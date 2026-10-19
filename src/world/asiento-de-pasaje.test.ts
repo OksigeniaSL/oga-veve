@@ -25,19 +25,12 @@ import { conPasaje } from "../audio/megafonia";
 import { colocarModelo } from "./aeronave-modelo";
 import { prepararAerofrenos } from "./aerofrenos";
 import { prepararFlaps } from "./flaps";
-import {
-  elCantoDeLaTrampilla,
-  elCristalEntero,
-  loQueAsomaDeLaSalida,
-  seVePorLaVentanilla,
-} from "./marco-de-ventanilla";
+import { seVePorLaVentanilla } from "./marco-de-ventanilla";
 import { CamaraDePasaje, FOV_DE_PASAJE } from "../cameras/pasaje";
 import type { Contexto } from "../cameras/tipos";
 import type { FlightState } from "../flight/model";
 import {
-  ANGULOS_EN_LA_SALIDA,
   asientoAnteVentanilla,
-  libreDelHud,
   medirElPasaje,
   OJOS_A,
   seVeSentado,
@@ -308,9 +301,7 @@ describe("el asiento de encima del ala", () => {
         /*
          * Sin la frente en el cristal ni más lejos que sentado, y el asiento
          * donde está: sentado, a su distancia de siempre. En el JAZ 120, con
-         * su cristal grande, sentado ya lo llena. En el JAZ 90, desde la fila
-         * de la salida, sentado del todo: lo que se viene a ver llega hasta el
-         * letrero, medio metro por encima del cristal, y asomado no cabe.
+         * su cristal grande, sentado ya lo llena.
          */
         const n = ala.ventanilla.normal;
         const c = ala.ventanilla.centro;
@@ -325,8 +316,7 @@ describe("el asiento de encima del ala", () => {
         /*
          * Sin perder el horizonte: de frente, por el cristal y en la pantalla.
          * Un ala sin horizonte no dice dónde está. En el JAZ 120 mirando hacia
-         * abajo, al ala; desde la fila de la salida del JAZ 90 se levanta un
-         * poco la vista, a la trampilla, y el ala se ve por debajo.
+         * abajo, al ala.
          */
         const giro = Math.abs(ala.guinada) - Math.PI / 2;
         const ojo = new Vector3(ala.ojo.x, ala.ojo.y, ala.ojo.z);
@@ -352,85 +342,115 @@ describe("el asiento de encima del ala", () => {
   }
 
   /*
-   * La salida de emergencia sobre el ala: en el de pasillo único, el asiento
-   * es el de la fila de la salida, mirando por la ventanilla de la trampilla
-   * —«el asa roja justo encima de la ventanilla y el EXIT encima», pidió
-   * Enrique—; en el de fuselaje ancho, que lleva puertas, no hay.
+   * **Y sin trampilla ni letrero en ninguno de los dos.** El JAZ 90 es de la
+   * clase del ERJ 170, que lleva cuatro salidas tipo I —sus puertas— y ninguna
+   * sobre el ala (EASA, hoja de tipo IM.A.001, III.21); el JAZ 120, de la del
+   * 747, cinco pares de puertas tipo A (FAA, hoja de tipo A20WE). Ver
+   * `docs/historias/fuentes.md`.
    */
-  it("jaz-90: la fila de la salida sobre el ala, por la ventanilla de la trampilla", async () => {
-    const { pasaje } = await montarMoviendo(AIRCRAFT.find((x) => x.id === "jaz-90")!);
-    for (const lado of ["izquierda", "derecha"] as const) {
-      const asiento = pasaje!.sobreElAla![lado];
-      const salida = asiento.salida;
-      expect(salida, lado).toBeTruthy();
-      // El cristal de uno, en medio de la trampilla, y ella del tamaño de una
-      // de tipo III: medio metro de ancho por uno de alto.
-      expect(salida!.enLaTrampilla, lado).toBe(true);
-      expect(Math.abs(salida!.haciaLaCola)).toBeLessThan(0.05);
-      expect(salida!.ancho).toBeGreaterThan(0.4);
-      expect(salida!.ancho).toBeLessThan(0.7);
-      expect(salida!.alto).toBeGreaterThan(0.8);
-      expect(salida!.alto).toBeLessThan(1.2);
-      // Y no es una ventanilla de la fila: ésa es la de siempre.
-      expect(asiento.ventanilla.centro.z).not.toBeCloseTo(pasaje![lado].ventanilla.centro.z, 1);
-      /*
-       * Un trozo del asa y del letrero, sin nada del HUD encima: «no cabe
-       * entera, pero se puede poner un trozo, también del letrero». Pedirlos
-       * enteros abrió la vista hasta noventa y dos grados, un ojo de pez.
-       */
-      const asoma = loQueAsomaDeLaSalida(asiento.ventanilla, salida!);
-      expect(asoma.length).toBeGreaterThanOrEqual(6);
-      const libres = asoma.filter((p) => libreDelHud(asiento, p)).length;
-      expect(libres * 2, lado).toBeGreaterThanOrEqual(asoma.length);
-      // Y el cristal, por lo menos la mitad sin HUD encima: es por donde se ve
-      // el ala, que es a lo que se viene.
-      const cristal = elCristalEntero(asiento.ventanilla);
-      const cristalLibre = cristal.filter((p) => libreDelHud(asiento, p)).length;
-      expect(cristalLibre * 2, lado).toBeGreaterThanOrEqual(cristal.length);
-      expect(asiento.fov, lado).toBeGreaterThanOrEqual(Math.min(...ANGULOS_EN_LA_SALIDA));
-      expect(asiento.fov, lado).toBeLessThanOrEqual(Math.max(...ANGULOS_EN_LA_SALIDA));
-      expect(pasaje![lado].fov ?? FOV_DE_PASAJE, `${lado}, el de siempre`).toBe(FOV_DE_PASAJE);
-      // Y la cámara de esta vista pide ese ángulo; la de siempre, el suyo.
-      const ctx = { pasaje } as unknown as Contexto;
-      const estado = {} as FlightState;
-      expect(new CamaraDePasaje(lado, true).fovDeseado(estado, ctx)).toBe(asiento.fov);
-      expect(new CamaraDePasaje(lado).fovDeseado(estado, ctx)).toBe(FOV_DE_PASAJE);
-      // Y el canto de arriba de la trampilla, que dice que el cristal va en
-      // una pieza: al menos una esquina en la pantalla. La otra puede quedar
-      // debajo de los botones de arriba a la derecha.
-      const canto = elCantoDeLaTrampilla(asiento.ventanilla, salida!);
-      expect(seVeSentado(asiento, canto[0]!) || seVeSentado(asiento, canto[1]!), lado).toBe(
-        true,
-      );
-      // Mirando de lado, y poco hacia la cola: no más de treinta y tres
-      // grados. Ver `ANGULOS_EN_LA_SALIDA`.
-      expect(Math.abs(asiento.guinada) - Math.PI / 2).toBeLessThan(33.01 * (Math.PI / 180));
+  for (const id of CON_FRENOS) {
+    it(`${id}: encima del ala, sin salida sobre el ala y con el ángulo de siempre`, async () => {
+      const { grupo, pasaje } = await montarMoviendo(AIRCRAFT.find((x) => x.id === id)!);
+      expect(verticesDeLasPiezas(grupo, /^salida-de-emergencia|^ventanita-salida/)).toEqual([]);
+      for (const lado of ["izquierda", "derecha"] as const) {
+        const asiento = pasaje!.sobreElAla![lado];
+        expect(asiento.salida ?? null, lado).toBeNull();
+        // Una ventanilla de la fila, como cualquier otra.
+        expect(
+          pasaje!.filas[lado].some((v) => v.centro.z === asiento.ventanilla.centro.z),
+          lado,
+        ).toBe(true);
+        expect(asiento.fov ?? FOV_DE_PASAJE, lado).toBe(FOV_DE_PASAJE);
+        // Y la cámara de esta vista pide el de siempre.
+        const ctx = { pasaje } as unknown as Contexto;
+        expect(new CamaraDePasaje(lado, true).fovDeseado({} as FlightState, ctx)).toBe(
+          FOV_DE_PASAJE,
+        );
+      }
+    });
+  }
+
+  /** Las trampillas de un costado, del modelo, de morro a cola: su caja. */
+  function trampillas(grupo: Object3D, s: number): Box3[] {
+    const suyos = verticesDeLasPiezas(grupo, /^salida-de-emergencia/)
+      .filter((v) => Math.sign(v.x) === s)
+      .sort((a, b) => a.z - b.z);
+    const cajas: Box3[] = [];
+    let actual: Vector3[] = [];
+    for (const v of [...suyos, null]) {
+      if (!v || (actual.length && v.z - actual[actual.length - 1]!.z > 0.2)) {
+        if (actual.length) cajas.push(new Box3().setFromPoints(actual));
+        actual = [];
+      }
+      if (v) actual.push(v);
     }
-  });
+    return cajas;
+  }
 
-  it("jaz-120: el ángulo de siempre desde encima del ala", async () => {
-    const { pasaje } = await montarMoviendo(AIRCRAFT.find((x) => x.id === "jaz-120")!);
-    expect(pasaje!.sobreElAla!.izquierda.fov ?? FOV_DE_PASAJE).toBe(FOV_DE_PASAJE);
-    expect(pasaje!.sobreElAla!.derecha.fov ?? FOV_DE_PASAJE).toBe(FOV_DE_PASAJE);
-  });
-
-  it("jaz-120: sin salida sobre el ala, que lleva puertas", async () => {
-    const { pasaje } = await montarMoviendo(AIRCRAFT.find((x) => x.id === "jaz-120")!);
-    expect(pasaje!.sobreElAla!.izquierda.salida ?? null).toBeNull();
-    expect(pasaje!.sobreElAla!.derecha.salida ?? null).toBeNull();
+  /*
+   * **El JAZ 60 sí las lleva**: es de la clase del Beech 1900, un turbohélice
+   * de cercanías de diecinueve plazas, y a ésos la norma les pide tres salidas
+   * además de la puerta, una del lado de la puerta y dos del otro (14 CFR
+   * 23.807(d)(1)(ii)). En el 1900C son tres trampillas sobre el ala, con su
+   * ventanilla: una a la izquierda y dos a la derecha (NTSB, AAR-97/04).
+   */
+  it("jaz-60: tres salidas sobre el ala, una a la izquierda y dos a la derecha, cada una con su ventanilla de la fila", async () => {
+    const { grupo, pasaje } = await montarMoviendo(AIRCRAFT.find((x) => x.id === "jaz-60")!);
+    const fuselaje = new Box3().setFromObject(grupo.getObjectByName("fuselaje")!);
+    const raiz = verticesDeLasPiezas(grupo, /^ala$/).filter(
+      (v) => Math.abs(v.x) < fuselaje.max.x + 0.6,
+    );
+    const ataque = Math.min(...raiz.map((v) => v.z));
+    const salida = Math.max(...raiz.map((v) => v.z));
+    for (const [lado, s, cuantas] of [
+      ["izquierda", -1, 1],
+      ["derecha", 1, 2],
+    ] as const) {
+      const cajas = trampillas(grupo, s);
+      expect(cajas.length, lado).toBe(cuantas);
+      for (const c of cajas) {
+        const z = (c.min.z + c.max.z) / 2;
+        // Sobre el ala, de borde de ataque a borde de salida.
+        expect(z, lado).toBeGreaterThan(ataque - 0.3);
+        expect(z, lado).toBeLessThan(salida + 0.3);
+        // Alrededor de una ventanilla de la fila, y más grande que ella: la
+        // de una salida, una elipse de diecinueve por veintiséis pulgadas de
+        // paso (23.807(b)).
+        const suya = pasaje!.filas[lado].find((v) => v.centro.z > c.min.z && v.centro.z < c.max.z);
+        expect(suya, lado).toBeTruthy();
+        expect(c.max.z - c.min.z).toBeGreaterThan(0.48);
+        expect(c.max.y - c.min.y).toBeGreaterThan(0.66);
+      }
+    }
   });
 
   /*
    * **Y la ve cualquier asiento que esté al lado**, no solo el de encima del
-   * ala: si el de siempre cae junto a la salida, ahí está. Y ninguno que no.
+   * ala: si el de siempre cae en la fila de una o junto a ella —sin otra
+   * ventanilla entre medias y a menos de metro y medio—, ahí está. Y ninguno
+   * que no.
    */
   it("la salida, en el asiento que la tiene al lado y en ninguno más", async () => {
+    let conAlguna = 0;
     for (const a of CON_PASAJE) {
-      const { pasaje } = await montarMoviendo(a);
-      const conSalida = !!pasaje!.izquierda.salida;
-      expect(conSalida, a.id).toBe(a.id === "jaz-90");
-      expect(!!pasaje!.derecha.salida, a.id).toBe(conSalida);
+      const { grupo, pasaje } = await montarMoviendo(a);
+      for (const [lado, s] of [
+        ["izquierda", -1],
+        ["derecha", 1],
+      ] as const) {
+        const z = pasaje![lado].ventanilla.centro.z;
+        const fila = pasaje!.filas[lado].map((v) => v.centro.z);
+        const alLado = trampillas(grupo, s).some((c) => {
+          const zc = (c.min.z + c.max.z) / 2;
+          const [desde, hasta] = [Math.min(z, zc), Math.max(z, zc)];
+          return hasta - desde <= 1.5 && !fila.some((f) => f > desde + 0.05 && f < hasta - 0.05);
+        });
+        expect(!!pasaje![lado].salida, `${a.id} ${lado}`).toBe(alLado);
+        if (alLado) conAlguna++;
+      }
     }
+    // Y que alguno la tenga, que si no esto no prueba nada.
+    expect(conAlguna).toBeGreaterThan(0);
   });
 
 });

@@ -63,19 +63,23 @@
  *
  * ## Y la salida sobre el ala
  *
- * En el asiento de encima del ala de un avión de pasillo único —el JAZ 90, de
- * la clase del A320 y el 737— la ventanilla es **la de la trampilla** de la
- * salida de emergencia: alrededor del cristal, la trampilla con su junta, el
- * asa roja justo encima del cristal y, encima, el letrero «EXIT», que es lo
- * que tiene de frente quien se sienta en esa fila. Desde la fila de al lado,
- * lo mismo asoma por donde va la ventanilla vecina. Va a la altura que la mide
- * el modelo —ver `SalidaDeAlLado` y `salidaEnLaPared`—, y el letrero, con su
- * tamaño y sus colores de verdad: letras rojas sobre blanco iluminado, que es
- * lo que pide la norma de certificación, con las letras de al menos treinta y
- * ocho milímetros —aquí, cuarenta y cuatro—. Alumbra solo: de noche, con la
- * cabina apagada para aterrizar, es lo que se sigue viendo. «EXIT» va en
- * inglés, como los rótulos de los instrumentos: es lo que pone en cualquier
- * avión.
+ * En el avión que la lleva —el JAZ 60, de la clase del Beech 1900, con tres
+ * trampillas que son ventanillas de la fila; ver `asiento-de-pasaje.ts`—, si
+ * la ventanilla de uno es **la de la trampilla**, alrededor del cristal va la
+ * trampilla con su junta, el asa roja justo encima del cristal y, encima, el
+ * letrero «EXIT», que es lo que tiene de frente quien se sienta en esa fila.
+ * Desde la fila de al lado, lo mismo asoma por donde va la ventanilla vecina.
+ * Va a la altura que la mide el modelo —ver `SalidaDeAlLado` y
+ * `salidaEnLaPared`—. El JAZ 90 no la lleva: sus salidas son sus puertas.
+ *
+ * El letrero es el que pide la norma de los de cercanías de su clase: la
+ * palabra «exit» iluminada, blanca sobre rojo o al revés si la cabina va igual
+ * de alumbrada (14 CFR 23.811(b)). Aquí, rojo sobre blanco, como el de las
+ * puertas del JAZ 90 —ver `world/pasillo-de-pasaje.ts`—, y con las letras de
+ * cuatro centímetros largos, algo más que la pulgada que pide, para que se lean
+ * en una pantalla pequeña. Alumbra solo: de noche, con la cabina apagada para
+ * aterrizar, es lo que se sigue viendo. «EXIT» va en inglés, como los rótulos
+ * de los instrumentos: es lo que pone en cualquier avión.
  *
  * Las letras no son una textura: son nueve trazos rectos —E, X, I y T no
  * tienen curvas— medidos como distancias, igual que el resto del marco. Se
@@ -826,7 +830,7 @@ export function queSeTocaEnLaPared(
  * `pasoDeVentanillas`—, y desde dentro la trampilla ocupa el sitio de la
  * ventanilla de al lado, que es lo que es. Nunca encima del hueco de uno.
  *
- * **Salvo que la ventanilla de uno sea la suya**, desde la fila de la salida:
+ * **Salvo que la ventanilla de uno sea la suya**, en la fila de la salida:
  * entonces la trampilla va alrededor del cristal de uno, a la altura que la
  * pone el modelo. Ver `SalidaDeAlLado.enLaTrampilla`.
  */
@@ -843,81 +847,6 @@ export function salidaEnLaPared(
     medioAncho,
     medioAlto: salida.alto / 2 + SALIDA.forro,
   };
-}
-
-/**
- * **Lo que tiene que asomar de la salida**, en coordenadas del avión: la
- * esquina de abajo del letrero que da a la ventanilla de uno, y el canto de la
- * trampilla de ese lado, a media altura. Lo usa quien elige hacia dónde se
- * mira sentado: que asome no es que se vea entero.
- *
- * **Desde la fila de la salida, entero**: lo que Enrique pidió tener de frente
- * —el asa roja justo encima del cristal y el letrero encima—. Las cuatro
- * esquinas del letrero y las dos de abajo del asa. Y el canto de la trampilla,
- * aparte: ver `elCantoDeLaTrampilla`.
- */
-export function loQueAsomaDeLaSalida(
-  ventanilla: VentanillaDePasaje,
-  salida: SalidaDeAlLado,
-): Vector3[] {
-  const s = salidaEnLaPared(ventanilla, salida);
-  const n = new Vector3(ventanilla.normal.x, ventanilla.normal.y, ventanilla.normal.z).normalize();
-  const arriba = new Vector3(0, 1, 0).addScaledVector(n, -n.y).normalize();
-  const c = ventanilla.centro;
-  const enLaPared = (largo: number, alto: number): Vector3 =>
-    new Vector3(c.x, c.y, c.z)
-      .add(new Vector3(0, 0, largo))
-      .addScaledVector(arriba, alto)
-      .addScaledVector(n, -FONDO);
-  if (salida.enLaTrampilla) {
-    const borde = s.arriba + s.medioAlto;
-    const letrero = borde + LETRERO.encima;
-    const medio = LETRERO.ancho / 2 + LETRERO.canto;
-    const asa = borde - ASA.bajo - ASA.alto / 2;
-    return [
-      enLaPared(-medio, letrero + LETRERO.alto + LETRERO.canto),
-      enLaPared(medio, letrero + LETRERO.alto + LETRERO.canto),
-      enLaPared(-medio, letrero),
-      enLaPared(medio, letrero),
-      enLaPared(-ASA.ancho / 2, asa),
-      enLaPared(ASA.ancho / 2, asa),
-    ];
-  }
-  const hacia = Math.sign(s.haciaLaCola);
-  return [
-    enLaPared(s.haciaLaCola - (hacia * LETRERO.ancho) / 4, s.arriba + s.medioAlto + LETRERO.encima),
-    enLaPared(s.haciaLaCola - hacia * s.medioAncho, s.arriba),
-  ];
-}
-
-/**
- * **El canto de la trampilla**, desde la fila de la salida, en coordenadas del
- * avión: sus dos esquinas de arriba y sus dos lados a la altura del cristal.
- * Es lo que dice que el cristal va en una pieza que se abre, y no en la pared
- * como los demás. Entero no cabe con el ala —baja hasta las rodillas—, así que
- * quien elige hacia dónde se mira cuenta cuántos de estos puntos se ven.
- */
-export function elCantoDeLaTrampilla(
-  ventanilla: VentanillaDePasaje,
-  salida: SalidaDeAlLado,
-): Vector3[] {
-  const s = salidaEnLaPared(ventanilla, salida);
-  const n = new Vector3(ventanilla.normal.x, ventanilla.normal.y, ventanilla.normal.z).normalize();
-  const arriba = new Vector3(0, 1, 0).addScaledVector(n, -n.y).normalize();
-  const c = new Vector3(ventanilla.centro.x, ventanilla.centro.y, ventanilla.centro.z);
-  const borde = s.arriba + s.medioAlto;
-  return [
-    [-s.medioAncho, borde],
-    [s.medioAncho, borde],
-    [-s.medioAncho, 0],
-    [s.medioAncho, 0],
-  ].map(([largo, alto]) =>
-    c
-      .clone()
-      .add(new Vector3(0, 0, s.haciaLaCola + largo!))
-      .addScaledVector(arriba, alto!)
-      .addScaledVector(n, -FONDO),
-  );
 }
 
 /**
@@ -941,9 +870,8 @@ export function elMarcoEntero(ventanilla: VentanillaDePasaje): Vector3[] {
 
 /**
  * **El cristal entero**, en coordenadas del avión: sus cuatro bordes, por
- * dentro de la junta. Lo usa quien elige hacia dónde se mira desde la fila de
- * la salida, para que no quede nada de él debajo del HUD: ahí, a sesenta y
- * cuatro grados, la mitad de abajo —el ala— quedaba bajo la barra de abajo.
+ * dentro de la junta —arriba, abajo, hacia la cola y hacia el morro—. Lo usa
+ * la escena de Ara para saber dónde cae su cristal en la pantalla.
  */
 export function elCristalEntero(ventanilla: VentanillaDePasaje): Vector3[] {
   const m = medidasDelHueco(ventanilla);

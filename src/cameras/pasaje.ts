@@ -139,9 +139,9 @@ export class CamaraDePasaje implements CameraRig {
   }
 
   /**
-   * El del asiento si trae el suyo —el de la fila de la salida del JAZ 90, ver
-   * `ANGULOS_EN_LA_SALIDA` en `world/asiento-de-pasaje.ts`—, y si no, el de
-   * siempre. El paso de uno a otro lo suaviza el juego, como entre vistas.
+   * El del asiento si trae el suyo —el de Ara asomada al pasillo, ver
+   * `world/pasillo-de-pasaje.ts`—, y si no, el de siempre. El paso de uno a
+   * otro lo suaviza el juego, como entre vistas.
    */
   fovDeseado(_state: FlightState, ctx: Contexto): number {
     return (ctx.asientoDeLaEscena ?? asientoDeLaVista(ctx.pasaje, this.lado, this.sobreElAla))?.fov ?? FOV_DE_PASAJE;

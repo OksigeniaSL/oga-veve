@@ -426,8 +426,7 @@ escena, como en las otras dos, y deja pasar los anuncios y lo de la ventanilla
 solo mientras la escena los está diciendo (`clavesDeLaEscena`).
 
 **Sin leer y sin tocar nada.** La vista es la del asiento de Ara, la
-ventanilla izquierda —el asiento de siempre y no el de la fila de la salida:
-en esa fila no se sientan niños—. Sin relojes, ni mandos, ni torre en la
+ventanilla izquierda, el asiento de siempre. Sin relojes, ni mandos, ni torre en la
 pantalla: se queda la tarjeta de la escena, el cartel del cinturón y el menú
 con el sonido y la pausa. La tarjeta dibuja **qué mirar** —la ventanilla, el
 ala, el motor, las nubes o el cinturón, con lo que hay que mirar latiendo— y

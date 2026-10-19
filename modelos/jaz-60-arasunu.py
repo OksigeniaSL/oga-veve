@@ -137,8 +137,26 @@ def construir():
     fila = [-3.35 + i * 0.80 for i in range(10)]
     piezas.append(ventanas("ventanillas", PIEL, fila, 0.24, 0.40, 0.30,
                            radio=0.14, fuera=0.008))
+    # La puerta de pasaje, la de la escalera, **solo a la izquierda**: en su
+    # clase no hay otra delante, y el costado de enfrente es el de dos de las
+    # salidas (NTSB, AAR-97/04, 1.6.1).
     piezas.append(contorno("puerta", PIEL, -4.25, -0.12, 1.50, 0.74,
-                           radio=0.12, grueso=0.025, fuera=0.012))
+                           radio=0.12, grueso=0.025, fuera=0.012, lados=(-1,)))
+
+    # **Y las tres salidas de emergencia sobre el ala**, que en un avión de
+    # diecinueve plazas de su clase son trampillas con su ventanilla: una en
+    # el costado de la puerta de pasaje, a la altura del borde de salida del
+    # ala, y dos en el de enfrente, en el borde de ataque y en el de salida.
+    # Es lo que pide la norma de los de cercanías de diez a diecinueve plazas
+    # —tres, una del lado de la puerta y dos del otro (14 CFR 23.807(d)(1)(ii))
+    # —, y lo que lleva el Beech 1900C según la NTSB (AAR-97/04, 1.15.3.2).
+    # La ventanilla es la de la fila: la trampilla va alrededor de ella, sin
+    # hueco. Del tamaño que pide la norma, una elipse de 19 por 26 pulgadas
+    # de paso (23.807(b)), y algo más de junta. Ver `docs/historias/fuentes.md`.
+    for cual, z, lados in (("delante", -0.95, (1,)), ("detras", 1.45, (-1, 1))):
+        piezas.append(contorno(f"salida-de-emergencia-{cual}", PIEL, z, 0.18,
+                               0.72, 0.52, radio=0.10, grueso=0.022,
+                               fuera=0.012, lados=lados))
 
     # La franja con su raya, que sube a la deriva por la cola. Los colores
     # los pone la ficha del avión: ver `src/flight/aircraft.ts`.
