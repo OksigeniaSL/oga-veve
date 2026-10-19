@@ -27,10 +27,11 @@
  *
  * ## Se bajan cuando hacen falta
  *
- * Como las fotos de las historias —ver `fotos-de-las-historias.ts`—: no van en
- * la precarga del trabajador de servicio, entran por `import.meta.glob` como
- * URL con la huella en el nombre, y se guardan la primera vez que se piden.
- * Son unos 345 KB entre las dieciocho, y en un vuelo se ven cinco como mucho.
+ * Como las de las historias —ver `ilustraciones-de-las-historias.ts`—: no van
+ * en la precarga del trabajador de servicio, entran por `import.meta.glob`
+ * como URL con la huella en el nombre, y se guardan la primera vez que se
+ * piden. Son unos 575 KB entre las veinte, y en un vuelo se ven cinco como
+ * mucho.
  * Sin red y sin copia, la ventanita no sale y la cara se queda dibujada.
  */
 

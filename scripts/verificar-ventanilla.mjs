@@ -11,9 +11,9 @@
  * Así que se vuela. Se pone el avión en crucero al norte del Teide mirando al
  * sur —donde hay hitos de sobra— y se mira el contador.
  *
- * Y detrás de lo señalado, su historia y **su foto**: mientras suena, la foto
+ * Y detrás de lo señalado, su historia y **su ilustración**: mientras suena,
  * sale al lado del cuadro —o en la placa, en las avionetas— y al acabar se va.
- * Se mira cada medio segundo qué foto hay puesta y dónde, y se exige que haya
+ * Se mira cada medio segundo cuál hay puesta y dónde, y se exige que haya
  * salido alguna y que se haya ido. Ver `ui/ventana-de-historia.ts`.
  *
  *   node scripts/verificar-ventanilla.mjs [avion]
@@ -35,9 +35,9 @@ const navegador = await chromium.launch({
 });
 const page = await navegador.newPage({
   /*
-   * Un portátil de 1280 × 720, que es donde la foto de la historia cabe al
-   * lado del cuadro de un reactor. Con 1100 de ancho el cuadro no deja hueco
-   * a los lados y la foto, como debe, no sale.
+   * Un portátil de 1280 × 720, que es donde la ilustración de la historia
+   * cabe al lado del cuadro de un reactor. Con 1100 de ancho el cuadro no deja
+   * hueco a los lados y la ilustración, como debe, no sale.
    */
   viewport: { width: 1280, height: 720 },
   locale: 'es-PY',

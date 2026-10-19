@@ -1173,7 +1173,7 @@ import {
 import type { Hito, Mirada } from "./world/hitos";
 import { destacadosDesde } from "./world/lo-destacado";
 import { laHistoria, loQueSeDice, type LoQueSeDice } from "./audio/ventanilla";
-import { precargarLaFoto } from "./ui/fotos-de-las-historias";
+import { precargarLaIlustracion } from "./ui/ilustraciones-de-las-historias";
 import { alSonarLaHistoria, type Caja, type LoQueNoSeTapa } from "./ui/ventana-de-historia";
 import { cajitasDelAvion, siluetaEnPantalla, type Cajita } from "./world/silueta-del-avion";
 import { mallasDeFuera } from "./world/asiento-de-ara";
@@ -7468,7 +7468,7 @@ export class Game {
   /**
    * **La ventanita de la escena de pasaje**: el dibujo de lo que se explica
    * —ver `ui/dibujos-del-pasaje.ts`—, la ilustración de lo que pasa —ver
-   * `ui/ilustraciones.ts`— o la foto de la historia que cuenta la comandante,
+   * `ui/ilustraciones.ts`— o la de la historia que cuenta la comandante,
    * en la misma ventana de cristal que las historias de cualquier vuelo. Y la
    * primera vez que se pide el cinturón —con la cabina llena o con la
    * hebilla—, el cartel del techo parpadea: es el que se acaba de encender
@@ -21177,10 +21177,11 @@ export class Game {
       const conHistoria =
         historia && this.instructor.vozDe(historia.clave, historia.relleno) ? historia : null;
       /*
-       * Y su foto, pedida ya: la historia empieza cuando acaba esta frase, y
-       * para entonces tiene que estar bajada. Ver `precargarLaFoto`.
+       * Y su ilustración, pedida ya: la historia empieza cuando acaba esta
+       * frase, y para entonces tiene que estar bajada. Ver
+       * `precargarLaIlustracion`.
        */
-      if (conHistoria?.sitio) precargarLaFoto(conHistoria.sitio);
+      if (conHistoria?.sitio) precargarLaIlustracion(conHistoria.sitio);
       boca.decir(
         dicho.texto,
         dicho.clave,
@@ -21257,8 +21258,8 @@ export class Game {
     if (this.descensoDeEmergencia !== null && !this.descensoDeEmergencia.terminado) return;
     this.huecos.usar();
     /*
-     * **Y mientras suena, su foto**: el Garoé, el tapir, los ángeles de
-     * Trinidad. Sale cuando empieza a sonar y se va cuando acaba; ver
+     * **Y mientras suena, su ilustración**: el Garoé, el tapir, los ángeles
+     * de Trinidad. Sale cuando empieza a sonar y se va cuando acaba; ver
      * `ui/ventana-de-historia.ts`.
      */
     boca.decir(

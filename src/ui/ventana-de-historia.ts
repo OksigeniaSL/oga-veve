@@ -1,6 +1,6 @@
 /**
- * **La ventana de la historia**: la foto de lo que Jazlyn está contando,
- * mientras lo cuenta.
+ * **La ventana de la historia**: la ilustración de lo que Jazlyn está
+ * contando, mientras lo cuenta.
  *
  * Pedido por Enrique (punto 252): «una ventana con efecto de cristal en la
  * esquina de abajo, al lado del cuadro (portátil y PC), mientras Jazlyn
@@ -10,17 +10,21 @@
  *
  * - **En los aviones pequeños, la placa del cuadro.** Es el recuadro donde va
  *   el retrato del avión, el que se toca para abrir la tarjeta en 3D. Mientras
- *   suena la historia, la foto ocupa el sitio del retrato; cuando acaba, vuelve
- *   el avión. Y la foto deja pasar el dedo: tocarla abre la tarjeta igual, que
+ *   suena la historia, su ilustración ocupa el sitio del retrato; cuando acaba,
+ *   vuelve el avión. Y deja pasar el dedo: tocarla abre la tarjeta igual, que
  *   es el avión en 3D con el que alterna. Ver `fotoDeLaHistoria` en
- *   `tablero.ts`.
+ *   `tablero.ts`. La placa es más apaisada que las ilustraciones, que son de
+ *   4:3: lo que sobra se quita por donde dice su foco, y no se deforman. Ver
+ *   `encuadrarEnLaPlaca`.
  * - **En los demás, una ventana de cristal al lado del cuadro**, abajo. Se
  *   coloca midiendo lo que hay —el cuadro, el volumen, la columna de mandos,
  *   los pulgares— y se pone donde no pisa nada: primero a la izquierda del
  *   cuadro y, si ahí no cabe, a la derecha. **Si no cabe sin tapar, no sale.**
  *   Es lo que pasa en el teléfono: entre los pulgares y el avión no queda un
- *   hueco de foto, y una foto encima de la palanca o del avión es peor que no
- *   tener foto. La historia se oye igual. Ver `dondeCabeLaVentana`.
+ *   hueco para una imagen, y una encima de la palanca o del avión es peor que
+ *   ninguna. La historia se oye igual. Ver `dondeCabeLaVentana`. Esta ventana
+ *   es de 3:2 y las ilustraciones de las historias, de 4:3: también aquí lo
+ *   que sobra de alto se quita por donde dice su foco.
  *
  * ## Y en la escena de pasaje, en grande
  *
@@ -57,8 +61,23 @@ import type { AlSonar } from "../audio/instructor";
 import { hayTexto, t } from "../i18n";
 import { urlDelDibujo, type DibujoDelPasaje } from "./dibujos-del-pasaje";
 import { aPxDelHud } from "./escala";
-import { fotoDeLaHistoria, type FotoDeLaHistoria } from "./fotos-de-las-historias";
 import { ilustracion, PREFIJO_DE_ILUSTRACION } from "./ilustraciones";
+import { FOCO_CENTRADO, ilustracionDeLaHistoria } from "./ilustraciones-de-las-historias";
+
+/**
+ * **Lo que sale en la ventana**: la ilustración de una historia, un dibujo o
+ * una ilustración de la escena de pasaje, con su sitio, su URL y su `alt`.
+ */
+export interface ImagenDeLaVentana {
+  readonly clave: string;
+  readonly url: string;
+  readonly alt: string;
+  /**
+   * La altura que se queda a la vista donde no cabe entera, de 0 —arriba— a
+   * 1 —abajo—; sin ella, en medio. Ver `FocoDeLaHistoria`.
+   */
+  readonly foco?: number;
+}
 
 /** Una caja en píxeles de pantalla, como las da `getBoundingClientRect`. */
 export interface Caja {
@@ -70,14 +89,14 @@ export interface Caja {
 
 /** Las medidas de la ventana, en píxeles de pantalla. */
 export const VENTANA = {
-  /** Lo que mide de ancho si cabe. La foto es el doble, 480. */
+  /** Lo que mide de ancho si cabe. */
   ancho: 240,
   /**
-   * Lo menos que puede medir y seguir siendo una foto: por debajo, un tapir
-   * es una mancha gris y la firma no se lee.
+   * Lo menos que puede medir y seguir siendo una imagen: por debajo, un tapir
+   * es una mancha gris.
    */
   minimo: 168,
-  /** El marco de cristal alrededor de la foto, por cada lado. */
+  /** El marco de cristal alrededor de la imagen, por cada lado. */
   marco: 6,
   /** Lo que se separa del cuadro, del borde y de cualquier otra cosa. */
   hueco: 12,
@@ -91,7 +110,7 @@ export const VENTANA = {
   arriba: 0.35,
 } as const;
 
-/** El alto de la ventana para un ancho: foto en 3:2 y su marco. */
+/** El alto de la ventana para un ancho: la imagen en 3:2, o en la proporción que se diga, y su marco. */
 export const altoDeLaVentana = (ancho: number, proporcion = 3 / 2): number =>
   (ancho - 2 * VENTANA.marco) / proporcion + 2 * VENTANA.marco;
 
@@ -350,8 +369,8 @@ export function anchoDeLaLamina(
  * nada de `no` y sin salirse de la pantalla; y de las que caben de ese
  * tamaño, **la más baja**, que arriba están los botones y quien habla, y
  * **la más pegada a un borde**, que es donde está la pared de la cabina y no
- * la vista. Con la `proporcion` de la imagen: las ilustraciones y las fotos
- * de ahora son de 3:2 y las que vienen, de 4:3, y ninguna se recorta.
+ * la vista. Con la `proporcion` de la imagen: los dibujos y las ilustraciones
+ * del pasaje son de 3:2 y las de las historias, de 4:3, y ninguna se recorta.
  */
 export function dondeCabeLaLamina(
   pantalla: { readonly ancho: number; readonly alto: number },
@@ -412,15 +431,16 @@ const DEL_NAVEGADOR: Plazos = {
 /**
  * **Lo más que se queda puesta**, ms. Las historias duran de diez a veinte
  * segundos; si en un minuto nadie ha dicho que acabó, algo se perdió por el
- * camino, y una foto que no se va nunca es peor que una que se va pronto.
+ * camino, y una imagen que no se va nunca es peor que una que se va pronto.
  */
 export const TOPE_DE_LA_VENTANA = 60_000;
 
 /**
- * **El aviso de la voz que pone y quita la foto**: se le pasa a `decir` con la
- * historia. Sale al empezar a sonar —no al pedirse: la historia espera turno
- * detrás de lo que urge— y se va al acabar, al cortarse, si no llega a sonar
- * o si se cae. Ver `AlSonar` en `audio/instructor.ts`.
+ * **El aviso de la voz que pone y quita la ilustración**: se le pasa a
+ * `decir` con la historia. Sale al empezar a sonar —no al pedirse: la
+ * historia espera turno detrás de lo que urge— y se va al acabar, al
+ * cortarse, si no llega a sonar o si se cae. Ver `AlSonar` en
+ * `audio/instructor.ts`.
  */
 export function alSonarLaHistoria(
   ventana: PonerYQuitar,
@@ -450,9 +470,9 @@ const OBSTACULOS =
   '[data-hud], button, [role="button"], .tarjeta, .concha, .pad, .volumen, .rincon, .tutor';
 
 /**
- * El ancho de placa, en píxeles de pantalla, desde el que la foto se pone
+ * El ancho de placa, en píxeles de pantalla, desde el que la imagen se pone
  * ahí: en un portátil la placa mide 180, y en la tablet de siete pulgadas,
- * con el cuadro encogido, setenta, que es un sello y no una foto.
+ * con el cuadro encogido, setenta, que es un sello y no una ilustración.
  */
 const PLACA_QUE_SE_VE = 110;
 
@@ -463,10 +483,9 @@ export class VentanaDeHistoria implements PonerYQuitar {
   private raiz: HTMLElement | null = null;
   private caja: HTMLElement | null = null;
   private foto: HTMLImageElement | null = null;
-  private firma: HTMLElement | null = null;
   /** La que está puesta, o la que se está cargando. */
   private sitio: string | null = null;
-  /** Para que una carga lenta no ponga una foto que ya no toca. */
+  /** Para que una carga lenta no ponga una imagen que ya no toca. */
   private vez = 0;
   /** Dónde quedó, para las sondas y los bancos. */
   private dondeQuedo: { donde: DondeQueda; caja: Caja } | null = null;
@@ -476,7 +495,7 @@ export class VentanaDeHistoria implements PonerYQuitar {
    */
   private escena: (() => LoQueNoSeTapa) | null = null;
   /** La que está pedida y no cabe ahora: sale en cuanto quepa. */
-  private esperando: FotoDeLaHistoria | null = null;
+  private esperando: ImagenDeLaVentana | null = null;
   /** Ancho entre alto de la imagen puesta: la lámina la lleva entera, sin recortarla. */
   private proporcion = 3 / 2;
   /** Cuándo se miró por última vez si la lámina sigue sin tapar nada, ms, y si cabía más grande. */
@@ -484,7 +503,7 @@ export class VentanaDeHistoria implements PonerYQuitar {
   private crecio = 0;
   /**
    * Lo que pasó la última vez que se pidió una, para que un banco que no la
-   * ve pueda decir por qué: no cabía, no bajó la imagen o no tiene foto.
+   * ve pueda decir por qué: no cabía, no bajó la imagen o no tiene ilustración.
    */
   private ultimo: string | null = null;
 
@@ -493,7 +512,6 @@ export class VentanaDeHistoria implements PonerYQuitar {
       <figure class="historia" data-hud="historia" hidden>
         <div class="historia__marco">
           <img class="historia__foto" data-hud="historia-foto" alt="" decoding="async" />
-          <figcaption class="historia__firma" data-hud="historia-firma"></figcaption>
         </div>
       </figure>`;
   }
@@ -503,7 +521,6 @@ export class VentanaDeHistoria implements PonerYQuitar {
     this.raiz = raiz;
     this.caja = raiz.querySelector('[data-hud="historia"]');
     this.foto = raiz.querySelector('[data-hud="historia-foto"]');
-    this.firma = raiz.querySelector('[data-hud="historia-firma"]');
     this.caja?.classList.toggle("historia--grande", !!this.escena);
     const puesta = this.sitio;
     this.dondeQuedo = null;
@@ -529,15 +546,15 @@ export class VentanaDeHistoria implements PonerYQuitar {
   }
 
   mostrar(sitio: string): void {
-    const foto = fotoDeLaHistoria(sitio);
-    this.ultimo = `${sitio}: ${foto ? "pedida" : "sin foto"}`;
-    if (foto) this.mostrarFoto(foto);
+    const ilustrada = ilustracionDeLaHistoria(sitio);
+    this.ultimo = `${sitio}: ${ilustrada ? "pedida" : "sin ilustración"}`;
+    if (ilustrada) this.mostrarFoto(ilustrada);
   }
 
   /**
    * **Un dibujo de la escena de pasaje**, en la misma ventana y con la misma
    * manera de entrar y salir: lo que acompaña a lo que se explica. Su sitio es
-   * `dibujo:<clave>`, para quitarlo igual que una foto. Ver
+   * `dibujo:<clave>`, para quitarlo igual que una historia. Ver
    * `ui/dibujos-del-pasaje.ts`.
    */
   mostrarDibujo(clave: DibujoDelPasaje, url: string = urlDelDibujo(clave)): void {
@@ -547,7 +564,6 @@ export class VentanaDeHistoria implements PonerYQuitar {
       clave: `dibujo:${clave}`,
       url,
       alt: hayTexto(alt) ? t(alt) : "",
-      firma: null,
     });
   }
 
@@ -583,10 +599,10 @@ export class VentanaDeHistoria implements PonerYQuitar {
     const sitio = `${PREFIJO_DE_ILUSTRACION}${clave}`;
     const i = ilustracion(clave);
     this.ultimo = `${sitio}: ${i ? "pedida" : "no hay"}`;
-    if (i) this.mostrarFoto({ clave: sitio, url: i.url, alt: i.alt, firma: null });
+    if (i) this.mostrarFoto({ clave: sitio, url: i.url, alt: i.alt });
   }
 
-  private mostrarFoto(foto: FotoDeLaHistoria): void {
+  private mostrarFoto(foto: ImagenDeLaVentana): void {
     const sitio = foto.clave;
     if (!this.raiz) return;
     if (this.sitio === sitio && this.dondeQuedo) return;
@@ -643,12 +659,12 @@ export class VentanaDeHistoria implements PonerYQuitar {
   }
 
   /**
-   * Primero la placa, si se ve de un tamaño en el que una foto es una foto;
+   * Primero la placa, si se ve de un tamaño en el que una imagen se entiende;
    * si no, la esquina; y si tampoco cabe, la placa aunque sea pequeña —en la
    * tablet de siete pulgadas el cuadro entero se encoge—, que es mejor que
    * nada y no tapa nada.
    */
-  private poner(foto: FotoDeLaHistoria, proporcion = 3 / 2): void {
+  private poner(foto: ImagenDeLaVentana, proporcion = 3 / 2): void {
     this.proporcion = proporcion;
     if (this.escena) {
       this.enGrande(foto);
@@ -664,10 +680,10 @@ export class VentanaDeHistoria implements PonerYQuitar {
 
   /**
    * **En la placa del cuadro**, si este avión la tiene y se ve entera: el
-   * cuadro abierto, dentro de la pantalla. Si está recogido, la foto va a la
-   * esquina como en los demás.
+   * cuadro abierto, dentro de la pantalla. Si está recogido, la imagen va a
+   * la esquina como en los demás.
    */
-  private enLaPlaca(foto: FotoDeLaHistoria, minimo: number): boolean {
+  private enLaPlaca(foto: ImagenDeLaVentana, minimo: number): boolean {
     const raiz = this.raiz;
     const grupo = raiz?.querySelector<SVGGElement>('[data-historia="placa"]');
     const cuadro = raiz?.querySelector<HTMLElement>('[data-hud="cuadro"]');
@@ -675,19 +691,19 @@ export class VentanaDeHistoria implements PonerYQuitar {
     const estilo = getComputedStyle(cuadro);
     if (estilo.display === "none" || estilo.visibility === "hidden" || Number(estilo.opacity) < 0.5)
       return false;
+    const ventana = grupo.querySelector<SVGSVGElement>('[data-historia="ventana"]');
     const imagen = grupo.querySelector<SVGImageElement>('[data-historia="foto"]');
-    const r = (imagen ?? grupo).getBoundingClientRect();
+    /*
+     * Se mide el marco y no la ventana ni la imagen: la caja de un `<svg>` de
+     * dentro es la de lo que lleva, recortado o no, y una ilustración de 4:3
+     * en la placa de 5:3 sobresale por arriba o por abajo aunque no se vea.
+     */
+    const r = (grupo.querySelector('[data-historia="marco"]') ?? ventana ?? grupo).getBoundingClientRect();
     if (r.width < minimo || r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth)
       return false;
+    if (ventana && imagen) encuadrarEnLaPlaca(ventana, imagen, this.proporcion, foto.foco ?? FOCO_CENTRADO);
     imagen?.setAttribute("href", foto.url);
     imagen?.setAttribute("aria-label", foto.alt);
-    const firma = grupo.querySelector<SVGTextElement>('[data-historia="firma"]');
-    const fondo = grupo.querySelector<SVGRectElement>('[data-historia="fondo"]');
-    if (firma) {
-      firma.textContent = foto.firma ?? "";
-      ajustarLaFirma(firma, imagen);
-    }
-    fondo?.setAttribute("display", foto.firma ? "inline" : "none");
     grupo.classList.add("tablero__historia--puesta");
     this.dondeQuedo = { donde: "placa", caja: r };
     return true;
@@ -700,7 +716,7 @@ export class VentanaDeHistoria implements PonerYQuitar {
   }
 
   /** **En la esquina**, al lado del cuadro, si cabe sin tapar nada. */
-  private enLaEsquina(foto: FotoDeLaHistoria): void {
+  private enLaEsquina(foto: ImagenDeLaVentana): void {
     const { raiz, caja } = this;
     if (!raiz || !caja) return;
     const cuadroEl = raiz.querySelector('[data-hud="cuadro"]');
@@ -757,7 +773,7 @@ export class VentanaDeHistoria implements PonerYQuitar {
   }
 
   /** **En grande**, en la escena de pasaje: ver `dondeCabeLaLamina`. Si no cabe, espera. */
-  private enGrande(foto: FotoDeLaHistoria): void {
+  private enGrande(foto: ImagenDeLaVentana): void {
     const no = this.loQueNoSeTapaAhora();
     const donde = no ? dondeCabeLaLamina({ ancho: innerWidth, alto: innerHeight }, no, this.proporcion) : null;
     if (!donde) {
@@ -814,20 +830,24 @@ export class VentanaDeHistoria implements PonerYQuitar {
     }
   }
 
-  /** La foto que está puesta, para volver a ponerla. */
-  private fotoPuesta: FotoDeLaHistoria | null = null;
+  /** La imagen que está puesta, para volver a ponerla. */
+  private fotoPuesta: ImagenDeLaVentana | null = null;
 
   /** Se pone en su sitio y entra con su fundido. */
-  private colocar(foto: FotoDeLaHistoria, donde: Caja, como: DondeQueda): void {
-    const { caja, foto: img, firma } = this;
-    if (!caja || !img || !firma) return;
+  private colocar(foto: ImagenDeLaVentana, donde: Caja, como: DondeQueda): void {
+    const { caja, foto: img } = this;
+    if (!caja || !img) return;
     img.src = foto.url;
     img.alt = foto.alt;
-    firma.textContent = foto.firma ?? "";
     this.fotoPuesta = foto;
-    // En grande, con la proporción de la imagen; en la esquina, la de siempre.
+    /*
+     * En grande, con la proporción de la imagen, entera; en la esquina, la de
+     * siempre, 3:2, y lo que sobra de una ilustración de 4:3 se quita por
+     * donde dice su foco.
+     */
     if (como === "grande") caja.style.setProperty("--historia-proporcion", String(this.proporcion));
     else caja.style.removeProperty("--historia-proporcion");
+    caja.style.setProperty("--historia-foco", `${Math.round((foto.foco ?? FOCO_CENTRADO) * 100)}%`);
     this.escribir(donde);
     caja.hidden = false;
     // Un fotograma para que el fundido arranque desde transparente.
@@ -860,7 +880,7 @@ export class VentanaDeHistoria implements PonerYQuitar {
 /**
  * **La proporción de una imagen ya descodificada**, ancho entre alto: la de
  * sus píxeles —un dibujo de SVG lleva los suyos, 480 × 320—, entre la de una
- * foto apaisada de 2:1 y una cuadrada. Sin medidas, la de siempre, 3:2.
+ * imagen apaisada de 2:1 y una cuadrada. Sin medidas, la de siempre, 3:2.
  */
 function proporcionDe(img: HTMLImageElement): number {
   const p = img.naturalWidth > 0 && img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : 3 / 2;
@@ -891,20 +911,37 @@ function visible(el: Element | null): boolean {
 }
 
 /**
- * La firma de la placa, del tamaño que quepa: los nombres van de «FrDr» a
- * «Coordenação-Geral de Observação da Terra/INPE», y en la placa de una
- * avioneta hay sitio para unas cuarenta letras.
+ * **Cómo cabe una imagen en una caja más apaisada o más alta que ella**, sin
+ * deformarla: tapándola entera y quitando lo que sobra. Lo que sobra de alto
+ * se quita por donde dice `foco` —0 deja a la vista lo de arriba, 1 lo de
+ * abajo—, igual que `object-position` en la esquina; lo que sobra de ancho,
+ * por igual a los dos lados. En píxeles de la caja, que empieza en 0, 0.
  */
-function ajustarLaFirma(firma: SVGTextElement, imagen: SVGImageElement | null): void {
-  const base = 14;
-  firma.style.fontSize = `${base}px`;
-  const cabe = Number(imagen?.getAttribute("width") ?? 0) - 12;
-  if (!cabe || !firma.textContent) return;
-  let largo = 0;
-  try {
-    largo = firma.getComputedTextLength();
-  } catch {
-    return;
-  }
-  if (largo > cabe) firma.style.fontSize = `${Math.max(9, (base * cabe) / largo).toFixed(1)}px`;
+export function encuadre(
+  caja: { readonly ancho: number; readonly alto: number },
+  proporcion: number,
+  foco: number,
+): { x: number; y: number; ancho: number; alto: number } {
+  const ancho = Math.max(caja.ancho, caja.alto * proporcion);
+  const alto = ancho / proporcion;
+  const f = Math.min(1, Math.max(0, foco));
+  return { x: (caja.ancho - ancho) / 2, y: (caja.alto - alto) * f, ancho, alto };
+}
+
+/**
+ * **La imagen en la placa de las avionetas**, que es de 5:3: más apaisada que
+ * una ilustración de 4:3. El recorte lo hace el `<svg>` de dentro, que no deja
+ * ver nada fuera de su caja; la imagen se pone con su proporción y corrida
+ * según el foco. Con `preserveAspectRatio` solo se podría arriba, en medio o
+ * abajo, y el agujero de la cueva de Risco Caído pide arriba del todo pero el
+ * Teide, un poco por encima del medio.
+ */
+function encuadrarEnLaPlaca(ventana: SVGSVGElement, imagen: SVGImageElement, proporcion: number, foco: number): void {
+  const caja = { ancho: Number(ventana.getAttribute("width")), alto: Number(ventana.getAttribute("height")) };
+  if (!(caja.ancho > 0 && caja.alto > 0)) return;
+  const e = encuadre(caja, proporcion, foco);
+  imagen.setAttribute("x", e.x.toFixed(2));
+  imagen.setAttribute("y", e.y.toFixed(2));
+  imagen.setAttribute("width", e.ancho.toFixed(2));
+  imagen.setAttribute("height", e.alto.toFixed(2));
 }

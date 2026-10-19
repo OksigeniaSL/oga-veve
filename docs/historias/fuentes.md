@@ -20,10 +20,12 @@ Las reglas con las que se escribieron:
 - **Lo dudoso no entra.** Lo que se descartó por no poder sostenerlo está al
   final, con el motivo.
 
-Y mientras suena, **su foto**: una por historia, de Wikimedia Commons, con su
-autor, su licencia y lo que se le hizo apuntados en «Las fotos de las historias
-de la ventanilla», en `CREDITOS.md`. La foto enseña lo que la historia cuenta
-—el tapir, el hito paraguayo, los ángeles del friso—, no algo parecido.
+Y mientras suena, **su ilustración**: una por historia, un dibujo de cuento
+de Oksigenia SL, anotado en «Las ilustraciones», en `CREDITOS.md`. Hasta el
+punto 306 eran fotos de Wikimedia Commons; el dibujo enseña lo que la historia
+cuenta —el Teide con la parte que queda debajo del mar, las canoas a hombros
+alrededor del Iguazú, los ángeles del friso—, que una foto no siempre puede, y
+con el mismo cuidado de no enseñar nada falso.
 
 Los libros que se citan:
 

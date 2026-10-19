@@ -343,7 +343,7 @@ async function elVuelo() {
   // Lo nombrado del paisaje, medido con lo que se pinta cuando se nombra. Ver `paisajeParaBanco`.
   const nombrados = [];
   let vistosNombrados = 0;
-  // Las fotos de las historias que salieron sin su voz sonando: ninguna. Ver el punto 287.
+  // Las ilustraciones de las historias que salieron sin su voz sonando: ninguna. Ver el punto 287.
   const fotosMudas = new Set();
   let fotosConVoz = 0;
   // Dentro de la nube, el meneo: si empezó con el avión metido en ella.

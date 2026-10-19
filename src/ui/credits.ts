@@ -61,7 +61,6 @@ export class CreditsScreen {
         <p>${t("credits.osm")}</p>
         <p>${t("credits.ortoEs")}</p>
         <p>${t("credits.ortoPy")}</p>
-        <p>${t("credits.fotosHistorias")}</p>
         <p>${t("credits.engine", { model: flightModelName })}</p>
         <p>${t("credits.licence")}</p>
         <!--

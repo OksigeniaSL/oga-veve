@@ -478,7 +478,7 @@ export interface Senalado {
     readonly texto: string;
     readonly clave: string;
     readonly relleno: Readonly<Record<string, string>>;
-    /** La clave de su foto, si la tiene: sale en la ventanita mientras se cuenta. */
+    /** La clave de su ilustración, si la tiene: sale en la ventanita mientras se cuenta. */
     readonly sitio?: string;
   } | null;
 }
@@ -2502,7 +2502,7 @@ export class VueloDePasaje {
         megafonia: true,
         texto: s.historia.texto,
         relleno: s.historia.relleno,
-        // Y su foto en la ventanita, la de las historias de cualquier vuelo.
+        // Y su ilustración en la ventanita, la de las historias de cualquier vuelo.
         ...(s.historia.sitio ? { dibujo: `foto:${s.historia.sitio}` } : {}),
       });
     const suLado = lado === (this.opciones.lado ?? LADO_DE_ARA);

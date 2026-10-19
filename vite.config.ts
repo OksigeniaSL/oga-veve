@@ -231,11 +231,11 @@ export default defineConfig({
      * más débil la política de todo el sitio.
      */
     /*
-     * **Y las fotos de las historias, tampoco.** Hoy pesan todas más de cuatro
+     * **Y las ilustraciones de las historias, tampoco.** Hoy pesan todas más de cuatro
      * kilobytes, pero una más pequeña entraría como `data:` dentro del
      * JavaScript del juego, que es lo que se precarga entero en la primera
      * visita: justo lo contrario de bajarla solo cuando se cuenta su
-     * historia. Ver `ui/fotos-de-las-historias.ts`.
+     * historia. Ver `ui/ilustraciones-de-las-historias.ts`.
      */
     assetsInlineLimit: (ruta: string) =>
       ruta.endsWith(".json") || /[\\/]assets[\\/]historias[\\/]/.test(ruta) ? false : undefined,

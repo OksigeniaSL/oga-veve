@@ -217,7 +217,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     ventanilla: () => juego.hitosSenalados,
     /**
-     * **La foto de la historia**: con un sitio la pone, con `null` la quita y
+     * **La ilustración de la historia**: con un sitio la pone, con `null` la quita y
      * sin nada dice cuál hay y dónde quedó —placa o esquina, y su caja en
      * píxeles de pantalla—. Los bancos la ponen a mano para medirla sin
      * esperar a que la comandante la cuente. Ver `ui/ventana-de-historia.ts`.

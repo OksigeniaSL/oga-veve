@@ -1105,8 +1105,8 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
   );
 
   /*
-   * **Y la foto de la historia de la ventanilla**, puesta a mano con la firma
-   * más larga que hay —la del INPE, en dos líneas—. Sale al lado del cuadro si
+   * **Y la ilustración de la historia de la ventanilla**, puesta a mano —la
+   * del río Paraguay, en 4:3 como todas—. Sale al lado del cuadro si
    * cabe sin tapar nada, en la placa de las avionetas si el cuadro está
    * abierto, y si no cabe no sale. Lo que se mira es que cuando sale no pisa
    * nada: ni con las cajas de lo que se ve, ni tocando en nueve puntos de la

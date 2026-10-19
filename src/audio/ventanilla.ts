@@ -53,7 +53,8 @@ export interface LoQueSeDice {
   readonly relleno: Readonly<Record<string, string>>;
   /**
    * El sitio del que habla, por su clave: lo lleva la historia para que la
-   * ventana sepa qué foto poner mientras suena. Ver `ui/fotos-de-las-historias.ts`.
+   * ventana sepa qué ilustración poner mientras suena. Ver
+   * `ui/ilustraciones-de-las-historias.ts`.
    */
   readonly sitio?: string;
 }
