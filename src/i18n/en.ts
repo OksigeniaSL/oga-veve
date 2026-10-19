@@ -2368,6 +2368,24 @@ export const EN: Dictionary = {
   "inicio.ara.pasaje.masGas": "Now the engines sound louder! What for, if we're about to land?",
   "inicio.mama.pasaje.masGas":
     "And just before touchdown, the engines got louder: with the wheels and the flaps out, the plane slows down a lot, and it needs more power so as not to lose speed.",
+  "inicio.ara.pasaje.vueltaEnPista": "We're turning round on the runway! We're going back the same way.",
+  "inicio.mama.pasaje.vueltaEnPista":
+    "And for those of you flying for the first time today: we turned round on the runway because the exits to the terminal were behind us, and there are none further on. At the end of the runway there's a wider bit for turning round.",
+  "inicio.mama.pasaje.permisoDeVuelta":
+    "To go back along the runway the other way, we need permission from the control tower: while we're on it, nobody else can land or take off.",
+  "inicio.ara.pasaje.seLevantan": "Listen! Some people are already undoing their seat belts and standing up.",
+  "inicio.ara.pasaje.luzApagada": "The seat belt light's gone off! Now I can take mine off: click!",
+  "inicio.tripulacion.pasaje.cerca.gracias":
+    "Thank you for waiting with your seat belt on until the light went off! While the plane is still moving, it can brake suddenly.",
+  "inicio.tripulacion.pasaje.cerca.maleteros":
+    "And take care when you open the lockers up above: bags may have moved during the flight, and they can fall out.",
+  "inicio.tripulacion.pasaje.cerca.seria":
+    "And do you know why we look so serious when we land? Because we're working, and safety comes first. I keep my seat belt on too until the plane stops: that's why we remind everyone over the speaker.",
+  "inicio.tripulacion.pasaje.cerca.oficio1":
+    "Do you know what? The most important part of my job isn't bringing water: it's safety. I know how to look after someone who feels unwell, and even help their heart with the defibrillator we carry on board.",
+  "inicio.tripulacion.pasaje.cerca.oficio2":
+    "And I know how to put out a fire wearing a smoke hood, get everyone off the plane in ninety seconds and use the life jackets in the water. We practise it every year.",
+  "inicio.ara.pasaje.uniforme": "So your uniform isn't for serving: it's for looking after all of us!",
   "inicio.kit.nombre": "Travel kit",
   "inicio.kit.abrir": "Open the travel kit",
   "inicio.kit.cerrar": "Put the kit away",

@@ -470,6 +470,11 @@ describe("cada cosa en su momento del vuelo", () => {
       "aterrizando",
       "toma",
       "llegada",
+      "impacientes",
+      "seLevantan",
+      "luz",
+      "suelto",
+      "gracias",
       "puesto",
     ];
     expect(dichos).toEqual(esperado);
@@ -819,6 +824,15 @@ const BAJADA_MEDIDA: readonly (readonly [number, number, number])[] = [
   [904, 730, 13.1],
 ];
 
+/**
+ * **La vuelta en la pista de La Palma**, s desde que se rueda al puesto: pista
+ * adelante a nueve metros por segundo hasta la punta, la vuelta en el ensanche
+ * —dieciocho segundos—, de vuelta por la pista hasta la calle C y fuera hacia
+ * la terminal. Como la vuela el JAZ 90 en el banco: ver
+ * `scripts/verificar-inicio-3.mjs`.
+ */
+const LA_VUELTA = { empieza: 100, acaba: 118, sale: 200 } as const;
+
 /** Lo que vale la columna `col` de una tabla en `t`, interpolando. */
 function enLaTabla(tabla: readonly (readonly number[])[], t: number, col: number): number {
   for (let i = 1; i < tabla.length; i++) {
@@ -1001,7 +1015,7 @@ class VueloMedido {
         if (t >= 15) this.pasar("al-puesto");
         break;
       case "al-puesto":
-        this.porElSuelo = 8;
+        this.porElSuelo = t < LA_VUELTA.empieza || t > LA_VUELTA.acaba ? 9 : 4;
         if (t >= 242) {
           this.porElSuelo = 0;
           this.pasar("aparcado");
@@ -1054,11 +1068,39 @@ class VueloMedido {
       meneo: enLaNube ? 0.8 : 0.1,
       visibilidad: 10000,
       // Y el señalero, haciendo señas en los últimos noventa metros hasta el puesto.
-      senalero: (this.tramo === "al-puesto" && this.enTramo > 200) || this.tramo === "aparcado",
+      senalero: (this.tramo === "al-puesto" && this.enTramo > 215) || this.tramo === "aparcado",
       potencia: this.potencia,
       conEstaPotencia: this.conEstaPotencia,
+      enLaPista: this.enTierra && this.tramo !== "puerta" ? this.enLaPista : null,
       ...(this.ver ? { ver: this.ver } : {}),
     };
+  }
+
+  /**
+   * **Dónde va respecto a la pista**, en la llegada a La Palma: pista adelante
+   * hasta la punta, la vuelta en el ensanche, de vuelta por la pista y fuera
+   * por la calle hacia la terminal. Ver `LA_VUELTA`. Con `sinVuelta`, frena a
+   * tiempo y sale por la calle sin dar ninguna vuelta.
+   */
+  sinVuelta = false;
+  get enLaPista(): NonNullable<LecturaDelPasaje["enLaPista"]> {
+    const t = this.enTramo;
+    if (this.tramo === "frenando") return { alEje: 0, hastaElFinal: 1700 - 50 * t, vuelta: 0 };
+    if (this.tramo !== "al-puesto") return { alEje: 200, hastaElFinal: 1200, vuelta: 2.4 };
+    if (this.sinVuelta) {
+      // A la calle, torciendo hacia la terminal a media pista: se aparta antes de girar mucho.
+      const f = Math.min(1, Math.max(0, (t - 20) / 12));
+      return { alEje: 140 * f, hastaElFinal: 1150, vuelta: 2.3 * f };
+    }
+    const v = LA_VUELTA;
+    if (t < v.empieza) return { alEje: 0, hastaElFinal: 1150 - 9 * t, vuelta: 0 };
+    if (t < v.acaba) {
+      const f = (t - v.empieza) / (v.acaba - v.empieza);
+      return { alEje: 25 * Math.sin(Math.PI * f), hastaElFinal: 160, vuelta: Math.PI * f };
+    }
+    if (t < v.sale) return { alEje: 0, hastaElFinal: 160 + 9 * (t - v.acaba), vuelta: Math.PI };
+    const f = Math.min(1, (t - v.sale) / 8);
+    return { alEje: 160 * f, hastaElFinal: 1000, vuelta: Math.PI - 0.8 * f };
   }
 
   /** Lo que se ve del paisaje, si se le pone. Ver `loQueSeVeEnElMedido`. */
@@ -1157,7 +1199,7 @@ describe("el vuelo medido, con las voces que duran lo que duran", () => {
   it("y lo que viene a cuento, en su sitio: el tren, el giro por su lado, las nubes otra vez, las ruedas", () => {
     const k = m.dichas.map((d) => d.linea.clave);
     const cuando = (clave: string): number => m.dichas.find((d) => d.linea.clave === clave)?.desde ?? NaN;
-    for (const c of ["tren", "plop", "giro", "ala", "altoRapido", "tcpMotor", "bajando", "tcpIslas", "tcpRuta", "otraNube", "ruedas", "cinturonQuieto", "repaso"] as const)
+    for (const c of ["tren", "plop", "giro", "ala", "altoRapido", "tcpMotor", "bajando", "tcpIslas", "tcpRuta", "otraNube", "ruedas", "vueltaEnPista", "porQueLaVuelta", "repaso"] as const)
       expect(e.charlas, c).toContain(c);
     // El tren, después de «¡estamos volando!» y mucho antes del crucero.
     expect(cuando("inicio.ara.pasaje.tren")).toBeGreaterThan(cuando("inicio.ara.pasaje.volando"));
@@ -2145,5 +2187,162 @@ describe("lo que se oye cambiar se cuenta: el gas de los motores y los oídos", 
       expect(vuelo.escena.estado.terminado).toBe(true);
       expect(vuelo.escena.estado.saltados).toEqual([]);
     }
+  });
+});
+
+/**
+ * **El vuelo medido, apuntando la llegada**: en cada paso, el tramo, dónde va
+ * respecto a la pista, el plano, la gente de la cabina y la luz del cinturón.
+ */
+function volarApuntandoLaLlegada(vuelo: VueloMedido = new VueloMedido()): Medido & {
+  pasos: {
+    t: number;
+    tramo: TramoDeLinea;
+    enTramo: number;
+    pista: LecturaDelPasaje["enLaPista"];
+    plano: Plano;
+    gente: VueloDePasaje["gente"];
+    luz: boolean;
+  }[];
+} {
+  let t = 0;
+  const v = vozQueTarda(loQueDura, () => t);
+  const escena = new VueloDePasaje(v.voz, { lado: "izquierda" });
+  const porVer = [...LO_QUE_SE_VIO];
+  const tramos: { t: number; tramo: TramoDeLinea }[] = [];
+  const pasos: ReturnType<typeof volarApuntandoLaLlegada>["pasos"] = [];
+  for (; t < 4000; t += DT) {
+    v.tic();
+    if (tramos[tramos.length - 1]?.tramo !== vuelo.tramo) tramos.push({ t, tramo: vuelo.tramo });
+    const l = vuelo.lectura;
+    vuelo.paso(DT, escena.paso(DT, l));
+    const e = escena.estado;
+    if (["frenando", "al-puesto", "aparcado", "apagado"].includes(vuelo.tramo))
+      pasos.push({ t, tramo: vuelo.tramo, enTramo: vuelo.enTramo, pista: l.enLaPista, plano: e.plano, gente: e.gente, luz: e.luzApagada });
+    if (porVer[0] && porVer[0].t <= t && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
+    if (e.puedeSeguir) escena.seguir();
+    if (e.terminado) break;
+  }
+  return { escena, vuelo, dichas: v.dichas, tramos, pasos };
+}
+
+describe("la llegada a La Palma: la vuelta en la pista (punto 300)", () => {
+  const m = volarApuntandoLaLlegada();
+  const cuando = (clave: string): number => m.dichas.find((d) => d.linea.clave === clave)?.desde ?? NaN;
+  const al = (cond: (p: (typeof m.pasos)[number]) => boolean): number => m.pasos.find(cond)?.t ?? NaN;
+  const empiezaAGirar = al((p) => p.tramo === "al-puesto" && (p.pista?.vuelta ?? 0) > 0.1);
+  const dejaLaPista = al((p) => p.tramo === "al-puesto" && (p.pista?.alEje ?? 0) > 75);
+
+  it("Ara lo nota cuando el avión de verdad gira en la punta, no antes, y se ve por fuera", () => {
+    const dicho = cuando("inicio.ara.pasaje.vueltaEnPista");
+    expect(dicho).toBeGreaterThanOrEqual(empiezaAGirar);
+    // Mientras gira o vuelve por la pista: antes de dejarla.
+    expect(dicho).toBeLessThan(dejaLaPista);
+    const plano = m.escena.estado.planos.find((p) => p.plano === "fuera-raqueta");
+    expect(plano).toBeTruthy();
+    expect(plano!.desde).toBeGreaterThanOrEqual(empiezaAGirar);
+    expect(plano!.desde).toBeLessThanOrEqual(dicho);
+  });
+
+  it("y lo explica la comandante en cuanto deja la pista libre, para todos: el ensanche y el permiso de la torre", () => {
+    const explica = cuando("inicio.mama.pasaje.vueltaEnPista");
+    const permiso = cuando("inicio.mama.pasaje.permisoDeVuelta");
+    expect(explica).toBeGreaterThan(dejaLaPista);
+    expect(explica).toBeGreaterThan(cuando("inicio.ara.pasaje.vueltaEnPista"));
+    expect(permiso).toBeGreaterThan(explica);
+    // Por la megafonía, y antes de pararse en el puesto: ahí empieza lo de los cinturones.
+    for (const c of ["inicio.mama.pasaje.vueltaEnPista", "inicio.mama.pasaje.permisoDeVuelta"])
+      expect(m.dichas.find((d) => d.linea.clave === c)!.linea.megafonia, c).toBe(true);
+    expect(permiso).toBeLessThan(cuando("inicio.ara.pasaje.seLevantan"));
+    // Y una vez cada cosa.
+    for (const c of ["inicio.ara.pasaje.vueltaEnPista", "inicio.mama.pasaje.vueltaEnPista", "inicio.mama.pasaje.permisoDeVuelta"])
+      expect(m.dichas.filter((d) => d.linea.clave === c).length, c).toBe(1);
+  });
+
+  it("y si frena a tiempo para la calle y no da la vuelta, no se cuenta ninguna vuelta", () => {
+    const sin = new VueloMedido();
+    sin.sinVuelta = true;
+    const r = volarApuntandoLaLlegada(sin);
+    const claves = r.dichas.map((d) => d.linea.clave);
+    for (const c of ["inicio.ara.pasaje.vueltaEnPista", "inicio.mama.pasaje.vueltaEnPista", "inicio.mama.pasaje.permisoDeVuelta"])
+      expect(claves, c).not.toContain(c);
+    expect(r.escena.estado.terminado).toBe(true);
+    expect(r.escena.estado.saltados).toEqual([]);
+  });
+});
+
+describe("la llegada al puesto: los que se levantan antes de tiempo, y lo que es la tripulación (punto 303)", () => {
+  const m = volarApuntandoLaLlegada();
+  const cuando = (clave: string): number => m.dichas.find((d) => d.linea.clave === clave)?.desde ?? NaN;
+  const al = (cond: (p: (typeof m.pasos)[number]) => boolean): number => m.pasos.find(cond)?.t ?? NaN;
+  const parado = al((p) => p.tramo === "aparcado");
+  const motoresFuera = al((p) => p.tramo === "apagado");
+  const seApagaLaLuz = al((p) => p.luz);
+  const impacientes = al((p) => p.gente === "impacientes");
+
+  it("parados en el puesto, con la luz encendida, se levantan los impacientes; Ara lo oye y sigue en su asiento", () => {
+    expect(impacientes).toBeGreaterThanOrEqual(parado);
+    expect(impacientes).toBeLessThan(seApagaLaLuz);
+    // Primero se oye, y después lo dice.
+    expect(cuando("inicio.ara.pasaje.seLevantan")).toBeGreaterThan(impacientes + 1);
+    expect(cuando("inicio.ara.pasaje.cinturonQuieto")).toBeGreaterThan(cuando("inicio.ara.pasaje.seLevantan"));
+    expect(cuando("inicio.ara.pasaje.cinturonQuieto")).toBeLessThan(seApagaLaLuz);
+    // Y «todavía no» se dice una vez: ya no rodando, que es aquí donde viene a cuento.
+    expect(m.dichas.filter((d) => d.linea.clave === "inicio.ara.pasaje.cinturonQuieto").length).toBe(1);
+    // Y lo de fuera se deja para volver a la cabina, que es donde pasa.
+    const enLaCabina = m.pasos.filter((p) => p.gente === "impacientes").every((p) => !esDeFuera(p.plano));
+    expect(enLaCabina).toBe(true);
+  });
+
+  it("la luz se apaga con los motores ya parados, y Ara se suelta después del ding, no antes", () => {
+    expect(seApagaLaLuz).toBeGreaterThan(motoresFuera);
+    expect(cuando("inicio.ara.pasaje.luzApagada")).toBeGreaterThan(seApagaLaLuz + 1);
+    expect(m.pasos.filter((p) => p.t >= seApagaLaLuz).every((p) => p.gente === "de-pie")).toBe(true);
+  });
+
+  it("la tripulante, ya de pie, se lo agradece, cuenta por qué y su cara seria; y después, la despedida", () => {
+    const k = m.dichas.map((d) => d.linea.clave);
+    const orden = [
+      "inicio.ara.pasaje.luzApagada",
+      "inicio.tripulacion.pasaje.cerca.gracias",
+      "inicio.tripulacion.pasaje.cerca.maleteros",
+      "inicio.tripulacion.pasaje.cerca.seria",
+      "inicio.tripulacion.pasaje.cerca.adios",
+      "inicio.ara.pasaje.fin",
+    ].map((c) => k.indexOf(c));
+    expect(orden.every((i) => i >= 0)).toBe(true);
+    expect(orden).toEqual([...orden].sort((a, b) => a - b));
+    for (const c of ["gracias", "maleteros", "seria"])
+      expect(m.dichas.find((d) => d.linea.clave === `inicio.tripulacion.pasaje.cerca.${c}`)!.linea.megafonia, c).toBeFalsy();
+  });
+
+  it("lo que sabe hacer la tripulante, una vez, por el pasillo en el rato tranquilo de la bajada", () => {
+    const oficio = m.dichas.filter((d) => d.linea.clave === "inicio.tripulacion.pasaje.cerca.oficio1");
+    expect(oficio.length).toBe(1);
+    expect(m.dichas.filter((d) => d.linea.clave === "inicio.tripulacion.pasaje.cerca.oficio2").length).toBe(1);
+    const t = oficio[0]!.desde;
+    const tramo = [...m.tramos].reverse().find((x) => x.t <= t)?.tramo;
+    expect(tramo).toBe("bajada");
+    expect(t).toBeGreaterThan(cuando("inicio.tripulacion.pasaje.cerca.estrellas"));
+    expect(t).toBeLessThan(cuando("comandante.aproximacion"));
+    expect(cuando("inicio.ara.pasaje.uniforme")).toBeGreaterThan(cuando("inicio.tripulacion.pasaje.cerca.oficio2"));
+    expect(m.escena.estado.charlas).toContain("tcpOficio");
+  });
+
+  it("y si bajando no hubo hueco, lo cuenta en el puesto, detrás de su cara seria: una vez igual", () => {
+    // Una bajada sin tramo tranquilo: de lejos a la cabina preparada de golpe.
+    const sinHueco = volarApuntandoLaLlegada(
+      new (class extends VueloMedido {
+        override get lectura(): LecturaDelPasaje {
+          const l = super.lectura;
+          return l.faltaParaTocar < 56000 && l.faltaParaTocar > 28000 ? { ...l, faltaParaTocar: 27500 } : l;
+        }
+      })(),
+    );
+    const k = sinHueco.dichas.map((d) => d.linea.clave);
+    expect(k.filter((c) => c === "inicio.tripulacion.pasaje.cerca.oficio1").length).toBe(1);
+    expect(k.indexOf("inicio.tripulacion.pasaje.cerca.oficio1")).toBeGreaterThan(k.indexOf("inicio.tripulacion.pasaje.cerca.seria"));
+    expect(k.indexOf("inicio.ara.pasaje.uniforme")).toBeLessThan(k.indexOf("inicio.tripulacion.pasaje.cerca.adios"));
+    expect(sinHueco.escena.estado.terminado).toBe(true);
   });
 });

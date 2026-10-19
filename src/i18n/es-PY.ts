@@ -3825,6 +3825,49 @@ export const ES_PY = {
   "inicio.ara.pasaje.masGas": "¡Ahora los motores suenan más fuerte! ¿Para qué, si ya vamos a aterrizar?",
   "inicio.mama.pasaje.masGas":
     "Y un poco antes de tocar, los motores sonaron más fuerte: con las ruedas y los flaps fuera, el avión frena mucho, y hace falta más fuerza para no perder velocidad.",
+  /*
+   * **La vuelta en la pista de La Palma** (punto 300): Ara lo nota cuando el
+   * avión gira en la punta, y la comandante lo explica en cuanto deja la
+   * pista libre. Las salidas de La Palma están todas en la mitad sur, y por
+   * delante de la C ya no hay ninguna; en la punta, el ensanche de viraje; y
+   * para ir por la pista al revés hace falta permiso de la torre, que con la
+   * pista ocupada no puede aterrizar nadie. AIP España, AD 2-GCLA: ver
+   * `docs/historias/fuentes.md`.
+   */
+  "inicio.ara.pasaje.vueltaEnPista": "¡Estamos dando la vuelta en la pista! Volvemos por el mismo camino.",
+  "inicio.mama.pasaje.vueltaEnPista":
+    "Y para quienes vuelan hoy por primera vez: dimos la vuelta en la pista porque las salidas hacia la terminal nos quedaron atrás, y más adelante no hay ninguna. Al final de la pista hay un ensanche para dar la vuelta.",
+  "inicio.mama.pasaje.permisoDeVuelta":
+    "Para ir por la pista al revés hace falta permiso de la torre de control: mientras vamos por ella, nadie más puede aterrizar ni despegar.",
+  /*
+   * **Los que se levantan antes de tiempo, y lo que es la tripulación**
+   * (punto 303). Parados en el puesto, alrededor se oyen hebillas y gente
+   * levantándose con la luz todavía encendida; Ara lo oye y sigue en su
+   * asiento —«todavía no», que ya estaba—, y se suelta con el *ding*. La
+   * tripulante, ya de pie, se lo agradece y cuenta por qué: el avión podía
+   * frenar de golpe y lo de arriba se pudo mover. Y su cara seria: está
+   * trabajando, que lo suyo es la seguridad. Sin regañar a nadie.
+   *
+   * Y lo que sabe hacer, en la bajada: primeros auxilios y RCP con el
+   * desfibrilador de a bordo, fuego y humo, evacuar el avión en noventa
+   * segundos y los chalecos en el agua —Reglamento (UE) 1178/2011, Parte CC;
+   * CS 25.803; ver `docs/historias/fuentes.md`—. Contado como lo que sabe
+   * hacer, no como algo que vaya a pasar. La tripulante, con el tú de
+   * Canarias y sin decir nada que diga si Ara es niño o niña.
+   */
+  "inicio.ara.pasaje.seLevantan": "¡Escuchá! Hay gente que ya se suelta el cinturón y se levanta.",
+  "inicio.ara.pasaje.luzApagada": "¡Se apagó la luz del cinturón! Ahora sí me lo saco: ¡clic!",
+  "inicio.tripulacion.pasaje.cerca.gracias":
+    "¡Gracias por esperar con el cinturón hasta que se apagó la luz! Mientras el avión se mueve, todavía puede frenar de golpe.",
+  "inicio.tripulacion.pasaje.cerca.maleteros":
+    "Y al abrir los compartimentos de arriba hay que tener cuidado: las maletas se pudieron mover en el vuelo, y se pueden caer.",
+  "inicio.tripulacion.pasaje.cerca.seria":
+    "¿Y sabes por qué al aterrizar ponemos cara seria? Porque estamos trabajando, y lo primero es la seguridad. Yo también voy con el cinturón puesto hasta que el avión para: por eso lo recordamos por el altavoz.",
+  "inicio.tripulacion.pasaje.cerca.oficio1":
+    "¿Sabes qué? Lo más importante de mi trabajo no es traer agua: es la seguridad. Sé cuidar a alguien que se pone malo, y hasta ayudar a su corazón con el desfibrilador que llevamos a bordo.",
+  "inicio.tripulacion.pasaje.cerca.oficio2":
+    "Y sé apagar un fuego con la capucha para el humo puesta, sacar a todo el mundo del avión en noventa segundos y usar los chalecos en el agua. Lo practicamos todos los años.",
+  "inicio.ara.pasaje.uniforme": "¡Entonces tu uniforme no es para servir: es para cuidarnos a todos!",
   // Lo que es de la pantalla y no se graba: para quien no ve los dibujos.
   "inicio.kit.nombre": "Kit de viaje",
   "inicio.kit.abrir": "Abrir el kit de viaje",

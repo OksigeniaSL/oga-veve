@@ -1118,6 +1118,7 @@ import {
 } from "./audio/momentos-de-crucero";
 import { elegirProducto, servicioPara } from "./audio/servicio-a-bordo";
 import { BAJANDO_A_LA_PISTA, HiloMusical } from "./audio/hilo-musical";
+import { GenteQueSeLevanta } from "./audio/gente-del-pasaje";
 import { anuncioTrasLaToma } from "./audio/anuncio-tras-la-toma";
 import {
   LlamadasDelPasaje,
@@ -7106,8 +7107,22 @@ export class Game {
        */
       potencia: e.potencia,
       conEstaPotencia: e.conEstaPotencia,
+      /*
+       * **Y dónde va respecto a la pista**, en tierra: lo que dice si se está
+       * dando la vuelta en ella (punto 300). Ver `daLaVuelta`.
+       */
+      enLaPista: s.onGround ? this.dondeEnLaPista() : null,
     };
     const permisos = escena.paso(dt, lectura);
+    /*
+     * **La gente de la cabina, en el puesto** (punto 303): las hebillas y los
+     * que se levantan, con el reloj de pared, que lo que se oye no se acelera.
+     * Ver `audio/gente-del-pasaje.ts`.
+     */
+    const pared = this.relojDePared;
+    const dtDePared = this.paredDeLaGente === null ? 0 : pared - this.paredDeLaGente;
+    this.paredDeLaGente = pared;
+    for (const r of this.genteDeLaCabina.paso(dtDePared, escena.gente)) this.audio.ruidoDeLaGente(r);
     const manos = tripulacion.paso(dt, linea, permisos);
     this.lecturaDeLinea = linea;
     this.manosDeLinea = manos;
@@ -7128,6 +7143,25 @@ export class Game {
       return;
     }
     this.pintarElInicio();
+  }
+
+  /** La gente de la cabina y su reloj de pared. Ver `atenderALaEscenaDePasaje`. */
+  private readonly genteDeLaCabina = new GenteQueSeLevanta();
+  private paredDeLaGente: number | null = null;
+
+  /**
+   * **Dónde va el avión respecto a la pista de ahora**: lo que se aparta del
+   * eje, lo que queda hasta su final en el sentido en que se usa y cuánto se
+   * ha dado la vuelta respecto a ese sentido, de 0 a π. Ver `daLaVuelta` en
+   * `flight/inicio-pasaje.ts`.
+   */
+  private dondeEnLaPista(): { alEje: number; hastaElFinal: number; vuelta: number } {
+    const r = this.laPistaDeAhora();
+    const s = this.flight.state;
+    const { along, across } = enEjesDePista(s.position.x, s.position.z, r.x, r.z, r.heading);
+    let vuelta = Math.abs(s.heading - (r.heading * Math.PI) / 180) % (2 * Math.PI);
+    if (vuelta > Math.PI) vuelta = 2 * Math.PI - vuelta;
+    return { alEje: Math.abs(across), hastaElFinal: r.length / 2 - along, vuelta };
   }
 
   /**
@@ -16582,7 +16616,13 @@ export class Game {
     // Ya con la tormenta dentro: ver `causasDe` en `flight/turbulencia.ts`.
     const movimiento = cuantoSeMueve(aire);
     this.movimientoDelAire = movimiento;
-    this.atenderAlCinturon(movimiento, loDijo, loEncendio);
+    this.atenderAlCinturon(
+      movimiento,
+      loDijo,
+      loEncendio,
+      // Y en el puesto, apagado cuando lo apaga la comandante de la escena de pasaje: ver el momento `luz`.
+      this.inicio instanceof VueloDePasaje && this.inicio.luzApagadaEnElPuesto,
+    );
     this.prepararLaCabina(dt);
     this.hablarDeLosBaches(dt, movimiento);
     this.buscarNivelTranquilo(dt, movimiento, aire);
@@ -28247,6 +28287,7 @@ export class Game {
     movimiento: number,
     loDijo: boolean,
     loEncendio: boolean,
+    apagadoEnElPuesto = false,
   ): void {
     const toca = this.cinturon.paso({
       fase: this.faseDeAhora as Fase,
@@ -28254,6 +28295,7 @@ export class Game {
       movimiento,
       loDijoLaComandante: loDijo,
       loEncendioLaComandante: loEncendio,
+      apagadoEnElPuesto,
     });
     if (toca === this.cinturonPuesto) return;
     this.cinturonPuesto = toca;

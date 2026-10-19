@@ -71,7 +71,10 @@ export type DibujoDelPasaje =
   | "papi"
   | "estrellas"
   | "meneo"
-  | "techo";
+  | "techo"
+  | "vuelta-en-pista"
+  | "maletero"
+  | "tripulacion";
 
 /** Los colores: los del juego, cálidos y tranquilos. */
 const C = {
@@ -615,8 +618,109 @@ ${estrellas}
   );
 })();
 
+/** Un avioncito visto desde arriba, mirando a la derecha, en `(x,y)` y girado `grados`. */
+function avioncito(x: number, y: number, grados: number, escala = 1, color: string = C.blanco): string {
+  return `<g transform="translate(${x} ${y}) rotate(${grados}) scale(${escala})">
+<path d="M-26 0 q0 -6 8 -6 h34 q10 0 14 6 q-4 6 -14 6 h-34 q-8 0 -8 -6z" fill="${color}" class="tf fino"/>
+<path d="M-2 0 l-12 -24 h8 l18 24z M-2 0 l-12 24 h8 l18 -24z M-22 0 l-6 -10 h5 l8 10z M-22 0 l-6 10 h5 l8 -10z" fill="${C.terracota}" stroke="${C.tinta}" stroke-width="3" stroke-linejoin="round"/>
+</g>`;
+}
+
+/**
+ * **La vuelta en la pista de La Palma** (punto 300), desde arriba, como en
+ * la carta del aeródromo: la pista, el ensanche redondo del final para girar
+ * y la única calle hacia la terminal, a media pista y ya detrás. El camino
+ * del avión, con su orden —1, 2, 3—: pista adelante hasta la punta, la vuelta
+ * en el ensanche y de vuelta por la misma pista hasta la calle. Y arriba, el
+ * avión que llega y espera dando vueltas: mientras uno va por la pista, nadie
+ * aterriza en ella. Sin letras.
+ */
+const VUELTA_EN_PISTA = lamina(
+  `<rect width="480" height="320" rx="18" fill="#cfe0b8"/>
+<path d="M170 196 q8 34 44 48 h136" fill="none" stroke="#7d827f" stroke-width="26" stroke-linejoin="round"/>
+<path d="M26 148 H372 A44 44 0 1 1 372 200 H26z" fill="#5d625f" class="tf fino"/>
+<path d="M44 174 h18 M84 174 h18 M124 174 h18 M164 174 h18 M204 174 h18 M244 174 h18 M284 174 h18 M324 174 h18" stroke="${C.blanco}" stroke-width="5" stroke-linecap="round"/>
+<rect x="300" y="256" width="150" height="44" rx="6" fill="${C.terracota}" class="tf fino"/>
+<path d="M276 300 v-28 M266 272 h20 v-14 h-20z" fill="${C.cielo}" stroke="${C.tinta}" stroke-width="4" stroke-linejoin="round"/>
+<path class="camino" d="M40 166 H372 A20 20 0 1 1 372 182 H186 Q170 182 172 200 q8 34 44 46 h120" fill="none" stroke="${C.amarillo}" stroke-width="6" stroke-linecap="round" stroke-dasharray="14 12"/>
+${numero(130, 124, 1)}
+${numero(452, 112, 2)}
+${numero(236, 216, 3)}
+${avioncito(84, 166, 0, 0.8)}
+<circle cx="80" cy="62" r="38" fill="none" stroke="${C.tinta}" stroke-width="4" stroke-dasharray="10 8"/>
+<g class="espera">${avioncito(80, 24, 0, 0.7)}</g>`,
+  `.camino{animation:anda 1.6s linear infinite}
+@keyframes anda{to{stroke-dashoffset:-26}}
+.espera{transform-box:view-box;transform-origin:80px 62px;animation:espera 6s linear infinite}
+@keyframes espera{to{transform:rotate(360deg)}}`,
+);
+
+/**
+ * **Los compartimentos de arriba**, al abrirlos en el puesto: la tapa
+ * levantada y la maleta que se movió en el vuelo, asomando y cayéndose.
+ */
+const MALETERO = lamina(
+  `<path d="M30 40 h420 v110 h-420z" fill="#d9d2c4" class="tf fino"/>
+<path d="M60 70 h170 v70 h-170z" fill="#efe9dd" class="tf fino"/>
+<g class="tapa"><path d="M250 150 h170 v-12 h-170z" fill="#efe9dd" class="tf fino"/></g>
+<path d="M250 70 h170 v70 h-170z" fill="#8f8a80" class="tf fino"/>
+<g class="cae"><rect x="300" y="96" width="92" height="64" rx="10" fill="${C.terracota}" class="tf fino"/>
+<path d="M330 96 v-12 h32 v12" class="t"/></g>
+<path d="M300 210 l-10 22 M346 214 v24 M392 210 l10 22" class="t fino"/>
+<path d="M40 286 h400" stroke="${C.gris}" stroke-width="10" stroke-linecap="round"/>
+<path d="M90 286 v-56 q0 -14 14 -14 h40 q14 0 14 14 v56" fill="${C.marHondo}" class="tf fino"/>`,
+  `.tapa{transform-box:fill-box;transform-origin:100% 0%;animation:abre 5s infinite}
+@keyframes abre{0%,15%{transform:rotate(0)}30%,100%{transform:rotate(-58deg)}}
+.cae{transform-box:fill-box;transform-origin:50% 100%;animation:cae 5s infinite}
+@keyframes cae{0%,32%{transform:translate(0,0) rotate(0)}48%{transform:translate(4px,18px) rotate(12deg)}60%,100%{transform:translate(4px,18px) rotate(12deg)}}`,
+);
+
+/**
+ * **Lo que sabe hacer la tripulación de cabina** (punto 303), con las señales
+ * de seguridad que se ven en cualquier aeropuerto: el botiquín —la cruz
+ * blanca sobre verde de la ISO 7010— y el desfibrilador —el corazón con el
+ * rayo—; el extintor apagando una llamita; la rampa de evacuación con el
+ * reloj, que se vacía el avión en noventa segundos; y el chaleco en el agua.
+ * Ni la cruz roja, que es un emblema protegido y no un dibujo.
+ */
+const TRIPULACION = lamina(
+  `<rect x="34" y="28" width="112" height="112" rx="18" fill="${C.verde}" class="tf fino"/>
+<path d="M76 48 h28 v28 h28 v28 h-28 v28 h-28 v-28 h-28 v-28 h28z" fill="${C.blanco}" stroke="${C.tinta}" stroke-width="3" stroke-linejoin="round"/>
+<rect x="184" y="28" width="112" height="112" rx="18" fill="${C.verde}" class="tf fino"/>
+<path class="late" d="M240 124 l-36 -36 a20 20 0 0 1 36 -26 a20 20 0 0 1 36 26z" fill="${C.blanco}" stroke="${C.tinta}" stroke-width="3" stroke-linejoin="round"/>
+<path d="M246 64 l-16 26 h14 l-10 24 l26 -32 h-14 l10 -18z" fill="${C.amarillo}" stroke="${C.tinta}" stroke-width="3" stroke-linejoin="round"/>
+<rect x="352" y="56" width="44" height="88" rx="16" fill="${C.rojo}" class="tf fino"/>
+<path d="M362 56 v-14 h24 v14 M386 46 q24 -6 30 18" class="t fino"/>
+<path class="chorro" d="M418 70 l22 22 M424 64 l26 14 M412 76 l18 26" stroke="${C.blanco}" stroke-width="5" stroke-linecap="round"/>
+<path class="llama" d="M446 128 q-14 -14 -4 -30 q4 12 10 10 q-2 -10 6 -18 q8 22 0 38z" fill="${C.naranja}" stroke="${C.tinta}" stroke-width="3" stroke-linejoin="round"/>
+<path d="M34 268 h160" stroke="${C.gris}" stroke-width="8" stroke-linecap="round"/>
+<path d="M50 176 h60 v40 h-60z" fill="#efe9dd" class="tf fino"/>
+<path d="M110 206 l70 58" stroke="${C.amarillo}" stroke-width="16" stroke-linecap="round"/>
+<g class="baja"><circle cx="126" cy="206" r="9" fill="${C.piel}" class="tf fino"/><path d="M124 216 l14 14" stroke="${C.marHondo}" stroke-width="9" stroke-linecap="round"/></g>
+<circle cx="240" cy="222" r="34" fill="${C.blanco}" class="tf fino"/>
+<path d="M240 184 v-8 M228 176 h24" class="t fino"/>
+<path class="aguja" d="M240 222 v-24" stroke="${C.rojo}" stroke-width="5" stroke-linecap="round"/>
+<path d="M300 276 q30 -12 60 0 t60 0 t60 0" fill="none" stroke="${C.mar}" stroke-width="6"/>
+<path d="M300 284 h180 v26 h-180z" fill="${C.mar}"/>
+<path d="M366 196 q28 -30 56 0 q14 34 0 58 q-28 18 -56 0 q-14 -24 0 -58z" fill="${C.amarillo}" class="tf fino"/>
+<circle cx="394" cy="178" r="18" fill="${C.piel}" class="tf fino"/>`,
+  `.late{transform-box:fill-box;transform-origin:center;animation:late 1.2s infinite}
+@keyframes late{0%,100%{transform:scale(1)}15%{transform:scale(1.1)}30%{transform:scale(1)}}
+.llama{transform-box:fill-box;transform-origin:50% 100%;animation:apaga 4s infinite}
+@keyframes apaga{0%,20%{transform:scale(1)}60%,100%{transform:scale(0)}}
+.chorro{opacity:0;animation:chorro 4s infinite}
+@keyframes chorro{0%,10%{opacity:0}18%,60%{opacity:1}70%,100%{opacity:0}}
+.baja{animation:desliza 3s infinite ease-in}
+@keyframes desliza{0%{transform:translate(0,0)}70%,100%{transform:translate(46px,40px)}}
+.aguja{transform-box:view-box;transform-origin:240px 222px;animation:gira 3s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}`,
+);
+
 /** Los dibujos, por clave: el SVG entero de cada uno. */
 export const DIBUJOS_DEL_PASAJE: Readonly<Record<DibujoDelPasaje, string>> = {
+  "vuelta-en-pista": VUELTA_EN_PISTA,
+  maletero: MALETERO,
+  tripulacion: TRIPULACION,
   papi: PAPI,
   estrellas: ESTRELLAS,
   meneo: MENEO,
