@@ -2305,11 +2305,12 @@ export const EN: Dictionary = {
   "inicio.dibujo.techo": "The base of the clouds, the plane just below it, how far it is to the sea and how far you can see.",
   // The travel kit: see `src/flight/kit-de-viaje.ts`.
   "inicio.tripulacion.pasaje.cerca.kitAqui":
-    "Look what I've brought you: your travel kit, with two games inside! We always carry a few on board.",
+    "Look what I've brought you: your travel kit, with three games inside! We always carry a few on board.",
   "inicio.tripulacion.pasaje.cerca.kitRato":
     "Flying is exciting, but flights take a little while. With this, the time to La Palma will fly by.",
   "inicio.ara.pasaje.kitGracias": "Thank you! Shall we play? Tap the little backpack and we'll pick one of the games.",
-  "inicio.ara.pasaje.kit.elegir": "There are two games: building the plane, or drawing the route of our flight. Which one do you want?",
+  "inicio.ara.pasaje.kit.elegir":
+    "There are three games: being the tower, building the plane, or drawing the route of our flight. Which one do you want?",
   "inicio.ara.pasaje.kit.piezas.empezar": "Will you help me build the plane? Grab each piece and take it to its place.",
   "inicio.ara.pasaje.kit.piezas.ala": "The wing! It pushes the air down, and the air pushes it up: that's what holds us up.",
   "inicio.ara.pasaje.kit.piezas.motor":
@@ -2328,6 +2329,23 @@ export const EN: Dictionary = {
   "inicio.ara.pasaje.kit.camino.ayuda": "That number comes later. First tap the one that's shining.",
   "inicio.tripulacion.pasaje.cerca.kitGuardar":
     "Now put the kit away in the seat pocket, because we're about to land: everything neatly stowed.",
+  "inicio.ara.pasaje.kit.luz.radio":
+    "Planes talk to the tower by radio. If one's radio breaks, the tower talks to it with a coloured lamp.",
+  "inicio.ara.pasaje.kit.luz.empezar":
+    "Now you're the tower: tap the plane with no radio and give it a green light to land, or a red one to wait.",
+  "inicio.ara.pasaje.kit.luz.alas": "It rocked its wings! That's how a plane says it saw the light.",
+  "inicio.ara.pasaje.kit.luz.sinAlas": "On base and on final it doesn't rock its wings: there it has to fly straight to the runway.",
+  "inicio.ara.pasaje.kit.luz.roja": "Red light! It goes around again and waits its turn: waiting is flying well too.",
+  "inicio.ara.pasaje.kit.luz.alAire":
+    "The runway was busy, so it went around all by itself. Well done! Going around is knowing how to fly too.",
+  "inicio.ara.pasaje.kit.luz.conRadio": "That one's radio works: it talks to the tower and lands without the lamp. That's the normal way.",
+  "inicio.ara.pasaje.kit.luz.fin": "They've all landed! With the coloured lamp, just like a real tower.",
+  "inicio.ara.pasaje.kit.luz.destellosRojos":
+    "There's a truck checking the runway. With the flashing red, the plane knows it can't land.",
+  "inicio.ara.pasaje.kit.luz.destellosVerdes":
+    "The truck has gone. With the flashing green, the plane knows it can come back to land.",
+  "inicio.ara.pasaje.kit.luz.noche":
+    "At night you can't see the wings: the plane answers by switching its landing lights off and on twice.",
   // What is seen, when it happens: see `src/flight/inicio-pasaje.ts`.
   "inicio.ara.pasaje.meneo": "Whoa, the plane is moving a little! And the wing goes up and down, as if it were waving.",
   "inicio.mama.pasaje.meneo":
@@ -2413,4 +2431,11 @@ export const EN: Dictionary = {
   "inicio.kit.parada.teide": "Two: the Teide",
   "inicio.kit.parada.gomera": "Three: La Gomera",
   "inicio.kit.parada.palma": "Four: La Palma, where we're going",
+  "inicio.kit.luz": "Green light: you're the tower",
+  "inicio.kit.luz.verde": "Steady green: cleared to land",
+  "inicio.kit.luz.roja": "Steady red: give way and keep circling",
+  "inicio.kit.luz.verde-destellos": "Flashing green: return for landing",
+  "inicio.kit.luz.roja-destellos": "Flashing red: aerodrome unsafe, do not land",
+  "inicio.kit.luz.conRadio": "Plane with a working radio",
+  "inicio.kit.luz.sinRadio": "Plane with a broken radio: it needs a light",
 };

@@ -3724,11 +3724,12 @@ export const ES_PY = {
    * Gomera. Ver `src/flight/kit-de-viaje.ts` y el ADR 0020.
    */
   "inicio.tripulacion.pasaje.cerca.kitAqui":
-    "¡Mira lo que te traigo: tu kit de viaje, con dos juegos dentro! Siempre llevamos unos cuantos a bordo.",
+    "¡Mira lo que te traigo: tu kit de viaje, con tres juegos dentro! Siempre llevamos unos cuantos a bordo.",
   "inicio.tripulacion.pasaje.cerca.kitRato":
     "Volar es apasionante, pero los vuelos duran un ratito. Con esto, el rato hasta La Palma se te pasa volando.",
   "inicio.ara.pasaje.kitGracias": "¡Gracias! ¿Jugamos? Tocá la mochilita y elegimos uno de los juegos.",
-  "inicio.ara.pasaje.kit.elegir": "Hay dos juegos: armar el avión o dibujar el camino de nuestro vuelo. ¿Cuál querés?",
+  "inicio.ara.pasaje.kit.elegir":
+    "Hay tres juegos: ser la torre, armar el avión o dibujar el camino de nuestro vuelo. ¿Cuál querés?",
   "inicio.ara.pasaje.kit.piezas.empezar": "¿Me ayudás a armar el avión? Agarrá cada pieza y llevala a su lugar.",
   "inicio.ara.pasaje.kit.piezas.ala": "¡El ala! Empuja el aire para abajo, y el aire la empuja para arriba: así nos sostiene.",
   "inicio.ara.pasaje.kit.piezas.motor":
@@ -3889,6 +3890,32 @@ export const ES_PY = {
   "inicio.tripulacion.pasaje.cerca.banoATiempo":
     "¿Ves? Fuiste justo a tiempo: ahora, con la luz encendida, ya no se levanta nadie hasta aterrizar.",
   "inicio.ara.pasaje.banoEspero": "Con la luz del cinturón encendida, espero a que aterricemos. ¡Ya falta poquito!",
+  /*
+   * **Luz verde**, el tercer juego del kit (punto 304): quien juega es la
+   * torre de La Palma. Las señales son las de SERA (Reglamento UE 923/2012,
+   * apéndice 1, 3) y el Anexo 2 de la OACI, y el avión contesta como de verdad:
+   * de día alabeando, salvo en base y en final; de noche, con los faros. Lo
+   * primero que se dice es que la lámpara es el plan B: lo normal es la radio.
+   * Y el «al aire» se celebra con la frase de la canción, «irse al aire también
+   * es saber volar». Ver `src/flight/luz-verde.ts`.
+   */
+  "inicio.ara.pasaje.kit.luz.radio":
+    "Los aviones hablan con la torre por radio. Si a uno se le rompe, la torre le habla con una linterna de colores.",
+  "inicio.ara.pasaje.kit.luz.empezar":
+    "Ahora la torre sos vos: tocá el avión sin radio y dale luz verde para aterrizar, o roja para que espere.",
+  "inicio.ara.pasaje.kit.luz.alas": "¡Movió las alas! Así contesta el avión que vio la luz.",
+  "inicio.ara.pasaje.kit.luz.sinAlas": "En la base y en la final no mueve las alas: ahí tiene que ir derechito a la pista.",
+  "inicio.ara.pasaje.kit.luz.roja": "¡Luz roja! Da otra vuelta y espera su turno: esperar también es volar bien.",
+  "inicio.ara.pasaje.kit.luz.alAire":
+    "La pista estaba ocupada y se fue al aire solo. ¡Bien! Irse al aire también es saber volar.",
+  "inicio.ara.pasaje.kit.luz.conRadio": "Ese tiene la radio bien: habla con la torre y aterriza sin linterna. Eso es lo normal.",
+  "inicio.ara.pasaje.kit.luz.fin": "¡Aterrizaron todos! Con la linterna de colores, como en una torre de verdad.",
+  "inicio.ara.pasaje.kit.luz.destellosRojos":
+    "Hay un camión revisando la pista. Con la roja que parpadea, el avión sabe que no puede aterrizar.",
+  "inicio.ara.pasaje.kit.luz.destellosVerdes":
+    "Ya se fue el camión. Con la verde que parpadea, el avión sabe que puede volver para aterrizar.",
+  "inicio.ara.pasaje.kit.luz.noche":
+    "De noche no se ven las alas: el avión contesta apagando y encendiendo dos veces los faros.",
   // Lo que es de la pantalla y no se graba: para quien no ve los dibujos.
   "inicio.kit.nombre": "Kit de viaje",
   "inicio.kit.abrir": "Abrir el kit de viaje",
@@ -3909,4 +3936,11 @@ export const ES_PY = {
   "inicio.kit.parada.teide": "Dos: el Teide",
   "inicio.kit.parada.gomera": "Tres: La Gomera",
   "inicio.kit.parada.palma": "Cuatro: La Palma, adonde vamos",
+  "inicio.kit.luz": "Luz verde: la torre sos vos",
+  "inicio.kit.luz.verde": "Luz verde fija: puede aterrizar",
+  "inicio.kit.luz.roja": "Luz roja fija: que dé otra vuelta",
+  "inicio.kit.luz.verde-destellos": "Destellos verdes: que vuelva para aterrizar",
+  "inicio.kit.luz.roja-destellos": "Destellos rojos: que no aterrice",
+  "inicio.kit.luz.conRadio": "Avión con la radio bien",
+  "inicio.kit.luz.sinRadio": "Avión con la radio rota: pide luz",
 } as const;

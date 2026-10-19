@@ -1734,7 +1734,25 @@ const DEL_BANO = [
   ["inicio.tripulacion.pasaje.cerca.banoAhora", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante viene a por Ara en cuanto se apaga la luz"],
   ["inicio.tripulacion.pasaje.cerca.banoATiempo", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante, bajando con la luz encendida: Ara fue justo a tiempo"],
 ];
-const LO_QUE_SE_VE = new Set([...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO].map(([k]) => k));
+/*
+ * **Y la luz verde del kit** (punto 304, 19-10-2026): el tercer juego, en el
+ * que quien juega es la torre de La Palma. Lo dice Ara, de vos; al final, que
+ * lo grabado no se renumera. Ver `src/flight/luz-verde.ts`.
+ */
+const DE_LA_LUZ_VERDE = [
+  ["inicio.ara.pasaje.kit.luz.radio", "ara", "el modo inicio, de pasaje, luz verde: Ara cuenta el plan B: lo normal es la radio, y la linterna es por si se rompe"],
+  ["inicio.ara.pasaje.kit.luz.empezar", "ara", "el modo inicio, de pasaje, luz verde: Ara explica qué hacer en la torre: verde para aterrizar, roja para esperar"],
+  ["inicio.ara.pasaje.kit.luz.alas", "ara", "el modo inicio, de pasaje, luz verde: Ara ve que el avión alabea para contestar a la luz"],
+  ["inicio.ara.pasaje.kit.luz.sinAlas", "ara", "el modo inicio, de pasaje, luz verde: Ara cuenta que en base y en final no se alabea"],
+  ["inicio.ara.pasaje.kit.luz.roja", "ara", "el modo inicio, de pasaje, luz verde: Ara celebra la roja: otra vuelta, esperar su turno"],
+  ["inicio.ara.pasaje.kit.luz.alAire", "ara", "el modo inicio, de pasaje, luz verde: Ara celebra el al aire solo, con la pista ocupada, con la frase de la canción"],
+  ["inicio.ara.pasaje.kit.luz.conRadio", "ara", "el modo inicio, de pasaje, luz verde: Ara señala el avión con la radio bien, que aterriza sin linterna"],
+  ["inicio.ara.pasaje.kit.luz.fin", "ara", "el modo inicio, de pasaje, luz verde: Ara celebra que aterrizaron todos"],
+  ["inicio.ara.pasaje.kit.luz.destellosRojos", "ara", "el modo inicio, de pasaje, luz verde: Ara cuenta los destellos rojos, con el camión en la pista"],
+  ["inicio.ara.pasaje.kit.luz.destellosVerdes", "ara", "el modo inicio, de pasaje, luz verde: Ara cuenta los destellos verdes, al irse el camión"],
+  ["inicio.ara.pasaje.kit.luz.noche", "ara", "el modo inicio, de pasaje, luz verde: Ara cuenta que de noche se contesta con los faros"],
+];
+const LO_QUE_SE_VE = new Set([...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_LUZ_VERDE].map(([k]) => k));
 for (const [prefijo, voz, para, salvo] of DEL_INICIO) {
   for (const [k, v] of es) {
     if (!k.startsWith(prefijo) || salvo?.test(k) || LO_QUE_SE_VE.has(k) || filas.some((f) => f.id === k)) continue;
@@ -1833,8 +1851,8 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
     total += texto.length;
   }
 }
-// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada y el baño: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA` y `DEL_BANO`.
-for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO]) {
+// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño y la luz verde: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO` y `DE_LA_LUZ_VERDE`.
+for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_LUZ_VERDE]) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });

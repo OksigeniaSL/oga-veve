@@ -1,5 +1,5 @@
 /**
- * **El kit de viaje, en la pantalla**: el botón de la mochilita y los dos
+ * **El kit de viaje, en la pantalla**: el botón de la mochilita y los tres
  * juegos, dibujados en el código y jugables con el dedo, con el ratón o con
  * el teclado. La lógica vive en `flight/kit-de-viaje.ts`; esto la dibuja y le
  * pasa lo que se toca.
@@ -12,6 +12,7 @@
  * dice qué hacer y qué es cada cosa, y el subtítulo va en la tarjeta de la
  * escena, arriba, como todo lo que se dice. Los únicos signos son los
  * números del camino, del uno al cuatro, que es lo que se aprende contando.
+ * La luz verde se dibuja aparte, en `luz-verde.ts`.
  *
  * ## Lo que se dibuja es lo de verdad
  *
@@ -30,6 +31,8 @@
  */
 
 import { t, type TranslationKey } from "../i18n";
+import { JuegoDeLaLuz, type Senal } from "../flight/luz-verde";
+import { hojaDeLaLuz, ICONO_DE_LA_LUZ, PintorDeLaLuz } from "./luz-verde";
 import {
   JuegoDeLasPiezas,
   JuegoDelCamino,
@@ -319,6 +322,7 @@ const ICONO: Readonly<Record<JuegoDelKit, string>> = {
 <path d="M70 66 L94 66 L60 92 L48 92 Z" fill="none" stroke="${C.tinta}" stroke-width="3" stroke-dasharray="6 5"/>
 <path d="M104 74 h22 q6 0 6 5 q0 5 -6 5 h-22 z" fill="${C.terracota}" stroke="${C.tinta}" stroke-width="3"/>
 </svg>`,
+  luz: ICONO_DE_LA_LUZ,
   camino: `<svg viewBox="0 0 160 100" aria-hidden="true">
 <rect width="160" height="100" rx="12" fill="${C.mar}"/>
 <path d="M120 60 L150 40 L140 76 Z M70 80 a12 10 0 1 0 1 0 M14 30 l14 -14 l8 40 z" fill="${C.tierra}" stroke="${C.tinta}" stroke-width="3"/>
@@ -353,7 +357,9 @@ export class PantallaDelKit {
   private readonly atras: HTMLButtonElement;
   private readonly pausa: HTMLElement;
   /** Lo que hay montado en la hoja: elegir, o el juego de ahora. */
-  private montado: "elegir" | JuegoDeLasPiezas | JuegoDelCamino | null = null;
+  private montado: "elegir" | JuegoDeLasPiezas | JuegoDelCamino | JuegoDeLaLuz | null = null;
+  /** Lo que pinta la luz verde, mientras está montada. */
+  private pintorDeLaLuz: PintorDeLaLuz | null = null;
   private firma = "";
   private medido = 0;
   /** Dónde quedó el panel la última vez que se colocó: el ancho de la pantalla, su arriba y su ancho, en píxeles. */
@@ -467,6 +473,7 @@ export class PantallaDelKit {
     this.atras.hidden = !juego;
     if (juego instanceof JuegoDeLasPiezas) this.pintarLasPiezas(juego, suena);
     else if (juego instanceof JuegoDelCamino) this.pintarElCamino(juego);
+    else if (juego instanceof JuegoDeLaLuz && e.juego?.juego === "luz") this.pintorDeLaLuz?.pintar(e.juego);
     else
       for (const b of this.hoja.querySelectorAll<HTMLElement>("[data-kit-juego]"))
         b.classList.toggle("kit-juego--hecho", e.hechos.includes(b.dataset.kitJuego as JuegoDelKit));
@@ -515,12 +522,16 @@ export class PantallaDelKit {
   }
 
   /** Monta lo de la hoja: elegir, o un juego nuevo. */
-  private montar(que: "elegir" | JuegoDeLasPiezas | JuegoDelCamino): void {
+  private montar(que: "elegir" | JuegoDeLasPiezas | JuegoDelCamino | JuegoDeLaLuz): void {
     this.montado = que;
     this.firma = "";
     this.arrastre = null;
-    if (que === "elegir")
-      this.hoja.innerHTML = `<div class="kit-elegir">${(["piezas", "camino"] as const)
+    this.pintorDeLaLuz = null;
+    if (que instanceof JuegoDeLaLuz) {
+      this.hoja.innerHTML = hojaDeLaLuz(que.luces);
+      this.pintorDeLaLuz = new PintorDeLaLuz(this.hoja);
+    } else if (que === "elegir")
+      this.hoja.innerHTML = `<div class="kit-elegir">${(["luz", "piezas", "camino"] as const)
         .map(
           (j) =>
             `<button class="kit-juego" type="button" data-kit-juego="${j}" aria-label="${t(`inicio.kit.${j}` as TranslationKey)}">${ICONO[j]}${ESTRELLA}</button>`,
@@ -616,6 +627,23 @@ export class PantallaDelKit {
 
   private readonly alApretar = (event: PointerEvent): void => {
     const j = this.kit.juego;
+    /*
+     * **La luz verde, al apretar** y no al soltar: los avioncitos se mueven, y
+     * entre bajar y levantar el dedo el de un niño de cuatro años ya se fue de
+     * debajo. Un toque en un avión le apunta la lámpara; uno en una luz, la
+     * enciende.
+     */
+    if (j instanceof JuegoDeLaLuz) {
+      const donde = event.target as Element | null;
+      const senal = donde?.closest("[data-luz-senal]")?.getAttribute("data-luz-senal") as Senal | null;
+      const avion = donde?.closest("[data-luz-avion]")?.getAttribute("data-luz-avion");
+      if (!senal && !avion) return;
+      event.preventDefault();
+      this.kit.tocado();
+      if (senal) j.encender(senal);
+      else if (avion) j.apuntar(Number(avion));
+      return;
+    }
     if (!(j instanceof JuegoDeLasPiezas) || this.arrastre) return;
     const g = (event.target as Element | null)?.closest<SVGGElement>("[data-pieza]");
     const p = g?.getAttribute("data-pieza") as Pieza | null;
@@ -704,6 +732,16 @@ export class PantallaDelKit {
       event.preventDefault();
       this.kit.tocado();
       j.tocar(parada, this.kit.hayHueco);
+      return;
+    }
+    if (j instanceof JuegoDeLaLuz) {
+      const senal = donde?.closest("[data-luz-senal]")?.getAttribute("data-luz-senal") as Senal | null;
+      const avion = donde?.closest("[data-luz-avion]")?.getAttribute("data-luz-avion");
+      if (!senal && !avion) return;
+      event.preventDefault();
+      this.kit.tocado();
+      if (senal) j.encender(senal);
+      else if (avion) j.apuntar(Number(avion));
     }
   };
 
@@ -714,6 +752,7 @@ export class PantallaDelKit {
     readonly piezas: Readonly<Record<string, { readonly en: DOMRect; readonly sitio: DOMRect }>>;
     readonly paradas: Readonly<Record<string, DOMRect>>;
     readonly juegos: Readonly<Record<string, DOMRect>>;
+    readonly luz: ReturnType<PintorDeLaLuz["paraBanco"]> | null;
   } {
     const caja = (el: Element | null): DOMRect | null => (el && !el.closest("[hidden]") ? el.getBoundingClientRect() : null);
     const piezas: Record<string, { en: DOMRect; sitio: DOMRect }> = {};
@@ -732,6 +771,6 @@ export class PantallaDelKit {
       const r = caja(b);
       if (r) juegos[b.dataset.kitJuego!] = r;
     }
-    return { boton: caja(this.boton), panel: caja(this.panel), piezas, paradas, juegos };
+    return { boton: caja(this.boton), panel: caja(this.panel), piezas, paradas, juegos, luz: this.pintorDeLaLuz?.paraBanco() ?? null };
   }
 }

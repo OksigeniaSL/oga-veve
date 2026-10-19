@@ -1,6 +1,6 @@
 /**
- * **El kit de viaje de Ara**: dos juegos cortos para la parte larga del
- * vuelo de pasaje.
+ * **El kit de viaje de Ara**: tres juegos para la parte larga del vuelo de
+ * pasaje.
  *
  * Pedido por Enrique (punto 275 de su lista): «a los niños suelen darles algo
  * para que se entretengan durante el vuelo […] volar es apasionante, pero los
@@ -8,10 +8,12 @@
  * que tenga que resolver en la pantalla y que tenga sentido educativo
  * también». Es lo que hacen las aerolíneas: un estuche con algo que hacer
  * para quien vuela con pocos años. Aquí lo trae la tripulante, en persona,
- * en la bajada, que es el tramo largo y tranquilo de este vuelo. Ver
- * `inicio-pasaje.ts`.
+ * en la parte alta de la bajada, sobre el mar, y lo pide recoger al empezar
+ * la llegada, cruzando los diez mil pies: desde ahí la llegada se vive sin
+ * juego delante («ese momento es mágico, cuando está llegando a tierra»).
+ * Ver `inicio-pasaje.ts`.
  *
- * ## Los dos juegos
+ * ## Los tres juegos
  *
  * - **Armá el avión** (`JuegoDeLasPiezas`): el ala, el motor, la cola y las
  *   ruedas, cada una a su sitio en el dibujo del avión. Al encajar, Ara dice
@@ -25,9 +27,15 @@
  *   que se tocan en orden para dibujar el camino. Contar hasta cuatro y saber
  *   dónde está cada isla y qué se ve desde el avión.
  *
- * Dos y no tres: el tercero que se pensó —buscar en la ventanilla lo que se
- * nombra— ya lo hace la escena entera, que señala el Teide, las nubes y el
- * mar por la ventanilla de verdad.
+ * - **Luz verde** (`JuegoDeLaLuz`, en `luz-verde.ts`): quien juega es la torre
+ *   de La Palma y les da luz verde o roja, con la lámpara de señales de
+ *   verdad, a los avioncitos sin radio que llegan por el circuito. Es el
+ *   largo: dura de dos a tres minutos, que los otros dos «se resuelven en
+ *   medio minuto» (punto 304).
+ *
+ * El que se pensó antes —buscar en la ventanilla lo que se nombra— ya lo hace
+ * la escena entera, que señala el Teide, las nubes y el mar por la ventanilla
+ * de verdad.
  *
  * ## Se gana siempre
  *
@@ -51,10 +59,14 @@
  */
 
 import type { Linea } from "./conversacion";
+import type { Peldano } from "./escalera";
+import { JuegoDeLaLuz, LINEAS_DE_LA_LUZ, type EstadoDeLaLuz } from "./luz-verde";
 
 /** Los juegos del kit. */
-export type JuegoDelKit = "piezas" | "camino";
-export const JUEGOS_DEL_KIT: readonly JuegoDelKit[] = ["piezas", "camino"];
+export type JuegoDelKit = "piezas" | "camino" | "luz";
+export const JUEGOS_DEL_KIT: readonly JuegoDelKit[] = ["piezas", "camino", "luz"];
+/** Un juego del kit, el que sea. */
+export type JuegoDeAhora = JuegoDeLasPiezas | JuegoDelCamino | JuegoDeLaLuz;
 
 /** Lo que dice Ara en el kit: a quien juega a su lado, de vos. */
 const ara = (clave: string): Linea => ({ quien: "ara", clave: `inicio.ara.pasaje.kit.${clave}` });
@@ -386,7 +398,7 @@ export interface EstadoDelKit {
   readonly abierto: boolean;
   readonly pausado: boolean;
   /** El juego de ahora, o `null` si se está eligiendo. */
-  readonly juego: EstadoDeLasPiezas | EstadoDelCamino | null;
+  readonly juego: EstadoDeLasPiezas | EstadoDelCamino | EstadoDeLaLuz | null;
   /** Los juegos ya terminados alguna vez. */
   readonly hechos: readonly JuegoDelKit[];
   /** Si se abrió alguna vez: el botón deja de latir. */
@@ -399,7 +411,20 @@ export class KitDeViaje {
   private abierto = false;
   private pausado = false;
   private visto = false;
-  private actual: JuegoDeLasPiezas | JuegoDelCamino | null = null;
+  private actual: JuegoDeAhora | null = null;
+  /**
+   * **El peldaño de quien juega**: en la luz verde, abajo hay verde y roja
+   * fijas, y arriba también los destellos. Lo pone la escena.
+   */
+  peldano: Peldano = "dibujo";
+  /**
+   * **A qué ritmo va la luz verde**, veces el reloj de pared. Uno, salvo en el
+   * banco, que juega las rondas enteras en cada pantalla sin esperar los tres
+   * minutos. Los avioncitos van con el reloj de pared, no con el del vuelo: el
+   * botón de adelantar acelera el avión de Ara, no el juego.
+   */
+  ritmo = 1;
+  private paredAntes: number | null = null;
   private readonly hechos = new Set<JuegoDelKit>();
   private terminadoDesde: number | null = null;
   private reloj = 0;
@@ -429,18 +454,23 @@ export class KitDeViaje {
     return this.dado;
   }
 
+  /** Si ya se recogió para aterrizar. */
+  get estaRecogido(): boolean {
+    return this.recogido;
+  }
+
   /** Si está abierto, aunque esté pausado. */
   get estaAbierto(): boolean {
     return this.abierto;
   }
 
   /** El juego que se ve, abierto, aunque esté pausado: lo que se dibuja. */
-  get juegoDeAhora(): JuegoDeLasPiezas | JuegoDelCamino | null {
+  get juegoDeAhora(): JuegoDeAhora | null {
     return this.abierto ? this.actual : null;
   }
 
   /** El juego de ahora, para que el dibujo le pase lo que se toca: sin pausar. */
-  get juego(): JuegoDeLasPiezas | JuegoDelCamino | null {
+  get juego(): JuegoDeAhora | null {
     return this.abierto && !this.pausado ? this.actual : null;
   }
 
@@ -490,7 +520,7 @@ export class KitDeViaje {
     if (!this.abierto || this.pausado) return;
     this.tocado();
     if (this.actual?.juego === j && !this.actual.terminado) return;
-    this.actual = j === "piezas" ? new JuegoDeLasPiezas() : new JuegoDelCamino();
+    this.actual = j === "piezas" ? new JuegoDeLasPiezas() : j === "camino" ? new JuegoDelCamino() : new JuegoDeLaLuz(this.peldano);
     this.terminadoDesde = null;
   }
 
@@ -528,10 +558,13 @@ export class KitDeViaje {
   ): void {
     this.reloj += dt;
     this.pared = s.pared ?? this.reloj;
+    // Lo que pasó de pared, con tope: una pestaña dormida no hace volar a los avioncitos de golpe.
+    const dePared = this.paredAntes === null ? 0 : Math.min(0.25, Math.max(0, this.pared - this.paredAntes));
+    this.paredAntes = this.pared;
     this.pausado = this.abierto && s.megafonia;
     this.callada = s.callada;
     if (!this.abierto || this.pausado || !this.actual) return;
-    this.actual.paso(dt, s.callada);
+    this.actual.paso(this.actual instanceof JuegoDeLaLuz ? dePared * this.ritmo : dt, s.callada);
     if (this.actual.terminado) {
       this.hechos.add(this.actual.juego);
       this.terminadoDesde ??= this.reloj;
@@ -574,4 +607,5 @@ export const LINEAS_DEL_KIT: readonly Linea[] = [
   LO_QUE_ES.gomera,
   LO_QUE_ES.palma,
   DICHO_DEL_CAMINO.ayuda,
+  ...LINEAS_DE_LA_LUZ,
 ];
