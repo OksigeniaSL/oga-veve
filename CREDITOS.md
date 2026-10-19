@@ -492,7 +492,7 @@ vuelta en la pista de La Palma, los compartimentos de arriba y lo que sabe
 hacer la tripulación de cabina— sale dibujado en la misma ventana
 de cristal que las ilustraciones de las historias. Desde el 19 de octubre de
 2026, los que explican cómo funciona algo —las máscaras, el chaleco, la nube,
-el frío, el oído, lo alto, el meneo y los compartimentos de arriba— salen con
+el frío, el oído, lo alto, el meneo, el motor y los compartimentos de arriba— salen con
 su ilustración, que está en la tabla de abajo; las islas, con la del Teide en
 corte, y los telescopios, con la del cielo de La Palma. Los demás siguen
 **dibujados en el código**,
@@ -573,6 +573,7 @@ y soñando, que no tienen hueco.
 | `src/assets/ilustraciones/oido.webp` | `esquemas/oido.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo del oído | entera, en 4:3, 1192 × 894 |
 | `src/assets/ilustraciones/alto.webp` | `esquemas/alto.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo de lo alto que se vuela | entera, en 4:3 y en espejo, para que el avión vuele hacia la derecha, como se ve por la ventanilla de Ara; 1192 × 894 |
 | `src/assets/ilustraciones/meneo.webp` | `esquemas/meneo.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo del meneo dentro de la nube | entera, en 4:3, 1192 × 894 |
+| `src/assets/ilustraciones/motor.webp` | `esquemas/motor.webp` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo del motor por dentro | entera, en 4:3, 1020 × 765 |
 | `src/assets/ilustraciones/chaleco.webp` | `esquemas/chaleco.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo del chaleco | entera, en 4:3, 1192 × 894 |
 | `src/assets/ilustraciones/maletero.webp` | `esquemas/maletero.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo de los compartimentos de arriba | entera, en 4:3, 1192 × 894 |
 | `src/assets/ilustraciones/torre-radio.webp` | `torre-radio.webp` | «Luz verde», en el kit de viaje de «Viajá con Jazlyn», cuando Ara cuenta que lo normal es la radio | entera, en 4:3, 1020 × 765 |

@@ -236,6 +236,7 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
   meneo: { original: "esquemas/meneo.jpg", hueco: "esquema", recorte: ENTERA_DE_1200 },
   chaleco: { original: "esquemas/chaleco.jpg", hueco: "esquema", recorte: ENTERA_DE_1200 },
   maletero: { original: "esquemas/maletero.jpg", hueco: "esquema", recorte: ENTERA_DE_1200 },
+  motor: { original: "esquemas/motor.webp", hueco: "esquema", recorte: ENTERA_DE_1024 },
   /*
    * **La torre de «Luz verde»**, el juego del kit de viaje: el controlador
    * hablando por radio con el avión que llega, que es lo normal; la lámpara de

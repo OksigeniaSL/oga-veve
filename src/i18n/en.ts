@@ -1386,6 +1386,7 @@ export const EN: Dictionary = {
   // Los esquemas de lo que se explica en el vuelo de pasaje, y la torre de «Luz verde» (punto 311).
   "ilustracion.mascara": "Oxygen masks drop: the dad puts one on first, then helps the little one",
   "ilustracion.nube": "A cloud under a magnifying glass: water droplets below, ice crystals above",
+  "ilustracion.motor": "Inside the engine: air goes in at the front, is heated and rushes out the back",
   "ilustracion.frio": "Frost on the outer pane; inside, warm air and a steaming cup",
   "ilustracion.oido": "Ara yawns, and air travels up inside to the ear and unblocks it",
   "ilustracion.alto": "The plane, higher than Mount Teide, flies above the sea of clouds",
