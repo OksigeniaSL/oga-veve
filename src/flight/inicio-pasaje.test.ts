@@ -20,6 +20,7 @@ import { EN } from "../i18n/en";
 import { Conversacion, ENTRE_FRASES, TOPE_DE_UNA_FRASE, type Linea } from "./conversacion";
 import { esDeLaEscena, VOZ_DE } from "./inicio";
 import {
+  ADELANTO,
   CHARLAS_DEL_PASAJE,
   CORTE_DE_PLANO,
   DIEZ_MIL_PIES,
@@ -29,6 +30,7 @@ import {
   esDeFuera,
   GUION_DEL_PASAJE,
   LINEAS_DEL_PASAJE,
+  proyectar,
   RED_DE_LA_ESPERA,
   VueloDePasaje,
   type LecturaDelPasaje,
@@ -1136,7 +1138,10 @@ interface Medido {
 }
 
 /** Vuela la escena entera con el vuelo medido y las voces que duran lo que duran. */
-function volarElMedido(vuelo: VueloMedido = new VueloMedido()): Medido {
+function volarElMedido(
+  vuelo: VueloMedido = new VueloMedido(),
+  cadaPaso?: (escena: VueloDePasaje, t: number, l: LecturaDelPasaje) => void,
+): Medido {
   let t = 0;
   const v = vozQueTarda(loQueDura, () => t);
   const escena = new VueloDePasaje(v.voz, { lado: "izquierda" });
@@ -1156,6 +1161,7 @@ function volarElMedido(vuelo: VueloMedido = new VueloMedido()): Medido {
         cartelApagado: escena.dicho("arriba") && !escena.dicho("bajada"),
       });
     if (porVer[0] && porVer[0].t <= vuelo.desdeQueDespego && escena.puedeSenalar) escena.senalar(porVer.shift()!.s);
+    cadaPaso?.(escena, t, vuelo.lectura);
     if (escena.estado.puedeSeguir) escena.seguir();
     if (escena.estado.terminado) break;
   }
@@ -1487,12 +1493,26 @@ describe("la siesta de Ara: arriba y sin nada que contar, se duerme un rato", ()
         `siestas: ${e.siestas.map((x) => `${x.desde.toFixed(0)}–${x.hasta?.toFixed(0)}${x.paraBajar ? " para bajar" : ""}`).join(" ")}` +
           ` · arriba a los ${empiezaA("crucero").toFixed(0)} · bajada a los ${empiezaA("bajada").toFixed(0)}`,
       );
+
     expect(e.siestas).toHaveLength(1);
     expect(s!.desde).toBeGreaterThan(empiezaA("subida"));
     expect(s!.hasta).not.toBeNull();
-    // Y lo que dura merece el fundido: un rato largo, no medio minuto.
-    expect(s!.hasta! - s!.desde).toBeGreaterThanOrEqual(40);
+    /*
+     * Y lo que dura se nota (19-10-2026): con minuto y medio Enrique se
+     * despertó viendo lo mismo. Es lo que queda de subida desde que la
+     * comandante acaba lo de los diez mil pies.
+     */
+    expect(s!.hasta! - s!.desde).toBeGreaterThanOrEqual(120);
     expect(e.durmiendo).toBe(false);
+  });
+
+  it("en cuanto la comandante acaba lo de los diez mil pies: lo que contesta a Ara, antes; lo que puede esperar, después", () => {
+    // Lo que contesta a lo que Ara notó o preguntó: las nubes y el gas de subida.
+    expect(cuando("inicio.mama.pasaje.nubes")).toBeLessThan(s!.desde);
+    expect(cuando("inicio.mama.pasaje.menosGas")).toBeLessThan(s!.desde);
+    // Y lo que viene a cuento igual más tarde —el ala, a qué altura se va—, al despertar.
+    expect(cuando("inicio.mama.pasaje.ala")).toBeGreaterThan(s!.hasta!);
+    expect(cuando("inicio.mama.pasaje.altoRapido")).toBeGreaterThan(s!.hasta!);
   });
 
   it("bosteza y lo dice antes de cerrar los ojos; durmiendo y al despertar, el mapa de la ruta en la ventanita", () => {
@@ -1507,7 +1527,8 @@ describe("la siesta de Ara: arriba y sin nada que contar, se duerme un rato", ()
     const enLa = (t: number): string | null => [...ventanita].reverse().find((v) => v.t <= t)?.dibujo ?? null;
     expect(enLa(s!.desde + 0.5)).toBe("ruta");
     expect(enLa((s!.desde + s!.hasta!) / 2)).toBe("ruta");
-    expect(enLa(s!.hasta! + 1)).toBe("ruta");
+    // Y otra vez con lo que dice Ara al despertar, detrás de la comandante.
+    expect(enLa(cuando("inicio.ara.pasaje.despertarse") + 0.5)).toBe("ruta");
   });
 
   it("durmiendo, no se dice nada: ni el guion, ni lo señalado, ni las charlas", () => {
@@ -1515,10 +1536,17 @@ describe("la siesta de Ara: arriba y sin nada que contar, se duerme un rato", ()
     expect(enLaSiesta.map((d) => d.clave)).toEqual([]);
   });
 
-  it("y se despierta antes de lo que hay que oír: el «ya estamos arriba», con lo del cinturón", () => {
+  it("y se despierta con el ding de la luz que se apaga con el «ya estamos arriba», que se oye entero", () => {
     expect(s!.paraBajar).toBe(false);
-    expect(s!.hasta!).toBeLessThan(cuando("comandante.crucero"));
-    expect(cuando("inicio.ara.pasaje.despertarse")).toBeLessThan(cuando("comandante.crucero"));
+    expect(s!.porQue).toBe("ding");
+    // Se despierta en el paso en que la comandante lo dice: el anuncio se oye entero.
+    expect(cuando("comandante.crucero") - s!.hasta!).toBeGreaterThanOrEqual(-1e-6);
+    expect(cuando("comandante.crucero") - s!.hasta!).toBeLessThan(CORTE_DE_PLANO + 1);
+    // Y Ara lo cuenta detrás, antes del baño y del servicio.
+    expect(cuando("inicio.ara.pasaje.despertarse")).toBeGreaterThan(cuando("comandante.crucero"));
+    expect(cuando("inicio.ara.pasaje.despertarse")).toBeLessThan(cuando("tripulacion.servicio"));
+    // El baño, con la luz apagada, sigue: después de despertar.
+    expect(cuando("inicio.tripulacion.pasaje.cerca.banoAhora")).toBeGreaterThan(cuando("inicio.ara.pasaje.despertarse"));
     // Y antes de empezar a bajar, que bajando no se duerme: lo de los oídos.
     expect(s!.hasta!).toBeLessThan(empiezaA("bajada"));
   });
@@ -1575,6 +1603,108 @@ describe("y con un crucero largo, despierta a Ara la tripulante para bajar", () 
 
   it("y sin los números del juego, Ara no se duerme: sin saber cuándo llega lo siguiente, no se puede despertar a tiempo", () => {
     expect(volarElMedido().escena.estado.siestas).toEqual([]);
+  });
+});
+
+describe("el botón de adelantar (⏩), pulsado siempre que sale", () => {
+  const sinBoton = volarElMedido(new VueloMedidoConRatos());
+  const ratos: { desde: number; hasta: number }[] = [];
+  const mal: string[] = [];
+  let antes = false;
+  const m = volarElMedido(new VueloMedidoConRatos(), (escena, t, l) => {
+    const a = escena.adelanto;
+    if (a.sale && !a.adelantando) escena.adelantar();
+    const ahora = escena.adelantaAhora;
+    if (ahora && !antes) ratos.push({ desde: t, hasta: Infinity });
+    if (!ahora && antes) ratos[ratos.length - 1]!.hasta = t;
+    if (ahora && (l.enTierra || escena.durmiendo || l.flaps > 0.05 || (l.tren ?? 0) > 0.05 || escena.dicho("aproximacion")))
+      mal.push(`${t.toFixed(0)} ${l.tramo}`);
+    antes = ahora;
+  });
+  const e = m.escena.estado;
+  const r = m.escena.registro;
+  const adelantando = (t: number): boolean => ratos.some((x) => t > x.desde + 1e-6 && t < x.hasta - 1e-6);
+
+  it("sale en los ratos en que no va a pasar nada, y adelanta un buen rato del vuelo", () => {
+    const total = ratos.reduce((s, x) => s + (Math.min(x.hasta, 4000) - x.desde), 0);
+    if (entorno?.OGA_PASAJE)
+      console.log(`adelantando ${ratos.length} veces, ${total.toFixed(0)} s: ${ratos.map((x) => `${x.desde.toFixed(0)}–${x.hasta.toFixed(0)}`).join(" ")}`);
+    // El vuelo medido va contado de punta a punta: lo que queda es poco, pero lo hay.
+    expect(ratos.length).toBeGreaterThanOrEqual(3);
+    expect(total).toBeGreaterThan(60);
+    expect(e.adelanto.pulsado).toBe(ratos.length);
+  });
+
+  it("nunca en tierra, ni con Ara durmiendo, ni preparando la cabina, ni con el tren o los flaps fuera", () => {
+    expect(mal).toEqual([]);
+    expect(ratos.every((x) => x.hasta < Infinity)).toBe(true);
+  });
+
+  it("mientras adelanta no habla nadie: lo que se dice, con el botón ya parado", () => {
+    expect(r.filter((d) => adelantando(d.desde)).map((d) => `${d.clave}@${d.desde.toFixed(0)}`)).toEqual([]);
+  });
+
+  it("se para solo un poco antes de lo siguiente: casi siempre con su rato de llegar", () => {
+    // Lo siguiente que se dice después de cada parada, y cuánto después.
+    const despues = ratos.map((x) => (r.find((d) => d.desde >= x.hasta - 1e-6)?.desde ?? Infinity) - x.hasta);
+    if (entorno?.OGA_PASAJE) console.log(`después de parar: ${despues.map((d) => d.toFixed(0)).join(" ")}`);
+    const aTiempo = despues.filter((d) => d >= ADELANTO.PARA_ANTES / 2);
+    expect(aTiempo.length / despues.length).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it("y no se salta nada: el guion entero y en orden, lo de seguridad y lo que se enseña", () => {
+    expect(e.saltados).toEqual([]);
+    expect(e.dichos).toEqual(GUION_DEL_PASAJE.map((x) => x.id).filter((x) => x !== "fin"));
+    for (const c of DE_SEGURIDAD) expect(r.some((x) => x.clave === c), c).toBe(true);
+    const sin = new Set(sinBoton.escena.estado.charlas);
+    expect(e.charlas.filter((c) => !sin.has(c))).toEqual([]);
+    expect([...sin].filter((c) => !e.charlas.includes(c))).toEqual([]);
+  });
+});
+
+describe("el vuelo de dentro de un rato, para saber qué viene", () => {
+  const arriba: LecturaDelPasaje = {
+    tramo: "crucero",
+    enTramo: 10,
+    motor: true,
+    enTierra: false,
+    porElSuelo: 150,
+    altura: 4877,
+    altitud: 4877,
+    vertical: 0,
+    autorizado: true,
+    flaps: 0,
+    nubes: { base: 1300, techo: 1900 },
+    enNube: 0,
+    cabina: 0,
+    faltaParaTocar: 140000,
+    potencia: "subida",
+    conEstaPotencia: 300,
+    hastaLaBajada: 40,
+  };
+
+  it("pasado el punto de descenso, se baja al ralentí y la cabina baja: lo de los oídos", () => {
+    const p = proyectar(arriba, 60);
+    expect(p.tramo).toBe("bajada");
+    expect(p.potencia).toBe("ralenti");
+    expect(p.conEstaPotencia).toBeCloseTo(20);
+    expect(p.cabina).toBeLessThan(-0.6);
+    expect(p.altitud).toBeLessThan(arriba.altitud);
+    expect(p.faltaParaTocar).toBeCloseTo(140000 - 150 * 60);
+  });
+
+  it("y subiendo, se nivela al llegar arriba", () => {
+    const p = proyectar({ ...arriba, tramo: "subida", vertical: 10, altitud: 4000, hastaElCrucero: 30, hastaLaBajada: 100 }, 50);
+    expect(p.tramo).toBe("crucero");
+    expect(p.altitud).toBeCloseTo(4300);
+    expect(p.vertical).toBe(0);
+    expect(p.hastaElCrucero).toBeUndefined();
+    expect(p.hastaLaBajada).toBeCloseTo(50);
+  });
+
+  it("y metido en la capa de nubes, dentro de la nube", () => {
+    const p = proyectar({ ...arriba, tramo: "bajada", altitud: 2100, vertical: -8, hastaLaBajada: undefined }, 40);
+    expect(p.enNube).toBe(1);
   });
 });
 

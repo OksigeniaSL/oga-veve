@@ -86,10 +86,13 @@
  *   bosteza, la pantalla se funde a Ara durmiendo y después soñando, con el
  *   mapa de la ruta en la ventanita —las islas con su costa de verdad (292) y
  *   el avión avanzando—; el vuelo pasa deprisa y **de verdad** —el avión sigue
- *   su ruta, no salta—, y Ara se despierta antes de lo que hay que oír y antes
- *   de bajar, sin perder nada de seguridad. Lo que pasa durmiendo no cuenta
- *   como silencio. Con capturas del fundido, del sueño con el mapa a mitad de
- *   la siesta y del despertar.
+ *   su ruta, no salta—, y Ara se despierta con algo que pasa —el *ding* de la
+ *   luz que se apaga con el «ya estamos arriba», que se oye entero, o la
+ *   tripulante antes de bajar—, sin perder nada de seguridad. Y que se nota
+ *   (19-10-2026): `SIESTA_KM` de ruta como poco, el avión del mapa bien movido y
+ *   el sitio donde se durmió, atrás. Lo que pasa durmiendo no cuenta como
+ *   silencio. Con capturas del fundido, del sueño con el mapa a mitad de la
+ *   siesta y del despertar.
  * - **La llegada a La Palma** (puntos 300 y 303): que Ara nota la vuelta en
  *   la pista cuando el avión de verdad gira —medido con su rumbo respecto a
  *   la pista y lo que se aparta del eje—, con el avión visto por fuera, y que
@@ -129,6 +132,16 @@
  *   se espera de un vuelo con nubes no vale ahí;
  *   y `OGA_SIN_JUGAR=1` no abre el kit en vuelo, para que las capturas de lo
  *   que se nombra bajando salgan sin él delante.
+ *
+ * **El botón ⏩** (19-10-2026): la ronda de siempre mira que sale solo cuando
+ * toca —nunca en tierra, ni con Ara durmiendo, ni con la cabina preparada— y
+ * no lo pulsa, para seguir midiendo el vuelo sin adelantar. Con
+ * `OGA_ADELANTAR=1` lo pulsa siempre que sale, como quien se aburre, y mide lo
+ * que cuesta: mientras adelanta, el reloj del juego vuelve a ×1 para que lo
+ * que se ve sea lo de quien juega —el botón a sus veces, con el mundo
+ * pintado—, y se cuentan los fotogramas, los lentos y las teselas que van
+ * bajando. Y al final, cuánto dura el vuelo para quien juega, con la siesta y
+ * el botón: el reloj de quien juega, ver `relojDeQuienJuega` en `game.ts`.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { chromium, devices } from "playwright";
@@ -140,6 +153,10 @@ const PUERTO = Number(process.env.OGA_PUERTO ?? 5397);
 const FOTOS = process.env.OGA_FOTOS ?? null;
 if (FOTOS) mkdirSync(FOTOS, { recursive: true });
 const VECES = Number(process.env.OGA_VECES ?? 12);
+/** Si se pulsa el ⏩ siempre que sale. Ver la cabecera. */
+const ADELANTAR = process.env.OGA_ADELANTAR === "1";
+/** **Lo que tiene que adelantar la siesta, como poco**, km por la ruta: que al despertar se note. */
+const SIESTA_KM = 25;
 /** Tope de pared: el vuelo son unos treinta y cinco minutos de reloj del juego. */
 const TOPE_S = Number(process.env.OGA_TOPE ?? 1800);
 
@@ -226,6 +243,10 @@ const leer = (page) =>
       cartel: !(document.querySelector('[data-hud="cinturon"]')?.hidden ?? true),
       // Y los golpes sueltos que han sonado desde la vez anterior: las hebillas, la gente.
       tocados: o?.ruidosTocados?.() ?? [],
+      // El botón ⏩: si se ve y si está pulsado, y las teselas que van bajando.
+      adelantar: visible('[data-hud="adelantar"]'),
+      adelantarPulsado: document.querySelector('[data-hud="adelantar"]')?.getAttribute("aria-pressed") === "true",
+      teselasBajando: o?.teselas?.()?.bajando ?? null,
     };
   });
 
@@ -393,6 +414,13 @@ async function elVuelo() {
   const gente = [];
   /** **La luz del cinturón en todo el vuelo**: cada vez que cambia el cartel, con la hora de la escena (punto 293). */
   const luces = [];
+  /**
+   * **El botón ⏩**: cuántas veces se vio, si salió donde no toca, si alguien
+   * habló adelantando, si el botón de la pantalla dice lo mismo que la
+   * escena, las veces que se pulsó, las teselas que llegaron a ir bajando a
+   * la vez y el reloj de quien juega en cada tramo.
+   */
+  const adelanto = { visto: 0, mal: [], hablando: [], desacuerdo: 0, pulsadas: 0, teselas: 0, aUno: false, reloj: [] };
   const t0 = Date.now();
 
   while (Date.now() - t0 < TOPE_S * 1000) {
@@ -404,7 +432,10 @@ async function elVuelo() {
     if (!e) break;
     if (v.percance) percance = v.percance;
     const tramo = i.tripulacion?.tramo;
-    if (tramo && tramos[tramos.length - 1]?.tramo !== tramo) tramos.push({ tramo, t: e.segundos });
+    if (tramo && tramos[tramos.length - 1]?.tramo !== tramo) {
+      tramos.push({ tramo, t: e.segundos });
+      adelanto.reloj.push({ tramo, quienJuega: i.adelanto?.quienJuega ?? null });
+    }
     if (v.mirar) miradas.add(v.mirar);
     if (i.planoVisto) vistos.add(i.planoVisto);
     veloMaximo = Math.max(veloMaximo, Number(i.velo) || 0);
@@ -542,6 +573,33 @@ async function elVuelo() {
         fotosMudas.add(
           `${enLaVentanita} con ${ahora?.clave ?? "nada"}${ahora?.hasta != null ? ` acabada hace ${(e.segundos - ahora.hasta).toFixed(1)} s (${ahora.como})` : ""}`,
         );
+    }
+    // ── El botón ⏩: solo cuando toca, y nadie habla adelantando ──
+    const ad = e.adelanto;
+    if (ad) {
+      if (v.adelantar) adelanto.visto++;
+      if (v.adelantar !== !!ad.sale || v.adelantarPulsado !== !!ad.adelantando) adelanto.desacuerdo++;
+      if (v.adelantar && (v.enTierra || e.durmiendo || ["final", "recogida"].includes(tramo) || e.dichos.includes("aproximacion")))
+        adelanto.mal.push(`${tramo} a los ${e.segundos.toFixed(0)} s${e.durmiendo ? " durmiendo" : ""}`);
+      if (ad.adelantando && e.hablando && e.linea) adelanto.hablando.push(`${e.linea.clave} a los ${e.segundos.toFixed(0)} s`);
+      if (ad.adelantando) adelanto.teselas = Math.max(adelanto.teselas, v.teselasBajando ?? 0);
+      if (ADELANTAR && ad.sale && !ad.adelantando && v.adelantar) {
+        const caja = await page.evaluate(() => {
+          const r = document.querySelector('[data-hud="adelantar"]')?.getBoundingClientRect();
+          return r ? { x: r.x + r.width / 2, y: r.y + r.height / 2 } : null;
+        });
+        if (caja) {
+          // Lo que se ve adelantando es lo de quien juega: el reloj del juego, a ×1.
+          await page.evaluate(() => globalThis.__oga.acelerar(1));
+          adelanto.aUno = true;
+          await page.mouse.click(caja.x, caja.y);
+          adelanto.pulsadas++;
+        }
+      }
+      if (adelanto.aUno && !ad.adelantando && !ad.sale) {
+        await page.evaluate((x) => globalThis.__oga.acelerar(x), VECES);
+        adelanto.aUno = false;
+      }
     }
     // ── La siesta de Ara: en cuanto bosteza, se mira entera ──
     if (siesta === null && (e.durmiendo || (e.linea?.clave === "inicio.ara.pasaje.dormirse" && e.hablando)))
@@ -816,24 +874,44 @@ async function elVuelo() {
   const alDespertar = oidaEn("inicio.ara.pasaje.despertarse");
   // Lo siguiente que había que oír: el «ya estamos arriba», o empezar a bajar.
   const loSiguiente = oidaEn(s0?.paraBajar ? "comandante.descenso" : "comandante.crucero");
+  /*
+   * **Y lo que despierta a Ara es algo que pasa** (19-10-2026): el *ding* de la
+   * luz que se apaga con el «ya estamos arriba» —que suena entero, y Ara lo
+   * cuenta detrás—, o la tripulante para bajar, antes de bajar.
+   */
+  const conElDing = s0?.porQue === "ding";
+  const porLaTripulante = s0?.porQue === "tripulante";
+  const oidoAlEmpezar = (c) => registro.find((d) => d.clave === c && (d.como === "sono" || d.como === "muda"));
+  const despiertan = oidoAlEmpezar("inicio.tripulacion.pasaje.cerca.despertar");
+  const loDeLaComandante = conElDing ? oidoAlEmpezar("comandante.crucero") : null;
+  const mama = registro.find((d) => d.clave === "inicio.mama.pasaje.menosGas" || d.clave === "inicio.mama.pasaje.nubes");
   comprobar(
-    "Ara se duerme una vez, arriba, y se despierta antes de lo que hay que oír y antes de empezar a bajar",
+    "Ara se duerme una vez, arriba, en cuanto la comandante acaba lo de los diez mil pies, y se despierta con algo que pasa: el ding de la luz, o la tripulante para bajar",
     (e?.siestas?.length ?? 0) === 1 &&
       s0.hasta !== null &&
       s0.hasta < bajadaEn &&
       !!bostezo &&
       !!alDespertar &&
       bostezo.desde < s0.desde &&
+      (!mama || mama.desde < s0.desde) &&
       alDespertar.desde >= s0.hasta - 1e-3 &&
-      !!loSiguiente &&
-      loSiguiente.desde > alDespertar.desde,
+      ((conElDing && !!loDeLaComandante && loDeLaComandante.desde >= s0.hasta - 1e-3 && loDeLaComandante.desde < s0.hasta + 3 && alDespertar.desde > loDeLaComandante.desde) ||
+        (porLaTripulante && !!despiertan && despiertan.desde < alDespertar.desde && !!loSiguiente && loSiguiente.desde > alDespertar.desde)),
     s0
-      ? `durmiendo de ${s0.desde.toFixed(0)} a ${s0.hasta?.toFixed(0)} s: ${(s0.hasta - s0.desde).toFixed(0)} s de vuelo${s0.paraBajar ? ", y despierta para bajar" : ""} · ${loSiguiente?.clave ?? "?"} a los ${loSiguiente?.desde?.toFixed(0) ?? "?"} s · empieza a bajar a los ${bajadaEn.toFixed(0)} s`
+      ? `durmiendo de ${s0.desde.toFixed(0)} a ${s0.hasta?.toFixed(0)} s: ${(s0.hasta - s0.desde).toFixed(0)} s de vuelo · se despierta con: ${s0.porQue ?? "?"} · ${loSiguiente?.clave ?? "?"} a los ${loSiguiente?.desde?.toFixed(0) ?? "?"} s · «me dormí» a los ${alDespertar?.desde?.toFixed(0) ?? "?"} s · empieza a bajar a los ${bajadaEn.toFixed(0)} s`
       : "no se durmió",
+  );
+  const movidoEnElMapa = siesta?.avionAntes && siesta?.avionDespues ? Math.hypot(siesta.avionDespues[0] - siesta.avionAntes[0], siesta.avionDespues[1] - siesta.avionAntes[1]) : 0;
+  comprobar(
+    `y al despertar se nota: ${SIESTA_KM} km de ruta como poco, el avión del mapa bien movido y lo de al dormirse, atrás`,
+    !!siesta && (siesta.km ?? 0) >= SIESTA_KM && movidoEnElMapa >= 20 && (siesta.atras ?? 0) >= 0.6 * SIESTA_KM,
+    siesta
+      ? `${siesta.km?.toFixed(1) ?? "?"} km por la ruta · el avión del mapa, ${movidoEnElMapa.toFixed(0)} puntos de 480 · donde se durmió, ${siesta.atras?.toFixed(1) ?? "?"} km por detrás`
+      : "no se vio",
   );
   comprobar(
     "y rápido: el fundido entero en segundos de pantalla, no un minuto",
-    !!siesta?.pared && siesta.pared < 15,
+    !!siesta?.pared && siesta.pared < 20,
     siesta?.pared ? `${siesta.pared.toFixed(1)} s de pared con la pantalla del sueño, por ${siesta.vuelo?.toFixed(0)} s de vuelo` : "no se vio",
   );
   comprobar(
@@ -880,6 +958,36 @@ async function elVuelo() {
       ? `islas de ${siesta.islas.join(", ")} puntos · el mapa en la ventanita en ${siesta.conElMapa} de ${siesta.muestras} muestras · el avión avanza ${movido.toFixed(1)} de 480 en la hoja`
       : "no se vio",
   );
+  // ── El botón ⏩ (19-10-2026) ──
+  const medida = i?.adelanto ?? null;
+  const reloj = (tramo) => adelanto.reloj.find((x) => x.tramo === tramo)?.quienJuega ?? null;
+  const minutos = (a, b) => (a !== null && b !== null ? ((b - a) / 60).toFixed(1) : "?");
+  const finDelVuelo = medida?.quienJuega ?? null;
+  console.log(
+    `  para quien juega${ADELANTAR ? ", pulsando ⏩ siempre que sale" : ", sin pulsar ⏩"}: el vuelo entero ${minutos(reloj("puerta"), finDelVuelo)} min ·` +
+      ` la bajada ${minutos(reloj("bajada"), reloj("final"))} min · de la puerta al despegue ${minutos(reloj("puerta"), reloj("carrera"))} min ·` +
+      ` la subida ${minutos(reloj("subida"), reloj("crucero"))} min · la final y el rodaje ${minutos(reloj("final"), finDelVuelo)} min`,
+  );
+  comprobar(
+    "el botón ⏩ sale en los ratos tranquilos, y nunca en tierra, con Ara durmiendo ni desde que se prepara la cabina",
+    adelanto.visto > 0 && adelanto.mal.length === 0 && adelanto.desacuerdo <= 2,
+    `visto en ${adelanto.visto} muestras · mal: ${adelanto.mal.slice(0, 3).join(" · ") || "ninguna"} · la pantalla y la escena, distintas en ${adelanto.desacuerdo}`,
+  );
+  comprobar(
+    "y mientras adelanta no habla nadie",
+    adelanto.hablando.length === 0,
+    adelanto.hablando.slice(0, 3).join(" · ") || `${e?.adelanto?.pulsado ?? 0} veces pulsado`,
+  );
+  if (ADELANTAR) {
+    const fps = medida && medida.pared > 0 ? medida.cuadros / medida.pared : 0;
+    comprobar(
+      "pulsado siempre que sale: adelanta con el mundo pintado a 60 fps, y las teselas llegan",
+      adelanto.pulsadas > 0 && (medida?.cuadros ?? 0) > 60 && fps >= 55 && adelanto.teselas <= 12,
+      medida
+        ? `${adelanto.pulsadas} veces · ${medida.cuadros} fotogramas en ${medida.pared.toFixed(1)} s: ${fps.toFixed(1)} fps, ${medida.lentos} de más de 20 ms · pasos por fotograma ${JSON.stringify(medida.porVeces)} · un paso ${medida.pasoMs.toFixed(2)} ms y el dibujo ${medida.dibujoMs.toFixed(1)} ms · teselas bajando a la vez, como mucho ${adelanto.teselas}`
+        : "sin medida",
+    );
+  }
   const cuaderno = i?.cuaderno;
   comprobar(
     "el cuaderno no apunta nada de pilotaje, y sí el sello de La Palma, de visita",
@@ -1303,12 +1411,13 @@ async function mirarLaSiesta(page) {
         mapa: j.ventanita?.sitio === "dibujo:ruta" && !!j.ventanita?.donde,
         x: l?.x ?? null,
         z: l?.z ?? null,
+        rumbo: l?.rumbo ?? null,
         tramo: l?.tramo ?? null,
         falta: l?.faltaParaTocar ?? null,
         suelo: l?.porElSuelo ?? 0,
       };
     });
-  const r = { pared: null, vuelo: null, lado: 0, muestras: 0, recorrido: null, islas: [], avionAntes: null, avionDespues: null, vistas: [], conElMapa: 0 };
+  const r = { pared: null, vuelo: null, lado: 0, muestras: 0, recorrido: null, islas: [], avionAntes: null, avionDespues: null, vistas: [], conElMapa: 0, km: null, atras: null };
   // El bostezo, que se oye o se lee; y Ara cierra los ojos.
   await page.waitForFunction(() => globalThis.__oga.inicio().estado?.durmiendo, null, { timeout: 40_000 }).catch(() => {});
   let a = await leerSiesta();
@@ -1357,6 +1466,15 @@ async function mirarLaSiesta(page) {
     .waitForFunction(() => (globalThis.__oga.inicio().siesta?.opacidad ?? 0) <= 0.001, null, { timeout: 10_000, polling: 16 })
     .catch(() => {});
   r.pared = (Date.now() - empieza) / 1000;
+  /*
+   * **Y lo que se avanzó durmiendo**, por la ruta, y dónde quedó lo que se veía
+   * al dormirse: el sitio del avión al cerrar los ojos, cuántos km por detrás
+   * del de al abrirlos, mirando hacia donde se va.
+   */
+  const luego = await leerSiesta();
+  if (desde.falta !== null && luego.falta !== null) r.km = (desde.falta - luego.falta) / 1000;
+  if (desde.x !== null && luego.x !== null && luego.rumbo !== null)
+    r.atras = -(((desde.x - luego.x) * Math.sin(luego.rumbo) - (desde.z - luego.z) * Math.cos(luego.rumbo)) / 1000);
   // Y Ara, con el mapa en la ventanita mientras dice que se durmió.
   await page
     .waitForFunction(

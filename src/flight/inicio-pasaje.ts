@@ -124,18 +124,27 @@
  *
  * Enrique voló la escena entera (punto 304): «esto tarda, y en un avión
  * aguantan porque no les queda otra, pero en casa se aburren». Así que arriba,
- * con un rato largo por delante sin nada que contar, Ara bosteza, la pantalla
- * se funde a Ara durmiendo y soñando, con el mapa de la ruta en la ventanita,
- * el vuelo pasa deprisa —de verdad: el avión sigue su ruta, ver `frame` en
- * `game.ts`— y Ara se despierta antes de lo que hay que oír. Para bajar, nunca
- * durmiendo: al bajar se notan los oídos, y quien duerme traga menos. Ver
- * `puedeDormirse` y `ui/siesta.ts`.
+ * en cuanto la comandante acaba lo de los diez mil pies y no queda nada que
+ * decir ni que ver, Ara bosteza, la pantalla se funde a Ara durmiendo y
+ * soñando, con el mapa de la ruta en la ventanita, el vuelo pasa deprisa —de
+ * verdad: el avión sigue su ruta, ver `frame` en `game.ts`— y lo que despierta
+ * a Ara es el *ding* de la luz del cinturón que se apaga con el «ya estamos
+ * arriba», como a medio avión. Para bajar, nunca durmiendo: al bajar se notan
+ * los oídos, y quien duerme traga menos. Ver `puedeDormirse` y `ui/siesta.ts`.
  *
- * Medido en el banco el 18-10-2026, el crucero de este vuelo dura un minuto y
- * va lleno —el «ya estamos arriba», el baño de Ara, el servicio y la
- * tripulante con las nubes—: entre islas casi no hay crucero. El rato callado de verdad es lo
+ * Medido en el banco, el crucero de este vuelo dura un minuto y va lleno —el
+ * «ya estamos arriba», el baño de Ara, el servicio y la tripulante con las
+ * nubes—: entre islas casi no hay crucero. El rato callado de verdad es lo
  * alto de la subida, por encima del mar de nubes, y ahí es donde cabe la
- * siesta.
+ * siesta: la primera, de minuto y medio, no se notaba —«no movieste el vuelo
+ * nada»—, y ahora es lo que queda de subida después de la comandante.
+ *
+ * ## Y el botón de adelantar
+ *
+ * Para los ratos en que no va a pasar nada, quien juega puede adelantar el
+ * vuelo con el botón ⏩: el avión vuela de verdad más deprisa, con todo a la
+ * vista, y el botón se para solo un poco antes de lo siguiente que hay que
+ * contar o ver. Nunca se salta nada. Ver `adelanto`.
  *
  * ## La vuelta en la pista de La Palma
  *
@@ -711,24 +720,80 @@ const CALLA_ANTES_DEL_KIT = 10;
 /**
  * **La siesta de Ara** (punto 304): los números. Ver `puedeDormirse`.
  *
- * - `CALLA_PARA_DORMIRSE`, s de silencio con nada a punto de contarse: el
- *   «rato largo sin nada que contar». Más que lo que esperan las
- *   explicaciones —de catorce a dieciocho—, que se dicen antes; menos que lo
- *   que espera lo que se mira cuando no pasa nada —el mar de nubes, cuarenta—,
- *   que es justo lo que el sueño viene a quitar.
- * - `SIESTA_MINIMA`, s de vuelo durmiendo, como poco: por menos no se funde la
- *   pantalla, que un fundido para medio minuto es más rato que el que se ahorra.
- * - `DESPIERTA_ANTES`, s antes de lo siguiente que hay que oír —el «ya estamos
- *   arriba» de la comandante, que lleva lo del cinturón—: lo que tarda Ara en
- *   desperezarse y decirlo. Y `DESPIERTA_ANTES_DE_BAJAR`, más, que antes de la
- *   bajada despierta a Ara la tripulante, y habla ella primero.
+ * - `CALLA_PARA_DORMIRSE`, s de silencio con nada a punto de contarse. Poco:
+ *   Ara cierra los ojos en cuanto la comandante acaba lo de los diez mil pies,
+ *   que el rato de dormir es lo que queda de subida y no da para esperar. Lo
+ *   justo para que lo que se ve por la ventanilla —el Teide— se señale antes.
+ * - `SIESTA_MINIMA`, s de vuelo durmiendo, como poco. Con un minuto y medio
+ *   Enrique se despertó viendo lo mismo que al dormirse —«no movieste el vuelo
+ *   nada»—: un salto que no se nota es peor que no dormirse. Por menos, Ara no
+ *   se duerme, y para lo que queda está el botón de adelantar.
+ * - `DESPIERTA_ANTES_DE_BAJAR`, s antes de empezar a bajar: si no hubo *ding*
+ *   que despertara a Ara antes, la despierta la tripulante, que habla primero.
  * - `LO_QUE_DURA_EL_BOSTEZO`, s: lo que dice Ara antes de cerrar los ojos.
+ * - `ESPERA_A_LO_QUE_SE_VE`, s de silencio: lo que se espera, antes de cerrar
+ *   los ojos, a que la comandante señale lo que se tiene a la vista. Si no lo
+ *   señala en ese rato, Ara se duerme igual.
  */
-const CALLA_PARA_DORMIRSE = 20;
-const SIESTA_MINIMA = 40;
-const DESPIERTA_ANTES = 10;
+const CALLA_PARA_DORMIRSE = 5;
+const SIESTA_MINIMA = 120;
 const DESPIERTA_ANTES_DE_BAJAR = 22;
 const LO_QUE_DURA_EL_BOSTEZO = 8;
+const ESPERA_A_LO_QUE_SE_VE = 25;
+/**
+ * **Lo que puede esperar a que Ara se despierte**: lo que se cuenta porque
+ * viene a cuento y sigue viniendo después —cómo se sostiene el avión, a qué
+ * altura se va, el mar de nubes—. Lo que no puede esperar es la respuesta a lo
+ * que Ara notó o preguntó —el gas de subida, las nubes—, que va antes de
+ * dormirse: una explicación siete minutos después de la pregunta ya no
+ * contesta nada. Ver `puedeDormirse`.
+ */
+const PUEDEN_ESPERAR: ReadonlySet<CharlaDelPasaje> = new Set(["ala", "altoRapido", "marArriba", "marDeNubes", "sobreLaIsla"]);
+/**
+ * **Y lo que esperó, al despertar, con menos silencio delante**, s: arriba el
+ * rato es justo —la bajada empieza al minuto, y lo de la altura deja de ser
+ * verdad por debajo del Teide—. Detrás de la explicación del ralentí, que
+ * contesta a lo que Ara acaba de notar —doce—, y la altura primero, que es la
+ * que se acaba antes; el frío de fuera —catorce— detrás, que también se acaba
+ * bajando; y el ala la última, que vale hasta los diez mil pies.
+ */
+const TRAS_AL_DESPERTAR: Partial<Record<CharlaDelPasaje, number>> = { altoRapido: 13, ala: 16 };
+/** Lo que se tiene que haber señalado, si se ve, antes de cerrar los ojos: lo más bonito de la ruta. */
+const SE_ENSENA_ANTES_DE_DORMIRSE = ["teide"] as const;
+
+/**
+ * **El botón de adelantar** (⏩): los números. Ver `adelanto`.
+ *
+ * - `SALE_SI_FALTAN`, s de vuelo hasta lo siguiente que hay que contar o ver:
+ *   por menos el botón no sale, que no hay rato que ahorrar. Medio minuto: la
+ *   bajada va contada de punta a punta, con silencios de entre veinte y
+ *   cuarenta y tantos segundos entre una cosa y la siguiente, y lo que se
+ *   adelanta es solo eso, el silencio.
+ * - `PARA_ANTES`, s de vuelo: se para solo cuando lo siguiente está a esto,
+ *   para llegar a ello a la velocidad de siempre y verlo venir.
+ * - `CALLA_PARA_ADELANTAR`, s de silencio antes de que salga: lo que se acaba
+ *   de decir se deja asentar.
+ * - `MIRA_HASTA`, s de vuelo: lo más lejos que se mira lo que viene. Más allá,
+ *   todo es «un rato largo».
+ * - `MIRA_CADA`, s de escena: cada cuánto se vuelve a mirar.
+ */
+export const ADELANTO = {
+  SALE_SI_FALTAN: 30,
+  PARA_ANTES: 6,
+  CALLA_PARA_ADELANTAR: 3,
+  MIRA_HASTA: 180,
+  MIRA_CADA: 0.5,
+} as const;
+/** Los ratos por delante en los que se mira qué viene, s de vuelo. */
+const PASOS_DE_MIRAR = [2, 5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 90, 105, 120, 150, 180] as const;
+/**
+ * **Lo que baja la cabina en la bajada, de cuenta**, m/s: el tope del control,
+ * trescientos cincuenta pies por minuto, que es lo que hace en cuanto el
+ * avión empieza a bajar. Ver `BAJA_LA_CABINA` en `cabina-presurizada.ts`.
+ */
+const LA_CABINA_BAJANDO = -1.78;
+/** Lo que enfría el aire al subir, °C por metro: la atmósfera tipo. */
+const ENFRIA_AL_SUBIR = 0.0065;
 /**
  * **La vuelta en la pista** (punto 300): cuándo se está dando. Ver `daLaVuelta`.
  *
@@ -2180,6 +2245,8 @@ export interface EstadoDelPasaje {
   readonly gente: GenteDeLaCabina;
   /** **Si Ara fue al baño**, con la luz apagada. Ver `puedeIrAlBano`. */
   readonly fueAlBano: boolean;
+  /** **El botón de adelantar** (⏩). Ver `adelanto`. */
+  readonly adelanto: EstadoDelAdelanto;
 }
 
 /** Una siesta de Ara, s de escena; `hasta` es `null` mientras dura. */
@@ -2188,6 +2255,78 @@ export interface Siesta {
   readonly hasta: number | null;
   /** Si despertó para bajar: entonces despierta a Ara la tripulante. */
   readonly paraBajar: boolean;
+  /** **Qué despertó a Ara**: el *ding* de la luz que se apaga, la tripulante para bajar u otra cosa que llegó. */
+  readonly porQue?: "ding" | "tripulante" | "otra";
+}
+
+/**
+ * **El botón de adelantar** (⏩), lo que deja ver la escena: si sale ahora, si
+ * está adelantando, cuánto falta para lo siguiente que hay que contar o ver
+ * —s de vuelo, o `null` si no se está en calma— y cuántas veces se pulsó.
+ */
+export interface EstadoDelAdelanto {
+  readonly sale: boolean;
+  readonly adelantando: boolean;
+  readonly falta: number | null;
+  readonly pulsado: number;
+}
+
+/**
+ * **El vuelo dentro de un rato**, s de vuelo, contado con lo que ya se sabe:
+ * la subida hasta nivelar, el crucero hasta el punto de descenso y la bajada
+ * por su senda, con la cabina que baja, los motores al ralentí, el frío de
+ * arriba y la capa de nubes por donde se cruce. Lo demás —el mar de debajo,
+ * el giro, lo que se ve—, como está ahora. Es con lo que la escena mira qué
+ * viene antes de dejar adelantar: ver `adelanto`.
+ */
+export function proyectar(l: LecturaDelPasaje, dt: number): LecturaDelPasaje {
+  let tramo = l.tramo;
+  let enTramo = l.enTramo + dt;
+  let altitud = l.altitud + l.vertical * dt;
+  let vertical = l.vertical;
+  let cabina = l.cabina;
+  let potencia = l.potencia;
+  let conEstaPotencia = l.conEstaPotencia === undefined ? undefined : l.conEstaPotencia + dt;
+  const nivela = l.hastaElCrucero;
+  const baja = l.hastaLaBajada;
+  if (tramo === "subida" && nivela !== undefined && dt >= nivela) {
+    tramo = "crucero";
+    enTramo = dt - nivela;
+    altitud = l.altitud + Math.max(0, l.vertical) * nivela;
+    vertical = 0;
+    cabina = 0;
+  }
+  if (tramo === "crucero" && baja !== undefined && dt >= baja) {
+    // Por la senda: lo que queda de altura repartido en lo que queda de camino.
+    const aTocar = Math.max(1000, l.faltaParaTocar - l.porElSuelo * baja);
+    const arriba = altitud;
+    tramo = "bajada";
+    enTramo = dt - baja;
+    vertical = (-l.porElSuelo * arriba) / aTocar;
+    altitud = arriba + vertical * (dt - baja);
+    cabina = LA_CABINA_BAJANDO;
+    potencia = "ralenti";
+    conEstaPotencia = dt - baja;
+  }
+  const n = l.nubes;
+  const enLaCapa = !!n && altitud > n.base && altitud < n.techo;
+  return {
+    ...l,
+    tramo,
+    enTramo,
+    altitud,
+    altura: l.altura + (altitud - l.altitud),
+    vertical,
+    cabina,
+    faltaParaTocar: l.faltaParaTocar - l.porElSuelo * dt,
+    enNube: enLaCapa ? Math.max(l.enNube, 1) : 0,
+    ...(l.meneo !== undefined || enLaCapa ? { meneo: enLaCapa ? Math.max(l.meneo ?? 0, 0.8) : l.meneo } : {}),
+    ...(l.temperatura !== undefined ? { temperatura: l.temperatura - (altitud - l.altitud) * ENFRIA_AL_SUBIR } : {}),
+    ...(potencia !== undefined ? { potencia } : {}),
+    ...(conEstaPotencia !== undefined ? { conEstaPotencia } : {}),
+    hastaElCrucero: tramo === "subida" && nivela !== undefined ? Math.max(0, nivela - dt) : undefined,
+    hastaLaBajada: tramo !== "bajada" && baja !== undefined ? Math.max(0, baja - dt) : undefined,
+  };
 }
 
 /** Cuánto se queda el dibujo de mirar después de decirlo, s. */
@@ -2244,10 +2383,19 @@ export class VueloDePasaje {
   private kitAbierto = false;
   private juegoDelKit: KitDeViaje["juegoDeAhora"] = null;
   /** **La siesta de Ara**: la de ahora, si duerme, y todas. Ver `puedeDormirse`. */
-  private siestaDeAhora: { desde: number; hasta: number | null; paraBajar: boolean } | null = null;
-  private readonly siestas: { desde: number; hasta: number | null; paraBajar: boolean }[] = [];
+  private siestaDeAhora: { desde: number; hasta: number | null; paraBajar: boolean; porQue?: Siesta["porQue"] } | null = null;
+  private readonly siestas: { desde: number; hasta: number | null; paraBajar: boolean; porQue?: Siesta["porQue"] }[] = [];
   /** Si lo último que se pidió es el bostezo: al acabar, Ara cierra los ojos. */
   private bostezando = false;
+  /** Si Ara se acaba de despertar con el *ding*: lo dice detrás del «ya estamos arriba». */
+  private despiertaConElDing = false;
+  /** Si lo que quedaba del plop explicado se apartó para el anuncio de la bajada. */
+  private plopAplazado = false;
+  /** **El botón de adelantar**: si adelanta, lo que falta y cuándo se miró. Ver `adelanto`. */
+  private adelantando = false;
+  private falta: number | null = null;
+  private faltaMiradaEn = -Infinity;
+  private pulsado = 0;
 
   constructor(
     voz: VozDelInicio,
@@ -2426,12 +2574,131 @@ export class VueloDePasaje {
       luzApagada: this.luzApagadaEnElPuesto,
       gente: this.gente,
       fueAlBano: this.alBano,
+      adelanto: this.adelanto,
     };
   }
 
   /** **Si Ara duerme ahora.** Lo mira el juego en cada fotograma: ver `frame` en `game.ts`. */
   get durmiendo(): boolean {
     return this.siestaDeAhora !== null;
+  }
+
+  /**
+   * **El botón de adelantar** (⏩), aprobado por Enrique: «en casa, jugando al
+   * simulador, se aburren». Lo decide quien juega, y la escena dice cuándo se
+   * puede:
+   *
+   * - **Sale solo cuando no va a pasar nada en un rato**: la escena sabe qué
+   *   viene —el siguiente momento del guion, lo que se cuenta cuando viene a
+   *   cuento, el siguiente cambio de tramo o de gas— y lo busca en el vuelo de
+   *   dentro de un rato, ver `proyectar`. Si falta menos de `SALE_SI_FALTAN`,
+   *   no sale.
+   * - **Se para solo** a `PARA_ANTES` de lo siguiente, para llegar a ello a la
+   *   velocidad de siempre; y en cuanto alguien habla, se cambia de plano o
+   *   hay algo señalado por la ventanilla, también. Otro toque lo para.
+   * - **Nunca se salta nada**: lo que se adelanta es el vuelo, de verdad, y lo
+   *   que se tiene que contar o ver llega con el botón ya parado.
+   * - **Ni en tierra, ni con la cabina preparada para aterrizar** —de ahí al
+   *   tren y los flaps es la aproximación—, **ni con Ara durmiendo**, que la
+   *   siesta ya pasa deprisa.
+   *
+   * Lo deprisa que va lo pone el juego, que es quien sabe lo que aguanta la
+   * máquina: ver `frame` en `game.ts`.
+   */
+  get adelanto(): EstadoDelAdelanto {
+    const falta = this.faltaAhora;
+    return {
+      sale: this.adelantando || (falta !== null && falta >= ADELANTO.SALE_SI_FALTAN),
+      adelantando: this.adelantando,
+      falta,
+      pulsado: this.pulsado,
+    };
+  }
+
+  /** Si el vuelo va adelantado ahora: lo mira el juego en cada paso. */
+  get adelantaAhora(): boolean {
+    return this.adelantando;
+  }
+
+  /**
+   * **Quien juega toca el botón**: adelanta si se puede, o para si ya
+   * adelantaba. Devuelve si adelanta.
+   */
+  adelantar(si: boolean = !this.adelantando): boolean {
+    if (si && !this.adelanto.sale) return false;
+    if (si && !this.adelantando) this.pulsado++;
+    this.adelantando = si;
+    return si;
+  }
+
+  /** Lo que falta para lo siguiente, s de vuelo, contando lo que pasó desde que se miró. */
+  private get faltaAhora(): number | null {
+    return this.falta === null ? null : Math.max(0, this.falta - (this.reloj - this.faltaMiradaEn));
+  }
+
+  /** Un paso del botón: se mira qué viene, cada poco, y se para a tiempo. */
+  private atenderAlAdelanto(l: LecturaDelPasaje): void {
+    if (!this.enCalma(l)) {
+      this.falta = null;
+      this.adelantando = false;
+      return;
+    }
+    if (this.falta === null || this.reloj - this.faltaMiradaEn >= ADELANTO.MIRA_CADA) {
+      this.falta = this.loQueFalta(l);
+      this.faltaMiradaEn = this.reloj;
+    }
+    if (this.adelantando && (this.faltaAhora ?? 0) <= ADELANTO.PARA_ANTES) this.adelantando = false;
+  }
+
+  /**
+   * **Si el vuelo está en calma**: en el aire y lejos de aterrizar, sin nadie
+   * hablando ni a punto de hablar, en la ventanilla, sin Ara durmiendo ni con
+   * el kit en las manos, y nada del guion que ya toque.
+   */
+  private enCalma(l: LecturaDelPasaje): boolean {
+    if (this.acabado || this.durmiendo || this.bostezando || this.def.id === "fin") return false;
+    if (!volando(l) || enLaFinal(l) || cabinaPreparada(l, this)) return false;
+    if (l.flaps > 0.05 || (l.tren ?? 0) > 0.05 || l.potencia === "despegue") return false;
+    if (!this.charla.callada || this.reloj < this.enCorteHasta || this.plano !== "ventanilla") return false;
+    if (this.porSenalar.length > 0 || this.contestacion || this.kit.estaAbierto || this.kit.ocupaAAra) return false;
+    if (!this.adelantando && this.callada < ADELANTO.CALLA_PARA_ADELANTAR) return false;
+    return !this.def.cuando(l, this);
+  }
+
+  /**
+   * **Cuánto falta para lo siguiente que hay que contar o ver**, s de vuelo,
+   * hasta `MIRA_HASTA`: lo que ya viene a cuento y espera su silencio, y lo que
+   * vendrá —el siguiente momento del guion, una charla, un cambio de tramo o
+   * de gas— en el vuelo de dentro de un rato. Lo que ya viene a cuento pero
+   * espera a verse —el mar entre las nubes— no se sabe cuándo llega: si llega
+   * adelantando, empieza a hablar, y el juego vuelve a su paso.
+   */
+  private loQueFalta(l: LecturaDelPasaje): number {
+    let falta: number = ADELANTO.MIRA_HASTA;
+    const yaVienen = new Set<CharlaDelPasaje>();
+    for (const c of CHARLAS_DEL_PASAJE) {
+      if (this.charlasDichas.includes(c.id) || !c.cuando(l, this) || c.caduca?.(l, this)) continue;
+      yaVienen.add(c.id);
+      if (this.callada < this.trasDe(c)) falta = Math.min(falta, this.trasDe(c) - this.callada);
+    }
+    for (const dt of PASOS_DE_MIRAR) {
+      if (dt >= falta) break;
+      const p = proyectar(l, dt);
+      const e = this.dentroDe(dt);
+      if (p.tramo !== l.tramo || p.potencia !== l.potencia) return dt;
+      if (this.def.cuando(p, e) && !this.def.caduca?.(p, e)) return dt;
+      for (const c of CHARLAS_DEL_PASAJE)
+        if (!this.charlasDichas.includes(c.id) && !yaVienen.has(c.id) && c.cuando(p, e) && !c.caduca?.(p, e)) return dt;
+    }
+    return falta;
+  }
+
+  /** **La escena dentro de un rato**, s, si nadie dice nada: para mirar qué viene. */
+  private dentroDe(dt: number): VueloDePasaje {
+    return Object.create(this, {
+      reloj: { value: this.reloj + dt },
+      callada: { value: this.callada + dt },
+    }) as VueloDePasaje;
   }
 
   /**
@@ -2509,6 +2776,7 @@ export class VueloDePasaje {
       // Después de lo que empieza a sonar en este paso: si es la megafonía, el kit se pausa ya.
       this.atenderAlKit(dt, l);
     }
+    this.atenderAlAdelanto(l);
     if (this.mira && this.reloj - this.miraDesde > SE_QUEDA_EL_DIBUJO && this.charla.callada) this.mira = null;
     this.mirarLaVentanita();
     return this.permisos(l);
@@ -2637,10 +2905,32 @@ export class VueloDePasaje {
      * mejor se ve: la cabina estéril de abajo la guarda `LoQueSeVe`.
      */
     if (this.dicho("aproximacion") || l.tramo === "final" || l.enTierra) this.porSenalar.length = 0;
-    // Con Ara durmiendo no se cuenta nada: solo se mira si toca despertar. Ver `atenderALaSiesta`.
+    /*
+     * Con Ara durmiendo no se cuenta nada: solo se mira si toca despertar. Ver
+     * `atenderALaSiesta`. Y si lo que despierta es el *ding* de la luz, lo que
+     * lo trae —el «ya estamos arriba»— se dice ahora mismo, más abajo.
+     */
     if (this.siestaDeAhora) {
       this.atenderALaSiesta(l);
-      return;
+      if (this.siestaDeAhora || !this.despiertaConElDing) return;
+    }
+    /*
+     * **Y empezar a bajar no espera al plop** (19-10-2026). La tripulante
+     * explica el plop de la subida al final de lo suyo con las nubes, y en un
+     * crucero de un minuto eso puede llegar al punto de descenso: el ralentí
+     * sonaba y Ara ya no lo podía notar a tiempo, ni la luz del cinturón se
+     * encendía. Lo que le queda por empezar de esa explicación se aparta, se
+     * dice el anuncio de la bajada —con el ralentí que nota Ara— y la
+     * tripulante lo acaba detrás, antes de los oídos, que es donde se engancha.
+     */
+    if (this.def.id === "bajada" && !this.plopAplazado && acabaDePonerse(l, "ralenti") && this.def.cuando(l, this)) {
+      let quitado = false;
+      this.charla.quitar((x) => {
+        const es = EL_PLOP_EXPLICADO.includes(x);
+        quitado ||= es;
+        return es;
+      });
+      this.plopAplazado = quitado;
     }
     if (!this.charla.callada) return;
     /*
@@ -2678,7 +2968,13 @@ export class VueloDePasaje {
        * espera: una explicación encima de un juego es un ruido. Lo que tiene
        * su momento —el guion, lo de la ventanilla— sí se dice.
        */
-      const charla = this.kit.ocupaAAra ? undefined : this.charlaQueToca(l);
+      /*
+       * Y si se va a dormir Ara, lo que puede esperar a que se despierte
+       * espera: con un rato de silencio llegaba antes que el sueño, y se
+       * comía la siesta. Ver `PUEDEN_ESPERAR`.
+       */
+      const esperan = this.puedeDormirse(l, false, true) ? PUEDEN_ESPERAR : undefined;
+      const charla = this.kit.ocupaAAra ? undefined : this.charlaQueToca(l, esperan);
       if (charla) {
         this.charlasDichas.push(charla.def.id);
         this.decirDe(charla.def, l, charla.vista);
@@ -2696,6 +2992,16 @@ export class VueloDePasaje {
     this.dichos.push(def.id);
     this.cuandoSeDijo.set(def.id, this.reloj);
     this.indice++;
+    // Y lo que quedó de la explicación del plop, detrás del anuncio de la bajada.
+    if (def.id === "bajada" && this.plopAplazado) {
+      this.plopAplazado = false;
+      this.charla.decir(EL_PLOP_EXPLICADO);
+    }
+    // Y Ara, a quien acaba de despertar el *ding*, detrás: con el mapa de lo que se voló mientras dormía.
+    if (this.despiertaConElDing) {
+      this.despiertaConElDing = false;
+      this.charla.decir([SE_DESPIERTA]);
+    }
   }
 
   /**
@@ -2767,15 +3073,24 @@ export class VueloDePasaje {
    * La primera charla que viene a cuento ahora, si hay alguna. **Y lo que
    * nombra del paisaje, solo si se ve**: ver `SitioDelPaisaje`.
    */
-  private charlaQueToca(l: LecturaDelPasaje): { def: DefCharla; vista?: VistaDelSitio } | undefined {
+  private charlaQueToca(
+    l: LecturaDelPasaje,
+    sin?: ReadonlySet<CharlaDelPasaje>,
+  ): { def: DefCharla; vista?: VistaDelSitio } | undefined {
     for (const c of CHARLAS_DEL_PASAJE) {
-      if (this.charlasDichas.includes(c.id) || this.callada < c.tras || !c.cuando(l, this) || c.caduca?.(l, this))
+      if (sin?.has(c.id)) continue;
+      if (this.charlasDichas.includes(c.id) || this.callada < this.trasDe(c) || !c.cuando(l, this) || c.caduca?.(l, this))
         continue;
       const vista = this.vistaDe(c, l);
       if (vista === null) continue;
       return { def: c, ...(vista ? { vista } : {}) };
     }
     return undefined;
+  }
+
+  /** El silencio que espera una charla: el suyo, o menos si esperó a que Ara se despertara. */
+  private trasDe(c: DefCharla): number {
+    return this.siestas.length > 0 && !this.durmiendo ? (TRAS_AL_DESPERTAR[c.id] ?? c.tras) : c.tras;
   }
 
   /**
@@ -2814,34 +3129,71 @@ export class VueloDePasaje {
    *   saliva, y al bajar es cuando la presión de la cabina empuja los oídos.
    *   Es lo que aconsejan los médicos —no dormirse para despegar ni para
    *   aterrizar—, y por eso la tripulación despierta a quien duerme.
-   * - **Un rato largo sin nada que contar**: nadie hablando desde hace
-   *   `CALLA_PARA_DORMIRSE`, nada del guion a punto, nada señalado esperando
-   *   y ninguna charla que venga a cuento ya.
+   * - **Nada que decir ni que ver** (19-10-2026): nadie hablando desde hace
+   *   `CALLA_PARA_DORMIRSE`, nada del guion a punto, nada señalado esperando y
+   *   **lo que contesta a Ara ya dicho**: pasados los diez mil pies, la
+   *   comandante explica las nubes y el gas de subida, y en cuanto acaba, Ara
+   *   cierra los ojos. Lo que puede esperar —ver `PUEDEN_ESPERAR`— se cuenta al
+   *   despertar, bajando por encima de los diez mil pies, donde sigue siendo
+   *   verdad. Y si lo más bonito de la ruta está a la vista sin señalar —el
+   *   Teide—, se espera a que lo señale la comandante.
    * - **Sin el kit en las manos**: quien está jugando no se aburre.
-   * - **Y con rato por delante**: lo que falta para lo siguiente que hay que
-   *   oír Ara —ver `ratoTranquilo`— da para el bostezo, una siesta que
-   *   merezca el fundido y despertarse a tiempo. **Lo que hay que oír sí o sí
-   *   no se lo come el sueño**: el «ya estamos arriba» lleva lo del cinturón
-   *   puesto mientras se va sentado, y empezar a bajar es lo de los oídos;
-   *   para los dos se despierta antes.
+   * - **Y con rato por delante, de verdad**: lo que falta para lo siguiente que
+   *   hay que oír —ver `ratoTranquilo`— da para el bostezo y una siesta de
+   *   `SIESTA_MINIMA` como poco. Con la siesta de antes, de minuto y medio,
+   *   Enrique se despertó viendo lo mismo que al dormirse: lo que se duerme
+   *   tiene que notarse en el mapa y por la ventanilla.
+   *
+   * **Lo que hay que oír sí o sí no se lo come el sueño.** Lo que despierta a
+   * Ara es lo que despierta a medio avión: el *ding* de la luz del cinturón
+   * que se apaga con el «ya estamos arriba». Y si antes llegara la bajada, la
+   * tripulante, que es lo que se hace de verdad. Ver `atenderALaSiesta`.
+   *
+   * Medido en el banco el 19-10-2026: de los diez mil pies al crucero son unos
+   * cuatro minutos y medio de subida, y la comandante habla el primer medio.
+   * Es el rato más largo en el que Ara puede dormir sin comerse nada: el
+   * crucero dura un minuto y lleva el baño y el servicio, y en cuanto se
+   * empieza a bajar están los oídos.
    *
    * Una vez por vuelo. Lo que se habría contado mientras duerme no se cuenta
    * después fuera de su momento: lo señalado no se señala —Ara no lo ve— y
    * lo que se cuenta cuando viene a cuento solo se cuenta si sigue viniendo.
    *
    * Con `trasElBostezo`, al acabar de bostezar: el silencio ya no cuenta, que
-   * acaba de hablar Ara.
+   * acaba de hablar Ara. Y con `soloElRato`, si va a poder dormirse en cuanto
+   * haya el silencio y se haya visto lo que hay que ver: lo que puede esperar,
+   * espera desde ya.
    */
-  private puedeDormirse(l: LecturaDelPasaje, trasElBostezo = false): boolean {
-    if (this.siestas.length > 0 || this.acabado) return false;
+  private puedeDormirse(l: LecturaDelPasaje, trasElBostezo = false, soloElRato = false): boolean {
+    if (this.siestas.length > 0 || this.acabado || this.bostezando) return false;
     if (!volando(l) || l.tramo === "bajada" || l.altitud < DIEZ_MIL_PIES || l.enNube >= DENTRO_DE_LA_NUBE) return false;
-    if (!trasElBostezo && this.callada < CALLA_PARA_DORMIRSE) return false;
+    if (!trasElBostezo && !soloElRato && this.callada < CALLA_PARA_DORMIRSE) return false;
     if (this.porSenalar.length > 0 || this.contestacion || this.kit.estaAbierto || this.kit.ocupaAAra) return false;
     if (this.def.cuando(l, this)) return false;
+    if (this.quedaPorContestar(l)) return false;
     const rato = this.ratoTranquilo(l);
     if (!rato) return false;
-    const despierta = rato.paraBajar ? DESPIERTA_ANTES_DE_BAJAR : DESPIERTA_ANTES;
-    return rato.segundos >= (trasElBostezo ? 0 : LO_QUE_DURA_EL_BOSTEZO) + SIESTA_MINIMA + despierta;
+    const despierta = rato.paraBajar ? DESPIERTA_ANTES_DE_BAJAR : 0;
+    if (rato.segundos < (trasElBostezo ? 0 : LO_QUE_DURA_EL_BOSTEZO) + SIESTA_MINIMA + despierta) return false;
+    return trasElBostezo || soloElRato || this.callada >= ESPERA_A_LO_QUE_SE_VE || !this.quedaPorVer(l);
+  }
+
+  /**
+   * **Si queda algo que contestar** antes de cerrar los ojos: una charla que ya
+   * viene a cuento y no puede esperar a que Ara se despierte, como la del gas
+   * de subida. Ver `PUEDEN_ESPERAR`.
+   */
+  private quedaPorContestar(l: LecturaDelPasaje): boolean {
+    return CHARLAS_DEL_PASAJE.some(
+      (c) => !PUEDEN_ESPERAR.has(c.id) && !this.charlasDichas.includes(c.id) && c.cuando(l, this) && !c.caduca?.(l, this),
+    );
+  }
+
+  /** **Si lo más bonito de la ruta está a la vista sin señalar**: ver `SE_ENSENA_ANTES_DE_DORMIRSE`. */
+  private quedaPorVer(l: LecturaDelPasaje): boolean {
+    return SE_ENSENA_ANTES_DE_DORMIRSE.some(
+      (que) => !this.senalados.includes(que) && !this.olvidados.includes(que) && this.seVe(`hito:${que}`, l),
+    );
   }
 
   /** **Ara bosteza** y lo dice, mirando por la ventanilla: al acabar, cierra los ojos. */
@@ -2858,26 +3210,47 @@ export class VueloDePasaje {
     this.siestaDeAhora = s;
     this.siestas.push(s);
     this.mira = null;
+    this.adelantando = false;
   }
 
   /**
-   * **Mientras Ara duerme**, solo se mira si toca despertar: un poco antes de
-   * lo siguiente que hay que oír —ver `DESPIERTA_ANTES`—, o ya si llega antes
-   * de lo contado o si el vuelo hace otra cosa. Lo que se le dice al
-   * despertar, por qué se despierta: por su cuenta, arriba; y para bajar, con la
-   * tripulante al lado diciéndole lo del cinturón y los oídos, que enlaza con
-   * lo que cuenta la megafonía al empezar a bajar. Ver el momento `oidos`.
+   * **Mientras Ara duerme**, solo se mira si toca despertar, y **lo que
+   * despierta es algo que pasa de verdad** (19-10-2026):
+   *
+   * - **El *ding* de la luz del cinturón**, que se apaga con el «ya estamos
+   *   arriba» de la comandante y despierta a medio avión. Ara se despierta
+   *   en el paso en que toca decirlo, la comandante lo dice —con su *ding*— y
+   *   Ara cuenta detrás que se durmió, con el mapa de lo que se voló. Ver
+   *   `avanzar`.
+   * - **La tripulante, si la bajada llega con Ara durmiendo** y sin *ding*: es
+   *   lo que se hace de verdad, despertar al pasaje al empezar a bajar, por el
+   *   cinturón y los oídos. Lo dice ella, `DESPIERTA_ANTES_DE_BAJAR` antes del
+   *   punto de descenso, que es antes de que la cabina empiece a bajar.
+   * - **Y cualquier otra cosa del guion que llegue**, o el vuelo que haga
+   *   otra cosa: se despierta ya, por su cuenta.
    */
   private atenderALaSiesta(l: LecturaDelPasaje): void {
     const s = this.siestaDeAhora;
     if (!s) return;
+    const toca = this.def.cuando(l, this);
+    if (toca && this.def.id === "arriba") {
+      this.despertar(s, "ding");
+      this.despiertaConElDing = true;
+      return;
+    }
     const rato = this.ratoTranquilo(l);
-    const antes = rato?.paraBajar ? DESPIERTA_ANTES_DE_BAJAR : DESPIERTA_ANTES;
-    if (rato && rato.segundos > antes && !this.def.cuando(l, this)) return;
+    if (rato && !toca && (rato.paraBajar ? rato.segundos > DESPIERTA_ANTES_DE_BAJAR : true)) return;
+    const paraBajar = rato ? rato.paraBajar : bajando(l.tramo) || this.def.id === "bajada";
+    this.despertar(s, paraBajar ? "tripulante" : "otra");
+    this.charla.decir(paraBajar ? [LA_DESPIERTAN, SE_DESPIERTA] : [SE_DESPIERTA]);
+  }
+
+  /** Se acabó la siesta, por lo que sea. */
+  private despertar(s: { hasta: number | null; paraBajar: boolean; porQue?: Siesta["porQue"] }, porQue: NonNullable<Siesta["porQue"]>): void {
     s.hasta = this.reloj;
-    s.paraBajar = rato ? rato.paraBajar : bajando(l.tramo) || this.def.id === "bajada";
+    s.paraBajar = porQue === "tripulante";
+    s.porQue = porQue;
     this.siestaDeAhora = null;
-    this.charla.decir(s.paraBajar ? [LA_DESPIERTAN, SE_DESPIERTA] : [SE_DESPIERTA]);
   }
 
   /**

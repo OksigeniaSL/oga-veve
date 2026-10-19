@@ -779,6 +779,8 @@ export class Hud {
   /** Qué cerrar cuando se abre el plano o el tiempo. Ver donde se usa. */
   private otraLamina: (() => void) | null = null;
   private pausaHandler: (() => void) | null = null;
+  private adelantarHandler: (() => void) | null = null;
+  private botonAdelantar: HTMLButtonElement | null = null;
   private creditsHandler: (() => void) | null = null;
   private alaHandler: (() => void) | null = null;
   private hangarHandler: (() => void) | null = null;
@@ -1414,6 +1416,21 @@ export class Hud {
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <rect x="6.5" y="5" width="4" height="14" rx="1.4" />
             <rect x="13.5" y="5" width="4" height="14" rx="1.4" />
+          </svg>
+        </button>
+        <!--
+          **Y al lado de la pausa, adelantar**: las dos flechas de cualquier
+          reproductor, que un niño de cuatro años ya conoce de los dibujos
+          animados. Solo en la escena de pasaje y solo cuando no va a pasar
+          nada en un rato; mientras adelanta, las flechas corren. Sin una
+          palabra: lo que hace se ve por la ventanilla. Ver «adelanto» en
+          flight/inicio-pasaje.ts.
+        -->
+        <button class="sonido adelantar" type="button" data-hud="adelantar"
+                aria-label="${t("hud.adelantar")}" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path class="adelantar__flecha" d="M3.5 6.2 L11.4 12 L3.5 17.8 Z" />
+            <path class="adelantar__flecha" d="M12.1 6.2 L20 12 L12.1 17.8 Z" />
           </svg>
         </button>
         <!--
@@ -2239,6 +2256,7 @@ export class Hud {
     this.mision = pick(this.root, "mision-boton");
     alPulsar(this.mision, () => this.misionHandler?.());
     alPulsar(pick(this.root, "pausa"), () => this.pausaHandler?.());
+    alPulsar(pick(this.root, "adelantar"), () => this.adelantarHandler?.());
     alPulsar(pick(this.root, "keys"), () => this.keysHandler?.());
     alPulsar(pick(this.root, "ala"), () => this.alaHandler?.());
     alPulsar(pick(this.root, "credits"), () => this.creditsHandler?.());
@@ -3828,6 +3846,29 @@ export class Hud {
   /** Y el de pausa, que no tenía tecla ni botón. */
   onPausa(handler: () => void): void {
     this.pausaHandler = handler;
+  }
+
+  /** El de adelantar de la escena de pasaje. Ver `ponerAdelantar`. */
+  onAdelantar(handler: () => void): void {
+    this.adelantarHandler = handler;
+  }
+
+  /**
+   * **El botón ⏩**: si sale y si está adelantando, o `null` fuera de la
+   * escena de pasaje. Se mira cada fotograma, así que solo se toca el DOM si
+   * cambia algo.
+   */
+  ponerAdelantar(e: { readonly sale: boolean; readonly adelantando: boolean } | null): void {
+    this.botonAdelantar ??= this.root.querySelector<HTMLButtonElement>('[data-hud="adelantar"]');
+    const b = this.botonAdelantar;
+    if (!b) return;
+    const sale = !!e?.sale;
+    if (b.hidden === sale) b.hidden = !sale;
+    const anda = sale && !!e?.adelantando;
+    if ((b.getAttribute("aria-pressed") === "true") !== anda) {
+      b.setAttribute("aria-pressed", String(anda));
+      b.classList.toggle("adelantar--andando", anda);
+    }
   }
 
   /** Los de antes de volar. Ver `ponerAntesDeVolar`. */

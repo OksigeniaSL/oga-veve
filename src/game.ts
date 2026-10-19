@@ -1503,8 +1503,9 @@ const TOPE_DE_ACELERACION = 16;
 /**
  * **Lo deprisa que pasa el vuelo con Ara durmiendo**, veces: el mismo tope que
  * el de los bancos, que es donde la máquina más lenta con que se mide deja de
- * ganar. Con un minuto y medio de siesta son unos seis segundos de sueño en
- * la pantalla; y como el mundo tapado no se pinta, cabe. Ver `frame`.
+ * ganar. Con los tres minutos largos de siesta son unos trece segundos de
+ * sueño en la pantalla, medido en el banco; y como el mundo tapado no se
+ * pinta, cabe. Ver `frame`.
  */
 const VECES_DE_LA_SIESTA = TOPE_DE_ACELERACION;
 /**
@@ -1514,6 +1515,27 @@ const VECES_DE_LA_SIESTA = TOPE_DE_ACELERACION;
  */
 const REFRESCA_LA_RUTA = 2;
 const REFRESCA_LA_RUTA_DURMIENDO = 0.4;
+
+/**
+ * **Lo deprisa que adelanta el botón ⏩ de la escena de pasaje**, veces, de
+ * más a menos: ocho si la máquina lo aguanta con el mundo pintado, y si no,
+ * cuatro o dos. Con todo a la vista, que es lo que se pidió —las nubes pasan
+ * volando y la isla crece—, así que aquí sí se pinta cada fotograma y el
+ * precio es de verdad. Ver `vecesDelAdelanto`.
+ */
+const VECES_DEL_ADELANTO = [8, 4, 2] as const;
+/**
+ * **Lo que puede costar un fotograma adelantando**, ms: los pasos del mundo y
+ * el dibujo, con margen para que quepan sesenta por segundo en una tablet de
+ * gama media (regla 6). Se mide en la máquina de quien juega, no se supone.
+ */
+const CUADRO_QUE_CABE = 14;
+/**
+ * **Y las teselas de ortofoto que pueden ir bajando a la vez**, adelantando:
+ * con más, el suelo se queda sin foto por donde se pasa —se ven huecos—, y
+ * se adelanta menos para que lleguen a tiempo.
+ */
+const TESELAS_QUE_ESPERAN = 6;
 
 /**
  * **La clave de una frase sin lo que le pone la boca detrás**: la receta
@@ -6471,6 +6493,10 @@ export class Game {
     });
     this.hud.alAbrirUnaLamina(() => this.misionUI?.cerrar());
     this.hud.onPausa(() => this.alternarPausa());
+    // El ⏩ de la escena de pasaje: adelanta si se puede, o para. Ver `adelanto`.
+    this.hud.onAdelantar(() => {
+      if (this.inicio instanceof VueloDePasaje) this.inicio.adelantar();
+    });
     this.hud.onCamara(() => this.cycleCamera());
     this.hud.onGafas(() => this.alternarGafas());
     // Antes de volar: la vuelta al avión y el tiempo de hoy.
@@ -7758,6 +7784,23 @@ export class Game {
     /** De pasaje: la pantalla de la siesta, si está puesta. Ver `ui/siesta.ts`. */
     readonly siesta: PantallaDeLaSiesta["paraBanco"] | null;
     /**
+     * **El botón ⏩**, medido: las veces de ahora, lo que cuestan aquí un paso
+     * y el dibujo, ms, los fotogramas adelantando —con su pared y los que se
+     * pasaron de cincuenta por segundo— y el reloj de quien juega, s: lo que
+     * habría durado todo en su pantalla, sin el reloj acelerado del banco.
+     */
+    readonly adelanto: {
+      readonly veces: number | null;
+      readonly pasoMs: number;
+      readonly dibujoMs: number;
+      readonly cuadros: number;
+      readonly pared: number;
+      readonly lentos: number;
+      /** Cuántos fotogramas adelantando con cada número de pasos. */
+      readonly porVeces: Readonly<Record<string, number>>;
+      readonly quienJuega: number;
+    };
+    /**
      * Y el mapa de la ruta de la ventanita: los puntos de la costa de cada isla
      * —una costa, no un óvalo— y dónde va el avión en la hoja de 480 × 320.
      * Ver `ui/mapa-de-la-ruta.ts`.
@@ -7799,6 +7842,13 @@ export class Game {
       kit: this.pantallaDelKit?.paraBanco ?? null,
       musica: this.musicaParaBanco,
       siesta: this.siesta?.paraBanco ?? null,
+      adelanto: {
+        veces: this.escenaAdelanta ? this.vecesDelAdelanto() : null,
+        pasoMs: this.costeDeUnPaso,
+        dibujoMs: this.costeDelDibujo,
+        ...this.medidaDelAdelanto,
+        quienJuega: this.relojDeQuienJuega,
+      },
       ruta: (() => {
         const v = this.inicio instanceof VueloDePasaje ? this.vueloParaElMapa() : null;
         if (!v) return null;
@@ -15274,28 +15324,115 @@ export class Game {
      * Fuera de desarrollo también, que es para quien juega. Ver `ui/siesta.ts`.
      */
     const duerme = this.siestaTapa && this.escenaDuerme;
-    const veces =
-      this.inicio?.estado.hablando || this.laTormentaHabla
-        ? 1
-        : Math.min(duerme ? Math.max(this.aceleracion, VECES_DE_LA_SIESTA) : this.aceleracion, caben);
+    /*
+     * **Y con el botón ⏩ pulsado, también**, pero con el mundo pintado: lo
+     * que se ve es el vuelo adelantado. Lo deprisa que va lo dice lo que
+     * aguanta esta máquina —ver `vecesDelAdelanto`—, y se para en cuanto la
+     * escena lo para, aunque sea a media tanda.
+     */
+    const adelanta = !duerme && this.escenaAdelanta;
+    const deLaEscena = duerme ? VECES_DE_LA_SIESTA : adelanta ? this.vecesDelAdelanto() : 1;
+    const habla = !!this.inicio?.estado.hablando || this.laTormentaHabla;
+    const veces = habla ? 1 : Math.min(Math.max(this.aceleracion, deLaEscena), caben);
     /*
      * **Con el modo inicio esperando, el mundo no da ni un paso**: se mira lo
      * que hace quien juega y se pinta el mismo mundo. Ver `esperarAlInicio`.
      */
+    const empiezaElMundo = performance.now();
+    let dados = 0;
     if (this.inicioCongelado) this.esperarAlInicio(real);
     else
       for (let i = 0; i < veces; i++) {
         this.unPaso(real);
-        // Despierta a media tanda: lo que queda, a su ritmo.
+        dados++;
+        /*
+         * **El reloj de quien juega**: lo que habría durado este paso en su
+         * pantalla, con el reloj del juego sin acelerar. Es lo que mide el
+         * banco para saber cuánto dura el vuelo con la siesta y el botón.
+         */
+        this.relojDeQuienJuega += real / (habla ? 1 : Math.min(deLaEscena, caben));
+        // Despierta, o se para el botón, a media tanda: lo que queda, a su ritmo.
         if (duerme && !this.escenaDuerme) break;
+        if (adelanta && !this.escenaAdelanta) break;
       }
+    const empiezaElDibujo = performance.now();
     // Lo señalado dura lo que dura una frase: con el reloj de pared, como la voz.
     this.nombrado.paso(real);
     this.ponerElAroDelPapi();
     this.pintarLaSiesta(real);
+    this.ponerElBotonDeAdelantar();
     if (!this.siestaTapa) this.pintar();
+    this.medirElAdelanto(real, dados, empiezaElDibujo - empiezaElMundo, performance.now() - empiezaElDibujo, adelanta);
     this.medidor.update(real);
   };
+
+  /** Si el botón ⏩ de la escena de pasaje está adelantando el vuelo. */
+  private get escenaAdelanta(): boolean {
+    return this.inicio instanceof VueloDePasaje && this.inicio.adelantaAhora;
+  }
+
+  /**
+   * **Lo que cuesta un fotograma**, ms, por partes: un paso del mundo y el
+   * dibujo, medidos en esta máquina y suavizados. Y lo que se ve adelantando,
+   * para el banco: fotogramas, su tiempo de pared y cuántos se pasaron de lo
+   * que da sesenta por segundo, con las veces de cada uno.
+   */
+  private costeDeUnPaso = 1;
+  private costeDelDibujo = 8;
+  /**
+   * **Y lo que tardan de verdad los fotogramas adelantando**, s, y el tope que
+   * dejan: el dibujo se mide en el procesador, y si lo que no da abasto es la
+   * tarjeta, solo lo dice el reloj entre fotogramas. Si pasa de lo que da
+   * cincuenta por segundo, se baja un escalón hasta que se suelte el botón.
+   */
+  private cuadroAdelantando = 1 / 60;
+  private topeDelAdelanto: number = VECES_DEL_ADELANTO[0];
+  private relojDeQuienJuega = 0;
+  private readonly medidaDelAdelanto = { cuadros: 0, pared: 0, lentos: 0, porVeces: {} as Record<string, number> };
+
+  private medirElAdelanto(real: number, pasos: number, mundo: number, dibujo: number, adelanta: boolean): void {
+    if (pasos > 0) this.costeDeUnPaso += (mundo / pasos - this.costeDeUnPaso) * 0.1;
+    if (!this.siestaTapa) this.costeDelDibujo += (dibujo - this.costeDelDibujo) * 0.1;
+    if (!adelanta) {
+      this.cuadroAdelantando = 1 / 60;
+      this.topeDelAdelanto = VECES_DEL_ADELANTO[0];
+      return;
+    }
+    this.cuadroAdelantando += (real - this.cuadroAdelantando) * 0.1;
+    if (this.cuadroAdelantando > 1 / 50) {
+      this.topeDelAdelanto = Math.max(VECES_DEL_ADELANTO[VECES_DEL_ADELANTO.length - 1] ?? 2, this.topeDelAdelanto / 2);
+      this.cuadroAdelantando = 1 / 60;
+    }
+    const m = this.medidaDelAdelanto;
+    m.cuadros++;
+    m.pared += real;
+    if (real > 1 / 50) m.lentos++;
+    m.porVeces[pasos] = (m.porVeces[pasos] ?? 0) + 1;
+  }
+
+  /**
+   * **Las veces del botón ⏩**: las más que quepan en `CUADRO_QUE_CABE` con lo
+   * que cuestan aquí un paso y el dibujo, y menos si las teselas de ortofoto
+   * no llegan. Ocho si da, cuatro si no, y dos como poco: así va bien en el
+   * portátil del colegio y en la tablet de gama media, cada uno a lo suyo.
+   */
+  private vecesDelAdelanto(): number {
+    const bajando = this.teselasDeOrtofoto?.estado().bajando ?? 0;
+    const tope = Math.min(this.topeDelAdelanto, bajando > 2 * TESELAS_QUE_ESPERAN ? 2 : bajando > TESELAS_QUE_ESPERAN ? 4 : 8);
+    for (const v of VECES_DEL_ADELANTO)
+      if (v <= tope && v * this.costeDeUnPaso + this.costeDelDibujo <= CUADRO_QUE_CABE) return v;
+    return VECES_DEL_ADELANTO[VECES_DEL_ADELANTO.length - 1] ?? 2;
+  }
+
+  /**
+   * **El botón ⏩ en la pantalla**: sale cuando la escena dice que se puede
+   * adelantar, y mientras adelanta se ve correr. Ver `adelanto` en
+   * `flight/inicio-pasaje.ts`.
+   */
+  private ponerElBotonDeAdelantar(): void {
+    const a = this.inicio instanceof VueloDePasaje ? this.inicio.adelanto : null;
+    this.hud.ponerAdelantar(a ? { sale: a.sale, adelantando: a.adelantando } : null);
+  }
 
   /** Si Ara duerme ahora, en la escena de pasaje. Ver `flight/inicio-pasaje.ts`. */
   private get escenaDuerme(): boolean {
