@@ -350,6 +350,118 @@ Teide» no le dice nada. Se presenta antes de decirlo.
   novecientos metros sobre el campo —1.532 m, unos cinco mil pies— y sobre
   el mar lo que falta hasta abajo es la altitud. Ver `TECHO_DE_HOY`.
 
+### La vuelta en la pista de La Palma · `inicio.ara.pasaje.vueltaEnPista`, `inicio.mama.pasaje.vueltaEnPista` y `.permisoDeVuelta`
+
+Punto 300. Mirado en el AIP de España (ENAIRE), aeródromo de La Palma, antes
+de escribir nada:
+
+- **Las salidas están todas en la mitad sur.** La pista 18/36 mide 2.258 m
+  —45 de ancho—, y a ella se entra y se sale por las calles A, B y C (2.20,
+  20.5.3: «Entry and exit for RWY 18/36 via TWY A, B and C»). Por las
+  distancias desde intersección de la 2.13 —«36 INT A» con 1.693 m por delante
+  y «36 INT C» con 1.093— y la carta, la A y la B quedan a unos 370 y 550 m
+  del umbral desplazado de la 36, y la C a unos 960. Al norte de la C no hay
+  ninguna calle: la paralela solo corre por la mitad sur. Aterrizando por la
+  36, que es la preferente, un reactor que no frena a tiempo para la C ya no
+  tiene salida por delante. — AIP España, AD 2-GCLA, AIRAC AMDT 09/26 (en
+  vigor desde el 1-oct-2026), 2.13 y 2.20,
+  [LE_AD_2_GCLA_en.pdf](https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCLA/LE_AD_2_GCLA_en.pdf).
+- **En la punta hay un ensanche para girar.** La carta del aeródromo dibuja
+  en los dos extremos de la pista una plataforma de viraje, con la raya
+  amarilla que se sigue para dar la vuelta, y la 2.15 dice que va iluminada
+  —«LED lighting system in edge and centre line of the turn pad»—. — AIP
+  España, AD 2-GCLA ADC 1.1, AIRAC AMDT 03/26 (en vigor desde el 16-abr-2026),
+  [LE_AD_2_GCLA_ADC_1_en.pdf](https://aip.enaire.es/AIP/contenido_AIP/AD/AD2/GCLA/LE_AD_2_GCLA_ADC_1_en.pdf);
+  y la 2.15 del AD 2-GCLA.
+- **Y la vuelta se da allí.** «All aircraft, except AT72, CN35, C295 and
+  those whose wingspan is less than 27.05 m, must accomplish back-track at
+  the end of the runway by following the taxiing guidance markings». — AD
+  2-GCLA, 2.20. El JAZ 90, que tiene la envergadura de un Embraer 170 —26 m—,
+  queda justo por debajo: la norma no le obliga a ir hasta la punta, y podría
+  girar sobre la pista, que tiene 45 m. Ir hasta el ensanche y seguir su raya
+  es lo que hacen allí los reactores, y lo que hace el juego: el JAZ 90 rueda
+  hasta la punta, gira y vuelve por la pista hasta la C. Ver
+  `scenarios.ts` y `world/plan-de-vuelo.ts`.
+- **Ir por la pista al revés pide permiso.** «All ground movements of
+  aircraft […] in the manoeuvring area are subject to prior ATC clearance».
+  — AD 2-GCLA, 20.1.1 A. Con su fraseología: «REQUEST BACKTRACK», «BACKTRACK
+  APPROVED», que se colaciona como cualquier permiso para pisar una pista. Y
+  con un avión en la pista nadie cruza el umbral para aterrizar hasta que la
+  deja libre. — OACI, PANS-ATM (Doc 4444), 16.ª ed., 2016: 12.3.4.7, 4.5.7.5.1
+  b) y 7.10.1.
+- **Por qué la explica la comandante, y cuándo.** En la pista, con ella
+  ocupada, la cabina de mando está en lo suyo —la cabina estéril— y la
+  tripulación de cabina, sentada; así que Ara lo nota al girar, y la
+  comandante lo cuenta por la megafonía en cuanto la deja libre, como la
+  reversa.
+
+### Al llegar al puesto: el cinturón hasta que se apaga la luz · `inicio.ara.pasaje.seLevantan`, `.luzApagada` y `inicio.tripulacion.pasaje.cerca.gracias`, `.maleteros` y `.seria`
+
+Punto 303.
+
+- **El cinturón puesto rodando**: «Before take-off and landing, and during
+  taxiing […] the commander shall be satisfied that each passenger on board
+  occupies a seat […] with his/her safety belt […] properly secured». —
+  Reglamento (UE) n.º 965/2012, anexo IV, CAT.OP.MPA.225(b)(1), en las
+  *Easy Access Rules for Air Operations* de EASA.
+- **Hasta que el avión se para y se apaga la luz**, y **cuidado con los
+  compartimentos de arriba, que el equipaje se pudo mover**: es lo que dicen
+  todas las tripulaciones al llegar, y ya lo dice el anuncio de la
+  tripulación de esta escena. Ver las fuentes en
+  `src/audio/anuncio-tras-la-toma.ts`.
+- **La tripulación de cabina, sentada y atada**: en las fases críticas
+  —el aterrizaje con su carrera dentro— cada tripulante va sentado en su
+  puesto y no hace nada que no sea la seguridad del avión
+  (CAT.OP.MPA.210(b)), y atado (CAT.OP.MPA.225(a)(1)). Hasta parar en el
+  puesto es lo que piden los procedimientos de las compañías, con la luz del
+  cinturón encendida; por eso no se levantan a decírselo a nadie y lo
+  recuerda el altavoz.
+- **La luz se apaga en el puesto**, con el avión parado y los motores
+  apagados, y la apaga la comandante: ver `flight/cinturon.ts`.
+
+### Lo que sabe hacer la tripulación de cabina · `inicio.tripulacion.pasaje.cerca.oficio1` y `.oficio2`
+
+Punto 303: «la gente se cree que son camareras, y saben hacer RCP en vuelo,
+atender urgencias, apagar un fuego en cabina…» (Enrique).
+
+- **El certificado europeo de tripulante de cabina** lleva un curso inicial
+  con examen cuyo programa está en el apéndice 1 de la Parte CC. — Reglamento
+  (UE) n.º 1178/2011, anexo V (Parte CC), CC.TRA.220 y apéndice 1,
+  introducidos por el Reglamento (UE) n.º 290/2012. Leído en el texto
+  consolidado que publica
+  [legislation.gov.uk](https://www.legislation.gov.uk/eur/2011/1178/annex/V)
+  —el de la UE en el Reino Unido, con las mismas palabras en estos puntos— y
+  en la FAQ de EASA
+  [«What are the requirements for cabin crew fire/smoke training?»](https://www.easa.europa.eu/en/the-agency/faqs/fire-and-smoke-training).
+  EUR-Lex no se dejó leer desde aquí. Lo que se cuenta:
+  - **primeros auxilios y RCP**: 5.3 y 5.4 —con el infarto, el atragantamiento
+    o el parto entre las urgencias en vuelo— y 5.6, «practical
+    cardio-pulmonary resuscitation training by each cabin crew member using a
+    specifically designed dummy»;
+  - **fuego y humo**: 8.4 y 8.5, las clases de fuego y sus extintores, y
+    «practical training in fire-fighting and in the donning and use of smoke
+    protection equipment used in aviation» —la capucha antihumo—;
+  - **evacuación**: 4.6, «methods used to motivate passengers and the crowd
+    control necessary to expedite an emergency evacuation»;
+  - **amerizaje y chalecos**: 9.2, «water survival training which shall
+    include the actual donning and use of personal flotation equipment in
+    water».
+- **El desfibrilador a bordo**: «automated external defibrillator (AED) on
+  all aircraft required to carry at least one cabin crew». — AMC1
+  CAT.IDE.A.220(a)(4)(i), ED Decision 2021/005/R, en las *Easy Access Rules
+  for Air Operations*. El JAZ 90 lleva tripulación de cabina, así que lo
+  lleva.
+- **Noventa segundos**: «For aeroplanes having a seating capacity of more
+  than 44 passengers, it must be shown that the maximum seating capacity
+  […] can be evacuated from the aeroplane to the ground under simulated
+  emergency conditions within 90 seconds». — EASA, CS 25.803(c),
+  [Easy Access Rules for Large Aeroplanes (CS-25)](https://www.easa.europa.eu/en/document-library/easy-access-rules/online-publications/easy-access-rules-large-aeroplanes-cs-25?page=27).
+  Un reactor regional como el JAZ 90 pasa de los 44 asientos.
+- **«Lo practicamos todos los años»**: el entrenamiento periódico es anual y
+  lleva, cada año, ponerse el chaleco y la capucha antihumo, los
+  procedimientos de emergencia y de evacuación y los primeros auxilios. —
+  Reglamento (UE) n.º 965/2012, anexo III, ORO.CC.140(a) y (d)(1).
+
 ---
 
 ## Lo que se miró y no entra
@@ -370,3 +482,5 @@ Teide» no le dice nada. Se presenta antes de decirlo.
 - **El lago de Itaipú y los Saltos del Guairá.** Se probó como sitio aparte y
   desde los reactores no se ve nunca: queda detrás del ala o en la cabina
   estéril de Guaraní.
+- **Por qué suena música al embarcar y al llegar.** Se oye en muchos vuelos,
+  pero no hay una fuente que diga el porqué: no se explica en la escena.

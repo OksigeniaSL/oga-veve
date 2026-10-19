@@ -157,6 +157,24 @@ describe("el cartel del cinturón", () => {
     expect(c.comoEsta).toBe("auto");
   });
 
+  it("en el puesto, con el avión parado, lo apaga la comandante; y en ningún otro sitio", () => {
+    /*
+     * Punto 303: Ara sigue con el cinturón «hasta que se apague la luz», y la
+     * luz se apaga en el puesto, con los motores parados, cuando la apaga la
+     * comandante. Antes, ni parado en el puesto: el cartel no se apagaba nunca.
+     */
+    const c = new Cinturon();
+    expect(c.paso(momento("apagado"))).toBe(true);
+    expect(c.paso({ ...momento("apagado"), apagadoEnElPuesto: true })).toBe(false);
+    expect(c.paso({ ...momento("en-puesto"), apagadoEnElPuesto: true })).toBe(false);
+    // Rodando o en la pista no vale: ahí el cartel va puesto pase lo que pase.
+    for (const f of ["a-plataforma", "abandonando", "rodando", "arrancando"])
+      expect(c.paso({ ...momento(f), apagadoEnElPuesto: true }), f).toBe(true);
+    // Y el interruptor manda sobre todo, como siempre.
+    c.ponerMando("puesto");
+    expect(c.paso({ ...momento("apagado"), apagadoEnElPuesto: true })).toBe(true);
+  });
+
   it("y en una avioneta sin pasaje no hay cartel", () => {
     const c = new Cinturon();
     expect(c.paso({ ...momento("despegando"), conPasaje: false })).toBe(false);

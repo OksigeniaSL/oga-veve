@@ -90,6 +90,14 @@
  *   de bajar, sin perder nada de seguridad. Lo que pasa durmiendo no cuenta
  *   como silencio. Con capturas del fundido, del sueño con el mapa a mitad de
  *   la siesta y del despertar.
+ * - **La llegada a La Palma** (puntos 300 y 303): que Ara nota la vuelta en
+ *   la pista cuando el avión de verdad gira —medido con su rumbo respecto a
+ *   la pista y lo que se aparta del eje—, con el avión visto por fuera, y que
+ *   la comandante la explica al dejar la pista; si no hay vuelta, que no se
+ *   cuenta. Que en el puesto se oyen hebillas y gente levantándose con la luz
+ *   del cinturón encendida, que Ara no se suelta hasta que se apaga —el
+ *   cartel de la pantalla— y que lo que sabe hacer la tripulante sale una vez
+ *   y sin pisar a nadie.
  *
  * Sin voces del sistema —el banco no las tiene, como el Brave de Enrique—,
  * con las tomas del pack: cada frase dura lo que dura su grabación, y **todo
@@ -208,6 +216,10 @@ const leer = (page) =>
           return { que: el.className?.baseVal ?? el.className ?? el.tagName, left: r.left, top: r.top, right: r.right, bottom: r.bottom };
         }),
       pantalla: { ancho: innerWidth, alto: innerHeight },
+      // El cartel del cinturón de la cabina: encendido o no. Ver `ponerCinturon` en `ui/hud.ts`.
+      cartel: !(document.querySelector('[data-hud="cinturon"]')?.hidden ?? true),
+      // Y los golpes sueltos que han sonado desde la vez anterior: las hebillas, la gente.
+      tocados: o?.ruidosTocados?.() ?? [],
     };
   });
 
@@ -243,6 +255,11 @@ const MOMENTOS = [
   "aterrizando",
   "toma",
   "llegada",
+  "impacientes",
+  "seLevantan",
+  "luz",
+  "suelto",
+  "gracias",
   "puesto",
 ];
 
@@ -359,6 +376,14 @@ async function elVuelo() {
   const laminaPisa = new Set();
   /** Las veces que la lámina estaba puesta con algo nombrado a la vista: lo que se pudo medir. */
   const laminaConNombrado = new Set();
+  /*
+   * **La llegada** (puntos 300 y 303): dónde va el avión respecto a la pista
+   * de llegada —lo que se aparta del eje y cuánto se ha dado la vuelta—, la
+   * fase, el cartel del cinturón y lo que suena de la gente, con la hora de
+   * la escena.
+   */
+  const llegada = [];
+  const gente = [];
   const t0 = Date.now();
 
   while (Date.now() - t0 < TOPE_S * 1000) {
@@ -423,6 +448,13 @@ async function elVuelo() {
     // En el puesto: el avión parado en su sitio —la fase lo dice—, o los motores apagados.
     if (m?.suena && despego && (tramo === "apagado" || v.fase === "en-puesto" || v.fase === "apagado"))
       musica.enElPuesto.push(`${tramo}/${v.fase} a los ${e.segundos.toFixed(0)} s`);
+    // ── La llegada: la vuelta en la pista, el cartel y la gente ──
+    if (["frenando", "al-puesto", "aparcado", "apagado"].includes(tramo)) {
+      const l = i.lecturaDeLinea;
+      const dif = l ? Math.abs((((l.rumbo - l.pista.rumbo) % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI) - Math.PI) : null;
+      llegada.push({ t: e.segundos, tramo, fase: v.fase, lado: l ? Math.abs(l.pista.lado) : null, vuelta: dif, cartel: v.cartel, plano: i.planoVisto });
+    }
+    for (const q of v.tocados ?? []) if (q === "hebilla" || q === "levantarse") gente.push({ t: e.segundos, que: q, tramo });
     // ── Lo que se oye cambiar ──
     if (v.gasQueSuena !== null) oido.push({ t: e.segundos, gas: v.gasQueSuena });
     altitudes.push({ t: e.segundos, altitud });
@@ -543,6 +575,11 @@ async function elVuelo() {
       if (en("senalero", sinVelo && i.planoVisto === "fuera-senalero" && e.segundos - e.planoDesde > 4)) await foto(page, "fuera-senalero");
       if (en("senalero-alto", sinVelo && i.planoVisto === "fuera-senalero" && (tramo === "aparcado" || v.velocidad < 0.5) && e.segundos - e.planoDesde > 6))
         await foto(page, "fuera-senalero-alto");
+      // Lo del 19-10: la vuelta en la punta de la pista, y la gente que se levanta en el puesto.
+      if (en("raqueta", sinVelo && i.planoVisto === "fuera-raqueta" && e.segundos - e.planoDesde > 3)) await foto(page, "fuera-raqueta");
+      if (en("raqueta-vuelta", sinVelo && i.planoVisto === "fuera-raqueta" && e.segundos - e.planoDesde > 12)) await foto(page, "fuera-raqueta-vuelta");
+      if (en("se-levantan", suena("inicio.ara.pasaje.seLevantan"))) await foto(page, "se-levantan");
+      if (en("luz-apagada", suena("inicio.ara.pasaje.luzApagada"))) await foto(page, "luz-apagada");
       // Y cada ilustración, la primera vez que queda puesta.
       const ilustrada = i.ventanita?.donde ? /^ilustracion:(.+)$/.exec(i.ventanita.sitio ?? "")?.[1] : null;
       if (ilustrada && en(`ilustracion-${ilustrada}`, true)) await pausa(800).then(() => foto(page, `ilustracion-${ilustrada}`));
@@ -1094,6 +1131,101 @@ async function elVuelo() {
     vistos.has("fuera-tren") && vistos.has("fuera-senalero"),
     `vistos: ${[...vistos].filter((p) => p === "fuera-tren" || p === "fuera-senalero").join(", ") || "ninguno"}`,
   );
+  // ── La llegada a La Palma (punto 300): la vuelta en la pista ──
+  {
+    const GRADO = Math.PI / 180;
+    const rodando = llegada.filter((x) => x.tramo === "al-puesto");
+    // Lo que de verdad hizo el avión: empezar a girar cerca del eje, y volver por la pista.
+    const k = rodando.findIndex((x) => x.vuelta !== null && x.vuelta > 35 * GRADO && x.lado < 45);
+    const giro = k >= 0 ? rodando[k] : null;
+    // Lo que se muestrea va a saltos con el juego acelerado: el giro empezó después de la muestra anterior.
+    const antesDelGiro = k > 0 ? rodando[k - 1].t : giro?.t ?? null;
+    const remonta = rodando.find((x) => x.vuelta !== null && x.vuelta > 150 * GRADO && x.lado < 25) ?? null;
+    const kDeja = giro ? llegada.findIndex((x) => x.t > giro.t && x.fase === "a-plataforma") : -1;
+    const deja = kDeja >= 0 ? llegada[kDeja] : null;
+    const antesDeDejar = kDeja > 0 ? llegada[kDeja - 1].t : deja?.t ?? null;
+    const nota = registro.find((d) => d.clave === "inicio.ara.pasaje.vueltaEnPista");
+    const explica = registro.find((d) => d.clave === "inicio.mama.pasaje.vueltaEnPista");
+    const permiso = registro.find((d) => d.clave === "inicio.mama.pasaje.permisoDeVuelta");
+    // Lo que se aparta del eje girando, en la pista: hasta dejarla.
+    const girando = rodando.filter((x) => x.vuelta !== null && x.vuelta > 35 * GRADO && (!deja || x.t < deja.t));
+    const maxLado = Math.max(0, ...girando.map((x) => x.lado));
+    console.log(
+      `  la vuelta en la pista: ${giro ? `empieza a girar a los ${giro.t.toFixed(0)} s (muestra anterior ${antesDelGiro?.toFixed(0)} s)` : "no gira"} · ${remonta ? `remonta a los ${remonta.t.toFixed(0)} s` : "no remonta"} · deja la pista a los ${deja?.t?.toFixed(0) ?? "—"} s · Ara a los ${nota?.desde?.toFixed(0) ?? "—"} s · la comandante a los ${explica?.desde?.toFixed(0) ?? "—"} y ${permiso?.desde?.toFixed(0) ?? "—"} s`,
+    );
+    comprobar(
+      "la vuelta en la pista: Ara la nota cuando el avión de verdad gira, con el avión por fuera, y la comandante la explica al dejar la pista",
+      remonta
+        ? !!giro &&
+            !!nota &&
+            nota.desde >= (antesDelGiro ?? Infinity) - 0.5 &&
+            !!deja &&
+            nota.desde < deja.t &&
+            vistos.has("fuera-raqueta") &&
+            ventanitas.has("dibujo:vuelta-en-pista") &&
+            !!explica &&
+            !!permiso &&
+            explica.desde >= (antesDeDejar ?? Infinity) - 0.5 &&
+            explica.desde > nota.desde &&
+            permiso.desde > explica.desde &&
+            [nota, explica, permiso].every((d) => registro.filter((x) => x.clave === d.clave).length === 1)
+        : !nota && !explica && !permiso,
+      remonta
+        ? `gira a los ${giro?.t?.toFixed(0)} s, se aparta ${maxLado.toFixed(0)} m del eje girando · Ara a los ${nota?.desde?.toFixed(0) ?? "—"} s · fuera-raqueta ${vistos.has("fuera-raqueta")} · deja la pista a los ${deja?.t?.toFixed(0) ?? "—"} s · la comandante a los ${explica?.desde?.toFixed(0) ?? "—"} s`
+        : `sin vuelta en la pista: ${nota || explica ? "¡y se contó!" : "y no se cuenta"}`,
+    );
+  }
+  // ── Los que se levantan antes de tiempo (punto 303): Ara en su asiento hasta que se apaga la luz ──
+  {
+    const despego = tramos.find((x) => x.tramo === "carrera")?.t ?? 0;
+    const kLuz = llegada.findIndex((x) => x.t > despego && (x.tramo === "apagado" || x.tramo === "aparcado") && !x.cartel);
+    const luz = kLuz >= 0 ? llegada[kLuz] : null;
+    const antesDeLaLuz = kLuz > 0 ? llegada[kLuz - 1].t : null;
+    const encendidaRodando = llegada.filter((x) => x.tramo === "al-puesto").every((x) => x.cartel);
+    const dicha = (c) => registro.find((d) => d.clave === c);
+    const seLevantan = dicha("inicio.ara.pasaje.seLevantan");
+    const todavia = dicha("inicio.ara.pasaje.cinturonQuieto");
+    const suelta = dicha("inicio.ara.pasaje.luzApagada");
+    const hebillasAntes = gente.filter((g) => g.que === "hebilla" && luz && g.t <= luz.t);
+    const levantanAntes = gente.filter((g) => g.que === "levantarse" && luz && g.t <= luz.t);
+    const despues = gente.filter((g) => luz && g.t > luz.t);
+    console.log(
+      `  el puesto: la luz se apaga a los ${luz?.t?.toFixed(0) ?? "—"} s (${luz?.tramo ?? "—"}) · ${hebillasAntes.length} hebillas y ${levantanAntes.length} de pie antes, la primera a los ${hebillasAntes[0]?.t?.toFixed(0) ?? "—"} s · ${despues.length} ruidos de la gente después · Ara: «se levantan» a los ${seLevantan?.desde?.toFixed(0) ?? "—"} s, «todavía no» a los ${todavia?.desde?.toFixed(0) ?? "—"} s, se suelta a los ${suelta?.desde?.toFixed(0) ?? "—"} s`,
+    );
+    comprobar(
+      "Ara no se levanta ni se suelta antes de que se apague la luz: la oye a la gente y espera, y se suelta con el ding",
+      !!luz &&
+        encendidaRodando &&
+        !!seLevantan &&
+        !!todavia &&
+        !!suelta &&
+        hebillasAntes.length >= 2 &&
+        hebillasAntes[0].t <= seLevantan.desde &&
+        todavia.desde > seLevantan.desde &&
+        (todavia.hasta ?? Infinity) <= luz.t + 0.5 &&
+        suelta.desde >= (antesDeLaLuz ?? Infinity) &&
+        suelta.desde >= luz.t - 0.5 &&
+        despues.some((g) => g.que === "hebilla") &&
+        registro.filter((d) => d.clave === "inicio.ara.pasaje.cinturonQuieto").length === 1,
+      `luz apagada a los ${luz?.t?.toFixed(0) ?? "—"} s · encendida rodando ${encendidaRodando} · hebillas antes ${hebillasAntes.length} · «todavía no» ${todavia?.desde?.toFixed(0) ?? "—"}–${todavia?.hasta?.toFixed(0) ?? "—"} s · se suelta ${suelta?.desde?.toFixed(0) ?? "—"} s`,
+    );
+    // ── Y lo que es la tripulación: una vez, sin pisar a nadie ──
+    const oficio = ["inicio.tripulacion.pasaje.cerca.oficio1", "inicio.tripulacion.pasaje.cerca.oficio2", "inicio.ara.pasaje.uniforme"].map((c) =>
+      registro.filter((d) => d.clave === c),
+    );
+    const pisa = oficio.flat().some((d) => registro.some((x) => x !== d && x.desde < (d.hasta ?? Infinity) - 1e-6 && (x.hasta ?? Infinity) > d.desde + 1e-6));
+    const tramoDe = (s) => [...tramos].reverse().find((x) => x.t <= s)?.tramo ?? "?";
+    const delPuesto = ["gracias", "maleteros", "seria"].map((c) => dicha(`inicio.tripulacion.pasaje.cerca.${c}`));
+    comprobar(
+      "lo que sabe hacer la tripulante sale una vez y no pisa a nadie; y en el puesto, las gracias, los compartimentos y su cara seria",
+      oficio.every((x) => x.length === 1) &&
+        !pisa &&
+        delPuesto.every((d) => !!d && !!luz && d.desde > luz.t) &&
+        ventanitas.has("dibujo:tripulacion") &&
+        ventanitas.has("dibujo:maletero"),
+      `${oficio.map((x) => `${x[0]?.clave.split(".").pop() ?? "?"} ×${x.length}${x[0] ? ` a los ${x[0].desde.toFixed(0)} s (${tramoDe(x[0].desde)})` : ""}`).join(" · ")} · pisa: ${pisa} · en el puesto: ${delPuesto.map((d) => d?.desde?.toFixed(0) ?? "—").join(", ")} s`,
+    );
+  }
   if (e) console.log(`  la escena duró ${e.segundos.toFixed(0)} s de reloj del juego`);
   comprobar("sin errores", errores.length === 0, errores[0] ?? "limpio");
   await ctx.close();

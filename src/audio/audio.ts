@@ -37,6 +37,7 @@ import {
   type Oido,
 } from "./ruidos";
 import { Enchufe, RuidosEnElAire, type Medida } from "./ruidos-en-el-aire";
+import type { RuidoDeLaGente } from "./gente-del-pasaje";
 import {
   AGUDA,
   GRAVE,
@@ -1115,6 +1116,15 @@ export class Audio {
   /** Y los golpes sueltos que han sonado desde la última vez. Para el banco. */
   ruidosTocados(): string[] {
     return this.ruidos?.sacarTocados() ?? [];
+  }
+
+  /**
+   * **Un ruido de la gente de la cabina**: una hebilla o alguien que se
+   * levanta, al llegar al puesto. Lo pide `game.ts` con lo que dice la
+   * escena de pasaje. Ver `audio/gente-del-pasaje.ts`.
+   */
+  ruidoDeLaGente(r: RuidoDeLaGente): void {
+    this.ruidos?.tocarLaGente(r);
   }
 
   /**

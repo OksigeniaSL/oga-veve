@@ -39,6 +39,7 @@
  * acaba de pisar el morro. Un solo nodo de fuente y una línea de retardo.
  */
 
+import { muestraDeHebilla, muestraDeLevantarse, type RuidoDeLaGente } from "./gente-del-pasaje";
 import type { Niveles, Suceso } from "./ruidos";
 
 /** El umbral de los granos: por debajo, nada; por encima, una gota. */
@@ -99,6 +100,12 @@ export const ESCALA = {
   aire: 0.28,
   chirrido: 0.35,
   golpe: 0.6,
+  /*
+   * La gente de la cabina, al llegar al puesto: bajito, que es lo que pasa
+   * alrededor y no lo que se cuenta. Ver `audio/gente-del-pasaje.ts`.
+   */
+  hebilla: 0.32,
+  levantarse: 0.26,
 } as const;
 
 /** Las barridas por segundo del ciclo de limpias grabado en memoria. */
@@ -548,6 +555,32 @@ export class RuidosEnElAire {
       return;
     }
     this.golpe(this.golpeGrabado, 1.4, s.fuerza * ESCALA.golpe * 0.6, ahora);
+  }
+
+  /**
+   * **Un ruido de la gente de la cabina**: una hebilla que se suelta o alguien
+   * que se levanta (punto 303). Por dentro del avión, así que no pasa por la
+   * pared. Cada uno con su tono, un poco distinto, que no son la misma hebilla
+   * ni el mismo asiento. Las muestras se hacen la primera vez que suenan.
+   */
+  tocarLaGente(r: RuidoDeLaGente): void {
+    if (this.tocados.length < 50) this.tocados.push(r.que);
+    const fs = this.ctx.sampleRate;
+    const buffer =
+      r.que === "hebilla"
+        ? (this.hebillaGrabada ??= this.aBuffer(muestraDeHebilla(fs)))
+        : (this.levantarseGrabado ??= this.aBuffer(muestraDeLevantarse(fs)));
+    const tono = 0.9 + 0.2 * Math.random();
+    this.golpe(buffer, tono, r.fuerza * ESCALA[r.que], this.ctx.currentTime);
+  }
+
+  private hebillaGrabada: AudioBuffer | null = null;
+  private levantarseGrabado: AudioBuffer | null = null;
+
+  private aBuffer(muestras: Float32Array): AudioBuffer {
+    const b = this.ctx.createBuffer(1, muestras.length, this.ctx.sampleRate);
+    b.getChannelData(0).set(muestras);
+    return b;
   }
 
   /**

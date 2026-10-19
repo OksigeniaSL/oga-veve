@@ -78,7 +78,19 @@ export interface Momento {
    * mesitas. Ver `comandante.descenso` en `audio/megafonia.ts`.
    */
   readonly loEncendioLaComandante?: boolean;
+  /**
+   * **Y si la comandante ya lo apagó en el puesto**, con el avión parado y los
+   * motores apagados, que es cuando se apaga en cualquier vuelo: el *ding* que
+   * deja levantarse. Es un estado, no un suceso: mientras dure. Lo pone la
+   * escena de pasaje (punto 303), que es la que cuenta ese momento; ver el
+   * momento `luz` en `inicio-pasaje.ts`. Solo vale en el puesto: con el motor
+   * en marcha otra vez, el cartel vuelve.
+   */
+  readonly apagadoEnElPuesto?: boolean;
 }
+
+/** Las fases del puesto, con el avión ya parado en su sitio. Ver `Momento.apagadoEnElPuesto`. */
+const EN_EL_PUESTO: readonly Fase[] = ["en-puesto", "apagado"];
 
 /** Lo que el piloto ha decidido, si ha decidido algo. */
 export type Mando = "auto" | "puesto" | "quitado";
@@ -186,6 +198,7 @@ export class Cinturon {
     }
     if (this.mando === "puesto") return true;
     if (this.mando === "quitado") return false;
+    if (m.apagadoEnElPuesto && EN_EL_PUESTO.includes(m.fase)) return false;
 
     // La turbulencia, con su banda muerta: enciende alto y suelta bajo.
     if (m.movimiento >= SACUDE) this.sacudiendo = true;

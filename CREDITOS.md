@@ -487,7 +487,9 @@ escrita junto a su dato en `src/world/aves.ts`.
 En la escena «Viajá con Jazlyn», lo que explican la tripulación y la
 comandante —el cinturón, las salidas, las mascarillas, el chaleco, la tarjeta,
 el modo avión, la persiana, las nubes, el ala, el motor, el frío, las islas,
-el camino, el oído, las luces de la pista y los telescopios de La Palma— sale dibujado en la misma ventana
+el camino, el oído, las luces de la pista, los telescopios de La Palma, la
+vuelta en la pista de La Palma, los compartimentos de arriba y lo que sabe
+hacer la tripulación de cabina— sale dibujado en la misma ventana
 de cristal que las ilustraciones de las historias. **Están dibujados en el código**,
 en `src/ui/dibujos-del-pasaje.ts`, con formas y colores del juego: son
 nuestros, van con el código bajo Apache-2.0 y no traen nada de fuera, ni
@@ -705,6 +707,10 @@ Lo que está hecho así:
   cabina. El golpe del tren, el chirrido y el ciclo de los limpias son
   muestras, pero hechas aquí: se calculan al montar el sonido, con su fórmula
   a la vista.
+- **La gente de la cabina al llegar al puesto**, en el vuelo de pasaje: las
+  **hebillas** que se sueltan y los que **se levantan** del asiento — muestras
+  calculadas igual, en `src/audio/gente-del-pasaje.ts`, y tocadas por
+  `ruidos-en-el-aire.ts`.
 
 **Si algún día entra un sonido grabado** —un trueno, un motor de verdad—,
 entra con licencia verificable y nada más: **CC0 o CC BY**, con la dirección

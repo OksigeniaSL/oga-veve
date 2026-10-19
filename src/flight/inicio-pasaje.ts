@@ -135,6 +135,42 @@
  * alto de la subida, por encima del mar de nubes, y ahí es donde cabe la
  * siesta.
  *
+ * ## La vuelta en la pista de La Palma
+ *
+ * Punto 300. En La Palma las tres salidas de la pista —A, B y C— están en su
+ * mitad sur, y aterrizando por la 36 un reactor no frena a tiempo para la C:
+ * se pasa, y por delante ya no hay ninguna. Así que sigue hasta el final, da
+ * la vuelta en el ensanche que hay en la punta —la plataforma de viraje,
+ * pintada con su raya para seguirla— y vuelve por la misma pista hasta la C.
+ * Es lo que pide el AIP de La Palma a los aviones grandes, y lo que hace el
+ * JAZ 90 en el juego; ver `docs/historias/fuentes.md`. Ara lo nota cuando de
+ * verdad gira, con el avión visto por fuera; y como en la pista no puede
+ * explicarlo nadie —la cabina de mando, en lo suyo con la pista ocupada; la
+ * tripulante, en su asiento—, lo cuenta la comandante en cuanto la deja
+ * libre: por qué se da la vuelta, que en la punta hay un ensanche para eso y
+ * que ir por la pista al revés pide permiso a la torre, porque mientras tanto
+ * nadie puede aterrizar. Ver `daLaVuelta` y las charlas `vueltaEnPista` y
+ * `porQueLaVuelta`.
+ *
+ * ## Los que se levantan antes de tiempo, y lo que es la tripulación
+ *
+ * Punto 303. Al pararse en el puesto, alrededor se oyen hebillas y gente
+ * levantándose, bajito, con la luz del cinturón todavía encendida; Ara lo oye
+ * y sigue en su asiento con el cinturón puesto. La luz se apaga cuando la
+ * comandante la apaga, con los motores ya parados —su *ding*, y el cartel que
+ * se va—, y entonces Ara se lo suelta y la tripulante se lo agradece: el
+ * avión podía frenar de golpe, y lo de los compartimentos de arriba se pudo
+ * mover en el vuelo. Y explica su cara seria: está trabajando, que lo suyo es
+ * la seguridad, y va con el cinturón puesto hasta que el avión para; por eso
+ * lo recuerda el altavoz. Sin regañar a nadie: se enseña con el ejemplo.
+ *
+ * Y lo que saben hacer de verdad —primeros auxilios y RCP con el desfibrilador
+ * de a bordo, fuego y humo, evacuar el avión en noventa segundos, los
+ * chalecos en el agua— lo cuenta la tripulante en el tramo tranquilo de la
+ * bajada, una vez; y si allí no hubo hueco, en el puesto. Es la misma lección
+ * que la de los galones: el uniforme no es para servir, es responsabilidad.
+ * Ver los momentos `impacientes` a `gracias` y la charla `tcpOficio`.
+ *
  * ## Quién contesta, y cómo
  *
  * **La comandante no le contesta a un pasajero por la megafonía**, y aquí no
@@ -157,6 +193,7 @@
  * `cameras/escena.ts`— y lo dibuja `ui/inicio.ts`.
  */
 
+import type { GenteDeLaCabina } from "../audio/gente-del-pasaje";
 import { seLePasoElMomento } from "../audio/megafonia";
 import type { DibujoDelPasaje } from "../ui/dibujos-del-pasaje";
 import type { IlustracionDelPasaje } from "../ui/ilustraciones";
@@ -207,6 +244,9 @@ export type QueMirar = "ventanilla" | "ala" | "motor" | "nubes" | "cinturon";
  * - **El tren desde abajo** —`fuera-tren`—, con las patas bajando y trabadas,
  *   y **el señalero** —`fuera-senalero`—, guiando el avión hasta pararlo:
  *   lo que desde el asiento no se ve y enseña qué pasa.
+ * - **La vuelta en la punta de la pista** —`fuera-raqueta`—, desde un lado y
+ *   en alto, quieta: el avión que gira en el ensanche del final y vuelve por
+ *   la pista. Desde la ventanilla solo se ve el suelo dando vueltas.
  */
 export type Plano =
   | "ventanilla"
@@ -221,7 +261,8 @@ export type Plano =
   | "fuera-pista"
   | "fuera-paisaje"
   | "fuera-tren"
-  | "fuera-senalero";
+  | "fuera-senalero"
+  | "fuera-raqueta";
 
 /** Si el plano es del avión por fuera. */
 export const esDeFuera = (p: Plano): boolean => p.startsWith("fuera-");
@@ -259,6 +300,8 @@ export const DURA_EL_PLANO: Readonly<Record<Plano, number>> = {
   "fuera-tren": 12,
   // Y el señalero, hasta parar el avión: lo devuelve a la ventanilla la despedida.
   "fuera-senalero": 45,
+  // La vuelta en la punta: el giro entero y el avión que echa a andar de vuelta.
+  "fuera-raqueta": 22,
 };
 
 export type MomentoDelPasaje =
@@ -289,6 +332,11 @@ export type MomentoDelPasaje =
   | "aterrizando"
   | "toma"
   | "llegada"
+  | "impacientes"
+  | "seLevantan"
+  | "luz"
+  | "suelto"
+  | "gracias"
   | "puesto"
   | "fin";
 
@@ -319,7 +367,9 @@ export type CharlaDelPasaje =
   | "ruedas"
   | "miro"
   | "cerquita"
-  | "cinturonQuieto"
+  | "vueltaEnPista"
+  | "porQueLaVuelta"
+  | "tcpOficio"
   | "despacito"
   | "repaso"
   | "meneo"
@@ -454,6 +504,15 @@ export interface LecturaDelPasaje {
    */
   readonly potencia?: PotenciaDeLinea;
   readonly conEstaPotencia?: number;
+  /**
+   * **Dónde va el avión respecto a la pista de llegada**, en tierra: lo que se
+   * aparta de su eje, m; lo que queda hasta su final en el sentido en que se
+   * aterrizó, m; y cuánto se ha dado la vuelta respecto a ese sentido, rad, de
+   * cero —hacia donde se aterrizó— a π —de vuelta por ella—. `null` en el
+   * aire. Sin esto —las pruebas que no lo miran—, no se nota ninguna vuelta.
+   * Ver `daLaVuelta`.
+   */
+  readonly enLaPista?: { readonly alEje: number; readonly hastaElFinal: number; readonly vuelta: number } | null;
 }
 
 /**
@@ -598,6 +657,13 @@ const BAJANDO = {
   papi: 66000,
   bano: 60000,
   estrellas: 54000,
+  /**
+   * **Lo que sabe hacer la tripulación** (punto 303), detrás de las estrellas:
+   * es el hueco callado más largo de la bajada que todavía tiene a la
+   * tripulante por el pasillo —medido en las pruebas, cincuenta y cinco
+   * segundos—, antes de las nubes y de preparar la cabina.
+   */
+  oficio: 50000,
 } as const;
 /** Lo que se calla la escena antes de que llegue la tripulante con el kit, s. */
 const CALLA_ANTES_DEL_KIT = 10;
@@ -622,6 +688,56 @@ const SIESTA_MINIMA = 40;
 const DESPIERTA_ANTES = 10;
 const DESPIERTA_ANTES_DE_BAJAR = 22;
 const LO_QUE_DURA_EL_BOSTEZO = 8;
+/**
+ * **La vuelta en la pista** (punto 300): cuándo se está dando. Ver `daLaVuelta`.
+ *
+ * - `EN_LA_PUNTA`, m hasta el final de la pista: el ensanche de viraje de La
+ *   Palma empieza a unos ciento cincuenta metros del final, y se le da margen.
+ * - `EMPIEZA_A_GIRAR`, rad: lo que se ha girado para decir que se gira.
+ * - `CERCA_DEL_EJE`, m: el ensanche llega a unos treinta del eje; la calle C,
+ *   que sale torciendo hacia la terminal a mitad de pista, se aparta más
+ *   antes de girar tanto, y además no está en la punta.
+ * - `DE_VUELTA`, rad, y `EN_EL_EJE`, m: ya mirando hacia atrás y por el eje,
+ *   que es remontar la pista esté donde esté la vuelta.
+ * - `PISTA_LIBRE`, m del eje: la pista dejada libre, lo mismo que en
+ *   `flight/vuelo.ts`.
+ */
+const EN_LA_PUNTA = 350;
+const EMPIEZA_A_GIRAR = 35 * GRADO;
+const CERCA_DEL_EJE = 45;
+const DE_VUELTA = 150 * GRADO;
+const EN_EL_EJE = 25;
+const PISTA_LIBRE = 75;
+/**
+ * **Si el avión está dando la vuelta en la pista**: girando en la punta, o ya
+ * de vuelta por ella. Lo que lo dice es el avión, no el plan: si frena a
+ * tiempo para la salida, no da ninguna vuelta y no se cuenta nada.
+ */
+export function daLaVuelta(l: LecturaDelPasaje): boolean {
+  const p = l.enLaPista;
+  if (!p || !l.enTierra) return false;
+  const enLaPunta = p.hastaElFinal < EN_LA_PUNTA && p.vuelta > EMPIEZA_A_GIRAR && p.alEje < CERCA_DEL_EJE;
+  return enLaPunta || (p.vuelta > DE_VUELTA && p.alEje < EN_EL_EJE);
+}
+/** Si el avión ya ha dejado la pista: por la fase del juego, o por lo lejos que va del eje. */
+const fueraDeLaPista = (l: LecturaDelPasaje): boolean =>
+  l.fase === "a-plataforma" || l.fase === "en-puesto" || l.fase === "apagado" || (l.enLaPista?.alEje ?? 0) > PISTA_LIBRE;
+/**
+ * **Los que se levantan antes de tiempo** (punto 303): los números.
+ *
+ * - `PARADO_DEL_TODO`, s parado en el puesto: el señalero acaba de cruzar los
+ *   bastones, y el plano suyo se queda a verlo antes de volver a la cabina.
+ * - `SE_OYEN_LAS_HEBILLAS`, s de los primeros clics hasta que Ara los nota:
+ *   primero se oye, y después se dice.
+ * - `APAGA_LA_LUZ`, s con los motores parados antes de que la comandante
+ *   apague la luz del cinturón: lo que tardan en pararse del todo.
+ * - `TRAS_EL_DING`, s del *ding* a que Ara se suelta: primero suena, y Ara
+ *   reacciona a lo que oye.
+ */
+const PARADO_DEL_TODO = 1.5;
+const SE_OYEN_LAS_HEBILLAS = 2.5;
+const APAGA_LA_LUZ = 3;
+const TRAS_EL_DING = 1.4;
 /** Lo que se queda el dibujo de la ventanita después de la última frase, s. */
 const SE_QUEDA_LA_VENTANITA = 2.5;
 /**
@@ -731,6 +847,29 @@ const contraElCristal = (l: Linea, e: VueloDePasaje): Linea =>
  */
 /** **El plop de los oídos, explicado** por la tripulante: ver el momento `tcpNubes`. */
 const EL_PLOP_EXPLICADO: readonly Linea[] = [conLaTripulante(tripulante("plop1")), conLaTripulante(tripulante("plop2"))];
+/**
+ * **Lo que sabe hacer la tripulante** (punto 303), con su dibujo: los
+ * primeros auxilios y el desfibrilador, el fuego con la capucha del humo,
+ * evacuar el avión en noventa segundos y los chalecos en el agua. Es lo que
+ * lleva el certificado de tripulante de cabina europeo y lo que se repasa
+ * cada año; ver `docs/historias/fuentes.md`. Contado como lo que sabe hacer,
+ * no como algo que vaya a pasar. Y Ara saca la lección de los galones: el
+ * uniforme es para cuidar.
+ */
+const EL_OFICIO: readonly Linea[] = [
+  con(tripulante("oficio1"), "tripulacion"),
+  con(tripulante("oficio2"), "tripulacion"),
+  con(ara("uniforme"), "tripulacion"),
+];
+/**
+ * **Y la vuelta en la pista, explicada**, por la comandante y para todos: por
+ * qué se dio, el ensanche de la punta, y el permiso de la torre para ir por la
+ * pista al revés. Con el dibujo de la pista desde arriba.
+ */
+const LA_VUELTA_EXPLICADA: readonly Linea[] = [
+  con(comandante("vueltaEnPista"), "vuelta-en-pista"),
+  con(comandante("permisoDeVuelta"), "vuelta-en-pista"),
+];
 const lasNubesDeCerca = (ultima: Linea): Linea[] => [
   conLaTripulante(tripulante("hola")),
   conLaTripulante(ara("deVerdad")),
@@ -772,6 +911,11 @@ interface DefMomento<Id extends string = MomentoDelPasaje> {
   readonly mira?: QueMirar;
   /** **Desde dónde se ve mientras se dice.** Sin decir, la ventanilla. */
   readonly plano?: Plano;
+  /**
+   * **Y si depende de lo que se está viendo**: la comandante que explica algo
+   * con el señalero ya guiando el avión no lo quita de la pantalla.
+   */
+  readonly planoSegun?: (l: LecturaDelPasaje, e: VueloDePasaje) => Plano;
   /**
    * **Lo que nombra del paisaje**: solo se dice si se ve, y desde donde se
    * vea —la ventanilla, la cara contra el cristal o el avión por fuera con el
@@ -1210,6 +1354,66 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     plano: "fuera-rodando",
   },
   {
+    /*
+     * **Parados en el puesto, los impacientes** (punto 303): el avión se para,
+     * los motores todavía en marcha y la luz del cinturón encendida, y
+     * alrededor empiezan los clics de las hebillas y la gente que se levanta,
+     * bajito. Lo de fuera —el señalero cruzando los bastones— se deja ver
+     * parar, y se vuelve a la cabina, que es donde pasa esto. Sin palabras:
+     * lo que se oye lo pone el juego mientras dure. Ver `gente`.
+     */
+    id: "impacientes",
+    cuando: (l) => (l.tramo === "aparcado" && l.enTramo >= PARADO_DEL_TODO) || l.tramo === "apagado",
+    lineas: [],
+  },
+  {
+    /*
+     * **Y Ara lo nota, y se queda en su asiento**: lo dice sin regañar a
+     * nadie —lo que hacen otros no es asunto suyo— y hace lo que toca. La
+     * luz sigue encendida: «todavía no».
+     */
+    id: "seLevantan",
+    cuando: (_l, e) => e.desdeQueSeDijo("impacientes") >= SE_OYEN_LAS_HEBILLAS,
+    lineas: [ara("seLevantan"), ara("cinturonQuieto")],
+  },
+  {
+    /*
+     * **La luz del cinturón se apaga** cuando la apaga la comandante: con el
+     * avión parado en su puesto y los motores ya apagados, que es cuando se
+     * apaga en cualquier vuelo. Con su *ding*. Sin palabras: lo que se ve es
+     * el cartel que se va, y lo pone el juego. Ver `luzApagadaEnElPuesto`.
+     */
+    id: "luz",
+    cuando: (l, e) => l.tramo === "apagado" && l.enTramo >= APAGA_LA_LUZ && e.callaDesde >= 0.6,
+    lineas: [],
+  },
+  {
+    // Y ahora sí: Ara se suelta el cinturón, detrás del *ding*.
+    id: "suelto",
+    cuando: (_l, e) => e.desdeQueSeDijo("luz") >= TRAS_EL_DING,
+    lineas: [ara("luzApagada")],
+  },
+  {
+    /*
+     * **La tripulante, ya de pie**, se acerca a Ara: le da las gracias por
+     * esperar, le cuenta por qué —el avión podía frenar de golpe, y al abrir
+     * los compartimentos de arriba se pueden caer cosas— y por qué al
+     * aterrizar ponen cara seria: están trabajando, en la seguridad, y van
+     * con el cinturón puesto hasta que el avión para; por eso lo recuerdan
+     * por el altavoz. Antes no podía: iba en su asiento, atada. Y si lo que
+     * sabe hacer no se contó bajando, se cuenta ahora: una vez.
+     */
+    id: "gracias",
+    cuando: (_l, e) => e.callaDesde >= 1,
+    lineas: [tripulante("gracias"), con(tripulante("maleteros"), "maletero"), tripulante("seria")],
+    segun: (_l, e) => [
+      tripulante("gracias"),
+      con(tripulante("maleteros"), "maletero"),
+      tripulante("seria"),
+      ...(e.oficioContado ? [] : EL_OFICIO),
+    ],
+  },
+  {
     id: "puesto",
     cuando: (l) => l.tramo === "apagado" && l.enTramo >= 1.5,
     lineas: [tripulante("adios"), ara("fin")],
@@ -1522,6 +1726,25 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     lineas: [con(tripulante("estrellas"), "estrellas"), con(ara("estrellas"), "estrellas")],
   },
   {
+    /*
+     * **Lo que sabe hacer la tripulante** (punto 303): «la gente se cree que
+     * son camareras, y saben hacer RCP en vuelo, atender urgencias, apagar un
+     * fuego en cabina…» (Enrique). Se lo cuenta a Ara en el hueco tranquilo
+     * de la bajada, con naturalidad y una vez. Ver `EL_OFICIO`.
+     */
+    id: "tcpOficio",
+    tras: 16,
+    cuando: (l, e) =>
+      l.tramo === "bajada" &&
+      !l.enTierra &&
+      tripulanteEnElPasillo(e) &&
+      !e.oficioContado &&
+      l.faltaParaTocar < BAJANDO.oficio &&
+      !cabinaPreparada(l, e),
+    caduca: (l, e) => cabinaPreparada(l, e),
+    lineas: EL_OFICIO,
+  },
+  {
     // Por debajo de las nubes, la isla de llegada ya cerca.
     id: "islaCerca",
     tras: 16,
@@ -1655,6 +1878,38 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
   },
   {
     /*
+     * **Dando la vuelta en la pista** (punto 300), cuando de verdad gira: en
+     * el ensanche de la punta, o ya de vuelta por la pista. Ara lo nota, y se
+     * ve por fuera, desde un lado y en alto, que desde el asiento solo se ve
+     * el suelo dar vueltas. No lo explica nadie todavía: la pista sigue
+     * ocupada y la cabina de mando está en lo suyo, y la tripulante va en su
+     * asiento. Ver `porQueLaVuelta`.
+     */
+    id: "vueltaEnPista",
+    tras: 0,
+    cuando: (l) => l.tramo === "al-puesto" && daLaVuelta(l),
+    caduca: (l) => l.tramo !== "al-puesto" || fueraDeLaPista(l),
+    lineas: [ara("vueltaEnPista")],
+    plano: "fuera-raqueta",
+  },
+  {
+    /*
+     * **Y en cuanto se deja la pista, por qué** —el primer rato tranquilo de
+     * la cabina de mando—: la comandante, para todo el pasaje, como la reversa
+     * y el gas de la aproximación. Solo si de verdad se dio la vuelta. Con el
+     * avión por fuera rodando a la terminal, o con el señalero si ya guía.
+     */
+    id: "porQueLaVuelta",
+    tras: 2,
+    cuando: (l, e) =>
+      (l.tramo === "al-puesto" || l.tramo === "aparcado") && e.dichaLaCharla("vueltaEnPista") && fueraDeLaPista(l),
+    // Y parados en el puesto ya no: ahí empieza lo de los cinturones, y no se pisa.
+    caduca: (l) => l.tramo === "apagado" || (l.tramo === "aparcado" && l.enTramo >= PARADO_DEL_TODO),
+    lineas: LA_VUELTA_EXPLICADA,
+    planoSegun: (_l, e) => (e.dichaLaCharla("senalero") ? "fuera-senalero" : "fuera-rodando"),
+  },
+  {
+    /*
      * **El señalero, desde fuera** (punto 301): al llegar al puesto, el que
      * guía el avión con sus dos bastones —seguir, girar, despacio y parar,
      * con las señas del Anexo 2 de la OACI— hasta dejarlo en su sitio. Desde
@@ -1668,14 +1923,6 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     caduca: (l) => l.tramo === "apagado",
     lineas: [],
     plano: "fuera-senalero",
-  },
-  {
-    // En tierra, rodando: el cinturón puesto hasta que se apague la luz.
-    id: "cinturonQuieto",
-    tras: 45,
-    cuando: (l, e) => l.tramo === "al-puesto" && e.dicho("llegada"),
-    caduca: (l) => l.tramo === "apagado",
-    lineas: [ara("cinturonQuieto")],
   },
   {
     id: "despacito",
@@ -1829,6 +2076,9 @@ export interface EstadoDelPasaje {
    */
   readonly durmiendo: boolean;
   readonly siestas: readonly Siesta[];
+  /** **La luz del cinturón, apagada en el puesto**, y la gente de la cabina. Ver `gente`. */
+  readonly luzApagada: boolean;
+  readonly gente: GenteDeLaCabina;
 }
 
 /** Una siesta de Ara, s de escena; `hasta` es `null` mientras dura. */
@@ -1877,6 +2127,8 @@ export class VueloDePasaje {
   private teideContado = false;
   /** Y si ya se explicó el plop de los oídos de la subida: ver el momento `tcpNubes`. */
   private plopContado = false;
+  /** Y si la tripulante ya contó lo que sabe hacer: ver `EL_OFICIO`. */
+  private oficioDicho = false;
 
   private dibujo: string | null = null;
   private dibujoDe: Linea | null = null;
@@ -1960,6 +2212,32 @@ export class VueloDePasaje {
     return this.plopContado;
   }
 
+  /** **Si la tripulante ya contó lo que sabe hacer**, bajando o en el puesto: una vez. */
+  get oficioContado(): boolean {
+    return this.oficioDicho;
+  }
+
+  /**
+   * **Si la comandante ya apagó la luz del cinturón en el puesto**: lo mira el
+   * juego en cada fotograma para apagar el cartel, con su *ding*. Ver el
+   * momento `luz` y `Cinturon.paso`.
+   */
+  get luzApagadaEnElPuesto(): boolean {
+    return this.dicho("luz");
+  }
+
+  /**
+   * **Cómo anda la gente de la cabina** en el puesto (punto 303): sentada, los
+   * impacientes que se sueltan y se levantan con la luz todavía encendida, y
+   * todo el mundo de pie cuando se apaga. Lo que suena lo pone el juego. Ver
+   * `audio/gente-del-pasaje.ts`.
+   */
+  get gente(): GenteDeLaCabina {
+    if (this.dicho("luz")) return "de-pie";
+    if (this.dicho("impacientes")) return "impacientes";
+    return "sentada";
+  }
+
   /**
    * **Cómo se ve ahora un sitio del paisaje.** Lo sabe el juego —ver
    * `LecturaDelPasaje.ver`—; sin él, todo se ve por la ventanilla y por el
@@ -2014,6 +2292,8 @@ export class VueloDePasaje {
       kit: this.kit.estado,
       durmiendo: this.durmiendo,
       siestas: this.siestas.map((s) => ({ ...s })),
+      luzApagada: this.luzApagadaEnElPuesto,
+      gente: this.gente,
     };
   }
 
@@ -2181,13 +2461,15 @@ export class VueloDePasaje {
   /** Se dice lo de un momento o una charla: su plano, su dibujo de mirar y sus frases. */
   private decirDe(def: DefMomento<string>, l: LecturaDelPasaje, vista?: VistaDelSitio): void {
     const sitio = def.nombra ?? def.muestra ?? null;
-    const plano = def.plano ?? (vista?.como && sitio ? planoParaVer(vista.como, sitio) : "ventanilla");
+    const plano =
+      def.planoSegun?.(l, this) ?? def.plano ?? (vista?.como && sitio ? planoParaVer(vista.como, sitio) : "ventanilla");
     this.ponerPlano(plano, sitio);
     const lineas = def.segun?.(l, this) ?? def.lineas;
     if (sitio && vista?.como && lineas[0])
       this.apuntarLoNombrado(sitio, lineas[0].clave, vista);
     if (lineas.some((x) => x.clave === "inicio.mama.pasaje.teide")) this.teideContado = true;
     if (lineas.some((x) => EL_PLOP_EXPLICADO.includes(x))) this.plopContado = true;
+    if (lineas.some((x) => EL_OFICIO.includes(x))) this.oficioDicho = true;
     this.charla.decir(lineas);
     if (def.mira) {
       this.mira = def.mira;

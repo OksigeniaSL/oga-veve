@@ -221,6 +221,15 @@ export class CamaraDeLaEscena {
       this.fijo.y = ctx.suelo(this.fijo.x, this.fijo.z) + 2.6;
       this.miraFija.set(s.x + mx * 22, s.y + 2.2, s.z + mz * 22);
       this.conSenalero = true;
+    } else if (toma === "fuera-raqueta") {
+      /*
+       * **La vuelta en la punta de la pista**, desde un lado y en alto: detrás
+       * de donde empieza a girar y a su izquierda, a la altura de un tejado,
+       * clavada. Se ve el giro entero en el ensanche del final, y el avión
+       * que echa a andar de vuelta por la pista y pasa por delante.
+       */
+      this.fijo.copy(p).addScaledVector(this.delante, -95).addScaledVector(this.izquierda, 70);
+      this.fijo.y = Math.max(ctx.suelo(this.fijo.x, this.fijo.z), p.y - 2) + 18;
     } else if (toma === "fuera-pista") {
       /*
        * **Y al aterrizar, desde la orilla de la pista**, pasada la zona de
@@ -312,6 +321,15 @@ export class CamaraDeLaEscena {
         suaviza = Infinity;
         const lejos = this.fijo.distanceTo(p);
         this.angulo = MathUtils.clamp(2 * Math.atan((largo * 1.4) / Math.max(1, lejos)) * MathUtils.RAD2DEG, 7, 55);
+        break;
+      }
+      case "fuera-raqueta": {
+        // Clavada, siguiendo al avión, y más abierta: que se vea la pista y el ensanche alrededor.
+        this.deseada.copy(this.fijo);
+        this.objetivo.y += 1;
+        suaviza = Infinity;
+        const lejos = this.fijo.distanceTo(p);
+        this.angulo = MathUtils.clamp(2 * Math.atan((largo * 2.6) / Math.max(1, lejos)) * MathUtils.RAD2DEG, 18, 60);
         break;
       }
       case "fuera-rodando":
