@@ -587,7 +587,7 @@ export class Hud {
    */
   private readonly pictos = new Pictogramas();
   readonly senal = new Senal();
-  /** La foto de la historia de la ventanilla, mientras se cuenta. */
+  /** La ilustración de la historia de la ventanilla, mientras se cuenta. */
   readonly historia = new VentanaDeHistoria();
 
   private speed: HTMLElement | null = null;
@@ -1357,7 +1357,7 @@ export class Hud {
     this.root.innerHTML =
       `
       <!--
-        La foto de la historia que se está contando, la primera de todas para
+        La ilustración de la historia que se está contando, la primera de todas para
         que todo lo demás se pinte encima. Ver ui/ventana-de-historia.ts.
       -->
       ${VentanaDeHistoria.markup()}
@@ -2358,7 +2358,7 @@ export class Hud {
     this.ponerMandoDeCinturon(this.cinturonEncendido);
     this.ponerGasDeNivel(this.gasDeNivel);
     this.ponerQuienLlevaElGas(this.quienLlevaElGas);
-    // Y la foto de la historia, si había una puesta: el marcado es nuevo.
+    // Y la ilustración de la historia, si había una puesta: el marcado es nuevo.
     this.historia.bind(this.root);
   }
 

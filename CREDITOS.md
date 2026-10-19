@@ -482,89 +482,13 @@ cada uno —SEO/BirdLife, Animal Diversity Web, WCS Paraguay, el Atlas de Guyra,
 Transport Canada, la FAA, la OACI, la prensa de Canarias y de Paraguay— está
 escrita junto a su dato en `src/world/aves.ts`.
 
-### Las fotos de las historias de la ventanilla
-
-Mientras la comandante —o la instructora, en avioneta— cuenta la historia de
-lo que se ve por la ventanilla, sale una foto de eso mismo: en una ventana de
-cristal al lado del cuadro o, en las avionetas, en la placa del retrato. Son
-veinticinco, una por historia, y **todas vienen de Wikimedia Commons** con su
-licencia escrita en la ficha: dominio público, CC0, CC BY o CC BY-SA. Se
-comprobaron una a una el 17 de octubre de 2026 leyendo su página; las que
-Commons trajo de Flickr o de iNaturalist llevan además la revisión de licencia
-de Commons (FlickreviewR, iNaturalistReviewBot o un revisor de confianza).
-
-Lo que se les hizo es lo mismo en todas: **recortadas a 3:2**, con el encuadre
-que se dice en cada fila, **reducidas a 480 × 320** —el doble de lo que miden
-en pantalla— y guardadas en WebP con calidad 74, que las deja por debajo de
-sesenta kilobytes. Una, la del Tajogaite, lleva además un 12 % más de
-contraste. **Las que salen de una foto CC BY-SA siguen bajo CC BY-SA**, en la
-misma versión: son obra derivada de la de su autor y no pasan a Apache-2.0 con
-el código.
-
-El crédito va también **a la vista**: las CC BY y CC BY-SA llevan su firma
-—autor y licencia— en pequeño sobre la propia foto mientras se ve, y la
-pantalla de créditos del juego remite a esta lista. Las de dominio público y
-CC0 no la piden. Ver `src/ui/fotos-de-las-historias.ts`, y
-`fotos-de-las-historias.test.ts`, que no deja entrar una foto que no esté en
-esta tabla con su autor, su licencia y su página.
-
-| Fichero | Historia | Autor | Licencia | Página en Commons | Cambios |
-| --- | --- | --- | --- | --- | --- |
-| `src/assets/historias/teide.webp` | El Teide desde un avión, sobre las nubes | Greenx | Dominio público | <https://commons.wikimedia.org/wiki/File:Teide_from_east.jpg> | recortada alrededor del Teide, 480 × 320, WebP |
-| `src/assets/historias/canadas.webp` | Tajinastes rojos delante del Teide | Dorian Cols | CC BY 2.0 | <https://commons.wikimedia.org/wiki/File:Echium_Wildpretii_at_The_Teide.jpg> | recortada a 3:2, 480 × 320, WebP |
-| `src/assets/historias/anaga.webp` | Las montañas de Anaga | FrDr | CC BY 4.0 | <https://commons.wikimedia.org/wiki/File:Parque_Rural_de_Anaga_-_Reserva_de_la_Biosfera_Macizo_de_Anaga_06.jpg> | recortada a 3:2, 480 × 320, WebP |
-| `src/assets/historias/orotava.webp` | Alexander von Humboldt, óleo de 1843 | Joseph Karl Stieler | Dominio público | <https://commons.wikimedia.org/wiki/File:Stieler,_Joseph_Karl_-_Alexander_von_Humboldt_-_1843.jpg> | recortada a la cabeza y el busto, 480 × 320, WebP |
-| `src/assets/historias/gigantes.webp` | Un calderón tropical frente a Tenerife | Gustavo A. Pérez | CC BY-SA 4.0 | <https://commons.wikimedia.org/wiki/File:Caladeron_Tropical_-_Globicephala_macrorhynchus.jpg> | recortada a 3:2, 480 × 320, WebP |
-| `src/assets/historias/garajonay.webp` | Un gomero hablando en silbo | Akalvin | CC BY-SA 3.0 | <https://commons.wikimedia.org/wiki/File:El_Silbo.jpg> | recortada a medio cuerpo, 480 × 320, WebP |
-| `src/assets/historias/taburiente.webp` | El telescopio William Herschel, en el Roque de los Muchachos | Whyistheskyblue1 | CC BY-SA 4.0 | <https://commons.wikimedia.org/wiki/File:William_Herschel_Telescope_and_Comet_Tsuchinshan–ATLAS.jpg> | recortada a 3:2, 480 × 320, WebP |
-| `src/assets/historias/tajogaite.webp` | Las fajanas nuevas junto al faro de Punta Lava, diciembre de 2021 | Mike Peel (www.mikepeel.net) | CC BY-SA 4.0 | <https://commons.wikimedia.org/wiki/File:At_La_Palma_2021_0839.jpg> | recortada a 3:2, 480 × 320, un 12 % más de contraste, WebP |
-| `src/assets/historias/hierro.webp` | El Garoé de hoy, el til plantado en 1949 | Josefir Instantes | CC BY-SA 4.0 | <https://commons.wikimedia.org/wiki/File:Árbol_Garoé_desde_el_suelo.jpg> | recortada al tronco y las hojas, 480 × 320, WebP |
-| `src/assets/historias/nieves.webp` | Cuevas talladas de Risco Caído | Sino Yu | CC0 | <https://commons.wikimedia.org/wiki/File:Risco_Caído_20191231_134919.jpg> | recortada a 3:2, 480 × 320, WebP |
-| `src/assets/historias/las-palmas.webp` | La réplica de la Pinta en Baiona | Zarateman | CC0 | <https://commons.wikimedia.org/wiki/File:Baiona_-_Museo-Réplica_de_la_Carabela_Pinta_1.JPG> | recortada al barco, 480 × 320, WebP |
-| `src/assets/historias/timanfaya.webp` | El géiser del Islote de Hilario | Andreas Tusche | Dominio público | <https://commons.wikimedia.org/wiki/File:Lanzarote_Timanfaya_Geysir.jpg> | recortada a 3:2, 480 × 320, WebP |
-| `src/assets/historias/rio-paraguay.webp` | El río Paraguay y sus meandros viejos a la altura de Puerto Antequera, satélite CBERS-4 | Coordenação-Geral de Observação da Terra/INPE | CC BY-SA 2.0 | <https://commons.wikimedia.org/wiki/File:Around_Puerto_Antequera.jpg> | recortada al tramo del río, 480 × 320, WebP |
-| `src/assets/historias/asuncion.webp` | Raíces de mandioca recién arrancadas | Geossegawa | CC BY 4.0 | <https://commons.wikimedia.org/wiki/File:Uprooted_cassava_01.jpg> | recortada a 3:2, 480 × 320, WebP |
-| `src/assets/historias/ypacarai.webp` | Una canoa en el lago Ypacaraí, desde Areguá | Leandro Neumann Ciuffo | CC BY 2.0 | <https://commons.wikimedia.org/wiki/File:Lago_Ypacarai.jpg> | recortada a 3:2, 480 × 320, WebP |
-| `src/assets/historias/ypoa.webp` | Una isla flotante del lago Ypoá | Paolo Mendoza | CC BY-SA 4.0 | <https://commons.wikimedia.org/wiki/File:Rivera_Del_Lago_Ypoa.jpg> | recortada alrededor de la isla, 480 × 320, WebP |
-| `src/assets/historias/yacyreta.webp` | La luna sobre la represa de Yacyretá | german ramirez | CC0 | <https://commons.wikimedia.org/wiki/File:Luna_en_yacyreta.jpg> | recortada a 3:2, 480 × 320, WebP |
-| `src/assets/historias/itaipu.webp` | El muro de Itaipú con sus tuberías de turbina | queulat00 | CC BY 2.0 | <https://commons.wikimedia.org/wiki/File:249_turbinas_itaipu_(6975012271).jpg> | recortada a 3:2, 480 × 320, WebP |
-| `src/assets/historias/iguazu.webp` | Las cataratas del Iguazú | Martin St-Amant | CC BY 3.0 | <https://commons.wikimedia.org/wiki/File:Iguazu_Décembre_2007_-_Panorama_8.jpg> | recortada a 3:2, 480 × 320, WebP |
-| `src/assets/historias/triple-frontera.webp` | El hito paraguayo de las Tres Fronteras, visto desde Foz do Iguaçu | SamirNosteb, Diego HC | CC BY-SA 3.0 | <https://commons.wikimedia.org/wiki/File:Hito_de_las_Tres_Fronteras_PARAGUAY.jpg> | recortada a 3:2, 480 × 320, WebP |
-| `src/assets/historias/cerro-cora.webp` | Un tapir, *Tapirus terrestris* | Mark Bolnik | CC BY 4.0 | <https://commons.wikimedia.org/wiki/File:Tapirus_terrestris_136722113.jpg> | recortada a 3:2, 480 × 320, WebP |
-| `src/assets/historias/chaco.webp` | El tronco de botella de un samuhú, *Ceiba chodatii* | Xemenendura | CC BY-SA 3.0 | <https://commons.wikimedia.org/wiki/File:Ceiba_chodatii_Marbella.JPG> | recortada al tronco, 480 × 320, WebP |
-| `src/assets/historias/encarnacion.webp` | El puente San Roque González de Santa Cruz | Horacio Cambeiro | CC BY 4.0 | <https://commons.wikimedia.org/wiki/File:Puente_Internacional_San_Roque_Gonzalez_de_Santa_Cruz.jpg> | recortada a 3:2, 480 × 320, WebP |
-| `src/assets/historias/trinidad.webp` | Ángeles músicos del friso de la iglesia de Trinidad | Falk2 | CC BY-SA 4.0 | <https://commons.wikimedia.org/wiki/File:J37_761_Engelfries.jpg> | recortada a tres ángeles del friso, 480 × 320, WebP |
-| `src/assets/historias/cruz-del-sur.webp` | La Cruz del Sur | Yulanlu97 | CC BY-SA 4.0 | <https://commons.wikimedia.org/wiki/File:The_Crux_from_Southeastern_Queensland.jpg> | recortada a la cruz, 480 × 320, WebP |
-
-Lo que se miró y **no** entró, con su motivo:
-
-- **El samuhú de iNaturalist** (Salta y Santiago del Estero, en su monte de
-  verdad): sus fichas de Commons no llevan revisión de licencia y la de
-  iNaturalist no se pudo comprobar. Va el de Marbella, que es la misma especie
-  y foto propia de su autor; el encuadre deja fuera el rótulo de un comercio.
-- **El grabado del Garoé de Manesson Mallet** (1683, dominio público): cuenta
-  justo la leyenda, pero dibuja a los bimbaches como los dibujaba Europa
-  entonces, y las historias no llevan estereotipos —ver
-  `docs/historias/fuentes.md`—. Va el árbol de hoy.
-- **El Teide desde la ventanilla con el ala de una compañía**: se ve la marca
-  en el winglet. Va otro desde un avión, sin marca.
-- **Otro Garoé, «Árbol Garoé.JPG»**: su ficha dice «lugar de importancia
-  comunitaria de Garoé», no el árbol, y no está en la categoría del árbol. Va
-  una que sí lo está.
-- **Las fotos de la ISS «View of Paraguay»** para los meandros: sus
-  coordenadas caen en Brasil, así que no se puede decir qué río son. Va la del
-  INPE, que nombra el río y el sitio.
-- **Las imágenes de Copernicus y de la ESA con licencia «Attribution»** para el
-  Tajogaite: no es ninguna de las cuatro que se aceptan aquí. Va la foto de
-  Mike Peel de las fajanas, que es lo que cuenta la historia.
-
 ### Los dibujos de la ventanita del vuelo de pasaje
 
 En la escena «Viajá con Jazlyn», lo que explican la tripulación y la
 comandante —el cinturón, las salidas, las mascarillas, el chaleco, la tarjeta,
 el modo avión, la persiana, las nubes, el ala, el motor, el frío, las islas,
 el camino, el oído, las luces de la pista y los telescopios de La Palma— sale dibujado en la misma ventana
-de cristal que las fotos de las historias. **Están dibujados en el código**,
+de cristal que las ilustraciones de las historias. **Están dibujados en el código**,
 en `src/ui/dibujos-del-pasaje.ts`, con formas y colores del juego: son
 nuestros, van con el código bajo Apache-2.0 y no traen nada de fuera, ni
 fotos, ni iconos de terceros, ni imágenes generadas. Las islas del mapa del
@@ -582,17 +506,25 @@ las islas con sus coordenadas. Nada traído de fuera.
 
 Son los dibujos de cuento del juego, todos de la misma colección: Jazlyn a los
 mandos de cada avión de la flota, cada avión por fuera con los colores de la
-casa, la cara de Jazlyn, la cabina de pasaje del primer vuelo de Ara y Ara
-durmiendo y soñando en ese vuelo. Como
-el resto del arte original, son contenido de Oksigenia SL y no van con el
-código bajo Apache-2.0: ver `LICENSE-CONTENIDO.md`.
+casa, la cara de Jazlyn, la cabina de pasaje del primer vuelo de Ara, Ara
+durmiendo y soñando en ese vuelo, y **las veinticinco de las historias de la
+ventanilla**, una por historia, que dibujan lo que cuenta cada una mientras
+la comandante —o la instructora, en avioneta— la cuenta. Como el resto del
+arte original, son contenido de Oksigenia SL y no van con el código bajo
+Apache-2.0: ver `LICENSE-CONTENIDO.md`.
 
-Los originales, unos cuarenta y cinco megas, no están en el repositorio: viven
-en `crudo/imagenes/`, que está en `.gitignore`. Lo que entra son los WebP que
-hace `scripts/hacer-ilustraciones.mjs`, **recortados a la proporción de su
-hueco y reducidos al doble de lo que miden en pantalla**, sin metadatos. Qué
-trozo se coge de cada una y por qué está en `src/ui/ilustraciones-recetas.ts`,
-y `src/ui/ilustraciones.test.ts` no deja entrar una que no esté en esta tabla.
+Las de las historias sustituyen desde el 19 de octubre de 2026 a las fotos de
+Wikimedia Commons que iban antes en esos mismos ficheros: ya no queda en el
+juego ninguna de aquellas fotos, ni su firma en pantalla.
+
+Los originales, unos ciento treinta y cinco megas, no están en el repositorio:
+viven en `crudo/imagenes/` —los de las historias, en `crudo/imagenes/historias/`—,
+que está en `.gitignore`. Lo que entra son los WebP que hace
+`scripts/hacer-ilustraciones.mjs`, **recortados a la proporción de su hueco y
+reducidos al doble de lo que miden en pantalla**, sin metadatos. Qué trozo se
+coge de cada una y por qué está en `src/ui/ilustraciones-recetas.ts`, y
+`src/ui/ilustraciones.test.ts` y `src/ui/ilustraciones-de-las-historias.test.ts`
+no dejan entrar una que no esté en esta tabla.
 
 Antes de entrar se miró cada una de cerca. **Una comandante lleva cuatro
 barras y quien va a su derecha, tres**: lo que no cuadraba se recortó hasta
@@ -624,6 +556,31 @@ y soñando, que no tienen hueco.
 | `src/assets/ilustraciones/cabina-jaz-90.webp` | `cabina-jaz90.jpg` | La tarjeta del avión, en el hangar | recortada por la derecha, hasta dejar fuera el hombro del copiloto, que llevaba cuatro barras: el asiento de la derecha lleva tres; 360 × 270 |
 | `src/assets/ilustraciones/cabina-jaz-120.webp` | `cabina-jaz120.jpg` | La tarjeta del avión, en el hangar | recortada por la derecha, hasta dejar fuera el hombro del copiloto, que llevaba cuatro barras: el asiento de la derecha lleva tres; 360 × 270 |
 | `src/assets/ilustraciones/retrato-jazlyn.webp` | `jazlyn-cabina-dibujo.jpg` | La cara de Jazlyn cuando habla | recortada a la cara sola, por encima de los hombros, que en el dibujo llevan las tres barras de primera oficial; 96 × 96, en redondo |
+| `src/assets/historias/teide.webp` | `historias/teide.jpeg` | La historia de el Teide, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/canadas.webp` | `historias/canadas.jpeg` | La historia de los tajinastes de Las Cañadas, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/anaga.webp` | `historias/anaga.jpeg` | La historia de Anaga, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/orotava.webp` | `historias/orotava.jpeg` | La historia de Humboldt en La Orotava, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/gigantes.webp` | `historias/gigantes.jpeg` | La historia de los calderones de Los Gigantes, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/garajonay.webp` | `historias/garajonay.jpeg` | La historia de el silbo gomero, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/taburiente.webp` | `historias/taburiente.jpeg` | La historia de el cielo de La Palma, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/tajogaite.webp` | `historias/tajogaite.jpeg` | La historia de la tierra nueva del Tajogaite, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/hierro.webp` | `historias/hierro.jpeg` | La historia de el Garoé, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/nieves.webp` | `historias/nieves.jpeg` | La historia de Risco Caído, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/las-palmas.webp` | `historias/las-palmas.jpeg` | La historia de la Pinta en Gran Canaria, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/timanfaya.webp` | `historias/timanfaya.jpeg` | La historia de Timanfaya, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/rio-paraguay.webp` | `historias/rio-paraguay.jpeg` | La historia de las curvas del río Paraguay, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/asuncion.webp` | `historias/asuncion.jpeg` | La historia de lo que sembraban los guaraníes, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/ypacarai.webp` | `historias/ypacarai.jpeg` | La historia de la canción del lago Ypacaraí, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/ypoa.webp` | `historias/ypoa.jpeg` | La historia de las islas que flotan del Ypoá, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/yacyreta.webp` | `historias/yacyreta.jpeg` | La historia de Yacyretá, la tierra de la luna, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/itaipu.webp` | `historias/itaipu.jpeg` | La historia de Itaipú, la piedra que suena, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/iguazu.webp` | `historias/iguazu.jpeg` | La historia de el agua grande del Iguazú, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/triple-frontera.webp` | `historias/triple-frontera.jpeg` | La historia de la Triple Frontera, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/cerro-cora.webp` | `historias/cerro-cora.jpeg` | La historia de el mboreví de Cerro Corá, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/chaco.webp` | `historias/chaco.jpeg` | La historia de el samuhú del Chaco, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/encarnacion.webp` | `historias/encarnacion.jpeg` | La historia de Encarnación y su puente, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/trinidad.webp` | `historias/trinidad.jpeg` | La historia de los ángeles músicos de Trinidad, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/cruz-del-sur.webp` | `historias/cruz-del-sur.jpeg` | La historia de la Cruz del Sur, mientras se cuenta | entera, en 4:3, 1280 × 960 |
 
 ### Si se incorpora más arte
 

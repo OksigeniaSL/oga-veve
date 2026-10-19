@@ -295,11 +295,6 @@ export const ES_PY = {
   // La cadena que pide EOX, literal. Ver CREDITOS.md.
   "credits.ortoPy":
     "Ortofoto de Paraguay: EOxCloudless (cloudless.eox.at) de EOX IT Services GmbH — contiene datos Copernicus Sentinel modificados, 2020.",
-  // CC BY y CC BY-SA piden nombrar a cada autor: en la propia foto mientras
-  // se ve, y aquí, la lista entera. Ver «Las fotos de las historias» en
-  // CREDITOS.md.
-  "credits.fotosHistorias":
-    "Fotos de las historias de la ventanilla: Wikimedia Commons. Cada una lleva su autor y su licencia —CC BY, CC BY-SA, CC0 o dominio público— y la lista entera está en CREDITOS.md, junto al código del juego.",
   "credits.engine": "Modelo de vuelo: {model}",
   "credits.licence":
     "Código libre bajo Apache-2.0. Contenido y marcas, © Oksigenia SL.",
@@ -1225,35 +1220,36 @@ export const ES_PY = {
   "ventanilla.historia.cruz-del-sur":
     "Hace más de cuatrocientos años, el padre José de Acosta escribió que a estas cuatro estrellas las llamaban el Crucero, y que los marineros, con la del pie de la cruz, medían qué tan al sur estaban.",
   /*
-   * **Y la foto que sale mientras se cuenta**, su texto alternativo: corto y
-   * diciendo lo que se ve, no lo que cuenta la historia. La foto se entiende
-   * sin él; es para quien no la ve. Ver `ui/fotos-de-las-historias.ts`.
+   * **Y la ilustración que sale mientras se cuenta**, su texto alternativo:
+   * corto y diciendo lo que se ve en el dibujo. El dibujo se entiende sin él;
+   * es para quien no lo ve. La clave dice «foto» porque las primeras lo eran.
+   * Ver `ui/ilustraciones-de-las-historias.ts`.
    */
-  "historia.foto.teide": "El Teide asomando por encima de las nubes",
-  "historia.foto.canadas": "Tajinastes rojos en flor delante del Teide",
-  "historia.foto.anaga": "Las montañas verdes de Anaga",
-  "historia.foto.orotava": "Alexander von Humboldt, pintado en 1843",
-  "historia.foto.gigantes": "Un calderón nadando frente a Tenerife",
-  "historia.foto.garajonay": "Un gomero hablando en silbo",
-  "historia.foto.taburiente": "Un telescopio de La Palma, con un cometa en el cielo",
-  "historia.foto.tajogaite": "Las fajanas nuevas del Tajogaite, junto al mar",
-  "historia.foto.hierro": "El árbol Garoé, en El Hierro",
-  "historia.foto.nieves": "Cuevas talladas en la roca en Risco Caído",
-  "historia.foto.las-palmas": "Una copia de la carabela Pinta",
-  "historia.foto.timanfaya": "Un chorro de vapor que sale del suelo en Timanfaya",
-  "historia.foto.rio-paraguay": "El río Paraguay y sus curvas viejas, vistos desde un satélite",
-  "historia.foto.asuncion": "Raíces de mandioca recién sacadas de la tierra",
-  "historia.foto.ypacarai": "Una canoa en el lago Ypacaraí",
-  "historia.foto.ypoa": "Una isla flotante del lago Ypoá",
-  "historia.foto.yacyreta": "La luna sobre la represa de Yacyretá, de noche",
-  "historia.foto.itaipu": "La represa de Itaipú",
-  "historia.foto.iguazu": "Las cataratas del Iguazú",
-  "historia.foto.triple-frontera": "El hito paraguayo de la Triple Frontera, rojo, blanco y azul",
-  "historia.foto.cerro-cora": "Un mboreví, el tapir, con su trompita",
-  "historia.foto.chaco": "El tronco con forma de botella de un samuhú",
-  "historia.foto.encarnacion": "El puente entre Encarnación y Posadas",
-  "historia.foto.trinidad": "Ángeles músicos tallados en piedra en Trinidad",
-  "historia.foto.cruz-del-sur": "La Cruz del Sur en el cielo de noche",
+  "historia.foto.teide": "El Teide en corte, con la parte que queda debajo del mar",
+  "historia.foto.canadas": "Tajinastes rojos más altos que una persona, delante del Teide",
+  "historia.foto.anaga": "La laurisilva de Anaga con una paloma, un mosquitero y un caracol",
+  "historia.foto.orotava": "Humboldt dibujando los pisos de plantas del Teide",
+  "historia.foto.gigantes": "Una familia de calderones nadando frente a los acantilados",
+  "historia.foto.garajonay": "Un hombre silba en el barranco y un niño lo escucha del otro lado",
+  "historia.foto.taburiente": "Telescopios bajo las estrellas y faroles que alumbran solo el suelo",
+  "historia.foto.tajogaite": "La tierra nueva de lava negra del Tajogaite, entrando en el mar",
+  "historia.foto.hierro": "El Garoé atrapa la niebla y su agua cae gota a gota en las pozas",
+  "historia.foto.nieves": "Un rayo de sol entra por el techo de la cueva de Risco Caído",
+  "historia.foto.las-palmas": "Carpinteros poniéndole un timón nuevo a la Pinta",
+  "historia.foto.timanfaya": "Un chorro de vapor sale del suelo y la comida se asa con el volcán",
+  "historia.foto.rio-paraguay": "El río Paraguay con sus curvas y sus lagunas en forma de herradura",
+  "historia.foto.asuncion": "Un pueblo guaraní cosechando maíz, mandioca, batata y maní",
+  "historia.foto.ypacarai": "Un guitarrista toca y una poeta se imagina el lago Ypacaraí",
+  "historia.foto.ypoa": "Una isla flotante del Ypoá, con sus raíces colgando bajo el agua",
+  "historia.foto.yacyreta": "La luna llena sobre una isla del río Paraná, de noche",
+  "historia.foto.itaipu": "El agua golpeando las piedras del río, con la represa de Itaipú detrás",
+  "historia.foto.iguazu": "Gente cargando canoas a pie para rodear las cataratas del Iguazú",
+  "historia.foto.triple-frontera": "Los tres hitos de la Triple Frontera, con los colores de cada país",
+  "historia.foto.cerro-cora": "Un mboreví, el tapir, con su cría junto a un arroyo",
+  "historia.foto.chaco": "Un samuhú con su tronco de botella, un ñandú y un tatú",
+  "historia.foto.encarnacion": "La orilla de Encarnación en 1615 y hoy, con el puente a Posadas",
+  "historia.foto.trinidad": "Ángeles músicos tallados en la piedra roja de Trinidad",
+  "historia.foto.cruz-del-sur": "Un marinero mide la Cruz del Sur con su ballestilla",
   /*
    * **Las ilustraciones**, su texto alternativo: lo que se ve, corto, para
    * quien no lo ve. Y de Ara, nada que diga si es niño o niña. Ver

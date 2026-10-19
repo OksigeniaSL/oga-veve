@@ -605,8 +605,9 @@ Canarias, en el Roque de los Muchachos, de 10,4 m (ficha del Ministerio de
 Ciencia); que una ley protege el cielo de la isla, por verificar.
 
 **Las ventanitas**: los dibujos van en la ventana de cristal de las fotos de
-las historias, que ya sabe dónde cabe sin tapar nada; y en esta escena también
-salen las fotos de las historias que cuenta la comandante. **Dibujados en el
+las historias —ilustraciones desde el punto 306—, que ya sabe dónde cabe sin
+tapar nada; y en esta escena también salen las de las historias que cuenta la
+comandante. **Dibujados en el
 código** (`ui/dibujos-del-pasaje.ts`), como se aprobó en el punto 231 —«escenas
 con el propio motor del juego, sin licencias»—: diecisiete láminas en SVG, sin
 letras salvo el «EXIT» de los letreros, con su animación quieta si se pide

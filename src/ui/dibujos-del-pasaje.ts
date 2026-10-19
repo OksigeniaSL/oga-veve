@@ -4,7 +4,7 @@
  *
  * Pedido por Enrique al probar el primer vuelo de pasaje de Ara: «podrían
  * aparecer ventanitas con gráficos e imágenes acompañando la explicación».
- * Van en la misma ventana de cristal que las fotos de las historias —ver
+ * Van en la misma ventana de cristal que las ilustraciones de las historias —ver
  * `ui/ventana-de-historia.ts`—, que ya sabe dónde cabe sin tapar nada y cómo
  * entrar y salir sin sobresalto.
  *
@@ -44,8 +44,8 @@
  * dentro de una `<img>`; con `prefers-reduced-motion` se queda quieto en su
  * último fotograma, que es el que cuenta la idea.
  *
- * Cada dibujo es una cadena de SVG de 480 × 320, el mismo tamaño que las fotos
- * de las historias, y se le da a la ventana como URL de datos. Ver
+ * Cada dibujo es una cadena de SVG de 480 × 320, en el 3:2 de la ventanita, y
+ * se le da a la ventana como URL de datos. Ver
  * `urlDelDibujo`.
  */
 

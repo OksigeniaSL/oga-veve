@@ -2999,7 +2999,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let ventanillaAntes = null;
   let ventanillaConOtroPlan = null;
   const historiaDeLaVentanilla = [];
-  // Las fotos de las historias que salieron, y si se fueron. Ver más abajo.
+  // Las ilustraciones de las historias que salieron, y si se fueron. Ver más abajo.
   const fotosDeLaHistoria = [];
   let fotoPuesta = null;
   /**
@@ -3716,7 +3716,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       }
       {
         /*
-         * **Y la foto de la historia de lo que se señala**: cuál sale, dónde y
+         * **Y la ilustración de la historia de lo que se señala**: cuál sale, dónde y
          * cuándo se va. Sale mientras suena la historia y nada más; ver
          * `ui/ventana-de-historia.ts`.
          */
@@ -7223,7 +7223,7 @@ else if (vuelo.ventanillaConOtroPlan)
   });
 
 /*
- * **Y la foto de la historia sale mientras se cuenta, y se va.** Solo si en
+ * **Y la ilustración de la historia sale mientras se cuenta, y se va.** Solo si en
  * este vuelo se contó alguna: en un vuelo de campo a campo que no cruza, a
  * menudo no se señala nada. Ver `ui/ventana-de-historia.ts`.
  */

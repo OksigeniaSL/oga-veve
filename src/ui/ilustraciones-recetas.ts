@@ -3,10 +3,10 @@
  * qué hueco y qué trozo se coge.
  *
  * Datos y nada más, sin `import` de ningún tipo, porque lo leen dos: el juego,
- * a través de `ui/ilustraciones.ts`, y `scripts/hacer-ilustraciones.mjs`, que
- * es quien las corta y las pasa a WebP desde los originales de
- * `crudo/imagenes/`. Así el recorte que se hace y el que se documenta no pueden
- * ser dos.
+ * a través de `ui/ilustraciones.ts` y de `ui/ilustraciones-de-las-historias.ts`,
+ * y `scripts/hacer-ilustraciones.mjs`, que es quien las corta y las pasa a
+ * WebP desde los originales de `crudo/imagenes/`. Así el recorte que se hace y
+ * el que se documenta no pueden ser dos.
  *
  * ## Lo que se ha mirado en cada una antes de dejarla entrar
  *
@@ -17,7 +17,7 @@
  */
 
 /** Los sitios del juego donde va una ilustración, cada uno con su forma. */
-export type HuecoDeLaIlustracion = "lamina" | "ventanita" | "tarjeta" | "retrato";
+export type HuecoDeLaIlustracion = "lamina" | "ventanita" | "tarjeta" | "retrato" | "historia";
 
 /**
  * **El tamaño al que se hacen**: el doble de lo que miden en pantalla.
@@ -29,12 +29,20 @@ export type HuecoDeLaIlustracion = "lamina" | "ventanita" | "tarjeta" | "retrato
  *   `ui/ventana-de-historia.ts`. Los originales de estas miden 1024 de ancho:
  *   más no se puede sacar.
  * - La ventanita de cristal mide 240 de ancho como mucho, en 3:2 —ver
- *   `VENTANA` en `ui/ventana-de-historia.ts`—, igual que las fotos de las
- *   historias. Es el hueco de Ara durmiendo y soñando.
+ *   `VENTANA` en `ui/ventana-de-historia.ts`—. Es el hueco de Ara durmiendo y
+ *   soñando.
  * - En la tarjeta del avión van dos, una al lado de la otra, en la columna de
  *   la ficha: unos 180 de ancho cada una en un portátil. Y en 4:3, que es como
  *   están dibujadas: así casi ninguna pierde nada.
  * - El retrato es la cara de quien habla, de 48 de lado. Ver `.inicio__cara`.
+ * - **Las de las historias de la ventanilla**, enteras y en 4:3, que es como
+ *   están dibujadas, a 1280 × 960: la lámina grande del pasaje, con la
+ *   proporción de la imagen, ronda los seiscientos cuarenta de ancho donde
+ *   cabe holgada, y a densidad dos eso son 1280 píxeles de pantalla —ver
+ *   `LAMINA` y `dondeCabeLaLamina` en `ui/ventana-de-historia.ts`—. Los
+ *   originales miden 2400 de ancho: hay de sobra. En los vuelos de siempre salen además en
+ *   la ventanita de 3:2 y en la placa de las avionetas, más apaisadas que
+ *   ellas: ahí se recortan al verse, no al hacerse. Ver `foco`.
  */
 export const TAMANO_DEL_HUECO: Readonly<
   Record<HuecoDeLaIlustracion, { readonly ancho: number; readonly alto: number }>
@@ -43,6 +51,7 @@ export const TAMANO_DEL_HUECO: Readonly<
   ventanita: { ancho: 480, alto: 320 },
   tarjeta: { ancho: 360, alto: 270 },
   retrato: { ancho: 96, alto: 96 },
+  historia: { ancho: 1280, alto: 960 },
 };
 
 /** Cómo se hace una ilustración. */
@@ -169,4 +178,89 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
     recorte: [460, 340, 600, 600],
     porque: "a la cara sola, por encima de los hombros, que en el dibujo llevan las tres barras de primera oficial",
   },
+};
+
+// ── Las historias de la ventanilla ──────────────────────────────────────
+
+/**
+ * **Dónde mirar cuando no cabe entera**: la altura, de 0 —arriba del todo— a
+ * 1 —abajo del todo—, que se queda a la vista cuando el hueco es más apaisado
+ * que el dibujo. Es lo mismo que el segundo número de `object-position`: con
+ * 0,5 se quita lo mismo por arriba que por abajo.
+ */
+export interface FocoDeLaHistoria {
+  readonly y: number;
+  /** Lo que se perdía centrada. Ver la prueba: no hay foco sin porqué. */
+  readonly porque: string;
+}
+
+/** Cómo se hace la ilustración de una historia: entera, y con su foco si lo necesita. */
+export interface RecetaDeLaHistoria extends RecetaDeLaIlustracion {
+  readonly hueco: "historia";
+  /** Sin foco, centrada: lo que sobra se quita igual por arriba que por abajo. */
+  readonly foco?: FocoDeLaHistoria;
+}
+
+/** Entera, del original de esa clave en `crudo/imagenes/historias/`. */
+const deLaHistoria = (clave: string, foco?: FocoDeLaHistoria): RecetaDeLaHistoria =>
+  foco
+    ? { original: `historias/${clave}.jpeg`, hueco: "historia", recorte: ENTERA_GRANDE, foco }
+    : { original: `historias/${clave}.jpeg`, hueco: "historia", recorte: ENTERA_GRANDE };
+
+/**
+ * **Las ilustraciones de las historias de la ventanilla**, por la clave de la
+ * historia: la misma de `ventanilla.historia.<clave>`, del fichero WebP y del
+ * texto alternativo, `historia.foto.<clave>`.
+ *
+ * Enrique, punto 306: las fotos de enciclopedia que había antes se cambian por
+ * dibujos de cuento, uno por historia, que dibujan **lo que cuenta la
+ * historia** y no solo el sitio: el Teide en corte con la parte de debajo del
+ * mar, Humboldt dibujando los pisos de la montaña, el silbo cruzando el
+ * barranco. Van enteros —el recorte se hace al verse— y estas son las que
+ * centradas perdían lo que cuentan en la ventanita de 3:2 o en la placa de las
+ * avionetas, que es aún más apaisada, de 5:3.
+ */
+export const RECETAS_DE_LAS_HISTORIAS: Readonly<Record<string, RecetaDeLaHistoria>> = {
+  // Canarias.
+  teide: deLaHistoria("teide", {
+    y: 0.4,
+    porque: "la punta del Teide y el pie de la montaña en el fondo del mar, que juntos son lo que cuenta la historia: centrada, la placa le cortaba la punta",
+  }),
+  canadas: deLaHistoria("canadas"),
+  anaga: deLaHistoria("anaga"),
+  orotava: deLaHistoria("orotava", {
+    y: 0.15,
+    porque: "la cima del Teide, que es el último piso de la montaña: centrada, se perdía la cima",
+  }),
+  gigantes: deLaHistoria("gigantes"),
+  garajonay: deLaHistoria("garajonay"),
+  taburiente: deLaHistoria("taburiente"),
+  tajogaite: deLaHistoria("tajogaite"),
+  hierro: deLaHistoria("hierro"),
+  nieves: deLaHistoria("nieves", {
+    y: 0,
+    porque: "el agujero de la cúpula por donde entra el sol, arriba del todo: centrada, la ventanita lo cortaba por la mitad y la placa entero",
+  }),
+  "las-palmas": deLaHistoria("las-palmas"),
+  timanfaya: deLaHistoria("timanfaya"),
+  // Paraguay.
+  "rio-paraguay": deLaHistoria("rio-paraguay"),
+  asuncion: deLaHistoria("asuncion"),
+  ypacarai: deLaHistoria("ypacarai", {
+    y: 0.2,
+    porque: "el lago que sale de la guitarra, arriba, que es lo que se imaginó la poeta: centrada, se cortaba por encima",
+  }),
+  ypoa: deLaHistoria("ypoa"),
+  yacyreta: deLaHistoria("yacyreta"),
+  itaipu: deLaHistoria("itaipu"),
+  iguazu: deLaHistoria("iguazu", {
+    y: 0.7,
+    porque: "las canoas a hombros por el camino, abajo, que es lo que cuenta la historia: centrada, la placa las dejaba sin pies",
+  }),
+  "triple-frontera": deLaHistoria("triple-frontera"),
+  "cerro-cora": deLaHistoria("cerro-cora"),
+  chaco: deLaHistoria("chaco"),
+  encarnacion: deLaHistoria("encarnacion"),
+  trinidad: deLaHistoria("trinidad"),
+  "cruz-del-sur": deLaHistoria("cruz-del-sur"),
 };

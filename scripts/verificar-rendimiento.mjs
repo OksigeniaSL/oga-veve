@@ -73,10 +73,10 @@
  * fotograma. Es un segundo dibujo en otro contexto, y la regla de AGENTS.md
  * es medirlo antes de darlo por bueno. Ver `ui/visor-del-avion.ts`.
  *
- * ## Y con la foto de la historia puesta
+ * ## Y con la ilustración de la historia puesta
  *
  * `OGA_HISTORIA=1` mide además, en el aire y en el mismo sitio que «aire»,
- * **con la foto de la historia de la ventanilla abierta**: la ventana de
+ * **con la ilustración de la historia de la ventanilla abierta**: la ventana de
  * cristal al lado del cuadro, o la placa en las avionetas. Es una imagen y un
  * marco encima del mundo, sin desenfoque, y la regla es la misma: se mide.
  * Ver `ui/ventana-de-historia.ts`.
@@ -268,8 +268,8 @@ for (const escenario of ESCENARIOS) {
      */
     ...(CON_TARJETA ? ["tarjeta", "girando"] : []),
     /*
-     * **La foto de la historia, también justo después del aire**, por lo
-     * mismo: que la diferencia sea la foto.
+     * **La ilustración de la historia, también justo después del aire**, por
+     * lo mismo: que la diferencia sea la ilustración.
      */
     ...(CON_HISTORIA ? ["historia"] : []),
     ...(hayCapa ? ["nube"] : []),

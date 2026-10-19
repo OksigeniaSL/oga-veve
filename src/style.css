@@ -13716,8 +13716,8 @@ svg .ex-raya {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
- * La foto de la historia, mientras se cuenta.
- * Ver src/ui/ventana-de-historia.ts y src/ui/fotos-de-las-historias.ts.
+ * La ilustración de la historia, mientras se cuenta.
+ * Ver src/ui/ventana-de-historia.ts y src/ui/ilustraciones-de-las-historias.ts.
  * ══════════════════════════════════════════════════════════════════════ */
 
 /*
@@ -13725,7 +13725,7 @@ svg .ex-raya {
  * —ver `dondeCabeLaVentana`— y lo escribe en las tres variables.
  *
  * El cristal es el marco: translúcido, con el filo de luz arriba y un reflejo
- * en diagonal sobre la foto. Sin `backdrop-filter`, que desenfoca el mundo en
+ * en diagonal sobre la imagen. Sin `backdrop-filter`, que desenfoca el mundo en
  * cada fotograma y en una tablet cuesta lo que aquí no compra, como en el mapa.
  *
  * Va **debajo de todo el HUD** —`z-index: -1` dentro de él, que sigue encima
@@ -13771,8 +13771,7 @@ svg .ex-raya {
 /*
  * **En grande, en la escena de pasaje**: lo que se explica, para verlo desde
  * el sofá —ver `LAMINA` en `ventana-de-historia.ts`—. Si cambia el plano o se
- * abre algo encima, se desliza a su nuevo sitio en vez de saltar; y la firma
- * de la foto crece con ella, que se tiene que seguir leyendo.
+ * abre algo encima, se desliza a su nuevo sitio en vez de saltar.
  */
 .historia--grande {
   border-radius: 18px;
@@ -13788,11 +13787,6 @@ svg .ex-raya {
   border-radius: 12px;
 }
 
-.historia--grande .historia__firma {
-  padding: 16px 10px 6px;
-  font-size: 13px;
-}
-
 .historia__marco {
   position: relative;
   /* La de la imagen en la lámina del pasaje —3:2 o 4:3—; si no, 3:2. */
@@ -13802,11 +13796,17 @@ svg .ex-raya {
   background: var(--barro);
 }
 
+/*
+ * En la esquina el marco es de 3:2 y las ilustraciones de las historias, de
+ * 4:3: lo que sobra de alto se quita por donde dice su foco, y nunca se
+ * deforma. Ver `foco` en `ilustraciones-recetas.ts`.
+ */
 .historia__foto {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: 50% var(--historia-foco, 50%);
 }
 
 /* El reflejo del cristal: una franja clara en diagonal y un filo por dentro. */
@@ -13828,28 +13828,6 @@ svg .ex-raya {
 }
 
 /*
- * La firma: quién hizo la foto y con qué licencia, que es lo que piden CC BY
- * y CC BY-SA mientras se ve. Pequeña, abajo y sobre una sombra para que se lea
- * en cualquier foto; no hace falta leerla para entender la foto.
- */
-.historia__firma {
-  position: absolute;
-  z-index: 1;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 12px 8px 4px;
-  font: 600 10px/1.25 var(--hud-fuente);
-  color: rgb(255 255 255 / 0.9);
-  text-shadow: 0 1px 2px rgb(0 0 0 / 0.7);
-  background: linear-gradient(transparent, rgb(0 0 0 / 0.55));
-}
-
-.historia__firma:empty {
-  display: none;
-}
-
-/*
  * **Y en la placa de las avionetas**, en el sitio del retrato. Deja pasar el
  * dedo al retrato de debajo, que abre la tarjeta del avión.
  */
@@ -13861,16 +13839,6 @@ svg .ex-raya {
 
 .tablero__historia--puesta {
   opacity: 1;
-}
-
-.tablero__historia-fondo {
-  fill: rgb(0 0 0 / 0.5);
-}
-
-.tablero__historia-firma {
-  fill: rgb(255 255 255 / 0.92);
-  font-family: var(--hud-fuente);
-  font-weight: 600;
 }
 
 .tablero__historia-marco {

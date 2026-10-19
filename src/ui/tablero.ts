@@ -902,21 +902,20 @@ export class Tablero {
   }
 
   /**
-   * **La foto de la historia, en el sitio del retrato.**
+   * **La ilustración de la historia, en el sitio del retrato.**
    *
    * Mientras Jazlyn —o la instructora, en la avioneta— cuenta la historia de
-   * lo que se ve por la ventanilla, la placa enseña la foto de eso mismo en
+   * lo que se ve por la ventanilla, la placa enseña el dibujo de eso mismo en
    * vez del avión, y al acabar vuelve el avión: «en los aviones pequeños, en
    * el recuadro del dibujo del avión, alternando con el avión en 3D». Ocupa
    * la caja del retrato, ni un píxel más, así que no tapa la chapa, la GS de
    * rodar ni las luces del tren.
    *
-   * Nace vacía y transparente; la pone `VentanaDeHistoria`. Y no recoge el
-   * dedo: tocar la placa con la foto puesta abre la tarjeta del avión igual
-   * que con el retrato. La firma —autor y licencia, que es lo que piden CC BY
-   * y CC BY-SA— va en pequeño sobre la foto; no lleva marca de peldaño
-   * porque no es un rótulo que se aprende: es lo que se le debe a quien hizo
-   * la foto, y se debe en los cuatro.
+   * Nace vacía y transparente; la pone `VentanaDeHistoria`, que también la
+   * encuadra: la caja es de 5:3 y las ilustraciones de 4:3, así que el `<svg>`
+   * de dentro recorta lo que sobra de alto por donde dice el foco de cada una
+   * —ver `encuadrarEnLaPlaca`—. Y no recoge el dedo: tocar la placa con la
+   * ilustración puesta abre la tarjeta del avión igual que con el retrato.
    */
   private fotoDeLaHistoria(ancho: number): string {
     const lado = 4;
@@ -925,13 +924,10 @@ export class Tablero {
     const y = BANDA.alto / 2 - h / 2;
     return `
       <g class="tablero__historia" data-historia="placa" aria-hidden="true">
-        <image data-historia="foto" x="${lado}" y="${y}" width="${w}" height="${h}"
-               preserveAspectRatio="xMidYMid slice" />
-        <rect data-historia="fondo" class="tablero__historia-fondo" x="${lado}" y="${y + h - 22}"
-              width="${w}" height="22" />
-        <text data-historia="firma" class="tablero__historia-firma" x="${lado + 6}"
-              y="${y + h - 7}"></text>
-        <rect class="tablero__historia-marco" x="${lado}" y="${y}" width="${w}" height="${h}" />
+        <svg data-historia="ventana" x="${lado}" y="${y}" width="${w}" height="${h}" overflow="hidden">
+          <image data-historia="foto" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice" />
+        </svg>
+        <rect data-historia="marco" class="tablero__historia-marco" x="${lado}" y="${y}" width="${w}" height="${h}" />
       </g>`;
   }
 

@@ -12,7 +12,11 @@ import { describe, expect, it } from "vitest";
 import { laHistoria } from "../audio/ventanilla";
 import { ES_PY } from "../i18n/es-PY";
 import type { Hito } from "../world/hitos";
-import { FOTOS, SIN_FOTO, fotoDeLaHistoria } from "./fotos-de-las-historias";
+import {
+  RECETAS_DE_LAS_HISTORIAS,
+  SIN_ILUSTRACION,
+  ilustracionDeLaHistoria,
+} from "./ilustraciones-de-las-historias";
 import {
   LAMINA,
   TOPE_DE_LA_VENTANA,
@@ -23,6 +27,7 @@ import {
   anchoDeLaLamina,
   dondeCabeLaLamina,
   dondeCabeLaVentana,
+  encuadre,
   laminaLibre,
   type Caja,
   type Plazos,
@@ -351,19 +356,57 @@ describe("la ventana sale y se va con la historia", () => {
   });
 });
 
-describe("cada historia con foto la enlaza", () => {
+/*
+ * **En pequeño, sin deformar y por donde dice el foco.** La ventanita de los
+ * vuelos de siempre es de 3:2 y la placa de las avionetas, de 5:3; las
+ * ilustraciones de las historias son de 4:3. Lo que sobra de alto se quita por
+ * donde dice su foco: lo mismo que `object-position` en la esquina, hecho a
+ * mano en la placa, que es SVG.
+ */
+describe("una ilustración de 4:3 en un hueco más apaisado", () => {
+  const placa = { ancho: 172, alto: 103.2 };
+
+  it.each([0, 0.15, 0.5, 0.7, 1])("con el foco en %s, tapa el hueco entero y no se deforma", (foco) => {
+    for (const hueco of [placa, { ancho: 228, alto: 152 }]) {
+      const e = encuadre(hueco, 4 / 3, foco);
+      expect(e.ancho / e.alto).toBeCloseTo(4 / 3, 9);
+      expect(e.x).toBeLessThanOrEqual(1e-9);
+      expect(e.y).toBeLessThanOrEqual(1e-9);
+      expect(e.x + e.ancho).toBeGreaterThanOrEqual(hueco.ancho - 1e-9);
+      expect(e.y + e.alto).toBeGreaterThanOrEqual(hueco.alto - 1e-9);
+    }
+  });
+
+  it("con el foco arriba enseña lo de arriba, abajo lo de abajo, y en medio quita igual", () => {
+    const sobra = placa.ancho / (4 / 3) - placa.alto;
+    expect(sobra).toBeGreaterThan(0);
+    expect(encuadre(placa, 4 / 3, 0).y).toBeCloseTo(0, 9);
+    expect(encuadre(placa, 4 / 3, 1).y).toBeCloseTo(-sobra, 9);
+    expect(encuadre(placa, 4 / 3, 0.5).y).toBeCloseTo(-sobra / 2, 9);
+    // Un foco fuera de la escala no saca la imagen del hueco.
+    expect(encuadre(placa, 4 / 3, -1).y).toBeCloseTo(0, 9);
+    expect(encuadre(placa, 4 / 3, 2).y).toBeCloseTo(-sobra, 9);
+  });
+
+  it("y una más apaisada que el hueco se recorta por los lados, a partes iguales", () => {
+    const e = encuadre({ ancho: 300, alto: 300 }, 2, 0);
+    expect(e).toEqual({ x: -150, y: 0, ancho: 600, alto: 300 });
+  });
+});
+
+describe("cada historia con ilustración la enlaza", () => {
   const sitio = (clave: string): Hito => ({ nombre: clave, clase: "montana", x: 0, z: 0, ele: null, clave });
   const historias = Object.keys(ES_PY)
     .map((k) => /^ventanilla\.historia\.(.+)$/.exec(k)?.[1])
     .filter((x): x is string => !!x);
 
-  it.each(historias.map((h) => [h]))("%s lleva su sitio, y el sitio su foto, en los dos registros", (h) => {
+  it.each(historias.map((h) => [h]))("%s lleva su sitio, y el sitio su ilustración, en los dos registros", (h) => {
     for (const conPasaje of [true, false]) {
       const historia = laHistoria({ hito: sitio(h), lado: "izquierda", distancia: 20_000, desdeElMorro: 70 }, conPasaje)!;
       expect(historia.sitio).toBe(h);
-      if (h in SIN_FOTO) expect(fotoDeLaHistoria(h)).toBeNull();
-      else expect(fotoDeLaHistoria(historia.sitio!)?.url).toBeTruthy();
+      if (h in SIN_ILUSTRACION) expect(ilustracionDeLaHistoria(h)).toBeNull();
+      else expect(ilustracionDeLaHistoria(historia.sitio!)?.url).toBeTruthy();
     }
-    expect(h in FOTOS || h in SIN_FOTO).toBe(true);
+    expect(h in RECETAS_DE_LAS_HISTORIAS || h in SIN_ILUSTRACION).toBe(true);
   });
 });
