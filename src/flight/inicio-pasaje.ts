@@ -78,9 +78,11 @@
  * 10. **Arriba**: la respuesta de las nubes, una vuelta alrededor del avión,
  *     el baño con la luz apagada, el servicio y la tripulante con Ara: las
  *     nubes de cerca.
- * 11. **La bajada**, los oídos, **el kit de viaje** —dos juegos que trae la
- *     tripulante para el tramo largo, ver `kit-de-viaje.ts`—, la isla y la
- *     cabina preparada, que es cuando se guarda el kit.
+ * 11. **La bajada**, los oídos, **el kit de viaje** —tres juegos que trae la
+ *     tripulante en la parte alta de la bajada, sobre el mar, ver
+ *     `kit-de-viaje.ts`—, que se guarda al empezar la llegada, cruzando los
+ *     diez mil pies; y la llegada sin juego delante: las nubes, la isla y la
+ *     cabina preparada.
  * 12. **La aproximación**: el ala estirando los flaps, el tren, y la toma vista
  *     desde el borde de la pista.
  * 13. **La llegada**, rodando por fuera, y en el puesto la despedida.
@@ -234,6 +236,7 @@ import type { IlustracionDelPasaje } from "../ui/ilustraciones";
 import { APAGA_LA_LUZ } from "./cinturon";
 import { Conversacion, type FraseDicha, type Linea, type VozDelInicio } from "./conversacion";
 import { KitDeViaje, LINEAS_DEL_KIT, type EstadoDelKit } from "./kit-de-viaje";
+import { LINEAS_DE_LA_LUZ } from "./luz-verde";
 import type { ComoSeVe } from "../world/se-ve-desde-el-pasaje";
 import type { Fase } from "./vuelo";
 import type { PermisosDeLaEscena, PotenciaDeLinea, TramoDeLinea } from "./vuelo-de-linea";
@@ -392,6 +395,7 @@ export type MomentoDelPasaje =
   | "bajada"
   | "oidos"
   | "kit"
+  | "kitRecoger"
   | "techo"
   | "isla"
   | "aproximacion"
@@ -729,11 +733,23 @@ const ESPERA_A_QUE_SE_VEA = 45;
  */
 const BAJANDO = {
   /**
-   * **El kit de viaje**, pasado lo último que se señala por la ventanilla y
-   * con más de cinco minutos de bajada por delante sin megafonía: el tramo
-   * tranquilo. Medido con la bajada del banco, cae hacia los 84 km.
+   * **El kit de viaje**, en la parte alta de la bajada y sobre el mar: pasado
+   * lo que solo vale arriba —el frío de fuera y el porqué del ralentí, que la
+   * comandante cuenta por encima de los diez mil pies—. Desde los 104 km, en
+   * el primer silencio: medido en el banco el 19-10-2026, llega a los 13.300
+   * pies, detrás del ala que explica la comandante, y la tripulante lo pide de
+   * vuelta tres minutos después (175 s), cruzando los diez mil; de esos, veinte
+   * segundos son la megafonía de La Gomera, que lo pausa. Dos minutos y medio
+   * largos de juego, que es lo que dura la luz verde.
+   *
+   * Estaba en los 84 km, pasado lo que se señala por la ventanilla, y allí,
+   * con la tripulación pidiéndolo de vuelta a los diez mil pies, no quedaba ni
+   * minuto y medio: la bajada se nivela a 10.430 pies para frenar a 250 nudos y
+   * cruza los diez mil hacia los 75 km. Las islas y la ruta, que la tripulante
+   * cuenta en persona, esperan a que se deje el juego: caducan al preparar la
+   * cabina, a 28 km, y por debajo de los diez mil hay seis minutos de bajada.
    */
-  kit: 84000,
+  kit: 104000,
   motor: 112000,
   islas: 99000,
   marQuieto: 86500,
@@ -751,6 +767,15 @@ const BAJANDO = {
 } as const;
 /** Lo que se calla la escena antes de que llegue la tripulante con el kit, s. */
 const CALLA_ANTES_DEL_KIT = 10;
+/**
+ * **Lo que tiene que sobrar por encima de los diez mil pies para traer el
+ * kit**, m: mil seiscientos pies, que con el tramo nivelado de los 10.430 son
+ * dos minutos largos de bajada. Por menos, la tripulante no lo trae para
+ * pedirlo de vuelta enseguida. Ver el momento `kitRecoger`.
+ */
+const KIT_POR_ENCIMA = 500;
+/** Y la red del kit que se queda abierto bajando, m por debajo de los diez mil pies. */
+const KIT_POR_DEBAJO = 300;
 /**
  * **La siesta de Ara** (punto 304): los números. Ver `puedeDormirse`.
  *
@@ -1480,8 +1505,23 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
       l.faltaParaTocar < BAJANDO.kit &&
       e.callaDesde >= CALLA_ANTES_DEL_KIT &&
       !cabinaPreparada(l, e),
-    caduca: (l, e) => cabinaPreparada(l, e),
+    caduca: (l, e) => cabinaPreparada(l, e) || l.altitud < DIEZ_MIL_PIES + KIT_POR_ENCIMA,
     lineas: [tripulante(KIT_DADO), tripulante("kitRato"), ara("kitGracias")].map(conLaTripulante),
+  },
+  {
+    /*
+     * **Y se recoge al empezar la llegada**, cruzando los diez mil pies
+     * bajando, que es cuando se prepara la cabina para la llegada: la
+     * tripulante pide guardarlo en el bolsillo del asiento. Lo pidió Enrique
+     * (19-10-2026): «hay que vivir la bajada y la aproximación, ese momento es
+     * mágico, cuando está llegando a tierra». Desde aquí, la llegada se vive
+     * sin juego delante: las nubes, la isla, los flaps, el tren y la pista.
+     * Antes se pedía con la cabina preparada, a treinta kilómetros de la pista.
+     */
+    id: "kitRecoger",
+    cuando: (l, e) => e.kit.esDado && !l.enTierra && bajando(l.tramo) && l.altitud < DIEZ_MIL_PIES,
+    caduca: (l, e) => !e.kit.esDado || e.kit.estaRecogido || l.enTierra || enLaFinal(l),
+    lineas: [conLaTripulante(tripulante(KIT_GUARDADO))],
   },
   {
     /*
@@ -1558,7 +1598,8 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
   {
     /*
      * La última vuelta de la tripulante antes de sentarse: cinturón, respaldo
-     * y persiana. Y si trajo el kit, que se guarde: para aterrizar, todo
+     * y persiana. Y si trajo el kit y todavía no se guardó —se pide a los diez
+     * mil pies, ver `kitRecoger`—, que se guarde: para aterrizar, todo
      * recogido. Ver `atenderAlKit`.
      */
     id: "tcpAterrizaje",
@@ -1566,7 +1607,9 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     caduca: (l) => l.enTierra || l.altura < 300,
     lineas: [conLaTripulante(tripulante("aterrizaje"))],
     segun: (_l, e) =>
-      (e.kit.esDado ? [tripulante(KIT_GUARDADO), tripulante("aterrizaje")] : [tripulante("aterrizaje")]).map(conLaTripulante),
+      (e.kit.esDado && !e.kit.estaRecogido ? [tripulante(KIT_GUARDADO), tripulante("aterrizaje")] : [tripulante("aterrizaje")]).map(
+        conLaTripulante,
+      ),
   },
   {
     /*
@@ -2258,8 +2301,8 @@ export const LINEAS_DEL_PASAJE: readonly Linea[] = (() => {
   // Y lo que va según lo que se ve y quién anda por el pasillo: el Teide, y bajo las nubes.
   poner(comandante("teide"));
   poner(ara("techo"));
-  // Y el kit: lo que se dice en los juegos, y guardarlo para aterrizar.
-  LINEAS_DEL_KIT.forEach(poner);
+  // Y el kit: lo que se dice en los juegos, y guardarlo para aterrizar. La luz verde, al final.
+  LINEAS_DEL_KIT.filter((l) => !LINEAS_DE_LA_LUZ.includes(l)).forEach(poner);
   poner(tripulante(KIT_GUARDADO));
   // Y la siesta: el bostezo, la tripulante que despierta a Ara para bajar y el despertar.
   [SE_DUERME, LA_DESPIERTAN, SE_DESPIERTA].forEach(poner);
@@ -2267,6 +2310,8 @@ export const LINEAS_DEL_PASAJE: readonly Linea[] = (() => {
   [ara("ralenti"), ...EL_PLOP_EXPLICADO, ara("oidosAlReves"), comandante("masGas")].forEach(poner);
   // Y el baño con la luz apagada: la tripulante que viene a por Ara, Ara de vuelta y, bajando, a tiempo.
   [...AL_BANO, FUE_A_TIEMPO].forEach(poner);
+  // Y la luz verde del kit (punto 304), al final: lo nuevo no renumera lo que ya está grabado.
+  LINEAS_DE_LA_LUZ.forEach(poner);
   return todas;
 })();
 
@@ -3236,7 +3281,17 @@ export class VueloDePasaje {
     const suena = this.charla.suena?.clave;
     if (suena === `inicio.tripulacion.pasaje.cerca.${KIT_DADO}` || this.charla.oida(`inicio.tripulacion.pasaje.cerca.${KIT_DADO}`))
       this.kit.dar();
-    if (suena === `inicio.tripulacion.pasaje.cerca.${KIT_GUARDADO}` || enLaFinal(l) || (l.enTierra && bajando(l.tramo)))
+    /*
+     * Y la red, por si la frase no llegó a sonar: mil pies por debajo de los
+     * diez mil, recogido igual. Una espera sin salida es un kit abierto en la
+     * final.
+     */
+    if (
+      suena === `inicio.tripulacion.pasaje.cerca.${KIT_GUARDADO}` ||
+      enLaFinal(l) ||
+      (l.enTierra && bajando(l.tramo)) ||
+      (bajando(l.tramo) && l.altitud < DIEZ_MIL_PIES - KIT_POR_DEBAJO)
+    )
       this.kit.recoger();
     this.kit.paso(dt, {
       megafonia: this.megafoniaSuena || this.dicho("aproximacion"),

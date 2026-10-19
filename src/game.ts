@@ -1226,6 +1226,7 @@ import {
   EN_GRANDE,
   EN_GRANDE_EN_PIES,
   laInstructoraLoExplica,
+  type Peldano,
 } from "./flight/escalera";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import {
@@ -6808,6 +6809,8 @@ export class Game {
       // Y su kit de viaje, que la tripulante trae en la bajada. Ver `flight/kit-de-viaje.ts`.
       this.pantallaDelKit?.quitar();
       const kit = document.getElementById("kit");
+      // En la luz verde, abajo hay verde y roja fijas, y arriba también los destellos: el peldaño de quien juega.
+      this.inicio.kit.peldano = this.tier.avisos;
       this.pantallaDelKit = kit ? new PantallaDelKit(kit, this.inicio.kit) : null;
       this.tripulacionDeLinea = new VueloDeLinea({
         vr: this.aircraft.rotationSpeed,
@@ -7911,6 +7914,18 @@ export class Game {
   darElKitParaBanco(): boolean {
     if (!(this.inicio instanceof VueloDePasaje)) return false;
     this.inicio.kit.dar();
+    return true;
+  }
+
+  /**
+   * **La luz verde, a otro ritmo y en otro peldaño**, para el banco: juega las
+   * rondas enteras en cada pantalla sin esperar los tres minutos, y la de
+   * noche del peldaño de cabina. Ver `KitDeViaje.ritmo`.
+   */
+  luzVerdeParaBanco(o: { readonly ritmo?: number; readonly peldano?: Peldano }): boolean {
+    if (!(this.inicio instanceof VueloDePasaje)) return false;
+    if (o.ritmo !== undefined) this.inicio.kit.ritmo = o.ritmo;
+    if (o.peldano !== undefined) this.inicio.kit.peldano = o.peldano;
     return true;
   }
 

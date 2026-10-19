@@ -631,6 +631,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * momento. Ver `flight/kit-de-viaje.ts`.
      */
     darElKit: () => juego.darElKitParaBanco(),
+    /** La luz verde, a otro ritmo o en otro peldaño: ver `Game.luzVerdeParaBanco`. */
+    juegoDeLaTorre: (o: { ritmo?: number; peldano?: "dibujo" | "palabra" | "cifra" | "cabina" }) => juego.luzVerdeParaBanco(o),
     /** El hilo musical: lo que decide y lo que suena. Ver `audio/hilo-musical.ts`. */
     musica: () => juego.musicaParaBanco,
     /*

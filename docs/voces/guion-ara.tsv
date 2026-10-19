@@ -81,7 +81,7 @@
 081	inicio.ara.pasaje.despacito	Ahora vamos despacito por el suelo, como un auto, hasta nuestro lugar.
 082	inicio.ara.pasaje.repaso	¡Qué lindo fue! Las nubes por dentro, el mar enorme y las islas con montañas.
 083	inicio.ara.pasaje.kitGracias	¡Gracias! ¿Jugamos? Tocá la mochilita y elegimos uno de los juegos.
-084	inicio.ara.pasaje.kit.elegir	Hay dos juegos: armar el avión o dibujar el camino de nuestro vuelo. ¿Cuál querés?
+084	inicio.ara.pasaje.kit.elegir	Hay tres juegos: ser la torre, armar el avión o dibujar el camino de nuestro vuelo. ¿Cuál querés?
 085	inicio.ara.pasaje.kit.piezas.empezar	¿Me ayudás a armar el avión? Agarrá cada pieza y llevala a su lugar.
 086	inicio.ara.pasaje.kit.piezas.ala	¡El ala! Empuja el aire para abajo, y el aire la empuja para arriba: así nos sostiene.
 087	inicio.ara.pasaje.kit.piezas.motor	¡El motor! Traga aire por adelante y lo echa para atrás con mucha fuerza: así el avión va para adelante.
@@ -115,3 +115,14 @@
 115	inicio.ara.pasaje.banoEspero	Con la luz del cinturón encendida, espero a que aterricemos. ¡Ya falta poquito!
 116	inicio.ara.pasaje.mascaraAhora	¿Hay que ponerse la máscara ahora?
 117	inicio.ara.pasaje.salidaAla	¿Y por la ventanilla no se sale, sobre el ala?
+118	inicio.ara.pasaje.kit.luz.radio	Los aviones hablan con la torre por radio. Si a uno se le rompe, la torre le habla con una linterna de colores.
+119	inicio.ara.pasaje.kit.luz.empezar	Ahora la torre sos vos: tocá el avión sin radio y dale luz verde para aterrizar, o roja para que espere.
+120	inicio.ara.pasaje.kit.luz.alas	¡Movió las alas! Así contesta el avión que vio la luz.
+121	inicio.ara.pasaje.kit.luz.sinAlas	En la base y en la final no mueve las alas: ahí tiene que ir derechito a la pista.
+122	inicio.ara.pasaje.kit.luz.roja	¡Luz roja! Da otra vuelta y espera su turno: esperar también es volar bien.
+123	inicio.ara.pasaje.kit.luz.alAire	La pista estaba ocupada y se fue al aire solo. ¡Bien! Irse al aire también es saber volar.
+124	inicio.ara.pasaje.kit.luz.conRadio	Ese tiene la radio bien: habla con la torre y aterriza sin linterna. Eso es lo normal.
+125	inicio.ara.pasaje.kit.luz.fin	¡Aterrizaron todos! Con la linterna de colores, como en una torre de verdad.
+126	inicio.ara.pasaje.kit.luz.destellosRojos	Hay un camión revisando la pista. Con la roja que parpadea, el avión sabe que no puede aterrizar.
+127	inicio.ara.pasaje.kit.luz.destellosVerdes	Ya se fue el camión. Con la verde que parpadea, el avión sabe que puede volver para aterrizar.
+128	inicio.ara.pasaje.kit.luz.noche	De noche no se ven las alas: el avión contesta apagando y encendiendo dos veces los faros.

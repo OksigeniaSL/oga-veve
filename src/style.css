@@ -15889,12 +15889,12 @@ body.con-vuelta #tactil {
   outline-offset: 3px;
 }
 
-/* Elegir: dos dibujos grandes, uno al lado del otro. */
+/* Elegir: tres dibujos grandes, uno al lado del otro. */
 .kit-elegir {
   width: 100%;
   height: 100%;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   grid-template-rows: minmax(0, 1fr);
   gap: 18px;
   padding: 12px;
@@ -16188,6 +16188,190 @@ body.con-vuelta #tactil {
   .kit-parada text {
     font-size: 34px;
   }
+}
+
+/* ── Luz verde: la torre de La Palma ──
+   Dos capas: el fondo, que no se toca, y lo que se mueve encima, en su propia
+   capa para que mover un avioncito no vuelva a pintar el mapa. Ver
+   `src/ui/luz-verde.ts`. */
+.luz {
+  position: relative;
+  display: block;
+}
+
+.luz-capa {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.luz-vivo {
+  will-change: transform;
+  touch-action: none;
+}
+
+.luz-avion,
+.luz-boton {
+  cursor: pointer;
+  outline: none;
+}
+
+.luz-avion:focus-visible .luz-avion__apunta,
+.luz-boton:focus-visible .luz-boton__aro {
+  visibility: visible;
+  stroke: #f2c230;
+  stroke-width: 5px;
+}
+
+/* El que pide luz, con un aro del color que le toca, latiendo. */
+.luz-avion__pide {
+  visibility: hidden;
+}
+
+.luz-avion--pide .luz-avion__pide {
+  visibility: visible;
+  animation: luz-late 1s ease-in-out infinite;
+}
+
+@keyframes luz-late {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.luz-avion__apunta {
+  visibility: hidden;
+}
+
+.luz-avion--apuntado .luz-avion__apunta {
+  visibility: visible;
+}
+
+/* En tierra ya no pide nada: ni la radio encima ni el aro. */
+.luz-avion--en-tierra .luz-avion__radio,
+.luz-avion--en-tierra .luz-avion__pide,
+.luz-avion--en-tierra .luz-avion__apunta {
+  display: none;
+}
+
+.luz-radio__ondas {
+  opacity: 0.3;
+}
+
+.luz-avion--habla .luz-radio__ondas {
+  opacity: 1;
+  animation: luz-destello 0.5s steps(2) infinite;
+}
+
+/* De noche: el mapa a oscuras, las luces de la pista y las de los aviones. */
+.luz-noche {
+  transition: opacity 1.5s;
+}
+
+.luz--noche .luz-noche {
+  opacity: 0.62;
+}
+
+.luz-luces-de-pista,
+.luz-avion__noche {
+  display: none;
+}
+
+.luz--noche .luz-luces-de-pista,
+.luz--noche .luz-avion__noche {
+  display: inline;
+}
+
+.luz-avion--faros-apagados .luz-avion__faros {
+  visibility: hidden;
+}
+
+/* La luz de la lámpara: fija, o a destellos. */
+.luz-haz {
+  opacity: 0.5;
+}
+
+.luz-haz--destellos,
+.luz-boton__rayos,
+.luz-camion__girofaro {
+  animation: luz-destello 0.4s steps(2) infinite;
+}
+
+.luz-boton__rayos {
+  animation-duration: 0.9s;
+}
+
+@keyframes luz-destello {
+  50% {
+    opacity: 0;
+  }
+}
+
+.luz-boton__aro {
+  stroke: #f2c230;
+  stroke-width: 0;
+}
+
+/* La luz que toca, cuando se ayuda: un aro amarillo que crece y encoge. */
+.luz-boton--ayuda .luz-boton__aro {
+  animation: luz-llama 1s ease-in-out infinite;
+}
+
+@keyframes luz-llama {
+  50% {
+    stroke-width: 9px;
+  }
+}
+
+.luz-boton--encendido .luz-boton__luz {
+  stroke: #ffffff;
+  stroke-width: 5px;
+}
+
+/* La fiesta: estrellitas al tocar, y la flecha de otra vuelta. */
+.luz-estrellita {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: luz-estrellita 1.3s ease-out forwards;
+}
+
+@keyframes luz-estrellita {
+  from {
+    transform: translate(0, 0) scale(0.4);
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--dx), var(--dy)) scale(1.2);
+    opacity: 0;
+  }
+}
+
+.luz-otra-vuelta > path {
+  transform-box: view-box;
+  animation: luz-aparece 2.6s ease-out forwards;
+}
+
+@keyframes luz-aparece {
+  0% {
+    opacity: 0;
+  }
+  20%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .luz * {
+    animation: none !important;
+  }
+}
+.sin-movimiento .luz * {
+  animation: none !important;
 }
 
 /* De pie y con el dedo manda el cartel de girar, como con la tarjeta. */

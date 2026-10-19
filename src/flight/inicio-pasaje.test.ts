@@ -469,6 +469,7 @@ describe("cada cosa en su momento del vuelo", () => {
       "bajada",
       "oidos",
       "kit",
+      "kitRecoger",
       "techo",
       "isla",
       "aproximacion",
@@ -1642,9 +1643,13 @@ describe("el modo rápido (⏩), puesto en cuanto sale y sin tocarlo más", () =
     if (entorno?.OGA_PASAJE)
       console.log(`corriendo ${ratos.length} veces, ${total.toFixed(0)} s: ${ratos.map((x) => `${x.desde.toFixed(0)}–${x.hasta.toFixed(0)}`).join(" ")}`);
     expect(e.adelanto.pulsado).toBe(1);
-    // El de T54, que solo salía con medio minuto callado por delante, corría tres veces en este vuelo.
-    expect(ratos.length).toBeGreaterThanOrEqual(6);
-    expect(total).toBeGreaterThan(60);
+    /*
+     * El vuelo va contado de punta a punta, y con el kit arriba —llega en lo
+     * alto de la bajada y se recoge a los diez mil pies— el modo rápido se
+     * queda quieto mientras se juega: corre menos, pero corre.
+     */
+    expect(ratos.length).toBeGreaterThanOrEqual(3);
+    expect(total).toBeGreaterThan(45);
     // Y la escena apunta los mismos ratos que se ven desde fuera.
     expect(e.adelanto.ratos.length).toBe(ratos.length);
   });
@@ -1735,12 +1740,14 @@ describe("el vuelo de dentro de un rato, para saber qué viene", () => {
 });
 
 describe("el kit de viaje, en el vuelo", () => {
-  const m = volarElMedido();
+  const alturas: { t: number; altitud: number }[] = [];
+  const m = volarElMedido(undefined, (_e, t, l) => alturas.push({ t, altitud: l.altitud }));
+  const altitudA = (t: number): number => [...alturas].reverse().find((x) => x.t <= t)?.altitud ?? NaN;
   const cuando = (dichas: Dicha[], clave: string): number => dichas.find((d) => d.linea.clave === clave)?.desde ?? NaN;
   const tramoA = (tramos: { t: number; tramo: TramoDeLinea }[], t: number): TramoDeLinea =>
     [...tramos].reverse().find((x) => x.t <= t)?.tramo ?? "puerta";
 
-  it("la tripulante lo trae en un tramo tranquilo de la bajada: sin megafonía cerca y con rato por delante", () => {
+  it("la tripulante lo trae en la parte alta de la bajada: sin megafonía cerca y con rato para jugar antes de los diez mil pies", () => {
     const dado = cuando(m.dichas, "inicio.tripulacion.pasaje.cerca.kitAqui");
     expect(dado).toBeGreaterThan(0);
     expect(tramoA(m.tramos, dado)).toBe("bajada");
@@ -1752,18 +1759,22 @@ describe("el kit de viaje, en el vuelo", () => {
       "inicio.tripulacion.pasaje.cerca.kitRato",
       "inicio.ara.pasaje.kitGracias",
     ]);
-    // Ni megafonía en el medio minuto de antes ni en los cinco de después.
+    // Ni megafonía en el medio minuto de antes ni en el minuto de después: la de La Gomera, más tarde, lo pausa.
     const megafonia = m.dichas.filter((d) => d.linea.megafonia);
-    expect(megafonia.filter((d) => d.desde > dado - 30 && d.desde < dado + 300).map((d) => d.linea.clave)).toEqual([]);
-    // Y más de cinco minutos antes de preparar la cabina para aterrizar.
-    expect(cuando(m.dichas, "comandante.aproximacion") - dado).toBeGreaterThan(300);
+    expect(megafonia.filter((d) => d.desde > dado - 30 && d.desde < dado + 60).map((d) => d.linea.clave)).toEqual([]);
+    // Bien por encima de los diez mil pies, y con más de tres minutos hasta que se pide guardarlo.
+    expect(altitudA(dado)).toBeGreaterThan(3048 + 900);
+    expect(cuando(m.dichas, "inicio.tripulacion.pasaje.cerca.kitGuardar") - dado).toBeGreaterThan(180);
   });
 
-  it("y antes de aterrizar pide guardarlo, justo antes de la última revisión", () => {
-    const k = m.dichas.map((d) => d.linea.clave);
-    const guardar = k.indexOf("inicio.tripulacion.pasaje.cerca.kitGuardar");
-    expect(guardar).toBeGreaterThan(k.indexOf("comandante.aproximacion"));
-    expect(k[guardar + 1]).toBe("inicio.tripulacion.pasaje.cerca.aterrizaje");
+  it("y al empezar la llegada, cruzando los diez mil pies bajando, pide guardarlo: la llegada, sin juego", () => {
+    const guardar = cuando(m.dichas, "inicio.tripulacion.pasaje.cerca.kitGuardar");
+    expect(tramoA(m.tramos, guardar)).toBe("bajada");
+    expect(altitudA(guardar)).toBeLessThan(3048);
+    expect(altitudA(guardar)).toBeGreaterThan(3048 - 300);
+    // Antes de preparar la cabina, y en la última revisión ya no se repite.
+    expect(guardar).toBeLessThan(cuando(m.dichas, "comandante.aproximacion"));
+    expect(m.dichas.filter((d) => d.linea.clave === "inicio.tripulacion.pasaje.cerca.kitGuardar")).toHaveLength(1);
     expect(m.escena.estado.kit.recogido).toBe(true);
   });
 

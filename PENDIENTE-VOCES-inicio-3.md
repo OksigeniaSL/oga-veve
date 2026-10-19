@@ -92,8 +92,36 @@ Jazlyn», o con `?inicio=3`.
 | `inicio.ara.pasaje.kit.camino.ayuda` | 53 |
 | `inicio.tripulacion.pasaje.cerca.kitGuardar` | 90 |
 
+- **La luz verde** (punto 304, 19-10-2026), el tercer juego del kit: Ara
+  cuenta el plan B —lo normal es la radio, y la linterna de colores es por si
+  se rompe—, qué se hace en la torre y lo que va pasando: el avión que alabea
+  para contestar, la roja y el «al aire», que **se celebran** —«irse al aire
+  también es saber volar», la frase de la canción—, y arriba los destellos y
+  los faros de noche. De vos y con chispa, contenta y tranquila: nada suena a
+  emergencia. **Once frases nuevas, al final de Ara**, y **dos que se
+  regraban** porque ya no hay dos juegos sino tres: `inicio.ara.pasaje.kit.elegir`
+  y `inicio.tripulacion.pasaje.cerca.kitAqui` —esta, la tripulante en persona,
+  sin chispa—. Trece frases, 1.159 caracteres.
+
+| Clave | Caracteres |
+|---|---:|
+| `inicio.tripulacion.pasaje.cerca.kitAqui` (se regraba) | 103 |
+| `inicio.ara.pasaje.kit.elegir` (se regraba) | 97 |
+| `inicio.ara.pasaje.kit.luz.radio` | 111 |
+| `inicio.ara.pasaje.kit.luz.empezar` | 104 |
+| `inicio.ara.pasaje.kit.luz.alas` | 54 |
+| `inicio.ara.pasaje.kit.luz.sinAlas` | 82 |
+| `inicio.ara.pasaje.kit.luz.roja` | 75 |
+| `inicio.ara.pasaje.kit.luz.alAire` | 90 |
+| `inicio.ara.pasaje.kit.luz.conRadio` | 86 |
+| `inicio.ara.pasaje.kit.luz.fin` | 76 |
+| `inicio.ara.pasaje.kit.luz.destellosRojos` | 97 |
+| `inicio.ara.pasaje.kit.luz.destellosVerdes` | 94 |
+| `inicio.ara.pasaje.kit.luz.noche` | 90 |
+
 Ninguna baja de treinta letras. Los rótulos del kit —`inicio.kit.*`, el
-nombre de cada pieza y de cada parada— son de la pantalla y no se graban.
+nombre de cada pieza y de cada parada, y las luces de la lámpara— son de la
+pantalla y no se graban.
 
 ## Cómo
 

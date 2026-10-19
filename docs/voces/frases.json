@@ -15570,7 +15570,7 @@
     "id": "inicio.ara.pasaje.kit.elegir",
     "voz": "ara",
     "idioma": "es-PY",
-    "texto": "Hay dos juegos: armar el avión o dibujar el camino de nuestro vuelo. ¿Cuál querés?",
+    "texto": "Hay tres juegos: ser la torre, armar el avión o dibujar el camino de nuestro vuelo. ¿Cuál querés?",
     "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
     "ajustes": {
       "stability": 0.35,
@@ -16081,7 +16081,7 @@
     "id": "inicio.tripulacion.pasaje.cerca.kitAqui",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
-    "texto": "¡Mira lo que te traigo: tu kit de viaje, con dos juegos dentro! Siempre llevamos unos cuantos a bordo.",
+    "texto": "¡Mira lo que te traigo: tu kit de viaje, con tres juegos dentro! Siempre llevamos unos cuantos a bordo.",
     "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
@@ -17928,7 +17928,161 @@
     "id": "inicio.tripulacion.pasaje.cerca.salidaAla",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
-    "texto": "En los aviones más grandes, sí: tienen ventanillas de salida sobre el ala, con su letrero encima. Este es más cortito, y sus salidas son las puertas.",
-    "para": "el modo inicio, de pasaje: la tripulante, las salidas sobre el ala son de los aviones más largos"
+    "texto": "En muchos aviones, sí: tienen ventanillas de salida sobre el ala, con su letrero encima. En este, las salidas son las puertas.",
+    "para": "el modo inicio, de pasaje: la tripulante, muchos aviones llevan salidas sobre el ala, y este no"
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.luz.radio",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Los aviones hablan con la torre por radio. Si a uno se le rompe, la torre le habla con una linterna de colores.",
+    "para": "el modo inicio, de pasaje, luz verde: Ara cuenta el plan B: lo normal es la radio, y la linterna es por si se rompe",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.luz.empezar",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Ahora la torre sos vos: tocá el avión sin radio y dale luz verde para aterrizar, o roja para que espere.",
+    "para": "el modo inicio, de pasaje, luz verde: Ara explica qué hacer en la torre: verde para aterrizar, roja para esperar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.luz.alas",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Movió las alas! Así contesta el avión que vio la luz.",
+    "para": "el modo inicio, de pasaje, luz verde: Ara ve que el avión alabea para contestar a la luz",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.luz.sinAlas",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "En la base y en la final no mueve las alas: ahí tiene que ir derechito a la pista.",
+    "para": "el modo inicio, de pasaje, luz verde: Ara cuenta que en base y en final no se alabea",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.luz.roja",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Luz roja! Da otra vuelta y espera su turno: esperar también es volar bien.",
+    "para": "el modo inicio, de pasaje, luz verde: Ara celebra la roja: otra vuelta, esperar su turno",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.luz.alAire",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "La pista estaba ocupada y se fue al aire solo. ¡Bien! Irse al aire también es saber volar.",
+    "para": "el modo inicio, de pasaje, luz verde: Ara celebra el al aire solo, con la pista ocupada, con la frase de la canción",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.luz.conRadio",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Ese tiene la radio bien: habla con la torre y aterriza sin linterna. Eso es lo normal.",
+    "para": "el modo inicio, de pasaje, luz verde: Ara señala el avión con la radio bien, que aterriza sin linterna",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.luz.fin",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Aterrizaron todos! Con la linterna de colores, como en una torre de verdad.",
+    "para": "el modo inicio, de pasaje, luz verde: Ara celebra que aterrizaron todos",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.luz.destellosRojos",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Hay un camión revisando la pista. Con la roja que parpadea, el avión sabe que no puede aterrizar.",
+    "para": "el modo inicio, de pasaje, luz verde: Ara cuenta los destellos rojos, con el camión en la pista",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.luz.destellosVerdes",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Ya se fue el camión. Con la verde que parpadea, el avión sabe que puede volver para aterrizar.",
+    "para": "el modo inicio, de pasaje, luz verde: Ara cuenta los destellos verdes, al irse el camión",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.luz.noche",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "De noche no se ven las alas: el avión contesta apagando y encendiendo dos veces los faros.",
+    "para": "el modo inicio, de pasaje, luz verde: Ara cuenta que de noche se contesta con los faros",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]
