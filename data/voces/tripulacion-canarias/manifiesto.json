@@ -15,6 +15,18 @@
       "ms": 5207,
       "h": "51317c2974"
     },
+    "inicio.tripulacion.pasaje.cerca.banoATiempo": {
+      "ms": 5907,
+      "h": "6d95939c74"
+    },
+    "inicio.tripulacion.pasaje.cerca.banoAhora": {
+      "ms": 4707,
+      "h": "59f0c0701c"
+    },
+    "inicio.tripulacion.pasaje.cerca.banoLuz": {
+      "ms": 6207,
+      "h": "9504db9b74"
+    },
     "inicio.tripulacion.pasaje.cerca.despertar": {
       "ms": 8607,
       "h": "c3bf25e096"
@@ -453,6 +465,15 @@
     ],
     "inicio.tripulacion.pasaje.cerca.oficio2": [
       "inicio.tripulacion.pasaje.cerca.oficio2"
+    ],
+    "inicio.tripulacion.pasaje.cerca.banoLuz": [
+      "inicio.tripulacion.pasaje.cerca.banoLuz"
+    ],
+    "inicio.tripulacion.pasaje.cerca.banoAhora": [
+      "inicio.tripulacion.pasaje.cerca.banoAhora"
+    ],
+    "inicio.tripulacion.pasaje.cerca.banoATiempo": [
+      "inicio.tripulacion.pasaje.cerca.banoATiempo"
     ]
   }
 }

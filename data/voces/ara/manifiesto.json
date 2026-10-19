@@ -91,6 +91,18 @@
       "ms": 3307,
       "h": "d5da29fcda"
     },
+    "inicio.ara.pasaje.banoAntes": {
+      "ms": 5507,
+      "h": "4c4fdbd8d2"
+    },
+    "inicio.ara.pasaje.banoEspero": {
+      "ms": 6207,
+      "h": "bf91e9af15"
+    },
+    "inicio.ara.pasaje.banoVuelta": {
+      "ms": 5707,
+      "h": "2790f12001"
+    },
     "inicio.ara.pasaje.bici": {
       "ms": 4907,
       "h": "5be8fbbfd9"
@@ -518,6 +530,15 @@
     ],
     "inicio.ara.pasaje.bano": [
       "inicio.ara.pasaje.bano"
+    ],
+    "inicio.ara.pasaje.banoAntes": [
+      "inicio.ara.pasaje.banoAntes"
+    ],
+    "inicio.ara.pasaje.banoEspero": [
+      "inicio.ara.pasaje.banoEspero"
+    ],
+    "inicio.ara.pasaje.banoVuelta": [
+      "inicio.ara.pasaje.banoVuelta"
     ],
     "inicio.ara.pasaje.bici": [
       "inicio.ara.pasaje.bici"

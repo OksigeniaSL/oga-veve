@@ -195,5 +195,14 @@
   ],
   "inicio.tripulacion.pasaje.cerca.oficio2": [
     "inicio.tripulacion.pasaje.cerca.oficio2"
+  ],
+  "inicio.tripulacion.pasaje.cerca.banoLuz": [
+    "inicio.tripulacion.pasaje.cerca.banoLuz"
+  ],
+  "inicio.tripulacion.pasaje.cerca.banoAhora": [
+    "inicio.tripulacion.pasaje.cerca.banoAhora"
+  ],
+  "inicio.tripulacion.pasaje.cerca.banoATiempo": [
+    "inicio.tripulacion.pasaje.cerca.banoATiempo"
   ]
 }
