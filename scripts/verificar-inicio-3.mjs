@@ -139,7 +139,15 @@
  *   se espera de un vuelo con nubes no vale ahí;
  *   `OGA_SIN_JUGAR=1` no abre el kit en vuelo, para que las capturas de lo
  *   que se nombra bajando salgan sin él delante; y `OGA_SOLO_LAMINA=1` solo
- *   mira la lámina con el kit que se abre y se mueve, en un minuto.
+ *   mira la lámina con el kit que se abre y se mueve, en un minuto; y
+ *   `OGA_SOLO_ESQUEMAS=1`, solo los esquemas, puestos uno a uno.
+ *
+ * **Los esquemas de lo que se explica** (punto 311): que cada dibujo que ya
+ * tiene ilustración —el oído, las máscaras, lo alto…— la enseña a ella y no
+ * al dibujo, en grande, entera y sin pisar la tarjeta ni los botones: en el
+ * vuelo, los que salen, y sin volar, todos, puestos uno a uno en la escena,
+ * con la torre de «Luz verde». Con `OGA_FOTOS`, el oído, las máscaras, lo
+ * alto y la torre en la lámina.
  *
  * **El modo rápido ⏩** (19-10-2026): la ronda de siempre mira que el botón
  * sale solo cuando toca —en el aire, nunca en tierra, ni con Ara durmiendo,
@@ -314,6 +322,26 @@ const MOMENTOS = [
   "puesto",
 ];
 
+/**
+ * **Los dibujos que ya salen con su ilustración** (punto 311), y el nombre del
+ * fichero que tiene que salir: el suyo, o el de la historia que cuenta lo
+ * mismo. Ver `ilustracionDelDibujo` en `src/ui/ilustraciones.ts`.
+ */
+const CON_ILUSTRACION = {
+  mascara: "ilustraciones/mascara",
+  nube: "ilustraciones/nube",
+  frio: "ilustraciones/frio",
+  oido: "ilustraciones/oido",
+  alto: "ilustraciones/alto",
+  meneo: "ilustraciones/meneo",
+  chaleco: "ilustraciones/chaleco",
+  maletero: "ilustraciones/maletero",
+  islas: "historias/teide",
+  estrellas: "historias/taburiente",
+};
+/** Si lo puesto en la lámina es la ilustración que le toca a ese dibujo. */
+const esSuIlustracion = (clave, fichero) => !!fichero && new RegExp(`${CON_ILUSTRACION[clave]}[-.][^/]*webp`).test(fichero);
+
 /** Lo que tiene toma en el pack: lo demás, hasta grabarlo, se lee. */
 const GRABADAS = new Set(
   ["ara", "comandante", "tripulacion-canarias"].flatMap((v) =>
@@ -425,6 +453,8 @@ async function elVuelo() {
    */
   const laminas = new Map();
   const laminaPisa = new Set();
+  /** Lo que salió en la lámina de cada dibujo con ilustración: su fichero, o «dibujo» si salió el de código. */
+  const conSuIlustracion = new Map();
   /** Las veces que la lámina estaba puesta con algo nombrado a la vista: lo que se pudo medir. */
   const laminaConNombrado = new Set();
   /*
@@ -476,7 +506,15 @@ async function elVuelo() {
       // El tamaño, sin el kit abierto: con él, lo que se mira es el kit y la lámina se hace a un lado.
       const ancho = (lamina.caja.right - lamina.caja.left) / v.pantalla.ancho;
       const antes = laminas.get(lamina.sitio);
-      if (!e.kit?.abierto && (!antes || ancho > antes.ancho)) laminas.set(lamina.sitio, { ancho, donde: lamina.donde, plano: i.planoVisto });
+      // Y su proporción, la de la imagen sin el marco: los dibujos son de 3:2 y las ilustraciones, de 4:3.
+      const proporcion = (lamina.caja.right - lamina.caja.left - 12) / Math.max(1, lamina.caja.bottom - lamina.caja.top - 12);
+      if (!e.kit?.abierto && (!antes || ancho > antes.ancho)) laminas.set(lamina.sitio, { ancho, proporcion, donde: lamina.donde, plano: i.planoVisto });
+      const esquema = /^dibujo:(.+)$/.exec(lamina.sitio)?.[1];
+      if (esquema && CON_ILUSTRACION[esquema]) {
+        const vistos = conSuIlustracion.get(esquema) ?? new Set();
+        vistos.add(lamina.fichero ?? "dibujo");
+        conSuIlustracion.set(esquema, vistos);
+      }
       for (const o of v.noSeTapa) if (sePisan(lamina.caja, o)) laminaPisa.add(`${lamina.sitio} pisa ${o.que}`);
       // Y lo nombrado de hace poco, donde cae ahora en la imagen: fuera de la lámina.
       const recientes = new Set((e.nombrados ?? []).filter((n) => n.desde >= e.segundos - 20).map((n) => n.sitio));
@@ -686,6 +724,9 @@ async function elVuelo() {
       if (en("cinturon", i.ventanita?.sitio === "dibujo:cinturon" && i.ventanita?.donde)) await pausa(800).then(() => foto(page, "cinturon"));
       if (en("rodando", sinVelo && i.planoVisto === "fuera-rodando")) await foto(page, "fuera-rodando");
       if (en("mascara", i.ventanita?.sitio === "dibujo:mascara" && i.ventanita?.donde)) await pausa(800).then(() => foto(page, "ventanita-mascara"));
+      if (en("oido-dibujo", i.ventanita?.sitio === "dibujo:oido" && i.ventanita?.donde)) await pausa(800).then(() => foto(page, "ventanita-oido"));
+      if (en("alto-dibujo", i.ventanita?.sitio === "dibujo:alto" && i.ventanita?.donde)) await pausa(800).then(() => foto(page, "ventanita-alto"));
+      if (en("torre", i.ventanita?.sitio === "ilustracion:torre-radio" && i.ventanita?.donde)) await pausa(800).then(() => foto(page, "ventanita-torre"));
       if (en("despegue", sinVelo && i.planoVisto === "fuera-despegue" && v.velocidad > 50)) await foto(page, "fuera-despegue");
       if (en("giro", sinVelo && i.planoVisto === "fuera-giro" && e.segundos - e.planoDesde > 4)) await foto(page, "fuera-giro");
       if (en("nubes", e.dichos.includes("nubes"))) await foto(page, "nubes");
@@ -1357,12 +1398,32 @@ async function elVuelo() {
    * lo grande no ha servido de nada.
    */
   const minimo = (plano) => (plano === "fuera-ala" || plano === "fuera-tren" ? 240 / 1280 : 0.25);
+  /*
+   * **El suelo se mide en superficie, no solo de ancho** (punto 311): el cuarto
+   * del ancho se puso con los dibujos, de 3:2, y los esquemas con ilustración
+   * son de 4:3, más altos. A igual superficie que una de 3:2 de un cuarto del
+   * ancho, una de 4:3 mide un 94 % de ese ancho: no es más pequeña, es más alta.
+   */
+  const anchoMinimo = (l) => minimo(l.plano) * Math.sqrt(Math.min(1, (l.proporcion ?? 1.5) / 1.5));
   const dibujosVistos = [...laminas].filter(([s]) => s.startsWith("dibujo:"));
-  const pequenos = dibujosVistos.filter(([, l]) => l.ancho < minimo(l.plano));
+  const pequenos = dibujosVistos.filter(([, l]) => l.ancho < anchoMinimo(l));
   comprobar(
     "lo que se explica sale en grande: cada dibujo, de un cuarto del ancho como poco (y nunca menos que la ventanita de antes con el ala o el tren de cerca)",
     dibujosVistos.length >= 5 && pequenos.length === 0 && [...laminas.values()].every((l) => l.donde === "grande"),
-    [...laminas].map(([s, l]) => `${s.replace(/^(dibujo|ilustracion):/, "")} ${Math.round(l.ancho * 100)} %${l.plano && l.plano !== "ventanilla" ? ` (${l.plano})` : ""}`).join(", "),
+    [...laminas].map(([s, l]) => `${s.replace(/^(dibujo|ilustracion):/, "")} ${(l.ancho * 100).toFixed(1)} %${l.proporcion < 1.4 ? " (4:3)" : ""}${l.plano && l.plano !== "ventanilla" ? ` (${l.plano})` : ""}`).join(", "),
+  );
+  /*
+   * **Y cada dibujo que ya tiene ilustración, con ella** (punto 311): en todas
+   * las muestras con la lámina puesta, su fichero y nunca el dibujo de código.
+   * Lo grande y lo que no tapa lo miran las de al lado, con todas las demás.
+   */
+  const esquemasVistos = [...conSuIlustracion];
+  const conDibujoDeCodigo = esquemasVistos.filter(([clave, vistos]) => [...vistos].some((f) => !esSuIlustracion(clave, f)));
+  comprobar(
+    "los esquemas salen con su ilustración, no con el dibujo de código",
+    esquemasVistos.length >= 4 && conDibujoDeCodigo.length === 0,
+    `${esquemasVistos.map(([c, vistos]) => `${c}${[...vistos].every((f) => esSuIlustracion(c, f)) ? "" : ` ✗ (${[...vistos].join(", ")})`}`).join(", ") || "ninguno"}` +
+      ` · torre de «Luz verde»: ${ventanitas.has("ilustracion:torre-radio") ? "salió" : "no salió"}`,
   );
   comprobar(
     "y no tapa lo nombrado, ni la tarjeta de quien habla ni los botones",
@@ -2204,13 +2265,111 @@ async function laLaminaYElKit() {
   }
 }
 
+/**
+ * **Los esquemas, uno a uno, sin volar** (punto 311). En un vuelo no salen
+ * todos —lo alto o los telescopios dependen de lo que se vea y de lo que dé
+ * tiempo a contar—, así que aquí se pone cada uno en la escena, en el
+ * portátil: tiene que salir su ilustración y no el dibujo, en grande —de un
+ * cuarto del ancho como poco—, entera —con la proporción del fichero— y sin
+ * pisar la tarjeta ni los botones. Y la torre de «Luz verde», igual.
+ */
+async function losEsquemasUnoAUno() {
+  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 800 }, locale: "es-PY" });
+  const page = await ctx.newPage();
+  const nombre = "cada esquema, puesto en la escena, sale con su ilustración, en grande, entera y sin pisar nada";
+  try {
+    await page.goto(`${BASE}/?inicio=3`);
+    await page.waitForFunction(() => !!globalThis.__oga?.inicio?.()?.estado, null, { timeout: 180_000 });
+    await page.keyboard.press("ShiftLeft");
+    await page.waitForFunction(() => !!document.querySelector("#inicio .inicio__tarjeta"), null, { timeout: 60_000 });
+    // La primera de la escena, la del embarque, se deja poner antes: así no viene después a pisar las de aquí.
+    await page.waitForFunction(() => globalThis.__oga.inicio().ventanita?.donde === "grande", null, { timeout: 30_000 }).catch(() => {});
+    const malos = [];
+    const vistos = [];
+    const pedidos = [...Object.keys(CON_ILUSTRACION).map((c) => ({ sitio: `dibujo:${c}`, clave: c })), { sitio: "ilustracion:torre-radio", clave: null }];
+    for (const { sitio, clave } of pedidos) {
+      let v = null;
+      for (let vez = 0; vez < 2 && !v; vez++) {
+        await page.evaluate(
+          ({ sitio, clave }) => {
+            const h = globalThis.__oga.juegoParaTrazas().hud.historia;
+            if (clave) h.mostrarDibujo(clave);
+            else h.mostrarIlustracion(sitio.replace(/^ilustracion:/, ""));
+          },
+          { sitio, clave },
+        );
+        v = await page
+          .waitForFunction((s) => { const j = globalThis.__oga.inicio().ventanita; return j?.sitio === s && j.donde ? j : null; }, sitio, { timeout: 10_000 })
+          .then((h) => h.jsonValue())
+          .catch(() => null);
+      }
+      if (!v) {
+        malos.push(`${sitio} no salió`);
+        continue;
+      }
+      await pausa(900);
+      const l = await leer(page);
+      const img = await page.evaluate(() => {
+        const f = document.querySelector('[data-hud="historia-foto"]');
+        const r = f?.getBoundingClientRect();
+        return f ? { w: f.naturalWidth, h: f.naturalHeight, rw: r.width, rh: r.height, src: f.currentSrc || f.src } : null;
+      });
+      const ancho = (v.caja.right - v.caja.left) / l.pantalla.ancho;
+      const pisa = l.noSeTapa.filter((o) => sePisan(v.caja, o)).map((o) => o.que);
+      const bueno = clave ? esSuIlustracion(clave, v.fichero) : /ilustraciones\/torre-radio[-.][^/]*webp/.test(v.fichero ?? "");
+      // Entera: la imagen se ve con la proporción de su fichero, sin recortar ni deformar.
+      const entera = !!img && img.w > 0 && Math.abs(img.rw / img.rh - img.w / img.h) < 0.03;
+      vistos.push(`${clave ?? "torre"} ${Math.round(ancho * 100)} %`);
+      if (!bueno) malos.push(`${sitio}: ${v.fichero ?? "el dibujo de código"}`);
+      if (v.donde !== "grande" || ancho < 0.25) malos.push(`${sitio}: ${v.donde} de ${Math.round(ancho * 100)} %`);
+      if (!entera) malos.push(`${sitio}: no entera (${JSON.stringify(img)})`);
+      if (pisa.length) malos.push(`${sitio} pisa ${pisa.join(", ")}`);
+      if (clave === "oido" || clave === "mascara" || clave === "alto" || !clave) await foto(page, `esquema-${clave ?? "torre"}`);
+    }
+    comprobar(nombre, malos.length === 0, `${vistos.join(", ")}${malos.length ? ` · ✗ ${malos.join(" · ")}` : ""}`);
+    /*
+     * **Y la torre, como sale de verdad**: con «Luz verde» abierto, cuando Ara
+     * cuenta que lo normal es la radio; al lado del panel, si cabe sin pisarlo.
+     */
+    const torreConKit = "y la torre sale con «Luz verde» abierto, al lado del panel, cuando Ara cuenta lo de la radio";
+    await page.evaluate(() => globalThis.__oga.juegoParaTrazas().hud.historia.quitar());
+    await page.evaluate(() => globalThis.__oga.darElKit());
+    await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.boton, null, { timeout: 10_000 });
+    let k = await page.evaluate(() => globalThis.__oga.inicio().kit);
+    await page.mouse.click(k.boton.x + k.boton.width / 2, k.boton.y + k.boton.height / 2);
+    await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.luz, null, { timeout: 10_000 });
+    k = await page.evaluate(() => globalThis.__oga.inicio().kit);
+    await page.mouse.click(k.juegos.luz.x + k.juegos.luz.width / 2, k.juegos.luz.y + k.juegos.luz.height / 2);
+    const torre = await page
+      .waitForFunction(() => { const j = globalThis.__oga.inicio().ventanita; return j?.sitio === "ilustracion:torre-radio" && j.donde ? j : null; }, null, { timeout: 40_000 })
+      .then((h) => h.jsonValue())
+      .catch(() => null);
+    const conKit = await leer(page);
+    const pisaKit = torre ? conKit.noSeTapa.filter((o) => sePisan(torre.caja, o)).map((o) => o.que) : [];
+    comprobar(
+      torreConKit,
+      !!torre && torre.donde === "grande" && pisaKit.length === 0,
+      torre
+        ? `${torre.donde} de ${Math.round(((torre.caja.right - torre.caja.left) / conKit.pantalla.ancho) * 100)} %${pisaKit.length ? ` · pisa ${pisaKit.join(", ")}` : ""}`
+        : `no salió · ${JSON.stringify(conKit.inicio?.ventanita?.ultimo ?? null)} · dice «${conKit.dice.slice(0, 60)}»`,
+    );
+    if (torre) await pausa(800).then(() => foto(page, "esquema-torre-con-el-kit"));
+  } catch (e) {
+    comprobar(nombre, false, String(e).slice(0, 140));
+  } finally {
+    await ctx.close();
+  }
+}
+
 try {
   if (process.env.OGA_SOLO_LAMINA) await laLaminaYElKit();
+  else if (process.env.OGA_SOLO_ESQUEMAS) await losEsquemasUnoAUno();
   else {
     if (!process.env.OGA_SIN_HANGAR) await desdeElHangar();
     await enElTelefono();
     if (!process.env.OGA_SIN_KIT) await elKitConElDedo();
     if (!process.env.OGA_SIN_KIT) await laLaminaYElKit();
+    await losEsquemasUnoAUno();
     if (!process.env.OGA_SOLO_KIT) await elVuelo();
   }
 } finally {

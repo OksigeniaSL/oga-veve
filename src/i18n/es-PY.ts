@@ -1275,6 +1275,16 @@ export const ES_PY = {
   "ilustracion.cabina-jaz-90": "Jazlyn a los mandos del JAZ 90, con el Teide delante",
   "ilustracion.cabina-jaz-120": "Jazlyn a los mandos del JAZ 120, de noche y con la Cruz del Sur",
   "ilustracion.retrato-jazlyn": "Jazlyn, con su gorra de comandante y sus gafas de sol",
+  // Los esquemas de lo que se explica en el vuelo de pasaje, y la torre de «Luz verde» (punto 311).
+  "ilustracion.mascara": "El papá se pone su máscara primero y después ayuda a la criatura",
+  "ilustracion.nube": "Una nube con lupa: gotitas de agua abajo y cristalitos de hielo arriba",
+  "ilustracion.frio": "Escarcha en el cristal de afuera; adentro, aire calentito y una taza humeante",
+  "ilustracion.oido": "Ara bosteza, y el aire sube por dentro hasta el oído y lo destapa",
+  "ilustracion.alto": "El avión, más alto que el Teide, vuela por encima del mar de nubes",
+  "ilustracion.meneo": "El avión dentro de la nube, con el aire que sube y baja a su alrededor",
+  "ilustracion.chaleco": "El chaleco se pone en el asiento y se infla afuera, ya en el agua",
+  "ilustracion.maletero": "Un señor sube su maleta al compartimento de arriba",
+  "ilustracion.torre-radio": "En la torre, el controlador habla por radio con el avión que llega",
 
   /*
    * **Y lo mismo, dicho por la instructora en la avioneta**: de vos, más

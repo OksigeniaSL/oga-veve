@@ -61,7 +61,7 @@ import type { AlSonar } from "../audio/instructor";
 import { hayTexto, t } from "../i18n";
 import { urlDelDibujo, type DibujoDelPasaje } from "./dibujos-del-pasaje";
 import { aPxDelHud } from "./escala";
-import { ilustracion, PREFIJO_DE_ILUSTRACION } from "./ilustraciones";
+import { ilustracion, ilustracionDelDibujo, PREFIJO_DE_ILUSTRACION } from "./ilustraciones";
 import { FOCO_CENTRADO, ilustracionDeLaHistoria } from "./ilustraciones-de-las-historias";
 
 /**
@@ -536,12 +536,16 @@ export class VentanaDeHistoria implements PonerYQuitar {
     donde: DondeQueda | null;
     caja: Caja | null;
     ultimo: string | null;
+    fichero: string | null;
   } {
+    const url = this.dondeQuedo ? this.fotoPuesta?.url : undefined;
     return {
       sitio: this.dondeQuedo ? this.sitio : null,
       donde: this.dondeQuedo?.donde ?? null,
       caja: this.dondeQuedo?.caja ?? null,
       ultimo: this.ultimo,
+      // El fichero de la imagen puesta; un dibujo hecho en código no lo tiene, va en una URL de datos.
+      fichero: url && !url.startsWith("data:") ? url : null,
     };
   }
 
@@ -556,14 +560,21 @@ export class VentanaDeHistoria implements PonerYQuitar {
    * manera de entrar y salir: lo que acompaña a lo que se explica. Su sitio es
    * `dibujo:<clave>`, para quitarlo igual que una historia. Ver
    * `ui/dibujos-del-pasaje.ts`.
+   *
+   * **Y si ese dibujo ya tiene ilustración, sale la ilustración** (punto 311),
+   * con su texto alternativo y en su proporción, que la lámina toma de la
+   * imagen: el sitio es el mismo, así que quien la pide y quien la quita no
+   * tienen que saber cuál de las dos sale. Ver `ilustracionDelDibujo`. Con
+   * `url`, la que se da: el mapa de la ruta con el vuelo de ahora.
    */
-  mostrarDibujo(clave: DibujoDelPasaje, url: string = urlDelDibujo(clave)): void {
+  mostrarDibujo(clave: DibujoDelPasaje, url?: string): void {
+    const ilustrada = url === undefined ? ilustracionDelDibujo(clave) : null;
     const alt = `inicio.dibujo.${clave}`;
-    this.ultimo = `dibujo:${clave}: pedido`;
+    this.ultimo = `dibujo:${clave}: ${ilustrada ? "pedida su ilustración" : "pedido"}`;
     this.mostrarFoto({
       clave: `dibujo:${clave}`,
-      url,
-      alt: hayTexto(alt) ? t(alt) : "",
+      url: ilustrada?.url ?? url ?? urlDelDibujo(clave),
+      alt: ilustrada?.alt ?? (hayTexto(alt) ? t(alt) : ""),
     });
   }
 
@@ -666,6 +677,7 @@ export class VentanaDeHistoria implements PonerYQuitar {
    */
   private poner(foto: ImagenDeLaVentana, proporcion = 3 / 2): void {
     this.proporcion = proporcion;
+    this.fotoPuesta = foto;
     if (this.escena) {
       this.enGrande(foto);
       this.ultimo = `${foto.clave}: ${this.dondeQuedo?.donde ?? "no cabe sin tapar lo que se enseña"}`;

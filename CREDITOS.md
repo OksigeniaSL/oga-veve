@@ -490,7 +490,12 @@ el modo avión, la persiana, las nubes, el ala, el motor, el frío, las islas,
 el camino, el oído, las luces de la pista, los telescopios de La Palma, la
 vuelta en la pista de La Palma, los compartimentos de arriba y lo que sabe
 hacer la tripulación de cabina— sale dibujado en la misma ventana
-de cristal que las ilustraciones de las historias. **Están dibujados en el código**,
+de cristal que las ilustraciones de las historias. Desde el 19 de octubre de
+2026, los que explican cómo funciona algo —las máscaras, el chaleco, la nube,
+el frío, el oído, lo alto, el meneo y los compartimentos de arriba— salen con
+su ilustración, que está en la tabla de abajo; las islas, con la del Teide en
+corte, y los telescopios, con la del cielo de La Palma. Los demás siguen
+**dibujados en el código**,
 en `src/ui/dibujos-del-pasaje.ts`, con formas y colores del juego: son
 nuestros, van con el código bajo Apache-2.0 y no traen nada de fuera, ni
 fotos, ni iconos de terceros, ni imágenes generadas. Las islas del mapa del
@@ -509,7 +514,9 @@ las islas con sus coordenadas. Nada traído de fuera.
 Son los dibujos de cuento del juego, todos de la misma colección: Jazlyn a los
 mandos de cada avión de la flota, cada avión por fuera con los colores de la
 casa, la cara de Jazlyn, la cabina de pasaje del primer vuelo de Ara, Ara
-durmiendo y soñando en ese vuelo, y **las veinticinco de las historias de la
+durmiendo y soñando en ese vuelo, **los esquemas de lo que se explica en ese
+vuelo** —el oído, las máscaras, la nube de cerca…— y la torre de «Luz verde»
+hablando por radio, y **las veinticinco de las historias de la
 ventanilla**, una por historia, que dibujan lo que cuenta cada una mientras
 la comandante —o la instructora, en avioneta— la cuenta. Como el resto del
 arte original, son contenido de Oksigenia SL y no van con el código bajo
@@ -520,10 +527,12 @@ Wikimedia Commons que iban antes en esos mismos ficheros: ya no queda en el
 juego ninguna de aquellas fotos, ni su firma en pantalla.
 
 Los originales, unos ciento treinta y cinco megas, no están en el repositorio:
-viven en `crudo/imagenes/` —los de las historias, en `crudo/imagenes/historias/`—,
-que está en `.gitignore`. Lo que entra son los WebP que hace
+viven en `crudo/imagenes/` —los de las historias, en `crudo/imagenes/historias/`,
+y los de los esquemas, en `crudo/imagenes/esquemas/`—, que está en
+`.gitignore`. Lo que entra son los WebP que hace
 `scripts/hacer-ilustraciones.mjs`, **recortados a la proporción de su hueco y
-reducidos al doble de lo que miden en pantalla**, sin metadatos. Qué trozo se
+reducidos al doble de lo que miden en pantalla**, y nunca más grandes que su
+original, sin metadatos. Qué trozo se
 coge de cada una y por qué está en `src/ui/ilustraciones-recetas.ts`, y
 `src/ui/ilustraciones.test.ts` y `src/ui/ilustraciones-de-las-historias.test.ts`
 no dejan entrar una que no esté en esta tabla.
@@ -558,13 +567,22 @@ y soñando, que no tienen hueco.
 | `src/assets/ilustraciones/cabina-jaz-90.webp` | `cabina-jaz90.jpg` | La tarjeta del avión, en el hangar | recortada por la derecha, hasta dejar fuera el hombro del copiloto, que llevaba cuatro barras: el asiento de la derecha lleva tres; 360 × 270 |
 | `src/assets/ilustraciones/cabina-jaz-120.webp` | `cabina-jaz120.jpg` | La tarjeta del avión, en el hangar | recortada por la derecha, hasta dejar fuera el hombro del copiloto, que llevaba cuatro barras: el asiento de la derecha lleva tres; 360 × 270 |
 | `src/assets/ilustraciones/retrato-jazlyn.webp` | `jazlyn-cabina-dibujo.jpg` | La cara de Jazlyn cuando habla | recortada a la cara sola, por encima de los hombros, que en el dibujo llevan las tres barras de primera oficial; 96 × 96, en redondo |
-| `src/assets/historias/teide.webp` | `historias/teide.jpeg` | La historia de el Teide, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/ilustraciones/mascara.webp` | `esquemas/mascara.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo de las máscaras | entera, en 4:3, 1280 × 960 |
+| `src/assets/ilustraciones/nube.webp` | `esquemas/nube.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo de la nube de cerca | entera, en 4:3, 1280 × 960 |
+| `src/assets/ilustraciones/frio.webp` | `esquemas/frio.webp` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo del frío de afuera | entera, en 4:3, 1020 × 765 |
+| `src/assets/ilustraciones/oido.webp` | `esquemas/oido.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo del oído | entera, en 4:3, 1192 × 894 |
+| `src/assets/ilustraciones/alto.webp` | `esquemas/alto.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo de lo alto que se vuela | entera, en 4:3 y en espejo, para que el avión vuele hacia la derecha, como se ve por la ventanilla de Ara; 1192 × 894 |
+| `src/assets/ilustraciones/meneo.webp` | `esquemas/meneo.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo del meneo dentro de la nube | entera, en 4:3, 1192 × 894 |
+| `src/assets/ilustraciones/chaleco.webp` | `esquemas/chaleco.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo del chaleco | entera, en 4:3, 1192 × 894 |
+| `src/assets/ilustraciones/maletero.webp` | `esquemas/maletero.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo de los compartimentos de arriba | entera, en 4:3, 1192 × 894 |
+| `src/assets/ilustraciones/torre-radio.webp` | `torre-radio.webp` | «Luz verde», en el kit de viaje de «Viajá con Jazlyn», cuando Ara cuenta que lo normal es la radio | entera, en 4:3, 1020 × 765 |
+| `src/assets/historias/teide.webp` | `historias/teide.jpeg` | La historia de el Teide, mientras se cuenta; y en «Viajá con Jazlyn», en lugar del dibujo de las islas que crecen desde el fondo del mar | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/canadas.webp` | `historias/canadas.jpeg` | La historia de los tajinastes de Las Cañadas, mientras se cuenta | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/anaga.webp` | `historias/anaga.jpeg` | La historia de Anaga, mientras se cuenta | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/orotava.webp` | `historias/orotava.jpeg` | La historia de Humboldt en La Orotava, mientras se cuenta | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/gigantes.webp` | `historias/gigantes.jpeg` | La historia de los calderones de Los Gigantes, mientras se cuenta | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/garajonay.webp` | `historias/garajonay.jpeg` | La historia de el silbo gomero, mientras se cuenta | entera, en 4:3, 1280 × 960 |
-| `src/assets/historias/taburiente.webp` | `historias/taburiente.jpeg` | La historia de el cielo de La Palma, mientras se cuenta | entera, en 4:3, 1280 × 960 |
+| `src/assets/historias/taburiente.webp` | `historias/taburiente.jpeg` | La historia de el cielo de La Palma, mientras se cuenta; y en «Viajá con Jazlyn», en lugar del dibujo de los telescopios | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/tajogaite.webp` | `historias/tajogaite.jpeg` | La historia de la tierra nueva del Tajogaite, mientras se cuenta | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/hierro.webp` | `historias/hierro.jpeg` | La historia de el Garoé, mientras se cuenta | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/nieves.webp` | `historias/nieves.jpeg` | La historia de Risco Caído, mientras se cuenta | entera, en 4:3, 1280 × 960 |

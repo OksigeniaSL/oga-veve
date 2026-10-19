@@ -1383,6 +1383,16 @@ export const EN: Dictionary = {
   "ilustracion.cabina-jaz-90": "Jazlyn at the controls of the JAZ 90, with Mount Teide ahead",
   "ilustracion.cabina-jaz-120": "Jazlyn at the controls of the JAZ 120, at night under the Southern Cross",
   "ilustracion.retrato-jazlyn": "Jazlyn, with the captain's cap and sunglasses",
+  // Los esquemas de lo que se explica en el vuelo de pasaje, y la torre de «Luz verde» (punto 311).
+  "ilustracion.mascara": "Oxygen masks drop: the dad puts one on first, then helps the little one",
+  "ilustracion.nube": "A cloud under a magnifying glass: water droplets below, ice crystals above",
+  "ilustracion.frio": "Frost on the outer pane; inside, warm air and a steaming cup",
+  "ilustracion.oido": "Ara yawns, and air travels up inside to the ear and unblocks it",
+  "ilustracion.alto": "The plane, higher than Mount Teide, flies above the sea of clouds",
+  "ilustracion.meneo": "The plane inside a cloud, with the air going up and down around it",
+  "ilustracion.chaleco": "The life vest goes on in the seat and is inflated outside, in the water",
+  "ilustracion.maletero": "A man lifts a suitcase into the overhead bin",
+  "ilustracion.torre-radio": "In the tower, the controller talks by radio to the arriving plane",
   /* The same, said by the instructor sitting beside you in a light aircraft. */
   "ventanilla.vos.lado.izquierda": "Look out of the window, to your left.",
   "ventanilla.vos.lado.derecha": "Look out of the window, to your right.",

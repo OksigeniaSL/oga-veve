@@ -15,13 +15,19 @@ import { ES_PY } from "../i18n/es-PY";
 import {
   CON_FICHERO,
   claveDelAlt,
+  DIBUJOS_CON_SU_HISTORIA,
   ilustracion,
+  ilustracionDelDibujo,
   ilustracionesDelAvion,
   RECETAS,
   RETRATO_DE_JAZLYN,
   TAMANO_DEL_HUECO,
+  tamanoDeLaReceta,
 } from "./ilustraciones";
+import { ilustracionDeLaHistoria } from "./ilustraciones-de-las-historias";
+import { DIBUJOS_DEL_PASAJE } from "./dibujos-del-pasaje";
 import { ESTA_HECHO } from "../flight/flota";
+import { DICHO_DE_LA_LUZ } from "../flight/luz-verde";
 
 /*
  * El módulo de Node se pide al propio proceso, como en `historias.test.ts`:
@@ -69,7 +75,7 @@ function medidasDeWebp(b: Uint8Array): { ancho: number; alto: number } | null {
 }
 
 /** Lo más que pesa una de cada hueco: el doble de su hueco, en WebP, no necesita más. */
-const TOPE_KB = { lamina: 140, ventanita: 60, tarjeta: 40, retrato: 12, historia: 240 } as const;
+const TOPE_KB = { lamina: 140, ventanita: 60, tarjeta: 40, retrato: 12, historia: 240, esquema: 240 } as const;
 
 describe("las ilustraciones", () => {
   it("cada receta tiene su fichero, y en la carpeta no sobra ninguno", () => {
@@ -85,11 +91,14 @@ describe("las ilustraciones", () => {
   });
 
   it.each(claves.map((c) => [c]))(
-    "%s es un WebP del tamaño de su hueco, ligero y sin metadatos",
+    "%s es un WebP del tamaño de su hueco —o del original, si es más pequeño—, ligero y sin metadatos",
     (clave) => {
       const r = RECETAS[clave]!;
       const b = fs.readFileSync(`${CARPETA}/${clave}.webp`);
-      expect(medidasDeWebp(b), clave).toEqual(TAMANO_DEL_HUECO[r.hueco]);
+      const tamano = tamanoDeLaReceta(r);
+      expect(medidasDeWebp(b), clave).toEqual(tamano);
+      // Nunca más grande que su hueco ni que el trozo del original que se coge.
+      expect(tamano.ancho, clave).toBeLessThanOrEqual(Math.min(TAMANO_DEL_HUECO[r.hueco].ancho, r.recorte[2]));
       expect(b.length, clave).toBeLessThan(TOPE_KB[r.hueco] * 1024);
       expect(b.length, clave).toBeGreaterThan(4 * 1024);
       /*
@@ -117,10 +126,11 @@ describe("las ilustraciones", () => {
       const fila = creditos.split("\n").find((l) => l.includes(`\`${CARPETA}/${clave}.webp\``));
       expect(fila, `falta \`${CARPETA}/${clave}.webp\` en CREDITOS.md`).toBeDefined();
       expect(fila, clave).toContain(`\`${r.original}\``);
-      const { ancho, alto } = TAMANO_DEL_HUECO[r.hueco];
+      const { ancho, alto } = tamanoDeLaReceta(r);
       expect(fila, clave).toContain(`${ancho} × ${alto}`);
-      // Y si se recortó por algo, el porqué.
+      // Y si se recortó por algo, el porqué; y si va volteada, que se diga.
       if (r.porque) expect(fila, clave).toContain(r.porque);
+      if (r.espejo) expect(fila, clave).toContain("en espejo");
     }
   });
 
@@ -161,6 +171,7 @@ describe("las ilustraciones", () => {
       "pasaje-ara-ventanilla",
       "ara-durmiendo",
       "ara-sonando",
+      "oido",
     ]);
   });
 
@@ -175,5 +186,54 @@ describe("las ilustraciones", () => {
     // El largo radio y el helicóptero no son de la flota: no tienen sitio.
     for (const c of claves) expect(RECETAS[c]!.original, c).not.toMatch(/largo-radio|helicoptero/);
     expect(ilustracionesDelAvion("guyrami")).toBeNull();
+  });
+});
+
+/*
+ * **Los esquemas de lo que se explica** (punto 311): en la lámina del pasaje,
+ * la ilustración sale en lugar del dibujo hecho en código que tiene su misma
+ * clave. Ver `ilustracionDelDibujo`.
+ */
+describe("los esquemas, en lugar de los dibujos", () => {
+  const esquemas = claves.filter((c) => RECETAS[c]!.hueco === "esquema");
+
+  it("cada esquema es el de un dibujo de la lámina, menos la torre de «Luz verde», que se pide aparte", () => {
+    expect(esquemas.length).toBeGreaterThanOrEqual(8);
+    for (const c of esquemas)
+      if (c !== "torre-radio") expect(Object.keys(DIBUJOS_DEL_PASAJE), c).toContain(c);
+    // Enteros: en 4:3, sin quitar nada más que lo justo para la proporción.
+    for (const c of esquemas) {
+      const [x, y] = RECETAS[c]!.recorte;
+      expect(Math.max(x, y), c).toBeLessThanOrEqual(6);
+    }
+  });
+
+  it("un dibujo con su esquema enseña la ilustración, con su texto; los demás siguen dibujados", () => {
+    for (const clave of Object.keys(DIBUJOS_DEL_PASAJE)) {
+      const i = ilustracionDelDibujo(clave);
+      const conHistoria = DIBUJOS_CON_SU_HISTORIA[clave];
+      if (esquemas.includes(clave)) {
+        expect(i?.url, clave).toMatch(new RegExp(`${clave}.*\\.webp`));
+        expect(i?.alt, clave).toBe(ES_PY[claveDelAlt(clave) as keyof typeof ES_PY]);
+      } else if (conHistoria) {
+        expect(i?.url, clave).toBe(ilustracionDeLaHistoria(conHistoria)?.url);
+        expect(i?.alt, clave).toBeTruthy();
+      } else expect(i, clave).toBeNull();
+    }
+    // Lo que imita una señal de verdad no se cambia por un dibujo de cuento.
+    for (const clave of ["cinturon", "salidas", "papi", "ruta", "modo-avion"]) expect(ilustracionDelDibujo(clave), clave).toBeNull();
+  });
+
+  it("las islas con el Teide en corte, y los telescopios con el cielo de La Palma", () => {
+    expect(DIBUJOS_CON_SU_HISTORIA).toEqual({ islas: "teide", estrellas: "taburiente" });
+    for (const [dibujo, historia] of Object.entries(DIBUJOS_CON_SU_HISTORIA)) {
+      expect(Object.keys(DIBUJOS_DEL_PASAJE), dibujo).toContain(dibujo);
+      expect(ilustracionDeLaHistoria(historia), historia).not.toBeNull();
+    }
+  });
+
+  it("y la torre hablando por radio sale cuando Ara cuenta que lo normal es la radio", () => {
+    expect(DICHO_DE_LA_LUZ.radio.dibujo).toBe("ilustracion:torre-radio");
+    expect(ilustracion("torre-radio")?.url).toMatch(/torre-radio.*\.webp/);
   });
 });

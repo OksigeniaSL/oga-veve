@@ -5,11 +5,13 @@
  * Los originales viven en `crudo/imagenes/`, fuera del repositorio: son más de
  * cien megas de dibujos, casi todos de 2400 × 1792 —ver `.gitignore`—. Lo que
  * entra en el repositorio es lo que sale de aquí, cada una recortada a la
- * proporción de su hueco y reducida al doble de lo que mide en pantalla, sin
+ * proporción de su hueco y reducida al doble de lo que mide en pantalla
+ * —nunca agrandada: si el original es más pequeño, se queda a su tamaño—, sin
  * metadatos:
  *
  * - las de la escena de pasaje, la tarjeta del avión y la cara de Jazlyn, en
- *   `src/assets/ilustraciones/`;
+ *   `src/assets/ilustraciones/`, con los esquemas de lo que se explica en el
+ *   pasaje, desde `crudo/imagenes/esquemas/`, y la torre de «Luz verde»;
  * - y las de las historias de la ventanilla, una por historia, en
  *   `src/assets/historias/`, desde `crudo/imagenes/historias/`.
  *
@@ -39,6 +41,7 @@ import {
   RECETAS,
   RECETAS_DE_LAS_HISTORIAS,
   TAMANO_DEL_HUECO,
+  tamanoDeLaReceta,
 } from "../src/ui/ilustraciones-recetas.ts";
 
 const ORIGINALES = process.env.OGA_ORIGINALES ?? "crudo/imagenes";
@@ -61,8 +64,11 @@ const COLECCIONES = [
  * 60 3,4 y en 75 4,2, y lo que se gana subiendo es grano que a tamaño de
  * pantalla no se ve; las estrellas, la luna y el cielo de las de noche quedan
  * igual. En 40 ya se nota: la luna de Yacyretá se emborrona.
+ *
+ * Los esquemas del pasaje van como las historias, en 50: son de la misma mano,
+ * acuarela y lápiz, y salen en la misma lámina.
  */
-const CALIDAD = { lamina: 78, ventanita: 80, tarjeta: 80, retrato: 90, historia: 50 };
+const CALIDAD = { lamina: 78, ventanita: 80, tarjeta: 80, retrato: 90, historia: 50, esquema: 50 };
 
 function correr(orden, args) {
   const r = spawnSync(orden, args, { encoding: "utf8" });
@@ -91,11 +97,12 @@ try {
     const r = col.recetas[clave];
     const original = join(ORIGINALES, r.original);
     if (!existsSync(original)) throw new Error(`Falta el original ${original}.`);
-    const { ancho, alto } = TAMANO_DEL_HUECO[r.hueco];
+    const hueco = TAMANO_DEL_HUECO[r.hueco];
     const [x, y, w, h] = r.recorte;
     // El recorte ya viene en la proporción del hueco: si no, se deformaría al reducir.
-    if (Math.abs(w / h - ancho / alto) > 0.01)
-      throw new Error(`${clave}: el recorte ${w} × ${h} no es de la proporción de su hueco, ${ancho} × ${alto}.`);
+    if (Math.abs(w / h - hueco.ancho / hueco.alto) > 0.01)
+      throw new Error(`${clave}: el recorte ${w} × ${h} no es de la proporción de su hueco, ${hueco.ancho} × ${hueco.alto}.`);
+    const { ancho, alto } = tamanoDeLaReceta(r);
     const png = join(temporal, `${clave}.png`);
     const redondo =
       r.hueco === "retrato"

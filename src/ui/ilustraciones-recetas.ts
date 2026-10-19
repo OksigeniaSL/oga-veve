@@ -17,7 +17,7 @@
  */
 
 /** Los sitios del juego donde va una ilustración, cada uno con su forma. */
-export type HuecoDeLaIlustracion = "lamina" | "ventanita" | "tarjeta" | "retrato" | "historia";
+export type HuecoDeLaIlustracion = "lamina" | "ventanita" | "tarjeta" | "retrato" | "historia" | "esquema";
 
 /**
  * **El tamaño al que se hacen**: el doble de lo que miden en pantalla.
@@ -43,6 +43,12 @@ export type HuecoDeLaIlustracion = "lamina" | "ventanita" | "tarjeta" | "retrato
  *   originales miden 2400 de ancho: hay de sobra. En los vuelos de siempre salen además en
  *   la ventanita de 3:2 y en la placa de las avionetas, más apaisadas que
  *   ellas: ahí se recortan al verse, no al hacerse. Ver `foco`.
+ * - **Los esquemas de lo que se explica en la escena de pasaje** (punto 311):
+ *   el oído, las máscaras, la nube de cerca…, que salen en la misma lámina
+ *   grande en lugar del dibujo hecho en código. Como las de las historias,
+ *   enteros, en 4:3 y a 1280 × 960; pero **nunca más grandes que su
+ *   original**, y hay originales de 1200 y de 1024 de ancho: esos se quedan a
+ *   su tamaño, recortados a lo justo para el 4:3. Ver `tamanoDeLaReceta`.
  */
 export const TAMANO_DEL_HUECO: Readonly<
   Record<HuecoDeLaIlustracion, { readonly ancho: number; readonly alto: number }>
@@ -52,6 +58,7 @@ export const TAMANO_DEL_HUECO: Readonly<
   tarjeta: { ancho: 360, alto: 270 },
   retrato: { ancho: 96, alto: 96 },
   historia: { ancho: 1280, alto: 960 },
+  esquema: { ancho: 1280, alto: 960 },
 };
 
 /** Cómo se hace una ilustración. */
@@ -62,7 +69,7 @@ export interface RecetaDeLaIlustracion {
   /**
    * **El trozo del original que se coge**: x, y, ancho y alto en píxeles del
    * original, ya en la proporción del hueco. Se reduce después al tamaño del
-   * hueco.
+   * hueco, si el trozo es más grande que el hueco. Ver `tamanoDeLaReceta`.
    */
   readonly recorte: readonly [number, number, number, number];
   /** Por qué ese trozo, si no es la imagen entera. Va también a `CREDITOS.md`. */
@@ -78,8 +85,24 @@ export interface RecetaDeLaIlustracion {
   readonly espejo?: boolean;
 }
 
+/**
+ * **El tamaño al que se hace una**: el de su hueco, salvo que el trozo que se
+ * coge del original sea más pequeño, que entonces se queda como está. Agrandar
+ * no saca detalle que no hay: solo pesa más y emborrona. Lo leen el guion que
+ * las hace y la prueba que las mide.
+ */
+export function tamanoDeLaReceta(r: RecetaDeLaIlustracion): { readonly ancho: number; readonly alto: number } {
+  const hueco = TAMANO_DEL_HUECO[r.hueco];
+  const [, , w, h] = r.recorte;
+  return w < hueco.ancho ? { ancho: w, alto: h } : hueco;
+}
+
 /** Entera, en 4:3, de un original de 2400 × 1792. */
 const ENTERA_GRANDE = [5, 0, 2389, 1792] as const;
+/** Enteras, en 4:3 justo, de los originales de los esquemas: 2000 × 1493, 1200 × 896 y 1024 × 765. */
+const ENTERA_DE_2000 = [6, 1, 1988, 1491] as const;
+const ENTERA_DE_1200 = [4, 1, 1192, 894] as const;
+const ENTERA_DE_1024 = [2, 0, 1020, 765] as const;
 
 /**
  * **Las recetas**, por clave: la misma del fichero WebP y del texto
@@ -188,6 +211,49 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
     recorte: [460, 340, 600, 600],
     porque: "a la cara sola, por encima de los hombros, que en el dibujo llevan las tres barras de primera oficial",
   },
+  /*
+   * ── Los esquemas de lo que se explica, en la lámina del pasaje ─────────
+   *
+   * Punto 311: los dibujos hechos en código —ver `ui/dibujos-del-pasaje.ts`—
+   * que explican **cómo funciona algo** se cambian por ilustraciones de
+   * cuento de la misma colección, enteras. Cada una lleva **la clave del
+   * dibujo al que sustituye**: con la receta y su fichero, la escena enseña la
+   * ilustración donde pedía el dibujo, sin tocar nada más. Ver
+   * `ilustracionDelDibujo` en `ui/ilustraciones.ts`. El ala y el motor, cuando
+   * llegue su original, entran igual: su receta aquí, su texto alternativo, su
+   * fila en `CREDITOS.md` y `node scripts/hacer-ilustraciones.mjs ala`.
+   */
+  mascara: { original: "esquemas/mascara.jpg", hueco: "esquema", recorte: ENTERA_DE_2000 },
+  nube: { original: "esquemas/nube.jpg", hueco: "esquema", recorte: ENTERA_DE_2000 },
+  frio: { original: "esquemas/frio.webp", hueco: "esquema", recorte: ENTERA_DE_1024 },
+  oido: { original: "esquemas/oido.jpg", hueco: "esquema", recorte: ENTERA_DE_1200, conAra: true },
+  /*
+   * En espejo: en el original el avión vuela hacia la izquierda, y en la
+   * escena vuela hacia la derecha, que es como se ve por la ventanilla de Ara.
+   * Ver `SENTIDO_DE_LOS_DIBUJOS` en `ui/dibujos-del-pasaje.ts`.
+   */
+  alto: { original: "esquemas/alto.jpg", hueco: "esquema", recorte: ENTERA_DE_1200, espejo: true },
+  meneo: { original: "esquemas/meneo.jpg", hueco: "esquema", recorte: ENTERA_DE_1200 },
+  chaleco: { original: "esquemas/chaleco.jpg", hueco: "esquema", recorte: ENTERA_DE_1200 },
+  maletero: { original: "esquemas/maletero.jpg", hueco: "esquema", recorte: ENTERA_DE_1200 },
+  /*
+   * **La torre de «Luz verde»**, el juego del kit de viaje: el controlador
+   * hablando por radio con el avión que llega, que es lo normal; la lámpara de
+   * colores es para el que se queda sin radio. Sale con lo que dice Ara al
+   * empezar el juego. Ver `DICHO_DE_LA_LUZ` en `flight/luz-verde.ts`.
+   */
+  "torre-radio": { original: "torre-radio.webp", hueco: "esquema", recorte: ENTERA_DE_1024 },
+};
+
+/**
+ * **Los dibujos que se enseñan con la ilustración de una historia**, la que
+ * ya cuenta lo mismo: las islas, que son volcanes que crecieron desde el fondo
+ * del mar, con el Teide en corte; y los telescopios de La Palma, con la de su
+ * cielo y la ley que lo protege. Por la clave del dibujo, la de la historia.
+ */
+export const DIBUJOS_CON_SU_HISTORIA: Readonly<Record<string, string>> = {
+  islas: "teide",
+  estrellas: "taburiente",
 };
 
 // ── Las historias de la ventanilla ──────────────────────────────────────

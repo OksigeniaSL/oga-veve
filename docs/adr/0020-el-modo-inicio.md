@@ -612,6 +612,17 @@ con el propio motor del juego, sin licencias»—: diecisiete láminas en SVG, s
 letras salvo el «EXIT» de los letreros, con su animación quieta si se pide
 movimiento reducido. Ninguna foto nueva ni ninguna imagen generada.
 
+**Y los esquemas, con ilustración** (punto 311, 19-10-2026): los dibujos que
+explican cómo funciona algo —el oído, las máscaras, el chaleco, la nube de
+cerca, el frío, lo alto, el meneo y los compartimentos de arriba— salen con
+una ilustración de cuento de la misma colección que las demás, entera y en
+4:3, en lugar del SVG; las islas, con la del Teide en corte, y los
+telescopios, con la del cielo de La Palma. Siguen en SVG los que imitan una
+señal de verdad —el cartel del cinturón, el letrero de la salida, el PAPI, el
+mapa con el vuelo de ahora…— y el ala y el motor hasta que llegue la suya.
+Lo decide la receta: un esquema con la clave del dibujo lo sustituye. Ver
+`ilustracionDelDibujo` en `ui/ilustraciones.ts`.
+
 **Las voces, sin grabar**: sesenta y siete frases nuevas —6.338
 caracteres—, en
 `PENDIENTE-VOCES-inicio-3.md`. Mientras tanto se leen.
