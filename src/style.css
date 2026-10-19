@@ -2803,7 +2803,6 @@ body:has([data-hud="fin"]:not([hidden])) .pad {
 .fin__frase {
   margin: 0;
   font-size: 22px;
-  max-width: 18ch;
 }
 
 .fin__frase[hidden] {
@@ -9575,7 +9574,6 @@ button.motor__tecla::after {
  */
 .atribucion {
   align-self: flex-start;
-  max-width: 62ch;
   margin-bottom: 4px;
   padding: 3px 8px;
   border-radius: var(--r-s);
@@ -14513,7 +14511,6 @@ body.con-vuelta #tactil {
 .parte__propone {
   margin: 0;
   text-align: center;
-  max-width: 46ch;
 }
 
 .parte__botones {

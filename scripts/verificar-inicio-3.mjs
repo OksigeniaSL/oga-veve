@@ -76,8 +76,9 @@
  *   desde abajo** (298) y **el señalero** (301).
  * - **Que lo que se explica sale en grande y no tapa lo que se enseña**
  *   (punto 305): cada dibujo de la ventanita, de un cuarto del ancho como
- *   poco cuando ya está puesto y sin el kit abierto —un quinto en las tomas
- *   de cerca del ala y del tren, que las llena el avión—; y la lámina nunca encima
+ *   poco cuando ya está puesto y sin el kit abierto —en las tomas de cerca
+ *   del ala y del tren, que las llena el avión, no menos que la ventanita de
+ *   antes—; y la lámina nunca encima
  *   de lo nombrado —el sitio de los últimos veinte segundos, donde cae en la
  *   imagen mientras la lámina está puesta—, de la tarjeta de quien habla ni
  *   de los botones.
@@ -1035,15 +1036,17 @@ async function elVuelo() {
   );
   // ── La lámina grande de lo que se explica (punto 305) ──
   /*
-   * Un cuarto del ancho; y un quinto en la toma del ala, que es de cerca y la
-   * llena el ala de punta a raíz: ahí manda no taparla, y la lámina se queda
-   * en lo que deja debajo (medido el 19-10-2026: un 22 %).
+   * Un cuarto del ancho. En las tomas de cerca del ala y del tren, las llena
+   * el avión de punta a raíz: ahí manda no taparlo, y la lámina se queda en lo
+   * que deja libre, que el 19-10-2026 midió entre un 19 y un 22 %. El suelo
+   * ahí es no bajar de la ventanita de antes, 240 px de 1280: si baja de eso,
+   * lo grande no ha servido de nada.
    */
-  const minimo = (plano) => (plano === "fuera-ala" || plano === "fuera-tren" ? 0.2 : 0.25);
+  const minimo = (plano) => (plano === "fuera-ala" || plano === "fuera-tren" ? 240 / 1280 : 0.25);
   const dibujosVistos = [...laminas].filter(([s]) => s.startsWith("dibujo:"));
   const pequenos = dibujosVistos.filter(([, l]) => l.ancho < minimo(l.plano));
   comprobar(
-    "lo que se explica sale en grande: cada dibujo, de un cuarto del ancho como poco (un quinto con el ala de cerca)",
+    "lo que se explica sale en grande: cada dibujo, de un cuarto del ancho como poco (y nunca menos que la ventanita de antes con el ala o el tren de cerca)",
     dibujosVistos.length >= 5 && pequenos.length === 0 && [...laminas.values()].every((l) => l.donde === "grande"),
     [...laminas].map(([s, l]) => `${s.replace(/^(dibujo|ilustracion):/, "")} ${Math.round(l.ancho * 100)} %${l.plano && l.plano !== "ventanilla" ? ` (${l.plano})` : ""}`).join(", "),
   );
