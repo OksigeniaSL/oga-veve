@@ -741,9 +741,10 @@ export class VentanaDeHistoria implements PonerYQuitar {
     const pantalla = innerWidth * innerHeight;
     for (const el of document.querySelectorAll(selector)) {
       if (el === caja || caja?.contains(el) || el === cuadroEl || cuadroEl?.contains(el)) continue;
-      if (!visible(el)) continue;
+      const deLaEscena = !!siempre && el.matches(siempre);
+      if (!visible(el, deLaEscena)) continue;
       const r = el.getBoundingClientRect();
-      if (r.width * r.height > pantalla * 0.5 && !(siempre && el.matches(siempre))) continue;
+      if (r.width * r.height > pantalla * 0.5 && !deLaEscena) continue;
       salida.push(r);
     }
     return salida;
@@ -900,14 +901,19 @@ const DE_LA_ESCENA = ".inicio__tarjeta, .kit__panel, .siesta__sueno";
 const VIGILA_CADA = 400;
 const CRECE_CADA = 2200;
 
-/** Si un elemento se ve: con tamaño, sin `hidden` y sin estar escondido por la hoja. */
-function visible(el: Element | null): boolean {
+/**
+ * Si un elemento se ve: con tamaño, sin `hidden` y sin estar escondido por la
+ * hoja. Con `yaCuenta`, también mientras entra con su fundido: el kit tarda un
+ * cuarto de segundo en dejar de ser transparente, y en ese rato la lámina ya
+ * tiene que apartarse, no quedarse encima hasta que se vea del todo.
+ */
+function visible(el: Element | null, yaCuenta = false): boolean {
   if (!el || el.closest("[hidden]")) return false;
   const r = el.getBoundingClientRect();
   if (r.width < 2 || r.height < 2) return false;
   if (r.right <= 0 || r.bottom <= 0 || r.left >= innerWidth || r.top >= innerHeight) return false;
   const s = getComputedStyle(el);
-  return s.display !== "none" && s.visibility !== "hidden" && Number(s.opacity) > 0.05;
+  return s.display !== "none" && s.visibility !== "hidden" && (yaCuenta || Number(s.opacity) > 0.05);
 }
 
 /**

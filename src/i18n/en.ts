@@ -2368,7 +2368,7 @@ export const EN: Dictionary = {
     "And just before touchdown, the engines got louder: with the wheels and the flaps out, the plane slows down a lot, and it needs more power so as not to lose speed.",
   "inicio.ara.pasaje.vueltaEnPista": "We're turning round on the runway! We're going back the same way.",
   "inicio.mama.pasaje.vueltaEnPista":
-    "We turned round on the runway because the exits to the terminal were behind us, and there are none further on. At the end of the runway there's a wider bit for turning round.",
+    "Ladies and gentlemen: we turned round on the runway because the exits to the terminal were behind us, and there are none further on. At the end of the runway there's a wider bit for turning round.",
   "inicio.mama.pasaje.permisoDeVuelta":
     "To go back along the runway the other way, we need permission from the control tower: while we're on it, nobody else can land or take off.",
   "inicio.ara.pasaje.seLevantan": "Listen! Some people are already undoing their seat belts and standing up.",

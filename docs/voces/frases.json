@@ -17753,7 +17753,7 @@
     "id": "inicio.mama.pasaje.vueltaEnPista",
     "voz": "comandante",
     "idioma": "es-PY",
-    "texto": "Dimos la vuelta en la pista porque las salidas hacia la terminal nos quedaron atrás, y más adelante no hay ninguna. Al final de la pista hay un ensanche para dar la vuelta.",
+    "texto": "Señores pasajeros: dimos la vuelta en la pista porque las salidas hacia la terminal nos quedaron atrás, y más adelante no hay ninguna. Al final de la pista hay un ensanche para dar la vuelta.",
     "para": "el modo inicio, de pasaje: la comandante explica la vuelta en la pista, ya fuera de ella",
     "ajustes": {
       "stability": 0.35,

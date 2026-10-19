@@ -3832,7 +3832,7 @@ export const ES_PY = {
    */
   "inicio.ara.pasaje.vueltaEnPista": "¡Estamos dando la vuelta en la pista! Volvemos por el mismo camino.",
   "inicio.mama.pasaje.vueltaEnPista":
-    "Dimos la vuelta en la pista porque las salidas hacia la terminal nos quedaron atrás, y más adelante no hay ninguna. Al final de la pista hay un ensanche para dar la vuelta.",
+    "Señores pasajeros: dimos la vuelta en la pista porque las salidas hacia la terminal nos quedaron atrás, y más adelante no hay ninguna. Al final de la pista hay un ensanche para dar la vuelta.",
   "inicio.mama.pasaje.permisoDeVuelta":
     "Para ir por la pista al revés hace falta permiso de la torre de control: mientras vamos por ella, nadie más puede aterrizar ni despegar.",
   /*

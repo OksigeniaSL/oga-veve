@@ -7444,11 +7444,14 @@ export class Game {
       /*
        * Y que siga sin tapar lo que se enseña: otro plano es otra toma. Un
        * fotograma después del corte, que es cuando la cámara ya está en ella.
+       * Lo mismo al abrir o cerrar el kit, que es su panel lo que no se tapa:
+       * un fotograma después, cuando ya está en la página.
        */
       const plano = this.fundidoDePlano.plano;
       this.hud.historia.vigilar(this.laminaPorColocar);
-      this.laminaPorColocar = plano !== this.planoDeLaLamina;
+      this.laminaPorColocar = plano !== this.planoDeLaLamina || p.kit.abierto !== this.kitDeLaLamina;
       this.planoDeLaLamina = plano;
+      this.kitDeLaLamina = p.kit.abierto;
       this.refrescarLaRuta();
       // El kit, con la pieza de la que habla Ara brillando mientras lo dice.
       this.pantallaDelKit?.pintar(p.hablando ? (p.linea?.clave ?? null) : null);
@@ -7540,6 +7543,8 @@ export class Game {
   /** El plano con el que se miró la lámina por última vez: si cambia, se recoloca. */
   private planoDeLaLamina: Plano | null = null;
   private laminaPorColocar = false;
+  /** Si el kit estaba abierto la vez anterior: al cambiar, la lámina se recoloca. */
+  private kitDeLaLamina = false;
 
   /** Las cajitas del avión que se dibuja, medidas una vez. Ver `world/silueta-del-avion.ts`. */
   private cajitas: { readonly de: object; readonly cajitas: readonly Cajita[] } | null = null;
