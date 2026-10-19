@@ -16293,13 +16293,13 @@ body.con-vuelta #tactil {
 }
 
 .luz-haz--destellos,
-.luz-boton__rayos,
 .luz-camion__girofaro {
   animation: luz-destello 0.4s steps(2) infinite;
 }
 
+/* Los rayos del botón, más despacio: señalan el botón que toca pulsar, no son la señal de la torre. */
 .luz-boton__rayos {
-  animation-duration: 0.9s;
+  animation: luz-destello 0.9s steps(2) infinite;
 }
 
 @keyframes luz-destello {
