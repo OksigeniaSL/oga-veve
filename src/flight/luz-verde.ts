@@ -78,7 +78,7 @@ const ara = (clave: string): Linea => ({ quien: "ara", clave: `inicio.ara.pasaje
 
 export const DICHO_DE_LA_LUZ = {
   /** El plan B, al empezar: lo normal es la radio. */
-  radio: ara("radio"),
+  radio: { ...ara("radio"), dibujo: "ilustracion:torre-radio" },
   /** Qué hay que hacer: lo mismo que se repite si pasa un rato sin tocar. */
   empezar: ara("empezar"),
   /** La primera vez que un avión alabea para contestar. */

@@ -15,6 +15,10 @@
  * - **En la tarjeta del avión, abierta desde el hangar**: cómo es por fuera y
  *   cómo es por dentro, con Jazlyn a los mandos. Ver `ilustracionesDelAvion`.
  * - **En la cara de quien habla**, la de Jazlyn. Ver `RETRATO_DE_JAZLYN`.
+ * - **Y en la lámina de lo que se explica**, en el mismo pasaje (punto 311):
+ *   el oído, las máscaras, la nube de cerca…, en lugar del dibujo hecho en
+ *   código que tenía la misma clave; y la torre hablando por radio, al
+ *   empezar «Luz verde». Ver `ilustracionDelDibujo`.
  *
  * ## Lo que se enseña es real, también en un dibujo
  *
@@ -30,15 +34,23 @@
  * Como las de las historias —ver `ilustraciones-de-las-historias.ts`—: no van
  * en la precarga del trabajador de servicio, entran por `import.meta.glob`
  * como URL con la huella en el nombre, y se guardan la primera vez que se
- * piden. Son unos 575 KB entre las veinte, y en un vuelo se ven cinco como
- * mucho.
+ * piden. Son unos 1,2 MB entre las veintinueve —la mitad, los esquemas del
+ * pasaje, a 1280 × 960—, y se bajan de una en una: en el hangar, las dos de
+ * la tarjeta que se abre; en el vuelo de pasaje, las que se van contando.
  * Sin red y sin copia, la ventanita no sale y la cara se queda dibujada.
  */
 
 import { hayTexto, t } from "../i18n";
-import { RECETAS, TAMANO_DEL_HUECO, type HuecoDeLaIlustracion } from "./ilustraciones-recetas";
+import { ilustracionDeLaHistoria } from "./ilustraciones-de-las-historias";
+import {
+  DIBUJOS_CON_SU_HISTORIA,
+  RECETAS,
+  TAMANO_DEL_HUECO,
+  tamanoDeLaReceta,
+  type HuecoDeLaIlustracion,
+} from "./ilustraciones-recetas";
 
-export { RECETAS, TAMANO_DEL_HUECO, type HuecoDeLaIlustracion };
+export { DIBUJOS_CON_SU_HISTORIA, RECETAS, TAMANO_DEL_HUECO, tamanoDeLaReceta, type HuecoDeLaIlustracion };
 
 /**
  * Las URL de los ficheros, por nombre: Vite las sirve en desarrollo y les pone
@@ -84,7 +96,8 @@ export type IlustracionDelPasaje =
   | "pasaje-lleno"
   | "pasaje-tripulante"
   | "pasaje-ara-ventanilla"
-  | "pasaje-comandante";
+  | "pasaje-comandante"
+  | "torre-radio";
 
 /**
  * **Cómo la pide la escena**: como pide un dibujo o una foto, con un prefijo
@@ -99,6 +112,27 @@ export const enLaVentanita = (clave: IlustracionDelPasaje): string => `${PREFIJO
 /** Si lo que pide una frase es una ilustración, cuál; si no, `null`. */
 export function ilustracionPedida(dibujo: string): string | null {
   return dibujo.startsWith(PREFIJO_DE_ILUSTRACION) ? dibujo.slice(PREFIJO_DE_ILUSTRACION.length) : null;
+}
+
+/**
+ * **La ilustración que sale en lugar de un dibujo de la lámina**, o `null` si
+ * ese dibujo sigue hecho en código —ver `ui/dibujos-del-pasaje.ts`—.
+ *
+ * La suya, si hay un esquema con su clave —ver las recetas de hueco
+ * `esquema`—; o la de la historia que ya cuenta lo mismo, para las islas y
+ * los telescopios. Los que siguen dibujados lo están porque imitan una señal
+ * de verdad —el cartel del cinturón, las cuatro luces de la pista, el letrero
+ * de la salida, el modo avión, el mapa con el vuelo de ahora— o porque su
+ * ilustración aún no ha llegado.
+ */
+export function ilustracionDelDibujo(clave: string): Ilustracion | null {
+  if (RECETAS[clave]?.hueco === "esquema") {
+    const propia = ilustracion(clave);
+    if (propia) return propia;
+  }
+  const historia = DIBUJOS_CON_SU_HISTORIA[clave];
+  const i = historia ? ilustracionDeLaHistoria(historia) : null;
+  return i ? { clave, url: i.url, alt: i.alt } : null;
 }
 
 // ── La tarjeta del avión ─────────────────────────────────────────────────

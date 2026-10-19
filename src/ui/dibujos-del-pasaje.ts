@@ -19,6 +19,13 @@
  * Earth, de dominio público y anotadas allí: una costa no se inventa. Ver
  * `mapa-de-la-ruta.ts`.
  *
+ * **Salvo los que ya tienen ilustración** (punto 311): los que explican cómo
+ * funciona algo —el oído, las máscaras, la nube de cerca…— salen con un dibujo
+ * de cuento de la colección del juego, si hay un esquema con su clave en
+ * `ilustraciones-recetas.ts`. Los de aquí siguen para lo que imita una señal
+ * de verdad —el cartel del cinturón, el letrero de la salida, el PAPI— y para
+ * lo que aún no tiene la suya. Ver `ilustracionDelDibujo` en `ilustraciones.ts`.
+ *
  * ## Sin letras
  *
  * Se juega sin saber leer (regla 2 del AGENTS.md), así que los dibujos no
