@@ -1278,6 +1278,7 @@ export const ES_PY = {
   // Los esquemas de lo que se explica en el vuelo de pasaje, y la torre de «Luz verde» (punto 311).
   "ilustracion.mascara": "El papá se pone su máscara primero y después ayuda a la criatura",
   "ilustracion.nube": "Una nube con lupa: gotitas de agua abajo y cristalitos de hielo arriba",
+  "ilustracion.ala": "El ala de costado: el aire la rodea y sale empujado hacia abajo",
   "ilustracion.motor": "El motor por adentro: el aire entra por adelante, se calienta y sale por atrás",
   "ilustracion.frio": "Escarcha en el cristal de afuera; adentro, aire calentito y una taza humeante",
   "ilustracion.oido": "Ara bosteza, y el aire sube por dentro hasta el oído y lo destapa",

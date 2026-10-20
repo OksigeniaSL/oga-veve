@@ -219,9 +219,10 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
    * cuento de la misma colección, enteras. Cada una lleva **la clave del
    * dibujo al que sustituye**: con la receta y su fichero, la escena enseña la
    * ilustración donde pedía el dibujo, sin tocar nada más. Ver
-   * `ilustracionDelDibujo` en `ui/ilustraciones.ts`. El ala y el motor, cuando
-   * llegue su original, entran igual: su receta aquí, su texto alternativo, su
-   * fila en `CREDITOS.md` y `node scripts/hacer-ilustraciones.mjs ala`.
+   * `ilustracionDelDibujo` en `ui/ilustraciones.ts`. El ala y el motor
+   * llegaron después y entraron así, como entrará cualquier otro: su receta
+   * aquí, su texto alternativo, su fila en `CREDITOS.md` y
+   * `node scripts/hacer-ilustraciones.mjs <clave>`.
    */
   mascara: { original: "esquemas/mascara.jpg", hueco: "esquema", recorte: ENTERA_DE_2000 },
   nube: { original: "esquemas/nube.jpg", hueco: "esquema", recorte: ENTERA_DE_2000 },
@@ -237,6 +238,7 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
   chaleco: { original: "esquemas/chaleco.jpg", hueco: "esquema", recorte: ENTERA_DE_1200 },
   maletero: { original: "esquemas/maletero.jpg", hueco: "esquema", recorte: ENTERA_DE_1200 },
   motor: { original: "esquemas/motor.webp", hueco: "esquema", recorte: ENTERA_DE_1024 },
+  ala: { original: "esquemas/ala.png", hueco: "esquema", recorte: ENTERA_DE_1024 },
   /*
    * **La torre de «Luz verde»**, el juego del kit de viaje: el controlador
    * hablando por radio con el avión que llega, que es lo normal; la lámpara de
