@@ -23,9 +23,12 @@
  * - **Armá tu avión** (`JuegoDelAvion`, puntos 289, 290 y 304): un avión de
  *   la flota por nivel, de la avioneta de escuela al cuatrimotor, con cada
  *   pieza en el sitio en que la lleva ese tipo de verdad —medido en sus
- *   modelos, ver `scripts/aviones-del-kit.mjs`— y después sus luces de
- *   navegación. Al acabar, se hace de noche para ver para qué sirven las
- *   luces, y el avión despega.
+ *   modelos, ver `scripts/aviones-del-kit.mjs`—. Se arma **de perfil**, que
+ *   es donde se ve sin dudar dónde van las ruedas y el motor; el avión se
+ *   tumba para enseñarse **desde arriba**, y ahí se ponen sus luces de
+ *   navegación, que es donde la izquierda y la derecha del avión son las de
+ *   quien mira. Al acabar, se hace de noche para ver para qué sirven las
+ *   luces, y el avión vuelve a ponerse de perfil y despega.
  *
  * Hubo otros dos, «las piezas» —cuatro piezas a cuatro huecos, con el motor
  * colgado del fuselaje— y «el camino» —cuatro números en un mapa—, y se
@@ -152,20 +155,23 @@ abstract class Juego<Id extends string> {
 // ── Armá tu avión ────────────────────────────────────────────────────────
 
 /**
- * **Las piezas de un avión**, las que se llevan a su sitio. Cada nivel usa las
- * de su tipo: el ala alta entera del entrenador, las dos del biplano, o la
- * derecha y la izquierda de los de ala baja —la izquierda con su motor, que
- * queda detrás y casi no se ve—; la cola entera en el primero y, desde el
+ * **Las piezas de un avión**, las que se llevan a su sitio, y son las que se
+ * ven de perfil desde la derecha: el ala —con su riostra en el entrenador—,
+ * o las dos del biplano; el motor, en la nariz o el del ala de este lado, que
+ * el de la otra queda detrás; la cola entera en el primero y, desde el
  * segundo, el estabilizador y la deriva por separado, que es cuando se ve que
  * el estabilizador es un ala chiquita; y el tren principal y el de morro, o la
  * ruedita de cola del biplano.
+ *
+ * Hasta el 24-10-2026 los de ala baja llevaban el ala derecha y la izquierda
+ * por separado, que en la vista de tres cuartos se veían las dos. De perfil
+ * la de la otra banda queda detrás, tapada por su gemela: no es una pieza que
+ * se vea.
  */
 export type PiezaDelAvion =
   | "ala"
   | "alaArriba"
   | "alaAbajo"
-  | "alaDerecha"
-  | "alaIzquierda"
   | "motor"
   | "cola"
   | "estabilizador"
@@ -194,12 +200,13 @@ export interface NivelDelAvion {
   readonly lucesConColor: boolean;
 }
 
-const DE_ALA_BAJA: readonly PiezaDelAvion[] = ["alaDerecha", "alaIzquierda", "motor", "estabilizador", "deriva", "trenPrincipal", "trenMorro"];
+const DE_ALA_BAJA: readonly PiezaDelAvion[] = ["ala", "motor", "estabilizador", "deriva", "trenPrincipal", "trenMorro"];
 
 /**
  * **Los niveles, de chico a grande**, como el hangar: un avión por nivel y
- * cada uno con algo nuevo que descubrir. Cinco piezas en el primero y siete
- * desde el segundo; y desde el tercero, los enchufes de las luces sin color.
+ * cada uno con algo nuevo que descubrir. Cinco piezas en el primero, siete en
+ * el biplano y seis en los de ala baja; y desde el tercero, los enchufes de
+ * las luces sin color.
  *
  * - **JAZ 20**, ala alta: el ala va arriba, el motor en la nariz con la hélice.
  * - **JAZ 25**, biplano: dos alas que se parecen, y la ruedita en la cola.
@@ -255,10 +262,17 @@ export const LO_QUE_ENSENA: Readonly<Record<NivelDelAvion["tipo"], Linea>> = {
  * premio es verlo, y el siguiente avión espera.
  */
 export const NOCHE = 4.5;
-export const DESPEGUE = 3.2;
+/** Y el despegue: el avión se vuelve a poner de perfil, carretea y se va. */
+export const DESPEGUE = 4.8;
+/**
+ * **La vuelta**, s: con el avión armado, el rato de verlo entero de perfil y
+ * de que se tumbe para enseñarse desde arriba, donde van las luces. Mientras
+ * gira no hay nada que llevar: las luces salen cuando ya está quieto.
+ */
+export const VUELTA = 2;
 
-/** En qué está el nivel: las piezas, las luces, la noche o el despegue. */
-export type FaseDelAvion = "piezas" | "luces" | "noche" | "despegue";
+/** En qué está el nivel: las piezas, la vuelta para enseñarse desde arriba, las luces, la noche o el despegue. */
+export type FaseDelAvion = "piezas" | "vuelta" | "luces" | "noche" | "despegue";
 
 /** Lo que se ve de Armá tu avión. */
 export interface EstadoDelAvion {
@@ -438,7 +452,8 @@ export class JuegoDelAvion extends Juego<Sitio> {
     }
     if (this.faltan().length > 0) return;
     if (this.fase === "piezas") {
-      this.cambiarA("luces");
+      // Lo de las luces, ya: se dice mientras se tumba, y cuando acaba de hablar ya se ve desde arriba.
+      this.cambiarA("vuelta");
       this.decirUnaVez("luces", DICHO_DEL_AVION.luces);
     } else if (this.fase === "luces") {
       this.cambiarA("noche");
@@ -462,9 +477,10 @@ export class JuegoDelAvion extends Juego<Sitio> {
   }
 
   /**
-   * **Un paso**: la ayuda de quien no acierta, y el final de cada nivel —la
-   * noche, el despegue y lo que enseña ese avión— hasta el siguiente. Después
-   * del último, ganado.
+   * **Un paso**: la ayuda de quien no acierta, la vuelta del avión armado
+   * para enseñarse desde arriba, y el final de cada nivel —la noche, el
+   * despegue y lo que enseña ese avión— hasta el siguiente. Después del
+   * último, ganado.
    */
   override paso(dt: number, callada: boolean): void {
     // Lo que quedó por contar de las piezas, en el primer silencio y de una en una.
@@ -477,7 +493,8 @@ export class JuegoDelAvion extends Juego<Sitio> {
     this.reloj += dt;
     if (this.acabado) return;
     this.enLaFase += dt;
-    if (this.fase === "noche" && this.enLaFase >= NOCHE) {
+    if (this.fase === "vuelta" && this.enLaFase >= VUELTA) this.cambiarA("luces");
+    else if (this.fase === "noche" && this.enLaFase >= NOCHE) {
       this.cambiarA("despegue");
       this.decir(LO_QUE_ENSENA[this.deAhora.tipo]);
     } else if (this.fase === "despegue" && this.enLaFase >= DESPEGUE) {

@@ -25,6 +25,7 @@ import {
   NO_SE_REPITE,
   NOCHE,
   PARA_QUE_SIRVE,
+  VUELTA,
   type Sitio,
 } from "./kit-de-viaje";
 import { NO_REPETIR } from "../audio/boca";
@@ -65,11 +66,17 @@ describe("las frases del kit", () => {
   });
 });
 
-/** Pone todo lo de la fase de ahora, a su sitio, y devuelve lo puesto. */
+/** La vuelta del avión armado para enseñarse desde arriba, a pasitos. */
+function darLaVuelta(j: JuegoDelAvion): void {
+  for (let t = 0; t < VUELTA + 0.2 && j.estado.fase === "vuelta"; t += 0.1) j.paso(0.1, true);
+}
+
+/** Pone todo lo de la fase de ahora, a su sitio, y devuelve lo puesto; con las piezas, también la vuelta hasta las luces. */
 function ponerLaFase(j: JuegoDelAvion): Sitio[] {
   const e = j.estado;
   const faltan: Sitio[] = e.fase === "piezas" ? NIVELES[e.nivel]!.piezas.filter((p) => !e.puestas.includes(p)) : LUCES.filter((l) => !e.puestas.includes(l));
   for (const s of faltan) expect(j.soltar(s, s), s).toBe(true);
+  darLaVuelta(j);
   return faltan;
 }
 
@@ -94,11 +101,18 @@ describe("armá tu avión", () => {
     expect(NIVELES.findIndex((n) => !n.lucesConColor)).toBe(2);
   });
 
-  it("se arma pieza a pieza, después las luces, se hace de noche y despega; y viene el siguiente", () => {
+  it("se arma pieza a pieza, se da la vuelta, después las luces, se hace de noche y despega; y viene el siguiente", () => {
     const j = new JuegoDelAvion();
     expect(claves(j.tomarLoQueDecir())).toEqual([DICHO_DEL_AVION.empezar.clave]);
-    ponerLaFase(j);
+    for (const s of NIVELES[0]!.piezas) expect(j.soltar(s, s), s).toBe(true);
+    // Armado, se tumba para enseñarse desde arriba: mientras gira no hay nada que llevar, ni ayuda que brille.
+    expect(j.estado.fase).toBe("vuelta");
+    for (const l of LUCES) expect(j.aMano(l), l).toBe(false);
+    for (let t = 0; t < VUELTA - 0.2; t += 0.1) j.paso(0.1, true);
+    expect(j.estado).toMatchObject({ fase: "vuelta", ilumina: null });
+    darLaVuelta(j);
     expect(j.estado.fase).toBe("luces");
+    for (const l of LUCES) expect(j.aMano(l), l).toBe(true);
     // Ara cuenta para qué sirve cada clase de pieza, y después lo de las luces.
     expect(claves(j.tomarLoQueDecir())).toEqual([
       PARA_QUE_SIRVE.ala.clave,

@@ -2502,8 +2502,6 @@ export const EN: Dictionary = {
   "inicio.kit.pieza.ala": "The wing",
   "inicio.kit.pieza.alaArriba": "The top wing",
   "inicio.kit.pieza.alaAbajo": "The bottom wing",
-  "inicio.kit.pieza.alaDerecha": "The right wing",
-  "inicio.kit.pieza.alaIzquierda": "The left wing",
   "inicio.kit.pieza.motor": "The engine",
   "inicio.kit.pieza.cola": "The tail",
   "inicio.kit.pieza.estabilizador": "The stabiliser",

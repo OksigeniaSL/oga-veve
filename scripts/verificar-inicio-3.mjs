@@ -2672,15 +2672,23 @@ async function elKitConElDedo() {
       await pausa(600);
       const tras = await estado();
       const ayuda = tras.juego?.puestas?.length === 0 && tras.juego?.ilumina === "motor";
+      /*
+       * Armado, el avión se tumba para enseñarse desde arriba, y mientras gira
+       * no hay nada que llevar: se espera a que esté quieto, como quien mira
+       * cómo gira, y se sigue con las luces. La foto del armado, en cuanto
+       * empieza a girar, que antes de tumbarse se queda un momento de perfil.
+       */
       for (let i = 0; i < 12; i++) {
+        await page.waitForFunction(() => globalThis.__oga.inicio().estado.kit.juego?.fase !== "vuelta", null, { timeout: 10_000 }).catch(() => {});
         k = await kitDe();
         const [p] = Object.values(k.piezas ?? {});
         if (!p) break;
         await arrastrar(centro(p.en), centro(p.sitio));
+        if ((await estado()).juego?.fase === "vuelta") await foto(page, `kit-avion-armado-${nombre}`);
         await pausa(600);
         if (i === 2) await foto(page, `kit-avion-a-medias-${nombre}`);
         const e = await estado();
-        if (e.juego?.fase === "luces" && e.juego.puestas.length === 5) await foto(page, `kit-avion-armado-${nombre}`);
+        if (e.juego?.fase === "luces" && e.juego.puestas.length === NIVELES_DEL_BANCO[e.juego.nivel]) await foto(page, `kit-avion-desde-arriba-${nombre}`);
       }
       const armado = await estado();
       await pausa(1500);
@@ -2753,6 +2761,9 @@ async function elKitConElDedo() {
     }
   }
 }
+
+/** Las piezas de cada avión de Armá tu avión, por nivel: ver `NIVELES` en `flight/kit-de-viaje.ts`. */
+const NIVELES_DEL_BANCO = [5, 7, 6, 6, 6, 6];
 
 /** El peldaño de la luz verde en cada pantalla: así se juegan los tres de la escalera que cambian algo. */
 const PELDANO_DE_LA_LUZ = { telefono: "dibujo", tablet: "cifra", portatil: "cabina" };
