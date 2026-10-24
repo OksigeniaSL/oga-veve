@@ -2294,12 +2294,13 @@ export const AYOLAS: Scenario = {
 /**
  * **Pilar: la ciudad del Ñeembucú, y una pista de avioneta.**
  *
- * Mil doscientos metros de hormigón y dieciocho de ancho, que es lo que
- * publica el AIP entre sus dos umbrales —OpenStreetMap dibuja mil quinientos
- * porque el pavimento sigue más al sur, y eso no es pista—. Caben los cuatro
- * pequeños —la avioneta, el biplano, el bimotor y el turbohélice de
- * diecinueve plazas— y ninguno de los dos reactores: al de pasaje le faltan
- * cuatrocientos metros.
+ * Mil quinientos metros de hormigón y dieciocho de ancho, con el umbral de
+ * la 02 desplazado sesenta, que es lo que publica el AIP desde la AMDT AIRAC
+ * 02/2026: hasta entonces eran mil doscientos entre dos umbrales, y el
+ * pavimento de más al sur no era pista. Caben los cuatro pequeños —la
+ * avioneta, el biplano, el bimotor y el turbohélice de diecinueve plazas— y
+ * ninguno de los dos reactores, que no caben en dieciocho metros de ancho
+ * ni en mil cuatrocientos cuarenta para parar.
  *
  * Tiene quien conteste en la radio: Pilar AFIS en 122.0, de día. Y desde
  * 2023 puede recibir vuelos internacionales a requerimiento.
@@ -2327,11 +2328,12 @@ export const PILAR: Scenario = {
    */
   waterLevel: 51,
   /*
-   * Y la pista a tres metros y medio por encima del agua en el umbral 02,
-   * que es lo que publica el AIP: 54,41. Pilar es ciudad de ribera, y el
-   * aeródromo está en el barrio del puerto. Ver `orilla`.
+   * Y la pista a casi seis metros por encima del agua en su umbral más bajo,
+   * el 20, que es lo que publica el AIP desde la AMDT AIRAC 02/2026: 56,77.
+   * Pilar es ciudad de ribera, y el aeródromo está en el barrio del puerto.
+   * Ver `orilla`.
    */
-  orilla: 3,
+  orilla: 5,
   riverWidth: 0,
   // Los colores sobre lo medido, que se mueve poco: del río al albardón.
   bands: [

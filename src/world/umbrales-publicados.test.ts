@@ -15,7 +15,7 @@ import { InstancedMesh } from "three";
 import { COLOR_DE_PISTA, colorVisto, createAerodrome, lucesDePista } from "./aerodrome";
 import type { Aerodrome, LuzDePista } from "./aerodrome";
 import { crearAproximacion } from "./aproximacion";
-import { conViento, LA_PALMA, LANZAROTE, SCENARIOS } from "./scenarios";
+import { conViento, LA_PALMA, LANZAROTE, PILAR, SCENARIOS } from "./scenarios";
 import { cabeceraEnUso } from "./terrain";
 import { TIEMPO_DE_CASA } from "./meteo";
 import { UMBRALES, umbralPublicado } from "./umbrales-publicados";
@@ -80,9 +80,10 @@ describe("el dato de cada fichero es el del AIP", () => {
 describe("la distancia de aterrizaje del juego es la LDA publicada", () => {
   /*
    * La geometría sale de OpenStreetMap y de OurAirports, y el largo de una
-   * pista dibujada no cae al metro con el publicado: en Pilar el fichero mide
-   * 1.224 entre umbrales y el AIP, 1.200. Treinta metros o el dos por ciento,
-   * lo que sea más; lo que esto caza son los cien de La Palma.
+   * pista dibujada no cae al metro con el publicado: en Pilar los umbrales del
+   * AIP quedan a 1.447 m uno de otro y la LDA publicada es de 1.440. Treinta
+   * metros o el dos por ciento, lo que sea más; lo que esto caza son los cien
+   * de La Palma.
    */
   const perdon = (lda: number) => Math.max(30, lda * 0.02);
 
@@ -161,6 +162,38 @@ describe("La Palma: la pista entera del AIP", () => {
       expect(ap.papiAdentro, cabecera).toBeGreaterThan(290);
       expect(ap.papiAdentro, cabecera).toBeLessThan(360);
     }
+  });
+});
+
+/*
+ * **Pilar, la pista nueva del AIP.** La AMDT AIRAC 02/2026 (en vigor desde el
+ * 1 de octubre de 2026) la publica de 1.500 × 18 m con el umbral de la 02
+ * desplazado sesenta metros, TORA de 1.500 y LDA de 1.440 por las dos
+ * cabeceras. El juego seguía con la de la enmienda anterior: 1.200 m entre
+ * umbrales, y cero desplazado. Se miró al leer el AIP en vigor de la DINAC,
+ * que el 5 de octubre no se pudo bajar.
+ */
+describe("Pilar: la pista de la AMDT AIRAC 02/2026", () => {
+  const p02 = porLaCabecera(PILAR, "02")!;
+  const p20 = porLaCabecera(PILAR, "20")!;
+
+  it("de punta a punta, los 1.500 m de hormigón", () => {
+    // Siete metros de más: los dos umbrales del AIP van a la centésima de
+    // segundo, y quedan a 1.447 m en vez de 1.440.
+    expect(Math.abs(p02.length - 1500)).toBeLessThan(10);
+  });
+
+  it("por la 02 se aterriza desde los sesenta metros, y por la 20 se acaba en el umbral 02", () => {
+    expect(p02.length / 2 - hastaElUmbralDeToma(p02)).toBeCloseTo(60, 0);
+    expect(Math.abs(paraAterrizarDe(p02) - 1440)).toBeLessThan(10);
+    expect(p20.length / 2 - hastaElFinDeToma(p20)).toBeCloseTo(60, 0);
+    expect(Math.abs(paraAterrizarDe(p20) - 1440)).toBeLessThan(10);
+  });
+
+  it("y las cotas de los umbrales, las de la enmienda: 187 y 186 ft", () => {
+    const u = PILAR.aerodrome!.runways[0]!.thresholds;
+    expect(u["02"]!.elevM).toBeCloseTo(56.89, 2);
+    expect(u["20"]!.elevM).toBeCloseTo(56.77, 2);
   });
 });
 

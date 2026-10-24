@@ -143,8 +143,8 @@ const SIN_PARALELA: Readonly<Record<string, Listado>> = {
   },
   pilar: {
     porque:
-      "Dieciocho metros de pista y una sola calle, a un tercio de ella. Sin back-taxi por lo " +
-      "estrecha: se despega desde la boca.",
+      "Dieciocho metros de pista y una sola calle, a 680 m de la punta sur y a 830 de la norte. " +
+      "Sin back-taxi por lo estrecha: se despega desde la boca.",
     cabeceras: [5, 185],
   },
   estigarribia: {
@@ -188,7 +188,18 @@ const VUELTA_POR_LA_PISTA: Readonly<Record<string, Listado>> = {
   encarnacion: { porque: "Aterrizando por la 20, la única calle queda a 300 m del umbral.", cabeceras: [192] },
   concepcion: { porque: "Aterrizando por la 21, la única calle queda antes de mitad de pista.", cabeceras: [196] },
   ayolas: { porque: "Aterrizando por la 02, la única calle está en el umbral.", cabeceras: [10] },
-  pilar: { porque: "Aterrizando por la 02, la única calle queda a un tercio de la pista.", cabeceras: [5] },
+  /*
+   * Con la pista de la AMDT AIRAC 02/2026, 1.500 m: la calle llega a 680 m de
+   * la punta sur y a 830 de la norte, y la prueba para a 829 m de la cabecera
+   * —el 55 % de la pista—: por la 20 se para encima de la boca, sin sitio
+   * para tomarla por delante.
+   */
+  pilar: {
+    porque:
+      "La única calle llega a la pista a 680 m de la punta sur y a 830 de la norte: por la 02 " +
+      "queda antes de mitad de pista, y por la 20, justo donde para el avión.",
+    cabeceras: [5, 185],
+  },
   estigarribia: { porque: "Aterrizando por la 19, la única calle queda a 550 m del umbral.", cabeceras: [178] },
   "pedro-juan": { porque: "La única calle, a media pista, queda detrás de donde para el avión.", cabeceras: [14, 194] },
   "el-hierro": {

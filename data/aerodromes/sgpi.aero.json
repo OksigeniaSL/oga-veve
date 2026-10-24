@@ -6,7 +6,7 @@
     "osm": "overpass",
     "extracted": "2026-09-26",
     "ourairports": "6094",
-    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. La pista, su cota y el punto de espera están puestos a mano con el AIP Paraguay de la DINAC (AD 2.8 SGPI, AMDT NR 02 del 30-OCT-2025, y el plano de aeródromo AD 2.8-9 del 16-MAY-2024): la 02/20 publicada mide 1.200 × 18 m de hormigón entre los dos umbrales, el 02 en S26°53′08,26″ W058°19′06,54″ a 179 ft (54,41 m) y el 20 en S26°52′28,76″ W058°19′02,82″ a 190 ft (57,77 m), con 1.200 m en las cuatro distancias declaradas. OpenStreetMap dibuja 1.500 m de hormigón porque el pavimento sigue unos 280 m al sur del umbral 02 —se ve en la foto—, pero eso no es pista: no está en ninguna distancia declarada y el plano la corta en el umbral. La cota del campo es la del plano: 194 ft (59 m). OurAirports no trae ninguna de las cotas de umbral. El punto de espera va a 30 m del eje, que es lo del Anexo 14 (tabla 3-2) para una pista de vuelo visual de número de clave 1 o 2 —el derivado caía en la puerta del hangar, porque la calle mide sesenta metros—, y el puesto de estacionamiento, sobre la plataforma: OpenStreetMap no trae ninguno y sin puesto no hay de dónde salir ni a dónde volver. Todo va marcado «manual» para que la próxima extracción no se lo lleve por delante. · AFIS, no torre: «PILAR AFIS», 122.0 MHz, de día (AIP Paraguay, AD 2.8-17 y 2.8-18)."
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. La pista, su cota y el punto de espera están puestos a mano con el AIP Paraguay de la DINAC. La pista es la de la AMDT AIRAC 02/2026, en vigor desde el 1-OCT-2026 (AD 2.8-2 y AD 2.8-5, leídos el 24-OCT-2026 en el archivo AMDT_AIRAC_02_2026 de dinac.gov.py): 1.500 × 18 m de hormigón, con el umbral de la 02 desplazado 60 m («Desplazamiento permanente del umbral de la Pista 02 en 60 metros», AD 2.8-2, observaciones). Umbral 02 en S26°53′15,43″ W058°19′07,30″ a 187 ft (56,89 m) y umbral 20 en S26°52′28,76″ W058°19′02,82″ a 186 ft (56,77 m) (2.12); la punta sur, de donde empieza a correr la 02, va 60 m más allá del umbral 02 por el eje. Distancias declaradas (2.13): TORA, TODA y ASDA de 1.500 m por las dos cabeceras y LDA de 1.440 m por las dos, así que aterrizando por la 20 la pista acaba en el umbral 02. Hasta la enmienda anterior (AMDT NR 02 del 30-OCT-2025) la pista medía 1.200 m entre el mismo umbral 20 y uno 02 que estaba 221 m más al norte, y el pavimento de más al sur que dibuja OpenStreetMap no era pista: ahora lo es. La cota del campo es la del plano: 194 ft (59 m). OurAirports no trae ninguna de las cotas de umbral. El punto de espera va a 30 m del eje, que es lo del Anexo 14 (tabla 3-2) para una pista de vuelo visual de número de clave 1 o 2 —el derivado caía en la puerta del hangar, porque la calle mide sesenta metros—, y el puesto de estacionamiento, sobre la plataforma: OpenStreetMap no trae ninguno y sin puesto no hay de dónde salir ni a dónde volver. Todo va marcado «manual» para que la próxima extracción no se lo lleve por delante. · AFIS, no torre: «PILAR AFIS», 122.0 MHz, de día (AIP Paraguay, AD 2.8-17 y 2.8-18)."
   },
   "origin": {
     "lat": -26.881981,
@@ -25,8 +25,8 @@
           814.6
         ],
         [
-          57.9,
-          -405.5
+          31.8,
+          -686.8
         ]
       ],
       "thresholds": {
@@ -35,20 +35,20 @@
             160.4,
             814.6
           ],
-          "elevM": 57.77,
-          "headingTrue": 184.8,
+          "elevM": 56.77,
+          "headingTrue": 184.9,
           "displacedM": 0,
           "papi": null,
           "approachLights": null
         },
         "02": {
           "xy": [
-            57.9,
-            -405.5
+            31.8,
+            -686.8
           ],
-          "elevM": 54.41,
-          "headingTrue": 4.8,
-          "displacedM": 0,
+          "elevM": 56.89,
+          "headingTrue": 4.9,
+          "displacedM": 60,
           "papi": null,
           "approachLights": null
         }

@@ -39,12 +39,13 @@
  *   08/26; GCHI, de la AIRAC 05/26; GCFV y GCGM, de la enmienda 408/26 (9 de
  *   julio de 2026); LECU, de la AIRAC 07/26.
  * - **Paraguay**, del AIP de la DINAC, ficha AD 2 de cada aeródromo,
- *   apartados 2.12 y 2.13, y AD 3 para Ayolas. La edición en vigor (AMDT NR
- *   02/2026) se distribuye en un archivo de dinac.gov.py que el 5 de octubre
- *   de 2026 no contestaba, y no está guardado en ningún archivo público; la
- *   más reciente que se pudo bajar es la **AMDT AIRAC 01/2025**, de la copia
- *   del Internet Archive del 2 de octubre de 2025. En ella ninguna pista
- *   paraguaya tiene el umbral desplazado: en todas, la LDA es la TORA.
+ *   apartados 2.12 y 2.13, y AD 3 para Ayolas: la **AMDT AIRAC 02/2026**, en
+ *   vigor desde el 1 de octubre de 2026, leída el 24 de octubre de 2026 en el
+ *   archivo `AMDT_AIRAC_02_2026` de dinac.gov.py (el 5 de octubre no
+ *   contestaba y se usó la AMDT AIRAC 01/2025 del Internet Archive). Todo
+ *   sigue igual salvo **Pilar**, que pasó de 1.200 a 1.500 m con el umbral
+ *   de la 02 desplazado 60: ver su fila. En las demás, nada desplazado y la
+ *   LDA es la TORA.
  * - **Yvytu Rape** es la pista de Granja Óga: no sale en ningún AIP.
  */
 
@@ -115,7 +116,18 @@ export const UMBRALES: Readonly<Record<string, Readonly<Record<string, UmbralPub
   SGPJ: { "03": { desplazado: 0, lda: 1800, tora: 1800 }, "21": { desplazado: 0, lda: 1800, tora: 1800 } },
   SGEN: { "02": { desplazado: 0, lda: 2000, tora: 2000 }, "20": { desplazado: 0, lda: 2000, tora: 2000 } },
   SGCO: { "03": { desplazado: 0, lda: 1850, tora: 1850 }, "21": { desplazado: 0, lda: 1850, tora: 1850 } },
-  SGPI: { "02": { desplazado: 0, lda: 1200, tora: 1200 }, "20": { desplazado: 0, lda: 1200, tora: 1200 } },
+  /*
+   * La AMDT AIRAC 02/2026 alargó Pilar por el sur: «Desplazamiento permanente
+   * del umbral de la Pista 02 en 60 metros» (AD 2.8-2), 1.500 × 18 m (2.12) y
+   * TORA 1.500 y LDA 1.440 por las dos cabeceras (2.13). Por la 02 se aterriza
+   * desde el umbral desplazado hasta la punta norte; por la 20, desde la
+   * punta norte hasta el umbral 02, que son los mismos 1.440: los sesenta del
+   * sur se corren despegando y no se usan para parar.
+   */
+  SGPI: {
+    "02": { desplazado: 60, lda: 1440, tora: 1500 },
+    "20": { desplazado: 0, lda: 1440, tora: 1500, hastaElOtroUmbral: true },
+  },
   /*
    * Ayolas sale en AD 3, la lista de aeródromos de cabotaje: 1850 × 45 m de
    * asfalto, sin distancias declaradas y sin nada desplazado. La LDA que se
