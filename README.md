@@ -56,6 +56,8 @@ genera por código, sin descargar datos.
 | `npm run sin-red` | Compila, corta la conexión y comprueba que se vuela igual |
 | `npm run rendimiento` | Mide el coste por fotograma con la CPU estrangulada |
 
+Para probar el kit de viaje de «Viajá con Jazlyn» sin volar media hora: `?inicio=3&kit` lo da en el puesto, y `&nivel=5` empieza «Armá tu avión» por ese avión (del 1 al 6), sin guardar el nivel.
+
 ## Sin conexión
 
 A partir de la segunda visita, el juego funciona **sin internet**: un service

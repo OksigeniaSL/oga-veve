@@ -1067,6 +1067,7 @@ import {
 } from "./flight/vuelo-de-linea";
 import { PantallaDelInicio } from "./ui/inicio";
 import { PantallaDelKit } from "./ui/kit-de-viaje";
+import { NIVELES } from "./flight/kit-de-viaje";
 import { selloDe } from "./ui/sellos";
 import { nombresDelPeldano } from "./ui/hoja";
 import {
@@ -6922,7 +6923,13 @@ export class Game {
       const kit = document.getElementById("kit");
       // En la luz verde, abajo hay verde y roja fijas, y arriba también los destellos: el peldaño de quien juega.
       this.inicio.kit.peldano = this.tier.avisos;
-      this.pantallaDelKit = kit ? new PantallaDelKit(kit, this.inicio.kit) : null;
+      const dePrueba = this.kitDePrueba();
+      this.pantallaDelKit = kit ? new PantallaDelKit(kit, this.inicio.kit, !dePrueba) : null;
+      // Con `?inicio=3&kit`, ya en la mano en el puesto: después de leer el nivel guardado, que el pedido manda.
+      if (dePrueba) {
+        if (dePrueba.nivel !== null) this.inicio.kit.seguirArmandoDesde(dePrueba.nivel);
+        this.inicio.kit.dar();
+      }
       this.tripulacionDeLinea = new VueloDeLinea({
         vr: this.aircraft.rotationSpeed,
         vref: this.aircraft.approachSpeed,
@@ -8133,6 +8140,26 @@ export class Game {
         return { islas: v.mapa.islas.map((i) => i.length), avion: a ? enLaHoja(v.mapa.encuadre, a) : null };
       })(),
     };
+  }
+
+  /**
+   * **El kit de viaje para probarlo en tierra**, pedido en la dirección:
+   * `?inicio=3&kit` lo da en cuanto empieza la escena, en el puesto, y
+   * `&nivel=5` empieza «Armá tu avión» por ese avión, del 1 —la avioneta— al
+   * 6 —el cuatrimotor—; con `nivel` solo, también se da. Enrique prueba cada
+   * cosa volando la escena entera, que es más de media hora hasta el kit y
+   * seis vuelos para ver los seis aviones.
+   *
+   * Como `?hora=` y los demás de la dirección: no sale en ningún menú, el
+   * vuelo sigue como siempre —la tripulante no lo vuelve a traer, y lo pide a
+   * los diez mil pies bajando— y el nivel no se guarda, que lo que se juega
+   * probando no es el progreso de nadie. Sin los dos, `null`, y nada cambia.
+   */
+  private kitDePrueba(): { readonly nivel: number | null } | null {
+    const q = new URLSearchParams(location.search);
+    if (!q.has("kit") && !q.has("nivel")) return null;
+    const n = Number(q.get("nivel"));
+    return { nivel: Number.isInteger(n) && n >= 1 && n <= NIVELES.length ? n - 1 : null };
   }
 
   /** El kit de viaje, dado ya, para el banco: ver `darElKit` en `dev/sondas.ts`. */

@@ -10,7 +10,9 @@
  * en un vuelo de verdad; ver `vuelo-de-linea.ts`.
  *
  * Se abre con su ficha en «¿A qué jugás?» o con `?inicio=3`. No es la
- * primera experiencia: esa sigue siendo el despegue.
+ * primera experiencia: esa sigue siendo el despegue. Y para probar el kit
+ * de viaje sin volar hasta él, `?inicio=3&kit`: ver `kitDePrueba` en
+ * `game.ts`.
  *
  * ## El vuelo
  *
@@ -1671,7 +1673,8 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
       l.faltaParaTocar < BAJANDO.kit &&
       e.callaDesde >= CALLA_ANTES_DEL_KIT &&
       !cabinaPreparada(l, e),
-    caduca: (l, e) => cabinaPreparada(l, e) || l.altitud < DIEZ_MIL_PIES + KIT_POR_ENCIMA,
+    // Y si ya lo tiene —el kit de prueba, en la mano desde el puesto: ver `kitDePrueba` en `game.ts`—, no se trae otra vez.
+    caduca: (l, e) => e.kit.esDado || cabinaPreparada(l, e) || l.altitud < DIEZ_MIL_PIES + KIT_POR_ENCIMA,
     lineas: [tripulante(KIT_DADO), tripulante("kitRato"), ara("kitGracias")].map(conLaTripulante),
   },
   {

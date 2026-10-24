@@ -1988,6 +1988,24 @@ describe("el kit de viaje, en el vuelo", () => {
     expect(recogidoA! - guardar!.desde).toBeGreaterThanOrEqual(0);
     expect(recogidoA! - guardar!.desde).toBeLessThan(1);
   });
+
+  it("con el kit de prueba, en la mano desde el puesto, la tripulante no lo trae otra vez y lo pide a los diez mil pies", () => {
+    // Lo que hace `?inicio=3&kit`: ver `kitDePrueba` en `game.ts`.
+    const alturasDeLaPrueba: { t: number; altitud: number }[] = [];
+    const r = volarElMedido(undefined, (escena, t, l) => {
+      if (t < 1) escena.kit.dar();
+      alturasDeLaPrueba.push({ t, altitud: l.altitud });
+    });
+    const k = r.dichas.map((d) => d.linea.clave);
+    expect(k).not.toContain("inicio.tripulacion.pasaje.cerca.kitAqui");
+    expect(r.escena.estado.saltados).toEqual(["kit"]);
+    const guardar = cuando(r.dichas, "inicio.tripulacion.pasaje.cerca.kitGuardar");
+    const altitud = [...alturasDeLaPrueba].reverse().find((x) => x.t <= guardar)?.altitud ?? NaN;
+    expect(altitud).toBeLessThan(3048);
+    expect(altitud).toBeGreaterThan(3048 - 300);
+    expect(r.escena.estado.kit.recogido).toBe(true);
+    expect(r.escena.estado.terminado).toBe(true);
+  });
 });
 
 // ── Lo que se nombra del paisaje, solo si se ve ──────────────────────────

@@ -468,6 +468,13 @@ export class PantallaDelKit {
   constructor(
     private readonly raiz: HTMLElement,
     private readonly kit: KitDeViaje,
+    /**
+     * **Si se guarda por qué avión se va.** Sí, salvo con el kit de prueba
+     * —`?inicio=3&kit`, ver `kitDePrueba` en `game.ts`—: lo que se juega
+     * probando no es el progreso de nadie, y el próximo vuelo de verdad tiene
+     * que empezar por donde lo dejó quien juega.
+     */
+    private readonly guardar = true,
   ) {
     raiz.innerHTML = `
       <button class="kit__boton" type="button" data-kit="abrir" aria-label="${t("inicio.kit.abrir")}" hidden>${MOCHILITA}</button>
@@ -527,7 +534,7 @@ export class PantallaDelKit {
     const e = this.kit.estado;
     if (this.kit.nivelDeArmar !== this.nivelGuardado) {
       this.nivelGuardado = this.kit.nivelDeArmar;
-      ponerProgreso(NIVEL_GUARDADO, this.nivelGuardado);
+      if (this.guardar) ponerProgreso(NIVEL_GUARDADO, this.nivelGuardado);
     }
     const abierto = e.abierto;
     this.boton.hidden = !this.kit.aMano || abierto;
