@@ -788,7 +788,8 @@ async function elVuelo() {
      */
     const suyaDesde = (i.registro ?? []).filter((d) => d.clave === e.linea?.clave).at(-1)?.desde ?? -Infinity;
     const deMazo =
-      ["inicio.ara.pasaje.mazo", "inicio.ara.pasaje.mazoBici"].includes(e.linea?.clave ?? "") && e.segundos - suyaDesde < 7;
+      ["inicio.ara.pasaje.mazo", "inicio.ara.pasaje.mazoCaminos", "inicio.ara.pasaje.mazoBici"].includes(e.linea?.clave ?? "") &&
+      e.segundos - suyaDesde < 7;
     if (deMazo && e.hablando && (Number(i.velo) || 0) < 0.02) {
       const p = await page.evaluate(() => globalThis.__oga.paisajeALaVista("ladera-de-mazo")).catch(() => null);
       mazo.muestras.push({
@@ -1913,6 +1914,7 @@ async function elVuelo() {
    * tierra, una vez y sin pisar a nadie; si Ara no la vio, nadie la nombra.
    */
   const mazoDicho = registro.find((d) => d.clave === "inicio.ara.pasaje.mazo");
+  const mazoCaminos = registro.find((d) => d.clave === "inicio.ara.pasaje.mazoCaminos");
   const mazoBici = registro.find((d) => d.clave === "inicio.ara.pasaje.mazoBici");
   const mazoNombrado = nombrados.find((n) => n.clave === "inicio.ara.pasaje.mazo");
   const yaCasi = registro.find((d) => d.clave === "inicio.ara.pasaje.yaCasi");
@@ -1933,6 +1935,7 @@ async function elVuelo() {
   comprobar(
     "lo de Mazo lo dice Ara en la final, solo con la ladera a la vista por su cristal y la cara contra él, y acaba antes de ver tocar",
     !!mazoDicho &&
+      !!mazoCaminos &&
       !!mazoBici &&
       !!mazoNombrado?.ok &&
       mazoNombrado.como === "asomado" &&

@@ -4,8 +4,9 @@
  * que decide qué se ve, no cómo se pinta.
  */
 import { describe, expect, it } from "vitest";
-import { MeshLambertMaterial, type WebGLRenderer } from "three";
+import { LinearMipmapLinearFilter, MeshLambertMaterial, type WebGLRenderer } from "three";
 import {
+  ANISOTROPIA,
   CALIDAD,
   CAPAS,
   FIN_DE_LA_FOTO,
@@ -20,7 +21,9 @@ import {
   nivelParaDistancia,
   rectanguloEnElMarco,
   rejillaDelMundo,
+  TeselasDeOrtofoto,
   vestirConTeselas,
+  type ManifiestoDeTeselas,
 } from "./teselas-de-ortofoto";
 import {
   ISLAS_CANARIAS,
@@ -341,5 +344,25 @@ describe("qué juego de teselas toca", () => {
     expect(juegoDeTeselas("Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA")).toBe("s2");
     expect(juegoDeTeselas("otra cosa")).toBeNull();
     expect(juegoDeTeselas(undefined)).toBeNull();
+  });
+});
+
+describe("la textura de capas", () => {
+  it("se lee con filtro anisótropo: la ladera de Mazo, casi rasante desde la final, se borraba en una mancha", () => {
+    /*
+     * Ver `ANISOTROPIA`. three solo lo pone con mipmaps trilineales y al
+     * subir la textura, así que tiene que venir puesto desde que se crea.
+     */
+    const todas: Tesela[] = [];
+    for (let z = 11; z <= 12; z++) {
+      const p = enTeselas(LA_PALMA.lat, LA_PALMA.lon, z);
+      todas.push({ z, x: Math.floor(p.x), y: Math.floor(p.y) });
+    }
+    const manifiesto = { nivelMin: 11, nivelMax: 12, indice: aIndice(todas) } as unknown as ManifiestoDeTeselas;
+    const t = new TeselasDeOrtofoto(manifiesto, "pnoa", LA_PALMA, 20000);
+    expect(ANISOTROPIA).toBeGreaterThanOrEqual(8);
+    expect(t.capas.anisotropy).toBe(ANISOTROPIA);
+    expect(t.capas.minFilter).toBe(LinearMipmapLinearFilter);
+    t.dispose();
   });
 });

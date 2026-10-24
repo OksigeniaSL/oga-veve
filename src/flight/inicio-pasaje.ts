@@ -864,8 +864,8 @@ const BAJANDO = {
 const SE_OYE_LA_MUSICA = 3;
 /**
  * **La ladera de Mazo en la final**, m de altura: lo más abajo que se
- * empieza a contar, y por debajo de cuánto ya no. Lo de Ara son dos frases,
- * unos diez segundos, y a tres metros y pico por segundo de bajada acaban
+ * empieza a contar, y por debajo de cuánto ya no. Lo de Ara son tres frases,
+ * unos trece segundos, y a tres metros y pico por segundo de bajada acaban
  * antes de los sesenta metros, que es cuando se corta a la pista para ver
  * tocar —ver el momento `aterrizando`—: lo de Mazo no se come la toma.
  */
@@ -2425,12 +2425,23 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
      * se corte a la pista para ver tocar. El nombre no lo dice: en la
      * final no lo puede decir nadie, y lo dice la comandante en tierra —ver
      * `queEsMazo`—.
+     *
+     * Es el mejor rato para verlo, medido en el banco con la final del
+     * juego: antes, el casco está más lejos y la ladera igual de rasante —a
+     * unos seis grados de la visual—; donde más cerca pasa, por el través, a
+     * dos kilómetros doscientos, ya se va a cien metros, la ladera queda a
+     * cuatro grados y medio y se está encima de la toma.
+     *
+     * Y los caminitos que suben entre las fincas, que se ven desde que las
+     * teselas se leen con filtro anisótropo —ver `ANISOTROPIA` en
+     * `world/teselas-de-ortofoto.ts`—: casi rasante, la ladera era una
+     * mancha. Van antes de la bici, que es por donde sube la gente.
      */
     id: "mazo",
     tras: 3,
     cuando: (l) => !l.enTierra && enLaFinal(l) && l.altura > MAZO_EMPIEZA_POR_ENCIMA,
     caduca: (l) => l.enTierra || !enLaFinal(l) || l.altura < MAZO_YA_NO,
-    lineas: [ara("mazo"), ara("mazoBici")],
+    lineas: [ara("mazo"), ara("mazoCaminos"), ara("mazoBici")],
     mira: "ventanilla",
     plano: "asomado-paisaje",
     nombra: "ladera-de-mazo",
