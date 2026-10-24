@@ -519,6 +519,10 @@
       "ms": 8007,
       "h": "e3c990ef5e"
     },
+    "inicio.ara.pasaje.silboOtras": {
+      "ms": 4507,
+      "h": "cfb721aa5e"
+    },
     "inicio.ara.pasaje.sobreLaIsla": {
       "ms": 5107,
       "h": "858757655b"
@@ -963,6 +967,9 @@
     ],
     "inicio.ara.pasaje.sigueLaNube": [
       "inicio.ara.pasaje.sigueLaNube"
+    ],
+    "inicio.ara.pasaje.silboOtras": [
+      "inicio.ara.pasaje.silboOtras"
     ],
     "inicio.ara.pasaje.sobreLaIsla": [
       "inicio.ara.pasaje.sobreLaIsla"

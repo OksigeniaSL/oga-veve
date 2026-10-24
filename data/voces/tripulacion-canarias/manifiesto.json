@@ -139,6 +139,10 @@
       "ms": 12907,
       "h": "06b6338b4e"
     },
+    "inicio.tripulacion.pasaje.cerca.silbo": {
+      "ms": 11307,
+      "h": "f377175587"
+    },
     "inicio.tripulacion.pasaje.cerca.techo": {
       "ms": 6507,
       "h": "94333e2b04"
@@ -166,6 +170,30 @@
     "inicio.tripulacion.pasaje.demo.cinturon": {
       "ms": 8307,
       "h": "c5364e1edc"
+    },
+    "inicio.tripulacion.pasaje.demo.gracia.examen.despedida": {
+      "ms": 7907,
+      "h": "be9e5ffaf8"
+    },
+    "inicio.tripulacion.pasaje.demo.gracia.examen.entrada": {
+      "ms": 8507,
+      "h": "e3d8421e30"
+    },
+    "inicio.tripulacion.pasaje.demo.gracia.primeraVez.despedida": {
+      "ms": 7407,
+      "h": "9a8eee4bda"
+    },
+    "inicio.tripulacion.pasaje.demo.gracia.primeraVez.entrada": {
+      "ms": 9207,
+      "h": "f0406499a2"
+    },
+    "inicio.tripulacion.pasaje.demo.gracia.ventanilla.despedida": {
+      "ms": 5107,
+      "h": "79513720b7"
+    },
+    "inicio.tripulacion.pasaje.demo.gracia.ventanilla.entrada": {
+      "ms": 7107,
+      "h": "e094992aaf"
     },
     "inicio.tripulacion.pasaje.demo.intro": {
       "ms": 7707,
@@ -495,6 +523,27 @@
     ],
     "inicio.tripulacion.pasaje.cerca.musica": [
       "inicio.tripulacion.pasaje.cerca.musica"
+    ],
+    "inicio.tripulacion.pasaje.demo.gracia.ventanilla.entrada": [
+      "inicio.tripulacion.pasaje.demo.gracia.ventanilla.entrada"
+    ],
+    "inicio.tripulacion.pasaje.demo.gracia.ventanilla.despedida": [
+      "inicio.tripulacion.pasaje.demo.gracia.ventanilla.despedida"
+    ],
+    "inicio.tripulacion.pasaje.demo.gracia.examen.entrada": [
+      "inicio.tripulacion.pasaje.demo.gracia.examen.entrada"
+    ],
+    "inicio.tripulacion.pasaje.demo.gracia.examen.despedida": [
+      "inicio.tripulacion.pasaje.demo.gracia.examen.despedida"
+    ],
+    "inicio.tripulacion.pasaje.demo.gracia.primeraVez.entrada": [
+      "inicio.tripulacion.pasaje.demo.gracia.primeraVez.entrada"
+    ],
+    "inicio.tripulacion.pasaje.demo.gracia.primeraVez.despedida": [
+      "inicio.tripulacion.pasaje.demo.gracia.primeraVez.despedida"
+    ],
+    "inicio.tripulacion.pasaje.cerca.silbo": [
+      "inicio.tripulacion.pasaje.cerca.silbo"
     ]
   }
 }

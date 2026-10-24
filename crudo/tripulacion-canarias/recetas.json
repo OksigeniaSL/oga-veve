@@ -213,5 +213,26 @@
   ],
   "inicio.tripulacion.pasaje.cerca.musica": [
     "inicio.tripulacion.pasaje.cerca.musica"
+  ],
+  "inicio.tripulacion.pasaje.demo.gracia.ventanilla.entrada": [
+    "inicio.tripulacion.pasaje.demo.gracia.ventanilla.entrada"
+  ],
+  "inicio.tripulacion.pasaje.demo.gracia.ventanilla.despedida": [
+    "inicio.tripulacion.pasaje.demo.gracia.ventanilla.despedida"
+  ],
+  "inicio.tripulacion.pasaje.demo.gracia.examen.entrada": [
+    "inicio.tripulacion.pasaje.demo.gracia.examen.entrada"
+  ],
+  "inicio.tripulacion.pasaje.demo.gracia.examen.despedida": [
+    "inicio.tripulacion.pasaje.demo.gracia.examen.despedida"
+  ],
+  "inicio.tripulacion.pasaje.demo.gracia.primeraVez.entrada": [
+    "inicio.tripulacion.pasaje.demo.gracia.primeraVez.entrada"
+  ],
+  "inicio.tripulacion.pasaje.demo.gracia.primeraVez.despedida": [
+    "inicio.tripulacion.pasaje.demo.gracia.primeraVez.despedida"
+  ],
+  "inicio.tripulacion.pasaje.cerca.silbo": [
+    "inicio.tripulacion.pasaje.cerca.silbo"
   ]
 }
