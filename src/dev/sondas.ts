@@ -1835,6 +1835,15 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       );
       const vistos: { nombre: string; a: number }[] = [];
       for (const t of rayo.intersectObject(juego.aircraftMesh.group, true)) {
+        /*
+         * **Solo superficies.** Un rayo «toca» una nube de puntos a menos de
+         * un metro de cualquiera de ellos —el umbral del `Raycaster` va en
+         * unidades del mundo, no en píxeles—, así que las luces del avión,
+         * que son puntos de unos pocos píxeles, salían tapando relojes que se
+         * veían enteros: el JAZ 25 daba sus luces de tráfico delante del
+         * horizonte y del variómetro. Lo que tapa algo es una malla.
+         */
+        if (!(t.object as { isMesh?: boolean }).isMesh) continue;
         // El nombre que sirve es el de la pieza, y una malla sin nombre lo
         // hereda del grupo que la cuelga: lo contrario devuelve una lista de
         // cadenas vacías, que es no contestar.
