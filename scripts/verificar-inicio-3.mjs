@@ -1750,17 +1750,37 @@ async function elVuelo() {
       d.desde >= armando.elegidoEn.t,
   );
   const despego = armando.despegados > 0;
+  /*
+   * Lo de la primera pieza va a la cola, detrás de quien hable, y se quita si
+   * la tripulante pide guardar el kit antes de que le llegue el turno. Así que
+   * Ara tiene que contar alguna **si hubo un hueco** entre elegir el avión y
+   * pedir guardarlo; si las charlas de la escena lo llenaron todo, que mandan
+   * ellas, no.
+   */
+  let hueco = Infinity;
+  if (armando.elegidoEn && guardar) {
+    hueco = 0;
+    let fin = armando.elegidoEn.t;
+    const enMedio = registro
+      .filter((d) => (d.hasta ?? d.desde) > armando.elegidoEn.t && d.desde < guardar.desde)
+      .sort((x, y) => x.desde - y.desde);
+    for (const d of enMedio) {
+      hueco = Math.max(hueco, d.desde - fin);
+      fin = Math.max(fin, d.hasta ?? d.desde);
+    }
+    hueco = Math.max(hueco, guardar.desde - fin);
+  }
   comprobar(
-    "en el vuelo, después de la luz verde y con lo que queda, se ponen piezas de Armá tu avión —ninguna con la megafonía pausando— y Ara cuenta alguna",
+    "en el vuelo, después de la luz verde y con lo que queda, se ponen piezas de Armá tu avión —ninguna con la megafonía pausando— y Ara cuenta alguna si la escena le deja un hueco",
     !!armando.elegidoEn &&
       !!torre.fin &&
       armando.elegidoEn.t > torre.fin.t &&
       armando.puestas.length > 0 &&
       armando.conPausa === 0 &&
-      !!piezaContada &&
+      (!!piezaContada || hueco < 1.5) &&
       (!despego || delKit.includes("avion.luces")),
     armando.elegidoEn
-      ? `elegido a los ${armando.elegidoEn.t.toFixed(0)} s a ${pies(armando.elegidoEn.altitud)}, ${torre.fin ? `${(armando.elegidoEn.t - torre.fin.t).toFixed(0)} s después de acabar la luz` : "sin acabar la luz"} · puestas ${armando.puestas.length} (${armando.puestas.join(", ")}) · fases ${[...armando.fases].join(", ")} · despegó ${despego} · ${armando.pausado} lecturas pausado por la megafonía armando, ${armando.conPausa} puestas en pausa · Ara cuenta ${piezaContada ? `${piezaContada.clave.replace("inicio.ara.pasaje.kit.", "")} a los ${piezaContada.desde.toFixed(0)} s` : "ninguna"} · dicho: ${delKit.join(", ") || "nada"}`
+      ? `elegido a los ${armando.elegidoEn.t.toFixed(0)} s a ${pies(armando.elegidoEn.altitud)}, ${torre.fin ? `${(armando.elegidoEn.t - torre.fin.t).toFixed(0)} s después de acabar la luz` : "sin acabar la luz"} · puestas ${armando.puestas.length} (${armando.puestas.join(", ")}) · fases ${[...armando.fases].join(", ")} · despegó ${despego} · ${armando.pausado} lecturas pausado por la megafonía armando, ${armando.conPausa} puestas en pausa · Ara cuenta ${piezaContada ? `${piezaContada.clave.replace("inicio.ara.pasaje.kit.", "")} a los ${piezaContada.desde.toFixed(0)} s` : "ninguna"} · el hueco más largo hasta pedir guardarlo, ${Number.isFinite(hueco) ? `${hueco.toFixed(1)} s` : "—"} · dicho: ${delKit.join(", ") || "nada"}`
       : `no se eligió · la luz ${torre.fin ? `acabó a los ${torre.fin.t.toFixed(0)} s` : "no acabó"} · la tripulante pide guardarlo a los ${guardar?.desde?.toFixed(0) ?? "—"} s`,
   );
   const aGuardar = guardar ? altitudEntre(guardar.desde) : null;
