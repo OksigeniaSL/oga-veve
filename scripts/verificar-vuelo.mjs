@@ -1064,12 +1064,31 @@ const alFinal = await page.evaluate(async () => {
   // Parado de verdad, por el modelo. Ver `__oga.colocar`.
   const fin = ruta[ruta.length - 1];
   o.colocar(fin[0], o.suelo(fin[0], fin[1]) + 1.3, fin[1], 0);
-  await new Promise((r) => setTimeout(r, 2000));
+  /*
+   * **Y se espera a la llave, no un rato fijo.** El avión llega al puesto a
+   * saltos, en dos o tres segundos desde la pista, y la lista de después del
+   * aterrizaje —flaps, luces de rodaje, transpondedor, cinco segundos de
+   * tarjeta cada punto— se lee a su ritmo, la que en un rodaje de verdad se
+   * acaba mucho antes de llegar. Con dos segundos fijos el banco miraba en
+   * mitad de «luces de rodaje» y lo daba por la tarjeta del señalero tapando
+   * la llave. Lo que esto protege sigue igual: una tarjeta que se queda y no
+   * deja salir la llave no la deja salir en quince segundos tampoco.
+   */
+  const vistas = [];
+  let dibujo = "";
+  let llave = false;
+  for (let i = 0; i < 75 && !llave; i++) {
+    await new Promise((r) => setTimeout(r, 200));
+    const t = o.tarjeta()?.dibujo ?? "";
+    if (t && vistas[vistas.length - 1] !== t) vistas.push(t);
+    dibujo =
+      document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? "";
+    // La llave en la tarjeta y su dibujo en pantalla: un círculo con hueco.
+    llave = i >= 9 && t === "llave" && dibujo.includes("senal__hueco");
+  }
   const raiz = globalThis.__raiz;
   const coche = raiz.getObjectByName("sigueme");
   const senalero = raiz.getObjectByName("senalero");
-  const dibujo =
-    document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? "";
   return {
     fase: `${o.fase()} av=${globalThis.__av ?? 0}`,
     cinta: cintaRodando,
@@ -1082,8 +1101,8 @@ const alFinal = await page.evaluate(async () => {
         )
       : Infinity,
     // La llave lleva un círculo con un hueco; el señalero, una figura con brazos.
-    pideApagar: dibujo.includes("senal__hueco"),
-    dibujo: dibujo.slice(0, 40),
+    pideApagar: llave,
+    vistas: vistas.join(" → "),
     v: o.estado().airspeed.toFixed(1),
     restante: o.cintaGuia() ? "hay ruta" : "sin ruta",
   };
