@@ -33,6 +33,16 @@ await page.addInitScript(() => {
   localStorage.setItem("oga-veve:teclas-vistas", "1");
 });
 await page.goto(`${BASE}/?escenario=valle-cordillera&hora=16`);
+/*
+ * **Con el cuadro recogido, que es cuando hay pictogramas.** Desde que el
+ * cuadro sale en los cuatro peldaños, los dibujos de la esquina solo salen con
+ * él bajado —dos instrumentos para lo mismo, uno encima del otro: «¿para qué
+ * ponerlos si se tiene el cuadro?»; ver `.pictos` en la hoja—. El banco los
+ * esperaba con el cuadro a la vista y se quedaba un minuto mirando un dibujo
+ * escondido. Se recoge con su tirador, como lo recoge quien juega.
+ */
+await page.waitForSelector('[data-hud="cuadro-tirador"]', { timeout: 60000 });
+await page.click('[data-hud="cuadro-tirador"]');
 await page.waitForSelector('[data-picto="speed"]', { timeout: 60000 });
 await page.waitForTimeout(2200);
 
