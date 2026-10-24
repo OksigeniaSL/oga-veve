@@ -25,8 +25,21 @@ import { baseDe } from "./servidor.mjs";
 const MINUTOS = Number(process.argv[2] ?? 6);
 // Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5299);
-/** Cuántas veces más deprisa va el reloj del juego. Ver `Game.acelerar`. */
-const VECES = 12;
+/**
+ * Cuántas veces más deprisa va el reloj del juego. Ver `Game.acelerar`.
+ *
+ * **Dos, y no doce.** El reloj acelerado comprime lo que pasa en el juego
+ * pero no lo que se dice: una frase dura lo que dura, en segundos de pared.
+ * A doce, los seis minutos de escucha son medio minuto de reloj y no caben
+ * más de tres llamadas con su voz —dos frases, dos matrículas y ni una de la
+ * torre a otro—: el banco daba «una radio en la que nadie contesta» con la
+ * radio entera funcionando. A cuatro ya contesta la torre y salen tres
+ * matrículas, pero en minuto y medio de reloj no caben más de siete llamadas
+ * y cuatro frases distintas. A dos son tres minutos, que es donde cabe lo que
+ * se quiere oír. Es lo mismo que se midió con las voces de La Palma: a ×12
+ * 22 de 23 y a ×4 23 de 23, con el mismo código.
+ */
+const VECES = 2;
 
 const server = await createServer({
   root: process.cwd(),
