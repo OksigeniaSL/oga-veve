@@ -984,6 +984,7 @@ import {
   LADO_DE_ARA,
   planoParaVer,
   SALIDAS_DEL_PASAJE,
+  VILLA_DE_MAZO,
   VueloDePasaje,
   type ComoSeVe,
   type LecturaDelPasaje,
@@ -7157,6 +7158,11 @@ export class Game {
        * del asiento, también para ir al baño (punto 293). Ver `puedeIrAlBano`.
        */
       cinturon: this.cinturonPuesto,
+      /*
+       * **Y si suena la música de llegada**, de verdad y no solo pedida: Ara
+       * pregunta por ella cuando la oye. Ver la charla `musica`.
+       */
+      musica: this.audio.suenaLaMusica,
     };
     const permisos = escena.paso(dt, lectura);
     /*
@@ -23439,6 +23445,21 @@ export class Game {
         ventanilla: (hito.peso ?? 1) >= 3 ? Math.min(alcance, 45_000) : POR_LA_VENTANILLA,
         fuera: alcance,
       };
+    }
+    /*
+     * **La ladera de Mazo** (punto 314): el casco del pueblo, que es suelo
+     * —se tiene que ver casi entero, con la ladera de alrededor—, y solo por
+     * el cristal: es lo que se reconoce desde el asiento al llegar, y no se
+     * enseña desde fuera. Tres kilómetros, y no los treinta de un monte: lo
+     * que se dice son casas y caminos. A cuatro, en la captura del banco con
+     * la Intel, el pueblo era una franja oscura con puntitos blancos; a dos y
+     * medio ya se ven la mancha del pueblo y sus casas sueltas.
+     */
+    if (sitio === "ladera-de-mazo") {
+      const origen = this.scenario.aerodrome?.origin;
+      if (!origen) return null;
+      const { x, z } = dondeCae(origen, VILLA_DE_MAZO);
+      return { puntos: [enElSuelo(x, z, null)], ventanilla: 3000, fuera: 0 };
     }
     const llegada = this.vecinos.find((v) => v.base.id === DESTINO_DEL_PASAJE);
     if (!llegada) return null;

@@ -496,6 +496,13 @@ async function elVuelo() {
    * decía el subtítulo de las salidas.
    */
   const pasillo = { muestras: 0, buenas: 0, peor: null, lamina: [], texto: null, foto: false };
+  /**
+   * **La ladera de Mazo mientras Ara la cuenta** (punto 314): cada muestra,
+   * medida con lo que se pinta —en la imagen, por el cristal y sin nube—; y la
+   * pregunta de la música, con lo que sonaba al hacerla.
+   */
+  const mazo = { muestras: [], foto: false };
+  let preguntaDeLaMusica = null;
   const t0 = Date.now();
 
   while (Date.now() - t0 < TOPE_S * 1000) {
@@ -678,6 +685,38 @@ async function elVuelo() {
       nombrados.push({ ...n, plano: medido.plano, medido: v, ok, nombre });
       if (FOTOS) await foto(page, nombre);
     }
+    // ── La ladera de Mazo, medida mientras Ara la cuenta ──
+    /*
+     * Mientras suena, o mientras se lee si no tiene toma: la última frase pedida
+     * se queda en `linea` hasta la siguiente, también en el silencio de un
+     * corte, y una frase de Ara no dura siete segundos.
+     */
+    const suyaDesde = (i.registro ?? []).filter((d) => d.clave === e.linea?.clave).at(-1)?.desde ?? -Infinity;
+    const deMazo =
+      ["inicio.ara.pasaje.mazo", "inicio.ara.pasaje.mazoBici"].includes(e.linea?.clave ?? "") && e.segundos - suyaDesde < 7;
+    if (deMazo && e.hablando && (Number(i.velo) || 0) < 0.02) {
+      const p = await page.evaluate(() => globalThis.__oga.paisajeALaVista("ladera-de-mazo")).catch(() => null);
+      mazo.muestras.push({
+        t: e.segundos,
+        clave: e.linea.clave,
+        plano: i.planoVisto,
+        tramo,
+        enTierra: v.enTierra,
+        pies: Math.round(altitud / 0.3048),
+        km: p ? p.distancia / 1000 : null,
+        enLaImagen: !!p && p.delante && Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1,
+        cristal: p?.porElCristal ?? null,
+        nube: p?.nubeEnMedio ?? null,
+        ojoEnNube: p?.ojoEnNube ?? 1,
+      });
+      if (FOTOS && !mazo.foto && e.linea.clave === "inicio.ara.pasaje.mazo" && i.planoVisto === "asomado-paisaje" && e.segundos - e.planoDesde > 1.5) {
+        mazo.foto = true;
+        await foto(page, "mazo-fincas");
+      }
+    }
+    // ── La pregunta de la música, con lo que suena al hacerla ──
+    if (preguntaDeLaMusica === null && e.linea?.clave === "inicio.ara.pasaje.musica" && e.hablando)
+      preguntaDeLaMusica = { t: e.segundos, suena: m?.suena ?? null, tramo, pies: Math.round(altitud / 0.3048) };
     // ── La foto de una historia, solo con su voz ──
     const enLaVentanita = i.ventanita?.sitio ?? "";
     if (enLaVentanita && !enLaVentanita.includes(":")) {
@@ -1372,6 +1411,95 @@ async function elVuelo() {
     // Con los motores apagados, ni una muestra; al pararse en el puesto, la del fotograma en que cambia la fase.
     !musica.enElPuesto.some((x) => x.includes("apagado")) && musica.enElPuesto.length <= 1 && musica.conMegafonia.length <= 2,
     `en el puesto: ${musica.enElPuesto.join(", ") || "nada"} · con la megafonía: ${musica.conMegafonia.join(", ") || "nada"}`,
+  );
+  // ── Por qué ponen música al bajar ──
+  /*
+   * Ara pregunta poco después de que empiece la música de llegada, con ella
+   * sonando, una vez, y contesta la tripulante en persona; ni la pregunta ni
+   * la respuesta caen encima de otra frase. Lo oído, que es lo que se pisa:
+   * lo que sonó y lo que se dejó leer.
+   */
+  const oidas = registro.filter((d) => d.como === "sono" || d.como === "muda");
+  const pisaA = (d) =>
+    oidas
+      .filter((o) => o !== d && o.hasta !== null && d.hasta !== null && o.desde < d.hasta - 0.05 && d.desde < o.hasta - 0.05)
+      .map((o) => o.clave);
+  const preguntasDeLaMusica = registro.filter((d) => d.clave === "inicio.ara.pasaje.musica");
+  const respuesta = registro.find((d) => d.clave === "inicio.tripulacion.pasaje.cerca.musica");
+  const pisadasDeLaMusica = [...preguntasDeLaMusica, ...(respuesta ? [respuesta] : [])].flatMap(pisaA);
+  comprobar(
+    "Ara pregunta por qué ponen música una vez, con la de llegada ya sonando, y la tripulante contesta en persona sin pisar a nadie",
+    preguntasDeLaMusica.length === 1 &&
+      !!musica.empieza &&
+      preguntasDeLaMusica[0].desde > musica.empieza.t &&
+      preguntaDeLaMusica?.suena === "canarias" &&
+      !!respuesta &&
+      respuesta.desde >= (preguntasDeLaMusica[0].hasta ?? Infinity) &&
+      pisadasDeLaMusica.length === 0,
+    preguntasDeLaMusica.length
+      ? `${preguntasDeLaMusica.length} vez, a los ${preguntasDeLaMusica[0].desde.toFixed(0)} s (música desde los ${musica.empieza?.t.toFixed(0) ?? "—"} s; al preguntar suena ${preguntaDeLaMusica?.suena ?? "nada"}, ${preguntaDeLaMusica?.tramo ?? "—"} a ${preguntaDeLaMusica?.pies ?? "—"} ft) · contesta a los ${respuesta?.desde.toFixed(0) ?? "—"} s · pisa: ${pisadasDeLaMusica.join(", ") || "nada"}`
+      : "no preguntó",
+  );
+  // ── Lo que se reconoce al llegar: la ladera de Mazo (punto 314) ──
+  /*
+   * Ara la cuenta en la final, y solo con la ladera a la vista por su cristal
+   * en todas las muestras mientras habla —en la imagen, por el cristal, sin
+   * nube—, con la cara contra él mirando hacia allí; acaba antes de que se
+   * corte a la pista para ver tocar. Y el nombre lo dice la comandante en
+   * tierra, una vez y sin pisar a nadie; si Ara no la vio, nadie la nombra.
+   */
+  const mazoDicho = registro.find((d) => d.clave === "inicio.ara.pasaje.mazo");
+  const mazoBici = registro.find((d) => d.clave === "inicio.ara.pasaje.mazoBici");
+  const mazoNombrado = nombrados.find((n) => n.clave === "inicio.ara.pasaje.mazo");
+  const yaCasi = registro.find((d) => d.clave === "inicio.ara.pasaje.yaCasi");
+  const mazoMal = mazo.muestras.filter(
+    (x) =>
+      !(
+        x.enLaImagen &&
+        x.cristal === true &&
+        x.ojoEnNube < 0.35 &&
+        (x.nube ?? Infinity) < 150 &&
+        x.plano === "asomado-paisaje" &&
+        ["final", "recogida"].includes(x.tramo) &&
+        !x.enTierra
+      ),
+  );
+  const primeraDeMazo = mazo.muestras[0];
+  const ultimaDeMazo = mazo.muestras[mazo.muestras.length - 1];
+  comprobar(
+    "lo de Mazo lo dice Ara en la final, solo con la ladera a la vista por su cristal y la cara contra él, y acaba antes de ver tocar",
+    !!mazoDicho &&
+      !!mazoBici &&
+      !!mazoNombrado?.ok &&
+      mazoNombrado.como === "asomado" &&
+      mazoNombrado.plano === "asomado-paisaje" &&
+      mazo.muestras.length >= 3 &&
+      mazoMal.length === 0 &&
+      !!yaCasi &&
+      yaCasi.desde >= (mazoBici.hasta ?? Infinity),
+    mazoDicho
+      ? `a los ${mazoDicho.desde.toFixed(0)} s, ${mazoNombrado?.como ?? "—"} · ${mazo.muestras.length} muestras, ${mazoMal.length} malas` +
+          (primeraDeMazo ? ` · de ${primeraDeMazo.pies} ft a ${primeraDeMazo.km?.toFixed(1)} km hasta ${ultimaDeMazo.pies} ft a ${ultimaDeMazo.km?.toFixed(1)} km` : "") +
+          ` · «ya casi» a los ${yaCasi?.desde.toFixed(0) ?? "—"} s, lo de Mazo acaba a los ${mazoBici?.hasta?.toFixed(0) ?? "—"} s` +
+          (mazoMal.length ? ` · la primera mala: ${JSON.stringify(mazoMal[0])}` : "")
+      : "no se dijo",
+  );
+  const nombreDeMazo = registro.filter((d) => d.clave === "inicio.mama.pasaje.mazo");
+  const toco = tramos.find((x) => x.tramo === "frenando")?.t ?? Infinity;
+  const alNombrar = nombreDeMazo[0] ? llegada.filter((x) => x.t <= nombreDeMazo[0].desde).pop() : null;
+  comprobar(
+    "y el nombre, Villa de Mazo, lo dice la comandante en tierra y no en la final: una vez, rodando con la pista libre y sin pisar a nadie",
+    mazoDicho
+      ? nombreDeMazo.length === 1 &&
+          nombreDeMazo[0].desde > toco &&
+          ["al-puesto", "aparcado"].includes(alNombrar?.tramo) &&
+          pisaA(nombreDeMazo[0]).length === 0
+      : nombreDeMazo.length === 0,
+    nombreDeMazo.length
+      ? `a los ${nombreDeMazo[0].desde.toFixed(0)} s (tocó a los ${toco.toFixed(0)} s), ${alNombrar?.tramo ?? "—"}/${alNombrar?.fase ?? "—"} a ${alNombrar?.lado?.toFixed(0) ?? "—"} m del eje · plano ${alNombrar?.plano ?? "—"} · pisa: ${pisaA(nombreDeMazo[0]).join(", ") || "nada"}`
+      : mazoDicho
+        ? "no lo dijo"
+        : "Ara no vio Mazo, y nadie la nombra",
   );
   // ── Lo que se oye cambiar: el gas de los motores y los oídos ──
   /*

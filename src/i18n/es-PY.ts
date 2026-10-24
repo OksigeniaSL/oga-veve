@@ -3951,6 +3951,25 @@ export const ES_PY = {
     "Ya se fue el camión. Con la verde que parpadea, el avión sabe que puede volver para aterrizar.",
   "inicio.ara.pasaje.kit.luz.noche":
     "De noche no se ven las alas: el avión contesta apagando y encendiendo dos veces los faros.",
+  /*
+   * **Lo que se reconoce al llegar a La Palma** (punto 314): la ladera de
+   * Villa de Mazo, por la ventanilla de Ara en la final de la 36, y su nombre
+   * dicho por la comandante con la pista ya libre. Se nombran sitios, no
+   * negocios. Ver la charla `mazo` en `flight/inicio-pasaje.ts`.
+   */
+  "inicio.ara.pasaje.mazo": "¡Ya se ven las fincas y las casitas, y los caminitos que suben por el monte!",
+  "inicio.ara.pasaje.mazoBici": "Seguro que por ahí sube gente caminando, y en bici.",
+  "inicio.mama.pasaje.mazo":
+    "Señores pasajeros: ese pueblo de la ladera que vieron por la izquierda al llegar es Villa de Mazo.",
+  /*
+   * **Por qué ponen música al bajar**: para que el rato sea tranquilo y
+   * calmar los nervios, y muchas compañías eligen música de su tierra. Que
+   * tape ruidos no lo dice ninguna fuente, y no se dice. Ver
+   * `docs/historias/fuentes.md`.
+   */
+  "inicio.ara.pasaje.musica": "¡Están poniendo música! ¿Por qué ponen música cuando bajamos?",
+  "inicio.tripulacion.pasaje.cerca.musica":
+    "Para que el ratito de bajar sea un rato de calma, sin nervios. Y muchas compañías ponen música de su tierra: esta es de Canarias.",
   // Lo que es de la pantalla y no se graba: para quien no ve los dibujos.
   "inicio.kit.nombre": "Kit de viaje",
   "inicio.kit.abrir": "Abrir el kit de viaje",

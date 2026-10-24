@@ -119,6 +119,22 @@ Jazlyn», o con `?inicio=3`.
 | `inicio.ara.pasaje.kit.luz.destellosVerdes` | 94 |
 | `inicio.ara.pasaje.kit.luz.noche` | 90 |
 
+- **Lo que se reconoce al llegar, y la música** (punto 314, 24-10-2026): la
+  ladera de Villa de Mazo, que Ara cuenta en la final cuando se ve por su
+  cristal y la comandante nombra ya en tierra, y por qué ponen música al
+  bajar, que Ara pregunta y contesta la tripulante en persona —sin chispa,
+  como todo lo que dice cara a cara—. **Cinco frases nuevas, al final de cada
+  voz**: tres de Ara, una de la comandante y una de la tripulante, 415
+  caracteres.
+
+| Clave | Voz | Caracteres |
+|---|---|---:|
+| `inicio.ara.pasaje.mazo` | `ara` | 76 |
+| `inicio.ara.pasaje.mazoBici` | `ara` | 51 |
+| `inicio.ara.pasaje.musica` | `ara` | 61 |
+| `inicio.mama.pasaje.mazo` | `comandante` | 98 |
+| `inicio.tripulacion.pasaje.cerca.musica` | `tripulacion-canarias` | 129 |
+
 Ninguna baja de treinta letras. Los rótulos del kit —`inicio.kit.*`, el
 nombre de cada pieza y de cada parada, y las luces de la lámpara— son de la
 pantalla y no se graban.

@@ -18084,5 +18084,68 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "inicio.ara.pasaje.mazo",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Ya se ven las fincas y las casitas, y los caminitos que suben por el monte!",
+    "para": "el modo inicio, de pasaje: Ara, en la final, ve la ladera de Mazo por su ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.mazoBici",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Seguro que por ahí sube gente caminando, y en bici.",
+    "para": "el modo inicio, de pasaje: Ara imagina a la gente que sube por la ladera",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.musica",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Están poniendo música! ¿Por qué ponen música cuando bajamos?",
+    "para": "el modo inicio, de pasaje: Ara pregunta por qué ponen música al bajar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.mama.pasaje.mazo",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros: ese pueblo de la ladera que vieron por la izquierda al llegar es Villa de Mazo.",
+    "para": "el modo inicio, de pasaje: la comandante, ya en tierra, nombra el pueblo de la ladera: Villa de Mazo",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.musica",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Para que el ratito de bajar sea un rato de calma, sin nervios. Y muchas compañías ponen música de su tierra: esta es de Canarias.",
+    "para": "el modo inicio, de pasaje: la tripulante, por qué ponen música al bajar"
   }
 ]
