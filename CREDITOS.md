@@ -578,6 +578,7 @@ y soñando, que no tienen hueco.
 | `src/assets/ilustraciones/chaleco.webp` | `esquemas/chaleco.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo del chaleco | entera, en 4:3, 1192 × 894 |
 | `src/assets/ilustraciones/maletero.webp` | `esquemas/maletero.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo de los compartimentos de arriba | entera, en 4:3, 1192 × 894 |
 | `src/assets/ilustraciones/torre-radio.webp` | `torre-radio.webp` | «Luz verde», en el kit de viaje de «Viajá con Jazlyn», cuando Ara cuenta que lo normal es la radio | entera, en 4:3, 1020 × 765 |
+| `src/assets/ilustraciones/mazo.webp` | `esquemas/mazo.jpg` | La lámina de la ladera de Mazo al tocarla por la ventanilla de Ara, en «Viajá con Jazlyn» | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/teide.webp` | `historias/teide.jpeg` | La historia de el Teide, mientras se cuenta; y en «Viajá con Jazlyn», en lugar del dibujo de las islas que crecen desde el fondo del mar | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/canadas.webp` | `historias/canadas.jpeg` | La historia de los tajinastes de Las Cañadas, mientras se cuenta | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/anaga.webp` | `historias/anaga.jpeg` | La historia de Anaga, mientras se cuenta | entera, en 4:3, 1280 × 960 |

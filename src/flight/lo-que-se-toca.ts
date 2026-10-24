@@ -116,8 +116,9 @@ export function selloDe(que: Tocable): SelloDelViaje | null {
  * `ui/dibujos-del-pasaje.ts`—, que sale con su ilustración si la tiene. El
  * motor por dentro, el ala que empuja el aire, la nube, las islas que fueron
  * volcanes en el fondo del mar —la ilustración del Teide en corte—, el silbo
- * de La Gomera y los telescopios de La Palma. El mar y Mazo no tienen: se
- * cuentan sin lámina.
+ * de La Gomera y los telescopios de La Palma. La ladera de Mazo, con su
+ * ilustración, que no tiene dibujo detrás. El mar no tiene: se cuenta sin
+ * lámina.
  */
 export function laminaDe(que: Tocable): string | null {
   switch (que) {
@@ -134,6 +135,8 @@ export function laminaDe(que: Tocable): string | null {
       return "islas";
     case "hito:garajonay":
       return "gomera";
+    case "ladera-de-mazo":
+      return "ilustracion:mazo";
     default:
       return null;
   }
@@ -248,7 +251,7 @@ export function loQueSeDiceAlTocar(que: Tocable, c: AlTocar): LoQueSeDiceAlTocar
     case "ladera-de-mazo": {
       // Lo de la charla de la final, entero si cabe: el nombre lo dice la comandante en tierra.
       if (c.charlaContada("mazo") || c.yaDicha("inicio.ara.pasaje.mazo")) return null;
-      return { lineas: [ara("mazo"), ara("mazoBici")], charlas: ["mazo"] };
+      return { lineas: [ara("mazo", lamina), ara("mazoCaminos"), ara("mazoBici")], charlas: ["mazo"] };
     }
     case "isla-de-llegada":
     case "hito:taburiente": {

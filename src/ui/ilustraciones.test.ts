@@ -197,10 +197,11 @@ describe("las ilustraciones", () => {
 describe("los esquemas, en lugar de los dibujos", () => {
   const esquemas = claves.filter((c) => RECETAS[c]!.hueco === "esquema");
 
-  it("cada esquema es el de un dibujo de la lámina, menos la torre de «Luz verde», que se pide aparte", () => {
+  it("cada esquema es el de un dibujo de la lámina, menos la torre de «Luz verde» y la ladera de Mazo, que se piden aparte", () => {
     expect(esquemas.length).toBeGreaterThanOrEqual(8);
-    for (const c of esquemas)
-      if (c !== "torre-radio") expect(Object.keys(DIBUJOS_DEL_PASAJE), c).toContain(c);
+    // Sin dibujo detrás: la torre la pide Luz verde, y Mazo, el toque en la ladera (ver `laminaDe`).
+    const aparte = new Set(["torre-radio", "mazo"]);
+    for (const c of esquemas) if (!aparte.has(c)) expect(Object.keys(DIBUJOS_DEL_PASAJE), c).toContain(c);
     // Enteros: en 4:3, sin quitar nada más que lo justo para la proporción.
     for (const c of esquemas) {
       const [x, y] = RECETAS[c]!.recorte;

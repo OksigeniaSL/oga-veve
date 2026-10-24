@@ -246,6 +246,14 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
    * empezar el juego. Ver `DICHO_DE_LA_LUZ` en `flight/luz-verde.ts`.
    */
   "torre-radio": { original: "torre-radio.webp", hueco: "esquema", recorte: ENTERA_DE_1024 },
+  /*
+   * **La ladera de Mazo**, por la ventanilla de Ara en la final de La Palma:
+   * los bancales con sus muros, las casitas, la iglesia y los caminos que
+   * suben. Sale al tocar la ladera —ver `laminaDe` en
+   * `flight/lo-que-se-toca.ts`—; cuando la nombra la escena, no, que ahí lo
+   * que se mira es la ladera de verdad.
+   */
+  mazo: { original: "esquemas/mazo.jpg", hueco: "esquema", recorte: ENTERA_GRANDE },
 };
 
 /**

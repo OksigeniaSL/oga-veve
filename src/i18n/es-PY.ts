@@ -1292,6 +1292,7 @@ export const ES_PY = {
   "ilustracion.chaleco": "El chaleco se pone en el asiento y se infla afuera, ya en el agua",
   "ilustracion.maletero": "Un señor sube su maleta al compartimento de arriba",
   "ilustracion.torre-radio": "En la torre, el controlador habla por radio con el avión que llega",
+  "ilustracion.mazo": "La ladera de Mazo por la ventanilla: bancales, casitas y caminos que suben",
 
   /*
    * **Y lo mismo, dicho por la instructora en la avioneta**: de vos, más

@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 import { EN } from "../i18n/en";
 import { ES_PY } from "../i18n/es-PY";
 import { DIBUJOS_DEL_PASAJE } from "../ui/dibujos-del-pasaje";
+import { CON_FICHERO } from "../ui/ilustraciones";
 import {
   laminaDe,
   LINEAS_DE_LA_VENTANILLA_VIVA,
@@ -122,9 +123,13 @@ describe("lo que se dice al tocar algo de la ventanilla", () => {
   it("cada cosa con su lámina, si la tiene, y cada lámina existe", () => {
     for (const que of TODO) {
       const lamina = laminaDe(que);
-      if (lamina) expect(Object.keys(DIBUJOS_DEL_PASAJE), que).toContain(lamina);
+      if (!lamina) continue;
+      // Un dibujo de la ventanita, o una ilustración sola con su receta y su fichero.
+      if (lamina.startsWith("ilustracion:")) expect(CON_FICHERO, que).toContain(lamina.slice("ilustracion:".length));
+      else expect(Object.keys(DIBUJOS_DEL_PASAJE), que).toContain(lamina);
     }
     expect(laminaDe("motor")).toBe("motor");
+    expect(laminaDe("ladera-de-mazo")).toBe("ilustracion:mazo");
     expect(laminaDe("hito:garajonay")).toBe("gomera");
     expect(laminaDe("mar")).toBeNull();
   });

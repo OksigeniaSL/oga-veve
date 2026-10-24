@@ -1404,6 +1404,7 @@ export const EN: Dictionary = {
   "ilustracion.chaleco": "The life vest goes on in the seat and is inflated outside, in the water",
   "ilustracion.maletero": "A man lifts a suitcase into the overhead bin",
   "ilustracion.torre-radio": "In the tower, the controller talks by radio to the arriving plane",
+  "ilustracion.mazo": "Mazo's hillside from the window: terraced farms, little houses and paths",
   /* The same, said by the instructor sitting beside you in a light aircraft. */
   "ventanilla.vos.lado.izquierda": "Look out of the window, to your left.",
   "ventanilla.vos.lado.derecha": "Look out of the window, to your right.",
