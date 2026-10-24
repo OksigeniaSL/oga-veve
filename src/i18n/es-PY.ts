@@ -1669,7 +1669,7 @@ export const ES_PY = {
    */
   "vuelo.esperandoAfis":
     "Pará y escuchá: acá nadie te da permiso. La radio te dice si viene alguien, y decidís vos",
-  "vuelo.autorizadoAfis": "La pista está libre: entrá cuando estés listo",
+  "vuelo.autorizadoAfis": "La pista está libre: entrá cuando quieras",
   "vuelo.backTaxi": "Andá hasta el fondo y dá la vuelta",
   /*
    * **Y antes de entrar, por qué el lazo de la raya está al fondo**: en los
