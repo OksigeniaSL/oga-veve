@@ -242,7 +242,8 @@ for (const id of FLOTA) {
           );
           if (i > 0)
             for (const o of v.slice(0, i))
-              if (!suyo.test(o.nombre))
+              // La caja o el marco de un instrumento son el instrumento.
+              if (!suyo.test(o.nombre) && !/-(caja|marco)$/.test(o.nombre))
                 cuenta[o.nombre] = (cuenta[o.nombre] ?? 0) + 1;
         }
       return cuenta;
