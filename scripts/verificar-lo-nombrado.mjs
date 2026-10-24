@@ -44,7 +44,11 @@ await server.listen();
 const BASE = baseDe(server, PUERTO);
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
-  args: ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader", "--autoplay-policy=no-user-gesture-required"],
+  // Con la tarjeta de verdad si se pide (`OGA_GPU=1`), que es la que juzga una captura.
+  args:
+    process.env.OGA_GPU === "1"
+      ? ["--headless=new", "--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=gl", "--autoplay-policy=no-user-gesture-required"]
+      : ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader", "--autoplay-policy=no-user-gesture-required"],
 });
 
 const resultados = [];
