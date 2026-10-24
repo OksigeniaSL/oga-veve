@@ -12,28 +12,34 @@ import { ES_PY } from "../i18n/es-PY";
 import { Conversacion, type Linea } from "./conversacion";
 import { EN } from "../i18n/en";
 import {
-  DICHO_DE_LAS_PIEZAS,
-  DICHO_DEL_CAMINO,
-  JuegoDeLasPiezas,
-  JuegoDelCamino,
+  DESPEGUE,
+  DICHO_DEL_AVION,
+  JuegoDelAvion,
   KitDeViaje,
   LINEAS_DEL_KIT,
+  LINEAS_NUEVAS_DEL_AVION,
+  LO_QUE_ENSENA,
   LO_QUE_HAY,
-  PARADAS,
-  PARA_QUE_SIRVE,
+  LUCES,
+  NIVELES,
   NO_SE_REPITE,
-  PIEZAS,
-  type Pieza,
+  NOCHE,
+  PARA_QUE_SIRVE,
+  type Sitio,
 } from "./kit-de-viaje";
 import { NO_REPETIR } from "../audio/boca";
 import { JuegoDeLaLuz } from "./luz-verde";
+import { FLOTA } from "./flota";
 
 /** Un azar con semilla, para que lo que falla se pueda repetir. */
 function azar(semilla: number): () => number {
-  let s = semilla;
+  // Mulberry32: el congruencial de antes, con números de coma flotante, caía en ciclos cortos.
+  let s = semilla >>> 0;
   return () => {
-    s = (s * 1103515245 + 12345) % 2147483648;
-    return s / 2147483648;
+    s = (s + 0x6d2b79f5) >>> 0;
+    let x = Math.imul(s ^ (s >>> 15), 1 | s);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
   };
 }
 
@@ -51,132 +57,161 @@ describe("las frases del kit", () => {
       expect(es, l.clave).not.toMatch(/\b(tú|tienes|puedes|quieres|mira|toca|coge)\b/i);
     }
   });
+
+  it("lo que enseña cada avión al despegar es distinto en cada nivel", () => {
+    const dichas = NIVELES.map((n) => LO_QUE_ENSENA[n.tipo].clave);
+    expect(new Set(dichas).size).toBe(NIVELES.length);
+    for (const l of LINEAS_NUEVAS_DEL_AVION) expect(LINEAS_DEL_KIT).toContain(l);
+  });
 });
 
-describe("armá el avión", () => {
-  it("se gana con el dedo, pieza a pieza, y Ara dice para qué sirve cada una", () => {
-    const j = new JuegoDeLasPiezas();
-    expect(claves(j.tomarLoQueDecir())).toEqual([DICHO_DE_LAS_PIEZAS.empezar.clave]);
-    for (const p of ["cola", "ala", "ruedas", "motor"] as const) expect(j.soltar(p, p)).toBe(true);
-    expect(j.terminado).toBe(true);
-    expect(claves(j.tomarLoQueDecir())).toEqual([
-      PARA_QUE_SIRVE.cola.clave,
-      PARA_QUE_SIRVE.ala.clave,
-      PARA_QUE_SIRVE.ruedas.clave,
-      PARA_QUE_SIRVE.motor.clave,
-      DICHO_DE_LAS_PIEZAS.fin.clave,
-    ]);
+/** Pone todo lo de la fase de ahora, a su sitio, y devuelve lo puesto. */
+function ponerLaFase(j: JuegoDelAvion): Sitio[] {
+  const e = j.estado;
+  const faltan: Sitio[] = e.fase === "piezas" ? NIVELES[e.nivel]!.piezas.filter((p) => !e.puestas.includes(p)) : LUCES.filter((l) => !e.puestas.includes(l));
+  for (const s of faltan) expect(j.soltar(s, s), s).toBe(true);
+  return faltan;
+}
+
+/** El final de un nivel: la noche y el despegue, a pasitos. */
+function despegar(j: JuegoDelAvion): void {
+  for (let t = 0; t < NOCHE + DESPEGUE + 0.5; t += 0.1) j.paso(0.1, true);
+}
+
+describe("armá tu avión", () => {
+  it("un nivel por avión de la flota, de chico a grande, y cada uno con sus piezas", () => {
+    expect(NIVELES.map((n) => n.tipo)).toEqual(FLOTA.map((m) => m.id));
+    for (const n of NIVELES) {
+      expect(n.piezas.length, n.tipo).toBeGreaterThanOrEqual(5);
+      expect(n.piezas.length, n.tipo).toBeLessThanOrEqual(7);
+      expect(new Set(n.piezas).size, n.tipo).toBe(n.piezas.length);
+    }
+    // El biplano lleva la ruedita en la cola; los demás, la rueda en la nariz.
+    expect(NIVELES[1]!.piezas).toContain("trenCola");
+    for (const n of NIVELES.filter((x) => x.tipo !== "jaz-25")) expect(n.piezas, n.tipo).toContain("trenMorro");
+    // Sube de un nivel al siguiente: más piezas, y después las luces sin color.
+    expect(NIVELES[0]!.piezas.length).toBeLessThan(NIVELES[1]!.piezas.length);
+    expect(NIVELES.findIndex((n) => !n.lucesConColor)).toBe(2);
   });
 
-  it("una pieza en otro sitio vuelve, su sitio se ilumina, y Ara ayuda sin regañar", () => {
-    const j = new JuegoDeLasPiezas();
+  it("se arma pieza a pieza, después las luces, se hace de noche y despega; y viene el siguiente", () => {
+    const j = new JuegoDelAvion();
+    expect(claves(j.tomarLoQueDecir())).toEqual([DICHO_DEL_AVION.empezar.clave]);
+    ponerLaFase(j);
+    expect(j.estado.fase).toBe("luces");
+    // Ara cuenta para qué sirve cada clase de pieza, y después lo de las luces.
+    expect(claves(j.tomarLoQueDecir())).toEqual([
+      PARA_QUE_SIRVE.ala.clave,
+      PARA_QUE_SIRVE.motor.clave,
+      PARA_QUE_SIRVE.cola.clave,
+      PARA_QUE_SIRVE.ruedas.clave,
+      DICHO_DEL_AVION.luces.clave,
+    ]);
+    // Una pieza no se lleva en la fase de las luces, ni una luz en la de las piezas.
+    expect(j.soltar("ala", "ala")).toBe(false);
+    ponerLaFase(j);
+    expect(j.estado.fase).toBe("noche");
+    expect(claves(j.tomarLoQueDecir())).toEqual([DICHO_DEL_AVION.noche.clave]);
+    for (let t = 0; t < NOCHE + 0.2; t += 0.1) j.paso(0.1, true);
+    expect(j.estado.fase).toBe("despegue");
+    expect(claves(j.tomarLoQueDecir())).toEqual([LO_QUE_ENSENA["jaz-20"].clave]);
+    for (let t = 0; t < DESPEGUE + 0.2; t += 0.1) j.paso(0.1, true);
+    expect(j.estado).toMatchObject({ nivel: 1, tipo: "jaz-25", fase: "piezas", puestas: [], despegados: 1, terminado: false });
+  });
+
+  it("lo de una vez no se repite en cada avión, y lo de cada avión sí se dice", () => {
+    const j = new JuegoDelAvion();
+    j.tomarLoQueDecir();
+    ponerLaFase(j);
+    ponerLaFase(j);
+    despegar(j);
+    j.tomarLoQueDecir();
+    ponerLaFase(j);
+    // El biplano: solo lo nuevo, el estabilizador; el ala, el motor, la cola y las ruedas ya se contaron.
+    expect(claves(j.tomarLoQueDecir())).toEqual([PARA_QUE_SIRVE.estabilizador.clave]);
+    ponerLaFase(j);
+    expect(j.tomarLoQueDecir()).toEqual([]);
+    despegar(j);
+    expect(claves(j.tomarLoQueDecir())).toEqual([LO_QUE_ENSENA["jaz-25"].clave]);
+  });
+
+  it("los seis aviones, y después del último, ganado", () => {
+    const j = new JuegoDelAvion();
+    for (let i = 0; i < NIVELES.length; i++) {
+      expect(j.estado.tipo).toBe(NIVELES[i]!.tipo);
+      ponerLaFase(j);
+      ponerLaFase(j);
+      despegar(j);
+    }
+    expect(j.terminado).toBe(true);
+    expect(j.estado.despegados).toBe(NIVELES.length);
+  });
+
+  it("con alguien hablando, lo de la pieza no se pone en cola: espera al silencio", () => {
+    const j = new JuegoDelAvion();
+    j.tomarLoQueDecir();
+    expect(j.soltar("trenPrincipal", "trenPrincipal", false)).toBe(true);
+    expect(j.tomarLoQueDecir()).toEqual([]);
+    j.soltar("trenMorro", "trenMorro", true);
+    expect(claves(j.tomarLoQueDecir())).toEqual([PARA_QUE_SIRVE.ruedas.clave]);
+    // Y lo de las luces, siempre: es lo que hay que hacer ahora.
+    for (const p of ["ala", "motor", "cola"] as const) j.soltar(p, p, false);
+    expect(claves(j.tomarLoQueDecir())).toEqual([DICHO_DEL_AVION.luces.clave]);
+  });
+
+  it("una pieza en otro hueco vuelve, el suyo se ilumina, y Ara ayuda sin regañar", () => {
+    const j = new JuegoDelAvion();
     j.tomarLoQueDecir();
     expect(j.soltar("motor", "cola")).toBe(false);
     expect(j.estado.puestas).toEqual([]);
     expect(j.estado.ilumina).toBe("motor");
-    expect(claves(j.tomarLoQueDecir())).toEqual([DICHO_DE_LAS_PIEZAS.ayuda.clave]);
-    // Y soltada en nada, también se ayuda, pero no se le repite al oído enseguida.
-    expect(j.soltar("motor", null)).toBe(false);
+    expect(claves(j.tomarLoQueDecir())).toEqual([DICHO_DEL_AVION.ayuda.clave]);
+    // Soltada en ninguna parte, vuelve sin más: ni ayuda ni cuenta.
+    expect(j.soltar("ala", null)).toBe(false);
     expect(j.tomarLoQueDecir()).toEqual([]);
-    // Acertar apaga la ayuda.
-    j.soltar("motor", "motor");
-    expect(j.estado.ilumina).toBeNull();
+    expect(j.estado.ayudas).toBe(1);
   });
 
-  it("a la segunda que no encuentra su sitio, tocarla la lleva sola", () => {
-    const j = new JuegoDeLasPiezas();
-    j.soltar("ruedas", "ala");
-    j.soltar("ruedas", "cola");
-    j.tocarPieza("ruedas");
-    expect(j.puesta("ruedas")).toBe(true);
+  it("a la segunda que no encuentra su hueco, tocarla la lleva sola", () => {
+    const j = new JuegoDelAvion(2);
+    j.soltar("motor", "trenMorro");
+    j.soltar("motor", "deriva");
+    j.tocarPieza("motor");
+    expect(j.puesta("motor")).toBe(true);
   });
 
-  it("sin arrastrar: un toque en la pieza y otro en su sitio", () => {
-    const j = new JuegoDeLasPiezas();
+  it("sin arrastrar: un toque en la pieza y otro en su hueco", () => {
+    const j = new JuegoDelAvion();
     j.tocarPieza("ala");
     expect(j.estado.cogida).toBe("ala");
     j.tocarSitio("ala");
     expect(j.puesta("ala")).toBe(true);
-    // Y un toque en un sitio vacío, sin nada en la mano, señala su pieza en la bandeja.
-    j.tocarSitio("cola");
-    expect(j.estado.senala).toBe("cola");
-  });
-
-  it("con el teclado, la pieza va directa a su sitio", () => {
-    const j = new JuegoDeLasPiezas();
-    for (const p of PIEZAS) j.colocar(p);
-    expect(j.terminado).toBe(true);
+    // Y un toque en un hueco sin nada en la mano: su pieza se mueve en la bandeja.
+    j.tocarSitio("motor");
+    expect(j.estado.senala).toBe("motor");
   });
 
   it("y si pasa un rato sin acertar, se ilumina lo que toca, primero sin palabras", () => {
-    const j = new JuegoDeLasPiezas();
+    const j = new JuegoDelAvion();
     j.tomarLoQueDecir();
     for (let t = 0; t < 13; t += 0.1) j.paso(0.1, true);
     expect(j.estado.ilumina).toBe("ala");
     expect(j.tomarLoQueDecir()).toEqual([]);
-    for (let t = 0; t < 13; t += 0.1) j.paso(0.1, true);
-    // La segunda vez, con lo que hay que hacer.
-    expect(claves(j.tomarLoQueDecir())).toEqual([DICHO_DE_LAS_PIEZAS.empezar.clave]);
   });
 
-  it("se gana siempre: quien arrastra a lo loco acaba con el avión armado", () => {
-    for (let semilla = 1; semilla <= 50; semilla++) {
+  it("se gana siempre: quien arrastra a lo loco acaba con los seis aviones despegados", () => {
+    for (let semilla = 1; semilla <= 20; semilla++) {
       const r = azar(semilla);
-      const j = new JuegoDeLasPiezas();
-      let intentos = 0;
-      while (!j.terminado && intentos < 200) {
-        const quedan = PIEZAS.filter((p) => !j.puesta(p));
-        const p = quedan[Math.floor(r() * quedan.length)]!;
-        const sitios: (Pieza | null)[] = [...PIEZAS, null];
-        const en = sitios[Math.floor(r() * sitios.length)]!;
-        // A veces arrastra, a veces toca la pieza: las dos formas de jugar.
-        if (r() < 0.5) j.soltar(p, en);
-        else j.tocarPieza(p);
-        j.paso(0.5, true);
-        intentos++;
-      }
-      expect(j.terminado, `semilla ${semilla}`).toBe(true);
-      expect(intentos, `semilla ${semilla}`).toBeLessThan(60);
-    }
-  });
-});
-
-describe("el camino del avión", () => {
-  it("se gana tocando los números en orden, y Ara dice qué es cada sitio", () => {
-    const j = new JuegoDelCamino();
-    expect(claves(j.tomarLoQueDecir())).toEqual([DICHO_DEL_CAMINO.empezar.clave]);
-    for (const p of PARADAS.slice(1)) j.tocar(p);
-    expect(j.terminado).toBe(true);
-    expect(claves(j.tomarLoQueDecir())).toEqual([
-      "inicio.ara.pasaje.kit.camino.teide",
-      "inicio.ara.pasaje.kit.camino.gomera",
-      "inicio.ara.pasaje.kit.camino.palma",
-    ]);
-  });
-
-  it("uno de más adelante deja brillar el que va, y uno ya unido no hace nada", () => {
-    const j = new JuegoDelCamino();
-    j.tomarLoQueDecir();
-    j.tocar("palma");
-    expect(j.estado.hechas).toBe(1);
-    expect(j.estado.ilumina).toBe("teide");
-    expect(claves(j.tomarLoQueDecir())).toEqual([DICHO_DEL_CAMINO.ayuda.clave]);
-    j.tocar("tenerife");
-    expect(j.estado.hechas).toBe(1);
-    j.tocar("teide");
-    expect(j.estado.hechas).toBe(2);
-    expect(j.estado.ilumina).toBeNull();
-  });
-
-  it("se gana siempre: quien toca a lo loco acaba con el camino dibujado", () => {
-    for (let semilla = 1; semilla <= 50; semilla++) {
-      const r = azar(semilla);
-      const j = new JuegoDelCamino();
-      let toques = 0;
-      while (!j.terminado && toques < 400) {
-        j.tocar(PARADAS[Math.floor(r() * PARADAS.length)]!);
-        j.paso(0.5, true);
-        toques++;
+      const j = new JuegoDelAvion();
+      const todos: Sitio[] = [...new Set(NIVELES.flatMap((n) => n.piezas)), ...LUCES];
+      const elegir = (): Sitio => todos[Math.floor(r() * todos.length)]!;
+      for (let paso = 0; paso < 40000 && !j.terminado; paso++) {
+        const s = elegir();
+        const q = r();
+        if (q < 0.4) j.soltar(s, r() < 0.5 ? elegir() : null);
+        else if (q < 0.7) j.tocarPieza(s);
+        else if (q < 0.85) j.tocarSitio(s);
+        j.paso(0.25, true);
       }
       expect(j.terminado, `semilla ${semilla}`).toBe(true);
     }
@@ -201,40 +236,58 @@ describe("el kit", () => {
     const k = new KitDeViaje();
     k.dar();
     k.abrir();
-    k.elegir("piezas");
-    (k.juego as JuegoDeLasPiezas).soltar("ala", "ala");
+    k.elegir("avion");
+    (k.juego as JuegoDelAvion).soltar("ala", "ala");
     k.cerrar();
     expect(k.estado.abierto).toBe(false);
     // Lo que quería decir y no llegó, ya no se dice.
     expect(k.tomarLoQueDecir()).toEqual([]);
     k.abrir();
-    k.elegir("piezas");
-    expect((k.estado.juego as unknown as { puestas: Pieza[] }).puestas).toEqual(["ala"]);
+    k.elegir("avion");
+    expect((k.estado.juego as unknown as { puestas: Sitio[] }).puestas).toEqual(["ala"]);
+  });
+
+  it("el avión sigue por el nivel en que iba, aunque se juegue a la torre en medio", () => {
+    const k = new KitDeViaje();
+    k.dar();
+    k.abrir();
+    k.elegir("avion");
+    const j = k.juego as JuegoDelAvion;
+    ponerLaFase(j);
+    ponerLaFase(j);
+    for (let t = 0; t < NOCHE + DESPEGUE + 0.5; t += 0.1) k.paso(0.1, { megafonia: false, callada: true });
+    expect(k.estado.juego).toMatchObject({ juego: "avion", nivel: 1 });
+    expect(k.estado.hechos).toContain("avion");
+    k.volverAElegir();
+    k.elegir("luz");
+    k.volverAElegir();
+    k.elegir("avion");
+    expect(k.estado.juego).toMatchObject({ juego: "avion", nivel: 1, puestas: [] });
   });
 
   it("se pausa con la megafonía: no se juega, y vuelve donde estaba", () => {
     const k = new KitDeViaje();
     k.dar();
     k.abrir();
-    k.elegir("camino");
+    k.elegir("avion");
     k.paso(0.1, { megafonia: true, callada: false });
     expect(k.estado.pausado).toBe(true);
     expect(k.juego).toBeNull();
-    k.elegir("piezas");
-    expect(k.estado.juego?.juego).toBe("camino");
+    k.elegir("luz");
+    expect(k.estado.juego?.juego).toBe("avion");
     // Ni corre el reloj de la ayuda mientras habla.
     for (let t = 0; t < 30; t += 0.1) k.paso(0.1, { megafonia: true, callada: false });
     expect((k.estado.juego as { ilumina: unknown }).ilumina).toBeNull();
     k.paso(0.1, { megafonia: false, callada: true });
     expect(k.estado.pausado).toBe(false);
-    expect(k.juego?.juego).toBe("camino");
+    expect(k.juego?.juego).toBe("avion");
   });
 
   it("se recoge para aterrizar: se cierra y ya no se abre", () => {
     const k = new KitDeViaje();
     k.dar();
     k.abrir();
-    k.elegir("piezas");
+    k.elegir("avion");
     k.recoger();
     expect(k.estado.abierto).toBe(false);
     expect(k.estado.recogido).toBe(true);
@@ -247,13 +300,20 @@ describe("el kit", () => {
     const k = new KitDeViaje();
     k.dar();
     k.abrir();
-    k.elegir("camino");
-    for (const p of PARADAS.slice(1)) (k.juego as JuegoDelCamino).tocar(p);
-    k.paso(0.1, { megafonia: false, callada: true });
+    k.elegir("avion");
+    const j = k.juego as JuegoDelAvion;
+    for (let i = 0; i < NIVELES.length; i++) {
+      ponerLaFase(j);
+      ponerLaFase(j);
+      for (let t = 0; t < NOCHE + DESPEGUE + 0.5; t += 0.1) k.paso(0.1, { megafonia: false, callada: true });
+    }
     expect(k.estado.juego?.terminado).toBe(true);
     for (let t = 0; t < 9; t += 0.1) k.paso(0.1, { megafonia: false, callada: true });
     expect(k.estado.juego).toBeNull();
-    expect(k.estado.hechos).toEqual(["camino"]);
+    expect(k.estado.hechos).toEqual(["avion"]);
+    // Y se vuelve a empezar por el primero.
+    k.elegir("avion");
+    expect(k.estado.juego).toMatchObject({ nivel: 0 });
   });
 
   it("abierto y sin tocarlo, al rato deja de ocupar a Ara: la escena vuelve a contar", () => {
@@ -274,13 +334,13 @@ describe("lo que la boca tiraría por repetido, el kit no lo pide", () => {
     const k = new KitDeViaje();
     k.dar();
     k.abrir();
-    k.elegir("piezas");
+    k.elegir("avion");
     const veces: number[] = [];
     for (let t = 0; t < segundos; t += 0.5) {
       const pared = t / x;
       k.paso(0.5, { megafonia: false, callada: true, pared });
       for (const l of k.tomarLoQueDecir())
-        if (l.clave === DICHO_DE_LAS_PIEZAS.empezar.clave) veces.push(pared);
+        if (l.clave === DICHO_DEL_AVION.empezar.clave) veces.push(pared);
     }
     return veces;
   }
@@ -303,14 +363,14 @@ describe("lo que la boca tiraría por repetido, el kit no lo pide", () => {
     k.dar();
     k.abrir();
     k.tomarLoQueDecir();
-    k.elegir("piezas");
+    k.elegir("avion");
     k.paso(0.5, { megafonia: false, callada: true, pared: 1 });
-    expect(claves(k.tomarLoQueDecir())).toContain(DICHO_DE_LAS_PIEZAS.empezar.clave);
+    expect(claves(k.tomarLoQueDecir())).toContain(DICHO_DEL_AVION.empezar.clave);
     k.cerrar();
     k.abrir();
-    k.elegir("piezas");
+    k.elegir("avion");
     k.paso(0.5, { megafonia: false, callada: true, pared: 6 });
-    expect(claves(k.tomarLoQueDecir())).not.toContain(DICHO_DE_LAS_PIEZAS.empezar.clave);
+    expect(claves(k.tomarLoQueDecir())).not.toContain(DICHO_DEL_AVION.empezar.clave);
   });
 });
 
@@ -405,7 +465,7 @@ describe("la canción de la luz verde", () => {
     kit.empezarLaCancion();
     expect(kit.cancion?.suena).toBe(false);
     kit.volverAElegir();
-    kit.elegir("piezas");
+    kit.elegir("avion");
     expect(kit.cancion).toBeNull();
   });
 });

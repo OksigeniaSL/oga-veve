@@ -45,7 +45,7 @@ import {
 import { REDUCE_EL_GAS, type PermisosDeLaEscena, type PotenciaDeLinea, type TramoDeLinea } from "./vuelo-de-linea";
 import { DIBUJOS_DEL_PASAJE, esDibujoDelPasaje } from "../ui/dibujos-del-pasaje";
 import { ilustracion, ilustracionPedida, RECETAS } from "../ui/ilustraciones";
-import { JuegoDeLasPiezas, JuegoDelCamino, PARADAS, PIEZAS as PIEZAS_DEL_AVION } from "./kit-de-viaje";
+import { JuegoDelAvion, LUCES, NIVELES } from "./kit-de-viaje";
 import type { Fase } from "./vuelo";
 
 const DT = 1 / 10;
@@ -1411,8 +1411,9 @@ function volarConElKit(jugador: (escena: VueloDePasaje, t: number) => void): Med
   return { escena, vuelo, dichas: v.dichas, tramos, ocupado, pausas };
 }
 
-/** Quien juega: abre el kit en cuanto lo tiene, elige `juego` y acierta una cosa cada `cada` segundos. */
-function jugadorQueAcierta(juego: "piezas" | "camino", cada = 4): (escena: VueloDePasaje, t: number) => void {
+/** Quien juega: abre el kit en cuanto lo tiene, elige el avión y acierta una cosa cada `cada` segundos. */
+function jugadorQueAcierta(cada = 4): (escena: VueloDePasaje, t: number) => void {
+  const juego = "avion" as const;
   let ultimo = -Infinity;
   return (escena, t) => {
     const kit = escena.kit;
@@ -1428,12 +1429,9 @@ function jugadorQueAcierta(juego: "piezas" | "camino", cada = 4): (escena: Vuelo
     if (t - ultimo < cada) return;
     ultimo = t;
     kit.tocado();
-    if (j instanceof JuegoDeLasPiezas) {
-      const p = PIEZAS_DEL_AVION.find((x) => !j.puesta(x));
+    if (j instanceof JuegoDelAvion) {
+      const p = [...NIVELES[j.numero]!.piezas, ...LUCES].find((x) => j.aMano(x));
       if (p) j.soltar(p, p, kit.hayHueco);
-    } else if (j instanceof JuegoDelCamino) {
-      const p = PARADAS[j.estado.hechas];
-      if (p) j.tocar(p, kit.hayHueco);
     }
   };
 }
@@ -1778,15 +1776,17 @@ describe("el kit de viaje, en el vuelo", () => {
     expect(m.escena.estado.kit.recogido).toBe(true);
   });
 
-  for (const juego of ["piezas", "camino"] as const) {
-    it(`se juega entero en el vuelo —${juego}—, y mientras se juega la escena no cuenta encima`, () => {
-      const r = volarConElKit(jugadorQueAcierta(juego));
+  for (const juego of ["avion"] as const) {
+    it(`se juega en el vuelo —${juego}— hasta que despega, y mientras se juega la escena no cuenta encima`, () => {
+      const r = volarConElKit(jugadorQueAcierta());
       const e = r.escena.estado;
       expect(e.kit.hechos).toContain(juego);
       const k = r.dichas.map((d) => d.linea.clave);
-      if (juego === "piezas") for (const p of PIEZAS_DEL_AVION) expect(k, p).toContain(`inicio.ara.pasaje.kit.piezas.${p}`);
-      else for (const p of PARADAS.slice(1)) expect(k, p).toContain(`inicio.ara.pasaje.kit.camino.${p}`);
-      expect(k).toContain(`inicio.ara.pasaje.kit.${juego}.empezar`);
+      // Lo de cada pieza, con hueco; lo de las luces, siempre. Ver `JuegoDelAvion.poner`.
+      expect(k).toContain("inicio.ara.pasaje.kit.piezas.ala");
+      expect(k).toContain("inicio.ara.pasaje.kit.avion.luces");
+      expect(k).toContain("inicio.ara.pasaje.kit.piezas.empezar");
+      expect(k).toContain("inicio.ara.pasaje.kit.piezas.fin");
       // Nunca dos frases a la vez.
       const reg = r.escena.registro;
       for (let i = 1; i < reg.length; i++)
@@ -1806,7 +1806,7 @@ describe("el kit de viaje, en el vuelo", () => {
 
   it("se pausa mientras habla la megafonía: no se juega, y se sigue al acabar", () => {
     let senalado = false;
-    const acierta = jugadorQueAcierta("piezas", 6);
+    const acierta = jugadorQueAcierta(6);
     const r = volarConElKit((escena, t) => {
       acierta(escena, t);
       // Con el kit abierto, la comandante señala algo por la ventanilla.
@@ -1822,7 +1822,7 @@ describe("el kit de viaje, en el vuelo", () => {
     // Y al acabar, se vuelve a jugar.
     const despues = r.pausas.filter((p) => p.t > conMegafonia[conMegafonia.length - 1]!.t + 1);
     expect(despues.some((p) => p.juego)).toBe(true);
-    expect(r.escena.estado.kit.hechos).toContain("piezas");
+    expect(r.escena.estado.kit.hechos).toContain("avion");
   });
 
   it("se recoge antes de aterrizar aunque se esté jugando: y ya no se abre", () => {
@@ -1832,7 +1832,7 @@ describe("el kit de viaje, en el vuelo", () => {
     const r = volarConElKit((escena, t) => {
       const kit = escena.kit;
       if (kit.aMano && !kit.estaAbierto) kit.abrir();
-      if (kit.estaAbierto && !kit.juego && !kit.estado.pausado) kit.elegir("camino");
+      if (kit.estaAbierto && !kit.juego && !kit.estado.pausado) kit.elegir("avion");
       if (kit.estaAbierto) kit.tocado();
       if (kit.estado.recogido) {
         recogidoA ??= t;
