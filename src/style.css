@@ -12069,6 +12069,16 @@ button.motor__tecla::after {
   }
 
   /*
+   * Y aquí, sin la franja invisible de encima: esta pestaña ya mide cuarenta
+   * y cuatro de pantalla, y la franja se quedaba con los toques de las losas
+   * y de las teclas del teléfono, que viven justo al lado. Ver
+   * `.cuadro__tirador::after` y `verificar-carteles.mjs`.
+   */
+  .hud .cuadro__tirador::after {
+    content: none;
+  }
+
+  /*
    * Recogida, una píldora con su filo: la sombra de siempre, recortada por el
    * asa, dibujaba un rectángulo oscuro alrededor.
    */
