@@ -7161,6 +7161,8 @@ export class Game {
        * Ver la charla `aerofrenos` en `flight/inicio-pasaje.ts`.
        */
       ...(this.aircraftMesh.aerofrenos ? { frenosDeTierra: c.frenosDeTierra ?? 0 } : {}),
+      // Y cómo fue la toma, si ya se tocó. Ver `ultimaToma`.
+      toque: this.ultimaToma?.veredicto ?? null,
       nubes: capa && capa.tapadura > 0 ? { base: capa.base, techo: capa.techo } : null,
       enNube:
         capa && s.position.y > capa.base - 50 && s.position.y < capa.techo + 50
@@ -7226,6 +7228,7 @@ export class Game {
     this.lecturaDeLinea = linea;
     this.manosDeLinea = manos;
     this.ponerLasManosDeLinea(manos);
+    this.apuntarLaRecogida(dt, linea, tripulacion);
     /*
      * **Al final, el sello del campo de llegada, de visita**: Ara no ha
      * pilotado, así que no es un aterrizaje ni un despegue del cuaderno. Ver
@@ -7345,6 +7348,78 @@ export class Game {
   }
 
   /**
+   * **La recogida de la tripulación, medida**, para el banco: cada décima de
+   * segundo de vuelo desde los cien pies hasta medio segundo después de tocar,
+   * lo que decide dónde se toca —la altura sobre el suelo del modelo y sobre
+   * la pista, la caída, las velocidades, el viento de cara, la pendiente bajo
+   * las ruedas, la senda y lo que pide la tripulación—, y una vez el origen
+   * de la senda. Existe por la toma larga de La Palma: se mide antes de
+   * proponer una causa.
+   */
+  private apuntarLaRecogida(dt: number, linea: LecturaDeLinea, tripulacion: VueloDeLinea): void {
+    const s = this.flight.state;
+    const r = this.medidaDeLaRecogida;
+    if (linea.enLaFinal && linea.altura > 40) {
+      r.muestras.length = 0;
+      r.reloj = 0;
+      r.siguiente = 0;
+      r.tocoA = null;
+      return;
+    }
+    if (!(linea.altura < 100 * 0.3048 || s.onGround) || r.muestras.length === 0 && s.onGround) return;
+    if (r.tocoA !== null && r.reloj - r.tocoA > 0.5) return;
+    if (r.muestras.length === 0) {
+      const o = this.origenDeLaSenda();
+      const pista = this.laPistaDeAhora();
+      const eo = enEjesDePista(o.x, o.z, pista.x, pista.z, pista.heading);
+      const a = this.campoParaLaAproximacion();
+      r.senda = {
+        origen: eo.along + hastaElUmbralDeToma(pista),
+        papi: o.papi,
+        angulo: a.angulo ?? null,
+        zona: this.dondeSeToca()?.zona ?? null,
+      };
+    }
+    r.reloj += dt;
+    if (s.onGround && r.tocoA === null) r.tocoA = r.reloj;
+    if (r.reloj < r.siguiente) return;
+    r.siguiente = r.reloj + 0.1;
+    const x = s.position.x;
+    const z = s.position.z;
+    const dx = -Math.sin(s.heading);
+    const dz = -Math.cos(s.heading);
+    const suelo = (k: number): number => this.terrain.sampleSurface(x + dx * k, z + dz * k);
+    const d = this.dondeSeToca();
+    r.muestras.push({
+      t: +r.reloj.toFixed(2),
+      pasado: d ? +d.pasado.toFixed(1) : null,
+      altura: +linea.altura.toFixed(2),
+      sueloDelModelo: +(s.position.y - s.heightAboveGround).toFixed(2),
+      cotaDeLaPista: +this.cotaDeLaPistaAqui().toFixed(2),
+      pendiente: +((suelo(20) - suelo(-20)) / 40).toFixed(4),
+      vertical: +s.verticalSpeed.toFixed(2),
+      velocidad: +s.airspeed.toFixed(2),
+      porElSuelo: +s.groundSpeed.toFixed(2),
+      pedida: +tripulacion.subidaPedidaParaBanco.toFixed(2),
+      sendaRitmo: linea.senda ? +linea.senda.ritmo.toFixed(2) : null,
+      sobreLaSenda: linea.senda ? +(s.position.y - linea.senda.altitud).toFixed(2) : null,
+      gas: +this.input.controls.throttle.toFixed(3),
+      tramo: tripulacion.estado.tramo,
+      enTierra: s.onGround,
+    });
+    if (r.muestras.length > 600) r.muestras.shift();
+  }
+
+  /** Lo que mide `apuntarLaRecogida`. */
+  private readonly medidaDeLaRecogida: {
+    reloj: number;
+    siguiente: number;
+    tocoA: number | null;
+    senda: { origen: number; papi: boolean; angulo: number | null; zona: number | null } | null;
+    muestras: Record<string, number | string | boolean | null>[];
+  } = { reloj: 0, siguiente: 0, tocoA: null, senda: null, muestras: [] };
+
+  /**
    * **La raya del plan, en puntos con nombre**, la misma mientras el plan no
    * pinte otra: la tripulación lleva por dónde va sobre ella, y una raya nueva
    * en cada fotograma la haría empezar de cero cada vez. Ver `SeguirLaRaya`.
@@ -7458,6 +7533,8 @@ export class Game {
       intento: this.input.intento,
       velocidad: s.airspeed,
       altura: Math.max(0, s.heightAboveGround - this.aircraft.gearHeight),
+      // Y la altitud, que con la altura dice lo que se mueve el suelo. Ver `SueloBajoLasRuedas`.
+      altitud: s.position.y,
       enTierra: s.onGround,
       alabeo: bankAngleOf(s.orientation),
       mando: this.input.ultimoMando,
@@ -7874,6 +7951,8 @@ export class Game {
     readonly velo: number;
     /** El último veredicto de una toma, y cómo se vieron los aerofrenos al tocar. Ver `ultimaToma`. */
     readonly ultimaToma: Game["ultimaToma"];
+    /** La recogida de la tripulación, medida. Ver `apuntarLaRecogida`. */
+    readonly recogida: Game["medidaDeLaRecogida"];
     readonly aerofrenosVistos: Game["aerofrenosVistos"];
     /** Dónde están ahora los aerofrenos de tierra, de 0 a 1. */
     readonly frenosDeTierra: number;
@@ -7936,6 +8015,7 @@ export class Game {
       texto: linea ? (this.textoDeLaEscena.get(linea) ?? linea.texto ?? t(linea.clave as TranslationKey)) : null,
       planoVisto: this.inicio instanceof VueloDePasaje ? this.fundidoDePlano.plano : null,
       ultimaToma: this.ultimaToma,
+      recogida: this.medidaDeLaRecogida,
       aerofrenosVistos: this.aerofrenosVistos,
       frenosDeTierra: this.input.controls.frenosDeTierra ?? 0,
       velo: Number(this.veloDelPlano && !this.veloDelPlano.hidden ? this.veloDelPlano.style.opacity || 0 : 0),

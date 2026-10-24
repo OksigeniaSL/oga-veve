@@ -480,6 +480,33 @@ describe("los aerofrenos al tocar, vistos desde el ala (punto 296)", () => {
     expect(r.dichas.filter((d) => /aerofrenos/.test(d.linea.clave)).every((d) => d.linea.quien === "ara")).toBe(true);
   });
 
+  /** Vuela la escena con la toma que se diga, y devuelve lo dicho. */
+  function conLaToma(toque: string | null): string[] {
+    let t = 0;
+    const v = vozQueTarda(() => 4, () => t);
+    const escena = new VueloDePasaje(v.voz, { lado: "izquierda" });
+    const vuelo = new VueloDeMentira();
+    for (; t < 3000; t += DT) {
+      v.tic();
+      const p = escena.paso(DT, { ...vuelo.lectura, toque: vuelo.tocoA !== null ? toque : null });
+      vuelo.paso(DT, p, t);
+      if (escena.estado.puedeSeguir) escena.seguir();
+      if (escena.estado.terminado) break;
+    }
+    return v.dichas.map((d) => d.linea.clave);
+  }
+
+  it("con una toma firme y en su sitio, Ara cuenta el golpecito justo antes de los aerofrenos", () => {
+    const c = conLaToma("firme");
+    const k = c.indexOf("inicio.ara.pasaje.golpecito");
+    expect(k).toBeGreaterThan(-1);
+    expect(c[k + 1]).toBe("inicio.ara.pasaje.aerofrenos");
+  });
+
+  it("y con una suave o una larga, no: decirlo sería mentir", () => {
+    for (const toque of ["suave", "largo", null]) expect(conLaToma(toque)).not.toContain("inicio.ara.pasaje.golpecito");
+  });
+
   it("sin aerofrenos que se vean, ni el corte al ala ni su explicación", () => {
     let t = 0;
     const v = vozQueTarda(() => 4, () => t);

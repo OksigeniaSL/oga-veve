@@ -96,3 +96,60 @@ export function escalonesDeLaRecogida(
         { metros: r.nariz, dice: "nariz" },
       ];
 }
+
+/**
+ * **Lo que sube o baja el suelo bajo las ruedas**, m/s: la recogida se hace
+ * contra la pista, no contra el aire.
+ *
+ * Quien recoge mira la pista y va dejando de acercarse a ella; la ley de la
+ * recogida pedía en cambio un ritmo de bajada **respecto al aire**, como si
+ * la pista fuera plana. Medido en la toma de La Palma (punto 299): su pista
+ * baja un medio por ciento hacia donde se aterriza, a sesenta y cinco metros
+ * por segundo eso son 0,33 m/s de suelo que se va, y al final de la recogida,
+ * pidiendo bajar 0,46, el avión se acercaba a la pista a 0,13: la recogida
+ * duraba 7,3 s en vez de los 5,5 del mundo plano y se comía cien metros más.
+ * Con lo que se mueve el suelo sumado a lo que se pide, el avión se acerca a
+ * la pista al ritmo que la ley quiere, sea cual sea la pendiente.
+ *
+ * Sale de la altura sobre el suelo y la altitud, que es lo que cualquiera de
+ * las dos manos sabe, y se suaviza: un escalón del terreno —una calle, el
+ * borde de la pista— no es una pendiente. Ver `VueloDeLinea` y la mano de
+ * Jazlyn en `inicio-aterrizar.ts`.
+ */
+export class SueloBajoLasRuedas {
+  private antes: number | null = null;
+  private ritmo = 0;
+
+  /** Un paso: la cota del suelo bajo las ruedas, m. Devuelve lo que se mueve, m/s. */
+  paso(dt: number, cotaDelSuelo: number): number {
+    if (this.antes === null || dt <= 0) {
+      this.antes = cotaDelSuelo;
+      return this.ritmo;
+    }
+    const ahora = (cotaDelSuelo - this.antes) / dt;
+    this.antes = cotaDelSuelo;
+    // Un escalón no es una pendiente: se descarta lo que no puede ser una pista.
+    if (Math.abs(ahora) > SUELO_COMO_MUCHO) return this.ritmo;
+    this.ritmo += (ahora - this.ritmo) * Math.min(1, dt / SUAVIZA_EL_SUELO);
+    return this.ritmo;
+  }
+
+  get ritmoDelSuelo(): number {
+    return this.ritmo;
+  }
+
+  reiniciar(): void {
+    this.antes = null;
+    this.ritmo = 0;
+  }
+}
+
+/**
+ * Lo más que sube o baja el suelo de una pista bajo un avión que aterriza,
+ * m/s: un dos por ciento a setenta y cinco metros por segundo, más de lo que
+ * baja cualquier pista de la flota. Lo que pase de ahí es un escalón del
+ * terreno.
+ */
+const SUELO_COMO_MUCHO = 1.5;
+/** Y en cuánto se suaviza, s. */
+const SUAVIZA_EL_SUELO = 0.6;

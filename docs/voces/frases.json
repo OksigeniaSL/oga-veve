@@ -18177,6 +18177,20 @@
     }
   },
   {
+    "id": "inicio.ara.pasaje.golpecito",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¿Notaste el golpecito al tocar? Es a propósito: así las ruedas agarran bien y el avión no se pasa de largo.",
+    "para": "el modo inicio, de pasaje: Ara, rodando, cuenta que el golpecito de una toma firme es a propósito",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
     "id": "vuelo.tocasteLargo",
     "voz": "instructor",
     "idioma": "es-PY",

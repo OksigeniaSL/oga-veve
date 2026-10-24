@@ -2407,6 +2407,8 @@ export const EN: Dictionary = {
   "inicio.mama.pasaje.masGas":
     "And just before touchdown, the engines got louder: with the wheels and the flaps out, the plane slows down a lot, and it needs more power so as not to lose speed.",
   "inicio.ara.pasaje.vueltaEnPista": "We're turning round on the runway! We're going back the same way.",
+  "inicio.ara.pasaje.golpecito":
+    "Did you feel the little bump when we touched down? It's on purpose: that way the wheels grip well and the plane doesn't run long.",
   "inicio.ara.pasaje.aerofrenos":
     "Did you see the wing when we touched the ground? Some panels popped up on top: they're the speed brakes.",
   "inicio.ara.pasaje.aerofrenosPorque":

@@ -61,6 +61,7 @@
  */
 
 import { Conversacion, type FraseDicha, type Linea } from "./conversacion";
+import { SueloBajoLasRuedas } from "./recogida";
 import {
   ENFRIA_EL_ERROR,
   ESPERA_SIN_HACER,
@@ -94,6 +95,12 @@ export interface LecturaDeAterrizar {
   readonly velocidad: number;
   /** De las ruedas al suelo, m. */
   readonly altura: number;
+  /**
+   * **La altitud**, m: con la altura, lo que se mueve el suelo bajo las
+   * ruedas. Sin ella —las pruebas que no la dan—, el suelo no se mueve. Ver
+   * `SueloBajoLasRuedas` en `recogida.ts`.
+   */
+  readonly altitud?: number;
   readonly enTierra: boolean;
   /** Rad, positivo con el ala derecha abajo. */
   readonly alabeo: number;
@@ -395,6 +402,8 @@ export class InicioDeAterrizar {
   private tiro = false;
   /** Si la mano ya está recogiendo: una vez empezada, hasta tocar. */
   private recogiendo = false;
+  /** Lo que se mueve el suelo bajo las ruedas. Ver `SueloBajoLasRuedas`. */
+  private readonly suelo = new SueloBajoLasRuedas();
   private vioElAire = false;
   private tocado = false;
   private frenando = false;
@@ -763,9 +772,15 @@ export class InicioDeAterrizar {
      * arriba y acabar más suave, que es lo que hace levantarla a tiempo. Y
      * empujar ahí abajo no se cede.
      */
+    /*
+     * **Contra la pista**, como la de la tripulación del vuelo de pasaje: a lo
+     * que se pide se le suma lo que se mueve el suelo bajo las ruedas, que en
+     * una pista con pendiente no es cero. Ver `SueloBajoLasRuedas`.
+     */
+    const suelo = l.altitud === undefined ? 0 : this.suelo.paso(dt, l.altitud - l.altura);
     if (pedidaLaRecogida) {
       const base = this.tiro ? RECOGE_TIRANDO : RECOGE_SOLA;
-      subida = Math.max(subida, -(base + RECOGE_POR_METRO * Math.max(0, l.altura)));
+      subida = Math.max(subida, -(base + RECOGE_POR_METRO * Math.max(0, l.altura)) + suelo);
     }
 
     // Y por el eje: el alabeo no se pide, y no se cede.

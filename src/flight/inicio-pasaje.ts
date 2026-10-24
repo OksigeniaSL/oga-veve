@@ -554,6 +554,12 @@ export interface LecturaDelPasaje {
    * `aerofrenos`.
    */
   readonly frenosDeTierra?: number;
+  /**
+   * **Cómo fue la toma**, el veredicto del juego: firme, suave, larga… Sin
+   * esto —las pruebas que no lo dan—, no se dice nada de ella. Ver la charla
+   * `aerofrenosPorque` y `Aterrizaje` en `aterrizaje.ts`.
+   */
+  readonly toque?: string | null;
   /** La capa de nubes de hoy, altitudes en m, o `null` sin capa. */
   readonly nubes: { readonly base: number; readonly techo: number } | null;
   /**
@@ -2394,7 +2400,15 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     cuando: (l, e) =>
       (l.tramo === "al-puesto" || l.tramo === "aparcado") && e.dicho("llegada") && e.dichaLaCharla("aerofrenos"),
     caduca: (l) => l.tramo === "apagado" || (l.tramo === "aparcado" && l.enTramo >= PARADO_DEL_TODO),
-    lineas: [ara("aerofrenos"), ara("aerofrenosPorque")],
+    lineas: [ara("golpecito"), ara("aerofrenos"), ara("aerofrenosPorque")],
+    /*
+     * **Y el golpecito, si lo hubo** (punto 299): una toma firme y en su sitio
+     * es a propósito —la rueda agarra y gira enseguida, que es lo que esperan
+     * los aerofrenos, y el avión no flota comiéndose la pista—. Solo si el
+     * juego la dio por firme, que es en su sitio y de dos a diez pies por
+     * segundo: con una toma suave o larga, decirlo sería mentir.
+     */
+    segun: (l) => [...(l.toque === "firme" ? [ara("golpecito")] : []), ara("aerofrenos"), ara("aerofrenosPorque")],
     planoSegun: (_l, e) => (e.planoDeAhora.endsWith("-paisaje") ? "ventanilla" : e.planoDeAhora),
   },
   {

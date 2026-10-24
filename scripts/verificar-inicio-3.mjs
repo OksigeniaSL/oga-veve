@@ -930,6 +930,9 @@ async function elVuelo() {
           descartadas: conversacion?.descartadas ?? null,
           nombrados,
           estado: e ?? null,
+          // Y la recogida medida, de los cien pies al toque. Ver `apuntarLaRecogida` en `game.ts`.
+          recogida: i?.recogida ?? null,
+          ultimaToma: i?.ultimaToma ?? null,
         },
         null,
         1,
@@ -1017,6 +1020,21 @@ async function elVuelo() {
         vuelta.desde - ala.desde >= 3.5 - 0.3 &&
         (registro.find((d) => d.clave === "inicio.ara.pasaje.toma")?.desde ?? -Infinity) >= vuelta.desde + CORTE - 0.05,
       `la pista desde los ${antes?.desde?.toFixed(1) ?? "—"} s · el ala ${ala ? (vuelta ? (vuelta.desde - ala.desde).toFixed(1) : "?") : "—"} s · de vuelta a ${vuelta?.plano ?? "—"} a los ${vuelta?.desde?.toFixed(1) ?? "—"} s · «¡tocamos el suelo!» a los ${registro.find((d) => d.clave === "inicio.ara.pasaje.toma")?.desde?.toFixed(1) ?? "—"} s`,
+    );
+    /*
+     * **Y el golpecito, solo si fue firme y en su sitio** (punto 299): justo
+     * antes de los aerofrenos y sin pisar a nadie; con otra toma, no se dice.
+     */
+    const kg = registro.findIndex((d) => d.clave === "inicio.ara.pasaje.golpecito");
+    const firmeYEnSuSitio = i?.ultimaToma?.veredicto === "firme";
+    comprobar(
+      "el golpecito se cuenta solo si la toma fue firme y en su sitio, antes de los aerofrenos y sin pisar a nadie",
+      firmeYEnSuSitio
+        ? kg >= 0 &&
+            registro[kg + 1]?.clave === "inicio.ara.pasaje.aerofrenos" &&
+            (!registro[kg - 1] || registro[kg].desde >= (registro[kg - 1].hasta ?? Infinity) - 1e-6)
+        : kg < 0,
+      `toma «${i?.ultimaToma?.veredicto ?? "—"}» · ${kg >= 0 ? `golpecito a los ${registro[kg].desde.toFixed(1)} s, ${registro[kg].como}, antes de ${registro[kg + 1]?.clave ?? "—"}` : "sin golpecito"}`,
     );
     const llegada = registro.find((d) => d.clave === "tripulacion.llegada");
     const k = registro.findIndex((d) => d.clave === "inicio.ara.pasaje.aerofrenos");

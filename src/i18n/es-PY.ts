@@ -3888,6 +3888,8 @@ export const ES_PY = {
    * pilotar —`vuelo.salenLosFrenosDeTierra`—: el ala deja de sostener el avión
    * y las ruedas frenan.
    */
+  "inicio.ara.pasaje.golpecito":
+    "¿Notaste el golpecito al tocar? Es a propósito: así las ruedas agarran bien y el avión no se pasa de largo.",
   "inicio.ara.pasaje.aerofrenos":
     "¿Viste el ala cuando tocamos el suelo? Se le levantaron unas tapas por arriba: son los aerofrenos.",
   "inicio.ara.pasaje.aerofrenosPorque":

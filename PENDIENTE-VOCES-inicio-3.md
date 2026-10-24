@@ -159,6 +159,15 @@ Jazlyn», o con `?inicio=3`.
 | `vuelo.tocasteLargoFacil` | `instructor` | 119 |
 | `vuelo.tocasteDuroFacil` | `instructor` | 113 |
 
+- **El golpecito** (punto 299, 24-10-2026): con la recogida contra la pista,
+  la tripulación toca firme y en su sitio, y Ara lo cuenta rodando, justo
+  antes de los aerofrenos: es a propósito. Solo si la toma fue firme. **Una
+  frase más de Ara**, al final de su voz.
+
+| Clave | Voz | Caracteres |
+|---|---|---:|
+| `inicio.ara.pasaje.golpecito` | `ara` | 107 |
+
 Ninguna baja de treinta letras. Los rótulos del kit —`inicio.kit.*`, el
 nombre de cada pieza y de cada parada, y las luces de la lámpara— son de la
 pantalla y no se graban.

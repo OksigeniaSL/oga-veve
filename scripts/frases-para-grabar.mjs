@@ -1794,6 +1794,7 @@ const DE_LO_QUE_SE_RECONOCE = [
 const DEL_TOQUE = [
   ["inicio.ara.pasaje.aerofrenos", "ara", "el modo inicio, de pasaje: Ara, rodando, recuerda las tapas que se levantaron en el ala al tocar"],
   ["inicio.ara.pasaje.aerofrenosPorque", "ara", "el modo inicio, de pasaje: Ara cuenta para qué se levantan los aerofrenos"],
+  ["inicio.ara.pasaje.golpecito", "ara", "el modo inicio, de pasaje: Ara, rodando, cuenta que el golpecito de una toma firme es a propósito"],
   ["vuelo.tocasteLargo", "instructor", "el veredicto de la toma: se tocó pasada la zona de toma"],
   ["vuelo.tocasteDuro", "instructor", "el veredicto de la toma: se tocó con más de diez pies por segundo"],
   ["vuelo.tocasteLargoFacil", "instructor", "el veredicto de la toma, en los peldaños de abajo: se aterrizó, pero lejos de las rayas"],
