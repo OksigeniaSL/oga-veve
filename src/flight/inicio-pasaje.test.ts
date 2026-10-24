@@ -2801,9 +2801,12 @@ describe("lo que se reconoce al llegar: la ladera de Mazo, y su nombre en tierra
     expect(n!.como).toBe("asomado");
     const plano = e.planos.filter((p) => p.desde <= n!.desde + 1e-6).pop();
     expect(plano).toEqual({ plano: "asomado-paisaje", desde: expect.any(Number), sitio: "ladera-de-mazo" });
-    // Las dos frases, una vez, en la final y con el avión todavía en el aire.
+    // Las tres frases, una vez y en su orden, en la final y con el avión todavía en el aire.
     expect(de("inicio.ara.pasaje.mazo")).toHaveLength(1);
+    expect(de("inicio.ara.pasaje.mazoCaminos")).toHaveLength(1);
     expect(de("inicio.ara.pasaje.mazoBici")).toHaveLength(1);
+    expect(de("inicio.ara.pasaje.mazoCaminos")[0]!.desde).toBeGreaterThanOrEqual(de("inicio.ara.pasaje.mazo")[0]!.hasta!);
+    expect(de("inicio.ara.pasaje.mazoBici")[0]!.desde).toBeGreaterThanOrEqual(de("inicio.ara.pasaje.mazoCaminos")[0]!.hasta!);
     expect(n!.desde).toBeGreaterThan(empiezaA("final"));
     expect(de("inicio.ara.pasaje.mazoBici")[0]!.hasta!).toBeLessThan(empiezaA("frenando"));
     // Y lo nombrado se veía en el mundo al empezar a decirlo: ver la prueba de arriba.

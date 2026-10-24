@@ -105,6 +105,34 @@ export const CAPAS = 192;
  */
 export const CALIDAD = 1.75;
 
+/**
+ * **El filtro anisótropo de la textura de capas**: cuántas muestras puede
+ * tomar la tarjeta a lo largo de un píxel que cae alargado sobre el suelo. Ella
+ * lo recorta a lo que tenga; sin la extensión, no hace nada.
+ *
+ * Punto 314: la ladera de Villa de Mazo por la ventanilla de Ara, en la final
+ * de la 36, a dos kilómetros y medio y casi rasante —seis grados entre la
+ * visual y la ladera—. Un píxel de pantalla abarca ahí cuatro metros de través
+ * y casi cuarenta a lo largo de la ladera, y sin este filtro la tarjeta elige
+ * el mipmap por el lado largo: medido con la pose de la escena, el nivel 3,6
+ * sobre la tesela z15 del casco, unos cincuenta metros por muestra, y las
+ * casas y los caminos que la tesela tiene se borraban en una mancha. Con él
+ * toma muestras a lo largo y lee el mipmap del través: 0,6, el detalle que
+ * la regla de la distancia ya había pedido. Una tesela más fina no lo
+ * arreglaba: la z16 no se pide ahí porque a esa distancia el píxel de través
+ * ya es de cuatro metros —no por falta de capas: se querían 150 de 192—, y
+ * forzada, sin este filtro, seguía en treinta metros por muestra.
+ *
+ * Ocho y no dieciséis porque a la ladera le bastan ocho —el píxel es unas ocho
+ * veces más largo que ancho, y con dieciséis la captura sale igual— y porque
+ * lo que se pasa de ocho es lo más rasante, junto al horizonte, donde en una
+ * tableta cada muestra de más es tiempo. No ocupa memoria: es cómo se lee la
+ * textura, no lo que guarda. Medido en la Intel del banco, el fotograma en la
+ * tarjeta no cambia más que el ruido de una toma a otra, ni en la final ni
+ * subiendo, en crucero o bajando.
+ */
+export const ANISOTROPIA = 8;
+
 /** Hasta qué ángulo de la mirada se parte con detalle: ochenta grados. */
 const COS_DEL_CUADRO = Math.cos((80 * Math.PI) / 180);
 
@@ -709,6 +737,8 @@ export class TeselasDeOrtofoto {
     this.capas.colorSpace = SRGBColorSpace;
     this.capas.minFilter = LinearMipmapLinearFilter;
     this.capas.magFilter = LinearFilter;
+    // Antes de reservarla: three solo pone el filtro al subir la textura.
+    this.capas.anisotropy = ANISOTROPIA;
     this.capas.generateMipmaps = true;
     this.capas.source.dataReady = false;
     this.capas.needsUpdate = true;

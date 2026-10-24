@@ -4047,8 +4047,14 @@ export const ES_PY = {
    * Villa de Mazo, por la ventanilla de Ara en la final de la 36, y su nombre
    * dicho por la comandante con la pista ya libre. Se nombran sitios, no
    * negocios. Ver la charla `mazo` en `flight/inicio-pasaje.ts`.
+   *
+   * Los caminitos, desde que las teselas se leen con filtro anisótropo: antes
+   * la ladera, vista casi rasante, se emborronaba en una mancha y no se
+   * decían. Son los de la ortofoto del PNOA. Ver `ANISOTROPIA` en
+   * `world/teselas-de-ortofoto.ts`.
    */
   "inicio.ara.pasaje.mazo": "¡Ya se ven las fincas y las casitas, ahí en la ladera del monte!",
+  "inicio.ara.pasaje.mazoCaminos": "¡Y se ven los caminitos que suben entre las fincas!",
   "inicio.ara.pasaje.mazoBici": "Seguro que por ahí sube gente caminando, y en bici.",
   "inicio.mama.pasaje.mazo":
     "Señores pasajeros: ese pueblo de la ladera que vieron por la izquierda al llegar es Villa de Mazo.",
