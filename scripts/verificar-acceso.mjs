@@ -770,6 +770,14 @@ if (ajustesAbiertos) {
   comprobar("ajustes: se abren desde la pausa", false, "no se abrieron");
 }
 
+/*
+ * **Y cada juego se cierra antes de abrir el siguiente.** Una pestaña con el
+ * juego cargado pasa del gigabyte y medio, y este banco abría tres sin cerrar
+ * ninguna: con el tope de memoria con el que se corren los bancos, el sistema
+ * mataba el navegador a medio camino y el parte no salía.
+ */
+await page.close();
+
 // ── El aparato táctil, que es el del aula ────────────────────────────────
 
 const tableta = await navegador.newPage({
@@ -785,6 +793,7 @@ await tableta.goto(
 );
 await tableta.waitForTimeout(12000);
 peores = peores.concat(await auditar(tableta, "tableta"));
+await tableta.close();
 
 // ── Los pilotos, que es lo primero que se ve ─────────────────────────────
 
