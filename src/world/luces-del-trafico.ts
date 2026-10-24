@@ -65,7 +65,7 @@
  *
  * ## Lo que cuesta
  *
- * **Una llamada de dibujo por avión**, con sus once luces en un solo `Points`
+ * **Una llamada de dibujo por avión**, con sus doce luces en un solo `Points`
  * colgado de su grupo: se mueven y giran con él sin tocar una coordenada. Lo
  * que cambia en cada fotograma es el tamaño de cada luz —cero es apagada—, y
  * solo se sube a la tarjeta cuando algo se enciende o se apaga. Un material
@@ -196,12 +196,18 @@ export function faseDelTuyo(a: ComoVaElTuyo): FaseDeLuces {
  * - `rodaje`: el faro en la pata de morro, o en el borde del ala.
  * - `focos`: uno de aterrizaje en cada ala, o los dos faros juntos en el ala
  *   izquierda.
+ * - `blanca`: la de posición de atrás, en la cola —una— o en el borde de
+ *   salida de cada punta de ala —dos—. La norma deja las dos maneras: «as far
+ *   aft as practicable», en la cola o en cada punta (14 CFR 25.1385(c)). Sin
+ *   decir, en la cola. Ver `Modelo.blanca` en `flight/flota.ts`, que dice cuál
+ *   lleva cada avión de la flota.
  */
 export interface EquipoDeLuces {
   readonly baliza: "deriva" | "lomo-y-panza";
   readonly estroboscopicas: "ninguna" | "puntas" | "puntas-y-cola";
   readonly rodaje: "morro" | "ala";
   readonly focos: "dos-alas" | "ala-izquierda";
+  readonly blanca?: "cola" | "puntas";
 }
 
 /** El de un avión de pasaje: el turbohélice, el reactor, el grande. */
@@ -364,6 +370,12 @@ export interface SitiosDeLuz {
   readonly morro: Vector3;
   /** Lo alto de la deriva: donde va la baliza de una avioneta. */
   readonly deriva: Vector3;
+  /**
+   * El borde de salida de cada punta de ala: donde va la blanca en los que no
+   * la llevan en la cola. Sin ellos, la cola.
+   */
+  readonly popaDerecha?: Vector3;
+  readonly popaIzquierda?: Vector3;
 }
 
 /**
@@ -413,6 +425,8 @@ export function sitiosDeLuz(cuerpo: Object3D): SitiosDeLuz | null {
     foco: p.foco,
     morro: new Vector3(0, morro.y - ancho * 0.02, morro.z),
     deriva,
+    popaDerecha: p.popaDerecha,
+    popaIzquierda: p.popaIzquierda,
   };
 }
 
@@ -438,6 +452,8 @@ export function sitiosPorMedidas(envergadura: number): SitiosDeLuz {
     foco: new Vector3(0.28 * m, 0, -0.15 * m),
     morro: new Vector3(0, -0.1 * m, -0.8 * m),
     deriva: new Vector3(0, 0.3 * m, 0.8 * m),
+    popaDerecha: new Vector3(m, 0, 0.2 * m),
+    popaIzquierda: new Vector3(-m, 0, 0.2 * m),
   };
 }
 
@@ -445,7 +461,7 @@ export function sitiosPorMedidas(envergadura: number): SitiosDeLuz {
  * El material de todas las luces de una clase de tráfico.
  *
  * Es el de puntos de siempre, con **el tamaño por luz** en vez de uno para
- * todas: así las once de un avión van en una sola llamada de dibujo y la luz
+ * todas: así las doce de un avión van en una sola llamada de dibujo y la luz
  * apagada es un punto de tamaño cero, que no llega a pintarse. Apagarla con
  * el color en negro no valía: la niebla mezcla ese negro con su color y
  * dejaba de lejos un punto gris donde no había luz.
@@ -517,7 +533,7 @@ export function alumbraHacia(
  * hacia delante: de cara deslumbran, de espaldas no se ven.
  *
  * Se mira en el plano del avión —la dirección del ojo contada desde el
- * morro, en horizontal— y se decide en la tarjeta, luz a luz: once vértices,
+ * morro, en horizontal— y se decide en la tarjeta, luz a luz: doce vértices,
  * ni una cuenta en la CPU.
  *
  * **Y se desbordan un poco, como las de verdad.** Con el borde a cuchillo
@@ -547,7 +563,7 @@ const HACIA_DONDE_ALUMBRA = `
 /** Hacia todos lados: la baliza y los destellos. */
 const TODO = [0, Math.PI] as const;
 
-/** El orden de las luces en la geometría: once, y siempre las mismas. */
+/** El orden de las luces en la geometría: doce, y siempre las mismas; la última solo la encienden los que llevan la blanca en las puntas. */
 const ORDEN: readonly {
   clase: Clase;
   color: number;
@@ -565,6 +581,8 @@ const ORDEN: readonly {
   { clase: "aterrizaje", color: FOCO, sector: [0, grados(40)] },
   { clase: "aterrizaje", color: FOCO, sector: [0, grados(40)] },
   { clase: "rodaje", color: FOCO, sector: [0, grados(40)] },
+  // La otra blanca, en la punta izquierda, en los que la llevan en las puntas.
+  { clase: "navegacion", color: BLANCA, sector: [Math.PI, grados(70)] },
 ];
 
 /**
@@ -642,10 +660,15 @@ export class LucesDeUnAvion {
       sitios.foco.y,
       sitios.foco.z,
     );
+    /*
+     * La blanca, en la cola o en el borde de salida de las dos puntas, según
+     * el avión. Ver `blanca` en `EquipoDeLuces`.
+     */
+    const enLasPuntas = equipo.blanca === "puntas" && !!sitios.popaDerecha && !!sitios.popaIzquierda;
     const donde = [
       sitios.alaDerecha,
       sitios.alaIzquierda,
-      sitios.cola,
+      enLasPuntas ? sitios.popaDerecha! : sitios.cola,
       derivaSola ? sitios.deriva : sitios.lomo,
       sitios.panza,
       sitios.alaDerecha,
@@ -657,6 +680,7 @@ export class LucesDeUnAvion {
       equipo.rodaje === "ala"
         ? focoIzquierdo.clone().setX(focoIzquierdo.x * 1.25)
         : sitios.morro,
+      enLasPuntas ? sitios.popaIzquierda! : sitios.cola,
     ];
     this.lleva = [
       true,
@@ -672,6 +696,7 @@ export class LucesDeUnAvion {
       equipo.focos !== "ala-izquierda",
       true,
       true,
+      enLasPuntas,
     ];
     const pos = new Float32Array(ORDEN.length * 3);
     const col = new Float32Array(ORDEN.length * 3);
@@ -698,8 +723,8 @@ export class LucesDeUnAvion {
     this.puntos.name = "luces-del-trafico";
     /*
      * El avión entero entra en pantalla antes que sus luces, y una caja de
-     * once puntos que se recorta sola por el borde apagaba las puntas de ala
-     * al asomar. Son once vértices: dibujarlos siempre no cuesta nada.
+     * doce puntos que se recorta sola por el borde apagaba las puntas de ala
+     * al asomar. Son doce vértices: dibujarlos siempre no cuesta nada.
      */
     this.puntos.frustumCulled = false;
   }

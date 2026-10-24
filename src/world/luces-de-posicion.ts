@@ -173,6 +173,13 @@ export interface Puntas {
   readonly lomo: Vector3;
   /** La raíz del ala por delante, que es donde va el foco de aterrizaje. */
   readonly foco: Vector3;
+  /**
+   * **El borde de salida de cada punta de ala**, a la altura del ala: donde
+   * llevan la blanca los aviones que no la llevan en la cola. Ver
+   * `blanca` en `EquipoDeLuces`.
+   */
+  readonly popaDerecha: Vector3;
+  readonly popaIzquierda: Vector3;
 }
 
 export function puntasDe(cuerpo: Object3D): Puntas | null {
@@ -285,6 +292,7 @@ export function puntasDe(cuerpo: Object3D): Puntas | null {
    * hacia arriba, es lo mismo.
    */
   const casiEnLaPunta = medido.x * 0.03;
+  const extremos = { derecha: ala.x, izquierda: alaIzquierda.x };
   const alPie = (lado: 1 | -1, punta: Vector3): void => {
     const extremo = punta.x;
     cuerpo.traverse((o) => {
@@ -299,6 +307,30 @@ export function puntasDe(cuerpo: Object3D): Puntas | null {
   };
   alPie(1, ala);
   alPie(-1, alaIzquierda);
+  /*
+   * **Y el borde de salida de la punta**, para la blanca de los que la llevan
+   * ahí y no en la cola —la clase del E170: «one white light at each aft
+   * wingtip position», FAA, MMEL ERJ-170/190, 33-43-00—. Lo más atrás de la
+   * punta del ala, sin subir por la aleta: a la altura del pie, como la roja
+   * y la verde, y con la misma regla de buscar solo en el ala con nombre.
+   */
+  const alBordeDeSalida = (lado: 1 | -1, pie: Vector3): Vector3 => {
+    const extremo = lado > 0 ? extremos.derecha : extremos.izquierda;
+    const popa = pie.clone();
+    cuerpo.traverse((o) => {
+      if (hayAla && !o.name.startsWith("ala")) return;
+      const pos = (o as Mesh).geometry?.getAttribute?.("position");
+      if (!pos) return;
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+        if (lado * (extremo - v.x) > casiEnLaPunta || v.y > pie.y + medido.y * 0.04) continue;
+        if (v.z > popa.z) popa.copy(v);
+      }
+    });
+    return popa;
+  };
+  const popaDerecha = alBordeDeSalida(1, ala);
+  const popaIzquierda = alBordeDeSalida(-1, alaIzquierda);
   /*
    * **Y el foco en el borde de ataque, aunque el ala no tenga un vértice
    * donde va.** Un ala recta como la del 172 se dibuja con sus estaciones en
@@ -351,6 +383,10 @@ export function puntasDe(cuerpo: Object3D): Puntas | null {
   const dedo = Math.max(medido.x, medido.z) * 0.01;
   ala.x += dedo;
   alaIzquierda.x -= dedo;
+  popaDerecha.x += dedo;
+  popaDerecha.z += dedo;
+  popaIzquierda.x -= dedo;
+  popaIzquierda.z += dedo;
   cola.z += dedo;
   lomo.y += dedo;
   foco.z -= dedo;
@@ -359,7 +395,7 @@ export function puntasDe(cuerpo: Object3D): Puntas | null {
     lomo.set(0, centro.y + medido.y * 0.3, centro.z);
   if (!Number.isFinite(foco.z))
     foco.set(medido.x * 0.12, centro.y, caja.min.z + medido.z * 0.35);
-  return { ala, alaIzquierda, cola, lomo, foco };
+  return { ala, alaIzquierda, cola, lomo, foco, popaDerecha, popaIzquierda };
 }
 
 /**
@@ -397,8 +433,11 @@ export function crearLucesDePosicion(
   const sitios = (cuerpo ? sitiosDeLuz(cuerpo) : null) ?? porLaFicha(a);
   const material = materialDeLuces();
   material.size = LAS_TUYAS;
-  const silueta = (a.id ? modeloPorId(a.id)?.silueta : undefined) ?? "reactor";
-  const luces = new LucesDeUnAvion(sitios, material, 0, equipoDe(silueta));
+  const modelo = a.id ? modeloPorId(a.id) : undefined;
+  const silueta = modelo?.silueta ?? "reactor";
+  // Y la blanca donde la lleva su clase: en la cola o en las puntas. Ver `Modelo.blanca`.
+  const equipo = { ...equipoDe(silueta), blanca: modelo?.blanca ?? "cola" };
+  const luces = new LucesDeUnAvion(sitios, material, 0, equipo);
   const grupo = new Group();
   grupo.name = "luces-de-posicion";
   grupo.add(luces.puntos);
@@ -430,5 +469,7 @@ function porLaFicha(a: {
     foco: new Vector3(media * 0.28, 0, -a.chord),
     morro: new Vector3(0, -a.chord * 0.2, -a.chord * 1.6),
     deriva: new Vector3(0, a.chord * 0.9, a.chord * 1.7),
+    popaDerecha: new Vector3(media, 0, a.chord * 0.5),
+    popaIzquierda: new Vector3(-media, 0, a.chord * 0.5),
   };
 }
