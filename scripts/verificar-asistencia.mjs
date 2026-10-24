@@ -191,16 +191,55 @@ for (const [tramo, APARTADO] of TRABAJOS) {
         // El rumbo del tramo, en grados. El morro mira a la −Z.
         const rumbo = (Math.atan2(ux, -uz) * 180) / Math.PI;
 
+        let suelto = false;
         o.pilotar((c) => {
           const e = o.estado();
           c.engineOn = true;
           c.aileron = 0;
           c.rudder = 0;
           c.elevator = 0;
-          c.throttle = e.airspeed < 7 ? 0.45 : 0;
-          c.brakes = e.airspeed > 10 ? 1 : 0;
+          c.throttle = suelto && e.airspeed < 7 ? 0.45 : 0;
+          c.brakes = !suelto || e.airspeed > 10 ? 1 : 0;
         });
-        o.colocar(x, o.suelo(x, z) + 0.2, z, 5, (rumbo * Math.PI) / 180);
+        const ponerlo = (velocidad) =>
+          o.colocar(x, o.suelo(x, z) + 0.2, z, velocidad, (rumbo * Math.PI) / 180);
+
+        /*
+         * **Y con el coche del sígame por delante, no por detrás.**
+         *
+         * En Guyrami y en Tukã sale el coche, y un sígame solo anda hacia
+         * delante: se había quedado esperando junto al puesto y, al aparecer
+         * el avión de un salto a setenta metros de ruta, arrancaba a buscarlo
+         * **por la raya**, desde atrás. La ayuda metía el avión hacia la raya
+         * justo cuando el coche pasaba por ella, y se lo llevaba por delante:
+         * percance, el juego devolvía el avión al puesto, y lo que se medía
+         * era la distancia desde el puesto — 21 metros en los dos peldaños
+         * que más ayudan, leídos como «la ayuda aparta de la raya».
+         *
+         * Así que el avión se planta parado donde se va a soltar —parado no
+         * atropella a nadie, ver `ROCE`—, se espera a que el coche pase y se
+         * ponga delante, que es donde está siempre en el juego, y entonces se
+         * suelta igual que antes. En los peldaños sin coche no se espera nada.
+         */
+        let cocheDelante = null;
+        if (o.sigueme?.()?.donde) {
+          ponerlo(0);
+          const hasta = performance.now() + 20000;
+          let antes = null;
+          let quieto = 0;
+          while (performance.now() < hasta) {
+            await cuadro();
+            const coche = o.sigueme().donde;
+            if (!coche) break;
+            cocheDelante = (coche.x - x) * ux + (coche.z - z) * uz;
+            const movido = antes ? Math.hypot(coche.x - antes.x, coche.z - antes.z) : Infinity;
+            antes = { x: coche.x, z: coche.z };
+            quieto = movido < 0.01 ? quieto + 1 : 0;
+            if (cocheDelante > 15 && quieto > 10) break;
+          }
+        }
+        suelto = true;
+        ponerlo(5);
         await new Promise((r) => setTimeout(r, 600));
 
         /** Cuánto se está del eje **de este tramo**, con signo fuera. */
@@ -225,6 +264,7 @@ for (const [tramo, APARTADO] of TRABAJOS) {
          * más ayuda. El promedio del último trecho no depende de eso.
          */
         const tramoFinal = [];
+        let percance = null;
         while (rodado < METROS && performance.now() < limite) {
           await cuadro();
           const e = o.estado();
@@ -232,6 +272,8 @@ for (const [tramo, APARTADO] of TRABAJOS) {
           antes = { ...e.position };
           if (rodado > METROS / 2) tramoFinal.push(alEje());
           if (!e.onGround) break;
+          percance = o.percance?.() ?? null;
+          if (percance) break;
         }
         const queda = tramoFinal.length
           ? tramoFinal.reduce((a, b) => a + b, 0) / tramoFinal.length
@@ -241,6 +283,10 @@ for (const [tramo, APARTADO] of TRABAJOS) {
           empezo: +empezo.toFixed(1),
           queda: +queda.toFixed(1),
           rodado: Math.round(rodado),
+          cocheDelante: cocheDelante === null ? null : Math.round(cocheDelante),
+          // Un percance por el camino devuelve el avión al puesto: lo medido
+          // después ya no es la ayuda. Ver arriba, el coche.
+          percance,
         };
       },
       [APARTADO, METROS],
@@ -252,6 +298,17 @@ for (const [tramo, APARTADO] of TRABAJOS) {
         false,
         "la ruta no tiene ningún tramo de sesenta metros",
         "sin recta, lo que se mide es la curva",
+      );
+      await page.close();
+      continue;
+    }
+    if (r.percance) {
+      comprobar(
+        `${tramo}: se rueda la medida sin percances`,
+        false,
+        `«${r.percance}» a los ${r.rodado} m` +
+          (r.cocheDelante === null ? "" : ` · el coche iba ${r.cocheDelante} m por delante`),
+        "con el avión vuelto al puesto, lo que se mide ya no es la ayuda",
       );
       await page.close();
       continue;
