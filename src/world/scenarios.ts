@@ -2297,10 +2297,12 @@ export const AYOLAS: Scenario = {
  * Mil quinientos metros de hormigón y dieciocho de ancho, con el umbral de
  * la 02 desplazado sesenta, que es lo que publica el AIP desde la AMDT AIRAC
  * 02/2026: hasta entonces eran mil doscientos entre dos umbrales, y el
- * pavimento de más al sur no era pista. Caben los cuatro pequeños —la
- * avioneta, el biplano, el bimotor y el turbohélice de diecinueve plazas— y
- * ninguno de los dos reactores, que no caben en dieciocho metros de ancho
- * ni en mil cuatrocientos cuarenta para parar.
+ * pavimento de más al sur no era pista. Caben la avioneta, el biplano y el
+ * bimotor. El turbohélice de diecinueve plazas y el reactor de pasaje
+ * cabrían en la pista, pero no van: el AIP no le da a Pilar categoría de
+ * salvamento y extinción de incendios (AD 2.8-6, «NIL»), y un avión de
+ * línea solo va adonde hay bomberos de su categoría o de una menos (ver
+ * `flight/bomberos.ts`). Al de fuselaje ancho le falta pista.
  *
  * Tiene quien conteste en la radio: Pilar AFIS en 122.0, de día. Y desde
  * 2023 puede recibir vuelos internacionales a requerimiento.
