@@ -3598,6 +3598,28 @@ export const ES_PY = {
   "inicio.ara.pasaje.demoChaleco": "Abajo de mi asiento hay un chaleco amarillo. ¡Y se infla recién afuera del avión!",
   "inicio.ara.pasaje.demoTarjeta": "¡Encontré la tarjeta en el bolsillo de adelante! Tiene dibujitos de todo.",
   /*
+   * **La demostración con gracia, de vez en cuando** (punto 294): una frase
+   * en la entrada y otra en la despedida, nunca en las instrucciones, que son
+   * las de arriba y no cambian. De usted, por la megafonía, con la gracia
+   * amable de Canarias y sin ironía sobre la seguridad: el paisaje que puede
+   * esperar, la tripulación que hasta se examina cada año —es verdad: ver
+   * `docs/historias/fuentes.md`— y el cariño a quien vuela por primera vez.
+   * Sale en uno de cada tres vuelos, y nunca dos seguidos: ver
+   * `src/flight/demostracion-con-gracia.ts`.
+   */
+  "inicio.tripulacion.pasaje.demo.gracia.ventanilla.entrada":
+    "Ya sé que por la ventanilla hay mejores vistas que nosotros, pero el paisaje no se va a ninguna parte: se lo prometo.",
+  "inicio.tripulacion.pasaje.demo.gracia.ventanilla.despedida":
+    "Y ahora sí, ya pueden volver a la ventanilla: el paisaje seguía ahí, como les prometí.",
+  "inicio.tripulacion.pasaje.demo.gracia.examen.entrada":
+    "Si ya se lo saben de memoria, repásenlo igual con nosotros: la tripulación lo repasa tanto que hasta tiene examen todos los años.",
+  "inicio.tripulacion.pasaje.demo.gracia.examen.despedida":
+    "Y a quien quiera repasarlo, la tarjeta del bolsillo se lo vuelve a contar, con dibujos y sin examen.",
+  "inicio.tripulacion.pasaje.demo.gracia.primeraVez.entrada":
+    "Hoy hay a bordo quien vuela por primera vez, así que se lo vamos a contar con todo el cariño del mundo. Y a los demás, también.",
+  "inicio.tripulacion.pasaje.demo.gracia.primeraVez.despedida":
+    "Y quien vuela hoy por primera vez ya sabe lo mismo que quien ha volado cien veces. ¡Buen viaje a todos!",
+  /*
    * **La tripulante, en persona**: con el tú de Canarias, que es su habla, y
    * nada que diga si Ara es niño o niña. Lo de la persiana es la curiosidad
    * de siempre, `explica.persianas`, dicha a quien pregunta.
@@ -3658,6 +3680,19 @@ export const ES_PY = {
   "inicio.tripulacion.pasaje.cerca.islas2":
     "La Palma, adonde vamos, es de las más jovencitas, y tiene unas montañas altísimas.",
   "inicio.ara.pasaje.islas": "¡Islas que eran volcanes en el fondo del mar! Se lo voy a contar a todos.",
+  /*
+   * **El silbo, también en otras islas** (punto 288): lo que Ara pregunta
+   * después de oír la historia del silbo gomero, y lo que contesta la
+   * tripulante en persona. Que se silbó también en El Hierro, en Tenerife y
+   * en Gran Canaria está documentado —la carta de la comunidad científica de
+   * 2023 y Díaz Reyes, ULPGC, 2017—, y la UNESCO cuenta que en las demás
+   * islas se fue perdiendo; donde se conserva y se enseña en la escuela es en
+   * La Gomera. En La Palma solo es «muy probable», así que no se dice. Las
+   * fuentes, en `docs/historias/fuentes.md`.
+   */
+  "inicio.ara.pasaje.silboOtras": "¿Y en las otras islas también hablan silbando, o solamente en La Gomera?",
+  "inicio.tripulacion.pasaje.cerca.silbo":
+    "¡No solo allí! También se silbaba en El Hierro, en Tenerife, de donde venimos, y en Gran Canaria. Pero donde más se conserva hoy es en La Gomera: allí se aprende en la escuela.",
   "inicio.tripulacion.pasaje.cerca.ruta":
     "¿Y cómo sabe el avión el camino? La comandante y el copiloto llevan el mapa en una pantalla, y hablan por radio con la torre de control.",
   "inicio.ara.pasaje.mapa": "¡Como el mapa del celular, pero para aviones! Y con la torre por radio.",

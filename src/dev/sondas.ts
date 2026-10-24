@@ -429,6 +429,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     acelerar: (veces: number) => juego.acelerar(veces),
     /**
+     * **La demostración de la escena de pasaje**, para el banco: una con
+     * gracia aunque sus frases esperen toma —en el juego no saldría hasta
+     * grabarlas— o `null` para la del sorteo. Se pide antes de que empiece la
+     * demostración. Ver `flight/demostracion-con-gracia.ts`.
+     */
+    demostracion: (forma: Parameters<typeof juego.ponerLaDemostracionParaBanco>[0]) =>
+      juego.ponerLaDemostracionParaBanco(forma),
+    /**
      * Qué aeronave se está volando y **con qué se está dibujando**.
      *
      * Lo segundo es lo que hacía falta: el modelo de verdad se carga si está

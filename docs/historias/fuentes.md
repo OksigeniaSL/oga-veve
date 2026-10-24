@@ -643,6 +643,66 @@ lo que suele verse:
 - **Lo que no se dice**: que se pone para tapar ruidos que inquietan. Ninguna
   de las dos lo dice, así que no entra.
 
+### El silbo, también en otras islas · `inicio.ara.pasaje.silboOtras` e `inicio.tripulacion.pasaje.cerca.silbo`
+
+Punto 288: Enrique preguntó si en otras islas también se silbaba. Ara lo
+pregunta después de oír la historia de La Gomera, y la tripulante contesta.
+
+- **También se silbó en El Hierro, en Tenerife y en Gran Canaria.** La carta
+  de miembros de la comunidad científica «con el propósito de garantizar la
+  protección, la continuidad y la investigación de las prácticas del lenguaje
+  silbado en Canarias», de 27-07-2023
+  ([ULPGC, PDF](https://www.ulpgc.es/sites/default/files/ArchivosULPGC/noticia/2023/Oct/carta-comunidad-cientifica-silbo-2023-divulgacion-2.pdf)),
+  firmada entre otros por Maximiano Trapero (ULPGC), Antonio Tejera Gaspar
+  (ULL), Julien Meyer (CNRS) y Colette Grinevald (Lyon 2), dice en su punto 6
+  que la documentación histórica y la investigación etnográfica reciente
+  «atestiguan el uso de este tipo de comunicación, al menos, en La Gomera, en
+  El Hierro, en Tenerife y en Gran Canaria», y en el 7, que todavía viven en
+  esas cuatro islas personas que lo aprendieron por transmisión tradicional.
+- **David Díaz Reyes, «El lenguaje silbado en Canarias»**, en *Pensando
+  Canarias*, 2017, pp. 74-79 (ISBN 978-84-946617-0-9). Registro en el
+  repositorio de la ULPGC, [accedaCRIS 10553/136425](https://accedacris.ulpgc.es/handle/10553/136425),
+  y en [Dialnet](https://dialnet.unirioja.es/servlet/articulo?codigo=9995882).
+  El texto del capítulo no se pudo leer desde aquí —el repositorio pide una
+  prueba de navegador y Dialnet no lo tiene—; lo que defiende lo cuenta
+  [RTVC, «El silbo en Canarias, un lenguaje único en el mundo», 27-02-2024](https://rtvc.es/el-silbo-en-canarias-un-lenguaje-unico-en-el-mundo/):
+  que, aparte de La Gomera, se usaba «con certeza documentada» en El Hierro,
+  Tenerife y Gran Canaria, y que en La Palma es «muy probable».
+- **Y que en las demás islas se fue perdiendo**: la UNESCO, al inscribirlo en
+  2009 en la Lista Representativa del Patrimonio Cultural Inmaterial, pide
+  transmitirlo «para evitar que este lenguaje desaparezca –tal como ha
+  ocurrido en las demás islas del archipiélago canario–». —
+  [UNESCO, «El silbo gomero»](https://ich.unesco.org/es/RL/el-silbo-gomero-lenguaje-silbado-de-la-isla-de-la-gomera-islas-canarias-00172).
+  Por eso se dice en pasado —«se silbaba»—, sin decir que se acabó: la carta
+  de 2023 cuenta que quedan silbadores tradicionales en las cuatro islas.
+- **Donde más se conserva hoy, y se aprende en la escuela, es en La Gomera**:
+  «enseñado en las escuelas desde 1999» (UNESCO, la misma ficha), y como
+  asignatura en los centros de La Gomera desde ese año, según la declaración
+  institucional del Parlamento de Canarias de 24-10-2017
+  ([PDF](https://www.parcan.es/files/media/texto/2017/texto06656.pdf)).
+- **Lo que no se dice**: La Palma. Solo es «muy probable» (RTVC, sobre Díaz
+  Reyes), así que no entra, y menos en un vuelo que va a La Palma.
+
+### La demostración con gracia: la tripulación «hasta tiene examen» · `inicio.tripulacion.pasaje.demo.gracia.examen.*`
+
+Punto 294. De las tres formas con gracia de la demostración, la única que
+cuenta un hecho es ésta, y el hecho es verdad:
+
+- **El entrenamiento periódico de la tripulación de cabina es anual**: «each
+  cabin crew member shall complete annually recurrent training». —
+  Reglamento (UE) n.º 965/2012, anexo III, ORO.CC.140(a), el mismo que ya se
+  cita para «lo practicamos todos los años».
+- **Y lleva su comprobación**: en cada curso, o al acabarlo, cada tripulante
+  pasa un control de todo lo que se ha entrenado, salvo el CRM, hecho por
+  personal cualificado para verificar que mantiene el nivel. — ORO.CC.115(d),
+  [CAA, *Regulatory Library*](https://regulatorylibrary.caa.co.uk/965-2012/Content/Regs/04350_OROCC115_Conduct_of_training_courses_and_associated_checking.htm),
+  que reproduce el 965/2012; el 24-10-2026 la página pedía iniciar sesión, y
+  lo citado es lo que devuelve de ella el buscador. Un control es un examen
+  dicho para quien tiene cinco años.
+- Las otras dos formas no cuentan nada que haya que sostener: que el paisaje
+  sigue ahí, y el cariño a quien vuela por primera vez. Ver
+  `src/flight/demostracion-con-gracia.ts`.
+
 ---
 
 ## Lo que se miró y no entra
@@ -663,5 +723,8 @@ lo que suele verse:
 - **El lago de Itaipú y los Saltos del Guairá.** Se probó como sitio aparte y
   desde los reactores no se ve nunca: queda detrás del ala o en la cabina
   estéril de Guaraní.
+- **El silbo en La Palma.** Díaz Reyes lo da por «muy probable», no por
+  documentado (RTVC, 2024): no se cuenta. Ver «El silbo, también en otras
+  islas», arriba.
 - **Por qué suena música al embarcar y al llegar.** Se oye en muchos vuelos,
   pero no hay una fuente que diga el porqué: no se explica en la escena.

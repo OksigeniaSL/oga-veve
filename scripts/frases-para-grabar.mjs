@@ -1782,8 +1782,28 @@ const DE_LO_QUE_SE_RECONOCE = [
   ["inicio.mama.pasaje.mazo", "comandante", "el modo inicio, de pasaje: la comandante, ya en tierra, nombra el pueblo de la ladera: Villa de Mazo"],
   ["inicio.tripulacion.pasaje.cerca.musica", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante, por qué ponen música al bajar"],
 ];
+/**
+ * **Y la demostración con gracia, de vez en cuando, y el silbo de otras islas**
+ * (puntos 294 y 288, 24-10-2026): las frases de la entrada y la despedida de
+ * cada forma con gracia de la demostración, por la megafonía —con chispa,
+ * como todo lo del inicio que no es cara a cara—, y lo que Ara pregunta del
+ * silbo y contesta la tripulante en persona, sin chispa. Las instrucciones de
+ * la demostración no cambian: la gracia va solo en el adorno. Al final, que
+ * lo grabado no se renumera. Ver `src/flight/demostracion-con-gracia.ts` y la
+ * charla `tcpSilbo` en `src/flight/inicio-pasaje.ts`.
+ */
+const DE_LA_GRACIA_Y_EL_SILBO = [
+  ["inicio.tripulacion.pasaje.demo.gracia.ventanilla.entrada", "tripulacion-canarias", "el modo inicio, de pasaje: la demostración con gracia, la entrada: el paisaje puede esperar"],
+  ["inicio.tripulacion.pasaje.demo.gracia.ventanilla.despedida", "tripulacion-canarias", "el modo inicio, de pasaje: la demostración con gracia, la despedida: el paisaje seguía ahí"],
+  ["inicio.tripulacion.pasaje.demo.gracia.examen.entrada", "tripulacion-canarias", "el modo inicio, de pasaje: la demostración con gracia, la entrada: la tripulación hasta tiene examen cada año"],
+  ["inicio.tripulacion.pasaje.demo.gracia.examen.despedida", "tripulacion-canarias", "el modo inicio, de pasaje: la demostración con gracia, la despedida: la tarjeta lo cuenta otra vez, sin examen"],
+  ["inicio.tripulacion.pasaje.demo.gracia.primeraVez.entrada", "tripulacion-canarias", "el modo inicio, de pasaje: la demostración con gracia, la entrada: con cariño a quien vuela por primera vez"],
+  ["inicio.tripulacion.pasaje.demo.gracia.primeraVez.despedida", "tripulacion-canarias", "el modo inicio, de pasaje: la demostración con gracia, la despedida: quien vuela por primera vez ya lo sabe"],
+  ["inicio.ara.pasaje.silboOtras", "ara", "el modo inicio, de pasaje: Ara pregunta si en otras islas también se habla silbando"],
+  ["inicio.tripulacion.pasaje.cerca.silbo", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante, el silbo también en El Hierro, Tenerife y Gran Canaria; hoy, sobre todo en La Gomera"],
+];
 const LO_QUE_SE_VE = new Set(
-  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE].map(
+  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_LA_GRACIA_Y_EL_SILBO].map(
     ([k]) => k,
   ),
 );
@@ -1885,8 +1905,8 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
     total += texto.length;
   }
 }
-// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde y lo que se reconoce al llegar: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE` y `DE_LO_QUE_SE_RECONOCE`.
-for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE]) {
+// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde, lo que se reconoce al llegar, y la gracia y el silbo: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE`, `DE_LO_QUE_SE_RECONOCE` y `DE_LA_GRACIA_Y_EL_SILBO`.
+for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_LA_GRACIA_Y_EL_SILBO]) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });

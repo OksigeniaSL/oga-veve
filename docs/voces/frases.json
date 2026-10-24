@@ -18147,5 +18147,110 @@
     "idioma": "es-PY",
     "texto": "Para que el ratito de bajar sea un rato de calma, sin nervios. Y muchas compañías ponen música de su tierra: esta es de Canarias.",
     "para": "el modo inicio, de pasaje: la tripulante, por qué ponen música al bajar"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.demo.gracia.ventanilla.entrada",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Ya sé que por la ventanilla hay mejores vistas que nosotros, pero el paisaje no se va a ninguna parte: se lo prometo.",
+    "para": "el modo inicio, de pasaje: la demostración con gracia, la entrada: el paisaje puede esperar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.demo.gracia.ventanilla.despedida",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Y ahora sí, ya pueden volver a la ventanilla: el paisaje seguía ahí, como les prometí.",
+    "para": "el modo inicio, de pasaje: la demostración con gracia, la despedida: el paisaje seguía ahí",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.demo.gracia.examen.entrada",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Si ya se lo saben de memoria, repásenlo igual con nosotros: la tripulación lo repasa tanto que hasta tiene examen todos los años.",
+    "para": "el modo inicio, de pasaje: la demostración con gracia, la entrada: la tripulación hasta tiene examen cada año",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.demo.gracia.examen.despedida",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Y a quien quiera repasarlo, la tarjeta del bolsillo se lo vuelve a contar, con dibujos y sin examen.",
+    "para": "el modo inicio, de pasaje: la demostración con gracia, la despedida: la tarjeta lo cuenta otra vez, sin examen",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.demo.gracia.primeraVez.entrada",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Hoy hay a bordo quien vuela por primera vez, así que se lo vamos a contar con todo el cariño del mundo. Y a los demás, también.",
+    "para": "el modo inicio, de pasaje: la demostración con gracia, la entrada: con cariño a quien vuela por primera vez",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.demo.gracia.primeraVez.despedida",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Y quien vuela hoy por primera vez ya sabe lo mismo que quien ha volado cien veces. ¡Buen viaje a todos!",
+    "para": "el modo inicio, de pasaje: la demostración con gracia, la despedida: quien vuela por primera vez ya lo sabe",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.silboOtras",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¿Y en las otras islas también hablan silbando, o solamente en La Gomera?",
+    "para": "el modo inicio, de pasaje: Ara pregunta si en otras islas también se habla silbando",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.silbo",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "¡No solo allí! También se silbaba en El Hierro, en Tenerife, de donde venimos, y en Gran Canaria. Pero donde más se conserva hoy es en La Gomera: allí se aprende en la escuela.",
+    "para": "el modo inicio, de pasaje: la tripulante, el silbo también en El Hierro, Tenerife y Gran Canaria; hoy, sobre todo en La Gomera"
   }
 ]

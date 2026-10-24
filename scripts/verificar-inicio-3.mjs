@@ -175,6 +175,16 @@
  * lámina encima, con las tiras del suelo, y que lo de las máscaras y la
  * salida sobre el ala se pregunta en la revisión, antes del despegue. Y que
  * la comandante cuenta rodando por qué se sale hacia el este.
+ *
+ * **La demostración con gracia y el silbo** (puntos 294 y 288, 24-10-2026):
+ * el vuelo se hace con una de las formas con gracia de la demostración
+ * —`OGA_DEMOSTRACION=ventanilla|examen|primeraVez|sobria`, `examen` por
+ * defecto—, aunque sus frases esperen toma: en el juego no saldría hasta
+ * grabarlas. Se mira que la entrada va detrás de la intro y la despedida
+ * detrás del modo avión, sin pisar a nadie; que las instrucciones suenan
+ * igual, las mismas tomas grabadas en el mismo orden; y que si Ara contestó a
+ * la historia del silbo, pregunta por las otras islas en la bajada y la
+ * tripulante le contesta en persona detrás, y si no, que no se pregunta.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { chromium, devices } from "playwright";
@@ -186,6 +196,8 @@ const PUERTO = Number(process.env.OGA_PUERTO ?? 5397);
 const FOTOS = process.env.OGA_FOTOS ?? null;
 if (FOTOS) mkdirSync(FOTOS, { recursive: true });
 const VECES = Number(process.env.OGA_VECES ?? 12);
+/** La forma de la demostración con la que se vuela. Ver la cabecera. */
+const DEMOSTRACION = process.env.OGA_DEMOSTRACION ?? "examen";
 /** Si se pone el modo rápido ⏩ en cuanto sale. Ver la cabecera. */
 const ADELANTAR = process.env.OGA_ADELANTAR === "1";
 /** **Lo que tiene que adelantar la siesta, como poco**, km por la ruta: que al despertar se note. */
@@ -384,6 +396,8 @@ async function elVuelo() {
     await ctx.close();
     return;
   }
+  // La demostración de este vuelo, antes de que empiece: ver `DEMOSTRACION`.
+  await page.evaluate((f) => globalThis.__oga.demostracion?.(f === "sobria" ? "sobria" : f), DEMOSTRACION);
   // El primer toque, que deja sonar algo.
   await page.keyboard.press("ShiftLeft");
   await page.waitForFunction(() => globalThis.__oga.inicio().vista?.startsWith("pasaje"), null, { timeout: 60_000 }).catch(() => {});
@@ -1018,6 +1032,75 @@ async function elVuelo() {
     "la demostración de seguridad, entera, en su orden y antes de «sentados para el despegue»",
     demo.every((x) => x >= 0) && demo.every((x, k) => k === 0 || x > demo[k - 1]) && Math.max(...demo) < claves.indexOf("comandante.despegue"),
     demo.join(" "),
+  );
+  /*
+   * **La demostración con gracia** (punto 294): la entrada detrás de «un
+   * momento de atención», la despedida detrás de «gracias por su atención»,
+   * oídas enteras y sin pisar a nadie. Y lo de en medio, igual que siempre:
+   * las mismas tomas grabadas —las instrucciones no cambian— en su orden.
+   */
+  const GRACIA_DE = {
+    ventanilla: "ventanilla",
+    examen: "examen",
+    primeraVez: "primeraVez",
+  };
+  const conGracia = GRACIA_DE[DEMOSTRACION] ?? null;
+  const loQuePisa = (d) =>
+    registro.filter((x) => x !== d && x.desde < (d.hasta ?? Infinity) - 1e-6 && (x.hasta ?? Infinity) > d.desde + 1e-6).map((x) => x.clave);
+  const deGracia = registro.filter((d) => d.clave.startsWith("inicio.tripulacion.pasaje.demo.gracia."));
+  if (conGracia) {
+    const entrada = `inicio.tripulacion.pasaje.demo.gracia.${conGracia}.entrada`;
+    const despedida = `inicio.tripulacion.pasaje.demo.gracia.${conGracia}.despedida`;
+    const pisadasDeLaGracia = deGracia.flatMap(loQuePisa);
+    comprobar(
+      `la demostración con gracia (${conGracia}) sale sin pisar a nadie: la entrada detrás de la intro y la despedida detrás del modo avión`,
+      deGracia.map((d) => d.clave).join() === [entrada, despedida].join() &&
+        claves.indexOf(entrada) === claves.indexOf("inicio.tripulacion.pasaje.demo.intro") + 1 &&
+        claves.indexOf(despedida) === claves.indexOf("inicio.tripulacion.pasaje.demo.aparatos") + 1 &&
+        deGracia.every((d) => (d.como === "sono" || d.como === "muda") && !d.cortada) &&
+        claves.indexOf(despedida) < claves.indexOf("comandante.despegue") &&
+        pisadasDeLaGracia.length === 0,
+      `${deGracia.map((d) => `${d.clave.split(".").slice(-2).join(".")} a los ${d.desde.toFixed(0)} s (${d.como})`).join(" · ") || "no se dijo"} · pisa: ${pisadasDeLaGracia.join(", ") || "nada"}`,
+    );
+  } else {
+    comprobar("la demostración de siempre, sin gracia, si así se pide", deGracia.length === 0, deGracia.map((d) => d.clave).join(", ") || "sin gracia");
+  }
+  const INSTRUCCIONES = ["intro", "cinturon", "salidas", "mascaras", "chaleco", "tarjeta", "aparatos"].map((x) => `inicio.tripulacion.pasaje.demo.${x}`);
+  const instrucciones = INSTRUCCIONES.map((c) => registro.find((d) => d.clave === c));
+  comprobar(
+    "las instrucciones de seguridad suenan igual con la gracia: las mismas tomas grabadas, enteras y en su orden",
+    instrucciones.every((d) => d && GRABADAS.has(d.clave) && d.como === "sono" && !d.cortada) &&
+      instrucciones.every((d, k) => k === 0 || d.desde > instrucciones[k - 1].desde),
+    instrucciones.map((d, k) => `${INSTRUCCIONES[k].split(".").pop()} ${d ? `${d.como}${GRABADAS.has(d.clave) ? "" : " sin toma"}` : "no"}`).join(" · "),
+  );
+  /*
+   * **El silbo, también en otras islas** (punto 288): si Ara contestó a la
+   * historia de La Gomera, pregunta después si se silba en más islas y la
+   * tripulante le contesta detrás, en persona, en la bajada y antes de
+   * preparar la cabina; sin la historia, no se pregunta.
+   */
+  const aLaHistoria = registro.find((d) => d.clave === "inicio.ara.pasaje.garajonay" && (d.como === "sono" || d.como === "muda"));
+  const preguntaDelSilbo = registro.filter((d) => d.clave === "inicio.ara.pasaje.silboOtras");
+  const respuestaDelSilbo = registro.filter((d) => d.clave === "inicio.tripulacion.pasaje.cerca.silbo");
+  const iPregunta = registro.indexOf(preguntaDelSilbo[0]);
+  const aproximacionEn = registro.find((d) => d.clave === "comandante.aproximacion")?.desde ?? Infinity;
+  const pisadasDelSilbo = [...preguntaDelSilbo, ...respuestaDelSilbo].flatMap(loQuePisa);
+  const tramoDelSilbo = preguntaDelSilbo[0] ? ([...tramos].reverse().find((x) => x.t <= preguntaDelSilbo[0].desde)?.tramo ?? "?") : "—";
+  comprobar(
+    "lo del silbo, en su sitio: detrás de la historia de La Gomera y de las islas de la tripulante, Ara pregunta por las otras islas y ella contesta en persona, sin pisar a nadie",
+    aLaHistoria
+      ? preguntaDelSilbo.length === 1 &&
+          respuestaDelSilbo.length === 1 &&
+          preguntaDelSilbo[0].desde > aLaHistoria.desde &&
+          preguntaDelSilbo[0].desde > (registro.find((d) => d.clave === "inicio.ara.pasaje.islas")?.desde ?? Infinity) &&
+          registro[iPregunta + 1] === respuestaDelSilbo[0] &&
+          [...preguntaDelSilbo, ...respuestaDelSilbo].every((d) => (d.como === "sono" || d.como === "muda") && !d.cortada) &&
+          respuestaDelSilbo[0].desde < aproximacionEn &&
+          pisadasDelSilbo.length === 0
+      : preguntaDelSilbo.length === 0 && respuestaDelSilbo.length === 0,
+    aLaHistoria
+      ? `historia contestada a los ${aLaHistoria.desde.toFixed(0)} s · pregunta ${preguntaDelSilbo.map((d) => `a los ${d.desde.toFixed(0)} s (${d.como}, ${tramoDelSilbo})`).join(", ") || "no"} · respuesta ${respuestaDelSilbo.map((d) => `a los ${d.desde.toFixed(0)} s (${d.como})`).join(", ") || "no"} · aproximación a los ${aproximacionEn.toFixed(0)} s · pisa: ${pisadasDelSilbo.join(", ") || "nada"}`
+      : `sin la historia del silbo, no se pregunta: ${preguntaDelSilbo.length + respuestaDelSilbo.length} dichas`,
   );
   /*
    * **Las salidas, las de este avión** (punto 312): lo que dijo el subtítulo de
