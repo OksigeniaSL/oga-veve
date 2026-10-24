@@ -589,6 +589,22 @@ export class KitDeViaje {
     };
   }
 
+  /**
+   * **El nivel de Armá tu avión por el que se va**, desde 0: el dibujo lo
+   * guarda en el dispositivo —solo el número— para seguir por ahí en el
+   * próximo vuelo. Si no, el kit es nuevo en cada vuelo y siempre se empieza
+   * por la avioneta: el reactor y el cuatrimotor no los vería casi nadie.
+   */
+  get nivelDeArmar(): number {
+    return this.nivelDelAvion;
+  }
+
+  /** Sigue por el nivel guardado, si es uno de verdad y todavía no se está jugando. */
+  seguirArmandoDesde(n: unknown): void {
+    if (typeof n !== "number" || !Number.isInteger(n) || n < 0 || n >= NIVELES.length || this.actual) return;
+    this.nivelDelAvion = n;
+  }
+
   /** Si ya lo dio la tripulante. */
   get esDado(): boolean {
     return this.dado;

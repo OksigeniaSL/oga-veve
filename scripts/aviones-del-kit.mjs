@@ -8,7 +8,7 @@
  * dibujan: se miden. Este guion abre los modelos de la flota
  * —`public/assets/aeronaves/jaz-*.glb`, los que vuela el juego, hechos con
  * `modelos/*.py` a partir de las medidas de su ficha— y saca de cada parte su
- * contorno, en una vista de tres cuartos desde arriba y por el lado derecho:
+ * contorno, en una vista de tres cuartos por delante, desde poco por encima y por la derecha:
  * la que deja ver a la vez las dos alas, el motor debajo o encima del ala, el
  * tren y la forma de la cola.
  *
@@ -127,16 +127,28 @@ const aLYU = ([x, y, z]) => [-z, x, y];
 // ── La vista ─────────────────────────────────────────────────────────────
 
 /**
- * **Tres cuartos desde arriba, por la derecha**: el morro a la derecha de la
- * hoja, el ala derecha delante y abajo, la izquierda detrás y arriba. Se mira
- * desde treinta y dos grados por encima del ala, que es lo que deja ver el
- * motor debajo de ella y la cola en T a la vez; y la profundidad corre un
- * poco hacia el morro, para que la punta del ala de atrás asome.
+ * **Tres cuartos por delante y desde arriba, por la derecha**, como se ve un
+ * avión desde la terminal: el morro a la derecha de la hoja, el ala derecha
+ * delante, hacia abajo y hacia la cola, y la izquierda detrás, asomando por
+ * encima del fuselaje hacia el morro, que así se lee como el ala del otro lado
+ * y no como una segunda deriva. Desde poca altura —el ala se ve casi de canto—
+ * el motor y el tren cuelgan por debajo de ella, sin quedar pintados encima;
+ * y la cola en T se ve como una T.
+ *
+ * Una vista por clase de avión (Enrique, 24-10-2026): en los reactores, de ala
+ * en flecha, la profundidad corre más hacia el morro, que si no el ala de
+ * atrás se queda de pie como una chimenea. `elev`, grados por encima del ala;
+ * `kx`, lo que corre cada metro de profundidad a lo largo, negativo hacia el
+ * morro del ala de atrás.
  */
-const ELEVACION = (32 * Math.PI) / 180;
-const SE = Math.sin(ELEVACION);
-const CE = Math.cos(ELEVACION);
-const KX = 0.06;
+let SE = 0;
+let CE = 1;
+let KX = 0;
+function ponerVista(elev, kx) {
+  SE = Math.sin((elev * Math.PI) / 180);
+  CE = Math.cos((elev * Math.PI) / 180);
+  KX = kx;
+}
 const ver = ([L, Y, U]) => [L + KX * Y, -U * CE + Y * SE];
 /** Lo cerca que queda de quien mira: lo que está más cerca tapa lo de detrás. */
 const cerca = ([, Y, U]) => Y * CE + U * SE;
@@ -235,12 +247,13 @@ const caja = (pts) => {
 };
 
 /**
- * **El tren, por encima de todo.** Desde arriba, el ala baja tapa casi entero
- * el tren principal, y una pieza que se pone y desaparece no se entiende: se
- * dibuja encima, como en cualquier lámina de un avión con el tren fuera. Su
- * sitio es el de verdad; lo que se simplifica es solo qué tapa a qué.
+ * **Lo que el tren se adelanta al tapar**, en metros de cercanía: nada. Desde
+ * treinta y dos grados el ala baja lo tapaba y se dibujó encima, y quedaba
+ * pintado sobre el ala como si estuviera posado en ella (Enrique, 24-10). Con
+ * la vista baja cuelga por debajo del ala y se ve en su sitio. Lo usa todavía
+ * el ala alta, que va encima de él.
  */
-const POR_ENCIMA = 20;
+const POR_ENCIMA = 0;
 
 /** Las ruedas de una pata: tantas como quepan en lo largo, de su radio. */
 function ruedas(pts) {
@@ -295,17 +308,18 @@ function helice(pts) {
  * izquierda, la de detrás).
  */
 const TIPOS = [
-  { id: "jaz-20", corteMorro: -1.7 },
-  { id: "jaz-25", corteMorro: -3.1 },
-  { id: "jaz-40" },
-  { id: "jaz-60" },
-  { id: "jaz-90" },
-  { id: "jaz-120" },
+  { id: "jaz-20", corteMorro: -1.7, elev: 20, kx: -0.45 },
+  { id: "jaz-25", corteMorro: -3.1, elev: 20, kx: -0.45 },
+  { id: "jaz-40", elev: 20, kx: -0.45 },
+  { id: "jaz-60", elev: 20, kx: -0.45 },
+  { id: "jaz-90", elev: 16, kx: -0.9 },
+  { id: "jaz-120", elev: 16, kx: -0.9 },
 ];
 
 const r1 = (n) => Math.round(n * 10) / 10;
 
 function tipo(t) {
+  ponerVista(t.elev, t.kx);
   const v = vertices(`public/assets/aeronaves/${t.id}.glb`);
   const de = (nombre) => (v.get(nombre) ?? []).map(aLYU);
   const hay = (nombre) => v.has(nombre);
@@ -519,7 +533,7 @@ function tipo(t) {
   ]);
 
   // Las ventanillas, del lado de acá: una fila a media altura de la cabina.
-  return { id: t.id, partes, luces, morro, fus: caja(fus) };
+  return { id: t.id, vista: { se: Math.round(SE * 1e4) / 1e4, ce: Math.round(CE * 1e4) / 1e4, kx: KX }, partes, luces, morro, fus: caja(fus) };
 }
 
 // ── A la hoja ────────────────────────────────────────────────────────────
@@ -602,6 +616,7 @@ function aLaHoja(a) {
   });
   return {
     id: a.id,
+    vista: a.vista,
     escala: r1(s),
     partes,
     luces: {
@@ -654,6 +669,8 @@ export type ParteDelModelo =
 
 export interface AvionDelModelo {
   readonly id: string;
+  /** Su vista: lo que baja en la hoja un metro hacia quien mira, lo que se aplasta la altura y lo que corre a lo largo. */
+  readonly vista: { readonly se: number; readonly ce: number; readonly kx: number };
   /** Puntos de la hoja por metro. */
   readonly escala: number;
   readonly partes: readonly ParteDelModelo[];
@@ -667,9 +684,6 @@ export interface AvionDelModelo {
 writeFileSync(
   SALIDA,
   `${cabecera}
-/** La vista: lo que baja en la hoja un metro hacia quien mira, lo que se aplasta la altura y lo que corre hacia el morro. */
-export const VISTA = { se: ${SE.toFixed(4)}, ce: ${CE.toFixed(4)}, kx: ${KX} } as const;
-
 export const AVIONES_DEL_MODELO: Readonly<Record<string, AvionDelModelo>> = ${JSON.stringify(Object.fromEntries(aviones.map((a) => [a.id, a])))};\n`,
 );
 console.log(

@@ -17,8 +17,9 @@
  *
  * Los aviones de Armá tu avión son los de la flota, medidos en sus modelos
  * —ver `aviones-del-kit.ts`, que es generado— y vistos de tres cuartos desde
- * arriba, por la derecha: la vista que deja ver a la vez las dos alas, el
- * motor debajo o encima del ala, el tren y la forma de la cola. Cada pieza
+ * delante y desde poco por encima, por la derecha: la vista que deja ver a
+ * la vez las dos alas, el motor debajo o encima del ala, el tren y la forma
+ * de la cola. Cada pieza
  * espera en un hueco con su forma exacta, en su sitio de verdad, y en la
  * bandeja se ve más grande o más chica para que quepa y se agarre con el dedo:
  * al levantarla toma su tamaño, el de su hueco. Las luces de navegación van
@@ -51,7 +52,11 @@ import {
   type PiezaDelAvion,
   type Sitio,
 } from "../flight/kit-de-viaje";
-import { AVIONES_DEL_MODELO, VISTA, type AvionDelModelo, type ParteDelModelo, type PiezaDelModelo } from "./aviones-del-kit";
+import { AVIONES_DEL_MODELO, type AvionDelModelo, type ParteDelModelo, type PiezaDelModelo } from "./aviones-del-kit";
+import { leerProgreso, ponerProgreso } from "../datos/guardado";
+
+/** Dónde se guarda el nivel de Armá tu avión: solo el número, en el progreso del perfil. */
+const NIVEL_GUARDADO = "kitNivelDelAvion";
 
 /** Los colores: los de la casa y los de los dibujos de la ventanita. Ver `LIBREA` en `aircraft.ts`. */
 const C = {
@@ -256,9 +261,9 @@ const lampara = (l: Luz, r = 13): string =>
  * 110 grados a la izquierda, la verde igual a la derecha, la blanca 140 hacia
  * atrás. Vistas de tres cuartos, como el avión.
  */
-function abanico(l: Luz, [x, y]: readonly [number, number], r: number): string {
+function abanico(l: Luz, [x, y]: readonly [number, number], r: number, vista: AvionDelModelo["vista"]): string {
   const delante = [1, 0] as const;
-  const izquierda = [-VISTA.kx, -VISTA.se] as const;
+  const izquierda = [-vista.kx, -vista.se] as const;
   const [a0, a1] = l === "roja" ? [0, 110] : l === "verde" ? [-110, 0] : [110, 250];
   const pts: string[] = [`${n(x)} ${n(y)}`];
   for (let i = 0; i <= 16; i++) {
@@ -341,7 +346,7 @@ function hojaDelAvion(i: number): string {
     // El sitio en un grupo y el latido en otro: el `transform` del CSS pisaría el del sitio.
     return `<g transform="translate(${n(x)} ${n(y)})"><g class="kit-luz" data-luz="${l}">${lampara(l, 6)}</g></g>`;
   }).join("");
-  const abanicos = LUCES.map((l) => abanico(l, avion.luces[l], 64)).join("");
+  const abanicos = LUCES.map((l) => abanico(l, avion.luces[l], 64, avion.vista)).join("");
   // La sombra en la pista, debajo del tren: se queda cuando el avión se va.
   const caja = cajaDe(avion.partes);
   return `<svg class="kit-hoja kit-hoja--avion" data-tipo="${nivel.tipo}" viewBox="0 0 ${ANCHO} ${ALTO}" xmlns="${SVG}" aria-label="${t("inicio.kit.avion")}">
@@ -434,6 +439,8 @@ export class PantallaDelKit {
   private montado: "elegir" | JuegoDelAvion | JuegoDeLaLuz | null = null;
   /** El nivel del avión montado: al despegar, se monta el siguiente. */
   private nivelMontado = -1;
+  /** El nivel que hay guardado en el dispositivo: se escribe solo al cambiar. */
+  private nivelGuardado = 0;
   private piezas: readonly PiezaDibujada[] = [];
   /** Lo que pinta la luz verde, mientras está montada. */
   private pintorDeLaLuz: PintorDeLaLuz | null = null;
@@ -476,6 +483,9 @@ export class PantallaDelKit {
     this.atras = raiz.querySelector<HTMLButtonElement>(".kit__atras")!;
     this.pausa = raiz.querySelector<HTMLElement>(".kit__pausa")!;
     raiz.hidden = false;
+    // Por donde se iba el otro día: solo el número del nivel, ningún dato de quien juega.
+    kit.seguirArmandoDesde(leerProgreso(NIVEL_GUARDADO));
+    this.nivelGuardado = kit.nivelDeArmar;
     raiz.addEventListener("click", this.alTocar);
     this.hoja.addEventListener("pointerdown", this.alApretar);
     this.hoja.addEventListener("pointermove", this.alMover);
@@ -515,6 +525,10 @@ export class PantallaDelKit {
    */
   pintar(suena: string | null): void {
     const e = this.kit.estado;
+    if (this.kit.nivelDeArmar !== this.nivelGuardado) {
+      this.nivelGuardado = this.kit.nivelDeArmar;
+      ponerProgreso(NIVEL_GUARDADO, this.nivelGuardado);
+    }
     const abierto = e.abierto;
     this.boton.hidden = !this.kit.aMano || abierto;
     this.boton.classList.toggle("kit__boton--nuevo", !e.visto);
