@@ -81,6 +81,7 @@ import {
   bandaSinMotor,
   pistaDelPlaneo,
   planeoDe,
+  queExplicaElSinkRate,
   queSeDiceSinMotor,
 } from "./flight/sin-motor";
 import { LaOtraCabecera, porQueCabecera } from "./flight/la-otra-cabecera";
@@ -26825,11 +26826,10 @@ export class Game {
       return;
     }
     if (ahora === "sink rate") this.sinkRateExplicado = true;
+    // Y sin motor, lento no es gas: ver `queExplicaElSinkRate`.
     const clave =
       ahora === "sink rate"
-        ? this.bandaDeAhora === "lento"
-          ? "vuelo.lentoYBajo"
-          : "vuelo.bajasRapido"
+        ? queExplicaElSinkRate(this.bandaDeAhora, this.sinMotor)
         : "vuelo.muyInclinado";
     this.cantar(ahora, t(clave), clave, "normal");
   }

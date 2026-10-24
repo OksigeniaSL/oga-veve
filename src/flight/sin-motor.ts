@@ -252,3 +252,27 @@ export function queSeDiceSinMotor(
   if (b.banda === "rapido" && b.de === "planeo") return "vuelo.planeoRapido";
   return null;
 }
+
+/**
+ * **Lo que explica la instructora detrás de *sink rate***, con motor o sin él.
+ *
+ * La caja dice *sink rate* igual en los dos casos —mide la bajada, no el
+ * porqué— y quien explica qué hacer es la instructora. Con velocidad de sobra
+ * se corta levantando un poco la nariz; yendo lento, lo que corta la bajada es
+ * el gas. **Y sin motor no hay gas**: lento, lo que la corta es bajar un poco
+ * la nariz y recuperar la de planeo, que en un ala lenta es la que menos baja.
+ *
+ * La explicación estaba escrita en `cantarLaActitud` sin mirar el motor, y en
+ * el banco del planeo, con el JAZ 90 sin combustible en la final de Gran
+ * Canaria, *sink rate* salió explicado con «Venís lento: metéle gas» a un
+ * avión que no tiene: lo mismo que el banco existe para que no pase —«¿cómo
+ * es que la instructora me dice que acelere?»—. La rama de la velocidad ya lo
+ * sabía; ver `queSeDiceSinMotor`.
+ */
+export function queExplicaElSinkRate(
+  banda: BandaDeVelocidad,
+  sinMotor: boolean,
+): "vuelo.lentoYBajo" | "vuelo.planeoLento" | "vuelo.bajasRapido" {
+  if (banda !== "lento") return "vuelo.bajasRapido";
+  return sinMotor ? "vuelo.planeoLento" : "vuelo.lentoYBajo";
+}
