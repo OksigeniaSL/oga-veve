@@ -79,6 +79,14 @@
       "ms": 2617,
       "h": "710bea479d"
     },
+    "inicio.ara.pasaje.aerofrenos": {
+      "ms": 8607,
+      "h": "752b427299"
+    },
+    "inicio.ara.pasaje.aerofrenosPorque": {
+      "ms": 7207,
+      "h": "61ea324a60"
+    },
     "inicio.ara.pasaje.altoRapido": {
       "ms": 5407,
       "h": "f2866a91c6"
@@ -202,6 +210,10 @@
     "inicio.ara.pasaje.giroFinal": {
       "ms": 5107,
       "h": "55329f9459"
+    },
+    "inicio.ara.pasaje.golpecito": {
+      "ms": 7807,
+      "h": "f1f9b5b442"
     },
     "inicio.ara.pasaje.isla": {
       "ms": 4107,
@@ -638,6 +650,12 @@
     "inicio.ara.nivelar": [
       "inicio.ara.nivelar"
     ],
+    "inicio.ara.pasaje.aerofrenos": [
+      "inicio.ara.pasaje.aerofrenos"
+    ],
+    "inicio.ara.pasaje.aerofrenosPorque": [
+      "inicio.ara.pasaje.aerofrenosPorque"
+    ],
     "inicio.ara.pasaje.altoRapido": [
       "inicio.ara.pasaje.altoRapido"
     ],
@@ -730,6 +748,9 @@
     ],
     "inicio.ara.pasaje.giroFinal": [
       "inicio.ara.pasaje.giroFinal"
+    ],
+    "inicio.ara.pasaje.golpecito": [
+      "inicio.ara.pasaje.golpecito"
     ],
     "inicio.ara.pasaje.isla": [
       "inicio.ara.pasaje.isla"

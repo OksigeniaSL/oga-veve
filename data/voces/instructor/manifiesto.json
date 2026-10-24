@@ -1316,8 +1316,8 @@
       "h": "a1ecdf1f92"
     },
     "vuelo.autorizadoAfis": {
-      "ms": 2281,
-      "h": "6ad5309c37"
+      "ms": 2075,
+      "h": "7a9a209ef8"
     },
     "vuelo.autorizadoSinTorre": {
       "ms": 1785,
@@ -2322,6 +2322,22 @@
     "vuelo.terrenoSube": {
       "ms": 1651,
       "h": "615532abce"
+    },
+    "vuelo.tocasteDuro": {
+      "ms": 4507,
+      "h": "83c0ca838a"
+    },
+    "vuelo.tocasteDuroFacil": {
+      "ms": 6207,
+      "h": "ac414ee3c0"
+    },
+    "vuelo.tocasteLargo": {
+      "ms": 5907,
+      "h": "fae78f8199"
+    },
+    "vuelo.tocasteLargoFacil": {
+      "ms": 6407,
+      "h": "525efc2bf2"
     },
     "vuelo.tomaLarga": {
       "ms": 2575,
@@ -4377,6 +4393,18 @@
     ],
     "ejercicio.tormenta.asiVa": [
       "ejercicio.tormenta.asiVa"
+    ],
+    "vuelo.tocasteLargo": [
+      "vuelo.tocasteLargo"
+    ],
+    "vuelo.tocasteDuro": [
+      "vuelo.tocasteDuro"
+    ],
+    "vuelo.tocasteLargoFacil": [
+      "vuelo.tocasteLargoFacil"
+    ],
+    "vuelo.tocasteDuroFacil": [
+      "vuelo.tocasteDuroFacil"
     ]
   }
 }
