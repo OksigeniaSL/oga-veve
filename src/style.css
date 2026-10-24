@@ -4753,6 +4753,26 @@ button.motor__tecla::after {
   box-shadow: 0 -3px 10px rgb(0 0 0 / 0.45);
 }
 
+/*
+ * **Y de alto, lo que pide un dedo, aunque se vea de treinta y cuatro.**
+ *
+ * La barra va de lado a lado del cuadro, pero de alto medía treinta y cuatro:
+ * menos que el tacto de la casa, y en una tableta o un portátil táctil de más
+ * de 640 px de alto —el aula— no hay regla de teléfono que la agrande. Hacerla
+ * más alta de verdad le come cabina a la vista, así que crece **el objetivo
+ * y no el dibujo**, como las teclas del motor: una franja invisible por
+ * encima, hasta el tacto entero. Hacia arriba y no hacia abajo, que debajo
+ * están los relojes y sus botones.
+ */
+.cuadro__tirador::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: max(100%, var(--tacto, 48px));
+}
+
 .cuadro__tirador svg {
   width: 26px;
   height: 26px;
@@ -12046,6 +12066,16 @@ button.motor__tecla::after {
   .hud .cuadro__tirador svg {
     width: calc(22px / var(--escala, 1));
     height: calc(22px / var(--escala, 1));
+  }
+
+  /*
+   * Y aquí, sin la franja invisible de encima: esta pestaña ya mide cuarenta
+   * y cuatro de pantalla, y la franja se quedaba con los toques de las losas
+   * y de las teclas del teléfono, que viven justo al lado. Ver
+   * `.cuadro__tirador::after` y `verificar-carteles.mjs`.
+   */
+  .hud .cuadro__tirador::after {
+    content: none;
   }
 
   /*

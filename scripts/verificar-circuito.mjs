@@ -24,7 +24,8 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
-const PUERTO = 5294;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5294);
 
 /** Los aeródromos con circuito, y el avión con el que se vuela cada uno. */
 const TODOS = [

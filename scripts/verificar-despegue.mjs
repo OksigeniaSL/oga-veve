@@ -46,7 +46,8 @@ const VIENTO = process.argv[4] ?? "";
  * lo único que de verdad puede salir mal, que es el grande en una pista corta.
  */
 const AVION = process.argv[5] ?? "jaz-20";
-const PUERTO = 5281;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5281);
 
 const server = await createServer({
   root: process.cwd(),

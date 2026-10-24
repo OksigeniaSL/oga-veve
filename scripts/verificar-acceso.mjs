@@ -54,7 +54,8 @@ const ACCIONES = new Set(
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 /** Y una misión de ese escenario, para poder abrir su panel. Ver más abajo. */
 const MISION = process.argv[3] ?? "a-anaga";
-const PUERTO = 5287;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5287);
 
 /** Los dos mundos sobre los que flota el HUD, y entre los que hay que leerlo. */
 const EXTREMOS = {
@@ -769,6 +770,14 @@ if (ajustesAbiertos) {
   comprobar("ajustes: se abren desde la pausa", false, "no se abrieron");
 }
 
+/*
+ * **Y cada juego se cierra antes de abrir el siguiente.** Una pestaña con el
+ * juego cargado pasa del gigabyte y medio, y este banco abría tres sin cerrar
+ * ninguna: con el tope de memoria con el que se corren los bancos, el sistema
+ * mataba el navegador a medio camino y el parte no salía.
+ */
+await page.close();
+
 // ── El aparato táctil, que es el del aula ────────────────────────────────
 
 const tableta = await navegador.newPage({
@@ -784,6 +793,7 @@ await tableta.goto(
 );
 await tableta.waitForTimeout(12000);
 peores = peores.concat(await auditar(tableta, "tableta"));
+await tableta.close();
 
 // ── Los pilotos, que es lo primero que se ve ─────────────────────────────
 
@@ -846,7 +856,14 @@ const balanceo = await quieta.evaluate(async () => {
     c.brakes = 0;
   });
   const antes = o.estado().position.clone?.() ?? { ...o.estado().position };
+  // Lo más deprisa que llega a ir, para saber si el que no rueda es el avión
+  // o es el tope. Ver abajo, «que el avión se haya movido».
+  let vMax = 0;
+  const vigilar = setInterval(() => {
+    vMax = Math.max(vMax, o.estado().groundSpeed ?? 0);
+  }, 100);
   await new Promise((r) => setTimeout(r, 6000));
+  clearInterval(vigilar);
   if (!o.ojoDeCamara) return null;
   const ahora = o.estado().position;
   const rodado = Math.hypot(ahora.x - antes.x, ahora.z - antes.z);
@@ -867,7 +884,7 @@ const balanceo = await quieta.evaluate(async () => {
       Math.abs(alturas[i] - (alturas[i - 2] + alturas[i - 1]) / 2),
     );
   }
-  return { peor, rodado };
+  return { peor, rodado, vMax, viraje: o.avion().rodaje.viraje };
 });
 /*
  * **Primero, que el avión se haya movido.**
@@ -876,12 +893,25 @@ const balanceo = await quieta.evaluate(async () => {
  * pasa siempre y con más motivo cuanto más roto esté el juego. Es lo que
  * pasaba: el mando iba mal escrito, el avión no rodaba y el banco daba verde.
  */
+/*
+ * **Y se mide contra lo que rueda este avión, no contra un número para todos.**
+ *
+ * Pedía treinta metros, que eran los seis segundos al tope de rodaje de
+ * entonces —cinco metros por segundo, el mismo para todos—. Desde que cada
+ * avión rueda a lo suyo —ver `flight/velocidades-en-tierra.ts`—, una avioneta
+ * que sale del puesto girando va a ocho nudos, cuatro metros por segundo, y
+ * en seis segundos arrancando de parado hace quince: el banco lo leía como
+ * «no rueda». Lo que protege esto es que el avión **se mueva**, y un avión
+ * que se mueve hace al menos la mitad de lo que haría a su paso de viraje.
+ */
+const rodarAlMenos = balanceo ? (balanceo.viraje * 6) / 2 : Infinity;
 comprobar(
   "y el avión rueda de verdad mientras se mide",
-  balanceo !== null && balanceo.rodado > 30,
+  balanceo !== null && balanceo.rodado > rodarAlMenos,
   balanceo === null
     ? "no se pudo mirar"
-    : `${balanceo.rodado.toFixed(0)} m en seis segundos`,
+    : `${balanceo.rodado.toFixed(0)} m en seis segundos, de ${rodarAlMenos.toFixed(0)} pedidos` +
+        ` · a ${balanceo.vMax.toFixed(1)} m/s como mucho, y vira a ${balanceo.viraje.toFixed(1)}`,
 );
 comprobar(
   "con movimiento reducido la cámara no se balancea (2.3.3)",

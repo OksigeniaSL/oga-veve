@@ -11,7 +11,8 @@ import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
 const D = process.argv[2] ?? "/tmp";
-const PUERTO = 5199;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5199);
 const server = await createServer({
   root: process.cwd(),
   server: { port: PUERTO, hmr: false },
@@ -47,6 +48,20 @@ for (const [ancho, alto, nombre] of [
     locale: "es-PY",
   });
   page.on("pageerror", (e) => console.log("ERROR:", e.message));
+  /*
+   * **Y quien vuelve, no quien vuela por primera vez.**
+   *
+   * Un piloto que no ha despegado nunca no pasa por el hangar: desde que el
+   * modo inicio tiene su voz grabada, la primera experiencia es esa —ver
+   * «quien vuela por primera vez» en `main.ts`— y el banco se quedaba un
+   * minuto esperando unas fichas que no iban a salir. El hangar es de quien
+   * ya ha volado, así que el perfil nace con un despegue en su cuaderno, por
+   * la misma vía por la que entran las claves sueltas de antes del guardado.
+   */
+  await page.addInitScript(() => {
+    if (localStorage.getItem("oga-veve:guardado") === null)
+      localStorage.setItem("oga-veve:cuaderno", JSON.stringify({ despegues: 1, segundos: 600 }));
+  });
   await page.goto(`${BASE}/`);
   /*
    * **Y antes del hangar hay que decir quién vuela.**

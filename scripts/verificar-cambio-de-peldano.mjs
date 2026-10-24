@@ -26,7 +26,8 @@ import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
 const AVIONES = (process.argv[2] ?? "jaz-120,jaz-20").split(",");
-const PUERTO = 5352;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5352);
 const ALTO = { "jaz-120": 20000, "jaz-90": 20000, "jaz-60": 12000, "jaz-40": 8000, "jaz-20": 6000 };
 
 const server = await createServer({

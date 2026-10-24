@@ -72,7 +72,8 @@ const CON_GPU = process.env.OGA_GPU === "1";
  * máquina de nadie.
  */
 const LENTO = Number(process.env.OGA_LENTO ?? 0) || 0;
-const PUERTO = 5297;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5297);
 
 const server = await createServer({
   root: process.cwd(),

@@ -69,7 +69,8 @@ if (!Number.isFinite(VECES) || VECES <= 0 || !/^jaz-\d+$/.test(AVION)) {
   );
   process.exit(2);
 }
-const PUERTO = 5297;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5297);
 
 /**
  * Los teléfonos, apaisados: el Pixel 7 y el iPhone 14 de la lista de

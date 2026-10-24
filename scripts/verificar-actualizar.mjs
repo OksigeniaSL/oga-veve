@@ -31,7 +31,8 @@ import { createServer } from "node:http";
 import { extname, join, normalize } from "node:path";
 import { chromium, devices } from "playwright";
 
-const PUERTO = 5323;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5323);
 
 if (!process.env.OGA_SIN_COMPILAR) {
   process.stdout.write("\n  compilando…\n");

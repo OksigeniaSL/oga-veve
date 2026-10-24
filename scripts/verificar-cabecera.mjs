@@ -24,7 +24,8 @@ import { baseDe } from "./servidor.mjs";
 const ESCENARIO = process.argv[2] ?? "gran-canaria";
 const TRAMO = process.argv[3] ?? "taguato";
 const AVION = process.argv[4] ?? "jaz-90";
-const PUERTO = 5333;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5333);
 
 const server = await createServer({
   root: process.cwd(),

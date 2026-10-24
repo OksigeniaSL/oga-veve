@@ -25,7 +25,8 @@ import { baseDe } from "./servidor.mjs";
 const ESCENARIO = process.argv[2] ?? "pettirossi";
 const TRAMO = process.argv[3] ?? "taguato";
 const AVION = process.argv[4] ?? "jaz-90";
-const PUERTO = 5337;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5337);
 /** El crucero de cada presurizado, m, y su verdadera allí, m/s: los de su ficha. */
 const CRUCERO = { "jaz-60": [7600, 90], "jaz-90": [11000, 220], "jaz-120": [10700, 230] };
 const [ALTO, VERDADERA] = CRUCERO[AVION] ?? CRUCERO["jaz-90"];
@@ -70,17 +71,39 @@ try {
       c.throttle = 0.55;
       c.elevator = 0;
     });
-    await espera(3000);
+    /*
+     * **Y se deja que el crucero sea crucero antes de quitarle el aire.**
+     *
+     * Se despresurizaba a los tres segundos de aparecer arriba, y el avión
+     * venía del puesto: el juego todavía estaba despachando por la radio la
+     * salida que acababa de «hacer» —autorización, contacto con salidas,
+     * subir a nivel— y el MAYDAY caía en medio. Medido con la traza: la
+     * radio llena hasta los treinta segundos, y detrás de ella la megafonía
+     * de las máscaras caducaba esperando y el «primero la tuya» no cabía en
+     * la cola de la instructora. Una cabina se despresuriza en un crucero ya
+     * establecido, con la frecuencia tranquila: se espera a que lo esté.
+     */
+    await espera(28000);
     const antes = o.presurizacion();
     const dichoAntes = o.dichoTodo();
     const cuantos = Object.fromEntries(Object.entries(dichoAntes).map(([q, l]) => [q, l.length]));
     const pudo = o.despresurizar();
     o.volarElDescenso();
-    o.acelerar?.(8);
+    /*
+     * **A ×2, y no a ×8.** El reloj acelerado comprime la bajada pero no lo
+     * que se dice: a ×8, los tres minutos y pico de descenso eran veintiocho
+     * segundos de pared, y en ese rato no cabían la megafonía y la instructora
+     * detrás de la caja y de la radio del MAYDAY. Medido con la traza de la
+     * cola: el juego pedía las tres frases —«descenso de emergencia», las
+     * máscaras de la tripulación y el «primero la tuya»— y la boca las tiraba
+     * por «no cabía en la cola» y «caducó esperando». A ×2 la bajada dura
+     * minuto y tres cuartos de reloj, y el tope de abajo deja margen de sobra.
+     */
+    o.acelerar?.(2);
     const tarjetas = new Set();
     const t0 = performance.now();
     let ahora = o.presurizacion();
-    while (performance.now() - t0 < 150000) {
+    while (performance.now() - t0 < 300000) {
       await espera(200);
       ahora = o.presurizacion();
       const t = o.tarjeta();
