@@ -70,6 +70,8 @@
  * 6. **La demostración de seguridad**, por la megafonía: el cinturón, las
  *    salidas y sus luces del suelo, las máscaras, el chaleco, la tarjeta y el
  *    modo avión. Ver `DEMOSTRACION` para el porqué de cada cosa y su orden.
+ *    Y en algunos vuelos, con un toque de gracia en la entrada y en la
+ *    despedida, nunca en las instrucciones: ver `demostracion-con-gracia.ts`.
  * 7. **La revisión**: la tripulante pasa mirando cinturones y le cuenta a Ara
  *    por qué la persiana va subida, y lo del baño con la luz encendida.
  * 8. **La espera** antes de la pista, y el permiso de la torre.
@@ -248,6 +250,7 @@ import type { DibujoDelPasaje } from "../ui/dibujos-del-pasaje";
 import type { IlustracionDelPasaje } from "../ui/ilustraciones";
 import { APAGA_LA_LUZ } from "./cinturon";
 import { Conversacion, type FraseDicha, type Linea, type VozDelInicio } from "./conversacion";
+import { conGracia, FORMAS_CON_GRACIA, GRACIA, type FormaDeLaDemostracion } from "./demostracion-con-gracia";
 import { KitDeViaje, LINEAS_DEL_KIT, type EstadoDelKit } from "./kit-de-viaje";
 import { DICHO_DE_LA_LUZ, JuegoDeLaLuz, LINEAS_DE_LA_LUZ } from "./luz-verde";
 import {
@@ -457,6 +460,7 @@ export type CharlaDelPasaje =
   | "tcpMotor"
   | "bajando"
   | "tcpIslas"
+  | "tcpSilbo"
   | "tcpRuta"
   | "tcpPapi"
   | "sobreLaIsla"
@@ -1314,6 +1318,19 @@ const DEMO_EQUIPO: readonly Linea[] = [
   con(ara("demoTarjeta"), "tarjeta"),
   con(tripulacion("demo.aparatos"), "modo-avion"),
 ];
+/**
+ * **Y la gracia de este vuelo, si la hay** (punto 294): la frase de la entrada
+ * detrás del «les rogamos un momento de atención», y la de la despedida
+ * detrás del «muchas gracias por su atención». Lo de en medio no se toca: las
+ * instrucciones son las mismas frases grabadas en todas las formas, en el
+ * mismo orden y con su dibujo. Sin dibujo la gracia, que no enseña nada que
+ * mirar. Ver `demostracion-con-gracia.ts`.
+ */
+const conSuGracia = (lineas: readonly Linea[], forma: FormaDeLaDemostracion, donde: "entrada" | "despedida"): readonly Linea[] => {
+  if (!conGracia(forma)) return lineas;
+  const gracia: Linea = { quien: "tripulacion", clave: GRACIA[forma][donde], megafonia: true };
+  return donde === "entrada" ? [lineas[0]!, gracia, ...lineas.slice(1)] : [...lineas, gracia];
+};
 /** Lo que se queda Ara mirando el letrero de la salida, s callados, antes de seguir la demostración. */
 const MIRA_LA_SALIDA = 2;
 /** Si se está rodando hacia la pista o esperando en la doble raya: cuando va la demostración. */
@@ -1396,6 +1413,7 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     cuando: (l, e) => rodandoALaPista(l) && e.callaDesde >= 1,
     caduca: yaEnLaPista,
     lineas: DEMOSTRACION,
+    segun: (_l, e) => conSuGracia(DEMOSTRACION, e.formaDeLaDemostracion, "entrada"),
   },
   {
     // Las salidas, con Ara asomada al pasillo mirando la suya. Ver `DEMOSTRACION`.
@@ -1412,6 +1430,7 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     cuando: (l, e) => rodandoALaPista(l) && e.callaDesde >= MIRA_LA_SALIDA,
     caduca: yaEnLaPista,
     lineas: DEMO_EQUIPO,
+    segun: (_l, e) => conSuGracia(DEMO_EQUIPO, e.formaDeLaDemostracion, "despedida"),
     sigue: "demostracion",
   },
   {
@@ -2140,6 +2159,30 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     lineas: [ara("nubesCerca")],
   },
   {
+    /*
+     * **Y el silbo, también en otras islas** (punto 288): Ara, que se quedó
+     * con ganas de aprender a silbar con la historia de La Gomera, pregunta
+     * si solo se habla así allí, y la tripulante, que es de Canarias, se lo
+     * cuenta en persona: también se silbaba en El Hierro, en Tenerife —de
+     * donde se sale— y en Gran Canaria, y donde más se conserva hoy, y se
+     * aprende en la escuela, es en La Gomera. En La Palma solo es «muy
+     * probable», y no se dice. Las fuentes, en `docs/historias/fuentes.md`.
+     *
+     * Solo si Ara oyó la historia y contestó: sin ella, la pregunta no viene
+     * de ningún sitio. Y **detrás de las islas** que cuenta la tripulante, que
+     * es de lo que se está hablando, mientras ande por el pasillo. Detrás
+     * también de las nubes que se acercan: lo que pasa se cuenta cuando pasa,
+     * y esto puede esperar. Medido en el banco, se decía antes de las islas y
+     * se comía las nubes de cerca.
+     */
+    id: "tcpSilbo",
+    tras: 16,
+    cuando: (l, e) =>
+      volando(l) && tripulanteEnElPasillo(e) && e.silboOido && e.dichaLaCharla("tcpIslas") && !cabinaPreparada(l, e),
+    caduca: (l, e) => cabinaPreparada(l, e),
+    lineas: [ara("silboOtras"), conLaTripulante(tripulante("silbo"))],
+  },
+  {
     // Las cuatro luces al lado de la pista: lo que se va a ver al llegar.
     id: "tcpPapi",
     tras: 18,
@@ -2501,6 +2544,9 @@ export const LINEAS_DEL_PASAJE: readonly Linea[] = (() => {
   LINEAS_DE_LA_LUZ.forEach(poner);
   // Y la ventanilla viva (19-10-2026): la invitación y lo que Ara dice de lo que toca.
   LINEAS_DE_LA_VENTANILLA_VIVA.forEach(poner);
+  // Y la gracia de la demostración (punto 294) y el silbo de otras islas (288), detrás de todo, por lo mismo.
+  for (const f of FORMAS_CON_GRACIA)
+    for (const clave of [GRACIA[f].entrada, GRACIA[f].despedida]) poner({ quien: "tripulacion", clave, megafonia: true });
   return todas;
 })();
 
@@ -2823,6 +2869,13 @@ export class VueloDePasaje {
        * escena. Ver `TOPE_DE_UNA_FRASE`.
        */
       readonly pared?: () => number;
+      /**
+       * **La demostración de este vuelo**: la de siempre o una con gracia. Se
+       * pregunta una vez, al ir a darla —cuando ya se sabe qué está grabado—,
+       * y se queda para todo el vuelo. Sin decir, la de siempre. Ver
+       * `demostracion-con-gracia.ts`.
+       */
+      readonly demostracion?: () => FormaDeLaDemostracion;
     } = {},
   ) {
     this.charla = new Conversacion(voz, () => this.reloj, () => this.pared());
@@ -2863,6 +2916,25 @@ export class VueloDePasaje {
   /** **Lo que lleva sonando seguida la música de llegada**, s de escena; 0 si no suena. */
   get musicaSuenaDesde(): number {
     return this.conMusica;
+  }
+
+  /**
+   * **La forma de la demostración de este vuelo**: se elige la primera vez que
+   * se pregunta, que es al ir a darla, y ya no cambia. Ver `opciones.demostracion`.
+   */
+  get formaDeLaDemostracion(): FormaDeLaDemostracion {
+    this.formaDeLaDemo ??= this.opciones.demostracion?.() ?? "sobria";
+    return this.formaDeLaDemo;
+  }
+
+  private formaDeLaDemo: FormaDeLaDemostracion | null = null;
+
+  /**
+   * **Si Ara oyó la historia del silbo y la contestó**: entonces puede
+   * preguntar si se silba en más islas. Ver la charla `tcpSilbo`.
+   */
+  get silboOido(): boolean {
+    return this.charla.oida("inicio.ara.pasaje.garajonay");
   }
 
   /** Si esa charla ya se dijo. */

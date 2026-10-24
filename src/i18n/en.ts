@@ -2218,6 +2218,18 @@ export const EN: Dictionary = {
   "inicio.ara.pasaje.demoMascara": "The grown-ups put their masks on first, and then mine! That way they can help me.",
   "inicio.ara.pasaje.demoChaleco": "There's a yellow life jacket under my seat. And it only gets inflated outside the plane!",
   "inicio.ara.pasaje.demoTarjeta": "I found the card in the pocket in front! It has little pictures of everything.",
+  "inicio.tripulacion.pasaje.demo.gracia.ventanilla.entrada":
+    "I know the view from the window beats looking at us, but the scenery isn't going anywhere: I promise.",
+  "inicio.tripulacion.pasaje.demo.gracia.ventanilla.despedida":
+    "And now you can go back to the window: the scenery was still there, just as I promised.",
+  "inicio.tripulacion.pasaje.demo.gracia.examen.entrada":
+    "If you already know it by heart, go over it with us anyway: we crew go over it so often that we even sit an exam every year.",
+  "inicio.tripulacion.pasaje.demo.gracia.examen.despedida":
+    "And for anyone who'd like to go over it again, the card in the seat pocket tells it all again, with pictures and no exam.",
+  "inicio.tripulacion.pasaje.demo.gracia.primeraVez.entrada":
+    "Someone on board is flying for the very first time today, so we'll tell it with all the care in the world. And for everyone else, too.",
+  "inicio.tripulacion.pasaje.demo.gracia.primeraVez.despedida":
+    "And whoever is flying for the first time today now knows as much as someone who has flown a hundred times. Have a good trip, everyone!",
   "inicio.tripulacion.pasaje.cerca.revision":
     "Hi there! Let me check that seat belt... perfect, that's how it's worn! And the window blind always goes up for take-off.",
   "inicio.ara.pasaje.persiana": "And why does the window blind have to be up for take-off?",
@@ -2263,6 +2275,9 @@ export const EN: Dictionary = {
   "inicio.tripulacion.pasaje.cerca.islas2":
     "La Palma, where we're going, is one of the youngest, and it has really high mountains.",
   "inicio.ara.pasaje.islas": "Islands that used to be volcanoes at the bottom of the sea! I'm going to tell everyone.",
+  "inicio.ara.pasaje.silboOtras": "And do people talk by whistling on the other islands too, or only on La Gomera?",
+  "inicio.tripulacion.pasaje.cerca.silbo":
+    "Not only there! People used to talk by whistling on El Hierro, on Tenerife, where we've come from, and on Gran Canaria too. But where it's kept alive most today is La Gomera: there, children learn it at school.",
   "inicio.tripulacion.pasaje.cerca.ruta":
     "And how does the plane know the way? The captain and the co-pilot have the map on a screen, and they talk to the control tower by radio.",
   "inicio.ara.pasaje.mapa": "Like the map on a phone, but for planes! And with the tower on the radio.",

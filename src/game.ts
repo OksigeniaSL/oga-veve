@@ -1029,6 +1029,7 @@ import {
 import { ganarSellosDelViaje, leerSellosDelViaje, type SelloDelViaje } from "./flight/sellos-del-viaje";
 import { paginaDelViaje } from "./ui/sellos-del-viaje";
 import { cuantoSeAparta, debajoDelDedo, RADIO_DE_LO_TOCABLE, RADIO_POR_DEFECTO } from "./world/ventanilla-viva";
+import { conGracia, laDemostracion, type FormaDeLaDemostracion } from "./flight/demostracion-con-gracia";
 import {
   asomadoHacia,
   claridad,
@@ -6869,7 +6870,11 @@ export class Game {
        * asiento de Ara. El avión lo lleva su tripulación —ver
        * `flight/vuelo-de-linea.ts`— y la escena dice qué toca y cuándo.
        */
-      this.inicio = new VueloDePasaje(this.vozDelInicio, { lado: LADO_DE_ARA, pared: this.pared });
+      this.inicio = new VueloDePasaje(this.vozDelInicio, {
+        lado: LADO_DE_ARA,
+        pared: this.pared,
+        demostracion: () => this.laDemostracionDeHoy(),
+      });
       // Y su kit de viaje, que la tripulante trae en la bajada. Ver `flight/kit-de-viaje.ts`.
       this.pantallaDelKit?.quitar();
       const kit = document.getElementById("kit");
@@ -12612,6 +12617,33 @@ export class Game {
     });
     this.recordar("megafonia.bienvenida", forma);
     return anuncio;
+  }
+
+  /**
+   * **La demostración de seguridad de este vuelo de pasaje**: la de siempre o,
+   * algunas veces, con un toque de gracia, y nunca dos vuelos seguidos con
+   * ella. Solo las formas con sus frases grabadas. Lo que salió se recuerda
+   * entre vuelos, como la bienvenida: una preferencia del juego, no un dato
+   * de nadie. Ver `flight/demostracion-con-gracia.ts`.
+   */
+  private laDemostracionDeHoy(): FormaDeLaDemostracion {
+    if (this.demostracionDelBanco) return this.demostracionDelBanco;
+    const forma = laDemostracion({
+      ultima: this.recordado("pasaje.demostracion"),
+      ultimaConGracia: this.recordado("pasaje.demostracion.gracia"),
+      grabada: (clave) => this.instructor.vozDe(clave) !== null,
+    });
+    this.recordar("pasaje.demostracion", forma);
+    if (conGracia(forma)) this.recordar("pasaje.demostracion.gracia", forma);
+    return forma;
+  }
+
+  /** La forma que pide el banco, si pide una: para oír una con gracia aunque no esté grabada. */
+  private demostracionDelBanco: FormaDeLaDemostracion | null = null;
+
+  /** **Para el banco**: la demostración de la próxima escena de pasaje. Ver `dev/sondas.ts`. */
+  ponerLaDemostracionParaBanco(forma: FormaDeLaDemostracion | null): void {
+    this.demostracionDelBanco = forma;
   }
 
   /** Lo último que dijo la megafonía de algo, entre vuelos. Ver `datos/guardado.ts`. */

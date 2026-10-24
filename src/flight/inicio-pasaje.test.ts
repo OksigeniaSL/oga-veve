@@ -49,6 +49,7 @@ import { ilustracion, ilustracionPedida, RECETAS } from "../ui/ilustraciones";
 import { JuegoDelAvion, LUCES, NIVELES } from "./kit-de-viaje";
 import { LINEAS_DE_LA_VENTANILLA_VIVA } from "./lo-que-se-toca";
 import type { Fase } from "./vuelo";
+import { FORMAS_CON_GRACIA, GRACIA, type FormaDeLaDemostracion } from "./demostracion-con-gracia";
 
 const DT = 1 / 10;
 const entorno = (globalThis as unknown as { process?: { env?: Record<string, string | undefined> } }).process?.env;
@@ -303,11 +304,13 @@ function correr(
     entreNubes?: boolean;
     conPrisa?: boolean;
     faseTardia?: boolean;
+    demostracion?: FormaDeLaDemostracion;
   } = {},
 ): Corrido {
   let t = 0;
   const v = vozQueTarda(dura, () => t);
-  const escena = new VueloDePasaje(v.voz, { lado: "izquierda" });
+  const forma = opciones.demostracion;
+  const escena = new VueloDePasaje(v.voz, { lado: "izquierda", ...(forma ? { demostracion: () => forma } : {}) });
   const vuelo = new VueloDeMentira(opciones.deUnSalto, opciones.entreNubes, opciones.conPrisa, opciones.faseTardia);
   const porSenalar = opciones.sitios ? [sitio("orotava", "izquierda"), sitio("teide", "izquierda"), sitio("hierro", "derecha"), sitio("garajonay", "izquierda")] : [];
   for (; t < 3000; t += DT) {
@@ -1201,6 +1204,16 @@ const CALLADO_EN_LA_FINAL = 75;
 describe("el vuelo medido, con las voces que duran lo que duran", () => {
   const m = volarElMedido();
   const e = m.escena.estado;
+
+  // El silbo de otras islas (punto 288), detrás de las islas de la tripulante: cabe en la bajada medida.
+  it("lo del silbo cabe en la bajada, detrás de las islas y antes de preparar la cabina", () => {
+    const k = m.dichas.map((d) => d.linea.clave);
+    expect(k).toContain("inicio.ara.pasaje.garajonay");
+    const pregunta = k.indexOf("inicio.ara.pasaje.silboOtras");
+    expect(pregunta).toBeGreaterThan(k.indexOf("inicio.ara.pasaje.islas"));
+    expect(k[pregunta + 1]).toBe("inicio.tripulacion.pasaje.cerca.silbo");
+    expect(pregunta).toBeLessThan(k.indexOf("comandante.aproximacion"));
+  });
 
   it("pasa por todo el guion, sin saltarse nada, y acaba", () => {
     if (entorno?.OGA_PASAJE)
@@ -2851,5 +2864,103 @@ describe("la ventanilla viva: tocar lo que se ve y que te lo cuenten", () => {
     // El ala y el motor, lo primero; la isla de llegada y Mazo, y lo señalado por la ventanilla.
     for (const s of ["motor", "ala", "palma", "mazo", "teide", "gomera"] as const) expect(vistos, s).toContain(s);
     expect(new Set(vistos).size).toBe(vistos.length);
+  });
+});
+
+/*
+ * **La demostración con gracia, de vez en cuando** (punto 294): «sin pasarse:
+ * aunque pueda ser divertido, no le quiero quitar la seriedad o importancia
+ * que tiene todo lo que se dice y se hace» (Enrique). La gracia va en el
+ * adorno —la entrada y la despedida— y las instrucciones son las mismas
+ * frases grabadas en todas las formas. Ver `demostracion-con-gracia.ts`.
+ */
+describe("la demostración con gracia: un toque en la entrada y en la despedida, y las instrucciones iguales", () => {
+  const INSTRUCCION = /^inicio\.(tripulacion\.pasaje\.demo\.(intro|cinturon|salidas|mascaras|chaleco|tarjeta|aparatos)|ara\.pasaje\.demo\w+)$/;
+  /** Lo que suena de la demostración, de la intro a la revisión. */
+  function laDemostracionCon(forma: FormaDeLaDemostracion): { r: Corrido; tramo: Linea[]; claves: string[] } {
+    const r = correr(() => 4, { demostracion: forma });
+    const desde = indice(r, "inicio.tripulacion.pasaje.demo.intro");
+    const hasta = indice(r, "inicio.tripulacion.pasaje.cerca.revision");
+    const tramo = r.dichas.slice(desde, hasta).map((d) => d.linea);
+    return { r, tramo, claves: tramo.map((l) => l.clave) };
+  }
+  const sobria = laDemostracionCon("sobria");
+
+  it("la de siempre, sin adorno", () => {
+    expect(sobria.claves.some((c) => c.includes(".gracia."))).toBe(false);
+    expect(sobria.r.escena.formaDeLaDemostracion).toBe("sobria");
+  });
+
+  for (const forma of FORMAS_CON_GRACIA) {
+    it(`${forma}: la entrada detrás de «un momento de atención», la despedida detrás de «gracias por su atención», y nada más`, () => {
+      const d = laDemostracionCon(forma);
+      const g = GRACIA[forma];
+      expect(d.claves.filter((c) => c.includes(".gracia."))).toEqual([g.entrada, g.despedida]);
+      expect(d.claves.indexOf(g.entrada)).toBe(d.claves.indexOf("inicio.tripulacion.pasaje.demo.intro") + 1);
+      expect(d.claves.indexOf(g.despedida)).toBe(d.claves.indexOf("inicio.tripulacion.pasaje.demo.aparatos") + 1);
+      // Por la megafonía, como el resto de la demostración, y sin dibujo: no enseña nada que mirar.
+      for (const l of d.tramo.filter((x) => x.clave.includes(".gracia."))) {
+        expect(l.quien).toBe("tripulacion");
+        expect(l.megafonia).toBe(true);
+        expect(l.dibujo).toBeUndefined();
+      }
+      // Y la demostración entera antes de entrar en pista: nada saltado, y la revisión detrás.
+      expect(d.r.escena.estado.saltados).toEqual([]);
+      expect(indice(d.r, "inicio.tripulacion.pasaje.cerca.revision")).toBeGreaterThan(indice(d.r, g.despedida));
+    });
+
+    it(`${forma}: las instrucciones de seguridad suenan igual que en la de siempre, con las mismas frases y su dibujo`, () => {
+      const d = laDemostracionCon(forma);
+      const lasDe = (t: readonly Linea[]): string[] =>
+        t.filter((l) => INSTRUCCION.test(l.clave)).map((l) => `${l.clave}·${l.dibujo ?? ""}`);
+      expect(lasDe(d.tramo)).toEqual(lasDe(sobria.tramo));
+      expect(lasDe(d.tramo).length).toBeGreaterThanOrEqual(10);
+    });
+  }
+
+  it("la gracia no toca lo que se enseña: ni el cinturón, ni las salidas, ni las mascarillas, ni el chaleco", () => {
+    for (const f of FORMAS_CON_GRACIA)
+      for (const clave of [GRACIA[f].entrada, GRACIA[f].despedida]) {
+        const es = ES_PY[clave as keyof typeof ES_PY] as string;
+        expect(es, clave).not.toMatch(/cintur|salida|m[aá]scar|ox[ií]geno|chaleco|emergencia|tr[aá]mite/i);
+        expect(EN[clave as keyof typeof EN], clave).toBeTruthy();
+      }
+  });
+});
+
+/*
+ * **El silbo, también en otras islas** (punto 288): Ara pregunta si solo se
+ * habla silbando en La Gomera, después de haber oído su historia, y la
+ * tripulante lo cuenta en persona. Sin la historia, la pregunta no sale.
+ */
+describe("el silbo en otras islas: Ara pregunta después de la historia de La Gomera, y la tripulante contesta", () => {
+  it("con la historia oída: la pregunta después, y la respuesta detrás, de la tripulante en persona", () => {
+    const r = correr(() => 4, { sitios: true });
+    const contesta = indice(r, "inicio.ara.pasaje.garajonay");
+    const pregunta = indice(r, "inicio.ara.pasaje.silboOtras");
+    expect(contesta).toBeGreaterThanOrEqual(0);
+    expect(pregunta).toBeGreaterThan(contesta);
+    expect(indice(r, "inicio.tripulacion.pasaje.cerca.silbo")).toBe(pregunta + 1);
+    expect(claves(r).filter((c) => c === "inicio.ara.pasaje.silboOtras")).toHaveLength(1);
+    expect(esDeCerca(r.dichas[pregunta + 1]!.linea)).toBe(true);
+    // Detrás de las islas que cuenta la tripulante, que es de lo que se está hablando.
+    expect(pregunta).toBeGreaterThan(indice(r, "inicio.ara.pasaje.islas"));
+    // Volando, con la tripulante por el pasillo: después del servicio y antes de preparar la cabina.
+    expect(pregunta).toBeGreaterThan(indice(r, "inicio.tripulacion.pasaje.cerca.hola"));
+    expect(pregunta).toBeLessThan(indice(r, "comandante.aproximacion"));
+  });
+
+  it("sin la historia del silbo, no se pregunta", () => {
+    const r = correr(() => 4);
+    expect(claves(r)).not.toContain("inicio.ara.pasaje.garajonay");
+    expect(claves(r)).not.toContain("inicio.ara.pasaje.silboOtras");
+    expect(claves(r)).not.toContain("inicio.tripulacion.pasaje.cerca.silbo");
+  });
+
+  it("y lo que se cuenta es lo documentado: El Hierro, Tenerife y Gran Canaria, hoy sobre todo La Gomera; La Palma no", () => {
+    const es = ES_PY["inicio.tripulacion.pasaje.cerca.silbo"];
+    for (const isla of ["El Hierro", "Tenerife", "Gran Canaria", "La Gomera"]) expect(es).toContain(isla);
+    expect(es).not.toContain("La Palma");
+    expect(EN["inicio.tripulacion.pasaje.cerca.silbo"]).not.toContain("La Palma");
   });
 });
