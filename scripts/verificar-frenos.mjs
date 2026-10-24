@@ -47,17 +47,22 @@ const comprobar = (nombre, ok, detalle, porque) =>
  * de tocar, y con cifras es una tarjeta con su tecla escrita.
  *
  * **Y depende del aparato, no solo del peldaño.** En un teclado son
- * excluyentes —«nunca los dos», dice el HUD— pero en una tablet el peldaño de
- * cifras enseña los dos a la vez, y tiene que ser así: la tarjeta dice qué
- * tecla es y el botón es lo único que se puede tocar. La primera versión de
- * esta comprobación daba por buena la regla del teclado en una página táctil
- * y cantaba un fallo donde no lo hay.
+ * excluyentes —«nunca los dos», dice el HUD—, y con el dedo el botón sale en
+ * todos los peldaños, porque es lo único que se puede tocar.
+ *
+ * **Y con el dedo, la tarjeta no.** Se pedían los dos en una tablet con
+ * cifras —la tarjeta para decir qué tecla es— y el juego dejó de enseñarla
+ * a propósito: dibuja la tecla B de un teclado que en una tablet no existe,
+ * y en un teléfono apaisado eran ciento veinte píxeles que echaban el destino
+ * fuera de la pantalla. Ver `this.brakes.hidden` en `ui/hud.ts` y
+ * `verificar-carteles.mjs`. Lo que sigue protegiendo esto es lo que de verdad
+ * importa: que con el dedo haya siempre un freno que tocar.
  */
 for (const [tramo, tactil, boton, tarjeta] of [
   ["guyrami", false, true, false],
   ["guyrami", true, true, false],
   ["taguato", false, false, true],
-  ["taguato", true, true, true],
+  ["taguato", true, true, false],
 ]) {
   const page = await navegador.newPage({
     viewport: { width: 1280, height: 800 },
