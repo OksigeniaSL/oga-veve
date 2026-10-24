@@ -1,5 +1,5 @@
 /**
- * **El kit de viaje de Ara**: tres juegos para la parte larga del vuelo de
+ * **El kit de viaje de Ara**: dos juegos para la parte larga del vuelo de
  * pasaje.
  *
  * Pedido por Enrique (punto 275 de su lista): «a los niños suelen darles algo
@@ -13,38 +13,33 @@
  * juego delante («ese momento es mágico, cuando está llegando a tierra»).
  * Ver `inicio-pasaje.ts`.
  *
- * ## Los tres juegos
- *
- * - **Armá el avión** (`JuegoDeLasPiezas`): el ala, el motor, la cola y las
- *   ruedas, cada una a su sitio en el dibujo del avión. Al encajar, Ara dice
- *   para qué sirve, y lo que dice es lo de verdad: el ala empuja el aire hacia
- *   abajo y el aire la empuja hacia arriba, el motor echa el aire hacia atrás
- *   y eso empuja el avión hacia delante, la cola lo lleva derecho como las
- *   plumas de una flecha y su timón le mueve la nariz a los lados, y las
- *   ruedas son para correr por la pista y se guardan al volar.
- * - **El camino del avión** (`JuegoDelCamino`): el mapa de las islas con los
- *   números del vuelo de hoy —Los Rodeos, el Teide, La Gomera y La Palma—,
- *   que se tocan en orden para dibujar el camino. Contar hasta cuatro y saber
- *   dónde está cada isla y qué se ve desde el avión.
+ * ## Los dos juegos
  *
  * - **Luz verde** (`JuegoDeLaLuz`, en `luz-verde.ts`): quien juega es la torre
  *   de La Palma y les da luz verde o roja, con la lámpara de señales de
- *   verdad, a los avioncitos sin radio que llegan por el circuito. Es el
- *   largo: dura minuto y medio, que los otros dos «se resuelven en medio
- *   minuto» (punto 304), y cuando aterrizan todos suena un trozo de la
- *   canción «Luz verde», la de Granja Óga. Ver `KitDeViaje.cancion`.
+ *   verdad, a los avioncitos sin radio que llegan por el circuito. Dura minuto
+ *   y medio, y cuando aterrizan todos suena un trozo de la canción «Luz
+ *   verde», la de Granja Óga. Ver `KitDeViaje.cancion`.
+ * - **Armá tu avión** (`JuegoDelAvion`, puntos 289, 290 y 304): un avión de
+ *   la flota por nivel, de la avioneta de escuela al cuatrimotor, con cada
+ *   pieza en el sitio en que la lleva ese tipo de verdad —medido en sus
+ *   modelos, ver `scripts/aviones-del-kit.mjs`— y después sus luces de
+ *   navegación. Al acabar, se hace de noche para ver para qué sirven las
+ *   luces, y el avión despega.
  *
- * El que se pensó antes —buscar en la ventanilla lo que se nombra— ya lo hace
- * la escena entera, que señala el Teide, las nubes y el mar por la ventanilla
- * de verdad.
+ * Hubo otros dos, «las piezas» —cuatro piezas a cuatro huecos, con el motor
+ * colgado del fuselaje— y «el camino» —cuatro números en un mapa—, y se
+ * quitaron: «¿En serio ahí van las ruedas y el motor? ¿Y eso es un juego?»
+ * (Enrique, 19-10-2026). Se resolvían sin pensar y el primero enseñaba algo
+ * falso.
  *
  * ## Se gana siempre
  *
  * Las normas se muestran, no se imponen. Una pieza que se suelta en otro sitio
- * vuelve a la bandeja y **su sitio se ilumina**; un número que se toca antes
- * de tiempo deja brillar el que va; y si pasa un rato sin acertar, también se
- * ilumina lo que toca. A la segunda que una pieza no encuentra su sitio,
- * tocarla la lleva sola. No hay fallo que se cuente ni nada que se pierda.
+ * vuelve a la bandeja con calma y **su sitio se ilumina**; y si pasa un rato
+ * sin acertar, también se ilumina lo que toca. A la segunda que una pieza no
+ * encuentra su sitio, tocarla la lleva sola. No hay fallo que se cuente, ni
+ * reloj que se acabe, ni nada que se pierda.
  *
  * ## Se deja cuando se quiera, y el vuelo manda
  *
@@ -65,10 +60,10 @@ import type { Peldano } from "./escalera";
 import { JuegoDeLaLuz, LINEAS_DE_LA_LUZ, type EstadoDeLaLuz } from "./luz-verde";
 
 /** Los juegos del kit. */
-export type JuegoDelKit = "piezas" | "camino" | "luz";
-export const JUEGOS_DEL_KIT: readonly JuegoDelKit[] = ["piezas", "camino", "luz"];
+export type JuegoDelKit = "luz" | "avion";
+export const JUEGOS_DEL_KIT: readonly JuegoDelKit[] = ["luz", "avion"];
 /** Un juego del kit, el que sea. */
-export type JuegoDeAhora = JuegoDeLasPiezas | JuegoDelCamino | JuegoDeLaLuz;
+export type JuegoDeAhora = JuegoDelAvion | JuegoDeLaLuz;
 
 /** Lo que dice Ara en el kit: a quien juega a su lado, de vos. */
 const ara = (clave: string): Linea => ({ quien: "ara", clave: `inicio.ara.pasaje.kit.${clave}` });
@@ -154,112 +149,249 @@ abstract class Juego<Id extends string> {
   }
 }
 
-// ── Armá el avión ────────────────────────────────────────────────────────
+// ── Armá tu avión ────────────────────────────────────────────────────────
 
-/** Las piezas del avión, en el orden en que se cuentan. */
-export type Pieza = "ala" | "motor" | "cola" | "ruedas";
-export const PIEZAS: readonly Pieza[] = ["ala", "motor", "cola", "ruedas"];
+/**
+ * **Las piezas de un avión**, las que se llevan a su sitio. Cada nivel usa las
+ * de su tipo: el ala alta entera del entrenador, las dos del biplano, o la
+ * derecha y la izquierda de los de ala baja —la izquierda con su motor, que
+ * queda detrás y casi no se ve—; la cola entera en el primero y, desde el
+ * segundo, el estabilizador y la deriva por separado, que es cuando se ve que
+ * el estabilizador es un ala chiquita; y el tren principal y el de morro, o la
+ * ruedita de cola del biplano.
+ */
+export type PiezaDelAvion =
+  | "ala"
+  | "alaArriba"
+  | "alaAbajo"
+  | "alaDerecha"
+  | "alaIzquierda"
+  | "motor"
+  | "cola"
+  | "estabilizador"
+  | "deriva"
+  | "trenPrincipal"
+  | "trenMorro"
+  | "trenCola";
 
-/** Lo que dice Ara de cada pieza al encajarla: para qué sirve. */
-export const PARA_QUE_SIRVE: Readonly<Record<Pieza, Linea>> = {
+/** **Las luces de navegación**: roja en la punta del ala izquierda, verde en la derecha, blanca atrás. */
+export type Luz = "roja" | "verde" | "blanca";
+export const LUCES: readonly Luz[] = ["roja", "verde", "blanca"];
+
+/** Lo que se lleva a su sitio: una pieza o una luz. */
+export type Sitio = PiezaDelAvion | Luz;
+export const esLuz = (s: Sitio): s is Luz => (LUCES as readonly string[]).includes(s);
+
+/**
+ * **Un nivel: un avión de la flota**, con sus piezas en el orden en que se
+ * ayudan, y si los enchufes de las luces llevan su color dibujado: en los dos
+ * primeros sí, que es cuando se aprende; después, se recuerda.
+ */
+export interface NivelDelAvion {
+  /** El tipo de la flota, como en `flota.ts`: es el modelo que se dibuja. */
+  readonly tipo: "jaz-20" | "jaz-25" | "jaz-40" | "jaz-60" | "jaz-90" | "jaz-120";
+  readonly piezas: readonly PiezaDelAvion[];
+  readonly lucesConColor: boolean;
+}
+
+const DE_ALA_BAJA: readonly PiezaDelAvion[] = ["alaDerecha", "alaIzquierda", "motor", "estabilizador", "deriva", "trenPrincipal", "trenMorro"];
+
+/**
+ * **Los niveles, de chico a grande**, como el hangar: un avión por nivel y
+ * cada uno con algo nuevo que descubrir. Cinco piezas en el primero y siete
+ * desde el segundo; y desde el tercero, los enchufes de las luces sin color.
+ *
+ * - **JAZ 20**, ala alta: el ala va arriba, el motor en la nariz con la hélice.
+ * - **JAZ 25**, biplano: dos alas que se parecen, y la ruedita en la cola.
+ * - **JAZ 40**, bimotor: un motor en cada ala, en su góndola.
+ * - **JAZ 60**, cola en T: el estabilizador va arriba de la deriva.
+ * - **JAZ 90**, el de Ara: los motores colgados debajo del ala.
+ * - **JAZ 120**, cuatrimotor: dos motores en cada ala y un montón de ruedas.
+ */
+export const NIVELES: readonly NivelDelAvion[] = [
+  { tipo: "jaz-20", piezas: ["ala", "motor", "cola", "trenPrincipal", "trenMorro"], lucesConColor: true },
+  { tipo: "jaz-25", piezas: ["alaArriba", "alaAbajo", "motor", "estabilizador", "deriva", "trenPrincipal", "trenCola"], lucesConColor: true },
+  { tipo: "jaz-40", piezas: DE_ALA_BAJA, lucesConColor: false },
+  { tipo: "jaz-60", piezas: DE_ALA_BAJA, lucesConColor: false },
+  { tipo: "jaz-90", piezas: DE_ALA_BAJA, lucesConColor: false },
+  { tipo: "jaz-120", piezas: DE_ALA_BAJA, lucesConColor: false },
+];
+
+/** Lo que dice Ara de cada clase de pieza la primera vez que la pone: para qué sirve. */
+export const PARA_QUE_SIRVE = {
   ala: ara("piezas.ala"),
   motor: ara("piezas.motor"),
   cola: ara("piezas.cola"),
   ruedas: ara("piezas.ruedas"),
-};
+  estabilizador: ara("avion.estabilizador"),
+} as const;
+type Clase = keyof typeof PARA_QUE_SIRVE;
+const claseDe = (p: PiezaDelAvion): Clase =>
+  p.startsWith("ala") ? "ala" : p === "motor" ? "motor" : p === "estabilizador" ? "estabilizador" : p.startsWith("tren") ? "ruedas" : "cola";
 
-export const DICHO_DE_LAS_PIEZAS = {
+export const DICHO_DEL_AVION = {
   empezar: ara("piezas.empezar"),
   ayuda: ara("piezas.ayuda"),
-  fin: ara("piezas.fin"),
+  luces: ara("avion.luces"),
+  noche: ara("avion.noche"),
 } as const;
 
-/** Lo que se ve del juego de las piezas. */
-export interface EstadoDeLasPiezas {
-  readonly juego: "piezas";
-  /** Las que ya están en su sitio, en el orden en que se pusieron. */
-  readonly puestas: readonly Pieza[];
-  /** La que se cogió con un toque, para soltarla con otro. */
-  readonly cogida: Pieza | null;
+/**
+ * **Lo que enseña cada avión al despegar**, uno por nivel y ninguno repetido:
+ * lo que tiene de suyo. El primero, con lo que ya estaba grabado.
+ */
+export const LO_QUE_ENSENA: Readonly<Record<NivelDelAvion["tipo"], Linea>> = {
+  "jaz-20": ara("piezas.fin"),
+  "jaz-25": ara("avion.biplano"),
+  "jaz-40": ara("avion.bimotor"),
+  "jaz-60": ara("avion.colaEnT"),
+  "jaz-90": ara("avion.reactor"),
+  "jaz-120": ara("avion.cuatrimotor"),
+};
+
+/**
+ * **Los tiempos del final de cada nivel**, s de escena: la noche con las luces
+ * encendidas, que es cuando se ve para qué sirven, y el despegue. Cortos: el
+ * premio es verlo, y el siguiente avión espera.
+ */
+export const NOCHE = 4.5;
+export const DESPEGUE = 3.2;
+
+/** En qué está el nivel: las piezas, las luces, la noche o el despegue. */
+export type FaseDelAvion = "piezas" | "luces" | "noche" | "despegue";
+
+/** Lo que se ve de Armá tu avión. */
+export interface EstadoDelAvion {
+  readonly juego: "avion";
+  /** El nivel de ahora, desde 0, y su avión. */
+  readonly nivel: number;
+  readonly tipo: NivelDelAvion["tipo"];
+  readonly fase: FaseDelAvion;
+  /** Lo que ya está en su sitio, en el orden en que se puso. */
+  readonly puestas: readonly Sitio[];
+  /** Lo que se cogió con un toque, para soltarlo con otro. */
+  readonly cogida: Sitio | null;
   /** El sitio que brilla para ayudar. */
-  readonly ilumina: Pieza | null;
-  /** La pieza de la bandeja que se mueve para decir «yo». */
-  readonly senala: Pieza | null;
+  readonly ilumina: Sitio | null;
+  /** Lo que se mueve en la bandeja para decir «yo». */
+  readonly senala: Sitio | null;
+  /** Los aviones que ya despegaron. */
+  readonly despegados: number;
   readonly terminado: boolean;
   readonly ayudas: number;
 }
 
-export class JuegoDeLasPiezas extends Juego<Pieza> {
-  readonly juego = "piezas" as const;
-  protected readonly ayuda = DICHO_DE_LAS_PIEZAS.ayuda;
-  protected readonly paraEmpezar = DICHO_DE_LAS_PIEZAS.empezar;
-  private readonly puestas: Pieza[] = [];
-  private cogida: Pieza | null = null;
-  private senala: Pieza | null = null;
-  private readonly fallos = new Map<Pieza, number>();
+export class JuegoDelAvion extends Juego<Sitio> {
+  readonly juego = "avion" as const;
+  protected readonly ayuda = DICHO_DEL_AVION.ayuda;
+  protected readonly paraEmpezar = DICHO_DEL_AVION.empezar;
+  private nivel: number;
+  private puestas: Sitio[] = [];
+  private cogida: Sitio | null = null;
+  private senala: Sitio | null = null;
+  private fallos = new Map<Sitio, number>();
+  private fase: FaseDelAvion = "piezas";
+  private enLaFase = 0;
+  private despegados = 0;
+  /** Las clases de pieza ya contadas, y lo de las luces: lo que se dice una vez por juego. */
+  private readonly dichas = new Set<string>();
 
-  protected siguiente(): Pieza | null {
-    return PIEZAS.find((p) => !this.puestas.includes(p)) ?? null;
+  constructor(nivel = 0) {
+    super();
+    this.nivel = Math.max(0, Math.min(NIVELES.length - 1, Math.floor(nivel)));
   }
 
-  get estado(): EstadoDeLasPiezas {
+  /** El nivel de ahora. */
+  get deAhora(): NivelDelAvion {
+    return NIVELES[this.nivel]!;
+  }
+
+  /** El nivel en que está, desde 0: el kit lo guarda para la próxima vez. */
+  get numero(): number {
+    return this.nivel;
+  }
+
+  /** Los aviones que ya despegaron en este juego. */
+  get yaDespegaron(): number {
+    return this.despegados;
+  }
+
+  /** Lo que falta por poner en la fase de ahora. */
+  private faltan(): readonly Sitio[] {
+    if (this.fase === "piezas") return this.deAhora.piezas.filter((p) => !this.puestas.includes(p));
+    if (this.fase === "luces") return LUCES.filter((l) => !this.puestas.includes(l));
+    return [];
+  }
+
+  protected siguiente(): Sitio | null {
+    return this.faltan()[0] ?? null;
+  }
+
+  get estado(): EstadoDelAvion {
     return {
-      juego: "piezas",
+      juego: "avion",
+      nivel: this.nivel,
+      tipo: this.deAhora.tipo,
+      fase: this.fase,
       puestas: [...this.puestas],
       cogida: this.cogida,
       ilumina: this.ilumina,
       senala: this.senala,
+      despegados: this.despegados,
       terminado: this.acabado,
       ayudas: this.ayudas,
     };
   }
 
-  /** Si esa pieza ya está en su sitio. */
-  puesta(p: Pieza): boolean {
-    return this.puestas.includes(p);
+  /** Si eso ya está en su sitio. */
+  puesta(s: Sitio): boolean {
+    return this.puestas.includes(s);
+  }
+
+  /** Si eso se puede llevar ahora: es de este avión, de la fase de ahora, y no está puesto. */
+  aMano(s: Sitio): boolean {
+    return !this.acabado && this.faltan().includes(s);
   }
 
   /**
-   * **Se suelta una pieza**, arrastrada, sobre el sitio `en` —el que le cae
-   * más cerca, lo mide el dibujo— o sobre nada. Devuelve si encajó. Si no,
-   * vuelve a la bandeja y su sitio se ilumina: así se ve dónde va.
+   * **Se suelta algo**, arrastrado, sobre el sitio `en` —el que le cae más
+   * cerca, lo mide el dibujo— o sobre nada. Devuelve si encajó. En otro sitio,
+   * vuelve a la bandeja con calma y el suyo se ilumina: así se ve dónde va.
+   * Soltado en ninguna parte, vuelve sin más.
    */
-  soltar(p: Pieza, en: Pieza | null, callada = true): boolean {
-    if (this.acabado || this.puesta(p)) return false;
+  soltar(s: Sitio, en: Sitio | null, callada = true): boolean {
+    if (!this.aMano(s)) return false;
     this.cogida = null;
-    if (en === p) {
-      this.poner(p);
+    if (en === s) {
+      this.poner(s);
       return true;
     }
-    this.fallos.set(p, (this.fallos.get(p) ?? 0) + 1);
+    if (en === null) return false;
+    this.fallos.set(s, (this.fallos.get(s) ?? 0) + 1);
     this.senala = null;
     this.ayudar(callada, this.ayuda);
-    // Lo que se ilumina es el sitio de esta pieza, que es la que se tiene en la mano.
-    this.ilumina = p;
+    this.ilumina = s;
     return false;
   }
 
   /**
    * **Un toque en una pieza**: se coge, y con otro toque en su sitio se suelta
-   * ahí, que es como se juega sin arrastrar. Tocarla otra vez la deja. Y a
-   * la segunda que no encontró su sitio, tocarla la lleva sola.
+   * ahí, que es como se juega sin arrastrar. Tocarla otra vez la deja. Y a la
+   * segunda que no encontró su sitio, tocarla la lleva sola.
    */
-  tocarPieza(p: Pieza): void {
-    if (this.acabado || this.puesta(p)) return;
-    if ((this.fallos.get(p) ?? 0) >= FALLOS_PARA_LLEVARLA) {
-      this.poner(p);
+  tocarPieza(s: Sitio): void {
+    if (!this.aMano(s)) return;
+    if ((this.fallos.get(s) ?? 0) >= FALLOS_PARA_LLEVARLA) {
+      this.poner(s);
       return;
     }
-    this.cogida = this.cogida === p ? null : p;
+    this.cogida = this.cogida === s ? null : s;
     this.senala = null;
   }
 
-  /**
-   * **Un toque en un sitio del avión**: si hay una pieza cogida, se suelta
-   * ahí. Si no, la pieza de ese sitio se mueve en la bandeja: «soy yo».
-   */
-  tocarSitio(sitio: Pieza, callada = true): void {
-    if (this.acabado || this.puesta(sitio)) return;
+  /** **Un toque en un sitio del avión**: suelta ahí lo que se cogió; si no hay nada, lo de ese sitio dice «yo». */
+  tocarSitio(sitio: Sitio, callada = true): void {
+    if (!this.aMano(sitio)) return;
     if (this.cogida) {
       this.soltar(this.cogida, sitio, callada);
       return;
@@ -267,96 +399,70 @@ export class JuegoDeLasPiezas extends Juego<Pieza> {
     this.senala = sitio;
   }
 
-  /** **La pieza, directa a su sitio**: con el teclado, o cuando se le ayuda. */
-  colocar(p: Pieza): void {
-    if (this.acabado || this.puesta(p)) return;
-    this.poner(p);
+  /** **Directo a su sitio**: con el teclado. */
+  colocar(s: Sitio): void {
+    if (this.aMano(s)) this.poner(s);
   }
 
-  private poner(p: Pieza): void {
-    this.puestas.push(p);
+  private poner(s: Sitio): void {
+    this.puestas.push(s);
     this.cogida = null;
-    if (this.senala === p) this.senala = null;
+    if (this.senala === s) this.senala = null;
     this.acierto();
-    this.decir(PARA_QUE_SIRVE[p]);
-    if (this.puestas.length === PIEZAS.length) {
-      this.acabado = true;
-      this.decir(DICHO_DE_LAS_PIEZAS.fin);
+    if (!esLuz(s)) this.decirUnaVez(claseDe(s), PARA_QUE_SIRVE[claseDe(s)]);
+    if (this.faltan().length > 0) return;
+    if (this.fase === "piezas") {
+      this.cambiarA("luces");
+      this.decirUnaVez("luces", DICHO_DEL_AVION.luces);
+    } else if (this.fase === "luces") {
+      this.cambiarA("noche");
+      this.decirUnaVez("noche", DICHO_DEL_AVION.noche);
     }
   }
 
-}
-
-// ── El camino del avión ──────────────────────────────────────────────────
-
-/**
- * **Las paradas del camino**, en el orden del vuelo de hoy: de Los Rodeos a
- * La Palma, con el Teide y La Gomera por la izquierda, que es lo que se ve
- * desde la ventanilla de Ara. Ver `LADO_DE_ARA` y el ADR 0020.
- */
-export type Parada = "tenerife" | "teide" | "gomera" | "palma";
-export const PARADAS: readonly Parada[] = ["tenerife", "teide", "gomera", "palma"];
-
-/** Lo que dice Ara al llegar a cada parada: qué es. La primera ya está: se sale de ahí. */
-export const LO_QUE_ES: Readonly<Record<Exclude<Parada, "tenerife">, Linea>> = {
-  teide: ara("camino.teide"),
-  gomera: ara("camino.gomera"),
-  palma: ara("camino.palma"),
-};
-
-export const DICHO_DEL_CAMINO = {
-  empezar: ara("camino.empezar"),
-  ayuda: ara("camino.ayuda"),
-} as const;
-
-/** Lo que se ve del juego del camino. */
-export interface EstadoDelCamino {
-  readonly juego: "camino";
-  /** Cuántas paradas hay ya unidas, contando la de salida. */
-  readonly hechas: number;
-  /** El número que brilla para ayudar. */
-  readonly ilumina: Parada | null;
-  readonly terminado: boolean;
-  readonly ayudas: number;
-}
-
-export class JuegoDelCamino extends Juego<Parada> {
-  readonly juego = "camino" as const;
-  protected readonly ayuda = DICHO_DEL_CAMINO.ayuda;
-  protected readonly paraEmpezar = DICHO_DEL_CAMINO.empezar;
-  /** Se sale de Tenerife: la primera ya está. */
-  private hechas = 1;
-
-  protected siguiente(): Parada | null {
-    return PARADAS[this.hechas] ?? null;
+  /** Lo que se cuenta la primera vez y no a cada avión: se repetiría al oído. */
+  private decirUnaVez(que: string, l: Linea): void {
+    if (this.dichas.has(que)) return;
+    this.dichas.add(que);
+    this.decir(l);
   }
 
-  get estado(): EstadoDelCamino {
-    return {
-      juego: "camino",
-      hechas: this.hechas,
-      ilumina: this.ilumina,
-      terminado: this.acabado,
-      ayudas: this.ayudas,
-    };
+  private cambiarA(f: FaseDelAvion): void {
+    this.fase = f;
+    this.enLaFase = 0;
+    this.ilumina = null;
+    this.quieto = 0;
+    this.fallos = new Map();
   }
 
   /**
-   * **Se toca una parada.** La que va, une el camino hasta ella y Ara dice qué
-   * es; una ya unida, nada; y una de más adelante deja brillar la que va.
+   * **Un paso**: la ayuda de quien no acierta, y el final de cada nivel —la
+   * noche, el despegue y lo que enseña ese avión— hasta el siguiente. Después
+   * del último, ganado.
    */
-  tocar(p: Parada, callada = true): void {
-    if (this.acabado) return;
-    const i = PARADAS.indexOf(p);
-    if (i < this.hechas) return;
-    if (i > this.hechas) {
-      this.ayudar(callada, this.ayuda);
+  override paso(dt: number, callada: boolean): void {
+    if (this.fase === "piezas" || this.fase === "luces") {
+      super.paso(dt, callada);
       return;
     }
-    this.hechas++;
-    this.acierto();
-    this.decir(LO_QUE_ES[p as Exclude<Parada, "tenerife">]);
-    if (this.hechas === PARADAS.length) this.acabado = true;
+    this.reloj += dt;
+    if (this.acabado) return;
+    this.enLaFase += dt;
+    if (this.fase === "noche" && this.enLaFase >= NOCHE) {
+      this.cambiarA("despegue");
+      this.decir(LO_QUE_ENSENA[this.deAhora.tipo]);
+    } else if (this.fase === "despegue" && this.enLaFase >= DESPEGUE) {
+      this.despegados++;
+      if (this.nivel === NIVELES.length - 1) {
+        this.acabado = true;
+        return;
+      }
+      this.nivel++;
+      this.puestas = [];
+      this.senala = null;
+      this.cogida = null;
+      this.cambiarA("piezas");
+    }
   }
 }
 
@@ -403,7 +509,7 @@ export interface EstadoDelKit {
   readonly abierto: boolean;
   readonly pausado: boolean;
   /** El juego de ahora, o `null` si se está eligiendo. */
-  readonly juego: EstadoDeLasPiezas | EstadoDelCamino | EstadoDeLaLuz | null;
+  readonly juego: EstadoDelAvion | EstadoDeLaLuz | null;
   /** Los juegos ya terminados alguna vez. */
   readonly hechos: readonly JuegoDelKit[];
   /** Si se abrió alguna vez: el botón deja de latir. */
@@ -434,6 +540,8 @@ export class KitDeViaje {
   private paredAntes: number | null = null;
   private readonly hechos = new Set<JuegoDelKit>();
   private terminadoDesde: number | null = null;
+  /** El nivel de Armá tu avión por el que se va, desde 0: se sigue por ahí al volver. */
+  private nivelDelAvion = 0;
   private reloj = 0;
   /** El reloj de la voz, s. Ver `NO_SE_REPITE`. */
   private pared = 0;
@@ -563,7 +671,8 @@ export class KitDeViaje {
     if (!this.abierto || this.pausado) return;
     this.tocado();
     if (this.actual?.juego === j && !this.actual.terminado) return;
-    this.actual = j === "piezas" ? new JuegoDeLasPiezas() : j === "camino" ? new JuegoDelCamino() : new JuegoDeLaLuz(this.peldano);
+    // El avión, por el nivel en que se dejó: lo armado no se pierde por jugar a la torre.
+    this.actual = j === "avion" ? new JuegoDelAvion(this.nivelDelAvion) : new JuegoDeLaLuz(this.peldano);
     this.terminadoDesde = null;
     this.cancionSuena = null;
   }
@@ -611,7 +720,17 @@ export class KitDeViaje {
     // La canción, hasta que se acaba su trozo: la megafonía no la para, la agacha.
     if (this.cancionSuena && this.pared - this.cancionSuena.desde >= trozoDe("luz-verde").dura) this.cancionSuena = null;
     if (!this.abierto || this.pausado || !this.actual) return;
-    this.actual.paso(this.actual instanceof JuegoDeLaLuz ? dePared * this.ritmo : dt, s.callada);
+    /*
+     * Los dos juegos con el reloj de pared: lo suyo se mueve en la pantalla
+     * —los avioncitos, la noche y el despegue— y no puede ir con el del vuelo,
+     * que el botón de adelantar acelera.
+     */
+    this.actual.paso(this.actual instanceof JuegoDeLaLuz ? dePared * this.ritmo : dePared, s.callada);
+    if (this.actual instanceof JuegoDelAvion) {
+      // Lo que despegó cuenta ya, y el nivel se guarda: se vuelve por donde se iba.
+      if (this.actual.yaDespegaron > 0) this.hechos.add("avion");
+      this.nivelDelAvion = this.actual.terminado ? 0 : this.actual.numero;
+    }
     if (this.actual.terminado) {
       this.hechos.add(this.actual.juego);
       this.terminadoDesde ??= this.reloj;
@@ -646,14 +765,23 @@ export class KitDeViaje {
 /** Todas las frases del kit, una vez cada una: para la lista de grabar y las pruebas. */
 export const LINEAS_DEL_KIT: readonly Linea[] = [
   LO_QUE_HAY,
-  DICHO_DE_LAS_PIEZAS.empezar,
-  ...PIEZAS.map((p) => PARA_QUE_SIRVE[p]),
-  DICHO_DE_LAS_PIEZAS.ayuda,
-  DICHO_DE_LAS_PIEZAS.fin,
-  DICHO_DEL_CAMINO.empezar,
-  LO_QUE_ES.teide,
-  LO_QUE_ES.gomera,
-  LO_QUE_ES.palma,
-  DICHO_DEL_CAMINO.ayuda,
+  DICHO_DEL_AVION.empezar,
+  ...Object.values(PARA_QUE_SIRVE),
+  DICHO_DEL_AVION.ayuda,
+  DICHO_DEL_AVION.luces,
+  DICHO_DEL_AVION.noche,
+  ...NIVELES.map((n) => LO_QUE_ENSENA[n.tipo]),
   ...LINEAS_DE_LA_LUZ,
+];
+
+/**
+ * **Lo nuevo de Armá tu avión** (puntos 289, 290 y 304): lo que no estaba
+ * grabado. Va aparte en la lista de grabar, al final, que lo grabado no se
+ * renumera. Ver `scripts/frases-para-grabar.mjs`.
+ */
+export const LINEAS_NUEVAS_DEL_AVION: readonly Linea[] = [
+  PARA_QUE_SIRVE.estabilizador,
+  DICHO_DEL_AVION.luces,
+  DICHO_DEL_AVION.noche,
+  ...NIVELES.slice(1).map((n) => LO_QUE_ENSENA[n.tipo]),
 ];

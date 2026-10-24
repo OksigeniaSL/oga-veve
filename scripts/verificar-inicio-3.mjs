@@ -48,15 +48,16 @@
  * - **Y que en un teléfono apaisado**, con el dedo, la tarjeta cabe y no hay
  *   mandos de pilotar.
  * - **El kit de viaje** (punto 275): que la tripulante lo trae en un tramo
- *   tranquilo de la parte alta de la bajada, que en el vuelo se abre, se juega
- *   el camino y después **la luz verde entera** —a la velocidad de verdad,
+ *   tranquilo de la parte alta de la bajada, que en el vuelo se abre, **se
+ *   arma un avión de Armá tu avión hasta que despega**, y después **la luz
+ *   verde entera** —a la velocidad de verdad,
  *   como un niño que hace caso a lo que brilla—, que acaba antes de los diez
  *   mil pies, que al acabar **suena el trozo de la canción**, agachado si
  *   alguien habla, y que **se recoge al empezar la llegada**, cruzando los diez
  *   mil pies bajando (19-10-2026), con la canción yéndose con un fundido si
  *   todavía sonaba; y en el teléfono, la tablet del aula y el portátil, que
- *   cabe sin tapar la tarjeta ni los botones, **se juegan los tres juegos
- *   enteros con el dedo** —arrastrando las piezas— o con el ratón, y que al
+ *   cabe sin tapar la tarjeta ni los botones, **se juegan los dos juegos
+ *   con el dedo** —arrastrando las piezas y las luces— o con el ratón, y que al
  *   ganar la torre suena la canción, se agacha con quien habla y se va al
  *   guardar el kit.
  * - **Luz verde** (punto 304), en cada pantalla y en tres peldaños —el
@@ -599,7 +600,7 @@ async function elVuelo() {
       // A la velocidad de verdad, de que llega el kit a que se recoge: es el rato que hay para jugar.
       kit.aUno = true;
       await page.evaluate(() => globalThis.__oga.acelerar(1));
-      await jugarElCaminoEnElVuelo(page);
+      await jugarElAvionEnElVuelo(page);
     }
     if (e.kit?.abierto && e.kit.pausado) kit.pausado++;
     // ── La luz verde en el vuelo, como quien hace caso a lo que brilla ──
@@ -1320,10 +1321,11 @@ async function elVuelo() {
       : "no llegó",
   );
   comprobar(
-    "en el vuelo se abre y se juega el camino entero, y Ara cuenta cada sitio",
-    !!e?.kit?.hechos?.includes("camino") &&
-      ["teide", "gomera", "palma"].every((p) => registro.some((d) => d.clave === `inicio.ara.pasaje.kit.camino.${p}`)),
-    `hechos: ${(e?.kit?.hechos ?? []).join(", ") || "ninguno"}`,
+    "en el vuelo se arma un avión entero, con sus luces, y despega; y Ara cuenta para qué sirve cada pieza",
+    !!e?.kit?.hechos?.includes("avion") &&
+      ["ala", "motor", "cola", "ruedas"].every((p) => registro.some((d) => d.clave === `inicio.ara.pasaje.kit.piezas.${p}`)) &&
+      registro.some((d) => d.clave === "inicio.ara.pasaje.kit.avion.luces"),
+    `hechos: ${(e?.kit?.hechos ?? []).join(", ") || "ninguno"} · el primer avión, de abrirlo a despegar: ${avionEnVuelo.s?.toFixed(0) ?? "?"} s de pared, ${avionEnVuelo.pausado} s con la megafonía`,
   );
   const aGuardar = guardar ? altitudEntre(guardar.desde) : null;
   comprobar(
@@ -1935,37 +1937,59 @@ async function mirarLaSiesta(page) {
   return r;
 }
 
+/** Lo que tardó el primer avión en el vuelo, de elegirlo a despegar: ver `jugarElAvionEnElVuelo`. */
+const avionEnVuelo = { s: null, pausado: 0 };
+
 /**
- * **El kit en el vuelo, con el ratón**: se abre la mochilita, se elige el
- * camino y se tocan los números; y después se elige el avión y se deja
- * abierto, que es lo que tienen que pausar la aproximación y recoger la
- * tripulante.
+ * **El kit en el vuelo, con el ratón**: se abre la mochilita, se elige Armá
+ * tu avión y se arma el primero —las piezas y las luces, arrastradas a su
+ * hueco con un respiro entre una y otra, como quien juega sin prisa— hasta
+ * que despega; y después se elige la luz verde y se deja abierta, que es lo
+ * que tienen que pausar la aproximación y recoger la tripulante.
  */
-async function jugarElCaminoEnElVuelo(page) {
+async function jugarElAvionEnElVuelo(page) {
   const kitDe = () => page.evaluate(() => globalThis.__oga.inicio().kit);
+  const estado = () => page.evaluate(() => globalThis.__oga.inicio().estado.kit);
   const centro = (r) => ({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
   let k = await kitDe();
   if (!k?.boton) return;
   let c = centro(k.boton);
   await page.mouse.click(c.x, c.y);
-  await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.camino, null, { timeout: 10_000 }).catch(() => {});
+  await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.avion, null, { timeout: 10_000 }).catch(() => {});
   k = await kitDe();
-  if (!k?.juegos?.camino) return;
-  c = centro(k.juegos.camino);
+  if (!k?.juegos?.avion) return;
+  c = centro(k.juegos.avion);
   await page.mouse.click(c.x, c.y);
-  await page.waitForFunction(() => Object.keys(globalThis.__oga.inicio().kit?.paradas ?? {}).length === 4, null, { timeout: 10_000 }).catch(() => {});
-  await foto(page, "kit-camino-en-vuelo");
-  for (const p of ["teide", "gomera", "palma"]) {
+  await page.waitForFunction(() => Object.keys(globalThis.__oga.inicio().kit?.piezas ?? {}).length > 0, null, { timeout: 10_000 }).catch(() => {});
+  const t0 = Date.now();
+  let pausado = 0;
+  await foto(page, "kit-avion-en-vuelo");
+  for (let i = 0; i < 24; i++) {
     // Sin pausar: si habla la megafonía, se espera, que manda ella.
+    const tp = Date.now();
     await page.waitForFunction(() => !globalThis.__oga.inicio().estado.kit.pausado, null, { timeout: 60_000 }).catch(() => {});
+    pausado += (Date.now() - tp) / 1000;
+    const e = await estado();
+    if (!e.abierto || e.juego?.juego !== "avion" || !["piezas", "luces"].includes(e.juego.fase)) break;
     k = await kitDe();
-    if (!k?.paradas?.[p]) return;
-    c = centro(k.paradas[p]);
-    await page.mouse.click(c.x, c.y);
-    await pausa(1500);
+    const [p] = Object.values(k?.piezas ?? {});
+    if (!p) break;
+    const de = centro(p.en);
+    const a = centro(p.sitio);
+    await page.mouse.move(de.x, de.y);
+    await page.mouse.down();
+    await page.mouse.move(a.x, a.y, { steps: 12 });
+    await page.mouse.up();
+    // Un respiro, como quien mira dónde va la siguiente.
+    await pausa(2500);
+    if (i === 3) await foto(page, "kit-avion-a-medias-en-vuelo");
   }
-  await foto(page, "kit-camino-hecho-en-vuelo");
+  await page.waitForFunction(() => (globalThis.__oga.inicio().estado.kit.juego?.despegados ?? 0) > 0, null, { timeout: 60_000 }).catch(() => {});
+  avionEnVuelo.s = (Date.now() - t0) / 1000;
+  avionEnVuelo.pausado = Math.round(pausado);
+  await foto(page, "kit-avion-despegado-en-vuelo");
   // Y la luz verde, que se deja abierta: la recoge la tripulación al empezar la llegada.
+  await page.click(".kit__atras", { force: true }).catch(() => {});
   await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.luz, null, { timeout: 60_000 }).catch(() => {});
   k = await kitDe();
   if (k?.juegos?.luz) {
@@ -2027,8 +2051,8 @@ async function medirLaLuzEnVuelo(page) {
  * **El kit con el dedo, en cada pantalla**: el teléfono apaisado, la tablet
  * del aula y el portátil con ratón. Se da el kit ya —sin volar media hora:
  * `darElKit`—, se abre, se mira que cabe sin tapar la tarjeta ni los botones,
- * y se juegan los dos juegos enteros: las piezas **arrastradas** a su sitio
- * con el dedo, y los números del camino tocados.
+ * y se juegan los dos: el primer avión de Armá tu avión, con las piezas y las
+ * luces **arrastradas** a su hueco con el dedo, hasta que despega; y la torre.
  */
 async function elKitConElDedo() {
   const PANTALLAS = [
@@ -2105,51 +2129,39 @@ async function elKitConElDedo() {
         `fuera ${solapes.fuera} · tapa: ${solapes.otros.join(", ") || "nada"} · juegos de ${minimo.toFixed(0)} px`,
       );
       await foto(page, `kit-elegir-${nombre}`);
-      // ── Armá el avión, arrastrando ──
-      await tocar(k.juegos.piezas);
-      await page.waitForFunction(() => Object.keys(globalThis.__oga.inicio().kit?.piezas ?? {}).length === 4, null, { timeout: 10_000 });
+      // ── Armá tu avión, arrastrando: el primero entero, con sus luces, hasta que despega ──
+      await tocar(k.juegos.avion);
+      await page.waitForFunction(() => Object.keys(globalThis.__oga.inicio().kit?.piezas ?? {}).length > 0, null, { timeout: 10_000 });
       await pausa(500);
       k = await kitDe();
       const menor = Math.min(...Object.values(k.piezas).map((x) => Math.max(x.en.width, x.en.height)));
-      // Primero una al sitio equivocado: vuelve a la bandeja y su sitio brilla.
+      // Primero el motor al hueco del ala: vuelve a la bandeja con calma y el suyo brilla.
       await arrastrar(centro(k.piezas.motor.en), centro(k.piezas.ala.sitio));
       await pausa(600);
       const tras = await estado();
       const ayuda = tras.juego?.puestas?.length === 0 && tras.juego?.ilumina === "motor";
-      for (const p of ["ala", "motor", "cola", "ruedas"]) {
+      for (let i = 0; i < 12; i++) {
         k = await kitDe();
-        await arrastrar(centro(k.piezas[p].en), centro(k.piezas[p].sitio));
+        const [p] = Object.values(k.piezas ?? {});
+        if (!p) break;
+        await arrastrar(centro(p.en), centro(p.sitio));
         await pausa(600);
-        if (p === "motor") await foto(page, `kit-piezas-${nombre}`);
+        if (i === 2) await foto(page, `kit-avion-a-medias-${nombre}`);
+        const e = await estado();
+        if (e.juego?.fase === "luces" && e.juego.puestas.length === 5) await foto(page, `kit-avion-armado-${nombre}`);
       }
-      const piezas = await estado();
-      comprobar(
-        `${nombre}: se arma el avión entero ${dedo ? "con el dedo, arrastrando" : "con el ratón"}; equivocarse ayuda`,
-        piezas.juego?.terminado === true && piezas.hechos.includes("piezas") && ayuda && menor >= 36,
-        `puestas: ${(piezas.juego?.puestas ?? []).join(", ")} · ayuda al equivocarse: ${ayuda} · pieza más chica ${menor.toFixed(0)} px`,
-      );
-      await pausa(1200);
-      await foto(page, `kit-piezas-hecho-${nombre}`);
-      // ── El camino, tocando los números ──
-      await page.click(".kit__atras", { force: true });
-      await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.camino, null, { timeout: 10_000 });
-      k = await kitDe();
-      await tocar(k.juegos.camino);
-      await page.waitForFunction(() => Object.keys(globalThis.__oga.inicio().kit?.paradas ?? {}).length === 4, null, { timeout: 10_000 });
-      await pausa(500);
-      for (const p of ["teide", "gomera", "palma"]) {
-        k = await kitDe();
-        await tocar(k.paradas[p]);
-        await pausa(800);
-      }
+      const armado = await estado();
       await pausa(1500);
-      await foto(page, `kit-camino-${nombre}`);
-      const camino = await estado();
-      const radio = Math.min(...Object.values(k.paradas).map((r) => r.width));
+      await foto(page, `kit-avion-noche-${nombre}`);
+      const despego = await page
+        .waitForFunction(() => (globalThis.__oga.inicio().estado.kit.juego?.despegados ?? 0) > 0, null, { timeout: 20_000 })
+        .then(() => true)
+        .catch(() => false);
+      const siguiente = await estado();
       comprobar(
-        `${nombre}: se dibuja el camino entero tocando los números`,
-        camino.juego?.terminado === true && camino.hechos.includes("camino") && radio >= 34,
-        `unidas ${camino.juego?.hechas} · número de ${radio.toFixed(0)} px`,
+        `${nombre}: se arma el primer avión ${dedo ? "con el dedo, arrastrando" : "con el ratón"}, con sus luces, y despega; equivocarse ayuda`,
+        ["noche", "despegue"].includes(armado.juego?.fase) && despego && siguiente.juego?.nivel === 1 && siguiente.hechos.includes("avion") && ayuda && menor >= 36,
+        `puestas: ${(armado.juego?.puestas ?? []).join(", ")} · fase ${armado.juego?.fase} · despegó ${despego}, y viene el ${siguiente.juego?.tipo} · ayuda al equivocarse: ${ayuda} · pieza más chica ${menor.toFixed(0)} px`,
       );
       // ── Luz verde, con el dedo, en un peldaño por pantalla ──
       await jugarLaLuz(page, nombre, tocar);

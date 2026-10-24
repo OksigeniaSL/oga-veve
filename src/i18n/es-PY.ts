@@ -3738,17 +3738,16 @@ export const ES_PY = {
    * lado. Lo que se dice de cada pieza es lo de verdad: el ala empuja el aire
    * hacia abajo y el aire la empuja hacia arriba (AGENTS.md, regla 4); la
    * deriva lleva el avión derecho como las plumas de una flecha y el timón
-   * le mueve la nariz a los lados. El Teide, 3.715 m, es la cumbre más alta
-   * de España (IGN); el silbo gomero se enseña todavía en las escuelas de La
-   * Gomera. Ver `src/flight/kit-de-viaje.ts` y el ADR 0020.
+   * le mueve la nariz a los lados. Ver `src/flight/kit-de-viaje.ts` y el ADR
+   * 0020.
    */
   "inicio.tripulacion.pasaje.cerca.kitAqui":
-    "¡Mira lo que te traigo: tu kit de viaje, con tres juegos dentro! Siempre llevamos unos cuantos a bordo.",
+    "¡Mira lo que te traigo: tu kit de viaje, con dos juegos dentro! Siempre llevamos unos cuantos a bordo.",
   "inicio.tripulacion.pasaje.cerca.kitRato":
     "Volar es apasionante, pero los vuelos duran un ratito. Con esto, el rato hasta La Palma se te pasa volando.",
   "inicio.ara.pasaje.kitGracias": "¡Gracias! ¿Jugamos? Tocá la mochilita y elegimos uno de los juegos.",
   "inicio.ara.pasaje.kit.elegir":
-    "Hay tres juegos: ser la torre, armar el avión o dibujar el camino de nuestro vuelo. ¿Cuál querés?",
+    "Hay dos juegos: ser la torre del aeropuerto o armar aviones de verdad, pieza por pieza. ¿Cuál querés?",
   "inicio.ara.pasaje.kit.piezas.empezar": "¿Me ayudás a armar el avión? Agarrá cada pieza y llevala a su lugar.",
   "inicio.ara.pasaje.kit.piezas.ala": "¡El ala! Empuja el aire para abajo, y el aire la empuja para arriba: así nos sostiene.",
   "inicio.ara.pasaje.kit.piezas.motor":
@@ -3759,12 +3758,34 @@ export const ES_PY = {
     "¡Las ruedas! Son para correr por la pista y para aterrizar. Volando, se guardan adentro del avión.",
   "inicio.ara.pasaje.kit.piezas.ayuda": "¡Casi! Esa pieza va en otro lugar del avión: mirá el que brilla.",
   "inicio.ara.pasaje.kit.piezas.fin": "¡Armamos el avión entero! Con ala, motor, cola y ruedas, ya puede volar.",
-  "inicio.ara.pasaje.kit.camino.empezar":
-    "Salimos del uno, en Tenerife. Tocá los números en orden y dibujamos el camino del avión.",
-  "inicio.ara.pasaje.kit.camino.teide": "¡Dos, el Teide! Es el volcán más alto de España, y asoma por encima de las nubes.",
-  "inicio.ara.pasaje.kit.camino.gomera": "¡Tres, La Gomera! Es una isla redondita, donde todavía se habla silbando.",
-  "inicio.ara.pasaje.kit.camino.palma": "¡Cuatro, La Palma! Ahí aterrizamos. Ya dibujamos todo el camino de nuestro vuelo.",
-  "inicio.ara.pasaje.kit.camino.ayuda": "Ese número viene después. Primero tocá el que brilla.",
+  /*
+   * **Armá tu avión** (puntos 289, 290 y 304): un avión de la flota por nivel.
+   * Lo que se dice al despegar cada uno es lo que tiene de suyo, y es lo de
+   * verdad: el estabilizador con su timón de profundidad sube y baja la nariz;
+   * las luces de navegación, roja a la izquierda, verde a la derecha y blanca
+   * atrás, y quien ve la roja y la verde a la vez tiene el otro avión de frente
+   * (14 CFR 25.1385 y 25.1387); el biplano Ag Cat lleva rueda de cola; un
+   * bimotor sigue volando con un motor; la cola en T saca el estabilizador de
+   * la estela del ala y de las hélices; los motores colgados descargan el ala
+   * y se alcanzan sin desmontar nada; y los trenes de muchas ruedas reparten
+   * el peso sobre la pista. Ver `src/flight/kit-de-viaje.ts`.
+   */
+  "inicio.ara.pasaje.kit.avion.estabilizador":
+    "¡El estabilizador! Es un ala más corta, atrás en la cola, y con su timón el avión sube o baja la nariz.",
+  "inicio.ara.pasaje.kit.avion.luces":
+    "Ahora las luces: la roja va en la punta del ala izquierda, la verde en la derecha y la blanca atrás.",
+  "inicio.ara.pasaje.kit.avion.noche":
+    "De noche, con las luces, otro avión sabe para dónde vamos: si ve la roja y la verde juntas, vamos de frente.",
+  "inicio.ara.pasaje.kit.avion.biplano":
+    "¡Un biplano! Tiene dos alas, una arriba y otra abajo, y su ruedita no va en la nariz: va en la cola.",
+  "inicio.ara.pasaje.kit.avion.bimotor":
+    "Este lleva un motor en cada ala. Si uno se apaga, el otro sigue empujando y el avión sigue volando.",
+  "inicio.ara.pasaje.kit.avion.colaEnT":
+    "¡La cola en T! El estabilizador va arriba de todo, lejos del aire revuelto del ala y de las hélices.",
+  "inicio.ara.pasaje.kit.avion.reactor":
+    "¡Como el nuestro! Los motores cuelgan debajo del ala: su peso le ayuda al ala, y se llega fácil para cuidarlos.",
+  "inicio.ara.pasaje.kit.avion.cuatrimotor":
+    "¡Cuatro motores y un montón de ruedas! Tantas ruedas reparten el peso, para no romper la pista.",
   "inicio.tripulacion.pasaje.cerca.kitGuardar":
     "Ahora guarda el kit en el bolsillo del asiento, que vamos a aterrizar: todo bien recogido.",
   /*
@@ -3975,21 +3996,23 @@ export const ES_PY = {
   "inicio.kit.abrir": "Abrir el kit de viaje",
   "inicio.kit.cerrar": "Guardar el kit",
   "inicio.kit.elegir": "Volver a los juegos",
-  "inicio.kit.piezas": "Armá el avión",
-  "inicio.kit.camino": "El camino del avión",
-  "inicio.kit.pausa": "Habla la megafonía: escuchá",
+  "inicio.kit.avion": "Armá tu avión",
   "inicio.kit.pieza.ala": "El ala",
+  "inicio.kit.pieza.alaArriba": "El ala de arriba",
+  "inicio.kit.pieza.alaAbajo": "El ala de abajo",
+  "inicio.kit.pieza.alaDerecha": "El ala derecha",
+  "inicio.kit.pieza.alaIzquierda": "El ala izquierda",
   "inicio.kit.pieza.motor": "El motor",
   "inicio.kit.pieza.cola": "La cola",
-  "inicio.kit.pieza.ruedas": "Las ruedas",
-  "inicio.kit.sitio.ala": "El lugar del ala",
-  "inicio.kit.sitio.motor": "El lugar del motor",
-  "inicio.kit.sitio.cola": "El lugar de la cola",
-  "inicio.kit.sitio.ruedas": "El lugar de las ruedas",
-  "inicio.kit.parada.tenerife": "Uno: Tenerife, de donde salimos",
-  "inicio.kit.parada.teide": "Dos: el Teide",
-  "inicio.kit.parada.gomera": "Tres: La Gomera",
-  "inicio.kit.parada.palma": "Cuatro: La Palma, adonde vamos",
+  "inicio.kit.pieza.estabilizador": "El estabilizador",
+  "inicio.kit.pieza.deriva": "La deriva",
+  "inicio.kit.pieza.trenPrincipal": "Las ruedas grandes",
+  "inicio.kit.pieza.trenMorro": "La rueda de la nariz",
+  "inicio.kit.pieza.trenCola": "La ruedita de la cola",
+  "inicio.kit.pieza.roja": "La luz roja",
+  "inicio.kit.pieza.verde": "La luz verde",
+  "inicio.kit.pieza.blanca": "La luz blanca",
+  "inicio.kit.pausa": "Habla la megafonía: escuchá",
   "inicio.kit.luz": "Luz verde: la torre sos vos",
   "inicio.kit.luz.verde": "Luz verde fija: puede aterrizar",
   "inicio.kit.luz.roja": "Luz roja fija: que dé otra vuelta",

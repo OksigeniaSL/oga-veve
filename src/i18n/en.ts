@@ -2317,12 +2317,12 @@ export const EN: Dictionary = {
   "inicio.dibujo.techo": "The base of the clouds, the plane just below it, how far it is to the sea and how far you can see.",
   // The travel kit: see `src/flight/kit-de-viaje.ts`.
   "inicio.tripulacion.pasaje.cerca.kitAqui":
-    "Look what I've brought you: your travel kit, with three games inside! We always carry a few on board.",
+    "Look what I've brought you: your travel kit, with two games inside! We always carry a few on board.",
   "inicio.tripulacion.pasaje.cerca.kitRato":
     "Flying is exciting, but flights take a little while. With this, the time to La Palma will fly by.",
   "inicio.ara.pasaje.kitGracias": "Thank you! Shall we play? Tap the little backpack and we'll pick one of the games.",
   "inicio.ara.pasaje.kit.elegir":
-    "There are three games: being the tower, building the plane, or drawing the route of our flight. Which one do you want?",
+    "There are two games: being the airport tower, or building real planes, piece by piece. Which one do you want?",
   "inicio.ara.pasaje.kit.piezas.empezar": "Will you help me build the plane? Grab each piece and take it to its place.",
   "inicio.ara.pasaje.kit.piezas.ala": "The wing! It pushes the air down, and the air pushes it up: that's what holds us up.",
   "inicio.ara.pasaje.kit.piezas.motor":
@@ -2333,12 +2333,22 @@ export const EN: Dictionary = {
     "The wheels! They're for running along the runway and for landing. In the air, they're tucked away inside the plane.",
   "inicio.ara.pasaje.kit.piezas.ayuda": "Almost! That piece goes somewhere else on the plane: look at the one that's shining.",
   "inicio.ara.pasaje.kit.piezas.fin": "We built the whole plane! With wing, engine, tail and wheels, it's ready to fly.",
-  "inicio.ara.pasaje.kit.camino.empezar":
-    "We set off from number one, in Tenerife. Tap the numbers in order and we'll draw the plane's route.",
-  "inicio.ara.pasaje.kit.camino.teide": "Two, the Teide! It's the highest volcano in Spain, and it peeks out above the clouds.",
-  "inicio.ara.pasaje.kit.camino.gomera": "Three, La Gomera! It's a round little island where people still talk by whistling.",
-  "inicio.ara.pasaje.kit.camino.palma": "Four, La Palma! That's where we land. We've drawn the whole route of our flight.",
-  "inicio.ara.pasaje.kit.camino.ayuda": "That number comes later. First tap the one that's shining.",
+  "inicio.ara.pasaje.kit.avion.estabilizador":
+    "The stabiliser! It's like a little wing on the tail, and with its elevator the plane raises or lowers its nose.",
+  "inicio.ara.pasaje.kit.avion.luces":
+    "Now the lights: the red one goes on the tip of the left wing, the green one on the right, and the white one at the back.",
+  "inicio.ara.pasaje.kit.avion.noche":
+    "At night, with the lights, another plane knows where we're going: if it sees red and green together, we're coming head-on.",
+  "inicio.ara.pasaje.kit.avion.biplano":
+    "A biplane! It has two wings, one on top and one below, and its little wheel isn't on the nose: it's on the tail.",
+  "inicio.ara.pasaje.kit.avion.bimotor":
+    "This one has an engine on each wing. If one stops, the other keeps pushing and the plane keeps flying.",
+  "inicio.ara.pasaje.kit.avion.colaEnT":
+    "A T-tail! The stabiliser sits right at the top, away from the stirred-up air of the wing and the propellers.",
+  "inicio.ara.pasaje.kit.avion.reactor":
+    "Just like ours! The engines hang under the wing: their weight helps the wing, and they're easy to reach for looking after.",
+  "inicio.ara.pasaje.kit.avion.cuatrimotor":
+    "Four engines and loads of wheels! All those wheels spread the weight, so the runway doesn't break.",
   "inicio.tripulacion.pasaje.cerca.kitGuardar":
     "Now put the kit away in the seat pocket, because we're about to land: everything neatly stowed.",
   "inicio.ara.pasaje.kit.luz.radio":
@@ -2443,21 +2453,23 @@ export const EN: Dictionary = {
   "inicio.kit.abrir": "Open the travel kit",
   "inicio.kit.cerrar": "Put the kit away",
   "inicio.kit.elegir": "Back to the games",
-  "inicio.kit.piezas": "Build the plane",
-  "inicio.kit.camino": "The plane's route",
-  "inicio.kit.pausa": "The announcement is on: listen",
+  "inicio.kit.avion": "Build your plane",
   "inicio.kit.pieza.ala": "The wing",
+  "inicio.kit.pieza.alaArriba": "The top wing",
+  "inicio.kit.pieza.alaAbajo": "The bottom wing",
+  "inicio.kit.pieza.alaDerecha": "The right wing",
+  "inicio.kit.pieza.alaIzquierda": "The left wing",
   "inicio.kit.pieza.motor": "The engine",
   "inicio.kit.pieza.cola": "The tail",
-  "inicio.kit.pieza.ruedas": "The wheels",
-  "inicio.kit.sitio.ala": "The wing's place",
-  "inicio.kit.sitio.motor": "The engine's place",
-  "inicio.kit.sitio.cola": "The tail's place",
-  "inicio.kit.sitio.ruedas": "The wheels' place",
-  "inicio.kit.parada.tenerife": "One: Tenerife, where we set off",
-  "inicio.kit.parada.teide": "Two: the Teide",
-  "inicio.kit.parada.gomera": "Three: La Gomera",
-  "inicio.kit.parada.palma": "Four: La Palma, where we're going",
+  "inicio.kit.pieza.estabilizador": "The stabiliser",
+  "inicio.kit.pieza.deriva": "The fin",
+  "inicio.kit.pieza.trenPrincipal": "The big wheels",
+  "inicio.kit.pieza.trenMorro": "The nose wheel",
+  "inicio.kit.pieza.trenCola": "The tail wheel",
+  "inicio.kit.pieza.roja": "The red light",
+  "inicio.kit.pieza.verde": "The green light",
+  "inicio.kit.pieza.blanca": "The white light",
+  "inicio.kit.pausa": "The announcement is on: listen",
   "inicio.kit.luz": "Green light: you're the tower",
   "inicio.kit.luz.verde": "Steady green: cleared to land",
   "inicio.kit.luz.roja": "Steady red: give way and keep circling",

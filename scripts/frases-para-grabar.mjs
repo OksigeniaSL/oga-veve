@@ -1782,8 +1782,25 @@ const DE_LO_QUE_SE_RECONOCE = [
   ["inicio.mama.pasaje.mazo", "comandante", "el modo inicio, de pasaje: la comandante, ya en tierra, nombra el pueblo de la ladera: Villa de Mazo"],
   ["inicio.tripulacion.pasaje.cerca.musica", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante, por qué ponen música al bajar"],
 ];
+/**
+ * **Y Armá tu avión** (puntos 289, 290 y 304, 24-10-2026): el juego del kit
+ * que arma un avión de la flota por nivel. Lo dice Ara, de vos: el
+ * estabilizador, las luces de navegación y lo que enseña cada avión al
+ * despegar; el primero, con lo que ya estaba grabado. Al final, que lo
+ * grabado no se renumera. Ver `src/flight/kit-de-viaje.ts`.
+ */
+const DE_ARMA_TU_AVION = [
+  ["inicio.ara.pasaje.kit.avion.estabilizador", "ara", "el modo inicio, de pasaje, armá tu avión: Ara cuenta que el estabilizador es un ala chiquita que sube y baja la nariz"],
+  ["inicio.ara.pasaje.kit.avion.luces", "ara", "el modo inicio, de pasaje, armá tu avión: Ara dice dónde va cada luz de navegación"],
+  ["inicio.ara.pasaje.kit.avion.noche", "ara", "el modo inicio, de pasaje, armá tu avión: Ara, de noche, para qué sirven las luces"],
+  ["inicio.ara.pasaje.kit.avion.biplano", "ara", "el modo inicio, de pasaje, armá tu avión: Ara, al despegar el biplano"],
+  ["inicio.ara.pasaje.kit.avion.bimotor", "ara", "el modo inicio, de pasaje, armá tu avión: Ara, al despegar el bimotor"],
+  ["inicio.ara.pasaje.kit.avion.colaEnT", "ara", "el modo inicio, de pasaje, armá tu avión: Ara, al despegar el de la cola en T"],
+  ["inicio.ara.pasaje.kit.avion.reactor", "ara", "el modo inicio, de pasaje, armá tu avión: Ara, al despegar el reactor, como el suyo"],
+  ["inicio.ara.pasaje.kit.avion.cuatrimotor", "ara", "el modo inicio, de pasaje, armá tu avión: Ara, al despegar el cuatrimotor"],
+];
 const LO_QUE_SE_VE = new Set(
-  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE].map(
+  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION].map(
     ([k]) => k,
   ),
 );
@@ -1885,8 +1902,8 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
     total += texto.length;
   }
 }
-// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde y lo que se reconoce al llegar: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE` y `DE_LO_QUE_SE_RECONOCE`.
-for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE]) {
+// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde, lo que se reconoce al llegar y armá tu avión: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE`, `DE_LO_QUE_SE_RECONOCE` y `DE_ARMA_TU_AVION`.
+for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION]) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });

@@ -15570,7 +15570,7 @@
     "id": "inicio.ara.pasaje.kit.elegir",
     "voz": "ara",
     "idioma": "es-PY",
-    "texto": "Hay tres juegos: ser la torre, armar el avión o dibujar el camino de nuestro vuelo. ¿Cuál querés?",
+    "texto": "Hay dos juegos: ser la torre del aeropuerto o armar aviones de verdad, pieza por pieza. ¿Cuál querés?",
     "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
     "ajustes": {
       "stability": 0.35,
@@ -15669,76 +15669,6 @@
     "voz": "ara",
     "idioma": "es-PY",
     "texto": "¡Armamos el avión entero! Con ala, motor, cola y ruedas, ya puede volar.",
-    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
-  },
-  {
-    "id": "inicio.ara.pasaje.kit.camino.empezar",
-    "voz": "ara",
-    "idioma": "es-PY",
-    "texto": "Salimos del uno, en Tenerife. Tocá los números en orden y dibujamos el camino del avión.",
-    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
-  },
-  {
-    "id": "inicio.ara.pasaje.kit.camino.teide",
-    "voz": "ara",
-    "idioma": "es-PY",
-    "texto": "¡Dos, el Teide! Es el volcán más alto de España, y asoma por encima de las nubes.",
-    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
-  },
-  {
-    "id": "inicio.ara.pasaje.kit.camino.gomera",
-    "voz": "ara",
-    "idioma": "es-PY",
-    "texto": "¡Tres, La Gomera! Es una isla redondita, donde todavía se habla silbando.",
-    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
-  },
-  {
-    "id": "inicio.ara.pasaje.kit.camino.palma",
-    "voz": "ara",
-    "idioma": "es-PY",
-    "texto": "¡Cuatro, La Palma! Ahí aterrizamos. Ya dibujamos todo el camino de nuestro vuelo.",
-    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
-    "ajustes": {
-      "stability": 0.35,
-      "similarity_boost": 0.8,
-      "style": 0.45,
-      "use_speaker_boost": true,
-      "speed": 1
-    }
-  },
-  {
-    "id": "inicio.ara.pasaje.kit.camino.ayuda",
-    "voz": "ara",
-    "idioma": "es-PY",
-    "texto": "Ese número viene después. Primero tocá el que brilla.",
     "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
     "ajustes": {
       "stability": 0.35,
@@ -16081,7 +16011,7 @@
     "id": "inicio.tripulacion.pasaje.cerca.kitAqui",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
-    "texto": "¡Mira lo que te traigo: tu kit de viaje, con tres juegos dentro! Siempre llevamos unos cuantos a bordo.",
+    "texto": "¡Mira lo que te traigo: tu kit de viaje, con dos juegos dentro! Siempre llevamos unos cuantos a bordo.",
     "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
@@ -18147,5 +18077,117 @@
     "idioma": "es-PY",
     "texto": "Para que el ratito de bajar sea un rato de calma, sin nervios. Y muchas compañías ponen música de su tierra: esta es de Canarias.",
     "para": "el modo inicio, de pasaje: la tripulante, por qué ponen música al bajar"
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.avion.estabilizador",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡El estabilizador! Es un ala más corta, atrás en la cola, y con su timón el avión sube o baja la nariz.",
+    "para": "el modo inicio, de pasaje, armá tu avión: Ara cuenta que el estabilizador es un ala chiquita que sube y baja la nariz",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.avion.luces",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Ahora las luces: la roja va en la punta del ala izquierda, la verde en la derecha y la blanca atrás.",
+    "para": "el modo inicio, de pasaje, armá tu avión: Ara dice dónde va cada luz de navegación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.avion.noche",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "De noche, con las luces, otro avión sabe para dónde vamos: si ve la roja y la verde juntas, vamos de frente.",
+    "para": "el modo inicio, de pasaje, armá tu avión: Ara, de noche, para qué sirven las luces",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.avion.biplano",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Un biplano! Tiene dos alas, una arriba y otra abajo, y su ruedita no va en la nariz: va en la cola.",
+    "para": "el modo inicio, de pasaje, armá tu avión: Ara, al despegar el biplano",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.avion.bimotor",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Este lleva un motor en cada ala. Si uno se apaga, el otro sigue empujando y el avión sigue volando.",
+    "para": "el modo inicio, de pasaje, armá tu avión: Ara, al despegar el bimotor",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.avion.colaEnT",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡La cola en T! El estabilizador va arriba de todo, lejos del aire revuelto del ala y de las hélices.",
+    "para": "el modo inicio, de pasaje, armá tu avión: Ara, al despegar el de la cola en T",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.avion.reactor",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Como el nuestro! Los motores cuelgan debajo del ala: su peso le ayuda al ala, y se llega fácil para cuidarlos.",
+    "para": "el modo inicio, de pasaje, armá tu avión: Ara, al despegar el reactor, como el suyo",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.avion.cuatrimotor",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Cuatro motores y un montón de ruedas! Tantas ruedas reparten el peso, para no romper la pista.",
+    "para": "el modo inicio, de pasaje, armá tu avión: Ara, al despegar el cuatrimotor",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]
