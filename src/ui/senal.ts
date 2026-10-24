@@ -217,6 +217,46 @@ const CORTO = icono(`
 `);
 
 /**
+ * Tocar pasada la zona de toma: **la pista, sus marcas de toma abajo y el
+ * avión allá arriba, lejos de ellas**.
+ *
+ * La misma pista que «fuera» y «corto», y el mismo avión: los tres se leen
+ * juntos sin una palabra. Las marcas son las de verdad —los rectángulos
+ * gordos del punto de visada y las barras de la zona de toma, cerca del
+ * umbral—, que es lo que hay que buscar con la vista el día que se aterrice:
+ * ahí se toca. El avión, posado casi al final, enseña cuánta pista se comió.
+ * Ver el punto 299 en `flight/aterrizaje.ts`.
+ */
+const LARGO = icono(`
+  <path d="M4 23 L9.6 2 h4.8 L20 23 Z" opacity="0.3" />
+  <rect x="7.4" y="17.4" width="2.4" height="3.6" />
+  <rect x="14.2" y="17.4" width="2.4" height="3.6" />
+  <rect x="8.6" y="13" width="1.6" height="2.4" opacity="0.75" />
+  <rect x="13.8" y="13" width="1.6" height="2.4" opacity="0.75" />
+  <g transform="translate(7.6 0.2) scale(0.36)">
+    <path d="M4.2 16.6 L11.2 15.8 V12 a0.8 0.8 0 0 1 1.6 0 v3.8 l7 0.8 v1.7 l-7 0.8 v2.4
+             l1.9 1.1 v1 L12 20.7 L8.3 21.4 v-1 l1.9-1.1 v-2.4 l-6-0.8 Z" />
+  </g>
+`);
+
+/**
+ * Tocar con demasiada caída: **el suelo, el avión que llega empinado y el
+ * golpe debajo de las ruedas**.
+ *
+ * El mismo suelo y la misma bajada que «aterrizá», pero más empinada y con
+ * tres rayitas de golpe donde toca. Sin tachón ni rojo: no se rompió nada, es
+ * información —se recoge un poco más y la próxima toca más suave—.
+ */
+const DURO = icono(`
+  <path d="M2 21 h20" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none" />
+  <path d="M6.6 3.4 L12 15.6" stroke="currentColor" stroke-width="2.6"
+        stroke-linecap="round" fill="none" />
+  <path d="M10.4 10.6 L14.6 14.2 L11.2 16.4 Z" />
+  <path d="M8.4 18.4 l-2 -1.6 M12 18 v-2.2 M15.6 18.4 l2 -1.6" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round" fill="none" />
+`);
+
+/**
  * Se escapó el aro por arriba: **bajá al aro**.
  *
  * «Supero el aro y nadie me corrige.» El aro perdido sonaba y destellaba en
@@ -1518,6 +1558,8 @@ export const DIBUJOS = {
   edificio: EDIFICIO,
   fuera: FUERA_DE_PISTA,
   corto: CORTO,
+  largo: LARGO,
+  duro: DURO,
   "circuito-subida": circuito("subida"),
   "circuito-cruzado": circuito("cruzado"),
   "circuito-encola": circuito("encola"),

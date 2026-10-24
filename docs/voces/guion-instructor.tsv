@@ -11,7 +11,7 @@
 011	vuelo.esperandoMirando	Pará y mirá: la manga, los animales y la pista
 012	vuelo.autorizadoSinTorre	Todo libre: entrá a la pista
 013	vuelo.esperandoAfis	Pará y escuchá: acá nadie te da permiso. La radio te dice si viene alguien, y decidís vos
-014	vuelo.autorizadoAfis	La pista está libre: entrá cuando estés listo
+014	vuelo.autorizadoAfis	La pista está libre: entrá cuando quieras
 015	vuelo.backTaxi	Andá hasta el fondo y dá la vuelta
 016	vuelo.remontar	Vamos por la pista hasta el final y damos la vuelta allá
 017	vuelo.remontarUnTrecho	Vamos un trecho por la pista y damos la vuelta: desde ahí nos sobra para despegar
@@ -609,3 +609,7 @@
 609	ejercicio.tormenta.salimos	Ya salimos. Así es adentro de una tormenta: sacude, llueve fuerte y graniza. Por eso no se entra: se la rodea de lejos. Vamos otra vez, desde el principio
 610	ejercicio.tormenta.bien	¡Muy bien! Rodeaste la tormenta y la dejaste bien lejos, como hacen los pilotos de verdad. Ahora, de vuelta a casa
 611	ejercicio.tormenta.bienCerca	La rodeaste sin entrar: bien hecho. Pasamos un poco cerca: la próxima, más lejos todavía, que de una tormenta así se pasa a veinte millas
+612	vuelo.tocasteLargo	Tocaste largo, lejos de las marcas: así se come la pista. Mejor firme y en su sitio que suave y lejos
+613	vuelo.tocasteDuro	Aterrizaje duro: ahora hay que revisar el avión. La próxima, recogé un poco más al final
+614	vuelo.tocasteLargoFacil	¡Aterrizaste! Pero lejos de las rayas blancas grandes: la próxima, tocá cerca de ellas, que así sobra pista para frenar
+615	vuelo.tocasteDuroFacil	¡Aterrizaste! Pero con un golpe fuerte: la próxima, llegá al suelo más despacito, sin empujar la nariz para abajo

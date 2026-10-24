@@ -545,6 +545,15 @@ export interface FlightModel {
   limiteDeCaida(): number;
 
   /**
+   * **Y a qué régimen de descenso al tocar es un aterrizaje duro**, m/s: el
+   * que no rompe nada pero ya no es una toma buena. Lo dice el modelo por lo
+   * mismo que `limiteDeCaida`: en el que lleva recogida de verdad es el de un
+   * tren certificado, y en el de los pequeños, que no la lleva, sería castigar
+   * su toma corriente. Ver `Aterrizaje` en `aterrizaje.ts`.
+   */
+  limiteDeDuro(): number;
+
+  /**
    * De qué está hecho el suelo que hay debajo ahora mismo.
    *
    * Lo dice el juego en cada fotograma, porque el que sabe de aeródromos es

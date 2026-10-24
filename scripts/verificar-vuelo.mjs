@@ -55,7 +55,8 @@ const CON_SIGUEME = TRAMO === "guyrami" || TRAMO === "tuka";
  * `flight/gobernador.ts`.
  */
 const CON_TOPE = CON_SIGUEME;
-const PUERTO = 5273;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5273);
 
 const server = await createServer({
   root: process.cwd(),
@@ -2129,6 +2130,7 @@ const volado =
         const bajar = async (alto, mando) => {
           o.reiniciar();
           await new Promise((res) => setTimeout(res, 600));
+          const antes = o.inicio?.()?.cuaderno?.aterrizajes ?? null;
           // En el eje, novecientos metros antes del umbral.
           const d = r.length / 2 + 900;
           const x = r.x - Math.sin(rad) * d;
@@ -2155,11 +2157,15 @@ const volado =
               // Y ahora sí, que el veredicto tarda dos segundos.
               for (let j = 0; j < 60; j++)
                 await new Promise((res) => setTimeout(res, 50));
+              const i = o.inicio?.();
               return {
                 caida: o.caida(),
                 along,
                 dibujo: dibujo(),
                 galones: o.galones(),
+                veredicto: i?.ultimaToma?.veredicto ?? null,
+                duro: o.limiteDeDuro?.() ?? 10 * 0.3048,
+                apuntado: antes !== null && (i?.cuaderno?.aterrizajes ?? 0) > antes,
               };
             }
           }
@@ -2183,11 +2189,20 @@ if (volado?.firme) {
     }`,
     "«me salió esto y aterricé bien»: el percance saltaba a 4 m/s y la senda se posa a 3",
   );
+  /*
+   * **Y se llama por su nombre** (punto 299). Esto pedía el galón de la toma
+   * a más de cuatro metros por segundo. Lo que no puede faltar es que cuente
+   * como aterrizaje —en el cuaderno, sin percance— y que se diga qué fue:
+   * firme, o duro si pasa del listón del modelo de este peldaño, que en el de
+   * los pequeños es holgado (ver `limiteDeDuro` en `arcade.ts`).
+   */
+  // El listón de «duro» lo pone el modelo del peldaño: ver `limiteDeDuro`.
+  const esperado = volado.firme.caida > volado.firme.duro ? "duro" : "firme";
   comprobar(
-    "y cuenta como aterrizaje",
-    volado.firme.galones.includes("toma"),
-    `galones: ${volado.firme.galones.join(", ") || "ninguno"}`,
-    "un aterrizaje que no se apunta es un aterrizaje que no ha pasado",
+    "y cuenta como aterrizaje, y se llama por su nombre: duro solo por encima del listón de su modelo",
+    volado.firme.apuntado && volado.firme.veredicto === esperado && (esperado === "duro") !== volado.firme.galones.includes("toma"),
+    `«${volado.firme.veredicto ?? "sin veredicto"}» a ${volado.firme.caida.toFixed(1)} m/s, duro desde ${volado.firme.duro.toFixed(1)} · en el cuaderno: ${volado.firme.apuntado} · galones: ${volado.firme.galones.join(", ") || "ninguno"}`,
+    "un aterrizaje que no se apunta es un aterrizaje que no ha pasado; y uno duro no es uno bueno",
   );
 }
 if (volado?.corta) {

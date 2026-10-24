@@ -187,6 +187,15 @@ export class TomaLarga {
     return this.propuesta && this.sePuede;
   }
 
+  /**
+   * **Si en esta toma ya se propuso irse**, se pueda todavía o no: entonces el
+   * veredicto de toma larga no se vuelve a decir, que ya se dijo lo bueno.
+   * Ver `checkLanding` en `game.ts`.
+   */
+  get yaPropuesta(): boolean {
+    return this.propuesta;
+  }
+
   /** Otro vuelo u otra aproximación. */
   reiniciar(): void {
     this.tocado = false;

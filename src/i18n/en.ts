@@ -80,9 +80,9 @@ export const EN: Dictionary = {
   "hud.stall": "Stall! Lower the nose",
   "hud.pullUp": "Ground. Pull up",
   "hud.runwayEnd": "Runway ending",
-  "hud.landedSoft": "Beautiful landing. Smooth as it gets",
+  "hud.landedSoft": "Beautiful landing: smooth, and right on the spot",
   "hud.landedFast": "Too fast! Ease off the power before touching down",
-  "hud.landedFirm": "Firm landing. You are down",
+  "hud.landedFirm": "Good landing: firm, and right on the spot",
   "hud.landedOffRunway": "You landed off the runway, but you landed",
   "hud.landedShort":
     "You touched down before the white bar: the arrows are for taxi and take-off",
@@ -354,6 +354,8 @@ export const EN: Dictionary = {
   "palabra.rapido": "Too fast",
   "palabra.fuera": "Off",
   "palabra.corto": "Short",
+  "palabra.largo": "Far",
+  "palabra.duro": "Hard",
   "palabra.roto": "Broken",
   "vuelo.estacionado": "Start the engine",
   "vuelo.arrancando": "Release the brakes and roll slowly",
@@ -401,6 +403,13 @@ export const EN: Dictionary = {
   "vuelo.proponeIrseSalidaTapada":
     "There's a plane waiting to take off right where we'd leave the runway. If you like, we go around, let it go, and come back calmly",
   "vuelo.tomaLarga": "Not like this: we go around and try again",
+  "vuelo.tocasteLargo":
+    "You touched down long, far from the markings: that eats up the runway. Firm and on the spot beats smooth and far",
+  "vuelo.tocasteDuro": "Hard landing: now the plane has to be inspected. Next time, flare a little more at the end",
+  "vuelo.tocasteLargoFacil":
+    "You landed! But far from the big white stripes: next time, touch down near them, so there's runway left to stop",
+  "vuelo.tocasteDuroFacil":
+    "You landed! But with a big bump: next time, reach the ground more gently, without pushing the nose down",
   "vuelo.tomaLargaSinPista": "Not enough runway to stop: we go around and try again",
   "vuelo.aterrizasteContraLaOrden":
     "The tower had sent us around. When the tower says go around, you go: it sees what we can't see from here",
@@ -2423,6 +2432,12 @@ export const EN: Dictionary = {
   "inicio.mama.pasaje.masGas":
     "And just before touchdown, the engines got louder: with the wheels and the flaps out, the plane slows down a lot, and it needs more power so as not to lose speed.",
   "inicio.ara.pasaje.vueltaEnPista": "We're turning round on the runway! We're going back the same way.",
+  "inicio.ara.pasaje.golpecito":
+    "Did you feel the little bump when we touched down? It's on purpose: that way the wheels grip well and the plane doesn't run long.",
+  "inicio.ara.pasaje.aerofrenos":
+    "Did you see the wing when we touched the ground? Some panels popped up on top: they're the speed brakes.",
+  "inicio.ara.pasaje.aerofrenosPorque":
+    "Mum told me that way the wing stops holding the plane up: the plane stays stuck to the ground and the wheels brake well.",
   "inicio.mama.pasaje.vueltaEnPista":
     "Ladies and gentlemen: we turned round on the runway because the exits to the terminal were behind us, and there are none further on. At the end of the runway there's a wider bit for turning round.",
   "inicio.mama.pasaje.permisoDeVuelta":

@@ -388,13 +388,20 @@ describe("del puesto al puesto con el JAZ 90 de Guyrami", () => {
     expect(vuelo.maxLadoEnFinal).toBeLessThan(8);
   });
 
-  it("toca suave, en la zona de toma y a su velocidad", () => {
+  /*
+   * **Firme y en su sitio** (punto 299): esto decía «toca suave», con la zona
+   * hasta los novecientos metros, y lo que hace buena una toma es el sitio —de
+   * 300 a 450 m del umbral, dentro de la zona de toma de `toma-larga.ts`— y
+   * una caída de toma de avión de línea, de dos a cuatro pies por segundo.
+   */
+  it("toca firme, en su sitio y a su velocidad", () => {
     const t = vuelo.toque!;
     const pasado = LLEGADA.z0 - t.z;
-    expect(pasado).toBeGreaterThan(150);
-    expect(pasado).toBeLessThan(900);
+    expect(pasado).toBeGreaterThan(300);
+    expect(pasado).toBeLessThan(450);
     expect(Math.abs(t.x)).toBeLessThan(5);
-    expect(t.caida).toBeLessThan(1.3);
+    expect(t.caida).toBeGreaterThan(2 * 0.3048);
+    expect(t.caida).toBeLessThan(4 * 0.3048);
     expect(t.velocidad).toBeLessThan(ARAI.approachSpeed + 3);
   });
 

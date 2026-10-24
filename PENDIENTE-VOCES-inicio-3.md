@@ -150,6 +150,39 @@ Jazlyn», o con `?inicio=3`.
 | `inicio.ara.pasaje.toque.gomera` | `ara` | 77 |
 | `inicio.ara.pasaje.toque.mar` | `ara` | 69 |
 
+- **El toque en tierra** (puntos 296 y 299, 24-10-2026): los aerofrenos que
+  se ven subir en el ala al tocar, que Ara cuenta rodando en el primer rato
+  tranquilo, y los dos veredictos de la toma que faltaban en los vuelos de
+  pilotar —tocar largo y tocar duro—, dichos por la instructora con calma.
+  **Cuatro frases nuevas, al final de cada voz**: dos de Ara y dos de la
+  instructora, 402 caracteres.
+
+| Clave | Voz | Caracteres |
+|---|---|---:|
+| `inicio.ara.pasaje.aerofrenos` | `ara` | 98 |
+| `inicio.ara.pasaje.aerofrenosPorque` | `ara` | 115 |
+| `vuelo.tocasteLargo` | `instructor` | 101 |
+| `vuelo.tocasteDuro` | `instructor` | 88 |
+
+- **Y los dos veredictos en sencillo** (24-10-2026), para los dos peldaños de
+  abajo: empiezan por lo que pasó —«¡aterrizaste!»— y dicen qué hacer la
+  próxima, sin «revisar el avión». **Dos frases más de la instructora**, al
+  final de su voz.
+
+| Clave | Voz | Caracteres |
+|---|---|---:|
+| `vuelo.tocasteLargoFacil` | `instructor` | 119 |
+| `vuelo.tocasteDuroFacil` | `instructor` | 113 |
+
+- **El golpecito** (punto 299, 24-10-2026): con la recogida contra la pista,
+  la tripulación toca firme y en su sitio, y Ara lo cuenta rodando, justo
+  antes de los aerofrenos: es a propósito. Solo si la toma fue firme. **Una
+  frase más de Ara**, al final de su voz.
+
+| Clave | Voz | Caracteres |
+|---|---|---:|
+| `inicio.ara.pasaje.golpecito` | `ara` | 107 |
+
 Ninguna baja de treinta letras. Los rótulos del kit —`inicio.kit.*`, el
 nombre de cada pieza y de cada parada, y las luces de la lámpara— son de la
 pantalla y no se graban.

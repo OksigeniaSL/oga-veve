@@ -64,7 +64,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -1832,8 +1832,26 @@ const DE_LA_GRACIA_Y_EL_SILBO = [
   ["inicio.ara.pasaje.silboOtras", "ara", "el modo inicio, de pasaje: Ara pregunta si en otras islas también se habla silbando"],
   ["inicio.tripulacion.pasaje.cerca.silbo", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante, el silbo también en El Hierro, Tenerife y Gran Canaria; hoy, sobre todo en La Gomera"],
 ];
+/**
+ * **Y el toque en tierra** (puntos 296 y 299, 24-10-2026): los aerofrenos que
+ * Ara ve subir en el ala al tocar y cuenta rodando, y los dos veredictos de
+ * la instructora que faltaban —tocar largo y tocar duro—, sin percance y con
+ * calma. Al final de cada voz, que lo grabado no se renumera: las de la
+ * instructora salen de su grupo `vuelo` por lo mismo. Ver las charlas
+ * `aerofrenos` y `aerofrenosPorque` en `src/flight/inicio-pasaje.ts` y
+ * `Aterrizaje` en `src/flight/aterrizaje.ts`.
+ */
+const DEL_TOQUE = [
+  ["inicio.ara.pasaje.aerofrenos", "ara", "el modo inicio, de pasaje: Ara, rodando, recuerda las tapas que se levantaron en el ala al tocar"],
+  ["inicio.ara.pasaje.aerofrenosPorque", "ara", "el modo inicio, de pasaje: Ara cuenta para qué se levantan los aerofrenos"],
+  ["inicio.ara.pasaje.golpecito", "ara", "el modo inicio, de pasaje: Ara, rodando, cuenta que el golpecito de una toma firme es a propósito"],
+  ["vuelo.tocasteLargo", "instructor", "el veredicto de la toma: se tocó pasada la zona de toma"],
+  ["vuelo.tocasteDuro", "instructor", "el veredicto de la toma: se tocó con más de diez pies por segundo"],
+  ["vuelo.tocasteLargoFacil", "instructor", "el veredicto de la toma, en los peldaños de abajo: se aterrizó, pero lejos de las rayas"],
+  ["vuelo.tocasteDuroFacil", "instructor", "el veredicto de la toma, en los peldaños de abajo: se aterrizó, pero con un golpe fuerte"],
+];
 const LO_QUE_SE_VE = new Set(
-  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO].map(
+  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE].map(
     ([k]) => k,
   ),
 );
@@ -1935,8 +1953,8 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
     total += texto.length;
   }
 }
-// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde, lo que se reconoce al llegar, armá tu avión, la ventanilla viva, y la gracia y el silbo: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE`, `DE_LO_QUE_SE_RECONOCE`, `DE_ARMA_TU_AVION`, `DE_LA_VENTANILLA_VIVA` y `DE_LA_GRACIA_Y_EL_SILBO`.
-for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO]) {
+// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde, lo que se reconoce al llegar, armá tu avión, la ventanilla viva, la gracia y el silbo, y el toque en tierra: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE`, `DE_LO_QUE_SE_RECONOCE`, `DE_ARMA_TU_AVION`, `DE_LA_VENTANILLA_VIVA`, `DE_LA_GRACIA_Y_EL_SILBO` y `DEL_TOQUE`.
+for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE]) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });

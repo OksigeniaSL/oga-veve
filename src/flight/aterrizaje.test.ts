@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { LandingWatcher } from "./aterrizaje";
+import { LandingWatcher, type Aterrizaje } from "./aterrizaje";
+import { lasGana } from "./gafas";
 
 /** Un vuelo completo: rodar, volar, tocar y frenar. */
 /** La velocidad de aproximación de las pruebas. La del Pykasu. */
@@ -47,8 +48,23 @@ describe("el aterrizaje se reconoce y se dice", () => {
     expect(volarYAterrizar(0.4)).toEqual(["suave"]);
   });
 
-  it("uno duro también cuenta, pero se llama por su nombre", () => {
+  /*
+   * **Firme no es duro** (punto 299): de dos a diez pies por segundo es una
+   * toma firme y buena; por encima de diez, la del tren certificado de un
+   * avión de transporte, duro. Ver la cuenta de `SUAVE` y `DURO`.
+   */
+  it("uno firme también cuenta, y se llama por su nombre", () => {
     expect(volarYAterrizar(2.6)).toEqual(["firme"]);
+  });
+
+  it("por debajo de dos pies por segundo es suave, y por encima, firme", () => {
+    expect(volarYAterrizar(0.55)).toEqual(["suave"]);
+    expect(volarYAterrizar(0.7)).toEqual(["firme"]);
+  });
+
+  it("y por encima de diez pies por segundo es un aterrizaje duro, aunque esté en su sitio", () => {
+    expect(volarYAterrizar(3.0)).toEqual(["firme"]);
+    expect(volarYAterrizar(3.2)).toEqual(["duro"]);
   });
 
   it("fuera de la pista sigue siendo un aterrizaje", () => {
@@ -293,5 +309,47 @@ describe("tocar antes del umbral desplazado", () => {
 
   it("y el sitio va antes que la velocidad, como con «fuera»", () => {
     expect(tocar(true, VREF * 1.6)).toEqual(["corto"]);
+  });
+});
+
+/**
+ * **Lo que manda es el sitio, no la suavidad** (punto 299): un toque de pluma
+ * flotando pasada la zona de toma es peor aterrizaje que uno firme en su
+ * sitio, porque se come la pista.
+ */
+describe("tocar largo", () => {
+  function tocar(sink: number, largo: boolean, alTocar = VREF): string[] {
+    const w = new LandingWatcher();
+    const dichos: string[] = [];
+    const paso = 0.5;
+    for (let i = 0; i < 40; i++) w.update(false, VREF, 0, false, false, VREF, paso);
+    const v = w.update(true, alTocar, sink, false, true, VREF, paso, Infinity, true, false, largo);
+    if (v) dichos.push(v);
+    // Rodando, ya pasada la zona de todos modos: lo que vale es dónde tocó.
+    for (let i = 0; i < 6; i++) {
+      const r = w.update(true, 30 - i * 4, 0, false, true, VREF, paso, Infinity, true, false, !largo);
+      if (r) dichos.push(r);
+    }
+    return dichos;
+  }
+
+  it("suave y pasada la zona de toma no es un buen aterrizaje: es largo", () => {
+    expect(tocar(0.2, true)).toEqual(["largo"]);
+  });
+
+  it("y firme en su sitio sí lo es", () => {
+    expect(tocar(1.0, false)).toEqual(["firme"]);
+  });
+
+  it("y solo se gana el aterrizaje bueno tocando en su sitio", () => {
+    expect(lasGana(tocar(1.0, false)[0] as Aterrizaje)).toBe(true);
+    expect(lasGana(tocar(0.2, false)[0] as Aterrizaje)).toBe(true);
+    expect(lasGana(tocar(0.2, true)[0] as Aterrizaje)).toBe(false);
+    expect(lasGana(tocar(3.5, false)[0] as Aterrizaje)).toBe(false);
+  });
+
+  it("y la velocidad y el golpe se dicen antes que el sitio", () => {
+    expect(tocar(0.2, true, VREF * 1.6)).toEqual(["rapido"]);
+    expect(tocar(3.5, true)).toEqual(["duro"]);
   });
 });

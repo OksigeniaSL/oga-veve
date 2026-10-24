@@ -114,6 +114,12 @@
  *   del cinturón encendida, que Ara no se suelta hasta que se apaga —el
  *   cartel de la pantalla— y que lo que sabe hacer la tripulante sale una vez
  *   y sin pisar a nadie.
+ * - **El toque en tierra** (puntos 296 y 299): que se toca en su sitio —en la
+ *   zona de toma y sin golpe duro—, que en cuanto las ruedas tocan se corta
+ *   al ala y **se ven subir los aerofrenos** —con la toma a ×1, que es como la
+ *   ve quien juega—, que se vuelve a la orilla de la pista a ver frenar, y que
+ *   Ara cuenta para qué sirven en el primer rato tranquilo rodando, sin pisar a
+ *   nadie. Con capturas del ala y de los paneles desde el asiento de Ara.
  * - **El baño de Ara** (punto 293): la luz manda, y cuando se apaga, se puede.
  *   Que Ara cuenta en el embarque que fue antes de subir, que lo pide rodando
  *   con la luz encendida y no se levanta, y que si va es con el cartel de la
@@ -537,6 +543,14 @@ async function elVuelo() {
   const viva = { aros: new Set(), toques: [], tapado: null, nube: null, pisa: null, teide: null, ultimo: 0, buscado: 0 };
   const dondeTocar = (que) => page.evaluate((q) => globalThis.__oga.dondeTocar?.(q) ?? null, que).catch(() => null);
   let preguntaDeLaMusica = null;
+  /**
+   * **La toma a la velocidad de verdad** (punto 296): de la recogida a dejar
+   * la pista, el reloj del juego a ×1. Los aerofrenos suben en un segundo y
+   * el fundido va por el reloj de pared, así que a ×12 los paneles ya están
+   * arriba antes de que cambie la cámara: lo que se mide es lo que ve quien
+   * juega, que vuela a ×1. Y las muestras de los paneles, con su plano.
+   */
+  const alTocar = { aUno: false, devuelto: false, muestras: [] };
   const t0 = Date.now();
 
   while (Date.now() - t0 < TOPE_S * 1000) {
@@ -552,6 +566,16 @@ async function elVuelo() {
       tramos.push({ tramo, t: e.segundos });
       adelanto.reloj.push({ tramo, quienJuega: i.adelanto?.quienJuega ?? null });
     }
+    if (tramo === "recogida" && !alTocar.aUno) {
+      alTocar.aUno = true;
+      await page.evaluate(() => globalThis.__oga.acelerar(1));
+    }
+    if (alTocar.aUno && !alTocar.devuelto && tramo === "al-puesto") {
+      alTocar.devuelto = true;
+      await page.evaluate((x) => globalThis.__oga.acelerar(x), VECES);
+    }
+    if (tramo === "frenando" && alTocar.muestras.length < 200)
+      alTocar.muestras.push({ t: e.segundos, plano: i.planoVisto, velo: Number(i.velo) || 0, paneles: i.frenosDeTierra ?? null });
     if (v.mirar) miradas.add(v.mirar);
     if (i.planoVisto) vistos.add(i.planoVisto);
     veloMaximo = Math.max(veloMaximo, Number(i.velo) || 0);
@@ -931,6 +955,21 @@ async function elVuelo() {
       if (en("ventanilla", e.senalados.length > 0 && e.mira === "ventanilla" && !v.enTierra)) await foto(page, "ventanilla");
       if (en("pista", sinVelo && i.planoVisto === "fuera-pista" && !v.enTierra)) await foto(page, "fuera-pista");
       if (en("toma", tramo === "frenando")) await foto(page, "toma");
+      /*
+       * Y desde el asiento de Ara, con los aerofrenos arriba puestos a mano en
+       * el puesto —solo el dibujo—: cómo se verían por su cristal (punto 296).
+       */
+      if (en("asiento-aerofrenos", sinVelo && i.planoVisto === "ventanilla" && v.enTierra && tramo === "puerta" && e.segundos > 4)) {
+        await page.evaluate(() => globalThis.__oga.aerofrenosFijos(1));
+        await pausa(500);
+        await foto(page, "asiento-aerofrenos");
+        await page.evaluate(() => globalThis.__oga.aerofrenosFijos(null));
+      }
+      // Y los aerofrenos al tocar, vistos desde el ala: subiendo, y ya arriba (punto 296).
+      if (en("aerofrenos-subiendo", i.planoVisto === "fuera-ala" && v.enTierra && (Number(i.velo) || 0) < 0.5 && (i.frenosDeTierra ?? 1) < 0.9))
+        await foto(page, "fuera-ala-aerofrenos-subiendo");
+      if (en("aerofrenos", sinVelo && i.planoVisto === "fuera-ala" && v.enTierra && (i.frenosDeTierra ?? 0) > 0.95))
+        await foto(page, "fuera-ala-aerofrenos");
       // Lo del 18-10 por la tarde: el meneo, debajo de las nubes, el tren desde abajo y el señalero.
       // Lo que se dice ahora, suene o se lea mientras espera su toma.
       const suena = (clave) => e.linea?.clave === clave && e.hablando;
@@ -1012,6 +1051,9 @@ async function elVuelo() {
           descartadas: conversacion?.descartadas ?? null,
           nombrados,
           estado: e ?? null,
+          // Y la recogida medida, de los cien pies al toque. Ver `apuntarLaRecogida` en `game.ts`.
+          recogida: i?.recogida ?? null,
+          ultimaToma: i?.ultimaToma ?? null,
         },
         null,
         1,
@@ -1035,11 +1077,26 @@ async function elVuelo() {
     String(entroEnPista),
   );
   comprobar("se despega por el eje", masDeLadoEnLaCarrera > 0 && masDeLadoEnLaCarrera < 5, `${masDeLadoEnLaCarrera.toFixed(1)} m de lado como mucho`);
+  /*
+   * **Se toca en su sitio** (punto 299). Esto decía «se toca suave», con menos
+   * de metro y medio por segundo de caída, y lo que hace bueno un aterrizaje no
+   * es lo suave: es tocar en la zona de toma, sin flotar, y sin pasar de los
+   * diez pies por segundo del aterrizaje duro. Ver `flight/aterrizaje.ts`.
+   */
+  const ut = i?.ultimaToma ?? null;
   comprobar(
-    "se toca suave, y sin percance",
-    !!t && t.caidaAlTocar !== null && t.caidaAlTocar < 1.5 && !percance,
-    t ? `${t.caidaAlTocar?.toFixed(2)} m/s · percance: ${percance ?? "ninguno"}` : "no se tocó",
+    "se toca sin golpe duro —por debajo de diez pies por segundo— y sin percance",
+    !!t && t.caidaAlTocar !== null && t.caidaAlTocar < 10 * 0.3048 && !percance,
+    t
+      ? `${t.caidaAlTocar?.toFixed(2)} m/s (${((t.caidaAlTocar ?? 0) / 0.3048).toFixed(1)} ft/s) · percance: ${percance ?? "ninguno"}`
+      : "no se tocó",
   );
+  comprobar(
+    "y en su sitio: en la zona de toma, que es lo que hace bueno un aterrizaje",
+    !!ut && (ut.veredicto === "suave" || ut.veredicto === "firme") && ut.pasado !== null && ut.pasado > 0 && ut.pasado <= ut.zona,
+    ut ? `«${ut.veredicto}» a ${ut.pasado?.toFixed(0)} m del umbral de aterrizaje; la zona acaba a ${ut.zona?.toFixed(0)} m` : "sin veredicto",
+  );
+
   const registro = conversacion?.registro ?? [];
   let pisadas = 0;
   for (let k = 1; k < registro.length; k++) if (registro[k].desde < (registro[k - 1].hasta ?? Infinity) - 1e-6) pisadas++;
@@ -1048,6 +1105,77 @@ async function elVuelo() {
     registro.length > 30 && pisadas === 0 && registro.every((d) => !d.cortada),
     `${registro.length} frases · ${pisadas} pisadas · ${registro.filter((d) => d.cortada).length} cortadas`,
   );
+  /*
+   * **Los aerofrenos al tocar, vistos desde el ala** (punto 296): la toma se ve
+   * desde la orilla de la pista hasta tocar; en cuanto los paneles empiezan a
+   * subir se corta al ala, y se los ve moverse —todavía no arriba del todo al
+   * quitarse el velo—; y se vuelve a la orilla de la pista a ver frenar.
+   */
+  {
+    const planosT = e?.planos ?? [];
+    const toco = tramos.find((x) => x.tramo === "frenando")?.t ?? Infinity;
+    const ala = planosT.find((p) => p.plano === "fuera-ala" && p.desde >= toco - 1);
+    const antes = planosT.filter((p) => ala && p.desde < ala.desde).pop();
+    const vuelta = ala ? planosT.find((p) => p.desde > ala.desde) : null;
+    const av = i?.aerofrenosVistos ?? null;
+    const enAla = alTocar.muestras.filter((m) => m.plano === "fuera-ala");
+    comprobar(
+      "al tocar se corta al ala, con los aerofrenos subiendo: se los ve moverse y quedar arriba",
+      !!ala &&
+        antes?.plano === "fuera-pista" &&
+        ala.desde - toco < 1 &&
+        !!av &&
+        av.alCambiar < 0.5 &&
+        av.sinVelo !== null &&
+        av.sinVelo < 0.9 &&
+        enAla.some((m) => m.velo < 0.02 && (m.paneles ?? 0) > 0.95) &&
+        (e?.charlas ?? []).includes("aerofrenos"),
+      `tocó a los ${toco.toFixed(1)} s · el ala a los ${ala?.desde?.toFixed(1) ?? "—"} s, desde ${antes?.plano ?? "—"} · paneles al cambiar de cámara ${av ? (av.alCambiar * 100).toFixed(0) : "—"} %, al quitarse el velo ${av?.sinVelo !== null && av ? (av.sinVelo * 100).toFixed(0) : "—"} % (${av?.tardoElVelo?.toFixed(2) ?? "—"} s de pared) · ${enAla.length} muestras en el ala, arriba del todo y sin velo: ${enAla.some((m) => m.velo < 0.02 && (m.paneles ?? 0) > 0.95)}`,
+    );
+    comprobar(
+      "y el plano desde la pista sigue: se ve tocar desde la orilla, y se vuelve a ella a ver frenar, con lo de la reversa",
+      !!ala &&
+        antes?.plano === "fuera-pista" &&
+        antes.desde < toco &&
+        vuelta?.plano === "fuera-pista" &&
+        vuelta.desde - ala.desde >= 3.5 - 0.3 &&
+        (registro.find((d) => d.clave === "inicio.ara.pasaje.toma")?.desde ?? -Infinity) >= vuelta.desde + CORTE - 0.05,
+      `la pista desde los ${antes?.desde?.toFixed(1) ?? "—"} s · el ala ${ala ? (vuelta ? (vuelta.desde - ala.desde).toFixed(1) : "?") : "—"} s · de vuelta a ${vuelta?.plano ?? "—"} a los ${vuelta?.desde?.toFixed(1) ?? "—"} s · «¡tocamos el suelo!» a los ${registro.find((d) => d.clave === "inicio.ara.pasaje.toma")?.desde?.toFixed(1) ?? "—"} s`,
+    );
+    /*
+     * **Y el golpecito, solo si fue firme y en su sitio** (punto 299): justo
+     * antes de los aerofrenos y sin pisar a nadie; con otra toma, no se dice.
+     */
+    const kg = registro.findIndex((d) => d.clave === "inicio.ara.pasaje.golpecito");
+    const firmeYEnSuSitio = i?.ultimaToma?.veredicto === "firme";
+    comprobar(
+      "el golpecito se cuenta solo si la toma fue firme y en su sitio, antes de los aerofrenos y sin pisar a nadie",
+      firmeYEnSuSitio
+        ? kg >= 0 &&
+            registro[kg + 1]?.clave === "inicio.ara.pasaje.aerofrenos" &&
+            (!registro[kg - 1] || registro[kg].desde >= (registro[kg - 1].hasta ?? Infinity) - 1e-6)
+        : kg < 0,
+      `toma «${i?.ultimaToma?.veredicto ?? "—"}» · ${kg >= 0 ? `golpecito a los ${registro[kg].desde.toFixed(1)} s, ${registro[kg].como}, antes de ${registro[kg + 1]?.clave ?? "—"}` : "sin golpecito"}`,
+    );
+    const llegada = registro.find((d) => d.clave === "tripulacion.llegada");
+    const k = registro.findIndex((d) => d.clave === "inicio.ara.pasaje.aerofrenos");
+    const x1 = registro[k];
+    const x2 = registro[k + 1];
+    const pisa = (d, j) => (registro[j - 1] && d.desde < (registro[j - 1].hasta ?? Infinity) - 1e-6) || (registro[j + 1] && registro[j + 1].desde < (d.hasta ?? Infinity) - 1e-6);
+    comprobar(
+      "y la explicación de los aerofrenos llega después, rodando, en el primer rato tranquilo: Ara, sin pisar a nadie",
+      !!llegada &&
+        !!x1 &&
+        x2?.clave === "inicio.ara.pasaje.aerofrenosPorque" &&
+        x1.desde > (llegada.hasta ?? Infinity) &&
+        !pisa(x1, k) &&
+        !pisa(x2, k + 1) &&
+        [x1, x2].every((d) => d.como === "sono" || d.como === "muda"),
+      x1
+        ? `a los ${x1.desde.toFixed(1)} s, ${(x1.desde - (llegada?.hasta ?? 0)).toFixed(1)} s después de la megafonía de la llegada · ${x1.como}/${x2?.como ?? "—"} · antes: ${registro[k - 1]?.clave ?? "—"} · después: ${registro[k + 2]?.clave ?? "—"}`
+        : "no se dijo",
+    );
+  }
   /*
    * **Y todo lo que dice la escena se oye**: con las tomas en el pack, cada
    * frase acaba sonando entera. Una que acaba sin sonar es una que se tiró por

@@ -442,6 +442,21 @@ const PARADO_DE_VERDAD = 1;
  */
 const SE_QUEDA_EL_VEREDICTO = 5;
 
+/**
+ * **Lo que se dice de cada toma.** Las dos buenas —suave y firme, en su
+ * sitio— se celebran igual: lo que hace buena una toma es el sitio, no la
+ * suavidad. Ver el punto 299 en `flight/aterrizaje.ts`.
+ */
+const DICHO_DE_LA_TOMA: Readonly<Record<NonNullable<Aterrizaje>, TranslationKey>> = {
+  suave: "hud.landedSoft",
+  firme: "hud.landedFirm",
+  rapido: "hud.landedFast",
+  largo: "vuelo.tocasteLargo",
+  duro: "vuelo.tocasteDuro",
+  corto: "hud.landedShort",
+  fuera: "hud.landedOffRunway",
+};
+
 const IMPORTANTE = 1;
 
 /** Lo más que espera una frase del descenso a que su boca se libere, ms. */
@@ -1110,7 +1125,7 @@ import {
   rodaduraDeFrenada,
   type DiaDeDespegue,
 } from "./flight/carrera";
-import { TomaLarga } from "./flight/toma-larga";
+import { TomaLarga, finDeLaZonaDeToma } from "./flight/toma-larga";
 import { POSICIONES as POSICIONES_DE_LA_PALANCA } from "./world/palanca-de-aerofrenos";
 import { GAS_AL_RALENTI, type PosicionDeLaPalanca } from "./flight/palanca-de-aerofrenos";
 import { REVERSA_HASTA } from "./flight/frenada";
@@ -1322,6 +1337,7 @@ import {
   hastaElUmbralDeToma,
   paraAterrizarDe,
   sobreDondeSeToca,
+  vistaDesdeLaOtraCabecera,
 } from "./world/umbral-desplazado";
 import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
 import { enCanarias } from "./world/canarias";
@@ -5222,6 +5238,32 @@ export class Game {
   }
   /** Lo último que leyó la escena de aterrizar, y cómo se tocó: para el banco. */
   private lecturaDelAterrizaje: LecturaDeAterrizar | null = null;
+  /**
+   * **El último veredicto de una toma**, para el banco: cuál, a qué caída,
+   * m/s, y dónde, m pasado el umbral, con el final de su zona de toma. Ver
+   * `checkLanding`.
+   */
+  private ultimaToma: {
+    readonly veredicto: NonNullable<Aterrizaje>;
+    readonly caida: number;
+    readonly pasado: number | null;
+    readonly zona: number | null;
+  } | null = null;
+  private dondeTocoUltima: { readonly pasado: number; readonly zona: number } | null = null;
+  /**
+   * **Los aerofrenos de tierra puestos a mano por el banco**, de 0 a 1, o
+   * `null`: solo el dibujo, sin tocar la física. Es para mirar desde el asiento
+   * de Ara cómo se ven arriba sin tener que estar frenando en la pista. Ver
+   * `aerofrenosFijos` en `dev/sondas.ts`.
+   */
+  aerofrenosDeBanco: number | null = null;
+  /**
+   * **Y cómo se vieron los aerofrenos al cortar al ala tocando**, para el
+   * banco: dónde iban los paneles, de 0 a 1, al cambiar de cámara y al
+   * quitarse el velo, y cuánto tardó eso, s de pared. Ver la charla
+   * `aerofrenos` en `flight/inicio-pasaje.ts`.
+   */
+  private aerofrenosVistos: { alCambiar: number; sinVelo: number | null; tardoElVelo: number | null; desde: number } | null = null;
   private tomaDelAterrizaje: {
     readonly alUmbral: number;
     readonly lado: number;
@@ -7180,6 +7222,14 @@ export class Game {
       vertical: s.verticalSpeed,
       autorizado: linea.autorizado,
       flaps: c.flaps,
+      /*
+       * Y los aerofrenos de tierra, **si el modelo que se ve los dibuja**: lo
+       * que la escena enseña subir al tocar tiene que subir en la pantalla.
+       * Ver la charla `aerofrenos` en `flight/inicio-pasaje.ts`.
+       */
+      ...(this.aircraftMesh.aerofrenos ? { frenosDeTierra: c.frenosDeTierra ?? 0 } : {}),
+      // Y cómo fue la toma, si ya se tocó. Ver `ultimaToma`.
+      toque: this.ultimaToma?.veredicto ?? null,
       nubes: capa && capa.tapadura > 0 ? { base: capa.base, techo: capa.techo } : null,
       enNube:
         capa && s.position.y > capa.base - 50 && s.position.y < capa.techo + 50
@@ -7250,6 +7300,7 @@ export class Game {
     this.lecturaDeLinea = linea;
     this.manosDeLinea = manos;
     this.ponerLasManosDeLinea(manos);
+    this.apuntarLaRecogida(dt, linea, tripulacion);
     /*
      * **Al final, el sello del campo de llegada, de visita**: Ara no ha
      * pilotado, así que no es un aterrizaje ni un despegue del cuaderno. Ver
@@ -7369,6 +7420,78 @@ export class Game {
   }
 
   /**
+   * **La recogida de la tripulación, medida**, para el banco: cada décima de
+   * segundo de vuelo desde los cien pies hasta medio segundo después de tocar,
+   * lo que decide dónde se toca —la altura sobre el suelo del modelo y sobre
+   * la pista, la caída, las velocidades, el viento de cara, la pendiente bajo
+   * las ruedas, la senda y lo que pide la tripulación—, y una vez el origen
+   * de la senda. Existe por la toma larga de La Palma: se mide antes de
+   * proponer una causa.
+   */
+  private apuntarLaRecogida(dt: number, linea: LecturaDeLinea, tripulacion: VueloDeLinea): void {
+    const s = this.flight.state;
+    const r = this.medidaDeLaRecogida;
+    if (linea.enLaFinal && linea.altura > 40) {
+      r.muestras.length = 0;
+      r.reloj = 0;
+      r.siguiente = 0;
+      r.tocoA = null;
+      return;
+    }
+    if (!(linea.altura < 100 * 0.3048 || s.onGround) || r.muestras.length === 0 && s.onGround) return;
+    if (r.tocoA !== null && r.reloj - r.tocoA > 0.5) return;
+    if (r.muestras.length === 0) {
+      const o = this.origenDeLaSenda();
+      const pista = this.laPistaDeAhora();
+      const eo = enEjesDePista(o.x, o.z, pista.x, pista.z, pista.heading);
+      const a = this.campoParaLaAproximacion();
+      r.senda = {
+        origen: eo.along + hastaElUmbralDeToma(pista),
+        papi: o.papi,
+        angulo: a.angulo ?? null,
+        zona: this.dondeSeToca()?.zona ?? null,
+      };
+    }
+    r.reloj += dt;
+    if (s.onGround && r.tocoA === null) r.tocoA = r.reloj;
+    if (r.reloj < r.siguiente) return;
+    r.siguiente = r.reloj + 0.1;
+    const x = s.position.x;
+    const z = s.position.z;
+    const dx = -Math.sin(s.heading);
+    const dz = -Math.cos(s.heading);
+    const suelo = (k: number): number => this.terrain.sampleSurface(x + dx * k, z + dz * k);
+    const d = this.dondeSeToca();
+    r.muestras.push({
+      t: +r.reloj.toFixed(2),
+      pasado: d ? +d.pasado.toFixed(1) : null,
+      altura: +linea.altura.toFixed(2),
+      sueloDelModelo: +(s.position.y - s.heightAboveGround).toFixed(2),
+      cotaDeLaPista: +this.cotaDeLaPistaAqui().toFixed(2),
+      pendiente: +((suelo(20) - suelo(-20)) / 40).toFixed(4),
+      vertical: +s.verticalSpeed.toFixed(2),
+      velocidad: +s.airspeed.toFixed(2),
+      porElSuelo: +s.groundSpeed.toFixed(2),
+      pedida: +tripulacion.subidaPedidaParaBanco.toFixed(2),
+      sendaRitmo: linea.senda ? +linea.senda.ritmo.toFixed(2) : null,
+      sobreLaSenda: linea.senda ? +(s.position.y - linea.senda.altitud).toFixed(2) : null,
+      gas: +this.input.controls.throttle.toFixed(3),
+      tramo: tripulacion.estado.tramo,
+      enTierra: s.onGround,
+    });
+    if (r.muestras.length > 600) r.muestras.shift();
+  }
+
+  /** Lo que mide `apuntarLaRecogida`. */
+  private readonly medidaDeLaRecogida: {
+    reloj: number;
+    siguiente: number;
+    tocoA: number | null;
+    senda: { origen: number; papi: boolean; angulo: number | null; zona: number | null } | null;
+    muestras: Record<string, number | string | boolean | null>[];
+  } = { reloj: 0, siguiente: 0, tocoA: null, senda: null, muestras: [] };
+
+  /**
    * **La raya del plan, en puntos con nombre**, la misma mientras el plan no
    * pinte otra: la tripulación lleva por dónde va sobre ella, y una raya nueva
    * en cada fotograma la haría empezar de cero cada vez. Ver `SeguirLaRaya`.
@@ -7482,6 +7605,8 @@ export class Game {
       intento: this.input.intento,
       velocidad: s.airspeed,
       altura: Math.max(0, s.heightAboveGround - this.aircraft.gearHeight),
+      // Y la altitud, que con la altura dice lo que se mueve el suelo. Ver `SueloBajoLasRuedas`.
+      altitud: s.position.y,
       enTierra: s.onGround,
       alabeo: bankAngleOf(s.orientation),
       mando: this.input.ultimoMando,
@@ -7906,6 +8031,13 @@ export class Game {
      */
     readonly planoVisto: Plano | null;
     readonly velo: number;
+    /** El último veredicto de una toma, y cómo se vieron los aerofrenos al tocar. Ver `ultimaToma`. */
+    readonly ultimaToma: Game["ultimaToma"];
+    /** La recogida de la tripulación, medida. Ver `apuntarLaRecogida`. */
+    readonly recogida: Game["medidaDeLaRecogida"];
+    readonly aerofrenosVistos: Game["aerofrenosVistos"];
+    /** Dónde están ahora los aerofrenos de tierra, de 0 a 1. */
+    readonly frenosDeTierra: number;
     readonly ventanita: { readonly sitio: string | null; readonly donde: string | null; readonly ultimo: string | null };
     readonly asientoDeAra: { readonly z: number; readonly motor: number; readonly ala: number } | null;
     /** De pasaje: el kit de viaje en la pantalla, dónde está cada cosa. Ver `PantallaDelKit.paraBanco`. */
@@ -7964,6 +8096,10 @@ export class Game {
       vista: this.vistaQueHay(),
       texto: linea ? (this.textoDeLaEscena.get(linea) ?? linea.texto ?? t(linea.clave as TranslationKey)) : null,
       planoVisto: this.inicio instanceof VueloDePasaje ? this.fundidoDePlano.plano : null,
+      ultimaToma: this.ultimaToma,
+      recogida: this.medidaDeLaRecogida,
+      aerofrenosVistos: this.aerofrenosVistos,
+      frenosDeTierra: this.input.controls.frenosDeTierra ?? 0,
       velo: Number(this.veloDelPlano && !this.veloDelPlano.hidden ? this.veloDelPlano.style.opacity || 0 : 0),
       ventanita: this.hud.historia.estado,
       asientoDeAra: (() => {
@@ -8305,6 +8441,10 @@ export class Game {
       !this.aircraft.trenRetractil || this.input.controls.tren > 0.5,
       // Y si fue antes del umbral de aterrizaje. Ver `enLaZonaDeLasFlechas`.
       this.enLaZonaDeLasFlechas(),
+      // Y si fue pasada la zona de toma: la toma larga. Ver `pasadaLaZonaDeToma`.
+      this.pasadaLaZonaDeToma(),
+      // Y desde qué caída es dura, que lo dice el modelo de este peldaño. Ver `limiteDeDuro`.
+      this.flight.limiteDeDuro(),
     );
     /*
      * **Y tocar el monte volando se juzga al tocar, no dos segundos después.**
@@ -8315,6 +8455,8 @@ export class Game {
      * metros por segundo, siguió volando y el vuelo no se enteró. Ver
      * `percanceAlTocar`.
      */
+    // Para el banco: dónde se tocó. Ver `ultimaToma`.
+    if (this.landing.acabaDeTocar) this.dondeTocoUltima = this.dondeSeToca();
     if (this.landing.acabaDeTocar) {
       const percance = percanceAlTocar({
         enLaPista: this.tocoEnElCampoDeVuelo(),
@@ -8339,20 +8481,13 @@ export class Game {
       }
     }
     if (!veredicto) return null;
-    this.hud.flash(
-      t(
-        veredicto === "suave"
-          ? "hud.landedSoft"
-          : veredicto === "firme"
-            ? "hud.landedFirm"
-            : veredicto === "rapido"
-              ? "hud.landedFast"
-              : veredicto === "corto"
-                ? "hud.landedShort"
-                : "hud.landedOffRunway",
-      ),
-      3.6,
-    );
+    this.ultimaToma = {
+      veredicto,
+      caida: this.landing.caidaAlTocar,
+      pasado: this.dondeTocoUltima?.pasado ?? null,
+      zona: this.dondeTocoUltima?.zona ?? null,
+    };
+    this.hud.flash(t(this.loQueSeDiceDeLaToma(veredicto)), 3.6);
     /*
      * **Y suena, porque hasta ahora el veredicto era solo texto.**
      *
@@ -8364,6 +8499,36 @@ export class Game {
      */
     if (veredicto === "suave" || veredicto === "firme") {
       this.avisar("success");
+    } else if (veredicto === "largo" || veredicto === "duro") {
+      /*
+       * **Largo y duro: dichos con calma, dibujados y nada más** (punto 299).
+       *
+       * Ninguno es un percance —el avión está entero en la pista— ni lo canta
+       * la cabina, que ningún avión lleva un aviso para esto. Lo dice la
+       * instructora, como el corto, y lo enseña el dibujo: la pista con el
+       * avión lejos de sus marcas, o el golpe debajo de las ruedas. No es la
+       * celebración de una toma buena, y tampoco una pantalla roja: se ve la
+       * consecuencia y la próxima se toca en su sitio.
+       *
+       * Si la instructora ya propuso irse al aire por la toma larga, manda
+       * eso: «nos vamos al aire» y «tocaste largo» serían dos voces para un
+       * solo suceso, y la buena es la primera. En el peldaño de cabina no la
+       * propone —decide quien vuela—, así que ahí sí se dice. Ver
+       * `mirarLaTomaLarga`. Y desde el asiento de pasaje no se oye a nadie de
+       * la cabina de mando: ver `cantar`.
+       */
+      this.avisar("attention");
+      const clave = this.loQueSeDiceDeLaToma(veredicto);
+      const yaDicho = veredicto === "largo" && this.tomaLarga.yaPropuesta && this.tier.avisos !== "cabina";
+      if (!this.dePasaje && !yaDicho) {
+        this.instructor.decir(t(clave), clave);
+        this.hud.senal.mostrar(
+          veredicto,
+          this.rotulo(clave, veredicto === "largo" ? "palabra.largo" : "palabra.duro"),
+          null,
+          { segundos: SE_QUEDA_EL_VEREDICTO, prioridad: URGENTE },
+        );
+      }
     } else if (veredicto === "corto") {
       /*
        * **Tocar antes del umbral desplazado: dicho, dibujado y nada más.**
@@ -17523,7 +17688,8 @@ export class Game {
     const deTierra = this.input.controls.frenosDeTierra ?? 0;
     this.aircraftMesh.aerofrenos?.poner(
       this.input.controls.aerofrenos ?? 0,
-      deTierra,
+      // Salvo que el banco los tenga puestos para mirarlos. Ver `aerofrenosDeBanco`.
+      this.aerofrenosDeBanco ?? deTierra,
     );
     const palanca = this.input.palancaDeAerofrenos.palanca;
     this.aircraftMesh.palancaDeAerofrenos?.poner(
@@ -20972,6 +21138,50 @@ export class Game {
   }
 
   /**
+   * **Lo que se dice de una toma en este peldaño.** Largo y duro crecen con
+   * quien los oye, como cualquier aviso (ver `flight/escalera.ts`): en los dos
+   * de abajo, en sencillo y empezando por lo que pasó —«¡aterrizaste!»—, que
+   * no parezca que no se aterrizó; desde el de las cifras, con su porqué de
+   * verdad: la pista que se come y el avión que hay que revisar.
+   */
+  private loQueSeDiceDeLaToma(veredicto: NonNullable<Aterrizaje>): TranslationKey {
+    const deAbajo = this.tier.avisos === "dibujo" || this.tier.avisos === "palabra";
+    if (deAbajo && veredicto === "largo") return "vuelo.tocasteLargoFacil";
+    if (deAbajo && veredicto === "duro") return "vuelo.tocasteDuroFacil";
+    return DICHO_DE_LA_TOMA[veredicto];
+  }
+
+  /**
+   * **Si las ruedas están pasada la zona de toma** de la pista de ahora, por
+   * la cabecera por la que se llega: es lo que hace larga una toma (punto
+   * 299). La zona es la de `finDeLaZonaDeToma`, la misma con la que la
+   * instructora propone irse al aire en `mirarLaTomaLarga`: dos definiciones
+   * de «largo» serían dos lecciones distintas. Ver `Aterrizaje`.
+   */
+  private pasadaLaZonaDeToma(): boolean {
+    const d = this.dondeSeToca();
+    return !!d && d.pasado > d.zona;
+  }
+
+  /**
+   * **Dónde está el avión en la pista de ahora**, por la cabecera por la que
+   * se llega: lo pasado de su umbral de aterrizaje y dónde acaba su zona de
+   * toma, m. `null` fuera de la pista. Ver `pasadaLaZonaDeToma`.
+   */
+  private dondeSeToca(): { readonly pasado: number; readonly zona: number } | null {
+    const s = this.flight.state;
+    const r = this.laPistaDeAhora();
+    const { along, across } = enEjesDePista(s.position.x, s.position.z, r.x, r.z, r.heading);
+    if (Math.abs(across) > r.width) return null;
+    const deFrente = Math.cos(s.heading - (r.heading * Math.PI) / 180) >= 0;
+    const pista = deFrente ? r : vistaDesdeLaOtraCabecera(r);
+    return {
+      pasado: (deFrente ? along : -along) + hastaElUmbralDeToma(pista),
+      zona: finDeLaZonaDeToma(paraAterrizarDe(pista)),
+    };
+  }
+
+  /**
    * Si las ruedas están en la pista **antes de su umbral de aterrizaje**, en
    * la zona de las flechas. Es lo que convierte una toma en «corta». Ver
    * `Aterrizaje`.
@@ -23289,6 +23499,15 @@ export class Game {
       `${pedido.plano}|${pedido.paisaje ?? ""}`,
     );
     this.ponerElVeloDelPlano(paso.velo);
+    if (paso.plano === "fuera-ala" && this.flight.state.onGround) {
+      const panel = this.input.controls.frenosDeTierra ?? 0;
+      const a = this.aerofrenosVistos;
+      if (paso.cambio) this.aerofrenosVistos = { alCambiar: panel, sinVelo: null, tardoElVelo: null, desde: this.relojDePared };
+      else if (a && a.sinVelo === null && paso.velo < 0.02) {
+        a.sinVelo = panel;
+        a.tardoElVelo = this.relojDePared - a.desde;
+      }
+    }
     // El sitio de la toma cambia con la cámara, con el velo puesto: no se ve saltar.
     if (paso.cambio) this.paisajeDeLaToma = pedido.paisaje;
     // Al pasillo y de vuelta, la cabeza salta con el velo puesto: su camino cruzaría la pared.

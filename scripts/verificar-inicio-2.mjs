@@ -39,7 +39,8 @@ import { chromium, devices } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
-const PUERTO = 5396;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5396);
 const CUALES = (process.argv[2] ?? "teclado,dedo,consola,joystick")
   .split(",")
   .map((s) => s.trim())

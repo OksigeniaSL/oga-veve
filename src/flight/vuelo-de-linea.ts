@@ -64,6 +64,7 @@
 
 import type { LoSacado } from "./model";
 import type { Fase } from "./vuelo";
+import { SueloBajoLasRuedas } from "./recogida";
 
 const GRADO = Math.PI / 180;
 const NUDO = 1852 / 3600;
@@ -337,6 +338,14 @@ const CAMBIA_LA_SUBIDA = 1;
 const CAMBIA_EN_LA_ROTACION = 2.5;
 const CAMBIA_EN_LA_RECOGIDA = 1.6;
 
+/**
+ * **A cuánto se acerca a la pista al tocar**, m/s: dos pies y medio por
+ * segundo, una toma firme de avión de línea —lo normal son de dos a cuatro—.
+ * Eran 0,45, pie y medio: una toma de pluma que flotaba, y una toma que flota
+ * se come la pista. Ver el punto 299 en `aterrizaje.ts`.
+ */
+const TOCA_A = 2.5 * PIE;
+
 /** **Las velocidades**, m/s. */
 const V_250 = 250 * NUDO;
 const V_ARRIBA = 280 * NUDO;
@@ -501,6 +510,13 @@ export class VueloDeLinea {
   private ultimaVertical = 0;
   /** El ritmo de subida que se pide, para no darlo de golpe. */
   private subidaPedida = 0;
+  /** Lo que se mueve el suelo bajo las ruedas. Ver `SueloBajoLasRuedas`. */
+  private readonly suelo = new SueloBajoLasRuedas();
+
+  /** **El ritmo de subida que pide ahora**, m/s: para el banco. Ver `apuntarLaRecogida` en `game.ts`. */
+  get subidaPedidaParaBanco(): number {
+    return this.subidaPedida;
+  }
   /** Lo que lleva el avión fuera del puesto, m: para no apagar antes de salir. */
   private rodado = 0;
   /** Si, entrando, ya está alineada en la pista. Ver `estaAlineado`. */
@@ -843,17 +859,21 @@ export class VueloDeLinea {
    */
   private volar(dt: number, l: LecturaDeLinea): ManosDeLinea {
     const sobreElCampo = l.altitud - l.cotaDelCampo;
+    // Lo que se mueve el suelo bajo las ruedas: la recogida es contra la pista. Ver `SueloBajoLasRuedas`.
+    const suelo = this.suelo.paso(dt, l.altitud - l.altura);
     // ── La vertical ──
     let subida: number;
     let cambia = CAMBIA_LA_SUBIDA;
     if (this.tramo === "recogida") {
       /*
-       * **La recogida**: de lo que baja la senda a casi nada al tocar, con el
-       * gas fuera a la vez. Es la misma ley que la de la mano de Jazlyn en la
+       * **La recogida**: de lo que baja la senda a una toma firme, con el gas
+       * fuera a la vez. Es la misma ley que la de la mano de Jazlyn en la
        * segunda escena, que es la de cualquier manual: nariz arriba poco a poco
-       * y el gas al ralentí al tocar.
+       * y el gas al ralentí al tocar. **Contra la pista**: lo que se pide es
+       * cuánto acercarse a ella, y se le suma lo que se mueve el suelo, que en
+       * una pista con pendiente no es cero. Ver `SueloBajoLasRuedas`.
        */
-      subida = Math.max(l.senda ? l.senda.ritmo : -3.5, -(0.45 + 0.3 * Math.max(0, l.altura)));
+      subida = Math.max(l.senda ? l.senda.ritmo : -3.5, -(TOCA_A + 0.3 * Math.max(0, l.altura))) + suelo;
       cambia = CAMBIA_EN_LA_RECOGIDA;
     } else if ((this.tramo === "final" || l.enLaFinal) && l.senda) {
       subida = l.senda.ritmo + acotar(0.15 * (l.senda.altitud - l.altitud), 1.5);

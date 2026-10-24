@@ -856,6 +856,26 @@ export class ArcadeFlightModel implements FlightModel {
     return 8;
   }
 
+  /**
+   * **Seis metros por segundo para llamar dura a una toma**, y no los diez
+   * pies de un tren certificado, que son tres.
+   *
+   * Por lo mismo que `limiteDeCaida`: este modelo no lleva recogida —el
+   * peldaño de los cuatro años no levanta la nariz al final—, y bajando por
+   * la senda con el gas al mínimo se posa a tres metros por segundo, que es
+   * lo normal en un avión sin recogida. Con los diez pies, la toma corriente
+   * de cualquier crío rozaba «duro»: sin galón y con «hay que revisar el
+   * avión», que es castigar lo que se está aprendiendo.
+   *
+   * Seis es el doble de esa toma corriente, mil doscientos pies por minuto, y
+   * queda por debajo de los ocho del golpe: entre las dos, «duro» es solo
+   * meter el avión contra el suelo empujando el morro, que eso sí se puede
+   * explicar sin asustar. Medido en `aterrizaje-del-arcade.test.ts`.
+   */
+  limiteDeDuro(): number {
+    return 6;
+  }
+
   velocidadDeEntradaEnFinal(): number {
     // A ras de suelo, que es donde se entra en final: la altura no pinta nada.
     return this.aircraft.cruiseSpeed * CRUISE_FRACTION * 0.94;

@@ -270,9 +270,11 @@ export class Galones {
         return this.renuncio;
 
       /*
-       * La toma. Suave y firme valen las dos: firme es como se posa un avión
-       * en una pista corta y no es un defecto. Rápido, fuera de pista y antes
-       * del umbral no, que son las maneras de que la toma salga mal.
+       * La toma. Suave y firme valen las dos, y las dos son **en su sitio**:
+       * firme es como se posa un avión en una pista corta o mojada y no es un
+       * defecto. Rápido, largo, duro, fuera de pista y antes del umbral no,
+       * que son las maneras de que la toma salga mal; y largo es la que más
+       * engaña, porque sale suave. Ver el punto 299 en `aterrizaje.ts`.
        */
       case "toma":
         return this.veredicto === "suave" || this.veredicto === "firme";
