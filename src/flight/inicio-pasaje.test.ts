@@ -40,12 +40,14 @@ import {
   type Plano,
   type Senalado,
   type SitioDelPaisaje,
+  type Tocable,
   type VistaDelSitio,
 } from "./inicio-pasaje";
 import { REDUCE_EL_GAS, type PermisosDeLaEscena, type PotenciaDeLinea, type TramoDeLinea } from "./vuelo-de-linea";
 import { DIBUJOS_DEL_PASAJE, esDibujoDelPasaje } from "../ui/dibujos-del-pasaje";
 import { ilustracion, ilustracionPedida, RECETAS } from "../ui/ilustraciones";
 import { JuegoDelAvion, LUCES, NIVELES } from "./kit-de-viaje";
+import { LINEAS_DE_LA_VENTANILLA_VIVA } from "./lo-que-se-toca";
 import type { Fase } from "./vuelo";
 
 const DT = 1 / 10;
@@ -1334,7 +1336,8 @@ describe("el vuelo medido, con las voces que duran lo que duran", () => {
   });
 
   it("cada explicación con su dibujo en la ventanita, y el dibujo existe", () => {
-    const conDibujo = [...GUION_DEL_PASAJE, ...CHARLAS_DEL_PASAJE]
+    // Con lo que se dice al tocar la ventanilla: La Gomera solo sale ahí. Ver `flight/lo-que-se-toca.ts`.
+    const conDibujo = [...GUION_DEL_PASAJE, ...CHARLAS_DEL_PASAJE, { lineas: LINEAS_DE_LA_VENTANILLA_VIVA }]
       .flatMap((x) => x.lineas)
       .filter((l) => l.dibujo && ilustracionPedida(l.dibujo) === null);
     expect(conDibujo.length).toBeGreaterThanOrEqual(20);
@@ -2727,5 +2730,126 @@ describe("por qué ponen música al bajar", () => {
   it("sin música no hay pregunta", () => {
     const sin = volarElMedido();
     expect(sin.escena.registro.map((d) => d.clave)).not.toContain("inicio.ara.pasaje.musica");
+  });
+});
+
+/*
+ * **La ventanilla viva** (19-10-2026): se toca lo que se ve por la ventanilla
+ * y te lo cuentan. Que el juego no llame a la escena con lo que no se ve lo
+ * mira el banco, con la imagen; aquí, lo que hace la escena con un toque:
+ * quién contesta, cuándo, sin pisar a nadie, sin repetir y sin cortar la
+ * llegada. Ver `flight/lo-que-se-toca.ts`.
+ */
+describe("la ventanilla viva: tocar lo que se ve y que te lo cuenten", () => {
+  /** Vuela el vuelo medido tocando lo que diga cada toque cuando se cumple su condición. */
+  function volarTocando(
+    toques: { readonly que: Tocable; readonly cuando: (l: LecturaDelPasaje, e: VueloDePasaje) => boolean; readonly veces?: number }[],
+    vuelo: VueloMedido = new VueloMedido(),
+  ): Medido {
+    const pendientes = toques.map((x) => ({ ...x, quedan: x.veces ?? 1, ultimo: -Infinity }));
+    return volarElMedido(vuelo, (escena, t, l) => {
+      // Uno por paso como mucho, y cada uno a su ritmo: lo que ya no viene a cuento no frena a los demás.
+      const sig = pendientes.find((x) => x.quedan > 0 && t - x.ultimo >= 2 && x.cuando(l, escena));
+      if (!sig) return;
+      sig.ultimo = t;
+      sig.quedan--;
+      escena.tocar(sig.que);
+    });
+  }
+  const arriba = (l: LecturaDelPasaje): boolean => !l.enTierra && l.altitud > DIEZ_MIL_PIES && l.tramo === "subida";
+  const contado = (e: VueloDePasaje, que: Tocable): boolean => e.estado.toques.some((t) => t.que === que && t.dijo.length > 0);
+
+  const m = volarTocando([
+    // El Teide, en un silencio, hasta que se cuente.
+    { que: "hito:teide", cuando: (l, e) => arriba(l) && !e.estado.hablando && !contado(e, "hito:teide"), veces: 8 },
+    // El motor, hasta que se cuente, y otra vez: la segunda, ya contado.
+    { que: "motor", cuando: (l, e) => !l.enTierra && !e.estado.hablando && !e.estado.durmiendo && !contado(e, "motor"), veces: 8 },
+    { que: "motor", cuando: (l, e) => !l.enTierra && !e.estado.hablando },
+  ]);
+  const toques = m.escena.estado.toques;
+  const r = m.escena.registro;
+
+  it("un toque sobre lo que se ve lo cuenta Ara, con su lámina, y da su sello del cuaderno de viaje", () => {
+    const teide = toques.find((t) => t.que === "hito:teide" && t.dijo.length);
+    expect(teide, JSON.stringify(toques)).toBeTruthy();
+    expect(teide!.dijo[0]).toBe("inicio.ara.pasaje.teide");
+    const dicha = m.dichas.find((d) => d.linea.clave === "inicio.ara.pasaje.teide" && d.desde >= teide!.desde);
+    expect(dicha?.linea.dibujo).toBe("islas");
+    expect(m.escena.estado.vistos).toContain("teide");
+  });
+
+  it("la comandante no contesta nunca un toque: Ara, y la tripulante si está a mano", () => {
+    expect(toques.some((t) => t.dijo.length)).toBe(true);
+    for (const t of toques)
+      for (const k of t.dijo) {
+        expect(k, k).not.toMatch(/^inicio\.mama\.|^ventanilla|^comandante\./);
+        expect(k, k).toMatch(/^inicio\.(ara|tripulacion)\.pasaje\./);
+        if (k.startsWith("inicio.tripulacion.")) expect(k).toMatch(/\.cerca\./);
+      }
+  });
+
+  it("no pisa a nadie: lo de un toque empieza cuando se calla quien hablaba", () => {
+    for (let i = 1; i < r.length; i++) expect(r[i]!.desde, r[i]!.clave).toBeGreaterThanOrEqual(r[i - 1]!.hasta ?? Infinity);
+    for (const t of toques.filter((x) => x.dijo.length)) {
+      const primera = r.find((d) => d.clave === t.dijo[0] && d.desde >= t.desde - 1e-6);
+      expect(primera, t.que).toBeTruthy();
+      const antes = r.filter((d) => d.desde < primera!.desde).at(-1);
+      if (antes) expect(primera!.desde).toBeGreaterThanOrEqual(antes.hasta ?? Infinity);
+    }
+  });
+
+  it("y no se repite: lo ya contado, tocado otra vez, enseña su lámina sin voz", () => {
+    const motores = toques.filter((t) => t.que === "motor");
+    expect(motores.length, JSON.stringify(motores)).toBeGreaterThanOrEqual(2);
+    expect(motores.some((t) => t.dijo.length > 0)).toBe(true);
+    expect(motores.at(-1)!.calla).toBe("contado");
+    expect(motores.at(-1)!.dijo).toEqual([]);
+    // Ninguna frase de Ara suena dos veces en el vuelo por un toque.
+    const deAra = toques.flatMap((t) => t.dijo).filter((k) => k.startsWith("inicio.ara."));
+    expect(new Set(deAra).size).toBe(deAra.length);
+    // Y lo de la tripulante que ya se contó al tocar no se cuenta otra vez en la bajada.
+    for (const k of ["inicio.tripulacion.pasaje.cerca.motor1", "inicio.tripulacion.pasaje.cerca.islas1"])
+      expect(r.filter((d) => d.clave === k).length, k).toBeLessThanOrEqual(1);
+    expect(m.escena.estado.saltados).toEqual([]);
+  });
+
+  it("la invitación a tocar, una vez y con algo que tocar a la vista; sin nada, no", () => {
+    class ConAlgoQueTocar extends VueloMedido {
+      override get lectura(): LecturaDelPasaje {
+        return { ...super.lectura, tocable: true };
+      }
+    }
+    const con = volarElMedido(new ConAlgoQueTocar());
+    expect(con.escena.registro.filter((d) => d.clave === "inicio.ara.pasaje.toque.invita")).toHaveLength(1);
+    expect(con.escena.estado.invitado).toBe(true);
+    expect(con.escena.estado.saltados).toEqual([]);
+    expect(m.escena.registro.map((d) => d.clave)).not.toContain("inicio.ara.pasaje.toque.invita");
+  });
+
+  it("y no corta la llegada: Mazo tocado en la final se cuenta una vez, y su nombre llega en tierra", () => {
+    const enLaFinal = volarTocando([
+      { que: "ladera-de-mazo", cuando: (l, e) => (l.tramo === "final" || l.tramo === "recogida") && l.altura > 150 && !e.estado.hablando },
+    ]);
+    const claves = enLaFinal.escena.registro.map((d) => d.clave);
+    expect(claves.filter((k) => k === "inicio.ara.pasaje.mazo")).toHaveLength(1);
+    expect(claves).toContain("inicio.mama.pasaje.mazo");
+    expect(enLaFinal.escena.estado.saltados).toEqual([]);
+    expect(enLaFinal.escena.estado.vistos).toContain("mazo");
+  });
+
+  it("con Ara durmiendo, un toque no dice nada: tiene los ojos cerrados", () => {
+    const dormida = volarTocando([{ que: "hito:teide", cuando: (_l, e) => e.estado.durmiendo }], new VueloMedidoConRatos());
+    const t = dormida.escena.estado.toques[0];
+    expect(dormida.escena.estado.siestas.length).toBeGreaterThan(0);
+    expect(t?.calla).toBe("dormida");
+    expect(t?.dijo).toEqual([]);
+  });
+
+  it("los sellos de un vuelo sin tocar nada: lo que la escena nombra cuando se ve", () => {
+    const solo = volarElMedido();
+    const vistos = solo.escena.estado.vistos;
+    // El ala y el motor, lo primero; la isla de llegada y Mazo, y lo señalado por la ventanilla.
+    for (const s of ["motor", "ala", "palma", "mazo", "teide", "gomera"] as const) expect(vistos, s).toContain(s);
+    expect(new Set(vistos).size).toBe(vistos.length);
   });
 });

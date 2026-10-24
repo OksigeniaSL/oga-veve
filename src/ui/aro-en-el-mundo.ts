@@ -18,6 +18,13 @@ export class AroEnElMundo {
   private puesto = false;
 
   /**
+   * Con `suave`, **el aro que invita a tocar**, en la ventanilla viva de la
+   * escena de pasaje: más fino, más lento y sin flecha, que no señala lo que
+   * alguien nombra sino lo que se puede tocar. Ver `flight/lo-que-se-toca.ts`.
+   */
+  constructor(private readonly variante: "suave" | null = null) {}
+
+  /**
    * Lo pone sobre ese punto de la pantalla, en píxeles CSS, o lo quita con
    * `null`. Se llama cada fotograma mientras dura lo señalado: se mueve con
    * `transform`, que no recoloca nada más de la página.
@@ -57,7 +64,7 @@ export class AroEnElMundo {
     if (this.el) return this.el;
     if (typeof document === "undefined") return null;
     const el = document.createElement("div");
-    el.className = "aro-del-mundo";
+    el.className = this.variante ? `aro-del-mundo aro-del-mundo--${this.variante}` : "aro-del-mundo";
     el.setAttribute("aria-hidden", "true");
     el.hidden = true;
     el.innerHTML = `<span class="aro-del-mundo__aro"></span>

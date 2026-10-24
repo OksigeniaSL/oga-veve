@@ -833,6 +833,7 @@ import {
 } from "./ui/explicaciones";
 import {
   DEL_CUADRO,
+  DURA_EL_SENALADO,
   LoSenalado,
   conSuSinVer,
   laQueSePuedeDecir,
@@ -1022,8 +1023,12 @@ import {
   type LecturaDelPasaje,
   type Plano,
   type SitioDelPaisaje,
+  type Tocable,
   type VistaDelSitio,
 } from "./flight/inicio-pasaje";
+import { ganarSellosDelViaje, leerSellosDelViaje, type SelloDelViaje } from "./flight/sellos-del-viaje";
+import { paginaDelViaje } from "./ui/sellos-del-viaje";
+import { cuantoSeAparta, debajoDelDedo, RADIO_DE_LO_TOCABLE, RADIO_POR_DEFECTO } from "./world/ventanilla-viva";
 import {
   asomadoHacia,
   claridad,
@@ -1214,7 +1219,7 @@ import { laHistoria, loQueSeDice, type LoQueSeDice } from "./audio/ventanilla";
 import { precargarLaIlustracion } from "./ui/ilustraciones-de-las-historias";
 import { alSonarLaHistoria, type Caja, type LoQueNoSeTapa } from "./ui/ventana-de-historia";
 import { cajitasDelAvion, siluetaEnPantalla, type Cajita } from "./world/silueta-del-avion";
-import { mallasDeFuera } from "./world/asiento-de-ara";
+import { ES_ALA, ES_MOTOR, mallasDeFuera, type AsientoDeAra } from "./world/asiento-de-ara";
 import {
   calorDelSuelo,
   capaDeMezcla,
@@ -2102,6 +2107,29 @@ const RECIEN_LLEGADO: ReadonlySet<string> = new Set<Fase>([
   "abandonando",
   "a-plataforma",
 ]);
+
+/** **Lo que mira Ara por su cristal** ahora: la escena, la pose, su asiento y lo que tapa la persiana. Ver `miraPorElCristalDeAra`. */
+interface MiradaDeAra {
+  readonly escena: VueloDePasaje;
+  readonly pose: AsientoDePasaje;
+  readonly ara: AsientoDeAra;
+  readonly cortina: number | undefined;
+}
+
+/** **Algo que se puede tocar por la ventanilla**, y por dónde: del avión, en sus ejes; si no, en el mundo. */
+interface LoDeLaVentanilla {
+  readonly que: Tocable;
+  readonly punto: PuntoDelMundo;
+  readonly delAvion: boolean;
+}
+
+/** El ala y el motor del lado de Ara, en los ejes del avión, y las mallas de fuera. Ver `lasPiezasDeAra`. */
+interface PiezasDeAra {
+  readonly de: object;
+  readonly mallas: Object3D[];
+  readonly motor: Vector3 | null;
+  readonly ala: readonly Vector3[];
+}
 
 export class Game {
   /** Qué se está enseñando hoy: de aquí sale qué guía se enciende. */
@@ -5568,6 +5596,8 @@ export class Game {
         // Y un toque en el paisaje no pulsa mandos de cabina: se está fuera.
         if (this.enLaVuelta) return;
         const [x, y] = enPantalla(e);
+        // En la escena de pasaje, lo que se ve por el cristal de Ara se cuenta. Ver `tocarLaVentanillaViva`.
+        if (this.tocarLaVentanillaViva(x, y)) return;
         // En el pasaje, la ventanilla: su persiana o su botón.
         if (this.tocarLaPared(x, y)) return;
         this.pulsarElMando(x, y);
@@ -7195,6 +7225,11 @@ export class Game {
        * pregunta por ella cuando la oye. Ver la charla `musica`.
        */
       musica: this.audio.suenaLaMusica,
+      /*
+       * **Y si hay algo que tocar a la vista**, por el cristal de Ara: lo que
+       * lleva el aro suave. Ver `ponerLosArosDeLaVentanilla`.
+       */
+      tocable: this.tocableALaVista !== null,
     };
     const permisos = escena.paso(dt, lectura);
     /*
@@ -7559,14 +7594,17 @@ export class Game {
         // Con el kit abierto, la tarjeta solo dice quién habla: lo que se mira es el kit.
         mira: p.kit.abierto ? null : p.mira,
         fin:
-          p.momento === "fin"
+          p.momento === "fin" || this.cuadernoForzadoParaBanco
             ? {
                 sello: selloDe(destino, t(destino.nameKey as TranslationKey)),
-                puedeSeguir: p.puedeSeguir,
+                puedeSeguir: p.puedeSeguir || this.cuadernoForzadoParaBanco,
                 volver: true,
+                // Y la página del viaje, con lo visto por la ventanilla. Ver `apuntarElViaje`.
+                viaje: this.paginaDelViaje ?? paginaDelViaje(leerSellosDelViaje()),
               }
             : null,
       });
+      this.ponerLosArosDeLaVentanilla(inicio, p);
       return;
     }
     const e = inicio.estado;
@@ -7687,6 +7725,13 @@ export class Game {
     for (const sitio of sitios) {
       const p = this.puntoDeLoNombrado(sitio);
       if (p) alrededor(p, margen);
+    }
+    // Y lo que se acaba de tocar por la ventanilla: lo que cuenta su lámina se sigue viendo. Ver `tocarLaVentanillaViva`.
+    const tocado = this.loTocado && this.relojDePared < this.loTocado.hasta + 8 ? this.loTocado : null;
+    if (tocado) {
+      const p = new Vector3(tocado.punto.x, tocado.punto.y, tocado.punto.z);
+      if (tocado.delAvion) p.applyMatrix4(this.aircraftMesh.group.matrixWorld);
+      alrededor(p, margen);
     }
     const g = this.aircraftMesh.group;
     g.updateMatrixWorld();
@@ -8225,6 +8270,8 @@ export class Game {
     this.rodadura?.dispose();
     this.terrain.dispose();
     this.aroDelPapi.dispose();
+    this.aroDeLoTocable.dispose();
+    this.aroDeLoTocado.dispose();
     this.cumulonimbo?.dispose();
     this.renderer.dispose();
   }
@@ -9458,6 +9505,15 @@ export class Game {
    * `Cuaderno.deViaje`.
    */
   private apuntarElViaje(): void {
+    /*
+     * **Y el cuaderno de viaje**: lo visto por la ventanilla, una vez por
+     * vuelo, con los que son nuevos para estamparlos. Ver
+     * `flight/sellos-del-viaje.ts`.
+     */
+    if (this.inicio instanceof VueloDePasaje && !this.paginaDelViaje) {
+      const nuevos = ganarSellosDelViaje(this.inicio.estado.vistos);
+      this.paginaDelViaje = paginaDelViaje(leerSellosDelViaje(), nuevos);
+    }
     // El campo donde se está, que es al que se llegó: el destino, a esas
     // alturas, ya es la vuelta a casa. Ver `elCampoDeAhora`.
     const llegada = this.elCampoDeAhora();
@@ -23430,8 +23486,11 @@ export class Game {
    * mar o el terreno, o `null` si en treinta kilómetros no llega a nada.
    */
   private dondeMiran(asiento: AsientoDePasaje, avion: { position: Vector3; orientation: Quaternion; largo: number }): PuntoDelMundo | null {
-    const ojo = ojosEnElMundo(asiento, avion);
-    const d = miradaDe(asiento, avion);
+    return this.dondeLlegaElRayo(ojosEnElMundo(asiento, avion), miradaDe(asiento, avion));
+  }
+
+  /** **Adonde llega una recta** desde unos ojos, hasta el mar o el terreno, o `null` si en treinta kilómetros no llega. */
+  private dondeLlegaElRayo(ojo: Vector3, d: Vector3): PuntoDelMundo | null {
     if (d.y > -0.01) return null;
     let antes = 0;
     for (let t = 100; t <= 30_000; t += Math.max(100, t * 0.08)) {
@@ -23449,6 +23508,348 @@ export class Game {
       antes = t;
     }
     return null;
+  }
+
+  // ── La ventanilla viva ───────────────────────────────────────────────
+
+  /**
+   * **Los dos aros de la ventanilla viva**: el suave, que late sobre algo que
+   * se puede tocar —uno a la vez, nunca la pantalla llena—, y el de lo que se
+   * acaba de tocar, con su flecha, el rato de lo señalado. Ver
+   * `flight/lo-que-se-toca.ts`.
+   */
+  private readonly aroDeLoTocable = new AroEnElMundo("suave");
+  private readonly aroDeLoTocado = new AroEnElMundo();
+  /** Lo que lleva el aro suave: se busca dos veces por segundo de pared, no en cada fotograma. */
+  private tocableALaVista: { readonly que: Tocable; readonly punto: PuntoDelMundo; readonly delAvion: boolean } | null = null;
+  private tocableMiradoEn = -Infinity;
+  /** Lo que se acaba de tocar, dónde, y hasta cuándo se señala, s de pared. */
+  private loTocado: { readonly que: Tocable; readonly punto: PuntoDelMundo; readonly delAvion: boolean; readonly hasta: number } | null = null;
+  /** **La página del cuaderno de viaje** de este vuelo, hecha una vez al llegar. Ver `apuntarElViaje`. */
+  private paginaDelViaje: string | null = null;
+  /** El cuaderno de viaje a la vista sin haber llegado, para mirarlo en el banco. */
+  private cuadernoForzadoParaBanco = false;
+  /**
+   * **El ala y el motor del lado de Ara**, en los ejes del avión: el centro
+   * del motor y tres puntos del ala, de la raíz a la punta, para el aro; y las
+   * mallas de fuera, para el rayo del dedo. Una vez por modelo.
+   */
+  private piezasDeAra: PiezasDeAra | null = null;
+  private readonly rayoDelDedo = new Raycaster();
+
+  private lasPiezasDeAra(): PiezasDeAra {
+    const g = this.aircraftMesh.group;
+    if (this.piezasDeAra?.de === g) return this.piezasDeAra;
+    g.updateWorldMatrix(true, true);
+    const aGrupo = g.matrixWorld.clone().invert();
+    const s = LADO_DE_ARA === "izquierda" ? -1 : 1;
+    const mallas = mallasDeFuera(g);
+    const motor = new Box3();
+    const ala = new Box3();
+    for (const o of mallas) {
+      const caja = ES_MOTOR.test(o.name) ? motor : ES_ALA.test(o.name) ? ala : null;
+      if (!caja) continue;
+      const suya = new Box3().setFromObject(o).applyMatrix4(aGrupo);
+      // Una malla puede llevar los dos lados: se queda la mitad del de Ara.
+      if (Math.sign(suya.max.x) !== s && Math.sign(suya.min.x) !== s) continue;
+      if (s < 0) suya.max.x = Math.min(suya.max.x, 0);
+      else suya.min.x = Math.max(suya.min.x, 0);
+      caja.union(suya);
+    }
+    const punta = s < 0 ? ala.min.x : ala.max.x;
+    this.piezasDeAra = {
+      de: g,
+      mallas,
+      motor: motor.isEmpty() ? null : motor.getCenter(new Vector3()),
+      ala: ala.isEmpty()
+        ? []
+        : [0.35, 0.55, 0.75].map((f) => new Vector3(f * punta, (ala.min.y + ala.max.y) / 2, (ala.min.z + ala.max.z) / 2)),
+    };
+    return this.piezasDeAra;
+  }
+
+  /**
+   * **Si ahora se mira por el cristal de Ara**: sentada o con la cara contra
+   * él, sin el velo de un corte, despierta, sin el kit delante y antes del
+   * final. Por fuera o asomada al pasillo, no: lo que se toca tiene que verse
+   * por su cristal.
+   */
+  private miraPorElCristalDeAra(escena: VueloDePasaje, e: VueloDePasaje["estado"]): MiradaDeAra | null {
+    if (e.terminado || e.momento === "fin" || e.durmiendo || e.kit.abierto) return null;
+    const plano = this.fundidoDePlano.plano;
+    if (esDeFuera(plano) || plano === "pasillo" || plano !== e.plano) return null;
+    if (this.veloDelPlano && !this.veloDelPlano.hidden && Number(this.veloDelPlano.style.opacity || 0) > 0.05) return null;
+    const ara = this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA];
+    if (!ara) return null;
+    const pose = this.asientoDeAraAhora(plano);
+    if (!pose) return null;
+    const c = this.cabinaDePasaje;
+    return { escena, pose, ara, cortina: cortinaDe(ara.ventanilla, c.tipoDeVentanilla, c.tapan[0]) };
+  }
+
+  /** Lo que se puede tocar del paisaje de este vuelo: sus hitos, la isla de llegada y la ladera de Mazo. */
+  private losTocablesDelPaisaje(): Tocable[] {
+    const hitos = this.hitosDelVuelo.filter((h) => h.clave).map((h): Tocable => `hito:${h.clave}`);
+    return [...hitos, "isla-de-llegada", "ladera-de-mazo"];
+  }
+
+  /**
+   * **Si un sitio del paisaje se ve ahora desde el asiento de Ara**, con su
+   * pose de ahora: por su cristal, sin relieve ni nube delante y a distancia
+   * de distinguirse, con la misma cuenta con la que la escena lo nombra —ver
+   * `seVeDesdeElAsiento`—. Por sus puntos, o, si se da la recta del dedo, por
+   * el trozo de isla que cae debajo de él. Devuelve por dónde se ve.
+   */
+  private seVeDesdeAra(que: Tocable, v: MiradaDeAra, dir?: Vector3): PuntoDelMundo | null {
+    const sitios = this.puntosDelPaisaje(que as SitioDelPaisaje);
+    if (!sitios) return null;
+    const s = this.flight.state;
+    const avion = { position: s.position, orientation: s.orientation, largo: this.largoDelAvion };
+    const mundo = this.mundoQueSeMira;
+    const prueba = (q: PuntoDelMundo): boolean => seVeDesdeElAsiento(v.pose, q, avion, mundo, sitios.ventanilla, v.cortina);
+    const ojo = this.camera.position;
+    const puntos = [...sitios.puntos]
+      .sort((a, b) => Math.hypot(a.x - ojo.x, a.z - ojo.z) - Math.hypot(b.x - ojo.x, b.z - ojo.z))
+      .slice(0, 3);
+    for (const p of puntos) if (p.deSuelo ? this.casiTodo(p, avion, prueba) : prueba(p)) return p;
+    const cerca = puntos[0];
+    if (!dir || !cerca) return null;
+    // Y el trozo de isla debajo del dedo, a la distancia del sitio: tierra, no el mar de al lado.
+    const lejos = Math.hypot(cerca.x - ojo.x, cerca.y - ojo.y, cerca.z - ojo.z);
+    const x = ojo.x + dir.x * lejos;
+    const z = ojo.z + dir.z * lejos;
+    const cota = this.terrain.cotaConocida(x, z) ?? 0;
+    if (cota < 5) return null;
+    const q = { x, y: cota + 30, z };
+    return prueba(q) ? q : null;
+  }
+
+  /**
+   * **Si una pieza del avión se ve ahora desde los ojos de Ara**: la recta
+   * hasta ella pasa por su cristal y lo primero que corta es esa pieza. Un
+   * rayo contra el modelo, dos veces por segundo como mucho. Devuelve el
+   * punto en los ejes del avión.
+   */
+  private seVeLaPieza(que: "motor" | "ala", v: MiradaDeAra): PuntoDelMundo | null {
+    const piezas = this.lasPiezasDeAra();
+    const g = this.aircraftMesh.group;
+    const ojo = this.camera.position;
+    const es = que === "motor" ? ES_MOTOR : ES_ALA;
+    for (const local of que === "motor" ? (piezas.motor ? [piezas.motor] : []) : piezas.ala) {
+      const p = local.clone().applyMatrix4(g.matrixWorld);
+      if (!seVePorLaVentanilla(ojo, p, this.flight.state, v.ara.ventanilla, v.cortina)) continue;
+      this.rayoDelDedo.set(ojo, p.clone().sub(ojo).normalize());
+      this.rayoDelDedo.far = 120;
+      const corte = this.rayoDelDedo.intersectObjects(piezas.mallas, false)[0];
+      if (corte && es.test(corte.object.name)) return { x: local.x, y: local.y, z: local.z };
+    }
+    return null;
+  }
+
+  /**
+   * **Lo que cae debajo del dedo**, por el cristal de Ara: primero lo del
+   * avión, que está delante de todo —un rayo contra el modelo—; después lo
+   * del paisaje, proyectado con su tamaño y la yema de margen —ver
+   * `world/ventanilla-viva.ts`— y solo si se ve; y por último lo de debajo, el
+   * mar de nubes o el mar, con un rayo contra el mapa de alturas. Lo que no se
+   * ve no se cuenta. `null` si no cae nada que contar.
+   */
+  private loQueCaeDebajoDelDedo(v: MiradaDeAra, dir: Vector3): LoDeLaVentanilla | null {
+    const ojo = this.camera.position;
+    const g = this.aircraftMesh.group;
+    // ── Lo del avión ──
+    const piezas = this.lasPiezasDeAra();
+    this.rayoDelDedo.set(ojo, dir);
+    this.rayoDelDedo.far = 120;
+    const corte = this.rayoDelDedo.intersectObjects(piezas.mallas, false)[0];
+    if (corte) {
+      const que: Tocable | null = ES_MOTOR.test(corte.object.name) ? "motor" : ES_ALA.test(corte.object.name) ? "ala" : null;
+      if (!que) return null;
+      const local = corte.point.clone().applyMatrix4(g.matrixWorld.clone().invert());
+      return { que, punto: { x: local.x, y: local.y, z: local.z }, delAvion: true };
+    }
+    // ── Lo del paisaje ──
+    const rpp = this.radianesPorPixel();
+    const candidatos: { que: Tocable; aparta: number }[] = [];
+    for (const que of this.losTocablesDelPaisaje()) {
+      const sitios = this.puntosDelPaisaje(que as SitioDelPaisaje);
+      if (!sitios || !sitios.puntos.length) continue;
+      const radio = RADIO_DE_LO_TOCABLE[que] ?? RADIO_POR_DEFECTO;
+      const aparta = Math.min(...sitios.puntos.map((p) => cuantoSeAparta(ojo, dir, p, radio, rpp)));
+      candidatos.push({ que, aparta });
+    }
+    for (const c of debajoDelDedo(candidatos)) {
+      const p = this.seVeDesdeAra(c.que, v, dir);
+      if (p) return { que: c.que, punto: p, delAvion: false };
+    }
+    // ── Lo de debajo: el mar de nubes o el mar ──
+    const p = this.dondeLlegaElRayo(ojo, dir);
+    if (!p) return null;
+    const mundo = this.mundoQueSeMira;
+    const capa = this.capaDeNubes;
+    if (capa && ojo.y > capa.techo && mundo.dentro(ojo) < 0.35 && mundo.nubes(ojo, p) < 0.85 && claridad(ojo, p, mundo) < SE_DISTINGUE) {
+      const t = (ojo.y - capa.techo) / -dir.y;
+      return { que: "nubes", punto: { x: ojo.x + dir.x * t, y: capa.techo, z: ojo.z + dir.z * t }, delAvion: false };
+    }
+    const s = this.flight.state;
+    const avion = { position: s.position, orientation: s.orientation, largo: this.largoDelAvion };
+    if (this.terrain.sampleSurface(p.x, p.z) < 5 && seVeDesdeElAsiento(v.pose, p, avion, mundo, POR_LA_VENTANILLA, v.cortina))
+      return { que: "mar", punto: p, delAvion: false };
+    return null;
+  }
+
+  /**
+   * **Un toque en la vista de Ara**, en la escena de pasaje: si cae por su
+   * cristal sobre algo que se ve, se le da a la escena —que lo cuenta en su
+   * turno— y se le pone el aro de lo señalado. Si no cae nada que contar, el
+   * toque es el de siempre: la persiana. Ver `flight/lo-que-se-toca.ts`.
+   *
+   * Un rayo por toque, no por fotograma: es lo que pide la regla del
+   * rendimiento, y lo que se mira es lo que hay debajo del dedo cuando se toca.
+   */
+  private tocarLaVentanillaViva(x: number, y: number): boolean {
+    if (!(this.inicio instanceof VueloDePasaje)) return false;
+    const v = this.miraPorElCristalDeAra(this.inicio, this.inicio.estado);
+    if (!v) return false;
+    const cam = this.camera;
+    cam.updateMatrixWorld();
+    const dir = new Vector3(x, y, 0.5).unproject(cam).sub(cam.position).normalize();
+    const lejos = cam.position.clone().addScaledVector(dir, 50);
+    // Por el cristal, y por debajo de la persiana: lo de la pared es la persiana.
+    if (!seVePorLaVentanilla(cam.position, lejos, this.flight.state, v.ara.ventanilla, v.cortina)) return false;
+    const lo = this.loQueCaeDebajoDelDedo(v, dir);
+    if (!lo) return false;
+    v.escena.tocar(lo.que);
+    this.loTocado = { ...lo, hasta: this.relojDePared + DURA_EL_SENALADO };
+    // Y el aro suave se busca otro sitio: este ya está tocado.
+    this.tocableMiradoEn = -Infinity;
+    return true;
+  }
+
+  /**
+   * **Lo que lleva el aro suave**: lo nuevo del paisaje que se ve ahora por
+   * el cristal y cae en la pantalla, y, hasta el primer toque, el motor o el
+   * ala, que es lo primero que se ve sentado en el puesto. Lo ya tocado, no.
+   */
+  private buscarLoTocable(v: MiradaDeAra, tocados: ReadonlySet<Tocable>): LoDeLaVentanilla | null {
+    for (const que of this.losTocablesDelPaisaje()) {
+      if (tocados.has(que)) continue;
+      const sitios = this.puntosDelPaisaje(que as SitioDelPaisaje);
+      if (!sitios || !sitios.puntos.some((p) => this.enLaPantalla(p) !== null)) continue;
+      const p = this.seVeDesdeAra(que, v);
+      if (p && this.enLaPantalla(p)) return { que, punto: p, delAvion: false };
+    }
+    if (tocados.size > 0) return null;
+    for (const que of ["motor", "ala"] as const) {
+      const p = this.seVeLaPieza(que, v);
+      if (p) return { que, punto: p, delAvion: true };
+    }
+    return null;
+  }
+
+  /** Dónde cae un punto en la pantalla, px CSS —del avión, en sus ejes—; `null` detrás, fuera o debajo del HUD. */
+  private enLaPantalla(p: PuntoDelMundo, delAvion = false): { x: number; y: number } | null {
+    const cam = this.camera;
+    const q = new Vector3(p.x, p.y, p.z);
+    if (delAvion) q.applyMatrix4(this.aircraftMesh.group.matrixWorld);
+    if (q.clone().applyMatrix4(cam.matrixWorldInverse).z >= 0) return null;
+    q.project(cam);
+    if (Math.abs(q.x) > 0.96 || Math.abs(q.y) > 0.96) return null;
+    const caja = this.renderer.domElement.getBoundingClientRect();
+    const x = caja.left + ((q.x + 1) / 2) * caja.width;
+    const y = caja.top + ((1 - q.y) / 2) * caja.height;
+    return this.hud.tapaElPunto(x, y) ? null : { x, y };
+  }
+
+  /**
+   * **Los aros de la ventanilla viva**, en cada fotograma: donde cae ahora lo
+   * que llevan, que el avión avanza y la cabeza se mueve. Lo que lleva el
+   * suave se busca dos veces por segundo; y con lo tocado señalado, el suave
+   * se aparta: un aro a la vez.
+   */
+  private ponerLosArosDeLaVentanilla(escena: VueloDePasaje, e: VueloDePasaje["estado"]): void {
+    const v = this.miraPorElCristalDeAra(escena, e);
+    if (!v) {
+      this.tocableALaVista = null;
+      this.aroDeLoTocable.poner(null);
+      this.aroDeLoTocado.poner(null);
+      return;
+    }
+    this.camera.updateMatrixWorld();
+    const ahora = this.relojDePared;
+    if (ahora - this.tocableMiradoEn > 0.5) {
+      this.tocableMiradoEn = ahora;
+      this.tocableALaVista = this.buscarLoTocable(v, new Set(e.toques.map((x) => x.que)));
+    }
+    const tocado = this.loTocado && ahora < this.loTocado.hasta ? this.loTocado : null;
+    this.aroDeLoTocado.poner(tocado ? this.enLaPantalla(tocado.punto, tocado.delAvion) : null);
+    const suave = this.tocableALaVista;
+    this.aroDeLoTocable.poner(!tocado && suave ? this.enLaPantalla(suave.punto, suave.delAvion) : null);
+  }
+
+  /** La ventanilla viva, para el banco: los dos aros, dónde están y qué llevan. Ver `scripts/verificar-inicio-3.mjs`. */
+  get ventanillaVivaParaBanco(): {
+    readonly suave: { readonly que: Tocable; readonly x: number; readonly y: number } | null;
+    readonly tocado: { readonly que: Tocable; readonly x: number; readonly y: number } | null;
+    /** Cuánto dentro de una nube están los ojos, de 0 a 1: con la ventanilla blanca no se ve nada que tocar. */
+    readonly enNube: number;
+  } {
+    const suave = this.aroDeLoTocable.donde;
+    const tocado = this.aroDeLoTocado.donde;
+    return {
+      suave: suave && this.tocableALaVista ? { que: this.tocableALaVista.que, ...suave } : null,
+      tocado: tocado && this.loTocado ? { que: this.loTocado.que, ...tocado } : null,
+      enNube: this.sky.enLaNube,
+    };
+  }
+
+  /**
+   * **Dónde cae en la pantalla algo que se puede tocar**, px CSS, si se ve
+   * ahora desde el asiento de Ara y si cae por su cristal. Con `cristal`, el
+   * centro de su cristal. Para el banco: lo tapado se toca y no tiene que
+   * contar nada.
+   */
+  dondeTocarParaBanco(que: string): { readonly x: number; readonly y: number; readonly seVe: boolean; readonly porElCristal: boolean } | null {
+    if (!(this.inicio instanceof VueloDePasaje)) return null;
+    const v = this.miraPorElCristalDeAra(this.inicio, this.inicio.estado);
+    if (!v) return null;
+    this.camera.updateMatrixWorld();
+    const g = this.aircraftMesh.group;
+    const ojo = this.camera.position;
+    const cristal = (p: PuntoDelMundo): boolean => seVePorLaVentanilla(ojo, p, this.flight.state, v.ara.ventanilla, v.cortina);
+    if (que === "cristal") {
+      const c = v.ara.ventanilla.centro;
+      const dentro = new Vector3(c.x, c.y, c.z).applyMatrix4(g.matrixWorld);
+      // Más allá del cristal, en la recta de los ojos: lo que se ve en su centro.
+      const fuera = dentro.clone().sub(ojo).normalize().multiplyScalar(200).add(ojo);
+      const en = this.enLaPantalla(fuera);
+      return en ? { ...en, seVe: false, porElCristal: cristal(fuera) } : null;
+    }
+    if (que === "motor" || que === "ala") {
+      const piezas = this.lasPiezasDeAra();
+      const local = que === "motor" ? piezas.motor : piezas.ala[1];
+      if (!local) return null;
+      const visto = this.seVeLaPieza(que, v);
+      const punto = visto ?? local;
+      const en = this.enLaPantalla(punto, true);
+      const enElMundo = new Vector3(punto.x, punto.y, punto.z).applyMatrix4(g.matrixWorld);
+      return en ? { ...en, seVe: !!visto, porElCristal: cristal(enElMundo) } : null;
+    }
+    const sitios = this.puntosDelPaisaje(que as SitioDelPaisaje);
+    if (!sitios) return null;
+    const visto = this.seVeDesdeAra(que as Tocable, v);
+    const punto = visto ?? [...sitios.puntos].sort((a, b) => Math.hypot(a.x - ojo.x, a.z - ojo.z) - Math.hypot(b.x - ojo.x, b.z - ojo.z))[0];
+    if (!punto) return null;
+    const en = this.enLaPantalla(punto);
+    return en ? { ...en, seVe: !!visto, porElCristal: cristal(punto) } : null;
+  }
+
+  /** **El cuaderno de viaje a la vista**, sin llegar: para mirar en el banco cómo cabe. Con los sellos que se digan. */
+  verElCuadernoDeViajeParaBanco(ganados: readonly SelloDelViaje[], nuevos: readonly SelloDelViaje[] = []): boolean {
+    if (!(this.inicio instanceof VueloDePasaje)) return false;
+    this.paginaDelViaje = paginaDelViaje(ganados, nuevos);
+    this.cuadernoForzadoParaBanco = true;
+    return true;
   }
 
   /**

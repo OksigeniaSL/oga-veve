@@ -169,6 +169,18 @@
  * él es la llegada a su paso: el reloj de quien juega, ver
  * `relojDeQuienJuega` en `game.ts`.
  *
+ * **La ventanilla viva** (19-10-2026): que sale el aro suave sobre algo que
+ * se puede tocar y Ara invita a tocar una vez; que un toque de verdad —un
+ * clic en la pantalla— sobre lo que se ve por el cristal de Ara lo cuenta,
+ * con el Teide si se ve; que un toque sobre algo tapado —por la nube o por el
+ * monte— no cuenta nada, ni dentro de la nube con la ventanilla blanca; que
+ * un toque mientras habla alguien no le pisa; y que al llegar, con los
+ * motores parados, sale el cuaderno de viaje con los sellos de lo visto y sus
+ * huecos. Con `OGA_FOTOS`, el toque en el Teide y el cuaderno. Y en el
+ * teléfono apaisado, que el cuaderno cabe. Lo que se toca aquí es lo de
+ * arriba —el Teide, La Gomera, el mar de nubes, el motor y el ala—: la isla
+ * de llegada y Mazo los cuenta la escena, que es lo que miran las demás.
+ *
  * **Las salidas y lo que se pregunta después** (puntos 312 y 313): que la
  * demostración dice las salidas que lleva el avión —las de su hoja de tipo,
  * y las puertas del modelo—, que al decirlas Ara se asoma al pasillo y se ve
@@ -503,6 +515,13 @@ async function elVuelo() {
    * pregunta de la música, con lo que sonaba al hacerla.
    */
   const mazo = { muestras: [], foto: false };
+  /**
+   * **La ventanilla viva**: lo que llevó el aro suave, los toques sobre lo que
+   * se ve —con el número de toques de la escena antes de cada uno—, el de algo
+   * tapado, el de dentro de la nube y el de mientras habla alguien.
+   */
+  const viva = { aros: new Set(), toques: [], tapado: null, nube: null, pisa: null, teide: null, ultimo: 0, buscado: 0 };
+  const dondeTocar = (que) => page.evaluate((q) => globalThis.__oga.dondeTocar?.(q) ?? null, que).catch(() => null);
   let preguntaDeLaMusica = null;
   const t0 = Date.now();
 
@@ -715,7 +734,77 @@ async function elVuelo() {
         await foto(page, "mazo-fincas");
       }
     }
-    // ── La pregunta de la música, con lo que suena al hacerla ──
+    // ── La ventanilla viva: tocar lo que se ve, lo tapado y mientras habla alguien ──
+    const sentada =
+      ["ventanilla", "asomado-motor", "asomado-abajo", "asomado-paisaje"].includes(i.planoVisto) &&
+      (Number(i.velo) || 0) < 0.02 &&
+      !e.durmiendo &&
+      !e.kit?.abierto &&
+      e.momento !== "fin";
+    // Lo de arriba: la llegada la cuenta la escena, y lo que miran las demás comprobaciones no se toca.
+    const arribaParaTocar = ["subida", "crucero", "bajada"].includes(tramo) && altitud > 3048 && !e.kit?.dado;
+    if (sentada) {
+      const vv = await page.evaluate(() => globalThis.__oga.ventanillaViva?.() ?? null).catch(() => null);
+      if (vv?.suave) viva.aros.add(vv.suave.que);
+      const toques = e.toques ?? [];
+      const clic = async (x, y) => {
+        await page.mouse.click(x, y);
+        viva.ultimo = Date.now();
+      };
+      const DE_ARRIBA = ["hito:teide", "hito:garajonay", "nubes", "motor", "ala"];
+      // Algo que se ve, en un silencio: el Teide si se ve, si no lo que lleve el aro suave.
+      if (arribaParaTocar && !e.hablando && viva.toques.length < 4 && Date.now() - viva.ultimo > 12_000) {
+        let objetivo = null;
+        if (!viva.teide) {
+          const d = await dondeTocar("hito:teide");
+          if (d?.seVe && d.porElCristal) objetivo = { que: "hito:teide", x: d.x, y: d.y };
+        }
+        if (!objetivo && vv?.suave && DE_ARRIBA.includes(vv.suave.que) && !viva.toques.some((x) => x.que === vv.suave.que))
+          objetivo = vv.suave;
+        if (objetivo) {
+          const tq = { que: objetivo.que, t: e.segundos, antes: toques.length };
+          await clic(objetivo.x, objetivo.y);
+          viva.toques.push(tq);
+          if (objetivo.que === "hito:teide") {
+            viva.teide = tq;
+            if (FOTOS) {
+              await pausa(1500);
+              await foto(page, "toque-teide");
+            }
+          }
+        }
+      }
+      // Algo tapado por la nube o por el monte, por el cristal: tocarlo no cuenta nada.
+      if (!viva.tapado && !e.hablando && Date.now() - viva.ultimo > 4000 && Date.now() - viva.buscado > 3000) {
+        viva.buscado = Date.now();
+        for (const que of ["hito:garajonay", "hito:teide", "isla-de-llegada", "hito:hierro", "hito:anaga", "hito:orotava"]) {
+          const d = await dondeTocar(que);
+          if (!d || d.seVe || !d.porElCristal) continue;
+          const cabina = await page.evaluate(() => globalThis.__oga.cabina?.() ?? null).catch(() => null);
+          viva.tapado = { que, t: e.segundos, antes: toques.length, tramo };
+          await clic(d.x, d.y);
+          // Si el toque fue a la persiana —no había nada que contar—, se deja como estaba.
+          if (cabina && !cabina.bloqueada)
+            for (let k = 0; k < 2; k++) await page.evaluate(() => globalThis.__oga.tocarLaVentanilla?.()).catch(() => {});
+          break;
+        }
+      }
+      // Dentro de la nube, con la ventanilla blanca: un toque en el cristal no cuenta nada.
+      if (!viva.nube && (vv?.enNube ?? 0) > 0.5) {
+        const d = await dondeTocar("cristal");
+        if (d?.porElCristal) {
+          viva.nube = { t: e.segundos, antes: toques.length, enNube: vv.enNube };
+          await clic(d.x, d.y);
+        }
+      }
+      // Mientras habla alguien, ya invitado: el toque espera su turno o se queda en su aro. Desde el embarque, el ala.
+      const invitado = (i.registro ?? []).some((d) => d.clave === "inicio.ara.pasaje.toque.invita");
+      if (!viva.pisa && invitado && (arribaParaTocar || tramo === "puerta") && e.hablando && e.linea && vv?.suave && DE_ARRIBA.includes(vv.suave.que)) {
+        viva.pisa = { que: vv.suave.que, t: e.segundos, antes: toques.length, clave: e.linea.clave };
+        await clic(vv.suave.x, vv.suave.y);
+      }
+    }
+    // ── La pregunta de la música, con lo que suena al hacerla ──    // ── La pregunta de la música, con lo que suena al hacerla ──
     if (preguntaDeLaMusica === null && e.linea?.clave === "inicio.ara.pasaje.musica" && e.hablando)
       preguntaDeLaMusica = { t: e.segundos, suena: m?.suena ?? null, tramo, pies: Math.round(altitud / 0.3048) };
     // ── La foto de una historia, solo con su voz ──
@@ -870,8 +959,25 @@ async function elVuelo() {
           campo: s?.getAttribute("data-campo") ?? null,
           visible: !!r && r.width > 40 && r.top >= 0 && r.bottom <= innerHeight,
           boton: b && !b.hidden ? b.textContent.trim() : null,
+          // Y el cuaderno de viaje: los sellos de lo visto y los huecos, a la vista.
+          viaje: (() => {
+            const p = document.querySelector("#inicio .viaje");
+            const r = p?.getBoundingClientRect();
+            return p
+              ? {
+                  sellos: [...p.querySelectorAll("[data-sello-viaje]")].map((x) => x.getAttribute("data-sello-viaje")),
+                  huecos: p.querySelectorAll(".viaje__sitio--hueco").length,
+                  visible: !!r && r.width > 100 && r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth,
+                }
+              : null;
+          })(),
         };
       });
+      // El cuaderno, cuando ya está estampado: lo nuevo se estampa uno detrás de otro.
+      if (FOTOS) {
+        await pausa(3500);
+        await foto(page, "cuaderno-de-viaje");
+      }
       await foto(page, "fin");
       break;
     }
@@ -1263,6 +1369,63 @@ async function elVuelo() {
         : "sin medida",
     );
   }
+  // ── La ventanilla viva ──
+  const losToques = e?.toques ?? [];
+  const elToque = (x) => losToques.find((q, k) => k >= x.antes && q.que === x.que && Math.abs(q.desde - x.t) < 3);
+  const contados = viva.toques.map((x) => ({ ...x, toque: elToque(x) }));
+  comprobar(
+    "la ventanilla viva invita a tocar: el aro suave sobre algo que se puede tocar, y Ara lo dice una vez",
+    viva.aros.size > 0 && claves.filter((k) => k === "inicio.ara.pasaje.toque.invita").length === 1,
+    `el aro suave en: ${[...viva.aros].join(", ") || "nada"} · invitación: ${claves.filter((k) => k === "inicio.ara.pasaje.toque.invita").length} vez`,
+  );
+  comprobar(
+    "un toque sobre lo que se ve por el cristal de Ara lo cuenta, y el Teide si se ve",
+    contados.length > 0 &&
+      contados.every((x) => x.toque && (x.toque.dijo.length > 0 || x.toque.calla === "contado")) &&
+      contados.some((x) => x.toque?.dijo.length > 0) &&
+      (!viva.teide || !!contados.find((x) => x.que === "hito:teide")?.toque) &&
+      contados.every((x) => (x.toque?.dijo ?? []).every((k) => /^inicio\.(ara|tripulacion)\.pasaje\./.test(k))),
+    contados.map((x) => `${x.que} a los ${x.t.toFixed(0)} s: ${x.toque ? (x.toque.dijo.join(" + ") || x.toque.calla) : "no llegó a la escena"}`).join(" · ") ||
+      "no se tocó nada",
+  );
+  const delTapado = viva.tapado ? losToques.filter((q, k) => k >= viva.tapado.antes && q.que === viva.tapado.que && Math.abs(q.desde - viva.tapado.t) < 3) : [];
+  comprobar(
+    "un toque sobre algo tapado por la nube o el monte no cuenta nada",
+    !!viva.tapado && delTapado.length === 0,
+    viva.tapado ? `${viva.tapado.que} en ${viva.tapado.tramo} a los ${viva.tapado.t.toFixed(0)} s: ${delTapado.length ? delTapado.map((q) => q.dijo.join(" + ")).join(", ") : "nada"}` : "no se encontró nada tapado por el cristal",
+  );
+  const enLaNube = viva.nube ? losToques.filter((q, k) => k >= viva.nube.antes && Math.abs(q.desde - viva.nube.t) < 3) : [];
+  comprobar(
+    "dentro de la nube, con la ventanilla blanca, un toque en el cristal no cuenta nada",
+    !!viva.nube && enLaNube.length === 0,
+    viva.nube ? `a los ${viva.nube.t.toFixed(0)} s, en la nube ${viva.nube.enNube.toFixed(2)}: ${enLaNube.map((q) => q.que).join(", ") || "nada"}` : "no se tocó dentro de la nube",
+  );
+  const pisado = viva.pisa ? losToques.find((q, k) => k >= viva.pisa.antes && Math.abs(q.desde - viva.pisa.t) < 3) : null;
+  const hablaba = viva.pisa ? registro.filter((d) => d.clave === viva.pisa.clave && d.desde <= viva.pisa.t + 0.5).at(-1) : null;
+  const suPrimera = pisado?.dijo.length ? registro.find((d) => d.clave === pisado.dijo[0] && d.desde >= pisado.desde - 0.1) : null;
+  comprobar(
+    "un toque mientras habla alguien no le pisa: espera a que se calle, o se queda en su aro",
+    !!viva.pisa &&
+      !!pisado &&
+      (suPrimera ? !!hablaba && suPrimera.desde >= (hablaba.hasta ?? Infinity) - 1e-6 : ["ocupado", "contado"].includes(pisado.calla)),
+    viva.pisa
+      ? `${viva.pisa.que} a los ${viva.pisa.t.toFixed(0)} s con «${viva.pisa.clave}» sonando (acaba a los ${hablaba?.hasta?.toFixed(1) ?? "—"} s): ${pisado ? (suPrimera ? `${pisado.dijo[0]} a los ${suPrimera.desde.toFixed(1)} s` : pisado.calla) : "no llegó a la escena"}`
+      : "no se tocó con nadie hablando",
+  );
+  const vistosDelViaje = e?.vistos ?? [];
+  comprobar(
+    "al llegar, con los motores parados, sale el cuaderno de viaje con los sellos de lo visto y los huecos de lo que falta",
+    !!sello?.viaje &&
+      sello.viaje.visible &&
+      sello.viaje.sellos.length === vistosDelViaje.length &&
+      vistosDelViaje.every((s) => sello.viaje.sellos.includes(s)) &&
+      sello.viaje.sellos.length + sello.viaje.huecos === 8 &&
+      t?.tramo === "apagado" &&
+      ultimo?.motor === false,
+    sello?.viaje
+      ? `${sello.viaje.sellos.join(", ")} · ${sello.viaje.huecos} huecos · vistos en el vuelo: ${vistosDelViaje.join(", ")} · ${t?.tramo}, motor ${ultimo?.motor}`
+      : "no salió",
+  );
   const cuaderno = i?.cuaderno;
   comprobar(
     "el cuaderno no apunta nada de pilotaje, y sí el sello de La Palma, de visita",
@@ -1557,6 +1720,8 @@ async function elVuelo() {
           .filter((d) => d.desde > bostezoDeLaBajada.desde && d.desde < explicaRalenti.desde - 5)
           .map((d) => d.clave)
           .filter((c) => !/^(ventanilla|inicio\.ara\.pasaje\.(teide|garajonay|orotava|loVeo|preguntaBajar)$)/.test(c))
+          // Y lo que dice Ara de lo que se toca por la ventanilla, que es como lo señalado: lo que se ve ahora.
+          .filter((c) => !(e?.toques ?? []).some((q) => q.dijo.includes(c) && c.startsWith("inicio.ara.")))
       : null;
   comprobar(
     "y lo explica la comandante en el primer rato tranquilo: el de subida pasados los diez mil pies, el del ralentí tras los oídos, el de la aproximación en tierra, tras la reversa",
@@ -2467,6 +2632,40 @@ async function enElTelefono() {
         : `no salió · ${JSON.stringify((await leer(page)).inicio?.ventanita ?? null)}`,
     );
     if (lamina) await foto(page, "telefono-lamina");
+    /*
+     * **Y el cuaderno de viaje, en el teléfono apaisado**: puesto a la vista
+     * con unos cuantos sellos y sus huecos, que quepa entero en la tarjeta y
+     * en la pantalla, con el botón de volver, y cada sello del tamaño de
+     * mirarlo. Ver `ui/sellos-del-viaje.ts`.
+     */
+    await page.evaluate(() => globalThis.__oga.verElCuadernoDeViaje(["motor", "ala", "nubes", "teide", "palma"], ["palma"]));
+    await pausa(3500);
+    const cuaderno = await page.evaluate(() => {
+      const caja = (sel) => {
+        const r = document.querySelector(sel)?.getBoundingClientRect();
+        return r ? { l: r.left, t: r.top, r: r.right, b: r.bottom } : null;
+      };
+      return {
+        tarjeta: caja("#inicio .inicio__tarjeta"),
+        viaje: caja("#inicio .viaje"),
+        boton: caja("#inicio [data-inicio='seguir']"),
+        sitios: [...document.querySelectorAll("#inicio .viaje__sitio")].map((x) => x.getBoundingClientRect().width),
+        w: innerWidth,
+        h: innerHeight,
+      };
+    });
+    const dentro = (a, b) => !!a && !!b && a.l >= b.l - 0.5 && a.t >= b.t - 0.5 && a.r <= b.r + 0.5 && a.b <= b.b + 0.5;
+    const pantalla = { l: 0, t: 0, r: cuaderno.w, b: cuaderno.h };
+    comprobar(
+      "teléfono apaisado: el cuaderno de viaje cabe entero en la tarjeta y en la pantalla, con el botón, y cada sello se ve",
+      dentro(cuaderno.tarjeta, pantalla) &&
+        dentro(cuaderno.viaje, cuaderno.tarjeta) &&
+        dentro(cuaderno.boton, pantalla) &&
+        cuaderno.sitios.length === 8 &&
+        cuaderno.sitios.every((w) => w >= 36),
+      `tarjeta ${JSON.stringify(cuaderno.tarjeta)} · cuaderno ${JSON.stringify(cuaderno.viaje)} · botón ${JSON.stringify(cuaderno.boton)} · sellos de ${Math.min(...cuaderno.sitios).toFixed(0)} px en ${cuaderno.w}×${cuaderno.h}`,
+    );
+    await foto(page, "telefono-cuaderno");
   } catch (e) {
     comprobar("teléfono apaisado: la escena se abre", false, String(e).slice(0, 140));
   } finally {

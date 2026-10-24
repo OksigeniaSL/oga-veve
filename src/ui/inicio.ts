@@ -616,7 +616,17 @@ export interface VistaDelInicio {
    * botón no es seguir volando sino volver al hangar: de pasaje no se sigue
    * volando el avión de otro.
    */
-  readonly fin: { readonly sello: string; readonly puedeSeguir: boolean; readonly volver?: boolean } | null;
+  readonly fin: {
+    readonly sello: string;
+    readonly puedeSeguir: boolean;
+    readonly volver?: boolean;
+    /**
+     * **La página del cuaderno de viaje**, de pasaje: los sellos de lo visto
+     * por la ventanilla y los huecos de lo que falta, al lado del sello del
+     * campo. Ver `ui/sellos-del-viaje.ts`.
+     */
+    readonly viaje?: string;
+  } | null;
   /** Qué mirar, en la escena de pasaje, cuando no hay gesto que pedir. */
   readonly mira?: QueMirar | null;
 }
@@ -783,13 +793,13 @@ export class PantallaDelInicio {
       this.colocarElDedo();
     }
 
-    const fin = v.fin ? `${v.fin.puedeSeguir}` : "";
+    const fin = v.fin ? `${v.fin.puedeSeguir}|${v.fin.viaje ?? ""}` : "";
     if (fin !== this.finPuesto) {
       const antes = this.finPuesto;
       this.finPuesto = fin;
       this.fin.hidden = !v.fin;
       this.tarjeta.classList.toggle("inicio__tarjeta--fin", !!v.fin);
-      if (v.fin && !antes) {
+      if (v.fin && (!antes || !antes.endsWith(`|${v.fin.viaje ?? ""}`))) {
         /*
          * De pasaje, **volver al hangar**, con su dibujo: el arco del hangar
          * con el avión dentro. Seguir volando un avión de línea que se acaba
@@ -799,8 +809,15 @@ export class PantallaDelInicio {
           ? `<path d="M6 30 V16 Q24 1 42 16 V30 H36 V19 Q24 9 12 19 V30 Z" />
              <path d="M15 27 L24 24.5 L27 21 L28.6 21.5 L27 25 L32 24 L33 25.6 L27.5 27.6 L16 28.6 Z" />`
           : `<path d="M9 19 L27 13 L33 6 L36 7 L33 14 L42 12 L44 15 L34 19 L26 22 L11 22 Z" />`;
+        /*
+         * Y de pasaje, al lado del sello del campo, **la página del viaje**:
+         * lo visto por la ventanilla, con sus huecos. Ver `ui/sellos-del-viaje.ts`.
+         */
         this.fin.innerHTML = `
-          <div class="inicio__sello">${v.fin.sello}</div>
+          <div class="inicio__llegada">
+            <div class="inicio__sello">${v.fin.sello}</div>
+            ${v.fin.viaje ?? ""}
+          </div>
           <button class="inicio__seguir" type="button" data-inicio="seguir" hidden>
             <svg viewBox="0 0 48 32" aria-hidden="true">${icono}</svg>
             <span>${t(v.fin.volver ? "inicio.modo.volver" : "inicio.modo.seguir")}</span>

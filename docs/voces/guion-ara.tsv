@@ -126,9 +126,13 @@
 126	inicio.ara.pasaje.musica	¡Están poniendo música! ¿Por qué ponen música cuando bajamos?
 127	inicio.ara.pasaje.kit.avion.estabilizador	¡El estabilizador! Es un ala más corta, atrás en la cola, y con su timón el avión sube o baja la nariz.
 128	inicio.ara.pasaje.kit.avion.luces	Ahora las luces: la roja va en la punta del ala izquierda, la verde en la derecha y la blanca atrás.
-129	inicio.ara.pasaje.kit.avion.noche	De noche, con las luces, otro avión sabe para dónde vamos: si ve la roja y la verde juntas, vamos de frente.
+129	inicio.ara.pasaje.kit.avion.noche	De noche, con las luces, otro avión sabe para dónde vamos: si ve la roja y la verde a la vez, es que vamos hacia él.
 130	inicio.ara.pasaje.kit.avion.biplano	¡Un biplano! Tiene dos alas, una arriba y otra abajo, y su ruedita no va en la nariz: va en la cola.
-131	inicio.ara.pasaje.kit.avion.bimotor	Este lleva un motor en cada ala. Si uno se apaga, el otro sigue empujando y el avión sigue volando.
+131	inicio.ara.pasaje.kit.avion.bimotor	Este lleva un motor en cada ala. Si uno se apaga, el otro sigue empujando y el avión puede seguir volando.
 132	inicio.ara.pasaje.kit.avion.colaEnT	¡La cola en T! El estabilizador va arriba de todo, lejos del aire revuelto del ala y de las hélices.
-133	inicio.ara.pasaje.kit.avion.reactor	¡Como el nuestro! Los motores cuelgan debajo del ala: su peso le ayuda al ala, y se llega fácil para cuidarlos.
+133	inicio.ara.pasaje.kit.avion.reactor	¡Como el nuestro! Los motores cuelgan debajo del ala: su peso ayuda a que el ala no se doble tanto, y se llega fácil para cuidarlos.
 134	inicio.ara.pasaje.kit.avion.cuatrimotor	¡Cuatro motores y un montón de ruedas! Tantas ruedas reparten el peso, para no romper la pista.
+135	inicio.ara.pasaje.toque.invita	¡Mirá por la ventanilla! Si tocás algo con el dedo, te cuento lo que es.
+136	inicio.ara.pasaje.toque.motor	¡Ese es el motor! Por adelante se traga el aire, y por atrás lo tira con fuerza.
+137	inicio.ara.pasaje.toque.gomera	¡Esa isla redondita es La Gomera! Mamá dice que ahí se puede hablar silbando.
+138	inicio.ara.pasaje.toque.mar	¡Todo eso de abajo es el mar! Y entre isla e isla hay muchísima agua.

@@ -3991,6 +3991,28 @@ export const ES_PY = {
   "inicio.ara.pasaje.musica": "¡Están poniendo música! ¿Por qué ponen música cuando bajamos?",
   "inicio.tripulacion.pasaje.cerca.musica":
     "Para que el ratito de bajar sea un rato de calma, sin nervios. Y muchas compañías ponen música de su tierra: esta es de Canarias.",
+  /*
+   * **La ventanilla viva** (19-10-2026): se toca lo que se ve por la
+   * ventanilla y te lo cuentan. Ara invita una vez y dice lo suyo de lo que
+   * toca; lo demás —el Teide, la isla, Mazo, el mar de nubes, el ala— son sus
+   * frases de siempre, y la tripulante cuenta las suyas. Ver
+   * `flight/lo-que-se-toca.ts`. Que en La Gomera se habla silbando es el
+   * silbo gomero, el de la historia de la comandante.
+   */
+  "inicio.ara.pasaje.toque.invita": "¡Mirá por la ventanilla! Si tocás algo con el dedo, te cuento lo que es.",
+  "inicio.ara.pasaje.toque.motor": "¡Ese es el motor! Por adelante se traga el aire, y por atrás lo tira con fuerza.",
+  "inicio.ara.pasaje.toque.gomera": "¡Esa isla redondita es La Gomera! Mamá dice que ahí se puede hablar silbando.",
+  "inicio.ara.pasaje.toque.mar": "¡Todo eso de abajo es el mar! Y entre isla e isla hay muchísima agua.",
+  // El cuaderno de viaje: lo que es de la pantalla y no se graba, para quien no ve los dibujos.
+  "inicio.viaje.titulo": "Lo que viste por la ventanilla",
+  "inicio.viaje.sello.motor": "El motor",
+  "inicio.viaje.sello.ala": "El ala y sus flaps",
+  "inicio.viaje.sello.nubes": "El mar de nubes",
+  "inicio.viaje.sello.teide": "El Teide",
+  "inicio.viaje.sello.gomera": "La Gomera",
+  "inicio.viaje.sello.palma": "La Palma",
+  "inicio.viaje.sello.ruedas": "Las ruedas",
+  "inicio.viaje.sello.mazo": "Villa de Mazo",
   // Lo que es de la pantalla y no se graba: para quien no ve los dibujos.
   "inicio.kit.nombre": "Kit de viaje",
   "inicio.kit.abrir": "Abrir el kit de viaje",

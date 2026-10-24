@@ -49,15 +49,15 @@ import { SILUETAS } from "./siluetas";
  */
 
 /** Un trazo, del grueso que se pida. */
-const trazo = (grueso: number): string =>
+export const trazo = (grueso: number): string =>
   `fill="none" stroke="currentColor" stroke-width="${grueso}" stroke-linecap="round" stroke-linejoin="round"`;
 /** Lleno de tinta. */
-const LLENO = `fill="currentColor"`;
+export const LLENO = `fill="currentColor"`;
 /** El tinte claro de dentro, como los paisajes de los sellos de campo. */
-const TINTE = `fill="currentColor" fill-opacity="0.22"`;
+export const TINTE = `fill="currentColor" fill-opacity="0.22"`;
 
 /** Un avión de lado, con el morro hacia la derecha, de unos dieciséis de largo. */
-const avionDeLado = (x: number, y: number, giro: number, escala: number): string =>
+export const avionDeLado = (x: number, y: number, giro: number, escala: number): string =>
   `<path ${LLENO} transform="translate(${x} ${y}) rotate(${giro}) scale(${escala})"
      d="M-8 -0.9 L5.2 -1.3 Q8 -1.2 8.2 0 Q8 1.1 5.2 1.3 L-6.5 1.1 Z
         M-8 -0.9 L-9 -5 L-6.6 -5 L-4.6 -1 Z M-1.5 0.6 L-4.2 4 L-2 4 L2 0.8 Z" />`;
@@ -311,7 +311,7 @@ function aro(id: Sello): string {
 }
 
 /** Un ángulo de estampado, siempre el mismo para el mismo sello: así se estampan. */
-function torcido(id: string): number {
+export function torcido(id: string): number {
   let h = 7;
   for (const c of id) h = (h * 31 + c.charCodeAt(0)) | 0;
   const a = (Math.abs(h) % 13) - 6;
@@ -413,7 +413,7 @@ export function ponerLosSellosEnLasExplicaciones(): void {
 /* ── La página ────────────────────────────────────────────────────────── */
 
 /** El hueco de un sello que falta: el sitio, a trazos, y nada dentro. */
-const HUECO = `<svg class="album__vacio" viewBox="0 0 48 48" aria-hidden="true">
+export const HUECO = `<svg class="album__vacio" viewBox="0 0 48 48" aria-hidden="true">
   <circle cx="24" cy="24" r="21.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3.4 3" />
 </svg>`;
 

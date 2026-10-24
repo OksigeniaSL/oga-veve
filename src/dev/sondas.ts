@@ -75,6 +75,7 @@ import { conPasaje, conTripulacion } from "../audio/megafonia";
 import { planeoDe } from "../flight/sin-motor";
 import { PilotoDelDescenso } from "../flight/despresurizacion";
 import { vfeDeAterrizaje } from "../flight/limites";
+import { esSelloDelViaje } from "../flight/lo-que-se-toca";
 
 /**
  * **El campo en el que el banco aterriza por la otra punta**, o `null`.
@@ -1246,6 +1247,19 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * nube hay por medio. Ver `paisajeParaBanco` en `game.ts`.
      */
     paisajeALaVista: (sitio: string) => juego.paisajeParaBanco(sitio),
+    /**
+     * **La ventanilla viva** (19-10-2026): los dos aros —el suave que invita a
+     * tocar y el de lo tocado—, dónde cae en la pantalla cada cosa que se puede
+     * tocar, si se ve y si cae por el cristal, y el cuaderno de viaje a la
+     * vista sin llegar. Ver `tocarLaVentanillaViva` en `game.ts`.
+     */
+    ventanillaViva: () => juego.ventanillaVivaParaBanco,
+    dondeTocar: (que: string) => juego.dondeTocarParaBanco(que),
+    verElCuadernoDeViaje: (ganados: string[], nuevos: string[] = []) =>
+      juego.verElCuadernoDeViajeParaBanco(
+        ganados.filter(esSelloDelViaje),
+        nuevos.filter(esSelloDelViaje),
+      ),
     /**
      * **Ara asomada al pasillo** (punto 312): el letrero de la salida más
      * cercana y las tiras del suelo, medidos con la cámara de ahora. Ver

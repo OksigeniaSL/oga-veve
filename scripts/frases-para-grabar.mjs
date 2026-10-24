@@ -1799,8 +1799,21 @@ const DE_ARMA_TU_AVION = [
   ["inicio.ara.pasaje.kit.avion.reactor", "ara", "el modo inicio, de pasaje, armá tu avión: Ara, al despegar el reactor, como el suyo"],
   ["inicio.ara.pasaje.kit.avion.cuatrimotor", "ara", "el modo inicio, de pasaje, armá tu avión: Ara, al despegar el cuatrimotor"],
 ];
+/**
+ * **Y la ventanilla viva** (19-10-2026): se toca lo que se ve por la
+ * ventanilla y te lo cuentan. Ara invita una vez a tocar y dice lo suyo del
+ * motor, de La Gomera y del mar; lo demás que se dice al tocar ya está
+ * grabado —las frases de Ara de la escena y las charlas de la tripulante—.
+ * Al final, que lo grabado no se renumera. Ver `src/flight/lo-que-se-toca.ts`.
+ */
+const DE_LA_VENTANILLA_VIVA = [
+  ["inicio.ara.pasaje.toque.invita", "ara", "el modo inicio, de pasaje: Ara invita a tocar lo que se ve por la ventanilla, una vez"],
+  ["inicio.ara.pasaje.toque.motor", "ara", "el modo inicio, de pasaje: Ara toca el motor por la ventanilla y cuenta lo que hace"],
+  ["inicio.ara.pasaje.toque.gomera", "ara", "el modo inicio, de pasaje: Ara toca La Gomera por la ventanilla, la del silbo"],
+  ["inicio.ara.pasaje.toque.mar", "ara", "el modo inicio, de pasaje: Ara toca el mar por la ventanilla"],
+];
 const LO_QUE_SE_VE = new Set(
-  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION].map(
+  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA].map(
     ([k]) => k,
   ),
 );
@@ -1902,8 +1915,8 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
     total += texto.length;
   }
 }
-// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde, lo que se reconoce al llegar y armá tu avión: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE`, `DE_LO_QUE_SE_RECONOCE` y `DE_ARMA_TU_AVION`.
-for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION]) {
+// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde, lo que se reconoce al llegar, armá tu avión y la ventanilla viva: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE`, `DE_LO_QUE_SE_RECONOCE`, `DE_ARMA_TU_AVION` y `DE_LA_VENTANILLA_VIVA`.
+for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA]) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });
