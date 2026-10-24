@@ -135,6 +135,20 @@ Jazlyn», o con `?inicio=3`.
 | `inicio.mama.pasaje.mazo` | `comandante` | 98 |
 | `inicio.tripulacion.pasaje.cerca.musica` | `tripulacion-canarias` | 129 |
 
+- **El toque en tierra** (puntos 296 y 299, 24-10-2026): los aerofrenos que
+  se ven subir en el ala al tocar, que Ara cuenta rodando en el primer rato
+  tranquilo, y los dos veredictos de la toma que faltaban en los vuelos de
+  pilotar —tocar largo y tocar duro—, dichos por la instructora con calma.
+  **Cuatro frases nuevas, al final de cada voz**: dos de Ara y dos de la
+  instructora, 402 caracteres.
+
+| Clave | Voz | Caracteres |
+|---|---|---:|
+| `inicio.ara.pasaje.aerofrenos` | `ara` | 98 |
+| `inicio.ara.pasaje.aerofrenosPorque` | `ara` | 115 |
+| `vuelo.tocasteLargo` | `instructor` | 101 |
+| `vuelo.tocasteDuro` | `instructor` | 88 |
+
 Ninguna baja de treinta letras. Los rótulos del kit —`inicio.kit.*`, el
 nombre de cada pieza y de cada parada, y las luces de la lámpara— son de la
 pantalla y no se graban.

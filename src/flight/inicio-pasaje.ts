@@ -84,7 +84,9 @@
  *     diez mil pies; y la llegada sin juego delante: las nubes, la isla y la
  *     cabina preparada.
  * 12. **La aproximación**: el ala estirando los flaps, el tren, y la toma vista
- *     desde el borde de la pista.
+ *     desde el borde de la pista; al tocar, el ala otra vez, con los
+ *     aerofrenos levantándose (punto 296), y Ara cuenta para qué en el primer
+ *     rato tranquilo rodando.
  * 13. **La llegada**, rodando por fuera, y en el puesto la despedida.
  *
  * ## Solo se nombra lo que se ve
@@ -477,7 +479,9 @@ export type CharlaDelPasaje =
   | "masGas"
   | "musica"
   | "mazo"
-  | "queEsMazo";
+  | "queEsMazo"
+  | "aerofrenos"
+  | "aerofrenosPorque";
 
 /**
  * **Lo que se nombra del paisaje**, y que por eso **solo se dice si se ve**
@@ -542,6 +546,14 @@ export interface LecturaDelPasaje {
   readonly autorizado: boolean;
   /** Dónde están los flaps, 0 a 1. */
   readonly flaps: number;
+  /**
+   * **Dónde están los aerofrenos de tierra**, 0 recogidos y 1 arriba del
+   * todo: los paneles del ala que se levantan al tocar, **en el modelo que se
+   * ve**. Sin esto —las pruebas que no los miran, o un avión que no los
+   * dibuja—, no se enseñan: lo que no se ve subir no se señala. Ver la charla
+   * `aerofrenos`.
+   */
+  readonly frenosDeTierra?: number;
   /** La capa de nubes de hoy, altitudes en m, o `null` sin capa. */
   readonly nubes: { readonly base: number; readonly techo: number } | null;
   /**
@@ -698,6 +710,19 @@ const HASTA_EL_SERVICIO = 3;
 const HASTA_EL_ASIENTO = 5;
 /** Y de la toma a decir que se tocó, s: las ruedas, y la reversa ya rugiendo. */
 const DESPUES_DE_TOCAR = 1.2;
+/**
+ * **Los aerofrenos al tocar, a la vista** (punto 296), s de escena desde el
+ * corte al ala: el segundo que tardan en subir —ver `TARDAN_LOS_DE_TIERRA`
+ * en `palanca-de-aerofrenos.ts`— y un par de segundos arriba con el avión
+ * frenando. Luego se vuelve a la pista, a ver frenar y oír la reversa.
+ */
+const LOS_AEROFRENOS_A_LA_VISTA = 3.5;
+/**
+ * **Y hasta cuándo vale cortar al ala para verlos subir**, s desde que se
+ * tocó: pasado esto ya están arriba y quietos, y lo que se vería es otra
+ * cosa. Lo que se pierde se cuenta igual, rodando.
+ */
+const SE_VEN_SUBIR = 2;
 /**
  * **A cuánto del umbral se prepara la cabina para aterrizar**, m: por encima
  * de la final, como en `EN_APROXIMACION` de la megafonía.
@@ -1690,8 +1715,16 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
     plano: "fuera-pista",
   },
   {
+    /*
+     * **Y la toma, desde la pista, detrás del ala**: si al tocar se cortó al ala
+     * para ver subir los aerofrenos —la charla `aerofrenos`—, se les deja su
+     * rato y se vuelve a la orilla de la pista, a ver frenar y oír la reversa.
+     */
     id: "toma",
-    cuando: (l) => l.tramo === "frenando" && l.enTramo >= DESPUES_DE_TOCAR,
+    cuando: (l, e) =>
+      l.tramo === "frenando" &&
+      l.enTramo >= DESPUES_DE_TOCAR &&
+      !(e.planoDeAhora === "fuera-ala" && e.enElPlanoDesde < LOS_AEROFRENOS_A_LA_VISTA),
     caduca: (l) => l.tramo === "al-puesto" || l.tramo === "aparcado" || l.tramo === "apagado",
     lineas: [ara("toma")],
     mira: "motor",
@@ -2303,6 +2336,32 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
   },
   {
     /*
+     * **Los aerofrenos al tocar, vistos desde el ala** (punto 296). Enrique:
+     * cuando el avión saca los flaps, el tren o los aerofrenos, que se vea el
+     * ala en ese momento. Los flaps y el tren ya se veían; faltaban los
+     * paneles que se levantan sobre el ala en cuanto las ruedas tocan y
+     * giran —en el JAZ 90 todos, los dos de dentro del motor, que son solo de
+     * tierra, y los tres de fuera—. Es lo primero que se ve desde una
+     * ventanilla de verdad al tocar.
+     *
+     * **Justo después del toque, y no antes**: la toma se sigue viendo desde
+     * la orilla de la pista hasta que las ruedas tocan, y al empezar a subir
+     * los paneles se corta al ala, con el fundido corto de este corte —ver
+     * `fundidoDe` en `cameras/escena.ts`—, para que se los vea moverse. Sin
+     * palabras: en la carrera no habla nadie, y lo que se ve lo cuenta Ara en
+     * el primer rato tranquilo de después. Ver `aerofrenosPorque` y el
+     * momento `toma`, que espera a que se hayan visto.
+     */
+    id: "aerofrenos",
+    tras: 0,
+    cuando: (l) => l.tramo === "frenando" && l.enTierra && (l.frenosDeTierra ?? 0) > 0 && l.enTramo < SE_VEN_SUBIR,
+    caduca: (l) => l.tramo !== "frenando" || l.enTramo >= SE_VEN_SUBIR,
+    lineas: [],
+    mira: "ala",
+    plano: "fuera-ala",
+  },
+  {
+    /*
      * **Dando la vuelta en la pista** (punto 300), cuando de verdad gira: en
      * el ensanche de la punta, o ya de vuelta por la pista. Ara lo nota, y se
      * ve por fuera, desde un lado y en alto, que desde el asiento solo se ve
@@ -2316,6 +2375,27 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     caduca: (l) => l.tramo !== "al-puesto" || fueraDeLaPista(l),
     lineas: [ara("vueltaEnPista")],
     plano: "fuera-raqueta",
+  },
+  {
+    /*
+     * **Y para qué se levantaron**, en el primer rato tranquilo de después:
+     * acabada la megafonía de la llegada, rodando. Lo que pasa en un momento
+     * de trabajo se explica en el primer momento tranquilo, como la reversa;
+     * pero esto no lo cuenta la comandante —rodando por la pista, la cabina
+     * de mando es estéril— ni la tripulante, que va sentada hasta el puesto.
+     * Lo cuenta Ara, con lo que le enseñó su mamá, y solo si se vio: se
+     * levantan para quitarle al ala la fuerza que sostiene, y así el peso va
+     * a las ruedas y frenan bien. Es lo mismo que dice la instructora en los
+     * vuelos de pilotar —ver `vuelo.salenLosFrenosDeTierra`—: las dos
+     * explicaciones no se pueden contradecir.
+     */
+    id: "aerofrenosPorque",
+    tras: 2,
+    cuando: (l, e) =>
+      (l.tramo === "al-puesto" || l.tramo === "aparcado") && e.dicho("llegada") && e.dichaLaCharla("aerofrenos"),
+    caduca: (l) => l.tramo === "apagado" || (l.tramo === "aparcado" && l.enTramo >= PARADO_DEL_TODO),
+    lineas: [ara("aerofrenos"), ara("aerofrenosPorque")],
+    planoSegun: (_l, e) => (e.planoDeAhora.endsWith("-paisaje") ? "ventanilla" : e.planoDeAhora),
   },
   {
     /*
@@ -2861,6 +2941,11 @@ export class VueloDePasaje {
   /** Si un alabeo baja el ala del lado de Ara. */
   bajaMiAla(alabeo: number): boolean {
     return (this.opciones.lado ?? LADO_DE_ARA) === "izquierda" ? alabeo < 0 : alabeo > 0;
+  }
+
+  /** **Cuánto lleva puesto el plano de ahora**, s de escena. */
+  get enElPlanoDesde(): number {
+    return this.reloj - this.planoDesde;
   }
 
   /** Cuánto hace que se dijo ese momento, s, o −∞ si no se dijo. */

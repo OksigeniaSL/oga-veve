@@ -99,8 +99,8 @@ export function ponerseLasGafas(puestas: boolean): void {
  * ¿Este aterrizaje las gana?
  *
  * La misma regla que el galón de la toma, a propósito: suave y firme valen las
- * dos —firme es como se posa un avión, no un fallo— y fuera de la pista o
- * llegando rápido, no. Tener dos definiciones de «aterrizar bien» sería tener
+ * dos —firme es como se posa un avión, no un fallo— y fuera de la pista,
+ * llegando rápido, tocando largo o dando un golpe duro, no. Tener dos definiciones de «aterrizar bien» sería tener
  * una equivocada.
  */
 export function lasGana(toma: Aterrizaje): boolean {

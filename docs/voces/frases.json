@@ -18147,5 +18147,47 @@
     "idioma": "es-PY",
     "texto": "Para que el ratito de bajar sea un rato de calma, sin nervios. Y muchas compañías ponen música de su tierra: esta es de Canarias.",
     "para": "el modo inicio, de pasaje: la tripulante, por qué ponen música al bajar"
+  },
+  {
+    "id": "inicio.ara.pasaje.aerofrenos",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¿Viste el ala cuando tocamos el suelo? Se le levantaron unas tapas por arriba: son los aerofrenos.",
+    "para": "el modo inicio, de pasaje: Ara, rodando, recuerda las tapas que se levantaron en el ala al tocar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.aerofrenosPorque",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Mamá me contó que así el ala deja de sostener al avión: el avión se queda pegado al suelo y las ruedas frenan bien.",
+    "para": "el modo inicio, de pasaje: Ara cuenta para qué se levantan los aerofrenos",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "vuelo.tocasteLargo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Tocaste largo, lejos de las marcas: así se come la pista. Mejor firme y en su sitio que suave y lejos",
+    "para": "el veredicto de la toma: se tocó pasada la zona de toma"
+  },
+  {
+    "id": "vuelo.tocasteDuro",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Aterrizaje duro: ahora hay que revisar el avión. La próxima, recogé un poco más al final",
+    "para": "el veredicto de la toma: se tocó con más de diez pies por segundo"
   }
 ]

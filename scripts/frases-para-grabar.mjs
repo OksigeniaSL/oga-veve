@@ -64,7 +64,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -1782,8 +1782,23 @@ const DE_LO_QUE_SE_RECONOCE = [
   ["inicio.mama.pasaje.mazo", "comandante", "el modo inicio, de pasaje: la comandante, ya en tierra, nombra el pueblo de la ladera: Villa de Mazo"],
   ["inicio.tripulacion.pasaje.cerca.musica", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante, por qué ponen música al bajar"],
 ];
+/**
+ * **Y el toque en tierra** (puntos 296 y 299, 24-10-2026): los aerofrenos que
+ * Ara ve subir en el ala al tocar y cuenta rodando, y los dos veredictos de
+ * la instructora que faltaban —tocar largo y tocar duro—, sin percance y con
+ * calma. Al final de cada voz, que lo grabado no se renumera: las de la
+ * instructora salen de su grupo `vuelo` por lo mismo. Ver las charlas
+ * `aerofrenos` y `aerofrenosPorque` en `src/flight/inicio-pasaje.ts` y
+ * `Aterrizaje` en `src/flight/aterrizaje.ts`.
+ */
+const DEL_TOQUE = [
+  ["inicio.ara.pasaje.aerofrenos", "ara", "el modo inicio, de pasaje: Ara, rodando, recuerda las tapas que se levantaron en el ala al tocar"],
+  ["inicio.ara.pasaje.aerofrenosPorque", "ara", "el modo inicio, de pasaje: Ara cuenta para qué se levantan los aerofrenos"],
+  ["vuelo.tocasteLargo", "instructor", "el veredicto de la toma: se tocó pasada la zona de toma"],
+  ["vuelo.tocasteDuro", "instructor", "el veredicto de la toma: se tocó con más de diez pies por segundo"],
+];
 const LO_QUE_SE_VE = new Set(
-  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE].map(
+  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DEL_TOQUE].map(
     ([k]) => k,
   ),
 );
@@ -1886,7 +1901,7 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
   }
 }
 // Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde y lo que se reconoce al llegar: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE` y `DE_LO_QUE_SE_RECONOCE`.
-for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE]) {
+for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DEL_TOQUE]) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });

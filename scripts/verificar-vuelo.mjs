@@ -55,7 +55,8 @@ const CON_SIGUEME = TRAMO === "guyrami" || TRAMO === "tuka";
  * `flight/gobernador.ts`.
  */
 const CON_TOPE = CON_SIGUEME;
-const PUERTO = 5273;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5273);
 
 const server = await createServer({
   root: process.cwd(),
@@ -2129,6 +2130,7 @@ const volado =
         const bajar = async (alto, mando) => {
           o.reiniciar();
           await new Promise((res) => setTimeout(res, 600));
+          const antes = o.inicio?.()?.cuaderno?.aterrizajes ?? null;
           // En el eje, novecientos metros antes del umbral.
           const d = r.length / 2 + 900;
           const x = r.x - Math.sin(rad) * d;
@@ -2155,11 +2157,14 @@ const volado =
               // Y ahora sí, que el veredicto tarda dos segundos.
               for (let j = 0; j < 60; j++)
                 await new Promise((res) => setTimeout(res, 50));
+              const i = o.inicio?.();
               return {
                 caida: o.caida(),
                 along,
                 dibujo: dibujo(),
                 galones: o.galones(),
+                veredicto: i?.ultimaToma?.veredicto ?? null,
+                apuntado: antes !== null && (i?.cuaderno?.aterrizajes ?? 0) > antes,
               };
             }
           }
@@ -2183,11 +2188,19 @@ if (volado?.firme) {
     }`,
     "«me salió esto y aterricé bien»: el percance saltaba a 4 m/s y la senda se posa a 3",
   );
+  /*
+   * **Y se llama por su nombre** (punto 299). Esto pedía el galón de la toma,
+   * y a más de cuatro metros por segundo —trece pies por segundo— no es una
+   * toma buena: por encima de diez es un aterrizaje duro, el que se apunta y
+   * obliga a revisar el avión. Lo que no puede faltar es que cuente como
+   * aterrizaje —en el cuaderno, sin percance— y que se diga qué fue.
+   */
+  const esperado = volado.firme.caida > 10 * 0.3048 ? "duro" : "firme";
   comprobar(
-    "y cuenta como aterrizaje",
-    volado.firme.galones.includes("toma"),
-    `galones: ${volado.firme.galones.join(", ") || "ninguno"}`,
-    "un aterrizaje que no se apunta es un aterrizaje que no ha pasado",
+    "y cuenta como aterrizaje, y se llama por su nombre: duro por encima de diez pies por segundo",
+    volado.firme.apuntado && volado.firme.veredicto === esperado && (esperado === "duro") !== volado.firme.galones.includes("toma"),
+    `«${volado.firme.veredicto ?? "sin veredicto"}» a ${(volado.firme.caida / 0.3048).toFixed(1)} ft/s · en el cuaderno: ${volado.firme.apuntado} · galones: ${volado.firme.galones.join(", ") || "ninguno"}`,
+    "un aterrizaje que no se apunta es un aterrizaje que no ha pasado; y uno duro no es uno bueno",
   );
 }
 if (volado?.corta) {

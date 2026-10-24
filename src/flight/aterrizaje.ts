@@ -17,17 +17,75 @@
  * `corto` es tocar **en la pista pero antes de su umbral de aterrizaje**: en
  * la zona de las flechas de un umbral desplazado, que es asfalto para rodar y
  * despegar y no para posarse. Ver `world/umbral-desplazado.ts`.
+ *
+ * `largo` es tocar **pasada la zona de toma**, flotando: el avión se come la
+ * pista que necesitaba para parar. Y `duro`, tocar con más caída de la que
+ * aguanta el tren sin que haya que revisarlo. Ver la cuenta de `SUAVE` y
+ * `DURO`, más abajo.
  */
 export type Aterrizaje =
   | "suave"
   | "firme"
   | "rapido"
+  | "largo"
+  | "duro"
   | "corto"
   | "fuera"
   | null;
 
+/*
+ * ## Lo que hace bueno un aterrizaje: el sitio, no la suavidad
+ *
+ * Se dice mucho que «un aterrizaje firme es mejor que uno suave», y es verdad
+ * a medias (punto 299). Lo que manda es **tocar en su sitio** —en la zona de
+ * toma, a unos trescientos metros del umbral— y a la velocidad buena. Un toque
+ * de pluma flotando seiscientos metros más allá es peor aterrizaje que uno
+ * firme en su sitio, porque se come la pista: es la toma larga, una de las
+ * causas que más se repiten en las salidas de pista por el final (FAA, AC
+ * 91-79A, *Mitigating the Risks of a Runway Overrun Upon Landing*). Ver `flight/toma-larga.ts`, que
+ * dice dónde acaba la zona.
+ *
+ * Y en pista mojada o corta se toca **firme a propósito**: la rueda rompe la
+ * capa de agua y gira enseguida, y así entran el antideslizante y los frenos
+ * de tierra, que esperan a notar el peso y el giro (Boeing, *737 Flight Crew
+ * Training Manual*, «Landing on Wet or Slippery Runways»; FAA, *Airplane
+ * Flying Handbook*, FAA-H-8083-3C, cap. 9 —el texto exacto, por verificar—).
+ * No tiene nada que ver con el combustible.
+ *
+ * Firme no es duro. Así que las dos tomas en su sitio valen lo mismo —el
+ * galón, las gafas y la celebración—, y lo que las separa es solo cómo se
+ * llaman:
+ *
+ * - **Suave**, por debajo de dos pies por segundo, unos ciento veinte pies por
+ *   minuto: un toque que casi no se nota, por debajo de lo habitual de un
+ *   reactor de línea en las series de cargas en servicio de la FAA (DOT/FAA/AR,
+ *   *Statistical Loads Data for … in Commercial Operations*; la cifra de cada
+ *   avión, por verificar).
+ * - **Firme**, de ahí a diez: lo normal de un avión de línea son dos a cuatro.
+ * - **Duro**, por encima de diez pies por segundo, seiscientos pies por
+ *   minuto: el régimen de descenso con el que se certifica el tren de un avión
+ *   de transporte a su peso de aterrizaje (EASA CS 25.473 y FAA 14 CFR 25.473,
+ *   «limit descent velocity» de 10 ft/s), y por encima del cual el manual de
+ *   mantenimiento manda apuntar un aterrizaje duro e inspeccionar el avión
+ *   (Airbus, AMM 05-51-11, *Inspection after Hard/Overweight Landing*; Boeing,
+ *   AMM 05-51-01 —los números de tarea, por verificar—). En las avionetas el
+ *   tren se certifica entre siete y diez pies por segundo según su carga alar
+ *   (14 CFR 23.473(d), en la redacción anterior a la enmienda 64), así que
+ *   diez es lo más que aguanta cualquiera de la flota sin revisar.
+ *
+ * Duro no es un percance: el avión está entero en la pista. Se dice, se ve y
+ * la próxima vez se recoge un poco más. El golpe que rompe el tren es otra
+ * cosa y lo pone el modelo de vuelo; ver `limiteDeCaida`.
+ */
+
+/** Pie por segundo, en m/s. */
+const PIE_POR_SEGUNDO = 0.3048;
+
 /** Por debajo de este régimen de descenso al tocar, se considera suave (m/s). */
-const SUAVE = 1.2;
+const SUAVE = 2 * PIE_POR_SEGUNDO;
+
+/** Y por encima de este, duro: se apunta y se revisa el avión (m/s). */
+const DURO = 10 * PIE_POR_SEGUNDO;
 
 /**
  * Cuánto se espera desde el contacto para dar el veredicto, s.
@@ -98,6 +156,8 @@ export class LandingWatcher {
   private trenPuestoAlTocar = true;
   /** Si se tocó antes del umbral de aterrizaje. Ver `Aterrizaje`. */
   private antesDelUmbralAlTocar = false;
+  /** Si se tocó pasada la zona de toma. Ver `Aterrizaje`. */
+  private largoAlTocar = false;
   /**
    * **Si las ruedas acaban de tocar viniendo del aire, en este paso.**
    *
@@ -155,6 +215,12 @@ export class LandingWatcher {
      * demás: rodando ya se ha salido de ella.
      */
     antesDelUmbral = false,
+    /**
+     * Si el contacto fue **pasada la zona de toma**: la toma larga. Lo dice
+     * quien sabe dónde acaba esa zona —ver `finDeLaZonaDeToma` en
+     * `toma-larga.ts`— y se guarda al tocar, que rodando ya se ha pasado.
+     */
+    largo = false,
   ): Aterrizaje {
     this.tocoAhora = false;
     if (!onGround) {
@@ -173,6 +239,7 @@ export class LandingWatcher {
       this.velocidadAlTocar = airspeed;
       this.trenPuestoAlTocar = trenFuera;
       this.antesDelUmbralAlTocar = antesDelUmbral;
+      this.largoAlTocar = largo;
       this.enPista = onRunway;
       this.desdeQueToco = 0;
       return null;
@@ -206,6 +273,19 @@ export class LandingWatcher {
      */
     const listón = Math.min(vref * DEMASIADO_RAPIDO, vmax * CASI_A_TOPE);
     if (this.velocidadAlTocar > listón) return "rapido";
+    /*
+     * **Y el golpe que obliga a revisar el avión**, antes que el sitio: es lo
+     * único de una toma que deja trabajo detrás —el aterrizaje duro se apunta
+     * y se inspecciona—, aunque haya sido en su sitio.
+     */
+    if (this.descenso > DURO) return "duro";
+    /*
+     * **Y el sitio manda sobre la suavidad** (punto 299). Una toma larga sale
+     * suave casi siempre —flotar es justo no dejar que el avión se pose—, y
+     * hasta hoy daba «¡qué aterrizaje!», que es premiar comerse la pista. Ver
+     * la cuenta de `SUAVE` y `DURO`.
+     */
+    if (this.largoAlTocar) return "largo";
     return this.descenso < SUAVE ? "suave" : "firme";
   }
 
@@ -238,6 +318,7 @@ export class LandingWatcher {
     this.tocoAhora = false;
     this.trenPuestoAlTocar = true;
     this.antesDelUmbralAlTocar = false;
+    this.largoAlTocar = false;
     this.volando = false;
     this.pendiente = false;
     this.desdeQueToco = 0;

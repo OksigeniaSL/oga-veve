@@ -102,12 +102,16 @@ class VueloDeMentira {
   vertical = 0;
   autorizado = false;
   flaps = 0;
+  /** Los aerofrenos de tierra: suben en un segundo al tocar y se recogen al rodar. */
+  frenosDeTierra = 0;
   cabina = 0;
   falta = 200000;
   arrancoA: number | null = null;
   rodoA: number | null = null;
   entroA: number | null = null;
   despegoA: number | null = null;
+  /** Cuándo tocaron las ruedas, s de la prueba. */
+  tocoA: number | null = null;
   alineado = false;
 
   /**
@@ -224,6 +228,7 @@ class VueloDeMentira {
         if (this.tramo === "bajada" && this.falta < 15000) this.pasar("final");
         if (this.altura < 9) {
           this.pasar("frenando");
+          this.tocoA = t;
           this.enTierra = true;
           this.altura = 0;
           this.vertical = 0;
@@ -232,8 +237,10 @@ class VueloDeMentira {
         break;
       case "frenando":
         this.porElSuelo = Math.max(12, this.porElSuelo - 2 * dt);
+        this.frenosDeTierra = Math.min(1, this.frenosDeTierra + dt);
         if (this.enTramo >= 20) {
           this.porElSuelo = 8;
+          this.frenosDeTierra = 0;
           this.pasar("al-puesto");
         }
         break;
@@ -266,6 +273,7 @@ class VueloDeMentira {
       vertical: this.vertical,
       autorizado: this.autorizado,
       flaps: this.flaps,
+      frenosDeTierra: this.frenosDeTierra,
       nubes: { base: 1532, techo: 1982 },
       // Una nube entre los 1.600 y los 1.800 m, si se sube por dentro de ella.
       enNube: !this.entreNubes && this.altitud > 1600 && this.altitud < 1800 ? 0.6 : 0,
@@ -436,6 +444,58 @@ describe("el guion", () => {
     ]);
     for (const l of deSiempre) expect(l.megafonia).toBe(true);
     for (const l of LINEAS_DEL_PASAJE) expect(esAnuncioDeSiempre(l.clave), l.clave).toBe(false);
+  });
+});
+
+describe("los aerofrenos al tocar, vistos desde el ala (punto 296)", () => {
+  const r = correr(() => 4);
+  const e = r.escena.estado;
+  const toco = r.vuelo.tocoA ?? Infinity;
+  const desdeQue = (clave: string): number => r.dichas.find((d) => d.linea.clave === clave)?.desde ?? Infinity;
+
+  it("la toma se ve desde la pista hasta tocar, y justo después se corta al ala", () => {
+    const pista = e.planos.filter((p) => p.plano === "fuera-pista");
+    const ala = e.planos.find((p) => p.plano === "fuera-ala" && p.desde >= toco - 1e-6);
+    expect(pista.some((p) => p.desde < toco)).toBe(true);
+    expect(ala, "el ala al tocar").toBeDefined();
+    // En el primer paso con los paneles subiendo —el tercero de la prueba desde que se tocó—: se los ve moverse.
+    expect(ala!.desde - toco).toBeLessThan(3.5 * DT);
+    expect(r.escena.dichaLaCharla("aerofrenos")).toBe(true);
+  });
+
+  it("y se vuelve a la pista a ver frenar, con lo de la reversa detrás del ala", () => {
+    const ala = e.planos.find((p) => p.plano === "fuera-ala" && p.desde >= toco - 1e-6)!;
+    const vuelta = e.planos.find((p) => p.plano === "fuera-pista" && p.desde > ala.desde);
+    expect(vuelta, "de vuelta a la pista").toBeDefined();
+    expect(vuelta!.desde - ala.desde).toBeGreaterThanOrEqual(3.5 - 1e-6);
+    expect(desdeQue("inicio.ara.pasaje.toma")).toBeGreaterThanOrEqual(vuelta!.desde + CORTE_DE_PLANO - 1e-6);
+  });
+
+  it("y lo cuenta Ara en el primer rato tranquilo rodando, detrás de la megafonía de la llegada", () => {
+    const llegada = r.dichas.find((d) => d.linea.clave === "tripulacion.llegada")!;
+    const explica = desdeQue("inicio.ara.pasaje.aerofrenos");
+    expect(explica).toBeGreaterThan(llegada.hasta!);
+    expect(desdeQue("inicio.ara.pasaje.aerofrenosPorque")).toBeGreaterThan(explica);
+    // Y nadie de la cabina de mando: lo dice Ara.
+    expect(r.dichas.filter((d) => /aerofrenos/.test(d.linea.clave)).every((d) => d.linea.quien === "ara")).toBe(true);
+  });
+
+  it("sin aerofrenos que se vean, ni el corte al ala ni su explicación", () => {
+    let t = 0;
+    const v = vozQueTarda(() => 4, () => t);
+    const escena = new VueloDePasaje(v.voz, { lado: "izquierda" });
+    const vuelo = new VueloDeMentira();
+    for (; t < 3000; t += DT) {
+      v.tic();
+      const { frenosDeTierra: _, ...sin } = vuelo.lectura;
+      const p = escena.paso(DT, sin);
+      vuelo.paso(DT, p, t);
+      if (escena.estado.puedeSeguir) escena.seguir();
+      if (escena.estado.terminado) break;
+    }
+    expect(escena.dichaLaCharla("aerofrenos")).toBe(false);
+    expect(v.dichas.some((d) => /aerofrenos/.test(d.linea.clave))).toBe(false);
+    expect(escena.estado.dichos).toContain("toma");
   });
 });
 

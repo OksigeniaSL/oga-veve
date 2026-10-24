@@ -41,6 +41,23 @@ import { FOV_DEL_PAISAJE, tomaDelPaisaje, type Punto } from "../world/se-ve-desd
  */
 export const FUNDIDO_DE_PLANO = { tapa: 0.45, destapa: 0.55 } as const;
 
+/**
+ * **Y el del ala al tocar**, más corto (punto 296): de la orilla de la pista
+ * al ala en cuanto las ruedas tocan, para ver subir los aerofrenos. Suben en
+ * un segundo —ver `TARDAN_LOS_DE_TIERRA` en `flight/palanca-de-aerofrenos.ts`—,
+ * y con el fundido de siempre ese segundo entero caía debajo del velo: se veía
+ * el ala con los paneles ya arriba y quietos, que no enseña que se mueven. Con
+ * este, el velo tapa una décima y media y destapa en un cuarto de segundo, y
+ * los paneles se ven subir más de la mitad de su recorrido. Sigue siendo un
+ * fundido, no un salto: lo de no marear vale igual.
+ */
+export const FUNDIDO_AL_ALA_AL_TOCAR = { tapa: 0.15, destapa: 0.25 } as const;
+
+/** El fundido de un corte, según de dónde a dónde. */
+export function fundidoDe(de: Plano, a: Plano): { readonly tapa: number; readonly destapa: number } {
+  return de === "fuera-pista" && a === "fuera-ala" ? FUNDIDO_AL_ALA_AL_TOCAR : FUNDIDO_DE_PLANO;
+}
+
 /** Lo que se ve en un paso: el plano que se pinta y cuánto tapa el velo, 0 a 1. */
 export interface PasoDelFundido {
   readonly plano: Plano;
@@ -73,6 +90,8 @@ export class FundidoDePlano {
   /** Cuándo empezó a tapar el corte en curso, o `null` sin corte. */
   private desde: number | null = null;
   private cambiadoEn: number | null = null;
+  /** El fundido del corte en curso. Ver `fundidoDe`. */
+  private fundido: { readonly tapa: number; readonly destapa: number } = FUNDIDO_DE_PLANO;
 
   /** El plano que se pinta ahora. */
   get plano(): Plano {
@@ -92,17 +111,18 @@ export class FundidoDePlano {
       }
       // Un corte: si ya destapaba otro, se vuelve a tapar desde donde iba.
       const velo = this.velo(ahora);
-      this.desde = ahora - velo * FUNDIDO_DE_PLANO.tapa;
+      this.fundido = fundidoDe(this.visto, pedido);
+      this.desde = ahora - velo * this.fundido.tapa;
       this.cambiadoEn = null;
     }
     let cambio = false;
-    if (this.desde !== null && this.cambiadoEn === null && ahora - this.desde >= FUNDIDO_DE_PLANO.tapa) {
+    if (this.desde !== null && this.cambiadoEn === null && ahora - this.desde >= this.fundido.tapa) {
       cambio = true;
       this.visto = this.pedido;
       this.cambiadoEn = ahora;
     }
     const velo = this.velo(ahora);
-    if (this.cambiadoEn !== null && ahora - this.cambiadoEn >= FUNDIDO_DE_PLANO.destapa) {
+    if (this.cambiadoEn !== null && ahora - this.cambiadoEn >= this.fundido.destapa) {
       this.desde = null;
       this.cambiadoEn = null;
     }
@@ -111,8 +131,8 @@ export class FundidoDePlano {
 
   private velo(ahora: number): number {
     if (this.desde === null) return 0;
-    if (this.cambiadoEn === null) return suave((ahora - this.desde) / FUNDIDO_DE_PLANO.tapa);
-    return 1 - suave((ahora - this.cambiadoEn) / FUNDIDO_DE_PLANO.destapa);
+    if (this.cambiadoEn === null) return suave((ahora - this.desde) / this.fundido.tapa);
+    return 1 - suave((ahora - this.cambiadoEn) / this.fundido.destapa);
   }
 }
 

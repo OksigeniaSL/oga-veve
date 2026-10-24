@@ -1174,6 +1174,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     aerofrenosPoner: (vuelo: number, tierra: number) =>
       juego.aircraftMesh.aerofrenos?.poner(vuelo, tierra),
+    /**
+     * Y dejarlos así **mientras el juego sigue**, solo en el dibujo, o `null`
+     * para soltarlos: el juego los vuelve a poner donde están en cada
+     * fotograma. Ver `aerofrenosDeBanco` en `game.ts`.
+     */
+    aerofrenosFijos: (tierra: number | null) => {
+      juego.aerofrenosDeBanco = tierra;
+    },
     /** Y su palanca en la cabina, de 0 recogida a 1 arriba. */
     palancaDeAerofrenosPoner: (posicion: number) =>
       juego.aircraftMesh.palancaDeAerofrenos?.poner(posicion),

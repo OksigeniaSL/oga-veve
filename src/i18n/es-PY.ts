@@ -74,9 +74,14 @@ export const ES_PY = {
   "hud.stall": "¡Pérdida! Bajá el morro",
   "hud.pullUp": "El suelo. Subí",
   "hud.runwayEnd": "¡Se acaba la pista!",
-  "hud.landedSoft": "¡Qué aterrizaje! Suavecito",
+  /*
+   * Las dos tomas buenas se celebran igual, y las dos dicen por qué: **en su
+   * sitio**. Lo que hace bueno un aterrizaje es dónde se toca, no lo suave
+   * que fue (punto 299; ver `flight/aterrizaje.ts`).
+   */
+  "hud.landedSoft": "¡Qué aterrizaje! Suavecito y en su sitio",
   "hud.landedFast": "¡Muy rápido! Bajá el motor antes de tocar",
-  "hud.landedFirm": "Aterrizaje firme. Ya estás abajo",
+  "hud.landedFirm": "¡Buen aterrizaje! Firme y en su sitio",
   "hud.landedOffRunway": "Bajaste fuera de la pista, pero bajaste",
   "hud.landedShort":
     "Bajaste antes de la barra blanca: las flechas son para rodar y despegar",
@@ -1632,6 +1637,8 @@ export const ES_PY = {
   "palabra.rapido": "Muy rápido",
   "palabra.fuera": "Fuera",
   "palabra.corto": "Corto",
+  "palabra.largo": "Largo",
+  "palabra.duro": "Duro",
   "palabra.roto": "Se rompió",
   "vuelo.estacionado": "Arrancá el motor",
   "vuelo.arrancando": "Soltá el freno y andá despacito",
@@ -1736,6 +1743,14 @@ export const ES_PY = {
    * propone, a tiempo y en calma. Ver `flight/toma-larga.ts`.
    */
   "vuelo.tomaLarga": "Así no: nos vamos al aire y lo volvemos a intentar",
+  /*
+   * **El veredicto de una toma larga y de una dura** (punto 299): sin
+   * percance, dicho con calma. Firme y en su sitio es un buen aterrizaje;
+   * suave y lejos, no. Ver `Aterrizaje` en `flight/aterrizaje.ts`.
+   */
+  "vuelo.tocasteLargo":
+    "Tocaste largo, lejos de las marcas: así se come la pista. Mejor firme y en su sitio que suave y lejos",
+  "vuelo.tocasteDuro": "Aterrizaje duro: ahora hay que revisar el avión. La próxima, recogé un poco más al final",
   "vuelo.tomaLargaSinPista":
     "No nos da la pista para parar: nos vamos al aire y lo volvemos a intentar",
   /*
@@ -3859,6 +3874,16 @@ export const ES_PY = {
    * `docs/historias/fuentes.md`.
    */
   "inicio.ara.pasaje.vueltaEnPista": "¡Estamos dando la vuelta en la pista! Volvemos por el mismo camino.",
+  /*
+   * **Los aerofrenos al tocar** (punto 296), contados por Ara en el primer rato
+   * tranquilo rodando. Lo mismo que dice la instructora en los vuelos de
+   * pilotar —`vuelo.salenLosFrenosDeTierra`—: el ala deja de sostener el avión
+   * y las ruedas frenan.
+   */
+  "inicio.ara.pasaje.aerofrenos":
+    "¿Viste el ala cuando tocamos el suelo? Se le levantaron unas tapas por arriba: son los aerofrenos.",
+  "inicio.ara.pasaje.aerofrenosPorque":
+    "Mamá me contó que así el ala deja de sostener al avión: el avión se queda pegado al suelo y las ruedas frenan bien.",
   "inicio.mama.pasaje.vueltaEnPista":
     "Señores pasajeros: dimos la vuelta en la pista porque las salidas hacia la terminal nos quedaron atrás, y más adelante no hay ninguna. Al final de la pista hay un ensanche para dar la vuelta.",
   "inicio.mama.pasaje.permisoDeVuelta":
