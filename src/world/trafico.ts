@@ -3552,12 +3552,21 @@ export function crearTrafico(
          * **Y la de dos del tráfico que se esperan el uno al otro en la
          * plataforma**: el que llegó y ya dejó la pista se da por aparcado.
          * Ver `ATASCO_ENTRE_ELLOS`.
+         *
+         * «Ya dejó la pista» es lo mismo que para la radio y para la red de
+         * `QUIETO`: no estar `aterrizando`, que admite medio metro antes de
+         * `fuera`. Aquí se pedía haber pasado `fuera` entero, y el que se
+         * paraba en ese medio metro no entraba en ninguna de las dos redes:
+         * en Pilar, con la pista de la AMDT AIRAC 02/2026, la avioneta que
+         * llega se queda a un paso del único puesto, donde la torre retiene a
+         * la que sale; ya había dicho «pista libre», pero la que salía seguía
+         * retenida por ella y no se movía ninguna.
          */
         const aparcado =
           quien.atascado > ATASCO_ENTRE_ELLOS &&
           !!c &&
           quien.marca.camino === c.llegada &&
-          quien.recorrido >= c.fuera;
+          !aterrizando(quien);
         if (quien.olvidado > SE_VA_A_LOS || quien.quieto > QUIETO || harto || aparcado) {
           quitar(matricula, quien);
           continue;
