@@ -68,8 +68,17 @@ for (const avion of AVIONES) {
   await page.addInitScript(() => {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
+  /*
+   * **Con el viento en calma.** Con el tiempo de casa, el alisio de Los Rodeos
+   * le entra cruzado al fumigador por encima de lo que aguanta, y la tarjeta
+   * del tiempo sale sola a decirlo —que es lo que tiene que hacer—, tapa la
+   * fila de botones del tablero y se queda con los toques. El banco la contaba
+   * como «fuera de la pantalla» y como «el contacto no arranca». Lo que se mide
+   * aquí son los mandos, no el parte: ver `verificar-despegue.mjs` para eso.
+   */
   await page.goto(
-    `${BASE}/?escenario=tenerife-norte&hora=16&leccion=despegue&tramo=guyrami&avion=${avion}`,
+    `${BASE}/?escenario=tenerife-norte&hora=16&leccion=despegue&tramo=guyrami&avion=${avion}` +
+      `&meteo=&viento=000/00`,
   );
   await page
     .waitForFunction(() => globalThis.__oga?.estado?.(), null, {
