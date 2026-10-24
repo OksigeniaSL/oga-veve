@@ -1088,13 +1088,16 @@ const alFinal = await page.evaluate(async () => {
    * tarjeta cada punto— se lee a su ritmo, y en un rodaje de verdad se
    * acaba mucho antes de llegar. Con dos segundos fijos el banco miraba en
    * mitad de «luces de rodaje» y lo daba por la tarjeta del señalero tapando
-   * la llave. Lo que esto protege sigue igual: una tarjeta que se queda y no
-   * deja salir la llave no la deja salir en quince segundos tampoco.
+   * la llave. Y con el avión parado llega también el momento tranquilo de los
+   * sellos —ver `esMomentoDeCelebrar`—: la primera frustrada del banco gana
+   * «Mbarete», cinco segundos más. Lo que esto protege sigue igual: una
+   * tarjeta que se queda y no deja salir la llave no la deja salir en treinta
+   * segundos tampoco.
    */
   const vistas = [];
   let dibujo = "";
   let llave = false;
-  for (let i = 0; i < 75 && !llave; i++) {
+  for (let i = 0; i < 150 && !llave; i++) {
     await new Promise((r) => setTimeout(r, 200));
     const t = o.tarjeta()?.dibujo ?? "";
     if (t && vistas[vistas.length - 1] !== t) vistas.push(t);
