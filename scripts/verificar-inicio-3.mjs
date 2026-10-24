@@ -48,15 +48,21 @@
  * - **Y que en un teléfono apaisado**, con el dedo, la tarjeta cabe y no hay
  *   mandos de pilotar.
  * - **El kit de viaje** (punto 275): que la tripulante lo trae en un tramo
- *   tranquilo de la parte alta de la bajada, que en el vuelo se abre, **se
- *   arma un avión de Armá tu avión hasta que despega**, y después **la luz
- *   verde entera** —a la velocidad de verdad,
- *   como un niño que hace caso a lo que brilla—, que acaba antes de los diez
- *   mil pies, que al acabar **suena el trozo de la canción**, agachado si
- *   alguien habla, y que **se recoge al empezar la llegada**, cruzando los diez
- *   mil pies bajando (19-10-2026), con la canción yéndose con un fundido si
- *   todavía sonaba; y en el teléfono, la tablet del aula y el portátil, que
- *   cabe sin tapar la tarjeta ni los botones, **se juegan los dos juegos
+ *   tranquilo de la parte alta de la bajada, que en el vuelo se abre y se
+ *   juega primero **la luz verde entera** —a la velocidad de verdad, como un
+ *   niño que hace caso a lo que brilla—, que acaba antes de los diez mil pies,
+ *   que al acabar **suena el trozo de la canción**, agachado si alguien habla;
+ *   que después, con lo que quede, **se ponen piezas de Armá tu avión** —nunca
+ *   con la megafonía pausando— y Ara cuenta alguna; y que **se recoge al
+ *   empezar la llegada**, cruzando los diez mil pies bajando (19-10-2026), con
+ *   el juego que esté abierto y la canción yéndose con un fundido si todavía
+ *   sonaba. La luz primero porque es la que tiene que acabar antes de los diez
+ *   mil pies y el rato para jugar cambia de un vuelo a otro —espera a que no
+ *   hable la megafonía—: con el avión entero delante, un rato corto la dejaba
+ *   a medias, que es lo que le pasa a quien juega a los dos pero no lo que se
+ *   quiere medir (24-10-2026). El avión entero, con sus luces y su despegue,
+ *   se mira en las tres pantallas. Y en el teléfono, la tablet del aula y el
+ *   portátil, que cabe sin tapar la tarjeta ni los botones, **se juegan los dos juegos
  *   con el dedo** —arrastrando las piezas y las luces— o con el ratón, y que al
  *   ganar la torre suena la canción, se agacha con quien habla y se va al
  *   guardar el kit.
@@ -82,7 +88,9 @@
  *   la costa, el mar, lo señalado por la ventanilla— se mide con lo que se
  *   pinta en ese momento: dentro de la imagen, por el cristal si se mira por
  *   la ventanilla, sin el ojo metido en una nube y sin nube densa por medio,
- *   contada a pasos con la densidad del dibujo. Con la captura de ese momento.
+ *   contada a pasos con la densidad del dibujo y lo que deja de ella su
+ *   desvanecido con la distancia (24-10-2026: ver `paisajeParaBanco`). Con la
+ *   captura de ese momento.
  * - **Que la foto de una historia no sale sin su voz** (punto 287), que dentro
  *   de la nube el meneo se cuenta en el momento (280), que al salir por debajo
  *   de las nubes se cuenta el techo (295), y los dos planos nuevos: **el tren
@@ -476,7 +484,20 @@ async function elVuelo() {
   const oido = [];
   const altitudes = [];
   // El kit de viaje: cuándo llega, qué se juega y cómo acaba. Ver `flight/kit-de-viaje.ts`.
-  const kit = { dadoEn: null, tramo: null, jugado: false, abiertoEnLaFinal: false, botonEnLaFinal: false, recogido: false, recogidoEn: null, pausado: 0, abiertoTrasGuardar: false, aUno: false };
+  /*
+   * `antes` es lo último que se leyó del kit sin recoger —abierto y con qué
+   * juego—, y `alRecoger`, eso mismo justo antes de recogerlo: lo que tenía
+   * delante quien jugaba cuando vino la tripulante.
+   */
+  const kit = { dadoEn: null, tramo: null, jugado: false, abiertoEnLaFinal: false, botonEnLaFinal: false, recogido: false, recogidoEn: null, pausado: 0, abiertoTrasGuardar: false, aUno: false, fotogramas: false, antes: null, alRecoger: null };
+  /*
+   * **Armá tu avión en el vuelo, después de la luz verde** (24-10-2026): cuándo
+   * se eligió, lo que se puso —una pieza cada dos segundos y medio como poco,
+   * como quien mira dónde va la siguiente, y nunca con la megafonía pausando—,
+   * las lecturas pausadas mientras se armaba y lo que se puso entre dos de
+   * ellas, que tiene que ser nada; y hasta dónde se llegó.
+   */
+  const armando = { elegidoEn: null, arrastres: 0, ultimo: 0, puestas: [], antes: null, pausado: 0, conPausa: 0, fases: new Set(), despegados: 0 };
   /*
    * **La luz verde en el vuelo** (19-10-2026): se juega entera, a la velocidad
    * de verdad y como un niño que hace caso a lo que brilla —toca el avión y la
@@ -657,17 +678,28 @@ async function elVuelo() {
       // A la velocidad de verdad, de que llega el kit a que se recoge: es el rato que hay para jugar.
       kit.aUno = true;
       await page.evaluate(() => globalThis.__oga.acelerar(1));
-      await jugarElAvionEnElVuelo(page);
+      await abrirLaLuzEnElVuelo(page);
     }
     if (e.kit?.abierto && e.kit.pausado) kit.pausado++;
+    if (e.kit && !e.kit.recogido) kit.antes = { t: e.segundos, abierto: !!e.kit.abierto, juego: e.kit.juego?.juego ?? null };
     // ── La luz verde en el vuelo, como quien hace caso a lo que brilla ──
     const jl = e.kit?.juego;
     if (kit.jugado && jl?.juego === "luz" && !e.kit.recogido) {
       torre.abierta ??= { t: e.segundos, altitud };
       if (jl.terminado && !torre.fin)
         torre.fin = { t: e.segundos, altitud, rondas: jl.rondas, aterrizados: jl.aterrizados, rojas: jl.rojas, alAire: jl.alAire };
+      /*
+       * Los fotogramas, en cuanto hay avioncitos en el circuito: la primera
+       * ronda espera a que Ara acabe de explicar. Ver `medirLaLuzEnVuelo`.
+       */
+      const medir = !kit.fotogramas && e.kit.abierto && !jl.terminado && (jl.aviones?.length ?? 0) > 0;
+      if (medir) {
+        kit.fotogramas = true;
+        await medirLaLuzEnVuelo(page);
+      }
+      // Lo leído al empezar la vuelta es de antes de medir: se toca en la siguiente.
       const pide = (jl.aviones ?? []).find((a) => a.pide);
-      if (!jl.terminado && jl.ayuda && !e.kit.pausado && pide) {
+      if (!medir && !jl.terminado && jl.ayuda && e.kit.abierto && !e.kit.pausado && pide) {
         if (torre.brilla?.senal !== jl.ayuda || torre.brilla?.id !== pide.id) torre.brilla = { senal: jl.ayuda, id: pide.id, desde: Date.now() };
         const r = i.kit?.luz;
         if (Date.now() - torre.brilla.desde > 1500 && r?.luces?.[jl.ayuda]) {
@@ -679,6 +711,8 @@ async function elVuelo() {
         }
       } else torre.brilla = null;
     }
+    // ── Y después, con lo que quede, Armá tu avión ──
+    if (kit.jugado && !e.kit?.recogido) await armarEnElVuelo(page, e, armando, torre, altitud);
     // ── Y su canción: cuándo empieza, cómo se agacha y cómo se va ──
     const ca = v.cancion?.audio;
     if (ca?.suena) {
@@ -698,7 +732,10 @@ async function elVuelo() {
       kit.abiertoEnLaFinal ||= !!e.kit?.abierto;
       kit.botonEnLaFinal ||= !!i.kit?.boton;
     }
-    if (e.kit?.recogido && !kit.recogido) kit.recogidoEn = { t: e.segundos, altitud };
+    if (e.kit?.recogido && !kit.recogido) {
+      kit.recogidoEn = { t: e.segundos, altitud };
+      kit.alRecoger = kit.antes;
+    }
     kit.recogido = !!e.kit?.recogido;
     // ── Lo nombrado del paisaje, a la vista ──
     const nuevos = (e.nombrados ?? []).slice(vistosNombrados);
@@ -1695,23 +1732,40 @@ async function elVuelo() {
       : "no llegó",
   );
   /*
-   * Lo de cada pieza se cuenta con la conversación callada y no hace cola: lo
-   * que se pone mientras habla la tripulante se cuenta en el siguiente silencio
-   * de esa misma fase, y si no llega, en el avión siguiente o tocando esa pieza
-   * por la ventanilla. Así que se pide que Ara cuente alguna pieza, no una en
-   * concreto, y siempre lo de las luces.
+   * **Armá tu avión, con lo que queda después de la luz verde**: se eligió
+   * cuando ya había acabado la luz, se pusieron piezas, ninguna entre dos
+   * lecturas con la megafonía pausando, y Ara contó alguna. Lo de cada pieza
+   * se cuenta con la conversación callada, menos la primera de cada avión, que
+   * va a la cola: así que se pide alguna, no una en concreto. Si el avión llegó
+   * a despegar, también lo de las luces. Si no dio tiempo a acabarlo, la
+   * tripulante lo recoge igual: lo mira la comprobación de después. El avión
+   * entero, con sus luces y su despegue, se mira en las tres pantallas.
    */
   const delKit = registro.filter((d) => d.clave.startsWith("inicio.ara.pasaje.kit.")).map((d) => d.clave.replace("inicio.ara.pasaje.kit.", ""));
+  const piezaContada = registro.find(
+    (d) =>
+      ["piezas.ala", "piezas.motor", "piezas.cola", "piezas.ruedas", "avion.estabilizador"].includes(d.clave.replace("inicio.ara.pasaje.kit.", "")) &&
+      d.como !== "cortada" &&
+      !!armando.elegidoEn &&
+      d.desde >= armando.elegidoEn.t,
+  );
+  const despego = armando.despegados > 0;
   comprobar(
-    "en el vuelo se arma un avión entero, con sus luces, y despega; Ara cuenta alguna pieza y lo de las luces, sin frases en cola",
-    !!e?.kit?.hechos?.includes("avion") &&
-      delKit.some((c) => ["piezas.ala", "piezas.motor", "piezas.cola", "piezas.ruedas", "avion.estabilizador"].includes(c)) &&
-      delKit.includes("avion.luces"),
-    `hechos: ${(e?.kit?.hechos ?? []).join(", ") || "ninguno"} · dicho: ${delKit.join(", ") || "nada"} · el primer avión, de abrirlo a despegar: ${avionEnVuelo.s?.toFixed(0) ?? "?"} s de pared, ${avionEnVuelo.pausado} s con la megafonía`,
+    "en el vuelo, después de la luz verde y con lo que queda, se ponen piezas de Armá tu avión —ninguna con la megafonía pausando— y Ara cuenta alguna",
+    !!armando.elegidoEn &&
+      !!torre.fin &&
+      armando.elegidoEn.t > torre.fin.t &&
+      armando.puestas.length > 0 &&
+      armando.conPausa === 0 &&
+      !!piezaContada &&
+      (!despego || delKit.includes("avion.luces")),
+    armando.elegidoEn
+      ? `elegido a los ${armando.elegidoEn.t.toFixed(0)} s a ${pies(armando.elegidoEn.altitud)}, ${torre.fin ? `${(armando.elegidoEn.t - torre.fin.t).toFixed(0)} s después de acabar la luz` : "sin acabar la luz"} · puestas ${armando.puestas.length} (${armando.puestas.join(", ")}) · fases ${[...armando.fases].join(", ")} · despegó ${despego} · ${armando.pausado} lecturas pausado por la megafonía armando, ${armando.conPausa} puestas en pausa · Ara cuenta ${piezaContada ? `${piezaContada.clave.replace("inicio.ara.pasaje.kit.", "")} a los ${piezaContada.desde.toFixed(0)} s` : "ninguna"} · dicho: ${delKit.join(", ") || "nada"}`
+      : `no se eligió · la luz ${torre.fin ? `acabó a los ${torre.fin.t.toFixed(0)} s` : "no acabó"} · la tripulante pide guardarlo a los ${guardar?.desde?.toFixed(0) ?? "—"} s`,
   );
   const aGuardar = guardar ? altitudEntre(guardar.desde) : null;
   comprobar(
-    "se recoge al empezar la llegada: la tripulante lo pide cruzando los diez mil pies bajando, con la luz verde abierta, y la llegada se vive sin juego",
+    "se recoge al empezar la llegada: la tripulante lo pide cruzando los diez mil pies bajando, con el juego que esté abierto, y la llegada se vive sin juego",
     !!guardar &&
       aGuardar !== null &&
       aGuardar < 3048 &&
@@ -1719,10 +1773,12 @@ async function elVuelo() {
       kit.recogido &&
       !!kit.recogidoEn &&
       kit.recogidoEn.altitud > 3048 - 350 &&
+      !!kit.alRecoger?.abierto &&
+      !!kit.alRecoger.juego &&
       !kit.abiertoTrasGuardar &&
       !kit.abiertoEnLaFinal &&
       !kit.botonEnLaFinal,
-    `pide guardarlo a ${pies(aGuardar)} · recogido a ${pies(kit.recogidoEn?.altitud ?? null)} · abierto después ${kit.abiertoTrasGuardar} · en la final: abierto ${kit.abiertoEnLaFinal}, mochilita ${kit.botonEnLaFinal} · pausado por la megafonía ${kit.pausado} lecturas`,
+    `pide guardarlo a ${pies(aGuardar)} · recogido a ${pies(kit.recogidoEn?.altitud ?? null)}, ${kit.alRecoger?.abierto ? `con ${kit.alRecoger.juego ?? "nada"} abierto` : "con el kit cerrado"} · abierto después ${kit.abiertoTrasGuardar} · en la final: abierto ${kit.abiertoEnLaFinal}, mochilita ${kit.botonEnLaFinal} · pausado por la megafonía ${kit.pausado} lecturas`,
   );
   // ── La luz verde en el vuelo, entera, y su canción ──
   const guardarEn = guardar?.desde ?? null;
@@ -1991,7 +2047,7 @@ async function elVuelo() {
     console.log(
       `  ${n.ok ? "·" : "✗"} ${n.sitio} (${n.clave}) a los ${n.desde.toFixed(0)} s: ${n.como} por ${n.lado ?? "—"} · plano ${n.plano} · ` +
         (n.medido
-          ? `en la imagen ${n.medido.x.toFixed(2)},${n.medido.y.toFixed(2)}${n.medido.delante ? "" : " detrás"} · cristal ${n.medido.porElCristal} · ojo en nube ${n.medido.ojoEnNube.toFixed(2)} · nube por medio ${n.medido.nubeEnMedio.toFixed(0)} m · a ${(n.medido.distancia / 1000).toFixed(1)} km`
+          ? `en la imagen ${n.medido.x.toFixed(2)},${n.medido.y.toFixed(2)}${n.medido.delante ? "" : " detrás"} · cristal ${n.medido.porElCristal} · ojo en nube ${n.medido.ojoEnNube.toFixed(2)} · nube por medio ${n.medido.nubeEnMedio.toFixed(0)} m (${(n.medido.nubeSinDesvanecer ?? 0).toFixed(0)} m sin el desvanecido) · a ${(n.medido.distancia / 1000).toFixed(1)} km`
           : "sin punto"),
     );
   comprobar(
@@ -2321,79 +2377,108 @@ async function mirarLaSiesta(page) {
   return r;
 }
 
-/** Lo que tardó el primer avión en el vuelo, de elegirlo a despegar: ver `jugarElAvionEnElVuelo`. */
-const avionEnVuelo = { s: null, pausado: 0 };
-
 /**
- * **El kit en el vuelo, con el ratón**: se abre la mochilita, se elige Armá
- * tu avión y se arma el primero —las piezas y las luces, arrastradas a su
- * hueco con un respiro entre una y otra, como quien juega sin prisa— hasta
- * que despega; y después se elige la luz verde y se deja abierta, que es lo
- * que tienen que pausar la aproximación y recoger la tripulante.
+ * **El kit en el vuelo, con el ratón** (24-10-2026): se abre la mochilita y se
+ * elige la luz verde, que va primero porque es la que tiene que acabar antes
+ * de los diez mil pies. La juega el bucle del vuelo, como quien hace caso a lo
+ * que brilla, y mide sus fotogramas en cuanto hay avioncitos en el circuito;
+ * lo de después, en `armarEnElVuelo`.
  */
-async function jugarElAvionEnElVuelo(page) {
+async function abrirLaLuzEnElVuelo(page) {
   const kitDe = () => page.evaluate(() => globalThis.__oga.inicio().kit);
-  const estado = () => page.evaluate(() => globalThis.__oga.inicio().estado.kit);
   const centro = (r) => ({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
   let k = await kitDe();
   if (!k?.boton) return;
   let c = centro(k.boton);
   await page.mouse.click(c.x, c.y);
-  await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.avion, null, { timeout: 10_000 }).catch(() => {});
+  await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.luz, null, { timeout: 10_000 }).catch(() => {});
   k = await kitDe();
-  if (!k?.juegos?.avion) return;
-  c = centro(k.juegos.avion);
+  if (!k?.juegos?.luz) return;
+  c = centro(k.juegos.luz);
   await page.mouse.click(c.x, c.y);
-  await page.waitForFunction(() => Object.keys(globalThis.__oga.inicio().kit?.piezas ?? {}).length > 0, null, { timeout: 10_000 }).catch(() => {});
-  const t0 = Date.now();
-  let pausado = 0;
-  await foto(page, "kit-avion-en-vuelo");
-  for (let i = 0; i < 24; i++) {
-    // Sin pausar: si habla la megafonía, se espera, que manda ella.
-    const tp = Date.now();
-    await page.waitForFunction(() => !globalThis.__oga.inicio().estado.kit.pausado, null, { timeout: 60_000 }).catch(() => {});
-    pausado += (Date.now() - tp) / 1000;
-    const e = await estado();
-    if (!e.abierto || e.juego?.juego !== "avion" || !["piezas", "luces"].includes(e.juego.fase)) break;
-    k = await kitDe();
-    const [p] = Object.values(k?.piezas ?? {});
-    if (!p) break;
-    const de = centro(p.en);
-    const a = centro(p.sitio);
-    await page.mouse.move(de.x, de.y);
-    await page.mouse.down();
-    await page.mouse.move(a.x, a.y, { steps: 12 });
-    await page.mouse.up();
-    // Un respiro, como quien mira dónde va la siguiente.
-    await pausa(2500);
-    if (i === 3) await foto(page, "kit-avion-a-medias-en-vuelo");
-  }
-  await page.waitForFunction(() => (globalThis.__oga.inicio().estado.kit.juego?.despegados ?? 0) > 0, null, { timeout: 60_000 }).catch(() => {});
-  avionEnVuelo.s = (Date.now() - t0) / 1000;
-  avionEnVuelo.pausado = Math.round(pausado);
-  await foto(page, "kit-avion-despegado-en-vuelo");
-  // Como quien mira despegar su avión: hasta que Ara acaba de contarlo. Cambiar de juego antes calla lo que quedaba por decir.
-  await page
-    .waitForFunction(() => (globalThis.__oga.inicio().registro ?? []).some((d) => d.clave === "inicio.ara.pasaje.kit.piezas.fin"), null, { timeout: 40_000 })
-    .catch(() => {});
-  // Y la luz verde, que se deja abierta: la recoge la tripulación al empezar la llegada.
-  await page.click(".kit__atras", { force: true }).catch(() => {});
-  await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.luz, null, { timeout: 60_000 }).catch(() => {});
-  k = await kitDe();
-  if (k?.juegos?.luz) {
-    c = centro(k.juegos.luz);
+  await pausa(1500);
+  await foto(page, "kit-luz-en-vuelo");
+}
+
+/**
+ * **Armá tu avión con lo que queda**, un paso por vuelta del bucle del vuelo y
+ * sin pararlo, que lo nombrado del paisaje se mide al nombrarse: el avión
+ * entero en un `await` tenía el bucle parado medio minuto, y lo nombrado en ese
+ * rato se medía tarde. Acabada la luz verde y con su canción ida, se vuelve a
+ * elegir y se elige el avión; y después, una pieza cada dos
+ * segundos y medio como poco, arrastrada a su hueco y solo con nadie
+ * hablando, que la megafonía manda y a Ara se la escucha. Se apunta lo que se pone, y lo que entró entre dos
+ * lecturas pausadas, que tiene que ser nada. Si no da tiempo a acabarlo, la
+ * tripulante lo recoge igual.
+ */
+async function armarEnElVuelo(page, e, a, torre, altitud) {
+  const k = e.kit;
+  if (!k?.abierto || k.recogido) return;
+  const centro = (r) => ({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
+  const j = k.juego;
+  if (!a.elegidoEn) {
+    if (!torre.fin || k.pausado) return;
+    /*
+     * Con la canción ida —o si en veinte segundos no llegó a sonar—, de vuelta
+     * a elegir, como quien ya oyó su premio: sin esperar a que el kit vuelva
+     * solo, que espera a que nadie hable y se come el rato del avión.
+     */
+    if (j?.juego === "luz") {
+      if (torre.empieza ? !k.cancion : e.segundos - torre.fin.t > 20) await page.click(".kit__atras", { force: true }).catch(() => {});
+      return;
+    }
+    if (j !== null) return;
+    const boton = await page.evaluate(() => globalThis.__oga.inicio().kit?.juegos?.avion ?? null);
+    if (!boton) return;
+    const c = centro(boton);
     await page.mouse.click(c.x, c.y);
-    await pausa(2500);
-    await foto(page, "kit-luz-en-vuelo");
-    await medirLaLuzEnVuelo(page);
+    a.elegidoEn = { t: e.segundos, altitud };
+    return;
   }
+  if (j?.juego !== "avion") return;
+  a.fases.add(j.fase);
+  a.despegados = Math.max(a.despegados, j.despegados ?? 0);
+  // Lo puesto desde la lectura anterior: lo nuevo de este avión, o todo lo del siguiente.
+  const antes = a.antes;
+  const nuevas = !antes || antes.nivel !== j.nivel ? j.puestas : j.puestas.slice(antes.n);
+  a.puestas.push(...nuevas);
+  if (antes?.pausado && k.pausado) a.conPausa += nuevas.length;
+  a.antes = { nivel: j.nivel, n: j.puestas.length, pausado: k.pausado };
+  if (k.pausado) {
+    a.pausado++;
+    return;
+  }
+  /*
+   * Y como quien escucha a Ara: la siguiente pieza, con nadie hablando. Con
+   * una pieza cada dos segundos y medio aunque hablara alguien, lo que se dice
+   * siempre —las luces, la noche, el despegue— y la primera pieza de cada
+   * avión se encadenaban en la cola, y en la primera pasada del 24-10-2026 la
+   * tripulante no encontró hueco para pedirlo en los mil pies que le da la red.
+   */
+  if (!["piezas", "luces"].includes(j.fase) || e.hablando || Date.now() - a.ultimo < 2500) return;
+  // Con la pantalla de ahora: la tarjeta puede haber movido el panel.
+  const piezas = await page.evaluate(() => globalThis.__oga.inicio().kit?.piezas ?? {});
+  const [p] = Object.values(piezas);
+  if (!p) return;
+  const de = centro(p.en);
+  const al = centro(p.sitio);
+  await page.mouse.move(de.x, de.y);
+  await page.mouse.down();
+  await page.mouse.move(al.x, al.y, { steps: 12 });
+  await page.mouse.up();
+  a.ultimo = Date.now();
+  a.arrastres++;
+  if (a.arrastres === 1) await foto(page, "kit-avion-en-vuelo");
+  if (a.arrastres === 4) await foto(page, "kit-avion-a-medias-en-vuelo");
 }
 
 /**
  * **Los fotogramas con la luz verde abierta**, en vuelo y con el reloj a ×1
  * —lo que ve quien juega—: seis segundos con el juego delante y seis con el
- * kit cerrado, para comparar. Regla 6: el juego va encima del vuelo, que
- * sigue corriendo.
+ * kit cerrado, para comparar, y se vuelve a abrir donde estaba. Regla 6: el
+ * juego va encima del vuelo, que sigue corriendo. Se llama con los
+ * avioncitos ya en el circuito, que la primera ronda espera a que Ara acabe
+ * de explicar.
  */
 async function medirLaLuzEnVuelo(page) {
   const fotogramas = () =>
@@ -2415,10 +2500,6 @@ async function medirLaLuzEnVuelo(page) {
         }),
     );
   await page.evaluate(() => globalThis.__oga.acelerar(1));
-  // Con los avioncitos ya en el circuito: la primera ronda espera a que Ara acabe de explicar.
-  await page
-    .waitForFunction(() => (globalThis.__oga.inicio().estado.kit.juego?.aviones?.length ?? 0) > 0, null, { timeout: 40_000 })
-    .catch(() => {});
   const r = await renderer(page);
   const conLuz = await fotogramas();
   const aviones = await page.evaluate(() => globalThis.__oga.inicio().estado.kit.juego?.aviones?.length ?? 0);
