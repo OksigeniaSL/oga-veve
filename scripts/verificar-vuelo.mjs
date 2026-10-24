@@ -311,6 +311,9 @@ const edificios = await page.evaluate(() => {
   const lista = o.edificios();
   const bultos = o.bultos();
   let solidos = 0;
+  let paredes = 0;
+  let tejadosConBulto = 0;
+  let tejados = 0;
   for (const e of lista) {
     let x = 0;
     let z = 0;
@@ -319,27 +322,67 @@ const edificios = await page.evaluate(() => {
       z += p[1] / e.puntos.length;
     }
     // A media altura del edificio, en su centro: ahí tiene que haber bulto.
-    if (bultos.choca(x, o.suelo(x, z) + e.alto / 2, z)) solidos += 1;
+    const choca = bultos.choca(x, o.suelo(x, z) + e.alto / 2, z);
+    if (e.paraUnAvion) {
+      paredes += 1;
+      if (choca) solidos += 1;
+    } else {
+      tejados += 1;
+      if (choca) tejadosConBulto += 1;
+    }
   }
-  const grupo = globalThis.__raiz.getObjectByName("edificios-aerodromo");
-  let mallas = 0;
-  grupo?.traverse((n) => {
-    if (n.isMesh) mallas += 1;
-  });
-  return { cuantos: lista.length, solidos, mallas };
+  const mallasDe = (nombre) => {
+    let n = 0;
+    globalThis.__raiz.getObjectByName(nombre)?.traverse((m) => {
+      if (m.isMesh) n += 1;
+    });
+    return n;
+  };
+  return {
+    cuantos: lista.length,
+    solidos,
+    paredes,
+    tejados,
+    tejadosConBulto,
+    propios: lista.filter((e) => !e.deLaGranja).length,
+    deLaGranja: lista.filter((e) => e.deLaGranja).length,
+    mallas: mallasDe("edificios-aerodromo"),
+    mallasDeLaGranja: mallasDe("granja:construcciones"),
+  };
 });
 if (edificios.cuantos) {
+  /*
+   * **Cada uno donde lo dibujan.** En la granja, la casa, el galpón y el
+   * hangar los levanta ella con su forma —ver `laDibujaLaGranja`— y el grupo
+   * de los prismas del aeródromo se queda vacío a propósito. Mirando solo ese
+   * grupo, Yvytu Rape salía «tres edificios en cero mallas» con los tres a la
+   * vista.
+   */
   comprobar(
     "los edificios del aeródromo están dibujados",
-    edificios.mallas > 0,
-    `${edificios.cuantos} edificios en ${edificios.mallas} mallas`,
+    (edificios.propios === 0 || edificios.mallas > 0) &&
+      (edificios.deLaGranja === 0 || edificios.mallasDeLaGranja > 0),
+    `${edificios.propios} edificios en ${edificios.mallas} mallas` +
+      (edificios.deLaGranja
+        ? ` y ${edificios.deLaGranja} de la granja en ${edificios.mallasDeLaGranja}`
+        : ""),
     "«se ve la terminal como dos cuadraditos, como si fuera una cabaña»",
   );
+  /*
+   * **Y una marquesina no es una pared**, a propósito: es un tejado sobre
+   * pilares donde se aparca, y como prisma macizo se cobraba un vuelo de cada
+   * cinco en Tenerife Norte —ver `paraUnAvion` en `aerodrome.ts`—. Así que se
+   * piden paredes a los edificios y ninguna a los tejados. Pidiéndoselas a
+   * todos, Tenerife Norte salía «21 de 28» por sus siete marquesinas.
+   */
   comprobar(
-    "y paran a un avión, que no son decorado",
-    edificios.solidos === edificios.cuantos,
-    `${edificios.solidos} de ${edificios.cuantos} tienen bulto`,
-    "la ciudad se atravesaba entera hasta que existió el índice de bultos",
+    "y paran a un avión, que no son decorado; las marquesinas no",
+    edificios.solidos === edificios.paredes && edificios.tejadosConBulto === 0,
+    `${edificios.solidos} de ${edificios.paredes} tienen bulto` +
+      (edificios.tejados
+        ? ` · ${edificios.tejadosConBulto} de ${edificios.tejados} marquesinas con pared`
+        : ""),
+    "la ciudad se atravesaba entera hasta que existió el índice de bultos; y la marquesina 27 de Tenerife Norte paraba a uno de cada cinco aviones al volver",
   );
 }
 

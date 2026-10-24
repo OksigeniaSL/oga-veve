@@ -52,7 +52,14 @@ import type { Intruso } from "../flight/tcas";
 import { familiaDe } from "../ui/familia";
 import { ilustracionPedida } from "../ui/ilustraciones";
 import type { Lluvia } from "../world/meteo";
-import { alturaDeEdificio, enElPavimento, esAfis, sinTorre } from "../world/aerodrome";
+import {
+  alturaDeEdificio,
+  enElPavimento,
+  esAfis,
+  paraUnAvion,
+  sinTorre,
+} from "../world/aerodrome";
+import { laDibujaLaGranja } from "../world/granja";
 import {
   escalaDeCircuito,
   formaDelCircuito,
@@ -2050,6 +2057,15 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         alto: alturaDeEdificio(e),
         // Del fichero al mundo: la Y del norte es la Z negativa.
         puntos: e.polygon.map(([x, y]) => [x, -y] as [number, number]),
+        /*
+         * Y lo que el banco necesita para no pedir lo que no toca: una
+         * marquesina no para a un avión a propósito —ver `paraUnAvion`—, y
+         * los de la granja no son prismas del aeródromo, los levanta ella con
+         * su forma —ver `laDibujaLaGranja`—. Sin esto el banco contaba los
+         * siete tejados de Tenerife Norte como paredes que faltaban.
+         */
+        paraUnAvion: paraUnAvion(e),
+        deLaGranja: juego.scenario.aerodrome?.granja === true && laDibujaLaGranja(e),
       })),
     /**
      * Cómo se sortean las órdenes de irse al aire: `siempre`, `nunca` o
