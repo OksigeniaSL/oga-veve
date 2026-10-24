@@ -1483,12 +1483,20 @@ async function elVuelo() {
       ? `a los ${dado.desde.toFixed(0)} s, ${kit.tramo}, a ${pies(altitudDe(dado.desde))} · megafonía cerca: ${cerca.map((d) => d.clave).join(", ") || "ninguna"} · para jugar: ${rato?.toFixed(0) ?? "?"} s hasta pedir guardarlo, ${enPausa.toFixed(0)} s de megafonía en medio (${megafoniaEnMedio.map((d) => d.clave).join(", ") || "ninguna"})`
       : "no llegó",
   );
+  /*
+   * Lo de cada pieza se cuenta con la conversación callada y no hace cola: lo
+   * que se pone mientras habla la tripulante se cuenta en el siguiente silencio
+   * de esa misma fase, y si no llega, en el avión siguiente o tocando esa pieza
+   * por la ventanilla. Así que se pide que Ara cuente alguna pieza, no una en
+   * concreto, y siempre lo de las luces.
+   */
+  const delKit = registro.filter((d) => d.clave.startsWith("inicio.ara.pasaje.kit.")).map((d) => d.clave.replace("inicio.ara.pasaje.kit.", ""));
   comprobar(
-    "en el vuelo se arma un avión entero, con sus luces, y despega; Ara cuenta el ala y lo de las luces, sin frases en cola",
+    "en el vuelo se arma un avión entero, con sus luces, y despega; Ara cuenta alguna pieza y lo de las luces, sin frases en cola",
     !!e?.kit?.hechos?.includes("avion") &&
-      registro.some((d) => d.clave === "inicio.ara.pasaje.kit.piezas.ala") &&
-      registro.some((d) => d.clave === "inicio.ara.pasaje.kit.avion.luces"),
-    `hechos: ${(e?.kit?.hechos ?? []).join(", ") || "ninguno"} · el primer avión, de abrirlo a despegar: ${avionEnVuelo.s?.toFixed(0) ?? "?"} s de pared, ${avionEnVuelo.pausado} s con la megafonía`,
+      delKit.some((c) => ["piezas.ala", "piezas.motor", "piezas.cola", "piezas.ruedas", "avion.estabilizador"].includes(c)) &&
+      delKit.includes("avion.luces"),
+    `hechos: ${(e?.kit?.hechos ?? []).join(", ") || "ninguno"} · dicho: ${delKit.join(", ") || "nada"} · el primer avión, de abrirlo a despegar: ${avionEnVuelo.s?.toFixed(0) ?? "?"} s de pared, ${avionEnVuelo.pausado} s con la megafonía`,
   );
   const aGuardar = guardar ? altitudEntre(guardar.desde) : null;
   comprobar(
