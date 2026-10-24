@@ -1093,6 +1093,14 @@ const alFinal = await page.evaluate(async () => {
    * «Mbarete», cinco segundos más. Lo que esto protege sigue igual: una
    * tarjeta que se queda y no deja salir la llave no la deja salir en treinta
    * segundos tampoco.
+   *
+   * **Y con señalero, la llave es su seña de cortar motores.** Desde que él
+   * lleva la llegada por el orden de la OACI —alto, frenos, calzos y cortar—,
+   * la fase de haber llegado se calla mientras señala, y lo que dice «apagá
+   * el motor» es su tarjeta de «cortar»: el señalero con el bastón por delante
+   * del cuello, la tecla del motor y pulsable, que apaga como la llave. Ver
+   * `tarjetaDelSenalero` en `game.ts`. El banco solo conocía la llave y la
+   * esperaba detrás de una seña que no se va hasta que se apaga.
    */
   const vistas = [];
   let dibujo = "";
@@ -1103,8 +1111,17 @@ const alFinal = await page.evaluate(async () => {
     if (t && vistas[vistas.length - 1] !== t) vistas.push(t);
     dibujo =
       document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? "";
+    const boton = document.querySelector('[data-hud="senal"]');
     // La llave en la tarjeta y su dibujo en pantalla: un círculo con hueco.
-    llave = i >= 9 && t === "llave" && dibujo.includes("senal__hueco");
+    const conLlave = t === "llave" && dibujo.includes("senal__hueco");
+    // O la seña de cortar, que se toca para apagar.
+    const cortar =
+      t === "senalero-cortar" &&
+      !!boton &&
+      !boton.hidden &&
+      !boton.disabled &&
+      boton.classList.contains("senal--pulsable");
+    llave = i >= 9 && (conLlave || cortar);
   }
   const raiz = globalThis.__raiz;
   const coche = raiz.getObjectByName("sigueme");
@@ -1120,7 +1137,6 @@ const alFinal = await page.evaluate(async () => {
           senalero.position.z - s.position.z,
         )
       : Infinity,
-    // La llave lleva un círculo con un hueco; el señalero, una figura con brazos.
     pideApagar: llave,
     vistas: vistas.join(" → "),
     v: o.estado().airspeed.toFixed(1),
@@ -1160,7 +1176,7 @@ comprobar(
   "y al parar, la pantalla dice apagar el motor",
   alFinal.pideApagar,
   alFinal.pideApagar
-    ? `la llave, después de ${alFinal.vistas}`
+    ? `${alFinal.vistas.endsWith("senalero-cortar") ? "la seña de cortar, pulsable" : "la llave"}, después de ${alFinal.vistas}`
     : `fase «${alFinal.fase}», v=${alFinal.v}, tarjetas: ${alFinal.vistas || "ninguna"}`,
   "la tarjeta del gesto del señalero se quedaba puesta y tapaba la llave",
 );
