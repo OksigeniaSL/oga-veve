@@ -3890,11 +3890,21 @@ export class VueloDePasaje {
      */
     const abierto = this.kit.estaAbierto;
     const juego = this.kit.juegoDeAhora;
-    if ((this.kitAbierto && !abierto) || juego !== this.juegoDelKit) this.charla.quitar(esDelKit);
+    /*
+     * **Y bajando de los diez mil pies, el kit deja la palabra a la
+     * tripulante**: lo que esperaba turno se quita y lo nuevo no entra, hasta
+     * que pida guardarlo. Pedirlo es una charla, que espera su rato de
+     * silencio, y con las piezas puestas deprisa las frases del kit se
+     * encadenaban sin dejarlo: medido en el banco, la tripulante no encontró
+     * hueco y el kit lo recogió la red a 9.015 ft, con la llegada ya empezada,
+     * que se vive sin juego delante. Ver el momento `kitRecoger`.
+     */
+    const aGuardar = abierto && !l.enTierra && bajando(l.tramo) && l.altitud < DIEZ_MIL_PIES;
+    if ((this.kitAbierto && !abierto) || juego !== this.juegoDelKit || aGuardar) this.charla.quitar(esDelKit);
     this.kitAbierto = abierto;
     this.juegoDelKit = juego;
     const lineas = this.kit.tomarLoQueDecir();
-    if (lineas.length) this.charla.decir(lineas);
+    if (lineas.length && !aGuardar) this.charla.decir(lineas);
   }
 
   /**

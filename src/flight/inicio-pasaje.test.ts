@@ -1954,6 +1954,40 @@ describe("el kit de viaje, en el vuelo", () => {
     const aprox = cuando(r.dichas, "comandante.aproximacion");
     expect(r.pausas.filter((p) => p.t > aprox + DT).every((p) => !p.juego)).toBe(true);
   });
+
+  it("con las frases del kit encadenadas, lo pide la tripulante a los diez mil pies y no lo recoge la red", () => {
+    // Quien pone una pieza cada segundo y vuelve a armar en cuanto acaba: cada pieza, su frase, sin un silencio.
+    let recogidoA: number | null = null;
+    let ultimo = -Infinity;
+    const r = volarConElKit((escena, t) => {
+      const kit = escena.kit;
+      if (kit.estado.recogido) {
+        recogidoA ??= t;
+        return;
+      }
+      if (!kit.aMano) return;
+      if (!kit.estaAbierto) kit.abrir();
+      if (!kit.estaAbierto || kit.estado.pausado) return;
+      const j = kit.juego;
+      if (!j) {
+        kit.elegir("avion");
+        return;
+      }
+      if (t - ultimo < 1) return;
+      ultimo = t;
+      kit.tocado();
+      if (j instanceof JuegoDelAvion) {
+        const p = [...NIVELES[j.numero]!.piezas, ...LUCES].find((x) => j.aMano(x));
+        if (p) j.soltar(p, p, true);
+      }
+    });
+    const guardar = r.dichas.find((d) => d.linea.clave === "inicio.tripulacion.pasaje.cerca.kitGuardar");
+    expect(guardar, "la tripulante pide guardarlo").toBeDefined();
+    expect(recogidoA).not.toBeNull();
+    // Lo recoge al pedirlo ella, no la red de mil pies más abajo.
+    expect(recogidoA! - guardar!.desde).toBeGreaterThanOrEqual(0);
+    expect(recogidoA! - guardar!.desde).toBeLessThan(1);
+  });
 });
 
 // ── Lo que se nombra del paisaje, solo si se ve ──────────────────────────
