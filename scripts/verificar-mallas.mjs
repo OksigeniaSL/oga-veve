@@ -17,7 +17,9 @@
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
 import { baseDe } from './servidor.mjs';
-const PUERTO = 5286;
+// Dónde dejar la foto a ras de pista: `node scripts/verificar-mallas.mjs [carpeta]`.
+const D = process.argv[2] ?? '/tmp';
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5286);
 const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
 const BASE = baseDe(server, PUERTO);
@@ -44,7 +46,7 @@ await page.evaluate(() => {
   s.velocity.x = 0; s.velocity.y = 0; s.velocity.z = 0;
 });
 await page.waitForTimeout(2500);
-await page.screenshot({ path: '/tmp/claude-1000/-home-eraorahan-Downloads-flyjazz/b3dbfc3e-0835-4131-92f8-19dd24f3f2e3/scratchpad/pintura-ras.png' });
+await page.screenshot({ path: `${D}/pintura-ras.png` });
 console.log('pintura-ras.png');
 const c = await page.evaluate(() => globalThis.__oga.camara?.() ?? null);
 console.log('cámara:', c ? `near ${c.near} · far ${c.far} · ${c.bits} bits · logarítmico ${c.logaritmico}` : 'sin dato');

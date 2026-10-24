@@ -31,7 +31,7 @@ import { join } from "node:path";
 import { baseDe } from "./servidor.mjs";
 
 const FOTOS = process.argv[2] ?? "";
-const PUERTO = 5301;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5301);
 const FLOTA = ["jaz-20", "jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
 
 if (FOTOS) mkdirSync(FOTOS, { recursive: true });

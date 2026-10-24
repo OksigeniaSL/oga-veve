@@ -53,7 +53,7 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
-const PUERTO = 5309;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5309);
 const CON_TREN = ["jaz-40", "jaz-60", "jaz-90", "jaz-120"];
 const SIN_TREN = ["jaz-20", "jaz-25"];
 

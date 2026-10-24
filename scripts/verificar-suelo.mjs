@@ -29,7 +29,7 @@ import { baseDe } from './servidor.mjs';
 /** Caída por metro, en metros, que ya despega al avión rodando. */
 const CAIDA_QUE_DESPEGA = 0.12;
 
-const PUERTO = 5278;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5278);
 const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
 const BASE = baseDe(server, PUERTO);

@@ -32,7 +32,7 @@ const RELOJ = 3;
  * del puesto a la cabecera 30, no cabe en los diez minutos de Pettirossi.
  */
 const TIEMPO = Number(process.env.OGA_TIEMPO ?? 600);
-const PUERTO = 5243;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5243);
 
 const server = await createServer({
   root: process.cwd(),

@@ -31,7 +31,7 @@ import { extname, join, normalize } from "node:path";
 import { chromium } from "playwright";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
-const PUERTO = 5321;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5321);
 
 process.stdout.write("\n  compilando…\n");
 execSync("npx vite build && node scripts/hacer-sw.mjs", { stdio: "pipe" });

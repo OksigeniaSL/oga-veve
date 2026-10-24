@@ -17,7 +17,7 @@ import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
 const D = process.argv[2] ?? null;
-const PUERTO = 5196;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5196);
 const server = await createServer({
   root: process.cwd(),
   server: { port: PUERTO, hmr: false },

@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 import { baseDe } from './servidor.mjs';
 
-const PUERTO = 5189;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5189);
 const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
 const BASE = baseDe(server, PUERTO);
@@ -48,7 +48,9 @@ for (const tramo of ['guyrami', 'tuka', 'taguato', 'taguato-ruvicha']) {
     return `${m.sel.replace('.', '')} ${r.toFixed(1)}:1 ${m.tam} ${r >= minimo ? '✓' : '✗ FALLA'}`;
   }).join(' · ');
   console.log(`${tramo.padEnd(16)} ${linea || '(sin texto medible)'}`);
-  await page.screenshot({ path: `${process.argv[2]}/piel-${tramo}.png` });
+  // La foto, solo si se pide carpeta: sin ella salía «undefined/piel-…» y el
+  // banco reventaba después de haber medido.
+  if (process.argv[2]) await page.screenshot({ path: `${process.argv[2]}/piel-${tramo}.png` });
   await page.close();
 }
 await b.close(); await server.close();

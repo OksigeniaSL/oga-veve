@@ -48,7 +48,7 @@ const FOTOS = process.env.OGA_FOTOS ?? "capturas-mirada";
 const CON_GPU = process.env.OGA_GPU !== "0";
 const SOLO = process.env.OGA_SOLO ?? "";
 const MEDIR = !process.env.OGA_SIN_MEDIR;
-const PUERTO = 5373;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5373);
 mkdirSync(FOTOS, { recursive: true });
 
 /**

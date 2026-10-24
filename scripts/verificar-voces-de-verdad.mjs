@@ -42,7 +42,7 @@ import {
   seSolapan,
 } from "./oido.mjs";
 
-const PUERTO = 5297;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5297);
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const AVION = process.argv[3] ?? "jaz-90";
 /** Cuánto se queda en el puesto mirando, en segundos de pared. */

@@ -34,7 +34,7 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
-const PUERTO = 5292;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5292);
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "taguato";
 const AVION = process.argv[4] ?? "jaz-20";

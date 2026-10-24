@@ -24,7 +24,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { baseDe } from "./servidor.mjs";
 
-const PUERTO = 5292;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5292);
 
 /** Qué frase le toca a quién, y de qué pack tiene que salir. */
 /** Una información de tráfico cualquiera: a las dos, tres millas, mil pies arriba. */

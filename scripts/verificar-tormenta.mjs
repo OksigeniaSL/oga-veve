@@ -40,7 +40,7 @@ if (!["rodear", "entrar", "fotos"].includes(MODO)) {
 const ESCENARIO = process.argv[3] ?? "pettirossi";
 const AVION = process.argv[4] ?? "jaz-90";
 const TRAMO = process.argv[5] ?? "taguato";
-const PUERTO = 5349;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5349);
 const FOTOS = process.env.OGA_FOTOS ?? "fotos-tormenta";
 const CON_GPU = process.env.OGA_GPU === "1";
 /** Lo más que se espera, en segundos de reloj del juego. */
