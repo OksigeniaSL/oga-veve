@@ -18420,5 +18420,19 @@
     "idioma": "es-PY",
     "texto": "¡Aterrizaste! Pero con un golpe fuerte: la próxima, llegá al suelo más despacito, sin empujar la nariz para abajo",
     "para": "el veredicto de la toma, en los peldaños de abajo: se aterrizó, pero con un golpe fuerte"
+  },
+  {
+    "id": "inicio.ara.pasaje.mazoCaminos",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Y se ven los caminitos que suben entre las fincas!",
+    "para": "el modo inicio, de pasaje: Ara, en la final, ve los caminos que suben entre las fincas de Mazo",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]

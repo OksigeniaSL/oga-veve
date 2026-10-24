@@ -407,6 +407,10 @@
       "ms": 4007,
       "h": "1abaeca6ab"
     },
+    "inicio.ara.pasaje.mazoCaminos": {
+      "ms": 3307,
+      "h": "9fa309f6e2"
+    },
     "inicio.ara.pasaje.meneo": {
       "ms": 5307,
       "h": "df073d2f79"
@@ -895,6 +899,9 @@
     ],
     "inicio.ara.pasaje.mazoBici": [
       "inicio.ara.pasaje.mazoBici"
+    ],
+    "inicio.ara.pasaje.mazoCaminos": [
+      "inicio.ara.pasaje.mazoCaminos"
     ],
     "inicio.ara.pasaje.meneo": [
       "inicio.ara.pasaje.meneo"

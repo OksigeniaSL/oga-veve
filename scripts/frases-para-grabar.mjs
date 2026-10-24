@@ -1850,8 +1850,17 @@ const DEL_TOQUE = [
   ["vuelo.tocasteLargoFacil", "instructor", "el veredicto de la toma, en los peldaños de abajo: se aterrizó, pero lejos de las rayas"],
   ["vuelo.tocasteDuroFacil", "instructor", "el veredicto de la toma, en los peldaños de abajo: se aterrizó, pero con un golpe fuerte"],
 ];
+/**
+ * **Y los caminos de Mazo** (punto 314, 24-10-2026): con la anisotropía de las
+ * ortofotos ya se distinguen en la final, y Ara los cuenta detrás de las
+ * fincas. Al final, que lo grabado no se renumera. Ver la charla `mazo` en
+ * `src/flight/inicio-pasaje.ts`.
+ */
+const DE_LOS_CAMINOS = [
+  ["inicio.ara.pasaje.mazoCaminos", "ara", "el modo inicio, de pasaje: Ara, en la final, ve los caminos que suben entre las fincas de Mazo"],
+];
 const LO_QUE_SE_VE = new Set(
-  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE].map(
+  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS].map(
     ([k]) => k,
   ),
 );
@@ -1953,8 +1962,8 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
     total += texto.length;
   }
 }
-// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde, lo que se reconoce al llegar, armá tu avión, la ventanilla viva, la gracia y el silbo, y el toque en tierra: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE`, `DE_LO_QUE_SE_RECONOCE`, `DE_ARMA_TU_AVION`, `DE_LA_VENTANILLA_VIVA`, `DE_LA_GRACIA_Y_EL_SILBO` y `DEL_TOQUE`.
-for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE]) {
+// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde, lo que se reconoce al llegar, armá tu avión, la ventanilla viva, la gracia y el silbo, el toque en tierra y los caminos de Mazo: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE`, `DE_LO_QUE_SE_RECONOCE`, `DE_ARMA_TU_AVION`, `DE_LA_VENTANILLA_VIVA`, `DE_LA_GRACIA_Y_EL_SILBO`, `DEL_TOQUE` y `DE_LOS_CAMINOS`.
+for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS]) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });
