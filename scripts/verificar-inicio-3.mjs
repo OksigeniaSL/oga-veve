@@ -1988,6 +1988,10 @@ async function jugarElAvionEnElVuelo(page) {
   avionEnVuelo.s = (Date.now() - t0) / 1000;
   avionEnVuelo.pausado = Math.round(pausado);
   await foto(page, "kit-avion-despegado-en-vuelo");
+  // Como quien mira despegar su avión: hasta que Ara acaba de contarlo. Cambiar de juego antes calla lo que quedaba por decir.
+  await page
+    .waitForFunction(() => (globalThis.__oga.inicio().registro ?? []).some((d) => d.clave === "inicio.ara.pasaje.kit.piezas.fin"), null, { timeout: 40_000 })
+    .catch(() => {});
   // Y la luz verde, que se deja abierta: la recoge la tripulación al empezar la llegada.
   await page.click(".kit__atras", { force: true }).catch(() => {});
   await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.luz, null, { timeout: 60_000 }).catch(() => {});
