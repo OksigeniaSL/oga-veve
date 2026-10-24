@@ -343,7 +343,8 @@ function tipo(t) {
   for (const [nombre, pts] of alas) {
     if (alta) {
       const s = superficie(pts, 1, 14);
-      poner("ala", { tipo: "superficie", contorno: s.contorno, cerca: 5 });
+      // El ala alta, encima de todo, también del tren: una rueda pintada sobre el ala parecería posada en ella.
+      poner("ala", { tipo: "superficie", contorno: s.contorno, cerca: 5 + POR_ENCIMA + 1 });
       continue;
     }
     const d = superficie(lado(pts, 1), 1, 6);
