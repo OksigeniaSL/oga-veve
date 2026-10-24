@@ -147,6 +147,18 @@ describe("armá tu avión", () => {
     expect(j.estado.despegados).toBe(NIVELES.length);
   });
 
+  it("con alguien hablando, lo de la pieza no se pone en cola: espera al silencio", () => {
+    const j = new JuegoDelAvion();
+    j.tomarLoQueDecir();
+    expect(j.soltar("trenPrincipal", "trenPrincipal", false)).toBe(true);
+    expect(j.tomarLoQueDecir()).toEqual([]);
+    j.soltar("trenMorro", "trenMorro", true);
+    expect(claves(j.tomarLoQueDecir())).toEqual([PARA_QUE_SIRVE.ruedas.clave]);
+    // Y lo de las luces, siempre: es lo que hay que hacer ahora.
+    for (const p of ["ala", "motor", "cola"] as const) j.soltar(p, p, false);
+    expect(claves(j.tomarLoQueDecir())).toEqual([DICHO_DEL_AVION.luces.clave]);
+  });
+
   it("una pieza en otro hueco vuelve, el suyo se ilumina, y Ara ayuda sin regañar", () => {
     const j = new JuegoDelAvion();
     j.tomarLoQueDecir();

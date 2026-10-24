@@ -1782,7 +1782,9 @@ describe("el kit de viaje, en el vuelo", () => {
       const e = r.escena.estado;
       expect(e.kit.hechos).toContain(juego);
       const k = r.dichas.map((d) => d.linea.clave);
-      for (const p of ["ala", "motor", "cola", "ruedas"]) expect(k, p).toContain(`inicio.ara.pasaje.kit.piezas.${p}`);
+      // Lo de cada pieza, con hueco; lo de las luces, siempre. Ver `JuegoDelAvion.poner`.
+      expect(k).toContain("inicio.ara.pasaje.kit.piezas.ala");
+      expect(k).toContain("inicio.ara.pasaje.kit.avion.luces");
       expect(k).toContain("inicio.ara.pasaje.kit.piezas.empezar");
       expect(k).toContain("inicio.ara.pasaje.kit.piezas.fin");
       // Nunca dos frases a la vez.

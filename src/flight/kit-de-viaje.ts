@@ -295,6 +295,8 @@ export class JuegoDelAvion extends Juego<Sitio> {
   private despegados = 0;
   /** Las clases de pieza ya contadas, y lo de las luces: lo que se dice una vez por juego. */
   private readonly dichas = new Set<string>();
+  /** Las que se pusieron con alguien hablando: se cuentan en el siguiente silencio, de una en una. */
+  private porContar: Clase[] = [];
 
   constructor(nivel = 0) {
     super();
@@ -363,7 +365,7 @@ export class JuegoDelAvion extends Juego<Sitio> {
     if (!this.aMano(s)) return false;
     this.cogida = null;
     if (en === s) {
-      this.poner(s);
+      this.poner(s, callada);
       return true;
     }
     if (en === null) return false;
@@ -404,12 +406,24 @@ export class JuegoDelAvion extends Juego<Sitio> {
     if (this.aMano(s)) this.poner(s);
   }
 
-  private poner(s: Sitio): void {
+  /**
+   * **Se pone en su sitio.** Lo que cuenta Ara de cada clase de pieza, solo
+   * con la conversación callada: quien pone piezas deprisa no puede ir con
+   * cuatro explicaciones en cola detrás, que llegan cuando ya está en otra
+   * cosa y le tapan lo de las luces (medido en el banco: un avión en
+   * veintisiete segundos y medio minuto de frases). Lo que no se dijo espera
+   * al siguiente silencio, de una en una: ver `paso`. Lo de las luces sí se
+   * dice siempre: es lo que hay que hacer ahora.
+   */
+  private poner(s: Sitio, callada = true): void {
     this.puestas.push(s);
     this.cogida = null;
     if (this.senala === s) this.senala = null;
     this.acierto();
-    if (!esLuz(s)) this.decirUnaVez(claseDe(s), PARA_QUE_SIRVE[claseDe(s)]);
+    if (!esLuz(s) && !this.dichas.has(claseDe(s))) {
+      if (callada) this.decirUnaVez(claseDe(s), PARA_QUE_SIRVE[claseDe(s)]);
+      else if (!this.porContar.includes(claseDe(s))) this.porContar.push(claseDe(s));
+    }
     if (this.faltan().length > 0) return;
     if (this.fase === "piezas") {
       this.cambiarA("luces");
@@ -441,6 +455,9 @@ export class JuegoDelAvion extends Juego<Sitio> {
    * del último, ganado.
    */
   override paso(dt: number, callada: boolean): void {
+    // Lo que quedó por contar de las piezas, en el primer silencio y de una en una.
+    const pendiente = callada && this.fase === "piezas" ? this.porContar.shift() : undefined;
+    if (pendiente) this.decirUnaVez(pendiente, PARA_QUE_SIRVE[pendiente]);
     if (this.fase === "piezas" || this.fase === "luces") {
       super.paso(dt, callada);
       return;

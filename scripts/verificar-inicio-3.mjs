@@ -1321,9 +1321,9 @@ async function elVuelo() {
       : "no llegó",
   );
   comprobar(
-    "en el vuelo se arma un avión entero, con sus luces, y despega; y Ara cuenta para qué sirve cada pieza",
+    "en el vuelo se arma un avión entero, con sus luces, y despega; Ara cuenta el ala y lo de las luces, sin frases en cola",
     !!e?.kit?.hechos?.includes("avion") &&
-      ["ala", "motor", "cola", "ruedas"].every((p) => registro.some((d) => d.clave === `inicio.ara.pasaje.kit.piezas.${p}`)) &&
+      registro.some((d) => d.clave === "inicio.ara.pasaje.kit.piezas.ala") &&
       registro.some((d) => d.clave === "inicio.ara.pasaje.kit.avion.luces"),
     `hechos: ${(e?.kit?.hechos ?? []).join(", ") || "ninguno"} · el primer avión, de abrirlo a despegar: ${avionEnVuelo.s?.toFixed(0) ?? "?"} s de pared, ${avionEnVuelo.pausado} s con la megafonía`,
   );
@@ -2105,7 +2105,7 @@ async function elKitConElDedo() {
       let k = await kitDe();
       await foto(page, `kit-mochilita-${nombre}`);
       await tocar(k.boton);
-      await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.piezas, null, { timeout: 10_000 });
+      await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.juegos?.avion, null, { timeout: 10_000 });
       await pausa(500);
       // Que cabe, y no tapa la tarjeta ni ningún botón del HUD que se vea.
       const solapes = await page.evaluate(() => {
