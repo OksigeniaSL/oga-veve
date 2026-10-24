@@ -2063,7 +2063,8 @@ export class Hud {
                    leer — la flecha dice a dónde va.
                  -->
                  <button class="sonido cuadro__tirador" type="button"
-                         data-hud="cuadro-tirador" aria-pressed="false"
+                         data-hud="cuadro-tirador" data-objetivo="extendido"
+                         aria-pressed="false"
                          aria-label="${t("hud.bajarCuadro")}">
                    <!--
                      Y en el teléfono, donde nace recogido, una esfera al
