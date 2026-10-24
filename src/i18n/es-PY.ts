@@ -3775,15 +3775,15 @@ export const ES_PY = {
   "inicio.ara.pasaje.kit.avion.luces":
     "Ahora las luces: la roja va en la punta del ala izquierda, la verde en la derecha y la blanca atrás.",
   "inicio.ara.pasaje.kit.avion.noche":
-    "De noche, con las luces, otro avión sabe para dónde vamos: si ve la roja y la verde juntas, vamos de frente.",
+    "De noche, con las luces, otro avión sabe para dónde vamos: si ve la roja y la verde a la vez, es que vamos hacia él.",
   "inicio.ara.pasaje.kit.avion.biplano":
     "¡Un biplano! Tiene dos alas, una arriba y otra abajo, y su ruedita no va en la nariz: va en la cola.",
   "inicio.ara.pasaje.kit.avion.bimotor":
-    "Este lleva un motor en cada ala. Si uno se apaga, el otro sigue empujando y el avión sigue volando.",
+    "Este lleva un motor en cada ala. Si uno se apaga, el otro sigue empujando y el avión puede seguir volando.",
   "inicio.ara.pasaje.kit.avion.colaEnT":
     "¡La cola en T! El estabilizador va arriba de todo, lejos del aire revuelto del ala y de las hélices.",
   "inicio.ara.pasaje.kit.avion.reactor":
-    "¡Como el nuestro! Los motores cuelgan debajo del ala: su peso le ayuda al ala, y se llega fácil para cuidarlos.",
+    "¡Como el nuestro! Los motores cuelgan debajo del ala: su peso ayuda a que el ala no se doble tanto, y se llega fácil para cuidarlos.",
   "inicio.ara.pasaje.kit.avion.cuatrimotor":
     "¡Cuatro motores y un montón de ruedas! Tantas ruedas reparten el peso, para no romper la pista.",
   "inicio.tripulacion.pasaje.cerca.kitGuardar":

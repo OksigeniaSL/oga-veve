@@ -2338,15 +2338,15 @@ export const EN: Dictionary = {
   "inicio.ara.pasaje.kit.avion.luces":
     "Now the lights: the red one goes on the tip of the left wing, the green one on the right, and the white one at the back.",
   "inicio.ara.pasaje.kit.avion.noche":
-    "At night, with the lights, another plane knows where we're going: if it sees red and green together, we're coming head-on.",
+    "At night, with the lights, another plane knows where we're going: if it sees red and green at the same time, we're heading towards it.",
   "inicio.ara.pasaje.kit.avion.biplano":
     "A biplane! It has two wings, one on top and one below, and its little wheel isn't on the nose: it's on the tail.",
   "inicio.ara.pasaje.kit.avion.bimotor":
-    "This one has an engine on each wing. If one stops, the other keeps pushing and the plane keeps flying.",
+    "This one has an engine on each wing. If one stops, the other keeps pushing and the plane can keep flying.",
   "inicio.ara.pasaje.kit.avion.colaEnT":
     "A T-tail! The stabiliser sits right at the top, away from the stirred-up air of the wing and the propellers.",
   "inicio.ara.pasaje.kit.avion.reactor":
-    "Just like ours! The engines hang under the wing: their weight helps the wing, and they're easy to reach for looking after.",
+    "Just like ours! The engines hang under the wing: their weight stops the wing from bending so much, and they're easy to reach for looking after.",
   "inicio.ara.pasaje.kit.avion.cuatrimotor":
     "Four engines and loads of wheels! All those wheels spread the weight, so the runway doesn't break.",
   "inicio.tripulacion.pasaje.cerca.kitGuardar":
