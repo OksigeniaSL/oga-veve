@@ -30,9 +30,12 @@ import {
   InstancedMesh,
   Matrix4,
   MeshBasicMaterial,
+  Quaternion,
   SphereGeometry,
+  Vector3,
 } from "three";
 import type { Pista, Punto, Umbral } from "./aerodrome";
+import { PAPI_SE_DISTINGUE_PX, PAPI_SE_VE_DESDE } from "../flight/lo-que-se-nombra";
 
 /** Un umbral del que sí sabemos dónde está. */
 type Situado = Umbral & { readonly xy: Punto };
@@ -87,6 +90,71 @@ const BARRA = 300;
 const PAPI_ADENTRO = 300;
 const PAPI_DEL_BORDE = 15;
 const PAPI_SEPARACION = 9;
+
+/** El radio de cada luz del PAPI dibujada a su tamaño, m. */
+const RADIO_DE_LUZ_DEL_PAPI = 1.1;
+
+/**
+ * **Lo menos que mide cada luz del PAPI en la pantalla**, px de diámetro: tres,
+ * que es un punto de luz que se ve sin buscarlo y deja dos píxeles de hueco
+ * entre una y otra cuando la fila mide `PAPI_SE_DISTINGUE_PX`.
+ */
+export const LUZ_DEL_PAPI_COMO_POCO_PX = 3;
+
+/** Cuánto se agranda el PAPI para verse de lejos. Ver `escalaDelPapi`. */
+export interface EscalaDelPapi {
+  /** Lo que se alarga la fila, desde la luz de dentro hacia fuera. */
+  readonly fila: number;
+  /** Lo que se agranda cada luz. */
+  readonly luz: number;
+}
+
+/**
+ * **El PAPI se ve de lejos, como el de verdad**: «these lights are visible
+ * from about 5 miles during the day» (FAA, *Aeronautical Information
+ * Manual*, 2-1-2 b). Dibujadas a su tamaño —esferas de un metro largo a nueve
+ * metros una de otra—, aquí solo se distinguían en los últimos novecientos
+ * metros, con los quinientos pies ya pasados, y la frase de «las cuatro luces
+ * de al lado de la pista» casi no llegaba a sonar (277).
+ *
+ * No es que las luces fueran pequeñas: es que **el ojo y la pantalla no ven lo
+ * mismo**. A cinco millas, nueve metros son casi cuatro minutos de arco, y un
+ * ojo separa uno; un píxel de una pantalla de 720 con sesenta y dos grados de
+ * campo son más de cinco. El ojo de quien vuela cuenta cuatro luces donde la
+ * pantalla pinta una. Es lo mismo que con los aviones del tráfico —ver
+ * `world/se-ve-de-lejos.ts`— y se resuelve igual, simplificando el dibujo y
+ * no lo que dice:
+ *
+ * - **cada luz, un punto de al menos `LUZ_DEL_PAPI_COMO_POCO_PX`**, que es lo
+ *   que es una luz de lejos;
+ * - **y la fila, larga lo que haga falta para contarlas**: al menos
+ *   `PAPI_SE_DISTINGUE_PX` de la primera a la última. Se alarga desde la luz
+ *   de dentro hacia fuera, así que nunca se mete en la pista.
+ *
+ * El color de cada una sigue saliendo de su sitio de verdad y su ángulo de
+ * verdad —ver `mirarDesde`—: de lejos se dibuja más grande, pero dice lo
+ * mismo que diría a su tamaño. De cerca, a su tamaño. Y pasadas las cinco
+ * millas del AIM, vuelve a él poco a poco: más allá, de día, no se ve.
+ *
+ * @param distancia del ojo al centro de las luces, m
+ * @param pixelesPorRadian los de la pantalla. Ver `pixelesPorRadian` en
+ *   `world/se-ve-de-lejos.ts`.
+ */
+export function escalaDelPapi(
+  distancia: number,
+  pixelesPorRadian: number,
+  fila = 3 * PAPI_SEPARACION,
+  radio = RADIO_DE_LUZ_DEL_PAPI,
+): EscalaDelPapi {
+  if (!(distancia > 0) || !(pixelesPorRadian > 0) || fila <= 0) return { fila: 1, luz: 1 };
+  const filaPx = (fila / distancia) * pixelesPorRadian;
+  const luzPx = ((2 * radio) / distancia) * pixelesPorRadian;
+  const sFila = Math.max(1, PAPI_SE_DISTINGUE_PX / filaPx);
+  const sLuz = Math.max(1, LUZ_DEL_PAPI_COMO_POCO_PX / luzPx);
+  // Entera hasta las cinco millas, y de ahí a su tamaño en una milla más.
+  const queda = Math.max(0, Math.min(1, (1.2 * PAPI_SE_VE_DESDE - distancia) / (0.2 * PAPI_SE_VE_DESDE)));
+  return { fila: 1 + (sFila - 1) * queda, luz: 1 + (sLuz - 1) * queda };
+}
 
 /** Una ayuda visual del fichero del aeródromo. */
 export interface AyudaVisual {
@@ -213,6 +281,14 @@ export interface Aproximacion {
    * módulo que cambia: las luces de aproximación se ponen una vez y se quedan.
    */
   mirarDesde(x: number, y: number, z: number): void;
+  /**
+   * **Dibuja el PAPI para que se vea desde el ojo**, en las coordenadas de
+   * este grupo: de lejos, más grande de lo que es, para que se distinga como
+   * lo distingue un ojo. Se llama cada fotograma con la cámara ya puesta. No
+   * toca los colores: esos los pone `mirarDesde` desde las luces de verdad.
+   * Ver `escalaDelPapi`.
+   */
+  verDesde(x: number, y: number, z: number, pixelesPorRadian: number): void;
   /**
    * A cuántos metros del umbral están las luces, pista adentro. Del umbral de
    * aterrizar, que con el umbral desplazado no es la punta.
@@ -357,7 +433,7 @@ export function crearAproximacion(
    * desde la aproximación, que es donde va.
    */
   const papi = new InstancedMesh(
-    new SphereGeometry(1.1, 8, 6),
+    new SphereGeometry(RADIO_DE_LUZ_DEL_PAPI, 8, 6),
     new MeshBasicMaterial(),
     4,
   );
@@ -376,6 +452,57 @@ export function crearAproximacion(
     papi.setMatrixAt(k, m);
   });
   grupo.add(papi);
+
+  /*
+   * **Y dibujadas para verse de lejos**: ver `escalaDelPapi`. Lo que se mueve
+   * es el dibujo; `luces` se queda con el sitio de verdad, que es desde donde
+   * se cuenta el ángulo de cada una.
+   */
+  const centroDelPapi = new Vector3();
+  for (const l of luces) centroDelPapi.add(new Vector3(l.x, l.y, l.z));
+  if (luces.length) centroDelPapi.divideScalar(luces.length);
+  const filaDelPapi =
+    luces.length > 1
+      ? Math.hypot(luces[luces.length - 1]!.x - luces[0]!.x, luces[luces.length - 1]!.z - luces[0]!.z)
+      : 0;
+  const sinGiro = new Quaternion();
+  const dondeVa = new Vector3();
+  const tamano = new Vector3();
+  let escalaPuesta: EscalaDelPapi = { fila: 1, luz: 1 };
+  const verDesde = (x: number, y: number, z: number, pixelesPorRadian: number): void => {
+    const primera = luces[0];
+    if (!primera) return;
+    const e = escalaDelPapi(
+      Math.hypot(x - centroDelPapi.x, y - centroDelPapi.y, z - centroDelPapi.z),
+      pixelesPorRadian,
+      filaDelPapi,
+    );
+    // Mover cuatro matrices cuesta poco, pero sin cambio no se mueve nada.
+    if (
+      Math.abs(e.fila - escalaPuesta.fila) < 0.01 * escalaPuesta.fila &&
+      Math.abs(e.luz - escalaPuesta.luz) < 0.01 * escalaPuesta.luz
+    )
+      return;
+    escalaPuesta = e;
+    const radio = RADIO_DE_LUZ_DEL_PAPI * e.luz;
+    luces.forEach((l, k) => {
+      const lx = primera.x + (l.x - primera.x) * e.fila;
+      const lz = primera.z + (l.z - primera.z) * e.fila;
+      /*
+       * Sobre su suelo, y con la luz agrandada entera por encima de él: una
+       * esfera de veinte metros puesta a un metro del suelo se vería media,
+       * enterrada. Lo que sube su centro, a cinco millas, no llega a dos
+       * píxeles.
+       */
+      const suelo = e.fila === 1 ? l.y - 1 : Math.max(cotaUmbral, altura([lx, -lz]));
+      dondeVa.set(lx, Math.max(l.y, suelo + radio), lz);
+      m.compose(dondeVa, sinGiro, tamano.setScalar(e.luz));
+      papi.setMatrixAt(k, m);
+    });
+    papi.instanceMatrix.needsUpdate = true;
+    // La esfera que la cámara usa para saber si se ve, con las luces donde van ahora.
+    papi.computeBoundingSphere();
+  };
 
   const tono = new Color();
   const mirarDesde = (x: number, y: number, z: number): void => {
@@ -412,6 +539,7 @@ export function crearAproximacion(
   return {
     grupo,
     mirarDesde,
+    verDesde,
     papiAdentro,
     senda,
     dispose() {

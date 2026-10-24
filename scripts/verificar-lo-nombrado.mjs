@@ -10,12 +10,20 @@
  *
  * Y mira, con la cámara y el cuadro de verdad:
  *
- * - que lejos, o mirando a otro lado, el PAPI no se nombra: se nombra el rombo,
- *   que sí está en el cuadro, y late;
+ * - que más allá de donde se distingue, o mirando a otro lado, el PAPI no se
+ *   nombra: se nombra el rombo, que sí está en el cuadro, y late;
  * - que con el cuadro recogido no se nombra ni el rombo: se dice la acción;
- * - que cerca y de frente el PAPI sí se nombra, y lleva su aro encima;
+ * - que de frente el PAPI sí se nombra, y lleva su aro encima: cerca y, desde
+ *   el 277, también a dos millas, que es donde se distingue el de verdad;
  * - que desde la cabina el rombo es el de su pantalla, y late allí;
  * - y que la puerta de la boca no tuvo que parar nada: quien habla eligió bien.
+ *
+ * El «lejos» de la captura del 273 era a dos millas, y ahí el PAPI de la
+ * pantalla no se distinguía: dibujado a su tamaño, solo en el último
+ * kilómetro. El de verdad se ve a cinco millas de día (AIM 2-1-2 b), y desde
+ * el 277 el de aquí también —ver `escalaDelPapi` en `world/aproximacion.ts`—,
+ * así que a dos millas y de frente lo que toca es nombrarlo y señalarlo. Lo de
+ * no nombrar lo que no se ve se mira ahora más allá de esas cinco millas.
  *
  * Saca capturas con la tarjeta de verdad —mira el renderer en cada una— del
  * rombo latiendo, del aro del PAPI y de la pantalla de la cabina.
@@ -33,6 +41,18 @@ const PUERTO = Number(process.env.OGA_PUERTO ?? 5373);
 const ESCENARIO = process.env.OGA_ESCENARIO ?? "pettirossi";
 const AVION = process.env.OGA_AVION ?? "jaz-60";
 const TRAMOS = (process.env.OGA_TRAMOS ?? "guyrami,taguato").split(",");
+/**
+ * **Lejos de verdad**, m antes del umbral: más allá de las cinco millas del
+ * AIM, contando las del ojo a las luces. Ahí el PAPI no se distingue —de día
+ * no se vería— y lo que se nombra es el rombo. Ver la cabecera.
+ */
+const LEJOS = 9500;
+/**
+ * **Y alto**, en veces la altura de la senda: a dos millas son trescientos
+ * cincuenta metros sobre la pista, por encima de donde la instructora apunta a
+ * las luces. Ahí apunta al rombo.
+ */
+const ALTO = 1.8;
 mkdirSync(CAPTURAS, { recursive: true });
 
 const server = await createServer({
@@ -150,22 +170,44 @@ try {
 
       const clave = (dicho) => (dicho ?? "").split("→ ")[1]?.split(" ")[0] ?? "";
 
-      // ── El 273: en final, desde fuera, a más de una milla ───────────────
-      const lejos = await enLaFinal(3400, 0.75, "chase");
-      const c1 = await pedirElConsejo();
+      // ── El 273, a dos millas y desde fuera: ahora sí se distingue (277) ──
+      const dosMillas = await enLaFinal(3400, 0.75, "chase");
+      const c0 = await pedirElConsejo();
+      await page.screenshot({ path: `${CAPTURAS}/${tramo}-273-dos-millas.png` });
+      comprobar(
+        `${tramo} · a dos millas (${dosMillas.alto} m, ${dosMillas.vista}): el PAPI se distingue, se nombra y lleva su aro`,
+        c0.ve.papiSeDistingue && /Papi$/.test(clave(c0.dicho)) && c0.aro !== null,
+        `${clave(c0.dicho)} · ` +
+          (c0.ve.papi ? `${c0.ve.papi.anchoPx.toFixed(1)} px de luces, ${Math.round(c0.ve.papi.distancia)} m` : "sin PAPI") +
+          ` · aro ${c0.aro ? `${Math.round(c0.aro.x)},${Math.round(c0.aro.y)}` : "no"}`,
+      );
+
+      // ── Más allá de las cinco millas, el PAPI no se distingue ───────────
+      const lejos = await enLaFinal(LEJOS, 0.75, "chase");
+      const ve = await page.evaluate(() => globalThis.__oga.juegoParaTrazas().loNombradoParaBanco);
       await page.screenshot({ path: `${CAPTURAS}/${tramo}-273-lejos.png` });
       comprobar(
         `${tramo} · lejos (${lejos.alto} m, ${lejos.vista}): el PAPI no se distingue`,
-        !c1.ve.papiSeDistingue,
-        c1.ve.papi ? `${c1.ve.papi.anchoPx.toFixed(1)} px de luces, ${Math.round(c1.ve.papi.distancia)} m` : "sin PAPI",
+        !ve.papiSeDistingue,
+        ve.papi ? `${ve.papi.anchoPx.toFixed(1)} px de luces, ${Math.round(ve.papi.distancia)} m` : "sin PAPI",
       );
+
+      /*
+       * ── Y por encima de los mil pies, la senda es la del rombo ──────────
+       *
+       * Las luces se nombran por debajo de los trescientos metros —ver
+       * `mirarLaSenda` en `game.ts`—, y con el rombo en el cuadro, lo que se
+       * nombra es el rombo, y late.
+       */
+      const alto = await enLaFinal(3400, ALTO, "chase");
+      const c1 = await pedirElConsejo();
       comprobar(
-        `${tramo} · lejos: no dice «dos blancas y dos rojas»`,
+        `${tramo} · alto (${alto.alto} m, ${alto.vista}): no dice «dos blancas y dos rojas»`,
         !/Papi/.test(clave(c1.dicho)),
         clave(c1.dicho),
       );
       comprobar(
-        `${tramo} · lejos: con el cuadro a la vista, nombra el rombo y el rombo late`,
+        `${tramo} · alto: con el cuadro a la vista, nombra el rombo y el rombo late`,
         /Senda$/.test(clave(c1.dicho)) &&
           c1.ve.seVen.includes("rombo") &&
           c1.senalados.rombo !== undefined &&
@@ -232,7 +274,7 @@ try {
       );
 
       // ── Desde la cabina: el rombo de su pantalla, latiendo ──────────────
-      const cabina = await enLaFinal(3400, 0.75, "cockpit");
+      const cabina = await enLaFinal(3400, ALTO, "cockpit");
       if (cabina.vista === "cockpit") {
         const c5 = await pedirElConsejo();
         await page.waitForTimeout(400);
@@ -246,7 +288,7 @@ try {
 
       // ── El rombo latiendo en el cuadro, para la captura del 272 ─────────
       // En lo alto del primer latido, que dura 1,1 s: ver `.explica--presenta`.
-      await enLaFinal(3400, 0.75, "chase");
+      await enLaFinal(3400, ALTO, "chase");
       await page.evaluate(() =>
         globalThis.__oga.juegoParaTrazas().decirElConsejo({ accion: "narizAbajo", motivo: "alto" }, null),
       );
@@ -260,12 +302,14 @@ try {
       /*
        * Aquí se piden consejos seguidos y se gira la cámara entre uno y otro,
        * así que la puerta puede parar uno: el de las luces que esperaba turno
-       * cuando la cámara dejó de verlas. Eso es lo que tiene que hacer. Lo que
-       * no puede parar es otra cosa: el resto lo eligió bien quien habla.
+       * cuando la cámara dejó de verlas, o el del rombo que esperaba cuando se
+       * recogió el cuadro —en Guyrami la cola va más llena y le pasa—. Eso es
+       * lo que tiene que hacer. Lo que no puede parar es otra cosa: el resto lo
+       * eligió bien quien habla.
        */
       comprobar(
         `${tramo} · la puerta de la boca solo paró lo que dejó de verse esperando turno`,
-        noSeVeia.every((c) => /Papi$/.test(c)),
+        noSeVeia.every((c) => /Papi$|Senda$/.test(c)),
         noSeVeia.join(", ") || "nada",
       );
       comprobar(`${tramo} · sin errores en la página`, errores.length === 0, errores.join(" | "));
