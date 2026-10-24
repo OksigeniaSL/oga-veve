@@ -1569,7 +1569,20 @@ const enElCampo = CON_TOPE
        * no hay veredicto que dar — la prueba medía un accidente. Desde ocho,
        * todavía. El límite de este peldaño anda por los once y medio.
        */
-      o.colocar(x, o.suelo(x, z) + 3, z, 26);
+      /*
+       * **Y el tiempo en el aire que hace falta para que sea una toma.** Un
+       * bote no es un vuelo: el detector de la toma no se arma hasta llevar
+       * tres segundos en el aire —ver `ALGO_MAS_QUE_UN_BOTE` en
+       * `aterrizaje.ts`, que existe porque un badén rodando daba «fuera de
+       * pista» con su percance—. Soltado a tres metros, el avión tocaba en
+       * menos de eso y no había veredicto que ver: la tarjeta que quedaba era
+       * la del rodaje a casa. Así que se le sostiene ahí cuatro segundos y
+       * después se le suelta.
+       */
+      for (let i = 0; i < 40; i++) {
+        o.colocar(x, o.suelo(x, z) + 3, z, 26);
+        await new Promise((r) => setTimeout(r, 100));
+      }
       let tarjeta = "";
       for (let i = 0; i < 140; i++) {
         await new Promise((r) => setTimeout(r, 100));
