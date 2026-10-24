@@ -211,14 +211,17 @@ const BOTON = { bajo: BISEL * 0.5, ancho: 0.064, alto: 0.022 };
  *
  * - El forro de la trampilla es algo más grande que el hueco de fuera: dos
  *   centímetros por lado. Su esquina, la del contorno de fuera.
- * - El asa, arriba, a ocho centímetros del borde: un hueco oscuro de catorce
- *   por cuatro y medio con su tapa roja.
+ * - El asa, arriba, a tres centímetros del borde: un hueco oscuro de catorce
+ *   por cuatro y medio con su tapa roja. Estaba a ocho, medida en la
+ *   trampilla del JAZ 90, y en la del JAZ 60 —la del 1900, que deja menos
+ *   forro entre su borde y el cristal— caía debajo del bisel de la ventanilla
+ *   y no se veía (punto 241).
  * - El letrero, a tres centímetros por encima: veintiuno por ocho y medio,
  *   con su canto oscuro de seis milímetros. Las letras, de cuatro centímetros
  *   largos, con trazo de ocho milímetros.
  */
 const SALIDA = { forro: 0.02, esquina: 0.1 };
-const ASA = { bajo: 0.08, ancho: 0.14, alto: 0.045 };
+const ASA = { bajo: 0.03, ancho: 0.14, alto: 0.045 };
 const LETRERO = { encima: 0.03, ancho: 0.21, alto: 0.085, canto: 0.006 };
 
 /**
@@ -847,6 +850,38 @@ export function salidaEnLaPared(
     medioAncho,
     medioAlto: salida.alto / 2 + SALIDA.forro,
   };
+}
+
+/**
+ * **Lo que tiene que asomar de la salida desde su fila**, en coordenadas del
+ * avión: las cuatro esquinas del letrero y las dos de abajo del asa, que es
+ * lo que tiene de frente quien se sienta junto a la trampilla. Lo usa quien
+ * elige hacia dónde se mira en esa fila (punto 241): que asome no es que se
+ * vea entero. Sin la ventanilla de uno en la trampilla, nada.
+ */
+export function loQueAsomaDeLaSalida(
+  ventanilla: VentanillaDePasaje,
+  salida: SalidaDeAlLado,
+): Vector3[] {
+  if (!salida.enLaTrampilla) return [];
+  const s = salidaEnLaPared(ventanilla, salida);
+  const n = new Vector3(ventanilla.normal.x, ventanilla.normal.y, ventanilla.normal.z).normalize();
+  const arriba = new Vector3(0, 1, 0).addScaledVector(n, -n.y).normalize();
+  const c = ventanilla.centro;
+  const enLaPared = (largo: number, alto: number): Vector3 =>
+    new Vector3(c.x, c.y, c.z + largo).addScaledVector(arriba, alto).addScaledVector(n, -FONDO);
+  const borde = s.arriba + s.medioAlto;
+  const letrero = borde + LETRERO.encima;
+  const medio = LETRERO.ancho / 2 + LETRERO.canto;
+  const asa = borde - ASA.bajo - ASA.alto / 2;
+  return [
+    enLaPared(-medio, letrero + LETRERO.alto + LETRERO.canto),
+    enLaPared(medio, letrero + LETRERO.alto + LETRERO.canto),
+    enLaPared(-medio, letrero),
+    enLaPared(medio, letrero),
+    enLaPared(-ASA.ancho / 2, asa),
+    enLaPared(ASA.ancho / 2, asa),
+  ];
 }
 
 /**

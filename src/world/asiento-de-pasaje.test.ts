@@ -25,12 +25,14 @@ import { conPasaje } from "../audio/megafonia";
 import { colocarModelo } from "./aeronave-modelo";
 import { prepararAerofrenos } from "./aerofrenos";
 import { prepararFlaps } from "./flaps";
-import { seVePorLaVentanilla } from "./marco-de-ventanilla";
+import { loQueAsomaDeLaSalida, seVePorLaVentanilla } from "./marco-de-ventanilla";
 import { CamaraDePasaje, FOV_DE_PASAJE } from "../cameras/pasaje";
 import type { Contexto } from "../cameras/tipos";
 import type { FlightState } from "../flight/model";
 import {
   asientoAnteVentanilla,
+  giroDe,
+  libreDelHud,
   medirElPasaje,
   OJOS_A,
   seVeSentado,
@@ -451,6 +453,39 @@ describe("el asiento de encima del ala", () => {
     }
     // Y que alguno la tenga, que si no esto no prueba nada.
     expect(conAlguna).toBeGreaterThan(0);
+  });
+
+  /*
+   * **Y se lee** (punto 241). Desde la fila de detrás, que es donde se
+   * sentaba, la trampilla quedaba a sesenta y tantos grados hacia el morro y
+   * el «EXIT» fuera de la pantalla: en ninguna captura salía. Ahora la vista de
+   * pasaje del JAZ 60 se sienta en la fila de la salida, con la trampilla
+   * alrededor de su cristal, y mira de modo que el letrero entero y el asa
+   * queden donde no hay HUD, con el horizonte por el cristal y sin ojo de pez.
+   */
+  it("jaz-60: desde la vista de pasaje se lee el EXIT de la trampilla, con su asa y el horizonte", async () => {
+    const { pasaje } = await montarMoviendo(AIRCRAFT.find((x) => x.id === "jaz-60")!);
+    for (const lado of ["izquierda", "derecha"] as const) {
+      const a = pasaje![lado];
+      expect(a.salida?.enLaTrampilla, lado).toBe(true);
+      const puntos = loQueAsomaDeLaSalida(a.ventanilla, a.salida!);
+      const giro = giroDe(a);
+      // Las cuatro esquinas del letrero y las dos del asa, sin HUD encima.
+      expect(puntos.length).toBe(6);
+      for (const p of puntos) expect(libreDelHud(a, giro, p), lado).toBe(true);
+      // Sin ojo de pez: entre el ángulo de las demás vistas de pasaje y 72.
+      expect(a.fov ?? FOV_DE_PASAJE).toBeGreaterThanOrEqual(FOV_DE_PASAJE);
+      expect(a.fov ?? FOV_DE_PASAJE).toBeLessThanOrEqual(72);
+      // Sentado: los ojos a la altura de los del asiento de siempre, ni de pie
+      // ni agachado.
+      expect(Math.abs(a.ojo.y - a.ventanilla.centro.y)).toBeLessThan(0.2);
+      // Y el horizonte de frente, por el cristal.
+      const ojo = new Vector3(a.ojo.x, a.ojo.y, a.ojo.z);
+      const lejos = new Vector3(Math.sin(-a.guinada), 0, -Math.cos(a.guinada))
+        .multiplyScalar(1000)
+        .add(ojo);
+      expect(seVePorLaVentanilla(ojo, lejos, QUIETO, a.ventanilla), lado).toBe(true);
+    }
   });
 
 });

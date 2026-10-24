@@ -48,6 +48,8 @@
  * por diez puertas. Así que la trampilla y su letrero salen **de lo que trae el
  * modelo** —`salida-de-emergencia…` en `modelos/`—, y el asiento que cae junto
  * a una la ve; los demás, no. Ver `conSuSalida` y `docs/historias/fuentes.md`.
+ * Y si el de siempre cae junto a una, la vista se sienta en su fila, que es
+ * desde donde se lee el «EXIT»: ver `asientoEnLaSalida`.
  */
 
 import {
@@ -62,7 +64,12 @@ import {
 } from "three";
 import { FOV_DE_PASAJE } from "../cameras/pasaje";
 import { asientoDeAra, type AsientoDeAra } from "./asiento-de-ara";
-import { elMarcoEntero, seVePorLaVentanilla } from "./marco-de-ventanilla";
+import {
+  elCristalEntero,
+  elMarcoEntero,
+  loQueAsomaDeLaSalida,
+  seVePorLaVentanilla,
+} from "./marco-de-ventanilla";
 
 type Punto = { readonly x: number; readonly y: number; readonly z: number };
 
@@ -446,8 +453,17 @@ export function medirElPasaje(raiz: Object3D, grupo: Object3D): Pasaje | null {
     };
   };
 
-  const lado = (cual: "izquierda" | "derecha"): AsientoDePasaje =>
-    conSuSalida(elDeSiempre(cual), filas[cual], salidas[cual]);
+  /*
+   * Y si el de siempre cae junto a una salida sobre el ala, en la fila de la
+   * salida, mirando de modo que asomen el asa y el letrero (punto 241). Ver
+   * `asientoEnLaSalida`.
+   */
+  const lado = (cual: "izquierda" | "derecha"): AsientoDePasaje => {
+    const deSiempre = conSuSalida(elDeSiempre(cual), filas[cual], salidas[cual]);
+    return (
+      asientoEnLaSalida(deSiempre, filas[cual], salidas[cual], cual, ventanillaDe) ?? deSiempre
+    );
+  };
 
   const elDeSiempre = (cual: "izquierda" | "derecha"): AsientoDePasaje => {
     const fila = filas[cual];
@@ -670,6 +686,179 @@ export function seVeSentado(asiento: AsientoDePasaje, p: Vector3): boolean {
     alto < medio.alto - MARGEN.arriba &&
     alto > -medio.alto + MARGEN.abajo
   );
+}
+
+type Rectangulo = { readonly x0: number; readonly x1: number; readonly y0: number; readonly y1: number };
+
+/**
+ * **Lo que tapa el HUD de la vista de pasaje**: rectángulos en coordenadas de
+ * pantalla, de −1 a 1 y con y hacia arriba, en 4:3. La fila de botones de
+ * arriba; la columna de la izquierda; el rincón de la derecha con la tarjeta y
+ * el gas, y la columna de más a la derecha; el volumen, y la barra de
+ * instrumentos de abajo con los pedales, que empieza a un 81 % del alto.
+ * Medidos para la fila de la salida del JAZ 90 cuando la llevaba (puntos 241 y
+ * 254, 5-oct-2026), y vueltos a mirar en captura con el JAZ 60 (24-oct-2026).
+ */
+const HUD: readonly Rectangulo[] = [
+  { x0: -1, x1: 1, y0: 0.82, y1: 1 },
+  { x0: -1, x1: -0.6, y0: 0.5, y1: 1 },
+  { x0: 0.33, x1: 1, y0: -0.15, y1: 1 },
+  { x0: 0.48, x1: 1, y0: -1, y1: -0.15 },
+  { x0: -1, x1: -0.58, y0: -1, y1: -0.33 },
+  { x0: -1, x1: 1, y0: -1, y1: -0.6 },
+];
+
+/**
+ * **Y la segunda fila de botones**, la de las pantallas estrechas: en una
+ * tablet de 4:3 los botones de arriba no caben en una y bajan al centro. En el
+ * portátil no está, así que no manda como el resto: entre dos miradas que
+ * enseñan lo mismo, gana la que tampoco queda debajo de ella.
+ */
+const SEGUNDA_FILA: readonly Rectangulo[] = [{ x0: -0.52, x1: 0.4, y0: 0.66, y1: 1 }];
+
+/**
+ * Si un punto se ve desde un asiento **sin nada del HUD encima**. `giro` es el
+ * inverso de hacia dónde mira el asiento, que se calcula una vez por mirada y
+ * no una por punto; `mas`, los rectángulos de las pantallas estrechas.
+ *
+ * **Y con el HUD en espejo**: los dos asientos de una fila van uno enfrente
+ * del otro y miran igual, y el HUD no es simétrico —los botones grandes van a
+ * la derecha—. Lo que vale desde un lado tiene que valer desde el otro.
+ */
+export function libreDelHud(
+  asiento: AsientoDePasaje,
+  giro: Quaternion,
+  p: Vector3,
+  mas: readonly Rectangulo[] = [],
+): boolean {
+  const d = AUX.set(p.x - asiento.ojo.x, p.y - asiento.ojo.y, p.z - asiento.ojo.z).applyQuaternion(giro);
+  if (d.z >= 0) return false;
+  const t = Math.tan((((asiento.fov ?? FOV_DE_PASAJE) / 2) * Math.PI) / 180);
+  const x = d.x / -d.z / ((4 / 3) * t);
+  const y = d.y / -d.z / t;
+  if (Math.abs(x) > 0.97 || Math.abs(y) > 0.97) return false;
+  const tapa = (x: number, rs: readonly Rectangulo[]): boolean =>
+    rs.some((r) => x > r.x0 && x < r.x1 && y > r.y0 && y < r.y1);
+  return !tapa(x, HUD) && !tapa(-x, HUD) && !tapa(x, mas) && !tapa(-x, mas);
+}
+const AUX = new Vector3();
+
+/** El inverso de hacia dónde mira un asiento: para pasar puntos a su vista. */
+export function giroDe(asiento: AsientoDePasaje): Quaternion {
+  return new Quaternion()
+    .setFromEuler(new Euler(asiento.cabeceo, asiento.guinada, 0, "YXZ"))
+    .invert();
+}
+
+/**
+ * **Hacia dónde se prueba a mirar desde la fila de la salida**: grados hacia
+ * la cola, grados hacia abajo —negativo es hacia arriba—, cuánto por encima
+ * del centro del cristal se apunta, m, y con qué ángulo de vista, grados.
+ *
+ * El ángulo, entre los sesenta y cuatro de las demás vistas de pasaje y
+ * setenta y dos: con noventa y dos, que es lo que pedía meterlo todo, salía un
+ * ojo de pez —la ventanilla de al lado enorme y el techo torcido, captura de
+ * Enrique del 5-oct-2026—. Apuntar por encima del cristal no sube los ojos:
+ * mirando hacia arriba, bajan otro tanto; ver `asientoAnteVentanilla`.
+ */
+const EN_LA_SALIDA = {
+  atras: { desde: -5, hasta: 30, paso: 2.5 },
+  abajo: { desde: -14, hasta: 10, paso: 2 },
+  encima: [0, 0.06, 0.12, 0.18, 0.24],
+  fov: [FOV_DE_PASAJE, 68, 72],
+} as const;
+
+/**
+ * **El asiento de la fila de la salida** (punto 241), en el avión que lleva
+ * salida sobre el ala, o `null` si el asiento de siempre no la tiene al lado.
+ *
+ * El de siempre del JAZ 60 —clase del Beech 1900— cae en la fila de detrás
+ * de una trampilla, y desde ahí la trampilla y su letrero quedaban fuera de la
+ * pantalla: con el cristal de uno de frente, la de al lado va a sesenta y
+ * tantos grados hacia el morro, y el letrero, medio metro por encima de su
+ * cristal. Ninguna captura lo enseñaba. Lo que sí se ve sentado es **la fila
+ * de la salida**: quien se sienta ahí tiene la trampilla alrededor de su
+ * propia ventanilla, el asa justo encima del cristal y el «EXIT» encima, que
+ * es para eso, para que lo vea. Es la fila de al lado, sobre la misma ala.
+ *
+ * Y se prueba hacia dónde mirar, como en la vista de encima del ala. Gana,
+ * por este orden:
+ *
+ * 1. el letrero entero sin HUD encima, que un letrero a medias no se lee;
+ * 2. y también en una tablet, con la segunda fila de botones —si no cabe, que
+ *    asome al menos la mitad del letrero y del asa, que es lo que se pidió:
+ *    «no cabe entera, pero se puede poner un trozo, también del letrero»—;
+ * 3. el horizonte por el cristal, que un ala sin horizonte no dice dónde está;
+ * 4. el ángulo de vista más cerrado, lo menos girado hacia la cola respecto a
+ *    la mirada de siempre, el cristal entero por encima de la barra de abajo
+ *    y lo menos hacia arriba;
+ * 5. y los ojos más bajos, que son los de quien está sentado, y más los de un
+ *    niño.
+ *
+ * Son unas cinco mil miradas sin un solo rayo —el letrero, el asa y el
+ * cristal se proyectan; ver `libreDelHud`—: unos milisegundos, una vez, la
+ * primera vez que se pide la vista.
+ */
+function asientoEnLaSalida(
+  deSiempre: AsientoDePasaje,
+  fila: readonly Medida[],
+  salidas: readonly Box3[],
+  cual: "izquierda" | "derecha",
+  ventanillaDe: (m: Medida, cual: "izquierda" | "derecha") => VentanillaDePasaje,
+): AsientoDePasaje | null {
+  const junto = deSiempre.salida;
+  if (!junto) return null;
+  const zDeLaTrampilla = deSiempre.ventanilla.centro.z + junto.haciaLaCola;
+  const suya = fila.find((m) => Math.abs((m.zMin + m.zMax) / 2 - zDeLaTrampilla) < junto.ancho / 2);
+  if (!suya) return null;
+  const v = ventanillaDe(suya, cual);
+  const salida = conSuSalida(asientoAnteVentanilla(v, cual), fila, salidas).salida;
+  if (!salida?.enLaTrampilla) return null;
+  const asomar = loQueAsomaDeLaSalida(v, salida);
+  const letrero = asomar.slice(0, 4);
+  const cristal = elCristalEntero(v);
+  const s = cual === "izquierda" ? -1 : 1;
+  const ojo = new Vector3();
+  const lejos = new Vector3();
+
+  type Nota = readonly number[];
+  const mejorQue = (a: Nota, b: Nota): boolean => {
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i]! > b[i]!;
+    return false;
+  };
+  let mejor: { asiento: AsientoDePasaje; nota: Nota } | null = null;
+  const { atras: A, abajo: B } = EN_LA_SALIDA;
+  for (const encima of EN_LA_SALIDA.encima)
+    for (let atras = A.desde; atras <= A.hasta; atras += A.paso)
+      for (let abajo = B.desde; abajo <= B.hasta; abajo += B.paso)
+        for (const fov of EN_LA_SALIDA.fov) {
+          const a: AsientoDePasaje = {
+            ...asientoAnteVentanilla(v, cual, atras * GRADO, abajo * GRADO, OJOS_A, encima),
+            fov,
+          };
+          const giro = giroDe(a);
+          if (!letrero.every((p) => libreDelHud(a, giro, p))) continue;
+          const enTablet = letrero.every((p) => libreDelHud(a, giro, p, SEGUNDA_FILA))
+            ? 2
+            : asomar.filter((p) => libreDelHud(a, giro, p, SEGUNDA_FILA)).length * 2 >= asomar.length
+              ? 1
+              : 0;
+          ojo.set(a.ojo.x, a.ojo.y, a.ojo.z);
+          lejos.set(s * Math.cos(atras * GRADO), 0, Math.sin(atras * GRADO)).multiplyScalar(1000).add(ojo);
+          const horizonte = seVePorLaVentanilla(ojo, lejos, QUIETO, v) && libreDelHud(a, giro, lejos);
+          const entero = cristal.every((p) => libreDelHud(a, giro, p));
+          const nota = [
+            enTablet,
+            horizonte ? 1 : 0,
+            -fov,
+            -Math.abs(atras * GRADO - HACIA_ATRAS),
+            entero ? 1 : 0,
+            -Math.abs(abajo * GRADO - HACIA_ABAJO),
+            -a.ojo.y,
+          ];
+          if (!mejor || mejorQue(nota, mejor.nota)) mejor = { asiento: a, nota };
+        }
+  return mejor ? { ...(mejor as { asiento: AsientoDePasaje }).asiento, salida } : null;
 }
 
 /**
