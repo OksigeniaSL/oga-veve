@@ -1078,7 +1078,13 @@ import {
 } from "./flight/sin-instructora";
 import { preguntarSiVuelaSinInstructora } from "./ui/pregunta-sin-instructora";
 import { comoSeDiceAqui, hablaDe, type Habla } from "./i18n/habla";
-import { BOCA, MEGAFONIA, anunciaElPuntoDeDescenso, anunciaLaFase } from "./audio/boca";
+import {
+  BOCA,
+  MEGAFONIA,
+  anunciaElPuntoDeDescenso,
+  anunciaLaFase,
+  esDelDescenso,
+} from "./audio/boca";
 import { claveDeCabina, esDeUnaCaja, loDiceElAvion, VOZ_DEL_RA } from "./audio/cabina";
 import { VozDeLaMaquina } from "./audio/maquina";
 import {
@@ -18637,7 +18643,7 @@ export class Game {
       this.cabinaPorPoner = false;
       this.cabinaDe = this.aircraft;
       this.descensoDeEmergencia = null;
-      this.porDecirDelDescenso = [];
+      this.retirarLoDelDescenso();
       this.leccionesDelAire.olvidarElVuelo();
       for (const p of this.leccionesPorContar) this.leccionesDelAire.noSeConto(p.leccion);
       this.leccionesPorContar = [];
@@ -18657,8 +18663,26 @@ export class Game {
     this.cabinaPorPoner = true;
     this.descensoDeEmergencia = null;
     this.tarjetaDelDescenso = false;
-    this.porDecirDelDescenso = [];
+    this.retirarLoDelDescenso();
     this.hastaDelDescenso = { instructor: 0, megafonia: 0 };
+  }
+
+  /**
+   * **Lo que quedaba por decir del descenso, fuera**: lo que esperaba su turno
+   * aquí y lo que esperaba en la boca. Las frases del descenso no caducan con
+   * el reloj —son el procedimiento y siguen siendo verdad mientras se baja,
+   * ver `esDelDescenso` en `audio/boca.ts`—, así que las retira quien sabe que
+   * el ejercicio se acabó o se perdió: un vuelo nuevo, el avión puesto en
+   * otro sitio, o parado en el suelo. Con `soloLaInstructora`, lo suyo y nada
+   * más: es lo que deja de valer al llegar a donde se respira.
+   */
+  private retirarLoDelDescenso(soloLaInstructora = false): void {
+    this.porDecirDelDescenso = soloLaInstructora
+      ? this.porDecirDelDescenso.filter((f) => f.por === "megafonia")
+      : [];
+    BOCA.retirar(
+      (c) => esDelDescenso(c) && (!soloLaInstructora || (!!c && c.startsWith("vuelo."))),
+    );
   }
 
   /** Pide una frase del descenso, detrás de las que ya esperan en su boca. */
@@ -18889,7 +18913,7 @@ export class Game {
     // Parado en el suelo, el ejercicio se acabó: lo demás es otro vuelo.
     if (d.terminado && s.onGround && s.groundSpeed < 1) {
       this.descensoDeEmergencia = null;
-      this.porDecirDelDescenso = [];
+      this.retirarLoDelDescenso();
     }
   }
 
@@ -18989,8 +19013,11 @@ export class Game {
         ? t("palabra.yaSeRespira")
         : `${t("palabra.yaSeRespira")} · ${Math.floor(segundos / 60)} min ${segundos % 60} s`;
     this.hud.senal.mostrar("corregido", rotulo, null, { segundos: 8, prioridad: IMPORTANTE });
-    // Lo que no se llegó a decir bajando ya no toca: se está abajo.
-    this.porDecirDelDescenso = this.porDecirDelDescenso.filter((f) => f.por === "megafonia");
+    /*
+     * Lo que no se llegó a decir bajando ya no toca: se está abajo. Aquí y
+     * en la boca, donde ya no lo tira un reloj. Ver `retirarLoDelDescenso`.
+     */
+    this.retirarLoDelDescenso(true);
     this.encolarDelDescenso("instructor", "vuelo.yaSeRespira");
     if (conTripulacion(this.aircraft.mass))
       this.encolarDelDescenso("megafonia", "comandante.alturaSegura");

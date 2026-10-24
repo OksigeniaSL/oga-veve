@@ -1092,8 +1092,12 @@ describe("lo que explica una orden aguanta lo que la orden", () => {
     expect(explicaLaOtraPunta("vuelo.alAireOtraPuntaX")).toBe(false);
   });
 
-  it("y el descenso de emergencia, que es un procedimiento, también", () => {
-    // Ver `esDelDescenso`: en Pettirossi el «ya se respira» caducaba esperando.
+  it("y el descenso de emergencia, que es un procedimiento, no caduca", () => {
+    /*
+     * Ver `esDelDescenso`: en Pettirossi el «ya se respira» caducaba con los
+     * cuatro segundos de un aviso, y el «primero la tuya» con los doce de una
+     * orden, detrás de la torre y del anuncio de las máscaras.
+     */
     for (const clave of [
       "vuelo.cabinaSinPresion",
       "vuelo.cabinaSinPresionConTren",
@@ -1104,9 +1108,40 @@ describe("lo que explica una orden aguanta lo que la orden", () => {
       "tripulacion.mascaras",
       "tripulacion.canario.mascaras",
     ])
-      expect(cuantoAguanta(clave), clave).toBe(CADUCA_LA_ORDEN);
+      expect(cuantoAguanta(clave, "mando"), clave).toBe(Infinity);
     // Y lo que el aire enseña por el camino, no: es un comentario.
     expect(cuantoAguanta("vuelo.aire.bolsa")).toBe(CADUCA);
+  });
+
+  /*
+   * **La lección del ejercicio no se pierde detrás de lo que no se pisa.**
+   * Medido en el banco de la despresurización: la torre contestando el MAYDAY
+   * y, detrás, el anuncio de las máscaras de la tripulación —dieciséis
+   * segundos de megafonía, que no la pisa nadie—, y «primero la tuya» caducaba
+   * a los doce. Espera lo que haga falta, y la retira quien sabe que ya no vale.
+   */
+  it("«primero la tuya» espera detrás de la torre y de la megafonía, y se dice", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("mando", frase("mayday"), "torre.canario.mayday@fonetico.zulu");
+    b.pedir("mando", frase("máscaras"), "tripulacion.mascaras");
+    b.pedir("mando", frase("primero la tuya"), "vuelo.primeroLaTuya.segundos");
+    reloj += 5000;
+    acabar["mayday"]!();
+    reloj += 16000;
+    acabar["máscaras"]!();
+    expect(dicho).toEqual(["mayday", "máscaras", "primero la tuya"]);
+    expect(b.descartadas).toEqual([]);
+  });
+
+  it("y la retira quien sabe que el descenso se acabó", () => {
+    const b = boca();
+    const { frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("mando", frase("primero la tuya"), "vuelo.primeroLaTuya.minuto");
+    b.retirar((c) => c === "vuelo.primeroLaTuya.minuto");
+    expect(b.espera("vuelo.primeroLaTuya.minuto")).toBe(false);
+    expect(sinHora(b.descartadas.at(-1))).toBe("vuelo.primeroLaTuya.minuto: ya no es verdad");
   });
 
   /*

@@ -160,13 +160,13 @@ export function cuantoAguanta(
     anunciaLaFase(clave) ||
     anunciaElPuntoDeDescenso(clave) ||
     esElAvisoDeAves(clave) ||
-    esLaInformacionDeTrafico(clave)
+    esLaInformacionDeTrafico(clave) ||
+    esDelDescenso(clave)
   )
     return Infinity;
   return clave?.startsWith("torre.") ||
     explicaLaEspera(clave) ||
     explicaLaOtraPunta(clave) ||
-    esDelDescenso(clave) ||
     cuentaElPirep(clave) ||
     esDeLaTormenta(clave)
     ? CADUCA_LA_ORDEN
@@ -179,7 +179,7 @@ export function cuantoAguanta(
 /**
  * **El descenso de emergencia, que es un procedimiento y no un comentario**:
  * qué se hace, por qué la máscara primero, la megafonía y el «ya se respira».
- * Aguanta lo que una orden de la torre.
+ * Espera lo que haga falta, y lo retira quien sabe que dejó de valer.
  *
  * Con los cuatro segundos de un aviso se caía en los aeropuertos con la
  * frecuencia llena: medido en Pettirossi con el JAZ 90, el «ya se respira» de
@@ -187,6 +187,18 @@ export function cuantoAguanta(
  * ejercicio acababa sin que nadie dijera que había acabado. Lo que se dice
  * sigue siendo verdad un rato —se sigue abajo, se sigue sin aire arriba—, y
  * las frases van de una en una: ver `decirLoQueQueda` en `game.ts`.
+ *
+ * **Y los doce segundos de una orden tampoco bastaban**, porque delante va lo
+ * que no se puede pisar. Medido en Pettirossi con el JAZ 90 en Taguató: la
+ * instructora con la cabina sin aire, nueve segundos; la respuesta de la torre
+ * al MAYDAY, cinco; y el anuncio de las máscaras de la tripulación, que es
+ * megafonía y no lo pisa nadie, dieciséis. Detrás de todo eso,
+ * «comandante.descensoDeEmergencia: caducó esperando» y
+ * «vuelo.primeroLaTuya.segundos: caducó esperando»: el ejercicio se quedaba
+ * sin su lección, que es ponerse la máscara antes de ayudar a nadie. Nada de
+ * eso deja de ser verdad mientras se baja: lo retira `game.ts` al llegar a
+ * donde se respira —lo de la instructora— y al acabar o perderse el
+ * ejercicio —todo—. Ver `retirarLoDelDescenso`.
  */
 export function esDelDescenso(clave: string | undefined): boolean {
   return !!clave && DEL_DESCENSO.test(clave);
