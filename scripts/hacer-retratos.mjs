@@ -50,7 +50,7 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
-const PUERTO = 5317;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5317);
 const MODELOS = "public/assets/aeronaves";
 const RETRATOS = join(MODELOS, "retratos");
 

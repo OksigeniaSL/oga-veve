@@ -21,7 +21,7 @@ import { baseDe } from "./servidor.mjs";
 const D = process.argv[2] ?? "/tmp";
 const ESC = process.argv[3] ?? "pettirossi";
 const HORA = process.argv[4] ?? "21";
-const PUERTO = 5296;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5296);
 mkdirSync(D, { recursive: true });
 
 const server = await createServer({

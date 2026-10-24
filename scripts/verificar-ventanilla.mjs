@@ -22,7 +22,7 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 import { baseDe } from './servidor.mjs';
 
-const PUERTO = 5261;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5261);
 const server = await createServer({
   root: process.cwd(),
   server: { port: PUERTO, hmr: false },
