@@ -7,17 +7,35 @@
  * colgando del fuselaje delante del ala (Enrique, 19-10-2026). Así que no se
  * dibujan: se miden. Este guion abre los modelos de la flota
  * —`public/assets/aeronaves/jaz-*.glb`, los que vuela el juego, hechos con
- * `modelos/*.py` a partir de las medidas de su ficha— y saca de cada parte su
- * contorno, en una vista de tres cuartos por delante, desde poco por encima y por la derecha:
- * la que deja ver a la vez las dos alas, el motor debajo o encima del ala, el
- * tren y la forma de la cola.
+ * `modelos/*.py` a partir de las medidas de su ficha— y saca de cada parte lo
+ * que se ve de ella en **dos vistas de libro**:
  *
- * - El fuselaje y las góndolas son cuerpos de revolución: por rebanadas a lo
- *   largo, su techo, su panza y su ancho.
- * - El ala, el estabilizador y la deriva son superficies: por rebanadas a lo
- *   ancho (o a lo alto, la deriva), su borde de ataque y el de salida.
- * - Las ruedas, círculos de su tamaño; las patas, del pozo a la rueda.
- * - Las hélices, su disco.
+ * - **De perfil**, por la derecha y con el morro a la derecha, como se ve por
+ *   la ventanilla y como se dibuja un avión en cualquier libro: ahí se arma.
+ *   Es la vista que dice sin dudar dónde van las ruedas y el motor, y si el
+ *   ala va arriba o abajo.
+ * - **En planta**, desde arriba y con el morro hacia arriba: ahí se ponen las
+ *   luces, porque la izquierda y la derecha del avión son las de quien mira.
+ *
+ * ## Por qué dos vistas y no una de tres cuartos
+ *
+ * Hasta el 24-10-2026 era una sola, de tres cuartos por delante y desde un
+ * poco por encima, que enseñaba las dos alas a la vez. En la avioneta, el ala
+ * alta salía como una tabla en diagonal de debajo de la cola a más allá del
+ * morro, cruzando la cabina, y sin sombras ni nada que dijera qué iba delante:
+ * «Un Picasso, vaya lujo de juego» (Enrique). Una vista ortográfica no tiene
+ * ese problema: lo de delante tapa lo de detrás, y se sabe qué es cada cosa.
+ *
+ * ## Cómo se mide
+ *
+ * Cada parte se rasteriza con sus triángulos en una rejilla fina —un cuarto
+ * de punto de la hoja— con su profundidad, como haría una tarjeta gráfica: así
+ * de cada parte sale su contorno exacto y, dentro, lo que se ve de cada
+ * material —la franja terracota, las ventanillas, las llantas—, sin que una
+ * cara de dentro pinte encima de la de fuera. El orden entre partes, que es lo
+ * que dice qué tapa qué, va por capas: ver `CAPAS_DE_PERFIL` y
+ * `CAPAS_DE_PLANTA`. Las hélices no se miden pala a pala, que paradas dicen
+ * poco: se dibuja su disco girando, de canto en las dos vistas.
  *
  * **Generado**: escribe `src/ui/aviones-del-kit.ts`, que no se edita a mano.
  *
@@ -40,7 +58,6 @@ function leerGlb(fichero) {
 }
 
 /** Matriz de 4×4 por columnas, como las de glTF. */
-const identidad = () => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 function multiplicar(a, b) {
   const r = new Array(16).fill(0);
   for (let i = 0; i < 4; i++)
@@ -73,48 +90,6 @@ function local(n) {
   ];
 }
 
-/** Los vértices de cada nodo con malla, en el mundo: `nombre → [[x, y, z], …]`. */
-function vertices(fichero) {
-  const { json, bin } = leerGlb(fichero);
-  const padre = new Map();
-  json.nodes.forEach((n, i) =>
-    (n.children ?? []).forEach((c) => padre.set(c, i)),
-  );
-  const mundo = (i) => {
-    let m = local(json.nodes[i]);
-    for (let p = padre.get(i); p !== undefined; p = padre.get(p))
-      m = multiplicar(local(json.nodes[p]), m);
-    return m;
-  };
-  const r = new Map();
-  json.nodes.forEach((n, i) => {
-    if (n.mesh === undefined || !n.name) return;
-    const m = mundo(i);
-    const pts = [];
-    for (const prim of json.meshes[n.mesh].primitives) {
-      const acc = json.accessors[prim.attributes.POSITION];
-      const vista = json.bufferViews[acc.bufferView];
-      const paso = vista.byteStride ?? 12;
-      const desde = (vista.byteOffset ?? 0) + (acc.byteOffset ?? 0);
-      for (let k = 0; k < acc.count; k++) {
-        const o = desde + k * paso;
-        const x = bin.readFloatLE(o);
-        const y = bin.readFloatLE(o + 4);
-        const z = bin.readFloatLE(o + 8);
-        pts.push([
-          m[0] * x + m[4] * y + m[8] * z + m[12],
-          m[1] * x + m[5] * y + m[9] * z + m[13],
-          m[2] * x + m[6] * y + m[10] * z + m[14],
-        ]);
-      }
-    }
-    r.set(n.name, pts);
-  });
-  return r;
-}
-
-// ── Los ejes del avión ───────────────────────────────────────────────────
-
 /*
  * Los modelos van en los ejes de glTF, con el avión girado por su nodo raíz:
  * la primera coordenada es la envergadura —positiva a la derecha, la de
@@ -124,508 +99,574 @@ function vertices(fichero) {
  */
 const aLYU = ([x, y, z]) => [-z, x, y];
 
-// ── La vista ─────────────────────────────────────────────────────────────
-
 /**
- * **Tres cuartos por delante y desde arriba, por la derecha**, como se ve un
- * avión desde la terminal: el morro a la derecha de la hoja, el ala derecha
- * delante, hacia abajo y hacia la cola, y la izquierda detrás, asomando por
- * encima del fuselaje hacia el morro, que así se lee como el ala del otro lado
- * y no como una segunda deriva. Desde poca altura —el ala se ve casi de canto—
- * el motor y el tren cuelgan por debajo de ella, sin quedar pintados encima;
- * y la cola en T se ve como una T.
- *
- * Una vista por clase de avión (Enrique, 24-10-2026): en los reactores, de ala
- * en flecha, la profundidad corre más hacia el morro, que si no el ala de
- * atrás se queda de pie como una chimenea. `elev`, grados por encima del ala;
- * `kx`, lo que corre cada metro de profundidad a lo largo, negativo hacia el
- * morro del ala de atrás.
+ * **Los triángulos de cada nodo con malla**, en el mundo y en L, Y, U:
+ * `nombre → [{ material, tri: [[a, b, c], …] }]`.
  */
-let SE = 0;
-let CE = 1;
-let KX = 0;
-function ponerVista(elev, kx) {
-  SE = Math.sin((elev * Math.PI) / 180);
-  CE = Math.cos((elev * Math.PI) / 180);
-  KX = kx;
-}
-const ver = ([L, Y, U]) => [L + KX * Y, -U * CE + Y * SE];
-/** Lo cerca que queda de quien mira: lo que está más cerca tapa lo de detrás. */
-const cerca = ([, Y, U]) => Y * CE + U * SE;
-
-// ── Las formas ───────────────────────────────────────────────────────────
-
-const media = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
-
-/**
- * **Un cuerpo de revolución**, por rebanadas a lo largo: su contorno en la
- * vista. Cada rebanada es una elipse de su ancho y su alto, y en la vista
- * ocupa de su centro a `±√((h·cos e)² + (a·sen e)²)`.
- */
-function cuerpo(pts, rebanadas = 28, corte = null) {
-  const L = pts.map((p) => p[0]);
-  let l0 = Math.min(...L);
-  let l1 = Math.max(...L);
-  if (corte) {
-    l0 = Math.max(l0, corte[0]);
-    l1 = Math.min(l1, corte[1]);
-  }
-  const arriba = [];
-  const abajo = [];
-  const lomo = [];
-  let cercania = [];
-  for (let i = 0; i <= rebanadas; i++) {
-    const l = l0 + ((l1 - l0) * i) / rebanadas;
-    const ancho = (l1 - l0) / rebanadas;
-    const en = pts.filter((p) => Math.abs(p[0] - l) <= ancho * 0.75);
-    if (en.length < 3) continue;
-    const Ys = en.map((p) => p[1]);
-    const Us = en.map((p) => p[2]);
-    const yc = (Math.min(...Ys) + Math.max(...Ys)) / 2;
-    const a = (Math.max(...Ys) - Math.min(...Ys)) / 2;
-    const uc = (Math.min(...Us) + Math.max(...Us)) / 2;
-    const h = (Math.max(...Us) - Math.min(...Us)) / 2;
-    const e = Math.hypot(h * CE, a * SE);
-    const [sx, sy] = ver([l, yc, uc]);
-    arriba.push([sx, sy - e]);
-    abajo.push([sx, sy + e]);
-    lomo.push(ver([l, yc, uc + h]));
-    cercania.push(cerca([l, yc, uc]));
-  }
-  return {
-    contorno: [...arriba, ...abajo.reverse()],
-    lomo,
-    cerca: media(cercania),
-    arriba,
-    abajo: [...abajo].reverse(),
+function triangulos(fichero) {
+  const { json, bin } = leerGlb(fichero);
+  const padre = new Map();
+  json.nodes.forEach((n, i) => (n.children ?? []).forEach((c) => padre.set(c, i)));
+  const mundo = (i) => {
+    let m = local(json.nodes[i]);
+    for (let p = padre.get(i); p !== undefined; p = padre.get(p)) m = multiplicar(local(json.nodes[p]), m);
+    return m;
   };
+  const leerIndices = (acc) => {
+    const vista = json.bufferViews[acc.bufferView];
+    const desde = (vista.byteOffset ?? 0) + (acc.byteOffset ?? 0);
+    const tam = acc.componentType === 5125 ? 4 : acc.componentType === 5123 ? 2 : 1;
+    return Array.from({ length: acc.count }, (_, k) =>
+      tam === 4 ? bin.readUInt32LE(desde + k * 4) : tam === 2 ? bin.readUInt16LE(desde + k * 2) : bin.readUInt8(desde + k),
+    );
+  };
+  const r = new Map();
+  json.nodes.forEach((n, i) => {
+    if (n.mesh === undefined || !n.name) return;
+    const m = mundo(i);
+    const prims = [];
+    for (const prim of json.meshes[n.mesh].primitives) {
+      if ((prim.mode ?? 4) !== 4) continue;
+      const acc = json.accessors[prim.attributes.POSITION];
+      const vista = json.bufferViews[acc.bufferView];
+      const paso = vista.byteStride ?? 12;
+      const desde = (vista.byteOffset ?? 0) + (acc.byteOffset ?? 0);
+      const pts = [];
+      for (let k = 0; k < acc.count; k++) {
+        const o = desde + k * paso;
+        const x = bin.readFloatLE(o);
+        const y = bin.readFloatLE(o + 4);
+        const z = bin.readFloatLE(o + 8);
+        pts.push(
+          aLYU([
+            m[0] * x + m[4] * y + m[8] * z + m[12],
+            m[1] * x + m[5] * y + m[9] * z + m[13],
+            m[2] * x + m[6] * y + m[10] * z + m[14],
+          ]),
+        );
+      }
+      const idx = prim.indices !== undefined ? leerIndices(json.accessors[prim.indices]) : pts.map((_, k) => k);
+      const tri = [];
+      for (let k = 0; k + 2 < idx.length; k += 3) tri.push([pts[idx[k]], pts[idx[k + 1]], pts[idx[k + 2]]]);
+      prims.push({ material: json.materials?.[prim.material]?.name ?? "casco", tri });
+    }
+    r.set(n.name, prims);
+  });
+  return r;
 }
 
 /**
- * **Una superficie**, por rebanadas a lo ancho (`eje` 1) o a lo alto (`eje`
- * 2): en cada una, el borde de ataque y el de salida, a la altura media.
+ * **Un triángulo cortado por el plano `L = corte`**: lo que queda del lado
+ * pedido, en triángulos. Es lo que separa el capó del motor del resto del
+ * fuselaje en las avionetas, sin dientes de sierra.
  */
-function superficie(pts, eje = 1, rebanadas = 10) {
-  const S = pts.map((p) => p[eje]);
-  const s0 = Math.min(...S);
-  const s1 = Math.max(...S);
-  const ataque = [];
-  const salida = [];
-  for (let i = 0; i <= rebanadas; i++) {
-    const s = s0 + ((s1 - s0) * i) / rebanadas;
-    const paso = (s1 - s0) / rebanadas;
-    const en = pts.filter((p) => Math.abs(p[eje] - s) <= paso * 0.6);
-    if (en.length < 2) continue;
-    const Ls = en.map((p) => p[0]);
-    const delante = en.reduce((a, b) => (b[0] > a[0] ? b : a));
-    const detras = en.reduce((a, b) => (b[0] < a[0] ? b : a));
-    const otro = eje === 1 ? 2 : 1;
-    const m = media(en.map((p) => p[otro]));
-    const punto = (l) => (eje === 1 ? [l, s, m] : [l, m, s]);
-    ataque.push(punto(Math.max(...Ls)));
-    salida.push(punto(Math.min(...Ls)));
-    void delante;
-    void detras;
+function cortar(t, corte, delante) {
+  const dentro = (p) => (delante ? p[0] >= corte : p[0] < corte);
+  const pol = [];
+  for (let i = 0; i < 3; i++) {
+    const a = t[i];
+    const b = t[(i + 1) % 3];
+    if (dentro(a)) pol.push(a);
+    if (dentro(a) !== dentro(b)) {
+      const f = (corte - a[0]) / (b[0] - a[0]);
+      pol.push([corte, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]);
+    }
   }
-  const contorno3 = [...ataque, ...salida.reverse()];
-  return {
-    contorno: contorno3.map(ver),
-    cerca: media(contorno3.map(cerca)),
-    puntos3: contorno3,
-  };
+  const r = [];
+  for (let i = 1; i + 1 < pol.length; i++) r.push([pol[0], pol[i], pol[i + 1]]);
+  return r;
 }
 
-const lado = (pts, signo) =>
-  pts.filter((p) => Math.sign(p[1]) === signo || Math.abs(p[1]) < 1e-3);
-const solo = (pts, signo) => pts.filter((p) => p[1] * signo > 0.05);
-const caja = (pts) => {
-  const c = [0, 1, 2].map((k) => [
-    Math.min(...pts.map((p) => p[k])),
-    Math.max(...pts.map((p) => p[k])),
-  ]);
-  return { L: c[0], Y: c[1], U: c[2], centro: c.map(([a, b]) => (a + b) / 2) };
+// ── Las vistas ───────────────────────────────────────────────────────────
+
+/**
+ * **Las dos vistas**, en metros: de un punto L, Y, U a la hoja (x a la
+ * derecha, y hacia abajo) y su profundidad (más es más cerca de quien mira).
+ */
+const VISTAS = {
+  // De perfil, por la derecha: el morro a la derecha, y lo de la derecha del avión, delante.
+  perfil: { ver: ([L, , U]) => [L, -U], hondo: ([, Y]) => Y },
+  // En planta, desde arriba: el morro arriba, la derecha del avión a la derecha de quien mira.
+  planta: { ver: ([L, Y]) => [Y, -L], hondo: ([, , U]) => U },
 };
 
 /**
- * **Lo que el tren se adelanta al tapar**, en metros de cercanía: nada. Desde
- * treinta y dos grados el ala baja lo tapaba y se dibujó encima, y quedaba
- * pintado sobre el ala como si estuviera posado en ella (Enrique, 24-10). Con
- * la vista baja cuelga por debajo del ala y se ve en su sitio. Lo usa todavía
- * el ala alta, que va encima de él.
+ * **Dónde cabe el avión en la hoja de 640 × 340**, lejos de los botones de
+ * las esquinas: de perfil, encima de la bandeja de las piezas, que va abajo;
+ * desde arriba, de alto entero, que con el morro arriba lo que manda es el
+ * largo, y a la izquierda de la bandeja de las luces.
  */
-const POR_ENCIMA = 0;
+const SITIOS = {
+  perfil: { x0: 44, x1: 596, y0: 14, y1: 242 },
+  // Y por debajo de la cola, sitio para el abanico de la luz blanca, que alumbra hacia atrás.
+  planta: { x0: 30, x1: 540, y0: 14, y1: 284 },
+};
 
-/** Las ruedas de una pata: tantas como quepan en lo largo, de su radio. */
-function ruedas(pts) {
-  const c = caja(pts);
-  const r = (c.U[1] - c.U[0]) / 2;
-  const n = Math.max(1, Math.round((c.L[1] - c.L[0]) / (2 * r)));
-  const paso = (c.L[1] - c.L[0]) / n;
-  return Array.from({ length: n }, (_, i) => {
-    const centro = [
-      c.L[0] + paso * (i + 0.5),
-      c.Y[1] - (c.Y[1] - c.Y[0]) * 0.25,
-      c.centro[2],
-    ];
-    return { centro: ver(centro), r, cerca: cerca(centro) + POR_ENCIMA };
-  });
+/** Lo que mide una celda de la rejilla, en puntos de la hoja: un cuarto, que el contorno no tenga escalones. */
+const CELDA = 0.25;
+
+/**
+ * **Rasteriza una parte**: cada celda se queda con el material del triángulo
+ * más cercano. `tri` en puntos de la hoja, con su profundidad.
+ */
+function rasterizar(tris) {
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  for (const t of tris)
+    for (const p of t.p) {
+      x0 = Math.min(x0, p[0]);
+      y0 = Math.min(y0, p[1]);
+      x1 = Math.max(x1, p[0]);
+      y1 = Math.max(y1, p[1]);
+    }
+  x0 = Math.floor(x0) - 1;
+  y0 = Math.floor(y0) - 1;
+  const W = Math.ceil((x1 - x0) / CELDA) + 3;
+  const H = Math.ceil((y1 - y0) / CELDA) + 3;
+  const mat = new Int16Array(W * H).fill(-1);
+  const z = new Float32Array(W * H).fill(-Infinity);
+  for (const t of tris) {
+    const [a, b, c] = t.p.map(([x, y]) => [(x - x0) / CELDA, (y - y0) / CELDA]);
+    const area = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    if (Math.abs(area) < 1e-9) continue;
+    const i0 = Math.max(0, Math.floor(Math.min(a[0], b[0], c[0])));
+    const i1 = Math.min(W - 1, Math.ceil(Math.max(a[0], b[0], c[0])));
+    const j0 = Math.max(0, Math.floor(Math.min(a[1], b[1], c[1])));
+    const j1 = Math.min(H - 1, Math.ceil(Math.max(a[1], b[1], c[1])));
+    for (let j = j0; j <= j1; j++) {
+      const py = j + 0.5;
+      for (let i = i0; i <= i1; i++) {
+        const px = i + 0.5;
+        const w0 = ((b[0] - px) * (c[1] - py) - (b[1] - py) * (c[0] - px)) / area;
+        const w1 = ((c[0] - px) * (a[1] - py) - (c[1] - py) * (a[0] - px)) / area;
+        const w2 = 1 - w0 - w1;
+        if (w0 < -1e-6 || w1 < -1e-6 || w2 < -1e-6) continue;
+        const h = w0 * t.z[0] + w1 * t.z[1] + w2 * t.z[2];
+        const k = j * W + i;
+        if (h > z[k]) {
+          z[k] = h;
+          mat[k] = t.m;
+        }
+      }
+    }
+  }
+  return { W, H, x0, y0, mat };
 }
 
-/** Una pata: del punto más alto al centro de la rueda. */
-function pata(pts, rueda) {
-  const c = caja(pts);
-  const arriba = pts.reduce((a, b) => (b[2] > a[2] ? b : a));
-  const abajo = [caja(rueda).centro[0], arriba[1], caja(rueda).centro[2]];
-  return {
-    de: ver(arriba),
-    a: ver(abajo),
-    grueso: Math.min(0.16, Math.max(0.08, (c.Y[1] - c.Y[0]) * 0.5)),
-    cerca: cerca(abajo) + POR_ENCIMA - 0.1,
-  };
+/**
+ * **Los contornos de una máscara**, por los bordes de las celdas: cada borde
+ * entre una celda llena y una vacía, en el sentido de las agujas del reloj, y
+ * encadenados en lazos. En un cruce en diagonal se gira a la derecha, que
+ * deja separadas dos celdas que solo se tocan por la esquina.
+ */
+function contornos(mask, W, H) {
+  const V = W + 1;
+  const sale = new Uint8Array(V * (H + 1));
+  const lleno = (i, j) => i >= 0 && j >= 0 && i < W && j < H && mask[j * W + i] === 1;
+  for (let j = 0; j < H; j++)
+    for (let i = 0; i < W; i++) {
+      if (!lleno(i, j)) continue;
+      if (!lleno(i, j - 1)) sale[j * V + i] |= 1; // arriba, hacia la derecha
+      if (!lleno(i + 1, j)) sale[j * V + i + 1] |= 2; // derecha, hacia abajo
+      if (!lleno(i, j + 1)) sale[(j + 1) * V + i + 1] |= 4; // abajo, hacia la izquierda
+      if (!lleno(i - 1, j)) sale[(j + 1) * V + i] |= 8; // izquierda, hacia arriba
+    }
+  const DX = [1, 0, -1, 0];
+  const DY = [0, 1, 0, -1];
+  const lazos = [];
+  for (let v0 = 0; v0 < sale.length; v0++) {
+    while (sale[v0]) {
+      let d = [0, 1, 2, 3].find((k) => sale[v0] & (1 << k));
+      let v = v0;
+      const pts = [];
+      let antes = -1;
+      for (let guarda = 0; guarda < 1e7; guarda++) {
+        sale[v] &= ~(1 << d);
+        if (d !== antes) pts.push([v % V, Math.floor(v / V)]);
+        antes = d;
+        v = v + DX[d] + DY[d] * V;
+        if (v === v0) break;
+        const s = sale[v];
+        const derecha = (d + 1) % 4;
+        const izquierda = (d + 3) % 4;
+        d = s & (1 << derecha) ? derecha : s & (1 << d) ? d : izquierda;
+        if (!(s & (1 << d))) break;
+      }
+      if (pts.length >= 3) lazos.push(pts);
+    }
+  }
+  return lazos;
 }
 
-/** El disco de una hélice, en su plano: de lado se ve como una elipse estrecha. */
-function helice(pts) {
-  const c = caja(pts);
-  const R = Math.max(c.Y[1] - c.Y[0], c.U[1] - c.U[0]) / 2;
-  const centro = c.centro;
-  const contorno = Array.from({ length: 24 }, (_, i) => {
-    const t = (i / 24) * 2 * Math.PI;
-    return ver([
-      centro[0],
-      centro[1] + R * Math.cos(t),
-      centro[2] + R * Math.sin(t),
-    ]);
-  });
-  return { contorno, centro: ver(centro), R, cerca: cerca(centro) + 0.01 };
+/** Ramer-Douglas-Peucker, en un trozo abierto. */
+function simplificar(pts, eps) {
+  if (pts.length < 3) return pts;
+  const [ax, ay] = pts[0];
+  const [bx, by] = pts[pts.length - 1];
+  const largo = Math.hypot(bx - ax, by - ay) || 1e-9;
+  let peor = 0;
+  let k = 0;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const d = Math.abs((bx - ax) * (ay - pts[i][1]) - (ax - pts[i][0]) * (by - ay)) / largo;
+    if (d > peor) {
+      peor = d;
+      k = i;
+    }
+  }
+  if (peor <= eps) return [pts[0], pts[pts.length - 1]];
+  return [...simplificar(pts.slice(0, k + 1), eps).slice(0, -1), ...simplificar(pts.slice(k), eps)];
+}
+
+const areaDe = (pts) => {
+  let a = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const [x0, y0] = pts[i];
+    const [x1, y1] = pts[(i + 1) % pts.length];
+    a += x0 * y1 - x1 * y0;
+  }
+  return a / 2;
+};
+
+const r1 = (n) => Math.round(n * 10) / 10;
+
+/** Un lazo cerrado, simplificado, en un camino de SVG; o nada si es una mota. */
+function camino(lazos, ox, oy, minimo) {
+  const trozos = [];
+  for (const lazo of lazos) {
+    const pts = lazo.map(([i, j]) => [ox + i * CELDA, oy + j * CELDA]);
+    if (Math.abs(areaDe(pts)) < minimo) continue;
+    // Cerrado: se parte por el punto más lejano del primero y se simplifica cada mitad.
+    let k = 0;
+    let lejos = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const d = Math.hypot(pts[i][0] - pts[0][0], pts[i][1] - pts[0][1]);
+      if (d > lejos) {
+        lejos = d;
+        k = i;
+      }
+    }
+    const a = simplificar(pts.slice(0, k + 1), 0.3);
+    const b = simplificar([...pts.slice(k), pts[0]], 0.3);
+    const juntos = [...a.slice(0, -1), ...b.slice(0, -1)];
+    if (juntos.length < 3) continue;
+    trozos.push(`M${juntos.map(([x, y]) => `${r1(x)} ${r1(y)}`).join(" L")}Z`);
+  }
+  return trozos.join("");
+}
+
+/** Los materiales que se pintan, por su nombre en el modelo. Los demás no salen en el dibujo. */
+const MATERIALES = ["casco", "capo", "detalle", "cola", "remate", "oscuro", "gris", "aluminio", "goma", "cristal"];
+
+/**
+ * **Una parte, dibujada en una vista**: su contorno, el color de lo que más
+ * se ve de ella y, encima, lo que se ve de los otros materiales.
+ */
+function dibujarParte(tris, aHoja, hondo) {
+  const enHoja = [];
+  for (const { material, t, pintado } of tris) {
+    const m = MATERIALES.indexOf(material);
+    if (m < 0) continue;
+    // Lo pintado sobre el casco gana al casco aunque vaya pegado a él: si no, la franja y las ventanillas se pierden.
+    const sesgo = pintado ? 0.01 : 0;
+    enHoja.push({ p: t.map(aHoja), z: t.map((q) => hondo(q) + sesgo), m });
+  }
+  if (!enHoja.length) return null;
+  const { W, H, x0, y0, mat } = rasterizar(enHoja);
+  const todo = new Uint8Array(W * H);
+  const cuantas = new Array(MATERIALES.length).fill(0);
+  for (let k = 0; k < mat.length; k++)
+    if (mat[k] >= 0) {
+      todo[k] = 1;
+      cuantas[mat[k]]++;
+    }
+  const d = camino(contornos(todo, W, H), x0, y0, 2);
+  if (!d) return null;
+  const base = cuantas.indexOf(Math.max(...cuantas));
+  const encima = [];
+  for (let m = 0; m < MATERIALES.length; m++) {
+    if (m === base || !cuantas[m]) continue;
+    const solo = new Uint8Array(W * H);
+    for (let k = 0; k < mat.length; k++) if (mat[k] === m) solo[k] = 1;
+    const dm = camino(contornos(solo, W, H), x0, y0, 1.2);
+    if (dm) encima.push({ color: MATERIALES[m], d: dm });
+  }
+  return { color: MATERIALES[base], d, encima };
 }
 
 // ── La flota ─────────────────────────────────────────────────────────────
 
-/*
- * **Cada tipo, con sus piezas.** El nombre de cada pieza es el de la parte del
- * modelo que la forma; `de` dice qué lado (+1 derecha, la de delante; −1
- * izquierda, la de detrás).
+/**
+ * **Cada tipo**: dónde se corta el morro para hacer la pieza del motor en las
+ * avionetas de motor delante (L del cortafuegos, en metros) y si lleva el sol
+ * de la casa en la cola, como su ficha (`appearance.motivo` en `aircraft.ts`).
  */
 const TIPOS = [
-  { id: "jaz-20", corteMorro: -1.7, elev: 20, kx: -0.45 },
-  { id: "jaz-25", corteMorro: -3.1, elev: 20, kx: -0.45 },
-  { id: "jaz-40", elev: 20, kx: -0.45 },
-  { id: "jaz-60", elev: 20, kx: -0.45 },
-  { id: "jaz-90", elev: 16, kx: -0.9 },
-  { id: "jaz-120", elev: 16, kx: -0.9 },
+  { id: "jaz-20", corteMorro: 1.7, sol: false },
+  { id: "jaz-25", corteMorro: 3.1, sol: false },
+  { id: "jaz-40", sol: true },
+  { id: "jaz-60", sol: true },
+  { id: "jaz-90", sol: true },
+  { id: "jaz-120", sol: true },
 ];
 
-const r1 = (n) => Math.round(n * 10) / 10;
+/** Lo que va pintado sobre el casco: la franja, la raya fina, los cristales y las puertas. */
+/** Lo pintado en los costados, que desde arriba no se ve: de canto, solo serían rayitas en el borde. */
+const DE_COSTADO = /^(cintura|cintura-fina|ventanillas|ventanita-puerta|puerta.*|salida-de-emergencia-.*|gondola-franja)$/;
+const PINTADO = /^(cintura|cintura-fina|ventanillas|ventanita-puerta|parabrisas|parabrisas-lado|carlinga|puerta.*|salida-de-emergencia-.*|gondola-franja)$/;
+const DEL_CASCO = /^(fuselaje|carenado|cintura|cintura-fina|ventanillas|ventanita-puerta|parabrisas|parabrisas-lado|carlinga|carlinga-arco|carlinga-marco|puerta.*|salida-de-emergencia-.*)$/;
+
+/**
+ * **Las capas de perfil**, de detrás a delante: la deriva y las ruedas detrás
+ * del fuselaje, que sus raíces se metan en él; el fuselaje con su librea; y
+ * delante, lo que está del lado de quien mira: el estabilizador, la riostra y
+ * el ala, los motores del ala y sus hélices.
+ */
+const CAPAS_DE_PERFIL = {
+  deriva: 10,
+  tren: 20,
+  casco: 30,
+  cabanas: 35,
+  motorDelMorro: 40,
+  estabilizador: 50,
+  puntal: 55,
+  alaAbajo: 60,
+  ala: 62,
+  alaArriba: 64,
+  motor: 70,
+  helice: 76,
+};
+
+/**
+ * **Las capas en planta**, de abajo arriba: los reactores, colgados, debajo
+ * del ala; el ala baja y el estabilizador debajo del fuselaje; el ala alta y
+ * las góndolas de hélice encima; la deriva encima del fuselaje, y la cola en T
+ * encima de todo. Las ruedas no salen: desde arriba no se ven.
+ */
+const CAPAS_DE_PLANTA = {
+  reactor: 10,
+  estabilizador: 20,
+  alaAbajo: 30,
+  ala: 32,
+  casco: 40,
+  motorDelMorro: 45,
+  alaAlta: 50,
+  alaArriba: 52,
+  gondola: 60,
+  helice: 66,
+  deriva: 70,
+  colaEnT: 80,
+};
+
+const caja3 = (pts) => {
+  const c = [0, 1, 2].map((k) => [Math.min(...pts.map((p) => p[k])), Math.max(...pts.map((p) => p[k]))]);
+  return { L: c[0], Y: c[1], U: c[2], centro: c.map(([a, b]) => (a + b) / 2) };
+};
 
 function tipo(t) {
-  ponerVista(t.elev, t.kx);
-  const v = vertices(`public/assets/aeronaves/${t.id}.glb`);
-  const de = (nombre) => (v.get(nombre) ?? []).map(aLYU);
-  const hay = (nombre) => v.has(nombre);
-  const partes = []; // { pieza, forma, cerca, ... }
-  const poner = (pieza, forma) => partes.push({ pieza, ...forma });
+  const nodos = triangulos(`public/assets/aeronaves/${t.id}.glb`);
+  const hay = (n) => nodos.has(n);
+  /** Los triángulos de unos nodos, con su material; `filtro` decide cuáles. */
+  const de = (nombres, filtro = () => true) =>
+    nombres.flatMap((n) =>
+      (nodos.get(n) ?? []).flatMap((p) =>
+        p.tri.filter(filtro).map((tri) => ({ material: p.material, t: tri, pintado: PINTADO.test(n), deCostado: DE_COSTADO.test(n) })),
+      ),
+    );
+  const vertices = (nombres) => de(nombres).flatMap((x) => x.t);
+  const nombres = [...nodos.keys()];
 
-  // El fuselaje: el tablero. En los de motor en el morro, el morro hasta el cortafuegos es la pieza del motor.
-  const fus = de("fuselaje");
-  const cf = caja(fus);
-  const corte = t.corteMorro !== undefined ? -t.corteMorro : null;
-  const tablero = cuerpo(fus, 36, corte !== null ? [cf.L[0], corte] : null);
-  poner(null, {
-    tipo: "cuerpo",
-    contorno: tablero.contorno,
-    cerca: 0,
-    lomo: tablero.lomo,
-    arriba: tablero.arriba,
-    abajo: tablero.abajo,
-  });
+  const fus = vertices(["fuselaje"]);
+  const cf = caja3(fus);
+  const alaAlta = hay("ala") && caja3(vertices(["ala"])).U[0] > cf.U[1] - 0.6;
+  const colaEnT = caja3(vertices(["estabilizador"])).U[0] > cf.U[1];
+  const corte = t.corteMorro ?? null;
+
+  /*
+   * **Las partes**: `pieza` del juego o `null` si es del tablero, sus
+   * triángulos y su capa en cada vista (sin capa, no sale en esa vista).
+   */
+  const partes = [];
+  const parte = (pieza, tris, perfil, planta, extra = {}) => {
+    if (tris.length) partes.push({ pieza, tris, perfil, planta, ...extra });
+  };
+  const delCasco = nombres.filter((n) => DEL_CASCO.test(n));
+  const casco = de(delCasco);
   if (corte !== null) {
-    const morro = cuerpo(fus, 8, [corte - 0.05, cf.L[1]]);
-    poner("motor", { tipo: "cuerpo", contorno: morro.contorno, cerca: 0.02 });
-    const h = [...de("helice"), ...de("helice-palas")];
-    if (h.length) poner("motor", { tipo: "helice", ...helice(h) });
+    // El morro hasta el cortafuegos es la pieza del motor; lo de detrás, el tablero.
+    const detras = casco.flatMap((c) => cortar(c.t, corte, false).map((x) => ({ ...c, t: x })));
+    const delante = casco.flatMap((c) => cortar(c.t, corte, true).map((x) => ({ ...c, t: x })));
+    parte(null, detras, CAPAS_DE_PERFIL.casco, CAPAS_DE_PLANTA.casco);
+    parte("motor", [...delante, ...de(["helice", "tomas"])], CAPAS_DE_PERFIL.motorDelMorro, CAPAS_DE_PLANTA.motorDelMorro);
+  } else parte(null, casco, CAPAS_DE_PERFIL.casco, CAPAS_DE_PLANTA.casco);
+  parte(null, de(["cabanas"]), CAPAS_DE_PERFIL.cabanas, null);
+
+  // La cola: la deriva, y el estabilizador, que en la cola en T va encima de ella.
+  parte("deriva", de(["deriva"]), CAPAS_DE_PERFIL.deriva, CAPAS_DE_PLANTA.deriva, { sol: t.sol });
+  parte(
+    "estabilizador",
+    de(["estabilizador", "bala-de-cola"]),
+    CAPAS_DE_PERFIL.estabilizador,
+    colaEnT ? CAPAS_DE_PLANTA.colaEnT : CAPAS_DE_PLANTA.estabilizador,
+  );
+
+  // Las alas, con lo que llevan pegado: carenados de los flaps, aletas de las puntas y el tramo fijo.
+  const delAla = nombres.filter((n) => /^(canoa-.*|remate|franja-fija)$/.test(n));
+  if (hay("ala")) {
+    parte("ala", de(["ala", ...delAla]), CAPAS_DE_PERFIL.ala, alaAlta ? CAPAS_DE_PLANTA.alaAlta : CAPAS_DE_PLANTA.ala);
+    // La riostra del ala alta, que va de la panza al ala: delante del fuselaje y detrás del ala.
+    parte("ala", de(["puntal-del-ala"]), CAPAS_DE_PERFIL.puntal, null);
+  } else {
+    parte("alaArriba", de(["ala-alta"]), CAPAS_DE_PERFIL.alaArriba, CAPAS_DE_PLANTA.alaArriba);
+    parte("alaAbajo", de(["ala-baja"]), CAPAS_DE_PERFIL.alaAbajo, CAPAS_DE_PLANTA.alaAbajo);
+    /*
+     * Los montantes entre las dos alas no salen, como los cables: de perfil
+     * son una placa en diagonal delante de la cabina entera, que tapa lo que
+     * se quiere enseñar —dos alas que se parecen, una arriba y otra abajo— y
+     * se comía la pieza del ala de arriba. Lo que la sujeta en el dibujo son
+     * los montantes de la cabina, que sí salen.
+     */
   }
 
-  // Las alas: la derecha delante, la izquierda detrás. Las de un ala alta van enteras, por encima de todo.
-  const alas = hay("ala")
-    ? [["ala", de("ala")]]
-    : [
-        ["alaArriba", de("ala-alta")],
-        ["alaAbajo", de("ala-baja")],
-      ];
-  const alta = caja(alas[0][1]).U[0] > cf.U[1] - 0.6 && alas.length === 1;
-  for (const [nombre, pts] of alas) {
-    if (alta) {
-      const s = superficie(pts, 1, 14);
-      // El ala alta, encima de todo, también del tren: una rueda pintada sobre el ala parecería posada en ella.
-      poner("ala", { tipo: "superficie", contorno: s.contorno, cerca: 5 + POR_ENCIMA + 1 });
-      continue;
-    }
-    const d = superficie(lado(pts, 1), 1, 6);
-    const i = superficie(lado(pts, -1), 1, 6);
-    if (nombre === "ala") {
-      poner("alaDerecha", {
-        tipo: "superficie",
-        contorno: d.contorno,
-        cerca: d.cerca,
-      });
-      poner("alaIzquierda", {
-        tipo: "superficie",
-        contorno: i.contorno,
-        cerca: i.cerca,
-      });
-    } else {
-      // El biplano: cada ala es una pieza entera, con sus dos lados.
-      poner(nombre, {
-        tipo: "superficie",
-        contorno: d.contorno,
-        cerca: d.cerca,
-      });
-      poner(nombre, {
-        tipo: "superficie",
-        contorno: i.contorno,
-        cerca: i.cerca,
-      });
-    }
+  // Los motores del ala: las góndolas, encima del ala, o los reactores, colgados debajo. Cada uno en su capa, que se vea dónde acaba uno y empieza el otro.
+  const helices = [];
+  if (hay("gondola")) {
+    parte("motor", de(["gondola", "gondola-franja", "escapes", "toma", "tomas", "helice-derecha", "helice-izquierda"]), CAPAS_DE_PERFIL.motor, CAPAS_DE_PLANTA.gondola);
+    for (const lado of ["derecha", "izquierda"]) helices.push({ palas: [`helice-${lado}-palas`, `helice-${lado}-palas-puntas`], buje: `helice-${lado}` });
   }
-
-  // La cola: el estabilizador, con sus dos lados en una pieza, y la deriva.
-  const est = de("estabilizador");
-  const ed = superficie(lado(est, 1), 1, 5);
-  const ei = superficie(lado(est, -1), 1, 5);
-  poner("estabilizador", {
-    tipo: "superficie",
-    contorno: ed.contorno,
-    cerca: ed.cerca,
-  });
-  poner("estabilizador", {
-    tipo: "superficie",
-    contorno: ei.contorno,
-    cerca: ei.cerca,
-  });
-  const der = superficie(de("deriva"), 2, 8);
-  poner("deriva", { tipo: "superficie", contorno: der.contorno, cerca: 0.3 });
-
-  // Los motores en el ala: góndolas de hélice o reactores colgados, el de la derecha y el de la izquierda.
-  const motores = [];
-  if (hay("gondola"))
-    motores.push({
-      cuerpo: de("gondola"),
-      helice: (s) =>
-        de(`helice-${s > 0 ? "derecha" : "izquierda"}`).concat(
-          de(`helice-${s > 0 ? "derecha" : "izquierda"}-palas`),
-        ),
-    });
-  if (hay("motor")) motores.push({ cuerpo: de("motor"), pilon: de("pilon") });
+  if (hay("motor")) parte("motor", de(["motor", "motor-cascada", "motor-manguito", "pilon"]), CAPAS_DE_PERFIL.motor, CAPAS_DE_PLANTA.reactor);
   for (const k of [0, 1])
     if (hay(`motor-${k}`))
-      motores.push({ cuerpo: de(`motor-${k}`), pilon: de(`pilon-${k}`), k });
-  for (const m of motores) {
-    for (const s of [1, -1]) {
-      const nombre = `motor${s > 0 ? "Derecho" : "Izquierdo"}${m.k !== undefined ? (m.k === 0 ? "Dentro" : "Fuera") : ""}`;
-      const c = cuerpo(solo(m.cuerpo, s), 9);
-      /*
-       * La góndola de un motor de hélice va montada **sobre** el ala y asoma por
-       * encima: se pinta después que su ala. El reactor cuelga debajo: antes.
-       */
-      const sobreElAla = !m.pilon;
-      const alaSuya = partes.find(
-        (p) => p.pieza === (s > 0 ? "alaDerecha" : "alaIzquierda"),
-      );
-      const cercaDeMotor =
-        sobreElAla && alaSuya ? alaSuya.cerca + 0.05 : c.cerca;
-      poner(nombre, {
-        tipo: "cuerpo",
-        contorno: c.contorno,
-        cerca: cercaDeMotor,
-        boca: m.pilon ? true : false,
-      });
-      if (m.pilon) {
-        const p = superficie(solo(m.pilon, s), 0 + 2, 4);
-        poner(nombre, {
-          tipo: "superficie",
-          contorno: p.contorno,
-          cerca: cercaDeMotor - 0.01,
-        });
-      }
-      if (m.helice) {
-        const h = m.helice(s);
-        if (h.length)
-          poner(nombre, {
-            tipo: "helice",
-            ...helice(h),
-            cerca: cercaDeMotor + 0.02,
-          });
-      }
-    }
-  }
+      parte("motor", de([`motor-${k}`, `motor-${k}-cascada`, `motor-${k}-manguito`, `pilon-${k}`]), CAPAS_DE_PERFIL.motor + k, CAPAS_DE_PLANTA.reactor + k);
+  if (corte !== null) helices.push({ palas: ["helice-palas", "helice-palas-puntas"], buje: "helice", delMorro: true });
 
-  // El tren: las principales de la derecha y la izquierda en una pieza, y la de morro (o la de cola).
-  const tren = (pieza, patas, ruedasDe) => {
-    for (const [p, r] of patas.map((n, i) => [de(n), de(ruedasDe[i])])) {
-      if (!r.length) continue;
-      if (p.length) poner(pieza, { tipo: "pata", ...pata(p, r) });
-      for (const w of ruedas(r)) poner(pieza, { tipo: "rueda", ...w });
-    }
-  };
-  if (hay("pata-principal-derecha"))
-    tren(
-      "trenPrincipal",
-      ["pata-principal-derecha", "pata-principal-izquierda"],
-      ["rueda-principal-derecha", "rueda-principal-izquierda"],
-    );
-  if (hay("pata-principal")) {
-    const p = de("pata-principal");
-    const r = de("rueda-principal");
-    tren("trenPrincipal", [], []);
-    for (const s of [1, -1]) {
-      poner("trenPrincipal", { tipo: "pata", ...pata(solo(p, s), solo(r, s)) });
-      for (const w of ruedas(solo(r, s)))
-        poner("trenPrincipal", { tipo: "rueda", ...w });
-    }
-  }
-  if (hay("pata-ala-derecha")) {
-    tren(
-      "trenPrincipal",
-      [
-        "pata-ala-derecha",
-        "pata-ala-izquierda",
-        "pata-panza-derecha",
-        "pata-panza-izquierda",
-      ],
-      [
-        "rueda-ala-derecha",
-        "rueda-ala-izquierda",
-        "rueda-panza-derecha",
-        "rueda-panza-izquierda",
-      ],
-    );
-  }
-  if (hay("pata-morro")) tren("trenMorro", ["pata-morro"], ["rueda-morro"]);
-  if (hay("pata-de-morro"))
-    tren("trenMorro", ["pata-de-morro"], ["rueda-de-morro"]);
-  if (hay("pata-de-cola"))
-    tren("trenCola", ["pata-de-cola"], ["rueda-de-cola"]);
+  // El tren: cada pata con su rueda, su llanta y su polaina.
+  const tren = (pieza, patron) => parte(pieza, de(nombres.filter((n) => patron.test(n))), CAPAS_DE_PERFIL.tren, null);
+  tren("trenPrincipal", /^(pata|rueda)-(principal|ala|panza)|^rueda-polaina$|^rueda-principal-llanta/);
+  tren("trenMorro", /^(pata|rueda)-(de-)?morro/);
+  tren("trenCola", /^(pata|rueda)-de-cola/);
 
   // Las luces: en la punta de cada ala —del ala de arriba en el biplano— y la blanca, lo más atrás de la cola.
-  const alaDeLuces = alas[0][1];
+  const alaDeLuces = vertices([hay("ala") ? "ala" : "ala-alta"]);
   const punta = (s) => {
-    const pts = solo(alaDeLuces, s);
-    const extremo = pts.reduce((a, b) =>
-      Math.abs(b[1]) > Math.abs(a[1]) ? b : a,
-    );
-    const cerca_ = pts.filter(
-      (p) => Math.abs(p[1]) > Math.abs(extremo[1]) - 0.25,
-    );
-    const delante = cerca_.reduce((a, b) => (b[0] > a[0] ? b : a));
+    const pts = alaDeLuces.filter((p) => p[1] * s > 0.05);
+    const extremo = pts.reduce((a, b) => (Math.abs(b[1]) > Math.abs(a[1]) ? b : a));
+    const cerca = pts.filter((p) => Math.abs(p[1]) > Math.abs(extremo[1]) - 0.25);
+    const delante = cerca.reduce((a, b) => (b[0] > a[0] ? b : a));
     return [delante[0], extremo[1], delante[2]];
   };
   const cola = fus.reduce((a, b) => (b[0] < a[0] ? b : a));
-  const luces = {
-    roja: ver(punta(-1)),
-    verde: ver(punta(1)),
-    blanca: ver([cola[0], 0, cola[2]]),
-  };
-  const morro = ver([
-    cf.L[1],
-    0,
-    caja(fus.filter((p) => p[0] > cf.L[1] - 0.3)).centro[2],
-  ]);
+  const luces = { roja: punta(-1), verde: punta(1), blanca: [cola[0], 0, cola[2]] };
 
-  // Las ventanillas, del lado de acá: una fila a media altura de la cabina.
-  return { id: t.id, vista: { se: Math.round(SE * 1e4) / 1e4, ce: Math.round(CE * 1e4) / 1e4, kx: KX }, partes, luces, morro, fus: caja(fus) };
+  // Los discos de las hélices: su eje y su radio, de las palas.
+  const discos = helices
+    .filter((h) => hay(h.palas[0]))
+    .map((h) => {
+      const palas = vertices(h.palas);
+      const buje = caja3(hay(h.buje) ? vertices([h.buje]) : palas);
+      const c = [caja3(palas).centro[0], buje.centro[1], buje.centro[2]];
+      const R = Math.max(...palas.map((p) => Math.hypot(p[1] - c[1], p[2] - c[2])));
+      return { c, R, delMorro: !!h.delMorro };
+    });
+
+  return { id: t.id, partes, luces, discos, alaAlta, colaEnT };
 }
 
 // ── A la hoja ────────────────────────────────────────────────────────────
 
-/**
- * **El sitio del avión en la hoja**, de 640 × 340: arriba y en el centro,
- * con sitio a los lados y debajo para las piezas.
- */
-const SITIO = { x0: 125, x1: 515, y0: 34, y1: 240 };
-
-function aLaHoja(a) {
-  const todos = [];
-  for (const p of a.partes) {
-    if (p.contorno) todos.push(...p.contorno);
-    if (p.tipo === "rueda")
-      todos.push(
-        [p.centro[0] - p.r, p.centro[1] - p.r * CE],
-        [p.centro[0] + p.r, p.centro[1] + p.r * CE],
-      );
+/** **Una vista entera**: la escala que cabe en el sitio, y cada parte dibujada en su capa. */
+function vista(a, nombre) {
+  const { ver, hondo } = VISTAS[nombre];
+  const SITIO = SITIOS[nombre];
+  const enVista = a.partes.filter((p) => p[nombre] !== null && p[nombre] !== undefined);
+  // De perfil, solo lo del lado de acá: lo de detrás queda tapado por su gemelo y por el fuselaje.
+  const visible = (tri) => nombre === "planta" || (tri[0][1] + tri[1][1] + tri[2][1]) / 3 >= -0.02;
+  const vale = (x) => visible(x.t) && !(nombre === "planta" && x.deCostado);
+  const pts = enVista.flatMap((p) => p.tris.filter(vale).flatMap((x) => x.t.map(ver)));
+  for (const disco of a.discos) {
+    const [x, y] = ver(disco.c);
+    pts.push([x - disco.R, y - disco.R], [x + disco.R, y + disco.R]);
   }
-  todos.push(a.luces.roja, a.luces.verde, a.luces.blanca);
-  const xs = todos.map((p) => p[0]);
-  const ys = todos.map((p) => p[1]);
-  const [ax, bx, ay, by] = [
-    Math.min(...xs),
-    Math.max(...xs),
-    Math.min(...ys),
-    Math.max(...ys),
-  ];
-  const s = Math.min(
-    (SITIO.x1 - SITIO.x0) / (bx - ax),
-    (SITIO.y1 - SITIO.y0) / (by - ay),
-  );
+  const xs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  const [ax, bx, ay, by] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  const s = Math.min((SITIO.x1 - SITIO.x0) / (bx - ax), (SITIO.y1 - SITIO.y0) / (by - ay));
   const ox = (SITIO.x0 + SITIO.x1) / 2 - ((ax + bx) / 2) * s;
   const oy = (SITIO.y0 + SITIO.y1) / 2 - ((ay + by) / 2) * s;
-  const P = ([x, y]) => [r1(x * s + ox), r1(y * s + oy)];
-  const camino = (ps) =>
-    `M${ps
-      .map(P)
-      .map(([x, y]) => `${x} ${y}`)
-      .join(" L")}Z`;
-  const partes = a.partes.map((p) => {
-    const base = { pieza: p.pieza, cerca: Math.round(p.cerca * 100) / 100 };
-    if (p.tipo === "rueda")
-      return {
-        ...base,
-        tipo: "rueda",
-        c: P(p.centro),
-        r: r1(p.r * s),
-        ry: r1(p.r * s * CE),
-      };
-    if (p.tipo === "pata")
-      return {
-        ...base,
-        tipo: "pata",
-        de: P(p.de),
-        a: P(p.a),
-        grueso: r1(Math.max(2.5, p.grueso * s)),
-      };
-    if (p.tipo === "helice")
-      return {
-        ...base,
-        tipo: "helice",
-        d: camino(p.contorno),
-        c: P(p.centro),
-        r: r1(p.R * s),
-      };
-    const extra = {};
-    if (p.lomo)
-      extra.lomo = `M${p.lomo
-        .map(P)
-        .map(([x, y]) => `${x} ${y}`)
-        .join(" L")}`;
-    if (p.arriba) {
-      extra.arriba = p.arriba.map(P);
-      extra.abajo = p.abajo.map(P);
-    }
-    if (p.boca) extra.boca = true;
-    return { ...base, tipo: p.tipo, d: camino(p.contorno), ...extra };
-  });
-  return {
-    id: a.id,
-    vista: a.vista,
-    escala: r1(s),
-    partes,
-    luces: {
-      roja: P(a.luces.roja),
-      verde: P(a.luces.verde),
-      blanca: P(a.luces.blanca),
-    },
-    morro: P(a.morro),
+  const P = (p) => {
+    const [x, y] = ver(p);
+    return [x * s + ox, y * s + oy];
   };
+  const dibujadas = [];
+  for (const p of [...enVista].sort((x, y) => x[nombre] - y[nombre])) {
+    const tris = p.tris.filter(vale);
+    const dib = dibujarParte(tris, P, hondo);
+    if (!dib) continue;
+    const parte = { pieza: p.pieza, capa: p[nombre], color: dib.color, d: dib.d };
+    if (dib.encima.length) parte.encima = dib.encima;
+    if (p.sol && nombre === "perfil") parte.sol = solDeLaDeriva(tris.flatMap((x) => x.t), P);
+    dibujadas.push(parte);
+  }
+  // Las hélices, de canto: de perfil solo la de este lado, que la otra queda detrás.
+  for (const disco of a.discos) {
+    if (nombre === "perfil" && disco.c[1] < -0.05) continue;
+    const [x, y] = P(disco.c);
+    const R = disco.R * s;
+    const fino = Math.max(2.2, R * 0.08);
+    // La del morro, justo encima de su capó; las del ala, encima de su góndola.
+    const capas = nombre === "perfil" ? CAPAS_DE_PERFIL : CAPAS_DE_PLANTA;
+    dibujadas.push({
+      pieza: "motor",
+      capa: disco.delMorro ? capas.motorDelMorro + 1 : capas.helice,
+      color: "helice",
+      d: elipse(x, y, nombre === "perfil" ? fino : R, nombre === "perfil" ? R : fino),
+    });
+  }
+  dibujadas.sort((x, y) => x.capa - y.capa);
+  const cajaDe = [SITIO.x0, SITIO.y0, SITIO.x1, SITIO.y1].map(r1);
+  return { escala: r1(s), caja: cajaDe, partes: dibujadas.map(({ capa, ...resto }) => resto), P };
+}
+
+/** Una elipse como camino, para que se mida y se pinte como cualquier otra parte. */
+function elipse(cx, cy, rx, ry) {
+  const n = 28;
+  const pts = Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * 2 * Math.PI;
+    return `${r1(cx + rx * Math.cos(a))} ${r1(cy + ry * Math.sin(a))}`;
+  });
+  return `M${pts.join(" L")}Z`;
+}
+
+/**
+ * **El sol de la casa en la deriva**, como lo pinta `world/librea.ts`: medio
+ * sol naciendo en la raíz —al 12 % de la altura, al 56 % de la cuerda desde
+ * el borde de ataque— y de radio, tres décimas de esa cuerda.
+ */
+function solDeLaDeriva(pts, P) {
+  const U = pts.map((p) => p[2]);
+  const u0 = Math.min(...U);
+  const u1 = Math.max(...U);
+  const u = u0 + 0.12 * (u1 - u0);
+  const franja = pts.filter((p) => Math.abs(p[2] - u) < 0.06 * (u1 - u0));
+  const ataque = Math.max(...franja.map((p) => p[0]));
+  const salida = Math.min(...franja.map((p) => p[0]));
+  const L = ataque + 0.56 * (salida - ataque);
+  const [cx, cy] = P([L, 0, u]);
+  const [bx] = P([L + 0.3 * (ataque - salida), 0, u]);
+  return { c: [r1(cx), r1(cy)], r: r1(Math.abs(bx - cx)) };
+}
+
+function aLaHoja(a) {
+  const perfil = vista(a, "perfil");
+  const planta = vista(a, "planta");
+  const luces = Object.fromEntries(Object.entries(a.luces).map(([k, p]) => [k, planta.P(p).map(r1)]));
+  // Lo más bajo de las ruedas, de perfil: donde está el suelo para la sombra y el despegue.
+  const ruedas = perfil.partes.filter((p) => p.pieza?.startsWith("tren"));
+  const suelo = Math.max(...ruedas.flatMap((p) => [...p.d.matchAll(/(-?[\d.]+) (-?[\d.]+)/g)].map((m) => Number(m[2]))));
+  const { P: _p, ...soloPerfil } = perfil;
+  const { P: _q, ...soloPlanta } = planta;
+  return { id: a.id, perfil: { ...soloPerfil, suelo: r1(suelo) }, planta: { ...soloPlanta, luces } };
 }
 
 const aviones = TIPOS.map((t) => aLaHoja(tipo(t)));
@@ -636,48 +677,46 @@ const cabecera = `/**
  * **Generado** por \`scripts/aviones-del-kit.mjs\` desde
  * \`public/assets/aeronaves/jaz-*.glb\`. No se edita a mano: se regenera.
  *
- * Cada parte es su contorno en la hoja del kit (640 × 340), vista de tres
- * cuartos desde arriba por la derecha, con el morro a la derecha. \`pieza\` es
- * la pieza del juego a la que pertenece, o \`null\` si es del tablero; \`cerca\`,
- * lo cerca que queda de quien mira: se dibuja de lejos a cerca.
+ * Cada avión, en dos vistas de libro sobre la hoja del kit (640 × 340): **de
+ * perfil**, por la derecha y con el morro a la derecha, que es donde se arma,
+ * y **en planta**, desde arriba y con el morro hacia arriba, que es donde se
+ * ponen las luces. Las partes van **en el orden en que se pintan**, de
+ * detrás a delante: lo que va después tapa lo de antes. \`pieza\` es la pieza
+ * del juego a la que pertenece cada una, o \`null\` si es del tablero.
  */
 
-export type PiezaDelModelo =
-  | "ala"
-  | "alaDerecha"
-  | "alaIzquierda"
-  | "alaArriba"
-  | "alaAbajo"
-  | "motor"
-  | "motorDerecho"
-  | "motorIzquierdo"
-  | "motorDerechoDentro"
-  | "motorDerechoFuera"
-  | "motorIzquierdoDentro"
-  | "motorIzquierdoFuera"
-  | "estabilizador"
-  | "deriva"
-  | "trenPrincipal"
-  | "trenMorro"
-  | "trenCola";
+export type PiezaDelModelo = "ala" | "alaArriba" | "alaAbajo" | "motor" | "estabilizador" | "deriva" | "trenPrincipal" | "trenMorro" | "trenCola";
 
-export type ParteDelModelo =
-  | { readonly pieza: PiezaDelModelo | null; readonly cerca: number; readonly tipo: "cuerpo" | "superficie"; readonly d: string; readonly lomo?: string; readonly arriba?: readonly (readonly [number, number])[]; readonly abajo?: readonly (readonly [number, number])[]; readonly boca?: boolean }
-  | { readonly pieza: PiezaDelModelo | null; readonly cerca: number; readonly tipo: "helice"; readonly d: string; readonly c: readonly [number, number]; readonly r: number }
-  | { readonly pieza: PiezaDelModelo | null; readonly cerca: number; readonly tipo: "rueda"; readonly c: readonly [number, number]; readonly r: number; readonly ry: number }
-  | { readonly pieza: PiezaDelModelo | null; readonly cerca: number; readonly tipo: "pata"; readonly de: readonly [number, number]; readonly a: readonly [number, number]; readonly grueso: number };
+/** Los colores, por el material del modelo; y \`helice\`, el disco de una hélice girando. */
+export type ColorDelModelo = "casco" | "capo" | "detalle" | "cola" | "remate" | "oscuro" | "gris" | "aluminio" | "goma" | "cristal";
+
+export interface ParteDelDibujo {
+  readonly pieza: PiezaDelModelo | null;
+  /** Lo que se ve de la parte, su color y su contorno. */
+  readonly color: ColorDelModelo | "helice";
+  readonly d: string;
+  /** Lo que se ve de otro color, encima: la franja, las ventanillas, las llantas. */
+  readonly encima?: readonly { readonly color: ColorDelModelo; readonly d: string }[];
+  /** El sol de la casa, en la deriva de los que lo llevan. */
+  readonly sol?: { readonly c: readonly [number, number]; readonly r: number };
+}
+
+export interface VistaDelModelo {
+  /** Puntos de la hoja por metro. */
+  readonly escala: number;
+  /** El sitio de la hoja en que cabe: x0, y0, x1, y1. */
+  readonly caja: readonly [number, number, number, number];
+  readonly partes: readonly ParteDelDibujo[];
+}
 
 export interface AvionDelModelo {
   readonly id: string;
-  /** Su vista: lo que baja en la hoja un metro hacia quien mira, lo que se aplasta la altura y lo que corre a lo largo. */
-  readonly vista: { readonly se: number; readonly ce: number; readonly kx: number };
-  /** Puntos de la hoja por metro. */
-  readonly escala: number;
-  readonly partes: readonly ParteDelModelo[];
-  /** Dónde va cada luz de navegación: las puntas de las alas y lo más atrás de la cola. */
-  readonly luces: { readonly roja: readonly [number, number]; readonly verde: readonly [number, number]; readonly blanca: readonly [number, number] };
-  /** La punta del morro, para las ventanillas y la cabina. */
-  readonly morro: readonly [number, number];
+  /** De perfil, y dónde está el suelo: lo más bajo de las ruedas. */
+  readonly perfil: VistaDelModelo & { readonly suelo: number };
+  /** En planta, y dónde va cada luz de navegación: las puntas de las alas y lo más atrás de la cola. */
+  readonly planta: VistaDelModelo & {
+    readonly luces: { readonly roja: readonly [number, number]; readonly verde: readonly [number, number]; readonly blanca: readonly [number, number] };
+  };
 }
 `;
 
@@ -687,5 +726,5 @@ writeFileSync(
 export const AVIONES_DEL_MODELO: Readonly<Record<string, AvionDelModelo>> = ${JSON.stringify(Object.fromEntries(aviones.map((a) => [a.id, a])))};\n`,
 );
 console.log(
-  `→ ${SALIDA}: ${aviones.map((a) => `${a.id} (${a.partes.length} partes, ${a.escala} pt/m)`).join(", ")}`,
+  `→ ${SALIDA}: ${aviones.map((a) => `${a.id} (perfil ${a.perfil.partes.length} partes a ${a.perfil.escala} pt/m, planta ${a.planta.partes.length} a ${a.planta.escala})`).join(", ")}`,
 );

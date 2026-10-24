@@ -4098,8 +4098,6 @@ export const ES_PY = {
   "inicio.kit.pieza.ala": "El ala",
   "inicio.kit.pieza.alaArriba": "El ala de arriba",
   "inicio.kit.pieza.alaAbajo": "El ala de abajo",
-  "inicio.kit.pieza.alaDerecha": "El ala derecha",
-  "inicio.kit.pieza.alaIzquierda": "El ala izquierda",
   "inicio.kit.pieza.motor": "El motor",
   "inicio.kit.pieza.cola": "La cola",
   "inicio.kit.pieza.estabilizador": "El estabilizador",

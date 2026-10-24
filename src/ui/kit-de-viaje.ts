@@ -13,20 +13,37 @@
  * escena, arriba, como todo lo que se dice. La luz verde se dibuja aparte, en
  * `luz-verde.ts`.
  *
- * ## Lo que se dibuja es lo de verdad
+ * ## Lo que se dibuja es lo de verdad, y en vistas de libro
  *
  * Los aviones de Armá tu avión son los de la flota, medidos en sus modelos
- * —ver `aviones-del-kit.ts`, que es generado— y vistos de tres cuartos desde
- * delante y desde poco por encima, por la derecha: la vista que deja ver a
- * la vez las dos alas, el motor debajo o encima del ala, el tren y la forma
- * de la cola. Cada pieza
- * espera en un hueco con su forma exacta, en su sitio de verdad, y en la
- * bandeja se ve más grande o más chica para que quepa y se agarre con el dedo:
- * al levantarla toma su tamaño, el de su hueco. Las luces de navegación van
- * donde van, y de noche se ve hacia dónde alumbra cada una: la roja hacia
- * delante y a la izquierda, la verde hacia delante y a la derecha, la blanca
- * hacia atrás, en los ángulos de la norma (14 CFR 25.1387: 110, 110 y 140
- * grados).
+ * —ver `aviones-del-kit.ts`, que es generado— y dibujados como en un libro:
+ *
+ * - **De perfil**, por la derecha y con el morro a la derecha, como se ven
+ *   por la ventanilla de Ara: ahí se arman. De perfil se ve sin dudar si el
+ *   ala va encima de la cabina o abajo, dónde van el motor y las ruedas, y la
+ *   forma de la cola. Lo de delante tapa lo de detrás, también los huecos:
+ *   cada uno va en su capa, como su pieza.
+ * - **Desde arriba**, con el morro hacia arriba: ahí se ponen las luces de
+ *   navegación, porque ahí la izquierda y la derecha del avión son las de
+ *   quien mira. Y de noche se ve hacia dónde alumbra cada una: la roja hacia
+ *   delante y a la izquierda, la verde hacia delante y a la derecha, la
+ *   blanca hacia atrás, en los ángulos de la norma (14 CFR 25.1387: 110, 110
+ *   y 140 grados).
+ * - Y **de perfil otra vez** para despegar.
+ *
+ * De una vista a la otra, sin leer: el avión armado se tumba —se aplasta de
+ * perfil y se abre por las alas, como al alabear hasta enseñar el lomo— y
+ * gira hasta poner el morro arriba. Al despegar, lo mismo al revés.
+ *
+ * Hasta el 24-10-2026 era una sola vista de tres cuartos por delante y desde
+ * un poco por encima, para ver las dos alas a la vez. En la avioneta el ala
+ * alta salía como una tabla en diagonal cruzando la cabina, y nada decía qué
+ * iba delante: «Un Picasso, vaya lujo de juego» (Enrique). Ver
+ * `scripts/aviones-del-kit.mjs`.
+ *
+ * Cada pieza espera en la bandeja de abajo, más grande o más chica para que
+ * quepa y se agarre con el dedo, y al levantarla toma su tamaño, el de su
+ * hueco. Las luces, en la de la derecha.
  *
  * ## Dónde
  *
@@ -52,7 +69,7 @@ import {
   type PiezaDelAvion,
   type Sitio,
 } from "../flight/kit-de-viaje";
-import { AVIONES_DEL_MODELO, type AvionDelModelo, type ParteDelModelo, type PiezaDelModelo } from "./aviones-del-kit";
+import { AVIONES_DEL_MODELO, type ColorDelModelo, type ParteDelDibujo, type PiezaDelModelo } from "./aviones-del-kit";
 import { leerProgreso, ponerProgreso } from "../datos/guardado";
 
 /** Dónde se guarda el nivel de Armá tu avión: solo el número, en el progreso del perfil. */
@@ -65,20 +82,35 @@ const C = {
   tinta: "#2a1c14",
   cielo: "#cfe6ee",
   crema: "#ecece6",
-  ala: "#dcd7c8",
   terracota: "#be5d38",
   verdeCasa: "#2f5243",
   amarillo: "#f2c230",
+  ocre: "#dd923f",
   blanco: "#ffffff",
   gris: "#b9c2c6",
-  oscuro: "#3b3b3b",
-  pata: "#8d9296",
-  cristal: "#3d5f78",
   noche: "#0d1631",
   roja: "#e0443a",
   verde: "#3fbf5f",
   luzBlanca: "#fff7da",
 } as const;
+
+/**
+ * **El color de cada material del modelo**, el de la librea de la casa
+ * —`LIBREA` en `aircraft.ts`—: casco crema, franja y remates terracota, raya
+ * fina y cola verdes; y lo que no se viste, como lo pinta el juego.
+ */
+const COLOR: Readonly<Record<ColorDelModelo, string>> = {
+  casco: C.crema,
+  capo: C.terracota,
+  detalle: C.verdeCasa,
+  cola: C.verdeCasa,
+  remate: C.terracota,
+  oscuro: "#3b3b3b",
+  gris: "#a9aeb3",
+  aluminio: "#cfd3d6",
+  goma: "#333333",
+  cristal: "#3d5f78",
+};
 
 const SVG = "http://www.w3.org/2000/svg";
 
@@ -88,14 +120,12 @@ const ALTO = 340;
 
 // ── Armá tu avión ────────────────────────────────────────────────────────
 
-/** **Qué partes del modelo forman cada pieza del juego.** La izquierda lleva su motor: de detrás casi no se ve. */
+/** **Qué partes del modelo forman cada pieza del juego.** La cola entera del primer avión es la deriva con su estabilizador. */
 const PARTES: Readonly<Record<PiezaDelAvion, readonly PiezaDelModelo[]>> = {
   ala: ["ala"],
   alaArriba: ["alaArriba"],
   alaAbajo: ["alaAbajo"],
-  alaDerecha: ["alaDerecha"],
-  alaIzquierda: ["alaIzquierda", "motorIzquierdo", "motorIzquierdoDentro", "motorIzquierdoFuera"],
-  motor: ["motor", "motorDerecho", "motorDerechoDentro", "motorDerechoFuera"],
+  motor: ["motor"],
   cola: ["estabilizador", "deriva"],
   estabilizador: ["estabilizador"],
   deriva: ["deriva"],
@@ -105,7 +135,7 @@ const PARTES: Readonly<Record<PiezaDelAvion, readonly PiezaDelModelo[]>> = {
 };
 
 /** De qué pieza del juego es cada parte del modelo en este nivel, o `null` si es del tablero. */
-function piezaDe(nivel: NivelDelAvion, p: ParteDelModelo): PiezaDelAvion | null {
+function piezaDe(nivel: NivelDelAvion, p: ParteDelDibujo): PiezaDelAvion | null {
   if (p.pieza === null) return null;
   return nivel.piezas.find((k) => PARTES[k].includes(p.pieza!)) ?? null;
 }
@@ -121,124 +151,67 @@ interface Caja {
   readonly x1: number;
   readonly y1: number;
 }
-function cajaDe(partes: readonly ParteDelModelo[]): Caja {
-  const xs: number[] = [];
-  const ys: number[] = [];
-  for (const p of partes) {
-    if (p.tipo === "rueda") {
-      xs.push(p.c[0] - p.r, p.c[0] + p.r);
-      ys.push(p.c[1] - p.ry, p.c[1] + p.ry);
-    } else if (p.tipo === "pata") {
-      xs.push(p.de[0], p.a[0]);
-      ys.push(p.de[1], p.a[1]);
-    } else
-      for (const [x, y] of puntosDe(p.d)) {
-        xs.push(x);
-        ys.push(y);
-      }
-  }
+function cajaDe(partes: readonly ParteDelDibujo[]): Caja {
+  const ps = partes.flatMap((p) => puntosDe(p.d));
+  const xs = ps.map((p) => p[0]);
+  const ys = ps.map((p) => p[1]);
   return { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) };
 }
 
-/** **El fuselaje con su librea**: el lomo con luz, la raya terracota, la cabina y las ventanillas del lado de acá. */
-function librea(p: Extract<ParteDelModelo, { tipo: "cuerpo" | "superficie" }>, escala: number): string {
-  const a = p.arriba;
-  const b = p.abajo;
-  if (!a || !b || a.length < 6) return "";
-  // Interpolado entre rebanadas: redondeado, las ventanillas salían a saltos, de dos en dos.
-  const en = (f: number, alto: number): readonly [number, number] => {
-    const u = Math.min(a.length - 1.001, Math.max(0, f * (a.length - 1)));
-    const i = Math.floor(u);
-    const k = u - i;
-    const mezcla = (p: readonly [number, number], q: readonly [number, number]): readonly [number, number] => [p[0] + (q[0] - p[0]) * k, p[1] + (q[1] - p[1]) * k];
-    const [x, ya] = mezcla(a[i]!, a[i + 1]!);
-    const yb = mezcla(b[i]!, b[i + 1]!)[1];
-    return [x, ya + (yb - ya) * alto];
-  };
-  const raya = Array.from({ length: 17 }, (_, i) => en(0.08 + (i / 16) * 0.86, 0.66));
-  const grueso = Math.max(2, 0.22 * escala);
-  const ventanilla = Math.min(7, Math.max(2.4, 0.32 * escala));
-  const cuadro = (ps: readonly (readonly [number, number])[], color: string): string =>
-    `<path d="M${ps.map(([x, y]) => `${n(x)} ${n(y)}`).join(" L")} Z" fill="${color}" stroke="${C.tinta}" stroke-width="1.2" stroke-linejoin="round"/>`;
-  /*
-   * En los de pasaje, la fila de ventanillas; en las avionetas, la ventana de
-   * la cabina, que es grande. Y en todos, el parabrisas, delante y arriba.
-   */
-  const ventanillas =
-    escala < 26
-      ? Array.from({ length: 12 }, (_, i) => en(0.3 + (i / 11) * 0.5, 0.42))
-          .map(([x, y]) => `<rect x="${n(x - ventanilla / 2)}" y="${n(y - ventanilla * 0.65)}" width="${n(ventanilla)}" height="${n(ventanilla * 1.3)}" rx="${n(ventanilla / 2)}" fill="${C.cristal}"/>`)
-          .join("")
-      : cuadro([en(0.6, 0.22), en(0.74, 0.2), en(0.74, 0.46), en(0.6, 0.46)], C.cielo);
-  const parabrisas = escala < 26 ? cuadro([en(0.9, 0.2), en(0.95, 0.3), en(0.95, 0.4), en(0.9, 0.4)], C.cristal) : cuadro([en(0.76, 0.18), en(0.84, 0.28), en(0.84, 0.46), en(0.76, 0.46)], C.cristal);
-  return `<path d="M${raya.map(([x, y]) => `${n(x)} ${n(y)}`).join(" L")}" fill="none" stroke="${C.terracota}" stroke-width="${n(grueso)}" stroke-linecap="round"/>
-${p.lomo ? `<path d="${p.lomo}" fill="none" stroke="${C.blanco}" stroke-width="2.4" stroke-linecap="round" opacity=".9"/>` : ""}
-${parabrisas}${ventanillas}`;
-}
+/** El `id` del recorte del sol de la deriva: uno por avión, que en la hoja hay uno montado cada vez. */
+const recorteDelSol = (tipo: string): string => `kit-deriva-${tipo}`;
 
-/** **Una parte, dibujada**: con su color de librea y su trazo. */
-function dibujoDe(p: ParteDelModelo, escala: number): string {
-  if (p.tipo === "rueda")
-    return `<ellipse cx="${p.c[0]}" cy="${p.c[1]}" rx="${p.r}" ry="${p.ry}" fill="${C.oscuro}" stroke="${C.tinta}" stroke-width="1.6"/><ellipse cx="${p.c[0]}" cy="${p.c[1]}" rx="${n(p.r * 0.4)}" ry="${n(p.ry * 0.4)}" fill="${C.gris}"/>`;
-  if (p.tipo === "pata")
-    return `<path d="M${p.de[0]} ${p.de[1]} L${p.a[0]} ${p.a[1]}" stroke="${C.tinta}" stroke-width="${n(p.grueso + 2)}" stroke-linecap="round"/><path d="M${p.de[0]} ${p.de[1]} L${p.a[0]} ${p.a[1]}" stroke="${C.pata}" stroke-width="${p.grueso}" stroke-linecap="round"/>`;
-  if (p.tipo === "helice")
-    return `<path d="${p.d}" fill="${C.gris}" fill-opacity=".45" stroke="${C.tinta}" stroke-width="1.2" stroke-opacity=".6"/><circle cx="${p.c[0]}" cy="${p.c[1]}" r="${n(Math.max(2.5, p.r * 0.14))}" fill="${C.terracota}" stroke="${C.tinta}" stroke-width="1.2"/>`;
-  const color =
-    p.pieza === null ? C.crema
-    : p.pieza === "deriva" ? C.verdeCasa
-    : p.pieza.startsWith("motor") && p.tipo === "cuerpo" ? C.terracota
-    : p.pieza === "motor" ? C.terracota
-    : p.pieza.startsWith("motor") ? C.gris
-    : C.ala;
-  let extra = "";
-  if (p.pieza === null && p.tipo === "cuerpo") extra = librea(p, escala);
-  if (p.pieza === "deriva") {
-    // El sol de la casa en la deriva verde, como en la librea.
-    const ps = puntosDe(p.d);
-    const cx = ps.reduce((s, q) => s + q[0], 0) / ps.length;
-    const cy = ps.reduce((s, q) => s + q[1], 0) / ps.length;
-    const alto = Math.max(...ps.map((q) => q[1])) - Math.min(...ps.map((q) => q[1]));
-    extra = `<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(Math.max(3, alto * 0.13))}" fill="${C.amarillo}" stroke="${C.tinta}" stroke-width="1"/>`;
-  }
-  if (p.tipo === "cuerpo" && p.boca && p.arriba && p.abajo) {
-    // La boca del reactor, delante: el ventilador oscuro.
-    const [xa, ya] = p.arriba[p.arriba.length - 1]!;
-    const yb = p.abajo[p.abajo.length - 1]![1];
-    extra = `<ellipse cx="${n(xa - 1)}" cy="${n((ya + yb) / 2)}" rx="${n(Math.max(1.6, (yb - ya) * 0.16))}" ry="${n((yb - ya) * 0.4)}" fill="${C.oscuro}" stroke="${C.tinta}" stroke-width="1"/>`;
-  }
-  return `<path d="${p.d}" fill="${color}" stroke="${C.tinta}" stroke-width="2" stroke-linejoin="round"/>${extra}`;
-}
-
-/** El hueco de una parte: su contorno a trazos, que se rellena un poco. */
-function huecoDe(p: ParteDelModelo): string {
-  if (p.tipo === "rueda") return `<ellipse cx="${p.c[0]}" cy="${p.c[1]}" rx="${p.r}" ry="${p.ry}"/>`;
-  if (p.tipo === "pata") return `<path d="M${p.de[0]} ${p.de[1]} L${p.a[0]} ${p.a[1]}"/>`;
-  return `<path d="${p.d}"/>`;
+/**
+ * **Una parte, dibujada**: tintas planas con su contorno. Primero lo que más
+ * se ve de ella, encima lo de otros colores —la franja, las ventanillas, las
+ * llantas— y el contorno al final, que nada lo pise. Una hélice girando es su
+ * disco, de canto.
+ */
+function dibujoDe(p: ParteDelDibujo, tipo: string): string {
+  if (p.color === "helice")
+    return `<path d="${p.d}" fill="${C.gris}" fill-opacity=".5" stroke="${C.tinta}" stroke-width="1.2" stroke-opacity=".75"/>`;
+  const encima = (p.encima ?? [])
+    .map((e) => `<path d="${e.d}" fill="${COLOR[e.color]}" fill-rule="evenodd"${e.color === "cristal" ? ` stroke="${C.tinta}" stroke-width=".7"` : ""}/>`)
+    .join("");
+  // El sol de la casa, naciendo en la raíz de la deriva y cortado por su borde, como lo pinta `world/librea.ts`.
+  const sol = p.sol
+    ? `<g clip-path="url(#${recorteDelSol(tipo)})"><circle cx="${p.sol.c[0]}" cy="${p.sol.c[1]}" r="${n(p.sol.r * 1.16)}" fill="${C.crema}"/><circle cx="${p.sol.c[0]}" cy="${p.sol.c[1]}" r="${p.sol.r}" fill="${C.ocre}"/></g>`
+    : "";
+  return `<path d="${p.d}" fill="${COLOR[p.color]}" fill-rule="evenodd"/>${encima}${sol}<path d="${p.d}" fill="none" stroke="${C.tinta}" stroke-width="1.8" stroke-linejoin="round"/>`;
 }
 
 /**
- * **La bandeja**: los sitios donde esperan las piezas, alrededor del avión
- * —dos a cada lado y tres debajo—, como en un puzle. Y las tres luces,
- * debajo, cuando el avión ya está armado.
+ * **La bandeja de las piezas**, abajo, como la tapa de un puzle: un sitio por
+ * pieza, en fila. Y la de las luces, a la derecha, que el avión visto desde
+ * arriba ocupa lo alto entero.
  */
-const BANDEJA: readonly (readonly [number, number, number, number])[] = [
-  [60, 84, 108, 108],
-  [580, 84, 108, 108],
-  [60, 208, 108, 108],
-  [580, 208, 108, 108],
-  [178, 294, 124, 78],
-  [320, 294, 124, 78],
-  [462, 294, 124, 78],
-];
-const BANDEJA_DE_LUCES: Readonly<Record<Luz, readonly [number, number]>> = { roja: [240, 296], verde: [320, 296], blanca: [400, 296] };
+const BANDEJA = { x0: 6, x1: 634, y: 294, alto: 78 } as const;
+const BANDEJA_DE_LUCES = { x: 593, y0: 92, paso: 82 } as const;
 
 /** Dónde espera cada pieza de un nivel: no en el orden del avión, que eso lo daría resuelto. */
-function sitioEnLaBandeja(nivel: number, i: number, cuantas: number): (typeof BANDEJA)[number] {
+function sitioEnLaBandeja(nivel: number, i: number, cuantas: number): readonly [number, number, number] {
   const orden = [4, 0, 6, 3, 1, 5, 2];
-  const k = orden[(i * 3 + nivel * 2) % cuantas]!;
-  return BANDEJA[k % BANDEJA.length]!;
+  // Saltando de tres en tres —o de cinco en cinco con seis, que de tres en tres se repetirían—, cada una en un sitio.
+  const paso = cuantas % 3 === 0 ? 5 : 3;
+  const k = orden.filter((x) => x < cuantas)[(i * paso + nivel * 2) % cuantas]!;
+  const ancho = (BANDEJA.x1 - BANDEJA.x0) / cuantas;
+  return [BANDEJA.x0 + ancho * (k + 0.5), BANDEJA.y, ancho];
 }
+
+/**
+ * **El orden de las luces en su bandeja**, por nivel: en los dos primeros,
+ * que es cuando se aprende, la roja arriba y la verde debajo; después,
+ * cambiado, que lo que se recuerda es dónde va cada una y no en qué orden
+ * llegan.
+ */
+const ORDEN_DE_LUCES: readonly (readonly Luz[])[] = [
+  ["roja", "verde", "blanca"],
+  ["roja", "verde", "blanca"],
+  ["verde", "blanca", "roja"],
+  ["blanca", "roja", "verde"],
+  ["verde", "roja", "blanca"],
+  ["roja", "blanca", "verde"],
+];
 
 /** Lo que mide cada pieza y cómo se ve en la bandeja: su centro de verdad y su escala para que quepa. */
 export interface PiezaDibujada {
@@ -257,109 +230,146 @@ const lampara = (l: Luz, r = 13): string =>
 <circle cx="${-r * 0.35}" cy="${-r * 0.35}" r="${r * 0.28}" fill="${C.blanco}" opacity=".75"/>`;
 
 /**
- * **Hacia dónde alumbra cada luz**, en el plano del ala: la roja de frente a
- * 110 grados a la izquierda, la verde igual a la derecha, la blanca 140 hacia
- * atrás. Vistas de tres cuartos, como el avión.
+ * **Hacia dónde alumbra cada luz**, desde arriba y con el morro arriba: la
+ * roja de frente a 110 grados a la izquierda, la verde igual a la derecha, la
+ * blanca 140 hacia atrás. Los ángulos, contados en el sentido del reloj desde
+ * el morro.
  */
-function abanico(l: Luz, [x, y]: readonly [number, number], r: number, vista: AvionDelModelo["vista"]): string {
-  const delante = [1, 0] as const;
-  const izquierda = [-vista.kx, -vista.se] as const;
-  const [a0, a1] = l === "roja" ? [0, 110] : l === "verde" ? [-110, 0] : [110, 250];
+function abanico(l: Luz, [x, y]: readonly [number, number], r: number): string {
+  const [a0, a1] = l === "roja" ? [-110, 0] : l === "verde" ? [0, 110] : [110, 250];
   const pts: string[] = [`${n(x)} ${n(y)}`];
   for (let i = 0; i <= 16; i++) {
     const g = ((a0 + ((a1 - a0) * i) / 16) * Math.PI) / 180;
-    const c = Math.cos(g);
-    const s = Math.sin(g);
-    pts.push(`${n(x + r * (c * delante[0] + s * izquierda[0]))} ${n(y + r * (c * delante[1] + s * izquierda[1]))}`);
+    pts.push(`${n(x + r * Math.sin(g))} ${n(y - r * Math.cos(g))}`);
   }
   const color = l === "roja" ? C.roja : l === "verde" ? C.verde : C.luzBlanca;
   return `<path class="kit-abanico kit-abanico--${l}" d="M${pts.join(" L")} Z" fill="${color}"/>`;
 }
 
-/** Las piezas de un nivel, medidas. */
+/** Las piezas de un nivel, medidas: las del avión de perfil, y las luces en la planta. */
 export function piezasDelNivel(i: number): readonly PiezaDibujada[] {
   const nivel = NIVELES[i]!;
   const avion = AVIONES_DEL_MODELO[nivel.tipo]!;
   const piezas = nivel.piezas.map((k, j) => {
-    const caja = cajaDe(avion.partes.filter((p) => piezaDe(nivel, p) === k));
-    const [bx, by, bw, bh] = sitioEnLaBandeja(i, j, nivel.piezas.length);
+    const caja = cajaDe(avion.perfil.partes.filter((p) => piezaDe(nivel, p) === k));
+    const [bx, by, ancho] = sitioEnLaBandeja(i, j, nivel.piezas.length);
     const w = caja.x1 - caja.x0 + 4;
     const h = caja.y1 - caja.y0 + 4;
     return {
       sitio: k as Sitio,
       centro: [(caja.x0 + caja.x1) / 2, (caja.y0 + caja.y1) / 2] as const,
       bandeja: [bx, by] as const,
-      escala: Math.min(1.6, (bw - 14) / w, (bh - 14) / h),
+      // Las chicas, más grandes en la bandeja, que se vean y se agarren; las grandes, lo que quepa.
+      escala: Math.min(2.4, (ancho - 16) / w, (BANDEJA.alto - 14) / h),
       margen: Math.max(46, 0.3 * Math.max(w, h)),
     };
   });
-  const luces = LUCES.map((l) => ({ sitio: l as Sitio, centro: avion.luces[l], bandeja: BANDEJA_DE_LUCES[l], escala: 1, margen: 42 }));
+  const orden = ORDEN_DE_LUCES[i] ?? LUCES;
+  const luces = LUCES.map((l) => ({
+    sitio: l as Sitio,
+    centro: avion.planta.luces[l],
+    bandeja: [BANDEJA_DE_LUCES.x, BANDEJA_DE_LUCES.y0 + BANDEJA_DE_LUCES.paso * orden.indexOf(l)] as const,
+    escala: 1,
+    margen: 42,
+  }));
   return [...piezas, ...luces];
 }
 
-/** **La hoja de un nivel**: el avión con sus huecos, la bandeja con las piezas y la noche para las luces. */
+/**
+ * **La hoja de un nivel**: el avión de perfil con sus huecos, la bandeja con
+ * las piezas, y el mismo avión desde arriba para las luces y la noche.
+ *
+ * El paso de una vista a la otra lo hace la hoja de estilos con las fases
+ * (`kit-hoja--vuelta` y `kit-hoja--despegue`): la planta sale de donde
+ * estaba el perfil, del mismo largo y con el morro a la derecha —`--gx`,
+ * `--gy` y `--gk`—, se abre por las alas hasta caber de alto —`--gm`— y
+ * llega a su sitio con el morro arriba.
+ */
 function hojaDelAvion(i: number): string {
   const nivel = NIVELES[i]!;
-  const avion: AvionDelModelo = AVIONES_DEL_MODELO[nivel.tipo]!;
+  const avion = AVIONES_DEL_MODELO[nivel.tipo]!;
+  const { perfil, planta } = avion;
   const piezas = piezasDelNivel(i);
-  const partes = [...avion.partes].sort((a, b) => a.cerca - b.cerca);
-  const escena = partes
+  const etiqueta = (s: Sitio): string => t(`inicio.kit.pieza.${s}` as TranslationKey);
+  /*
+   * **Cada hueco en la capa de su pieza**, justo debajo de ella: lo que va
+   * delante tapa también el hueco de lo que va detrás —la rueda se mete
+   * debajo del ala, la deriva detrás del fuselaje— y no se ven rayas que se
+   * cruzan sin saber cuál va delante.
+   */
+  const escena = perfil.partes
     .map((p) => {
       const k = piezaDe(nivel, p);
-      return `<g class="kit-parte${k ? "" : " kit-parte--fija"}"${k ? ` data-de="${k}"` : ""}>${dibujoDe(p, avion.escala)}</g>`;
+      const dibujo = `<g class="kit-parte${k ? "" : " kit-parte--fija"}"${k ? ` data-de="${k}"` : ""}>${dibujoDe(p, nivel.tipo)}</g>`;
+      if (!k) return dibujo;
+      return `<g class="kit-hueco" data-sitio="${k}" role="button" aria-label="${etiqueta(k)}"><path class="kit-hueco__forma" d="${p.d}"/></g>${dibujo}`;
     })
     .join("");
-  const huecos = piezas
-    .map((pz) => {
-      if (esLuz(pz.sitio)) {
-        const [x, y] = pz.centro;
-        // Con su color en los primeros niveles; la blanca, con borde de tinta, que si no en el papel no se ve.
-        const relleno = nivel.lucesConColor ? (pz.sitio === "roja" ? C.roja : pz.sitio === "verde" ? C.verde : C.luzBlanca) : "currentColor";
-        const borde = nivel.lucesConColor && pz.sitio !== "blanca" ? relleno : "currentColor";
-        return `<g class="kit-hueco kit-hueco--luz" data-sitio="${pz.sitio}" role="button" aria-label="${t(`inicio.kit.pieza.${pz.sitio}` as TranslationKey)}">
+  const deriva = perfil.partes.find((p) => p.sol);
+  const recorte = deriva ? `<clipPath id="${recorteDelSol(nivel.tipo)}" clipPathUnits="userSpaceOnUse"><path d="${deriva.d}"/></clipPath>` : "";
+  const desdeArriba = planta.partes.map((p) => dibujoDe(p, nivel.tipo)).join("");
+  const huecosDeLuces = LUCES.map((l) => {
+    const [x, y] = planta.luces[l];
+    // Con su color en los primeros niveles; la blanca, con borde de tinta, que si no en el papel no se ve.
+    const relleno = nivel.lucesConColor ? (l === "roja" ? C.roja : l === "verde" ? C.verde : C.luzBlanca) : "none";
+    const borde = nivel.lucesConColor && l !== "blanca" ? relleno : C.tinta;
+    return `<g class="kit-hueco kit-hueco--luz" data-sitio="${l}" role="button" aria-label="${etiqueta(l)}">
 <circle cx="${n(x)}" cy="${n(y)}" r="26" fill="transparent" stroke="none"/>
-<g class="kit-hueco__forma"><circle cx="${n(x)}" cy="${n(y)}" r="9" fill="${relleno}" fill-opacity="${nivel.lucesConColor ? 0.6 : 0.1}" stroke="${borde}" stroke-width="3"/></g></g>`;
-      }
-      const suyas = partes.filter((p) => piezaDe(nivel, p) === pz.sitio);
-      return `<g class="kit-hueco" data-sitio="${pz.sitio}" role="button" aria-label="${t(`inicio.kit.pieza.${pz.sitio}` as TranslationKey)}">
-<g class="kit-hueco__forma" fill="currentColor" stroke="currentColor">${suyas.map(huecoDe).join("")}</g></g>`;
-    })
-    .join("");
+<circle class="kit-hueco__forma" cx="${n(x)}" cy="${n(y)}" r="9" fill="${relleno}" fill-opacity=".55" stroke="${borde}"/></g>`;
+  }).join("");
   const bandeja = piezas
     .map((pz) => {
       const [bx, by] = pz.bandeja;
       const dibujo = esLuz(pz.sitio)
         ? lampara(pz.sitio)
-        : `<g transform="translate(${n(-pz.centro[0])} ${n(-pz.centro[1])})">${partes
+        : `<g transform="translate(${n(-pz.centro[0])} ${n(-pz.centro[1])})">${perfil.partes
             .filter((p) => piezaDe(nivel, p) === pz.sitio)
-            .map((p) => dibujoDe(p, avion.escala))
+            .map((p) => dibujoDe(p, nivel.tipo))
             .join("")}</g>`;
-      const [w, h] = esLuz(pz.sitio) ? [70, 70] : [BANDEJA[0]![2] - 6, BANDEJA[0]![3] - 6];
-      return `<g class="kit-pieza${esLuz(pz.sitio) ? " kit-pieza--luz" : ""}" data-pieza="${pz.sitio}" style="transform: translate(${n(bx)}px, ${n(by)}px)" role="button" tabindex="0" aria-label="${t(`inicio.kit.pieza.${pz.sitio}` as TranslationKey)}">
-<rect class="kit-pieza__toque" x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="14" fill="transparent" stroke="none"/>
+      const [w, h] = esLuz(pz.sitio) ? [70, 70] : [(BANDEJA.x1 - BANDEJA.x0) / nivel.piezas.length - 6, BANDEJA.alto];
+      return `<g class="kit-pieza${esLuz(pz.sitio) ? " kit-pieza--luz" : ""}" data-pieza="${pz.sitio}" style="transform: translate(${n(bx)}px, ${n(by)}px)" role="button" tabindex="0" aria-label="${etiqueta(pz.sitio)}">
+<rect class="kit-pieza__toque" x="${n(-w / 2)}" y="${n(-h / 2)}" width="${n(w)}" height="${n(h)}" rx="14" fill="transparent" stroke="none"/>
 <g class="kit-pieza__escala" style="--s: ${pz.escala.toFixed(3)}"><g class="kit-pieza__dibujo">${dibujo}</g></g></g>`;
     })
     .join("");
-  const [lx, ly] = avion.luces.blanca;
   const encendidas = LUCES.map((l) => {
-    const [x, y] = avion.luces[l];
+    const [x, y] = planta.luces[l];
     // El sitio en un grupo y el latido en otro: el `transform` del CSS pisaría el del sitio.
     return `<g transform="translate(${n(x)} ${n(y)})"><g class="kit-luz" data-luz="${l}">${lampara(l, 6)}</g></g>`;
   }).join("");
-  const abanicos = LUCES.map((l) => abanico(l, avion.luces[l], 64, avion.vista)).join("");
-  // La sombra en la pista, debajo del tren: se queda cuando el avión se va.
-  const caja = cajaDe(avion.partes);
-  return `<svg class="kit-hoja kit-hoja--avion" data-tipo="${nivel.tipo}" viewBox="0 0 ${ANCHO} ${ALTO}" xmlns="${SVG}" aria-label="${t("inicio.kit.avion")}">
-<rect class="kit-bandeja" x="6" y="252" width="628" height="84" rx="18"/>
-<ellipse class="kit-sombra" cx="${n((caja.x0 + caja.x1) / 2)}" cy="${n(caja.y1 + 6)}" rx="${n((caja.x1 - caja.x0) * 0.42)}" ry="7" fill="${C.tinta}" opacity=".12"/>
-<g class="kit-avion" style="transform-origin: ${n((caja.x0 + caja.x1) / 2)}px ${n((caja.y0 + caja.y1) / 2)}px">
-<g class="kit-velocidad"><path d="M${n(lx - 20)} ${n(ly - 30)} h-60 M${n(lx - 10)} ${n(ly)} h-80 M${n(lx - 20)} ${n(ly + 30)} h-50" stroke="${C.tinta}" stroke-width="5" stroke-linecap="round" opacity=".45"/></g>
+  const abanicos = LUCES.map((l) => abanico(l, planta.luces[l], 58)).join("");
+  // De dónde sale la planta: del sitio del perfil, del mismo largo y con el morro a la derecha.
+  const centro = (c: readonly [number, number, number, number]): readonly [number, number] => [(c[0] + c[2]) / 2, (c[1] + c[3]) / 2];
+  const [px, py] = centro(perfil.caja);
+  const [qx, qy] = centro(planta.caja);
+  // Y al abrirse por las alas, ya del tamaño que quepa de alto: de envergadura, la planta ocupa su ancho.
+  const k = perfil.escala / planta.escala;
+  const envergadura = cajaDe(planta.partes);
+  const cabe = Math.min(k, (ALTO - 30) / (envergadura.x1 - envergadura.x0));
+  const giro = `--gx: ${n(px - qx)}px; --gy: ${n(py - qy)}px; --gk: ${k.toFixed(3)}; --gm: ${cabe.toFixed(3)}`;
+  // La sombra en la pista, debajo del tren, y el despegue, girando sobre las ruedas grandes.
+  const caja = cajaDe(perfil.partes);
+  const ruedas = cajaDe(perfil.partes.filter((p) => p.pieza === "trenPrincipal"));
+  const cola = caja.x0;
+  const medio = (caja.y0 + perfil.suelo) / 2;
+  return `<svg class="kit-hoja kit-hoja--avion" data-tipo="${nivel.tipo}" viewBox="0 0 ${ANCHO} ${ALTO}" xmlns="${SVG}" aria-label="${t("inicio.kit.avion")}" style="${giro}">
+<defs>${recorte}</defs>
+<rect class="kit-bandeja kit-bandeja--piezas" x="${BANDEJA.x0}" y="${BANDEJA.y - BANDEJA.alto / 2 - 3}" width="${BANDEJA.x1 - BANDEJA.x0}" height="${BANDEJA.alto + 6}" rx="18"/>
+<rect class="kit-bandeja kit-bandeja--luces" x="${BANDEJA_DE_LUCES.x - 40}" y="${BANDEJA_DE_LUCES.y0 - 40}" width="80" height="${BANDEJA_DE_LUCES.paso * 2 + 80}" rx="18"/>
+<ellipse class="kit-sombra" cx="${n((caja.x0 + caja.x1) / 2)}" cy="${n(perfil.suelo + 3)}" rx="${n((caja.x1 - caja.x0) * 0.42)}" ry="6" fill="${C.tinta}" fill-opacity=".12"/>
+<g class="kit-perfil" style="transform-origin: ${n(px)}px ${n(py)}px">
+<g class="kit-vuela" style="transform-origin: ${n((ruedas.x0 + ruedas.x1) / 2)}px ${n(perfil.suelo)}px">
+<g class="kit-velocidad"><path d="M${n(cola - 14)} ${n(medio - 34)} h-60 M${n(cola - 6)} ${n(medio)} h-80 M${n(cola - 14)} ${n(medio + 34)} h-50" stroke="${C.tinta}" stroke-width="5" stroke-linecap="round" opacity=".45"/></g>
 <g class="kit-escena">${escena}</g>
+</g>
+</g>
+<g class="kit-planta" style="transform-origin: ${n(qx)}px ${n(qy)}px"><g class="kit-escena">${desdeArriba}</g></g>
 <rect class="kit-noche" x="-400" y="-400" width="1440" height="1140" fill="${C.noche}"/>
+<g class="kit-planta" style="transform-origin: ${n(qx)}px ${n(qy)}px">
 <g class="kit-abanicos">${abanicos}</g>
 <g class="kit-luces">${encendidas}</g>
+<g class="kit-huecos">${huecosDeLuces}</g>
 </g>
-<g class="kit-huecos">${huecos}</g>
 <g class="kit-piezas">${bandeja}</g>
 </svg>`;
 }
@@ -384,25 +394,28 @@ const MOCHILITA = `<svg viewBox="0 0 64 64" aria-hidden="true">
  */
 function iconoDelAvion(): string {
   const nivel = NIVELES[0]!;
-  const avion = AVIONES_DEL_MODELO[nivel.tipo]!;
-  const partes = [...avion.partes].sort((a, b) => a.cerca - b.cerca);
-  const de = (k: PiezaDelAvion | null): readonly ParteDelModelo[] => partes.filter((p) => piezaDe(nivel, p) === k);
-  // El avión entero menos la cola y el motor, que tienen su hueco; y esas dos piezas en la bandeja, al lado.
-  const fijas = partes.filter((p) => !["cola", "motor"].includes(piezaDe(nivel, p) ?? "")).map((p) => dibujoDe(p, avion.escala)).join("");
-  const huecos = (["cola", "motor"] as const)
-    .map((k) => `<g fill="${C.tinta}" fill-opacity=".06" stroke="${C.tinta}" stroke-width="4" stroke-dasharray="10 8" stroke-linejoin="round">${de(k).map(huecoDe).join("")}</g>`)
+  const { perfil } = AVIONES_DEL_MODELO[nivel.tipo]!;
+  const de = (k: PiezaDelAvion): readonly ParteDelDibujo[] => perfil.partes.filter((p) => piezaDe(nivel, p) === k);
+  // El avión entero, de perfil, menos la cola y el motor, que tienen su hueco en su capa; y esas dos piezas en la bandeja, al lado.
+  const falta = (p: ParteDelDibujo): boolean => ["cola", "motor"].includes(piezaDe(nivel, p) ?? "");
+  const avion = perfil.partes
+    .map((p) =>
+      falta(p)
+        ? `<path d="${p.d}" fill="${C.papel}" stroke="${C.tinta}" stroke-width="4" stroke-dasharray="10 8" stroke-linejoin="round"/>`
+        : dibujoDe(p, nivel.tipo),
+    )
     .join("");
   const pieza = (k: PiezaDelAvion, x: number, y: number, s: number): string => {
     const c = cajaDe(de(k));
-    return `<g transform="translate(${x} ${y}) scale(${s}) translate(${n(-(c.x0 + c.x1) / 2)} ${n(-(c.y0 + c.y1) / 2)})">${de(k).map((p) => dibujoDe(p, avion.escala)).join("")}</g>`;
+    return `<g transform="translate(${x} ${y}) scale(${s}) translate(${n(-(c.x0 + c.x1) / 2)} ${n(-(c.y0 + c.y1) / 2)})">${de(k).map((p) => dibujoDe(p, nivel.tipo)).join("")}</g>`;
   };
-  const c = cajaDe(avion.partes);
-  const s = Math.min(108 / (c.x1 - c.x0), 92 / (c.y1 - c.y0));
+  const c = cajaDe(perfil.partes);
+  const s = Math.min(108 / (c.x1 - c.x0), 88 / (c.y1 - c.y0));
   return `<svg viewBox="0 0 160 100" aria-hidden="true">
 <rect width="160" height="100" rx="12" fill="${C.mesa}"/>
 <rect x="118" y="5" width="38" height="90" rx="9" fill="${C.papel}" stroke="${C.tinta}" stroke-width="1.2" stroke-dasharray="2 4"/>
-<g transform="translate(${n(60 - ((c.x1 - c.x0) * s) / 2)} ${n(50 - ((c.y1 - c.y0) * s) / 2)}) scale(${s.toFixed(3)}) translate(${n(-c.x0)} ${n(-c.y0)})">${fijas}${huecos}</g>
-${pieza("cola", 137, 24, 0.3)}${pieza("motor", 137, 54, 0.42)}
+<g transform="translate(${n(60 - ((c.x1 - c.x0) * s) / 2)} ${n(50 - ((c.y1 - c.y0) * s) / 2)}) scale(${s.toFixed(3)}) translate(${n(-c.x0)} ${n(-c.y0)})">${avion}</g>
+${pieza("cola", 137, 26, 0.2)}${pieza("motor", 137, 56, 0.24)}
 <g transform="translate(130 82)">${lampara("roja", 5)}</g><g transform="translate(145 82)">${lampara("verde", 5)}</g>
 </svg>`;
 }
@@ -649,13 +662,14 @@ export class PantallaDelKit {
     const e = juego.estado;
     const svg = this.hoja.querySelector("svg");
     if (!svg) return;
-    for (const f of ["piezas", "luces", "noche", "despegue"]) svg.classList.toggle(`kit-hoja--${f}`, e.fase === f);
+    for (const f of ["piezas", "vuelta", "luces", "noche", "despegue"]) svg.classList.toggle(`kit-hoja--${f}`, e.fase === f);
     svg.classList.toggle("kit-hoja--hecha", e.terminado);
     for (const pz of this.piezas) {
       const s = pz.sitio;
       const g = this.hoja.querySelector<SVGGElement>(`[data-pieza="${s}"]`);
-      const hueco = this.hoja.querySelector<SVGGElement>(`[data-sitio="${s}"]`);
-      if (!g || !hueco) continue;
+      // Una pieza puede tener su hueco en varias capas: la cola entera es la deriva, detrás del fuselaje, y el estabilizador, delante.
+      const huecos = this.hoja.querySelectorAll<SVGGElement>(`[data-sitio="${s}"]`);
+      if (!g || !huecos.length) continue;
       const puesta = e.puestas.includes(s);
       const deLaFase = esLuz(s) ? e.fase === "luces" : e.fase === "piezas";
       if (this.arrastre?.pieza !== s) {
@@ -668,8 +682,10 @@ export class PantallaDelKit {
       g.classList.toggle("kit-pieza--senala", e.senala === s);
       g.setAttribute("tabindex", puesta || !deLaFase ? "-1" : "0");
       g.setAttribute("aria-disabled", String(puesta || !deLaFase));
-      hueco.classList.toggle("kit-hueco--puesto", puesta || !deLaFase);
-      hueco.classList.toggle("kit-hueco--brilla", !puesta && deLaFase && e.ilumina === s);
+      for (const hueco of huecos) {
+        hueco.classList.toggle("kit-hueco--puesto", puesta || !deLaFase);
+        hueco.classList.toggle("kit-hueco--brilla", !puesta && deLaFase && e.ilumina === s);
+      }
       if (esLuz(s)) this.hoja.querySelector(`[data-luz="${s}"]`)?.classList.toggle("kit-luz--puesta", puesta);
       else for (const parte of this.hoja.querySelectorAll(`[data-de="${s}"]`)) parte.classList.toggle("kit-parte--puesta", puesta);
     }
@@ -843,7 +859,15 @@ export class PantallaDelKit {
       for (const { sitio: s } of this.piezas) {
         if (!j.aMano(s)) continue;
         const en = caja(this.hoja.querySelector(`[data-pieza="${s}"] .kit-pieza__dibujo`));
-        const sitio = caja(this.hoja.querySelector(`[data-sitio="${s}"] .kit-hueco__forma`));
+        // El hueco entero, con todas sus capas.
+        const capas = [...this.hoja.querySelectorAll(`[data-sitio="${s}"] .kit-hueco__forma`)].map(caja).filter((r): r is DOMRect => !!r);
+        const sitio = capas.length
+          ? capas.reduce((a, b) => {
+              const x = Math.min(a.left, b.left);
+              const y = Math.min(a.top, b.top);
+              return new DOMRect(x, y, Math.max(a.right, b.right) - x, Math.max(a.bottom, b.bottom) - y);
+            })
+          : null;
         if (en && sitio) piezas[s] = { en, sitio };
       }
     const juegos: Record<string, DOMRect> = {};
