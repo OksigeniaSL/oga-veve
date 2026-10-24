@@ -497,7 +497,7 @@ async function elVuelo() {
    * las lecturas pausadas mientras se armaba y lo que se puso entre dos de
    * ellas, que tiene que ser nada; y hasta dónde se llegó.
    */
-  const armando = { elegidoEn: null, arrastres: 0, ultimo: 0, puestas: [], antes: null, pausado: 0, conPausa: 0, fases: new Set(), despegados: 0 };
+  const armando = { elegidoEn: null, arrastres: 0, ultimo: 0, puestas: [], antes: null, pausado: 0, conPausa: 0, fases: new Set(), despegados: 0, libre: 0, tAnt: null };
   /*
    * **La luz verde en el vuelo** (19-10-2026): se juega entera, a la velocidad
    * de verdad y como un niño que hace caso a lo que brilla —toca el avión y la
@@ -1751,6 +1751,10 @@ async function elVuelo() {
   );
   const despego = armando.despegados > 0;
   /*
+   * Y piezas puestas, si hubo rato: el banco solo pone una con el kit sin
+   * pausa y sin nadie hablando, y con la luz y su canción delante a veces no
+   * queda ni eso antes de pedir guardarlo (24-10-2026: 0 s libres).
+   *
    * Lo de la primera pieza va a la cola, detrás de quien hable, y se quita si
    * la tripulante pide guardar el kit antes de que le llegue el turno. Así que
    * Ara tiene que contar alguna **si hubo un hueco** entre elegir el avión y
@@ -1775,12 +1779,12 @@ async function elVuelo() {
     !!armando.elegidoEn &&
       !!torre.fin &&
       armando.elegidoEn.t > torre.fin.t &&
-      armando.puestas.length > 0 &&
+      (armando.puestas.length > 0 || armando.libre < 3) &&
       armando.conPausa === 0 &&
       (!!piezaContada || hueco < 1.5) &&
       (!despego || delKit.includes("avion.luces")),
     armando.elegidoEn
-      ? `elegido a los ${armando.elegidoEn.t.toFixed(0)} s a ${pies(armando.elegidoEn.altitud)}, ${torre.fin ? `${(armando.elegidoEn.t - torre.fin.t).toFixed(0)} s después de acabar la luz` : "sin acabar la luz"} · puestas ${armando.puestas.length} (${armando.puestas.join(", ")}) · fases ${[...armando.fases].join(", ")} · despegó ${despego} · ${armando.pausado} lecturas pausado por la megafonía armando, ${armando.conPausa} puestas en pausa · Ara cuenta ${piezaContada ? `${piezaContada.clave.replace("inicio.ara.pasaje.kit.", "")} a los ${piezaContada.desde.toFixed(0)} s` : "ninguna"} · el hueco más largo hasta pedir guardarlo, ${Number.isFinite(hueco) ? `${hueco.toFixed(1)} s` : "—"} · dicho: ${delKit.join(", ") || "nada"}`
+      ? `elegido a los ${armando.elegidoEn.t.toFixed(0)} s a ${pies(armando.elegidoEn.altitud)}, ${torre.fin ? `${(armando.elegidoEn.t - torre.fin.t).toFixed(0)} s después de acabar la luz` : "sin acabar la luz"} · ${armando.libre.toFixed(0)} s libres para jugar (sin pausa y sin nadie hablando) · puestas ${armando.puestas.length} (${armando.puestas.join(", ")}) · fases ${[...armando.fases].join(", ")} · despegó ${despego} · ${armando.pausado} lecturas pausado por la megafonía armando, ${armando.conPausa} puestas en pausa · Ara cuenta ${piezaContada ? `${piezaContada.clave.replace("inicio.ara.pasaje.kit.", "")} a los ${piezaContada.desde.toFixed(0)} s` : "ninguna"} · el hueco más largo hasta pedir guardarlo, ${Number.isFinite(hueco) ? `${hueco.toFixed(1)} s` : "—"} · dicho: ${delKit.join(", ") || "nada"}`
       : `no se eligió · la luz ${torre.fin ? `acabó a los ${torre.fin.t.toFixed(0)} s` : "no acabó"} · la tripulante pide guardarlo a los ${guardar?.desde?.toFixed(0) ?? "—"} s`,
   );
   const aGuardar = guardar ? altitudEntre(guardar.desde) : null;
@@ -2456,6 +2460,9 @@ async function armarEnElVuelo(page, e, a, torre, altitud) {
     return;
   }
   if (j?.juego !== "avion") return;
+  // El rato de vuelo desde la lectura anterior: para contar cuánto se pudo jugar de verdad.
+  const dt = a.tAnt === null ? 0 : e.segundos - a.tAnt;
+  a.tAnt = e.segundos;
   a.fases.add(j.fase);
   a.despegados = Math.max(a.despegados, j.despegados ?? 0);
   // Lo puesto desde la lectura anterior: lo nuevo de este avión, o todo lo del siguiente.
@@ -2468,6 +2475,7 @@ async function armarEnElVuelo(page, e, a, torre, altitud) {
     a.pausado++;
     return;
   }
+  if (["piezas", "luces"].includes(j.fase) && !e.hablando) a.libre += dt;
   /*
    * Y como quien escucha a Ara: la siguiente pieza, con nadie hablando. Con
    * una pieza cada dos segundos y medio aunque hablara alguien, lo que se dice
