@@ -284,6 +284,38 @@ const PROXY_METEO: string | null = import.meta.env.VITE_METEO ?? null;
  */
 const HORA_BUENA = 16;
 
+/**
+ * **La hora del vuelo de pasaje**: las tres de la tarde, una antes que la
+ * hora buena.
+ *
+ * Lo que decide es la llegada (punto 314): en la final de la 36 de La Palma,
+ * Ara mira por su cristal la ladera de Villa de Mazo, que baja hacia el
+ * estesudeste —trece grados de pendiente, medidos en el relieve del juego—,
+ * con el sol de la tarde por detrás. A las cuatro, el 24 de octubre, el sol
+ * está a dieciséis grados por el oestesudoeste y a esa ladera le llega el
+ * quince por ciento de su luz (N·L = 0,15), y debajo del mar de nubes de la
+ * escena, siete décimas de capa, el sol va además a un setenta por ciento: la
+ * ladera salía a 28 sobre 255 en la captura con la tarjeta del portátil,
+ * cuando la misma foto del IGN da 76, y los caminos que suben entre las
+ * fincas no se distinguían. De noviembre a enero, peor: entre el cinco y el
+ * once por ciento.
+ *
+ * A las tres, el mismo día, el sol está a veintiocho grados y le llega el
+ * treinta y siete por ciento (N·L = 0,37), y ningún día del año baja del
+ * treinta. Medido en la misma captura: la ladera pasa de 28 a 38 sobre 255, y
+ * las pistas que suben entre las fincas de abajo se ven claras; es la foto
+ * del IGN y nada más. Lo que no cambia es el casco, a dos kilómetros y medio:
+ * se mira casi a ras de la ladera —seis grados— y ahí la foto se emborrona
+ * igual a cualquier hora. Sigue siendo la tarde, con sombras y relieve —el
+ * sol de las tres en diciembre está a veintidós grados, más bajo que el de
+ * las cuatro en junio—, y lo que mira al este sigue más oscuro que lo que
+ * mira al oeste: se adelanta la hora, no se pinta luz donde no la hay. Y es
+ * el horario de ese vuelo, como los que salen siempre a la misma hora. Se
+ * midió también el relleno del cielo al doble, y aclara lo mismo a costa de
+ * teñir de azul y aplanar la isla entera.
+ */
+const HORA_DEL_PASAJE = 15;
+
 /** A qué distancia de la cabecera empieza la lección de aterrizar, m. */
 /** A cuántos metros del umbral empieza la lección de aterrizar. */
 const APROXIMACION = ENTRADA_EN_FINAL;
@@ -12028,9 +12060,9 @@ export class Game {
     /*
      * **De pasaje, de día**: el primer vuelo de alguien es para mirar por la
      * ventanilla, y de noche no se ve el Teide. Es el horario de ese vuelo,
-     * como los que salen siempre a la misma hora.
+     * como los que salen siempre a la misma hora. Ver `HORA_DEL_PASAJE`.
      */
-    if (this.dePasaje) return HORA_BUENA;
+    if (this.dePasaje) return HORA_DEL_PASAJE;
     /*
      * **Y la tormenta, de tarde**: la tormenta de verano es la de la tarde,
      * cuando el suelo ya calentó el aire —el #49—, y de noche el ejercicio no
