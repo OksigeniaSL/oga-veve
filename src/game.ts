@@ -206,7 +206,7 @@ import {
   queLucesSeLeVen,
 } from "./world/luces-del-trafico";
 import { estrellasQueSeSenalan } from "./world/hitos-del-cielo";
-import { createSky, ponerNubes, radioDeLasNubes, updateSky, type SkyRig } from "./world/sky";
+import { createSky, DESVANECE_DESDE, ponerNubes, radioDeLasNubes, updateSky, type SkyRig } from "./world/sky";
 import { CURVAR_EL_DIBUJO, instalarCurvatura } from "./world/curvatura";
 import { crearLluvia, type LluviaEnElMundo } from "./world/lluvia";
 import { ENTRE_RAYOS, luzDelRelampago, Relampagos } from "./world/relampago";
@@ -24303,6 +24303,19 @@ export class Game {
    * cuánta nube hay en la recta hasta él, tomada a pasos con la densidad del
    * dibujo —otra cuenta que la de las láminas, para que el banco no se mida
    * con la misma regla—. Para el banco: ver `scripts/verificar-inicio-3.mjs`.
+   *
+   * **La nube, como se pinta: con su desvanecido** (24-10-2026). La lámina
+   * se apaga con la hondura desde el 45 % del radio de las nubes y llega a
+   * cero en él —ver `materialDeNube` en `world/sky.ts`—, y esto la contaba
+   * entera hasta el radio mismo: a 32,8 km, donde de la lámina queda una
+   * milésima, contaba nube densa. Bajando hacia La Gomera, la recta entra en
+   * el mar de nubes cada vez más cerca y esa nube que no se pinta asoma por
+   * el borde de la cuenta: medido desde la cámara de la toma, 0 m a 43,8 km
+   * de Garajonay, 200 m a 43,7 y 350 m a 43,5, todo entre los 32,8 y los
+   * 33,1 km de la recta, con la isla entera en la imagen y lo que dejan ver
+   * las láminas en 0,98. Así que cuenta la densidad por lo que deja de ella
+   * el desvanecido, a la hondura de la cámara, que es como la apaga la
+   * tarjeta. `nubeSinDesvanecer` es la cuenta de antes, para el registro.
    */
   paisajeParaBanco(sitio: string): {
     readonly punto: PuntoDelMundo;
@@ -24312,6 +24325,7 @@ export class Game {
     readonly porElCristal: boolean | null;
     readonly ojoEnNube: number;
     readonly nubeEnMedio: number;
+    readonly nubeSinDesvanecer: number;
     readonly distancia: number;
   } | null {
     const punto = this.puntoDeLoNombrado(sitio as SitioDelPaisaje);
@@ -24325,12 +24339,20 @@ export class Game {
     const d = Math.hypot(punto.x - ojo.x, punto.y - ojo.y, punto.z - ojo.z);
     // Los metros de nube densa que cruza la recta, hasta donde se pintan las nubes.
     let nube = 0;
+    let sinDesvanecer = 0;
     const paso = 25;
-    const hasta = Math.min(d, radioDeLasNubes(this.scenario.size * 4));
+    const radio = radioDeLasNubes(this.scenario.size * 4);
+    const desde = radio * DESVANECE_DESDE;
+    const hasta = Math.min(d, radio);
+    // La hondura de cada paso, la de la tarjeta: lo que avanza a lo largo de la mirada de la cámara.
+    const mirada = c.getWorldDirection(new Vector3());
+    const hondo = ((punto.x - ojo.x) * mirada.x + (punto.y - ojo.y) * mirada.y + (punto.z - ojo.z) * mirada.z) / d;
     for (let t = paso; t < hasta; t += paso) {
       const f = t / d;
       const densidad = this.sky.densidadEn(ojo.x + (punto.x - ojo.x) * f, ojo.y + (punto.y - ojo.y) * f, ojo.z + (punto.z - ojo.z) * f);
-      if (densidad > 0.3) nube += paso;
+      const k = MathUtils.clamp((t * hondo - desde) / (radio - desde), 0, 1);
+      if (densidad * (1 - k * k * (3 - 2 * k)) > 0.3) nube += paso;
+      if (densidad > 0.3) sinDesvanecer += paso;
     }
     return {
       punto,
@@ -24340,6 +24362,7 @@ export class Game {
       porElCristal: this.seVePorLaVentanillaParaBanco(punto),
       ojoEnNube: this.sky.enLaNube,
       nubeEnMedio: nube,
+      nubeSinDesvanecer: sinDesvanecer,
       distancia: d,
     };
   }
