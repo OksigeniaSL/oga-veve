@@ -64,7 +64,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -1796,6 +1796,8 @@ const DEL_TOQUE = [
   ["inicio.ara.pasaje.aerofrenosPorque", "ara", "el modo inicio, de pasaje: Ara cuenta para qué se levantan los aerofrenos"],
   ["vuelo.tocasteLargo", "instructor", "el veredicto de la toma: se tocó pasada la zona de toma"],
   ["vuelo.tocasteDuro", "instructor", "el veredicto de la toma: se tocó con más de diez pies por segundo"],
+  ["vuelo.tocasteLargoFacil", "instructor", "el veredicto de la toma, en los peldaños de abajo: se aterrizó, pero lejos de las rayas"],
+  ["vuelo.tocasteDuroFacil", "instructor", "el veredicto de la toma, en los peldaños de abajo: se aterrizó, pero con un golpe fuerte"],
 ];
 const LO_QUE_SE_VE = new Set(
   [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DEL_TOQUE].map(

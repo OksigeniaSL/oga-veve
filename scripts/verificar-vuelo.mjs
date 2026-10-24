@@ -2164,6 +2164,7 @@ const volado =
                 dibujo: dibujo(),
                 galones: o.galones(),
                 veredicto: i?.ultimaToma?.veredicto ?? null,
+                duro: o.limiteDeDuro?.() ?? 10 * 0.3048,
                 apuntado: antes !== null && (i?.cuaderno?.aterrizajes ?? 0) > antes,
               };
             }
@@ -2189,17 +2190,18 @@ if (volado?.firme) {
     "«me salió esto y aterricé bien»: el percance saltaba a 4 m/s y la senda se posa a 3",
   );
   /*
-   * **Y se llama por su nombre** (punto 299). Esto pedía el galón de la toma,
-   * y a más de cuatro metros por segundo —trece pies por segundo— no es una
-   * toma buena: por encima de diez es un aterrizaje duro, el que se apunta y
-   * obliga a revisar el avión. Lo que no puede faltar es que cuente como
-   * aterrizaje —en el cuaderno, sin percance— y que se diga qué fue.
+   * **Y se llama por su nombre** (punto 299). Esto pedía el galón de la toma
+   * a más de cuatro metros por segundo. Lo que no puede faltar es que cuente
+   * como aterrizaje —en el cuaderno, sin percance— y que se diga qué fue:
+   * firme, o duro si pasa del listón del modelo de este peldaño, que en el de
+   * los pequeños es holgado (ver `limiteDeDuro` en `arcade.ts`).
    */
-  const esperado = volado.firme.caida > 10 * 0.3048 ? "duro" : "firme";
+  // El listón de «duro» lo pone el modelo del peldaño: ver `limiteDeDuro`.
+  const esperado = volado.firme.caida > volado.firme.duro ? "duro" : "firme";
   comprobar(
-    "y cuenta como aterrizaje, y se llama por su nombre: duro por encima de diez pies por segundo",
+    "y cuenta como aterrizaje, y se llama por su nombre: duro solo por encima del listón de su modelo",
     volado.firme.apuntado && volado.firme.veredicto === esperado && (esperado === "duro") !== volado.firme.galones.includes("toma"),
-    `«${volado.firme.veredicto ?? "sin veredicto"}» a ${(volado.firme.caida / 0.3048).toFixed(1)} ft/s · en el cuaderno: ${volado.firme.apuntado} · galones: ${volado.firme.galones.join(", ") || "ninguno"}`,
+    `«${volado.firme.veredicto ?? "sin veredicto"}» a ${volado.firme.caida.toFixed(1)} m/s, duro desde ${volado.firme.duro.toFixed(1)} · en el cuaderno: ${volado.firme.apuntado} · galones: ${volado.firme.galones.join(", ") || "ninguno"}`,
     "un aterrizaje que no se apunta es un aterrizaje que no ha pasado; y uno duro no es uno bueno",
   );
 }

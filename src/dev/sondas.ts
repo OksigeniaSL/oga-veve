@@ -2506,6 +2506,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     },
     /** A qué caída se tocó, m/s. Para el banco y para las sondas. */
     caida: () => juego.landing.caidaAlTocar,
+    /** Desde qué caída es dura una toma en el modelo de ahora, m/s. Ver `limiteDeDuro`. */
+    limiteDeDuro: () => juego.flight.limiteDeDuro(),
     /**
      * Qué palanca da este ritmo de subida, m/s, en el modelo sencillo; `null`
      * en el completo. Es la misma pregunta que le hace el piloto automático en

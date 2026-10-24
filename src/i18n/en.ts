@@ -354,7 +354,7 @@ export const EN: Dictionary = {
   "palabra.rapido": "Too fast",
   "palabra.fuera": "Off",
   "palabra.corto": "Short",
-  "palabra.largo": "Long",
+  "palabra.largo": "Far",
   "palabra.duro": "Hard",
   "palabra.roto": "Broken",
   "vuelo.estacionado": "Start the engine",
@@ -406,6 +406,10 @@ export const EN: Dictionary = {
   "vuelo.tocasteLargo":
     "You touched down long, far from the markings: that eats up the runway. Firm and on the spot beats smooth and far",
   "vuelo.tocasteDuro": "Hard landing: now the plane has to be inspected. Next time, flare a little more at the end",
+  "vuelo.tocasteLargoFacil":
+    "You landed! But far from the big white stripes: next time, touch down near them, so there's runway left to stop",
+  "vuelo.tocasteDuroFacil":
+    "You landed! But with a big bump: next time, reach the ground more gently, without pushing the nose down",
   "vuelo.tomaLargaSinPista": "Not enough runway to stop: we go around and try again",
   "vuelo.aterrizasteContraLaOrden":
     "The tower had sent us around. When the tower says go around, you go: it sees what we can't see from here",

@@ -21,7 +21,7 @@
  * `largo` es tocar **pasada la zona de toma**, flotando: el avión se come la
  * pista que necesitaba para parar. Y `duro`, tocar con más caída de la que
  * aguanta el tren sin que haya que revisarlo. Ver la cuenta de `SUAVE` y
- * `DURO`, más abajo.
+ * `DURO_DE_TRANSPORTE`, más abajo, y `limiteDeDuro`.
  */
 export type Aterrizaje =
   | "suave"
@@ -73,6 +73,10 @@ export type Aterrizaje =
  *   (14 CFR 23.473(d), en la redacción anterior a la enmienda 64), así que
  *   diez es lo más que aguanta cualquiera de la flota sin revisar.
  *
+ * **Y eso en los modelos con recogida de verdad.** El del peldaño de los
+ * pequeños no la lleva y su toma corriente baja a tres metros por segundo:
+ * ahí el listón lo pone su modelo, más holgado. Ver `limiteDeDuro`.
+ *
  * Duro no es un percance: el avión está entero en la pista. Se dice, se ve y
  * la próxima vez se recoge un poco más. El golpe que rompe el tren es otra
  * cosa y lo pone el modelo de vuelo; ver `limiteDeCaida`.
@@ -84,8 +88,12 @@ const PIE_POR_SEGUNDO = 0.3048;
 /** Por debajo de este régimen de descenso al tocar, se considera suave (m/s). */
 const SUAVE = 2 * PIE_POR_SEGUNDO;
 
-/** Y por encima de este, duro: se apunta y se revisa el avión (m/s). */
-const DURO = 10 * PIE_POR_SEGUNDO;
+/**
+ * Y por encima de este, duro: se apunta y se revisa el avión (m/s). Es el de
+ * los modelos con recogida de verdad; el de los pequeños lo pone su modelo,
+ * más holgado. Ver `limiteDeDuro`.
+ */
+export const DURO_DE_TRANSPORTE = 10 * PIE_POR_SEGUNDO;
 
 /**
  * Cuánto se espera desde el contacto para dar el veredicto, s.
@@ -221,6 +229,12 @@ export class LandingWatcher {
      * `toma-larga.ts`— y se guarda al tocar, que rodando ya se ha pasado.
      */
     largo = false,
+    /**
+     * **Desde qué caída es dura la toma**, m/s: lo dice el modelo de vuelo de
+     * este peldaño —ver `limiteDeDuro`—, como el golpe que rompe lo dice
+     * `limiteDeCaida`. Sin decir, el del tren certificado.
+     */
+    duro = DURO_DE_TRANSPORTE,
   ): Aterrizaje {
     this.tocoAhora = false;
     if (!onGround) {
@@ -278,12 +292,12 @@ export class LandingWatcher {
      * único de una toma que deja trabajo detrás —el aterrizaje duro se apunta
      * y se inspecciona—, aunque haya sido en su sitio.
      */
-    if (this.descenso > DURO) return "duro";
+    if (this.descenso > duro) return "duro";
     /*
      * **Y el sitio manda sobre la suavidad** (punto 299). Una toma larga sale
      * suave casi siempre —flotar es justo no dejar que el avión se pose—, y
      * hasta hoy daba «¡qué aterrizaje!», que es premiar comerse la pista. Ver
-     * la cuenta de `SUAVE` y `DURO`.
+     * la cuenta de `SUAVE` y `DURO_DE_TRANSPORTE`.
      */
     if (this.largoAlTocar) return "largo";
     return this.descenso < SUAVE ? "suave" : "firme";

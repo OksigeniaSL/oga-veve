@@ -149,6 +149,16 @@ Jazlyn», o con `?inicio=3`.
 | `vuelo.tocasteLargo` | `instructor` | 101 |
 | `vuelo.tocasteDuro` | `instructor` | 88 |
 
+- **Y los dos veredictos en sencillo** (24-10-2026), para los dos peldaños de
+  abajo: empiezan por lo que pasó —«¡aterrizaste!»— y dicen qué hacer la
+  próxima, sin «revisar el avión». **Dos frases más de la instructora**, al
+  final de su voz.
+
+| Clave | Voz | Caracteres |
+|---|---|---:|
+| `vuelo.tocasteLargoFacil` | `instructor` | 119 |
+| `vuelo.tocasteDuroFacil` | `instructor` | 113 |
+
 Ninguna baja de treinta letras. Los rótulos del kit —`inicio.kit.*`, el
 nombre de cada pieza y de cada parada, y las luces de la lámpara— son de la
 pantalla y no se graban.

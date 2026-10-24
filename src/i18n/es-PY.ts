@@ -1637,8 +1637,8 @@ export const ES_PY = {
   "palabra.rapido": "Muy rápido",
   "palabra.fuera": "Fuera",
   "palabra.corto": "Corto",
-  "palabra.largo": "Largo",
-  "palabra.duro": "Duro",
+  "palabra.largo": "Lejos",
+  "palabra.duro": "Fuerte",
   "palabra.roto": "Se rompió",
   "vuelo.estacionado": "Arrancá el motor",
   "vuelo.arrancando": "Soltá el freno y andá despacito",
@@ -1751,6 +1751,14 @@ export const ES_PY = {
   "vuelo.tocasteLargo":
     "Tocaste largo, lejos de las marcas: así se come la pista. Mejor firme y en su sitio que suave y lejos",
   "vuelo.tocasteDuro": "Aterrizaje duro: ahora hay que revisar el avión. La próxima, recogé un poco más al final",
+  /*
+   * Y en los dos peldaños de abajo, en sencillo y empezando por lo que pasó:
+   * se aterrizó. Ver `loQueSeDiceDeLaToma` en `game.ts`.
+   */
+  "vuelo.tocasteLargoFacil":
+    "¡Aterrizaste! Pero lejos de las rayas blancas grandes: la próxima, tocá cerca de ellas, que así sobra pista para frenar",
+  "vuelo.tocasteDuroFacil":
+    "¡Aterrizaste! Pero con un golpe fuerte: la próxima, llegá al suelo más despacito, sin empujar la nariz para abajo",
   "vuelo.tomaLargaSinPista":
     "No nos da la pista para parar: nos vamos al aire y lo volvemos a intentar",
   /*

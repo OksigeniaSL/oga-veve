@@ -8279,6 +8279,8 @@ export class Game {
       this.enLaZonaDeLasFlechas(),
       // Y si fue pasada la zona de toma: la toma larga. Ver `pasadaLaZonaDeToma`.
       this.pasadaLaZonaDeToma(),
+      // Y desde qué caída es dura, que lo dice el modelo de este peldaño. Ver `limiteDeDuro`.
+      this.flight.limiteDeDuro(),
     );
     /*
      * **Y tocar el monte volando se juzga al tocar, no dos segundos después.**
@@ -8321,7 +8323,7 @@ export class Game {
       pasado: this.dondeTocoUltima?.pasado ?? null,
       zona: this.dondeTocoUltima?.zona ?? null,
     };
-    this.hud.flash(t(DICHO_DE_LA_TOMA[veredicto]), 3.6);
+    this.hud.flash(t(this.loQueSeDiceDeLaToma(veredicto)), 3.6);
     /*
      * **Y suena, porque hasta ahora el veredicto era solo texto.**
      *
@@ -8352,7 +8354,7 @@ export class Game {
        * la cabina de mando: ver `cantar`.
        */
       this.avisar("attention");
-      const clave = DICHO_DE_LA_TOMA[veredicto];
+      const clave = this.loQueSeDiceDeLaToma(veredicto);
       const yaDicho = veredicto === "largo" && this.tomaLarga.yaPropuesta && this.tier.avisos !== "cabina";
       if (!this.dePasaje && !yaDicho) {
         this.instructor.decir(t(clave), clave);
@@ -20933,6 +20935,20 @@ export class Game {
       Math.abs(across) < r.width / 2 + A_UN_LADO_DEL_EJE &&
       sobreDondeSeToca(r, along, (this.flight.state.heading * 180) / Math.PI)
     );
+  }
+
+  /**
+   * **Lo que se dice de una toma en este peldaño.** Largo y duro crecen con
+   * quien los oye, como cualquier aviso (ver `flight/escalera.ts`): en los dos
+   * de abajo, en sencillo y empezando por lo que pasó —«¡aterrizaste!»—, que
+   * no parezca que no se aterrizó; desde el de las cifras, con su porqué de
+   * verdad: la pista que se come y el avión que hay que revisar.
+   */
+  private loQueSeDiceDeLaToma(veredicto: NonNullable<Aterrizaje>): TranslationKey {
+    const deAbajo = this.tier.avisos === "dibujo" || this.tier.avisos === "palabra";
+    if (deAbajo && veredicto === "largo") return "vuelo.tocasteLargoFacil";
+    if (deAbajo && veredicto === "duro") return "vuelo.tocasteDuroFacil";
+    return DICHO_DE_LA_TOMA[veredicto];
   }
 
   /**

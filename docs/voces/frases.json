@@ -18189,5 +18189,19 @@
     "idioma": "es-PY",
     "texto": "Aterrizaje duro: ahora hay que revisar el avión. La próxima, recogé un poco más al final",
     "para": "el veredicto de la toma: se tocó con más de diez pies por segundo"
+  },
+  {
+    "id": "vuelo.tocasteLargoFacil",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Aterrizaste! Pero lejos de las rayas blancas grandes: la próxima, tocá cerca de ellas, que así sobra pista para frenar",
+    "para": "el veredicto de la toma, en los peldaños de abajo: se aterrizó, pero lejos de las rayas"
+  },
+  {
+    "id": "vuelo.tocasteDuroFacil",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Aterrizaste! Pero con un golpe fuerte: la próxima, llegá al suelo más despacito, sin empujar la nariz para abajo",
+    "para": "el veredicto de la toma, en los peldaños de abajo: se aterrizó, pero con un golpe fuerte"
   }
 ]

@@ -237,6 +237,7 @@ export interface FdmOptions {
 }
 
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
+import { DURO_DE_TRANSPORTE } from "./aterrizaje";
 
 /**
  * A qué ritmo gira este avión en el suelo, en radianes por segundo.
@@ -756,6 +757,15 @@ export class CoefficientFlightModel implements FlightModel {
   /** El mismo con el que se rompe de verdad. Ver `crashLimits`. */
   limiteDeCaida(): number {
     return this.crashLimits().sink;
+  }
+
+  /**
+   * Diez pies por segundo: el del tren certificado. Este modelo lleva recogida
+   * de verdad —se levanta la nariz y el avión deja de bajar—, así que lo que
+   * pasa de ahí es lo que pasaría en el avión. Ver `DURO_DE_TRANSPORTE`.
+   */
+  limiteDeDuro(): number {
+    return DURO_DE_TRANSPORTE;
   }
 
   velocidadDeEntradaEnFinal(vref: number): number {
