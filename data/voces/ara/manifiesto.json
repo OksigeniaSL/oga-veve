@@ -215,6 +215,38 @@
       "ms": 4907,
       "h": "6e16339e17"
     },
+    "inicio.ara.pasaje.kit.avion.bimotor": {
+      "ms": 8207,
+      "h": "64897d4474"
+    },
+    "inicio.ara.pasaje.kit.avion.biplano": {
+      "ms": 8707,
+      "h": "1d40d00bbe"
+    },
+    "inicio.ara.pasaje.kit.avion.colaEnT": {
+      "ms": 7807,
+      "h": "54a2488168"
+    },
+    "inicio.ara.pasaje.kit.avion.cuatrimotor": {
+      "ms": 6907,
+      "h": "d8f7076493"
+    },
+    "inicio.ara.pasaje.kit.avion.estabilizador": {
+      "ms": 8507,
+      "h": "9c3e2041c4"
+    },
+    "inicio.ara.pasaje.kit.avion.luces": {
+      "ms": 9307,
+      "h": "95186f0a84"
+    },
+    "inicio.ara.pasaje.kit.avion.noche": {
+      "ms": 8907,
+      "h": "b3cb97547d"
+    },
+    "inicio.ara.pasaje.kit.avion.reactor": {
+      "ms": 10007,
+      "h": "cb321e96f4"
+    },
     "inicio.ara.pasaje.kit.camino.ayuda": {
       "ms": 3807,
       "h": "58f6ea6833"
@@ -236,8 +268,8 @@
       "h": "b32ef56834"
     },
     "inicio.ara.pasaje.kit.elegir": {
-      "ms": 7307,
-      "h": "ce210152d3"
+      "ms": 8507,
+      "h": "82c150022b"
     },
     "inicio.ara.pasaje.kit.luz.alAire": {
       "ms": 8207,
@@ -503,6 +535,22 @@
       "ms": 4107,
       "h": "9f4c02efd5"
     },
+    "inicio.ara.pasaje.toque.gomera": {
+      "ms": 5507,
+      "h": "483412e978"
+    },
+    "inicio.ara.pasaje.toque.invita": {
+      "ms": 5007,
+      "h": "7aa4c1ee4f"
+    },
+    "inicio.ara.pasaje.toque.mar": {
+      "ms": 6207,
+      "h": "ecf334c389"
+    },
+    "inicio.ara.pasaje.toque.motor": {
+      "ms": 5807,
+      "h": "f5965e496e"
+    },
     "inicio.ara.pasaje.tren": {
       "ms": 5307,
       "h": "8c60b34329"
@@ -687,6 +735,30 @@
     ],
     "inicio.ara.pasaje.islas": [
       "inicio.ara.pasaje.islas"
+    ],
+    "inicio.ara.pasaje.kit.avion.bimotor": [
+      "inicio.ara.pasaje.kit.avion.bimotor"
+    ],
+    "inicio.ara.pasaje.kit.avion.biplano": [
+      "inicio.ara.pasaje.kit.avion.biplano"
+    ],
+    "inicio.ara.pasaje.kit.avion.colaEnT": [
+      "inicio.ara.pasaje.kit.avion.colaEnT"
+    ],
+    "inicio.ara.pasaje.kit.avion.cuatrimotor": [
+      "inicio.ara.pasaje.kit.avion.cuatrimotor"
+    ],
+    "inicio.ara.pasaje.kit.avion.estabilizador": [
+      "inicio.ara.pasaje.kit.avion.estabilizador"
+    ],
+    "inicio.ara.pasaje.kit.avion.luces": [
+      "inicio.ara.pasaje.kit.avion.luces"
+    ],
+    "inicio.ara.pasaje.kit.avion.noche": [
+      "inicio.ara.pasaje.kit.avion.noche"
+    ],
+    "inicio.ara.pasaje.kit.avion.reactor": [
+      "inicio.ara.pasaje.kit.avion.reactor"
     ],
     "inicio.ara.pasaje.kit.camino.ayuda": [
       "inicio.ara.pasaje.kit.camino.ayuda"
@@ -903,6 +975,18 @@
     ],
     "inicio.ara.pasaje.toma": [
       "inicio.ara.pasaje.toma"
+    ],
+    "inicio.ara.pasaje.toque.gomera": [
+      "inicio.ara.pasaje.toque.gomera"
+    ],
+    "inicio.ara.pasaje.toque.invita": [
+      "inicio.ara.pasaje.toque.invita"
+    ],
+    "inicio.ara.pasaje.toque.mar": [
+      "inicio.ara.pasaje.toque.mar"
+    ],
+    "inicio.ara.pasaje.toque.motor": [
+      "inicio.ara.pasaje.toque.motor"
     ],
     "inicio.ara.pasaje.tren": [
       "inicio.ara.pasaje.tren"
