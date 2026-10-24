@@ -83,6 +83,10 @@
       "ms": 8407,
       "h": "2778bd5c3c"
     },
+    "inicio.tripulacion.pasaje.cerca.musica": {
+      "ms": 7807,
+      "h": "af036fae2d"
+    },
     "inicio.tripulacion.pasaje.cerca.nubes1": {
       "ms": 6707,
       "h": "f8c929ab4d"
@@ -488,6 +492,9 @@
     ],
     "inicio.tripulacion.pasaje.cerca.salidaAla": [
       "inicio.tripulacion.pasaje.cerca.salidaAla"
+    ],
+    "inicio.tripulacion.pasaje.cerca.musica": [
+      "inicio.tripulacion.pasaje.cerca.musica"
     ]
   }
 }

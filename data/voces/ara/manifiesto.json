@@ -355,6 +355,14 @@
       "ms": 2110,
       "h": "9a37a61908"
     },
+    "inicio.ara.pasaje.mazo": {
+      "ms": 4107,
+      "h": "35c7799ca8"
+    },
+    "inicio.ara.pasaje.mazoBici": {
+      "ms": 4007,
+      "h": "1abaeca6ab"
+    },
     "inicio.ara.pasaje.meneo": {
       "ms": 5307,
       "h": "df073d2f79"
@@ -374,6 +382,10 @@
     "inicio.ara.pasaje.motores": {
       "ms": 5707,
       "h": "8cad8f7903"
+    },
+    "inicio.ara.pasaje.musica": {
+      "ms": 4607,
+      "h": "df20947667"
     },
     "inicio.ara.pasaje.niebla": {
       "ms": 4607,
@@ -781,6 +793,12 @@
     "inicio.ara.pasaje.mascaraAhora": [
       "inicio.ara.pasaje.mascaraAhora"
     ],
+    "inicio.ara.pasaje.mazo": [
+      "inicio.ara.pasaje.mazo"
+    ],
+    "inicio.ara.pasaje.mazoBici": [
+      "inicio.ara.pasaje.mazoBici"
+    ],
     "inicio.ara.pasaje.meneo": [
       "inicio.ara.pasaje.meneo"
     ],
@@ -795,6 +813,9 @@
     ],
     "inicio.ara.pasaje.motores": [
       "inicio.ara.pasaje.motores"
+    ],
+    "inicio.ara.pasaje.musica": [
+      "inicio.ara.pasaje.musica"
     ],
     "inicio.ara.pasaje.niebla": [
       "inicio.ara.pasaje.niebla"

@@ -2432,7 +2432,7 @@ export const EN: Dictionary = {
     "On many planes, yes: they have exit windows over the wing, with a sign above them. On this one, the exits are the doors.",
   "inicio.mama.pasaje.viento":
     "Today the wind is from the north-east, and whenever they can, planes take off with the wind ahead of them: it helps them climb sooner. That's why we head east, and then turn back towards La Palma.",
-  "inicio.ara.pasaje.mazo": "Now you can see the farms and the little houses, and the little paths going up the mountain!",
+  "inicio.ara.pasaje.mazo": "Now you can see the farms and the little houses, there on the mountainside!",
   "inicio.ara.pasaje.mazoBici": "I bet people walk up there, and ride their bikes too.",
   "inicio.mama.pasaje.mazo":
     "Ladies and gentlemen: the village on the hillside you saw on the left as we came in is Villa de Mazo.",

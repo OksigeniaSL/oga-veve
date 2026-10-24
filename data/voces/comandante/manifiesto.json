@@ -1639,6 +1639,10 @@
       "ms": 8907,
       "h": "858d10bac3"
     },
+    "inicio.mama.pasaje.mazo": {
+      "ms": 5207,
+      "h": "f27e519abd"
+    },
     "inicio.mama.pasaje.meneo": {
       "ms": 12507,
       "h": "b45e2a4f62"
@@ -3387,6 +3391,9 @@
     ],
     "inicio.mama.pasaje.viento": [
       "inicio.mama.pasaje.viento"
+    ],
+    "inicio.mama.pasaje.mazo": [
+      "inicio.mama.pasaje.mazo"
     ]
   }
 }

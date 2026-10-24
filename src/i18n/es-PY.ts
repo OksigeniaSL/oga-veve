@@ -3957,7 +3957,7 @@ export const ES_PY = {
    * dicho por la comandante con la pista ya libre. Se nombran sitios, no
    * negocios. Ver la charla `mazo` en `flight/inicio-pasaje.ts`.
    */
-  "inicio.ara.pasaje.mazo": "¡Ya se ven las fincas y las casitas, y los caminitos que suben por el monte!",
+  "inicio.ara.pasaje.mazo": "¡Ya se ven las fincas y las casitas, ahí en la ladera del monte!",
   "inicio.ara.pasaje.mazoBici": "Seguro que por ahí sube gente caminando, y en bici.",
   "inicio.mama.pasaje.mazo":
     "Señores pasajeros: ese pueblo de la ladera que vieron por la izquierda al llegar es Villa de Mazo.",
