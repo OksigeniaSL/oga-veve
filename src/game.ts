@@ -178,7 +178,7 @@ import {
   type SueloDelTrafico,
 } from "./world/suelo-del-trafico";
 import { MILLA, rangoConMemoria, type Mapa, type RangoElegido } from "./ui/carta";
-import { ponerTamanoMinimo } from "./world/se-ve-de-lejos";
+import { pixelesPorRadian, ponerTamanoMinimo } from "./world/se-ve-de-lejos";
 import {
   Tcas,
   bandaPara,
@@ -18007,6 +18007,8 @@ export class Game {
       this.avionesDeLasIslas?.grupo,
     ])
       if (grupo) ponerTamanoMinimo(grupo.children, this.camera, alto);
+    // Y el PAPI, que se distinga de lejos como el de verdad. Ver `verLosPapis`.
+    this.verLosPapis();
     // El ala que se dobla, con la cámara ya puesta. Ver `world/ala-que-se-dobla.ts`.
     this.aircraftMesh.ala?.antesDePintar(this.camera);
     // Y los puntos de la vuelta al avión, con la cámara ya puesta.
@@ -18014,6 +18016,29 @@ export class Game {
     this.renderer.render(this.scene, this.camera);
     this.medidor.apuntarPintado(performance.now() - t0);
   }
+
+  /**
+   * **El PAPI de cada campo, dibujado para que se distinga desde la cámara**:
+   * hasta las cinco millas del AIM, como lo distingue un ojo, y no solo en los
+   * últimos novecientos metros, que es lo que daba la pantalla con las luces a
+   * su tamaño (277). En los píxeles de la página, los mismos con los que
+   * `mirarElPapi` decide si se distingue. Ver `escalaDelPapi` en
+   * `world/aproximacion.ts`.
+   */
+  private verLosPapis(): void {
+    const alto = this.renderer.domElement.clientHeight || window.innerHeight;
+    const ppr = pixelesPorRadian(alto, this.camera.fov);
+    this.camera.getWorldPosition(this.ojoDelPapi);
+    for (const luces of [this.aproximacion, ...this.vecinos.map((v) => v.aproximacion)]) {
+      if (!luces) continue;
+      // El del campo de llegada vive en las coordenadas de su mapa.
+      luces.grupo.updateWorldMatrix(true, false);
+      const ojo = luces.grupo.worldToLocal(this.ojoDelPapiAqui.copy(this.ojoDelPapi));
+      luces.verDesde(ojo.x, ojo.y, ojo.z, ppr);
+    }
+  }
+  private readonly ojoDelPapi = new Vector3();
+  private readonly ojoDelPapiAqui = new Vector3();
 
   /** Hacia dónde mira la cámara, para las teselas. Sin reservar en cada cuadro. */
   private readonly miradaDeLasTeselas = new Vector3();

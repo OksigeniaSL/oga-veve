@@ -7,8 +7,14 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { Color, type InstancedMesh } from "three";
-import { blancasDePapi, crearAproximacion } from "./aproximacion";
+import { Color, Matrix4, Quaternion, Vector3, type InstancedMesh } from "three";
+import {
+  LUZ_DEL_PAPI_COMO_POCO_PX,
+  blancasDePapi,
+  crearAproximacion,
+  escalaDelPapi,
+} from "./aproximacion";
+import { PAPI_SE_DISTINGUE_PX } from "../flight/lo-que-se-nombra";
 import { GLIDE_SLOPE, SENDA_DESDE } from "./runway-guide";
 import type { Pista, Umbral } from "./aerodrome";
 
@@ -297,5 +303,97 @@ describe("los aros y el PAPI, la misma senda", () => {
     const enElUmbral = SENDA_DESDE * Math.tan(GLIDE_SLOPE);
     expect(enElUmbral).toBeGreaterThan(12);
     expect(enElUmbral).toBeLessThan(20);
+  });
+});
+
+/*
+ * ── El PAPI, que se distinga de lejos (277) ─────────────────────────────
+ *
+ * A su tamaño —esferas de un metro largo a nueve metros una de otra— solo se
+ * distinguía en los últimos novecientos metros, y el AIM dice que de día se ve
+ * a unas cinco millas (2-1-2 b). La pantalla no separa lo que separa un ojo:
+ * de lejos se dibuja más grande, desde la luz de dentro hacia fuera, y el
+ * color sigue saliendo de cada luz de verdad.
+ */
+describe("el PAPI se distingue de lejos, como el de verdad", () => {
+  /** Los de una pantalla de 720 de alto con los sesenta y dos grados del juego. */
+  const PPR = 720 / (2 * Math.tan((31 * Math.PI) / 180));
+  const MILLA_TERRESTRE = 1609.344;
+
+  /** Dónde quedan dibujadas las cuatro, mirando desde `d` m antes del umbral por la senda. */
+  function dibujadasDesde(d: number) {
+    const a = crearAproximacion(PISTA, "09", () => 0)!;
+    const y = alturaPara(3, d);
+    a.verDesde(-d, y, 0, PPR);
+    a.mirarDesde(-d, y, 0);
+    const papi = a.grupo.getObjectByName("papi") as InstancedMesh;
+    const m = new Matrix4();
+    const p = new Vector3();
+    const q = new Quaternion();
+    const s = new Vector3();
+    const c = new Color();
+    const luces = Array.from({ length: 4 }, (_, k) => {
+      papi.getMatrixAt(k, m);
+      m.decompose(p, q, s);
+      papi.getColorAt(k, c);
+      return { x: p.x, y: p.y, z: p.z, escala: s.x, blanca: c.b > 0.5 };
+    });
+    const centro = luces
+      .reduce((v, l) => v.add(new Vector3(l.x, l.y, l.z)), new Vector3())
+      .multiplyScalar(0.25);
+    const lejos = centro.distanceTo(new Vector3(-d, y, 0));
+    const fila = Math.hypot(luces[3]!.x - luces[0]!.x, luces[3]!.z - luces[0]!.z);
+    return {
+      luces,
+      filaPx: (fila / lejos) * PPR,
+      luzPx: ((2 * 1.1 * Math.min(...luces.map((l) => l.escala))) / lejos) * PPR,
+    };
+  }
+
+  it("desde el kilómetro hasta las cinco millas se cuentan las cuatro", () => {
+    for (const d of [700, 1000, 2000, 3000, 5000, 7000, 5 * MILLA_TERRESTRE - 400]) {
+      const r = dibujadasDesde(d);
+      expect(r.filaPx, `${d} m`).toBeGreaterThanOrEqual(PAPI_SE_DISTINGUE_PX - 0.2);
+      expect(r.luzPx, `${d} m`).toBeGreaterThanOrEqual(LUZ_DEL_PAPI_COMO_POCO_PX - 0.05);
+      // Y cada luz cabe en su hueco: no se juntan en una mancha.
+      expect(r.luzPx, `${d} m`).toBeLessThan(r.filaPx / 3);
+    }
+  });
+
+  it("y de cerca, a su tamaño y en su sitio", () => {
+    const r = dibujadasDesde(400);
+    expect(escalaDelPapi(400 + 300, PPR).fila).toBe(1);
+    const sitio = sitiarPapi([0, 0], [1, 0], 45, 3000);
+    r.luces.forEach((l, k) => {
+      expect(l.x).toBeCloseTo(sitio.luces[k]![0], 6);
+      expect(l.z).toBeCloseTo(-sitio.luces[k]![1], 6);
+    });
+  });
+
+  it("se alarga hacia fuera: la luz de dentro no se mueve y ninguna se mete en la pista", () => {
+    const cerca = dibujadasDesde(400);
+    const lejos = dibujadasDesde(6000);
+    expect(lejos.luces[0]!.x).toBeCloseTo(cerca.luces[0]!.x, 6);
+    expect(lejos.luces[0]!.z).toBeCloseTo(cerca.luces[0]!.z, 6);
+    // A la izquierda viniendo del oeste es el norte: z negativa, y más lejos del eje.
+    for (let k = 1; k < 4; k++) expect(lejos.luces[k]!.z).toBeLessThan(cerca.luces[k]!.z);
+    for (const l of lejos.luces) expect(Math.abs(l.z)).toBeGreaterThanOrEqual(45 / 2 + 15 - 1e-6);
+  });
+
+  it("y dice lo mismo que a su tamaño: en la senda, dos blancas y dos rojas", () => {
+    for (const d of [400, 2000, 6000])
+      expect(
+        dibujadasDesde(d).luces.map((l) => l.blanca),
+        `${d} m`,
+      ).toEqual([true, true, false, false]);
+  });
+
+  it("pasadas las cinco millas del AIM vuelve a su tamaño, poco a poco", () => {
+    const en5 = escalaDelPapi(5 * MILLA_TERRESTRE, PPR);
+    const en55 = escalaDelPapi(5.5 * MILLA_TERRESTRE, PPR);
+    const en7 = escalaDelPapi(7 * MILLA_TERRESTRE, PPR);
+    expect(en5.fila).toBeGreaterThan(en55.fila);
+    expect(en55.fila).toBeGreaterThan(1);
+    expect(en7).toEqual({ fila: 1, luz: 1 });
   });
 });

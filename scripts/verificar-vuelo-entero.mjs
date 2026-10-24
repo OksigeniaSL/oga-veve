@@ -67,7 +67,8 @@ import { fasesATiempoReal } from "./reloj-del-banco.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
-const PUERTO = 5289;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5289);
 /*
  * Cuántas veces más deprisa va el reloj del juego. Ver `Game.acelerar`.
  *

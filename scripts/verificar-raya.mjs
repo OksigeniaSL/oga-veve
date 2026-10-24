@@ -15,7 +15,8 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 import { baseDe } from './servidor.mjs';
 
-const PUERTO = 5280;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5280);
 const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
 const BASE = baseDe(server, PUERTO);

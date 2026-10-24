@@ -344,6 +344,12 @@ export const PAPI_SE_VE_DESDE = 5 * 1609.344;
  * De quince para arriba, cada luz mide algo más de un píxel y hay cinco entre
  * una y otra. Es una cuenta en píxeles a propósito: en una pantalla más grande
  * las luces también se pintan más grandes, y el límite se corre solo.
+ *
+ * Y esas medidas son de cuando las luces se dibujaban a su tamaño: así el PAPI
+ * solo se distinguía en los últimos novecientos metros, y el de verdad se ve a
+ * cinco millas (277). Desde entonces el mundo lo dibuja para que mida al menos
+ * esto hasta las cinco millas —ver `escalaDelPapi` en `world/aproximacion.ts`—,
+ * y esta puerta sigue siendo la misma: lo que se distingue en la pantalla.
  */
 export const PAPI_SE_DISTINGUE_PX = 15;
 
