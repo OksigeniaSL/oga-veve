@@ -137,7 +137,17 @@ for (const id of FLOTA) {
     );
 
     // Y que no se monten unas encima de otras.
-    const ordenadas = [...dentro].sort((a, b) => a.x0 - b.x0);
+    /*
+     * **Sin los marcos de las pantallas**, que se tocan a propósito: en una
+     * cabina de cristal las pantallas van una al lado de otra con los biseles
+     * juntos, y vistas en escorzo desde el asiento sus cajas alineadas con los
+     * ejes de la pantalla se montan seis o doce píxeles sin que nada se pise
+     * —en la captura del JAZ 90 los tres biseles se tocan y ninguna pantalla
+     * tapa a otra—. Lo que no puede pasar es que se pisen las pantallas.
+     */
+    const ordenadas = [...dentro]
+      .filter((p) => !p.nombre.endsWith("-marco"))
+      .sort((a, b) => a.x0 - b.x0);
     /**
      * De qué instrumento es esta pieza.
      *
