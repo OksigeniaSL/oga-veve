@@ -16,16 +16,21 @@
  * - **Dos imágenes**: el aeródromo entero desde arriba y un acercamiento a un
  *   rótulo, que a escala de aeródromo mide dos píxeles.
  *
- * Uso: `node scripts/verificar-aerodromo.mjs`
+ * Uso: `node scripts/verificar-aerodromo.mjs [carpeta]`, la de las dos imágenes
+ * (por defecto, la temporal del sistema).
  */
 
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { baseDe } from './servidor.mjs';
 
 // Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5191);
+// Las imágenes iban a la carpeta de trabajo de una sesión concreta, escrita a
+// mano: en cualquier otra máquina, o en otra sesión, el banco moría al guardar.
+const D = process.argv[2] ?? tmpdir();
 const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
 const BASE = baseDe(server, PUERTO);
@@ -141,7 +146,7 @@ for (const id of ['sgas', 'gcxo']) {
         `${Math.abs(desvio) > 0.6 ? '✗ descentrado' : fuera ? '✗ se sale del asfalto' : '✓'}`,
     );
   }
-  const salida = `/tmp/claude-1000/-home-eraorahan-Downloads-flyjazz/b3dbfc3e-0835-4131-92f8-19dd24f3f2e3/scratchpad/cenital-${id}.png`;
+  const salida = `${D}/cenital-${id}.png`;
   writeFileSync(salida, Buffer.from(r.png.split(',')[1], 'base64'));
   console.log(`  vista cenital → ${salida}`);
   if (r.zoom) {
