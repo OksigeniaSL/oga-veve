@@ -1888,6 +1888,11 @@ export class Audio {
       .catch(() => this.musicas.set(cual, "no-llega"));
   }
 
+  /** **Si suena ahora el hilo musical**, de verdad: empezado y sin callarse. */
+  get suenaLaMusica(): boolean {
+    return this.musica !== null;
+  }
+
   /**
    * **Lo que suena del hilo musical**, para el banco: cuál, lo bajado, por
    * dónde suena y cuánto ha entrado el fundido.

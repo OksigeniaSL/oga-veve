@@ -126,3 +126,6 @@ Ese tiene la radio bien: habla con la torre y aterriza sin linterna. Eso es lo n
 Hay un camión revisando la pista. Con la roja que parpadea, el avión sabe que no puede aterrizar.
 Ya se fue el camión. Con la verde que parpadea, el avión sabe que puede volver para aterrizar.
 De noche no se ven las alas: el avión contesta apagando y encendiendo dos veces los faros.
+¡Ya se ven las fincas y las casitas, y los caminitos que suben por el monte!
+Seguro que por ahí sube gente caminando, y en bici.
+¡Están poniendo música! ¿Por qué ponen música cuando bajamos?

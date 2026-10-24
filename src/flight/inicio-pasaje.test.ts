@@ -1891,6 +1891,13 @@ function loQueSeVeEnElMedido(v: VueloMedido): (sitio: SitioDelPaisaje, plano?: P
     if (sitio === "isla-de-llegada")
       return v.falta < 50000 && (debajo || encima) ? visto(v.falta > 30000 ? "fuera" : "ventanilla") : NADA;
     if (sitio === "costa-de-llegada") return v.falta < 40000 && debajo ? visto("fuera") : NADA;
+    /*
+     * La ladera de Mazo, por el cristal de Ara y solo así: con el relieve y la
+     * final de la 36 del juego, desde unos tres kilómetros del umbral, que es
+     * cuando el pueblo queda a tres y se distinguen sus casas. Ver
+     * `docs/historias/fuentes.md`.
+     */
+    if (sitio === "ladera-de-mazo") return v.tramo === "final" && v.falta < 3000 && (!plano || como === "asomado") ? visto("asomado") : NADA;
     const que = sitio.slice("hito:".length);
     return ASOMA.has(que) ? (encima || debajo ? visto("ventanilla") : NADA) : debajo ? visto("ventanilla") : NADA;
   };
@@ -1907,6 +1914,7 @@ const NOMBRA: Readonly<Record<string, SitioDelPaisaje>> = {
   "inicio.ara.pasaje.marDeNubes": "nubes-abajo",
   "inicio.ara.pasaje.isla": "isla-de-llegada",
   "inicio.ara.pasaje.islaCerca": "costa-de-llegada",
+  "inicio.ara.pasaje.mazo": "ladera-de-mazo",
 };
 
 interface VueloConPaisaje extends Medido {
@@ -2614,5 +2622,110 @@ describe("el baño de Ara: la luz manda, y cuando se apaga, se puede", () => {
     for (const c of SE_LEVANTA) expect(claves, c).not.toContain(c);
     expect(claves).toContain("inicio.ara.pasaje.banoEspero");
     expect(estado.saltados).toEqual([]);
+  });
+});
+
+/*
+ * **Lo que se reconoce al llegar** (punto 314): la ladera de Villa de Mazo,
+ * a la izquierda en la final de la 36, contada por Ara cuando se ve por su
+ * cristal, y su nombre dicho por la comandante ya en tierra. Con el mundo de
+ * mentira del mar de nubes, que la deja ver desde unos tres kilómetros del
+ * umbral: ver `loQueSeVeEnElMedido`.
+ */
+describe("lo que se reconoce al llegar: la ladera de Mazo, y su nombre en tierra", () => {
+  const m = volarConElPaisaje();
+  const e = m.escena.estado;
+  const r = m.escena.registro;
+  const de = (clave: string) => r.filter((d) => d.clave === clave);
+  const empiezaA = (tramo: TramoDeLinea): number => m.tramos.find((x) => x.tramo === tramo)?.t ?? NaN;
+
+  it("Ara la cuenta en la final, con la cara contra el cristal mirando hacia ella, y solo viéndose", () => {
+    const n = e.nombrados.find((x) => x.clave === "inicio.ara.pasaje.mazo");
+    expect(n, "Mazo").toBeTruthy();
+    expect(n!.sitio).toBe("ladera-de-mazo");
+    expect(n!.como).toBe("asomado");
+    const plano = e.planos.filter((p) => p.desde <= n!.desde + 1e-6).pop();
+    expect(plano).toEqual({ plano: "asomado-paisaje", desde: expect.any(Number), sitio: "ladera-de-mazo" });
+    // Las dos frases, una vez, en la final y con el avión todavía en el aire.
+    expect(de("inicio.ara.pasaje.mazo")).toHaveLength(1);
+    expect(de("inicio.ara.pasaje.mazoBici")).toHaveLength(1);
+    expect(n!.desde).toBeGreaterThan(empiezaA("final"));
+    expect(de("inicio.ara.pasaje.mazoBici")[0]!.hasta!).toBeLessThan(empiezaA("frenando"));
+    // Y lo nombrado se veía en el mundo al empezar a decirlo: ver la prueba de arriba.
+    expect(m.nombrado.find((x) => x.clave === "inicio.ara.pasaje.mazo")?.seVeia).toBe(true);
+  });
+
+  it("y no se come la toma: «ya casi» sale después, con el plano desde la pista", () => {
+    const bici = de("inicio.ara.pasaje.mazoBici")[0]!;
+    const yaCasi = de("inicio.ara.pasaje.yaCasi")[0];
+    expect(yaCasi, "ya casi").toBeTruthy();
+    expect(yaCasi!.desde).toBeGreaterThanOrEqual(bici.hasta!);
+    expect(yaCasi!.desde).toBeLessThan(empiezaA("frenando"));
+    expect(e.planos.some((p) => p.plano === "fuera-pista" && p.desde >= bici.hasta! - 1e-6)).toBe(true);
+    expect(e.saltados).toEqual([]);
+  });
+
+  it("el nombre lo dice la comandante en tierra, con la pista libre y detrás de la vuelta, una vez", () => {
+    const nombre = de("inicio.mama.pasaje.mazo");
+    expect(nombre).toHaveLength(1);
+    expect(nombre[0]!.desde).toBeGreaterThan(empiezaA("al-puesto"));
+    expect(nombre[0]!.desde).toBeGreaterThan(de("inicio.mama.pasaje.permisoDeVuelta")[0]!.hasta!);
+    // Y no en la final: ahí no habla nadie de lo que no es volar.
+    expect(nombre[0]!.desde).toBeGreaterThan(de("inicio.ara.pasaje.toma")[0]!.desde);
+  });
+
+  it("si la ladera no se ve, Ara no la cuenta y la comandante no la nombra", () => {
+    class SinMazo extends VueloMedido {
+      override get lectura(): LecturaDelPasaje {
+        const l = super.lectura;
+        const ver = l.ver;
+        return ver ? { ...l, ver: (s, p) => (s === "ladera-de-mazo" ? NADA : ver(s, p)) } : l;
+      }
+    }
+    const sin = volarConElPaisaje(new SinMazo());
+    const claves = sin.escena.registro.map((d) => d.clave);
+    expect(claves).not.toContain("inicio.ara.pasaje.mazo");
+    expect(claves).not.toContain("inicio.mama.pasaje.mazo");
+    expect(claves).toContain("inicio.ara.pasaje.yaCasi");
+    expect(sin.escena.estado.terminado).toBe(true);
+  });
+});
+
+/*
+ * **Por qué ponen música al bajar**: Ara pregunta poco después de que suene
+ * la música de llegada, y contesta la tripulante en persona, que anda por los
+ * asientos preparando la cabina. Con la música donde la pone el juego: desde
+ * los diez mil pies bajando hasta el puesto. Ver `audio/hilo-musical.ts`.
+ */
+describe("por qué ponen música al bajar", () => {
+  class ConMusica extends VueloMedido {
+    override get lectura(): LecturaDelPasaje {
+      const l = super.lectura;
+      const suena = (l.tramo === "bajada" && l.altitud < BAJANDO_A_LA_PISTA) || ["final", "frenando", "al-puesto"].includes(l.tramo);
+      return { ...l, musica: suena };
+    }
+  }
+  let empieza: number | null = null;
+  const m = volarElMedido(new ConMusica(), (_e, t, l) => {
+    if (l.musica && empieza === null) empieza = t;
+  });
+  const r = m.escena.registro;
+
+  it("Ara pregunta una vez, con la música ya sonando, y la tripulante contesta en persona", () => {
+    const pregunta = r.filter((d) => d.clave === "inicio.ara.pasaje.musica");
+    expect(pregunta).toHaveLength(1);
+    expect(empieza).not.toBeNull();
+    expect(pregunta[0]!.desde).toBeGreaterThanOrEqual(empieza! + 3);
+    const i = r.indexOf(pregunta[0]!);
+    expect(r[i + 1]?.clave).toBe("inicio.tripulacion.pasaje.cerca.musica");
+    // Poco después: antes de preparar la cabina, que es cuando la tripulante se sienta.
+    const aproximacion = r.find((d) => d.clave === "comandante.aproximacion");
+    expect(pregunta[0]!.desde).toBeLessThan(aproximacion!.desde);
+    expect(m.escena.estado.saltados).toEqual([]);
+  });
+
+  it("sin música no hay pregunta", () => {
+    const sin = volarElMedido();
+    expect(sin.escena.registro.map((d) => d.clave)).not.toContain("inicio.ara.pasaje.musica");
   });
 });

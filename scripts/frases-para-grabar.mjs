@@ -1767,8 +1767,25 @@ const DE_LA_LUZ_VERDE = [
   ["inicio.ara.pasaje.kit.luz.destellosVerdes", "ara", "el modo inicio, de pasaje, luz verde: Ara cuenta los destellos verdes, al irse el camión"],
   ["inicio.ara.pasaje.kit.luz.noche", "ara", "el modo inicio, de pasaje, luz verde: Ara cuenta que de noche se contesta con los faros"],
 ];
+/**
+ * **Y lo que se reconoce al llegar, y la música** (punto 314, 24-10-2026): la
+ * ladera de Villa de Mazo, que Ara cuenta en la final cuando se ve por su
+ * cristal y nombra la comandante en tierra; y por qué ponen música al bajar,
+ * que Ara pregunta y contesta la tripulante en persona —sin chispa, como todo
+ * lo que dice cara a cara—. Al final, que lo grabado no se renumera. Ver las
+ * charlas `mazo`, `queEsMazo` y `musica` en `src/flight/inicio-pasaje.ts`.
+ */
+const DE_LO_QUE_SE_RECONOCE = [
+  ["inicio.ara.pasaje.mazo", "ara", "el modo inicio, de pasaje: Ara, en la final, ve la ladera de Mazo por su ventanilla"],
+  ["inicio.ara.pasaje.mazoBici", "ara", "el modo inicio, de pasaje: Ara imagina a la gente que sube por la ladera"],
+  ["inicio.ara.pasaje.musica", "ara", "el modo inicio, de pasaje: Ara pregunta por qué ponen música al bajar"],
+  ["inicio.mama.pasaje.mazo", "comandante", "el modo inicio, de pasaje: la comandante, ya en tierra, nombra el pueblo de la ladera: Villa de Mazo"],
+  ["inicio.tripulacion.pasaje.cerca.musica", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante, por qué ponen música al bajar"],
+];
 const LO_QUE_SE_VE = new Set(
-  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE].map(([k]) => k),
+  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE].map(
+    ([k]) => k,
+  ),
 );
 for (const [prefijo, voz, para, salvo] of DEL_INICIO) {
   for (const [k, v] of es) {
@@ -1868,8 +1885,8 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
     total += texto.length;
   }
 }
-// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración y la luz verde: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION` y `DE_LA_LUZ_VERDE`.
-for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE]) {
+// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde y lo que se reconoce al llegar: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE` y `DE_LO_QUE_SE_RECONOCE`.
+for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE]) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });

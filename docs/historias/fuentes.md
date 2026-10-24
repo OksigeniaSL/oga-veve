@@ -579,6 +579,70 @@ siempre que se puede con el viento por delante, nunca por detrás. «Siempre» a
 secas sería falso: con poco viento se usa la pista preferente, y se admite
 algo de viento de cola.
 
+### La ladera de Villa de Mazo, al llegar · `inicio.ara.pasaje.mazo`, `.mazoBici` e `inicio.mama.pasaje.mazo`
+
+Punto 314. Lo que se dice es lo que dejan ver los datos que lleva el juego, no
+lo que suele verse:
+
+- **Dónde está**: el casco de Villa de Mazo —la iglesia, la plaza y las casas
+  apretadas, en la ortofoto del PNOA de `data/ortho/la-palma-cerca.jpg`— en
+  28,608° N, 17,778° O, a unos 460 m sobre el mar en el relieve del
+  PNOA-LiDAR de `data/terrain/la-palma.bin`. Queda **2,2 km al oeste de la
+  final de la 36 y 0,9 km al sur de su umbral** (AD 2-GCLA: umbral a 31,7 m,
+  rumbo verdadero 359°, ver `data/aerodromes/gcla.aero.json`). A su alrededor,
+  la ladera sube del acantilado a los mil metros con casas sueltas, fincas
+  —con invernaderos junto a la costa— y las carreteras que suben en lazos
+  (54 tramos de vía en 1,5 km a la redonda en `data/cities/la-palma.city.json`,
+  de OpenStreetMap).
+- **Por qué lado**: la final de la 36 entra por el sur, sobre el mar, a unos
+  cientos de metros de la costa, y la isla queda a la izquierda: la ventanilla
+  de Ara.
+- **Desde dónde se ve por su cristal**: en la final de tres grados, el pueblo
+  queda a tres kilómetros con el avión a 2,9 km del umbral y 200 m de altitud, 44°
+  por delante del través izquierdo —dentro de lo que gira la cabeza pegada al
+  cristal, cincuenta grados: `GIRA_LA_CABEZA` en
+  `src/world/se-ve-desde-el-pasaje.ts`— y cinco grados por encima del
+  horizonte, porque el avión ya va más bajo que el pueblo. A 2 km del umbral,
+  27° por delante del través y 7° por encima; a 1 km, casi al través, a 2,2 km
+  de distancia y 9° por encima. Ara lo cuenta desde los tres kilómetros del
+  pueblo y no antes: el banco con la Intel lo vio decir a cuatro, por el
+  cristal y sin nube, pero en la captura el pueblo era una franja oscura con
+  puntitos blancos, y lo que dice Ara son fincas, casas y caminos. A 2,6 km
+  (24-10-2026) se ven la mancha del pueblo y sus casas sueltas, con la ladera
+  en sombra —el sol de la escena le da por detrás—; los caminos, en la
+  captura, todavía no se distinguen. Sentada, sin pegarse al cristal, no
+  entraría hasta el último kilómetro, a cien metros del agua.
+- **Lo que dice Ara** es lo que se ve: fincas, casitas y caminos que suben. Lo
+  de la gente que sube caminando y en bici lo dice como lo que es, una
+  suposición —«seguro que»—, mirando las carreteras que suben por la ladera.
+- **El nombre**, Villa de Mazo, lo dice la comandante en tierra, con la pista
+  libre: en la final no habla de nada que no sea volar. Se nombra el pueblo,
+  ningún negocio.
+
+### Por qué ponen música al bajar · `inicio.ara.pasaje.musica` e `inicio.tripulacion.pasaje.cerca.musica`
+
+- **Para que el rato sea tranquilo y calmar los nervios.** Marisa Garcia,
+  «Designing soundscapes: the delicate balance of boarding music», *Runway
+  Girl Network*, 18-06-2019
+  (<https://runwaygirlnetwork.com/2019/06/18/designing-soundscapes-the-delicate-balance-of-boarding-music>):
+  la música del embarque debería «soothe nerves» y puede «literally set the
+  tone for the journey».
+- **Y muchas compañías ponen música de su tierra**, que da sentido del lugar:
+  «Airlines find boarding music can set the tone for a flight — so they keep
+  it chill», *Business Report* (busrep.co.za), 2022
+  (<https://busrep.co.za/travel/travel-tips/airlines-find-boarding-music-can-set-the-tone-for-a-flight-so-they-keep-it-chill-606c90ea-9155-4cc2-914f-584585180794>):
+  la música calma durante el embarque, marca el ambiente, y las compañías la
+  usan para dar idea de dónde son —Qatar Airways, con un músico qatarí—. El
+  24-10-2026 la página no abría (error 525 del servidor); lo citado es lo que
+  devuelve de ella el buscador.
+- **Las dos hablan de la música del embarque.** La de la llegada es la misma
+  costumbre en las compañías de las islas, según la observó Enrique (punto
+  302), y se cuenta con el porqué que dan las fuentes.
+- **La de la escena es de Canarias**, con timple: ver `CREDITOS.md` y
+  `src/audio/hilo-musical.ts`.
+- **Lo que no se dice**: que se pone para tapar ruidos que inquietan. Ninguna
+  de las dos lo dice, así que no entra.
+
 ---
 
 ## Lo que se miró y no entra

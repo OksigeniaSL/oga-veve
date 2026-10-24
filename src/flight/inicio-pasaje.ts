@@ -167,6 +167,19 @@
  * nadie puede aterrizar. Ver `daLaVuelta` y las charlas `vueltaEnPista` y
  * `porQueLaVuelta`.
  *
+ * ## Lo que se reconoce al llegar, y la música
+ *
+ * Punto 314. Lo mágico, dice Enrique, es ir reconociendo lo de abajo cuando
+ * el avión ya casi toca tierra. Entrando por el sur a la 36, la ladera de
+ * Villa de Mazo —fincas, casas, caminos que suben— queda a la izquierda, la
+ * de Ara, y Ara la cuenta cuando de verdad se ve por su cristal. El nombre del
+ * pueblo lo dice la comandante con la pista ya libre, que en la final no
+ * puede nadie. Ver las charlas `mazo` y `queEsMazo`.
+ *
+ * Y la música de llegada, que empieza a los diez mil pies: Ara pregunta por
+ * qué la ponen poco después de que suene, y contesta la tripulante en persona
+ * si anda por los asientos preparando la cabina. Ver la charla `musica`.
+ *
  * ## Los que se levantan antes de tiempo, y lo que es la tripulación
  *
  * Punto 303. Al pararse en el puesto, alrededor se oyen hebillas y gente
@@ -259,6 +272,17 @@ export const DESTINO_DEL_PASAJE = "la-palma";
 export const AVION_DEL_PASAJE = "jaz-90";
 /** Y el lado de la ventanilla de Ara: el de lo que se cuenta. */
 export const LADO_DE_ARA = "izquierda" as const;
+
+/**
+ * **Villa de Mazo, el pueblo de la ladera al llegar** (punto 314): el centro
+ * del casco, donde la ortofoto del PNOA que lleva el juego enseña la iglesia,
+ * la plaza y las casas apretadas —`data/ortho/la-palma-cerca.jpg`—, a unos
+ * cuatrocientos sesenta metros sobre el mar según el relieve del juego. Queda
+ * dos kilómetros y doscientos metros al oeste de la final de la 36 y unos
+ * ochocientos metros al sur de su umbral: entrando por el sur, a la izquierda,
+ * que es el lado de Ara. Ver la charla `mazo` y `docs/historias/fuentes.md`.
+ */
+export const VILLA_DE_MAZO = { lat: 28.608, lon: -17.778 } as const;
 
 /**
  * **Las salidas de emergencia del avión de la escena** (punto 312): las de su
@@ -450,7 +474,10 @@ export type CharlaDelPasaje =
   | "sigueLaNube"
   | "menosGas"
   | "porQueMenosGas"
-  | "masGas";
+  | "masGas"
+  | "musica"
+  | "mazo"
+  | "queEsMazo";
 
 /**
  * **Lo que se nombra del paisaje**, y que por eso **solo se dice si se ve**
@@ -469,6 +496,10 @@ export type CharlaDelPasaje =
  * - `tierra-abajo` y `mar-abajo`: el suelo o el mar de debajo, por la
  *   ventanilla o con la cara pegada al cristal; y `nubes-abajo`, el mar de
  *   nubes, que también se tiene que ver para decirlo.
+ * - `ladera-de-mazo`: la ladera de Villa de Mazo, con sus fincas, sus casas y
+ *   sus caminos, en la final de la 36 (punto 314). **Solo por el cristal de
+ *   Ara**: es lo que se reconoce desde el asiento al llegar, y no se enseña
+ *   desde fuera. Ver `VILLA_DE_MAZO` y la charla `mazo`.
  *
  * Si se ve lo dice el juego, que es quien tiene el mundo: ver `LecturaDelPasaje.ver`
  * y `world/se-ve-desde-el-pasaje.ts`.
@@ -476,6 +507,7 @@ export type CharlaDelPasaje =
 export type SitioDelPaisaje =
   | "isla-de-llegada"
   | "costa-de-llegada"
+  | "ladera-de-mazo"
   | "tierra-abajo"
   | "mar-abajo"
   | "nubes-abajo"
@@ -592,6 +624,13 @@ export interface LecturaDelPasaje {
    * estamos arriba» hasta el anuncio de la bajada. Ver `luzApagada`.
    */
   readonly cinturon?: boolean;
+  /**
+   * **Si suena ahora el hilo musical** por el altavoz del techo, de verdad: la
+   * música de llegada que pone el juego —ver `audio/hilo-musical.ts`—, no la
+   * que tocaría. Sin esto —las pruebas que no la miran—, no suena: lo que no
+   * se sabe si sonó no se pregunta. Ver la charla `musica`.
+   */
+  readonly musica?: boolean;
 }
 
 /**
@@ -766,6 +805,22 @@ const BAJANDO = {
    */
   oficio: 50000,
 } as const;
+/**
+ * **Lo que suena la música de llegada antes de que Ara pregunte por ella**,
+ * s de escena seguidos: que se oiga sola un momento, ya entrada, y no en el
+ * primer compás. Ver la charla `musica`.
+ */
+const SE_OYE_LA_MUSICA = 3;
+/**
+ * **La ladera de Mazo en la final**, m de altura: lo más abajo que se
+ * empieza a contar, y por debajo de cuánto ya no. Lo de Ara son dos frases,
+ * unos diez segundos, y a tres metros y pico por segundo de bajada acaban
+ * antes de los sesenta metros, que es cuando se corta a la pista para ver
+ * tocar —ver el momento `aterrizando`—: lo de Mazo no se come la toma.
+ */
+const MAZO_EMPIEZA_POR_ENCIMA = 110;
+const MAZO_YA_NO = 100;
+
 /** Lo que se calla la escena antes de que llegue la tripulante con el kit, s. */
 const CALLA_ANTES_DEL_KIT = 10;
 /**
@@ -1943,6 +1998,30 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     lineas: [ara("preguntaBajar"), desdeLaCabina(comandante("bajando"))],
   },
   {
+    /*
+     * **Por qué ponen música al bajar.** La música de llegada empieza a los
+     * diez mil pies —ver `audio/hilo-musical.ts`—, y Ara lo nota poco después
+     * de que suene de verdad, con un rato sonando sola. Contesta la
+     * tripulante, en persona, si está a mano: preparando la cabina pasa por
+     * los asientos. Lo que se cuenta es lo que dicen las fuentes: que se pone
+     * para que el rato sea tranquilo y calmar los nervios, y que muchas
+     * compañías eligen música de su tierra, que da sentido del lugar. Que tape
+     * ruidos que inquietan no lo dice ninguna, y no se dice. Ver
+     * `docs/historias/fuentes.md`.
+     */
+    id: "musica",
+    tras: 4,
+    cuando: (l, e) =>
+      !!l.musica &&
+      e.musicaSuenaDesde >= SE_OYE_LA_MUSICA &&
+      bajando(l.tramo) &&
+      !l.enTierra &&
+      tripulanteEnElPasillo(e) &&
+      !cabinaPreparada(l, e),
+    caduca: (l, e) => l.enTierra || !bajando(l.tramo) || cabinaPreparada(l, e),
+    lineas: [ara("musica"), conLaTripulante(tripulante("musica"))],
+  },
+  {
     // El frío de fuera: solo si de verdad está bajo cero.
     id: "tcpFrio",
     tras: 14,
@@ -2189,6 +2268,32 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     lineas: [ara("miro")],
   },
   {
+    /*
+     * **Lo que se reconoce al llegar** (punto 314). Enrique: lo mágico es ir
+     * reconociendo lo de abajo cuando el avión ya casi toca tierra. Entrando
+     * por el sur a la 36, la isla queda a la izquierda, del lado de Ara, y en
+     * la ladera está Villa de Mazo: sus fincas, sus casas y los caminos que
+     * suben. Ara lo cuenta **cuando de verdad se ve por su cristal**, con la
+     * cara contra él mirando hacia allí, que es la toma que lo enseña: con el
+     * relieve y la final del juego, a tres kilómetros del pueblo —a unos tres
+     * del umbral y doscientos metros de altitud, con el pueblo cuarenta y
+     * tantos grados por delante del través—, que a cuatro, en la captura del
+     * banco, el pueblo era una franja oscura con puntitos. Y con tiempo de
+     * acabar antes de que
+     * se corte a la pista para ver tocar. El nombre no lo dice: en la
+     * final no lo puede decir nadie, y lo dice la comandante en tierra —ver
+     * `queEsMazo`—.
+     */
+    id: "mazo",
+    tras: 3,
+    cuando: (l) => !l.enTierra && enLaFinal(l) && l.altura > MAZO_EMPIEZA_POR_ENCIMA,
+    caduca: (l) => l.enTierra || !enLaFinal(l) || l.altura < MAZO_YA_NO,
+    lineas: [ara("mazo"), ara("mazoBici")],
+    mira: "ventanilla",
+    plano: "asomado-paisaje",
+    nombra: "ladera-de-mazo",
+  },
+  {
     id: "cerquita",
     tras: 6,
     cuando: (l) => !l.enTierra && enLaFinal(l) && l.altura < 300 && l.altura > 110 && !!l.sobreElMar,
@@ -2227,6 +2332,27 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     caduca: (l) => l.tramo === "apagado" || (l.tramo === "aparcado" && l.enTramo >= PARADO_DEL_TODO),
     lineas: LA_VUELTA_EXPLICADA,
     planoSegun: (_l, e) => (e.dichaLaCharla("senalero") ? "fuera-senalero" : "fuera-rodando"),
+  },
+  {
+    /*
+     * **Y el nombre del pueblo de la ladera**, en el primer rato tranquilo en
+     * tierra: con la pista ya libre y, si hubo vuelta, detrás de su porqué.
+     * Lo dice la comandante, para todo el pasaje, que en la final no podía
+     * nadie —la cabina de mando, en lo suyo; la tripulante, sentada—. Solo si
+     * Ara lo vio: lo que no se vio no se nombra. Sin cambiar lo que se está
+     * viendo, que en el puesto es el señalero.
+     */
+    id: "queEsMazo",
+    tras: 3,
+    cuando: (l, e) =>
+      (l.tramo === "al-puesto" || l.tramo === "aparcado") &&
+      e.dichaLaCharla("mazo") &&
+      e.dicho("llegada") &&
+      fueraDeLaPista(l) &&
+      (e.dichaLaCharla("porQueLaVuelta") || !e.dichaLaCharla("vueltaEnPista")),
+    caduca: (l) => l.tramo === "apagado" || (l.tramo === "aparcado" && l.enTramo >= PARADO_DEL_TODO),
+    lineas: [comandante("mazo")],
+    planoSegun: (_l, e) => (e.planoDeAhora.endsWith("-paisaje") ? "ventanilla" : e.planoDeAhora),
   },
   {
     /*
@@ -2544,6 +2670,8 @@ export class VueloDePasaje {
   private oficioDicho = false;
   /** Y si Ara ya fue al baño: ver `puedeIrAlBano`. */
   private alBano = false;
+  /** Lo que lleva sonando seguida la música de llegada, s de escena. Ver la charla `musica`. */
+  private conMusica = 0;
 
   private dibujo: string | null = null;
   private dibujoDe: Linea | null = null;
@@ -2623,6 +2751,16 @@ export class VueloDePasaje {
   /** Si ese momento se saltó por pasarse de su momento. */
   saltado(id: MomentoDelPasaje): boolean {
     return this.saltados.includes(id);
+  }
+
+  /** **El plano de ahora**: lo que deja como está lo que no cambia de toma. */
+  get planoDeAhora(): Plano {
+    return this.plano;
+  }
+
+  /** **Lo que lleva sonando seguida la música de llegada**, s de escena; 0 si no suena. */
+  get musicaSuenaDesde(): number {
+    return this.conMusica;
   }
 
   /** Si esa charla ya se dijo. */
@@ -3005,6 +3143,7 @@ export class VueloDePasaje {
      */
     const enCorte = this.reloj < this.enCorteHasta && this.charla.vacia;
     this.callada = this.charla.callada || enCorte ? this.callada + dt : 0;
+    this.conMusica = l.musica ? this.conMusica + dt : 0;
     if (!this.acabado) {
       this.charla.atender();
       this.avanzar(l);
