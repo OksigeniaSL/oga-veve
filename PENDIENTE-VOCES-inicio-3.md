@@ -135,6 +135,21 @@ Jazlyn», o con `?inicio=3`.
 | `inicio.mama.pasaje.mazo` | `comandante` | 98 |
 | `inicio.tripulacion.pasaje.cerca.musica` | `tripulacion-canarias` | 129 |
 
+- **La ventanilla viva** (19-10-2026): se toca lo que se ve por la
+  ventanilla y te lo cuentan. Ara invita una vez a tocar y dice lo suyo del
+  motor, de La Gomera y del mar; lo demás que se dice al tocar ya está
+  grabado —el Teide, la isla, Mazo, el mar de nubes y el ala de Ara, y las
+  charlas de la tripulante—. De vos y con chispa, como todo lo de Ara.
+  **Cuatro frases nuevas, al final de Ara**, 298 caracteres. Ver
+  `src/flight/lo-que-se-toca.ts`.
+
+| Clave | Voz | Caracteres |
+|---|---|---:|
+| `inicio.ara.pasaje.toque.invita` | `ara` | 72 |
+| `inicio.ara.pasaje.toque.motor` | `ara` | 80 |
+| `inicio.ara.pasaje.toque.gomera` | `ara` | 77 |
+| `inicio.ara.pasaje.toque.mar` | `ara` | 69 |
+
 Ninguna baja de treinta letras. Los rótulos del kit —`inicio.kit.*`, el
 nombre de cada pieza y de cada parada, y las luces de la lámpara— son de la
 pantalla y no se graban.

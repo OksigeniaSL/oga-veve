@@ -57,6 +57,7 @@
  */
 
 import { dibujoDelMapa, vueloDeMuestra, type LoDelVuelo, type MapaDeLaRuta } from "./mapa-de-la-ruta";
+import { SILUETAS } from "./siluetas";
 
 /** Los dibujos que hay, por su clave. Ver `DIBUJOS_DEL_PASAJE`. */
 export type DibujoDelPasaje =
@@ -81,7 +82,8 @@ export type DibujoDelPasaje =
   | "techo"
   | "vuelta-en-pista"
   | "maletero"
-  | "tripulacion";
+  | "tripulacion"
+  | "gomera";
 
 /** Los colores: los del juego, cálidos y tranquilos. */
 const C = {
@@ -768,6 +770,33 @@ const TRIPULACION = lamina(
 @keyframes gira{to{transform:rotate(360deg)}}`,
 );
 
+/**
+ * **La Gomera, con su costa de verdad**: la silueta de Natural Earth sobre el
+ * mar, el verde del Garajonay arriba y el silbo cruzando un barranco de una
+ * orilla a otra. Es lo que queda si no llega la ilustración del silbo, que es
+ * la que sale: ver `DIBUJOS_CON_SU_HISTORIA`.
+ */
+const GOMERA = (() => {
+  const anillo = SILUETAS.es.find((a) => a.some(([lon, lat]) => Math.abs(lon + 17.24) < 0.12 && Math.abs(lat - 28.11) < 0.12));
+  if (!anillo) return lamina("", "", C.mar);
+  const lons = anillo.map(([lon]) => lon);
+  const lats = anillo.map(([, lat]) => lat);
+  const [x0, x1, y0, y1] = [Math.min(...lons), Math.max(...lons), Math.min(...lats), Math.max(...lats)];
+  const k = Math.cos((((y0 + y1) / 2) * Math.PI) / 180);
+  const escala = Math.min(300 / ((x1 - x0) * k), 240 / (y1 - y0));
+  const dx = 240 - ((x1 - x0) * k * escala) / 2;
+  const dy = 160 - ((y1 - y0) * escala) / 2;
+  const d = `M${anillo.map(([lon, lat]) => `${(dx + (lon - x0) * k * escala).toFixed(1)} ${(dy + (y1 - lat) * escala).toFixed(1)}`).join("L")}Z`;
+  return lamina(
+    `<path d="${d}" fill="${C.tierra}" class="tf fino"/>
+<ellipse cx="240" cy="158" rx="58" ry="40" fill="${C.verde}" class="tf fino"/>
+<g class="silbo"><path d="M150 96 q14 -18 28 0 t28 0 t28 0 t28 0 t28 0 t28 0" fill="none" stroke="${C.blanco}" stroke-width="7" stroke-linecap="round"/></g>`,
+    `.silbo{animation:silbo 1.8s infinite ease-in-out}
+@keyframes silbo{50%{transform:translateY(-6px);opacity:.6}}`,
+    C.mar,
+  );
+})();
+
 /** Los dibujos, por clave: el SVG entero de cada uno. */
 export const DIBUJOS_DEL_PASAJE: Readonly<Record<DibujoDelPasaje, string>> = {
   "vuelta-en-pista": VUELTA_EN_PISTA,
@@ -792,6 +821,7 @@ export const DIBUJOS_DEL_PASAJE: Readonly<Record<DibujoDelPasaje, string>> = {
   islas: ISLAS,
   ruta: RUTA,
   oido: OIDO,
+  gomera: GOMERA,
 };
 
 /** Si una clave es la de un dibujo de la escena. */

@@ -13171,6 +13171,53 @@ svg .ex-raya {
     animation: none;
   }
 }
+
+/*
+ * **El aro suave de la ventanilla viva**: el que invita a tocar lo que se ve
+ * por el cristal de Ara. Más fino, más lento y sin flecha, que no señala lo
+ * que alguien nombra: dice «esto se puede tocar». Uno a la vez. Ver
+ * `src/flight/lo-que-se-toca.ts`.
+ */
+.aro-del-mundo--suave {
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+}
+
+.aro-del-mundo--suave .aro-del-mundo__flecha {
+  display: none;
+}
+
+.aro-del-mundo--suave .aro-del-mundo__aro {
+  border-width: 2px;
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 0 0 1px rgba(5, 7, 10, 0.4),
+    0 0 10px rgba(255, 255, 255, 0.35);
+  animation: aro-del-mundo-suave 2.2s ease-in-out infinite;
+}
+
+@keyframes aro-del-mundo-suave {
+  0%,
+  100% {
+    transform: scale(0.85);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.95;
+  }
+}
+
+.sin-movimiento .aro-del-mundo--suave .aro-del-mundo__aro {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aro-del-mundo--suave .aro-del-mundo__aro {
+    animation: none;
+  }
+}
 /*
  * ── La tarjeta del avión ────────────────────────────────────────────────
  *
@@ -15521,6 +15568,66 @@ body.con-vuelta #tactil {
   max-width: none;
 }
 
+/*
+ * **El cuaderno de viaje**, al lado del sello del campo: los ocho sitios de
+ * lo que se vio por la ventanilla, en cuatro y cuatro, con sus huecos. En el
+ * papel del cuaderno, como el sello de al lado; y los recién ganados se
+ * estampan uno detrás de otro, después del del campo. Ver
+ * `src/ui/sellos-del-viaje.ts`.
+ */
+.inicio__llegada {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.viaje {
+  padding: 6px 8px;
+  border-radius: var(--r-m);
+  background: #f3ecd9;
+}
+
+.viaje__sellos {
+  display: grid;
+  grid-template-columns: repeat(4, 54px);
+  gap: 4px 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.viaje__sitio {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+}
+
+.viaje__sello {
+  display: block;
+  width: 100%;
+}
+
+.sello-del-viaje {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* La tinta azul de Canarias, la de los sellos de campo de allí. */
+  color: #1d5fa6;
+  opacity: 0.9;
+}
+
+.viaje__sitio .album__vacio {
+  width: 100%;
+  margin: 0;
+}
+
+.viaje__sello--nuevo {
+  animation: inicio-estampa 0.7s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  animation-delay: calc(0.6s + var(--orden, 0) * 0.35s);
+}
+
 @keyframes inicio-estampa {
   from {
     transform: scale(1.8) rotate(-14deg);
@@ -15726,6 +15833,13 @@ body.con-vuelta #tactil {
   }
   .inicio__sello {
     width: 86px;
+  }
+  .viaje {
+    padding: 4px 6px;
+  }
+  .viaje__sellos {
+    grid-template-columns: repeat(4, 40px);
+    gap: 2px 4px;
   }
 }
 

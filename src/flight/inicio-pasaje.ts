@@ -250,11 +250,20 @@ import { APAGA_LA_LUZ } from "./cinturon";
 import { Conversacion, type FraseDicha, type Linea, type VozDelInicio } from "./conversacion";
 import { KitDeViaje, LINEAS_DEL_KIT, type EstadoDelKit } from "./kit-de-viaje";
 import { DICHO_DE_LA_LUZ, JuegoDeLaLuz, LINEAS_DE_LA_LUZ } from "./luz-verde";
+import {
+  LA_INVITACION,
+  laminaDe,
+  LINEAS_DE_LA_VENTANILLA_VIVA,
+  loQueSeDiceAlTocar,
+  selloDe,
+  type SelloDelViaje,
+  type Tocable,
+} from "./lo-que-se-toca";
 import type { ComoSeVe } from "../world/se-ve-desde-el-pasaje";
 import type { Fase } from "./vuelo";
 import type { PermisosDeLaEscena, PotenciaDeLinea, TramoDeLinea } from "./vuelo-de-linea";
 
-export type { ComoSeVe };
+export type { ComoSeVe, SelloDelViaje, Tocable };
 
 /** Diez mil pies, m: por debajo, la cabina de mando no habla de nada que no sea volar. */
 export const DIEZ_MIL_PIES = 10000 * 0.3048;
@@ -631,6 +640,13 @@ export interface LecturaDelPasaje {
    * se sabe si sonó no se pregunta. Ver la charla `musica`.
    */
   readonly musica?: boolean;
+  /**
+   * **Si ahora hay algo que se puede tocar a la vista**, por el cristal de Ara:
+   * lo que lleva el aro suave. Es lo que espera la invitación a tocar, que se
+   * dice una vez. Sin esto —las pruebas que no lo miran—, no se invita. Ver
+   * `flight/lo-que-se-toca.ts`.
+   */
+  readonly tocable?: boolean;
 }
 
 /**
@@ -979,6 +995,50 @@ const SE_QUEDA_LA_VENTANITA = 2.5;
  * pasaje con el hilo musical. Ver `EMBARCANDO`.
  */
 const HASTA_LA_SIGUIENTE: ReadonlySet<string> = new Set(["ilustracion:pasaje-embarque"]);
+
+/**
+ * **La ventanilla viva** (19-10-2026): los números. Ver `tocar` y
+ * `flight/lo-que-se-toca.ts`.
+ *
+ * - `ESPERA_EL_TOQUE`, s de escena: lo que espera un toque a que se calle
+ *   quien habla. Un toque no pisa a nadie, pero tampoco se contesta medio
+ *   minuto después, cuando ya se está mirando otra cosa: pasado esto, se
+ *   queda en su aro, sin voz.
+ * - `CALLA_ANTES_DEL_TOQUE`, s de silencio antes de contestar: lo justo para
+ *   que no suene pegado a lo de antes.
+ * - `SIGUE_A_LA_VISTA`, s: lo que se fía de que se sigue viendo lo que se
+ *   tocó; si ha esperado más, se vuelve a mirar antes de decirlo, que en ese
+ *   rato el avión puede meterse en una nube.
+ * - `INVITA_TRAS`, s de silencio con algo que tocar a la vista: lo que espera
+ *   la invitación, que se dice una vez.
+ */
+const ESPERA_EL_TOQUE = 6;
+const CALLA_ANTES_DEL_TOQUE = 0.4;
+const SIGUE_A_LA_VISTA = 1.5;
+const INVITA_TRAS = 3;
+/** Lo que se queda la lámina de un toque sin voz, s: el rato de lo señalado. */
+const LAMINA_DEL_TOQUE = 6;
+
+/**
+ * **Los sellos del cuaderno de viaje que da lo que dice la escena**, cuando
+ * se ve mientras se dice: lo que se cuenta con el plano que lo enseña —el
+ * motor con la cara contra el cristal, el ala y las ruedas por fuera— o lo que
+ * nombra del paisaje, que solo se dice si se ve. Lo señalado por la comandante
+ * da el suyo en `decirLoSenalado`. Ver `flight/sellos-del-viaje.ts`.
+ */
+const SELLO_AL_DECIRLO: Readonly<Partial<Record<string, readonly SelloDelViaje[]>>> = {
+  ventanilla: ["motor", "ala"],
+  motores: ["motor"],
+  tcpMotor: ["motor"],
+  ala: ["ala"],
+  flaps: ["ala"],
+  marDeNubes: ["nubes"],
+  isla: ["palma"],
+  islaCerca: ["palma"],
+  mazo: ["mazo"],
+  ruedas: ["ruedas"],
+  altoRapido: ["teide"],
+};
 
 /**
  * **Y la red de la espera**, s de reloj de pared: si «sentados para el
@@ -2439,6 +2499,8 @@ export const LINEAS_DEL_PASAJE: readonly Linea[] = (() => {
   [...AL_BANO, FUE_A_TIEMPO].forEach(poner);
   // Y la luz verde del kit (punto 304), al final: lo nuevo no renumera lo que ya está grabado.
   LINEAS_DE_LA_LUZ.forEach(poner);
+  // Y la ventanilla viva (19-10-2026): la invitación y lo que Ara dice de lo que toca.
+  LINEAS_DE_LA_VENTANILLA_VIVA.forEach(poner);
   return todas;
 })();
 
@@ -2464,6 +2526,23 @@ export interface Nombrado {
   readonly lado: "izquierda" | "derecha" | null;
   /** Segundos de escena. */
   readonly desde: number;
+}
+
+/**
+ * **Un toque en la ventanilla**, ya visto por el juego —lo que no se ve no
+ * llega a la escena—: qué se tocó, cuándo, lo que se dijo y, si no se dijo
+ * nada, por qué. Para el banco y las pruebas.
+ *
+ * - `ocupado`: hablaba alguien y el toque se quedó en su aro.
+ * - `contado`: ya se había contado, y se enseña su lámina sin voz.
+ * - `dormida`: Ara tiene los ojos cerrados.
+ * - `sinVer`: esperó su turno y, cuando le tocó, ya no se veía.
+ */
+export interface Toque {
+  readonly que: Tocable;
+  readonly desde: number;
+  readonly dijo: readonly string[];
+  readonly calla: "ocupado" | "contado" | "dormida" | "sinVer" | null;
 }
 
 /** Si un sitio es de lo de debajo del avión: se mira hacia abajo, no hacia él. */
@@ -2533,6 +2612,14 @@ export interface EstadoDelPasaje {
   readonly fueAlBano: boolean;
   /** **El botón de adelantar** (⏩). Ver `adelanto`. */
   readonly adelanto: EstadoDelAdelanto;
+  /**
+   * **La ventanilla viva**: los toques, si ya se invitó a tocar y los sellos
+   * del cuaderno de viaje de lo visto en este vuelo, en el orden en que se
+   * vieron. Ver `tocar`.
+   */
+  readonly toques: readonly Toque[];
+  readonly invitado: boolean;
+  readonly vistos: readonly SelloDelViaje[];
 }
 
 /** Una siesta de Ara, s de escena; `hasta` es `null` mientras dura. */
@@ -2708,6 +2795,21 @@ export class VueloDePasaje {
   private llegadaDesde: number | null = null;
   private apagadoSolo = false;
   private readonly ratos: { desde: number; hasta: number | null }[] = [];
+  /**
+   * **La ventanilla viva**: los toques, el que espera su turno, lo que ya se
+   * contó, las frases pedidas en el vuelo —para no repetir ninguna, la diga
+   * quien la diga—, los sellos de lo visto, si ya se invitó a tocar y la
+   * lámina de un toque sin voz. Ver `tocar`.
+   */
+  private readonly toques: { que: Tocable; desde: number; dijo: string[]; calla: Toque["calla"] }[] = [];
+  private toquePendiente: { readonly que: Tocable; readonly desde: number; readonly toque: { dijo: string[]; calla: Toque["calla"] } } | null = null;
+  private readonly contados = new Set<Tocable>();
+  private readonly pedidas = new Set<string>();
+  /** Las frases de Ara que ya se dijeron por un toque: la escena no las repite cuando le llegan. */
+  private readonly porUnToque = new Set<string>();
+  private readonly vistosDelViaje: SelloDelViaje[] = [];
+  private invitado = false;
+  private laminaDelToque: { readonly dibujo: string; readonly hasta: number } | null = null;
 
   constructor(
     voz: VozDelInicio,
@@ -2897,7 +2999,142 @@ export class VueloDePasaje {
       gente: this.gente,
       fueAlBano: this.alBano,
       adelanto: this.adelanto,
+      toques: this.toques.map((t) => ({ ...t, dijo: [...t.dijo] })),
+      invitado: this.invitado,
+      vistos: [...this.vistosDelViaje],
     };
+  }
+
+  /**
+   * **Un toque en la ventanilla de Ara**, sobre algo que el juego ya ha visto
+   * que se ve por su cristal —ver `tocarLaVentanillaViva` en `game.ts`—. Da
+   * su sello del cuaderno de viaje, se le pone su aro, y se contesta en
+   * cuanto haya un silencio: Ara, la lámina y, si está a mano, la tripulante.
+   * La comandante, nunca. Ver `flight/lo-que-se-toca.ts`.
+   *
+   * Un toque no pisa a nadie: si alguien habla, espera su turno
+   * `ESPERA_EL_TOQUE` como mucho y, si no le llega, se queda en su aro, sin
+   * voz. Lo ya contado no se cuenta otra vez: sale su lámina, callada. Y con
+   * Ara durmiendo no pasa nada, que tiene los ojos cerrados.
+   */
+  tocar(que: Tocable): void {
+    if (this.acabado) return;
+    const toque = { que, desde: this.reloj, dijo: [] as string[], calla: null as Toque["calla"] };
+    this.toques.push(toque);
+    if (this.toques.length > 60) this.toques.shift();
+    if (this.durmiendo || this.bostezando) {
+      toque.calla = "dormida";
+      return;
+    }
+    this.verLo(selloDe(que));
+    if (this.contados.has(que)) {
+      toque.calla = "contado";
+      this.ensenarLaLamina(que);
+      return;
+    }
+    // Un toque nuevo manda sobre el que esperaba: es lo que se está mirando ahora.
+    if (this.toquePendiente) this.toquePendiente.toque.calla = "ocupado";
+    this.toquePendiente = { que, desde: this.reloj, toque };
+  }
+
+  /** **Un sello del cuaderno de viaje**, de lo que se acaba de ver: una vez cada uno. */
+  private verLo(...sellos: readonly (SelloDelViaje | null | undefined)[]): void {
+    for (const s of sellos) if (s && !this.vistosDelViaje.includes(s)) this.vistosDelViaje.push(s);
+  }
+
+  /** La lámina de lo tocado, sin voz, el rato de lo señalado: si no habla nadie con la suya. */
+  private ensenarLaLamina(que: Tocable): void {
+    const dibujo = laminaDe(que);
+    if (dibujo) this.laminaDelToque = { dibujo, hasta: this.reloj + LAMINA_DEL_TOQUE };
+  }
+
+  /** Si una frase ya se pidió en este vuelo, la dijera quien la dijera. */
+  private yaSePidio(clave: string): boolean {
+    return this.pedidas.has(clave) || this.charla.registro.some((d) => d.clave === clave);
+  }
+
+  /**
+   * **Si lo tocado se sigue viendo desde el asiento de Ara**, después de
+   * esperar su turno: por su cristal, sentada o con la cara contra él. Las
+   * piezas del avión no se van; lo de debajo y el paisaje, sí. Sin el mundo
+   * —las pruebas que no lo miran—, se ve.
+   */
+  private sigueALaVista(que: Tocable, l: LecturaDelPasaje): boolean {
+    if (que === "motor" || que === "ala" || !l.ver) return true;
+    const sitio: SitioDelPaisaje = que === "mar" ? "mar-abajo" : que === "nubes" ? "nubes-abajo" : que;
+    const como = l.ver(sitio).como;
+    return como === "ventanilla" || como === "asomado";
+  }
+
+  /**
+   * **Lo tocado, contestado en su turno**: en un silencio del guion, después
+   * de lo señalado por la comandante y antes de lo que se cuenta cuando viene
+   * a cuento —que lo que se acaba de tocar es lo que se está mirando—. Y la
+   * invitación, una vez, en el primer silencio con algo que tocar a la vista.
+   * Devuelve si se dijo algo.
+   */
+  private atenderAlToque(l: LecturaDelPasaje): boolean {
+    if (this.reloj < this.enCorteHasta) return false;
+    if (this.kit.estaAbierto || this.kit.ocupaAAra || this.durmiendo || this.bostezando) return false;
+    const p = this.toquePendiente;
+    if (!p) {
+      if (this.invitado || !l.tocable || this.callada < INVITA_TRAS || esDeFuera(this.plano) || this.plano === "pasillo")
+        return false;
+      this.invitado = true;
+      /*
+       * Con la lámina que haya puesta, que la invitación no la quita: la del
+       * embarque se queda hasta la frase siguiente. Menos la foto de una
+       * historia, que solo sale con la voz que la cuenta.
+       */
+      const dibujo = this.dibujo && !this.dibujo.startsWith("foto:") ? this.dibujo : null;
+      this.decirLasDelToque([dibujo ? { ...LA_INVITACION, dibujo } : LA_INVITACION]);
+      return true;
+    }
+    if (this.callada < CALLA_ANTES_DEL_TOQUE) return false;
+    this.toquePendiente = null;
+    if (this.reloj - p.desde > SIGUE_A_LA_VISTA && !this.sigueALaVista(p.que, l)) {
+      p.toque.calla = "sinVer";
+      return false;
+    }
+    this.contados.add(p.que);
+    // La invitación ya no hace falta: se ha tocado.
+    this.invitado = true;
+    const dicho = loQueSeDiceAlTocar(p.que, {
+      /*
+       * La tripulante viene si anda por el pasillo, y si no hay una respuesta
+       * a Ara esperando su rato tranquilo —el porqué del ralentí, que va
+       * primero—: lo tocado se queda en lo que dice Ara, que es corto.
+       */
+      conLaTripulante: tripulanteEnElPasillo(this) && volando(l) && !cabinaPreparada(l, this) && !this.quedaPorContestar(l),
+      yaDicha: (k) => this.yaSePidio(k),
+      charlaContada: (id) => this.charlasDichas.includes(id as CharlaDelPasaje),
+      altitud: l.altitud,
+      nubes: l.nubes,
+      enLaFinal: enLaFinal(l),
+      faltaParaTocar: l.faltaParaTocar,
+      altura: l.altura,
+    });
+    if (!dicho) {
+      p.toque.calla = "contado";
+      this.ensenarLaLamina(p.que);
+      return false;
+    }
+    // Lo que cuenta aquí la escena ya no lo vuelve a contar cuando le llegue.
+    for (const c of dicho.charlas)
+      if (!this.charlasDichas.includes(c as CharlaDelPasaje)) this.charlasDichas.push(c as CharlaDelPasaje);
+    for (const x of dicho.lineas) if (x.quien === "ara") this.porUnToque.add(x.clave);
+    p.toque.dijo.push(...dicho.lineas.map((x) => x.clave));
+    this.mira = p.que === "motor" ? "motor" : p.que === "ala" ? "ala" : p.que === "nubes" ? "nubes" : "ventanilla";
+    this.miraDesde = this.reloj;
+    this.decirLasDelToque(dicho.lineas);
+    return true;
+  }
+
+  /** Lo de un toque, a la cola, apuntado como pedido. */
+  private decirLasDelToque(lineas: readonly Linea[]): void {
+    for (const x of lineas) this.pedidas.add(x.clave);
+    this.laminaDelToque = null;
+    this.charla.decir(lineas);
   }
 
   /** **Si Ara duerme ahora.** Lo mira el juego en cada fotograma: ver `frame` en `game.ts`. */
@@ -3032,7 +3269,8 @@ export class VueloDePasaje {
    */
   private enCalma(l: LecturaDelPasaje): boolean {
     if (!this.charla.callada || this.reloj < this.enCorteHasta || this.plano !== "ventanilla") return false;
-    if (this.porSenalar.length > 0 || this.contestacion || this.kit.estaAbierto || this.kit.ocupaAAra) return false;
+    if (this.porSenalar.length > 0 || this.contestacion || this.toquePendiente || this.kit.estaAbierto || this.kit.ocupaAAra)
+      return false;
     if (!this.adelantando && this.callada < ADELANTO.CALLA_PARA_ADELANTAR) return false;
     return !this.def.cuando(l, this);
   }
@@ -3188,6 +3426,13 @@ export class VueloDePasaje {
     const seQueda = this.dibujo !== null && HASTA_LA_SIGUIENTE.has(this.dibujo);
     if (this.charla.callada && this.callada > SE_QUEDA_LA_VENTANITA && !seQueda) this.dibujo = null;
     /*
+     * **Y la lámina de lo tocado sin voz**: lo que ya se contó, tocado otra
+     * vez, enseña su lámina un rato, callada. Si alguien habla, manda lo suyo.
+     */
+    const lt = this.laminaDelToque;
+    if (lt && (this.reloj >= lt.hasta || !this.charla.callada)) this.laminaDelToque = null;
+    else if (lt) this.dibujo = lt.dibujo;
+    /*
      * **Y con Ara durmiendo, el mapa de la ruta**, con el avión avanzando: es
      * como se ve que el vuelo sigue mientras pasa deprisa. Y al despertar se
      * queda con lo que dice Ara. Ver `ui/siesta.ts`.
@@ -3239,9 +3484,17 @@ export class VueloDePasaje {
     const plano =
       def.planoSegun?.(l, this) ?? def.plano ?? (vista?.como && sitio ? planoParaVer(vista.como, sitio) : "ventanilla");
     this.ponerPlano(plano, sitio);
-    const lineas = def.segun?.(l, this) ?? def.lineas;
+    /*
+     * Lo que Ara ya dijo al tocarlo no lo repite cuando le llega a la escena:
+     * «¡ya se ve la isla adonde vamos!» una vez. Ver `tocar`.
+     */
+    const lineas = (def.segun?.(l, this) ?? def.lineas).filter((x) => !this.porUnToque.has(x.clave));
     if (sitio && vista?.como && lineas[0])
       this.apuntarLoNombrado(sitio, lineas[0].clave, vista);
+    // El sello del cuaderno de viaje de lo que se cuenta, si se ve mientras se cuenta.
+    if (!sitio || vista?.como) this.verLo(...(SELLO_AL_DECIRLO[def.id] ?? []));
+    if (def.id === "nubes" && lineas.some((x) => x.clave === "inicio.ara.pasaje.nubesAbajo")) this.verLo("nubes");
+    for (const x of lineas) this.pedidas.add(x.clave);
     if (lineas.some((x) => x.clave === "inicio.mama.pasaje.teide")) this.teideContado = true;
     if (lineas.some((x) => EL_PLOP_EXPLICADO.includes(x))) this.plopContado = true;
     if (lineas.some((x) => EL_OFICIO.includes(x))) this.oficioDicho = true;
@@ -3307,6 +3560,11 @@ export class VueloDePasaje {
       });
       this.plopAplazado = quitado;
     }
+    // El toque que no encontró silencio a tiempo se queda en su aro, sin voz.
+    if (this.toquePendiente && this.reloj - this.toquePendiente.desde > ESPERA_EL_TOQUE) {
+      this.toquePendiente.toque.calla = "ocupado";
+      this.toquePendiente = null;
+    }
     if (!this.charla.callada) return;
     /*
      * Acabado el bostezo, Ara cierra los ojos, si sigue sin haber nada que
@@ -3338,6 +3596,8 @@ export class VueloDePasaje {
        */
       if (def.id === "servicio") return;
       if (this.atenderLoSenalado(l)) return;
+      // Y lo que se acaba de tocar por la ventanilla, que es lo que se está mirando. Ver `tocar`.
+      if (this.atenderAlToque(l)) return;
       /*
        * Y con el kit en las manos, lo que se cuenta cuando viene a cuento
        * espera: una explicación encima de un juego es un ruido. Lo que tiene
@@ -3565,7 +3825,8 @@ export class VueloDePasaje {
     if (this.siestas.length > 0 || this.acabado || this.bostezando) return false;
     if (!volando(l) || l.tramo === "bajada" || l.altitud < DIEZ_MIL_PIES || l.enNube >= DENTRO_DE_LA_NUBE) return false;
     if (!trasElBostezo && !soloElRato && this.callada < CALLA_PARA_DORMIRSE) return false;
-    if (this.porSenalar.length > 0 || this.contestacion || this.kit.estaAbierto || this.kit.ocupaAAra) return false;
+    if (this.porSenalar.length > 0 || this.contestacion || this.toquePendiente || this.kit.estaAbierto || this.kit.ocupaAAra)
+      return false;
     if (this.def.cuando(l, this)) return false;
     if (this.quedaPorContestar(l)) return false;
     const rato = this.ratoTranquilo(l);
@@ -3676,7 +3937,10 @@ export class VueloDePasaje {
      */
     const lado = v.lado ?? s.lado;
     const dicho = s.porLado?.[lado] ?? s.dicho;
-    if (v.como) this.apuntarLoNombrado(sitio, dicho.clave, v);
+    if (v.como) {
+      this.apuntarLoNombrado(sitio, dicho.clave, v);
+      this.verLo(selloDe(sitio));
+    }
     if (s.que === "teide") this.teideContado = true;
     const lineas: Linea[] = [
       { quien: "mama", clave: dicho.clave, megafonia: true, texto: dicho.texto, relleno: dicho.relleno },
@@ -3702,7 +3966,15 @@ export class VueloDePasaje {
        * historia, la historia.
        */
       const oir = [dicho.clave, ...(s.historia && CONTESTA_A_LA_HISTORIA.has(s.que) ? [s.historia.clave] : [])];
-      this.contestacion = { linea: suya ? ara(suya) : LO_VEO, oir, desde: this.reloj };
+      /*
+       * Y sin repetir lo que Ara ya dijo al tocarlo: si al tocar el Teide ya
+       * dijo lo suyo, ahora no lo dice otra vez. Ver `tocar`.
+       */
+      const contesta = [suya ? ara(suya) : LO_VEO, LO_VEO].find((x) => !this.porUnToque.has(x.clave)) ?? null;
+      if (contesta) {
+        this.contestacion = { linea: contesta, oir, desde: this.reloj };
+        this.pedidas.add(contesta.clave);
+      }
       this.mira = "ventanilla";
       this.miraDesde = this.reloj;
     }

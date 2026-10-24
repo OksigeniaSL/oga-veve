@@ -1782,8 +1782,21 @@ const DE_LO_QUE_SE_RECONOCE = [
   ["inicio.mama.pasaje.mazo", "comandante", "el modo inicio, de pasaje: la comandante, ya en tierra, nombra el pueblo de la ladera: Villa de Mazo"],
   ["inicio.tripulacion.pasaje.cerca.musica", "tripulacion-canarias", "el modo inicio, de pasaje: la tripulante, por qué ponen música al bajar"],
 ];
+/**
+ * **Y la ventanilla viva** (19-10-2026): se toca lo que se ve por la
+ * ventanilla y te lo cuentan. Ara invita una vez a tocar y dice lo suyo del
+ * motor, de La Gomera y del mar; lo demás que se dice al tocar ya está
+ * grabado —las frases de Ara de la escena y las charlas de la tripulante—.
+ * Al final, que lo grabado no se renumera. Ver `src/flight/lo-que-se-toca.ts`.
+ */
+const DE_LA_VENTANILLA_VIVA = [
+  ["inicio.ara.pasaje.toque.invita", "ara", "el modo inicio, de pasaje: Ara invita a tocar lo que se ve por la ventanilla, una vez"],
+  ["inicio.ara.pasaje.toque.motor", "ara", "el modo inicio, de pasaje: Ara toca el motor por la ventanilla y cuenta lo que hace"],
+  ["inicio.ara.pasaje.toque.gomera", "ara", "el modo inicio, de pasaje: Ara toca La Gomera por la ventanilla, la del silbo"],
+  ["inicio.ara.pasaje.toque.mar", "ara", "el modo inicio, de pasaje: Ara toca el mar por la ventanilla"],
+];
 const LO_QUE_SE_VE = new Set(
-  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE].map(
+  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_LA_VENTANILLA_VIVA].map(
     ([k]) => k,
   ),
 );
@@ -1885,8 +1898,8 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
     total += texto.length;
   }
 }
-// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde y lo que se reconoce al llegar: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE` y `DE_LO_QUE_SE_RECONOCE`.
-for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE]) {
+// Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde, lo que se reconoce al llegar y la ventanilla viva: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE`, `DE_LO_QUE_SE_RECONOCE` y `DE_LA_VENTANILLA_VIVA`.
+for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_LA_VENTANILLA_VIVA]) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });

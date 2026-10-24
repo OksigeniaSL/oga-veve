@@ -18147,5 +18147,61 @@
     "idioma": "es-PY",
     "texto": "Para que el ratito de bajar sea un rato de calma, sin nervios. Y muchas compañías ponen música de su tierra: esta es de Canarias.",
     "para": "el modo inicio, de pasaje: la tripulante, por qué ponen música al bajar"
+  },
+  {
+    "id": "inicio.ara.pasaje.toque.invita",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Mirá por la ventanilla! Si tocás algo con el dedo, te cuento lo que es.",
+    "para": "el modo inicio, de pasaje: Ara invita a tocar lo que se ve por la ventanilla, una vez",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.toque.motor",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Ese es el motor! Por adelante se traga el aire, y por atrás lo tira con fuerza.",
+    "para": "el modo inicio, de pasaje: Ara toca el motor por la ventanilla y cuenta lo que hace",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.toque.gomera",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Esa isla redondita es La Gomera! Mamá dice que ahí se puede hablar silbando.",
+    "para": "el modo inicio, de pasaje: Ara toca La Gomera por la ventanilla, la del silbo",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.toque.mar",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Todo eso de abajo es el mar! Y entre isla e isla hay muchísima agua.",
+    "para": "el modo inicio, de pasaje: Ara toca el mar por la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]

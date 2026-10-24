@@ -251,12 +251,15 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
 /**
  * **Los dibujos que se enseñan con la ilustración de una historia**, la que
  * ya cuenta lo mismo: las islas, que son volcanes que crecieron desde el fondo
- * del mar, con el Teide en corte; y los telescopios de La Palma, con la de su
- * cielo y la ley que lo protege. Por la clave del dibujo, la de la historia.
+ * del mar, con el Teide en corte; los telescopios de La Palma, con la de su
+ * cielo y la ley que lo protege; y La Gomera, que se toca por la ventanilla
+ * —ver `flight/lo-que-se-toca.ts`—, con la del silbo que cruza sus barrancos.
+ * Por la clave del dibujo, la de la historia.
  */
 export const DIBUJOS_CON_SU_HISTORIA: Readonly<Record<string, string>> = {
   islas: "teide",
   estrellas: "taburiente",
+  gomera: "garajonay",
 };
 
 // ── Las historias de la ventanilla ──────────────────────────────────────

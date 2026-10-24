@@ -224,8 +224,8 @@ describe("los esquemas, en lugar de los dibujos", () => {
     for (const clave of ["cinturon", "salidas", "papi", "ruta", "modo-avion"]) expect(ilustracionDelDibujo(clave), clave).toBeNull();
   });
 
-  it("las islas con el Teide en corte, y los telescopios con el cielo de La Palma", () => {
-    expect(DIBUJOS_CON_SU_HISTORIA).toEqual({ islas: "teide", estrellas: "taburiente" });
+  it("las islas con el Teide en corte, los telescopios con el cielo de La Palma y La Gomera con su silbo", () => {
+    expect(DIBUJOS_CON_SU_HISTORIA).toEqual({ islas: "teide", estrellas: "taburiente", gomera: "garajonay" });
     for (const [dibujo, historia] of Object.entries(DIBUJOS_CON_SU_HISTORIA)) {
       expect(Object.keys(DIBUJOS_DEL_PASAJE), dibujo).toContain(dibujo);
       expect(ilustracionDeLaHistoria(historia), historia).not.toBeNull();

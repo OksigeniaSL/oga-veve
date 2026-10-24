@@ -52,7 +52,7 @@ import { designador } from "./hangar";
 export type Tinta = "py" | "canarias" | "madrid" | "inventado";
 
 /** El dibujo del paisaje de cada campo, en un recuadro de 40 × 40. */
-const PAISAJES = {
+export const PAISAJES = {
   /* Asunción: el Palacio de López, con su torre en el centro. */
   palacio: `
     <path class="estampa__tinte" d="M5 36 V24 H35 V36 Z" />
@@ -276,12 +276,47 @@ function torcido(id: string): number {
 }
 
 /**
- * La silueta encajada en su hueco del sello, con el punto del campo.
+ * **La isla de Canarias donde cae un punto**, con su silueta de Natural
+ * Earth, o `null` si cae en el mar. La de los sellos de campo, y la de los
+ * del cuaderno de viaje: ver `ui/sellos-del-viaje.ts`.
+ */
+export function islaDe(lon: number, lat: number): Anillo | null {
+  return SILUETAS.es.find((a) => dentro([lon, lat], a)) ?? null;
+}
+
+/**
+ * **Una silueta encajada en un hueco**: lo que convierte cada longitud y
+ * latitud en un punto del dibujo, `"x,y"`.
  *
  * Con la longitud acortada por el coseno de la latitud: sin eso el Paraguay
  * sale ancho y las islas, chatas, que es justo lo que no se puede hacer con
  * una forma que se tiene que reconocer.
  */
+export function encajarLaSilueta(
+  anillo: Anillo,
+  x: number,
+  y: number,
+  ancho: number,
+  alto: number,
+): (p: readonly [number, number]) => string {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const [lon, lat] of anillo) {
+    minX = Math.min(minX, lon);
+    maxX = Math.max(maxX, lon);
+    minY = Math.min(minY, lat);
+    maxY = Math.max(maxY, lat);
+  }
+  const k = Math.cos((((minY + maxY) / 2) * Math.PI) / 180);
+  const escala = Math.min(ancho / ((maxX - minX) * k), alto / (maxY - minY));
+  const dx = x + (ancho - (maxX - minX) * k * escala) / 2;
+  const dy = y + (alto - (maxY - minY) * escala) / 2;
+  return ([lon, lat]) => `${(dx + (lon - minX) * k * escala).toFixed(1)},${(dy + (maxY - lat) * escala).toFixed(1)}`;
+}
+
+/** La silueta encajada en su hueco del sello, con el punto del campo. Ver `encajarLaSilueta`. */
 function siluetaEnElSello(
   e: Scenario,
   x: number,
@@ -292,22 +327,7 @@ function siluetaEnElSello(
   const s = siluetaDe(e);
   const p = dondeEsta(e);
   if (!s || !p) return "";
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
-  for (const [lon, lat] of s.anillo) {
-    minX = Math.min(minX, lon);
-    maxX = Math.max(maxX, lon);
-    minY = Math.min(minY, lat);
-    maxY = Math.max(maxY, lat);
-  }
-  const k = Math.cos((((minY + maxY) / 2) * Math.PI) / 180);
-  const escala = Math.min(ancho / ((maxX - minX) * k), alto / (maxY - minY));
-  const dx = x + (ancho - (maxX - minX) * k * escala) / 2;
-  const dy = y + (alto - (maxY - minY) * escala) / 2;
-  const a = ([lon, lat]: readonly [number, number]): string =>
-    `${(dx + (lon - minX) * k * escala).toFixed(1)},${(dy + (maxY - lat) * escala).toFixed(1)}`;
+  const a = encajarLaSilueta(s.anillo, x, y, ancho, alto);
   const anillo = `M${s.anillo.map(a).join("L")}Z`;
   const rios = s.rios
     .map((r) => `<path class="estampa__rio" d="M${r.filter((_, i) => i % 2 === 0).map(a).join("L")}" />`)
