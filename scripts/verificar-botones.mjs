@@ -18,7 +18,8 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
-const PUERTO = 5287;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5287);
 /*
  * Los seis. Eran tres —uno por familia de cabina— y con eso no se vio que los
  * botones del fumigador y los del bimotor colgaban fuera del tablero: ninguno

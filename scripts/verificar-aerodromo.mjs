@@ -24,7 +24,8 @@ import { createServer } from 'vite';
 import { writeFileSync } from 'node:fs';
 import { baseDe } from './servidor.mjs';
 
-const PUERTO = 5191;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5191);
 const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
 const BASE = baseDe(server, PUERTO);

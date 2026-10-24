@@ -23,7 +23,8 @@ import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
 const MINUTOS = Number(process.argv[2] ?? 6);
-const PUERTO = 5299;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5299);
 /** Cuántas veces más deprisa va el reloj del juego. Ver `Game.acelerar`. */
 const VECES = 12;
 

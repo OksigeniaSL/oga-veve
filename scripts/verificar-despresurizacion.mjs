@@ -25,7 +25,8 @@ import { baseDe } from "./servidor.mjs";
 const ESCENARIO = process.argv[2] ?? "pettirossi";
 const TRAMO = process.argv[3] ?? "taguato";
 const AVION = process.argv[4] ?? "jaz-90";
-const PUERTO = 5337;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5337);
 /** El crucero de cada presurizado, m, y su verdadera allí, m/s: los de su ficha. */
 const CRUCERO = { "jaz-60": [7600, 90], "jaz-90": [11000, 220], "jaz-120": [10700, 230] };
 const [ALTO, VERDADERA] = CRUCERO[AVION] ?? CRUCERO["jaz-90"];

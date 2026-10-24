@@ -36,7 +36,8 @@ const TRAZA = !!process.env.OGA_TRAZA;
  */
 const ASIENTA = Number(process.env.OGA_ASIENTA ?? 120);
 const MIDE = Number(process.env.OGA_MIDE ?? 300);
-const PUERTO = 5351;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5351);
 /** Crucero de cada uno: nivel 290 y su indicada de crucero, nudos. */
 const CRUCERO = { "jaz-120": 275, "jaz-90": 270, "jaz-60": 150, "jaz-40": 140, "jaz-20": 100 };
 const PIES = Number(process.env.OGA_PIES ?? 29000);

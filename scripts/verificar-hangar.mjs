@@ -11,7 +11,8 @@ import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
 const D = process.argv[2] ?? "/tmp";
-const PUERTO = 5199;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5199);
 const server = await createServer({
   root: process.cwd(),
   server: { port: PUERTO, hmr: false },

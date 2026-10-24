@@ -54,7 +54,8 @@ const ACCIONES = new Set(
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 /** Y una misión de ese escenario, para poder abrir su panel. Ver más abajo. */
 const MISION = process.argv[3] ?? "a-anaga";
-const PUERTO = 5287;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5287);
 
 /** Los dos mundos sobre los que flota el HUD, y entre los que hay que leerlo. */
 const EXTREMOS = {

@@ -52,7 +52,8 @@ if (!EJERCICIO) {
 const ESCENARIO = process.argv[3] ?? "gran-canaria";
 const AVION = process.argv[4] ?? (MODO === "planeo" ? "jaz-20" : "jaz-90");
 const TRAMO = process.argv[5] ?? (MODO === "planeo" ? "tuka" : "taguato");
-const PUERTO = 5337;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5337);
 /**
  * Lo más que se espera a que acabe el ejercicio, en segundos de reloj. El de
  * la despresurización empieza a cien kilómetros, arriba: más rato.
