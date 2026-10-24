@@ -31,7 +31,7 @@ import { join } from "node:path";
 import { baseDe } from "./servidor.mjs";
 
 const FOTOS = process.argv[2] ?? "";
-const PUERTO = 5301;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5301);
 const FLOTA = ["jaz-20", "jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
 
 if (FOTOS) mkdirSync(FOTOS, { recursive: true });
@@ -137,7 +137,17 @@ for (const id of FLOTA) {
     );
 
     // Y que no se monten unas encima de otras.
-    const ordenadas = [...dentro].sort((a, b) => a.x0 - b.x0);
+    /*
+     * **Sin los marcos de las pantallas**, que se tocan a propósito: en una
+     * cabina de cristal las pantallas van una al lado de otra con los biseles
+     * juntos, y vistas en escorzo desde el asiento sus cajas alineadas con los
+     * ejes de la pantalla se montan seis o doce píxeles sin que nada se pise
+     * —en la captura del JAZ 90 los tres biseles se tocan y ninguna pantalla
+     * tapa a otra—. Lo que no puede pasar es que se pisen las pantallas.
+     */
+    const ordenadas = [...dentro]
+      .filter((p) => !p.nombre.endsWith("-marco"))
+      .sort((a, b) => a.x0 - b.x0);
     /**
      * De qué instrumento es esta pieza.
      *
@@ -147,7 +157,13 @@ for (const id of FLOTA) {
      * el día que apareció y ninguno era real; con dos relojes en el tablero no
      * se notaba porque el orden por x los separaba de casualidad.
      */
-    const suyo = (p) => p.nombre.replace(/-caja$/, "");
+    /*
+     * Y **una pantalla y su marco, lo mismo**: `pantalla-rumbo-marco` es el
+     * bisel de `pantalla-rumbo`, como la caja lo es del reloj. Las cabinas de
+     * pantallas trajeron el marco y el banco daba un solape por cada pantalla
+     * con el suyo —nueve en el JAZ 90—, ninguno real.
+     */
+    const suyo = (p) => p.nombre.replace(/-(caja|marco)$/, "");
     /*
      * Y **se comparan todas contra todas**, no cada una con la siguiente.
      *
@@ -219,15 +235,25 @@ for (const id of FLOTA) {
       for (let x = 340; x <= 1000; x += 40)
         for (let y = 440; y <= 800; y += 40) {
           const v = globalThis.__oga.queHayEn(x, y, 3);
+          /*
+           * **Lo que se lee: la esfera y la pantalla, no su caja ni el
+           * tablero.** Contando el tablero desnudo, todo lo que va delante de
+           * él a propósito salía como avión por delante de los instrumentos:
+           * la visera, que se monta encima del panel para darle sombra, el
+           * panel del automático y el de las pantallas sobre ella, la placa de
+           * la matrícula o los pomos del gas. El fallo que esto busca —el
+           * lomo del biplano cruzando por delante de los relojes— tapa
+           * esferas, y eso se sigue viendo igual.
+           */
           const i = v.findIndex(
             (o) =>
-              o.nombre === "panel" ||
-              o.nombre.startsWith("pantalla") ||
-              o.nombre.startsWith("reloj"),
+              (o.nombre.startsWith("pantalla") || o.nombre.startsWith("reloj")) &&
+              !/-(caja|marco)$/.test(o.nombre),
           );
           if (i > 0)
             for (const o of v.slice(0, i))
-              if (!suyo.test(o.nombre))
+              // La caja o el marco de un instrumento son el instrumento.
+              if (!suyo.test(o.nombre) && !/-(caja|marco)$/.test(o.nombre))
                 cuenta[o.nombre] = (cuenta[o.nombre] ?? 0) + 1;
         }
       return cuenta;

@@ -24,7 +24,7 @@ import { baseDe } from './servidor.mjs';
 /** Cuánto tiene que moverse en horizontal para llamarlo un salto, en metros. */
 const SALTO = 5;
 
-const PUERTO = 5272;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5272);
 const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
 const BASE = baseDe(server, PUERTO);

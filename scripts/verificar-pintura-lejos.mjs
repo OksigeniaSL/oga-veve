@@ -28,7 +28,7 @@ import { baseDe } from "./servidor.mjs";
 
 const CAMPOS = process.argv.length > 2 ? process.argv.slice(2) : ["tenerife-norte", "pettirossi", "gran-canaria"];
 const CON_GPU = process.env.OGA_GPU === "1";
-const PUERTO = 5298;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5298);
 
 const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();

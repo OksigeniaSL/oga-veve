@@ -34,9 +34,18 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
-const PUERTO = 5292;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5292);
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
-const TRAMO = process.argv[3] ?? "taguato";
+/*
+ * **En Guyrami, que es donde habla la instructora en este trayecto.** Del
+ * arranque al punto de espera, en Taguató no dijo ni una frase (medido el 24
+ * de octubre de 2026: la torre cuatro, ella cero), y la comprobación de que no
+ * comparte voz con la radio se quedaba sin nada suyo que comparar —«instructor
+ * —», en rojo sin haber medido—. En Guyrami dice la suya y la torre las
+ * suyas, que es lo que hace falta para compararlas. Para otro peldaño, el
+ * segundo argumento.
+ */
+const TRAMO = process.argv[3] ?? "guyrami";
 const AVION = process.argv[4] ?? "jaz-20";
 
 /**

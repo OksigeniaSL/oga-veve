@@ -23,7 +23,7 @@ import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
-const PUERTO = 5296;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5296);
 
 const server = await createServer({
   root: process.cwd(),
@@ -88,15 +88,34 @@ const golpe = await page.evaluate(async () => {
   const hp = (r.heading * Math.PI) / 180;
   const fx = Math.sin(hp);
   const fz = -Math.cos(hp);
-  // Ochenta metros antes del final, rodando rápido y sin frenos.
-  const x = r.x + fx * (r.length / 2 - 80);
-  const z = r.z + fz * (r.length / 2 - 80);
-  o.colocar(x, o.suelo(x, z) + 1.2, z, 30, hp);
+  /*
+   * **Y se aterriza de verdad, que pasarse del final es el final de una
+   * toma.** El juego solo lo llama salida por el final con la fase en
+   * «aterrizado» —ver dónde se llama `sufrirPercance("pasada")` en
+   * `game.ts`—, y esto ponía el avión rodando a treinta metros por segundo
+   * con el gas a tope: eso es un despegue. Desde que los mandos del banco
+   * llegan al modelo por `pilotar`, el avión se iba al aire antes del final
+   * («rodó 1614 m») y no había percance que medir.
+   *
+   * Así que se vuela un momento: sobre la pista, a trescientos cincuenta
+   * metros del final y a ocho de alto, sostenido cuatro segundos —lo que
+   * hace falta para que el juego lo dé por volando, ver
+   * `ALGO_MAS_QUE_UN_BOTE`—, y se le suelta sin gas ni freno y con el morro
+   * un poco abajo. Toca, rueda y se sale.
+   */
+  o.reiniciar();
+  await espera(600 / veces);
+  const x = r.x + fx * (r.length / 2 - 350);
+  const z = r.z + fz * (r.length / 2 - 350);
+  for (let i = 0; i < 40; i++) {
+    o.colocar(x, o.suelo(x, z) + 8, z, 30, hp);
+    await espera(100 / veces);
+  }
   o.pilotar((c) => {
     c.engineOn = true;
-    c.throttle = 1;
+    c.throttle = 0;
     c.brakes = 0;
-    c.elevator = 0;
+    c.elevator = -0.15;
     c.aileron = 0;
   });
   let masLejos = 0;

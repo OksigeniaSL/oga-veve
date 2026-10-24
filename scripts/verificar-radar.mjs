@@ -24,7 +24,7 @@ import { createServer } from "vite";
 import { mkdir } from "node:fs/promises";
 import { baseDe } from "./servidor.mjs";
 
-const PUERTO = 5373;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5373);
 const FOTOS = process.argv[2] ?? null;
 const CON_GPU = process.env.OGA_GPU === "1";
 const MILLA = 1852;

@@ -22,7 +22,7 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
-const PUERTO = 5281;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5281);
 const ESCENARIO = process.argv[2] ?? "pettirossi";
 
 /** Cuánto puede haberse movido el avión con un panel abierto. */

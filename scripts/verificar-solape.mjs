@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 import { baseDe } from './servidor.mjs';
 
-const PUERTO = 5198;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5198);
 const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
 const BASE = baseDe(server, PUERTO);
@@ -48,7 +48,13 @@ for (const [nombre, width, height] of formas) {
   await page.goto(`${BASE}/?escenario=valle-cordillera&hora=16`);
   await page.waitForTimeout(2200);
   const tutor = await page.locator('.tutor:not([hidden])').boundingBox().catch(() => null);
-  const panel = await page.locator('.seispack').boundingBox();
+  /*
+   * El cuadro de mandos, que es lo que ocupa hoy el sitio del seis-pack: el
+   * `.seispack` del HUD se fue cuando el cuadro pasó a salir en los cuatro
+   * peldaños —el seis-pack es ahora una caja dentro de él— y el banco se
+   * quedaba medio minuto esperando una clase que no existe.
+   */
+  const panel = await page.locator('[data-hud="cuadro"]').boundingBox();
   const abajo = await page.locator('.hud__abajo').boundingBox();
   // La alarma se fuerza por **el camino de verdad**: la clase `hud--avisando`,
   // que es la que hace desaparecer al tutor. Forzándola a mano sin esa clase

@@ -52,7 +52,14 @@ import type { Intruso } from "../flight/tcas";
 import { familiaDe } from "../ui/familia";
 import { ilustracionPedida } from "../ui/ilustraciones";
 import type { Lluvia } from "../world/meteo";
-import { alturaDeEdificio, enElPavimento, esAfis, sinTorre } from "../world/aerodrome";
+import {
+  alturaDeEdificio,
+  enElPavimento,
+  esAfis,
+  paraUnAvion,
+  sinTorre,
+} from "../world/aerodrome";
+import { laDibujaLaGranja } from "../world/granja";
 import {
   escalaDeCircuito,
   formaDelCircuito,
@@ -1828,6 +1835,15 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       );
       const vistos: { nombre: string; a: number }[] = [];
       for (const t of rayo.intersectObject(juego.aircraftMesh.group, true)) {
+        /*
+         * **Solo superficies.** Un rayo «toca» una nube de puntos a menos de
+         * un metro de cualquiera de ellos —el umbral del `Raycaster` va en
+         * unidades del mundo, no en píxeles—, así que las luces del avión,
+         * que son puntos de unos pocos píxeles, salían tapando relojes que se
+         * veían enteros: el JAZ 25 daba sus luces de tráfico delante del
+         * horizonte y del variómetro. Lo que tapa algo es una malla.
+         */
+        if (!(t.object as { isMesh?: boolean }).isMesh) continue;
         // El nombre que sirve es el de la pieza, y una malla sin nombre lo
         // hereda del grupo que la cuelga: lo contrario devuelve una lista de
         // cadenas vacías, que es no contestar.
@@ -2050,6 +2066,15 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         alto: alturaDeEdificio(e),
         // Del fichero al mundo: la Y del norte es la Z negativa.
         puntos: e.polygon.map(([x, y]) => [x, -y] as [number, number]),
+        /*
+         * Y lo que el banco necesita para no pedir lo que no toca: una
+         * marquesina no para a un avión a propósito —ver `paraUnAvion`—, y
+         * los de la granja no son prismas del aeródromo, los levanta ella con
+         * su forma —ver `laDibujaLaGranja`—. Sin esto el banco contaba los
+         * siete tejados de Tenerife Norte como paredes que faltaban.
+         */
+        paraUnAvion: paraUnAvion(e),
+        deLaGranja: juego.scenario.aerodrome?.granja === true && laDibujaLaGranja(e),
       })),
     /**
      * Cómo se sortean las órdenes de irse al aire: `siempre`, `nunca` o

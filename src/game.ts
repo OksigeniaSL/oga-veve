@@ -30232,12 +30232,21 @@ export class Game {
        * de antes de volar que no espera a que se pida: mirar si hoy se sale
        * no es opcional, aunque quedarse sí lo sea.
        */
+      /*
+       * **Y no encima de un instrumento abierto.** El panel del tiempo no
+       * congela el vuelo —es un instrumento, como el plano— y la tarjeta solo
+       * esperaba a los paneles que congelan. Así que quien ponía en la rosa
+       * un viento de más se encontraba la tarjeta tapándole la rosa a los dos
+       * segundos, en mitad de elegir: el banco del tiempo tocaba la rosa y le
+       * contestaba la tarjeta. Sale al cerrarlo, que es cuando se ha elegido.
+       */
       if (
         !this.parteYaAbierto &&
         !this.parteDeHoy.decision.salir &&
         this.enElPuestoDesde > 2.5 &&
         !this.enLaVuelta &&
-        !this.hayPanelAbierto
+        !this.hayPanelAbierto &&
+        !this.hayInstrumentoAbierto
       ) {
         this.parteYaAbierto = true;
         this.abrirElParte();

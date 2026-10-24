@@ -35,7 +35,7 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
-const PUERTO = 5381;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5381);
 /** Un día de lluvia de verdad en Los Rodeos, con la capa a tres mil pies. */
 const METAR = "METAR GCXO 021300Z 31012KT 5000 RA BKN030 19/17 Q1017";
 /** Por debajo de esto, calla. */

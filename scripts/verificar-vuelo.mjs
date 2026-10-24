@@ -108,6 +108,23 @@ await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
 });
 await page.waitForTimeout(22000);
 
+/*
+ * **Qué campo es**, porque no todos tienen lo mismo y el banco no puede pedir
+ * lo que no hay. En un campo particular —la granja de Yvytu Rape— no hay
+ * señalero ni coche: quien recibe es la bici (ver `Aerodrome.privado`). Y en
+ * uno sin torre no hay lámpara: la pista la ocupa una vaca (ver
+ * `mandaronIrseAlAire` en `game.ts`). Pidiéndole señalero y lámpara a la
+ * granja, el banco daba cinco fallos que eran el juego haciendo lo que tiene
+ * que hacer.
+ */
+const CAMPO = await page.evaluate(() => {
+  const a = globalThis.__oga.escenario().aerodrome;
+  return {
+    privado: a?.privado === true,
+    sinTorre: !a || a.privado === true || a.sinTorre === true,
+  };
+});
+
 /** Coloca el avión respecto al umbral: `d` metros antes, `alto` sobre la pista. */
 async function poner(d, alto, lateral = 0) {
   await page.evaluate(
@@ -311,6 +328,9 @@ const edificios = await page.evaluate(() => {
   const lista = o.edificios();
   const bultos = o.bultos();
   let solidos = 0;
+  let paredes = 0;
+  let tejadosConBulto = 0;
+  let tejados = 0;
   for (const e of lista) {
     let x = 0;
     let z = 0;
@@ -319,27 +339,67 @@ const edificios = await page.evaluate(() => {
       z += p[1] / e.puntos.length;
     }
     // A media altura del edificio, en su centro: ahí tiene que haber bulto.
-    if (bultos.choca(x, o.suelo(x, z) + e.alto / 2, z)) solidos += 1;
+    const choca = bultos.choca(x, o.suelo(x, z) + e.alto / 2, z);
+    if (e.paraUnAvion) {
+      paredes += 1;
+      if (choca) solidos += 1;
+    } else {
+      tejados += 1;
+      if (choca) tejadosConBulto += 1;
+    }
   }
-  const grupo = globalThis.__raiz.getObjectByName("edificios-aerodromo");
-  let mallas = 0;
-  grupo?.traverse((n) => {
-    if (n.isMesh) mallas += 1;
-  });
-  return { cuantos: lista.length, solidos, mallas };
+  const mallasDe = (nombre) => {
+    let n = 0;
+    globalThis.__raiz.getObjectByName(nombre)?.traverse((m) => {
+      if (m.isMesh) n += 1;
+    });
+    return n;
+  };
+  return {
+    cuantos: lista.length,
+    solidos,
+    paredes,
+    tejados,
+    tejadosConBulto,
+    propios: lista.filter((e) => !e.deLaGranja).length,
+    deLaGranja: lista.filter((e) => e.deLaGranja).length,
+    mallas: mallasDe("edificios-aerodromo"),
+    mallasDeLaGranja: mallasDe("granja:construcciones"),
+  };
 });
 if (edificios.cuantos) {
+  /*
+   * **Cada uno donde lo dibujan.** En la granja, la casa, el galpón y el
+   * hangar los levanta ella con su forma —ver `laDibujaLaGranja`— y el grupo
+   * de los prismas del aeródromo se queda vacío a propósito. Mirando solo ese
+   * grupo, Yvytu Rape salía «tres edificios en cero mallas» con los tres a la
+   * vista.
+   */
   comprobar(
     "los edificios del aeródromo están dibujados",
-    edificios.mallas > 0,
-    `${edificios.cuantos} edificios en ${edificios.mallas} mallas`,
+    (edificios.propios === 0 || edificios.mallas > 0) &&
+      (edificios.deLaGranja === 0 || edificios.mallasDeLaGranja > 0),
+    `${edificios.propios} edificios en ${edificios.mallas} mallas` +
+      (edificios.deLaGranja
+        ? ` y ${edificios.deLaGranja} de la granja en ${edificios.mallasDeLaGranja}`
+        : ""),
     "«se ve la terminal como dos cuadraditos, como si fuera una cabaña»",
   );
+  /*
+   * **Y una marquesina no es una pared**, a propósito: es un tejado sobre
+   * pilares donde se aparca, y como prisma macizo se cobraba un vuelo de cada
+   * cinco en Tenerife Norte —ver `paraUnAvion` en `aerodrome.ts`—. Así que se
+   * piden paredes a los edificios y ninguna a los tejados. Pidiéndoselas a
+   * todos, Tenerife Norte salía «21 de 28» por sus siete marquesinas.
+   */
   comprobar(
-    "y paran a un avión, que no son decorado",
-    edificios.solidos === edificios.cuantos,
-    `${edificios.solidos} de ${edificios.cuantos} tienen bulto`,
-    "la ciudad se atravesaba entera hasta que existió el índice de bultos",
+    "y paran a un avión, que no son decorado; las marquesinas no",
+    edificios.solidos === edificios.paredes && edificios.tejadosConBulto === 0,
+    `${edificios.solidos} de ${edificios.paredes} tienen bulto` +
+      (edificios.tejados
+        ? ` · ${edificios.tejadosConBulto} de ${edificios.tejados} marquesinas con pared`
+        : ""),
+    "la ciudad se atravesaba entera hasta que existió el índice de bultos; y la marquesina 27 de Tenerife Norte paraba a uno de cada cinco aviones al volver",
   );
 }
 
@@ -1021,12 +1081,51 @@ const alFinal = await page.evaluate(async () => {
   // Parado de verdad, por el modelo. Ver `__oga.colocar`.
   const fin = ruta[ruta.length - 1];
   o.colocar(fin[0], o.suelo(fin[0], fin[1]) + 1.3, fin[1], 0);
-  await new Promise((r) => setTimeout(r, 2000));
+  /*
+   * **Y se espera a la llave, no un rato fijo.** El avión llega al puesto a
+   * saltos, en dos o tres segundos desde la pista, y la lista de después del
+   * aterrizaje —flaps, luces de rodaje, transpondedor, cinco segundos de
+   * tarjeta cada punto— se lee a su ritmo, y en un rodaje de verdad se
+   * acaba mucho antes de llegar. Con dos segundos fijos el banco miraba en
+   * mitad de «luces de rodaje» y lo daba por la tarjeta del señalero tapando
+   * la llave. Y con el avión parado llega también el momento tranquilo de los
+   * sellos —ver `esMomentoDeCelebrar`—: la primera frustrada del banco gana
+   * «Mbarete», cinco segundos más. Lo que esto protege sigue igual: una
+   * tarjeta que se queda y no deja salir la llave no la deja salir en treinta
+   * segundos tampoco.
+   *
+   * **Y con señalero, la llave es su seña de cortar motores.** Desde que él
+   * lleva la llegada por el orden de la OACI —alto, frenos, calzos y cortar—,
+   * la fase de haber llegado se calla mientras señala, y lo que dice «apagá
+   * el motor» es su tarjeta de «cortar»: el señalero con el bastón por delante
+   * del cuello, la tecla del motor y pulsable, que apaga como la llave. Ver
+   * `tarjetaDelSenalero` en `game.ts`. El banco solo conocía la llave y la
+   * esperaba detrás de una seña que no se va hasta que se apaga.
+   */
+  const vistas = [];
+  let dibujo = "";
+  let llave = false;
+  for (let i = 0; i < 150 && !llave; i++) {
+    await new Promise((r) => setTimeout(r, 200));
+    const t = o.tarjeta()?.dibujo ?? "";
+    if (t && vistas[vistas.length - 1] !== t) vistas.push(t);
+    dibujo =
+      document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? "";
+    const boton = document.querySelector('[data-hud="senal"]');
+    // La llave en la tarjeta y su dibujo en pantalla: un círculo con hueco.
+    const conLlave = t === "llave" && dibujo.includes("senal__hueco");
+    // O la seña de cortar, que se toca para apagar.
+    const cortar =
+      t === "senalero-cortar" &&
+      !!boton &&
+      !boton.hidden &&
+      !boton.disabled &&
+      boton.classList.contains("senal--pulsable");
+    llave = i >= 9 && (conLlave || cortar);
+  }
   const raiz = globalThis.__raiz;
   const coche = raiz.getObjectByName("sigueme");
   const senalero = raiz.getObjectByName("senalero");
-  const dibujo =
-    document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? "";
   return {
     fase: `${o.fase()} av=${globalThis.__av ?? 0}`,
     cinta: cintaRodando,
@@ -1038,9 +1137,8 @@ const alFinal = await page.evaluate(async () => {
           senalero.position.z - s.position.z,
         )
       : Infinity,
-    // La llave lleva un círculo con un hueco; el señalero, una figura con brazos.
-    pideApagar: dibujo.includes("senal__hueco"),
-    dibujo: dibujo.slice(0, 40),
+    pideApagar: llave,
+    vistas: vistas.join(" → "),
     v: o.estado().airspeed.toFixed(1),
     restante: o.cintaGuia() ? "hay ruta" : "sin ruta",
   };
@@ -1058,16 +1156,28 @@ comprobar(
       : "no hay cinta",
   "sus cotas van horneadas y cualquier cambio del suelo la entierra",
 );
-comprobar(
-  "el señalero está a la vista al llegar",
-  alFinal.senaleroVisible && alFinal.senaleroDistancia < 60,
-  `${alFinal.senaleroVisible ? alFinal.senaleroDistancia.toFixed(0) + " m" : "no se ve"}`,
-  "«señor de los bastones, ¿qué señor?»: medía treinta píxeles",
-);
+if (CAMPO.privado)
+  comprobar(
+    "y en un campo particular no hay señalero",
+    !alFinal.senaleroVisible,
+    alFinal.senaleroVisible
+      ? `está a ${alFinal.senaleroDistancia.toFixed(0)} m, con su chaleco`
+      : "no lo hay: recibe la bici",
+    "en la granja seguía esperando en el puesto con su chaleco, y eso es un servicio de aeropuerto",
+  );
+else
+  comprobar(
+    "el señalero está a la vista al llegar",
+    alFinal.senaleroVisible && alFinal.senaleroDistancia < 60,
+    `${alFinal.senaleroVisible ? alFinal.senaleroDistancia.toFixed(0) + " m" : "no se ve"}`,
+    "«señor de los bastones, ¿qué señor?»: medía treinta píxeles",
+  );
 comprobar(
   "y al parar, la pantalla dice apagar el motor",
   alFinal.pideApagar,
-  alFinal.pideApagar ? "la llave" : `fase «${alFinal.fase}», v=${alFinal.v}`,
+  alFinal.pideApagar
+    ? `${alFinal.vistas.endsWith("senalero-cortar") ? "la seña de cortar, pulsable" : "la llave"}, después de ${alFinal.vistas}`
+    : `fase «${alFinal.fase}», v=${alFinal.v}, tarjetas: ${alFinal.vistas || "ninguna"}`,
   "la tarjeta del gesto del señalero se quedaba puesta y tapaba la llave",
 );
 
@@ -1133,10 +1243,14 @@ if (final.puesta) {
  * que el juego le pasa dónde está el avión y a qué velocidad va, y que la
  * figura del mundo se mueve de verdad.
  */
-const senalero = await page.evaluate(async () => {
+/*
+ * En un campo particular no lo hay —ver `CAMPO`—, y la figura que queda en la
+ * escena está escondida y quieta a propósito: no hay a quién atropellar.
+ */
+const senalero = await page.evaluate(async (privado) => {
   const o = globalThis.__oga;
   const figura = globalThis.__raiz.getObjectByName("senalero");
-  if (!figura) return { sinSenalero: true };
+  if (!figura || privado) return { sinSenalero: true };
   const antes = { x: figura.position.x, z: figura.position.z };
   const c = o.controles();
   c.brakes = 0;
@@ -1161,7 +1275,7 @@ const senalero = await page.evaluate(async () => {
   c.throttle = 0;
   c.brakes = 1;
   return { seFue, pidioDespacio };
-});
+}, CAMPO.privado);
 if (!senalero.sinSenalero) {
   comprobar(
     "el señalero se quita de en medio",
@@ -1526,7 +1640,20 @@ const enElCampo = CON_TOPE
        * no hay veredicto que dar — la prueba medía un accidente. Desde ocho,
        * todavía. El límite de este peldaño anda por los once y medio.
        */
-      o.colocar(x, o.suelo(x, z) + 3, z, 26);
+      /*
+       * **Y el tiempo en el aire que hace falta para que sea una toma.** Un
+       * bote no es un vuelo: el detector de la toma no se arma hasta llevar
+       * tres segundos en el aire —ver `ALGO_MAS_QUE_UN_BOTE` en
+       * `aterrizaje.ts`, que existe porque un badén rodando daba «fuera de
+       * pista» con su percance—. Soltado a tres metros, el avión tocaba en
+       * menos de eso y no había veredicto que ver: la tarjeta que quedaba era
+       * la del rodaje a casa. Así que se le sostiene ahí cuatro segundos y
+       * después se le suelta.
+       */
+      for (let i = 0; i < 40; i++) {
+        o.colocar(x, o.suelo(x, z) + 3, z, 26);
+        await new Promise((r) => setTimeout(r, 100));
+      }
       let tarjeta = "";
       for (let i = 0; i < 140; i++) {
         await new Promise((r) => setTimeout(r, 100));
@@ -2248,6 +2375,13 @@ const orden = await page.evaluate(async () => {
   let mandaron = false;
   let dibujo = "";
   let lampara = "no se miró";
+  // Donde no hay torre, el motivo es una vaca en la pista. Ver `CAMPO`.
+  const vacaALaVista = () => {
+    let raiz = globalThis.__oga.aeronave().grupo;
+    while (raiz.parent) raiz = raiz.parent;
+    return raiz.getObjectByName("vaca")?.visible ?? false;
+  };
+  let vacaAlMandar = false;
   for (let i = 0; i < 40 && !mandaron; i++) {
     c.elevator = -0.05;
     await new Promise((r) => setTimeout(r, 100));
@@ -2266,31 +2400,73 @@ const orden = await page.evaluate(async () => {
        */
       const luz = document.querySelector('[data-hud="torre"]');
       lampara = luz && !luz.hidden ? luz.className : "apagada";
+      vacaAlMandar = vacaALaVista();
     }
   }
   // Y bajar igualmente: se sigue hasta tocar, con gas de aproximación.
   let percance = false;
+  let toco = false;
+  let explicada = false;
   if (mandaron) {
     c.throttle = 0.12;
-    for (let i = 0; i < 300 && !percance; i++) {
+    for (let i = 0; i < 300 && !percance && !toco; i++) {
       c.elevator = -0.5;
       await new Promise((r) => setTimeout(r, 100));
       percance = o.finDeVuelo();
+      toco = o.estado().onGround;
     }
+    /*
+     * **Y en el suelo, lo que pasa después**, con el avión frenado, que es
+     * cuando habla la torre. La tarjeta de la orden se va al tocar —ya no
+     * describe nada— y la de la explicación es la misma frustrada, que vuelve.
+     */
+    c.throttle = 0;
+    c.elevator = 0;
+    c.brakes = 1;
+    let sinTarjeta = false;
+    for (let i = 0; i < 260 && toco && !percance && !explicada; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      percance = o.finDeVuelo();
+      const t = o.tarjeta()?.dibujo ?? "";
+      if (t !== "frustrada") sinTarjeta = true;
+      else if (sinTarjeta) explicada = true;
+    }
+    c.brakes = 0;
   }
-  const vaca = (() => {
-    let raiz = globalThis.__oga.aeronave().grupo;
-    while (raiz.parent) raiz = raiz.parent;
-    return raiz.getObjectByName("vaca")?.visible ?? false;
-  })();
-  return { mandaron, dibujo, lampara, percance, vaca, fase: o.fase() };
+  const contada = (o.cantados?.() ?? []).some((x) =>
+    x.startsWith("aterrizó con la orden de irse puesta"),
+  );
+  return {
+    mandaron,
+    dibujo,
+    lampara,
+    percance,
+    toco,
+    contada,
+    explicada,
+    vacaAlMandar,
+    fase: o.fase(),
+  };
 });
-comprobar(
-  "y la lámpara de la torre se pone roja, y se ve",
-  orden.lampara.includes("roja"),
-  `lámpara: ${orden.lampara}`,
-  "las dos luces de la torre se encendían y el plan de vuelo las apagaba en el mismo paso",
-);
+/*
+ * **El motivo, donde lo hay**: con torre, su lámpara; sin torre no hay
+ * lámpara que encender y lo que ocupa la pista es una vaca. Pidiéndole la
+ * lámpara a la granja, el banco daba por fallo el juego haciendo lo real.
+ */
+if (CAMPO.sinTorre)
+  comprobar(
+    "y sin torre, lo que ocupa la pista se ve: la vaca",
+    orden.vacaAlMandar && orden.lampara === "apagada",
+    `vaca: ${orden.vacaAlMandar ? "en la pista" : "no está"} · lámpara: ${orden.lampara}`,
+    "el motivo de la orden tiene que verse, y en un campo sin torre no hay quién encienda una lámpara",
+  );
+else
+  comprobar(
+    "y la lámpara de la torre se pone roja, y se ve",
+    orden.lampara.includes("roja"),
+    `lámpara: ${orden.lampara}`,
+    "las dos luces de la torre se encendían y el plan de vuelo las apagaba en el mismo paso",
+  );
 
 comprobar(
   "en final te pueden mandar irse al aire",
@@ -2413,13 +2589,32 @@ comprobar(
   "se podía bajar dentro de una nube hasta el suelo y nadie decía nada",
 );
 
+/*
+ * **Y bajar igualmente tiene consecuencia, pero no la de romperse.**
+ *
+ * Esto pedía la pantalla del percance, y el juego dejó de darla a propósito
+ * (puntos 206 y 237): romper el avión «por lo que hubiera en la pista» no es
+ * lo que pasa, y con el 747 se rompía contra un obstáculo que no existía. Lo
+ * de verdad es que la torre lo dice después de tocar y la instructora cuenta
+ * por qué cuando la torre manda irse, uno se va — con la tarjeta de la
+ * frustrada. Ver `aterrizoContraLaOrden` en `game.ts`. El banco salía en rojo
+ * o en verde según donde cayera el avión: fuera de la pista, percance de
+ * «fuera»; en ella, nada que él supiera ver.
+ *
+ * Así que se pide que se cuente: apuntado al tocar y, salvo en el peldaño de
+ * cabina —donde no hay quien explique—, la tarjeta de la explicación. Y si
+ * tocó fuera de la pista, el percance de «fuera», que es lo que toca.
+ */
+const CABINA = TRAMO === "taguato-ruvicha";
 comprobar(
-  "y bajar igualmente termina el intento",
-  orden.percance,
+  "y bajar igualmente tiene consecuencia: se cuenta, con calma",
+  orden.percance || (orden.contada && (orden.explicada || CABINA)),
   orden.percance
-    ? "sale la pantalla del percance"
-    : `se aterrizó sin consecuencia (fase «${orden.fase}»)`,
-  "una orden que se puede ignorar sin consecuencia no es una orden",
+    ? "tocó fuera de la pista: sale la pantalla del percance"
+    : !orden.toco
+      ? `no llegó a tocar (fase «${orden.fase}»)`
+      : `apuntado: ${orden.contada ? "sí" : "no"} · explicado con la tarjeta: ${orden.explicada ? "sí" : "no"}`,
+  "una orden que se puede ignorar sin consecuencia no es una orden; y la consecuencia es que se cuenta, no que se rompa",
 );
 
 // ── La escalera de comunicación ───────────────────────────────────────────

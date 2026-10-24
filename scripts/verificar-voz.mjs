@@ -32,7 +32,7 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
-const PUERTO = 5284;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5284);
 const VOZ = "instructor";
 const TOMAS = join("node_modules", ".cache", "tomas-de-prueba");
 const PACK = join("data", "voces", VOZ);

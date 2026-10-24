@@ -29,7 +29,7 @@ const TRAMO = process.argv[3] ?? "taguato";
 const AVION = process.argv[4] ?? "jaz-90";
 /** A cuántos metros del umbral se coloca el avión, en su eje. */
 const LEJOS = Number(process.argv[5] ?? 9000);
-const PUERTO = 5331;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5331);
 
 const server = await createServer({
   root: process.cwd(),

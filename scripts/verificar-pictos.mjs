@@ -17,7 +17,7 @@ import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
 const D = process.argv[2] ?? null;
-const PUERTO = 5196;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5196);
 const server = await createServer({
   root: process.cwd(),
   server: { port: PUERTO, hmr: false },
@@ -32,7 +32,25 @@ await page.addInitScript(() => {
   localStorage.setItem("oga-veve:tramo", "guyrami");
   localStorage.setItem("oga-veve:teclas-vistas", "1");
 });
-await page.goto(`${BASE}/?escenario=valle-cordillera&hora=16`);
+/*
+ * **En la pista, que es de donde se despega.** Sin lección se empieza en el
+ * puesto —la de por defecto es la del despegue, que empieza rodando—, y desde
+ * ahí el gas a fondo y la palanca atrás no despegan: en este peldaño el juego
+ * pone tope a la velocidad de rodaje (ver `flight/gobernador.ts`). El banco
+ * daba por roto el dibujo de la altura porque el avión seguía en la
+ * plataforma. La vuelta al campo empieza alineado.
+ */
+await page.goto(`${BASE}/?escenario=valle-cordillera&hora=16&leccion=vuelta`);
+/*
+ * **Con el cuadro recogido, que es cuando hay pictogramas.** Desde que el
+ * cuadro sale en los cuatro peldaños, los dibujos de la esquina solo salen con
+ * él bajado —dos instrumentos para lo mismo, uno encima del otro: «¿para qué
+ * ponerlos si se tiene el cuadro?»; ver `.pictos` en la hoja—. El banco los
+ * esperaba con el cuadro a la vista y se quedaba un minuto mirando un dibujo
+ * escondido. Se recoge con su tirador, como lo recoge quien juega.
+ */
+await page.waitForSelector('[data-hud="cuadro-tirador"]', { timeout: 60000 });
+await page.click('[data-hud="cuadro-tirador"]');
 await page.waitForSelector('[data-picto="speed"]', { timeout: 60000 });
 await page.waitForTimeout(2200);
 
