@@ -297,6 +297,8 @@ export class JuegoDelAvion extends Juego<Sitio> {
   private readonly dichas = new Set<string>();
   /** Las que se pusieron con alguien hablando: se cuentan en el siguiente silencio, de una en una. */
   private porContar: Clase[] = [];
+  /** Si este avión ya mandó a la cola lo de una pieza: ver `poner`. */
+  private unaEnCola = false;
 
   constructor(nivel = 0) {
     super();
@@ -414,6 +416,14 @@ export class JuegoDelAvion extends Juego<Sitio> {
    * veintisiete segundos y medio minuto de frases). Lo que no se dijo espera
    * al siguiente silencio, de una en una: ver `paso`. Lo de las luces sí se
    * dice siempre: es lo que hay que hacer ahora.
+   *
+   * **Menos la primera de cada avión, que va a la cola** detrás de quien
+   * habla. Medido en el banco: con la tripulante dando el kit y Ara diciendo
+   * «¿me ayudás a armar el avión?», las cinco piezas del primer avión se
+   * pusieron sin un silencio, y al pasar a las luces se perdieron todas, así
+   * que el avión se armó sin que nadie contara para qué sirve ninguna pieza,
+   * que es lo que este juego enseña. Una frase en cola no es la media minuto
+   * de antes.
    */
   private poner(s: Sitio, callada = true): void {
     this.puestas.push(s);
@@ -421,8 +431,10 @@ export class JuegoDelAvion extends Juego<Sitio> {
     if (this.senala === s) this.senala = null;
     this.acierto();
     if (!esLuz(s) && !this.dichas.has(claseDe(s))) {
-      if (callada) this.decirUnaVez(claseDe(s), PARA_QUE_SIRVE[claseDe(s)]);
-      else if (!this.porContar.includes(claseDe(s))) this.porContar.push(claseDe(s));
+      if (callada || !this.unaEnCola) {
+        if (!callada) this.unaEnCola = true;
+        this.decirUnaVez(claseDe(s), PARA_QUE_SIRVE[claseDe(s)]);
+      } else if (!this.porContar.includes(claseDe(s))) this.porContar.push(claseDe(s));
     }
     if (this.faltan().length > 0) return;
     if (this.fase === "piezas") {
@@ -476,6 +488,7 @@ export class JuegoDelAvion extends Juego<Sitio> {
       }
       this.nivel++;
       this.puestas = [];
+      this.unaEnCola = false;
       this.senala = null;
       this.cogida = null;
       this.cambiarA("piezas");

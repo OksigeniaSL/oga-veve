@@ -16102,12 +16102,12 @@ body.con-vuelta #tactil {
   visibility: hidden;
 }
 
-.kit-parte--fija,
-.kit-parte--puesta {
+.kit-parte--fija {
   visibility: visible;
 }
 
 .kit-parte--puesta {
+  visibility: visible;
   transition: visibility 0s 0.35s;
 }
 
