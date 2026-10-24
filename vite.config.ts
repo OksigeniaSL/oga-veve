@@ -204,9 +204,27 @@ export default defineConfig({
      * ocupa 1,4 GB en vez de 2,1. Con varias copias del repositorio probando a
      * la vez eso es lo que agotó la memoria: el sistema se quedó sin ella tres
      * veces en una noche y se llevó por delante el editor.
+     *
+     * Iba con `minWorkers: 1`, que Vitest 4 ya no tiene: solo cuenta el tope.
      */
     maxWorkers: 6,
-    minWorkers: 1,
+    /*
+     * **Cinco minutos por prueba, y no los cinco segundos de fábrica.**
+     *
+     * Las pruebas de tráfico y de rodaje simulan aeródromos enteros de un
+     * tirón y tardan hasta un minuto sin soltar el hilo. Con Vitest 2 eso daba
+     * igual: el tope era un reloj que no puede sonar mientras el hilo está
+     * ocupado, así que una prueba síncrona no se cortaba nunca. Vitest 4 mira
+     * además, al acabar, cuánto tardó, y la da por fallida aunque haya pasado:
+     * al subir de versión cayeron veintisiete, todas por tiempo y ninguna por
+     * lo que comprueban.
+     *
+     * El tope está para cazar una prueba colgada, no para medir cuánto tarda.
+     * La más lenta sin tope propio tarda algo más de un minuto con cuatro
+     * hilos; cinco minutos son cuatro veces eso, que es margen para un
+     * portátil más lento o para CI.
+     */
+    testTimeout: 300_000,
   },
   build: {
     target: "es2022",
