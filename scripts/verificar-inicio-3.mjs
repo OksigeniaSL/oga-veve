@@ -1091,6 +1091,9 @@ async function elVuelo() {
           // Y la recogida medida, de los cien pies al toque. Ver `apuntarLaRecogida` en `game.ts`.
           recogida: i?.recogida ?? null,
           ultimaToma: i?.ultimaToma ?? null,
+          // Y la altitud cada dos segundos de escena, m, y la luz del cinturón: para medir los ratos del vuelo.
+          altitudes: altitudes.reduce((cada, x) => (!cada.length || x.t - cada[cada.length - 1].t >= 2 ? [...cada, x] : cada), []),
+          luces,
         },
         null,
         1,
@@ -1760,19 +1763,34 @@ async function elVuelo() {
    * Ara tiene que contar alguna **si hubo un hueco** entre elegir el avión y
    * pedir guardarlo; si las charlas de la escena lo llenaron todo, que mandan
    * ellas, no.
+   *
+   * **Y el hueco, hasta los diez mil pies** (24-10-2026): desde ahí el kit ya
+   * no dice nada, que deja la palabra a la tripulante —ver `atenderAlKit` en
+   * `inicio-pasaje.ts`—, así que el rato entre cruzarlos y que ella lo pida no
+   * es un hueco para Ara. Medido en el banco: 1,9 s entre lo último del kit y
+   * su «guárdalo», 0,8 por encima de los diez mil y 1,1 por debajo, y la
+   * comprobación lo daba por hueco perdido.
    */
+  const cruzaLosDiezMil = (() => {
+    const n = altitudes.findIndex((x, k) => k > 0 && altitudes[k - 1].altitud >= 3048 && x.altitud < 3048);
+    if (n < 1) return null;
+    const a = altitudes[n - 1];
+    const b = altitudes[n];
+    return a.t + ((a.altitud - 3048) * (b.t - a.t)) / (a.altitud - b.altitud);
+  })();
   let hueco = Infinity;
   if (armando.elegidoEn && guardar) {
     hueco = 0;
+    const hasta = Math.min(guardar.desde, cruzaLosDiezMil ?? Infinity);
     let fin = armando.elegidoEn.t;
     const enMedio = registro
-      .filter((d) => (d.hasta ?? d.desde) > armando.elegidoEn.t && d.desde < guardar.desde)
+      .filter((d) => (d.hasta ?? d.desde) > armando.elegidoEn.t && d.desde < hasta)
       .sort((x, y) => x.desde - y.desde);
     for (const d of enMedio) {
       hueco = Math.max(hueco, d.desde - fin);
       fin = Math.max(fin, d.hasta ?? d.desde);
     }
-    hueco = Math.max(hueco, guardar.desde - fin);
+    hueco = Math.max(hueco, hasta - fin);
   }
   comprobar(
     "en el vuelo, después de la luz verde y con lo que queda, se ponen piezas de Armá tu avión —ninguna con la megafonía pausando— y Ara cuenta alguna si la escena le deja un hueco",
@@ -1784,7 +1802,7 @@ async function elVuelo() {
       (!!piezaContada || hueco < 1.5) &&
       (!despego || delKit.includes("avion.luces")),
     armando.elegidoEn
-      ? `elegido a los ${armando.elegidoEn.t.toFixed(0)} s a ${pies(armando.elegidoEn.altitud)}, ${torre.fin ? `${(armando.elegidoEn.t - torre.fin.t).toFixed(0)} s después de acabar la luz` : "sin acabar la luz"} · ${armando.libre.toFixed(0)} s libres para jugar (sin pausa y sin nadie hablando) · puestas ${armando.puestas.length} (${armando.puestas.join(", ")}) · fases ${[...armando.fases].join(", ")} · despegó ${despego} · ${armando.pausado} lecturas pausado por la megafonía armando, ${armando.conPausa} puestas en pausa · Ara cuenta ${piezaContada ? `${piezaContada.clave.replace("inicio.ara.pasaje.kit.", "")} a los ${piezaContada.desde.toFixed(0)} s` : "ninguna"} · el hueco más largo hasta pedir guardarlo, ${Number.isFinite(hueco) ? `${hueco.toFixed(1)} s` : "—"} · dicho: ${delKit.join(", ") || "nada"}`
+      ? `elegido a los ${armando.elegidoEn.t.toFixed(0)} s a ${pies(armando.elegidoEn.altitud)}, ${torre.fin ? `${(armando.elegidoEn.t - torre.fin.t).toFixed(0)} s después de acabar la luz` : "sin acabar la luz"} · ${armando.libre.toFixed(0)} s libres para jugar (sin pausa y sin nadie hablando) · puestas ${armando.puestas.length} (${armando.puestas.join(", ")}) · fases ${[...armando.fases].join(", ")} · despegó ${despego} · ${armando.pausado} lecturas pausado por la megafonía armando, ${armando.conPausa} puestas en pausa · Ara cuenta ${piezaContada ? `${piezaContada.clave.replace("inicio.ara.pasaje.kit.", "")} a los ${piezaContada.desde.toFixed(0)} s` : "ninguna"} · el hueco más largo hasta los diez mil pies o pedir guardarlo, ${Number.isFinite(hueco) ? `${hueco.toFixed(1)} s` : "—"} · dicho: ${delKit.join(", ") || "nada"}`
       : `no se eligió · la luz ${torre.fin ? `acabó a los ${torre.fin.t.toFixed(0)} s` : "no acabó"} · la tripulante pide guardarlo a los ${guardar?.desde?.toFixed(0) ?? "—"} s`,
   );
   const aGuardar = guardar ? altitudEntre(guardar.desde) : null;
@@ -2546,18 +2564,25 @@ async function medirLaLuzEnVuelo(page) {
 
 /**
  * **El kit con el dedo, en cada pantalla**: el teléfono apaisado, la tablet
- * del aula y el portátil con ratón. Se da el kit ya —sin volar media hora:
- * `darElKit`—, se abre, se mira que cabe sin tapar la tarjeta ni los botones,
- * y se juegan los dos: el primer avión de Armá tu avión, con las piezas y las
- * luces **arrastradas** a su hueco con el dedo, hasta que despega; y la torre.
+ * del aula y el portátil con ratón. Se da el kit ya —sin volar media hora—,
+ * se abre, se mira que cabe sin tapar la tarjeta ni los botones, y se juegan
+ * los dos: un avión de Armá tu avión, con las piezas y las luces
+ * **arrastradas** a su hueco con el dedo, hasta que despega; y la torre.
+ *
+ * **Y el kit de prueba de la dirección** (24-10-2026, ver `kitDePrueba` en
+ * `game.ts`): el teléfono lo da con la sonda de desarrollo, `darElKit`, y la
+ * tablet y el portátil con lo que usa Enrique para probarlo sin volar,
+ * `?inicio=3&kit` —y el portátil con `&nivel=5`, el JAZ 90—: que llega en el
+ * puesto sin tocar nada, que se empieza por el avión pedido y que el nivel no
+ * se guarda.
  */
 async function elKitConElDedo() {
   const PANTALLAS = [
-    ["telefono", { ...devices["Pixel 7 landscape"], hasTouch: true, isMobile: true }],
-    ["tablet", { viewport: { width: 1024, height: 600 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1.5 }],
-    ["portatil", { viewport: { width: 1280, height: 800 } }],
+    ["telefono", { ...devices["Pixel 7 landscape"], hasTouch: true, isMobile: true }, { url: "?inicio=3", nivel: 0 }],
+    ["tablet", { viewport: { width: 1024, height: 600 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1.5 }, { url: "?inicio=3&kit", nivel: 0 }],
+    ["portatil", { viewport: { width: 1280, height: 800 } }, { url: "?inicio=3&kit&nivel=5", nivel: 4 }],
   ];
-  for (const [nombre, opciones] of PANTALLAS) {
+  for (const [nombre, opciones, prueba] of PANTALLAS) {
     const ctx = await navegador.newContext({ ...opciones, locale: "es-PY" });
     const page = await ctx.newPage();
     const errores = [];
@@ -2593,12 +2618,16 @@ async function elKitConElDedo() {
     const kitDe = () => page.evaluate(() => globalThis.__oga.inicio().kit);
     const estado = () => page.evaluate(() => globalThis.__oga.inicio().estado.kit);
     try {
-      await page.goto(`${BASE}/?inicio=3`);
+      await page.goto(`${BASE}/${prueba.url}`);
       await page.waitForFunction(() => !!globalThis.__oga?.inicio?.()?.estado, null, { timeout: 180_000 });
       await page.keyboard.press("ShiftLeft");
       await page.waitForFunction(() => !!document.querySelector("#inicio .inicio__tarjeta"), null, { timeout: 60_000 });
-      await page.evaluate(() => globalThis.__oga.darElKit());
+      const dePrueba = prueba.url.includes("kit");
+      if (!dePrueba) await page.evaluate(() => globalThis.__oga.darElKit());
       await page.waitForFunction(() => !!globalThis.__oga.inicio().kit?.boton, null, { timeout: 10_000 });
+      /** Si quedó guardado por qué avión de Armá tu avión se va: con el kit de prueba, nunca. */
+      const nivelGuardado = () => page.evaluate(() => Object.values(localStorage).some((v) => String(v).includes("kitNivelDelAvion")));
+      const enElPuesto = await leer(page);
       let k = await kitDe();
       await foto(page, `kit-mochilita-${nombre}`);
       await tocar(k.boton);
@@ -2632,8 +2661,11 @@ async function elKitConElDedo() {
       await pausa(500);
       k = await kitDe();
       const menor = Math.min(...Object.values(k.piezas).map((x) => Math.max(x.en.width, x.en.height)));
-      // Primero el motor al hueco del ala: vuelve a la bandeja con calma y el suyo brilla.
-      await arrastrar(centro(k.piezas.motor.en), centro(k.piezas.ala.sitio));
+      const primero = await estado();
+      // Primero el motor al hueco de otra pieza, la que lo tiene más lejos: vuelve a la bandeja con calma y el suyo brilla.
+      const lejos = (p) => Math.hypot(centro(k.piezas[p].sitio).x - centro(k.piezas.motor.sitio).x, centro(k.piezas[p].sitio).y - centro(k.piezas.motor.sitio).y);
+      const [otra] = Object.keys(k.piezas).filter((p) => p !== "motor").sort((a, b) => lejos(b) - lejos(a));
+      await arrastrar(centro(k.piezas.motor.en), centro(k.piezas[otra].sitio));
       await pausa(600);
       const tras = await estado();
       const ayuda = tras.juego?.puestas?.length === 0 && tras.juego?.ilumina === "motor";
@@ -2656,10 +2688,18 @@ async function elKitConElDedo() {
         .catch(() => false);
       const siguiente = await estado();
       comprobar(
-        `${nombre}: se arma el primer avión ${dedo ? "con el dedo, arrastrando" : "con el ratón"}, con sus luces, y despega; equivocarse ayuda`,
-        ["noche", "despegue"].includes(armado.juego?.fase) && despego && siguiente.juego?.nivel === 1 && siguiente.hechos.includes("avion") && ayuda && menor >= 36,
+        `${nombre}: se arma el ${armado.juego?.tipo ?? "avión"} ${dedo ? "con el dedo, arrastrando" : "con el ratón"}, con sus luces, y despega; equivocarse ayuda`,
+        ["noche", "despegue"].includes(armado.juego?.fase) && despego && siguiente.juego?.nivel === prueba.nivel + 1 && siguiente.hechos.includes("avion") && ayuda && menor >= 36,
         `puestas: ${(armado.juego?.puestas ?? []).join(", ")} · fase ${armado.juego?.fase} · despegó ${despego}, y viene el ${siguiente.juego?.tipo} · ayuda al equivocarse: ${ayuda} · pieza más chica ${menor.toFixed(0)} px`,
       );
+      if (dePrueba) {
+        const guardado = await nivelGuardado();
+        comprobar(
+          `${nombre}: con ${prueba.url} el kit está en la mano en el puesto, sin sonda, se empieza por el avión pedido y el nivel no se guarda`,
+          enElPuesto.enTierra && enElPuesto.inicio?.tripulacion?.tramo === "puerta" && primero.juego?.nivel === prueba.nivel && !guardado,
+          `en tierra ${enElPuesto.enTierra}, ${enElPuesto.inicio?.tripulacion?.tramo ?? "—"} · empieza por el ${primero.juego?.tipo ?? "—"} (nivel ${primero.juego?.nivel ?? "—"}) · guardado: ${guardado}`,
+        );
+      }
       // ── Luz verde, con el dedo, en un peldaño por pantalla ──
       await jugarLaLuz(page, nombre, tocar);
       // ── La canción: suena al ganar la torre, se agacha si alguien habla y se va al guardar el kit ──
