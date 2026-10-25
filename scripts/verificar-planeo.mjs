@@ -82,6 +82,22 @@ try {
     const alto = lejos * Math.tan((3.8 * Math.PI) / 180);
     o.colocar(p.x, cota + alto, p.z, planeo.velocidad, p.h);
     /*
+     * **Y limpio, con el tren dentro**, que es como planea lo que dice su
+     * ficha y como empieza el ejercicio del juego —ver `ponerElTrenDentro`—.
+     *
+     * El avión venía del puesto con las patas fuera y el banco nunca las
+     * metía: el JAZ 90 planeaba con los 0,026 de su tren sumados a los 0,02 de
+     * su `cd0`, a fineza once y no diecisiete, y con el alisio de cara bajaba
+     * a cinco grados y tocaba ochocientos metros antes de la pista. Medido con
+     * la traza: «tren 1.00» de punta a punta. Y no vale pedirlo en el mismo
+     * instante en que se coloca: el interruptor de tierra/aire del tren lo
+     * pone el juego en cada fotograma, todavía dice «en el suelo», y la orden
+     * se rechaza sin ruido —ver `alternarTren` en `flight/input.ts`—. Un
+     * fotograma después, entra.
+     */
+    await espera(300);
+    o.pedirTren(false);
+    /*
      * La traza, desde que se coloca: cada segundo y medio, dónde está, cómo
      * vuela y qué piden los mandos. Sale si no llega, o con `OGA_TRAZA=1`.
      */
@@ -148,6 +164,8 @@ try {
     const vref = planeo.vref;
     const vfe = planeo.vfeKt / 1.943844;
     let mandoAlAire = false;
+    // Cómo iba el tren lejos de la pista: dentro, si la orden entró.
+    let trenLejos = NaN;
     let toco = null;
     let bajo = Infinity;
     o.pilotar((c) => {
@@ -182,6 +200,9 @@ try {
           ? planeo.velocidad
           : Math.max(vref * 1.1, planeo.velocidad - (3000 - u) * 0.02);
       if (s.airspeed < vfe && u < 3500) o.pedirFlaps(1);
+      // Y el tren, con la pista hecha: fuera cuesta media fineza.
+      if (u < 3500) o.pedirTren(true);
+      else trenLejos = o.controles().tren;
       const ganancia = Math.min(1, (90 / Math.max(1, s.airspeed)) ** 2);
       /*
        * **La bajada, no la velocidad.** Seguir la velocidad con el timón a
@@ -228,6 +249,7 @@ try {
       toco,
       bajo,
       mandoAlAire,
+      trenLejos,
       percance: o.percance(),
       sinMotorAlFinal: o.sinMotor(),
       instructor: todo.instructor.slice(antes.instructor),
@@ -283,10 +305,11 @@ try {
   comprobar(
     "y el avión llega y toca en la pista",
     r.toco?.enPista && !r.percance,
-    r.toco
+    (r.toco
       ? `tocó ${r.toco.enPista ? "en la pista" : "fuera"} a ${nudos(r.toco.velocidad)} kt` +
           (r.percance ? ` · percance ${r.percance}` : "")
-      : `no llegó · lo más bajo ${Math.round(r.bajo)} m`,
+      : `no llegó · lo más bajo ${Math.round(r.bajo)} m`) +
+      ` · tren ${r.trenLejos.toFixed(2)} hasta la final`,
   );
   comprobar(
     "y parado en el suelo ya no es un planeo",

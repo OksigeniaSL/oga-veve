@@ -337,10 +337,29 @@ try {
 
         if (tramo === "final") {
           const u = -p.a;
-          const lead = aMundo(Math.min(p.a + 2500, pista.length), 0);
+          /*
+           * **Por la traza, no por el morro, y mirando más cerca al llegar.**
+           *
+           * Apuntaba el morro a un punto del eje dos kilómetros y medio por
+           * delante, y eso deja un desvío fijo: con un motor parado y el pie
+           * sujetándolo, o con algo de viento de costado, el avión no va
+           * adonde apunta el morro, y a 2.500 m de palanca la corrección de
+           * veinte metros es de medio grado. Medido con la traza en Gran
+           * Canaria: el eje a 2 m a cuatro kilómetros, a 16 m en el umbral y
+           * a 26 m al tocar, en una pista de 45 de ancho —el juego la da por
+           * pisada hasta 28,5, y una tirada sí y otra no caía fuera—. Lo que
+           * hace un piloto es llevar **la traza** al eje y mirar más cerca
+           * cuanto más cerca está.
+           */
+          const adelante = Math.max(800, Math.min(2500, u * 0.6));
+          const lead = aMundo(Math.min(p.a + adelante, pista.length), 0);
+          const deriva =
+            Math.hypot(s.velocity.x, s.velocity.z) > 5
+              ? error(Math.atan2(s.velocity.x, -s.velocity.z), s.heading)
+              : 0;
           c.aileron = alabear(
             s,
-            s.onGround ? h : rumboA(s, lead.x, lead.z),
+            s.onGround ? h : rumboA(s, lead.x, lead.z) - deriva,
             (18 * Math.PI) / 180,
           );
           if (s.onGround) {

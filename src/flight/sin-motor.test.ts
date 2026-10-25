@@ -12,6 +12,7 @@ import {
   bandaSinMotor,
   pistaDelPlaneo,
   planeoDe,
+  queExplicaElSinkRate,
   queSeDiceSinMotor,
   type Planeo,
 } from "./sin-motor";
@@ -132,6 +133,19 @@ describe("la velocidad sin motor", () => {
     expect(
       queSeDiceSinMotor({ banda: "lento", de: "aproximacion" }, false),
     ).toBe("vuelo.planeoLento");
+  });
+
+  /*
+   * Y lo mismo detrás de *sink rate*: medido en el banco del planeo, con el
+   * JAZ 90 sin combustible en la final de Gran Canaria, la caja cantó y la
+   * instructora lo explicó con «Venís lento: metéle gas».
+   */
+  it("y *sink rate* yendo lento, sin motor, tampoco pide gas", () => {
+    expect(queExplicaElSinkRate("lento", true)).toBe("vuelo.planeoLento");
+    // Con motor, lo de siempre: lento es gas, y con velocidad, la nariz.
+    expect(queExplicaElSinkRate("lento", false)).toBe("vuelo.lentoYBajo");
+    expect(queExplicaElSinkRate("bien", true)).toBe("vuelo.bajasRapido");
+    expect(queExplicaElSinkRate("rapido", false)).toBe("vuelo.bajasRapido");
   });
 
   it("rápido lejos es levantarla; rápido en final, lo de siempre", () => {

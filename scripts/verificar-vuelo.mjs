@@ -186,6 +186,41 @@ await page.evaluate(() => {
     z: faro.position.z,
   };
   globalThis.__raiz = raiz;
+  /*
+   * **Los mandos del banco, por la vía buena.** Lo que se escribe en
+   * `controles()` lo reescribe el teclado en el fotograma siguiente —y en el
+   * peldaño de los pequeños, la mano que sostiene la trayectoria—, así que un
+   * «morro abajo» escrito cada cincuenta milisegundos llegaba al modelo a
+   * trozos, y más o menos trozos según lo cargada que fuera la máquina.
+   * Medido en Yvytu Rape: con el morro «abajo» diez segundos, el avión pasaba
+   * de 35 a 38 m del suelo, y la altura de decisión, el aviso de ir bajo y la
+   * toma contra la orden salían una tirada sí y otra no. Ya se había visto y
+   * arreglado en la sección del percance, que vuela con `pilotar`; esto es lo
+   * mismo para las demás que vuelan: lo que se escriba en el objeto que
+   * devuelve se pone en los mandos en cada fotograma, detrás del teclado.
+   */
+  /*
+   * Y con `bajada`, en metros por segundo, el morro lo pone el banco en cada
+   * fotograma para sostener esa bajada. Con el mando llegando entero, «morro
+   * abajo a −0,35» ya no es un toque: es un picado, y lo que se quiere es
+   * bajar, no estrellarse. La ganancia es la del modelo sencillo, que es el de
+   * los peldaños en los que vuela este banco: un metro por segundo de error
+   * pide un cuarto de mando.
+   */
+  globalThis.__aLosMandos = () => {
+    const o = globalThis.__oga;
+    const c = {};
+    o.pilotar((m) => {
+      const { bajada, ...resto } = c;
+      Object.assign(m, resto);
+      if (bajada !== undefined) {
+        const v = o.estado().verticalSpeed;
+        m.elevator = Math.max(-0.6, Math.min(0.6, (-bajada - v) * 0.25));
+      }
+    });
+    return c;
+  };
+  globalThis.__soltarLosMandos = () => globalThis.__oga.pilotar(null);
 });
 
 /*
@@ -204,10 +239,20 @@ const comprobar = (nombre, ok, detalle, porque) =>
 
 // ── La senda ──────────────────────────────────────────────────────────────
 
+/*
+ * **Medida desde donde se cuenta la senda**: la cota del umbral —la del faro,
+ * que está plantado en él— y el punto del PAPI, trescientos metros pista
+ * adentro. Se medía desde el suelo del centro de la pista y desde el umbral,
+ * y una senda de tres grados no es recta desde ahí: es recta desde el punto
+ * de su PAPI, y por eso cruza el umbral a quince metros y no a ras de suelo,
+ * como una de verdad. Medidos los siete aros de Los Rodeos, los siete en
+ * 3,00° desde el PAPI; desde el umbral, el último daba 4,45°, y el banco lo
+ * leía como un palo de hockey que no había.
+ */
 const senda = await page.evaluate(() => {
   const raiz = globalThis.__raiz;
-  const pista = globalThis.__oga.pista();
-  const suelo = globalThis.__oga.suelo(pista.x, pista.z);
+  const desde = globalThis.__oga.sendaDesde?.() ?? 0;
+  const cota = globalThis.__umbral.y;
   const aros = [];
   raiz.getObjectByName("aros").traverse((o) => {
     if (o.isMesh) aros.push({ y: o.position.y, d: o.userData.distancia ?? 0 });
@@ -216,7 +261,7 @@ const senda = await page.evaluate(() => {
     .sort((a, b) => b.d - a.d)
     .map((a) => ({
       d: a.d,
-      grados: (Math.atan2(a.y - suelo, a.d) * 180) / Math.PI,
+      grados: (Math.atan2(a.y - cota, a.d + desde) * 180) / Math.PI,
     }));
 });
 const pendientes = senda.map((a) => a.grados);
@@ -577,11 +622,31 @@ const porEncima = await page.evaluate(async () => {
   o.reiniciarSenda();
   await new Promise((r) => setTimeout(r, 400));
 
+  /*
+   * **Y la corrección vale venga del aro o de la senda**, si es hacia abajo.
+   *
+   * Pasando ochenta metros por encima del centro del aro, la instructora de la
+   * bajada ve que se va alto antes de cruzarlo y dice «nariz abajo» con el
+   * dibujo de la nariz —en Los Rodeos, apuntando al PAPI—; al cruzar el aro,
+   * lo mismo otra vez no se dice, que un suceso es una voz. Medido con la
+   * lectura del consejero: «narizAbajo (alto, papi)» y su tarjeta a 1,4 s de
+   * colocar el avión, el aro cruzado a 1,5 s y ya nada que añadir. El banco
+   * solo aceptaba el dibujo del aro, y salía «ninguna» o la tarjeta de lo que
+   * viniera después. Lo que se pide es que alguien corrija **hacia dónde**: el
+   * aro alto o la nariz abajo. Hacia arriba, no.
+   */
   let tarjeta = "";
+  const vistas = [];
   for (let i = 0; i < 200; i++) {
     await new Promise((r) => setTimeout(r, 50));
     const puesta = o.tarjeta().dibujo;
-    if (puesta === "aro-alto" || puesta === "aro-bajo") {
+    if (puesta && !vistas.includes(puesta)) vistas.push(puesta);
+    if (
+      puesta === "aro-alto" ||
+      puesta === "aro-bajo" ||
+      puesta === "nariz-abajo" ||
+      puesta === "nariz-arriba"
+    ) {
       tarjeta = puesta;
       break;
     }
@@ -590,13 +655,13 @@ const porEncima = await page.evaluate(async () => {
   return {
     tarjeta,
     ultima: o.tarjeta().dibujo,
-    como: `aro ${pendiente}→${o.aros()?.i ?? "-"} a ${d.toFixed(0)} m, ${cual.y.toFixed(0)} de alto y ${cual.r.toFixed(0)} de radio · ${aros.length} aros · acabó a ${Math.hypot(e.position.x - u.x, e.position.z - u.z).toFixed(0)} m del umbral, ${e.onGround ? "posado" : "volando"}`,
+    como: `aro ${pendiente}→${o.aros()?.i ?? "-"} a ${d.toFixed(0)} m, ${cual.y.toFixed(0)} de alto y ${cual.r.toFixed(0)} de radio · ${aros.length} aros · acabó a ${Math.hypot(e.position.x - u.x, e.position.z - u.z).toFixed(0)} m del umbral, ${e.onGround ? "posado" : "volando"} · tarjetas: ${vistas.join(", ") || "ninguna"}`,
   };
 });
 if (!porEncima.sinAros) {
   comprobar(
     "pasar por encima de un aro tiene quien lo corrija",
-    porEncima.tarjeta === "aro-alto",
+    porEncima.tarjeta === "aro-alto" || porEncima.tarjeta === "nariz-abajo",
     porEncima.tarjeta
       ? `dice «${porEncima.tarjeta}»`
       : `tarjeta «${porEncima.ultima || "ninguna"}» · ${porEncima.como}`,
@@ -628,7 +693,7 @@ if (!porEncima.sinAros) {
 await ponerSobreElSuelo(1500, 35);
 const bajoEnLaSenda = await page.evaluate(async () => {
   const o = globalThis.__oga;
-  const c = o.controles();
+  const c = globalThis.__aLosMandos();
   /*
    * **Morro abajo de verdad y gas corto.** Con un toque suave, en el modelo de
    * coeficientes el avión a veces se sostenía y la prueba salía distinta cada
@@ -648,7 +713,7 @@ const bajoEnLaSenda = await page.evaluate(async () => {
   let fase = "";
   let alto = 0;
   for (let i = 0; i < 200; i++) {
-    c.elevator = -0.35;
+    c.bajada = 3;
     await new Promise((r) => setTimeout(r, 50));
     alto = o.estado().heightAboveGround;
     /*
@@ -669,6 +734,8 @@ const bajoEnLaSenda = await page.evaluate(async () => {
   const ultimaFase = o.fase();
   c.elevator = 0;
   c.throttle = 0;
+  await new Promise((r) => setTimeout(r, 100));
+  globalThis.__soltarLosMandos();
   return { fase, aviso, alto, ultimaFase };
 });
 comprobar(
@@ -698,7 +765,7 @@ comprobar(
 await poner(1500, 82);
 const frustrada = await page.evaluate(async () => {
   const o = globalThis.__oga;
-  const c = o.controles();
+  const c = globalThis.__aLosMandos();
   const dibujo = () =>
     document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? "";
   // El trazo de la senda que baja y se vuelve a ir arriba. Ver `ui/senal.ts`.
@@ -718,7 +785,7 @@ const frustrada = await page.evaluate(async () => {
   let cantoMinimos = false;
   const tarjetasVistas = [];
   for (let i = 0; i < 400; i++) {
-    c.elevator = -0.35;
+    c.bajada = 4;
     await new Promise((r) => setTimeout(r, 50));
     const s = o.estado();
     enFinal ||= o.fase() === "final";
@@ -737,6 +804,7 @@ const frustrada = await page.evaluate(async () => {
   // Y la decisión: gas a tope y arriba.
   const t0 = performance.now();
   c.throttle = 1;
+  c.bajada = undefined;
   let cuando = Infinity;
   let alSubir = Infinity;
   let subido = 0;
@@ -765,6 +833,7 @@ const frustrada = await page.evaluate(async () => {
   c.throttle = 0;
   // Y los galones, que es donde la frustrada tiene que valer lo que vale.
   await new Promise((r) => setTimeout(r, 400));
+  globalThis.__soltarLosMandos();
   return {
     enFinal,
     toco,
@@ -1977,6 +2046,19 @@ const umbral = await page.evaluate(async () => {
 
   const faseArriba = `${o.fase()}/${o.estado().onGround ? "suelo" : "aire"}/${o.estado().airspeed.toFixed(0)}`;
   const p = o.puntoDeFinal(80);
+  /*
+   * **Bajando despacio, a medio metro por segundo, y por `pilotar`.**
+   *
+   * Nivelado se va para arriba —y lo que salta es la tarjeta de la frustrada,
+   * que es otra prueba y muy buena— y con mucho se planta en el campo antes
+   * de llegar al umbral. Era «un pelo de morro abajo» escrito una vez en
+   * `controles()`, que el teclado borra en el fotograma siguiente: lo que
+   * hacía el avión dependía de lo que hiciera sin nadie a los mandos. En Yvytu
+   * Rape se plantaba duro antes del umbral. Así se sostiene una bajada.
+   */
+  const c = globalThis.__aLosMandos();
+  c.throttle = 0.35;
+  c.bajada = 0.5;
   o.colocar(p.x, globalThis.__umbral.y + 10, p.z, 30, p.h);
   await new Promise((r) => setTimeout(r, 400));
   const puesto = (() => {
@@ -1984,26 +2066,29 @@ const umbral = await page.evaluate(async () => {
     const u = globalThis.__umbral;
     return `puesto a ${Math.hypot(e.position.x - u.x, e.position.z - u.z).toFixed(0)} m del umbral, cabecera ${p.cabecera}, enPista ${e.onRunway}`;
   })();
-  const c = o.controles();
-  c.throttle = 0.35;
-  // Un pelo de morro abajo: nivelado se va para arriba —y lo que salta es la
-  // tarjeta de la frustrada, que es otra prueba y muy buena— y con mucho se
-  // planta en el campo antes de llegar al umbral.
-  c.elevator = -0.04;
   let tarjeta = "";
   let terreno = "nada";
+  // Y lo que se vio por el camino, cada medio segundo: tarjeta, altura y caída.
+  const camino = [];
   for (let i = 0; i < 50; i++) {
     await new Promise((r) => setTimeout(r, 100));
     if (o.avisoDeTerreno()) terreno = o.avisoDeTerreno();
     if (o.tarjeta().dibujo === "toma") tarjeta = "toma";
+    if (i % 5 === 4) {
+      const e = o.estado();
+      camino.push(
+        `${o.tarjeta().dibujo || "-"}/${(e.position.y - globalThis.__umbral.y).toFixed(0)}m/${e.verticalSpeed.toFixed(1)}`,
+      );
+    }
   }
+  globalThis.__soltarLosMandos();
   const s = o.estado();
   return {
     tarjeta,
     terreno,
     ultima: o.tarjeta().dibujo,
     // Para saber por qué, si no sale: altura sobre la pista, caída y suelo.
-    como: `${puesto} · arriba ${faseArriba} · alto ${(s.position.y - globalThis.__umbral.y).toFixed(0)} m · vs ${s.verticalSpeed.toFixed(1)} · ${s.onGround ? "posado" : "volando"} · fase ${o.fase()} · v ${s.airspeed.toFixed(0)}`,
+    como: `${puesto} · arriba ${faseArriba} · alto ${(s.position.y - globalThis.__umbral.y).toFixed(0)} m · vs ${s.verticalSpeed.toFixed(1)} · ${s.onGround ? "posado" : "volando"} · fase ${o.fase()} · v ${s.airspeed.toFixed(0)} · camino ${camino.join(" ")}`,
   };
 });
 comprobar(
@@ -2370,7 +2455,7 @@ const orden = await page.evaluate(async () => {
   o.reiniciar();
   await new Promise((r) => setTimeout(r, 600));
   o.mandarFrustrar("siempre");
-  const c = o.controles();
+  const c = globalThis.__aLosMandos();
   c.throttle = 0.25;
   c.elevator = 0;
   // En final, a la altura a la que se manda: noventa metros sobre la pista.
@@ -2414,7 +2499,7 @@ const orden = await page.evaluate(async () => {
   if (mandaron) {
     c.throttle = 0.12;
     for (let i = 0; i < 300 && !percance && !toco; i++) {
-      c.elevator = -0.5;
+      c.bajada = 5;
       await new Promise((r) => setTimeout(r, 100));
       percance = o.finDeVuelo();
       toco = o.estado().onGround;
@@ -2424,6 +2509,7 @@ const orden = await page.evaluate(async () => {
      * cuando habla la torre. La tarjeta de la orden se va al tocar —ya no
      * describe nada— y la de la explicación es la misma frustrada, que vuelve.
      */
+    c.bajada = undefined;
     c.throttle = 0;
     c.elevator = 0;
     c.brakes = 1;
@@ -2437,6 +2523,8 @@ const orden = await page.evaluate(async () => {
     }
     c.brakes = 0;
   }
+  await new Promise((r) => setTimeout(r, 100));
+  globalThis.__soltarLosMandos();
   const contada = (o.cantados?.() ?? []).some((x) =>
     x.startsWith("aterrizó con la orden de irse puesta"),
   );
