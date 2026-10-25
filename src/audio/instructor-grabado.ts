@@ -574,7 +574,7 @@ export class InstructorGrabado implements Instructor {
     const suena = this.quienLaDice(clave ?? null, relleno);
     const cadena = suena ? this.cadenaDe(suena) : null;
     this.ultima = clave ?? texto;
-    this.apuntar();
+    this.apuntar(suena && cadena ? suena.piezas : null);
     if (suena && cadena) {
       this.suplente.callar();
       this.callarLoGrabado();
@@ -794,9 +794,11 @@ export class InstructorGrabado implements Instructor {
   }
 
   /** Apunta lo último en el historial, sin dejarlo crecer sin fin. */
-  private apuntar(): void {
+  private apuntar(piezas: readonly string[] | null = null): void {
     if (!import.meta.env.DEV) return;
     this.historial.push(this.ultima);
+    this.piezasDelHistorial.push(piezas);
+    if (this.piezasDelHistorial.length > 5000) this.piezasDelHistorial.shift();
     /*
      * **Y el tope da para un vuelo entero, que es lo que se mide.**
      *
@@ -844,6 +846,18 @@ export class InstructorGrabado implements Instructor {
    * vive en memoria mientras dure la partida.
    */
   readonly historial: string[] = [];
+
+  /**
+   * **Y con qué piezas se dijo cada una**, a la par del historial: `null` si
+   * no sonó grabada.
+   *
+   * Hace falta para las frases que son una receta de huecos —la bienvenida
+   * con el plan de la comandante—: su clave no es el nombre de ninguna
+   * pieza, y lo que llena los huecos lo decide el juego al pedirla. Sin esto,
+   * el banco buscaba piezas que empezaran por la clave y daba por mudas
+   * frases que sí sonaban. Ver `verificar-voces-de-verdad.mjs`.
+   */
+  readonly piezasDelHistorial: (readonly string[] | null)[] = [];
 
   /**
    * Baja el pack y lo deja listo. Se llama después del primer gesto.

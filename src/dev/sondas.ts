@@ -882,6 +882,23 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       return salida;
     },
     /**
+     * Lo mismo, con las piezas con que sonó cada frase, o `null` si no sonó
+     * grabada. Ver `InstructorGrabado.piezasDelHistorial`.
+     */
+    dichoConPiezas: () => {
+      const salida: Record<string, { clave: string; piezas: readonly string[] | null }[]> = {};
+      for (const [quien, boca] of Object.entries(juego.bocas)) {
+        salida[quien] =
+          boca instanceof InstructorGrabado
+            ? boca.historial.map((clave, i) => ({
+                clave,
+                piezas: boca.piezasDelHistorial[i] ?? null,
+              }))
+            : [];
+      }
+      return salida;
+    },
+    /**
      * Quiénes están ahora mismo en la frecuencia.
      *
      * Van cambiando: cada uno hace su vuelo y cuando lo termina se va y llega
