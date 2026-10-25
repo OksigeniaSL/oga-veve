@@ -1029,8 +1029,15 @@ function avisarDeLaVersionNueva(registro: ServiceWorkerRegistration): void {
 /**
  * Cuánto se espera a que el trabajador nuevo tome el mando antes de recargar
  * igual, ms. Ver `estrenar`.
+ *
+ * **Quince segundos y no cuatro.** Con la página ya callada —ver
+ * `callarLaRed`— lo único que retrasa al nuevo es lo que el viejo tenía en
+ * camino, y en un teléfono con datos una tesela o un modelo tardan varios
+ * segundos en llegar. Recargar antes es recargar con el viejo al mando, que
+ * es justo lo que colgaba la página; la flecha que gira ya dice mientras
+ * tanto que el toque se oyó.
  */
-const ESPERA_AL_NUEVO = 4000;
+const ESPERA_AL_NUEVO = 15_000;
 
 /**
  * **Estrenar la versión que espera ahora, no la que esperaba al salir el
@@ -1058,6 +1065,9 @@ const ESPERA_AL_NUEVO = 4000;
  *   mientras el viejo termina lo que estaba bajando—, se recarga igual. La
  *   página se pide primero a la red —ver `plantilla-sw.js`— y las piezas del
  *   armazón nuevo ya están en su caché, así que lo que abre es lo nuevo.
+ *   **Pero es una red, no el camino**: recargar con el viejo al mando puede
+ *   colgar la página, y por eso antes se le quita el trabajo al viejo —ver
+ *   `callarLaRed`— para que el camino sea el de `controllerchange`.
  *
  * Y el botón **dice que lo ha oído** en cuanto se toca: la flecha gira. Sin
  * eso, un segundo de espera hasta la recarga se lee igual que un botón que
@@ -1091,5 +1101,30 @@ function estrenar(
     return;
   }
   esperando.postMessage("estrenar");
+  callarLaRed();
   window.setTimeout(recargar, ESPERA_AL_NUEVO);
+}
+
+/**
+ * **Y la página deja de pedir cosas, que si no el nuevo no entra.**
+ *
+ * Chrome no deja tomar el mando al trabajador nuevo mientras el viejo tenga
+ * peticiones a medias, aunque al nuevo se le haya dicho que no espere: para
+ * al viejo en cuanto se queda sin trabajo, y si en ese instante la página le
+ * pide otra cosa —una tesela, un modelo—, lo vuelve a arrancar para
+ * atenderla y el nuevo sigue esperando. Volando, con las teselas llegando,
+ * eso pasa casi siempre. Medido con el banco, la recarga de socorro de
+ * `ESPERA_AL_NUEVO` caía entonces con el viejo al mando y salía de dos
+ * maneras, las dos malas: o abría la página otra vez con el botón puesto y
+ * el nuevo esperando, o el navegador mataba al viejo a media navegación y la
+ * página se quedaba colgada para siempre.
+ *
+ * La página se va a recargar de todas formas, así que no pierde nada: lo que
+ * estaba bajando se corta y lo que se pida desde aquí se queda esperando a
+ * una recarga que ya viene. En cuanto el viejo termina, entra el nuevo y
+ * `controllerchange` recarga. Ver `scripts/verificar-actualizar.mjs`.
+ */
+function callarLaRed(): void {
+  globalThis.fetch = () => new Promise<Response>(() => {});
+  window.stop();
 }
