@@ -2834,6 +2834,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const tusAutorizaciones = [];
   /**
+   * **La última vez que la pista era de otro**, s: el que la tiene por la
+   * frecuencia o el que se ve encima. Con ella así, la torre espera a que
+   * quede libre para autorizar, y eso puede caer por debajo de los quinientos
+   * pies: el límite de verdad es entonces la decisión. Ver el permiso de
+   * aterrizar, más abajo.
+   */
+  let ultimaConOtroEnLaPista = -Infinity;
+  /**
    * **Y las esperas en la roja por alguien**, con lo que se dijo del porqué:
    * la roja podía durar tres minutos con un «hold short» a secas.
    */
@@ -4062,6 +4070,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         if (ocupan.length)
           esperandoPorAlguien = `${t.toFixed(0)} s: ${ocupan.map((x) => `${x.matricula} ${x.orden}`).join(", ")}`;
       }
+      if ((o.pistaDeLosDemas?.() ?? []).length || (o.trafico?.() ?? []).some((a) => a.enLaPista)) ultimaConOtroEnLaPista = t;
       for (const x of nuevas) {
         if (
           /^[\d.]+s (?:torre\.(?:[a-z]+\.)?(?:holdShort|afisInUse)(?:Landing|Departing)@|vuelo\.esperaQue)/.test(x) &&
@@ -4112,6 +4121,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             // Y a qué altura sonó: con la pista ocupada hasta la decisión, la
             // torre manda al aire, no autoriza a once metros del suelo.
             alto: Math.round(alto(s)),
+            // Y cuánto hacía que la pista era de otro, s: `null` si no lo fue.
+            conOtroHace: Number.isFinite(ultimaConOtroEnLaPista) ? Math.round(t - ultimaConOtroEnLaPista) : null,
           });
         // A quién va, por sus letras: las cinco del alfabeto, sin la pista.
         const quien = m[3]
@@ -7405,15 +7416,28 @@ comprobar(
   // La altura de decisión del juego, sesenta metros: ver `src/flight/minimos.ts`.
   const ALTURA_DE_DECISION = 60;
   const LISTON = Math.max(500 * 0.3048, ALTURA_DE_DECISION);
-  const bajas = tuyas.filter((a) => typeof a.alto === "number" && a.alto < LISTON);
+  /*
+   * Con la pista de otro hasta hace nada, la torre espera a que quede libre
+   * para autorizar, como una de verdad, y eso cae a veces por debajo de los
+   * quinientos pies (medido el 25-10-2026: a 364 y 374 ft, con el de delante
+   * todavía en la pista). El límite es entonces la decisión: sin permiso ahí,
+   * se va al aire. Ver `turno-de-pista.ts`.
+   */
+  const RECIEN_LIBRE = 15;
+  const listonDe = (a) => (a.conOtroHace !== null && a.conOtroHace !== undefined && a.conOtroHace <= RECIEN_LIBRE ? ALTURA_DE_DECISION : LISTON);
+  const bajas = tuyas.filter((a) => typeof a.alto === "number" && a.alto < listonDe(a));
   const enPies = (m) => Math.round(m / 0.3048);
   if (tuyas.length)
     comprobar(
-      "el permiso de aterrizar se oye antes de los 500 ft sobre la pista",
+      "el permiso de aterrizar se oye antes de los 500 ft sobre la pista, o antes de la decisión si la pista acababa de quedar libre",
       bajas.length === 0,
       (bajas.length ? bajas : tuyas)
-        .map((a) => `${a.t} s ${a.dice} a ${a.alto ?? "?"} m (${typeof a.alto === "number" ? enPies(a.alto) : "?"} ft)`)
-        .join(" · ") + ` · listón ${Math.round(LISTON)} m`,
+        .map(
+          (a) =>
+            `${a.t} s ${a.dice} a ${a.alto ?? "?"} m (${typeof a.alto === "number" ? enPies(a.alto) : "?"} ft)` +
+            `${a.conOtroHace !== null && a.conOtroHace !== undefined ? `, pista de otro hasta hace ${a.conOtroHace} s` : ""} · listón ${Math.round(listonDe(a))} m`,
+        )
+        .join(" · "),
       "«cleared to land» con la máquina contando «one hundred», en La Palma; y a once metros del suelo, de número dos, en Los Rodeos",
     );
 }
