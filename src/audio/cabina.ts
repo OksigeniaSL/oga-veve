@@ -154,19 +154,15 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
    * «seventy knots»—, y en la flota no hay ningún Airbus: el JAZ 90 es de la
    * clase del E170 y el JAZ 120 de la del 747. Se quitaron sin grabarse.
    *
-   * Fuente: el FCOM del 747-400, NP *Landing Roll Procedure*, que no se ha
-   * leído: **el texto exacto del 747 sigue por verificar**. Lo que sí se ha
-   * leído es la cita del FCOM de Boeing —del 737— en el informe del NTSB
-   * DCA11IA047 (Chicago Midway, 2011): quien vigila dice «SPEED BRAKES UP» o
-   * «SPEED BRAKES NOT UP»; y el mismo informe dice que ese FCOM **no** pedía
-   * cantar las reversas. «Reversers normal» y «sixty knots» quedan, pues, por
-   * verificar en el del 747. «No reverser» —la reversa pedida que no se abre—
-   * no está, porque el juego no tiene reversas que fallen. Ver
-   * `contarLaCarrera` en `game.ts`.
+   * Fuente: el FCOM del 747-400, NP.21.53 *Landing Roll Procedure*, leído el
+   * 25-10-2026: «speedbrakes up» o «speedbrakes not up» y «sixty knots».
+   * «Reversers normal» no está en él —el informe del NTSB DCA11IA047 dice lo
+   * mismo del FCOM del 737—, así que su toma se queda sin usar. «No reverser»
+   * —la reversa pedida que no se abre— tampoco, porque el juego no tiene
+   * reversas que fallen. Ver `contarLaCarrera` en `game.ts`.
    *
-   * Y el JAZ 90, de la clase del E170, solo dice «sixty knots», que es la
-   * única que canta quien vigila en la carrera de los E-Jets: ver `EMBRAER`
-   * más abajo.
+   * Y el JAZ 90, de la clase del E170, no canta ninguno: el SOPM de Embraer
+   * no los lleva. Ver `CANTOS_DE_LA_CARRERA` más abajo.
    */
   "speedbrakes up": "cabina.speedbrakesUp",
   "speedbrakes not up": "cabina.speedbrakesNotUp",
@@ -189,31 +185,41 @@ export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
  * **Los cantos de la carrera de aterrizaje de cada familia**: no los dice
  * cualquier tripulación, cada fabricante tiene los suyos. Los dice quien vuela
  * un avión cuyo procedimiento los lleva —ver `cantosDeLaCarrera` en
- * `flight/aircraft.ts`—, y en los demás no suena ninguno.
+ * `flight/aircraft.ts`—, y en los demás no suena ninguno. Leídos en el manual
+ * de cada uno el 25-10-2026 (punto 259):
  *
- * - **Boeing**, el *Landing Roll* del FCOM: los aerofrenos arriba o no, las
- *   reversas en verde y los sesenta nudos. Ver `CLAVE_DE_CABINA`.
- * - **Embraer**, los E-Jets: al tocar, quien vigila **mira** los aerofrenos y
- *   las reversas sin cantarlos, y a los sesenta nudos canta «60 kts», que es
- *   cuando quien vuela lleva la reversa al mínimo (y la cierra a los treinta).
- *   Fuente: el resumen de formación del E190 de Christoph Regli (Helvetic
- *   Airways, 16-09-2025, flite.ch), que remite al SOPM; leído en el documento.
- *   **El SOPM de Embraer no se ha podido leer**: lo que diga, por verificar.
+ * - **Boeing**, el 747-400: *Landing Roll Procedure*, FCOM D6-30151-400,
+ *   NP.21.53 (2009), lo que canta quien vigila: «SPEEDBRAKES UP», o
+ *   «SPEEDBRAKES NOT UP» si la palanca no ha subido, y «60 KNOTS». Las
+ *   reversas las mira sin cantarlas: «reversers normal», que se cantaba aquí
+ *   de memoria, no está en el del 747-400. Su toma sigue en
+ *   `CLAVE_DE_CABINA`, sin usarse.
+ * - **Embraer**, los E-Jets: **ninguno**. El SOPM (SOPM-1755, rev. 19, 3-40,
+ *   «Landing rollout – actions and callouts») pone acciones y no cantos:
+ *   comprobar que salen los ground spoilers, vigilar la reversa y la
+ *   velocidad, y a 60 kt la reversa al mínimo y a 30 al ralentí. Las únicas
+ *   frases entre comillas son el cambio de mandos y «AFTER LANDING
+ *   SEQUENCE». El «60 kts» que se cantaba aquí era de un operador (el
+ *   resumen de formación del E190 de Helvetic, Regli, 2025), igual que otros
+ *   añaden los de Boeing (Jetairfly, OM-B del E190, 2.2.21): no es del
+ *   fabricante, así que el JAZ 90 no canta nada en la carrera.
  */
 export const CANTOS_DE_LA_CARRERA: Readonly<Record<"boeing" | "embraer", ReadonlySet<string>>> = {
-  boeing: new Set([
-    "cabina.speedbrakesUp",
-    "cabina.speedbrakesNotUp",
-    "cabina.reversersNormal",
-    "cabina.sixtyKnots",
-  ]),
-  embraer: new Set(["cabina.sixtyKnots"]),
+  boeing: new Set(["cabina.speedbrakesUp", "cabina.speedbrakesNotUp", "cabina.sixtyKnots"]),
+  embraer: new Set<string>(),
 };
 
-/** Todos los de la carrera, de cualquier familia. Ver `CANTOS_DE_LA_CARRERA`. */
-export const DE_LA_CARRERA: ReadonlySet<string> = new Set(
-  Object.values(CANTOS_DE_LA_CARRERA).flatMap((c) => [...c]),
-);
+/**
+ * **Todos los de la carrera**, los cante o no alguna familia de la flota:
+ * ninguno es de cualquier tripulación, y uno que no está en la lista de su
+ * avión no lo dice nadie. Ver `loDiceElAvion`.
+ */
+export const DE_LA_CARRERA: ReadonlySet<string> = new Set([
+  "cabina.speedbrakesUp",
+  "cabina.speedbrakesNotUp",
+  "cabina.reversersNormal",
+  "cabina.sixtyKnots",
+]);
 
 /**
  * **La cuenta del radioaltímetro**, número a número: lo único de la cabina

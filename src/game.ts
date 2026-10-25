@@ -9033,9 +9033,8 @@ export class Game {
    * en el peldaño de cabina y, en los de abajo, la explicación en casa en su
    * lugar —`cantarLoGrabado`, un suceso y una voz—. Cada familia canta los
    * suyos: el JAZ 120, los del procedimiento normal de Boeing, *Landing Roll*
-   * (FCOM del 747-400; el texto exacto, por verificar); el JAZ 90, de la clase
-   * del E170, solo «sixty knots», que es lo único que se canta en la carrera
-   * de los E-Jets (el SOPM de Embraer, por verificar). Ver
+   * (FCOM del 747-400, NP.21.53: aerofrenos y sesenta nudos); el JAZ 90, de la
+   * clase del E170, ninguno, que el SOPM de Embraer no los lleva. Ver
    * `cantosDeLaCarrera` en `flight/aircraft.ts` y `CANTOS_DE_LA_CARRERA` en
    * `audio/cabina.ts`.
    *
@@ -9082,7 +9081,11 @@ export class Game {
       if (this.aircraft.frenosDeTierra !== null && !fuera && (porque || !explica))
         c.sinFrenosDicho = this.cantarLoGrabado("speedbrakes not up", porque, "mando");
     }
-    // Las reversas, abiertas del todo: en verde, «reversers normal».
+    /*
+     * Las reversas, abiertas del todo: en verde, «reversers normal». Hoy no lo
+     * canta nadie de la flota —el 747-400 las mira sin cantarlas—, y se pide
+     * por si lo lleva un avión que llegue. Ver `CANTOS_DE_LA_CARRERA`.
+     */
     const abierta = this.reversa.abierta >= 0.99;
     if (abierta && !c.abierta) this.cantarLoGrabado("reversers normal");
     c.abierta = abierta;

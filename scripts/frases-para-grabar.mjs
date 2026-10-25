@@ -411,10 +411,11 @@ const CABINA = [
   ["cabina.stop", "stop", "antes de V1: se para el despegue"],
   /*
    * **Y la carrera de aterrizaje**, lo que canta quien vigila al tocar en el
-   * procedimiento normal de Boeing, *Landing Roll* (FCOM del 747-400; el
-   * texto exacto, por verificar): los aerofrenos arriba o no, las reversas en
-   * verde y los sesenta nudos. En el JAZ 120; y «sixty knots», también en el
-   * JAZ 90, que es lo único que se canta en la carrera de los E-Jets. Ver
+   * procedimiento normal de Boeing, *Landing Roll* (FCOM del 747-400,
+   * NP.21.53): los aerofrenos arriba o no y los sesenta nudos, en el JAZ 120.
+   * «Reversers normal» está grabada y no la canta nadie: el 747-400 mira las
+   * reversas sin cantarlas. El JAZ 90 no canta ninguno: el SOPM de Embraer no
+   * los lleva. Ver
    * `contarLaCarrera` en `src/game.ts` y `CANTOS_DE_LA_CARRERA` en
    * `src/audio/cabina.ts`. Aquí estaban los de Airbus, y en la flota no hay
    * ningún Airbus.
