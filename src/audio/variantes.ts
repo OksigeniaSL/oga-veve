@@ -234,7 +234,13 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
     "Señores pasajeros, Tenerife Norte. Si el Teide se dejó ver en el camino, hoy tuvieron suerte. Gracias por volar con nosotros.",
   ],
   "comandante.llegada.tenerife-sur": [
-    "Señores pasajeros, bienvenidos a Tenerife Sur. Este aeropuerto se abrió porque el del norte se llenaba de nubes; acá casi nunca. Gracias por acompañarnos.",
+    /*
+     * La fecha, sin el porqué: abrió al tráfico el 23 de octubre de 1978 (Aena,
+     * «Historia | Aeropuerto de Tenerife Sur»). Antes decía que se abrió porque
+     * el del norte se llenaba de nubes, y Enrique, que es de allí, no comparte
+     * ese relato.
+     */
+    "Señores pasajeros, bienvenidos a Tenerife Sur. Este aeropuerto abrió a los pasajeros en octubre de 1978. Gracias por acompañarnos.",
     "Bienvenidos a Tenerife Sur, en Granadilla. Acá al lado, en El Médano, el viento se usa para navegar encima de una tabla. Gracias por volar con nosotros.",
     "Señores pasajeros, estamos en el sur de Tenerife. Esa montaña colorada que se ve desde la pista es justo eso: colorada. Gracias por venir.",
     "Bienvenidos a Tenerife Sur. Misma isla que el norte y otro clima: eso también es Canarias. Gracias por acompañarnos.",
@@ -343,16 +349,10 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
  * a todas las de detrás, que sonarían con el texto de otra. Así que se queda
  * en su sitio, sin salir, hasta que se escriba la que la sustituye y se grabe.
  *
- * - `comandante.llegada.tenerife-sur~2`: «se abrió porque el del norte se
- *   llenaba de nubes». Enrique, que es de allí, no comparte ese relato y
- *   prefiere que Jazlyn cuente otras cosas del sur.
  * - `comandante.llegada.tenerife-norte~4`: «el del sur es el hermano
  *   pequeño». Falso: Tenerife Sur mueve bastantes más pasajeros.
  */
-export const RETIRADAS: ReadonlySet<string> = new Set([
-  "comandante.llegada.tenerife-sur~2",
-  "comandante.llegada.tenerife-norte~4",
-]);
+export const RETIRADAS: ReadonlySet<string> = new Set(["comandante.llegada.tenerife-norte~4"]);
 
 /**
  * Cuántas formas tiene una frase, contando la de `i18n`.
