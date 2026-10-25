@@ -67,6 +67,46 @@ describe("aros de aproximación", () => {
   });
 });
 
+/*
+ * **La senda se cuenta desde el umbral por el que se entra.** Con la cota del
+ * centro de la pista, en Los Rodeos la de la 12 iba casi nueve metros por
+ * debajo de la que dicen el PAPI y el rombo, que miden desde el umbral: el
+ * banco de vuelo ponía el avión «a diez metros del umbral» y tocaba antes de
+ * la pista. Aquí, una pista que sube hacia la cabecera por la que se entra.
+ */
+describe("en una pista con pendiente", () => {
+  const terrain = new Terrain(VALLE_CORDILLERA);
+  const centro = VALLE_CORDILLERA.runway;
+  // Nueve metros más alta en la cabecera de entrada que en el centro.
+  const alUmbral = 9;
+  const guia = new RunwayGuide(
+    VALLE_CORDILLERA,
+    (x, z) =>
+      terrain.runwayElevation +
+      Math.min(alUmbral, (Math.hypot(x - centro.x, z - centro.z) / (centro.length / 2)) * alUmbral),
+    (x, z) => terrain.sampleSurface(x, z),
+  );
+
+  it("el faro y los postes están en la cota del umbral, no en la del centro", () => {
+    const faro = guia.group.getObjectByName("faro") as Mesh;
+    const altoDelFaro = (faro.geometry as unknown as { parameters: { height: number } })
+      .parameters.height;
+    expect(faro.position.y - altoDelFaro / 2).toBeCloseTo(terrain.runwayElevation + alUmbral, 3);
+  });
+
+  it("y los aros, a su senda contada desde ahí", () => {
+    const cota = terrain.runwayElevation + alUmbral;
+    const pendiente = Math.tan((3 * Math.PI) / 180);
+    guia.group.getObjectByName("aros")!.traverse((o) => {
+      if (!(o instanceof Mesh)) return;
+      const d = o.userData.distancia as number;
+      // Donde el relieve no obliga a subirlo, va justo en la senda.
+      if (o.position.y > cota + (d + guia.sendaDesde) * pendiente + 0.01) return;
+      expect(o.position.y).toBeCloseTo(cota + (d + guia.sendaDesde) * pendiente, 3);
+    });
+  });
+});
+
 describe("la senda reacciona", () => {
   const senda = () => {
     const terrain = new Terrain(VALLE_CORDILLERA);

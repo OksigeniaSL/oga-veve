@@ -6264,7 +6264,8 @@ export class Game {
 
     this.runwayGuide = new RunwayGuide(
       this.scenario,
-      this.terrain.runwayElevation,
+      // La cota en cada punto, para medir desde el umbral: ver `buildGuide`.
+      (x: number, z: number) => this.terrain.cotaDeLaPista(x, z),
       (x: number, z: number) => this.terrain.sampleSurface(x, z),
       /*
        * **Desde donde están las luces del PAPI**, que es desde donde se cuenta
@@ -13819,7 +13820,8 @@ export class Game {
     this.scene.remove(this.runwayGuide.group);
     this.runwayGuide = new RunwayGuide(
       this.scenario,
-      this.terrain.runwayElevation,
+      // La cota en cada punto, para medir desde el umbral: ver `buildGuide`.
+      (x: number, z: number) => this.terrain.cotaDeLaPista(x, z),
       (x: number, z: number) => this.terrain.sampleSurface(x, z),
       /*
        * **Desde donde están las luces del PAPI**, que es desde donde se cuenta

@@ -1413,6 +1413,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Dónde empieza la senda. Para ver que se muda con el viento. */
     dondeEmpiezaLaSenda: () => juego.runwayGuide.dondeEmpieza,
     /**
+     * Cuántos metros pista adentro está el punto **desde el que se cuenta** la
+     * senda, el del PAPI: una senda de tres grados es recta desde ahí, no
+     * desde el umbral. Ver `SENDA_DESDE` en `world/runway-guide.ts`.
+     */
+    sendaDesde: () => juego.runwayGuide.sendaDesde,
+    /**
      * Poner un viento y ver qué se mueve con él.
      *
      * Cambiar de viento cambia **la cabecera en uso**, y con ella todo lo

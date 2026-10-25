@@ -204,10 +204,20 @@ const comprobar = (nombre, ok, detalle, porque) =>
 
 // ── La senda ──────────────────────────────────────────────────────────────
 
+/*
+ * **Medida desde donde se cuenta la senda**: la cota del umbral —la del faro,
+ * que está plantado en él— y el punto del PAPI, trescientos metros pista
+ * adentro. Se medía desde el suelo del centro de la pista y desde el umbral,
+ * y una senda de tres grados no es recta desde ahí: es recta desde el punto
+ * de su PAPI, y por eso cruza el umbral a quince metros y no a ras de suelo,
+ * como una de verdad. Medidos los siete aros de Los Rodeos, los siete en
+ * 3,00° desde el PAPI; desde el umbral, el último daba 4,45°, y el banco lo
+ * leía como un palo de hockey que no había.
+ */
 const senda = await page.evaluate(() => {
   const raiz = globalThis.__raiz;
-  const pista = globalThis.__oga.pista();
-  const suelo = globalThis.__oga.suelo(pista.x, pista.z);
+  const desde = globalThis.__oga.sendaDesde?.() ?? 0;
+  const cota = globalThis.__umbral.y;
   const aros = [];
   raiz.getObjectByName("aros").traverse((o) => {
     if (o.isMesh) aros.push({ y: o.position.y, d: o.userData.distancia ?? 0 });
@@ -216,7 +226,7 @@ const senda = await page.evaluate(() => {
     .sort((a, b) => b.d - a.d)
     .map((a) => ({
       d: a.d,
-      grados: (Math.atan2(a.y - suelo, a.d) * 180) / Math.PI,
+      grados: (Math.atan2(a.y - cota, a.d + desde) * 180) / Math.PI,
     }));
 });
 const pendientes = senda.map((a) => a.grados);

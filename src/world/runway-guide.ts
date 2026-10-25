@@ -475,7 +475,12 @@ export class RunwayGuide {
 
   constructor(
     scenario: Scenario,
-    runwayElevation: number,
+    /**
+     * La cota de la pista: un número, o **la cota en cada punto** de una pista
+     * con pendiente, que es lo que hace falta para medir la senda desde el
+     * umbral por el que se entra. Ver `cotaDelUmbral` en `buildGuide`.
+     */
+    runwayElevation: number | GroundSampler,
     ground: GroundSampler,
     /**
      * A cuánto del umbral está el PAPI de esta pista, que es **desde donde se
@@ -1046,7 +1051,7 @@ export class RunwayGuide {
 
 function buildGuide(
   scenario: Scenario,
-  runwayElevation: number,
+  cotaDeLaPista: number | GroundSampler,
   ground: GroundSampler,
   /** Desde dónde se cuenta la senda. Ver `SENDA_DESDE`. */
   sendaDesde: number,
@@ -1070,6 +1075,25 @@ function buildGuide(
   const atras = hastaElUmbralDeToma(runway);
   const thresholdX = runway.x - ax * atras;
   const thresholdZ = runway.z - az * atras;
+  /*
+   * **La senda se mide desde la cota del umbral por el que se entra**, no
+   * desde la del centro de la pista.
+   *
+   * Era la del centro, que en una pista con pendiente no es la de ningún
+   * umbral: en Los Rodeos la 12 entra por 628,5 m y la 30 por 611,7, y el
+   * centro queda en 619,75. Los aros, el hilo, el faro y los postes de la 12
+   * iban casi nueve metros por debajo de la senda que dicen el PAPI y el
+   * rombo —esos sí miden desde el umbral, ver `campoParaLaAproximacion` en
+   * `game.ts`—, y cruzaban el umbral a siete metros en vez de a los quince
+   * de una senda de verdad: tres sendas en la misma pantalla y una de ellas
+   * llevando contra el terraplén de la cabecera. Medido con el banco de
+   * vuelo, que coloca el avión desde el faro: «diez metros sobre el umbral»
+   * eran metro y cuarto, y el avión tocaba antes de llegar a la pista.
+   */
+  const runwayElevation =
+    typeof cotaDeLaPista === "function"
+      ? cotaDeLaPista(thresholdX, thresholdZ)
+      : cotaDeLaPista;
 
   group.add(beacon(thresholdX, runwayElevation, thresholdZ));
   group.add(
