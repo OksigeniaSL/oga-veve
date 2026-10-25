@@ -1256,6 +1256,8 @@ const senalero = await page.evaluate(async (privado) => {
   c.brakes = 0;
   c.throttle = 0.4;
   let pidioDespacio = false;
+  // Lo que salió en la tarjeta mientras tanto, para saber qué la tapaba.
+  const vistas = [];
   for (let i = 0; i < 26; i++) {
     /*
      * El avión, encima de él y **sin dejar de estarlo**. Se ponía una vez y
@@ -1266,7 +1268,9 @@ const senalero = await page.evaluate(async (privado) => {
      */
     o.colocar(antes.x, o.suelo(antes.x, antes.z) + 1.3, antes.z, 6);
     await new Promise((r) => setTimeout(r, 100));
-    pidioDespacio ||= o.tarjeta().dibujo.startsWith("senalero-");
+    const dibujo = o.tarjeta().dibujo;
+    pidioDespacio ||= dibujo.startsWith("senalero-");
+    if (vistas[vistas.length - 1] !== dibujo) vistas.push(dibujo);
   }
   const seFue = Math.hypot(
     figura.position.x - antes.x,
@@ -1274,7 +1278,7 @@ const senalero = await page.evaluate(async (privado) => {
   );
   c.throttle = 0;
   c.brakes = 1;
-  return { seFue, pidioDespacio };
+  return { seFue, pidioDespacio, vistas };
 }, CAMPO.privado);
 if (!senalero.sinSenalero) {
   comprobar(
@@ -1286,7 +1290,7 @@ if (!senalero.sinSenalero) {
   comprobar(
     "y lo dice con los bastones antes de tener que quitarse",
     senalero.pidioDespacio,
-    senalero.pidioDespacio ? "señaló" : "no señaló nada",
+    `${senalero.pidioDespacio ? "señaló" : "no señaló nada"} · la tarjeta: ${senalero.vistas.join(" → ") || "vacía"}`,
     "ir a por él a toda velocidad no tenía quien lo avisara",
   );
 }
