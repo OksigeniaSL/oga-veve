@@ -324,6 +324,20 @@ export class InstructorGrabado implements Instructor {
     return this.banco.piezas.size;
   }
 
+  /**
+   * Y cuántas de cada voz: el pack son nueve voces que bajan juntas, y el
+   * banco del pack de voz cambia una sola por otra de mentira. Ver
+   * `verificar-voz.mjs`.
+   */
+  get piezasPorVoz(): Record<string, number> {
+    const salida: Record<string, number> = {};
+    for (const cual of this.banco.piezas.keys()) {
+      const voz = cual.slice(0, cual.indexOf("/"));
+      salida[voz] = (salida[voz] ?? 0) + 1;
+    }
+    return salida;
+  }
+
   /** Cómo va la bajada del pack. Ver `BancoDeVoces.estado`. */
   get estadoDelPack(): BancoDeVoces["estado"] {
     return this.banco.estado;

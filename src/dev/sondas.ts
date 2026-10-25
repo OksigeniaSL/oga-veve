@@ -664,6 +664,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     voz: () => ({
       piezas: juego.instructor.cuantasPiezas,
+      porVoz: juego.instructor.piezasPorVoz,
       // Y cómo va la bajada: desde que los manifiestos llegan primero, saber
       // quién dice qué ya no quiere decir que sus piezas estén bajadas.
       pack: juego.instructor.estadoDelPack,
