@@ -44,7 +44,7 @@ const VISTAS = [
   "pasaje-ala-izquierda",
   "pasaje-ala-derecha",
 ];
-const PUERTO = 5312;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5312);
 const ALTO = 800;
 
 mkdirSync(CARPETA, { recursive: true });

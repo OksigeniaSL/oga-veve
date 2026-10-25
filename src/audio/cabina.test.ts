@@ -266,23 +266,26 @@ describe("los cantos de cada avión", () => {
   });
 
   /*
-   * **Menos los de la carrera de aterrizaje**, que son de un procedimiento:
-   * los de Boeing, en el JAZ 120, y en nadie más; los de Embraer —solo
-   * «sixty knots»—, en el JAZ 90. En la flota no hay ningún Airbus.
+   * **Menos los de la carrera de aterrizaje**, que son de un procedimiento
+   * (punto 259, leídos en sus manuales): los de Boeing, en el JAZ 120, como
+   * el FCOM del 747-400 —aerofrenos y sesenta nudos, y las reversas sin
+   * cantarlas—; y en el JAZ 90 ninguno, que el SOPM de Embraer no los lleva.
+   * En la flota no hay ningún Airbus.
    */
-  it("y los de la carrera, solo el avión de esa familia: Boeing el JAZ 120, Embraer el JAZ 90", () => {
-    const deEmbraer = new Set(["cabina.sixtyKnots"]);
+  it("y los de la carrera, solo los de su manual: el JAZ 120 los del 747-400, el JAZ 90 ninguno", () => {
+    const del747 = new Set(["cabina.speedbrakesUp", "cabina.speedbrakesNotUp", "cabina.sixtyKnots"]);
     for (const a of AIRCRAFT)
       for (const clave of DE_LA_CARRERA) {
-        const canta = a.id === YVAGA.id || (a.id === ARAI.id && deEmbraer.has(clave));
+        const canta = a.id === YVAGA.id && del747.has(clave);
         expect(loDiceElAvion(clave, a), `${a.id} ${clave}`).toBe(canta);
         // De la tripulación: suben por la escalera.
         expect(esDeUnaCaja(clave), clave).toBe(false);
       }
-    // Los aerofrenos y las reversas, el E-Jet los mira sin cantarlos.
+    // Las reversas, nadie: el 747-400 las mira sin cantarlas.
+    for (const a of AIRCRAFT) expect(loDiceElAvion("cabina.reversersNormal", a), a.id).toBe(false);
+    // El E-Jet, nada en la carrera.
     expect(loDiceElAvion("cabina.speedbrakesUp", ARAI)).toBe(false);
-    expect(loDiceElAvion("cabina.reversersNormal", ARAI)).toBe(false);
-    expect(loDiceElAvion("cabina.sixtyKnots", ARAI)).toBe(true);
+    expect(loDiceElAvion("cabina.sixtyKnots", ARAI)).toBe(false);
     expect(Object.values(CLAVE_DE_CABINA)).toEqual(expect.arrayContaining([...DE_LA_CARRERA]));
   });
 

@@ -2512,6 +2512,7 @@ export const EN: Dictionary = {
   "inicio.kit.pieza.roja": "The red light",
   "inicio.kit.pieza.verde": "The green light",
   "inicio.kit.pieza.blanca": "The white light",
+  "inicio.kit.pieza.otraBlanca": "The other white light",
   "inicio.kit.pausa": "The announcement is on: listen",
   "inicio.kit.luz": "Green light: you're the tower",
   "inicio.kit.luz.verde": "Steady green: cleared to land",

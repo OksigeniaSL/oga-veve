@@ -25,7 +25,7 @@ const AVION = process.argv[3] ?? "jaz-120";
 const HORA = process.argv[4] ?? "12";
 const TEIDE_A = Number(process.env.OGA_TEIDE ?? 70);
 const CON_GPU = process.env.OGA_GPU !== "0";
-const PUERTO = 5383;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5383);
 mkdirSync(FOTOS, { recursive: true });
 
 const pausa = (ms) => new Promise((r) => setTimeout(r, ms));

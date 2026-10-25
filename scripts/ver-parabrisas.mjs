@@ -34,7 +34,7 @@ const MOMENTOS = (process.argv[4] ?? "dia,atardecer").split(",");
 const PANTALLAS = (process.argv[5] ?? "portatil,telefono").split(",");
 mkdirSync(CARPETA, { recursive: true });
 const CON_GPU = process.env.OGA_GPU === "1";
-const PUERTO = 5374;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5374);
 
 /*
  * El portátil, del tamaño de la captura que vino con la queja; el teléfono,

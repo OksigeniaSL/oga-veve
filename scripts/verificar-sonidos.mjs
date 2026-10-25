@@ -276,10 +276,18 @@ try {
       fueraPuesto.media.apu - cabinaPuesto.media.apu > 12,
       `fuera ${db(fueraPuesto.media.apu)}, cabina ${db(cabinaPuesto.media.apu)}`,
     );
+    /*
+     * Y el soplido de los packs, grave y bajito (punto 218): por debajo del
+     * rumor de la APU que entra por la pared, que en el puesto se oía como
+     * lluvia. Desde que es grave mide menos —se le quitaron los agudos, que
+     * son los que se oían—, así que el suelo baja de −50 a −60.
+     */
     comprobar(
-      "los packs soplan en el pasaje, y desde fuera casi nada",
-      pasajePuesto.media.aire > -50 && pasajePuesto.media.aire - fueraPuesto.media.aire > 25,
-      `pasaje ${db(pasajePuesto.media.aire)}, fuera ${db(fueraPuesto.media.aire)}`,
+      "los packs soplan en el pasaje, bajito, y desde fuera casi nada",
+      pasajePuesto.media.aire > -60 &&
+        pasajePuesto.media.aire < pasajePuesto.media.apu &&
+        pasajePuesto.media.aire - fueraPuesto.media.aire > 25,
+      `pasaje ${db(pasajePuesto.media.aire)} (la APU, ${db(pasajePuesto.media.apu)}), fuera ${db(fueraPuesto.media.aire)}`,
     );
 
     // En vuelo bajo la lluvia, a 70 m/s y trescientos metros.

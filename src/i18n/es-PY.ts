@@ -4109,6 +4109,7 @@ export const ES_PY = {
   "inicio.kit.pieza.roja": "La luz roja",
   "inicio.kit.pieza.verde": "La luz verde",
   "inicio.kit.pieza.blanca": "La luz blanca",
+  "inicio.kit.pieza.otraBlanca": "La otra luz blanca",
   "inicio.kit.pausa": "Habla la megafonía: escuchá",
   "inicio.kit.luz": "Luz verde: la torre sos vos",
   "inicio.kit.luz.verde": "Luz verde fija: puede aterrizar",

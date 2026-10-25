@@ -59,9 +59,10 @@ import { JuegoDeLaLuz, type Senal } from "../flight/luz-verde";
 import { hojaDeLaLuz, ICONO_DE_LA_LUZ, PintorDeLaLuz } from "./luz-verde";
 import {
   JuegoDelAvion,
-  LUCES,
   NIVELES,
+  esBlanca,
   esLuz,
+  lucesDe,
   type JuegoDelKit,
   type KitDeViaje,
   type Luz,
@@ -69,7 +70,13 @@ import {
   type PiezaDelAvion,
   type Sitio,
 } from "../flight/kit-de-viaje";
-import { AVIONES_DEL_MODELO, type ColorDelModelo, type ParteDelDibujo, type PiezaDelModelo } from "./aviones-del-kit";
+import {
+  AVIONES_DEL_MODELO,
+  type AvionDelModelo,
+  type ColorDelModelo,
+  type ParteDelDibujo,
+  type PiezaDelModelo,
+} from "./aviones-del-kit";
 import { leerProgreso, ponerProgreso } from "../datos/guardado";
 
 /** Dónde se guarda el nivel de Armá tu avión: solo el número, en el progreso del perfil. */
@@ -188,6 +195,9 @@ function dibujoDe(p: ParteDelDibujo, tipo: string): string {
 const BANDEJA = { x0: 6, x1: 634, y: 294, alto: 78 } as const;
 const BANDEJA_DE_LUCES = { x: 593, y0: 92, paso: 82 } as const;
 
+/** El paso entre las luces de su bandeja: con cuatro —las dos blancas del JAZ 90—, más juntas, que quepan. */
+const pasoDeLuces = (cuantas: number): number => (cuantas > 3 ? 64 : BANDEJA_DE_LUCES.paso);
+
 /** Dónde espera cada pieza de un nivel: no en el orden del avión, que eso lo daría resuelto. */
 function sitioEnLaBandeja(nivel: number, i: number, cuantas: number): readonly [number, number, number] {
   const orden = [4, 0, 6, 3, 1, 5, 2];
@@ -209,9 +219,18 @@ const ORDEN_DE_LUCES: readonly (readonly Luz[])[] = [
   ["roja", "verde", "blanca"],
   ["verde", "blanca", "roja"],
   ["blanca", "roja", "verde"],
-  ["verde", "roja", "blanca"],
+  // El JAZ 90, con sus dos blancas: ver `lucesDe`.
+  ["verde", "blanca", "roja", "otraBlanca"],
   ["roja", "blanca", "verde"],
 ];
+
+/** Dónde va una luz en la planta de su avión. La otra blanca solo la lleva el que la tiene: ver `lucesDe`. */
+function dondeVa(avion: AvionDelModelo, l: Luz): readonly [number, number] {
+  return (l === "otraBlanca" ? avion.planta.luces.otraBlanca : avion.planta.luces[l]) ?? avion.planta.luces.blanca;
+}
+
+/** El color de una luz, para la lámpara, el abanico y el hueco. */
+const colorDe = (l: Luz): string => (esBlanca(l) ? C.luzBlanca : l === "roja" ? C.roja : C.verde);
 
 /** Lo que mide cada pieza y cómo se ve en la bandeja: su centro de verdad y su escala para que quepa. */
 export interface PiezaDibujada {
@@ -225,8 +244,8 @@ export interface PiezaDibujada {
 
 /** **La lámpara de cada luz**: una bombillita con su color. */
 const lampara = (l: Luz, r = 13): string =>
-  `<circle r="${r + 5}" fill="${l === "blanca" ? C.luzBlanca : l === "roja" ? C.roja : C.verde}" opacity=".35"/>
-<circle r="${r}" fill="${l === "blanca" ? C.luzBlanca : l === "roja" ? C.roja : C.verde}" stroke="${C.tinta}" stroke-width="2.4"/>
+  `<circle r="${r + 5}" fill="${colorDe(l)}" opacity=".35"/>
+<circle r="${r}" fill="${colorDe(l)}" stroke="${C.tinta}" stroke-width="2.4"/>
 <circle cx="${-r * 0.35}" cy="${-r * 0.35}" r="${r * 0.28}" fill="${C.blanco}" opacity=".75"/>`;
 
 /**
@@ -242,8 +261,7 @@ function abanico(l: Luz, [x, y]: readonly [number, number], r: number): string {
     const g = ((a0 + ((a1 - a0) * i) / 16) * Math.PI) / 180;
     pts.push(`${n(x + r * Math.sin(g))} ${n(y - r * Math.cos(g))}`);
   }
-  const color = l === "roja" ? C.roja : l === "verde" ? C.verde : C.luzBlanca;
-  return `<path class="kit-abanico kit-abanico--${l}" d="M${pts.join(" L")} Z" fill="${color}"/>`;
+  return `<path class="kit-abanico kit-abanico--${esBlanca(l) ? "blanca" : l}" d="M${pts.join(" L")} Z" fill="${colorDe(l)}"/>`;
 }
 
 /** Las piezas de un nivel, medidas: las del avión de perfil, y las luces en la planta. */
@@ -264,11 +282,12 @@ export function piezasDelNivel(i: number): readonly PiezaDibujada[] {
       margen: Math.max(46, 0.3 * Math.max(w, h)),
     };
   });
-  const orden = ORDEN_DE_LUCES[i] ?? LUCES;
-  const luces = LUCES.map((l) => ({
+  const suyas = lucesDe(nivel.tipo);
+  const orden = ORDEN_DE_LUCES[i]?.length === suyas.length ? ORDEN_DE_LUCES[i]! : suyas;
+  const luces = suyas.map((l) => ({
     sitio: l as Sitio,
-    centro: avion.planta.luces[l],
-    bandeja: [BANDEJA_DE_LUCES.x, BANDEJA_DE_LUCES.y0 + BANDEJA_DE_LUCES.paso * orden.indexOf(l)] as const,
+    centro: dondeVa(avion, l),
+    bandeja: [BANDEJA_DE_LUCES.x, BANDEJA_DE_LUCES.y0 + pasoDeLuces(suyas.length) * orden.indexOf(l)] as const,
     escala: 1,
     margen: 42,
   }));
@@ -308,14 +327,23 @@ function hojaDelAvion(i: number): string {
   const deriva = perfil.partes.find((p) => p.sol);
   const recorte = deriva ? `<clipPath id="${recorteDelSol(nivel.tipo)}" clipPathUnits="userSpaceOnUse"><path d="${deriva.d}"/></clipPath>` : "";
   const desdeArriba = planta.partes.map((p) => dibujoDe(p, nivel.tipo)).join("");
-  const huecosDeLuces = LUCES.map((l) => {
-    const [x, y] = planta.luces[l];
+  const suyas = lucesDe(nivel.tipo);
+  const huecosDeLuces = suyas.map((l) => {
+    const [x, y] = dondeVa(avion, l);
     // Con su color en los primeros niveles; la blanca, con borde de tinta, que si no en el papel no se ve.
-    const relleno = nivel.lucesConColor ? (l === "roja" ? C.roja : l === "verde" ? C.verde : C.luzBlanca) : "none";
-    const borde = nivel.lucesConColor && l !== "blanca" ? relleno : C.tinta;
+    const relleno = nivel.lucesConColor ? colorDe(l) : "none";
+    const borde = nivel.lucesConColor && !esBlanca(l) ? relleno : C.tinta;
+    /*
+     * Y sin pisarse: en el JAZ 90 la roja y la blanca de una punta van a
+     * quince puntos —delante y detrás de la misma punta de ala—, y dos huecos
+     * de nueve se tocaban. Uno algo más chico que la mitad de lo que las
+     * separa. Qué hueco recibe un toque lo decide la distancia: ver `alTocar`.
+     */
+    const cerca = Math.min(...suyas.filter((o) => o !== l).map((o) => Math.hypot(dondeVa(avion, o)[0] - x, dondeVa(avion, o)[1] - y)));
+    const r = Math.min(9, cerca / 2 - 1.5);
     return `<g class="kit-hueco kit-hueco--luz" data-sitio="${l}" role="button" aria-label="${etiqueta(l)}">
 <circle cx="${n(x)}" cy="${n(y)}" r="26" fill="transparent" stroke="none"/>
-<circle class="kit-hueco__forma" cx="${n(x)}" cy="${n(y)}" r="9" fill="${relleno}" fill-opacity=".55" stroke="${borde}"/></g>`;
+<circle class="kit-hueco__forma" cx="${n(x)}" cy="${n(y)}" r="${n(r)}" fill="${relleno}" fill-opacity=".55" stroke="${borde}"/></g>`;
   }).join("");
   const bandeja = piezas
     .map((pz) => {
@@ -332,12 +360,12 @@ function hojaDelAvion(i: number): string {
 <g class="kit-pieza__escala" style="--s: ${pz.escala.toFixed(3)}"><g class="kit-pieza__dibujo">${dibujo}</g></g></g>`;
     })
     .join("");
-  const encendidas = LUCES.map((l) => {
-    const [x, y] = planta.luces[l];
+  const encendidas = suyas.map((l) => {
+    const [x, y] = dondeVa(avion, l);
     // El sitio en un grupo y el latido en otro: el `transform` del CSS pisaría el del sitio.
     return `<g transform="translate(${n(x)} ${n(y)})"><g class="kit-luz" data-luz="${l}">${lampara(l, 6)}</g></g>`;
   }).join("");
-  const abanicos = LUCES.map((l) => abanico(l, planta.luces[l], 58)).join("");
+  const abanicos = suyas.map((l) => abanico(l, dondeVa(avion, l), 58)).join("");
   // De dónde sale la planta: del sitio del perfil, del mismo largo y con el morro a la derecha.
   const centro = (c: readonly [number, number, number, number]): readonly [number, number] => [(c[0] + c[2]) / 2, (c[1] + c[3]) / 2];
   const [px, py] = centro(perfil.caja);
@@ -355,7 +383,7 @@ function hojaDelAvion(i: number): string {
   return `<svg class="kit-hoja kit-hoja--avion" data-tipo="${nivel.tipo}" viewBox="0 0 ${ANCHO} ${ALTO}" xmlns="${SVG}" aria-label="${t("inicio.kit.avion")}" style="${giro}">
 <defs>${recorte}</defs>
 <rect class="kit-bandeja kit-bandeja--piezas" x="${BANDEJA.x0}" y="${BANDEJA.y - BANDEJA.alto / 2 - 3}" width="${BANDEJA.x1 - BANDEJA.x0}" height="${BANDEJA.alto + 6}" rx="18"/>
-<rect class="kit-bandeja kit-bandeja--luces" x="${BANDEJA_DE_LUCES.x - 40}" y="${BANDEJA_DE_LUCES.y0 - 40}" width="80" height="${BANDEJA_DE_LUCES.paso * 2 + 80}" rx="18"/>
+<rect class="kit-bandeja kit-bandeja--luces" x="${BANDEJA_DE_LUCES.x - 40}" y="${BANDEJA_DE_LUCES.y0 - 40}" width="80" height="${pasoDeLuces(suyas.length) * (suyas.length - 1) + 80}" rx="18"/>
 <ellipse class="kit-sombra" cx="${n((caja.x0 + caja.x1) / 2)}" cy="${n(perfil.suelo + 3)}" rx="${n((caja.x1 - caja.x0) * 0.42)}" ry="6" fill="${C.tinta}" fill-opacity=".12"/>
 <g class="kit-perfil" style="transform-origin: ${n(px)}px ${n(py)}px">
 <g class="kit-vuela" style="transform-origin: ${n((ruedas.x0 + ruedas.x1) / 2)}px ${n(perfil.suelo)}px">
@@ -709,15 +737,53 @@ export class PantallaDelKit {
       return;
     }
     const j = this.kit.juego;
-    const sitio = donde?.closest("[data-sitio]")?.getAttribute("data-sitio") as Sitio | null;
+    let sitio = donde?.closest("[data-sitio]")?.getAttribute("data-sitio") as Sitio | null;
     if (sitio && j instanceof JuegoDelAvion && !donde?.closest("[data-pieza]")) {
+      /*
+       * **Y entre huecos de luz, el más cercano** de los que faltan: en el JAZ
+       * 90 la roja y la blanca de una punta van a quince puntos y sus zonas de
+       * toque se pisan, y la de encima se llevaba el toque de la otra.
+       */
+      if (esLuz(sitio)) sitio = this.luzMasCercana(event, j) ?? sitio;
       this.kit.tocado();
       j.tocarSitio(sitio, this.kit.hayHueco);
     }
   };
 
+  /** El hueco de luz que falta más cerca de donde se tocó, en puntos de la hoja. */
+  private luzMasCercana(event: MouseEvent, j: JuegoDelAvion): Sitio | null {
+    const en = this.enLaHoja(event);
+    if (!en) return null;
+    const lejos = (s: Sitio): number => Math.hypot(en.x - this.pieza(s)!.centro[0], en.y - this.pieza(s)!.centro[1]);
+    return (
+      this.piezas
+        .map((p) => p.sitio)
+        .filter((s) => esLuz(s) && j.aMano(s))
+        .sort((p, q) => lejos(p) - lejos(q))[0] ?? null
+    );
+  }
+
+  /**
+   * **Las dos blancas se cambian de sitio en la bandeja**: son la misma
+   * lámpara, y soltada una en el hueco de la otra, va ahí. Para que la que se
+   * llevó sea la que se queda —y no vuelva a la bandeja mientras la otra salta
+   * al hueco—, se cambian el nombre y el sitio de espera.
+   */
+  private cambiarLasBlancas(a: Sitio, b: Sitio): void {
+    const ga = this.hoja.querySelector<SVGGElement>(`[data-pieza="${a}"]`);
+    const gb = this.hoja.querySelector<SVGGElement>(`[data-pieza="${b}"]`);
+    const pa = this.pieza(a);
+    const pb = this.pieza(b);
+    if (!ga || !gb || !pa || !pb) return;
+    ga.setAttribute("data-pieza", b);
+    gb.setAttribute("data-pieza", a);
+    this.piezas = this.piezas.map((p) =>
+      p === pa ? { ...pa, bandeja: pb.bandeja } : p === pb ? { ...pb, bandeja: pa.bandeja } : p,
+    );
+  }
+
   /** De la pantalla a los puntos de la hoja. */
-  private enLaHoja(event: PointerEvent): { x: number; y: number } | null {
+  private enLaHoja(event: MouseEvent): { x: number; y: number } | null {
     const svg = this.hoja.querySelector("svg");
     const m = svg?.getScreenCTM();
     if (!svg || !m) return null;
@@ -807,7 +873,14 @@ export class PantallaDelKit {
       .map((p) => p.sitio)
       .filter((s) => s !== a.pieza && j.aMano(s) && esLuz(s) === esLuz(a.pieza))
       .sort((p, q) => lejos(p) - lejos(q))[0];
-    j.soltar(a.pieza, otro && lejos(otro) < Math.max(CERCA_DE_OTRO, this.pieza(otro)!.margen * 0.8) ? otro : null, this.kit.hayHueco);
+    const cerca = otro && lejos(otro) < Math.max(CERCA_DE_OTRO, this.pieza(otro)!.margen * 0.8) ? otro : null;
+    // Una blanca en el hueco de la otra: es la misma lámpara. Ver `cambiarLasBlancas`.
+    if (cerca && esBlanca(a.pieza) && esBlanca(cerca)) {
+      this.cambiarLasBlancas(a.pieza, cerca);
+      j.soltar(cerca, cerca, this.kit.hayHueco);
+      return;
+    }
+    j.soltar(a.pieza, cerca, this.kit.hayHueco);
   };
 
   /**

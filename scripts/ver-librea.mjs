@@ -21,7 +21,7 @@ import { baseDe } from "./servidor.mjs";
 const CARPETA = process.argv[2] ?? "librea";
 const PEDIDOS = process.argv.slice(3);
 const TODOS = ["jaz-20", "jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
-const PUERTO = 5311;
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5311);
 
 /**
  * Las vistas. `dir` es de dónde se mira en los ejes del avión —x a la

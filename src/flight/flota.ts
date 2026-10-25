@@ -83,6 +83,13 @@ export interface Modelo {
    * una prueba. Ver `flota.test.ts`.
    */
   readonly enDisputa?: string;
+  /**
+   * **Dónde lleva la luz blanca de atrás**: en la cola, o en el borde de
+   * salida de cada punta de ala. La norma deja las dos —«as far aft as
+   * practicable», 14 CFR 25.1385(c)— y cada fabricante elige. Sin decir, en
+   * la cola. Ver `EquipoDeLuces` en `world/luces-del-trafico.ts`.
+   */
+  readonly blanca?: "cola" | "puntas";
 }
 
 /**
@@ -120,6 +127,13 @@ export const FLOTA: readonly Modelo[] = [
     pajaro: "trueno",
     silueta: "cola-en-t",
     id: "jaz-60",
+    /*
+     * La blanca, en la cola: **sin confirmar** para la clase del Beech 1900D.
+     * No se ha encontrado manual, MMEL ni foto de noche que diga si va en el
+     * cono de cola o en lo alto de la cola en T. Se queda en el cono, que es
+     * lo más atrás del avión.
+     */
+    blanca: "cola",
   },
   {
     numero: 90,
@@ -127,6 +141,15 @@ export const FLOTA: readonly Modelo[] = [
     pajaro: "nube",
     silueta: "reactor",
     id: "jaz-90",
+    /*
+     * **La blanca, en las puntas de ala**, una en el borde de salida de cada
+     * una, y no en el cono de cola: es lo que lleva su clase. La lista mínima
+     * de la FAA para el ERJ-170/190 (MMEL, ítem 33-43-00, «Navigation
+     * Lights»): «One green light at the right forward wingtip position, …
+     * one red light at the left forward wingtip position, and … one white
+     * light at each aft wingtip position».
+     */
+    blanca: "puntas",
     /*
      * **Se llamó Kuarahy y duró lo que tardó en verse la colisión.**
      *
@@ -146,6 +169,13 @@ export const FLOTA: readonly Modelo[] = [
     pajaro: "cielo",
     silueta: "cuatrimotor",
     id: "jaz-120",
+    /*
+     * La blanca, en el cono de cola, por donde sale la APU: «white (tail
+     * cone) position lights» (Boeing, FCOM del 747-400, D6-30151-425, 1.40),
+     * y la lista mínima de la FAA del 747-100/200 la llama «white tail light
+     * assembly». Lo blanco de las puntas de un 747 son los destellos.
+     */
+    blanca: "cola",
     /*
      * **El grande, y vuela los números de un 747 de verdad.**
      *

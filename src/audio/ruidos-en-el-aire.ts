@@ -42,6 +42,13 @@
 import { muestraDeHebilla, muestraDeLevantarse, type RuidoDeLaGente } from "./gente-del-pasaje";
 import type { Niveles, Suceso } from "./ruidos";
 
+/**
+ * **Dónde corta los agudos el aire de la cabina**, Hz: por encima, el soplido
+ * cae veinticuatro decibelios por octava. Ver «El aire de la cabina» en el
+ * constructor de `RuidosEnElAire`.
+ */
+export const AIRE_HZ = 350;
+
 /** El umbral de los granos: por debajo, nada; por encima, una gota. */
 export const UMBRAL_DE_GRANOS = 0.6;
 
@@ -404,9 +411,27 @@ export class RuidosEnElAire {
     this.capa("apu", this.apu, this.pared, 2);
 
     // ── El aire de la cabina ────────────────────────────────────────────
+    /*
+     * **Un soplido grave y sordo, no un siseo** (punto 218). Era ruido blanco
+     * por un paso banda en 800 Hz, de una octava larga a cada lado: un «shhh»
+     * de agudos, que es justo como suena la lluvia, y en el pasaje, en el
+     * puesto y con el cielo despejado, Enrique lo oyó llover. Bajarlo doce
+     * decibelios no le cambió el timbre. Lo que suena de verdad con los packs
+     * en marcha es el aire saliendo por los conductos del techo: un rumor
+     * constante con el peso abajo, que casi no se nota. Así que el mismo ruido
+     * por dos pasos bajos en 350 Hz —veinticuatro decibelios por octava por
+     * encima: lo que queda de agudos ya no se oye— y uno alto en 70, que lo de
+     * más abajo no lo da un altavoz de tablet y solo le roba margen a la mezcla.
+     * Sin modulación: un soplido no tiene gotas.
+     */
     this.aire = this.ganancia(0);
-    const aireFiltro = this.filtro("bandpass", 800, 0.5);
-    ruidoDelResto.connect(this.aire).connect(aireFiltro);
+    const aireSordo = this.filtro("lowpass", AIRE_HZ, Math.SQRT1_2);
+    const aireFiltro = this.filtro("highpass", 70, Math.SQRT1_2);
+    ruidoDelResto
+      .connect(this.aire)
+      .connect(this.filtro("lowpass", AIRE_HZ, Math.SQRT1_2))
+      .connect(aireSordo)
+      .connect(aireFiltro);
     this.capa("aire", aireFiltro, salida, 3);
 
     // ── Los golpes sueltos, generados una vez ───────────────────────────

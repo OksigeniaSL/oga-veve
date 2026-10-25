@@ -474,3 +474,60 @@ describe("los focos del JAZ 60, a la vista de frente", () => {
     expect(foco.x).toBeGreaterThan(1.2);
   });
 });
+
+/*
+ * ── Y la blanca donde la lleva cada clase ─────────────────────────────────
+ *
+ * La norma deja ponerla en la cola o en cada punta de ala (14 CFR
+ * 25.1385(c)), y cada fabricante elige. El JAZ 90, de la clase del E170, la
+ * lleva en el borde de salida de las dos puntas (FAA, MMEL ERJ-170/190,
+ * 33-43-00: «one white light at each aft wingtip position»); el JAZ 120, de
+ * la del 747, en el cono de cola (FCOM 747-400, 1.40: «white (tail cone)»).
+ * El JAZ 60 sigue en el cono, sin confirmar para el 1900D.
+ */
+describe("la blanca, en la cola o en las puntas según su clase", () => {
+  /** Índice de la otra blanca, la de la punta izquierda: ver `ORDEN`. */
+  const OTRA_BLANCA = 11;
+  const NAVEGANDO = { navegacion: true, baliza: false, estroboscopicas: false, aterrizaje: false, rodaje: false };
+
+  it("jaz-90: una en el borde de salida de cada punta de ala, y ninguna en la cola", async () => {
+    const raiz = await modelo("jaz-90");
+    const a = AIRCRAFT.find((x) => x.id === "jaz-90")!;
+    const l = crearLucesDePosicion(a, raiz);
+    l.paso(0, NAVEGANDO);
+    const p = puestas(l);
+    const t = l.luces.tamanosAhora;
+    expect(t[BLANCA], "la de la derecha, encendida").toBeGreaterThan(0);
+    expect(t[OTRA_BLANCA], "y la de la izquierda").toBeGreaterThan(0);
+    const derecha = p[BLANCA]!;
+    const izquierda = p[OTRA_BLANCA]!;
+    for (const b of [derecha, izquierda]) expect(Math.min(b.r, b.g, b.b)).toBeGreaterThan(0.8);
+    // En la punta: tan lejos del eje como la verde y la roja.
+    expect(derecha.x).toBeGreaterThan(p[VERDE]!.x - 0.5);
+    expect(izquierda.x).toBeLessThan(p[ROJA]!.x + 0.5);
+    // Y detrás de ellas, en el borde de salida, a la altura del ala.
+    expect(derecha.z).toBeGreaterThan(p[VERDE]!.z + 0.3);
+    expect(izquierda.z).toBeGreaterThan(p[ROJA]!.z + 0.3);
+    expect(Math.abs(derecha.y - p[VERDE]!.y)).toBeLessThan(0.5);
+    // Simétricas.
+    expect(izquierda.x).toBeCloseTo(-derecha.x, 1);
+    expect(izquierda.z).toBeCloseTo(derecha.z, 1);
+  });
+
+  for (const id of ["jaz-120", "jaz-60"]) {
+    it(`${id}: una sola, en el cono de cola`, async () => {
+      const raiz = await modelo(id);
+      const a = AIRCRAFT.find((x) => x.id === id)!;
+      const l = crearLucesDePosicion(a, raiz);
+      l.paso(0, NAVEGANDO);
+      const t = l.luces.tamanosAhora;
+      expect(t[BLANCA]).toBeGreaterThan(0);
+      expect(t[OTRA_BLANCA], "la otra blanca no la lleva").toBe(0);
+      const blanca = puestas(l)[BLANCA]!;
+      const caja = new Box3().setFromObject(raiz);
+      // En el eje y lo más atrás del avión.
+      expect(Math.abs(blanca.x)).toBeLessThan(0.05);
+      expect(blanca.z).toBeGreaterThan(caja.max.z - 0.01);
+    });
+  }
+});
