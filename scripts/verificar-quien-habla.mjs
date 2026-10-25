@@ -37,13 +37,23 @@ import { baseDe } from "./servidor.mjs";
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5292);
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 /*
- * **En Guyrami, que es donde habla la instructora en este trayecto.** Del
- * arranque al punto de espera, en Taguató no dijo ni una frase (medido el 24
- * de octubre de 2026: la torre cuatro, ella cero), y la comprobación de que no
- * comparte voz con la radio se quedaba sin nada suyo que comparar —«instructor
- * —», en rojo sin haber medido—. En Guyrami dice la suya y la torre las
- * suyas, que es lo que hace falta para compararlas. Para otro peldaño, el
- * segundo argumento.
+ * **En Guyrami, que es donde la instructora llega a hablar en este trayecto.**
+ * Del arranque al punto de espera, en Taguató no sonó ni una frase suya (la
+ * torre cuatro, ella cero), y la comprobación de que no comparte voz con la
+ * radio se quedaba sin nada suyo que comparar —«instructor —», en rojo sin
+ * haber medido—.
+ *
+ * **Y no es su peldaño**: la escalera no la calla en Taguató —ver
+ * `flight/escalera.ts`: lo que reparte es lo que se escribe y en qué idioma
+ * se canta, no si se habla—. Medido con lo que tira la boca, ella pidió
+ * cuatro veces y se le cayeron las cuatro: «arrancando» por ya no ser verdad,
+ * «autorizado» y «desde la intersección» por no caber en la cola, y su
+ * matrícula por caducar esperando. Es el salto de este banco al punto de
+ * espera, a seis por uno: mete en un instante lo que jugando llega en
+ * minutos, y en Taguató la torre dice además su fraseología —la intersección,
+ * la TORA, el «cleared for take-off»— y se queda con la cola. En Guyrami la
+ * torre dice menos y lo de ella cabe. Para otro peldaño, el segundo
+ * argumento; lo que se cayó sale al final, con su motivo.
  */
 const TRAMO = process.argv[3] ?? "guyrami";
 const AVION = process.argv[4] ?? "jaz-20";
@@ -269,6 +279,12 @@ comprobar("sin errores", !errores.length, errores[0] ?? "limpio", "");
 console.log("\n  quién habla:\n");
 for (const [q, n] of Object.entries(cuenta).sort((a, b) => b[1] - a[1]))
   console.log(`  · ${q.padEnd(11)} ${String(n).padStart(3)} frases  ·  ${(voces[q] ?? []).join(", ") || "—"}`);
+// Y qué dijo cada uno, que «cero frases» sin más no dice si es lo que toca.
+for (const [q, l] of Object.entries(dicho))
+  if (l.length) console.log(`    ${q}: ${l.slice(0, 8).join(", ")}${l.length > 8 ? " …" : ""}`);
+const tiradas = await page.evaluate(() => globalThis.__oga.descartadas?.() ?? []).catch(() => []);
+if (tiradas.length)
+  console.log(`    y la boca tiró: ${tiradas.slice(0, 8).map((d) => JSON.stringify(d)).join(" · ")}`);
 console.log("");
 for (const r of resultados) {
   console.log(`  ${r.ok ? "✓" : "✗"} ${r.nombre}  —  ${r.detalle}`);
