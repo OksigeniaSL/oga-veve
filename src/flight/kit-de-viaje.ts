@@ -60,6 +60,7 @@
 import { trozoDe, type PedidoDeCancion } from "../audio/cancion";
 import type { Linea } from "./conversacion";
 import type { Peldano } from "./escalera";
+import { modeloPorId } from "./flota";
 import { JuegoDeLaLuz, LINEAS_DE_LA_LUZ, type EstadoDeLaLuz } from "./luz-verde";
 
 /** Los juegos del kit. */
@@ -180,13 +181,31 @@ export type PiezaDelAvion =
   | "trenMorro"
   | "trenCola";
 
-/** **Las luces de navegación**: roja en la punta del ala izquierda, verde en la derecha, blanca atrás. */
-export type Luz = "roja" | "verde" | "blanca";
+/**
+ * **Las luces de navegación**: roja en la punta del ala izquierda, verde en la
+ * derecha, blanca atrás. Atrás es la cola o, en el avión que la lleva ahí, el
+ * borde de salida de cada punta de ala: dos blancas, `blanca` a la derecha y
+ * `otraBlanca` a la izquierda. Ver `lucesDe` y `Modelo.blanca` en `flota.ts`.
+ */
+export type Luz = "roja" | "verde" | "blanca" | "otraBlanca";
 export const LUCES: readonly Luz[] = ["roja", "verde", "blanca"];
+const LUCES_CON_DOS_BLANCAS: readonly Luz[] = [...LUCES, "otraBlanca"];
 
 /** Lo que se lleva a su sitio: una pieza o una luz. */
 export type Sitio = PiezaDelAvion | Luz;
-export const esLuz = (s: Sitio): s is Luz => (LUCES as readonly string[]).includes(s);
+export const esLuz = (s: Sitio): s is Luz => (LUCES_CON_DOS_BLANCAS as readonly string[]).includes(s);
+
+/** Si es una blanca: las dos son la misma lámpara, y cualquiera va en cualquiera de sus dos sitios. */
+export const esBlanca = (s: Sitio | null): boolean => s === "blanca" || s === "otraBlanca";
+
+/**
+ * **Las luces de un avión**, las de su clase: tres, o cuatro en el que lleva
+ * la blanca en las puntas de ala —el JAZ 90, de la clase del E170: «one white
+ * light at each aft wingtip position», FAA, MMEL ERJ-170/190, 33-43-00—.
+ */
+export function lucesDe(tipo: NivelDelAvion["tipo"]): readonly Luz[] {
+  return modeloPorId(tipo)?.blanca === "puntas" ? LUCES_CON_DOS_BLANCAS : LUCES;
+}
 
 /**
  * **Un nivel: un avión de la flota**, con sus piezas en el orden en que se
@@ -337,7 +356,7 @@ export class JuegoDelAvion extends Juego<Sitio> {
   /** Lo que falta por poner en la fase de ahora. */
   private faltan(): readonly Sitio[] {
     if (this.fase === "piezas") return this.deAhora.piezas.filter((p) => !this.puestas.includes(p));
-    if (this.fase === "luces") return LUCES.filter((l) => !this.puestas.includes(l));
+    if (this.fase === "luces") return lucesDe(this.deAhora.tipo).filter((l) => !this.puestas.includes(l));
     return [];
   }
 
@@ -382,6 +401,11 @@ export class JuegoDelAvion extends Juego<Sitio> {
     this.cogida = null;
     if (en === s) {
       this.poner(s, callada);
+      return true;
+    }
+    // Una blanca en el sitio de la otra, que falta: es la misma lámpara, y va ahí.
+    if (esBlanca(s) && esBlanca(en) && en && this.aMano(en)) {
+      this.poner(en, callada);
       return true;
     }
     if (en === null) return false;

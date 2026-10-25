@@ -399,15 +399,19 @@ function dibujarParte(tris, aHoja, hondo) {
 
 /**
  * **Cada tipo**: dónde se corta el morro para hacer la pieza del motor en las
- * avionetas de motor delante (L del cortafuegos, en metros) y si lleva el sol
- * de la casa en la cola, como su ficha (`appearance.motivo` en `aircraft.ts`).
+ * avionetas de motor delante (L del cortafuegos, en metros), si lleva el sol
+ * de la casa en la cola, como su ficha (`appearance.motivo` en `aircraft.ts`),
+ * y si lleva la luz blanca en las puntas de ala y no en la cola, como su
+ * modelo (`blanca` en `src/flight/flota.ts`, con su fuente): el JAZ 90, de la
+ * clase del E170, una en el borde de salida de cada punta. Lo comprueba
+ * `kit-de-viaje.test.ts`.
  */
 const TIPOS = [
   { id: "jaz-20", corteMorro: 1.7, sol: false },
   { id: "jaz-25", corteMorro: 3.1, sol: false },
   { id: "jaz-40", sol: true },
   { id: "jaz-60", sol: true },
-  { id: "jaz-90", sol: true },
+  { id: "jaz-90", sol: true, blancaEnLasPuntas: true },
   { id: "jaz-120", sol: true },
 ];
 
@@ -547,17 +551,20 @@ function tipo(t) {
   tren("trenMorro", /^(pata|rueda)-(de-)?morro/);
   tren("trenCola", /^(pata|rueda)-de-cola/);
 
-  // Las luces: en la punta de cada ala —del ala de arriba en el biplano— y la blanca, lo más atrás de la cola.
+  // Las luces: en la punta de cada ala —del ala de arriba en el biplano— y la blanca, lo más atrás de la cola,
+  // o en el borde de salida de cada punta en el que la lleva ahí: la de la derecha es `blanca` y la de la izquierda, `otraBlanca`.
   const alaDeLuces = vertices([hay("ala") ? "ala" : "ala-alta"]);
-  const punta = (s) => {
+  const punta = (s, haciaAtras = false) => {
     const pts = alaDeLuces.filter((p) => p[1] * s > 0.05);
     const extremo = pts.reduce((a, b) => (Math.abs(b[1]) > Math.abs(a[1]) ? b : a));
     const cerca = pts.filter((p) => Math.abs(p[1]) > Math.abs(extremo[1]) - 0.25);
-    const delante = cerca.reduce((a, b) => (b[0] > a[0] ? b : a));
-    return [delante[0], extremo[1], delante[2]];
+    const borde = cerca.reduce((a, b) => ((haciaAtras ? b[0] < a[0] : b[0] > a[0]) ? b : a));
+    return [borde[0], extremo[1], borde[2]];
   };
   const cola = fus.reduce((a, b) => (b[0] < a[0] ? b : a));
-  const luces = { roja: punta(-1), verde: punta(1), blanca: [cola[0], 0, cola[2]] };
+  const luces = t.blancaEnLasPuntas
+    ? { roja: punta(-1), verde: punta(1), blanca: punta(1, true), otraBlanca: punta(-1, true) }
+    : { roja: punta(-1), verde: punta(1), blanca: [cola[0], 0, cola[2]] };
 
   // Los discos de las hélices: su eje y su radio, de las palas.
   const discos = helices
@@ -713,9 +720,17 @@ export interface AvionDelModelo {
   readonly id: string;
   /** De perfil, y dónde está el suelo: lo más bajo de las ruedas. */
   readonly perfil: VistaDelModelo & { readonly suelo: number };
-  /** En planta, y dónde va cada luz de navegación: las puntas de las alas y lo más atrás de la cola. */
+  /**
+   * En planta, y dónde va cada luz de navegación: las puntas de las alas y lo más atrás de la cola; o, en el que
+   * la lleva en las puntas, la blanca en el borde de salida de la derecha y \`otraBlanca\` en el de la izquierda.
+   */
   readonly planta: VistaDelModelo & {
-    readonly luces: { readonly roja: readonly [number, number]; readonly verde: readonly [number, number]; readonly blanca: readonly [number, number] };
+    readonly luces: {
+      readonly roja: readonly [number, number];
+      readonly verde: readonly [number, number];
+      readonly blanca: readonly [number, number];
+      readonly otraBlanca?: readonly [number, number];
+    };
   };
 }
 `;

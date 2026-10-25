@@ -22,6 +22,7 @@ import {
   LO_QUE_HAY,
   LUCES,
   NIVELES,
+  lucesDe,
   NO_SE_REPITE,
   NOCHE,
   PARA_QUE_SIRVE,
@@ -30,7 +31,8 @@ import {
 } from "./kit-de-viaje";
 import { NO_REPETIR } from "../audio/boca";
 import { JuegoDeLaLuz } from "./luz-verde";
-import { FLOTA } from "./flota";
+import { FLOTA, modeloPorId } from "./flota";
+import { AVIONES_DEL_MODELO } from "../ui/aviones-del-kit";
 
 /** Un azar con semilla, para que lo que falla se pueda repetir. */
 function azar(semilla: number): () => number {
@@ -74,7 +76,10 @@ function darLaVuelta(j: JuegoDelAvion): void {
 /** Pone todo lo de la fase de ahora, a su sitio, y devuelve lo puesto; con las piezas, también la vuelta hasta las luces. */
 function ponerLaFase(j: JuegoDelAvion): Sitio[] {
   const e = j.estado;
-  const faltan: Sitio[] = e.fase === "piezas" ? NIVELES[e.nivel]!.piezas.filter((p) => !e.puestas.includes(p)) : LUCES.filter((l) => !e.puestas.includes(l));
+  const faltan: Sitio[] =
+    e.fase === "piezas"
+      ? NIVELES[e.nivel]!.piezas.filter((p) => !e.puestas.includes(p))
+      : lucesDe(e.tipo).filter((l) => !e.puestas.includes(l));
   for (const s of faltan) expect(j.soltar(s, s), s).toBe(true);
   darLaVuelta(j);
   return faltan;
@@ -221,7 +226,7 @@ describe("armá tu avión", () => {
     for (let semilla = 1; semilla <= 20; semilla++) {
       const r = azar(semilla);
       const j = new JuegoDelAvion();
-      const todos: Sitio[] = [...new Set(NIVELES.flatMap((n) => n.piezas)), ...LUCES];
+      const todos: Sitio[] = [...new Set(NIVELES.flatMap((n) => n.piezas)), ...LUCES, "otraBlanca"];
       const elegir = (): Sitio => todos[Math.floor(r() * todos.length)]!;
       for (let paso = 0; paso < 40000 && !j.terminado; paso++) {
         const s = elegir();
@@ -233,6 +238,51 @@ describe("armá tu avión", () => {
       }
       expect(j.terminado, `semilla ${semilla}`).toBe(true);
     }
+  });
+});
+
+/*
+ * **La blanca, donde la lleva cada clase** (14 CFR 25.1385(c): en la cola o
+ * en cada punta de ala). El JAZ 90, de la clase del E170, lleva una en el
+ * borde de salida de cada punta (FAA, MMEL ERJ-170/190, 33-43-00), así que su
+ * nivel tiene dos blancas que poner, y son la misma lámpara.
+ */
+describe("armá tu avión: la luz blanca", () => {
+  it("cada avión del kit lleva las blancas de su ficha: en la cola, o una en cada punta", () => {
+    for (const n of NIVELES) {
+      const luces = AVIONES_DEL_MODELO[n.tipo]!.planta.luces;
+      const enLasPuntas = modeloPorId(n.tipo)?.blanca === "puntas";
+      expect(!!luces.otraBlanca, n.tipo).toBe(enLasPuntas);
+      expect(lucesDe(n.tipo).length, n.tipo).toBe(enLasPuntas ? 4 : 3);
+      if (enLasPuntas) {
+        // Detrás de la roja y de la verde, en su misma punta: en la planta el morro va arriba.
+        expect(luces.blanca[1], n.tipo).toBeGreaterThan(luces.verde[1]);
+        expect(luces.otraBlanca![1], n.tipo).toBeGreaterThan(luces.roja[1]);
+        expect(Math.abs(luces.blanca[0] - luces.verde[0]), n.tipo).toBeLessThan(6);
+        expect(Math.abs(luces.otraBlanca![0] - luces.roja[0]), n.tipo).toBeLessThan(6);
+      } else {
+        // En la cola: en el eje, entre la roja y la verde, y detrás de las dos.
+        expect(luces.blanca[0], n.tipo).toBeCloseTo((luces.roja[0] + luces.verde[0]) / 2, 0);
+        expect(luces.blanca[1], n.tipo).toBeGreaterThan(luces.verde[1]);
+      }
+    }
+    expect(lucesDe("jaz-90")).toContain("otraBlanca");
+  });
+
+  it("jaz-90: una blanca soltada en el hueco de la otra va ahí, y el avión se acaba con las cuatro", () => {
+    const nivel = NIVELES.findIndex((n) => n.tipo === "jaz-90");
+    const j = new JuegoDelAvion(nivel);
+    ponerLaFase(j);
+    expect(j.estado.fase).toBe("luces");
+    expect(j.soltar("roja", "roja")).toBe(true);
+    expect(j.soltar("verde", "verde")).toBe(true);
+    // La de la derecha, soltada en el hueco de la izquierda: encaja, sin fallo ni ayuda.
+    expect(j.soltar("blanca", "otraBlanca")).toBe(true);
+    expect(j.estado.ilumina).toBe(null);
+    expect(j.puesta("otraBlanca")).toBe(true);
+    expect(j.estado.fase).toBe("luces");
+    expect(j.soltar("blanca", "blanca")).toBe(true);
+    expect(j.estado.fase).toBe("noche");
   });
 });
 
