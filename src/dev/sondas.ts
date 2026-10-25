@@ -664,6 +664,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     voz: () => ({
       piezas: juego.instructor.cuantasPiezas,
+      porVoz: juego.instructor.piezasPorVoz,
       // Y cómo va la bajada: desde que los manifiestos llegan primero, saber
       // quién dice qué ya no quiere decir que sus piezas estén bajadas.
       pack: juego.instructor.estadoDelPack,
@@ -878,6 +879,23 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       for (const [quien, boca] of Object.entries(juego.bocas)) {
         salida[quien] =
           boca instanceof InstructorGrabado ? [...boca.historial] : [];
+      }
+      return salida;
+    },
+    /**
+     * Lo mismo, con las piezas con que sonó cada frase, o `null` si no sonó
+     * grabada. Ver `InstructorGrabado.piezasDelHistorial`.
+     */
+    dichoConPiezas: () => {
+      const salida: Record<string, { clave: string; piezas: readonly string[] | null }[]> = {};
+      for (const [quien, boca] of Object.entries(juego.bocas)) {
+        salida[quien] =
+          boca instanceof InstructorGrabado
+            ? boca.historial.map((clave, i) => ({
+                clave,
+                piezas: boca.piezasDelHistorial[i] ?? null,
+              }))
+            : [];
       }
       return salida;
     },

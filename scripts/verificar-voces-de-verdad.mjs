@@ -29,6 +29,7 @@
  *
  * Uso: `node scripts/verificar-voces-de-verdad.mjs [escenario] [avión]`
  */
+import { readFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
@@ -145,7 +146,7 @@ try {
 
     const fase = await page.evaluate(() => globalThis.__oga.fase()).catch(() => "?");
     const pedido = await page
-      .evaluate(() => globalThis.__oga.dichoTodo?.() ?? {})
+      .evaluate(() => globalThis.__oga.dichoConPiezas?.() ?? {})
       .catch(() => ({}));
     const oido = await loOido(page);
     const frases = frasesOidas(oido.sonidos);
@@ -164,17 +165,38 @@ try {
       crosscheck && crosscheck.entera,
       crosscheck
         ? `${enUnaLinea(crosscheck, cero)} · fase ${fase}`
-        : `no sonó · la comandante pidió: ${(pedido.comandante ?? []).join(", ") || "nada"} · ` +
+        : `no sonó · la comandante pidió: ${(pedido.comandante ?? []).map((p) => p.clave).join(", ") || "nada"} · ` +
             `oído de ella: ${deJazlyn.map((f) => f.piezas[0]).join(", ") || "nada"} · fase ${fase}`,
     );
     /*
      * Y todo lo que la comandante pidió decir sonó: lo pedido que no llegó
      * al altavoz es justo lo que en casa era silencio.
+     *
+     * **Con las piezas de su receta, no con el nombre de la clave.** Se
+     * buscaba una pieza oída que empezara por la clave pedida, y eso solo
+     * vale para las frases que son una pieza con su nombre. Las recetas de
+     * huecos no: `comandante.bienvenidaConPlan` es `{saludo?} {bienvenida}
+     * {vuelo?}…` —ver su `manifiesto.json` y `crudo/comandante/recetas.json`—
+     * y lo que suena son la bienvenida a su destino, la duración y el nivel,
+     * que se llaman de otra manera. Sonaba entera y salía «sin sonar». Ahora
+     * el juego dice con qué piezas montó cada frase —lo que llenó sus huecos
+     * al pedirla— y se busca esa tira entera, en orden, entre lo oído de
+     * ella. Lo que no tenía grabación sale con piezas nulas, que es lo que
+     * en casa no se oía.
      */
-    const pedidoDeElla = (pedido.comandante ?? []).map((c) => c.replace(/~\d+$/, ""));
-    const sinSonar = pedidoDeElla.filter(
-      (c) => !deJazlyn.some((f) => f.piezas.some((p) => p.startsWith(c))),
-    );
+    const RECETAS = JSON.parse(
+      readFileSync("data/voces/comandante/manifiesto.json", "utf8"),
+    ).recetas;
+    const contiene = (oidas, tira) =>
+      oidas.some((_, i) => tira.every((p, j) => oidas[i + j] === p));
+    const pedidoDeElla = pedido.comandante ?? [];
+    const sinSonar = pedidoDeElla
+      .filter(
+        ({ piezas }) => !piezas || !deJazlyn.some((f) => contiene(f.piezas, piezas)),
+      )
+      .map(({ clave, piezas }) =>
+        !RECETAS[clave] ? `${clave} (sin receta)` : !piezas ? `${clave} (sin grabación)` : clave,
+      );
     comprobar(
       `${como}: lo que pidió la comandante, sonó`,
       pedidoDeElla.length > 0 && sinSonar.length === 0,

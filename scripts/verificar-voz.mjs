@@ -34,7 +34,15 @@ import { baseDe } from "./servidor.mjs";
 
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5284);
 const VOZ = "instructor";
-const TOMAS = join("node_modules", ".cache", "tomas-de-prueba");
+/*
+ * **Su propia carpeta, en el árbol donde corre.** Las tomas de mentira y el
+ * pack apartado iban a `node_modules/.cache`, y en una copia de trabajo
+ * enlazada `node_modules` es el de la copia principal: el pack de verdad de
+ * una copia se apartaba dentro de otra, y dos bancos a la vez en dos copias
+ * se pisaban el apartado. Ver `.gitignore`.
+ */
+const CARPETA = ".banco-de-voz";
+const TOMAS = join(CARPETA, "tomas-de-prueba");
 const PACK = join("data", "voces", VOZ);
 
 /** Las piezas del pack de mentira, y las frases que montan. */
@@ -98,7 +106,7 @@ function recoger() {
 }
 
 /** Dónde se guarda el pack de verdad mientras corre el banco. */
-const GUARDADO = join("node_modules", ".cache", "pack-de-voz-guardado");
+const GUARDADO = join(CARPETA, "pack-de-voz-guardado");
 
 /**
  * Aparta el pack de verdad, si lo hay, y devuelve cómo devolverlo.
@@ -181,16 +189,27 @@ const BASE = baseDe(server, PUERTO);
     "bajarlo al arrancar sería gastar la red de alguien que quizá juegue en silencio",
   );
 
-  // El primer gesto: es lo que despierta el audio y lo que dispara la bajada.
+  /*
+   * El primer gesto: es lo que despierta el audio y lo que dispara la bajada.
+   *
+   * **Y se cuentan las piezas de esta voz, no todas.** El juego baja hoy las
+   * nueve voces —ver `cargar` en `audio/instructor-grabado.ts`— y aquí solo
+   * se cambia la del instructor por la de mentira: las otras son las de
+   * verdad, y siguen bajando de fondo. Contadas juntas daban «6 de 4» y «14
+   * de 4» según cuándo se mirase, con el pack de mentira entero.
+   */
+  const deEstaVoz = (v) => v.porVoz?.[VOZ] ?? 0;
   await page.mouse.click(450, 500);
-  await page.waitForFunction(() => globalThis.__oga.voz().piezas > 0, null, {
-    timeout: 30000,
-  });
+  await page.waitForFunction(
+    ([voz, n]) => (globalThis.__oga.voz().porVoz?.[voz] ?? 0) >= n,
+    [VOZ, PIEZAS.length],
+    { timeout: 30000 },
+  ).catch(() => {});
   const cargado = await page.evaluate(() => globalThis.__oga.voz());
   comprobar(
     "y con el primer gesto se baja el pack entero",
-    cargado.piezas === PIEZAS.length,
-    `${cargado.piezas} de ${PIEZAS.length} piezas`,
+    deEstaVoz(cargado) === PIEZAS.length,
+    `${deEstaVoz(cargado)} de ${PIEZAS.length} piezas`,
     "un pack a medias deja frases cojas, y media frase es peor que ninguna",
   );
 
@@ -257,17 +276,28 @@ const BASE = baseDe(server, PUERTO);
    * pack por partes y oír el resultado el mismo día en vez de esperar a las
    * ciento dieciséis frases.
    */
+  /*
+   * **Mirando con qué piezas sonó, no cuál fue la última.** «La última» es
+   * hoy la última que se pidió, la diga quien la diga —es lo que usa la boca
+   * para no repetirse—, así que una frase sin grabar también pasa a ser la
+   * última y esto salía en rojo con el mecanismo bien. Lo que dice si la dijo
+   * la persona es si sonó con piezas suyas: ver `dichoConPiezas`.
+   */
   const suplente = await page.evaluate(async () => {
     const o = globalThis.__oga;
-    const antes = o.voz().ultima;
     o.decirlo("vuelo.estacionado");
     await new Promise((r) => setTimeout(r, 400));
-    return { antes, ahora: o.voz() };
+    return o.dichoConPiezas().instructor.filter((d) => d.clave === "vuelo.estacionado");
   });
+  const conPiezas = suplente.filter((d) => d.piezas);
   comprobar(
     "lo que todavía no está grabado no lo dice la persona",
-    suplente.ahora.ultima === suplente.antes,
-    `última sigue siendo «${suplente.ahora.ultima}»`,
+    suplente.length > 0 && conPiezas.length === 0,
+    suplente.length === 0
+      ? "no llegó a pedirse"
+      : conPiezas.length
+        ? `sonó con ${conPiezas[0].piezas.join(" ")}`
+        : "pedida, y sin piezas grabadas",
     "una frase a medias con la voz de otro es peor que la voz del navegador entera",
   );
 
@@ -285,8 +315,12 @@ const BASE = baseDe(server, PUERTO);
    */
   const otra = await contexto.newPage();
   const pedidas = [];
+  /*
+   * Las de esta voz: las otras ocho siguen bajando de fondo lo que no les
+   * dio tiempo en la primera sesión, y eso no es volver a pedir nada.
+   */
   otra.on("request", (r) => {
-    if (r.url().includes("/data/voces/")) pedidas.push(r.url());
+    if (r.url().includes(`/data/voces/${VOZ}/`)) pedidas.push(r.url());
   });
   await otra.addInitScript(() =>
     localStorage.setItem("oga-veve:teclas-vistas", "1"),
@@ -297,15 +331,17 @@ const BASE = baseDe(server, PUERTO);
   });
   await otra.mouse.click(450, 500);
   await otra
-    .waitForFunction(() => globalThis.__oga.voz().piezas > 0, null, {
-      timeout: 30000,
-    })
+    .waitForFunction(
+      ([voz, n]) => (globalThis.__oga.voz().porVoz?.[voz] ?? 0) >= n,
+      [VOZ, PIEZAS.length],
+      { timeout: 30000 },
+    )
     .catch(() => {});
   const segunda = await otra.evaluate(() => globalThis.__oga.voz());
   comprobar(
     "la segunda sesión tiene el pack igual",
-    segunda.piezas === PIEZAS.length,
-    `${segunda.piezas} de ${PIEZAS.length} piezas`,
+    deEstaVoz(segunda) === PIEZAS.length,
+    `${deEstaVoz(segunda)} de ${PIEZAS.length} piezas`,
     "de nada sirve guardarlo si a la vuelta no está",
   );
   /*
