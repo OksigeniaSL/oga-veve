@@ -27,6 +27,20 @@
  * (slideshare.net/slideshow/b737-ng-communications/29381095) y FlyByWire
  * (docs.flybywiresim.com/pilots-corner/a32nx/a32nx-briefing/flight-deck/ovhd/signs/).
  *
+ * **Y lo mismo en la clase del JAZ 90**, comprobado el 25-10-2026 (punto
+ * 215): el manual de operación del E170/175 (AOM-1502-003, rev. 21, 14-01-40,
+ * «Call system table») da «single lo tone chime» al encenderse o apagarse un
+ * cartel del pasaje —«an aural signal sounds whenever any passenger sign is
+ * turned on or off»—, «single hi tone chime» con luz azul para el pasajero
+ * que llama, «single HI/LO» con luz verde para la llamada de la cabina de
+ * mando a la tripulación y «triple HI/LO» con luz roja para la de
+ * emergencia. El boletín del AAIB 1/2010 (E195, G-FBEH) lo confirma en el
+ * otro sentido: la llamada de la tripulación a la cabina de mando, una nota,
+ * y la de emergencia, tres. En Boeing (OM del 737-300/400/500, 5.20.4), la
+ * llamada de la tripulación de cabina a la cabina de mando es una nota aguda,
+ * y la de dos notas solo va de la cabina de mando a la tripulación, que es la
+ * única que suena aquí.
+ *
  * ## Desde dónde se oye
  *
  * Suenan por los altavoces del techo del pasaje: ahí a tope. **En la cabina de
