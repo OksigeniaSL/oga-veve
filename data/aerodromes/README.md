@@ -75,8 +75,10 @@ relieve medido de Copernicus, así que un error así ya no pasa callado.
 Lo mismo con los **umbrales desplazados**: la cifra de cada cabecera, con su
 AIP y su enmienda, está en `src/world/umbrales-publicados.ts`, y
 `umbrales-publicados.test.ts` comprueba que cada fichero de aquí dice lo
-mismo. Los que se corrigieron —Fuerteventura, Lanzarote y la pista entera de
-La Palma, que OpenStreetMap dibujaba 58 m más corta— van marcados `manual`.
+mismo. Los que se corrigieron —Fuerteventura, Lanzarote, la pista entera de
+La Palma, que OpenStreetMap dibujaba 58 m más corta, y la de Pilar, que la
+AMDT AIRAC 02/2026 alargó a 1.500 m con el umbral 02 desplazado— van marcados
+`manual`.
 
 ## Lo que hay ahora
 

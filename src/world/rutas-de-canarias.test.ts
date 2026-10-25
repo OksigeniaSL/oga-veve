@@ -678,6 +678,30 @@ describe("lo que dura el vuelo", () => {
     expect(vistos).toBeGreaterThan(TRAMOS.length / 2);
   });
 
+  it("de Fuerteventura a Gran Canaria con el JAZ 120, los quince minutos del descenso son los que faltan (242)", () => {
+    /*
+     * Enrique, el 4 de octubre, con el JAZ 120: «tardaremos quince minutos»
+     * al empezar a bajar, y a los quince aún quedaba la final. Se mira aquí
+     * el caso con el avión con el que voló, que no estaba entre los de
+     * arriba: volando el plan a la velocidad de la escalera —250 nudos bajo
+     * el nivel 100, la de maniobra en el área terminal, la de flaps y la de
+     * final—, lo que dice al empezar a bajar es lo que falta, al minuto, y
+     * dicho se queda en quince. Si con el juego de verdad se tarda más, no
+     * es esta cuenta: es volar más despacio que la escalera o fuera del plan.
+     */
+    const jaz120 = AIRCRAFT.find((a) => a.id === "jaz-120")!;
+    const tramos = TRAMOS.filter((t) => t.nombre.startsWith("GCFV") && t.nombre.includes("→ GCLP"));
+    expect(tramos.length).toBeGreaterThan(0);
+    for (const t of tramos) {
+      const v = volar(t, jaz120);
+      expect(v.alBajar, t.nombre).not.toBeNull();
+      const falta = v.total - v.alBajar!.reloj;
+      expect(Math.abs(falta - v.alBajar!.eta), t.nombre).toBeLessThan(60);
+      expect(minutosDichos(v.alBajar!.eta), t.nombre).toBe(15);
+      expect(Math.abs(falta / 60 - 15), t.nombre).toBeLessThan(2.5);
+    }
+  });
+
   it("y volando más despacio de lo planeado, la hora lo dice", () => {
     /*
      * Enrique voló lento a propósito, porque con el teclado no sostenía el
