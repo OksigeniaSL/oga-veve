@@ -97,12 +97,11 @@ describe("cuánto cuenta, según lo que dura el tramo", () => {
    * Gomera con el JAZ 60 —diecinueve plazas, sin auxiliar— se volaba entero
    * en silencio entre el cartel y la bajada: «la comandante no habla».
    */
-  it("pero sin servicio a bordo, ese rato es de la comandante: una cosa desde los quince, dos desde los veinte", () => {
+  it("pero sin servicio a bordo, ese rato es de la comandante: desde los quince, las dos", () => {
     expect(cuantosSueltos(12, false)).toBe(0);
-    expect(cuantosSueltos(17, false)).toBe(1);
-    expect(cuantosSueltos(20, false)).toBe(2);
+    expect(cuantosSueltos(17, false)).toBe(2);
     const dichos = volar(17, { conTripulacion: false, servicioDicho: false }, 15 * 60, 8 * 60);
-    expect(dichos.map((d) => d.que)).toEqual(["curiosidad"]);
+    expect(dichos.map((d) => d.que)).toEqual(["curiosidad", "chicos"]);
   });
 
   /*

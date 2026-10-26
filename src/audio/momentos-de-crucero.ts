@@ -26,9 +26,9 @@
  *
  * Así que no se dice todo en todos los vuelos. **Cuánto, lo pone la duración
  * del tramo**: en un salto entre islas de veinte minutos, nada más que el
- * guion —o una cosa, si no hay servicio que llene ese rato—; desde media hora
- * larga, una cosa; desde cuarenta minutos, además el punto del vuelo; y desde
- * la hora, todo. Ver `cuantosSueltos`.
+ * guion —o el saludo y la curiosidad, si no hay tripulación que llene ese
+ * rato—; desde media hora larga, una cosa; desde cuarenta minutos, además el
+ * punto del vuelo; y desde la hora, todo. Ver `cuantosSueltos`.
  *
  * Y nunca encima de nadie: cada cosa espera **su hueco** —el reparto de
  * `Huecos` en `turnos.ts`, el mismo de lo que se ve por la ventanilla y de las
@@ -115,16 +115,14 @@ export const PARA_LA_MITAD = 40;
 export const PARA_TODO = 60;
 
 /**
- * **Y sin servicio, desde los quince.** Lo que llena un salto de veinte
- * minutos es el agua que pasa por el pasillo, y en un avión sin tripulación de
- * cabina —el JAZ 60, de diecinueve plazas— no pasa nadie: el rato del
- * servicio queda libre, y de El Hierro a La Gomera se volaba entero en
- * silencio entre el cartel y la bajada. Ahí cabe una cosa, la que en un vuelo
- * más largo iría primero.
+ * **Y sin servicio, desde los quince, las dos.** Lo que llena un salto de
+ * veinte minutos es la tripulación —el servicio, los cinturones, prepararse
+ * para aterrizar—, y en un avión sin tripulación de cabina —el JAZ 60, de
+ * diecinueve plazas— no pasa nadie: ese rato queda libre, y de El Hierro a La
+ * Gomera se volaba entero en silencio entre el cartel y la bajada. Ahí caben
+ * el saludo y la curiosidad, repartidos por el crucero.
  */
-export const PARA_UNO_SIN_SERVICIO = 15;
-/** Y desde los veinte, las dos: el saludo y la curiosidad, repartidos. */
-export const PARA_DOS_SIN_SERVICIO = 20;
+export const PARA_DOS_SIN_SERVICIO = 15;
 
 /**
  * Cuánto tiene que haber callado la megafonía antes de contar algo, s.
@@ -206,8 +204,7 @@ export interface EnCrucero {
  */
 export function cuantosSueltos(minutos: number | null, conServicio = true): number {
   if (minutos === null) return 0;
-  if (!conServicio)
-    return minutos < PARA_UNO_SIN_SERVICIO ? 0 : minutos < PARA_DOS_SIN_SERVICIO ? 1 : 2;
+  if (!conServicio) return minutos < PARA_DOS_SIN_SERVICIO ? 0 : 2;
   if (minutos < PARA_UNO) return 0;
   return minutos < PARA_TODO ? 1 : 2;
 }
