@@ -125,6 +125,39 @@ export function canalesDe(peldano: Peldano): Canales {
 }
 
 /**
+ * **Los calcos de la carta**: qué capas lleva el mapa en cada peldaño.
+ *
+ * La carta crece como unas hojas de papel calco puestas una encima de otra:
+ * se suman y nunca se retiran. Son los mismos canales de arriba, dichos en
+ * cosas de mapa —ver la hoja de estilo de la carta, apartado 10—:
+ *
+ * - **Guyrami, «el territorio»**: el papel, el mar con sus veriles, el relieve
+ *   con su cubierta y su sombreado, la costa, los ríos, los aeródromos, el
+ *   avión y la ruta. Ni una letra ni un número: un mapa se lee sin leer.
+ * - **Tukã, «los nombres»**: islas, sitios, aeródromos y el agua.
+ * - **Taguato, «las cifras»**: cotas, la designación de la pista, la elevación
+ *   del aeródromo, el rumbo y las millas de la ruta, y la retícula con sus
+ *   grados.
+ * - **Taguato Ruvicha, «la radio»**: las frecuencias, la declinación y las
+ *   cifras de la rosa.
+ *
+ * **Y el indicativo OACI va en los cuatro.** La hoja lo pone en el calco de
+ * la radio, pero el mapa del país ya lo enseñaba al lado de cada punto a todo
+ * el mundo antes de ser carta, y lo que alguien ya veía no se le quita: son
+ * cuatro letras que no se leen sino que se reconocen, como una matrícula.
+ */
+export interface Calcos {
+  readonly nombres: boolean;
+  readonly cifras: boolean;
+  readonly radio: boolean;
+}
+
+export function calcosDe(peldano: Peldano): Calcos {
+  const c = CANALES[peldano];
+  return { nombres: c.texto, cifras: c.cifra, radio: c.cabina };
+}
+
+/**
  * **Desde qué peldaño, de uno a cuatro, lleva su número lo que se avisa con un
  * número**: el tercero, el de `cifra`.
  *
