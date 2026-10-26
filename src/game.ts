@@ -27849,6 +27849,7 @@ export class Game {
         BOCA.esperaAlguna((c) => esDeLaMegafonia(c)),
       minutosDelTramo: this.minutosDelTramo ?? null,
       faltan,
+      alDescenso: this.segundosAlDescenso(),
       primero: this.primerSuelto,
       hay: (m) => hayAlgoQueContar(m, grabada),
     });
@@ -27877,6 +27878,19 @@ export class Game {
       dicho.relleno,
       this.tiraAlSonar(dicho.texto, null),
     );
+  }
+
+  /**
+   * **Lo que falta para el punto de descenso del plan**, s, a la velocidad
+   * por el suelo de ahora; `null` sin plan hacia el destino o con el punto ya
+   * pasado. Ver `ANTES_DEL_DESCENSO` en `audio/momentos-de-crucero.ts`.
+   */
+  private segundosAlDescenso(): number | null {
+    const destino = this.elDestino();
+    const p = this.navegacion.progreso;
+    if (!destino || !p || p.descenso === null || this.navegacion.bajando) return null;
+    if (this.segundosDelPlanHasta(destino.id) === null) return null;
+    return Math.max(0, p.restante - p.descenso) / Math.max(30, this.flight.state.groundSpeed);
   }
 
   /** Lo que contó la comandante en el crucero de este vuelo, para los bancos. */

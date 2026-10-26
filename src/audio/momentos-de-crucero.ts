@@ -26,8 +26,9 @@
  *
  * Así que no se dice todo en todos los vuelos. **Cuánto, lo pone la duración
  * del tramo**: en un salto entre islas de veinte minutos, nada más que el
- * guion; desde media hora larga, una cosa; desde cuarenta minutos, además el
- * punto del vuelo; y desde la hora, todo. Ver `cuantosSueltos`.
+ * guion —o una cosa, si no hay servicio que llene ese rato—; desde media hora
+ * larga, una cosa; desde cuarenta minutos, además el punto del vuelo; y desde
+ * la hora, todo. Ver `cuantosSueltos`.
  *
  * Y nunca encima de nadie: cada cosa espera **su hueco** —el reparto de
  * `Huecos` en `turnos.ts`, el mismo de lo que se ve por la ventanilla y de las
@@ -114,6 +115,18 @@ export const PARA_LA_MITAD = 40;
 export const PARA_TODO = 60;
 
 /**
+ * **Y sin servicio, desde los quince.** Lo que llena un salto de veinte
+ * minutos es el agua que pasa por el pasillo, y en un avión sin tripulación de
+ * cabina —el JAZ 60, de diecinueve plazas— no pasa nadie: el rato del
+ * servicio queda libre, y de El Hierro a La Gomera se volaba entero en
+ * silencio entre el cartel y la bajada. Ahí cabe una cosa, la que en un vuelo
+ * más largo iría primero.
+ */
+export const PARA_UNO_SIN_SERVICIO = 15;
+/** Y desde los veinte, las dos: el saludo y la curiosidad, repartidos. */
+export const PARA_DOS_SIN_SERVICIO = 20;
+
+/**
  * Cuánto tiene que haber callado la megafonía antes de contar algo, s.
  *
  * Un minuto y medio. El hueco de `Huecos` es de quince segundos detrás de un
@@ -130,6 +143,18 @@ export const ENTRE_ANUNCIOS = 90;
  * minutos de «empezamos a bajar» la pisa o la empuja.
  */
 export const ANTES_DE_BAJAR = 8 * 60;
+
+/**
+ * **Y con el punto de descenso a la vista, lo que falta para él**, s: con
+ * menos de esto ya no se empieza nada.
+ *
+ * Los ocho minutos de arriba se cuentan hasta tocar tierra, y en un vuelo
+ * alto eso cae ya bajando; en un salto corto a cuatro mil pies, con la bajada
+ * de cinco minutos, cerraban el crucero tres minutos antes de empezar a
+ * bajar, y ese rato se volaba en silencio. Lo que se quería guardar era el
+ * aire entre lo que se cuenta y «empezamos a bajar»: dos minutos y medio.
+ */
+export const ANTES_DEL_DESCENSO = 150;
 
 /**
  * **Hasta cuándo es la mitad del camino**, en lo que queda del tramo.
@@ -164,15 +189,26 @@ export interface EnCrucero {
   readonly minutosDelTramo: number | null;
   /** Lo que falta para tocar según el plan, s, o `null` si no se sabe. */
   readonly faltan: number | null;
+  /**
+   * Lo que falta para el punto de descenso del plan, s, o `null` si no se
+   * sabe o ya se pasó. Ver `ANTES_DEL_DESCENSO`.
+   */
+  readonly alDescenso?: number | null;
   /** Cuál de los dos sueltos va primero: el que no se contó la última vez. */
   readonly primero: Suelto;
   /** Si hay algo grabado que contar de cada cosa. */
   readonly hay: (m: MomentoDeCrucero) => boolean;
 }
 
-/** Cuántos de los dos sueltos caben en un tramo de estos minutos. */
-export function cuantosSueltos(minutos: number | null): number {
-  if (minutos === null || minutos < PARA_UNO) return 0;
+/**
+ * Cuántos de los dos sueltos caben en un tramo de estos minutos: con servicio
+ * a bordo, o sin él. Ver `PARA_UNO_SIN_SERVICIO`.
+ */
+export function cuantosSueltos(minutos: number | null, conServicio = true): number {
+  if (minutos === null) return 0;
+  if (!conServicio)
+    return minutos < PARA_UNO_SIN_SERVICIO ? 0 : minutos < PARA_DOS_SIN_SERVICIO ? 1 : 2;
+  if (minutos < PARA_UNO) return 0;
   return minutos < PARA_TODO ? 1 : 2;
 }
 
@@ -194,12 +230,21 @@ export class MomentosDeCrucero {
   private callada = Infinity;
   /** Si a la mitad del camino ya se le pasó el momento en este vuelo. */
   private mitadPasada = false;
+  /**
+   * **El crucero de este vuelo**: cuánto había del principio al punto de
+   * descenso, s, y cuánto se lleva. Para repartir lo que se cuenta a lo largo
+   * de él en vez de soltarlo todo al principio. Ver `paso`.
+   */
+  private ventana: number | null = null;
+  private enCrucero = 0;
 
   /** Vuelo nuevo: se olvida de lo dicho. */
   reiniciar(): void {
     this.dichos.clear();
     this.callada = Infinity;
     this.mitadPasada = false;
+    this.ventana = null;
+    this.enCrucero = 0;
   }
 
   /** Si ya se contó en este vuelo. Para el juego y los bancos. */
@@ -220,7 +265,11 @@ export class MomentosDeCrucero {
     const queda = c.faltan !== null && total ? c.faltan / total : null;
     if (conMitad && !this.dichos.has("mitad") && queda !== null && queda < MITAD_HASTA)
       this.mitadPasada = true;
-    if (c.faltan !== null && c.faltan < ANTES_DE_BAJAR) return null;
+    const alDescenso = c.alDescenso ?? null;
+    if (this.ventana === null && alDescenso !== null) this.ventana = alDescenso;
+    this.enCrucero += dt;
+    if (alDescenso !== null ? alDescenso < ANTES_DEL_DESCENSO : c.faltan !== null && c.faltan < ANTES_DE_BAJAR)
+      return null;
     if (!c.hayHueco || c.megafoniaHabla || this.callada < ENTRE_ANUNCIOS) return null;
 
     if (
@@ -236,7 +285,7 @@ export class MomentosDeCrucero {
     if (c.cartelPuesto) return null;
     const sueltos = [c.primero, elOtro(c.primero)]
       .filter((s) => c.hay(s))
-      .slice(0, cuantosSueltos(minutos));
+      .slice(0, cuantosSueltos(minutos, c.conTripulacion));
     const siguiente = sueltos.find((s) => !this.dichos.has(s));
     if (!siguiente) return null;
     /*
@@ -251,6 +300,17 @@ export class MomentosDeCrucero {
      */
     if (yaUno && conMitad && !this.dichos.has("mitad") && !this.mitadPasada && queda !== null)
       return null;
+    /*
+     * **Y sin el punto del vuelo, repartidas por el crucero**: con el punto
+     * de descenso a la vista, cada una en su tercio —o en su mitad, si solo
+     * cabe una—, que es lo que hace que entre el cartel y la bajada no quede
+     * un rato largo sin nadie. Soltadas al principio, de El Hierro a La Gomera
+     * quedaban cinco minutos callados antes de empezar a bajar.
+     */
+    if (!conMitad && this.ventana !== null) {
+      const ya = sueltos.filter((s) => this.dichos.has(s)).length;
+      if (this.enCrucero < (this.ventana * (ya + 1)) / (sueltos.length + 1)) return null;
+    }
     return this.decir(siguiente);
   }
 

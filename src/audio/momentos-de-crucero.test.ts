@@ -12,6 +12,7 @@ import { recetaDe, type Manifiesto } from "./banco-de-voz";
 import { seLePasoElMomento } from "./megafonia";
 import {
   ANTES_DE_BAJAR,
+  ANTES_DEL_DESCENSO,
   CURIOSIDADES,
   ENTRE_ANUNCIOS,
   MITADES,
@@ -89,6 +90,66 @@ describe("cuánto cuenta, según lo que dura el tramo", () => {
   it("en un salto de veinte minutos, nada más que el guion", () => {
     expect(cuantosSueltos(20)).toBe(0);
     expect(volar(20, {}, 15 * 60, 0)).toEqual([]);
+  });
+
+  /*
+   * **Y sin servicio, ese rato es de la comandante.** De El Hierro a La
+   * Gomera con el JAZ 60 —diecinueve plazas, sin auxiliar— se volaba entero
+   * en silencio entre el cartel y la bajada: «la comandante no habla».
+   */
+  it("pero sin servicio a bordo, ese rato es de la comandante: una cosa desde los quince, dos desde los veinte", () => {
+    expect(cuantosSueltos(12, false)).toBe(0);
+    expect(cuantosSueltos(17, false)).toBe(1);
+    expect(cuantosSueltos(20, false)).toBe(2);
+    const dichos = volar(17, { conTripulacion: false, servicioDicho: false }, 15 * 60, 8 * 60);
+    expect(dichos.map((d) => d.que)).toEqual(["curiosidad"]);
+  });
+
+  /*
+   * **Y repartidas por el crucero, hasta dos minutos y medio antes de bajar.**
+   * Medido de El Hierro a La Gomera: nueve minutos y medio de crucero, y el
+   * rato más largo sin una voz, cinco minutos y medio justo antes de empezar a
+   * bajar. Con el punto de descenso a la vista, cada cosa va en su tercio.
+   */
+  it("sin servicio, en un salto de veinte minutos, las dos y repartidas hasta la bajada", () => {
+    const m = new MomentosDeCrucero();
+    const ventana = 560;
+    const dichos: { que: MomentoDeCrucero; t: number }[] = [];
+    let hablando = 0;
+    for (let t = 0; t < ventana; t++) {
+      hablando = Math.max(0, hablando - 1);
+      const que = m.paso(
+        1,
+        crucero({
+          conTripulacion: false,
+          servicioDicho: false,
+          minutosDelTramo: 20,
+          faltan: ventana - t + 300,
+          alDescenso: ventana - t,
+          megafoniaHabla: hablando > 0,
+        }),
+      );
+      if (que) {
+        dichos.push({ que, t });
+        hablando = 15;
+      }
+    }
+    expect(dichos.map((d) => d.que).sort()).toEqual(["chicos", "curiosidad"]);
+    // Uno en cada tercio: ni pegados al cartel ni a la bajada.
+    expect(dichos[0]!.t).toBeGreaterThanOrEqual(ventana / 3 - 1);
+    expect(dichos[1]!.t).toBeGreaterThanOrEqual((2 * ventana) / 3 - 1);
+    expect(ventana - dichos[1]!.t).toBeGreaterThanOrEqual(ANTES_DEL_DESCENSO);
+    // Y el rato más largo sin nadie, de un tercio y poco.
+    const huecos = [dichos[0]!.t, dichos[1]!.t - dichos[0]!.t - 15, ventana - dichos[1]!.t - 15];
+    expect(Math.max(...huecos)).toBeLessThan(ventana / 3 + 5);
+  });
+
+  it("y con el punto de descenso cerca, nada nuevo", () => {
+    const m = new MomentosDeCrucero();
+    for (let t = 0; t < 600; t++)
+      expect(
+        m.paso(1, crucero({ alDescenso: ANTES_DEL_DESCENSO - 1, faltan: 20 * 60 })),
+      ).toBeNull();
   });
 
   it("en uno de media hora, una sola cosa y sin el punto del vuelo", () => {
