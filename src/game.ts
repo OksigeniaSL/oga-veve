@@ -13036,6 +13036,14 @@ export class Game {
         0,
         this.loMasAltoDelVuelo - this.flight.state.position.y,
       ),
+      /*
+       * Y cuánto falta para el crucero del plan, si se vuela uno: «ya estamos
+       * arriba» es en su nivel. Ver `arribaYAsentado`.
+       */
+      faltaParaElCrucero:
+        this.navegacion.plan && this.navegacion.cruceroPlaneado > 0
+          ? this.navegacion.cruceroPlaneado - this.flight.state.position.y
+          : null,
     });
     /*
      * **Y en un descenso de emergencia, el guion de siempre se calla**: su

@@ -429,6 +429,20 @@ export const YA_NO_SUBE = 2.5;
  */
 export const YA_EMPEZO_A_BAJAR = 150;
 
+/**
+ * **Cerca del crucero del plan**, m: lo que se puede estar por debajo de él
+ * para contar como arriba. Ciento cincuenta, la misma banda que separa el
+ * vaivén del crucero de un descenso.
+ */
+export const CERCA_DEL_CRUCERO = 150;
+
+/**
+ * **O nivelado un buen rato**, s, por debajo del plan: quien decide quedarse
+ * más abajo también está arriba. Un minuto; una subida lenta no se queda
+ * quieta tanto.
+ */
+export const NIVELADO_UN_RATO = 60;
+
 /** Lo que la megafonía mira del vuelo para saber si le toca hablar. */
 export interface Momento {
   readonly fase: Fase;
@@ -475,6 +489,11 @@ export interface Momento {
    * cinturón, es el momento de ponérselo».
    */
   readonly desdeLoMasAlto: number;
+  /**
+   * **Cuánto falta para el crucero del plan**, m —positivo por debajo—, o
+   * `null` sin plan. Ver `arribaYAsentado`.
+   */
+  readonly faltaParaElCrucero?: number | null;
 }
 
 /**
@@ -482,8 +501,22 @@ export interface Momento {
  *
  * Ver `ARRIBA_DEL_TODO`, `YA_NO_SUBE` y `YA_EMPEZO_A_BAJAR`.
  */
-function arribaYAsentado(m: Momento): boolean {
+function arribaYAsentado(m: Momento, nivelado: number): boolean {
+  /*
+   * **Y con plan, arriba es en su crucero.** Subiendo despacio —menos de
+   * quinientos pies por minuto— la vertical pasaba por debajo de la banda y
+   * «ya estamos arriba, pueden soltarse el cinturón» salía a mitad de la
+   * subida: medido de El Hierro a La Gomera con el JAZ 60, a 670 m con el
+   * plan en 1.219. Se dice al llegar a su nivel, o nivelado un rato si quien
+   * vuela decide quedarse más abajo.
+   */
+  const enSuNivel =
+    m.faltaParaElCrucero === undefined ||
+    m.faltaParaElCrucero === null ||
+    m.faltaParaElCrucero < CERCA_DEL_CRUCERO ||
+    nivelado >= NIVELADO_UN_RATO;
   return (
+    enSuNivel &&
     m.sobreElCampo >= ARRIBA_DEL_TODO &&
     Math.abs(m.vertical) < YA_NO_SUBE &&
     /*
@@ -520,6 +553,8 @@ export class Megafonia {
   private estuvoArriba = false;
   /** Cuántos segundos seguidos lleva bajando. Ver `BAJANDO_SEGUIDO`. */
   private bajando = 0;
+  /** Y cuántos lleva nivelado. Ver `NIVELADO_UN_RATO`. */
+  private nivelado = 0;
   /** Si ya empezó el descenso, lo haya visto esto o lo haya dicho el plan. */
   private descensoEmpezado = false;
 
@@ -532,6 +567,7 @@ export class Megafonia {
     this.desde = 0;
     this.estuvoArriba = false;
     this.bajando = 0;
+    this.nivelado = 0;
     this.descensoEmpezado = false;
   }
 
@@ -588,7 +624,9 @@ export class Megafonia {
   private seDanLasCondiciones(anuncio: Anuncio, m: Momento): boolean {
     switch (anuncio) {
       case "comandante.crucero":
-        return arribaYAsentado(m) && !this.descensoEmpezado && !m.turbulenciaPorPasar;
+        return (
+          arribaYAsentado(m, this.nivelado) && !this.descensoEmpezado && !m.turbulenciaPorPasar
+        );
       case "tripulacion.servicio":
         return (
           this.hace("comandante.crucero") >= ANTES_DEL_SERVICIO &&
@@ -632,7 +670,13 @@ export class Megafonia {
    * cruza el cero cada poco, ni suma ni resta.
    */
   private mirarSiBaja(dt: number, m: Momento): void {
-    if (arribaYAsentado(m)) this.estuvoArriba = true;
+    this.nivelado = Math.abs(m.vertical) < BAJA ? this.nivelado + dt : 0;
+    /*
+     * Para saber si después se baja basta con haber estado arriba un momento,
+     * llegara o no a su nivel: un salto que sube y baja sin nivelar también
+     * tiene su «empezamos a bajar».
+     */
+    if (arribaYAsentado(m, Infinity)) this.estuvoArriba = true;
     if (m.vertical < -BAJA) this.bajando += dt;
     else if (m.vertical > YA_NO_SUBE) this.bajando = 0;
     if (!this.estuvoArriba) return;

@@ -396,6 +396,27 @@ describe("y el anuncio de crucero es del final de la subida", () => {
       "comandante.crucero",
     );
   });
+
+  /*
+   * **Y con plan, arriba es en su nivel.** De El Hierro a La Gomera con el
+   * JAZ 60, subiendo a menos de quinientos pies por minuto, «ya estamos
+   * arriba» salió a 670 m con el plan en 1.219.
+   */
+  it("con plan, subiendo despacio por debajo de su nivel, todavía no", () => {
+    expect(
+      correrlo(new Megafonia(), { faltaParaElCrucero: 550, vertical: 2 }, 40),
+    ).not.toContain("comandante.crucero");
+  });
+
+  it("en su nivel sí, y por debajo también si se queda nivelado un rato", () => {
+    expect(correrlo(new Megafonia(), { faltaParaElCrucero: 40 }, 20)).toContain(
+      "comandante.crucero",
+    );
+    // Nivelado más abajo de lo planeado: quien vuela decidió quedarse ahí.
+    const m = new Megafonia();
+    expect(correrlo(m, { faltaParaElCrucero: 500 }, 30)).not.toContain("comandante.crucero");
+    expect(correrlo(m, { faltaParaElCrucero: 500 }, 60)).toContain("comandante.crucero");
+  });
 });
 
 describe("el guion de un vuelo de línea, entero y en orden", () => {
