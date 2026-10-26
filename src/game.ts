@@ -12784,12 +12784,21 @@ export class Game {
         campo: t(donde.nameKey as TranslationKey).replace(" · ", ", "),
       },
       /*
-       * **Y las formas de sentarse para despegar, solo las grabadas.** Cada
-       * una entra en el sorteo el día que tiene su pieza: una forma escrita
-       * y sin grabar no se sortea. Ver `unaForma` en `audio/variantes.ts`.
+       * **Y las formas de cada anuncio, solo las grabadas.** Cada una entra
+       * en el sorteo el día que tiene su pieza: una forma escrita y sin
+       * grabar no se sortea. Era así solo para la de sentarse a despegar, y
+       * cualquier anuncio que estrenara variante habría sorteado entre una
+       * que suena y otra muda. Ver `unaForma` en `audio/variantes.ts`.
        */
-      anuncio === "comandante.despegue" ? (id) => this.instructor.vozDe(id) !== null : undefined,
+      (id) => this.instructor.vozDe(id) !== null,
+      /*
+       * **Y nunca la de la última vez**, entre vuelos y entre sesiones, como
+       * la bienvenida y el producto del servicio: «que dos vuelos seguidos no
+       * suenen igual». Una preferencia del juego, no un dato de nadie.
+       */
+      this.recordado(`megafonia.forma.${cual}`),
     );
+    this.recordar(`megafonia.forma.${cual}`, forma.id);
     return { clave: forma.id, texto: forma.texto };
   }
 

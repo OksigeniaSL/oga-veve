@@ -102,6 +102,18 @@ describe("las formas de una frase", () => {
     expect(f.texto).toBe(t("comandante.despegue"));
   });
 
+  it("y la de la última vez no sale, si queda otra: dos vuelos seguidos no suenan igual", () => {
+    const clave = "comandante.llegada.la-gomera" as const;
+    for (let i = 0; i < 50; i++) {
+      const azar = () => (i + 0.5) / 50;
+      const antes = unaForma(clave, azar).id;
+      expect(unaForma(clave, azar, undefined, undefined, antes).id).not.toBe(antes);
+    }
+    // Con una sola forma posible, esa: mejor repetir que callar.
+    const sola = unaForma("comandante.despegue", () => 0.5, undefined, () => false, "comandante.despegue");
+    expect(sola.id).toBe("comandante.despegue");
+  });
+
   it("las retiradas no salen nunca, y las demás siguen con su número", async () => {
     const { unaForma, RETIRADAS } = await import("./variantes");
     const clave = "comandante.llegada.tenerife-sur" as const;
