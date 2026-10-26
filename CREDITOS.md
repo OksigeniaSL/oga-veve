@@ -507,6 +507,16 @@ sus piezas y el mapa de las islas con el camino del vuelo—, igual: dibujado
 en el código, en `src/ui/kit-de-viaje.ts`, con los colores de la ventanita y
 las islas con sus coordenadas. Nada traído de fuera.
 
+### Los sellos de campo del cuaderno
+
+Los sellos de cada aeródromo (`src/ui/sellos.ts`) están **dibujados en el
+código** y van con él bajo Apache-2.0: la silueta sale de Natural Earth (arriba,
+en los datos geográficos), los números son los de la pista, el paisaje de cada
+campo es un dibujo nuestro a una tinta (`src/ui/paisajes.ts`) y el aspecto de
+goma lo pone una máscara generada (`src/ui/caucho.ts`). Cada paisaje se
+dibujó mirando fotos de Wikimedia Commons del propio sitio, para que fuera
+como es; esas fotos no entran en el juego, solo sirvieron de referencia.
+
 ### Las ilustraciones
 
 **Ilustraciones: Oksigenia SL, con licencia de uso de su proveedor.**
