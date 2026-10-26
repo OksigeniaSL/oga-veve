@@ -14,7 +14,9 @@ import {
   TOPES,
   aSotavento,
   guionDeTurbulencia,
+  guionSiguiente,
   hayAlisio,
+  mismoGuion,
   inversionDelAlisio,
   type DatosDelVuelo,
   type Episodio,
@@ -189,6 +191,27 @@ describe("el control: realista, pero sin que se vuelva recurrente", () => {
         const meneo = g.reduce((s, e) => s + e.hasta - e.desde, 0);
         expect(meneo / base.largo).toBeLessThanOrEqual(0.15);
       }
+  });
+
+  it("y dos vuelos seguidos por la misma ruta nunca son el mismo, aunque la ventana sea corta", () => {
+    for (const p of PELDANOS) {
+      const d = { ...vuelo(HIERRO, GOMERA), peldano: p };
+      let antes: Episodio[] | null = null;
+      for (let i = 0; i < 400; i++) {
+        const g = guionSiguiente(d, mulberry32(i + 1), antes);
+        if (antes) expect(mismoGuion(g, antes)).toBe(false);
+        antes = g;
+      }
+    }
+  });
+
+  it("y en los peldaños de abajo toca menos veces, por la misma causa", () => {
+    const d = vuelo(RODEOS, GANDO, { vientoKt: 20 });
+    const conMeneo = (p: Peldano) =>
+      muchos({ ...d, peldano: p }).filter((g) => g.length > 0).length / 400;
+    expect(conMeneo("dibujo")).toBeLessThan(conMeneo("cabina"));
+    expect(conMeneo("dibujo")).toBeLessThan(0.7);
+    expect(conMeneo("cabina")).toBeGreaterThan(0.85);
   });
 
   it("y el control no se come lo real: en los peldaños de arriba la moderada sale", () => {

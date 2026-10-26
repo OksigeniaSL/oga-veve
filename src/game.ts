@@ -1225,7 +1225,12 @@ import {
   type SucesoDelCamino,
   type Zona,
 } from "./flight/turbulencia-del-vuelo";
-import { ISLAS_ALTAS, guionDeTurbulencia } from "./flight/guion-de-turbulencia";
+import {
+  ISLAS_ALTAS,
+  guionDeTurbulencia,
+  guionSiguiente,
+  type DatosDelVuelo,
+} from "./flight/guion-de-turbulencia";
 import { mulberry32 } from "./world/noise";
 import {
   CINTURON_PORQUE,
@@ -29197,55 +29202,99 @@ export class Game {
       this.turbulenciaDelVuelo.empezar(this.turbulenciaPedida);
       return;
     }
-    const destino = this.elDestino();
-    const salida = this.campoPorId(this.salidaId);
-    if (!destino || !salida || destino.id === this.salidaId) {
+    const pedida = Number(new URLSearchParams(location.search).get("turbulencia"));
+    this.semillaDeTurbulencia = Number.isFinite(pedida) && pedida > 0
+      ? pedida >>> 0
+      : (Math.random() * 0xffffffff) >>> 0;
+    const datos = this.datosDelGuion();
+    if (!datos) {
       this.turbulenciaDelVuelo.empezar([]);
       return;
     }
+    // Y distinto del vuelo de antes por esta misma ruta. Ver `guionSiguiente`.
+    const ruta = `${this.salidaId}>${this.elDestino()?.id ?? ""}`;
+    const guion = guionSiguiente(
+      datos,
+      mulberry32(this.semillaDeTurbulencia),
+      this.guionDeAntes.get(ruta) ?? null,
+    );
+    this.guionDeAntes.set(ruta, guion);
+    this.turbulenciaDelVuelo.empezar(guion);
+  }
+
+  /** El último guion de cada ruta, para no repetirlo. Ver `guionSiguiente`. */
+  private readonly guionDeAntes = new Map<string, readonly Zona[]>();
+
+  /**
+   * **Lo que el guion necesita saber de este vuelo**, o `null` en una vuelta
+   * al campo, que no tiene camino. Aparte para que un banco pueda pedir el
+   * guion de otra semilla con los mismos datos. Ver `guionParaBanco`.
+   */
+  private datosDelGuion(): DatosDelVuelo | null {
+    const destino = this.elDestino();
+    const salida = this.campoPorId(this.salidaId);
+    if (!destino || !salida || destino.id === this.salidaId) return null;
     const aqui = this.scenario.meteo ?? TIEMPO_DE_CASA;
     const alli = destino.escenario.meteo ?? aqui;
     const plan = this.navegacion.plan;
     const recta = Math.hypot(destino.x - salida.x, destino.z - salida.z);
     const origen = this.scenario.aerodrome?.origin;
     const canarias = !!origen && enCanarias(origen);
-    const pedida = Number(new URLSearchParams(location.search).get("turbulencia"));
-    this.semillaDeTurbulencia = Number.isFinite(pedida) && pedida > 0
-      ? pedida >>> 0
-      : (Math.random() * 0xffffffff) >>> 0;
     const capa = this.capaDeNubes;
-    this.turbulenciaDelVuelo.empezar(
-      guionDeTurbulencia(
-        {
-          region: canarias ? "canarias" : "paraguay",
-          mes: this.fechaDelVuelo().getUTCMonth() + 1,
-          hora: this.horaDelVuelo,
-          vientoKt: Math.max(aqui.vientoKt, alli.vientoKt),
-          vientoDe: aqui.vientoDe ?? alli.vientoDe,
-          tormenta:
-            aqui.lluvia === "tormenta" || alli.lluvia === "tormenta" || this.celdas.length > 0,
-          nubes: capa ? { base: capa.base, techo: capa.techo } : null,
-          // La ruta del plan, en los metros del mundo, de la salida a la llegada.
-          ruta: [
-            { x: salida.x, z: salida.z },
-            ...(plan?.fijos ?? []).map((f) => ({ x: f.x, z: f.z })),
-            { x: destino.x, z: destino.z },
-          ],
-          largo: plan?.total ?? recta * 1.15,
-          velocidad: this.aircraft.cruiseSpeed,
-          crucero: plan ? this.navegacion.cruceroPlaneado : this.flight.state.position.y + 1500,
-          cotaSalida: this.cotaDelCampo(this.elCampo(salida.id)),
-          cotaLlegada: this.cotaDelCampo(this.elCampo(destino.id)),
-          // Las islas altas, en los metros de este mundo: su cumbre vista desde casa.
-          islas:
-            canarias && origen
-              ? ISLAS_ALTAS.map((i) => ({ ...i, ...dondeCae(origen, i) }))
-              : [],
-          peldano: this.tier.avisos,
-        },
-        mulberry32(this.semillaDeTurbulencia),
-      ),
-    );
+    return {
+      region: canarias ? "canarias" : "paraguay",
+      mes: this.fechaDelVuelo().getUTCMonth() + 1,
+      hora: this.horaDelVuelo,
+      vientoKt: Math.max(aqui.vientoKt, alli.vientoKt),
+      vientoDe: aqui.vientoDe ?? alli.vientoDe,
+      tormenta: aqui.lluvia === "tormenta" || alli.lluvia === "tormenta" || this.celdas.length > 0,
+      nubes: capa ? { base: capa.base, techo: capa.techo } : null,
+      // La ruta del plan, en los metros del mundo, de la salida a la llegada.
+      ruta: [
+        { x: salida.x, z: salida.z },
+        ...(plan?.fijos ?? []).map((f) => ({ x: f.x, z: f.z })),
+        { x: destino.x, z: destino.z },
+      ],
+      largo: plan?.total ?? recta * 1.15,
+      velocidad: this.aircraft.cruiseSpeed,
+      crucero: plan ? this.navegacion.cruceroPlaneado : this.flight.state.position.y + 1500,
+      cotaSalida: this.cotaDelCampo(this.elCampo(salida.id)),
+      cotaLlegada: this.cotaDelCampo(this.elCampo(destino.id)),
+      // Las islas altas, en los metros de este mundo: su cumbre vista desde casa.
+      islas:
+        canarias && origen ? ISLAS_ALTAS.map((i) => ({ ...i, ...dondeCae(origen, i) })) : [],
+      peldano: this.tier.avisos,
+    };
+  }
+
+  /**
+   * **El guion que saldría con otra semilla**, con los datos de este vuelo:
+   * para que un banco mire muchos vuelos de la misma ruta sin volarlos. Ver
+   * `scripts/verificar-turbulencia.mjs`.
+   */
+  guionParaBanco(semilla: number): { datos: DatosDelVuelo | null; guion: readonly Zona[] } {
+    const datos = this.datosDelGuion();
+    return { datos, guion: datos ? guionDeTurbulencia(datos, mulberry32(semilla >>> 0)) : [] };
+  }
+
+  /**
+   * **Los guiones de muchos vuelos seguidos por esta ruta**, como saldrían
+   * uno detrás de otro, cada uno sin repetir el de antes. Para los bancos.
+   */
+  guionesSeguidosParaBanco(
+    cuantos: number,
+    semilla: number,
+  ): { datos: DatosDelVuelo | null; guiones: readonly (readonly Zona[])[] } {
+    const datos = this.datosDelGuion();
+    if (!datos) return { datos, guiones: [] };
+    const guiones: Zona[][] = [];
+    let antes: readonly Zona[] | null = null;
+    for (let i = 0; i < cuantos; i++) {
+      const g = guionSiguiente(datos, mulberry32((semilla + i * 7919) >>> 0), antes);
+      guiones.push(g);
+      antes = g;
+    }
+    return { datos, guiones };
   }
 
   /** La semilla del guion de este vuelo. Ver `repartirLaTurbulencia`. */

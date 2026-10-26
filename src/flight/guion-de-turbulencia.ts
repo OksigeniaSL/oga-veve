@@ -182,6 +182,12 @@ export interface DatosDelVuelo {
  *   tormenta.
  * - `enLaFinal`: si un episodio puede llegar a la final. En Guyrami, no: en
  *   la final el niño tiene que poder mirar la pista y nada más.
+ * - `frecuencia`: cuánto de lo probable de verdad se juega, de 0 a 1. Con el
+ *   alisio de veinte nudos entre Los Rodeos y Gando casi todo vuelo de verdad
+ *   se menea al subir o al bajar, y así salía también en Guyrami: el 97 % de
+ *   los vuelos. Real, y demasiado recurrente para un niño de cinco años. Con
+ *   esto la causa sigue siendo la de verdad —el alisio, la estela, la tarde—
+ *   y lo que cambia es cuántas veces toca. En el peldaño de cabina, entera.
  */
 export const TOPES: Readonly<
   Record<
@@ -192,13 +198,14 @@ export const TOPES: Readonly<
       readonly fuerte: Exclude<Intensidad, "fuerte">;
       readonly delVuelo: number;
       readonly enLaFinal: boolean;
+      readonly frecuencia: number;
     }
   >
 > = {
-  dibujo: { episodios: 1, dura: 60, fuerte: "ligera", delVuelo: 0.15, enLaFinal: false },
-  palabra: { episodios: 2, dura: 150, fuerte: "moderada", delVuelo: 0.25, enLaFinal: false },
-  cifra: { episodios: 3, dura: 300, fuerte: "moderada", delVuelo: 0.35, enLaFinal: true },
-  cabina: { episodios: 4, dura: 480, fuerte: "moderada", delVuelo: 0.5, enLaFinal: true },
+  dibujo: { episodios: 1, dura: 60, fuerte: "ligera", delVuelo: 0.15, enLaFinal: false, frecuencia: 0.4 },
+  palabra: { episodios: 2, dura: 150, fuerte: "moderada", delVuelo: 0.25, enLaFinal: false, frecuencia: 0.6 },
+  cifra: { episodios: 3, dura: 300, fuerte: "moderada", delVuelo: 0.35, enLaFinal: true, frecuencia: 0.8 },
+  cabina: { episodios: 4, dura: 480, fuerte: "moderada", delVuelo: 0.5, enLaFinal: true, frecuencia: 1 },
 };
 
 /**
@@ -547,7 +554,8 @@ export function guionDeTurbulencia(d: DatosDelVuelo, azar: Azar): Episodio[] {
    */
   const elegidos: Episodio[] = [];
   for (const c of candidatos(d)) {
-    const sale = azar() < c.probable;
+    // La tormenta, si está en el parte, está: lo que se recorta de ella es lo que dura.
+    const sale = azar() < (c.causa === "tormenta" ? c.probable : c.probable * tope.frecuencia);
     const tiradaFuerza = azar();
     const tiradaLargo = azar();
     const tiradaSitio = azar();
@@ -585,6 +593,49 @@ export function guionDeTurbulencia(d: DatosDelVuelo, azar: Azar): Episodio[] {
     });
   }
   return controlar(elegidos, d.largo, finDelVuelo, metros, tope);
+}
+
+/**
+ * **Lo que se parecen dos guiones para contar como el mismo vuelo**, m: dos
+ * kilómetros arriba o abajo en cada punta, con la misma fuerza. Dos vuelos en
+ * calma no son «el mismo vuelo»: la calma es lo más corriente, y se repite.
+ */
+const PARECIDO = 2000;
+
+/** Si dos guiones, con meneo, son el mismo vuelo. Ver `PARECIDO`. */
+export function mismoGuion(a: readonly Zona[], b: readonly Zona[]): boolean {
+  if (a.length === 0 || a.length !== b.length) return false;
+  return a.every((e, i) => {
+    const o = b[i]!;
+    return (
+      e.intensidad === o.intensidad &&
+      Math.abs(e.desde - o.desde) < PARECIDO &&
+      Math.abs(e.hasta - o.hasta) < PARECIDO
+    );
+  });
+}
+
+/** Cuántas veces se vuelve a tirar para no repetir el vuelo de antes. */
+const OTRA_TIRADA = 6;
+
+/**
+ * **El guion del vuelo siguiente por la misma ruta, que no repite el de
+ * antes.** Con ventanas cortas —la subida de un salto entre islas— dos
+ * semillas seguidas podían dar el mismo episodio de punta a punta, y el niño
+ * que repite el vuelo se encontraba el mismo bache en el mismo sitio, que es
+ * justo lo que no pasa de verdad. Si sale igual, se vuelve a tirar con el
+ * mismo azar, que sigue su cuenta: con la misma semilla y el mismo vuelo de
+ * antes, el mismo resultado.
+ */
+export function guionSiguiente(
+  d: DatosDelVuelo,
+  azar: Azar,
+  anterior: readonly Zona[] | null,
+): Episodio[] {
+  let g = guionDeTurbulencia(d, azar);
+  for (let i = 0; i < OTRA_TIRADA && anterior && mismoGuion(g, anterior); i++)
+    g = guionDeTurbulencia(d, azar);
+  return g;
 }
 
 /**

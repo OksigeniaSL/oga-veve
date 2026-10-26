@@ -822,6 +822,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * por lo volado desde el despegue. Ver `flight/turbulencia-del-vuelo.ts`.
      */
     turbulencia: () => juego.turbulenciaParaBanco,
+    /**
+     * **El guion de turbulencia que saldría con otra semilla**, con los datos
+     * de este vuelo. Ver `flight/guion-de-turbulencia.ts`.
+     */
+    guionDeTurbulencia: (semilla: number) => juego.guionParaBanco(semilla),
+    /** Y los de muchos vuelos seguidos por la misma ruta, sin repetir el de antes. */
+    guionesSeguidos: (cuantos: number, semilla: number) =>
+      juego.guionesSeguidosParaBanco(cuantos, semilla),
     /** Las ráfagas de ahora: si se está en una racha y lo que sopla. Ver `flight/rafagas.ts`. */
     rafagas: () => juego.rafagasParaBanco,
     /**
