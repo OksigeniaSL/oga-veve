@@ -320,10 +320,18 @@ export class TurbulenciaDelVuelo {
     );
   }
 
-  /** Si viene otra zona en menos de lo que se avisa antes. */
+  /**
+   * Si viene otra zona **de las que se saben** en menos de lo que se avisa
+   * antes. La de aire claro no cuenta: nadie la ve venir, y contarla dejaba
+   * el cartel puesto por una turbulencia que la comandante no puede saber —
+   * medido de El Hierro a La Gomera: la moderada pasó a los 25 km y el «ya
+   * pasó» esperó hasta los 37, detrás de una de aire claro que ni se había
+   * anunciado—.
+   */
   private vieneOtra(velocidad: number): boolean {
     return this.zonas.some(
       (z) =>
+        z.como !== "sin-avisar" &&
         z.desde > this.volado &&
         (z.desde - this.volado) / Math.max(1, velocidad) <= AVISA_ANTES,
     );

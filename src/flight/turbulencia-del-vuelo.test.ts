@@ -146,6 +146,19 @@ describe("el anuncio, atado a la turbulencia de verdad", () => {
     expect(vez).toEqual([1, 2]);
   });
 
+  it("y la de aire claro que viene detrás no retrasa el «ya pasó» de la anterior: nadie la ve venir", () => {
+    const t = new TurbulenciaDelVuelo();
+    // Una prevista hasta los tres minutos y una de aire claro un minuto después.
+    t.empezar([
+      { desde: 120 * 100, hasta: 120 * 180, intensidad: "moderada", como: "prevista", capa: null },
+      { desde: 120 * 250, hasta: 120 * 300, intensidad: "ligera", como: "sin-avisar", capa: null },
+    ]);
+    const pasado = volar(t, 400, () => ({ pasajeSuelto: false }));
+    const paso = pasado.find((p) => p.suceso.que === "paso");
+    expect(paso).toBeDefined();
+    expect(paso!.seg).toBeLessThan(250);
+  });
+
   it("en la final no se anuncia: se espera a poder", () => {
     const t = new TurbulenciaDelVuelo();
     t.empezar([
