@@ -585,7 +585,14 @@ await page
  * crucero —`OGA_CRUCERO`— para que dé tiempo a cruzarla. Ver
  * `flight/turbulencia-del-vuelo.ts`.
  */
-const TURBULENCIA = process.env.OGA_TURBULENCIA ?? null;
+/*
+ * Y `OGA_TURBULENCIA=ninguna`, el aire en calma de punta a punta: la del
+ * camino se sortea en cada vuelo —a veces nada, a veces un buen rato—, y para
+ * medir lo que se oye en un vuelo normal con `OGA_RUTA` hace falta que dos
+ * tiradas vuelen el mismo aire.
+ */
+const SIN_TURBULENCIA = process.env.OGA_TURBULENCIA === "ninguna";
+const TURBULENCIA = SIN_TURBULENCIA ? null : (process.env.OGA_TURBULENCIA ?? null);
 /*
  * Y de dónde se sabe la prevista, si se pide: `OGA_TURBULENCIA_FUENTE=pirep`
  * la hace avisar por otro avión, con la radio delante de la comandante. Ver
@@ -604,6 +611,7 @@ const ZONA_PEDIDA = TURBULENCIA
   : null;
 if (ZONA_PEDIDA)
   await page.evaluate((z) => globalThis.__oga?.ponerTurbulencia?.([z]), ZONA_PEDIDA);
+if (SIN_TURBULENCIA) await page.evaluate(() => globalThis.__oga?.ponerTurbulencia?.([]));
 
 const resultados = [];
 /**
