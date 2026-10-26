@@ -679,6 +679,15 @@ const POR_ENCIMA_DEL_TEJADO = 3;
  * pantalla le quita el momento a las dos cosas.
  */
 const TARDA_EL_FINAL = 0.5;
+/**
+ * **Cuándo se va en crucero**, para la cabina estéril: subiendo o bajando
+ * menos de esto, m/s —unos trescientos pies por minuto, el vaivén de
+ * cualquier crucero—, durante `RATO_EN_CRUCERO` segundos. Lo mismo que mira
+ * la lección del aire fino: llegar arriba no es pasar por arriba. Ver
+ * `enFaseDeTrabajo` en `flight/lo-que-se-ve.ts`.
+ */
+const NIVELADO_EN_CRUCERO = 1.5;
+const RATO_EN_CRUCERO = 20;
 
 /**
  * **El dibujo de cada ejercicio**, el mismo de su tarjeta en el hangar: el
@@ -21759,6 +21768,16 @@ export class Game {
       alCampo,
       conPasaje: conPasaje(this.aircraft.mass),
       /*
+       * **Y si se va en crucero**: nivelado un rato y sin haber empezado a
+       * bajar. Por debajo de diez mil pies es lo único que no es cabina
+       * estéril, y en un salto corto entre islas es todo el rato que hay
+       * para contar algo. Ver `enFaseDeTrabajo`.
+       */
+      enCrucero:
+        this.niveladoDesde >= RATO_EN_CRUCERO &&
+        !this.navegacion.bajando &&
+        !this.megafonia.bajandoAlDestino,
+      /*
        * Cualquiera de las bocas, y también la máquina. Esto es lo que menos
        * urge de todo lo que suena: una autorización no puede esperar y el
        * paisaje sí. Un suceso, una voz.
@@ -21782,7 +21801,18 @@ export class Game {
     };
   }
 
+  /**
+   * Cuántos segundos lleva el avión nivelado en el aire: para saber si va en
+   * crucero. Ver `momentoDeMirar`.
+   */
+  private niveladoDesde = 0;
+
   private mirarPorLaVentanilla(dt: number): void {
+    const vs = this.flight.state.verticalSpeed;
+    this.niveladoDesde =
+      !this.flight.state.onGround && Math.abs(vs) < NIVELADO_EN_CRUCERO
+        ? this.niveladoDesde + dt
+        : 0;
     const conGente = conPasaje(this.aircraft.mass);
     /*
      * **De pasaje, lo que se ve se le da a la escena**, que lo dice cuando no
