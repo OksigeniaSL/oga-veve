@@ -1744,6 +1744,15 @@ export class Senal {
   private tecla: HTMLElement | null = null;
   private actual = "";
   private queda = 0;
+
+  /**
+   * Si hay una tarjeta puesta que todavía no caducó: lo que espera turno para
+   * salir —cómo se aterriza, por ejemplo— no pisa la de un paso. Las de
+   * espera, que no caducan, también cuentan.
+   */
+  get ocupada(): boolean {
+    return this.queda > 0 && !!this.caja && !this.caja.hidden;
+  }
   /**
    * Lo importante que es lo que hay puesto ahora. Ver `mostrar`.
    *

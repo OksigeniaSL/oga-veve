@@ -1289,7 +1289,8 @@ import {
   type Aviso,
   type Lectura,
 } from "./flight/avisos-de-altura";
-import { escalonesDeLaRecogida, laRecogidaDe } from "./flight/recogida";
+import { claseDeRecogida, escalonesDeLaRecogida, laRecogidaDe } from "./flight/recogida";
+import { comoSeAterriza, loQueSeJuzga } from "./flight/como-se-aterriza";
 import {
   canalesDe,
   cantaLaCabina,
@@ -10328,6 +10329,8 @@ export class Game {
        * como fallo lo que nunca llegó a pedirse.
        */
       if (tramo === "base") this.runwayGuide.reset(this.flight.state.position);
+      // En el viento en cola, que es donde se repasa la toma: ver `contarComoSeAterriza`.
+      if (tramo === "encola") this.tomaPorContar = true;
       /*
        * **Y por el lado del circuito que se vuela, no siempre por la
        * izquierda.** El dibujo, la tarjeta y la voz decían «girá a la
@@ -18003,7 +18006,56 @@ export class Game {
     this.hud.senal.update(dt);
     this.hud.noRepetirElTutor();
     this.mirarLasTeclasQueTocan();
+    this.contarComoSeAterriza();
   };
+
+  // ── Cómo se aterriza, contado antes ───────────────────────────────────
+
+  /** Si toca contar cómo se aterriza, en cuanto haya un hueco. */
+  private tomaPorContar = false;
+  /** Si ya se contó en este tramo. Se olvida al tocar tierra. */
+  private tomaContada = false;
+
+  /**
+   * **Antes de la final, cómo se aterriza en este avión y en este peldaño**:
+   * una vez por tramo, al empezar la aproximación del plan —sus primeros
+   * flaps— o en el viento en cola del circuito, que es donde se repasa. Se
+   * espera a que la instructora calle y a que la tarjeta del paso se vaya:
+   * es otra cosa que contar, no la misma frase más larga. Solo con su
+   * grabación; la tarjeta sale igual, con el dibujo de la toma. Lo que dice
+   * es lo mismo que juzga la nota de después: ver
+   * `flight/como-se-aterriza.ts`.
+   */
+  private contarComoSeAterriza(): void {
+    if (this.flight.state.onGround) {
+      this.tomaPorContar = false;
+      this.tomaContada = false;
+      return;
+    }
+    if (!this.tomaPorContar || this.tomaContada) return;
+    if (this.instructor.hablando || this.hud.senal.ocupada) return;
+    this.tomaPorContar = false;
+    this.tomaContada = true;
+    if (this.dePasaje || this.inicio !== null) return;
+    const clave = comoSeAterriza(this.tier.avisos, claseDeRecogida(this.aircraft));
+    if (!clave) return;
+    const canales = canalesDe(this.tier.avisos);
+    const kt = Math.round(vrefKt(this.aircraft) + 5);
+    const u = UNIT_SYSTEMS[this.tier.units];
+    const rotulo = !canales.texto
+      ? ""
+      : canales.corto
+        ? t("palabra.aterrizar")
+        : canales.cifra
+          ? `${t(clave)} (${velocidadDicha(kt, this.tier.units)} ${u.speedLabel()})`
+          : t(clave);
+    this.hud.senal.mostrar("toma", rotulo, null, {
+      segundos: SE_QUEDA_EL_PASO,
+      prioridad: IMPORTANTE,
+    });
+    const dicha = this.decirLoGrabado(clave);
+    this.apuntarCanto(`cómo se aterriza: ${clave} → ${dicha ? "dicha" : "la tarjeta"}`);
+  }
 
   // ── Las teclas que tocan ──────────────────────────────────────────────
 
@@ -21324,9 +21376,9 @@ export class Game {
    * verdad: la pista que se come y el avión que hay que revisar.
    */
   private loQueSeDiceDeLaToma(veredicto: NonNullable<Aterrizaje>): TranslationKey {
-    const deAbajo = this.tier.avisos === "dibujo" || this.tier.avisos === "palabra";
-    if (deAbajo && veredicto === "largo") return "vuelo.tocasteLargoFacil";
-    if (deAbajo && veredicto === "duro") return "vuelo.tocasteDuroFacil";
+    // Lo mismo que se contó antes: ver `flight/como-se-aterriza.ts`.
+    if (veredicto === "largo" || veredicto === "duro")
+      return loQueSeJuzga(this.tier.avisos, veredicto) as TranslationKey;
     return DICHO_DE_LA_TOMA[veredicto];
   }
 
@@ -28346,6 +28398,12 @@ export class Game {
           ? "cabina"
           : "la torre";
     this.apuntarCanto(`paso ${p.escalon}: ${p.que} (${p.objetivo.kt} kt) → ${dice}`);
+    // Lo de que el avión se queda solo, ya contado: no se vuelve a contar.
+    if (solo && habla && forma && forma.id.startsWith("vuelo.paso.cruceroSolo"))
+      this.explicadoEnEsteVuelo.add("vuelo.niveladaAsistida");
+    // Y empezada la aproximación, cómo se aterriza. Ver `contarComoSeAterriza`.
+    if (p.escalon === "flaps:1" || p.escalon === "tren" || p.escalon.startsWith("velocidad:primeros-flaps"))
+      this.tomaPorContar = true;
     // Y lo que nombra, latiendo con la tarjeta. Ver `decirElConsejo`.
     this.senalarLoQueNombra(forma?.id ?? escrita);
     if (p.que === "tren") {

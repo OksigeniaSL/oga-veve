@@ -410,6 +410,15 @@ export const EN: Dictionary = {
     "You landed! But far from the big white stripes: next time, touch down near them, so there's runway left to stop",
   "vuelo.tocasteDuroFacil":
     "You landed! But with a big bump: next time, reach the ground more gently, without pushing the nose down",
+  "vuelo.comoSeAterriza.facil":
+    "This is how we land: we reach the ground gently, without pushing the nose down, and touch down near the big white stripes on the runway.",
+  "vuelo.comoSeAterriza.helice":
+    "This is how we land this plane: at final approach speed, and near the ground, the nose up a little and the power off, together. Touch down firmly on the big markings: firm and on the spot beats smooth and far.",
+  "vuelo.comoSeAterriza.cables":
+    "This is how we land this plane: at final approach speed, and near the ground, the nose up a little and then the power off. Touch down firmly on the big markings: firm and on the spot beats smooth and far.",
+  "vuelo.comoSeAterriza.electricos":
+    "This is how we land this plane: at final approach speed, and near the ground, the nose up a little; when the plane says retard, power off. Touch down firmly on the big markings: firm and on the spot beats smooth and far.",
+  "palabra.aterrizar": "Landing",
   "vuelo.tomaLargaSinPista": "Not enough runway to stop: we go around and try again",
   "vuelo.aterrizasteContraLaOrden":
     "The tower had sent us around. When the tower says go around, you go: it sees what we can't see from here",

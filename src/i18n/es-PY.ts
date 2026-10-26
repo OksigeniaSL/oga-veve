@@ -1760,6 +1760,22 @@ export const ES_PY = {
     "¡Aterrizaste! Pero lejos de las rayas blancas grandes: la próxima, tocá cerca de ellas, que así sobra pista para frenar",
   "vuelo.tocasteDuroFacil":
     "¡Aterrizaste! Pero con un golpe fuerte: la próxima, llegá al suelo más despacito, sin empujar la nariz para abajo",
+  /*
+   * **Y cómo se aterriza, contado antes** (Enrique, El Hierro–La Gomera con el
+   * JAZ 60: «la instructora me dijo que le metí una buena hostia al tren»):
+   * una vez por tramo, antes de la final, y diciendo lo mismo que la nota de
+   * después. Abajo, en sencillo; en Taguató, la recogida de cada clase de
+   * avión. Ver `flight/como-se-aterriza.ts`.
+   */
+  "vuelo.comoSeAterriza.facil":
+    "Así se aterriza: llegamos al suelo despacito, sin empujar la nariz para abajo, y tocamos cerca de las rayas blancas grandes de la pista.",
+  "vuelo.comoSeAterriza.helice":
+    "Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y el gas afuera, juntos. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.",
+  "vuelo.comoSeAterriza.cables":
+    "Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y enseguida el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.",
+  "vuelo.comoSeAterriza.electricos":
+    "Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba; cuando el avión diga retard, el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.",
+  "palabra.aterrizar": "Aterrizar",
   "vuelo.tomaLargaSinPista":
     "No nos da la pista para parar: nos vamos al aire y lo volvemos a intentar",
   /*
