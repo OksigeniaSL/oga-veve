@@ -680,13 +680,18 @@ const POR_ENCIMA_DEL_TEJADO = 3;
  */
 const TARDA_EL_FINAL = 0.5;
 /**
- * **Cuándo se va en crucero**, para la cabina estéril: subiendo o bajando
- * menos de esto, m/s —unos trescientos pies por minuto, el vaivén de
- * cualquier crucero—, durante `RATO_EN_CRUCERO` segundos. Lo mismo que mira
- * la lección del aire fino: llegar arriba no es pasar por arriba. Ver
+ * **Cuándo se va en crucero**, para la cabina estéril: dentro de una banda de
+ * altura de tanto arriba y abajo, m, durante `RATO_EN_CRUCERO` segundos.
+ * Llegar arriba no es pasar por arriba.
+ *
+ * Por la altura y no por la vertical: un bache mueve la vertical dos o tres
+ * metros por segundo un instante y el avión sigue en su nivel, y mirando la
+ * vertical cada bache volvía a poner la cuenta a cero. Treinta metros dejan
+ * fuera cualquier subida o bajada de verdad —a metro y medio por segundo, la
+ * banda se cruza antes de los veinte— y dentro el vaivén de un crucero. Ver
  * `enFaseDeTrabajo` en `flight/lo-que-se-ve.ts`.
  */
-const NIVELADO_EN_CRUCERO = 1.5;
+const BANDA_EN_CRUCERO = 30;
 const RATO_EN_CRUCERO = 20;
 
 /**
@@ -21921,13 +21926,17 @@ export class Game {
    * crucero. Ver `momentoDeMirar`.
    */
   private niveladoDesde = 0;
+  /** Y a qué altura se niveló, m. Ver `BANDA_EN_CRUCERO`. */
+  private alturaNivelada = 0;
 
   private mirarPorLaVentanilla(dt: number): void {
-    const vs = this.flight.state.verticalSpeed;
-    this.niveladoDesde =
-      !this.flight.state.onGround && Math.abs(vs) < NIVELADO_EN_CRUCERO
-        ? this.niveladoDesde + dt
-        : 0;
+    const y = this.flight.state.position.y;
+    if (!this.flight.state.onGround && Math.abs(y - this.alturaNivelada) < BANDA_EN_CRUCERO)
+      this.niveladoDesde += dt;
+    else {
+      this.alturaNivelada = y;
+      this.niveladoDesde = 0;
+    }
     const conGente = conPasaje(this.aircraft.mass);
     /*
      * **De pasaje, lo que se ve se le da a la escena**, que lo dice cuando no
