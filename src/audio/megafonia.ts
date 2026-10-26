@@ -108,15 +108,6 @@ export type Anuncio = (typeof ANUNCIOS)[number];
  * los que dice ella. Sin auxiliares a bordo, «tripulación, sentados para el
  * despegue» no se lo dice nadie a nadie.
  */
-/**
- * **Y los que dice la comandante porque no hay tripulación de cabina.** Lo
- * que en un avión con auxiliares le toca a ellos —que el pasaje se prepare
- * para aterrizar— en uno de diecinueve plazas lo hace quien va en la cabina
- * de mando, por la megafonía: alguien tiene que decirlo, y la seguridad no
- * se queda sin decir porque no haya quién pase por el pasillo.
- */
-const SIN_LA_TRIPULACION: ReadonlySet<Anuncio> = new Set<Anuncio>(["comandante.cinturones"]);
-
 const DE_LA_TRIPULACION: ReadonlySet<Anuncio> = new Set<Anuncio>([
   "comandante.crosscheck",
   "comandante.despegue",
@@ -125,6 +116,15 @@ const DE_LA_TRIPULACION: ReadonlySet<Anuncio> = new Set<Anuncio>([
   "comandante.aproximacion",
   "tripulacion.llegada",
 ]);
+
+/**
+ * **Y los que dice la comandante porque no hay tripulación de cabina.** Lo
+ * que en un avión con auxiliares le toca a ellos —que el pasaje se prepare
+ * para aterrizar— en uno de diecinueve plazas lo hace quien va en la cabina
+ * de mando, por la megafonía: alguien tiene que decirlo, y la seguridad no
+ * se queda sin decir porque no haya quién pase por el pasillo.
+ */
+const SIN_LA_TRIPULACION: ReadonlySet<Anuncio> = new Set<Anuncio>(["comandante.cinturones"]);
 
 /**
  * En qué fase toca cada uno.
