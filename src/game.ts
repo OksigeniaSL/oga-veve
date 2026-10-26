@@ -1221,11 +1221,12 @@ import {
 } from "./audio/turnos";
 import {
   TurbulenciaDelVuelo,
-  turbulenciaDelCamino,
   type Intensidad,
   type SucesoDelCamino,
   type Zona,
 } from "./flight/turbulencia-del-vuelo";
+import { ISLAS_ALTAS, guionDeTurbulencia } from "./flight/guion-de-turbulencia";
+import { mulberry32 } from "./world/noise";
 import {
   CINTURON_PORQUE,
   GRADO_EN_RADIO,
@@ -6971,7 +6972,7 @@ export class Game {
       /*
        * Y un día sin turbulencia en el camino, que es lo más corriente con buen
        * tiempo: la del aire de abajo, la del alisio rozando la isla, se nota
-       * igual al subir. Ver `turbulenciaDelCamino`.
+       * igual al subir. Ver `guionDeTurbulencia`.
        */
       this.turbulenciaPedida = [];
     } else if (aterrizar) {
@@ -29162,19 +29163,27 @@ export class Game {
     zonas: readonly Zona[];
     volado: number;
     sucesos: readonly { volado: number; suceso: SucesoDelCamino }[];
+    semilla: number;
+    peldano: string;
   } {
     return {
       zonas: this.turbulenciaDelVuelo.deEsteVuelo,
       volado: this.turbulenciaDelVuelo.loVolado,
       sucesos: [...this.turbulenciaDelVuelo.sucesos],
+      semilla: this.semillaDeTurbulencia,
+      peldano: this.tier.avisos,
     };
   }
 
   /**
-   * **La turbulencia del camino, repartida al despegar**: según el tiempo de
-   * los dos campos, lo largo del tramo y la variedad de lo real —a veces
-   * nada, unos minutos, más rato o casi todo el vuelo con tormenta—. Una
-   * vuelta al campo no tiene camino. Ver `turbulenciaDelCamino`.
+   * **El guion de la turbulencia de este vuelo, decidido al despegar**: cuántos
+   * episodios, dónde de la ruta, cuánto duran y con qué fuerza, según el sitio,
+   * la época, la hora y el tiempo de hoy, y con el tope del peldaño. Una
+   * vuelta al campo no tiene camino. Ver `flight/guion-de-turbulencia.ts`.
+   *
+   * La semilla, la de `?turbulencia=` si se pide —para repetir un vuelo— y si
+   * no una nueva en cada despegue: dos vuelos seguidos por la misma ruta no
+   * salen iguales. Se guarda para los bancos.
    */
   private repartirLaTurbulencia(): void {
     this.cartelPorLaTurbulencia = false;
@@ -29197,23 +29206,48 @@ export class Game {
     const plan = this.navegacion.plan;
     const recta = Math.hypot(destino.x - salida.x, destino.z - salida.z);
     const origen = this.scenario.aerodrome?.origin;
+    const canarias = !!origen && enCanarias(origen);
+    const pedida = Number(new URLSearchParams(location.search).get("turbulencia"));
+    this.semillaDeTurbulencia = Number.isFinite(pedida) && pedida > 0
+      ? pedida >>> 0
+      : (Math.random() * 0xffffffff) >>> 0;
+    const capa = this.capaDeNubes;
     this.turbulenciaDelVuelo.empezar(
-      turbulenciaDelCamino(
+      guionDeTurbulencia(
         {
+          region: canarias ? "canarias" : "paraguay",
+          mes: this.fechaDelVuelo().getUTCMonth() + 1,
+          hora: this.horaDelVuelo,
           vientoKt: Math.max(aqui.vientoKt, alli.vientoKt),
+          vientoDe: aqui.vientoDe ?? alli.vientoDe,
           tormenta:
             aqui.lluvia === "tormenta" || alli.lluvia === "tormenta" || this.celdas.length > 0,
-          nubes: aqui.techoM !== null || alli.techoM !== null,
-          montana: !!origen && enCanarias(origen),
-        },
-        {
+          nubes: capa ? { base: capa.base, techo: capa.techo } : null,
+          // La ruta del plan, en los metros del mundo, de la salida a la llegada.
+          ruta: [
+            { x: salida.x, z: salida.z },
+            ...(plan?.fijos ?? []).map((f) => ({ x: f.x, z: f.z })),
+            { x: destino.x, z: destino.z },
+          ],
           largo: plan?.total ?? recta * 1.15,
           velocidad: this.aircraft.cruiseSpeed,
           crucero: plan ? this.navegacion.cruceroPlaneado : this.flight.state.position.y + 1500,
+          cotaSalida: this.cotaDelCampo(this.elCampo(salida.id)),
+          cotaLlegada: this.cotaDelCampo(this.elCampo(destino.id)),
+          // Las islas altas, en los metros de este mundo: su cumbre vista desde casa.
+          islas:
+            canarias && origen
+              ? ISLAS_ALTAS.map((i) => ({ ...i, ...dondeCae(origen, i) }))
+              : [],
+          peldano: this.tier.avisos,
         },
+        mulberry32(this.semillaDeTurbulencia),
       ),
     );
   }
+
+  /** La semilla del guion de este vuelo. Ver `repartirLaTurbulencia`. */
+  private semillaDeTurbulencia = 0;
 
   /**
    * **El anuncio de la turbulencia, atado a la de verdad.** Ver
