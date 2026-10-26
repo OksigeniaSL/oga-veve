@@ -1705,6 +1705,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Las teclas que tocan: pedir una como un paso, y ver cuál toca. */
     pedirTecla: (que: Parameters<Game["pedirTeclaParaBanco"]>[0]) => juego.pedirTeclaParaBanco(que),
     teclas: () => juego.teclasParaBanco,
+    forzarTecla: (que: Parameters<Game["forzarTeclaParaBanco"]>[0]) => juego.forzarTeclaParaBanco(que),
     nubes: () => {
       const banco = juego.sky?.group.getObjectByName("nubes");
       if (!banco) return null;

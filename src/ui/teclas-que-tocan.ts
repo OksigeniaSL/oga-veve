@@ -315,34 +315,55 @@ export class PistaDeTeclas {
   private colocarLaTarjeta(): void {
     const tarjeta = this.tarjeta;
     if (tarjeta.hidden) return;
+    tarjeta.style.left = "";
     tarjeta.style.top = "0px";
     tarjeta.style.transform = "none";
     const caja = tarjeta.getBoundingClientRect();
-    const izquierda = caja.left;
-    const derecha = caja.left + caja.width;
-    const enSuFranja = (r: DOMRect): boolean =>
-      r.width > 2 && r.height > 2 && r.left < derecha + 8 && r.right > izquierda - 8;
-    const visibles = (sel: string): DOMRect[] =>
+    const visibles = (sel: string, desde: number): DOMRect[] =>
       [...document.querySelectorAll<HTMLElement>(sel)]
         .filter((e) => !e.closest("[hidden]") && getComputedStyle(e).display !== "none")
         .map((e) => e.getBoundingClientRect())
-        .filter(enSuFranja);
-    const arriba = Math.max(
-      16,
-      ...visibles(".hud__vistas, .hud__arriba > *, [data-hud='radio'], [data-hud='torre']").map((r) => r.bottom + 8),
-    );
-    const abajo = Math.min(
-      innerHeight - 8,
-      ...visibles(
-        "[data-hud='tablero'], [data-hud='cuadro-tel'], [data-hud='cuadro-tirador'], #tactil .pad, [data-hud='volumen-caja'], [data-hud='warning']",
-      ).map((r) => r.top - 8),
-    );
-    const cabe = Math.max(0, abajo - arriba);
-    const escala = Math.max(0.55, Math.min(1, cabe / caja.height));
-    const alto = caja.height * escala;
-    const top = arriba + Math.max(0, (cabe - alto) / 2);
-    tarjeta.style.top = `${Math.round(top)}px`;
-    tarjeta.style.transform = escala < 1 ? `scale(${escala.toFixed(3)})` : "none";
+        .filter(
+          (r) =>
+            r.width > 2 && r.height > 2 && r.left < desde + caja.width + 8 && r.right > desde - 8,
+        );
+    /*
+     * **Dos sitios, y el que deje la tarjeta más grande**: pegada al borde,
+     * debajo de la columna de botones, o a la derecha de esa columna, debajo
+     * de la barra de arriba. En la tablet cabe en el primero; en un teléfono
+     * apaisado, entre la columna y la palanca quedan cuarenta píxeles, y al
+     * lado de la columna, el cielo entero.
+     */
+    const columna = document.querySelector<HTMLElement>(".hud__vistas")?.getBoundingClientRect();
+    const sitios = [caja.left, ...(columna && columna.width > 2 ? [columna.right + 8] : [])];
+    let mejor = { izquierda: caja.left, top: 16, escala: 0 };
+    /*
+     * Lo que empieza en el tercio de arriba de la pantalla es techo —la
+     * columna, la barra, los pictogramas del teléfono, la radio— y lo demás,
+     * suelo: el cuadro, la palanca, el volumen, el aviso.
+     */
+    const obstaculos =
+      ".hud__vistas, .hud__arriba > *, [data-hud='radio'], [data-hud='torre'], [data-hud='pictos'], [data-hud='senal'], " +
+      "[data-hud='tablero'], [data-hud='cuadro-tel'], [data-hud='cuadro-tirador'], #tactil .pad, [data-hud='volumen-caja'], [data-hud='warning']";
+    for (const izquierda of sitios) {
+      const todos = visibles(obstaculos, izquierda);
+      const techo = innerHeight * 0.35;
+      const arriba = Math.max(16, ...todos.filter((r) => r.top < techo).map((r) => r.bottom + 8));
+      const abajo = Math.min(
+        innerHeight - 8,
+        ...todos.filter((r) => r.top >= techo && r.bottom > arriba).map((r) => r.top - 8),
+      );
+      const cabe = Math.max(0, abajo - arriba);
+      const escala = Math.max(0.55, Math.min(1, cabe / caja.height));
+      // Por poco, el de siempre: que no salte de sitio por un píxel.
+      if (escala > mejor.escala + 0.05) {
+        const top = arriba + Math.max(0, (cabe - caja.height * escala) / 2);
+        mejor = { izquierda, top, escala };
+      }
+    }
+    if (mejor.izquierda !== caja.left) tarjeta.style.left = `${Math.round(mejor.izquierda)}px`;
+    tarjeta.style.top = `${Math.round(mejor.top)}px`;
+    tarjeta.style.transform = mejor.escala < 1 ? `scale(${mejor.escala.toFixed(3)})` : "none";
     tarjeta.style.transformOrigin = "top left";
   }
 

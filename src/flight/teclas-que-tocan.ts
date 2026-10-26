@@ -110,7 +110,7 @@ export function teclaDelPaso(
 export interface MandosParaLaTecla {
   /** El gas, 0 a 1. */
   readonly gas: number;
-  /** La profundidad que se pide, −1 a 1: positiva, morro arriba. */
+  /** Lo que pide quien vuela con la profundidad, −1 a 1: positivo, morro arriba. */
   readonly profundidad: number;
   /** La palanca de flaps, 0 a 1. */
   readonly flaps: number;

@@ -16048,14 +16048,23 @@ body.con-vuelta #tactil {
   animation: senal-llama 1.8s ease-in-out infinite;
 }
 
-/* Pantallas bajas: la tecla más chica, para que quepa entre las columnas. */
+/*
+ * Pantallas bajas: la tecla más chica y **en fila con el visto**, que en un
+ * teléfono apaisado el alto es lo que falta entre la columna de botones y la
+ * palanca. En fila, el «ya me lo aprendí» conserva su yema sin encoger.
+ */
 @media (max-height: 520px) {
   .ttq {
-    --tecla: 32px;
-    padding: 6px 6px 0;
+    --tecla: 30px;
+    flex-direction: row;
+    gap: 2px;
+    padding: 4px 2px 4px 6px;
   }
   .ttq .dib {
-    height: 56px;
+    height: 48px;
+  }
+  .ttq__aprendida-texto {
+    display: none;
   }
   .ttq .inicio__pasa {
     display: none;

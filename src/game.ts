@@ -18075,7 +18075,9 @@ export class Game {
     const c = this.input.controls;
     return {
       gas: c.throttle,
-      profundidad: c.elevator,
+      // La intención, no la profundidad: la mano la mueve despacio, y con la
+      // nivelada o el automático la profundidad no es de quien vuela.
+      profundidad: this.input.intento.cabeceo,
       flaps: this.input.palancaDeFlaps,
       tren: this.input.trenQueSePide,
       aerofrenos: this.input.aerofrenosAbiertos,
@@ -18092,6 +18094,14 @@ export class Game {
   get teclasParaBanco(): { ahora: TeclaQueToca | null; aprendidas: number } {
     return { ahora: this.teclasQueTocan.ahora, aprendidas: this.teclasQueTocan.cuantasAprendidas };
   }
+  /**
+   * Y una puesta a la fuerza, en tierra o con el tutor hablando, para medir
+   * dónde cae la tarjeta: `null` la quita. Ver `verificar-carteles.mjs`.
+   */
+  forzarTeclaParaBanco(que: TeclaQueToca | null): void {
+    this.teclaForzada = que;
+  }
+  private teclaForzada: TeclaQueToca | null = null;
 
   /** La tecla que pide un paso de la cadena, apuntada con los mandos de ahora. */
   private pedirLaTecla(p: PasoDeLaCadena, mando: MandoDelPaso | null, l: LecturaDelPaso): void {
@@ -18112,8 +18122,9 @@ export class Game {
     }
     if (this.flight.state.onGround || this.percance || this.flight.state.crashed)
       this.teclasQueTocan.quitar();
-    const tecla = this.teclasQueTocan.mirar(this.mandosParaLaTecla());
-    const tapada = this.hud.tutor.visible || this.inicio !== null || this.dePasaje;
+    const tecla = this.teclaForzada ?? this.teclasQueTocan.mirar(this.mandosParaLaTecla());
+    const tapada =
+      this.teclaForzada === null && (this.hud.tutor.visible || this.inicio !== null || this.dePasaje);
     this.pistaDeTeclas.pintar(
       tecla && !tapada
         ? {
