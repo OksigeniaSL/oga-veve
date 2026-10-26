@@ -2782,6 +2782,8 @@ export class Hud {
   /** En qué peldaño de la escalera de comunicación avisa este tramo. */
   setEscalera(peldano: Peldano): void {
     this.escalera = peldano;
+    // Y el plano lleva los calcos de la carta de ese peldaño.
+    this.mapa.ponerPeldano(peldano);
   }
 
   /** Cuántos instrumentos enseña este peldaño de la escalera. */
