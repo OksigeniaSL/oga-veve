@@ -178,7 +178,7 @@ try {
           // Lo que se cantó, con la hora de la vuelta en que se vio.
           const cantados = j.cantados;
           for (const c of cantados.slice(cantadosVistos))
-            if (/^(consejo|gas de la final|paso )/.test(c)) linea.push(`${t}s ${c.split(" [")[0]}`);
+            if (/^(consejo|gas de la final|paso |cómo se aterriza)/.test(c)) linea.push(`${t}s ${c.split(" [")[0]}`);
           cantadosVistos = cantados.length;
           // Lo que pide el paso, hecho dos segundos después.
           if (pendiente && t >= pendiente.en) {
