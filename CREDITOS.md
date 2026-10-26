@@ -272,6 +272,25 @@ escenarios españoles y de EOX sobre datos Sentinel en Silvio Pettirossi, y las
 dos están en la tabla de arriba. Un fichero de licencias que afirma lo
 contrario de lo que hace el código es peor que no tenerlo.
 
+## La carta aeronáutica
+
+La carta del hangar y del plano en vuelo (`src/ui/carta/`, ADR 0021). Lo que no
+es nuestro, con su licencia; lo que es nuestro, con quién lo hizo.
+
+| Qué | De quién | Uso | Licencia |
+| --- | --- | --- | --- |
+| [ETOPO 2022](https://www.ncei.noaa.gov/products/etopo-global-relief-model), 15″ | NCEI / NOAA | El relieve y el fondo del mar de la carta: tintas hipsométricas, sombreado y veriles, horneados en `src/assets/carta/*.webp` por `scripts/carta-hornear.mjs` | **Dominio público** (obra del Gobierno de EE. UU.); se cita doi:10.25921/fd45-gt74 |
+| [ESA WorldCover 2021 v200](https://esa-worldcover.org) | ESA / consorcio WorldCover | La cubierta del suelo que matiza la rampa: monte, matorral, cultivo, suelo desnudo, humedal, ciudad y agua dulce | **CC BY 4.0** · «© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium» |
+| [CHELSA V2.1](https://chelsa-climate.org), bio12 1981-2010 | Karger et al., WSL | La lluvia del año, que separa el monte seco del húmedo: el Chaco del oriente, el sur de las islas del norte | **CC0 1.0** (ficha de EnviDat); se cita Karger et al. (2017), *Scientific Data* 4, 170122 |
+| [WMM2025](https://www.ncei.noaa.gov/products/world-magnetic-model) | NCEI / NOAA y BGS | La declinación de la rosa y de cada aeródromo, calculada el día que se juega; los coeficientes, copiados en `src/ui/carta/declinacion.ts` | **Dominio público** |
+| AIP España, AD 2.18 de cada aeródromo | ENAIRE | Las frecuencias de la ficha y de la carta en el calco de la radio (`src/world/frecuencias-publicadas.ts`), con la página de cada una | **Hechos de una publicación oficial**: se citan, no se reproduce ninguna carta |
+| AIP Paraguay, AMDT AIRAC 02/2026, AD 2.x-18 y AD 3 | DINAC | Lo mismo para los campos paraguayos | **Hechos de una publicación oficial** |
+| Barlow Semi Condensed y Barlow Condensed | Jeremy Tribby, de Google Fonts (github.com/google/fonts, carpetas `ofl/barlowsemicondensed` y `ofl/barlowcondensed`) | Las letras de la carta, recortadas y dentro del paquete (`src/assets/letras/`, con su `OFL.txt`; `scripts/letras-de-la-carta.sh`) | **SIL Open Font License 1.1** |
+| La hoja de estilo de la carta: tokens, símbolos (`src/ui/carta/simbolos/`) y grano del papel (`src/assets/carta/papel.webp`) | Gaudí, director de arte de Oksigenia, sobre la carta 1:500 000 de ENAIRE hoja GC 2025 | Los colores, la rampa, los símbolos de aeródromo, la rosa, el avión en planta y el papel | Propio (Oksigenia SL) |
+
+La atribución de WorldCover va también en la pantalla de créditos del juego,
+que es donde la pide su licencia.
+
 ## El cielo de noche
 
 | Fuente | Uso | Licencia |

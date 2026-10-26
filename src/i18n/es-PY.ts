@@ -300,6 +300,9 @@ export const ES_PY = {
   // La cadena que pide EOX, literal. Ver CREDITOS.md.
   "credits.ortoPy":
     "Ortofoto de Paraguay: EOxCloudless (cloudless.eox.at) de EOX IT Services GmbH — contiene datos Copernicus Sentinel modificados, 2020.",
+  // La de WorldCover, literal: su CC BY la pide a quien usa la carta. Ver CREDITOS.md.
+  "credits.carta":
+    "Carta: relieve y fondo del mar de ETOPO 2022 (NOAA); cubierta del suelo © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, CC BY 4.0; lluvia de CHELSA (CC0); declinación del WMM2025; letras Barlow (SIL OFL 1.1).",
   "credits.engine": "Modelo de vuelo: {model}",
   "credits.licence":
     "Código libre bajo Apache-2.0. Contenido y marcas, © Oksigenia SL.",
@@ -2735,6 +2738,19 @@ export const ES_PY = {
   "mapa.title": "Ver el mapa",
   "mapa.cerca": "Ver más de cerca",
   "mapa.lejos": "Ver más lejos",
+  // La carta del hangar: los nombres del agua y de los países de al lado, y
+  // lo poco que se escribe en la ficha de un aeródromo. Ver `ui/mapa-del-pais.ts`.
+  "carta.atlantico": "Océano Atlántico",
+  "carta.rioParaguay": "Río Paraguay",
+  "carta.rioParana": "Río Paraná",
+  "carta.rioPilcomayo": "Río Pilcomayo",
+  "carta.bolivia": "Bolivia",
+  "carta.brasil": "Brasil",
+  "carta.argentina": "Argentina",
+  "carta.enPies": "Cotas en pies",
+  "carta.ir": "Volar",
+  "carta.sinFrecuencia": "El AIP no publica frecuencia",
+  "carta.sinAip": "No sale en ningún AIP",
   "tiempo.title": "El tiempo",
   "tiempo.hora": "La hora del día",
   "tiempo.viento": "De dónde viene el viento y cuánto sopla",

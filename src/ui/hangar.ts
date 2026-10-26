@@ -68,7 +68,7 @@ import {
   type Scenario,
 } from "../world/scenarios";
 import { PROXIMAMENTE } from "../world/proximamente";
-import { mapaDelPais, type RutaEnElMapa } from "./mapa-del-pais";
+import { abrirFichaDeLaCarta, mapaDelPais, type RutaEnElMapa } from "./mapa-del-pais";
 import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from "../i18n";
 import { cielo, marca, pie } from "./marca";
 import { elegirMundo, mundoElegido } from "./mundo";
@@ -1934,6 +1934,8 @@ export function abrirHangar(
               SCENARIOS.filter((e) => e.pais === sitio.pais && e.aerodrome),
               rutasDelMapa(sitio, avion),
               destinoDeAhora(),
+              // Los calcos de la carta van con el peldaño del piloto elegido.
+              tramo.avisos,
             )}
             ${fichaDeDestino(sitio, null, avion, destinoDeAhora() === sitio.id)}
             ${destinosPosibles(sitio, avion)
@@ -2315,6 +2317,17 @@ export function abrirHangar(
           pantalla = "inicio";
           pintar();
         }
+        return;
+      }
+
+      /*
+       * **Un aeródromo de la carta abre su ficha**, sin repintar: la ficha ya
+       * está en la página. Elegir ese destino es el botón de ir de la ficha,
+       * que lleva el `data-destino` de siempre. Ver `abrirFichaDeLaCarta`.
+       */
+      const ficha = boton.getAttribute("data-ficha");
+      if (ficha !== null) {
+        abrirFichaDeLaCarta(root, ficha);
         return;
       }
 

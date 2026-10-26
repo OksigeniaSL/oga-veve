@@ -41,9 +41,15 @@ import type { Ciudad } from "../world/ciudad";
 import { puntoDePista } from "../world/rumbo";
 import { esAguaDeCasa } from "../world/agua-de-casa";
 import { fondoPara, type FondoDelMapa } from "./fondo-del-mapa";
+import { dondeCae } from "../world/entre-aerodromos";
 import type { Hito } from "../world/hitos";
 import { Panel } from "./panel";
 import { cotaEscrita } from "./carta";
+import { calcosDe, type Peldano } from "../flight/escalera";
+import { MAR, PAPEL, RAMPA, REGIONES, SIMBOLOS, SOMBRA, TINTAS, CUBIERTA, LINEAS } from "./carta/estilo";
+import { dibujarAerodromo, dibujarAvion, dibujarRosa, FondoHorneado, rotular } from "./carta/carta-en-vuelo";
+import { anoDecimal, declinacion, varEscrita } from "./carta/declinacion";
+import { frecuenciasDeLaCarta } from "../world/frecuencias-publicadas";
 import {
   encuadreCon,
   escalones,
@@ -100,9 +106,22 @@ const MUESTRAS = 230;
  */
 const LADO_DE_LAS_CALLES = 5000;
 
-/** El color de «de aquí no hay dibujo», y el de sus rayas. */
-const SIN_DATOS = [138, 134, 122] as const;
-const SIN_DATOS_RAYA = [118, 114, 104] as const;
+/**
+ * El color de «de aquí no hay dibujo», y el de sus rayas: el papel sin
+ * levantar de una carta, un punto más oscuro que el papel.
+ */
+const SIN_DATOS = [226, 220, 204] as const;
+const SIN_DATOS_RAYA = [206, 198, 180] as const;
+
+/** Un color de la hoja, `#rrggbb`, en sus tres canales. */
+const rgbHex = (hex: string): readonly [number, number, number] => [
+  parseInt(hex.slice(1, 3), 16),
+  parseInt(hex.slice(3, 5), 16),
+  parseInt(hex.slice(5, 7), 16),
+];
+const RAMPA_RGB = RAMPA.map((f) => ({ desde: f.desde, color: rgbHex(f.color) }));
+const MAR_RGB = rgbHex(MAR[0]!.color);
+const SOMBRA_RGB = rgbHex(SOMBRA.color);
 
 export class Mapa {
   private caja: HTMLElement | null = null;
@@ -158,6 +177,31 @@ export class Mapa {
 
   /** El plan de vuelo de ahora, si se va a otro campo. Ver `ponerRuta`. */
   private ruta: RutaEnElMapa | null = null;
+
+  /**
+   * **El peldaño, que decide los calcos de la carta**: el dibujo en todos, los
+   * nombres desde Tukã, las cifras desde Taguato y la radio en Ruvicha. Ver
+   * `calcosDe` en `flight/escalera.ts`.
+   */
+  private peldano: Peldano = "dibujo";
+
+  ponerPeldano(peldano: Peldano): void {
+    if (peldano === this.peldano) return;
+    const antes = this.peldano === "dibujo";
+    this.peldano = peldano;
+    // El de los pequeños lleva otra imagen, con la sombra más fuerte.
+    if (antes !== (peldano === "dibujo")) this.horneado = null;
+    this.repintar();
+  }
+
+  /** El fondo horneado de la región, si el sitio cae en una. Ver `FondoHorneado`. */
+  private horneado: FondoHorneado | null = null;
+
+  private fondoHorneado(esc: Scenario): FondoHorneado | null {
+    if (!esc.aerodrome) return null;
+    this.horneado ??= new FondoHorneado(esc.aerodrome.origin, this.peldano === "dibujo", () => this.repintar());
+    return this.horneado;
+  }
 
   /**
    * El plan de vuelo, para pintarlo por sus puntos. Se llama cada fotograma
@@ -386,6 +430,7 @@ export class Mapa {
    * perdido.
    */
   rehacer(escenario: Scenario): void {
+    if (escenario.aerodrome?.origin !== this.escenario?.aerodrome?.origin) this.horneado = null;
     this.escenario = escenario;
     this.repintar();
   }
@@ -534,13 +579,17 @@ export class Mapa {
       const b = this.enElPapel(this.destino, puesto);
       if (Math.hypot(b[0] - a[0], b[1] - a[1]) > 12) {
         g.save();
-        g.strokeStyle = "rgba(111, 179, 224, 0.85)";
-        g.lineWidth = 3;
-        g.setLineDash([2, 6]);
         g.lineCap = "round";
+        g.setLineDash([2, 6]);
         g.beginPath();
         g.moveTo(a[0], a[1]);
         g.lineTo(b[0], b[1]);
+        // El magenta de la carta, sobre su orla de papel.
+        g.strokeStyle = PAPEL.fondo;
+        g.lineWidth = LINEAS.ruta + 2 * LINEAS.rutaOrla;
+        g.stroke();
+        g.strokeStyle = TINTAS.ruta;
+        g.lineWidth = LINEAS.ruta;
         g.stroke();
         g.restore();
       }
@@ -581,7 +630,7 @@ export class Mapa {
        */
       g.save();
       g.setLineDash([4, 5]);
-      g.strokeStyle = "rgba(232, 118, 44, 0.75)";
+      g.strokeStyle = TINTAS.tinta;
       g.lineWidth = 2;
       g.beginPath();
       g.moveTo(LADO / 2, LADO / 2);
@@ -605,7 +654,7 @@ export class Mapa {
       const az = LADO / 2 + (this.alterno.z - puesto.cz) * escala;
       if (ax > 0 && ax < LADO && az > 0 && az < LADO) {
         g.save();
-        g.strokeStyle = "#8fd3e8";
+        g.strokeStyle = TINTAS.aero;
         g.lineWidth = 2.2;
         g.setLineDash([3, 3]);
         g.beginPath();
@@ -627,7 +676,7 @@ export class Mapa {
         ? this.enElPapel(siguiente, puesto)
         : [dx, dz];
       g.save();
-      g.strokeStyle = "#ffd27a";
+      g.strokeStyle = TINTAS.rutaTexto;
       g.lineWidth = 2.2;
       g.setLineDash([7, 5]);
       g.beginPath();
@@ -649,32 +698,21 @@ export class Mapa {
     // Los demás, debajo de la flecha: lo primero que se mira es dónde estoy.
     if (trafico.length) this.pintarElTrafico(g, trafico, puesto);
 
-    g.save();
-    g.translate(cx, cy);
-    // El rumbo del avión y el norte del mapa son el mismo cero: arriba.
-    g.rotate(rumboRad);
-    g.fillStyle = "#e8762c";
-    g.strokeStyle = "#2a2622";
-    g.lineWidth = 1.6;
     if (fuera) {
       // El aro dice «estás fuera, esto es por dónde».
+      g.save();
       g.beginPath();
-      g.arc(0, 0, 13, 0, Math.PI * 2);
-      g.strokeStyle = "#e8762c";
+      g.arc(cx, cy, 15, 0, Math.PI * 2);
+      g.strokeStyle = TINTAS.tinta;
       g.lineWidth = 2.4;
       g.stroke();
-      g.strokeStyle = "#2a2622";
-      g.lineWidth = 1.6;
+      g.restore();
     }
-    g.beginPath();
-    g.moveTo(0, -9);
-    g.lineTo(6.5, 8);
-    g.lineTo(0, 4.5);
-    g.lineTo(-6.5, 8);
-    g.closePath();
-    g.fill();
-    g.stroke();
-    g.restore();
+    /*
+     * **El avión en planta de la hoja**, con su halo de papel: el morro a su
+     * rumbo, que con el norte arriba es el mismo cero que el del plano.
+     */
+    dibujarAvion(g, cx, cy, rumboRad, SIMBOLOS.avion);
   }
 
   /**
@@ -818,64 +856,131 @@ export class Mapa {
     this.encuadrePintado = encuadre;
     const paso = lado / MUESTRAS;
 
-    // ── El relieve ──────────────────────────────────────────────────────
-    //
-    // Con la misma paleta que el terreno del juego, que es lo que hace que el
-    // mapa y lo que se ve por la ventanilla sean el mismo sitio. Una paleta
-    // de mapa distinta obliga a traducir, y traducir es justo lo que no puede
-    // hacer quien no lee.
-    this.relieve ??= Object.assign(document.createElement("canvas"), {
-      width: MUESTRAS,
-      height: MUESTRAS,
-    });
-    const r = this.relieve.getContext("2d");
-    if (!r) return;
-    const img = r.createImageData(MUESTRAS, MUESTRAS);
-    const agua = rgbDe(esc.water);
     /*
-     * **Y debajo, la costa y los ríos**, para que el plano no se acabe donde
-     * se acaba el relieve cargado. Ver `fondo-del-mapa.ts`. Donde lo hay, las
-     * muestras sin cota se dejan transparentes y se ve este dibujo; donde no
-     * —un escenario sin siluetas—, las rayas de siempre.
+     * ── La carta ────────────────────────────────────────────────────────
+     *
+     * **El papel y, encima, la carta horneada de la región**: el relieve con
+     * sus tintas, la cubierta del suelo y el mar con sus veriles, lo mismo
+     * que en el hangar. Era la paleta del terreno del juego, para que el plano
+     * y la ventanilla fueran el mismo sitio; ahora es la de la carta, que es
+     * la que se va a encontrar quien vuele de verdad, y el mismo sitio lo
+     * siguen diciendo la costa, el relieve y los aeródromos.
+     */
+    g.fillStyle = PAPEL.fondo;
+    g.fillRect(0, 0, LADO, LADO);
+    const puesto = { cx, cz, escala };
+    const horneado = this.fondoHorneado(esc);
+    const conImagen = horneado?.pintar(g, LADO, puesto) ?? false;
+    /*
+     * **Y debajo o encima, la costa y los ríos**, para que el plano no se
+     * acabe donde se acaba el relieve cargado. Ver `fondo-del-mapa.ts`. Sin
+     * imagen todavía —se está bajando—, la costa rellena hace de carta.
      */
     const fondo = esc.aerodrome ? fondoPara(esc.pais, esc.aerodrome.origin) : null;
-    if (fondo) this.pintarLaCosta(g, fondo, esc, cx, cz, escala);
-    for (let fila = 0; fila < MUESTRAS; fila++) {
-      for (let col = 0; col < MUESTRAS; col++) {
-        const x = cx - lado / 2 + (col + 0.5) * paso;
-        const z = cz - lado / 2 + (fila + 0.5) * paso;
-        /*
-         * **Donde no se sabe, se dice que no se sabe.**
-         *
-         * Fuera del mundo se pintaba mar, con el argumento de que «más allá
-         * no hay nada, y ahí el mar es lo honesto». En una isla casi acierta;
-         * tierra adentro miente: volando de Pettirossi a Encarnación, el plano
-         * ancho enseñaba un océano al sur de Asunción. Ahora la cota viene del
-         * mundo entero del vuelo —el mapa fino, los de los destinos y el del
-         * horizonte— y donde ninguno contesta se pinta gris a rayas, que es
-         * como marca una carta de verdad la zona sin levantar.
-         */
-        const h = cota(x, z);
-        const c =
-          h === null
-            ? (col + fila) % 6 < 2
-              ? SIN_DATOS_RAYA
-              : SIN_DATOS
-            : esAguaDeCasa(h, esc.waterLevel)
-              ? agua
-              : rgbDe(colorDeCota(esc, h));
-        const i = (fila * MUESTRAS + col) * 4;
-        img.data[i] = c[0];
-        img.data[i + 1] = c[1];
-        img.data[i + 2] = c[2];
-        img.data[i + 3] = h === null && fondo ? 0 : 255;
+    if (fondo && !conImagen) this.pintarLaCosta(g, fondo, cx, cz, escala, true);
+
+    /*
+     * ── El relieve fino ─────────────────────────────────────────────────
+     *
+     * Cuando el encuadre es tan pequeño que un píxel de la carta horneada ya
+     * mide más que una muestra del terreno cargado, se le vuelve a preguntar
+     * al terreno: acercarse no es ampliar la imagen, es mirar con más detalle.
+     * Con la rampa de la carta en peldaños y el sombreado del noroeste, y un
+     * poco transparente para que la cubierta del suelo siga asomando.
+     */
+    const fino = !conImagen || paso < (horneado?.metrosPorPixel ?? Infinity);
+    if (fino) {
+      this.relieve ??= Object.assign(document.createElement("canvas"), {
+        width: MUESTRAS,
+        height: MUESTRAS,
+      });
+      const r = this.relieve.getContext("2d");
+      if (!r) return;
+      const img = r.createImageData(MUESTRAS, MUESTRAS);
+      const cotas = new Float32Array(MUESTRAS * MUESTRAS);
+      const sabe = new Uint8Array(MUESTRAS * MUESTRAS);
+      for (let fila = 0; fila < MUESTRAS; fila++) {
+        for (let col = 0; col < MUESTRAS; col++) {
+          const x = cx - lado / 2 + (col + 0.5) * paso;
+          const z = cz - lado / 2 + (fila + 0.5) * paso;
+          /*
+           * **Donde no se sabe, se dice que no se sabe.** Fuera del mundo se
+           * pintaba mar, y tierra adentro eso miente: volando de Pettirossi a
+           * Encarnación, el plano ancho enseñaba un océano al sur de
+           * Asunción. Donde no contesta ningún mapa queda la carta horneada
+           * o, sin ella, el papel a rayas de la zona sin levantar.
+           */
+          const h = cota(x, z);
+          const i = fila * MUESTRAS + col;
+          if (h !== null) {
+            cotas[i] = h;
+            sabe[i] = 1;
+          }
+        }
       }
+      const region = horneado?.region ? REGIONES[horneado.region] : null;
+      const exageracion = region?.exageracion ?? 1.5;
+      const fuerza = this.peldano === "dibujo" ? SOMBRA.fuerzaPequenos : SOMBRA.fuerza;
+      const zen = ((90 - SOMBRA.altura) * Math.PI) / 180;
+      const az = (SOMBRA.azimut * Math.PI) / 180;
+      const en = (c: number, f: number): number => {
+        const k = Math.max(0, Math.min(MUESTRAS - 1, f)) * MUESTRAS + Math.max(0, Math.min(MUESTRAS - 1, c));
+        return sabe[k] ? cotas[k]! : NaN;
+      };
+      for (let fila = 0; fila < MUESTRAS; fila++) {
+        for (let col = 0; col < MUESTRAS; col++) {
+          const i = fila * MUESTRAS + col;
+          const o = i * 4;
+          if (!sabe[i]) {
+            const c = (col + fila) % 6 < 2 ? SIN_DATOS_RAYA : SIN_DATOS;
+            img.data[o] = c[0];
+            img.data[o + 1] = c[1];
+            img.data[o + 2] = c[2];
+            img.data[o + 3] = fondo || conImagen ? 0 : 255;
+            continue;
+          }
+          const h = cotas[i]!;
+          if (esAguaDeCasa(h, esc.waterLevel)) {
+            img.data[o] = MAR_RGB[0];
+            img.data[o + 1] = MAR_RGB[1];
+            img.data[o + 2] = MAR_RGB[2];
+            img.data[o + 3] = 255;
+            continue;
+          }
+          let banda = RAMPA_RGB[0]!.color;
+          for (const b of RAMPA_RGB) if (h >= b.desde) banda = b.color;
+          // El sombreado de la hoja: solo oscurece la ladera de sombra.
+          const este = en(col + 1, fila) - en(col - 1, fila);
+          const sur = en(col, fila + 1) - en(col, fila - 1);
+          let oscuro = 0;
+          if (Number.isFinite(este) && Number.isFinite(sur)) {
+            const sx = (este / (2 * paso)) * exageracion;
+            const sy = (sur / (2 * paso)) * exageracion;
+            const pendiente = Math.atan(Math.hypot(sx, sy));
+            const aspecto = Math.atan2(sy, -sx);
+            const luz =
+              Math.cos(zen) * Math.cos(pendiente) +
+              Math.sin(zen) * Math.sin(pendiente) * Math.cos(Math.PI * 2.5 - az - aspecto);
+            oscuro = Math.max(0, Math.min(1, 1 - luz / Math.cos(zen))) * fuerza;
+          }
+          img.data[o] = banda[0] * (1 - oscuro) + SOMBRA_RGB[0] * oscuro * 0.35;
+          img.data[o + 1] = banda[1] * (1 - oscuro) + SOMBRA_RGB[1] * oscuro * 0.35;
+          img.data[o + 2] = banda[2] * (1 - oscuro) + SOMBRA_RGB[2] * oscuro * 0.35;
+          img.data[o + 3] = 255;
+        }
+      }
+      r.putImageData(img, 0, 0);
+      // A cuadros, como estaba: el relieve es una rejilla de muestras, y
+      // suavizarlo inventaría cotas entre medias.
+      g.save();
+      g.imageSmoothingEnabled = false;
+      g.globalAlpha = conImagen ? 0.82 : 1;
+      g.drawImage(this.relieve, 0, 0, LADO, LADO);
+      g.restore();
     }
-    r.putImageData(img, 0, 0);
-    // A cuadros, como estaba: el relieve es una rejilla de muestras, y
-    // suavizarlo inventaría cotas entre medias.
-    g.imageSmoothingEnabled = false;
-    g.drawImage(this.relieve, 0, 0, LADO, LADO);
+    // La costa trazada, los ríos y la frontera, encima de todo el relieve.
+    if (fondo) this.pintarLaCosta(g, fondo, cx, cz, escala, false);
+    this.pintarLaReticula(g, esc, puesto);
 
     // ── La ciudad ───────────────────────────────────────────────────────
     //
@@ -898,15 +1003,16 @@ export class Mapa {
           const qx = LADO / 2 + (mx - cx) * escala;
           const qy = LADO / 2 + (mz - cz) * escala;
           if (qx < -cp || qy < -cp || qx > LADO || qy > LADO) continue;
-          g.globalAlpha = 0.3 + d * 0.55;
-          g.fillStyle = c === 3 ? "#8e8577" : c === 2 ? "#9aa09a" : "#c3b394";
+          // El amarillo de las ciudades de la carta, más denso donde más hay.
+          g.globalAlpha = 0.25 + d * 0.5;
+          g.fillStyle = c === 3 ? "#d9b13a" : c === 2 ? "#e3c45a" : CUBIERTA.ciudad.color;
           g.fillRect(qx, qy, cp + 1, cp + 1);
         }
       }
       g.globalAlpha = 1;
 
       // ── Las carreteras ────────────────────────────────────────────────
-      g.strokeStyle = "#5a5a5e";
+      g.strokeStyle = "#8a6d4a";
       g.lineCap = "round";
       for (const via of ciudad.vias) {
         g.lineWidth = via.nivel <= 1 ? 1.8 : via.nivel === 2 ? 1.3 : 0.8;
@@ -943,7 +1049,7 @@ export class Mapa {
         LADO / 2 + (-py - cz) * escala,
       ];
 
-      g.fillStyle = "#3f4442";
+      g.fillStyle = "#8f8a80";
       for (const plat of aero.aprons ?? []) {
         if (plat.polygon.length < 3) continue;
         g.beginPath();
@@ -956,7 +1062,7 @@ export class Mapa {
         g.fill();
       }
 
-      g.strokeStyle = "#3f4442";
+      g.strokeStyle = "#8f8a80";
       g.lineCap = "round";
       g.lineJoin = "round";
       for (const calle of aero.taxiways ?? []) {
@@ -996,58 +1102,176 @@ export class Mapa {
     //
     // Se dibuja la última y en blanco: cuando uno mira este mapa es porque no
     // sabe dónde está, y lo que busca casi siempre es por dónde se vuelve.
+    const calcos = calcosDe(this.peldano);
+    const tamano = this.peldano === "dibujo" ? SIMBOLOS.aerodromoPequenos : SIMBOLOS.aerodromo;
+    /*
+     * **De lejos, el aeródromo de la hoja; de cerca, la pista a escala**, que
+     * es lo que hay que encontrar al volver. El símbolo, civil si el AIP le
+     * publica torre y pequeño si no, con la pista girada a su rumbo.
+     */
     const pintarPista = (pista: {
       x: number;
       z: number;
       heading: number;
       length: number;
-    }): void => {
+    }, oaci: string | null): void => {
       const media = pista.length / 2;
       const a = puntoDePista(pista, media);
       const b = puntoDePista(pista, -media);
-      g.strokeStyle = "#1d1b19";
-      g.lineWidth = Math.max(5, 5 * escala * 4);
+      const largo = pista.length * escala;
+      if (largo < tamano * 1.6) {
+        const civil = frecuenciasDeLaCarta(oaci)?.torre?.servicio === "TWR";
+        dibujarAerodromo(
+          g,
+          LADO / 2 + (pista.x - cx) * escala,
+          LADO / 2 + (pista.z - cz) * escala,
+          civil,
+          (pista.heading * Math.PI) / 180,
+          tamano,
+        );
+        return;
+      }
+      g.save();
       g.lineCap = "butt";
       g.beginPath();
       g.moveTo(LADO / 2 + (a[0] - cx) * escala, LADO / 2 + (a[1] - cz) * escala);
       g.lineTo(LADO / 2 + (b[0] - cx) * escala, LADO / 2 + (b[1] - cz) * escala);
+      g.strokeStyle = PAPEL.fondo;
+      g.lineWidth = Math.max(7, 5 * escala * 4) + 3;
       g.stroke();
-      g.strokeStyle = "#f4efe6";
-      g.lineWidth = Math.max(2.6, 2.6 * escala * 4);
+      g.strokeStyle = TINTAS.aerodromo;
+      g.lineWidth = Math.max(7, 5 * escala * 4);
       g.stroke();
+      // El eje blanco a trazos, como en la carta de aeródromo.
+      g.strokeStyle = "#fff";
+      g.lineWidth = Math.max(1.2, escala * 1.5);
+      g.setLineDash([6, 5]);
+      g.stroke();
+      g.restore();
     };
-    pintarPista(esc.runway);
+    /** El indicativo del campo más cerca de una pista, para su símbolo. */
+    const oaciDe = (p: { x: number; z: number }): string | null => {
+      let mejor: string | null = null;
+      let cerca = 6000;
+      for (const c of this.campos) {
+        const d = Math.hypot(c.x - p.x, c.z - p.z);
+        if (d < cerca) {
+          cerca = d;
+          mejor = c.oaci;
+        }
+      }
+      return mejor;
+    };
+    pintarPista(esc.runway, esc.aerodrome?.id ?? null);
     /*
      * **Y la del destino, que es la otra mitad del mapa.**
      *
      * Un plano con un solo sitio donde bajar no contesta la pregunta que se
      * hace quien está volando sobre el mar: «¿a cuál de esas dos islas puedo
-     * ir?». Se pinta igual que la de casa —barra blanca con reborde oscuro—
-     * porque es lo mismo: una pista.
+     * ir?». Se pinta igual que la de casa porque es lo mismo: una pista.
      */
-    for (const p of this.otrasPistas) pintarPista(p);
+    for (const p of this.otrasPistas) pintarPista(p, oaciDe(p));
 
-    // Y cada aeródromo con su rótulo, con reborde claro como los de los
-    // hitos: sobre relieve un texto oscuro a secas no se lee.
-    g.textBaseline = "middle";
+    /*
+     * Y cada aeródromo con su rótulo, por calcos y con su halo de papel: el
+     * indicativo siempre —ya estaba—, el nombre desde Tukã y la frecuencia
+     * de la torre en Ruvicha, como la imprime su AIP.
+     */
     for (const c of this.campos) {
       const px = LADO / 2 + (c.x - cx) * escala;
       const py = LADO / 2 + (c.z - cz) * escala;
       if (px < -40 || px > LADO + 40 || py < -20 || py > LADO + 20) continue;
-      const texto = c.oaci ? `${c.oaci} ${c.nombre}` : c.nombre;
-      g.font = "700 12px system-ui, sans-serif";
-      const ancho = g.measureText(texto).width;
-      // Al lado que quepa, igual que los hitos.
-      const aLaIzquierda = px + 12 + ancho > LADO - 2;
-      g.textAlign = aLaIzquierda ? "right" : "left";
-      const tx = aLaIzquierda ? px - 12 : px + 12;
-      const ty = Math.max(10, Math.min(LADO - 10, py - 12));
-      g.lineWidth = 3.2;
-      g.strokeStyle = "#f4efe6";
-      g.fillStyle = "#1d1b19";
-      g.strokeText(texto, tx, ty);
-      g.fillText(texto, tx, ty);
+      const radio = calcos.radio ? frecuenciasDeLaCarta(c.oaci)?.torre : null;
+      rotular(
+        g,
+        [
+          ...(calcos.nombres ? [{ texto: c.nombre, color: TINTAS.tinta, cuerpo: 13 }] : []),
+          ...(c.oaci ? [{ texto: c.oaci, color: TINTAS.tinta, cifras: true, cuerpo: 12 }] : []),
+          ...(radio
+            ? [{ texto: `${radio.servicio} ${radio.f.cifra}${radio.f.canal833 ? " C" : ""}`, color: TINTAS.aero, cifras: true, cuerpo: 12 }]
+            : []),
+        ],
+        px,
+        py,
+        LADO,
+        tamano / 2 + 6,
+      );
     }
+
+    /*
+     * ── La rosa, en su esquina ──────────────────────────────────────────
+     *
+     * Abajo a la izquierda, que es donde menos estorba a la flecha. Con la
+     * radio, el norte magnético girado a la declinación de hoy en el sitio.
+     */
+    if (esc.aerodrome) {
+      const ano = anoDecimal(new Date());
+      const d = declinacion(esc.aerodrome.origin.lat, esc.aerodrome.origin.lon, ano);
+      dibujarRosa(g, 32, LADO - 40, 20, calcos.radio ? d : null, calcos.radio ? varEscrita(d) : null);
+    }
+  }
+
+  /**
+   * **La retícula de la carta**, cada treinta minutos de arco, en sus
+   * meridianos y paralelos de verdad; y con sus grados desde el calco de las
+   * cifras. Con la proyección del mundo, así que cae donde caen las cosas.
+   */
+  private pintarLaReticula(
+    g: CanvasRenderingContext2D,
+    esc: Scenario,
+    e: { readonly cx: number; readonly cz: number; readonly escala: number },
+  ): void {
+    const o = esc.aerodrome?.origin;
+    if (!o) return;
+    const lado = LADO / e.escala;
+    // Lo que se ve, en grados, con margen.
+    const dLat = ((lado / 6371008) * 180) / Math.PI;
+    const dLon = dLat / Math.cos((o.lat * Math.PI) / 180);
+    const z0 = e.cz;
+    const x0 = e.cx;
+    const latCentro = o.lat - (((z0 / 6371008) * 180) / Math.PI);
+    const lonCentro = o.lon + (((x0 / 6371008) * 180) / Math.PI) / Math.cos((o.lat * Math.PI) / 180);
+    if (dLat > 12) return;
+    const conCifras = calcosDe(this.peldano).cifras;
+    const enPapel = (lat: number, lon: number): readonly [number, number] => {
+      const p = dondeCaeEnElMundo(o, lat, lon);
+      return [LADO / 2 + (p.x - e.cx) * e.escala, LADO / 2 + (p.z - e.cz) * e.escala];
+    };
+    g.save();
+    g.strokeStyle = PAPEL.reticula;
+    g.lineWidth = LINEAS.reticula;
+    g.font = `600 10px 'Barlow Condensed', sans-serif`;
+    g.fillStyle = TINTAS.aero;
+    for (let lat = Math.floor((latCentro - dLat) * 2) / 2; lat <= latCentro + dLat; lat += 0.5) {
+      const [a0, a1] = enPapel(lat, lonCentro - dLon);
+      const [b0, b1] = enPapel(lat, lonCentro + dLon);
+      g.beginPath();
+      g.moveTo(a0, a1);
+      g.lineTo(b0, b1);
+      g.stroke();
+      if (conCifras && a1 > 12 && a1 < LADO - 4) {
+        const g0 = Math.floor(Math.abs(lat));
+        const m = Math.round((Math.abs(lat) - g0) * 60);
+        g.fillText(`${g0}°${m ? `${m}′` : ""}${lat >= 0 ? "N" : "S"}`, 3, a1 - 3);
+      }
+    }
+    for (let lon = Math.floor((lonCentro - dLon) * 2) / 2; lon <= lonCentro + dLon; lon += 0.5) {
+      const [a0, a1] = enPapel(latCentro + dLat, lon);
+      const [b0, b1] = enPapel(latCentro - dLat, lon);
+      g.beginPath();
+      g.moveTo(a0, a1);
+      g.lineTo(b0, b1);
+      g.stroke();
+      if (conCifras) {
+        const xTop = a0 + ((b0 - a0) * (0 - a1)) / (b1 - a1 || 1);
+        if (xTop > 4 && xTop < LADO - 40) {
+          const g0 = Math.floor(Math.abs(lon));
+          const m = Math.round((Math.abs(lon) - g0) * 60);
+          g.fillText(`${g0}°${m ? `${m}′` : ""}${lon >= 0 ? "E" : "W"}`, xTop + 3, 11);
+        }
+      }
+    }
+    g.restore();
   }
 
   /**
@@ -1068,7 +1292,8 @@ export class Mapa {
     g.lineJoin = "round";
     // Lo volado: fino y a trazos, hasta el punto de donde se viene.
     const desde = Math.max(0, ruta.activo - 1);
-    g.strokeStyle = "rgba(111, 179, 224, 0.55)";
+    g.strokeStyle = TINTAS.ruta;
+    g.globalAlpha = 0.55;
     g.lineWidth = 2;
     g.setLineDash([2, 6]);
     g.beginPath();
@@ -1078,12 +1303,13 @@ export class Mapa {
       else g.moveTo(x, y);
     }
     g.stroke();
+    g.globalAlpha = 1;
     // Lo que queda, con el tramo que se está volando: entero. Empieza en el
     // punto de donde se viene, como en la carta, para que se vea si uno va
-    // por el tramo o se ha ido a un lado.
+    // por el tramo o se ha ido a un lado. Magenta sobre su orla de papel.
     g.setLineDash([]);
-    g.strokeStyle = "rgba(20, 60, 90, 0.55)";
-    g.lineWidth = 5;
+    g.strokeStyle = PAPEL.fondo;
+    g.lineWidth = LINEAS.ruta + 2 * LINEAS.rutaOrla;
     g.beginPath();
     for (let i = desde; i < pts.length; i++) {
       const [x, y] = pts[i]!;
@@ -1091,12 +1317,12 @@ export class Mapa {
       else g.lineTo(x, y);
     }
     g.stroke();
-    g.strokeStyle = "rgb(111, 179, 224)";
-    g.lineWidth = 3;
+    g.strokeStyle = TINTAS.ruta;
+    g.lineWidth = LINEAS.ruta;
     g.stroke();
     // Los puntos, del primero al último. La cabecera de salida y el umbral
     // ya los dibuja la pista.
-    g.font = "600 10px system-ui, sans-serif";
+    g.font = `600 11px ${"'Barlow Condensed', sans-serif"}`;
     g.textBaseline = "middle";
     ruta.fijos.forEach((f, i) => {
       if (f.papel === "despegue" || f.papel === "umbral" || f.papel === "aqui") return;
@@ -1104,8 +1330,8 @@ export class Mapa {
       if (x < -20 || x > LADO + 20 || y < -20 || y > LADO + 20) return;
       const activo = i === ruta.activo;
       estrella(g, x, y, activo ? 7 : 5.5);
-      g.fillStyle = activo ? "#ffd27a" : i < ruta.activo ? "#9ab3c4" : "#f4efe6";
-      g.strokeStyle = "#1d1b19";
+      g.fillStyle = activo ? TINTAS.ruta : i < ruta.activo ? "#b9c3cc" : PAPEL.fondo;
+      g.strokeStyle = TINTAS.aero;
       g.lineWidth = 1.4;
       g.fill();
       g.stroke();
@@ -1122,9 +1348,9 @@ export class Mapa {
       g.textAlign = izquierda ? "right" : "left";
       const tx = izquierda ? x - 8 : x + 8;
       g.lineWidth = 3;
-      g.strokeStyle = "#f4efe6";
+      g.strokeStyle = PAPEL.fondo;
       g.strokeText(f.nombre, tx, y + 8);
-      g.fillStyle = "#1d1b19";
+      g.fillStyle = TINTAS.aero;
       g.fillText(f.nombre, tx, y + 8);
     });
     /*
@@ -1138,16 +1364,16 @@ export class Mapa {
       const [x, y] = pts[umbral]!;
       if (x > -20 && x < LADO + 20 && y > -20 && y < LADO + 20) {
         const texto = `${ruta.fijos[umbral]!.nombre} · ${cotaEscrita(ruta.cotaDelUmbral)}`;
-        g.font = "700 11px system-ui, sans-serif";
+        g.font = `600 12px 'Barlow Condensed', sans-serif`;
         const ancho = g.measureText(texto).width;
         const izquierda = x + 10 + ancho > LADO - 2;
         g.textAlign = izquierda ? "right" : "left";
         const tx = izquierda ? x - 10 : x + 10;
         const ty = Math.max(10, Math.min(LADO - 10, y + 14));
         g.lineWidth = 3;
-        g.strokeStyle = "#f4efe6";
+        g.strokeStyle = PAPEL.fondo;
         g.strokeText(texto, tx, ty);
-        g.fillStyle = "#1d1b19";
+        g.fillStyle = TINTAS.cota;
         g.fillText(texto, tx, ty);
       }
     }
@@ -1159,8 +1385,8 @@ export class Mapa {
          * bajar se entiende sin leer, y «T/D» —*top of descent*— es como lo
          * rotula cualquier pantalla de navegación, sin traducir.
          */
-        g.fillStyle = "#f4efe6";
-        g.strokeStyle = "#2f8f5b";
+        g.fillStyle = PAPEL.fondo;
+        g.strokeStyle = TINTAS.rutaTexto;
         g.lineWidth = 2.4;
         g.beginPath();
         g.arc(x, y, 6.5, 0, Math.PI * 2);
@@ -1174,9 +1400,9 @@ export class Mapa {
         if (ruta.conNombres) {
           g.textAlign = "left";
           g.lineWidth = 3;
-          g.strokeStyle = "#f4efe6";
+          g.strokeStyle = PAPEL.fondo;
           g.strokeText("T/D", x + 9, y - 8);
-          g.fillStyle = "#1f6b43";
+          g.fillStyle = TINTAS.rutaTexto;
           g.fillText("T/D", x + 9, y - 8);
         }
       }
@@ -1196,18 +1422,16 @@ export class Mapa {
   private pintarLaCosta(
     g: CanvasRenderingContext2D,
     fondo: FondoDelMapa,
-    esc: Scenario,
     cx: number,
     cz: number,
     escala: number,
+    rellenar: boolean,
   ): void {
     const enPapel = (p: { x: number; z: number }): readonly [number, number] => [
       LADO / 2 + (p.x - cx) * escala,
       LADO / 2 + (p.z - cz) * escala,
     ];
-    const tierra = hex(esc.fill);
-    g.fillStyle = fondo.fuera === "mar" ? hex(esc.water) : apagado(esc.fill);
-    g.fillRect(0, 0, LADO, LADO);
+    g.save();
     g.beginPath();
     for (const anillo of fondo.tierras) {
       anillo.forEach((p, i) => {
@@ -1217,21 +1441,34 @@ export class Mapa {
       });
       g.closePath();
     }
-    g.fillStyle = tierra;
-    g.fill();
-    if (fondo.frontera) {
-      g.save();
-      g.strokeStyle = "rgba(40, 36, 32, 0.7)";
-      g.lineWidth = 1.6;
-      g.setLineDash([6, 4]);
-      g.stroke();
-      g.restore();
+    if (rellenar) {
+      /*
+       * Sin la carta horneada —se está bajando—, el dibujo plano: el mar en
+       * su primer azul y la tierra en el primer peldaño de la rampa, que no
+       * se sabe su cota y pintarla de monte sería inventársela.
+       */
+      g.fillStyle = fondo.fuera === "mar" ? MAR[0]!.color : PAPEL.fondo;
+      g.fillRect(0, 0, LADO, LADO);
+      g.fillStyle = RAMPA[0]!.color;
+      g.fill();
     }
-    g.save();
-    g.strokeStyle = hex(esc.water);
-    g.lineCap = "round";
     g.lineJoin = "round";
-    g.lineWidth = 2.2;
+    g.lineCap = "round";
+    if (fondo.frontera) {
+      g.strokeStyle = TINTAS.tinta;
+      g.globalAlpha = 0.6;
+      g.lineWidth = 1.4;
+      g.setLineDash([7, 3, 2, 3]);
+      g.stroke();
+      g.setLineDash([]);
+      g.globalAlpha = 1;
+    } else {
+      g.strokeStyle = TINTAS.agua;
+      g.lineWidth = LINEAS.costa;
+      g.stroke();
+    }
+    g.strokeStyle = TINTAS.agua;
+    g.lineWidth = LINEAS.rio;
     for (const rio of fondo.rios) {
       g.beginPath();
       rio.forEach((p, i) => {
@@ -1261,7 +1498,8 @@ export class Mapa {
      * relieve. La raya de la pista se dibuja con cinco de grueso por el mismo
      * motivo.
      */
-    g.font = "600 11px system-ui, sans-serif";
+    const calcos = calcosDe(this.peldano);
+    g.font = `500 12px 'Barlow Semi Condensed', sans-serif`;
     g.textAlign = "left";
     g.textBaseline = "middle";
     for (const hito of this.hitos) {
@@ -1276,8 +1514,8 @@ export class Mapa {
        * oscuro es un símbolo que no está.
        */
       g.lineWidth = 2;
-      g.strokeStyle = "#f4efe6";
-      g.fillStyle = "#1d1b19";
+      g.strokeStyle = PAPEL.fondo;
+      g.fillStyle = hito.clase === "montana" ? TINTAS.cota : TINTAS.tinta;
       g.beginPath();
       if (hito.clase === "montana") {
         // El triángulo de cota de las cartas de verdad.
@@ -1290,14 +1528,16 @@ export class Mapa {
       }
       g.stroke();
       g.fill();
-      if (!dichos.has(hito.nombre)) continue;
+      // El nombre, desde el calco de los nombres y solo si ya se oyó.
+      if (!calcos.nombres || !dichos.has(hito.nombre)) continue;
       /*
        * Y el nombre con su reborde claro, que sobre relieve verde y monte
        * marrón un texto oscuro a secas no se lee. Es lo mismo que hacen los
        * rótulos de una carta aeronáutica y por el mismo motivo.
        */
       g.lineWidth = 3;
-      g.strokeStyle = "#f4efe6";
+      g.strokeStyle = PAPEL.fondo;
+      g.fillStyle = TINTAS.tinta;
       /*
        * Y al lado que quepa. Medido en una captura: «Santa Cruz de Tenerife»
        * escrito siempre a la derecha se salía del lienzo y se leía «Sa».
@@ -1312,29 +1552,12 @@ export class Mapa {
   }
 }
 
-/** Un color de los escenarios, `0xRRGGBB`, en sus tres canales. */
-const rgbDe = (n: number): readonly [number, number, number] => [
-  (n >> 16) & 255,
-  (n >> 8) & 255,
-  n & 255,
-];
-
-/** El color que le toca a una cota, con las mismas bandas que el terreno. */
-function colorDeCota(esc: Scenario, h: number): number {
-  let color = esc.fill;
-  for (const banda of esc.bands) if (h >= banda.from) color = banda.colour;
-  return color;
-}
-
-/** Un color de los escenarios, como lo quiere un lienzo. */
-const hex = (n: number): string => `#${n.toString(16).padStart(6, "0")}`;
-
-/** El mismo color, apagado hacia el gris: la tierra de al lado. */
-function apagado(n: number): string {
-  const [r, g, b] = rgbDe(n);
-  const gris = (r + g + b) / 3;
-  const mezcla = (c: number) => Math.round(c * 0.55 + gris * 0.45);
-  return `rgb(${mezcla(r)}, ${mezcla(g)}, ${mezcla(b)})`;
+/**
+ * Dónde cae una latitud y longitud en el mundo de un origen: la misma cuenta
+ * que `dondeCae`, para la retícula.
+ */
+function dondeCaeEnElMundo(o: { lat: number; lon: number }, lat: number, lon: number): { x: number; z: number } {
+  return dondeCae(o, { lat, lon });
 }
 
 /**

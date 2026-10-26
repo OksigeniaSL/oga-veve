@@ -32,6 +32,45 @@
  * La regla de oro, escrita para no volver a discutirla: si algo lleva texto
  * encima, es opaco. El vidrio es un filo, no una superficie.
  */
+/*
+ * **Las letras de la carta**: Barlow Semi Condensed para los nombres y Barlow
+ * Condensed para las cifras, de Jeremy Tribby (SIL Open Font License 1.1).
+ * Dentro del paquete y recortadas a lo que se escribe —ver
+ * `scripts/letras-de-la-carta.sh`—: el juego no pide nada a terceros mientras
+ * se juega. Solo se bajan cuando hay carta en pantalla.
+ */
+@font-face {
+  font-family: "Barlow Semi Condensed";
+  src: url("./assets/letras/BarlowSemiCondensed-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Barlow Semi Condensed";
+  src: url("./assets/letras/BarlowSemiCondensed-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Barlow Semi Condensed";
+  src: url("./assets/letras/BarlowSemiCondensed-MediumItalic.woff2") format("woff2");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Barlow Condensed";
+  src: url("./assets/letras/BarlowCondensed-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* ── Marca Granja Óga ── */
   --terracota: #be5d38;
@@ -7942,6 +7981,18 @@ button.motor__tecla::after {
  * Y la barra de desplazamiento va en la paleta del juego, sin flechas ni
  * relieve: se ve siempre, porque es la que avisa de que hay más debajo.
  */
+/*
+ * **La carta del hangar, a lo ancho de la rejilla.** Es la cara del juego, y
+ * en dos huecos los rótulos del calco de la radio se pisaban unos con otros.
+ * Con alto fijo y no mínimo, como en el teléfono —ver más abajo—: solo con el
+ * mínimo, Chrome daba cero a sus unidades de contenedor. Va antes que la
+ * regla del teléfono para que aquella, que es más pequeña, gane allí.
+ */
+.hangar .pais {
+  grid-column: 1 / -1;
+  height: clamp(260px, 58vh, 640px);
+}
+
 .hangar__rejilla {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
@@ -10942,30 +10993,56 @@ button.motor__tecla::after {
 }
 
 /*
- * **El país, como la primera ficha de destino.** Ver `ui/mapa-del-pais.ts`.
+ * **La carta del país, como la primera ficha de destino.** Ver
+ * `ui/mapa-del-pais.ts` y la hoja de estilo de la carta (`ui/carta/estilo.ts`),
+ * que es de donde salen todas las `--carta-*`: el elemento las lleva puestas.
  *
  * Una ficha más de la rejilla y no una franja encima: puesta encima, en un
  * teléfono tumbado empujaba las fichas —que son los mandos— por debajo del
  * borde, y lo que no se ve para quien no lee no existe. Como ficha ocupa un
  * hueco y las demás siguen a la vista.
  *
- * Dentro, el país guarda su proporción: la silueta va en SVG estirado a la
- * caja —`preserveAspectRatio="none"`—, así que el lienzo tiene que tener
- * exactamente su forma o el Paraguay saldría apaisado. Se mide contra la
- * ficha con unidades de contenedor y se centra.
+ * Dentro, la región guarda su proporción: el dibujo va en SVG estirado a la
+ * caja —`preserveAspectRatio="none"`— y la imagen horneada debajo, así que el
+ * lienzo tiene que tener exactamente su forma o el Paraguay saldría apaisado.
+ * Se mide contra la ficha con unidades de contenedor y se centra.
+ *
+ * **El papel** es el mosaico de grano de la hoja —un WebP de 1 KB, porque un
+ * filtro no aguanta 60 fps en una tablet— y los dos pliegues de una carta
+ * doblada en cuatro, que van por encima de todo como en una carta de verdad.
  */
 .pais {
   position: relative;
   container-type: size;
   min-height: 150px;
+  overflow: hidden;
   border-radius: var(--r-l);
-  background: var(--barro-claro);
-  background-image: var(--barniz);
-  box-shadow: var(--filo), var(--poso);
+  background-color: var(--carta-papel);
+  background-image: var(--papel-grano, none);
+  background-size: 256px 256px;
+  box-shadow: var(--poso);
+  color: var(--carta-tinta);
+  font-family: var(--carta-letra-nombres);
+  /* El halo de papel de cada etiqueta: así se lee sobre cualquier tinte. */
+  --halo-de-papel: 0 0 1px var(--carta-papel), 0 0 2px var(--carta-papel),
+    1px 1px 0 var(--carta-papel), -1px -1px 0 var(--carta-papel),
+    1px -1px 0 var(--carta-papel), -1px 1px 0 var(--carta-papel),
+    0 0 4px var(--carta-papel);
+}
+
+.pais::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, transparent calc(50% - 10px), var(--carta-pliegue) 50%, transparent calc(50% + 10px)),
+    linear-gradient(0deg, transparent calc(50% - 10px), var(--carta-pliegue) 50%, transparent calc(50% + 10px));
 }
 
 /*
- * Y un archipiélago tumbado ocupa dos huecos: Canarias mide tres veces más de
+ * Y un archipiélago tumbado ocupa dos huecos: Canarias mide dos veces más de
  * ancho que de alto, y en uno solo las islas salían del tamaño de los rótulos.
  */
 .pais--apaisado {
@@ -10976,8 +11053,18 @@ button.motor__tecla::after {
   position: absolute;
   inset: 0;
   margin: auto;
-  width: min(calc(100cqw - 44px), calc((100cqh - 24px) * var(--proporcion, 1)));
-  height: min(calc(100cqh - 24px), calc((100cqw - 44px) / var(--proporcion, 1)));
+  width: min(calc(100cqw - 16px), calc((100cqh - 16px) * var(--proporcion, 1)));
+  height: min(calc(100cqh - 16px), calc((100cqw - 16px) / var(--proporcion, 1)));
+}
+
+.pais__relieve {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  pointer-events: none;
+  user-select: none;
 }
 
 .pais__dibujo {
@@ -10986,51 +11073,186 @@ button.motor__tecla::after {
   width: 100%;
   height: 100%;
   overflow: visible;
+  pointer-events: none;
 }
 
-.pais__tierra {
-  fill: rgb(228 226 218 / 0.1);
-  stroke: var(--tinta-suave);
-  stroke-width: 1.5px;
-  stroke-linejoin: round;
+.pais__dibujo path,
+.pais__dibujo line {
+  fill: none;
   vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.pais__reticula {
+  stroke: var(--carta-reticula);
+  stroke-width: var(--reticula-grosor);
+}
+
+.pais__costa {
+  stroke: var(--carta-tinta-agua);
+  stroke-width: var(--costa-grosor);
+}
+
+/* La frontera, a trazos: fuera también es tierra y lo que separa es la raya. */
+.pais__frontera {
+  stroke: var(--carta-tinta);
+  stroke-width: 1.4px;
+  stroke-dasharray: 7px 3px 2px 3px;
+  opacity: 0.6;
+}
+
+.pais__rio {
+  stroke: var(--carta-tinta-agua);
+  stroke-width: var(--rio-grosor);
+}
+
+/* La ruta va sobre su orla de papel: el magenta solo no da 3:1 sobre el pardo. */
+.pais__orla {
+  stroke: var(--carta-papel);
+  stroke-width: var(--ruta-orla);
 }
 
 .pais__ruta {
-  stroke-width: 3px;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-}
-
-.pais__ruta--cabe {
-  stroke: var(--ocre);
+  stroke: var(--carta-ruta);
+  stroke-width: var(--ruta-grosor);
 }
 
 /* La de un avión que no llega: a trazos y apagada, como su ficha. */
-.pais__ruta--no {
-  stroke: var(--tinta-suave);
-  stroke-dasharray: 6px 6px;
-  opacity: 0.45;
+.pais__ruta--no,
+.pais__orla--no {
+  stroke-dasharray: 6px 7px;
+  opacity: 0.5;
 }
 
 .pais__ruta--elegida {
-  stroke: var(--ocre-tinta);
-  stroke-width: 5px;
+  stroke-width: calc(var(--ruta-grosor) + 1.6px);
+}
+
+/* ── Lo que se lee, con su halo de papel ─────────────────────────────── */
+
+/* Toda letra de la carta: suelta, sin partirse y con su halo. */
+.pais__letra {
+  position: absolute;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: var(--halo-de-papel);
+  line-height: 1.1;
+}
+
+.pais__nombre {
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pais__nombre--isla {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pais__nombre--agua {
+  font-style: italic;
+  color: var(--carta-tinta-agua);
+}
+
+.pais__nombre--pais {
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* Las cifras, en Barlow Condensed y tabulares, como en la carta. */
+.pais__numeros {
+  font-family: var(--carta-letra-cifras);
+  font-weight: 600;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.pais__grado {
+  font-size: 11px;
+  color: var(--carta-tinta-aero);
+}
+
+.pais__grado--lon {
+  transform: translate(-50%, 2px);
+}
+
+.pais__grado--lat {
+  transform: translate(3px, -110%);
+}
+
+.pais__cota {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  transform: translate(-3px, -50%);
+  color: var(--carta-tinta-cota);
+  font-size: 12px;
+}
+
+.pais__cota svg {
+  width: 6px;
+  height: 6px;
+}
+
+.pais__cifra-ruta {
+  transform: translate(-50%, -50%);
+  font-size: 13px;
+  color: var(--carta-ruta-texto);
+}
+
+.pais__cifra-ruta--no {
+  opacity: 0.75;
+}
+
+.pais__leyenda {
+  left: 10px;
+  bottom: 8px;
+  z-index: 1;
+  font-size: 11px;
+}
+
+.pais__rosa {
+  position: absolute;
+  width: 72px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.pais__rosa svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pais__rosa i {
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: var(--carta-tinta-aero);
 }
 
 /*
- * Los campos. El punto es pequeño para que el mapa se lea, y el sitio donde
- * se toca no: el `::before` lo agranda hasta el dedo de un niño sin
+ * ── Los aeródromos ────────────────────────────────────────────────────
+ *
+ * El símbolo es pequeño para que la carta se lea, y el sitio donde se toca
+ * no: el `::before` lo agranda hasta los 44 px del dedo de un niño sin
  * agrandar el dibujo.
  */
 .pais__campo {
   position: absolute;
-  width: 14px;
-  height: 14px;
+  z-index: 1;
+  width: var(--tamano, 18px);
+  height: var(--tamano, 18px);
   padding: 0;
-  border: 2px solid var(--tinta);
+  border: 0;
   border-radius: 50%;
-  background: var(--verde-bosque);
+  background: none;
   transform: translate(-50%, -50%);
   cursor: pointer;
 }
@@ -11038,51 +11260,284 @@ button.motor__tecla::after {
 .pais__campo::before {
   content: "";
   position: absolute;
-  inset: -15px;
+  inset: calc((var(--tamano, 18px) - 44px) / 2);
   border-radius: 50%;
 }
 
-.pais__campo--cabe {
-  background: var(--ocre);
+.pais__campo > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 1.5px var(--carta-papel));
 }
 
+/* Casa, con el aro ocre de lo tuyo; el destino elegido, con el de la ruta. */
 .pais__campo--salida {
-  width: 18px;
-  height: 18px;
-  background: var(--tinta);
-  border-color: var(--ocre);
-  border-width: 4px;
+  box-shadow: 0 0 0 2px var(--carta-papel), 0 0 0 5px var(--carta-elegido);
 }
 
 .pais__campo--elegido {
-  box-shadow: 0 0 0 5px rgb(242 176 92 / 0.45);
+  box-shadow: 0 0 0 2px var(--carta-papel), 0 0 0 5px var(--carta-ruta);
+}
+
+.pais__campo--abierto {
+  box-shadow: 0 0 0 2px var(--carta-papel), 0 0 0 6px var(--carta-tinta-aero);
 }
 
 .pais__campo--no {
-  opacity: 0.55;
-}
-
-/* Un campo sin ruta desde aquí: se ve que existe, y no se toca. */
-.pais__campo--sin-ruta {
-  width: 9px;
-  height: 9px;
-  border-width: 1.5px;
-  background: transparent;
   opacity: 0.6;
-  cursor: default;
 }
 
-.pais__oaci {
-  position: absolute;
+/* Un campo sin ruta desde aquí: se ve que existe, más pequeño. */
+.pais__campo--sin-ruta {
+  transform: translate(-50%, -50%) scale(0.8);
+  opacity: 0.75;
+}
+
+.pais__rotulo {
   left: 100%;
   top: 50%;
-  transform: translate(5px, -50%);
-  font-size: 11px;
-  font-weight: 700;
+  display: grid;
+  justify-items: start;
+  transform: translate(6px, -50%);
+  color: var(--carta-tinta);
+  text-align: left;
+}
+
+.pais__rotulo--izquierda {
+  left: auto;
+  right: 100%;
+  justify-items: end;
+  transform: translate(-6px, -50%);
+  text-align: right;
+}
+
+/*
+ * **Y en una carta pequeña, menos letra**: en el teléfono tumbado la carta
+ * mide doscientos y pico píxeles de alto, y con la radio, las cotas y los
+ * nombres de las islas los rótulos se tapaban unos a otros. Es lo que hace
+ * una carta a menor escala —generalizar—, y lo quitado sigue en la ficha de
+ * cada aeródromo, que se abre tocándolo.
+ */
+@container (max-height: 300px) {
+  .pais__radio,
+  .pais__cota,
+  .pais__grado,
+  .pais__nombre--isla {
+    display: none;
+  }
+}
+
+.pais__rotulo--abajo {
+  left: 50%;
+  top: 100%;
+  justify-items: center;
+  transform: translate(-50%, 5px);
+  text-align: center;
+}
+
+.pais__rotulo--arriba {
+  left: 50%;
+  top: auto;
+  bottom: 100%;
+  justify-items: center;
+  transform: translate(-50%, -5px);
+  text-align: center;
+}
+
+.pais__rotulo-nombre {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pais__rotulo .pais__oaci {
+  font-size: 12px;
   letter-spacing: 0.03em;
-  color: var(--tinta-suave);
+}
+
+.pais__elev {
+  color: var(--carta-tinta-cota);
+}
+
+.pais__radio {
+  font-size: 12px;
+  color: var(--carta-tinta-aero);
+}
+
+/*
+ * ── La ficha de un aeródromo ──────────────────────────────────────────
+ *
+ * Encima de la carta y dentro de su caja: abrirla no mueve nada de lo de
+ * alrededor, que en un teléfono tumbado son los mandos. Con su cruz de 44 px
+ * para cerrarla y el botón de ir, que es el mismo de las fichas de abajo.
+ */
+.ficha-carta {
+  position: absolute;
+  inset: 8px;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(72px, 30%) 1fr;
+  grid-template-rows: 1fr auto;
+  gap: 6px 12px;
+  padding: 10px 12px;
+  overflow: auto;
+  border: 1.5px solid var(--carta-tinta-aero);
+  border-radius: 14px;
+  background-color: var(--carta-papel);
+  background-image: var(--papel-grano, none);
+  background-size: 256px 256px;
+  box-shadow: 0 6px 18px -6px rgb(0 0 0 / 0.45);
+  color: var(--carta-tinta);
+  text-align: left;
+}
+
+.ficha-carta[hidden] {
+  display: none;
+}
+
+.ficha-carta__cerrar {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  border: 0;
+  background: none;
+  color: var(--carta-tinta);
+  cursor: pointer;
+}
+
+.ficha-carta__cerrar svg {
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+.ficha-carta__dibujo {
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+.pistas {
+  display: block;
+  width: 100%;
+  max-height: 150px;
+}
+
+.pistas__barra {
+  stroke: var(--carta-aerodromo);
+}
+
+.pistas__eje {
+  stroke: #fff;
+  stroke-width: 0.8;
+  stroke-dasharray: 4 3;
+}
+
+.pistas__norte {
+  fill: var(--carta-tinta-aero);
+}
+
+.pistas__numero {
+  font-family: var(--carta-letra-cifras);
+  font-weight: 600;
+  font-size: 11px;
+  fill: var(--carta-tinta);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  paint-order: stroke;
+  stroke: var(--carta-papel);
+  stroke-width: 3px;
+}
+
+.ficha-carta__datos {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding-right: 40px;
+}
+
+.ficha-carta__oaci {
+  font-family: var(--carta-letra-cifras);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.ficha-carta__nombre {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.ficha-carta__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--carta-letra-cifras);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ficha-carta__cifras {
+  font-size: 15px;
+}
+
+.ficha-carta__radio {
+  font-size: 13px;
+  color: var(--carta-tinta-aero);
+}
+
+.ficha-carta__radio span {
+  font-family: var(--carta-letra-nombres);
+  font-weight: 500;
+}
+
+.ficha-carta__radio i {
+  font-style: normal;
   white-space: nowrap;
-  pointer-events: none;
+}
+
+.ficha-carta__pie {
+  margin: 0;
+  font-size: 12px;
+  color: var(--carta-tinta);
+}
+
+.ficha-carta__var {
+  font-family: var(--carta-letra-cifras);
+  font-weight: 600;
+  color: var(--carta-tinta-aero);
+}
+
+.ficha-carta__ir {
+  grid-column: 2;
+  justify-self: end;
+  align-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 72px;
+  min-height: 48px;
+  padding: 6px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--carta-ruta-texto);
+  color: #fff;
+  font: 600 19px var(--carta-letra-nombres);
+  cursor: pointer;
+}
+
+.ficha-carta__ir svg {
+  width: 30px;
+  height: 26px;
+  fill: currentColor;
+  /* El morro a la derecha, hacia donde se va: girado en diagonal parecía una cruz, que es cerrar. */
+  transform: rotate(90deg);
 }
 
 /* Lo que pide y lo que hay: para quien lee, debajo del nombre. */

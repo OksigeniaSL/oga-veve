@@ -242,6 +242,8 @@ export const EN: Dictionary = {
     "Aerial imagery of Spain: PNOA © Instituto Geográfico Nacional de España, CC BY 4.0 · scne.es.",
   "credits.ortoPy":
     "Aerial imagery of Paraguay: EOxCloudless (cloudless.eox.at) by EOX IT Services GmbH — contains modified Copernicus Sentinel data, 2020.",
+  "credits.carta":
+    "Chart: relief and sea floor from ETOPO 2022 (NOAA); land cover © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, CC BY 4.0; rainfall from CHELSA (CC0); magnetic variation from WMM2025; Barlow typefaces (SIL OFL 1.1).",
   "credits.engine": "Flight model: {model}",
   "credits.licence":
     "Code free under Apache-2.0. Content and brands, © Oksigenia SL.",
@@ -1047,6 +1049,17 @@ export const EN: Dictionary = {
   "mapa.title": "See the map",
   "mapa.cerca": "Zoom in",
   "mapa.lejos": "Zoom out",
+  "carta.atlantico": "Atlantic Ocean",
+  "carta.rioParaguay": "Paraguay River",
+  "carta.rioParana": "Paraná River",
+  "carta.rioPilcomayo": "Pilcomayo River",
+  "carta.bolivia": "Bolivia",
+  "carta.brasil": "Brazil",
+  "carta.argentina": "Argentina",
+  "carta.enPies": "Elevations in feet",
+  "carta.ir": "Fly",
+  "carta.sinFrecuencia": "No published frequency",
+  "carta.sinAip": "Not in any AIP",
   "tiempo.title": "Weather",
   "tiempo.hora": "Time of day",
   "tiempo.viento": "Where the wind comes from and how hard",

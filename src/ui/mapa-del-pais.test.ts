@@ -105,4 +105,56 @@ describe("el mapa del país", () => {
     const sitio = SCENARIOS.find((e) => e.pais === "inventado")!;
     expect(mapaDelPais(sitio, SCENARIOS, [], sitio.id)).toBe("");
   });
+
+  it("y Cuatro Vientos tiene la suya, la de Madrid", () => {
+    const sitio = scenarioById("cuatro-vientos");
+    const html = mapaDelPais(sitio, SCENARIOS, [], sitio.id);
+    expect(html).toContain('data-region="madrid"');
+    expect(html).toContain("LECU");
+    expect(html).not.toContain("GCXO");
+  });
+});
+
+/**
+ * Los calcos: se suman y nunca se retiran. Lo que se busca son marcas que solo
+ * pone un calco —el nombre del campo, la cota, la frecuencia—, no el texto
+ * entero, que cambia con el idioma.
+ */
+describe("los calcos de la carta", () => {
+  const sitio = scenarioById("tenerife-norte");
+  const carta = (peldano: "dibujo" | "palabra" | "cifra" | "cabina") =>
+    mapaDelPais(sitio, SCENARIOS, rutasDelMapa(sitio, AIRCRAFT[0]!), sitio.id, peldano);
+
+  it("en el del dibujo no hay ni nombres, ni cifras, ni radio; el indicativo sí", () => {
+    const html = carta("dibujo");
+    expect(html).not.toContain("pais__rotulo-nombre");
+    expect(html).not.toContain("pais__elev");
+    expect(html).not.toContain("pais__radio");
+    expect(html).not.toContain("pais__cifra-ruta");
+    // El indicativo ya se veía en el mapa del país antes de ser carta.
+    expect(html).toContain("GCXO");
+  });
+
+  it("los nombres llegan con Tukã, las cifras con Taguato y la radio con Ruvicha", () => {
+    expect(carta("palabra")).toContain("pais__rotulo-nombre");
+    expect(carta("palabra")).not.toContain("pais__elev");
+    const cifra = carta("cifra");
+    expect(cifra).toContain("pais__rotulo-nombre");
+    expect(cifra).toContain("pais__elev");
+    expect(cifra).toContain(" NM</span>");
+    expect(cifra).not.toContain("pais__radio");
+    const cabina = carta("cabina");
+    expect(cabina).toContain("pais__elev");
+    expect(cabina).toContain("pais__radio");
+    expect(cabina).toContain("VAR ");
+  });
+
+  it("y la frecuencia se escribe como la imprime el AIP, con su punto", () => {
+    // AD 2-GCXO-9: «118.700 MHz»; AD 2.1-7 de la DINAC: «118.1 MHZ».
+    expect(carta("cabina")).toContain("TWR 118.700");
+    const asuncion = scenarioById("pettirossi");
+    const html = mapaDelPais(asuncion, SCENARIOS, rutasDelMapa(asuncion, AIRCRAFT[0]!), asuncion.id, "cabina");
+    expect(html).toContain("TWR 118.1");
+    expect(html).toContain("118.1 MHZ");
+  });
 });
