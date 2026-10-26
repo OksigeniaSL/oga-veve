@@ -64,7 +64,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -1860,8 +1860,28 @@ const DEL_TOQUE = [
 const DE_LOS_CAMINOS = [
   ["inicio.ara.pasaje.mazoCaminos", "ara", "el modo inicio, de pasaje: Ara, en la final, ve los caminos que suben entre las fincas de Mazo"],
 ];
+/**
+ * **Y lo que toca hacer, dicho a tiempo** (26-10-2026, El Hierro–La Gomera con
+ * el JAZ 60): la velocidad con la altura que da la torre, el avión que se
+ * queda solo al llegar arriba y cómo se aterriza, contado antes de la final.
+ * Al final, que lo grabado no se renumera. La de la torre, en Taguató, lleva
+ * detrás la cifra: su receta es `[clave, "{velocidad?}"]`, como los pasos de
+ * velocidad. Ver `autorizarAltura`, `niveladaPorContar` y
+ * `contarComoSeAterriza` en `src/game.ts`.
+ */
+const DE_LO_QUE_TOCA = [
+  ["vuelo.alturaDeLaTorreRayaYMarca", "instructor", "la primera altura de la torre, en Guyrami: hasta la raya, y la velocidad en la marca"],
+  ["vuelo.alturaDeLaTorreYMarca", "instructor", "la primera altura de la torre: la ventanilla, y la velocidad en la marca; en Taguató, con la cifra detrás"],
+  ["vuelo.paso.cruceroSolo", "instructor", "al llegar arriba con la nivelada de los peldaños de abajo: el avión se queda solo, y el gas de crucero"],
+  ["vuelo.paso.cruceroSolo.sinVer", "instructor", "lo mismo, sin la marca del motor a la vista"],
+  ["vuelo.paso.cruceroSoloConAutomatico", "instructor", "lo mismo, y se ofrece el piloto automático"],
+  ["vuelo.comoSeAterriza.facil", "instructor", "antes de la final, en Guyrami y Tukã: cómo se aterriza, en sencillo"],
+  ["vuelo.comoSeAterriza.helice", "instructor", "antes de la final, en Taguató, en un avión de hélice"],
+  ["vuelo.comoSeAterriza.cables", "instructor", "antes de la final, en Taguató, en el reactor de cables"],
+  ["vuelo.comoSeAterriza.electricos", "instructor", "antes de la final, en Taguató, en el reactor de mandos eléctricos"],
+];
 const LO_QUE_SE_VE = new Set(
-  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS].map(
+  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA].map(
     ([k]) => k,
   ),
 );
@@ -1964,7 +1984,7 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
   }
 }
 // Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde, lo que se reconoce al llegar, armá tu avión, la ventanilla viva, la gracia y el silbo, el toque en tierra y los caminos de Mazo: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE`, `DE_LO_QUE_SE_RECONOCE`, `DE_ARMA_TU_AVION`, `DE_LA_VENTANILLA_VIVA`, `DE_LA_GRACIA_Y_EL_SILBO`, `DEL_TOQUE` y `DE_LOS_CAMINOS`.
-for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS]) {
+for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA]) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });
