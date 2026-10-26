@@ -147,9 +147,10 @@ export function enFaseDeTrabajo(m: MomentoDeMirar): boolean {
    * Lo de los treinta kilómetros era la forma de no hablar subiendo ni
    * bajando, y para eso vale; pero en un salto corto entre islas el crucero
    * entero cae a menos de treinta de algún campo. De El Hierro a La Gomera
-   * —setenta y dos kilómetros a cinco mil pies con el JAZ 60— no quedaba ni
-   * un minuto en el que contar nada, y se jugó así: «mucho rato volando en
-   * silencio». Nivelado y antes de empezar a bajar, se habla.
+   * —setenta y dos kilómetros a cuatro mil pies con el JAZ 60—, de nueve
+   * minutos y medio de crucero quedaban dos en los que contar algo, y se jugó
+   * así: «mucho rato volando en silencio». Nivelado y antes de empezar a
+   * bajar, se habla.
    *
    * Solo con pasaje: es la regla de los vuelos de línea. La avioneta tiene la
    * suya, que es salir del circuito.
