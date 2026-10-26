@@ -847,6 +847,11 @@ export const EN: Dictionary = {
   "hud.salirPantallaCompleta": "Exit full screen",
   "inicio.pasos": "To play full screen: tap Share, then “Add to Home Screen”.",
   "inicio.cerrar": "Close",
+  "teclas.queTocan": "The key to press",
+  "teclas.yaMeLoAprendi": "Got it, don't show again",
+  "teclas.yaLaSe": "Got it",
+  "ajustes.teclasQueTocan": "The keys you already learned are no longer shown.",
+  "ajustes.teclasQueTocan.volver": "Show them again",
   "ajustes.inicio":
     "On iPhone, the game runs full screen when opened from its icon: in Safari tap Share (or “•••”, then Share), choose “Add to Home Screen” and open it from there.",
   "gafas.ganadas": "Your sunglasses!",

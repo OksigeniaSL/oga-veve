@@ -2371,6 +2371,16 @@ export const ES_PY = {
   "inicio.pasos":
     "Para jugar a pantalla completa: tocá Compartir y después «Agregar a inicio».",
   "inicio.cerrar": "Cerrar",
+  /*
+   * **Las teclas que tocan**: la tecla que pide el paso, en un lado. No se
+   * dicen: se leen, y en el peldaño que no lee queda solo el visto. Ver
+   * `ui/teclas-que-tocan.ts`.
+   */
+  "teclas.queTocan": "La tecla que toca",
+  "teclas.yaMeLoAprendi": "Ya me lo aprendí",
+  "teclas.yaLaSe": "Ya la sé",
+  "ajustes.teclasQueTocan": "Las teclas que ya te aprendiste no salen más.",
+  "ajustes.teclasQueTocan.volver": "Volver a mostrarlas",
   "ajustes.inicio":
     "En el iPhone, el juego va a pantalla completa abierto desde su ícono: en Safari tocá Compartir (o «•••» y Compartir), elegí «Agregar a inicio» y abrilo desde ahí.",
   "gafas.ganadas": "¡Tus gafas de sol!",

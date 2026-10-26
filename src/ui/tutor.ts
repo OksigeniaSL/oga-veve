@@ -263,6 +263,14 @@ export class Tutor {
     this.liston = root.querySelector('[data-hud="tutor-liston"]');
   }
 
+  /**
+   * Si la tarjeta se ve ahora: mientras el tutor enseña una tecla, las teclas
+   * que tocan en vuelo se apartan. Ver `ui/teclas-que-tocan.ts`.
+   */
+  get visible(): boolean {
+    return !!this.root && !this.root.hidden;
+  }
+
   /** Vuelve al principio: al reiniciar el vuelo hay que volver a explicar. */
   reset(): void {
     this.step = "throttle";

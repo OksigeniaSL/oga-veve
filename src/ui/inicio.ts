@@ -202,8 +202,11 @@ export function caraDentro(quien: Quien, x: number, y: number, lado: number): st
 
 // ── El teclado ───────────────────────────────────────────────────────────
 
-/** Una tecla dibujada, encendida o apagada, como en la pantalla de teclas. */
-function tecla(glifo: string, letra: string, encendida: boolean): string {
+/**
+ * Una tecla dibujada, encendida o apagada, como en la pantalla de teclas. La
+ * usan también las teclas que tocan en vuelo: ver `ui/teclas-que-tocan.ts`.
+ */
+export function tecla(glifo: string, letra: string, encendida: boolean): string {
   const clases = encendida
     ? "tecla tecla--activa inicio__tecla inicio__tecla--late"
     : "tecla tecla--activa inicio__tecla inicio__tecla--apagada";
@@ -216,7 +219,7 @@ function tecla(glifo: string, letra: string, encendida: boolean): string {
  * buena por dónde está; una flecha suelta en medio de la nada no se sabe en
  * qué parte del teclado buscarla.
  */
-function lasFlechas(cual: "arriba" | "abajo" | "izquierda" | "derecha", o: ConQueTeclas): string {
+export function lasFlechas(cual: "arriba" | "abajo" | "izquierda" | "derecha", o: ConQueTeclas): string {
   const letra = (a: Accion): string => nombreDeTecla(o.teclaDe(a));
   return `
     <span class="inicio__flechas">

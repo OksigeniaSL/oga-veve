@@ -15894,6 +15894,171 @@ body.con-vuelta #tactil {
   animation: none !important;
 }
 
+/* ── Las teclas que tocan ──
+   La tecla que pide el paso, con sus vecinas, en el lado izquierdo y a media
+   altura: ahí no hay instrumentos, ni el aviso de pérdida, ni el cuadro, ni
+   la columna de mandos. Ver `ui/teclas-que-tocan.ts`. */
+
+.teclas-que-tocan {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.ttq {
+  position: absolute;
+  left: calc(16px + env(safe-area-inset-left, 0px));
+  /* El alto lo pone `colocarLaTarjeta`: entre lo de arriba y lo de abajo. */
+  top: 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 10px 2px;
+  border-radius: var(--r-l);
+  background: var(--barniz), var(--barro);
+  box-shadow: var(--filo), var(--poso);
+  color: var(--tinta);
+  font-family: var(--hud-fuente);
+  --tecla: 44px;
+}
+
+.ttq[hidden],
+.ttq__dedo[hidden] {
+  display: none;
+}
+
+.ttq .inicio__mando {
+  gap: 8px;
+}
+
+.ttq .inicio__flechas,
+.ttq .inicio__fila {
+  gap: 5px;
+}
+
+.ttq .dib {
+  height: 76px;
+}
+
+.ttq .inicio__pasa {
+  width: 40px;
+  height: 40px;
+}
+
+/* Con el dedo, el botón de la pantalla dibujado: el mismo marco que la llave. */
+.ttq__boton {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-m);
+  border: 3px solid var(--ocre);
+  background: var(--barro-claro);
+  animation: senal-llama 1.8s ease-in-out infinite;
+}
+
+.ttq__boton > svg:first-child {
+  width: 40px;
+  height: 40px;
+  fill: var(--ocre);
+}
+
+.ttq__boton .inicio__toque {
+  right: -14px;
+  bottom: -16px;
+  width: 32px;
+  height: 36px;
+}
+
+/* «Ya me lo aprendí»: pequeño de ver y de una yema de tocar. */
+.ttq__aprendida {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--tinta-suave);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ttq__aprendida svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ttq__aprendida:focus-visible {
+  outline: 3px solid var(--ocre);
+  outline-offset: -3px;
+  border-radius: var(--r-m);
+}
+
+/* La palabra, según el peldaño: el visto solo en el que no lee. */
+.teclas-que-tocan[data-peldano="1"] .ttq__aprendida-texto {
+  display: none;
+}
+
+/* Y el mando de la pantalla que toca, con el dedo: encendido como la llave. */
+.ttq--senalado {
+  outline: 3px solid var(--ocre);
+  outline-offset: 2px;
+  animation: senal-llama 1.8s ease-in-out infinite;
+}
+
+/* Pantallas bajas: la tecla más chica, para que quepa entre las columnas. */
+@media (max-height: 520px) {
+  .ttq {
+    --tecla: 32px;
+    padding: 6px 6px 0;
+  }
+  .ttq .dib {
+    height: 56px;
+  }
+  .ttq .inicio__pasa {
+    display: none;
+  }
+  .ttq__boton {
+    width: 48px;
+    height: 48px;
+  }
+  .ttq__boton > svg:first-child {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* De pie y con el dedo manda el cartel de girar, como en el modo inicio. */
+@media (pointer: coarse) and (orientation: portrait) {
+  .teclas-que-tocan {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .teclas-que-tocan *,
+  .ttq--senalado {
+    animation: none !important;
+  }
+}
+.sin-movimiento .teclas-que-tocan *,
+.sin-movimiento .ttq--senalado {
+  animation: none !important;
+}
+
 /* ── El kit de viaje de Ara ──
    La mochilita abajo a la derecha, y el kit abierto debajo de la tarjeta de
    la escena, como un cuaderno de actividades encima de la mesita: papel

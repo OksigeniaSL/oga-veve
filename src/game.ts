@@ -1067,6 +1067,14 @@ import {
   type ManosDeLinea,
 } from "./flight/vuelo-de-linea";
 import { PantallaDelInicio } from "./ui/inicio";
+import { PistaDeTeclas } from "./ui/teclas-que-tocan";
+import {
+  LLAVE_DE_LO_APRENDIDO,
+  teclaDelPaso,
+  TeclasQueTocan,
+  type MandosParaLaTecla,
+  type TeclaQueToca,
+} from "./flight/teclas-que-tocan";
 import { PantallaDelKit } from "./ui/kit-de-viaje";
 import { NIVELES } from "./flight/kit-de-viaje";
 import { selloDe } from "./ui/sellos";
@@ -1289,6 +1297,7 @@ import {
   EN_GRANDE,
   EN_GRANDE_EN_PIES,
   laInstructoraLoExplica,
+  PELDANOS,
   type Peldano,
 } from "./flight/escalera";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
@@ -1424,6 +1433,7 @@ import {
   comoSeDice,
   consejoDelPaso,
   type LecturaDelPaso,
+  type MandoDelPaso,
   type Paso as PasoDeLaCadena,
 } from "./flight/siguiente-paso";
 import { gasQueSostiene, marcaDelGas } from "./flight/gas-que-toca";
@@ -1509,7 +1519,7 @@ import {
   limitarElRodaje,
   RODAJE,
 } from "./flight/tope-de-rodaje";
-import { escribirYa, leerTexto, ponerTexto } from "./datos/guardado";
+import { escribirYa, leerProgreso, leerTexto, ponerProgreso, ponerTexto } from "./datos/guardado";
 import {
   pedirRearranque,
   sePuedeCambiarDeAvion,
@@ -6507,8 +6517,14 @@ export class Game {
     this.keyScreen?.setCompensador(this.tier.model !== "simple");
     const ajustesRoot = document.getElementById("ajustes");
     if (ajustesRoot) {
-      this.ajustesUI = new PantallaDeAjustes(ajustesRoot, (a) =>
-        this.aplicarAjustes(a),
+      this.ajustesUI = new PantallaDeAjustes(
+        ajustesRoot,
+        (a) => this.aplicarAjustes(a),
+        // Las teclas que tocan que se retiraron, para volver a verlas.
+        {
+          cuantas: () => this.teclasQueTocan.cuantasAprendidas,
+          recuperar: () => this.teclasQueTocan.recuperarTodas(),
+        },
       );
     }
     const pausaRoot = document.getElementById("pausa");
@@ -12236,6 +12252,9 @@ export class Game {
     this.input.topeDeFlaps = 1;
     this.dichoTrasLaToma = NADA_DICHO;
     this.hud.tutor.reset();
+    // Lo que se pedía en el vuelo de antes ya no toca; lo aprendido, del perfil de ahora.
+    this.teclasQueTocan.quitar();
+    this.teclasQueTocan.releer();
     /*
      * **Vuelo nuevo: la instructora se olvida de lo que ya había dicho.**
      *
@@ -17981,7 +18000,80 @@ export class Game {
     if (this.vistaActual?.leccionHecha) this.terminarElVuelo();
     this.hud.senal.update(dt);
     this.hud.noRepetirElTutor();
+    this.mirarLasTeclasQueTocan();
   };
+
+  // ── Las teclas que tocan ──────────────────────────────────────────────
+
+  /**
+   * **La tecla que pide el paso, y las que ya se aprendió este perfil.** Lo
+   * aprendido vive en el progreso del perfil, en este navegador. Ver
+   * `flight/teclas-que-tocan.ts`.
+   */
+  private readonly teclasQueTocan = new TeclasQueTocan({
+    leer: () => leerProgreso(LLAVE_DE_LO_APRENDIDO),
+    escribir: (v) => ponerProgreso(LLAVE_DE_LO_APRENDIDO, v),
+  });
+  private pistaDeTeclas: PistaDeTeclas | null = null;
+
+  /** Los mandos, para saber si lo que pedía la tecla ya se hizo. */
+  private mandosParaLaTecla(): MandosParaLaTecla {
+    const c = this.input.controls;
+    return {
+      gas: c.throttle,
+      profundidad: c.elevator,
+      flaps: this.input.palancaDeFlaps,
+      tren: this.input.trenQueSePide,
+      aerofrenos: this.input.aerofrenosAbiertos,
+    };
+  }
+
+  /**
+   * Para el banco: pedir una tecla como la pediría un paso, y ver cuál toca y
+   * cuáles se aprendieron. Ver `scripts/verificar-teclas-que-tocan.mjs`.
+   */
+  pedirTeclaParaBanco(que: TeclaQueToca | null): void {
+    this.teclasQueTocan.pedir(que, this.mandosParaLaTecla());
+  }
+  get teclasParaBanco(): { ahora: TeclaQueToca | null; aprendidas: number } {
+    return { ahora: this.teclasQueTocan.ahora, aprendidas: this.teclasQueTocan.cuantasAprendidas };
+  }
+
+  /** La tecla que pide un paso de la cadena, apuntada con los mandos de ahora. */
+  private pedirLaTecla(p: PasoDeLaCadena, mando: MandoDelPaso | null, l: LecturaDelPaso): void {
+    this.teclasQueTocan.pedir(teclaDelPaso(p.que, mando, l.vertical), this.mandosParaLaTecla());
+  }
+
+  /**
+   * **Cada fotograma, la pista de la tecla**: se va si ya se hizo, se aparta
+   * mientras habla el tutor del despegue —que dibuja la suya— o el modo
+   * inicio —que dibuja la suya también—, y en tierra o con un percance no hay
+   * nada que pedir. Con qué mando se dibuja, el que se esté usando.
+   */
+  private mirarLasTeclasQueTocan(): void {
+    if (!this.pistaDeTeclas) {
+      const raiz = document.getElementById("teclas-que-tocan");
+      if (!raiz) return;
+      this.pistaDeTeclas = new PistaDeTeclas(raiz, (que) => this.teclasQueTocan.aprender(que));
+    }
+    if (this.flight.state.onGround || this.percance || this.flight.state.crashed)
+      this.teclasQueTocan.quitar();
+    const tecla = this.teclasQueTocan.mirar(this.mandosParaLaTecla());
+    const tapada = this.hud.tutor.visible || this.inicio !== null || this.dePasaje;
+    this.pistaDeTeclas.pintar(
+      tecla && !tapada
+        ? {
+            tecla,
+            mando: this.input.ultimoMando,
+            teclas: {
+              teclaDe: (accion) => this.input.preferredKey(accion),
+              chorro: esDeChorro(this.aircraft),
+            },
+            peldano: (PELDANOS.indexOf(this.tier.avisos) + 1) as 1 | 2 | 3 | 4,
+          }
+        : null,
+    );
+  }
 
   /**
    * Pintar, cronometrado.
@@ -28151,6 +28243,8 @@ export class Game {
       prioridad: IMPORTANTE,
       tecla,
     });
+    // Y la tecla que lo hace, en su sitio del teclado. Ver `mirarLasTeclasQueTocan`.
+    this.pedirLaTecla(p, como.mando, l);
     /*
      * **Y la marca nueva, explicada una vez y vista las demás.** Enrique:
      * «estar escuchando a la instructora diciendo "bajá el motor" es un medio
