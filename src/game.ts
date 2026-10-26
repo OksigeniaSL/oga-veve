@@ -13017,6 +13017,8 @@ export class Game {
        * lo que se enseña. Ver `atenderALaTormenta`.
        */
       turbulenciaPorPasar: this.turbulenciaDelVuelo.porPasarTodavia || this.tormentaPorDelante,
+      // Y con baches, tampoco: el cinturón se suelta en aire quieto. Ver `aireMovido`.
+      aireMovido: this.cinturon.sacudiendoAhora,
       /*
        * Y a qué altura se va **sobre el campo**, no sobre el mar: el cartel
        * del cinturón se apaga cuando el avión está arriba, y «arriba» en La

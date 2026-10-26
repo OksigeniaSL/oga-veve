@@ -313,3 +313,63 @@ describe("el cartel en un vuelo normal con pasaje, con la megafonía", () => {
     expect(enElPuesto.t - motoresParados).toBeLessThanOrEqual(APAGA_LA_LUZ);
   });
 });
+
+/**
+ * **El vuelo de El Hierro a La Gomera con el JAZ 60**, tal como se midió con
+ * `scripts/verificar-turbulencia.mjs`: el mar de nubes del alisio de 1226 a
+ * 1676 m, la comandante con todo listo para soltar el cinturón a 1211 m, y la
+ * capa cruzada subiendo con σ entre 0,45 y 0,75. Ahí se quedaba el cartel
+ * apagado y nadie decía nada.
+ */
+describe("el mar de nubes, con el cartel y la comandante", () => {
+  /** Lo que sacude la capa subiendo por ella, con sus altibajos medidos. */
+  const enLaCapa = [0.75, 0.75, 0.7, 0.67, 0.45, 0.56, 0.72, 0.67, 0.45, 0.45, 0.59, 0.73, 0.5];
+
+  it("cruzar la capa enciende el cartel, aunque sea turbulencia ligera, y no parpadea", () => {
+    const c = new Cinturon();
+    hastaElCrucero(c);
+    expect(c.paso(momento("en-vuelo"))).toBe(false);
+    const dentro = enLaCapa.map((movimiento) => c.paso(momento("en-vuelo", { movimiento })));
+    expect(dentro.every(Boolean)).toBe(true);
+    // Encima de la capa, el aire quieto: se apaga.
+    expect(c.paso(momento("en-vuelo", { movimiento: 0.1 }))).toBe(false);
+    // Y lo que sacude dentro está por encima de lo que enciende el cartel.
+    expect(Math.max(...enLaCapa)).toBeGreaterThanOrEqual(SACUDE);
+  });
+
+  it("y la comandante no suelta el cinturón dentro de la capa: lo dice encima, en aire quieto", () => {
+    const m = new Megafonia();
+    const c = new Cinturon();
+    const dichos: { anuncio: string; movimiento: number }[] = [];
+    const paso = (movimiento: number, sobreElCampo: number) => {
+      const encendido = c.paso({
+        fase: "en-vuelo",
+        conPasaje: true,
+        movimiento,
+        loDijoLaComandante: false,
+        dt: 0.5,
+      });
+      const dice = m.paso(0.5, {
+        fase: "en-vuelo",
+        conPasaje: true,
+        sobreElCampo,
+        vertical: 0,
+        desdeLoMasAlto: 0,
+        cartelPuesto: encendido,
+        aireMovido: c.sacudiendoAhora,
+      });
+      if (dice) dichos.push({ anuncio: dice, movimiento });
+      if (dice === "comandante.crucero")
+        c.paso({ fase: "en-vuelo", conPasaje: true, movimiento, loDijoLaComandante: true });
+    };
+    // Arriba y asentado, pero en la base de la capa y con baches, un minuto largo.
+    for (let i = 0; i < 160; i++) paso(enLaCapa[i % enLaCapa.length]!, 1200);
+    expect(dichos.map((d) => d.anuncio)).not.toContain("comandante.crucero");
+    expect(c.pasajeSuelto).toBe(false);
+    // Encima de la capa, quieto: ahora sí.
+    for (let i = 0; i < 40; i++) paso(0.05, 1700);
+    const crucero = dichos.find((d) => d.anuncio === "comandante.crucero");
+    expect(crucero).toBeDefined();
+    expect(crucero!.movimiento).toBeLessThan(YA_NO_SACUDE);
+  });
+});

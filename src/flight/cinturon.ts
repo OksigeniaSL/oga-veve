@@ -56,9 +56,23 @@ import type { Fase } from "./vuelo";
  * por segundo, y el eco de la tormenta, de cero a uno: dos números de cosas
  * distintas comparados con el mismo umbral. Ahora la tormenta entra en la
  * ráfaga —ver `causasDe` en `turbulencia.ts`— y lo que llega aquí es uno solo.
+ *
+ * **Y se enciende con lo que se nota, no por encima.** Eran nueve décimas
+ * para encender y seis para apagar, y el mar de nubes del alisio sacude con
+ * ocho como mucho —ver `EN_LA_NUBE` en `turbulencia.ts`—: cruzarlo no
+ * encendía el cartel nunca. Enrique, de El Hierro a La Gomera con el JAZ 60:
+ * «cuando hay turbulencias no se enciende la luz del cinturón y no dice
+ * nada». Medido con `scripts/verificar-turbulencia.mjs` en ese vuelo: la
+ * comandante soltó el cinturón en la base de la capa y el avión la cruzó
+ * subiendo con σ entre 0,45 y 0,75 y baches de ±0,24 g, con el cartel
+ * apagado de punta a punta. Ahora enciende en seis décimas —la mitad alta de
+ * la ligera, la que ya lleva baches que se sienten en el asiento— y apaga por
+ * debajo de cuatro, que es donde empieza la ligera en `nivelDe` y donde el
+ * meneo deja de notarse (`SE_NOTA_EL_MENEO` en `inicio-pasaje.ts`). Por
+ * debajo de eso, ni cartel ni anuncio: es el aire de siempre.
  */
-export const SACUDE = 0.9;
-export const YA_NO_SACUDE = 0.6;
+export const SACUDE = 0.6;
+export const YA_NO_SACUDE = 0.4;
 
 /**
  * **Lo que tarda la comandante en apagar la luz en el puesto**, s con el avión
@@ -200,6 +214,15 @@ export class Cinturon {
   }
 
   /**
+   * **Si el aire se está moviendo**, con la banda muerta del cartel: lo que
+   * mira la comandante antes de decir que ya se pueden soltar. Ver
+   * `aireQuieto` en `audio/megafonia.ts`.
+   */
+  get sacudiendoAhora(): boolean {
+    return this.sacudiendo;
+  }
+
+  /**
    * Un paso. Devuelve si el cartel está encendido **ahora**.
    *
    * Quien llama compara con lo de antes para saber si suena el *ding*: aquí no
@@ -239,13 +262,16 @@ export class Cinturon {
     this.paradoEnElPuesto =
       this.llegoAlPuesto && m.fase === "apagado" ? this.paradoEnElPuesto + (m.dt ?? 0) : 0;
     const apagadoEnElPuesto = m.apagadoEnElPuesto ?? this.paradoEnElPuesto >= APAGA_LA_LUZ;
+    /*
+     * La turbulencia, con su banda muerta: enciende alto y suelta bajo. Se
+     * mira siempre, mande quien mande: es lo que pregunta la comandante antes
+     * de soltar el cinturón. Ver `sacudiendoAhora`.
+     */
+    if (m.movimiento >= SACUDE) this.sacudiendo = true;
+    else if (m.movimiento < YA_NO_SACUDE) this.sacudiendo = false;
     if (this.mando === "puesto") return true;
     if (this.mando === "quitado") return false;
     if (apagadoEnElPuesto && EN_EL_PUESTO.includes(m.fase)) return false;
-
-    // La turbulencia, con su banda muerta: enciende alto y suelta bajo.
-    if (m.movimiento >= SACUDE) this.sacudiendo = true;
-    else if (m.movimiento < YA_NO_SACUDE) this.sacudiendo = false;
 
     if (SIEMPRE_ENCENDIDO.includes(m.fase) || this.sacudiendo) return true;
 
