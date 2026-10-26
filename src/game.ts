@@ -12913,7 +12913,8 @@ export class Game {
         atmosfera: this.flight.aireDelDia(),
         verdadera: null,
       }),
-      nivel: nivelDicho(crucero),
+      // Los niveles de los saltos cortos, solo con su grabación. Ver `NIVELES_BAJOS`.
+      nivel: nivelDicho(crucero, (id) => this.instructor.vozDe(id) !== null),
     };
   }
 

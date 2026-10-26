@@ -129,6 +129,14 @@ export const PRIMER_NIVEL = 5;
 export const ULTIMO_NIVEL = HASTA / 1000;
 
 /**
+ * **Y los de los saltos cortos, cuando tengan su toma**: tres y cuatro mil
+ * pies. De El Hierro a La Gomera el plan del JAZ 60 cruza a cuatro mil, y con
+ * la primera grabación en cinco la bienvenida no podía decirlo. Se dicen el
+ * día que estén grabados, y hasta entonces no: ver `nivelDicho`.
+ */
+export const NIVELES_BAJOS = [3, 4] as const;
+
+/**
  * A qué altura se va a cruzar, en miles de pies: **el crucero del plan**,
  * dicho como se dice. O `null` si ese nivel no está entre los que hay
  * grabados.
@@ -144,8 +152,14 @@ export const ULTIMO_NIVEL = HASTA / 1000;
  * los cinco mil de la primera grabación sería anunciar una altura que no es.
  * Un número que no puede sonar a su altura no se dice.
  */
-export function nivelDicho(cruceroM: number): number | null {
+export function nivelDicho(
+  cruceroM: number,
+  /** Si una pieza tiene su grabación: los niveles bajos, solo con ella. */
+  grabada: (pieza: string) => boolean = () => false,
+): number | null {
   const miles = Math.round(cruceroM / 0.3048 / 1000);
+  if ((NIVELES_BAJOS as readonly number[]).includes(miles))
+    return grabada(piezaDeNivel(miles)) ? miles : null;
   return miles >= PRIMER_NIVEL && miles <= ULTIMO_NIVEL ? miles : null;
 }
 
@@ -310,9 +324,17 @@ export function bienvenidaConPlan(
     segundosPrevistos === null
       ? null
       : minutosQueSeDicen(segundosPrevistos, piezaDeDuracion, grabada);
-  const conPlan = min !== null && nivelMiles !== null;
+  /*
+   * **Cuánto dura y a qué altura, cada uno por su lado.** Iban juntos —o los
+   * dos, o ninguno—, y en un salto corto el nivel cae por debajo de lo
+   * grabado: de El Hierro a La Gomera, cuatro mil pies, y la bienvenida se
+   * quedaba sin decir ni cuánto duraba el vuelo, que es lo primero que quiere
+   * saber quien va sentado. Lo que se puede decir, se dice.
+   */
+  const conDuracion = min !== null;
+  const conNivel = nivelMiles !== null;
   const { saludo, cierre, alla } = alrededor;
-  if (!conPlan && !saludo && !cierre && !alla)
+  if (!conDuracion && !conNivel && !saludo && !cierre && !alla)
     return { clave: bienvenida.id, relleno: {}, texto: bienvenida.texto };
   const relleno: Record<string, string> = {};
   const textos: string[] = [];
@@ -322,13 +344,13 @@ export function bienvenidaConPlan(
   }
   relleno.bienvenida = bienvenida.id;
   textos.push(bienvenida.texto);
-  if (conPlan) {
+  if (conDuracion) {
     relleno.vuelo = piezaDeDuracion(min);
+    textos.push(textoDeLaDuracion("comandante.previsto.vuelo", piezaDeDuracion, min));
+  }
+  if (conNivel) {
     relleno.nivel = piezaDeNivel(nivelMiles);
-    textos.push(
-      textoDeLaDuracion("comandante.previsto.vuelo", piezaDeDuracion, min),
-      textoDe("comandante.previsto.nivel", nivelMiles),
-    );
+    textos.push(textoDe("comandante.previsto.nivel", nivelMiles));
   }
   if (alla) {
     const tiempo = elTiempoDeAlla(alla);
