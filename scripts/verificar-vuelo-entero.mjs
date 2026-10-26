@@ -6608,6 +6608,31 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     dejoDeFrenarA: +dejoDeFrenarA.toFixed(1),
     galones: o.galones().map((g) => g.id ?? g),
     fin: o.finDeVuelo(),
+    /*
+     * **Y el vuelo siguiente que ofrece el panel del final**: cuál, si se ve,
+     * y si es de verdad una ruta de aquí a la que este avión llega. Se mira
+     * con las reglas de siempre —los destinos del campo y `cabeEn`—, no con
+     * la cuenta que lo eligió. Ver `flight/siguiente-vuelo.ts`.
+     */
+    siguiente: await (async () => {
+      const propuesto = o.juegoParaTrazas?.()?.siguienteParaBanco ?? null;
+      const caja = document.querySelector('[data-hud="fin-seguir"]');
+      const enPantalla = !!caja && !caja.hidden;
+      const aqui = o.campoDeAhora?.() ?? null;
+      if (!propuesto) return { propuesto, enPantalla, aqui, deAqui: null, cabe: null };
+      const { SCENARIOS, destinosDe } = await import("/src/world/scenarios.ts");
+      const { cabeEn, campoDe } = await import("/src/flight/cabe.ts");
+      const { aircraftById } = await import("/src/flight/aircraft.ts");
+      const sitio = SCENARIOS.find((e) => e.id === aqui);
+      const alla = SCENARIOS.find((e) => e.id === propuesto);
+      return {
+        propuesto,
+        enPantalla,
+        aqui,
+        deAqui: !!sitio && destinosDe(sitio).includes(propuesto),
+        cabe: !!alla && cabeEn(aircraftById(o.avion().id), campoDe(alla)).cabe,
+      };
+    })(),
     avion: o.avion?.() ?? null,
     /*
      * **Y a qué altura del suelo se queda el avión parado.**
@@ -6942,6 +6967,23 @@ if (RUTA_PEDIDA) {
       .map(([tramo, x]) => `${tramo} ${x.largo.toFixed(0)} s`)
       .join(" · ") || "sin tramos",
     "«aburrido, no pasa casi nada; mucho rato volando en silencio»",
+  );
+}
+/*
+ * **Y al acabar en otro campo, la invitación al vuelo siguiente**: una ruta
+ * que sale de allí y a la que este avión llega, a la vista en el panel del
+ * final. Si de allí no sale ninguna para este avión, no se ofrece nada.
+ */
+if (DESTINO) {
+  const sig = vuelo.siguiente ?? {};
+  comprobarSiVolo(
+    "el panel del final ofrece el vuelo siguiente, de verdad",
+    sig.propuesto ? sig.enPantalla && sig.deAqui && sig.cabe : !sig.enPantalla,
+    sig.propuesto
+      ? `desde ${sig.aqui} hacia ${sig.propuesto}` +
+          `${sig.enPantalla ? "" : " · no se ve"}${sig.deAqui ? "" : " · no sale de aquí"}${sig.cabe ? "" : " · no cabe"}`
+      : `desde ${sig.aqui ?? "?"}: ninguno`,
+    "«que el avión lo lleve de la mano a seguir y seguir»",
   );
 }
 

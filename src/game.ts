@@ -1519,6 +1519,8 @@ import {
   RODAJE,
 } from "./flight/tope-de-rodaje";
 import { escribirYa, leerTexto, ponerTexto } from "./datos/guardado";
+import { elSiguienteVuelo, rutasDesdeAqui } from "./flight/siguiente-vuelo";
+import { mapaDelPais } from "./ui/mapa-del-pais";
 import {
   pedirRearranque,
   sePuedeCambiarDeAvion,
@@ -9832,7 +9834,104 @@ export class Game {
         nombresDelPeldano(canalesDe(this.tier.avisos)),
       );
       this.avisar("achieved");
+      this.invitarAlSiguiente();
     });
+  }
+
+  /**
+   * **El vuelo siguiente**: desde donde se acaba, adónde se podría ir, dicho
+   * por quien está y ofrecido con un toque en el panel del final.
+   *
+   * Solo al acabar un vuelo de verdad —del puesto al puesto, sin misión, sin
+   * ejercicio y fuera de las escenas del inicio— y solo hacia una ruta que
+   * sale de aquí y a la que este avión llega. Ver `flight/siguiente-vuelo.ts`.
+   *
+   * **Lo dice quien está**, una sola voz: en un avión con pasaje, la
+   * comandante por la megafonía, que es lo que se oye de verdad en un vuelo
+   * que sigue —«para los que siguen viaje, este avión sale después hacia…»—;
+   * en la avioneta, la instructora, que va sentada al lado. Y solo con su
+   * grabación: es lo que menos urge del vuelo, y el panel ya lo enseña con su
+   * mapa a quien no lo oye.
+   */
+  private invitarAlSiguiente(paraBanco = false): void {
+    if (
+      !paraBanco &&
+      (this.dePasaje ||
+      this.conInicio ||
+      this.percance ||
+      this.missions.current !== null ||
+      this.ejercicioDeHoy !== null ||
+      this.leccion.arranque !== "puesto" ||
+      this.leccion.acabaEnLaEspera)
+    )
+      return;
+    const aqui = this.elCampoDeAhora();
+    if (!aqui.aerodrome || (!paraBanco && !this.campoEnCuyoSueloEsta())) return;
+    const llave = `siguiente.${aqui.id}`;
+    const vinoDe = this.despegoDe || (this.salidaId !== aqui.id ? this.salidaId : null);
+    const siguiente = elSiguienteVuelo({
+      aqui,
+      vinoDe,
+      avion: this.aircraft,
+      escenarios: SCENARIOS,
+      hora: this.horaDelVuelo,
+      ultimo: this.recordado(llave),
+    });
+    if (!siguiente) return;
+    this.recordar(llave, siguiente.id);
+    this.siguienteParaBanco = siguiente.id;
+    const nombre = t(siguiente.nameKey as TranslationKey).split(" · ")[0] ?? siguiente.id;
+    const rutas = rutasDesdeAqui({ aqui, avion: this.aircraft, escenarios: SCENARIOS }).map(
+      (destino) => ({ destino, cabe: true, con: null }),
+    );
+    const canales = canalesDe(this.tier.avisos);
+    this.hud.ofrecerElSiguiente({
+      mapa: mapaDelPais(
+        aqui,
+        SCENARIOS.filter((e) => e.pais === aqui.pais),
+        rutas,
+        siguiente.id,
+      ),
+      // La palabra, desde el peldaño que lee; el dibujo y el mapa, siempre.
+      texto: canales.texto ? t("rotulo.seguir", { campo: nombre }) : "",
+      etiqueta: t("rotulo.seguir", { campo: nombre }),
+      alTocar: () => this.seguirHacia(aqui.id, siguiente.id),
+    });
+    const conGente = conPasaje(this.aircraft.mass);
+    if (!conGente && this.sinInstructora) return;
+    const clave = conGente ? `comandante.sigue.${siguiente.id}` : `seguir.${siguiente.id}`;
+    if (!hayTexto(clave) || !this.instructor.vozDe(clave)) return;
+    const boca = conGente ? this.comandante : this.instructor;
+    boca.decir(t(clave as TranslationKey), clave, "baja");
+  }
+
+  /** El destino que se propuso al acabar este vuelo, para el banco. */
+  siguienteParaBanco: string | null = null;
+
+  /**
+   * **Para el banco de los carteles**: la invitación puesta en el panel del
+   * final aunque el vuelo no haya acabado en un puesto, para medir que cabe
+   * en cada pantalla con todo lo demás. Ver `verificar-carteles.mjs`.
+   */
+  ofrecerElSiguienteParaBanco(): void {
+    this.invitarAlSiguiente(true);
+  }
+
+  /**
+   * **Seguir volando desde aquí**: el vuelo nuevo empieza en el puesto de este
+   * campo, con el mismo avión y el destino propuesto. Es el mismo recado que
+   * deja el cambio de avión —ver `cambiarDeAvion`— y por la misma razón: el
+   * arranque no vuelve a preguntar quién vuela ni dónde.
+   */
+  private seguirHacia(aqui: string, destino: string): void {
+    ponerTexto("escenario", aqui);
+    escribirYa();
+    pedirRearranque(sesionDeLaPestana(), {
+      escenario: aqui,
+      avion: this.aircraft.id,
+      destino,
+    });
+    location.reload();
   }
 
   /**

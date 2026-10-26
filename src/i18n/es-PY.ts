@@ -1506,6 +1506,73 @@ export const ES_PY = {
     "Señores pasajeros, bienvenidos a Cuatro Vientos. Este es el aeródromo más antiguo de España y todavía trabaja: no se jubila nadie acá. Gracias por acompañarnos.",
 
   /*
+   * ── **Y el vuelo siguiente** ────────────────────────────────────────────
+   *
+   * Al acabar un vuelo con pasaje, la comandante cuenta adónde sigue el
+   * avión, que es lo que se oye en cualquier vuelo con escala: «para los que
+   * siguen viaje…». Es la invitación al vuelo siguiente —el panel del final
+   * la ofrece con un toque—, y nunca una obligación. Una por destino, entera:
+   * el nombre del sitio no se pega en medio de otra frase. Ver
+   * `flight/siguiente-vuelo.ts` e `invitarAlSiguiente` en `game.ts`.
+   */
+  "comandante.sigue.pettirossi":
+    "Y para los que siguen viaje: este mismo avión sale después hacia Asunción.",
+  "comandante.sigue.guarani":
+    "Y para los que siguen viaje: este mismo avión sale después hacia Ciudad del Este.",
+  "comandante.sigue.encarnacion":
+    "Y para los que siguen viaje: este mismo avión sale después hacia Encarnación.",
+  "comandante.sigue.concepcion":
+    "Y para los que siguen viaje: este mismo avión sale después hacia Concepción.",
+  "comandante.sigue.pedro-juan":
+    "Y para los que siguen viaje: este mismo avión sale después hacia Pedro Juan Caballero.",
+  "comandante.sigue.estigarribia":
+    "Y para los que siguen viaje: este mismo avión sale después hacia Mariscal Estigarribia.",
+  "comandante.sigue.ayolas":
+    "Y para los que siguen viaje: este mismo avión sale después hacia Ayolas.",
+  "comandante.sigue.pilar":
+    "Y para los que siguen viaje: este mismo avión sale después hacia Pilar.",
+  "comandante.sigue.yvytu-rape":
+    "Y para los que siguen viaje: este mismo avión sale después hacia Yvytu Rape, la pista de la Granja Óga.",
+  "comandante.sigue.tenerife-norte":
+    "Y para los que siguen viaje: este mismo avión sale después hacia Tenerife Norte.",
+  "comandante.sigue.tenerife-sur":
+    "Y para los que siguen viaje: este mismo avión sale después hacia Tenerife Sur.",
+  "comandante.sigue.gran-canaria":
+    "Y para los que siguen viaje: este mismo avión sale después hacia Gran Canaria.",
+  "comandante.sigue.lanzarote":
+    "Y para los que siguen viaje: este mismo avión sale después hacia Lanzarote.",
+  "comandante.sigue.fuerteventura":
+    "Y para los que siguen viaje: este mismo avión sale después hacia Fuerteventura.",
+  "comandante.sigue.la-palma":
+    "Y para los que siguen viaje: este mismo avión sale después hacia La Palma.",
+  "comandante.sigue.el-hierro":
+    "Y para los que siguen viaje: este mismo avión sale después hacia El Hierro.",
+  "comandante.sigue.la-gomera":
+    "Y para los que siguen viaje: este mismo avión sale después hacia La Gomera.",
+
+  /*
+   * **Y en la avioneta, la instructora**, que va sentada al lado: adónde se
+   * puede seguir volando desde acá. Ver `invitarAlSiguiente` en `game.ts`.
+   */
+  "seguir.pettirossi": "¿Seguimos volando? Desde acá podemos ir hasta Asunción.",
+  "seguir.guarani": "¿Seguimos volando? Desde acá podemos ir hasta Ciudad del Este.",
+  "seguir.encarnacion": "¿Seguimos volando? Desde acá podemos ir hasta Encarnación.",
+  "seguir.concepcion": "¿Seguimos volando? Desde acá podemos ir hasta Concepción.",
+  "seguir.pedro-juan": "¿Seguimos volando? Desde acá podemos ir hasta Pedro Juan Caballero.",
+  "seguir.estigarribia": "¿Seguimos volando? Desde acá podemos ir hasta Mariscal Estigarribia.",
+  "seguir.ayolas": "¿Seguimos volando? Desde acá podemos ir hasta Ayolas.",
+  "seguir.pilar": "¿Seguimos volando? Desde acá podemos ir hasta Pilar.",
+  "seguir.yvytu-rape": "¿Seguimos volando? Desde acá podemos ir hasta Yvytu Rape, la pista de la Granja Óga.",
+  "seguir.tenerife-norte": "¿Seguimos volando? Desde acá podemos ir hasta Tenerife Norte.",
+  "seguir.tenerife-sur": "¿Seguimos volando? Desde acá podemos ir hasta Tenerife Sur.",
+  "seguir.gran-canaria": "¿Seguimos volando? Desde acá podemos ir hasta Gran Canaria.",
+  "seguir.lanzarote": "¿Seguimos volando? Desde acá podemos ir hasta Lanzarote.",
+  "seguir.fuerteventura": "¿Seguimos volando? Desde acá podemos ir hasta Fuerteventura.",
+  "seguir.la-palma": "¿Seguimos volando? Desde acá podemos ir hasta La Palma.",
+  "seguir.el-hierro": "¿Seguimos volando? Desde acá podemos ir hasta El Hierro.",
+  "seguir.la-gomera": "¿Seguimos volando? Desde acá podemos ir hasta La Gomera.",
+
+  /*
    * ── El otro avión de la frecuencia ──────────────────────────────────────
    *
    * Cinco frases que no le dicen nada a quien juega y lo cambian todo: **se
@@ -2381,6 +2448,12 @@ export const ES_PY = {
   "fin.bien": "¡Buen vuelo!",
   "fin.muyBien": "¡Gran vuelo!",
   "fin.otra": "Otro vuelo",
+  /*
+   * El botón del vuelo siguiente en el panel del final, para quien lee: el
+   * mapa con la raya y el avión que sigue lo dicen sin leer. Ver
+   * `ofrecerElSiguiente` en `ui/hud.ts`.
+   */
+  "rotulo.seguir": "Seguir a {campo}",
   "fin.redondo": "¡Vuelo redondo! No se puede hacer mejor",
   "vuelo.aterrizado": "Frená",
   "vuelo.abandonando": "Salí de la pista, que viene otro",

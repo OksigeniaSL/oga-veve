@@ -1185,6 +1185,12 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     const fin = await page.evaluate(() => {
       globalThis.__oga.acelerar?.(1);
       globalThis.__oga.acabar();
+      /*
+       * Y con la invitación al vuelo siguiente, que es una cosa más en la
+       * fila de los botones: si cabe con ella, cabe sin ella. Donde de aquí
+       * no sale ninguna ruta para este avión no se pone, y no se mide.
+       */
+      setTimeout(() => globalThis.__oga.ofrecerElSiguiente?.(), 900);
       return new Promise((listo) =>
         setTimeout(() => {
           /*
@@ -1203,9 +1209,9 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
           const plano = document.querySelector(".fin__plano svg");
           if (plano) plano.setAttribute("viewBox", "0 0 100 140");
           const malos = [];
-          for (const q of ["fin-otra", "fin-hangar"]) {
+          for (const q of ["fin-otra", "fin-hangar", "fin-seguir-boton"]) {
             const b = document.querySelector(`[data-hud="${q}"]`);
-            if (!b) continue;
+            if (!b || b.closest("[hidden]")) continue;
             const c = b.getBoundingClientRect();
             const fuera = c.top < 0 || c.bottom > innerHeight || c.left < 0 || c.right > innerWidth;
             const p = document.elementFromPoint(

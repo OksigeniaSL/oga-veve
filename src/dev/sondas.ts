@@ -996,6 +996,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     },
     /** Si está puesta la pantalla de fin de vuelo. Para el banco. */
     finDeVuelo: () => juego.hud.finPuesto,
+    /** La invitación al vuelo siguiente en el panel del final, para medirla. */
+    ofrecerElSiguiente: () => juego.ofrecerElSiguienteParaBanco(),
     /**
      * El aviso de terreno vigente, o `null`.
      *

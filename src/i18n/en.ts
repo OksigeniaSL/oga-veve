@@ -857,6 +857,62 @@ export const EN: Dictionary = {
   "fin.bien": "Good flight!",
   "fin.muyBien": "Great flight!",
   "fin.otra": "Fly again",
+  "rotulo.seguir": "Fly on to {campo}",
+
+  // The next flight: where this aircraft goes on to. See `invitarAlSiguiente`.
+  "comandante.sigue.pettirossi":
+    "And for those continuing with us: this same aircraft goes on next to Asunción.",
+  "comandante.sigue.guarani":
+    "And for those continuing with us: this same aircraft goes on next to Ciudad del Este.",
+  "comandante.sigue.encarnacion":
+    "And for those continuing with us: this same aircraft goes on next to Encarnación.",
+  "comandante.sigue.concepcion":
+    "And for those continuing with us: this same aircraft goes on next to Concepción.",
+  "comandante.sigue.pedro-juan":
+    "And for those continuing with us: this same aircraft goes on next to Pedro Juan Caballero.",
+  "comandante.sigue.estigarribia":
+    "And for those continuing with us: this same aircraft goes on next to Mariscal Estigarribia.",
+  "comandante.sigue.ayolas":
+    "And for those continuing with us: this same aircraft goes on next to Ayolas.",
+  "comandante.sigue.pilar":
+    "And for those continuing with us: this same aircraft goes on next to Pilar.",
+  "comandante.sigue.yvytu-rape":
+    "And for those continuing with us: this same aircraft goes on next to Yvytu Rape, the Granja Óga airstrip.",
+  "comandante.sigue.tenerife-norte":
+    "And for those continuing with us: this same aircraft goes on next to Tenerife North.",
+  "comandante.sigue.tenerife-sur":
+    "And for those continuing with us: this same aircraft goes on next to Tenerife South.",
+  "comandante.sigue.gran-canaria":
+    "And for those continuing with us: this same aircraft goes on next to Gran Canaria.",
+  "comandante.sigue.lanzarote":
+    "And for those continuing with us: this same aircraft goes on next to Lanzarote.",
+  "comandante.sigue.fuerteventura":
+    "And for those continuing with us: this same aircraft goes on next to Fuerteventura.",
+  "comandante.sigue.la-palma":
+    "And for those continuing with us: this same aircraft goes on next to La Palma.",
+  "comandante.sigue.el-hierro":
+    "And for those continuing with us: this same aircraft goes on next to El Hierro.",
+  "comandante.sigue.la-gomera":
+    "And for those continuing with us: this same aircraft goes on next to La Gomera.",
+
+  // And in the light aircraft, the instructor, sitting next to you.
+  "seguir.pettirossi": "Shall we keep flying? From here we can go on to Asunción.",
+  "seguir.guarani": "Shall we keep flying? From here we can go on to Ciudad del Este.",
+  "seguir.encarnacion": "Shall we keep flying? From here we can go on to Encarnación.",
+  "seguir.concepcion": "Shall we keep flying? From here we can go on to Concepción.",
+  "seguir.pedro-juan": "Shall we keep flying? From here we can go on to Pedro Juan Caballero.",
+  "seguir.estigarribia": "Shall we keep flying? From here we can go on to Mariscal Estigarribia.",
+  "seguir.ayolas": "Shall we keep flying? From here we can go on to Ayolas.",
+  "seguir.pilar": "Shall we keep flying? From here we can go on to Pilar.",
+  "seguir.yvytu-rape": "Shall we keep flying? From here we can go on to Yvytu Rape, the Granja Óga airstrip.",
+  "seguir.tenerife-norte": "Shall we keep flying? From here we can go on to Tenerife North.",
+  "seguir.tenerife-sur": "Shall we keep flying? From here we can go on to Tenerife South.",
+  "seguir.gran-canaria": "Shall we keep flying? From here we can go on to Gran Canaria.",
+  "seguir.lanzarote": "Shall we keep flying? From here we can go on to Lanzarote.",
+  "seguir.fuerteventura": "Shall we keep flying? From here we can go on to Fuerteventura.",
+  "seguir.la-palma": "Shall we keep flying? From here we can go on to La Palma.",
+  "seguir.el-hierro": "Shall we keep flying? From here we can go on to El Hierro.",
+  "seguir.la-gomera": "Shall we keep flying? From here we can go on to La Gomera.",
   "fin.redondo": "A perfect flight. It does not get better",
   "vuelo.aterrizado": "Brake",
   "vuelo.abandonando": "Vacate the runway, someone is behind you",

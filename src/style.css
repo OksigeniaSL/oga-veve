@@ -2837,6 +2837,87 @@ body:has([data-hud="fin"]:not([hidden])) .pad {
   height: 26px;
 }
 
+/*
+ * **El vuelo siguiente**: el país pequeño con la raya de aquí a allí y el
+ * avión que sigue, en un solo sitio que se toca entero. Va en la fila de los
+ * botones y no en una fila aparte: en un teléfono apaisado una fila más
+ * empujaba «Otro vuelo» por debajo del borde. Ver `ofrecerElSiguiente`.
+ */
+.fin__seguir {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 6px;
+  border-radius: 14px;
+  border: 1px solid var(--ocre);
+  background: var(--barro-claro);
+  cursor: pointer;
+}
+
+.fin__seguir[hidden] {
+  display: none;
+}
+
+/* El mapa es dibujo: se toca el conjunto, no sus puntos. */
+.fin__seguir-mapa {
+  display: block;
+  width: 136px;
+  height: 52px;
+  pointer-events: none;
+}
+
+.fin__seguir-mapa .pais {
+  min-height: 0;
+  height: 100%;
+  box-shadow: none;
+  border-radius: 10px;
+}
+
+/*
+ * A este tamaño el mapa es una viñeta: sin rótulos, y los campos en puntos
+ * pequeños para que se vean las islas y la raya de aquí a allí.
+ */
+.fin__seguir-mapa .pais__oaci {
+  display: none;
+}
+
+.fin__seguir-mapa .pais__campo {
+  width: 7px;
+  height: 7px;
+  border-width: 1px;
+}
+
+.fin__seguir-mapa .pais__campo--salida,
+.fin__seguir-mapa .pais__campo--elegido {
+  width: 9px;
+  height: 9px;
+  border-width: 2px;
+}
+
+.fin__seguir-mapa .pais__campo--elegido {
+  box-shadow: 0 0 0 3px rgb(242 176 92 / 0.45);
+}
+
+.fin__seguir-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 11px;
+  border: none;
+  background: var(--ocre);
+  color: var(--barro);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.fin__seguir-boton svg {
+  width: 26px;
+  height: 26px;
+}
+
 /* La manga del grado y, al lado, la hoja del vuelo. */
 .fin__manga {
   display: flex;
