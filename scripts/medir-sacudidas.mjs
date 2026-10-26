@@ -35,7 +35,8 @@ const TRAMO = process.env.OGA_TRAMO ?? "taguato-ruvicha";
 const VIENTO = process.env.OGA_VIENTO ?? "000/00";
 const SITIO = (process.env.OGA_SITIO ?? "0,-60000").split(",").map(Number);
 const CON_GPU = process.env.OGA_GPU !== "0";
-const PUERTO = 5391;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5391);
 
 const server = await createServer({
   root: process.cwd(),
