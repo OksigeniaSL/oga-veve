@@ -11536,7 +11536,8 @@ button.motor__tecla::after {
   width: 30px;
   height: 26px;
   fill: currentColor;
-  transform: rotate(45deg);
+  /* El morro a la derecha, hacia donde se va: girado en diagonal parecía una cruz, que es cerrar. */
+  transform: rotate(90deg);
 }
 
 /* Lo que pide y lo que hay: para quien lee, debajo del nombre. */

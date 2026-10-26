@@ -174,7 +174,7 @@ function dibujoDePistas(e: Scenario, conNumeros: boolean): string {
       const [bx, by] = en(b);
       // A su anchura, y como poco tres: dos paralelas a doscientos metros se
       // tienen que ver dos.
-      const grueso = Math.max(3, ((p.widthM ?? 45) / lado) * 100);
+      const grueso = Math.max(5, ((p.widthM ?? 45) / lado) * 100);
       return `<line x1="${r3(ax)}" y1="${r3(ay)}" x2="${r3(bx)}" y2="${r3(by)}" class="pistas__barra" stroke-width="${r3(grueso)}" />
         <line x1="${r3(ax)}" y1="${r3(ay)}" x2="${r3(bx)}" y2="${r3(by)}" class="pistas__eje" />`;
     })
