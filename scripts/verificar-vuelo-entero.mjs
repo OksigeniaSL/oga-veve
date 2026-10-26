@@ -5187,12 +5187,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * banco el crucero era un columpio —de −7 a +6 m/s, hasta 3,9 g y un
        * «stall, stall» a 160 nudos—, y un avión que no se queda nivelado no
        * está nunca en crucero: lo que la cabina deja contar en él no salía, y
-       * eso era del banco y no del juego. Pasados los trescientos metros se
-       * engancha con la ventanilla en el nivel del plan, como el botón, y se le
-       * va dando el rumbo al punto siguiente; la bajada desde el punto de
-       * descenso la lleva él, por la senda del plan. El gas, el de siempre.
+       * eso era del banco y no del juego. En cuanto empieza la ruta —ciento
+       * cincuenta metros, quinientos pies— se engancha con la ventanilla en el
+       * nivel del plan, como el botón, y se le va dando el rumbo al punto
+       * siguiente; la bajada desde el punto de descenso la lleva él, por la
+       * senda del plan. El gas, el de siempre. Se enganchaba a los trescientos,
+       * y entre medias la palanca del banco subiendo despacio hacía sonar el
+       * avisador de pérdida a 219 m.
        */
-      if (!o.pilotoAutomatico?.() && alto(s) > 300 && !rutaSinAutomatico) {
+      if (!o.pilotoAutomatico?.() && alto(s) > 150 && !rutaSinAutomatico) {
         o.ponerVentanillaAlt?.(Math.round(crucero / 0.3048 / 100) * 100);
         o.pilotoAutomatico?.(true);
         if (!o.pilotoAutomatico?.()) rutaSinAutomatico = true;
