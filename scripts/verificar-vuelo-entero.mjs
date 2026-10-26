@@ -6862,13 +6862,22 @@ if (RUTA_PEDIDA && (vuelo.lineaDeRuta ?? []).length) {
       yaArriba = true;
     r.tramo = tramoDe(r, yaArriba);
   }
-  // Del reloj de audio al de pared, con el de cada pieza.
-  const desfases = oido.sonidos
-    .filter((x) => Number.isFinite(x.ahora))
-    .map((x) => x.pared / 1000 - x.ahora)
-    .sort((a, b) => a - b);
-  const desfase = desfases[Math.floor(desfases.length / 2)] ?? 0;
-  const enPared = (audio) => audio + desfase;
+  /*
+   * Del reloj de audio al de pared, **con el de la primera pieza de cada
+   * frase**: cuándo se pidió que sonara —su hora de pared— más lo que se
+   * programó por delante en el reloj del audio. Uno solo para todo el vuelo
+   * no vale: con la máquina cargada el reloj del audio se queda atrás del de
+   * pared —medido, cuatro minutos y medio en veinte—, y la llegada salía
+   * «bajando a 537 m».
+   */
+  const piezaDe = (f) =>
+    oido.sonidos.find(
+      (x) => x.voz === f.voz && Math.abs(x.t0 - f.t0) < 0.02 && Number.isFinite(x.ahora),
+    );
+  const enParedDe = (f) => {
+    const x = piezaDe(f);
+    return x ? x.pared / 1000 + (x.t0 - x.ahora) : null;
+  };
   const renglonEn = (pared) => {
     let mejor = renglones[0];
     for (const r of renglones) {
@@ -6880,8 +6889,12 @@ if (RUTA_PEDIDA && (vuelo.lineaDeRuta ?? []).length) {
   const desde = renglones[0].pared;
   const hasta = renglones[renglones.length - 1].pared;
   const frases = frasesDelVuelo
-    .map((f) => ({ ...f, p0: enPared(f.t0), p1: enPared(f.t1) }))
-    .filter((f) => f.p1 >= desde && f.p0 <= hasta);
+    .map((f) => {
+      const p0 = enParedDe(f);
+      return p0 === null ? null : { ...f, p0, p1: p0 + (f.t1 - f.t0) };
+    })
+    .filter((f) => f !== null && f.p1 >= desde && f.p0 <= hasta)
+    .sort((a, b) => a.p0 - b.p0);
   for (const f of frases) {
     const r = renglonEn(f.p0);
     rutaDelVuelo.push(
@@ -6950,7 +6963,18 @@ if (RUTA_PEDIDA && (vuelo.lineaDeRuta ?? []).length) {
     const { writeFile } = await import("node:fs/promises");
     await writeFile(
       process.env.OGA_RUTA_JSON,
-      JSON.stringify({ renglones, frases: rutaDelVuelo, huecos: huecos.map(([a, b]) => [renglonEn(a).t, +(b - a).toFixed(1)]), habladas: vuelo.habladas }, null, 1),
+      JSON.stringify(
+        {
+          renglones,
+          frases: rutaDelVuelo,
+          huecos: huecos.map(([a, b]) => [renglonEn(a).t, +(b - a).toFixed(1)]),
+          habladas: vuelo.habladas,
+          // Y lo oído tal cual, pieza a pieza, para mirarlo después.
+          sonidos: oido.sonidos,
+        },
+        null,
+        1,
+      ),
     );
   }
 }
