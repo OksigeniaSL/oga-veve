@@ -661,6 +661,14 @@ export const ES_PY = {
    */
   "comandante.aproximacion": "Tripulación, prepararse para el aterrizaje.",
   /*
+   * **Y sin tripulación de cabina, lo dice la comandante.** En el JAZ 60, de
+   * diecinueve plazas, no viaja auxiliar: lo que en otro avión pide ella al
+   * pasaje antes de aterrizar lo pide quien va en la cabina de mando, y se
+   * cuenta por qué. Ver `SIN_LA_TRIPULACION` en `audio/megafonia.ts`.
+   */
+  "comandante.cinturones":
+    "Señores pasajeros, nos preparamos para aterrizar: comprueben que tienen el cinturón abrochado, el respaldo derecho y la mesita cerrada. En este avión no viaja tripulación de cabina, así que eso se lo pido yo. Gracias.",
+  /*
    * **Y la cabina sin aire**, con la frase de los procedimientos de verdad: la
    * comandante avisa a la tripulación de cabina —«atención, tripulación,
    * descenso de emergencia»— para que se siente y se ponga la máscara, y al

@@ -48,7 +48,9 @@
  * 6. Al empezar a bajar, la comandante: cuánto falta, qué cielo y qué
  *    temperatura hay allí. Y se enciende el cartel.
  * 7. A la vez, la tripulación: cinturones, respaldos y mesitas.
- * 8. Ya en la aproximación: tripulación, prepararse para el aterrizaje.
+ * 8. Ya en la aproximación: tripulación, prepararse para el aterrizaje. Y sin
+ *    tripulación de cabina, la comandante al pasaje: cinturón, respaldo y
+ *    mesita, que eso no se queda sin decir. Ver `SIN_LA_TRIPULACION`.
  * 9. Y al llegar, la despedida con el nombre del sitio.
  * 10. Ya fuera de la pista, rodando, **la tripulación**: bienvenidos, sigan
  *     sentados con el cinturón hasta que el avión pare y se apague la señal,
@@ -94,6 +96,7 @@ export const ANUNCIOS = [
   "comandante.descenso",
   "tripulacion.cinturones",
   "comandante.aproximacion",
+  "comandante.cinturones",
   "comandante.llegada",
   "tripulacion.llegada",
 ] as const;
@@ -105,6 +108,15 @@ export type Anuncio = (typeof ANUNCIOS)[number];
  * los que dice ella. Sin auxiliares a bordo, «tripulación, sentados para el
  * despegue» no se lo dice nadie a nadie.
  */
+/**
+ * **Y los que dice la comandante porque no hay tripulación de cabina.** Lo
+ * que en un avión con auxiliares le toca a ellos —que el pasaje se prepare
+ * para aterrizar— en uno de diecinueve plazas lo hace quien va en la cabina
+ * de mando, por la megafonía: alguien tiene que decirlo, y la seguridad no
+ * se queda sin decir porque no haya quién pase por el pasillo.
+ */
+const SIN_LA_TRIPULACION: ReadonlySet<Anuncio> = new Set<Anuncio>(["comandante.cinturones"]);
+
 const DE_LA_TRIPULACION: ReadonlySet<Anuncio> = new Set<Anuncio>([
   "comandante.crosscheck",
   "comandante.despegue",
@@ -212,6 +224,7 @@ const CUANDO: Record<Anuncio, readonly Fase[]> = {
   "comandante.descenso": ["en-vuelo"],
   "tripulacion.cinturones": ["en-vuelo"],
   "comandante.aproximacion": ["en-vuelo"],
+  "comandante.cinturones": ["en-vuelo"],
   "comandante.llegada": ["abandonando", "a-plataforma"],
   /*
    * **Y lo de la tripulación, con la pista ya libre.** No antes: en la carrera
@@ -343,6 +356,7 @@ const VENTANA: Partial<Record<Anuncio, number>> = {
   "comandante.descenso": 60,
   "tripulacion.cinturones": 40,
   "comandante.aproximacion": 60,
+  "comandante.cinturones": 60,
   /*
    * **Y el de después de aterrizar, el rodaje de vuelta.** Al salir de la
    * pista coinciden la torre con el rodaje, la instructora y la lista de
@@ -645,6 +659,15 @@ export class Megafonia {
           m.sobreElCampo < EN_APROXIMACION
         );
       /*
+       * Sin auxiliares, la comandante, con lo mismo que ellos: detrás de la
+       * bajada y al empezar la aproximación, por encima de la final.
+       */
+      case "comandante.cinturones":
+        return (
+          this.hace("comandante.descenso") >= ANTES_DE_LA_APROXIMACION &&
+          m.sobreElCampo < EN_APROXIMACION
+        );
+      /*
        * Con la señal encendida, que es lo que el anuncio pide respetar: si
        * quien vuela la apagó a mano rodando, «sigan sentados hasta que se
        * apague» ya no es verdad y no se dice.
@@ -713,6 +736,7 @@ export class Megafonia {
     for (const anuncio of ANUNCIOS) {
       if (this.dichos.has(anuncio)) continue;
       if (DE_LA_TRIPULACION.has(anuncio) && !m.conTripulacion) continue;
+      if (SIN_LA_TRIPULACION.has(anuncio) && m.conTripulacion) continue;
       if (!CUANDO[anuncio].includes(m.fase)) continue;
       if (!this.seDanLasCondiciones(anuncio, m)) continue;
       /*

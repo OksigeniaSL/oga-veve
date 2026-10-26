@@ -520,9 +520,23 @@ describe("el guion de un vuelo de línea, entero y en orden", () => {
         "comandante.bienvenida",
         "comandante.crucero",
         "comandante.descenso",
+        "comandante.cinturones",
         "comandante.llegada",
       ],
     );
+  });
+
+  /*
+   * **Y lo que el pasaje tiene que hacer para aterrizar, lo dice ella.** En
+   * el JAZ 60 no hay auxiliar que pase pidiendo cinturón, respaldo y mesita:
+   * lo dice la comandante, por encima de la final y detrás de la bajada.
+   */
+  it("sin auxiliares, la comandante pide prepararse para aterrizar, y con ellos no", () => {
+    const donde = new Map<string, number>();
+    volar(new Megafonia(), DE_LINEA, { conTripulacion: false }, (a, alto) => donde.set(a, alto));
+    expect(donde.get("comandante.cinturones")).toBeLessThan(1000);
+    expect(donde.get("comandante.cinturones")).toBeGreaterThan(300);
+    expect(volar(new Megafonia(), DE_LINEA)).not.toContain("comandante.cinturones");
   });
 
   it("con el cartel puesto por turbulencia no se anuncia el servicio", () => {

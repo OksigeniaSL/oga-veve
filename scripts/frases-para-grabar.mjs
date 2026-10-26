@@ -53,7 +53,7 @@ const DE_LA_COMANDANTE_VIVA =
  * por lo mismo que lo de arriba: lo ya grabado no se renumera. Ver
  * `src/flight/siguiente-vuelo.ts` e `invitarAlSiguiente` en `src/game.ts`.
  */
-const DEL_VUELO_VIVO = /^(?:comandante\.sigue\.|seguir\.)/;
+const DEL_VUELO_VIVO = /^(?:comandante\.sigue\.|seguir\.|comandante\.cinturones$)/;
 /**
  * Y las formas nuevas de frases que ya tenían su grabación: la de `i18n` se
  * queda donde estaba y las otras van al final, con las del vuelo vivo.

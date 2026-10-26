@@ -18436,6 +18436,20 @@
     }
   },
   {
+    "id": "comandante.cinturones",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, nos preparamos para aterrizar: comprueben que tienen el cinturón abrochado, el respaldo derecho y la mesita cerrada. En este avión no viaja tripulación de cabina, así que eso se lo pido yo. Gracias.",
+    "para": "el vuelo normal, contado como en uno de verdad",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
     "id": "comandante.sigue.pettirossi",
     "voz": "comandante",
     "idioma": "es-PY",

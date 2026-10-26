@@ -12670,6 +12670,13 @@ export class Game {
    */
   private decirPorMegafonia(anuncio: Anuncio): void {
     /*
+     * **Y lo nuevo, solo con su grabación**: «prepárense para aterrizar» de
+     * la comandante en el avión sin auxiliares se estrena cuando tenga su
+     * toma. Sin ella lo diría la voz del navegador, muda en Brave para Linux,
+     * y el cartel del cinturón ya está encendido desde la bajada.
+     */
+    if (anuncio === "comandante.cinturones" && !this.instructor.vozDe(anuncio)) return;
+    /*
      * Los dos sucesos del cartel: se apaga con el anuncio de crucero y se
      * vuelve a encender con el del descenso. El cartel y la frase cuentan lo
      * mismo porque son lo mismo. Ver `flight/cinturon.ts`.
