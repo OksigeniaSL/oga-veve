@@ -656,6 +656,10 @@ export const EN: Dictionary = {
   "vuelo.alturaDeLaTorreRaya":
     "The tower tells us how high to climb: up to the line on the altitude.",
   "vuelo.otraAlturaDeLaTorre": "The tower lets us climb a bit more. The new altitude is already set.",
+  "vuelo.alturaDeLaTorreRayaYMarca":
+    "The tower tells us how high to climb: up to the line on the altitude. And the speed on the pink mark.",
+  "vuelo.alturaDeLaTorreYMarca":
+    "The tower gave us how high to climb. I set it in the altitude window, in magenta: we climb up to there with the speed on the pink mark, and stay.",
   "vuelo.tonoDeAltitudCerca":
     "That tone means we're nearly at the ALT window altitude. That's where we level off.",
   "vuelo.tonoDeAltitudFuera":
@@ -779,6 +783,12 @@ export const EN: Dictionary = {
     "We're up: cruise power, to the mark on the engine. And if you like, switch on the autopilot: it's the button that's pulsing.",
   "vuelo.paso.cruceroConGases":
     "We're up. The autopilot sets cruise power: watch the lever go by itself to the engine mark.",
+  "vuelo.paso.cruceroSolo":
+    "We're up, and the plane stays at this height by itself: it's a help for learning. Now cruise power, to the mark on the engine.",
+  "vuelo.paso.cruceroSolo.sinVer":
+    "We're up, and the plane stays at this height by itself: it's a help for learning. Now cruise power.",
+  "vuelo.paso.cruceroSoloConAutomatico":
+    "We're up, and the plane stays at this height by itself: it's a help for learning. Cruise power, to the mark on the engine; and if you like, switch on the autopilot: it's the button that's pulsing.",
   "vuelo.paso.bajar": "We start down: less power, and we come down gently to the height line.",
   "vuelo.paso.bajarConAutomatico":
     "We start down. The autopilot follows the path down to the height line: you check the speed stays on the pink mark.",

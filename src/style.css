@@ -5564,6 +5564,17 @@ button.motor__tecla::after {
   stroke-width: 1;
 }
 
+/* Quién sostiene la altura, debajo de la ventanilla: la mano o el automático. */
+.cr__quien-fondo {
+  fill: #05070a;
+  stroke: var(--cabina-filo);
+  stroke-width: 1;
+}
+
+.cr__quien {
+  fill: var(--cabina-valor);
+}
+
 .cr__sel-cifra {
   fill: var(--cabina-objetivo);
   font-family: var(--cabina-fuente);
@@ -11363,6 +11374,24 @@ button.motor__tecla::after {
   stroke-width: 2.2;
   stroke-linecap: round;
   stroke-dasharray: 3 2.2;
+}
+
+/*
+ * Y lo que se busca en todo el vuelo, en el avión que lo lleva marcado: la
+ * raya de la ventanilla ALT y la marca de la velocidad que toca. Rosa y
+ * enteras, como sus bugs en la cinta; la senda es la rayada. Ver
+ * `ObjetivoDeLosPictos` en `ui/pictogramas.ts`.
+ */
+.picto__objetivo {
+  stroke: var(--cabina-objetivo);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+/* Quién sostiene la altura: la mano de la ayuda o el automático, en pequeño. */
+.picto__sostiene {
+  fill: var(--tinta);
+  color: var(--tinta);
 }
 
 /*

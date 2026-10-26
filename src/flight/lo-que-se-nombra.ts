@@ -163,6 +163,8 @@ export const NOMBRA: Readonly<Record<string, readonly Pieza[]>> = {
   "vuelo.paso.nivelar": ["raya"],
   "vuelo.alturaDeLaTorreRaya": ["raya"],
   "vuelo.alturaDeLaTorre": ["raya"],
+  "vuelo.alturaDeLaTorreRayaYMarca": ["raya", "marca"],
+  "vuelo.alturaDeLaTorreYMarca": ["raya", "marca"],
   "vuelo.paso.cotaAlMar": ["altimetro"],
   "vuelo.paso.cotaEnAlto": ["altimetro", "cota"],
   "vuelo.cotaDeLaPista": ["altimetro", "carta"],
@@ -170,6 +172,8 @@ export const NOMBRA: Readonly<Record<string, readonly Pieza[]>> = {
   "vuelo.paso.crucero.sinVer": ["motor"],
   "vuelo.paso.cruceroConAutomatico": ["motor"],
   "vuelo.paso.cruceroConGases": ["motor"],
+  "vuelo.paso.cruceroSolo": ["motor"],
+  "vuelo.paso.cruceroSoloConAutomatico": ["motor"],
   // ── El radar meteorológico, en la carta ────────────────────────────
   "ejercicio.tormenta.radar": ["carta"],
   // ── Los tráficos del mapa ──────────────────────────────────────────
@@ -201,6 +205,8 @@ export const SIN_VER: Readonly<Record<string, string>> = {
   "vuelo.paso.frenarNariz": "vuelo.paso.frenarNariz.sinVer",
   "vuelo.paso.marcaDelAutomatico": "vuelo.paso.marcaDelAutomatico.sinVer",
   "vuelo.paso.crucero": "vuelo.paso.crucero.sinVer",
+  "vuelo.paso.cruceroSolo": "vuelo.paso.cruceroSolo.sinVer",
+  "vuelo.paso.cruceroSoloConAutomatico": "vuelo.paso.cruceroSolo.sinVer",
   "vuelo.paso.nivelar": "vuelo.paso.nivelar.sinVer",
   "vuelo.paso.recogerAerofrenos": "vuelo.paso.recogerAerofrenos.sinVer",
   "vuelo.paso.senda": "vuelo.paso.senda.sinVer",

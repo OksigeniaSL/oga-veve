@@ -17913,6 +17913,8 @@ export class Game {
          */
         presion: { puesta: this.qnhPuesta, delSitio: this.qnhDelSitio },
         ventanilla: this.ventanillaParaElCuadro(),
+        // Y quién sostiene la altura, si no es quien vuela. Ver `sostenerElNivel`.
+        sostieneLaAltura: this.quienSostieneLaAltura(),
         // Y la cabina de verdad, la misma que la de las pantallas de dentro.
         cabina: this.cabinaDelAvion.altitud,
         aerofrenos: {
@@ -25343,13 +25345,33 @@ export class Game {
     if (!laInstructoraLoExplica(this.tier.avisos)) return;
     if (this.llevaVentanillaAlt)
       this.ventanillaAlt = Math.min(pies, topeDeLaVentanilla(this.aircraft));
-    const dice: TranslationKey = this.explicado.altura
-      ? "vuelo.otraAlturaDeLaTorre"
-      : this.tier.id === "guyrami"
-        ? "vuelo.alturaDeLaTorreRaya"
-        : "vuelo.alturaDeLaTorre";
+    /*
+     * **Y la primera vez, con la velocidad**: subir es ir a una altura a una
+     * velocidad, y la de antes solo decía la altura. «No supe en ningún
+     * momento a qué altura debía llegar ni si la velocidad era mucha o
+     * poca.» Con su grabación y con las dos cosas a la vista; si no, la de
+     * siempre. Y en el peldaño de las cifras, la cifra detrás, como en los
+     * pasos de velocidad.
+     */
+    const dice = this.queSeDiceDeLaSubida();
     this.explicado.altura = true;
-    this.instructor.decir(t(dice), dice);
+    const cifra = dice.conMarca ? this.cifraDeLaVelocidad(this.laVelocidadQueToca().kt) : null;
+    if (cifra) this.instructor.decir(`${t(dice.clave)} ${cifra.texto}`, dice.clave, "normal", cifra.relleno);
+    else this.instructor.decir(t(dice.clave), dice.clave);
+  }
+
+  /**
+   * Lo que dice la instructora detrás de la altura de la torre: la primera
+   * vez, con la velocidad si está grabada y se ve; las demás, que hay altura
+   * nueva. Ver `autorizarAltura`.
+   */
+  private queSeDiceDeLaSubida(): { clave: TranslationKey; conMarca: boolean } {
+    if (this.explicado.altura) return { clave: "vuelo.otraAlturaDeLaTorre", conMarca: false };
+    const raya = this.tier.id === "guyrami";
+    const conMarca: TranslationKey = raya ? "vuelo.alturaDeLaTorreRayaYMarca" : "vuelo.alturaDeLaTorreYMarca";
+    if (!nombraLoQueNoSeVe(conMarca, this.seVe) && this.instructor.vozDe(conMarca))
+      return { clave: conMarca, conMarca: true };
+    return { clave: raya ? "vuelo.alturaDeLaTorreRaya" : "vuelo.alturaDeLaTorre", conMarca: false };
   }
 
   /**
@@ -26383,6 +26405,33 @@ export class Game {
     this.mandosConAutomatico.automatico = false;
     this.timonDeLaNivelada = m.elevator;
     return this.mandosConAutomatico;
+  }
+
+  /**
+   * **El paso del crucero que cuenta la nivelada**, si al llegar arriba el
+   * avión se queda solo y todavía no se contó en este vuelo; `null` si no.
+   * Ver `decirElPaso`.
+   */
+  private niveladaPorContar(p: PasoDeLaCadena, nueva: string): string | null {
+    if (p.que !== "crucero" || this.nivelada === null) return null;
+    if (this.explicadoEnEsteVuelo.has("vuelo.niveladaAsistida")) return null;
+    if (nueva === "vuelo.paso.cruceroConAutomatico") return "vuelo.paso.cruceroSoloConAutomatico";
+    if (nueva === "vuelo.paso.crucero") return "vuelo.paso.cruceroSolo";
+    return null;
+  }
+
+  /**
+   * **Quién sostiene la altura**, si no es quien vuela: la nivelada de los
+   * peldaños de abajo —una ayuda del peldaño, no del avión— o el automático
+   * con su altura puesta. Es lo que se vio jugando sin saber por qué: «se
+   * estabilizó solo». Ahora se ve en la tarjeta de la altura de los
+   * pictogramas y debajo de la ventanilla de la cinta. Ver
+   * `ObjetivoDeLosPictos` en `ui/pictogramas.ts`.
+   */
+  private quienSostieneLaAltura(): "ayuda" | "automatico" | null {
+    if (this.nivelada !== null) return "ayuda";
+    if (this.pilotoPuesto && this.objetivos.altitud !== null) return "automatico";
+    return null;
   }
 
   /** El compensador al capturar, para saber si alguien lo mueve. */
@@ -28166,7 +28215,7 @@ export class Game {
    */
   private decirElPaso(p: PasoDeLaCadena, l: LecturaDelPaso): void {
     const c = this.input.controls;
-    const como = comoSeDice(p, {
+    const deSiempre = comoSeDice(p, {
       gasDelAutomatico: this.gasesPuestos || this.gasDeLaFinal !== null,
       alturaDelAutomatico: this.pilotoPuesto && this.objetivos.altitud !== null,
       velocidadConElMorro:
@@ -28196,6 +28245,16 @@ export class Game {
      * latir, salvo que lo esté proponiendo la nivelada. Ver
      * `proponerPilotoAutomatico`.
      */
+    /*
+     * **Y arriba, si el avión se queda solo, se dice.** Es la nivelada de los
+     * peldaños de abajo: al llegar al crucero sostiene la altura con la
+     * palanca suelta, y por debajo del crucero ya lo cuenta su propia frase
+     * —ver `sostenerElNivel`—, pero al crucero lo contaba este paso, y este
+     * paso no lo decía: «se estabilizó solo», de El Hierro a La Gomera con el
+     * JAZ 60. Si la nueva no está grabada, la de siempre.
+     */
+    const solo = this.niveladaPorContar(p, deSiempre.nueva);
+    const como = solo ? { ...deSiempre, nueva: solo } : deSiempre;
     const ofrece =
       llevaPilotoAutomatico(this.aircraft) &&
       !this.pilotoPuesto &&
@@ -28211,7 +28270,10 @@ export class Game {
      * Con el cuadro recogido, «hasta la marca rosa» era señalar al vacío. Y la
      * tarjeta, con la misma. Ver `flight/lo-que-se-nombra.ts`.
      */
-    const candidatas = conSuSinVer(como.nueva, [como.grabada]);
+    const candidatas = conSuSinVer(como.nueva, [
+      ...(solo ? conSuSinVer(deSiempre.nueva) : []),
+      como.grabada,
+    ]);
     const conVoz = candidatas.find(
       (c) => !!c && !nombraLoQueNoSeVe(c, this.seVe) && !!this.instructor.vozDe(c),
     );
@@ -28316,10 +28378,19 @@ export class Game {
     p: PasoDeLaCadena,
   ): { texto: string; relleno: Record<string, string> } | null {
     if (p.que !== "acelerar" && p.que !== "frenar" && p.que !== "mantener") return null;
+    return this.cifraDeLaVelocidad(p.objetivo.kt);
+  }
+
+  /**
+   * **La cifra de una velocidad, dicha**: la pieza grabada y su texto, en el
+   * peldaño de las cifras y si está grabada. La usan el paso de velocidad y
+   * la subida que da la torre. Ver `velocidadEnVoz`.
+   */
+  private cifraDeLaVelocidad(kt: number): { texto: string; relleno: Record<string, string> } | null {
     if (!canalesDe(this.tier.avisos).cifra) return null;
-    const pieza = piezaDeVelocidad(p.objetivo.kt, this.tier.units);
+    const pieza = piezaDeVelocidad(kt, this.tier.units);
     if (!pieza || !this.instructor.vozDe(pieza)) return null;
-    const n = velocidadDicha(p.objetivo.kt, this.tier.units);
+    const n = velocidadDicha(kt, this.tier.units);
     return {
       texto: t("vuelo.paso.velocidad", { n: String(n) }),
       relleno: { velocidad: pieza },

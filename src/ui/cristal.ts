@@ -604,6 +604,20 @@ function cintaDeAltitud(
               class="cr__sel-cifra" text-anchor="end"></text>
       </g>
       <!--
+        **Y quién la sostiene**, si no la sostiene quien vuela: la mano de la
+        instructora con la nivelada de los peldaños de abajo —una ayuda del
+        peldaño, no del avión—, o el avión sobre su raya con el automático.
+        Debajo de la caja de la ventanilla, en pequeño: «se estabilizó solo»
+        se vio jugando sin saber por qué. Ver Tablero.ventanillaAlt.
+      -->
+      <g data-cristal="alt-quien" visibility="hidden" transform="translate(4 38)">
+        <rect width="16" height="16" rx="3" class="cr__quien-fondo" />
+        <path data-quien="ayuda" class="cr__quien" transform="translate(1 0) scale(0.6)"
+              d="M8 20 v-6 l-2.4-2.4 a1.4 1.4 0 0 1 2-2 L9.4 11.2 V4.6 a1.3 1.3 0 0 1 2.6 0 v5 v-5.6 a1.3 1.3 0 0 1 2.6 0 V10 v-4.4 a1.3 1.3 0 0 1 2.6 0 V14 a6 6 0 0 1-6 6 Z" />
+        <path data-quien="automatico" class="cr__quien" transform="translate(1 1) scale(0.58)"
+              d="M12 4 13.4 11 21 12.6v1.6l-7.6-1.2L12 20l-1.4-6.2L3 14.2v-1.6L10.6 11Z M3 21h18v1.6H3Z" />
+      </g>
+      <!--
         **La ventanilla de presión, debajo de la cinta.**
 
         Es donde va en cualquier pantalla de vuelo del mundo, y es la

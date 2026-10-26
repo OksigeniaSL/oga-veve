@@ -2928,6 +2928,13 @@ export class Hud {
        * `agujasDeLosMotores` en `game.ts`.
        */
       readonly motores?: readonly number[];
+      /**
+       * **Quién sostiene la altura**, si no la sostiene quien vuela: la
+       * nivelada de los peldaños de abajo, que es una ayuda, o el piloto
+       * automático. Se ve en la tarjeta de la altura de los pictogramas. Ver
+       * `sostenerElNivel` en `game.ts`.
+       */
+      readonly sostieneLaAltura?: "ayuda" | "automatico" | null;
     },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
@@ -2967,9 +2974,41 @@ export class Hud {
       const lenta = this.vref * 0.8;
       // El pájaro, donde de verdad se llega. Ver `vmax`.
       const rapida = Math.min(this.vref * 1.6, this.vmax);
+      /*
+       * **Y hasta dónde se sube, en el avión que lo lleva marcado.** Con la
+       * escala de siempre —cuatrocientos metros arriba— un turbohélice que
+       * sube a cuatro mil pies se quedaba clavado en el techo de la tarjeta
+       * desde el despegue, y la raya de la ventanilla con él: «no supe en
+       * ningún momento a qué altura debía llegar». Con ventanilla, el techo
+       * de la tarjeta es un cuarto más que ella, y la raya cae cerca de
+       * arriba con sitio para ver al avioncito subir hacia ella. La raya va
+       * sobre el mismo suelo que el avioncito —lo que hay debajo—, así que
+       * los dos coinciden justo cuando el altímetro marca la ventanilla.
+       */
+      const ventanilla =
+        mandos?.ventanilla && mandos.ventanilla.enLaCinta !== false
+          ? mandos.ventanilla.pies * 0.3048
+          : null;
+      /*
+       * Y con ventanilla, en línea recta y no por raíz: la raíz está para que
+       * un vuelo rasante mueva el avioncito, y aquí lo que hay que ver es
+       * cuánto falta hasta la raya. Por raíz, a tres mil pies con la raya en
+       * cuatro mil, los dos quedaban a dos píxeles.
+       */
+      const techo = ventanilla !== null ? Math.max(400, ventanilla * 1.25) : 400;
+      const suelo = state.position.y - state.heightAboveGround;
+      const enLaTarjeta = (metros: number): number =>
+        ventanilla !== null ? Math.max(0, metros) / techo : Math.sqrt(Math.max(0, metros) / techo);
+      /*
+       * Y la velocidad que toca, en el mismo avión: el que lleva bugs en el
+       * anemómetro o velocidad seleccionada en su pantalla. Ver
+       * `ObjetivoDeLosPictos`.
+       */
+      const marca = ventanilla !== null && mandos?.spd ? mandos.spd.kt * 0.514444 : null;
+      const holgura = 5 * 0.514444;
       this.pictos.update(
         (ias - lenta) / (rapida - lenta),
-        Math.sqrt(Math.max(0, state.heightAboveGround) / 400),
+        enLaTarjeta(state.heightAboveGround),
         engineOn ? throttle : 0,
         dt,
         engineOn,
@@ -3001,10 +3040,21 @@ export class Hud {
          * `flight/perfil-vertical.ts`.
          */
         mandos?.perfil?.metros !== null && mandos?.perfil?.metros !== undefined
-          ? Math.sqrt(
-              Math.max(0, state.heightAboveGround - mandos.perfil.metros) / 400,
-            )
+          ? enLaTarjeta(state.heightAboveGround - mandos.perfil.metros)
           : null,
+        {
+          altura: ventanilla !== null ? enLaTarjeta(ventanilla - suelo) : null,
+          velocidad: marca !== null ? (marca - lenta) / (rapida - lenta) : null,
+          banda:
+            marca === null
+              ? null
+              : ias < marca - holgura
+                ? "lento"
+                : ias > marca + holgura
+                  ? "rapido"
+                  : "bien",
+          sostiene: mandos?.sostieneLaAltura ?? null,
+        },
       );
     }
 
@@ -3376,6 +3426,7 @@ export class Hud {
         combustible: mandos?.combustible ?? null,
         presion: mandos?.presion ?? null,
         ventanilla: mandos?.ventanilla ?? null,
+        sostieneLaAltura: mandos?.sostieneLaAltura ?? null,
         spd: mandos?.spd ?? null,
         fma: mandos?.fma ?? null,
         minimos: mandos?.minimos ?? null,

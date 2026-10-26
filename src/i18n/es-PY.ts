@@ -2000,6 +2000,17 @@ export const ES_PY = {
   "vuelo.alturaDeLaTorreRaya": "La torre nos dice hasta dónde subir: hasta la raya de la altura.",
   "vuelo.otraAlturaDeLaTorre": "La torre nos deja subir otro poco. Ya puse la altura nueva.",
   /*
+   * **Y la velocidad, con la altura**, la primera vez: subir es ir a una
+   * altura **a una velocidad**, y sin la segunda mitad no se sabe si se va
+   * rápido o despacio. Detrás, en Taguató, la cifra: «Son {n} kilómetros por
+   * hora». Solo con su grabación; sin ella, la de siempre. Ver
+   * `autorizarAltura` en `game.ts`.
+   */
+  "vuelo.alturaDeLaTorreRayaYMarca":
+    "La torre nos dice hasta dónde subir: hasta la raya de la altura. Y la velocidad en la marca rosa.",
+  "vuelo.alturaDeLaTorreYMarca":
+    "La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí con la velocidad en la marca rosa, y nos quedamos.",
+  /*
    * Y el tono del avisador de altitud, contado detrás de la máquina y una sola
    * vez: ver `sonarElAvisador` en `game.ts`.
    */
@@ -2227,6 +2238,18 @@ export const ES_PY = {
     "Ya estamos arriba: gas de crucero, hasta la marca del motor. Y si querés, poné el piloto automático: es el botón que late.",
   "vuelo.paso.cruceroConGases":
     "Ya estamos arriba. El automático pone el gas de crucero: mirá cómo la palanca va sola a la marca del motor.",
+  /*
+   * **Y arriba, si el avión se queda solo a la altura**, que lo diga: es la
+   * nivelada de los peldaños de abajo, una ayuda para aprender y no algo que
+   * haga el avión. Sin decirlo, «se estabilizó solo» y no se sabía por qué.
+   * Ver `sostenerElNivel` en `game.ts`.
+   */
+  "vuelo.paso.cruceroSolo":
+    "Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Ahora gas de crucero, hasta la marca del motor.",
+  "vuelo.paso.cruceroSolo.sinVer":
+    "Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Ahora gas de crucero.",
+  "vuelo.paso.cruceroSoloConAutomatico":
+    "Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Gas de crucero, hasta la marca del motor; y si querés, poné el piloto automático: es el botón que late.",
   "vuelo.paso.bajar":
     "Empezamos a bajar: menos gas, y bajamos despacito hasta la raya de la altura.",
   "vuelo.paso.bajarConAutomatico":
