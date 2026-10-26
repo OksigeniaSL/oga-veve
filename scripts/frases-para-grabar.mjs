@@ -46,6 +46,20 @@ const SALIDA = process.argv[2] ?? "docs/voces";
 const DE_LA_COMANDANTE_VIVA =
   /^comandante\.(?:bienvenida\.(?:saludo|gracia|a|detalle|cierre)\.|mitad\.|chicos\.|curiosidad\.)/;
 
+/*
+ * **Y el vuelo vivo** (26-10-2026): lo que dice la comandante —y, en la
+ * avioneta, la instructora— para llenar un vuelo normal de lo que pasa de
+ * verdad, y la invitación al vuelo siguiente. Va **al final de cada voz**,
+ * por lo mismo que lo de arriba: lo ya grabado no se renumera. Ver
+ * `src/flight/siguiente-vuelo.ts` e `invitarAlSiguiente` en `src/game.ts`.
+ */
+const DEL_VUELO_VIVO = /^(?:comandante\.sigue\.|seguir\.)/;
+/**
+ * Y las formas nuevas de frases que ya tenían su grabación: la de `i18n` se
+ * queda donde estaba y las otras van al final, con las del vuelo vivo.
+ */
+const VARIANTES_AL_FINAL = new Set(["comandante.crucero"]);
+
 /**
  * Qué grupos de claves habla el instructor.
  *
@@ -182,8 +196,9 @@ const HABLADOS = [
     "comandante",
     "comandante",
     "la megafonía de cabina, para el pasaje",
-    // Menos lo nuevo de la comandante, que va al final. Ver `DE_LA_COMANDANTE_VIVA`.
-    DE_LA_COMANDANTE_VIVA,
+    // Menos lo nuevo de la comandante, que va al final. Ver `DE_LA_COMANDANTE_VIVA`
+    // y `DEL_VUELO_VIVO`.
+    new RegExp(`${DE_LA_COMANDANTE_VIVA.source}|${DEL_VUELO_VIVO.source}`),
   ],
   /*
    * **Y la tripulación de cabina**, con el habla del sitio como la torre: la
@@ -1026,6 +1041,7 @@ for (const [grupo, voz, para, salvo] of HABLADOS) {
      * como la clave; las demás llevan su número.
      */
     for (const [n, otra] of (variantes.get(k) ?? []).entries()) {
+      if (VARIANTES_AL_FINAL.has(k)) break;
       filas.push({
         id: `${k}~${n + 2}`,
         voz,
@@ -1969,6 +1985,54 @@ for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });
   total += texto.length;
+}
+
+/*
+ * **Y el vuelo vivo**, detrás de todo: ver `DEL_VUELO_VIVO`. La comandante,
+ * por la megafonía; la instructora, al lado, en la avioneta.
+ */
+for (const [k, v] of es) {
+  if (!DEL_VUELO_VIVO.test(k) || filas.some((f) => f.id === k)) continue;
+  const deLaComandante = k.startsWith("comandante.");
+  filas.push({
+    id: k,
+    voz: deLaComandante ? "comandante" : "instructor",
+    idioma: "es-PY",
+    texto: v,
+    para: k.startsWith("comandante.sigue.") || k.startsWith("seguir.")
+      ? "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+      : "el vuelo normal, contado como en uno de verdad",
+  });
+  total += v.length;
+}
+/*
+ * Y los niveles de los saltos cortos, tres y cuatro mil pies, con la
+ * plantilla de los demás: ver `NIVELES_BAJOS` en
+ * `src/audio/partes-de-la-comandante.ts`.
+ */
+{
+  const plantilla = es.get("comandante.previsto.nivel");
+  for (const n of [3, 4]) {
+    const id = `comandante.previsto.nivel.${n}`;
+    if (filas.some((f) => f.id === id)) continue;
+    const texto = conNumero(plantilla, n);
+    filas.push({ id, voz: "comandante", idioma: "es-PY", texto, para: "a qué altura se va, detrás de la bienvenida: los saltos cortos" });
+    total += texto.length;
+  }
+}
+for (const k of VARIANTES_AL_FINAL) {
+  for (const [n, otra] of (variantes.get(k) ?? []).entries()) {
+    const id = `${k}~${n + 2}`;
+    if (filas.some((f) => f.id === id)) continue;
+    filas.push({
+      id,
+      voz: "comandante",
+      idioma: "es-PY",
+      texto: otra,
+      para: "la megafonía de cabina, para el pasaje · otra forma de decirlo",
+    });
+    total += otra.length;
+  }
 }
 
 /*

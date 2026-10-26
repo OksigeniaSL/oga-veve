@@ -613,3 +613,20 @@
 613	vuelo.tocasteDuro	Aterrizaje duro: ahora hay que revisar el avión. La próxima, recogé un poco más al final
 614	vuelo.tocasteLargoFacil	¡Aterrizaste! Pero lejos de las rayas blancas grandes: la próxima, tocá cerca de ellas, que así sobra pista para frenar
 615	vuelo.tocasteDuroFacil	¡Aterrizaste! Pero con un golpe fuerte: la próxima, llegá al suelo más despacito, sin empujar la nariz para abajo
+616	seguir.pettirossi	¿Seguimos volando? Desde acá podemos ir hasta Asunción.
+617	seguir.guarani	¿Seguimos volando? Desde acá podemos ir hasta Ciudad del Este.
+618	seguir.encarnacion	¿Seguimos volando? Desde acá podemos ir hasta Encarnación.
+619	seguir.concepcion	¿Seguimos volando? Desde acá podemos ir hasta Concepción.
+620	seguir.pedro-juan	¿Seguimos volando? Desde acá podemos ir hasta Pedro Juan Caballero.
+621	seguir.estigarribia	¿Seguimos volando? Desde acá podemos ir hasta Mariscal Estigarribia.
+622	seguir.ayolas	¿Seguimos volando? Desde acá podemos ir hasta Ayolas.
+623	seguir.pilar	¿Seguimos volando? Desde acá podemos ir hasta Pilar.
+624	seguir.yvytu-rape	¿Seguimos volando? Desde acá podemos ir hasta Yvytu Rape, la pista de la Granja Óga.
+625	seguir.tenerife-norte	¿Seguimos volando? Desde acá podemos ir hasta Tenerife Norte.
+626	seguir.tenerife-sur	¿Seguimos volando? Desde acá podemos ir hasta Tenerife Sur.
+627	seguir.gran-canaria	¿Seguimos volando? Desde acá podemos ir hasta Gran Canaria.
+628	seguir.lanzarote	¿Seguimos volando? Desde acá podemos ir hasta Lanzarote.
+629	seguir.fuerteventura	¿Seguimos volando? Desde acá podemos ir hasta Fuerteventura.
+630	seguir.la-palma	¿Seguimos volando? Desde acá podemos ir hasta La Palma.
+631	seguir.el-hierro	¿Seguimos volando? Desde acá podemos ir hasta El Hierro.
+632	seguir.la-gomera	¿Seguimos volando? Desde acá podemos ir hasta La Gomera.

@@ -18434,5 +18434,418 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "comandante.sigue.pettirossi",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia Asunción.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.guarani",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia Ciudad del Este.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.encarnacion",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia Encarnación.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.concepcion",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia Concepción.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.pedro-juan",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia Pedro Juan Caballero.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.estigarribia",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia Mariscal Estigarribia.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.ayolas",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia Ayolas.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.pilar",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia Pilar.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.yvytu-rape",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia Yvytu Rape, la pista de la Granja Óga.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.tenerife-norte",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia Tenerife Norte.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.tenerife-sur",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia Tenerife Sur.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.gran-canaria",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia Gran Canaria.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.lanzarote",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia Lanzarote.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.fuerteventura",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia Fuerteventura.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.la-palma",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia La Palma.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.el-hierro",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia El Hierro.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.sigue.la-gomera",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Y para los que siguen viaje: este mismo avión sale después hacia La Gomera.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "seguir.pettirossi",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta Asunción.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.guarani",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta Ciudad del Este.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.encarnacion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta Encarnación.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.concepcion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta Concepción.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.pedro-juan",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta Pedro Juan Caballero.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.estigarribia",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta Mariscal Estigarribia.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.ayolas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta Ayolas.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.pilar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta Pilar.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.yvytu-rape",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta Yvytu Rape, la pista de la Granja Óga.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.tenerife-norte",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta Tenerife Norte.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.tenerife-sur",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta Tenerife Sur.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.gran-canaria",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta Gran Canaria.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.lanzarote",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta Lanzarote.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.fuerteventura",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta Fuerteventura.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.la-palma",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta La Palma.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.el-hierro",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta El Hierro.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "seguir.la-gomera",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Seguimos volando? Desde acá podemos ir hasta La Gomera.",
+    "para": "el vuelo siguiente: adónde se puede seguir volando desde aquí, al acabar"
+  },
+  {
+    "id": "comandante.previsto.nivel.3",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a tres mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida: los saltos cortos",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.previsto.nivel.4",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar a cuatro mil pies.",
+    "para": "a qué altura se va, detrás de la bienvenida: los saltos cortos",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.crucero~2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, les habla la comandante: ya llegamos a nuestra altura. Se apagó la señal del cinturón; si se quedan sentados, déjenselo puesto, flojito.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.crucero~3",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Terminamos de subir, señores pasajeros. Pueden soltarse el cinturón para moverse un poco; sentados, mejor con el cinturón puestito.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]
