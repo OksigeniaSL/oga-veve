@@ -2551,6 +2551,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const ALTO_DE_BAJADA = 320;
   /** Cuándo se llegó arriba en ese crucero, s de juego. */
   let cruceroDesde = null;
+  /** Si el automático no quiso engancharse en la ruta: se vuela a mano. */
+  let rutaSinAutomatico = false;
 
   /*
    * **Las fases en las que el juego promete una raya que seguir.**
@@ -5171,10 +5173,37 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const aSuVelocidad = Math.min(1, (bajandoYa ? 0.35 : 0.55) + (quiere - s.airspeed) * 0.04);
       c.throttle = subiendo ? gasSubiendo : Math.max(bajandoYa ? 0.1 : 0.3, aSuVelocidad);
       configurar(s, c, 1);
-      c.elevator = subiendo ? subirDeVerdad(s) : aLaAltura(s, altoQueToca);
-      sostenerLaAltura(s, subiendo, altoQueToca);
       const fijo = plan?.fijos?.[plan.activo] ?? null;
-      if (fijo) c.aileron = alPuntoPorElSuelo(s, fijo.x, fijo.z);
+      /*
+       * **Y con el automático, como lo vuela quien juega.** Con la palanca del
+       * banco el crucero era un columpio —de −7 a +6 m/s, hasta 3,9 g y un
+       * «stall, stall» a 160 nudos—, y un avión que no se queda nivelado no
+       * está nunca en crucero: lo que la cabina deja contar en él no salía, y
+       * eso era del banco y no del juego. Pasados los trescientos metros se
+       * engancha con la ventanilla en el nivel del plan, como el botón, y se le
+       * va dando el rumbo al punto siguiente; la bajada desde el punto de
+       * descenso la lleva él, por la senda del plan. El gas, el de siempre.
+       */
+      if (!o.pilotoAutomatico?.() && alto(s) > 300 && !rutaSinAutomatico) {
+        o.ponerVentanillaAlt?.(Math.round(crucero / 0.3048 / 100) * 100);
+        o.pilotoAutomatico?.(true);
+        if (!o.pilotoAutomatico?.()) rutaSinAutomatico = true;
+      }
+      if (o.pilotoAutomatico?.()) {
+        c.aileron = 0;
+        c.elevator = 0;
+        if (fijo) {
+          const objetivos = j.objetivos;
+          j.objetivos = {
+            ...objetivos,
+            rumbo: Math.atan2(fijo.x - s.position.x, -(fijo.z - s.position.z)),
+          };
+        }
+      } else {
+        c.elevator = subiendo ? subirDeVerdad(s) : aLaAltura(s, altoQueToca);
+        sostenerLaAltura(s, subiendo, altoQueToca);
+        if (fijo) c.aileron = alPuntoPorElSuelo(s, fijo.x, fijo.z);
+      }
       /*
        * Y se cruza a la final de allí cuando ya se llega a ella: a dos
        * kilómetros del punto donde la pone el cruce —diez antes del umbral,
@@ -5186,7 +5215,11 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const f = enLaRuta ?? o.puntoDeFinalDe(10000, destino);
       const aLaFinal = f ? Math.hypot(f.x - s.position.x, f.z - s.position.z) : Infinity;
       const alUmbral = u ? Math.hypot(u.x - s.position.x, u.z - s.position.z) : Infinity;
-      if (aLaFinal < 2000 || (bajandoYa && alUmbral < 11000)) etapa = "cruzar";
+      if (aLaFinal < 2000 || (bajandoYa && alUmbral < 11000)) {
+        // Y a la final, a mano: es lo que hace quien juega antes de los mínimos.
+        if (o.pilotoAutomatico?.()) o.pilotoAutomatico(false);
+        etapa = "cruzar";
+      }
     } else if (etapa === "crucero") {
       /*
        * **Subir, cruzar nivelado y bajar**, recto por el rumbo de salida.
