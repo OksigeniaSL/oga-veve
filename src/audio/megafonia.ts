@@ -339,6 +339,16 @@ const VENTANA: Partial<Record<Anuncio, number>> = {
    * pasaba sin hueco. Se da rodando, y el rodaje dura lo que dura.
    */
   "comandante.bienvenida": 120,
+  /*
+   * **Y el de soltar el cinturón, todo el crucero.** Espera a que el aire esté
+   * quieto —ver `aireMovido`— y eso llega cuando llega, a veces con la radio
+   * hablando o la comandante contando otra cosa. Con veinticinco segundos se
+   * perdía, y el cartel se quedaba puesto el resto del vuelo sin que nadie
+   * lo soltara: medido de El Hierro a La Gomera, listo a los 26 km detrás de
+   * una moderada y sin decirse nunca. Lo que lo deja de hacer verdad lo
+   * guardan sus condiciones: empezar a bajar, una turbulencia por delante.
+   */
+  "comandante.crucero": 120,
   "tripulacion.servicio": 120,
   "comandante.descenso": 60,
   "tripulacion.cinturones": 40,
