@@ -536,6 +536,14 @@ export const EN: Dictionary = {
     "Ladies and gentlemen, we're through it and it's smooth again. We're switching off the seatbelt sign: you're free to move about, but while you're seated, please keep it fastened.",
   "comandante.turbulencia.pasoBajando":
     "Ladies and gentlemen, we're through the turbulence. The seatbelt sign stays on because we've started our descent.",
+  "comandante.turbulencia.sentados.moderada":
+    "Ladies and gentlemen, this is your captain. There's moderate turbulence ahead, so it will get quite bumpy for a while. That's normal, and the aircraft is built for it. Please stay seated with your seatbelt securely fastened.",
+  "comandante.turbulencia.moderada.sinTripulacion":
+    "Ladies and gentlemen, this is your captain. There's moderate turbulence ahead, so it will get quite bumpy for a while. That's normal, and the aircraft is built for it. Please return to your seat, fasten your seatbelt securely and put away anything loose.",
+  "comandante.turbulencia.ahora.moderada.sinTripulacion":
+    "Ladies and gentlemen, this is your captain. We're going through some moderate turbulence that we couldn't see coming: it doesn't show on the radar. It's normal, and the aircraft is built for it. Please return to your seat and fasten your seatbelt securely.",
+  "comandante.turbulencia.otraVez.moderada.sinTripulacion":
+    "Ladies and gentlemen, more turbulence is coming, a bit bumpier this time. Same as before: everyone seated with seatbelts securely fastened.",
   "comandante.cinturon.porque":
     "A tip from your captain: even when the seatbelt sign is off, keep your seatbelt loosely fastened while you're seated. Sometimes turbulence comes without warning, and your seatbelt is what keeps you safely in your seat.",
 

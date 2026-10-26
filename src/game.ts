@@ -29187,6 +29187,8 @@ export class Game {
    */
   private repartirLaTurbulencia(): void {
     this.cartelPorLaTurbulencia = false;
+    this.episodioConVoz = false;
+    this.bachesContadosEn = null;
     // Y lo que se dice una vez por vuelo, para el vuelo nuevo.
     this.servicioParado = false;
     this.cinturonPorqueDicho = false;
@@ -29276,6 +29278,9 @@ export class Game {
       const seApaga = this.cartelPorLaTurbulencia && !bajando;
       if (seApaga) this.dijoSoltarse = true;
       this.cartelPorLaTurbulencia = false;
+      // La ligera pasa como llegó, sin megafonía: el cartel se apaga con su *ding*.
+      const conVoz = this.episodioConVoz;
+      this.episodioConVoz = false;
       /*
        * **Y se dice**, si hay grabada una frase que sea verdad: que se apaga
        * la señal porque la encendió ella, o que sigue encendida porque ya se
@@ -29284,8 +29289,8 @@ export class Game {
        * del cinturón; y la forma del «ya pasó» que no lo da ya.
        */
       const conConsejo =
-        seApaga && !this.cinturonPorqueDicho && grabada(CINTURON_PORQUE);
-      const forma = pasoDeTurbulencia({ bajando, seApaga, conConsejo }, grabada);
+        conVoz && seApaga && !this.cinturonPorqueDicho && grabada(CINTURON_PORQUE);
+      const forma = conVoz ? pasoDeTurbulencia({ bajando, seApaga, conConsejo }, grabada) : null;
       if (forma) {
         this.comandante.decir(forma.texto, forma.id, "baja");
         if (this.tier.instruments !== "none") this.hud.radio(forma.texto);
@@ -29303,6 +29308,23 @@ export class Game {
     if (pasajeSuelto) this.cartelPorLaTurbulencia = true;
     this.pidioAbrocharse = true;
     /*
+     * **La ligera, solo el cartel.** Es lo que hace una comandante de verdad
+     * con unos baches suaves: enciende la señal y ya, sin megafonía, y el
+     * servicio sigue —el AIM de la FAA (7-1-21) lo dice de la ligera: se
+     * puede servir y se anda sin dificultad—. El anuncio es de la moderada,
+     * una vez por episodio. Lo que oye quien vuela es el *ding*, y en los
+     * peldaños de abajo la instructora cuenta los baches cuando se sienten:
+     * ver `hablarDeLosBaches`. La de la tormenta sí se cuenta, que es la del
+     * radar y dura casi todo el vuelo; la que avisó otro avión deja oír la
+     * radio, que es lo que enseña.
+     */
+    if (suceso.intensidad === "ligera" && suceso.como !== "tormenta") {
+      this.episodioConVoz = false;
+      if (suceso.fuente === "pirep") this.contarElPirep(suceso.intensidad, () => {});
+      return;
+    }
+    this.episodioConVoz = true;
+    /*
      * **Y el servicio se para**, si ya se había ofrecido y el pasaje iba
      * suelto: la tripulación lo dice cuando acaba la comandante —pedido a la
      * vez, esperaría lo que dura su anuncio y podría caducar—, y al pasar,
@@ -29317,7 +29339,11 @@ export class Game {
         comoSeDiceAqui("tripulacion.servicio.pausa", this.hablaDeLaTripulacion()),
       ) !== null;
     if (parar) this.servicioParado = true;
-    const forma = anuncioDeTurbulencia(suceso, grabada);
+    // Dicha a quien la oye: sin nombrar a la tripulación donde no la hay. Ver `AQuien`.
+    const forma = anuncioDeTurbulencia(suceso, grabada, undefined, {
+      conTripulacion: conTripulacion(this.aircraft.mass),
+      sentados: !pasajeSuelto,
+    });
     let pidioParar = false;
     /*
      * La tira, cuando empieza a hablar si va detrás de la radio —escrita en
@@ -29372,6 +29398,17 @@ export class Game {
 
   /** Si la tripulación paró el servicio por la turbulencia. */
   private servicioParado = false;
+  /**
+   * Si el episodio de ahora lo anunció la comandante: el de la moderada. El
+   * de la ligera va sin megafonía, y al pasar tampoco se dice nada. Ver
+   * `anunciarLaTurbulencia`.
+   */
+  private episodioConVoz = false;
+  /**
+   * El episodio cuyos baches ya contó la instructora: uno por episodio, y lo
+   * rearma el episodio siguiente, no un reloj. Ver `contarLosBachesDeLaLigera`.
+   */
+  private bachesContadosEn: Zona | null = null;
   /** Si ya se dio el consejo del cinturón en este vuelo. */
   private cinturonPorqueDicho = false;
   /** Si ya se contó en este vuelo lo que avisó otro avión. Ver `contarElPirep`. */
@@ -29600,6 +29637,7 @@ export class Game {
     if (conGente) {
       if (suceso) this.anunciarLaTurbulencia(suceso);
       else this.aconsejarElCinturon();
+      this.contarLosBachesDeLaLigera(movimiento);
       return;
     }
     if (movimiento < YA_NO_SACUDE) this.bachesDichos = false;
@@ -29612,6 +29650,39 @@ export class Game {
     )
       return;
     this.bachesDichos = true;
+    const forma = unaForma("vuelo.baches");
+    this.instructor.decir(forma.texto, forma.id);
+  }
+
+  /**
+   * **Los baches de un episodio ligero, contados por la instructora** en los
+   * peldaños de abajo: la ligera va sin megafonía —ver `anunciarLaTurbulencia`—
+   * y lo que suena es el *ding* del cartel. Detrás, ella cuenta con calma qué
+   * es eso, cuando se siente y no antes, una vez por episodio. Solo los del
+   * guion del vuelo: la capa de abajo de cada despegue no se cuenta, que era
+   * «siempre la anuncia en el mismo sitio». En el vuelo de Ara, la escena.
+   */
+  private contarLosBachesDeLaLigera(movimiento: number): void {
+    const s = this.flight.state;
+    if (
+      this.episodioConVoz ||
+      this.dePasaje ||
+      !laInstructoraLoExplica(this.tier.avisos) ||
+      movimiento < SACUDE ||
+      s.onGround ||
+      this.faseDeAhora !== "en-vuelo" ||
+      s.heightAboveGround < 300
+    )
+      return;
+    const zona = this.turbulenciaDelVuelo.zonaDeAhora;
+    if (
+      !zona ||
+      zona === this.bachesContadosEn ||
+      zona.intensidad !== "ligera" ||
+      this.turbulenciaDelVuelo.sacude(s.position.y, s.heightAboveGround) <= 0
+    )
+      return;
+    this.bachesContadosEn = zona;
     const forma = unaForma("vuelo.baches");
     this.instructor.decir(forma.texto, forma.id);
   }

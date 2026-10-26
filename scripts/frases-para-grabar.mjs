@@ -46,6 +46,16 @@ const SALIDA = process.argv[2] ?? "docs/voces";
 const DE_LA_COMANDANTE_VIVA =
   /^comandante\.(?:bienvenida\.(?:saludo|gracia|a|detalle|cierre)\.|mitad\.|chicos\.|curiosidad\.)/;
 
+/*
+ * **Y la moderada dicha a quien la oye**: la de «sigan sentados», para el
+ * pasaje que ya va sentado, y las que no nombran a la tripulación, para el
+ * avión que no la lleva. Sus claves empiezan por `comandante.turbulencia.` y
+ * metidas en su grupo renumerarían las ya grabadas: van al final de la lista
+ * de la comandante. Ver `clavesDelAnuncio` en `src/audio/anuncio-de-turbulencia.ts`.
+ */
+const DE_LA_TURBULENCIA_A_QUIEN_LA_OYE =
+  /^comandante\.turbulencia\.(?:sentados\..+|.+\.sinTripulacion)$/;
+
 /**
  * Qué grupos de claves habla el instructor.
  *
@@ -183,7 +193,7 @@ const HABLADOS = [
     "comandante",
     "la megafonía de cabina, para el pasaje",
     // Menos lo nuevo de la comandante, que va al final. Ver `DE_LA_COMANDANTE_VIVA`.
-    DE_LA_COMANDANTE_VIVA,
+    new RegExp(`${DE_LA_COMANDANTE_VIVA.source}|${DE_LA_TURBULENCIA_A_QUIEN_LA_OYE.source}`),
   ],
   /*
    * **Y la tripulación de cabina**, con el habla del sitio como la torre: la
@@ -1969,6 +1979,23 @@ for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });
   total += texto.length;
+}
+/*
+ * **Y la moderada dicha a quien la oye**, al final de todo lo de la comandante,
+ * por lo mismo: lo ya grabado no se renumera. Ver `DE_LA_TURBULENCIA_A_QUIEN_LA_OYE`.
+ */
+for (const [k, v] of es) {
+  if (!DE_LA_TURBULENCIA_A_QUIEN_LA_OYE.test(k) || filas.some((f) => f.id === k)) continue;
+  filas.push({
+    id: k,
+    voz: "comandante",
+    idioma: "es-PY",
+    texto: v,
+    para: k.includes(".sentados.")
+      ? "el anuncio de la turbulencia moderada con el pasaje ya sentado"
+      : "el anuncio de la turbulencia moderada en el avión sin tripulación de cabina",
+  });
+  total += v.length;
 }
 
 /*
