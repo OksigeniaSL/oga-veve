@@ -49,6 +49,20 @@
  * `--salida fichero.json`. Y cada variante puede llevar su propio escenario y
  * su rumbo —`gc=dist,gran-canaria,290`—, que es como se pone al lado una
  * referencia: el mundo más gordo que ya se publica.
+ *
+ * ## Y lo que cuesta un sitio con modelo
+ *
+ * `--sitio 20000` añade un cuarto sitio de medida, **con un sitio de prueba
+ * delante**: el `.glb` hecho por código de `world/glb-de-prueba.ts`, con esos
+ * triángulos, a ocho kilómetros del campo en el rumbo del crucero, y el avión
+ * a seis de él y a seiscientos metros, mirándolo. `--copias 4` pone cuatro,
+ * separados kilómetro y medio, que es lo que habrá en Ciudad del Este con
+ * Itaipú, los dos puentes y el Monday a la vez. Solo lo ponen las variantes
+ * que lo piden con un cuarto campo, `con=dist,,,sitio`; las demás miden desde
+ * el mismo sitio sin él, que es la comparación que vale. Y además de los
+ * cuadros dice el **tirón de la carga** —el cuadro más largo mientras se lee
+ * el `.glb`— y si **se suelta**: se aleja el avión más allá del margen y se
+ * mira que vuelvan las geometrías que había en la tarjeta.
  */
 import { chromium } from "playwright";
 import { createServer } from "node:http";
@@ -66,16 +80,20 @@ const AVION = opcion("avion", "jaz-20");
 const VUELTAS = Number(opcion("vueltas", "3"));
 const RUMBO = Number(opcion("rumbo", "95"));
 const SALIDA = opcion("salida", null);
+/** Los triángulos del sitio de prueba, o `null` para no medir el sitio. */
+const SITIO = opcion("sitio", null) === null ? null : Number(opcion("sitio", "20000"));
+const COPIAS = Number(opcion("copias", "1"));
 const VARIANTES = args
   .filter((a, i) => a.includes("=") && !args[i - 1]?.startsWith("--"))
   .map((a) => {
     const [etiqueta, resto] = a.split("=");
-    const [carpeta, escenario, rumbo] = resto.split(",");
+    const [carpeta, escenario, rumbo, conSitio] = resto.split(",");
     return {
       etiqueta,
       carpeta: resolve(carpeta),
       escenario: escenario || ESCENARIO,
       rumbo: rumbo ? Number(rumbo) : RUMBO,
+      conSitio: conSitio === "sitio",
     };
   });
 if (VARIANTES.length === 0) {
@@ -353,6 +371,90 @@ try {
       await page.waitForTimeout(2500);
       cuadros.crucero = await page.evaluate(contarCuadros, MIDE);
 
+      let sitio = null;
+      if (SITIO !== null) {
+        /*
+         * Los sitios se ponen en la lista **desde el crucero**, a veintidós
+         * kilómetros, más allá de su alcance: como en el juego, donde el
+         * catálogo se carga al arrancar y el sombreado se compila entonces, sin
+         * nadie mirando. Luego el avión se acerca y se cuentan los cuadros
+         * mientras bajan: el más largo es el tirón. Y en la variante sin sitio
+         * se hace lo mismo sin ponerlos: el mundo ya tiene sus cuadros largos
+         * —una tesela que sube, el relieve al moverse—, y el tirón del sitio es
+         * lo que pasa de ellos.
+         */
+        if (v.conSitio)
+          await page.evaluate(
+            ({ rumbo, triangulos, copias }) => {
+              const o = globalThis.__oga;
+              const r = o.pista();
+              const h = (rumbo * Math.PI) / 180;
+              for (let i = 0; i < copias; i++) {
+                const lado = (i - (copias - 1) / 2) * 1500;
+                o.ponerSitioDePrueba({
+                  id: `prueba-${i}`,
+                  x: r.x + Math.sin(h) * 8000 + Math.cos(h) * lado,
+                  z: r.z - Math.cos(h) * 8000 + Math.sin(h) * lado,
+                  triangulos,
+                  alcance: 20000,
+                });
+              }
+            },
+            { rumbo: v.rumbo, triangulos: SITIO, copias: COPIAS },
+          );
+        await page.waitForTimeout(3000);
+        const antes = await page.evaluate(() => globalThis.__oga.coste().geometrias);
+        // El avión a dos kilómetros del campo en el rumbo, a seiscientos
+        // metros, mirando hacia los sitios: a seis de ellos.
+        const carga = await page.evaluate(
+          async ({ rumbo, ms }) => {
+            const o = globalThis.__oga;
+            const r = o.pista();
+            const h = (rumbo * Math.PI) / 180;
+            const x = r.x + Math.sin(h) * 2000;
+            const z = r.z - Math.cos(h) * 2000;
+            o.colocar(x, o.suelo(x, z) + 600, z, 70, h);
+            const tiempos = [];
+            await new Promise((listo) => {
+              let previo = performance.now();
+              const fin = previo + ms;
+              const paso = (t) => {
+                tiempos.push(t - previo);
+                previo = t;
+                if (t < fin) requestAnimationFrame(paso);
+                else listo();
+              };
+              requestAnimationFrame(paso);
+            });
+            tiempos.sort((a, b) => b - a);
+            return {
+              maximo: tiempos[0] ?? 0,
+              segundo: tiempos[1] ?? 0,
+              puestos: o.sitios().filter((s) => s.estado === "puesto").length,
+              triangulos: o.sitios().reduce((n, s) => n + s.triangulos, 0),
+            };
+          },
+          { rumbo: v.rumbo, ms: 5000 },
+        );
+        cuadros.sitio = await page.evaluate(contarCuadros, MIDE);
+        const puesto = await page.evaluate(() => globalThis.__oga.coste().geometrias);
+        // Y lejos, pasado el margen de soltar: treinta kilómetros al otro lado.
+        await page.evaluate((rumbo) => {
+          const o = globalThis.__oga;
+          const r = o.pista();
+          const h = (rumbo * Math.PI) / 180;
+          const x = r.x - Math.sin(h) * 30000;
+          const z = r.z + Math.cos(h) * 30000;
+          o.colocar(x, o.suelo(x, z) + 2500, z, 80, h);
+        }, v.rumbo);
+        await page.waitForTimeout(2000);
+        const suelto = await page.evaluate(() => ({
+          geometrias: globalThis.__oga.coste().geometrias,
+          puestos: globalThis.__oga.sitios().filter((s) => s.estado === "puesto").length,
+        }));
+        sitio = { antes, puesto, suelto, carga };
+      }
+
       filas.push({
         variante: v.etiqueta,
         escenario: v.escenario,
@@ -365,6 +467,7 @@ try {
         pssMB: proceso,
         ...peso,
         cuadros,
+        sitio,
         errores,
       });
       console.log(
@@ -375,6 +478,12 @@ try {
           Object.entries(cuadros)
             .map(([k, c]) => `${k} ${c.mediana.toFixed(1)}/${c.p95.toFixed(1)} ms`)
             .join(" · ") +
+          (sitio?.carga
+            ? ` · carga: ${sitio.carga.puestos} puestos, ${(sitio.carga.triangulos / 1000).toFixed(0)}k △, ` +
+              `cuadros más largos ${sitio.carga.maximo.toFixed(0)} y ${sitio.carga.segundo.toFixed(0)} ms · ` +
+              `geometrías ${sitio.antes}→${sitio.puesto}→${sitio.suelto.geometrias} ` +
+              `(${sitio.suelto.puestos} puestos al alejarse)`
+            : "") +
           (errores.length ? ` · ${errores.length} errores: ${errores[0]}` : ""),
       );
       await contexto.close();
@@ -401,12 +510,33 @@ for (const v of VARIANTES) {
       `texturas ${m((x) => x.texturasMB).toFixed(0)} MB · mallas ${m((x) => x.mallasMB).toFixed(0)} MB · ` +
       `PSS ${m((x) => x.pssMB).toFixed(0)} MB`,
   );
-  for (const sitio of ["puesto", "campo", "crucero"])
+  for (const sitio of ["puesto", "campo", "crucero", ...(SITIO !== null ? ["sitio"] : [])])
     console.log(
       `  ${"".padEnd(12)} ${sitio.padEnd(8)} mediana ${m((x) => x.cuadros[sitio].mediana).toFixed(1)} ms · ` +
         `p95 ${m((x) => x.cuadros[sitio].p95).toFixed(1)} ms · ` +
         `${m((x) => x.cuadros[sitio].llamadas)} dibujos · ` +
         `${(m((x) => x.cuadros[sitio].triangulos) / 1000).toFixed(0)}k △`,
+    );
+  /*
+   * Las geometrías en la tarjeta, contadas igual en las dos variantes: al
+   * alejarse treinta kilómetros el mundo monta y quita cosas suyas, así que
+   * lo que dice si un sitio se soltó es la diferencia con la variante sin él.
+   */
+  const conMedida = f.filter((x) => x.sitio);
+  if (conMedida.length)
+    console.log(
+      `  ${"".padEnd(12)} tarjeta  geometrías al ponerlo ${m((x) => x.sitio.puesto - x.sitio.antes)} · ` +
+        `al alejarse ${m((x) => x.sitio.suelto.geometrias - x.sitio.antes)} (respecto a antes)`,
+    );
+  const conCarga = f.filter((x) => x.sitio?.carga);
+  if (conCarga.length)
+    console.log(
+      `  ${"".padEnd(12)} carga    cuadros más largos ${mediana(conCarga.map((x) => x.sitio.carga.maximo)).toFixed(0)} y ` +
+        `${mediana(conCarga.map((x) => x.sitio.carga.segundo)).toFixed(0)} ms` +
+        (v.conSitio
+          ? ` · ${conCarga.every((x) => x.sitio.carga.puestos === COPIAS) ? "puestos todos" : "NO se pusieron todos"} · ` +
+            `${conCarga.every((x) => x.sitio.suelto.puestos === 0) ? "soltados todos" : "NO se soltaron"}`
+          : " (sin sitio: lo que ya tiene el mundo)"),
     );
 }
 if (SALIDA) await writeFile(SALIDA, JSON.stringify({ tarjeta, filas }, null, 2));

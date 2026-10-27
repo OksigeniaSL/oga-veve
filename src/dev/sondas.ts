@@ -60,6 +60,7 @@ import {
   sinTorre,
 } from "../world/aerodrome";
 import { laDibujaLaGranja } from "../world/granja";
+import { glbDePrueba } from "../world/glb-de-prueba";
 import {
   escalaDeCircuito,
   formaDelCircuito,
@@ -2435,7 +2436,43 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       triangulos: juego.renderer.info.render.triangles,
       arboles: juego.vegetacion?.children.length ?? 0,
       aves: juego.dibujoDeBandadas.pintadas,
+      // Lo que hay subido a la tarjeta: es lo que dice si un sitio soltado se soltó.
+      geometrias: juego.renderer.info.memory.geometries,
+      texturas: juego.renderer.info.memory.textures,
     }),
+    /**
+     * **Los sitios con modelo**: cuáles hay, dónde y si están puestos. Ver
+     * `world/sitios-con-modelo.ts`.
+     */
+    sitios: () => juego.sitios?.estado() ?? [],
+    /**
+     * **Un sitio de prueba en `x`, `z`**, con el `.glb` hecho por código de
+     * `triangulos` triángulos, para medir el camino sin arte. Lo usa
+     * `medir-mundo.mjs --sitio`. `false` si este campo no tiene sitios.
+     */
+    ponerSitioDePrueba: (o: { id: string; x: number; z: number; triangulos: number; alcance: number }) => {
+      const sitios = juego.sitios;
+      const casa = juego.scenario.aerodrome?.origin;
+      if (!sitios || !casa) return false;
+      const glb = glbDePrueba(o.triangulos);
+      const url = URL.createObjectURL(new Blob([glb.slice().buffer], { type: "model/gltf-binary" }));
+      const R = 6371008;
+      const RAD = Math.PI / 180;
+      sitios.anadir(
+        {
+          id: o.id,
+          nombre: `prueba ${o.id}`,
+          lat: casa.lat - o.z / (R * RAD),
+          lon: casa.lon + o.x / (R * RAD * Math.cos(casa.lat * RAD)),
+          giro: 0,
+          cota: null,
+          alcance: o.alcance,
+          de: "banco",
+        },
+        url,
+      );
+      return true;
+    },
     /**
      * **Las bandadas puestas**, con dónde está cada una ahora. Ver
      * `world/bandadas.ts`.
