@@ -154,6 +154,9 @@ export const ANTES_DE_BAJAR = 8 * 60;
  */
 export const ANTES_DEL_DESCENSO = 150;
 
+/** Y la última ocasión de contar algo, s antes de ese punto. Ver `paso`. */
+const ULTIMA_OCASION = 15;
+
 /**
  * **Hasta cuándo es la mitad del camino**, en lo que queda del tramo.
  *
@@ -227,21 +230,12 @@ export class MomentosDeCrucero {
   private callada = Infinity;
   /** Si a la mitad del camino ya se le pasó el momento en este vuelo. */
   private mitadPasada = false;
-  /**
-   * **El crucero de este vuelo**: cuánto había del principio al punto de
-   * descenso, s, y cuánto se lleva. Para repartir lo que se cuenta a lo largo
-   * de él en vez de soltarlo todo al principio. Ver `paso`.
-   */
-  private ventana: number | null = null;
-  private enCrucero = 0;
 
   /** Vuelo nuevo: se olvida de lo dicho. */
   reiniciar(): void {
     this.dichos.clear();
     this.callada = Infinity;
     this.mitadPasada = false;
-    this.ventana = null;
-    this.enCrucero = 0;
   }
 
   /** Si ya se contó en este vuelo. Para el juego y los bancos. */
@@ -263,8 +257,6 @@ export class MomentosDeCrucero {
     if (conMitad && !this.dichos.has("mitad") && queda !== null && queda < MITAD_HASTA)
       this.mitadPasada = true;
     const alDescenso = c.alDescenso ?? null;
-    if (this.ventana === null && alDescenso !== null) this.ventana = alDescenso;
-    this.enCrucero += dt;
     if (alDescenso !== null ? alDescenso < ANTES_DEL_DESCENSO : c.faltan !== null && c.faltan < ANTES_DE_BAJAR)
       return null;
     if (!c.hayHueco || c.megafoniaHabla || this.callada < ENTRE_ANUNCIOS) return null;
@@ -298,15 +290,26 @@ export class MomentosDeCrucero {
     if (yaUno && conMitad && !this.dichos.has("mitad") && !this.mitadPasada && queda !== null)
       return null;
     /*
-     * **Y sin el punto del vuelo, repartidas por el crucero**: con el punto
-     * de descenso a la vista, cada una en su tercio —o en su mitad, si solo
-     * cabe una—, que es lo que hace que entre el cartel y la bajada no quede
-     * un rato largo sin nadie. Soltadas al principio, de El Hierro a La Gomera
-     * quedaban cinco minutos callados antes de empezar a bajar.
+     * **Y sin el punto del vuelo, repartidas hasta la bajada**: lo que queda
+     * por contar se reparte a partes iguales entre lo último que dijo la
+     * megafonía y el punto de descenso, que es donde habla otra vez. Con `r`
+     * cosas por decir, la siguiente va cuando lo callado ya es la parte que le
+     * toca: `callada · r ≥ lo que falta para bajar`. Soltadas al principio, de
+     * El Hierro a La Gomera quedaban cinco minutos callados antes de empezar a
+     * bajar; repartidas contra el crucero medido al nivelar, la segunda caía
+     * después del punto de no empezar nada —la velocidad al nivelar es baja y
+     * el crucero parecía más largo— y no se decía. Mirado a cada paso, también
+     * vale si el crucero cambia: otro nivel por los baches, otra bajada.
      */
-    if (!conMitad && this.ventana !== null) {
-      const ya = sueltos.filter((s) => this.dichos.has(s)).length;
-      if (this.enCrucero < (this.ventana * (ya + 1)) / (sueltos.length + 1)) return null;
+    /*
+     * Y si el reparto cae ya dentro de los dos minutos y medio de antes de
+     * bajar, la última ocasión es justo antes: mejor un rato más corto que
+     * callarla.
+     */
+    if (!conMitad && alDescenso !== null) {
+      const quedan = sueltos.filter((s) => !this.dichos.has(s)).length;
+      const ultimaOcasion = alDescenso < ANTES_DEL_DESCENSO + ULTIMA_OCASION;
+      if (!ultimaOcasion && this.callada * quedan < alDescenso) return null;
     }
     return this.decir(siguiente);
   }
