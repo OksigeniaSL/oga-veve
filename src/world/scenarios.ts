@@ -39,6 +39,8 @@ import SGCO from "../../data/aerodromes/sgco.aero.json";
 import SGAY from "../../data/aerodromes/sgay.aero.json";
 import SGPI from "../../data/aerodromes/sgpi.aero.json";
 import type { Ciudad } from "./ciudad";
+import type { ParcheDeRelieve } from "./parches-de-relieve";
+import type { Lago } from "./lagos";
 import type { Mano } from "./circuito";
 import { deFrente, type Meteo } from "./meteo";
 
@@ -276,6 +278,19 @@ export interface Scenario {
    * se queda sin relieve alrededor, que es justo donde hace falta.
    */
   relieveLejano?: { readonly datos: Int16Array; readonly resolucion: number };
+
+  /**
+   * **El relieve fino de lo que el horizonte alisa**: el Teide, los roques,
+   * el cañón del Paraná bajo Itaipú. Solo los que caen en el horizonte de
+   * este mundo. Ver `world/parches-de-relieve.ts` y el ADR 0022.
+   */
+  parches?: readonly ParcheDeRelieve[];
+
+  /**
+   * **Los lagos**: agua de tierra adentro a su propia cota, con su contorno
+   * de OpenStreetMap. Ver `world/lagos.ts`.
+   */
+  lagos?: readonly Lago[];
 
   /**
    * La ciudad de alrededor, si la hay: dónde hay casas y por dónde van las

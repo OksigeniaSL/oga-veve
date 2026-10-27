@@ -21,6 +21,16 @@
       "cota": null,
       "alcance": 40000,
       "de": "osm way/791153661"
+    },
+    {
+      "id": "itaipu",
+      "nombre": "Represa de Itaipú",
+      "lat": -25.408347,
+      "lon": -54.587833,
+      "giro": 0,
+      "cota": 225,
+      "alcance": 80000,
+      "de": "osm way/32236291"
     }
   ]
 }

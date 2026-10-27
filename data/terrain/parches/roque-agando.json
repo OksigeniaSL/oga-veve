@@ -1,0 +1,15 @@
+{
+  "id": "roque-agando",
+  "nombre": "El Roque de Agando",
+  "fuente": "PNOA-LiDAR MDT05 (IGN)",
+  "atribucion": "Modelo Digital del Terreno MDT05 del PNOA-LiDAR © Instituto Geográfico Nacional de España, CC BY 4.0",
+  "sur": 28.0850653,
+  "norte": 28.1255347,
+  "oeste": -17.2365397,
+  "este": -17.1906603,
+  "filas": 226,
+  "columnas": 226,
+  "dibujo": 35,
+  "minM": 392,
+  "maxM": 1366
+}

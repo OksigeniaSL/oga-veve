@@ -1,0 +1,15 @@
+{
+  "id": "tajogaite",
+  "nombre": "Tajogaite y la Cumbre Vieja",
+  "fuente": "PNOA-LiDAR MDT05 (IGN) y Copernicus EMS EMSN119 (DEM de febrero de 2022)",
+  "atribucion": "Modelo Digital del Terreno MDT05 del PNOA-LiDAR © Instituto Geográfico Nacional de España, CC BY 4.0. © European Union, Copernicus Emergency Management Service, activación EMSN119 (La Palma), producto P01 DEM T3, 3 de febrero de 2022",
+  "sur": 28.5885687,
+  "norte": 28.6380313,
+  "oeste": -17.897133,
+  "este": -17.835667,
+  "filas": 276,
+  "columnas": 301,
+  "dibujo": 35,
+  "minM": 325,
+  "maxM": 1848
+}

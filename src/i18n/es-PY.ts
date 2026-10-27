@@ -283,6 +283,9 @@ export const ES_PY = {
     "Relieve a partir de Copernicus DEM GLO-30. © DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved.",
   "credits.terrainEs":
     "Relieve de España a partir del MDT05 del PNOA-LiDAR © Instituto Geográfico Nacional de España, CC BY 4.0.",
+  // La cita que piden las condiciones de Copernicus EMS. Ver CREDITOS.md.
+  "credits.terrainEms":
+    "El cono de Tajogaite, a partir del modelo de elevaciones de 2022 de la activación EMSN119. © European Union, Copernicus Emergency Management Service.",
   /*
    * **Y las cuatro que faltaban, que llevaban meses solo en CREDITOS.md.**
    *

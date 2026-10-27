@@ -48,6 +48,17 @@ import { mapaDelPavimento, type MapaDelPavimento } from "./mapa-del-pavimento";
 import { delante } from "./rumbo";
 import { esAguaDeCasa } from "./agua-de-casa";
 import { mallarConDetalle } from "./malla-lejana";
+import {
+  mallarElParche,
+  refinarElHorizonte,
+  type HorizonteRefinado,
+} from "./parches-de-relieve";
+import {
+  AguaDeLosLagos,
+  HUNDIDO_LAGO,
+  crearLago,
+  materialDelLago,
+} from "./lagos";
 import { vecesLejosDe, type Scenario } from "./scenarios";
 import { sitioDelCielo, solALaHora } from "./cielo-de-noche";
 
@@ -136,6 +147,18 @@ export function cabeceraContraria(escenario: Scenario): string | null {
     null
   );
 }
+
+/**
+ * Desde qué nivel el agua de casa es de río y no de mar, m: la de Canarias
+ * va a dos. Ver `esAguaDeCasa`.
+ */
+const NIVEL_DE_TIERRA_ADENTRO = 10;
+
+/** Cuánto se hunde el río de casa bajo su lámina en un parche, m. */
+const HUNDIDO_DEL_RIO = 15;
+
+/** El radio con el que se sacaron los mapas, m. Ver `Terrain.aGrados`. */
+const RADIO_DE_LOS_MAPAS = 6371008;
 
 /** Cuánto se hunde el mar del mapa lejano bajo el agua, m. Ver `buildFarMesh`. */
 const HUNDIDO_LEJOS = 30;
@@ -378,6 +401,7 @@ export class Terrain {
     this.resolution = scenario.segments + 1;
     this.step = scenario.size / scenario.segments;
     this.half = scenario.size / 2;
+    this.lagos = scenario.lagos?.length ? new AguaDeLosLagos(scenario.lagos) : null;
 
     this.heights = buildHeightfield(scenario);
 
@@ -437,6 +461,10 @@ export class Terrain {
     if (horizonte) this.group.add(horizonte);
     this.group.add(this.buildTerrainMesh());
     this.group.add(this.buildWater());
+    // Y cada lago, a su cota. Ver `world/lagos.ts`.
+    if (scenario.aerodrome)
+      for (const lago of scenario.lagos ?? [])
+        this.group.add(crearLago(lago, (lat, lon) => this.aMetros(lat, lon), scenario.water));
     // Con aeródromo real no se dibuja la pista de juguete: la pone él.
     if (scenario.aerodrome) {
       this.group.add(
@@ -749,6 +777,146 @@ export class Terrain {
    *
    * Y no era arena: era el horizonte por encima del aeropuerto.
    */
+  /** Dónde hay agua de lago, y a qué cota. Ver `world/lagos.ts`. */
+  private readonly lagos: AguaDeLosLagos | null;
+
+  /**
+   * **De metros de este mundo a grados, y de vuelta**, con la proyección con
+   * la que se sacaron sus mapas: el coseno del origen, fijo. Ver
+   * `copernicus-a-relieve.mjs`. Con otra, los parches y los lagos caerían
+   * unos metros al lado de su foto.
+   */
+  private aGrados(x: number, z: number): { lat: number; lon: number } {
+    const o = this.scenario.aerodrome?.origin ?? { lat: 0, lon: 0 };
+    return {
+      lat: o.lat + (-z * 180) / (RADIO_DE_LOS_MAPAS * Math.PI),
+      lon: o.lon + (x * 180) / (RADIO_DE_LOS_MAPAS * Math.PI * Math.cos((o.lat * Math.PI) / 180)),
+    };
+  }
+
+  private aMetros(lat: number, lon: number): { x: number; z: number } {
+    const o = this.scenario.aerodrome?.origin ?? { lat: 0, lon: 0 };
+    return {
+      x: ((lon - o.lon) * RADIO_DE_LOS_MAPAS * Math.PI * Math.cos((o.lat * Math.PI) / 180)) / 180,
+      z: -((lat - o.lat) * RADIO_DE_LOS_MAPAS * Math.PI) / 180,
+    };
+  }
+
+  /**
+   * **El horizonte con sus parches puestos**, o `null` si no hay ninguno.
+   * Ver `world/parches-de-relieve.ts`.
+   *
+   * Se hace una vez y se rehace al recortar el horizonte: dónde caen los
+   * vecinos decide qué cuadros se dibujan, y en el borde de lo que no se
+   * dibuja el parche se funde con el horizonte.
+   */
+  private horizonteRefinado(): HorizonteRefinado | null {
+    if (this.refinado !== undefined) return this.refinado;
+    const lejos = this.scenario.relieveLejano;
+    const parches = this.scenario.parches;
+    if (!lejos || !parches?.length || !this.scenario.aerodrome) return (this.refinado = null);
+    const n = lejos.resolucion;
+    const tamano = this.scenario.size * vecesLejosDe(this.scenario);
+    const paso = tamano / (n - 1);
+    const mitad = tamano / 2;
+    const alturas = this.cotasLejanas(lejos);
+    // Lo mismo que dibuja `buildFarMesh`, sin mirar en qué mitad del anillo.
+    const casa = this.half - paso;
+    const hundido = this.scenario.waterLevel - HUNDIDO_LEJOS;
+    const cota = (f: number, c: number): number => alturas[clampInt(f, 0, n - 1) * n + clampInt(c, 0, n - 1)]!;
+    this.refinado = refinarElHorizonte(
+      {
+        lado: n,
+        paso,
+        mitad,
+        cota,
+        dibujable: (f, c) => {
+          if (cota(f, c) <= hundido && cota(f + 1, c) <= hundido && cota(f, c + 1) <= hundido && cota(f + 1, c + 1) <= hundido)
+            return false;
+          const cx = -mitad + (c + 0.5) * paso;
+          const cz = -mitad + (f + 0.5) * paso;
+          if (Math.abs(cx) < casa && Math.abs(cz) < casa) return false;
+          // Y lo mismo sobre el mapa fino de cada vecino.
+          return !this.enUnHueco(cx, cz, paso);
+        },
+      },
+      parches,
+      (x, z) => this.aGrados(x, z),
+      (lat, lon) => this.aMetros(lat, lon),
+      (h, lat, lon) => {
+        // El fondo de los lagos, hundido como en el resto del horizonte.
+        const lago = this.lagos?.cotaEn(lat, lon) ?? null;
+        if (lago !== null) return Math.min(h, this.fondoDelLago(lago));
+        /*
+         * **Y el río de casa, también.** El relieve mide la lámina del río
+         * como suelo: bajo Itaipú, el Paraná va a 102-105 m y el agua de
+         * Guaraní a 105, y dos superficies a tres metros se turnan de lejos.
+         * Lo que queda a la cota del agua de casa o por debajo, tierra
+         * adentro, se hunde como el mar del horizonte, y el agua lo tapa.
+         * Ver `sobreElAguaRefinado`.
+         */
+        const nivel = this.scenario.waterLevel;
+        if (nivel >= NIVEL_DE_TIERRA_ADENTRO && h <= nivel + 1 && h >= nivel - HUNDIDO_DEL_RIO)
+          return nivel - HUNDIDO_DEL_RIO;
+        return h;
+      },
+    );
+    return this.refinado;
+  }
+
+  /**
+   * **El agua de casa sobre un parche**, para el mapa de orillas: cuánto
+   * queda sobre el agua lo más bajo de los cuatro cuadros de alrededor de un
+   * nudo del horizonte, si los cuatro van refinados; `null` si no.
+   *
+   * El mapa de orillas va nudo a nudo del horizonte —uno cada kilómetro y
+   * setecientos en Guaraní—, y un cañón de quinientos metros no cabe en él:
+   * decía «tierra» a medio río y el agua se cortaba en una raya recta. Así
+   * que donde hay parche dice «agua» en todo cuadro que tenga río —hundido,
+   * ver `horizonteRefinado`— y el fondo de profundidad hace la orilla, que
+   * con el río quince metros por debajo de la lámina ya no empata.
+   */
+  private sobreElAguaRefinado(fila: number, col: number): number | null {
+    const r = this.horizonteRefinado();
+    if (!r) return null;
+    for (const p of r.parches) {
+      if (
+        !p.refinado(fila - 1, col - 1) ||
+        !p.refinado(fila - 1, col) ||
+        !p.refinado(fila, col - 1) ||
+        !p.refinado(fila, col)
+      )
+        continue;
+      const i0 = (fila - 1 - p.f0) * p.s;
+      const j0 = (col - 1 - p.c0) * p.s;
+      let bajo = Infinity;
+      for (let i = i0; i <= i0 + 2 * p.s; i++)
+        for (let j = j0; j <= j0 + 2 * p.s; j++) {
+          const h = p.alturas[i * p.columnas + j]!;
+          if (h < bajo) bajo = h;
+        }
+      return bajo - this.scenario.waterLevel;
+    }
+    return null;
+  }
+
+  /**
+   * A qué cota se dibuja el fondo de un lago que está a `lago` metros.
+   *
+   * `HUNDIDO_LAGO` por debajo, **pero no por debajo del agua de casa** si el
+   * lago está por encima de ella: el Ypacaraí está a 63 y el río de Asunción
+   * a 56, y un fondo a 48 sería un hueco por debajo de la lámina de casa,
+   * que se pintaría debajo del lago. Seis metros bastan para que el agua y
+   * el fondo no empaten de lejos.
+   */
+  private fondoDelLago(lago: number): number {
+    const nivel = this.scenario.waterLevel;
+    return lago > nivel ? Math.max(lago - HUNDIDO_LAGO, nivel + 1) : lago - HUNDIDO_LAGO;
+  }
+
+  /** Ver `horizonteRefinado`; `undefined` es «sin hacer todavía». */
+  private refinado: HorizonteRefinado | null | undefined = undefined;
+
   private huecosDelHorizonte: readonly {
     readonly x: number;
     readonly z: number;
@@ -855,6 +1023,21 @@ export class Terrain {
           }
         alturas[i] = Math.min(hundido, nivel - (tierra - nivel));
       }
+    /*
+     * **Y el fondo de cada lago, hundido**, por lo mismo que el mar: el
+     * relieve mide la lámina como suelo, y el agua del lago va a esa misma
+     * cota. Ver `world/lagos.ts`.
+     */
+    if (this.lagos) {
+      const tamano = this.scenario.size * vecesLejosDe(this.scenario);
+      const paso = tamano / (n - 1);
+      for (let f = 0; f < n; f++)
+        for (let c = 0; c < n; c++) {
+          const { lat, lon } = this.aGrados(-tamano / 2 + c * paso, -tamano / 2 + f * paso);
+          const lago = this.lagos.cotaEn(lat, lon);
+          if (lago !== null) alturas[f * n + c] = Math.min(alturas[f * n + c]!, this.fondoDelLago(lago));
+        }
+    }
     this.cotasDelHorizonte = alturas;
     return alturas;
   }
@@ -864,6 +1047,8 @@ export class Terrain {
   ): void {
     if (!huecos.length || !this.scenario.relieveLejano) return;
     this.huecosDelHorizonte = huecos;
+    // Los parches, otra vez: ver `horizonteRefinado`.
+    this.refinado = undefined;
     /*
      * Y se rehace **como estuviera**: entero si no hay foto de en medio, y
      * partido en dos si la hay. Rehacer solo la de fuera dejaría la de dentro
@@ -915,8 +1100,23 @@ export class Terrain {
    * muestras se nota volando aunque no se vea.
    */
   private cotaDelHorizonte(x: number, z: number): number | null {
+    const h = this.cotaDelHorizonteSinLagos(x, z);
+    if (h === null || !this.lagos) return h;
+    /*
+     * Sobre un lago, la lámina: el fondo del parche va hundido para el
+     * dibujo, y lo que se pisa —o lo que se mide para el plano— es el agua.
+     */
+    const { lat, lon } = this.aGrados(x, z);
+    const lago = this.lagos.cotaEn(lat, lon);
+    return lago === null ? h : Math.max(h, lago);
+  }
+
+  private cotaDelHorizonteSinLagos(x: number, z: number): number | null {
     const lejos = this.scenario.relieveLejano;
     if (!lejos) return null;
+    // Donde hay un parche, el parche. Ver `world/parches-de-relieve.ts`.
+    const fino = this.horizonteRefinado()?.cota(x, z) ?? null;
+    if (fino !== null) return fino;
     const lado = this.scenario.size * vecesLejosDe(this.scenario);
     const mitad = lado / 2;
     if (Math.abs(x) > mitad || Math.abs(z) > mitad) return null;
@@ -1300,6 +1500,12 @@ export class Terrain {
     (agua.material as Material).dispose();
     agua.material = material;
     this.alcanceDelAgua = alcance;
+    // Y los lagos, con el mismo agua. Ver `materialDelLago`.
+    for (const o of this.group.children)
+      if (o.name.startsWith("lago:") && o instanceof Mesh) {
+        (o.material as Material).dispose();
+        o.material = materialDelLago(material);
+      }
     this.vestirElAgua();
   }
 
@@ -1453,6 +1659,18 @@ export class Terrain {
        * cuenta de siempre la daría por agua.
        */
       const crudo = lejos.datos[fila * m + col] ?? 0;
+      // Sobre un parche, lo que diga el parche. Ver `sobreElAguaRefinado`.
+      const fino = this.sobreElAguaRefinado(fila, col);
+      if (fino !== null) return fino;
+      /*
+       * Y un lago no es agua de casa: su lámina la pone él, a su cota, y
+       * la de casa no se pinta encima. Ver `world/lagos.ts`.
+       */
+      if (this.lagos) {
+        const { lat, lon } = this.aGrados(x, z);
+        const lago = this.lagos.cotaEn(lat, lon);
+        if (lago !== null) return Math.max(crudo, lago) - nivel;
+      }
       if (crudo < nivel && !esAguaDeCasa(crudo, nivel)) return nivel - crudo;
       return lejano(fila * m + col) - nivel;
     });
@@ -1920,15 +2138,13 @@ export class Terrain {
      */
     const bajoElAgua = (fila: number, col: number): boolean =>
       cota(fila, col) <= hundido;
-    const va = (fila: number, col: number): boolean => {
-      // El mar abierto primero, que es casi todo el mundo y lo más barato.
-      if (
-        bajoElAgua(fila, col) &&
-        bajoElAgua(fila + 1, col) &&
-        bajoElAgua(fila, col + 1) &&
-        bajoElAgua(fila + 1, col + 1)
-      )
-        return false;
+    // Los cuadros que van partidos en un parche. Ver `horizonteRefinado`.
+    const refinado = this.horizonteRefinado();
+    /*
+     * Lo que decide en qué malla va un cuadro, sin mirar el mar ni los
+     * parches: el mapa fino, los vecinos y el reparto entre las dos mitades.
+     */
+    const enEstaMalla = (fila: number, col: number): boolean => {
       const cx = -mitad + (col + 0.5) * paso;
       const cz = -mitad + (fila + 0.5) * paso;
       if (Math.abs(cx) < dentro && Math.abs(cz) < dentro) return false;
@@ -1945,6 +2161,18 @@ export class Terrain {
         if (aqui !== trozo.dentro) return false;
       }
       return true;
+    };
+    const va = (fila: number, col: number): boolean => {
+      if (refinado?.refinado(fila, col)) return false;
+      // El mar abierto primero, que es casi todo el mundo y lo más barato.
+      if (
+        bajoElAgua(fila, col) &&
+        bajoElAgua(fila + 1, col) &&
+        bajoElAgua(fila, col + 1) &&
+        bajoElAgua(fila + 1, col + 1)
+      )
+        return false;
+      return enEstaMalla(fila, col);
     };
     /*
      * **Y con los triángulos donde hay relieve**, no uno por cada cuadro.
@@ -2035,10 +2263,63 @@ export class Terrain {
       colores[i * 3 + 2] = tinte.b;
     }
 
+    /*
+     * **Y los parches, en la misma malla**: sus nudos detrás de los del
+     * horizonte, con el mismo color, y sus triángulos con los índices
+     * corridos. Así llevan la misma foto, las mismas teselas y la misma
+     * curva sin que nadie tenga que enterarse. Ver
+     * `world/parches-de-relieve.ts`.
+     */
+    let todasPosiciones = posiciones;
+    let todosColores = colores;
+    let todosIndices: number[] = indices;
+    if (refinado?.parches.length) {
+      const pos: number[] = Array.from(posiciones);
+      const col: number[] = Array.from(colores);
+      todosIndices = indices.slice();
+      for (const p of refinado.parches) {
+        const suyos = mallarElParche(p, enEstaMalla);
+        if (!suyos.length) continue;
+        const pasoFino = paso / p.s;
+        const h = (i: number, j: number): number =>
+          p.alturas[clampInt(i, 0, p.filas - 1) * p.columnas + clampInt(j, 0, p.columnas - 1)]!;
+        const renumerado = new Map<number, number>();
+        for (const v of suyos) {
+          let k = renumerado.get(v);
+          if (k === undefined) {
+            k = pos.length / 3;
+            renumerado.set(v, k);
+            const i = Math.floor(v / p.columnas);
+            const j = v - i * p.columnas;
+            const x = -mitad + (p.c0 + j / p.s) * paso;
+            const z = -mitad + (p.f0 + i / p.s) * paso;
+            const y = h(i, j);
+            pos.push(x, y, z);
+            const dx = (h(i, j + 1) - h(i, j - 1)) / (2 * pasoFino);
+            const dz = (h(i + 1, j) - h(i - 1, j)) / (2 * pasoFino);
+            const luz = clamp01(0.55 + (-dx * sol.x - dz * sol.z + sol.y) * 0.45);
+            colourFor(
+              y,
+              Math.min(1, Math.hypot(dx, dz)),
+              this.scenario,
+              manchas.fbm(x * escala, z * escala, 3),
+              luz,
+              tinte,
+              y <= hundido,
+            );
+            col.push(tinte.r, tinte.g, tinte.b);
+          }
+          todosIndices.push(k);
+        }
+      }
+      todasPosiciones = Float32Array.from(pos);
+      todosColores = Float32Array.from(col);
+    }
+
     const geo = new BufferGeometry();
-    geo.setAttribute("position", new BufferAttribute(posiciones, 3));
-    geo.setAttribute("color", new BufferAttribute(colores, 3));
-    geo.setIndex(indices);
+    geo.setAttribute("position", new BufferAttribute(todasPosiciones, 3));
+    geo.setAttribute("color", new BufferAttribute(todosColores, 3));
+    geo.setIndex(todosIndices);
     geo.computeVertexNormals();
     geo.computeBoundingSphere();
 
