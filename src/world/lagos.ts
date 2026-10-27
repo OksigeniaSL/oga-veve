@@ -116,6 +116,20 @@ export class AguaDeLosLagos {
     return this.lagos.length === 0;
   }
 
+  /**
+   * Lo mismo, para la física: con la latitud redondeada a medio
+   * milisegundo de grado —cincuenta y cinco metros—, que el avión cambia de
+   * fila en cada pregunta y las doscientas cuarenta preguntas por segundo
+   * recorrerían los ocho mil lados del embalse de Itaipú cada vez. Cincuenta
+   * metros de orilla no se notan al pisar el agua.
+   */
+  cotaParaPisar(lat: number, lon: number): number | null {
+    for (const { caja } of this.lagos)
+      if (lat >= caja.sur && lat <= caja.norte && lon >= caja.oeste && lon <= caja.este)
+        return this.cotaEn(Math.round(lat / 5e-4) * 5e-4, lon);
+    return null;
+  }
+
   /** La cota del lago en el que cae el punto, o `null` si no cae en ninguno. */
   cotaEn(lat: number, lon: number): number | null {
     if (lat !== this.ultimaLat) {

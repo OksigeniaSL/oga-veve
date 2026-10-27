@@ -758,25 +758,6 @@ export class Terrain {
    */
   private sueloLejano: ((x: number, z: number) => number | null) | null = null;
 
-  /**
-   * Los trozos del horizonte que no se mallan porque otro mapa fino los cubre.
-   *
-   * El anillo del horizonte ya se recortaba sobre el mapa fino **de casa** —
-   * dos superficies a la misma cota se pelean por el fondo de profundidad—,
-   * pero no sobre el del vecino, y desde que se vuela a otra isla el vecino
-   * trae el suyo. Resultado: encima del aeropuerto de destino hay la malla
-   * detallada del aeródromo **y, pisándola, un cuadro de trescientos metros
-   * de lado** a la cota media de la zona. Donde ese cuadro queda por encima
-   * del asfalto aplanado, se traga lo que haya: el avión, el coche del sígame
-   * y al señalero.
-   *
-   * Contado jugando, dos veces y en dos islas, las dos siendo destino: «el
-   * avión está metido en una duna, el coche no se ve, ese ya quedó enterrado
-   * del todo», «el señor que me señala está enterrado bajo la arena», «las
-   * dunas de Tenerife Sur».
-   *
-   * Y no era arena: era el horizonte por encima del aeropuerto.
-   */
   /** Dónde hay agua de lago, y a qué cota. Ver `world/lagos.ts`. */
   private readonly lagos: AguaDeLosLagos | null;
 
@@ -917,6 +898,25 @@ export class Terrain {
   /** Ver `horizonteRefinado`; `undefined` es «sin hacer todavía». */
   private refinado: HorizonteRefinado | null | undefined = undefined;
 
+  /**
+   * Los trozos del horizonte que no se mallan porque otro mapa fino los cubre.
+   *
+   * El anillo del horizonte ya se recortaba sobre el mapa fino **de casa** —
+   * dos superficies a la misma cota se pelean por el fondo de profundidad—,
+   * pero no sobre el del vecino, y desde que se vuela a otra isla el vecino
+   * trae el suyo. Resultado: encima del aeropuerto de destino hay la malla
+   * detallada del aeródromo **y, pisándola, un cuadro de trescientos metros
+   * de lado** a la cota media de la zona. Donde ese cuadro queda por encima
+   * del asfalto aplanado, se traga lo que haya: el avión, el coche del sígame
+   * y al señalero.
+   *
+   * Contado jugando, dos veces y en dos islas, las dos siendo destino: «el
+   * avión está metido en una duna, el coche no se ve, ese ya quedó enterrado
+   * del todo», «el señor que me señala está enterrado bajo la arena», «las
+   * dunas de Tenerife Sur».
+   *
+   * Y no era arena: era el horizonte por encima del aeropuerto.
+   */
   private huecosDelHorizonte: readonly {
     readonly x: number;
     readonly z: number;
@@ -1107,7 +1107,7 @@ export class Terrain {
      * dibujo, y lo que se pisa —o lo que se mide para el plano— es el agua.
      */
     const { lat, lon } = this.aGrados(x, z);
-    const lago = this.lagos.cotaEn(lat, lon);
+    const lago = this.lagos.cotaParaPisar(lat, lon);
     return lago === null ? h : Math.max(h, lago);
   }
 
