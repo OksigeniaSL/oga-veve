@@ -1499,6 +1499,122 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
 }
 
 /*
+ * **El plano en vuelo: que ningún rótulo pise a otro.**
+ *
+ * Lo mismo que la carta del hangar, en el plano que se abre volando: sus
+ * rótulos se colocan con la letra medida en la pantalla —ver
+ * `carta/rotulos-del-plano.ts`—, y aquí se mira lo que quedó escrito, en los
+ * cuatro calcos, de lejos y dos lupas más cerca, y en los tamaños donde se
+ * vuela: los de pie no, que ahí el juego pide girar el teléfono. Ningún
+ * rótulo pisa a otro ni a un símbolo, ninguno se sale, ninguno baja de once
+ * píxeles de pantalla y en Guyrami no hay más letra que el indicativo.
+ *
+ * El calco se cambia como lo cambia el juego al subir de peldaño, por la
+ * escalera del HUD, sin volver a cargar.
+ */
+const PLANOS = [
+  { escenario: "tenerife-norte", ver: "Tenerife Norte" },
+  { escenario: "pettirossi", ver: "Silvio Pettirossi" },
+];
+const PELDANOS_DEL_PLANO = [
+  ["dibujo", "guyrami"],
+  ["palabra", "tuka"],
+  ["cifra", "taguato"],
+  ["cabina", "taguato-ruvicha"],
+];
+
+/** Corre en la página: lo que hay escrito en el plano, y lo que se pisa. */
+function medirElPlano() {
+  const j = globalThis.__oga?.juegoParaTrazas?.();
+  const p = j?.hud?.mapa?.rotulosPuestos;
+  const lienzo = document.querySelector('[data-hud="mapa-rotulos"]');
+  if (!p || !lienzo) return null;
+  const lado = lienzo.getBoundingClientRect().width;
+  const ejes = (c) => [
+    [Math.cos(c.giro ?? 0), Math.sin(c.giro ?? 0)],
+    [-Math.sin(c.giro ?? 0), Math.cos(c.giro ?? 0)],
+  ];
+  const radio = (c, [ex, ey]) => {
+    const [[ux, uy], [vx, vy]] = ejes(c);
+    return (c.w / 2) * Math.abs(ux * ex + uy * ey) + (c.h / 2) * Math.abs(vx * ex + vy * ey);
+  };
+  // Medio píxel de gracia: el redondeo no es un choque.
+  const pisan = (a, b) =>
+    [...ejes(a), ...ejes(b)].every(
+      (e) => Math.abs((a.cx - b.cx) * e[0] + (a.cy - b.cy) * e[1]) < radio(a, e) + radio(b, e) - 0.5,
+    );
+  const mal = [];
+  p.rotulos.forEach((a, i) => {
+    const rx = radio(a.caja, [1, 0]);
+    const ry = radio(a.caja, [0, 1]);
+    if (a.caja.cx - rx < -0.5 || a.caja.cy - ry < -0.5 || a.caja.cx + rx > p.lado + 0.5 || a.caja.cy + ry > p.lado + 0.5)
+      mal.push(`«${a.que}» se sale`);
+    if (a.cuerpo < 11) mal.push(`«${a.que}» con letra de ${a.cuerpo}`);
+    for (const b of p.rotulos.slice(i + 1)) if (pisan(a.caja, b.caja)) mal.push(`«${a.que}» pisa «${b.que}»`);
+    for (const f of p.fijos) if (pisan(a.caja, f)) mal.push(`«${a.que}» pisa un símbolo`);
+  });
+  return {
+    mal,
+    lado: Math.round(lado),
+    // Lo que el plano cree que mide, contra lo que mide: la letra va en esa medida.
+    medida: Math.abs(p.lado - lado) <= 1,
+    textos: p.rotulos.map((r) => r.que),
+  };
+}
+
+for (const [ancho, alto, dedo] of PANTALLAS.filter(([w, h]) => w > h))
+  for (const plano of PLANOS) {
+    const tam = `${ancho}×${alto}${dedo ? " con el dedo" : ""}`;
+    const page = await navegador.newPage({ viewport: { width: ancho, height: alto }, hasTouch: !!dedo, isMobile: !!dedo });
+    try {
+      await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
+      // Con la ruta del vuelo de siempre, que es la que lleva puntos, umbral y T/D.
+      await page.goto(`${BASE}/?escenario=${plano.escenario}&tramo=taguato-ruvicha&hora=12&meteo=`);
+      await page.waitForFunction(() => globalThis.__oga?.estado?.() && globalThis.__oga.juegoParaTrazas?.()?.hud, null, {
+        timeout: 90000,
+      });
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(1500);
+      await page.evaluate(() => document.querySelector('[data-hud="mapa-boton"]')?.click());
+      await page.waitForTimeout(600);
+      for (const [peldano, tramo] of PELDANOS_DEL_PLANO) {
+        const donde = `plano en vuelo de ${plano.ver} en ${tramo}, ${tam}`;
+        await page.evaluate((p) => globalThis.__oga.juegoParaTrazas().hud.setEscalera(p), peldano);
+        await page.waitForTimeout(300);
+        const lejos = await page.evaluate(medirElPlano);
+        for (let i = 0; i < 2; i++)
+          await page.evaluate(() => document.querySelector('[data-hud="mapa"] [data-accion="cerca"]')?.click());
+        await page.waitForTimeout(400);
+        const cerca = await page.evaluate(medirElPlano);
+        for (let i = 0; i < 2; i++)
+          await page.evaluate(() => document.querySelector('[data-hud="mapa"] [data-accion="lejos"]')?.click());
+        await page.waitForTimeout(200);
+        const males = [
+          ...(lejos?.mal ?? ["sin plano de lejos"]).map((m) => `de lejos: ${m}`),
+          ...(cerca?.mal ?? ["sin plano de cerca"]).map((m) => `de cerca: ${m}`),
+        ];
+        if (lejos && !lejos.medida) males.push(`el plano no sabe lo que mide (${lejos.lado} px)`);
+        // En Guyrami, solo indicativos: cuatro letras que se reconocen sin leer.
+        if (peldano === "dibujo")
+          for (const t of [...(lejos?.textos ?? []), ...(cerca?.textos ?? [])])
+            if (!/^[A-Z]{4}$/.test(t)) males.push(`«${t}» en Guyrami`);
+        comprobar(
+          `${donde}: ningún rótulo pisa a otro`,
+          lejos && cerca && males.length === 0 && lejos.textos.length > 0,
+          males.length
+            ? males.slice(0, 4).join(" · ")
+            : `${lejos.textos.length} rótulos de lejos y ${cerca.textos.length} de cerca en ${lejos.lado} px de plano`,
+          "un plano donde los nombres se montan no se lee; lo que no cabe sale al acercar la lupa",
+        );
+      }
+    } catch (e) {
+      comprobar(`plano en vuelo de ${plano.ver}, ${tam}: se abre`, false, String(e).slice(0, 160), "");
+    } finally {
+      await page.close();
+    }
+  }
+
+/*
  * **La pantalla de inicio, de pie y en el portátil.** En un teléfono de pie el
  * pie —Granja Óga, Hecho en Capiibary, Desarrollado por Oksigenia, Código
  * fuente— quedaba pegado a la izquierda debajo de los idiomas, que van
