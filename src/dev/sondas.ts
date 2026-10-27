@@ -333,6 +333,18 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
          */
         juego.percance = null;
         juego.hud.cerrarFinDeVuelo();
+        /*
+         * **Y la aproximación de antes se olvida.** El detector de frustradas
+         * se arma bajando por debajo de doscientos metros y apunta lo más
+         * bajo; colocado después más arriba, con el tirón del teletransporte
+         * —un metro por segundo hacia arriba basta—, daba por hecha una
+         * frustrada de ciento sesenta metros que nadie voló. Medido en
+         * `verificar-vuelo.mjs` en Los Rodeos, al pasar por encima de un aro
+         * justo después de la corta final a veinticuatro metros, una vez de
+         * cada ocho: «going around, good decision», la senda callada por la
+         * frustrada y el banco sin tarjeta que corrigiera.
+         */
+        juego.olvidarLaAproximacionParaBanco();
       })(),
     /** Si la torre está mandando frustrar ahora mismo. Para el banco. */
     aproximacionManda: () => juego.laAproximacion?.mandanFrustrar ?? false,

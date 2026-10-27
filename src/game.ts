@@ -4913,6 +4913,15 @@ export class Game {
   private avisadoDeLaPasada = false;
   /** Si ya se dijo en esta aproximación que se puede tocar. */
   dichoDeLaToma = false;
+
+  /**
+   * **Colocado a mano, otra aproximación**: lo que el detector de frustradas
+   * seguía de la de antes no vale. Para la sonda `colocar` del banco, que
+   * teletransporta; jugando no se salta de un sitio a otro. Ver `Frustrada`.
+   */
+  olvidarLaAproximacionParaBanco(): void {
+    this.frustrada.reiniciar();
+  }
   /**
    * Cuántas veces el juego ha decidido decir «ya podés tocar».
    *
