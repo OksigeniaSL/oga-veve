@@ -219,8 +219,31 @@ try {
           const bajando = obj.altitud !== null && obj.altitud < s.position.y - 60;
           const gas = j.flight.gasPara?.(75) ?? 0.6;
           c.throttle = subiendo ? 1 : bajando ? Math.max(0.15, gas - 0.25) : gas;
+          /*
+           * **Y a tiempo real mientras alguien habla o espera turno.** El
+           * vuelo a ×16 comprime el juego y no el habla, que va con el reloj
+           * de pared: es la trampa de `relojPara` en el banco del vuelo
+           * entero. Medido en este vuelo al juntar la turbulencia con el
+           * vuelo vivo: el anuncio de la moderada, pedido a los 12,9 km,
+           * esperó en la cola detrás de la torre y la instructora y empezó a
+           * sonar a los 21 km, ya dentro de la zona; sonó nueve segundos de
+           * pared, que a ×9 eran ochenta de juego, y pasó la zona entera con
+           * él hablando. Detrás esperaba «buscamos un nivel más tranquilo»
+           * desde los 17 km, y «pueden soltarse el cinturón», listo desde que
+           * pasó la moderada a los 25,6 km, agotó su ventana de dos minutos
+           * de juego con la megafonía ocupada y no sonó nunca —o sonó a los
+           * 36,7 km, después de la ligera—. A tiempo real, la cola entera es
+           * cosa de veinte segundos y todo cae donde cae jugando.
+           */
+          const b = o.bocaAhora();
+          const quiere = b.ocupada || b.espera.length ? 1 : 16;
+          if (quiere !== globalThis.__reloj) {
+            globalThis.__reloj = quiere;
+            o.acelerar(quiere);
+          }
         });
         globalThis.__t0 = o.reloj();
+        globalThis.__reloj = 16;
         o.acelerar(16);
       }, zonas);
       const muestras = [];
