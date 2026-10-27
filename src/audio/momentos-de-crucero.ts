@@ -26,7 +26,8 @@
  *
  * Así que no se dice todo en todos los vuelos. **Cuánto, lo pone la duración
  * del tramo**: en un salto entre islas de veinte minutos, nada más que el
- * guion; desde media hora larga, una cosa; desde cuarenta minutos, además el
+ * guion —o el saludo y la curiosidad, si no hay tripulación que llene ese
+ * rato—; desde media hora larga, una cosa; desde cuarenta minutos, además el
  * punto del vuelo; y desde la hora, todo. Ver `cuantosSueltos`.
  *
  * Y nunca encima de nadie: cada cosa espera **su hueco** —el reparto de
@@ -114,6 +115,16 @@ export const PARA_LA_MITAD = 40;
 export const PARA_TODO = 60;
 
 /**
+ * **Y sin servicio, desde los quince, las dos.** Lo que llena un salto de
+ * veinte minutos es la tripulación —el servicio, los cinturones, prepararse
+ * para aterrizar—, y en un avión sin tripulación de cabina —el JAZ 60, de
+ * diecinueve plazas— no pasa nadie: ese rato queda libre, y de El Hierro a La
+ * Gomera se volaba entero en silencio entre el cartel y la bajada. Ahí caben
+ * el saludo y la curiosidad, repartidos por el crucero.
+ */
+export const PARA_DOS_SIN_SERVICIO = 15;
+
+/**
  * Cuánto tiene que haber callado la megafonía antes de contar algo, s.
  *
  * Un minuto y medio. El hueco de `Huecos` es de quince segundos detrás de un
@@ -130,6 +141,21 @@ export const ENTRE_ANUNCIOS = 90;
  * minutos de «empezamos a bajar» la pisa o la empuja.
  */
 export const ANTES_DE_BAJAR = 8 * 60;
+
+/**
+ * **Y con el punto de descenso a la vista, lo que falta para él**, s: con
+ * menos de esto ya no se empieza nada.
+ *
+ * Los ocho minutos de arriba se cuentan hasta tocar tierra, y en un vuelo
+ * alto eso cae ya bajando; en un salto corto a cuatro mil pies, con la bajada
+ * de cinco minutos, cerraban el crucero tres minutos antes de empezar a
+ * bajar, y ese rato se volaba en silencio. Lo que se quería guardar era el
+ * aire entre lo que se cuenta y «empezamos a bajar»: dos minutos y medio.
+ */
+export const ANTES_DEL_DESCENSO = 150;
+
+/** Y la última ocasión de contar algo, s antes de ese punto. Ver `paso`. */
+const ULTIMA_OCASION = 15;
 
 /**
  * **Hasta cuándo es la mitad del camino**, en lo que queda del tramo.
@@ -164,15 +190,25 @@ export interface EnCrucero {
   readonly minutosDelTramo: number | null;
   /** Lo que falta para tocar según el plan, s, o `null` si no se sabe. */
   readonly faltan: number | null;
+  /**
+   * Lo que falta para el punto de descenso del plan, s, o `null` si no se
+   * sabe o ya se pasó. Ver `ANTES_DEL_DESCENSO`.
+   */
+  readonly alDescenso?: number | null;
   /** Cuál de los dos sueltos va primero: el que no se contó la última vez. */
   readonly primero: Suelto;
   /** Si hay algo grabado que contar de cada cosa. */
   readonly hay: (m: MomentoDeCrucero) => boolean;
 }
 
-/** Cuántos de los dos sueltos caben en un tramo de estos minutos. */
-export function cuantosSueltos(minutos: number | null): number {
-  if (minutos === null || minutos < PARA_UNO) return 0;
+/**
+ * Cuántos de los dos sueltos caben en un tramo de estos minutos: con servicio
+ * a bordo, o sin él. Ver `PARA_UNO_SIN_SERVICIO`.
+ */
+export function cuantosSueltos(minutos: number | null, conServicio = true): number {
+  if (minutos === null) return 0;
+  if (!conServicio) return minutos < PARA_DOS_SIN_SERVICIO ? 0 : 2;
+  if (minutos < PARA_UNO) return 0;
   return minutos < PARA_TODO ? 1 : 2;
 }
 
@@ -220,7 +256,9 @@ export class MomentosDeCrucero {
     const queda = c.faltan !== null && total ? c.faltan / total : null;
     if (conMitad && !this.dichos.has("mitad") && queda !== null && queda < MITAD_HASTA)
       this.mitadPasada = true;
-    if (c.faltan !== null && c.faltan < ANTES_DE_BAJAR) return null;
+    const alDescenso = c.alDescenso ?? null;
+    if (alDescenso !== null ? alDescenso < ANTES_DEL_DESCENSO : c.faltan !== null && c.faltan < ANTES_DE_BAJAR)
+      return null;
     if (!c.hayHueco || c.megafoniaHabla || this.callada < ENTRE_ANUNCIOS) return null;
 
     if (
@@ -232,11 +270,19 @@ export class MomentosDeCrucero {
     )
       return this.decir("mitad");
 
-    // Los sueltos piden además el cartel apagado: con él puesto, se está a otra cosa.
-    if (c.cartelPuesto) return null;
+    /*
+     * **Y con el cartel puesto por el movimiento de siempre, también.** Los
+     * sueltos esperaban al cartel apagado, y en un salto corto a cuatro mil
+     * pies —la base del mar de nubes del alisio— el aire se mueve todo el
+     * crucero y el cartel no se apaga: no se contaba nada. Con la señal
+     * encendida por unos baches una comandante habla igual, y su voz tranquila
+     * es justo lo que hace falta; lo que no se cuenta es nada con una
+     * turbulencia anunciada por delante, y eso ya lo guarda
+     * `enCruceroDeVerdad`.
+     */
     const sueltos = [c.primero, elOtro(c.primero)]
       .filter((s) => c.hay(s))
-      .slice(0, cuantosSueltos(minutos));
+      .slice(0, cuantosSueltos(minutos, c.conTripulacion));
     const siguiente = sueltos.find((s) => !this.dichos.has(s));
     if (!siguiente) return null;
     /*
@@ -251,6 +297,28 @@ export class MomentosDeCrucero {
      */
     if (yaUno && conMitad && !this.dichos.has("mitad") && !this.mitadPasada && queda !== null)
       return null;
+    /*
+     * **Y sin el punto del vuelo, repartidas hasta la bajada**: lo que queda
+     * por contar se reparte a partes iguales entre lo último que dijo la
+     * megafonía y el punto de descenso, que es donde habla otra vez. Con `r`
+     * cosas por decir, la siguiente va cuando lo callado ya es la parte que le
+     * toca: `callada · r ≥ lo que falta para bajar`. Soltadas al principio, de
+     * El Hierro a La Gomera quedaban cinco minutos callados antes de empezar a
+     * bajar; repartidas contra el crucero medido al nivelar, la segunda caía
+     * después del punto de no empezar nada —la velocidad al nivelar es baja y
+     * el crucero parecía más largo— y no se decía. Mirado a cada paso, también
+     * vale si el crucero cambia: otro nivel por los baches, otra bajada.
+     */
+    /*
+     * Y si el reparto cae ya dentro de los dos minutos y medio de antes de
+     * bajar, la última ocasión es justo antes: mejor un rato más corto que
+     * callarla.
+     */
+    if (!conMitad && alDescenso !== null) {
+      const quedan = sueltos.filter((s) => !this.dichos.has(s)).length;
+      const ultimaOcasion = alDescenso < ANTES_DEL_DESCENSO + ULTIMA_OCASION;
+      if (!ultimaOcasion && this.callada * quedan < alDescenso) return null;
+    }
     return this.decir(siguiente);
   }
 

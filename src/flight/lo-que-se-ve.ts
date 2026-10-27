@@ -8,9 +8,11 @@
  * Cinco reglas, y las cinco salen de cómo se comporta una de verdad:
  *
  * 1. **Fuera de las fases de trabajo.** Ni en el despegue, ni en la
- *    aproximación, ni por debajo de diez mil pies cerca del campo: es la
- *    cabina estéril, la regla de verdad por la que en esos ratos nadie habla
- *    de nada que no sea el vuelo. Ver `DIEZ_MIL_PIES` y `CERCA_DEL_CAMPO`.
+ *    aproximación, ni subiendo o bajando por debajo de diez mil pies cerca
+ *    del campo: es la cabina estéril, la regla de verdad por la que en esos
+ *    ratos nadie habla de nada que no sea el vuelo. **Menos en crucero**, que
+ *    es la excepción que la propia regla escribe. Ver `DIEZ_MIL_PIES`,
+ *    `CERCA_DEL_CAMPO` y `MomentoDeMirar.enCrucero`.
  * 2. **De uno en uno y con su rato.** Una cosa cada par de minutos. Seguidas
  *    no se oye ninguna, y una comandante que habla cada minuto es una radio.
  * 3. **Nunca encima de nadie.** Si habla la instructora, la torre, la voz de
@@ -113,6 +115,11 @@ export interface MomentoDeMirar {
   readonly alCampo: number;
   /** Si el avión lleva pasaje: cambia qué es «cerca del campo». */
   readonly conPasaje: boolean;
+  /**
+   * **Si se va en crucero de verdad**: nivelado un rato y sin haber empezado
+   * a bajar hacia el destino. Ver `enFaseDeTrabajo`.
+   */
+  readonly enCrucero?: boolean;
   /** Si hay alguna voz sonando ahora mismo. */
   readonly alguienHabla: boolean;
 }
@@ -129,7 +136,26 @@ export function enFaseDeTrabajo(m: MomentoDeMirar): boolean {
   const cerca = m.conPasaje
     ? CERCA_DEL_CAMPO.conPasaje
     : CERCA_DEL_CAMPO.enAvioneta;
-  return m.altitud < DIEZ_MIL_PIES && m.alCampo < cerca;
+  if (m.altitud >= DIEZ_MIL_PIES || m.alCampo >= cerca) return false;
+  /*
+   * **Y el crucero por debajo de diez mil pies no es cabina estéril**, que es
+   * lo que dice la regla con todas sus letras: las fases críticas son el
+   * rodaje, el despegue, el aterrizaje «y todo lo que se vuela por debajo de
+   * diez mil pies, **menos el crucero**» (FAA, 14 CFR 121.542). En EASA son
+   * todavía menos: la carrera, la salida, la final y la toma.
+   *
+   * Lo de los treinta kilómetros era la forma de no hablar subiendo ni
+   * bajando, y para eso vale; pero en un salto corto entre islas el crucero
+   * entero cae a menos de treinta de algún campo. De El Hierro a La Gomera
+   * —setenta y dos kilómetros a cuatro mil pies con el JAZ 60—, de nueve
+   * minutos y medio de crucero quedaban dos en los que contar algo, y se jugó
+   * así: «mucho rato volando en silencio». Nivelado y antes de empezar a
+   * bajar, se habla.
+   *
+   * Solo con pasaje: es la regla de los vuelos de línea. La avioneta tiene la
+   * suya, que es salir del circuito.
+   */
+  return !(m.conPasaje && m.enCrucero === true);
 }
 
 export class LoQueSeVe {

@@ -679,6 +679,20 @@ const POR_ENCIMA_DEL_TEJADO = 3;
  * pantalla le quita el momento a las dos cosas.
  */
 const TARDA_EL_FINAL = 0.5;
+/**
+ * **Cuándo se va en crucero**, para la cabina estéril: dentro de una banda de
+ * altura de tanto arriba y abajo, m, durante `RATO_EN_CRUCERO` segundos.
+ * Llegar arriba no es pasar por arriba.
+ *
+ * Por la altura y no por la vertical: un bache mueve la vertical dos o tres
+ * metros por segundo un instante y el avión sigue en su nivel, y mirando la
+ * vertical cada bache volvía a poner la cuenta a cero. Treinta metros dejan
+ * fuera cualquier subida o bajada de verdad —a metro y medio por segundo, la
+ * banda se cruza antes de los veinte— y dentro el vaivén de un crucero. Ver
+ * `enFaseDeTrabajo` en `flight/lo-que-se-ve.ts`.
+ */
+const BANDA_EN_CRUCERO = 30;
+const RATO_EN_CRUCERO = 20;
 
 /**
  * **El dibujo de cada ejercicio**, el mismo de su tarjeta en el hangar: el
@@ -1171,6 +1185,7 @@ import type { MandoDeCabina } from "./world/botones-cabina";
 import {
   ANUNCIOS,
   Megafonia,
+  NIVELADO_UN_RATO,
   conPasaje,
   conTripulacion,
   seLePasoElMomento,
@@ -1527,6 +1542,8 @@ import {
   RODAJE,
 } from "./flight/tope-de-rodaje";
 import { escribirYa, leerProgreso, leerTexto, ponerProgreso, ponerTexto } from "./datos/guardado";
+import { elSiguienteVuelo, rutasDesdeAqui } from "./flight/siguiente-vuelo";
+import { mapaDelPais } from "./ui/mapa-del-pais";
 import {
   pedirRearranque,
   sePuedeCambiarDeAvion,
@@ -9846,7 +9863,104 @@ export class Game {
         nombresDelPeldano(canalesDe(this.tier.avisos)),
       );
       this.avisar("achieved");
+      this.invitarAlSiguiente();
     });
+  }
+
+  /**
+   * **El vuelo siguiente**: desde donde se acaba, adónde se podría ir, dicho
+   * por quien está y ofrecido con un toque en el panel del final.
+   *
+   * Solo al acabar un vuelo de verdad —del puesto al puesto, sin misión, sin
+   * ejercicio y fuera de las escenas del inicio— y solo hacia una ruta que
+   * sale de aquí y a la que este avión llega. Ver `flight/siguiente-vuelo.ts`.
+   *
+   * **Lo dice quien está**, una sola voz: en un avión con pasaje, la
+   * comandante por la megafonía, que es lo que se oye de verdad en un vuelo
+   * que sigue —«para los que siguen viaje, este avión sale después hacia…»—;
+   * en la avioneta, la instructora, que va sentada al lado. Y solo con su
+   * grabación: es lo que menos urge del vuelo, y el panel ya lo enseña con su
+   * mapa a quien no lo oye.
+   */
+  private invitarAlSiguiente(paraBanco = false): void {
+    if (
+      !paraBanco &&
+      (this.dePasaje ||
+      this.conInicio ||
+      this.percance ||
+      this.missions.current !== null ||
+      this.ejercicioDeHoy !== null ||
+      this.leccion.arranque !== "puesto" ||
+      this.leccion.acabaEnLaEspera)
+    )
+      return;
+    const aqui = this.elCampoDeAhora();
+    if (!aqui.aerodrome || (!paraBanco && !this.campoEnCuyoSueloEsta())) return;
+    const llave = `siguiente.${aqui.id}`;
+    const vinoDe = this.despegoDe || (this.salidaId !== aqui.id ? this.salidaId : null);
+    const siguiente = elSiguienteVuelo({
+      aqui,
+      vinoDe,
+      avion: this.aircraft,
+      escenarios: SCENARIOS,
+      hora: this.horaDelVuelo,
+      ultimo: this.recordado(llave),
+    });
+    if (!siguiente) return;
+    this.recordar(llave, siguiente.id);
+    this.siguienteParaBanco = siguiente.id;
+    const nombre = t(siguiente.nameKey as TranslationKey).split(" · ")[0] ?? siguiente.id;
+    const rutas = rutasDesdeAqui({ aqui, avion: this.aircraft, escenarios: SCENARIOS }).map(
+      (destino) => ({ destino, cabe: true, con: null }),
+    );
+    const canales = canalesDe(this.tier.avisos);
+    this.hud.ofrecerElSiguiente({
+      mapa: mapaDelPais(
+        aqui,
+        SCENARIOS.filter((e) => e.pais === aqui.pais),
+        rutas,
+        siguiente.id,
+      ),
+      // La palabra, desde el peldaño que lee; el dibujo y el mapa, siempre.
+      texto: canales.texto ? t("rotulo.seguir", { campo: nombre }) : "",
+      etiqueta: t("rotulo.seguir", { campo: nombre }),
+      alTocar: () => this.seguirHacia(aqui.id, siguiente.id),
+    });
+    const conGente = conPasaje(this.aircraft.mass);
+    if (!conGente && this.sinInstructora) return;
+    const clave = conGente ? `comandante.sigue.${siguiente.id}` : `seguir.${siguiente.id}`;
+    if (!hayTexto(clave) || !this.instructor.vozDe(clave)) return;
+    const boca = conGente ? this.comandante : this.instructor;
+    boca.decir(t(clave as TranslationKey), clave, "baja");
+  }
+
+  /** El destino que se propuso al acabar este vuelo, para el banco. */
+  siguienteParaBanco: string | null = null;
+
+  /**
+   * **Para el banco de los carteles**: la invitación puesta en el panel del
+   * final aunque el vuelo no haya acabado en un puesto, para medir que cabe
+   * en cada pantalla con todo lo demás. Ver `verificar-carteles.mjs`.
+   */
+  ofrecerElSiguienteParaBanco(): void {
+    this.invitarAlSiguiente(true);
+  }
+
+  /**
+   * **Seguir volando desde aquí**: el vuelo nuevo empieza en el puesto de este
+   * campo, con el mismo avión y el destino propuesto. Es el mismo recado que
+   * deja el cambio de avión —ver `cambiarDeAvion`— y por la misma razón: el
+   * arranque no vuelve a preguntar quién vuela ni dónde.
+   */
+  private seguirHacia(aqui: string, destino: string): void {
+    ponerTexto("escenario", aqui);
+    escribirYa();
+    pedirRearranque(sesionDeLaPestana(), {
+      escenario: aqui,
+      avion: this.aircraft.id,
+      destino,
+    });
+    location.reload();
   }
 
   /**
@@ -12590,6 +12704,13 @@ export class Game {
    */
   private decirPorMegafonia(anuncio: Anuncio): void {
     /*
+     * **Y lo nuevo, solo con su grabación**: «prepárense para aterrizar» de
+     * la comandante en el avión sin auxiliares se estrena cuando tenga su
+     * toma. Sin ella lo diría la voz del navegador, muda en Brave para Linux,
+     * y el cartel del cinturón ya está encendido desde la bajada.
+     */
+    if (anuncio === "comandante.cinturones" && !this.instructor.vozDe(anuncio)) return;
+    /*
      * Los dos sucesos del cartel: se apaga con el anuncio de crucero y se
      * vuelve a encender con el del descenso. El cartel y la frase cuentan lo
      * mismo porque son lo mismo. Ver `flight/cinturon.ts`.
@@ -12803,12 +12924,21 @@ export class Game {
         campo: t(donde.nameKey as TranslationKey).replace(" · ", ", "),
       },
       /*
-       * **Y las formas de sentarse para despegar, solo las grabadas.** Cada
-       * una entra en el sorteo el día que tiene su pieza: una forma escrita
-       * y sin grabar no se sortea. Ver `unaForma` en `audio/variantes.ts`.
+       * **Y las formas de cada anuncio, solo las grabadas.** Cada una entra
+       * en el sorteo el día que tiene su pieza: una forma escrita y sin
+       * grabar no se sortea. Era así solo para la de sentarse a despegar, y
+       * cualquier anuncio que estrenara variante habría sorteado entre una
+       * que suena y otra muda. Ver `unaForma` en `audio/variantes.ts`.
        */
-      anuncio === "comandante.despegue" ? (id) => this.instructor.vozDe(id) !== null : undefined,
+      (id) => this.instructor.vozDe(id) !== null,
+      /*
+       * **Y nunca la de la última vez**, entre vuelos y entre sesiones, como
+       * la bienvenida y el producto del servicio: «que dos vuelos seguidos no
+       * suenen igual». Una preferencia del juego, no un dato de nadie.
+       */
+      this.recordado(`megafonia.forma.${cual}`),
     );
+    this.recordar(`megafonia.forma.${cual}`, forma.id);
     return { clave: forma.id, texto: forma.texto };
   }
 
@@ -12941,7 +13071,8 @@ export class Game {
         atmosfera: this.flight.aireDelDia(),
         verdadera: null,
       }),
-      nivel: nivelDicho(crucero),
+      // Los niveles de los saltos cortos, solo con su grabación. Ver `NIVELES_BAJOS`.
+      nivel: nivelDicho(crucero, (id) => this.instructor.vozDe(id) !== null),
     };
   }
 
@@ -13065,6 +13196,14 @@ export class Game {
         0,
         this.loMasAltoDelVuelo - this.flight.state.position.y,
       ),
+      /*
+       * Y cuánto falta para el crucero del plan, si se vuela uno: «ya estamos
+       * arriba» es en su nivel. Ver `arribaYAsentado`.
+       */
+      faltaParaElCrucero:
+        this.navegacion.plan && this.navegacion.cruceroPlaneado > 0
+          ? this.navegacion.cruceroPlaneado - this.flight.state.position.y
+          : null,
     });
     /*
      * **Y en un descenso de emergencia, el guion de siempre se calla**: su
@@ -21915,6 +22054,16 @@ export class Game {
       alCampo,
       conPasaje: conPasaje(this.aircraft.mass),
       /*
+       * **Y si se va en crucero**: nivelado un rato y sin haber empezado a
+       * bajar. Por debajo de diez mil pies es lo único que no es cabina
+       * estéril, y en un salto corto entre islas es todo el rato que hay
+       * para contar algo. Ver `enFaseDeTrabajo`.
+       */
+      enCrucero:
+        this.niveladoDesde >= RATO_EN_CRUCERO &&
+        !this.navegacion.bajando &&
+        !this.megafonia.bajandoAlDestino,
+      /*
        * Cualquiera de las bocas, y también la máquina. Esto es lo que menos
        * urge de todo lo que suena: una autorización no puede esperar y el
        * paisaje sí. Un suceso, una voz.
@@ -21938,7 +22087,22 @@ export class Game {
     };
   }
 
+  /**
+   * Cuántos segundos lleva el avión nivelado en el aire: para saber si va en
+   * crucero. Ver `momentoDeMirar`.
+   */
+  private niveladoDesde = 0;
+  /** Y a qué altura se niveló, m. Ver `BANDA_EN_CRUCERO`. */
+  private alturaNivelada = 0;
+
   private mirarPorLaVentanilla(dt: number): void {
+    const y = this.flight.state.position.y;
+    if (!this.flight.state.onGround && Math.abs(y - this.alturaNivelada) < BANDA_EN_CRUCERO)
+      this.niveladoDesde += dt;
+    else {
+      this.alturaNivelada = y;
+      this.niveladoDesde = 0;
+    }
     const conGente = conPasaje(this.aircraft.mass);
     /*
      * **De pasaje, lo que se ve se le da a la escena**, que lo dice cuando no
@@ -27981,7 +28145,17 @@ export class Game {
     const destino = this.elDestino();
     const grabada = (id: string): boolean =>
       this.instructor.vozDe(id) !== null || (this.momentosSinGrabarParaBanco && hayTexto(id));
-    const cruceroDicho = this.megafonia.yaDicho("comandante.crucero");
+    /*
+     * **Arriba, aunque el cartel no se haya apagado.** Con baches todo el
+     * crucero la comandante no dice «pueden soltarse el cinturón», y con eso
+     * esperando no se contaba nada más en todo el vuelo. Un minuto nivelado
+     * arriba también es estar en crucero. Ver `NIVELADO_UN_RATO`.
+     */
+    const cruceroDicho =
+      this.megafonia.yaDicho("comandante.crucero") ||
+      (this.faseDeAhora === "en-vuelo" &&
+        this.niveladoDesde >= NIVELADO_UN_RATO &&
+        this.megafonia.estuvoArribaDeVerdad);
     /*
      * La duración del tramo y cuál de los dos sueltos va primero —el que no se
      * contó la última vez—, una vez por vuelo y ya en crucero. Ver
@@ -28022,6 +28196,7 @@ export class Game {
         BOCA.esperaAlguna((c) => esDeLaMegafonia(c)),
       minutosDelTramo: this.minutosDelTramo ?? null,
       faltan,
+      alDescenso: this.segundosAlDescenso(),
       primero: this.primerSuelto,
       hay: (m) => hayAlgoQueContar(m, grabada),
     });
@@ -28050,6 +28225,19 @@ export class Game {
       dicho.relleno,
       this.tiraAlSonar(dicho.texto, null),
     );
+  }
+
+  /**
+   * **Lo que falta para el punto de descenso del plan**, s, a la velocidad
+   * por el suelo de ahora; `null` sin plan hacia el destino o con el punto ya
+   * pasado. Ver `ANTES_DEL_DESCENSO` en `audio/momentos-de-crucero.ts`.
+   */
+  private segundosAlDescenso(): number | null {
+    const destino = this.elDestino();
+    const p = this.navegacion.progreso;
+    if (!destino || !p || p.descenso === null || this.navegacion.bajando) return null;
+    if (this.segundosDelPlanHasta(destino.id) === null) return null;
+    return Math.max(0, p.restante - p.descenso) / Math.max(30, this.flight.state.groundSpeed);
   }
 
   /** Lo que contó la comandante en el crucero de este vuelo, para los bancos. */

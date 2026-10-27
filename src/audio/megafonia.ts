@@ -48,7 +48,9 @@
  * 6. Al empezar a bajar, la comandante: cuánto falta, qué cielo y qué
  *    temperatura hay allí. Y se enciende el cartel.
  * 7. A la vez, la tripulación: cinturones, respaldos y mesitas.
- * 8. Ya en la aproximación: tripulación, prepararse para el aterrizaje.
+ * 8. Ya en la aproximación: tripulación, prepararse para el aterrizaje. Y sin
+ *    tripulación de cabina, la comandante al pasaje: cinturón, respaldo y
+ *    mesita, que eso no se queda sin decir. Ver `SIN_LA_TRIPULACION`.
  * 9. Y al llegar, la despedida con el nombre del sitio.
  * 10. Ya fuera de la pista, rodando, **la tripulación**: bienvenidos, sigan
  *     sentados con el cinturón hasta que el avión pare y se apague la señal,
@@ -94,6 +96,7 @@ export const ANUNCIOS = [
   "comandante.descenso",
   "tripulacion.cinturones",
   "comandante.aproximacion",
+  "comandante.cinturones",
   "comandante.llegada",
   "tripulacion.llegada",
 ] as const;
@@ -113,6 +116,15 @@ const DE_LA_TRIPULACION: ReadonlySet<Anuncio> = new Set<Anuncio>([
   "comandante.aproximacion",
   "tripulacion.llegada",
 ]);
+
+/**
+ * **Y los que dice la comandante porque no hay tripulación de cabina.** Lo
+ * que en un avión con auxiliares le toca a ellos —que el pasaje se prepare
+ * para aterrizar— en uno de diecinueve plazas lo hace quien va en la cabina
+ * de mando, por la megafonía: alguien tiene que decirlo, y la seguridad no
+ * se queda sin decir porque no haya quién pase por el pasillo.
+ */
+const SIN_LA_TRIPULACION: ReadonlySet<Anuncio> = new Set<Anuncio>(["comandante.cinturones"]);
 
 /**
  * En qué fase toca cada uno.
@@ -212,6 +224,7 @@ const CUANDO: Record<Anuncio, readonly Fase[]> = {
   "comandante.descenso": ["en-vuelo"],
   "tripulacion.cinturones": ["en-vuelo"],
   "comandante.aproximacion": ["en-vuelo"],
+  "comandante.cinturones": ["en-vuelo"],
   "comandante.llegada": ["abandonando", "a-plataforma"],
   /*
    * **Y lo de la tripulación, con la pista ya libre.** No antes: en la carrera
@@ -353,6 +366,7 @@ const VENTANA: Partial<Record<Anuncio, number>> = {
   "comandante.descenso": 60,
   "tripulacion.cinturones": 40,
   "comandante.aproximacion": 60,
+  "comandante.cinturones": 60,
   /*
    * **Y el de después de aterrizar, el rodaje de vuelta.** Al salir de la
    * pista coinciden la torre con el rodaje, la instructora y la lista de
@@ -439,6 +453,20 @@ export const YA_NO_SUBE = 2.5;
  */
 export const YA_EMPEZO_A_BAJAR = 150;
 
+/**
+ * **Cerca del crucero del plan**, m: lo que se puede estar por debajo de él
+ * para contar como arriba. Ciento cincuenta, la misma banda que separa el
+ * vaivén del crucero de un descenso.
+ */
+export const CERCA_DEL_CRUCERO = 150;
+
+/**
+ * **O nivelado un buen rato**, s, por debajo del plan: quien decide quedarse
+ * más abajo también está arriba. Un minuto; una subida lenta no se queda
+ * quieta tanto.
+ */
+export const NIVELADO_UN_RATO = 60;
+
 /** Lo que la megafonía mira del vuelo para saber si le toca hablar. */
 export interface Momento {
   readonly fase: Fase;
@@ -497,6 +525,11 @@ export interface Momento {
    * cinturón, es el momento de ponérselo».
    */
   readonly desdeLoMasAlto: number;
+  /**
+   * **Cuánto falta para el crucero del plan**, m —positivo por debajo—, o
+   * `null` sin plan. Ver `arribaYAsentado`.
+   */
+  readonly faltaParaElCrucero?: number | null;
 }
 
 /**
@@ -504,8 +537,22 @@ export interface Momento {
  *
  * Ver `ARRIBA_DEL_TODO`, `YA_NO_SUBE` y `YA_EMPEZO_A_BAJAR`.
  */
-function arribaYAsentado(m: Momento): boolean {
+function arribaYAsentado(m: Momento, nivelado: number): boolean {
+  /*
+   * **Y con plan, arriba es en su crucero.** Subiendo despacio —menos de
+   * quinientos pies por minuto— la vertical pasaba por debajo de la banda y
+   * «ya estamos arriba, pueden soltarse el cinturón» salía a mitad de la
+   * subida: medido de El Hierro a La Gomera con el JAZ 60, a 670 m con el
+   * plan en 1.219. Se dice al llegar a su nivel, o nivelado un rato si quien
+   * vuela decide quedarse más abajo.
+   */
+  const enSuNivel =
+    m.faltaParaElCrucero === undefined ||
+    m.faltaParaElCrucero === null ||
+    m.faltaParaElCrucero < CERCA_DEL_CRUCERO ||
+    nivelado >= NIVELADO_UN_RATO;
   return (
+    enSuNivel &&
     m.sobreElCampo >= ARRIBA_DEL_TODO &&
     Math.abs(m.vertical) < YA_NO_SUBE &&
     /*
@@ -542,6 +589,10 @@ export class Megafonia {
   private estuvoArriba = false;
   /** Cuántos segundos seguidos lleva bajando. Ver `BAJANDO_SEGUIDO`. */
   private bajando = 0;
+  /** Y cuántos lleva nivelado. Ver `NIVELADO_UN_RATO`. */
+  private nivelado = 0;
+  /** Si llegó a estar arriba en su nivel: ver `estuvoArribaDeVerdad`. */
+  private arribaDeVerdad = false;
   /** Si ya empezó el descenso, lo haya visto esto o lo haya dicho el plan. */
   private descensoEmpezado = false;
 
@@ -554,6 +605,8 @@ export class Megafonia {
     this.desde = 0;
     this.estuvoArriba = false;
     this.bajando = 0;
+    this.nivelado = 0;
+    this.arribaDeVerdad = false;
     this.descensoEmpezado = false;
   }
 
@@ -593,6 +646,16 @@ export class Megafonia {
     return this.dichos.has(anuncio);
   }
 
+  /**
+   * **Si se llegó arriba**, al crucero del plan o nivelado un rato, y todavía
+   * no se baja: lo que pide el anuncio del cartel apagado, sin el cartel. Para
+   * lo que se cuenta en crucero cuando el cartel no se apaga. Ver
+   * `contarLaVidaDeCabina` en `game.ts`.
+   */
+  get estuvoArribaDeVerdad(): boolean {
+    return this.arribaDeVerdad && !this.descensoEmpezado;
+  }
+
   /** Si ya se empezó a bajar hacia el destino. Para el juego y los bancos. */
   get bajandoAlDestino(): boolean {
     return this.descensoEmpezado && this.estuvoArriba;
@@ -611,7 +674,7 @@ export class Megafonia {
     switch (anuncio) {
       case "comandante.crucero":
         return (
-          arribaYAsentado(m) &&
+          arribaYAsentado(m, this.nivelado) &&
           !this.descensoEmpezado &&
           !m.turbulenciaPorPasar &&
           !m.aireMovido
@@ -631,6 +694,15 @@ export class Megafonia {
       case "comandante.aproximacion":
         return (
           this.hace("tripulacion.cinturones") >= ANTES_DE_LA_APROXIMACION &&
+          m.sobreElCampo < EN_APROXIMACION
+        );
+      /*
+       * Sin auxiliares, la comandante, con lo mismo que ellos: detrás de la
+       * bajada y al empezar la aproximación, por encima de la final.
+       */
+      case "comandante.cinturones":
+        return (
+          this.hace("comandante.descenso") >= ANTES_DE_LA_APROXIMACION &&
           m.sobreElCampo < EN_APROXIMACION
         );
       /*
@@ -659,7 +731,14 @@ export class Megafonia {
    * cruza el cero cada poco, ni suma ni resta.
    */
   private mirarSiBaja(dt: number, m: Momento): void {
-    if (arribaYAsentado(m)) this.estuvoArriba = true;
+    this.nivelado = Math.abs(m.vertical) < BAJA ? this.nivelado + dt : 0;
+    /*
+     * Para saber si después se baja basta con haber estado arriba un momento,
+     * llegara o no a su nivel: un salto que sube y baja sin nivelar también
+     * tiene su «empezamos a bajar».
+     */
+    if (arribaYAsentado(m, Infinity)) this.estuvoArriba = true;
+    if (arribaYAsentado(m, this.nivelado)) this.arribaDeVerdad = true;
     if (m.vertical < -BAJA) this.bajando += dt;
     else if (m.vertical > YA_NO_SUBE) this.bajando = 0;
     if (!this.estuvoArriba) return;
@@ -696,6 +775,7 @@ export class Megafonia {
     for (const anuncio of ANUNCIOS) {
       if (this.dichos.has(anuncio)) continue;
       if (DE_LA_TRIPULACION.has(anuncio) && !m.conTripulacion) continue;
+      if (SIN_LA_TRIPULACION.has(anuncio) && m.conTripulacion) continue;
       if (!CUANDO[anuncio].includes(m.fase)) continue;
       if (!this.seDanLasCondiciones(anuncio, m)) continue;
       /*

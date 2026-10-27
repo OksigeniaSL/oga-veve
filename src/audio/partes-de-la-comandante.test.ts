@@ -227,15 +227,41 @@ describe("la bienvenida con el plan", () => {
     // Las de minutos están grabadas desde siempre y no se preguntan.
     expect(minutosQueSeDicen(20 * 60, piezaDeDuracion, () => false)).toBe(20);
     expect(minutosQueSeDicen(130 * 60, piezaDeDuracion, () => true)).toBeNull();
-    expect(bienvenidaConPlan(forma, 75 * 60, 13)).toEqual({
-      clave: forma.id,
-      relleno: {},
-      texto: forma.texto,
+    // Sin la duración, lo que sí se puede decir: la altura.
+    const sinDuracion = bienvenidaConPlan(forma, 75 * 60, 13);
+    expect(sinDuracion.relleno).toEqual({
+      bienvenida: forma.id,
+      nivel: "comandante.previsto.nivel.13",
     });
+    expect(sinDuracion.texto).not.toContain("minutos");
     const d = descensoPara("pettirossi", 75 * 60, TIEMPO_DE_CASA);
     expect(d.relleno.minutos).toBeUndefined();
     expect(d.texto).not.toContain("minutos");
     expect(d.texto).not.toContain("hora");
+  });
+
+  /*
+   * **De El Hierro a La Gomera, a cuatro mil pies**: el nivel caía por debajo
+   * de lo grabado y la bienvenida se quedaba también sin la duración. Medido
+   * con el banco del trayecto entero: «Bienvenidos a bordo… Allá hay algunas
+   * nubes», y ni un minuto.
+   */
+  it("la duración se dice aunque el nivel no se pueda decir", () => {
+    const b = bienvenidaConPlan(forma, 18 * 60, nivelDicho(4000 * PIE));
+    expect(b.relleno).toEqual({
+      bienvenida: forma.id,
+      vuelo: "comandante.previsto.vuelo.20",
+    });
+    expect(b.texto).toContain("20 minutos");
+    expect(b.texto).not.toContain("mil pies");
+  });
+
+  it("y los niveles de los saltos cortos, el día que tengan su toma", () => {
+    expect(nivelDicho(4000 * PIE)).toBeNull();
+    expect(nivelDicho(3000 * PIE, () => false)).toBeNull();
+    expect(nivelDicho(4000 * PIE, (p) => p === "comandante.previsto.nivel.4")).toBe(4);
+    // Y los de siempre, como siempre: grabados desde el principio.
+    expect(nivelDicho(5000 * PIE, () => false)).toBe(5);
   });
 
   it("y detrás del plan, el tiempo de allá; delante el saludo y al final el cierre", () => {

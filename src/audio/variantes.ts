@@ -95,6 +95,18 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
   ],
 
   /*
+   * **Y el cartel que se apaga arriba**, que sale en todos los vuelos con
+   * pasaje y era siempre la misma frase. Dicen lo mismo y en el mismo orden
+   * —ya arriba, se puede soltar, y sentado mejor puesto—, que es lo que dice
+   * cualquier comandante al nivelar. Se graban al final de su guion: ver
+   * `VARIANTES_AL_FINAL` en `scripts/frases-para-grabar.mjs`.
+   */
+  "comandante.crucero": [
+    "Señores pasajeros, les habla la comandante: ya llegamos a nuestra altura. Se apagó la señal del cinturón; si se quedan sentados, déjenselo puesto, flojito.",
+    "Terminamos de subir, señores pasajeros. Pueden soltarse el cinturón para moverse un poco; sentados, mejor con el cinturón puestito.",
+  ],
+
+  /*
    * **Y el «ya pasó» de la turbulencia**, que en un vuelo movido sale dos o
    * tres veces. La segunda forma no da el consejo del cinturón: es la que va
    * cuando detrás viene `comandante.cinturon.porque`, para no decirlo dos
@@ -419,6 +431,12 @@ export function unaForma(
    * esto, se sortea entre todas.
    */
   conPieza?: (id: string) => boolean,
+  /**
+   * **Y la de la última vez, fuera del sorteo**, si quedan otras: dos vuelos
+   * seguidos con la misma frase delatan la grabación. Por su identificador.
+   * Lo que se dijo la última vez lo recuerda quien llama.
+   */
+  evitar?: string | null,
 ): { readonly texto: string; readonly id: string } {
   const rellenar = (texto: string): string =>
     valores
@@ -433,7 +451,9 @@ export function unaForma(
   const grabadas = conPieza
     ? sinRetirar.filter((k) => conPieza(idDeLaForma(clave, k)))
     : sinRetirar;
-  const validas = grabadas.length ? grabadas : conPieza ? [0] : sinRetirar;
+  const todas = grabadas.length ? grabadas : conPieza ? [0] : sinRetirar;
+  const sinLaDeAntes = evitar ? todas.filter((k) => idDeLaForma(clave, k) !== evitar) : todas;
+  const validas = sinLaDeAntes.length ? sinLaDeAntes : todas;
   const n = validas[Math.min(validas.length - 1, Math.floor(azar() * validas.length))] ?? 0;
   return {
     texto: n === 0 ? t(clave, valores) : rellenar(otras[n - 1]!),

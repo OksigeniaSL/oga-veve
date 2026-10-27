@@ -24,6 +24,7 @@ import { puntoAFaltando } from "./ruta";
 import {
   CERCA_DEL_CAMPO,
   DIEZ_MIL_PIES,
+  enFaseDeTrabajo,
   LoQueSeVe,
 } from "./lo-que-se-ve";
 import { conPasaje } from "../audio/megafonia";
@@ -52,7 +53,12 @@ interface Dicho {
   readonly texto: string;
   /** La historia que va detrás, si el sitio la tiene: su clave. */
   readonly historia: string | null;
+  /** Si se dijo en crucero, nivelado y antes de bajar. Ver `enFaseDeTrabajo`. */
+  readonly enCrucero: boolean;
 }
+
+/** Cuánto tiene que llevar nivelado para ir en crucero, s: como el juego. */
+const RATO_EN_CRUCERO = 20;
 
 /**
  * Vuela el tramo y devuelve lo que se contó. `mapas` son los campos cuyo
@@ -86,6 +92,9 @@ function volar(desde: string, hasta: string, avion: string, mapas: readonly stri
   const dt = 0.5;
   let habla = 0;
   let t = 0;
+  let nivelado = 0;
+  /** Cuánto rato se puede contar algo: fuera de la cabina estéril, s. */
+  let abierta = 0;
   for (let s = 0; s < ruta.total; s += suyo.cruiseSpeed * dt, t += dt) {
     const p = puntoAFaltando(ruta, ruta.total - s)!;
     const q = puntoAFaltando(ruta, Math.max(0, ruta.total - s - 300))!;
@@ -98,8 +107,10 @@ function volar(desde: string, hasta: string, avion: string, mapas: readonly stri
     const aSalida = Math.hypot(p.x - salida.pista.x, p.z - salida.pista.z);
     const aLlegada = Math.hypot(p.x - llegada.pista.x, p.z - llegada.pista.z);
     const alCampo = Math.min(aSalida, aLlegada);
-    const mirada = ventanilla.paso(dt, {
-      fase: s < 500 ? "despegando" : "en-vuelo",
+    nivelado = altitud >= crucero - 1 ? nivelado + dt : 0;
+    const enCrucero = nivelado >= RATO_EN_CRUCERO;
+    const momento = {
+      fase: (s < 500 ? "despegando" : "en-vuelo") as "despegando" | "en-vuelo",
       x: p.x,
       z: p.z,
       rumbo,
@@ -107,8 +118,11 @@ function volar(desde: string, hasta: string, avion: string, mapas: readonly stri
       sobreElCampo: altitud - (aSalida < aLlegada ? cotaSalida : cotaLlegada),
       alCampo,
       conPasaje: conGente,
+      enCrucero,
       alguienHabla: habla > 0,
-    });
+    };
+    if (!enFaseDeTrabajo(momento)) abierta += dt;
+    const mirada = ventanilla.paso(dt, momento);
     habla = Math.max(0, habla - dt);
     if (!mirada) continue;
     const dicho = loQueSeDice(mirada, conGente, ventanilla.cuantos - 1);
@@ -125,6 +139,7 @@ function volar(desde: string, hasta: string, avion: string, mapas: readonly stri
       lado: mirada.lado,
       texto: dicho?.texto ?? "",
       historia: historia?.relleno.historia ?? null,
+      enCrucero,
     });
   }
   if (entorno?.OGA_VENTANILLA) {
@@ -141,15 +156,18 @@ function volar(desde: string, hasta: string, avion: string, mapas: readonly stri
           .join("\n"),
     );
   }
-  return { dichos, conGente, origen, suelo };
+  return { dichos, conGente, origen, suelo, abierta };
 }
 
-/** Ninguna en la cabina estéril: por debajo de diez mil pies y cerca del campo. */
+/**
+ * Ninguna en la cabina estéril: subiendo o bajando por debajo de diez mil pies
+ * cerca del campo. En crucero, con pasaje, sí: es la excepción de la regla.
+ */
 function fueraDeLaCabinaEsteril(dichos: readonly Dicho[], conGente: boolean) {
   const cerca = (conGente ? CERCA_DEL_CAMPO.conPasaje : CERCA_DEL_CAMPO.enAvioneta) / 1000;
   for (const x of dichos)
     expect(
-      x.pies * 0.3048 >= DIEZ_MIL_PIES - 40 || x.alCampo >= cerca - 1,
+      x.pies * 0.3048 >= DIEZ_MIL_PIES - 40 || x.alCampo >= cerca - 1 || (conGente && x.enCrucero),
       `${x.nombre} a ${x.pies} ft y ${x.alCampo} km del campo`,
     ).toBe(true);
 }
@@ -250,5 +268,31 @@ describe("de Asunción a Ciudad del Este, el Ybytyruzú", () => {
   it("se ve, y fuera de la cabina estéril", () => {
     expect(vuelo.dichos.map((d) => d.nombre)).toContain("Cerro Tres Kandú");
     fueraDeLaCabinaEsteril(vuelo.dichos, vuelo.conGente);
+  });
+});
+
+/*
+ * **De El Hierro a La Gomera con el JAZ 60**, el vuelo que se jugó entero y
+ * salió «aburrido, mucho rato volando en silencio». Setenta kilómetros: casi
+ * todo el tramo cae a menos de treinta de uno de los dos campos, y con la
+ * cabina estéril medida así no quedaba ni un minuto en el que contar nada.
+ *
+ * Y lo que hay a los lados en ese canal es mar: La Gomera y el Teide van
+ * delante del morro todo el crucero, y El Hierro queda detrás. Que la
+ * ventanilla calle ahí es verdad; lo que no lo era es que no pudiera hablar.
+ */
+describe("de El Hierro a La Gomera, lo que se ve", () => {
+  const vuelo = volar("el-hierro", "la-gomera", "jaz-60", CANARIAS_OESTE);
+
+  it("el crucero ya no es cabina estéril: hay rato para contar", () => {
+    // Cuatro minutos largos de crucero; con la regla de los treinta
+    // kilómetros, un par de minutos sueltos en medio del canal.
+    expect(vuelo.abierta).toBeGreaterThan(200);
+  });
+
+  it("y lo que se cuente, en crucero y sin repetir", () => {
+    for (const d of vuelo.dichos) expect(d.enCrucero, d.nombre).toBe(true);
+    const nombres = vuelo.dichos.map((d) => d.nombre);
+    expect(new Set(nombres).size).toBe(nombres.length);
   });
 });

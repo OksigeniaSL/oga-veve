@@ -72,6 +72,12 @@ export function oidoEnLaPagina() {
         dura: this.buffer?.duration ?? 0,
         estado: ctx.state,
         pared: performance.now(),
+        /*
+         * Y el reloj del audio en ese mismo instante: con él se pasa la hora
+         * de cada frase al reloj de pared, que es en el que el banco apunta
+         * por dónde va el vuelo. Ver `OGA_RUTA` en `verificar-vuelo-entero`.
+         */
+        ahora: ctx.currentTime,
       };
       this.__apunte = apunte;
       oido.sonidos.push(apunte);

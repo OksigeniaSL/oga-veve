@@ -327,6 +327,19 @@ const ICONO_PARTE = `<svg viewBox="0 0 24 24" aria-hidden="true">
   <path d="M5 19 a3.6 3.6 0 0 1 0.6 -7.1 a4.8 4.8 0 0 1 9.2 1 a3.1 3.1 0 0 1 0.4 6.1 Z" fill="currentColor"/>
 </svg>`;
 
+/**
+ * **Seguir volando**: el avión que despega hacia la flecha. Es el dibujo del
+ * vuelo siguiente en el panel del final; la raya de aquí a allí la pone el
+ * mapa del país al lado. Ver `ofrecerElSiguiente`.
+ */
+const SEGUIR = `
+  <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+    <path d="M2.6 17.4 l1.6 -1.2 l3.2 0.9 l7.6 -5.4 l-8.8 -3.2 l2.1 -1.5 l11 1.7
+             l2.3 -1.6 a1.5 1.5 0 0 1 1.9 2.3 l-12.2 8.8 a3 3 0 0 1 -2.7 0.4 Z" />
+    <path d="M3 21 h11.5" fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" />
+  </svg>`;
+
 const HANGAR = `
   <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
     <path fill-rule="evenodd"
@@ -2147,6 +2160,19 @@ export class Hud {
           -->
           <button type="button" class="fin__hangar" data-hud="fin-hangar"
                   aria-label="${t("hangar.volver")}">${HANGAR}</button>
+          <!--
+            Y el vuelo siguiente, si desde aquí sale una ruta para este avión:
+            el país con la raya de aquí a allí y el avión que sigue. Se toca
+            entero —el mapa también— y lleva al puesto de aquí, con ese
+            destino. Una invitación: sin cuenta atrás y sin nada que se pierda
+            por no tocarla. Ver flight/siguiente-vuelo.ts.
+          -->
+          <div class="fin__seguir" data-hud="fin-seguir" hidden>
+            <span class="fin__seguir-mapa" data-hud="fin-seguir-mapa" aria-hidden="true"></span>
+            <button type="button" class="fin__seguir-boton" data-hud="fin-seguir-boton">
+              ${SEGUIR}<span data-hud="fin-seguir-texto"></span>
+            </button>
+          </div>
           </div>
         </div>
       </div>
@@ -2333,6 +2359,11 @@ export class Hud {
     pick(this.root, "fin-hangar").addEventListener("click", (e) => {
       e.stopPropagation();
       location.href = location.pathname;
+    });
+    // Y el vuelo siguiente, tocando el mapa o el botón. Ver `ofrecerElSiguiente`.
+    pick(this.root, "fin-seguir").addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.alSeguir?.();
     });
 
     this.badge.textContent = this.badgeText;
@@ -3754,8 +3785,34 @@ export class Hud {
     v1.classList.add("v1--suena");
   }
 
+  /**
+   * **El vuelo siguiente**, en el panel del final: el mapa del país con la
+   * raya de aquí al destino que se propone, el avión que sigue y, para quien
+   * lee, «Seguir a…». `null` lo quita. Se pone después de enseñar el final y
+   * se va con él. Ver `flight/siguiente-vuelo.ts`.
+   */
+  ofrecerElSiguiente(
+    o: {
+      readonly mapa: string;
+      readonly texto: string;
+      readonly etiqueta: string;
+      readonly alTocar: () => void;
+    } | null,
+  ): void {
+    const caja = optional(this.root, "fin-seguir");
+    if (!caja) return;
+    this.alSeguir = o?.alTocar ?? null;
+    caja.hidden = !o;
+    pick(this.root, "fin-seguir-mapa").innerHTML = o?.mapa ?? "";
+    pick(this.root, "fin-seguir-texto").textContent = o?.texto ?? "";
+    pick(this.root, "fin-seguir-boton").setAttribute("aria-label", o?.etiqueta ?? "");
+  }
+
+  private alSeguir: (() => void) | null = null;
+
   /** Y se quita. Otro vuelo, otra hoja. */
   cerrarFinDeVuelo(): void {
+    this.ofrecerElSiguiente(null);
     if (this.fin) this.fin.hidden = true;
     pick(this.root, "fin-frase").classList.remove("fin__frase--ascenso");
     this.root.classList.remove("hud--fin");

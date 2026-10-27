@@ -158,6 +158,32 @@ const DESTINO = process.argv[6] ?? null;
  */
 const CRUCERO_PEDIDO = Number(process.env.OGA_CRUCERO ?? 0) || 0;
 /**
+ * **Y el trayecto entero, si se pide**: `OGA_RUTA=1`, con destino.
+ *
+ * Lo de cruzar a la final del otro campo nada más subir se queda corto para
+ * lo que pasa **dentro** del avión: un vuelo de El Hierro a La Gomera con el
+ * JAZ 60 se jugó entero y salió «aburrido, mucho rato volando en silencio, la
+ * comandante no habla», y este banco no lo podía ver porque ese rato no lo
+ * volaba. Con esto se vuela el plan de verdad —subir a su nivel, seguir sus
+ * puntos, bajar por su senda desde el punto de descenso— y solo se cruza a la
+ * final cuando el avión ya está llegando a ella.
+ *
+ * Y se apunta la línea de tiempo: por dónde va el vuelo cada segundo, lo que
+ * se ve por la ventanilla y quién habla, con los silencios de cada tramo. Va
+ * con el reloj a ×1, que el habla va con el de pared: ver `fasesATiempoReal`.
+ */
+const RUTA_PEDIDA = process.env.OGA_RUTA === "1" && DESTINO !== null;
+/**
+ * **El silencio más largo que puede tener cada tramo**, s, con `OGA_RUTA`.
+ *
+ * Un hueco corto no es un fallo: una comandante de verdad habla poco y a su
+ * momento, y entre frase y frase se oye el avión. Lo que no puede haber es un
+ * tramo entero sin nadie. Tres minutos y pico: medido de El Hierro a La
+ * Gomera, el crucero se quedó callado cinco minutos y medio seguidos, y con lo
+ * que cuenta la comandante repartido por él quedan tercios de unos tres.
+ */
+const SILENCIO_MAXIMO = Number(process.env.OGA_SILENCIO ?? 200);
+/**
  * **Y una final volada como la vuela una persona, si se pide**:
  * `OGA_BAMBOLEO=metros[,segundos]`.
  *
@@ -559,7 +585,14 @@ await page
  * crucero —`OGA_CRUCERO`— para que dé tiempo a cruzarla. Ver
  * `flight/turbulencia-del-vuelo.ts`.
  */
-const TURBULENCIA = process.env.OGA_TURBULENCIA ?? null;
+/*
+ * Y `OGA_TURBULENCIA=ninguna`, el aire en calma de punta a punta: la del
+ * camino se sortea en cada vuelo —a veces nada, a veces un buen rato—, y para
+ * medir lo que se oye en un vuelo normal con `OGA_RUTA` hace falta que dos
+ * tiradas vuelen el mismo aire.
+ */
+const SIN_TURBULENCIA = process.env.OGA_TURBULENCIA === "ninguna";
+const TURBULENCIA = SIN_TURBULENCIA ? null : (process.env.OGA_TURBULENCIA ?? null);
 /*
  * Y de dónde se sabe la prevista, si se pide: `OGA_TURBULENCIA_FUENTE=pirep`
  * la hace avisar por otro avión, con la radio delante de la comandante. Ver
@@ -578,6 +611,7 @@ const ZONA_PEDIDA = TURBULENCIA
   : null;
 if (ZONA_PEDIDA)
   await page.evaluate((z) => globalThis.__oga?.ponerTurbulencia?.([z]), ZONA_PEDIDA);
+if (SIN_TURBULENCIA) await page.evaluate(() => globalThis.__oga?.ponerTurbulencia?.([]));
 
 const resultados = [];
 /**
@@ -698,7 +732,7 @@ const conMegafonia = await page
   .catch(() => true);
 const A_TIEMPO_REAL = fasesATiempoReal(conMegafonia);
 
-const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo, obedienteEnElBanco, filaPedida]) => {
+const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, cruceroPedido, trazarCoche, aTiempoReal, pistaOcupadaPedida, bamboleo, obedienteEnElBanco, filaPedida, rutaPedida]) => {
   const o = globalThis.__oga;
   /*
    * **Y con `OGA_FILA_DE_SALIDA=1`, uno de la frecuencia sale a rodar ya**,
@@ -2525,6 +2559,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const ALTO_DE_BAJADA = 320;
   /** Cuándo se llegó arriba en ese crucero, s de juego. */
   let cruceroDesde = null;
+  /** Si el automático no quiso engancharse en la ruta: se vuela a mano. */
+  let rutaSinAutomatico = false;
 
   /*
    * **Las fases en las que el juego promete una raya que seguir.**
@@ -3486,8 +3522,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    *
    * Frustrar es parte del vuelo y está en la lección; un vuelo que tarda más
    * porque **hace más** no es un vuelo que falle.
+   *
+   * Y con `OGA_RUTA`, una hora: el trayecto entero va a tiempo real.
    */
-  const TOPE = 1800;
+  const TOPE = rutaPedida ? 3600 : 1800;
   /*
    * Y el tiempo se lee del juego, no se cuenta por vueltas.
    *
@@ -3590,6 +3628,63 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   /** Traza de la subida: qué se pidió y qué hizo el avión. */
   const subida = [];
 
+  /*
+   * **La línea de tiempo del trayecto**, con `OGA_RUTA`: un renglón por
+   * segundo de juego con la fase, la altura, a cuánto de cada campo, si es
+   * fase de trabajo —la cabina estéril de `lo-que-se-ve.ts`— y lo que se ve
+   * por la ventanilla del pasaje. Quién habla se cruza después con el oído.
+   */
+  const lineaDeRuta = [];
+  let muestraDeRuta = -Infinity;
+  let ultimoMirado = -Infinity;
+  const deLaVentanilla = rutaPedida ? await import("/src/world/hitos.ts") : null;
+  const delMomento = rutaPedida ? await import("/src/flight/lo-que-se-ve.ts") : null;
+  const apuntarLaRuta = async (s, fase, t) => {
+    const j = o.juegoParaTrazas();
+    const m = j.momentoDeMirar();
+    const plan = o.planDeVuelo?.();
+    const renglon = {
+      pared: performance.now() / 1000,
+      t: +t.toFixed(1),
+      fase,
+      etapa,
+      alto: Math.round(m.sobreElCampo),
+      msl: Math.round(s.position.y),
+      vs: +s.verticalSpeed.toFixed(1),
+      alCampo: Math.round(m.alCampo),
+      bajando: !!plan?.bajando,
+      crucero: Math.round(j.navegacion?.cruceroPlaneado ?? 0),
+      trabajo: delMomento ? delMomento.enFaseDeTrabajo(m) : null,
+      seVe: null,
+    };
+    /*
+     * Lo que se ve, cada diez segundos: lo que `queSeVe` daría por la
+     * ventanilla del pasaje si no se hubiera dicho nada todavía, uno tras
+     * otro hasta que no quede nada a la vista.
+     */
+    if (deLaVentanilla && t - ultimoMirado >= 10 && !s.onGround) {
+      ultimoMirado = t;
+      const v = j.ventanilla;
+      const vistos = new Set();
+      const lista = [];
+      for (let k = 0; k < 6; k++) {
+        const mirada = deLaVentanilla.queSeVe(
+          v.hitos,
+          { x: m.x, z: m.z, rumbo: m.rumbo, y: m.altitud },
+          vistos,
+          v.suelo,
+          v.capa,
+          deLaVentanilla.CAMPO_DEL_PASAJE,
+        );
+        if (!mirada) break;
+        vistos.add(mirada.hito.nombre);
+        lista.push(`${mirada.hito.nombre} (${mirada.lado})`);
+      }
+      renglon.seVe = lista;
+    }
+    lineaDeRuta.push(renglon);
+  };
+
   const empezo = o.reloj();
   let leidoAntes = empezo;
   let t = 0;
@@ -3607,6 +3702,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     t = ahora - empezo;
     const s = o.estado();
     const fase = o.fase();
+    if (rutaPedida && t - muestraDeRuta >= 1) {
+      muestraDeRuta = t;
+      await apuntarLaRuta(s, fase, t);
+    }
     if (filaAlLlegar) {
       const tu = o.estado();
       const cota = o.cotaDePistaDeAhora?.(tu.position.x, tu.position.z) ?? 0;
@@ -5042,6 +5141,96 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       // Ver `OGA_CRUCERO`: antes de cruzar, un crucero y una bajada.
       etapa = "crucero";
       cruceroDesde = null;
+    } else if (
+      etapa === "subir" &&
+      destino &&
+      !enElDestino &&
+      rutaPedida &&
+      alto(s) > 150 &&
+      t - despego > 25
+    ) {
+      // Ver `OGA_RUTA`: el trayecto entero, por el plan.
+      etapa = "ruta";
+    } else if (etapa === "ruta") {
+      /*
+       * **Por el plan, como lo vuela quien juega**: a su nivel, de punto en
+       * punto y bajando por su senda desde el punto de descenso. La palanca y
+       * el gas, con el mismo reparto que el crucero de `OGA_CRUCERO`: subiendo,
+       * la palanca lleva la velocidad; nivelado y bajando, la altura.
+       */
+      const j = o.juegoParaTrazas();
+      const plan = o.planDeVuelo?.();
+      const nav = j.navegacion;
+      // La cota a la que se refiere `alto`: la del campo de ahora.
+      const base = s.position.y - alto(s);
+      const crucero = nav.cruceroPlaneado || base + ALTO_DE_CRUCERO;
+      let objetivo = crucero;
+      const bajandoYa = !!plan?.bajando;
+      if (bajandoYa) {
+        const senda = nav.alturaParaElAutomatico(j.lecturaDeRuta());
+        if (senda !== null && Number.isFinite(senda)) objetivo = Math.min(crucero, senda);
+      }
+      const altoQueToca = objetivo - base;
+      const subiendo = !bajandoYa && alto(s) < altoQueToca - 30;
+      const topeSubiendo = Math.max(VELOCIDAD_DE_SUBIDA, DE_CIRCUITO);
+      const gasSubiendo =
+        NECESITA_TECNICA && peldano !== "guyrami"
+          ? Math.max(0, Math.min(1, 0.55 + (topeSubiendo - s.airspeed) * 0.04))
+          : 1;
+      const quiere = bajandoYa ? DE_CIRCUITO * 1.2 : VELOCIDAD_DE_CRUCERO;
+      const aSuVelocidad = Math.min(1, (bajandoYa ? 0.35 : 0.55) + (quiere - s.airspeed) * 0.04);
+      c.throttle = subiendo ? gasSubiendo : Math.max(bajandoYa ? 0.1 : 0.3, aSuVelocidad);
+      configurar(s, c, 1);
+      const fijo = plan?.fijos?.[plan.activo] ?? null;
+      /*
+       * **Y con el automático, como lo vuela quien juega.** Con la palanca del
+       * banco el crucero era un columpio —de −7 a +6 m/s, hasta 3,9 g y un
+       * «stall, stall» a 160 nudos—, y un avión que no se queda nivelado no
+       * está nunca en crucero: lo que la cabina deja contar en él no salía, y
+       * eso era del banco y no del juego. En cuanto empieza la ruta —ciento
+       * cincuenta metros, quinientos pies— se engancha con la ventanilla en el
+       * nivel del plan, como el botón, y se le va dando el rumbo al punto
+       * siguiente; la bajada desde el punto de descenso la lleva él, por la
+       * senda del plan. El gas, el de siempre. Se enganchaba a los trescientos,
+       * y entre medias la palanca del banco subiendo despacio hacía sonar el
+       * avisador de pérdida a 219 m.
+       */
+      if (!o.pilotoAutomatico?.() && alto(s) > 150 && !rutaSinAutomatico) {
+        o.ponerVentanillaAlt?.(Math.round(crucero / 0.3048 / 100) * 100);
+        o.pilotoAutomatico?.(true);
+        if (!o.pilotoAutomatico?.()) rutaSinAutomatico = true;
+      }
+      if (o.pilotoAutomatico?.()) {
+        c.aileron = 0;
+        c.elevator = 0;
+        if (fijo) {
+          const objetivos = j.objetivos;
+          j.objetivos = {
+            ...objetivos,
+            rumbo: Math.atan2(fijo.x - s.position.x, -(fijo.z - s.position.z)),
+          };
+        }
+      } else {
+        c.elevator = subiendo ? subirDeVerdad(s) : aLaAltura(s, altoQueToca);
+        sostenerLaAltura(s, subiendo, altoQueToca);
+        if (fijo) c.aileron = alPuntoPorElSuelo(s, fijo.x, fijo.z);
+      }
+      /*
+       * Y se cruza a la final de allí cuando ya se llega a ella: a dos
+       * kilómetros del punto donde la pone el cruce —diez antes del umbral,
+       * por la ruta de llegada si la hay—, o en cuanto el plan pasa a su
+       * tramo final. El salto que queda es de ese tamaño, no el canal entero.
+       */
+      const u = o.puntoDeFinalDe(0, destino);
+      const enLaRuta = u ? porLaRutaDeLlegada(plan, u, 10000) : null;
+      const f = enLaRuta ?? o.puntoDeFinalDe(10000, destino);
+      const aLaFinal = f ? Math.hypot(f.x - s.position.x, f.z - s.position.z) : Infinity;
+      const alUmbral = u ? Math.hypot(u.x - s.position.x, u.z - s.position.z) : Infinity;
+      if (aLaFinal < 2000 || (bajandoYa && alUmbral < 11000)) {
+        // Y a la final, a mano: es lo que hace quien juega antes de los mínimos.
+        if (o.pilotoAutomatico?.()) o.pilotoAutomatico(false);
+        etapa = "cruzar";
+      }
     } else if (etapa === "crucero") {
       /*
        * **Subir, cruzar nivelado y bajar**, recto por el rumbo de salida.
@@ -5085,7 +5274,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       )
         etapa = "cruzar";
     } else if (
-      (etapa === "cruzar" || (etapa === "subir" && !cruceroPedido)) &&
+      (etapa === "cruzar" || (etapa === "subir" && !cruceroPedido && !rutaPedida)) &&
       destino &&
       !enElDestino &&
       alto(s) > 150 &&
@@ -6301,6 +6490,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     cuentaOida: o.cuentaOida?.() ?? [],
     // Y lo que sonó por la megafonía, en orden: el guion de la cabina.
     megafonia: o.megafonia?.() ?? [],
+    // Y la línea de tiempo del trayecto, con `OGA_RUTA`.
+    lineaDeRuta,
     // Y lo que contó la comandante en el crucero, con su hora. Ver `OGA_MOMENTOS`.
     momentosDeCrucero: o.momentosDeCrucero?.() ?? [],
     // Y la lista de después del aterrizaje, punto por punto con su hora.
@@ -6461,6 +6652,31 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     dejoDeFrenarA: +dejoDeFrenarA.toFixed(1),
     galones: o.galones().map((g) => g.id ?? g),
     fin: o.finDeVuelo(),
+    /*
+     * **Y el vuelo siguiente que ofrece el panel del final**: cuál, si se ve,
+     * y si es de verdad una ruta de aquí a la que este avión llega. Se mira
+     * con las reglas de siempre —los destinos del campo y `cabeEn`—, no con
+     * la cuenta que lo eligió. Ver `flight/siguiente-vuelo.ts`.
+     */
+    siguiente: await (async () => {
+      const propuesto = o.juegoParaTrazas?.()?.siguienteParaBanco ?? null;
+      const caja = document.querySelector('[data-hud="fin-seguir"]');
+      const enPantalla = !!caja && !caja.hidden;
+      const aqui = o.campoDeAhora?.() ?? null;
+      if (!propuesto) return { propuesto, enPantalla, aqui, deAqui: null, cabe: null };
+      const { SCENARIOS, destinosDe } = await import("/src/world/scenarios.ts");
+      const { cabeEn, campoDe } = await import("/src/flight/cabe.ts");
+      const { aircraftById } = await import("/src/flight/aircraft.ts");
+      const sitio = SCENARIOS.find((e) => e.id === aqui);
+      const alla = SCENARIOS.find((e) => e.id === propuesto);
+      return {
+        propuesto,
+        enPantalla,
+        aqui,
+        deAqui: !!sitio && destinosDe(sitio).includes(propuesto),
+        cabe: !!alla && cabeEn(aircraftById(o.avion().id), campoDe(alla)).cabe,
+      };
+    })(),
     avion: o.avion?.() ?? null,
     /*
      * **Y a qué altura del suelo se queda el avión parado.**
@@ -6542,7 +6758,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     return lectura;
   })();
   return resultado;
-}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE, A_TIEMPO_REAL, process.env.OGA_PISTA_OCUPADA === "1", BAMBOLEO, OBEDIENTE, process.env.OGA_FILA_DE_SALIDA === "1"]);
+}, [VECES, DESTINO, TRAMO, CRUCERO_PEDIDO, !!process.env.OGA_TRAZA_COCHE, A_TIEMPO_REAL, process.env.OGA_PISTA_OCUPADA === "1", BAMBOLEO, OBEDIENTE, process.env.OGA_FILA_DE_SALIDA === "1", RUTA_PEDIDA]);
 fotografiando = false;
 await fotos;
 /** Lo que de verdad sonó en el vuelo. Ver `scripts/oido.mjs`. */
@@ -6615,6 +6831,154 @@ if (process.env.OGA_VOCES) {
   );
 }
 
+/*
+ * ── **La línea de tiempo del trayecto, con `OGA_RUTA`** ──
+ *
+ * Quién habla y cuándo, en qué tramo del vuelo, y los silencios: el rato
+ * seguido sin ninguna voz —ni la instructora, ni la torre, ni la comandante,
+ * ni la máquina—. Lo que sonó lo dice el oído, con su hora de audio; el
+ * tramo, la línea de tiempo del juego, con su hora de pared. Las dos se casan
+ * por el reloj de pared, que el oído apunta al empezar cada pieza.
+ */
+const tramoDe = (r, yaArriba) => {
+  if (["estacionado", "arrancando", "rodando", "esperando", "autorizado", "back-taxi", "alineando"].includes(r.fase))
+    return "tierra-salida";
+  if (["despegando", "comprometido"].includes(r.fase)) return "despegue";
+  if (r.fase === "en-vuelo") {
+    if (r.bajando) return "bajada";
+    if (yaArriba) return "crucero";
+    return "subida";
+  }
+  if (["abandonando", "a-plataforma", "en-puesto", "apagado"].includes(r.fase)) return "tierra-llegada";
+  return "final";
+};
+const rutaDelVuelo = [];
+const silenciosPorTramo = new Map();
+if (RUTA_PEDIDA && (vuelo.lineaDeRuta ?? []).length) {
+  const renglones = vuelo.lineaDeRuta;
+  let yaArriba = false;
+  for (const r of renglones) {
+    if (r.fase === "en-vuelo" && !r.bajando && r.crucero && Math.abs(r.msl - r.crucero) < 60)
+      yaArriba = true;
+    r.tramo = tramoDe(r, yaArriba);
+  }
+  /*
+   * Del reloj de audio al de pared, **con el de la primera pieza de cada
+   * frase**: cuándo se pidió que sonara —su hora de pared— más lo que se
+   * programó por delante en el reloj del audio. Uno solo para todo el vuelo
+   * no vale: con la máquina cargada el reloj del audio se queda atrás del de
+   * pared —medido, cuatro minutos y medio en veinte—, y la llegada salía
+   * «bajando a 537 m».
+   */
+  const piezaDe = (f) =>
+    oido.sonidos.find(
+      (x) => x.voz === f.voz && Math.abs(x.t0 - f.t0) < 0.02 && Number.isFinite(x.ahora),
+    );
+  const enParedDe = (f) => {
+    const x = piezaDe(f);
+    return x ? x.pared / 1000 + (x.t0 - x.ahora) : null;
+  };
+  const renglonEn = (pared) => {
+    let mejor = renglones[0];
+    for (const r of renglones) {
+      if (r.pared > pared) break;
+      mejor = r;
+    }
+    return mejor;
+  };
+  const desde = renglones[0].pared;
+  const hasta = renglones[renglones.length - 1].pared;
+  const frases = frasesDelVuelo
+    .map((f) => {
+      const p0 = enParedDe(f);
+      return p0 === null ? null : { ...f, p0, p1: p0 + (f.t1 - f.t0) };
+    })
+    .filter((f) => f !== null && f.p1 >= desde && f.p0 <= hasta)
+    .sort((a, b) => a.p0 - b.p0);
+  for (const f of frases) {
+    const r = renglonEn(f.p0);
+    rutaDelVuelo.push(
+      `${String(r.t.toFixed(0)).padStart(5)} s  ${r.tramo.padEnd(15)} ${String(r.alto).padStart(5)} m  ${f.voz}: ${f.piezas.slice(0, 3).join(" ")}${f.piezas.length > 3 ? " …" : ""}`,
+    );
+  }
+  // Los huecos: lo que queda entre las frases, juntando las que se pisan.
+  const ocupado = frases.map((f) => [f.p0, f.p1]).sort((a, b) => a[0] - b[0]);
+  const huecos = [];
+  let libreDesde = desde;
+  for (const [a, b] of ocupado) {
+    if (a > libreDesde) huecos.push([libreDesde, a]);
+    libreDesde = Math.max(libreDesde, b);
+  }
+  if (hasta > libreDesde) huecos.push([libreDesde, hasta]);
+  /*
+   * Un hueco que cruza de un tramo a otro se reparte: cada tramo se queda con
+   * lo suyo, que es lo que se oye en él.
+   */
+  for (const [a, b] of huecos) {
+    let tramo = null;
+    let empieza = a;
+    for (const r of renglones) {
+      if (r.pared < a) continue;
+      if (r.pared > b) break;
+      if (tramo === null) tramo = r.tramo;
+      if (r.tramo !== tramo) {
+        const largo = r.pared - empieza;
+        const antes = silenciosPorTramo.get(tramo);
+        if (!antes || largo > antes.largo)
+          silenciosPorTramo.set(tramo, { largo, t: renglonEn(empieza).t });
+        tramo = r.tramo;
+        empieza = r.pared;
+      }
+    }
+    if (tramo === null) tramo = renglonEn(a).tramo;
+    const largo = b - empieza;
+    const antes = silenciosPorTramo.get(tramo);
+    if (!antes || largo > antes.largo) silenciosPorTramo.set(tramo, { largo, t: renglonEn(empieza).t });
+  }
+  console.log("\n  el trayecto, quién habla y cuándo:\n");
+  for (const l of rutaDelVuelo) console.log(`    ${l}`);
+  console.log("\n  silencios largos (más de 30 s):\n");
+  for (const [a, b] of huecos)
+    if (b - a > 30) {
+      const r = renglonEn(a);
+      console.log(`    ${(b - a).toFixed(0).padStart(4)} s desde ${r.t.toFixed(0)} s · ${r.tramo} · ${r.alto} m`);
+    }
+  console.log("\n  el silencio más largo de cada tramo:\n");
+  for (const [tramo, x] of silenciosPorTramo)
+    console.log(`    ${tramo.padEnd(15)} ${x.largo.toFixed(0).padStart(4)} s (desde ${x.t.toFixed(0)} s)`);
+  console.log("\n  lo que se ve por la ventanilla del pasaje:\n");
+  let antes = "";
+  for (const r of renglones) {
+    if (!r.seVe) continue;
+    const ahora = r.seVe.join(" · ") || "—";
+    if (ahora === antes) continue;
+    antes = ahora;
+    console.log(`    ${String(r.t.toFixed(0)).padStart(5)} s  ${r.tramo.padEnd(15)} ${String(r.alto).padStart(5)} m · al campo ${(r.alCampo / 1000).toFixed(0)} km${r.trabajo ? " · trabajo" : ""}  ${ahora}`);
+  }
+  if (oido.navegador.length) {
+    console.log("\n  lo que se le pasó a la voz del navegador (muda en Brave para Linux):\n");
+    for (const n of oido.navegador) console.log(`    ${n.texto}`);
+  }
+  if (process.env.OGA_RUTA_JSON) {
+    const { writeFile } = await import("node:fs/promises");
+    await writeFile(
+      process.env.OGA_RUTA_JSON,
+      JSON.stringify(
+        {
+          renglones,
+          frases: rutaDelVuelo,
+          huecos: huecos.map(([a, b]) => [renglonEn(a).t, +(b - a).toFixed(1)]),
+          habladas: vuelo.habladas,
+          // Y lo oído tal cual, pieza a pieza, para mirarlo después.
+          sonidos: oido.sonidos,
+        },
+        null,
+        1,
+      ),
+    );
+  }
+}
+
 if (process.env.OGA_TRAZA_ALA) {
   const { writeFile } = await import("node:fs/promises");
   await writeFile(
@@ -6642,7 +7006,8 @@ if (process.env.OGA_TRAZA_COCHE) {
  * fallos —todo lo que se mide después de aterrizar— cuando el defecto era uno:
  * no se llegó a aterrizar. Ver `comprobarSiVolo`.
  */
-const seQuedoSinTiempo = vuelo.etapa !== "apagar" && vuelo.segundos >= 1750;
+const seQuedoSinTiempo =
+  vuelo.etapa !== "apagar" && vuelo.segundos >= (RUTA_PEDIDA ? 3550 : 1750);
 
 /*
  * **Y lo mismo cuando el que se agota es el reloj de pared.**
@@ -6654,6 +7019,41 @@ const seQuedoSinTiempo = vuelo.etapa !== "apagar" && vuelo.segundos >= 1750;
  * avanzó. Ver `TOPE_DE_PARED`.
  */
 const seQuedoSinPared = !!vuelo.seQuedoSinPared;
+
+/*
+ * **Y con `OGA_RUTA`, ningún tramo callado.** Un hueco corto no es un fallo
+ * —entre frase y frase se oye el avión—; lo que no puede haber es un tramo
+ * entero sin nadie, que es lo que se jugó de El Hierro a La Gomera: «mucho
+ * rato volando en silencio». Ver `SILENCIO_MAXIMO`.
+ */
+if (RUTA_PEDIDA) {
+  const callados = [...silenciosPorTramo].filter(([, x]) => x.largo > SILENCIO_MAXIMO);
+  comprobarSiVolo(
+    `ningún tramo se queda más de ${SILENCIO_MAXIMO} s sin una voz`,
+    callados.length === 0,
+    [...silenciosPorTramo]
+      .map(([tramo, x]) => `${tramo} ${x.largo.toFixed(0)} s`)
+      .join(" · ") || "sin tramos",
+    "«aburrido, no pasa casi nada; mucho rato volando en silencio»",
+  );
+}
+/*
+ * **Y al acabar en otro campo, la invitación al vuelo siguiente**: una ruta
+ * que sale de allí y a la que este avión llega, a la vista en el panel del
+ * final. Si de allí no sale ninguna para este avión, no se ofrece nada.
+ */
+if (DESTINO) {
+  const sig = vuelo.siguiente ?? {};
+  comprobarSiVolo(
+    "el panel del final ofrece el vuelo siguiente, de verdad",
+    sig.propuesto ? sig.enPantalla && sig.deAqui && sig.cabe : !sig.enPantalla,
+    sig.propuesto
+      ? `desde ${sig.aqui} hacia ${sig.propuesto}` +
+          `${sig.enPantalla ? "" : " · no se ve"}${sig.deAqui ? "" : " · no sale de aquí"}${sig.cabe ? "" : " · no cabe"}`
+      : `desde ${sig.aqui ?? "?"}: ninguno`,
+    "«que el avión lo lleve de la mano a seguir y seguir»",
+  );
+}
 
 /** Cuánto juego se movió por cada segundo de pared, de verdad. */
 const relojDeVerdad =

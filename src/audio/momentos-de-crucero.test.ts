@@ -12,6 +12,7 @@ import { recetaDe, type Manifiesto } from "./banco-de-voz";
 import { seLePasoElMomento } from "./megafonia";
 import {
   ANTES_DE_BAJAR,
+  ANTES_DEL_DESCENSO,
   CURIOSIDADES,
   ENTRE_ANUNCIOS,
   MITADES,
@@ -89,6 +90,98 @@ describe("cuánto cuenta, según lo que dura el tramo", () => {
   it("en un salto de veinte minutos, nada más que el guion", () => {
     expect(cuantosSueltos(20)).toBe(0);
     expect(volar(20, {}, 15 * 60, 0)).toEqual([]);
+  });
+
+  /*
+   * **Y sin servicio, ese rato es de la comandante.** De El Hierro a La
+   * Gomera con el JAZ 60 —diecinueve plazas, sin auxiliar— se volaba entero
+   * en silencio entre el cartel y la bajada: «la comandante no habla».
+   */
+  it("pero sin servicio a bordo, ese rato es de la comandante: desde los quince, las dos", () => {
+    expect(cuantosSueltos(12, false)).toBe(0);
+    expect(cuantosSueltos(17, false)).toBe(2);
+    const dichos = volar(17, { conTripulacion: false, servicioDicho: false }, 15 * 60, 8 * 60);
+    expect(dichos.map((d) => d.que)).toEqual(["curiosidad", "chicos"]);
+  });
+
+  /*
+   * **Y repartidas por el crucero, hasta dos minutos y medio antes de bajar.**
+   * Medido de El Hierro a La Gomera: nueve minutos y medio de crucero, y el
+   * rato más largo sin una voz, cinco minutos y medio justo antes de empezar a
+   * bajar. Con el punto de descenso a la vista, cada cosa va en su tercio.
+   */
+  it("sin servicio, en un salto de veinte minutos, las dos y repartidas hasta la bajada", () => {
+    const m = new MomentosDeCrucero();
+    const ventana = 560;
+    const dichos: { que: MomentoDeCrucero; t: number }[] = [];
+    // Empieza con el cartel recién apagado: la comandante acaba de hablar.
+    let hablando = 8;
+    for (let t = 0; t < ventana; t++) {
+      hablando = Math.max(0, hablando - 1);
+      const que = m.paso(
+        1,
+        crucero({
+          conTripulacion: false,
+          servicioDicho: false,
+          minutosDelTramo: 20,
+          faltan: ventana - t + 300,
+          alDescenso: ventana - t,
+          megafoniaHabla: hablando > 0,
+        }),
+      );
+      if (que) {
+        dichos.push({ que, t });
+        hablando = 15;
+      }
+    }
+    expect(dichos.map((d) => d.que).sort()).toEqual(["chicos", "curiosidad"]);
+    // Ni pegadas al cartel ni a la bajada, y a partes iguales.
+    expect(ventana - dichos[1]!.t).toBeGreaterThanOrEqual(ANTES_DEL_DESCENSO);
+    const huecos = [
+      dichos[0]!.t - 8,
+      dichos[1]!.t - dichos[0]!.t - 15,
+      ventana - dichos[1]!.t - 15,
+    ];
+    expect(Math.max(...huecos)).toBeLessThan(ventana / 3);
+    expect(Math.min(...huecos)).toBeGreaterThan(ventana / 3 - 30);
+  });
+
+  it("y si el crucero cambia —otro nivel por los baches—, se reparte con lo que queda", () => {
+    const m = new MomentosDeCrucero();
+    const dichos: number[] = [];
+    let hablando = 8;
+    // El punto de descenso se acerca de golpe a los cien segundos: el crucero
+    // nuevo es más corto que el que se veía al nivelar.
+    for (let t = 0; t < 600; t++) {
+      hablando = Math.max(0, hablando - 1);
+      const alDescenso = t < 100 ? 700 - t : 450 - t;
+      if (alDescenso <= 0) break;
+      const que = m.paso(
+        1,
+        crucero({
+          conTripulacion: false,
+          servicioDicho: false,
+          minutosDelTramo: 20,
+          faltan: alDescenso + 300,
+          alDescenso,
+          megafoniaHabla: hablando > 0,
+        }),
+      );
+      if (que) {
+        dichos.push(t);
+        hablando = 15;
+      }
+    }
+    expect(dichos.length).toBe(2);
+    for (const t of dichos) expect(450 - t).toBeGreaterThanOrEqual(ANTES_DEL_DESCENSO);
+  });
+
+  it("y con el punto de descenso cerca, nada nuevo", () => {
+    const m = new MomentosDeCrucero();
+    for (let t = 0; t < 600; t++)
+      expect(
+        m.paso(1, crucero({ alDescenso: ANTES_DEL_DESCENSO - 1, faltan: 20 * 60 })),
+      ).toBeNull();
   });
 
   it("en uno de media hora, una sola cosa y sin el punto del vuelo", () => {
@@ -174,9 +267,9 @@ describe("nada fuera de tiempo", () => {
     expect(enDiezMinutos({ conTripulacion: false, servicioDicho: false })).not.toEqual([]);
   });
 
-  it("con el cartel puesto, los sueltos esperan; la mitad del camino, no", () => {
-    const dichos = volar(45, { cartelPuesto: true });
-    expect(dichos.map((d) => d.que)).toEqual(["mitad"]);
+  it("con el cartel puesto por unos baches se cuenta igual; con una turbulencia anunciada, nada", () => {
+    expect(volar(45, { cartelPuesto: true }).map((d) => d.que)).toEqual(["curiosidad", "mitad"]);
+    expect(volar(45, { cartelPuesto: true, turbulenciaPorPasar: true })).toEqual([]);
   });
 
   it("con la bajada a menos de ocho minutos ya no se empieza nada", () => {

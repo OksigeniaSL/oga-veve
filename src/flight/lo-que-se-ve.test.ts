@@ -104,6 +104,47 @@ describe("cuándo se señala lo que se ve", () => {
     ).toEqual(["izquierda: Teide"]);
   });
 
+  /*
+   * **Y el crucero no es cabina estéril**, aunque vaya por debajo de diez mil
+   * pies y cerca de un campo: es la excepción que escribe la propia regla
+   * (14 CFR 121.542). De El Hierro a La Gomera el crucero entero cae a menos
+   * de treinta kilómetros de algún campo, y la comandante no contaba nada.
+   */
+  it("en crucero, nivelado y sin bajar, sí, aunque esté cerca del campo", () => {
+    const enCrucero = new LoQueSeVe(HITOS);
+    expect(
+      correr(enCrucero, LO_PRIMERO + 2, {
+        altitud: 1500,
+        sobreElCampo: 1450,
+        alCampo: CERCA_DEL_CAMPO.conPasaje - 10_000,
+        enCrucero: true,
+      }),
+    ).toEqual(["izquierda: Teide"]);
+    // Subiendo o bajando, en el mismo sitio, sigue siendo cabina estéril.
+    const subiendo = new LoQueSeVe(HITOS);
+    expect(
+      correr(subiendo, 600, {
+        altitud: 1500,
+        sobreElCampo: 1450,
+        alCampo: CERCA_DEL_CAMPO.conPasaje - 10_000,
+        enCrucero: false,
+      }),
+    ).toEqual([]);
+  });
+
+  it("y la excepción del crucero es de los vuelos de línea: la avioneta sale del circuito", () => {
+    const m = new LoQueSeVe(HITOS);
+    expect(
+      correr(m, 300, {
+        conPasaje: false,
+        altitud: 1200,
+        sobreElCampo: 1000,
+        alCampo: CERCA_DEL_CAMPO.enAvioneta - 500,
+        enCrucero: true,
+      }),
+    ).toEqual([]);
+  });
+
   it("y en avioneta, la instructora habla en cuanto sale del circuito", () => {
     // Una avioneta no sube a diez mil pies: con la regla de los grandes no
     // diría nunca nada. Su fase de trabajo es el circuito.
