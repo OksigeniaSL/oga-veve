@@ -339,6 +339,18 @@ describe("y los anuncios no se pierden porque una lección salte una fase", () =
     expect(correr(m, "en-vuelo", 20)).toContain("comandante.crucero");
   });
 
+  it("y el de crucero espera su hueco aunque la megafonía tarde en callarse", () => {
+    /*
+     * Con el aire quieto llega cuando llega, y a veces con otra frase de la
+     * comandante en la cola. Con veinticinco segundos de ventana se perdía y
+     * el cartel se quedaba puesto el resto del vuelo.
+     */
+    const m = new Megafonia();
+    for (let t = 0; t < 50; t += 0.5)
+      m.paso(0.5, momento("en-vuelo", { megafoniaHablando: true }));
+    expect(correr(m, "en-vuelo", 10)).toContain("comandante.crucero");
+  });
+
   it("y aun así cada anuncio se dice una sola vez", () => {
     const m = new Megafonia();
     const dichos = [

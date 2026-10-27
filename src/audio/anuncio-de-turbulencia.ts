@@ -60,17 +60,62 @@ export function claveDelAnuncio(
   return `comandante.turbulencia.${suceso.intensidad}` as TranslationKey;
 }
 
+/** A quién se le habla, que cambia lo que es verdad decir. */
+export interface AQuien {
+  /**
+   * Si el avión lleva tripulación de cabina. El JAZ 60 no la lleva —ver
+   * `conTripulacion` en `megafonia.ts`—, y «la tripulación también se va a
+   * sentar» dicho en él es falso.
+   */
+  readonly conTripulacion: boolean;
+  /**
+   * Si el pasaje ya va sentado con el cartel puesto —la subida, la bajada—:
+   * «vuelvan a su asiento» no es lo que se dice ahí, sino «sigan sentados».
+   */
+  readonly sentados: boolean;
+}
+
+/** Las de la moderada que hablan de la tripulación. Ver `AQuien.conTripulacion`. */
+const NOMBRAN_A_LA_TRIPULACION = /^comandante\.turbulencia\.(?:ahora\.|otraVez\.)?(?:moderada|fuerte)$/;
+
 /**
- * **El anuncio, con su grabación**: el suyo si la tiene y, si no, el de
- * siempre en una de sus formas. Ver la cabecera.
+ * **Las claves que valen para este anuncio, de la que mejor lo dice a la que
+ * menos**, antes de mirar cuál está grabada:
+ *
+ * - con el pasaje sentado, la de «sigan sentados», si es moderada;
+ * - sin tripulación de cabina, la suya, que no la nombra;
+ * - y la de siempre del suceso, si es verdad en este avión.
+ */
+export function clavesDelAnuncio(
+  suceso: Extract<SucesoDelCamino, { que: "anunciar" }>,
+  a: AQuien = { conTripulacion: true, sentados: false },
+): TranslationKey[] {
+  const base = claveDelAnuncio(suceso);
+  const claves: TranslationKey[] = [];
+  const moderada = suceso.intensidad === "moderada";
+  const propia = suceso.como === "tormenta" || suceso.fuente === "pirep";
+  if (a.sentados && moderada && !propia) claves.push("comandante.turbulencia.sentados.moderada");
+  if (!a.conTripulacion && NOMBRAN_A_LA_TRIPULACION.test(base)) {
+    if (moderada) claves.push(`${base}.sinTripulacion` as TranslationKey);
+    return claves;
+  }
+  claves.push(base);
+  return claves;
+}
+
+/**
+ * **El anuncio, con su grabación**: el que mejor lo dice de los grabados y, si
+ * no hay ninguno, el de siempre en una de sus formas, que no nombra a la
+ * tripulación. Ver la cabecera.
  */
 export function anuncioDeTurbulencia(
   suceso: Extract<SucesoDelCamino, { que: "anunciar" }>,
   grabada: (id: string) => boolean,
   azar: () => number = Math.random,
+  a?: AQuien,
 ): FormaDicha {
-  const suya = claveDelAnuncio(suceso);
-  if (grabada(suya)) return { texto: t(suya), id: suya };
+  for (const clave of clavesDelAnuncio(suceso, a))
+    if (grabada(clave)) return { texto: t(clave), id: clave };
   return unaForma(LA_DE_SIEMPRE, azar);
 }
 

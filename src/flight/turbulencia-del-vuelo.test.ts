@@ -11,104 +11,13 @@ import {
   PRIMERO_LOS_BACHES,
   SACUDE_CADA,
   TurbulenciaDelVuelo,
-  fuenteDe,
   sacudeEnElCamino,
-  turbulenciaDelCamino,
   type MomentoDelCamino,
   type SucesoDelCamino,
   type Zona,
 } from "./turbulencia-del-vuelo";
 
-/** Un azar que se repite, mulberry32: semillas seguidas dan tiradas distintas. */
-function dados(semilla: number): () => number {
-  let x = (semilla * 0x9e3779b9) >>> 0;
-  return () => {
-    x = (x + 0x6d2b79f5) >>> 0;
-    let t = x;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const CAMINO = { largo: 150_000, velocidad: 120, crucero: 4300 };
-const BUEN_TIEMPO = { vientoKt: 6, tormenta: false, nubes: false, montana: false };
-const ALISIO = { vientoKt: 28, tormenta: false, nubes: true, montana: true };
-const TORMENTA = { vientoKt: 18, tormenta: true, nubes: true, montana: false };
-
-describe("la turbulencia del camino tiene la variedad de lo real", () => {
-  it("con buen tiempo, muchos vuelos no tienen ninguna", () => {
-    let sinNada = 0;
-    for (let i = 0; i < 400; i++)
-      if (turbulenciaDelCamino(BUEN_TIEMPO, CAMINO, dados(i + 1)).length === 0) sinNada++;
-    expect(sinNada / 400).toBeGreaterThan(0.45);
-    expect(sinNada / 400).toBeLessThan(0.8);
-  });
-
-  it("con alisio fuerte entre montañas, lo raro es no encontrarla", () => {
-    let sinNada = 0;
-    const intensidades = new Set<string>();
-    for (let i = 0; i < 400; i++) {
-      const zonas = turbulenciaDelCamino(ALISIO, CAMINO, dados(i + 1));
-      if (!zonas.length) sinNada++;
-      for (const z of zonas) intensidades.add(z.intensidad);
-    }
-    expect(sinNada / 400).toBeLessThan(0.25);
-    // Ligera, moderada y alguna fuerte.
-    expect([...intensidades].sort()).toEqual(["fuerte", "ligera", "moderada"]);
-  });
-
-  it("con tormenta, casi todo el vuelo", () => {
-    for (let i = 0; i < 50; i++) {
-      const zonas = turbulenciaDelCamino(TORMENTA, CAMINO, dados(i + 1));
-      expect(zonas).toHaveLength(1);
-      const z = zonas[0]!;
-      expect(z.como).toBe("tormenta");
-      expect((z.hasta - z.desde) / CAMINO.largo).toBeGreaterThan(0.6);
-    }
-  });
-
-  it("en cualquier parte del vuelo, y unas cortas y otras largas", () => {
-    const sitios: number[] = [];
-    const duran: number[] = [];
-    for (let i = 0; i < 400; i++)
-      for (const z of turbulenciaDelCamino(ALISIO, CAMINO, dados(i + 1))) {
-        sitios.push(z.desde / CAMINO.largo);
-        duran.push((z.hasta - z.desde) / CAMINO.velocidad / 60);
-      }
-    // En la subida, en crucero y en la bajada.
-    expect(sitios.some((f) => f < 0.2)).toBe(true);
-    expect(sitios.some((f) => f > 0.4 && f < 0.6)).toBe(true);
-    expect(sitios.some((f) => f > 0.75)).toBe(true);
-    // Unos minutos, y más rato.
-    expect(duran.some((m) => m < 4.1)).toBe(true);
-    expect(duran.some((m) => m > 6)).toBe(true);
-  });
-
-  it("prevista y sin avisar, las dos", () => {
-    const comos = new Set<string>();
-    for (let i = 0; i < 200; i++)
-      for (const z of turbulenciaDelCamino(ALISIO, CAMINO, dados(i + 1))) comos.add(z.como);
-    expect([...comos].sort()).toEqual(["prevista", "sin-avisar"]);
-  });
-
-  it("y de la prevista, una de cada tres la avisa otro avión por radio", () => {
-    let previstas = 0;
-    let pireps = 0;
-    for (let i = 0; i < 2000; i++)
-      for (const z of turbulenciaDelCamino(ALISIO, CAMINO, dados(i + 1))) {
-        // La de aire claro no se sabe: no tiene de dónde.
-        if (z.como === "sin-avisar") expect(fuenteDe(z)).toBeNull();
-        if (z.como !== "prevista") continue;
-        previstas++;
-        if (fuenteDe(z) === "pirep") pireps++;
-      }
-    expect(pireps / previstas).toBeGreaterThan(0.28);
-    expect(pireps / previstas).toBeLessThan(0.39);
-    // Y la de la tormenta se sabe por el radar.
-    expect(fuenteDe(turbulenciaDelCamino(TORMENTA, CAMINO, dados(1))[0]!)).toBe("radar");
-  });
-
+describe("cada grado sacude lo que su nombre dice", () => {
   it("y cada grado sacude lo que su nombre dice, y la ligera enciende el cartel", () => {
     expect(nivelDe(SACUDE_CADA.ligera)).toBe("ligera");
     expect(nivelDe(SACUDE_CADA.moderada)).toBe("moderada");
@@ -235,6 +144,19 @@ describe("el anuncio, atado a la turbulencia de verdad", () => {
       .filter((s) => s.que === "anunciar")
       .map((s) => (s.que === "anunciar" ? s.vez : 0));
     expect(vez).toEqual([1, 2]);
+  });
+
+  it("y la de aire claro que viene detrás no retrasa el «ya pasó» de la anterior: nadie la ve venir", () => {
+    const t = new TurbulenciaDelVuelo();
+    // Una prevista hasta los tres minutos y una de aire claro un minuto después.
+    t.empezar([
+      { desde: 120 * 100, hasta: 120 * 180, intensidad: "moderada", como: "prevista", capa: null },
+      { desde: 120 * 250, hasta: 120 * 300, intensidad: "ligera", como: "sin-avisar", capa: null },
+    ]);
+    const pasado = volar(t, 400, () => ({ pasajeSuelto: false }));
+    const paso = pasado.find((p) => p.suceso.que === "paso");
+    expect(paso).toBeDefined();
+    expect(paso!.seg).toBeLessThan(250);
   });
 
   it("en la final no se anuncia: se espera a poder", () => {

@@ -563,6 +563,22 @@ export const ES_PY = {
     "Señores pasajeros, ya estamos tranquilos. Apagamos la señal del cinturón: pueden soltarse, pero si están sentados, déjenselo puestito.",
   "comandante.turbulencia.pasoBajando":
     "Señores pasajeros, ya pasamos la turbulencia. La señal del cinturón sigue encendida porque ya empezamos a bajar.",
+  /*
+   * **Y la moderada dicha a quien la oye.** Con el pasaje ya sentado —el
+   * cartel puesto desde el despegue, o la bajada—, «sigan sentados» y no
+   * «vuelvan a su asiento». Y en el avión sin tripulación de cabina, el JAZ
+   * 60, sin nombrarla: decir que se sienta quien no va a bordo es enseñar algo
+   * falso. Cada una suena con su grabación; hasta entonces, la de siempre. Ver
+   * `clavesDelAnuncio` en `audio/anuncio-de-turbulencia.ts`.
+   */
+  "comandante.turbulencia.sentados.moderada":
+    "Señores pasajeros, les habla la comandante. Más adelante hay turbulencia moderada: el avión se va a mover bastante un rato. Es normal, y el avión está hecho para esto. Sigan sentados, con el cinturón bien abrochado.",
+  "comandante.turbulencia.moderada.sinTripulacion":
+    "Señores pasajeros, les habla la comandante. Más adelante hay turbulencia moderada: el avión se va a mover bastante un rato. Es normal, y el avión está hecho para esto. Vuelvan a su asiento, abróchense bien el cinturón y guarden lo que tengan suelto.",
+  "comandante.turbulencia.ahora.moderada.sinTripulacion":
+    "Señores pasajeros, les habla la comandante. Estamos pasando por turbulencia moderada que no se veía venir: no sale en el radar. Es normal y el avión está hecho para esto. Vuelvan a su asiento y abróchense bien el cinturón.",
+  "comandante.turbulencia.otraVez.moderada.sinTripulacion":
+    "Señores pasajeros, otra vez viene turbulencia, esta vez un poco más movida. Igual que antes: todos sentados y con el cinturón bien puesto.",
   "comandante.cinturon.porque":
     "Un consejo de la comandante: aunque la señal del cinturón esté apagada, mientras estén sentados déjenselo puesto, flojito. A veces la turbulencia llega sin avisar, y el cinturón es lo que los deja quietitos en su asiento.",
 

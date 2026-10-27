@@ -339,6 +339,16 @@ const VENTANA: Partial<Record<Anuncio, number>> = {
    * pasaba sin hueco. Se da rodando, y el rodaje dura lo que dura.
    */
   "comandante.bienvenida": 120,
+  /*
+   * **Y el de soltar el cinturón, todo el crucero.** Espera a que el aire esté
+   * quieto —ver `aireMovido`— y eso llega cuando llega, a veces con la radio
+   * hablando o la comandante contando otra cosa. Con veinticinco segundos se
+   * perdía, y el cartel se quedaba puesto el resto del vuelo sin que nadie
+   * lo soltara: medido de El Hierro a La Gomera, listo a los 26 km detrás de
+   * una moderada y sin decirse nunca. Lo que lo deja de hacer verdad lo
+   * guardan sus condiciones: empezar a bajar, una turbulencia por delante.
+   */
+  "comandante.crucero": 120,
   "tripulacion.servicio": 120,
   "comandante.descenso": 60,
   "tripulacion.cinturones": 40,
@@ -458,6 +468,18 @@ export interface Momento {
    * Ver `turbulencia-del-vuelo.ts`.
    */
   readonly turbulenciaPorPasar?: boolean;
+  /**
+   * **Si el aire se está moviendo ahora**, con la banda muerta del cartel:
+   * ver `sacudiendoAhora` en `flight/cinturon.ts`. Con baches no se dice «ya
+   * pueden soltarse el cinturón».
+   *
+   * Lo dijo en la base del mar de nubes, de El Hierro a La Gomera con el JAZ
+   * 60, y el avión cruzó la capa entera subiendo con baches de ±0,24 g y el
+   * pasaje suelto: «cuando hay turbulencias no se enciende la luz del cinturón
+   * y no dice nada». Una comandante de verdad apaga el cartel en aire quieto,
+   * por encima de las nubes, no dentro. Sin el dato, quieto.
+   */
+  readonly aireMovido?: boolean;
   /** A qué altura se va sobre el aeródromo, en metros. */
   readonly sobreElCampo: number;
   /** Y cuánto se sube o se baja, en metros por segundo. */
@@ -588,7 +610,12 @@ export class Megafonia {
   private seDanLasCondiciones(anuncio: Anuncio, m: Momento): boolean {
     switch (anuncio) {
       case "comandante.crucero":
-        return arribaYAsentado(m) && !this.descensoEmpezado && !m.turbulenciaPorPasar;
+        return (
+          arribaYAsentado(m) &&
+          !this.descensoEmpezado &&
+          !m.turbulenciaPorPasar &&
+          !m.aireMovido
+        );
       case "tripulacion.servicio":
         return (
           this.hace("comandante.crucero") >= ANTES_DEL_SERVICIO &&

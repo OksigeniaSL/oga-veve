@@ -1229,11 +1229,17 @@ import {
 } from "./audio/turnos";
 import {
   TurbulenciaDelVuelo,
-  turbulenciaDelCamino,
   type Intensidad,
   type SucesoDelCamino,
   type Zona,
 } from "./flight/turbulencia-del-vuelo";
+import {
+  ISLAS_ALTAS,
+  guionDeTurbulencia,
+  guionSiguiente,
+  type DatosDelVuelo,
+} from "./flight/guion-de-turbulencia";
+import { mulberry32 } from "./world/noise";
 import {
   CINTURON_PORQUE,
   GRADO_EN_RADIO,
@@ -6988,7 +6994,7 @@ export class Game {
       /*
        * Y un día sin turbulencia en el camino, que es lo más corriente con buen
        * tiempo: la del aire de abajo, la del alisio rozando la isla, se nota
-       * igual al subir. Ver `turbulenciaDelCamino`.
+       * igual al subir. Ver `guionDeTurbulencia`.
        */
       this.turbulenciaPedida = [];
     } else if (aterrizar) {
@@ -13039,6 +13045,8 @@ export class Game {
        * lo que se enseña. Ver `atenderALaTormenta`.
        */
       turbulenciaPorPasar: this.turbulenciaDelVuelo.porPasarTodavia || this.tormentaPorDelante,
+      // Y con baches, tampoco: el cinturón se suelta en aire quieto. Ver `aireMovido`.
+      aireMovido: this.cinturon.sacudiendoAhora,
       /*
        * Y a qué altura se va **sobre el campo**, no sobre el mar: el cartel
        * del cinturón se apaga cuando el avión está arriba, y «arriba» en La
@@ -29394,22 +29402,32 @@ export class Game {
     zonas: readonly Zona[];
     volado: number;
     sucesos: readonly { volado: number; suceso: SucesoDelCamino }[];
+    semilla: number;
+    peldano: string;
   } {
     return {
       zonas: this.turbulenciaDelVuelo.deEsteVuelo,
       volado: this.turbulenciaDelVuelo.loVolado,
       sucesos: [...this.turbulenciaDelVuelo.sucesos],
+      semilla: this.semillaDeTurbulencia,
+      peldano: this.tier.avisos,
     };
   }
 
   /**
-   * **La turbulencia del camino, repartida al despegar**: según el tiempo de
-   * los dos campos, lo largo del tramo y la variedad de lo real —a veces
-   * nada, unos minutos, más rato o casi todo el vuelo con tormenta—. Una
-   * vuelta al campo no tiene camino. Ver `turbulenciaDelCamino`.
+   * **El guion de la turbulencia de este vuelo, decidido al despegar**: cuántos
+   * episodios, dónde de la ruta, cuánto duran y con qué fuerza, según el sitio,
+   * la época, la hora y el tiempo de hoy, y con el tope del peldaño. Una
+   * vuelta al campo no tiene camino. Ver `flight/guion-de-turbulencia.ts`.
+   *
+   * La semilla, la de `?turbulencia=` si se pide —para repetir un vuelo— y si
+   * no una nueva en cada despegue: dos vuelos seguidos por la misma ruta no
+   * salen iguales. Se guarda para los bancos.
    */
   private repartirLaTurbulencia(): void {
     this.cartelPorLaTurbulencia = false;
+    this.episodioConVoz = false;
+    this.bachesContadosEn = null;
     // Y lo que se dice una vez por vuelo, para el vuelo nuevo.
     this.servicioParado = false;
     this.cinturonPorqueDicho = false;
@@ -29418,34 +29436,103 @@ export class Game {
       this.turbulenciaDelVuelo.empezar(this.turbulenciaPedida);
       return;
     }
-    const destino = this.elDestino();
-    const salida = this.campoPorId(this.salidaId);
-    if (!destino || !salida || destino.id === this.salidaId) {
+    const pedida = Number(new URLSearchParams(location.search).get("turbulencia"));
+    this.semillaDeTurbulencia = Number.isFinite(pedida) && pedida > 0
+      ? pedida >>> 0
+      : (Math.random() * 0xffffffff) >>> 0;
+    const datos = this.datosDelGuion();
+    if (!datos) {
       this.turbulenciaDelVuelo.empezar([]);
       return;
     }
+    // Y distinto del vuelo de antes por esta misma ruta. Ver `guionSiguiente`.
+    const ruta = `${this.salidaId}>${this.elDestino()?.id ?? ""}`;
+    const guion = guionSiguiente(
+      datos,
+      mulberry32(this.semillaDeTurbulencia),
+      this.guionDeAntes.get(ruta) ?? null,
+    );
+    this.guionDeAntes.set(ruta, guion);
+    this.turbulenciaDelVuelo.empezar(guion);
+  }
+
+  /** El último guion de cada ruta, para no repetirlo. Ver `guionSiguiente`. */
+  private readonly guionDeAntes = new Map<string, readonly Zona[]>();
+
+  /**
+   * **Lo que el guion necesita saber de este vuelo**, o `null` en una vuelta
+   * al campo, que no tiene camino. Aparte para que un banco pueda pedir el
+   * guion de otra semilla con los mismos datos. Ver `guionParaBanco`.
+   */
+  private datosDelGuion(): DatosDelVuelo | null {
+    const destino = this.elDestino();
+    const salida = this.campoPorId(this.salidaId);
+    if (!destino || !salida || destino.id === this.salidaId) return null;
     const aqui = this.scenario.meteo ?? TIEMPO_DE_CASA;
     const alli = destino.escenario.meteo ?? aqui;
     const plan = this.navegacion.plan;
     const recta = Math.hypot(destino.x - salida.x, destino.z - salida.z);
     const origen = this.scenario.aerodrome?.origin;
-    this.turbulenciaDelVuelo.empezar(
-      turbulenciaDelCamino(
-        {
-          vientoKt: Math.max(aqui.vientoKt, alli.vientoKt),
-          tormenta:
-            aqui.lluvia === "tormenta" || alli.lluvia === "tormenta" || this.celdas.length > 0,
-          nubes: aqui.techoM !== null || alli.techoM !== null,
-          montana: !!origen && enCanarias(origen),
-        },
-        {
-          largo: plan?.total ?? recta * 1.15,
-          velocidad: this.aircraft.cruiseSpeed,
-          crucero: plan ? this.navegacion.cruceroPlaneado : this.flight.state.position.y + 1500,
-        },
-      ),
-    );
+    const canarias = !!origen && enCanarias(origen);
+    const capa = this.capaDeNubes;
+    return {
+      region: canarias ? "canarias" : "paraguay",
+      mes: this.fechaDelVuelo().getUTCMonth() + 1,
+      hora: this.horaDelVuelo,
+      vientoKt: Math.max(aqui.vientoKt, alli.vientoKt),
+      vientoDe: aqui.vientoDe ?? alli.vientoDe,
+      tormenta: aqui.lluvia === "tormenta" || alli.lluvia === "tormenta" || this.celdas.length > 0,
+      nubes: capa ? { base: capa.base, techo: capa.techo } : null,
+      // La ruta del plan, en los metros del mundo, de la salida a la llegada.
+      ruta: [
+        { x: salida.x, z: salida.z },
+        ...(plan?.fijos ?? []).map((f) => ({ x: f.x, z: f.z })),
+        { x: destino.x, z: destino.z },
+      ],
+      largo: plan?.total ?? recta * 1.15,
+      velocidad: this.aircraft.cruiseSpeed,
+      crucero: plan ? this.navegacion.cruceroPlaneado : this.flight.state.position.y + 1500,
+      cotaSalida: this.cotaDelCampo(this.elCampo(salida.id)),
+      cotaLlegada: this.cotaDelCampo(this.elCampo(destino.id)),
+      // Las islas altas, en los metros de este mundo: su cumbre vista desde casa.
+      islas:
+        canarias && origen ? ISLAS_ALTAS.map((i) => ({ ...i, ...dondeCae(origen, i) })) : [],
+      peldano: this.tier.avisos,
+    };
   }
+
+  /**
+   * **El guion que saldría con otra semilla**, con los datos de este vuelo:
+   * para que un banco mire muchos vuelos de la misma ruta sin volarlos. Ver
+   * `scripts/verificar-turbulencia.mjs`.
+   */
+  guionParaBanco(semilla: number): { datos: DatosDelVuelo | null; guion: readonly Zona[] } {
+    const datos = this.datosDelGuion();
+    return { datos, guion: datos ? guionDeTurbulencia(datos, mulberry32(semilla >>> 0)) : [] };
+  }
+
+  /**
+   * **Los guiones de muchos vuelos seguidos por esta ruta**, como saldrían
+   * uno detrás de otro, cada uno sin repetir el de antes. Para los bancos.
+   */
+  guionesSeguidosParaBanco(
+    cuantos: number,
+    semilla: number,
+  ): { datos: DatosDelVuelo | null; guiones: readonly (readonly Zona[])[] } {
+    const datos = this.datosDelGuion();
+    if (!datos) return { datos, guiones: [] };
+    const guiones: Zona[][] = [];
+    let antes: readonly Zona[] | null = null;
+    for (let i = 0; i < cuantos; i++) {
+      const g = guionSiguiente(datos, mulberry32((semilla + i * 7919) >>> 0), antes);
+      guiones.push(g);
+      antes = g;
+    }
+    return { datos, guiones };
+  }
+
+  /** La semilla del guion de este vuelo. Ver `repartirLaTurbulencia`. */
+  private semillaDeTurbulencia = 0;
 
   /**
    * **El anuncio de la turbulencia, atado a la de verdad.** Ver
@@ -29474,6 +29561,9 @@ export class Game {
       const seApaga = this.cartelPorLaTurbulencia && !bajando;
       if (seApaga) this.dijoSoltarse = true;
       this.cartelPorLaTurbulencia = false;
+      // La ligera pasa como llegó, sin megafonía: el cartel se apaga con su *ding*.
+      const conVoz = this.episodioConVoz;
+      this.episodioConVoz = false;
       /*
        * **Y se dice**, si hay grabada una frase que sea verdad: que se apaga
        * la señal porque la encendió ella, o que sigue encendida porque ya se
@@ -29482,8 +29572,8 @@ export class Game {
        * del cinturón; y la forma del «ya pasó» que no lo da ya.
        */
       const conConsejo =
-        seApaga && !this.cinturonPorqueDicho && grabada(CINTURON_PORQUE);
-      const forma = pasoDeTurbulencia({ bajando, seApaga, conConsejo }, grabada);
+        conVoz && seApaga && !this.cinturonPorqueDicho && grabada(CINTURON_PORQUE);
+      const forma = conVoz ? pasoDeTurbulencia({ bajando, seApaga, conConsejo }, grabada) : null;
       if (forma) {
         this.comandante.decir(forma.texto, forma.id, "baja");
         if (this.tier.instruments !== "none") this.hud.radio(forma.texto);
@@ -29501,6 +29591,23 @@ export class Game {
     if (pasajeSuelto) this.cartelPorLaTurbulencia = true;
     this.pidioAbrocharse = true;
     /*
+     * **La ligera, solo el cartel.** Es lo que hace una comandante de verdad
+     * con unos baches suaves: enciende la señal y ya, sin megafonía, y el
+     * servicio sigue —el AIM de la FAA (7-1-21) lo dice de la ligera: se
+     * puede servir y se anda sin dificultad—. El anuncio es de la moderada,
+     * una vez por episodio. Lo que oye quien vuela es el *ding*, y en los
+     * peldaños de abajo la instructora cuenta los baches cuando se sienten:
+     * ver `hablarDeLosBaches`. La de la tormenta sí se cuenta, que es la del
+     * radar y dura casi todo el vuelo; la que avisó otro avión deja oír la
+     * radio, que es lo que enseña.
+     */
+    if (suceso.intensidad === "ligera" && suceso.como !== "tormenta") {
+      this.episodioConVoz = false;
+      if (suceso.fuente === "pirep") this.contarElPirep(suceso.intensidad, () => {});
+      return;
+    }
+    this.episodioConVoz = true;
+    /*
      * **Y el servicio se para**, si ya se había ofrecido y el pasaje iba
      * suelto: la tripulación lo dice cuando acaba la comandante —pedido a la
      * vez, esperaría lo que dura su anuncio y podría caducar—, y al pasar,
@@ -29515,7 +29622,11 @@ export class Game {
         comoSeDiceAqui("tripulacion.servicio.pausa", this.hablaDeLaTripulacion()),
       ) !== null;
     if (parar) this.servicioParado = true;
-    const forma = anuncioDeTurbulencia(suceso, grabada);
+    // Dicha a quien la oye: sin nombrar a la tripulación donde no la hay. Ver `AQuien`.
+    const forma = anuncioDeTurbulencia(suceso, grabada, undefined, {
+      conTripulacion: conTripulacion(this.aircraft.mass),
+      sentados: !pasajeSuelto,
+    });
     let pidioParar = false;
     /*
      * La tira, cuando empieza a hablar si va detrás de la radio —escrita en
@@ -29570,6 +29681,17 @@ export class Game {
 
   /** Si la tripulación paró el servicio por la turbulencia. */
   private servicioParado = false;
+  /**
+   * Si el episodio de ahora lo anunció la comandante: el de la moderada. El
+   * de la ligera va sin megafonía, y al pasar tampoco se dice nada. Ver
+   * `anunciarLaTurbulencia`.
+   */
+  private episodioConVoz = false;
+  /**
+   * El episodio cuyos baches ya contó la instructora: uno por episodio, y lo
+   * rearma el episodio siguiente, no un reloj. Ver `contarLosBachesDeLaLigera`.
+   */
+  private bachesContadosEn: Zona | null = null;
   /** Si ya se dio el consejo del cinturón en este vuelo. */
   private cinturonPorqueDicho = false;
   /** Si ya se contó en este vuelo lo que avisó otro avión. Ver `contarElPirep`. */
@@ -29798,6 +29920,7 @@ export class Game {
     if (conGente) {
       if (suceso) this.anunciarLaTurbulencia(suceso);
       else this.aconsejarElCinturon();
+      this.contarLosBachesDeLaLigera(movimiento);
       return;
     }
     if (movimiento < YA_NO_SACUDE) this.bachesDichos = false;
@@ -29810,6 +29933,39 @@ export class Game {
     )
       return;
     this.bachesDichos = true;
+    const forma = unaForma("vuelo.baches");
+    this.instructor.decir(forma.texto, forma.id);
+  }
+
+  /**
+   * **Los baches de un episodio ligero, contados por la instructora** en los
+   * peldaños de abajo: la ligera va sin megafonía —ver `anunciarLaTurbulencia`—
+   * y lo que suena es el *ding* del cartel. Detrás, ella cuenta con calma qué
+   * es eso, cuando se siente y no antes, una vez por episodio. Solo los del
+   * guion del vuelo: la capa de abajo de cada despegue no se cuenta, que era
+   * «siempre la anuncia en el mismo sitio». En el vuelo de Ara, la escena.
+   */
+  private contarLosBachesDeLaLigera(movimiento: number): void {
+    const s = this.flight.state;
+    if (
+      this.episodioConVoz ||
+      this.dePasaje ||
+      !laInstructoraLoExplica(this.tier.avisos) ||
+      movimiento < SACUDE ||
+      s.onGround ||
+      this.faseDeAhora !== "en-vuelo" ||
+      s.heightAboveGround < 300
+    )
+      return;
+    const zona = this.turbulenciaDelVuelo.zonaDeAhora;
+    if (
+      !zona ||
+      zona === this.bachesContadosEn ||
+      zona.intensidad !== "ligera" ||
+      this.turbulenciaDelVuelo.sacude(s.position.y, s.heightAboveGround) <= 0
+    )
+      return;
+    this.bachesContadosEn = zona;
     const forma = unaForma("vuelo.baches");
     this.instructor.decir(forma.texto, forma.id);
   }

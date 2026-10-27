@@ -92,6 +92,55 @@ describe("y mientras no está grabada, suena la que hay", () => {
   });
 });
 
+describe("y dicha a quien la oye", () => {
+  const sinTripulacion = { conTripulacion: false, sentados: false };
+  const sentados = { conTripulacion: true, sentados: true };
+
+  it("sin tripulación de cabina, nunca la nombra: ni con la suya grabada ni sin ella", () => {
+    for (const s of [
+      suceso({ intensidad: "moderada" }),
+      suceso({ intensidad: "moderada", vez: 2 }),
+      suceso({ intensidad: "moderada", como: "sin-avisar", fuente: null }),
+    ]) {
+      for (const grabada of [todo, nada, (id: string) => !id.endsWith(".sinTripulacion")]) {
+        const f = anuncioDeTurbulencia(s, grabada, () => 0, sinTripulacion);
+        expect(f.texto, f.id).not.toMatch(/tripulación/i);
+      }
+      // Con la suya grabada, la suya.
+      expect(anuncioDeTurbulencia(s, todo, () => 0, sinTripulacion).id).toMatch(/\.sinTripulacion$/);
+    }
+  });
+
+  it("con el pasaje sentado, «sigan sentados» y no «vuelvan a su asiento»", () => {
+    const f = anuncioDeTurbulencia(suceso({ intensidad: "moderada" }), todo, () => 0, sentados);
+    expect(f.id).toBe("comandante.turbulencia.sentados.moderada");
+    expect(f.texto).toMatch(/Sigan sentados/);
+    expect(f.texto).not.toMatch(/vuelvan/i);
+    // Sin grabar, la de siempre del suceso, que es la que ya suena hoy.
+    const sinGrabar = anuncioDeTurbulencia(
+      suceso({ intensidad: "moderada" }),
+      (id) => !id.includes(".sentados."),
+      () => 0,
+      sentados,
+    );
+    expect(sinGrabar.id).toBe("comandante.turbulencia.moderada");
+  });
+
+  it("las nuevas dicen «turbulencia», en castellano y en inglés", () => {
+    for (const clave of [
+      "comandante.turbulencia.sentados.moderada",
+      "comandante.turbulencia.moderada.sinTripulacion",
+      "comandante.turbulencia.ahora.moderada.sinTripulacion",
+      "comandante.turbulencia.otraVez.moderada.sinTripulacion",
+    ] as const) {
+      expect(hayTexto(clave), clave).toBe(true);
+      expect(EN[clave], clave).toMatch(/turbulence/);
+      expect(t(clave), clave).toMatch(/turbulencia/);
+      expect(t(clave), clave).not.toMatch(/tripulación|peligro/i);
+    }
+  });
+});
+
 describe("lo que se dice al pasar", () => {
   it("bajando, que la señal sigue encendida, y solo con su grabación", () => {
     expect(pasoDeTurbulencia({ bajando: true, seApaga: false, conConsejo: false }, todo)?.id).toBe(

@@ -9,12 +9,10 @@
  * del camino. Y la del camino no existía: por encima de la capa de abajo el
  * modelo no tenía nada.
  *
- * Esto es la del camino, con la variedad de lo real y según el tiempo del día:
- *
- * - **a veces nada**: es lo más corriente con buen tiempo;
- * - **unos minutos**, o **más rato**, en cualquier parte del vuelo —en la
- *   subida, en crucero o en la bajada—;
- * - **casi todo el vuelo**, con tormenta.
+ * Esto es la del camino: las zonas que se cruzan y lo que se dice de ellas.
+ * **Cuántas hay, dónde, cuánto duran y con qué fuerza** lo decide el guion de
+ * cada vuelo, con lo real del sitio, la época y la hora y el tope de cada
+ * peldaño: ver `guion-de-turbulencia.ts`.
  *
  * Y en las dos maneras de llegar que tiene de verdad:
  *
@@ -75,18 +73,21 @@ export function fuenteDe(z: Zona): Fuente | null {
   return z.fuente ?? (z.como === "tormenta" ? "radar" : "parte");
 }
 
-/** De cada cuántas previstas, una la avisa otro avión: una de cada tres. */
-export const AVISA_OTRO_AVION = 1 / 3;
-
 /**
  * **Cuánto sacude cada grado**, σ_w en m/s, contra los niveles de
  * `nivelDe` en `turbulencia.ts`: la ligera enciende el cartel —por encima de
- * `SACUDE`— sin dejar de ser ligera; la moderada, en medio de la suya; la
+ * `SACUDE`— y se queda en la mitad suave de la suya; la moderada, en medio de la suya; la
  * fuerte, al empezar la severa. Lo que se siente y lo que se anuncia cuentan lo
  * mismo.
  */
 export const SACUDE_CADA: Readonly<Record<Intensidad, number>> = {
-  ligera: 0.95,
+  /*
+   * Siete décimas: por encima de lo que enciende el cartel y en la mitad baja
+   * de la ligera, la de los baches pequeños. Eran nueve y media, casi en la
+   * moderada: en el JAZ 60 eso eran sacudidas de un tercio de g, y la ligera
+   * es un temblor.
+   */
+  ligera: 0.7,
   moderada: 1.5,
   fuerte: 2,
 };
@@ -96,128 +97,6 @@ const BORDE = 1500;
 
 /** Por debajo de esto, sobre el suelo, manda la capa de abajo, m. */
 const POR_ENCIMA_DE = 300;
-
-/** El tiempo del día, lo que cuenta para la turbulencia del camino. */
-export interface TiempoDelCamino {
-  readonly vientoKt: number;
-  /** Si el parte trae tormenta. */
-  readonly tormenta: boolean;
-  /** Si hay capa de nubes con techo. */
-  readonly nubes: boolean;
-  /** Si el camino pasa entre montañas: las islas con su relieve. */
-  readonly montana: boolean;
-}
-
-/** Lo que hace falta del vuelo para repartir la turbulencia por el camino. */
-export interface Camino {
-  /** Cuánto se va a volar, m. */
-  readonly largo: number;
-  /** A qué velocidad se cruza, m/s. */
-  readonly velocidad: number;
-  /** A qué altura se cruza, m sobre el mar. */
-  readonly crucero: number;
-}
-
-/**
- * **La turbulencia de un vuelo**, repartida con la variedad de lo real.
- *
- * `azar` da números entre cero y uno: en el juego, `Math.random`; en las
- * pruebas, uno que se repite.
- */
-export function turbulenciaDelCamino(
-  tiempo: TiempoDelCamino,
-  camino: Camino,
-  azar: () => number = Math.random,
-): Zona[] {
-  const { largo, velocidad } = camino;
-  if (!(largo > 4000) || !(velocidad > 0)) return [];
-  const minutos = (m: number) => m * 60 * velocidad;
-  /*
-   * **Con tormenta, casi todo el vuelo**: del primer cuarto a casi el final,
-   * moderada si sopla y ligera si no. Es la que se ve en el radar, así que es
-   * prevista. Las células, además, sacuden donde están: ver `tormentas.ts`.
-   */
-  if (tiempo.tormenta)
-    return [
-      {
-        desde: largo * (0.08 + 0.1 * azar()),
-        hasta: largo * (0.85 + 0.1 * azar()),
-        intensidad: tiempo.vientoKt >= 15 || azar() < 0.4 ? "moderada" : "ligera",
-        como: "tormenta",
-        capa: null,
-        fuente: "radar",
-      },
-    ];
-  /*
-   * **Cuántas zonas**, según el viento y las nubes. Con buen tiempo, lo más
-   * corriente es no encontrar ninguna; con viento fuerte entre montañas —el
-   * alisio por encima de las islas—, lo raro es no encontrarla.
-   */
-  const fuerte = tiempo.vientoKt >= 25;
-  const movido = tiempo.vientoKt >= 12 || tiempo.nubes;
-  const nada = fuerte ? 0.12 : movido ? 0.35 : 0.6;
-  if (azar() < nada) return [];
-  const cuantas = 1 + (azar() < (fuerte ? 0.6 : movido ? 0.35 : 0.15) ? 1 : 0);
-  const zonas: Zona[] = [];
-  for (let i = 0; i < cuantas; i++) {
-    // Unos minutos, o más rato: de dos a cuatro, o de seis a doce.
-    const larga = azar() < (fuerte ? 0.45 : 0.25);
-    const dura = minutos(larga ? 6 + 6 * azar() : 2 + 2 * azar());
-    const tramo = Math.min(dura, largo * 0.6);
-    // En cualquier parte: la subida, el crucero o la bajada.
-    const desde = largo * 0.05 + (largo * 0.9 - tramo) * azar();
-    const sorteo = azar();
-    const intensidad: Intensidad = fuerte
-      ? sorteo < 0.15
-        ? "fuerte"
-        : sorteo < 0.65
-          ? "moderada"
-          : "ligera"
-      : movido
-        ? sorteo < 0.3
-          ? "moderada"
-          : "ligera"
-        : sorteo < 0.1
-          ? "moderada"
-          : "ligera";
-    /*
-     * **Prevista o sin avisar.** La de montaña y la de las nubes salen en el
-     * parte; la de aire claro, no, y es una capa alrededor del nivel de
-     * crucero. Con viento entre montañas, casi siempre se sabe.
-     */
-    const umbral = tiempo.montana && movido ? 0.25 : 0.45;
-    const tirada = azar();
-    const sinAvisar = tirada < umbral;
-    /*
-     * **Y de la prevista, una de cada tres la avisa otro avión** por radio:
-     * el PIREP, que es como se sabe de verdad mucha de la que no sale en el
-     * parte. Sale de la misma tirada —lo que sobra por encima del umbral,
-     * repartido de cero a uno—, para no mover el sorteo de lo demás.
-     */
-    const pirep = !sinAvisar && (tirada - umbral) / (1 - umbral) < AVISA_OTRO_AVION;
-    zonas.push({
-      desde,
-      hasta: desde + tramo,
-      intensidad,
-      como: sinAvisar ? "sin-avisar" : "prevista",
-      capa: sinAvisar ? { de: camino.crucero - 600, a: camino.crucero + 300 } : null,
-      ...(sinAvisar ? {} : { fuente: pirep ? "pirep" : "parte" }),
-    });
-  }
-  // En orden, y sin pisarse: la segunda empieza después de la primera.
-  zonas.sort((a, b) => a.desde - b.desde);
-  for (let i = 1; i < zonas.length; i++) {
-    const antes = zonas[i - 1]!;
-    const esta = zonas[i]!;
-    if (esta.desde < antes.hasta + BORDE * 2)
-      zonas[i] = {
-        ...esta,
-        desde: antes.hasta + BORDE * 2,
-        hasta: antes.hasta + BORDE * 2 + (esta.hasta - esta.desde),
-      };
-  }
-  return zonas;
-}
 
 /**
  * **Cuánto sacude la turbulencia del camino aquí**, σ_w en m/s: la de la zona
@@ -342,6 +221,11 @@ export class TurbulenciaDelVuelo {
     return this.zonas;
   }
 
+  /** La zona que se está cruzando ahora, bordes incluidos, o `null`. */
+  get zonaDeAhora(): Zona | null {
+    return this.zonaAqui();
+  }
+
   /** Lo volado desde el despegue, m. */
   get loVolado(): number {
     return this.volado;
@@ -436,10 +320,18 @@ export class TurbulenciaDelVuelo {
     );
   }
 
-  /** Si viene otra zona en menos de lo que se avisa antes. */
+  /**
+   * Si viene otra zona **de las que se saben** en menos de lo que se avisa
+   * antes. La de aire claro no cuenta: nadie la ve venir, y contarla dejaba
+   * el cartel puesto por una turbulencia que la comandante no puede saber —
+   * medido de El Hierro a La Gomera: la moderada pasó a los 25 km y el «ya
+   * pasó» esperó hasta los 37, detrás de una de aire claro que ni se había
+   * anunciado—.
+   */
   private vieneOtra(velocidad: number): boolean {
     return this.zonas.some(
       (z) =>
+        z.como !== "sin-avisar" &&
         z.desde > this.volado &&
         (z.desde - this.volado) / Math.max(1, velocidad) <= AVISA_ANTES,
     );
