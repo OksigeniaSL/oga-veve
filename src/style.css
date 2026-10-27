@@ -8001,7 +8001,8 @@ button.motor__tecla::after {
  */
 .hangar .pais {
   grid-column: 1 / -1;
-  height: clamp(260px, 58vh, 640px);
+  /* Y nunca más alta que la lista: en el teléfono tumbado se cortaba por abajo. */
+  height: min(clamp(260px, 58vh, 640px), var(--hangar-lista));
 }
 
 .hangar__rejilla {
@@ -8413,7 +8414,7 @@ button.motor__tecla::after {
      daba cero a sus unidades de contenedor y el país no se dibujaba. */
   .hangar .pais {
     grid-column: 1 / -1;
-    height: 230px;
+    height: min(230px, var(--hangar-lista));
   }
 }
 
@@ -11220,16 +11221,18 @@ button.motor__tecla::after {
   opacity: 0.75;
 }
 
+/* La leyenda va dentro de la carta, en la esquina que deje libre el colocador. */
 .pais__leyenda {
-  left: 10px;
-  bottom: 8px;
+  left: 6px;
+  bottom: 6px;
   z-index: 1;
   font-size: 11px;
 }
 
+/* La rosa, a la medida de la carta: en el teléfono tumbado se salía por abajo. */
 .pais__rosa {
   position: absolute;
-  width: 72px;
+  width: clamp(46px, 16cqh, 72px);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
@@ -11302,59 +11305,82 @@ button.motor__tecla::after {
 
 /* Un campo sin ruta desde aquí: se ve que existe, más pequeño. */
 .pais__campo--sin-ruta {
-  transform: translate(-50%, -50%) scale(0.8);
   opacity: 0.75;
 }
 
+/*
+ * El rótulo de un aeródromo va suelto en la carta, no dentro de su botón:
+ * así el colocador lo puede llevar a cualquier lado de su punto. Antes de que
+ * pase, a la derecha. Ver `colocarLaCarta`.
+ */
 .pais__rotulo {
-  left: 100%;
-  top: 50%;
   display: grid;
   justify-items: start;
-  transform: translate(6px, -50%);
+  transform: translate(calc(var(--r, 9px) + 5px), -50%);
   color: var(--carta-tinta);
   text-align: left;
 }
 
 .pais__rotulo--izquierda {
-  left: auto;
-  right: 100%;
   justify-items: end;
-  transform: translate(-6px, -50%);
   text-align: right;
 }
 
+.pais__rotulo--centro {
+  justify-items: center;
+  text-align: center;
+}
+
+/* El de un campo al que este avión no llega, o sin ruta desde aquí: apagado, con su 4,5:1. */
+.pais__rotulo--no,
+.pais__rotulo--sin-ruta {
+  opacity: 0.75;
+}
+
 /*
- * **Y en una carta pequeña, menos letra**: en el teléfono tumbado la carta
- * mide doscientos y pico píxeles de alto, y con la radio, las cotas y los
- * nombres de las islas los rótulos se tapaban unos a otros. Es lo que hace
- * una carta a menor escala —generalizar—, y lo quitado sigue en la ficha de
- * cada aeródromo, que se abre tocándolo.
+ * **Las formas de un rótulo**, de la entera a la más corta: sin la radio; sin
+ * la radio ni las cifras; solo el primer renglón; solo el indicativo. El colocador se queda con la
+ * primera que cabe y lo quitado sigue en la ficha, que es lo que hace una
+ * carta a menor escala: generalizar.
+ */
+.pais__rotulo[data-v="1"] .pais__radio,
+.pais__rotulo[data-v="2"] .pais__radio,
+.pais__rotulo[data-v="2"] .pais__cifras,
+.pais__rotulo[data-v="3"] > :not(:first-child),
+.pais__rotulo[data-v="4"] > :not(.pais__oaci),
+.pais__rotulo[data-v="4"] .pais__cifras {
+  display: none;
+}
+
+/* Lo que no cabe no se escribe; se esconde sin quitarlo, para poder medirlo. */
+.pais__letra--fuera {
+  visibility: hidden;
+}
+
+/*
+ * **Y en una carta pequeña, letra un punto más pequeña**: en el teléfono
+ * tumbado la carta mide doscientos y pico píxeles de alto. Lo que aun así no
+ * cabe lo quita el colocador, por orden de importancia.
  */
 @container (max-height: 300px) {
-  .pais__radio,
-  .pais__cota,
-  .pais__grado,
+  .pais__rotulo-nombre,
   .pais__nombre--isla {
-    display: none;
+    font-size: 12.5px;
   }
-}
 
-.pais__rotulo--abajo {
-  left: 50%;
-  top: 100%;
-  justify-items: center;
-  transform: translate(-50%, 5px);
-  text-align: center;
-}
+  .pais__rotulo .pais__oaci,
+  .pais__radio,
+  .pais__cifra-ruta,
+  .pais__nombre {
+    font-size: 11.5px;
+  }
 
-.pais__rotulo--arriba {
-  left: 50%;
-  top: auto;
-  bottom: 100%;
-  justify-items: center;
-  transform: translate(-50%, -5px);
-  text-align: center;
+  /* La declinación, al lado de la rosa y no debajo, que debajo se salía de la carta. */
+  .pais__rosa i {
+    left: 100%;
+    top: 50%;
+    transform: translate(4px, -50%);
+  }
 }
 
 .pais__rotulo-nombre {
@@ -11377,22 +11403,66 @@ button.motor__tecla::after {
 }
 
 /*
+ * **La ficha al lado de la carta.** Una región más estrecha que su hueco —el
+ * Paraguay en una tablet tumbada— dejaba dos tercios de papel vacío a los
+ * lados. Cuando sobra, la región se arrima y la ficha va a su lado, sin tapar
+ * nada, y las dos juntas se centran en la hoja. Lo decide `ponerElMargen`.
+ */
+.pais--margen {
+  --lienzo-ancho: calc((100cqh - 16px) * var(--proporcion, 1));
+  --ficha-ancho: min(620px, 100cqw - 24px - var(--lienzo-ancho));
+  --margen-izq: calc((100cqw - var(--lienzo-ancho) - 8px - var(--ficha-ancho)) / 2);
+}
+
+.pais--margen .pais__lienzo {
+  inset: 8px auto 8px var(--margen-izq);
+  margin: 0;
+  width: var(--lienzo-ancho);
+  height: calc(100cqh - 16px);
+}
+
+.pais--margen .ficha-carta {
+  inset: 8px auto 8px calc(var(--margen-izq) + var(--lienzo-ancho) + 8px);
+  width: var(--ficha-ancho);
+  box-shadow: none;
+}
+
+/*
+ * Sin margen, la ficha se abre encima, como una hoja puesta sobre la carta:
+ * a un lado y no entera, para que se siga viendo dónde está lo demás. Del
+ * lado contrario al campo que se tocó, que si no se tapaba a sí mismo. Ver
+ * `abrirFichaDeLaCarta`.
+ */
+.pais:not(.pais--margen) .ficha-carta {
+  inset: 8px 8px 8px auto;
+  width: min(620px, 100% - 16px);
+}
+
+.pais:not(.pais--margen) .ficha-carta[data-lado="izquierda"] {
+  inset: 8px auto 8px 8px;
+}
+
+/*
  * ── La ficha de un aeródromo ──────────────────────────────────────────
  *
- * Encima de la carta y dentro de su caja: abrirla no mueve nada de lo de
- * alrededor, que en un teléfono tumbado son los mandos. Con su cruz de 44 px
- * para cerrarla y el botón de ir, que es el mismo de las fichas de abajo.
+ * Encima de la carta y dentro de su caja, o a su lado si sobra papel: abrirla
+ * no mueve nada de lo de alrededor, que en un teléfono tumbado son los
+ * mandos. Con su cruz de 44 px para cerrarla.
+ *
+ * Lo llena lo que se reconoce del sitio —su sello, su pista, el avión que va
+ * a ir— y el botón de ir, grande y abajo a la derecha, donde cae el pulgar.
+ * Todo se mide contra la propia ficha, que es contenedor: la misma ficha vale
+ * para la tablet y para el teléfono tumbado.
  */
 .ficha-carta {
   position: absolute;
   inset: 8px;
   z-index: 3;
-  display: grid;
-  grid-template-columns: minmax(72px, 30%) 1fr;
-  grid-template-rows: 1fr auto;
-  gap: 6px 12px;
-  padding: 10px 12px;
-  overflow: auto;
+  container: ficha / size;
+  /* El alto de la fila de abajo —el avión y el botón de ir—, y el lado del sello y de la pista. */
+  --abajo: clamp(56px, 28cqh, 150px);
+  --lado: min(calc(100cqh - 32px - var(--abajo)), 25cqw);
+  overflow: hidden;
   border: 1.5px solid var(--carta-tinta-aero);
   border-radius: 14px;
   background-color: var(--carta-papel);
@@ -11403,6 +11473,68 @@ button.motor__tecla::after {
   text-align: left;
 }
 
+/*
+ * La hoja de dentro lleva la rejilla, y no la ficha, porque una consulta de
+ * contenedor solo cambia lo que hay dentro del contenedor: así la rejilla se
+ * reparte según lo que mida la ficha.
+ */
+.ficha-carta__hoja {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "sello dibujo datos"
+    "avion avion ir";
+  align-items: center;
+  gap: 8px 14px;
+  padding: 12px 14px;
+}
+
+/*
+ * En Guyrami no hay datos que leer: el sello y la pista en grande, y a su
+ * lado, el avión y el botón de ir.
+ */
+.ficha-carta--dibujo {
+  --abajo: clamp(60px, 34cqh, 170px);
+  /* Y dejando libre la esquina de la cruz de cerrar. */
+  --lado: min(calc(100cqh - 32px - var(--abajo)), 40cqw, calc((100cqw - 100px) / 2));
+}
+
+.ficha-carta--dibujo .ficha-carta__hoja {
+  grid-template-areas:
+    "sello dibujo ."
+    "avion avion ir";
+}
+
+/*
+ * Y en una ficha estrecha —un teléfono de pie—, dos columnas: el sello y la
+ * pista arriba, o el sello y los datos para quien lee; el avión y el botón
+ * debajo.
+ */
+@container ficha (max-width: 440px) {
+  .ficha-carta__hoja,
+  .ficha-carta--dibujo .ficha-carta__hoja {
+    --lado: min(calc(100cqh - 32px - var(--abajo)), 40cqw, calc((100cqw - 100px) / 2));
+    /* La primera columna, la del sello: el avión de debajo se encoge a ella y no la ensancha. */
+    grid-template-columns: var(--lado) minmax(0, 1fr);
+    grid-template-areas:
+      "sello datos"
+      "avion ir";
+  }
+
+  .ficha-carta--dibujo .ficha-carta__hoja {
+    grid-template-areas:
+      "sello dibujo"
+      "avion ir";
+  }
+
+  .ficha-carta:not(.ficha-carta--dibujo) .ficha-carta__dibujo {
+    display: none;
+  }
+}
+
 .ficha-carta[hidden] {
   display: none;
 }
@@ -11411,6 +11543,7 @@ button.motor__tecla::after {
   position: absolute;
   top: 2px;
   right: 2px;
+  z-index: 1;
   width: 44px;
   height: 44px;
   padding: 10px;
@@ -11428,9 +11561,47 @@ button.motor__tecla::after {
   stroke-linecap: round;
 }
 
-.ficha-carta__dibujo {
-  grid-row: 1 / span 2;
+/* El sello y la pista, cuadrados y del mismo lado. */
+.ficha-carta__sello {
+  grid-area: sello;
+  width: var(--lado);
+  height: var(--lado);
   align-self: center;
+}
+
+.ficha-carta__sello .estampa {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+}
+
+.ficha-carta__dibujo {
+  grid-area: dibujo;
+  width: var(--lado);
+  height: var(--lado);
+  align-self: center;
+}
+
+.ficha-carta .pistas {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+}
+
+/* El avión que va a ir: el retrato del hangar, mirando hacia donde se va. */
+.ficha-carta__avion {
+  grid-area: avion;
+  display: block;
+  min-width: 0;
+  justify-self: start;
+}
+
+.ficha-carta__avion img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: var(--abajo);
+  object-fit: contain;
 }
 
 .pistas {
@@ -11441,6 +11612,20 @@ button.motor__tecla::after {
 
 .pistas__barra {
   stroke: var(--carta-aerodromo);
+}
+
+/* El campo alrededor de la pista: plataformas y calles, en gris de carta. */
+.pistas__plataforma {
+  fill: #b9b4a6;
+  stroke: #8f8a7d;
+  stroke-width: 0.4;
+}
+
+.pistas__calle {
+  fill: none;
+  stroke: #8f8a7d;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .pistas__eje {
@@ -11465,12 +11650,32 @@ button.motor__tecla::after {
   stroke-width: 3px;
 }
 
+/*
+ * Los datos, en columnas de periódico cuando no caben de alto: en el teléfono
+ * tumbado la radio de Gran Canaria se quedaba debajo, fuera de la vista, en
+ * una ficha con media hoja libre a la derecha.
+ */
 .ficha-carta__datos {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  grid-area: datos;
+  align-self: stretch;
   min-width: 0;
-  padding-right: 40px;
+  min-height: 0;
+  margin-right: 40px;
+  column-width: 210px;
+  column-gap: 18px;
+  column-fill: auto;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.ficha-carta__datos > * {
+  display: block;
+  margin-bottom: 3px;
+  break-inside: avoid;
+}
+
+.ficha-carta__datos li {
+  break-inside: avoid;
 }
 
 .ficha-carta__oaci {
@@ -11525,30 +11730,65 @@ button.motor__tecla::after {
   color: var(--carta-tinta-aero);
 }
 
+/* El botón de ir: grande, abajo a la derecha, con el avión mirando hacia donde se va. */
 .ficha-carta__ir {
-  grid-column: 2;
+  grid-area: ir;
   justify-self: end;
   align-self: end;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-width: 72px;
-  min-height: 48px;
-  padding: 6px 18px;
+  justify-content: center;
+  gap: 10px;
+  min-width: 112px;
+  min-height: 64px;
+  padding: 8px 24px;
   border: 0;
   border-radius: 999px;
   background: var(--carta-ruta-texto);
+  box-shadow: 0 4px 0 rgb(60 10 50 / 0.35);
   color: #fff;
-  font: 600 19px var(--carta-letra-nombres);
+  font: 600 22px var(--carta-letra-nombres);
   cursor: pointer;
 }
 
 .ficha-carta__ir svg {
-  width: 30px;
-  height: 26px;
+  width: 40px;
+  height: 35px;
   fill: currentColor;
   /* El morro a la derecha, hacia donde se va: girado en diagonal parecía una cruz, que es cerrar. */
   transform: rotate(90deg);
+}
+
+/* En una ficha baja —el teléfono tumbado—, el botón un punto más pequeño, y aún de sobra para el dedo. */
+@container ficha (max-height: 260px) {
+  .ficha-carta__hoja {
+    gap: 6px 10px;
+    padding: 10px 12px;
+  }
+
+  .ficha-carta__ir {
+    min-width: 88px;
+    min-height: 54px;
+    padding: 6px 18px;
+    font-size: 19px;
+  }
+
+  .ficha-carta__ir svg {
+    width: 32px;
+    height: 28px;
+  }
+
+  .ficha-carta__oaci {
+    font-size: 17px;
+  }
+
+  .ficha-carta__nombre {
+    font-size: 15px;
+  }
+
+  .ficha-carta__cifras {
+    font-size: 13.5px;
+  }
 }
 
 /* Lo que pide y lo que hay: para quien lee, debajo del nombre. */
