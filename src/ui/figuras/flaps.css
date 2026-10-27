@@ -1,0 +1,112 @@
+/*
+ * La hoja de la figura, toda bajo `.fig-flaps` para que no pise al juego ni el
+ * juego a ella. Ver `flaps.ts`. Las letras crecen por el ancho de la figura
+ * (`@container figura`) y no por el de la pantalla: ver `.explica__figura` en
+ * style.css.
+ */
+.fig-flaps { --in-papel: #f3efe3; --in-panel: #f8f5ec; --in-tinta: #2e537a; --in-tinta-2: #22302a; --in-tinta-suave: #8ea3b8;
+  --in-rojo: #b3261e; --in-total: #c2541f; --in-estatica: #2e537a; --in-hielo: #dff1fb;
+  --in-letra: "Barlow Semi Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  --in-cifras: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif; }
+.fig-flaps .in-panel { fill: var(--in-panel); stroke: var(--in-tinta); stroke-width: 1.4; }
+.fig-flaps .in-txt { font-family: var(--in-letra); fill: var(--in-tinta-2); }
+.fig-flaps .in-ac { fill: var(--in-panel); stroke: var(--in-tinta-2); stroke-width: 1.5; stroke-linejoin: round; }
+.fig-flaps .in-ac-glass { fill: #dfe8ee; stroke: var(--in-tinta-2); stroke-width: 1.2; stroke-linejoin: round; }
+.fig-flaps .in-ac-line { fill: none; stroke: var(--in-tinta-2); stroke-width: 1.5; stroke-linecap: round; }
+.fig-flaps .in-ac-prop { fill: var(--in-tinta-suave); opacity: .55; }
+.fig-flaps .in-ac-pitot { fill: none; stroke: var(--in-tinta-2); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.fig-flaps .in-wall--0 { fill: #d9d2bf; } .fig-flaps .in-wall--1 { fill: #e3ddcd; } .fig-flaps .in-wall--2 { fill: #ece7da; } .fig-flaps .in-wall--3 { fill: #f4f0e6; }
+.fig-flaps .in-inner--0 { fill: #b9b19c; } .fig-flaps .in-inner--1 { fill: #c6bfab; } .fig-flaps .in-inner--2 { fill: #d2ccba; } .fig-flaps .in-inner--3 { fill: #dcd6c6; }
+.fig-flaps .in-wall, .fig-flaps .in-inner { stroke: none; }
+.fig-flaps .in-backplate { fill: #cfc8b4; stroke: var(--in-tinta); stroke-width: 1; }
+.fig-flaps .in-cutface { fill: url(#fig-in-hatch); stroke: var(--in-tinta); stroke-width: 1; }
+.fig-flaps .in-cutline, .fig-flaps .in-rim { fill: none; stroke: var(--in-tinta); stroke-width: 1.3; }
+.fig-flaps .in-bezel { fill: #3b4643; stroke: none; }
+.fig-flaps .in-face { fill: #22302a; stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-flaps .in-ring { stroke: var(--in-tinta); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.fig-flaps .in-ring--cresta { fill: #ecd09a; } .fig-flaps .in-ring--valle { fill: #c49a55; }
+.fig-flaps .in-web { fill: #b8914f; stroke: var(--in-tinta); stroke-width: .8; }
+.fig-flaps .in-corr { fill: none; stroke: #9c7a3c; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.fig-flaps .in-boss { fill: var(--in-tinta-2); }
+.fig-flaps .in-dial-rim { fill: #3b4643; }
+.fig-flaps .in-dial { fill: #22302a; }
+.fig-flaps .in-ticks { stroke: var(--in-papel); stroke-width: 2; stroke-linecap: round; fill: none; }
+.fig-flaps .in-num { font-family: var(--in-cifras); font-weight: 600; font-size: 21px; fill: var(--in-papel); }
+.fig-flaps .in-unit { font-family: var(--in-letra); font-weight: 600; font-size: 15px; fill: var(--in-papel); letter-spacing: .08em; }
+.fig-flaps .in-arc { fill: none; stroke-linecap: butt; }
+.fig-flaps .in-arc--blanco { stroke: #f3efe3; } .fig-flaps .in-arc--verde { stroke: #3fa65e; } .fig-flaps .in-arc--amarillo { stroke: #e9b52b; }
+.fig-flaps .in-redline { stroke: #e2453a; stroke-width: 5; stroke-linecap: butt; }
+.fig-flaps .in-needle { fill: #f3efe3; stroke: #0f1714; stroke-width: 1; stroke-linejoin: round; }
+.fig-flaps .in-hub { fill: #3b4643; stroke: #f3efe3; stroke-width: 1.5; }
+.fig-flaps .in-track { stroke: var(--in-tinta-2); stroke-width: 12; stroke-linecap: round; }
+.fig-flaps .in-track-slot { stroke: #6b7a72; stroke-width: 4; stroke-linecap: round; }
+.fig-flaps .in-chev { fill: none; stroke: var(--in-tinta); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.fig-flaps .in-knob { cursor: ew-resize; outline: none; }
+.fig-flaps .in-grip { fill: transparent; stroke: var(--in-rojo); stroke-width: 0; }
+.fig-flaps .in-knob:focus-visible .in-grip { stroke-width: 2.5; }
+.fig-flaps .in-shaft { stroke: #9aa6a0; stroke-width: 6; stroke-linecap: round; }
+.fig-flaps .in-knob-ball { fill: #1c2420; stroke: #000; stroke-width: 1; }
+.fig-flaps .in-knob-hi { fill: #ffffff; opacity: .35; }
+.fig-flaps .in-staff { stroke: #6b7a72; stroke-width: 2.2; }
+.fig-flaps .in-sector { fill: #d9b46a; stroke: var(--in-tinta-2); stroke-width: .5; }
+.fig-flaps .in-teeth { fill: #b78f3f; }
+.fig-flaps .in-tail { stroke: var(--in-tinta-2); stroke-width: 1.6; }
+.fig-flaps .in-pivot, .fig-flaps .in-pin { fill: var(--in-tinta-2); }
+.fig-flaps .in-pinion { fill: #d9b46a; stroke: var(--in-tinta-2); stroke-width: .5; }
+.fig-flaps .in-pinion-teeth { stroke: #b78f3f; stroke-width: 1.2; }
+.fig-flaps .in-lever { fill: none; stroke: var(--in-tinta-2); stroke-width: 2.2; stroke-linecap: round; }
+.fig-flaps .in-face-ticks { stroke: var(--in-papel); stroke-width: .9; }
+.fig-flaps .in-screw { fill: #9aa6a0; stroke: #22302a; stroke-width: .6; }
+.fig-flaps .in-glare { fill: none; stroke: #ffffff; stroke-width: 1.6; opacity: .35; vector-effect: non-scaling-stroke; }
+.fig-flaps .in-chip { fill: var(--in-panel); stroke: var(--in-tinta); stroke-width: 1.3; }
+.fig-flaps .in-callout circle { fill: var(--in-rojo); }
+.fig-flaps .in-callout path { stroke: var(--in-rojo); stroke-width: 1.3; fill: none; }
+.fig-flaps .in-call { font-family: var(--in-letra); font-size: 19px; font-weight: 600; fill: var(--in-rojo); paint-order: stroke; stroke: var(--in-panel); stroke-width: 4px; stroke-linejoin: round; }
+.fig-flaps { display: block; width: 100%; padding: 6px; border-radius: 12px; background: var(--in-papel); box-sizing: border-box; --fl-flap: #2f6f8f; }
+.fig-flaps .fl-svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; }
+.fig-flaps .fl-box { fill: #fbf9f3; stroke: var(--in-tinta); stroke-width: 1.2; }
+.fig-flaps .fl-main { fill: #e6e0cf; stroke: var(--in-tinta-2); stroke-width: 1.8; stroke-linejoin: round; }
+.fig-flaps .fl-flap { fill: #cfe0ea; stroke: var(--fl-flap); stroke-width: 2.4; stroke-linejoin: round; }
+.fig-flaps .fl-ghost { fill: none; stroke: #7d8e9c; stroke-width: 1.4; stroke-dasharray: 5 4; }
+.fig-flaps .fl-hanger { fill: #d6cfba; stroke: var(--in-tinta-2); stroke-width: 1.2; stroke-linejoin: round; }
+.fig-flaps .fl-track { fill: none; stroke: var(--in-tinta-2); stroke-width: 7; stroke-linecap: round; }
+.fig-flaps .fl-track-slot { fill: none; stroke: #9aa6a0; stroke-width: 2.4; stroke-linecap: round; }
+.fig-flaps .fl-roller { fill: var(--in-papel); stroke: var(--in-tinta-2); stroke-width: 1.6; }
+.fig-flaps .fl-camber { fill: none; stroke: var(--in-rojo); stroke-width: 2.2; stroke-dasharray: 8 5; stroke-linecap: round; }
+.fig-flaps .fl-dim-old { fill: none; stroke: #7d8e9c; stroke-width: 2; }
+.fig-flaps .fl-dim { fill: none; stroke: var(--in-tinta); stroke-width: 3.4; stroke-linecap: round; }
+.fig-flaps .fl-say-t { font-size: 20px; }
+.fig-flaps .fl-sky { fill: #e9eff0; }
+.fig-flaps .fl-cloud { fill: #ffffff; stroke: #c3cfd4; stroke-width: 1.2; }
+.fig-flaps .fl-ground { fill: #d9cfae; }
+.fig-flaps .fl-runway { fill: #4b524f; }
+.fig-flaps .fl-stripe { fill: #f3efe3; }
+.fig-flaps .fl-trunk { stroke: #6b5a3a; stroke-width: 3; }
+.fig-flaps .fl-tree { fill: #7d9a64; stroke: #4f6a3c; stroke-width: 1.2; }
+.fig-flaps .fl-pole { stroke: var(--in-tinta-2); stroke-width: 2; }
+.fig-flaps .fl-sock { fill: #e2702f; stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-flaps .fl-frame { fill: none; stroke: var(--in-tinta); stroke-width: 1.2; }
+.fig-flaps [data-in="ac-flap"] .in-ac { fill: #cfe0ea; stroke: var(--fl-flap); }
+.fig-flaps .fl-lens { fill: none; stroke: var(--in-rojo); stroke-width: 2; }
+.fig-flaps .fl-lens-line { fill: none; stroke: var(--in-rojo); stroke-width: 1.2; stroke-dasharray: 4 4; }
+.fig-flaps .fl-plate { fill: #3b4643; }
+.fig-flaps .fl-plate-t { font-family: var(--in-cifras); font-size: 17px; font-weight: 600; fill: var(--in-papel); letter-spacing: .1em; }
+.fig-flaps .fl-slot { fill: #0f1714; stroke: #6b7a72; stroke-width: 1; }
+.fig-flaps .fl-stop { fill: #9aa6a0; }
+.fig-flaps .fl-scale { fill: none; stroke: var(--in-papel); stroke-width: 2; }
+.fig-flaps .fl-deg { font-family: var(--in-cifras); font-size: 18px; font-weight: 600; fill: var(--in-papel); }
+.fig-flaps .fl-pointer { fill: #e9b52b; }
+.fig-flaps .fl-stem { stroke: #9aa6a0; stroke-width: 5; stroke-linecap: round; }
+.fig-flaps .fl-knob { fill: var(--in-papel); stroke: #0f1714; stroke-width: 1.4; }
+.fig-flaps .fl-k { cursor: ns-resize; outline: none; }
+.fig-flaps .fl-hit { fill: transparent; }
+.fig-flaps .fl-ring { fill: none; stroke: #e9b52b; stroke-width: 2.6; stroke-dasharray: 6 4; opacity: 0; }
+.fig-flaps .fl-k:focus-visible .fl-ring { opacity: 1; }
+.fig-flaps .fl-word { font-size: 17px; font-weight: 600; }
+.fig-flaps[data-edad="guyrami"] .in-age2, .fig-flaps[data-edad="guyrami"] .in-age3, .fig-flaps[data-edad="tuka"] .in-age3 { display: none; }
+@container figura (max-width: 440px) {
+  .fig-flaps .in-call { font-size: 22px; stroke-width: 5px; }
+  .fig-flaps .fl-say-t { font-size: 23px; }
+  .fig-flaps .fl-word { font-size: 19px; }
+  .fig-flaps .fl-deg { font-size: 20px; }
+}

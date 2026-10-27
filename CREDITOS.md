@@ -323,6 +323,31 @@ matriz galáctica de la IAU—, escritas en `src/world/cielo-de-noche.ts`.
 | [Vite](https://vitejs.dev)                     | Bundler y servidor de desarrollo | MIT        |
 | [TypeScript](https://www.typescriptlang.org)   | Lenguaje                         | Apache-2.0 |
 | [Vitest](https://vitest.dev)                   | Tests                            | MIT        |
+| [Anatomy](https://github.com/wheresryan22/anatomy), de Ryan | La hoja de estilo isométrica (`iso.css`) que va dentro del CSS de la figura del PAPI (`src/ui/figuras/papi.css`, bajo `.fig-papi`), y la fórmula de su proyección isométrica (`isometrica` en `src/ui/figuras/figura.ts`). Con su generador isométrico se dibujaron el PAPI, el velocímetro, el altímetro y los mandos | MIT        |
+
+El aviso de Anatomy, como pide su licencia:
+
+> MIT License
+>
+> Copyright (c) 2026 Ryan
+>
+> Permission is hereby granted, free of charge, to any person obtaining a copy
+> of this software and associated documentation files (the "Software"), to deal
+> in the Software without restriction, including without limitation the rights
+> to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+> copies of the Software, and to permit persons to whom the Software is
+> furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all
+> copies or substantial portions of the Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+> IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+> FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+> AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+> LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+> OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+> SOFTWARE.
 
 ## Assets artísticos
 
@@ -535,6 +560,56 @@ campo es un dibujo nuestro a una tinta (`src/ui/paisajes.ts`) y el aspecto de
 goma lo pone una máscara generada (`src/ui/caucho.ts`). Cada paisaje se
 dibujó mirando fotos de Wikimedia Commons del propio sitio, para que fuera
 como es; esas fotos no entran en el juego, solo sirvieron de referencia.
+
+### Los instrumentos por dentro
+
+Las once figuras que se tocan en la ventana de explicación —el PAPI, el
+pitot con su velocímetro, el altímetro, los mandos, los flaps, el
+turbohélice, el turbofán, el motor de pistones, el tren fijo, el tren que
+se recoge y las luces (`src/ui/figuras/`)— son **figuras propias**: las dibujó Gaudí, director de
+arte de Oksigenia, con cara de manual de vuelo antiguo y las tintas y letras
+de la carta, y van con el código bajo Apache-2.0. Lo único de fuera es lo
+que dice el software de terceros, arriba: la hoja isométrica de Anatomy (MIT)
+dentro del CSS del PAPI.
+
+Lo que enseñan sale de fuentes aeronáuticas, citadas en la cabecera de cada
+módulo:
+
+- **El PAPI**: OACI, Doc 9157, *Manual de diseño de aeródromos*, parte 4,
+  capítulo 8 (los cuatro cortes y dónde va); Transport Canada, AC 302-009,
+  sobre el Anexo 14 (lo que se ve); patente CA 2 881 284 y Optics for Hire
+  (la óptica del filtro y la lente).
+- **El pitot y el altímetro**: FAA, *Pilot's Handbook of Aeronautical
+  Knowledge* (FAA-H-8083-25C), capítulo 8, con sus figuras 8-2 y 8-7; los
+  arcos del velocímetro, del manual del Cessna 172S, sección 2.
+- **Los mandos y los flaps**: el mismo manual de la FAA, capítulo 6; los
+  grados de las superficies, de la ficha de tipo FAA 3A12; la palanca de
+  flaps y las velocidades de pérdida, del manual del Cessna 172S, secciones 7
+  y 5. Solo las publicadas: a 20° de flaps el manual no da cifra, y la figura
+  tampoco.
+- **El turbohélice y el turbofán**: FAA, *Airplane Flying Handbook*
+  (FAA-H-8083-3C), capítulos 15 y 16, con su figura 15-5 del PT6 de turbina
+  libre y flujo invertido; *Pilot's Handbook of Aeronautical Knowledge*,
+  capítulo 7; *Aviation Maintenance Technician Handbook – Powerplant*
+  (FAA-H-8083-32), capítulo 1. El motor de la clase del JAZ 60, el PT6A-67D,
+  del informe de aceptación de tipo del Beech 1900C y 1900D de la autoridad
+  de aviación de Nueva Zelanda, sobre el certificado de tipo A24CE de la FAA.
+- **El motor de pistones**: el Lycoming IO-360-L2A de la clase del JAZ 20,
+  del informe de aceptación de tipo de la serie 172 de Nueva Zelanda (TAR
+  96/15, sobre la hoja de datos FAA 3A12) y de la hoja de datos de EASA
+  IM.A.051; el manual del Cessna 172S, sección 7; y el *Pilot's Handbook of
+  Aeronautical Knowledge*, capítulo 7, con los cuatro tiempos de su figura
+  7-5 y el doble encendido.
+- **El tren**: el fijo, del manual del Cessna 172S, sección 7, y del
+  *Aviation Maintenance Technician Handbook – Airframe* de la FAA
+  (FAA-H-8083-31A, vol. 2), capítulo 13; el que se recoge, de los informes
+  de accidente del 1900D de la TAIC de Nueva Zelanda (07-006) y del TSB de
+  Canadá (A16W0092), que citan su manual de mantenimiento, y del *Airplane
+  Flying Handbook*, capítulo 12.
+- **Las luces**: 14 CFR 25.1385, 25.1387 y 25.1401 (dónde va cada luz y su
+  sector), 91.209 y el AIM 4-3-24 de la FAA (cuándo se enciende cada una),
+  y 14 CFR 91.113 con SERA.3210 del Reglamento (UE) 923/2012 (quién cede el
+  paso); la avioneta, del manual del Cessna 172S, sección 7.
 
 ### Las ilustraciones
 

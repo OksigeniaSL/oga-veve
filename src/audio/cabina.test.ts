@@ -151,9 +151,11 @@ describe("los cantos de cabina", () => {
      *
      * Ahora son dos que **no van a estar**, y por decisión y no por pereza:
      *
-     * - «retard» es la llamada del autoempuje de un Airbus, y este juego no
-     *   modela autoempuje. La regla de la casa es que un aviso sonoro solo se
-     *   pone en un avión que lo llevaría; sin autoempuje sería decoración.
+     * - «retard» es la llamada de un Airbus en la recogida, y en esta flota
+     *   no hay ninguno: el JAZ 90 es de la clase del E170, cuyas voces no la
+     *   llevan —sus gases van al ralentí en silencio, ver `flight/recogida.ts`—.
+     *   La regla de la casa es que un aviso sonoro solo se pone en un avión
+     *   que lo llevaría.
      * - «cleared to land» es de la torre, no de la cabina: tiene su propia
      *   voz, su propia tabla y su propio pack.
      *

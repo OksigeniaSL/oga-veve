@@ -35,9 +35,11 @@ const FLECHAS: Record<string, boolean> = {
  *
  * Un deslizador, una lista desplegable o una caja de texto: dentro de ellos
  * una flecha mueve el valor o el cursor, y eso manda sobre recorrer el panel.
+ * Y lo que lo diga con `data-con-flechas`: la palanca del tren de la figura,
+ * que es un interruptor y sube y baja con las flechas, como la de verdad.
  */
 function seQuedaConLasFlechas(quien: Element | null): boolean {
-  return !!quien?.matches?.("input, select, textarea, [role='slider']");
+  return !!quien?.matches?.("input, select, textarea, [role='slider'], [data-con-flechas]");
 }
 
 const ENFOCABLES =

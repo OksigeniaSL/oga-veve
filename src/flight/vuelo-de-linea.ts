@@ -383,9 +383,9 @@ const VUELVE_AL_EJE = 60;
 const CORTE_EN_PISTA = 8 * GRADO;
 
 /**
- * **Desde qué parte de la altura de la recogida empieza a salir el gas**: el
- * «retard» de los reactores, que llega a unos veinte pies, por debajo de los
- * treinta de levantar la nariz. Ver `recogida.ts`.
+ * **Desde qué parte de la altura de la recogida empieza a salir el gas** en el
+ * vuelo de línea: va saliendo con la altura y llega al ralentí al tocar. Ver
+ * `recogida.ts`, donde está la altura de cada clase con su manual.
  */
 const GAS_FUERA = 0.65;
 

@@ -1829,6 +1829,8 @@ export function abrirHangar(
     tarjeta ??= new TarjetaDelAvion(raiz, {
       enVuelo: false,
       decir: (texto, clave) => voz.decir(clave, texto),
+      // La figura de «por dentro», con las letras del tramo elegido.
+      peldano: () => tramo.avisos,
     });
     tarjeta.abrir(a);
   };

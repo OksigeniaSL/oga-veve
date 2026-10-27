@@ -17,11 +17,11 @@ const RAD = Math.PI / 180;
 const enPies = (m: number) => Math.round(m / PIE);
 
 describe("la altura de la recogida, por clase y con su manual", () => {
-  it("el reactor de mandos eléctricos recoge a 30 ft y quita el gas a 20, como el A320", () => {
+  it("el reactor de mandos eléctricos recoge y quita el gas a 30 ft, como el E170 con su «thirty»", () => {
     const r = laRecogidaDe(ARAI);
     expect(r.clase).toBe("electricos");
     expect(enPies(r.nariz)).toBe(30);
-    expect(enPies(r.gas)).toBe(20);
+    expect(enPies(r.gas)).toBe(30);
   });
 
   it("el reactor de cables recoge y quita el gas a 20 ft, como dice el FCTM de Boeing", () => {
@@ -44,7 +44,7 @@ describe("la altura de la recogida, por clase y con su manual", () => {
   it("donde el manual junta la nariz y el gas, es un solo escalón: una frase", () => {
     expect(escalonesDeLaRecogida(laRecogidaDe(YVAGA)).map((e) => e.dice)).toEqual(["nariz y gas"]);
     expect(escalonesDeLaRecogida(laRecogidaDe(PYKASU)).map((e) => e.dice)).toEqual(["nariz y gas"]);
-    expect(escalonesDeLaRecogida(laRecogidaDe(ARAI)).map((e) => e.dice)).toEqual(["nariz", "gas"]);
+    expect(escalonesDeLaRecogida(laRecogidaDe(ARAI)).map((e) => e.dice)).toEqual(["nariz y gas"]);
   });
 });
 
@@ -76,9 +76,9 @@ describe("la recogida se pide una vez por aproximación", () => {
     expect(bajar(avisos, 60, 0.5)).toEqual(["nariz y gas"]);
   });
 
-  it("el JAZ 90: la nariz a 30 ft y el gas a 20, cada una una vez", () => {
+  it("el JAZ 90: «nariz y gas» juntos a 30 ft, una sola vez", () => {
     const avisos = new AvisosDeAltura(escalonesDeLaRecogida(laRecogidaDe(ARAI)));
-    expect(bajar(avisos, 60, 0.5)).toEqual(["nariz", "gas"]);
+    expect(bajar(avisos, 60, 0.5)).toEqual(["nariz y gas"]);
   });
 });
 

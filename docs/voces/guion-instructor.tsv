@@ -621,21 +621,22 @@
 621	vuelo.comoSeAterriza.facil	Así se aterriza: llegamos al suelo despacito, sin empujar la nariz para abajo, y tocamos cerca de las rayas blancas grandes de la pista.
 622	vuelo.comoSeAterriza.helice	Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y el gas afuera, juntos. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.
 623	vuelo.comoSeAterriza.cables	Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y enseguida el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.
-624	vuelo.comoSeAterriza.electricos	Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba; cuando el avión diga retard, el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.
-625	seguir.pettirossi	¿Seguimos volando? Desde acá podemos ir hasta Asunción.
-626	seguir.guarani	¿Seguimos volando? Desde acá podemos ir hasta Ciudad del Este.
-627	seguir.encarnacion	¿Seguimos volando? Desde acá podemos ir hasta Encarnación.
-628	seguir.concepcion	¿Seguimos volando? Desde acá podemos ir hasta Concepción.
-629	seguir.pedro-juan	¿Seguimos volando? Desde acá podemos ir hasta Pedro Juan Caballero.
-630	seguir.estigarribia	¿Seguimos volando? Desde acá podemos ir hasta Mariscal Estigarribia.
-631	seguir.ayolas	¿Seguimos volando? Desde acá podemos ir hasta Ayolas.
-632	seguir.pilar	¿Seguimos volando? Desde acá podemos ir hasta Pilar.
-633	seguir.yvytu-rape	¿Seguimos volando? Desde acá podemos ir hasta Yvytu Rape, la pista de la Granja Óga.
-634	seguir.tenerife-norte	¿Seguimos volando? Desde acá podemos ir hasta Tenerife Norte.
-635	seguir.tenerife-sur	¿Seguimos volando? Desde acá podemos ir hasta Tenerife Sur.
-636	seguir.gran-canaria	¿Seguimos volando? Desde acá podemos ir hasta Gran Canaria.
-637	seguir.lanzarote	¿Seguimos volando? Desde acá podemos ir hasta Lanzarote.
-638	seguir.fuerteventura	¿Seguimos volando? Desde acá podemos ir hasta Fuerteventura.
-639	seguir.la-palma	¿Seguimos volando? Desde acá podemos ir hasta La Palma.
-640	seguir.el-hierro	¿Seguimos volando? Desde acá podemos ir hasta El Hierro.
-641	seguir.la-gomera	¿Seguimos volando? Desde acá podemos ir hasta La Gomera.
+624	vuelo.comoSeAterriza.electricos	Así se aterriza en este avión: con la velocidad de la final, y cuando el avión cuente thirty, la nariz un poquito arriba y el gas afuera, juntos. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.
+625	explica.papi.texto	El PAPI son cuatro luces al lado de la pista. Cada una se ve blanca desde arriba y roja desde abajo. Dos blancas y dos rojas: vas por la senda. Más blancas, vas alto; más rojas, vas bajo.
+626	seguir.pettirossi	¿Seguimos volando? Desde acá podemos ir hasta Asunción.
+627	seguir.guarani	¿Seguimos volando? Desde acá podemos ir hasta Ciudad del Este.
+628	seguir.encarnacion	¿Seguimos volando? Desde acá podemos ir hasta Encarnación.
+629	seguir.concepcion	¿Seguimos volando? Desde acá podemos ir hasta Concepción.
+630	seguir.pedro-juan	¿Seguimos volando? Desde acá podemos ir hasta Pedro Juan Caballero.
+631	seguir.estigarribia	¿Seguimos volando? Desde acá podemos ir hasta Mariscal Estigarribia.
+632	seguir.ayolas	¿Seguimos volando? Desde acá podemos ir hasta Ayolas.
+633	seguir.pilar	¿Seguimos volando? Desde acá podemos ir hasta Pilar.
+634	seguir.yvytu-rape	¿Seguimos volando? Desde acá podemos ir hasta Yvytu Rape, la pista de la Granja Óga.
+635	seguir.tenerife-norte	¿Seguimos volando? Desde acá podemos ir hasta Tenerife Norte.
+636	seguir.tenerife-sur	¿Seguimos volando? Desde acá podemos ir hasta Tenerife Sur.
+637	seguir.gran-canaria	¿Seguimos volando? Desde acá podemos ir hasta Gran Canaria.
+638	seguir.lanzarote	¿Seguimos volando? Desde acá podemos ir hasta Lanzarote.
+639	seguir.fuerteventura	¿Seguimos volando? Desde acá podemos ir hasta Fuerteventura.
+640	seguir.la-palma	¿Seguimos volando? Desde acá podemos ir hasta La Palma.
+641	seguir.el-hierro	¿Seguimos volando? Desde acá podemos ir hasta El Hierro.
+642	seguir.la-gomera	¿Seguimos volando? Desde acá podemos ir hasta La Gomera.

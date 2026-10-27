@@ -1,0 +1,115 @@
+/*
+ * La hoja de la figura, toda bajo `.fig-turbohelice` para que no pise al juego ni el
+ * juego a ella. Ver `turbohelice.ts`. Las letras crecen por el ancho de la figura
+ * (`@container figura`) y no por el de la pantalla: ver `.explica__figura` en
+ * style.css.
+ */
+.fig-turbohelice { --in-papel: #f3efe3; --in-panel: #f8f5ec; --in-tinta: #2e537a; --in-tinta-2: #22302a; --in-tinta-suave: #8ea3b8;
+  --in-rojo: #b3261e; --in-total: #c2541f; --in-estatica: #2e537a; --in-hielo: #dff1fb;
+  --in-letra: "Barlow Semi Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  --in-cifras: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif; }
+.fig-turbohelice .in-panel { fill: var(--in-panel); stroke: var(--in-tinta); stroke-width: 1.4; }
+.fig-turbohelice .in-txt { font-family: var(--in-letra); fill: var(--in-tinta-2); }
+.fig-turbohelice .in-ac { fill: var(--in-panel); stroke: var(--in-tinta-2); stroke-width: 1.5; stroke-linejoin: round; }
+.fig-turbohelice .in-ac-glass { fill: #dfe8ee; stroke: var(--in-tinta-2); stroke-width: 1.2; stroke-linejoin: round; }
+.fig-turbohelice .in-ac-line { fill: none; stroke: var(--in-tinta-2); stroke-width: 1.5; stroke-linecap: round; }
+.fig-turbohelice .in-ac-prop { fill: var(--in-tinta-suave); opacity: .55; }
+.fig-turbohelice .in-ac-pitot { fill: none; stroke: var(--in-tinta-2); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.fig-turbohelice .in-wall--0 { fill: #d9d2bf; } .fig-turbohelice .in-wall--1 { fill: #e3ddcd; } .fig-turbohelice .in-wall--2 { fill: #ece7da; } .fig-turbohelice .in-wall--3 { fill: #f4f0e6; }
+.fig-turbohelice .in-inner--0 { fill: #b9b19c; } .fig-turbohelice .in-inner--1 { fill: #c6bfab; } .fig-turbohelice .in-inner--2 { fill: #d2ccba; } .fig-turbohelice .in-inner--3 { fill: #dcd6c6; }
+.fig-turbohelice .in-wall, .fig-turbohelice .in-inner { stroke: none; }
+.fig-turbohelice .in-backplate { fill: #cfc8b4; stroke: var(--in-tinta); stroke-width: 1; }
+.fig-turbohelice .in-cutface { fill: url(#fig-in-hatch); stroke: var(--in-tinta); stroke-width: 1; }
+.fig-turbohelice .in-cutline, .fig-turbohelice .in-rim { fill: none; stroke: var(--in-tinta); stroke-width: 1.3; }
+.fig-turbohelice .in-bezel { fill: #3b4643; stroke: none; }
+.fig-turbohelice .in-face { fill: #22302a; stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-turbohelice .in-ring { stroke: var(--in-tinta); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.fig-turbohelice .in-ring--cresta { fill: #ecd09a; } .fig-turbohelice .in-ring--valle { fill: #c49a55; }
+.fig-turbohelice .in-web { fill: #b8914f; stroke: var(--in-tinta); stroke-width: .8; }
+.fig-turbohelice .in-corr { fill: none; stroke: #9c7a3c; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.fig-turbohelice .in-boss { fill: var(--in-tinta-2); }
+.fig-turbohelice .in-dial-rim { fill: #3b4643; }
+.fig-turbohelice .in-dial { fill: #22302a; }
+.fig-turbohelice .in-ticks { stroke: var(--in-papel); stroke-width: 2; stroke-linecap: round; fill: none; }
+.fig-turbohelice .in-num { font-family: var(--in-cifras); font-weight: 600; font-size: 21px; fill: var(--in-papel); }
+.fig-turbohelice .in-unit { font-family: var(--in-letra); font-weight: 600; font-size: 15px; fill: var(--in-papel); letter-spacing: .08em; }
+.fig-turbohelice .in-arc { fill: none; stroke-linecap: butt; }
+.fig-turbohelice .in-arc--blanco { stroke: #f3efe3; } .fig-turbohelice .in-arc--verde { stroke: #3fa65e; } .fig-turbohelice .in-arc--amarillo { stroke: #e9b52b; }
+.fig-turbohelice .in-redline { stroke: #e2453a; stroke-width: 5; stroke-linecap: butt; }
+.fig-turbohelice .in-needle { fill: #f3efe3; stroke: #0f1714; stroke-width: 1; stroke-linejoin: round; }
+.fig-turbohelice .in-hub { fill: #3b4643; stroke: #f3efe3; stroke-width: 1.5; }
+.fig-turbohelice .in-track { stroke: var(--in-tinta-2); stroke-width: 12; stroke-linecap: round; }
+.fig-turbohelice .in-track-slot { stroke: #6b7a72; stroke-width: 4; stroke-linecap: round; }
+.fig-turbohelice .in-chev { fill: none; stroke: var(--in-tinta); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.fig-turbohelice .in-knob { cursor: ew-resize; outline: none; }
+.fig-turbohelice .in-grip { fill: transparent; stroke: var(--in-rojo); stroke-width: 0; }
+.fig-turbohelice .in-knob:focus-visible .in-grip { stroke-width: 2.5; }
+.fig-turbohelice .in-shaft { stroke: #9aa6a0; stroke-width: 6; stroke-linecap: round; }
+.fig-turbohelice .in-knob-ball { fill: #1c2420; stroke: #000; stroke-width: 1; }
+.fig-turbohelice .in-knob-hi { fill: #ffffff; opacity: .35; }
+.fig-turbohelice .in-staff { stroke: #6b7a72; stroke-width: 2.2; }
+.fig-turbohelice .in-sector { fill: #d9b46a; stroke: var(--in-tinta-2); stroke-width: .5; }
+.fig-turbohelice .in-teeth { fill: #b78f3f; }
+.fig-turbohelice .in-tail { stroke: var(--in-tinta-2); stroke-width: 1.6; }
+.fig-turbohelice .in-pivot, .fig-turbohelice .in-pin { fill: var(--in-tinta-2); }
+.fig-turbohelice .in-pinion { fill: #d9b46a; stroke: var(--in-tinta-2); stroke-width: .5; }
+.fig-turbohelice .in-pinion-teeth { stroke: #b78f3f; stroke-width: 1.2; }
+.fig-turbohelice .in-lever { fill: none; stroke: var(--in-tinta-2); stroke-width: 2.2; stroke-linecap: round; }
+.fig-turbohelice .in-face-ticks { stroke: var(--in-papel); stroke-width: .9; }
+.fig-turbohelice .in-screw { fill: #9aa6a0; stroke: #22302a; stroke-width: .6; }
+.fig-turbohelice .in-glare { fill: none; stroke: #ffffff; stroke-width: 1.6; opacity: .35; vector-effect: non-scaling-stroke; }
+.fig-turbohelice .in-chip { fill: var(--in-panel); stroke: var(--in-tinta); stroke-width: 1.3; }
+.fig-turbohelice .in-callout circle { fill: var(--in-rojo); }
+.fig-turbohelice .in-callout path { stroke: var(--in-rojo); stroke-width: 1.3; fill: none; }
+.fig-turbohelice .in-call { font-family: var(--in-letra); font-size: 19px; font-weight: 600; fill: var(--in-rojo); paint-order: stroke; stroke: var(--in-panel); stroke-width: 4px; stroke-linejoin: round; }
+.fig-turbohelice { display: block; width: 100%; padding: 6px; border-radius: 12px; background: var(--in-papel); box-sizing: border-box;
+  --mo-frio: #2f6f8f; --mo-tibio: #7a5aa6; --mo-fuego: #c2541f; --mo-gas: #a8431a; --mo-fan: #2e537a; --mo-gen: #2e537a; --mo-libre: #2f7a48; }
+.fig-turbohelice .mo-svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; }
+.fig-turbohelice .mo-shaft { stroke-linecap: round; }
+.fig-turbohelice .mo-shaft-halo { fill: none; stroke: var(--in-papel); stroke-width: 10; stroke-linecap: round; }
+.fig-turbohelice .mo-disc-tip { fill: rgba(255, 255, 255, .35); stroke: var(--in-tinta-2); stroke-width: 1.1; }
+.fig-turbohelice .mo-disc-hub { fill: #b9b19c; stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-turbohelice .mo-blades { fill: none; stroke: var(--in-tinta-2); stroke-width: 1.6; stroke-linecap: round; }
+.fig-turbohelice .mo-blades--far { stroke: #9aa6a0; stroke-width: 1; }
+.fig-turbohelice .mo-vanes { fill: none; stroke: #8d9a93; stroke-width: 2; stroke-linecap: round; }
+.fig-turbohelice .mo-dots { fill: none; stroke-width: 4.4; stroke-linecap: round; }
+.fig-turbohelice .mo-dots--frio { stroke: var(--mo-frio); } .fig-turbohelice .mo-dots--tibio { stroke: var(--mo-tibio); }
+.fig-turbohelice .mo-dots--fuego { stroke: var(--mo-fuego); } .fig-turbohelice .mo-dots--gas { stroke: var(--mo-gas); }
+.fig-turbohelice .mo-flame { fill: #e9b52b; stroke: var(--mo-fuego); stroke-width: 1.2; transform-box: fill-box; transform-origin: 50% 50%; }
+.fig-turbohelice .mo-quad { fill: #3b4643; }
+.fig-turbohelice .mo-quad-slot { fill: none; stroke: #0f1714; stroke-width: 9; stroke-linecap: round; }
+.fig-turbohelice .mo-lever-arm { stroke: #9aa6a0; stroke-width: 6; stroke-linecap: round; }
+.fig-turbohelice .mo-lever-knob { fill: var(--in-papel); stroke: #0f1714; stroke-width: 1.4; }
+.fig-turbohelice .mo-k { cursor: ew-resize; outline: none; }
+.fig-turbohelice .mo-hit { fill: transparent; }
+.fig-turbohelice .mo-ring { fill: none; stroke: #e9b52b; stroke-width: 2.6; stroke-dasharray: 6 4; opacity: 0; }
+.fig-turbohelice .mo-k:focus-visible .mo-ring { opacity: 1; }
+.fig-turbohelice .mo-quad-t { font-family: var(--in-letra); font-size: 16px; font-weight: 600; fill: var(--in-papel); }
+.fig-turbohelice .mo-bar-t { font-size: 15px; font-weight: 600; }
+.fig-turbohelice .mo-bar { fill: #e3ddcd; stroke: var(--in-tinta); stroke-width: 1; }
+.fig-turbohelice .mo-bar-on { fill: var(--in-tinta); }
+.fig-turbohelice .mo-call { font-size: 17px; }
+.fig-turbohelice .mo-word { font-size: 18px; font-weight: 600; }
+.fig-turbohelice .mo-sil { fill: var(--in-panel); stroke: var(--in-tinta-2); stroke-width: 1.2; stroke-linejoin: round; }
+.fig-turbohelice .mo-sil-mark { fill: none; stroke: var(--in-rojo); stroke-width: 2; }
+.fig-turbohelice .mo-chev { fill: none; stroke: var(--in-tinta-2); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.fig-turbohelice[data-edad="guyrami"] .in-age2, .fig-turbohelice[data-edad="guyrami"] .in-age3, .fig-turbohelice[data-edad="tuka"] .in-age3, .fig-turbohelice[data-edad="taguato"] .mo-tuka { display: none; }
+@container figura (max-width: 440px) {
+  .fig-turbohelice .mo-call { font-size: 20px; stroke-width: 5px; }
+  .fig-turbohelice .mo-bar-t { font-size: 17px; }
+  .fig-turbohelice .mo-word { font-size: 20px; }
+}
+.fig-turbohelice .mo-acc { fill: #c6bfab; stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-turbohelice .mo-screen { stroke: var(--in-tinta-2); stroke-width: 3; stroke-dasharray: 2 2; }
+.fig-turbohelice .mo-body { fill: #8f9a90; stroke: var(--in-tinta-2); stroke-width: 1.4; stroke-linejoin: round; }
+.fig-turbohelice .mo-ch { stroke: var(--in-tinta-2); stroke-width: .8; stroke-linejoin: round; }
+.fig-turbohelice .mo-ch--frio { fill: #dcebf2; } .fig-turbohelice .mo-ch--tibio { fill: #e6def0; } .fig-turbohelice .mo-ch--fuego { fill: #f6cfae; } .fig-turbohelice .mo-ch--gas { fill: #f8e0cc; }
+.fig-turbohelice .mo-nozzle { fill: none; stroke: var(--in-tinta-2); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.fig-turbohelice .mo-shaft--gen { stroke: var(--mo-gen); stroke-width: 7; }
+.fig-turbohelice .mo-shaft--libre { stroke: var(--mo-libre); stroke-width: 4; }
+.fig-turbohelice .mo-disc--gen .mo-disc-tip { stroke: var(--mo-gen); stroke-width: 1.6; }
+.fig-turbohelice .mo-disc--libre .mo-disc-tip { stroke: var(--mo-libre); stroke-width: 1.6; }
+.fig-turbohelice .mo-spinner { fill: #e7e2d4; stroke: var(--in-tinta-2); stroke-width: 1.4; }
+.fig-turbohelice .mo-blade { fill: #3b4643; stroke: #0f1714; stroke-width: 1; stroke-linejoin: round; }
+.fig-turbohelice .mo-blade--far { fill: #8d9a93; stroke: #5d6b64; }
+.fig-turbohelice .mo-slip { fill: none; stroke: #4f86a0; stroke-width: 2.4; stroke-linecap: round; }

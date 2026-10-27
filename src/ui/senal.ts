@@ -1902,6 +1902,14 @@ export class Senal {
       /** Qué hace la tarjeta al tocarla. Si hay algo, es un botón de verdad. */
       readonly accion?: (() => void) | null;
       /**
+       * **Si llama a tocarla**, con su filo y su latido. Sí cuando lo que
+       * pide es apretar algo —arrancar, apagar—: la orden y el mando son el
+       * mismo objeto. No cuando tocarla solo explica lo que dibuja, como las
+       * luces del PAPI en la final: se toca como una pieza del cuadro, sin
+       * que nada invite a soltar los mandos para tocarla.
+       */
+      readonly llama?: boolean;
+      /**
        * Cuánta falta hace esto, de cero a lo que sea. Cero por defecto.
        *
        * Una tarjeta no puede tapar a otra que importe más mientras esta dure.
@@ -1960,7 +1968,9 @@ export class Senal {
     this.accion = opciones.accion ?? null;
     const boton = this.caja as HTMLButtonElement;
     boton.disabled = !this.accion;
-    boton.classList.toggle("senal--pulsable", !!this.accion);
+    const llama = opciones.llama ?? true;
+    boton.classList.toggle("senal--pulsable", !!this.accion && llama);
+    boton.classList.toggle("senal--explica", !!this.accion && !llama);
     this.medirse();
   }
 

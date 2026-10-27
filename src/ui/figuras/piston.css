@@ -1,0 +1,151 @@
+/*
+ * La hoja de la figura, toda bajo `.fig-piston` para que no pise al juego ni el
+ * juego a ella. Ver `piston.ts`. Las letras crecen por el ancho de la figura
+ * (`@container figura`) y no por el de la pantalla: ver `.explica__figura` en
+ * style.css.
+ */
+.fig-piston { --in-papel: #f3efe3; --in-panel: #f8f5ec; --in-tinta: #2e537a; --in-tinta-2: #22302a; --in-tinta-suave: #8ea3b8;
+  --in-rojo: #b3261e; --in-total: #c2541f; --in-estatica: #2e537a; --in-hielo: #dff1fb;
+  --in-letra: "Barlow Semi Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  --in-cifras: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif; }
+.fig-piston .in-panel { fill: var(--in-panel); stroke: var(--in-tinta); stroke-width: 1.4; }
+.fig-piston .in-txt { font-family: var(--in-letra); fill: var(--in-tinta-2); }
+.fig-piston .in-ac { fill: var(--in-panel); stroke: var(--in-tinta-2); stroke-width: 1.5; stroke-linejoin: round; }
+.fig-piston .in-ac-glass { fill: #dfe8ee; stroke: var(--in-tinta-2); stroke-width: 1.2; stroke-linejoin: round; }
+.fig-piston .in-ac-line { fill: none; stroke: var(--in-tinta-2); stroke-width: 1.5; stroke-linecap: round; }
+.fig-piston .in-ac-prop { fill: var(--in-tinta-suave); opacity: .55; }
+.fig-piston .in-ac-pitot { fill: none; stroke: var(--in-tinta-2); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.fig-piston .in-wall--0 { fill: #d9d2bf; } .fig-piston .in-wall--1 { fill: #e3ddcd; } .fig-piston .in-wall--2 { fill: #ece7da; } .fig-piston .in-wall--3 { fill: #f4f0e6; }
+.fig-piston .in-inner--0 { fill: #b9b19c; } .fig-piston .in-inner--1 { fill: #c6bfab; } .fig-piston .in-inner--2 { fill: #d2ccba; } .fig-piston .in-inner--3 { fill: #dcd6c6; }
+.fig-piston .in-wall, .fig-piston .in-inner { stroke: none; }
+.fig-piston .in-backplate { fill: #cfc8b4; stroke: var(--in-tinta); stroke-width: 1; }
+.fig-piston .in-cutface { fill: url(#fig-in-hatch); stroke: var(--in-tinta); stroke-width: 1; }
+.fig-piston .in-cutline, .fig-piston .in-rim { fill: none; stroke: var(--in-tinta); stroke-width: 1.3; }
+.fig-piston .in-bezel { fill: #3b4643; stroke: none; }
+.fig-piston .in-face { fill: #22302a; stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-piston .in-ring { stroke: var(--in-tinta); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.fig-piston .in-ring--cresta { fill: #ecd09a; } .fig-piston .in-ring--valle { fill: #c49a55; }
+.fig-piston .in-web { fill: #b8914f; stroke: var(--in-tinta); stroke-width: .8; }
+.fig-piston .in-corr { fill: none; stroke: #9c7a3c; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.fig-piston .in-boss { fill: var(--in-tinta-2); }
+.fig-piston .in-dial-rim { fill: #3b4643; }
+.fig-piston .in-dial { fill: #22302a; }
+.fig-piston .in-ticks { stroke: var(--in-papel); stroke-width: 2; stroke-linecap: round; fill: none; }
+.fig-piston .in-num { font-family: var(--in-cifras); font-weight: 600; font-size: 21px; fill: var(--in-papel); }
+.fig-piston .in-unit { font-family: var(--in-letra); font-weight: 600; font-size: 15px; fill: var(--in-papel); letter-spacing: .08em; }
+.fig-piston .in-arc { fill: none; stroke-linecap: butt; }
+.fig-piston .in-arc--blanco { stroke: #f3efe3; } .fig-piston .in-arc--verde { stroke: #3fa65e; } .fig-piston .in-arc--amarillo { stroke: #e9b52b; }
+.fig-piston .in-redline { stroke: #e2453a; stroke-width: 5; stroke-linecap: butt; }
+.fig-piston .in-needle { fill: #f3efe3; stroke: #0f1714; stroke-width: 1; stroke-linejoin: round; }
+.fig-piston .in-hub { fill: #3b4643; stroke: #f3efe3; stroke-width: 1.5; }
+.fig-piston .in-track { stroke: var(--in-tinta-2); stroke-width: 12; stroke-linecap: round; }
+.fig-piston .in-track-slot { stroke: #6b7a72; stroke-width: 4; stroke-linecap: round; }
+.fig-piston .in-chev { fill: none; stroke: var(--in-tinta); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.fig-piston .in-knob { cursor: ew-resize; outline: none; }
+.fig-piston .in-grip { fill: transparent; stroke: var(--in-rojo); stroke-width: 0; }
+.fig-piston .in-knob:focus-visible .in-grip { stroke-width: 2.5; }
+.fig-piston .in-shaft { stroke: #9aa6a0; stroke-width: 6; stroke-linecap: round; }
+.fig-piston .in-knob-ball { fill: #1c2420; stroke: #000; stroke-width: 1; }
+.fig-piston .in-knob-hi { fill: #ffffff; opacity: .35; }
+.fig-piston .in-staff { stroke: #6b7a72; stroke-width: 2.2; }
+.fig-piston .in-sector { fill: #d9b46a; stroke: var(--in-tinta-2); stroke-width: .5; }
+.fig-piston .in-teeth { fill: #b78f3f; }
+.fig-piston .in-tail { stroke: var(--in-tinta-2); stroke-width: 1.6; }
+.fig-piston .in-pivot, .fig-piston .in-pin { fill: var(--in-tinta-2); }
+.fig-piston .in-pinion { fill: #d9b46a; stroke: var(--in-tinta-2); stroke-width: .5; }
+.fig-piston .in-pinion-teeth { stroke: #b78f3f; stroke-width: 1.2; }
+.fig-piston .in-lever { fill: none; stroke: var(--in-tinta-2); stroke-width: 2.2; stroke-linecap: round; }
+.fig-piston .in-face-ticks { stroke: var(--in-papel); stroke-width: .9; }
+.fig-piston .in-screw { fill: #9aa6a0; stroke: #22302a; stroke-width: .6; }
+.fig-piston .in-glare { fill: none; stroke: #ffffff; stroke-width: 1.6; opacity: .35; vector-effect: non-scaling-stroke; }
+.fig-piston .in-chip { fill: var(--in-panel); stroke: var(--in-tinta); stroke-width: 1.3; }
+.fig-piston .in-callout circle { fill: var(--in-rojo); }
+.fig-piston .in-callout path { stroke: var(--in-rojo); stroke-width: 1.3; fill: none; }
+.fig-piston .in-call { font-family: var(--in-letra); font-size: 19px; font-weight: 600; fill: var(--in-rojo); paint-order: stroke; stroke: var(--in-panel); stroke-width: 4px; stroke-linejoin: round; }
+.fig-piston { display: block; width: 100%; padding: 6px; border-radius: 12px; background: var(--in-papel); box-sizing: border-box;
+  --mo-frio: #2f6f8f; --mo-tibio: #7a5aa6; --mo-fuego: #c2541f; --mo-gas: #a8431a; --mo-fan: #2e537a; --mo-gen: #2e537a; --mo-libre: #2f7a48; }
+.fig-piston .mo-svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; }
+.fig-piston .mo-shaft { stroke-linecap: round; }
+.fig-piston .mo-shaft-halo { fill: none; stroke: var(--in-papel); stroke-width: 10; stroke-linecap: round; }
+.fig-piston .mo-disc-tip { fill: rgba(255, 255, 255, .35); stroke: var(--in-tinta-2); stroke-width: 1.1; }
+.fig-piston .mo-disc-hub { fill: #b9b19c; stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-piston .mo-blades { fill: none; stroke: var(--in-tinta-2); stroke-width: 1.6; stroke-linecap: round; }
+.fig-piston .mo-blades--far { stroke: #9aa6a0; stroke-width: 1; }
+.fig-piston .mo-vanes { fill: none; stroke: #8d9a93; stroke-width: 2; stroke-linecap: round; }
+.fig-piston .mo-dots { fill: none; stroke-width: 4.4; stroke-linecap: round; }
+.fig-piston .mo-dots--frio { stroke: var(--mo-frio); } .fig-piston .mo-dots--tibio { stroke: var(--mo-tibio); }
+.fig-piston .mo-dots--fuego { stroke: var(--mo-fuego); } .fig-piston .mo-dots--gas { stroke: var(--mo-gas); }
+.fig-piston .mo-flame { fill: #e9b52b; stroke: var(--mo-fuego); stroke-width: 1.2; transform-box: fill-box; transform-origin: 50% 50%; }
+.fig-piston .mo-quad { fill: #3b4643; }
+.fig-piston .mo-quad-slot { fill: none; stroke: #0f1714; stroke-width: 9; stroke-linecap: round; }
+.fig-piston .mo-lever-arm { stroke: #9aa6a0; stroke-width: 6; stroke-linecap: round; }
+.fig-piston .mo-lever-knob { fill: var(--in-papel); stroke: #0f1714; stroke-width: 1.4; }
+.fig-piston .mo-k { cursor: ew-resize; outline: none; }
+.fig-piston .mo-hit { fill: transparent; }
+.fig-piston .mo-ring { fill: none; stroke: #e9b52b; stroke-width: 2.6; stroke-dasharray: 6 4; opacity: 0; }
+.fig-piston .mo-k:focus-visible .mo-ring { opacity: 1; }
+.fig-piston .mo-quad-t { font-family: var(--in-letra); font-size: 16px; font-weight: 600; fill: var(--in-papel); }
+.fig-piston .mo-bar-t { font-size: 15px; font-weight: 600; }
+.fig-piston .mo-bar { fill: #e3ddcd; stroke: var(--in-tinta); stroke-width: 1; }
+.fig-piston .mo-bar-on { fill: var(--in-tinta); }
+.fig-piston .mo-call { font-size: 17px; }
+.fig-piston .mo-word { font-size: 18px; font-weight: 600; }
+.fig-piston .mo-sil { fill: var(--in-panel); stroke: var(--in-tinta-2); stroke-width: 1.2; stroke-linejoin: round; }
+.fig-piston .mo-sil-mark { fill: none; stroke: var(--in-rojo); stroke-width: 2; }
+.fig-piston .mo-chev { fill: none; stroke: var(--in-tinta-2); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.fig-piston[data-edad="guyrami"] .in-age2, .fig-piston[data-edad="guyrami"] .in-age3, .fig-piston[data-edad="tuka"] .in-age3, .fig-piston[data-edad="taguato"] .mo-tuka { display: none; }
+@container figura (max-width: 440px) {
+  .fig-piston .mo-call { font-size: 20px; stroke-width: 5px; }
+  .fig-piston .mo-bar-t { font-size: 17px; }
+  .fig-piston .mo-word { font-size: 20px; }
+}
+.fig-piston .pi-box { fill: #fbf9f3; stroke: var(--in-tinta); stroke-width: 1.2; }
+.fig-piston .pi-case { fill: #b9b19c; stroke: var(--in-tinta-2); stroke-width: 1.4; }
+.fig-piston .pi-wall, .fig-piston .pi-head { fill: #8f9a90; stroke: var(--in-tinta-2); stroke-width: 1.4; stroke-linejoin: round; }
+.fig-piston .pi-fins { fill: none; stroke: #6b7a72; stroke-width: 3; stroke-linecap: round; }
+.fig-piston .pi-port { stroke: var(--in-tinta-2); stroke-width: 1.2; stroke-linejoin: round; }
+.fig-piston .pi-port--in { fill: #dcebf2; } .fig-piston .pi-port--ex { fill: #e3d8cc; }
+.fig-piston .pi-injector { fill: var(--in-tinta-2); stroke: var(--in-tinta-2); stroke-width: 2; stroke-linejoin: round; }
+.fig-piston .pi-charge { stroke: none; }
+.fig-piston .pi-charge--0 { fill: #cfe3ef; } .fig-piston .pi-charge--1 { fill: #a9c7dc; } .fig-piston .pi-charge--2 { fill: #f2b48a; } .fig-piston .pi-charge--3 { fill: #d6cbbf; }
+.fig-piston .pi-flame { fill: #e9b52b; stroke: var(--mo-fuego); stroke-width: 1.4; }
+.fig-piston .pi-piston { fill: #c6bfab; stroke: var(--in-tinta-2); stroke-width: 1.4; }
+.fig-piston .pi-rings { stroke: #6b7a72; stroke-width: 1.4; }
+.fig-piston .pi-pinhole { fill: #6b7a72; stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-piston .pi-rod { fill: none; stroke: #6b7a72; stroke-width: 10; stroke-linecap: round; }
+.fig-piston .pi-web { fill: #8f9a90; stroke: var(--in-tinta-2); stroke-width: 1.4; stroke-linejoin: round; }
+.fig-piston .pi-journal { fill: var(--mo-libre); stroke: var(--in-tinta-2); stroke-width: 1.4; }
+.fig-piston .pi-crankpin { fill: #c6bfab; stroke: var(--in-tinta-2); stroke-width: 1.4; }
+.fig-piston .pi-valve { fill: none; stroke: var(--in-tinta-2); stroke-width: 4; stroke-linecap: round; }
+.fig-piston .pi-plug { fill: none; stroke: #3b4643; stroke-width: 6; stroke-linecap: round; }
+.fig-piston .pi-spark { fill: #fff3b0; stroke: var(--in-tinta-2); stroke-width: 1.4; stroke-linejoin: round; }
+.fig-piston .pi-lead { fill: none; stroke: var(--in-rojo); stroke-width: 2; }
+.fig-piston .pi-lead[data-off] { stroke-dasharray: 4 4; opacity: .5; }
+.fig-piston .pi-mag { fill: #3b4643; stroke: var(--in-tinta-2); stroke-width: 1.2; }
+.fig-piston .pi-mag-x { fill: none; stroke: #e9b52b; stroke-width: 3.4; stroke-linecap: round; }
+.fig-piston .pi-cowl { fill: #f3efe3; stroke: var(--in-tinta-2); stroke-width: 1.6; }
+.fig-piston .pi-cowl-in { fill: none; stroke: var(--mo-frio); stroke-width: 5; stroke-linecap: round; }
+.fig-piston .pi-shaft { stroke: var(--mo-libre); stroke-width: 6; stroke-linecap: round; }
+.fig-piston .pi-barrel { fill: #8f9a90; stroke: var(--in-tinta-2); stroke-width: 1.2; }
+.fig-piston .pi-headp { fill: #6b7a72; stroke: var(--in-tinta-2); stroke-width: 1.2; }
+.fig-piston .pi-pistonp { stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-piston .pi-blade { fill: #3b4643; stroke: #0f1714; stroke-width: 1; }
+.fig-piston .pi-spinner { fill: #e7e2d4; stroke: var(--in-tinta-2); stroke-width: 1.4; }
+.fig-piston .pi-st rect { fill: var(--in-panel); stroke: var(--in-tinta); stroke-width: 1.2; }
+.fig-piston .pi-st[data-on] rect { fill: var(--in-tinta); }
+.fig-piston .pi-st-t { font-size: 17px; font-weight: 600; }
+.fig-piston .pi-st[data-on] .pi-st-t { fill: var(--in-papel); }
+.fig-piston .pi-btn { cursor: pointer; outline: none; }
+.fig-piston .pi-btn rect { fill: var(--in-panel); stroke: var(--in-tinta); stroke-width: 1.6; }
+.fig-piston .pi-btn[aria-pressed="true"] rect { fill: #3b4643; }
+.fig-piston .pi-btn[aria-pressed="true"] .pi-btn-t { fill: var(--in-papel); }
+.fig-piston .pi-btn:focus-visible rect { stroke: var(--in-rojo); stroke-width: 3; }
+.fig-piston .pi-btn-t { font-size: 17px; font-weight: 600; }
+.fig-piston .pi-say { font-size: 16px; font-weight: 600; fill: var(--in-rojo); paint-order: stroke; stroke: #fbf9f3; stroke-width: 4px; stroke-linejoin: round; }
+.fig-piston .pi-panel { fill: #3b4643; }
+.fig-piston .pi-more { font-size: 16px; font-weight: 600; fill: var(--in-papel); }
+.fig-piston .pi-face { stroke: #9aa6a0; stroke-width: 3; stroke-linecap: round; }
+.fig-piston .pi-knob-shaft { stroke: #9aa6a0; stroke-width: 6; stroke-linecap: round; }
+.fig-piston .pi-knob { fill: #1c2420; stroke: #9aa6a0; stroke-width: 1.4; }
+.fig-piston .pi-mixture { fill: #c0392b; stroke: var(--in-papel); stroke-width: 2; }
+.fig-piston .mo-k { cursor: ew-resize; }

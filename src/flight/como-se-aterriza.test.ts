@@ -31,7 +31,9 @@ describe("lo que se cuenta antes de la final dice lo mismo que la nota de despu�
       );
       // La duro pide recoger: lo de antes dice cuándo, con la recogida de su manual.
       expect(texto(loQueSeJuzga("cifra", "duro"))).toContain("recogé");
-      if (clase === "electricos") expect(antes).toContain("retard");
+      // Lo que canta su radioaltímetro, y no el «retard» de Airbus, que el E170 no lleva.
+      if (clase === "electricos") expect(antes).toContain("thirty");
+      expect(antes, a.id).not.toContain("retard");
       if (clase === "helice") expect(antes).toContain("juntos");
     }
   });

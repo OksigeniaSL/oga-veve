@@ -37,7 +37,11 @@ import {
 } from "../world/modelo-de-la-tarjeta";
 import { equipoDe } from "../world/luces-del-trafico";
 import type { PiezaDelAvion } from "../world/puntos-del-avion";
+import type { Peldano } from "../flight/escalera";
 import { armarPanel } from "./concha";
+import { abrirExplicacion } from "./explicaciones";
+import { ponerLasDeSerie } from "./explicaciones-de-serie";
+import { figuraEnLaTarjeta } from "./figuras/montar";
 import {
   dibujoDe,
   explicacion,
@@ -266,7 +270,24 @@ export interface OpcionesDeLaTarjeta {
    * tarjeta se calla y el globo se lee. Lo que no está grabado no suena.
    */
   readonly decir?: (texto: string, clave: string) => void;
+  /**
+   * El peldaño de quien mira, para la figura de «por dentro»: en el hangar no
+   * hay vuelo que lo diga. En el vuelo lo dice el juego. Ver
+   * `ponerContextoDeLasExplicaciones`.
+   */
+  readonly peldano?: () => Peldano;
 }
+
+/**
+ * **Por dentro**: un engranaje, que es lo que se ve al abrir un instrumento y
+ * se reconoce sin leer.
+ */
+const ENGRANAJE = `<svg class="tav__por-dentro-dibujo" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M10.3 2.5 h3.4 l.5 2.6 a7.4 7.4 0 0 1 1.9 1.1 l2.5 -.9 1.7 2.9 -2 1.7 a7.4 7.4 0 0 1 0 2.2
+           l2 1.7 -1.7 2.9 -2.5 -.9 a7.4 7.4 0 0 1 -1.9 1.1 l-.5 2.6 h-3.4 l-.5 -2.6 a7.4 7.4 0 0 1 -1.9 -1.1
+           l-2.5 .9 -1.7 -2.9 2 -1.7 a7.4 7.4 0 0 1 0 -2.2 l-2 -1.7 1.7 -2.9 2.5 .9 a7.4 7.4 0 0 1 1.9 -1.1 Z" />
+  <circle cx="12" cy="12" r="3" class="tav__por-dentro-hueco" />
+</svg>`;
 
 export class TarjetaDelAvion {
   private readonly root: HTMLElement;
@@ -511,9 +532,22 @@ export class TarjetaDelAvion {
     if (!globo) return;
     this.globo = que;
     if (this.visor) this.visor.quieto = true;
+    /*
+     * **Y si el punto tiene figura, el botón para verla por dentro**: el
+     * globo cuenta qué es, y la figura, cómo funciona. Abre la ventana de
+     * explicación, que en el vuelo lo congela como cualquier otra. Ver
+     * `ui/figuras/montar.ts`.
+     */
+    const conFigura = this.avion ? figuraEnLaTarjeta(e.id, this.avion) : null;
     globo.innerHTML = `
       ${dibujoDe(e, "tav__globo-dibujo")}
-      <p class="tav__globo-texto">${t(e.texto)}</p>`;
+      <p class="tav__globo-texto">${t(e.texto)}</p>
+      ${
+        conFigura
+          ? `<button type="button" class="tav__por-dentro" data-tarjeta="por-dentro"
+                     aria-label="${t("tarjeta.porDentro.lector")}">${ENGRANAJE}<span>${t("tarjeta.porDentro")}</span></button>`
+          : ""
+      }`;
     globo.dataset.explicacion = e.id;
     globo.hidden = false;
     this.colocarGlobo();
@@ -555,6 +589,21 @@ export class TarjetaDelAvion {
     const donde = e.target as Element | null;
     const a = this.avion;
     if (!donde || !a) return;
+    const porDentro = donde.closest<HTMLElement>('[data-tarjeta="por-dentro"]');
+    if (porDentro) {
+      const id = porDentro.closest<HTMLElement>('[data-tarjeta="globo"]')?.dataset.explicacion;
+      const figura = id ? figuraEnLaTarjeta(id, a) : null;
+      // En el hangar, antes del primer vuelo, todavía no están apuntadas.
+      ponerLasDeSerie();
+      // Callada: el globo acaba de decirlo. El altavoz de la ventana lo repite.
+      if (id && figura)
+        abrirExplicacion(
+          id,
+          this.opciones.peldano ? { peldano: this.opciones.peldano(), enTierra: true } : undefined,
+          { callada: true, figura },
+        );
+      return;
+    }
     const punto = donde.closest<HTMLElement>("[data-pieza]");
     if (punto) {
       const pieza = punto.dataset.pieza as PiezaDelAvion;

@@ -8891,6 +8891,16 @@ button.motor__tecla::after {
   animation: senal-llama 1.8s ease-in-out infinite;
 }
 
+/*
+ * **La que se toca para que se explique**: el PAPI dibujado abre el PAPI por
+ * dentro. Se toca como una pieza del cuadro, sin filo ni latido: no está
+ * pidiendo nada. Ver `Senal.mostrar`.
+ */
+.senal--explica {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 .senal--pulsable:hover {
   filter: brightness(1.08);
 }
@@ -13599,6 +13609,113 @@ button.motor__tecla::after {
   width: min(50%, 160px);
 }
 
+/*
+ * **La figura que se toca**, en el sitio del dibujo: el instrumento por
+ * dentro. Ver `ui/figuras/`.
+ *
+ * Su hoja de estilo va aparte y bajo su propia clase, `.fig-…`, y aquí solo
+ * se le da el sitio. Es su propio contenedor —`container: figura`— porque las
+ * letras de la figura crecen cuando el dibujo sale pequeño, y lo que manda es
+ * lo ancho que sale el dibujo, no la pantalla: una ventana de seiscientos en
+ * un escritorio es un dibujo de escritorio, y la misma en un teléfono
+ * tumbado, uno de teléfono.
+ *
+ * **Y cabe sin rodar.** Partes de las figuras se arrastran con el dedo y no
+ * dejan rodar la ventana por encima, así que el dibujo no puede ser más alto
+ * que lo que queda de pantalla: el ancho se ajusta al alto que hay, con la
+ * proporción del dibujo, 600 por 430.
+ */
+.explica--figura {
+  width: min(600px, 100%);
+}
+
+/* El PAPI son cuatro dibujos: el perfil y la cabina van uno al lado del otro. */
+.explica--figura-papi {
+  width: min(1040px, 100%);
+}
+
+.explica__figura {
+  container: figura / inline-size;
+  width: min(100%, calc((100dvh - 240px) * 1.39));
+  margin-inline: auto;
+}
+
+/* En el PAPI lo que no puede pasarse de alto es el perfil, el de arrastrar. */
+.explica--figura-papi .explica__figura {
+  width: min(100%, calc((100dvh - 240px) * 2.25));
+}
+
+/* Mientras llega la figura, o si no llega, el dibujo de siempre. */
+.explica__figura-dentro:not([class*="fig-"]) > svg {
+  display: block;
+  width: min(100%, 320px);
+  height: auto;
+  max-height: 34dvh;
+  margin: auto;
+  fill: currentColor;
+}
+
+/*
+ * En un teléfono de pie, el marco de la ventana más fino: con veinticuatro
+ * píxeles de cada lado el dibujo salía tan estrecho que el gas medía menos de
+ * un dedo.
+ */
+@media (max-width: 480px) {
+  .explicacion:has(.explica--figura) {
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+
+  .explica--figura {
+    padding: 14px 12px 12px;
+  }
+}
+
+/*
+ * Y tumbado, sin la cabecera a la vista —el nombre sigue ahí para el lector
+ * de pantalla— y con el marco fino: quedan trescientos y pocos píxeles de
+ * alto, y son para el dibujo y para cerrar.
+ */
+@media (max-height: 480px) {
+  .explicacion:has(.explica--figura) {
+    padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+      max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+
+  .explica--figura {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .explica--figura .concha__cabecera {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .explica--figura .concha__acciones {
+    padding-top: 8px;
+  }
+
+  .explica__figura {
+    width: min(100%, calc((100dvh - 110px) * 1.39));
+  }
+
+  /*
+   * El PAPI, tumbado, en dos columnas aunque salga estrecho: en una sola, su
+   * perfil va a todo el ancho y es más alto que la pantalla. Con el perfil
+   * en la columna ancha —cinco octavos del ancho, menos los márgenes—, mide
+   * de alto siete décimas de esa columna.
+   */
+  .explica--figura-papi .explica__figura {
+    width: min(100%, max(640px, calc((100dvh - 110px) * 2.39)));
+  }
+}
+
 .explica__video {
   width: 100%;
   max-height: 46vh;
@@ -14253,6 +14370,41 @@ svg .ex-raya {
   margin: 0;
   font-size: 15px;
   line-height: 1.35;
+}
+
+/*
+ * **Por dentro**: el botón que abre la figura del punto. El globo deja pasar
+ * el dedo al avión de detrás; el botón no, que es para tocarlo. De un dedo de
+ * grande, también en el teléfono.
+ */
+.tav__por-dentro {
+  grid-column: 1 / -1;
+  justify-self: end;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: max(44px, var(--tacto));
+  min-height: max(44px, var(--tacto));
+  padding: 6px 16px 6px 10px;
+  border-radius: 999px;
+  border: none;
+  background: var(--barro-calido);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tav__por-dentro-dibujo {
+  width: 26px;
+  height: 26px;
+  fill: currentColor;
+}
+
+.tav__por-dentro-hueco {
+  fill: var(--barro-calido);
 }
 
 /* La mano que gira: se va en cuanto alguien lo gira. */

@@ -10312,7 +10312,19 @@ export class Game {
                 : this.rotulo("vuelo.papiBajo", "palabra.subi")
             : this.rotulo("vuelo.papiBien", "palabra.bien"),
         null,
-        { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+        {
+          segundos: SE_QUEDA_EL_ARO,
+          prioridad: IMPORTANTE,
+          /*
+           * **Y tocarla abre el PAPI por dentro**: las cuatro luces, el
+           * abanico de sus haces y una caja desarmada, que se tocan. Es la
+           * explicación de cualquier pieza del cuadro —congela el vuelo
+           * mientras se mira— y la tarjeta no llama a tocarla: en la final
+           * las manos van en los mandos. Ver `ui/figuras/papi.ts`.
+           */
+          accion: () => void abrirExplicacion("papi"),
+          llama: false,
+        },
       );
     });
 

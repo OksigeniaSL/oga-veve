@@ -18,6 +18,10 @@
  * - Abajo, el altavoz para volver a oírla —solo si tiene grabación: un botón
  *   que no hace nada enseña que los botones no funcionan—, la lamparita que
  *   lleva al rincón de las curiosidades, y cerrar.
+ * - **La figura que se toca**, cuando la lleva: el instrumento por dentro, en
+ *   el sitio del dibujo. Se pide al abrir y se desmonta al cerrar o al
+ *   cambiar de explicación, con su animación y sus oyentes: mientras la
+ *   ventana no está, no cuesta nada. Ver `ui/figuras/montar.ts`.
  *
  * Vive fuera del HUD, en su propia caja, por lo mismo que la pausa: el HUD se
  * rehace al cambiar de idioma o de peldaño, y la tarjeta del avión del hangar
@@ -26,6 +30,8 @@
 
 import { t } from "../i18n";
 import { armarPanel, CERRAR, type Accion } from "./concha";
+import { edadDe, type Figura } from "./figuras/figura";
+import { montarFigura } from "./figuras/montar";
 import { Panel } from "./panel";
 import { DIBUJOS } from "./senal";
 import {
@@ -39,6 +45,13 @@ import {
   type DibujoDeExplicacion,
   type PantallaDeExplicaciones,
 } from "./explicaciones";
+
+/**
+ * **Lo que tarda en llegar el clic del toque que abrió la ventana**, ms. Es
+ * el mismo margen que `LLEGA_EL_CLICK` en `pulsar.ts`, que espera ese clic
+ * para no contar el toque dos veces.
+ */
+const CLIC_DEL_MISMO_TOQUE = 800;
 
 /** El altavoz con sus ondas: volver a oírla. */
 const ALTAVOZ = `
@@ -102,6 +115,15 @@ export class VentanaDeExplicacion implements PantallaDeExplicaciones {
   private readonly panel: Panel;
   /** Si lo que hay dentro es una de las curiosidades: entonces se vuelve al rincón. */
   private deCuriosidad = false;
+  /** La figura montada ahora, si hay. */
+  private figura: Figura | null = null;
+  /**
+   * Cuántas veces se ha rehecho el contenido: una figura que llega tarde, con
+   * la ventana ya cerrada o con otra explicación dentro, no se monta.
+   */
+  private vez = 0;
+  /** Cuándo se abrió, ms. Ver `CLIC_DEL_MISMO_TOQUE`. */
+  private abiertaEn = Number.NEGATIVE_INFINITY;
 
   constructor(caja: HTMLElement) {
     this.caja = caja;
@@ -114,17 +136,50 @@ export class VentanaDeExplicacion implements PantallaDeExplicaciones {
       if (accion === "curiosidades") return abrirCuriosidades();
       const abre = donde?.closest?.("[data-explica-abre]")?.getAttribute("data-explica-abre");
       if (abre) return void abrirExplicacion(abre);
-      // Y tocar fuera, en el velo, también cierra.
-      if (donde === caja) this.cerrarDesdeDentro();
+      /*
+       * Y tocar fuera, en el velo, también cierra. **Pero no el toque que la
+       * abrió**: las tarjetas que se tocan —la del PAPI, la de la presentación—
+       * actúan al levantar el dedo, y el clic que el navegador manda detrás
+       * de ese mismo toque cae ya sobre la ventana recién abierta. Si caía en
+       * el velo, la cerraba en el acto: en Guyrami, sin cabecera, el PAPI se
+       * abría y se cerraba sin que se viera. Medido con `ver-figuras.mjs`.
+       */
+      if (donde === caja && performance.now() - this.abiertaEn > CLIC_DEL_MISMO_TOQUE)
+        this.cerrarDesdeDentro();
     });
   }
 
   private cerrarDesdeDentro(): void {
+    this.soltarLaFigura();
     this.panel.cerrar();
     alCerrarseLaVentana();
   }
 
+  /** Desmonta la figura que haya, y deja sin efecto la que esté llegando. */
+  private soltarLaFigura(): void {
+    this.vez++;
+    this.figura?.desmontar();
+    this.figura = null;
+  }
+
+  /** La figura en su hueco, cuando llegue. Sin red, se queda el dibujo. */
+  private ponerLaFigura(como: ComoSeEnsena): void {
+    const f = como.figura;
+    const hueco = this.caja.querySelector<HTMLElement>("[data-explica-figura]");
+    if (!f || !hueco) return;
+    const vez = this.vez;
+    void montarFigura(hueco, f, edadDe(como.peldano))
+      .then((montada) => {
+        if (vez !== this.vez || !hueco.isConnected) return montada.desmontar();
+        this.figura = montada;
+      })
+      .catch(() => {
+        // El dibujo quieto ya está en el hueco: la explicación sigue entera.
+      });
+  }
+
   mostrar(como: ComoSeEnsena): void {
+    this.soltarLaFigura();
     this.deCuriosidad = como.explicacion.rincon === "curiosidades";
     const acciones: Accion[] = [];
     if (como.suena)
@@ -143,16 +198,30 @@ export class VentanaDeExplicacion implements PantallaDeExplicaciones {
       titulo: titulo(como),
       clase: `explica${this.deCuriosidad ? " explica--curiosidad" : ""}${
         como.palabra ? "" : " explica--sin-letras"
-      }`,
+      }${como.figura ? ` explica--figura explica--figura-${como.figura.cual}` : ""}`,
       acciones,
       cuerpo: `
         <div class="explica__medio" data-explica-dibujo="${como.explicacion.id}">
-          ${como.video ? video(como) : dibujoDe(como.explicacion.dibujo)}
+          ${
+            como.video
+              ? video(como)
+              : como.figura
+                ? /*
+                   * Dos cajas y no una: la de fuera es el contenedor por el
+                   * que la figura mide su ancho, y una consulta de contenedor
+                   * no alcanza al contenedor mismo. Con la figura montada en
+                   * él, el PAPI no pasaba nunca a dos columnas.
+                   */
+                  `<div class="explica__figura"><div class="explica__figura-dentro"
+                       data-explica-figura="${como.figura.cual}">${dibujoDe(como.explicacion.dibujo)}</div></div>`
+                : dibujoDe(como.explicacion.dibujo)
+          }
         </div>
         ${como.texto ? `<p class="explica__texto">${como.texto}</p>` : ""}`,
     });
     this.caja.dataset.abierta = como.explicacion.id;
     this.abrirOEnfocar();
+    this.ponerLaFigura(como);
   }
 
   /**
@@ -161,11 +230,15 @@ export class VentanaDeExplicacion implements PantallaDeExplicaciones {
    * lo tenía ya no existe, y sin foco el teclado y el mando se quedan fuera.
    */
   private abrirOEnfocar(): void {
-    if (!this.panel.abierto) return this.panel.abrir();
+    if (!this.panel.abierto) {
+      this.abiertaEn = performance.now();
+      return this.panel.abrir();
+    }
     this.caja.querySelector<HTMLElement>("[data-explica-abre], [data-accion]")?.focus();
   }
 
   mostrarRincon(cuales: readonly ComoSeEnsena[]): void {
+    this.soltarLaFigura();
     this.deCuriosidad = false;
     const primera = cuales[0];
     const conLetras = !!primera?.palabra;
@@ -199,6 +272,7 @@ export class VentanaDeExplicacion implements PantallaDeExplicaciones {
   }
 
   ocultar(): void {
+    this.soltarLaFigura();
     this.panel.cerrar();
     delete this.caja.dataset.abierta;
   }
