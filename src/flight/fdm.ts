@@ -666,6 +666,19 @@ export class CoefficientFlightModel implements FlightModel {
     this.updateBodyAxes();
     s.velocity.copy(this.forward).multiplyScalar(initial.airspeed);
     /*
+     * **Y la velocidad pedida es respecto al aire**, como dice
+     * `InitialConditions.airspeed`: volando, el aire se mueve, y el avión con
+     * él. Se ponía respecto al suelo, así que con viento nacía con otra
+     * velocidad de la pedida: colocado en la final de diez kilómetros de La
+     * Gomera a su Vref más cinco nudos, con catorce nudos de viento de 020,
+     * salía a 57,9 m/s de aire en vez de 52,6 y con seis grados de derrape;
+     * con los flaps de aterrizar eso es 1,3 g, y en cuatro segundos subía a
+     * seis metros por segundo. En el suelo no: parado con viento, parado.
+     */
+    const alto = initial.position.y - this.ground(initial.position.x, initial.position.z);
+    if (initial.airspeed > MIN_AIRSPEED && alto > this.aircraft.gearHeight + PEGADO_AL_SUELO)
+      s.velocity.addScaledVector(this.viento, perfilDeViento(alto));
+    /*
      * Equilibrado: el morro arriba lo que pide el ala para sostener el peso, y
      * la velocidad, horizontal. Ver `InitialConditions.equilibrado`.
      */
