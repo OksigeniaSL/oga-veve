@@ -2228,12 +2228,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       -topeDeInclinacion,
       Math.min(topeDeInclinacion, e * 1.5),
     );
+    /*
+     * **En Guyrami el alerón ya es la inclinación**: el modelo sencillo pide
+     * con él un ángulo, `alerón · VISUAL_BANK`, y vira lo que ese ángulo da
+     * —ver el viraje en vuelo de `flight/arcade.ts`—. La ley de abajo, hecha
+     * para un alerón que manda velocidad de alabeo, ahí se quedaba en la
+     * mitad: con veinticinco grados pedidos el avión se asentaba en catorce.
+     * El JAZ 90 en Tenerife Norte, a noventa y cinco metros por segundo, abría
+     * así el viraje del viento en cola cuatro kilómetros y medio por fuera del
+     * circuito y se metía en la ladera a 320 m sobre la pista (44 de 59
+     * vuelos); y el JAZ 20 salía de la base todavía virando y llegaba a los
+     * quinientos pies cruzado diecisiete grados.
+     */
+    if (SENCILLO) return Math.max(-1, Math.min(1, quiere / INCLINACION_A_FONDO_SENCILLO));
     const alabeo = o.actitud?.().alabeo ?? 0;
     return Math.max(
       -TOPE_DE_ALERON_EN_VUELO,
       Math.min(TOPE_DE_ALERON_EN_VUELO, (quiere - alabeo) * 1.6),
     );
   };
+  /** La inclinación del alerón a fondo en el modelo sencillo, rad: `VISUAL_BANK`. */
+  const INCLINACION_A_FONDO_SENCILLO = 0.75;
   /** Y para ir a un punto. */
   const alPunto = (s, x, z) =>
     alRumbo(s, Math.atan2(x - s.position.x, -(z - s.position.z)));
@@ -5318,6 +5333,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const enLaSenda = alli + (DESDE + 250) * SENDA + (suyas.tren ?? 0);
       // El obediente, armado antes de ponerlo en la final: ver `obediente`.
       if (obedienteEnElBanco) obediente.armado = true;
+      /*
+       * **Y el salto, a tiempo real.** Después de colocar se esperan quinientos
+       * milisegundos de pared a que el juego cambie de campo, y en ellos no
+       * vuela nadie: la palanca en cero y el gas del crucero. Con el reloj a
+       * doce eran seis segundos de juego sueltos en la final, y el JAZ 60 de
+       * La Gomera los pasaba subiendo hasta seis metros por segundo; con la
+       * final de la torre ya puesta, eso era irse al aire. A uno es medio
+       * segundo; la vuelta siguiente devuelve el reloj que toque.
+       */
+      if (relojAhora !== 1) {
+        o.acelerar?.(1);
+        relojAhora = 1;
+      }
       o.colocar(f.x, enLaSenda, f.z, aproximacion + 3, f.h);
       /*
        * **Y un reactor llega a los cuatro kilómetros estabilizado, como uno de

@@ -110,6 +110,11 @@ export interface DibujoDelTurno {
    * esto, no. Ver `puedeSalirSinEsperarte` en `world/trafico.ts`.
    */
   puedeSalirSinEsperarte?(matricula: string): boolean;
+  /**
+   * Y si el que sale se habría ido —remonte incluido— antes de que llegues.
+   * Sin esto, sí: lo de antes. Ver `seVaAntesQueTu` en `world/trafico.ts`.
+   */
+  seVaAntesQueTu?(matricula: string): boolean;
 }
 
 /** Con quién se turna la pista, y cómo se dice lo que hay que decir. */
@@ -959,7 +964,9 @@ export class TurnoDePista {
     const enTuSalida = this.de.trafico()?.enTuSalida?.() ?? [];
     const laCalle = this.ocupadaEnElDibujo
       ? false
-      : this.conCalleUnica || (this.conTorre && enTuSalida);
+      : this.conCalleUnica
+        ? this.losDeLaCalleQueSeVanAntes()
+        : this.conTorre && enTuSalida;
     const dichas = this.de.radio.despejarLaPista(this.numeroDos, laCalle);
     const trafico = this.de.trafico();
     for (const dice of dichas)
@@ -970,6 +977,26 @@ export class TurnoDePista {
       );
     const dice = laQueSeDice(dichas);
     if (dice) this.despejeSinDecir = this.de.decirAOtro(dice);
+  }
+
+  /**
+   * **Los de la única calle a los que les da tiempo a irse antes que tú**, o
+   * `true` —todos los de la calle, como antes— si el dibujo no lo sabe.
+   *
+   * Se le daba la salida al de la calle sin mirar cuánto tardaba en irse, y
+   * en un campo de una sola calle eso puede ser remontar la pista entera. En
+   * La Gomera, llegando por la ruta del plan, la torre te ve en el tramo
+   * final, a unos diez kilómetros: al de la doble raya de la A le sonaba
+   * «runway free for take-off» en ese mismo instante, remontaba mil metros
+   * a paso de calle, daba la vuelta y despegaba más de tres minutos después,
+   * con tu avión ya en la decisión y la pista ocupada. Nadie que oye a otro
+   * en final a cinco millas entra a remontar: espera, y lo de tu salida lo
+   * cuenta quien informa. Es la misma cuenta que la de `enTuSalida`.
+   */
+  private losDeLaCalleQueSeVanAntes(): boolean | string[] {
+    const trafico = this.de.trafico();
+    if (!trafico?.seVaAntesQueTu) return true;
+    return this.de.radio.matriculas.filter((m) => trafico.seVaAntesQueTu!(m));
   }
 
   /**

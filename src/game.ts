@@ -4239,6 +4239,18 @@ export class Game {
   }
 
   /**
+   * **Tu circuito en el otro campo**, si estás en él, para los bancos: el que
+   * la torre de allí te tiene, sus vértices en este mundo. En casa, `null`: el
+   * de casa es el que se dibuja. Ver `circuitoDeLaTorre` y la sonda `circuito`.
+   */
+  get circuitoDeAlliParaBanco(): readonly PuntoDeCircuito[] | null {
+    const campo = this.elCampo();
+    const c = this.circuitoDeLaTorre;
+    if (campo.esCasa || !c || c.campo !== campo.id) return null;
+    return c.vertices;
+  }
+
+  /**
    * Un campo del vuelo entero, para los bancos: su escenario, su aeródromo ya
    * corrido a este mundo, su pista y la cota de esa pista.
    *
@@ -13705,10 +13717,17 @@ export class Game {
     const p = this.navegacion.progreso;
     // Y solo en el campo al que se va: el tráfico es el del campo montado.
     const alli = this.elDestino()?.id === this.elCampoMontado().id;
-    const deLejos =
-      this.conPrioridad && alli && !s.onGround && this.navegacion.bajando && p !== null
+    /*
+     * **Y sin prioridad, la hora prevista**: bajando por la ruta hacia el
+     * campo, quien contesta ya sabe cuándo llegas, aunque todavía no te tenga
+     * en la fila. Con ella no le da la pista a quien no se iría antes ni deja
+     * rodar hacia tu salida a quien te la tapara. Ver `QuienJuega.deRuta`.
+     */
+    const porLaRuta =
+      alli && !s.onGround && this.navegacion.bajando && p !== null
         ? p.restante / velocidad
         : null;
+    const deLejos = this.conPrioridad ? porLaRuta : null;
     /*
      * **Y en la final del plan, a la fila aunque todavía no sea «final».**
      *
@@ -13747,13 +13766,16 @@ export class Game {
      * `QuienJuega.llegada` y `tuCircuitoParaLaTorre`.
      */
     const enLaFinal = alUmbral !== null && alUmbral > 0 ? alUmbral : null;
-    const llegada = enLaFinal ?? (this.sinMotor ? null : this.tuCircuitoParaLaTorre());
+    const deRuta = enLaFinal === null && !this.sinMotor ? porLaRuta : null;
+    const llegada =
+      enLaFinal ?? (this.sinMotor ? null : (this.tuCircuitoParaLaTorre() ?? deRuta));
     const aterrizandoAqui = s.onGround
       ? VUELVES_POR_TU_SALIDA.has(fase)
       : llegada !== null;
     return {
       alUmbral: enLaFinal,
       llegada,
+      deRuta,
       enLaPista: s.onGround && ENCIMA_DE_LA_PISTA.has(fase),
       velocidad,
       prioridad: this.conPrioridad,

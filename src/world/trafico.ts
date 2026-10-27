@@ -280,6 +280,11 @@ export interface Caminos {
      * `suelo-del-trafico.ts`.
      */
     readonly remonta?: number;
+    /**
+     * Y dónde pisa el eje y dónde empieza la media vuelta, en metros de
+     * `salida`, si remonta. Ver `alRemontar`.
+     */
+    readonly remonte?: { readonly entra: number; readonly vira: number } | null;
   } | null;
 }
 
@@ -721,6 +726,75 @@ export function enSuCarrera(
 }
 
 /**
+ * **A cuánto remonta la pista el que sale**, m/s: veinte nudos, la velocidad
+ * normal de rodaje en recta («Normal taxi speed is approximately 20 knots»,
+ * Boeing, *737 Flight Crew Training Manual*, Taxi Speed and Braking). Se
+ * remontaba a paso de calle, `RUEDA_A`, catorce nudos: los mil sesenta metros
+ * de La Gomera por la 09 eran dos minutos y medio de pista ocupada solo de
+ * ida, cuando su AIP pide estar listo al llegar al punto de espera (AD
+ * 2-GCGM, 20.1) y nadie se entretiene en una pista que espera a otro.
+ */
+export const REMONTA_A = 20 * KT;
+
+/**
+ * **Y a cuánto da la media vuelta al final**, m/s: unos seis nudos. Se daba a
+ * paso de calle, siete metros por segundo en un radio de doce, casi media g
+ * de lado: ningún avión de pasaje gira así en una plataforma de viraje.
+ */
+export const VIRA_A = 3;
+
+/** Lo que acelera y frena rodando por la recta del remonte, m/s². */
+const AL_REMONTAR = 0.5;
+
+/**
+ * **A cuánto va el que remonta**, m/s, a `r` metros de su salida: acelera
+ * desde el paso de calle hasta `REMONTA_A` en la recta, frena para llegar a
+ * la media vuelta a `VIRA_A`, y la da a ese paso. Fuera del remonte, `null`.
+ */
+export function alRemontar(
+  r: number,
+  remonte: { readonly entra: number; readonly vira: number },
+  eje: number,
+): number | null {
+  if (r < remonte.entra || r >= eje) return null;
+  if (r >= remonte.vira) return VIRA_A;
+  const acelerando = Math.sqrt(RUEDA_A * RUEDA_A + 2 * AL_REMONTAR * (r - remonte.entra));
+  const frenando = Math.sqrt(VIRA_A * VIRA_A + 2 * AL_REMONTAR * (remonte.vira - r));
+  return Math.min(REMONTA_A, acelerando, frenando);
+}
+
+/**
+ * **Lo que le queda de remonte**, s, desde `r` metros de su salida hasta
+ * alinearse: la recta a su paso y la media vuelta al suyo. La misma cuenta que
+ * `alRemontar`, sumada a pasos de cinco metros.
+ */
+export function tiempoDeRemonte(
+  remonte: { readonly entra: number; readonly vira: number },
+  eje: number,
+  r: number,
+): number {
+  let t = 0;
+  const PASO = 5;
+  for (let m = Math.max(r, remonte.entra); m < eje; m += PASO) {
+    const v = alRemontar(Math.min(m + PASO / 2, eje - 0.01), remonte, eje) ?? RUEDA_A;
+    t += Math.min(PASO, eje - m) / Math.max(AL_ALINEARSE, v);
+  }
+  return t;
+}
+
+/**
+ * **Lo que le queda de remonte al que sale**, s, a `r` metros de su salida:
+ * con el trazado del remonte, a su paso; sin él, los metros que le quedan a
+ * paso de calle, como antes. Cero si no remonta.
+ */
+function segundosDeRemonte(c: Caminos, r: number): number {
+  const t = c.enTierra;
+  if (!t?.remonta) return 0;
+  if (t.remonte) return tiempoDeRemonte(t.remonte, t.eje, r);
+  return Math.max(0, t.remonta - Math.max(0, r - c.espera)) / RUEDA_A;
+}
+
+/**
  * **Lo que tarda en correr su carrera**, s: de alinearse a despegar. Ver
  * `enSuCarrera`.
  */
@@ -986,6 +1060,7 @@ export function trazar(
         despega: sale.eje + t.carrera,
         tipo: t,
         remonta: sale.remonta,
+        remonte: sale.remonta > 0 ? (sale.remonte ?? null) : null,
       };
     }
   }
@@ -1417,6 +1492,17 @@ export interface QuienJuega {
    */
   readonly llegada?: number | null;
   /**
+   * **Y cuánto le falta si viene por la ruta del plan**, s, bajando hacia
+   * este campo y sin volar todavía su final: lo que sabe quien contesta desde
+   * su primera llamada, la hora prevista. Llegando por la ruta no hay circuito
+   * en el que verle, y la final del plan empieza a diez kilómetros: con eso
+   * solo, al que espera en su doble raya se le daba la pista para remontarla
+   * tres minutos sin saber que llegabas en dos. No te pone en la fila de
+   * llegadas —eso es la final—: solo hace que no se le dé la pista a quien no
+   * se habría ido antes. Ver `llegaAntesDeQueSalga`.
+   */
+  readonly deRuta?: number | null;
+  /**
    * **Si tiene prioridad**: un MAYDAY o un «minimum fuel» puestos. Entonces
    * los que giran a la base le dejan más hueco por delante del de siempre, y
    * si no les cabe, esperan en la esquina. Ver `PRIORIDAD` y
@@ -1783,6 +1869,15 @@ export interface Trafico {
    * esperarte. Ver `darleLaPista` en `flight/turno-de-pista.ts`.
    */
   puedeSalirSinEsperarte(matricula: string): boolean;
+  /**
+   * **Si el que sale se habría ido antes de que llegues**: lo que le queda
+   * hasta su doble raya, lo que remonte, entrar, alinearse, correr y pasar
+   * el final de la pista, con su margen, y lo que espere a que la dejen
+   * libre los demás —lo mismo que `tapanTuSalida`—, contra lo que te falta
+   * para el umbral. Sin ti en final, o sin ser uno que sale, sí. Ver
+   * `losDeLaCalleQueSeVanAntes` en `flight/turno-de-pista.ts`.
+   */
+  seVaAntesQueTu(matricula: string): boolean;
   /**
    * **Los que salen antes que tú**, en orden: los que esperan listos en su
    * doble raya desde antes de que tú llegaras a la tuya —o todos los que
@@ -2276,8 +2371,14 @@ export function crearTrafico(
       const alTocar = t.tipo.aproximacion * 0.85;
       return alTocar + (RUEDA_A * 1.5 - alTocar) * f;
     }
-    if (c && t && t.despega > 0 && m.camino === c.salida)
-      return enSuCarrera(t.tipo, r - t.eje, m.velocidad);
+    if (c && t && t.despega > 0 && m.camino === c.salida) {
+      const deCarrera = enSuCarrera(t.tipo, r - t.eje, m.velocidad);
+      // Remontando, la recta a su paso y la vuelta al suyo. Ver `alRemontar`.
+      const remontando = t.remonte ? alRemontar(r, t.remonte, t.eje) : null;
+      if (remontando === null) return deCarrera;
+      // Y en los últimos metros, alineándose, lo que pida alinearse.
+      return r - t.eje >= -ARRIMANDOSE ? Math.min(remontando, deCarrera) : remontando;
+    }
     return m.velocidad;
   };
 
@@ -2663,7 +2764,7 @@ export function crearTrafico(
    * volar hasta el final de la pista, con su margen.
    */
   const hastaIrseDesdeLaRaya = (tipo: TipoDeTrafico, c: Caminos, remontado: number): number =>
-    Math.max(0, (c.enTierra?.remonta ?? 0) - remontado) / RUEDA_A +
+    segundosDeRemonte(c, c.espera + remontado) +
     ENTRAR_Y_ALINEARSE +
     tiempoDeCarrera(tipo) +
     Math.max(0, runway.length - tipo.carrera) / velocidadDeDespegue(tipo) +
@@ -3141,20 +3242,36 @@ export function crearTrafico(
     return Math.max(0, Math.min(t.remonta, t.eje - quien.recorrido));
   };
 
+  /**
+   * **Y lo que tarda en hacerlo**, s: la recta a su paso y la media vuelta
+   * al suyo. Ver `alRemontar`.
+   */
+  const loQueTardaEnRemontar = (quien: Volando | undefined, matricula: string): number => {
+    const c = quien?.caminos ?? caminosDe(tipoDe(matricula));
+    if (!c?.enTierra?.remonta) return 0;
+    const desde = quien && quien.marca.camino === c.salida ? quien.recorrido : c.espera;
+    return segundosDeRemonte(c, desde);
+  };
+
   const llegaAntesDeQueSalga = (
     tipo: TipoDeTrafico,
     clave: string,
+    /** Lo que le queda de remonte, s. Ver `loQueTardaEnRemontar`. */
     remonta = 0,
     contigo = true,
   ): boolean => {
     const hastaElFinal =
       Math.max(0, runway.length - tipo.carrera) / velocidadDeDespegue(tipo);
     const hueco =
-      remonta / RUEDA_A +
+      remonta +
       ENTRAR_Y_ALINEARSE +
       tiempoDeCarrera(tipo) +
       hastaElFinal +
       (clave === "torre.lineUpWait" ? ESPERA_MAXIMA : 0);
+    // Y quien viene por la ruta y todavía no está en la fila: ver `QuienJuega.deRuta`.
+    const tu = contigo ? opciones.quienJuega?.() : null;
+    const deRuta = tu && tu.alUmbral == null ? (tu.deRuta ?? null) : null;
+    if (deRuta !== null && deRuta < hueco) return true;
     return laFila(null, contigo).some(
       (b) => !b.sale && b.hora >= reloj && b.hora - reloj < hueco,
     );
@@ -3664,7 +3781,7 @@ export function crearTrafico(
       if (!quien || !c || quien.marca.camino !== c.salida) return false;
       if (quien.recorrido < c.espera - 1) return false;
       if (pistaOcupadaPorOtro(matricula)) return false;
-      const remonta = loQueLeQuedaPorRemontar(quien, matricula);
+      const remonta = loQueTardaEnRemontar(quien, matricula);
       if (llegaAntesDeQueSalga(quien.tipo, "torre.clearedTakeoff", remonta, false)) return false;
       return !(
         laUltimaSalida &&
@@ -3713,7 +3830,7 @@ export function crearTrafico(
           llegaAntesDeQueSalga(
             quien?.tipo ?? tipoDe(matricula),
             clave,
-            loQueLeQuedaPorRemontar(quien, matricula),
+            loQueTardaEnRemontar(quien, matricula),
           )
         )
           return true;
@@ -3833,6 +3950,21 @@ export function crearTrafico(
         if (raya && enElCamino(raya, salida)) return m;
       }
       return null;
+    },
+    seVaAntesQueTu(matricula) {
+      const quien = aviones.get(matricula);
+      const c = quien?.caminos;
+      // Ya alineado, o sin ser uno que sale: lo que le quede no se cuenta aquí.
+      if (!quien || !c?.enTierra || quien.marca.camino !== c.salida) return true;
+      if (quien.recorrido >= c.enTierra.eje - 1) return true;
+      const alUmbral = opciones.quienJuega?.()?.alUmbral ?? null;
+      if (alUmbral === null) return true;
+      const hastaLaRaya = Math.max(0, c.espera - quien.recorrido) / RUEDA_A;
+      const remontado = Math.max(0, quien.recorrido - c.espera);
+      return (
+        alUmbral >
+        hastaLaRaya + hastaIrseDesdeLaRaya(quien.tipo, c, remontado) + pistaLibreEn(matricula)
+      );
     },
     enTuSalida() {
       const alUmbral = opciones.quienJuega?.()?.alUmbral ?? null;
