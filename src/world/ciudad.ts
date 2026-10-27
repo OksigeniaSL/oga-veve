@@ -257,6 +257,53 @@ class Viario {
  */
 const BAJITA = 3;
 
+/** Un hueco de la ciudad: un contorno cerrado, en metros del mundo. */
+export type HuecoDeCiudad = readonly { readonly x: number; readonly z: number }[];
+
+/**
+ * Los huecos de `data/cities/huecos.json` en el mundo de un escenario, con la
+ * proyección de su ciudad (la de `osm-comun.mjs`): solo los que caen a menos
+ * de `alcance` metros del origen.
+ */
+export function huecosDeLaCiudad(
+  origen: { readonly lat: number; readonly lon: number },
+  datos: { readonly huecos: readonly { readonly anillos: readonly (readonly (readonly number[])[])[] }[] },
+  alcance: number,
+): HuecoDeCiudad[] {
+  const R = 6371000;
+  const k = Math.cos((origen.lat * Math.PI) / 180);
+  const salida: HuecoDeCiudad[] = [];
+  for (const h of datos.huecos)
+    for (const anillo of h.anillos) {
+      // La Y del fichero es el norte; la Z del mundo, el sur.
+      const enMetros = anillo.map(([la, lo]) => ({
+        x: ((lo! - origen.lon) * R * Math.PI * k) / 180,
+        z: -((la! - origen.lat) * R * Math.PI) / 180,
+      }));
+      if (enMetros.some((p) => Math.abs(p.x) < alcance && Math.abs(p.z) < alcance)) salida.push(enMetros);
+    }
+  return salida;
+}
+
+/** Si una casa de `radio` metros en (x, z) toca algún hueco. */
+export function enUnHueco(huecos: readonly HuecoDeCiudad[], x: number, z: number, radio: number): boolean {
+  for (const h of huecos) {
+    let dentro = false;
+    for (let i = 0, j = h.length - 1; i < h.length; j = i++) {
+      const a = h[i]!;
+      const b = h[j]!;
+      if (a.z > z !== b.z > z && x < ((b.x - a.x) * (z - a.z)) / (b.z - a.z) + a.x) dentro = !dentro;
+      // Y pegada al borde por fuera, también: la casa tiene su tamaño.
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+      if (Math.hypot(x - a.x - t * dx, z - a.z - t * dz) < radio) return true;
+    }
+    if (dentro) return true;
+  }
+  return false;
+}
+
 export function crearCiudad(
   ciudad: Ciudad,
   cota: (x: number, z: number) => number,
@@ -319,6 +366,12 @@ export function crearCiudad(
    * una vista previa— no tiene por qué pagar el índice.
    */
   bultos?: Obstaculos,
+  /**
+   * **Donde no se construye**, en coordenadas del mundo: la manzana de un
+   * sitio que va a llevar su modelo, como el Palacio de López. Ver
+   * `huecosDeLaCiudad` y `data/cities/huecos.json`.
+   */
+  huecos: readonly HuecoDeCiudad[] = [],
 ): Group {
   const grupo = new Group();
   grupo.name = "ciudad";
@@ -506,6 +559,15 @@ export function crearCiudad(
           Math.floor(sorteo() * 4) * (Math.PI / 2) + (sorteo() - 0.5) * 0.25,
         );
         escala.set(ancho, alto, fondo);
+        /*
+         * **Y en un hueco, nada**: la casa se sortea entera y no se pone. Con
+         * lo que habría gastado del sorteo —el tinte de abajo— gastado igual,
+         * para que el resto de la ciudad salga idéntica a la de siempre.
+         */
+        if (huecos.length && enUnHueco(huecos, x, z, Math.hypot(ancho, fondo) / 2)) {
+          sorteo();
+          continue;
+        }
         matrices[cual]!.push(new Matrix4().compose(posicion, giro, escala));
         /*
          * Y su bulto, si alguien lo está apuntando. Se guarda la caja recta

@@ -793,7 +793,8 @@ const CIERRE_DEL_EJERCICIO: Readonly<
 const CIERRE_DE_LA_DESPRESURIZACION: TranslationKey = "ejercicio.bienDespresurizacion";
 /** Lo menos que se pasa por encima del terreno de debajo, m. */
 const SUELO_MINIMO = 150;
-import { crearCiudad, type Ciudad } from "./world/ciudad";
+import { crearCiudad, huecosDeLaCiudad, type Ciudad } from "./world/ciudad";
+import HUECOS_DE_CIUDAD from "../data/cities/huecos.json";
 import {
   crearLucesDeCiudad,
   type LucesDeCiudad,
@@ -6213,6 +6214,18 @@ export class Game {
            * Hasta hoy se atravesaba entera. Ver `world/obstaculos.ts`.
            */
           this.bultos,
+          /*
+           * Y sin cajas donde va el modelo de un sitio: la manzana del
+           * Palacio de López no es un bloque de pisos. Ver
+           * `scripts/huecos-de-ciudad.mjs`.
+           */
+          this.scenario.aerodrome
+            ? huecosDeLaCiudad(
+                this.scenario.aerodrome.origin,
+                HUECOS_DE_CIUDAD,
+                this.scenario.ciudad.tamanoM,
+              )
+            : [],
         ),
       );
     }
