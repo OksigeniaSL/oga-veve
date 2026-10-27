@@ -4236,6 +4236,18 @@ export class Game {
   }
 
   /**
+   * **Tu circuito en el otro campo**, si estás en él, para los bancos: el que
+   * la torre de allí te tiene, sus vértices en este mundo. En casa, `null`: el
+   * de casa es el que se dibuja. Ver `circuitoDeLaTorre` y la sonda `circuito`.
+   */
+  get circuitoDeAlliParaBanco(): readonly PuntoDeCircuito[] | null {
+    const campo = this.elCampo();
+    const c = this.circuitoDeLaTorre;
+    if (campo.esCasa || !c || c.campo !== campo.id) return null;
+    return c.vertices;
+  }
+
+  /**
    * Un campo del vuelo entero, para los bancos: su escenario, su aeródromo ya
    * corrido a este mundo, su pista y la cota de esa pista.
    *

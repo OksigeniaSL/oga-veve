@@ -2636,6 +2636,16 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * este fichero promete no hacer.
      */
     circuito: () => {
+      /*
+       * **En el otro campo, el de allí.** Esto daba siempre el de casa: llegando
+       * de El Hierro a La Gomera con el JAZ 60 y frustrando allí, el piloto del
+       * banco recibía el circuito de El Hierro, a sesenta y ocho kilómetros y
+       * a noventa y seis metros sobre la pista de La Gomera —la cota de casa es
+       * más baja—. Subía a esos noventa y seis, por debajo de los ciento
+       * cincuenta de girar, y volaba recto hacia el este cuarenta minutos.
+       */
+      const deAlli = juego.circuitoDeAlliParaBanco;
+      if (deAlli) return deAlli;
       if (juego.circuito) return juego.circuito.vertices;
       // Y la altura también, que ahora la pide el terreno: la misma cuenta
       // que `crearCircuito`, o el banco volaría otro circuito.
