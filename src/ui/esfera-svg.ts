@@ -219,10 +219,11 @@ export function esferaSvg(
       /*
        * Un reloj de vuelo o de motor es un instrumento entero: en la pantalla
        * grande del teléfono, tocarlo es volver a las losas, como siempre. El
-       * depósito y los flaps son piezas, y se explican. Ver
+       * depósito y los flaps son piezas, y se explican; y el anemómetro y el
+       * altímetro, que llevan su figura por dentro, también. Ver
        * `ui/tocar-para-explicar.ts`.
        */
-      id !== "fuel" && id !== "flaps" ? " data-explica-fondo" : ""
+      !["fuel", "flaps", "asi", "alt"].includes(id) ? " data-explica-fondo" : ""
     }
        transform="translate(${donde.x - donde.radio} ${donde.y - donde.radio}) scale(${escala})">
       ${empotrada()}

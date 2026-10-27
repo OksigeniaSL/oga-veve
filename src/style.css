@@ -8098,6 +8098,22 @@ button.motor__tecla::after {
 }
 
 /*
+ * **Y una ficha no se aplasta para caber: la lista rueda.**
+ *
+ * La ficha lleva `overflow: hidden` —por sus esquinas— y su dibujo, el alto
+ * mínimo a cero: en una rejilla con `max-height`, las filas se repartían lo
+ * que quedaba en vez de rodar. Debajo de la carta del país, en un teléfono de
+ * pie, cada destino se quedaba en una franja de sesenta y siete píxeles, con
+ * el nombre cortado por la mitad y sin el surtidor; y en la tablet, con la
+ * ficha del aeródromo al lado, en una raya de seis. Medido en el navegador:
+ * con `min-height` en la ficha las filas seguían en sesenta y siete y las
+ * fichas se montaban unas sobre otras; lo que manda es el alto de la fila.
+ */
+.hangar__rejilla {
+  grid-auto-rows: max-content;
+}
+
+/*
  * Los sitios agrupados por país. El que rueda es el contenedor de los grupos,
  * no cada rejilla: si rodara cada una, un país con muchos aeropuertos tendría
  * su propia barra dentro de la barra grande, y habría que rodar dos veces para
@@ -9171,6 +9187,7 @@ button.motor__tecla::after {
 }
 
 .mapa__fondo,
+.mapa__rotulos,
 .mapa__encima {
   position: absolute;
   inset: 8px;
@@ -14395,6 +14412,12 @@ svg .ex-raya {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* Solo el engranaje, en Guyrami: redondo y con el dibujo en medio. */
+.tav__por-dentro:not(:has(span)) {
+  justify-content: center;
+  padding: 6px;
 }
 
 .tav__por-dentro-dibujo {

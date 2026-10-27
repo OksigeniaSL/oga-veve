@@ -311,6 +311,14 @@ export function ponerContextoDeLasExplicaciones(c: () => Contexto): void {
   contexto = c;
 }
 
+/**
+ * El peldaño de ahora, el mismo con que se abriría una explicación: lo que se
+ * pinta alrededor de ella —el botón que la abre— lleva letras o no según él.
+ */
+export function peldanoDeLasExplicaciones(): Peldano {
+  return contexto().peldano;
+}
+
 function laPantalla(): PantallaDeExplicaciones | null {
   if (!pantalla && pantallaPorDefecto) pantalla = pantallaPorDefecto();
   return pantalla;

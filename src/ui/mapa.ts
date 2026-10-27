@@ -47,7 +47,18 @@ import { Panel } from "./panel";
 import { cotaEscrita } from "./carta";
 import { calcosDe, type Peldano } from "../flight/escalera";
 import { MAR, PAPEL, RAMPA, REGIONES, SIMBOLOS, SOMBRA, TINTAS, CUBIERTA, LINEAS } from "./carta/estilo";
-import { dibujarAerodromo, dibujarAvion, dibujarRosa, FondoHorneado, rotular } from "./carta/carta-en-vuelo";
+import { dibujarAerodromo, dibujarAvion, dibujarRosa, FondoHorneado } from "./carta/carta-en-vuelo";
+import type { Caja, Raya } from "./carta/rotulos";
+import {
+  CUERPOS,
+  pintarRotulo,
+  rotularElPlano,
+  unoMas,
+  type CampoDelPlano,
+  type Medir,
+  type PuntoDelPlano,
+  type RotuloPuesto,
+} from "./carta/rotulos-del-plano";
 import { anoDecimal, declinacion, varEscrita } from "./carta/declinacion";
 import { frecuenciasDeLaCarta } from "../world/frecuencias-publicadas";
 import {
@@ -127,6 +138,114 @@ export class Mapa {
   private caja: HTMLElement | null = null;
   private fondo: HTMLCanvasElement | null = null;
   private encima: HTMLCanvasElement | null = null;
+  /**
+   * **El lienzo de los rótulos**, entre el mundo y la flecha.
+   *
+   * Los rótulos iban pintados en el fondo, cada uno a la derecha de su punto,
+   * y los nombres de la ruta en el de encima, cada fotograma: unos no sabían
+   * de los otros y se pisaban. Ahora se colocan todos juntos, cada uno en su
+   * hueco —ver `carta/rotulos-del-plano.ts`—, y van en su propio lienzo para
+   * que el punto de la ruta al que se va pueda cambiar sin repintar el mundo:
+   * el fondo sigue repintándose solo cuando se mueve el encuadre.
+   *
+   * Y a la resolución de la pantalla, no a la del lienzo de abajo: la letra
+   * es lo que más se nota cuando sale borrosa.
+   */
+  private rotulos: HTMLCanvasElement | null = null;
+  private observador: ResizeObserver | null = null;
+  /**
+   * **Lo que mide el plano en la pantalla**, en píxeles.
+   *
+   * El lienzo cuenta cuatrocientos sesenta de lado, pero se enseña a lo que
+   * quepa: cuatrocientos cuarenta en una tablet y doscientos en un teléfono
+   * tumbado. Lo que se dibujaba en las unidades del lienzo —la letra, los
+   * símbolos de la hoja— salía allí a menos de la mitad: letra de seis
+   * píxeles. Ahora la letra va con su medida, que es de pantalla —ver
+   * `LETRAS` en `carta/estilo.ts`—; los símbolos, como dice `trazo`; y el
+   * mapa se encoge debajo.
+   */
+  private enPantalla = LADO;
+  /** Cuántas unidades del lienzo mide un píxel de la pantalla. */
+  private get u(): number {
+    return LADO / this.enPantalla;
+  }
+
+  /**
+   * **Y los símbolos, a medio camino.** La letra va a su medida de pantalla
+   * porque por debajo no se lee; un símbolo se reconoce más chico, y a su
+   * medida entera tapaba lo que señala: en el teléfono tumbado el plano mide
+   * ciento setenta píxeles, y el aeródromo de La Palma con sus dos montes
+   * tapaba la isla entera. Así que crecen con la raíz de lo que encoge el
+   * plano: en la tablet, lo mismo que la hoja; en el teléfono, la mitad de
+   * lo que les faltaba, que es el doble de lo que medían.
+   */
+  private get trazo(): number {
+    return Math.sqrt(this.u);
+  }
+
+  /**
+   * Mide el plano en la pantalla. Dice si cambió.
+   *
+   * **Con su ancho de maqueta y el `zoom` del HUD**, no con su caja en la
+   * pantalla: el panel entra creciendo —`concha-entra`—, y medido al abrirse
+   * salía un par de píxeles chico; y en las pantallas bajas el HUD va con
+   * `zoom`, que el ancho de maqueta no cuenta: en un teléfono de 360 de alto
+   * el plano maqueta 265 y se ve a 159.
+   */
+  private medirse(): boolean {
+    const f = this.fondo;
+    if (!f) return false;
+    let zoom = (f as HTMLElement & { currentCSSZoom?: number }).currentCSSZoom;
+    if (zoom === undefined) {
+      zoom = 1;
+      for (let e: Element | null = f; e; e = e.parentElement) zoom *= Number(getComputedStyle(e).zoom) || 1;
+    }
+    const ancho = f.offsetWidth * zoom;
+    if (ancho < 40) return false;
+    const antes = this.enPantalla;
+    this.enPantalla = ancho;
+    return Math.abs(antes - ancho) > 0.5;
+  }
+
+  /** Los símbolos del fondo, en píxeles de pantalla: lo que un rótulo no pisa. */
+  private fijosDelFondo: Caja[] = [];
+  /** Los aeródromos pintados, con el radio de su símbolo en la pantalla. */
+  private pistasPintadas: { x: number; z: number; radio: number }[] = [];
+  /** Los grados de la retícula que se pueden escribir. Ver `pintarLaReticula`. */
+  private gradosDelFondo: { texto: string; eje: "lat" | "lon"; en: number }[] = [];
+  /** La rosa, en píxeles de pantalla, y su declinación escrita. */
+  private rosaPuesta: { x: number; y: number; radio: number; texto: string } | null = null;
+  /** Los rótulos puestos, en píxeles de pantalla. */
+  private puestos: RotuloPuesto[] = [];
+  /** Y los símbolos que no pisaron, para el banco. */
+  private fijosPuestos: Caja[] = [];
+  /** Con qué se rotuló: si cambia el punto activo o un hito nuevo, se rotula otra vez. */
+  private rotuladoCon = "";
+  /** El «T/D» de la ruta, que va aparte: se corre con la altura. Ver `update`. */
+  private td: { donde: string; puesto: RotuloPuesto | null } = { donde: "", puesto: null };
+
+  /**
+   * **Lo que hay escrito en el plano**, en píxeles de pantalla: cada rótulo
+   * con su caja y su letra, y los símbolos que no deben pisar. Para el banco,
+   * que lo mide desde fuera. Ver `verificar-carteles.mjs`.
+   */
+  get rotulosPuestos(): {
+    readonly lado: number;
+    readonly rotulos: readonly { que: string; caja: Caja; cuerpo: number }[];
+    readonly fijos: readonly Caja[];
+  } {
+    const todos = this.td.puesto ? [...this.puestos, this.td.puesto] : this.puestos;
+    return {
+      lado: this.enPantalla,
+      rotulos: todos.map((r) => ({
+        que: r.que,
+        caja: r.caja,
+        cuerpo: Math.min(...r.renglones.map((x) => x.cuerpo)),
+      })),
+      fijos: this.fijosPuestos,
+    };
+  }
+
   /** Si está abierto. Lo dice el panel, que es quien enseña y esconde. */
   private get abierto(): boolean {
     return this.panel?.abierto ?? false;
@@ -348,6 +467,7 @@ export class Mapa {
           cuerpo: `
         <div class="mapa__lienzos">
           <canvas class="mapa__fondo" data-hud="mapa-fondo" width="${LADO}" height="${LADO}"></canvas>
+          <canvas class="mapa__rotulos" data-hud="mapa-rotulos" width="${LADO}" height="${LADO}"></canvas>
           <canvas class="mapa__encima" data-hud="mapa-encima" width="${LADO}" height="${LADO}"></canvas>
         </div>
           `,
@@ -380,7 +500,21 @@ export class Mapa {
         false,
       );
     this.fondo = raiz.querySelector('[data-hud="mapa-fondo"]');
+    this.rotulos = raiz.querySelector('[data-hud="mapa-rotulos"]');
     this.encima = raiz.querySelector('[data-hud="mapa-encima"]');
+    /*
+     * **Y si el plano cambia de tamaño, se vuelve a medir y a rotular**:
+     * girar la tablet, o la barra del navegador que entra y sale. La letra
+     * mide lo que mide en la pantalla, así que en otro tamaño caben otras
+     * cosas. Ver `medirse`.
+     */
+    this.observador?.disconnect();
+    if (this.fondo && typeof ResizeObserver !== "undefined") {
+      this.observador = new ResizeObserver(() => {
+        if (this.abierto && this.medirse()) this.pintarFondo();
+      });
+      this.observador.observe(this.fondo);
+    }
     raiz
       .querySelector('[data-hud="mapa-boton"]')
       ?.addEventListener("click", () => this.alternar());
@@ -473,6 +607,8 @@ export class Mapa {
     this.avisarAlHud();
     if (!this.panel.abierto) return;
     this.alAbrir?.();
+    // Ya en la página: lo que mide de verdad, que la letra va en esa medida.
+    this.medirse();
     // Con lo que se haya movido mientras estaba cerrado, el fondo de antes ya
     // no vale: se pinta el de ahora.
     this.pintarFondo();
@@ -537,9 +673,17 @@ export class Mapa {
      * cuánto puede moverse sin que el avión se salga del papel.
      */
     if (hayQueRepintar(this.encuadrePintado, this.encuadre())) this.pintarFondo();
+    /*
+     * **Y los rótulos, cuando cambia lo que se rotula sin moverse el
+     * encuadre**: el punto de la ruta al que se va, o un hito que la
+     * comandante acaba de nombrar. Solo los rótulos: el mundo no ha cambiado.
+     */
+    else if (this.encuadrePintado && this.claveDeLosRotulos() !== this.rotuladoCon) this.colocarRotulos();
     const g = this.encima.getContext("2d");
     if (!g) return;
     g.clearRect(0, 0, LADO, LADO);
+    // Los símbolos de la hoja, en su medida: ver `trazo`.
+    const u = this.trazo;
 
     /*
      * **Y la flecha va con el encuadre que hay pintado, no con el de ahora.**
@@ -577,19 +721,19 @@ export class Mapa {
       const casa = this.escenario.runway;
       const a = this.enElPapel(casa, puesto);
       const b = this.enElPapel(this.destino, puesto);
-      if (Math.hypot(b[0] - a[0], b[1] - a[1]) > 12) {
+      if (Math.hypot(b[0] - a[0], b[1] - a[1]) > 12 * u) {
         g.save();
         g.lineCap = "round";
-        g.setLineDash([2, 6]);
+        g.setLineDash([2 * u, 6 * u]);
         g.beginPath();
         g.moveTo(a[0], a[1]);
         g.lineTo(b[0], b[1]);
         // El magenta de la carta, sobre su orla de papel.
         g.strokeStyle = PAPEL.fondo;
-        g.lineWidth = LINEAS.ruta + 2 * LINEAS.rutaOrla;
+        g.lineWidth = (LINEAS.ruta + 2 * LINEAS.rutaOrla) * u;
         g.stroke();
         g.strokeStyle = TINTAS.ruta;
-        g.lineWidth = LINEAS.ruta;
+        g.lineWidth = LINEAS.ruta * u;
         g.stroke();
         g.restore();
       }
@@ -612,7 +756,7 @@ export class Mapa {
      * que se sale, y para quien no lee es lo único que se entiende: **por ahí
      * está lo que buscas**.
      */
-    const margen = 14;
+    const margen = 14 * u;
     const fuera =
       px < margen || py < margen || px > LADO - margen || py > LADO - margen;
     const cx = Math.max(margen, Math.min(LADO - margen, px));
@@ -629,9 +773,9 @@ export class Mapa {
        * dónde has salido**— sin una palabra.
        */
       g.save();
-      g.setLineDash([4, 5]);
+      g.setLineDash([4 * u, 5 * u]);
       g.strokeStyle = TINTAS.tinta;
-      g.lineWidth = 2;
+      g.lineWidth = 2 * u;
       g.beginPath();
       g.moveTo(LADO / 2, LADO / 2);
       g.lineTo(cx, cy);
@@ -655,10 +799,10 @@ export class Mapa {
       if (ax > 0 && ax < LADO && az > 0 && az < LADO) {
         g.save();
         g.strokeStyle = TINTAS.aero;
-        g.lineWidth = 2.2;
-        g.setLineDash([3, 3]);
+        g.lineWidth = 2.2 * u;
+        g.setLineDash([3 * u, 3 * u]);
         g.beginPath();
-        g.arc(ax, az, 9, 0, Math.PI * 2);
+        g.arc(ax, az, 9 * u, 0, Math.PI * 2);
         g.stroke();
         g.restore();
       }
@@ -677,8 +821,8 @@ export class Mapa {
         : [dx, dz];
       g.save();
       g.strokeStyle = TINTAS.rutaTexto;
-      g.lineWidth = 2.2;
-      g.setLineDash([7, 5]);
+      g.lineWidth = 2.2 * u;
+      g.setLineDash([7 * u, 5 * u]);
       g.beginPath();
       g.moveTo(cx, cy);
       g.lineTo(rx, rz);
@@ -688,8 +832,8 @@ export class Mapa {
       // dice la raya, que sale por ese lado.
       if (dx > 0 && dx < LADO && dz > 0 && dz < LADO) {
         g.beginPath();
-        g.arc(dx, dz, 6.5, 0, Math.PI * 2);
-        g.lineWidth = 2.6;
+        g.arc(dx, dz, 6.5 * u, 0, Math.PI * 2);
+        g.lineWidth = 2.6 * u;
         g.stroke();
       }
       g.restore();
@@ -702,9 +846,9 @@ export class Mapa {
       // El aro dice «estás fuera, esto es por dónde».
       g.save();
       g.beginPath();
-      g.arc(cx, cy, 15, 0, Math.PI * 2);
+      g.arc(cx, cy, 15 * u, 0, Math.PI * 2);
       g.strokeStyle = TINTAS.tinta;
-      g.lineWidth = 2.4;
+      g.lineWidth = 2.4 * u;
       g.stroke();
       g.restore();
     }
@@ -712,7 +856,7 @@ export class Mapa {
      * **El avión en planta de la hoja**, con su halo de papel: el morro a su
      * rumbo, que con el norte arriba es el mismo cero que el del plano.
      */
-    dibujarAvion(g, cx, cy, rumboRad, SIMBOLOS.avion);
+    dibujarAvion(g, cx, cy, rumboRad, SIMBOLOS.avion * u);
   }
 
   /**
@@ -781,16 +925,17 @@ export class Mapa {
     const orden = [...trafico].sort(
       (a, b) => IMPORTA[a.clase] - IMPORTA[b.clase],
     );
+    const u = this.trazo;
     g.save();
     for (const o of orden) {
       const [x, y] = enElPapelDelMapa(o, e);
       if (x < 0 || x > LADO || y < 0 || y > LADO) continue;
-      g.lineWidth = 3.4;
+      g.lineWidth = 3.4 * u;
       g.strokeStyle = "rgba(20, 28, 34, 0.85)";
       // El de la maniobra, el cuadrado rojo de la carta. Ver `flight/tcas.ts`.
       if (o.clase === "resolucion") {
         g.beginPath();
-        g.rect(x - 5.5, y - 5.5, 11, 11);
+        g.rect(x - 5.5 * u, y - 5.5 * u, 11 * u, 11 * u);
         g.stroke();
         g.fillStyle = "#ff3b30";
         g.fill();
@@ -798,13 +943,13 @@ export class Mapa {
       }
       if (o.clase === "aviso") {
         g.beginPath();
-        g.arc(x, y, 6, 0, Math.PI * 2);
+        g.arc(x, y, 6 * u, 0, Math.PI * 2);
         g.stroke();
         g.fillStyle = "#f2a33a";
         g.fill();
         continue;
       }
-      const lado = 6.5;
+      const lado = 6.5 * u;
       g.beginPath();
       g.moveTo(x, y - lado);
       g.lineTo(x + lado, y);
@@ -816,7 +961,7 @@ export class Mapa {
         g.fillStyle = "#5fd3f0";
         g.fill();
       }
-      g.lineWidth = 1.8;
+      g.lineWidth = 1.8 * u;
       g.strokeStyle = "#5fd3f0";
       g.stroke();
     }
@@ -855,6 +1000,11 @@ export class Mapa {
     const escala = LADO / lado;
     this.encuadrePintado = encuadre;
     const paso = lado / MUESTRAS;
+    // Lo que se apunta mientras se pinta, para rotular después.
+    this.fijosDelFondo = [];
+    this.pistasPintadas = [];
+    this.gradosDelFondo = [];
+    this.rosaPuesta = null;
 
     /*
      * ── La carta ────────────────────────────────────────────────────────
@@ -1103,7 +1253,11 @@ export class Mapa {
     // Se dibuja la última y en blanco: cuando uno mira este mapa es porque no
     // sabe dónde está, y lo que busca casi siempre es por dónde se vuelve.
     const calcos = calcosDe(this.peldano);
-    const tamano = this.peldano === "dibujo" ? SIMBOLOS.aerodromoPequenos : SIMBOLOS.aerodromo;
+    // Los símbolos en su medida —ver `trazo`—, y lo que miden en la pantalla.
+    const u = this.trazo;
+    const k = 1 / this.u;
+    const tamano = (this.peldano === "dibujo" ? SIMBOLOS.aerodromoPequenos : SIMBOLOS.aerodromo) * u;
+    const tamanoCss = tamano * k;
     /*
      * **De lejos, el aeródromo de la hoja; de cerca, la pista a escala**, que
      * es lo que hay que encontrar al volver. El símbolo, civil si el AIP le
@@ -1119,28 +1273,30 @@ export class Mapa {
       const a = puntoDePista(pista, media);
       const b = puntoDePista(pista, -media);
       const largo = pista.length * escala;
+      const px = LADO / 2 + (pista.x - cx) * escala;
+      const py = LADO / 2 + (pista.z - cz) * escala;
       if (largo < tamano * 1.6) {
         const civil = frecuenciasDeLaCarta(oaci)?.torre?.servicio === "TWR";
-        dibujarAerodromo(
-          g,
-          LADO / 2 + (pista.x - cx) * escala,
-          LADO / 2 + (pista.z - cz) * escala,
-          civil,
-          (pista.heading * Math.PI) / 180,
-          tamano,
-        );
+        dibujarAerodromo(g, px, py, civil, (pista.heading * Math.PI) / 180, tamano);
+        this.fijosDelFondo.push({ cx: px * k, cy: py * k, w: tamanoCss + 2, h: tamanoCss + 2 });
+        this.pistasPintadas.push({ x: pista.x, z: pista.z, radio: tamanoCss / 2 + 1 });
         return;
       }
+      const ax = LADO / 2 + (a[0] - cx) * escala;
+      const ay = LADO / 2 + (a[1] - cz) * escala;
+      const bx = LADO / 2 + (b[0] - cx) * escala;
+      const by = LADO / 2 + (b[1] - cz) * escala;
+      const ancho = Math.max(7, 5 * escala * 4) + 3;
       g.save();
       g.lineCap = "butt";
       g.beginPath();
-      g.moveTo(LADO / 2 + (a[0] - cx) * escala, LADO / 2 + (a[1] - cz) * escala);
-      g.lineTo(LADO / 2 + (b[0] - cx) * escala, LADO / 2 + (b[1] - cz) * escala);
+      g.moveTo(ax, ay);
+      g.lineTo(bx, by);
       g.strokeStyle = PAPEL.fondo;
-      g.lineWidth = Math.max(7, 5 * escala * 4) + 3;
+      g.lineWidth = ancho;
       g.stroke();
       g.strokeStyle = TINTAS.aerodromo;
-      g.lineWidth = Math.max(7, 5 * escala * 4);
+      g.lineWidth = ancho - 3;
       g.stroke();
       // El eje blanco a trazos, como en la carta de aeródromo.
       g.strokeStyle = "#fff";
@@ -1148,6 +1304,15 @@ export class Mapa {
       g.setLineDash([6, 5]);
       g.stroke();
       g.restore();
+      // La pista entera, girada a su rumbo: un rótulo no tapa lo que se busca.
+      this.fijosDelFondo.push({
+        cx: px * k,
+        cy: py * k,
+        w: largo * k,
+        h: ancho * k,
+        giro: Math.atan2(by - ay, bx - ax),
+      });
+      this.pistasPintadas.push({ x: pista.x, z: pista.z, radio: 8 });
     };
     /** El indicativo del campo más cerca de una pista, para su símbolo. */
     const oaciDe = (p: { x: number; z: number }): string | null => {
@@ -1173,42 +1338,188 @@ export class Mapa {
     for (const p of this.otrasPistas) pintarPista(p, oaciDe(p));
 
     /*
-     * Y cada aeródromo con su rótulo, por calcos y con su halo de papel: el
-     * indicativo siempre —ya estaba—, el nombre desde Tukã y la frecuencia
-     * de la torre en Ruvicha, como la imprime su AIP.
-     */
-    for (const c of this.campos) {
-      const px = LADO / 2 + (c.x - cx) * escala;
-      const py = LADO / 2 + (c.z - cz) * escala;
-      if (px < -40 || px > LADO + 40 || py < -20 || py > LADO + 20) continue;
-      const radio = calcos.radio ? frecuenciasDeLaCarta(c.oaci)?.torre : null;
-      rotular(
-        g,
-        [
-          ...(calcos.nombres ? [{ texto: c.nombre, color: TINTAS.tinta, cuerpo: 13 }] : []),
-          ...(c.oaci ? [{ texto: c.oaci, color: TINTAS.tinta, cifras: true, cuerpo: 12 }] : []),
-          ...(radio
-            ? [{ texto: `${radio.servicio} ${radio.f.cifra}${radio.f.canal833 ? " C" : ""}`, color: TINTAS.aero, cifras: true, cuerpo: 12 }]
-            : []),
-        ],
-        px,
-        py,
-        LADO,
-        tamano / 2 + 6,
-      );
-    }
-
-    /*
      * ── La rosa, en su esquina ──────────────────────────────────────────
      *
      * Abajo a la izquierda, que es donde menos estorba a la flecha. Con la
-     * radio, el norte magnético girado a la declinación de hoy en el sitio.
+     * radio, el norte magnético girado a la declinación de hoy en el sitio, y
+     * su cifra debajo, que se rotula con los demás.
      */
     if (esc.aerodrome) {
       const ano = anoDecimal(new Date());
       const d = declinacion(esc.aerodrome.origin.lat, esc.aerodrome.origin.lon, ano);
-      dibujarRosa(g, 32, LADO - 40, 20, calcos.radio ? d : null, calcos.radio ? varEscrita(d) : null);
+      const radio = 15 * u * k;
+      const x = radio + 8;
+      const y = this.enPantalla - radio - (calcos.radio ? 22 : 10);
+      dibujarRosa(g, x / k, y / k, radio / k, calcos.radio ? d : null);
+      this.fijosDelFondo.push({ cx: x, cy: y - 2, w: 2 * radio + 4, h: 2 * radio + 10 });
+      this.rosaPuesta = { x, y, radio, texto: calcos.radio ? varEscrita(d) : "" };
     }
+
+    // Y ahora, con todo lo que no se mueve apuntado, los rótulos.
+    this.colocarRotulos();
+  }
+
+  /**
+   * **Coloca y pinta los rótulos del plano**, en su lienzo: los aeródromos,
+   * los puntos de la ruta, la cota del umbral, los hitos ya nombrados, la
+   * declinación y los grados de la retícula, cada uno en su hueco. Se llama al
+   * repintar el fondo y cuando cambia lo que se rotula sin moverse el
+   * encuadre: el punto de la ruta al que se va, o un hito que se acaba de
+   * nombrar. Ver `carta/rotulos-del-plano.ts`.
+   */
+  private colocarRotulos(): void {
+    const lienzo = this.rotulos;
+    const hecho = this.encuadrePintado;
+    if (!lienzo || !hecho) return;
+    const g = lienzo.getContext("2d");
+    if (!g) return;
+    const S = this.enPantalla;
+    /*
+     * A la resolución de la pantalla, y no más del doble: un teléfono de tres
+     * píxeles por punto pagaría nueve veces el lienzo por una letra que a
+     * dos ya se ve nítida.
+     */
+    const resolucion = Math.min(2, Math.max(1, globalThis.devicePixelRatio || 1));
+    const lado = Math.round(S * resolucion);
+    if (lienzo.width !== lado) {
+      lienzo.width = lado;
+      lienzo.height = lado;
+    }
+    g.setTransform(lado / S, 0, 0, lado / S, 0, 0);
+    g.clearRect(0, 0, S, S);
+    const medir: Medir = (texto, letra) => {
+      g.font = letra;
+      return g.measureText(texto).width;
+    };
+    const escala = LADO / hecho.lado;
+    const k = 1 / this.u;
+    const enPantalla = (p: { readonly x: number; readonly z: number }): [number, number] => [
+      (LADO / 2 + (p.x - hecho.cx) * escala) * k,
+      (LADO / 2 + (p.z - hecho.cz) * escala) * k,
+    ];
+
+    // ── Los aeródromos, con el radio de su símbolo y su papel en el vuelo
+    const casa = this.escenario?.runway ?? null;
+    const llegada = this.ruta?.fijos.find((f) => f.papel === "umbral") ?? this.destino;
+    const masCerca = (p: { x: number; z: number } | null | undefined) => {
+      if (!p) return null;
+      let mejor: (typeof this.campos)[number] | null = null;
+      let cerca = 6000;
+      for (const c of this.campos) {
+        const d = Math.hypot(c.x - p.x, c.z - p.z);
+        if (d < cerca) {
+          cerca = d;
+          mejor = c;
+        }
+      }
+      return mejor;
+    };
+    const deCasa = masCerca(casa);
+    const delDestino = masCerca(llegada);
+    const campos: CampoDelPlano[] = this.campos.map((c) => {
+      const [x, y] = enPantalla(c);
+      let simbolo = 9;
+      let cerca = 6000;
+      for (const p of this.pistasPintadas) {
+        const d = Math.hypot(p.x - c.x, p.z - c.z);
+        if (d < cerca) {
+          cerca = d;
+          simbolo = p.radio;
+        }
+      }
+      const torre = frecuenciasDeLaCarta(c.oaci)?.torre;
+      return {
+        x,
+        y,
+        nombre: c.nombre,
+        oaci: c.oaci,
+        radio: torre ? `${torre.servicio} ${torre.f.cifra}${torre.f.canal833 ? " C" : ""}` : null,
+        simbolo,
+        papel: c === deCasa ? "casa" : c === delDestino ? "destino" : "otro",
+      };
+    });
+
+    // ── La ruta: sus puntos, sus rayas y la cota del umbral
+    const ruta = this.ruta;
+    const fijos: Caja[] = [...this.fijosDelFondo];
+    const rayas: Raya[] = [];
+    const puntos: PuntoDelPlano[] = [];
+    let umbral: { x: number; y: number; nombre: string; cota: string } | null = null;
+    if (ruta) {
+      const pts = ruta.fijos.map(enPantalla);
+      for (let i = 1; i < pts.length; i++) rayas.push({ a: pts[i - 1]!, b: pts[i]! });
+      /*
+       * **Y el nombre, cuando cabe.** En el plano ancho —cientos de
+       * kilómetros— los cinco puntos de una aproximación caen en un palmo:
+       * solo va el del punto al que se va. Acercando la lupa salen todos.
+       */
+      const millaEnPantalla = 1852 * escala * k;
+      ruta.fijos.forEach((f, i) => {
+        if (f.papel === "despegue" || f.papel === "umbral" || f.papel === "aqui") return;
+        const [x, y] = pts[i]!;
+        const activo = i === ruta.activo;
+        const r = (activo ? ESTRELLA_ACTIVA : ESTRELLA) * this.trazo * k;
+        fijos.push({ cx: x, cy: y, w: 2 * r + 2, h: 2 * r + 2 });
+        if (ruta.conNombres && (activo || millaEnPantalla >= 4))
+          puntos.push({ x, y, nombre: f.nombre, activo, simbolo: r });
+      });
+      const i = ruta.fijos.findIndex((f) => f.papel === "umbral");
+      if (ruta.conNombres && i >= 0 && ruta.cotaDelUmbral != null) {
+        const [x, y] = pts[i]!;
+        umbral = { x, y, nombre: ruta.fijos[i]!.nombre, cota: cotaEscrita(ruta.cotaDelUmbral) };
+      }
+    }
+
+    // ── Los hitos: el dibujo siempre, el nombre si ya se oyó
+    const dichos = this.dichos();
+    const hitos = this.hitos
+      .filter((h) => h.clase !== "isla" && dichos.has(h.nombre))
+      .map((h) => {
+        const [x, y] = enPantalla(h);
+        return { x, y, nombre: h.nombre };
+      });
+
+    /*
+     * **Y el avión, donde está al rotular**: en tierra está encima de casa, y
+     * el nombre de casa se escribía debajo de la flecha. Luego se mueve, y
+     * para eso va la flecha encima de todo.
+     */
+    const [ax, ay] = enPantalla({ x: this.avionX, z: this.avionZ });
+    const avion = SIMBOLOS.avion * this.trazo * k;
+    fijos.push({ cx: ax, cy: ay, w: avion, h: avion });
+    // Y los aros del destino y del alternativo, que van encima cada fotograma.
+    for (const p of [this.destino, this.alterno]) {
+      if (!p) continue;
+      const [x, y] = enPantalla(p);
+      const r = 9 * this.trazo * k + 1;
+      fijos.push({ cx: x, cy: y, w: 2 * r, h: 2 * r });
+    }
+
+    const { puestos } = rotularElPlano(
+      {
+        lado: S,
+        peldano: this.peldano,
+        campos,
+        puntos,
+        umbral,
+        hitos,
+        rosa: this.rosaPuesta,
+        grados: this.gradosDelFondo,
+        fijos,
+        rayas,
+      },
+      medir,
+    );
+    for (const r of puestos) pintarRotulo(g, r, PAPEL.fondo);
+    this.puestos = puestos;
+    this.fijosPuestos = fijos;
+    this.rotuladoCon = this.claveDeLosRotulos();
+    this.td = { donde: "", puesto: null };
+  }
+
+  /** Lo que, si cambia sin moverse el encuadre, pide rotular otra vez. */
+  private claveDeLosRotulos(): string {
+    return `${this.ruta?.activo ?? -1}|${this.ruta?.conNombres ?? ""}|${this.dichos().size}`;
   }
 
   /**
@@ -1237,11 +1548,11 @@ export class Mapa {
       const p = dondeCaeEnElMundo(o, lat, lon);
       return [LADO / 2 + (p.x - e.cx) * e.escala, LADO / 2 + (p.z - e.cz) * e.escala];
     };
+    // Los grados se apuntan y se escriben con los rótulos, si caben.
+    const k = 1 / this.u;
     g.save();
     g.strokeStyle = PAPEL.reticula;
     g.lineWidth = LINEAS.reticula;
-    g.font = `600 10px 'Barlow Condensed', sans-serif`;
-    g.fillStyle = TINTAS.aero;
     for (let lat = Math.floor((latCentro - dLat) * 2) / 2; lat <= latCentro + dLat; lat += 0.5) {
       const [a0, a1] = enPapel(lat, lonCentro - dLon);
       const [b0, b1] = enPapel(lat, lonCentro + dLon);
@@ -1249,10 +1560,10 @@ export class Mapa {
       g.moveTo(a0, a1);
       g.lineTo(b0, b1);
       g.stroke();
-      if (conCifras && a1 > 12 && a1 < LADO - 4) {
+      if (conCifras && a1 > 0 && a1 < LADO) {
         const g0 = Math.floor(Math.abs(lat));
         const m = Math.round((Math.abs(lat) - g0) * 60);
-        g.fillText(`${g0}°${m ? `${m}′` : ""}${lat >= 0 ? "N" : "S"}`, 3, a1 - 3);
+        this.gradosDelFondo.push({ texto: `${g0}°${m ? `${m}′` : ""}${lat >= 0 ? "N" : "S"}`, eje: "lat", en: a1 * k });
       }
     }
     for (let lon = Math.floor((lonCentro - dLon) * 2) / 2; lon <= lonCentro + dLon; lon += 0.5) {
@@ -1264,10 +1575,10 @@ export class Mapa {
       g.stroke();
       if (conCifras) {
         const xTop = a0 + ((b0 - a0) * (0 - a1)) / (b1 - a1 || 1);
-        if (xTop > 4 && xTop < LADO - 40) {
+        if (xTop > 0 && xTop < LADO) {
           const g0 = Math.floor(Math.abs(lon));
           const m = Math.round((Math.abs(lon) - g0) * 60);
-          g.fillText(`${g0}°${m ? `${m}′` : ""}${lon >= 0 ? "E" : "W"}`, xTop + 3, 11);
+          this.gradosDelFondo.push({ texto: `${g0}°${m ? `${m}′` : ""}${lon >= 0 ? "E" : "W"}`, eje: "lon", en: xTop * k });
         }
       }
     }
@@ -1287,6 +1598,8 @@ export class Mapa {
   ): void {
     const pts = ruta.fijos.map((f) => this.enElPapel(f, puesto));
     if (pts.length < 2) return;
+    // Los símbolos de la hoja en su medida —ver `trazo`—; la letra, en la de la pantalla.
+    const u = this.trazo;
     g.save();
     g.lineCap = "round";
     g.lineJoin = "round";
@@ -1294,8 +1607,8 @@ export class Mapa {
     const desde = Math.max(0, ruta.activo - 1);
     g.strokeStyle = TINTAS.ruta;
     g.globalAlpha = 0.55;
-    g.lineWidth = 2;
-    g.setLineDash([2, 6]);
+    g.lineWidth = 2 * u;
+    g.setLineDash([2 * u, 6 * u]);
     g.beginPath();
     for (let i = 0; i <= desde && i < pts.length; i++) {
       const [x, y] = pts[i]!;
@@ -1309,7 +1622,7 @@ export class Mapa {
     // por el tramo o se ha ido a un lado. Magenta sobre su orla de papel.
     g.setLineDash([]);
     g.strokeStyle = PAPEL.fondo;
-    g.lineWidth = LINEAS.ruta + 2 * LINEAS.rutaOrla;
+    g.lineWidth = (LINEAS.ruta + 2 * LINEAS.rutaOrla) * u;
     g.beginPath();
     for (let i = desde; i < pts.length; i++) {
       const [x, y] = pts[i]!;
@@ -1318,65 +1631,26 @@ export class Mapa {
     }
     g.stroke();
     g.strokeStyle = TINTAS.ruta;
-    g.lineWidth = LINEAS.ruta;
+    g.lineWidth = LINEAS.ruta * u;
     g.stroke();
-    // Los puntos, del primero al último. La cabecera de salida y el umbral
-    // ya los dibuja la pista.
-    g.font = `600 11px ${"'Barlow Condensed', sans-serif"}`;
-    g.textBaseline = "middle";
+    /*
+     * Los puntos, del primero al último. La cabecera de salida y el umbral
+     * ya los dibuja la pista. Sus nombres y la cota del umbral van en el
+     * lienzo de los rótulos, colocados con los demás: ver `colocarRotulos`.
+     */
     ruta.fijos.forEach((f, i) => {
       if (f.papel === "despegue" || f.papel === "umbral" || f.papel === "aqui") return;
       const [x, y] = pts[i]!;
       if (x < -20 || x > LADO + 20 || y < -20 || y > LADO + 20) return;
       const activo = i === ruta.activo;
-      estrella(g, x, y, activo ? 7 : 5.5);
+      estrella(g, x, y, (activo ? ESTRELLA_ACTIVA : ESTRELLA) * u);
       g.fillStyle = activo ? TINTAS.ruta : i < ruta.activo ? "#b9c3cc" : PAPEL.fondo;
       g.strokeStyle = TINTAS.aero;
-      g.lineWidth = 1.4;
+      g.lineWidth = 1.4 * u;
       g.fill();
       g.stroke();
-      /*
-       * **Y el nombre, cuando cabe.** En el plano ancho —cientos de
-       * kilómetros— los cinco puntos de una aproximación caen en un palmo y
-       * sus nombres se montan unos sobre otros y sobre el del aeropuerto: solo
-       * va el del punto al que se va. Acercando la lupa salen todos.
-       */
-      if (!ruta.conNombres) return;
-      if (!activo && puesto.escala * 1852 < 4) return;
-      const ancho = g.measureText(f.nombre).width;
-      const izquierda = x + 8 + ancho > LADO - 2;
-      g.textAlign = izquierda ? "right" : "left";
-      const tx = izquierda ? x - 8 : x + 8;
-      g.lineWidth = 3;
-      g.strokeStyle = PAPEL.fondo;
-      g.strokeText(f.nombre, tx, y + 8);
-      g.fillStyle = TINTAS.aero;
-      g.fillText(f.nombre, tx, y + 8);
     });
-    /*
-     * **Y la pista de llegada, con su nombre y su cota**: «RW19 · ELEV 108
-     * FT», junto a su umbral, que es donde la lleva una carta de
-     * aproximación. La pista ya la dibuja la barra blanca; lo que faltaba es
-     * lo que hace falta para calcular la bajada. Ver `cotaEscrita`.
-     */
-    const umbral = ruta.fijos.findIndex((f) => f.papel === "umbral");
-    if (ruta.conNombres && umbral >= 0 && ruta.cotaDelUmbral != null) {
-      const [x, y] = pts[umbral]!;
-      if (x > -20 && x < LADO + 20 && y > -20 && y < LADO + 20) {
-        const texto = `${ruta.fijos[umbral]!.nombre} · ${cotaEscrita(ruta.cotaDelUmbral)}`;
-        g.font = `600 12px 'Barlow Condensed', sans-serif`;
-        const ancho = g.measureText(texto).width;
-        const izquierda = x + 10 + ancho > LADO - 2;
-        g.textAlign = izquierda ? "right" : "left";
-        const tx = izquierda ? x - 10 : x + 10;
-        const ty = Math.max(10, Math.min(LADO - 10, y + 14));
-        g.lineWidth = 3;
-        g.strokeStyle = PAPEL.fondo;
-        g.strokeText(texto, tx, ty);
-        g.fillStyle = TINTAS.cota;
-        g.fillText(texto, tx, ty);
-      }
-    }
+    let conTd = false;
     if (ruta.descenso) {
       const [x, y] = this.enElPapel(ruta.descenso, puesto);
       if (x > 0 && x < LADO && y > 0 && y < LADO) {
@@ -1387,26 +1661,61 @@ export class Mapa {
          */
         g.fillStyle = PAPEL.fondo;
         g.strokeStyle = TINTAS.rutaTexto;
-        g.lineWidth = 2.4;
+        g.lineWidth = 2.4 * u;
         g.beginPath();
-        g.arc(x, y, 6.5, 0, Math.PI * 2);
+        g.arc(x, y, 6.5 * u, 0, Math.PI * 2);
         g.fill();
         g.stroke();
         g.beginPath();
-        g.moveTo(x - 3.5, y - 2.5);
-        g.lineTo(x - 0.5, y - 2.5);
-        g.lineTo(x + 3.5, y + 2.5);
+        g.moveTo(x - 3.5 * u, y - 2.5 * u);
+        g.lineTo(x - 0.5 * u, y - 2.5 * u);
+        g.lineTo(x + 3.5 * u, y + 2.5 * u);
         g.stroke();
-        if (ruta.conNombres) {
-          g.textAlign = "left";
-          g.lineWidth = 3;
-          g.strokeStyle = PAPEL.fondo;
-          g.strokeText("T/D", x + 9, y - 8);
-          g.fillStyle = TINTAS.rutaTexto;
-          g.fillText("T/D", x + 9, y - 8);
+        /*
+         * **Y su rótulo, en el primer hueco que dejen los demás.** El punto
+         * se corre con la altura, así que no entra en la colocación de los
+         * rótulos —habría que rehacerla cada fotograma—: se busca su sitio
+         * contra lo ya puesto, y solo cuando se ha movido un píxel.
+         */
+        // Con las cifras, como los nombres de la ruta: ver `rotularElPlano`.
+        if (ruta.conNombres && calcosDe(this.peldano).cifras) {
+          conTd = true;
+          const k = 1 / this.u;
+          const donde = `${Math.round(x * k)},${Math.round(y * k)}`;
+          if (donde !== this.td.donde) {
+            const ocupado = [
+              ...this.fijosPuestos,
+              ...this.puestos.map((r) => r.caja),
+              { cx: x * k, cy: y * k, w: 13 * u * k + 3, h: 13 * u * k + 3 },
+            ];
+            this.td = {
+              donde,
+              puesto: unoMas(
+                this.enPantalla,
+                ocupado,
+                [{ texto: "T/D", color: TINTAS.rutaTexto, cifras: true, cuerpo: CUERPOS.td }],
+                x * k,
+                y * k,
+                6.5 * u * k + 2,
+                (texto, letra) => {
+                  g.font = letra;
+                  return g.measureText(texto).width;
+                },
+              ),
+            };
+          }
+          if (this.td.puesto) {
+            // El lienzo de encima cuenta en sus unidades: se pinta a escala.
+            g.save();
+            g.scale(this.u, this.u);
+            pintarRotulo(g, this.td.puesto, PAPEL.fondo);
+            g.restore();
+          }
         }
       }
     }
+    // Sin «T/D» en el plano, no se queda uno viejo apuntado.
+    if (!conTd) this.td = { donde: "", puesto: null };
     g.restore();
   }
 
@@ -1481,7 +1790,10 @@ export class Mapa {
     g.restore();
   }
 
-  /** Cumbres y pueblos: el dibujo siempre, el nombre si ya se oyó. */
+  /**
+   * Cumbres y pueblos: el dibujo siempre; el nombre, si ya se oyó, lo rotula
+   * `colocarRotulos` con los demás.
+   */
   private pintarHitos(
     g: CanvasRenderingContext2D,
     cx: number,
@@ -1489,19 +1801,16 @@ export class Mapa {
     escala: number,
   ): void {
     if (this.hitos.length === 0) return;
-    const dichos = this.dichos();
     /*
      * **Y se ven.** La primera versión dibujaba triángulos de cuatro píxeles
      * de lado y círculos de tres, y en el plano de verdad —que en pantalla
      * mide unos doscientos setenta, no los cuatrocientos sesenta del lienzo—
      * eso son dos píxeles: medido en una captura, no se distinguían del
-     * relieve. La raya de la pista se dibuja con cinco de grueso por el mismo
-     * motivo.
+     * relieve. Ahora van en píxeles de pantalla, como la hoja: ver
+     * `enPantalla`.
      */
-    const calcos = calcosDe(this.peldano);
-    g.font = `500 12px 'Barlow Semi Condensed', sans-serif`;
-    g.textAlign = "left";
-    g.textBaseline = "middle";
+    const u = this.trazo;
+    const k = 1 / this.u;
     for (const hito of this.hitos) {
       // Las islas no llevan símbolo: la isla **es** la forma del relieve, y
       // un punto encima de una isla no dice nada que el mapa no diga ya.
@@ -1513,44 +1822,29 @@ export class Mapa {
        * Con reborde claro, como los rótulos: un símbolo oscuro sobre monte
        * oscuro es un símbolo que no está.
        */
-      g.lineWidth = 2;
+      g.lineWidth = 2 * u;
       g.strokeStyle = PAPEL.fondo;
       g.fillStyle = hito.clase === "montana" ? TINTAS.cota : TINTAS.tinta;
       g.beginPath();
       if (hito.clase === "montana") {
         // El triángulo de cota de las cartas de verdad.
-        g.moveTo(px, py - 7);
-        g.lineTo(px + 6, py + 4.5);
-        g.lineTo(px - 6, py + 4.5);
+        g.moveTo(px, py - 7 * u);
+        g.lineTo(px + 6 * u, py + 4.5 * u);
+        g.lineTo(px - 6 * u, py + 4.5 * u);
         g.closePath();
       } else {
-        g.arc(px, py, 4.5, 0, Math.PI * 2);
+        g.arc(px, py, 4.5 * u, 0, Math.PI * 2);
       }
       g.stroke();
       g.fill();
-      // El nombre, desde el calco de los nombres y solo si ya se oyó.
-      if (!calcos.nombres || !dichos.has(hito.nombre)) continue;
-      /*
-       * Y el nombre con su reborde claro, que sobre relieve verde y monte
-       * marrón un texto oscuro a secas no se lee. Es lo mismo que hacen los
-       * rótulos de una carta aeronáutica y por el mismo motivo.
-       */
-      g.lineWidth = 3;
-      g.strokeStyle = PAPEL.fondo;
-      g.fillStyle = TINTAS.tinta;
-      /*
-       * Y al lado que quepa. Medido en una captura: «Santa Cruz de Tenerife»
-       * escrito siempre a la derecha se salía del lienzo y se leía «Sa».
-       */
-      const ancho = g.measureText(hito.nombre).width;
-      const aLaIzquierda = px + 9 + ancho > LADO - 2;
-      g.textAlign = aLaIzquierda ? "right" : "left";
-      const tx = aLaIzquierda ? px - 9 : px + 9;
-      g.strokeText(hito.nombre, tx, py);
-      g.fillText(hito.nombre, tx, py);
+      this.fijosDelFondo.push({ cx: px * k, cy: py * k, w: 14 * u * k, h: 14 * u * k });
     }
   }
 }
+
+/** El radio de la estrella de un punto de la ruta, px de pantalla; y la del punto al que se va. */
+const ESTRELLA = 5.5;
+const ESTRELLA_ACTIVA = 7;
 
 /**
  * Dónde cae una latitud y longitud en el mundo de un origen: la misma cuenta

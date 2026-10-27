@@ -377,9 +377,32 @@ describe("las de serie", () => {
     }
     for (const id of ["tcas", "td", "tc", "arco", "senda", "gs-rodaje", "tren", "avisos"])
       expect([...fondo], id).not.toContain(id);
-    for (const id of ["carta", "actitud", "altitud", "velocidad", "rumbo", "motor"])
+    for (const id of ["carta", "actitud", "rumbo", "motor"])
       expect([...fondo], id).toContain(id);
     expect([...pieza]).toContain("tcas");
+  });
+
+  /*
+   * **Salvo la velocidad y la altitud, que llevan su figura por dentro.** En
+   * el teléfono las losas no explican, y la pantalla grande era la única
+   * puerta que podían tener: si allí fueran fondo, el velocímetro y el
+   * altímetro por dentro no se verían nunca en un teléfono. Y el horizonte
+   * sigue siendo fondo en los seis aviones: siempre hay por dónde volver.
+   */
+  it("y la velocidad y la altitud se explican también en la pantalla grande, en los seis aviones", () => {
+    for (const a of AIRCRAFT) {
+      const marcado = new Tablero().markup(a, 4);
+      const etiquetas = [...marcado.matchAll(/<[^>]*data-explica="([^"]+)"[^>]*>/g)];
+      const de = (id: string) => etiquetas.filter((m) => m[1] === id);
+      for (const id of ["velocidad", "altitud"]) {
+        expect(de(id).length, `${a.id} ${id}`).toBeGreaterThan(0);
+        for (const m of de(id)) expect(m[0], `${a.id} ${id}`).not.toContain("data-explica-fondo");
+      }
+      expect(
+        de("actitud").some((m) => m[0].includes("data-explica-fondo")),
+        `${a.id}: el horizonte, la vuelta a las losas`,
+      ).toBe(true);
+    }
   });
 
   it("y no se pisan las que alguien ya afinó", () => {

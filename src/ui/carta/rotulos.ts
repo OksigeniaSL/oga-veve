@@ -148,6 +148,13 @@ export function cruza(c: Caja, r: Raya): boolean {
  *
  * `fijos` son los símbolos y la rosa, que no se mueven y no se pisan.
  * `holgura` es el aire mínimo entre dos rótulos, en píxeles.
+ *
+ * `porForma`, si se da, cambia el orden de las formas por un precio: cada
+ * forma más corta cuesta eso más, y gana el sitio más barato de todas. En el
+ * plano en vuelo, que en un teléfono mide ciento setenta píxeles, el rótulo
+ * entero de casa acababa en el tercer anillo, lejos de su punto, cuando sin
+ * la radio cabía pegado a él; y un rótulo lejos de su punto ya no dice de
+ * quién es.
  */
 export function colocar(
   ancho: number,
@@ -156,6 +163,7 @@ export function colocar(
   rayas: readonly Raya[],
   rotulos: readonly PorColocar[],
   holgura = 2,
+  porForma?: number,
 ): (Colocado | null)[] {
   /*
    * Con su caja envolvente al lado, que descarta de una vez casi todos los
@@ -175,29 +183,35 @@ export function colocar(
         (!(caja.giro || p.caja.giro) || sePisan(caja, p.caja, holgura)),
     );
   return rotulos.map((r) => {
+    let mejorForma = -1;
+    let mejor = -1;
+    let menos = Infinity;
+    let suya: ReturnType<typeof envolvente> | null = null;
     for (let f = 0; f < r.formas.length; f++) {
-      let mejor = -1;
-      let menos = Infinity;
-      let suya: ReturnType<typeof envolvente> | null = null;
+      // Sin precio, la primera forma que cabe; con él, la más barata de todas.
+      if (porForma === undefined) menos = Infinity;
+      const extra = (porForma ?? 0) * f;
       r.formas[f]!.forEach((s, i) => {
-        if (s.coste >= menos) return;
+        if (s.coste + extra >= menos) return;
         const e = envolvente(s.caja);
         if (e.x0 < 0 || e.y0 < 0 || e.x1 > ancho || e.y1 > alto) return;
         if (pisaAlguna(s.caja, e)) return;
-        let coste = s.coste;
+        let coste = s.coste + extra;
         for (let k = 0; k < rayas.length && coste < menos; k++)
           if (k !== r.propia && cruza(s.caja, rayas[k]!)) coste += CRUCE;
         if (coste < menos) {
           menos = coste;
           mejor = i;
+          mejorForma = f;
           suya = e;
         }
       });
-      if (mejor >= 0 && suya) {
-        const caja = r.formas[f]![mejor]!.caja;
-        puestas.push({ caja, e: suya });
-        return { forma: f, sitio: mejor, caja };
-      }
+      if (porForma === undefined && mejor >= 0) break;
+    }
+    if (mejor >= 0 && suya) {
+      const caja = r.formas[mejorForma]![mejor]!.caja;
+      puestas.push({ caja, e: suya });
+      return { forma: mejorForma, sitio: mejor, caja };
     }
     return null;
   });

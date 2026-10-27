@@ -37,9 +37,9 @@ import {
 } from "../world/modelo-de-la-tarjeta";
 import { equipoDe } from "../world/luces-del-trafico";
 import type { PiezaDelAvion } from "../world/puntos-del-avion";
-import type { Peldano } from "../flight/escalera";
+import { canalesDe, type Peldano } from "../flight/escalera";
 import { armarPanel } from "./concha";
-import { abrirExplicacion } from "./explicaciones";
+import { abrirExplicacion, peldanoDeLasExplicaciones } from "./explicaciones";
 import { ponerLasDeSerie } from "./explicaciones-de-serie";
 import { figuraEnLaTarjeta } from "./figuras/montar";
 import {
@@ -539,13 +539,21 @@ export class TarjetaDelAvion {
      * `ui/figuras/montar.ts`.
      */
     const conFigura = this.avion ? figuraEnLaTarjeta(e.id, this.avion) : null;
+    /*
+     * En Guyrami, solo el engranaje: quien tiene cuatro años no lee «Por
+     * dentro», y un botón con letras que no se leen es ruido. Su nombre sigue
+     * en `aria-label`, para el lector de pantalla.
+     */
+    const conLetras = canalesDe(this.opciones.peldano?.() ?? peldanoDeLasExplicaciones()).texto;
     globo.innerHTML = `
       ${dibujoDe(e, "tav__globo-dibujo")}
       <p class="tav__globo-texto">${t(e.texto)}</p>
       ${
         conFigura
           ? `<button type="button" class="tav__por-dentro" data-tarjeta="por-dentro"
-                     aria-label="${t("tarjeta.porDentro.lector")}">${ENGRANAJE}<span>${t("tarjeta.porDentro")}</span></button>`
+                     aria-label="${t("tarjeta.porDentro.lector")}">${ENGRANAJE}${
+                       conLetras ? `<span>${t("tarjeta.porDentro")}</span>` : ""
+                     }</button>`
           : ""
       }`;
     globo.dataset.explicacion = e.id;
