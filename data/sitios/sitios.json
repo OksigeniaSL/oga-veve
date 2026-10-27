@@ -91,6 +91,16 @@
       "cota": 102,
       "alcance": 60000,
       "de": "osm way/875833703"
+    },
+    {
+      "id": "muchachos",
+      "nombre": "Observatorio del Roque de los Muchachos",
+      "lat": 28.75916,
+      "lon": -17.88674,
+      "giro": 0,
+      "cota": 2262,
+      "alcance": 30000,
+      "de": "osm way/288988504"
     }
   ]
 }

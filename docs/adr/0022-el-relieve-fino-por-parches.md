@@ -141,6 +141,12 @@ tienen río, y el fondo de profundidad hace la orilla.
   al pie de Itaipú, de ~180 a ~105, y la presa asoma entera; las ruinas de
   Trinidad, a 159 en todos los mundos. El Roque Nublo y el de Agando, a su
   cumbre con su modelo (1.813 y 1.246,7), sobre el suelo del parche.
+- **Los Saltos del Monday caen dentro del parche de Itaipú**, que ya tiene el
+  río a su cota de verdad: unos 160 m encima del salto y 117 debajo, con el
+  cañón. El primer modelo del Monday, hecho para el horizonte de antes —el río
+  como una piel sobre los 189 m de Guaraní—, quedaría flotando entre dieciocho
+  y setenta metros sobre ese suelo, y no entra: va el del salto y el cañón de
+  verdad, sobre este relieve.
 - **Tajogaite queda a unos 1.060-1.070 m**, que es lo que miden los dos
   modelos de EMS (diciembre de 2021 y febrero de 2022). OpenStreetMap le da
   1.120. Se pone lo medido, y se dice aquí y en los créditos.
@@ -155,10 +161,14 @@ tienen río, y el fondo de profundidad hace la orilla.
 
   Las texturas no cambian: los parches usan la foto que ya había. Por parche,
   entre catorce mil triángulos (Agando) y cincuenta mil (el Teide visto desde
-  La Palma); ver `parches-de-relieve.test.ts` para cómo se ponen. Los tiempos
-  de cuadro de esa tirada no valen: el portátil estaba a carga 43 con otro
-  trabajo encima, y entre dos vueltas de la misma variante el cuadro iba de
-  30 a 150 ms. Por la medida que cuenta `buildFarMesh` en `terrain.ts`
+  La Palma); ver `parches-de-relieve.test.ts` para cómo se ponen. **Los
+  tiempos de cuadro no se pudieron medir bien**: el portátil estuvo a carga
+  de 15 a 43 con otros trabajos encima, y entre dos vueltas de la misma
+  variante el cuadro iba de 30 a 150 ms. Alternando antes y después, en la
+  primera tirada (carga 43) la mediana de después salió más lenta en cuatro de
+  los nueve sitios de medida, y en la segunda (carga 15-25) más rápida en
+  cinco de seis: el ruido es mayor que lo que se mide, y queda por repetir con
+  el portátil en reposo. Por la medida que cuenta `buildFarMesh` en `terrain.ts`
   —doscientos cincuenta mil triángulos de horizonte más, de 11,3 a 11,5 ms
   con la CPU ×4—, cien mil son menos de una décima.
 - La atribución de Copernicus EMS va en la pantalla de créditos, con las de

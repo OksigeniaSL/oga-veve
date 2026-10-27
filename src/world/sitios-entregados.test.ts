@@ -39,7 +39,7 @@ const TOPE: Record<string, number> = {
   izana: 4_000,
   "saltos-monday": 2_500,
   "observatorio-teide": 4_000,
-  "roque-muchachos": 3_000,
+  muchachos: 3_000,
 };
 
 async function abrir(id: string): Promise<Object3D> {

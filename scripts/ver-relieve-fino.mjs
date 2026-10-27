@@ -157,6 +157,20 @@ const VISTAS = {
     altura: 300,
     mira: [-25.5094, -54.6005],
   },
+  "muchachos-ara": {
+    // El vuelo de Ara, llegando a La Palma desde el este.
+    escenario: "tenerife-norte",
+    sitio: [28.7, -17.65],
+    altura: 2500,
+    mira: [28.75916, -17.88674],
+  },
+  "muchachos-hierro": {
+    // De El Hierro a La Palma, al pasar por el oeste de la isla.
+    escenario: "el-hierro",
+    sitio: [28.6, -18.05],
+    altura: 3000,
+    mira: [28.75916, -17.88674],
+  },
   "palacio-lopez": {
     escenario: "pettirossi",
     sitio: [-25.262, -57.615],
