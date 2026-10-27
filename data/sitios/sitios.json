@@ -11,6 +11,16 @@
       "cota": null,
       "alcance": 80000,
       "de": "osm way/315098676"
+    },
+    {
+      "id": "puente-remanso",
+      "nombre": "Puente Remanso",
+      "lat": -25.183017,
+      "lon": -57.548165,
+      "giro": 132.86,
+      "cota": null,
+      "alcance": 40000,
+      "de": "osm way/791153661"
     }
   ]
 }
