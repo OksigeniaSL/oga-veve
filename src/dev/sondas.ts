@@ -334,6 +334,31 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
          */
         juego.percance = null;
         juego.hud.cerrarFinDeVuelo();
+        /*
+         * **Y lo que se seguía del avión de antes se olvida.** Ver
+         * `colocadoParaBanco`. Medido dos veces, las dos con el salto leído
+         * como vuelo:
+         *
+         * - En `verificar-vuelo.mjs`, en Los Rodeos, pasando por encima de un
+         *   aro justo después de la corta final a veinticuatro metros: el
+         *   detector de frustradas seguía armado con lo más bajo de antes, y
+         *   el tirón del teletransporte daba por hecha una frustrada de ciento
+         *   sesenta metros que nadie voló —«going around, good decision», la
+         *   senda callada y el banco sin tarjeta que corrigiera—, una vez de
+         *   cada ocho.
+         * - En el vuelo entero de El Hierro a La Gomera con el JAZ 60, al
+         *   cruzar a la final de diez kilómetros: dos kilómetros de salto en
+         *   un ciclo del TCAS son dos mil metros por segundo de acercamiento,
+         *   y daba «traffic, traffic» a dos del circuito a nueve y a dieciséis
+         *   kilómetros, que no se acercaban. Uno así, nombrado y retirado
+         *   antes de la muestra siguiente, es el que el banco contaba como
+         *   nombrado sin estar en el mundo. Con un salto de 2,5 km hacia uno
+         *   quieto a quince, sin olvidar: aviso; olvidando: ninguno.
+         *
+         * La final de la torre, igual: su `reiniciar` es para esto, «o se
+         * puso el avión en otro sitio».
+         */
+        juego.colocadoParaBanco();
       })(),
     /** Si la torre está mandando frustrar ahora mismo. Para el banco. */
     aproximacionManda: () => juego.laAproximacion?.mandanFrustrar ?? false,
