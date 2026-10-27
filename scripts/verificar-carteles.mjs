@@ -1033,6 +1033,69 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
   }
 
   /*
+   * **Y la tecla que toca**, en el lado izquierdo: la tarjeta con la tecla y
+   * sus vecinas que sale cuando un paso pide un mando. Se fuerza la más alta
+   * —las cuatro flechas— con el teclado, y con el dedo la de la palanca, y se
+   * mira que no pise el cuadro, la columna de mandos, los avisos, los botones
+   * de arriba, los pulgares ni el volumen, y que quepa. Ver
+   * `ui/teclas-que-tocan.ts`.
+   */
+  const ttq = await page.evaluate(async (conDedo) => {
+    const pisa = (a, b) =>
+      Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+      Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+    const o = globalThis.__oga;
+    if (!o.forzarTecla) return { falta: true };
+    o.juegoParaTrazas().input.ultimoMando = conDedo ? "dedo" : "teclado";
+    o.forzarTecla("subir");
+    await new Promise((r) => setTimeout(r, 500));
+    const el = document.querySelector('[data-hud="teclas-que-tocan"]');
+    const r = el?.getBoundingClientRect();
+    const visible = !!el && !el.hidden && !!r && r.width > 4;
+    const vecinos = !visible
+      ? []
+      : [
+          '[data-hud="tablero"]',
+          '[data-hud="cuadro-tel"]',
+          '[data-hud="cuadro-tirador"]',
+          ".hud__derecha > *",
+          ".hud__arriba > *",
+          ".hud__vistas > *",
+          '[data-hud="pictos"]',
+          '[data-hud="senal"]',
+          '[data-hud="warning"]',
+          '[data-hud="volumen-caja"]',
+          "#tactil .pad",
+        ]
+          .flatMap((q) => [...document.querySelectorAll(q)])
+          .filter(
+            (v) =>
+              !v.closest("[hidden]") &&
+              getComputedStyle(v).display !== "none" &&
+              getComputedStyle(v).visibility !== "hidden" &&
+              v.getBoundingClientRect().width > 2 &&
+              pisa(r, v.getBoundingClientRect()),
+          )
+          .map((v) => v.dataset.hud ?? String(v.className).slice(0, 24));
+    const fuera =
+      visible && (r.left < 0 || r.top < 0 || r.right > innerWidth || r.bottom > innerHeight);
+    o.forzarTecla(null);
+    return { visible, vecinos: [...new Set(vecinos)], fuera };
+  }, !!dedo);
+  comprobar(
+    `${donde}: la tecla que toca sale, cabe y no pisa el cuadro, los mandos ni los avisos`,
+    !ttq.falta && ttq.visible && !ttq.fuera && ttq.vecinos.length === 0,
+    ttq.falta
+      ? "no hay con qué forzarla"
+      : !ttq.visible
+        ? "no sale"
+        : ttq.fuera
+          ? "se sale de la pantalla"
+          : ttq.vecinos.map((v) => `pisa ${v}`).join(" · ") || "libre",
+    "«nada que tape los instrumentos, el aviso de pérdida o el cuadro»",
+  );
+
+  /*
    * **Y la tarjeta del mando que se conecta**, con el dibujo del aparato que se
    * reconoce: el HOTAS X en el reactor y el de consola en la avioneta, que así
    * se miran los dos dibujos. Se enchufa uno de mentira y se mira lo que se

@@ -18434,5 +18434,68 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "vuelo.alturaDeLaTorreRayaYMarca",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La torre nos dice hasta dónde subir: hasta la raya de la altura. Y la velocidad en la marca rosa.",
+    "para": "la primera altura de la torre, en Guyrami: hasta la raya, y la velocidad en la marca"
+  },
+  {
+    "id": "vuelo.alturaDeLaTorreYMarca",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí con la velocidad en la marca rosa, y nos quedamos.",
+    "para": "la primera altura de la torre: la ventanilla, y la velocidad en la marca; en Taguató, con la cifra detrás"
+  },
+  {
+    "id": "vuelo.paso.cruceroSolo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Ahora gas de crucero, hasta la marca del motor.",
+    "para": "al llegar arriba con la nivelada de los peldaños de abajo: el avión se queda solo, y el gas de crucero"
+  },
+  {
+    "id": "vuelo.paso.cruceroSolo.sinVer",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Ahora gas de crucero.",
+    "para": "lo mismo, sin la marca del motor a la vista"
+  },
+  {
+    "id": "vuelo.paso.cruceroSoloConAutomatico",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Gas de crucero, hasta la marca del motor; y si querés, poné el piloto automático: es el botón que late.",
+    "para": "lo mismo, y se ofrece el piloto automático"
+  },
+  {
+    "id": "vuelo.comoSeAterriza.facil",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Así se aterriza: llegamos al suelo despacito, sin empujar la nariz para abajo, y tocamos cerca de las rayas blancas grandes de la pista.",
+    "para": "antes de la final, en Guyrami y Tukã: cómo se aterriza, en sencillo"
+  },
+  {
+    "id": "vuelo.comoSeAterriza.helice",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y el gas afuera, juntos. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.",
+    "para": "antes de la final, en Taguató, en un avión de hélice"
+  },
+  {
+    "id": "vuelo.comoSeAterriza.cables",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y enseguida el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.",
+    "para": "antes de la final, en Taguató, en el reactor de cables"
+  },
+  {
+    "id": "vuelo.comoSeAterriza.electricos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba; cuando el avión diga retard, el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.",
+    "para": "antes de la final, en Taguató, en el reactor de mandos eléctricos"
   }
 ]

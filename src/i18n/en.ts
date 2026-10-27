@@ -412,6 +412,15 @@ export const EN: Dictionary = {
     "You landed! But far from the big white stripes: next time, touch down near them, so there's runway left to stop",
   "vuelo.tocasteDuroFacil":
     "You landed! But with a big bump: next time, reach the ground more gently, without pushing the nose down",
+  "vuelo.comoSeAterriza.facil":
+    "This is how we land: we reach the ground gently, without pushing the nose down, and touch down near the big white stripes on the runway.",
+  "vuelo.comoSeAterriza.helice":
+    "This is how we land this plane: at final approach speed, and near the ground, the nose up a little and the power off, together. Touch down firmly on the big markings: firm and on the spot beats smooth and far.",
+  "vuelo.comoSeAterriza.cables":
+    "This is how we land this plane: at final approach speed, and near the ground, the nose up a little and then the power off. Touch down firmly on the big markings: firm and on the spot beats smooth and far.",
+  "vuelo.comoSeAterriza.electricos":
+    "This is how we land this plane: at final approach speed, and near the ground, the nose up a little; when the plane says retard, power off. Touch down firmly on the big markings: firm and on the spot beats smooth and far.",
+  "palabra.aterrizar": "Landing",
   "vuelo.tomaLargaSinPista": "Not enough runway to stop: we go around and try again",
   "vuelo.aterrizasteContraLaOrden":
     "The tower had sent us around. When the tower says go around, you go: it sees what we can't see from here",
@@ -658,6 +667,10 @@ export const EN: Dictionary = {
   "vuelo.alturaDeLaTorreRaya":
     "The tower tells us how high to climb: up to the line on the altitude.",
   "vuelo.otraAlturaDeLaTorre": "The tower lets us climb a bit more. The new altitude is already set.",
+  "vuelo.alturaDeLaTorreRayaYMarca":
+    "The tower tells us how high to climb: up to the line on the altitude. And the speed on the pink mark.",
+  "vuelo.alturaDeLaTorreYMarca":
+    "The tower gave us how high to climb. I set it in the altitude window, in magenta: we climb up to there with the speed on the pink mark, and stay.",
   "vuelo.tonoDeAltitudCerca":
     "That tone means we're nearly at the ALT window altitude. That's where we level off.",
   "vuelo.tonoDeAltitudFuera":
@@ -781,6 +794,12 @@ export const EN: Dictionary = {
     "We're up: cruise power, to the mark on the engine. And if you like, switch on the autopilot: it's the button that's pulsing.",
   "vuelo.paso.cruceroConGases":
     "We're up. The autopilot sets cruise power: watch the lever go by itself to the engine mark.",
+  "vuelo.paso.cruceroSolo":
+    "We're up, and the plane stays at this height by itself: it's a help for learning. Now cruise power, to the mark on the engine.",
+  "vuelo.paso.cruceroSolo.sinVer":
+    "We're up, and the plane stays at this height by itself: it's a help for learning. Now cruise power.",
+  "vuelo.paso.cruceroSoloConAutomatico":
+    "We're up, and the plane stays at this height by itself: it's a help for learning. Cruise power, to the mark on the engine; and if you like, switch on the autopilot: it's the button that's pulsing.",
   "vuelo.paso.bajar": "We start down: less power, and we come down gently to the height line.",
   "vuelo.paso.bajarConAutomatico":
     "We start down. The autopilot follows the path down to the height line: you check the speed stays on the pink mark.",
@@ -849,6 +868,11 @@ export const EN: Dictionary = {
   "hud.salirPantallaCompleta": "Exit full screen",
   "inicio.pasos": "To play full screen: tap Share, then “Add to Home Screen”.",
   "inicio.cerrar": "Close",
+  "teclas.queTocan": "The key to press",
+  "teclas.yaMeLoAprendi": "Got it, don't show again",
+  "teclas.yaLaSe": "Got it",
+  "ajustes.teclasQueTocan": "The keys you already learned are no longer shown.",
+  "ajustes.teclasQueTocan.volver": "Show them again",
   "ajustes.inicio":
     "On iPhone, the game runs full screen when opened from its icon: in Safari tap Share (or “•••”, then Share), choose “Add to Home Screen” and open it from there.",
   "gafas.ganadas": "Your sunglasses!",

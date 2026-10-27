@@ -181,6 +181,37 @@ const AVION = `
 `;
 
 /**
+ * **Quién sostiene la altura**, en pequeño en la esquina de la tarjeta: la
+ * mano de la instructora —la nivelada de los peldaños de abajo, que es una
+ * ayuda del peldaño y no del avión— o el avión sobre su raya —el piloto
+ * automático—. Son los dos dibujos de quién lleva el gas en la tarjeta del
+ * motor: un significado, un dibujo. Ver `ponerQuienLlevaElGas` en `hud.ts`.
+ */
+const SOSTIENE_LA_AYUDA = `
+  <path d="M8 20 v-6 l-2.4-2.4 a1.4 1.4 0 0 1 2-2 L9.4 11.2 V4.6
+           a1.3 1.3 0 0 1 2.6 0 v5 v-5.6 a1.3 1.3 0 0 1 2.6 0 V10
+           v-4.4 a1.3 1.3 0 0 1 2.6 0 V14 a6 6 0 0 1-6 6 Z" />`;
+const SOSTIENE_EL_AUTOMATICO = `
+  <path d="M3 18h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+  <path d="M12 4 13.4 11 21 12.6v1.6l-7.6-1.2L12 20l-1.4-6.2L3 14.2v-1.6L10.6 11Z" />`;
+
+/**
+ * **A qué se apunta**, en las mismas fracciones que el avioncito: la altura de
+ * la ventanilla en la tarjeta de la altura, la velocidad de la marca en la vía
+ * de la velocidad, y quién sostiene la altura si alguien la sostiene. Ver
+ * `Pictogramas.update`.
+ */
+export interface ObjetivoDeLosPictos {
+  /** Dónde va la raya de la altura, 0 a 1, o `null` si no hay ventanilla. */
+  readonly altura: number | null;
+  /** Dónde va la marca de la velocidad, 0 a 1, o `null` si no hay marca. */
+  readonly velocidad: number | null;
+  /** Cómo va la velocidad frente a la marca, si hay marca. */
+  readonly banda: "lento" | "bien" | "rapido" | null;
+  readonly sostiene: "ayuda" | "automatico" | null;
+}
+
+/**
  * A partir de cuántos grados de alabeo el horizonte se pone ámbar.
  *
  * **Treinta y cinco, y el número sale de medirlo, no del manual.** En la
@@ -209,6 +240,10 @@ export class Pictogramas {
   private altPlane: SVGElement | null = null;
   /** La raya de la senda en la tarjeta de la altura. Ver el marcado. */
   private sendaMark: SVGElement | null = null;
+  /** La raya de la ventanilla y la marca de la velocidad. Ver `ObjetivoDeLosPictos`. */
+  private alturaMark: SVGElement | null = null;
+  private velocidadMark: SVGElement | null = null;
+  private sostiene: SVGElement | null = null;
   private propeller: SVGElement | null = null;
   private horizonte: SVGElement | null = null;
 
@@ -251,6 +286,17 @@ export class Pictogramas {
               suelo— y se va con ella. Ver bandaDeVelocidad en flight/.
             -->
             <line class="picto__vref" data-picto="vref" x1="20" y1="14" x2="20" y2="24" />
+            <!--
+              **Y la velocidad que toca, en todo el vuelo**, en el avión que
+              la lleva marcada en su anemómetro —los bugs de un turbohélice,
+              la velocidad seleccionada de un reactor—: la misma marca rosa
+              que la cinta, puesta en esta vía. El avioncito se tiñe con ella:
+              verde en la marca, ámbar si va lento, azul si va rápido. En la
+              avioneta no hay marca que llevar, y no sale. Ver
+              flight/escalera-de-velocidades.ts.
+            -->
+            <line class="picto__objetivo" data-picto="spd-obj" x1="20" y1="13" x2="20" y2="25"
+                  visibility="hidden" />
             <g class="picto__avion" data-picto="speed" transform="translate(20 11)">${AVION}</g>
           </svg>
         </div>
@@ -274,6 +320,19 @@ export class Pictogramas {
             -->
             <line class="picto__senda" data-picto="senda" x1="3" y1="0" x2="31" y2="0"
                   visibility="hidden" />
+            <!--
+              **Y hasta dónde se sube: la raya de la ventanilla ALT**, en el
+              avión que la lleva —el preselector de altitud de un turbohélice
+              o un reactor—. Rosa y entera, como el bug de la cinta; la senda
+              es la rayada. El avioncito sube hasta ella y se queda. En la
+              avioneta no hay ventanilla, y no sale: lo dice la instructora.
+            -->
+            <line class="picto__objetivo" data-picto="alt-obj" x1="3" y1="0" x2="31" y2="0"
+                  visibility="hidden" />
+            <g class="picto__sostiene" data-picto="sostiene" visibility="hidden">
+              <svg x="22" y="1" width="11" height="11" viewBox="0 0 24 24" data-quien="ayuda">${SOSTIENE_LA_AYUDA}</svg>
+              <svg x="22" y="1" width="11" height="11" viewBox="0 0 24 24" data-quien="automatico">${SOSTIENE_EL_AUTOMATICO}</svg>
+            </g>
             <g class="picto__avion" data-picto="altitude" transform="translate(9 22)">${AVION}</g>
           </svg>
         </div>
@@ -323,6 +382,9 @@ export class Pictogramas {
     this.vrefMark = this.pick("vref");
     this.altPlane = this.pick("altitude");
     this.sendaMark = this.pick("senda");
+    this.alturaMark = this.pick("alt-obj");
+    this.velocidadMark = this.pick("spd-obj");
+    this.sostiene = this.pick("sostiene");
     this.propeller = this.pick("prop");
     this.horizonte = this.pick("horizonte");
   }
@@ -369,6 +431,8 @@ export class Pictogramas {
      * `height`, o `null` si no se baja por ninguna. Ver el marcado.
      */
     senda: number | null = null,
+    /** A qué se apunta y quién sostiene la altura. Ver `ObjetivoDeLosPictos`. */
+    objetivo: ObjetivoDeLosPictos | null = null,
   ): void {
     if (!this.root) return;
 
@@ -387,12 +451,27 @@ export class Pictogramas {
         this.vrefMark.setAttribute("x2", String(x));
       }
     }
+    /*
+     * La marca de la velocidad que toca, fuera de la aproximación: en ella
+     * manda la de Vref, que es la misma velocidad y ya está puesta.
+     */
+    if (this.velocidadMark) {
+      const hay = objetivo?.velocidad != null && banda === null;
+      this.velocidadMark.setAttribute("visibility", hay ? "visible" : "hidden");
+      if (hay) {
+        const x = (20 + clamp01(objetivo!.velocidad!) * 60).toFixed(1);
+        this.velocidadMark.setAttribute("x1", x);
+        this.velocidadMark.setAttribute("x2", x);
+      }
+    }
     // El avioncito de la escala se tiñe con la banda. Verde es «así», y los
-    // otros dos dicen hacia dónde hay que moverlo sin decir una palabra.
+    // otros dos dicen hacia dónde hay que moverlo sin decir una palabra. Fuera
+    // de la aproximación, frente a la marca, si la hay.
+    const color = banda ?? objetivo?.banda ?? null;
     const marca = this.speedMark?.classList;
-    marca?.toggle("picto__avion--lento", banda === "lento");
-    marca?.toggle("picto__avion--bien", banda === "bien");
-    marca?.toggle("picto__avion--rapido", banda === "rapido");
+    marca?.toggle("picto__avion--lento", color === "lento");
+    marca?.toggle("picto__avion--bien", color === "bien");
+    marca?.toggle("picto__avion--rapido", color === "rapido");
 
     // El avión sube por la tarjeta. Se queda a media pieza del borde de
     // arriba para que no parezca que se sale, y apoyado en el cerro abajo.
@@ -411,6 +490,27 @@ export class Pictogramas {
         const y = (22 - clamp01(senda) * 19 + 8.2).toFixed(1);
         this.sendaMark.setAttribute("y1", y);
         this.sendaMark.setAttribute("y2", y);
+      }
+    }
+
+    // La raya de la ventanilla, con la misma cuenta que el avioncito.
+    if (this.alturaMark) {
+      const hay = objetivo?.altura != null;
+      this.alturaMark.setAttribute("visibility", hay ? "visible" : "hidden");
+      if (hay) {
+        const y = (22 - clamp01(objetivo!.altura!) * 19 + 8.2).toFixed(1);
+        this.alturaMark.setAttribute("y1", y);
+        this.alturaMark.setAttribute("y2", y);
+      }
+    }
+    // Y quién la sostiene, si alguien la sostiene.
+    if (this.sostiene) {
+      const quien = objetivo?.sostiene ?? null;
+      this.sostiene.setAttribute("visibility", quien ? "visible" : "hidden");
+      if (quien && this.sostiene.getAttribute("data-quien") !== quien) {
+        this.sostiene.setAttribute("data-quien", quien);
+        for (const d of this.sostiene.querySelectorAll<SVGElement>("[data-quien]"))
+          d.setAttribute("visibility", d.getAttribute("data-quien") === quien ? "visible" : "hidden");
       }
     }
 

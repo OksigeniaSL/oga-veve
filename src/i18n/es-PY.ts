@@ -1763,6 +1763,22 @@ export const ES_PY = {
     "¡Aterrizaste! Pero lejos de las rayas blancas grandes: la próxima, tocá cerca de ellas, que así sobra pista para frenar",
   "vuelo.tocasteDuroFacil":
     "¡Aterrizaste! Pero con un golpe fuerte: la próxima, llegá al suelo más despacito, sin empujar la nariz para abajo",
+  /*
+   * **Y cómo se aterriza, contado antes** (Enrique, El Hierro–La Gomera con el
+   * JAZ 60: «la instructora me dijo que le metí una buena hostia al tren»):
+   * una vez por tramo, antes de la final, y diciendo lo mismo que la nota de
+   * después. Abajo, en sencillo; en Taguató, la recogida de cada clase de
+   * avión. Ver `flight/como-se-aterriza.ts`.
+   */
+  "vuelo.comoSeAterriza.facil":
+    "Así se aterriza: llegamos al suelo despacito, sin empujar la nariz para abajo, y tocamos cerca de las rayas blancas grandes de la pista.",
+  "vuelo.comoSeAterriza.helice":
+    "Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y el gas afuera, juntos. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.",
+  "vuelo.comoSeAterriza.cables":
+    "Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y enseguida el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.",
+  "vuelo.comoSeAterriza.electricos":
+    "Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba; cuando el avión diga retard, el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.",
+  "palabra.aterrizar": "Aterrizar",
   "vuelo.tomaLargaSinPista":
     "No nos da la pista para parar: nos vamos al aire y lo volvemos a intentar",
   /*
@@ -2003,6 +2019,17 @@ export const ES_PY = {
   "vuelo.alturaDeLaTorreRaya": "La torre nos dice hasta dónde subir: hasta la raya de la altura.",
   "vuelo.otraAlturaDeLaTorre": "La torre nos deja subir otro poco. Ya puse la altura nueva.",
   /*
+   * **Y la velocidad, con la altura**, la primera vez: subir es ir a una
+   * altura **a una velocidad**, y sin la segunda mitad no se sabe si se va
+   * rápido o despacio. Detrás, en Taguató, la cifra: «Son {n} kilómetros por
+   * hora». Solo con su grabación; sin ella, la de siempre. Ver
+   * `autorizarAltura` en `game.ts`.
+   */
+  "vuelo.alturaDeLaTorreRayaYMarca":
+    "La torre nos dice hasta dónde subir: hasta la raya de la altura. Y la velocidad en la marca rosa.",
+  "vuelo.alturaDeLaTorreYMarca":
+    "La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí con la velocidad en la marca rosa, y nos quedamos.",
+  /*
    * Y el tono del avisador de altitud, contado detrás de la máquina y una sola
    * vez: ver `sonarElAvisador` en `game.ts`.
    */
@@ -2230,6 +2257,18 @@ export const ES_PY = {
     "Ya estamos arriba: gas de crucero, hasta la marca del motor. Y si querés, poné el piloto automático: es el botón que late.",
   "vuelo.paso.cruceroConGases":
     "Ya estamos arriba. El automático pone el gas de crucero: mirá cómo la palanca va sola a la marca del motor.",
+  /*
+   * **Y arriba, si el avión se queda solo a la altura**, que lo diga: es la
+   * nivelada de los peldaños de abajo, una ayuda para aprender y no algo que
+   * haga el avión. Sin decirlo, «se estabilizó solo» y no se sabía por qué.
+   * Ver `sostenerElNivel` en `game.ts`.
+   */
+  "vuelo.paso.cruceroSolo":
+    "Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Ahora gas de crucero, hasta la marca del motor.",
+  "vuelo.paso.cruceroSolo.sinVer":
+    "Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Ahora gas de crucero.",
+  "vuelo.paso.cruceroSoloConAutomatico":
+    "Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Gas de crucero, hasta la marca del motor; y si querés, poné el piloto automático: es el botón que late.",
   "vuelo.paso.bajar":
     "Empezamos a bajar: menos gas, y bajamos despacito hasta la raya de la altura.",
   "vuelo.paso.bajarConAutomatico":
@@ -2374,6 +2413,16 @@ export const ES_PY = {
   "inicio.pasos":
     "Para jugar a pantalla completa: tocá Compartir y después «Agregar a inicio».",
   "inicio.cerrar": "Cerrar",
+  /*
+   * **Las teclas que tocan**: la tecla que pide el paso, en un lado. No se
+   * dicen: se leen, y en el peldaño que no lee queda solo el visto. Ver
+   * `ui/teclas-que-tocan.ts`.
+   */
+  "teclas.queTocan": "La tecla que toca",
+  "teclas.yaMeLoAprendi": "Ya me lo aprendí",
+  "teclas.yaLaSe": "Ya la sé",
+  "ajustes.teclasQueTocan": "Las teclas que ya te aprendiste no salen más.",
+  "ajustes.teclasQueTocan.volver": "Volver a mostrarlas",
   "ajustes.inicio":
     "En el iPhone, el juego va a pantalla completa abierto desde su ícono: en Safari tocá Compartir (o «•••» y Compartir), elegí «Agregar a inicio» y abrilo desde ahí.",
   "gafas.ganadas": "¡Tus gafas de sol!",

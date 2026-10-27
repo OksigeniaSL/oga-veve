@@ -25,6 +25,39 @@
  * sosteniendo la altura que llevaba al engancharlo, que es lo que hace un
  * automático sin preselector. Ver `llevaVentanillaDeAltitud`.
  *
+ * ## Y a qué se apunta en cada clase, con su fuente
+ *
+ * Enrique, de El Hierro a La Gomera con el JAZ 60: «no supe en ningún momento
+ * a qué altura debía llegar ni si la velocidad era mucha o poca». Cada avión
+ * enseña la altitud y la velocidad que tocan **con lo que lleva de verdad**, y
+ * un avión no puede enseñar un instrumento que no tiene:
+ *
+ * - **Las avionetas** (la clase del 172, del fumigador y del bimotor de
+ *   escuela): anemómetro y altímetro de aguja, con sus arcos de color y sin
+ *   marcadores —FAA, *Pilot's Handbook of Aeronautical Knowledge*,
+ *   FAA-H-8083-25C, cap. 8, «Airspeed Indicator» y sus marcas—. La altitud y
+ *   la velocidad de cada tramo las lleva la hoja de navegación del vuelo —el
+ *   mismo manual, cap. 16, «Flight Planning», con su columna de altitud y de
+ *   velocidad— y las dice la instructora. Aquí no hay ventanilla ni marca: lo
+ *   dice ella.
+ * - **El turbohélice** (la clase del Beech 1900D): pantallas de actitud y de
+ *   rumbo, director de vuelo con preselector y avisador de altitud, y
+ *   **marcadores** en el anemómetro que la tripulación pone en cada tramo —los
+ *   *bugs*—. Es lo que lleva su cabina Collins de serie; el automático, el
+ *   APS-65, era opción. El manual del 1900D que lo diría con su página no es
+ *   público: la referencia queda **por verificar** contra su POH, sección 7.
+ *   Aquí, la ventanilla ALT con su bug y la marca rosa de la cinta.
+ * - **Los reactores**: la velocidad y la altitud **seleccionadas** en la
+ *   pantalla de vuelo, en magenta, encima de cada cinta y como marca en ella
+ *   —Boeing, *737 FCOM*, «Flight Instruments, Displays — PFD»; Airbus, *A320
+ *   FCOM*, «PFD — Speed Scale / Altitude Scale», el objetivo de velocidad y
+ *   el de altitud—.
+ *
+ * Y por peldaño: el dibujo en los cuatro —la raya y la marca rosa, también en
+ * los pictogramas de los pequeños, ver `ObjetivoDeLosPictos` en
+ * `ui/pictogramas.ts`—, una palabra en la tarjeta del paso desde Tukã y la
+ * cifra desde Taguató. Ver `flight/escalera.ts`.
+ *
  * ## El avisador, con los números de Boeing
  *
  * - **Acercándose**: a novecientos pies de la seleccionada suena un tono y se

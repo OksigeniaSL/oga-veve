@@ -613,3 +613,12 @@
 613	vuelo.tocasteDuro	Aterrizaje duro: ahora hay que revisar el avión. La próxima, recogé un poco más al final
 614	vuelo.tocasteLargoFacil	¡Aterrizaste! Pero lejos de las rayas blancas grandes: la próxima, tocá cerca de ellas, que así sobra pista para frenar
 615	vuelo.tocasteDuroFacil	¡Aterrizaste! Pero con un golpe fuerte: la próxima, llegá al suelo más despacito, sin empujar la nariz para abajo
+616	vuelo.alturaDeLaTorreRayaYMarca	La torre nos dice hasta dónde subir: hasta la raya de la altura. Y la velocidad en la marca rosa.
+617	vuelo.alturaDeLaTorreYMarca	La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí con la velocidad en la marca rosa, y nos quedamos.
+618	vuelo.paso.cruceroSolo	Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Ahora gas de crucero, hasta la marca del motor.
+619	vuelo.paso.cruceroSolo.sinVer	Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Ahora gas de crucero.
+620	vuelo.paso.cruceroSoloConAutomatico	Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Gas de crucero, hasta la marca del motor; y si querés, poné el piloto automático: es el botón que late.
+621	vuelo.comoSeAterriza.facil	Así se aterriza: llegamos al suelo despacito, sin empujar la nariz para abajo, y tocamos cerca de las rayas blancas grandes de la pista.
+622	vuelo.comoSeAterriza.helice	Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y el gas afuera, juntos. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.
+623	vuelo.comoSeAterriza.cables	Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y enseguida el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.
+624	vuelo.comoSeAterriza.electricos	Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba; cuando el avión diga retard, el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.

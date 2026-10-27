@@ -5603,6 +5603,17 @@ button.motor__tecla::after {
   stroke-width: 1;
 }
 
+/* Quién sostiene la altura, debajo de la ventanilla: la mano o el automático. */
+.cr__quien-fondo {
+  fill: #05070a;
+  stroke: var(--cabina-filo);
+  stroke-width: 1;
+}
+
+.cr__quien {
+  fill: var(--cabina-valor);
+}
+
 .cr__sel-cifra {
   fill: var(--cabina-objetivo);
   font-family: var(--cabina-fuente);
@@ -11821,6 +11832,24 @@ button.motor__tecla::after {
 }
 
 /*
+ * Y lo que se busca en todo el vuelo, en el avión que lo lleva marcado: la
+ * raya de la ventanilla ALT y la marca de la velocidad que toca. Rosa y
+ * enteras, como sus bugs en la cinta; la senda es la rayada. Ver
+ * `ObjetivoDeLosPictos` en `ui/pictogramas.ts`.
+ */
+.picto__objetivo {
+  stroke: var(--cabina-objetivo);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+/* Quién sostiene la altura: la mano de la ayuda o el automático, en pequeño. */
+.picto__sostiene {
+  fill: var(--tinta);
+  color: var(--tinta);
+}
+
+/*
  * **La esquina de lo que el juego te enseña**: pictogramas y tarjeta de aviso.
  *
  * Los dos iban sueltos y centrados arriba, cada uno colocado por su cuenta —la
@@ -16346,6 +16375,180 @@ body.con-vuelta #tactil {
 }
 .sin-movimiento .inicio *,
 .sin-movimiento .inicio__dedo {
+  animation: none !important;
+}
+
+/* ── Las teclas que tocan ──
+   La tecla que pide el paso, con sus vecinas, en el lado izquierdo y a media
+   altura: ahí no hay instrumentos, ni el aviso de pérdida, ni el cuadro, ni
+   la columna de mandos. Ver `ui/teclas-que-tocan.ts`. */
+
+.teclas-que-tocan {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.ttq {
+  position: absolute;
+  left: calc(16px + env(safe-area-inset-left, 0px));
+  /* El alto lo pone `colocarLaTarjeta`: entre lo de arriba y lo de abajo. */
+  top: 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 10px 2px;
+  border-radius: var(--r-l);
+  background: var(--barniz), var(--barro);
+  box-shadow: var(--filo), var(--poso);
+  color: var(--tinta);
+  font-family: var(--hud-fuente);
+  --tecla: 44px;
+}
+
+.ttq[hidden],
+.ttq__dedo[hidden] {
+  display: none;
+}
+
+.ttq .inicio__mando {
+  gap: 8px;
+}
+
+.ttq .inicio__flechas,
+.ttq .inicio__fila {
+  gap: 5px;
+}
+
+.ttq .dib {
+  height: 76px;
+}
+
+.ttq .inicio__pasa {
+  width: 40px;
+  height: 40px;
+}
+
+/* Con el dedo, el botón de la pantalla dibujado: el mismo marco que la llave. */
+.ttq__boton {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-m);
+  border: 3px solid var(--ocre);
+  background: var(--barro-claro);
+  animation: senal-llama 1.8s ease-in-out infinite;
+}
+
+.ttq__boton > svg:first-child {
+  width: 40px;
+  height: 40px;
+  fill: var(--ocre);
+}
+
+.ttq__boton .inicio__toque {
+  right: -14px;
+  bottom: -16px;
+  width: 32px;
+  height: 36px;
+}
+
+/* «Ya me lo aprendí»: pequeño de ver y de una yema de tocar. */
+.ttq__aprendida {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--tinta-suave);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ttq__aprendida svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ttq__aprendida:focus-visible {
+  outline: 3px solid var(--ocre);
+  outline-offset: -3px;
+  border-radius: var(--r-m);
+}
+
+/* La palabra, según el peldaño: el visto solo en el que no lee. */
+.teclas-que-tocan[data-peldano="1"] .ttq__aprendida-texto {
+  display: none;
+}
+
+/* Y el mando de la pantalla que toca, con el dedo: encendido como la llave. */
+.ttq--senalado {
+  outline: 3px solid var(--ocre);
+  outline-offset: 2px;
+  animation: senal-llama 1.8s ease-in-out infinite;
+}
+
+/*
+ * Pantallas bajas: la tecla más chica y **en fila con el visto**, que en un
+ * teléfono apaisado el alto es lo que falta entre la columna de botones y la
+ * palanca. En fila, el «ya me lo aprendí» conserva su yema sin encoger.
+ */
+@media (max-height: 520px) {
+  .ttq {
+    --tecla: 30px;
+    flex-direction: row;
+    gap: 2px;
+    padding: 4px 2px 4px 6px;
+  }
+  .ttq .dib {
+    height: 48px;
+  }
+  .ttq__aprendida-texto {
+    display: none;
+  }
+  .ttq .inicio__pasa {
+    display: none;
+  }
+  .ttq__boton {
+    width: 48px;
+    height: 48px;
+  }
+  .ttq__boton > svg:first-child {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* De pie y con el dedo manda el cartel de girar, como en el modo inicio. */
+@media (pointer: coarse) and (orientation: portrait) {
+  .teclas-que-tocan {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .teclas-que-tocan *,
+  .ttq--senalado {
+    animation: none !important;
+  }
+}
+.sin-movimiento .teclas-que-tocan *,
+.sin-movimiento .ttq--senalado {
   animation: none !important;
 }
 

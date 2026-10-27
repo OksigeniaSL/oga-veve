@@ -212,6 +212,12 @@ export interface DatosDelTablero {
    * pies, y lo que dice el avisador. `null` si el avión no la lleva o no hay
    * ninguna puesta. Ver `flight/altitud-seleccionada.ts`.
    */
+  /**
+   * **Quién sostiene la altura**, si no es quien vuela: la nivelada de los
+   * peldaños de abajo o el automático. Ver `quienSostieneLaAltura` en
+   * `game.ts`.
+   */
+  readonly sostieneLaAltura?: "ayuda" | "automatico" | null;
   readonly ventanilla?: {
     readonly pies: number;
     readonly alerta: Alerta;
@@ -1617,6 +1623,13 @@ export class Tablero {
    */
   private ventanillaAlt(d: DatosDelTablero, dt: number): void {
     const v = d.ventanilla ?? null;
+    // Quién sostiene la altura, con la ventanilla o sin ella.
+    const quien = d.sostieneLaAltura ?? null;
+    const sostiene = this.pieza('[data-cristal="alt-quien"]');
+    poner(sostiene, "visibility", quien ? "visible" : "hidden");
+    if (sostiene && quien)
+      for (const p of sostiene.querySelectorAll<SVGElement>("[data-quien]"))
+        poner(p, "visibility", p.getAttribute("data-quien") === quien ? "visible" : "hidden");
     const bug = this.pieza('[data-bug="alt-sel"]');
     const caja = this.pieza('[data-cristal="alt-sel-caja"]');
     const mcp = this.pieza("[data-mcp-alt]");
