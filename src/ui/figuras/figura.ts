@@ -156,7 +156,7 @@ export function pieza<T extends Element = SVGElement>(svg: Element, nombre: stri
 /** Lo enfocable de un dibujo: un mando de verdad para el teclado y el lector. */
 export function hacerMando(
   e: Element,
-  rol: "slider" | "button",
+  rol: "slider" | "button" | "switch",
   etiqueta: string,
   extra: Readonly<Record<string, string>> = {},
 ): void {

@@ -563,10 +563,10 @@ como es; esas fotos no entran en el juego, solo sirvieron de referencia.
 
 ### Los instrumentos por dentro
 
-Las ocho figuras que se tocan en la ventana de explicación —el PAPI, el
+Las diez figuras que se tocan en la ventana de explicación —el PAPI, el
 pitot con su velocímetro, el altímetro, los mandos, los flaps, el
-turbohélice, el turbofán y el motor de pistones (`src/ui/figuras/`)— son
-**figuras propias**: las dibujó Gaudí, director de
+turbohélice, el turbofán, el motor de pistones, el tren fijo y el tren que
+se recoge (`src/ui/figuras/`)— son **figuras propias**: las dibujó Gaudí, director de
 arte de Oksigenia, con cara de manual de vuelo antiguo y las tintas y letras
 de la carta, y van con el código bajo Apache-2.0. Lo único de fuera es lo
 que dice el software de terceros, arriba: la hoja isométrica de Anatomy (MIT)
@@ -600,6 +600,12 @@ módulo:
   IM.A.051; el manual del Cessna 172S, sección 7; y el *Pilot's Handbook of
   Aeronautical Knowledge*, capítulo 7, con los cuatro tiempos de su figura
   7-5 y el doble encendido.
+- **El tren**: el fijo, del manual del Cessna 172S, sección 7, y del
+  *Aviation Maintenance Technician Handbook – Airframe* de la FAA
+  (FAA-H-8083-31A, vol. 2), capítulo 13; el que se recoge, de los informes
+  de accidente del 1900D de la TAIC de Nueva Zelanda (07-006) y del TSB de
+  Canadá (A16W0092), que citan su manual de mantenimiento, y del *Airplane
+  Flying Handbook*, capítulo 12.
 
 ### Las ilustraciones
 

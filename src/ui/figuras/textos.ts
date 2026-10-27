@@ -16,6 +16,8 @@
 import { t, type TranslationKey } from "../../i18n";
 import type { TextosDelMotor } from "./motor-comun";
 import type { PalabrasDelPiston, TextosDelPiston } from "./piston";
+import type { TextosDelTrenFijo } from "./tren-fijo";
+import type { TextosDelTrenRetractil } from "./tren-retractil";
 import type { PalabrasDelTurbofan } from "./turbofan";
 import type { PalabrasDelTurbohelice } from "./turbohelice";
 import { cifra } from "./figura";
@@ -215,6 +217,51 @@ export function textosDelPiston(): TextosDelPiston {
     magneto: t("figura.piston.magneto"),
     valor: (p) =>
       t(p < 0.25 ? "figura.piston.valorPoco" : p < 0.75 ? "figura.piston.valorMedio" : "figura.piston.valorTodo"),
+  };
+}
+
+/** Las palabras de un dibujo, por sus claves del diccionario con ese prefijo. */
+function palabras<K extends string>(prefijo: string, claves: readonly K[]): Readonly<Record<K, string>> {
+  return Object.fromEntries(claves.map((k) => [k, t(`${prefijo}.${k}` as TranslationKey)])) as Record<K, string>;
+}
+
+export function textosDelTrenFijo(): TextosDelTrenFijo {
+  return {
+    dibujo: palabras("figura.trenFijo", [
+      "aceite", "aire", "amortiguador", "desdeArriba", "fuerte", "muelle", "orificio", "pata", "pedales", "piston",
+      "ruedaMorro", "suave", "aria",
+    ] as const),
+    suave: t("figura.trenFijo.tomaSuave"),
+    fuerte: t("figura.trenFijo.tomaFuerte"),
+    pedales: t("figura.trenFijo.pedales"),
+    quieto: [t("figura.trenFijo.quieto1"), t("figura.trenFijo.quieto2")],
+    patas: [t("figura.trenFijo.patas1"), t("figura.trenFijo.patas2")],
+    morro: [t("figura.trenFijo.morro1"), t("figura.trenFijo.morro2")],
+    vPedales: (v) =>
+      t(v > 0.05 ? "figura.trenFijo.pedalDer" : v < -0.05 ? "figura.trenFijo.pedalIzq" : "figura.trenFijo.parejos"),
+  };
+}
+
+export function textosDelTrenRetractil(): TextosDelTrenRetractil {
+  return {
+    dibujo: palabras("figura.trenRetractil", [
+      "abajo", "arriba", "tresVerdes1", "tresVerdes2", "tresVerdes3", "porque1", "porque2", "bomba", "bomba2",
+      "asoman", "compuerta", "der", "izq", "morro", "rojo1", "rojo2", "ruedaMorro", "ruedas", "morroAtras",
+      "principalAdelante", "aria",
+    ] as const),
+    palanca: t("figura.trenRetractil.palanca"),
+    estados: {
+      abajo: t("figura.trenRetractil.estadoAbajo"),
+      arriba: t("figura.trenRetractil.estadoArriba"),
+      bajando: t("figura.trenRetractil.bajando"),
+      subiendo: t("figura.trenRetractil.subiendo"),
+    },
+    vivo: {
+      abajo: t("figura.trenRetractil.vivoAbajo"),
+      arriba: t("figura.trenRetractil.vivoArriba"),
+      bajando: t("figura.trenRetractil.vivoBajando"),
+      subiendo: t("figura.trenRetractil.vivoSubiendo"),
+    },
   };
 }
 
