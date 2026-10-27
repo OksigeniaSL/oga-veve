@@ -14414,6 +14414,12 @@ svg .ex-raya {
   cursor: pointer;
 }
 
+/* Solo el engranaje, en Guyrami: redondo y con el dibujo en medio. */
+.tav__por-dentro:not(:has(span)) {
+  justify-content: center;
+  padding: 6px;
+}
+
 .tav__por-dentro-dibujo {
   width: 26px;
   height: 26px;

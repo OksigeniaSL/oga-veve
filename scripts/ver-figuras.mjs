@@ -12,7 +12,8 @@
  *    queda abierta: el clic que sigue al toque que la abre no la cierra.
  * 2. **Que cabe**: la figura y el botón de cerrar, dentro de la pantalla.
  * 3. **Que se toca con el dedo**: cada mando de la figura mide 44 × 44 o más.
- * 4. **Que en Guyrami no hay letras**: ni una letra ni un número a la vista.
+ * 4. **Que en Guyrami no hay letras**: ni una letra ni un número a la vista,
+ *    tampoco en el botón «Por dentro», que es solo el engranaje.
  * 5. **Que se mueve con el teclado** y el panel no le roba las flechas.
  * 6. **Que se va entera al cerrar**: ni rastro de la figura en la página.
  * 7. **Que solo va en el avión que dibuja**: los mandos y los flaps, en el
@@ -279,7 +280,7 @@ async function porDentro(page, pieza) {
     const b = document.querySelector('[data-tarjeta="globo"]:not([hidden]) .tav__por-dentro');
     if (!b) return null;
     const r = b.getBoundingClientRect();
-    return { w: Math.round(r.width), h: Math.round(r.height) };
+    return { w: Math.round(r.width), h: Math.round(r.height), letras: b.innerText.trim(), lector: b.getAttribute("aria-label") ?? "" };
   });
 }
 
@@ -289,6 +290,9 @@ async function abrirPorDentro(page, pantalla, tramo, pieza, cual, etiqueta) {
   const n = `${pantalla} ${tramo} ${etiqueta}`;
   comprobar(`${n}: «por dentro» de un dedo`, !!boton && boton.w >= 44 && boton.h >= 44, boton ? `${boton.w}×${boton.h}` : "no está");
   if (!boton) return null;
+  // En Guyrami, solo el engranaje; su nombre, para el lector de pantalla.
+  if (tramo === "guyrami")
+    comprobar(`${n}: «por dentro» sin letras, con su nombre`, boton.letras === "" && boton.lector !== "", `«${boton.letras}» · «${boton.lector}»`);
   if (!(await tocar(page, '[data-tarjeta="globo"]:not([hidden]) .tav__por-dentro')) || !(await esperarFigura(page, cual))) {
     comprobar(`${n}: figura`, false);
     await cerrar(page, n);
