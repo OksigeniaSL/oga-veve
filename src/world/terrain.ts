@@ -154,8 +154,14 @@ export function cabeceraContraria(escenario: Scenario): string | null {
  */
 const NIVEL_DE_TIERRA_ADENTRO = 10;
 
-/** Cuánto se hunde el río de casa bajo su lámina en un parche, m. */
-const HUNDIDO_DEL_RIO = 15;
+/**
+ * Cuánto se hunde el río de casa bajo su lámina en un parche, m.
+ *
+ * Diez, que es lo que `esAguaDeCasa` todavía cuenta como agua de casa: así
+ * el avión que se posa en el río flota a la cota de la lámina y no se hunde
+ * hasta el fondo dibujado. Ver `sampleSurface`.
+ */
+const HUNDIDO_DEL_RIO = 10;
 
 /** El radio con el que se sacaron los mapas, m. Ver `Terrain.aGrados`. */
 const RADIO_DE_LOS_MAPAS = 6371008;
@@ -855,7 +861,7 @@ export class Terrain {
    * decía «tierra» a medio río y el agua se cortaba en una raya recta. Así
    * que donde hay parche dice «agua» en todo cuadro que tenga río —hundido,
    * ver `horizonteRefinado`— y el fondo de profundidad hace la orilla, que
-   * con el río quince metros por debajo de la lámina ya no empata.
+   * con el río diez metros por debajo de la lámina ya no empata.
    */
   private sobreElAguaRefinado(fila: number, col: number): number | null {
     const r = this.horizonteRefinado();

@@ -117,7 +117,8 @@ Debajo, el relieve mide la lámina como suelo, y el agua y el suelo a la misma
 cota se turnan de lejos. Así que el fondo de cada lago **se hunde al
 dibujarlo**, como el mar del horizonte: quince metros, sin bajar del agua de
 casa. Y lo mismo el río de casa dentro de un parche: bajo Itaipú el Paraná va
-a 102-105 m y el agua de Guaraní a 105; se hunde quince y el mapa de orillas,
+a 102-105 m y el agua de Guaraní a 105; se hunde diez —lo que el agua de casa
+todavía cuenta como suya, para que el avión flote en ella— y el mapa de orillas,
 que va a kilómetro y setecientos, dice «agua» en los cuadros refinados que
 tienen río, y el fondo de profundidad hace la orilla.
 

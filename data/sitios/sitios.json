@@ -71,6 +71,26 @@
       "cota": 1650,
       "alcance": 40000,
       "de": "osm node/303985477"
+    },
+    {
+      "id": "izana",
+      "nombre": "Observatorio del Teide",
+      "lat": 28.3009,
+      "lon": -16.51035,
+      "giro": 0,
+      "cota": 2384,
+      "alcance": 35000,
+      "de": "osm way/256228083"
+    },
+    {
+      "id": "amistad",
+      "nombre": "Puente de la Amistad",
+      "lat": -25.50947,
+      "lon": -54.6011,
+      "giro": 90.8,
+      "cota": 102,
+      "alcance": 60000,
+      "de": "osm way/875833703"
     }
   ]
 }

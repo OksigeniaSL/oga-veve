@@ -135,6 +135,28 @@ const VISTAS = {
     altura: 800,
     mira: [28.456108, -16.251243],
   },
+  izana: {
+    // Saliendo de Los Rodeos hacia el oeste, como el vuelo de Ara, con la
+    // cumbre de Izaña a la izquierda.
+    escenario: "tenerife-norte",
+    sitio: [28.42, -16.43],
+    altura: 2200,
+    mira: [28.3009, -16.51035],
+  },
+  "amistad-ruta": {
+    // Saliendo de Guaraní hacia el este, sobre Ciudad del Este.
+    escenario: "guarani",
+    sitio: [-25.48, -54.70],
+    altura: 900,
+    mira: [-25.50947, -54.6011],
+  },
+  "amistad-cerca": {
+    // Y de cerca, aguas abajo, con el puente de costado.
+    escenario: "guarani",
+    sitio: [-25.526, -54.61],
+    altura: 300,
+    mira: [-25.5094, -54.6005],
+  },
   "palacio-lopez": {
     escenario: "pettirossi",
     sitio: [-25.262, -57.615],
