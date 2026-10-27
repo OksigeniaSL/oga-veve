@@ -31,6 +31,16 @@
       "cota": 225,
       "alcance": 80000,
       "de": "osm way/32236291"
+    },
+    {
+      "id": "auditorio",
+      "nombre": "Auditorio de Tenerife y Torres de Santa Cruz",
+      "lat": 28.456108,
+      "lon": -16.251243,
+      "giro": 0,
+      "cota": null,
+      "alcance": 40000,
+      "de": "osm way/38313227"
     }
   ]
 }

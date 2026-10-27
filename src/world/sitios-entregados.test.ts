@@ -30,6 +30,15 @@ const TOPE: Record<string, number> = {
   itaipu: 12_000,
   "puente-encarnacion": 8_000,
   "puente-remanso": 3_000,
+  auditorio: 6_000,
+  "palacio-lopez": 4_000,
+  trinidad: 4_000,
+  "roque-agando": 3_000,
+  "roque-nublo": 3_000,
+  "puente-amistad": 3_000,
+  "saltos-monday": 2_500,
+  "observatorio-teide": 4_000,
+  "roque-muchachos": 3_000,
 };
 
 async function abrir(id: string): Promise<Object3D> {

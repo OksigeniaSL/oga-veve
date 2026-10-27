@@ -100,6 +100,13 @@ const VISTAS = {
     altura: 300,
     mira: [-25.183017, -57.548165],
   },
+  auditorio: {
+    // Saliendo de Los Rodeos por la 12, sobre La Laguna hacia Santa Cruz.
+    escenario: "tenerife-norte",
+    sitio: [28.468, -16.3],
+    altura: 800,
+    mira: [28.456108, -16.251243],
+  },
   "palacio-lopez": {
     escenario: "pettirossi",
     sitio: [-25.262, -57.615],

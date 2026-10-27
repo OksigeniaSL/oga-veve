@@ -112,15 +112,29 @@ tienen río, y el fondo de profundidad hace la orilla.
 ## Consecuencias
 
 - La cima del Teide pasa de 3.648 a 3.700 m; el Roque Nublo, a la meseta
-  (1.740 m): el roque, un dedo de sesenta y siete metros, lo pone su modelo;
-  el de Agando, a 1.233; Timanfaya, a 504; el río al pie de Itaipú, a ~105, y
-  la presa asoma entera.
+  (1.746 m): el roque, un dedo de sesenta y siete metros, lo pone su modelo;
+  el de Agando, de 995 a 1.206 en su punto (1.233 lo más alto); Timanfaya, de
+  434 a 504; el río al pie de Itaipú, de ~180 a ~105, y la presa asoma entera.
 - **Tajogaite queda a unos 1.060-1.070 m**, que es lo que miden los dos
   modelos de EMS (diciembre de 2021 y febrero de 2022). OpenStreetMap le da
   1.120. Se pone lo medido, y se dice aquí y en los créditos.
-- Lo que cuesta, medido con `scripts/medir-mundo.mjs` en el informe de este
-  cambio: unos miles de triángulos por parche en el horizonte de cada mundo
-  que lo ve.
+- **Lo que cuesta**, medido con `scripts/medir-mundo.mjs` (CPU ×4, la Iris Xe
+  del portátil, JAZ 90), antes y después:
+
+  | Mundo | Triángulos en el campo | Mallas | Fuera del montón |
+  |---|---:|---:|---:|
+  | Guaraní (Itaipú, Ypacaraí) | 805k → 874k | 42 → 46 MB | 69 → 75 MB |
+  | Los Rodeos (Teide, Nublo, Agando, Tajogaite) | 566k → 674k | 52 → 56 MB | 92 → 97 MB |
+  | Asunción (Itaipú, Ypacaraí) | 1.196k → 1.271k | 41 → 44 MB | 71 → 77 MB |
+
+  Las texturas no cambian: los parches usan la foto que ya había. Por parche,
+  entre catorce mil triángulos (Agando) y cincuenta mil (el Teide visto desde
+  La Palma); ver `parches-de-relieve.test.ts` para cómo se ponen. Los tiempos
+  de cuadro de esa tirada no valen: el portátil estaba a carga 43 con otro
+  trabajo encima, y entre dos vueltas de la misma variante el cuadro iba de
+  30 a 150 ms. Por la medida que cuenta `buildFarMesh` en `terrain.ts`
+  —doscientos cincuenta mil triángulos de horizonte más, de 11,3 a 11,5 ms
+  con la CPU ×4—, cien mil son menos de una décima.
 - La atribución de Copernicus EMS va en la pantalla de créditos, con las de
   Copernicus GLO-30 y el IGN, y en `CREDITOS.md`.
 - **Lo que no hace**: los mapas finos de casa no se parchean (ninguno de estos
