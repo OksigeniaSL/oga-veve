@@ -101,6 +101,16 @@
       "cota": 2262,
       "alcance": 30000,
       "de": "osm way/288988504"
+    },
+    {
+      "id": "palacio",
+      "nombre": "Palacio de López",
+      "lat": -25.277381,
+      "lon": -57.637324,
+      "giro": 0,
+      "cota": null,
+      "alcance": 35000,
+      "de": "osm way/957263953"
     }
   ]
 }

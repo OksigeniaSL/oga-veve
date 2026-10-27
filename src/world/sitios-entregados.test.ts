@@ -31,7 +31,7 @@ const TOPE: Record<string, number> = {
   "puente-encarnacion": 8_000,
   "puente-remanso": 3_000,
   auditorio: 6_000,
-  "palacio-lopez": 4_000,
+  palacio: 4_000,
   trinidad: 4_000,
   agando: 3_000,
   nublo: 3_000,
