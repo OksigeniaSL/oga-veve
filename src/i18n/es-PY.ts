@@ -686,7 +686,7 @@ export const ES_PY = {
    * cuenta por qué. Ver `SIN_LA_TRIPULACION` en `audio/megafonia.ts`.
    */
   "comandante.cinturones":
-    "Señores pasajeros, nos preparamos para aterrizar: comprueben que tienen el cinturón abrochado, el respaldo derecho y la mesita cerrada. En este avión no viaja tripulación de cabina, así que eso se lo pido yo. Gracias.",
+    "Señores pasajeros, nos preparamos para aterrizar: comprueben que tienen el cinturón bien abrochado. En este avión no viaja tripulación de cabina, así que eso se lo pido yo. Gracias.",
   /*
    * **Y la cabina sin aire**, con la frase de los procedimientos de verdad: la
    * comandante avisa a la tripulación de cabina —«atención, tripulación,

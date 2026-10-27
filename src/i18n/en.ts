@@ -1692,7 +1692,7 @@ export const EN: Dictionary = {
   "comandante.temperaturaBajoCero": "The temperature is {n} degrees below zero.",
   "comandante.aproximacion": "Cabin crew, prepare for landing.",
   "comandante.cinturones":
-    "Ladies and gentlemen, we are preparing to land: please check that your seatbelt is fastened, your seat back is upright and your tray table is stowed. There is no cabin crew on this aircraft, so I am asking you myself. Thank you.",
+    "Ladies and gentlemen, we are preparing to land: please check that your seatbelt is securely fastened. There is no cabin crew on this aircraft, so I am asking you myself. Thank you.",
   "comandante.descensoDeEmergencia": "Cabin crew, emergency descent.",
   "comandante.alturaSegura": "Cabin crew, we have reached a safe altitude.",
   "comandante.mascaras":

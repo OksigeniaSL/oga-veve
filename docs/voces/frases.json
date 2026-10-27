@@ -18558,7 +18558,7 @@
     "id": "comandante.cinturones",
     "voz": "comandante",
     "idioma": "es-PY",
-    "texto": "Señores pasajeros, nos preparamos para aterrizar: comprueben que tienen el cinturón abrochado, el respaldo derecho y la mesita cerrada. En este avión no viaja tripulación de cabina, así que eso se lo pido yo. Gracias.",
+    "texto": "Señores pasajeros, nos preparamos para aterrizar: comprueben que tienen el cinturón bien abrochado. En este avión no viaja tripulación de cabina, así que eso se lo pido yo. Gracias.",
     "para": "el vuelo normal, contado como en uno de verdad",
     "ajustes": {
       "stability": 0.35,
