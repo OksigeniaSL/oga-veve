@@ -1840,6 +1840,37 @@ describe("el vuelo de dentro de un rato, para saber qué viene", () => {
   });
 });
 
+/**
+ * **El kit no pierde su sitio contra lo que viene a cuento.** El kit llega en
+ * la bajada a los 104 km de la pista, tras diez segundos callados; el ala de
+ * la comandante, que puede esperar, en cuanto hay quince. En el vuelo del
+ * banco los dos se podían decir en el mismo instante —el kit a los 1.048,7 s,
+ * justo a los quince del frío—, y bastaba que la bajada llegara un segundo
+ * más tarde a los 104 km para que empezara el ala: el kit se iba treinta
+ * segundos más allá y caía encima de lo de la ventanilla. Se vio con el
+ * relieve fino del ADR 0022, que mueve un poco cuándo se nombra el paisaje.
+ * Aquí, la bajada de unos cientos de metros a unos kilómetros más larga: con
+ * el vuelo de los ratos y un kilómetro más, el ala se colaba antes del kit.
+ * Ver `kitAPuntoDeLlegar`.
+ */
+describe("el kit, antes que el ala, aunque la bajada llegue un poco más tarde a su sitio", () => {
+  for (const extra of [0, 1000, 3000, 5000])
+    it(`con la bajada ${extra} m más larga`, () => {
+      class V extends VueloMedidoConRatos {
+        override get lectura(): LecturaDelPasaje {
+          const base = super.lectura;
+          return base.tramo === "bajada" ? { ...base, faltaParaTocar: base.faltaParaTocar + extra } : base;
+        }
+      }
+      const m = volarElMedido(new V(58));
+      const k = m.dichas.map((d) => d.linea.clave);
+      const kit = k.indexOf("inicio.tripulacion.pasaje.cerca.kitAqui");
+      const ala = k.indexOf("inicio.mama.pasaje.ala");
+      expect(kit).toBeGreaterThanOrEqual(0);
+      expect(ala).toBeGreaterThan(kit);
+    });
+});
+
 describe("el kit de viaje, en el vuelo", () => {
   const alturas: { t: number; altitud: number }[] = [];
   const m = volarElMedido(undefined, (_e, t, l) => alturas.push({ t, altitud: l.altitud }));
