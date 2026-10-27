@@ -1497,7 +1497,7 @@ export const EN: Dictionary = {
   "ilustracion.mascara": "Oxygen masks drop: the dad puts one on first, then helps the little one",
   "ilustracion.nube": "A cloud under a magnifying glass: water droplets below, ice crystals above",
   "ilustracion.ala": "A wing from the side: the air flows around it and is pushed down",
-  "ilustracion.motor": "Inside the engine: air goes in at the front, is heated and rushes out the back",
+  "ilustracion.motor": "Inside the engine: the fan pushes most of the air around the outside",
   "ilustracion.frio": "Frost on the outer pane; inside, warm air and a steaming cup",
   "ilustracion.oido": "Ara yawns, and air travels up inside to the ear and unblocks it",
   "ilustracion.alto": "The plane, higher than Mount Teide, flies above the sea of clouds",
@@ -2677,8 +2677,8 @@ export const EN: Dictionary = {
   "inicio.tripulacion.pasaje.cerca.motor1":
     "Can you see the engine, there under the wing? At the front it has a giant fan that swallows loads and loads of air.",
   "inicio.tripulacion.pasaje.cerca.motor2":
-    "Inside, the air is squeezed, heated up with the fuel, and shoots out of the back at top speed. That pushes the plane forwards.",
-  "inicio.ara.pasaje.secador": "Like a hair dryer: a fan that blows warm air, only giant!",
+    "Most of that air is pushed backwards by the fan, around the outside of the engine, and that is what pushes the plane the most. A little goes into the middle, is heated with the fuel and turns the fan.",
+  "inicio.ara.pasaje.secador": "Like a giant fan that blows the air backwards!",
   "inicio.ara.pasaje.preguntaBajar": "And how does the plane go down? Do they switch the engines off?",
   "inicio.mama.pasaje.bajando":
     "Ladies and gentlemen, for those of you flying for the first time today: to come down, we don't switch the engines off. We turn them right down, and the plane comes down little by little, like on a very long slide.",
@@ -2733,7 +2733,7 @@ export const EN: Dictionary = {
   "inicio.dibujo.nube": "A cloud up close: water droplets below and tiny ice crystals above.",
   "inicio.dibujo.ala": "The wing pushes the air down, and the air pushes the wing up.",
   "inicio.dibujo.alto": "The plane, higher than Mount Teide and faster than a car.",
-  "inicio.dibujo.motor": "Inside the engine: it swallows air, heats it and blows it out the back.",
+  "inicio.dibujo.motor": "Inside the engine: the fan blows most of the air out the back.",
   "inicio.dibujo.frio": "Below zero outside; warm inside.",
   "inicio.dibujo.islas": "Volcanoes growing up from the bottom of the sea until they become islands.",
   "inicio.dibujo.ruta": "The plane's route, from Tenerife to La Palma, and the tower on the radio.",

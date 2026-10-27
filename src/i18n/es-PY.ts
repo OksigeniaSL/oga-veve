@@ -1311,7 +1311,7 @@ export const ES_PY = {
   "ilustracion.mascara": "El papá se pone su máscara primero y después ayuda a la criatura",
   "ilustracion.nube": "Una nube con lupa: gotitas de agua abajo y cristalitos de hielo arriba",
   "ilustracion.ala": "El ala de costado: el aire la rodea y sale empujado hacia abajo",
-  "ilustracion.motor": "El motor por adentro: el aire entra por adelante, se calienta y sale por atrás",
+  "ilustracion.motor": "El motor por adentro: casi todo el aire lo empuja el ventilador por afuera",
   "ilustracion.frio": "Escarcha en el cristal de afuera; adentro, aire calentito y una taza humeante",
   "ilustracion.oido": "Ara bosteza, y el aire sube por dentro hasta el oído y lo destapa",
   "ilustracion.alto": "El avión, más alto que el Teide, vuela por encima del mar de nubes",
@@ -4164,8 +4164,8 @@ export const ES_PY = {
   "inicio.tripulacion.pasaje.cerca.motor1":
     "¿Ves el motor, ahí debajo del ala? Delante tiene un ventilador gigante que se traga muchísimo aire.",
   "inicio.tripulacion.pasaje.cerca.motor2":
-    "Dentro, el aire se aprieta, se calienta con el combustible y sale por detrás a toda velocidad. Eso empuja el avión hacia delante.",
-  "inicio.ara.pasaje.secador": "¡Como el secador de pelo: un ventilador que tira aire calentito, pero gigante!",
+    "Casi todo ese aire lo empuja el ventilador hacia atrás, por fuera del motor, y eso es lo que más empuja el avión. Un poco entra en el centro, se calienta con el combustible y hace girar el ventilador.",
+  "inicio.ara.pasaje.secador": "¡Como un ventilador gigante que tira el aire para atrás!",
   "inicio.ara.pasaje.preguntaBajar": "¿Y cómo hace el avión para bajar? ¿Apagan los motores?",
   "inicio.mama.pasaje.bajando":
     "Señores pasajeros, para quienes vuelan hoy por primera vez: para bajar no apagamos los motores. Los dejamos suavecito, y el avión va bajando poco a poco, como por un tobogán muy largo.",
@@ -4250,7 +4250,7 @@ export const ES_PY = {
   "inicio.dibujo.nube": "Una nube de cerca: gotitas de agua abajo y cristalitos de hielo arriba.",
   "inicio.dibujo.ala": "El ala empuja el aire hacia abajo y el aire la empuja hacia arriba.",
   "inicio.dibujo.alto": "El avión, más alto que el Teide y más rápido que un auto.",
-  "inicio.dibujo.motor": "El motor por dentro: traga aire, lo calienta y lo echa para atrás.",
+  "inicio.dibujo.motor": "El motor por dentro: el ventilador echa casi todo el aire para atrás.",
   "inicio.dibujo.frio": "Afuera, bajo cero; adentro, calentito.",
   "inicio.dibujo.islas": "Los volcanes que crecen desde el fondo del mar hasta ser islas.",
   "inicio.dibujo.ruta": "El camino del avión, de Tenerife a La Palma, y la torre por radio.",

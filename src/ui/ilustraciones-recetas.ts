@@ -103,6 +103,8 @@ const ENTERA_GRANDE = [5, 0, 2389, 1792] as const;
 const ENTERA_DE_2000 = [6, 1, 1988, 1491] as const;
 const ENTERA_DE_1200 = [4, 1, 1192, 894] as const;
 const ENTERA_DE_1024 = [2, 0, 1020, 765] as const;
+/** Entera, la lámina del motor de 1448 × 1086, que ya viene en 4:3 justo. */
+const ENTERA_DE_1448 = [0, 0, 1448, 1086] as const;
 
 /**
  * **Las recetas**, por clave: la misma del fichero WebP y del texto
@@ -237,7 +239,7 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
   meneo: { original: "esquemas/meneo.jpg", hueco: "esquema", recorte: ENTERA_DE_1200 },
   chaleco: { original: "esquemas/chaleco.jpg", hueco: "esquema", recorte: ENTERA_DE_1200 },
   maletero: { original: "esquemas/maletero.jpg", hueco: "esquema", recorte: ENTERA_DE_1200 },
-  motor: { original: "esquemas/motor.webp", hueco: "esquema", recorte: ENTERA_DE_1024 },
+  motor: { original: "esquemas/motor.png", hueco: "esquema", recorte: ENTERA_DE_1448 },
   ala: { original: "esquemas/ala.png", hueco: "esquema", recorte: ENTERA_DE_1024 },
   /*
    * **La torre de «Luz verde»**, el juego del kit de viaje: el controlador

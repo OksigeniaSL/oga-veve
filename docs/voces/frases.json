@@ -15234,7 +15234,7 @@
     "id": "inicio.ara.pasaje.secador",
     "voz": "ara",
     "idioma": "es-PY",
-    "texto": "¡Como el secador de pelo: un ventilador que tira aire calentito, pero gigante!",
+    "texto": "¡Como un ventilador gigante que tira el aire para atrás!",
     "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
     "ajustes": {
       "stability": 0.35,
@@ -15948,7 +15948,7 @@
     "id": "inicio.tripulacion.pasaje.cerca.motor2",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",
-    "texto": "Dentro, el aire se aprieta, se calienta con el combustible y sale por detrás a toda velocidad. Eso empuja el avión hacia delante.",
+    "texto": "Casi todo ese aire lo empuja el ventilador hacia atrás, por fuera del motor, y eso es lo que más empuja el avión. Un poco entra en el centro, se calienta con el combustible y hace girar el ventilador.",
     "para": "el modo inicio, de pasaje: la tripulante, en persona junto al asiento de Ara"
   },
   {
