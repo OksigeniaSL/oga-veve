@@ -2079,8 +2079,8 @@ export const EN: Dictionary = {
   "figura.trenRetractil.der": "RIGHT",
   "figura.trenRetractil.ruedaMorro": "Nose wheel",
   "figura.trenRetractil.ruedas": "Wheels",
-  "figura.trenRetractil.morroAtras": "Nose gear: backwards",
-  "figura.trenRetractil.principalAdelante": "Main gear: forwards",
+  "figura.trenRetractil.morroAtras": "Nose: backwards",
+  "figura.trenRetractil.principalAdelante": "Main: forwards",
   "figura.trenRetractil.aria":
     "The turboprop's retractable landing gear: with the wheel-shaped lever, an oil pump driven by an electric motor, in the left wing, raises or lowers the three legs. The nose leg folds backwards, behind its door, and the two-wheeled main legs fold forwards, into the engine. While they move, the handle lights up red; down and locked, three green lights come on, one for each leg.",
   "figura.trenRetractil.palanca": "Gear down",

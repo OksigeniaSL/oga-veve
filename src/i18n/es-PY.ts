@@ -3552,8 +3552,8 @@ export const ES_PY = {
   "figura.trenRetractil.der": "DER.",
   "figura.trenRetractil.ruedaMorro": "Rueda de morro",
   "figura.trenRetractil.ruedas": "Ruedas",
-  "figura.trenRetractil.morroAtras": "Tren de morro: hacia atrás",
-  "figura.trenRetractil.principalAdelante": "Tren principal: hacia adelante",
+  "figura.trenRetractil.morroAtras": "Morro: atrás",
+  "figura.trenRetractil.principalAdelante": "Principal: adelante",
   "figura.trenRetractil.aria":
     "El tren retráctil del turbohélice: con la palanca de la rueda, una bomba de aceite movida por un motor eléctrico, en el ala izquierda, sube o baja las tres patas. La de morro se pliega hacia atrás, detrás de su compuerta, y las principales, de dos ruedas, hacia adelante, dentro del motor. Mientras se mueven, el mango se enciende en rojo; abajo y trabadas, se encienden tres luces verdes, una por pata.",
   "figura.trenRetractil.palanca": "Tren abajo",
