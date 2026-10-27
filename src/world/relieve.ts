@@ -18,8 +18,10 @@
  * arreglado.
  */
 
-import type { Scenario } from "./scenarios";
+import { vecesLejosDe, type Scenario } from "./scenarios";
 import { conPlazo, PLAZO_DE_DATO } from "../datos/con-plazo";
+import { cargarParches } from "./parches-de-relieve";
+import { cargarLagos } from "./lagos";
 
 /**
  * Con `import.meta.glob` y no con una URL construida a mano.
@@ -91,15 +93,52 @@ export async function descomprimir(bytes: ArrayBuffer): Promise<ArrayBuffer> {
  * trescientos y pico kilobytes que no dependen entre sí, y encadenarlos era
  * duplicar la espera del arranque sin ningún motivo.
  */
-export async function conRelieve(escenario: Scenario): Promise<Scenario> {
-  const [relieve, relieveLejano] = await Promise.all([
+export async function conRelieve(
+  escenario: Scenario,
+  /**
+   * Si es el mundo en el que se vuela, y no un vecino: solo ese dibuja el
+   * horizonte, y con él los parches de relieve fino y los lagos que caen en
+   * él. Un vecino los bajaría para nada. Ver `MundoVecino`.
+   */
+  deCasa = false,
+): Promise<Scenario> {
+  const dentro = deCasa ? cuadradoDelHorizonte(escenario) : null;
+  const [relieve, relieveLejano, parches, lagos] = await Promise.all([
     cargarRelieve(escenario.id),
     cargarRelieve(`${escenario.id}-lejos`),
+    dentro
+      ? cargarParches(
+          (f) => dentro(f),
+          descomprimir,
+          (url) => conPlazo(fetch(url), PLAZO_DE_DATO, `el parche ${url}`),
+        )
+      : Promise.resolve([]),
+    dentro ? cargarLagos(dentro) : Promise.resolve([]),
   ]);
   if (!relieve && !relieveLejano) return escenario;
   return {
     ...escenario,
     ...(relieve ? { relieve } : {}),
     ...(relieveLejano ? { relieveLejano } : {}),
+    // Sin horizonte no hay dónde ponerlos.
+    ...(relieveLejano && parches.length ? { parches } : {}),
+    ...(relieveLejano && lagos.length ? { lagos } : {}),
   };
+}
+
+/**
+ * Si un recuadro en grados toca el mapa del horizonte de un escenario, con la
+ * proyección de sus mapas. `null` si no tiene aeródromo con coordenadas.
+ */
+function cuadradoDelHorizonte(
+  escenario: Scenario,
+): ((c: { sur: number; norte: number; oeste: number; este: number }) => boolean) | null {
+  const o = escenario.aerodrome?.origin;
+  if (!o) return null;
+  const mitad = (escenario.size * vecesLejosDe(escenario)) / 2;
+  const R = 6371008;
+  const dLat = (mitad / (R * Math.PI)) * 180;
+  const dLon = dLat / Math.cos((o.lat * Math.PI) / 180);
+  return (c) =>
+    c.norte > o.lat - dLat && c.sur < o.lat + dLat && c.este > o.lon - dLon && c.oeste < o.lon + dLon;
 }

@@ -4,6 +4,10 @@ datos/dem/
 # Lo que baja el horno de la carta (`scripts/carta-hornear.mjs`): ETOPO,
 # WorldCover y CHELSA. Se rehace solo; lo que va al juego son los WebP.
 datos/carta/
+# Lo que baja `scripts/relieve-fino.mjs`: los MDT del IGN, Copernicus, el DEM
+# de Copernicus EMS de La Palma y los contornos de los lagos. Se rehace solo;
+# lo que va al juego son los parches de `data/terrain/parches/`.
+datos/relieve-fino/
 # ── Datos de terreno (pesados, se regeneran) ───────────────────────────
 # ── Dependencias ───────────────────────────────────────────────────────
 # descargan con `scripts/hgt-a-heightmap.mjs`, no se versionan.

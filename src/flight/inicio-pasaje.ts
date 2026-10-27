@@ -874,6 +874,13 @@ const SE_OYE_LA_MUSICA = 3;
 const MAZO_EMPIEZA_POR_ENCIMA = 110;
 const MAZO_YA_NO = 100;
 
+/**
+ * **Desde cuántos metros antes del sitio del kit esperan las charlas**: unos
+ * cuarenta segundos de bajada, más que la charla más larga. Ver
+ * `kitAPuntoDeLlegar`.
+ */
+const ANTES_DEL_KIT = 6000;
+
 /** Lo que se calla la escena antes de que llegue la tripulante con el kit, s. */
 const CALLA_ANTES_DEL_KIT = 10;
 /**
@@ -3794,7 +3801,7 @@ export class VueloDePasaje {
        * comía la siesta. Ver `PUEDEN_ESPERAR`.
        */
       const esperan = this.puedeDormirse(l, false, true) ? PUEDEN_ESPERAR : undefined;
-      const charla = this.kit.ocupaAAra ? undefined : this.charlaQueToca(l, esperan);
+      const charla = this.kit.ocupaAAra || this.kitAPuntoDeLlegar(def, l) ? undefined : this.charlaQueToca(l, esperan);
       if (charla) {
         this.charlasDichas.push(charla.def.id);
         this.decirDe(charla.def, l, charla.vista);
@@ -4016,6 +4023,34 @@ export class VueloDePasaje {
    * haya el silencio y se haya visto lo que hay que ver: lo que puede esperar,
    * espera desde ya.
    */
+  /**
+   * **Si lo siguiente es el kit y está a punto de llegar**: en la bajada, a
+   * menos de `ANTES_DEL_KIT` metros de su sitio y sin haberlo traído.
+   *
+   * El kit llega a los 104 km de la pista tras diez segundos callados, y una
+   * charla que viene a cuento —el ala de la comandante, con quince— podía
+   * colarse en ese mismo silencio si la bajada llegaba a los 104 km un
+   * segundo tarde. Entonces el kit se iba treinta segundos más allá, detrás
+   * del ala, y caía encima de lo que la comandante señala por la ventanilla:
+   * medido en el banco del vuelo entero, el kit a los 1.085 s en vez de a los
+   * 1.049, la ventanilla a los 46 s y «Armá tu avión» sin rato. Se vio al
+   * meter el relieve fino del ADR 0022, que adelanta o retrasa un poco cuándo
+   * se nombra el paisaje, pero la carrera estaba: en el vuelo medido del
+   * banco, el kit y el ala se podían decir en el mismo instante. Así que lo
+   * que viene a cuento espera al kit; lo que tiene su momento —el guion, la
+   * ventanilla— no.
+   */
+  private kitAPuntoDeLlegar(def: DefMomento, l: LecturaDelPasaje): boolean {
+    return (
+      def.id === "kit" &&
+      l.tramo === "bajada" &&
+      !this.kit.esDado &&
+      l.faltaParaTocar < BAJANDO.kit + ANTES_DEL_KIT &&
+      !cabinaPreparada(l, this) &&
+      l.altitud >= DIEZ_MIL_PIES + KIT_POR_ENCIMA
+    );
+  }
+
   private puedeDormirse(l: LecturaDelPasaje, trasElBostezo = false, soloElRato = false): boolean {
     if (this.siestas.length > 0 || this.acabado || this.bostezando) return false;
     if (!volando(l) || l.tramo === "bajada" || l.altitud < DIEZ_MIL_PIES || l.enNube >= DENTRO_DE_LA_NUBE) return false;

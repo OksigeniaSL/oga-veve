@@ -549,7 +549,7 @@ for (const fuera of noCabenHoy)
  */
 const [conMapa, ciudad, meteo, ortofoto, ortofotoFina, vecinos] =
   await Promise.all([
-  conMiga("relieve", conRelieve(escenario)),
+  conMiga("relieve", conRelieve(escenario, true)),
   conMiga("ciudad", cargarCiudad(escenario.id)),
   conMiga(
     "tiempo",

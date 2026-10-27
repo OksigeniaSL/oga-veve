@@ -1,0 +1,15 @@
+{
+  "id": "teide",
+  "nombre": "El Teide y Pico Viejo",
+  "fuente": "PNOA-LiDAR MDT05 (IGN)",
+  "atribucion": "Modelo Digital del Terreno MDT05 del PNOA-LiDAR © Instituto Geográfico Nacional de España, CC BY 4.0",
+  "sur": 28.2320272,
+  "norte": 28.3039728,
+  "oeste": -16.6999492,
+  "este": -16.6080508,
+  "filas": 321,
+  "columnas": 361,
+  "dibujo": 45,
+  "minM": 1630,
+  "maxM": 3709
+}

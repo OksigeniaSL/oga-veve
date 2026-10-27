@@ -236,6 +236,8 @@ export const EN: Dictionary = {
     "Relief from Copernicus DEM GLO-30. © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved.",
   "credits.terrainEs":
     "Relief in Spain from PNOA-LiDAR MDT05 © Instituto Geográfico Nacional de España, CC BY 4.0.",
+  "credits.terrainEms":
+    "Tajogaite's cone from the 2022 elevation model of activation EMSN119. © European Union, Copernicus Emergency Management Service.",
   "credits.osm":
     "Aerodromes, taxiways, aprons and towns from data © OpenStreetMap contributors, under the ODbL licence.",
   "credits.ortoEs":

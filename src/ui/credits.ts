@@ -51,6 +51,11 @@ export class CreditsScreen {
         -->
         <p>${t("credits.terrainEs")}</p>
         <!--
+          Y la de Copernicus EMS, que da el cono de Tajogaite: sus condiciones
+          piden citar la fuente a quien lo usa. Ver el ADR 0022.
+        -->
+        <p>${t("credits.terrainEms")}</p>
+        <!--
           **Y las cuatro que faltaban.** OpenStreetMap, la ortofoto del PNOA,
           la de EOX sobre datos Sentinel y el modelo de la avioneta se cargan
           en el juego de verdad, y las cuatro licencias piden atribución **a

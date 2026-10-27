@@ -1,0 +1,15 @@
+{
+  "id": "timanfaya",
+  "nombre": "Timanfaya",
+  "fuente": "PNOA-LiDAR MDT05 (IGN)",
+  "atribucion": "Modelo Digital del Terreno MDT05 del PNOA-LiDAR © Instituto Geográfico Nacional de España, CC BY 4.0",
+  "sur": 28.9685238,
+  "norte": 29.0314762,
+  "oeste": -13.7762709,
+  "este": -13.6837291,
+  "filas": 281,
+  "columnas": 361,
+  "dibujo": 50,
+  "minM": 124,
+  "maxM": 509
+}

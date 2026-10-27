@@ -1,0 +1,25 @@
+{
+  "id": "itaipu",
+  "nombre": "Itaipú y el cañón del Paraná",
+  "fuente": "Copernicus DEM GLO-30",
+  "atribucion": "© DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved",
+  "sur": -25.6608845,
+  "norte": -25.3551155,
+  "oeste": -54.6966982,
+  "este": -54.5273018,
+  "filas": 1134,
+  "columnas": 568,
+  "dibujo": 70,
+  "asientos": [
+    {
+      "sitio": "monday",
+      "lat": -25.5627515,
+      "lon": -54.6323698,
+      "corte": 0,
+      "radio": 220,
+      "hundido": 45
+    }
+  ],
+  "minM": 98,
+  "maxM": 276
+}

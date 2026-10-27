@@ -1,0 +1,15 @@
+{
+  "id": "ypacarai",
+  "nombre": "El lago Ypacaraí",
+  "fuente": "Copernicus DEM GLO-30",
+  "atribucion": "© DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved",
+  "sur": -25.4259049,
+  "norte": -25.1740951,
+  "oeste": -57.4395259,
+  "este": -57.2604741,
+  "filas": 934,
+  "columnas": 601,
+  "dibujo": 90,
+  "minM": 59,
+  "maxM": 290
+}
