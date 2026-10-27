@@ -2158,6 +2158,32 @@ export const EN: Dictionary = {
   "figura.trenRetractil.vivoArriba": "Gear up: all the lights off",
   "figura.trenRetractil.vivoBajando": "The gear goes down: red light in the handle",
   "figura.trenRetractil.vivoSubiendo": "The gear goes up: red light in the handle",
+  "figura.trenE170.hid": "HYD 2",
+  "figura.trenE170.arriba": "Up",
+  "figura.trenE170.abajo": "Down",
+  "figura.trenE170.eicas1": "The EICAS shows",
+  "figura.trenE170.eicas2": "the gear while",
+  "figura.trenE170.eicas3": "it moves, in",
+  "figura.trenE170.eicas4": "amber stripes.",
+  "figura.trenE170.aterrizar": "Land",
+  "figura.trenE170.reversa": "Reverse",
+  "figura.trenE170.frenos": "Brakes",
+  "figura.trenE170.loQueFrena": "What slows it:",
+  "figura.trenE170.aerofrenos": "Spoilers",
+  "figura.trenE170.sistema": "Hydraulic system 2",
+  "figura.trenE170.compuerta": "Door, joined to the leg",
+  "figura.trenE170.puerta": "Door",
+  "figura.trenE170.aria":
+    "The E-Jet landing gear: with the lever, the nose gear and the two main legs go up and down with hydraulic system 2. The door of each main leg is joined to it, and when up the wheels stay in view; the nose has two doors that only open while the gear is moving. On the EICAS screen, amber striped boxes while the gear is moving. On landing, the spoilers, the reverser and the wheel brakes slow the plane down.",
+  "figura.trenE170.palanca": "Gear down",
+  "figura.trenE170.vivoAbajo": "Gear down and locked",
+  "figura.trenE170.vivoArriba": "Gear up",
+  "figura.trenE170.vivoBajando": "The gear goes down: amber striped boxes",
+  "figura.trenE170.vivoSubiendo": "The gear goes up: amber striped boxes",
+  "figura.trenE170.vivoToca": "Touchdown: the spoilers go up",
+  "figura.trenE170.vivoReversa": "Reverse out: green REV on the EICAS; the engine air goes forwards",
+  "figura.trenE170.vivoFrena": "The wheels brake",
+  "figura.trenE170.vivoParado": "Stopped",
   "figura.luces.sNavegacion": "Navigation",
   "figura.luces.sFaro": "Beacon",
   "figura.luces.sDestellos": "Strobes",
@@ -2272,6 +2298,7 @@ export const EN: Dictionary = {
   "tarjeta.corta.pitotMorro": "Pitot tubes",
   "tarjeta.corta.motorPiston": "Piston engine",
   "tarjeta.corta.motorRadial": "Radial engine",
+  "tarjeta.corta.motorTurbo": "Turbocharged engine",
   "tarjeta.corta.turbohelice": "Turboprop",
   "tarjeta.corta.reactor": "Jet engine",
   "tarjeta.corta.trenFijo": "Fixed landing gear",
@@ -2299,6 +2326,8 @@ export const EN: Dictionary = {
     "Pitot tubes, one on each side of the nose: one for each pilot. Air rushes straight in, and the faster you go, the harder it pushes. That's how airspeed is measured.",
   "tarjeta.motorPiston":
     "Engine and propeller. The engine spins the propeller; its blades are little wings that push air backwards and pull the plane forwards.",
+  "tarjeta.motorTurbo":
+    "Turbocharged engines. Each wing carries a six-cylinder one, and the turbo feeds it squeezed air: that way it doesn't lose power as it climbs, until it's very high. And the two propellers turn opposite ways.",
   "tarjeta.motorRadial":
     "Radial engine. Its cylinders sit in a circle, like the points of a star, and they spin the propeller, which pulls the plane.",
   "tarjeta.turbohelice":
@@ -2311,6 +2340,10 @@ export const EN: Dictionary = {
     "Fixed gear. It's always out: simpler and lighter, though it slows the plane down a little.",
   "tarjeta.luces":
     "Navigation lights: red on the left wingtip, green on the right and white on the tail. If at night you see the red and the green together, that plane is coming towards you.",
+  "tarjeta.lucesPuntas":
+    "Navigation lights: red on the left wingtip, green on the right and, on each tip, a white one facing backwards. If at night you see the red and the green together, that plane is coming towards you.",
+  "tarjeta.lucesAtras":
+    "Navigation lights: red on the left wingtip, green on the right and white at the back. If at night you see the red and the green together, that plane is coming towards you.",
   "tarjeta.luzBaliza":
     "Beacon: the flashing red light. It goes on before the engine starts and says: this plane is alive, keep clear.",
   "tarjeta.luzEstrobos":
@@ -2347,6 +2380,10 @@ export const EN: Dictionary = {
     "This gear never folds away: it's always out. It's simpler and lighter, though it slows the plane down a little.",
   "tarjeta.voz.luces":
     "These are the navigation lights: red on the left, green on the right and white at the back. If at night you see the red and the green together, that plane is coming straight at you.",
+  "tarjeta.voz.motorTurbo":
+    "This plane has two six-cylinder engines with turbos: the turbo feeds them squeezed air, so they don't lose power as they climb, until they're very high. And look at the propellers: they turn opposite ways.",
+  "tarjeta.voz.lucesPuntas":
+    "These are the navigation lights: red on the left wingtip, green on the right, and on each tip, a white one facing backwards. If at night you see the red and the green together, that plane is coming straight at you.",
   "tarjeta.voz.luzBaliza":
     "The beacon is the flashing red light. It goes on before the engine starts and tells everyone: keep clear, this plane is about to move.",
   "tarjeta.voz.luzEstrobos":

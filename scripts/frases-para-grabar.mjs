@@ -176,7 +176,13 @@ const HABLADOS = [
     /\.(nombre|globo)$|^vuelta\.(titulo|abrir|volver|seguir|lista)$/,
   ],
   ["parte.propone", "instructor", "por qué hoy mejor no salir, con el parte"],
-  ["tarjeta.voz", "instructor", "lo que explica cada punto de la tarjeta del avión"],
+  [
+    "tarjeta.voz",
+    "instructor",
+    "lo que explica cada punto de la tarjeta del avión",
+    // Lo de cada avión va al final: ver `DE_CADA_AVION`.
+    /^tarjeta\.voz\.(?:lucesPuntas|motorTurbo)$/,
+  ],
   /*
    * **La torre de Canarias va primero, y por eso el grupo más concreto gana.**
    *
@@ -1918,6 +1924,17 @@ const DE_LO_QUE_TOCA = [
 const DE_LOS_INSTRUMENTOS = [
   ["explica.papi.texto", "instructor", "lo que explica tocar la tarjeta del PAPI en la final, con la figura de sus luces"],
 ];
+/**
+ * **Y cada avión, como es ese avión** (27-10-2026): la tarjeta del JAZ 90,
+ * que lleva la blanca en el borde de salida de cada punta y no en la cola, y
+ * la del JAZ 40, con sus motores de turbo y sus hélices contrarrotativas. Al
+ * final, que lo grabado no se renumera. Ver `lucesDe` y `explicacionDe` en
+ * `src/ui/explicaciones-del-avion.ts`.
+ */
+const DE_CADA_AVION = [
+  ["tarjeta.voz.lucesPuntas", "instructor", "lo que explica el punto de las luces en la tarjeta del avión que lleva la blanca en las puntas"],
+  ["tarjeta.voz.motorTurbo", "instructor", "lo que explica el punto del motor en la tarjeta del bimotor de pistón: turbo y hélices contrarrotativas"],
+];
 const LO_QUE_SE_VE = new Set(
   [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA, ...DE_LOS_INSTRUMENTOS].map(
     ([k]) => k,
@@ -2092,6 +2109,17 @@ for (const k of VARIANTES_AL_FINAL) {
     });
     total += otra.length;
   }
+}
+
+/*
+ * **Y lo de cada avión**, detrás del vuelo vivo, que ya está grabado: ver
+ * `DE_CADA_AVION`.
+ */
+for (const [id, voz, para] of DE_CADA_AVION) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz, idioma: "es-PY", texto, para });
+  total += texto.length;
 }
 
 /*

@@ -337,8 +337,10 @@ def construir():
     # **Tres palas y dos metros sesenta de diámetro**, que es lo que mueve un
     # radial de fumigador y lo que dice su propia ficha (`appearance.blades`).
     # El cono, de metal: así va en su ilustración, dentro del anillo terracota.
+    # Y a la derecha vista desde el asiento, el giro convencional: ver `giro`.
     piezas += helice("helice", (0, 0.02, -4.40), radio=1.30, cuantas=3,
-                     buje=0.24, cuerda=0.20, largo_cono=0.42, cono="aluminio")
+                     buje=0.24, cuerda=0.20, largo_cono=0.42, cono="aluminio",
+                     giro=-1)
 
     # Y ningún mando toca nada al moverse: ni los alerones los montantes y
     # los cables, ni la profundidad el timón y sus riostras. Ver

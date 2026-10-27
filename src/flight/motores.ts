@@ -83,8 +83,13 @@ export function alPararse(): EstadoDelMotor {
  * motor derecho, que queda, empuja más lejos del eje. En los libros es el
  * «factor P». Este modelo no lleva ese detalle y los dos motores le tuercen
  * igual; se elige el de fuera por la izquierda, que es el crítico de verdad en
- * los aviones de su clase, y en el cuatrimotor el de fuera, que es el que más
- * palanca tiene. `-1` en un monomotor, que no tiene a quién torcer.
+ * el turbohélice de su clase, y en el cuatrimotor el de fuera, que es el que
+ * más palanca tiene. `-1` en un monomotor, que no tiene a quién torcer.
+ *
+ * El bimotor de pistón **no tiene motor crítico**: lleva la hélice de la
+ * derecha al revés —ver `helicesContrarrotativas`— y «no engine is more
+ * critical than the other» (FAA, *Airplane Flying Handbook*, p. 13-24). Para
+ * la cuenta da igual cuál se elija, porque el modelo los tuerce igual.
  */
 export function motorCritico(a: Pick<AircraftConfig, "motoresA">): number {
   if (a.motoresA.length < 2) return -1;

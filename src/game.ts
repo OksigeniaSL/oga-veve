@@ -1301,17 +1301,19 @@ import {
 import { apuntarVuelo, type Paso, type Vuelo } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
 import { sueloEn, TRAQUETEO, type Superficie } from "./world/superficie";
+import { signoDelGiro } from "./world/giro-de-las-helices";
 import { firmeDe } from "./world/firme";
 import { avionQueSuena, oidoDe } from "./audio/ruidos";
 import { mapaDePavimento, type Pavimento } from "./world/vegetation";
 import {
   AvisosDeAltura,
+  cantaPorDebajoDe,
   laCuentaDe,
   radioaltimetro,
   type Aviso,
   type Lectura,
 } from "./flight/avisos-de-altura";
-import { claseDeRecogida, escalonesDeLaRecogida, laRecogidaDe } from "./flight/recogida";
+import { claseDeRecogida, escalonesDeLaRecogida, laRecogidaDe, rotuloDeLosGases } from "./flight/recogida";
 import { comoSeAterriza, loQueSeJuzga } from "./flight/como-se-aterriza";
 import {
   canalesDe,
@@ -7033,6 +7035,7 @@ export class Game {
         vr: this.aircraft.rotationSpeed,
         vref: this.aircraft.approachSpeed,
         alturaDeLaRecogida: laRecogidaDe(this.aircraft).nariz,
+        alturaDelGas: laRecogidaDe(this.aircraft).gas,
         reversa: tieneReversa(this.aircraft),
         trenQueSeMete: this.input.hayPalancaDeTren,
       });
@@ -9244,11 +9247,10 @@ export class Game {
    * senda, a cinco metros por segundo con el JAZ 120. Medido con el piloto
    * obediente de `verificar-vuelo-entero.mjs` (`OGA_OBEDIENTE=1`).
    *
-   * Las alturas son las de la clase de cada avión —treinta y veinte pies en el
-   * de mandos eléctricos, veinte en el de cables, quince en los de hélice—, con
-   * su manual: ver `flight/recogida.ts`. Donde el manual junta la nariz y el
-   * gas, se piden juntos y en una frase; donde no —el JAZ 90, que recoge a
-   * treinta y quita el gas a veinte—, cada cosa en su altura. Un suceso, una
+   * Las alturas son las de la clase de cada avión —treinta pies en los dos
+   * reactores, quince en los de hélice—, con su manual: ver
+   * `flight/recogida.ts`. Donde el manual junta la nariz y el gas, se piden
+   * juntos y en una frase; donde no, cada cosa en su altura. Un suceso, una
    * voz.
    *
    * **Y ojo con la boca**, que ya pasó: con un solo número para todos, estuvo
@@ -17084,12 +17086,14 @@ export class Game {
         { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
       );
       /*
-       * **Y en el avión que lleva la cuenta, lo dice ella.** A esa altura la
-       * máquina está diciendo *fifty, forty, thirty*, y la instructora encima
-       * serían dos voces para el mismo momento. La tarjeta se queda, que es
-       * el dibujo; la voz es la de la caja.
+       * **Y en el avión cuya cuenta canta la toma, lo dice ella.** A esa
+       * altura la máquina está diciendo *fifty, forty, thirty*, y la
+       * instructora encima serían dos voces para el mismo momento. La tarjeta
+       * se queda, que es el dibujo; la voz es la de la caja. En el que se
+       * queda en *five hundred* —el JAZ 90 no, el JAZ 60—, ahí abajo no canta
+       * nadie, y habla ella.
        */
-      if (!laCuentaDe(this.aircraft).length)
+      if (!cantaPorDebajoDe(this.aircraft, ALTURA_DE_TOMA))
         this.instructor.decir(t("vuelo.yaPodesTocar"), "vuelo.yaPodesTocar");
     } else if (
       this.dichoDeLaToma &&
@@ -17987,6 +17991,7 @@ export class Game {
         aerofrenos: this.input.controls.aerofrenos ?? 0,
         frenosDeTierra: deTierra,
         helice: this.propellerAngle,
+        contrarrotativas: this.aircraft.helicesContrarrotativas,
         disco: (this.giroDeHelice - 20) / 25,
         carga: this.flight.state.loadFactor,
         enTierra: this.flight.state.onGround,
@@ -23774,7 +23779,8 @@ export class Game {
     for (const h of this.aircraftMesh.helices ?? [
       this.aircraftMesh.propeller,
     ]) {
-      h.rotation.z = this.propellerAngle;
+      // Cada una hacia donde gira la suya: ver `signoDelGiro`.
+      h.rotation.z = signoDelGiro(this.aircraft, h.position.x) * this.propellerAngle;
     }
 
     this.updateBlobShadow(state);
@@ -26858,22 +26864,30 @@ export class Game {
   private elFma(): Fma | null {
     /*
      * **Los gases solos, sin el automático**: los de la final de Guyrami. El
-     * FMA de un Boeing escribe el modo de los gases aunque el A/P esté
-     * suelto, y en la recogida, `RETARD`: las palancas al ralentí, a la
-     * altura de su clase. Ver `sostenerLaVelocidadDeLaFinal`.
+     * FMA escribe el modo de los gases aunque el A/P esté suelto, y en la
+     * recogida, el de llevar las palancas al ralentí, a la altura de su
+     * clase. Ver `sostenerLaVelocidadDeLaFinal`.
      */
+    // Con el nombre de su cabina: `RETD` en un E-Jet, `IDLE` en un 747. Ver `rotuloDeLosGases`.
+    const clase = claseDeRecogida(this.aircraft);
     if (!this.pilotoPuesto && this.gasesPuestos) {
       const retard = !this.flight.state.onGround && this.enRetard;
-      return { gases: retard ? "RETARD" : "SPD", lateral: "", vertical: "", piloto: false };
+      return {
+        gases: rotuloDeLosGases(clase, retard ? "recogida" : "velocidad"),
+        lateral: "",
+        vertical: "",
+        piloto: false,
+      };
     }
     if (!this.pilotoPuesto) return null;
     const gases = !this.gasesPuestos
       ? ""
       : this.modoVertical === "FLCH SPD"
-        ? (this.objetivos.altitud ?? 0) > this.flight.state.position.y
-          ? "THR"
-          : "IDLE"
-        : "SPD";
+        ? rotuloDeLosGases(
+            clase,
+            (this.objetivos.altitud ?? 0) > this.flight.state.position.y ? "empuje" : "ralenti",
+          )
+        : rotuloDeLosGases(clase, "velocidad");
     return {
       gases,
       lateral: this.objetivos.rumbo !== null ? this.modoLateral : "",
@@ -28890,8 +28904,8 @@ export class Game {
    * - **Se ve quién lleva el gas**: el dibujo en la tarjeta del motor, en los
    *   cuatro peldaños, y la palanca que se mueve sola.
    * - **Se suelta como un A/T de verdad**: al tocar el gas, que pasa a ser de
-   *   quien vuela, y al tocar tierra. Y en la recogida, a treinta pies, se
-   *   lleva al ralentí, que es el `RETARD` de los gases de Boeing.
+   *   quien vuela, y al tocar tierra. Y en la recogida, a la altura de su
+   *   clase, se lleva al ralentí: el `RETD` de un E-Jet, el `IDLE` de un 747.
    * - **Una vez por aproximación**, al entrar en la final. Quien la suelta
    *   tocando el gas no la ve volver hasta la siguiente aproximación: el gas
    *   que se coge, se respeta.

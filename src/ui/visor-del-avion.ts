@@ -47,6 +47,7 @@ import {
   MANDOS_AL_CENTRO,
   type PosicionDeLosMandos,
 } from "../world/superficies-de-mando";
+import { signoDelGiro } from "../world/giro-de-las-helices";
 
 /** Si los mandos se han movido lo bastante como para repintar la tarjeta. */
 function mandosDistintos(
@@ -103,6 +104,8 @@ export interface EnVivo {
   readonly frenosDeTierra: number;
   /** El giro de las hélices, rad, y cuánto se ven como disco, de 0 a 1. */
   readonly helice: number;
+  /** Si la de la derecha gira al revés. Ver `signoDelGiro`. */
+  readonly contrarrotativas?: boolean;
   readonly disco: number;
   /** La carga, en g, y si está en el suelo: para el ala que se dobla. */
   readonly carga: number;
@@ -437,7 +440,8 @@ export class VisorDelAvion {
     m.aerofrenos?.poner(e.aerofrenos, e.frenosDeTierra);
     m.mandos?.poner(e.mandos ?? MANDOS_AL_CENTRO);
     m.borrarHelices?.(e.disco);
-    for (const h of m.helices) h.rotation.z = e.helice;
+    for (const h of m.helices)
+      h.rotation.z = signoDelGiro({ helicesContrarrotativas: !!e.contrarrotativas }, h.position.x) * e.helice;
     this.marcar();
   }
 

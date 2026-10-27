@@ -1142,6 +1142,14 @@ def palas(nombre, en, radio, cuantas, raiz, cuerda=None, material_="oscuro",
     Todo eso se ve cuando la hélice está parada en la plataforma, que es
     cuando más se mira.
 
+    **`giro` es hacia dónde gira**, visto desde el asiento: `-1` a la derecha,
+    que es el giro convencional de los motores de la flota —«conventional,
+    clockwise rotation as viewed from the pilot's seat» (FAA, *Airplane
+    Flying Handbook*, p. 13-23)—, y `1` a la izquierda, la del motor que gira
+    al revés. Con él, el borde de ataque de cada pala va delante en el sentido
+    en que gira; el juego la hace girar igual, con `signoDelGiro` en
+    `src/world/giro-de-las-helices.ts`, y lo comprueba `giro-de-las-helices.test.ts`.
+
     **Van todas en una malla**, y las puntas amarillas en otra. Las dos llevan
     `pala` en el nombre, que es por donde el juego las encuentra para
     desvanecerlas cuando giran, y `helice`, que es por donde las junta con su

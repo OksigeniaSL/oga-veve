@@ -301,11 +301,14 @@ def construir():
                                   material_="oscuro", fuera=0.008)))
     # Los conos, oscuros como las palas: así van en su ilustración, y del
     # color de la franja eran dos puntos terracota sueltos delante del ala.
+    # Y las dos giran igual, a la derecha vistas desde el asiento: un
+    # turbohélice de su clase no lleva hélices contrarrotativas, y por eso
+    # tiene motor crítico. Estaban en espejo, como las del bimotor de pistón.
     for lado, nombre in ((-1, "izquierda"), (1, "derecha")):
         piezas += helice(f"helice-{nombre}",
                          (lado * MOTOR, EJE_HELICE, Z_HELICE),
                          radio=RADIO_HELICE, cuantas=4, buje=0.24,
-                         cuerda=0.22, largo_cono=0.55, giro=lado,
+                         cuerda=0.22, largo_cono=0.55, giro=-1,
                          cono="oscuro")
 
     # ── Cola en T ─────────────────────────────────────────────────────────

@@ -18,8 +18,9 @@
  *    JAZ 20 y no en el JAZ 90; el pitot del morro del reactor, sin figura;
  *    cada motor en el suyo: el de pistones en el JAZ 20, el turbohélice en
  *    el JAZ 60, el turbofán en el JAZ 90, y nada en el bimotor ni en el
- *    fumigador, que llevan otros; y el tren fijo en el JAZ 20 y el que se
- *    recoge en el JAZ 60, y ninguno en los demás.
+ *    fumigador, que llevan otros; y el tren fijo en el JAZ 20, el que se
+ *    recoge en el JAZ 60 y el de los E-Jets en el JAZ 90, con su aterrizaje
+ *    y su REV verde, y ninguno en los demás: tampoco en el JAZ 120.
  * 8. **Que «reducir movimiento» la deja quieta**: el avión del PAPI no pasea.
  *
  * Uso: `node scripts/ver-figuras.mjs carpeta`. Con `OGA_GPU=1`, con la tarjeta
@@ -268,6 +269,41 @@ async function cerrar(page, nombre) {
   comprobar(`${nombre}: se va entera al cerrar`, abierta && queda.figuras === 0 && !queda.abierta, JSON.stringify({ ...queda, estabaAbierta: abierta }));
 }
 
+/**
+ * **El tren del JAZ 90, y su aterrizaje.** Se abre como los demás y, antes de
+ * cerrarlo, se toca «Aterrizar»: tienen que salir la reversa con su REV verde
+ * en la EICAS y frenar las ruedas, que es lo que cuenta el resumen del E190.
+ */
+async function elTrenDelE170(page) {
+  const n = "tablet taguato jaz-90-tren-e170";
+  const boton = await porDentro(page, "tren");
+  comprobar(`${n}: «por dentro» de un dedo`, !!boton && boton.w >= 44 && boton.h >= 44, boton ? `${boton.w}×${boton.h}` : "no está");
+  if (!boton) return;
+  if (!(await tocar(page, '[data-tarjeta="globo"]:not([hidden]) .tav__por-dentro')) || !(await esperarFigura(page, "tren-e170"))) {
+    comprobar(`${n}: figura`, false);
+    await cerrar(page, n);
+    return;
+  }
+  await revisar(page, "tablet", "taguato", "jaz-90-tren-e170");
+  await conElTeclado(page, n);
+  // El teclado subió el tren: «Aterrizar» lo baja solo y aterriza.
+  const pulsado = await tocar(page, '#explicacion [data-in="k-land"]');
+  let rev = false;
+  let frena = false;
+  for (let i = 0; i < 40 && !(rev && frena); i++) {
+    await page.waitForTimeout(150);
+    const e = await page.evaluate(() => ({
+      rev: document.querySelector('#explicacion [data-in="rev-label"]')?.getAttribute("opacity") === "1",
+      frena: document.querySelector('#explicacion [data-in="disc"]')?.hasAttribute("data-on") ?? false,
+    }));
+    rev ||= e.rev;
+    frena ||= e.frena;
+  }
+  comprobar(`${n}: al aterrizar, la reversa con su REV verde y los frenos`, pulsado && rev && frena, JSON.stringify({ pulsado, rev, frena }));
+  await page.screenshot({ path: `${FOTOS}/tablet-taguato-jaz-90-tren-e170-aterrizando.png` });
+  await cerrar(page, n);
+}
+
 /** Toca un punto de la tarjeta del avión y mide su «por dentro», si lo tiene. */
 async function porDentro(page, pieza) {
   await page.evaluate((p) => {
@@ -386,9 +422,10 @@ try {
         await page.evaluate(() => globalThis.__oga.alternarTarjeta());
         await page.waitForSelector('.tav__punto[data-pieza="motor"]', { timeout: 60000 }).catch(() => {});
         await abrirPorDentro(page, pantalla, tramo, "motor", cual, `${avion}-motor-${cual}`);
-        // Y el tren que se recoge, el del JAZ 60; el del reactor no es ese.
+        // Y cada tren en el suyo: el que se recoge, el del JAZ 60; el del JAZ 90, el de los E-Jets.
         if (avion === "jaz-60") await abrirPorDentro(page, pantalla, tramo, "tren", "tren-retractil", `${avion}-tren-retractil`);
-        else comprobar(`${pantalla} ${tramo} ${avion} tren: sin «por dentro», que no es el suyo`, (await porDentro(page, "tren")) === null);
+        else if (pantalla === "tablet" && tramo === "taguato") await elTrenDelE170(page);
+        else await abrirPorDentro(page, pantalla, tramo, "tren", "tren-e170", `${avion}-tren-e170`);
         /*
          * Y en el reactor, lo que no es suyo no sale: ni los mandos de cables
          * ni los flaps del JAZ 20, ni el pitot de debajo del ala.
@@ -408,6 +445,15 @@ try {
         await page.close();
       }
     }
+  }
+
+  // El JAZ 120 se queda sin tren por dentro: un 747 tiene cinco patas, y su EICAS no se ha comprobado.
+  {
+    const page = await abrir("tablet", "taguato", "jaz-120");
+    await page.evaluate(() => globalThis.__oga.alternarTarjeta());
+    await page.waitForSelector('.tav__punto[data-pieza="tren"]', { timeout: 60000 }).catch(() => {});
+    comprobar("jaz-120 tren: sin «por dentro», que no es el del E170", (await porDentro(page, "tren")) === null);
+    await page.close();
   }
 
   // El bimotor de pistón y el fumigador llevan otros motores: sin la figura del de la avioneta.

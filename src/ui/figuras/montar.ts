@@ -32,9 +32,12 @@
  *   de cada avión.
  * - **El tren**, en el punto del tren: el fijo de la avioneta de escuela, con
  *   sus patas de acero y su rueda de morro, solo en el JAZ 20 —el fumigador
- *   es de rueda de cola—; y el que se recoge, con su bomba eléctrica y sus
- *   tres verdes, solo en el JAZ 60, que es el del 1900D. El bimotor de pistón
- *   y los reactores lo recogen con otros sistemas y siguen con su globo.
+ *   es de rueda de cola—; el que se recoge, con su bomba eléctrica y sus
+ *   tres verdes, solo en el JAZ 60, que es el del 1900D; y el de los E-Jets,
+ *   con su sistema hidráulico 2, sus compuertas y su EICAS, solo en el
+ *   JAZ 90. El bimotor de pistón lo recoge con otro sistema y sigue con su
+ *   globo, y el JAZ 120 también: un 747 tiene cinco patas y no se ha podido
+ *   comprobar cómo enseña el tren abajo. Ver `POR_AVION`.
  * - **Las luces**, en el punto de las luces y en sus cuatro interruptores de
  *   la tarjeta, con la que se tocó encendida, y la blanca de atrás donde la
  *   lleva cada avión: `Modelo.blanca` en `flight/flota.ts`, lo mismo que
@@ -64,6 +67,7 @@ import {
   textosDelAltimetro,
   textosDelPapi,
   textosDelPiston,
+  textosDelTrenE170,
   textosDelTrenFijo,
   textosDelTrenRetractil,
   textosDelTurbofan,
@@ -82,6 +86,7 @@ export type CualFigura =
   | "piston"
   | "tren-fijo"
   | "tren-retractil"
+  | "tren-e170"
   | "luces";
 
 /** La figura que lleva una explicación, y lo que cambia según el punto o el avión. */
@@ -114,6 +119,8 @@ export const FIGURAS = {
   "avion.tren-fijo": { cual: "tren-fijo" },
   "avion.tren": { cual: "tren-retractil" },
   "avion.luces": { cual: "luces" },
+  "avion.luces-puntas": { cual: "luces" },
+  "avion.luces-atras": { cual: "luces" },
   "avion.luz-baliza": { cual: "luces", luz: "beacon" },
   "avion.luz-estrobos": { cual: "luces", luz: "strobe" },
   "avion.luz-aterrizaje": { cual: "luces", luz: "land" },
@@ -135,6 +142,16 @@ const AVION_DE_LA_FIGURA: Partial<Record<CualFigura, string>> = {
   piston: "jaz-20",
   "tren-fijo": "jaz-20",
   "tren-retractil": "jaz-60",
+  "tren-e170": "jaz-90",
+};
+
+/**
+ * **El mismo punto, otra figura según el avión.** El tren que se recoge es el
+ * del JAZ 60 por su `id`, `avion.tren`, pero el JAZ 90 lo recoge con otro
+ * sistema y tiene el suyo: el de los E-Jets.
+ */
+const POR_AVION: Readonly<Record<string, Readonly<Record<string, FiguraPedida>>>> = {
+  "avion.tren": { "jaz-90": { cual: "tren-e170" } },
 };
 
 /**
@@ -143,7 +160,8 @@ const AVION_DE_LA_FIGURA: Partial<Record<CualFigura, string>> = {
  * llevan; las que dibujan un avión, solo en el suyo. Ver la cabecera.
  */
 export function figuraEnLaTarjeta(id: string, a: Pick<AircraftConfig, "id">): FiguraPedida | null {
-  const f = figuraDe(id);
+  const otra = POR_AVION[id]?.[a.id];
+  const f = otra ?? figuraDe(id);
   if (!f || !id.startsWith("avion.")) return null;
   const suyo = AVION_DE_LA_FIGURA[f.cual];
   if (suyo && a.id !== suyo) return null;
@@ -191,6 +209,8 @@ export async function montarFigura(el: HTMLElement, f: FiguraPedida, edad: Edad)
       return (await import("./tren-fijo")).montarTrenFijo(el, { edad, textos: textosDelTrenFijo() });
     case "tren-retractil":
       return (await import("./tren-retractil")).montarTrenRetractil(el, { edad, textos: textosDelTrenRetractil() });
+    case "tren-e170":
+      return (await import("./tren-e170")).montarTrenE170(el, { edad, textos: textosDelTrenE170() });
     case "luces":
       return (await import("./luces")).montarLuces(el, {
         edad,

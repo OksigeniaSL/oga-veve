@@ -94,11 +94,37 @@ describe("los puntos de la tarjeta en cada modelo", () => {
   it("cada avión explica su motor, no el de otro", () => {
     const motor = (id: string) => explicacionDe("motor", AIRCRAFT.find((a) => a.id === id)!).id;
     expect(motor("jaz-20")).toBe("avion.motor-piston");
+    // El bimotor, con los suyos: seis cilindros con turbo y hélices al revés.
+    expect(motor("jaz-40")).toBe("avion.motor-turbo");
     expect(motor("jaz-25")).toBe("avion.motor-radial");
     expect(motor("jaz-60")).toBe("avion.turbohelice");
     expect(motor("jaz-120")).toBe("avion.reactor");
     const tren = (id: string) => explicacionDe("tren", AIRCRAFT.find((a) => a.id === id)!).id;
     expect(tren("jaz-20")).toBe("avion.tren-fijo");
     expect(tren("jaz-90")).toBe("avion.tren");
+  });
+
+  /*
+   * **La blanca, donde la lleva cada uno.** La tarjeta decía «blanca en la
+   * cola» también en el JAZ 90, que la lleva en el borde de salida de cada
+   * punta (MMEL de la FAA del ERJ-170/190); y en el JAZ 60, donde no se ha
+   * podido confirmar, no dice en qué pieza.
+   */
+  it("cada avión cuenta su luz blanca donde la lleva, y ninguno donde no se sabe", () => {
+    const luces = (id: string) => explicacionDe("luces", AIRCRAFT.find((a) => a.id === id)!);
+    for (const id of ["jaz-20", "jaz-25", "jaz-40", "jaz-120"]) expect(luces(id).id, id).toBe("avion.luces");
+    expect(luces("jaz-90").id).toBe("avion.luces-puntas");
+    expect(ES_PY[luces("jaz-90").texto]).toMatch(/en cada punta/);
+    expect(ES_PY[luces("jaz-90").texto]).not.toMatch(/cola/);
+    expect(ES_PY[luces("jaz-90").voz]).toMatch(/en cada punta/);
+    // El JAZ 60: «atrás», sin pieza, con la voz de siempre, que ya lo decía así.
+    const sinConfirmar = luces("jaz-60");
+    expect(sinConfirmar.id).toBe("avion.luces-atras");
+    for (const k of [sinConfirmar.texto, sinConfirmar.voz]) {
+      expect(ES_PY[k]).toMatch(/blanca atrás/);
+      expect(ES_PY[k]).not.toMatch(/cola|cada punta/);
+      expect(EN[k]).not.toMatch(/tail/);
+    }
+    expect(sinConfirmar.voz).toBe("tarjeta.voz.luces");
   });
 });

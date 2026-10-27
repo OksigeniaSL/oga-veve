@@ -10,7 +10,7 @@ import { AIRCRAFT, ARAI, ARASUNU, PYKASU, YVAGA } from "./aircraft";
 import { AvisosDeAltura, type Lectura } from "./avisos-de-altura";
 import { ArcadeFlightModel } from "./arcade";
 import { neutralControls } from "./model";
-import { claseDeRecogida, escalonesDeLaRecogida, laRecogidaDe } from "./recogida";
+import { claseDeRecogida, escalonesDeLaRecogida, laRecogidaDe, rotuloDeLosGases } from "./recogida";
 
 const PIE = 0.3048;
 const RAD = Math.PI / 180;
@@ -24,11 +24,11 @@ describe("la altura de la recogida, por clase y con su manual", () => {
     expect(enPies(r.gas)).toBe(30);
   });
 
-  it("el reactor de cables recoge y quita el gas a 20 ft, como dice el FCTM de Boeing", () => {
+  it("el reactor de cables recoge y quita el gas a 30 ft, como dice el FCTM del 747-400", () => {
     const r = laRecogidaDe(YVAGA);
     expect(r.clase).toBe("cables");
-    expect(enPies(r.nariz)).toBe(20);
-    expect(enPies(r.gas)).toBe(20);
+    expect(enPies(r.nariz)).toBe(30);
+    expect(enPies(r.gas)).toBe(30);
   });
 
   it("los de hélice, a 15 ft las dos cosas: el medio de los 10 a 20 del manual de la FAA", () => {
@@ -45,6 +45,34 @@ describe("la altura de la recogida, por clase y con su manual", () => {
     expect(escalonesDeLaRecogida(laRecogidaDe(YVAGA)).map((e) => e.dice)).toEqual(["nariz y gas"]);
     expect(escalonesDeLaRecogida(laRecogidaDe(PYKASU)).map((e) => e.dice)).toEqual(["nariz y gas"]);
     expect(escalonesDeLaRecogida(laRecogidaDe(ARAI)).map((e) => e.dice)).toEqual(["nariz y gas"]);
+  });
+});
+
+/*
+ * **El FMA, con el nombre de su cabina.** El JAZ 90 ponía `RETARD`, que es el
+ * nombre del 737: un E-Jet escribe `RETD` y un 747-400, `IDLE`.
+ */
+describe("lo que escribe el FMA de los gases, en cada clase", () => {
+  it("el E-Jet: SPDT, SPDE en el FLCH y RETD en la recogida", () => {
+    const c = claseDeRecogida(ARAI);
+    expect(rotuloDeLosGases(c, "velocidad")).toBe("SPDT");
+    expect(rotuloDeLosGases(c, "empuje")).toBe("SPDE");
+    expect(rotuloDeLosGases(c, "ralenti")).toBe("SPDE");
+    expect(rotuloDeLosGases(c, "recogida")).toBe("RETD");
+  });
+
+  it("el 747: SPD, THR, IDLE, e IDLE también en la recogida", () => {
+    const c = claseDeRecogida(YVAGA);
+    expect(rotuloDeLosGases(c, "velocidad")).toBe("SPD");
+    expect(rotuloDeLosGases(c, "empuje")).toBe("THR");
+    expect(rotuloDeLosGases(c, "ralenti")).toBe("IDLE");
+    expect(rotuloDeLosGases(c, "recogida")).toBe("IDLE");
+  });
+
+  it("y ninguno escribe RETARD, que es del 737", () => {
+    for (const a of AIRCRAFT)
+      for (const que of ["velocidad", "empuje", "ralenti", "recogida"] as const)
+        expect(rotuloDeLosGases(claseDeRecogida(a), que), `${a.id} ${que}`).not.toBe("RETARD");
   });
 });
 

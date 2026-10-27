@@ -82,7 +82,10 @@ donde esta le deja el 81 %—, y se probó: con ella el JAZ 40, que tiene el
 crucero en 5.500 m, no subía allí trescientos metros en cinco minutos. Un
 bimotor que cruza a esa altura lleva turbocompresor, y con turbocompresor el
 calor casi no le quita potencia hasta su altitud crítica: primero hay que
-decidir qué motor lleva. Queda en `loQueDaElMotor`, en un solo sitio.
+decidir qué motor lleva (*decidido el 27-10-2026: los dos Continental
+TSIO-360-E de su clase, con la potencia de nivel del mar hasta los 12.000
+pies; ver `alturaCritica` en la ficha*). Queda en `loQueDaElMotor`, en un solo
+sitio.
 
 ### Contarlo cuando pesa
 

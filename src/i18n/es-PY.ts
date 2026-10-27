@@ -3149,6 +3149,7 @@ export const ES_PY = {
   "tarjeta.corta.pitotMorro": "Tubos pitot",
   "tarjeta.corta.motorPiston": "Motor de pistón",
   "tarjeta.corta.motorRadial": "Motor radial",
+  "tarjeta.corta.motorTurbo": "Motor con turbo",
   "tarjeta.corta.turbohelice": "Turbohélice",
   "tarjeta.corta.reactor": "Reactor",
   "tarjeta.corta.trenFijo": "Tren fijo",
@@ -3169,6 +3170,8 @@ export const ES_PY = {
     "Tubos pitot, a los dos lados de la nariz: uno para cada piloto. El aire entra de frente, y cuanto más rápido, más empuja. Así se mide la velocidad.",
   "tarjeta.motorPiston":
     "Motor y hélice. El motor hace girar la hélice; sus palas son alas chiquitas que empujan el aire hacia atrás y tiran del avión hacia adelante.",
+  "tarjeta.motorTurbo":
+    "Motores con turbo. Cada ala lleva uno de seis cilindros, y el turbo le mete el aire apretado: así, al subir, no pierde fuerza hasta muy arriba. Y las dos hélices giran al revés una de la otra.",
   "tarjeta.motorRadial":
     "Motor radial. Sus cilindros van en círculo, como los rayos de una estrella, y hacen girar la hélice, que tira del avión.",
   "tarjeta.turbohelice":
@@ -3181,6 +3184,11 @@ export const ES_PY = {
     "Tren fijo. Va siempre afuera: es más sencillo y más liviano, aunque frena un poco al avión.",
   "tarjeta.luces":
     "Luces de navegación: roja en la punta izquierda, verde en la derecha y blanca en la cola. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
+  // La blanca no va en la cola en todos: ver `lucesDe` en `ui/explicaciones-del-avion.ts`.
+  "tarjeta.lucesPuntas":
+    "Luces de navegación: roja en la punta izquierda, verde en la derecha y, en cada punta, una blanca que mira hacia atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
+  "tarjeta.lucesAtras":
+    "Luces de navegación: roja en la punta izquierda, verde en la derecha y blanca atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
   "tarjeta.luzBaliza":
     "Baliza: la luz roja que parpadea. Se enciende antes de arrancar el motor y dice: este avión está vivo, no te acerques.",
   "tarjeta.luzEstrobos":
@@ -3223,6 +3231,10 @@ export const ES_PY = {
     "Este tren no se guarda nunca: va siempre afuera. Es más sencillo y más liviano, aunque frena un poco al avión.",
   "tarjeta.voz.luces":
     "Estas son las luces de navegación: roja a la izquierda, verde a la derecha y blanca atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
+  "tarjeta.voz.motorTurbo":
+    "Este avión lleva dos motores de seis cilindros, con turbo: el turbo les mete el aire apretado, y así, al subir, no pierden fuerza hasta muy arriba. Y mirá las hélices: giran al revés una de la otra.",
+  "tarjeta.voz.lucesPuntas":
+    "Estas son las luces de navegación: roja en la punta izquierda, verde en la derecha, y en cada punta, una blanca que mira para atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
   "tarjeta.voz.luzBaliza":
     "La baliza es la luz roja que parpadea. Se enciende antes de arrancar el motor y les dice a todos: no te acerques, este avión se va a mover.",
   "tarjeta.voz.luzEstrobos":
@@ -3662,6 +3674,33 @@ export const ES_PY = {
   "figura.trenRetractil.vivoArriba": "Tren arriba: todas las luces apagadas",
   "figura.trenRetractil.vivoBajando": "El tren baja: luz roja en el mango",
   "figura.trenRetractil.vivoSubiendo": "El tren sube: luz roja en el mango",
+  // El tren de los E-Jets, en la tarjeta del JAZ 90. Ver `ui/figuras/tren-e170.ts`.
+  "figura.trenE170.hid": "HID. 2",
+  "figura.trenE170.arriba": "Arriba",
+  "figura.trenE170.abajo": "Abajo",
+  "figura.trenE170.eicas1": "La EICAS muestra",
+  "figura.trenE170.eicas2": "el tren mientras",
+  "figura.trenE170.eicas3": "se mueve, en",
+  "figura.trenE170.eicas4": "ámbar a rayas.",
+  "figura.trenE170.aterrizar": "Aterrizar",
+  "figura.trenE170.reversa": "Reversa",
+  "figura.trenE170.frenos": "Frenos",
+  "figura.trenE170.loQueFrena": "Lo que frena:",
+  "figura.trenE170.aerofrenos": "Aerofrenos",
+  "figura.trenE170.sistema": "Sistema hidráulico 2",
+  "figura.trenE170.compuerta": "Compuerta, unida a la pata",
+  "figura.trenE170.puerta": "Puerta",
+  "figura.trenE170.aria":
+    "El tren de los E-Jet: con la palanca, el tren de morro y los dos principales suben y bajan con el sistema hidráulico 2. La compuerta de cada pata principal va unida a ella, y arriba las ruedas quedan a la vista; el morro tiene dos compuertas que solo se abren mientras el tren se mueve. En la pantalla EICAS, recuadros ámbar a rayas mientras el tren se mueve. Al aterrizar frenan los aerofrenos, la reversa y los frenos de las ruedas.",
+  "figura.trenE170.palanca": "Tren abajo",
+  "figura.trenE170.vivoAbajo": "Tren abajo y trabado",
+  "figura.trenE170.vivoArriba": "Tren arriba",
+  "figura.trenE170.vivoBajando": "El tren baja: recuadros ámbar a rayas",
+  "figura.trenE170.vivoSubiendo": "El tren sube: recuadros ámbar a rayas",
+  "figura.trenE170.vivoToca": "Toca la pista: suben los aerofrenos",
+  "figura.trenE170.vivoReversa": "Sale la reversa: REV verde en la EICAS; el aire del motor va hacia adelante",
+  "figura.trenE170.vivoFrena": "Frenan las ruedas",
+  "figura.trenE170.vivoParado": "Parado",
   "figura.luces.sNavegacion": "Navegación",
   "figura.luces.sFaro": "Baliza",
   "figura.luces.sDestellos": "Destellos",

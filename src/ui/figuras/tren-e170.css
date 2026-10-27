@@ -1,0 +1,121 @@
+/*
+ * La hoja de la figura, toda bajo `.fig-tren-e170` para que no pise al juego ni
+ * el juego a ella. Ver `tren-e170.ts`. Las letras crecen por el ancho de la
+ * figura (`@container figura`) y no por el de la pantalla: ver
+ * `.explica__figura` en style.css.
+ */
+.fig-tren-e170 { --in-papel: #f3efe3; --in-panel: #f8f5ec; --in-tinta: #2e537a; --in-tinta-2: #22302a; --in-tinta-suave: #8ea3b8;
+  --in-rojo: #b3261e; --in-total: #c2541f; --in-estatica: #2e537a; --in-hielo: #dff1fb;
+  --in-letra: "Barlow Semi Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  --in-cifras: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif; }
+.fig-tren-e170 .in-panel { fill: var(--in-panel); stroke: var(--in-tinta); stroke-width: 1.4; }
+.fig-tren-e170 .in-txt { font-family: var(--in-letra); fill: var(--in-tinta-2); }
+.fig-tren-e170 .in-ac { fill: var(--in-panel); stroke: var(--in-tinta-2); stroke-width: 1.5; stroke-linejoin: round; }
+.fig-tren-e170 .in-ac-glass { fill: #dfe8ee; stroke: var(--in-tinta-2); stroke-width: 1.2; stroke-linejoin: round; }
+.fig-tren-e170 .in-ac-line { fill: none; stroke: var(--in-tinta-2); stroke-width: 1.5; stroke-linecap: round; }
+.fig-tren-e170 .in-ac-prop { fill: var(--in-tinta-suave); opacity: .55; }
+.fig-tren-e170 .in-ac-pitot { fill: none; stroke: var(--in-tinta-2); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.fig-tren-e170 .in-wall--0 { fill: #d9d2bf; } .fig-tren-e170 .in-wall--1 { fill: #e3ddcd; } .fig-tren-e170 .in-wall--2 { fill: #ece7da; } .fig-tren-e170 .in-wall--3 { fill: #f4f0e6; }
+.fig-tren-e170 .in-inner--0 { fill: #b9b19c; } .fig-tren-e170 .in-inner--1 { fill: #c6bfab; } .fig-tren-e170 .in-inner--2 { fill: #d2ccba; } .fig-tren-e170 .in-inner--3 { fill: #dcd6c6; }
+.fig-tren-e170 .in-wall, .fig-tren-e170 .in-inner { stroke: none; }
+.fig-tren-e170 .in-backplate { fill: #cfc8b4; stroke: var(--in-tinta); stroke-width: 1; }
+.fig-tren-e170 .in-cutface { fill: url(#fig-in-hatch); stroke: var(--in-tinta); stroke-width: 1; }
+.fig-tren-e170 .in-cutline, .fig-tren-e170 .in-rim { fill: none; stroke: var(--in-tinta); stroke-width: 1.3; }
+.fig-tren-e170 .in-bezel { fill: #3b4643; stroke: none; }
+.fig-tren-e170 .in-face { fill: #22302a; stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-tren-e170 .in-ring { stroke: var(--in-tinta); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.fig-tren-e170 .in-ring--cresta { fill: #ecd09a; } .fig-tren-e170 .in-ring--valle { fill: #c49a55; }
+.fig-tren-e170 .in-web { fill: #b8914f; stroke: var(--in-tinta); stroke-width: .8; }
+.fig-tren-e170 .in-corr { fill: none; stroke: #9c7a3c; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.fig-tren-e170 .in-boss { fill: var(--in-tinta-2); }
+.fig-tren-e170 .in-dial-rim { fill: #3b4643; }
+.fig-tren-e170 .in-dial { fill: #22302a; }
+.fig-tren-e170 .in-ticks { stroke: var(--in-papel); stroke-width: 2; stroke-linecap: round; fill: none; }
+.fig-tren-e170 .in-num { font-family: var(--in-cifras); font-weight: 600; font-size: 21px; fill: var(--in-papel); }
+.fig-tren-e170 .in-unit { font-family: var(--in-letra); font-weight: 600; font-size: 15px; fill: var(--in-papel); letter-spacing: .08em; }
+.fig-tren-e170 .in-arc { fill: none; stroke-linecap: butt; }
+.fig-tren-e170 .in-arc--blanco { stroke: #f3efe3; } .fig-tren-e170 .in-arc--verde { stroke: #3fa65e; } .fig-tren-e170 .in-arc--amarillo { stroke: #e9b52b; }
+.fig-tren-e170 .in-redline { stroke: #e2453a; stroke-width: 5; stroke-linecap: butt; }
+.fig-tren-e170 .in-needle { fill: #f3efe3; stroke: #0f1714; stroke-width: 1; stroke-linejoin: round; }
+.fig-tren-e170 .in-hub { fill: #3b4643; stroke: #f3efe3; stroke-width: 1.5; }
+.fig-tren-e170 .in-track { stroke: var(--in-tinta-2); stroke-width: 12; stroke-linecap: round; }
+.fig-tren-e170 .in-track-slot { stroke: #6b7a72; stroke-width: 4; stroke-linecap: round; }
+.fig-tren-e170 .in-chev { fill: none; stroke: var(--in-tinta); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.fig-tren-e170 .in-knob { cursor: ew-resize; outline: none; }
+.fig-tren-e170 .in-grip { fill: transparent; stroke: var(--in-rojo); stroke-width: 0; }
+.fig-tren-e170 .in-knob:focus-visible .in-grip { stroke-width: 2.5; }
+.fig-tren-e170 .in-shaft { stroke: #9aa6a0; stroke-width: 6; stroke-linecap: round; }
+.fig-tren-e170 .in-knob-ball { fill: #1c2420; stroke: #000; stroke-width: 1; }
+.fig-tren-e170 .in-knob-hi { fill: #ffffff; opacity: .35; }
+.fig-tren-e170 .in-staff { stroke: #6b7a72; stroke-width: 2.2; }
+.fig-tren-e170 .in-sector { fill: #d9b46a; stroke: var(--in-tinta-2); stroke-width: .5; }
+.fig-tren-e170 .in-teeth { fill: #b78f3f; }
+.fig-tren-e170 .in-tail { stroke: var(--in-tinta-2); stroke-width: 1.6; }
+.fig-tren-e170 .in-pivot, .fig-tren-e170 .in-pin { fill: var(--in-tinta-2); }
+.fig-tren-e170 .in-pinion { fill: #d9b46a; stroke: var(--in-tinta-2); stroke-width: .5; }
+.fig-tren-e170 .in-pinion-teeth { stroke: #b78f3f; stroke-width: 1.2; }
+.fig-tren-e170 .in-lever { fill: none; stroke: var(--in-tinta-2); stroke-width: 2.2; stroke-linecap: round; }
+.fig-tren-e170 .in-face-ticks { stroke: var(--in-papel); stroke-width: .9; }
+.fig-tren-e170 .in-screw { fill: #9aa6a0; stroke: #22302a; stroke-width: .6; }
+.fig-tren-e170 .in-glare { fill: none; stroke: #ffffff; stroke-width: 1.6; opacity: .35; vector-effect: non-scaling-stroke; }
+.fig-tren-e170 .in-chip { fill: var(--in-panel); stroke: var(--in-tinta); stroke-width: 1.3; }
+.fig-tren-e170 .in-callout circle { fill: var(--in-rojo); }
+.fig-tren-e170 .in-callout path { stroke: var(--in-rojo); stroke-width: 1.3; fill: none; }
+.fig-tren-e170 .in-call { font-family: var(--in-letra); font-size: 19px; font-weight: 600; fill: var(--in-rojo); paint-order: stroke; stroke: var(--in-panel); stroke-width: 4px; stroke-linejoin: round; }
+.fig-tren-e170 .mo-call { font-size: 17px; }
+
+.fig-tren-e170 { display: block; width: 100%; padding: 6px; border-radius: 12px; background: var(--in-papel); box-sizing: border-box; }
+.fig-tren-e170 .re-svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; }
+.fig-tren-e170 .re-sky { fill: #e9eff0; } .fig-tren-e170 .re-ground { fill: #4b524f; } .fig-tren-e170 .re-mark { fill: #f3efe3; }
+.fig-tren-e170 .re-ac { fill: var(--in-panel); stroke: var(--in-tinta-2); stroke-width: 1.5; stroke-linejoin: round; }
+.fig-tren-e170 .re-win { fill: #b6c8d2; stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-tren-e170 .re-nac { fill: #c6bfab; stroke: var(--in-tinta-2); stroke-width: 1.4; }
+.fig-tren-e170 .re-fan { fill: #6b7a72; stroke: var(--in-tinta-2); stroke-width: 1; } .fig-tren-e170 .re-spin { fill: var(--in-panel); }
+.fig-tren-e170 .re-pylon { stroke: var(--in-tinta-2); stroke-width: 5; }
+.fig-tren-e170 .re-pump { fill: #3b4643; stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-tren-e170 .re-hyd-t { font-family: var(--in-cifras); font-size: 10px; font-weight: 600; fill: var(--in-papel); }
+.fig-tren-e170 .re-mdoor { stroke: var(--in-tinta-2); stroke-width: 4; stroke-linecap: round; }
+.fig-tren-e170 .re-door--thin { stroke-width: 3; }
+.fig-tren-e170 .re-eicas { fill: #0f1714; stroke: #6b7a72; stroke-width: 1.2; }
+.fig-tren-e170 .re-box { opacity: 0; }
+.fig-tren-e170 .re-box[data-state="moving"] { opacity: 1; }
+.fig-tren-e170 .re-box[data-state="moving"] rect { fill: url(#fig-ej-hatch); stroke: #e9b52b; stroke-width: 2.4; }
+.fig-tren-e170 .re-rev-t { font-family: var(--in-cifras); font-size: 16px; font-weight: 600; fill: #3fd06a; }
+.fig-tren-e170 .re-bay { stroke: #3b4643; stroke-width: 6; stroke-linecap: round; }
+.fig-tren-e170 .re-line { fill: none; stroke: #b3261e; stroke-width: 2; stroke-linejoin: round; }
+.fig-tren-e170 .re-flow { fill: none; stroke: #b3261e; stroke-width: 4.6; stroke-linecap: round; }
+.fig-tren-e170 .re-leg { fill: none; stroke: #6b7a72; stroke-width: 6; stroke-linecap: round; }
+.fig-tren-e170 .re-tyre { fill: #2a3330; stroke: #0f1714; stroke-width: 1.2; }
+.fig-tren-e170 .re-door { fill: none; stroke: var(--in-tinta-2); stroke-width: 4; stroke-linecap: round; }
+.fig-tren-e170 .re-panel { fill: #3b4643; }
+.fig-tren-e170 .re-lamp { stroke: #0f1714; stroke-width: 1.2; }
+.fig-tren-e170 .re-lamp--red { fill: #3a2321; } .fig-tren-e170 .re-lamp--green { fill: #1f2a25; }
+.fig-tren-e170 .re-lamp--red[data-on] { fill: #ff4b3e; } .fig-tren-e170 .re-lamp--green[data-on] { fill: #3fd06a; }
+.fig-tren-e170 .re-lamp-t { font-family: var(--in-cifras); font-size: 12px; font-weight: 600; fill: var(--in-papel); }
+.fig-tren-e170 .re-slot { fill: #0f1714; stroke: #6b7a72; stroke-width: 1; }
+.fig-tren-e170 .re-lv-t { font-family: var(--in-cifras); font-size: 15px; font-weight: 600; fill: var(--in-papel); }
+.fig-tren-e170 .re-knob { fill: #1c2420; stroke: #9aa6a0; stroke-width: 2; } .fig-tren-e170 .re-knob-hub { fill: #6b7a72; }
+.fig-tren-e170 .re-k { cursor: pointer; outline: none; } .fig-tren-e170 .re-hit { fill: transparent; }
+.fig-tren-e170 .re-ring { fill: none; stroke: #e9b52b; stroke-width: 2.6; stroke-dasharray: 6 4; opacity: 0; }
+.fig-tren-e170 .re-k:focus-visible .re-ring { opacity: 1; }
+.fig-tren-e170 .re-panel-t { font-size: 15px; font-weight: 600; fill: var(--in-papel); } .fig-tren-e170 .re-panel-t.re-panel-t--amber { fill: #f2c55c; }
+.fig-tren-e170 .re-used-bg { fill: #c9c3b2; } .fig-tren-e170 .re-used { fill: var(--in-tinta); }
+.fig-tren-e170 .re-spoilers { fill: none; stroke: var(--in-tinta-2); stroke-width: 3; stroke-linecap: round; }
+.fig-tren-e170 .re-sleeve { fill: #9aa6a0; stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-tren-e170 .re-rev { fill: none; stroke: #2f6f8f; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.fig-tren-e170 .re-wheel { fill: #2a3330; stroke: #0f1714; stroke-width: 1.2; }
+.fig-tren-e170 .re-disc { fill: #6b7a72; } .fig-tren-e170 .re-disc[data-on] { fill: #ff8a3c; stroke: #ffd6b0; stroke-width: 2; }
+.fig-tren-e170 .re-btn { cursor: pointer; outline: none; }
+.fig-tren-e170 .re-btn rect { fill: var(--in-panel); stroke: var(--in-tinta); stroke-width: 1.6; }
+.fig-tren-e170 .re-btn[aria-pressed="false"] rect { fill: #e3ddcd; }
+.fig-tren-e170 .re-btn:focus-visible rect { stroke: var(--in-rojo); stroke-width: 3; }
+.fig-tren-e170 .re-btn-t { font-size: 17px; font-weight: 600; }
+.fig-tren-e170 .re-btn-dot { fill: #9aa6a0; stroke: var(--in-tinta-2); stroke-width: 1.2; }
+.fig-tren-e170 .re-btn[aria-pressed="true"] .re-btn-dot { fill: #3fd06a; }
+.fig-tren-e170 .re-btn-ico { fill: none; stroke: var(--in-tinta); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.fig-tren-e170 .re-force-t { font-size: 14px; font-weight: 600; fill: var(--in-tinta-2); }
+.fig-tren-e170 .re-bar { fill: #e3ddcd; stroke: var(--in-tinta); stroke-width: 1; } .fig-tren-e170 .re-bar-on { fill: var(--in-tinta); }
+.fig-tren-e170 .re-sr { font-size: 1px; fill: transparent; }
+.fig-tren-e170 .mo-call { font-size: 17px; }
+.fig-tren-e170[data-edad="guyrami"] .in-age2, .fig-tren-e170[data-edad="guyrami"] .in-age3, .fig-tren-e170[data-edad="tuka"] .in-age3, .fig-tren-e170[data-edad="taguato"] .re-tuka { display: none; }
+@container figura (max-width: 440px) { .fig-tren-e170 .mo-call { font-size: 19px; stroke-width: 5px; } .fig-tren-e170 .re-force-t { font-size: 16px; } .fig-tren-e170 .re-btn-t { font-size: 19px; } }

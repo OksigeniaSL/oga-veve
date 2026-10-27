@@ -90,6 +90,13 @@ export interface Modelo {
    * la cola. Ver `EquipoDeLuces` en `world/luces-del-trafico.ts`.
    */
   readonly blanca?: "cola" | "puntas";
+  /**
+   * **Si dónde va la blanca está sin confirmar.** El modelo la tiene que
+   * dibujar en algún sitio —`blanca`—, pero la tarjeta no enseña lo que no se
+   * sabe: dice «blanca atrás», que es lo que la norma pide a cualquiera, y no
+   * en qué pieza. Ver `explicacionDe` en `ui/explicaciones-del-avion.ts`.
+   */
+  readonly blancaSinConfirmar?: true;
 }
 
 /**
@@ -131,9 +138,10 @@ export const FLOTA: readonly Modelo[] = [
      * La blanca, en la cola: **sin confirmar** para la clase del Beech 1900D.
      * No se ha encontrado manual, MMEL ni foto de noche que diga si va en el
      * cono de cola o en lo alto de la cola en T. Se queda en el cono, que es
-     * lo más atrás del avión.
+     * lo más atrás del avión, y la tarjeta no dice dónde.
      */
     blanca: "cola",
+    blancaSinConfirmar: true,
   },
   {
     numero: 90,

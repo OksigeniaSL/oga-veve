@@ -32,6 +32,7 @@
  */
 
 import type { AircraftConfig } from "../flight/aircraft";
+import { modeloPorId } from "../flight/flota";
 import type { TranslationKey } from "../i18n";
 import type { PiezaDelAvion } from "../world/puntos-del-avion";
 
@@ -160,12 +161,29 @@ export const EXPLICACIONES_DEL_AVION: readonly ExplicacionDelAvion[] = [
   de("avion.pitot", "pitot", "pitot", "tarjeta.pieza.pitot"),
   de("avion.pitot-morro", "pitot", "pitotMorro", "tarjeta.corta.pitotMorro"),
   de("avion.motor-piston", "helice", "motorPiston", "tarjeta.corta.motorPiston"),
+  /*
+   * El del bimotor de pistón, que no es el de la avioneta: dos de seis
+   * cilindros con turbo y hélices que giran al revés una de otra, como los
+   * TSIO-360 y LTSIO-360 del Seneca II. Ver `alturaCritica` y
+   * `helicesContrarrotativas` en su ficha.
+   */
+  de("avion.motor-turbo", "helice", "motorTurbo", "tarjeta.corta.motorTurbo"),
   de("avion.motor-radial", "helice", "motorRadial", "tarjeta.corta.motorRadial"),
   de("avion.turbohelice", "turbohelice", "turbohelice", "tarjeta.corta.turbohelice"),
   de("avion.reactor", "reactor", "reactor", "tarjeta.corta.reactor"),
   de("avion.tren", "tren", "tren", "tarjeta.pieza.tren"),
   de("avion.tren-fijo", "tren-fijo", "trenFijo", "tarjeta.corta.trenFijo"),
   de("avion.luces", "luces", "luces", "tarjeta.luz.navegacion"),
+  /*
+   * **Y la blanca donde la lleva cada uno.** La de arriba la pone en la cola,
+   * y el JAZ 90, de la clase del E170, lleva una en el borde de salida de cada
+   * punta: «one white light at each aft wingtip position» (FAA, MMEL del
+   * ERJ-170/190, 33-43-00). La de abajo no dice en qué pieza, y es la del
+   * avión en el que no se ha podido confirmar; su voz es la de siempre, que ya
+   * decía «blanca atrás». Ver `Modelo.blanca` en `flight/flota.ts`.
+   */
+  de("avion.luces-puntas", "luces", "lucesPuntas", "tarjeta.luz.navegacion"),
+  { ...de("avion.luces-atras", "luces", "lucesAtras", "tarjeta.luz.navegacion"), voz: "tarjeta.voz.luces" },
   de("avion.luz-baliza", "baliza", "luzBaliza", "tarjeta.luz.baliza"),
   de("avion.luz-estrobos", "estrobos", "luzEstrobos", "tarjeta.luz.estroboscopicas"),
   de("avion.luz-aterrizaje", "aterrizaje", "luzAterrizaje", "tarjeta.luz.aterrizaje"),
@@ -202,7 +220,9 @@ export function explicacionDe(
             ? "avion.turbohelice"
             : a.sound.engine === "radial"
               ? "avion.motor-radial"
-              : "avion.motor-piston",
+              : a.alturaCritica !== null
+                ? "avion.motor-turbo"
+                : "avion.motor-piston",
       );
     case "tren":
       return explicacion(a.trenRetractil ? "avion.tren" : "avion.tren-fijo");
@@ -212,9 +232,22 @@ export function explicacionDe(
           ? "avion.pitot-morro"
           : "avion.pitot",
       );
+    case "luces":
+      return explicacion(lucesDe(a));
     default:
       return explicacion(`avion.${pieza}`);
   }
+}
+
+/**
+ * **Las de navegación de este avión**: con la blanca en la cola, en las
+ * puntas o, si no se sabe, solo «atrás». Lo dice `Modelo.blanca`, lo mismo
+ * que pintan el modelo y la figura de las luces.
+ */
+function lucesDe(a: Pick<AircraftConfig, "id">): ExplicacionDelAvion["id"] {
+  const m = modeloPorId(a.id);
+  if (m?.blancaSinConfirmar) return "avion.luces-atras";
+  return m?.blanca === "puntas" ? "avion.luces-puntas" : "avion.luces";
 }
 
 /**

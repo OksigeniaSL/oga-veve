@@ -270,7 +270,10 @@ def construir():
         [(-1.86, 55), (-1.86, 100), (-1.77, 102), (-1.77, 52)],
     ]), material_="oscuro", fuera=0.005, div=3)))
     for lado, nombre in ((-1, "izquierda"), (1, "derecha")):
-        # Los conos, de metal, como en su ilustración.
+        # Los conos, de metal, como en su ilustración. Y en espejo, que es lo
+        # que son: la de la izquierda gira a la derecha vista desde el asiento
+        # y la de la derecha al revés, como las del TSIO-360 y el LTSIO-360 del
+        # Seneca II. Ver `giro` y `helicesContrarrotativas` en su ficha.
         piezas += helice(f"helice-{nombre}", (lado * MOTOR, EJE, Z_HELICE),
                          radio=RADIO_HELICE, cuantas=3, buje=0.15,
                          cuerda=0.14, largo_cono=0.34, giro=lado,

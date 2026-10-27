@@ -369,8 +369,10 @@ def construir():
     # El cono, de metal y no del color de la franja: es como va en su
     # ilustración, y un cono terracota delante de un capó crema era el único
     # trozo de morro pintado de toda la flota.
+    # Y a la derecha vista desde el asiento, como la de un Lycoming: ver `giro`.
     piezas += helice("helice", (0, 0.06, -2.42), radio=0.95, cuantas=2,
-                     buje=0.17, cuerda=0.13, largo_cono=0.40, cono="aluminio")
+                     buje=0.17, cuerda=0.13, largo_cono=0.40, cono="aluminio",
+                     giro=-1)
 
     # Los flaps no atraviesan nada al bajar: ni el fuselaje ni el puntal, que
     # se clava en el ala justo por delante de ellos. Ver `flaps_libres`.

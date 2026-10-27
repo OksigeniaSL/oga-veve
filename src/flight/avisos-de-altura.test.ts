@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest";
 import {
   ALCANCE_DEL_RADIOALTIMETRO,
   AvisosDeAltura,
+  cantaPorDebajoDe,
   holguraDe,
   LA_CUENTA,
   laCuentaDe,
@@ -307,15 +308,69 @@ describe("qué cuenta lleva cada avión", () => {
       "jaz-60",
       "jaz-90",
     ]);
-    for (const a of conRadioaltimetro) expect(laCuentaDe(a), a.id).toBe(LA_CUENTA);
+    for (const a of conRadioaltimetro) expect(laCuentaDe(a).length, a.id).toBeGreaterThan(0);
   });
 
   it("y las avionetas no llevan ninguna: no hay caja que la cante", () => {
-    for (const a of AIRCRAFT.filter((x) => !x.avisosHablados))
+    for (const a of AIRCRAFT.filter((x) => !x.avisosHablados)) {
       expect(laCuentaDe(a), a.id).toEqual([]);
+      // Ni una cuenta escrita en la ficha de un avión sin caja: se contradirían.
+      expect(a.cuentaDeLaToma, a.id).toBeNull();
+    }
   });
 
-  it("es la secuencia de verdad, en pies, de dos mil quinientos a diez", () => {
+  /*
+   * **Y cada uno, la de su clase**, con la fuente en su ficha. El JAZ 90
+   * cantaba cuatrocientos y trescientos, que los E-Jets no llevan.
+   */
+  it("cada uno canta la de su clase, y no la de otro", () => {
+    const dice = (id: string) => laCuentaDe(AIRCRAFT.find((a) => a.id === id)!).map((e) => e.dice);
+    // E-Jets: Regli, *Embraer EMB190 – Summary*, p. 1-57.
+    expect(dice("jaz-90")).toEqual([
+      "twenty five hundred", "one thousand", "five hundred", "two hundred", "one hundred",
+      "fifty", "forty", "thirty", "twenty", "ten",
+    ]);
+    // 747-400: el registrador del F-GITA (BEA), anexo 4.
+    expect(dice("jaz-120")).toEqual([
+      "one thousand", "five hundred", "four hundred", "three hundred", "two hundred", "one hundred",
+      "fifty", "forty", "thirty", "twenty", "ten",
+    ]);
+    // Un TAWS de clase A: solo el de quinientos (FAA, AC 23-18).
+    expect(dice("jaz-60")).toEqual(["five hundred"]);
+    // Y siempre de más alto a más bajo, que es como los recorre la máquina.
+    for (const a of conRadioaltimetro) {
+      const m = laCuentaDe(a).map((e) => e.metros);
+      expect(m, a.id).toEqual([...m].sort((x, y) => y - x));
+    }
+  });
+
+  it("y la máquina de la toma solo canta los de su cuenta", () => {
+    const jaz90 = AIRCRAFT.find((a) => a.id === "jaz-90")!;
+    const avisos = new AvisosDeAltura(laCuentaDe(jaz90));
+    const oidos: string[] = [];
+    for (let pies = 3000; pies >= 0; pies -= 2) {
+      const a = avisos.paso(lee(pies));
+      if (a) oidos.push(a.dice);
+    }
+    expect(oidos).not.toContain("four hundred");
+    expect(oidos).not.toContain("three hundred");
+    expect(oidos).toEqual(laCuentaDe(jaz90).map((e) => e.dice));
+  });
+
+  /*
+   * **Y quién habla en los últimos metros.** Con *fifty, forty, thirty*
+   * sonando, la caja; con una cuenta que acaba en *five hundred*, la
+   * instructora, que si no ahí abajo no diría nadie «ya podés tocar».
+   */
+  it("solo la cuenta que llega abajo calla a la instructora en la toma", () => {
+    const de = (id: string) => AIRCRAFT.find((a) => a.id === id)!;
+    expect(cantaPorDebajoDe(de("jaz-90"), 18)).toBe(true);
+    expect(cantaPorDebajoDe(de("jaz-120"), 18)).toBe(true);
+    expect(cantaPorDebajoDe(de("jaz-60"), 18)).toBe(false);
+    expect(cantaPorDebajoDe(de("jaz-20"), 18)).toBe(false);
+  });
+
+  it("el menú entero de la caja, en pies, de dos mil quinientos a diez", () => {
     expect(LA_CUENTA.map((e) => [e.dice, Math.round(e.metros / PIE)])).toEqual([
       ["twenty five hundred", 2500],
       ["one thousand", 1000],
@@ -338,8 +393,9 @@ describe("qué cuenta lleva cada avión", () => {
       expect(clave, e.dice).not.toBeNull();
       expect(DE_LA_CUENTA.has(clave!), e.dice).toBe(true);
       expect(esDeUnaCaja(clave!), e.dice).toBe(true);
-      for (const a of conRadioaltimetro)
-        expect(loDiceElAvion(clave!, a), `${a.id} ${e.dice}`).toBe(true);
     }
+    for (const a of conRadioaltimetro)
+      for (const e of laCuentaDe(a))
+        expect(loDiceElAvion(claveDeCabina(e.dice)!, a), `${a.id} ${e.dice}`).toBe(true);
   });
 });
