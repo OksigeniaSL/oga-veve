@@ -94,6 +94,8 @@ describe("los puntos de la tarjeta en cada modelo", () => {
   it("cada avión explica su motor, no el de otro", () => {
     const motor = (id: string) => explicacionDe("motor", AIRCRAFT.find((a) => a.id === id)!).id;
     expect(motor("jaz-20")).toBe("avion.motor-piston");
+    // El bimotor, con los suyos: seis cilindros con turbo y hélices al revés.
+    expect(motor("jaz-40")).toBe("avion.motor-turbo");
     expect(motor("jaz-25")).toBe("avion.motor-radial");
     expect(motor("jaz-60")).toBe("avion.turbohelice");
     expect(motor("jaz-120")).toBe("avion.reactor");

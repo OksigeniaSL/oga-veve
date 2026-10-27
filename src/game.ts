@@ -1301,6 +1301,7 @@ import {
 import { apuntarVuelo, type Paso, type Vuelo } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
 import { sueloEn, TRAQUETEO, type Superficie } from "./world/superficie";
+import { signoDelGiro } from "./world/giro-de-las-helices";
 import { firmeDe } from "./world/firme";
 import { avionQueSuena, oidoDe } from "./audio/ruidos";
 import { mapaDePavimento, type Pavimento } from "./world/vegetation";
@@ -17990,6 +17991,7 @@ export class Game {
         aerofrenos: this.input.controls.aerofrenos ?? 0,
         frenosDeTierra: deTierra,
         helice: this.propellerAngle,
+        contrarrotativas: this.aircraft.helicesContrarrotativas,
         disco: (this.giroDeHelice - 20) / 25,
         carga: this.flight.state.loadFactor,
         enTierra: this.flight.state.onGround,
@@ -23777,7 +23779,8 @@ export class Game {
     for (const h of this.aircraftMesh.helices ?? [
       this.aircraftMesh.propeller,
     ]) {
-      h.rotation.z = this.propellerAngle;
+      // Cada una hacia donde gira la suya: ver `signoDelGiro`.
+      h.rotation.z = signoDelGiro(this.aircraft, h.position.x) * this.propellerAngle;
     }
 
     this.updateBlobShadow(state);

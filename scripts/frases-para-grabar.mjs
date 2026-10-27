@@ -181,7 +181,7 @@ const HABLADOS = [
     "instructor",
     "lo que explica cada punto de la tarjeta del avión",
     // Lo de cada avión va al final: ver `DE_CADA_AVION`.
-    /^tarjeta\.voz\.lucesPuntas$/,
+    /^tarjeta\.voz\.(?:lucesPuntas|motorTurbo)$/,
   ],
   /*
    * **La torre de Canarias va primero, y por eso el grupo más concreto gana.**
@@ -1926,12 +1926,14 @@ const DE_LOS_INSTRUMENTOS = [
 ];
 /**
  * **Y cada avión, como es ese avión** (27-10-2026): la tarjeta del JAZ 90,
- * que lleva la blanca en el borde de salida de cada punta y no en la cola. Al
- * final, que lo grabado no se renumera. Ver `lucesDe` en
+ * que lleva la blanca en el borde de salida de cada punta y no en la cola, y
+ * la del JAZ 40, con sus motores de turbo y sus hélices contrarrotativas. Al
+ * final, que lo grabado no se renumera. Ver `lucesDe` y `explicacionDe` en
  * `src/ui/explicaciones-del-avion.ts`.
  */
 const DE_CADA_AVION = [
   ["tarjeta.voz.lucesPuntas", "instructor", "lo que explica el punto de las luces en la tarjeta del avión que lleva la blanca en las puntas"],
+  ["tarjeta.voz.motorTurbo", "instructor", "lo que explica el punto del motor en la tarjeta del bimotor de pistón: turbo y hélices contrarrotativas"],
 ];
 const LO_QUE_SE_VE = new Set(
   [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA, ...DE_LOS_INSTRUMENTOS].map(

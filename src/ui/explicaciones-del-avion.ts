@@ -161,6 +161,13 @@ export const EXPLICACIONES_DEL_AVION: readonly ExplicacionDelAvion[] = [
   de("avion.pitot", "pitot", "pitot", "tarjeta.pieza.pitot"),
   de("avion.pitot-morro", "pitot", "pitotMorro", "tarjeta.corta.pitotMorro"),
   de("avion.motor-piston", "helice", "motorPiston", "tarjeta.corta.motorPiston"),
+  /*
+   * El del bimotor de pistón, que no es el de la avioneta: dos de seis
+   * cilindros con turbo y hélices que giran al revés una de otra, como los
+   * TSIO-360 y LTSIO-360 del Seneca II. Ver `alturaCritica` y
+   * `helicesContrarrotativas` en su ficha.
+   */
+  de("avion.motor-turbo", "helice", "motorTurbo", "tarjeta.corta.motorTurbo"),
   de("avion.motor-radial", "helice", "motorRadial", "tarjeta.corta.motorRadial"),
   de("avion.turbohelice", "turbohelice", "turbohelice", "tarjeta.corta.turbohelice"),
   de("avion.reactor", "reactor", "reactor", "tarjeta.corta.reactor"),
@@ -213,7 +220,9 @@ export function explicacionDe(
             ? "avion.turbohelice"
             : a.sound.engine === "radial"
               ? "avion.motor-radial"
-              : "avion.motor-piston",
+              : a.alturaCritica !== null
+                ? "avion.motor-turbo"
+                : "avion.motor-piston",
       );
     case "tren":
       return explicacion(a.trenRetractil ? "avion.tren" : "avion.tren-fijo");

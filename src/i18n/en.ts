@@ -2298,6 +2298,7 @@ export const EN: Dictionary = {
   "tarjeta.corta.pitotMorro": "Pitot tubes",
   "tarjeta.corta.motorPiston": "Piston engine",
   "tarjeta.corta.motorRadial": "Radial engine",
+  "tarjeta.corta.motorTurbo": "Turbocharged engine",
   "tarjeta.corta.turbohelice": "Turboprop",
   "tarjeta.corta.reactor": "Jet engine",
   "tarjeta.corta.trenFijo": "Fixed landing gear",
@@ -2325,6 +2326,8 @@ export const EN: Dictionary = {
     "Pitot tubes, one on each side of the nose: one for each pilot. Air rushes straight in, and the faster you go, the harder it pushes. That's how airspeed is measured.",
   "tarjeta.motorPiston":
     "Engine and propeller. The engine spins the propeller; its blades are little wings that push air backwards and pull the plane forwards.",
+  "tarjeta.motorTurbo":
+    "Turbocharged engines. Each wing carries a six-cylinder one, and the turbo feeds it squeezed air: that way it doesn't lose power as it climbs, until it's very high. And the two propellers turn opposite ways.",
   "tarjeta.motorRadial":
     "Radial engine. Its cylinders sit in a circle, like the points of a star, and they spin the propeller, which pulls the plane.",
   "tarjeta.turbohelice":
@@ -2377,6 +2380,8 @@ export const EN: Dictionary = {
     "This gear never folds away: it's always out. It's simpler and lighter, though it slows the plane down a little.",
   "tarjeta.voz.luces":
     "These are the navigation lights: red on the left, green on the right and white at the back. If at night you see the red and the green together, that plane is coming straight at you.",
+  "tarjeta.voz.motorTurbo":
+    "This plane has two six-cylinder engines with turbos: the turbo feeds them squeezed air, so they don't lose power as they climb, until they're very high. And look at the propellers: they turn opposite ways.",
   "tarjeta.voz.lucesPuntas":
     "These are the navigation lights: red on the left wingtip, green on the right, and on each tip, a white one facing backwards. If at night you see the red and the green together, that plane is coming straight at you.",
   "tarjeta.voz.luzBaliza":

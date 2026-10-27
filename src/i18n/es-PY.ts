@@ -3149,6 +3149,7 @@ export const ES_PY = {
   "tarjeta.corta.pitotMorro": "Tubos pitot",
   "tarjeta.corta.motorPiston": "Motor de pistón",
   "tarjeta.corta.motorRadial": "Motor radial",
+  "tarjeta.corta.motorTurbo": "Motor con turbo",
   "tarjeta.corta.turbohelice": "Turbohélice",
   "tarjeta.corta.reactor": "Reactor",
   "tarjeta.corta.trenFijo": "Tren fijo",
@@ -3169,6 +3170,8 @@ export const ES_PY = {
     "Tubos pitot, a los dos lados de la nariz: uno para cada piloto. El aire entra de frente, y cuanto más rápido, más empuja. Así se mide la velocidad.",
   "tarjeta.motorPiston":
     "Motor y hélice. El motor hace girar la hélice; sus palas son alas chiquitas que empujan el aire hacia atrás y tiran del avión hacia adelante.",
+  "tarjeta.motorTurbo":
+    "Motores con turbo. Cada ala lleva uno de seis cilindros, y el turbo le mete el aire apretado: así, al subir, no pierde fuerza hasta muy arriba. Y las dos hélices giran al revés una de la otra.",
   "tarjeta.motorRadial":
     "Motor radial. Sus cilindros van en círculo, como los rayos de una estrella, y hacen girar la hélice, que tira del avión.",
   "tarjeta.turbohelice":
@@ -3228,6 +3231,8 @@ export const ES_PY = {
     "Este tren no se guarda nunca: va siempre afuera. Es más sencillo y más liviano, aunque frena un poco al avión.",
   "tarjeta.voz.luces":
     "Estas son las luces de navegación: roja a la izquierda, verde a la derecha y blanca atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
+  "tarjeta.voz.motorTurbo":
+    "Este avión lleva dos motores de seis cilindros, con turbo: el turbo les mete el aire apretado, y así, al subir, no pierden fuerza hasta muy arriba. Y mirá las hélices: giran al revés una de la otra.",
   "tarjeta.voz.lucesPuntas":
     "Estas son las luces de navegación: roja en la punta izquierda, verde en la derecha, y en cada punta, una blanca que mira para atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
   "tarjeta.voz.luzBaliza":

@@ -1,4 +1,5 @@
 import { FLOTA, nombreEntero } from "./flota";
+import { airDensity, SEA_LEVEL_DENSITY } from "./atmosphere";
 import type { EquipoTcas } from "./tcas";
 import type { FrenosDelTipo } from "./frenada";
 import type { TardaElTren } from "./tren";
@@ -410,6 +411,14 @@ export function tieneReversa(a: AircraftConfig): boolean {
  * proyecto para el empuje de una turbina y, en primera aproximación, para la
  * potencia de un motor de pistón. Ver el ADR 0011.
  *
+ * **Y el de pistón con turbo, entero hasta su altitud crítica.** Hasta ahí el
+ * turbo le da el aire de nivel del mar y el motor da lo mismo; por encima, lo
+ * que da cae con la densidad que le queda respecto a la de esa altura, como en
+ * las curvas de su fabricante: el TSIO-360-E de la clase del JAZ 40 pasa de
+ * unos 215 hp a 12.000 pies a unos 133 a 25.000 (Continental, X30583, figura
+ * 2), y esta cuenta le deja dos tercios de los 200 de nivel del mar. Ver
+ * `alturaCritica`.
+ *
  * **Y con el aire del día**, que es lo que faltaba: el motor no sabe a qué
  * altura está, solo cuánto aire le entra, y en una tarde de calor le entra
  * menos. Ver `atmosphere.ts`.
@@ -421,12 +430,22 @@ export function tieneReversa(a: AircraftConfig): boolean {
  *
  * El de pistón sin compresor pierde, de verdad, algo más deprisa —la ley de
  * Gagg y Farrar, `σ − (1 − σ)/7,55`, le deja el 71 % a tres mil metros donde
- * esta le deja el 81 %—. No se usa aquí porque el JAZ 40 tiene su crucero a
- * 5.500 m, que es el de un bimotor con turbocompresor, y con la ley del
- * atmosférico casi no llegaría: primero hay que decidir qué motor lleva. Ver
- * el ADR 0012.
+ * esta le deja el 81 %—. No se usa aquí: el ADR 0012 lo dejó pendiente de
+ * decidir qué motor lleva el JAZ 40, y ya está decidido —el de su clase, con
+ * turbo—. La avioneta y el fumigador siguen con la de todos.
+ *
+ * Lo que no cuenta: el calor del día también le quita al de turbo —el uno por
+ * ciento cada seis grados Fahrenheit sobre la estándar de su manual—, y aquí
+ * solo se sabe la densidad, no qué parte de ella es temperatura.
  */
-export function loQueDaElMotor(_ac: AircraftConfig, sigma: number): number {
+export function loQueDaElMotor(
+  ac: Pick<AircraftConfig, "alturaCritica">,
+  sigma: number,
+): number {
+  if (ac.alturaCritica !== null) {
+    const enLaCritica = airDensity(ac.alturaCritica) / SEA_LEVEL_DENSITY;
+    return sigma >= enLaCritica ? 1 : Math.max(0, sigma) / enLaCritica;
+  }
   return Math.pow(Math.max(0, sigma), 0.7);
 }
 
@@ -642,6 +661,27 @@ export interface AircraftConfig {
    * `motores.test.ts` leyendo el guion de cada uno.
    */
   motoresA: readonly number[];
+  /**
+   * **Hasta qué altura sostiene el turbo la potencia**, m, o `null` en el
+   * motor que no lo lleva.
+   *
+   * Un motor de pistón atmosférico pierde potencia en cuanto sube, porque le
+   * entra menos aire; con turbocompresor, el turbo aprieta el aire de la
+   * admisión hasta la presión de nivel del mar y la potencia se queda donde
+   * estaba hasta su **altitud crítica**. Por encima, el turbo ya va a fondo y
+   * el motor pierde como uno atmosférico. Ver `loQueDaElMotor`.
+   */
+  alturaCritica: number | null;
+  /**
+   * **Si las hélices giran una contra otra.** Lo normal es que todas giren
+   * igual, a la derecha vistas desde el asiento —«conventional, clockwise
+   * rotation as viewed from the pilot's seat» (FAA, *Airplane Flying
+   * Handbook*, FAA-H-8083-3C, p. 13-23)—; con `true`, las de la derecha giran
+   * al revés, y el bimotor se queda **sin motor crítico**: «no engine is more
+   * critical than the other» (p. 13-24). Ver `signoDelGiro` en
+   * `world/giro-de-las-helices.ts`.
+   */
+  helicesContrarrotativas: boolean;
   /**
    * **Lo que frena un motor parado**, como área equivalente: `D = q·A`, m².
    * Ver `MotorParado`.
@@ -1226,6 +1266,8 @@ export const PYKASU: AircraftConfig = {
   // velocidad. Ver `mandos`.
   mandos: "convencionales",
   motoresA: [0],
+  alturaCritica: null,
+  helicesContrarrotativas: false,
   /*
    * La hélice de paso fijo de una avioneta de escuela, de un metro noventa: un
    * disco que en molinete frena como el del bimotor, y que no se puede poner
@@ -1372,6 +1414,8 @@ export const MAINUMBY: AircraftConfig = {
   motores: 1,
   mandos: "convencionales",
   motoresA: [0],
+  alturaCritica: null,
+  helicesContrarrotativas: false,
   // La hélice grande del radial, de paso fijo: más disco y ninguna bandera.
   motorParado: { molinete: 0.5, bandera: null, autoBandera: false },
   cruiseSpeed: 55,
@@ -1547,6 +1591,18 @@ export const PANAMBI: AircraftConfig = {
   // A dos metros cuarenta y cinco del eje, que es `MOTOR` en su modelo.
   motoresA: [-2.45, 2.45],
   /*
+   * **Dos Continental TSIO-360-E de seis cilindros, con turbo**, el de la
+   * derecha un LTSIO-360-E que gira al revés: los del Seneca II (FAA, ficha de
+   * tipo A7SO; Continental, *TSIO-360 Series Engine Operator's Manual*,
+   * X30583, 2011, sección II: seis cilindros, 200 hp a 2575 rpm, «TSIO –
+   * clockwise, LTSIO – counterclockwise»). Su figura 2, «Altitude Performance
+   * Curves L/TSIO-360-E, EB», da los 200 hp de nivel del mar sostenidos a 40
+   * pulgadas de admisión **hasta los 12.000 pies**, y por encima, a fondo,
+   * caen como los de un atmosférico.
+   */
+  alturaCritica: 12000 * 0.3048,
+  helicesContrarrotativas: true,
+  /*
    * **La hélice que se pone en bandera a mano**, que es la lección entera de
    * un motor parado en un bimotor de pistón. Treinta y cinco decímetros
    * cuadrados en molinete son los doscientos pies por minuto que cuenta el
@@ -1622,13 +1678,17 @@ export const PANAMBI: AircraftConfig = {
     motivo: "sol",
   },
   sound: {
-    // Dos cuatro cilindros. Suena a avioneta pero doble, que es exactamente
-    // lo que es, y el batido de los dos motores casi acompasados es la firma
-    // sonora de un bimotor de pistón.
+    /*
+     * **Seis cilindros, a 2575 vueltas**: los del TSIO-360-E, con su ralentí
+     * de 700 (Continental, X30583, «Tabulated Data and Limits»). Estaba como
+     * dos de cuatro, con ocho cilindros para sonar «doble»; pero dos motores
+     * a las mismas vueltas no suben la nota, la repiten: cada uno enciende
+     * tres veces por vuelta, y esa es la nota de los dos.
+     */
     engine: "piston",
-    cylinders: 8,
+    cylinders: 6,
     idleRpm: 700,
-    maxRpm: 2600,
+    maxRpm: 2575,
     growlHz: 250,
     growlRise: 300,
     /*
@@ -1720,6 +1780,8 @@ export const ARASUNU: AircraftConfig = {
   mandos: "convencionales",
   // A tres metros diez, que es `MOTOR` en su modelo.
   motoresA: [-3.1, 3.1],
+  alturaCritica: null,
+  helicesContrarrotativas: false,
   /*
    * La hélice de dos metros sesenta y cuatro: el doble de disco que la del
    * bimotor de pistón, y el doble de freno en molinete. Por eso un turbohélice
@@ -1941,6 +2003,8 @@ export const ARAI: AircraftConfig = {
   // Colgados en el quiebro del ala, a cuatro metros cuarenta: `QUIEBRO` en su
   // modelo.
   motoresA: [-4.4, 4.4],
+  alturaCritica: null,
+  helicesContrarrotativas: false,
   /*
    * Un fan en molinete, que no tiene bandera: la cuenta de Torenbeek con la
    * toma y la tobera de un motor de esta clase —de metro y pico de diámetro—
@@ -2252,6 +2316,8 @@ export const YVAGA: AircraftConfig = {
   // Los de dentro a diez sesenta y los de fuera a veinte cuarenta: `MOTORES`
   // en su modelo.
   motoresA: [-20.4, -10.6, 10.6, 20.4],
+  alturaCritica: null,
+  helicesContrarrotativas: false,
   // La misma cuenta que el JAZ 90 con un fan de más de dos metros.
   motorParado: { molinete: 0.85, bandera: null, autoBandera: false },
   cruiseSpeed: 230,
