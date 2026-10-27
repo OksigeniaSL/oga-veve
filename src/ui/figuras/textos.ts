@@ -17,6 +17,7 @@ import { t, type TranslationKey } from "../../i18n";
 import type { TextosDelMotor } from "./motor-comun";
 import type { PalabrasDelPiston, TextosDelPiston } from "./piston";
 import type { TextosDeLasLuces } from "./luces";
+import type { TextosDelTrenE170 } from "./tren-e170";
 import type { TextosDelTrenFijo } from "./tren-fijo";
 import type { TextosDelTrenRetractil } from "./tren-retractil";
 import type { PalabrasDelTurbofan } from "./turbofan";
@@ -308,6 +309,29 @@ export function textosDeLasLuces(): TextosDeLasLuces {
       taxi: dos("figura.luces.cuandoTaxi"),
     },
     grados: (grados) => t("figura.luces.grados", { grados }),
+  };
+}
+
+export function textosDelTrenE170(): TextosDelTrenE170 {
+  return {
+    dibujo: palabras("figura.trenE170", [
+      "aria", "hid", "arriba", "abajo", "eicas1", "eicas2", "eicas3", "eicas4", "aterrizar", "reversa", "frenos",
+      "loQueFrena", "aerofrenos", "sistema", "compuerta", "puerta",
+    ] as const),
+    palanca: t("figura.trenE170.palanca"),
+    aterrizar: t("figura.trenE170.aterrizar"),
+    reversa: t("figura.trenE170.reversa"),
+    frenos: t("figura.trenE170.frenos"),
+    vivo: {
+      abajo: t("figura.trenE170.vivoAbajo"),
+      arriba: t("figura.trenE170.vivoArriba"),
+      bajando: t("figura.trenE170.vivoBajando"),
+      subiendo: t("figura.trenE170.vivoSubiendo"),
+      toca: t("figura.trenE170.vivoToca"),
+      reversa: t("figura.trenE170.vivoReversa"),
+      frena: t("figura.trenE170.vivoFrena"),
+      parado: t("figura.trenE170.vivoParado"),
+    },
   };
 }
 
