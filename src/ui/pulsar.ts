@@ -77,19 +77,35 @@ function apuntar(e: PointerEvent, boton: Element, accion: () => void): void {
   pulsando.set(e.pointerId, { boton, accion, caja: boton.getBoundingClientRect() });
 }
 
-function yaAtendido(boton: Element): boolean {
+/**
+ * Si el `click` ya está atendido: el de ese botón, o **cualquiera que deja un
+ * dedo ya atendido**, caiga donde caiga, en lo que tarda en llegar.
+ *
+ * El navegador manda el clic detrás del dedo levantado, en el mismo punto y a
+ * lo que haya ahí en ese momento. Si la pulsación cambió lo de debajo, el clic
+ * le llegaba a lo nuevo: en el teléfono, tocar la losa de la velocidad del
+ * JAZ 20 ponía grande su pantalla, la pantalla grande caía justo debajo del
+ * dedo, y su propio clic —en el coordinador de virajes— la quitaba en el acto.
+ * Un gesto, una acción. Los clics sin dedo —la tecla Intro, los bancos que
+ * llaman a `click()`— traen `detail` a cero y pasan.
+ */
+function yaAtendido(boton: Element, e: MouseEvent): boolean {
   const a = atendido;
-  if (!a || a.boton !== boton) return false;
-  atendido = null;
-  return performance.now() - a.cuando < LLEGA_EL_CLICK;
+  if (!a) return false;
+  const reciente = performance.now() - a.cuando < LLEGA_EL_CLICK;
+  if (a.boton === boton) {
+    atendido = null;
+    return reciente;
+  }
+  return reciente && e.detail > 0;
 }
 
 /** **Pulsar este botón con su propio dedo.** Ver la cabecera. */
 export function alPulsar(boton: HTMLElement, accion: () => void): void {
   escucharLaVentana();
   boton.addEventListener("pointerdown", (e) => apuntar(e, boton, accion));
-  boton.addEventListener("click", () => {
-    if (!yaAtendido(boton)) accion();
+  boton.addEventListener("click", (e) => {
+    if (!yaAtendido(boton, e)) accion();
   });
 }
 
@@ -121,6 +137,6 @@ export function alPulsarDentro(
   });
   raiz.addEventListener("click", (e) => {
     const boton = elBoton(e);
-    if (boton && !yaAtendido(boton)) accion(boton);
+    if (boton && !yaAtendido(boton, e)) accion(boton);
   });
 }
