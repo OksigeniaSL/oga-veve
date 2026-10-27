@@ -37,6 +37,7 @@ import type { TranslationKey } from "../i18n";
 import { barrasDe, type Grado } from "../flight/cuaderno";
 import { INSTRUCTORA_CALLADA } from "./instructora-callada";
 import { dibujoDe, EXPLICACIONES_DEL_AVION } from "./explicaciones-del-avion";
+import { FIGURAS, figuraDe } from "./figuras/montar";
 import {
   explicacionDe,
   registrarExplicacion,
@@ -406,8 +407,12 @@ const enRincon = (
 ): readonly Explicacion[] => lista.map((e) => ({ ...e, rincon }));
 
 const DEL_CUADRO = enRincon("cuadro", [
-  { id: "velocidad", rotulo: "IAS", dibujo: { svg: VELOCIDAD }, ...claves("velocidad") },
-  { id: "altitud", rotulo: "ALT", dibujo: { svg: ALTITUD }, ...claves("altitud") },
+  /*
+   * **La velocidad y la altura, por dentro**: el pitot con su velocímetro y
+   * el altímetro con sus cápsulas, que se tocan. Ver `ui/figuras/`.
+   */
+  { id: "velocidad", rotulo: "IAS", dibujo: { svg: VELOCIDAD }, ...claves("velocidad"), figura: FIGURAS.velocidad },
+  { id: "altitud", rotulo: "ALT", dibujo: { svg: ALTITUD }, ...claves("altitud"), figura: FIGURAS.altitud },
   { id: "rumbo", rotulo: "HDG", dibujo: { svg: RUMBO }, ...claves("rumbo") },
   { id: "actitud", dibujo: { svg: ACTITUD }, ...claves("actitud") },
   { id: "variometro", rotulo: "V/S", dibujo: { svg: VARIOMETRO }, ...claves("variometro") },
@@ -561,6 +566,23 @@ const DEL_HANGAR: readonly Explicacion[] = [
 ];
 
 /**
+ * **Las del mundo**, sin rincón: lo que está fuera de la cabina y se abre
+ * tocando lo que lo representa en el vuelo. Hoy, el PAPI, que se abre tocando
+ * su tarjeta —las cuatro luces dibujadas— en la final, con su figura por
+ * dentro. Su dibujo quieto es el de la tarjeta en la senda: dos blancas y dos
+ * rojas, con el visto.
+ */
+const DEL_MUNDO: readonly Explicacion[] = [
+  {
+    id: "papi",
+    rotulo: "PAPI",
+    dibujo: { senal: "papi2" },
+    ...claves("papi"),
+    figura: FIGURAS.papi,
+  },
+];
+
+/**
  * **Los puntos de la tarjeta del avión en 3D**, en el mismo registro.
  *
  * La tarjeta los enseña en su globo, junto al punto, y así sigue. Pero hasta
@@ -571,20 +593,29 @@ const DEL_HANGAR: readonly Explicacion[] = [
  * ventana, y sin rincón: se llega a ellos desde la tarjeta o por su `id`. Ver
  * `ui/explicaciones-del-avion.ts`.
  */
-const DEL_AVION: readonly Explicacion[] = EXPLICACIONES_DEL_AVION.map((e) => ({
-  id: e.id,
-  dibujo: { svg: dibujoDe(e, "ex-avion") },
-  corta: e.corta,
-  texto: e.texto,
-  voz: e.voz,
-  ...(e.video ? { video: { src: e.video } } : {}),
-}));
+const DEL_AVION: readonly Explicacion[] = EXPLICACIONES_DEL_AVION.map((e) => {
+  /*
+   * La figura del punto, si la lleva. Qué avión la enseña lo decide la
+   * tarjeta, que es la que sabe de qué avión es: ver `figuraEnLaTarjeta`.
+   */
+  const figura = figuraDe(e.id);
+  return {
+    id: e.id,
+    dibujo: { svg: dibujoDe(e, "ex-avion") },
+    corta: e.corta,
+    texto: e.texto,
+    voz: e.voz,
+    ...(e.video ? { video: { src: e.video } } : {}),
+    ...(figura ? { figura } : {}),
+  };
+});
 
 /** Los `id` de las que trae el juego. Para las pruebas y para el banco. */
 export const DE_SERIE: readonly string[] = [
   ...DEL_CUADRO,
   ...CURIOSIDADES,
   ...DEL_HANGAR,
+  ...DEL_MUNDO,
   ...DEL_AVION,
 ].map((e) => e.id);
 
@@ -593,7 +624,7 @@ export const DE_SERIE: readonly string[] = [
  * está —porque alguien la afinó después—, no se pisa.
  */
 export function ponerLasDeSerie(): void {
-  for (const e of [...DEL_CUADRO, ...CURIOSIDADES, ...DEL_HANGAR, ...DEL_AVION]) {
+  for (const e of [...DEL_CUADRO, ...CURIOSIDADES, ...DEL_HANGAR, ...DEL_MUNDO, ...DEL_AVION]) {
     if (explicacionDe(e.id)) continue;
     registrarExplicacion(
       SIN_RINCON.has(e.id) ? { ...e, rincon: undefined } : e,

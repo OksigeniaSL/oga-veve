@@ -1,0 +1,156 @@
+/*
+ * El PAPI por dentro: la hoja de la figura, toda bajo `.fig-papi` para que no
+ * pise al juego ni el juego a ella. Ver `papi.ts`.
+ *
+ * Las primeras reglas, las de `.iso`, son la hoja isométrica de Anatomy
+ * (https://github.com/wheresryan22/anatomy), © 2026 Ryan, con licencia MIT:
+ * el aviso entero está en CREDITOS.md. Van con las tintas del manual encima.
+ *
+ * Las letras crecen por el ancho de la figura (`@container figura`) y no por
+ * el de la pantalla: ver `.explica__figura` en style.css.
+ */
+.fig-papi .iso {
+  --anatomy-page:#0b0b0b;--anatomy-card:#131313;--anatomy-text:#a3a3a3;--anatomy-strong:#e6e6e6;--anatomy-muted:#6e6e6e;
+  --anatomy-paper:#131313;--anatomy-face:#1b1b1b;--anatomy-top:#1c1c1c;
+  --anatomy-shade-0:#0f0f0f;--anatomy-shade-1:#121212;--anatomy-shade-2:#151515;--anatomy-shade-3:#181818;
+  --anatomy-lit-top:#262626;--anatomy-lit-shade:#1d1d1d;
+  --anatomy-hi:#d4d4d4;--anatomy-mid:#6a6a6a;--anatomy-lo:#3e3e3e;--anatomy-faint:#2a2a2a;--anatomy-lit:#ffffff;
+  --anatomy-halo:#050505;--anatomy-halo-opacity:.9;--anatomy-dot:#e6e6e6;
+  --anatomy-red:#ff6b6b;--anatomy-green:#6be0a0;--anatomy-blue:#6b9bff;
+  --anatomy-weight:.6px;--anatomy-ease:cubic-bezier(.32,.72,0,1);
+  --anatomy-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --anatomy-lift:inset 0 1px 0 0 #ffffff0a,inset 0 0 0 1px #ffffff06,0 0 0 1px #00000026,0 1px 1px -.5px #00000014,0 3px 3px -1.5px #00000014,0 6px 6px -3px #00000014,0 12px 12px -6px #00000014;
+}
+.fig-papi .iso-svg {display:block;width:100%;height:auto;overflow:visible}
+.fig-papi .iso-svg path, .fig-papi .iso-svg circle {vector-effect:non-scaling-stroke}
+.fig-papi .iso-fill {fill:var(--anatomy-paper);stroke:none}
+.fig-papi .iso-solid[data-lit]>.iso-fill {fill:var(--anatomy-face)}
+.fig-papi .iso-shade, .fig-papi .iso-top {stroke:none}
+.fig-papi .iso-shade[data-shade="0"] {fill:var(--anatomy-shade-0)}
+.fig-papi .iso-shade[data-shade="1"] {fill:var(--anatomy-shade-1)}
+.fig-papi .iso-shade[data-shade="2"] {fill:var(--anatomy-shade-2)}
+.fig-papi .iso-shade[data-shade="3"] {fill:var(--anatomy-shade-3)}
+.fig-papi .iso-top {fill:var(--anatomy-top)}
+.fig-papi .iso-solid[data-lit]>.iso-top {fill:var(--anatomy-lit-top)}
+.fig-papi .iso-solid[data-lit]>.iso-shade {fill:var(--anatomy-lit-shade)}
+.fig-papi .iso-solid[data-seamless]>.iso-shade, .fig-papi .iso-solid[data-seamless]>.iso-top {stroke-width:.4;stroke-linejoin:round}
+.fig-papi .iso-solid[data-seamless]>.iso-shade[data-shade="0"] {stroke:var(--anatomy-shade-0)}
+.fig-papi .iso-solid[data-seamless]>.iso-shade[data-shade="1"] {stroke:var(--anatomy-shade-1)}
+.fig-papi .iso-solid[data-seamless]>.iso-shade[data-shade="2"] {stroke:var(--anatomy-shade-2)}
+.fig-papi .iso-solid[data-seamless]>.iso-shade[data-shade="3"] {stroke:var(--anatomy-shade-3)}
+.fig-papi .iso-solid[data-seamless]>.iso-top {stroke:var(--anatomy-top)}
+.fig-papi .iso-solid[data-seamless][data-lit]>.iso-top {stroke:var(--anatomy-lit-top)}
+.fig-papi .iso-solid[data-seamless][data-lit]>.iso-shade {stroke:var(--anatomy-lit-shade)}
+.fig-papi .iso-solid[data-lit]>.iso-edge {stroke:var(--anatomy-lit)}
+.fig-papi .iso-halo {fill:var(--anatomy-halo);stroke:none;filter:blur(9px);opacity:var(--anatomy-halo-opacity);transform:translateY(3px)}
+.fig-papi .iso-line {fill:none;stroke:var(--anatomy-lo);stroke-width:var(--anatomy-weight);stroke-linecap:round;stroke-linejoin:round}
+.fig-papi .iso-line[data-tone="hi"] {stroke:var(--anatomy-hi)}
+.fig-papi .iso-line[data-tone="mid"] {stroke:var(--anatomy-mid)}
+.fig-papi .iso-line[data-tone="lo"] {stroke:var(--anatomy-lo)}
+.fig-papi .iso-line[data-tone="faint"] {stroke:var(--anatomy-faint)}
+.fig-papi .iso-line[data-tone="lit"] {stroke:var(--anatomy-lit)}
+.fig-papi .iso-line[data-tone="red"] {stroke:var(--anatomy-red)}
+.fig-papi .iso-line[data-tone="green"] {stroke:var(--anatomy-green)}
+.fig-papi .iso-line[data-tone="blue"] {stroke:var(--anatomy-blue)}
+.fig-papi .iso-line[data-dotted] {stroke-dasharray:.01 3.5;stroke-width:1}
+.fig-papi .iso-line[data-dashed] {stroke-dasharray:3 3}
+.fig-papi .iso-wire-end {fill:var(--anatomy-paper);stroke:var(--anatomy-lo);stroke-width:var(--anatomy-weight)}
+.fig-papi .iso-wire[data-tone="hi"] .iso-wire-end {stroke:var(--anatomy-hi)}
+.fig-papi .iso-wire[data-tone="mid"] .iso-wire-end {stroke:var(--anatomy-mid)}
+.fig-papi .iso-wire[data-tone="faint"] .iso-wire-end {stroke:var(--anatomy-faint)}
+.fig-papi .iso-wire[data-tone="lit"] .iso-wire-end {stroke:var(--anatomy-lit)}
+.fig-papi .iso-dots circle {fill:var(--anatomy-dot);stroke:none;opacity:.32}
+.fig-papi .iso-dots[data-tone="hi"] circle {opacity:.85}
+.fig-papi .iso-dots[data-tone="mid"] circle {opacity:.45}
+.fig-papi .iso-dots[data-tone="lo"] circle {opacity:.22}
+.fig-papi .iso-dots[data-tone="faint"] circle {opacity:.12}
+.fig-papi .iso-face-text {fill:var(--anatomy-mid);font-family:var(--anatomy-mono);letter-spacing:.04em}
+.fig-papi .iso-face-text[data-tone="hi"] {fill:var(--anatomy-hi)}
+.fig-papi .iso-face-text[data-tone="lo"] {fill:var(--anatomy-lo)}
+.fig-papi .iso-face-text[data-tone="faint"] {fill:var(--anatomy-faint)}
+.fig-papi .tb-body {fill:var(--anatomy-shade-2);stroke:none}
+.fig-papi .tb-shine {fill:var(--anatomy-top);stroke:none}
+.fig-papi .tb-shade {fill:var(--anatomy-shade-0);stroke:none}
+.fig-papi .tb-ring {fill:none;stroke:var(--anatomy-lo);stroke-width:.45;stroke-linecap:butt;stroke-linejoin:round}
+.fig-papi .tb-ring[data-tone="mid"] {stroke:var(--anatomy-mid)}
+.fig-papi .tb-ring[data-tone="faint"] {stroke:var(--anatomy-faint)}
+.fig-papi .tb-ring[data-tone="hi"] {stroke:var(--anatomy-hi)}
+.fig-papi { --pp-papel: #f3efe3; --pp-panel: #f8f5ec; --pp-tinta: #2e537a; --pp-tinta-2: #22302a; --pp-tinta-suave: #8ea3b8;
+  --pp-rojo: #b3261e; --pp-luz-blanca: #fffaf0; --pp-luz-roja: #9b1c14; --pp-senda: #c4239f;
+  --pp-letra: "Barlow Semi Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  --pp-cifras: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); padding: 10px; border-radius: 12px; background: var(--pp-papel); }
+@container figura (min-width: 640px) {
+  .fig-papi { grid-template-columns: minmax(0, 1.67fr) minmax(0, 1fr); }
+  .fig-papi .pp-v-profile { grid-row: span 2; align-self: center; }
+  .fig-papi .pp-v-exploded { grid-column: 1 / -1; }
+}
+.fig-papi .pp-svg { display: block; width: 100%; height: auto; }
+.fig-papi .pp-v-profile { touch-action: none; cursor: ns-resize; }
+.fig-papi .pp-paper { fill: var(--pp-papel); }
+.fig-papi .pp-panel { fill: var(--pp-panel); stroke: var(--pp-tinta); stroke-width: 1.4; }
+.fig-papi .pp-band { stroke: none; }
+.fig-papi .pp-band--0 { fill: #fbf9f2; } .fig-papi .pp-band--1 { fill: #f4e6dc; } .fig-papi .pp-band--2 { fill: #ecd3c8; }
+.fig-papi .pp-band--3 { fill: #e4bdb1; } .fig-papi .pp-band--4 { fill: #d9a596; }
+.fig-papi .pp-band--2 { stroke: var(--pp-tinta); stroke-width: .6; stroke-dasharray: 2 3; }
+.fig-papi .pp-mini circle { stroke: var(--pp-tinta-2); stroke-width: .9; }
+.fig-papi .pp-w { fill: var(--pp-luz-blanca); } .fig-papi .pp-r { fill: var(--pp-luz-roja); }
+.fig-papi .pp-cut { stroke: var(--pp-tinta); stroke-width: 1.1; fill: none; }
+.fig-papi .pp-path { stroke: var(--pp-senda); stroke-width: 2.2; stroke-dasharray: 9 5; fill: none; }
+.fig-papi .pp-ground { stroke: var(--pp-tinta-2); stroke-width: 1.6; }
+.fig-papi .pp-hatch { stroke: var(--pp-tinta-suave); stroke-width: .9; fill: none; }
+.fig-papi .pp-runway { fill: var(--pp-tinta-2); }
+.fig-papi .pp-thr { stroke: var(--pp-papel); stroke-width: 1.6; }
+.fig-papi .pp-box rect { fill: var(--pp-panel); stroke: var(--pp-tinta); stroke-width: 1.4; }
+.fig-papi .pp-box path { stroke: var(--pp-tinta); stroke-width: 1.4; }
+.fig-papi .pp-box circle { fill: var(--pp-rojo); }
+.fig-papi .pp-rail { stroke: var(--pp-tinta-suave); stroke-width: 1; stroke-dasharray: 3 4; }
+.fig-papi .pp-plane { cursor: grab; outline: none; }
+.fig-papi .pp-plane:active { cursor: grabbing; }
+.fig-papi .pp-grip { fill: transparent; stroke: var(--pp-rojo); stroke-width: 0; }
+.fig-papi .pp-plane:focus-visible .pp-grip { stroke-width: 2.5; }
+.fig-papi .pp-ac { fill: var(--pp-panel); stroke: var(--pp-tinta-2); stroke-width: 1.5; stroke-linejoin: round; }
+.fig-papi .pp-ac-line { stroke: var(--pp-tinta-2); stroke-width: 1.2; }
+.fig-papi .pp-eye { fill: var(--pp-rojo); }
+.fig-papi .pp-sky { fill: #e8eef0; } .fig-papi .pp-land { fill: #e9e4cf; }
+.fig-papi .pp-rwy { fill: #6d6f6a; stroke: var(--pp-tinta-2); stroke-width: 1.2; }
+.fig-papi .pp-rwy-c { stroke: var(--pp-papel); stroke-width: 2; }
+.fig-papi .pp-frame { fill: none; stroke: var(--pp-tinta-2); stroke-width: 5; stroke-linejoin: round; }
+.fig-papi .pp-glare { stroke: #ffffff; stroke-width: 2; opacity: .6; }
+.fig-papi .pp-light-bar { stroke: var(--pp-tinta-2); stroke-width: 3; }
+.fig-papi .pp-halo { fill: var(--pp-luz-blanca); opacity: .55; }
+.fig-papi .pp-lamp { fill: var(--pp-luz-blanca); stroke: var(--pp-tinta-2); stroke-width: 1.6; }
+.fig-papi .pp-light[data-red] .pp-halo { fill: #e0715f; opacity: .35; }
+.fig-papi .pp-light[data-red] .pp-lamp { fill: var(--pp-luz-roja); }
+.fig-papi .pp-chip { fill: var(--pp-panel); stroke: var(--pp-tinta); stroke-width: 1.2; }
+.fig-papi .pp-txt { font-family: var(--pp-letra); fill: var(--pp-tinta-2); }
+.fig-papi .pp-word { font-size: 22px; font-weight: 600; }
+.fig-papi .pp-angle, .fig-papi .pp-ang { font-family: var(--pp-cifras); font-weight: 600; font-variant-numeric: tabular-nums; }
+.fig-papi .pp-angle { font-size: 20px; fill: var(--pp-tinta); }
+.fig-papi .pp-ang { font-size: 19px; fill: var(--pp-tinta); paint-order: stroke; stroke: var(--pp-panel); stroke-width: 3px; }
+.fig-papi .pp-note { font-size: 17px; font-style: italic; fill: var(--pp-tinta); }
+.fig-papi .pp-path-label { font-size: 18px; font-weight: 600; fill: #95187a; paint-order: stroke; stroke: var(--pp-panel); stroke-width: 3px; }
+.fig-papi .pp-callout circle { fill: var(--pp-rojo); }
+.fig-papi .pp-callout path { stroke: var(--pp-rojo); stroke-width: 1.2; fill: none; }
+.fig-papi .pp-call { font-size: 20px; font-weight: 600; fill: var(--pp-rojo); paint-order: stroke; stroke: var(--pp-panel); stroke-width: 3px; }
+.fig-papi .pp-quad { fill: none; stroke: var(--pp-tinta); stroke-width: 1; }
+.fig-papi .pp-quad-tick { stroke: var(--pp-tinta); stroke-width: .7; }
+.fig-papi .pp-quad-needle { stroke: var(--pp-rojo); stroke-width: 1.2; }
+.fig-papi .pp-quad-hub { fill: var(--pp-rojo); }
+.fig-papi .pp-bulb { fill: #fff7d6; stroke: var(--pp-tinta); stroke-width: 1.1; }
+.fig-papi .pp-filter-frame { fill: var(--pp-panel); stroke: var(--pp-tinta); stroke-width: 1.2; }
+.fig-papi .pp-filter-red { fill: #c0392b; opacity: .85; }
+.fig-papi .pp-filter-clear { fill: #dfe9ee; }
+.fig-papi .pp-ray { fill: none; stroke: var(--pp-rojo); stroke-width: 1.3; stroke-dasharray: 5 3; }
+.fig-papi .pp-row-bg { fill: transparent; stroke: none; }
+.fig-papi .pp-row[data-on] .pp-row-bg { fill: #e8eef3; stroke: var(--pp-tinta); stroke-width: 1.4; }
+.fig-papi .pp-key-light { stroke: var(--pp-tinta-2); stroke-width: 1.2; }
+.fig-papi .pp-key-path { stroke: var(--pp-senda); stroke-width: 1.6; stroke-dasharray: 4 3; }
+.fig-papi .pp-key-word { font-size: 18px; font-weight: 600; }
+.fig-papi .pp-key-range { font-family: var(--pp-cifras); font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; fill: var(--pp-tinta); }
+@container figura (max-width: 639px) { .fig-papi .pp-call { font-size: 36px; stroke-width: 5px; } .fig-papi .pp-v-exploded .pp-note { font-size: 30px; } }
+.fig-papi[data-edad="guyrami"] .pp-age2, .fig-papi[data-edad="guyrami"] .pp-age3, .fig-papi[data-edad="tuka"] .pp-age3 { display: none; }
+.fig-papi .iso { --anatomy-paper: #f8f5ec; --anatomy-face: #fbf9f2; --anatomy-top: #fdfcf7; --anatomy-shade-0: #e3dccb; --anatomy-shade-1: #e9e3d4;
+  --anatomy-shade-2: #efeadf; --anatomy-shade-3: #f5f1e7; --anatomy-lit-top: #ffffff; --anatomy-lit-shade: #f0ebdf;
+  --anatomy-hi: #2e537a; --anatomy-mid: #4f6e8e; --anatomy-lo: #7f97ae; --anatomy-faint: #b8c6d3; --anatomy-lit: #b3261e;
+  --anatomy-halo: #8a7f60; --anatomy-halo-opacity: .25; --anatomy-weight: 1.1px; }

@@ -1,0 +1,134 @@
+/*
+ * La hoja de la figura, toda bajo `.fig-mandos` para que no pise al juego ni el
+ * juego a ella. Ver `mandos.ts`. Las letras crecen por el ancho de la figura
+ * (`@container figura`) y no por el de la pantalla: ver `.explica__figura` en
+ * style.css.
+ */
+.fig-mandos { --in-papel: #f3efe3; --in-panel: #f8f5ec; --in-tinta: #2e537a; --in-tinta-2: #22302a; --in-tinta-suave: #8ea3b8;
+  --in-rojo: #b3261e; --in-total: #c2541f; --in-estatica: #2e537a; --in-hielo: #dff1fb;
+  --in-letra: "Barlow Semi Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  --in-cifras: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif; }
+.fig-mandos .in-panel { fill: var(--in-panel); stroke: var(--in-tinta); stroke-width: 1.4; }
+.fig-mandos .in-txt { font-family: var(--in-letra); fill: var(--in-tinta-2); }
+.fig-mandos .in-ac { fill: var(--in-panel); stroke: var(--in-tinta-2); stroke-width: 1.5; stroke-linejoin: round; }
+.fig-mandos .in-ac-glass { fill: #dfe8ee; stroke: var(--in-tinta-2); stroke-width: 1.2; stroke-linejoin: round; }
+.fig-mandos .in-ac-line { fill: none; stroke: var(--in-tinta-2); stroke-width: 1.5; stroke-linecap: round; }
+.fig-mandos .in-ac-prop { fill: var(--in-tinta-suave); opacity: .55; }
+.fig-mandos .in-ac-pitot { fill: none; stroke: var(--in-tinta-2); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.fig-mandos .in-wall--0 { fill: #d9d2bf; } .fig-mandos .in-wall--1 { fill: #e3ddcd; } .fig-mandos .in-wall--2 { fill: #ece7da; } .fig-mandos .in-wall--3 { fill: #f4f0e6; }
+.fig-mandos .in-inner--0 { fill: #b9b19c; } .fig-mandos .in-inner--1 { fill: #c6bfab; } .fig-mandos .in-inner--2 { fill: #d2ccba; } .fig-mandos .in-inner--3 { fill: #dcd6c6; }
+.fig-mandos .in-wall, .fig-mandos .in-inner { stroke: none; }
+.fig-mandos .in-backplate { fill: #cfc8b4; stroke: var(--in-tinta); stroke-width: 1; }
+.fig-mandos .in-cutface { fill: url(#fig-in-hatch); stroke: var(--in-tinta); stroke-width: 1; }
+.fig-mandos .in-cutline, .fig-mandos .in-rim { fill: none; stroke: var(--in-tinta); stroke-width: 1.3; }
+.fig-mandos .in-bezel { fill: #3b4643; stroke: none; }
+.fig-mandos .in-face { fill: #22302a; stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-mandos .in-ring { stroke: var(--in-tinta); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.fig-mandos .in-ring--cresta { fill: #ecd09a; } .fig-mandos .in-ring--valle { fill: #c49a55; }
+.fig-mandos .in-web { fill: #b8914f; stroke: var(--in-tinta); stroke-width: .8; }
+.fig-mandos .in-corr { fill: none; stroke: #9c7a3c; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.fig-mandos .in-boss { fill: var(--in-tinta-2); }
+.fig-mandos .in-dial-rim { fill: #3b4643; }
+.fig-mandos .in-dial { fill: #22302a; }
+.fig-mandos .in-ticks { stroke: var(--in-papel); stroke-width: 2; stroke-linecap: round; fill: none; }
+.fig-mandos .in-num { font-family: var(--in-cifras); font-weight: 600; font-size: 21px; fill: var(--in-papel); }
+.fig-mandos .in-unit { font-family: var(--in-letra); font-weight: 600; font-size: 15px; fill: var(--in-papel); letter-spacing: .08em; }
+.fig-mandos .in-arc { fill: none; stroke-linecap: butt; }
+.fig-mandos .in-arc--blanco { stroke: #f3efe3; } .fig-mandos .in-arc--verde { stroke: #3fa65e; } .fig-mandos .in-arc--amarillo { stroke: #e9b52b; }
+.fig-mandos .in-redline { stroke: #e2453a; stroke-width: 5; stroke-linecap: butt; }
+.fig-mandos .in-needle { fill: #f3efe3; stroke: #0f1714; stroke-width: 1; stroke-linejoin: round; }
+.fig-mandos .in-hub { fill: #3b4643; stroke: #f3efe3; stroke-width: 1.5; }
+.fig-mandos .in-track { stroke: var(--in-tinta-2); stroke-width: 12; stroke-linecap: round; }
+.fig-mandos .in-track-slot { stroke: #6b7a72; stroke-width: 4; stroke-linecap: round; }
+.fig-mandos .in-chev { fill: none; stroke: var(--in-tinta); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.fig-mandos .in-knob { cursor: ew-resize; outline: none; }
+.fig-mandos .in-grip { fill: transparent; stroke: var(--in-rojo); stroke-width: 0; }
+.fig-mandos .in-knob:focus-visible .in-grip { stroke-width: 2.5; }
+.fig-mandos .in-shaft { stroke: #9aa6a0; stroke-width: 6; stroke-linecap: round; }
+.fig-mandos .in-knob-ball { fill: #1c2420; stroke: #000; stroke-width: 1; }
+.fig-mandos .in-knob-hi { fill: #ffffff; opacity: .35; }
+.fig-mandos .in-staff { stroke: #6b7a72; stroke-width: 2.2; }
+.fig-mandos .in-sector { fill: #d9b46a; stroke: var(--in-tinta-2); stroke-width: .5; }
+.fig-mandos .in-teeth { fill: #b78f3f; }
+.fig-mandos .in-tail { stroke: var(--in-tinta-2); stroke-width: 1.6; }
+.fig-mandos .in-pivot, .fig-mandos .in-pin { fill: var(--in-tinta-2); }
+.fig-mandos .in-pinion { fill: #d9b46a; stroke: var(--in-tinta-2); stroke-width: .5; }
+.fig-mandos .in-pinion-teeth { stroke: #b78f3f; stroke-width: 1.2; }
+.fig-mandos .in-lever { fill: none; stroke: var(--in-tinta-2); stroke-width: 2.2; stroke-linecap: round; }
+.fig-mandos .in-face-ticks { stroke: var(--in-papel); stroke-width: .9; }
+.fig-mandos .in-screw { fill: #9aa6a0; stroke: #22302a; stroke-width: .6; }
+.fig-mandos .in-glare { fill: none; stroke: #ffffff; stroke-width: 1.6; opacity: .35; vector-effect: non-scaling-stroke; }
+.fig-mandos .in-chip { fill: var(--in-panel); stroke: var(--in-tinta); stroke-width: 1.3; }
+.fig-mandos .in-callout circle { fill: var(--in-rojo); }
+.fig-mandos .in-callout path { stroke: var(--in-rojo); stroke-width: 1.3; fill: none; }
+.fig-mandos .in-call { font-family: var(--in-letra); font-size: 19px; font-weight: 600; fill: var(--in-rojo); paint-order: stroke; stroke: var(--in-panel); stroke-width: 4px; stroke-linejoin: round; }
+.fig-mandos { display: block; width: 100%; padding: 6px; border-radius: 12px; background: var(--in-papel); box-sizing: border-box;
+  --ma-al: #c2541f; --ma-el: #2e537a; --ma-ru: #2f7a48; --ma-al-t: #f3dccd; --ma-el-t: #d6e1ec; --ma-ru-t: #d4e8da;
+  --ma-al-x: #a8431a; --ma-ru-x: #276a3d; }
+.fig-mandos .ma-svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; }
+.fig-mandos .ph-body { fill: var(--in-panel); fill-opacity: .7; stroke: none; }
+.fig-mandos .ph-glass { fill: #dfe8ee; fill-opacity: .8; stroke: none; }
+.fig-mandos .ph-edge { fill: none; stroke: var(--in-tinta-2); stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; }
+.fig-mandos .ph-wing { fill: var(--in-panel); fill-opacity: .82; stroke: var(--in-tinta-2); stroke-width: 1.3; stroke-linejoin: round; }
+.fig-mandos .ph-wing-side { fill: #ddd6c3; stroke: var(--in-tinta-2); stroke-width: 1; stroke-linejoin: round; }
+.fig-mandos .ph-panel { fill: none; stroke: var(--in-tinta-suave); stroke-width: 1; }
+.fig-mandos .ph-tail { fill: var(--in-panel); fill-opacity: .9; stroke: var(--in-tinta-2); stroke-width: 1.3; stroke-linejoin: round; }
+.fig-mandos .ph-strut, .fig-mandos .ph-leg { fill: none; stroke: var(--in-tinta-2); stroke-width: 2; stroke-linecap: round; }
+.fig-mandos .ph-tyre { fill: #3b4643; stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-mandos .ph-prop { stroke: var(--in-tinta-suave); stroke-width: 3; stroke-linecap: round; }
+.fig-mandos .ph-surf { stroke: var(--in-tinta-2); stroke-width: 1.3; stroke-linejoin: round; }
+.fig-mandos .ph-surf--al { fill: var(--ma-al-t); } .fig-mandos .ph-surf--el { fill: var(--ma-el-t); } .fig-mandos .ph-surf--ru { fill: var(--ma-ru-t); }
+.fig-mandos[data-on~="al"] .ph-surf--al { fill: var(--ma-al); } .fig-mandos[data-on~="el"] .ph-surf--el { fill: var(--ma-el); } .fig-mandos[data-on~="ru"] .ph-surf--ru { fill: var(--ma-ru); }
+.fig-mandos .ph-tab { fill: var(--in-tinta-2); stroke: none; }
+.fig-mandos .ph-circ--al .ph-cable, .fig-mandos .ph-circ--al .ph-link, .fig-mandos .ph-circ--al .ph-bead, .fig-mandos .ph-circ--al .ph-arrow { stroke: var(--ma-al); }
+.fig-mandos .ph-circ--el .ph-cable, .fig-mandos .ph-circ--el .ph-link, .fig-mandos .ph-circ--el .ph-bead, .fig-mandos .ph-circ--el .ph-arrow { stroke: var(--ma-el); }
+.fig-mandos .ph-circ--ru .ph-cable, .fig-mandos .ph-circ--ru .ph-link, .fig-mandos .ph-circ--ru .ph-bead, .fig-mandos .ph-circ--ru .ph-arrow { stroke: var(--ma-ru); }
+.fig-mandos .ph-cable { fill: none; stroke-width: 1.8; stroke-linejoin: round; }
+.fig-mandos .ph-link { fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.fig-mandos .ph-bead { fill: none; stroke-width: 4.6; stroke-linecap: round; }
+.fig-mandos .ph-pulleys circle { fill: var(--in-panel); stroke: var(--in-tinta-2); stroke-width: 1.2; }
+.fig-mandos .ph-yoke { fill: none; stroke: var(--in-tinta-2); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.fig-mandos .ph-pedals { fill: var(--ma-ru); stroke: var(--in-tinta-2); stroke-width: .8; }
+.fig-mandos .ph-arrow { fill: none; stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
+.fig-mandos .pv-bg { fill: #ece6d6; stroke: var(--in-tinta); stroke-width: 1.2; }
+.fig-mandos .pv-panel { fill: #3b4643; }
+.fig-mandos .pv-dial { fill: #22302a; stroke: #9aa6a0; stroke-width: 1.2; }
+.fig-mandos .pv-dial-n { stroke: var(--in-papel); stroke-width: 1.6; stroke-linecap: round; }
+.fig-mandos .pv-floor { stroke: var(--in-tinta-suave); stroke-width: 2; stroke-linecap: round; }
+.fig-mandos .pv-shaft { fill: var(--ma-el); stroke: var(--in-tinta-2); stroke-width: 1; }
+.fig-mandos .pv-wheel { fill: #2a3330; stroke: var(--ma-al); stroke-width: 2.4; stroke-linejoin: round; }
+.fig-mandos .pv-hub { fill: #3b4643; stroke: #0f1714; stroke-width: 1; }
+.fig-mandos .pv-emblem { fill: var(--in-papel); }
+.fig-mandos .pv-pedal { fill: #4b5752; stroke: var(--ma-ru); stroke-width: 2.4; stroke-linejoin: round; }
+.fig-mandos .pv-pedal-grip { stroke: #8d9a93; stroke-width: 2; stroke-linecap: round; }
+.fig-mandos .pv-pedal-arm { stroke: #4b5752; stroke-width: 6; stroke-linecap: round; }
+.fig-mandos .ma-k { outline: none; }
+.fig-mandos [data-in="k-turn"], .fig-mandos [data-in="k-pedal"] { cursor: grab; }
+.fig-mandos .ma-hit { fill: transparent; }
+.fig-mandos .ma-ring { fill: none; stroke: var(--in-rojo); stroke-width: 2.6; stroke-dasharray: 6 4; opacity: 0; }
+.fig-mandos .ma-k:focus-visible .ma-ring { opacity: 1; }
+.fig-mandos .bs-sky { fill: #e9eff0; }
+.fig-mandos .bs-ground { fill: #d9cfae; }
+.fig-mandos .bs-furrow { stroke: #c4b893; stroke-width: 1.4; fill: none; }
+.fig-mandos .bs-cloud { fill: #ffffff; stroke: #c3cfd4; stroke-width: 1.2; }
+.fig-mandos .bs-frame { fill: none; stroke: var(--in-tinta); stroke-width: 1.2; }
+.fig-mandos .bs-f { stroke: var(--in-tinta-2); stroke-width: .8; stroke-linejoin: round; }
+.fig-mandos .bs-t0 { fill: #b9b19c; } .fig-mandos .bs-t1 { fill: #d2ccba; } .fig-mandos .bs-t2 { fill: #e7e2d4; } .fig-mandos .bs-t3 { fill: #f7f3ea; }
+.fig-mandos .bs-g.bs-t0, .fig-mandos .bs-g.bs-t1 { fill: #8fa6b3; } .fig-mandos .bs-g.bs-t2, .fig-mandos .bs-g.bs-t3 { fill: #b6c8d2; }
+.fig-mandos .bs-s { fill: var(--in-tinta-2); }
+.fig-mandos .bs-axis { fill: none; stroke-width: 2; stroke-dasharray: 6 4; stroke-linecap: round; }
+.fig-mandos .bs-axis--al { stroke: var(--ma-al); stroke-dasharray: 10 5; } .fig-mandos .bs-axis--el { stroke: var(--ma-el); stroke-dasharray: 2.5 4; } .fig-mandos .bs-axis--ru { stroke: var(--ma-ru); stroke-dasharray: 10 4 2.5 4; }
+.fig-mandos .bs-key { stroke-width: 2.6; }
+.fig-mandos .bs-lab { font-size: 16px; font-weight: 600; paint-order: stroke; stroke: #e9eff0; stroke-width: 4px; stroke-linejoin: round; }
+.fig-mandos .bs-lab--al { fill: var(--ma-al-x); } .fig-mandos .bs-lab--el { fill: var(--ma-el); } .fig-mandos .bs-lab--ru { fill: var(--ma-ru-x); }
+.fig-mandos .ma-word { font-size: 18px; font-weight: 600; }
+.fig-mandos[data-edad="guyrami"] .in-age2, .fig-mandos[data-edad="guyrami"] .in-age3, .fig-mandos[data-edad="tuka"] .in-age3 { display: none; }
+.fig-mandos[data-edad="taguato"] .ma-chipg { display: none; }
+.fig-mandos[data-foco="alerones"] :is(.ph-circ--el, .ph-circ--ru, .ph-surf--el, .ph-surf--ru, .bs-axis--el, .bs-axis--ru, .bs-lab--el, .bs-lab--ru, .ma-c-el, .ma-c-ru),
+.fig-mandos[data-foco="profundidad"] :is(.ph-circ--al, .ph-circ--ru, .ph-surf--al, .ph-surf--ru, .bs-axis--al, .bs-axis--ru, .bs-lab--al, .bs-lab--ru, .ma-c-al, .ma-c-ru),
+.fig-mandos[data-foco="timon"] :is(.ph-circ--al, .ph-circ--el, .ph-surf--al, .ph-surf--el, .bs-axis--al, .bs-axis--el, .bs-lab--al, .bs-lab--el, .ma-c-al, .ma-c-el) { opacity: .28; }
+@container figura (max-width: 440px) {
+  .fig-mandos .in-call { font-size: 22px; stroke-width: 5px; }
+  .fig-mandos .bs-lab { font-size: 19px; }
+  .fig-mandos .ma-word { font-size: 21px; }
+}

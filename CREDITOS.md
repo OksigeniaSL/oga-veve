@@ -323,6 +323,31 @@ matriz galáctica de la IAU—, escritas en `src/world/cielo-de-noche.ts`.
 | [Vite](https://vitejs.dev)                     | Bundler y servidor de desarrollo | MIT        |
 | [TypeScript](https://www.typescriptlang.org)   | Lenguaje                         | Apache-2.0 |
 | [Vitest](https://vitest.dev)                   | Tests                            | MIT        |
+| [Anatomy](https://github.com/wheresryan22/anatomy), de Ryan | La hoja de estilo isométrica (`iso.css`) que va dentro del CSS de la figura del PAPI (`src/ui/figuras/papi.css`, bajo `.fig-papi`), y la fórmula de su proyección isométrica (`isometrica` en `src/ui/figuras/figura.ts`). Con su generador se dibujaron las cinco figuras de los instrumentos por dentro | MIT        |
+
+El aviso de Anatomy, como pide su licencia:
+
+> MIT License
+>
+> Copyright (c) 2026 Ryan
+>
+> Permission is hereby granted, free of charge, to any person obtaining a copy
+> of this software and associated documentation files (the "Software"), to deal
+> in the Software without restriction, including without limitation the rights
+> to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+> copies of the Software, and to permit persons to whom the Software is
+> furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all
+> copies or substantial portions of the Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+> IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+> FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+> AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+> LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+> OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+> SOFTWARE.
 
 ## Assets artísticos
 
@@ -535,6 +560,32 @@ campo es un dibujo nuestro a una tinta (`src/ui/paisajes.ts`) y el aspecto de
 goma lo pone una máscara generada (`src/ui/caucho.ts`). Cada paisaje se
 dibujó mirando fotos de Wikimedia Commons del propio sitio, para que fuera
 como es; esas fotos no entran en el juego, solo sirvieron de referencia.
+
+### Los instrumentos por dentro
+
+Las cinco figuras que se tocan en la ventana de explicación —el PAPI, el
+pitot con su velocímetro, el altímetro, los mandos y los flaps
+(`src/ui/figuras/`)— son **figuras propias**: las dibujó Gaudí, director de
+arte de Oksigenia, con cara de manual de vuelo antiguo y las tintas y letras
+de la carta, y van con el código bajo Apache-2.0. Lo único de fuera es lo
+que dice el software de terceros, arriba: la hoja isométrica de Anatomy (MIT)
+dentro del CSS del PAPI.
+
+Lo que enseñan sale de fuentes aeronáuticas, citadas en la cabecera de cada
+módulo:
+
+- **El PAPI**: OACI, Doc 9157, *Manual de diseño de aeródromos*, parte 4,
+  capítulo 8 (los cuatro cortes y dónde va); Transport Canada, AC 302-009,
+  sobre el Anexo 14 (lo que se ve); patente CA 2 881 284 y Optics for Hire
+  (la óptica del filtro y la lente).
+- **El pitot y el altímetro**: FAA, *Pilot's Handbook of Aeronautical
+  Knowledge* (FAA-H-8083-25C), capítulo 8, con sus figuras 8-2 y 8-7; los
+  arcos del velocímetro, del manual del Cessna 172S, sección 2.
+- **Los mandos y los flaps**: el mismo manual de la FAA, capítulo 6; los
+  grados de las superficies, de la ficha de tipo FAA 3A12; la palanca de
+  flaps y las velocidades de pérdida, del manual del Cessna 172S, secciones 7
+  y 5. Solo las publicadas: a 20° de flaps el manual no da cifra, y la figura
+  tampoco.
 
 ### Las ilustraciones
 

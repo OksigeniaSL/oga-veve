@@ -18497,5 +18497,19 @@
     "idioma": "es-PY",
     "texto": "Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba; cuando el avión diga retard, el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.",
     "para": "antes de la final, en Taguató, en el reactor de mandos eléctricos"
+  },
+  {
+    "id": "explica.papi.texto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El PAPI son cuatro luces al lado de la pista. Cada una se ve blanca desde arriba y roja desde abajo. Dos blancas y dos rojas: vas por la senda. Más blancas, vas alto; más rojas, vas bajo.",
+    "para": "lo que explica tocar la tarjeta del PAPI en la final, con la figura de sus luces",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]

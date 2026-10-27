@@ -132,9 +132,10 @@ const HABLADOS = [
     "lo que explica tocar una pieza del cuadro",
     /*
      * La palabra corta y los nombres de los botones se leen, no se dicen. Y
-     * los sellos van al final de la lista: ver `DE_LOS_SELLOS`.
+     * los sellos y el PAPI van al final de la lista: ver `DE_LOS_SELLOS` y
+     * `DE_LOS_INSTRUMENTOS`.
      */
-    /\.corta$|^explica\.(oir|curiosidades)$|^explica\.sello\./,
+    /\.corta$|^explica\.(oir|curiosidades)$|^explica\.sello\.|^explica\.papi\./,
   ],
   /*
    * **Y lo que se cuenta antes de volar y al tocar el avión**: cada sitio de
@@ -1880,8 +1881,17 @@ const DE_LO_QUE_TOCA = [
   ["vuelo.comoSeAterriza.cables", "instructor", "antes de la final, en Taguató, en el reactor de cables"],
   ["vuelo.comoSeAterriza.electricos", "instructor", "antes de la final, en Taguató, en el reactor de mandos eléctricos"],
 ];
+/**
+ * **Y los instrumentos por dentro** (27-10-2026): el PAPI, que se abre tocando
+ * su tarjeta en la final, con su figura. Las palabras de las figuras se leen y
+ * no se graban. Al final, que lo grabado no se renumera. Ver
+ * `src/ui/figuras/`.
+ */
+const DE_LOS_INSTRUMENTOS = [
+  ["explica.papi.texto", "instructor", "lo que explica tocar la tarjeta del PAPI en la final, con la figura de sus luces"],
+];
 const LO_QUE_SE_VE = new Set(
-  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA].map(
+  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA, ...DE_LOS_INSTRUMENTOS].map(
     ([k]) => k,
   ),
 );
@@ -1984,7 +1994,7 @@ for (const [id, texto, para] of DESVIO_POR_LA_TORMENTA) {
   }
 }
 // Y lo que se ve, cuando pasa, la siesta, lo que se oye cambiar, la llegada, el baño, lo de la demostración, la luz verde, lo que se reconoce al llegar, armá tu avión, la ventanilla viva, la gracia y el silbo, el toque en tierra y los caminos de Mazo: al final de cada voz. Ver `DE_LO_QUE_SE_VE`, `DE_LA_SIESTA`, `DE_LO_QUE_SE_OYE`, `DE_LA_LLEGADA`, `DEL_BANO`, `DE_LA_DEMOSTRACION`, `DE_LA_LUZ_VERDE`, `DE_LO_QUE_SE_RECONOCE`, `DE_ARMA_TU_AVION`, `DE_LA_VENTANILLA_VIVA`, `DE_LA_GRACIA_Y_EL_SILBO`, `DEL_TOQUE` y `DE_LOS_CAMINOS`.
-for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA]) {
+for (const [id, voz, para] of [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA, ...DE_LOS_INSTRUMENTOS]) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });

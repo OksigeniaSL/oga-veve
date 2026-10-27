@@ -50,6 +50,7 @@
 
 import { canalesDe, type Peldano } from "../flight/escalera";
 import { t, type TranslationKey } from "../i18n";
+import type { FiguraPedida } from "./figuras/montar";
 import type { DibujoDeSenal } from "./senal";
 
 /**
@@ -130,6 +131,12 @@ export interface Explicacion extends Dicho {
   /** El vídeo, cuando lo haya. Ver `VideoDeExplicacion`. */
   readonly video?: VideoDeExplicacion;
   /**
+   * **La figura que se toca**, en el sitio del dibujo: el instrumento por
+   * dentro, con cara de manual de vuelo. El dibujo de siempre se queda debajo
+   * mientras llega, y si no llega. Ver `ui/figuras/montar.ts`.
+   */
+  readonly figura?: FiguraPedida;
+  /**
    * De qué rincón es: del cuadro —se abre tocando la pieza— o de las
    * curiosidades del vuelo —se abre desde su rincón—. Las de otros sitios,
    * como la tarjeta del avión, no dicen nada y no salen en ningún rincón.
@@ -168,6 +175,10 @@ export interface ComoSeEnsena {
   /** Si la voz va a sonar: grabada y sin vídeo que hable por ella. */
   readonly suena: boolean;
   readonly video: VideoDeExplicacion | null;
+  /** La figura que se toca, si la lleva y no hay vídeo, que manda sobre ella. */
+  readonly figura: FiguraPedida | null;
+  /** El peldaño con que se enseña: la figura lleva letras o no según él. */
+  readonly peldano: Peldano;
 }
 
 /**
@@ -254,6 +265,8 @@ export function comoSeEnsena(
     voz: { clave: claveDeVoz, texto: textoEntero },
     suena: video === null && grabada(claveDeVoz),
     video,
+    figura: video ? null : (e.figura ?? null),
+    peldano: ctx.peldano,
   };
 }
 
@@ -314,8 +327,16 @@ function grabadaSegunLaVoz(clave: string): boolean {
  *
  * `cambios` deja forzar parte del contexto: la tarjeta del avión en el hangar
  * puede decir que se está en tierra aunque el último vuelo acabara en el aire.
+ *
+ * Con `callada`, se abre sin decirla: el globo de la tarjeta del avión acaba
+ * de decir eso mismo, y quien toca «por dentro» quiere ver la figura, no oír
+ * la frase dos veces. El altavoz de la ventana la repite si se quiere.
  */
-export function abrirExplicacion(id: string, cambios?: Partial<Contexto>): boolean {
+export function abrirExplicacion(
+  id: string,
+  cambios?: Partial<Contexto>,
+  opciones?: { readonly callada?: boolean },
+): boolean {
   const e = registro.get(id);
   if (!e) return false;
   const p = laPantalla();
@@ -324,7 +345,7 @@ export function abrirExplicacion(id: string, cambios?: Partial<Contexto>): boole
   abierta = id;
   rinconAbierto = false;
   p?.mostrar(como);
-  if (como.suena && voz) {
+  if (como.suena && voz && !opciones?.callada) {
     voz.decir(como.voz.clave, como.voz.texto);
     hablando = true;
   }
