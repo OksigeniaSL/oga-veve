@@ -1,5 +1,16 @@
 {
   "fuente": "OpenStreetMap (dónde va cada sitio), con el elemento anotado en `de`",
   "licencia": "ODbL 1.0 (OpenStreetMap)",
-  "sitios": []
+  "sitios": [
+    {
+      "id": "puente-encarnacion",
+      "nombre": "Puente San Roque González de Santa Cruz",
+      "lat": -27.374494,
+      "lon": -55.87485,
+      "giro": 64.86,
+      "cota": null,
+      "alcance": 80000,
+      "de": "osm way/315098676"
+    }
+  ]
 }
