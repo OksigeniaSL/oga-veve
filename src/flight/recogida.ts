@@ -14,12 +14,20 @@
  *
  * ## Lo que dicen los manuales, por clase
  *
- * - **Reactor de mandos eléctricos (el JAZ 90, como un A320):** la recogida
- *   empieza a unos **treinta pies**, y a **veinte** el avión canta *retard*
- *   para recordar que las palancas van al ralentí; tienen que estar ahí al
- *   tocar, como muy tarde, o los frenos de tierra no salen. Airbus, *Safety
- *   First*, «A Focus on the Landing Flare», con el FCOM y el FCTM del A320:
- *   <https://safetyfirst.airbus.com/a-focus-on-the-landing-flare/>.
+ * - **Reactor de mandos eléctricos (el JAZ 90, de la clase del E170):** las
+ *   palancas van al ralentí **desde los treinta pies** y llegan abajo al
+ *   tocar: es el modo `RETD` de sus gases automáticos, «Idle during flare
+ *   (30ft until T/D)», y el procedimiento de su operador, «30ft Idle» (AOM
+ *   del E170/190, vol. 2, 14-03-20, y OM-A 8.3.2.42.1 de Helvetic, recogidos
+ *   en C. Regli, *Embraer EMB190 – Summary*, 2025, pp. 1-14 y 2-25:
+ *   <http://www.flite.ch/Emb/Summary_E190.pdf>). La nariz, entre los treinta
+ *   y los veinte pies —«20ft Flare» en ese OM-A; «just after the "30"
+ *   callout» en la técnica de línea de Merlin's Corner, «Landing the E175»—:
+ *   aquí, a treinta, cuando el radioaltímetro canta *thirty*, que es lo que
+ *   oye quien vuela. **No canta *retard***: esa voz es de Airbus, y no está
+ *   entre las del E170 —su cuenta es 2500, 1000, 500, 200, 100, 50, 40, 30,
+ *   20, 10 y *minimums*— ni entre las nuevas del E2 (Transport Canada,
+ *   *Operational Evaluation Report – Embraer E-Jets*, rev. 1, 2023, ATA 31).
  * - **Reactor de mandos de cables (el JAZ 120, de Boeing):** «Initiate the
  *   flare when the main gear is approximately **20 feet** above the runway by
  *   increasing pitch attitude approximately 2° - 3°… After the flare is
@@ -57,7 +65,7 @@ export interface LaRecogida {
 
 /** Las alturas de cada clase, en pies, que es como las dan los manuales. */
 const EN_PIES: Readonly<Record<ClaseDeRecogida, { nariz: number; gas: number }>> = {
-  electricos: { nariz: 30, gas: 20 },
+  electricos: { nariz: 30, gas: 30 },
   cables: { nariz: 20, gas: 20 },
   helice: { nariz: 15, gas: 15 },
 };

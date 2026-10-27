@@ -419,7 +419,7 @@ export const EN: Dictionary = {
   "vuelo.comoSeAterriza.cables":
     "This is how we land this plane: at final approach speed, and near the ground, the nose up a little and then the power off. Touch down firmly on the big markings: firm and on the spot beats smooth and far.",
   "vuelo.comoSeAterriza.electricos":
-    "This is how we land this plane: at final approach speed, and near the ground, the nose up a little; when the plane says retard, power off. Touch down firmly on the big markings: firm and on the spot beats smooth and far.",
+    "This is how we land this plane: at final approach speed, and when the plane counts thirty, the nose up a little and the power off, together. Touch down firmly on the big markings: firm and on the spot beats smooth and far.",
   "palabra.aterrizar": "Landing",
   "vuelo.tomaLargaSinPista": "Not enough runway to stop: we go around and try again",
   "vuelo.aterrizasteContraLaOrden":

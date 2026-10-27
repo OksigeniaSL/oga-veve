@@ -28,8 +28,8 @@
  *   gas van juntos a quince pies (FAA, *Airplane Flying Handbook*, cap. 9);
  *   en el reactor de cables, la nariz a veinte pies y el gas detrás (Boeing,
  *   *737 FCTM*, «Flare and Touchdown»); en el de mandos eléctricos, la nariz
- *   a treinta y el gas cuando el avión canta *retard* (Airbus, *Safety
- *   First*, «A Focus on the Landing Flare»).
+ *   y el gas juntos a treinta, cuando el radioaltímetro canta *thirty* (el
+ *   AOM del E170 y el procedimiento de su operador; ver `recogida.ts`).
  *
  * Sin DOM ni voz: decide qué frase. La dice `contarComoSeAterriza` en
  * `game.ts`, una vez por tramo.

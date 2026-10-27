@@ -1777,7 +1777,7 @@ export const ES_PY = {
   "vuelo.comoSeAterriza.cables":
     "Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y enseguida el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.",
   "vuelo.comoSeAterriza.electricos":
-    "Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba; cuando el avión diga retard, el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.",
+    "Así se aterriza en este avión: con la velocidad de la final, y cuando el avión cuente thirty, la nariz un poquito arriba y el gas afuera, juntos. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.",
   "palabra.aterrizar": "Aterrizar",
   "vuelo.tomaLargaSinPista":
     "No nos da la pista para parar: nos vamos al aire y lo volvemos a intentar",
