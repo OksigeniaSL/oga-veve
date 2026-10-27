@@ -107,6 +107,13 @@ export interface SueloDelTrafico {
      * alinearse: cero si entra y despega desde ahí. Ver `remontando`.
      */
     readonly remonta: number;
+    /**
+     * **Y dónde, en metros de `camino`**, si remonta: `entra`, donde pisa el
+     * eje de la pista, y `vira`, donde se acaba la recta y empieza la media
+     * vuelta. Es lo que hace falta para rodar la recta a su paso y la vuelta
+     * al suyo. Ver `alRemontar` en `trafico.ts`.
+     */
+    readonly remonte?: { readonly entra: number; readonly vira: number };
   } | null;
   /**
    * **Si entre la plataforma y la pista no hay más que una calle**: todo lo
@@ -586,11 +593,13 @@ export function sueloDelTrafico(
         const vuelta = mediaVuelta();
         const alineado = enElEje(vuelta.alineado);
         const porLaPista = [entrada, ...vuelta.puntos, alineado];
+        const entra = espera + largo(hastaElEje);
         const salida = {
           camino: [...hecha.hastaLaRaya, ...hastaElEje.slice(1), ...vuelta.puntos, alineado],
           espera,
-          eje: espera + largo(hastaElEje) + largo(porLaPista),
+          eje: entra + largo(porLaPista),
           remonta: Math.max(0, boca.along - (vuelta.alineado - 10)),
+          remonte: { entra, vira: entra + dist(entrada, vuelta.puntos[0]!) },
         };
         if (!encimaDeTuCalle) remonte = salida;
         else remonteEncima ??= salida;
