@@ -101,6 +101,8 @@ export const PARCHES = [
     paso: 20,
     dibujo: 40,
     fuente: "ign",
+    // La meseta y el roque los pone su modelo, `nublo.glb`: ver `asentar`.
+    asiento: { lat: 27.970815, lon: -15.6125968, corte: 1690, radio: 380 },
   },
   {
     id: "roque-agando",
@@ -112,6 +114,8 @@ export const PARCHES = [
     paso: 20,
     dibujo: 35,
     fuente: "ign",
+    // El roque lo pone su modelo, `agando.glb`: ver `asentar`.
+    asiento: { lat: 28.1052923, lon: -17.2137276, corte: 1060, radio: 330 },
   },
   {
     id: "timanfaya",
@@ -147,6 +151,25 @@ export const PARCHES = [
     lon: -54.598,
     ancho: 13000,
     alto: 26000,
+    paso: 30,
+    dibujo: 60,
+    fuente: "copernicus",
+  },
+  {
+    /*
+     * Las ruinas de Trinidad, en lo alto de su loma: el horizonte, a
+     * kilómetro y doscientos o a dos kilómetros por muestra, las ponía entre
+     * 139 y 156 m según el mundo, con un valle de noventa al lado. El modelo
+     * baja diez metros de falda, y eso no tapa cuarenta. Ancho, para que
+     * hasta el horizonte de Asunción, a dos kilómetros por muestra, tenga
+     * cuadros enteros dentro.
+     */
+    id: "trinidad",
+    nombre: "Las ruinas de Trinidad",
+    lat: -27.131,
+    lon: -55.703,
+    ancho: 12000,
+    alto: 12000,
     paso: 30,
     dibujo: 60,
     fuente: "copernicus",
@@ -513,6 +536,32 @@ async function abrirEms() {
 
 // ── El parche ─────────────────────────────────────────────────────────────
 
+/**
+ * Lo que se hunde el suelo bajo la pieza de un sitio con modelo, m.
+ *
+ * **El asiento.** El Roque Nublo y el de Agando llevan modelo: la roca, sacada
+ * del mismo MDT05 por encima de una cota (`corte`) y afinada donde el MDT05
+ * la recorta —la cumbre, las paredes—. Si el parche la tuviera también, serían
+ * dos rocas en el mismo sitio: la del parche, más roma, asomando por donde el
+ * modelo no llega, y las dos peleándose por el fondo de profundidad donde
+ * coinciden. Así que el parche pone el suelo y el modelo la roca: por encima
+ * del `corte`, a menos de `radio` metros, el parche baja `HUNDIDO_DEL_ASIENTO`
+ * metros por debajo de la pieza, con una transición de diez metros de cota y
+ * de ochenta de radio para no dejar escalón. Medido con los vértices de los
+ * dos modelos contra el parche: la faja que baja del modelo queda entera por
+ * debajo del suelo, que es para lo que era.
+ */
+const HUNDIDO_DEL_ASIENTO = 12;
+
+function asentar(h, la, lo, a) {
+  if (!a) return h;
+  const d = Math.hypot((lo - a.lon) * R * RAD * Math.cos(a.lat * RAD), (la - a.lat) * R * RAD);
+  const enRadio = 1 - Math.min(1, Math.max(0, (d - a.radio) / 80));
+  const enCota = Math.min(1, Math.max(0, (h - (a.corte - 12)) / 10));
+  const w = enRadio * enCota;
+  return h - HUNDIDO_DEL_ASIENTO * w * w * (3 - 2 * w);
+}
+
 /** El recuadro de un parche, en grados. */
 function cajaDe(p) {
   const dLat = p.alto / 2 / (R * RAD);
@@ -592,7 +641,7 @@ async function hacerParche(p) {
           }
         }
       if (!cuantas) huecos++;
-      const v = Math.round(cuantas ? suma / cuantas : 0);
+      const v = Math.round(asentar(cuantas ? suma / cuantas : 0, lat, lon, p.asiento));
       alturas[f * columnas + c] = v;
       if (v < min) min = v;
       if (v > max) max = v;
@@ -633,6 +682,7 @@ async function hacerParche(p) {
         filas,
         columnas,
         dibujo: p.dibujo,
+        ...(p.asiento ? { asiento: p.asiento } : {}),
         minM: min,
         maxM: max,
       },

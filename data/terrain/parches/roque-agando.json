@@ -10,6 +10,12 @@
   "filas": 226,
   "columnas": 226,
   "dibujo": 35,
+  "asiento": {
+    "lat": 28.1052923,
+    "lon": -17.2137276,
+    "corte": 1060,
+    "radio": 330
+  },
   "minM": 392,
   "maxM": 1366
 }

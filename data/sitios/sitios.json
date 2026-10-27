@@ -41,6 +41,36 @@
       "cota": null,
       "alcance": 40000,
       "de": "osm way/38313227"
+    },
+    {
+      "id": "trinidad",
+      "nombre": "Ruinas de Trinidad",
+      "lat": -27.132,
+      "lon": -55.702,
+      "giro": 0,
+      "cota": null,
+      "alcance": 30000,
+      "de": "osm way/129913306"
+    },
+    {
+      "id": "agando",
+      "nombre": "Roque de Agando",
+      "lat": 28.1052923,
+      "lon": -17.2137276,
+      "giro": 0,
+      "cota": 1000,
+      "alcance": 40000,
+      "de": "osm node/332107293"
+    },
+    {
+      "id": "nublo",
+      "nombre": "Roque Nublo",
+      "lat": 27.970815,
+      "lon": -15.6125968,
+      "giro": 0,
+      "cota": 1650,
+      "alcance": 40000,
+      "de": "osm node/303985477"
     }
   ]
 }

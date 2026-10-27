@@ -12,6 +12,8 @@
  */
 
 import { describe, expect, it } from "vitest";
+import type { BufferGeometry, Mesh } from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
   RAMPA,
   cotaDelParche,
@@ -185,14 +187,17 @@ describe("con los mapas de verdad", () => {
   const casos = [
     { mundo: "tenerife-norte", parche: "teide", cima: [28.27269, -16.64227], minimo: 3690, antes: 3660 },
     /*
-     * Del Roque Nublo, la meseta: el roque, un dedo de sesenta y siete metros
-     * y treinta de ancho, no cabe en cuadros de cuarenta y lo pone su modelo.
+     * De los roques, el asiento: la roca la pone su modelo, y el parche baja
+     * doce metros debajo de ella. Ver «el asiento de los roques», abajo.
      */
-    { mundo: "gran-canaria", parche: "roque-nublo", cima: [27.97074, -15.61264], minimo: 1730, antes: 1700 },
-    { mundo: "la-gomera", parche: "roque-agando", cima: [28.10521, -17.2135], minimo: 1200, antes: 1061 },
+    { mundo: "gran-canaria", parche: "roque-nublo", cima: [27.97074, -15.61264], minimo: 1715, antes: 1700 },
+    { mundo: "la-gomera", parche: "roque-agando", cima: [28.10521, -17.2135], minimo: 1180, antes: 1061 },
     // El río al pie de la central: va a ciento y pico metros, y el
     // horizonte lo ponía a ciento ochenta.
     { mundo: "guarani", parche: "itaipu", cima: [-25.4095, -54.5878], maximo: 130, antes: 170 },
+    // Las ruinas de Trinidad, en su loma a 159 m: el horizonte las bajaba.
+    { mundo: "encarnacion", parche: "trinidad", cima: [-27.132, -55.702], minimo: 157, antes: 150 },
+    { mundo: "pettirossi", parche: "trinidad", cima: [-27.132, -55.702], minimo: 157, antes: 158 },
   ] as const;
   for (const c of casos)
     it(`${c.parche} desde ${c.mundo}`, () => {
@@ -226,5 +231,65 @@ describe("con los mapas de verdad", () => {
         expect(antes).toBeGreaterThan(c.antes);
         expect(ahora!).toBeLessThan(c.maximo);
       }
+    });
+});
+
+/*
+ * **El asiento de los roques.** El Roque Nublo y el de Agando llevan modelo,
+ * sacado del mismo MDT05 que su parche por encima de una cota y afinado en la
+ * cumbre y las paredes. Si el parche llevara la roca también, serían dos: la
+ * del parche asomando por donde el modelo no llega, y las dos turnándose por
+ * el fondo de profundidad donde coinciden. Así que el modelo pone la roca y el
+ * parche se aparta debajo (`asentar` en `scripts/relieve-fino.mjs`): la pieza
+ * del modelo queda por encima del suelo, y la faja que baja de ella, por
+ * debajo.
+ */
+describe("el asiento de los roques", () => {
+  const casos = [
+    { sitio: "agando", parche: "roque-agando" },
+    { sitio: "nublo", parche: "roque-nublo" },
+  ] as const;
+  const catalogo = JSON.parse(fs().readFileSync("data/sitios/sitios.json", "utf8") as string) as {
+    sitios: { id: string; lat: number; lon: number; giro: number; cota: number | null }[];
+  };
+  for (const c of casos)
+    it(`${c.sitio}: la roca, del modelo; el suelo, del parche`, async () => {
+      const ficha = catalogo.sitios.find((s) => s.id === c.sitio)!;
+      expect(ficha.giro).toBe(0);
+      expect(ficha.cota).not.toBeNull();
+      const parche = leerParche(c.parche);
+      const asiento = (JSON.parse(fs().readFileSync(`data/terrain/parches/${c.parche}.json`, "utf8") as string) as {
+        asiento: { corte: number };
+      }).asiento;
+      const b = fs().readFileSync(`public/assets/sitios/${c.sitio}.glb`) as Uint8Array;
+      const escena = (
+        await new GLTFLoader().parseAsync(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer, "")
+      ).scene;
+      escena.updateMatrixWorld(true);
+      const k = Math.cos(ficha.lat * RAD);
+      const pieza: number[] = [];
+      const faja: number[] = [];
+      escena.traverse((o) => {
+        const m = o as Mesh;
+        if (!m.isMesh || /^bulto/i.test(m.name)) return;
+        const pos = (m.geometry as BufferGeometry).getAttribute("position");
+        const e = m.matrixWorld.elements;
+        for (let i = 0; i < pos.count; i++) {
+          const px = pos.getX(i);
+          const py = pos.getY(i);
+          const pz = pos.getZ(i);
+          const x = e[0]! * px + e[4]! * py + e[8]! * pz + e[12]!;
+          const y = e[1]! * px + e[5]! * py + e[9]! * pz + e[13]! + ficha.cota!;
+          const z = e[2]! * px + e[6]! * py + e[10]! * pz + e[14]!;
+          const suelo = cotaDelParche(parche, ficha.lat - z / (R * RAD), ficha.lon + x / (R * RAD * k))!;
+          (y >= asiento.corte ? pieza : faja).push(y - suelo);
+        }
+      });
+      pieza.sort((a, b) => a - b);
+      faja.sort((a, b) => a - b);
+      // Nueve de cada diez nudos de la roca, a cinco metros o más del suelo.
+      expect(pieza[Math.floor(pieza.length * 0.1)]!).toBeGreaterThan(5);
+      // Y la faja, debajo: nueve de cada diez nudos, bajo tierra.
+      expect(faja[Math.floor(faja.length * 0.9)]!).toBeLessThan(0);
     });
 });

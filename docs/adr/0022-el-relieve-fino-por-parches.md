@@ -77,7 +77,32 @@ curva de la Tierra y el mismo material, sin que nada de eso se entere.
   los pinos—, así que manda solo a menos de 1,8 km del cono, donde la ceniza
   lo enterró todo, y se funde con el MDT05 hasta los 2,4 km.
 - **Paraguay: Copernicus GLO-30**, la fuente de todos sus relieves: Itaipú con
-  el cañón del Paraná hasta pasado el Monday, y el entorno del Ypacaraí.
+  el cañón del Paraná hasta pasado el Monday, el entorno del Ypacaraí y la loma
+  de las ruinas de Trinidad, que el horizonte ponía entre 139 y 156 m según el
+  mundo (están a 159) con un valle de noventa al lado, y su modelo baja diez
+  metros de falda.
+
+### Donde hay modelo, el modelo pone la roca y el parche el suelo
+
+El Roque Nublo y el de Agando llevan su modelo (`nublo.glb`, `agando.glb`),
+sacado del mismo MDT05 que su parche por encima de una cota —1.690 y 1.060 m—
+y afinado donde el MDT05 se queda corto: la cumbre, a su cota publicada, y en
+Agando las paredes de pan de azúcar. Con el parche debajo serían **dos rocas**
+en el mismo sitio: la del parche, más roma, asomando por donde el modelo no
+llega, y las dos turnándose por el fondo de profundidad donde coinciden —la
+mitad de los nudos de la roca del modelo quedaban a menos de dos metros del
+parche—.
+
+Se eligió que **el modelo ponga la roca y el parche se aparte**: por encima de
+esa cota y cerca del roque, el parche baja doce metros (`asentar` en
+`scripts/relieve-fino.mjs`, anotado en la ficha del parche como `asiento`).
+No al revés, porque el roque que se reconoce del Nublo es un dedo de treinta
+metros de ancho y ochenta de alto que no cabe en cuadros de cuarenta, y
+porque las cumbres las dan los modelos a su cota publicada. Medido con los
+vértices de los dos modelos contra el parche: nueve de cada diez nudos de la
+roca quedan a siete metros o más sobre el suelo, y la faja que baja del modelo
+hacia el horizonte de antes queda debajo del suelo, que es para lo que era
+(`parches-de-relieve.test.ts`, «el asiento de los roques»).
 
 ### Los lagos, con su lámina
 
@@ -111,10 +136,10 @@ tienen río, y el fondo de profundidad hace la orilla.
 
 ## Consecuencias
 
-- La cima del Teide pasa de 3.648 a 3.700 m; el Roque Nublo, a la meseta
-  (1.746 m): el roque, un dedo de sesenta y siete metros, lo pone su modelo;
-  el de Agando, de 995 a 1.206 en su punto (1.233 lo más alto); Timanfaya, de
-  434 a 504; el río al pie de Itaipú, de ~180 a ~105, y la presa asoma entera.
+- La cima del Teide pasa de 3.648 a 3.700 m; Timanfaya, de 434 a 504; el río
+  al pie de Itaipú, de ~180 a ~105, y la presa asoma entera; las ruinas de
+  Trinidad, a 159 en todos los mundos. El Roque Nublo y el de Agando, a su
+  cumbre con su modelo (1.813 y 1.246,7), sobre el suelo del parche.
 - **Tajogaite queda a unos 1.060-1.070 m**, que es lo que miden los dos
   modelos de EMS (diciembre de 2021 y febrero de 2022). OpenStreetMap le da
   1.120. Se pone lo medido, y se dice aquí y en los créditos.

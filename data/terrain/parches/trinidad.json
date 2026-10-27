@@ -1,0 +1,15 @@
+{
+  "id": "trinidad",
+  "nombre": "Las ruinas de Trinidad",
+  "fuente": "Copernicus DEM GLO-30",
+  "atribucion": "© DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved",
+  "sur": -27.1849592,
+  "norte": -27.0770408,
+  "oeste": -55.7636306,
+  "este": -55.6423694,
+  "filas": 401,
+  "columnas": 401,
+  "dibujo": 60,
+  "minM": 82,
+  "maxM": 265
+}

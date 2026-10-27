@@ -55,6 +55,34 @@ const VISTAS = {
     altura: 1900,
     mira: [27.97083, -15.6125],
   },
+  "roque-nublo-ruta": {
+    // De Los Rodeos a Gran Canaria, a 16.000 ft y unos 19 km: como la ficha.
+    escenario: "tenerife-norte",
+    sitio: [28.14, -15.61],
+    altura: 4877,
+    mira: [27.970815, -15.6125968],
+  },
+  "roque-nublo-cerca": {
+    // Sobre el Pico de las Nieves, a cuatro kilómetros.
+    escenario: "gran-canaria",
+    sitio: [27.959, -15.573],
+    altura: 2300,
+    mira: [27.970815, -15.6125968],
+  },
+  trinidad: {
+    // En la ruta de Guaraní a Encarnación, a unos cinco kilómetros.
+    escenario: "encarnacion",
+    sitio: [-27.1, -55.668],
+    altura: 900,
+    mira: [-27.132, -55.702],
+  },
+  "trinidad-cerca": {
+    // Y de cerca, con las ruinas un poco a la izquierda del avión.
+    escenario: "encarnacion",
+    sitio: [-27.121, -55.689],
+    altura: 450,
+    mira: [-27.1335, -55.7045],
+  },
   "roque-agando": {
     escenario: "la-gomera",
     sitio: [28.065, -17.165],
