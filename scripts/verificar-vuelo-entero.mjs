@@ -5318,6 +5318,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const enLaSenda = alli + (DESDE + 250) * SENDA + (suyas.tren ?? 0);
       // El obediente, armado antes de ponerlo en la final: ver `obediente`.
       if (obedienteEnElBanco) obediente.armado = true;
+      /*
+       * **Y el salto, a tiempo real.** Después de colocar se esperan quinientos
+       * milisegundos de pared a que el juego cambie de campo, y en ellos no
+       * vuela nadie: la palanca en cero y el gas del crucero. Con el reloj a
+       * doce eran seis segundos de juego sueltos en la final, y el JAZ 60 de
+       * La Gomera los pasaba subiendo hasta seis metros por segundo; con la
+       * final de la torre ya puesta, eso era irse al aire. A uno es medio
+       * segundo; la vuelta siguiente devuelve el reloj que toque.
+       */
+      if (relojAhora !== 1) {
+        o.acelerar?.(1);
+        relojAhora = 1;
+      }
       o.colocar(f.x, enLaSenda, f.z, aproximacion + 3, f.h);
       /*
        * **Y un reactor llega a los cuatro kilómetros estabilizado, como uno de
