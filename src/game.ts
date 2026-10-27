@@ -4915,12 +4915,25 @@ export class Game {
   dichoDeLaToma = false;
 
   /**
-   * **Colocado a mano, otra aproximación**: lo que el detector de frustradas
-   * seguía de la de antes no vale. Para la sonda `colocar` del banco, que
-   * teletransporta; jugando no se salta de un sitio a otro. Ver `Frustrada`.
+   * **Colocado a mano, otra situación**: lo que se seguía del avión de un
+   * fotograma a otro empieza de cero. Para la sonda `colocar` del banco, que
+   * teletransporta; jugando no se salta de un sitio a otro, y todo lo que
+   * mide una subida o un acercamiento contra lo de antes leía el salto como
+   * si se hubiera volado:
+   *
+   * - el detector de frustradas, con lo más bajo de la aproximación de antes:
+   *   ver `Frustrada`;
+   * - la final de la torre, con su «lo más bajo» también —su `reiniciar` es
+   *   para esto, «o se puso el avión en otro sitio»—: ver `FinalDeLaTorre`;
+   * - y las trazas del TCAS, que sacan el acercamiento de la distancia de un
+   *   ciclo al siguiente: ver `Tcas`. Un salto de kilómetros en un ciclo es
+   *   un acercamiento que ningún avión vuela, y daba avisos de tráfico a
+   *   aviones a diez kilómetros que no se acercaban.
    */
-  olvidarLaAproximacionParaBanco(): void {
+  colocadoParaBanco(): void {
     this.frustrada.reiniciar();
+    this.finalDeLaTorre.reiniciar();
+    this.tcas.reiniciar();
   }
   /**
    * Cuántas veces el juego ha decidido decir «ya podés tocar».
