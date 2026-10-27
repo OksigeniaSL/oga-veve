@@ -1,9 +1,10 @@
 /**
  * **Los instrumentos por dentro, abiertos en su sitio**, mirados y medidos.
  *
- * Abre cada figura donde va —la IAS y la ALT del cuadro, la tarjeta del PAPI
- * de la final, y el pitot, los alerones, la profundidad, el timón, los flaps y
- * el motor de la tarjeta del avión— en una tablet y en un teléfono tumbado,
+ * Abre cada figura donde va —la IAS y la ALT del cuadro, en el teléfono por
+ * su pantalla grande; la tarjeta del PAPI de la final, y el pitot, los
+ * alerones, la profundidad, el timón, los flaps y el motor de la tarjeta del
+ * avión— en una tablet y en un teléfono tumbado,
  * en los tres peldaños que tienen figura distinta, y saca la foto de cada
  * una. Y comprueba lo que una foto no dice:
  *
@@ -313,25 +314,42 @@ try {
         console.log(`  tarjeta gráfica: ${tarjeta}`);
       }
 
-      for (const [sel, cual, etiqueta, id] of [
-        ['.cuadro [data-explica="velocidad"]', "velocimetro", "ias-velocimetro", "velocidad"],
-        ['.cuadro [data-explica="altitud"]', "altimetro", "alt-altimetro", "altitud"],
+      for (const [sel, cual, etiqueta, losa] of [
+        ['.cuadro [data-explica="velocidad"]', "velocimetro", "ias-velocimetro", ".tel__losa--ias"],
+        ['.cuadro [data-explica="altitud"]', "altimetro", "alt-altimetro", ".tel__losa--alt"],
       ]) {
         const n = `${pantalla} ${tramo} ${etiqueta}`;
         /*
-         * En el teléfono el cuadro son las losas, que no explican: tocar la
-         * de la velocidad pone grande la pantalla. Allí la ventana se abre
-         * por su id, para medir cómo cabe la figura en el teléfono.
+         * **En el teléfono, en dos toques**: la losa pone grande la pantalla
+         * —y no abre nada, que se toca a cada rato volando— y en la grande la
+         * cinta o el reloj se explican. Ver `ui/tocar-para-explicar.ts`.
          */
-        const tocado =
-          pantalla === "telefono"
-            ? await page.evaluate(async (i) => (await import("/src/ui/explicaciones.ts")).abrirExplicacion(i), id)
-            : await tocar(page, sel);
+        let tocado;
+        if (pantalla === "telefono") {
+          await tocar(page, losa);
+          await page.waitForTimeout(500);
+          const grande = await page.evaluate(() => ({
+            grande: !!document.querySelector(".cuadro--grande"),
+            abierta: !document.getElementById("explicacion")?.hidden,
+          }));
+          comprobar(`${n}: la losa pone grande la pantalla y no abre nada`, grande.grande && !grande.abierta, JSON.stringify(grande));
+          tocado = await tocar(page, `.cuadro--grande ${sel.replace(".cuadro ", "")}`);
+        } else tocado = await tocar(page, sel);
         if (tocado && (await esperarFigura(page, cual))) {
           await revisar(page, pantalla, tramo, etiqueta);
           if (pantalla === "tablet" && tramo === "taguato") await conElTeclado(page, n);
         } else comprobar(`${n}: se toca y se abre`, false);
         await cerrar(page, n);
+        // Y del grande se vuelve a las losas tocando el horizonte, que sigue siendo fondo.
+        if (pantalla === "telefono") {
+          await tocar(page, '.cuadro--grande [data-explica="actitud"]');
+          await page.waitForTimeout(400);
+          const vuelta = await page.evaluate(() => ({
+            grande: !!document.querySelector(".cuadro--grande"),
+            abierta: !document.getElementById("explicacion")?.hidden,
+          }));
+          comprobar(`${n}: el horizonte vuelve a las losas`, !vuelta.grande && !vuelta.abierta, JSON.stringify(vuelta));
+        }
       }
 
       // La tarjeta del PAPI, como en la final: se toca y abre el PAPI por dentro.

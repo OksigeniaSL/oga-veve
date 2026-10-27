@@ -400,7 +400,12 @@ function cintaDeVelocidad(
       width="${clase.endsWith("blanco") ? 4 : 5}"
       height="${(hasta - desde) * c.asiMax * POR_NUDO}" class="${clase}" />`;
   return `
-    <g data-explica="velocidad" data-explica-fondo transform="translate(${x} ${y})">
+    <!--
+      Sin data-explica-fondo: la cinta lleva su velocímetro por dentro, y en
+      el teléfono la pantalla grande es la única puerta para verlo. Ver
+      «instrumentos con figura» en ui/tocar-para-explicar.ts.
+    -->
+    <g data-explica="velocidad" transform="translate(${x} ${y})">
       <rect width="${w}" height="${h}" rx="3" class="cr__ventana" />
       <clipPath id="${yo}-ias"><rect width="${w}" height="${h}" /></clipPath>
       <g clip-path="url(#${yo}-ias)">
@@ -546,7 +551,8 @@ function cintaDeAltitud(
     )
     .join("");
   return `
-    <g data-explica="altitud" data-explica-fondo data-nombra="altimetro" transform="translate(${x} ${y})">
+    <!-- Sin data-explica-fondo, como la de la velocidad: lleva su altímetro por dentro. -->
+    <g data-explica="altitud" data-nombra="altimetro" transform="translate(${x} ${y})">
       <rect width="${w}" height="${h}" rx="3" class="cr__ventana" />
       <clipPath id="${yo}-alt"><rect width="${w}" height="${h}" /></clipPath>
       <clipPath id="${yo}-tambor"><rect x="${w - 34}" y="${h / 2 - 16}" width="34" height="32" /></clipPath>

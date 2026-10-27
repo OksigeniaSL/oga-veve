@@ -28,6 +28,15 @@
  *   `data-explica-fondo`, y tocarlos ahí es lo que fue siempre: volver a las
  *   losas. Si el toque de vuelta abriera una explicación, de la pantalla
  *   grande no se saldría nunca.
+ * - **Salvo los instrumentos con figura**: la velocidad y la altitud, que
+ *   llevan el velocímetro y el altímetro por dentro. En el teléfono las losas
+ *   no explican —tocarlas pone grande su pantalla, y eso se hace a cada rato
+ *   volando—, así que la figura no tenía puerta. Ahora la tiene en dos pasos,
+ *   como la tarjeta del PAPI en la final: se toca como una pieza del cuadro,
+ *   sin nada que llame a tocarla, y un toque suelto en una losa no abre nada
+ *   que pare el vuelo. Primero la losa pone grande la pantalla; ahí, la cinta
+ *   o el reloj se explican, y el horizonte, el rumbo y el fondo siguen siendo
+ *   la vuelta a las losas.
  *
  * Y los símbolos pequeños se tocan con el dedo y no con la punta de un lápiz:
  * un rombo de diez píxeles se busca como si midiera `DEDO`.
