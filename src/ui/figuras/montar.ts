@@ -23,9 +23,13 @@
  * - **El motor**, en el punto del motor de la tarjeta, cada avión con el que
  *   lleva: el turbohélice de turbina libre en el JAZ 60 —el único que lo
  *   lleva, de la clase del 1900D con su PT6— y el turbofán en los dos
- *   reactores. Las avionetas de pistón siguen con su globo: su figura no
- *   está hecha todavía. La elección es la de siempre, `explicacionDe` en
- *   `ui/explicaciones-del-avion.ts`, por el motor de cada avión.
+ *   reactores; y el de pistones, el Lycoming IO-360-L2A de cuatro cilindros
+ *   opuestos y hélice directa, solo en el JAZ 20, que es el que lo lleva. El
+ *   bimotor de pistón, de la clase del Seneca II, lleva dos de seis cilindros
+ *   con turbo y hélices que giran al revés, y el fumigador un radial: con
+ *   esta figura dirían otra cosa, y siguen con su globo. La elección es la de
+ *   siempre, `explicacionDe` en `ui/explicaciones-del-avion.ts`, por el motor
+ *   de cada avión.
  * - **Los mandos y los flaps**, en los puntos de la tarjeta del avión que
  *   dibujan: el JAZ 20. Los grados, los cables, el volante y los topes de la
  *   palanca son los suyos, de la clase del Cessna 172S; el biplano lleva
@@ -44,12 +48,21 @@ import {
   textosDeLosMandos,
   textosDelAltimetro,
   textosDelPapi,
+  textosDelPiston,
   textosDelTurbofan,
   textosDelTurbohelice,
   textosDelVelocimetro,
 } from "./textos";
 
-export type CualFigura = "papi" | "velocimetro" | "altimetro" | "mandos" | "flaps" | "turbohelice" | "turbofan";
+export type CualFigura =
+  | "papi"
+  | "velocimetro"
+  | "altimetro"
+  | "mandos"
+  | "flaps"
+  | "turbohelice"
+  | "turbofan"
+  | "piston";
 
 /** La figura que lleva una explicación, y la superficie de delante si son los mandos. */
 export interface FiguraPedida {
@@ -72,6 +85,7 @@ export const FIGURAS = {
   "avion.flaps": { cual: "flaps" },
   "avion.turbohelice": { cual: "turbohelice" },
   "avion.reactor": { cual: "turbofan" },
+  "avion.motor-piston": { cual: "piston" },
 } as const satisfies Readonly<Record<string, FiguraPedida>>;
 
 /** La figura de la explicación con ese `id`, si lleva. */
@@ -79,18 +93,18 @@ export function figuraDe(id: string): FiguraPedida | undefined {
   return (FIGURAS as Readonly<Record<string, FiguraPedida>>)[id];
 }
 
-/** El avión que dibujan los mandos y los flaps. */
+/** El avión que dibujan los mandos, los flaps y el motor de pistones. */
 const EL_DEL_DIBUJO = "jaz-20";
 
 /**
  * **Si el punto de la tarjeta de este avión lleva figura.** El velocímetro,
- * en todas las que usan `avion.pitot`; los mandos y los flaps, solo en la del
- * avión que dibujan. Ver la cabecera.
+ * en todas las que usan `avion.pitot`; los mandos, los flaps y el motor de
+ * pistones, solo en la del avión que dibujan. Ver la cabecera.
  */
 export function figuraEnLaTarjeta(id: string, a: Pick<AircraftConfig, "id">): FiguraPedida | null {
   const f = figuraDe(id);
   if (!f || !id.startsWith("avion.")) return null;
-  if ((f.cual === "mandos" || f.cual === "flaps") && a.id !== EL_DEL_DIBUJO) return null;
+  if ((f.cual === "mandos" || f.cual === "flaps" || f.cual === "piston") && a.id !== EL_DEL_DIBUJO) return null;
   return f;
 }
 
@@ -120,5 +134,7 @@ export async function montarFigura(el: HTMLElement, f: FiguraPedida, edad: Edad)
       return (await import("./turbohelice")).montarTurbohelice(el, { edad, textos: textosDelTurbohelice() });
     case "turbofan":
       return (await import("./turbofan")).montarTurbofan(el, { edad, textos: textosDelTurbofan() });
+    case "piston":
+      return (await import("./piston")).montarPiston(el, { edad, textos: textosDelPiston() });
   }
 }

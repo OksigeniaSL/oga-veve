@@ -15,6 +15,7 @@
 
 import { t, type TranslationKey } from "../../i18n";
 import type { TextosDelMotor } from "./motor-comun";
+import type { PalabrasDelPiston, TextosDelPiston } from "./piston";
 import type { PalabrasDelTurbofan } from "./turbofan";
 import type { PalabrasDelTurbohelice } from "./turbohelice";
 import { cifra } from "./figura";
@@ -199,7 +200,25 @@ export function textosDeLosFlaps(): TextosDeLosFlaps {
   };
 }
 
-/** Lo común de los dos motores: la frase de Tukã y la palanca. */
+export function textosDelPiston(): TextosDelPiston {
+  const claves = [
+    "n1", "n2", "n3", "n4", "aireEnfria", "aletas", "aprieta", "biela", "bujias", "bujia", "ciguenal", "opuestos",
+    "cilindros", "empuja", "entra", "falla1", "gas", "helice", "otraSigue", "magnetos", "falla2", "mas", "mezcla",
+    "piston", "sale", "valvulaAdm", "valvulaEsc", "barraVueltas", "aria",
+  ] as const;
+  const dibujo = Object.fromEntries(
+    claves.map((k) => [k, t(`figura.piston.${k}` as TranslationKey)]),
+  ) as PalabrasDelPiston;
+  return {
+    dibujo,
+    gas: t("figura.piston.gas"),
+    magneto: t("figura.piston.magneto"),
+    valor: (p) =>
+      t(p < 0.25 ? "figura.piston.valorPoco" : p < 0.75 ? "figura.piston.valorMedio" : "figura.piston.valorTodo"),
+  };
+}
+
+/** Lo común de los dos motores de turbina: la frase de Tukã y la palanca. */
 const delMotor = (
   palanca: TranslationKey,
   poco: TranslationKey,

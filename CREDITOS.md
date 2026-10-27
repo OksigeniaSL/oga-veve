@@ -563,9 +563,10 @@ como es; esas fotos no entran en el juego, solo sirvieron de referencia.
 
 ### Los instrumentos por dentro
 
-Las siete figuras que se tocan en la ventana de explicación —el PAPI, el
+Las ocho figuras que se tocan en la ventana de explicación —el PAPI, el
 pitot con su velocímetro, el altímetro, los mandos, los flaps, el
-turbohélice y el turbofán (`src/ui/figuras/`)— son **figuras propias**: las dibujó Gaudí, director de
+turbohélice, el turbofán y el motor de pistones (`src/ui/figuras/`)— son
+**figuras propias**: las dibujó Gaudí, director de
 arte de Oksigenia, con cara de manual de vuelo antiguo y las tintas y letras
 de la carta, y van con el código bajo Apache-2.0. Lo único de fuera es lo
 que dice el software de terceros, arriba: la hoja isométrica de Anatomy (MIT)
@@ -593,6 +594,12 @@ módulo:
   (FAA-H-8083-32), capítulo 1. El motor de la clase del JAZ 60, el PT6A-67D,
   del informe de aceptación de tipo del Beech 1900C y 1900D de la autoridad
   de aviación de Nueva Zelanda, sobre el certificado de tipo A24CE de la FAA.
+- **El motor de pistones**: el Lycoming IO-360-L2A de la clase del JAZ 20,
+  del informe de aceptación de tipo de la serie 172 de Nueva Zelanda (TAR
+  96/15, sobre la hoja de datos FAA 3A12) y de la hoja de datos de EASA
+  IM.A.051; el manual del Cessna 172S, sección 7; y el *Pilot's Handbook of
+  Aeronautical Knowledge*, capítulo 7, con los cuatro tiempos de su figura
+  7-5 y el doble encendido.
 
 ### Las ilustraciones
 
