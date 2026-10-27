@@ -68,7 +68,7 @@ import {
   type Scenario,
 } from "../world/scenarios";
 import { PROXIMAMENTE } from "../world/proximamente";
-import { abrirFichaDeLaCarta, mapaDelPais, type RutaEnElMapa } from "./mapa-del-pais";
+import { abrirFichaDeLaCarta, campoTocado, mapaDelPais, type RutaEnElMapa } from "./mapa-del-pais";
 import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from "../i18n";
 import { cielo, marca, pie } from "./marca";
 import { elegirMundo, mundoElegido } from "./mundo";
@@ -2327,7 +2327,8 @@ export function abrirHangar(
        */
       const ficha = boton.getAttribute("data-ficha");
       if (ficha !== null) {
-        abrirFichaDeLaCarta(root, ficha);
+        // El más cercano al dedo, que en una carta pequeña los círculos de tocar se solapan.
+        abrirFichaDeLaCarta(root, ficha && campoTocado(boton, event));
         return;
       }
 

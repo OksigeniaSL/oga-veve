@@ -707,6 +707,33 @@ export function mapaDelPais(
 }
 
 /**
+ * **El aeródromo que se quiso tocar**: el más cercano al dedo.
+ *
+ * Cada punto se toca en un círculo de 44 px aunque se dibuje de 18, y en una
+ * carta pequeña los de Encarnación y Ayolas están a veinte píxeles: el círculo
+ * del que va después en la página tapaba el centro del otro, y tocar
+ * Encarnación abría Ayolas. Así que no manda el círculo que recibe el toque,
+ * sino el punto más cercano a donde cayó el dedo. Sin dedo —un clic sin
+ * coordenadas— manda el propio botón.
+ */
+export function campoTocado(boton: HTMLElement, evento: MouseEvent): string {
+  const propio = boton.getAttribute("data-ficha") ?? "";
+  const pais = boton.closest(".pais");
+  if (!pais || !boton.matches(".pais__campo") || evento.detail === 0) return propio;
+  let mejor = propio;
+  let cerca = Infinity;
+  for (const c of pais.querySelectorAll<HTMLElement>(".pais__campo")) {
+    const r = c.getBoundingClientRect();
+    const d = Math.hypot(r.left + r.width / 2 - evento.clientX, r.top + r.height / 2 - evento.clientY);
+    if (d < cerca) {
+      cerca = d;
+      mejor = c.getAttribute("data-ficha") ?? mejor;
+    }
+  }
+  return mejor;
+}
+
+/**
  * **Abre la ficha de un aeródromo de la carta**, o la cierra con `""`.
  *
  * No repinta el hangar: la ficha ya está en la página, escondida, y solo se
