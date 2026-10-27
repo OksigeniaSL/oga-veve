@@ -18994,5 +18994,12 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "tarjeta.voz.lucesPuntas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estas son las luces de navegación: roja en la punta izquierda, verde en la derecha, y en cada punta, una blanca que mira para atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
+    "para": "lo que explica el punto de las luces en la tarjeta del avión que lleva la blanca en las puntas"
   }
 ]

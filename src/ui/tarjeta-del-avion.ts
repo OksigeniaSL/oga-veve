@@ -619,7 +619,12 @@ export class TarjetaDelAvion {
       this.visor.ponerLuces({ [cual]: ahora });
       const suya = LUCES_DE_LA_TARJETA.find((l) => l.luz === cual);
       // Al encenderla se cuenta por qué; al apagarla, no hace falta.
-      if (ahora && suya) this.abrirGlobo(cual === "navegacion" ? "luces" : cual, explicacion(suya.explicacion));
+      // Las de navegación, las de este avión: la blanca no va en el mismo sitio en todos.
+      if (ahora && suya)
+        this.abrirGlobo(
+          cual === "navegacion" ? "luces" : cual,
+          cual === "navegacion" ? explicacionDe("luces", a) : explicacion(suya.explicacion),
+        );
       else this.cerrarGlobo();
       return;
     }

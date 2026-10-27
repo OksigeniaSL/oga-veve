@@ -426,8 +426,8 @@ describe("dónde cae el dedo", () => {
 describe("los puntos de la tarjeta del avión", () => {
   beforeEach(() => ponerLasDeSerie());
 
-  it("los dieciocho están en el registro, con su palabra corta", () => {
-    expect(EXPLICACIONES_DEL_AVION).toHaveLength(18);
+  it("los veinte están en el registro, con su palabra corta", () => {
+    expect(EXPLICACIONES_DEL_AVION).toHaveLength(20);
     const falta: string[] = [];
     for (const e of EXPLICACIONES_DEL_AVION) {
       const r = explicacionDe(e.id);
@@ -446,8 +446,8 @@ describe("los puntos de la tarjeta del avión", () => {
       }
     }
     expect(falta).toEqual([]);
-    // Y los dieciocho son distintos: un `id` repetido taparía a otro.
-    expect(new Set(EXPLICACIONES_DEL_AVION.map((e) => e.id)).size).toBe(18);
+    // Y los veinte son distintos: un `id` repetido taparía a otro.
+    expect(new Set(EXPLICACIONES_DEL_AVION.map((e) => e.id)).size).toBe(20);
   });
 
   it("y se abren por su id, con su dibujo y su palabra", () => {

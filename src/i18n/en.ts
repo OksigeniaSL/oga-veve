@@ -2311,6 +2311,10 @@ export const EN: Dictionary = {
     "Fixed gear. It's always out: simpler and lighter, though it slows the plane down a little.",
   "tarjeta.luces":
     "Navigation lights: red on the left wingtip, green on the right and white on the tail. If at night you see the red and the green together, that plane is coming towards you.",
+  "tarjeta.lucesPuntas":
+    "Navigation lights: red on the left wingtip, green on the right and, on each tip, a white one facing backwards. If at night you see the red and the green together, that plane is coming towards you.",
+  "tarjeta.lucesAtras":
+    "Navigation lights: red on the left wingtip, green on the right and white at the back. If at night you see the red and the green together, that plane is coming towards you.",
   "tarjeta.luzBaliza":
     "Beacon: the flashing red light. It goes on before the engine starts and says: this plane is alive, keep clear.",
   "tarjeta.luzEstrobos":
@@ -2347,6 +2351,8 @@ export const EN: Dictionary = {
     "This gear never folds away: it's always out. It's simpler and lighter, though it slows the plane down a little.",
   "tarjeta.voz.luces":
     "These are the navigation lights: red on the left, green on the right and white at the back. If at night you see the red and the green together, that plane is coming straight at you.",
+  "tarjeta.voz.lucesPuntas":
+    "These are the navigation lights: red on the left wingtip, green on the right, and on each tip, a white one facing backwards. If at night you see the red and the green together, that plane is coming straight at you.",
   "tarjeta.voz.luzBaliza":
     "The beacon is the flashing red light. It goes on before the engine starts and tells everyone: keep clear, this plane is about to move.",
   "tarjeta.voz.luzEstrobos":

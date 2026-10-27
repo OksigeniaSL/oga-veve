@@ -114,6 +114,8 @@ export const FIGURAS = {
   "avion.tren-fijo": { cual: "tren-fijo" },
   "avion.tren": { cual: "tren-retractil" },
   "avion.luces": { cual: "luces" },
+  "avion.luces-puntas": { cual: "luces" },
+  "avion.luces-atras": { cual: "luces" },
   "avion.luz-baliza": { cual: "luces", luz: "beacon" },
   "avion.luz-estrobos": { cual: "luces", luz: "strobe" },
   "avion.luz-aterrizaje": { cual: "luces", luz: "land" },

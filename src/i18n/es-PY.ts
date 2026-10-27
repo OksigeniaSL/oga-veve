@@ -3181,6 +3181,11 @@ export const ES_PY = {
     "Tren fijo. Va siempre afuera: es más sencillo y más liviano, aunque frena un poco al avión.",
   "tarjeta.luces":
     "Luces de navegación: roja en la punta izquierda, verde en la derecha y blanca en la cola. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
+  // La blanca no va en la cola en todos: ver `lucesDe` en `ui/explicaciones-del-avion.ts`.
+  "tarjeta.lucesPuntas":
+    "Luces de navegación: roja en la punta izquierda, verde en la derecha y, en cada punta, una blanca que mira hacia atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
+  "tarjeta.lucesAtras":
+    "Luces de navegación: roja en la punta izquierda, verde en la derecha y blanca atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
   "tarjeta.luzBaliza":
     "Baliza: la luz roja que parpadea. Se enciende antes de arrancar el motor y dice: este avión está vivo, no te acerques.",
   "tarjeta.luzEstrobos":
@@ -3223,6 +3228,8 @@ export const ES_PY = {
     "Este tren no se guarda nunca: va siempre afuera. Es más sencillo y más liviano, aunque frena un poco al avión.",
   "tarjeta.voz.luces":
     "Estas son las luces de navegación: roja a la izquierda, verde a la derecha y blanca atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
+  "tarjeta.voz.lucesPuntas":
+    "Estas son las luces de navegación: roja en la punta izquierda, verde en la derecha, y en cada punta, una blanca que mira para atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.",
   "tarjeta.voz.luzBaliza":
     "La baliza es la luz roja que parpadea. Se enciende antes de arrancar el motor y les dice a todos: no te acerques, este avión se va a mover.",
   "tarjeta.voz.luzEstrobos":
