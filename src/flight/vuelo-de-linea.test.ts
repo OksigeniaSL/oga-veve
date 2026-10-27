@@ -101,6 +101,7 @@ function volar(): Vuelo {
     vr: ARAI.rotationSpeed,
     vref: ARAI.approachSpeed,
     alturaDeLaRecogida: laRecogidaDe(ARAI).nariz,
+    alturaDelGas: laRecogidaDe(ARAI).gas,
     reversa: true,
     trenQueSeMete: true,
   });

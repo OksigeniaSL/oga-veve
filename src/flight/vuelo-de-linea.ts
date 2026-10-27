@@ -168,6 +168,11 @@ export interface FichaDeLinea {
   readonly vref: number;
   /** A qué altura se levanta la nariz, m. Ver `recogida.ts`. */
   readonly alturaDeLaRecogida: number;
+  /**
+   * A qué altura empieza a ir el gas al ralentí, m: la de su clase, que en
+   * un E-Jet es la del `RETD`, «30ft until T/D». Ver `recogida.ts`.
+   */
+  readonly alturaDelGas: number;
   /** Si lleva reversa. */
   readonly reversa: boolean;
   /** Si mete el tren. */
@@ -382,13 +387,6 @@ const GIRA_EN_PISTA = 3;
 const VUELVE_AL_EJE = 60;
 const CORTE_EN_PISTA = 8 * GRADO;
 
-/**
- * **Desde qué parte de la altura de la recogida empieza a salir el gas** en el
- * vuelo de línea: va saliendo con la altura y llega al ralentí al tocar. Ver
- * `recogida.ts`, donde está la altura de cada clase con su manual.
- */
-const GAS_FUERA = 0.65;
-
 /** La reversa, hasta estos m/s: unos sesenta y cinco nudos. */
 const REVERSA_HASTA = 65 * NUDO;
 /** Y a qué velocidad deja el autofreno y frena a mano para salir, m/s. */
@@ -578,7 +576,7 @@ export class VueloDeLinea {
       this.empuje = potencia === "despegue" ? EMPUJE.despegue : 0;
       return manos;
     }
-    // En la recogida el empuje sale con el gas, al ralentí al tocar. Ver `GAS_FUERA`.
+    // En la recogida el empuje sale con el gas, al ralentí al tocar. Ver `alturaDelGas`.
     const objetivo = EMPUJE[potencia] * (this.tramo === "recogida" ? (manos.fraccion ?? 1) : 1);
     this.empuje += acotar(objetivo - this.empuje, CAMBIA_EL_EMPUJE * dt);
     return { ...manos, empuje: this.empuje };
@@ -954,9 +952,14 @@ export class VueloDeLinea {
        * during the flare»— y lo que deja al avión la velocidad que se gasta en
        * posarse. Sacado de golpe, el JAZ 90 tocaba a cien nudos, treinta por
        * debajo de su aproximación.
+       *
+       * **Y desde la altura de su clase**, no desde una parte de ella: empezaba
+       * a salir a dos tercios de la recogida, unos veinte pies en el JAZ 90,
+       * cuando el `RETD` de un E-Jet lleva las palancas al ralentí «30ft until
+       * T/D». Ver `recogida.ts`.
        */
       ...(recogiendo
-        ? { fraccion: Math.max(0, Math.min(1, l.altura / Math.max(0.5, GAS_FUERA * this.ficha.alturaDeLaRecogida))) }
+        ? { fraccion: Math.max(0, Math.min(1, l.altura / Math.max(0.5, this.ficha.alturaDelGas))) }
         : {}),
       subida: this.subidaPedida,
       alabeo,

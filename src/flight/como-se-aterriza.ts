@@ -26,8 +26,8 @@
  * - **La clase de avión.** La recogida no es igual en todos —ver
  *   `flight/recogida.ts`, con sus manuales—: en los de hélice la nariz y el
  *   gas van juntos a quince pies (FAA, *Airplane Flying Handbook*, cap. 9);
- *   en el reactor de cables, la nariz a veinte pies y el gas detrás (Boeing,
- *   *737 FCTM*, «Flare and Touchdown»); en el de mandos eléctricos, la nariz
+ *   en el reactor de cables, la nariz a treinta pies y el gas detrás (Boeing,
+ *   *747-400 FCTM*, citado por la AAIB); en el de mandos eléctricos, la nariz
  *   y el gas juntos a treinta, cuando el radioaltímetro canta *thirty* (el
  *   AOM del E170 y el procedimiento de su operador; ver `recogida.ts`).
  *

@@ -28,13 +28,16 @@
  *   entre las del E170 —su cuenta es 2500, 1000, 500, 200, 100, 50, 40, 30,
  *   20, 10 y *minimums*— ni entre las nuevas del E2 (Transport Canada,
  *   *Operational Evaluation Report – Embraer E-Jets*, rev. 1, 2023, ATA 31).
- * - **Reactor de mandos de cables (el JAZ 120, de Boeing):** «Initiate the
- *   flare when the main gear is approximately **20 feet** above the runway by
- *   increasing pitch attitude approximately 2° - 3°… After the flare is
- *   initiated, smoothly retard the thrust levers to idle». La nariz y el gas
- *   van juntos, a veinte pies, y las palancas llegan al ralentí al tocar.
- *   Boeing, *737 Flight Crew Training Manual*, «Landing — Flare and
- *   Touchdown».
+ * - **Reactor de mandos de cables (el JAZ 120, de la clase del 747-400):**
+ *   «Initiate the flare when the main gear is approximately **30 feet** above
+ *   the runway by increasing pitch attitude approximately 2° - 3°… A smooth
+ *   power reduction to idle also assists in controlling the natural nose down
+ *   pitch change associated with thrust reduction». La nariz y el gas van
+ *   juntos, a treinta pies, y las palancas llegan al ralentí al tocar. Es el
+ *   *B747-400 Flight Crew Training Manual* de Boeing, citado por la AAIB
+ *   británica en su boletín 6/2008 sobre el G-VLIP, un 747-443, p. 37
+ *   (<https://assets.publishing.service.gov.uk/media/5422fb79ed915d1371000841/Boeing_747-443__G-VLIP_06-08.pdf>).
+ *   Estaba a veinte, que es lo del *737 FCTM*: un 737 no es un 747.
  * - **Avión de hélice (JAZ 20, 25, 40 y 60):** «When the airplane approaches
  *   **10 to 20 feet** above the ground in a normal descent, the round out or
  *   flare is started… Since power normally is reduced to idle during the
@@ -66,7 +69,7 @@ export interface LaRecogida {
 /** Las alturas de cada clase, en pies, que es como las dan los manuales. */
 const EN_PIES: Readonly<Record<ClaseDeRecogida, { nariz: number; gas: number }>> = {
   electricos: { nariz: 30, gas: 30 },
-  cables: { nariz: 20, gas: 20 },
+  cables: { nariz: 30, gas: 30 },
   helice: { nariz: 15, gas: 15 },
 };
 
@@ -82,6 +85,35 @@ export function laRecogidaDe(a: AircraftConfig): LaRecogida {
   const clase = claseDeRecogida(a);
   const p = EN_PIES[clase];
   return { clase, nariz: p.nariz * PIE, gas: p.gas * PIE };
+}
+
+/** Lo que hacen los gases automáticos, dicho sin el nombre de nadie. */
+export type QueHacenLosGases = "velocidad" | "empuje" | "ralenti" | "recogida";
+
+/**
+ * **Cómo llama el FMA a lo que hacen los gases**, en la clase de este avión.
+ *
+ * Lo mismo se escribe distinto en cada cabina, y lo que se aprende aquí se
+ * tiene que reconocer en la de verdad:
+ *
+ * - **En la de los E-Jets (el JAZ 90)**, `SPDT` cuando los gases sostienen la
+ *   velocidad, `SPDE` cuando la sostiene el timón de profundidad con un
+ *   empuje fijo —el FLCH, que sube con todo y baja al ralentí— y `RETD` en la
+ *   recogida, «Idle during flare (30ft until T/D)» (C. Regli, *Embraer EMB190
+ *   – Summary*, 2025, p. 1-14). `RETARD`, que es lo que ponía, es el nombre de
+ *   Boeing, y no sale en la pantalla de un E170.
+ * - **En la de Boeing (el JAZ 120)**, `SPD`, `THR` subiendo e `IDLE`
+ *   bajando, y también `IDLE` en la recogida: en el 747-400 los gases llevan
+ *   las palancas al ralentí a veinticinco pies e `IDLE` sustituye a `SPD` en
+ *   el FMA (el FCOM del 747-400, citado en el hilo «B744 Autothrottle on
+ *   Manual Landing» de PPRuNe, Tech Log, n.º 577059). `RETARD` es del 737.
+ *
+ * Los de hélice no llevan gases automáticos: les vale la de Boeing, que no
+ * pintan.
+ */
+export function rotuloDeLosGases(clase: ClaseDeRecogida, que: QueHacenLosGases): string {
+  if (clase === "electricos") return que === "velocidad" ? "SPDT" : que === "recogida" ? "RETD" : "SPDE";
+  return que === "velocidad" ? "SPD" : que === "empuje" ? "THR" : "IDLE";
 }
 
 /**
