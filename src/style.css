@@ -13384,8 +13384,14 @@ button.motor__tecla::after {
     width: min(100%, calc((100dvh - 110px) * 1.39));
   }
 
+  /*
+   * El PAPI, tumbado, en dos columnas aunque salga estrecho: en una sola, su
+   * perfil va a todo el ancho y es más alto que la pantalla. Con el perfil
+   * en la columna ancha —cinco octavos del ancho, menos los márgenes—, mide
+   * de alto siete décimas de esa columna.
+   */
   .explica--figura-papi .explica__figura {
-    width: min(100%, calc((100dvh - 110px) * 2.25));
+    width: min(100%, max(640px, calc((100dvh - 110px) * 2.39)));
   }
 }
 
