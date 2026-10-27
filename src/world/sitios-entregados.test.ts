@@ -37,10 +37,16 @@ const TOPE: Record<string, number> = {
   nublo: 3_000,
   amistad: 3_000,
   izana: 4_000,
-  "saltos-monday": 2_500,
-  "observatorio-teide": 4_000,
+  monday: 2_500,
   muchachos: 3_000,
 };
+
+/**
+ * Los sitios que no llevan bultos, y por qué. Los Saltos del Monday son suelo y
+ * agua: lo que se pisa lo pone el parche de relieve, y no hay nada que se
+ * levante sobre él con lo que chocar. Lo dice su ficha.
+ */
+const SIN_BULTOS = new Set(["monday"]);
 
 async function abrir(id: string): Promise<Object3D> {
   const b = fs().readFileSync(`public/assets/sitios/${id}.glb`);
@@ -88,7 +94,7 @@ describe("los modelos entregados", () => {
       expect(triangulos, s.id).toBeGreaterThan(0);
       expect(triangulos, s.id).toBeLessThanOrEqual(TOPE[s.id] ?? 12_000);
       expect(peor, `${s.id}: el lado más largo`).toBeLessThanOrEqual(250);
-      expect(bultos, `${s.id}: bultos`).toBeGreaterThan(0);
+      if (!SIN_BULTOS.has(s.id)) expect(bultos, `${s.id}: bultos`).toBeGreaterThan(0);
       expect(sinColor, `${s.id}: mallas sin color en los vértices`).toBe(0);
       expect(conTextura, `${s.id}: con textura`).toBe(false);
       // Y de su tamaño: ni un milímetro ni un continente (escala aplicada).

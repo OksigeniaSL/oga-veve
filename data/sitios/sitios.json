@@ -111,6 +111,16 @@
       "cota": null,
       "alcance": 35000,
       "de": "osm way/957263953"
+    },
+    {
+      "id": "monday",
+      "nombre": "Saltos del Monday",
+      "lat": -25.5627515,
+      "lon": -54.6323698,
+      "giro": 0,
+      "cota": 150,
+      "alcance": 40000,
+      "de": "osm node/4218536799"
     }
   ]
 }
