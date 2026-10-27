@@ -2017,5 +2017,11 @@
   ],
   "vuelo.comoSeAterriza.electricos": [
     "vuelo.comoSeAterriza.electricos"
+  ],
+  "tarjeta.voz.lucesPuntas": [
+    "tarjeta.voz.lucesPuntas"
+  ],
+  "tarjeta.voz.motorTurbo": [
+    "tarjeta.voz.motorTurbo"
   ]
 }

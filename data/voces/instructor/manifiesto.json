@@ -887,6 +887,10 @@
       "ms": 8607,
       "h": "e365e5db0e"
     },
+    "tarjeta.voz.lucesPuntas": {
+      "ms": 11807,
+      "h": "6bd45d0c9d"
+    },
     "tarjeta.voz.luzAterrizaje": {
       "ms": 8807,
       "h": "05d4aa60f1"
@@ -910,6 +914,10 @@
     "tarjeta.voz.motorRadial": {
       "ms": 7607,
       "h": "6311dbc277"
+    },
+    "tarjeta.voz.motorTurbo": {
+      "ms": 12007,
+      "h": "33c06ff176"
     },
     "tarjeta.voz.pitot": {
       "ms": 8207,
@@ -4595,6 +4603,12 @@
     ],
     "vuelo.comoSeAterriza.electricos": [
       "vuelo.comoSeAterriza.electricos"
+    ],
+    "tarjeta.voz.lucesPuntas": [
+      "tarjeta.voz.lucesPuntas"
+    ],
+    "tarjeta.voz.motorTurbo": [
+      "tarjeta.voz.motorTurbo"
     ]
   }
 }
