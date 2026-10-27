@@ -2409,6 +2409,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       pistaLibreOtraVez: juego.hechos.cuantosEscuchan("pistaLibreOtraVez"),
       puntoDeDescenso: juego.hechos.cuantosEscuchan("puntoDeDescenso"),
     }),
+    /**
+     * Las luces del PAPI, como si se vieran en la final: saca su tarjeta, la
+     * que se toca para abrir el PAPI por dentro. Ver `ver-figuras.mjs`.
+     */
+    papiVisto: (blancas: number) => juego.hechos.emit("papi", { blancas }),
     /** Si ahora mismo hay orden de irse al aire. */
     ordenDeFrustrar: () => juego.laAproximacion.mandanFrustrar,
     porQueSeMando: () => juego.laAproximacion.porQueSeMando,
