@@ -487,6 +487,27 @@ son verdes; ganado nelore casi todo blanco; el camino de tierra colorada; y
 el tajamar en el punto más bajo del potrero según el relieve medido, que es
 donde se junta el agua.
 
+### Los sitios que se reconocen desde el aire
+
+Lo que sobresale del suelo y el relieve no pone —la represa de Itaipú, el
+puente de Encarnación, el Auditorio de Santa Cruz, el Roque Nublo— entra como
+un `.glb` por sitio en `public/assets/sitios/`, y dónde va cada uno en
+`data/sitios/sitios.json`. El camino está en `src/world/sitios-con-modelo.ts`
+y el contrato del fichero, en `data/sitios/README.md`.
+
+Cada modelo se anota aquí, en esta tabla, **antes** de entrar, con el fichero,
+de quién es, su licencia y las fotos que sirvieron de referencia.
+`src/world/sitios-con-modelo.test.ts` falla si un sitio del catálogo no tiene
+su línea. Las fotos de referencia, como las de los sellos de campo, no entran
+en el juego: solo sirven para que el modelo sea como es el sitio.
+
+| Fichero | Qué es | De quién | Licencia | Referencias |
+| ------- | ------ | -------- | -------- | ----------- |
+
+Por la regla de las marcas de más abajo, un sitio se modela **sin rótulos, sin
+logotipos y sin la librea de nadie**: la forma de una presa o de un puente es
+un hecho; el cartel de la empresa que la explota, no.
+
 ### Las aves y el servicio de fauna del aeropuerto
 
 Las bandadas —una malla de ave con cuerpo, cola y dos alas partidas, y una uve
