@@ -13325,7 +13325,7 @@ button.motor__tecla::after {
 }
 
 /* Mientras llega la figura, o si no llega, el dibujo de siempre. */
-.explica__figura:not([class*="fig-"]) > svg {
+.explica__figura-dentro:not([class*="fig-"]) > svg {
   display: block;
   width: min(100%, 320px);
   height: auto;

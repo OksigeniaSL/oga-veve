@@ -206,9 +206,14 @@ export class VentanaDeExplicacion implements PantallaDeExplicaciones {
             como.video
               ? video(como)
               : como.figura
-                ? `<div class="explica__figura" data-explica-figura="${como.figura.cual}">${dibujoDe(
-                    como.explicacion.dibujo,
-                  )}</div>`
+                ? /*
+                   * Dos cajas y no una: la de fuera es el contenedor por el
+                   * que la figura mide su ancho, y una consulta de contenedor
+                   * no alcanza al contenedor mismo. Con la figura montada en
+                   * él, el PAPI no pasaba nunca a dos columnas.
+                   */
+                  `<div class="explica__figura"><div class="explica__figura-dentro"
+                       data-explica-figura="${como.figura.cual}">${dibujoDe(como.explicacion.dibujo)}</div></div>`
                 : dibujoDe(como.explicacion.dibujo)
           }
         </div>
