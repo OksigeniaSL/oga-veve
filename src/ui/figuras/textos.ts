@@ -13,7 +13,10 @@
  * la placa «FLAPS» del panel, que van fijos en el dibujo.
  */
 
-import { t } from "../../i18n";
+import { t, type TranslationKey } from "../../i18n";
+import type { TextosDelMotor } from "./motor-comun";
+import type { PalabrasDelTurbofan } from "./turbofan";
+import type { PalabrasDelTurbohelice } from "./turbohelice";
 import { cifra } from "./figura";
 import type { TextosDeLosFlaps } from "./flaps";
 import type { TextosDeLosMandos } from "./mandos";
@@ -193,5 +196,82 @@ export function textosDeLosFlaps(): TextosDeLosFlaps {
         : grados === 0
           ? t("figura.flaps.valorGuardado", { nudos })
           : t("figura.flaps.valor", { grados, nudos }),
+  };
+}
+
+/** Lo común de los dos motores: la frase de Tukã y la palanca. */
+const delMotor = (
+  palanca: TranslationKey,
+  poco: TranslationKey,
+  medio: TranslationKey,
+  todo: TranslationKey,
+): TextosDelMotor => ({
+  palanca: t(palanca),
+  poco: t("figura.motor.poco"),
+  medio: t("figura.motor.medio"),
+  todo: t("figura.motor.todo"),
+  valor: (p) => t(p < 0.2 ? poco : p < 0.7 ? medio : todo),
+});
+
+export function textosDelTurbohelice(): TextosDelMotor & { readonly dibujo: PalabrasDelTurbohelice } {
+  return {
+    ...delMotor(
+      "figura.turbohelice.palanca",
+      "figura.turbohelice.valorPoco",
+      "figura.turbohelice.valorMedio",
+      "figura.turbohelice.valorTodo",
+    ),
+    dibujo: {
+      n1: t("figura.turbohelice.n1"),
+      n2: t("figura.turbohelice.n2"),
+      n3: t("figura.turbohelice.n3"),
+      n4: t("figura.turbohelice.n4"),
+      n5: t("figura.turbohelice.n5"),
+      n6: t("figura.turbohelice.n6"),
+      aire: t("figura.turbohelice.aire"),
+      caja: t("figura.turbohelice.caja"),
+      combustion: t("figura.turbohelice.combustion"),
+      compresor: t("figura.turbohelice.compresor"),
+      escape: t("figura.turbohelice.escape"),
+      barraNg: t("figura.turbohelice.barraNg"),
+      helice: t("figura.turbohelice.helice"),
+      barraNp: t("figura.turbohelice.barraNp"),
+      mas: t("figura.motor.mas"),
+      menos: t("figura.motor.menos"),
+      barraPar: t("figura.turbohelice.barraPar"),
+      turbinas: t("figura.turbohelice.turbinas"),
+      aria: t("figura.turbohelice.aria"),
+    },
+  };
+}
+
+export function textosDelTurbofan(): TextosDelMotor & { readonly dibujo: PalabrasDelTurbofan } {
+  return {
+    ...delMotor(
+      "figura.turbofan.palanca",
+      "figura.turbofan.valorPoco",
+      "figura.turbofan.valorMedio",
+      "figura.turbofan.valorTodo",
+    ),
+    dibujo: {
+      n1: t("figura.turbofan.n1"),
+      n2: t("figura.turbofan.n2"),
+      n3: t("figura.turbofan.n3"),
+      n4: t("figura.turbofan.n4"),
+      n5: t("figura.turbofan.n5"),
+      daLaVuelta: t("figura.turbofan.daLaVuelta"),
+      rodea: t("figura.turbofan.rodea"),
+      combustion: t("figura.turbofan.combustion"),
+      masEmpuja: t("figura.turbofan.masEmpuja"),
+      barraEmpuje: t("figura.turbofan.barraEmpuje"),
+      calientes: t("figura.turbofan.calientes"),
+      mas: t("figura.motor.mas"),
+      menos: t("figura.motor.menos"),
+      barraN2: t("figura.turbofan.barraN2"),
+      nucleo: t("figura.turbofan.nucleo"),
+      barraN1: t("figura.turbofan.barraN1"),
+      ventilador: t("figura.turbofan.ventilador"),
+      aria: t("figura.turbofan.aria"),
+    },
   };
 }

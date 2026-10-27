@@ -323,7 +323,7 @@ matriz galáctica de la IAU—, escritas en `src/world/cielo-de-noche.ts`.
 | [Vite](https://vitejs.dev)                     | Bundler y servidor de desarrollo | MIT        |
 | [TypeScript](https://www.typescriptlang.org)   | Lenguaje                         | Apache-2.0 |
 | [Vitest](https://vitest.dev)                   | Tests                            | MIT        |
-| [Anatomy](https://github.com/wheresryan22/anatomy), de Ryan | La hoja de estilo isométrica (`iso.css`) que va dentro del CSS de la figura del PAPI (`src/ui/figuras/papi.css`, bajo `.fig-papi`), y la fórmula de su proyección isométrica (`isometrica` en `src/ui/figuras/figura.ts`). Con su generador se dibujaron las cinco figuras de los instrumentos por dentro | MIT        |
+| [Anatomy](https://github.com/wheresryan22/anatomy), de Ryan | La hoja de estilo isométrica (`iso.css`) que va dentro del CSS de la figura del PAPI (`src/ui/figuras/papi.css`, bajo `.fig-papi`), y la fórmula de su proyección isométrica (`isometrica` en `src/ui/figuras/figura.ts`). Con su generador isométrico se dibujaron el PAPI, el velocímetro, el altímetro y los mandos | MIT        |
 
 El aviso de Anatomy, como pide su licencia:
 
@@ -563,9 +563,9 @@ como es; esas fotos no entran en el juego, solo sirvieron de referencia.
 
 ### Los instrumentos por dentro
 
-Las cinco figuras que se tocan en la ventana de explicación —el PAPI, el
-pitot con su velocímetro, el altímetro, los mandos y los flaps
-(`src/ui/figuras/`)— son **figuras propias**: las dibujó Gaudí, director de
+Las siete figuras que se tocan en la ventana de explicación —el PAPI, el
+pitot con su velocímetro, el altímetro, los mandos, los flaps, el
+turbohélice y el turbofán (`src/ui/figuras/`)— son **figuras propias**: las dibujó Gaudí, director de
 arte de Oksigenia, con cara de manual de vuelo antiguo y las tintas y letras
 de la carta, y van con el código bajo Apache-2.0. Lo único de fuera es lo
 que dice el software de terceros, arriba: la hoja isométrica de Anatomy (MIT)
@@ -586,6 +586,13 @@ módulo:
   flaps y las velocidades de pérdida, del manual del Cessna 172S, secciones 7
   y 5. Solo las publicadas: a 20° de flaps el manual no da cifra, y la figura
   tampoco.
+- **El turbohélice y el turbofán**: FAA, *Airplane Flying Handbook*
+  (FAA-H-8083-3C), capítulos 15 y 16, con su figura 15-5 del PT6 de turbina
+  libre y flujo invertido; *Pilot's Handbook of Aeronautical Knowledge*,
+  capítulo 7; *Aviation Maintenance Technician Handbook – Powerplant*
+  (FAA-H-8083-32), capítulo 1. El motor de la clase del JAZ 60, el PT6A-67D,
+  del informe de aceptación de tipo del Beech 1900C y 1900D de la autoridad
+  de aviación de Nueva Zelanda, sobre el certificado de tipo A24CE de la FAA.
 
 ### Las ilustraciones
 
