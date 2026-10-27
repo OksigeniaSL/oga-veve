@@ -2287,8 +2287,9 @@ export class Terrain {
         const suyos = mallarElParche(p, enEstaMalla);
         if (!suyos.length) continue;
         const pasoFino = paso / p.s;
+        // Las que se dibujan: con el asiento de los sitios con modelo. Ver `Asiento`.
         const h = (i: number, j: number): number =>
-          p.alturas[clampInt(i, 0, p.filas - 1) * p.columnas + clampInt(j, 0, p.columnas - 1)]!;
+          p.dibujadas[clampInt(i, 0, p.filas - 1) * p.columnas + clampInt(j, 0, p.columnas - 1)]!;
         const renumerado = new Map<number, number>();
         for (const v of suyos) {
           let k = renumerado.get(v);

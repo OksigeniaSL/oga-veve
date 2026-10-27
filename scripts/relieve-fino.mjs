@@ -101,8 +101,8 @@ export const PARCHES = [
     paso: 20,
     dibujo: 40,
     fuente: "ign",
-    // La meseta y el roque los pone su modelo, `nublo.glb`: ver `asentar`.
-    asiento: { lat: 27.970815, lon: -15.6125968, corte: 1690, radio: 380 },
+    // La meseta y el roque los pone su modelo, `nublo.glb`: ver «el asiento».
+    asientos: [{ sitio: "nublo", lat: 27.970815, lon: -15.6125968, corte: 1690, radio: 380 }],
   },
   {
     id: "roque-agando",
@@ -114,8 +114,8 @@ export const PARCHES = [
     paso: 20,
     dibujo: 35,
     fuente: "ign",
-    // El roque lo pone su modelo, `agando.glb`: ver `asentar`.
-    asiento: { lat: 28.1052923, lon: -17.2137276, corte: 1060, radio: 330 },
+    // El roque lo pone su modelo, `agando.glb`: ver «el asiento».
+    asientos: [{ sitio: "agando", lat: 28.1052923, lon: -17.2137276, corte: 1060, radio: 330 }],
   },
   {
     id: "timanfaya",
@@ -144,16 +144,30 @@ export const PARCHES = [
      * La presa y el cañón del Paraná aguas abajo, hasta pasado el Monday:
      * el Puente de la Amistad y los saltos caen dentro, y el río de verdad
      * va a cien metros entre barrancas de ciento cincuenta.
+     *
+     * **Con holgura alrededor de los saltos.** En el horizonte de cada mundo
+     * solo se refinan los cuadros enteros, menos uno de margen, y el borde se
+     * funde a lo largo de otro: en el de Asunción son casi seis kilómetros
+     * por cada lado. Con el recuadro de antes, los saltos quedaban a tres del
+     * borde y el horizonte los seguía dibujando.
      */
     id: "itaipu",
     nombre: "Itaipú y el cañón del Paraná",
-    lat: -25.475,
-    lon: -54.598,
-    ancho: 13000,
-    alto: 26000,
+    lat: -25.508,
+    lon: -54.612,
+    ancho: 17000,
+    alto: 34000,
     paso: 30,
-    dibujo: 60,
+    dibujo: 70,
     fuente: "copernicus",
+    /*
+     * Los Saltos del Monday los pone su modelo con su suelo hasta los 290 m:
+     * el río a su cota, las paredes de basalto y la caída de cuarenta metros,
+     * que a treinta metros por muestra el parche deja en una rampa. Debajo,
+     * el parche baja 45 m —el pozo está a ~117 y el parche, bajo los labios,
+     * a 135-150—, y vuelve a subir entre los 220 y los 300 m.
+     */
+    asientos: [{ sitio: "monday", lat: -25.5627515, lon: -54.6323698, corte: 0, radio: 220, hundido: 45 }],
   },
   {
     /*
@@ -537,30 +551,13 @@ async function abrirEms() {
 // ── El parche ─────────────────────────────────────────────────────────────
 
 /**
- * Lo que se hunde el suelo bajo la pieza de un sitio con modelo, m.
- *
- * **El asiento.** El Roque Nublo y el de Agando llevan modelo: la roca, sacada
- * del mismo MDT05 por encima de una cota (`corte`) y afinada donde el MDT05
- * la recorta —la cumbre, las paredes—. Si el parche la tuviera también, serían
- * dos rocas en el mismo sitio: la del parche, más roma, asomando por donde el
- * modelo no llega, y las dos peleándose por el fondo de profundidad donde
- * coinciden. Así que el parche pone el suelo y el modelo la roca: por encima
- * del `corte`, a menos de `radio` metros, el parche baja `HUNDIDO_DEL_ASIENTO`
- * metros por debajo de la pieza, con una transición de diez metros de cota y
- * de ochenta de radio para no dejar escalón. Medido con los vértices de los
- * dos modelos contra el parche: la faja que baja del modelo queda entera por
- * debajo del suelo, que es para lo que era.
+ * **El asiento.** Donde un sitio lleva modelo con su propio suelo —la roca de
+ * los roques, el salto del Monday—, el parche se aparta debajo para que no
+ * salgan dos: se anota en la ficha del parche (`asientos`) y el juego lo
+ * aplica **al dibujarlo**, no a las cotas, que siguen siendo las medidas: la
+ * física y la línea de vista pisan el suelo de verdad. Ver `asentar` en
+ * `world/parches-de-relieve.ts`.
  */
-const HUNDIDO_DEL_ASIENTO = 12;
-
-function asentar(h, la, lo, a) {
-  if (!a) return h;
-  const d = Math.hypot((lo - a.lon) * R * RAD * Math.cos(a.lat * RAD), (la - a.lat) * R * RAD);
-  const enRadio = 1 - Math.min(1, Math.max(0, (d - a.radio) / 80));
-  const enCota = Math.min(1, Math.max(0, (h - (a.corte - 12)) / 10));
-  const w = enRadio * enCota;
-  return h - HUNDIDO_DEL_ASIENTO * w * w * (3 - 2 * w);
-}
 
 /** El recuadro de un parche, en grados. */
 function cajaDe(p) {
@@ -641,7 +638,7 @@ async function hacerParche(p) {
           }
         }
       if (!cuantas) huecos++;
-      const v = Math.round(asentar(cuantas ? suma / cuantas : 0, lat, lon, p.asiento));
+      const v = Math.round(cuantas ? suma / cuantas : 0);
       alturas[f * columnas + c] = v;
       if (v < min) min = v;
       if (v > max) max = v;
@@ -682,7 +679,7 @@ async function hacerParche(p) {
         filas,
         columnas,
         dibujo: p.dibujo,
-        ...(p.asiento ? { asiento: p.asiento } : {}),
+        ...(p.asientos ? { asientos: p.asientos } : {}),
         minM: min,
         maxM: max,
       },

@@ -16,6 +16,7 @@ import type { BufferGeometry, Mesh } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
   RAMPA,
+  asentar,
   cotaDelParche,
   mallarElParche,
   refinarElHorizonte,
@@ -240,9 +241,8 @@ describe("con los mapas de verdad", () => {
  * cumbre y las paredes. Si el parche llevara la roca también, serían dos: la
  * del parche asomando por donde el modelo no llega, y las dos turnándose por
  * el fondo de profundidad donde coinciden. Así que el modelo pone la roca y el
- * parche se aparta debajo (`asentar` en `scripts/relieve-fino.mjs`): la pieza
- * del modelo queda por encima del suelo, y la faja que baja de ella, por
- * debajo.
+ * parche se aparta debajo al dibujarlo (`asentar`): la pieza del modelo queda
+ * por encima del suelo dibujado, y la faja que baja de ella, por debajo.
  */
 describe("el asiento de los roques", () => {
   const casos = [
@@ -258,9 +258,7 @@ describe("el asiento de los roques", () => {
       expect(ficha.giro).toBe(0);
       expect(ficha.cota).not.toBeNull();
       const parche = leerParche(c.parche);
-      const asiento = (JSON.parse(fs().readFileSync(`data/terrain/parches/${c.parche}.json`, "utf8") as string) as {
-        asiento: { corte: number };
-      }).asiento;
+      const asiento = parche.asientos!.find((a) => a.sitio === c.sitio)!;
       const b = fs().readFileSync(`public/assets/sitios/${c.sitio}.glb`) as Uint8Array;
       const escena = (
         await new GLTFLoader().parseAsync(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer, "")
@@ -281,7 +279,10 @@ describe("el asiento de los roques", () => {
           const x = e[0]! * px + e[4]! * py + e[8]! * pz + e[12]!;
           const y = e[1]! * px + e[5]! * py + e[9]! * pz + e[13]! + ficha.cota!;
           const z = e[2]! * px + e[6]! * py + e[10]! * pz + e[14]!;
-          const suelo = cotaDelParche(parche, ficha.lat - z / (R * RAD), ficha.lon + x / (R * RAD * k))!;
+          const la = ficha.lat - z / (R * RAD);
+          const lo = ficha.lon + x / (R * RAD * k);
+          const medido = cotaDelParche(parche, la, lo)!;
+          const suelo = medido - asentar(medido, la, lo, parche.asientos);
           (y >= asiento.corte ? pieza : faja).push(y - suelo);
         }
       });
@@ -292,4 +293,53 @@ describe("el asiento de los roques", () => {
       // Y la faja, debajo: nueve de cada diez nudos, bajo tierra.
       expect(faja[Math.floor(faja.length * 0.9)]!).toBeLessThan(0);
     });
+});
+
+/*
+ * **El asiento del Monday, y que es solo del dibujo.** El modelo de los
+ * Saltos del Monday trae su suelo hasta los 290 m —el río a su cota, las
+ * paredes y la caída de cuarenta metros—, y el parche de Itaipú, a treinta
+ * metros por muestra, deja la caída en una rampa que asomaba por el pozo. Su
+ * asiento baja el dibujo cuarenta y cinco metros en 220 m y lo devuelve a los
+ * 300. La cota que se pisa —y la que mira la ventanilla— no se mueve.
+ */
+describe("el asiento del Monday, en el parche de Itaipú", () => {
+  const m = leerMapa("guarani-lejos");
+  const { aGrados, aMetros } = proyeccion(m.lat, m.lon);
+  const rej: RejillaDelHorizonte = {
+    lado: m.n,
+    paso: m.tamano / (m.n - 1),
+    mitad: m.tamano / 2,
+    cota: (f, col) => m.datos[Math.min(m.n - 1, f) * m.n + Math.min(m.n - 1, col)]!,
+    dibujable: () => true,
+  };
+  const r = refinarElHorizonte(rej, [leerParche("itaipu")], aGrados, aMetros);
+  const p = r.parches[0]!;
+  const enLaRejilla = (lat: number, lon: number, cual: Float32Array): number => {
+    const { x, z } = aMetros(lat, lon);
+    const i = Math.round(((z + rej.mitad) / rej.paso - p.f0) * p.s);
+    const j = Math.round(((x + rej.mitad) / rej.paso - p.c0) * p.s);
+    return cual[i * p.columnas + j]!;
+  };
+  const monday = { lat: -25.5627515, lon: -54.6323698 };
+
+  it("en los saltos, el dibujo baja cuarenta y cinco metros y lo que se pisa no", () => {
+    const pisado = enLaRejilla(monday.lat, monday.lon, p.alturas);
+    const dibujado = enLaRejilla(monday.lat, monday.lon, p.dibujadas);
+    expect(pisado - dibujado).toBeCloseTo(45, 0);
+    // Lo que se pisa es lo medido: en el origen, el borde del salto, a unos 150 m.
+    expect(pisado).toBeGreaterThan(140);
+  });
+
+  it("y a cuatrocientos metros ya no se aparta nada", () => {
+    const lejos = { lat: monday.lat + 400 / (R * RAD), lon: monday.lon };
+    expect(enLaRejilla(lejos.lat, lejos.lon, p.dibujadas)).toBeCloseTo(enLaRejilla(lejos.lat, lejos.lon, p.alturas), 5);
+  });
+
+  it("y los roques siguen con el suyo de doce", () => {
+    const nublo = leerParche("roque-nublo");
+    const a = nublo.asientos![0]!;
+    expect(asentar(1800, a.lat, a.lon, nublo.asientos)).toBeCloseTo(12, 5);
+    expect(asentar(1600, a.lat, a.lon, nublo.asientos)).toBe(0);
+  });
 });

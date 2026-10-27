@@ -94,8 +94,12 @@ mitad de los nudos de la roca del modelo quedaban a menos de dos metros del
 parche—.
 
 Se eligió que **el modelo ponga la roca y el parche se aparte**: por encima de
-esa cota y cerca del roque, el parche baja doce metros (`asentar` en
-`scripts/relieve-fino.mjs`, anotado en la ficha del parche como `asiento`).
+esa cota y cerca del roque, el parche baja doce metros **al dibujarlo**
+(`asentar` en `world/parches-de-relieve.ts`, anotado en la ficha del parche
+como `asientos`). Solo el dibujo: la física y la línea de vista siguen pisando
+el suelo medido, que es donde está la roca aunque la dibuje su modelo. La
+primera versión hundía también las cotas, y con la roca de Agando doce metros
+más baja para la línea de vista, la ventanilla nombraba antes el paisaje.
 No al revés, porque el roque que se reconoce del Nublo es un dedo de treinta
 metros de ancho y ochenta de alto que no cabe en cuadros de cuarenta, y
 porque las cumbres las dan los modelos a su cota publicada. Medido con los
@@ -103,6 +107,21 @@ vértices de los dos modelos contra el parche: nueve de cada diez nudos de la
 roca quedan a siete metros o más sobre el suelo, y la faja que baja del modelo
 hacia el horizonte de antes queda debajo del suelo, que es para lo que era
 (`parches-de-relieve.test.ts`, «el asiento de los roques»).
+
+Los **Saltos del Monday** van con el mismo mecanismo y su propio hundido: su
+modelo trae el suelo hasta los 290 m —el río a su cota, las paredes de basalto
+y la caída de cuarenta metros en los dos labios—, y el parche, a treinta
+metros por muestra, deja la caída en una rampa de sesenta a noventa que asoma
+por el pozo. Bajo él, el dibujo baja cuarenta y cinco metros en 220 m y
+vuelve a su sitio a los 300. Para que el horizonte de todos los mundos lo
+refine de verdad, el parche de Itaipú llega más allá: en el de Asunción, a dos
+kilómetros por muestra, se pierden casi seis kilómetros por cada borde, y con
+el recuadro de antes los saltos quedaban a tres.
+
+Y **más basto cuanto más lejos de casa** (`LEJANIA`): el paso de dibujo crece
+con la distancia del parche al centro del mundo, un metro por cada dos
+kilómetros. El Teide desde Gran Canaria, a 130 km, va a 62 m y no a 45; Itaipú
+desde Asunción, a 300, a 150. A esa distancia un píxel cubre más.
 
 ### Los lagos, con su lámina
 
@@ -141,12 +160,11 @@ tienen río, y el fondo de profundidad hace la orilla.
   al pie de Itaipú, de ~180 a ~105, y la presa asoma entera; las ruinas de
   Trinidad, a 159 en todos los mundos. El Roque Nublo y el de Agando, a su
   cumbre con su modelo (1.813 y 1.246,7), sobre el suelo del parche.
-- **Los Saltos del Monday caen dentro del parche de Itaipú**, que ya tiene el
-  río a su cota de verdad: unos 160 m encima del salto y 117 debajo, con el
-  cañón. El primer modelo del Monday, hecho para el horizonte de antes —el río
-  como una piel sobre los 189 m de Guaraní—, quedaría flotando entre dieciocho
-  y setenta metros sobre ese suelo, y no entra: va el del salto y el cañón de
-  verdad, sobre este relieve.
+- **Los Saltos del Monday caen dentro del parche de Itaipú**, con el río a su
+  cota de verdad —unos 160 m encima del salto y 117 debajo— y su asiento para
+  el modelo del salto y el cañón reales. El primer modelo, hecho para el
+  horizonte de antes —el río como una piel sobre los 189 m de Guaraní—,
+  quedaría flotando y no entra.
 - **Tajogaite queda a unos 1.060-1.070 m**, que es lo que miden los dos
   modelos de EMS (diciembre de 2021 y febrero de 2022). OpenStreetMap le da
   1.120. Se pone lo medido, y se dice aquí y en los créditos.

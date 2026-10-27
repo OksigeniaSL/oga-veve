@@ -51,9 +51,58 @@ export interface FichaDeParche {
   readonly columnas: number;
   /** Cada cuántos metros se dibuja, más o menos. Ver `subdivisionDe`. */
   readonly dibujo: number;
+  /** Dónde se aparta el dibujo bajo un sitio con modelo. Ver `asentar`. */
+  readonly asientos?: readonly Asiento[];
   readonly minM: number;
   readonly maxM: number;
 }
+
+/**
+ * **El asiento de un sitio con modelo**: donde el modelo trae su propio suelo
+ * —la roca del Roque Nublo y del de Agando, el salto del Monday—, el parche
+ * se aparta debajo para que no salgan dos suelos. Por encima de `corte` y a
+ * menos de `radio` metros, el dibujo baja `hundido` metros (doce si no se
+ * dice), y vuelve a su sitio en diez metros de cota y ochenta de radio, sin
+ * escalón.
+ *
+ * **Solo el dibujo.** La física y la línea de vista siguen pisando el suelo
+ * medido: el roque está ahí aunque lo dibuje su modelo, y tapa lo que tapa.
+ * Hundido también para ellas, la ventanilla veía Garajonay a través del
+ * roque de Agando.
+ */
+export interface Asiento {
+  /** El sitio cuyo modelo pone el suelo, por su clave en `data/sitios/sitios.json`. */
+  readonly sitio: string;
+  readonly lat: number;
+  readonly lon: number;
+  /** Desde qué cota, m. Cero: todo lo que hay en el radio. */
+  readonly corte: number;
+  /** Hasta qué distancia del punto, m. */
+  readonly radio: number;
+  /** Cuánto se aparta, m. */
+  readonly hundido?: number;
+}
+
+/** Lo que se aparta el dibujo bajo un modelo si su asiento no dice otra cosa, m. */
+export const HUNDIDO_DEL_ASIENTO = 12;
+
+/** Lo que baja el dibujo en un punto por los asientos de un parche, m (positivo). */
+export function asentar(h: number, lat: number, lon: number, asientos: readonly Asiento[] | undefined): number {
+  if (!asientos?.length) return 0;
+  let baja = 0;
+  for (const a of asientos) {
+    const d = Math.hypot((lon - a.lon) * R * RAD * Math.cos(a.lat * RAD), (lat - a.lat) * R * RAD);
+    const enRadio = 1 - Math.min(1, Math.max(0, (d - a.radio) / 80));
+    const enCota = Math.min(1, Math.max(0, (h - (a.corte - 12)) / 10));
+    const w = enRadio * enCota;
+    baja = Math.max(baja, (a.hundido ?? HUNDIDO_DEL_ASIENTO) * w * w * (3 - 2 * w));
+  }
+  return baja;
+}
+
+/** Radio con el que se sacaron los parches, m: el de los extractores. */
+const R = 6371008;
+const RAD = Math.PI / 180;
 
 /** Un parche cargado: su ficha y sus cotas, m, filas de norte a sur. */
 export interface ParcheDeRelieve extends FichaDeParche {
@@ -69,6 +118,13 @@ export interface ParcheDeRelieve extends FichaDeParche {
  * en `scripts/relieve-fino.mjs`.
  */
 export const RAMPA = 1000;
+
+/**
+ * A cuántos metros del centro del mundo se dibuja un parche a un metro por
+ * muestra: a cien kilómetros, cincuenta; a doscientos cincuenta, ciento
+ * veinticinco. Ver `refinarElHorizonte`.
+ */
+export const LEJANIA = 2000;
 
 /** Cuánto puede apartarse un bloque llano de sus muestras, m. */
 const TOLERANCIA = 3;
@@ -143,8 +199,13 @@ export interface ParcheRefinado {
   /** Nudos pequeños por fila y por columna: `(f1 − f0)·s + 1`, `(c1 − c0)·s + 1`. */
   readonly filas: number;
   readonly columnas: number;
-  /** La cota de cada nudo pequeño, m, fila a fila desde `f0`. */
+  /** La cota de cada nudo pequeño, m, fila a fila desde `f0`: la que se pisa. */
   readonly alturas: Float32Array;
+  /**
+   * Y la que se dibuja: la misma, salvo bajo los asientos. Es el mismo
+   * arreglo si el parche no tiene ninguno. Ver `Asiento`.
+   */
+  readonly dibujadas: Float32Array;
   /** Si el cuadro del horizonte (fila, col) va refinado. */
   refinado(fila: number, col: number): boolean;
 }
@@ -256,10 +317,21 @@ export function refinarElHorizonte(
       return t * t * (3 - 2 * t);
     });
 
-    const s = subdivisionDe(paso, p.dibujo);
+    /*
+     * **Y más basto cuanto más lejos de casa.** El Teide se mira de cerca
+     * desde Los Rodeos y a ciento treinta kilómetros desde Gran Canaria, y
+     * a esa distancia un píxel cubre ciento ochenta metros: dibujarlo a
+     * cuarenta y cinco era pagar triángulos que no se ven. A partir de
+     * `LEJANIA` metros por metro de dibujo, el paso crece con la distancia
+     * del parche al centro del mundo.
+     */
+    const centro = aMetros((p.norte + p.sur) / 2, (p.oeste + p.este) / 2);
+    const s = subdivisionDe(paso, Math.max(p.dibujo, Math.hypot(centro.x, centro.z) / LEJANIA));
     const filas = alto * s + 1;
     const columnas = ancho * s + 1;
     const alturas = new Float32Array(filas * columnas);
+    const conAsiento = !!p.asientos?.length;
+    const dibujadas = conAsiento ? new Float32Array(filas * columnas) : alturas;
     for (let i = 0; i < filas; i++) {
       const gf = i / s;
       const fa = Math.min(alto - 1, Math.floor(gf));
@@ -278,17 +350,23 @@ export function refinarElHorizonte(
         const w3 = peso[(fa + 1) * (ancho + 1) + ca + 1]!;
         const w = (w0 * (1 - tc) + w1 * tc) * (1 - tf) + (w2 * (1 - tc) + w3 * tc) * tf;
         let h = lejos;
+        let baja = 0;
         if (w > 0) {
           const x = -mitad + (c0 + gc) * paso;
           const z = -mitad + (f0 + gf) * paso;
           const { lat, lon } = aGrados(x, z);
           const fino = cotaDelParche(p, lat, lon);
-          if (fino !== null) h = lejos + (retocar(fino, lat, lon) - lejos) * w;
+          if (fino !== null) {
+            h = lejos + (retocar(fino, lat, lon) - lejos) * w;
+            // El asiento mira la cota medida, no la retocada: ver `Asiento`.
+            if (conAsiento) baja = asentar(fino, lat, lon, p.asientos) * w;
+          }
         }
         alturas[i * columnas + j] = h;
+        if (conAsiento) dibujadas[i * columnas + j] = h - baja;
       }
     }
-    puestos.push({ parche: p, f0, f1, c0, c1, s, filas, columnas, alturas, refinado });
+    puestos.push({ parche: p, f0, f1, c0, c1, s, filas, columnas, alturas, dibujadas, refinado });
   }
 
   return {
@@ -336,7 +414,7 @@ export function mallarElParche(
   const lado = Math.max(p.filas, p.columnas);
   const indices = mallarConDetalle(
     lado,
-    (i, j) => p.alturas[Math.min(p.filas - 1, i) * p.columnas + Math.min(p.columnas - 1, j)]!,
+    (i, j) => p.dibujadas[Math.min(p.filas - 1, i) * p.columnas + Math.min(p.columnas - 1, j)]!,
     (i, j) =>
       i < p.filas - 1 &&
       j < p.columnas - 1 &&
