@@ -82,6 +82,7 @@ import { esDeLaMegafonia } from "../audio/turnos";
 import { conPasaje, conTripulacion } from "../audio/megafonia";
 import { planeoDe } from "../flight/sin-motor";
 import { PilotoDelDescenso } from "../flight/despresurizacion";
+import { laCuentaDe } from "../flight/avisos-de-altura";
 import { vfeDeAterrizaje } from "../flight/limites";
 import { esSelloDelViaje } from "../flight/lo-que-se-toca";
 
@@ -543,6 +544,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        * fallo. Ver `laCuentaDe`.
        */
       avisosHablados: juego.aircraft.avisosHablados,
+      // Y cuáles: cada clase canta los suyos, y uno de otra es un fallo.
+      cuenta: laCuentaDe(juego.aircraft).map((e) => e.dice),
       /*
        * **Y sus límites de configuración**, que el piloto del banco necesita
        * para aterrizar un reactor.

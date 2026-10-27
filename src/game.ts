@@ -1306,6 +1306,7 @@ import { avionQueSuena, oidoDe } from "./audio/ruidos";
 import { mapaDePavimento, type Pavimento } from "./world/vegetation";
 import {
   AvisosDeAltura,
+  cantaPorDebajoDe,
   laCuentaDe,
   radioaltimetro,
   type Aviso,
@@ -17084,12 +17085,14 @@ export class Game {
         { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
       );
       /*
-       * **Y en el avión que lleva la cuenta, lo dice ella.** A esa altura la
-       * máquina está diciendo *fifty, forty, thirty*, y la instructora encima
-       * serían dos voces para el mismo momento. La tarjeta se queda, que es
-       * el dibujo; la voz es la de la caja.
+       * **Y en el avión cuya cuenta canta la toma, lo dice ella.** A esa
+       * altura la máquina está diciendo *fifty, forty, thirty*, y la
+       * instructora encima serían dos voces para el mismo momento. La tarjeta
+       * se queda, que es el dibujo; la voz es la de la caja. En el que se
+       * queda en *five hundred* —el JAZ 90 no, el JAZ 60—, ahí abajo no canta
+       * nadie, y habla ella.
        */
-      if (!laCuentaDe(this.aircraft).length)
+      if (!cantaPorDebajoDe(this.aircraft, ALTURA_DE_TOMA))
         this.instructor.decir(t("vuelo.yaPodesTocar"), "vuelo.yaPodesTocar");
     } else if (
       this.dichoDeLaToma &&

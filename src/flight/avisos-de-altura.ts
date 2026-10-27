@@ -27,9 +27,11 @@
  *   dónde estás. Ver `paso`.
  * - **Solo en aproximación, y nunca con peso en las ruedas.** Un radioaltímetro
  *   de verdad no canta la cuenta sobre una sierra en crucero, ni rodando.
- * - **Solo en el avión que la lleva.** El turbohélice de pasaje y los dos
- *   reactores; la avioneta de escuela, el fumigador y el bimotor de pistón no
- *   llevan ninguna caja que cante, y en ellos no hay cuenta. Ver `laCuentaDe`.
+ * - **Solo en el avión que la lleva, y la suya.** El turbohélice de pasaje y
+ *   los dos reactores; la avioneta de escuela, el fumigador y el bimotor de
+ *   pistón no llevan ninguna caja que cante, y en ellos no hay cuenta. Y cada
+ *   uno canta los números de su clase, no los de otro: el JAZ 90 no lleva el
+ *   cuatrocientos ni el trescientos que lleva un 747. Ver `laCuentaDe`.
  *
  * ## Lo que fallaba, contado por quien lo oyó
  *
@@ -99,14 +101,19 @@ function enPies(pies: number, dice: string): Escalon {
   return { metros: pies * PIE, dice };
 }
 
+/** Los números que puede cantar la caja, en pies. Ver `LA_CUENTA`. */
+export type PiesDeLaCuenta = 2500 | 1000 | 500 | 400 | 300 | 200 | 100 | 50 | 40 | 30 | 20 | 10;
+
 /**
- * **La cuenta del radioaltímetro**, de más alto a más bajo.
+ * **La cuenta del radioaltímetro**, de más alto a más bajo: todos los números
+ * que tiene grabados el juego.
  *
- * Es una de las selecciones de verdad del avisador de proximidad al terreno:
- * los números que canta un radioaltímetro son un menú que elige quien opera
- * el avión, y ésta es la cuenta entera —el radar que empieza a ver el suelo,
- * mil, quinientos, los tres cientos de en medio, cien, y de diez en diez hasta
- * diez—. Espaciada arriba y apretada abajo: esa aceleración **es** la lección.
+ * Es el menú del avisador de proximidad al terreno: los números que canta un
+ * radioaltímetro los elige quien opera el avión, y aquí está el menú entero
+ * —el radar que empieza a ver el suelo, mil, quinientos, los tres cientos de
+ * en medio, cien, y de diez en diez hasta diez—. Cada avión canta los de su
+ * clase: ver `cuentaDeLaToma` en la ficha y `laCuentaDe`. Espaciada arriba y
+ * apretada abajo: esa aceleración **es** la lección.
  *
  * Los tres cientos de en medio se pidieron jugando —«five hundred, four
  * hundred… fifty, forty»—; *twenty five hundred* y *one thousand* se
@@ -131,9 +138,10 @@ export const LA_CUENTA: readonly Escalon[] = [
 /**
  * **Qué cuenta se canta en este avión.**
  *
- * La del radioaltímetro si lo lleva —`avisosHablados` en la ficha— y ninguna
- * si no. En la avioneta la altura se mira en el altímetro y quien acompaña la
- * recogida es la instructora, sin números: ver `Game.acompanarLaRecogida`.
+ * La de su radioaltímetro si lo lleva —`avisosHablados` en la ficha—, con los
+ * números de su clase —`cuentaDeLaToma`—, y ninguna si no. En la avioneta la
+ * altura se mira en el altímetro y quien acompaña la recogida es la
+ * instructora, sin números: ver `Game.acompanarLaRecogida`.
  *
  * Había una segunda cuenta, en metros y en la voz de la instructora, para los
  * aviones sin caja. Era la que se oía «todo seguido» y la del «cinco» ya
@@ -142,8 +150,26 @@ export const LA_CUENTA: readonly Escalon[] = [
  */
 export function laCuentaDe(avion: {
   readonly avisosHablados: boolean;
+  readonly cuentaDeLaToma: readonly PiesDeLaCuenta[] | null;
 }): readonly Escalon[] {
-  return avion.avisosHablados ? LA_CUENTA : [];
+  const suya = avion.cuentaDeLaToma;
+  if (!avion.avisosHablados || !suya) return [];
+  return LA_CUENTA.filter((e) => suya.includes(Math.round(e.metros / PIE) as PiesDeLaCuenta));
+}
+
+/**
+ * **Si su cuenta canta la toma**: algún número por debajo de esa altura, m.
+ *
+ * Es lo que decide si en los últimos metros habla la caja o la instructora:
+ * con *fifty, forty, thirty* sonando, la instructora encima serían dos voces
+ * para el mismo momento; con una cuenta que acaba en *five hundred*, ahí
+ * abajo no canta nadie, y lo dice ella. Ver `Game` y «ya podés tocar».
+ */
+export function cantaPorDebajoDe(
+  avion: Parameters<typeof laCuentaDe>[0],
+  metros: number,
+): boolean {
+  return laCuentaDe(avion).some((e) => e.metros <= metros);
 }
 
 /**

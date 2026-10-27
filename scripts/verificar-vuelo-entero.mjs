@@ -8858,6 +8858,23 @@ const NUMERO_EN_UNA_BOCA =
         : `no sonó ningún número${lista ? `: ${lista}` : ""}`,
       "«un buen rato después me dice 100 sin que cuadre con lo que realmente estoy haciendo»",
     );
+    /*
+     * **Y solo los de su clase.** El JAZ 90 cantaba *four hundred* y *three
+     * hundred*, que su clase no lleva: cada avión tiene su cuenta en la ficha,
+     * `cuentaDeLaToma`, y la sonda dice cuál es.
+     */
+    const suya = vuelo.avion?.cuenta;
+    const deOtro = Array.isArray(suya) ? sonaron.filter((c) => !suya.includes(c.dice)) : [];
+    comprobar(
+      "y solo los números de la cuenta de su avión",
+      Array.isArray(suya) && deOtro.length === 0,
+      !Array.isArray(suya)
+        ? "la sonda no dice qué cuenta lleva este avión"
+        : deOtro.length
+          ? `de otra clase: ${deOtro.map((c) => `${c.t}s ${c.dice}`).join(" · ")}`
+          : `${sonaron.length} números, todos de su cuenta (${suya.join(", ")})`,
+      "«cada avión, como es ese avión»: un aviso sonoro solo en el avión que lo llevaría",
+    );
     comprobarSiVolo(
       "y ningún número con peso en las ruedas",
       !sonaron.some((c) => c.enTierra),

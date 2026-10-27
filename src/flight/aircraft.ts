@@ -2,6 +2,7 @@ import { FLOTA, nombreEntero } from "./flota";
 import type { EquipoTcas } from "./tcas";
 import type { FrenosDelTipo } from "./frenada";
 import type { TardaElTren } from "./tren";
+import type { PiesDeLaCuenta } from "./avisos-de-altura";
 
 /**
  * Fichas técnicas de las aeronaves.
@@ -817,6 +818,17 @@ export interface AircraftConfig {
    */
   avisosHablados: boolean;
   /**
+   * **Los números que canta su radioaltímetro en la toma**, en pies, o `null`
+   * en el avión sin caja que los cante.
+   *
+   * No hay una cuenta para todos: los números son un menú del avisador de
+   * terreno, y cada tipo —y cada operador— lleva la suya. Aquí va la de su
+   * clase, con la fuente al lado de cada avión, y solo lo que la fuente dice:
+   * un número que su clase no canta no se canta. Ver `laCuentaDe` en
+   * `flight/avisos-de-altura.ts`.
+   */
+  cuentaDeLaToma: readonly PiesDeLaCuenta[] | null;
+  /**
    * **Cómo se oscurecen las ventanillas del pasaje**, o `null` sin pasaje.
    *
    * - `persiana`: la de siempre, de plástico, que sube y baja cada uno con la
@@ -1243,6 +1255,7 @@ export const PYKASU: AircraftConfig = {
   cantosDeLaCarrera: null,
   tcas: null,
   avisosHablados: false,
+  cuentaDeLaToma: null,
   ventanillas: null,
   // 163 nudos: la Vne de un entrenador ligero. El Mach no lo ve en su vida.
   vmoKt: 163,
@@ -1379,6 +1392,7 @@ export const MAINUMBY: AircraftConfig = {
   cantosDeLaCarrera: null,
   tcas: null,
   avisosHablados: false,
+  cuentaDeLaToma: null,
   ventanillas: null,
   // Un biplano lento: 130 nudos y se queda muy lejos del Mach.
   vmoKt: 130,
@@ -1557,6 +1571,7 @@ export const PANAMBI: AircraftConfig = {
   cantosDeLaCarrera: null,
   tcas: null,
   avisosHablados: false,
+  cuentaDeLaToma: null,
   ventanillas: null,
   // Y los límites, tomados de un bimotor ligero de esta clase.
   vmoKt: 230,
@@ -1740,6 +1755,16 @@ export const ARASUNU: AircraftConfig = {
   // Diecinueve plazas y 5 600 kg: debajo de la raya del ACAS II. Ver `tcas`.
   tcas: "TCAS I",
   avisosHablados: true,
+  /*
+   * **Solo *five hundred***: lo único que se puede asegurar de su clase. Un
+   * turbohélice de diecinueve plazas vuela con un TAWS de clase A (14 CFR
+   * 135.154), y la clase A lleva, entre las funciones del GPWS, «descent of
+   * the airplane to 500 feet above the terrain or nearest runway elevation
+   * (voice callout "Five Hundred")» (FAA, AC 23-18, 2000, §8.a, sobre el
+   * TSO-C151a). El resto de la cuenta es un menú que elige cada operador, y
+   * para el 1900D no se ha encontrado cuál: sin fuente, no se canta.
+   */
+  cuentaDeLaToma: [500],
   // Persiana de plástico, como cualquier turbohélice regional.
   ventanillas: "persiana",
   // Turbohélice de línea corta: rápido abajo y con techo de treinta mil.
@@ -1956,6 +1981,14 @@ export const ARAI: AircraftConfig = {
   cantosDeLaCarrera: "embraer",
   tcas: "TCAS II",
   avisosHablados: true,
+  /*
+   * **La de los E-Jets, sin cuatrocientos ni trescientos**: «RA calls: 2500,
+   * 1000, 500, 200, 100, 50, 40, 30, 20, 10, MIN» (C. Regli, *Embraer EMB190 –
+   * Summary*, 2025, p. 1-57, modo 6 del EGPWS:
+   * <http://www.flite.ch/Emb/Summary_E190.pdf>). El *minimums* va aparte,
+   * a la altura de decisión: ver `cabina.minimums`.
+   */
+  cuentaDeLaToma: [2500, 1000, 500, 200, 100, 50, 40, 30, 20, 10],
   // Persiana de plástico, como cualquier reactor de pasillo único.
   ventanillas: "persiana",
   /*
@@ -2254,6 +2287,16 @@ export const YVAGA: AircraftConfig = {
   cantosDeLaCarrera: "boeing",
   tcas: "TCAS II",
   avisosHablados: true,
+  /*
+   * **La de un 747-400 de verdad**, oída en su cabina: la transcripción del
+   * registrador de voz del F-GITA, un 747-428 de Air France, en su toma de
+   * Tahití —«(SV): One thousand… Five hundred… Four hundred… Three hundred…
+   * Two hundred… One hundred… Fifty… Forty… Thirty… Twenty… Ten»— (BEA,
+   * *Report on the accident to the Air France Boeing 747-428 B registered
+   * F-GITA on September 13 1993*, anexo 4, pp. 72-73). Sin *twenty five
+   * hundred*, que esa transcripción no recoge.
+   */
+  cuentaDeLaToma: [1000, 500, 400, 300, 200, 100, 50, 40, 30, 20, 10],
   /*
    * **Electrocrómicas**, como las de los largos radios de esta generación —el
    * 787 y el 777X—, que son los que llevan ventanillas tan grandes como estas
