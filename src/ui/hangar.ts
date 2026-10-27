@@ -68,7 +68,7 @@ import {
   type Scenario,
 } from "../world/scenarios";
 import { PROXIMAMENTE } from "../world/proximamente";
-import { abrirFichaDeLaCarta, campoTocado, mapaDelPais, type RutaEnElMapa } from "./mapa-del-pais";
+import { abrirFichaDeLaCarta, campoTocado, colocarLaCarta, mapaDelPais, type RutaEnElMapa } from "./mapa-del-pais";
 import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from "../i18n";
 import { cielo, marca, pie } from "./marca";
 import { elegirMundo, mundoElegido } from "./mundo";
@@ -1936,6 +1936,8 @@ export function abrirHangar(
               destinoDeAhora(),
               // Los calcos de la carta van con el peldaño del piloto elegido.
               tramo.avisos,
+              // Y la ficha de cada campo enseña el avión que va a ir.
+              avion.id,
             )}
             ${fichaDeDestino(sitio, null, avion, destinoDeAhora() === sitio.id)}
             ${destinosPosibles(sitio, avion)
@@ -2195,6 +2197,11 @@ export function abrirHangar(
       ".ficha__retrato, .ficha__propuesta img",
     ))
       img.addEventListener("error", () => img.remove(), { once: true });
+    /*
+     * Los rótulos de la carta, en su sitio: dónde cabe cada uno depende del
+     * tamaño que le ha dado la página, y eso solo se sabe ya pintada.
+     */
+    colocarLaCarta(root);
     // El destello del cambio de avión es de una sola vez.
     avionCambiado = false;
     /*

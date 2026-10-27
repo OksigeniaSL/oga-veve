@@ -39,7 +39,9 @@ import { baseDe } from "./servidor.mjs";
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5291);
 const server = await createServer({
   root: process.cwd(),
-  server: { port: PUERTO, hmr: false },
+  // Sin vigilar ficheros: no se edita nada mientras corre, y con otros bancos a la vez
+  // los vigilantes de Vite agotaban los del sistema (EMFILE) antes de abrir la página.
+  server: { port: PUERTO, hmr: false, watch: null },
 });
 await server.listen();
 const BASE = baseDe(server, PUERTO);
@@ -1235,6 +1237,196 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     "",
   );
   await page.close();
+}
+
+/*
+ * **La carta del hangar: que ningún rótulo pise a otro.**
+ *
+ * En el calco de la radio, en el nudo de Pettirossi, el rumbo y las millas de
+ * las rutas caían encima de los nombres y de las frecuencias, y en el teléfono
+ * se escribía todo encima de todo. Esto no lo ve una prueba sin navegador: la
+ * letra mide lo que mide en pantalla y la carta, lo que le deja la página. Así
+ * que se abre la carta de verdad en cada región que tiene hangar —Canarias y
+ * el Paraguay—, en los cuatro calcos y en los mismos tamaños de arriba, y se
+ * mide cada rótulo con su giro: ninguno puede pisar a otro, ni a un
+ * aeródromo, ni salirse de la carta.
+ *
+ * Y la ficha de un campo, abierta: su sello, su pista, su avión y su botón de
+ * ir dentro de la ficha y sin pisarse; los números de las paralelas de Gran
+ * Canaria, separados; y el botón de ir, de una yema por lo menos.
+ */
+const CARTAS = [
+  { sitio: "pettirossi", ficha: "encarnacion" },
+  { sitio: "tenerife-norte", ficha: "gran-canaria" },
+];
+const CALCOS = ["guyrami", "tuka", "taguato", "taguato-ruvicha"];
+
+/** Corre en la página: las cajas de lo que se ve en la carta, con su giro, y lo que se pisa. */
+function medirLaCarta() {
+  const pais = document.querySelector(".pais");
+  if (!pais) return null;
+  const lienzo = pais.querySelector(".pais__lienzo").getBoundingClientRect();
+  const visible = (el) => {
+    const cs = getComputedStyle(el);
+    return cs.visibility !== "hidden" && cs.display !== "none" && !el.closest("[hidden]");
+  };
+  const cajas = [];
+  const nombre = (el) => (el.textContent || el.getAttribute("data-ficha") || "").replace(/\s+/g, " ").trim().slice(0, 28);
+  for (const el of pais.querySelectorAll(".pais__lienzo .pais__letra")) {
+    if (!visible(el) || el.closest(".pais__rosa")) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) continue;
+    const cs = getComputedStyle(el);
+    const m = cs.transform && cs.transform !== "none" ? new DOMMatrix(cs.transform) : new DOMMatrix();
+    cajas.push({
+      que: nombre(el),
+      letra: true,
+      cx: r.left + r.width / 2,
+      cy: r.top + r.height / 2,
+      w: el.offsetWidth * Math.hypot(m.a, m.b),
+      h: el.offsetHeight * Math.hypot(m.c, m.d),
+      giro: Math.atan2(m.b, m.a),
+      r,
+    });
+  }
+  // Los aeródromos —el dibujo, no la yema de alrededor— y la rosa.
+  for (const el of pais.querySelectorAll(".pais__campo > svg, .pais__rosa svg, .pais__rosa i")) {
+    if (!visible(el)) continue;
+    const r = el.getBoundingClientRect();
+    cajas.push({ que: el.closest(".pais__rosa") ? "la rosa" : `el aeródromo ${el.parentElement.dataset.ficha}`, cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width, h: r.height, giro: 0, r });
+  }
+  const ejes = (c) => [
+    [Math.cos(c.giro), Math.sin(c.giro)],
+    [-Math.sin(c.giro), Math.cos(c.giro)],
+  ];
+  const radio = (c, [ex, ey]) => {
+    const [[ux, uy], [vx, vy]] = ejes(c);
+    return (c.w / 2) * Math.abs(ux * ex + uy * ey) + (c.h / 2) * Math.abs(vx * ex + vy * ey);
+  };
+  // Medio píxel de gracia: el redondeo de la página no es un choque.
+  const pisan = (a, b) =>
+    [...ejes(a), ...ejes(b)].every(
+      (e) => Math.abs((a.cx - b.cx) * e[0] + (a.cy - b.cy) * e[1]) < radio(a, e) + radio(b, e) - 0.5,
+    );
+  const choques = [];
+  for (let i = 0; i < cajas.length; i++)
+    for (let j = i + 1; j < cajas.length; j++)
+      if ((cajas[i].letra || cajas[j].letra) && pisan(cajas[i], cajas[j]))
+        choques.push(`«${cajas[i].que}» pisa «${cajas[j].que}»`);
+  const fuera = cajas
+    .filter((c) => c.letra && (c.r.left < lienzo.left - 1 || c.r.top < lienzo.top - 1 || c.r.right > lienzo.right + 1 || c.r.bottom > lienzo.bottom + 1))
+    .map((c) => `«${c.que}» se sale`);
+  const campos = [...pais.querySelectorAll(".pais__rotulo")];
+  return {
+    choques,
+    fuera,
+    letras: cajas.filter((c) => c.letra).length,
+    escondidos: campos.filter((el) => !visible(el)).map((el) => el.dataset.de),
+    alto: Math.round(lienzo.height),
+    margen: pais.classList.contains("pais--margen"),
+  };
+}
+
+/** Corre en la página: la ficha abierta, por dentro. */
+function medirLaFicha() {
+  const f = document.querySelector(".ficha-carta:not([hidden])");
+  if (!f) return null;
+  const caja = f.getBoundingClientRect();
+  const partes = [];
+  for (const sel of [".ficha-carta__sello", ".ficha-carta__dibujo", ".ficha-carta__datos", ".ficha-carta__avion img", ".ficha-carta__ir", ".ficha-carta__cerrar"]) {
+    const el = f.querySelector(sel);
+    if (!el || getComputedStyle(el).display === "none") continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 1) continue;
+    partes.push({ que: sel.replace(".ficha-carta__", "").replace(" img", ""), r });
+  }
+  const pisa = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+  const mal = [];
+  for (const p of partes)
+    if (p.r.left < caja.left - 1 || p.r.top < caja.top - 1 || p.r.right > caja.right + 1 || p.r.bottom > caja.bottom + 1)
+      mal.push(`${p.que} se sale de la ficha`);
+  for (let i = 0; i < partes.length; i++)
+    for (let j = i + 1; j < partes.length; j++)
+      if (pisa(partes[i].r, partes[j].r)) mal.push(`${partes[i].que} pisa ${partes[j].que}`);
+  const numeros = [...f.querySelectorAll(".pistas__numero, .pistas__norte")].map((el) => ({ que: el.textContent || "N", r: el.getBoundingClientRect() }));
+  for (let i = 0; i < numeros.length; i++)
+    for (let j = i + 1; j < numeros.length; j++)
+      if (pisa(numeros[i].r, numeros[j].r)) mal.push(`el ${numeros[i].que} pisa el ${numeros[j].que}`);
+  const ir = f.querySelector(".ficha-carta__ir")?.getBoundingClientRect();
+  if (ir && (ir.width < 43.5 || ir.height < 43.5)) mal.push(`el botón de ir mide ${Math.round(ir.width)}×${Math.round(ir.height)}`);
+  if (ir && (ir.bottom > innerHeight || ir.right > innerWidth)) mal.push("el botón de ir cae fuera de la pantalla");
+  return {
+    de: f.dataset.fichaDe,
+    mal,
+    sello: !!f.querySelector(".ficha-carta__sello svg"),
+    ir: ir ? `${Math.round(ir.width)}×${Math.round(ir.height)}` : "sin botón",
+  };
+}
+
+for (const [ancho, alto, dedo] of PANTALLAS) {
+  const page = await navegador.newPage({
+    viewport: { width: ancho, height: alto },
+    hasTouch: !!dedo,
+    isMobile: !!dedo,
+  });
+  const tam = `${ancho}×${alto}${dedo ? " con el dedo" : ""}`;
+  try {
+    // Como `verificar-hangar.mjs`: el hangar es de quien ya ha volado, y antes se dice quién vuela.
+    await page.addInitScript(() => {
+      localStorage.setItem("oga-veve:teclas-vistas", "1");
+      if (localStorage.getItem("oga-veve:guardado") === null)
+        localStorage.setItem("oga-veve:cuaderno", JSON.stringify({ despegues: 1, segundos: 600 }));
+    });
+    await page.goto(`${BASE}/`);
+    await page.waitForSelector(".piloto__boton", { timeout: 90000 });
+    await page.click(".piloto__boton");
+    await page.waitForSelector(".ficha--sitio", { timeout: 90000 });
+    for (const { sitio, ficha } of CARTAS)
+      for (const calco of CALCOS) {
+        const donde = `carta de ${sitio} en ${calco}, ${tam}`;
+        await page.click('[data-pantalla="donde"]');
+        await page.click(`[data-sitio="${sitio}"]`);
+        await page.click('[data-pantalla="quien"]');
+        await page.click(`[data-tramo="${calco}"]`);
+        await page.click('[data-pantalla="adonde"]');
+        await page.waitForSelector(".pais__lienzo");
+        await page.evaluate(() => document.fonts.ready);
+        // Lo que tarda en llegar el aviso de tamaño y la recolocación.
+        await page.waitForTimeout(150);
+        const c = await page.evaluate(medirLaCarta);
+        comprobar(
+          `${donde}: ningún rótulo pisa a otro`,
+          c && !c.choques.length && !c.fuera.length,
+          c
+            ? c.choques.length || c.fuera.length
+              ? [...c.choques, ...c.fuera].slice(0, 4).join(" · ")
+              : `${c.letras} rótulos en ${c.alto} px de carta${c.margen ? ", ficha al lado" : ""}${c.escondidos.length ? ` · a la ficha: ${c.escondidos.join(", ")}` : ""}`
+            : "no hay carta",
+          "una carta donde los nombres se montan no se lee, y lo que no cabe se queda en la ficha",
+        );
+        // Con fuerza: en una carta pequeña el círculo de tocar de un vecino tapa el centro, y manda el más cercano al dedo.
+        await page.click(`.pais__campo[data-ficha="${ficha}"] > svg`, { force: true });
+        await page.waitForTimeout(60);
+        const f = await page.evaluate(medirLaFicha);
+        comprobar(
+          `${donde}: la ficha de ${ficha}, con su sello y su botón, sin pisarse`,
+          f && f.de === ficha && f.sello && !f.mal.length,
+          f
+            ? f.de !== ficha
+              ? `se abrió la de ${f.de}`
+              : f.mal.length
+                ? f.mal.slice(0, 4).join(" · ")
+                : `botón de ir ${f.ir}`
+            : "no se abrió",
+          "la ficha es donde quien no lee ve adónde va",
+        );
+        await page.click('[data-pantalla="inicio"]');
+      }
+  } catch (e) {
+    comprobar(`carta del hangar ${tam}: se abre`, false, String(e).slice(0, 160), "");
+  } finally {
+    await page.close();
+  }
 }
 
 /*
