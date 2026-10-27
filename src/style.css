@@ -9171,6 +9171,7 @@ button.motor__tecla::after {
 }
 
 .mapa__fondo,
+.mapa__rotulos,
 .mapa__encima {
   position: absolute;
   inset: 8px;

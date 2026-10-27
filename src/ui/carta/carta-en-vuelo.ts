@@ -10,7 +10,7 @@
  */
 
 import { dondeCae, type Sitio } from "../../world/entre-aerodromos";
-import { REGIONES, SIMBOLOS, TINTAS, PAPEL, LETRAS, type IdRegion } from "./estilo";
+import { REGIONES, SIMBOLOS, TINTAS, PAPEL, type IdRegion } from "./estilo";
 import { imagenDe, regionDe } from "./region";
 import { AVION_EN_PLANTA } from "./simbolos";
 
@@ -179,48 +179,13 @@ export function dibujarAvion(g: CanvasRenderingContext2D, x: number, y: number, 
 }
 
 /**
- * **Un rótulo de la carta**, renglón a renglón y con su halo de papel: así se
- * lee sobre cualquier tinte, que es lo que hacen las cartas de verdad.
- */
-export function rotular(
-  g: CanvasRenderingContext2D,
-  renglones: readonly { readonly texto: string; readonly color: string; readonly cifras?: boolean; readonly cuerpo?: number }[],
-  x: number,
-  y: number,
-  lado: number,
-  margen = 12,
-): void {
-  const medidas = renglones.map((r) => {
-    g.font = letra(r);
-    return g.measureText(r.texto).width;
-  });
-  const ancho = Math.max(0, ...medidas);
-  const izquierda = x + margen + ancho > lado - 2;
-  const alto = renglones.length * 14;
-  let ty = Math.max(8, Math.min(lado - alto, y - alto / 2 + 7));
-  g.save();
-  g.textBaseline = "middle";
-  g.textAlign = izquierda ? "right" : "left";
-  g.lineJoin = "round";
-  for (const r of renglones) {
-    g.font = letra(r);
-    const tx = izquierda ? x - margen : x + margen;
-    g.lineWidth = LETRAS.halo;
-    g.strokeStyle = PAPEL.fondo;
-    g.strokeText(r.texto, tx, ty);
-    g.fillStyle = r.color;
-    g.fillText(r.texto, tx, ty);
-    ty += 14;
-  }
-  g.restore();
-}
-
-const letra = (r: { readonly cifras?: boolean; readonly cuerpo?: number }): string =>
-  r.cifras ? `600 ${r.cuerpo ?? LETRAS.cifra}px ${LETRAS.cifras}` : `500 ${r.cuerpo ?? 13}px ${LETRAS.nombres}`;
-
-/**
  * **La rosa**, pequeña y en una esquina: el norte verdadero arriba siempre;
- * con la radio, el norte magnético girado a la declinación de hoy y su cifra.
+ * con la radio, el norte magnético girado a la declinación de hoy. Su cifra
+ * la escribe quien la pone, con los demás rótulos: ver
+ * `carta/rotulos-del-plano.ts`.
+ *
+ * Todo lo de dentro va en proporción a su radio, también el trazo y las
+ * puntas: con un radio de veinte es la rosa de siempre.
  */
 export function dibujarRosa(
   g: CanvasRenderingContext2D,
@@ -228,13 +193,13 @@ export function dibujarRosa(
   y: number,
   radio: number,
   declinacion: number | null,
-  texto: string | null,
 ): void {
+  const s = radio / 20;
   g.save();
   g.translate(x, y);
   g.strokeStyle = TINTAS.aero;
   g.fillStyle = TINTAS.aero;
-  g.lineWidth = 0.8;
+  g.lineWidth = 0.8 * s;
   g.beginPath();
   g.arc(0, 0, radio, 0, Math.PI * 2);
   g.stroke();
@@ -248,32 +213,31 @@ export function dibujarRosa(
   }
   // El norte verdadero: el triángulo de fuera.
   g.beginPath();
-  g.moveTo(0, -radio - 5);
-  g.lineTo(3, -radio + 2);
-  g.lineTo(-3, -radio + 2);
+  g.moveTo(0, -radio - 5 * s);
+  g.lineTo(3 * s, -radio + 2 * s);
+  g.lineTo(-3 * s, -radio + 2 * s);
   g.closePath();
   g.fill();
   if (declinacion !== null) {
     g.save();
     g.rotate((declinacion * Math.PI) / 180);
-    g.lineWidth = 1.1;
+    g.lineWidth = 1.1 * s;
     g.beginPath();
     g.moveTo(0, -radio * 0.75);
     g.lineTo(0, -radio * 0.25);
     g.stroke();
     g.beginPath();
     g.moveTo(0, -radio * 0.82);
-    g.lineTo(2.4, -radio * 0.62);
-    g.lineTo(-2.4, -radio * 0.62);
+    g.lineTo(2.4 * s, -radio * 0.62);
+    g.lineTo(-2.4 * s, -radio * 0.62);
     g.closePath();
     g.fill();
     g.restore();
   }
   g.beginPath();
-  g.arc(0, 0, 1.6, 0, Math.PI * 2);
+  g.arc(0, 0, 1.6 * s, 0, Math.PI * 2);
   g.fill();
   g.restore();
-  if (texto) rotular(g, [{ texto, color: TINTAS.aero, cifras: true, cuerpo: 11 }], x - radio, y + radio + 9, Infinity, 0);
 }
 
 /** Los tamaños de la hoja que pinta el plano. */
