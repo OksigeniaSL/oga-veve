@@ -46,6 +46,13 @@ import {
   type PantallaDeExplicaciones,
 } from "./explicaciones";
 
+/**
+ * **Lo que tarda en llegar el clic del toque que abrió la ventana**, ms. Es
+ * el mismo margen que `LLEGA_EL_CLICK` en `pulsar.ts`, que espera ese clic
+ * para no contar el toque dos veces.
+ */
+const CLIC_DEL_MISMO_TOQUE = 800;
+
 /** El altavoz con sus ondas: volver a oírla. */
 const ALTAVOZ = `
   <path d="M3.4 9.2 h3.6 l5 -4.2 v14 l-5 -4.2 h-3.6 Z" />
@@ -115,6 +122,8 @@ export class VentanaDeExplicacion implements PantallaDeExplicaciones {
    * la ventana ya cerrada o con otra explicación dentro, no se monta.
    */
   private vez = 0;
+  /** Cuándo se abrió, ms. Ver `CLIC_DEL_MISMO_TOQUE`. */
+  private abiertaEn = Number.NEGATIVE_INFINITY;
 
   constructor(caja: HTMLElement) {
     this.caja = caja;
@@ -127,8 +136,16 @@ export class VentanaDeExplicacion implements PantallaDeExplicaciones {
       if (accion === "curiosidades") return abrirCuriosidades();
       const abre = donde?.closest?.("[data-explica-abre]")?.getAttribute("data-explica-abre");
       if (abre) return void abrirExplicacion(abre);
-      // Y tocar fuera, en el velo, también cierra.
-      if (donde === caja) this.cerrarDesdeDentro();
+      /*
+       * Y tocar fuera, en el velo, también cierra. **Pero no el toque que la
+       * abrió**: las tarjetas que se tocan —la del PAPI, la de la presentación—
+       * actúan al levantar el dedo, y el clic que el navegador manda detrás
+       * de ese mismo toque cae ya sobre la ventana recién abierta. Si caía en
+       * el velo, la cerraba en el acto: en Guyrami, sin cabecera, el PAPI se
+       * abría y se cerraba sin que se viera. Medido con `ver-figuras.mjs`.
+       */
+      if (donde === caja && performance.now() - this.abiertaEn > CLIC_DEL_MISMO_TOQUE)
+        this.cerrarDesdeDentro();
     });
   }
 
@@ -208,7 +225,10 @@ export class VentanaDeExplicacion implements PantallaDeExplicaciones {
    * lo tenía ya no existe, y sin foco el teclado y el mando se quedan fuera.
    */
   private abrirOEnfocar(): void {
-    if (!this.panel.abierto) return this.panel.abrir();
+    if (!this.panel.abierto) {
+      this.abiertaEn = performance.now();
+      return this.panel.abrir();
+    }
     this.caja.querySelector<HTMLElement>("[data-explica-abre], [data-accion]")?.focus();
   }
 
