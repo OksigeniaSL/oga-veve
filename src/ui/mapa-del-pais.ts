@@ -138,15 +138,9 @@ function tieneTorre(oaci: string | null): boolean {
   return frecuenciasDeLaCarta(oaci)?.torre?.servicio === "TWR";
 }
 
-/**
- * Las pistas de un aeródromo dibujadas para su ficha, con el norte arriba y
- * su rumbo de verdad; y sus números en las cabeceras desde el calco de las
- * cifras.
- */
-function dibujoDePistas(e: Scenario, conNumeros: boolean): string {
-  const pistas = e.aerodrome?.runways ?? [];
-  const puntos = pistas.flatMap((p) => p.centerline);
-  if (puntos.length < 2) return "";
+/** Del fichero del aeródromo —la Y al norte— al dibujo de su ficha —la Y abajo—, en cien de lado. */
+function encuadreDePistas(e: Scenario): ((p: readonly [number, number]) => [number, number]) & { lado: number } {
+  const puntos = (e.aerodrome?.runways ?? []).flatMap((p) => p.centerline);
   let x0 = Infinity;
   let x1 = -Infinity;
   let y0 = Infinity;
@@ -157,14 +151,114 @@ function dibujoDePistas(e: Scenario, conNumeros: boolean): string {
     y0 = Math.min(y0, y);
     y1 = Math.max(y1, y);
   }
-  const lado = Math.max(x1 - x0, y1 - y0) * 1.5 || 1;
+  // Con sitio alrededor para los números de las cabeceras y la flecha del norte.
+  const lado = Math.max(x1 - x0, y1 - y0) * 1.8 || 1;
   const cx = (x0 + x1) / 2;
   const cy = (y0 + y1) / 2;
-  // Del fichero —la Y al norte— al dibujo —la Y abajo—, en cien de lado.
-  const en = ([x, y]: readonly [number, number]): [number, number] => [
-    50 + ((x - cx) / lado) * 100,
-    50 - ((y - cy) / lado) * 100,
-  ];
+  return Object.assign(
+    ([x, y]: readonly [number, number]): [number, number] => [50 + ((x - cx) / lado) * 100, 50 - ((y - cy) / lado) * 100],
+    { lado },
+  );
+}
+
+/**
+ * La flecha del norte del dibujo, en su esquina: en el medio de arriba caía
+ * encima del número de una pista norte-sur.
+ */
+const FLECHA_DEL_NORTE = "M8 2 L12.5 12 L8 10 L3.5 12 Z";
+/** La caja de la flecha, para que no la pise ningún número. */
+export const CAJA_DEL_NORTE = { x0: 3, y0: 1.5, x1: 13, y1: 12.5 } as const;
+
+/** El cuerpo de los números de pista en el dibujo de la ficha, en unidades del dibujo (cien de lado). */
+const CUERPO_DE_PISTA = 11;
+
+/** Lo que ocupa un número de pista en el dibujo: Barlow estrecha, con su halo de papel. */
+export const anchoDeNumeroDePista = (nombre: string): number => nombre.length * CUERPO_DE_PISTA * 0.52 + 3;
+
+/**
+ * **Dónde va el número de cada cabecera** en el dibujo de la ficha: un poco
+ * más allá del umbral, por fuera de la pista. Y el de una paralela, a su lado
+ * de verdad: el 03L, a la izquierda de quien despega o aterriza por el 03 —el
+ * oeste en Gran Canaria—, y el 03R a la derecha. Estaban cambiados de lado, y
+ * en Gran Canaria los dos números se montaban uno encima del otro en medio de
+ * las dos pistas.
+ *
+ * Una cabecera repetida —Cuatro Vientos trae dos pistas con los mismos
+ * umbrales— se rotula una vez: dos números iguales en el mismo sitio son uno
+ * ilegible.
+ */
+export function numerosDePista(e: Scenario): { nombre: string; x: number; y: number }[] {
+  const en = encuadreDePistas(e);
+  const salen: { nombre: string; x: number; y: number }[] = [];
+  for (const p of e.aerodrome?.runways ?? []) {
+    const c = p.centerline;
+    for (const [nombre, u] of Object.entries(p.thresholds)) {
+      if (!u?.xy || !c[0]) continue;
+      const [x, y] = en(u.xy);
+      // La otra punta es la más lejana del umbral, no la que no coincide con él:
+      // un umbral desplazado no cae en la punta de su eje.
+      const ultima = c[c.length - 1] ?? c[0];
+      const otra =
+        Math.hypot(c[0][0] - u.xy[0], c[0][1] - u.xy[1]) > Math.hypot(ultima[0] - u.xy[0], ultima[1] - u.xy[1]) ? c[0] : ultima;
+      const [ox, oy] = en(otra);
+      // Hacia fuera de la pista, por su cabecera.
+      const dx = x - ox;
+      const dy = y - oy;
+      const d = Math.hypot(dx, dy) || 1;
+      /*
+       * La izquierda de quien mira pista adentro —de la cabecera hacia la otra
+       * punta—, con la Y del dibujo hacia abajo: mirando al norte (0, −1), la
+       * izquierda es el oeste (−1, 0).
+       */
+      const izq: [number, number] = [-dy / d, dx / d];
+      const lado = /L$/.test(nombre) ? 1 : /R$/.test(nombre) ? -1 : 0;
+      const aparte = lado ? anchoDeNumeroDePista(nombre) / 2 + 1.5 : 0;
+      const fuera = CUERPO_DE_PISTA * 0.8;
+      const n = {
+        nombre,
+        x: x + (dx / d) * fuera + izq[0] * aparte * lado,
+        y: y + (dy / d) * fuera + izq[1] * aparte * lado,
+      };
+      if (!salen.some((o) => o.nombre === n.nombre && Math.hypot(o.x - n.x, o.y - n.y) < 4)) salen.push(n);
+    }
+  }
+  return salen;
+}
+
+/**
+ * Las pistas de un aeródromo dibujadas para su ficha, con el norte arriba y
+ * su rumbo de verdad; y sus números en las cabeceras desde el calco de las
+ * cifras.
+ */
+function dibujoDePistas(e: Scenario, conNumeros: boolean): string {
+  const pistas = e.aerodrome?.runways ?? [];
+  const puntos = pistas.flatMap((p) => p.centerline);
+  if (puntos.length < 2) return "";
+  const en = encuadreDePistas(e);
+  const { lado } = en;
+  /*
+   * Lo que separa dos paralelas, en unidades del dibujo: en Gran Canaria son
+   * doscientos metros en tres kilómetros de pista, y con el grueso mínimo de
+   * cinco las dos barras se fundían en una.
+   */
+  let separacion = Infinity;
+  for (const p of pistas)
+    for (const q of pistas) {
+      const [a, b] = [p.centerline[0], p.centerline[p.centerline.length - 1]];
+      const [c, d] = [q.centerline[0], q.centerline[q.centerline.length - 1]];
+      if (p === q || !a || !b || !c || !d) continue;
+      const ux = b[0] - a[0];
+      const uy = b[1] - a[1];
+      const l = Math.hypot(ux, uy) || 1;
+      const vx = d[0] - c[0];
+      const vy = d[1] - c[1];
+      // Solo las que corren juntas: menos de diez grados entre una y otra.
+      if (Math.abs(ux * vy - uy * vx) / (l * (Math.hypot(vx, vy) || 1)) > 0.17) continue;
+      const mx = (c[0] + d[0]) / 2 - a[0];
+      const my = (c[1] + d[1]) / 2 - a[1];
+      const perp = Math.abs(mx * uy - my * ux) / l;
+      if (perp > 1) separacion = Math.min(separacion, (perp / lado) * 100);
+    }
   const barras = pistas
     .map((p) => {
       const a = p.centerline[0];
@@ -172,41 +266,19 @@ function dibujoDePistas(e: Scenario, conNumeros: boolean): string {
       if (!a || !b) return "";
       const [ax, ay] = en(a);
       const [bx, by] = en(b);
-      // A su anchura, y como poco tres: dos paralelas a doscientos metros se
-      // tienen que ver dos.
-      const grueso = Math.max(5, ((p.widthM ?? 45) / lado) * 100);
+      // A su anchura, y como poco cinco; pero entre dos paralelas, con hueco.
+      const grueso = Math.min(Math.max(5, ((p.widthM ?? 45) / lado) * 100), separacion * 0.6);
       return `<line x1="${r3(ax)}" y1="${r3(ay)}" x2="${r3(bx)}" y2="${r3(by)}" class="pistas__barra" stroke-width="${r3(grueso)}" />
         <line x1="${r3(ax)}" y1="${r3(ay)}" x2="${r3(bx)}" y2="${r3(by)}" class="pistas__eje" />`;
     })
     .join("");
   const numeros = conNumeros
-    ? pistas
-        .flatMap((p) =>
-          Object.entries(p.thresholds).map(([nombre, u]) => {
-            if (!u?.xy) return "";
-            const [x, y] = en(u.xy);
-            /*
-             * Un poco hacia fuera del umbral, por el lado de su cabecera; y la
-             * de la izquierda, a su izquierda, que con dos paralelas los
-             * números de las dos caían uno encima del otro.
-             */
-            const c = p.centerline;
-            const otra = c[0] && Math.hypot(c[0][0] - u.xy[0], c[0][1] - u.xy[1]) < 1 ? c[c.length - 1] : c[0];
-            const [ox, oy] = otra ? en(otra) : [50, 50];
-            const dx = x - ox;
-            const dy = y - oy;
-            const d = Math.hypot(dx, dy) || 1;
-            const lado = /L$/.test(nombre) ? -1 : /R$/.test(nombre) ? 1 : 0;
-            // Mirando por la pista hacia fuera, la izquierda es (dy, −dx).
-            const lx = (dy / d) * 7 * lado;
-            const ly = (-dx / d) * 7 * lado;
-            return `<text x="${r3(x + (dx / d) * 9 - lx)}" y="${r3(y + (dy / d) * 9 - ly)}" class="pistas__numero">${nombre}</text>`;
-          }),
-        )
+    ? numerosDePista(e)
+        .map((n) => `<text x="${r3(n.x)}" y="${r3(n.y)}" class="pistas__numero">${n.nombre}</text>`)
         .join("")
     : "";
   return `<svg class="pistas" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
-      <path d="M50 4 L54 13 L50 11 L46 13 Z" class="pistas__norte" />
+      <path d="${FLECHA_DEL_NORTE}" class="pistas__norte" />
       ${barras}${numeros}
     </svg>`;
 }

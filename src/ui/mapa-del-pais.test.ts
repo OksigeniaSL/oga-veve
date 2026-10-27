@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest";
 import { SCENARIOS, scenarioById, destinosDe } from "../world/scenarios";
 import { AIRCRAFT } from "../flight/aircraft";
 import { SILUETAS, type Anillo } from "./siluetas";
-import { mapaDelPais } from "./mapa-del-pais";
+import { anchoDeNumeroDePista, CAJA_DEL_NORTE, mapaDelPais, numerosDePista } from "./mapa-del-pais";
 import { rutasDelMapa, destinosPosibles, destinosQueNoCaben } from "./hangar";
 
 /** Si un punto cae dentro de un anillo: el rayo de toda la vida. */
@@ -156,5 +156,42 @@ describe("los calcos de la carta", () => {
     const html = mapaDelPais(asuncion, SCENARIOS, rutasDelMapa(asuncion, AIRCRAFT[0]!), asuncion.id, "cabina");
     expect(html).toContain("TWR 118.1");
     expect(html).toContain("118.1 MHZ");
+  });
+});
+
+/**
+ * Los números de pista del dibujo de la ficha: en Gran Canaria, el 03L y el
+ * 03R caían uno encima del otro en medio de las dos paralelas, porque iban
+ * cada uno al lado del otro.
+ */
+describe("los números de pista de la ficha", () => {
+  it("no se pisan y caen dentro del dibujo, en todos los campos", () => {
+    for (const e of SCENARIOS.filter((s) => s.aerodrome)) {
+      const n = numerosDePista(e);
+      const cajas = n.map((u) => {
+        const w = anchoDeNumeroDePista(u.nombre);
+        return { u, x0: u.x - w / 2, x1: u.x + w / 2, y0: u.y - 5.5, y1: u.y + 5.5 };
+      });
+      for (const c of cajas) {
+        const n = CAJA_DEL_NORTE;
+        expect(c.x0 < n.x1 && n.x0 < c.x1 && c.y0 < n.y1 && n.y0 < c.y1, `${e.id} ${c.u.nombre} pisa el norte`).toBe(false);
+        expect(c.x0 >= 0 && c.x1 <= 100 && c.y0 >= 0 && c.y1 <= 100, `${e.id} ${c.u.nombre}`).toBe(true);
+        for (const o of cajas)
+          if (o !== c)
+            expect(
+              c.x0 < o.x1 && o.x0 < c.x1 && c.y0 < o.y1 && o.y0 < c.y1,
+              `${e.id}: ${c.u.nombre} pisa ${o.u.nombre}`,
+            ).toBe(false);
+      }
+    }
+  });
+
+  it("y el de la izquierda va a la izquierda de quien aterriza por él", () => {
+    // En Gran Canaria la 03L es la del oeste: su número, a poniente del 03R.
+    const n = numerosDePista(scenarioById("gran-canaria"));
+    const x = (nombre: string): number => n.find((u) => u.nombre === nombre)!.x;
+    expect(x("03L")).toBeLessThan(x("03R"));
+    // Y desde el norte, quien aterriza por el 21 mira al sur: su izquierda es el este.
+    expect(x("21L")).toBeGreaterThan(x("21R"));
   });
 });
