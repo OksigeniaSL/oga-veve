@@ -334,7 +334,7 @@ try {
           await page.waitForTimeout(500);
           const grande = await page.evaluate(() => ({
             grande: !!document.querySelector(".cuadro--grande"),
-            abierta: !document.getElementById("explicacion")?.hidden,
+            abierta: ((v) => !!v && !v.hidden)(document.getElementById("explicacion")),
           }));
           comprobar(`${n}: la losa pone grande la pantalla y no abre nada`, grande.grande && !grande.abierta, JSON.stringify(grande));
           tocado = await tocar(page, `.cuadro--grande ${sel.replace(".cuadro ", "")}`);
@@ -350,7 +350,7 @@ try {
           await page.waitForTimeout(400);
           const vuelta = await page.evaluate(() => ({
             grande: !!document.querySelector(".cuadro--grande"),
-            abierta: !document.getElementById("explicacion")?.hidden,
+            abierta: ((v) => !!v && !v.hidden)(document.getElementById("explicacion")),
           }));
           comprobar(`${n}: el horizonte vuelve a las losas`, !vuelta.grande && !vuelta.abierta, JSON.stringify(vuelta));
         }

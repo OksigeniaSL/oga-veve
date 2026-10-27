@@ -66,6 +66,8 @@ interface Bajada {
   readonly x: number;
   readonly y: number;
   readonly cuando: number;
+  /** Lo que se explicaría, decidido al bajar el dedo. Ver `abajo`. */
+  readonly id: string | null;
 }
 
 /**
@@ -120,19 +122,30 @@ function seVe(el: Element): boolean {
 export function escucharLosToquesQueExplican(raiz: HTMLElement): () => void {
   const bajadas = new Map<number, Bajada>();
 
+  /*
+   * **Qué se explica se decide al bajar el dedo**, con la pantalla como estaba
+   * cuando se tocó; al levantarlo solo se mira que fue un toque.
+   *
+   * Se decidía al levantarlo, y para entonces el mismo toque ya podía haber
+   * cambiado la pantalla: tocar el horizonte de la pantalla grande del
+   * teléfono es volver a las losas, y el botón que lo hace se entera antes —su
+   * escucha en la ventana se apuntó primero—, así que cuando aquí se miraba,
+   * el horizonte ya no estaba en una pantalla grande y dejaba de ser fondo: se
+   * abría la explicación de la actitud y el vuelo se paraba. Un toque sin
+   * querer, volviendo a las losas en la final, paraba el avión a destiempo.
+   */
   const abajo = (e: PointerEvent): void => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
-    bajadas.set(e.pointerId, { x: e.clientX, y: e.clientY, cuando: performance.now() });
+    bajadas.set(e.pointerId, { x: e.clientX, y: e.clientY, cuando: performance.now(), id: queSeExplica(e) });
   };
 
   const arriba = (e: PointerEvent): void => {
     const b = bajadas.get(e.pointerId);
     bajadas.delete(e.pointerId);
-    if (!b) return;
+    if (!b?.id) return;
     if (Math.hypot(e.clientX - b.x, e.clientY - b.y) > UMBRAL) return;
     if (performance.now() - b.cuando > TOQUE) return;
-    const id = queSeExplica(e);
-    if (id) abrirExplicacion(id);
+    abrirExplicacion(b.id);
   };
 
   const queSeExplica = (e: PointerEvent): string | null => {
@@ -167,9 +180,8 @@ export function escucharLosToquesQueExplican(raiz: HTMLElement): () => void {
   };
 
   /*
-   * En captura y pasivo: se oye antes que nadie y no se toca nada. Si un
-   * mando se queda el dedo con `setPointerCapture`, el `pointerup` llega
-   * igual a la ventana, con el mando de destino, y `MANDO` lo descarta.
+   * En captura y pasivo: no se toca nada. Si un mando se queda el dedo con
+   * `setPointerCapture`, el toque empezó en el mando, y `MANDO` lo descarta.
    */
   const opciones = { capture: true, passive: true } as const;
   window.addEventListener("pointerdown", abajo, opciones);
