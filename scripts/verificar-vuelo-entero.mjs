@@ -2228,12 +2228,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       -topeDeInclinacion,
       Math.min(topeDeInclinacion, e * 1.5),
     );
+    /*
+     * **En Guyrami el alerón ya es la inclinación**: el modelo sencillo pide
+     * con él un ángulo, `alerón · VISUAL_BANK`, y vira lo que ese ángulo da
+     * —ver el viraje en vuelo de `flight/arcade.ts`—. La ley de abajo, hecha
+     * para un alerón que manda velocidad de alabeo, ahí se quedaba en la
+     * mitad: con veinticinco grados pedidos el avión se asentaba en catorce.
+     * El JAZ 90 en Tenerife Norte, a noventa y cinco metros por segundo, abría
+     * así el viraje del viento en cola cuatro kilómetros y medio por fuera del
+     * circuito y se metía en la ladera a 320 m sobre la pista (44 de 59
+     * vuelos); y el JAZ 20 salía de la base todavía virando y llegaba a los
+     * quinientos pies cruzado diecisiete grados.
+     */
+    if (SENCILLO) return Math.max(-1, Math.min(1, quiere / INCLINACION_A_FONDO_SENCILLO));
     const alabeo = o.actitud?.().alabeo ?? 0;
     return Math.max(
       -TOPE_DE_ALERON_EN_VUELO,
       Math.min(TOPE_DE_ALERON_EN_VUELO, (quiere - alabeo) * 1.6),
     );
   };
+  /** La inclinación del alerón a fondo en el modelo sencillo, rad: `VISUAL_BANK`. */
+  const INCLINACION_A_FONDO_SENCILLO = 0.75;
   /** Y para ir a un punto. */
   const alPunto = (s, x, z) =>
     alRumbo(s, Math.atan2(x - s.position.x, -(z - s.position.z)));
