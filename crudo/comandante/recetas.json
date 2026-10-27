@@ -1468,5 +1468,83 @@
   ],
   "inicio.mama.pasaje.mazo": [
     "inicio.mama.pasaje.mazo"
+  ],
+  "comandante.turbulencia.sentados.moderada": [
+    "comandante.turbulencia.sentados.moderada"
+  ],
+  "comandante.turbulencia.moderada.sinTripulacion": [
+    "comandante.turbulencia.moderada.sinTripulacion"
+  ],
+  "comandante.turbulencia.ahora.moderada.sinTripulacion": [
+    "comandante.turbulencia.ahora.moderada.sinTripulacion"
+  ],
+  "comandante.turbulencia.otraVez.moderada.sinTripulacion": [
+    "comandante.turbulencia.otraVez.moderada.sinTripulacion"
+  ],
+  "comandante.cinturones": [
+    "comandante.cinturones"
+  ],
+  "comandante.sigue.pettirossi": [
+    "comandante.sigue.pettirossi"
+  ],
+  "comandante.sigue.guarani": [
+    "comandante.sigue.guarani"
+  ],
+  "comandante.sigue.encarnacion": [
+    "comandante.sigue.encarnacion"
+  ],
+  "comandante.sigue.concepcion": [
+    "comandante.sigue.concepcion"
+  ],
+  "comandante.sigue.pedro-juan": [
+    "comandante.sigue.pedro-juan"
+  ],
+  "comandante.sigue.estigarribia": [
+    "comandante.sigue.estigarribia"
+  ],
+  "comandante.sigue.ayolas": [
+    "comandante.sigue.ayolas"
+  ],
+  "comandante.sigue.pilar": [
+    "comandante.sigue.pilar"
+  ],
+  "comandante.sigue.yvytu-rape": [
+    "comandante.sigue.yvytu-rape"
+  ],
+  "comandante.sigue.tenerife-norte": [
+    "comandante.sigue.tenerife-norte"
+  ],
+  "comandante.sigue.tenerife-sur": [
+    "comandante.sigue.tenerife-sur"
+  ],
+  "comandante.sigue.gran-canaria": [
+    "comandante.sigue.gran-canaria"
+  ],
+  "comandante.sigue.lanzarote": [
+    "comandante.sigue.lanzarote"
+  ],
+  "comandante.sigue.fuerteventura": [
+    "comandante.sigue.fuerteventura"
+  ],
+  "comandante.sigue.la-palma": [
+    "comandante.sigue.la-palma"
+  ],
+  "comandante.sigue.el-hierro": [
+    "comandante.sigue.el-hierro"
+  ],
+  "comandante.sigue.la-gomera": [
+    "comandante.sigue.la-gomera"
+  ],
+  "comandante.previsto.nivel.3": [
+    "comandante.previsto.nivel.3"
+  ],
+  "comandante.previsto.nivel.4": [
+    "comandante.previsto.nivel.4"
+  ],
+  "comandante.crucero~2": [
+    "comandante.crucero~2"
+  ],
+  "comandante.crucero~3": [
+    "comandante.crucero~3"
   ]
 }

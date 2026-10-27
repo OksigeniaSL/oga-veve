@@ -1935,5 +1935,87 @@
   ],
   "vuelo.tocasteDuroFacil": [
     "vuelo.tocasteDuroFacil"
+  ],
+  "vuelo.alturaDeLaTorreRayaYMarca": [
+    "vuelo.alturaDeLaTorreRayaYMarca"
+  ],
+  "vuelo.alturaDeLaTorreYMarca": [
+    "vuelo.alturaDeLaTorreYMarca",
+    "{velocidad?}"
+  ],
+  "vuelo.paso.cruceroSolo": [
+    "vuelo.paso.cruceroSolo"
+  ],
+  "vuelo.paso.cruceroSolo.sinVer": [
+    "vuelo.paso.cruceroSolo.sinVer"
+  ],
+  "vuelo.paso.cruceroSoloConAutomatico": [
+    "vuelo.paso.cruceroSoloConAutomatico"
+  ],
+  "vuelo.comoSeAterriza.facil": [
+    "vuelo.comoSeAterriza.facil"
+  ],
+  "vuelo.comoSeAterriza.helice": [
+    "vuelo.comoSeAterriza.helice"
+  ],
+  "vuelo.comoSeAterriza.cables": [
+    "vuelo.comoSeAterriza.cables"
+  ],
+  "seguir.pettirossi": [
+    "seguir.pettirossi"
+  ],
+  "seguir.guarani": [
+    "seguir.guarani"
+  ],
+  "seguir.encarnacion": [
+    "seguir.encarnacion"
+  ],
+  "seguir.concepcion": [
+    "seguir.concepcion"
+  ],
+  "seguir.pedro-juan": [
+    "seguir.pedro-juan"
+  ],
+  "seguir.estigarribia": [
+    "seguir.estigarribia"
+  ],
+  "seguir.ayolas": [
+    "seguir.ayolas"
+  ],
+  "seguir.pilar": [
+    "seguir.pilar"
+  ],
+  "seguir.yvytu-rape": [
+    "seguir.yvytu-rape"
+  ],
+  "seguir.tenerife-norte": [
+    "seguir.tenerife-norte"
+  ],
+  "seguir.tenerife-sur": [
+    "seguir.tenerife-sur"
+  ],
+  "seguir.gran-canaria": [
+    "seguir.gran-canaria"
+  ],
+  "seguir.lanzarote": [
+    "seguir.lanzarote"
+  ],
+  "seguir.fuerteventura": [
+    "seguir.fuerteventura"
+  ],
+  "seguir.la-palma": [
+    "seguir.la-palma"
+  ],
+  "seguir.el-hierro": [
+    "seguir.el-hierro"
+  ],
+  "seguir.la-gomera": [
+    "seguir.la-gomera"
+  ],
+  "explica.papi.texto": [
+    "explica.papi.texto"
+  ],
+  "vuelo.comoSeAterriza.electricos": [
+    "vuelo.comoSeAterriza.electricos"
   ]
 }

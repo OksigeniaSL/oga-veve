@@ -303,6 +303,10 @@
       "ms": 9007,
       "h": "524f7b624e"
     },
+    "explica.papi.texto": {
+      "ms": 11807,
+      "h": "0d7ba2de76"
+    },
     "explica.persianas.texto": {
       "ms": 16907,
       "h": "25a4129477"
@@ -787,6 +791,74 @@
       "ms": 3407,
       "h": "a9cc2fbff5"
     },
+    "seguir.ayolas": {
+      "ms": 2681,
+      "h": "ee1b42aed6"
+    },
+    "seguir.concepcion": {
+      "ms": 3005,
+      "h": "99c2007940"
+    },
+    "seguir.el-hierro": {
+      "ms": 3107,
+      "h": "1c9eb0d8c9"
+    },
+    "seguir.encarnacion": {
+      "ms": 3407,
+      "h": "067f7763e2"
+    },
+    "seguir.estigarribia": {
+      "ms": 3507,
+      "h": "fdb8fe7fd9"
+    },
+    "seguir.fuerteventura": {
+      "ms": 3207,
+      "h": "fe4e32a6eb"
+    },
+    "seguir.gran-canaria": {
+      "ms": 3107,
+      "h": "0efbd4cc53"
+    },
+    "seguir.guarani": {
+      "ms": 3207,
+      "h": "cd4c4ff978"
+    },
+    "seguir.la-gomera": {
+      "ms": 3107,
+      "h": "dbf742b5c5"
+    },
+    "seguir.la-palma": {
+      "ms": 2686,
+      "h": "aae339c56d"
+    },
+    "seguir.lanzarote": {
+      "ms": 3307,
+      "h": "93b1653202"
+    },
+    "seguir.pedro-juan": {
+      "ms": 3707,
+      "h": "00e969fd86"
+    },
+    "seguir.pettirossi": {
+      "ms": 2987,
+      "h": "d6cee2242b"
+    },
+    "seguir.pilar": {
+      "ms": 2704,
+      "h": "cf548746c2"
+    },
+    "seguir.tenerife-norte": {
+      "ms": 3307,
+      "h": "871150d815"
+    },
+    "seguir.tenerife-sur": {
+      "ms": 2847,
+      "h": "ffde97ac3b"
+    },
+    "seguir.yvytu-rape": {
+      "ms": 4607,
+      "h": "18d6bb5dae"
+    },
     "senalero.alto": {
       "ms": 2163,
       "h": "b19d36c308"
@@ -1251,6 +1323,14 @@
       "ms": 3707,
       "h": "6419ac7e0d"
     },
+    "vuelo.alturaDeLaTorreRayaYMarca": {
+      "ms": 5507,
+      "h": "3094575e60"
+    },
+    "vuelo.alturaDeLaTorreYMarca": {
+      "ms": 7707,
+      "h": "4d6e7e3c54"
+    },
     "vuelo.apagado": {
       "ms": 971,
       "h": "0a765f34bf"
@@ -1362,6 +1442,22 @@
     "vuelo.calor": {
       "ms": 3307,
       "h": "78b853ba38"
+    },
+    "vuelo.comoSeAterriza.cables": {
+      "ms": 12507,
+      "h": "2ee298581e"
+    },
+    "vuelo.comoSeAterriza.electricos": {
+      "ms": 13607,
+      "h": "0736540008"
+    },
+    "vuelo.comoSeAterriza.facil": {
+      "ms": 7607,
+      "h": "fccbc52932"
+    },
+    "vuelo.comoSeAterriza.helice": {
+      "ms": 12907,
+      "h": "f27e4b7946"
     },
     "vuelo.comprometido": {
       "ms": 2567,
@@ -1830,6 +1926,18 @@
     "vuelo.paso.cruceroConGases": {
       "ms": 5607,
       "h": "fa33184cdc"
+    },
+    "vuelo.paso.cruceroSolo": {
+      "ms": 6707,
+      "h": "885c6b9149"
+    },
+    "vuelo.paso.cruceroSolo.sinVer": {
+      "ms": 5707,
+      "h": "e0b55b02b3"
+    },
+    "vuelo.paso.cruceroSoloConAutomatico": {
+      "ms": 10307,
+      "h": "69d5002143"
     },
     "vuelo.paso.flaps1": {
       "ms": 3907,
@@ -4405,6 +4513,88 @@
     ],
     "vuelo.tocasteDuroFacil": [
       "vuelo.tocasteDuroFacil"
+    ],
+    "vuelo.alturaDeLaTorreRayaYMarca": [
+      "vuelo.alturaDeLaTorreRayaYMarca"
+    ],
+    "vuelo.alturaDeLaTorreYMarca": [
+      "vuelo.alturaDeLaTorreYMarca",
+      "{velocidad?}"
+    ],
+    "vuelo.paso.cruceroSolo": [
+      "vuelo.paso.cruceroSolo"
+    ],
+    "vuelo.paso.cruceroSolo.sinVer": [
+      "vuelo.paso.cruceroSolo.sinVer"
+    ],
+    "vuelo.paso.cruceroSoloConAutomatico": [
+      "vuelo.paso.cruceroSoloConAutomatico"
+    ],
+    "vuelo.comoSeAterriza.facil": [
+      "vuelo.comoSeAterriza.facil"
+    ],
+    "vuelo.comoSeAterriza.helice": [
+      "vuelo.comoSeAterriza.helice"
+    ],
+    "vuelo.comoSeAterriza.cables": [
+      "vuelo.comoSeAterriza.cables"
+    ],
+    "seguir.pettirossi": [
+      "seguir.pettirossi"
+    ],
+    "seguir.guarani": [
+      "seguir.guarani"
+    ],
+    "seguir.encarnacion": [
+      "seguir.encarnacion"
+    ],
+    "seguir.concepcion": [
+      "seguir.concepcion"
+    ],
+    "seguir.pedro-juan": [
+      "seguir.pedro-juan"
+    ],
+    "seguir.estigarribia": [
+      "seguir.estigarribia"
+    ],
+    "seguir.ayolas": [
+      "seguir.ayolas"
+    ],
+    "seguir.pilar": [
+      "seguir.pilar"
+    ],
+    "seguir.yvytu-rape": [
+      "seguir.yvytu-rape"
+    ],
+    "seguir.tenerife-norte": [
+      "seguir.tenerife-norte"
+    ],
+    "seguir.tenerife-sur": [
+      "seguir.tenerife-sur"
+    ],
+    "seguir.gran-canaria": [
+      "seguir.gran-canaria"
+    ],
+    "seguir.lanzarote": [
+      "seguir.lanzarote"
+    ],
+    "seguir.fuerteventura": [
+      "seguir.fuerteventura"
+    ],
+    "seguir.la-palma": [
+      "seguir.la-palma"
+    ],
+    "seguir.el-hierro": [
+      "seguir.el-hierro"
+    ],
+    "seguir.la-gomera": [
+      "seguir.la-gomera"
+    ],
+    "explica.papi.texto": [
+      "explica.papi.texto"
+    ],
+    "vuelo.comoSeAterriza.electricos": [
+      "vuelo.comoSeAterriza.electricos"
     ]
   }
 }

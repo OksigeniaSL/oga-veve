@@ -335,6 +335,10 @@
       "ms": 12107,
       "h": "2a76ff0b8f"
     },
+    "comandante.cinturones": {
+      "ms": 9507,
+      "h": "18ad92b7da"
+    },
     "comandante.crosscheck": {
       "ms": 2865,
       "h": "e2eddbd702"
@@ -342,6 +346,14 @@
     "comandante.crucero": {
       "ms": 4807,
       "h": "a02acf2272"
+    },
+    "comandante.crucero~2": {
+      "ms": 8707,
+      "h": "baf7753476"
+    },
+    "comandante.crucero~3": {
+      "ms": 6707,
+      "h": "716d16debd"
     },
     "comandante.curiosidad.alas": {
       "ms": 11707,
@@ -1043,6 +1055,14 @@
       "ms": 1703,
       "h": "f809d308f3"
     },
+    "comandante.previsto.nivel.3": {
+      "ms": 1191,
+      "h": "9993272902"
+    },
+    "comandante.previsto.nivel.4": {
+      "ms": 1412,
+      "h": "8478ee2f7d"
+    },
     "comandante.previsto.nivel.5": {
       "ms": 1374,
       "h": "927623c33e"
@@ -1142,6 +1162,74 @@
     "comandante.previsto.vuelo.h90": {
       "ms": 2367,
       "h": "663b43ec5b"
+    },
+    "comandante.sigue.ayolas": {
+      "ms": 3707,
+      "h": "8b7b67fab0"
+    },
+    "comandante.sigue.concepcion": {
+      "ms": 4107,
+      "h": "247098890c"
+    },
+    "comandante.sigue.el-hierro": {
+      "ms": 3907,
+      "h": "9b44a7f494"
+    },
+    "comandante.sigue.encarnacion": {
+      "ms": 4007,
+      "h": "f0f9f47362"
+    },
+    "comandante.sigue.estigarribia": {
+      "ms": 5507,
+      "h": "d997707066"
+    },
+    "comandante.sigue.fuerteventura": {
+      "ms": 4007,
+      "h": "44b9ce6816"
+    },
+    "comandante.sigue.gran-canaria": {
+      "ms": 4607,
+      "h": "6a1dbd75db"
+    },
+    "comandante.sigue.guarani": {
+      "ms": 4107,
+      "h": "0c035b3b8b"
+    },
+    "comandante.sigue.la-gomera": {
+      "ms": 3807,
+      "h": "16b7f2cde1"
+    },
+    "comandante.sigue.la-palma": {
+      "ms": 4207,
+      "h": "8a8c7634b2"
+    },
+    "comandante.sigue.lanzarote": {
+      "ms": 4007,
+      "h": "e34cf9a525"
+    },
+    "comandante.sigue.pedro-juan": {
+      "ms": 4507,
+      "h": "9b329287b1"
+    },
+    "comandante.sigue.pettirossi": {
+      "ms": 4007,
+      "h": "3dbb2294a9"
+    },
+    "comandante.sigue.pilar": {
+      "ms": 4007,
+      "h": "653482e7a2"
+    },
+    "comandante.sigue.tenerife-norte": {
+      "ms": 4507,
+      "h": "98439d8ba9"
+    },
+    "comandante.sigue.tenerife-sur": {
+      "ms": 4507,
+      "h": "b06fdf028a"
+    },
+    "comandante.sigue.yvytu-rape": {
+      "ms": 5907,
+      "h": "9ca287b556"
     },
     "comandante.temperatura.0": {
       "ms": 1801,
@@ -1359,6 +1447,10 @@
       "ms": 14507,
       "h": "10d7c276c3"
     },
+    "comandante.turbulencia.ahora.moderada.sinTripulacion": {
+      "ms": 12207,
+      "h": "63d013a44a"
+    },
     "comandante.turbulencia.fuerte": {
       "ms": 18807,
       "h": "59a953a26e"
@@ -1370,6 +1462,10 @@
     "comandante.turbulencia.moderada": {
       "ms": 15607,
       "h": "11d6a7221f"
+    },
+    "comandante.turbulencia.moderada.sinTripulacion": {
+      "ms": 12807,
+      "h": "5ec852e46b"
     },
     "comandante.turbulencia": {
       "ms": 9107,
@@ -1387,6 +1483,10 @@
       "ms": 9907,
       "h": "8aa33df0fb"
     },
+    "comandante.turbulencia.otraVez.moderada.sinTripulacion": {
+      "ms": 7507,
+      "h": "4cded2e3f0"
+    },
     "comandante.turbulencia.paso": {
       "ms": 7907,
       "h": "edb07d54ca"
@@ -1402,6 +1502,10 @@
     "comandante.turbulencia.pirep": {
       "ms": 13807,
       "h": "f85c66726e"
+    },
+    "comandante.turbulencia.sentados.moderada": {
+      "ms": 12307,
+      "h": "b7bdb5b9e3"
     },
     "comandante.turbulencia.tormenta": {
       "ms": 14807,
@@ -3394,6 +3498,84 @@
     ],
     "inicio.mama.pasaje.mazo": [
       "inicio.mama.pasaje.mazo"
+    ],
+    "comandante.turbulencia.sentados.moderada": [
+      "comandante.turbulencia.sentados.moderada"
+    ],
+    "comandante.turbulencia.moderada.sinTripulacion": [
+      "comandante.turbulencia.moderada.sinTripulacion"
+    ],
+    "comandante.turbulencia.ahora.moderada.sinTripulacion": [
+      "comandante.turbulencia.ahora.moderada.sinTripulacion"
+    ],
+    "comandante.turbulencia.otraVez.moderada.sinTripulacion": [
+      "comandante.turbulencia.otraVez.moderada.sinTripulacion"
+    ],
+    "comandante.cinturones": [
+      "comandante.cinturones"
+    ],
+    "comandante.sigue.pettirossi": [
+      "comandante.sigue.pettirossi"
+    ],
+    "comandante.sigue.guarani": [
+      "comandante.sigue.guarani"
+    ],
+    "comandante.sigue.encarnacion": [
+      "comandante.sigue.encarnacion"
+    ],
+    "comandante.sigue.concepcion": [
+      "comandante.sigue.concepcion"
+    ],
+    "comandante.sigue.pedro-juan": [
+      "comandante.sigue.pedro-juan"
+    ],
+    "comandante.sigue.estigarribia": [
+      "comandante.sigue.estigarribia"
+    ],
+    "comandante.sigue.ayolas": [
+      "comandante.sigue.ayolas"
+    ],
+    "comandante.sigue.pilar": [
+      "comandante.sigue.pilar"
+    ],
+    "comandante.sigue.yvytu-rape": [
+      "comandante.sigue.yvytu-rape"
+    ],
+    "comandante.sigue.tenerife-norte": [
+      "comandante.sigue.tenerife-norte"
+    ],
+    "comandante.sigue.tenerife-sur": [
+      "comandante.sigue.tenerife-sur"
+    ],
+    "comandante.sigue.gran-canaria": [
+      "comandante.sigue.gran-canaria"
+    ],
+    "comandante.sigue.lanzarote": [
+      "comandante.sigue.lanzarote"
+    ],
+    "comandante.sigue.fuerteventura": [
+      "comandante.sigue.fuerteventura"
+    ],
+    "comandante.sigue.la-palma": [
+      "comandante.sigue.la-palma"
+    ],
+    "comandante.sigue.el-hierro": [
+      "comandante.sigue.el-hierro"
+    ],
+    "comandante.sigue.la-gomera": [
+      "comandante.sigue.la-gomera"
+    ],
+    "comandante.previsto.nivel.3": [
+      "comandante.previsto.nivel.3"
+    ],
+    "comandante.previsto.nivel.4": [
+      "comandante.previsto.nivel.4"
+    ],
+    "comandante.crucero~2": [
+      "comandante.crucero~2"
+    ],
+    "comandante.crucero~3": [
+      "comandante.crucero~3"
     ]
   }
 }
