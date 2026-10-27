@@ -240,6 +240,7 @@ import {
 import { createVegetation, zonaDeAeropuerto } from "./world/vegetation";
 import { FinalDeLaTorre } from "./flight/final-de-la-torre";
 import { crearGranja, type Granja } from "./world/granja";
+import { SitiosConModelo } from "./world/sitios-con-modelo";
 import {
   arrancarAbreOtroTramo,
   LECCION_POR_DEFECTO,
@@ -2350,6 +2351,12 @@ export class Game {
    * esperar la hora y pico que tarda en salir.
    */
   private barcos: Barcos | null = null;
+  /**
+   * Los sitios que se reconocen desde el aire con su modelo —Itaipú, el
+   * Auditorio, el Roque Nublo—, bajados al acercarse y soltados al alejarse.
+   * Ver `world/sitios-con-modelo.ts`.
+   */
+  sitios: SitiosConModelo | null = null;
   private adelantoDeLosBarcos = 0;
 
   /**
@@ -5967,6 +5974,28 @@ export class Game {
     }
 
     /*
+     * **Y lo que sobresale y el relieve no pone**: los sitios con modelo, cada
+     * uno en el marco del suelo que lo dibuja —el del vecino si cae en su
+     * mapa, el de casa si no—, para que caiga sobre su foto. Ninguno está en
+     * la escena hasta que el avión se acerca. Ver `world/sitios-con-modelo.ts`.
+     */
+    if (aqui) {
+      this.sitios = new SitiosConModelo({
+        casa: aqui,
+        vecinos: this.vecinos.flatMap((v) => {
+          const origen = v.base.aerodrome?.origin;
+          return origen
+            ? [{ origen, desplazamiento: v.mundo.desplazamiento, medioLado: v.base.size / 2 }]
+            : [];
+        }),
+        suelo: (x, z) => this.terrain.sampleHeight(x, z),
+        bultos: this.bultos,
+        preparar: (modelo) => this.renderer.compileAsync(modelo, this.camera, this.scene),
+      });
+      this.scene.add(this.sitios.grupo);
+    }
+
+    /*
      * **Y lo que se ve por la ventanilla**: lo destacado de la zona, puesto
      * con la misma cuenta que coloca a los aeródromos vecinos, y el relieve
      * entero —el de casa, el de los destinos y el del horizonte— para saber
@@ -8489,6 +8518,7 @@ export class Game {
     this.aroDeLoTocable.dispose();
     this.aroDeLoTocado.dispose();
     this.cumulonimbo?.dispose();
+    this.sitios?.soltarTodo();
     this.renderer.dispose();
   }
 
@@ -13260,6 +13290,8 @@ export class Game {
      * Y los barcos y los turbohélices de las islas, también antes de la
      * puerta del campo privado: el mar no depende de que haya torre.
      */
+    // Y los sitios con modelo: cuáles se bajan y cuáles se sueltan.
+    this.sitios?.paso(dt, this.flight.state.position.x, this.flight.state.position.z);
     this.barcos?.paso(
       this.relojDeRuta + this.adelantoDeLosBarcos,
       this.flight.state.position,
