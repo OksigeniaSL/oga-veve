@@ -408,6 +408,17 @@ describe("y el anuncio de crucero es del final de la subida", () => {
     ).not.toContain("comandante.crucero");
   });
 
+  it("y arriba es arriba aunque el cartel no se apague: se sabe sin el anuncio", () => {
+    // Con una turbulencia por delante no se dice «pueden soltarse»; lo que
+    // se cuenta en crucero tiene que poder saber igual que ya se está arriba.
+    const m = new Megafonia();
+    expect(
+      correrlo(m, { faltaParaElCrucero: 20, turbulenciaPorPasar: true }, 30),
+    ).not.toContain("comandante.crucero");
+    expect(m.estuvoArribaDeVerdad).toBe(true);
+    expect(new Megafonia().estuvoArribaDeVerdad).toBe(false);
+  });
+
   it("en su nivel sí, y por debajo también si se queda nivelado un rato", () => {
     expect(correrlo(new Megafonia(), { faltaParaElCrucero: 40 }, 20)).toContain(
       "comandante.crucero",

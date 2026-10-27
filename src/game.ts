@@ -1177,6 +1177,7 @@ import type { MandoDeCabina } from "./world/botones-cabina";
 import {
   ANUNCIOS,
   Megafonia,
+  NIVELADO_UN_RATO,
   conPasaje,
   conTripulacion,
   seLePasoElMomento,
@@ -27932,7 +27933,17 @@ export class Game {
     const destino = this.elDestino();
     const grabada = (id: string): boolean =>
       this.instructor.vozDe(id) !== null || (this.momentosSinGrabarParaBanco && hayTexto(id));
-    const cruceroDicho = this.megafonia.yaDicho("comandante.crucero");
+    /*
+     * **Arriba, aunque el cartel no se haya apagado.** Con baches todo el
+     * crucero la comandante no dice «pueden soltarse el cinturón», y con eso
+     * esperando no se contaba nada más en todo el vuelo. Un minuto nivelado
+     * arriba también es estar en crucero. Ver `NIVELADO_UN_RATO`.
+     */
+    const cruceroDicho =
+      this.megafonia.yaDicho("comandante.crucero") ||
+      (this.faseDeAhora === "en-vuelo" &&
+        this.niveladoDesde >= NIVELADO_UN_RATO &&
+        this.megafonia.estuvoArribaDeVerdad);
     /*
      * La duración del tramo y cuál de los dos sueltos va primero —el que no se
      * contó la última vez—, una vez por vuelo y ya en crucero. Ver

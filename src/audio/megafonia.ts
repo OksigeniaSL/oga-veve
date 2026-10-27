@@ -569,6 +569,8 @@ export class Megafonia {
   private bajando = 0;
   /** Y cuántos lleva nivelado. Ver `NIVELADO_UN_RATO`. */
   private nivelado = 0;
+  /** Si llegó a estar arriba en su nivel: ver `estuvoArribaDeVerdad`. */
+  private arribaDeVerdad = false;
   /** Si ya empezó el descenso, lo haya visto esto o lo haya dicho el plan. */
   private descensoEmpezado = false;
 
@@ -582,6 +584,7 @@ export class Megafonia {
     this.estuvoArriba = false;
     this.bajando = 0;
     this.nivelado = 0;
+    this.arribaDeVerdad = false;
     this.descensoEmpezado = false;
   }
 
@@ -619,6 +622,16 @@ export class Megafonia {
   /** Si ese anuncio ya se dijo en este vuelo. */
   yaDicho(anuncio: Anuncio): boolean {
     return this.dichos.has(anuncio);
+  }
+
+  /**
+   * **Si se llegó arriba**, al crucero del plan o nivelado un rato, y todavía
+   * no se baja: lo que pide el anuncio del cartel apagado, sin el cartel. Para
+   * lo que se cuenta en crucero cuando el cartel no se apaga. Ver
+   * `contarLaVidaDeCabina` en `game.ts`.
+   */
+  get estuvoArribaDeVerdad(): boolean {
+    return this.arribaDeVerdad && !this.descensoEmpezado;
   }
 
   /** Si ya se empezó a bajar hacia el destino. Para el juego y los bancos. */
@@ -700,6 +713,7 @@ export class Megafonia {
      * tiene su «empezamos a bajar».
      */
     if (arribaYAsentado(m, Infinity)) this.estuvoArriba = true;
+    if (arribaYAsentado(m, this.nivelado)) this.arribaDeVerdad = true;
     if (m.vertical < -BAJA) this.bajando += dt;
     else if (m.vertical > YA_NO_SUBE) this.bajando = 0;
     if (!this.estuvoArriba) return;

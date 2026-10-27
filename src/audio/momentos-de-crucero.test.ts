@@ -267,9 +267,9 @@ describe("nada fuera de tiempo", () => {
     expect(enDiezMinutos({ conTripulacion: false, servicioDicho: false })).not.toEqual([]);
   });
 
-  it("con el cartel puesto, los sueltos esperan; la mitad del camino, no", () => {
-    const dichos = volar(45, { cartelPuesto: true });
-    expect(dichos.map((d) => d.que)).toEqual(["mitad"]);
+  it("con el cartel puesto por unos baches se cuenta igual; con una turbulencia anunciada, nada", () => {
+    expect(volar(45, { cartelPuesto: true }).map((d) => d.que)).toEqual(["curiosidad", "mitad"]);
+    expect(volar(45, { cartelPuesto: true, turbulenciaPorPasar: true })).toEqual([]);
   });
 
   it("con la bajada a menos de ocho minutos ya no se empieza nada", () => {

@@ -270,8 +270,16 @@ export class MomentosDeCrucero {
     )
       return this.decir("mitad");
 
-    // Los sueltos piden además el cartel apagado: con él puesto, se está a otra cosa.
-    if (c.cartelPuesto) return null;
+    /*
+     * **Y con el cartel puesto por el movimiento de siempre, también.** Los
+     * sueltos esperaban al cartel apagado, y en un salto corto a cuatro mil
+     * pies —la base del mar de nubes del alisio— el aire se mueve todo el
+     * crucero y el cartel no se apaga: no se contaba nada. Con la señal
+     * encendida por unos baches una comandante habla igual, y su voz tranquila
+     * es justo lo que hace falta; lo que no se cuenta es nada con una
+     * turbulencia anunciada por delante, y eso ya lo guarda
+     * `enCruceroDeVerdad`.
+     */
     const sueltos = [c.primero, elOtro(c.primero)]
       .filter((s) => c.hay(s))
       .slice(0, cuantosSueltos(minutos, c.conTripulacion));
