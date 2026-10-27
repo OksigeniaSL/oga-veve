@@ -592,14 +592,15 @@ export class TarjetaDelAvion {
     const porDentro = donde.closest<HTMLElement>('[data-tarjeta="por-dentro"]');
     if (porDentro) {
       const id = porDentro.closest<HTMLElement>('[data-tarjeta="globo"]')?.dataset.explicacion;
+      const figura = id ? figuraEnLaTarjeta(id, a) : null;
       // En el hangar, antes del primer vuelo, todavía no están apuntadas.
       ponerLasDeSerie();
       // Callada: el globo acaba de decirlo. El altavoz de la ventana lo repite.
-      if (id)
+      if (id && figura)
         abrirExplicacion(
           id,
           this.opciones.peldano ? { peldano: this.opciones.peldano(), enTierra: true } : undefined,
-          { callada: true },
+          { callada: true, figura },
         );
       return;
     }

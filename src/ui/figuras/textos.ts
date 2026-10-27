@@ -16,6 +16,7 @@
 import { t, type TranslationKey } from "../../i18n";
 import type { TextosDelMotor } from "./motor-comun";
 import type { PalabrasDelPiston, TextosDelPiston } from "./piston";
+import type { TextosDeLasLuces } from "./luces";
 import type { TextosDelTrenFijo } from "./tren-fijo";
 import type { TextosDelTrenRetractil } from "./tren-retractil";
 import type { PalabrasDelTurbofan } from "./turbofan";
@@ -262,6 +263,51 @@ export function textosDelTrenRetractil(): TextosDelTrenRetractil {
       bajando: t("figura.trenRetractil.vivoBajando"),
       subiendo: t("figura.trenRetractil.vivoSubiendo"),
     },
+  };
+}
+
+/** Un texto de varios renglones, separados con «|» en el diccionario. */
+const renglones = (clave: TranslationKey): string[] => t(clave).split("|");
+const dos = (clave: TranslationKey): readonly [string, string] => {
+  const [a = "", b = ""] = renglones(clave);
+  return [a, b];
+};
+
+export function textosDeLasLuces(): TextosDeLasLuces {
+  return {
+    dibujo: palabras("figura.luces", [
+      "sAterrizaje", "sDestellos", "sFaro", "sNavegacion", "sRodaje", "loQueVes", "tu", "aria",
+    ] as const),
+    rumbo: t("figura.luces.rumbo"),
+    interruptores: {
+      nav: t("figura.luces.nav"),
+      beacon: t("figura.luces.beacon"),
+      strobe: t("figura.luces.strobe"),
+      land: t("figura.luces.land"),
+      taxi: t("figura.luces.taxi"),
+    },
+    palabra: {
+      red: t("figura.luces.palabraRoja"),
+      green: t("figura.luces.palabraVerde"),
+      behind: t("figura.luces.palabraBlanca"),
+      head: t("figura.luces.palabraFrente"),
+      none: t("figura.luces.palabraNinguna"),
+    },
+    regla: {
+      red: renglones("figura.luces.reglaRoja"),
+      green: renglones("figura.luces.reglaVerde"),
+      behind: renglones("figura.luces.reglaDetras"),
+      head: renglones("figura.luces.reglaFrente"),
+      none: renglones("figura.luces.reglaNinguna"),
+    },
+    cuando: {
+      nav: dos("figura.luces.cuandoNav"),
+      beacon: dos("figura.luces.cuandoBeacon"),
+      strobe: dos("figura.luces.cuandoStrobe"),
+      land: dos("figura.luces.cuandoLand"),
+      taxi: dos("figura.luces.cuandoTaxi"),
+    },
+    grados: (grados) => t("figura.luces.grados", { grados }),
   };
 }
 

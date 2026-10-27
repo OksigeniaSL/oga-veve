@@ -35,6 +35,12 @@
  *   es de rueda de cola—; y el que se recoge, con su bomba eléctrica y sus
  *   tres verdes, solo en el JAZ 60, que es el del 1900D. El bimotor de pistón
  *   y los reactores lo recogen con otros sistemas y siguen con su globo.
+ * - **Las luces**, en el punto de las luces y en sus cuatro interruptores de
+ *   la tarjeta, con la que se tocó encendida, y la blanca de atrás donde la
+ *   lleva cada avión: `Modelo.blanca` en `flight/flota.ts`, lo mismo que
+ *   pintan el modelo y «Armá tu avión». El dibujo es la avioneta, con la
+ *   baliza en la deriva y los destellos en las puntas; en el fumigador, que no
+ *   lleva destellos, no va.
  * - **Los mandos y los flaps**, en los puntos de la tarjeta del avión que
  *   dibujan: el JAZ 20. Los grados, los cables, el volante y los topes de la
  *   palanca son los suyos, de la clase del Cessna 172S; el biplano lleva
@@ -46,9 +52,13 @@
  */
 
 import type { AircraftConfig } from "../../flight/aircraft";
+import { modeloPorId } from "../../flight/flota";
+import { equipoDe } from "../../world/luces-del-trafico";
 import type { Edad, Figura } from "./figura";
+import type { Luz } from "./luces";
 import type { FocoDeLosMandos } from "./mandos";
 import {
+  textosDeLasLuces,
   textosDeLosFlaps,
   textosDeLosMandos,
   textosDelAltimetro,
@@ -71,12 +81,18 @@ export type CualFigura =
   | "turbofan"
   | "piston"
   | "tren-fijo"
-  | "tren-retractil";
+  | "tren-retractil"
+  | "luces";
 
-/** La figura que lleva una explicación, y la superficie de delante si son los mandos. */
+/** La figura que lleva una explicación, y lo que cambia según el punto o el avión. */
 export interface FiguraPedida {
   readonly cual: CualFigura;
+  /** En los mandos, la superficie de delante. */
   readonly foco?: FocoDeLosMandos;
+  /** En las luces, la que se tocó en la tarjeta, encendida al abrir. */
+  readonly luz?: Luz;
+  /** En las luces, dónde lleva este avión la blanca de atrás. */
+  readonly blanca?: "cola" | "puntas";
 }
 
 /**
@@ -97,6 +113,10 @@ export const FIGURAS = {
   "avion.motor-piston": { cual: "piston" },
   "avion.tren-fijo": { cual: "tren-fijo" },
   "avion.tren": { cual: "tren-retractil" },
+  "avion.luces": { cual: "luces" },
+  "avion.luz-baliza": { cual: "luces", luz: "beacon" },
+  "avion.luz-estrobos": { cual: "luces", luz: "strobe" },
+  "avion.luz-aterrizaje": { cual: "luces", luz: "land" },
 } as const satisfies Readonly<Record<string, FiguraPedida>>;
 
 /** La figura de la explicación con ese `id`, si lleva. */
@@ -127,6 +147,15 @@ export function figuraEnLaTarjeta(id: string, a: Pick<AircraftConfig, "id">): Fi
   if (!f || !id.startsWith("avion.")) return null;
   const suyo = AVION_DE_LA_FIGURA[f.cual];
   if (suyo && a.id !== suyo) return null;
+  if (f.cual === "luces") {
+    /*
+     * Las luces, con la blanca donde la lleva este avión. Y no en el que no
+     * lleva destellos —el fumigador—: la figura los tiene, y diría que sí.
+     */
+    const modelo = modeloPorId(a.id);
+    if (!modelo || equipoDe(modelo.silueta).estroboscopicas === "ninguna") return null;
+    return { ...f, blanca: modelo.blanca ?? "cola" };
+  }
   return f;
 }
 
@@ -162,5 +191,12 @@ export async function montarFigura(el: HTMLElement, f: FiguraPedida, edad: Edad)
       return (await import("./tren-fijo")).montarTrenFijo(el, { edad, textos: textosDelTrenFijo() });
     case "tren-retractil":
       return (await import("./tren-retractil")).montarTrenRetractil(el, { edad, textos: textosDelTrenRetractil() });
+    case "luces":
+      return (await import("./luces")).montarLuces(el, {
+        edad,
+        textos: textosDeLasLuces(),
+        ...(f.blanca ? { blanca: f.blanca } : {}),
+        ...(f.luz ? { enciende: f.luz } : {}),
+      });
   }
 }

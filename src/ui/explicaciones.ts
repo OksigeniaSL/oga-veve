@@ -330,18 +330,24 @@ function grabadaSegunLaVoz(clave: string): boolean {
  *
  * Con `callada`, se abre sin decirla: el globo de la tarjeta del avión acaba
  * de decir eso mismo, y quien toca «por dentro» quiere ver la figura, no oír
- * la frase dos veces. El altavoz de la ventana la repite si se quiere.
+ * la frase dos veces. El altavoz de la ventana la repite si se quiere. Y con
+ * `figura`, esa en vez de la de serie.
  */
 export function abrirExplicacion(
   id: string,
   cambios?: Partial<Contexto>,
-  opciones?: { readonly callada?: boolean },
+  opciones?: { readonly callada?: boolean; readonly figura?: FiguraPedida },
 ): boolean {
   const e = registro.get(id);
   if (!e) return false;
   const p = laPantalla();
   callarLaVoz();
-  const como = comoSeEnsena(e, { ...contexto(), ...cambios }, grabadaSegunLaVoz);
+  const base = comoSeEnsena(e, { ...contexto(), ...cambios }, grabadaSegunLaVoz);
+  /*
+   * La figura que pide quien abre, si pide una: la tarjeta del avión sabe de
+   * qué avión es, y las luces llevan la blanca donde la lleva el suyo.
+   */
+  const como = opciones?.figura && !base.video ? { ...base, figura: opciones.figura } : base;
   abierta = id;
   rinconAbierto = false;
   p?.mostrar(como);
