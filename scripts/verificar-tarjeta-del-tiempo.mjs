@@ -174,6 +174,22 @@ try {
     );
 
     // ── Señalar sin pulsar ──
+    /*
+     * Lo que se señala espera su turno detrás de la explicación —un suceso, una
+     * voz—, y la explicación grabada dura unos diez segundos: se espera a que
+     * calle, con tope, para mirar lo que pide señalar y no la cola.
+     */
+    // Callada de verdad: la explicación son tres piezas, y entre una y otra
+    // la boca se calla un instante. Se piden 1,5 s seguidos sin hablar.
+    const callada = async () => {
+      let quieta = 0;
+      for (let t = 0; t < 25_000 && quieta < 6; t += 250) {
+        const habla = await page.evaluate(() => globalThis.__oga.voz().hablando);
+        quieta = habla ? 0 : quieta + 1;
+        await page.waitForTimeout(250);
+      }
+    };
+    await callada();
     await page.keyboard.press("Tab");
     await page.waitForTimeout(600);
     const conTab = await pedidas(page);
@@ -188,6 +204,7 @@ try {
         const b = document.querySelector('[data-parte-accion="salir-igual"]').getBoundingClientRect();
         return { x: b.left + b.width / 2, y: b.top + b.height / 2 };
       });
+      await callada();
       await page.mouse.move(r.x - 6, r.y);
       await page.mouse.move(r.x, r.y, { steps: 3 });
       await page.waitForTimeout(900);
