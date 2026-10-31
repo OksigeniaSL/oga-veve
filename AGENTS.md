@@ -138,6 +138,7 @@ En la práctica, tres consecuencias que sí son decisiones concretas:
 En `docs/adr/`. Antes de cambiar el motor de render, el modelo de vuelo o el
 origen de los datos de terreno, lee el ADR correspondiente: la decisión ya se
 tomó con argumentos, y si se cambia hay que escribir el ADR que la revierte.
+Y antes de tocar una pantalla, una pieza o una voz, `DESIGN.md`.
 
 ## Publicación
 
