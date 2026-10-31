@@ -1850,3 +1850,8 @@ instructor	instructor/parte.explica.bien.ogg	es-PY	Hoy el tiempo está bien para
 instructor	instructor/parte.senala.quedarse.ogg	es-PY	Con este nos quedamos hoy en tierra, y eso también es ganar.	la tarjeta del tiempo: qué hace el botón de quedarse, al señalarlo
 instructor	instructor/parte.senala.esperar.ogg	es-PY	Con este esperamos un ratito y volvemos a mirar el tiempo.	la tarjeta del tiempo: qué hace el botón de esperar, al señalarlo
 instructor	instructor/parte.senala.salirIgual.ogg	es-PY	Con este salimos igual, con cuidado, y si no se puede, volvemos.	la tarjeta del tiempo: qué hace el botón de salir igual, al señalarlo
+instructor	instructor/teclas.explica.abajo.ogg	es-PY	Estas son las teclas para volar. Las que tienen dibujo son las que vas a usar: apretá una y mirá cómo se ilumina.	la pantalla de las teclas al abrirse, en Guyrami y Tukã: las del dibujo se encienden
+instructor	instructor/teclas.explica.arriba.ogg	es-PY	Estas son las teclas para volar y lo que hace cada una. Si alguna te queda incómoda, abrí «Cambiar las teclas» y elegí otra.	la pantalla de las teclas al abrirse, desde Taguato: qué hace cada una y dónde se cambian
+instructor	instructor/fin.explica.hoja.ogg	es-PY	En la hoja, cada visto es algo que te salió bien.	el final del vuelo, detrás del reconocimiento: qué es la hoja, si hay algún visto
+instructor	instructor/fin.explica.abajo.ogg	es-PY	La raya es por dónde volaste. Para volar otra vez, tocá la flecha redonda.	el final del vuelo, en Guyrami y Tukã: la raya del plano y la flecha de volver a volar
+instructor	instructor/fin.explica.arriba.ogg	es-PY	En el plano, la raya es por dónde volaste. Para volar otra vez, tocá «Otro vuelo».	el final del vuelo, desde Taguato: la raya del plano y el botón «Otro vuelo»

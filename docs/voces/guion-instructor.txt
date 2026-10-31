@@ -660,3 +660,8 @@ Hoy el tiempo está bien para este avión: podemos salir cuando quieras.
 Con este nos quedamos hoy en tierra, y eso también es ganar.
 Con este esperamos un ratito y volvemos a mirar el tiempo.
 Con este salimos igual, con cuidado, y si no se puede, volvemos.
+Estas son las teclas para volar. Las que tienen dibujo son las que vas a usar: apretá una y mirá cómo se ilumina.
+Estas son las teclas para volar y lo que hace cada una. Si alguna te queda incómoda, abrí «Cambiar las teclas» y elegí otra.
+En la hoja, cada visto es algo que te salió bien.
+La raya es por dónde volaste. Para volar otra vez, tocá la flecha redonda.
+En el plano, la raya es por dónde volaste. Para volar otra vez, tocá «Otro vuelo».

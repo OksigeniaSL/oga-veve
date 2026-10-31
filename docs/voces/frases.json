@@ -19134,5 +19134,40 @@
     "idioma": "es-PY",
     "texto": "Con este salimos igual, con cuidado, y si no se puede, volvemos.",
     "para": "la tarjeta del tiempo: qué hace el botón de salir igual, al señalarlo"
+  },
+  {
+    "id": "teclas.explica.abajo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estas son las teclas para volar. Las que tienen dibujo son las que vas a usar: apretá una y mirá cómo se ilumina.",
+    "para": "la pantalla de las teclas al abrirse, en Guyrami y Tukã: las del dibujo se encienden"
+  },
+  {
+    "id": "teclas.explica.arriba",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estas son las teclas para volar y lo que hace cada una. Si alguna te queda incómoda, abrí «Cambiar las teclas» y elegí otra.",
+    "para": "la pantalla de las teclas al abrirse, desde Taguato: qué hace cada una y dónde se cambian"
+  },
+  {
+    "id": "fin.explica.hoja",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En la hoja, cada visto es algo que te salió bien.",
+    "para": "el final del vuelo, detrás del reconocimiento: qué es la hoja, si hay algún visto"
+  },
+  {
+    "id": "fin.explica.abajo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La raya es por dónde volaste. Para volar otra vez, tocá la flecha redonda.",
+    "para": "el final del vuelo, en Guyrami y Tukã: la raya del plano y la flecha de volver a volar"
+  },
+  {
+    "id": "fin.explica.arriba",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En el plano, la raya es por dónde volaste. Para volar otra vez, tocá «Otro vuelo».",
+    "para": "el final del vuelo, desde Taguato: la raya del plano y el botón «Otro vuelo»"
   }
 ]
