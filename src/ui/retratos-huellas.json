@@ -26,7 +26,7 @@
     "retrato": "jaz-25-ca96dced.webp"
   },
   "jaz-40": {
-    "glb": "183d18cd267638535b54db0d0a909faed6a10f4f9cdc2803b5e2e6a88b452e9f",
+    "glb": "f5703e06249cee4c9c78ddc72ee2f349e54dcc29de6edad87e0f4534208d4f9c",
     "librea": "0a056c732b4fc40863e8845c518c628f3c36120bd8b82aad668dd1a661c953bf",
     "ficha": {
       "body": 15527142,
@@ -34,10 +34,10 @@
       "trim": 3101251,
       "cola": 3101251,
       "remate": 12475704,
-      "blades": 3,
+      "blades": 2,
       "motivo": "sol"
     },
-    "retrato": "jaz-40-8997e1f7.webp"
+    "retrato": "jaz-40-ef92fddb.webp"
   },
   "jaz-60": {
     "glb": "89d0ad156627ed7053a1f6e821ecd42b108eaf1b76a6255ed0662d5c79b228c9",

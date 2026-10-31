@@ -1674,7 +1674,8 @@ export const PANAMBI: AircraftConfig = {
     // La librea de la casa con el sol en la cola: es un avión de trabajo que
     // lleva gente, y se pinta como se pintan ésos.
     ...LIBREA,
-    blades: 3,
+    // Bipala, la de serie del Seneca II: ver `helice` en su modelo.
+    blades: 2,
     motivo: "sol",
   },
   sound: {

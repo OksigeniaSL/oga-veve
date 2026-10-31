@@ -14,7 +14,7 @@ con las aristas vivas y el fuselaje abierto por dentro. Ver la cabecera de
 **Con las proporciones de su clase**: el morro largo de la bodega, la cabina
 de seis plazas con sus ventanillas grandes, el cono de cola que se afina y
 sube, y dos motores de cilindros opuestos en góndolas con su capó, sus tomas y
-su hélice tripala, que se alargan por detrás del ala porque ahí se mete el
+su hélice bipala, que se alargan por detrás del ala porque ahí se mete el
 tren.
 
 Los ayudantes están en `comun.py` y `exterior.py`. Aquí queda solo lo que es
@@ -59,11 +59,15 @@ DIEDRO = math.radians(6)
 # Dónde van los motores.
 #
 # No es un número libre: la hélice tiene que pasar lejos del fuselaje —aquí
-# quedan ochenta y nueve centímetros de aire entre la punta de pala y el
+# quedan ochenta y cinco centímetros de aire entre la punta de pala y el
 # costado— y a la vez cuanto más cerca del eje, menos guiñada da un motor
 # parado. Dos metros y medio es donde lo ponen los bimotores de este tamaño.
 MOTOR = 2.45
-RADIO_HELICE = 0.92
+# **Y la hélice, de 1,92 m**: la de serie del Seneca II mide entre 75 y 76
+# pulgadas, «Diameter: Not over 76", not under 75". No further reduction
+# permitted» (FAA, ficha de tipo A7SO, rev. 17, PA-34-200T). Medía 1,84, que no
+# es ninguna de las que puede llevar.
+RADIO_HELICE = 0.96
 EJE = -0.22
 Z_HELICE = -1.95
 
@@ -274,8 +278,16 @@ def construir():
         # que son: la de la izquierda gira a la derecha vista desde el asiento
         # y la de la derecha al revés, como las del TSIO-360 y el LTSIO-360 del
         # Seneca II. Ver `giro` y `helicesContrarrotativas` en su ficha.
+        #
+        # **De dos palas, que son las de serie.** La ficha de tipo del
+        # PA-34-200T da para todos los Seneca II una Hartzell BHC-C2YF-2 —el
+        # 2 de «C2Y» son las palas— con palas FC8459-8R, y la tripala, una
+        # McCauley 3AF34C50x, solo para los números de serie 34-7970001 a
+        # 34-8170092 (FAA, A7SO, rev. 17): la que *Plane & Pilot* cuenta como
+        # «optional three-blade propellers» desde 1979. Llevaba tres, que es
+        # la opción y no el avión.
         piezas += helice(f"helice-{nombre}", (lado * MOTOR, EJE, Z_HELICE),
-                         radio=RADIO_HELICE, cuantas=3, buje=0.15,
+                         radio=RADIO_HELICE, cuantas=2, buje=0.15,
                          cuerda=0.14, largo_cono=0.34, giro=lado,
                          cono="aluminio")
 

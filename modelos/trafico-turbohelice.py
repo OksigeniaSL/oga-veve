@@ -199,10 +199,18 @@ def construir():
     piezas.append(espejo(paneles("toma", gondola, simetricos([
         [(-3.16, 150), (-3.16, 180), (-2.96, 180), (-2.96, 152)],
     ]), material_="oscuro", fuera=0.008, div=3)))
+    # **Las dos hélices giran hacia el mismo lado**, a la derecha vistas desde
+    # el asiento: el giro convencional de un bimotor, «twins with each engine
+    # rotating in conventional, clockwise rotation as viewed from the pilot's
+    # seat» (FAA, *Airplane Flying Handbook*, FAA-H-8083-3C, p. 13-23). Iban
+    # en espejo, `giro=lado`, que son las palas de un bimotor de hélices
+    # contrarrotativas como el JAZ 40, y un turbohélice regional de esta clase
+    # no lleva una al revés. Ver `giro` en `exterior.palas` y
+    # `giro-de-las-helices.test.ts`.
     for lado, nombre in ((-1, "izquierda"), (1, "derecha")):
         piezas += helice(f"helice-{nombre}", (lado * MOTOR, E, Z_HELICE),
                          radio=RADIO_HELICE, cuantas=6, buje=0.30,
-                         cuerda=0.24, largo_cono=0.80, giro=lado)
+                         cuerda=0.24, largo_cono=0.80, giro=-1)
 
     # ── Cola en T ─────────────────────────────────────────────────────────
     #

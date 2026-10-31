@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { Mesh, Vector3, type Object3D } from "three";
 import { AIRCRAFT, PANAMBI, PYKASU } from "../flight/aircraft";
+import { TIPOS } from "./trafico";
 import { colocarModelo, ejesDeHelice } from "./aeronave-modelo";
 import { signoDelGiro } from "./giro-de-las-helices";
 
@@ -98,4 +99,83 @@ describe("hacia dónde gira cada hélice", () => {
       }
     });
   }
+
+  /*
+   * **Y el turbohélice del tráfico, con las dos hacia el mismo lado.** Iban en
+   * espejo, como las de un bimotor contrarrotativo, y uno de su clase lleva
+   * las dos con el giro convencional. El tráfico no dibuja las palas —ver
+   * `PIEZA_DE_DENTRO` en `cuerpos-del-trafico.ts`—, pero el modelo es el que
+   * es. Ver `modelos/trafico-turbohelice.py`.
+   */
+  it("trafico-turbohelice: sus palas, las dos hechas para el giro convencional", async () => {
+    const raiz = await modelo("trafico-turbohelice");
+    const comoFicha = { ...PANAMBI, id: "trafico-turbohelice", wingSpan: TIPOS.turbohelice.envergadura };
+    colocarModelo(raiz, comoFicha).updateWorldMatrix(true, true);
+    const ejes = ejesDeHelice(raiz);
+    expect(ejes.length).toBe(2);
+    for (const eje of ejes) {
+      expect(new Vector3(0, 0, 1).transformDirection(eje.matrixWorld).z).toBeGreaterThan(0.99);
+      expect(haciaDondeEstaHecha(eje), eje.name).toBe(
+        signoDelGiro({ helicesContrarrotativas: false }, eje.position.x),
+      );
+    }
+  });
 });
+
+/**
+ * **Cuántas palas y de qué tamaño**, contadas en el modelo: las puntas de las
+ * palas, agrupadas por el ángulo alrededor del eje. Devuelve las palas y el
+ * diámetro, m, en los ejes del juego.
+ */
+function palasYDiametro(eje: Object3D): { palas: number; diametro: number } {
+  const centro = new Vector3().setFromMatrixPosition(eje.matrixWorld);
+  let radio = 0;
+  const v = new Vector3();
+  eje.traverse((o) => {
+    if (!(o instanceof Mesh) || !o.name.toLowerCase().includes("pala")) return;
+    const pos = o.geometry.getAttribute("position");
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld).sub(centro);
+      radio = Math.max(radio, Math.hypot(v.x, v.y));
+    }
+  });
+  // Solo lo de fuera, donde las palas ya no se tocan, en sectores de 10°.
+  const sectores = new Set<number>();
+  eje.traverse((o) => {
+    if (!(o instanceof Mesh) || !o.name.toLowerCase().includes("pala")) return;
+    const pos = o.geometry.getAttribute("position");
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld).sub(centro);
+      if (Math.hypot(v.x, v.y) < radio * 0.7) continue;
+      sectores.add(((Math.round((Math.atan2(v.y, v.x) * 180) / Math.PI / 10) % 36) + 36) % 36);
+    }
+  });
+  // Cada pala es una racha de sectores seguidos, contando la vuelta.
+  let palas = 0;
+  for (const k of sectores) if (!sectores.has((k + 35) % 36)) palas++;
+  return { palas, diametro: 2 * radio };
+}
+
+describe("las hélices de serie del JAZ 40, las del Seneca II", () => {
+  /*
+   * La ficha de tipo del PA-34-200T da para todos una Hartzell bipala de 75 a
+   * 76 pulgadas; la tripala es la opción de los números de serie de 1979 en
+   * adelante (FAA, A7SO, rev. 17). Ver `modelos/jaz-40-panambi.py`.
+   */
+  it("dos palas y entre 75 y 76 pulgadas, en el modelo y en la ficha", async () => {
+    expect(PANAMBI.appearance.blades).toBe(2);
+    const raiz = await modelo("jaz-40");
+    colocarModelo(raiz, PANAMBI).updateWorldMatrix(true, true);
+    const ejes = ejesDeHelice(raiz);
+    expect(ejes.length).toBe(2);
+    const PULGADA = 0.0254;
+    for (const eje of ejes) {
+      const { palas, diametro } = palasYDiametro(eje);
+      expect(palas, eje.name).toBe(2);
+      // La punta redondeada se come un poco del radio: medio centímetro.
+      expect(diametro, eje.name).toBeGreaterThan(75 * PULGADA - 0.01);
+      expect(diametro, eje.name).toBeLessThan(76 * PULGADA + 0.005);
+    }
+  });
+});
+
