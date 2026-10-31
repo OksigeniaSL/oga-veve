@@ -435,6 +435,18 @@
       "ms": 925,
       "h": "b90de81670"
     },
+    "fin.explica.abajo": {
+      "ms": 4307,
+      "h": "1a62233303"
+    },
+    "fin.explica.arriba": {
+      "ms": 4907,
+      "h": "7b1ca975bf"
+    },
+    "fin.explica.hoja": {
+      "ms": 2642,
+      "h": "13deed4b27"
+    },
     "fin.horas": {
       "ms": 1087,
       "h": "96453effa8"
@@ -1022,6 +1034,14 @@
     "tarjeta.voz.turbohelice": {
       "ms": 6707,
       "h": "f543397a06"
+    },
+    "teclas.explica.abajo": {
+      "ms": 7007,
+      "h": "9b33e5b4f4"
+    },
+    "teclas.explica.arriba": {
+      "ms": 6907,
+      "h": "fad9946e14"
     },
     "tutor.dobleToque": {
       "ms": 2150,
@@ -4740,6 +4760,26 @@
       "parte.explica.miramos",
       "{porque}",
       "{eleccion?}"
+    ],
+    "teclas.explica.abajo": [
+      "teclas.explica.abajo"
+    ],
+    "teclas.explica.arriba": [
+      "teclas.explica.arriba"
+    ],
+    "fin.explica.hoja": [
+      "fin.explica.hoja"
+    ],
+    "fin.explica.abajo": [
+      "fin.explica.abajo"
+    ],
+    "fin.explica.arriba": [
+      "fin.explica.arriba"
+    ],
+    "fin.explica": [
+      "{nivel}",
+      "{hoja?}",
+      "{como}"
     ]
   }
 }

@@ -2082,5 +2082,25 @@
     "parte.explica.miramos",
     "{porque}",
     "{eleccion?}"
+  ],
+  "teclas.explica.abajo": [
+    "teclas.explica.abajo"
+  ],
+  "teclas.explica.arriba": [
+    "teclas.explica.arriba"
+  ],
+  "fin.explica.hoja": [
+    "fin.explica.hoja"
+  ],
+  "fin.explica.abajo": [
+    "fin.explica.abajo"
+  ],
+  "fin.explica.arriba": [
+    "fin.explica.arriba"
+  ],
+  "fin.explica": [
+    "{nivel}",
+    "{hoja?}",
+    "{como}"
   ]
 }
