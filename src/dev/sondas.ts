@@ -1064,6 +1064,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     combustible: () => juego.depositoParaBanco,
     /** La vuelta al avión, la funda y el parte de hoy. Ver `Game.atenderAntesDeVolar`. */
     antesDeVolar: () => juego.antesDeVolarParaBanco,
+    /**
+     * Cuántas veces le salió la tarjeta del tiempo a este perfil y si se quitó
+     * su explicación en voz. Ver `flight/explicacion-del-parte.ts`.
+     */
+    explicacionDelParte: () => juego.explicacionDelParteParaBanco,
     /** La aeronave montada: para saber si vuela el modelo o las cajas. */
     aeronave: () => ({
       grupo: juego.aircraftMesh.group,

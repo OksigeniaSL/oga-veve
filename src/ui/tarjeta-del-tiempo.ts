@@ -53,7 +53,22 @@ export interface AccionesDelTiempo {
    * tarjeta, cuenta el rato, vuelve a pedir el tiempo y la abre otra vez.
    */
   readonly alEsperar: () => void;
+  /**
+   * **Se cierra sin decidir**, con la ✕ o con Escape: el juego calla la
+   * explicación si todavía suena. Ver `cerrarAMano`.
+   */
+  readonly alCerrar?: () => void;
+  /** «No volver a explicar»: se tocó el botón. Ver `flight/explicacion-del-parte.ts`. */
+  readonly alNoExplicar?: () => void;
+  /**
+   * **Se señala un botón de la decisión** sin pulsarlo —el ratón que se para
+   * encima, o el tabulador que llega—: el juego dice qué hace.
+   */
+  readonly alSenalar?: (que: BotonQueSeSenala) => void;
 }
+
+/** Los tres botones de la decisión que dicen qué hacen al señalarlos. */
+export type BotonQueSeSenala = "quedarse" | "esperar" | "salir-igual";
 
 /** Lo que se le da al abrirla. */
 export interface ParteParaVer {
@@ -70,6 +85,11 @@ export interface ParteParaVer {
    * decide, `mejor` si ahora ya se puede. Ver `AccionesDelTiempo.alEsperar`.
    */
   readonly releido?: "igual" | "mejor";
+  /**
+   * Si lleva el botón de «no volver a explicar»: desde la segunda vez que a
+   * este perfil le sale la tarjeta. Ver `OFRECER_DESDE_LA_VEZ`.
+   */
+  readonly ofrecerNoExplicar?: boolean;
 }
 
 const AMBAR = "parte--pasa";
@@ -286,6 +306,19 @@ const RATO = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3 H18 M6 2
 const ESTRELLA = `<svg viewBox="0 0 48 48" aria-hidden="true"><path class="parte__estrella"
   d="M24 3 L30 17 L45 18 L33.5 28 L37 43 L24 35 L11 43 L14.5 28 L3 18 L18 17 Z"/></svg>`;
 
+/**
+ * **«No volver a explicar»**: el globo de lo que se dice, con el visto dentro
+ * —«ya lo sé»—. Es el mismo visto de «ya me lo aprendí» de las teclas que
+ * tocan, para que se reconozca como la misma idea: esto ya lo aprendí.
+ */
+const YA_LO_SE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5 h16 a1.5 1.5 0 0 1 1.5 1.5 v9 a1.5 1.5 0 0 1 -1.5 1.5 h-9 l-4.5 3.5 v-3.5 h-2.5 a1.5 1.5 0 0 1 -1.5 -1.5 v-9 a1.5 1.5 0 0 1 1.5 -1.5 Z"
+  fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 11.5 l2.6 2.6 l5.4 -5.4" fill="none"
+  stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+/** La cruz de cerrar, dibujada: el carácter ✕ cambia con la fuente de cada aparato. */
+const CRUZ = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18" stroke="currentColor"
+  stroke-width="2.6" stroke-linecap="round"/></svg>`;
+
 /** El avión en su puesto, quieto: quedarse. */
 const QUIETO = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10 L12 4 L21 10" fill="none" stroke="currentColor"
   stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9 v8 M6 14 h12 M9.5 19 h5" stroke="currentColor"
@@ -300,9 +333,60 @@ export class TarjetaDelTiempo {
   constructor(root: HTMLElement, acciones: AccionesDelTiempo) {
     this.root = root;
     this.acciones = acciones;
-    this.panel = new Panel(root, () => this.cerrar(), true, true);
+    // Escape hace lo mismo que la ✕: ver `cerrarAMano`.
+    this.panel = new Panel(root, () => this.cerrarAMano(), true, true);
     root.addEventListener("click", (e) => this.alClic(e));
+    this.vigilarLoQueSeSenala();
   }
+
+  /**
+   * **Lo que se señala sin pulsar se dice**: el ratón que se para encima de
+   * un botón de la decisión, o el foco que llega con el tabulador o el mando.
+   * A los cuatro años un botón que no se sabe qué hace no se toca, o se toca
+   * por probar; así se pregunta sin decidir.
+   *
+   * Y no al pulsar: el toque ya hace lo suyo y lo dice —«¡hoy ganaste!»,
+   * «esperamos un rato»—, y contarlo dos veces sería un suceso con dos voces.
+   * Por eso se ignora el foco que trae un toque o un clic, y el que pone la
+   * propia tarjeta al abrirse. El ratón tiene que moverse y pararse encima
+   * —`PARADO_ENCIMA`—: pasar de largo camino de otro botón no pregunta nada.
+   */
+  private vigilarLoQueSeSenala(): void {
+    const PARADO_ENCIMA = 450;
+    const boton = (e: Event): BotonQueSeSenala | null => {
+      const b = (e.target as Element | null)?.closest?.<HTMLElement>("[data-parte-accion]");
+      const que = b?.dataset.parteAccion;
+      return que === "quedarse" || que === "esperar" || que === "salir-igual" ? que : null;
+    };
+    this.root.addEventListener("pointerdown", () => (this.tocadoEn = performance.now()), true);
+    this.root.addEventListener("focusin", (e) => {
+      const que = boton(e);
+      if (!que || this.enfocandoYo || performance.now() - this.tocadoEn < 800) return;
+      this.acciones.alSenalar?.(que);
+    });
+    let reloj: ReturnType<typeof setTimeout> | null = null;
+    const soltar = () => {
+      if (reloj !== null) clearTimeout(reloj);
+      reloj = null;
+    };
+    this.root.addEventListener("pointermove", (e) => {
+      soltar();
+      if (e.pointerType !== "mouse" && e.pointerType !== "pen") return;
+      const que = boton(e);
+      if (!que) return;
+      reloj = setTimeout(() => {
+        reloj = null;
+        if (this.abierta) this.acciones.alSenalar?.(que);
+      }, PARADO_ENCIMA);
+    });
+    this.root.addEventListener("pointerleave", soltar);
+    this.root.addEventListener("pointerdown", soltar);
+  }
+
+  /** Cuándo se tocó por última vez, para no contar ese foco como «señalar». */
+  private tocadoEn = -Infinity;
+  /** Mientras la propia tarjeta pone el foco, que eso no lo señaló nadie. */
+  private enfocandoYo = false;
 
   get abierta(): boolean {
     return !this.root.hidden;
@@ -318,11 +402,66 @@ export class TarjetaDelTiempo {
       instrumento: true,
       acciones: [],
     });
-    this.panel.abrir();
+    this.root.dataset.peldano = v.peldano;
+    this.root
+      .querySelector(".concha__cabecera")
+      ?.insertAdjacentHTML("beforeend", this.arriba(v.ofrecerNoExplicar === true, v.peldano !== "dibujo"));
+    this.enfocandoYo = true;
+    try {
+      this.panel.abrir();
+      /*
+       * **El foco, en la decisión y no en la ✕.** El encierro lo pone en lo
+       * primero de dentro, y lo primero ahora es la fila de arriba: un Enter
+       * de más cerraba la tarjeta. Va al botón que propone la tarjeta, como
+       * antes de que hubiera ✕.
+       */
+      this.root
+        .querySelector<HTMLElement>(".parte__boton--principal")
+        ?.focus({ preventScroll: true });
+    } finally {
+      this.enfocandoYo = false;
+    }
+  }
+
+  /**
+   * **Los dos botones de arriba a la derecha**: «no volver a explicar», si
+   * toca, y la ✕ de cerrar, siempre.
+   *
+   * La ✕ faltaba: «si lo quito (que no hay x para quitar)…». Se cerraba con
+   * Escape, que es una tecla que hay que saber que existe y que en una tablet
+   * no hay. Va arriba a la derecha, que es donde se busca una ✕ en cualquier
+   * pantalla del mundo.
+   */
+  private arriba(noExplicar: boolean, conLetras: boolean): string {
+    const ya = noExplicar
+      ? `<button type="button" class="parte__arriba parte__no-explicar" data-parte-accion="no-explicar"
+              aria-label="${t("parte.noExplicar")}" title="${t("parte.noExplicar")}">${YA_LO_SE}${
+                conLetras ? `<span>${t("parte.noExplicar")}</span>` : ""
+              }</button>`
+      : "";
+    return `<span class="parte__arriba-fila">${ya}<button type="button" class="parte__arriba parte__cerrar"
+              data-parte-accion="cerrar" aria-label="${t("parte.cerrar")}" title="${t("parte.cerrar")}">${CRUZ}</button></span>`;
   }
 
   cerrar(): void {
     this.panel.cerrar();
+  }
+
+  /**
+   * **Cerrar a mano, con la ✕ o con Escape: se sigue sin decidir.**
+   *
+   * No hace lo del botón de por defecto —quedarse—, porque quedarse es una
+   * decisión que se felicita y se apunta en la bitácora, y cerrar no es
+   * decidir: es «ya lo vi». Tampoco es salir igual, que la instructora
+   * contestaría «salimos con cuidado» a algo que nadie dijo. Así que se cierra
+   * y ya: el avión sigue en el puesto, nada queda apuntado, el botón del
+   * tiempo de arriba sigue en ámbar para volver a abrirla, y arrancar el motor
+   * es salir, como siempre. La explicación, si todavía sonaba, se calla:
+   * quien cierra ya no la está mirando.
+   */
+  private cerrarAMano(): void {
+    this.acciones.alCerrar?.();
+    this.cerrar();
   }
 
   private cuerpo(v: ParteParaVer): string {
@@ -469,11 +608,17 @@ export class TarjetaDelTiempo {
         <div class="parte__botones">
           <button type="button" class="parte__boton parte__boton--principal" data-parte-accion="hangar"
                   aria-label="${t("hangar.volver")}">${QUIETO}${conLetras ? `<span>${t("hangar.volver")}</span>` : ""}</button>
-          <button type="button" class="parte__boton" data-parte-accion="cerrar"
-                  aria-label="${t("inicio.cerrar")}">✕</button>
         </div>
       </div>`;
-    this.root.querySelector<HTMLElement>('[data-parte-accion="hangar"]')?.focus();
+    // Y quedarse ya decidió: «no volver a explicar» no pinta nada aquí. La ✕
+    // de arriba sigue, y es la de cerrar y quedarse mirando el aeropuerto.
+    this.root.querySelector(".parte__no-explicar")?.remove();
+    this.enfocandoYo = true;
+    try {
+      this.root.querySelector<HTMLElement>('[data-parte-accion="hangar"]')?.focus();
+    } finally {
+      this.enfocandoYo = false;
+    }
   }
 
   private alClic(e: MouseEvent): void {
@@ -496,7 +641,20 @@ export class TarjetaDelTiempo {
     } else if (que === "hangar") {
       this.acciones.alHangar();
     } else if (que === "cerrar") {
-      this.cerrar();
+      this.cerrarAMano();
+    } else if (que === "no-explicar") {
+      this.acciones.alNoExplicar?.();
+      /*
+       * Y se va: ya hizo lo suyo. El foco no se queda en el aire —lo tenía el
+       * botón que desaparece—: pasa a la ✕, que es lo que está al lado.
+       */
+      b.remove();
+      this.enfocandoYo = true;
+      try {
+        this.root.querySelector<HTMLElement>(".parte__cerrar")?.focus();
+      } finally {
+        this.enfocandoYo = false;
+      }
     }
   }
 }

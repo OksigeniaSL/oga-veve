@@ -53,6 +53,15 @@ export interface TeclasRetiradas {
   readonly recuperar: () => void;
 }
 
+/**
+ * **La explicación en voz de la tarjeta del tiempo, si se quitó**, para
+ * volver a oírla. Ver `flight/explicacion-del-parte.ts`.
+ */
+export interface ExplicacionQuitada {
+  readonly quitada: () => boolean;
+  readonly recuperar: () => void;
+}
+
 export class PantallaDeAjustes {
   private readonly root: HTMLElement;
   private readonly panel: Panel;
@@ -62,6 +71,7 @@ export class PantallaDeAjustes {
     root: HTMLElement,
     alCambiar: (a: Ajustes) => void,
     private readonly teclas: TeclasRetiradas | null = null,
+    private readonly explicacion: ExplicacionQuitada | null = null,
   ) {
     this.root = root;
     this.alCambiar = alCambiar;
@@ -69,6 +79,12 @@ export class PantallaDeAjustes {
     root.addEventListener("click", (e) => {
       if ((e.target as HTMLElement)?.closest?.('[data-accion="teclas-que-tocan"]')) {
         this.teclas?.recuperar();
+        this.pintar();
+        this.root.querySelector<HTMLElement>(".ajustes__opcion")?.focus();
+        return;
+      }
+      if ((e.target as HTMLElement)?.closest?.('[data-accion="explicacion-del-parte"]')) {
+        this.explicacion?.recuperar();
         this.pintar();
         this.root.querySelector<HTMLElement>(".ajustes__opcion")?.focus();
         return;
@@ -145,7 +161,10 @@ export class PantallaDeAjustes {
                 .join("")}
             </div>
           </div>`;
-      }).join("") + this.lineaDeLasTeclas() + lineaDeAnadirAInicio(),
+      }).join("") +
+        this.lineaDeLasTeclas() +
+        this.lineaDeLaExplicacion() +
+        lineaDeAnadirAInicio(),
     });
   }
 
@@ -163,6 +182,23 @@ export class PantallaDeAjustes {
         <span class="ajustes__que">${t("ajustes.teclasQueTocan")}</span>
         <div class="ajustes__opciones">
           <button type="button" class="ajustes__opcion" data-accion="teclas-que-tocan">${t("ajustes.teclasQueTocan.volver")}</button>
+        </div>
+      </div>`;
+  }
+
+  /**
+   * **Y la explicación de la tarjeta del tiempo, si se quitó**, por lo mismo
+   * que las teclas: solo sale si hay algo que recuperar. Quien tocó «no
+   * volver a explicar» sin querer, o el hermano pequeño que hereda la tablet,
+   * vuelve a oírla.
+   */
+  private lineaDeLaExplicacion(): string {
+    if (!this.explicacion?.quitada()) return "";
+    return `
+      <div class="ajustes__fila" data-ajuste-linea="explicacion-del-parte">
+        <span class="ajustes__que">${t("ajustes.explicacionDelParte")}</span>
+        <div class="ajustes__opciones">
+          <button type="button" class="ajustes__opcion" data-accion="explicacion-del-parte">${t("ajustes.explicacionDelParte.volver")}</button>
         </div>
       </div>`;
   }

@@ -15702,6 +15702,60 @@ body.con-vuelta #tactil {
   background: #2f6f45;
 }
 
+/*
+ * **Arriba a la derecha, «no volver a explicar» y la ✕**: de yema los dos,
+ * en el color de la tinta suave para que no compitan con la decisión, que es
+ * lo que importa. Sin rojo: cerrar no es una alarma.
+ */
+.parte__arriba-fila {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.parte__arriba {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 2px solid transparent;
+  border-radius: 22px;
+  background: none;
+  color: var(--tinta-suave);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.parte__arriba svg {
+  width: 24px;
+  height: 24px;
+  flex: none;
+}
+
+.parte__arriba:hover,
+.parte__arriba:focus-visible {
+  color: var(--tinta);
+  border-color: var(--linea-fuerte);
+  background: var(--barro-claro);
+}
+
+.parte__arriba:focus-visible,
+.parte__boton:focus-visible {
+  outline: 3px solid var(--ocre);
+  outline-offset: 2px;
+}
+
+/* La palabra, desde el peldaño que lee: en el de los dibujos, solo el globo. */
+.tarjeta-tiempo[data-peldano="dibujo"] .parte__no-explicar span {
+  display: none;
+}
+
 .parte__ganaste {
   display: flex;
   flex-direction: column;

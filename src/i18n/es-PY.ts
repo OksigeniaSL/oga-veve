@@ -2517,6 +2517,8 @@ export const ES_PY = {
   "teclas.yaLaSe": "Ya la sé",
   "ajustes.teclasQueTocan": "Las teclas que ya te aprendiste no salen más.",
   "ajustes.teclasQueTocan.volver": "Volver a mostrarlas",
+  "ajustes.explicacionDelParte": "La tarjeta del tiempo ya no se explica en voz.",
+  "ajustes.explicacionDelParte.volver": "Volver a explicarla",
   "ajustes.inicio":
     "En el iPhone, el juego va a pantalla completa abierto desde su ícono: en Safari tocá Compartir (o «•••» y Compartir), elegí «Agregar a inicio» y abrilo desde ahí.",
   "gafas.ganadas": "¡Tus gafas de sol!",
@@ -3906,6 +3908,42 @@ export const ES_PY = {
   "parte.yaSePuede.voz": "Miramos otra vez y ya mejoró: ahora sí podemos salir.",
   "parte.salgoIgual.voz":
     "Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.",
+  /*
+   * **La explicación en voz al abrirse**, montada de piezas: qué es la
+   * tarjeta, qué pasa hoy —acá o donde vamos— y qué se puede elegir. Ver
+   * `flight/explicacion-del-parte.ts`. Ninguna baja de treinta letras.
+   */
+  "parte.explica.miramos": "Antes de salir, miramos cómo está el tiempo.",
+  "parte.explica.aca.tormenta":
+    "Hoy acá hay tormenta encima del campo, y con tormenta no se sale.",
+  "parte.explica.aca.visibilidad": "Hoy acá se ve muy poco, menos de lo que necesita este avión.",
+  "parte.explica.aca.techo": "Hoy acá las nubes están muy bajas, más de lo que aguanta este avión.",
+  "parte.explica.aca.visibilidadYTecho":
+    "Hoy acá se ve muy poco y las nubes están muy bajas, más de lo que aguanta este avión.",
+  "parte.explica.aca.cruzado":
+    "Hoy acá sopla mucho viento de costado, más del que aguanta este avión.",
+  "parte.explica.aca.pista": "Hoy a este avión no le alcanza la pista para despegar con su margen.",
+  "parte.explica.alla.tormenta":
+    "Hoy donde vamos hay tormenta encima del campo, y con tormenta no se aterriza.",
+  "parte.explica.alla.visibilidad":
+    "Hoy donde vamos se ve muy poco, menos de lo que necesita este avión.",
+  "parte.explica.alla.techo":
+    "Hoy donde vamos las nubes están muy bajas, más de lo que aguanta este avión.",
+  "parte.explica.alla.visibilidadYTecho":
+    "Hoy donde vamos se ve muy poco y las nubes están muy bajas, más de lo que aguanta este avión.",
+  "parte.explica.alla.cruzado":
+    "Hoy donde vamos sopla mucho viento de costado, más del que aguanta este avión.",
+  "parte.explica.elegis":
+    "Podemos quedarnos en tierra, esperar un rato o salir igual. Vos elegís.",
+  "parte.explica.tambienSalir": "Y si querés, también podés salir igual: la decisión es tuya.",
+  "parte.explica.bien": "Hoy el tiempo está bien para este avión: podemos salir cuando quieras.",
+  /* Lo que dice cada botón de la decisión al señalarlo, sin pulsarlo. */
+  "parte.senala.quedarse": "Con este nos quedamos hoy en tierra, y eso también es ganar.",
+  "parte.senala.esperar": "Con este esperamos un ratito y volvemos a mirar el tiempo.",
+  "parte.senala.salirIgual": "Con este salimos igual, con cuidado, y si no se puede, volvemos.",
+  /* Los dos botones de arriba de la tarjeta: se leen, no se dicen. */
+  "parte.noExplicar": "No volver a explicar",
+  "parte.cerrar": "Cerrar la tarjeta",
   /*
    * **El modo inicio: Jazlyn le enseña a volar a Ara.** Ara pregunta y ella
    * enseña, paso a paso, con el avión esperando en cada uno. Jazlyn con la voz

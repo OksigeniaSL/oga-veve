@@ -2123,6 +2123,41 @@ for (const [id, voz, para] of DE_CADA_AVION) {
 }
 
 /*
+ * **Y la tarjeta del tiempo, explicada** (31-10-2026): lo que dice la
+ * instructora al abrirse —qué es, qué pasa hoy acá o donde vamos, y qué se
+ * puede elegir—, en piezas que se montan con la receta `parte.explica`, y lo
+ * que dice cada botón de la decisión al señalarlo. Las claves se montan en el
+ * juego, así que el lector de `.decir(` no las ve: van escritas aquí, al final
+ * de la instructora, que lo grabado no se renumera. La receta va a
+ * `crudo/instructor/recetas.json` al grabarlas:
+ * `"parte.explica": ["parte.explica.miramos", "{porque}", "{eleccion?}"]`.
+ * Ver `src/flight/explicacion-del-parte.ts`.
+ */
+const DE_LA_TARJETA_DEL_TIEMPO = [
+  ["parte.explica.miramos", "la tarjeta del tiempo al abrirse: qué es"],
+  ...["tormenta", "visibilidad", "techo", "visibilidadYTecho", "cruzado", "pista"].map((m) => [
+    `parte.explica.aca.${m}`,
+    "la tarjeta del tiempo al abrirse: qué pasa hoy en el campo de salida, en sencillo",
+  ]),
+  ...["tormenta", "visibilidad", "techo", "visibilidadYTecho", "cruzado"].map((m) => [
+    `parte.explica.alla.${m}`,
+    "la tarjeta del tiempo al abrirse: qué pasa hoy en el campo de llegada, en sencillo",
+  ]),
+  ["parte.explica.elegis", "la tarjeta del tiempo al abrirse, en Guyrami y Tukã: las tres cosas que se pueden hacer"],
+  ["parte.explica.tambienSalir", "la tarjeta del tiempo al abrirse, desde Taguato: detrás del porqué, que salir igual también se puede"],
+  ["parte.explica.bien", "la tarjeta del tiempo abierta a mano un día bueno"],
+  ["parte.senala.quedarse", "la tarjeta del tiempo: qué hace el botón de quedarse, al señalarlo"],
+  ["parte.senala.esperar", "la tarjeta del tiempo: qué hace el botón de esperar, al señalarlo"],
+  ["parte.senala.salirIgual", "la tarjeta del tiempo: qué hace el botón de salir igual, al señalarlo"],
+];
+for (const [id, para] of DE_LA_TARJETA_DEL_TIEMPO) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
+}
+
+/*
  * **Y fuera lo que no se graba: lo que se monta.**
  *
  * Las frases con hueco —«{indicativo}, en final»— no son frases: son recetas.

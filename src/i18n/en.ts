@@ -883,6 +883,8 @@ export const EN: Dictionary = {
   "teclas.yaLaSe": "Got it",
   "ajustes.teclasQueTocan": "The keys you already learned are no longer shown.",
   "ajustes.teclasQueTocan.volver": "Show them again",
+  "ajustes.explicacionDelParte": "The weather card is no longer explained out loud.",
+  "ajustes.explicacionDelParte.volver": "Explain it again",
   "ajustes.inicio":
     "On iPhone, the game runs full screen when opened from its icon: in Safari tap Share (or “•••”, then Share), choose “Add to Home Screen” and open it from there.",
   "gafas.ganadas": "Your sunglasses!",
@@ -2498,6 +2500,34 @@ export const EN: Dictionary = {
   "parte.yaSePuede.voz": "We looked again and it got better: now we can go.",
   "parte.salgoIgual.voz":
     "All right: we go, carefully. And if it's no good up there, we come back.",
+  "parte.explica.miramos": "Before we go, we check the weather.",
+  "parte.explica.aca.tormenta":
+    "Today there's a thunderstorm over this field, and nobody takes off into a storm.",
+  "parte.explica.aca.visibilidad": "Today you can hardly see here: less than this plane needs.",
+  "parte.explica.aca.techo": "Today the cloud here is very low, lower than this plane can handle.",
+  "parte.explica.aca.visibilidadYTecho":
+    "Today you can hardly see here and the cloud is very low, more than this plane can handle.",
+  "parte.explica.aca.cruzado":
+    "Today there's a strong crosswind here, more than this plane can handle.",
+  "parte.explica.aca.pista": "Today this runway is too short for this plane to take off with its margin.",
+  "parte.explica.alla.tormenta":
+    "Today there's a thunderstorm over the field we're going to, and nobody lands into a storm.",
+  "parte.explica.alla.visibilidad":
+    "Where we're going, you can hardly see today: less than this plane needs.",
+  "parte.explica.alla.techo":
+    "Where we're going, the cloud is very low today, lower than this plane can handle.",
+  "parte.explica.alla.visibilidadYTecho":
+    "Where we're going, you can hardly see and the cloud is very low, more than this plane can handle.",
+  "parte.explica.alla.cruzado":
+    "Where we're going, there's a strong crosswind today, more than this plane can handle.",
+  "parte.explica.elegis": "We can stay on the ground, wait a while, or go anyway. Your call.",
+  "parte.explica.tambienSalir": "And if you want, you can still go anyway: it's your decision.",
+  "parte.explica.bien": "The weather's fine for this plane today: we can go whenever you're ready.",
+  "parte.senala.quedarse": "This one means we stay on the ground today, and that's a win too.",
+  "parte.senala.esperar": "This one means we wait a little and check the weather again.",
+  "parte.senala.salirIgual": "This one means we go anyway, carefully, and come back if it's no good.",
+  "parte.noExplicar": "Don't explain again",
+  "parte.cerrar": "Close the card",
   "inicio.modo.nombre": "Learn with Jazlyn",
   "inicio.modo.mama": "Jazlyn",
   "inicio.modo.ara": "Ara",

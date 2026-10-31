@@ -1599,7 +1599,14 @@ import { enLaHoja, mapaPara, type LoDelVuelo, type MapaDeLaRuta } from "./ui/map
 import { PantallaDeLaSiesta } from "./ui/siesta";
 import { ilustracionPedida } from "./ui/ilustraciones";
 import { PantallaDeLaVuelta, type CosaEnPantalla } from "./ui/vuelta-al-avion";
-import { TarjetaDelTiempo } from "./ui/tarjeta-del-tiempo";
+import { TarjetaDelTiempo, type BotonQueSeSenala } from "./ui/tarjeta-del-tiempo";
+import {
+  AL_SENALAR,
+  ExplicacionDelParte,
+  LLAVE_DE_LA_EXPLICACION,
+  montarLaExplicacion,
+  RECETA_DE_LA_EXPLICACION,
+} from "./flight/explicacion-del-parte";
 
 /** Un punto por el que se mira un sitio del paisaje, y si es el suelo mismo. Ver `casiTodo`. */
 type PuntoDeUnSitio = PuntoDelMundo & { readonly deSuelo?: boolean };
@@ -6626,6 +6633,11 @@ export class Game {
         {
           cuantas: () => this.teclasQueTocan.cuantasAprendidas,
           recuperar: () => this.teclasQueTocan.recuperarTodas(),
+        },
+        // Y la explicación en voz de la tarjeta del tiempo, si se quitó.
+        {
+          quitada: () => this.explicacionDelParte.quitada,
+          recuperar: () => this.explicacionDelParte.recuperar(),
         },
       );
     }
@@ -12469,6 +12481,7 @@ export class Game {
     // Lo que se pedía en el vuelo de antes ya no toca; lo aprendido, del perfil de ahora.
     this.teclasQueTocan.quitar();
     this.teclasQueTocan.releer();
+    this.explicacionDelParte.releer();
     /*
      * **Vuelo nuevo: la instructora se olvida de lo que ya había dicho.**
      *
@@ -31342,19 +31355,98 @@ export class Game {
 
   private declinaciones = new Map<string, number>();
 
+  /**
+   * **Cuántas veces le salió la tarjeta del tiempo a este perfil, y si se
+   * quitó su explicación en voz.** Vive en el progreso del perfil, en este
+   * navegador. Ver `flight/explicacion-del-parte.ts`.
+   */
+  private readonly explicacionDelParte = new ExplicacionDelParte({
+    leer: () => leerProgreso(LLAVE_DE_LA_EXPLICACION),
+    escribir: (v) => ponerProgreso(LLAVE_DE_LA_EXPLICACION, v),
+  });
+
+  /** Para el banco: lo guardado de la explicación. Ver `verificar-tarjeta-del-tiempo.mjs`. */
+  get explicacionDelParteParaBanco(): { veces: number; quitada: boolean } {
+    return { veces: this.explicacionDelParte.veces, quitada: this.explicacionDelParte.quitada };
+  }
+
+  /**
+   * **La explicación de la tarjeta, si todavía suena o espera, se calla.**
+   *
+   * Al decidir, al cerrar o al pedir que no se explique más. Sin esto la
+   * respuesta al botón —«¡hoy ganaste!», «esperamos un rato»— esperaba en la
+   * cola detrás de doce segundos de explicación y caducaba sin sonar: un
+   * toque sin respuesta. Solo se corta lo de la tarjeta; si la instructora
+   * está diciendo otra cosa, sigue.
+   */
+  private callarLaExplicacion(): void {
+    const deLaTarjeta = (c: string | undefined): boolean =>
+      !!c && (c === RECETA_DE_LA_EXPLICACION || c.startsWith("parte.propone.") || c.startsWith("parte.senala."));
+    BOCA.retirar((c) => deLaTarjeta(c));
+    if (this.instructor.hablando && deLaTarjeta(this.instructor.loUltimo)) this.instructor.callar();
+  }
+
+  /**
+   * **Lo que se dice al abrirse la tarjeta**: qué es, qué pasa hoy y qué se
+   * puede hacer, montado de piezas. Ver `montarLaExplicacion`.
+   *
+   * Con su grabación si está entera. Si no —las piezas nuevas esperan su
+   * toma—, el porqué de siempre, que sí está grabado: mejor una frase de
+   * verdad que la voz del navegador, muda en el Brave de Enrique. Y si
+   * tampoco, el navegador, que en una tablet sí habla.
+   */
+  private explicarElParte(decision: Decision): void {
+    const e = montarLaExplicacion(decision, this.tier.avisos);
+    const texto = e.trozos.map((k) => t(k as TranslationKey)).join(" ");
+    if (this.instructor.vozDe(RECETA_DE_LA_EXPLICACION, e.relleno) !== null) {
+      this.instructor.decir(texto, RECETA_DE_LA_EXPLICACION, "normal", e.relleno);
+      return;
+    }
+    const motivo = decision.motivos[0]?.motivo;
+    const deSiempre = motivo ? (`parte.propone.${motivo}` as const) : null;
+    if (deSiempre && this.instructor.vozDe(deSiempre) !== null) {
+      this.instructor.decir(t(deSiempre), deSiempre);
+      return;
+    }
+    this.instructor.decir(texto, RECETA_DE_LA_EXPLICACION, "normal", e.relleno);
+  }
+
+  /**
+   * **Un botón de la decisión, señalado**: qué hace, dicho sin pulsarlo. Se
+   * pide con el dedo, así que pasa también sin instructora; y en `normal`, sin
+   * cortar a nadie: si la explicación todavía suena, va detrás.
+   */
+  private senalarEnElParte(que: BotonQueSeSenala): void {
+    const clave = AL_SENALAR[que];
+    this.instructor.decirLoPedido(t(clave), clave);
+  }
+
   /** Abre la tarjeta del tiempo de hoy, con la decisión. */
   private abrirElParte(releido?: "igual" | "mejor"): void {
     const raiz = document.getElementById("tarjeta-del-tiempo");
     if (!raiz) return;
     this.tarjetaDelTiempo ??= new TarjetaDelTiempo(raiz, {
-      alQuedarse: () => this.quedarseEnTierra(),
+      alQuedarse: () => {
+        this.callarLaExplicacion();
+        this.quedarseEnTierra();
+      },
       alSalir: (conTodoBien) => {
+        this.callarLaExplicacion();
         if (!conTodoBien)
           this.instructor.decir(t("parte.salgoIgual.voz"), "parte.salgoIgual.voz");
       },
       // Al hangar como lo hace el final del vuelo: sin escenario en la dirección.
       alHangar: () => window.location.assign(window.location.pathname),
-      alEsperar: () => this.esperarUnRato(),
+      alEsperar: () => {
+        this.callarLaExplicacion();
+        this.esperarUnRato();
+      },
+      alCerrar: () => this.callarLaExplicacion(),
+      alNoExplicar: () => {
+        this.explicacionDelParte.quitar();
+        this.callarLaExplicacion();
+      },
+      alSenalar: (que) => this.senalarEnElParte(que),
     });
     if (this.enLaVuelta) this.cerrarLaVuelta();
     // Abierta a mano, ya no se espera: se está mirando.
@@ -31362,6 +31454,12 @@ export class Game {
     const parte = this.leerElParte();
     this.parteDeHoy = parte;
     const limites = limitesDe(this.aircraft);
+    /*
+     * **Y se cuenta otra vez que le sale**, salvo al volver a mirar después
+     * de esperar: eso es la misma tarjeta, que vuelve con la respuesta a lo
+     * que se pidió, y lo que dice es esa respuesta.
+     */
+    const vez = releido ? null : this.explicacionDelParte.alAbrir();
     this.tarjetaDelTiempo.minimoDeTechoM = limites.techoM;
     this.tarjetaDelTiempo.abrir({
       ...parte,
@@ -31369,11 +31467,11 @@ export class Game {
       declinacion: (oaci) => this.declinaciones.get(oaci) ?? 0,
       limites,
       ...(releido ? { releido } : {}),
+      ofrecerNoExplicar: vez?.ofrecerQuitarla ?? false,
     });
-    const motivo = parte.decision.motivos[0]?.motivo;
     if (releido === "mejor") this.instructor.decir(t("parte.yaSePuede.voz"), "parte.yaSePuede.voz");
     else if (releido === "igual") this.instructor.decir(t("parte.sigueIgual.voz"), "parte.sigueIgual.voz");
-    else if (motivo) this.instructor.decir(t(`parte.propone.${motivo}`), `parte.propone.${motivo}`);
+    else if (vez?.explicar) this.explicarElParte(parte.decision);
   }
 
   /**
