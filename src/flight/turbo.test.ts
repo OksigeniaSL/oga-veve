@@ -47,20 +47,35 @@ describe("el motor con turbo", () => {
   });
 
   /*
-   * **Y cruza a lo que cruza el de su clase**: 189 nudos verdaderos al 75 %
-   * (*Plane & Pilot*, «Seneca II»: 218 millas por hora). Su ficha decía 155.
-   * Se mide donde el empuje y la
-   * resistencia se igualan, nivelado a su altura de crucero y con tres cuartos
-   * de gas: unos 181 nudos, a un cinco por ciento.
+   * **Y va a fondo y al 75 % a lo que va el Seneca II, a la vez**: «Top mph
+   * 226» y el 75 % a 218 mph (*Plane & Pilot*, «Seneca II»), 196 y 189 nudos.
+   * Con una sola cifra no salían los dos: con el crucero de verdad, a fondo
+   * iba a 211. Ver `heliceSinEmpujeA`.
+   *
+   * Se mide donde el empuje y la resistencia se igualan. El tope, a 12.000
+   * pies, la altitud crítica, que es donde un motor con turbo corre más; y en
+   * ningún otro sitio más deprisa. El 75 %, **de potencia y no de palanca**,
+   * que es lo que dice la cifra: arriba el turbo ya no da los 200 hp, y tres
+   * cuartos de palanca son ahí menos de tres cuartos de potencia.
    */
-  it("y cruza a lo que cruza el Seneca II: 189 nudos verdaderos al 75 %", () => {
+  it("y va a fondo y al 75 % a lo que va el Seneca II: 196 y 189 nudos", () => {
     const NUDO = 0.514444;
+    const nivelado = (alto: number, gas: number) => {
+      let v = 50;
+      while (v < 150 && empujeLleno(PANAMBI, airDensity(alto), v) * gas > resistenciaNivelado(PANAMBI, alto, v)) v += 0.05;
+      return v / NUDO;
+    };
     expect(PANAMBI.cruiseSpeed / NUDO).toBeCloseTo(189, 0);
+    const tope = nivelado(12000 * PIE, 1);
+    expect(tope).toBeGreaterThan(196 * 0.98);
+    expect(tope).toBeLessThan(196 * 1.02);
+    for (const pies of [0, 6000, 16000, 20000, 24000]) expect(nivelado(pies * PIE, 1), `${pies} ft`).toBeLessThan(tope);
     const alto = PANAMBI.alturaDeCrucero;
-    let v = 40;
-    while (v < 150 && empujeLleno(PANAMBI, airDensity(alto), v) * 0.75 > resistenciaNivelado(PANAMBI, alto, v)) v += 0.1;
-    expect(v / NUDO).toBeGreaterThan(189 * 0.95);
-    expect(v / NUDO).toBeLessThan(189 * 1.05);
+    const tresCuartos = 0.75 / loQueDaElMotor(PANAMBI, airDensity(alto) / SEA_LEVEL_DENSITY);
+    expect(tresCuartos).toBeLessThan(1);
+    const crucero = nivelado(alto, tresCuartos);
+    expect(crucero).toBeGreaterThan(189 * 0.97);
+    expect(crucero).toBeLessThan(189 * 1.02);
   });
 });
 

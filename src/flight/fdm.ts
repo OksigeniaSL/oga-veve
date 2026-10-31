@@ -50,6 +50,7 @@ import {
   loQueDaElMotor,
   masaDe,
   tieneReversa,
+  velocidadSinEmpuje,
   type AircraftConfig,
 } from "./aircraft";
 import {
@@ -2072,7 +2073,7 @@ export function empujeLleno(
 ): number {
   const factor = esDeChorro(ac)
     ? Math.max(0.5, 1 - (0.3 * velocidad) / ac.cruiseSpeed)
-    : Math.max(0.2, 1 - velocidad / (2.4 * ac.cruiseSpeed));
+    : Math.max(0.2, 1 - velocidad / velocidadSinEmpuje(ac));
   return (
     ac.maxThrust * loQueDaElMotor(ac, densidad / SEA_LEVEL_DENSITY) * factor
   );
