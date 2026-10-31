@@ -400,8 +400,9 @@ nada.
 - **No: la pantalla roja, la música de tensión ni el pitido** en una frustrada o un fallo de motor. Son maniobras que
   se entrenan, no emergencias que se dramatizan.
 - **Sí: lo que sale de golpe se explica en voz**, y a partir de la segunda o tercera vez se ofrece «no volver a
-  explicar», guardado en el perfil y recuperable en los ajustes. Hecho en las teclas que tocan («Ya me lo aprendí»);
-  pendiente en la tarjeta del tiempo de antes de salir (pedido el 27 de octubre de 2026).
+  explicar», guardado en el perfil y recuperable en los ajustes. Hecho en las teclas que tocan («Ya me lo aprendí»)
+  y en la tarjeta del tiempo de antes de salir («No volver a explicar», desde la segunda vez; pedido el 27 de octubre
+  de 2026). Pendiente en la pantalla de las teclas y en el panel del final del vuelo, que salen sin voz.
 - **Sí (arte):** el dato real primero y el dibujo después; cada recurso con su crédito en `CREDITOS.md` antes de
   entrar; el papel cálido y la tinta fría; el magenta solo para la ruta y los objetivos.
 - **No (arte):** degradados ni brillos en el papel; el magenta para adornar; un dibujo que no se pueda comprobar contra
