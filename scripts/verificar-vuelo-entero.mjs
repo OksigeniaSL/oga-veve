@@ -1653,7 +1653,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * turbohélice aterriza sin flaps porque sí.
    */
   const configurar = (s, c, tramo, enFinal = false) => {
-    if (s.onGround || LIMPIO) return;
+    if (s.onGround) return;
     const kt = s.airspeed * 1.94384;
     if (suyas.trenRetractil) {
       if (tramo >= 2 && kt < (suyas.vleKt ?? 999)) o.pedirTren?.(true);
@@ -1867,21 +1867,6 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const CON_EL_AUTOMATICO = !SENCILLO;
   /**
-   * **Y en Guyrami, las hélices aterrizan limpias**, a nueve décimas de su
-   * Vref, como volaban.
-   *
-   * El modelo sencillo no tiene ala: el gas es la velocidad, y los flaps y
-   * el tren la recortan —ver `FRENAN_LOS_FLAPS` en `arcade.ts`—. Con los de
-   * aterrizaje y el tren fuera, el JAZ 60 no pasaba de 35 m/s **con el gas a
-   * fondo**, trece por debajo de su Vref, y a fondo el modelo sube solo:
-   * voló la final de Pilar entera a nivel, cruzó la pista a doscientos treinta
-   * metros y se fue al aire. En ese modelo no hay pérdida que guardar, y lo
-   * que baja a la senda es el gas por debajo de la mitad: la velocidad de la
-   * final la pone el modelo, no la tarjeta. Los reactores sí se configuran,
-   * que con su margen de crucero les cabe.
-   */
-  const LIMPIO = SENCILLO && !NECESITA_TECNICA;
-  /**
    * **Y en Guyrami, la senda con el morro y sin tope de ala.**
    *
    * En el modelo sencillo el gas es la velocidad: por encima de la mitad
@@ -1898,12 +1883,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * palanca lo busca con un término proporcional y uno que acumula.
    */
   let sendaSencilla = 0;
-  const porLaSendaSencilla = (s, objetivo, dt) => {
+  /*
+   * **Y con el ritmo que se le dé**: el de la senda en final y, en el viento
+   * en cola y la base, el de la bajada planeada —ver `planearLaBajada`—, que
+   * es cero mientras el circuito va nivelado.
+   */
+  const porLaSendaSencilla = (s, objetivo, dt, ritmo = -porElSuelo(s) * SENDA) => {
     const quiere = Math.max(
       -CAIDA_MAXIMA,
       Math.min(
         bamboleo.length ? 8 : 3,
-        -porElSuelo(s) * SENDA + (objetivo - alto(s)) * 0.15 + bamboleoAhora.ritmo,
+        ritmo + (objetivo - alto(s)) * 0.15 + bamboleoAhora.ritmo,
       ),
     );
     const falta = quiere - s.verticalSpeed;
@@ -3313,8 +3303,6 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let gasQueSostiene = 0;
   /** El error de velocidad de la vuelta anterior, en final. Ver el gas de la final. */
   let errorDeGasAntes = null;
-  /** El gas medio de los últimos segundos de final. Ver `recogida.gas`. */
-  let gasMedioEnFinal = 0.55;
   /** La velocidad de los últimos diez segundos de final, para la racha. */
   const velocidadesDeFinal = [];
   /**
@@ -3642,6 +3630,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let ultimoAltoQueToca = null;
   /** Traza de la subida: qué se pidió y qué hizo el avión. */
   const subida = [];
+  /**
+   * **Y la de la final**, un renglón por segundo de juego de la entrada en
+   * final a la toma: senda, eje, velocidad y mandos. La de la subida se
+   * acaba a los ciento diez renglones, antes de la puerta, y lo que se quiere
+   * ver de una final mal llegada es justo lo de después. Se imprime con
+   * `OGA_TRAZA_FINAL`.
+   */
+  const trazaDeLaFinal = [];
+  let ultimoRenglonDeLaFinal = -Infinity;
 
   /*
    * **La línea de tiempo del trayecto**, con `OGA_RUTA`: un renglón por
@@ -4956,7 +4953,6 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       finalLarga = false;
       gasQueSostiene = 0;
       errorDeGasAntes = null;
-      gasMedioEnFinal = 0.55;
       velocidadesDeFinal.length = 0;
       alturaPlaneada = null;
       empezoLaRecogida = null;
@@ -5382,7 +5378,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         o.pedirTren?.(true);
         // Y los aerofrenos armados, como en `configurar`.
         o.ponerPalancaDeAerofrenos?.("armada");
-        const conFlaps = suyas.llevaFlaps && !LIMPIO;
+        const conFlaps = suyas.llevaFlaps;
         if (conFlaps) o.pedirFlaps?.(1);
         const mandos = o.controles();
         mandos.tren = 1;
@@ -5535,7 +5531,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * no es subir — es quedarse a esa velocidad, y nivelado también se está
        * a esa velocidad. Ver el mismo comentario en la etapa de despegar.
        */
-      c.elevator = subiendo ? subirDeVerdad(s) : aLaAltura(s, altoPedido);
+      /*
+       * **Y en Guyrami, la bajada del circuito con la misma mano que la
+       * senda.** La ley de altura va acotada a tres décimas de palanca por la
+       * pérdida, que en el modelo sencillo no hay, y es proporcional: en el
+       * viento en cola y la base no seguía la bajada planeada, y el JAZ 20 de
+       * Los Rodeos entraba en final a 240 m de ruedas y 82 por encima de la
+       * senda. En final, con la palanca a −0,8 todo el rato, llegaba a la
+       * puerta de los quinientos pies 44 m alto. Un piloto empieza a bajar en
+       * el viento en cola y entra en final en la senda: es lo que planea
+       * `planearLaBajada`, y lo que vuela `porLaSendaSencilla` con su ritmo.
+       */
+      c.elevator = subiendo
+        ? subirDeVerdad(s)
+        : SENCILLO && aproximando && !obedienteEnElBanco
+          ? porLaSendaSencilla(s, altoPedido, paso, ritmoPlaneado)
+          : aLaAltura(s, altoPedido);
       sostenerLaAltura(
         s,
         subiendo,
@@ -5751,9 +5762,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         20 * 0.514444,
         Math.max(ADITIVO_DE_FINAL, deCara / 2 + racha),
       );
-      const quiere = LIMPIO
-        ? deAproximacion * 0.91
-        : enVerdadera(s, deAproximacion + aditivo);
+      /*
+       * **Y en Guyrami igual, configurado y a la Vref más el margen.** Las
+       * hélices volaban ahí la final limpias y a nueve décimas de la Vref,
+       * porque con tren y flaps el modelo sencillo no llegaba a su Vref ni
+       * con el gas a fondo. Eso se arregló en el modelo —ver
+       * `puntaConLoSacado` en `flight/arcade.ts`—, y lo de las nueve décimas
+       * se quedó aquí: el JAZ 20 de Los Rodeos llegaba a la puerta a 55 nudos
+       * con la Vref en 64, sin flaps y con el juego diciéndole «lento y
+       * bajo». Ahora vuela como le pide la tarjeta.
+       */
+      const quiere = enVerdadera(s, deAproximacion + aditivo);
       /*
        * **Y el gas lleva la velocidad, y también la senda por debajo.**
        *
@@ -5838,8 +5857,6 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * Con lo que baja de verdad, si baja más que la senda: el que llega
        * bajando de más necesita más altura para recoger, no la misma.
        */
-      if (!recogida)
-        gasMedioEnFinal += (c.throttle - gasMedioEnFinal) * Math.min(1, paso / 8);
       /*
        * La senda por el aire y no por el suelo: con viento de cara, el avión
        * baja la senda más despacio, pero en los últimos metros pierde el
@@ -5882,12 +5899,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
            * 604–644 m; desde la senda, a 453–479, y a 430–479 empiece a lo
            * que empiece, siempre a 1,2 m/s. Es lo que hace un piloto: la
            * recogida es la misma a la misma altura, no la que dicte el
-           * variómetro de ese segundo. Las hélices de Guyrami no: vuelan la
-           * final limpias y lentas —ver `LIMPIO`— y no se han tocado.
+           * variómetro de ese segundo. Y desde que las hélices de Guyrami
+           * vuelan la final configuradas, ellas también.
            */
           caida: Math.max(
             RITMO_AL_TOCAR,
-            SENCILLO && !LIMPIO
+            SENCILLO
               ? porElSuelo(s) * SENDA
               : Math.min(6, -s.verticalSpeed, porElSuelo(s) * SENDA * 1.1),
           ),
@@ -5903,21 +5920,11 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           ultimo: o.reloj(),
           velocidad: s.airspeed,
           /*
-           * **Y en Guyrami, el gas de la final y no el del instante.** Ahí la
-           * ley de la final mueve el gas a escalones, y la recogida se quedaba
-           * con el escalón que pillara: en La Gomera, el JAZ 60 empezó a
-           * recoger con el gas a cero, y en ese modelo sin gas la palanca no
-           * tiene con qué —su mando crece con el gas— y tocó a 2,2. Con el gas
-           * medio de la final, en el banco de mesa la avioneta pasa de tocar a
-           * 2,2 a hacerlo a 1,7, y el fumigador de 2,9 a 1,5. Solo en las
-           * hélices, que vuelan la final limpias y lentas —ver `LIMPIO`—: en
-           * los reactores el gas medio es más que el que sostiene la Vref, ese
-           * modelo acelera con él, y el JAZ 120 flotó hasta los 865 m.
-           *
-           * **Y en los reactores de Guyrami, el gas de la Vref, preguntado al
-           * modelo**, y no el del instante (punto 254). La ley de la final
-           * mueve el gas a escalones de cinco centésimas diez veces por
-           * segundo, y la recogida se quedaba con el escalón que pillara: el
+           * **Y en Guyrami, el gas de la Vref, preguntado al modelo**, y no
+           * el del instante (punto 254); medido en los reactores, y desde que
+           * las hélices vuelan ahí la final configuradas, en todos. La ley de
+           * la final mueve el gas a escalones de cinco centésimas diez veces
+           * por segundo, y la recogida se quedaba con el escalón que pillara: el
            * JAZ 120 de Los Rodeos a Reina Sofía tocó a 622–655 m y a 2,0–2,5
            * m/s en una tanda y a 393 m y 1,5 en otra, con el mismo código.
            * Medido en un banco de mesa con estas mismas leyes sobre el modelo
@@ -5939,9 +5946,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
            * recogida, que es como se cruza el umbral. Al tocar, el gas al
            * ralentí —ver la etapa `frenar`—, y los frenos de tierra suben.
            */
-          gas: LIMPIO
-            ? Math.max(c.throttle, gasMedioEnFinal)
-            : SENCILLO && typeof o.gasPara === "function"
+          gas:
+            SENCILLO && typeof o.gasPara === "function"
               ? (o.gasPara(vref) ?? c.throttle)
               : c.throttle,
         };
@@ -6015,7 +6021,6 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           empezoPorDebajo: masAltoEnFinal < puerta + 1,
           nudos: Math.round(o.velocidadDeCabina?.() ?? s.airspeed * 1.94384),
           vref: Math.round(deAproximacion * 1.94384),
-          limpio: LIMPIO,
           flaps: +(mandosAhora.flaps ?? 0).toFixed(2),
           tren: +(mandosAhora.tren ?? 1).toFixed(2),
           // Contra la senda de verdad, no contra la planeada.
@@ -6184,6 +6189,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
           aLaVista = aLaVista.slice(1);
           if (aLaVista.length === 0) aLaVista = null;
         }
+      }
+      if (t - ultimoRenglonDeLaFinal >= 1 && trazaDeLaFinal.length < 400) {
+        ultimoRenglonDeLaFinal = t;
+        const m = o.controles();
+        trazaDeLaFinal.push(
+          `${t.toFixed(0)}s ${fase} umbral ${Math.round(falta)} m · ruedas ${ruedas.toFixed(0)} senda ${(alto(s) - sendaDeVerdad).toFixed(1)}` +
+            ` · eje ${desvio(s).toFixed(1)} rumbo ${((error(s.heading, hp) * 180) / Math.PI).toFixed(1)}°` +
+            ` · ${Math.round(o.velocidadDeCabina?.() ?? s.airspeed * 1.94384)} kt sube ${s.verticalSpeed.toFixed(1)}` +
+            ` · gas ${m.throttle.toFixed(2)} elev ${m.elevator.toFixed(2)} alerón ${m.aileron.toFixed(2)} flaps ${(m.flaps ?? 0).toFixed(2)}` +
+            (recogida ? " · recogiendo" : ""),
+        );
       }
       if (s.onGround && s.onRunway) {
         toco = t;
@@ -6462,6 +6478,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     segundos: +t.toFixed(1),
     veces,
     subida,
+    trazaDeLaFinal,
     /*
      * Los dos relojes, para poder compararlos: si el de juego avanzó mucho
      * menos que el de pared × `veces`, el vuelo no iba lento — iba parado.
@@ -8490,12 +8507,9 @@ comprobarSiVolo(
   const a = vuelo.avion ?? {};
   const fallos = [];
   if (p) {
-    // En Guyrami las hélices van limpias y a nueve décimas: ver `LIMPIO`.
-    if (a.llevaFlaps && !p.limpio && p.flaps < 0.95) fallos.push(`flaps ${p.flaps}`);
+    if (a.llevaFlaps && p.flaps < 0.95) fallos.push(`flaps ${p.flaps}`);
     if (a.trenRetractil && p.tren < 0.99) fallos.push("sin tren");
-    // Limpias en Guyrami, la mínima del modelo es nueve décimas de la Vref
-    // en verdadera, que en indicada, con calor, son ocho y media.
-    if (p.nudos < p.vref * (p.limpio ? 0.85 : 1) || p.nudos > p.vref + 20)
+    if (p.nudos < p.vref || p.nudos > p.vref + 20)
       fallos.push(`${p.nudos} kt con Vref ${p.vref}`);
     if (Math.abs(p.senda) > p.tolSenda)
       fallos.push(`${p.senda} m de la senda (±${p.tolSenda})`);
@@ -9385,6 +9399,8 @@ const queTiempoHizo = vuelo.meteo
   : "";
 if (vuelo.subida?.length)
   console.log("\n  la subida:\n" + vuelo.subida.map((l) => "    " + l).join("\n"));
+if (process.env.OGA_TRAZA_FINAL && vuelo.trazaDeLaFinal?.length)
+  console.log("\n  la final:\n" + vuelo.trazaDeLaFinal.map((l) => "    " + l).join("\n"));
 // Cada orden de irse al aire, con su porqué. Ver `ordenesDeIrse`.
 console.log(
   `\n  órdenes de irse al aire: ${vuelo.ordenesDeIrse?.length ?? 0}` +
