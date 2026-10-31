@@ -8,8 +8,9 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { escribirYa, olvidar, ponerTexto } from "../datos/guardado";
+import { crearPerfil, elegirPerfil, olvidar, perfiles, ponerAjuste, ponerTexto } from "../datos/guardado";
 import {
+  CLAVE_DEL_APARATO,
   DE_FABRICA,
   POSICION,
   alternar,
@@ -41,9 +42,9 @@ beforeEach(() => {
 });
 
 describe("los pasos de antes, dentro del deslizador", () => {
-  it("normal y bajo suenan lo que sonaban", () => {
+  it("normal suena lo que sonaba, y bajo es el cuarto del aula", () => {
     expect(gananciaDe(conPaso("normal", DE_FABRICA))).toBeCloseTo(0.85, 6);
-    expect(gananciaDe(conPaso("bajo", DE_FABRICA))).toBeCloseTo(0.3, 6);
+    expect(gananciaDe(conPaso("bajo", DE_FABRICA))).toBeCloseTo(0.25, 6);
     expect(gananciaDe(conPaso("mudo", DE_FABRICA))).toBe(0);
   });
 
@@ -69,11 +70,12 @@ describe("el toque del altavoz", () => {
     expect(alternar(callado)).toEqual(puesto);
   });
 
-  it("callado con el deslizador a cero, el toque vuelve al normal", () => {
-    // Un altavoz que se destacha y sigue sin sonar es un botón roto.
+  it("callado con el deslizador a cero, el toque vuelve al de fábrica, bajo", () => {
+    // Un altavoz que se destacha y sigue sin sonar es un botón roto; y
+    // volver a tope en un aula es el susto que se quiere evitar.
     const vuelto = alternar(conPosicion(0));
     expect(vuelto.mudo).toBe(false);
-    expect(vuelto.posicion).toBeCloseTo(POSICION.normal, 6);
+    expect(vuelto.posicion).toBeCloseTo(DE_FABRICA.posicion, 6);
   });
 
   it("y la fila de ajustes calla sin perder la posición", () => {
@@ -82,28 +84,62 @@ describe("el toque del altavoz", () => {
   });
 });
 
-describe("el aparato lo recuerda", () => {
+describe("la primera vez, bajo", () => {
+  it("sin nada guardado suena a un cuarto: el deslizador a medio recorrido", () => {
+    expect(leerVolumen()).toEqual(DE_FABRICA);
+    expect(gananciaDe(DE_FABRICA)).toBeCloseTo(0.25, 6);
+    expect(DE_FABRICA.posicion).toBeCloseTo(0.5, 6);
+    expect(DE_FABRICA.mudo).toBe(false);
+    // Y se lee como el paso bajo de los ajustes: un solo bajo en el juego.
+    expect(pasoDe(DE_FABRICA)).toBe("bajo");
+  });
+});
+
+describe("el aparato lo recuerda, no el perfil", () => {
   it("la posición fina, y callado o no", () => {
     guardarVolumen(conPosicion(0.37));
-    escribirYa();
     olvidar();
-    expect(leerVolumen()).toEqual({ posicion: 0.37, mudo: false });
+    expect(leerVolumen().posicion).toBeCloseTo(0.37, 2);
+    expect(leerVolumen().mudo).toBe(false);
     guardarVolumen(alternar(conPosicion(0.37)));
-    escribirYa();
     olvidar();
-    expect(leerVolumen()).toEqual({ posicion: 0.37, mudo: true });
-  });
-
-  it("un guardado de antes, con solo el paso, se respeta", () => {
-    // Quien lo dejó en «bajo» con los tres pasos lo encuentra en bajo.
-    ponerTexto("volumen", "bajo");
-    expect(leerVolumen().posicion).toBeCloseTo(POSICION.bajo, 6);
-    ponerTexto("volumen", "mudo");
+    expect(leerVolumen().posicion).toBeCloseTo(0.37, 2);
     expect(leerVolumen().mudo).toBe(true);
   });
 
-  it("sin nada guardado, el de fábrica", () => {
-    expect(leerVolumen()).toEqual(DE_FABRICA);
+  it("en la clave que comparten las ayudas de Oksigenia, como ganancia", () => {
+    guardarVolumen(conPosicion(0.5));
+    expect(memoria.get(CLAVE_DEL_APARATO)).toBe("0.25");
+    // Y lo que dejó allí otra ayuda con voz se oye igual aquí.
+    memoria.set(CLAVE_DEL_APARATO, "0.64");
+    expect(leerVolumen().posicion).toBeCloseTo(0.8, 6);
+  });
+
+  it("cambiar de piloto, o estrenar uno, no lo mueve", () => {
+    guardarVolumen(conPosicion(0.3));
+    const primero = perfiles().activo;
+    crearPerfil("jaguarete", "azul");
+    expect(leerVolumen().posicion).toBeCloseTo(0.3, 2);
+    // Aunque el perfil nuevo lleve un volumen viejo guardado en el suyo.
+    ponerTexto("volumen", "normal");
+    elegirPerfil(primero);
+    expect(leerVolumen().posicion).toBeCloseTo(0.3, 2);
+  });
+
+  it("un volumen de antes, guardado en el perfil, se respeta y pasa al aparato", () => {
+    // Quien lo dejó en «normal» con los tres pasos lo encuentra en normal.
+    ponerTexto("volumen", "normal");
+    expect(leerVolumen().posicion).toBeCloseTo(POSICION.normal, 2);
+    expect(memoria.has(CLAVE_DEL_APARATO)).toBe(true);
+    // Y desde ahí es del aparato: otro piloto lo oye igual.
+    crearPerfil("karumbe", "verde");
+    expect(leerVolumen().posicion).toBeCloseTo(POSICION.normal, 2);
+  });
+
+  it("con la posición fina del perfil, y callado", () => {
+    ponerAjuste("volumen.nivel", 0.4);
+    ponerTexto("volumen", "mudo");
+    expect(leerVolumen()).toEqual({ posicion: 0.4, mudo: true });
   });
 
   it("y sin almacenamiento se juega igual", () => {

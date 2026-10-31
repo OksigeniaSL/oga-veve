@@ -145,6 +145,12 @@ const EXPLICA_UN_MANDO =
  * frenos de tierra, que son seis segundos de cabina, y con los cuatro de un
  * aviso «gafas.ganadas: caducó esperando» en los dos vuelos medidos a Gando.
  *
+ * **Y la explicación del panel del final**, con el reconocimiento delante
+ * —«¡Gran vuelo!»—: el panel se queda hasta que se toca, y lo que lo explica
+ * vale lo mismo diez segundos después. Medido en el banco: detrás de lo que
+ * la instructora estaba diciendo, «fin.muyBien: caducó esperando». Lo retira
+ * quien cierra el panel. Ver `explicarElFinal` en `game.ts`.
+ *
  * Así que no se echa, como no se echa una autorización: si no cabe, la cola
  * crece una plaza. Y lo que se queda viejo antes de sonar no lo tira un
  * reloj sino quien sabe que ya no vale —la seña siguiente, el motor
@@ -155,7 +161,7 @@ export function cierraElVuelo(clave: string | undefined): boolean {
 }
 
 const CIERRA_EL_VUELO =
-  /^(?:vuelo\.(?:apagado|enPuesto|cortaMotores|alto|flapsArribaAlSalir|alPuestoConFlaps|despuesDelAterrizaje|despues\.(?:aerofrenos|luces|transpondedor))|senalero\.(?:alto|frenos|calzos)|ejercicio\.(?:bien|bienParado|bienDespresurizacion|paradoTrasV1|seguidoAntesDeV1|bomberos|bomberosUno|bomberosFrenos)|gafas\.ganadas)(?:[@~]|$)/;
+  /^(?:vuelo\.(?:apagado|enPuesto|cortaMotores|alto|flapsArribaAlSalir|alPuestoConFlaps|despuesDelAterrizaje|despues\.(?:aerofrenos|luces|transpondedor))|senalero\.(?:alto|frenos|calzos)|ejercicio\.(?:bien|bienParado|bienDespresurizacion|paradoTrasV1|seguidoAntesDeV1|bomberos|bomberosUno|bomberosFrenos)|gafas\.ganadas|fin\.(?:explica|llegaste|bien|muyBien|redondo))(?:[@~]|$)/;
 
 /**
  * **Lo que cuenta una seña del señalero**: la voz de las de parar y lo que

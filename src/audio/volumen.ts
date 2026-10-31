@@ -21,19 +21,48 @@
  * La ganancia es la posición al cuadrado. Con una recta, casi todo el
  * recorrido se oye igual de alto y todo el cambio se amontona en el último
  * dedo de abajo, porque el oído no oye amplitudes: oye proporciones. El
- * cuadrado es la aproximación de siempre, sin tablas, y deja los dos pasos de
- * antes donde estaban: el normal (0,85) a nueve décimas del recorrido y el
- * bajo (0,3) a poco más de la mitad.
+ * cuadrado es la aproximación de siempre, sin tablas: el normal (0,85) cae a
+ * nueve décimas del recorrido y el bajo (0,25), en la mitad.
  *
- * ## Se recuerda en el guardado, con lo demás
+ * ## Bajo de partida, porque en un aula hay veintiocho
  *
- * En el mismo perfil y la misma clave de siempre —`volumen`, con el paso— y
- * una nueva al lado con la posición fina. `datos/guardado.ts` ya envuelve el
- * `localStorage` entero en su `try/catch` y frena las escrituras, que es justo
- * lo que pide un deslizador: arrastrarlo son treinta cambios en un segundo.
+ * Visto en aulas de verdad (`oksigenia-hq/shared/diseno-por-edades.md`, «la
+ * voz empieza baja» y «el volumen, regulable y bajo de partida»): veintiocho
+ * Chromebooks hablando a la vez dieron risas y ruido y rompieron el trabajo, y
+ * en la pizarra de un primero una voz que sale de golpe muy alta asustó a los
+ * pequeños. Así que la primera vez **suena a un cuarto**: una ganancia de
+ * 0,25, que es lo que ponen las ayudas con voz de Oksigenia
+ * (`audio.volume = 0.25`, que es amplitud y no recorrido). Aquí el deslizador
+ * va en posición y la ganancia es su cuadrado, así que un cuarto de ganancia
+ * es el deslizador **a medio recorrido**: −12 dB del tope, que el oído oye
+ * como algo menos de la mitad de fuerte. Un cuarto del recorrido serían
+ * −24 dB, y en el altavoz de una tablet con el aula hablando eso es no oír a
+ * la instructora, que a los cuatro años es el único canal que no se lee. Y
+ * el paso «bajo» de los ajustes es ese mismo cuarto: un solo bajo en todo el
+ * juego, y el que sale de fábrica.
+ *
+ * ## Se recuerda en el aparato, no en el perfil
+ *
+ * El volumen es de la sala y no de quien juega: se ajusta una vez en la
+ * pizarra y vale para todos. Guardado en el perfil, cada piloto nuevo de la
+ * tablet del aula volvía a arrancar con el de fábrica, y cambiar de piloto
+ * cambiaba el volumen. Así que va **fuera del guardado de los perfiles**, en
+ * dos claves del aparato:
+ *
+ * - `oks-volumen`, la ganancia de 0 a 1. Es la clave que ya usan las ayudas
+ *   con voz de Oksigenia —«uno para todos los juegos del aparato»—, con el
+ *   mismo significado: donde compartan origen, lo que se ajustó en uno vale
+ *   en el otro.
+ * - `oga-veve:mudo`, si está callado. El silencio es de este juego: callar la
+ *   pizarra aquí no tiene por qué callar la ayuda de otra página.
+ *
+ * Quien ya tenía un volumen elegido en su perfil lo encuentra igual: la
+ * primera vez que se lee sin nada en el aparato se adopta el del perfil que
+ * esté jugando y se pasa al aparato. Se escribe solo al soltar el deslizador o
+ * al tocar el altavoz, así que no hace falta el freno del guardado.
  */
 
-import { leerAjuste, leerTexto, ponerAjuste, ponerTexto } from "../datos/guardado";
+import { leerAjuste, leerTexto } from "../datos/guardado";
 import type { Volumen as Paso } from "../ui/ajustes";
 
 export interface Volumen {
@@ -43,13 +72,17 @@ export interface Volumen {
   readonly mudo: boolean;
 }
 
-/** Dónde caen en el deslizador los dos pasos que suenan. */
+/**
+ * Dónde caen en el deslizador los dos pasos que suenan. El bajo es el cuarto
+ * de ganancia del aula, a medio recorrido: ver arriba.
+ */
 export const POSICION: Readonly<Record<"normal" | "bajo", number>> = {
   normal: Math.sqrt(0.85),
-  bajo: Math.sqrt(0.3),
+  bajo: Math.sqrt(0.25),
 };
 
-export const DE_FABRICA: Volumen = { posicion: POSICION.normal, mudo: false };
+/** **El de fábrica, bajo**: lo que suena la primera vez en un aparato. */
+export const DE_FABRICA: Volumen = { posicion: POSICION.bajo, mudo: false };
 
 const acotar = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
 
@@ -77,7 +110,7 @@ export function conPaso(paso: Paso, antes: Volumen): Volumen {
 
 /** El deslizador en una posición. A cero es callar: ahí no suena nada. */
 export function conPosicion(posicion: number): Volumen {
-  const p = Number.isFinite(posicion) ? acotar(posicion) : POSICION.normal;
+  const p = Number.isFinite(posicion) ? acotar(posicion) : DE_FABRICA.posicion;
   return { posicion: p, mudo: p <= 0 };
 }
 
@@ -86,12 +119,13 @@ export function conPosicion(posicion: number): Volumen {
  *
  * Si se calló bajando el deslizador del todo no hay «lo que había» al que
  * volver, y un altavoz que se destacha y sigue sin sonar es un botón roto:
- * vuelve al normal.
+ * vuelve al de fábrica, que es bajo. Volver a tope en un aula sería el susto
+ * que esto quiere evitar.
  */
 export function alternar(v: Volumen): Volumen {
   if (!v.mudo && v.posicion > 0) return { posicion: v.posicion, mudo: true };
   return {
-    posicion: v.posicion > 0 ? v.posicion : POSICION.normal,
+    posicion: v.posicion > 0 ? v.posicion : DE_FABRICA.posicion,
     mudo: false,
   };
 }
@@ -101,37 +135,75 @@ export function enElMando(v: Volumen): number {
   return v.mudo ? 0 : v.posicion;
 }
 
-/** La clave de la posición fina, al lado de la de siempre. */
-const CLAVE_FINA = "volumen.nivel";
+/** Las dos claves del aparato: la ganancia, compartida, y el silencio, nuestro. */
+export const CLAVE_DEL_APARATO = "oks-volumen";
+export const CLAVE_DEL_SILENCIO = "oga-veve:mudo";
+
+/** La de antes, en el perfil: la posición fina al lado del paso. */
+const CLAVE_FINA_DEL_PERFIL = "volumen.nivel";
+
+const almacen = (): Storage | null => {
+  try {
+    return globalThis.localStorage ?? null;
+  } catch {
+    return null;
+  }
+};
 
 /**
- * El volumen guardado.
+ * El volumen que había en el perfil que juega, de antes de que fuera del
+ * aparato, o `null` si nunca se tocó. Sin la posición fina manda el paso:
+ * quien lo dejó en «bajo» con los tres pasos lo encuentra en bajo.
+ */
+function delPerfil(): Volumen | null {
+  const paso = leerTexto("volumen");
+  const fina = leerAjuste(CLAVE_FINA_DEL_PERFIL);
+  const mudo = paso === "mudo";
+  if (typeof fina === "number" && Number.isFinite(fina)) {
+    const posicion = acotar(fina);
+    return { posicion, mudo: mudo || posicion <= 0 };
+  }
+  if (paso === "bajo") return { posicion: POSICION.bajo, mudo: false };
+  if (paso === "normal" || paso === "mudo") return { posicion: POSICION.normal, mudo };
+  return null;
+}
+
+/**
+ * El volumen de este aparato.
  *
- * Sin la posición fina —un guardado de antes de que existiera— manda el paso,
- * que es lo que había: quien lo dejó en «bajo» lo encuentra en bajo.
+ * Sin nada en el aparato, el del perfil que juega si alguna vez se tocó —y se
+ * pasa al aparato, para que cambiar de piloto ya no lo mueva—, y si no, el de
+ * fábrica, que es bajo.
  */
 export function leerVolumen(): Volumen {
+  const s = almacen();
+  if (!s) return DE_FABRICA;
   try {
-    const paso = leerTexto("volumen");
-    const fina = leerAjuste(CLAVE_FINA);
-    const mudo = paso === "mudo";
-    if (typeof fina === "number" && Number.isFinite(fina)) {
-      const posicion = acotar(fina);
-      return { posicion, mudo: mudo || posicion <= 0 };
+    const crudo = s.getItem(CLAVE_DEL_APARATO);
+    const ganancia = crudo === null ? NaN : Number.parseFloat(crudo);
+    if (Number.isFinite(ganancia)) {
+      const posicion = Math.sqrt(acotar(ganancia));
+      return { posicion, mudo: s.getItem(CLAVE_DEL_SILENCIO) === "1" || posicion <= 0 };
     }
-    if (paso === "bajo") return { posicion: POSICION.bajo, mudo: false };
-    return { posicion: POSICION.normal, mudo };
+    const antes = delPerfil();
+    if (antes) {
+      guardarVolumen(antes);
+      return antes;
+    }
+    return DE_FABRICA;
   } catch {
     // Sin almacenamiento se arranca con el de fábrica. Se juega igual.
     return DE_FABRICA;
   }
 }
 
-/** Y guardarlo: el paso en su clave de siempre y la posición en la suya. */
+/** Y guardarlo en el aparato: la ganancia y si está callado. */
 export function guardarVolumen(v: Volumen): void {
+  const s = almacen();
+  if (!s) return;
   try {
-    ponerTexto("volumen", pasoDe(v));
-    ponerAjuste(CLAVE_FINA, Math.round(v.posicion * 1000) / 1000);
+    s.setItem(CLAVE_DEL_APARATO, String(Math.round(v.posicion * v.posicion * 1000) / 1000));
+    s.setItem(CLAVE_DEL_SILENCIO, v.mudo ? "1" : "0");
   } catch {
     // No poder recordarlo no puede romper nada.
   }

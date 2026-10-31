@@ -11,7 +11,8 @@
  * botones sueltos. Y se recorre entera con el tabulador, como todo lo demás.
  */
 
-import { t } from "../i18n";
+import { t, type TranslationKey } from "../i18n";
+import type { PantallaQueSeExplica } from "../flight/explicacion-al-abrir";
 import { Panel } from "./panel";
 import { armarPanel, CERRAR } from "./concha";
 import { lineaDeAnadirAInicio } from "./anadir-a-inicio";
@@ -54,13 +55,36 @@ export interface TeclasRetiradas {
 }
 
 /**
- * **La explicación en voz de la tarjeta del tiempo, si se quitó**, para
- * volver a oírla. Ver `flight/explicacion-del-parte.ts`.
+ * **Las explicaciones en voz que se quitaron**, para volver a oírlas: la de
+ * la tarjeta del tiempo, la de la pantalla de las teclas y la del final del
+ * vuelo. Ver `flight/explicacion-al-abrir.ts`.
  */
 export interface ExplicacionQuitada {
-  readonly quitada: () => boolean;
-  readonly recuperar: () => void;
+  readonly cual: PantallaQueSeExplica;
+  readonly explicacion: { readonly quitada: boolean; recuperar(): void };
 }
+
+/**
+ * Qué dice cada línea y cómo se llama en la página. La de la tarjeta conserva
+ * su nombre de siempre, que es el que mira su banco.
+ */
+const LINEA_DE: Record<PantallaQueSeExplica, { readonly accion: string; readonly dice: string; readonly volver: string }> = {
+  parte: {
+    accion: "explicacion-del-parte",
+    dice: "ajustes.explicacionDelParte",
+    volver: "ajustes.explicacionDelParte.volver",
+  },
+  teclas: {
+    accion: "explicacion-de-las-teclas",
+    dice: "ajustes.explicacionDeLasTeclas",
+    volver: "ajustes.explicacionDeLasTeclas.volver",
+  },
+  fin: {
+    accion: "explicacion-del-final",
+    dice: "ajustes.explicacionDelFinal",
+    volver: "ajustes.explicacionDelFinal.volver",
+  },
+};
 
 export class PantallaDeAjustes {
   private readonly root: HTMLElement;
@@ -71,7 +95,7 @@ export class PantallaDeAjustes {
     root: HTMLElement,
     alCambiar: (a: Ajustes) => void,
     private readonly teclas: TeclasRetiradas | null = null,
-    private readonly explicacion: ExplicacionQuitada | null = null,
+    private readonly explicaciones: readonly ExplicacionQuitada[] = [],
   ) {
     this.root = root;
     this.alCambiar = alCambiar;
@@ -83,8 +107,11 @@ export class PantallaDeAjustes {
         this.root.querySelector<HTMLElement>(".ajustes__opcion")?.focus();
         return;
       }
-      if ((e.target as HTMLElement)?.closest?.('[data-accion="explicacion-del-parte"]')) {
-        this.explicacion?.recuperar();
+      const devuelta = this.explicaciones.find(({ cual }) =>
+        (e.target as HTMLElement)?.closest?.(`[data-accion="${LINEA_DE[cual].accion}"]`),
+      );
+      if (devuelta) {
+        devuelta.explicacion.recuperar();
         this.pintar();
         this.root.querySelector<HTMLElement>(".ajustes__opcion")?.focus();
         return;
@@ -163,7 +190,7 @@ export class PantallaDeAjustes {
           </div>`;
       }).join("") +
         this.lineaDeLasTeclas() +
-        this.lineaDeLaExplicacion() +
+        this.lineasDeLasExplicaciones() +
         lineaDeAnadirAInicio(),
     });
   }
@@ -187,19 +214,24 @@ export class PantallaDeAjustes {
   }
 
   /**
-   * **Y la explicación de la tarjeta del tiempo, si se quitó**, por lo mismo
-   * que las teclas: solo sale si hay algo que recuperar. Quien tocó «no
+   * **Y las explicaciones que se quitaron**, por lo mismo que las teclas: una
+   * línea por cada una, y solo si hay algo que recuperar. Quien tocó «no
    * volver a explicar» sin querer, o el hermano pequeño que hereda la tablet,
    * vuelve a oírla.
    */
-  private lineaDeLaExplicacion(): string {
-    if (!this.explicacion?.quitada()) return "";
-    return `
-      <div class="ajustes__fila" data-ajuste-linea="explicacion-del-parte">
-        <span class="ajustes__que">${t("ajustes.explicacionDelParte")}</span>
+  private lineasDeLasExplicaciones(): string {
+    return this.explicaciones
+      .filter(({ explicacion }) => explicacion.quitada)
+      .map(({ cual }) => {
+        const l = LINEA_DE[cual];
+        return `
+      <div class="ajustes__fila" data-ajuste-linea="${l.accion}">
+        <span class="ajustes__que">${t(l.dice as TranslationKey)}</span>
         <div class="ajustes__opciones">
-          <button type="button" class="ajustes__opcion" data-accion="explicacion-del-parte">${t("ajustes.explicacionDelParte.volver")}</button>
+          <button type="button" class="ajustes__opcion" data-accion="${l.accion}">${t(l.volver as TranslationKey)}</button>
         </div>
       </div>`;
+      })
+      .join("");
   }
 }

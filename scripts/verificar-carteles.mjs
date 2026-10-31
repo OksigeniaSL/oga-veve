@@ -843,8 +843,9 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
    * en el juego, abajo, porque tengo música de fondo.» Abajo es donde viven
    * el cuadro y, con el dedo, los pulgares: se mira que la cápsula no caiga
    * encima de ninguno, que quepa, y que el altavoz y el deslizador reciban el
-   * toque. En el teléfono apaisado vive en el menú de los cuatro puntos, y
-   * ahí se abre el menú para preguntarlo igual.
+   * toque. En el teléfono apaisado vive arriba, al lado de los cuatro puntos
+   * y fuera del menú, a la vista; si algún día vuelve a una caja que se
+   * recoge, se abre para preguntarlo igual.
    */
   const volumen = await page.evaluate(async () => {
     const caja = document.querySelector('[data-hud="volumen-caja"]');

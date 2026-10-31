@@ -2501,11 +2501,12 @@ export const ES_PY = {
   /*
    * En el iPhone la pantalla completa no se pide: se consigue abriendo el
    * juego desde su ícono. «Agregar a inicio» es como lo dice el iPhone en
-   * español de Latinoamérica, que es lo que va a leer quien lo busque. Ver
-   * `ui/anadir-a-inicio.ts`.
+   * español de Latinoamérica, que es lo que va a leer quien lo busque. Y el
+   * «•••», porque el Safari de ahora guarda Compartir ahí, como ya decía la
+   * línea de los ajustes. Ver `ui/anadir-a-inicio.ts`.
    */
   "inicio.pasos":
-    "Para jugar a pantalla completa: tocá Compartir y después «Agregar a inicio».",
+    "Para jugar a pantalla completa: tocá Compartir (o «•••» y Compartir) y después «Agregar a inicio».",
   "inicio.cerrar": "Cerrar",
   /*
    * **Las teclas que tocan**: la tecla que pide el paso, en un lado. No se
@@ -2519,6 +2520,10 @@ export const ES_PY = {
   "ajustes.teclasQueTocan.volver": "Volver a mostrarlas",
   "ajustes.explicacionDelParte": "La tarjeta del tiempo ya no se explica en voz.",
   "ajustes.explicacionDelParte.volver": "Volver a explicarla",
+  "ajustes.explicacionDeLasTeclas": "La pantalla de las teclas ya no se explica en voz.",
+  "ajustes.explicacionDeLasTeclas.volver": "Volver a explicarla",
+  "ajustes.explicacionDelFinal": "El final del vuelo ya no se explica en voz.",
+  "ajustes.explicacionDelFinal.volver": "Volver a explicarlo",
   "ajustes.inicio":
     "En el iPhone, el juego va a pantalla completa abierto desde su ícono: en Safari tocá Compartir (o «•••» y Compartir), elegí «Agregar a inicio» y abrilo desde ahí.",
   "gafas.ganadas": "¡Tus gafas de sol!",
@@ -3944,6 +3949,21 @@ export const ES_PY = {
   /* Los dos botones de arriba de la tarjeta: se leen, no se dicen. */
   "parte.noExplicar": "No volver a explicar",
   "parte.cerrar": "Cerrar la tarjeta",
+  /*
+   * **La pantalla de las teclas y el final del vuelo, explicados al
+   * abrirse**, como la tarjeta del tiempo: abajo en sencillo, desde Taguato
+   * con lo que hace falta. El final se monta detrás de su reconocimiento
+   * —«¡Buen vuelo!»—, con la receta `fin.explica`. Ver
+   * `flight/explicacion-al-abrir.ts`. Ninguna baja de treinta letras.
+   */
+  "teclas.explica.abajo":
+    "Estas son las teclas para volar. Las que tienen dibujo son las que vas a usar: apretá una y mirá cómo se ilumina.",
+  "teclas.explica.arriba":
+    "Estas son las teclas para volar y lo que hace cada una. Si alguna te queda incómoda, abrí «Cambiar las teclas» y elegí otra.",
+  "fin.explica.hoja": "En la hoja, cada visto es algo que te salió bien.",
+  "fin.explica.abajo": "La raya es por dónde volaste. Para volar otra vez, tocá la flecha redonda.",
+  "fin.explica.arriba":
+    "En el plano, la raya es por dónde volaste. Para volar otra vez, tocá «Otro vuelo».",
   /*
    * **El modo inicio: Jazlyn le enseña a volar a Ara.** Ara pregunta y ella
    * enseña, paso a paso, con el avión esperando en cada uno. Jazlyn con la voz

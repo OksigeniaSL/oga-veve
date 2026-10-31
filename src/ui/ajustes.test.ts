@@ -8,7 +8,7 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { escribirYa, leerTexto, olvidar, ponerTexto } from "../datos/guardado";
+import { crearPerfil, escribirYa, leerTexto, olvidar, ponerTexto } from "../datos/guardado";
 import {
   ESCALA,
   POR_DEFECTO,
@@ -116,32 +116,35 @@ describe("los otros dos", () => {
 
 describe("el sonido y el contraste, que son los que faltaban", () => {
   /*
-   * **El volumen se guarda donde ya se guardaba.**
-   *
-   * `volumen` a secas, sin el prefijo `ajuste.` de los demás, porque es la
-   * clave que lleva usando `audio.ts` desde que existe el botón del HUD.
-   * Renombrarla por coherencia le habría borrado el ajuste a todo el que ya
-   * tenía el juego puesto en «bajito» — que es justo la gente a la que le
-   * importa. Esta prueba está para que nadie la «arregle».
+   * **El volumen es del aparato, no del perfil.** Se ajusta una vez en la
+   * pizarra y vale para todos los pilotos; y quien lo tenía elegido en su
+   * perfil, con la clave de siempre, lo encuentra igual. Ver
+   * `audio/volumen.ts`.
    */
-  it("el volumen sigue en la clave de siempre, la del botón del HUD", () => {
-    ponerTexto("volumen", "bajo");
-    expect(leerAjustes().volumen).toBe("bajo");
-    guardarAjuste("volumen", "mudo");
-    escribirYa();
-    olvidar();
-    expect(leerTexto("volumen")).toBe("mudo");
+  it("el volumen de antes, en la clave de siempre del perfil, se respeta", () => {
+    ponerTexto("volumen", "normal");
+    expect(leerAjustes().volumen).toBe("normal");
   });
 
-  it("y de fábrica se oye y el contraste es el normal", () => {
-    expect(POR_DEFECTO.volumen).toBe("normal");
+  it("la fila lo guarda en el aparato, y otro piloto lo encuentra igual", () => {
+    guardarAjuste("volumen", "mudo");
+    expect(memoria.get("oga-veve:mudo")).toBe("1");
+    crearPerfil("jaguarete", "azul");
+    expect(leerAjustes().volumen).toBe("mudo");
+    // Y en el perfil no queda nada que lo contradiga.
+    expect(leerTexto("volumen")).toBeNull();
+  });
+
+  it("y de fábrica suena bajo, y el contraste es el normal", () => {
+    // Bajo de partida: veintiocho aparatos hablando a la vez en un aula.
+    expect(POR_DEFECTO.volumen).toBe("bajo");
     expect(POR_DEFECTO.contraste).toBe("normal");
   });
 
   it("un valor que no existe tampoco rompe estos dos", () => {
     ponerTexto("volumen", "altísimo");
     ponerTexto("ajuste.contraste", "");
-    expect(leerAjustes().volumen).toBe("normal");
+    expect(leerAjustes().volumen).toBe("bajo");
     expect(leerAjustes().contraste).toBe("normal");
   });
 

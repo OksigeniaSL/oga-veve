@@ -35,13 +35,16 @@
  * la mezcla y no suena nada por él. Un mando que no manda sobre nada es peor
  * que no tenerlo: enseña que el ajuste está roto. Cuando haya música, la fila.
  *
- * ## Todo pasa por el guardado con versión
+ * ## Todo pasa por el guardado con versión, menos el volumen
  *
  * No hay claves sueltas: un ajuste es un ajuste del perfil, y va donde va todo
- * lo demás. Ver `datos/guardado.ts`.
+ * lo demás. Ver `datos/guardado.ts`. **El volumen no**: es de la sala y no de
+ * quien juega —se ajusta una vez en la pizarra y vale para todos—, así que
+ * vive en el aparato y cambiar de piloto no lo toca. Ver `audio/volumen.ts`.
  */
 
 import { leerTexto, ponerTexto } from "../datos/guardado";
+import { conPaso, guardarVolumen, leerVolumen, pasoDe } from "../audio/volumen";
 
 export const MOVIMIENTOS = ["sistema", "normal", "reducido"] as const;
 export const VOLUMENES = ["normal", "bajo", "mudo"] as const;
@@ -78,7 +81,8 @@ export const POR_DEFECTO: Ajustes = {
   cabeceo: "normal",
   unidades: "peldano",
   tamano: "normal",
-  volumen: "normal",
+  // Bajo de partida: lo que suena la primera vez en un aula. Ver `audio/volumen.ts`.
+  volumen: "bajo",
   contraste: "normal",
 };
 
@@ -94,15 +98,6 @@ const CLAVES = {
   cabeceo: "ajuste.cabeceo",
   unidades: "ajuste.unidades",
   tamano: "ajuste.tamano",
-  /*
-   * **Y el volumen se guarda donde ya se guardaba.**
-   *
-   * `volumen`, a secas, sin el prefijo de los demás: es la clave que lleva
-   * usando `audio.ts` desde que existe el botón del HUD. Cambiarla por
-   * coherencia de nombres le habría borrado el ajuste a todo el que ya tenía
-   * el juego puesto en «bajo» — que es justo la gente a la que le importa.
-   */
-  volumen: "volumen",
   contraste: "ajuste.contraste",
 } as const;
 
@@ -125,7 +120,8 @@ export function leerAjustes(): Ajustes {
     cabeceo: unoDe(CABECEOS, leerTexto(CLAVES.cabeceo), POR_DEFECTO.cabeceo),
     unidades: unoDe(UNIDADES, leerTexto(CLAVES.unidades), POR_DEFECTO.unidades),
     tamano: unoDe(TAMANOS, leerTexto(CLAVES.tamano), POR_DEFECTO.tamano),
-    volumen: unoDe(VOLUMENES, leerTexto(CLAVES.volumen), POR_DEFECTO.volumen),
+    // El del aparato, leído como uno de los tres pasos.
+    volumen: pasoDe(leerVolumen()),
     contraste: unoDe(
       CONTRASTES,
       leerTexto(CLAVES.contraste),
@@ -138,7 +134,12 @@ export function guardarAjuste<K extends keyof Ajustes>(
   cual: K,
   valor: Ajustes[K],
 ): void {
-  ponerTexto(CLAVES[cual], valor);
+  if (cual === "volumen") {
+    // En el aparato, y callar desde aquí no pierde dónde estaba el deslizador.
+    guardarVolumen(conPaso(valor as Volumen, leerVolumen()));
+    return;
+  }
+  ponerTexto(CLAVES[cual as Exclude<K, "volumen">], valor);
 }
 
 /**

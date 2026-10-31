@@ -31,113 +31,29 @@
  *
  * ## Y cuándo se deja de decir
  *
- * Se cuenta cada vez que a este perfil le sale la tarjeta. Desde la
- * `OFRECER_DESDE_LA_VEZ`, la tarjeta ofrece «no volver a explicar», y si se
- * toca, no se explica más en ese perfil. Se recupera desde los ajustes, como
- * las teclas que tocan. Se guarda en el progreso del perfil, en este
- * navegador, y en ningún otro sitio.
+ * Como toda pantalla que sale de golpe: se cuenta cada vez, desde la segunda
+ * se ofrece «no volver a explicar» y los ajustes la devuelven. Eso vive en
+ * `flight/explicacion-al-abrir.ts`, que nació aquí y sirve ya también a la
+ * pantalla de las teclas y al final del vuelo.
  *
- * Este módulo no habla ni dibuja: decide si toca explicar y con qué piezas.
+ * Este módulo no habla ni dibuja: decide con qué piezas se explica.
  */
 
 import type { Peldano } from "./escalera";
+import { PANTALLAS_QUE_SE_EXPLICAN } from "./explicacion-al-abrir";
 import type { Decision, Motivo } from "./parte-de-salida";
 
-/**
- * **Desde qué vez se ofrece «no volver a explicar»: la segunda.**
- *
- * Nunca desde la primera: quien la ve por primera vez no sabe todavía qué es,
- * y un botón de «no me lo expliques» al lado de algo que no se entiende es una
- * trampa —se toca por quitárselo de encima y la tarjeta se queda muda para
- * siempre—. Y no más tarde de la segunda: la segunda vez ya es «lo mismo otra
- * vez», que es justo lo que Enrique dijo que cansa. Él dijo «a partir de la
- * segunda o tercera vez»; se elige la segunda porque la tarjeta sale poco
- * —solo los días que algo pasa del límite—, y entre una vez y la siguiente
- * pueden pasar semanas.
- */
-export const OFRECER_DESDE_LA_VEZ = 2;
+export {
+  OFRECER_DESDE_LA_VEZ,
+  leerLaExplicacion,
+  ExplicacionAlAbrir as ExplicacionDelParte,
+  type AlAbrir as AlAbrirLaTarjeta,
+  type AlmacenDeLaExplicacion,
+  type GuardadoDeLaExplicacion,
+} from "./explicacion-al-abrir";
 
 /** Dónde se guarda, dentro del progreso del perfil. */
-export const LLAVE_DE_LA_EXPLICACION = "explicacionDelParte";
-
-/** Lo que se guarda: cuántas veces salió y si se quitó la explicación. */
-export interface GuardadoDeLaExplicacion {
-  readonly veces: number;
-  readonly quitada: boolean;
-}
-
-/** Cómo se lee y se escribe. Inyectado, para probarlo sin navegador. */
-export interface AlmacenDeLaExplicacion {
-  leer(): unknown;
-  escribir(valor: GuardadoDeLaExplicacion): void;
-}
-
-/** Lo guardado, leído con desconfianza: un formato viejo o roto es cero. */
-export function leerLaExplicacion(valor: unknown): GuardadoDeLaExplicacion {
-  const v = (valor ?? {}) as Partial<Record<keyof GuardadoDeLaExplicacion, unknown>>;
-  const veces = typeof v.veces === "number" && Number.isFinite(v.veces) ? Math.max(0, Math.floor(v.veces)) : 0;
-  return { veces, quitada: v.quitada === true };
-}
-
-/** Lo que toca al abrirse la tarjeta. */
-export interface AlAbrirLaTarjeta {
-  /** Si se explica en voz. */
-  readonly explicar: boolean;
-  /** Si la tarjeta lleva el botón de «no volver a explicar». */
-  readonly ofrecerQuitarla: boolean;
-}
-
-export class ExplicacionDelParte {
-  private guardado: GuardadoDeLaExplicacion;
-
-  constructor(private readonly almacen: AlmacenDeLaExplicacion) {
-    this.guardado = leerLaExplicacion(almacen.leer());
-  }
-
-  /** Si se quitó: los ajustes solo ofrecen recuperarla si lo está. */
-  get quitada(): boolean {
-    return this.guardado.quitada;
-  }
-
-  /** Cuántas veces le salió la tarjeta a este perfil. */
-  get veces(): number {
-    return this.guardado.veces;
-  }
-
-  /**
-   * **Le sale la tarjeta**: se cuenta, y se dice si toca explicarla y si se
-   * ofrece dejar de hacerlo. Al volver a mirar después de esperar no se
-   * llama: eso es la misma tarjeta, no otra vez.
-   */
-  alAbrir(): AlAbrirLaTarjeta {
-    const veces = this.guardado.veces + 1;
-    this.poner({ veces, quitada: this.guardado.quitada });
-    return {
-      explicar: !this.guardado.quitada,
-      ofrecerQuitarla: !this.guardado.quitada && veces >= OFRECER_DESDE_LA_VEZ,
-    };
-  }
-
-  /** «No volver a explicar»: en este perfil, para siempre o hasta los ajustes. */
-  quitar(): void {
-    this.poner({ veces: this.guardado.veces, quitada: true });
-  }
-
-  /** Desde los ajustes: se vuelve a explicar. La cuenta sigue donde estaba. */
-  recuperar(): void {
-    this.poner({ veces: this.guardado.veces, quitada: false });
-  }
-
-  /** Al cambiar de perfil: lo guardado es el del perfil nuevo. */
-  releer(): void {
-    this.guardado = leerLaExplicacion(this.almacen.leer());
-  }
-
-  private poner(g: GuardadoDeLaExplicacion): void {
-    this.guardado = g;
-    this.almacen.escribir(g);
-  }
-}
+export const LLAVE_DE_LA_EXPLICACION = PANTALLAS_QUE_SE_EXPLICAN.parte;
 
 /**
  * **La receta de la explicación**, para el pack de la instructora: la pieza

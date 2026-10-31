@@ -1616,6 +1616,15 @@ import {
   montarLaExplicacion,
   RECETA_DE_LA_EXPLICACION,
 } from "./flight/explicacion-del-parte";
+import {
+  claveDeLasTeclas,
+  esDeLaExplicacion,
+  ExplicacionAlAbrir,
+  montarElFinal,
+  PANTALLAS_QUE_SE_EXPLICAN,
+  RECETA_DEL_FINAL,
+  type PantallaQueSeExplica,
+} from "./flight/explicacion-al-abrir";
 
 /** Un punto por el que se mira un sitio del paisaje, y si es el suelo mismo. Ver `casiTodo`. */
 type PuntoDeUnSitio = PuntoDelMundo & { readonly deSuelo?: boolean };
@@ -6625,8 +6634,23 @@ export class Game {
     // La pantalla de teclas se monta si existe su hueco. Es opcional a
     // propósito: el juego tiene que arrancar aunque falte.
     const teclasRoot = document.getElementById("teclas");
-    if (teclasRoot)
+    if (teclasRoot) {
       this.keyScreen = new KeyScreen(teclasRoot, this.input.keymap);
+      /*
+       * **Y se explica al abrirse**, como toda pantalla que sale de golpe: la
+       * primera vez que hay teclado se abre sola. Ver `explicarLasTeclas`.
+       */
+      this.keyScreen.alAbrir = () => this.explicarLasTeclas();
+      this.keyScreen.alNoExplicar = () => {
+        this.explicacionDeLasTeclas.quitar();
+        this.teclasPorExplicar = null;
+        this.callarLaExplicacionDe("teclas");
+      };
+      this.keyScreen.alCerrar = () => {
+        this.teclasPorExplicar = null;
+        this.callarLaExplicacionDe("teclas");
+      };
+    }
     this.ponerElDibujoDelMotor();
     // Sin letras, teclado dibujado. Con letras, la tabla.
     this.keyScreen?.setSimple(
@@ -6643,11 +6667,13 @@ export class Game {
           cuantas: () => this.teclasQueTocan.cuantasAprendidas,
           recuperar: () => this.teclasQueTocan.recuperarTodas(),
         },
-        // Y la explicación en voz de la tarjeta del tiempo, si se quitó.
-        {
-          quitada: () => this.explicacionDelParte.quitada,
-          recuperar: () => this.explicacionDelParte.recuperar(),
-        },
+        // Y las explicaciones en voz que se quitaron: la tarjeta del
+        // tiempo, la pantalla de las teclas y el final del vuelo.
+        [
+          { cual: "parte", explicacion: this.explicacionDelParte },
+          { cual: "teclas", explicacion: this.explicacionDeLasTeclas },
+          { cual: "fin", explicacion: this.explicacionDelFinal },
+        ],
       );
     }
     const pausaRoot = document.getElementById("pausa");
@@ -6938,6 +6964,12 @@ export class Game {
     }
 
     this.hud.onSoundClick(() => this.toggleSound());
+    // «No volver a explicar» el final, y el final que se cierra: lo suyo se calla.
+    this.hud.onNoExplicarElFinal(() => {
+      this.explicacionDelFinal.quitar();
+      this.callarLaExplicacionDe("fin");
+    });
+    this.hud.onCerrarElFinal(() => this.callarLaExplicacionDe("fin"));
     this.hud.onVolumen((posicion, soltado) =>
       this.moverElVolumen(posicion, soltado),
     );
@@ -9942,29 +9974,53 @@ export class Game {
         this.avisar("achieved");
         return;
       }
-      const final = reconocer(this.galones.lista);
-      this.hud.mostrarFinDeVuelo(
-        this.galones.lista,
-        // Sin palabras donde todavía no se lee: las barras son el mensaje.
-        this.tier.instruments === "none"
-          ? ""
-          : t(`fin.${final.nivel}` as never),
-        // Y el plano con la raya de por dónde se fue. Ver `bitacora.ts`.
-        //
-        // **Encuadrado en lo volado, sin suelo de escala.** Se le pasaba el
-        // tamaño del escenario, y con eso la ventana medía doce kilómetros
-        // en Asunción: el aeródromo salía como un punto y la lección de rodar,
-        // que se queda en un kilómetro, como nada. El suelo de escala es para
-        // comparar fichas en el hangar; aquí solo hay un vuelo.
-        plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
-        // Y lo que se lleva volado en total, en avioncitos. Ver `ui/reloj.ts`.
-        this.relojDeHoras(),
-        // Y el nombre de cada parte de la hoja, desde el peldaño que lee.
-        nombresDelPeldano(canalesDe(this.tier.avisos)),
-      );
-      this.avisar("achieved");
+      this.mostrarElFinal();
       this.invitarAlSiguiente();
     });
+  }
+
+  /**
+   * **El panel del final del vuelo**: la manga, la hoja, el plano y las horas,
+   * y su explicación en voz. Lo usa el final de verdad y, con una hoja puesta
+   * a mano, el banco. Ver `finalParaBanco`.
+   */
+  private mostrarElFinal(lista: readonly Galon[] = this.galones.lista): void {
+    const final = reconocer(lista);
+    // Cuántas veces le sale el final a este perfil, y si se explica.
+    const vez = this.conInicio ? null : this.explicacionDelFinal.alAbrir();
+    this.hud.mostrarFinDeVuelo(
+      lista,
+      // Sin palabras donde todavía no se lee: las barras son el mensaje.
+      this.tier.instruments === "none"
+        ? ""
+        : t(`fin.${final.nivel}` as never),
+      // Y el plano con la raya de por dónde se fue. Ver `bitacora.ts`.
+      //
+      // **Encuadrado en lo volado, sin suelo de escala.** Se le pasaba el
+      // tamaño del escenario, y con eso la ventana medía doce kilómetros
+      // en Asunción: el aeródromo salía como un punto y la lección de rodar,
+      // que se queda en un kilómetro, como nada. El suelo de escala es para
+      // comparar fichas en el hangar; aquí solo hay un vuelo.
+      plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
+      // Y lo que se lleva volado en total, en avioncitos. Ver `ui/reloj.ts`.
+      this.relojDeHoras(),
+      // Y el nombre de cada parte de la hoja, desde el peldaño que lee.
+      nombresDelPeldano(canalesDe(this.tier.avisos)),
+      vez?.ofrecerQuitarla ? { conLetras: this.tier.avisos !== "dibujo" } : null,
+    );
+    this.avisar("achieved");
+    /*
+     * **Y se explica en voz**, antes de la invitación al vuelo siguiente,
+     * que va detrás y en baja: primero qué es esto, después adónde se puede
+     * ir. Con el modo inicio no: allí cuenta Ara, y dos voces para un final
+     * no pegan.
+     */
+    if (vez?.explicar) this.explicarElFinal(final.nivel);
+  }
+
+  /** Para el banco: el final de un vuelo, con su explicación, sin volarlo. */
+  finalParaBanco(lista: readonly Galon[] = []): void {
+    this.mostrarElFinal(lista);
   }
 
   /**
@@ -12491,6 +12547,8 @@ export class Game {
     this.teclasQueTocan.quitar();
     this.teclasQueTocan.releer();
     this.explicacionDelParte.releer();
+    this.explicacionDeLasTeclas.releer();
+    this.explicacionDelFinal.releer();
     /*
      * **Vuelo nuevo: la instructora se olvida de lo que ya había dicho.**
      *
@@ -12516,6 +12574,8 @@ export class Game {
     this.islenos?.reiniciar();
     this.loMasAltoDelVuelo = 0;
     this.instructor.callar();
+    // Y lo que explicaba la pantalla de las teclas, si sigue abierta y no sonó.
+    if (this.keyScreen?.visible) this.decirLasTeclas();
     this.updateBadge();
     /*
      * **Y el modo inicio, si estaba a medias, otra vez desde la llave.** Si no
@@ -15942,6 +16002,8 @@ export class Game {
     this.islenos?.reiniciar();
     this.loMasAltoDelVuelo = 0;
     this.instructor.callar();
+    // Y lo que explicaba la pantalla de las teclas, si sigue abierta y no sonó.
+    if (this.keyScreen?.visible) this.decirLasTeclas();
     this.updateBadge();
     // Y la escena de aterrizar, si estaba en marcha: ver `retomarElInicio`.
     this.retomarElInicio();
@@ -31431,10 +31493,93 @@ export class Game {
    * está diciendo otra cosa, sigue.
    */
   private callarLaExplicacion(): void {
-    const deLaTarjeta = (c: string | undefined): boolean =>
-      !!c && (c === RECETA_DE_LA_EXPLICACION || c.startsWith("parte.propone.") || c.startsWith("parte.senala."));
-    BOCA.retirar((c) => deLaTarjeta(c));
-    if (this.instructor.hablando && deLaTarjeta(this.instructor.loUltimo)) this.instructor.callar();
+    this.callarLaExplicacionDe("parte");
+  }
+
+  /**
+   * Lo mismo para cualquier pantalla que se explica al abrirse: al cerrarla o
+   * al pedir que no se explique más, lo suyo se calla y lo de los demás sigue.
+   */
+  private callarLaExplicacionDe(que: PantallaQueSeExplica): void {
+    BOCA.retirar((c) => esDeLaExplicacion(que, c));
+    if (this.instructor.hablando && esDeLaExplicacion(que, this.instructor.loUltimo)) this.instructor.callar();
+  }
+
+  /**
+   * **Cuántas veces le salió cada pantalla a este perfil, y si se quitó su
+   * explicación en voz**: la de las teclas y el final del vuelo, como la
+   * tarjeta del tiempo. Ver `flight/explicacion-al-abrir.ts`.
+   */
+  private readonly explicacionDeLasTeclas = new ExplicacionAlAbrir({
+    leer: () => leerProgreso(PANTALLAS_QUE_SE_EXPLICAN.teclas),
+    escribir: (v) => ponerProgreso(PANTALLAS_QUE_SE_EXPLICAN.teclas, v),
+  });
+  private readonly explicacionDelFinal = new ExplicacionAlAbrir({
+    leer: () => leerProgreso(PANTALLAS_QUE_SE_EXPLICAN.fin),
+    escribir: (v) => ponerProgreso(PANTALLAS_QUE_SE_EXPLICAN.fin, v),
+  });
+
+  /** Para el banco: lo guardado de las tres explicaciones. */
+  get explicacionesParaBanco(): Record<PantallaQueSeExplica, { veces: number; quitada: boolean }> {
+    const de = (e: ExplicacionAlAbrir) => ({ veces: e.veces, quitada: e.quitada });
+    return {
+      parte: de(this.explicacionDelParte),
+      teclas: de(this.explicacionDeLasTeclas),
+      fin: de(this.explicacionDelFinal),
+    };
+  }
+
+  /**
+   * **La pantalla de las teclas, al abrirse**: se cuenta, y si toca se dice
+   * qué es en una frase del tramo —abajo, que las del dibujo son las tuyas y
+   * se encienden; arriba, que la lista dice qué hace cada una y se cambian—.
+   * Devuelve si se ofrece «no volver a explicar» y si lleva la palabra.
+   */
+  private explicarLasTeclas(): { ofrecerQuitarla: boolean; conLetras: boolean } {
+    const vez = this.explicacionDeLasTeclas.alAbrir();
+    this.teclasPorExplicar = vez.explicar ? claveDeLasTeclas(this.tier.avisos) : null;
+    this.decirLasTeclas();
+    return { ofrecerQuitarla: vez.ofrecerQuitarla, conLetras: this.tier.avisos !== "dibujo" };
+  }
+
+  /**
+   * **La explicación de las teclas que todavía no ha sonado.** La pantalla se
+   * abre sola al montar el juego, y unos segundos después el suelo se asienta
+   * y el vuelo se reinicia, que vacía la cola de las voces: lo pedido al
+   * abrirse se perdía sin sonar ni quedar apuntado. Mientras no suene y la
+   * pantalla siga abierta, el reinicio la vuelve a pedir. Ver `resetFlight`.
+   */
+  private teclasPorExplicar: string | null = null;
+
+  private decirLasTeclas(): void {
+    const clave = this.teclasPorExplicar;
+    if (!clave) return;
+    this.instructor.decir(t(clave as TranslationKey), clave, "normal", undefined, (que) => {
+      if (que !== "se-cae" && this.teclasPorExplicar === clave) this.teclasPorExplicar = null;
+    });
+  }
+
+  /**
+   * **El final del vuelo, explicado**: el reconocimiento —«¡Buen vuelo!»—, que
+   * en Guyrami no se escribe, y qué se mira y cómo se vuelve a volar, en una
+   * frase montada. Con su grabación si está entera; si no —las piezas nuevas
+   * esperan su toma—, el reconocimiento solo, que sí está grabado: mejor una
+   * frase de verdad que la voz del navegador, muda en el Brave de Enrique. Y
+   * si tampoco, el navegador, que en una tablet sí habla.
+   */
+  private explicarElFinal(nivel: "llegaste" | "bien" | "muyBien" | "redondo"): void {
+    const e = montarElFinal(nivel, this.tier.avisos);
+    const texto = e.trozos.map((k) => t(k as TranslationKey)).join(" ");
+    if (this.instructor.vozDe(RECETA_DEL_FINAL, e.relleno) !== null) {
+      this.instructor.decir(texto, RECETA_DEL_FINAL, "normal", e.relleno);
+      return;
+    }
+    const solo = `fin.${nivel}`;
+    if (this.instructor.vozDe(solo) !== null) {
+      this.instructor.decir(t(solo as TranslationKey), solo);
+      return;
+    }
+    this.instructor.decir(texto, RECETA_DEL_FINAL, "normal", e.relleno);
   }
 
   /**

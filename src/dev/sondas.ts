@@ -49,6 +49,7 @@ import {
   ultimaCartaDeLaCabina,
 } from "../world/pantallas-cabina";
 import type { Intruso } from "../flight/tcas";
+import type { Galon } from "../flight/galones";
 import { familiaDe } from "../ui/familia";
 import { ilustracionPedida } from "../ui/ilustraciones";
 import type { Lluvia } from "../world/meteo";
@@ -1069,6 +1070,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * su explicación en voz. Ver `flight/explicacion-del-parte.ts`.
      */
     explicacionDelParte: () => juego.explicacionDelParteParaBanco,
+    /**
+     * Y las tres pantallas que se explican al abrirse: la tarjeta del tiempo,
+     * la de las teclas y el final del vuelo. Ver `flight/explicacion-al-abrir.ts`.
+     */
+    explicaciones: () => juego.explicacionesParaBanco,
+    /** El final de un vuelo, con su explicación, sin volarlo. */
+    finalParaBanco: (lista: readonly Galon[] = []) => juego.finalParaBanco(lista),
     /** La aeronave montada: para saber si vuela el modelo o las cajas. */
     aeronave: () => ({
       grupo: juego.aircraftMesh.group,
