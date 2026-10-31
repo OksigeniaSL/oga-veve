@@ -461,6 +461,9 @@ const DICHO_DE_LA_TOMA: Readonly<Record<NonNullable<Aterrizaje>, TranslationKey>
 
 const IMPORTANTE = 1;
 
+/** Si la seña del señalero pide frenar o parar. Ver `tarjetaDelSenalero`. */
+const pideFrenar = (gesto: string | null): boolean => gesto === "alto" || gesto === "despacio";
+
 /** Lo más que espera una frase del descenso a que su boca se libere, ms. */
 const ESPERA_DEL_DESCENSO = 3000;
 
@@ -21059,22 +21062,23 @@ export class Game {
           ? nombreDeTecla(this.input.preferredKey("engine"))
           : null;
     /*
-     * **Y por encima de lo que se cuenta de pasada.** Un señalero haciendo
-     * señas es lo que hay que mirar en ese momento: quien rueda hacia él
-     * hace lo que dicen sus bastones, y la radio, la lista y la instructora
-     * esperan. Con la prioridad de siempre, la de cero, la tarjeta de las
-     * luces de rodaje de la lista de después del aterrizaje —«la instructora
-     * enciende las luces», cinco segundos— le ganaba, y el «despacio» o el
-     * «alto» se quedaban en la cola mientras el avión se le echaba encima.
-     * Lo urgente —«te lo pasaste»— sigue por encima. Y como no caduca sola,
-     * se quita en cuanto el gesto deja de verse: ver
-     * `quitarLaTarjetaDelSenalero`.
+     * **Y el «despacio» y el «alto», por encima de lo que se cuenta de
+     * pasada.** Cuando el señalero pide frenar o parar, es lo que hay que
+     * mirar: con la prioridad de cero, la tarjeta de las luces de rodaje de
+     * la lista de después del aterrizaje —«la instructora enciende las
+     * luces», cinco segundos— le ganaba, y el «alto» se quedaba en la cola
+     * mientras el avión se le echaba encima. Las demás señas no: con el
+     * «adelante» o el «cortar motores» puestos con prioridad, los sellos y
+     * las gafas, que esperan a que no haya una tarjeta que importe más, no
+     * se celebraban nunca en un rodaje corto como el de La Gomera. Lo urgente
+     * —«te lo pasaste»— sigue por encima. Y como no caduca sola, se quita en
+     * cuanto el gesto deja de verse: ver `quitarLaTarjetaDelSenalero`.
      */
     this.hud.senal.mostrar(comoDibujo(`senalero-${gesto}`), "", null, {
       segundos: Infinity,
       tecla,
       accion: cortar ? () => this.toggleEngine() : null,
-      prioridad: IMPORTANTE,
+      prioridad: pideFrenar(gesto) ? IMPORTANTE : 0,
     });
     return parando;
   }
@@ -28459,12 +28463,12 @@ export class Game {
         this.llamadas.some((l) => l.sono !== null) ||
         BOCA.esperaAlguna((c) => esDeLaMegafonia(c)) ||
         /*
-         * **Y con el señalero haciendo señas**, que también es alguien
-         * hablando: con los bastones. Un punto de la lista encima de su
-         * tarjeta la taparía cinco segundos con el avión rodando hacia él.
+         * **Y con el señalero pidiendo frenar o parar**, que también es
+         * alguien hablando: con los bastones. Un punto de la lista encima de
+         * su tarjeta la taparía cinco segundos con el avión rodando hacia él.
          * Ver `tarjetaDelSenalero`.
          */
-        this.gestoEnPantalla !== null,
+        pideFrenar(this.gestoEnPantalla),
       dt,
     });
     if (!leido) return;
