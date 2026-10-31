@@ -26,7 +26,9 @@
  *
  * Lo que sí hace es lo que hace el de cada avión al cambiar de nivel, y eso
  * no es lo mismo en todos. Se ve escrito en lo alto de la pantalla de vuelo de
- * los reactores, con las palabras de Boeing —el FMA—:
+ * los reactores —el FMA—, y aquí se llama con las palabras de Boeing; en la
+ * pantalla de cada uno, con las de su cabina (ver `rotuloDelModo` en
+ * `flight/recogida.ts`):
  *
  * - **`V/S`**, en los que no llevan gases automáticos: el morro pide un ritmo
  *   de subida o bajada, y la velocidad es cosa de quien lleva la palanca.

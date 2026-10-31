@@ -209,9 +209,11 @@ function escalaDeLaSenda(x: number, cy: number, paso: number): string {
 /**
  * **El FMA**: la franja de arriba de la pantalla de vuelo de un avión de
  * línea, que dice **qué hace cada mano del automático**. Tres columnas, con
- * las palabras de Boeing: los gases (`SPD`, `THR`, `IDLE`), el lateral
- * (`HDG HOLD`, `LOC`) y el vertical (`ALT`, `V/S`, `FLCH SPD`, `VNAV PTH`,
- * `G/S`); y debajo, en medio, `A/P` si el automático está puesto.
+ * las palabras de la cabina de cada clase: los gases (`SPD`, `THR`, `IDLE`
+ * en la de Boeing; `SPDT`, `SPDE`, `RETD` en la de un E-Jet), el lateral
+ * (`HDG HOLD` o `HDG`, `LOC`) y el vertical (`ALT`, `V/S` o `VS`, `FLCH SPD`
+ * o `FLCH`…); y debajo, en medio, `A/P` si el automático está puesto. Ver
+ * `rotuloDeLosGases` y `rotuloDelModo` en `flight/recogida.ts`.
  *
  * Es la respuesta a «¿quién lleva el avión?», que es la pregunta que no se
  * podía contestar cuando el gas bombeaba solo. Son palabras de instrumento y
