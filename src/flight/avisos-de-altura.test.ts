@@ -358,6 +358,25 @@ describe("qué cuenta lleva cada avión", () => {
   });
 
   /*
+   * **Y el JAZ 60, solo en las de no precisión.** Su cuenta no sale de su
+   * manual sino de la norma del TAWS, que pide el *five hundred* «during a
+   * non-precision approach» (FAA, AC 23-18). Con la senda de un ILS delante
+   * no lo canta; sin ella, sí. Los reactores cantan la suya siempre.
+   */
+  it("el JAZ 60 canta su five hundred solo sin ILS delante", () => {
+    const de = (id: string) => AIRCRAFT.find((a) => a.id === id)!;
+    expect(de("jaz-60").cuentaSoloSinIls).toBe(true);
+    for (const a of AIRCRAFT.filter((x) => x.id !== "jaz-60")) expect(a.cuentaSoloSinIls, a.id).toBe(false);
+    const sinIls = dichos(bajar(new AvisosDeAltura(laCuentaDe(de("jaz-60"))), 1500, 0, { conIls: false }));
+    expect(sinIls).toEqual(["five hundred"]);
+    const conIls = dichos(bajar(new AvisosDeAltura(laCuentaDe(de("jaz-60"))), 1500, 0, { conIls: true }));
+    expect(conIls).toEqual([]);
+    // El JAZ 90, con ILS o sin él, la suya entera.
+    const jaz90 = laCuentaDe(de("jaz-90")).map((e) => e.dice);
+    expect(dichos(bajar(new AvisosDeAltura(laCuentaDe(de("jaz-90"))), 3000, 0, { conIls: true }))).toEqual(jaz90);
+  });
+
+  /*
    * **Y quién habla en los últimos metros.** Con *fifty, forty, thirty*
    * sonando, la caja; con una cuenta que acaba en *five hundred*, la
    * instructora, que si no ahí abajo no diría nadie «ya podés tocar».

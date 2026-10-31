@@ -818,7 +818,7 @@ import {
   vecesLejosDe,
   type Scenario,
 } from "./world/scenarios";
-import { SENDA_DE_SIEMPRE, sendaDeLaCabecera } from "./world/sendas-publicadas";
+import { SENDA_DE_SIEMPRE, sendaDeLaCabecera, tieneIls } from "./world/sendas-publicadas";
 import { crearTeselas, type Teselas } from "./world/teselas";
 import {
   TeselasDeOrtofoto,
@@ -16487,6 +16487,8 @@ export class Game {
         ) || this.sobreLaPista(),
       vertical: ya.verticalSpeed,
       altitud: ya.position.y,
+      // Con la senda de un ILS delante no es de no precisión. Ver `tieneIls`.
+      conIls: tieneIls(oaciDe(this.elCampo().escenario), cabeceraEnUso(this.elCampo().escenario)),
     };
     const aviso = this.avisosDeAltura.paso(lectura);
     if (aviso) this.cantarLaCuenta(aviso);

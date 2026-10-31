@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { Color, type InstancedMesh } from "three";
 import { angulosDelPapi, blancasDePapi, crearAproximacion } from "./aproximacion";
 import { SCENARIOS, oaciDe } from "./scenarios";
-import { SENDAS, SENDA_DE_SIEMPRE, sendaDeLaCabecera } from "./sendas-publicadas";
+import { SENDAS, SENDA_DE_SIEMPRE, sendaDeLaCabecera, tieneIls } from "./sendas-publicadas";
 import { alturaDeLaSendaDeLaFinal, desvioEnLaFinal, ritmoDeLaSenda } from "../flight/perfil-vertical";
 import { altitudDelPerfil, MILLA, perfilDeLaBajada } from "../flight/ruta";
 import type { Pista, Umbral } from "./aerodrome";
@@ -32,6 +32,25 @@ describe("la senda de cada cabecera, la de su AIP", () => {
       ["GCGM", "09"],
     ] as const)
       expect(sendaDeLaCabecera(oaci, cab), `${oaci} ${cab}`).toBe(3);
+  });
+
+  /*
+   * **Y qué cabeceras tienen ILS**, del apartado 2.19 de su AIP o de sus
+   * cartas: las RNP tienen senda y no ILS, y es lo que decide si el *five
+   * hundred* del JAZ 60 se canta. Ver `tieneIls`.
+   */
+  it("el ILS, donde lo publica su AIP, y la RNP no cuenta como ILS", () => {
+    for (const [oaci, cab] of [
+      ["GCXO", "12"], ["GCXO", "30"], ["GCTS", "07"], ["GCTS", "25"], ["GCLP", "03L"], ["GCLP", "21R"],
+      ["GCFV", "01"], ["GCFV", "19"], ["GCRR", "03"], ["SGAS", "20"], ["SGES", "23"],
+    ] as const)
+      expect(tieneIls(oaci, cab), `${oaci} ${cab}`).toBe(true);
+    for (const [oaci, cab] of [
+      ["GCLP", "03R"], ["GCLP", "21L"], ["GCLA", "36"], ["GCRR", "21"], ["GCHI", "34"], ["GCGM", "09"],
+      ["LECU", "09"], ["SGAS", "02"], ["SGEN", "20"], ["SGME", "01"], ["SGPI", "20"],
+    ] as const)
+      expect(tieneIls(oaci, cab), `${oaci} ${cab}`).toBe(false);
+    expect(tieneIls(null, null)).toBe(false);
   });
 
   it("y lo que no se sabe, a tres", () => {

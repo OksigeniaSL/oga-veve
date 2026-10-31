@@ -48,6 +48,15 @@ export interface SendaPublicada {
    * RNP con guía vertical, grados; `null` si no tiene ninguna.
    */
   readonly senda: number | null;
+  /**
+   * **Si la cabecera tiene ILS**: su localizador y su senda de planeo en el
+   * apartado 2.19 de su AIP, o su carta de aproximación ILS. No sale de
+   * `senda`, que también es la de una RNP —y en Asunción, al revés: la 20
+   * tiene ILS y su ángulo no se pudo leer—. Para el dibujo da igual; para la
+   * caja que canta *five hundred* solo en las de no precisión, no. Ver
+   * `tieneIls`.
+   */
+  readonly ils?: true;
 }
 
 /** La senda de la OACI cuando el terreno deja, grados. */
@@ -55,23 +64,26 @@ export const SENDA_DE_SIEMPRE = 3;
 
 /** Por indicativo OACI y por cabecera. */
 export const SENDAS: Readonly<Record<string, Readonly<Record<string, SendaPublicada>>>> = {
-  GCXO: { "12": { papi: 3, senda: 3 }, "30": { papi: 3, senda: 3 } },
-  GCTS: { "07": { papi: 3, senda: 3 }, "25": { papi: 3, senda: 3 } },
+  GCXO: { "12": { papi: 3, senda: 3, ils: true }, "30": { papi: 3, senda: 3, ils: true } },
+  GCTS: { "07": { papi: 3, senda: 3, ils: true }, "25": { papi: 3, senda: 3, ils: true } },
   GCLP: {
-    "03L": { papi: 3, senda: 3 },
-    "21R": { papi: 3, senda: 3 },
+    "03L": { papi: 3, senda: 3, ils: true },
+    "21R": { papi: 3, senda: 3, ils: true },
     // Sin ILS: la RNP, a 3,00° (LPV) y a 3,05° (LNAV/VNAV).
     "03R": { papi: 3, senda: 3 },
     "21L": { papi: 3, senda: 3.05 },
   },
-  GCFV: { "01": { papi: 3, senda: 3 }, "19": { papi: 3.45, senda: 3.45 } },
-  GCRR: { "03": { papi: 3, senda: 3 }, "21": { papi: 3.7, senda: null } },
+  GCFV: { "01": { papi: 3, senda: 3, ils: true }, "19": { papi: 3.45, senda: 3.45, ils: true } },
+  GCRR: { "03": { papi: 3, senda: 3, ils: true }, "21": { papi: 3.7, senda: null } },
+  // Sin ILS en su 2.19: la senda de la 36 es la de su RNP.
   GCLA: { "18": { papi: 3, senda: null }, "36": { papi: 3, senda: 3 } },
   GCHI: { "16": { papi: 3, senda: null }, "34": { papi: 3, senda: null } },
   GCGM: { "09": { papi: 3, senda: null }, "27": { papi: 3, senda: null } },
   LECU: { "09": { papi: 2.8, senda: null }, "27": { papi: 3, senda: null } },
-  SGAS: { "02": { papi: 3, senda: null }, "20": { papi: 3, senda: null } },
-  SGES: { "05": { papi: 3, senda: null }, "23": { papi: 3, senda: 3 } },
+  // La 20 tiene ILS —«ILS or LOC Z RWY 20» entre sus cartas—, y el ángulo de
+  // su senda no se pudo leer en esa edición: va el del PAPI.
+  SGAS: { "02": { papi: 3, senda: null }, "20": { papi: 3, senda: null, ils: true } },
+  SGES: { "05": { papi: 3, senda: null }, "23": { papi: 3, senda: 3, ils: true } },
   SGEN: { "02": { papi: 3, senda: null }, "20": { papi: 3, senda: null } },
   SGCO: { "03": { papi: null, senda: null }, "21": { papi: null, senda: null } },
   SGME: { "01": { papi: null, senda: null }, "19": { papi: null, senda: null } },
@@ -88,4 +100,17 @@ export function sendaDeLaCabecera(
 ): number {
   const s = oaci && cabecera ? SENDAS[oaci]?.[cabecera] : undefined;
   return s?.papi ?? s?.senda ?? SENDA_DE_SIEMPRE;
+}
+
+/**
+ * **Si esa cabecera tiene ILS**, el de su AIP. Lo que no está en la tabla no
+ * lo tiene, que es lo que pasa en los campos sin AIP: ahí no hay ILS que
+ * valga. Ver `SendaPublicada.ils`.
+ */
+export function tieneIls(
+  oaci: string | null | undefined,
+  cabecera: string | null | undefined,
+): boolean {
+  const s = oaci && cabecera ? SENDAS[oaci]?.[cabecera] : undefined;
+  return s?.ils === true;
 }

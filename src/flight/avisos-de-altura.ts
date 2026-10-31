@@ -93,6 +93,13 @@ export interface Escalon {
   readonly metros: number;
   /** Lo que se dice, o lo que se enseña en grande. */
   readonly dice: string;
+  /**
+   * **Si solo se canta sin ILS delante**: en la aproximación de no precisión,
+   * que es como la pide la norma del TAWS cuando es la única fuente de la
+   * cuenta de ese avión. Cruzarlo con ILS lo gasta igual, sin decirlo. Ver
+   * `cuentaSoloSinIls` en la ficha y `Lectura.conIls`.
+   */
+  readonly soloSinIls?: boolean;
 }
 
 export type Aviso = Escalon;
@@ -151,10 +158,14 @@ export const LA_CUENTA: readonly Escalon[] = [
 export function laCuentaDe(avion: {
   readonly avisosHablados: boolean;
   readonly cuentaDeLaToma: readonly PiesDeLaCuenta[] | null;
+  readonly cuentaSoloSinIls?: boolean;
 }): readonly Escalon[] {
   const suya = avion.cuentaDeLaToma;
   if (!avion.avisosHablados || !suya) return [];
-  return LA_CUENTA.filter((e) => suya.includes(Math.round(e.metros / PIE) as PiesDeLaCuenta));
+  const escalones = LA_CUENTA.filter((e) =>
+    suya.includes(Math.round(e.metros / PIE) as PiesDeLaCuenta),
+  );
+  return avion.cuentaSoloSinIls ? escalones.map((e) => ({ ...e, soloSinIls: true })) : escalones;
 }
 
 /**
@@ -211,6 +222,11 @@ export interface Lectura {
   readonly vertical: number;
   /** Altitud sobre el mar, m: con ella se sabe si se sube de verdad. */
   readonly altitud: number;
+  /**
+   * Si la pista a la que se llega tiene la senda de un ILS: entonces no es
+   * una aproximación de no precisión. Ver `Escalon.soloSinIls`.
+   */
+  readonly conIls?: boolean;
 }
 
 /**
@@ -294,6 +310,7 @@ export class AvisosDeAltura {
       if (!(antes > e.metros && ra <= e.metros)) continue;
       this.armados.delete(e.metros);
       if (!l.enAproximacion || l.vertical >= 0) continue;
+      if (e.soloSinIls && l.conIls) continue;
       if (ra < e.metros - holguraDe(e.metros)) continue;
       toca = e;
     }
