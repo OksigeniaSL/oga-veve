@@ -76,7 +76,7 @@
 .fig-papi .tb-ring[data-tone="faint"] {stroke:var(--anatomy-faint)}
 .fig-papi .tb-ring[data-tone="hi"] {stroke:var(--anatomy-hi)}
 .fig-papi { --pp-papel: #f3efe3; --pp-panel: #f8f5ec; --pp-tinta: #2e537a; --pp-tinta-2: #22302a; --pp-tinta-suave: #8ea3b8;
-  --pp-rojo: #b3261e; --pp-luz-blanca: #fffaf0; --pp-luz-roja: #9b1c14; --pp-senda: #c4239f;
+  --pp-rojo: #b3261e; --pp-luz-blanca: #fffaf0; --pp-luz-roja: #9b1c14; --pp-senda: #c0219b;
   --pp-letra: "Barlow Semi Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
   --pp-cifras: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
   display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); padding: 10px; border-radius: 12px; background: var(--pp-papel); }

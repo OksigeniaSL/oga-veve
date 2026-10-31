@@ -55,10 +55,12 @@ export const TINTAS = {
   /** Cotas y elevaciones. 8,6:1. */
   cota: "#5a3d22",
   /**
-   * La ruta: el magenta del juego, un punto más oscuro para el papel. 4,5:1,
-   * y por eso va siempre sobre su orla de papel.
+   * La ruta: el magenta del juego, un punto más oscuro para el papel. Con el
+   * de antes, `#c4239f`, se quedaba en 4,47:1, por debajo del AA; éste da
+   * 4,65:1 sin dejar de ser el mismo magenta. Y va igual sobre su orla de
+   * papel, que la ruta cruza relieve más oscuro que el papel liso.
    */
-  ruta: "#c4239f",
+  ruta: "#c0219b",
   /** Lo que se escribe en la ruta: rumbo y distancia. 6,8:1. */
   rutaTexto: "#95187a",
   /** El azul de los sellos de Canarias, para marcar lo visitado. 5,6:1. */
