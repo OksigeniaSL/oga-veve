@@ -19008,5 +19008,131 @@
     "idioma": "es-PY",
     "texto": "Este avión lleva dos motores de seis cilindros, con turbo: el turbo les mete el aire apretado, y así, al subir, no pierden fuerza hasta muy arriba. Y mirá las hélices: giran al revés una de la otra.",
     "para": "lo que explica el punto del motor en la tarjeta del bimotor de pistón: turbo y hélices contrarrotativas"
+  },
+  {
+    "id": "parte.explica.miramos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Antes de salir, miramos cómo está el tiempo.",
+    "para": "la tarjeta del tiempo al abrirse: qué es"
+  },
+  {
+    "id": "parte.explica.aca.tormenta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy acá hay tormenta encima del campo, y con tormenta no se sale.",
+    "para": "la tarjeta del tiempo al abrirse: qué pasa hoy en el campo de salida, en sencillo"
+  },
+  {
+    "id": "parte.explica.aca.visibilidad",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy acá se ve muy poco, menos de lo que necesita este avión.",
+    "para": "la tarjeta del tiempo al abrirse: qué pasa hoy en el campo de salida, en sencillo"
+  },
+  {
+    "id": "parte.explica.aca.techo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy acá las nubes están muy bajas, más de lo que aguanta este avión.",
+    "para": "la tarjeta del tiempo al abrirse: qué pasa hoy en el campo de salida, en sencillo"
+  },
+  {
+    "id": "parte.explica.aca.visibilidadYTecho",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy acá se ve muy poco y las nubes están muy bajas, más de lo que aguanta este avión.",
+    "para": "la tarjeta del tiempo al abrirse: qué pasa hoy en el campo de salida, en sencillo"
+  },
+  {
+    "id": "parte.explica.aca.cruzado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy acá sopla mucho viento de costado, más del que aguanta este avión.",
+    "para": "la tarjeta del tiempo al abrirse: qué pasa hoy en el campo de salida, en sencillo"
+  },
+  {
+    "id": "parte.explica.aca.pista",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy a este avión no le alcanza la pista para despegar con su margen.",
+    "para": "la tarjeta del tiempo al abrirse: qué pasa hoy en el campo de salida, en sencillo"
+  },
+  {
+    "id": "parte.explica.alla.tormenta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy donde vamos hay tormenta encima del campo, y con tormenta no se aterriza.",
+    "para": "la tarjeta del tiempo al abrirse: qué pasa hoy en el campo de llegada, en sencillo"
+  },
+  {
+    "id": "parte.explica.alla.visibilidad",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy donde vamos se ve muy poco, menos de lo que necesita este avión.",
+    "para": "la tarjeta del tiempo al abrirse: qué pasa hoy en el campo de llegada, en sencillo"
+  },
+  {
+    "id": "parte.explica.alla.techo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy donde vamos las nubes están muy bajas, más de lo que aguanta este avión.",
+    "para": "la tarjeta del tiempo al abrirse: qué pasa hoy en el campo de llegada, en sencillo"
+  },
+  {
+    "id": "parte.explica.alla.visibilidadYTecho",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy donde vamos se ve muy poco y las nubes están muy bajas, más de lo que aguanta este avión.",
+    "para": "la tarjeta del tiempo al abrirse: qué pasa hoy en el campo de llegada, en sencillo"
+  },
+  {
+    "id": "parte.explica.alla.cruzado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy donde vamos sopla mucho viento de costado, más del que aguanta este avión.",
+    "para": "la tarjeta del tiempo al abrirse: qué pasa hoy en el campo de llegada, en sencillo"
+  },
+  {
+    "id": "parte.explica.elegis",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Podemos quedarnos en tierra, esperar un rato o salir igual. Vos elegís.",
+    "para": "la tarjeta del tiempo al abrirse, en Guyrami y Tukã: las tres cosas que se pueden hacer"
+  },
+  {
+    "id": "parte.explica.tambienSalir",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Y si querés, también podés salir igual: la decisión es tuya.",
+    "para": "la tarjeta del tiempo al abrirse, desde Taguato: detrás del porqué, que salir igual también se puede"
+  },
+  {
+    "id": "parte.explica.bien",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy el tiempo está bien para este avión: podemos salir cuando quieras.",
+    "para": "la tarjeta del tiempo abierta a mano un día bueno"
+  },
+  {
+    "id": "parte.senala.quedarse",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Con este nos quedamos hoy en tierra, y eso también es ganar.",
+    "para": "la tarjeta del tiempo: qué hace el botón de quedarse, al señalarlo"
+  },
+  {
+    "id": "parte.senala.esperar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Con este esperamos un ratito y volvemos a mirar el tiempo.",
+    "para": "la tarjeta del tiempo: qué hace el botón de esperar, al señalarlo"
+  },
+  {
+    "id": "parte.senala.salirIgual",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Con este salimos igual, con cuidado, y si no se puede, volvemos.",
+    "para": "la tarjeta del tiempo: qué hace el botón de salir igual, al señalarlo"
   }
 ]

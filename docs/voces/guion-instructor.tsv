@@ -642,3 +642,21 @@
 642	seguir.la-gomera	¿Seguimos volando? Desde acá podemos ir hasta La Gomera.
 643	tarjeta.voz.lucesPuntas	Estas son las luces de navegación: roja en la punta izquierda, verde en la derecha, y en cada punta, una blanca que mira para atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.
 644	tarjeta.voz.motorTurbo	Este avión lleva dos motores de seis cilindros, con turbo: el turbo les mete el aire apretado, y así, al subir, no pierden fuerza hasta muy arriba. Y mirá las hélices: giran al revés una de la otra.
+645	parte.explica.miramos	Antes de salir, miramos cómo está el tiempo.
+646	parte.explica.aca.tormenta	Hoy acá hay tormenta encima del campo, y con tormenta no se sale.
+647	parte.explica.aca.visibilidad	Hoy acá se ve muy poco, menos de lo que necesita este avión.
+648	parte.explica.aca.techo	Hoy acá las nubes están muy bajas, más de lo que aguanta este avión.
+649	parte.explica.aca.visibilidadYTecho	Hoy acá se ve muy poco y las nubes están muy bajas, más de lo que aguanta este avión.
+650	parte.explica.aca.cruzado	Hoy acá sopla mucho viento de costado, más del que aguanta este avión.
+651	parte.explica.aca.pista	Hoy a este avión no le alcanza la pista para despegar con su margen.
+652	parte.explica.alla.tormenta	Hoy donde vamos hay tormenta encima del campo, y con tormenta no se aterriza.
+653	parte.explica.alla.visibilidad	Hoy donde vamos se ve muy poco, menos de lo que necesita este avión.
+654	parte.explica.alla.techo	Hoy donde vamos las nubes están muy bajas, más de lo que aguanta este avión.
+655	parte.explica.alla.visibilidadYTecho	Hoy donde vamos se ve muy poco y las nubes están muy bajas, más de lo que aguanta este avión.
+656	parte.explica.alla.cruzado	Hoy donde vamos sopla mucho viento de costado, más del que aguanta este avión.
+657	parte.explica.elegis	Podemos quedarnos en tierra, esperar un rato o salir igual. Vos elegís.
+658	parte.explica.tambienSalir	Y si querés, también podés salir igual: la decisión es tuya.
+659	parte.explica.bien	Hoy el tiempo está bien para este avión: podemos salir cuando quieras.
+660	parte.senala.quedarse	Con este nos quedamos hoy en tierra, y eso también es ganar.
+661	parte.senala.esperar	Con este esperamos un ratito y volvemos a mirar el tiempo.
+662	parte.senala.salirIgual	Con este salimos igual, con cuidado, y si no se puede, volvemos.

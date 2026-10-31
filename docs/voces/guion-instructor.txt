@@ -642,3 +642,21 @@ El PAPI son cuatro luces al lado de la pista. Cada una se ve blanca desde arriba
 ¿Seguimos volando? Desde acá podemos ir hasta La Gomera.
 Estas son las luces de navegación: roja en la punta izquierda, verde en la derecha, y en cada punta, una blanca que mira para atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.
 Este avión lleva dos motores de seis cilindros, con turbo: el turbo les mete el aire apretado, y así, al subir, no pierden fuerza hasta muy arriba. Y mirá las hélices: giran al revés una de la otra.
+Antes de salir, miramos cómo está el tiempo.
+Hoy acá hay tormenta encima del campo, y con tormenta no se sale.
+Hoy acá se ve muy poco, menos de lo que necesita este avión.
+Hoy acá las nubes están muy bajas, más de lo que aguanta este avión.
+Hoy acá se ve muy poco y las nubes están muy bajas, más de lo que aguanta este avión.
+Hoy acá sopla mucho viento de costado, más del que aguanta este avión.
+Hoy a este avión no le alcanza la pista para despegar con su margen.
+Hoy donde vamos hay tormenta encima del campo, y con tormenta no se aterriza.
+Hoy donde vamos se ve muy poco, menos de lo que necesita este avión.
+Hoy donde vamos las nubes están muy bajas, más de lo que aguanta este avión.
+Hoy donde vamos se ve muy poco y las nubes están muy bajas, más de lo que aguanta este avión.
+Hoy donde vamos sopla mucho viento de costado, más del que aguanta este avión.
+Podemos quedarnos en tierra, esperar un rato o salir igual. Vos elegís.
+Y si querés, también podés salir igual: la decisión es tuya.
+Hoy el tiempo está bien para este avión: podemos salir cuando quieras.
+Con este nos quedamos hoy en tierra, y eso también es ganar.
+Con este esperamos un ratito y volvemos a mirar el tiempo.
+Con este salimos igual, con cuidado, y si no se puede, volvemos.
