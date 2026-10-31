@@ -246,7 +246,23 @@ describe("los cantos de cada avión", () => {
   it("el turbohélice de pasaje y los reactores, sí", () => {
     for (const a of [ARASUNU, ARAI])
       for (const clave of DE_LOS_AVISADORES)
-        expect(loDiceElAvion(clave, a), `${a.id} ${clave}`).toBe(true);
+        expect(loDiceElAvion(clave, a), `${a.id} ${clave}`).toBe(
+          // Menos el *minimums* del JAZ 60: ver el siguiente.
+          !(a === ARASUNU && clave === "cabina.minimums"),
+        );
+  });
+
+  /*
+   * **Y *minimums*, solo con la fuente de su clase.** No lo pide la norma del
+   * TAWS —es de las llamadas que elige quien lo instala (FAA, AC 23-18)— y en
+   * el JAZ 60 no se ha encontrado: ahí lo dice la instructora.
+   */
+  it("y *minimums* lo canta la caja del E-Jet y no la del JAZ 60", () => {
+    expect(loDiceElAvion("cabina.minimums", ARAI)).toBe(true);
+    expect(loDiceElAvion("cabina.minimums", ARASUNU)).toBe(false);
+    expect(loDiceElAvion("cabina.minimums", PYKASU)).toBe(false);
+    for (const a of AIRCRAFT)
+      expect(loDiceElAvion("cabina.minimums", a), a.id).toBe(a.avisosHablados && a.cantaLosMinimos);
   });
 
   it("y el «traffic, traffic» lo canta quien lleva TCAS, y nadie más", () => {

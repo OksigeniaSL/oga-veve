@@ -10,7 +10,13 @@ import { AIRCRAFT, ARAI, ARASUNU, PYKASU, YVAGA } from "./aircraft";
 import { AvisosDeAltura, type Lectura } from "./avisos-de-altura";
 import { ArcadeFlightModel } from "./arcade";
 import { neutralControls } from "./model";
-import { claseDeRecogida, escalonesDeLaRecogida, laRecogidaDe, rotuloDeLosGases } from "./recogida";
+import {
+  claseDeRecogida,
+  escalonesDeLaRecogida,
+  laRecogidaDe,
+  rotuloDeLosGases,
+  rotuloDelModo,
+} from "./recogida";
 
 const PIE = 0.3048;
 const RAD = Math.PI / 180;
@@ -168,5 +174,29 @@ describe("en Guyrami, quien recoge al ralentí toca suave", () => {
     for (let t = 0; t < 30; t += 1 / 60) m.step(1 / 60, c);
     // ...y gastado lo que sobraba, baja: sin motor no se vuela recto.
     expect(m.state.verticalSpeed).toBeLessThan(-1);
+  });
+});
+
+/*
+ * **Y las otras dos columnas, también con los de su cabina.** El JAZ 90
+ * escribía `HDG HOLD` y `FLCH SPD`, que son de Boeing; un E-Jet escribe `HDG`
+ * y `FLCH` (C. Regli, *Embraer EMB190 – Summary*, 2025, pp. 1-12 y 1-13).
+ */
+describe("lo que escribe el FMA de lado y de alto, en cada clase", () => {
+  it("el E-Jet: HDG, LOC; ALT, VS, FLCH, VPATH y GS", () => {
+    const c = claseDeRecogida(ARAI);
+    expect(rotuloDelModo(c, "HDG HOLD")).toBe("HDG");
+    expect(rotuloDelModo(c, "LOC")).toBe("LOC");
+    expect(rotuloDelModo(c, "ALT")).toBe("ALT");
+    expect(rotuloDelModo(c, "V/S")).toBe("VS");
+    expect(rotuloDelModo(c, "FLCH SPD")).toBe("FLCH");
+    expect(rotuloDelModo(c, "VNAV PTH")).toBe("VPATH");
+    expect(rotuloDelModo(c, "G/S")).toBe("GS");
+  });
+
+  it("el 747: los de Boeing, tal cual", () => {
+    const c = claseDeRecogida(YVAGA);
+    for (const m of ["HDG HOLD", "LOC", "ALT", "V/S", "FLCH SPD", "VNAV PTH", "G/S"] as const)
+      expect(rotuloDelModo(c, m)).toBe(m);
   });
 });

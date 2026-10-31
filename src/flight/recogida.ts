@@ -52,6 +52,7 @@
  */
 
 import { esDeChorro, type AircraftConfig } from "./aircraft";
+import type { ModoLateral, ModoVertical } from "./piloto-automatico";
 
 const PIE = 0.3048;
 
@@ -114,6 +115,51 @@ export type QueHacenLosGases = "velocidad" | "empuje" | "ralenti" | "recogida";
 export function rotuloDeLosGases(clase: ClaseDeRecogida, que: QueHacenLosGases): string {
   if (clase === "electricos") return que === "velocidad" ? "SPDT" : que === "recogida" ? "RETD" : "SPDE";
   return que === "velocidad" ? "SPD" : que === "empuje" ? "THR" : "IDLE";
+}
+
+/**
+ * **Cómo escribe el FMA lo que llevan las otras dos manos**, el lateral y el
+ * vertical, en la cabina de la clase de este avión. Los modos del automático
+ * se llaman por dentro con las palabras de Boeing —ver `ModoLateral` y
+ * `ModoVertical`—, y en la pantalla cada cabina pone las suyas:
+ *
+ * - **En la de los E-Jets (el JAZ 90)**, las del sistema de guiado de su
+ *   familia (C. Regli, *Embraer EMB190 – Summary*, 2025, pp. 1-12 y 1-13):
+ *   `HDG`, «Returns to selected HDG», y `LOC` de lado; y de alto, `ALT`,
+ *   «Hold PRESS ALT»; `VS`; `FLCH`, «Selected SPD, controlled by elevator,
+ *   climb/descend to selected ALT»; `GS`, y `VPATH`, la senda del plan del
+ *   VNAV, «1°..6°, default 3°». El automático del juego sostiene el rumbo que
+ *   llevabas al ponerlo, con el *bug* de rumbo llevado a él —es lo que enseña
+ *   la ventanilla HDG—, y en un E-Jet eso es `HDG` con el *bug* sincronizado:
+ *   `HDG HOLD` no está entre sus modos.
+ * - **En la de Boeing (el JAZ 120, de la clase del 747-400)**, las de Boeing:
+ *   `HDG HOLD` y `LOC`; `ALT`, `V/S`, `FLCH SPD`, `VNAV PTH` y `G/S`. De
+ *   ellas, en documento oficial se ha podido leer `VNAV PTH` en la columna
+ *   vertical del FMA de un 747-428 —«THR LNAV VNAV PTH»— (BEA, informe del
+ *   accidente del F-GITA, Tahití, 1993, p. 18) y los modos `FLCH`, `V/S` y
+ *   `ALT HOLD` por su nombre (ARAIC, informe AA2006-1 del JA8903, un
+ *   747-400D, 2006). El rótulo exacto de los demás —`HDG HOLD`, `FLCH SPD`,
+ *   `ALT`, `LOC`, `G/S`— no se ha podido leer en su FCOM: son los de la
+ *   familia de Boeing, y quedan por comprobar en el del 747-400.
+ *
+ * Los de hélice no llevan FMA: les vale la de Boeing, que no pintan.
+ */
+export function rotuloDelModo(clase: ClaseDeRecogida, modo: ModoLateral | ModoVertical): string {
+  if (clase !== "electricos") return modo;
+  switch (modo) {
+    case "HDG HOLD":
+      return "HDG";
+    case "V/S":
+      return "VS";
+    case "FLCH SPD":
+      return "FLCH";
+    case "VNAV PTH":
+      return "VPATH";
+    case "G/S":
+      return "GS";
+    default:
+      return modo;
+  }
 }
 
 /**

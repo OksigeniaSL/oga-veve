@@ -869,6 +869,31 @@ export interface AircraftConfig {
    */
   cuentaDeLaToma: readonly PiesDeLaCuenta[] | null;
   /**
+   * **Si esa cuenta se canta solo sin ILS delante**, en las aproximaciones de
+   * no precisión.
+   *
+   * Es la del avión cuya cuenta no sale de su manual sino de la norma del
+   * TAWS, que la pide así: «Descent of the airplane to 500 feet above the
+   * terrain or nearest runway elevation (voice callout "Five Hundred") during
+   * a non-precision approach» (FAA, AC 23-18, 2000, §3.d, sobre el
+   * TSO-C151a). Con un ILS delante esa norma no pide nada, y cantarlo ahí es
+   * enseñar una llamada que ese avión no tiene por qué dar. Ver `soloSinIls`
+   * en `flight/avisos-de-altura.ts` y `tieneIls` en
+   * `world/sendas-publicadas.ts`.
+   */
+  cuentaSoloSinIls: boolean;
+  /**
+   * **Si su avisador canta *minimums*** al llegar a la altura de decisión.
+   *
+   * No es de las llamadas que pide la norma del TAWS sino de las que elige
+   * quien lo instala —«Altitude Call Outs "Approaching Minimums," or other
+   * features not required by TSO-C151a» (FAA, AC 23-18, 2000, §7.o.(8))—,
+   * así que va con la fuente de su clase o no va. Sin ella, a la altura de
+   * decisión lo dice quien va sentado al lado, que es la instructora. Ver
+   * `loDiceElAvion` en `audio/cabina.ts`.
+   */
+  cantaLosMinimos: boolean;
+  /**
    * **Cómo se oscurecen las ventanillas del pasaje**, o `null` sin pasaje.
    *
    * - `persiana`: la de siempre, de plástico, que sube y baja cada uno con la
@@ -1298,6 +1323,8 @@ export const PYKASU: AircraftConfig = {
   tcas: null,
   avisosHablados: false,
   cuentaDeLaToma: null,
+  cuentaSoloSinIls: false,
+  cantaLosMinimos: false,
   ventanillas: null,
   // 163 nudos: la Vne de un entrenador ligero. El Mach no lo ve en su vida.
   vmoKt: 163,
@@ -1437,6 +1464,8 @@ export const MAINUMBY: AircraftConfig = {
   tcas: null,
   avisosHablados: false,
   cuentaDeLaToma: null,
+  cuentaSoloSinIls: false,
+  cantaLosMinimos: false,
   ventanillas: null,
   // Un biplano lento: 130 nudos y se queda muy lejos del Mach.
   vmoKt: 130,
@@ -1611,7 +1640,21 @@ export const PANAMBI: AircraftConfig = {
    * parte. O sea: en molinete no sube, en bandera sí.
    */
   motorParado: { molinete: 0.35, bandera: 0.03, autoBandera: false },
-  cruiseSpeed: 80,
+  /*
+   * **Los 189 nudos verdaderos del Seneca II al 75 %**: «215 hp at 12,000
+   * feet, which allows for a 75-percent cruise speed of 218 mph» (*Plane &
+   * Pilot*, «Piper Seneca II, III, IV, V»), que son 189 nudos. Estaba en 80
+   * m/s, 155 nudos. La cifra es verdad arriba, con el turbo dando su potencia
+   * de nivel del mar: ver `alturaCritica` y `alturaDeCrucero`.
+   *
+   * Y como el empuje de una hélice se apaga con la velocidad en proporción a
+   * esta cifra —ver `empujeLleno`—, también lo hace un poco más rápido abajo:
+   * a fondo, 186 nudos a nivel del mar y 211 a 12.000 pies, cuando el de
+   * verdad no pasa de 196 («Top mph 226», *Plane & Pilot*). Con la de antes no
+   * se pasaba, pero al 75 % de gas a su altura de crucero iba a 167 nudos; con
+   * ésta, a 181.
+   */
+  cruiseSpeed: 189 * 0.514444,
   // Cinco mil quinientos: un bimotor de pistón sin presurizar vuela sus etapas
   // ahí arriba, con oxígeno a bordo.
   alturaDeCrucero: 5500,
@@ -1628,6 +1671,8 @@ export const PANAMBI: AircraftConfig = {
   tcas: null,
   avisosHablados: false,
   cuentaDeLaToma: null,
+  cuentaSoloSinIls: false,
+  cantaLosMinimos: false,
   ventanillas: null,
   // Y los límites, tomados de un bimotor ligero de esta clase.
   vmoKt: 230,
@@ -1674,7 +1719,8 @@ export const PANAMBI: AircraftConfig = {
     // La librea de la casa con el sol en la cola: es un avión de trabajo que
     // lleva gente, y se pinta como se pintan ésos.
     ...LIBREA,
-    blades: 3,
+    // Bipala, la de serie del Seneca II: ver `helice` en su modelo.
+    blades: 2,
     motivo: "sol",
   },
   sound: {
@@ -1818,15 +1864,29 @@ export const ARASUNU: AircraftConfig = {
   tcas: "TCAS I",
   avisosHablados: true,
   /*
-   * **Solo *five hundred***: lo único que se puede asegurar de su clase. Un
-   * turbohélice de diecinueve plazas vuela con un TAWS de clase A (14 CFR
-   * 135.154), y la clase A lleva, entre las funciones del GPWS, «descent of
-   * the airplane to 500 feet above the terrain or nearest runway elevation
-   * (voice callout "Five Hundred")» (FAA, AC 23-18, 2000, §8.a, sobre el
-   * TSO-C151a). El resto de la cuenta es un menú que elige cada operador, y
-   * para el 1900D no se ha encontrado cuál: sin fuente, no se canta.
+   * **Solo *five hundred*, y solo sin ILS delante**: lo único que se puede
+   * asegurar de su clase. Un turbohélice de diecinueve plazas vuela con un
+   * TAWS de clase A (14 CFR 135.154), y la clase A lleva, entre las funciones
+   * del GPWS, «descent of the airplane to 500 feet above the terrain or
+   * nearest runway elevation (voice callout "Five Hundred") during a
+   * non-precision approach» (FAA, AC 23-18, 2000, §3.d, sobre el TSO-C151a).
+   * Se cantaba en todas las tomas, también con la senda de un ILS delante.
+   *
+   * Y no se ha encontrado más fuente que esa. El TAWS de un 1900D no es uno
+   * de serie con su cuenta en el manual del avión: es el que le pone cada
+   * operador, cada uno con su menú —un Sandel ST3400 con el STC de Maxcraft
+   * (Transport Canada, SA12-78), o el T2CAS de ACSS que Raytheon ofrecía
+   * como opción desde 2007—, y sin el de su clase el resto de la cuenta no
+   * se canta. Ver `cuentaSoloSinIls`.
    */
   cuentaDeLaToma: [500],
+  cuentaSoloSinIls: true,
+  /*
+   * **Y sin *minimums***: no lo pide la norma del TAWS y no se ha encontrado
+   * en ningún documento del 1900D. Lo dice la instructora, como lo diría
+   * quien va a la derecha. Ver `cantaLosMinimos`.
+   */
+  cantaLosMinimos: false,
   // Persiana de plástico, como cualquier turbohélice regional.
   ventanillas: "persiana",
   // Turbohélice de línea corta: rápido abajo y con techo de treinta mil.
@@ -2053,6 +2113,9 @@ export const ARAI: AircraftConfig = {
    * a la altura de decisión: ver `cabina.minimums`.
    */
   cuentaDeLaToma: [2500, 1000, 500, 200, 100, 50, 40, 30, 20, 10],
+  cuentaSoloSinIls: false,
+  // Y el «MIN» de esa misma lista, a la altura de decisión (Regli, p. 1-57).
+  cantaLosMinimos: true,
   // Persiana de plástico, como cualquier reactor de pasillo único.
   ventanillas: "persiana",
   /*
@@ -2363,6 +2426,10 @@ export const YVAGA: AircraftConfig = {
    * hundred*, que esa transcripción no recoge.
    */
   cuentaDeLaToma: [1000, 500, 400, 300, 200, 100, 50, 40, 30, 20, 10],
+  cuentaSoloSinIls: false,
+  // Como estaba: no se ha leído aquí una fuente del 747-400 que lo diga, y
+  // queda por comprobar.
+  cantaLosMinimos: true,
   /*
    * **Electrocrómicas**, como las de los largos radios de esta generación —el
    * 787 y el 777X—, que son los que llevan ventanillas tan grandes como estas

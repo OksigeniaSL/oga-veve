@@ -818,7 +818,7 @@ import {
   vecesLejosDe,
   type Scenario,
 } from "./world/scenarios";
-import { SENDA_DE_SIEMPRE, sendaDeLaCabecera } from "./world/sendas-publicadas";
+import { SENDA_DE_SIEMPRE, sendaDeLaCabecera, tieneIls } from "./world/sendas-publicadas";
 import { crearTeselas, type Teselas } from "./world/teselas";
 import {
   TeselasDeOrtofoto,
@@ -1314,7 +1314,13 @@ import {
   type Aviso,
   type Lectura,
 } from "./flight/avisos-de-altura";
-import { claseDeRecogida, escalonesDeLaRecogida, laRecogidaDe, rotuloDeLosGases } from "./flight/recogida";
+import {
+  claseDeRecogida,
+  escalonesDeLaRecogida,
+  laRecogidaDe,
+  rotuloDeLosGases,
+  rotuloDelModo,
+} from "./flight/recogida";
 import { comoSeAterriza, loQueSeJuzga } from "./flight/como-se-aterriza";
 import {
   canalesDe,
@@ -16494,6 +16500,8 @@ export class Game {
         ) || this.sobreLaPista(),
       vertical: ya.verticalSpeed,
       altitud: ya.position.y,
+      // Con la senda de un ILS delante no es de no precisión. Ver `tieneIls`.
+      conIls: tieneIls(oaciDe(this.elCampo().escenario), cabeceraEnUso(this.elCampo().escenario)),
     };
     const aviso = this.avisosDeAltura.paso(lectura);
     if (aviso) this.cantarLaCuenta(aviso);
@@ -26936,10 +26944,11 @@ export class Game {
             (this.objetivos.altitud ?? 0) > this.flight.state.position.y ? "empuje" : "ralenti",
           )
         : rotuloDeLosGases(clase, "velocidad");
+    // Y los otros dos, también con los de su cabina: `HDG` y `FLCH` en un E-Jet. Ver `rotuloDelModo`.
     return {
       gases,
-      lateral: this.objetivos.rumbo !== null ? this.modoLateral : "",
-      vertical: this.objetivos.altitud !== null ? this.modoVertical : "",
+      lateral: this.objetivos.rumbo !== null ? rotuloDelModo(clase, this.modoLateral) : "",
+      vertical: this.objetivos.altitud !== null ? rotuloDelModo(clase, this.modoVertical) : "",
       piloto: true,
     };
   }

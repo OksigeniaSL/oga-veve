@@ -421,10 +421,9 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
         /*
          * **Con turbo, algo más.** A 1.500 m el turbo le da toda la potencia
          * de nivel del mar, que un atmosférico ya no tiene, y a fondo pasa un
-         * poco más de su crucero: medido, 93 m/s contra 80. Es lo que hace el
-         * de su clase, que con sus 215 hp a 12.000 pies cruza al 75 % a 218
-         * millas por hora (*Plane & Pilot*, «Seneca II»), más deprisa que el
-         * crucero de su ficha.
+         * poco de su crucero: unos 100 m/s contra 97, los 189 nudos con los
+         * que el de su clase, con sus 215 hp a 12.000 pies, cruza al 75 % (218
+         * millas por hora, *Plane & Pilot*, «Seneca II»).
          */
         expect(tope).toBeLessThan(a.cruiseSpeed * (a.alturaCritica !== null ? 1.2 : 1.15));
         return;

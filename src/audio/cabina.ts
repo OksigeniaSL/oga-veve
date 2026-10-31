@@ -335,6 +335,8 @@ export const DE_LA_PRESURIZACION: ReadonlySet<string> = new Set(["cabina.cabin"]
 /** Lo que hace falta saber de un avión para saber qué cantos lleva. */
 export interface EquipoDeCabina {
   readonly avisosHablados: boolean;
+  /** Si su avisador dice *minimums*. Ver `cantaLosMinimos` en la ficha. */
+  readonly cantaLosMinimos?: boolean;
   readonly tcas: string | null;
   readonly presurizacion?: { readonly avisoHablado: boolean } | null;
   readonly cantosDeLaCarrera?: "boeing" | "embraer" | null;
@@ -369,6 +371,8 @@ export function loDiceElAvion(clave: string, avion: EquipoDeCabina): boolean {
   // La maniobra, solo el TCAS II: el TCAS I solo avisa. Ver `daLaManiobra`.
   if (DEL_RA.has(clave)) return avion.tcas === "TCAS II";
   if (DE_LA_PRESURIZACION.has(clave)) return avion.presurizacion?.avisoHablado === true;
+  // *Minimums*, solo en la caja que lo lleva en su menú: ver `cantaLosMinimos`.
+  if (clave === "cabina.minimums") return avion.avisosHablados && avion.cantaLosMinimos === true;
   if (DE_LOS_AVISADORES.has(clave)) return avion.avisosHablados;
   return true;
 }
