@@ -117,6 +117,20 @@ const OTRO_AVION = `<svg class="otro-avion" viewBox="0 0 24 24" aria-hidden="tru
 </svg>`;
 
 /**
+ * **La altura sobre la pista, dibujada**: el avión de perfil, con el morro a
+ * la derecha como en una vista de libro, encima de la pista, y la flecha que
+ * los une. Va delante del número en grande de Taguato para que el número
+ * nunca salga solo: dice «esto es lo que hay de la pista al avión».
+ */
+const ALTURA_SOBRE_LA_PISTA = `<svg class="insignia__dibujo" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M7 4.2h2l2.6 2.6H19c1.4 0 2.4.6 2.4 1.3S20.4 9.4 19 9.4H8.4L7 7.2Z" fill="currentColor" />
+  <path d="M4 10.5v8.2M2.2 12.4 4 10.5l1.8 1.9M2.2 16.8 4 18.7l1.8-1.9" fill="none"
+        stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M7 20.2h15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M10 20.2h2.4M15 20.2h2.4" fill="none" stroke="var(--barro, #1a2420)" stroke-width="0.9" />
+</svg>`;
+
+/**
  * **El remolino que deja detrás**, para la espera por su estela: el avión que
  * salió y, detrás, su torbellino. Ver `setLuzDeTorre`.
  */
@@ -3526,7 +3540,10 @@ export class Hud {
 
     if (this.hintTimer > 0) {
       this.hintTimer -= dt;
-      if (this.hintTimer <= 0) this.hint.textContent = "";
+      if (this.hintTimer <= 0) {
+        this.hint.textContent = "";
+        this.hint.classList.remove("insignia--cifra");
+      }
     }
   }
 
@@ -4932,7 +4949,36 @@ export class Hud {
   }
 
   flash(text: string, seconds = 2.4): void {
+    this.hint.classList.remove("insignia--cifra");
     this.hint.textContent = text;
+    this.hintTimer = seconds;
+  }
+
+  /**
+   * **La altura sobre la pista, en grande**, que es lo que la escalera promete
+   * en Taguato al cruzar 150, 100 y 50 m (500, 100 y 50 ft en Taguato
+   * Ruvicha). Antes salía por `flash`, a la letra del subtítulo, y un número
+   * de 13 px no se lee de un vistazo en una final.
+   *
+   * Va donde los subtítulos —arriba, en el hueco de la barra—, que no tapa la
+   * pista ni el aviso, que viven en el centro y abajo; y es el mismo elemento
+   * para que el lector de pantalla lo diga como dice los demás. Nunca solo:
+   * con el dibujo de la altura sobre la pista delante, su unidad detrás, y la
+   * voz de máquina en el avión que lleva radioaltímetro.
+   */
+  alturaEnGrande(cifra: string, unidad: string, seconds = 1.6): void {
+    this.hint.classList.add("insignia--cifra");
+    this.hint.replaceChildren();
+    this.hint.insertAdjacentHTML("beforeend", ALTURA_SOBRE_LA_PISTA.trim());
+    const numero = document.createElement("span");
+    numero.className = "insignia__cifra";
+    numero.textContent = cifra;
+    const u = document.createElement("span");
+    u.className = "insignia__unidad";
+    u.textContent = unidad;
+    // El espacio no se pinta —entre piezas de una caja flex no cuenta— pero el
+    // lector de pantalla dice «150 m» y no «150m».
+    this.hint.append(numero, " ", u);
     this.hintTimer = seconds;
   }
 

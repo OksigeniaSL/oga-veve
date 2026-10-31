@@ -16612,8 +16612,9 @@ export class Game {
      */
     const grande = this.alturaEnGrande.paso(lectura);
     if (grande && canalesDe(this.tier.avisos).cifra) {
-      this.hud.flash(
-        `${grande.dice} ${UNIT_SYSTEMS[this.tier.units].altitudeLabel()}`,
+      this.hud.alturaEnGrande(
+        grande.dice,
+        UNIT_SYSTEMS[this.tier.units].altitudeLabel(),
         1.6,
       );
     }

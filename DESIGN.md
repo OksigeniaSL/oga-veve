@@ -73,9 +73,12 @@ Tres reglas que la tabla no dice sola:
 - **La voz de la instructora no está en la escalera.** Abajo es más necesaria que arriba: quien no lee necesita que
   alguien le diga las cosas.
 
-Pendiente: la escalera dice que en Taguato la altura sobre la pista sale **en grande** al cruzar 150, 100 y 50 m, y
-hoy sale por el subtítulo (`Hud.flash`), que es una insignia de 13 px. Le falta su tamaño; `--voz-cifra` (32 px) está
-definida en la hoja y no la usa nadie.
+La altura sobre la pista **en grande** (`Hud.alturaEnGrande`): al cruzar 150, 100 y 50 m en Taguato (500, 100 y 50 ft
+en Taguato Ruvicha), el número a `--voz-cifra` (32 px × escala, 700, cifras tabulares) con su unidad a la letra de la
+glosa y, delante, el dibujo del avión de perfil sobre la pista con la flecha que los une. Sale 1,6 s en el sitio de los
+subtítulos —arriba, en el hueco de la barra; en cabina, debajo de la barra y no al 32 %—, que no tapa la pista de la
+final ni el aviso, y sin animación. Nunca es el único canal: el dibujo, el lector de pantalla (es el mismo elemento
+`aria-live` de los subtítulos), la ALT del cuadro y, en el avión que lleva radioaltímetro, la voz de máquina.
 
 ## 2. Colores y su papel
 
@@ -174,7 +177,7 @@ noroeste a 45°, fuerza 0,38 y 0,46 para los pequeños), para que el papel siga 
 
 | Familia | Pila | Dónde | Notas |
 |---|---|---|---|
-| HUD | `"Varela Round", "Trebuchet MS", "Segoe UI", system-ui, sans-serif` (`--hud-fuente`) | todo lo que no es cabina ni carta | Varela Round no se descarga: sale la del sistema. Pendiente decidir si se empaqueta |
+| HUD | `"Oga Redonda", "Varela Round", "Trebuchet MS", "Segoe UI", system-ui, sans-serif` (`--hud-fuente`) | todo lo que no es cabina ni carta | Varela Round dentro del paquete, recortada a latín, castellano y guaraní (ã ẽ ĩ õ ũ ỹ, la g̃, el puso) y renombrada «Oga Redonda» porque su OFL reserva el nombre (`scripts/letra-del-hud.sh`): 24 KB en woff2, un solo grueso (los 600 y 700 los engruesa el navegador). La firma de los aviones (`world/librea.ts`) aún la pide como «Varela Round»: cambiarla obliga a rehacer los retratos (`npm run retratos`) |
 | Cabina | `"Roboto Condensed", "Liberation Sans Narrow", "Arial Narrow", "DejaVu Sans Condensed", ui-sans-serif, sans-serif` (`--cabina-fuente`) | el cuadro de mandos y los rótulos de cabina | condensada, en mayúsculas y nunca en cursiva; ninguna se descarga |
 | Carta | Barlow Semi Condensed (500, 500 cursiva, 600) para los nombres y Barlow Condensed (600) para las cifras | la carta y lo que se escribe encima | dentro del paquete, recortadas a lo que se escribe (`scripts/letras-de-la-carta.sh`); OFL |
 
@@ -192,16 +195,39 @@ noroeste a 45°, fuerza 0,38 y 0,46 para los pequeños), para que el papel siga 
 | Glosa (`--voz-glosa`) | 16 px × escala | 400 | — |
 | Rótulo aeronáutico (`--voz-rotulo`) | 15 px × escala, espaciado 0,1 em, en `--ocre-tinta` | 700 | — |
 | Botón de panel | 15 px | 400 | — |
-| Unidad, insignia, subtítulo | 13 px | 400 | — |
+| La altura en grande (`--voz-cifra`) | 32 px × escala, cifras tabulares | 700 | 1 |
+| Subtítulo, placa del avión, radio | 16 px × escala (la glosa) | 400 | — |
+| Unidad de una tarjeta de instrumento | 13 px | 400 | — |
 
 Lo más usado en la hoja son 600 y 700 de grueso; las cifras van siempre tabulares (`font-variant-numeric:
 tabular-nums`); y el interlineado es 1 en cifras y glifos, y de 1,15 a 1,35 en el texto.
 
 **El suelo es 16 px para lo que lee alguien que empieza a leer**: no lee letra a letra, reconoce la silueta de la
 palabra, y a 11 px esa silueta no se resuelve. Por eso la glosa, que es su muleta, va a 16, y el rótulo aeronáutico
-manda por grueso, mayúsculas y color, no por tamaño. Quedan textos de 9 a 13 px en piezas secundarias (la palabra de
-las luces del cuadro a 11, «próximamente» en el hangar a 11, pies de tarjeta): pendiente de revisarlos uno a uno
-contra el suelo.
+manda por grueso, mayúsculas y color, no por tamaño. En el teléfono apaisado lo que se lee va a la glosa **dividida por
+`--escala`**, para que el zoom de la pantalla baja no la deje en once.
+
+Revisado el 31 de octubre de 2026: lo que se lee como frase subió a la glosa (los subtítulos, la placa del avión, la
+radio, la frase del tutor, la explicación de la tecla, las glosas del cuaderno y de la tarjeta del avión, los porqués
+del parte, la dedicatoria, «Ya me lo aprendí»). Lo que queda por debajo de 16 px, y por qué:
+
+- **Rótulos técnicos de cabina**, pequeños a propósito y del tamaño de los de un panel de verdad: las cifras y los
+  rótulos del cuadro (`.cr__*`, `.esfera__*`), la palabra de las luces de aviso (11), el TRIM, la unidad de una tarjeta
+  de instrumento (13) y el rótulo de la tarjeta del avión en letra de cabina (12). Los del cuadro son unidades del SVG
+  de 1280 × 540, que se escala de una pieza. Ninguno va solo: van con su color, su dibujo y, debajo, su glosa a 16.
+- **Códigos aeronáuticos**, que se leen como códigos y no como palabras, igual que en un METAR o en el AIP: el METAR
+  crudo (12) y su línea descifrada (13; 10,5 en el teléfono), el RWY del parte, el OACI de la tarjeta de casa y de la
+  ficha del plano (12).
+- **La carta**, con su propia escala de carta impresa (de 11,5 a 17, cada etiqueta con su halo de papel; ver abajo).
+- **Letra que es parte de un dibujo**: los sellos de caucho (8,5 a 11), la letra de las teclas dibujadas, los números
+  dentro de los dibujos del parte y de las explicaciones (unidades de SVG).
+- **Piezas estrechas a propósito**: en las fichas del hangar, que son una rejilla sin carrusel de 118 a 186 px, el dato
+  y la cuenta van a 15, el rótulo del paso en mayúsculas a 12 y «próximamente» a 12, que no es el canal (la ficha va
+  al 62 % y rayada); y los nombres bajo los sellos del álbum (11 a 12,5). En pantallas de 500 px de alto o menos, los
+  porqués del parte (13 y 15), la curiosidad de la explicación y el globo de la tarjeta del avión (15).
+- **Lo que no es para quien juega**: la firma de la fotografía (11), que es una obligación nuestra, y el medidor de
+  rendimiento (12).
+- Los rótulos de grupo de los ajustes van a `--voz-rotulo` (15, en mayúsculas espaciadas), como cualquier rótulo.
 
 **La carta**: islas en mayúsculas espaciadas a 17 px, sitios en caja normal a 14, el agua en cursiva y en su tinta a
 15, cifras tabulares a 13 y la radio a 12. Cada etiqueta lleva un halo de papel de 3 px.
@@ -316,9 +342,10 @@ Todo se mide contra la propia ficha (es contenedor), y así vale igual en la tab
   pico por encima») vale hasta que alguien añade un botón: así se escondió el cinturón.
 - Separaciones de uso: 2, 4, 6, 8, 10, 12, 14 y 16 px. Radios: `--r-s` 10, `--r-m` 16 y `--r-l` 22; 999 px para las
   pastillas y 50 % para lo redondo.
-- **El texto ocupa su caja**: nunca `max-width` en `ch` ni en px para un párrafo. Hoy no hay ninguno en `ch`; quedan
-  topes en px en tres textos del vuelo, puestos para no pisar otra tarjeta: la frase del tutor con el dedo (240), la
-  radio (320) y los porqués del parte (560). Pendiente de rehacerlos sin tope.
+- **El texto ocupa su caja**: nunca `max-width` en `ch` ni en px para un párrafo. Si una frase no puede crecer, se
+  acota la caja y la frase ocupa lo que ella deje: el tutor en pantalla baja no pasa de un tercio de la pantalla
+  (`34vw`); la radio parte de 18 em en la fila de la barra, crece hasta llenar el hueco y se para donde acaba la frase
+  (`max-width: max-content`); y los porqués del parte van al ancho de la tarjeta, como los partes de arriba.
 - Las medidas que el HUD toma de sí mismo y escribe como variables pasan por `aPxDelHud` (`src/ui/escala.ts`): en
   pantallas bajas el HUD va con `zoom`, y sin esa conversión cada hueco medido se reduce dos veces.
 
@@ -483,8 +510,8 @@ a las dos cosas. Se quedan quietos: la entrada de los paneles, los parpadeos y l
 la bajada del cuadro, las gafas, el ángulo de visión que se abre con la velocidad, el traqueteo en la carrera de
 despegue, la cabeza que se mueve en la cabina y la que se asoma en la ventanilla, y el giro de la cámara de escena. El
 relámpago sube despacio y no pasa de un tercio. **Se queda toda la información**: una luz de aviso del cuadro no
-parpadea, se enciende y se queda; un cambio no parpadea, luce y se apaga. Pendiente: el destello del cinturón y la
-flecha que gira en el aviso de versión nueva solo atienden a la preferencia del sistema, no a la de los ajustes.
+parpadea, se enciende y se queda; un cambio no parpadea, luce y se apaga. El cartel del cinturón no destella: se
+enciende y el timbre marca el instante; y la flecha del aviso de versión nueva no gira: el borde ámbar dice que va.
 
 ### La voz
 

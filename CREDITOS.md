@@ -298,6 +298,12 @@ escenarios españoles y de EOX sobre datos Sentinel en Silvio Pettirossi, y las
 dos están en la tabla de arriba. Un fichero de licencias que afirma lo
 contrario de lo que hace el código es peor que no tenerlo.
 
+## La letra del juego
+
+| Qué | De quién | Uso | Licencia |
+| --- | --- | --- | --- |
+| Varela Round 3.010 | Joe Prince y The Varela Round Project Authors (github.com/alefalefalef/Varela-Round-Hebrew), de Google Fonts (github.com/google/fonts, carpeta `ofl/varelaround`) | La letra de todo el HUD y de las pantallas de antes de volar. Recortada a latín, castellano y guaraní y dentro del paquete como **«Oga Redonda»** (`src/assets/letras/OgaRedonda-Regular.woff2`, con su `OFL-VarelaRound.txt`; `scripts/letra-del-hud.sh`): su licencia reserva los nombres «Varela» y «Varela Round», y un recorte es una versión modificada que no puede llevarlos | **SIL Open Font License 1.1** |
+
 ## La carta aeronáutica
 
 La carta del hangar y del plano en vuelo (`src/ui/carta/`, ADR 0021). Lo que no

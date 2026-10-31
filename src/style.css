@@ -2,9 +2,8 @@
  * Estilos del juego.
  *
  * Paleta de Granja Óga: terracota, ocre, verde bosque y beige. Tipografía
- * Varela Round si está disponible en el sistema, con una pila de reserva
- * legible: no cargamos la fuente por red todavía porque el juego tiene que
- * arrancar rápido en una conexión de colegio.
+ * Varela Round, dentro del paquete y recortada —ver `--hud-fuente`—, con una
+ * pila de reserva legible por si aún no ha llegado.
  *
  * Los tamaños del HUD están pensados para leerse de un vistazo mientras se
  * vuela, no para lucir en una captura.
@@ -67,6 +66,23 @@
   font-family: "Barlow Condensed";
   src: url("./assets/letras/BarlowCondensed-SemiBold.woff2") format("woff2");
   font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+ * **La letra del HUD**: Varela Round, de Joe Prince (SIL Open Font License
+ * 1.1), recortada y renombrada «Oga Redonda» —su licencia reserva el nombre
+ * para la letra sin tocar; ver `scripts/letra-del-hud.sh`—. Iba solo por su
+ * nombre y no se descargaba, así que cada aparato caía en su letra del sistema
+ * y el HUD se veía distinto en cada uno. Un solo grueso: los 600 y 700 de la
+ * hoja los engruesa el navegador, como hacía con la instalada. Son unos 24 KB
+ * y llegan con la hoja, sin pedir nada a terceros.
+ */
+@font-face {
+  font-family: "Oga Redonda";
+  src: url("./assets/letras/OgaRedonda-Regular.woff2") format("woff2");
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
@@ -138,7 +154,8 @@
   --sombra: var(--barro);
 
   --hud-fuente:
-    "Varela Round", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+    "Oga Redonda", "Varela Round", "Trebuchet MS", "Segoe UI", system-ui,
+    sans-serif;
 
   /*
    * ── Los colores de la cabina ──
@@ -444,10 +461,16 @@ body {
   }
 }
 
+/* Quieta también con la fila «Movimiento» de los ajustes, no solo con la del
+   sistema: ver «Movimiento reducido, por partida doble». El borde ámbar y el
+   cursor siguen diciendo que va. */
 @media (prefers-reduced-motion: reduce) {
   .version-nueva--yendo svg {
     animation: none;
   }
+}
+.sin-movimiento .version-nueva--yendo svg {
+  animation: none;
 }
 
 /*
@@ -630,10 +653,16 @@ body {
   }
 }
 
+/* Y sin destello con «reducir movimiento», venga del sistema o de los
+   ajustes del juego: el cartel se enciende y se queda, que es la información;
+   el timbre ya marca el instante. */
 @media (prefers-reduced-motion: reduce) {
   .cinturon.cinturon--destello {
     animation: none;
   }
+}
+.sin-movimiento .cinturon.cinturon--destello {
+  animation: none;
 }
 
 /*
@@ -2230,7 +2259,7 @@ body {
 }
 
 .cuaderno__glosa {
-  font-size: 13px;
+  font-size: var(--voz-glosa);
   line-height: 1.2;
   /* Una palabra larga —en guaraní las hay— se parte antes que salirse. */
   overflow-wrap: break-word;
@@ -3683,11 +3712,50 @@ button.motor__tecla::after {
 }
 
 .insignia {
-  font-size: 13px;
+  font-size: var(--voz-glosa);
   padding: 6px 12px;
   border-radius: 999px;
   background: rgba(47, 82, 67, 0.82);
   border: 1px solid rgba(228, 226, 218, 0.2);
+}
+
+/*
+ * **La altura sobre la pista, en grande** (`Hud.alturaEnGrande`): el peldaño
+ * de Taguato empieza a leer una altura, y la escalera la promete grande. Es
+ * `--voz-cifra`, la voz de las cifras, con su unidad a la letra de la glosa y
+ * el dibujo delante; en el sitio de los subtítulos, que no tapa la pista ni
+ * el aviso. Un momento —1,6 s— y sin animación: aparecer ya es el aviso.
+ */
+.insignia.insignia--cifra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 18px 4px 12px;
+  background: var(--barniz), var(--barro);
+  border: 2px solid var(--ocre);
+  box-shadow: var(--filo), var(--poso);
+  color: var(--tinta);
+  line-height: 1;
+}
+
+.insignia__dibujo {
+  width: calc(var(--voz-cifra) * 1.1);
+  height: calc(var(--voz-cifra) * 1.1);
+  flex: none;
+  color: var(--ocre-tinta);
+}
+
+.insignia__cifra {
+  font-size: var(--voz-cifra);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.insignia__unidad {
+  font-size: var(--voz-glosa);
+  color: var(--tinta-suave);
+  align-self: flex-end;
+  padding-bottom: 0.3em;
 }
 
 /*
@@ -4248,10 +4316,18 @@ button.motor__tecla::after {
     left: 38%;
   }
 
-  /* Y su frase, en dos líneas si hace falta: en una sola, «Empujá el motor a
-     tope y esperá a que corra» le llegaba hasta la tarjeta de la orden. */
+  /*
+   * Y su frase, en dos líneas si hace falta: en una sola, «Empujá el motor a
+   * tope y esperá a que corra» le llegaba hasta la tarjeta de la orden. **Manda
+   * la caja, no la frase**: la tarjeta no pasa de un tercio de la pantalla y
+   * la frase ocupa lo que ella deje. Con el tope en la frase (240 px) quedaba
+   * más estrecha que su tarjeta, y al subirle la letra se partía en tres.
+   */
+  .hud .tutor {
+    max-width: 34vw;
+  }
+
   .tutor__texto {
-    max-width: 240px;
     text-align: center;
   }
 
@@ -6502,7 +6578,7 @@ button.motor__tecla::after {
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.14);
-  font-size: 13px;
+  font-size: var(--voz-glosa);
   font-style: italic;
   opacity: 0.78;
 }
@@ -6811,7 +6887,7 @@ button.motor__tecla::after {
 }
 
 .teclas__pista {
-  font-size: 13px;
+  font-size: var(--voz-glosa);
   opacity: 0.75;
 }
 
@@ -7253,7 +7329,7 @@ button.motor__tecla::after {
   background: var(--barro);
   box-shadow: 0 0 0 100vmax var(--barro);
   clip-path: inset(0 -100vmax -100vmax);
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.4;
   color: rgb(228 226 218 / 0.85);
 }
@@ -7721,7 +7797,7 @@ button.motor__tecla::after {
 }
 
 .ficha__dato {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--tinta-suave);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -8001,7 +8077,7 @@ button.motor__tecla::after {
 }
 
 .ficha__proximamente {
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 4px 9px;
@@ -8112,14 +8188,14 @@ button.motor__tecla::after {
 }
 
 .paso__que {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   opacity: 0.72;
 }
 
 .paso__valor {
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -8263,7 +8339,7 @@ button.motor__tecla::after {
 .hangar__reposo {
   margin: 6px 0 0;
   text-align: center;
-  font-size: 12.5px;
+  font-size: var(--voz-glosa);
   color: rgb(228 226 218 / 0.55);
 }
 
@@ -8636,7 +8712,7 @@ button.motor__tecla::after {
 }
 
 .ajuste__titulo {
-  font-size: 11px;
+  font-size: var(--voz-rotulo);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgb(228 226 218 / 0.6);
@@ -9979,7 +10055,15 @@ button.motor__tecla::after {
 }
 
 .radio {
-  max-width: 320px;
+  /*
+   * **Lo que deje la barra, y no más que su frase.** Tenía un tope de 320 px
+   * para no estirar la barra; ahora es la barra la que manda: parte de 18 em
+   * —si no le quedan, baja de fila, como cualquier botón—, crece hasta llenar
+   * el hueco de su fila y se para donde acaba la frase, sin fondo vacío.
+   */
+  flex: 1 1 18em;
+  min-width: 0;
+  max-width: max-content;
   padding: 5px 10px;
   border-radius: var(--r-s);
   /* Al 62 % se quedaba en 4,27:1 sobre un cielo claro. Al 75 %, en 6,52.
@@ -9987,7 +10071,7 @@ button.motor__tecla::after {
   background: rgb(12 18 15 / 75%);
   border: 1px solid var(--linea);
   color: var(--tinta-suave);
-  font-size: 13px;
+  font-size: var(--voz-glosa);
   line-height: 1.35;
   font-style: italic;
 }
@@ -12006,7 +12090,7 @@ button.motor__tecla::after {
 
 /* Lo que pide y lo que hay: para quien lee, debajo del nombre. */
 .ficha__cuenta {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--tinta-suave);
   font-variant-numeric: tabular-nums;
   text-align: left;
@@ -12522,6 +12606,12 @@ button.motor__tecla::after {
   bottom: auto;
   left: 50%;
   max-width: calc(100% - 32px);
+}
+
+/* La altura en grande, en cabina, arriba y no al 32 %: sale en la final, y en
+   la final la pista está justo encima de la visera. */
+.hud.hud--cabina .hud__abajo > [data-hud="hint"].insignia--cifra {
+  top: calc(var(--alto-de-la-barra, 58px) + 16px);
 }
 
 .hud.hud--cabina .hud__abajo > .aviso-hud {
@@ -13101,13 +13191,14 @@ button.motor__tecla::after {
           var(--escala, 1));
     top: auto;
     transform: none;
-    max-width: calc(180px / var(--escala, 1));
+    /* 210 y no 180 desde que su frase va a la glosa: a 180 la del motor se
+       partía en cuatro líneas y en 864 × 330 subía hasta la señal. Medido. */
+    max-width: calc(210px / var(--escala, 1));
     padding: 8px 12px;
   }
 
   .hud .tutor__texto {
-    font-size: calc(13px / var(--escala, 1));
-    max-width: none;
+    font-size: calc(var(--voz-glosa) / var(--escala, 1));
   }
 
   /*
@@ -13145,11 +13236,21 @@ button.motor__tecla::after {
     z-index: 7;
   }
 
-  /* Y el resto de lo que se lee, también en letra de teléfono. */
+  /*
+   * Y el resto de lo que se lee, en píxeles de pantalla: la glosa dividida por
+   * la escala, para que el zoom de la pantalla baja no la deje en once. Iba a
+   * trece, por debajo del suelo de dieciséis de lo que se lee.
+   */
   .hud .hud__abajo > [data-hud="hint"],
   .hud .torre__texto,
   .hud .radio {
-    font-size: calc(13px / var(--escala, 1));
+    font-size: calc(var(--voz-glosa) / var(--escala, 1));
+  }
+
+  /* Y la altura en grande, grande en la pantalla y no solo en la hoja. */
+  .hud .insignia--cifra {
+    --voz-cifra: calc(32px * var(--escala-hud) / var(--escala, 1));
+    --voz-glosa: calc(16px * var(--escala-hud) / var(--escala, 1));
   }
 
   /*
@@ -13876,7 +13977,7 @@ button.motor__tecla::after {
   background: var(--barro-claro);
   color: var(--tinta);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--voz-glosa);
   cursor: pointer;
 }
 
@@ -13935,7 +14036,7 @@ button.motor__tecla::after {
   .explica__curiosidad {
     min-height: 86px;
     padding: 8px 4px;
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .explica__miniatura svg {
@@ -14478,7 +14579,7 @@ svg .ex-raya {
 
 .tav__globo-texto {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--voz-glosa);
   line-height: 1.35;
 }
 
@@ -14705,14 +14806,14 @@ svg .ex-raya {
 
 .tav__tambien {
   display: block;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 400;
   color: var(--tinta-suave);
 }
 
 .tav__glosa {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--voz-glosa);
   line-height: 1.25;
   color: var(--tinta-suave);
 }
@@ -14773,7 +14874,7 @@ svg .ex-raya {
 
 .tav__dicho {
   grid-column: 1 / -1;
-  font-size: 13px;
+  font-size: var(--voz-glosa);
   letter-spacing: 0.03em;
   color: var(--tinta-suave);
 }
@@ -14871,7 +14972,7 @@ svg .ex-raya {
   }
 
   .tav__globo-texto {
-    font-size: 13px;
+    font-size: 15px;
   }
 }
 
@@ -15672,8 +15773,9 @@ body.con-vuelta #tactil {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* El ancho de la tarjeta, como los dos partes de arriba: con un tope de
+     560 px la frase del porqué se partía antes que su caja. */
   width: 100%;
-  max-width: 560px;
 }
 
 /*
@@ -15734,13 +15836,13 @@ body.con-vuelta #tactil {
 }
 
 .parte__porque-cifras {
-  font: 13px/1.3 ui-monospace, monospace;
+  font: 15px/1.3 ui-monospace, monospace;
   color: #8fd3ff;
   overflow-wrap: anywhere;
 }
 
 .parte__porque-origen {
-  font-size: 12px;
+  font-size: var(--voz-glosa);
   color: var(--tinta-suave);
 }
 
@@ -15823,7 +15925,7 @@ body.con-vuelta #tactil {
   background: none;
   color: var(--tinta-suave);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--voz-glosa);
   cursor: pointer;
   touch-action: manipulation;
 }
@@ -15944,15 +16046,15 @@ body.con-vuelta #tactil {
   }
 
   .parte__porque-cifras {
-    font-size: 10.5px;
+    font-size: 13px;
   }
 
   .parte__porque-origen {
-    font-size: 10px;
+    font-size: 13px;
   }
 
   .parte__propone {
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .parte__boton {
@@ -17129,7 +17231,7 @@ body.con-vuelta #tactil {
   background: none;
   color: var(--tinta-suave);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--voz-glosa);
   cursor: pointer;
 }
 
