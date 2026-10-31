@@ -21058,12 +21058,37 @@ export class Game {
         : cortar
           ? nombreDeTecla(this.input.preferredKey("engine"))
           : null;
+    /*
+     * **Y por encima de lo que se cuenta de pasada.** Un señalero haciendo
+     * señas es lo que hay que mirar en ese momento: quien rueda hacia él
+     * hace lo que dicen sus bastones, y la radio, la lista y la instructora
+     * esperan. Con la prioridad de siempre, la de cero, la tarjeta de las
+     * luces de rodaje de la lista de después del aterrizaje —«la instructora
+     * enciende las luces», cinco segundos— le ganaba, y el «despacio» o el
+     * «alto» se quedaban en la cola mientras el avión se le echaba encima.
+     * Lo urgente —«te lo pasaste»— sigue por encima. Y como no caduca sola,
+     * se quita en cuanto el gesto deja de verse: ver
+     * `quitarLaTarjetaDelSenalero`.
+     */
     this.hud.senal.mostrar(comoDibujo(`senalero-${gesto}`), "", null, {
       segundos: Infinity,
       tecla,
       accion: cortar ? () => this.toggleEngine() : null,
+      prioridad: IMPORTANTE,
     });
     return parando;
+  }
+
+  /**
+   * **Quita la tarjeta del gesto, si es la que está puesta.** Con su
+   * prioridad y sin caducar, se quedaría tapando lo que viene detrás —la
+   * fase repuesta, la llave—, que entra con la de cero. Solo la del gesto,
+   * la que espera: la de «te lo pasaste» lleva el mismo dibujo y su tiempo.
+   */
+  private quitarLaTarjetaDelSenalero(gesto: string | null): void {
+    const puesta = this.hud.senal.puesto;
+    if (gesto !== null && puesta.dibujo === `senalero-${gesto}` && puesta.queda === Infinity)
+      this.hud.senal.caducar(puesta.dibujo);
   }
 
   /** Si el señalero estaba en el cuadro el fotograma anterior. */
@@ -21144,8 +21169,11 @@ export class Game {
     const antesDeLaRed = this.paradoSinLlegar;
     this.paradoSinLlegar = llamando ? this.paradoSinLlegar + dt : 0;
     // Y al saltar la red, la llegada se anuncia entera, con su voz.
-    if (antesDeLaRed < PACIENCIA_EN_EL_PUESTO && this.paradoSinLlegar >= PACIENCIA_EN_EL_PUESTO)
+    // Y la tarjeta del señalero deja sitio a la de la llave. Ver `quitarLaTarjetaDelSenalero`.
+    if (antesDeLaRed < PACIENCIA_EN_EL_PUESTO && this.paradoSinLlegar >= PACIENCIA_EN_EL_PUESTO) {
       this.faseAnunciada = "";
+      this.quitarLaTarjetaDelSenalero(this.gestoEnPantalla);
+    }
 
     /*
      * **Y pasarse del puesto tiene que doler un poco.**
@@ -21228,10 +21256,13 @@ export class Game {
     if (
       enPantalla !== null &&
       enPantalla === this.gestoEnPantalla &&
-      this.hud.senal.puesto.dibujo === ""
+      this.hud.senal.puesto.dibujo === "" &&
+      // Pasada la red, la pantalla es de la llave. Ver `PACIENCIA_EN_EL_PUESTO`.
+      this.paradoSinLlegar < PACIENCIA_EN_EL_PUESTO
     )
       this.tarjetaDelSenalero(enPantalla);
     if (enPantalla !== this.gestoEnPantalla) {
+      if (enPantalla === null) this.quitarLaTarjetaDelSenalero(this.gestoEnPantalla);
       this.gestoEnPantalla = enPantalla;
       if (enPantalla) {
         /*
@@ -28426,7 +28457,14 @@ export class Game {
         this.comandante.hablando ||
         this.tripulacion.hablando ||
         this.llamadas.some((l) => l.sono !== null) ||
-        BOCA.esperaAlguna((c) => esDeLaMegafonia(c)),
+        BOCA.esperaAlguna((c) => esDeLaMegafonia(c)) ||
+        /*
+         * **Y con el señalero haciendo señas**, que también es alguien
+         * hablando: con los bastones. Un punto de la lista encima de su
+         * tarjeta la taparía cinco segundos con el avión rodando hacia él.
+         * Ver `tarjetaDelSenalero`.
+         */
+        this.gestoEnPantalla !== null,
       dt,
     });
     if (!leido) return;
