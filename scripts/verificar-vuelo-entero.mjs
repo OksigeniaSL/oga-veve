@@ -3139,6 +3139,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let empezoLaRecogida = null;
   /** A qué ritmo se tocó, m/s: lo que apunta el propio juego al tocar. */
   let caidaAlTocar = null;
+  /** De dónde salió `caidaAlTocar`, y lo que decía el modelo en esa muestra. */
+  let caidaDeQuien = null;
   /** Lo más deprisa que se rodó de vuelta fuera de la pista, m/s. */
   let rodajeMasRapido = 0;
   /**
@@ -3198,6 +3200,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   let frenadaFotogramas = 0;
   let frenadaEnElAire = 0;
+  /**
+   * **Los botes después de tocar**: el más largo, s de juego, y cuántos. Un
+   * bote de tres segundos ya no es un bote para el juego —vuelve a armar el
+   * detector, ver `ALGO_MAS_QUE_UN_BOTE`— y el veredicto es del toque
+   * siguiente, no del primero.
+   */
+  const botes = { mas: 0, cuantos: 0, desde: null };
+  /** Los flaps con los que se tocó, de 0 a 1. Ver «morro abajo» en `frenar`. */
+  let flapsAlTocar = 0;
   /*
    * **Y si el vuelo se dio por terminado con el avión todavía en la pista.**
    *
@@ -6222,16 +6233,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         const delJuego = o.caida?.();
         caidaAlTocar =
           typeof delJuego === "number" && delJuego > 0 ? delJuego : ultimaCaida;
+        caidaDeQuien = {
+          juego: typeof delJuego === "number" && delJuego > 0,
+          modelo: +(s.touchdownSinkRate ?? NaN).toFixed(2),
+        };
         recogida = null;
         desplazadoAlTocar = r.desplazado ?? 0;
         tocoA = s.airspeed;
         tocoSuelo = porElSuelo(s);
+        flapsAlTocar = o.controles().flaps ?? 0;
         etapa = "frenar";
       }
     } else if (etapa === "frenar") {
       frenadaFotogramas++;
     if (fase === "en-puesto" || fase === "apagado") acaboEnLaPista = true;
       if (!s.onGround) frenadaEnElAire++;
+      if (!s.onGround && botes.desde === null) {
+        botes.desde = t;
+        botes.cuantos++;
+      } else if (s.onGround && botes.desde !== null) botes.desde = null;
+      if (botes.desde !== null) botes.mas = Math.max(botes.mas, t - botes.desde);
       if (antesDeFrenar) {
         rodaduraMedida += Math.hypot(
           s.position.x - antesDeFrenar.x,
@@ -6248,8 +6269,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * morro en cuanto toca y los frenos de tierra le quitan la sustentación
        * al ala; los frenos de tierra salen solos con la palanca armada —ver
        * `configurar`— y bajar el morro lo hace el piloto.
+       *
+       * **Y cualquiera que toque con los flaps de aterrizaje, igual**, que lo
+       * que sostiene el avión es el ala con flaps y no el motor que lleve. El
+       * JAZ 60 llega a La Gomera con todos fuera, y con la palanca en el
+       * centro hacía lo que hacía el reactor: tocaba bien —a 1,45 m/s—,
+       * volvía a volar —el 35 % de la frenada por el aire— y bajaba otra vez
+       * de golpe. Un bote de más de tres segundos ya no es un bote para el
+       * juego, que juzga el toque siguiente —ver `ALGO_MAS_QUE_UN_BOTE` en
+       * `flight/aterrizaje.ts`—, y con razón: un aterrizaje que rebota y cae
+       * es un aterrizaje duro. Así que «duro», sin galón de la toma y sin las
+       * gafas, en dos de cada tres vuelos de El Hierro a La Gomera. Con el
+       * modelo sencillo de Guyrami no: ahí la palanca no manda el ángulo y su
+       * piloto vuela como volaba.
        */
-      c.elevator = REACTOR_COMPLETO ? -0.3 : 0;
+      const morroAbajo = REACTOR_COMPLETO || (!SENCILLO && flapsAlTocar > 0.5);
+      c.elevator = morroAbajo ? -0.3 : 0;
       c.brakes = 1;
       c.aileron = alRumbo(s, rumboPista);
       /*
@@ -6673,6 +6708,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     tocoPasadoElUmbral: Math.round(tocoPasadoElUmbral),
     pistaParaTocar: Math.round(pistaParaTocar),
     caidaAlTocar: caidaAlTocar === null ? null : +caidaAlTocar.toFixed(2),
+    caidaDeQuien,
+    /*
+     * **Y lo que juzgó el juego de esa toma**: el veredicto y la caída con la
+     * que lo juzgó. El banco mide la toma por su cuenta, y cuando las dos
+     * medidas no dicen lo mismo —«se toca con recogida» en verde y las gafas
+     * sin ganar— es lo único que dice cuál de las dos se equivoca.
+     */
+    tomaDelJuego: (() => {
+      const u = o.inicio?.()?.ultimaToma ?? null;
+      return u ? { veredicto: u.veredicto, caida: +u.caida.toFixed(2), pasado: u.pasado, zona: u.zona } : null;
+    })(),
     obediente: obedienteEnElBanco
       ? {
           atendidos: obediente.atendidos,
@@ -6693,6 +6739,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     tocoSuelo: +tocoSuelo.toFixed(1),
     frenadaFotogramas,
     frenadaEnElAire,
+    botes: { mas: +botes.mas.toFixed(1), cuantos: botes.cuantos },
     acaboEnLaPista,
     dejoDeFrenarA: +dejoDeFrenarA.toFixed(1),
     galones: o.galones().map((g) => g.id ?? g),
@@ -8692,9 +8739,18 @@ if (vuelo.toco > 0) {
   comprobarSiVolo(
     "y con el primer aterrizaje bueno te llevás las gafas de sol",
     vuelo.gafas?.ganadas === true && vuelo.gafas?.puestas === true,
-    vuelo.gafas
+    (vuelo.gafas
       ? `ganadas ${vuelo.gafas.ganadas ? "sí" : "no"}, puestas ${vuelo.gafas.puestas ? "sí" : "no"}`
-      : "el juego no sabe decirlo",
+      : "el juego no sabe decirlo") +
+      (vuelo.tomaDelJuego
+        ? ` · la toma, para el juego: ${vuelo.tomaDelJuego.veredicto} a ${vuelo.tomaDelJuego.caida} m/s`
+        : " · el juego no dio veredicto") +
+      (vuelo.caidaDeQuien
+        ? ` · el banco la midió a ${vuelo.caidaAlTocar} m/s (${vuelo.caidaDeQuien.juego ? "del juego" : "suya"}; el modelo, ${vuelo.caidaDeQuien.modelo})`
+        : "") +
+      (vuelo.botes?.cuantos
+        ? ` · ${vuelo.botes.cuantos} bote${vuelo.botes.cuantos === 1 ? "" : "s"}, el más largo de ${vuelo.botes.mas} s`
+        : " · sin botes"),
     "«quiero ser piloto con las gafas de sol»",
   );
 }
