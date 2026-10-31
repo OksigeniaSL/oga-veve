@@ -5761,6 +5761,14 @@ export class Game {
     // Tope de 2: por encima no se distingue y en una tablet cuesta la mitad
     // de los fotogramas. Ver AGENTS.md, regla de rendimiento.
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Lo que mide el lienzo, apuntado cuando cambia. Ver `lienzo`.
+    if (typeof ResizeObserver !== "undefined")
+      new ResizeObserver((cambios) => {
+        const caja = cambios[cambios.length - 1]?.contentRect;
+        if (!caja) return;
+        this.lienzo.ancho = caja.width;
+        this.lienzo.alto = caja.height;
+      }).observe(this.renderer.domElement);
 
     // El plano lejano llega hasta donde llegue el terreno. Con horizonte lejano
     // eso son ochenta y seis kilómetros: el Teide está a treinta y siete y medio
@@ -18472,7 +18480,7 @@ export class Game {
    * `world/aproximacion.ts`.
    */
   private verLosPapis(): void {
-    const alto = this.renderer.domElement.clientHeight || window.innerHeight;
+    const alto = this.altoDelLienzo;
     const ppr = pixelesPorRadian(alto, this.camera.fov);
     this.camera.getWorldPosition(this.ojoDelPapi);
     for (const luces of [this.aproximacion, ...this.vecinos.map((v) => v.aproximacion)]) {
@@ -18485,6 +18493,28 @@ export class Game {
   }
   private readonly ojoDelPapi = new Vector3();
   private readonly ojoDelPapiAqui = new Vector3();
+
+  /**
+   * **Lo que mide el lienzo en la página**, px CSS: lo apunta un
+   * `ResizeObserver` cuando cambia, y no se le pregunta a la maqueta en cada
+   * imagen.
+   *
+   * Preguntar `clientHeight` obliga al navegador a recalcular el estilo —y
+   * la maqueta— en el acto, y el PAPI lo preguntaba en cada imagen y en cada
+   * paso, justo después de que el HUD escribiera el cuadro. Medido en el
+   * teléfono con `medir-cuadro-telefono` y `OGA_TRAZA_PILA` (915 × 412, CPU
+   * ×4, JAZ 90): 8 ms por imagen de estilo forzado con el cuadro recogido y
+   * 12 con la pantalla grande, que obliga a estilar todo lo que acaba de
+   * escribir. Ver #173.
+   */
+  private readonly lienzo = { ancho: 0, alto: 0 };
+  /** Antes del primer aviso del observador, lo de la ventana, que es lo que mide. */
+  private get anchoDelLienzo(): number {
+    return this.lienzo.ancho || window.innerWidth;
+  }
+  private get altoDelLienzo(): number {
+    return this.lienzo.alto || window.innerHeight;
+  }
 
   /** Hacia dónde mira la cámara, para las teselas. Sin reservar en cada cuadro. */
   private readonly miradaDeLasTeselas = new Vector3();
@@ -27492,8 +27522,8 @@ export class Game {
     cam.updateMatrixWorld();
     const distancia = cam.position.distanceTo(centro);
     const delante = this.papiAux.copy(centro).applyMatrix4(cam.matrixWorldInverse).z < 0;
-    const ancho = this.renderer.domElement.clientWidth || window.innerWidth;
-    const alto = this.renderer.domElement.clientHeight || window.innerHeight;
+    const ancho = this.anchoDelLienzo;
+    const alto = this.altoDelLienzo;
     a.project(cam);
     b.project(cam);
     const anchoPx = Math.hypot(((a.x - b.x) * ancho) / 2, ((a.y - b.y) * alto) / 2);
