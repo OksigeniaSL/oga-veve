@@ -876,7 +876,7 @@ export const EN: Dictionary = {
   "hud.menu": "More buttons",
   "hud.pantallaCompleta": "Full screen",
   "hud.salirPantallaCompleta": "Exit full screen",
-  "inicio.pasos": "To play full screen: tap Share, then “Add to Home Screen”.",
+  "inicio.pasos": "To play full screen: tap Share (or “•••”, then Share), then “Add to Home Screen”.",
   "inicio.cerrar": "Close",
   "teclas.queTocan": "The key to press",
   "teclas.yaMeLoAprendi": "Got it, don't show again",
@@ -885,6 +885,10 @@ export const EN: Dictionary = {
   "ajustes.teclasQueTocan.volver": "Show them again",
   "ajustes.explicacionDelParte": "The weather card is no longer explained out loud.",
   "ajustes.explicacionDelParte.volver": "Explain it again",
+  "ajustes.explicacionDeLasTeclas": "The keys screen is no longer explained out loud.",
+  "ajustes.explicacionDeLasTeclas.volver": "Explain it again",
+  "ajustes.explicacionDelFinal": "The end-of-flight screen is no longer explained out loud.",
+  "ajustes.explicacionDelFinal.volver": "Explain it again",
   "ajustes.inicio":
     "On iPhone, the game runs full screen when opened from its icon: in Safari tap Share (or “•••”, then Share), choose “Add to Home Screen” and open it from there.",
   "gafas.ganadas": "Your sunglasses!",
@@ -2528,6 +2532,13 @@ export const EN: Dictionary = {
   "parte.senala.salirIgual": "This one means we go anyway, carefully, and come back if it's no good.",
   "parte.noExplicar": "Don't explain again",
   "parte.cerrar": "Close the card",
+  "teclas.explica.abajo":
+    "These are the keys for flying. The ones with a picture are the ones you'll use: press one and watch it light up.",
+  "teclas.explica.arriba":
+    "These are the flying keys and what each one does. If one feels awkward, open “Change the keys” and pick another.",
+  "fin.explica.hoja": "On the sheet, every tick is something you did well.",
+  "fin.explica.abajo": "The line shows where you flew. To fly again, tap the round arrow.",
+  "fin.explica.arriba": "On the chart, the line shows where you flew. To go again, tap “Fly again”.",
   "inicio.modo.nombre": "Learn with Jazlyn",
   "inicio.modo.mama": "Jazlyn",
   "inicio.modo.ara": "Ara",

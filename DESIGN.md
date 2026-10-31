@@ -402,9 +402,10 @@ nada.
 - **No: la pantalla roja, la música de tensión ni el pitido** en una frustrada o un fallo de motor. Son maniobras que
   se entrenan, no emergencias que se dramatizan.
 - **Sí: lo que sale de golpe se explica en voz**, y a partir de la segunda o tercera vez se ofrece «no volver a
-  explicar», guardado en el perfil y recuperable en los ajustes. Hecho en las teclas que tocan («Ya me lo aprendí»)
-  y en la tarjeta del tiempo de antes de salir («No volver a explicar», desde la segunda vez; pedido el 27 de octubre
-  de 2026). Pendiente en la pantalla de las teclas y en el panel del final del vuelo, que salen sin voz.
+  explicar», guardado en el perfil y recuperable en los ajustes. Hecho en las teclas que tocan («Ya me lo aprendí»),
+  en la tarjeta del tiempo de antes de salir («No volver a explicar», desde la segunda vez; pedido el 27 de octubre
+  de 2026), en la pantalla de las teclas y en el panel del final del vuelo, con un solo módulo para las tres
+  (`src/flight/explicacion-al-abrir.ts`) y un solo botón (`src/ui/no-volver-a-explicar.ts`).
 - **Sí (arte):** el dato real primero y el dibujo después; cada recurso con su crédito en `CREDITOS.md` antes de
   entrar; el papel cálido y la tinta fría; el magenta solo para la ruta y los objetivos.
 - **No (arte):** degradados ni brillos en el papel; el magenta para adornar; un dibujo que no se pueda comprobar contra
@@ -517,6 +518,12 @@ alarma se graban en calma, con la voz estable y sin estilo; lo que se cuenta por
 **La mezcla** (`src/audio/mezcla.ts`): ocho buses por prioridad —voz 0 dB, avisos −1,5, interfaz −5, radio −5,5,
 canción −6, motor −6,5, ambiente −8 y música −18—. Cuando habla una voz o suena un aviso, todo lo demás baja 10 dB en
 50 ms y vuelve en 0,4 s. La radio suena más baja que quien habla al lado, como en una cabina.
+
+**El volumen, bajo de partida y del aparato** (`src/audio/volumen.ts`). Visto en aulas: veintiocho aparatos hablando a
+la vez y una voz que sale de golpe muy alta en la pizarra. La primera vez suena a un cuarto de ganancia —el deslizador a
+medio recorrido, −12 dB del tope— y lo elegido se guarda en el aparato (`oks-volumen`, la clave de las ayudas con voz de
+Oksigenia), no en el perfil: se ajusta una vez y no cambia con el piloto. El altavoz y su deslizador están siempre a la
+vista: abajo a la izquierda en el portátil y la tablet, y arriba, junto a los cuatro puntos, en el teléfono apaisado.
 
 **Una frase sin grabar es muda.** Hay navegadores sin voces del sistema, así que toda frase nueva se graba antes de
 publicarse. El inglés aeronáutico se graba una vez y vale para los tres idiomas; el guaraní no lleva voz hasta que la

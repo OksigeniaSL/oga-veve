@@ -97,7 +97,11 @@ const HABLADOS = [
    */
   ["senalero", "instructor", "lo que dice cada seña del señalero"],
   ["percance", "instructor", "lo que salió mal, en la pantalla de fin"],
-  ["fin", "instructor", "el reconocimiento al terminar"],
+  /*
+   * Menos la explicación del final, que es nueva y va al final de la lista:
+   * ver `DE_LAS_PANTALLAS_QUE_SE_EXPLICAN`.
+   */
+  ["fin", "instructor", "el reconocimiento al terminar", /^fin\.explica\./],
   ["grado", "instructor", "los cuatro grados del cuaderno"],
   // La palabra corta de cada parte se lee en la hoja y no se dice.
   ["galon", "instructor", "lo que marca la hoja de la instructora en cada vuelo", /\.corta$/],
@@ -2151,6 +2155,30 @@ const DE_LA_TARJETA_DEL_TIEMPO = [
   ["parte.senala.salirIgual", "la tarjeta del tiempo: qué hace el botón de salir igual, al señalarlo"],
 ];
 for (const [id, para] of DE_LA_TARJETA_DEL_TIEMPO) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
+}
+
+/*
+ * **Y la pantalla de las teclas y el final del vuelo, explicados al abrirse**
+ * (31-10-2026), como la tarjeta del tiempo: una frase por tramo para las
+ * teclas, y para el final las piezas que van detrás del reconocimiento ya
+ * grabado —«¡Buen vuelo!»—, montadas con la receta `fin.explica`. Al final de
+ * la instructora, que lo grabado no se renumera. La receta va a
+ * `crudo/instructor/recetas.json` al grabarlas:
+ * `"fin.explica": ["{nivel}", "{hoja?}", "{como}"]`. Ver
+ * `src/flight/explicacion-al-abrir.ts`.
+ */
+const DE_LAS_PANTALLAS_QUE_SE_EXPLICAN = [
+  ["teclas.explica.abajo", "la pantalla de las teclas al abrirse, en Guyrami y Tukã: las del dibujo se encienden"],
+  ["teclas.explica.arriba", "la pantalla de las teclas al abrirse, desde Taguato: qué hace cada una y dónde se cambian"],
+  ["fin.explica.hoja", "el final del vuelo, detrás del reconocimiento: qué es la hoja, si hay algún visto"],
+  ["fin.explica.abajo", "el final del vuelo, en Guyrami y Tukã: la raya del plano y la flecha de volver a volar"],
+  ["fin.explica.arriba", "el final del vuelo, desde Taguato: la raya del plano y el botón «Otro vuelo»"],
+];
+for (const [id, para] of DE_LAS_PANTALLAS_QUE_SE_EXPLICAN) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });

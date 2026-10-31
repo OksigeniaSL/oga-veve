@@ -25,6 +25,7 @@ import {
 import { t } from "../i18n";
 import { Panel } from "./panel";
 import { armarPanel } from "./concha";
+import { botonDeNoExplicar } from "./no-volver-a-explicar";
 import { motorMas, motorMenos } from "./pictogramas";
 import { DIBUJOS } from "./senal";
 
@@ -215,6 +216,17 @@ export class KeyScreen {
   /** Teclas pulsadas ahora mismo, para encender su dibujo. */
   private readonly pulsadas = new Set<string>();
 
+  /**
+   * **Lo que pasa al abrirse y al cerrarse, que lo decide el juego**: la
+   * explicación en voz, si toca, y si se ofrece «no volver a explicar». Es
+   * de las pantallas que salen de golpe —la primera vez que hay teclado se
+   * abre sola— y se explican como todas: ver `flight/explicacion-al-abrir.ts`.
+   */
+  alAbrir: (() => { readonly ofrecerQuitarla: boolean; readonly conLetras: boolean }) | null = null;
+  alNoExplicar: (() => void) | null = null;
+  alCerrar: (() => void) | null = null;
+  private noExplicar: { readonly conLetras: boolean } | null = null;
+
   private readonly root: HTMLElement;
   private readonly keymap: Keymap;
   /**
@@ -241,6 +253,14 @@ export class KeyScreen {
       // dibujo, el clic llega al dibujo y no al botón, y no pasaba nada.
       const target = bruto.closest<HTMLElement>("button") ?? bruto;
       const accion = target.dataset.accion as Accion | undefined;
+      if (target.classList.contains("no-explicar")) {
+        this.alNoExplicar?.();
+        this.noExplicar = null;
+        target.remove();
+        // El foco no se queda en el aire: pasa a cerrar, que es lo que queda.
+        this.root.querySelector<HTMLElement>('[data-accion="cerrar"]')?.focus();
+        return;
+      }
       if (accion) this.capture(accion);
       if (target.dataset.todo === "restaurar") {
         this.keymap.restoreAll();
@@ -320,6 +340,10 @@ export class KeyScreen {
     if (!this.root.hidden) this.render();
   }
 
+  get visible(): boolean {
+    return !this.root.hidden;
+  }
+
   toggle(): void {
     if (this.root.hidden) this.show();
     else this.hide();
@@ -329,13 +353,29 @@ export class KeyScreen {
     // Se pinta **antes** de enseñarlo: el encierro lleva el foco al primer
     // mando de dentro, y si todavía no hay nada dentro no hay a dónde
     // llevarlo.
+    const vez = this.alAbrir?.() ?? null;
+    this.noExplicar = vez?.ofrecerQuitarla ? { conLetras: vez.conLetras } : null;
     this.render();
     this.panel.abrir();
+    /*
+     * El encierro lleva el foco a lo primero de dentro, y lo primero ahora es
+     * «no volver a explicar», arriba: un Enter de más dejaría la pantalla muda
+     * para siempre. El foco va a donde iba antes de que existiera.
+     */
+    if (document.activeElement?.classList.contains("no-explicar")) {
+      const otro = [...this.root.querySelectorAll<HTMLElement>("button, input, [tabindex]")].find(
+        (e) => !e.classList.contains("no-explicar") && e.tabIndex >= 0,
+      );
+      otro?.focus();
+    }
   }
 
   hide(): void {
+    const abierta = !this.root.hidden;
     this.capturando = null;
     this.panel.cerrar();
+    // Quien cierra ya no está mirando: la explicación, si sonaba, se calla.
+    if (abierta) this.alCerrar?.();
   }
 
   private capture(accion: Accion): void {
@@ -421,6 +461,13 @@ export class KeyScreen {
         ${tabla}
       `,
     });
+    if (this.noExplicar)
+      this.root
+        .querySelector(".concha__cabecera")
+        ?.insertAdjacentHTML(
+          "beforeend",
+          botonDeNoExplicar(this.noExplicar.conLetras, "teclado__no-explicar"),
+        );
     this.paintPressed();
   }
 

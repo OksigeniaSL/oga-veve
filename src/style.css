@@ -1241,7 +1241,7 @@ body {
   border-radius: 4px;
   background: linear-gradient(
     to right,
-    var(--ocre) calc(var(--volumen, 0.92) * 100%),
+    var(--ocre) calc(var(--volumen, 0.5) * 100%),
     rgba(228, 226, 218, 0.22) 0
   );
 }
@@ -1251,7 +1251,7 @@ body {
   border-radius: 4px;
   background: linear-gradient(
     to right,
-    var(--ocre) calc(var(--volumen, 0.92) * 100%),
+    var(--ocre) calc(var(--volumen, 0.5) * 100%),
     rgba(228, 226, 218, 0.22) 0
   );
 }
@@ -2768,6 +2768,20 @@ body:has([data-hud="fin"]:not([hidden])) .pad {
   .fin .fin__manga:not(:has(.hoja)) .fin__mi-manga svg {
     height: 128px;
   }
+}
+
+/*
+ * «No volver a explicar», arriba a la derecha de la pantalla del final y
+ * fuera del panel, que es el vuelo. Ver `Hud.ponerNoExplicarElFinal`.
+ */
+/* Con `.fin` delante, para ganarle a la medida común de `.no-explicar`, más abajo. */
+.fin .fin__no-explicar {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  /* Dentro del HUD, que en pantallas bajas se encoge: la yema no. */
+  min-width: max(44px, var(--yema, 0px));
+  min-height: max(44px, var(--yema, 0px));
 }
 
 .fin__panel {
@@ -12852,41 +12866,29 @@ button.motor__tecla::after {
   }
 
   /*
-   * **Y el volumen, dentro del menú y a lo ancho.** Abajo, en un teléfono
-   * apaisado, están los dos pulgares: la palanca, el timón y el motor ocupan
-   * el borde entero y no queda un dedo libre. El altavoz ya vivía en este
-   * menú, y el deslizador va con él, en una fila propia de lado a lado: es el
-   * único mando del menú que se arrastra, y cuanto más largo, más fino.
+   * **Y el volumen, fuera del menú y a la vista**, en la fila de arriba y al
+   * lado de los cuatro puntos. Vivió dentro del menú porque abajo están los
+   * pulgares —la palanca, el timón y el motor ocupan el borde entero—, pero
+   * escondido detrás de un botón no se encuentra cuando hace falta: en un
+   * aula, con una voz que sale de golpe, el altavoz para quitarla tiene que
+   * estar siempre a la vista, y el deslizador con él (oksigenia-hq,
+   * `shared/diseno-por-edades.md`). Tumbado y sin el hueco de al lado del
+   * cuadro, que aquí no se mide: va en la fila como un botón más.
    */
-  .hud.hud--menu .hud__menu > .volumen {
+  .hud .volumen {
     position: static;
-    grid-column: 1 / -1;
     width: auto;
+    container-type: normal;
   }
 
-  .hud.hud--menu .hud__menu .volumen__capsula {
+  .hud .volumen__capsula {
     display: flex;
-    padding-right: 18px;
+    padding-right: 12px;
   }
 
-  .hud.hud--menu .hud__menu .volumen__capsula > .sonido {
-    width: calc(var(--tacto) * 1.25);
-    height: calc(var(--tacto) * 1.25);
-  }
-
-  .hud.hud--menu .hud__menu .volumen__capsula > .sonido svg {
-    width: 30px;
-    height: 30px;
-  }
-
-  .hud.hud--menu .hud__menu .volumen__carril {
-    flex: 1;
-    height: calc(var(--tacto) * 1.25);
-  }
-
-  .hud.hud--menu .hud__menu .volumen__mando {
-    width: 100%;
-    height: 100%;
+  .hud .volumen__carril,
+  .hud .volumen__mando {
+    width: 104px;
   }
 
   .hud.hud--menu .hud__menu-boton {
@@ -15796,7 +15798,9 @@ body.con-vuelta #tactil {
 /*
  * **Arriba a la derecha, «no volver a explicar» y la ✕**: de yema los dos,
  * en el color de la tinta suave para que no compitan con la decisión, que es
- * lo que importa. Sin rojo: cerrar no es una alarma.
+ * lo que importa. Sin rojo: cerrar no es una alarma. El de «no volver a
+ * explicar» es el mismo en toda pantalla que se explica al abrirse
+ * (`.no-explicar`, ver `ui/no-volver-a-explicar.ts`).
  */
 .parte__arriba-fila {
   margin-left: auto;
@@ -15805,7 +15809,8 @@ body.con-vuelta #tactil {
   gap: 4px;
 }
 
-.parte__arriba {
+.parte__arriba,
+.no-explicar {
   min-width: 44px;
   min-height: 44px;
   padding: 0 8px;
@@ -15823,23 +15828,35 @@ body.con-vuelta #tactil {
   touch-action: manipulation;
 }
 
-.parte__arriba svg {
+.parte__arriba svg,
+.no-explicar svg {
   width: 24px;
   height: 24px;
   flex: none;
 }
 
 .parte__arriba:hover,
-.parte__arriba:focus-visible {
+.parte__arriba:focus-visible,
+.no-explicar:hover,
+.no-explicar:focus-visible {
   color: var(--tinta);
   border-color: var(--linea-fuerte);
   background: var(--barro-claro);
 }
 
 .parte__arriba:focus-visible,
+.no-explicar:focus-visible,
 .parte__boton:focus-visible {
   outline: 3px solid var(--ocre);
   outline-offset: 2px;
+}
+
+/*
+ * En la cabecera de la pantalla de las teclas, al otro lado del título: donde
+ * en la tarjeta del tiempo va con la ✕.
+ */
+.teclado__no-explicar {
+  margin-left: auto;
 }
 
 /* La palabra, desde el peldaño que lee: en el de los dibujos, solo el globo. */

@@ -76,6 +76,7 @@ import {
   esTelefonoApaisado,
 } from "./telefono";
 import { alPulsar, alPulsarDentro } from "./pulsar";
+import { botonDeNoExplicar } from "./no-volver-a-explicar";
 import { ponerLasDeSerie } from "./explicaciones-de-serie";
 import { escucharLosToquesQueExplican } from "./tocar-para-explicar";
 // La ventana de las explicaciones se ofrece al registro al cargarse.
@@ -1628,6 +1629,38 @@ export class Hud {
         -->
         <div class="radio" data-hud="radio" hidden role="status"></div>
         <!--
+          Botón de sonido. Es un botón de verdad y no un adorno: se pulsa con
+          el dedo, se enfoca con el tabulador y dice su estado. Existe porque
+          la tecla V silenciaba sin dejar rastro en pantalla, y un estado
+          invisible no es un estado: es un fallo esperando.
+        -->
+        <!--
+          **Y al lado, el volumen fino, a mano.** «Un control de volumen en
+          el juego, abajo, porque tengo música de fondo y a la vez el juego.»
+          El altavoz sigue siendo el gesto de los pequeños —un toque calla,
+          otro devuelve—, y el deslizador es para dejar el juego por debajo
+          de la música sin perderlo. Van juntos porque son dos mandos sobre
+          una cosa: ver audio/volumen.ts.
+
+          Abajo a la izquierda en el portátil y en la tablet; en el teléfono
+          apaisado, arriba, en la fila de lo que el vuelo enciende y al lado
+          de los cuatro puntos: abajo están los pulgares. **Fuera de esa
+          caja y no dentro**, que es donde vivió: en un aula el altavoz para
+          quitar el sonido tiene que estar siempre a la vista, y el
+          deslizador con él (oksigenia-hq, «la voz empieza baja»). Ver
+          .volumen en la hoja.
+        -->
+        <div class="volumen">
+          <div class="volumen__capsula" data-hud="volumen-caja">
+            <button class="sonido" type="button" data-hud="sound" aria-pressed="false"></button>
+            <span class="volumen__carril">
+              <input class="volumen__mando" type="range" min="0" max="1" step="0.01"
+                     value="0.5" data-hud="volumen"
+                     aria-label="${t("hud.volumen")}" />
+            </span>
+          </div>
+        </div>
+        <!--
           **Lo que no es volar, en una caja que en el teléfono se recoge.**
 
           En la tablet y el portátil la caja no existe —\`display: contents\`,
@@ -1645,34 +1678,6 @@ export class Hud {
         <button class="sonido pantalla-completa" type="button"
                 data-hud="pantalla-completa" aria-pressed="false" hidden
                 aria-label="${t("hud.pantallaCompleta")}">${PANTALLA_COMPLETA}</button>
-        <!--
-          Botón de sonido. Es un botón de verdad y no un adorno: se pulsa con
-          el dedo, se enfoca con el tabulador y dice su estado. Existe porque
-          la tecla V silenciaba sin dejar rastro en pantalla, y un estado
-          invisible no es un estado: es un fallo esperando.
-        -->
-        <!--
-          **Y al lado, el volumen fino, a mano.** «Un control de volumen en
-          el juego, abajo, porque tengo música de fondo y a la vez el juego.»
-          El altavoz sigue siendo el gesto de los pequeños —un toque calla,
-          otro devuelve—, y el deslizador es para dejar el juego por debajo
-          de la música sin perderlo. Van juntos porque son dos mandos sobre
-          una cosa: ver audio/volumen.ts.
-
-          Abajo a la izquierda en el portátil y en la tablet; en el teléfono
-          apaisado, dentro del menú de los cuatro puntos, donde ya vivía el
-          altavoz: abajo están los pulgares. Ver .volumen en la hoja.
-        -->
-        <div class="volumen">
-          <div class="volumen__capsula" data-hud="volumen-caja">
-            <button class="sonido" type="button" data-hud="sound" aria-pressed="false"></button>
-            <span class="volumen__carril">
-              <input class="volumen__mando" type="range" min="0" max="1" step="0.01"
-                     value="0.92" data-hud="volumen"
-                     aria-label="${t("hud.volumen")}" />
-            </span>
-          </div>
-        </div>
         <!--
           Y la fila de paneles: mandos, plano, tiempo, ala, créditos y
           cuaderno. No están escritos aquí uno a uno a propósito — salen de
@@ -2344,7 +2349,16 @@ export class Hud {
     this.fin = pick(this.root, "fin");
     // Se cierra tocando en cualquier parte: a los cuatro años no se busca una
     // equis.
-    this.fin.addEventListener("click", () => this.cerrarFinDeVuelo());
+    this.fin.addEventListener("click", (e) => {
+      // Menos «no volver a explicar», que hace lo suyo y deja el final puesto.
+      const no = (e.target as Element | null)?.closest?.(".fin__no-explicar");
+      if (no) {
+        no.remove();
+        this.alNoExplicarElFinal?.();
+        return;
+      }
+      this.cerrarFinDeVuelo();
+    });
     // Y el botón vuelve a volar, que es lo que uno quiere hacer justo ahí.
     pick(this.root, "fin-otra").addEventListener("click", (e) => {
       e.stopPropagation();
@@ -3627,8 +3641,15 @@ export class Hud {
     planoConTraza = "",
     reloj = "",
     conNombres: NombresDeLaHoja = frase ? "entero" : false,
+    /**
+     * «No volver a explicar», si toca: el final se explica en voz al salir, y
+     * desde la segunda vez se ofrece dejar de hacerlo. Ver
+     * `flight/explicacion-al-abrir.ts`.
+     */
+    noExplicar: { readonly conLetras: boolean } | null = null,
   ): void {
     if (!this.fin) return;
+    this.ponerNoExplicarElFinal(noExplicar);
     this.ponerPlano(planoConTraza);
     this.ponerReloj(reloj);
     const final = reconocer(lista);
@@ -3811,9 +3832,36 @@ export class Hud {
   private alSeguir: (() => void) | null = null;
 
   /** Y se quita. Otro vuelo, otra hoja. */
+  /**
+   * **«No volver a explicar», arriba a la derecha de la pantalla** y no dentro
+   * del panel: el panel es el vuelo —el plano, la manga, la hoja— y esto es
+   * otra cosa, pequeña y apartada. Fuera de él no pisa nada.
+   */
+  private ponerNoExplicarElFinal(que: { readonly conLetras: boolean } | null): void {
+    this.fin?.querySelector(".fin__no-explicar")?.remove();
+    if (!que) return;
+    this.fin?.insertAdjacentHTML("afterbegin", botonDeNoExplicar(que.conLetras, "fin__no-explicar"));
+  }
+
+  /** Quién se entera de que no se quiere oír más la explicación del final. */
+  onNoExplicarElFinal(fn: () => void): void {
+    this.alNoExplicarElFinal = fn;
+  }
+
+  /** Y de que se cerró: lo que se estuviera explicando ya no lo mira nadie. */
+  onCerrarElFinal(fn: () => void): void {
+    this.alCerrarElFinal = fn;
+  }
+
+  private alNoExplicarElFinal: (() => void) | null = null;
+  private alCerrarElFinal: (() => void) | null = null;
+
   cerrarFinDeVuelo(): void {
+    const estaba = this.finPuesto;
     this.ofrecerElSiguiente(null);
+    this.ponerNoExplicarElFinal(null);
     if (this.fin) this.fin.hidden = true;
+    if (estaba) this.alCerrarElFinal?.();
     pick(this.root, "fin-frase").classList.remove("fin__frase--ascenso");
     this.root.classList.remove("hud--fin");
   }

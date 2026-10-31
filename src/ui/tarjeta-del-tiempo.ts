@@ -38,6 +38,7 @@ import { getLocale, t, type TranslationKey } from "../i18n";
 import { atisEnTexto } from "../world/meteo";
 import { armarPanel } from "./concha";
 import { mangaDeViento } from "./manga-de-viento";
+import { botonDeNoExplicar } from "./no-volver-a-explicar";
 import { Panel } from "./panel";
 
 /** Lo que el juego le pide a la tarjeta. */
@@ -306,15 +307,6 @@ const RATO = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3 H18 M6 2
 const ESTRELLA = `<svg viewBox="0 0 48 48" aria-hidden="true"><path class="parte__estrella"
   d="M24 3 L30 17 L45 18 L33.5 28 L37 43 L24 35 L11 43 L14.5 28 L3 18 L18 17 Z"/></svg>`;
 
-/**
- * **«No volver a explicar»**: el globo de lo que se dice, con el visto dentro
- * —«ya lo sé»—. Es el mismo visto de «ya me lo aprendí» de las teclas que
- * tocan, para que se reconozca como la misma idea: esto ya lo aprendí.
- */
-const YA_LO_SE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5 h16 a1.5 1.5 0 0 1 1.5 1.5 v9 a1.5 1.5 0 0 1 -1.5 1.5 h-9 l-4.5 3.5 v-3.5 h-2.5 a1.5 1.5 0 0 1 -1.5 -1.5 v-9 a1.5 1.5 0 0 1 1.5 -1.5 Z"
-  fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 11.5 l2.6 2.6 l5.4 -5.4" fill="none"
-  stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-
 /** La cruz de cerrar, dibujada: el carácter ✕ cambia con la fuente de cada aparato. */
 const CRUZ = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18" stroke="currentColor"
   stroke-width="2.6" stroke-linecap="round"/></svg>`;
@@ -434,10 +426,7 @@ export class TarjetaDelTiempo {
    */
   private arriba(noExplicar: boolean, conLetras: boolean): string {
     const ya = noExplicar
-      ? `<button type="button" class="parte__arriba parte__no-explicar" data-parte-accion="no-explicar"
-              aria-label="${t("parte.noExplicar")}" title="${t("parte.noExplicar")}">${YA_LO_SE}${
-                conLetras ? `<span>${t("parte.noExplicar")}</span>` : ""
-              }</button>`
+      ? botonDeNoExplicar(conLetras, "parte__arriba parte__no-explicar", 'data-parte-accion="no-explicar"')
       : "";
     return `<span class="parte__arriba-fila">${ya}<button type="button" class="parte__arriba parte__cerrar"
               data-parte-accion="cerrar" aria-label="${t("parte.cerrar")}" title="${t("parte.cerrar")}">${CRUZ}</button></span>`;
