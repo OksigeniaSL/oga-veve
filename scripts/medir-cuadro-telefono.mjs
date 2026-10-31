@@ -27,6 +27,21 @@
  * defecto los cuatro: `recogido,abierto,grande-actitud,cabina`. Y
  * `grande-rumbo` y `grande-motor` ponen grande la otra pantalla.
  *
+ * ## Y de qué parte es el coste
+ *
+ * `grande-oculto` pone en grande la pantalla de actitud y la esconde con
+ * `visibility`: se sigue actualizando cada imagen —el guion y el estilo— y no
+ * se pinta. Lo que cueste lo mismo que `grande-actitud` es la actualización;
+ * lo que baje, el pintado y el tamaño. El tamaño solo, con `OGA_CSS` sobre
+ * `.cuadro--grande > .tablero`. Y con `OGA_TRAZA` se ve en qué clase de
+ * trabajo se va.
+ *
+ * Y `OGA_TRAZA_PILA=1` dice quién obliga a recalcular el estilo a mitad de
+ * guion, con la función y su línea.
+ *
+ * Una copia quieta delante no sirve para esto: dobla el árbol que hay que
+ * estilar y sale más cara que la de verdad. Se probó.
+ *
  * Uso: `node scripts/medir-cuadro-telefono.mjs [avión…]`
  *   `OGA_TRAMO=guyrami` mide en otro peldaño (por defecto, el de arriba).
  *   `OGA_VUELTAS=3` cuántas veces se alterna.
@@ -35,7 +50,8 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
-const PUERTO = 5377;
+// Uno propio, que otro banco puede estar corriendo a la vez: `OGA_PUERTO` para otro.
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5377);
 const AVIONES = process.argv.slice(2).length
   ? process.argv.slice(2)
   : ["jaz-20", "jaz-60", "jaz-90"];
@@ -95,7 +111,8 @@ async function trazar(cdp, caso) {
   const acabado = new Promise((r) => cdp.once("Tracing.tracingComplete", r));
   await cdp.send("Tracing.start", {
     categories:
-      "devtools.timeline,disabled-by-default-devtools.timeline,blink,cc,gpu,viz",
+      "devtools.timeline,disabled-by-default-devtools.timeline,blink,cc,gpu,viz" +
+      (process.env.OGA_TRAZA_PILA ? ",disabled-by-default-devtools.timeline.stack" : ""),
     transferMode: "ReportEvents",
   });
   await new Promise((r) => setTimeout(r, 3000));
@@ -115,6 +132,28 @@ async function trazar(cdp, caso) {
     suma.set(e.name, (suma.get(e.name) ?? 0) + ms);
   }
   const porCuadro = (n) => (suma.get(n) ?? 0) / Math.max(1, cuadros);
+  /*
+   * **Y quién obliga a recalcular el estilo a mitad de guion**
+   * (`OGA_TRAZA_PILA=1`): con el JAZ 60 y el JAZ 90 casi todo el estilo de
+   * cada imagen salía forzado —«Blink.ForcedStyleAndLayout»—, o sea que algo
+   * lee la maqueta después de escribir. Con la pila de cada recálculo forzado
+   * se ve qué función lo pide, y cuántos milisegundos por imagen.
+   */
+  if (process.env.OGA_TRAZA_PILA) {
+    const quien = new Map();
+    for (const e of eventos) {
+      if (e.ph !== "X" || (e.name !== "UpdateLayoutTree" && e.name !== "Layout")) continue;
+      const pila = e.args?.beginData?.stackTrace;
+      if (!pila?.length) continue;
+      const f = pila[0];
+      const donde = `${f.functionName || "(anónima)"} ${String(f.url).split("/").pop()}:${f.lineNumber}`;
+      quien.set(donde, (quien.get(donde) ?? 0) + (e.tdur ?? e.dur) / 1000);
+    }
+    const top = [...quien.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+    console.log(`    estilo forzado ${caso}, por quien lo pide:`);
+    for (const [d, ms] of top)
+      console.log(`      ${(ms / Math.max(1, cuadros)).toFixed(2)} ms/cuadro  ${d}`);
+  }
   const cuanto = Number(process.env.OGA_TRAZA);
   if (cuanto > 1) {
     const top = [...suma.entries()].sort((a, b) => b[1] - a[1]).slice(0, cuanto);
@@ -154,6 +193,16 @@ try {
       timeout: 90000,
     });
     await page.waitForTimeout(8000);
+    /*
+     * **Y con qué tarjeta se dibujó**: una medida hecha con el dibujo por
+     * programa en vez de con la GPU no vale, y no se nota en los números.
+     */
+    const tarjeta = await page.evaluate(() => {
+      const gl = globalThis.__oga.pintor?.()?.getContext?.();
+      const dbg = gl?.getExtension("WEBGL_debug_renderer_info");
+      return dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : "sin nombre";
+    });
+    console.log(`  ${avion}: dibuja ${tarjeta}`);
     /*
      * En el aire, virando suave con el motor tirando: todo se mueve. Y se
      * vuelve a colocar antes de cada medida, que un viraje sostenido acaba en
@@ -198,6 +247,9 @@ try {
      */
     const ponerCaso = async (caso) => {
       await page.evaluate(() => {
+        // El dibujo a la vista, por si lo escondió `grande-oculto`.
+        const t = document.querySelector('[data-hud="tablero"]');
+        if (t) t.style.visibility = "";
         const o = globalThis.__oga;
         const cuadro = document.querySelector('[data-hud="cuadro"]');
         if (cuadro?.classList.contains("cuadro--grande"))
@@ -212,9 +264,15 @@ try {
           document
             .querySelector(`[data-tel-grande="${cual}"]`)
             ?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
-        }, caso.split("-")[1] ?? "actitud");
+        }, ["rumbo", "motor"].includes(caso.split("-")[1]) ? caso.split("-")[1] : "actitud");
       if (caso === "cabina")
         await page.evaluate(() => globalThis.__oga.ponerVista("cockpit"));
+      // Escondido y no quitado: deja su caja en la maqueta y lo saca del pintado.
+      if (caso === "grande-oculto")
+        await page.evaluate(() => {
+          const t = document.querySelector('[data-hud="tablero"]');
+          if (t) t.style.visibility = "hidden";
+        });
     };
     /** Lo que se ve de verdad, para no dar por medido un caso que no se puso. */
     const casoDeVerdad = () =>
@@ -297,12 +355,13 @@ try {
         await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
         const porCuadro = (k) => ((despues[k] - antes[k]) * 1000) / medida.n;
         const visto = await casoDeVerdad();
-        if (!caso.startsWith(visto))
+        if (!caso.startsWith(visto) && !(visto === "grande" && caso.startsWith("grande")))
           console.log(`  ${avion}: se pidió «${caso}» y se ve «${visto}»`);
         filas.push({
           avion,
           vuelta: v,
           caso: caso.startsWith(visto) ? caso : `${caso}?`,
+          tarjeta,
           ...medida,
           guion: porCuadro("guion"),
           estilo: porCuadro("estilo"),
