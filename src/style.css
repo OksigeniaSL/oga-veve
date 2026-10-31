@@ -7884,6 +7884,53 @@ button.motor__tecla::after {
   stroke: none;
 }
 
+/*
+ * ── El ave de cada tramo, con su panel debajo ──
+ *
+ * El ave manda: es por lo que se elige, y el issue pedía que se leyera a 150
+ * px, que es lo que mide la ficha en un teléfono. Así que el lienzo deja de
+ * ser el 5/3 de las demás y crece con ella: el medallón a lo ancho hasta 150
+ * y el panel debajo, más pequeño, que es lo que se gana al subir y no se
+ * pierde. Ver `fichaDeTramo` en `ui/hangar.ts`.
+ */
+.ficha__lienzo--tramo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  aspect-ratio: auto;
+  padding: 8px;
+}
+
+.ficha__ave {
+  display: block;
+  flex: none;
+  width: min(100%, 150px);
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.ficha--tramo .ficha__panel {
+  flex: none;
+  width: min(60%, 126px);
+  height: auto;
+}
+
+/*
+ * Los cuatro en una fila siempre que quepan a 150, que es contar los peldaños
+ * de izquierda a derecha. Con la rejilla de las demás, en la tablet salían
+ * tres y el cuarto solo debajo: la escalera, partida.
+ *
+ * El tope va en la rejilla y no en la columna: con `minmax(150px, 210px)`,
+ * `auto-fit` cuenta cuántas caben **a 210**, y en la tablet volvían a ser
+ * tres. Y con `.hangar` delante para ganar a la regla general, que va más
+ * abajo en la hoja.
+ */
+.hangar .hangar__rejilla--tramos {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  max-width: calc(4 * 210px + 3 * 12px + 10px);
+}
+
 /* ── Los galones ─────────────────────────────────────────────────────── */
 
 /* Los peldaños, escalones que suben: ver `peldanos` en `ui/hangar.ts`. */
@@ -8357,6 +8404,50 @@ button.motor__tecla::after {
     display: flex;
     align-items: baseline;
     gap: 8px;
+    padding: 7px 12px 8px;
+  }
+
+  /*
+   * **Y los tramos, con el ave al lado del panel.** Uno encima del otro no
+   * caben: en 864 × 330 la lista deja ciento ochenta píxeles, y el ave a 150
+   * con el panel debajo pide trescientos. Lo que sobra en un teléfono tumbado
+   * es ancho, así que los cuatro en una fila —con la rejilla de las demás, en
+   * 915 salía una quinta columna vacía— y en cada ficha el ave a la izquierda,
+   * todo lo grande que deja el alto, y el panel a su derecha.
+   */
+  .hangar .hangar__rejilla--tramos {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* El panel, abajo: arriba a la derecha va la marca de elegido. */
+  .hangar .ficha--tramo .ficha__lienzo {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 8px;
+    aspect-ratio: auto;
+    padding: 8px;
+  }
+
+  .hangar .ficha--tramo .ficha__ave {
+    width: min(56%, 116px);
+  }
+
+  .hangar .ficha--tramo .ficha__panel {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 104px;
+  }
+
+  /*
+   * Y los peldaños y el nombre en un renglón, que aquí sobra ancho y falta
+   * alto; si «Taguato Ruvicha» no cabe al lado, baja solo.
+   */
+  .hangar .ficha--tramo .ficha__pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 4px 8px;
     padding: 7px 12px 8px;
   }
 }

@@ -158,7 +158,7 @@ sobre el color.
 | Datos aeronáuticos: puntos, radiales, frecuencias, la rosa | `--carta-tinta-aero` | `#2e537a` | 6,9:1 |
 | Costa, ríos, nombres del agua | `--carta-tinta-agua` | `#255f86` | 6,0:1 |
 | Cotas y elevaciones | `--carta-tinta-cota` | `#5a3d22` | 8,6:1 |
-| La ruta, «lo que quiero» | `--carta-ruta` | `#c4239f` | 4,47:1: va siempre sobre su orla de papel de 1,5 px |
+| La ruta, «lo que quiero» | `--carta-ruta` | `#c0219b` | 4,65:1; va sobre su orla de papel de 1,5 px |
 | Rumbo y distancia de la ruta | `--carta-ruta-texto` | `#95187a` | 6,8:1 |
 | Lo visitado (los sellos) | `TINTAS.sello` | `#1d5fa6` | 5,6:1 |
 | El aeródromo civil | `--carta-aerodromo` | `#231f20` | 14,2:1 |
@@ -283,7 +283,9 @@ Encima sube 3 px; pulsada, escala 0,985 (140 ms); foco en ocre. **Elegida, con t
 el borde ocre, el galón redondo de 26 px arriba a la derecha y la marca de visto. **No cabe en este campo**: el avión y
 su pie al 38 % y desaturados, el dibujo del porqué (un avión que se sale de la pista) intacto, sin una palabra y sin
 esconderse, porque que exista y necesite más pista es media lección. **En proyecto**: al 62 %, con rayado y la marca
-«próximamente».
+«próximamente». **La de tramo** lleva su ave arriba, en su medallón de papel y a 150 px, que es por lo que se elige, y
+debajo el panel de ese peldaño, que es lo que se gana al subir; los cuatro en una fila siempre que quepan, y en el
+teléfono tumbado el ave a la izquierda y el panel a su lado.
 
 **La ficha de un aeródromo en la carta** (`.ficha-carta`). Es papel y no barro: `--carta-papel` con su grano, borde de
 1,5 px en `--carta-tinta-aero`, radio 14 y sombra `0 6px 18px -6px` al 45 %. Se abre encima de la carta sin mover
@@ -557,6 +559,7 @@ ponga alguien que lo hable.
 | La carta horneada de cada región y su papel | `src/assets/carta/` |
 | Ilustraciones y láminas | `src/assets/ilustraciones/`, con `scripts/hacer-ilustraciones.mjs` |
 | Sellos de caucho | `src/ui/sellos.ts`, `src/ui/caucho.ts`, `src/ui/album.ts` |
+| Las aves de los tramos | `src/assets/aves/`, `src/ui/aves.ts` |
 | Sitios y aviones en 3D | `public/assets/sitios/`, `public/assets/aeronaves/` |
 | Comprobación | `npm run carteles`, `npm run acceso`, `npm run paneles`, `npm run cuadro` |
 
@@ -567,7 +570,7 @@ Los diez valores que más se usan: `--barro` `#1a2420` con `--barniz`, `--filo` 
 `--barro-calido` `#a94f2f` con letra blanca para la acción principal; `--panel-verde` `#223c31` para los paneles;
 `--tacto` 48 px y nunca menos de 44 de pantalla con el dedo; radios 10, 16 y 22; glosa 16 px, rótulo 15 a 700;
 cabina: blanco lo que tengo, magenta `#E14FD8` lo que quiero, verde `#35C759` normal, ámbar `#FFB02E` cerca del
-límite, rojo `#FF3B30` el límite; carta: tinta `#22302a` sobre papel `#f3efe3`, ruta `#c4239f` sobre su orla.
+límite, rojo `#FF3B30` el límite; carta: tinta `#22302a` sobre papel `#f3efe3`, ruta `#c0219b` sobre su orla.
 
 Para pedir una pieza: «una pieza de Óga Veve para <qué>: barro opaco con barniz, filo y poso; qué dice en cada uno de
 los cuatro peldaños —dibujo en todos, una palabra en Tukã, frase y cifras desde Taguato, inglés de cabina en Taguato

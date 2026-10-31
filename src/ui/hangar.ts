@@ -23,9 +23,9 @@
  * como se distinguen los sitios de verdad.
  *
  * Lo que aquí **no** hay, a propósito: ninguna edad, ninguna palabra
- * imprescindible y ningún «modo fácil». Los tramos se eligen por sus galones
- * y por el panel que traen, que es lo que de verdad cambia de un peldaño al
- * siguiente. Nadie quiere elegir el modo de pequeños.
+ * imprescindible y ningún «modo fácil». Los tramos se eligen por su ave, por
+ * sus peldaños y por el panel que traen, que es lo que de verdad cambia de un
+ * peldaño al siguiente. Nadie quiere elegir el modo de pequeños.
  */
 
 import { TIERS, type Tier } from "../flight/tiers";
@@ -50,6 +50,7 @@ import { camposDeLaRuta, tramosDelPlan } from "../flight/alterno";
 import { cargaParaElPlan, loQueCabe } from "../flight/combustible";
 import { FABRICANTE, modeloPorId } from "../flight/flota";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
+import { AVES, LADO_DEL_AVE } from "./aves";
 import { TarjetaDelAvion } from "./tarjeta-del-avion";
 import { caraDentro } from "./inicio";
 import type { EscenaDelInicio } from "../flight/inicio";
@@ -120,20 +121,18 @@ export interface Eleccion {
 
 // ── Qué cambia en cada tramo ─────────────────────────────────────────────
 //
-// Aquí iban cuatro aves, y no salieron. Dos intentos: cuatro retratos de
-// perfil que parecían huevos con pico, y cuatro siluetas en vuelo que
-// parecían libélulas. Es el mismo muro que con los avatares — **el sistema
-// está bien, el dibujo necesita a alguien que sepa dibujar** —, así que el
-// retrato queda pendiente y aquí va lo que sí se puede hacer bien y además
-// dice más.
+// Aquí iban cuatro aves y tardaron en llegar: los dos primeros intentos
+// salieron huevos con pico y libélulas, y mientras tanto la ficha llevó **el
+// panel de ese tramo**. Ya están —ver `ui/aves.ts`—, y el panel no se va:
+// el ave arriba, que es por lo que se elige, y el panel debajo, que es lo que
+// se gana al subir. Porque un tramo no es un personaje: es cuánta física se
+// te confía, y eso se ve en los instrumentos. Guyrami vuela sin ninguno; Tukã
+// tiene dibujos; Taguato, cifras; Taguato Ruvicha, los seis relojes de un
+// avión de verdad.
 //
-// Lo que se dibuja es **el panel de ese tramo**. Porque un tramo no es un
-// personaje: es cuánta física se te confía, y eso se ve en los instrumentos.
-// Guyrami vuela sin ninguno; Tukã tiene dibujos; Taguato, cifras; Taguato
-// Ruvicha, los seis relojes de un avión de verdad.
-//
-// Y de paso resuelve algo que faltaba: hasta ahora nadie sabía qué ganaba al
-// subir de peldaño. La ficha se lo enseña antes de elegir.
+// **Debajo y no al pasar por encima**: en una tablet o un teléfono no se pasa
+// por encima de nada, y un panel que solo sale con ratón es un panel que
+// quien más lo necesita no ve.
 
 const panel = (cuerpo: string): string => `
   <svg class="ficha__panel" viewBox="0 0 120 84" aria-hidden="true">
@@ -1120,7 +1119,11 @@ function fichaDeTramo(tier: Tier, indice: number, elegido: boolean): string {
     <button class="ficha ficha--tramo" type="button" role="radio"
             aria-checked="${elegido}" tabindex="${elegido ? 0 : -1}"
             data-tramo="${tier.id}">
-      <span class="ficha__lienzo ficha__lienzo--panel">${PANELES[tier.id] ?? GUYRAMI_SVG}</span>
+      <span class="ficha__lienzo ficha__lienzo--panel ficha__lienzo--tramo">
+        <img class="ficha__ave" src="${AVES[tier.id]}" alt=""
+             width="${LADO_DEL_AVE}" height="${LADO_DEL_AVE}" decoding="async" />
+        ${PANELES[tier.id] ?? GUYRAMI_SVG}
+      </span>
       <span class="ficha__pie">
         <!-- Dos filas, igual que las de sitio: en columna estrecha «Taguato
              Ruvicha» no cabe al lado de los galones. -->
@@ -2001,7 +2004,8 @@ export function abrirHangar(
             ? `
         <section class="hangar__bloque" aria-labelledby="hangar-tramo">
           <h2 class="hangar__pregunta" id="hangar-tramo">${t("hangar.como")}</h2>
-          <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-tramo">
+          <div class="hangar__rejilla hangar__rejilla--tramos" role="radiogroup"
+               aria-labelledby="hangar-tramo">
             ${TIERS.map((tier, i) => fichaDeTramo(tier, i, tier.id === tramo.id)).join("")}
           </div>
         </section>`

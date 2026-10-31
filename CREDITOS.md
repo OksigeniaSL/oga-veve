@@ -502,6 +502,28 @@ dice de qué modelo, de qué ficha y de qué librea salió cada una;
 `src/ui/retratos.test.ts` avisa si alguno de los tres cambió y los retratos no
 se rehicieron.
 
+### Las aves de los tramos
+
+`src/assets/aves/*.svg` son los cuatro retratos con los que se elige el tramo
+en el hangar: el chingolo (*Zonotrichia capensis*) de Guyrami, el tucán grande
+(*Ramphastos toco*) de Tukã, el taguató común (*Rupornis magnirostris*) de
+Taguato y la harpía (*Harpia harpyja*) de Taguato Ruvicha. Son **dibujos
+propios de Oksigenia SL**, hechos para esto en estilo de guía de campo antigua
+y pasados a vector plano, en un medallón con el papel y las tintas de la carta.
+Como el resto del arte original, son contenido de Oksigenia SL y no van con el
+código bajo Apache-2.0: ver `LICENSE-CONTENIDO.md`.
+
+Para la especie, el plumaje y las proporciones se miraron estas fotos de
+Wikimedia Commons. **Se miraron, no se reproducen**: no hay en el dibujo ni un
+trozo de ninguna.
+
+| Tramo | Foto de referencia | Licencia |
+| --- | --- | --- |
+| Guyrami | [«Zonotrichia capensis -Buenos Aires, Argentina-8.jpg»](https://commons.wikimedia.org/wiki/File:Zonotrichia_capensis_-Buenos_Aires,_Argentina-8.jpg) | CC BY 2.0 |
+| Tukã | [«006 Toco toucan in Encontro das Águas State Park Photo by Giles Laurent.jpg»](https://commons.wikimedia.org/wiki/File:006_Toco_toucan_in_Encontro_das_%C3%81guas_State_Park_Photo_by_Giles_Laurent.jpg) | CC BY-SA 4.0 |
+| Taguato | [«Rupornis magnirostris 454377456.jpg»](https://commons.wikimedia.org/wiki/File:Rupornis_magnirostris_454377456.jpg) | CC BY 4.0 |
+| Taguato Ruvicha | [«Captive Harpia harpyja (Harpy Eagle) at Belize Zoo.jpg»](https://commons.wikimedia.org/wiki/File:Captive_Harpia_harpyja_(Harpy_Eagle)_at_Belize_Zoo.jpg) | CC BY-SA 4.0 |
+
 ### Los barcos y los turbohélices de las islas
 
 Los cinco barcos que cruzan entre islas —un ferri de carga y pasaje en dos
