@@ -7,6 +7,8 @@
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT, loQueDaElMotor, PANAMBI, PYKASU } from "./aircraft";
 import { airDensity, SEA_LEVEL_DENSITY } from "./atmosphere";
+import { empujeLleno } from "./fdm";
+import { resistenciaNivelado } from "./nivel-que-ahorra";
 
 const PIE = 0.3048;
 const sigma = (pies: number) => airDensity(pies * PIE) / SEA_LEVEL_DENSITY;
@@ -43,4 +45,22 @@ describe("el motor con turbo", () => {
   it("y los demás, con la ley de siempre", () => {
     expect(loQueDaElMotor(PYKASU, sigma(10000))).toBeCloseTo(Math.pow(sigma(10000), 0.7), 9);
   });
+
+  /*
+   * **Y cruza a lo que cruza el de su clase**: 189 nudos verdaderos al 75 %
+   * (*Plane & Pilot*, «Seneca II»: 218 millas por hora). Su ficha decía 155.
+   * Se mide donde el empuje y la
+   * resistencia se igualan, nivelado a su altura de crucero y con tres cuartos
+   * de gas: unos 181 nudos, a un cinco por ciento.
+   */
+  it("y cruza a lo que cruza el Seneca II: 189 nudos verdaderos al 75 %", () => {
+    const NUDO = 0.514444;
+    expect(PANAMBI.cruiseSpeed / NUDO).toBeCloseTo(189, 0);
+    const alto = PANAMBI.alturaDeCrucero;
+    let v = 40;
+    while (v < 150 && empujeLleno(PANAMBI, airDensity(alto), v) * 0.75 > resistenciaNivelado(PANAMBI, alto, v)) v += 0.1;
+    expect(v / NUDO).toBeGreaterThan(189 * 0.95);
+    expect(v / NUDO).toBeLessThan(189 * 1.05);
+  });
 });
+

@@ -1611,7 +1611,21 @@ export const PANAMBI: AircraftConfig = {
    * parte. O sea: en molinete no sube, en bandera sí.
    */
   motorParado: { molinete: 0.35, bandera: 0.03, autoBandera: false },
-  cruiseSpeed: 80,
+  /*
+   * **Los 189 nudos verdaderos del Seneca II al 75 %**: «215 hp at 12,000
+   * feet, which allows for a 75-percent cruise speed of 218 mph» (*Plane &
+   * Pilot*, «Piper Seneca II, III, IV, V»), que son 189 nudos. Estaba en 80
+   * m/s, 155 nudos. La cifra es verdad arriba, con el turbo dando su potencia
+   * de nivel del mar: ver `alturaCritica` y `alturaDeCrucero`.
+   *
+   * Y como el empuje de una hélice se apaga con la velocidad en proporción a
+   * esta cifra —ver `empujeLleno`—, también lo hace un poco más rápido abajo:
+   * a fondo, 186 nudos a nivel del mar y 211 a 12.000 pies, cuando el de
+   * verdad no pasa de 196 («Top mph 226», *Plane & Pilot*). Con la de antes no
+   * se pasaba, pero al 75 % de gas a su altura de crucero iba a 167 nudos; con
+   * ésta, a 181.
+   */
+  cruiseSpeed: 189 * 0.514444,
   // Cinco mil quinientos: un bimotor de pistón sin presurizar vuela sus etapas
   // ahí arriba, con oxígeno a bordo.
   alturaDeCrucero: 5500,
