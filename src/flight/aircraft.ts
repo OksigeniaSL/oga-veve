@@ -450,6 +450,19 @@ export function loQueDaElMotor(
 }
 
 /**
+ * **La velocidad a la que la recta del empuje de una hélice llega a cero**,
+ * m/s: la de su ficha, o 2,4 veces su crucero. Vive aquí y no en cada sitio
+ * que cuenta el empuje porque son tres —el motor en vuelo, la carrera de
+ * despegue y el ascenso de la ficha— y con una cifra en cada uno el avión
+ * corría en uno lo que no corría en otro. Ver `empujeLleno`.
+ */
+export function velocidadSinEmpuje(
+  a: Pick<AircraftConfig, "cruiseSpeed" | "heliceSinEmpujeA">,
+): number {
+  return a.heliceSinEmpujeA ?? 2.4 * a.cruiseSpeed;
+}
+
+/**
  * **La velocidad de pérdida con todo fuera**, m/s: por encima, el ala lleva
  * el avión; por debajo, lo llevan las ruedas.
  *
@@ -687,8 +700,22 @@ export interface AircraftConfig {
    * Ver `MotorParado`.
    */
   motorParado: MotorParado;
-  /** Velocidad de crucero de referencia, m/s. Modula la caída de empuje. */
+  /**
+   * Velocidad de crucero de referencia, m/s. Sin `heliceSinEmpujeA`, modula
+   * también la caída de empuje: ver `velocidadSinEmpuje`.
+   */
   cruiseSpeed: number;
+  /**
+   * **A qué velocidad dejaría de empujar la hélice**, m/s: dónde llega a cero
+   * la recta con la que `empujeLleno` hace caer el empuje de una hélice. Sin
+   * decir, 2,4 veces el crucero.
+   *
+   * Hace falta cuando el crucero de la ficha es el de verdad y la recta, con
+   * él, deja ir el avión a fondo más deprisa que el de verdad: el crucero y
+   * el tope son dos números del mismo avión, y una sola cifra no puede dar
+   * los dos. Ver el JAZ 40.
+   */
+  heliceSinEmpujeA?: number;
   /**
    * A qué altura se hace ese crucero, m.
    *
@@ -1646,15 +1673,22 @@ export const PANAMBI: AircraftConfig = {
    * Pilot*, «Piper Seneca II, III, IV, V»), que son 189 nudos. Estaba en 80
    * m/s, 155 nudos. La cifra es verdad arriba, con el turbo dando su potencia
    * de nivel del mar: ver `alturaCritica` y `alturaDeCrucero`.
-   *
-   * Y como el empuje de una hélice se apaga con la velocidad en proporción a
-   * esta cifra —ver `empujeLleno`—, también lo hace un poco más rápido abajo:
-   * a fondo, 186 nudos a nivel del mar y 211 a 12.000 pies, cuando el de
-   * verdad no pasa de 196 («Top mph 226», *Plane & Pilot*). Con la de antes no
-   * se pasaba, pero al 75 % de gas a su altura de crucero iba a 167 nudos; con
-   * ésta, a 181.
    */
   cruiseSpeed: 189 * 0.514444,
+  /*
+   * **Y su tope, que es otro número: 196 nudos** («Top mph 226», *Plane &
+   * Pilot*, el mismo artículo). Con la recta de empuje de siempre —2,4 veces
+   * el crucero— los 189 de arriba lo llevaban a fondo a 211 nudos a 12.000
+   * pies: quince más que el de verdad.
+   *
+   * Con la recta acabando en 375 nudos va a fondo a 196 **a 12.000 pies**, su
+   * altitud crítica, que es donde un motor con turbo corre más —ahí tiene aún
+   * sus 200 hp y el aire ya frena menos—, y a 175 a nivel del mar. Y el
+   * crucero sigue saliendo: con el 75 % de su potencia —que a su altura de
+   * crucero es el 91 % de la palanca, porque arriba el turbo ya no da los 200
+   * hp— va a 185 nudos, y a 20.000 pies a 188. Lo prueba `turbo.test.ts`.
+   */
+  heliceSinEmpujeA: 375 * 0.514444,
   // Cinco mil quinientos: un bimotor de pistón sin presurizar vuela sus etapas
   // ahí arriba, con oxígeno a bordo.
   alturaDeCrucero: 5500,

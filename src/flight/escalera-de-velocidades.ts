@@ -276,8 +276,27 @@ export function indicadaDeSubida(a: AircraftConfig): number {
  */
 function cruceroDeHelice(a: AircraftConfig, altitud: number, aire: Aire): number {
   const ias =
-    (a.cruiseSpeed * Math.sqrt(airDensity(altitud, aire) / SEA_LEVEL_DENSITY)) / NUDO;
+    (verdaderaDeCrucero(a, altitud, aire) * Math.sqrt(airDensity(altitud, aire) / SEA_LEVEL_DENSITY)) / NUDO;
   return Math.max(indicadaDeSubida(a), Math.round(ias / 5) * 5);
+}
+
+/**
+ * **La verdadera de crucero de un avión de hélice a esta altitud**, m/s.
+ *
+ * La de la ficha, salvo **en el que lleva turbo y va por debajo de su altura
+ * de crucero**. Su cifra es de arriba —los 189 nudos del Seneca II al 75 %—,
+ * y abajo, con la misma potencia, va más despacio: el aire es más denso y
+ * frena más. Con la potencia igual y la resistencia de forma mandando, la
+ * potencia que hace falta crece con `ρ·V³`, así que la verdadera cae con la
+ * raíz cúbica de la densidad. Pedirle abajo la verdadera de arriba era una
+ * marca rosa que no se alcanza ni a fondo: a 8.000 pies, 189 nudos son su
+ * tope. En los atmosféricos no cambia nada: ahí la potencia de crucero se
+ * acaba subiendo, y la cifra de su ficha es la de abajo.
+ */
+function verdaderaDeCrucero(a: AircraftConfig, altitud: number, aire: Aire): number {
+  if (a.alturaCritica === null || altitud >= a.alturaDeCrucero) return a.cruiseSpeed;
+  const densa = airDensity(altitud, aire) / airDensity(a.alturaDeCrucero, aire);
+  return a.cruiseSpeed / Math.cbrt(densa);
 }
 
 /** La Vref de la ficha, en nudos. */
