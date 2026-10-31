@@ -2023,5 +2023,64 @@
   ],
   "tarjeta.voz.motorTurbo": [
     "tarjeta.voz.motorTurbo"
+  ],
+  "parte.explica.miramos": [
+    "parte.explica.miramos"
+  ],
+  "parte.explica.aca.tormenta": [
+    "parte.explica.aca.tormenta"
+  ],
+  "parte.explica.aca.visibilidad": [
+    "parte.explica.aca.visibilidad"
+  ],
+  "parte.explica.aca.techo": [
+    "parte.explica.aca.techo"
+  ],
+  "parte.explica.aca.visibilidadYTecho": [
+    "parte.explica.aca.visibilidadYTecho"
+  ],
+  "parte.explica.aca.cruzado": [
+    "parte.explica.aca.cruzado"
+  ],
+  "parte.explica.aca.pista": [
+    "parte.explica.aca.pista"
+  ],
+  "parte.explica.alla.tormenta": [
+    "parte.explica.alla.tormenta"
+  ],
+  "parte.explica.alla.visibilidad": [
+    "parte.explica.alla.visibilidad"
+  ],
+  "parte.explica.alla.techo": [
+    "parte.explica.alla.techo"
+  ],
+  "parte.explica.alla.visibilidadYTecho": [
+    "parte.explica.alla.visibilidadYTecho"
+  ],
+  "parte.explica.alla.cruzado": [
+    "parte.explica.alla.cruzado"
+  ],
+  "parte.explica.elegis": [
+    "parte.explica.elegis"
+  ],
+  "parte.explica.tambienSalir": [
+    "parte.explica.tambienSalir"
+  ],
+  "parte.explica.bien": [
+    "parte.explica.bien"
+  ],
+  "parte.senala.quedarse": [
+    "parte.senala.quedarse"
+  ],
+  "parte.senala.esperar": [
+    "parte.senala.esperar"
+  ],
+  "parte.senala.salirIgual": [
+    "parte.senala.salirIgual"
+  ],
+  "parte.explica": [
+    "parte.explica.miramos",
+    "{porque}",
+    "{eleccion?}"
   ]
 }
