@@ -327,6 +327,28 @@ const leer = (page) =>
 /** Si dos cajas en píxeles de pantalla se pisan. */
 const sePisan = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 
+/**
+ * **Lo menos que mide la lámina grande**, en fracción del ancho, según la
+ * toma: un cuarto, y en las de cerca del ala y del tren, que las llena el
+ * avión, la ventanita de antes. Ver la comprobación del vuelo.
+ */
+const minimoDeLaLamina = (plano) => (plano === "fuera-ala" || plano === "fuera-tren" ? 240 / 1280 : 0.25);
+/**
+ * Y medido en superficie (punto 311): una de 4:3 de igual superficie que una
+ * de 3:2 de un cuarto del ancho mide un 94 % de ese ancho. Ver la comprobación
+ * del vuelo; los esquemas uno a uno miden con la misma regla.
+ */
+const anchoMinimoDeLaLamina = (plano, proporcion) => minimoDeLaLamina(plano) * Math.sqrt(Math.min(1, (proporcion ?? 1.5) / 1.5));
+
+/**
+ * **Lo que tarda la lámina en asentarse**, ms: la que sale con la cabeza de
+ * Ara todavía moviéndose —del motor a la ventanilla— se coloca con el sitio
+ * que deja el cristal en ese instante, y crece en el vistazo siguiente en
+ * que cabe bastante más grande, que es cada 2,2 s (`CRECE_CADA` en
+ * `ui/ventana-de-historia.ts`). Con un poco de holgura para el vistazo.
+ */
+const ASIENTA_LA_LAMINA = 3200;
+
 /** Los momentos de un vuelo normal, en su orden. Ver `GUION_DEL_PASAJE`. */
 const MOMENTOS = [
   "ventanilla",
@@ -2108,14 +2130,14 @@ async function elVuelo() {
    * ahí es no bajar de la ventanita de antes, 240 px de 1280: si baja de eso,
    * lo grande no ha servido de nada.
    */
-  const minimo = (plano) => (plano === "fuera-ala" || plano === "fuera-tren" ? 240 / 1280 : 0.25);
+  const minimo = minimoDeLaLamina;
   /*
    * **El suelo se mide en superficie, no solo de ancho** (punto 311): el cuarto
    * del ancho se puso con los dibujos, de 3:2, y los esquemas con ilustración
    * son de 4:3, más altos. A igual superficie que una de 3:2 de un cuarto del
    * ancho, una de 4:3 mide un 94 % de ese ancho: no es más pequeña, es más alta.
    */
-  const anchoMinimo = (l) => minimo(l.plano) * Math.sqrt(Math.min(1, (l.proporcion ?? 1.5) / 1.5));
+  const anchoMinimo = (l) => anchoMinimoDeLaLamina(l.plano, l.proporcion);
   const dibujosVistos = [...laminas].filter(([s]) => s.startsWith("dibujo:"));
   const pequenos = dibujosVistos.filter(([, l]) => l.ancho < anchoMinimo(l));
   comprobar(
@@ -3065,7 +3087,24 @@ async function enElTelefono() {
  * va la lámina, como en el vuelo, después de cada fotograma del juego.
  */
 async function laLaminaYElKit() {
-  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 800 }, locale: "es-PY" });
+  /*
+   * **Y en una pantalla donde el caso pasa siempre**: la de 1280 × 1024, la
+   * de cinco por cuatro de tantos colegios.
+   *
+   * En 1280 × 800 el panel del kit va a lo ancho, 780 px, y la tarjeta que
+   * crece lo empuja hacia abajo: lo único que puede pisar es la franja de
+   * debajo. Esa franja mide 105 px con la tarjeta de dos líneas —160 px de
+   * alto; la de cuando se escribió esto medía 148— y una lámina necesita 116
+   * como poco (`VENTANA.minimo`, de 3:2): la lámina se iba a un lado, adonde
+   * el panel no llega, y el banco daba «el panel bajó sobre la lámina 0
+   * veces», sin un solo fotograma pisado. Que cupiera o no dependía de
+   * cuántas líneas tuviera la frase que la escena estaba diciendo. En 1024 de
+   * alto la franja mide más de trescientos y la lámina más grande va ahí,
+   * abajo del todo; y para que el panel llegue a ella, la tarjeta también
+   * crece de más —ver los empujones—. `OGA_DETALLE` dice dónde estuvo cada
+   * una.
+   */
+  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 1024 }, locale: "es-PY" });
   const page = await ctx.newPage();
   const nombre = "la lámina se aparta del panel del kit en el mismo fotograma: al abrirse y cada vez que la tarjeta lo empuja";
   try {
@@ -3087,6 +3126,8 @@ async function laLaminaYElKit() {
         if (r.width <= 2 || r.height <= 2) return;
         m.juntos++;
         const p = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+        const firma = `${Math.round(v.caja.left)},${Math.round(v.caja.top)}-${Math.round(v.caja.right)},${Math.round(v.caja.bottom)} | ${Math.round(p.left)},${Math.round(p.top)}-${Math.round(p.right)},${Math.round(p.bottom)}`;
+        if ((m.vistas ??= []).at(-1) !== firma && m.vistas.length < 40) m.vistas.push(firma);
         // El caso que se busca: el panel se mueve encima de donde estaba la lámina.
         if (m.antes && (m.antes.panel.top !== p.top || m.antes.panel.right !== p.right) && sePisan(m.antes.caja, p)) m.empujones++;
         if (sePisan(v.caja, p)) m.pisadas.push({ panel: p, lamina: v.caja });
@@ -3104,8 +3145,14 @@ async function laLaminaYElKit() {
     const k = await page.evaluate(() => globalThis.__oga.inicio().kit);
     await page.mouse.click(k.boton.x + k.boton.width / 2, k.boton.y + k.boton.height / 2);
     await pausa(800);
-    // La tarjeta, más alta y más baja, como con las frases largas y cortas: el panel va debajo.
-    for (const crece of [20, 45, 70, 35, 0, 90, 0, 60, 0]) {
+    /*
+     * La tarjeta, más alta y más baja, como con las frases largas y cortas: el
+     * panel va debajo. Y antes, dos empujones de más, de 160 y 240 px, que no
+     * los da ninguna frase: la lámina se pone lo más abajo que cabe, y con los
+     * de una frase el panel no bajaba hasta ella. Primero, que la escena pone
+     * la suya al rato y la quita al acabar la frase.
+     */
+    for (const crece of [160, 0, 240, 0, 20, 45, 70, 35, 0, 90, 0, 60, 0]) {
       await page.evaluate((px) => {
         document.querySelector("#inicio .inicio__tarjeta").style.paddingBottom = px ? `${14 + px}px` : "";
       }, crece);
@@ -3118,7 +3165,8 @@ async function laLaminaYElKit() {
       m.juntos > 60 && m.empujones >= 1 && m.pisadas.length === 0,
       `${m.juntos} fotogramas con las dos · el panel bajó sobre la lámina ${m.empujones} veces · pisada en ${m.pisadas.length}` +
         (m.pisadas[0] ? ` (panel ${JSON.stringify(m.pisadas[0].panel)}, lámina ${JSON.stringify(m.pisadas[0].lamina)})` : "") +
-        ` · al final ${v?.sitio ?? "sin lámina"} ${v?.donde ?? ""}`,
+        ` · al final ${v?.sitio ?? "sin lámina"} ${v?.donde ?? ""}` +
+        (process.env.OGA_DETALLE ? ` · lámina | panel: ${(m.vistas ?? []).join(" → ")} · último: ${JSON.stringify(v?.ultimo ?? null)}` : ""),
     );
   } catch (e) {
     comprobar(nombre, false, String(e).slice(0, 140));
@@ -3169,21 +3217,47 @@ async function losEsquemasUnoAUno() {
         malos.push(`${sitio} no salió`);
         continue;
       }
-      await pausa(900);
+      /*
+       * **Y su tamaño, el asentado**, como en el vuelo, que se queda con el
+       * mayor mientras está puesta. Se medía a los 900 ms, y la escena sigue
+       * corriendo debajo: el maletero salía cuando Ara volvía la cabeza del
+       * motor a la ventanilla, y con el cristal a medio camino la lámina se
+       * colocaba al 22 %; en su vistazo siguiente crecía al 32, como las que
+       * vinieron detrás en la misma toma. Medido con la toma de cada uno: ver
+       * `ASIENTA_LA_LAMINA`. Y se espera solo lo que haga falta —los 900 ms
+       * de antes, y más únicamente si todavía no llega—, que la escena sigue
+       * su guion debajo y la torre de «Luz verde», que va detrás, tiene que
+       * salir antes de que hable la comandante.
+       */
+      let mayor = { ancho: 0, plano: null, proporcion: 1.5 };
+      for (const desde = Date.now(); Date.now() - desde < ASIENTA_LA_LAMINA; ) {
+        await pausa(300);
+        if (Date.now() - desde >= 900 && mayor.ancho >= anchoMinimoDeLaLamina(mayor.plano, mayor.proporcion)) break;
+        const j = await page.evaluate(() => {
+          const i = globalThis.__oga.inicio();
+          return { v: i.ventanita, plano: i.planoVisto ?? null, ancho: innerWidth };
+        });
+        if (j.v?.sitio !== sitio || !j.v.caja) continue;
+        v = j.v;
+        const a = (v.caja.right - v.caja.left) / j.ancho;
+        const proporcion = (v.caja.right - v.caja.left - 12) / Math.max(1, v.caja.bottom - v.caja.top - 12);
+        if (a > mayor.ancho) mayor = { ancho: a, plano: j.plano, proporcion };
+      }
       const l = await leer(page);
       const img = await page.evaluate(() => {
         const f = document.querySelector('[data-hud="historia-foto"]');
         const r = f?.getBoundingClientRect();
         return f ? { w: f.naturalWidth, h: f.naturalHeight, rw: r.width, rh: r.height, src: f.currentSrc || f.src } : null;
       });
-      const ancho = (v.caja.right - v.caja.left) / l.pantalla.ancho;
+      const ancho = Math.max(mayor.ancho, (v.caja.right - v.caja.left) / l.pantalla.ancho);
       const pisa = l.noSeTapa.filter((o) => sePisan(v.caja, o)).map((o) => o.que);
       const bueno = clave ? esSuIlustracion(clave, v.fichero) : /ilustraciones\/torre-radio[-.][^/]*webp/.test(v.fichero ?? "");
       // Entera: la imagen se ve con la proporción de su fichero, sin recortar ni deformar.
       const entera = !!img && img.w > 0 && Math.abs(img.rw / img.rh - img.w / img.h) < 0.03;
-      vistos.push(`${clave ?? "torre"} ${Math.round(ancho * 100)} %`);
+      vistos.push(`${clave ?? "torre"} ${Math.round(ancho * 100)} %${mayor.plano && mayor.plano !== "ventanilla" ? ` (${mayor.plano})` : ""}`);
       if (!bueno) malos.push(`${sitio}: ${v.fichero ?? "el dibujo de código"}`);
-      if (v.donde !== "grande" || ancho < 0.25) malos.push(`${sitio}: ${v.donde} de ${Math.round(ancho * 100)} %`);
+      if (v.donde !== "grande" || ancho < anchoMinimoDeLaLamina(mayor.plano, mayor.proporcion))
+        malos.push(`${sitio}: ${v.donde} de ${Math.round(ancho * 100)} %${mayor.plano ? ` (${mayor.plano})` : ""}`);
       if (!entera) malos.push(`${sitio}: no entera (${JSON.stringify(img)})`);
       if (pisa.length) malos.push(`${sitio} pisa ${pisa.join(", ")}`);
       if (clave === "oido" || clave === "mascara" || clave === "alto" || !clave) await foto(page, `esquema-${clave ?? "torre"}`);
