@@ -987,6 +987,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     const engancha = memoriaDeSenda === null;
     if (engancha) memoriaDeSenda = memoriaNueva();
     const actitud = o.actitud();
+    /*
+     * **Y yendo alto, un reactor no se tira a por la senda.** El automático suma
+     * al ritmo de la senda lo que falta de altura entre diez segundos, hasta 7,5
+     * m/s: con cuarenta metros de más, el JAZ 110 pasaba de cuatro metros por
+     * segundo a doce con todo fuera, saliendo del viraje, y ganaba treinta nudos
+     * que sus flaps no aguantan. Se le pide lo que ya es la cuenta de este banco
+     * para corregir —`CAIDA_MAXIMA`, un grado más que la senda— y un cuarto más
+     * de holgura, y el resto de altura se va bajando detrás.
+     */
+    let pedida = senda.altitud + senda.ritmo * (ahora - senda.desde);
+    if (REACTOR_COMPLETO)
+      pedida = Math.max(pedida, s.position.y + (-CAIDA_MAXIMA * 1.25 - senda.ritmo) * 10);
     const r = mandosPara(
       {
         heading: s.heading,
@@ -1000,10 +1012,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         ritmoDeCabeceo: s.pitchRate,
         // Lo que lleva la palanca al engancharlo, para no dar un tirón.
         timon: engancha ? mandos.elevator : undefined,
+        // Lo mismo que le da el juego. Ver `AUTORIDAD_SUFICIENTE`.
+        autoridadDelTimon: o.autoridadDelTimon?.(),
       },
       {
         rumbo: null,
-        altitud: senda.altitud + senda.ritmo * (ahora - senda.desde),
+        altitud: pedida,
         ritmo: senda.ritmo,
         velocidad: null,
       },
@@ -1151,18 +1165,41 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * con dos, el JAZ 90 se pasaba en la recogida, se nivelaba a metro y medio
      * y flotaba cuatrocientos metros perdiendo velocidad hasta caerse a 2 m/s.
      */
+    /*
+     * **Y en un avión grande, más: lo que tarda su morro va con su tamaño.** El
+     * corto período crece con el largo del avión —`V/ℓ`—, y esa ala de sesenta
+     * metros tarda el doble que la de veintiséis en dar lo que se le pide: medido
+     * en el banco de mesa, el JAZ 110 estaba todavía bajando a tres metros por
+     * segundo cuando le llegaba el suelo. Empezar antes no lo arregla: a cuatro
+     * segundos de senda flotaba quinientos metros. Pedir de antemano el doble,
+     * sí: de 2,1 a 1,6 m/s y solo quince metros más allá.
+     */
+    const envergadura = suyas.envergadura ?? 0;
+    const porSuTamano = Math.max(1, envergadura / 30);
     const porDelante = recogida.porAngulo
-      ? recogida.porAngulo * 0.01 * acelera
+      ? recogida.porAngulo * 0.01 * porSuTamano * acelera
       : 0.1 * acelera;
+    /*
+     * **Y lo que pide, con la presión que lleva.** Lo que se le pide al ala va en
+     * ángulo, y un ángulo da más sustentación cuanto más deprisa se va: con veinte
+     * nudos de cara el JAZ 110 llega a la recogida a la Vref más quince, un cuarto
+     * más de presión, y con la misma mano se pasaba: se quedaba a medio metro
+     * subiendo, se iba a siete y medio, flotaba mil metros y caía a 4,6 m/s, en
+     * Gran Canaria; en el banco de mesa, igual, a 3,2. Un ala que tarda no perdona
+     * pasarse. Con el ángulo en proporción inversa a la presión, 1,7 m/s a la Vref
+     * más cinco y 1,3 a la Vref más quince, sin subir. Los menores se afinaron
+     * sin esto y se quedan como estaban.
+     */
+    const porLaPresion =
+      envergadura > 30
+        ? Math.min(1, (enVerdadera(s, suyas.aproximacion ?? s.airspeed) / Math.max(1, s.airspeed)) ** 2)
+        : 1;
     const calculado = Math.max(
       -0.6,
       Math.min(
         0.8,
         recogida.palanca +
-          porLoQueFrena +
-          porDelante +
-          kp * falta +
-          ki * recogida.acumulado -
+          porLaPresion * (porLoQueFrena + porDelante + kp * falta + ki * recogida.acumulado) -
           kq * (s.pitchRate ?? 0),
       ),
     );
@@ -1201,8 +1238,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * exceso, el avión se quedaba flotando a tres metros mientras la velocidad
      * se iba, y luego caía.
      */
+    /*
+     * **Y un avión grande, a ras de suelo, tampoco tira más.** Nivelado a medio
+     * metro con velocidad de sobra —la Vref más quince, con viento de cara—, lo
+     * que pide la velocidad que se pierde seguía subiendo la palanca, y el JAZ 110
+     * se sostenía ahí hasta gastarla: 758 m pasado el umbral, a 1,1 m/s. Es lo que
+     * se enseña a no hacer: se aguanta la actitud y se deja que se pose.
+     */
+    const aRas = envergadura > 30 && ruedas < 1.5 && pide - contraLaPista < 0;
     mandos.elevator =
-      falta < -0.6 && recogida.ultimoMando !== undefined ? recogida.ultimoMando : calculado;
+      (falta < -0.6 || aRas) && recogida.ultimoMando !== undefined
+        ? recogida.ultimoMando
+        : calculado;
     recogida.ultimoMando = mandos.elevator;
     if (!SENCILLO) mandos.throttle = 0;
   };
@@ -3406,6 +3453,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       // Y un segundo de margen, lo que tarda en entrar el alabeo.
       arco: radio * (1 - Math.cos(theta)) + v * Math.sin(theta),
       rumbo: hp,
+      radio,
     };
   };
   const llegaAlEjeVirando = (s) => {
@@ -5461,8 +5509,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        */
       const porLaSenda =
         meta && v && aDonde >= 3 ? queQuedaHastaTocar(s, v, aDonde) * SENDA : Infinity;
+      /*
+       * **Y hacia la entrada en final, la senda que queda, no la altura de la
+       * entrada.** Con esa altura de tope, en cuanto se apuntaba a la entrada se
+       * pedía bajar hasta ella: doscientos metros, al ritmo de la senda y más,
+       * justo al empezar el viraje y con los últimos flaps saliendo. Un reactor
+       * no vira en una esquina: el JAZ 110 de Gran Canaria se alejaba dos
+       * kilómetros más en un arco de noventa segundos, así que llegaba al fondo
+       * del arco cien metros por debajo de la senda, habiendo bajado a once
+       * metros por segundo. De ahí salía a buscarla con todo el gas, se subía a
+       * doce, y volvía picando a 190 nudos, por encima de lo que aguantan sus
+       * flaps. El que planifica la bajada baja cuando se le acaba el camino,
+       * que es lo que dice `porLaSenda`. En los demás, como estaba.
+       */
+      const tope = REACTOR_COMPLETO && aDonde >= 4 && v?.[3] ? v[3].y : meta?.y;
       const altoQueToca = meta
-        ? Math.min(meta.y - cotaDePista, porLaSenda + (suyas.tren ?? 0))
+        ? Math.min(tope - cotaDePista, porLaSenda + (suyas.tren ?? 0))
         : CRUCERO;
       ultimoAltoQueToca = altoQueToca;
       const subiendo = alto(s) < altoQueToca - 15;
@@ -5703,6 +5765,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         const ultimoDeLaVista = aLaVista[aLaVista.length - 1];
         const u0 = finalAhora(0);
         if (u0) queda += Math.hypot(u0.x - ultimoDeLaVista.x, u0.z - ultimoDeLaVista.z);
+      } else if (REACTOR_COMPLETO) {
+        /*
+         * **Y mientras se vira a la final, lo mismo: lo que queda es el arco.** Lo
+         * que falta por el eje no cuenta el camino del viraje, y un reactor entra
+         * en final en uno de ciento ochenta grados y tres kilómetros de ancho. La
+         * senda por el eje se le ponía por debajo en cuanto empezaba a virar:
+         * bajaba a ocho metros por segundo con todo fuera y virando, llegaba al
+         * fondo del arco, donde la senda vuelve a subir, cuarenta metros bajo ella,
+         * y subía a buscarla, con el gas a ochenta centésimas al salir del viraje.
+         * Con el radio `R` y `θ` por girar, el arco es `R·θ` y acerca `R·sen θ` por
+         * el eje: lo que da de más es `R·(θ − sen θ)`, que a θ cero es nada.
+         */
+        const a = elArcoHastaElEje(s);
+        queda += a.radio * (a.theta - Math.sin(a.theta));
       }
       const sendaDeVerdad = Math.max(0, (queda + puntoDeToma) * SENDA) + tren;
       /*
