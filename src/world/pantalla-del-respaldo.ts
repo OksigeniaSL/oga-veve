@@ -178,9 +178,18 @@ function pintarElMapa(c: CanvasRenderingContext2D, fondo: CanvasImageSource, avi
   dibujarElAvion(c, xAvion, yAvion, avion.apunta);
 }
 
+/**
+ * **Lo que puede enseñar la pantalla**: el camino entero, el trozo que se está
+ * cruzando, la pelota, los relojes de las dos ciudades y los datos del vuelo. La
+ * pantalla sabe pintarlos; qué modos se ofrecen a quién lo decide la consola.
+ */
+export type ModoDeLaPantalla = "mapa" | "cerca" | "pelota" | "relojes" | "datos";
+
 export class PantallaDelRespaldo {
   /** Lo que pinta la pantalla. `null` sin lienzo: en las pruebas. */
   readonly textura: CanvasTexture | null = null;
+  /** Lo que está enseñando ahora. */
+  modo: ModoDeLaPantalla = "mapa";
   private readonly contexto: CanvasRenderingContext2D | null = null;
   private readonly fondo: HTMLCanvasElement | null = null;
   private readonly camino = caminoEnElMapa();
@@ -223,6 +232,14 @@ export class PantallaDelRespaldo {
     if (!this.contexto || !this.fondo || !this.textura) return true;
     pintarElMapa(this.contexto, this.fondo, avion, this.camino);
     this.textura.needsUpdate = true;
+    return true;
+  }
+
+  /** Cambia lo que enseña. Devuelve si cambió: el siguiente `poner` lo repinta. */
+  mostrar(modo: ModoDeLaPantalla): boolean {
+    if (modo === this.modo) return false;
+    this.modo = modo;
+    this.pintadoEn = null;
     return true;
   }
 
