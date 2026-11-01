@@ -978,6 +978,7 @@ import {
 } from "./world/marco-de-ventanilla";
 import { CabinaDePasaje, cabinaPreparada, enLaPuerta } from "./world/cabina-de-pasaje";
 import type { AsientoDePasaje } from "./world/asiento-de-pasaje";
+import { CERCANO_EN_LA_CABINA } from "./world/cabina-333";
 import { montarElPasillo, type PasilloDePasaje } from "./world/pasillo-de-pasaje";
 import { diaEnLaCabina } from "./world/luz-de-cabina";
 import { nombreDeTecla } from "./flight/keymap";
@@ -25502,6 +25503,8 @@ export class Game {
     p.pantalla.poner(perfil, this.horaDelVueloLargo ?? this.relojDelJuego - RODAJE_DE_SALIDA);
   }
   private perfilDeLaPantalla: PerfilDelVuelo | null = null;
+  /** El plano cercano de la cámara, el de todo el juego. Ver `CERCANO_EN_LA_CABINA`. */
+  private readonly cercanoDeSiempre = 0.6;
 
   /**
    * **Cuelga o descuelga el pasillo del avión**: solo existe mientras se mira,
@@ -25811,6 +25814,11 @@ export class Game {
     const asiento = this.asientoDe(modo);
     // Asomada al pasillo, la pared de la ventanilla no está delante: la cabina la pone el pasillo.
     const pasillo = !!asiento && this.enElPasillo;
+    const cercano = pasillo && this.elPasillo()?.pantalla ? CERCANO_EN_LA_CABINA : this.cercanoDeSiempre;
+    if (this.camera.near !== cercano) {
+      this.camera.near = cercano;
+      this.camera.updateProjectionMatrix();
+    }
     this.marcoDeVentanilla.visible = !!asiento && !pasillo;
     if (pasaje) pasaje.ventanillas.visible = !asiento;
     this.ponerElPasillo(pasillo);

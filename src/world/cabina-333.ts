@@ -152,13 +152,20 @@ const POPA_DEL_ASIENTO = 0.57;
 const COJIN_BAJO_LOS_OJOS = 0.3;
 
 /**
- * **El plano cercano de la cámara del juego**, m. Medio metro de los ojos al
- * respaldo de delante queda por dentro y la pantalla no se pintaría. Así que el
- * plano `respaldo` se ve desde algo más atrás y con el ángulo más cerrado: lo que
- * se ve es lo mismo, y no hay que tocar la precisión de todo el mundo por una
- * pantalla.
+ * **De los ojos de Ara a la pantalla**, m: los de un niño sentado, con la espalda en
+ * el respaldo, en treinta y una pulgadas entre filas.
  */
-const OJOS_A_LA_PANTALLA = 0.72;
+export const OJOS_A_LA_PANTALLA = 0.5;
+
+/**
+ * **El plano cercano de la cámara mientras se mira esta cabina**, m. El del juego
+ * son sesenta centímetros, y aquí dentro los compartimentos quedan a un palmo y la
+ * pantalla a medio metro: se cortaban y se veía el compartimento por dentro. Se
+ * acerca solo mientras se mira la cabina, cuando lo lejano solo asoma por las
+ * ventanillas y un poco menos de precisión allí no se nota. Ver `ponerLaCabina` en
+ * `game.ts`.
+ */
+export const CERCANO_EN_LA_CABINA = 0.12;
 
 /**
  * **El ángulo de la vista para que la pantalla quepa**, grados, y no solo en
@@ -258,7 +265,7 @@ const COLOR = {
   techo: "#efece6",
   compartimento: "#dcd9d1",
   puertaDeCompartimento: "#efece6",
-  labio: "#6b6a70",
+  labio: "#7d7c82",
   panel: "#bcbcbc",
   monumento: "#e0ddd4",
   puertaDeAseo: "#c9c6bd",
@@ -585,7 +592,7 @@ export function montarLaCabina333(
    * La luz cálida sale de la zona de las puertas, y se apaga hacia atrás. A la
    * altura de Ara ya solo queda la azul: es lo que dibuja la lámina.
    */
-  const calidaEn = (z: number): number => 1 - suave(binsDesde + 0.2, binsDesde + 3.6, z);
+  const calidaEn = (z: number): number => 1 - suave(binsDesde - 0.4, binsDesde + 2.4, z);
   const cuerpo = new Cosido(suelo, calidaEn);
   const luces = new Cosido(suelo, () => 0, true);
   const coves = new Cosido(suelo, () => 0, true);
@@ -903,7 +910,6 @@ export function montarLaCabina333(
   for (const k of [s, -s] as const) colgarLaSenal(k * 1.75, 2.2, zPuerta, k as -1 | 1);
 
   // ── Desde dónde se mira ────────────────────────────────────────────────
-  // Algo por detrás del ojo sentado: la fila de delante queda fuera del plano cercano, y no se corta.
   const ojo = { x: s * pasillos[1], y: H(MIRANDO_EL_PASILLO.ojosSobreElSuelo), z: sentada.z + 0.15 };
   const pose: AsientoDePasaje = {
     ojo,

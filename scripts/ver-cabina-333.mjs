@@ -47,7 +47,7 @@ const laTarjeta = (page) =>
     return i ? g.getParameter(i.UNMASKED_RENDERER_WEBGL) : "sin extensión";
   });
 
-async function abrir(contexto, consulta) {
+async function abrir(contexto, consulta, espera = 5000) {
   const page = await contexto.newPage();
   page.on("pageerror", (e) => console.log("  ERROR:", e.message.slice(0, 300)));
   page.on("console", (m) => {
@@ -58,23 +58,32 @@ async function abrir(contexto, consulta) {
   await page.waitForFunction(() => !!globalThis.__oga?.inicio?.()?.estado, null, { timeout: 240_000 });
   await page.keyboard.press("ShiftLeft");
   await page.waitForFunction(() => globalThis.__oga.inicio().vista?.startsWith("pasaje"), null, { timeout: 120_000 }).catch(() => {});
-  await pausa(5000);
+  await pausa(espera);
   return page;
 }
 
-async function fotos(page, sufijo, planos = ["pasillo", "ventanilla", "respaldo"]) {
+/** La misma foto, sin nada de lo que el juego pone encima: lo que se mira aquí es la cabina. */
+async function fotoLimpia(page, ruta) {
+  const estilo = await page.addStyleTag({ content: "* { visibility: hidden !important; } canvas#game, #game canvas, canvas { visibility: visible !important; }" });
+  await pausa(100);
+  await page.screenshot({ path: ruta });
+  await estilo.evaluate((n) => n.remove());
+}
+
+async function fotos(page, sufijo, planos = ["pasillo", "ventanilla", "respaldo"], paso = 2500) {
   const tarjeta = await laTarjeta(page);
   console.log(`  ${sufijo} · avión ${await page.evaluate(() => globalThis.__oga.avion().id)} · tarjeta: ${tarjeta}`);
   informe.push(`${sufijo}: ${tarjeta}`);
   for (const plano of planos) {
     await page.evaluate((p) => globalThis.__oga.ponerPlano(p), plano);
-    await pausa(2500);
+    await pausa(paso);
     const donde = await page.evaluate(() => {
       const p = globalThis.__oga.pasillo();
       return p ? { plano: p.plano, colgado: p.colgado, marco: p.marco, fov: p.fov, letrero: p.letrero, tiras: p.tiras } : null;
     });
     console.log(`  ${plano}:`, JSON.stringify(donde));
     await page.screenshot({ path: `${FOTOS}/${plano}-${sufijo}.png` });
+    await fotoLimpia(page, `${FOTOS}/${plano}-${sufijo}-limpia.png`);
   }
 }
 
@@ -170,8 +179,8 @@ try {
     await puesto.close();
     // Sin salto: `hasta` a la misma hora. Lo primero la pantalla, antes de que Ara se duerma.
     console.log("De noche, arriba, a las cuatro horas de vuelo:");
-    const page = await abrir(contexto, "fecha=2026-11-15&largo=14400&hasta=14400");
-    await fotos(page, "crucero-noche", ["respaldo", "pasillo"]);
+    const page = await abrir(contexto, "fecha=2026-11-15&largo=14400&hasta=14400", 800);
+    await fotos(page, "crucero-noche", ["pasillo", "respaldo"], 1900);
     console.log("  hora del vuelo:", await page.evaluate(() => globalThis.__oga.inicio()?.salto?.hora ?? null));
     await page.close();
   }

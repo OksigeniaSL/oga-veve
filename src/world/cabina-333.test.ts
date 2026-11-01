@@ -14,6 +14,7 @@ import {
   filasDeLaCabina,
   fovParaLaPantalla,
   montarLaCabina333,
+  OJOS_A_LA_PANTALLA,
   PANTALLA,
   PASO_DE_CUADERNAS,
   SECCION,
@@ -51,8 +52,8 @@ function montar(): NonNullable<ReturnType<typeof montarLaCabina333>> {
 }
 
 /** Lo primero que corta un rayo en la cabina: a cuánto está. */
-function primero(c: ReturnType<typeof montar>, desde: Vector3, hacia: Vector3, cercano = 0): number | null {
-  const r = new Raycaster(desde, hacia.clone().normalize(), cercano);
+function primero(c: ReturnType<typeof montar>, desde: Vector3, hacia: Vector3): number | null {
+  const r = new Raycaster(desde, hacia.clone().normalize());
   const corte = r.intersectObjects(c.mallas as Mesh[], false)[0];
   return corte?.distance ?? null;
 }
@@ -212,7 +213,7 @@ describe("Lo que se le vio al primer bloque", () => {
     expect(pilar).not.toBeNull();
   });
 
-  it("«Justamente a Ara le has quitado la pantalla»: de frente, sin nada delante, y fuera del plano cercano", () => {
+  it("«Justamente a Ara le has quitado la pantalla»: de frente, sin nada delante, a la distancia de su asiento", () => {
     expect(c.pantalla).toBeDefined();
     const pose = c.poseDelRespaldo!(16 / 9);
     const ojo = new Vector3(pose.ojo.x, pose.ojo.y, pose.ojo.z);
@@ -220,13 +221,14 @@ describe("Lo que se le vio al primer bloque", () => {
     // Delante de Ara, en su columna.
     expect(Math.abs(a.x - disposicion333().asientoA)).toBeLessThan(0.01);
     expect(a.z).toBeLessThan(ojo.z);
-    // Más lejos que el plano cercano de la cámara (0,6 m), y mirando a ella.
+    // A lo que queda en treinta y una pulgadas, y mirando a ella.
     const d = ojo.distanceTo(a);
-    expect(d).toBeGreaterThan(0.62);
+    expect(d).toBeGreaterThan(0.45);
+    expect(d).toBeLessThan(0.55);
     expect(pose.guinada).toBe(0);
     expect(pose.cabeceo).toBeCloseTo(-Math.atan2(ojo.y - a.y, ojo.z - a.z), 6);
-    // Y nada entre los ojos y la pantalla. El respaldo de Ara queda por detrás del plano cercano, y no se pinta.
-    const hasta = primero(c, ojo, a.clone().sub(ojo), 0.6);
+    // Y nada entre los ojos y la pantalla, ni el respaldo de Ara por delante de ellos.
+    const hasta = primero(c, ojo, a.clone().sub(ojo));
     expect(hasta === null || hasta > d - 0.03).toBe(true);
   });
 
@@ -248,7 +250,7 @@ describe("Lo que se le vio al primer bloque", () => {
 describe("La pantalla llena la vista", () => {
   const cabe = (aspecto: number): { alto: number; ancho: number } => {
     const t = Math.tan(((fovParaLaPantalla(aspecto) / 2) * Math.PI) / 180);
-    const d = 0.72;
+    const d = OJOS_A_LA_PANTALLA;
     return { alto: PANTALLA.alto / (2 * d * t), ancho: PANTALLA.ancho / (2 * d * t * aspecto) };
   };
 
