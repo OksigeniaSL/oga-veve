@@ -969,7 +969,7 @@ export const ADELANTO = {
  */
 export const EMPIEZA_LA_LLEGADA = DIEZ_MIL_PIES;
 /** Si el vuelo ya va en la llegada: bajando por debajo de los diez mil pies, o ya preparando la cabina. */
-const enLaLlegada = (l: LecturaDelPasaje, e: VueloDePasaje): boolean =>
+const enLaLlegada = (l: LecturaDelPasaje, e: MotorDelPasaje): boolean =>
   (bajando(l.tramo) && l.altitud < EMPIEZA_LA_LLEGADA) || (bajando(l.tramo) && cabinaPreparada(l, e));
 /** Los ratos por delante en los que se mira qué viene, s de vuelo. */
 const PASOS_DE_MIRAR = [2, 5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 90, 105, 120, 150, 180] as const;
@@ -1173,15 +1173,15 @@ const LA_DESPIERTAN = conLaTripulante(tripulante("despertar"));
  * cristal, solo sale entonces: con el cartel encendido el cinturón va puesto
  * y bien abrochado, y un dibujo no enseña lo contrario.
  */
-const cartelApagado = (e: VueloDePasaje): boolean => e.dicho("arriba") && !e.dicho("bajada");
+const cartelApagado = (e: MotorDelPasaje): boolean => e.dicho("arriba") && !e.dicho("bajada");
 /**
  * **Si la luz del cinturón está apagada ahora**: la del cartel, si el juego la
  * da; si no, la de lo que se ha dicho. Es la que manda para levantarse.
  */
-const luzApagada = (l: LecturaDelPasaje, e: VueloDePasaje): boolean =>
+const luzApagada = (l: LecturaDelPasaje, e: MotorDelPasaje): boolean =>
   l.cinturon === undefined ? cartelApagado(e) : !l.cinturon;
 /** Ara contra el cristal, con su ilustración si el cartel está apagado; si no, como venía. */
-const contraElCristal = (l: Linea, e: VueloDePasaje): Linea =>
+const contraElCristal = (l: Linea, e: EscenaDelPasaje): Linea =>
   cartelApagado(e) ? ilustrada(l, "pasaje-ara-ventanilla") : l;
 /**
  * **Las nubes de cerca, con la tripulante al lado**: el saludo con su
@@ -1256,15 +1256,22 @@ export function esDeCerca(l: Linea): boolean {
   return l.quien === "tripulacion" && !l.megafonia;
 }
 
-interface DefMomento<Id extends string = MomentoDelPasaje> {
+/**
+ * **Un momento del guion**: lo que se dice, cuándo toca y desde dónde se ve.
+ * `Id` es el suyo; `M` y `C`, los momentos y las charlas del guion entero, que
+ * son los que puede mirar en el vuelo. Lo que mira el vuelo va con forma de
+ * método y no de propiedad a propósito: así un guion con sus ids cabe donde se
+ * pide uno cualquiera, que es lo que hace el motor con sus ayudantes.
+ */
+export interface DefMomento<Id extends string = string, M extends string = string, C extends string = string> {
   readonly id: Id;
   /** Cuándo toca: lo que pasa en el avión, y lo que ya se dijo. */
-  readonly cuando: (l: LecturaDelPasaje, e: VueloDePasaje) => boolean;
+  cuando(l: LecturaDelPasaje, e: MotorDelPasaje<M, C>): boolean;
   /** Y cuándo ya no viene a cuento: se salta sin decirlo. */
-  readonly caduca?: (l: LecturaDelPasaje, e: VueloDePasaje) => boolean;
+  caduca?(l: LecturaDelPasaje, e: MotorDelPasaje<M, C>): boolean;
   readonly lineas: readonly Linea[];
   /** Y si lo que se dice depende de lo que pasa: las nubes, por dentro o desde arriba. */
-  readonly segun?: (l: LecturaDelPasaje, e: VueloDePasaje) => readonly Linea[];
+  segun?(l: LecturaDelPasaje, e: MotorDelPasaje<M, C>): readonly Linea[];
   /** Qué se dibuja para mirar mientras se dice. */
   readonly mira?: QueMirar;
   /** **Desde dónde se ve mientras se dice.** Sin decir, la ventanilla. */
@@ -1273,7 +1280,7 @@ interface DefMomento<Id extends string = MomentoDelPasaje> {
    * **Y si depende de lo que se está viendo**: la comandante que explica algo
    * con el señalero ya guiando el avión no lo quita de la pantalla.
    */
-  readonly planoSegun?: (l: LecturaDelPasaje, e: VueloDePasaje) => Plano;
+  planoSegun?(l: LecturaDelPasaje, e: MotorDelPasaje<M, C>): Plano;
   /**
    * **Lo que nombra del paisaje**: solo se dice si se ve, y desde donde se
    * vea —la ventanilla, la cara contra el cristal o el avión por fuera con el
@@ -1292,7 +1299,14 @@ interface DefMomento<Id extends string = MomentoDelPasaje> {
    * para cambiar de plano entre ellos —ver `DEMOSTRACION`—, y es un solo
    * anuncio: lo que sigue no vuelve a saludar al pasaje.
    */
-  readonly sigue?: MomentoDelPasaje;
+  readonly sigue?: M;
+  /**
+   * **Si va pegado a lo de antes**: mientras espera su momento no se cuenta
+   * nada más —ni lo señalado, ni lo tocado, ni las charlas—. Es el servicio
+   * de un salto entre islas, pegado al cartel apagado: el crucero dura un
+   * minuto, y una historia en medio se lo comía.
+   */
+  readonly pegado?: boolean;
 }
 
 /**
@@ -1301,9 +1315,91 @@ interface DefMomento<Id extends string = MomentoDelPasaje> {
  * `tras` segundos como poco, si en ese momento vale, y si su rato pasa sin
  * decirse, no pasa nada.
  */
-interface DefCharla extends DefMomento<CharlaDelPasaje> {
+export interface DefCharla<M extends string = string, C extends string = string> extends DefMomento<C, M, C> {
   /** Cuánto silencio antes, s: lo que suena a sucedido va enseguida; lo explicado, con aire. */
   readonly tras: number;
+}
+
+/**
+ * **Las anclas**: los momentos de los que el motor cuelga lo suyo, y que por
+ * eso todo guion lleva con estos nombres. Son los huesos de cualquier vuelo de
+ * línea, no los de uno: las puertas y los motores, que dan permiso para
+ * arrancar y rodar; «sentados para el despegue», que lo da para entrar en
+ * pista; el «ya estamos arriba» con su *ding*, que apaga el cartel y despierta
+ * a quien duerme; el anuncio de la bajada, que lo vuelve a encender; la
+ * cabina preparada, desde la que ya no se señala nada; en el puesto, los
+ * impacientes y la luz apagada; y el final, que es siempre el último.
+ */
+export type AnclaDelPasaje =
+  | "puertas"
+  | "motores"
+  | "despegue"
+  | "arriba"
+  | "bajada"
+  | "aproximacion"
+  | "impacientes"
+  | "luz"
+  | "fin";
+
+/**
+ * **El guion de un vuelo de pasaje** (T1 del largo radio, 1-11-2026): lo que
+ * se cuenta en ese vuelo, en qué orden y con qué frases. El motor —los
+ * turnos, los planos, la siesta, el ⏩, la ventanilla viva, el kit y el
+ * cuaderno— es el mismo para cualquier vuelo; lo que cambia de uno a otro va
+ * aquí. `M` son los momentos del guion y `C`, sus charlas: con ellos, un guion
+ * no puede preguntar por un momento que no tiene.
+ */
+export interface GuionDelPasaje<M extends string = string, C extends string = string> {
+  /** El lado de la ventanilla de Ara: el de lo que se cuenta. */
+  readonly lado: "izquierda" | "derecha";
+  /** **Los momentos**, en el orden en que pasa el vuelo, con las anclas entre ellos y `fin` el último. */
+  readonly momentos: readonly DefMomento<M, M, C>[];
+  /** **Las charlas**: lo que se cuenta cuando viene a cuento, en el orden en que se prefieren. */
+  readonly charlas: readonly DefCharla<M, C>[];
+  /** Desde qué momentos se puede señalar algo por la ventanilla: el primero que se diga abre. */
+  readonly seSenalaDesde: readonly M[];
+  /** Si la tripulante ya anda por el pasillo: entonces viene a lo que toca Ara. */
+  tripulanteEnElPasillo(e: MotorDelPasaje<M, C>): boolean;
+  /**
+   * **La siesta**: lo que dice Ara al cerrar los ojos y al abrirlos, la
+   * tripulante que despierta a Ara para bajar, lo que puede esperar a que se
+   * despierte —y con cuánto silencio, al despertar— y lo que se tiene que
+   * haber señalado, si se ve, antes de dormirse. Ver `puedeDormirse`.
+   */
+  readonly siesta: {
+    readonly seDuerme: Linea;
+    readonly seDespierta: Linea;
+    readonly laDespiertan: Linea;
+    readonly puedenEsperar: ReadonlySet<C>;
+    readonly trasAlDespertar: Readonly<Partial<Record<C, number>>>;
+    readonly antesDeDormirse: readonly string[];
+  };
+  /**
+   * **Lo que contesta Ara a lo señalado**, si va por su lado: su frase para
+   * cada sitio, la de siempre para lo demás, y los sitios en los que contesta
+   * a la historia y no a lo que ve. Ver `decirLoSenalado`.
+   */
+  readonly senalado: {
+    readonly suyas: Readonly<Record<string, Linea>>;
+    readonly loVeo: Linea;
+    readonly contestaALaHistoria: ReadonlySet<string>;
+  };
+  /** Los sellos del cuaderno de viaje que da lo que se dice; `seVe`, si lo que nombra se ve. */
+  sellosAlDecirlo(id: string, lineas: readonly Linea[], seVe: boolean): readonly SelloDelViaje[];
+  /** Los dibujos de la ventanita que se quedan hasta la frase siguiente, no solo un poco. */
+  readonly seQuedanHastaLaSiguiente: ReadonlySet<string>;
+  /** **El plop de los oídos, explicado**: lo que queda de él se aparta para el anuncio de la bajada. */
+  readonly elPlop: readonly Linea[];
+  /** **Lo que sabe hacer la tripulante**: se cuenta una vez. Ver `oficioContado`. */
+  readonly elOficio: readonly Linea[];
+  /** **El baño**: el momento en que se pide y la frase con la que se va. Sin él, no se va. */
+  readonly bano: { readonly pedido: M; readonly vuelta: Linea } | null;
+  /**
+   * **El kit de viaje**: el momento en que llega, a cuántos metros de tocar,
+   * y las claves de la tripulante que lo da y que lo pide guardar. Sin él, no
+   * hay kit.
+   */
+  readonly kit: { readonly momento: M; readonly llegaA: number; readonly dado: string; readonly guardado: string } | null;
 }
 
 const enElSuelo = (t: TramoDeLinea): boolean =>
@@ -1319,10 +1415,21 @@ const volando = (l: LecturaDelPasaje): boolean =>
   !l.enTierra && (l.tramo === "subida" || l.tramo === "crucero" || l.tramo === "bajada");
 const enLaFinal = (l: LecturaDelPasaje): boolean => l.tramo === "final" || l.tramo === "recogida";
 /** Si ya no se puede ir por el pasillo: la cabina preparada para aterrizar. */
-const cabinaPreparada = (l: LecturaDelPasaje, e: VueloDePasaje): boolean =>
+const cabinaPreparada = (l: LecturaDelPasaje, e: MotorDelPasaje): boolean =>
   l.enTierra || enLaFinal(l) || l.faltaParaTocar < PREPARAR_LA_CABINA || e.dicho("aproximacion");
 /** Si la tripulante ya anda por el pasillo: desde que trae el servicio. */
-const tripulanteEnElPasillo = (e: VueloDePasaje): boolean => e.dicho("tcpNubes") || e.saltado("tcpNubes");
+const tripulanteEnElPasillo = (e: EscenaDelPasaje): boolean => e.dicho("tcpNubes") || e.saltado("tcpNubes");
+/**
+ * **Si ya se ha contado qué es el Teide**, lo primero de todo: lo cuenta la
+ * comandante al señalarlo por la ventanilla, o antes de decir que se vuela
+ * más alto que él. Ver la charla `altoRapido`.
+ */
+const teidePresentado = (e: EscenaDelPasaje): boolean => e.fueSenalado("teide") || e.pedida("inicio.mama.pasaje.teide");
+/**
+ * **Si Ara oyó la historia del silbo y la contestó**: entonces puede
+ * preguntar si se silba en más islas. Ver la charla `tcpSilbo`.
+ */
+const silboOido = (e: EscenaDelPasaje): boolean => e.oida("inicio.ara.pasaje.garajonay");
 
 /**
  * **La demostración de seguridad**, por la megafonía y con su dibujo cada
@@ -1383,7 +1490,7 @@ const yaEnLaPista = (l: LecturaDelPasaje): boolean => !enElSuelo(l.tramo) || l.t
  * a que no hable nadie y a que el avión esté donde toca; el que se pasa de su
  * momento se salta.
  */
-export const GUION_DEL_PASAJE: readonly DefMomento[] = [
+export const GUION_DEL_PASAJE: readonly DefMomento<MomentoDelPasaje, MomentoDelPasaje, CharlaDelPasaje>[] = [
   {
     /*
      * **Lo primero, pegarse al cristal**: desde su asiento, sentada, Ara ve la
@@ -1595,6 +1702,8 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
      */
     segun: (l, e) => (e.puedeIrAlBano(l) ? AL_BANO : [anuncio("tripulacion.servicio"), ara("servicio")]),
     plano: "fuera-vuelta",
+    // Pegado al cartel apagado: un crucero entre islas dura un minuto, y una historia en medio se lo comía.
+    pegado: true,
   },
   {
     /*
@@ -1923,7 +2032,7 @@ export const GUION_DEL_PASAJE: readonly DefMomento[] = [
  * vuelo de verdad de Los Rodeos a La Palma, para que **ningún rato largo se
  * quede callado**. Ver `inicio-pasaje.test.ts`.
  */
-export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
+export const CHARLAS_DEL_PASAJE: readonly DefCharla<MomentoDelPasaje, CharlaDelPasaje>[] = [
   {
     // El tren se guarda en cuanto se despega, con un golpe que se oye en el pasaje.
     id: "tren",
@@ -2098,7 +2207,7 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     lineas: [ara("preguntaAlto"), con(comandante("altoRapido"), "alto"), con(ara("altoRapido"), "alto")],
     segun: (l, e) => {
       const lineas: Linea[] = [ara("preguntaAlto")];
-      if (!e.teidePresentado) lineas.push(con(comandante("teide"), "alto"));
+      if (!teidePresentado(e)) lineas.push(con(comandante("teide"), "alto"));
       lineas.push(con(comandante("altoRapido"), "alto"));
       if (e.seVe("hito:teide", l)) lineas.push(con(ara("altoRapido"), "alto"));
       return lineas;
@@ -2227,7 +2336,7 @@ export const CHARLAS_DEL_PASAJE: readonly DefCharla[] = [
     id: "tcpSilbo",
     tras: 16,
     cuando: (l, e) =>
-      volando(l) && tripulanteEnElPasillo(e) && e.silboOido && e.dichaLaCharla("tcpIslas") && !cabinaPreparada(l, e),
+      volando(l) && tripulanteEnElPasillo(e) && silboOido(e) && e.dichaLaCharla("tcpIslas") && !cabinaPreparada(l, e),
     caduca: (l, e) => cabinaPreparada(l, e),
     lineas: [ara("silboOtras"), conLaTripulante(tripulante("silbo"))],
   },
@@ -2665,6 +2774,42 @@ export const LINEAS_DEL_PASAJE: readonly Linea[] = (() => {
   return todas;
 })();
 
+/**
+ * **El guion de este vuelo**, de Los Rodeos a La Palma, como lo recibe el
+ * motor del pasaje. Ver `GuionDelPasaje`.
+ */
+export const GUION_TENERIFE_LA_PALMA: GuionDelPasaje<MomentoDelPasaje, CharlaDelPasaje> = {
+  lado: LADO_DE_ARA,
+  momentos: GUION_DEL_PASAJE,
+  charlas: CHARLAS_DEL_PASAJE,
+  // Arriba: del cartel apagado, o de la comandante contando las nubes pasados los diez mil pies.
+  seSenalaDesde: ["arriba", "nubesRespuesta"],
+  tripulanteEnElPasillo,
+  siesta: {
+    seDuerme: SE_DUERME,
+    seDespierta: SE_DESPIERTA,
+    laDespiertan: LA_DESPIERTAN,
+    puedenEsperar: PUEDEN_ESPERAR,
+    trasAlDespertar: TRAS_AL_DESPERTAR,
+    antesDeDormirse: SE_ENSENA_ANTES_DE_DORMIRSE,
+  },
+  senalado: {
+    suyas: Object.fromEntries(Object.entries(LO_QUE_DICE_ARA).map(([que, clave]) => [que, ara(clave)])),
+    loVeo: LO_VEO,
+    contestaALaHistoria: CONTESTA_A_LA_HISTORIA,
+  },
+  sellosAlDecirlo: (id, lineas, seVe) => [
+    ...(seVe ? (SELLO_AL_DECIRLO[id] ?? []) : []),
+    // El mar de nubes visto desde arriba, que es como se dice al salir de ellas.
+    ...(id === "nubes" && lineas.some((x) => x.clave === "inicio.ara.pasaje.nubesAbajo") ? (["nubes"] as const) : []),
+  ],
+  seQuedanHastaLaSiguiente: HASTA_LA_SIGUIENTE,
+  elPlop: EL_PLOP_EXPLICADO,
+  elOficio: EL_OFICIO,
+  bano: { pedido: "revision", vuelta: AL_BANO[0]! },
+  kit: { momento: "kit", llegaA: BAJANDO.kit, dado: tripulante(KIT_DADO).clave, guardado: tripulante(KIT_GUARDADO).clave },
+};
+
 // ── La secuencia ─────────────────────────────────────────────────────────
 
 /** Un cambio de plano, con su hora de escena. */
@@ -2722,8 +2867,8 @@ export function planoParaVer(como: ComoSeVe, sitio: SitioDelPaisaje): Plano {
 }
 
 /** Lo que la escena deja ver: para el dibujo, la cámara, el banco y las pruebas. */
-export interface EstadoDelPasaje {
-  readonly momento: MomentoDelPasaje;
+export interface EstadoDelPasaje<M extends string = string, C extends string = string> {
+  readonly momento: M;
   /** Qué se dibuja para mirar, o `null`. */
   readonly mira: QueMirar | null;
   /** La última frase pedida: el subtítulo. */
@@ -2734,10 +2879,10 @@ export interface EstadoDelPasaje {
   /** Segundos de escena. */
   readonly segundos: number;
   /** Los momentos dichos, en orden, y los que se saltaron por pasarse. */
-  readonly dichos: readonly MomentoDelPasaje[];
-  readonly saltados: readonly MomentoDelPasaje[];
+  readonly dichos: readonly M[];
+  readonly saltados: readonly M[];
   /** Las charlas dichas, en orden. */
-  readonly charlas: readonly CharlaDelPasaje[];
+  readonly charlas: readonly C[];
   /** Lo señalado por la ventanilla, por su clave. */
   readonly senalados: readonly string[];
   /** **El plano de ahora**, y desde cuándo. Ver `Plano`. */
@@ -2879,16 +3024,41 @@ export function proyectar(l: LecturaDelPasaje, dt: number): LecturaDelPasaje {
 /** Cuánto se queda el dibujo de mirar después de decirlo, s. */
 const SE_QUEDA_EL_DIBUJO = 14;
 
-export class VueloDePasaje {
+/** Lo que el juego le dice al motor del pasaje al empezar, además del guion. */
+export interface OpcionesDelPasaje {
+  /** El lado de la ventanilla de Ara. Sin decir, el del guion. */
+  readonly lado?: "izquierda" | "derecha";
+  /**
+   * **El reloj de las voces**, s: el de pared mientras se juega. Lo que
+   * espera a que algo suene se mide con él, que una grabación dura lo que
+   * dura aunque el reloj del juego vaya acelerado. Sin decir, el de la
+   * escena. Ver `TOPE_DE_UNA_FRASE`.
+   */
+  readonly pared?: () => number;
+  /**
+   * **La demostración de este vuelo**: la de siempre o una con gracia. Se
+   * pregunta una vez, al ir a darla —cuando ya se sabe qué está grabado—,
+   * y se queda para todo el vuelo. Sin decir, la de siempre. Ver
+   * `demostracion-con-gracia.ts`.
+   */
+  readonly demostracion?: () => FormaDeLaDemostracion;
+}
+
+/**
+ * **El motor del pasaje**: cuenta un vuelo con su guion —`M` son sus
+ * momentos y `C`, sus charlas— al paso del vuelo que le da el juego. Ver
+ * `GuionDelPasaje`.
+ */
+export class MotorDelPasaje<M extends string = string, C extends string = string> {
   private indice = 0;
   private reloj = 0;
   private acabado = false;
   private seguirPedido = false;
   private readonly charla: Conversacion;
-  private readonly dichos: MomentoDelPasaje[] = [];
-  private readonly saltados: MomentoDelPasaje[] = [];
-  private readonly cuandoSeDijo = new Map<MomentoDelPasaje, number>();
-  private readonly charlasDichas: CharlaDelPasaje[] = [];
+  private readonly dichos: M[] = [];
+  private readonly saltados: M[] = [];
+  private readonly cuandoSeDijo = new Map<M, number>();
+  private readonly charlasDichas: C[] = [];
   private mira: QueMirar | null = null;
   private miraDesde = 0;
   private callada = 0;
@@ -2910,8 +3080,6 @@ export class VueloDePasaje {
    * frase y las que tienen que haber sonado antes. Ver `decirLoSenalado`.
    */
   private contestacion: { readonly linea: Linea; readonly oir: readonly string[]; readonly desde: number } | null = null;
-  /** Si ya se contó qué es el Teide: ver la charla `altoRapido`. */
-  private teideContado = false;
   /** Y si ya se explicó el plop de los oídos de la subida: ver el momento `tcpNubes`. */
   private plopContado = false;
   /** Y si la tripulante ya contó lo que sabe hacer: ver `EL_OFICIO`. */
@@ -2974,24 +3142,9 @@ export class VueloDePasaje {
 
   constructor(
     voz: VozDelInicio,
-    private readonly opciones: {
-      /** El lado de la ventanilla de Ara. */
-      readonly lado?: "izquierda" | "derecha";
-      /**
-       * **El reloj de las voces**, s: el de pared mientras se juega. Lo que
-       * espera a que algo suene se mide con él, que una grabación dura lo que
-       * dura aunque el reloj del juego vaya acelerado. Sin decir, el de la
-       * escena. Ver `TOPE_DE_UNA_FRASE`.
-       */
-      readonly pared?: () => number;
-      /**
-       * **La demostración de este vuelo**: la de siempre o una con gracia. Se
-       * pregunta una vez, al ir a darla —cuando ya se sabe qué está grabado—,
-       * y se queda para todo el vuelo. Sin decir, la de siempre. Ver
-       * `demostracion-con-gracia.ts`.
-       */
-      readonly demostracion?: () => FormaDeLaDemostracion;
-    } = {},
+    /** **El guion de este vuelo**: lo que se cuenta, y cuándo. Ver `GuionDelPasaje`. */
+    private readonly guion: GuionDelPasaje<M, C>,
+    private readonly opciones: OpcionesDelPasaje = {},
   ) {
     this.charla = new Conversacion(voz, () => this.reloj, () => this.pared());
   }
@@ -3000,8 +3153,9 @@ export class VueloDePasaje {
     return this.opciones.pared?.() ?? this.reloj;
   }
 
-  private get def(): DefMomento {
-    return GUION_DEL_PASAJE[Math.min(this.indice, GUION_DEL_PASAJE.length - 1)]!;
+  private get def(): DefMomento<M, M, C> {
+    const momentos = this.guion.momentos;
+    return momentos[Math.min(this.indice, momentos.length - 1)]!;
   }
 
   get segundos(): number {
@@ -3013,14 +3167,17 @@ export class VueloDePasaje {
     return this.callada;
   }
 
-  /** Si ese momento ya se dijo. */
-  dicho(id: MomentoDelPasaje): boolean {
-    return this.cuandoSeDijo.has(id);
+  /**
+   * Si ese momento ya se dijo. Con los del guion, y con las anclas de las que
+   * el motor cuelga lo suyo: ver `AnclaDelPasaje`.
+   */
+  dicho(id: M | AnclaDelPasaje): boolean {
+    return this.cuandoSeDijo.has(id as M);
   }
 
   /** Si ese momento se saltó por pasarse de su momento. */
-  saltado(id: MomentoDelPasaje): boolean {
-    return this.saltados.includes(id);
+  saltado(id: M | AnclaDelPasaje): boolean {
+    return this.saltados.includes(id as M);
   }
 
   /** **El plano de ahora**: lo que deja como está lo que no cambia de toma. */
@@ -3045,25 +3202,26 @@ export class VueloDePasaje {
   private formaDeLaDemo: FormaDeLaDemostracion | null = null;
 
   /**
-   * **Si Ara oyó la historia del silbo y la contestó**: entonces puede
-   * preguntar si se silba en más islas. Ver la charla `tcpSilbo`.
+   * **Si esa frase sonó**, con su voz: lo que se contesta a una historia
+   * espera a que se haya oído. Ver `Conversacion.oida`.
    */
-  get silboOido(): boolean {
-    return this.charla.oida("inicio.ara.pasaje.garajonay");
+  oida(clave: string): boolean {
+    return this.charla.oida(clave);
+  }
+
+  /** **Si la escena ya pidió esa frase** en este vuelo: por un momento, una charla, un toque o una contestación. */
+  pedida(clave: string): boolean {
+    return this.pedidas.has(clave);
+  }
+
+  /** **Si ya se señaló ese sitio** por la ventanilla, por su clave. Ver `senalar`. */
+  fueSenalado(que: string): boolean {
+    return this.senalados.includes(que);
   }
 
   /** Si esa charla ya se dijo. */
-  dichaLaCharla(id: CharlaDelPasaje): boolean {
+  dichaLaCharla(id: C): boolean {
     return this.charlasDichas.includes(id);
-  }
-
-  /**
-   * **Si ya se ha contado qué es el Teide**, lo primero de todo: lo cuenta la
-   * comandante al señalarlo por la ventanilla, o antes de decir que se vuela
-   * más alto que él. Ver la charla `altoRapido`.
-   */
-  get teidePresentado(): boolean {
-    return this.teideContado;
   }
 
   /**
@@ -3097,9 +3255,11 @@ export class VueloDePasaje {
    *   basta con estar en crucero.
    */
   puedeIrAlBano(l: LecturaDelPasaje): boolean {
+    const bano = this.guion.bano;
     return (
       !this.alBano &&
-      this.dicho("revision") &&
+      bano !== null &&
+      this.dicho(bano.pedido) &&
       !l.enTierra &&
       l.tramo === "crucero" &&
       luzApagada(l, this) &&
@@ -3137,7 +3297,7 @@ export class VueloDePasaje {
     return (
       l.ver?.(sitio, plano) ?? {
         como: plano && esDeFuera(plano) ? "fuera" : plano && plano !== "ventanilla" ? "asomado" : "ventanilla",
-        lado: lado ?? this.opciones.lado ?? LADO_DE_ARA,
+        lado: lado ?? this.opciones.lado ?? this.guion.lado,
       }
     );
   }
@@ -3149,7 +3309,7 @@ export class VueloDePasaje {
 
   /** Si un alabeo baja el ala del lado de Ara. */
   bajaMiAla(alabeo: number): boolean {
-    return (this.opciones.lado ?? LADO_DE_ARA) === "izquierda" ? alabeo < 0 : alabeo > 0;
+    return (this.opciones.lado ?? this.guion.lado) === "izquierda" ? alabeo < 0 : alabeo > 0;
   }
 
   /** **Cuánto lleva puesto el plano de ahora**, s de escena. */
@@ -3158,12 +3318,12 @@ export class VueloDePasaje {
   }
 
   /** Cuánto hace que se dijo ese momento, s, o −∞ si no se dijo. */
-  desdeQueSeDijo(id: MomentoDelPasaje): number {
+  desdeQueSeDijo(id: M): number {
     const t = this.cuandoSeDijo.get(id);
     return t === undefined ? -Infinity : this.reloj - t;
   }
 
-  get estado(): EstadoDelPasaje {
+  get estado(): EstadoDelPasaje<M, C> {
     const fin = this.def.id === "fin";
     return {
       momento: this.def.id,
@@ -3297,9 +3457,9 @@ export class VueloDePasaje {
        * a Ara esperando su rato tranquilo —el porqué del ralentí, que va
        * primero—: lo tocado se queda en lo que dice Ara, que es corto.
        */
-      conLaTripulante: tripulanteEnElPasillo(this) && volando(l) && !cabinaPreparada(l, this) && !this.quedaPorContestar(l),
+      conLaTripulante: this.guion.tripulanteEnElPasillo(this) && volando(l) && !cabinaPreparada(l, this) && !this.quedaPorContestar(l),
       yaDicha: (k) => this.yaSePidio(k),
-      charlaContada: (id) => this.charlasDichas.includes(id as CharlaDelPasaje),
+      charlaContada: (id) => this.charlasDichas.includes(id as C),
       altitud: l.altitud,
       nubes: l.nubes,
       enLaFinal: enLaFinal(l),
@@ -3312,8 +3472,7 @@ export class VueloDePasaje {
       return false;
     }
     // Lo que cuenta aquí la escena ya no lo vuelve a contar cuando le llegue.
-    for (const c of dicho.charlas)
-      if (!this.charlasDichas.includes(c as CharlaDelPasaje)) this.charlasDichas.push(c as CharlaDelPasaje);
+    for (const c of dicho.charlas) if (!this.charlasDichas.includes(c as C)) this.charlasDichas.push(c as C);
     for (const x of dicho.lineas) if (x.quien === "ara") this.porUnToque.add(x.clave);
     p.toque.dijo.push(...dicho.lineas.map((x) => x.clave));
     this.mira = p.que === "motor" ? "motor" : p.que === "ala" ? "ala" : p.que === "nubes" ? "nubes" : "ventanilla";
@@ -3477,8 +3636,8 @@ export class VueloDePasaje {
    */
   private loQueFalta(l: LecturaDelPasaje): number {
     let falta: number = ADELANTO.MIRA_HASTA;
-    const yaVienen = new Set<CharlaDelPasaje>();
-    for (const c of CHARLAS_DEL_PASAJE) {
+    const yaVienen = new Set<C>();
+    for (const c of this.guion.charlas) {
       if (this.charlasDichas.includes(c.id) || !c.cuando(l, this) || c.caduca?.(l, this)) continue;
       yaVienen.add(c.id);
       if (this.callada < this.trasDe(c)) falta = Math.min(falta, this.trasDe(c) - this.callada);
@@ -3491,18 +3650,18 @@ export class VueloDePasaje {
       // Y la llegada, que se vive a su paso desde el primer metro.
       if (enLaLlegada(p, e)) return dt;
       if (this.def.cuando(p, e) && !this.def.caduca?.(p, e)) return dt;
-      for (const c of CHARLAS_DEL_PASAJE)
+      for (const c of this.guion.charlas)
         if (!this.charlasDichas.includes(c.id) && !yaVienen.has(c.id) && c.cuando(p, e) && !c.caduca?.(p, e)) return dt;
     }
     return falta;
   }
 
   /** **La escena dentro de un rato**, s, si nadie dice nada: para mirar qué viene. */
-  private dentroDe(dt: number): VueloDePasaje {
+  private dentroDe(dt: number): MotorDelPasaje<M, C> {
     return Object.create(this, {
       reloj: { value: this.reloj + dt },
       callada: { value: this.callada + dt },
-    }) as VueloDePasaje;
+    }) as MotorDelPasaje<M, C>;
   }
 
   /**
@@ -3541,7 +3700,7 @@ export class VueloDePasaje {
       // Ni con Ara cerrando los ojos o durmiendo: lo que no ve, no se le señala.
       !this.bostezando &&
       !this.durmiendo &&
-      (this.dicho("arriba") || this.dicho("nubesRespuesta")) &&
+      this.guion.seSenalaDesde.some((m) => this.dicho(m)) &&
       !this.dicho("aproximacion") &&
       this.charla.callada &&
       this.porSenalar.length === 0 &&
@@ -3615,7 +3774,7 @@ export class VueloDePasaje {
       if (!deVerdad && this.dibujo === this.dibujoDe.dibujo) this.dibujo = null;
       else if (deVerdad) this.dibujo = this.dibujoDe.dibujo;
     }
-    const seQueda = this.dibujo !== null && HASTA_LA_SIGUIENTE.has(this.dibujo);
+    const seQueda = this.dibujo !== null && this.guion.seQuedanHastaLaSiguiente.has(this.dibujo);
     if (this.charla.callada && this.callada > SE_QUEDA_LA_VENTANITA && !seQueda) this.dibujo = null;
     /*
      * **Y la lámina de lo tocado sin voz**: lo que ya se contó, tocado otra
@@ -3662,7 +3821,7 @@ export class VueloDePasaje {
    * entonces espera—, o desde dónde se ve. Lo que solo se enseña si se ve
    * —`muestra`— no espera: sin verse, se dice sin enseñarlo.
    */
-  private vistaDe(def: DefMomento<string>, l: LecturaDelPasaje): VistaDelSitio | null | undefined {
+  private vistaDe(def: DefMomento<string, M, C>, l: LecturaDelPasaje): VistaDelSitio | null | undefined {
     const sitio = def.nombra ?? def.muestra;
     if (!sitio) return undefined;
     const v = this.comoSeVe(sitio, l, def.plano);
@@ -3671,7 +3830,7 @@ export class VueloDePasaje {
   }
 
   /** Se dice lo de un momento o una charla: su plano, su dibujo de mirar y sus frases. */
-  private decirDe(def: DefMomento<string>, l: LecturaDelPasaje, vista?: VistaDelSitio): void {
+  private decirDe(def: DefMomento<M | C, M, C>, l: LecturaDelPasaje, vista?: VistaDelSitio): void {
     const sitio = def.nombra ?? def.muestra ?? null;
     const plano =
       def.planoSegun?.(l, this) ?? def.plano ?? (vista?.como && sitio ? planoParaVer(vista.como, sitio) : "ventanilla");
@@ -3683,14 +3842,12 @@ export class VueloDePasaje {
     const lineas = (def.segun?.(l, this) ?? def.lineas).filter((x) => !this.porUnToque.has(x.clave));
     if (sitio && vista?.como && lineas[0])
       this.apuntarLoNombrado(sitio, lineas[0].clave, vista);
-    // El sello del cuaderno de viaje de lo que se cuenta, si se ve mientras se cuenta.
-    if (!sitio || vista?.como) this.verLo(...(SELLO_AL_DECIRLO[def.id] ?? []));
-    if (def.id === "nubes" && lineas.some((x) => x.clave === "inicio.ara.pasaje.nubesAbajo")) this.verLo("nubes");
+    // Los sellos del cuaderno de viaje de lo que se cuenta: los da el guion, que sabe qué se ve.
+    this.verLo(...this.guion.sellosAlDecirlo(def.id, lineas, !sitio || !!vista?.como));
     for (const x of lineas) this.pedidas.add(x.clave);
-    if (lineas.some((x) => x.clave === "inicio.mama.pasaje.teide")) this.teideContado = true;
-    if (lineas.some((x) => EL_PLOP_EXPLICADO.includes(x))) this.plopContado = true;
-    if (lineas.some((x) => EL_OFICIO.includes(x))) this.oficioDicho = true;
-    if (lineas.includes(AL_BANO[0]!)) this.alBano = true;
+    if (lineas.some((x) => this.guion.elPlop.includes(x))) this.plopContado = true;
+    if (lineas.some((x) => this.guion.elOficio.includes(x))) this.oficioDicho = true;
+    if (this.guion.bano && lineas.includes(this.guion.bano.vuelta)) this.alBano = true;
     this.charla.decir(lineas);
     if (def.mira) {
       this.mira = def.mira;
@@ -3746,7 +3903,7 @@ export class VueloDePasaje {
     if (this.def.id === "bajada" && !this.plopAplazado && acabaDePonerse(l, "ralenti") && this.def.cuando(l, this)) {
       let quitado = false;
       this.charla.quitar((x) => {
-        const es = EL_PLOP_EXPLICADO.includes(x);
+        const es = this.guion.elPlop.includes(x);
         quitado ||= es;
         return es;
       });
@@ -3782,11 +3939,10 @@ export class VueloDePasaje {
     if (!def.cuando(l, this) || this.esperaSuFase(def, l) || vista === null) {
       /*
        * Lo señalado por la ventanilla, en los huecos de lo que no ha llegado;
-       * y si no hay, lo que venga a cuento. Menos en el del servicio, que va
-       * pegado al cartel apagado: un crucero entre islas dura un minuto, y una
-       * historia en medio se lo comía.
+       * y si no hay, lo que venga a cuento. Menos en lo que va pegado a lo de
+       * antes, como el servicio de un salto entre islas: ver `DefMomento.pegado`.
        */
-      if (def.id === "servicio") return;
+      if (def.pegado) return;
       if (this.atenderLoSenalado(l)) return;
       // Y lo que se acaba de tocar por la ventanilla, que es lo que se está mirando. Ver `tocar`.
       if (this.atenderAlToque(l)) return;
@@ -3800,7 +3956,7 @@ export class VueloDePasaje {
        * espera: con un rato de silencio llegaba antes que el sueño, y se
        * comía la siesta. Ver `PUEDEN_ESPERAR`.
        */
-      const esperan = this.puedeDormirse(l, false, true) ? PUEDEN_ESPERAR : undefined;
+      const esperan = this.puedeDormirse(l, false, true) ? this.guion.siesta.puedenEsperar : undefined;
       const charla = this.kit.ocupaAAra || this.kitAPuntoDeLlegar(def, l) ? undefined : this.charlaQueToca(l, esperan);
       if (charla) {
         this.charlasDichas.push(charla.def.id);
@@ -3822,12 +3978,12 @@ export class VueloDePasaje {
     // Y lo que quedó de la explicación del plop, detrás del anuncio de la bajada.
     if (def.id === "bajada" && this.plopAplazado) {
       this.plopAplazado = false;
-      this.charla.decir(EL_PLOP_EXPLICADO);
+      this.charla.decir(this.guion.elPlop);
     }
     // Y Ara, a quien acaba de despertar el *ding*, detrás: con el mapa de lo que se voló mientras dormía.
     if (this.despiertaConElDing) {
       this.despiertaConElDing = false;
-      this.charla.decir([SE_DESPIERTA]);
+      this.charla.decir([this.guion.siesta.seDespierta]);
     }
   }
 
@@ -3873,15 +4029,15 @@ export class VueloDePasaje {
    */
   private atenderAlKit(dt: number, l: LecturaDelPasaje): void {
     const suena = this.charla.suena?.clave;
-    if (suena === `inicio.tripulacion.pasaje.cerca.${KIT_DADO}` || this.charla.oida(`inicio.tripulacion.pasaje.cerca.${KIT_DADO}`))
-      this.kit.dar();
+    const lasDelKit = this.guion.kit;
+    if (lasDelKit && (suena === lasDelKit.dado || this.charla.oida(lasDelKit.dado))) this.kit.dar();
     /*
      * Y la red, por si la frase no llegó a sonar: mil pies por debajo de los
      * diez mil, recogido igual. Una espera sin salida es un kit abierto en la
      * final.
      */
     if (
-      suena === `inicio.tripulacion.pasaje.cerca.${KIT_GUARDADO}` ||
+      (lasDelKit !== null && suena === lasDelKit.guardado) ||
       enLaFinal(l) ||
       (l.enTierra && bajando(l.tramo)) ||
       (bajando(l.tramo) && l.altitud < DIEZ_MIL_PIES - KIT_POR_DEBAJO)
@@ -3934,9 +4090,9 @@ export class VueloDePasaje {
    */
   private charlaQueToca(
     l: LecturaDelPasaje,
-    sin?: ReadonlySet<CharlaDelPasaje>,
-  ): { def: DefCharla; vista?: VistaDelSitio } | undefined {
-    for (const c of CHARLAS_DEL_PASAJE) {
+    sin?: ReadonlySet<C>,
+  ): { def: DefCharla<M, C>; vista?: VistaDelSitio } | undefined {
+    for (const c of this.guion.charlas) {
       if (sin?.has(c.id)) continue;
       if (this.charlasDichas.includes(c.id) || this.callada < this.trasDe(c) || !c.cuando(l, this) || c.caduca?.(l, this))
         continue;
@@ -3948,8 +4104,8 @@ export class VueloDePasaje {
   }
 
   /** El silencio que espera una charla: el suyo, o menos si esperó a que Ara se despertara. */
-  private trasDe(c: DefCharla): number {
-    return this.siestas.length > 0 && !this.durmiendo ? (TRAS_AL_DESPERTAR[c.id] ?? c.tras) : c.tras;
+  private trasDe(c: DefCharla<M, C>): number {
+    return this.siestas.length > 0 && !this.durmiendo ? (this.guion.siesta.trasAlDespertar[c.id] ?? c.tras) : c.tras;
   }
 
   /**
@@ -4040,12 +4196,14 @@ export class VueloDePasaje {
    * que viene a cuento espera al kit; lo que tiene su momento —el guion, la
    * ventanilla— no.
    */
-  private kitAPuntoDeLlegar(def: DefMomento, l: LecturaDelPasaje): boolean {
+  private kitAPuntoDeLlegar(def: DefMomento<M, M, C>, l: LecturaDelPasaje): boolean {
+    const kit = this.guion.kit;
     return (
-      def.id === "kit" &&
+      kit !== null &&
+      def.id === kit.momento &&
       l.tramo === "bajada" &&
       !this.kit.esDado &&
-      l.faltaParaTocar < BAJANDO.kit + ANTES_DEL_KIT &&
+      l.faltaParaTocar < kit.llegaA + ANTES_DEL_KIT &&
       !cabinaPreparada(l, this) &&
       l.altitud >= DIEZ_MIL_PIES + KIT_POR_ENCIMA
     );
@@ -4072,14 +4230,14 @@ export class VueloDePasaje {
    * de subida. Ver `PUEDEN_ESPERAR`.
    */
   private quedaPorContestar(l: LecturaDelPasaje): boolean {
-    return CHARLAS_DEL_PASAJE.some(
-      (c) => !PUEDEN_ESPERAR.has(c.id) && !this.charlasDichas.includes(c.id) && c.cuando(l, this) && !c.caduca?.(l, this),
+    return this.guion.charlas.some(
+      (c) => !this.guion.siesta.puedenEsperar.has(c.id) && !this.charlasDichas.includes(c.id) && c.cuando(l, this) && !c.caduca?.(l, this),
     );
   }
 
   /** **Si lo más bonito de la ruta está a la vista sin señalar**: ver `SE_ENSENA_ANTES_DE_DORMIRSE`. */
   private quedaPorVer(l: LecturaDelPasaje): boolean {
-    return SE_ENSENA_ANTES_DE_DORMIRSE.some(
+    return this.guion.siesta.antesDeDormirse.some(
       (que) => !this.senalados.includes(que) && !this.olvidados.includes(que) && this.seVe(`hito:${que}`, l),
     );
   }
@@ -4089,7 +4247,7 @@ export class VueloDePasaje {
     this.ponerPlano("ventanilla");
     this.bostezando = true;
     this.mira = null;
-    this.charla.decir([SE_DUERME]);
+    this.charla.decir([this.guion.siesta.seDuerme]);
   }
 
   /** **Y se duerme**: desde aquí, la escena calla y el juego funde la pantalla. */
@@ -4131,7 +4289,8 @@ export class VueloDePasaje {
     if (rato && !toca && (rato.paraBajar ? rato.segundos > DESPIERTA_ANTES_DE_BAJAR : true)) return;
     const paraBajar = rato ? rato.paraBajar : bajando(l.tramo) || this.def.id === "bajada";
     this.despertar(s, paraBajar ? "tripulante" : "otra");
-    this.charla.decir(paraBajar ? [LA_DESPIERTAN, SE_DESPIERTA] : [SE_DESPIERTA]);
+    const { laDespiertan, seDespierta } = this.guion.siesta;
+    this.charla.decir(paraBajar ? [laDespiertan, seDespierta] : [seDespierta]);
   }
 
   /** Se acabó la siesta, por lo que sea. */
@@ -4171,7 +4330,6 @@ export class VueloDePasaje {
       this.apuntarLoNombrado(sitio, dicho.clave, v);
       this.verLo(selloDe(sitio));
     }
-    if (s.que === "teide") this.teideContado = true;
     const lineas: Linea[] = [
       { quien: "mama", clave: dicho.clave, megafonia: true, texto: dicho.texto, relleno: dicho.relleno },
     ];
@@ -4185,9 +4343,10 @@ export class VueloDePasaje {
         // Y su ilustración en la ventanita, la de las historias de cualquier vuelo.
         ...(s.historia.sitio ? { dibujo: `foto:${s.historia.sitio}` } : {}),
       });
-    const suLado = lado === (this.opciones.lado ?? LADO_DE_ARA);
+    const suLado = lado === (this.opciones.lado ?? this.guion.lado);
     if (suLado) {
-      const suya = LO_QUE_DICE_ARA[s.que];
+      const { suyas, loVeo, contestaALaHistoria } = this.guion.senalado;
+      const suya = suyas[s.que];
       /*
        * **Y Ara contesta a lo que se ha oído** (punto 287): se ponía a la cola
        * con lo demás, y «¿hablar silbando?» salía detrás de una historia del
@@ -4195,12 +4354,12 @@ export class VueloDePasaje {
        * comandante, y solo si sonó: lo que la señala y, si contesta a la
        * historia, la historia.
        */
-      const oir = [dicho.clave, ...(s.historia && CONTESTA_A_LA_HISTORIA.has(s.que) ? [s.historia.clave] : [])];
+      const oir = [dicho.clave, ...(s.historia && contestaALaHistoria.has(s.que) ? [s.historia.clave] : [])];
       /*
        * Y sin repetir lo que Ara ya dijo al tocarlo: si al tocar el Teide ya
        * dijo lo suyo, ahora no lo dice otra vez. Ver `tocar`.
        */
-      const contesta = [suya ? ara(suya) : LO_VEO, LO_VEO].find((x) => !this.porUnToque.has(x.clave)) ?? null;
+      const contesta = [suya ? { ...suya } : loVeo, loVeo].find((x) => !this.porUnToque.has(x.clave)) ?? null;
       if (contesta) {
         this.contestacion = { linea: contesta, oir, desde: this.reloj };
         this.pedidas.add(contesta.clave);
@@ -4258,7 +4417,7 @@ export class VueloDePasaje {
    * no sonaba. Medido en el banco con las tomas grabadas. Así que se espera a
    * la fase del juego, con su red: ver `RED_DEL_ANUNCIO`.
    */
-  private esperaSuFase(def: DefMomento, l: LecturaDelPasaje): boolean {
+  private esperaSuFase(def: DefMomento<M, M, C>, l: LecturaDelPasaje): boolean {
     const fase = l.fase;
     const aDestiempo =
       fase !== undefined &&
@@ -4274,4 +4433,17 @@ export class VueloDePasaje {
   private aDestiempoDesde: number | null = null;
 
   private dados: PermisosDeLaEscena = { arrancar: false, rodar: false, entrar: false, despegar: false };
+}
+
+/** Lo que mira el guion de este vuelo: el motor, con sus momentos y sus charlas. */
+type EscenaDelPasaje = MotorDelPasaje<MomentoDelPasaje, CharlaDelPasaje>;
+
+/**
+ * **La tercera escena**: el motor del pasaje con el guion de Los Rodeos a La
+ * Palma. Es lo que abre el juego con `?inicio=3`.
+ */
+export class VueloDePasaje extends MotorDelPasaje<MomentoDelPasaje, CharlaDelPasaje> {
+  constructor(voz: VozDelInicio, opciones: OpcionesDelPasaje = {}) {
+    super(voz, GUION_TENERIFE_LA_PALMA, opciones);
+  }
 }
