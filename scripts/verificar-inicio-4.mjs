@@ -2,13 +2,17 @@
  * **El tercer capítulo del vuelo largo, de principio a fin**: `?inicio=4&capitulo=3`.
  * Ver `src/flight/guion-llegada-a-asuncion.ts` y el ADR 0023.
  *
- * Es el banco de la tanda T4 del plan del largo radio, en lo que hay: el esqueleto
- * y el vuelo. Lo que se cuenta es poco, y lo que mira es que el vuelo se pueda
- * hacer entero y que no se rompa nada del motor del pasaje con otro guion.
+ * Es el banco de la tanda T4 del plan del largo radio: lo que se cuenta y el vuelo
+ * entero. Mira que el vuelo se pueda hacer entero, que no se rompa nada del motor del
+ * pasaje con otro guion, y que lo que se cuenta suene en su orden y con su lámina.
  *
  * ## Qué mira
  *
- * - **Se abre**: el JAZ 110, de pasajero, sin pasar por el hangar y sin menú.
+ * - **Se abre**: el JAZ 110, de pasajero, sin pasar por el hangar y sin menú. Y con
+ *   su ficha de «¿A qué jugás?», con el dedo: `OGA_MENU=1`, solo eso.
+ * - **El mundo no asoma antes de la ventanilla**, y cada lámina se ve de verdad, con
+ *   su fichero bajado, y en su orden. Lo que falta por grabar se dice: `sin grabar`,
+ *   que es lo esperado mientras no lleguen las voces, y no cuenta como fallo.
  * - **Entra en el sitio y la hora que da la cuenta**: en crucero, en el mundo de
  *   Paraguay, con la hora del vuelo de `entradaDeLaLlegada` y el sol de ese
  *   instante. Y sin la tarjeta de la escena en blanco.
@@ -26,8 +30,10 @@
  * los bancos por debajo de los diez mil pies, que el botón ⏩ no toca: acelera lo
  * que quien juega no puede, solo para no esperar media hora, y `OGA_PRISA` lo
  * pone desde el principio. `OGA_GPU=1` y `OGA_FOTOS=<dir>`, como los demás.
+ * `OGA_APERTURA=1` para en cuanto se abre la ventanilla: es lo que tarda en comprobarse
+ * lo que se cuenta, con sus capturas, sin volar lo demás.
  */
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
@@ -38,6 +44,30 @@ if (FOTOS) mkdirSync(FOTOS, { recursive: true });
 const FECHA = process.env.OGA_FECHA ?? "2026-12-15";
 const VIENTO = process.env.OGA_VIENTO ?? "020/8";
 const VECES = Number(process.env.OGA_VECES ?? 8);
+const SOLO_APERTURA = !!process.env.OGA_APERTURA;
+/** Las frases de lo que se cuenta antes de ver el mundo, en su orden. */
+const DE_LA_APERTURA = (temporada, sol) => [
+  "inicio.tripulacion.pasaje.cerca.despertar",
+  "inicio.ara.pasaje.largo.meDormi",
+  "inicio.tripulacion.pasaje.cerca.largo.mapa",
+  "inicio.ara.pasaje.largo.mapa",
+  "inicio.tripulacion.pasaje.derlis.desayuno",
+  "inicio.ara.pasaje.largo.chipa",
+  "inicio.ara.pasaje.largo.nariz",
+  "inicio.tripulacion.pasaje.derlis.agua",
+  "inicio.ara.pasaje.largo.huso",
+  "inicio.tripulacion.pasaje.cerca.largo.huso",
+  temporada === "verano" ? "inicio.tripulacion.pasaje.cerca.largo.husoVerano" : "inicio.tripulacion.pasaje.cerca.largo.husoInvierno",
+  "inicio.tripulacion.pasaje.cerca.largo.ecuador1",
+  "inicio.ara.pasaje.largo.ecuador",
+  "inicio.tripulacion.pasaje.cerca.largo.ecuador2",
+  "inicio.tripulacion.pasaje.derlis.piernas",
+  "inicio.tripulacion.pasaje.derlis.desfase",
+  ...(sol),
+];
+/** De qué piezas tienen voz ya: lo que no, sale «sin grabar». */
+const manifiesto = (voz) => JSON.parse(readFileSync(`data/voces/${voz}/manifiesto.json`, "utf8")).piezas;
+const GRABADAS = new Set(["ara", "comandante", "tripulacion", "tripulacion-canarias"].flatMap((v) => Object.keys(manifiesto(v))));
 /** Tope del vuelo entero, ms de pared. */
 const TOPE = Number(process.env.OGA_TOPE ?? 50) * 60_000;
 const PIE = 0.3048;
@@ -113,6 +143,8 @@ const leer = (page) =>
       tren: o.controles().tren,
       gas: o.controles().throttle,
       escena: i.escena,
+      lamina: i.lamina ?? null,
+      tapa: i.estado?.tapa ?? null,
       momento: i.estado?.momento ?? null,
       dichos: i.estado?.dichos ?? [],
       saltados: i.estado?.saltados ?? [],
@@ -123,6 +155,13 @@ const leer = (page) =>
       adelanto: i.estado?.adelanto ?? null,
       linea: i.estado?.linea?.clave ?? null,
       registro: (i.registro ?? []).map((d) => ({ clave: d.clave, desde: d.desde, hasta: d.hasta, como: d.como, cortada: d.cortada })),
+      nombrados: i.estado?.nombrados ?? [],
+      charlas: i.estado?.charlas ?? [],
+      cartel: o.salto().cartel,
+      sobreElMundo: {
+        visible: document.querySelector("#lamina-grande")?.hidden === false,
+        opacidad: Number(document.querySelector("#lamina-grande")?.style.opacity ?? 0),
+      },
       tripulacion: i.tripulacion,
       manos: i.manos ?? null,
       faltaParaTocar: i.lecturaDeLinea?.faltaParaTocar ?? null,
@@ -175,6 +214,11 @@ async function elCapitulo() {
 
     // ── Se abre, y entra donde toca ──────────────────────────────────────
     const uno = await leer(page);
+    comprobar(
+      "arranca tapado: el mundo no asoma antes de abrirse la ventanilla",
+      uno.sobreElMundo.visible && uno.sobreElMundo.opacidad === 1 && uno.tapa !== null,
+      `lámina ${uno.tapa} · opacidad ${uno.sobreElMundo.opacidad}`,
+    );
     const avion = await page.evaluate(() => globalThis.__oga.avion().id);
     comprobar(
       "se abre con el JAZ 110, de pasajero, en el mundo del Paraguay y con la tripulación en crucero",
@@ -205,7 +249,93 @@ async function elCapitulo() {
     );
     const plan = uno.plan;
     console.log(`  el plan: ${plan?.fijos?.filter((f) => f.nombre).map((f) => `${f.nombre}(${f.papel})`).join(" → ")}`);
-    await foto(page, "1-entrada");
+
+    // ── Lo de antes de ver el mundo ──────────────────────────────────────
+    const fotos = new Set();
+    const planosVistos = [];
+    const tapasVistas = [];
+    let desnudo = 0;
+    let abierta = null;
+    const pared00 = Date.now();
+    await foto(page, "0-a-oscuras");
+    for (;;) {
+      const a = await leer(page);
+      if (tapasVistas.at(-1) !== a.tapa) tapasVistas.push(a.tapa);
+      if (planosVistos.at(-1) !== a.plano) planosVistos.push(a.plano);
+      // Sin lámina ni pantalla delante, antes de tiempo: el mundo a la vista.
+      if (a.tapa === null && a.plano !== "respaldo" && !a.dichos.includes("ventanilla") && !a.sobreElMundo.visible) desnudo++;
+      const vista = a.lamina?.vista ?? null;
+      if (vista && a.lamina.tapa && !fotos.has(vista) && a.linea && (a.momento !== "despertar" || a.lamina.opacidad === 1)) {
+        // Ya con la luz subida del todo, si es la del despertar.
+        if (a.dichos.includes("mapa") || vista !== (a.lamina.vistas[0] ?? "")) {
+          fotos.add(vista);
+          await pausa(1100);
+          await foto(page, `lamina-${vista}`);
+        }
+      }
+      if (a.plano === "respaldo" && !fotos.has("respaldo") && a.linea?.endsWith("largo.mapa")) {
+        fotos.add("respaldo");
+        await pausa(1500);
+        await foto(page, "pantalla-del-respaldo");
+      }
+      if (a.dichos.includes("ventanilla")) {
+        abierta = a;
+        break;
+      }
+      if (a.percance || Date.now() - pared00 > 12 * 60_000) break;
+      await pausa(300);
+    }
+    const a = abierta;
+    comprobar("la apertura se acaba, y se abre la ventanilla", !!a, a ? `${((Date.now() - pared00) / 1000).toFixed(0)} s de pared` : "no se abrió");
+    if (a) {
+      const temporada = perfil.horario.temporada;
+      const conSol = ruta.solEnElVuelo(perfil, ruta.entradaDeLaLlegada(perfil)).asoma;
+      const desayuno = conSol ? "desayuno" : "desayuno-noche";
+      const huso = temporada === "verano" ? "huso-verano" : "huso-invierno";
+      const esperadas = [desayuno, huso, "ecuador"];
+      comprobar(
+        "cada lámina se ve, con su fichero, y es la de hoy",
+        esperadas.every((c) => a.lamina.vistas.includes(c)) && a.lamina.sinFichero.length === 0 && !a.lamina.vistas.includes(conSol ? "desayuno-noche" : "desayuno"),
+        `vistas ${a.lamina.vistas.join(" → ")} · sin fichero ${a.lamina.sinFichero.join(", ") || "ninguna"}`,
+      );
+      comprobar(
+        "en su orden, con la pantalla del asiento entre medias",
+        tapasVistas.filter((t) => t).join() === ["a-oscuras", desayuno, desayuno, huso, "ecuador", desayuno, huso].filter((t, i) => t !== "a-oscuras" || tapasVistas[0] === "a-oscuras").join() &&
+          planosVistos.includes("respaldo"),
+        `${tapasVistas.join(" → ")} · planos ${planosVistos.join(" → ")}`,
+      );
+      comprobar("y sin que el mundo asome antes de tiempo", desnudo === 0, `${desnudo} lecturas con el mundo a la vista`);
+      const orden = DE_LA_APERTURA(temporada, []);
+      const dichas = a.registro.map((d) => d.clave);
+      let i = -1;
+      const fueraDeOrden = orden.filter((c) => {
+        const j = dichas.indexOf(c);
+        if (j <= i) return true;
+        i = j;
+        return false;
+      });
+      comprobar("suena todo, en su orden", fueraDeOrden.length === 0, fueraDeOrden.length ? `fuera de orden o sin decir: ${fueraDeOrden.join(", ")}` : `${orden.length} frases`);
+      const sin = a.registro.filter((d) => d.como !== "sono").map((d) => d.clave);
+      const graves = sin.filter((c) => GRABADAS.has(c));
+      comprobar(
+        "lo que no suena es solo lo que está sin grabar",
+        graves.length === 0,
+        graves.length ? `grabadas y mudas: ${graves.join(", ")}` : `sin grabar, y por eso mudas: ${sin.length} de ${a.registro.length}`,
+      );
+      if (sin.length) console.log(`  sin grabar: ${sin.join(" · ")}`);
+      comprobar(
+        "la frase de Idaira que llevaba tiempo muda, la primera",
+        dichas[0] === "inicio.tripulacion.pasaje.cerca.despertar",
+        `${a.registro[0]?.clave} (${a.registro[0]?.como})`,
+      );
+      comprobar("y no sale el ⏩ mientras dura", !(a.adelanto?.pulsado > 0), `pulsado ${a.adelanto?.pulsado}`);
+      await pausa(1500);
+      await foto(page, "1-ventanilla");
+    }
+    if (SOLO_APERTURA) {
+      comprobar("sin errores de consola", errores.length === 0, errores.slice(0, 4).join(" · "));
+      return;
+    }
 
     // ── El vuelo entero ──────────────────────────────────────────────────
     // Para mirar la llegada sin esperar el crucero; las comprobaciones del ⏩ siguen valiendo.
@@ -239,6 +369,8 @@ async function elCapitulo() {
         adelanto.pulsadas++;
       }
       if (ad?.adelantando) adelanto.corrio = true;
+      if (l.dichos.includes("bajada") && adelanto.cartelAlBajar === undefined && Date.now() - (adelanto.bajadaEn ??= Date.now()) > 8000)
+        adelanto.cartelAlBajar = l.cartel;
       if (ad?.llegada != null && !adelanto.enLaLlegada) {
         adelanto.enLaLlegada = { y: l.y, seApagoSolo: ad.seApagoSolo, puesto: ad.puesto, falta: l.faltaParaTocar, pared: Date.now() };
         // Desde aquí, el reloj de los bancos: lo que queda es a su paso para quien juega, y son veinte minutos.
@@ -325,10 +457,46 @@ async function elCapitulo() {
     const queSono = registro.filter((d) => d.como === "sono").length;
     comprobar(
       "nunca suenan dos voces a la vez",
-      registro.length >= 6 && pisadas === 0 && registro.every((d) => !d.cortada),
+      registro.length >= 20 && pisadas === 0 && registro.every((d) => !d.cortada),
       `${registro.length} frases, ${queSono} sonadas · ${pisadas} pisadas · ${registro.filter((d) => d.cortada).length} cortadas`,
     );
     console.log(`  lo dicho: ${registro.map((d) => `${d.clave}(${d.como})`).join(" · ")}`);
+    // ── Lo de la ventanilla, ya abierta ──────────────────────────────────
+    const lasDichas = registro.map((d) => d.clave);
+    const delAnuncio = registro.find((d) => d.clave === "comandante.largo.anuncio");
+    comprobar(
+      "el anuncio de la comandante, y después los cinturones, los oídos y prepararse para aterrizar",
+      !!delAnuncio &&
+        ["comandante.largo.anuncio", "tripulacion.cinturones", "inicio.tripulacion.pasaje.cerca.largo.oidos", "comandante.aproximacion"].every(
+          (c, k, t) => lasDichas.includes(c) && (k === 0 || lasDichas.indexOf(t[k - 1]) < lasDichas.indexOf(c)),
+        ),
+      lasDichas.filter((c) => /largo\.anuncio|cinturones|largo\.oidos|aproximacion/.test(c)).join(" → "),
+    );
+    comprobar(
+      "el cartel se enciende al bajar",
+      adelanto.cartelAlBajar === true,
+      `el cartel a ${adelanto.cartelAlBajar ?? "?"}`,
+    );
+    const sol = ruta.solEnElVuelo(perfil, l.salto.hora);
+    const nombro = l.nombrados.map((n) => `${n.sitio}(${n.como}${n.lado ? `, ${n.lado}` : ""})`);
+    console.log(`  lo que Ara nombró: ${nombro.join(" · ") || "nada"} · charlas ${l.charlas.join(", ") || "ninguna"}`);
+    comprobar(
+      "lo que nombra Ara, solo por su cristal",
+      l.nombrados.every((n) => n.como === "ventanilla" && (n.lado === null || n.lado === "izquierda")),
+      nombro.join(" · ") || "nada: hoy no se veía por su lado",
+    );
+    comprobar(
+      "y de noche cerrada, ni el río ni el Chaco",
+      sol.deNoche ? !l.charlas.includes("rio") && !l.charlas.includes("chaco") : true,
+      `el sol al acabar a ${((sol.altura * 180) / Math.PI).toFixed(0)}°`,
+    );
+    const horaFinal = `comandante.largo.llegada.${perfil.horario.temporada}`;
+    comprobar("la hora de allí al llegar, la de hoy", lasDichas.includes(horaFinal), horaFinal);
+    comprobar(
+      "y Ara dice que llegó, y no a La Palma",
+      lasDichas.includes("inicio.ara.pasaje.largo.llegamos") && !lasDichas.includes("inicio.ara.pasaje.fin"),
+      "",
+    );
     const ajenas = l.habladas.filter((h) => !/ (inicio\.|comandante\.|tripulacion\.)/.test(h));
     comprobar(
       "ni otra voz que no sea de la escena, ni la de la máquina",
@@ -345,8 +513,43 @@ async function elCapitulo() {
   }
 }
 
+/** La ficha de «¿A qué jugás?», con el dedo: abre el capítulo, sin obligar a leer. */
+async function laFicha() {
+  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 800 }, locale: "es-PY" });
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
+  // Como en los otros bancos del menú: sin el pack de Ara, un piloto nuevo va al hangar y no a la primera experiencia.
+  await page.route("**/data/voces/ara/manifiesto.json", (r) => r.fulfill({ status: 404, body: "" }));
+  try {
+    await page.goto(`${BASE}/?hora=12&fecha=${FECHA}`);
+    await page.click("[data-nuevo]", { timeout: 120_000 });
+    await page.click("[data-crear]");
+    await page.waitForSelector('[data-pantalla="que"]', { timeout: 120_000 });
+    await page.click('[data-pantalla="que"]');
+    await page.waitForSelector('[data-inicio-modo="largo"]', { timeout: 20_000 });
+    const ficha = await page.evaluate(() => {
+      const b = document.querySelector('[data-inicio-modo="largo"]');
+      const c = b.getBoundingClientRect();
+      return { alto: c.height, ancho: c.width, dibujo: !!b.querySelector("svg"), nombre: b.querySelector(".ficha__nombre")?.textContent?.trim() };
+    });
+    comprobar("la ficha de llegar a Asunción, con su dibujo y su nombre", ficha.dibujo && ficha.alto >= 44 && !!ficha.nombre, `«${ficha.nombre}» ${Math.round(ficha.ancho)} × ${Math.round(ficha.alto)} px`);
+    if (FOTOS) await page.screenshot({ path: `${FOTOS}/inicio-4-menu.png` });
+    await page.click('[data-inicio-modo="largo"]');
+    await page.waitForFunction(() => globalThis.__oga?.inicio?.()?.estado && globalThis.__oga.salto?.()?.hora != null, null, { timeout: 240_000 });
+    const abre = await page.evaluate(() => ({ escena: globalThis.__oga.inicio().escena, avion: globalThis.__oga.avion().id, mundo: globalThis.__oga.salto().mundo }));
+    comprobar("y abre este capítulo", abre.escena === "largo" && abre.avion === "jaz-110" && abre.mundo === "pettirossi", `${abre.escena} · ${abre.avion} · ${abre.mundo}`);
+    comprobar("sin errores de consola, desde el menú", errores.length === 0, errores.slice(0, 3).join(" · "));
+  } catch (e) {
+    comprobar("la ficha", false, `${String(e).slice(0, 300)} · ${errores.slice(0, 2).join(" · ")}`);
+  } finally {
+    await ctx.close();
+  }
+}
+
 try {
-  await elCapitulo();
+  if (process.env.OGA_MENU) await laFicha();
+  else await elCapitulo();
 } finally {
   await navegador.close();
   await server.close();

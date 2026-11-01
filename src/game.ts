@@ -170,14 +170,16 @@ import {
   dondeVa,
   entradaDeLaLlegada,
   horarioDelDia,
+  horasEn,
   NIVELES_DE_CRUCERO,
   PETTIROSSI as PETTIROSSI_DE_LA_RUTA,
   perfilDelVuelo,
   RODAJE_DE_SALIDA,
+  solEnElVuelo,
   type PerfilDelVuelo,
 } from "./flight/ruta-larga";
 import { guionDePruebaDelSalto } from "./flight/guion-de-prueba-del-salto";
-import { GUION_LLEGADA_A_ASUNCION, MUNDO_DE_LA_LLEGADA } from "./flight/guion-llegada-a-asuncion";
+import { CHACO_ENFRENTE, GUION_LLEGADA_A_ASUNCION, MUNDO_DE_LA_LLEGADA, SE_DESAYUNA_A } from "./flight/guion-llegada-a-asuncion";
 import { cargarElMundo, type MundoCargado } from "./world/mundo-del-tramo";
 import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import {
@@ -1080,6 +1082,7 @@ import {
   esDeLaCabina,
   LADO_DE_ARA,
   MotorDelPasaje,
+  type DelVueloLargo,
   planoParaVer,
   SALIDAS_DEL_PASAJE,
   VILLA_DE_MAZO,
@@ -1227,6 +1230,7 @@ import {
   type Anuncio,
 } from "./audio/megafonia";
 import {
+  anuncioDeLaBajadaDelVueloLargo,
   descensoPara,
   nivelDicho,
   segundosHastaTocar,
@@ -1636,6 +1640,7 @@ import { CamaraDeLaVuelta } from "./cameras/vuelta";
 import { CamaraDeLaEscena, FundidoDePlano } from "./cameras/escena";
 import { esDibujoDelPasaje, laminaDeLaRuta, urlDeLaLamina } from "./ui/dibujos-del-pasaje";
 import { enLaHoja, mapaPara, type LoDelVuelo, type MapaDeLaRuta } from "./ui/mapa-de-la-ruta";
+import { PantallaDeLaLamina } from "./ui/lamina-grande";
 import { PantallaDeLaSiesta } from "./ui/siesta";
 import { ilustracionPedida } from "./ui/ilustraciones";
 import { PantallaDeLaVuelta, type CosaEnPantalla } from "./ui/vuelta-al-avion";
@@ -1670,6 +1675,8 @@ const TOPE_DE_ACELERACION = 16;
  * pinta, cabe. Ver `frame`.
  */
 const VECES_DE_LA_SIESTA = TOPE_DE_ACELERACION;
+/** **Cada cuántos fotogramas se pinta bajo una lámina**, s a sesenta por segundo: medio segundo. Ver `frame`. */
+const PINTA_BAJO_LA_LAMINA = 30;
 /**
  * **Cada cuánto se repone el cielo del vuelo largo**, s de juego: el sol se
  * mueve un cuarto de grado por minuto, y en un vuelo que amanece se tiene que
@@ -7284,6 +7291,8 @@ export class Game {
     const anuncio = linea.clave as Anuncio;
     if (anuncio === "comandante.crucero") this.dijoSoltarse = true;
     if (anuncio === "comandante.descenso") this.pidioAbrocharse = true;
+    // En el vuelo largo, la comandante avisa antes de bajar: el cartel se enciende con la bajada.
+    if (anuncio === "tripulacion.cinturones" && this.vueloLargo) this.pidioAbrocharse = true;
     const dicho = this.loQueDiceLaMegafonia(anuncio);
     this.textoDeLaEscena.set(linea, dicho.texto);
     const boca = anuncio.startsWith("tripulacion.") ? this.tripulacion : this.comandante;
@@ -7418,6 +7427,7 @@ export class Game {
        * dando la vuelta en ella (punto 300). Ver `daLaVuelta`.
        */
       enLaPista: s.onGround ? this.dondeEnLaPista() : null,
+      ...(this.vueloLargo && this.escenaDelInicio === "largo" ? { largo: this.delVueloLargoDeHoy() } : {}),
       /*
        * **Y la luz del cinturón**, la del cartel: la que manda para levantarse
        * del asiento, también para ir al baño (punto 293). Ver `puedeIrAlBano`.
@@ -8210,6 +8220,7 @@ export class Game {
     readonly musica: { readonly decide: string | null; readonly audio: Audio["musicaParaBanco"] };
     /** De pasaje: la pantalla de la siesta, si está puesta. Ver `ui/siesta.ts`. */
     readonly siesta: PantallaDeLaSiesta["paraBanco"] | null;
+    readonly lamina: PantallaDeLaLamina["paraBanco"] | null;
     /**
      * **El botón ⏩**, medido: las veces de ahora, lo que cuestan aquí un paso
      * y el dibujo, ms, los fotogramas adelantando —con su pared y los que se
@@ -8240,6 +8251,7 @@ export class Game {
       conInicio: this.conInicio,
       escena: this.escenaDelInicio,
       estado: e ?? null,
+      lamina: this.laminaGrande?.paraBanco ?? null,
       registro: this.inicio?.registro ?? null,
       congelado: this.inicioCongelado,
       mando: this.input.ultimoMando,
@@ -16752,9 +16764,16 @@ export class Game {
     this.nombrado.paso(real);
     this.ponerElAroDelPapi();
     this.pintarLaSiesta(real);
+    this.pintarLaLamina(real);
     this.atenderAlSalto();
     this.ponerElBotonDeAdelantar();
-    if (!this.siestaTapa) this.pintar();
+    /*
+     * Lo que está tapado no se pinta. Menos un fotograma de vez en cuando con la lámina
+     * delante, que la tapa es de minutos y el mundo que se destapa todavía no se ha
+     * pintado nunca: así los sombreadores y las texturas ya están en la tarjeta cuando
+     * se abre la ventanilla, y no se paga todo de golpe delante de quien mira.
+     */
+    if (!this.siestaTapa && (!this.laminaTapa || this.tapadoDesde % PINTA_BAJO_LA_LAMINA === 1)) this.pintar();
     this.medirElAdelanto(real, dados, empiezaElDibujo - empiezaElMundo, performance.now() - empiezaElDibujo, adelanta);
     this.medidor.update(real);
   };
@@ -16785,7 +16804,7 @@ export class Game {
 
   private medirElAdelanto(real: number, pasos: number, mundo: number, dibujo: number, adelanta: boolean): void {
     if (pasos > 0) this.costeDeUnPaso += (mundo / pasos - this.costeDeUnPaso) * 0.1;
-    if (!this.siestaTapa) this.costeDelDibujo += (dibujo - this.costeDelDibujo) * 0.1;
+    if (!this.siestaTapa && !this.laminaTapa) this.costeDelDibujo += (dibujo - this.costeDelDibujo) * 0.1;
     if (!adelanta) {
       this.cuadroAdelantando = 1 / 60;
       this.topeDelAdelanto = VECES_DEL_ADELANTO[0];
@@ -16850,6 +16869,61 @@ export class Game {
     this.siesta ??= new PantallaDeLaSiesta(document.getElementById("siesta"));
     // Y con un salto en marcha, tapada hasta que esté puesto, se despierte quien se despierte.
     this.siestaTapa = this.siesta.paso(real, this.escenaDuerme || this.saltoEnCurso !== null);
+  }
+
+  /** La lámina a pantalla completa, y si tapa del todo el mundo. Ver `ui/lamina-grande.ts`. */
+  private laminaGrande: PantallaDeLaLamina | null = null;
+  private laminaTapa = false;
+  /** Los fotogramas que lleva tapado. Ver `frame`. */
+  private tapadoDesde = 0;
+
+  /** **La lámina a pantalla completa**, con el reloj de pared: la que diga la escena. */
+  private pintarLaLamina(real: number): void {
+    const escena = this.inicio instanceof MotorDelPasaje ? this.inicio : null;
+    if (!escena && !this.laminaGrande) return;
+    if (!this.laminaGrande) {
+      this.laminaGrande = new PantallaDeLaLamina(document.getElementById("lamina-grande"));
+      if (escena) this.laminaGrande.precargar(escena.laminasDelGuion);
+    }
+    this.laminaTapa = this.laminaGrande.paso(real, escena?.tapaDeAhora ?? null, escena?.laTapaSeEnciende ?? false);
+    this.tapadoDesde = this.laminaTapa ? this.tapadoDesde + 1 : 0;
+  }
+
+  /**
+   * **Lo que el guion del vuelo largo necesita saber de hoy**: la cuenta de
+   * `ruta-larga.ts`, que es la misma que pone el sol en el cielo. Ver `DelVueloLargo`.
+   */
+  private delVueloLargoDeHoy(): DelVueloLargo {
+    const vl = this.vueloLargo!;
+    const perfil = vl.perfil;
+    const ahora = vl.reloj.ahora(this.relojDelJuego);
+    const alEntrar = entradaDeLaLlegada(perfil);
+    return {
+      temporada: perfil.horario.temporada,
+      conSolAlDesayunar: solEnElVuelo(perfil, alEntrar).asoma,
+      sol: (solEnElVuelo(perfil, ahora).altura * 180) / Math.PI,
+      solPorMiVentanilla: this.elSolPorLaVentanilla(),
+      anuncioDeLaBajada: () => {
+        const meteo = this.scenario.meteo ?? TIEMPO_DE_CASA;
+        return anuncioDeLaBajadaDelVueloLargo(
+          horasEn(perfil, ahora).asuncion,
+          perfil.enElAire - ahora,
+          meteo,
+          (id) => this.instructor.vozDe(id) !== null,
+        );
+      },
+    };
+  }
+
+  /** **Si el sol cae dentro del cristal de Ara**, desde su asiento y con la cuenta que pinta el marco. */
+  private elSolPorLaVentanilla(): boolean {
+    const ara = this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA];
+    if (!ara) return false;
+    const s = this.flight.state;
+    const avion = { position: s.position, orientation: s.orientation, largo: this.largoDelAvion };
+    const ojo = ojosEnElMundo(ara.poses.sentada, avion);
+    const d = this.sky.sunDirection;
+    return seVePorLaVentanilla(ojo, { x: ojo.x + d.x * 1e5, y: ojo.y + d.y * 1e5, z: ojo.z + d.z * 1e5 }, avion, ara.ventanilla);
   }
 
   /**
@@ -25452,6 +25526,13 @@ export class Game {
       const { x, z } = dondeCae(origen, VILLA_DE_MAZO);
       return { puntos: [enElSuelo(x, z, null)], ventanilla: 3000, fuera: 0 };
     }
+    // Como la ladera de Mazo, por el cristal y nada más: es lo que Ara reconoce al llegar.
+    if (sitio === "chaco-enfrente") {
+      const origen = this.scenario.aerodrome?.origin;
+      if (!origen) return null;
+      const { x, z } = dondeCae(origen, CHACO_ENFRENTE);
+      return { puntos: [enElSuelo(x, z, null)], ventanilla: POR_LA_VENTANILLA, fuera: 0 };
+    }
     const llegada = this.vecinos.find((v) => v.base.id === DESTINO_DEL_PASAJE);
     if (!llegada) return null;
     const pista = llegada.campo.pista;
@@ -25563,7 +25644,9 @@ export class Game {
     p.ponerLuz?.(diaEnLaCabina(this.sky.sunDirection.y), c.luz, c.tapan[0]);
     if (!p.pantalla) return;
     const perfil = this.vueloLargo?.perfil ?? (this.perfilDeLaPantalla ??= perfilDelVuelo(horarioDelDia(this.fechaDelVuelo())));
-    p.pantalla.poner(perfil, this.horaDelVueloLargo ?? this.relojDelJuego - RODAJE_DE_SALIDA);
+    // Antes de abrir la ventanilla, la hora del cuento: el desayuno, sobre Brasil. Ver `SE_DESAYUNA_A`.
+    const enElCuento = this.inicio instanceof MotorDelPasaje && this.inicio.enLaApertura;
+    p.pantalla.poner(perfil, enElCuento ? SE_DESAYUNA_A : (this.horaDelVueloLargo ?? this.relojDelJuego - RODAJE_DE_SALIDA));
   }
   private perfilDeLaPantalla: PerfilDelVuelo | null = null;
   /** El plano cercano de la cámara, el de todo el juego. Ver `CERCANO_EN_LA_CABINA`. */

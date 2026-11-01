@@ -67,8 +67,11 @@ const COLECCIONES = [
  *
  * Los esquemas del pasaje van como las historias, en 50: son de la misma mano,
  * acuarela y lápiz, y salen en la misma lámina.
+ *
+ * Las de pantalla completa, en 60: a 50, los degradados de la cabina de la lámina
+ * del desayuno hacían escalones a pantalla entera, que es como se miran.
  */
-const CALIDAD = { lamina: 78, ventanita: 80, tarjeta: 80, retrato: 90, historia: 50, esquema: 50 };
+const CALIDAD = { lamina: 78, ventanita: 80, tarjeta: 80, retrato: 90, historia: 50, esquema: 50, pantalla: 60 };
 
 function correr(orden, args) {
   const r = spawnSync(orden, args, { encoding: "utf8" });

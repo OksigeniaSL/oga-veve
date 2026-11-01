@@ -71,7 +71,7 @@ export type QueMirar = "ventanilla" | "ala" | "motor" | "nubes" | "cinturon";
  *   fundido. Ver `world/pasillo-de-pasaje.ts`.
  * - **Ara mirando su pantalla** —`respaldo`—, en el avión que la lleva: al frente y
  *   con la pantalla del respaldo de delante ocupando la vista. Otra pared, otro
- *   corte. Ver `world/cabina-333.ts`. Ningún guion lo usa todavía.
+ *   corte. Ver `world/cabina-333.ts`.
  */
 export type Plano =
   | "ventanilla"
@@ -143,7 +143,7 @@ export const DURA_EL_PLANO: Readonly<Record<Plano, number>> = {
   "fuera-raqueta": 22,
   // El pasillo, lo que dura la frase de las salidas y el rato de mirar el letrero.
   pasillo: 6,
-  // La pantalla, un buen rato: es para mirarla. El guion que la use dirá si le basta.
+  // La pantalla, un buen rato: es para mirarla.
   respaldo: 20,
 };
 
@@ -168,6 +168,9 @@ export const DURA_EL_PLANO: Readonly<Record<Plano, number>> = {
  *   sus caminos, en la final de la 36 (punto 314). **Solo por el cristal de
  *   Ara**: es lo que se reconoce desde el asiento al llegar, y no se enseña
  *   desde fuera. Ver `VILLA_DE_MAZO` y la charla `mazo`.
+ * - `chaco-enfrente`: el Chaco de enfrente de Asunción, al otro lado del río, que
+ *   es lo que se ve al llegar. El hito `chaco` está en Pozo Colorado y Filadelfia,
+ *   a doscientos kilómetros de esta final. Ver `CHACO_ENFRENTE`.
  *
  * Si se ve lo dice el juego, que es quien tiene el mundo: ver `LecturaDelPasaje.ver`
  * y `world/se-ve-desde-el-pasaje.ts`.
@@ -176,6 +179,7 @@ export type SitioDelPaisaje =
   | "isla-de-llegada"
   | "costa-de-llegada"
   | "ladera-de-mazo"
+  | "chaco-enfrente"
   | "tierra-abajo"
   | "mar-abajo"
   | "nubes-abajo"
@@ -320,6 +324,34 @@ export interface LecturaDelPasaje {
    * `flight/lo-que-se-toca.ts`.
    */
   readonly tocable?: boolean;
+  /**
+   * **El vuelo largo de hoy**: lo que cambia con la fecha, y que por eso lo saca
+   * el juego de la cuenta y no lo escribe nadie en el guion. Sin esto —las pruebas
+   * que no lo miran, y el vuelo corto—, el guion no dice nada del sol. Ver
+   * `DelVueloLargo`.
+   */
+  readonly largo?: DelVueloLargo;
+}
+
+/**
+ * **Lo que dice la cuenta del vuelo largo, hoy y ahora.** Ver
+ * `flight/ruta-larga.ts`: de mayo a agosto se aterriza de noche cerrada, de
+ * noviembre a marzo con el sol ya fuera, y el huso es de cuatro o de cinco horas.
+ */
+export interface DelVueloLargo {
+  readonly temporada: "verano" | "invierno";
+  /** Si cuando se abre la ventanilla ya ha salido el sol: el del desayuno por el cristal. */
+  readonly conSolAlDesayunar: boolean;
+  /** La altura del sol ahora, grados. */
+  readonly sol: number;
+  /** Si el sol cae ahora dentro del cristal de Ara, desde su asiento. */
+  readonly solPorMiVentanilla: boolean;
+  /**
+   * **El anuncio de la bajada**, ya montado con la hora de allí, los minutos que
+   * faltan y el parte de Pettirossi. Con una función porque se monta una vez y esto
+   * se lee en cada paso. Ver `anuncioDeLaBajadaDelVueloLargo`.
+   */
+  anuncioDeLaBajada(): { readonly clave: string; readonly texto: string; readonly relleno: Readonly<Record<string, string>> };
 }
 
 /**
@@ -609,6 +641,17 @@ export interface DefMomento<Id extends string = string, M extends string = strin
    * minuto, y una historia en medio se lo comía.
    */
   readonly pegado?: boolean;
+  /**
+   * **La lámina a pantalla completa con la que se dice**, o `null` para quitarla.
+   * Sin decir, se queda la que hubiera. Es para lo que se cuenta sin que se vea el
+   * mundo: un capítulo que abre sobre un sitio que el juego no tiene dibujado. Ver
+   * `GuionDelPasaje.apertura` y `ui/lamina-grande.ts`.
+   */
+  readonly tapa?: string | null;
+  /** **Y si depende de la fecha**: el huso, y el amanecer de la ventanilla. */
+  tapaSegun?(l: LecturaDelPasaje, e: MotorDelPasaje<M, C>): string | null;
+  /** **Si esa lámina sale a oscuras y se va encendiendo**: la luz de la cabina que sube. */
+  readonly enciende?: boolean;
 }
 
 /**
@@ -714,7 +757,18 @@ export interface GuionDelPasaje<M extends string = string, C extends string = st
    * hay kit.
    */
   readonly kit: { readonly momento: M; readonly llegaA: number; readonly dado: string; readonly guardado: string } | null;
+  /**
+   * **Lo que se cuenta antes de ver el mundo**, bajo láminas: hasta qué momento dura,
+   * y las láminas que va a pedir, para tenerlas bajadas antes de que hagan falta. El
+   * vuelo arranca tapado, sin que el mundo asome ni un fotograma; mientras dura, no
+   * se adelanta, no se señala y no se toca nada, porque no se ve. Sin esto, se abre
+   * con el mundo a la vista, que es lo de todos los demás vuelos.
+   */
+  readonly apertura?: { readonly hasta: M; readonly laminas: readonly string[] };
 }
+
+/** **La tapa de antes de la primera lámina**: la pantalla a oscuras, sin dibujo. */
+export const TAPA_A_OSCURAS = "a-oscuras";
 
 export const enElSuelo = (t: TramoDeLinea): boolean =>
   t === "puerta" ||
@@ -847,6 +901,8 @@ export interface EstadoDelPasaje<M extends string = string, C extends string = s
   readonly toques: readonly Toque[];
   readonly invitado: boolean;
   readonly vistos: readonly SelloDelViaje[];
+  /** **La lámina a pantalla completa de ahora**, o `null`. Ver `DefMomento.tapa`. */
+  readonly tapa: string | null;
 }
 
 /** Una siesta de Ara, s de escena; `hasta` es `null` mientras dura. */
@@ -1065,6 +1121,9 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   private readonly vistosDelViaje: SelloDelViaje[] = [];
   private invitado = false;
   private laminaDelToque: { readonly dibujo: string; readonly hasta: number } | null = null;
+  /** La lámina a pantalla completa, y si se va encendiendo. Ver `DefMomento.tapa`. */
+  private tapa: string | null;
+  private tapaEnciende = false;
 
   constructor(
     voz: VozDelInicio,
@@ -1073,6 +1132,28 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     private readonly opciones: OpcionesDelPasaje = {},
   ) {
     this.charla = new Conversacion(voz, () => this.reloj, () => this.pared());
+    this.tapa = guion.apertura ? TAPA_A_OSCURAS : null;
+  }
+
+  /** **La lámina a pantalla completa de ahora**, o `null`: lo mira el juego en cada fotograma. */
+  get tapaDeAhora(): string | null {
+    return this.tapa;
+  }
+
+  /** **Si esa lámina se va encendiendo**. Ver `DefMomento.enciende`. */
+  get laTapaSeEnciende(): boolean {
+    return this.tapaEnciende;
+  }
+
+  /** **Las láminas que va a pedir el guion**, para bajarlas antes. */
+  get laminasDelGuion(): readonly string[] {
+    return this.guion.apertura?.laminas ?? [];
+  }
+
+  /** **Si se está contando lo de antes de ver el mundo**. Ver `GuionDelPasaje.apertura`. */
+  get enLaApertura(): boolean {
+    const a = this.guion.apertura;
+    return !!a && !this.cuandoSeDijo.has(a.hasta);
   }
 
   private pared(): number {
@@ -1280,6 +1361,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       toques: this.toques.map((t) => ({ ...t, dijo: [...t.dijo] })),
       invitado: this.invitado,
       vistos: [...this.vistosDelViaje],
+      tapa: this.tapa,
     };
   }
 
@@ -1296,7 +1378,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
    * Ara durmiendo no pasa nada, que tiene los ojos cerrados.
    */
   tocar(que: Tocable): void {
-    if (this.acabado) return;
+    // Con la lámina delante no se ve lo que hay detrás, así que no se toca.
+    if (this.acabado || this.enLaApertura) return;
     const toque = { que, desde: this.reloj, dijo: [] as string[], calla: null as Toque["calla"] };
     this.toques.push(toque);
     if (this.toques.length > 60) this.toques.shift();
@@ -1352,7 +1435,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
    * Devuelve si se dijo algo.
    */
   private atenderAlToque(l: LecturaDelPasaje): boolean {
-    if (this.reloj < this.enCorteHasta) return false;
+    if (this.reloj < this.enCorteHasta || this.enLaApertura) return false;
     if (this.kit.estaAbierto || this.kit.ocupaAAra || this.durmiendo || this.bostezando) return false;
     const p = this.toquePendiente;
     if (!p) {
@@ -1578,6 +1661,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
    */
   private sePuedeCorrer(l: LecturaDelPasaje): boolean {
     if (this.acabado || this.durmiendo || this.bostezando || this.def.id === "fin" || this.llegadaDesde !== null) return false;
+    if (this.enLaApertura) return false;
     if (!volando(l) || enLaFinal(l) || cabinaPreparada(l, this)) return false;
     return l.flaps <= 0.05 && (l.tren ?? 0) <= 0.05 && l.potencia !== "despegue";
   }
@@ -1668,6 +1752,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       // Ni con Ara cerrando los ojos o durmiendo: lo que no ve, no se le señala.
       !this.bostezando &&
       !this.durmiendo &&
+      !this.enLaApertura &&
       this.guion.seSenalaDesde.some((m) => this.dicho(m)) &&
       !this.dicho("aproximacion") &&
       this.charla.callada &&
@@ -1803,6 +1888,11 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     const plano =
       def.planoSegun?.(l, this) ?? def.plano ?? (vista?.como && sitio ? planoParaVer(vista.como, sitio) : "ventanilla");
     this.ponerPlano(plano, sitio);
+    const tapa = def.tapaSegun ? def.tapaSegun(l, this) : def.tapa;
+    if (tapa !== undefined) {
+      this.tapa = tapa;
+      this.tapaEnciende = def.enciende === true;
+    }
     /*
      * Lo que Ara ya dijo al tocarlo no lo repite cuando le llega a la escena:
      * «¡ya se ve la isla adonde vamos!» una vez. Ver `tocar`.

@@ -17,7 +17,7 @@
  */
 
 /** Los sitios del juego donde va una ilustración, cada uno con su forma. */
-export type HuecoDeLaIlustracion = "lamina" | "ventanita" | "tarjeta" | "retrato" | "historia" | "esquema";
+export type HuecoDeLaIlustracion = "lamina" | "ventanita" | "tarjeta" | "retrato" | "historia" | "esquema" | "pantalla";
 
 /**
  * **El tamaño al que se hacen**: el doble de lo que miden en pantalla.
@@ -49,6 +49,11 @@ export type HuecoDeLaIlustracion = "lamina" | "ventanita" | "tarjeta" | "retrato
  *   enteros, en 4:3 y a 1280 × 960; pero **nunca más grandes que su
  *   original**, y hay originales de 1200 y de 1024 de ancho: esos se quedan a
  *   su tamaño, recortados a lo justo para el 4:3. Ver `tamanoDeLaReceta`.
+ * - **Las de pantalla completa del vuelo largo** (T4, 1-11-2026): lo que se cuenta
+ *   antes de ver el mundo, tapándolo todo. En 16:9, que es como vienen pintadas y
+ *   como es casi toda pantalla apaisada, a 1600 × 900: un portátil las enseña casi
+ *   píxel a píxel, y una tablet de densidad dos no llega a pedir más que el original.
+ *   Ver `ui/lamina-grande.ts`.
  */
 export const TAMANO_DEL_HUECO: Readonly<
   Record<HuecoDeLaIlustracion, { readonly ancho: number; readonly alto: number }>
@@ -59,6 +64,7 @@ export const TAMANO_DEL_HUECO: Readonly<
   retrato: { ancho: 96, alto: 96 },
   historia: { ancho: 1280, alto: 960 },
   esquema: { ancho: 1280, alto: 960 },
+  pantalla: { ancho: 1600, alto: 900 },
 };
 
 /** Cómo se hace una ilustración. */
@@ -105,6 +111,8 @@ const ENTERA_DE_1200 = [4, 1, 1192, 894] as const;
 const ENTERA_DE_1024 = [2, 0, 1020, 765] as const;
 /** Entera, la lámina del motor de 1448 × 1086, que ya viene en 4:3 justo. */
 const ENTERA_DE_1448 = [0, 0, 1448, 1086] as const;
+/** Entera, de las láminas del vuelo largo de 1672 × 941, a lo justo para el 16:9. */
+const ENTERA_DE_1672 = [0, 0, 1672, 940] as const;
 
 /**
  * **Las recetas**, por clave: la misma del fichero WebP y del texto
@@ -256,6 +264,19 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
    * que se mira es la ladera de verdad.
    */
   mazo: { original: "esquemas/mazo.jpg", hueco: "esquema", recorte: ENTERA_GRANDE },
+  /*
+   * **Lo que se cuenta del vuelo largo antes de ver el mundo**, a pantalla completa:
+   * ver `flight/guion-llegada-a-asuncion.ts`. Los dos husos, con las agujas medidas
+   * sobre la lámina: 10:00 en Madrid y las 6:00 o las 5:00 en Asunción. El desayuno
+   * lleva el amanecer por la ventanilla, que solo es verdad de noviembre a marzo, y por
+   * eso hay otra con la noche en el cristal: la misma lámina, repintados los cristales
+   * y nada más. La cabina sigue con la luz del amanecer, que la pone la tripulación.
+   */
+  desayuno: { original: "vuelo-largo/desayuno.png", hueco: "pantalla", recorte: ENTERA_DE_1672, conAra: true },
+  "desayuno-noche": { original: "vuelo-largo/desayuno-noche.png", hueco: "pantalla", recorte: ENTERA_DE_1672, conAra: true },
+  "huso-invierno": { original: "vuelo-largo/huso-invierno.png", hueco: "pantalla", recorte: ENTERA_DE_1672 },
+  "huso-verano": { original: "vuelo-largo/huso-verano.png", hueco: "pantalla", recorte: ENTERA_DE_1672 },
+  ecuador: { original: "vuelo-largo/ecuador.png", hueco: "pantalla", recorte: ENTERA_DE_1672 },
 };
 
 /**

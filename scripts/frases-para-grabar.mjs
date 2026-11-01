@@ -45,6 +45,8 @@ const SALIDA = process.argv[2] ?? "docs/voces";
  */
 const DE_LA_COMANDANTE_VIVA =
   /^comandante\.(?:bienvenida\.(?:saludo|gracia|a|detalle|cierre)\.|mitad\.|chicos\.|curiosidad\.)/;
+/** Y la del vuelo largo, que va en `DEL_VUELO_LARGO`. Mismo motivo: lo ya grabado no se renumera. */
+const DE_LA_COMANDANTE_DEL_LARGO = /^comandante\.largo\./;
 
 /*
  * **Y la moderada dicha a quien la oye**: la de «sigan sentados», para el
@@ -220,7 +222,7 @@ const HABLADOS = [
     // Menos lo nuevo de la comandante, que va al final. Ver `DE_LA_COMANDANTE_VIVA`,
     // `DE_LA_TURBULENCIA_A_QUIEN_LA_OYE` y `DEL_VUELO_VIVO`.
     new RegExp(
-      `${DE_LA_COMANDANTE_VIVA.source}|${DE_LA_TURBULENCIA_A_QUIEN_LA_OYE.source}|${DEL_VUELO_VIVO.source}`,
+      `${DE_LA_COMANDANTE_VIVA.source}|${DE_LA_TURBULENCIA_A_QUIEN_LA_OYE.source}|${DEL_VUELO_VIVO.source}|${DE_LA_COMANDANTE_DEL_LARGO.source}`,
     ),
   ],
   /*
@@ -1944,8 +1946,47 @@ const DE_CADA_AVION = [
   ["tarjeta.voz.lucesPuntas", "instructor", "lo que explica el punto de las luces en la tarjeta del avión que lleva la blanca en las puntas"],
   ["tarjeta.voz.motorTurbo", "instructor", "lo que explica el punto del motor en la tarjeta del bimotor de pistón: turbo y hélices contrarrotativas"],
 ];
+/**
+ * **Y lo que se cuenta del vuelo largo** (T4, 1-11-2026): el tercer capítulo. Al
+ * final de cada voz, que lo grabado no se renumera. Derlis es la voz de `tripulacion`,
+ * la del Paraguay, y aquí habla en persona: sin la chispa, como Idaira cara a cara. La
+ * comandante monta su anuncio con esto y con los minutos, el cielo y los grados de
+ * siempre: ver `comandante.largo.anuncio` y `anuncioDeLaBajadaDelVueloLargo`.
+ */
+const DEL_VUELO_LARGO = [
+  ["inicio.ara.pasaje.largo.meDormi", "ara", "el vuelo largo: Ara despierta y pregunta dónde está"],
+  ["inicio.tripulacion.pasaje.cerca.largo.mapa", "tripulacion-canarias", "el vuelo largo: Idaira enseña el mapa en la pantalla del respaldo"],
+  ["inicio.ara.pasaje.largo.mapa", "ara", "el vuelo largo: Ara ve en el mapa que cruzó el mar durmiendo"],
+  ["inicio.tripulacion.pasaje.derlis.desayuno", "tripulacion", "el vuelo largo: Derlis, en persona, trae el desayuno con la chipa de casa"],
+  ["inicio.ara.pasaje.largo.chipa", "ara", "el vuelo largo: Ara huele la chipa"],
+  ["inicio.ara.pasaje.largo.nariz", "ara", "el vuelo largo: a Ara se le secan la nariz y los ojos"],
+  ["inicio.tripulacion.pasaje.derlis.agua", "tripulacion", "el vuelo largo: Derlis, en persona: el aire seco y un vasito cuando haya sed"],
+  ["inicio.ara.pasaje.largo.huso", "ara", "el vuelo largo: Ara nota la diferencia de hora con Madrid"],
+  ["inicio.tripulacion.pasaje.cerca.largo.huso", "tripulacion-canarias", "el vuelo largo: Idaira explica el huso: la Tierra gira y cada sitio pone el reloj con su sol"],
+  ["inicio.tripulacion.pasaje.cerca.largo.husoInvierno", "tripulacion-canarias", "el vuelo largo: Idaira, cuatro horas de diferencia, en invierno de Europa"],
+  ["inicio.tripulacion.pasaje.cerca.largo.husoVerano", "tripulacion-canarias", "el vuelo largo: Idaira, cinco horas de diferencia, en verano de Europa"],
+  ["inicio.tripulacion.pasaje.cerca.largo.ecuador1", "tripulacion-canarias", "el vuelo largo: Idaira, mientras dormías cruzamos el ecuador"],
+  ["inicio.ara.pasaje.largo.ecuador", "ara", "el vuelo largo: Ara pregunta cómo es del otro lado del ecuador"],
+  ["inicio.tripulacion.pasaje.cerca.largo.ecuador2", "tripulacion-canarias", "el vuelo largo: Idaira, las estaciones al revés, la Polar y la Cruz del Sur"],
+  ["inicio.tripulacion.pasaje.derlis.piernas", "tripulacion", "el vuelo largo: Derlis, en persona: mover pies y piernas sin levantarse"],
+  ["inicio.tripulacion.pasaje.derlis.desfase", "tripulacion", "el vuelo largo: Derlis, en persona: el reloj del cuerpo y cómo se pone en hora"],
+  ["inicio.ara.pasaje.largo.deDia", "ara", "el vuelo largo: se abre la ventanilla, y ya es de día"],
+  ["inicio.ara.pasaje.largo.amanece", "ara", "el vuelo largo: por la ventanilla está saliendo el sol"],
+  ["inicio.ara.pasaje.largo.deNoche", "ara", "el vuelo largo: se abre la ventanilla, y todavía es de noche"],
+  ["comandante.largo.bajada", "comandante", "el vuelo largo: unos cuarenta minutos antes de tocar, falta poco para bajar; con la hora, los minutos, el cielo y los grados detrás"],
+  ["comandante.largo.hora.0545", "comandante", "el vuelo largo: la hora de Asunción en el anuncio de la bajada, en verano de Europa"],
+  ["comandante.largo.hora.0645", "comandante", "el vuelo largo: la hora de Asunción en el anuncio de la bajada, en invierno de Europa"],
+  ["inicio.tripulacion.pasaje.cerca.largo.oidos", "tripulacion-canarias", "el vuelo largo: Idaira, tragar, bostezar o masticar al bajar"],
+  ["inicio.ara.pasaje.largo.rio", "ara", "el vuelo largo: Ara ve el río Paraguay por su ventanilla, con luz"],
+  ["inicio.ara.pasaje.largo.chaco", "ara", "el vuelo largo: Ara ve el Chaco al otro lado del río"],
+  ["inicio.ara.pasaje.largo.asuncion", "ara", "el vuelo largo: Ara ve Asunción y su bahía"],
+  ["inicio.ara.pasaje.largo.asuncionNoche", "ara", "el vuelo largo: Ara ve las luces de Asunción, de noche"],
+  ["comandante.largo.llegada.verano", "comandante", "el vuelo largo: la hora al llegar, las 06:25, en verano de Europa"],
+  ["comandante.largo.llegada.invierno", "comandante", "el vuelo largo: la hora al llegar, las 07:30, en invierno de Europa"],
+  ["inicio.ara.pasaje.largo.llegamos", "ara", "el vuelo largo: Ara llega a Asunción"],
+];
 const LO_QUE_SE_VE = new Set(
-  [...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA, ...DE_LOS_INSTRUMENTOS].map(
+  [...DEL_VUELO_LARGO, ...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA, ...DE_LOS_INSTRUMENTOS].map(
     ([k]) => k,
   ),
 );
@@ -2465,6 +2506,13 @@ for (const f of filas) {
  * instructora igual: lo que cuenta es lo mismo y se cuenta con las mismas
  * ganas.
  */
+// Y el vuelo largo, de lo último que hay en cada voz: lo ya grabado no se renumera.
+for (const [id, voz, para] of DEL_VUELO_LARGO) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz, idioma: "es-PY", texto, para });
+  total += texto.length;
+}
 const AJUSTES_CON_CHISPA = {
   stability: 0.35,
   similarity_boost: 0.8,
@@ -2509,7 +2557,7 @@ const CON_CHISPA = (id) =>
    * queda como está; cara a cara con un niño, no. Una tripulante es una
    * profesional tranquila y segura: va con los ajustes de su voz.
    */
-  (id.startsWith("inicio.") && !id.startsWith("inicio.tripulacion.pasaje.cerca.")) ||
+  (id.startsWith("inicio.") && !id.startsWith("inicio.tripulacion.pasaje.cerca.") && !id.startsWith("inicio.tripulacion.pasaje.derlis.")) ||
   id.startsWith("ventanilla.") ||
   id.startsWith("vuelo.aire.") ||
   id.startsWith("explica.") ||

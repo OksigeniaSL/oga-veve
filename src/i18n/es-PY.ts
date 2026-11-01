@@ -4692,4 +4692,72 @@ export const ES_PY = {
   "inicio.kit.luz.roja-destellos": "Destellos rojos: que no aterrice",
   "inicio.kit.luz.conRadio": "Avión con la radio bien",
   "inicio.kit.luz.sinRadio": "Avión con la radio rota: pide luz",
+  /*
+   * ── **El tercer capítulo del vuelo largo: «Amanecer y llegada a Asunción»** ─
+   *
+   * Ara despierta sobre Brasil y llega a casa. Idaira atiende de tú, que es de
+   * Canarias; Derlis, de vos, que es de acá: los dos en persona, sin altavoz, y la
+   * tripulación se nota como lo que es, que se ocupa de la seguridad. Las fuentes,
+   * en el ADR 0023: lo del agua y el desfase es de la OMS, *International Travel and
+   * Health*, cap. 2 (el avión no deshidrata y la melatonina no se recomienda), y lo
+   * del huso, de la Ley 7354/2024 del Paraguay. Ver
+   * `src/flight/guion-llegada-a-asuncion.ts`.
+   */
+  "inicio.ara.pasaje.largo.meDormi": "¡Me dormí toda la noche! ¿Dónde estamos ahora?",
+  "inicio.tripulacion.pasaje.cerca.largo.mapa":
+    "Míralo en tu pantalla: ese avioncito somos nosotros. La raya seguida es lo que ya volamos, y los puntitos, lo que nos falta.",
+  "inicio.ara.pasaje.largo.mapa": "¡Cruzamos todo el mar mientras yo dormía!",
+  "inicio.tripulacion.pasaje.derlis.desayuno":
+    "Buen día. Acá tenés tu desayuno: chipa de casa, calentita, y fruta. El cinturón, puesto mientras comés: en el asiento, siempre.",
+  "inicio.ara.pasaje.largo.chipa": "¡Chipa! Esto huele a casa.",
+  "inicio.ara.pasaje.largo.nariz": "Se me secó la nariz, y me pican un poco los ojos.",
+  "inicio.tripulacion.pasaje.derlis.agua":
+    "Es el aire de arriba, que es muy seco. No pasa nada: un vasito de agua cuando tengas sed, y listo.",
+  "inicio.ara.pasaje.largo.huso": "En Madrid ya son las diez. ¿Por qué acá es tan temprano?",
+  "inicio.tripulacion.pasaje.cerca.largo.huso":
+    "Porque la Tierra gira, ¿ves? El sol llega antes a Madrid y después a Asunción, y cada sitio pone el reloj con su sol.",
+  "inicio.tripulacion.pasaje.cerca.largo.husoInvierno":
+    "Hoy son cuatro horas de diferencia. En verano de Europa son cinco, porque España cambia la hora y Paraguay ya no.",
+  "inicio.tripulacion.pasaje.cerca.largo.husoVerano":
+    "Hoy son cinco horas de diferencia. En invierno de Europa son cuatro, porque España cambia la hora y Paraguay ya no.",
+  "inicio.tripulacion.pasaje.cerca.largo.ecuador1":
+    "Y mientras dormías cruzamos el ecuador: la raya que parte la Tierra en dos, como la cintura de una pelota.",
+  "inicio.ara.pasaje.largo.ecuador": "¿Y cómo es del otro lado?",
+  "inicio.tripulacion.pasaje.cerca.largo.ecuador2":
+    "Las estaciones van al revés: cuando en Madrid es invierno, aquí es verano. Y en el cielo de noche se esconde la Polar y aparece la Cruz del Sur.",
+  "inicio.tripulacion.pasaje.derlis.piernas":
+    "Y después de tantas horas, mové los pies y las piernas sin levantarte: la punta arriba, la punta abajo, y unas vueltas con el tobillo.",
+  "inicio.tripulacion.pasaje.derlis.desfase":
+    "Tu cuerpo también tiene un reloj, y todavía anda con la hora de Madrid. Hoy salí al sol de la mañana, comé y dormí a la hora de acá, y en unos días se pone en hora.",
+  "inicio.ara.pasaje.largo.deDia": "¡Ya es de día! Mirá toda esa luz allá afuera.",
+  "inicio.ara.pasaje.largo.amanece": "¡Mirá por la ventanilla: está saliendo el sol!",
+  "inicio.ara.pasaje.largo.deNoche": "Afuera todavía es de noche, y yo ya desayuné.",
+  /*
+   * La bajada, unos cuarenta minutos antes de tocar y antes de empezar a bajar de
+   * verdad: se monta como la de siempre, con los minutos, el cielo y los grados ya
+   * grabados. Solo son nuevas esta frase y la hora. Ver
+   * `anuncioDeLaBajadaDelVueloLargo`.
+   */
+  "comandante.largo.bajada":
+    "Señores pasajeros, les habla nuevamente la comandante. En unos minutos empezamos a bajar hacia Asunción.",
+  "comandante.largo.hora.0545": "En Asunción son las cinco y cuarenta y cinco de la mañana.",
+  "comandante.largo.hora.0645": "En Asunción son las seis y cuarenta y cinco de la mañana.",
+  "inicio.tripulacion.pasaje.cerca.largo.oidos":
+    "Traga, bosteza o mastica algo, y verás cómo se destapan. Por eso te desperté antes de bajar.",
+  "inicio.ara.pasaje.largo.rio": "¡Mirá, el río Paraguay! Qué grande, y cuántas curvas que da.",
+  "inicio.ara.pasaje.largo.chaco": "Y del otro lado del río, todo plano hasta lejos: ese es el Chaco.",
+  "inicio.ara.pasaje.largo.asuncion": "¡Ahí está Asunción, con su bahía! Ya casi llegamos.",
+  "inicio.ara.pasaje.largo.asuncionNoche": "¡Mirá las luces de Asunción! Ya casi llegamos.",
+  "comandante.largo.llegada.verano": "En Asunción son las seis y veinticinco de la mañana. Que tengan un muy lindo día.",
+  "comandante.largo.llegada.invierno": "En Asunción son las siete y media de la mañana. Que tengan un muy lindo día.",
+  "inicio.ara.pasaje.largo.llegamos": "¡Llegamos a Asunción! Crucé el océano entero.",
+  // No se graban: son de la pantalla.
+  "inicio.modo.largo": "Llegá a Asunción",
+  "inicio.modo.tripulanteDerlis": "El tripulante de cabina, a tu lado",
+  "inicio.dibujo.piernas": "Un pie que sube y baja la punta, sin levantarse del asiento.",
+  "ilustracion.desayuno": "Ara abre los ojos con el desayuno en la mesita; por la ventanilla sale el sol",
+  "ilustracion.desayuno-noche": "Ara abre los ojos con el desayuno en la mesita; afuera todavía es de noche",
+  "ilustracion.huso-invierno": "La Tierra, mitad de noche: las diez en Madrid y las seis en Asunción",
+  "ilustracion.huso-verano": "La Tierra, mitad de noche: las diez en Madrid y las cinco en Asunción",
+  "ilustracion.ecuador": "La Tierra con el ecuador en raya roja, y el avión cruzándolo",
 } as const;

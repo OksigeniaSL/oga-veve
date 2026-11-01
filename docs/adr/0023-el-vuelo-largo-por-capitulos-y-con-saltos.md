@@ -317,3 +317,29 @@ menú. Cuatro decisiones que no estaban arriba:
   vuelo largo: el corto y la final no cambian.
 - **Ara no se duerme en este guion** (`sinSiesta`): acaba de despertarse, y lo que
   queda por delante es bajar.
+
+## Lo que se cuenta en el tercer capítulo
+
+Ya no es un esqueleto: lleva su guion, sus láminas y su ficha en «¿A qué jugás?». Lo
+que no estaba arriba y se decidió al escribirlo:
+
+- **Lo de la mañana va bajo láminas, con el vuelo corriendo debajo.** El desayuno es
+  sobre Brasil y el mundo empieza en el Paraguay, así que se cuenta tapado
+  (`GuionDelPasaje.apertura`, `ui/lamina-grande.ts`). Se pensó en parar el vuelo
+  mientras tanto, con la espera del modo inicio; pero esa espera calla el mundo y no
+  da pasos, y un sonido de cabina que se corta es lo que se nota. Corre, y la tapa
+  dura lo que duran las frases: unos dos minutos de los catorce de crucero.
+- **El mapa enseña la hora del cuento**, no la del mundo que hay debajo: las 9 h 40
+  (`SE_DESAYUNA_A`). Es la pantalla del respaldo de verdad, y dice lo cierto: a esa hora
+  el avión va sobre Brasil.
+- **La comandante avisa antes de bajar, no al bajar.** Con los perfiles de hoy, el
+  punto de descenso del juego cae unos diez minutos después de abrirse la ventanilla.
+  Un «empezamos a bajar» ahí sería falso; una frase nueva, «en unos minutos empezamos a
+  bajar», con la hora y lo demás montado de lo ya grabado, no lo es. Al llegar el
+  descenso, el aviso de la tripulación enciende el cartel.
+- **El Chaco que se nombra es el de enfrente**, `CHACO_ENFRENTE`: el hito `chaco` está
+  a doscientos kilómetros de esta final, y por el cristal no llegaría a verse nunca.
+- **El desayuno tiene dos láminas.** La aprobada lleva el amanecer por la ventanilla, y
+  de abril a octubre no lo hay. La otra es la misma con los cristales repintados de
+  noche, sin tocar lo demás: la cabina sigue con la luz del amanecer, que esa la pone la
+  tripulación.

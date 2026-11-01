@@ -16134,6 +16134,61 @@ body.con-vuelta #tactil {
   display: none;
 }
 
+/*
+ * La lámina a pantalla completa del vuelo largo. Entera, nunca recortada: enseña
+ * relojes y media Tierra, que recortadas ya no dicen lo mismo. Ver
+ * `ui/lamina-grande.ts`.
+ */
+.lamina-grande {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: #0b1222;
+}
+
+.lamina-grande[hidden] {
+  display: none;
+}
+
+.lamina-grande__dibujo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+
+.lamina-grande__dibujo--vista {
+  opacity: 1;
+}
+
+/* La luz de la cabina que sube: de casi a oscuras al color del amanecer. */
+.lamina-grande__dibujo--enciende {
+  animation: lamina-enciende 11s ease-out both;
+}
+
+@keyframes lamina-enciende {
+  from {
+    filter: brightness(0.1) saturate(0.5);
+  }
+  to {
+    filter: brightness(1) saturate(1);
+  }
+}
+
+.sin-movimiento .lamina-grande__dibujo--enciende {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lamina-grande__dibujo--enciende {
+    animation: none;
+  }
+}
+
 /* El cuadro del sueño: tres por dos, con el cristal de la ventanita. */
 .siesta__sueno {
   position: relative;

@@ -1231,15 +1231,48 @@ const LEC_INICIO_PASAJE = escena(`
 `);
 
 /**
+ * **Llegar a Asunción**: la Tierra con su raya hasta casa, el avión casi al final y
+ * Ara al lado. Se entiende sin leer, y como es un viaje de muchas horas, se dibuja
+ * entero y no solo su final: el de la pelota, con el camino de un lado a otro del mar.
+ */
+const LEC_INICIO_LARGO = `
+  <svg class="ficha__panel" viewBox="0 0 120 84" aria-hidden="true">
+    <rect class="panel__cielo" x="0" y="0" width="120" height="84" rx="3" />
+    <circle class="leccion__mar" cx="74" cy="42" r="38" />
+    <path class="leccion__loma" d="M84 7 q14 3 21 16 q-4 11 -13 11 q-9 -1 -11 -9 q-3 -9 3 -18 Z" />
+    <path class="leccion__loma" d="M46 38 q10 -7 22 -2 q9 8 8 20 q-4 13 -11 21 q-6 -2 -9 -11 q-2 -9 -7 -14 q-3 -6 -3 -14 Z" />
+    <path class="leccion__estela" d="M95 24 Q82 40 66 56" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.1 5" />
+    <circle cx="65" cy="58" r="3.4" fill="#c62f2f" stroke="#fff" stroke-width="1.4" />
+    <g transform="translate(77 41) rotate(-138)">
+      <path class="leccion__avion" fill="#fff" stroke="#2a1c14" stroke-width="0.8" d="M0 -10 q1.6 2 1.6 5 v2.6 l8.4 5.4 v2 l-8.4 -2.6 l-0.4 5 l3 2.4 v1.4 l-4.2 -1.2 l-4.2 1.2 v-1.4 l3 -2.4 l-0.4 -5 l-8.4 2.6 v-2 l8.4 -5.4 v-2.6 q0 -3 1.6 -5 Z" />
+    </g>
+    ${caraDentro("ara", 4, 48, 30)}
+  </svg>
+`;
+
+/**
  * Las fichas del modo inicio. **No son lecciones más del grupo**: no se eligen
  * y se despega después, sino que se tocan y se vuelan, con su sitio, su avión
  * y su peldaño. Por eso van fuera del grupo de radio, delante de todo: la de
  * aprender a volar y, al lado, la de aterrizar.
  */
 function fichaDelInicio(cual: EscenaDelInicio): string {
-  const dibujo = cual === "aterrizar" ? LEC_INICIO_ATERRIZAR : cual === "pasaje" ? LEC_INICIO_PASAJE : LEC_INICIO;
+  const dibujo =
+    cual === "aterrizar"
+      ? LEC_INICIO_ATERRIZAR
+      : cual === "pasaje"
+        ? LEC_INICIO_PASAJE
+        : cual === "largo"
+          ? LEC_INICIO_LARGO
+          : LEC_INICIO;
   const nombre =
-    cual === "aterrizar" ? "inicio.modo.aterrizar" : cual === "pasaje" ? "inicio.modo.pasaje" : "inicio.modo.nombre";
+    cual === "aterrizar"
+      ? "inicio.modo.aterrizar"
+      : cual === "pasaje"
+        ? "inicio.modo.pasaje"
+        : cual === "largo"
+          ? "inicio.modo.largo"
+          : "inicio.modo.nombre";
   return `
     <button class="ficha ficha--leccion ficha--inicio" type="button" data-inicio-modo="${cual}">
       <span class="ficha__lienzo ficha__lienzo--panel">${dibujo}</span>
@@ -1969,7 +2002,7 @@ export function abrirHangar(
         -->
         <section class="hangar__bloque" aria-labelledby="hangar-leccion">
           <h2 class="hangar__pregunta" id="hangar-leccion">${t("hangar.aque")}</h2>
-          <div class="hangar__rejilla hangar__rejilla--suelta hangar__inicio">${fichaDelInicio("despegar")}${fichaDelInicio("aterrizar")}${fichaDelInicio("pasaje")}</div>
+          <div class="hangar__rejilla hangar__rejilla--suelta hangar__inicio">${fichaDelInicio("despegar")}${fichaDelInicio("aterrizar")}${fichaDelInicio("pasaje")}${fichaDelInicio("largo")}</div>
           <div class="hangar__grupos" role="radiogroup" aria-labelledby="hangar-leccion">
             ${grupo(
               MARCA_TRAMOS,
@@ -2469,7 +2502,7 @@ export function abrirHangar(
       const conInicio = boton.hasAttribute("data-inicio-modo");
       const modo = boton.getAttribute("data-inicio-modo");
       const escenaDelInicio: EscenaDelInicio =
-        modo === "aterrizar" ? "aterrizar" : modo === "pasaje" ? "pasaje" : "despegar";
+        modo === "aterrizar" ? "aterrizar" : modo === "pasaje" ? "pasaje" : modo === "largo" ? "largo" : "despegar";
       if (boton.hasAttribute("data-despegar") || conInicio) {
         if (reposo !== null) clearTimeout(reposo);
         apuntarReciente(sitio.id);
