@@ -47,18 +47,17 @@ export const KMH_CADA = 10;
  * dos familias hay huecos que no pide nadie.
  */
 export const KMH_QUE_SE_DICEN = [
-  110, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 310,
-  340, 350, 360, 390, 410, 420, 440, 460, 480, 520, 540,
+  110, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 300,
+  310, 340, 350, 360, 390, 410, 420, 440, 460, 480, 520, 540, 590,
 ] as const;
 
 /**
- * **Las que ya pide el JAZ 110 y esperan su toma**, km/h: su Vref más veinte, 164
- * nudos, y su subida, 320. No hace falta tenerlas para volar: sin pieza, la frase va
- * sin el número —ver `piezaDeVelocidad`—, y una lista en la que hubiera una cifra sin
- * grabar rompería el horneado. Al grabarlas pasan a `KMH_QUE_SE_DICEN`. Ver
- * `PENDIENTE-VOCES-tijereta.md`.
+ * **Las que ya pide algún avión y esperan su toma**, km/h; hoy, ninguna. No hace falta
+ * tenerlas para volar: sin pieza, la frase va sin el número —ver `piezaDeVelocidad`—, y
+ * una lista en la que hubiera una cifra sin grabar rompería el horneado. Al grabarlas
+ * pasan a `KMH_QUE_SE_DICEN`.
  */
-export const KMH_QUE_ESPERAN_SU_TOMA = [300, 590] as const;
+export const KMH_QUE_ESPERAN_SU_TOMA = [] as const;
 
 /** Las unidades de un peldaño. Ver `Tier.units`. */
 export type Unidades = "metric" | "aeronautical";

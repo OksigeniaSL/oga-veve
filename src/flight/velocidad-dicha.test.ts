@@ -87,8 +87,8 @@ describe("la velocidad dicha con su número", () => {
     // La de 212 nudos: 392,6 km/h, que se escribe y se dice 390.
     expect(velocidadDicha(212, "metric")).toBe(390);
     expect(piezaDeVelocidad(212, "metric")).toBe("vuelo.paso.velocidad.390");
-    // Y 300 no la pide ningún avión: sin pieza, la frase va sin el número.
-    expect(piezaDeVelocidad(162, "metric")).toBe(null);
+    // Y 320 no la pide ningún avión: sin pieza, la frase va sin el número.
+    expect(piezaDeVelocidad(173, "metric")).toBe(null);
     // La de 250 nudos, el tope de los diez mil pies: 463 km/h, 460.
     expect(velocidadDicha(250, "metric")).toBe(460);
     expect(piezaDeVelocidad(250, "metric")).toBe("vuelo.paso.velocidad.460");

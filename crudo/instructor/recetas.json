@@ -2102,5 +2102,11 @@
     "{nivel}",
     "{hoja?}",
     "{como}"
+  ],
+  "vuelo.paso.velocidad.300": [
+    "vuelo.paso.velocidad.300"
+  ],
+  "vuelo.paso.velocidad.590": [
+    "vuelo.paso.velocidad.590"
   ]
 }

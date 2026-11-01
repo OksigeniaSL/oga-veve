@@ -2211,6 +2211,10 @@
       "ms": 2323,
       "h": "070ed94d83"
     },
+    "vuelo.paso.velocidad.300": {
+      "ms": 1544,
+      "h": "877ff18f51"
+    },
     "vuelo.paso.velocidad.310": {
       "ms": 2030,
       "h": "c36f003b7b"
@@ -2258,6 +2262,10 @@
     "vuelo.paso.velocidad.540": {
       "ms": 2218,
       "h": "249514b5be"
+    },
+    "vuelo.paso.velocidad.590": {
+      "ms": 2096,
+      "h": "164ce5eb0d"
     },
     "vuelo.pediFlaps": {
       "ms": 1614,
@@ -4780,6 +4788,12 @@
       "{nivel}",
       "{hoja?}",
       "{como}"
+    ],
+    "vuelo.paso.velocidad.300": [
+      "vuelo.paso.velocidad.300"
+    ],
+    "vuelo.paso.velocidad.590": [
+      "vuelo.paso.velocidad.590"
     ]
   }
 }

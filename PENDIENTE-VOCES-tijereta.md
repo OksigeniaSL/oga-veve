@@ -29,3 +29,5 @@ sin grabar (`piezaDeVelocidad`).
 **Al grabarlas:** pasar las dos de `KMH_QUE_ESPERAN_SU_TOMA` a `KMH_QUE_SE_DICEN` en
 `src/flight/velocidad-dicha.ts`, ponerles su receta en `crudo/instructor/recetas.json` y
 hornear. `por-grabar.test.ts` y `velocidad-dicha.test.ts` lo piden.
+
+**Grabadas el 1-11-2026** las tres, con su receta y horneadas.

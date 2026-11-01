@@ -558,6 +558,7 @@ Son doscientos cincuenta kilómetros por hora.
 Son doscientos sesenta kilómetros por hora.
 Son doscientos setenta kilómetros por hora.
 Son doscientos ochenta kilómetros por hora.
+Son trescientos kilómetros por hora.
 Son trescientos diez kilómetros por hora.
 Son trescientos cuarenta kilómetros por hora.
 Son trescientos cincuenta kilómetros por hora.
@@ -570,7 +571,6 @@ Son cuatrocientos sesenta kilómetros por hora.
 Son cuatrocientos ochenta kilómetros por hora.
 Son quinientos veinte kilómetros por hora.
 Son quinientos cuarenta kilómetros por hora.
-Son trescientos kilómetros por hora.
 Son quinientos noventa kilómetros por hora.
 Bajaste antes de la barra blanca: las flechas son para rodar y despegar
 ¡Tus gafas de sol!

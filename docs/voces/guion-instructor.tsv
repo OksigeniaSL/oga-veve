@@ -558,19 +558,19 @@
 558	vuelo.paso.velocidad.260	Son doscientos sesenta kilómetros por hora.
 559	vuelo.paso.velocidad.270	Son doscientos setenta kilómetros por hora.
 560	vuelo.paso.velocidad.280	Son doscientos ochenta kilómetros por hora.
-561	vuelo.paso.velocidad.310	Son trescientos diez kilómetros por hora.
-562	vuelo.paso.velocidad.340	Son trescientos cuarenta kilómetros por hora.
-563	vuelo.paso.velocidad.350	Son trescientos cincuenta kilómetros por hora.
-564	vuelo.paso.velocidad.360	Son trescientos sesenta kilómetros por hora.
-565	vuelo.paso.velocidad.390	Son trescientos noventa kilómetros por hora.
-566	vuelo.paso.velocidad.410	Son cuatrocientos diez kilómetros por hora.
-567	vuelo.paso.velocidad.420	Son cuatrocientos veinte kilómetros por hora.
-568	vuelo.paso.velocidad.440	Son cuatrocientos cuarenta kilómetros por hora.
-569	vuelo.paso.velocidad.460	Son cuatrocientos sesenta kilómetros por hora.
-570	vuelo.paso.velocidad.480	Son cuatrocientos ochenta kilómetros por hora.
-571	vuelo.paso.velocidad.520	Son quinientos veinte kilómetros por hora.
-572	vuelo.paso.velocidad.540	Son quinientos cuarenta kilómetros por hora.
-573	vuelo.paso.velocidad.300	Son trescientos kilómetros por hora.
+561	vuelo.paso.velocidad.300	Son trescientos kilómetros por hora.
+562	vuelo.paso.velocidad.310	Son trescientos diez kilómetros por hora.
+563	vuelo.paso.velocidad.340	Son trescientos cuarenta kilómetros por hora.
+564	vuelo.paso.velocidad.350	Son trescientos cincuenta kilómetros por hora.
+565	vuelo.paso.velocidad.360	Son trescientos sesenta kilómetros por hora.
+566	vuelo.paso.velocidad.390	Son trescientos noventa kilómetros por hora.
+567	vuelo.paso.velocidad.410	Son cuatrocientos diez kilómetros por hora.
+568	vuelo.paso.velocidad.420	Son cuatrocientos veinte kilómetros por hora.
+569	vuelo.paso.velocidad.440	Son cuatrocientos cuarenta kilómetros por hora.
+570	vuelo.paso.velocidad.460	Son cuatrocientos sesenta kilómetros por hora.
+571	vuelo.paso.velocidad.480	Son cuatrocientos ochenta kilómetros por hora.
+572	vuelo.paso.velocidad.520	Son quinientos veinte kilómetros por hora.
+573	vuelo.paso.velocidad.540	Son quinientos cuarenta kilómetros por hora.
 574	vuelo.paso.velocidad.590	Son quinientos noventa kilómetros por hora.
 575	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
 576	gafas.ganadas	¡Tus gafas de sol!
