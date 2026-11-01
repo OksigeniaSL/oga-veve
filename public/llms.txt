@@ -5,7 +5,8 @@
 > rutas de Paraguay y de las islas Canarias.
 
 Producto de Oksigenia SL, publicado bajo la marca Granja Óga.
-Código libre bajo Apache-2.0. Contenido y marcas, © Oksigenia SL.
+Código libre bajo Apache-2.0. Contenido, © Oksigenia SL, libre para todo uso sin
+ánimo de lucro.
 
 ## Qué es
 
@@ -36,10 +37,10 @@ Cuatro peldaños, del que no sabe leer al que lee instrumentos:
 
 ## El compromiso
 
-**Gratis, para quien quiera**: sin registro y sin pagar nada. Para toda la
-educación paraguaya —colegios, docentes, alumnos y familias—, además, para
-siempre y por escrito: está en LICENSE-CONTENIDO.md y en la pantalla de créditos
-del propio juego, que es donde lo puede leer cualquiera.
+**Gratis y para siempre para todo uso sin ánimo de lucro**, para cualquiera y en
+cualquier país: sin registro y sin pagar nada. Está escrito en
+LICENSE-CONTENIDO.md y en la pantalla de créditos del propio juego, que es donde
+lo puede leer cualquiera.
 
 Y sin datos personales: no hay cuentas, ni correo, ni nombres. Un perfil es un
 bicho y un color —*Tero Rojo*, *Jaguareté Azul*—, y todo lo que se guarda vive

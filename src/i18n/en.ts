@@ -229,7 +229,7 @@ export const EN: Dictionary = {
   "credits.title": "Credits",
   "credits.madeBy": "An Oksigenia SL product, under the Granja Óga brand.",
   "credits.educational":
-    "Free, for anyone who wants it: no sign-up, no payment. And for all Paraguayan education, forever and in writing.",
+    "Free forever for any non-profit use, in any country: no sign-up, no payment.",
   "credits.cancion": "The simulator's song: «Luz verde» (Green Light), by Granja Óga.",
   "credits.cancionEnlace": "Listen on YouTube",
   "credits.terrain":
@@ -248,7 +248,7 @@ export const EN: Dictionary = {
     "Chart: relief and sea floor from ETOPO 2022 (NOAA); land cover © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, CC BY 4.0; rainfall from CHELSA (CC0); magnetic variation from WMM2025; Barlow typefaces (SIL OFL 1.1).",
   "credits.engine": "Flight model: {model}",
   "credits.licence":
-    "Code free under Apache-2.0. Content and brands, © Oksigenia SL.",
+    "Code free under Apache-2.0. Content, © Oksigenia SL.",
   "credits.dedication":
     "For Guillermo Ayala, of Teide National Park, who has spent forty years teaching that mountain to schoolchildren. The rule this game runs on is his: safety, safety, safety — everything after that is learning.",
   "credits.close": "Close",

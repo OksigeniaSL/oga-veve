@@ -195,17 +195,18 @@ encuentra con las unidades de verdad en el mismo gesto.
 ## Licencia
 
 - **Código** — [Apache-2.0](LICENSE). Úsalo, véndelo, no nos preguntes.
-- **Contenido y marcas** — propietario, © Oksigenia SL.
-- **Toda la educación paraguaya** — gratis, permanente, sin trámites.
+- **Contenido** — propietario, © Oksigenia SL, y **libre para todo uso sin ánimo
+  de lucro**, en cualquier país: gratis, permanente, sin trámites.
   [Detalles](LICENSE-CONTENIDO.md).
+- **Marcas** — no se ceden.
 
 Procedencia y licencia de cada dependencia y cada dato: [CREDITOS.md](CREDITOS.md).
 
 ## Que esto siga existiendo
 
-**Gratis para quien quiera usarlo.** Para la educación paraguaya, además, está
-firmado en [LICENSE-CONTENIDO.md](LICENSE-CONTENIDO.md) y no depende de que haya
-dinero: mientras Óga Veve exista, a un colegio no se le cobra.
+**Gratis para todo uso sin ánimo de lucro, para cualquiera y en cualquier país.**
+Eso está firmado en [LICENSE-CONTENIDO.md](LICENSE-CONTENIDO.md) y no depende de
+que haya dinero: mientras Óga Veve exista, a un colegio no se le cobra.
 
 Lo que no está firmado es que vaya a existir siempre. Esto lo mantiene una
 empresa pequeña, no tiene ingresos y **puede dar pérdidas y cerrarse**. Conviene

@@ -21,21 +21,39 @@ puede querer integrar en un cliente, eso importa. Y no elegimos GPL porque
 queremos que cualquiera pueda incorporar el motor a un producto cerrado: el
 objetivo del motor abierto es que se use, no que se contagie.
 
-## 2. El contenido: propietario, con licencia educativa abierta para Paraguay
+## 2. El contenido: propietario, y libre para todo uso sin ánimo de lucro
 
 El contenido creativo **no** es Apache-2.0. Esto incluye:
 
-- Marcas, nombres y logotipos de **Oksigenia** y **Granja Óga**.
 - Modelos 3D, texturas, ilustraciones y arte originales.
 - Música, efectos de sonido y voces originales.
 - Diseño de escenarios y de niveles (`src/world/scenarios.ts` en su parte de
   datos de escenario, y los assets asociados).
 - Los personajes de Granja Óga y sus nombres.
 
-Todo ello es **© 2026 Oksigenia SL, todos los derechos reservados**, con la
-excepción que sigue.
+Todo ello es **© 2026 Oksigenia SL, todos los derechos reservados**, con las
+concesiones que siguen.
 
-### Excepción: uso educativo en Paraguay
+### Para cualquiera: todo uso sin ánimo de lucro
+
+> Oksigenia SL concede de forma **gratuita, permanente e irrevocable**, a
+> cualquier persona o entidad de cualquier país, el derecho de usar, instalar,
+> proyectar, copiar y distribuir Óga Veve —código y contenido— para **todo uso
+> sin ánimo de lucro**.
+>
+> **No hace falta registrarse, pedir permiso, avisar ni pagar nada.**
+>
+> Únicos límites: esta concesión no autoriza a vender el juego ni a cobrar por
+> él, ni a retirarle los créditos, ni a usar las marcas Oksigenia o Granja Óga
+> para respaldar productos o servicios de terceros.
+
+Un colegio, una biblioteca, una asociación o una familia, públicos o privados y
+de donde sean, que lo usen sin cobrar por él entran aquí, aunque el colegio sea
+de pago.
+
+### Y la educación paraguaya, como estaba
+
+Esta concesión se dio la primera y es irrevocable, así que sigue tal cual:
 
 > Oksigenia SL concede de forma **gratuita, permanente e irrevocable** el
 > derecho de usar, instalar, proyectar, copiar y distribuir internamente
@@ -55,23 +73,33 @@ excepción que sigue.
 > retirarle los créditos, ni a usar las marcas Oksigenia o Granja Óga para
 > respaldar productos o servicios de terceros.
 
-Si eres un colegio paraguayo y alguien te está cobrando por esto, te están
-cobrando de más. Escribe y lo arreglamos.
+Si eres un colegio y alguien te está cobrando por esto, te están cobrando de
+más. Escribe y lo arreglamos.
 
-### Fuera de ese ámbito
+### Uso comercial
 
-Para uso comercial del contenido fuera del ámbito educativo paraguayo,
-contacta con Oksigenia SL. El código, insistimos, es libre para todos.
+Para uso comercial del contenido —venderlo, cobrar por él, ponerle publicidad o
+integrarlo en un producto—, contacta con Oksigenia SL. El código, insistimos, es
+libre para todos.
+
+### Lo que no entra en ninguna de las dos licencias
+
+- **Las marcas**, los nombres y los logotipos de Oksigenia y Granja Óga no se
+  ceden: se pueden nombrar para decir de dónde viene el juego, y nada más.
+  OKSIGENIA® es una marca registrada.
+- **Los datos y los assets de terceros** siguen con su licencia y su atribución,
+  que no se pueden quitar. Cada uno, en [CREDITOS.md](CREDITOS.md).
 
 ---
 
 ## Resumen en una tabla
 
-| Qué | Licencia | ¿Puedo usarlo en un producto comercial? |
-|---|---|---|
-| Motor, FDM, herramientas (`src/`, `scripts/`) | Apache-2.0 | Sí, sin pedir permiso |
-| Relieve derivado de Copernicus DEM GLO-30 | Gratuito, comercial permitido, **atribución literal obligatoria** | Sí, con la atribución |
-| Relieve derivado del PNOA-LiDAR MDT05 (IGN) | CC BY 4.0 | Sí, con atribución |
-| Arte, audio, escenarios, personajes | Propietario | No, salvo acuerdo |
-| Marcas Oksigenia / Granja Óga | Propietario | No |
-| Todo lo anterior, en un colegio paraguayo | Gratis, para siempre | Sí, adelante |
+| Qué | Licencia | ¿Sin ánimo de lucro? | ¿En un producto comercial? |
+|---|---|---|---|
+| Motor, FDM, herramientas (`src/`, `scripts/`) | Apache-2.0 | Sí | Sí, sin pedir permiso |
+| Relieve derivado de Copernicus DEM GLO-30 | Gratuito, comercial permitido, **atribución literal obligatoria** | Sí, con la atribución | Sí, con la atribución |
+| Relieve derivado del PNOA-LiDAR MDT05 (IGN) | CC BY 4.0 | Sí, con atribución | Sí, con atribución |
+| Arte, audio, escenarios, personajes | Propietario, con la concesión de arriba | Sí, gratis y para siempre | No, salvo acuerdo |
+| Marcas Oksigenia / Granja Óga | No se ceden | Solo para decir de dónde viene | No |
+
+El resto de los datos de terceros, con su licencia, en [CREDITOS.md](CREDITOS.md).

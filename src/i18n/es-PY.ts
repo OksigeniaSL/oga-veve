@@ -274,7 +274,7 @@ export const ES_PY = {
   "credits.title": "Créditos",
   "credits.madeBy": "Un producto de Oksigenia SL, bajo la marca Granja Óga.",
   "credits.educational":
-    "Gratis, para quien quiera: sin registro y sin pagar nada. Y para toda la educación paraguaya, para siempre y por escrito.",
+    "Gratis y para siempre para todo uso sin ánimo de lucro, en cualquier país: sin registro y sin pagar nada.",
   // **Literal y sin resumir**: la licencia de Copernicus exige esta frase
   // exacta, y por eso no se traduce la parte legal.
   "credits.cancion": "La canción del simulador: «Luz verde», de Granja Óga.",
@@ -308,7 +308,7 @@ export const ES_PY = {
     "Carta: relieve y fondo del mar de ETOPO 2022 (NOAA); cubierta del suelo © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, CC BY 4.0; lluvia de CHELSA (CC0); declinación del WMM2025; letras Barlow (SIL OFL 1.1).",
   "credits.engine": "Modelo de vuelo: {model}",
   "credits.licence":
-    "Código libre bajo Apache-2.0. Contenido y marcas, © Oksigenia SL.",
+    "Código libre bajo Apache-2.0. Contenido, © Oksigenia SL.",
   "credits.dedication":
     "A Guillermo Ayala, del Parque Nacional del Teide, que lleva cuarenta años enseñando esa montaña a escolares. La regla que gobierna este juego es suya: seguridad, seguridad, seguridad — a partir de ahí, todo lo demás es aprendizaje.",
   "credits.close": "Cerrar",

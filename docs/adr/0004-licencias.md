@@ -1,6 +1,6 @@
 # ADR 0004 — Apache-2.0 para el código, contenido propietario, educación paraguaya gratis
 
-**Fecha**: 2026-08-30 · **Estado**: aceptada
+**Fecha**: 2026-08-30 · **Estado**: aceptada; la concesión sobre el contenido, ampliada por el [ADR 0024](0024-cualquiera-sin-animo-de-lucro.md)
 
 ## Contexto
 
