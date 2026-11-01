@@ -143,8 +143,8 @@ export const DURA_EL_PLANO: Readonly<Record<Plano, number>> = {
   "fuera-raqueta": 22,
   // El pasillo, lo que dura la frase de las salidas y el rato de mirar el letrero.
   pasillo: 6,
-  // La pantalla, lo que se quede mirándola: no vuelve sola.
-  respaldo: 0,
+  // La pantalla, un buen rato: es para mirarla. El guion que la use dirá si le basta.
+  respaldo: 20,
 };
 
 /**

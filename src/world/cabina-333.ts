@@ -47,9 +47,11 @@
  * ## Las señales de salida
  *
  * Verdes, con el hombre que corre hacia la puerta (ISO 7010, E001 y E002), como en
- * la lámina aprobada: es la que permite CS 25.812 en vez de la palabra y es la que
- * se entiende sin saber leer. El JAZ 90, de otra generación, sigue con su «EXIT»
- * rojo: en los aviones de verdad hay de las dos.
+ * la lámina aprobada: es la que se entiende sin saber leer. Las normas la admiten en
+ * vez de la palabra: CS 26.120 habla de «universal symbolic exit sign», y EASA tiene
+ * aceptada una de esas contra CS 25.812. **Por verificar con fuente primaria**: que
+ * sea la que lleva el 787, que solo sale de un foro de aviación. El JAZ 90 sigue con
+ * su «EXIT» rojo: en los aviones de verdad hay de las dos.
  *
  * ## La luz
  *
@@ -59,8 +61,11 @@
  * puertas y se apaga a lo largo de la cabina. Son dos colores por vértice y dos por
  * fotograma: nada que calcular. Ver `ponerLuz`.
  *
- * **Lo que cuesta**: unos veinticinco mil triángulos en cuatro mallas, un sombreador
- * de una línea. La medida, en el informe de la tanda y en `scripts/ver-cabina-333.mjs`.
+ * **Lo que cuesta**: unos veintidós mil triángulos en cuatro mallas y un sombreador
+ * de una línea. Medido con `scripts/ver-cabina-333.mjs` en la tarjeta del portátil,
+ * a 1280 × 720: 3,3 ms por cuadro mirando el pasillo y 3,8 mirando por la ventanilla
+ * sin ella. Tapa casi todo el mundo y se pinta lo primero, así que lo que añade lo
+ * devuelve; a 60 fps con la CPU a un cuarto en las dos.
  */
 
 import {
@@ -148,7 +153,7 @@ export const PANTALLA = { ancho: 0.258, alto: 0.161, altura: 0.97, marco: 0.012 
 /** Lo que se aparta el respaldo de la fila de delante del borde de delante de su cojín, m. */
 const POPA_DEL_ASIENTO = 0.57;
 
-/** Dónde queda el borde de delante del cojín de Ara, por detrás del ojo, m. Ver `ojoDeSentado`. */
+/** Dónde queda el borde de delante del cojín de Ara, por delante de sus ojos sentada, m. */
 const COJIN_BAJO_LOS_OJOS = 0.3;
 
 /**

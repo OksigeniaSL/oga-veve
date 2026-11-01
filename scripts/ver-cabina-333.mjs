@@ -181,7 +181,6 @@ try {
     console.log("De noche, arriba, a las cuatro horas de vuelo:");
     const page = await abrir(contexto, "fecha=2026-11-15&largo=14400&hasta=14400", 800);
     await fotos(page, "crucero-noche", ["pasillo", "respaldo"], 1900);
-    console.log("  hora del vuelo:", await page.evaluate(() => globalThis.__oga.inicio()?.salto?.hora ?? null));
     await page.close();
   }
   writeFileSync(`${FOTOS}/informe.txt`, informe.join("\n") + "\n");
