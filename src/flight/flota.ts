@@ -43,11 +43,11 @@ export const FABRICANTE = "JAZ";
 /**
  * Las siluetas, que son lo que de verdad distingue un avión de otro.
  *
- * Seis siluetas y no seis pinturas: ala alta, biplano, bimotor de ala baja,
- * cola en T, reactor en flecha y cuatrimotor de fuselaje ancho. Es exactamente
- * la destreza que enseña el álbum de postales —reconocer un avión por su
- * forma—, así que la flota tiene que darle seis respuestas distintas o el
- * álbum no tiene nada que enseñar.
+ * Siete siluetas y no siete pinturas: ala alta, biplano, bimotor de ala baja,
+ * cola en T, reactor en flecha, bimotor de fuselaje ancho y cuatrimotor de
+ * fuselaje ancho. Es exactamente la destreza que enseña el álbum de postales
+ * —reconocer un avión por su forma—, así que la flota tiene que darle siete
+ * respuestas distintas o el álbum no tiene nada que enseñar.
  */
 export type Silueta =
   | "ala-alta"
@@ -55,6 +55,14 @@ export type Silueta =
   | "bimotor-ala-baja"
   | "cola-en-t"
   | "reactor"
+  /**
+   * **El bimotor de fuselaje ancho**, que tampoco es un reactor grande: dos
+   * motores enormes en un tubo gordo. Se distingue de los dos en un tubo
+   * estrecho del reactor mirando el tubo y el tamaño del motor, y del
+   * cuatrimotor, contando. Es lo que cruza hoy los océanos, y por eso es la
+   * silueta que más se va a ver desde una ventanilla.
+   */
+  | "bimotor-ancho"
   /**
    * Y el cuatrimotor de fuselaje ancho, que es otra silueta y no un reactor
    * grande: **cuatro motores bajo el ala** se cuentan desde el suelo y desde
@@ -172,6 +180,30 @@ export const FLOTA: readonly Modelo[] = [
      */
   },
   {
+    numero: 110,
+    nombre: "Tijereta",
+    pajaro: "tijereta",
+    silueta: "bimotor-ancho",
+    id: "jaz-110",
+    /*
+     * La blanca, en el cono de cola. Es de los que la llevan en los dos sitios
+     * —«white tailcone lights» y «white wingtip lights», MMEL de la FAA para el
+     * B-787, rev. 19, 33-43-01—, y se dibuja la de la cola, la de toda su
+     * clase. Decidido por Enrique.
+     */
+    blanca: "cola",
+    /*
+     * **El que se va y vuelve.** La tijereta se va del Paraguay en invierno y
+     * vuelve en primavera, y este es el avión del vuelo largo. Va en castellano,
+     * decidido por quien bautiza: en guaraní las fuentes no se ponían de acuerdo
+     * en cómo se llama.
+     *
+     * **Vuela los números de un 787-9** y no lleva ni su rótulo ni su cara: un
+     * bimotor de fuselaje ancho es una clase entera, y la máscara negra del
+     * parabrisas, una marca. Ver `aircraft.ts`.
+     */
+  },
+  {
     numero: 120,
     nombre: "Yvága",
     pajaro: "cielo",
@@ -207,6 +239,7 @@ export const ESTA_HECHO: readonly string[] = [
   "jaz-40",
   "jaz-60",
   "jaz-90",
+  "jaz-110",
   "jaz-120",
 ];
 

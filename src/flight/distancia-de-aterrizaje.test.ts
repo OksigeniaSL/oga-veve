@@ -38,6 +38,7 @@
  *     jaz-20   178 m  (ref. 175)   jaz-60   366 m  (ref. 404)
  *     jaz-40   308 m  (ref. 358)   jaz-90   455 m  (ref. 400)
  *                                   jaz-120  700 m  (ref. 776)
+ *                                   jaz-110  664 m  (ref. 730)
  *
  * Y el resto de lo que pidió la tanda: la pista mojada, el peso, la velocidad
  * al tocar, los frenos de tierra, la reversa y el autofreno.
@@ -137,6 +138,8 @@ const DEL_MANUAL: Readonly<Record<string, { metros: number; kilos: number }>> = 
   "jaz-60": { metros: 2800 * PIE - 1000 * PIE, kilos: 16765 * LIBRA },
   "jaz-90": { metros: 1228 * 0.6 - 300, kilos: 32800 },
   "jaz-120": { metros: 1900 * 0.6 - 350, kilos: 574000 * LIBRA },
+  // 1.800 m a su máximo al aterrizaje, flaps 30, seco (D6-58333, 3.4.3).
+  "jaz-110": { metros: 1800 * 0.6 - 350, kilos: 192776 },
 };
 
 describe("la distancia de aterrizaje, contra el manual de su clase", () => {
@@ -255,8 +258,8 @@ describe("lo que alarga y lo que acorta la parada", () => {
 describe("el autofreno", () => {
   const reactores = AIRCRAFT.filter((a) => a.autofreno);
 
-  it("lo llevan los dos reactores y nadie más", () => {
-    expect(reactores.map((a) => a.id).sort()).toEqual(["jaz-120", "jaz-90"]);
+  it("lo llevan los tres reactores y nadie más", () => {
+    expect(reactores.map((a) => a.id).sort()).toEqual(["jaz-110", "jaz-120", "jaz-90"]);
   });
 
   it("sostiene su deceleración: 1,7 m/s² en LO y 3 en MED", () => {

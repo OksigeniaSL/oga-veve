@@ -11,7 +11,7 @@
 import { describe, expect, it } from "vitest";
 import manifiesto from "../../data/voces/cabina/manifiesto.json";
 import fuenteDelJuego from "../game.ts?raw";
-import { AIRCRAFT, ARAI, ARASUNU, PANAMBI, PYKASU, YVAGA } from "../flight/aircraft";
+import { AIRCRAFT, ARAI, ARASUNU, PANAMBI, PYKASU, TIJERETA, YVAGA } from "../flight/aircraft";
 import { LA_CUENTA } from "../flight/avisos-de-altura";
 import { CANTOS_DEL_CONSEJO } from "../flight/consejo-de-la-bajada";
 import {
@@ -285,16 +285,16 @@ describe("los cantos de cada avión", () => {
 
   /*
    * **Menos los de la carrera de aterrizaje**, que son de un procedimiento
-   * (punto 259, leídos en sus manuales): los de Boeing, en el JAZ 120, como
-   * el FCOM del 747-400 —aerofrenos y sesenta nudos, y las reversas sin
+   * (punto 259, leídos en sus manuales): los de Boeing, en el JAZ 120 y en el JAZ
+   * 110, como el FCOM del 747-400 —aerofrenos y sesenta nudos, y las reversas sin
    * cantarlas—; y en el JAZ 90 ninguno, que el SOPM de Embraer no los lleva.
    * En la flota no hay ningún Airbus.
    */
-  it("y los de la carrera, solo los de su manual: el JAZ 120 los del 747-400, el JAZ 90 ninguno", () => {
+  it("y los de la carrera, solo los de su manual: los dos grandes los de Boeing, el JAZ 90 ninguno", () => {
     const del747 = new Set(["cabina.speedbrakesUp", "cabina.speedbrakesNotUp", "cabina.sixtyKnots"]);
     for (const a of AIRCRAFT)
       for (const clave of DE_LA_CARRERA) {
-        const canta = a.id === YVAGA.id && del747.has(clave);
+        const canta = (a.id === YVAGA.id || a.id === TIJERETA.id) && del747.has(clave);
         expect(loDiceElAvion(clave, a), `${a.id} ${clave}`).toBe(canta);
         // De la tripulación: suben por la escalera.
         expect(esDeUnaCaja(clave), clave).toBe(false);

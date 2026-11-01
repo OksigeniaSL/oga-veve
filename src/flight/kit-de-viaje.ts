@@ -214,7 +214,7 @@ export function lucesDe(tipo: NivelDelAvion["tipo"]): readonly Luz[] {
  */
 export interface NivelDelAvion {
   /** El tipo de la flota, como en `flota.ts`: es el modelo que se dibuja. */
-  readonly tipo: "jaz-20" | "jaz-25" | "jaz-40" | "jaz-60" | "jaz-90" | "jaz-120";
+  readonly tipo: "jaz-20" | "jaz-25" | "jaz-40" | "jaz-60" | "jaz-90" | "jaz-110" | "jaz-120";
   readonly piezas: readonly PiezaDelAvion[];
   readonly lucesConColor: boolean;
 }
@@ -233,6 +233,10 @@ const DE_ALA_BAJA: readonly PiezaDelAvion[] = ["ala", "motor", "estabilizador", 
  * - **JAZ 60**, cola en T: el estabilizador va arriba de la deriva.
  * - **JAZ 90**, el de Ara: los motores colgados debajo del ala.
  * - **JAZ 120**, cuatrimotor: dos motores en cada ala y un montón de ruedas.
+ * - **JAZ 110**, bimotor de fuselaje ancho: dos motores enormes en un tubo gordo.
+ *   Es el nivel siete y va el último, aunque sea más chico que el JAZ 120: los
+ *   niveles se guardan por su orden, y metido en medio le cambiaría el avión a
+ *   quien ya los jugó. Y se juega mejor después de contar cuatro motores.
  */
 export const NIVELES: readonly NivelDelAvion[] = [
   { tipo: "jaz-20", piezas: ["ala", "motor", "cola", "trenPrincipal", "trenMorro"], lucesConColor: true },
@@ -241,6 +245,7 @@ export const NIVELES: readonly NivelDelAvion[] = [
   { tipo: "jaz-60", piezas: DE_ALA_BAJA, lucesConColor: false },
   { tipo: "jaz-90", piezas: DE_ALA_BAJA, lucesConColor: false },
   { tipo: "jaz-120", piezas: DE_ALA_BAJA, lucesConColor: false },
+  { tipo: "jaz-110", piezas: DE_ALA_BAJA, lucesConColor: false },
 ];
 
 /** Lo que dice Ara de cada clase de pieza la primera vez que la pone: para qué sirve. */
@@ -272,6 +277,7 @@ export const LO_QUE_ENSENA: Readonly<Record<NivelDelAvion["tipo"], Linea>> = {
   "jaz-40": ara("avion.bimotor"),
   "jaz-60": ara("avion.colaEnT"),
   "jaz-90": ara("avion.reactor"),
+  "jaz-110": ara("avion.bimotorAncho"),
   "jaz-120": ara("avion.cuatrimotor"),
 };
 

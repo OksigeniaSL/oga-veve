@@ -134,9 +134,9 @@ describe("cada avión sube y baja lo suyo", () => {
     expect(caeElGrande).toBeGreaterThan(2 * caeLaAvioneta);
   });
 
-  it("ninguno sube ni baja lo mismo que otro", () => {
+  it("ninguno sube ni baja lo mismo que otro, menos los tres reactores, que llegan al tope", () => {
     const suben = AIRCRAFT.map((a) => Math.round(ascensoMaximo(a) * 10));
-    expect(new Set(suben).size).toBeGreaterThanOrEqual(AIRCRAFT.length - 1);
+    expect(new Set(suben).size).toBeGreaterThanOrEqual(AIRCRAFT.length - 2);
   });
 });
 

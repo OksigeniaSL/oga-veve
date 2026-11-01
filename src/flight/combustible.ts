@@ -144,6 +144,9 @@ export function quemaPorSegundo(
  * `cargaParaLaRuta`.
  */
 export function loQueCabe(avion: AircraftConfig): number {
+  // Y si la hoja de tipo lo dice, lo que dice ella: el JAZ 110 lleva combustible
+  // para un océano, más de la mitad de lo que pesa a su máximo al aterrizaje.
+  if (avion.combustibleUtilizable !== undefined) return avion.combustibleUtilizable;
   const parte = avion.sound.engine === "turbofan" ? 0.33 : 0.14;
   return avion.mass * parte;
 }

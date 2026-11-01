@@ -19,7 +19,7 @@
  *    traído de fuera; en el hecho aquí las dos pantallas son la misma
  *    geometría movida por el nodo.
  *
- * Uso: `node scripts/verificar-cabina.mjs`
+ * Uso: `node scripts/verificar-cabina.mjs [avion]`
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -50,8 +50,10 @@ for (const id of [
   "jaz-40",
   "jaz-60",
   "jaz-90",
+  "jaz-110",
   "jaz-120",
-]) {
+  // Uno solo, si se pide: un navegador por avión es mucho para mirar uno nuevo.
+].filter((x) => !process.argv[2] || x === process.argv[2])) {
   const page = await navegador.newPage({
     viewport: { width: 900, height: 600 },
   });

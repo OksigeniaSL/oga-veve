@@ -13537,6 +13537,20 @@
     "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
   },
   {
+    "id": "vuelo.paso.velocidad.300",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son trescientos kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.590",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son quinientos noventa kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
     "id": "torre.solo.subir.2",
     "voz": "torre",
     "idioma": "es",
@@ -15669,6 +15683,20 @@
     "voz": "ara",
     "idioma": "es-PY",
     "texto": "¡Armamos el avión entero! Con ala, motor, cola y ruedas, ya puede volar.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.avion.bimotorAncho",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Tan grande y con dos motores nomás! Son enormes, y con dos solos este avión cruza el océano.",
     "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
     "ajustes": {
       "stability": 0.35,

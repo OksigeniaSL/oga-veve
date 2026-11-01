@@ -1041,17 +1041,22 @@ describe("cómo giran en el suelo", () => {
     /*
      * **Y esto es una descripción honesta, no un listón que se cumple solo.**
      *
-     * A seis metros por segundo, cinco de los seis aviones giran prácticamente
+     * A seis metros por segundo, cinco de los siete aviones giran prácticamente
      * igual —entre ocho y nueve metros de radio— porque ahí el límite no es la
      * geometría del tren sino lo que agarran las ruedas, y agarran parecido.
-     * Solo el de fuselaje ancho es más ancho que ese límite: su batalla de
-     * veinticinco metros no le deja cerrar más de lo que cierra.
+     * Solo los de fuselaje ancho son más anchos que ese límite: su batalla de
+     * veinticinco metros no les deja cerrar más de lo que cierran.
      *
      * Se deja escrito para que se vea cambiar: si un día alguien toca el tope
      * de deslizamiento, esta comprobación dirá qué aviones se desmarcan.
      */
-    const menos = radios.filter(([id]) => id !== "jaz-120").map(([, r]) => r);
+    const menos = radios
+      .filter(([id]) => id !== "jaz-120" && id !== "jaz-110")
+      .map(([, r]) => r);
     expect(Math.max(...menos) - Math.min(...menos)).toBeLessThan(1.5);
+    expect(radios.find(([id]) => id === "jaz-110")![1]).toBeGreaterThan(
+      Math.max(...menos) * 1.4,
+    );
     expect(radios.find(([id]) => id === "jaz-120")![1]).toBeGreaterThan(
       Math.max(...menos) * 1.4,
     );

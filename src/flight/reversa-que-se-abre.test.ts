@@ -88,8 +88,8 @@ describe("lo que tarda en abrirse", () => {
 describe("el manguito en el modelo", () => {
   const TURBOFANES = AIRCRAFT.filter((a) => a.sound.engine === "turbofan");
 
-  it("son los dos reactores", () => {
-    expect(TURBOFANES.map((a) => a.id)).toEqual(["jaz-90", "jaz-120"]);
+  it("son los tres reactores", () => {
+    expect(TURBOFANES.map((a) => a.id)).toEqual(["jaz-90", "jaz-110", "jaz-120"]);
   });
 
   for (const a of TURBOFANES) {

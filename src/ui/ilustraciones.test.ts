@@ -175,14 +175,28 @@ describe("las ilustraciones", () => {
     ]);
   });
 
+  /*
+   * **El JAZ 110 todavía no tiene las suyas**: el retrato aprobado es de perfil, sobre
+   * papel, y el dibujo de cabina que hay, el del largo radio, lleva lo que se apuntó
+   * en su plan —un copiloto de cuatro barras, el sol de frente—. Sin los dos, la
+   * tarjeta enseña el modelo, como con cualquier avión sin dibujos. Al llegar, sale
+   * de aquí.
+   */
+  const SIN_DIBUJOS: readonly string[] = ["jaz-110"];
+
   it("cada avión de la flota, por fuera y por dentro; y nada de lo que no es de la flota", () => {
-    for (const id of ESTA_HECHO) {
+    for (const id of ESTA_HECHO.filter((x) => !SIN_DIBUJOS.includes(x))) {
       const d = ilustracionesDelAvion(id);
       expect(d?.fuera.url, id).toMatch(new RegExp(`fuera-${id}.*\\.webp`));
       expect(d?.cabina.url, id).toMatch(new RegExp(`cabina-${id}.*\\.webp`));
     }
     const deLaTarjeta = claves.filter((c) => RECETAS[c]!.hueco === "tarjeta");
-    expect(deLaTarjeta.sort()).toEqual(ESTA_HECHO.flatMap((id) => [`fuera-${id}`, `cabina-${id}`]).sort());
+    expect(deLaTarjeta.sort()).toEqual(
+      ESTA_HECHO.filter((x) => !SIN_DIBUJOS.includes(x))
+        .flatMap((id) => [`fuera-${id}`, `cabina-${id}`])
+        .sort(),
+    );
+    for (const id of SIN_DIBUJOS) expect(ilustracionesDelAvion(id), id).toBeNull();
     // El largo radio y el helicóptero no son de la flota: no tienen sitio.
     for (const c of claves) expect(RECETAS[c]!.original, c).not.toMatch(/largo-radio|helicoptero/);
     expect(ilustracionesDelAvion("guyrami")).toBeNull();

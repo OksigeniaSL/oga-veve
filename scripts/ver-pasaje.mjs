@@ -21,7 +21,7 @@ import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
 
 const FOTOS = process.argv[2] ?? "capturas-pasaje";
-const AVION = process.argv[3] ?? "jaz-120";
+const AVION = process.argv[3] ?? "jaz-110";
 const HORA = process.argv[4] ?? "12";
 const TEIDE_A = Number(process.env.OGA_TEIDE ?? 70);
 const CON_GPU = process.env.OGA_GPU !== "0";

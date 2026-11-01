@@ -72,7 +72,7 @@ describe("la reversa acorta la parada", () => {
 
   it("y la lleva quien la lleva, por su motor y no por una lista", () => {
     const conReversa = AIRCRAFT.filter(tieneReversa).map((a) => a.id);
-    expect(conReversa).toEqual(["jaz-60", "jaz-90", "jaz-120"]);
+    expect(conReversa).toEqual(["jaz-60", "jaz-90", "jaz-110", "jaz-120"]);
   });
 
   /*

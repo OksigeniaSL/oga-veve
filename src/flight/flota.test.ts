@@ -9,7 +9,8 @@
  * casualidad. Esto lo mira siempre.
  */
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT } from "./aircraft";
+import { AIRCRAFT, aircraftById } from "./aircraft";
+import { MEDIDAS_DEL_TIPO } from "./bomberos";
 import {
   ESTA_HECHO,
   FABRICANTE,
@@ -24,6 +25,34 @@ describe("la flota", () => {
     const numeros = FLOTA.map((m) => m.numero);
     expect(numeros).toEqual([...numeros].sort((a, b) => a - b));
     expect(new Set(numeros).size).toBe(numeros.length);
+  });
+
+  /*
+   * **Los tres reactores se distinguen a simple vista**, y es lo que enseña el
+   * álbum: dos motores en un tubo estrecho, dos en uno gordo, y cuatro. Si un día
+   * dos de los tres se quedan con la misma combinación, el álbum deja de tener
+   * respuesta.
+   */
+  it("dos motores en un tubo estrecho, dos en uno gordo y cuatro son tres siluetas", () => {
+    const de = (id: string) => ({
+      silueta: modeloPorId(id)!.silueta,
+      motores: aircraftById(id).motores,
+      tubo: MEDIDAS_DEL_TIPO[id]!.ancho,
+    });
+    const reactor = de("jaz-90");
+    const ancho = de("jaz-110");
+    const cuatro = de("jaz-120");
+    expect(reactor.silueta).toBe("reactor");
+    expect(ancho.silueta).toBe("bimotor-ancho");
+    expect(cuatro.silueta).toBe("cuatrimotor");
+    expect(ancho.motores).toBe(reactor.motores);
+    expect(ancho.tubo).toBeGreaterThan(reactor.tubo * 1.5);
+    expect(cuatro.motores).toBe(2 * ancho.motores);
+    expect(cuatro.tubo).toBeGreaterThan(5);
+    // Y el motor es grande: más de cinco veces el empuje del de pasillo único.
+    expect(aircraftById("jaz-110").maxThrust / 2).toBeGreaterThan(
+      (aircraftById("jaz-90").maxThrust / 2) * 5,
+    );
   });
 
   it("ningún pájaro se repite", () => {

@@ -14,6 +14,7 @@ import {
 } from "three";
 import { AIRCRAFT, aircraftById } from "../flight/aircraft";
 import {
+  DEL_787_POR_G,
   estacionesDe,
   FlexionDelAla,
   flexionEscalada,
@@ -42,9 +43,21 @@ describe("cuánto se dobla", () => {
     }
   });
 
+  /*
+   * Y el JAZ 110, **la cifra del ensayo tal cual**: es la de su clase y no hay nada
+   * que escalar. Punta a 30,06 m y unos 7,6 m a 3,75 g. Y en el extremo blando de la
+   * horquilla de Airbus, que es un ala larga.
+   */
+  it("el JAZ 110 lleva la cifra del ensayo sin escalar", () => {
+    const a = aircraftById("jaz-110");
+    expect(a.alaQueSeDobla!.porG).toBeCloseTo(DEL_787_POR_G * 30.06, 2);
+    expect(a.alaQueSeDobla!.hz).toBe(1.1);
+  });
+
   it("y los pequeños no la doblan", () => {
     for (const a of AIRCRAFT)
-      if (a.id !== "jaz-90" && a.id !== "jaz-120") expect(a.alaQueSeDobla, a.id).toBeUndefined();
+      if (!["jaz-90", "jaz-110", "jaz-120"].includes(a.id))
+        expect(a.alaQueSeDobla, a.id).toBeUndefined();
   });
 
   it("en vuelo, la punta arriba lo que da su carga; parado en tierra, como está dibujada", () => {

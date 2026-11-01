@@ -80,6 +80,7 @@ const ENVERGADURA: Partial<Record<Silueta, number>> = {
   "bimotor-ala-baja": 27,
   reactor: 34,
   "cola-en-t": 17,
+  "bimotor-ancho": 60,
   cuatrimotor: 60,
 };
 

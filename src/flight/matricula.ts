@@ -241,8 +241,8 @@ export function sortearIndicativo(
  * lo que hace que la radio deje de ser ruido de fondo: cuando dicen tu nombre,
  * te están hablando a vos.
  *
- * Las tres letras son las de su nombre guaraní, que es lo que un hangar hace de
- * verdad con sus aviones. Y el prefijo es ZP-, de Paraguay, en los seis: la
+ * Las tres letras son las de su nombre, que es lo que un hangar hace de verdad con
+ * sus aviones. Y el prefijo es ZP-, de Paraguay, en los siete: la
  * flota es de allí y **un avión no cambia de matrícula al cruzar una frontera**
  * —por eso en Tenerife te llamarán «Zulu Papa…» y estará bien—.
  */
@@ -252,6 +252,7 @@ const MATRICULAS: Readonly<Record<string, string>> = {
   "jaz-40": "ZP-PNB",
   "jaz-60": "ZP-ARS",
   "jaz-90": "ZP-ARI",
+  "jaz-110": "ZP-TJT",
   "jaz-120": "ZP-YVA",
 };
 

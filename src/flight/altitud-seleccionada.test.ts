@@ -10,9 +10,9 @@ import {
 } from "./altitud-seleccionada";
 
 describe("quién lleva la ventanilla ALT", () => {
-  it("el turbohélice y los dos reactores; las avionetas no, que no la llevan", () => {
+  it("el turbohélice y los tres reactores; las avionetas no, que no la llevan", () => {
     const llevan = AIRCRAFT.filter(llevaVentanillaDeAltitud).map((a) => a.id);
-    expect(llevan.sort()).toEqual(["jaz-120", "jaz-60", "jaz-90"]);
+    expect(llevan.sort()).toEqual(["jaz-110", "jaz-120", "jaz-60", "jaz-90"]);
   });
 
   it("y la rueda para donde para el avión", () => {

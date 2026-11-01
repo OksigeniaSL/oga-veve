@@ -412,14 +412,15 @@ const TIPOS = [
   { id: "jaz-40", sol: true },
   { id: "jaz-60", sol: true },
   { id: "jaz-90", sol: true, blancaEnLasPuntas: true },
+  { id: "jaz-110", sol: true },
   { id: "jaz-120", sol: true },
 ];
 
 /** Lo que va pintado sobre el casco: la franja, la raya fina, los cristales y las puertas. */
 /** Lo pintado en los costados, que desde arriba no se ve: de canto, solo serían rayitas en el borde. */
-const DE_COSTADO = /^(cintura|cintura-fina|ventanillas|ventanita-puerta|puerta.*|salida-de-emergencia-.*|gondola-franja)$/;
-const PINTADO = /^(cintura|cintura-fina|ventanillas|ventanita-puerta|parabrisas|parabrisas-lado|carlinga|puerta.*|salida-de-emergencia-.*|gondola-franja)$/;
-const DEL_CASCO = /^(fuselaje|carenado|cintura|cintura-fina|ventanillas|ventanita-puerta|parabrisas|parabrisas-lado|carlinga|carlinga-arco|carlinga-marco|puerta.*|salida-de-emergencia-.*)$/;
+const DE_COSTADO = /^(cintura|cintura-fina|panza-.*|ventanillas|ventanita-puerta|puerta.*|salida-de-emergencia-.*|gondola-franja)$/;
+const PINTADO = /^(cintura|cintura-fina|panza-.*|ventanillas|ventanita-puerta|parabrisas|parabrisas-lado|carlinga|puerta.*|salida-de-emergencia-.*|gondola-franja)$/;
+const DEL_CASCO = /^(fuselaje|carenado|cintura|cintura-fina|panza-.*|ventanillas|ventanita-puerta|parabrisas|parabrisas-lado|carlinga|carlinga-arco|carlinga-marco|puerta.*|salida-de-emergencia-.*)$/;
 
 /**
  * **Las capas de perfil**, de detrás a delante: la deriva y las ruedas detrás

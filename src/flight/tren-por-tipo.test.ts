@@ -120,6 +120,7 @@ describe("el morro, con las ruedas en el suelo", () => {
     "jaz-40": 9.0,
     "jaz-60": 15.0,
     "jaz-90": 31.5,
+    "jaz-110": 62.0,
     "jaz-120": 64.0,
   };
 

@@ -493,6 +493,16 @@ export interface Presurizacion {
    */
   readonly diferencialMaximo: number;
   /**
+   * **Hasta dónde deja subir la cabina el programa**, m.
+   *
+   * Ocho mil pies es la regla de los aviones de transporte (CS 25.841 y 14 CFR
+   * 25.841), y eso es un tope, no una obligación: un fuselaje de fibra de
+   * carbono aguanta más diferencia y puede llevar la cabina más baja. Por eso
+   * va en la ficha y no era verdad que fuera un número para todos. Ver
+   * `OCHO_MIL_PIES`.
+   */
+  readonly topeDeCabina: number;
+  /**
    * **Si el aviso de altitud de cabina habla**: la voz de una caja que dice
    * *cabin* cuando la cabina pasa de diez mil pies.
    *
@@ -509,6 +519,12 @@ export interface Presurizacion {
 
 /** Un psi, en pascales: los manuales de presurización van en psi. */
 export const PSI = 6894.757;
+
+/**
+ * La regla de los aviones de transporte para la cabina, m. Estaba en dos mil
+ * cuatrocientos redondos; son 2438,4.
+ */
+export const OCHO_MIL_PIES = 8000 * 0.3048;
 
 /**
  * **Lo que pesa este avión ahora**, kg: el de la copia con su combustible, o
@@ -631,6 +647,11 @@ export interface AircraftConfig {
   inertia: { xx: number; yy: number; zz: number };
   /** Empuje estático a nivel del mar, N. */
   maxThrust: number;
+  /**
+   * **Lo que cabe en los depósitos**, kg, si se ha leído de su hoja de tipo. Sin
+   * decir, la proporción de su clase: ver `loQueCabe` en `combustible.ts`.
+   */
+  combustibleUtilizable?: number;
   /**
    * Cuántos motores lleva.
    *
@@ -1882,7 +1903,7 @@ export const ARASUNU: AircraftConfig = {
    * su aviso no es el de los reactores. Sin aerofrenos: frena con las hélices
    * al ralentí y con el tren.
    */
-  presurizacion: { diferencialMaximo: 5.0 * PSI, avisoHablado: false },
+  presurizacion: { diferencialMaximo: 5.0 * PSI, topeDeCabina: OCHO_MIL_PIES, avisoHablado: false },
   aerofrenos: null,
   /*
    * **Los frenos de un turbohélice de cercanías**: algo más que una avioneta,
@@ -2122,7 +2143,7 @@ export const ARAI: AircraftConfig = {
    * seis o siete mil pies por minuto, unos cuatro minutos. Ver
    * `despresurizacion.test.ts`.
    */
-  presurizacion: { diferencialMaximo: 8.4 * PSI, avisoHablado: true },
+  presurizacion: { diferencialMaximo: 8.4 * PSI, topeDeCabina: OCHO_MIL_PIES, avisoHablado: true },
   aerofrenos: 0.025,
   /*
    * **Frenos de carbono con antideslizante modulado, frenos de tierra y
@@ -2368,7 +2389,7 @@ export const ARAI: AircraftConfig = {
  */
 export const YVAGA: AircraftConfig = {
   id: "jaz-120",
-  name: nombreEntero(FLOTA[5]!),
+  name: nombreEntero(FLOTA[6]!),
   descriptionKey: "aircraft.yvaga.description",
   mass: 255826,
   /*
@@ -2433,7 +2454,7 @@ export const YVAGA: AircraftConfig = {
    * y lo cuenta la instructora. Los aerofrenos de vuelo, con la misma
    * calibración que el JAZ 90: ver `despresurizacion.test.ts`.
    */
-  presurizacion: { diferencialMaximo: 8.9 * PSI, avisoHablado: false },
+  presurizacion: { diferencialMaximo: 8.9 * PSI, topeDeCabina: OCHO_MIL_PIES, avisoHablado: false },
   aerofrenos: 0.02,
   /*
    * **Dieciséis ruedas con frenos, antideslizante y frenos de tierra**, y un
@@ -2465,12 +2486,12 @@ export const YVAGA: AircraftConfig = {
   // queda por comprobar.
   cantaLosMinimos: true,
   /*
-   * **Electrocrómicas**, como las de los largos radios de esta generación —el
-   * 787 y el 777X—, que son los que llevan ventanillas tan grandes como estas
-   * (36 × 52 cm en el modelo). Los cuatrimotores de antes, el 747 o el A340,
-   * llevan persiana: si este se quisiera de aquella generación, es esta línea.
+   * **Persiana, la de los cuatrimotores de verdad**, el 747 o el A340. Llevó las
+   * electrocrómicas mientras no había otro avión que las llevara; con el JAZ 110,
+   * que son suyas, vuelve a las de su generación: «así tendremos de los dos
+   * tipos» (Enrique, 31-10-2026).
    */
-  ventanillas: "electrocromica",
+  ventanillas: "persiana",
   /*
    * **Un metro y cuarenta por g**: treinta metros de semiala, pero con el
    * alargamiento de un 747, siete, que es un ala más corta y gruesa que la del
@@ -2599,12 +2620,296 @@ export const YVAGA: AircraftConfig = {
   },
 };
 
+/**
+ * JAZ 110 *Tijereta* — bimotor de fuselaje ancho.
+ *
+ * El del vuelo largo. La tijereta es el ave que se va del Paraguay en invierno y
+ * vuelve en primavera.
+ *
+ * ## Vuela los números de un 787-9 de verdad
+ *
+ * Con la fuente al lado de cada uno, y lo que no tiene fuente dice «por
+ * verificar». Las dos que mandan:
+ *
+ * - **EASA, TCDS IM.A.115**, edición 30 (17-12-2025), sección 2: masas,
+ *   combustible, VMO/MMO, techo, motores, salidas y la cuerda media.
+ * - **Boeing, D6-58333 rev. Q** (octubre de 2025), *787 Airplane Characteristics
+ *   for Airport Planning*: lo que se mide con una cinta y las pistas que pide.
+ *
+ * Y la cabina a seis mil pies, de la página del propio fabricante, *787
+ * Dreamliner by design*.
+ *
+ * **Lo que no se copia es el rótulo ni la cara**, igual que con el grande: un
+ * bimotor de fuselaje ancho es una clase entera. Ver `flota.ts` y
+ * `modelos/jaz-110-tijereta.py`.
+ */
+export const TIJERETA: AircraftConfig = {
+  id: "jaz-110",
+  name: nombreEntero(FLOTA[5]!),
+  descriptionKey: "aircraft.tijereta.description",
+  /*
+   * **192.776 kg, el máximo al aterrizaje de la hoja de tipo** (425.000 lb), como
+   * el grande, que lleva el de su clase. Es con la que Boeing da las pistas de
+   * abajo, y con la que la FAA da su Vref.
+   */
+  mass: 192776,
+  /*
+   * **Por debajo de sus 181.436 kg de máximo sin combustible** (TCDS, 13): 290
+   * personas (D6-58333, 2.1.2) a los 84 kg de un adulto en Europa más once de
+   * bodega, y la carga de la bodega de un vuelo así. Cuánto pesa vacío no lo da
+   * ni la hoja de tipo ni el D6-58333: **por verificar**. Con ellos, las 4.962
+   * millas de Madrid a Asunción salen, a ojo en la gráfica de alcance de Boeing
+   * (3.2.2), con unas 245 t al soltar frenos, por debajo de su máximo.
+   */
+  masaSinCombustible: 175000,
+  /*
+   * **Los 101.085 kg utilizables de la hoja de tipo** (TCDS, 9: 126.356 l). Boeing
+   * da 73 l más; manda la hoja de tipo. Es lo que cabe y no lo que se carga: ver
+   * `loQueCabe`.
+   */
+  combustibleUtilizable: 101085,
+  /*
+   * **377 m²: por verificar.** No sale ni en la hoja de tipo ni en el D6-58333, y
+   * es la cifra que circula para el ala «bruta». Dos cosas la sostienen: la
+   * envergadura por la cuerda media de la hoja de tipo da justo eso, y las cuerdas
+   * medidas en el dibujo de Boeing, contando lo que cruza el fuselaje, 381.
+   */
+  wingArea: 377,
+  // 60,12 m: 197 ft 3 in, en la hoja de tipo y en el D6-58333, 2.2.2.
+  wingSpan: 60.12,
+  /*
+   * **8,37 m, la cuerda media del ala de esos 377 m²**, medida sobre el dibujo en
+   * planta de Boeing (2.2.2): el ala con su raíz entera. La de la hoja de tipo,
+   * 6,27 m (TCDS, 16), es la de su ala de referencia, otra más pequeña, y con ella y
+   * esta superficie el avión tenía un tercio menos de brazo para todo lo que mueve
+   * el morro: no rotaba hasta cinco segundos después de tirar.
+   */
+  chord: 8.37,
+  /*
+   * **Escaladas desde la NASA CR-2144**, con la masa y el tamaño: el balanceo con
+   * la envergadura al cuadrado, el cabeceo con el largo al cuadrado y la guiñada
+   * con la suma de los dos. Son las del JAZ 120 —su masa, 59,64 m de ala y 70,66 de
+   * largo— llevadas a estos.
+   */
+  inertia: { xx: 14220000, yy: 24620000, zz: 38940000 },
+  /*
+   * **Dos de 321,6 kN**: GEnx-1B70 en la hoja de tipo, y un Trent de la misma
+   * horquilla, de 307,8 a 347,5 kN. Es lo que Boeing llama empuje típico en sus
+   * gráficas de pista —cuál es, no lo dice: **por verificar**—. Con él, a este peso
+   * el juego pide 1.950 m de pista, donde su gráfica da unos 1.800 (3.3.9); y a su
+   * máximo al despegue, 2.640 donde da unos 3.030.
+   */
+  maxThrust: 643200,
+  motores: 2,
+  /*
+   * **Convencionales para quien vuela**, aunque vayan por cable: el Boeing de
+   * mandos eléctricos imita la estabilidad de velocidad, que es lo que este juego
+   * llama convencionales. Suelto, el avión vuelve a la velocidad compensada. Ver
+   * `mandos` y `flight/mano.ts`. Por verificar en su manual; lo del 777, en el
+   * JAZ 120.
+   */
+  mandos: "convencionales",
+  // A 9,91 m del eje (D6-58333, 2.2.2): `MOTOR` en su modelo.
+  motoresA: [-9.91, 9.91],
+  alturaCritica: null,
+  helicesContrarrotativas: false,
+  // La misma cuenta de Torenbeek que los demás, con un fan de casi tres metros.
+  motorParado: { molinete: 1.1, bandera: null, autoBandera: false },
+  /*
+   * **Mach 0,85**, el de la gráfica de alcance de Boeing (D6-58333, 3.2.2): 251 m/s
+   * de verdadera arriba. A treinta y nueve mil pies, en la mitad de los niveles
+   * pares de ese vuelo.
+   */
+  cruiseSpeed: 251,
+  alturaDeCrucero: 11887,
+  reglasDeVuelo: "instrumentos",
+  /*
+   * **La cabina a seis mil pies**: «maintain pressurization at an altitude of
+   * 6,000-feet (2,000 feet lower than conventional jets)» (Boeing, *787 Dreamliner
+   * by design*). Y el diferencial sale de ahí: seis mil pies a los 43.100 de su
+   * techo son 9,44 psi. **Por verificar** contra su manual.
+   *
+   * El aviso, sin voz: no se ha leído fuente de que hable, y lo cuenta la
+   * instructora. Por verificar. Los aerofrenos, con la misma calibración que sus
+   * hermanos: ver `despresurizacion.test.ts`.
+   */
+  presurizacion: { diferencialMaximo: 9.45 * PSI, topeDeCabina: 6000 * 0.3048, avisoHablado: false },
+  aerofrenos: 0.02,
+  /*
+   * **Ocho ruedas con frenos de carbono**, antideslizante y frenos de tierra, y
+   * 229 psi en los neumáticos (D6-58333, 7.2). Calibrados con su pista: 1.800 m de
+   * pista de aterrizaje en seco a su peso máximo con los flaps a 30 (3.4.3), que
+   * son 1.080 de distancia de verdad y, quitando el aire, unos 730 de rodadura;
+   * aquí rueda 664. Por debajo de eso sería más freno que el autofreno.
+   */
+  frenos: { enSeco: 0.35, psi: 229, antideslizante: 0.8 },
+  frenosDeTierra: { resistencia: 0.06, sustentacion: 0.7 },
+  autofreno: true,
+  // Los del Landing Roll de Boeing. Ver `cantosDeLaCarrera`.
+  cantosDeLaCarrera: "boeing",
+  tcas: "TCAS II",
+  avisosHablados: true,
+  /*
+   * **Por verificar.** La cuenta es un menú que elige cada operador y no se ha
+   * leído la de esta clase; es la de los Boeing de ahora, con su *twenty five
+   * hundred*.
+   */
+  cuentaDeLaToma: [2500, 1000, 500, 100, 50, 40, 30, 20, 10],
+  cuentaSoloSinIls: false,
+  cantaLosMinimos: true,
+  /*
+   * **Las que se oscurecen solas**: «electronically dimmable windows» (Boeing, *787
+   * Dreamliner by design*), en cinco pasos y con mando de la tripulación (PPG y
+   * Gentex, sus fabricantes, 2005 y 2007). Y de 27 × 47 cm en su modelo.
+   */
+  ventanillas: "electrocromica",
+  /*
+   * **La cifra del ensayo, sin escalar**, porque es la suya: unos 7,6 m de punta a
+   * 3,75 g, ver `alaQueSeDobla` arriba. Y a 1,1 Hz, el extremo blando de la
+   * horquilla de Airbus, que es un ala larga y flexible.
+   */
+  alaQueSeDobla: { porG: 2.03, hz: 1.1 },
+  // 350 KEAS y Mach 0,90 (TCDS, 10). A nivel del mar, los KEAS son indicados.
+  vmoKt: 350,
+  /*
+   * **Por verificar**, las dos: la hoja de tipo las deja al manual de vuelo, que no
+   * es público, y no se ha encontrado otra fuente. Son una estimación de su clase, a
+   * la altura de sus hermanos y con la de aterrizaje con margen sobre la Vref.
+   */
+  vleKt: 270,
+  vfePorMuesca: [235, 195, 170],
+  alivioDeFlaps: true,
+  mmo: 0.9,
+  /*
+   * **Ciento cuarenta y cuatro nudos, categoría D**: la fila B789 de la *Aircraft
+   * Characteristics Database* de la FAA (2025). El D6-58333 no la da.
+   */
+  approachSpeed: 144 * 0.514444,
+  /*
+   * **Ciento sesenta y cinco nudos**: Vref más veintiuno, la de maniobra con los
+   * flaps del viento en cola, en categoría D y por debajo de la placa de sus flaps
+   * de aterrizaje, que es la que manda.
+   */
+  velocidadDeCircuito: 165 * 0.514444,
+  /*
+   * **Por verificar**: el manual de vuelo no es público. Son las que hacen que a
+   * este peso ruede lo que dice Boeing, y V1 y Vr salen de la misma cuenta que los
+   * demás. Ver `prestaciones.test.ts`.
+   */
+  decisionSpeed: 76,
+  rotationSpeed: 81,
+  // 84 ft 9 in (D6-58333, 2.2.2).
+  batalla: 25.83,
+  // Con ella la panza queda a 1,86 m del suelo y el lomo a 7,80, los de 2.3.2. Tiene
+  // que decir lo mismo que `TREN` en `modelos/jaz-110-tijereta.py`.
+  gearHeight: 4.8,
+  trenRetractil: true,
+  meteElTrenA: 20,
+  // Tres patas grandes: entre sus dos hermanos. Estimación de su clase, por lo
+  // mismo que en ellos: el tiempo está en el manual de mantenimiento.
+  tardaElTren: { sale: 9, entra: 9 },
+  /*
+   * **Ocho grados y medio: lo que da su cola**, medida en el dibujo de 2.2.2, con la
+   * pata sin comprimir y la actitud de 0,52° de morro abajo con que está parado
+   * (4.4.1). La panza empieza a subir a dieciséis metros por detrás de la pata, y
+   * es de lo poco que no ata la hoja de tipo: **por verificar**.
+   */
+  maxGroundPitch: 0.15,
+  // 25,8 m de morro y quince centímetros: 0,33°.
+  minGroundPitch: -0.006,
+  llevaFlaps: true,
+  /*
+   * **Lo que da 144 nudos con este ala y este peso**: un CL máximo de 2,5, lo de un
+   * reactor de línea con todo fuera. Ver el Arai.
+   */
+  flapsLift: 0.82,
+  flapsDrag: 0.065,
+  /*
+   * Cinco, veinte y treinta: tres de los de su palanca. Los de aterrizaje de la
+   * gráfica de Boeing son 25 y 30 (3.4). Ocho segundos por muesca, por verificar.
+   */
+  muescasDeFlaps: [0, 5, 20, 30],
+  tardanLosFlaps: 24,
+  appearance: {
+    // La librea de la casa, con las góndolas del color de la franja y la panza
+    // verde: la del retrato aprobado. Ver su modelo.
+    ...LIBREA,
+    blades: 0,
+    motivo: "sol",
+  },
+  sound: {
+    engine: "turbofan",
+    cylinders: 0,
+    /*
+     * **Dos turbofanes grandes de mucho flujo secundario, más graves y más callados
+     * por dentro que los cuatro del grande.** Veinte palas y unas dos mil setecientas
+     * vueltas de fan a fondo, las de un Trent 1000: **por verificar**. De 200 a 900
+     * hercios: un fan enorme que gira despacio, donde el JT9D del grande va de 767 a
+     * 2.760.
+     */
+    palasDeFan: 20,
+    idleRpm: 600,
+    maxRpm: 2700,
+    growlHz: 300,
+    growlRise: 520,
+    /*
+     * Tren grande bajo un suelo grueso, flaps hidráulicos, limpias, APU y aire de
+     * compresores eléctricos, que por dentro suenan a packs: **sin aire sangrado**,
+     * la hoja de tipo dice «no bleed-air APU». Y el forro del tubo más silencioso de
+     * la flota.
+     */
+    ruidos: {
+      tren: 0.5,
+      flaps: "hidraulicos",
+      limpias: true,
+      apu: true,
+      aire: "packs",
+      aislamiento: 0.88,
+    },
+  },
+  aero: {
+    /*
+     * Más que el grande: mucho más alargamiento y algo menos de flecha, con su
+     * pérdida limpia por los 140 nudos a este peso y un crucero a tres grados de
+     * ángulo de ataque. **Del orden de su clase**, como los de sus hermanos: los
+     * coeficientes de un avión de este siglo no se publican.
+     */
+    cl0: 0.3,
+    clAlpha: 5.2,
+    alphaStall: 0.27, // ~15,5°
+    /*
+     * Fineza máxima en torno a dieciocho, con su alargamiento de 9,6. En crucero de
+     * verdad anda algo más alto; con más, el fugoide casi no se amortigua y el avión
+     * no se queda donde se le deja.
+     */
+    cd0: 0.018,
+    oswald: 0.8,
+    cyBeta: -0.9,
+    cm0: 0.04,
+    cmAlpha: -0.75,
+    cmQ: -22,
+    cmElevator: 0.4,
+    clBeta: -0.09,
+    clP: -0.45,
+    clAileron: 0.035, // ~25 °/s, lo del grande.
+    cnBeta: 0.13,
+    cnR: -0.26,
+    /*
+     * Con el doble de timón que su hermano mayor: un motor grande muy lejos del eje,
+     * y uno solo al otro lado. Ver `vmc`.
+     */
+    cnRudder: 0.07,
+    cnAileron: -0.002,
+  },
+};
+
 export const AIRCRAFT: readonly AircraftConfig[] = [
   PYKASU,
   MAINUMBY,
   PANAMBI,
   ARASUNU,
   ARAI,
+  TIJERETA,
   YVAGA,
 ];
 

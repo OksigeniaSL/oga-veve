@@ -109,6 +109,8 @@ export const EN: Dictionary = {
     "Regional turboprop, T-tail. Big, and it fits short runways.",
   "aircraft.arai.description":
     "Swept-wing jet. Fast, and everything happens slower.",
+  "aircraft.tijereta.description":
+    "Twin-engine widebody. Two huge engines, to go far and come back.",
   "aircraft.yvaga.description":
     "Four-engine widebody. The big one: count the engines.",
 
@@ -2854,6 +2856,8 @@ export const EN: Dictionary = {
     "A T-tail! The stabiliser sits right at the top, away from the stirred-up air of the wing and the propellers.",
   "inicio.ara.pasaje.kit.avion.reactor":
     "Just like ours! The engines hang under the wing: their weight stops the wing from bending so much, and they're easy to reach for looking after.",
+  "inicio.ara.pasaje.kit.avion.bimotorAncho":
+    "So big, and just two engines! They're huge, and with only those two this plane crosses the ocean.",
   "inicio.ara.pasaje.kit.avion.cuatrimotor":
     "Four engines and loads of wheels! All those wheels spread the weight, so the runway doesn't break.",
   "inicio.tripulacion.pasaje.cerca.kitGuardar":

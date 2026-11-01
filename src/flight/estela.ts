@@ -81,6 +81,7 @@ export const DE_CLASE: Readonly<
   "bimotor-ala-baja": { masa: 21000, envergadura: 27 },
   "cola-en-t": { masa: 12000, envergadura: 16 },
   reactor: { masa: 64000, envergadura: 34 },
+  "bimotor-ancho": { masa: 192776, envergadura: 60 },
   cuatrimotor: { masa: 285000, envergadura: 60 },
 };
 

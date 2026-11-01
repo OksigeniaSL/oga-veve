@@ -101,6 +101,15 @@ export const RECORRIDO_DE_MANDOS: Readonly<Record<string, RecorridoDeMandos>> = 
       "Airbus A320, FCOM DSC-27-10/20: alerones ±25°, profundidad 30° arriba y 17° abajo, timón ±30° a poca velocidad",
     provisional: false,
   },
+  "jaz-110": {
+    /*
+     * **Provisional.** Su clase es la del 787-9 y no se ha leído una fuente con sus
+     * topes; van los del A320, un avión de línea como él.
+     */
+    ...A320,
+    fuente: "Provisional: los del A320 (FCOM DSC-27) hasta leer los de su clase",
+    provisional: true,
+  },
   "jaz-120": {
     /*
      * **Provisional.** Su clase es la del 747 y no se ha leído una fuente

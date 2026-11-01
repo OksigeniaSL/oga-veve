@@ -127,6 +127,11 @@ export const MEDIDAS_DEL_TIPO: Readonly<
   "jaz-60": { largo: 17.6, ancho: 1.5, tipo: "Beechcraft 1900D" },
   // Embraer 170: 29,9 × 3,0.
   "jaz-90": { largo: 29.9, ancho: 3.0, tipo: "Embraer 170" },
+  /*
+   * El 787-9, del manual de aeropuertos de Boeing (D6-58333, 2.2.2): 62,81 × 5,77.
+   * Es de la 9, por largo.
+   */
+  "jaz-110": { largo: 62.81, ancho: 5.77, tipo: "Boeing 787-9" },
   // Boeing 747-100, -200 y -300: 70,4 × 6,5.
   "jaz-120": { largo: 70.4, ancho: 6.5, tipo: "Boeing 747-100" },
 };
