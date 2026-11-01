@@ -327,7 +327,8 @@ async function elCapitulo() {
         return false;
       });
       comprobar("suena todo, en su orden", fueraDeOrden.length === 0, fueraDeOrden.length ? `fuera de orden o sin decir: ${fueraDeOrden.join(", ")}` : `${orden.length} frases`);
-      const sin = a.registro.filter((d) => d.como !== "sono").map((d) => d.clave);
+      // La última puede estar aún sonando al abrirse la ventanilla, y entonces su `como` es null: no ha acabado, no es muda.
+      const sin = a.registro.filter((d) => d.como !== null && d.como !== "sono").map((d) => d.clave);
       const graves = sin.filter((c) => GRABADAS.has(c));
       comprobar(
         "lo que no suena es solo lo que está sin grabar",
