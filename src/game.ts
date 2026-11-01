@@ -16144,11 +16144,12 @@ export class Game {
 
   /**
    * **`?largo=<s>&hasta=<s>`, si lo trae la dirección**: entrar arriba en el
-   * vuelo largo a esa hora, y a qué hora cae la siesta. Como `?kit` y los demás
-   * de la dirección: no sale en ningún menú. Para el banco del salto, hasta que
-   * lleguen los capítulos.
+   * vuelo largo a esa hora, y a qué hora cae la siesta. Solo en desarrollo: es
+   * para el banco del salto y lo que abre es su guion de prueba, no un vuelo que
+   * se pueda enseñar. En lo publicado, nada.
    */
   private vueloLargoPedido(): { readonly desde: number; readonly hasta: number } | null {
+    if (!import.meta.env.DEV) return null;
     const q = new URLSearchParams(location.search);
     const desde = Number(q.get("largo"));
     if (!q.has("largo") || !Number.isFinite(desde)) return null;
