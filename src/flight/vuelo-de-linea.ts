@@ -560,12 +560,13 @@ export class VueloDeLinea {
    * potencia —la escena cuenta cada cambio que se oye— no puede leer el salto
    * como un cambio que acaba de pasar.
    */
-  ponerEnCrucero(velocidad: number): void {
+  ponerEnCrucero(velocidad: number, altitud: number): void {
     this.tramo = "crucero";
     this.enTramo = YA_LLEVA_UN_RATO;
     this.vioElAire = true;
     this.subidaPedida = 0;
     this.velocidadDeCrucero = velocidad;
+    this.alturaDeCrucero = altitud;
     if (this.potencia !== "subida") this.potencias.push({ potencia: "subida", desde: this.reloj });
     this.potencia = "subida";
     this.conEstaPotencia = YA_LLEVA_UN_RATO;
@@ -578,6 +579,8 @@ export class VueloDeLinea {
    * frenar el avión a la mitad nada más caer. Ver `ponerEnCrucero`.
    */
   private velocidadDeCrucero: number | null = null;
+  /** Y a qué altitud se llevaba, m: es de donde parte la bajada. Ver `velocidadBajando`. */
+  private alturaDeCrucero = DIEZ_MIL + 1;
 
   /** Un paso: lo que se lee, lo que deja la escena y lo que hacen las manos. */
   paso(dt: number, l: LecturaDeLinea, permisos: PermisosDeLaEscena): ManosDeLinea {
@@ -959,7 +962,7 @@ export class VueloDeLinea {
     } else if (!bajando) {
       v = l.altitud < DIEZ_MIL ? V_250 : (this.velocidadDeCrucero ?? V_ARRIBA);
     } else {
-      v = l.altitud < DIEZ_MIL ? V_250 : V_ARRIBA;
+      v = l.altitud < DIEZ_MIL ? V_250 : this.velocidadBajando(l.altitud);
       if (falta < CONFIGURA.frena) v = Math.min(v, V_BAJANDO_CERCA);
       if (falta < CONFIGURA.flaps1) {
         flaps = 1 / 3;
@@ -1004,6 +1007,22 @@ export class VueloDeLinea {
       autofreno: falta < CONFIGURA.tren || recogiendo ? 2 : 0,
       reversa: 0,
     };
+  }
+
+  /**
+   * **A qué velocidad se baja por encima de los diez mil pies**, m/s. Entre islas,
+   * doscientos ochenta nudos desde el primer metro. En un vuelo largo eso sería
+   * frenar a más de la mitad en el punto de descenso, con los motores al ralentí y
+   * a cuarenta mil pies: se baja a la velocidad del crucero, y se va perdiendo con
+   * la altura hasta llegar a los doscientos ochenta en los diez mil. Es lo que hace
+   * el avión de verdad, que baja a Mach y luego a indicada, y la velocidad de
+   * verdad va cayendo sola.
+   */
+  private velocidadBajando(altitud: number): number {
+    const arriba = this.velocidadDeCrucero;
+    if (arriba === null) return V_ARRIBA;
+    const k = Math.min(1, Math.max(0, (altitud - DIEZ_MIL) / (this.alturaDeCrucero - DIEZ_MIL)));
+    return V_ARRIBA + (arriba - V_ARRIBA) * k;
   }
 
   /**

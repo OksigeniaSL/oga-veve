@@ -16248,6 +16248,11 @@ body.con-vuelta #tactil {
   font-family: var(--hud-fuente);
 }
 
+/* Con visibilidad y no con `display`: la tarjeta se mide para encuadrar lo de debajo. */
+.inicio__tarjeta--callada {
+  visibility: hidden;
+}
+
 /*
  * Con el dedo, entre las dos columnas: ni la palanca ni el gas debajo, ni la
  * tarjeta del destino de arriba a la derecha. En el teléfono pequeño de

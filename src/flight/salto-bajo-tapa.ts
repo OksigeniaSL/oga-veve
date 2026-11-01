@@ -307,6 +307,14 @@ export function caminoEnElMundo(
   return puntos;
 }
 
+/**
+ * **A cuántos metros de la pista se deja la ortodrómica**, para ir directo al
+ * punto de inicio de la aproximación. Bastante antes del punto de descenso de
+ * nada: a esta distancia, ir a una puerta que queda a veinte kilómetros a un lado
+ * es torcerse unos grados, sin un viraje que se note.
+ */
+export const DEJA_LA_ORTODROMICA = 150_000;
+
 // ── El mundo del tramo ──────────────────────────────────────────────────
 
 /** Un mundo que el vuelo largo puede poner: su identificador y dónde se monta. */

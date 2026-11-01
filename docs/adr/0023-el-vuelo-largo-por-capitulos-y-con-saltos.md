@@ -282,3 +282,38 @@ polar de su ficha quema unas once toneladas por hora, y sus tanques, con la
 proporción de `loQueCabe`, son ochenta y cuatro: unas siete horas y media, de once
 y cuarto que dura esto en el aire. El banco le carga ciento cincuenta a mano. El
 avión de esta ruta es el de la otra tanda, y habrá que mirarlo con él.
+
+## Lo que se programó del tercer capítulo
+
+`?inicio=4&capitulo=3` abre el esqueleto: el JAZ 110 Tijereta con Ara de pasaje,
+ya arriba, del crucero al puesto de Pettirossi. Es `flight/guion-llegada-a-asuncion.ts`
+sobre el motor de siempre, y lo vuela `scripts/verificar-inicio-4.mjs`. El guion
+de verdad, sus voces y sus láminas son de otra tanda, y todavía no sale en ningún
+menú. Cuatro decisiones que no estaban arriba:
+
+- **Se entra por el sitio y no por la hora**, y **sin pasillo de crucero**. El
+  capítulo cae en el mundo del Paraguay a cuatrocientos kilómetros de Pettirossi
+  por la ortodrómica (`entradaDeLaLlegada`), que es lo que ese mundo da de sí sin
+  nada detrás: las 10 h 35 del despegue en verano y las 10 h 40 en invierno. La
+  hora sale de ese punto con el horario del día. El despertar y el desayuno, que
+  pasan antes, sobre Brasil, irán bajo una lámina: de ellos solo queda el hueco
+  al principio del guion.
+- **La aproximación publicada, colgada de la ortodrómica.** A ciento cincuenta
+  kilómetros se deja la ortodrómica y se va al punto de inicio de la RNP de la
+  cabecera que dé el viento. La llegada de la carta acaba en esas mismas puertas,
+  MULSO o PAKOR, así que lo último del camino es el de verdad; lo que no se vuela
+  es su principio, DEVOS y compañía, a más de cien kilómetros al este de la ruta.
+- **La bajada desde cuarenta mil pies, buscando su senda.** Ninguna de las dos
+  cosas que hacía la tripulación en un salto entre islas vale desde tan arriba. A
+  esa velocidad, tres millas por cada mil pies son dos mil quinientos pies por
+  minuto, y el avión da unos mil novecientos: se queda por encima de la senda en
+  el primer minuto, y el atajo del automático para no picar —«como mucho noventa
+  metros por delante», `POR_DELANTE`— con la captura de la tripulación da
+  setecientos pies por minuto, y de ahí ya no sale: llegaba a la pista a treinta
+  mil pies. En un vuelo largo la tripulación mira la senda de verdad y baja lo que
+  da hasta encontrarla, que es hacia los seis mil pies, a cuarenta y seis
+  kilómetros. Y sale de la velocidad del crucero y la va perdiendo con la altura
+  (`velocidadBajando`), en vez de frenar de golpe a la mitad al empezar. Eso es del
+  vuelo largo: el corto y la final no cambian.
+- **Ara no se duerme en este guion** (`sinSiesta`): acaba de despertarse, y lo que
+  queda por delante es bajar.

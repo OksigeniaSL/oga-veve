@@ -103,6 +103,7 @@ import {
   DESTINO_DEL_PASAJE,
   SITIO_DEL_PASAJE,
 } from "./flight/inicio-pasaje";
+import { AVION_DEL_LARGO, MUNDO_DE_LA_LLEGADA } from "./flight/guion-llegada-a-asuncion";
 import {
   AVION_DEL_INICIO,
   escenaPedida,
@@ -207,9 +208,12 @@ const pedido = rearranque?.escenario ?? params.get("escenario");
  * `flight/inicio-aterrizar.ts`. Y `?inicio=3`, la tercera: el primer vuelo de
  * pasaje de Ara, ver `flight/inicio-pasaje.ts`.
  */
-/** Dónde se vuela cada escena: las dos de Jazlyn en el Chaco, la de pasaje en Los Rodeos. */
+/**
+ * Dónde se vuela cada escena: las dos de Jazlyn en el Chaco, la de pasaje en
+ * Los Rodeos y el capítulo que hay del vuelo largo, sobre el Paraguay.
+ */
 function sitioDeLaEscena(e: EscenaDelInicio): string {
-  return e === "pasaje" ? SITIO_DEL_PASAJE : SITIO_DEL_INICIO;
+  return e === "largo" ? MUNDO_DE_LA_LLEGADA : e === "pasaje" ? SITIO_DEL_PASAJE : SITIO_DEL_INICIO;
 }
 let conInicio = params.has("inicio") && !rearranque;
 const conVueloLargo = params.has("largo");
@@ -444,6 +448,15 @@ if (conInicio) {
       destino = escenario?.id;
     }
   }
+  /*
+   * **Y el vuelo largo, su avión, ya arriba**: sin puesto de salida, sin hangar
+   * y con el destino en el mundo donde se entra. Ver `flight/guion-llegada-a-asuncion.ts`.
+   */
+  if (escenaDelInicio === "largo") {
+    avion = AIRCRAFT.find((a) => a.id === AVION_DEL_LARGO) ?? avion;
+    leccion = DESPEGUE;
+    destino = escenario?.id;
+  }
 }
 
 /*
@@ -578,7 +591,11 @@ const [conMapa, ciudad, meteo, ortofoto, ortofotoFina, vecinos] =
          * campos se quedan con su tiempo típico. Ver `vientoDeCasa`.
          */
         Promise.resolve({ ...vientoDeCasa(escenario.vientoDominante), tapadura: 0.7, fuente: "mano" as const })
-      : conInicio
+      : /*
+         * Y el vuelo largo, con el tiempo que hace hoy en Asunción: es a donde
+         * se llega, y el viento del día decide si se entra por la 02 o por la 20.
+         */
+        conInicio && escenaDelInicio !== "largo"
         ? Promise.resolve({ ...TIEMPO_DE_CASA, vientoDe: null, vientoKt: 0, fuente: "mano" as const })
         : tiempoPedido(escenario),
   ),

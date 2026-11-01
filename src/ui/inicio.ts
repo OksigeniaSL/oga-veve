@@ -615,6 +615,14 @@ export interface VistaDelInicio {
   } | null;
   readonly congelado: boolean;
   /**
+   * **Si sin nada que decir, la tarjeta no sale.** Entrando en vuelo puede pasar
+   * un buen rato hasta la primera frase —catorce minutos de crucero, en el vuelo
+   * largo—, y una tarjeta vacía encima de la ventanilla es un recuadro negro
+   * tapando lo que se mira. En un vuelo que empieza en el puesto la primera
+   * frase llega enseguida, y la tarjeta ya está en su sitio.
+   */
+  readonly sinTarjetaSiCalla?: boolean;
+  /**
    * El sello del final, en SVG, y si ya se puede seguir. Con `volver`, el
    * botón no es seguir volando sino volver al hangar: de pasaje no se sigue
    * volando el avión de otro.
@@ -765,6 +773,7 @@ export class PantallaDelInicio {
 
     const o = this.teclas();
     const mira = v.gesto ? null : (v.mira ?? null);
+    this.tarjeta.classList.toggle("inicio__tarjeta--callada", !!v.sinTarjetaSiCalla && !v.linea && !v.gesto && !mira && !v.fin);
     const dibujo = v.gesto
       ? `${v.gesto}|${v.mando}|${v.lado}|${o.chorro}|${o.teclaDe("pitchUp")}`
       : mira

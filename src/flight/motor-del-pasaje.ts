@@ -673,6 +673,11 @@ export interface GuionDelPasaje<M extends string = string, C extends string = st
      * vuelo corto, y con `null` tampoco salta. Ver `saltoPedido`.
      */
     salto?(e: MotorDelPasaje<M, C>, l: LecturaDelPasaje): number | null;
+    /**
+     * **Si en este guion Ara no se duerme**: entra recién despierta, y lo que
+     * queda por delante es bajar, que no se hace durmiendo. Ver `puedeDormirse`.
+     */
+    readonly sinSiesta?: boolean;
   };
   /**
    * **Lo que contesta Ara a lo señalado**, si va por su lado: su frase para
@@ -2164,7 +2169,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   }
 
   private puedeDormirse(l: LecturaDelPasaje, trasElBostezo = false, soloElRato = false): boolean {
-    if (this.siestas.length > 0 || this.acabado || this.bostezando) return false;
+    if (this.guion.siesta.sinSiesta || this.siestas.length > 0 || this.acabado || this.bostezando) return false;
     if (!volando(l) || l.tramo === "bajada" || l.altitud < DIEZ_MIL_PIES || l.enNube >= DENTRO_DE_LA_NUBE) return false;
     if (!trasElBostezo && !soloElRato && this.callada < CALLA_PARA_DORMIRSE) return false;
     if (this.porSenalar.length > 0 || this.contestacion || this.toquePendiente || this.kit.estaAbierto || this.kit.ocupaAAra)
