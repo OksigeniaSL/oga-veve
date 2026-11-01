@@ -997,7 +997,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * de holgura, y el resto de altura se va bajando detrás.
      */
     let pedida = senda.altitud + senda.ritmo * (ahora - senda.desde);
-    if (REACTOR_COMPLETO)
+    if (FUSELAJE_ANCHO)
       pedida = Math.max(pedida, s.position.y + (-CAIDA_MAXIMA * 1.25 - senda.ritmo) * 10);
     const r = mandosPara(
       {
@@ -1837,6 +1837,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * también ahí). En Guyrami el piloto del banco vuela como volaba.
    */
   const REACTOR_COMPLETO = NECESITA_TECNICA && peldano !== "guyrami";
+  /**
+   * **Y lo que se aprendió volando los de fuselaje ancho, solo en ellos.** La
+   * bajada por el arco y la bajada con tope se midieron con el JAZ 110; el JAZ 90
+   * pasaba sin ellas y con ellas no se ha volado.
+   */
+  const FUSELAJE_ANCHO = REACTOR_COMPLETO && (suyas.envergadura ?? 0) > 30;
   const ganancia = (s) =>
     Math.min(1, (AJUSTADO_HASTA / Math.max(1, s.airspeed)) ** 2);
 
@@ -5522,7 +5528,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * flaps. El que planifica la bajada baja cuando se le acaba el camino,
        * que es lo que dice `porLaSenda`. En los demás, como estaba.
        */
-      const tope = REACTOR_COMPLETO && aDonde >= 4 && v?.[3] ? v[3].y : meta?.y;
+      const tope = FUSELAJE_ANCHO && aDonde >= 4 && v?.[3] ? v[3].y : meta?.y;
       const altoQueToca = meta
         ? Math.min(tope - cotaDePista, porLaSenda + (suyas.tren ?? 0))
         : CRUCERO;
@@ -5765,7 +5771,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         const ultimoDeLaVista = aLaVista[aLaVista.length - 1];
         const u0 = finalAhora(0);
         if (u0) queda += Math.hypot(u0.x - ultimoDeLaVista.x, u0.z - ultimoDeLaVista.z);
-      } else if (REACTOR_COMPLETO) {
+      } else if (FUSELAJE_ANCHO) {
         /*
          * **Y mientras se vira a la final, lo mismo: lo que queda es el arco.** Lo
          * que falta por el eje no cuenta el camino del viraje, y un reactor entra
