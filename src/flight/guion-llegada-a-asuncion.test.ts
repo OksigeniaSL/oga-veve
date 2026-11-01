@@ -19,7 +19,18 @@ import type { Linea } from "./conversacion";
 import { GUION_LLEGADA_A_ASUNCION } from "./guion-llegada-a-asuncion";
 import { escenaPedida } from "./inicio";
 import { MotorDelPasaje, TAPA_A_OSCURAS, type DelVueloLargo, type GuionDelPasaje, type LecturaDelPasaje } from "./motor-del-pasaje";
-import { entradaDeLaLlegada, ENTRA_LA_LLEGADA_A, dondeVa, horarioDelDia, perfilDelVuelo, PETTIROSSI } from "./ruta-larga";
+import {
+  dondeVa,
+  ENTRA_LA_LLEGADA_A,
+  entradaDeLaLlegada,
+  horaLocal,
+  horarioDelDia,
+  horasEn,
+  HUSO_DE_ASUNCION,
+  perfilDelVuelo,
+  PETTIROSSI,
+  solEnElVuelo,
+} from "./ruta-larga";
 import { DEJA_LA_ORTODROMICA } from "./salto-bajo-tapa";
 
 /** Las frases que pueden salir en el guion, con y sin lo que depende del vuelo. */
@@ -283,7 +294,57 @@ describe("el guion", () => {
     const claves = (temporada: "verano" | "invierno"): string | undefined =>
       hora.segun?.({ ...EN_CRUCERO, largo: { ...HOY_DE_DIA, temporada } }, e as never)[0]?.clave;
     expect(ES_PY[claves("verano") as keyof typeof ES_PY]).toMatch(/seis y veinticinco/);
+    // Es lo mismo que dice la cuenta: 06:25 y 07:30 en la hora de Asunción.
+    const calzos = (fecha: string): number => horaLocal(horarioDelDia(new Date(fecha)).llegada, HUSO_DE_ASUNCION) / 60;
+    expect(calzos("2026-07-15T12:00:00Z")).toBeCloseTo(6 * 60 + 25, 0);
+    expect(calzos("2026-12-15T12:00:00Z")).toBeCloseTo(7 * 60 + 30, 0);
     expect(ES_PY[claves("invierno") as keyof typeof ES_PY]).toMatch(/siete y media/);
+  });
+});
+
+/*
+ * **Con la cuenta de verdad**, mes a mes: es lo que decide la lámina del desayuno y la
+ * hora del anuncio. La tabla, la del apartado 1.4 del plan.
+ */
+describe("lo que dice la cuenta, según el mes", () => {
+  const perfilDel = (mes: string) => perfilDelVuelo(horarioDelDia(new Date(`2026-${mes}-15T12:00:00Z`)));
+  /** Lo que tarda en abrirse la ventanilla, s: lo que duran las frases de la apertura, de sobra. */
+  const LA_APERTURA = 180;
+
+  it("el amanecer por la ventanilla del desayuno, de noviembre a marzo y solo entonces", () => {
+    const conSol = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"].filter((m) => {
+      const p = perfilDel(m);
+      return solEnElVuelo(p, entradaDeLaLlegada(p)).asoma;
+    });
+    expect(conSol).toEqual(["01", "02", "03", "11", "12"]);
+  });
+
+  it("de mayo a agosto se aterriza de noche cerrada, y en diciembre con el sol alto", () => {
+    for (const m of ["05", "06", "07", "08"]) {
+      const p = perfilDel(m);
+      expect(solEnElVuelo(p, p.enElAire).deNoche, m).toBe(true);
+    }
+    const dic = perfilDel("12");
+    expect((solEnElVuelo(dic, dic.enElAire).altura * 180) / Math.PI).toBeGreaterThan(8);
+  });
+
+  it("la hora del anuncio cae siempre en una de las dos que tienen su trozo", () => {
+    for (const m of ["01", "04", "07", "10", "12"]) {
+      const p = perfilDel(m);
+      for (const tras of [0, LA_APERTURA, 2 * LA_APERTURA]) {
+        const a = anuncioDeLaBajadaDelVueloLargo(horasEn(p, entradaDeLaLlegada(p) + tras).asuncion, 1800, { temp: 20, visibilidadM: 10_000, techoM: null } as Meteo);
+        expect(a.relleno.hora, `${m} +${tras} s`).toBe(p.horario.temporada === "verano" ? "comandante.largo.hora.0545" : "comandante.largo.hora.0645");
+      }
+    }
+  });
+
+  it("y faltan unos treinta y tantos minutos para tocar, que es el «unos cuarenta» de una comandante", () => {
+    for (const m of ["07", "12"]) {
+      const p = perfilDel(m);
+      const falta = (p.enElAire - entradaDeLaLlegada(p) - LA_APERTURA) / 60;
+      expect(falta, m).toBeGreaterThan(28);
+      expect(falta, m).toBeLessThan(42);
+    }
   });
 });
 
@@ -297,7 +358,7 @@ describe("el anuncio de la bajada", () => {
     expect(a.relleno.minutos).toBe("comandante.minutos.35");
     expect(a.relleno.cielo).toBe("comandante.cielo.despejado");
     expect(a.relleno.temperatura).toBe("comandante.temperatura.24");
-    expect(a.texto).toMatch(/En unos minutos empezamos a bajar hacia Asunción/);
+    expect(a.texto).toMatch(/En unos minutos empezamos a bajar/);
     expect(a.texto).toMatch(/seis y cuarenta y cinco/);
     expect(anuncioDeLaBajadaDelVueloLargo(5 * 3600 + 41 * 60, 35 * 60, METEO).relleno.hora).toBe("comandante.largo.hora.0545");
   });

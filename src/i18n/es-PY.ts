@@ -4739,7 +4739,7 @@ export const ES_PY = {
    * `anuncioDeLaBajadaDelVueloLargo`.
    */
   "comandante.largo.bajada":
-    "Señores pasajeros, les habla nuevamente la comandante. En unos minutos empezamos a bajar hacia Asunción.",
+    "Señores pasajeros, les habla nuevamente la comandante. En unos minutos empezamos a bajar.",
   "comandante.largo.hora.0545": "En Asunción son las cinco y cuarenta y cinco de la mañana.",
   "comandante.largo.hora.0645": "En Asunción son las seis y cuarenta y cinco de la mañana.",
   "inicio.tripulacion.pasaje.cerca.largo.oidos":
@@ -4748,8 +4748,8 @@ export const ES_PY = {
   "inicio.ara.pasaje.largo.chaco": "Y del otro lado del río, todo plano hasta lejos: ese es el Chaco.",
   "inicio.ara.pasaje.largo.asuncion": "¡Ahí está Asunción, con su bahía! Ya casi llegamos.",
   "inicio.ara.pasaje.largo.asuncionNoche": "¡Mirá las luces de Asunción! Ya casi llegamos.",
-  "comandante.largo.llegada.verano": "En Asunción son las seis y veinticinco de la mañana. Que tengan un muy lindo día.",
-  "comandante.largo.llegada.invierno": "En Asunción son las siete y media de la mañana. Que tengan un muy lindo día.",
+  "comandante.largo.llegada.verano": "Aquí son las seis y veinticinco de la mañana. Que tengan un muy lindo día.",
+  "comandante.largo.llegada.invierno": "Aquí son las siete y media de la mañana. Que tengan un muy lindo día.",
   "inicio.ara.pasaje.largo.llegamos": "¡Llegamos a Asunción! Crucé el océano entero.",
   // No se graban: son de la pantalla.
   "inicio.modo.largo": "Llegá a Asunción",

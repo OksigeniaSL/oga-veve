@@ -16894,11 +16894,14 @@ export class Game {
    * `ruta-larga.ts`, que es la misma que pone el sol en el cielo. Ver `DelVueloLargo`.
    */
   private delVueloLargoDeHoy(): DelVueloLargo {
+    // El sol se mueve despacio, y esto se lee en cada paso: con mirar una vez por segundo sobra.
+    const antes = this.vueloLargoMirado;
+    if (antes && this.relojDePared - antes.en < 1) return antes.que;
     const vl = this.vueloLargo!;
     const perfil = vl.perfil;
     const ahora = vl.reloj.ahora(this.relojDelJuego);
     const alEntrar = entradaDeLaLlegada(perfil);
-    return {
+    const que: DelVueloLargo = {
       temporada: perfil.horario.temporada,
       conSolAlDesayunar: solEnElVuelo(perfil, alEntrar).asoma,
       sol: (solEnElVuelo(perfil, ahora).altura * 180) / Math.PI,
@@ -16913,7 +16916,10 @@ export class Game {
         );
       },
     };
+    this.vueloLargoMirado = { en: this.relojDePared, que };
+    return que;
   }
+  private vueloLargoMirado: { readonly en: number; readonly que: DelVueloLargo } | null = null;
 
   /** **Si el sol cae dentro del cristal de Ara**, desde su asiento y con la cuenta que pinta el marco. */
   private elSolPorLaVentanilla(): boolean {

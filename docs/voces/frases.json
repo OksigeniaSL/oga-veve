@@ -19398,7 +19398,7 @@
     "id": "comandante.largo.bajada",
     "voz": "comandante",
     "idioma": "es-PY",
-    "texto": "Señores pasajeros, les habla nuevamente la comandante. En unos minutos empezamos a bajar hacia Asunción.",
+    "texto": "Señores pasajeros, les habla nuevamente la comandante. En unos minutos empezamos a bajar.",
     "para": "el vuelo largo: unos cuarenta minutos antes de tocar, falta poco para bajar; con la hora, los minutos, el cielo y los grados detrás",
     "ajustes": {
       "stability": 0.35,
@@ -19503,7 +19503,7 @@
     "id": "comandante.largo.llegada.verano",
     "voz": "comandante",
     "idioma": "es-PY",
-    "texto": "En Asunción son las seis y veinticinco de la mañana. Que tengan un muy lindo día.",
+    "texto": "Aquí son las seis y veinticinco de la mañana. Que tengan un muy lindo día.",
     "para": "el vuelo largo: la hora al llegar, las 06:25, en verano de Europa",
     "ajustes": {
       "stability": 0.35,
@@ -19517,7 +19517,7 @@
     "id": "comandante.largo.llegada.invierno",
     "voz": "comandante",
     "idioma": "es-PY",
-    "texto": "En Asunción son las siete y media de la mañana. Que tengan un muy lindo día.",
+    "texto": "Aquí son las siete y media de la mañana. Que tengan un muy lindo día.",
     "para": "el vuelo largo: la hora al llegar, las 07:30, en invierno de Europa",
     "ajustes": {
       "stability": 0.35,

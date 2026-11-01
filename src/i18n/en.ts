@@ -3038,7 +3038,7 @@ export const EN: Dictionary = {
   "inicio.ara.pasaje.largo.amanece": "Look out of the window: the sun's coming up!",
   "inicio.ara.pasaje.largo.deNoche": "It's still night outside, and I've already had breakfast.",
   "comandante.largo.bajada":
-    "Ladies and gentlemen, this is the captain again. In a few minutes we'll start our descent into Asunción.",
+    "Ladies and gentlemen, this is the captain again. In a few minutes we'll start our descent.",
   "comandante.largo.hora.0545": "In Asunción it's a quarter to six in the morning.",
   "comandante.largo.hora.0645": "In Asunción it's a quarter to seven in the morning.",
   "inicio.tripulacion.pasaje.cerca.largo.oidos":
@@ -3047,8 +3047,8 @@ export const EN: Dictionary = {
   "inicio.ara.pasaje.largo.chaco": "And on the other side of the river, flat as far as you can see: that's the Chaco.",
   "inicio.ara.pasaje.largo.asuncion": "There's Asunción, with its bay! We're nearly there.",
   "inicio.ara.pasaje.largo.asuncionNoche": "Look at the lights of Asunción! We're nearly there.",
-  "comandante.largo.llegada.verano": "In Asunción it's twenty-five past six in the morning. Have a lovely day.",
-  "comandante.largo.llegada.invierno": "In Asunción it's half past seven in the morning. Have a lovely day.",
+  "comandante.largo.llegada.verano": "It's twenty-five past six in the morning here. Have a lovely day.",
+  "comandante.largo.llegada.invierno": "It's half past seven in the morning here. Have a lovely day.",
   "inicio.ara.pasaje.largo.llegamos": "We've reached Asunción! I crossed the whole ocean.",
   "inicio.modo.largo": "Arrive in Asunción",
   "inicio.modo.tripulanteDerlis": "The cabin crew member, right beside you",
