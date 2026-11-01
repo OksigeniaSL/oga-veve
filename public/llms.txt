@@ -1,9 +1,8 @@
 # Óga Veve
 
-> Simulador de vuelo para navegador, gratis y sin instalar, hecho para que
-> los chicos del Paraguay aprendan a volar reconociendo su propio país
-> desde el aire, y para volar también sobre las islas Canarias. Empieza a los
-> cuatro años, antes de saber leer.
+> Simulador de vuelo para navegador, gratis y sin instalar, para quien quiera
+> volar. Empieza a los cuatro años, antes de saber leer. Los vuelos van por
+> rutas de Paraguay y de las islas Canarias.
 
 Producto de Oksigenia SL, publicado bajo la marca Granja Óga.
 Código libre bajo Apache-2.0. Contenido y marcas, © Oksigenia SL.
@@ -37,10 +36,10 @@ Cuatro peldaños, del que no sabe leer al que lee instrumentos:
 
 ## El compromiso
 
-**Gratis para siempre para toda la educación paraguaya**: colegios, docentes,
-alumnos y familias. Sin trámites y sin pagar nada. Está escrito en
-LICENSE-CONTENIDO.md y en la pantalla de créditos del propio juego, que es
-donde lo puede leer cualquiera.
+**Gratis, para quien quiera**: sin registro y sin pagar nada. Para toda la
+educación paraguaya —colegios, docentes, alumnos y familias—, además, para
+siempre y por escrito: está en LICENSE-CONTENIDO.md y en la pantalla de créditos
+del propio juego, que es donde lo puede leer cualquiera.
 
 Y sin datos personales: no hay cuentas, ni correo, ni nombres. Un perfil es un
 bicho y un color —*Tero Rojo*, *Jaguareté Azul*—, y todo lo que se guarda vive

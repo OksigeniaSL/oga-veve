@@ -274,7 +274,7 @@ export const ES_PY = {
   "credits.title": "Créditos",
   "credits.madeBy": "Un producto de Oksigenia SL, bajo la marca Granja Óga.",
   "credits.educational":
-    "Gratis para siempre para toda la educación paraguaya: colegios, docentes, alumnos y familias. Sin trámites y sin pagar nada.",
+    "Gratis, para quien quiera: sin registro y sin pagar nada. Y para toda la educación paraguaya, para siempre y por escrito.",
   // **Literal y sin resumir**: la licencia de Copernicus exige esta frase
   // exacta, y por eso no se traduce la parte legal.
   "credits.cancion": "La canción del simulador: «Luz verde», de Granja Óga.",

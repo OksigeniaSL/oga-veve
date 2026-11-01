@@ -16,8 +16,9 @@ real, el paisaje lo pintamos nosotros— y se aterriza donde se pueda.
 > en los [issues](https://github.com/OksigeniaSL/oga-veve/issues).
 
 Producto de **[Oksigenia SL](https://oksigenia.com)**, publicado bajo la
-marca **Granja Óga**. **Gratis para siempre para la educación paraguaya** —
-ver [LICENSE-CONTENIDO.md](LICENSE-CONTENIDO.md).
+marca **Granja Óga**. **Gratis, para quien quiera usarlo.** Las rutas son de
+Paraguay y de Canarias; quien juega puede estar en cualquier parte. La licencia,
+en [LICENSE-CONTENIDO.md](LICENSE-CONTENIDO.md).
 
 ---
 
@@ -202,9 +203,9 @@ Procedencia y licencia de cada dependencia y cada dato: [CREDITOS.md](CREDITOS.m
 
 ## Que esto siga existiendo
 
-**Gratis para siempre para toda la educación paraguaya.** Eso está firmado en
-[LICENSE-CONTENIDO.md](LICENSE-CONTENIDO.md) y no depende de que haya dinero:
-mientras Óga Veve exista, a un colegio no se le cobra.
+**Gratis para quien quiera usarlo.** Para la educación paraguaya, además, está
+firmado en [LICENSE-CONTENIDO.md](LICENSE-CONTENIDO.md) y no depende de que haya
+dinero: mientras Óga Veve exista, a un colegio no se le cobra.
 
 Lo que no está firmado es que vaya a existir siempre. Esto lo mantiene una
 empresa pequeña, no tiene ingresos y **puede dar pérdidas y cerrarse**. Conviene

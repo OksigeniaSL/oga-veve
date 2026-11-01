@@ -6,8 +6,10 @@ código sin haber estado en las conversaciones que lo originaron.
 ## Qué es
 
 Simulador de vuelo para navegador. Producto de **Oksigenia SL**, publicado
-bajo la marca **Granja Óga**. Público objetivo: niños de 4 a 14 años en
-Paraguay, y adultos que quieran volar sin leer un manual.
+bajo la marca **Granja Óga**. Lo puede usar cualquiera que quiera, esté donde
+esté: está pensado para niños desde los 4 años y para adultos que quieran volar
+sin leer un manual. Los vuelos van por rutas de Paraguay y de Canarias; eso es
+dónde se vuela, no para quién es.
 
 ## La regla que va antes de las reglas
 

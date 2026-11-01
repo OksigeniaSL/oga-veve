@@ -229,7 +229,7 @@ export const EN: Dictionary = {
   "credits.title": "Credits",
   "credits.madeBy": "An Oksigenia SL product, under the Granja Óga brand.",
   "credits.educational":
-    "Free forever for Paraguayan education: schools, teachers, pupils and families. No paperwork, no payment.",
+    "Free, for anyone who wants it: no sign-up, no payment. And for all Paraguayan education, forever and in writing.",
   "credits.cancion": "The simulator's song: «Luz verde» (Green Light), by Granja Óga.",
   "credits.cancionEnlace": "Listen on YouTube",
   "credits.terrain":
