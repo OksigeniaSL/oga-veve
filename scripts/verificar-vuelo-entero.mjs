@@ -7268,9 +7268,12 @@ const relojDeVerdad =
   const prefijo = (c) =>
     c === "comandante.bienvenidaConPlan"
       ? "comandante.bienvenida"
-      : c.startsWith("tripulacion.")
-        ? c.split(".").slice(0, 2).join(".")
-        : c;
+      : // Se dice por piezas, «bienvenidos a…» y lo de después: su clave no suena nunca.
+        c === "tripulacion.llegada"
+        ? "tripulacion.bienvenidos"
+        : c.startsWith("tripulacion.")
+          ? c.split(".").slice(0, 2).join(".")
+          : c;
   const deLaMegafonia = frasesDelVuelo.filter(
     (f) => f.voz === "comandante" || f.voz.startsWith("tripulacion"),
   );
