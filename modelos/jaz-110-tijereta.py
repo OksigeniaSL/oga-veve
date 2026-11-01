@@ -205,13 +205,26 @@ def construir():
     # chapa del casco haciendo de marco. Es lo contrario de la máscara negra,
     # que es lo que dice qué avión es: aquí se ven cuatro cristales sueltos en una
     # cara crema, como en el retrato.
+    #
+    # **Una sola línea de abajo y una de arriba, de cristal a cristal**, con un
+    # poste fino e inclinado entre los dos: así sale de la estructura de una
+    # cabina de verdad. El de costado, medido a mano como un cuadro suelto en la
+    # chapa, salía un trapecio torcido que no seguía a nada.
     o = OJOS_Z
+    abajo = 0.28
+    arriba = 0.98
+    poste = 0.14
+    # El de frente, en dos tramos que se tocan: de un cuadro solo, el borde de
+    # abajo cruzaba el morro en línea recta de ángulos y salía arqueado.
     piezas.append(paneles("parabrisas", PIEL, simetricos([
-        [(o - 1.94, 9), (o - 1.72, 52), (o - 1.16, 52), (o - 1.04, 9)],
+        [(o - 1.94, 9), zy(PIEL, o - 1.62, abajo + 0.02),
+         zy(PIEL, o - 0.77, arriba + 0.04), (o - 1.02, 9)],
+        [zy(PIEL, o - 1.62, abajo + 0.02), zy(PIEL, o - 1.30, abajo),
+         zy(PIEL, o - 0.52, arriba), zy(PIEL, o - 0.77, arriba + 0.04)],
     ]), fuera=0.02, div=6))
     piezas.append(paneles_zy("parabrisas-lado", PIEL, [
-        [(o - 0.98, 0.36), (o - 0.08, 0.36), (o + 0.08, 1.00),
-         (o - 0.58, 1.16)],
+        [(o - 1.30 + poste, abajo), (o + 0.22, abajo), (o + 0.16, arriba),
+         (o - 0.52 + poste, arriba)],
     ], fuera=0.02, div=5))
 
     # ── Ventanillas, puertas y librea ─────────────────────────────────────

@@ -82,7 +82,7 @@
     "retrato": "jaz-120-273625e2.webp"
   },
   "jaz-110": {
-    "glb": "5995db1e79a49d4e96a02e96b2ef91971ada1ebc85d31619d567938b3f98c66a",
+    "glb": "ca62e058f27fcb994f0878ea3919459336104f2c43cc3a38c0e17702ea6eda00",
     "librea": "0a056c732b4fc40863e8845c518c628f3c36120bd8b82aad668dd1a661c953bf",
     "ficha": {
       "body": 15527142,
@@ -93,6 +93,6 @@
       "blades": 0,
       "motivo": "sol"
     },
-    "retrato": "jaz-110-a73988b4.webp"
+    "retrato": "jaz-110-cdcc829b.webp"
   }
 }
