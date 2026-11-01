@@ -171,6 +171,7 @@ import {
   NIVELES_DE_CRUCERO,
   PETTIROSSI as PETTIROSSI_DE_LA_RUTA,
   perfilDelVuelo,
+  RODAJE_DE_SALIDA,
   type PerfilDelVuelo,
 } from "./flight/ruta-larga";
 import { guionDePruebaDelSalto } from "./flight/guion-de-prueba-del-salto";
@@ -1072,6 +1073,7 @@ import {
   esAnuncioDeSiempre,
   esDeAbajo,
   esDeFuera,
+  esDeLaCabina,
   LADO_DE_ARA,
   planoParaVer,
   SALIDAS_DEL_PASAJE,
@@ -24732,11 +24734,12 @@ export class Game {
    */
   private camaraDeLaEscena(escena: VueloDePasaje, dt: number): boolean {
     const pedido = escena.estado;
+    const planoPedido = this.planoForzadoParaBanco ?? pedido.plano;
     const paso = this.fundidoDePlano.paso(
-      pedido.plano,
+      planoPedido,
       this.relojDePared,
       // Otro sitio al fondo es otra toma, con su corte.
-      `${pedido.plano}|${pedido.paisaje ?? ""}`,
+      `${planoPedido}|${pedido.paisaje ?? ""}`,
     );
     this.ponerElVeloDelPlano(paso.velo);
     if (paso.plano === "fuera-ala" && this.flight.state.onGround) {
@@ -24751,7 +24754,7 @@ export class Game {
     // El sitio de la toma cambia con la cámara, con el velo puesto: no se ve saltar.
     if (paso.cambio) this.paisajeDeLaToma = pedido.paisaje;
     // Al pasillo y de vuelta, la cabeza salta con el velo puesto: su camino cruzaría la pared.
-    this.contextoDeCamara.saltaLaCabeza = paso.cambio && (paso.plano === "pasillo" || this.planoDeAntes === "pasillo");
+    this.contextoDeCamara.saltaLaCabeza = paso.cambio && (esDeLaCabina(paso.plano) || esDeLaCabina(this.planoDeAntes));
     this.planoDeAntes = paso.plano;
     if (!esDeFuera(paso.plano)) {
       const asiento = this.asientoDeAraAhora(paso.plano);
@@ -25068,7 +25071,7 @@ export class Game {
   private miraPorElCristalDeAra(escena: VueloDePasaje, e: VueloDePasaje["estado"]): MiradaDeAra | null {
     if (e.terminado || e.momento === "fin" || e.durmiendo || e.kit.abierto) return null;
     const plano = this.fundidoDePlano.plano;
-    if (esDeFuera(plano) || plano === "pasillo" || plano !== e.plano) return null;
+    if (esDeFuera(plano) || esDeLaCabina(plano) || plano !== e.plano) return null;
     if (this.veloDelPlano && !this.veloDelPlano.hidden && Number(this.veloDelPlano.style.opacity || 0) > 0.05) return null;
     const ara = this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA];
     if (!ara) return null;
@@ -25444,6 +25447,8 @@ export class Game {
       return ara.poses.motor;
     }
     if (plano === "pasillo") return this.elPasillo()?.pose ?? ara.poses.sentada;
+    // En el avión sin pantalla, la ventanilla de siempre: ver `enElPasillo`.
+    if (plano === "respaldo") return this.elPasillo()?.poseDelRespaldo?.(this.camera.aspect) ?? ara.poses.sentada;
     return plano === "asomado-motor" ? ara.poses.motor : plano === "asomado-abajo" ? ara.poses.abajo : ara.poses.sentada;
   }
 
@@ -25462,7 +25467,7 @@ export class Game {
       this.pasilloMontado = {
         de: pasaje,
         pasillo: ara
-          ? montarElPasillo(ara, LADO_DE_ARA, pasaje.filas, pasaje.puertas, franjaDeLaFunda(this.aircraft.appearance))
+          ? montarElPasillo(ara, LADO_DE_ARA, pasaje.filas, pasaje.puertas, franjaDeLaFunda(this.aircraft.appearance), this.aircraft.disposicionDelPasaje)
           : null,
       };
     }
@@ -25471,8 +25476,32 @@ export class Game {
 
   /** Si lo que se ve ahora es el pasillo, en la escena de pasaje. */
   private get enElPasillo(): boolean {
-    return this.inicio instanceof VueloDePasaje && this.fundidoDePlano.plano === "pasillo";
+    if (!(this.inicio instanceof VueloDePasaje)) return false;
+    const plano = this.fundidoDePlano.plano;
+    return plano === "pasillo" || (plano === "respaldo" && !!this.elPasillo()?.pantalla);
   }
+
+  /**
+   * **El plano, puesto a mano**, por encima de lo que pida la escena, o `null` para
+   * dejarla. Solo para el banco: el plano `respaldo` todavía no lo usa ningún guion.
+   */
+  planoForzadoParaBanco: Plano | null = null;
+
+  /**
+   * **La cabina de pasaje con lo de ahora**: la luz y el mapa de la pantalla. Solo
+   * mientras se mira: el lienzo se repinta cuando el avión se mueve un píxel, y no
+   * hay por qué moverlo a oscuras. Y en un vuelo que no es el largo —la escena corta
+   * con el avión grande, para mirar la cabina— enseña el vuelo largo como si acabara
+   * de empezar, a la hora del juego. Ver `world/pantalla-del-respaldo.ts`.
+   */
+  private ponerLaCabina(p: PasilloDePasaje): void {
+    const c = this.cabinaDePasaje;
+    p.ponerLuz?.(diaEnLaCabina(this.sky.sunDirection.y), c.luz, c.tapan[0]);
+    if (!p.pantalla) return;
+    const perfil = this.vueloLargo?.perfil ?? (this.perfilDeLaPantalla ??= perfilDelVuelo(horarioDelDia(this.fechaDelVuelo())));
+    p.pantalla.poner(perfil, this.horaDelVueloLargo ?? this.relojDelJuego - RODAJE_DE_SALIDA);
+  }
+  private perfilDeLaPantalla: PerfilDelVuelo | null = null;
 
   /**
    * **Cuelga o descuelga el pasillo del avión**: solo existe mientras se mira,
@@ -25785,6 +25814,10 @@ export class Game {
     this.marcoDeVentanilla.visible = !!asiento && !pasillo;
     if (pasaje) pasaje.ventanillas.visible = !asiento;
     this.ponerElPasillo(pasillo);
+    if (pasillo) {
+      const p = this.elPasillo();
+      if (p) this.ponerLaCabina(p);
+    }
     if (!asiento || pasillo) return;
     this.marcoDeVentanilla.librea(franjaDeLaFunda(this.aircraft.appearance));
     this.marcoDeVentanilla.poner(

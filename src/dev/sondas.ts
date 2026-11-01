@@ -35,6 +35,7 @@ import {
   type Object3D,
 } from "three";
 import type { Game } from "../game";
+import type { Plano } from "../flight/motor-del-pasaje";
 import { CAMERA_MODES } from "../cameras";
 import { PANELES_DEL_VUELO, type PanelDelVuelo } from "../ui/paneles";
 import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
@@ -1295,6 +1296,10 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Con qué vista se está mirando: `chase`, `cockpit`, `wing`… */
     vista: () => juego.cameraMode,
     /** Y ponerse en una, sin ir pulsando la tecla a ciegas. Para el banco. */
+    /** **Poner un plano de la escena de pasaje** a mano, o `null` para dejarla: ver `planoForzadoParaBanco`. */
+    ponerPlano: (plano: Plano | null) => {
+      juego.planoForzadoParaBanco = plano;
+    },
     ponerVista: (cual: string) => {
       // Una vuelta entera como mucho: si la vista no es de este avión —la de
       // pasaje en una avioneta—, la tecla no llega nunca y se para ahí.

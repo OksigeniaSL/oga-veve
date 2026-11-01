@@ -56,7 +56,9 @@ import {
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { AsientoDeAra } from "./asiento-de-ara";
 import type { AsientoDePasaje, PuertaDePasaje, VentanillaDePasaje } from "./asiento-de-pasaje";
+import { montarLaCabina333 } from "./cabina-333";
 import { COLORES_DE_LA_CABINA } from "./marco-de-ventanilla";
+import type { PantallaDelRespaldo } from "./pantalla-del-respaldo";
 
 type Punto = { readonly x: number; readonly y: number; readonly z: number };
 
@@ -138,6 +140,18 @@ export interface PasilloDePasaje {
   readonly desde: number;
   readonly hasta: number;
   readonly suelo: number;
+  /** **La pantalla del respaldo de Ara**, en el avión que la lleva. Ver `cabina-333.ts`. */
+  readonly pantalla?: PantallaDelRespaldo;
+  /** Desde dónde se mira esa pantalla, en el plano `respaldo`: el ángulo depende de lo ancha que sea la vista. */
+  readonly poseDelRespaldo?: (aspecto: number) => AsientoDePasaje;
+  /** El centro de esa pantalla, en coordenadas del avión. Para el banco. */
+  readonly centroDeLaPantalla?: Vector3;
+  /**
+   * **La luz de ahora**, en la cabina que no la lleva fija: de 0 a 1, cuánto es de
+   * día (`diaEnLaCabina`), las luces del pasaje (`CabinaDePasaje.luz`) y cuánto se
+   * oscurecen las ventanillas.
+   */
+  readonly ponerLuz?: (dia: number, luz: number, tapa: number) => void;
 }
 
 /** Una caja con los colores de sus caras ya alumbrados, para juntarla con las demás. */
@@ -222,6 +236,9 @@ function texturaDelLetrero(conFlechas: boolean): CanvasTexture | null {
 /**
  * **Monta el pasillo** delante del asiento de Ara, o `null` si el modelo no
  * da con qué: sin puertas delante de Ara no hay salida que mirar.
+ *
+ * `disposicion`, la de la ficha del avión: el que no dice nada es de un pasillo. El
+ * de fuselaje ancho tiene su propia cabina, en `cabina-333.ts`.
  */
 export function montarElPasillo(
   ara: AsientoDeAra,
@@ -229,7 +246,9 @@ export function montarElPasillo(
   filas: Readonly<Record<"izquierda" | "derecha", readonly VentanillaDePasaje[]>>,
   puertas: readonly PuertaDePasaje[],
   franja: number,
+  disposicion?: "3-3-3",
 ): PasilloDePasaje | null {
+  if (disposicion === "3-3-3") return montarLaCabina333(ara, lado, puertas, franja);
   const sentada = ara.poses.sentada.ojo;
   const delante = puertas.find((p) => p.zMax < sentada.z);
   if (!delante) return null;

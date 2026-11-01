@@ -69,6 +69,9 @@ export type QueMirar = "ventanilla" | "ala" | "motor" | "nubes" | "cinturon";
  *   encendido encima de las puertas y las tiras del suelo que llevan a ellas.
  *   Es dentro, pero es otra toma —de la pared al pasillo—, así que va con su
  *   fundido. Ver `world/pasillo-de-pasaje.ts`.
+ * - **Ara mirando su pantalla** —`respaldo`—, en el avión que la lleva: al frente y
+ *   con la pantalla del respaldo de delante ocupando la vista. Otra pared, otro
+ *   corte. Ver `world/cabina-333.ts`. Ningún guion lo usa todavía.
  */
 export type Plano =
   | "ventanilla"
@@ -76,6 +79,7 @@ export type Plano =
   | "asomado-abajo"
   | "asomado-paisaje"
   | "pasillo"
+  | "respaldo"
   | "fuera-rodando"
   | "fuera-despegue"
   | "fuera-giro"
@@ -90,14 +94,17 @@ export type Plano =
 /** Si el plano es del avión por fuera. */
 export const esDeFuera = (p: Plano): boolean => p.startsWith("fuera-");
 
+/** Si el plano mira hacia dentro de la cabina, y no por la ventanilla: el pasillo o la pantalla. */
+export const esDeLaCabina = (p: Plano): boolean => p === "pasillo" || p === "respaldo";
+
 /**
  * **Si pasar de un plano a otro es un corte**, con su fundido y su silencio:
  * de dentro a fuera, de fuera a dentro, de un sitio de fuera a otro, y de la
- * ventanilla al pasillo o al revés, que es mirar a otra pared. Asomarse al
+ * ventanilla al pasillo o a la pantalla, o al revés, que es mirar a otra pared. Asomarse al
  * cristal no lo es: es la cabeza que se acerca.
  */
 export const esCorte = (de: Plano, a: Plano): boolean =>
-  esDeFuera(de) || esDeFuera(a) || (de !== a && (de === "pasillo" || a === "pasillo"));
+  esDeFuera(de) || esDeFuera(a) || (de !== a && (esDeLaCabina(de) || esDeLaCabina(a)));
 
 /**
  * **El silencio de un corte**, s de escena. Pasar de la ventanilla a fuera, o
@@ -136,6 +143,8 @@ export const DURA_EL_PLANO: Readonly<Record<Plano, number>> = {
   "fuera-raqueta": 22,
   // El pasillo, lo que dura la frase de las salidas y el rato de mirar el letrero.
   pasillo: 6,
+  // La pantalla, lo que se quede mirándola: no vuelve sola.
+  respaldo: 0,
 };
 
 /**
@@ -1342,7 +1351,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     if (this.kit.estaAbierto || this.kit.ocupaAAra || this.durmiendo || this.bostezando) return false;
     const p = this.toquePendiente;
     if (!p) {
-      if (this.invitado || !l.tocable || this.callada < INVITA_TRAS || esDeFuera(this.plano) || this.plano === "pasillo")
+      if (this.invitado || !l.tocable || this.callada < INVITA_TRAS || esDeFuera(this.plano) || esDeLaCabina(this.plano))
         return false;
       this.invitado = true;
       /*
