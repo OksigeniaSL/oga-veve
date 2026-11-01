@@ -185,4 +185,16 @@ describe("cada avión con las suyas", () => {
     for (const a of AIRCRAFT)
       expect(a.ventanillas !== null, a.id).toBe(conPasaje(a.mass));
   });
+
+  /*
+   * «Así tendremos de los dos tipos» (Enrique, 31-10-2026): las que se oscurecen
+   * solas, en el bimotor de fuselaje ancho, que es de la generación que las lleva;
+   * el cuatrimotor, con persianas, como los de la suya.
+   */
+  it("hay de los dos tipos: el JAZ 110 las oscurece y el JAZ 120 lleva persianas", () => {
+    const de = (id: string) => AIRCRAFT.find((a) => a.id === id)!.ventanillas;
+    expect(de("jaz-110")).toBe("electrocromica");
+    expect(de("jaz-120")).toBe("persiana");
+    expect(AIRCRAFT.filter((a) => a.ventanillas === "electrocromica").map((a) => a.id)).toEqual(["jaz-110"]);
+  });
 });

@@ -2657,9 +2657,9 @@ export const TIJERETA: AircraftConfig = {
    * **Por debajo de sus 181.436 kg de máximo sin combustible** (TCDS, 13): 290
    * personas (D6-58333, 2.1.2) a los 84 kg de un adulto en Europa más once de
    * bodega, y la carga de la bodega de un vuelo así. Cuánto pesa vacío no lo da
-   * ni la hoja de tipo ni el D6-58333: **por verificar**. Con ellos, un Madrid–
-   * Asunción de 4.962 millas sale al máximo al despegue según la gráfica de
-   * alcance de Boeing (3.2.2), que es lo que vuela de verdad.
+   * ni la hoja de tipo ni el D6-58333: **por verificar**. Con ellos, las 4.962
+   * millas de Madrid a Asunción salen, a ojo en la gráfica de alcance de Boeing
+   * (3.2.2), con unas 245 t al soltar frenos, por debajo de su máximo.
    */
   masaSinCombustible: 175000,
   /*
@@ -2695,8 +2695,9 @@ export const TIJERETA: AircraftConfig = {
   /*
    * **Dos de 321,6 kN**: GEnx-1B70 en la hoja de tipo, y un Trent de la misma
    * horquilla, de 307,8 a 347,5 kN. Es lo que Boeing llama empuje típico en sus
-   * gráficas de pista —cuál es, no lo dice: **por verificar**—, y con él la pista
-   * que pide el juego a este peso es la de su gráfica, unos 1.800 m.
+   * gráficas de pista —cuál es, no lo dice: **por verificar**—. Con él, a este peso
+   * el juego pide 1.950 m de pista, donde su gráfica da unos 1.800 (3.3.9); y a su
+   * máximo al despegue, 2.640 donde da unos 3.030.
    */
   maxThrust: 643200,
   motores: 2,
@@ -2738,7 +2739,8 @@ export const TIJERETA: AircraftConfig = {
    * **Ocho ruedas con frenos de carbono**, antideslizante y frenos de tierra, y
    * 229 psi en los neumáticos (D6-58333, 7.2). Calibrados con su pista: 1.800 m de
    * pista de aterrizaje en seco a su peso máximo con los flaps a 30 (3.4.3), que
-   * son 1.080 de distancia de verdad y, quitando el aire, unos 730 de rodadura.
+   * son 1.080 de distancia de verdad y, quitando el aire, unos 730 de rodadura;
+   * aquí rueda 664. Por debajo de eso sería más freno que el autofreno.
    */
   frenos: { enSeco: 0.35, psi: 229, antideslizante: 0.8 },
   frenosDeTierra: { resistencia: 0.06, sustentacion: 0.7 },
@@ -2770,9 +2772,9 @@ export const TIJERETA: AircraftConfig = {
   // 350 KEAS y Mach 0,90 (TCDS, 10). A nivel del mar, los KEAS son indicados.
   vmoKt: 350,
   /*
-   * **Por verificar**, las dos: la hoja de tipo las deja al manual de vuelo, y el
-   * manual no es público. 270 y la placa de flaps son las que se citan para su
-   * clase, con la de aterrizaje con margen sobre la Vref.
+   * **Por verificar**, las dos: la hoja de tipo las deja al manual de vuelo, que no
+   * es público, y no se ha encontrado otra fuente. Son una estimación de su clase, a
+   * la altura de sus hermanos y con la de aterrizaje con margen sobre la Vref.
    */
   vleKt: 270,
   vfePorMuesca: [235, 195, 170],

@@ -530,4 +530,23 @@ describe("la blanca, en la cola o en las puntas según su clase", () => {
       expect(blanca.z).toBeGreaterThan(caja.max.z - 0.01);
     });
   }
+
+  /*
+   * En el JAZ 110 lo más atrás del avión es la punta del estabilizador, que se pasa
+   * del cono ochenta centímetros (Boeing, D6-58333, 2.2.2), y ahí la blanca acababa a
+   * diez metros del eje.
+   */
+  it("jaz-110: en el cono, aunque el estabilizador se pase de él", async () => {
+    const raiz = await modelo("jaz-110");
+    const a = AIRCRAFT.find((x) => x.id === "jaz-110")!;
+    const l = crearLucesDePosicion(a, raiz);
+    l.paso(0, NAVEGANDO);
+    const t = l.luces.tamanosAhora;
+    expect(t[BLANCA]).toBeGreaterThan(0);
+    expect(t[OTRA_BLANCA], "la otra blanca no la lleva").toBe(0);
+    const blanca = puestas(l)[BLANCA]!;
+    const caja = new Box3().setFromObject(raiz);
+    expect(Math.abs(blanca.x)).toBeLessThan(0.05);
+    expect(blanca.z).toBeGreaterThan(caja.max.z - 1.0);
+  });
 });

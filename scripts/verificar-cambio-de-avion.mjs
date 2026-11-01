@@ -19,7 +19,7 @@
  *   apoyado sobre sus ruedas y sin percance;
  * - y el recado es de un solo uso: la recarga siguiente vuelve a lo de siempre.
  *
- * Uso: `node scripts/verificar-cambio-de-avion.mjs [escenario] [tramo]`
+ * Uso: `node scripts/verificar-cambio-de-avion.mjs [escenario] [tramo] [avion]`
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -29,6 +29,8 @@ import { baseDe } from "./servidor.mjs";
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5293);
 const ESCENARIO = process.argv[2] ?? "pettirossi";
 const TRAMO = process.argv[3] ?? "taguato-ruvicha";
+// Del que se sale: con la tecla se pasa al siguiente de la flota que quepa.
+const AVION = process.argv[4] ?? "jaz-120";
 
 const server = await createServer({
   root: process.cwd(),
@@ -83,7 +85,7 @@ try {
 
   // ── En el aire, la tecla no cambia de avión ─────────────────────────────
   await page.goto(
-    `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=aterrizaje&tramo=${TRAMO}&avion=jaz-120`,
+    `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=aterrizaje&tramo=${TRAMO}&avion=${AVION}`,
   );
   await arrancado();
   const enElAire = await mirar();
@@ -119,7 +121,7 @@ try {
 
   // ── En tierra y parado, empieza otro vuelo ──────────────────────────────
   await page.goto(
-    `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=despegue&tramo=${TRAMO}&avion=jaz-120`,
+    `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=despegue&tramo=${TRAMO}&avion=${AVION}`,
   );
   await arrancado();
   const antes = await mirar();
@@ -163,8 +165,8 @@ try {
     const otraVez = await mirar();
     comprobar(
       "y la recarga siguiente ya no lo lleva: el recado era de un solo uso",
-      otraVez.avion === "jaz-120",
-      `tras recargar: ${otraVez.avion} (la dirección pide jaz-120)`,
+      otraVez.avion === AVION,
+      `tras recargar: ${otraVez.avion} (la dirección pide ${AVION})`,
       "si se quedara, cada recarga se saltaría el hangar para siempre",
     );
   }
