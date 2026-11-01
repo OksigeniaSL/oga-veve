@@ -11,7 +11,9 @@ que instalara el juego o lo proyectara en clase no tenía permiso sobre el papel
 
 Enrique, el 1 de noviembre de 2026: «En Paraguay, no. Lo puede usar cualquiera que quiera», y «otra cosa es que los
 vuelos estén basados en rutas de Paraguay y las Islas Canarias». Preguntado por el alcance: «Para todo uso sin ánimo de
-lucro».
+lucro». Y el porqué: «si un colegio de Colombia lo usa, bien por sus maestros y bien por el turismo de Paraguay y
+Canarias, porque así van a conocer esos países y regiones un poco mejor niños de otras partes del mundo». Que el juego
+llegue lejos es parte de lo que se busca: las rutas enseñan esos sitios a quien no vive allí.
 
 ## Decisión
 

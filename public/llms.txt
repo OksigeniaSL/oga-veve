@@ -37,7 +37,7 @@ Cuatro peldaños, del que no sabe leer al que lee instrumentos:
 
 ## El compromiso
 
-**Gratis y para siempre para todo uso sin ánimo de lucro**, para cualquiera y en
+**Gratis para siempre para todo uso sin ánimo de lucro**, para cualquiera y en
 cualquier país: sin registro y sin pagar nada. Está escrito en
 LICENSE-CONTENIDO.md y en la pantalla de créditos del propio juego, que es donde
 lo puede leer cualquiera.
