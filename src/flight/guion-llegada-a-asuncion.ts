@@ -74,6 +74,13 @@ export const SE_DESAYUNA_A = 9 * 3600 + 40 * 60;
  * la final, y no los sitios del hito `chaco`, que están muy al norte.
  */
 export const CHACO_ENFRENTE = { lat: -25.2, lon: -57.72 } as const;
+/**
+ * **El río que se ve al llegar**: el cauce de delante de la bahía de Asunción. El hito
+ * `rio-paraguay` sigue la línea de Natural Earth, que por aquí es de trazo grueso y
+ * va al otro lado de esta final en su trozo de más al sur: medido en el banco, por el
+ * cristal no se veía nunca.
+ */
+export const RIO_ENFRENTE = { lat: -25.275, lon: -57.665 } as const;
 
 export type MomentoDeLaLlegada =
   | "despertar"
@@ -382,7 +389,7 @@ const CHARLAS: readonly Charla[] = [
     tras: 3,
     cuando: (l) => enLaLlegada(l) && conLuz(l),
     caduca: (l) => l.enTierra,
-    nombra: "hito:rio-paraguay",
+    nombra: "rio-enfrente",
     plano: "ventanilla",
     lineas: [delLargo("rio")],
   },

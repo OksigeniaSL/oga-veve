@@ -195,7 +195,7 @@ const sitioDe = (l) => salto.sitioDelMundo(l.salto.origen, l.x, l.z);
 const fueraDeLaCuenta = (l) => ruta.ortodromica(sitioDe(l), ruta.dondeVa(perfil, l.salto.hora).sitio).distancia;
 
 async function elCapitulo() {
-  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 720 } });
+  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 720 }, locale: "es-PY" });
   const page = await ctx.newPage();
   const errores = [];
   const avisos = [];
@@ -278,6 +278,11 @@ async function elCapitulo() {
         await pausa(1500);
         await foto(page, "pantalla-del-respaldo");
       }
+      if (!fotos.has("piernas") && a.linea?.endsWith("derlis.piernas")) {
+        fotos.add("piernas");
+        await pausa(1500);
+        await foto(page, "lamina-piernas");
+      }
       if (a.dichos.includes("ventanilla")) {
         abierta = a;
         break;
@@ -350,6 +355,7 @@ async function elCapitulo() {
     let fotoRodando = false;
     let tocado = null;
     let flaps = false;
+    const fotosDeLoNombrado = new Set();
     for (;;) {
       const l = await leer(page);
       ultimo = l;
@@ -380,6 +386,11 @@ async function elCapitulo() {
       if (adelanto.enLaLlegada && Date.now() - adelanto.enLaLlegada.pared > 2500) {
         if (l.boton?.visible || ad?.sale || ad?.puesto) adelanto.botonTrasLaLlegada++;
         if (ad?.adelantando) adelanto.corrioTras = true;
+      }
+      for (const n of l.nombrados) {
+        if (fotosDeLoNombrado.has(n.sitio)) continue;
+        fotosDeLoNombrado.add(n.sitio);
+        await foto(page, `nombra-${n.sitio.replace(":", "-")}`);
       }
       if (!flaps && l.flaps > 0.2) {
         flaps = true;
@@ -477,7 +488,7 @@ async function elCapitulo() {
       adelanto.cartelAlBajar === true,
       `el cartel a ${adelanto.cartelAlBajar ?? "?"}`,
     );
-    const sol = ruta.solEnElVuelo(perfil, l.salto.hora);
+    const solAlAcabar = ruta.solEnElVuelo(perfil, l.salto.hora);
     const nombro = l.nombrados.map((n) => `${n.sitio}(${n.como}${n.lado ? `, ${n.lado}` : ""})`);
     console.log(`  lo que Ara nombró: ${nombro.join(" · ") || "nada"} · charlas ${l.charlas.join(", ") || "ninguna"}`);
     comprobar(
@@ -487,9 +498,16 @@ async function elCapitulo() {
     );
     comprobar(
       "y de noche cerrada, ni el río ni el Chaco",
-      sol.deNoche ? !l.charlas.includes("rio") && !l.charlas.includes("chaco") : true,
-      `el sol al acabar a ${((sol.altura * 180) / Math.PI).toFixed(0)}°`,
+      solAlAcabar.deNoche ? !l.charlas.includes("rio") && !l.charlas.includes("chaco") : true,
+      `el sol al acabar a ${((solAlAcabar.altura * 180) / Math.PI).toFixed(0)}°`,
     );
+    // Con la 02 y de día queda todo de su lado: si aquí no nombra nada, es que lo que mira no ve.
+    if (VIENTO.startsWith("020") && !solAlAcabar.deNoche)
+      comprobar(
+        "y con la 02 y de día, nombra el río, el Chaco y Asunción",
+        ["rio", "chaco", "asuncion"].every((c) => l.charlas.includes(c)),
+        l.charlas.join(", "),
+      );
     const horaFinal = `comandante.largo.llegada.${perfil.horario.temporada}`;
     comprobar("la hora de allí al llegar, la de hoy", lasDichas.includes(horaFinal), horaFinal);
     comprobar(

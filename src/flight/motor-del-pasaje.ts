@@ -170,7 +170,8 @@ export const DURA_EL_PLANO: Readonly<Record<Plano, number>> = {
  *   desde fuera. Ver `VILLA_DE_MAZO` y la charla `mazo`.
  * - `chaco-enfrente`: el Chaco de enfrente de Asunción, al otro lado del río, que
  *   es lo que se ve al llegar. El hito `chaco` está en Pozo Colorado y Filadelfia,
- *   a doscientos kilómetros de esta final. Ver `CHACO_ENFRENTE`.
+ *   a doscientos kilómetros de esta final. Ver `CHACO_ENFRENTE`. Y `rio-enfrente`,
+ *   el río a la altura de la bahía: ver `RIO_ENFRENTE`.
  *
  * Si se ve lo dice el juego, que es quien tiene el mundo: ver `LecturaDelPasaje.ver`
  * y `world/se-ve-desde-el-pasaje.ts`.
@@ -180,6 +181,7 @@ export type SitioDelPaisaje =
   | "costa-de-llegada"
   | "ladera-de-mazo"
   | "chaco-enfrente"
+  | "rio-enfrente"
   | "tierra-abajo"
   | "mar-abajo"
   | "nubes-abajo"

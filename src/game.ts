@@ -179,7 +179,7 @@ import {
   type PerfilDelVuelo,
 } from "./flight/ruta-larga";
 import { guionDePruebaDelSalto } from "./flight/guion-de-prueba-del-salto";
-import { CHACO_ENFRENTE, GUION_LLEGADA_A_ASUNCION, MUNDO_DE_LA_LLEGADA, SE_DESAYUNA_A } from "./flight/guion-llegada-a-asuncion";
+import { CHACO_ENFRENTE, GUION_LLEGADA_A_ASUNCION, MUNDO_DE_LA_LLEGADA, RIO_ENFRENTE, SE_DESAYUNA_A } from "./flight/guion-llegada-a-asuncion";
 import { cargarElMundo, type MundoCargado } from "./world/mundo-del-tramo";
 import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import {
@@ -25533,10 +25533,10 @@ export class Game {
       return { puntos: [enElSuelo(x, z, null)], ventanilla: 3000, fuera: 0 };
     }
     // Como la ladera de Mazo, por el cristal y nada más: es lo que Ara reconoce al llegar.
-    if (sitio === "chaco-enfrente") {
+    if (sitio === "chaco-enfrente" || sitio === "rio-enfrente") {
       const origen = this.scenario.aerodrome?.origin;
       if (!origen) return null;
-      const { x, z } = dondeCae(origen, CHACO_ENFRENTE);
+      const { x, z } = dondeCae(origen, sitio === "chaco-enfrente" ? CHACO_ENFRENTE : RIO_ENFRENTE);
       return { puntos: [enElSuelo(x, z, null)], ventanilla: POR_LA_VENTANILLA, fuera: 0 };
     }
     const llegada = this.vecinos.find((v) => v.base.id === DESTINO_DEL_PASAJE);

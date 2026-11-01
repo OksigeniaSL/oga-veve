@@ -8,9 +8,11 @@
  * lámina va en cada momento lo decide el guion; esto es lo que se ve.
  *
  * Va debajo del HUD, como la siesta: la tarjeta con la cara y el subtítulo de quien
- * habla se queda encima. Se ve entera en cualquier pantalla: en el portátil la llena
- * y en una tablet o un teléfono de pie deja franjas de color, porque recortarla
- * dejaría sin el reloj de Madrid o sin la mitad de la Tierra.
+ * habla se queda encima. Se ve entera en cualquier pantalla: recortarla dejaría sin el
+ * reloj de Madrid o sin la mitad de la Tierra. Y las que enseñan algo con todas sus
+ * partes van por debajo de la tarjeta, enmarcadas, que a toda pantalla tapaba justo el
+ * sol y la luna del huso. La del desayuno es una escena: esa llena la pantalla, y lo
+ * que tapa la tarjeta es techo.
  *
  * Y cuando tapa del todo no se pinta el mundo: ver `pintar` en `game.ts`.
  */
@@ -19,6 +21,9 @@ import { ilustracion } from "./ilustraciones";
 
 /** Lo que tarda el fundido, s de pared: en tapar y en destapar. */
 const FUNDIDO = { entra: 0.8, sale: 0.9 } as const;
+
+/** **Las que tienen que verse enteras**, por debajo de la tarjeta: ver arriba. */
+const SE_VEN_ENTERAS: ReadonlySet<string> = new Set(["huso-invierno", "huso-verano", "ecuador"]);
 
 /** Lo que mira el banco. */
 export interface LaminaParaBanco {
@@ -101,7 +106,7 @@ export class PantallaDeLaLamina {
     const i = ilustracion(clave);
     if (!i || !this.raiz) return null;
     const img = document.createElement("img");
-    img.className = "lamina-grande__dibujo";
+    img.className = SE_VEN_ENTERAS.has(clave) ? "lamina-grande__dibujo lamina-grande__dibujo--entera" : "lamina-grande__dibujo";
     img.alt = i.alt;
     img.decoding = "async";
     img.src = i.url;

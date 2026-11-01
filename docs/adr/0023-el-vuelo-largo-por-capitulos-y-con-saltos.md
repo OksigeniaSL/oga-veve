@@ -333,12 +333,14 @@ que no estaba arriba y se decidió al escribirlo:
   (`SE_DESAYUNA_A`). Es la pantalla del respaldo de verdad, y dice lo cierto: a esa hora
   el avión va sobre Brasil.
 - **La comandante avisa antes de bajar, no al bajar.** Con los perfiles de hoy, el
-  punto de descenso del juego cae unos diez minutos después de abrirse la ventanilla.
+  punto de descenso del juego cae unos doce minutos después de abrirse la ventanilla.
   Un «empezamos a bajar» ahí sería falso; una frase nueva, «en unos minutos empezamos a
   bajar», con la hora y lo demás montado de lo ya grabado, no lo es. Al llegar el
   descenso, el aviso de la tripulación enciende el cartel.
-- **El Chaco que se nombra es el de enfrente**, `CHACO_ENFRENTE`: el hito `chaco` está
-  a doscientos kilómetros de esta final, y por el cristal no llegaría a verse nunca.
+- **El Chaco y el río que se nombran son los de enfrente**, `CHACO_ENFRENTE` y
+  `RIO_ENFRENTE`: el hito `chaco` está a doscientos kilómetros de esta final, y la línea
+  del río de Natural Earth va, en su trozo de más al sur, al otro lado. Por el cristal no
+  llegaban a verse nunca, y Ara no los nombraba.
 - **El desayuno tiene dos láminas.** La aprobada lleva el amanecer por la ventanilla, y
   de abril a octubre no lo hay. La otra es la misma con los cristales repintados de
   noche, sin tocar lo demás: la cabina sigue con la luz del amanecer, que esa la pone la

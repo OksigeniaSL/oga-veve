@@ -16161,6 +16161,16 @@ body.con-vuelta #tactil {
   transition: opacity 0.9s ease;
 }
 
+/* Las del huso y el ecuador, por debajo de la tarjeta: lo que enseñan tiene que verse entero. */
+.lamina-grande__dibujo--entera {
+  --hueco: min(calc(var(--inicio-arriba, 64px) + 96px), 30vh);
+  inset: var(--hueco) 0 auto;
+  height: calc(100% - var(--hueco) - 8px);
+  width: min(100% - 16px, (100vh - var(--hueco) - 8px) * 16 / 9);
+  margin-inline: auto;
+  border-radius: 14px;
+}
+
 .lamina-grande__dibujo--vista {
   opacity: 1;
 }
