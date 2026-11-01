@@ -82,6 +82,7 @@ export type DibujoDelPasaje =
   | "techo"
   | "vuelta-en-pista"
   | "maletero"
+  | "piernas"
   | "tripulacion"
   | "gomera";
 
@@ -730,6 +731,21 @@ const MALETERO = lamina(
 );
 
 /**
+ * **Mover los pies sin levantarse**: el pie que sube y baja la punta sobre el talón,
+ * delante del asiento. Es lo que se hace, y se entiende sin saber leer.
+ */
+const PIERNAS = lamina(
+  `<path d="M60 30 h70 q18 0 18 18 v120 h110 v50 h-158 q-40 0 -40 -40z" fill="#3c7a6a" class="tf fino"/>
+<path d="M148 150 h104 q14 0 14 14 v28 h-118z" fill="${C.marHondo}" class="tf fino"/>
+<path d="M266 164 h64 v44 h-64z" fill="${C.marHondo}" class="tf fino"/>
+<g class="pie"><path d="M330 214 v-52 q0 -10 12 -10 h34 q44 6 62 30 q6 12 -8 14 l-82 18 q-18 4 -18 0z" fill="${C.terracota}" class="tf fino"/></g>
+<path d="M40 282 h400" stroke="${C.gris}" stroke-width="10" stroke-linecap="round"/>
+<path d="M404 106 q24 22 20 54 m0 0 l-14 -12 m14 12 l12 -14" class="t fino"/>`,
+  `.pie{transform-box:view-box;transform-origin:340px 208px;animation:pie 2.4s ease-in-out infinite}
+@keyframes pie{0%,100%{transform:rotate(-20deg)}50%{transform:rotate(14deg)}}`,
+);
+
+/**
  * **Lo que sabe hacer la tripulación de cabina** (punto 303), con las señales
  * de seguridad que se ven en cualquier aeropuerto: el botiquín —la cruz
  * blanca sobre verde de la ISO 7010— y el desfibrilador —el corazón con el
@@ -801,6 +817,7 @@ const GOMERA = (() => {
 export const DIBUJOS_DEL_PASAJE: Readonly<Record<DibujoDelPasaje, string>> = {
   "vuelta-en-pista": VUELTA_EN_PISTA,
   maletero: MALETERO,
+  piernas: PIERNAS,
   tripulacion: TRIPULACION,
   papi: PAPI,
   estrellas: ESTRELLAS,

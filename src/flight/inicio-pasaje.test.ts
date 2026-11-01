@@ -13,6 +13,7 @@
  * dos juntas en el navegador, `scripts/verificar-inicio-3.mjs`.
  */
 
+import { GUION_LLEGADA_A_ASUNCION } from "./guion-llegada-a-asuncion";
 import { describe, expect, it } from "vitest";
 import { BAJANDO_A_LA_PISTA } from "../audio/hilo-musical";
 import { seLePasoElMomento } from "../audio/megafonia";
@@ -1437,7 +1438,8 @@ describe("el vuelo medido, con las voces que duran lo que duran", () => {
 
   it("cada explicación con su dibujo en la ventanita, y el dibujo existe", () => {
     // Con lo que se dice al tocar la ventanilla: La Gomera solo sale ahí. Ver `flight/lo-que-se-toca.ts`.
-    const conDibujo = [...GUION_DEL_PASAJE, ...CHARLAS_DEL_PASAJE, { lineas: LINEAS_DE_LA_VENTANILLA_VIVA }]
+    // Y con el vuelo largo, que lleva las piernas: en un salto entre islas no hacen falta.
+    const conDibujo = [...GUION_DEL_PASAJE, ...CHARLAS_DEL_PASAJE, ...GUION_LLEGADA_A_ASUNCION.momentos, { lineas: LINEAS_DE_LA_VENTANILLA_VIVA }]
       .flatMap((x) => x.lineas)
       .filter((l) => l.dibujo && ilustracionPedida(l.dibujo) === null);
     expect(conDibujo.length).toBeGreaterThanOrEqual(20);

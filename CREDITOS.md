@@ -795,6 +795,11 @@ y soñando, que no tienen hueco.
 | `src/assets/ilustraciones/maletero.webp` | `esquemas/maletero.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo de los compartimentos de arriba | entera, en 4:3, 1192 × 894 |
 | `src/assets/ilustraciones/torre-radio.webp` | `torre-radio.webp` | «Luz verde», en el kit de viaje de «Viajá con Jazlyn», cuando Ara cuenta que lo normal es la radio | entera, en 4:3, 1020 × 765 |
 | `src/assets/ilustraciones/mazo.webp` | `esquemas/mazo.jpg` | La lámina de la ladera de Mazo al tocarla por la ventanilla de Ara, en «Viajá con Jazlyn» | entera, en 4:3, 1280 × 960 |
+| `src/assets/ilustraciones/desayuno.webp` | `vuelo-largo/desayuno.png` | «Llegá a Asunción», a pantalla completa: Ara se despierta y desayuna, con el amanecer por la ventanilla, de noviembre a marzo | entera, en 16:9, 1600 × 900 |
+| `src/assets/ilustraciones/desayuno-noche.webp` | `vuelo-largo/desayuno-noche.png` | La misma, de abril a octubre, que a esa hora todavía es de noche | sale de `vuelo-largo/desayuno.png` con los cristales de las tres ventanillas repintados de noche, para que no enseñe un sol que hoy no hay; entera, en 16:9, 1600 × 900 |
+| `src/assets/ilustraciones/huso-invierno.webp` | `vuelo-largo/huso-invierno.png` | «Llegá a Asunción», a pantalla completa: el huso horario en invierno de Europa, las 10:00 en Madrid y las 6:00 en Asunción | entera, en 16:9, 1600 × 900 |
+| `src/assets/ilustraciones/huso-verano.webp` | `vuelo-largo/huso-verano.png` | «Llegá a Asunción», a pantalla completa: el huso horario en verano de Europa, las 10:00 en Madrid y las 5:00 en Asunción | entera, en 16:9, 1600 × 900 |
+| `src/assets/ilustraciones/ecuador.webp` | `vuelo-largo/ecuador.png` | «Llegá a Asunción», a pantalla completa: el ecuador que se cruza mientras se duerme | entera, en 16:9, 1600 × 900 |
 | `src/assets/historias/teide.webp` | `historias/teide.jpeg` | La historia de el Teide, mientras se cuenta; y en «Viajá con Jazlyn», en lugar del dibujo de las islas que crecen desde el fondo del mar | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/canadas.webp` | `historias/canadas.jpeg` | La historia de los tajinastes de Las Cañadas, mientras se cuenta | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/anaga.webp` | `historias/anaga.jpeg` | La historia de Anaga, mientras se cuenta | entera, en 4:3, 1280 × 960 |

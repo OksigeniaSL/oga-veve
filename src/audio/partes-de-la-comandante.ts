@@ -402,3 +402,45 @@ export function descensoPara(
   textos.push(tiempo.texto);
   return { clave: "comandante.descenso", relleno, texto: textos.join(" ") };
 }
+
+/**
+ * **Lo que dice la comandante del vuelo largo unos cuarenta minutos antes de
+ * tocar**: que falta poco para bajar, qué hora es allí, cuánto falta y qué tiempo
+ * hace. Con los trozos de siempre para los minutos, el cielo y los grados, que no
+ * hay que grabarlos otra vez.
+ *
+ * No es `descensoPara`, que dice «empezamos a bajar», porque todavía no se baja: el
+ * punto de descenso está unos minutos por delante, y una comandante lo anuncia antes
+ * para que dé tiempo a recoger el desayuno.
+ *
+ * `horaEnAsuncion`, s desde medianoche. Se dice redondeada al cuarto de hora, como lo
+ * diría cualquiera, y solo las dos que caen en este punto del vuelo con el horario de
+ * cada temporada: otra hora no tiene su trozo, y un número que no puede sonar a su
+ * altura no se dice.
+ */
+export function anuncioDeLaBajadaDelVueloLargo(
+  horaEnAsuncion: number,
+  segundos: number,
+  meteo: Meteo,
+  grabada?: (pieza: string) => boolean,
+): AnuncioMontado {
+  const bajada: TranslationKey = "comandante.largo.bajada";
+  const tiempo = elTiempoDeAlla(meteo);
+  const relleno: Record<string, string> = { bajada, ...tiempo.relleno };
+  const textos = [t(bajada)];
+  const cuarto = Math.round(horaEnAsuncion / 900) * 900;
+  const hh = String(Math.floor(cuarto / 3600)).padStart(2, "0");
+  const mm = String(Math.floor(cuarto / 60) % 60).padStart(2, "0");
+  const hora = `comandante.largo.hora.${hh}${mm}`;
+  if (hayTexto(hora)) {
+    relleno.hora = hora;
+    textos.push(t(hora as TranslationKey));
+  }
+  const min = minutosQueSeDicen(segundos, piezaDeMinutos, grabada);
+  if (min !== null) {
+    relleno.minutos = piezaDeMinutos(min);
+    textos.push(textoDeLaDuracion("comandante.minutos", piezaDeMinutos, min));
+  }
+  textos.push(tiempo.texto);
+  return { clave: "comandante.largo.anuncio", relleno, texto: textos.join(" ") };
+}

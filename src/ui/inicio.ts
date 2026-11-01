@@ -125,6 +125,23 @@ const LA_TRIPULANTE = `
       <path class="cara__alas" d="M30.6 41.2 h5.6 M33.4 40 v2.4" />`;
 
 /**
+ * **Y Derlis, el tripulante del Paraguay, en el vuelo largo**: pelo corto y corbata
+ * en los colores de la casa, con las alas en la solapa. Sus frases van con su clave,
+ * que es la que dice qué voz les toca. Ver `flight/guion-llegada-a-asuncion.ts`.
+ */
+const DE_DERLIS = "inicio.tripulacion.pasaje.derlis.";
+const EL_TRIPULANTE = `
+      <circle class="cara__fondo" cx="24" cy="24" r="23" />
+      <path class="cara__pelo" d="M13.8 26 q-0.6-13.4 10.2-13.4 q10.8 0 10.2 13.4 q-1.6-6.2-5-7.6 q-5.2 2.4-10.4 0 q-3.4 1.4-5 7.6 Z" />
+      <ellipse class="cara__piel" cx="24" cy="27.4" rx="9.4" ry="10.4" />
+      <path class="cara__pelo" d="M14.8 24.2 q1.6-6 9.2-6 q7.6 0 9.2 6 q-3.4-3.2-9.2-3.2 q-5.8 0-9.2 3.2 Z" />
+      <circle class="cara__ojo" cx="20.4" cy="27.2" r="1.4" />
+      <circle class="cara__ojo" cx="27.6" cy="27.2" r="1.4" />
+      <path class="cara__trazo" d="M21 32.4 q3 2.8 6 0" />
+      <path class="cara__panuelo" d="M21.8 38.6 h4.4 l-1.2 2.4 l1.4 3.4 h-4.8 l1.4 -3.4 Z" />
+      <path class="cara__alas" d="M30.6 41.2 h5.6 M33.4 40 v2.4" />`;
+
+/**
  * **Y la de Jazlyn, como en los cuentos**: el retrato de sus ilustraciones
  * —ver `ui/ilustraciones.ts`—, en redondo y encima de la de trazos, dejando
  * a la vista un filo del ocre de su círculo. La de trazos se queda debajo por
@@ -136,7 +153,9 @@ function retratoEncima(quien: Quien): string {
   return `<image class="cara__retrato" href="${RETRATO_DE_JAZLYN}" x="2.5" y="2.5" width="43" height="43" />`;
 }
 
-export function caraDe(quien: Quien, megafonia = false): string {
+export function caraDe(quien: Quien, megafonia = false, clave = ""): string {
+  if (quien === "tripulacion" && !megafonia && clave.startsWith(DE_DERLIS))
+    return `<svg class="inicio__cara inicio__cara--tripulante" viewBox="0 0 48 48" aria-hidden="true">${EL_TRIPULANTE}</svg>`;
   if (quien === "tripulacion" && !megafonia)
     return `<svg class="inicio__cara inicio__cara--tripulante" viewBox="0 0 48 48" aria-hidden="true">${LA_TRIPULANTE}</svg>`;
   const altavoz = megafonia && quien !== "tripulacion" ? POR_EL_ALTAVOZ : "";
@@ -745,7 +764,7 @@ export class PantallaDelInicio {
     const dicho = v.linea ? `${v.linea.quien}|${v.linea.clave}|${v.linea.texto}` : "";
     if (dicho !== this.dicho) {
       this.dicho = dicho;
-      this.cara.innerHTML = v.linea ? caraDe(v.linea.quien, v.linea.megafonia) : "";
+      this.cara.innerHTML = v.linea ? caraDe(v.linea.quien, v.linea.megafonia, v.linea.clave) : "";
       // Quién habla, también para quien no ve la cara.
       if (v.linea) {
         this.cara.setAttribute("role", "img");
@@ -755,7 +774,9 @@ export class PantallaDelInicio {
             v.linea.quien === "tripulacion"
               ? v.linea.megafonia
                 ? "inicio.modo.tripulacion"
-                : "inicio.modo.tripulante"
+                : v.linea.clave.startsWith(DE_DERLIS)
+                  ? "inicio.modo.tripulanteDerlis"
+                  : "inicio.modo.tripulante"
               : v.linea.quien === "ara"
                 ? "inicio.modo.ara"
                 : v.linea.megafonia

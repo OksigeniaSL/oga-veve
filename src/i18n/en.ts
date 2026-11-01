@@ -3007,4 +3007,55 @@ export const EN: Dictionary = {
   "inicio.kit.luz.roja-destellos": "Flashing red: aerodrome unsafe, do not land",
   "inicio.kit.luz.conRadio": "Plane with a working radio",
   "inicio.kit.luz.sinRadio": "Plane with a broken radio: it needs a light",
+  // The third chapter of the long flight: Ara wakes up over Brazil and gets home.
+  "inicio.ara.pasaje.largo.meDormi": "I slept the whole night! Where are we now?",
+  "inicio.tripulacion.pasaje.cerca.largo.mapa":
+    "Look at your screen: that little plane is us. The solid line is what we've already flown, and the dots are what's left.",
+  "inicio.ara.pasaje.largo.mapa": "We crossed the whole ocean while I was sleeping!",
+  "inicio.tripulacion.pasaje.derlis.desayuno":
+    "Good morning. Here's your breakfast: chipa from home, nice and warm, and fruit. Seat belt on while you eat: in your seat, always.",
+  "inicio.ara.pasaje.largo.chipa": "Chipa from home! And how good it smells, still warm.",
+  "inicio.ara.pasaje.largo.nariz": "My nose has gone dry, and my eyes itch a little.",
+  "inicio.tripulacion.pasaje.derlis.agua":
+    "That's the air up here, it's very dry. It's nothing to worry about: a little glass of water when you're thirsty, and that's it.",
+  "inicio.ara.pasaje.largo.huso": "It's already ten o'clock in Madrid. Why is it so early here?",
+  "inicio.tripulacion.pasaje.cerca.largo.huso":
+    "Because the Earth turns, see? The sun reaches Madrid first and Asunción later, and each place sets its clock by its own sun.",
+  "inicio.tripulacion.pasaje.cerca.largo.husoInvierno":
+    "Today it's a four-hour difference. In the European summer it's five, because Spain changes its clocks and Paraguay no longer does.",
+  "inicio.tripulacion.pasaje.cerca.largo.husoVerano":
+    "Today it's a five-hour difference. In the European winter it's four, because Spain changes its clocks and Paraguay no longer does.",
+  "inicio.tripulacion.pasaje.cerca.largo.ecuador1":
+    "And while you were sleeping we crossed the equator: the line that splits the Earth in two, like the waist of a ball.",
+  "inicio.ara.pasaje.largo.ecuador": "And what are things like on the other side of the line?",
+  "inicio.tripulacion.pasaje.cerca.largo.ecuador2":
+    "The seasons are the other way round: when it's winter in Madrid, it's summer here. And in the night sky the North Star hides and the Southern Cross appears.",
+  "inicio.tripulacion.pasaje.derlis.piernas":
+    "And after so many hours, move your feet and legs without getting up: toes up, toes down, and a few circles with your ankle.",
+  "inicio.tripulacion.pasaje.derlis.desfase":
+    "Your body has a clock too, and it's still on Madrid time. Today go out in the morning sun, eat and sleep on local time, and in a few days it will catch up.",
+  "inicio.ara.pasaje.largo.deDia": "It's daytime already! Look at all that light out there.",
+  "inicio.ara.pasaje.largo.amanece": "Look out of the window: the sun's coming up!",
+  "inicio.ara.pasaje.largo.deNoche": "It's still night outside, and I've already had breakfast.",
+  "comandante.largo.bajada":
+    "Ladies and gentlemen, this is the captain again. In a few minutes we'll start our descent.",
+  "comandante.largo.hora.0545": "In Asunción it's a quarter to six in the morning.",
+  "comandante.largo.hora.0645": "In Asunción it's a quarter to seven in the morning.",
+  "inicio.tripulacion.pasaje.cerca.largo.oidos":
+    "Swallow, yawn or chew something, and you'll see them clear. That's why I woke you before going down.",
+  "inicio.ara.pasaje.largo.rio": "Look, the Paraguay River! It's so big, and it has so many bends.",
+  "inicio.ara.pasaje.largo.chaco": "And on the other side of the river, flat as far as you can see: that's the Chaco.",
+  "inicio.ara.pasaje.largo.asuncion": "There's Asunción, with its bay! We're nearly there.",
+  "inicio.ara.pasaje.largo.asuncionNoche": "Look at the lights of Asunción! We're nearly there.",
+  "comandante.largo.llegada.verano": "It's twenty-five past six in the morning here. Have a lovely day.",
+  "comandante.largo.llegada.invierno": "It's half past seven in the morning here. Have a lovely day.",
+  "inicio.ara.pasaje.largo.llegamos": "We've reached Asunción! I crossed the whole ocean.",
+  "inicio.modo.largo": "Arrive in Asunción",
+  "inicio.modo.tripulanteDerlis": "The cabin crew member, right beside you",
+  "inicio.dibujo.piernas": "A foot lifting and lowering its toes, without getting up from the seat.",
+  "ilustracion.desayuno": "Ara wakes up with breakfast on the tray; the sun rises outside the window",
+  "ilustracion.desayuno-noche": "Ara wakes up with breakfast on the tray; outside it is still night",
+  "ilustracion.huso-invierno": "The Earth half in night: ten in Madrid and six in Asunción",
+  "ilustracion.huso-verano": "The Earth half in night: ten in Madrid and five in Asunción",
+  "ilustracion.ecuador": "The Earth with the equator as a red line, and the plane crossing it",
 };

@@ -2954,9 +2954,9 @@ async function desdeElHangar() {
       })),
     );
     comprobar(
-      "hangar: la ficha de viajar con Jazlyn, al lado de las otras dos",
-      fichas.length === 3 &&
-        fichas.map((f) => f.cual).join() === "despegar,aterrizar,pasaje" &&
+      "hangar: la ficha de viajar con Jazlyn, al lado de las otras dos, y la de llegar a Asunción detrás",
+      fichas.length === 4 &&
+        fichas.map((f) => f.cual).join() === "despegar,aterrizar,pasaje,largo" &&
         fichas.every((f) => f.alto >= 44),
       fichas.map((f) => `${f.cual}: «${f.nombre}» ${f.alto} px`).join(" · "),
     );

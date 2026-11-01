@@ -740,6 +740,13 @@
     "{cielo}",
     "{temperatura}"
   ],
+  "comandante.largo.anuncio": [
+    "{bajada}",
+    "{hora?}",
+    "{minutos?}",
+    "{cielo}",
+    "{temperatura}"
+  ],
   "comandante.mitad": [
     "{mitad}",
     "{minutos?}",
