@@ -1239,8 +1239,8 @@ const LEC_INICIO_LARGO = `
   <svg class="ficha__panel" viewBox="0 0 120 84" aria-hidden="true">
     <rect class="panel__cielo" x="0" y="0" width="120" height="84" rx="3" />
     <circle class="leccion__mar" cx="74" cy="42" r="38" />
-    <path class="leccion__loma" d="M84 7 q14 3 21 16 q-4 11 -13 11 q-9 -1 -11 -9 q-3 -9 3 -18 Z" />
-    <path class="leccion__loma" d="M46 38 q10 -7 22 -2 q9 8 8 20 q-4 13 -11 21 q-6 -2 -9 -11 q-2 -9 -7 -14 q-3 -6 -3 -14 Z" />
+    <path fill="#8fd06c" d="M84 7 q14 3 21 16 q-4 11 -13 11 q-9 -1 -11 -9 q-3 -9 3 -18 Z" />
+    <path fill="#8fd06c" d="M46 38 q10 -7 22 -2 q9 8 8 20 q-4 13 -11 21 q-6 -2 -9 -11 q-2 -9 -7 -14 q-3 -6 -3 -14 Z" />
     <path class="leccion__estela" d="M95 24 Q82 40 66 56" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.1 5" />
     <circle cx="65" cy="58" r="3.4" fill="#c62f2f" stroke="#fff" stroke-width="1.4" />
     <g transform="translate(77 41) rotate(-138)">

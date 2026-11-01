@@ -69,11 +69,11 @@ export const MUNDO_DE_LA_LLEGADA = "pettirossi";
 export const SE_DESAYUNA_A = 9 * 3600 + 40 * 60;
 
 /**
- * **El Chaco que se ve al llegar**: enfrente de la bahía de Asunción, a unos cinco
+ * **El Chaco que se ve al llegar**: enfrente de la bahía de Asunción, a unos tres
  * kilómetros de la orilla, ya en la Región Occidental. Lo que se tiene delante desde
  * la final, y no los sitios del hito `chaco`, que están muy al norte.
  */
-export const CHACO_ENFRENTE = { lat: -25.2, lon: -57.72 } as const;
+export const CHACO_ENFRENTE = { lat: -25.24, lon: -57.7 } as const;
 /**
  * **El río que se ve al llegar**: el cauce de delante de la bahía de Asunción. El hito
  * `rio-paraguay` sigue la línea de Natural Earth, que por aquí es de trazo grueso y

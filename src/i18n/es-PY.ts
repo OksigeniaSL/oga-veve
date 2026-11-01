@@ -4709,7 +4709,7 @@ export const ES_PY = {
   "inicio.ara.pasaje.largo.mapa": "¡Cruzamos todo el mar mientras yo dormía!",
   "inicio.tripulacion.pasaje.derlis.desayuno":
     "Buen día. Acá tenés tu desayuno: chipa de casa, calentita, y fruta. El cinturón, puesto mientras comés: en el asiento, siempre.",
-  "inicio.ara.pasaje.largo.chipa": "¡Chipa! Esto huele a casa.",
+  "inicio.ara.pasaje.largo.chipa": "¡Chipa de casa! Y cómo huele, todavía calentita.",
   "inicio.ara.pasaje.largo.nariz": "Se me secó la nariz, y me pican un poco los ojos.",
   "inicio.tripulacion.pasaje.derlis.agua":
     "Es el aire de arriba, que es muy seco. No pasa nada: un vasito de agua cuando tengas sed, y listo.",
@@ -4722,7 +4722,7 @@ export const ES_PY = {
     "Hoy son cinco horas de diferencia. En invierno de Europa son cuatro, porque España cambia la hora y Paraguay ya no.",
   "inicio.tripulacion.pasaje.cerca.largo.ecuador1":
     "Y mientras dormías cruzamos el ecuador: la raya que parte la Tierra en dos, como la cintura de una pelota.",
-  "inicio.ara.pasaje.largo.ecuador": "¿Y cómo es del otro lado?",
+  "inicio.ara.pasaje.largo.ecuador": "¿Y cómo son las cosas del otro lado de la raya?",
   "inicio.tripulacion.pasaje.cerca.largo.ecuador2":
     "Las estaciones van al revés: cuando en Madrid es invierno, aquí es verano. Y en el cielo de noche se esconde la Polar y aparece la Cruz del Sur.",
   "inicio.tripulacion.pasaje.derlis.piernas":

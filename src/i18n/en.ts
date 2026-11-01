@@ -3014,7 +3014,7 @@ export const EN: Dictionary = {
   "inicio.ara.pasaje.largo.mapa": "We crossed the whole ocean while I was sleeping!",
   "inicio.tripulacion.pasaje.derlis.desayuno":
     "Good morning. Here's your breakfast: chipa from home, nice and warm, and fruit. Seat belt on while you eat: in your seat, always.",
-  "inicio.ara.pasaje.largo.chipa": "Chipa! This smells like home.",
+  "inicio.ara.pasaje.largo.chipa": "Chipa from home! And how good it smells, still warm.",
   "inicio.ara.pasaje.largo.nariz": "My nose has gone dry, and my eyes itch a little.",
   "inicio.tripulacion.pasaje.derlis.agua":
     "That's the air up here, it's very dry. It's nothing to worry about: a little glass of water when you're thirsty, and that's it.",
@@ -3027,7 +3027,7 @@ export const EN: Dictionary = {
     "Today it's a five-hour difference. In the European winter it's four, because Spain changes its clocks and Paraguay no longer does.",
   "inicio.tripulacion.pasaje.cerca.largo.ecuador1":
     "And while you were sleeping we crossed the equator: the line that splits the Earth in two, like the waist of a ball.",
-  "inicio.ara.pasaje.largo.ecuador": "And what's it like on the other side?",
+  "inicio.ara.pasaje.largo.ecuador": "And what are things like on the other side of the line?",
   "inicio.tripulacion.pasaje.cerca.largo.ecuador2":
     "The seasons are the other way round: when it's winter in Madrid, it's summer here. And in the night sky the North Star hides and the Southern Cross appears.",
   "inicio.tripulacion.pasaje.derlis.piernas":

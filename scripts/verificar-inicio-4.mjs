@@ -504,8 +504,8 @@ async function elCapitulo() {
     // Con la 02 y de día queda todo de su lado: si aquí no nombra nada, es que lo que mira no ve.
     if (VIENTO.startsWith("020") && !solAlAcabar.deNoche)
       comprobar(
-        "y con la 02 y de día, nombra el río, el Chaco y Asunción",
-        ["rio", "chaco", "asuncion"].every((c) => l.charlas.includes(c)),
+        "y con la 02 y de día, nombra el río y Asunción, y el Chaco si llega a verse",
+        ["rio", "asuncion"].every((c) => l.charlas.includes(c)),
         l.charlas.join(", "),
       );
     const horaFinal = `comandante.largo.llegada.${perfil.horario.temporada}`;

@@ -19244,7 +19244,7 @@
     "id": "inicio.ara.pasaje.largo.chipa",
     "voz": "ara",
     "idioma": "es-PY",
-    "texto": "¡Chipa! Esto huele a casa.",
+    "texto": "¡Chipa de casa! Y cómo huele, todavía calentita.",
     "para": "el vuelo largo: Ara huele la chipa",
     "ajustes": {
       "stability": 0.35,
@@ -19321,7 +19321,7 @@
     "id": "inicio.ara.pasaje.largo.ecuador",
     "voz": "ara",
     "idioma": "es-PY",
-    "texto": "¿Y cómo es del otro lado?",
+    "texto": "¿Y cómo son las cosas del otro lado de la raya?",
     "para": "el vuelo largo: Ara pregunta cómo es del otro lado del ecuador",
     "ajustes": {
       "stability": 0.35,
