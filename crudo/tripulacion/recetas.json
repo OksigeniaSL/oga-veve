@@ -60,5 +60,17 @@
   ],
   "tripulacion.servicio.seguimos": [
     "tripulacion.servicio.seguimos"
+  ],
+  "inicio.tripulacion.pasaje.derlis.desayuno": [
+    "inicio.tripulacion.pasaje.derlis.desayuno"
+  ],
+  "inicio.tripulacion.pasaje.derlis.agua": [
+    "inicio.tripulacion.pasaje.derlis.agua"
+  ],
+  "inicio.tripulacion.pasaje.derlis.piernas": [
+    "inicio.tripulacion.pasaje.derlis.piernas"
+  ],
+  "inicio.tripulacion.pasaje.derlis.desfase": [
+    "inicio.tripulacion.pasaje.derlis.desfase"
   ]
 }

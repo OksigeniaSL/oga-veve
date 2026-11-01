@@ -3,6 +3,22 @@
   "voz": "tripulacion",
   "idioma": "es-PY",
   "piezas": {
+    "inicio.tripulacion.pasaje.derlis.agua": {
+      "ms": 7207,
+      "h": "cc179eb3a9"
+    },
+    "inicio.tripulacion.pasaje.derlis.desayuno": {
+      "ms": 8907,
+      "h": "2fed2021d4"
+    },
+    "inicio.tripulacion.pasaje.derlis.desfase": {
+      "ms": 9707,
+      "h": "a90cfa3911"
+    },
+    "inicio.tripulacion.pasaje.derlis.piernas": {
+      "ms": 10207,
+      "h": "07a4eeb32d"
+    },
     "tripulacion.bienvenidos.encarnacion": {
       "ms": 2274,
       "h": "a861845118"
@@ -138,6 +154,18 @@
     ],
     "tripulacion.servicio.seguimos": [
       "tripulacion.servicio.seguimos"
+    ],
+    "inicio.tripulacion.pasaje.derlis.desayuno": [
+      "inicio.tripulacion.pasaje.derlis.desayuno"
+    ],
+    "inicio.tripulacion.pasaje.derlis.agua": [
+      "inicio.tripulacion.pasaje.derlis.agua"
+    ],
+    "inicio.tripulacion.pasaje.derlis.piernas": [
+      "inicio.tripulacion.pasaje.derlis.piernas"
+    ],
+    "inicio.tripulacion.pasaje.derlis.desfase": [
+      "inicio.tripulacion.pasaje.derlis.desfase"
     ]
   }
 }

@@ -475,6 +475,26 @@
       "ms": 1433,
       "h": "d218ecc5fa"
     },
+    "comandante.largo.bajada": {
+      "ms": 4607,
+      "h": "5bf6651ce3"
+    },
+    "comandante.largo.hora.0545": {
+      "ms": 2736,
+      "h": "9325c4f8bb"
+    },
+    "comandante.largo.hora.0645": {
+      "ms": 2727,
+      "h": "d135f739e6"
+    },
+    "comandante.largo.llegada.invierno": {
+      "ms": 3407,
+      "h": "6a76b6a492"
+    },
+    "comandante.largo.llegada.verano": {
+      "ms": 4107,
+      "h": "c89bdaa2b6"
+    },
     "comandante.llegada.ayolas": {
       "ms": 9507,
       "h": "286d20c253"
@@ -2770,6 +2790,13 @@
       "{cielo}",
       "{temperatura}"
     ],
+    "comandante.largo.anuncio": [
+      "{bajada}",
+      "{hora?}",
+      "{minutos?}",
+      "{cielo}",
+      "{temperatura}"
+    ],
     "comandante.mitad": [
       "{mitad}",
       "{minutos?}",
@@ -3576,6 +3603,21 @@
     ],
     "comandante.crucero~3": [
       "comandante.crucero~3"
+    ],
+    "comandante.largo.bajada": [
+      "comandante.largo.bajada"
+    ],
+    "comandante.largo.hora.0545": [
+      "comandante.largo.hora.0545"
+    ],
+    "comandante.largo.hora.0645": [
+      "comandante.largo.hora.0645"
+    ],
+    "comandante.largo.llegada.verano": [
+      "comandante.largo.llegada.verano"
+    ],
+    "comandante.largo.llegada.invierno": [
+      "comandante.largo.llegada.invierno"
     ]
   }
 }

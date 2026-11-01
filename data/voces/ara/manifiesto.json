@@ -363,6 +363,62 @@
       "ms": 5507,
       "h": "77dd043ffe"
     },
+    "inicio.ara.pasaje.largo.amanece": {
+      "ms": 3307,
+      "h": "2d51eb7ba1"
+    },
+    "inicio.ara.pasaje.largo.asuncion": {
+      "ms": 4107,
+      "h": "cf4df2c9e2"
+    },
+    "inicio.ara.pasaje.largo.asuncionNoche": {
+      "ms": 3507,
+      "h": "4295c711ae"
+    },
+    "inicio.ara.pasaje.largo.chaco": {
+      "ms": 5707,
+      "h": "2f09ccadaf"
+    },
+    "inicio.ara.pasaje.largo.chipa": {
+      "ms": 3907,
+      "h": "fe91b5b248"
+    },
+    "inicio.ara.pasaje.largo.deDia": {
+      "ms": 3207,
+      "h": "ec4fd7a25f"
+    },
+    "inicio.ara.pasaje.largo.deNoche": {
+      "ms": 3307,
+      "h": "95c02d3c65"
+    },
+    "inicio.ara.pasaje.largo.ecuador": {
+      "ms": 2984,
+      "h": "c045253b85"
+    },
+    "inicio.ara.pasaje.largo.huso": {
+      "ms": 3707,
+      "h": "7474a344e7"
+    },
+    "inicio.ara.pasaje.largo.llegamos": {
+      "ms": 3307,
+      "h": "feb435683c"
+    },
+    "inicio.ara.pasaje.largo.mapa": {
+      "ms": 2749,
+      "h": "fd90d1b369"
+    },
+    "inicio.ara.pasaje.largo.meDormi": {
+      "ms": 4007,
+      "h": "3430ffa978"
+    },
+    "inicio.ara.pasaje.largo.nariz": {
+      "ms": 3807,
+      "h": "419195b835"
+    },
+    "inicio.ara.pasaje.largo.rio": {
+      "ms": 4507,
+      "h": "2c08f4c741"
+    },
     "inicio.ara.pasaje.loVeo": {
       "ms": 3807,
       "h": "cd1e41c6a7"
@@ -870,6 +926,48 @@
     ],
     "inicio.ara.pasaje.kitGracias": [
       "inicio.ara.pasaje.kitGracias"
+    ],
+    "inicio.ara.pasaje.largo.amanece": [
+      "inicio.ara.pasaje.largo.amanece"
+    ],
+    "inicio.ara.pasaje.largo.asuncion": [
+      "inicio.ara.pasaje.largo.asuncion"
+    ],
+    "inicio.ara.pasaje.largo.asuncionNoche": [
+      "inicio.ara.pasaje.largo.asuncionNoche"
+    ],
+    "inicio.ara.pasaje.largo.chaco": [
+      "inicio.ara.pasaje.largo.chaco"
+    ],
+    "inicio.ara.pasaje.largo.chipa": [
+      "inicio.ara.pasaje.largo.chipa"
+    ],
+    "inicio.ara.pasaje.largo.deDia": [
+      "inicio.ara.pasaje.largo.deDia"
+    ],
+    "inicio.ara.pasaje.largo.deNoche": [
+      "inicio.ara.pasaje.largo.deNoche"
+    ],
+    "inicio.ara.pasaje.largo.ecuador": [
+      "inicio.ara.pasaje.largo.ecuador"
+    ],
+    "inicio.ara.pasaje.largo.huso": [
+      "inicio.ara.pasaje.largo.huso"
+    ],
+    "inicio.ara.pasaje.largo.llegamos": [
+      "inicio.ara.pasaje.largo.llegamos"
+    ],
+    "inicio.ara.pasaje.largo.mapa": [
+      "inicio.ara.pasaje.largo.mapa"
+    ],
+    "inicio.ara.pasaje.largo.meDormi": [
+      "inicio.ara.pasaje.largo.meDormi"
+    ],
+    "inicio.ara.pasaje.largo.nariz": [
+      "inicio.ara.pasaje.largo.nariz"
+    ],
+    "inicio.ara.pasaje.largo.rio": [
+      "inicio.ara.pasaje.largo.rio"
     ],
     "inicio.ara.pasaje.loVeo": [
       "inicio.ara.pasaje.loVeo"

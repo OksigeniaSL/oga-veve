@@ -234,5 +234,26 @@
   ],
   "inicio.tripulacion.pasaje.cerca.silbo": [
     "inicio.tripulacion.pasaje.cerca.silbo"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.mapa": [
+    "inicio.tripulacion.pasaje.cerca.largo.mapa"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.huso": [
+    "inicio.tripulacion.pasaje.cerca.largo.huso"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.husoInvierno": [
+    "inicio.tripulacion.pasaje.cerca.largo.husoInvierno"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.husoVerano": [
+    "inicio.tripulacion.pasaje.cerca.largo.husoVerano"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.ecuador1": [
+    "inicio.tripulacion.pasaje.cerca.largo.ecuador1"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.ecuador2": [
+    "inicio.tripulacion.pasaje.cerca.largo.ecuador2"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.oidos": [
+    "inicio.tripulacion.pasaje.cerca.largo.oidos"
   ]
 }

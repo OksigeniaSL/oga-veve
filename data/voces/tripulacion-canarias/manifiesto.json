@@ -67,6 +67,34 @@
       "ms": 6607,
       "h": "4b1410c892"
     },
+    "inicio.tripulacion.pasaje.cerca.largo.ecuador1": {
+      "ms": 7007,
+      "h": "a0329acd93"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.ecuador2": {
+      "ms": 9007,
+      "h": "e694facba1"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.huso": {
+      "ms": 5807,
+      "h": "f409ba4456"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.husoInvierno": {
+      "ms": 6207,
+      "h": "17126f7803"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.husoVerano": {
+      "ms": 6607,
+      "h": "9ba093e41f"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.mapa": {
+      "ms": 8407,
+      "h": "4e635fdbe2"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.oidos": {
+      "ms": 6307,
+      "h": "4a06f5e7f8"
+    },
     "inicio.tripulacion.pasaje.cerca.maleteros": {
       "ms": 7007,
       "h": "656396dbeb"
@@ -544,6 +572,27 @@
     ],
     "inicio.tripulacion.pasaje.cerca.silbo": [
       "inicio.tripulacion.pasaje.cerca.silbo"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.mapa": [
+      "inicio.tripulacion.pasaje.cerca.largo.mapa"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.huso": [
+      "inicio.tripulacion.pasaje.cerca.largo.huso"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.husoInvierno": [
+      "inicio.tripulacion.pasaje.cerca.largo.husoInvierno"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.husoVerano": [
+      "inicio.tripulacion.pasaje.cerca.largo.husoVerano"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.ecuador1": [
+      "inicio.tripulacion.pasaje.cerca.largo.ecuador1"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.ecuador2": [
+      "inicio.tripulacion.pasaje.cerca.largo.ecuador2"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.oidos": [
+      "inicio.tripulacion.pasaje.cerca.largo.oidos"
     ]
   }
 }

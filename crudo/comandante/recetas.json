@@ -1553,5 +1553,20 @@
   ],
   "comandante.crucero~3": [
     "comandante.crucero~3"
+  ],
+  "comandante.largo.bajada": [
+    "comandante.largo.bajada"
+  ],
+  "comandante.largo.hora.0545": [
+    "comandante.largo.hora.0545"
+  ],
+  "comandante.largo.hora.0645": [
+    "comandante.largo.hora.0645"
+  ],
+  "comandante.largo.llegada.verano": [
+    "comandante.largo.llegada.verano"
+  ],
+  "comandante.largo.llegada.invierno": [
+    "comandante.largo.llegada.invierno"
   ]
 }
