@@ -88,13 +88,17 @@ export type Gesto =
  * pasaje en un avión de línea, mirando por la ventanilla —ver
  * `inicio-pasaje.ts`—. `?inicio=1` abre la primera, `?inicio=2` la segunda
  * e `?inicio=3` la tercera.
+ *
+ * Y la cuarta, el vuelo largo de vuelta a casa, por capítulos: `?inicio=4&capitulo=3`.
+ * Todavía sin menú, y con el único capítulo que hay: el tercero, «Amanecer y
+ * llegada a Asunción». Ver `guion-llegada-a-asuncion.ts` y el ADR 0023.
  */
-export type EscenaDelInicio = "despegar" | "aterrizar" | "pasaje";
+export type EscenaDelInicio = "despegar" | "aterrizar" | "pasaje" | "largo";
 
-/** Qué escena pide un `?inicio=` de la dirección: el 2, aterrizar; el 3, de pasaje; lo demás, despegar. */
+/** Qué escena pide un `?inicio=` de la dirección: el 2, aterrizar; el 3, de pasaje; el 4, el vuelo largo; lo demás, despegar. */
 export function escenaPedida(valor: string | null): EscenaDelInicio {
   const v = valor?.trim();
-  return v === "2" ? "aterrizar" : v === "3" ? "pasaje" : "despegar";
+  return v === "2" ? "aterrizar" : v === "3" ? "pasaje" : v === "4" ? "largo" : "despegar";
 }
 
 export type PasoId =

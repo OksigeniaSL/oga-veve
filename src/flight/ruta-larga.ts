@@ -594,6 +594,24 @@ export function cuandoPasa(p: PerfilDelVuelo, recorrido: number): number {
   return (a + b) / 2;
 }
 
+/**
+ * **A cuántos metros de Pettirossi se entra en el tercer capítulo**, por la
+ * ortodrómica. Lo que manda es el mundo: el capítulo entra en el del Paraguay,
+ * que no tiene pasillo de crucero detrás, así que el avión tiene que caer ya
+ * dentro de él, y estos cuatrocientos kilómetros son unos trescientos diez al
+ * norte y doscientos cincuenta al este del centro de un mundo que llega a
+ * trescientos setenta y cuatro. Es el sitio y no la hora porque la hora cambia
+ * con el horario del día: en verano cae a las 10 h 35 del despegue y en invierno
+ * a las 10 h 40, un rato antes de la entrada en el Paraguay junto a Pedro Juan
+ * Caballero.
+ */
+export const ENTRA_LA_LLEGADA_A = 400_000;
+
+/** **Cuándo entra el tercer capítulo**, s desde el despegue. Ver `ENTRA_LA_LLEGADA_A`. */
+export function entradaDeLaLlegada(p: PerfilDelVuelo): number {
+  return cuandoPasa(p, p.ruta.distancia - ENTRA_LA_LLEGADA_A);
+}
+
 // ── Las horas y la luz ──────────────────────────────────────────────────
 
 /**
