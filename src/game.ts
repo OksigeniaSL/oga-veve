@@ -1459,6 +1459,7 @@ import { calorQuePesa } from "./flight/caliente-y-alto";
 import {
   aCuantoCaptura,
   loSolto,
+  autoridadDelTimon,
   mandosPara,
   memoriaNueva,
   modoVertical,
@@ -27078,6 +27079,12 @@ export class Game {
         // con eso cuánto acelera cada trozo de palanca.
         empujeAFondo: empujeLleno(this.aircraft, airDensity(s.position.y, aire), s.airspeed),
         masa: this.masaDeAhora(),
+        // Y lo que mueve su morro su timón: ver `AUTORIDAD_SUFICIENTE`.
+        autoridadDelTimon: autoridadDelTimon(
+          this.aircraft,
+          airDensity(s.position.y, aire),
+          s.airspeed,
+        ),
         /*
          * **Y en el modelo sencillo, con sus propias cuentas**: ahí la palanca
          * es cuánto se sube y el gas es la velocidad, y las dos cosas se le
@@ -27450,6 +27457,12 @@ export class Game {
         verdadera: s.airspeed,
         ritmoDeCabeceo: s.pitchRate,
         timon: this.flight.timonAhora(),
+        // Lo que mueve su morro su timón: ver `AUTORIDAD_SUFICIENTE`.
+        autoridadDelTimon: autoridadDelTimon(
+          this.aircraft,
+          airDensity(s.position.y, aire),
+          s.airspeed,
+        ),
         ...(modelo.mandoParaSubir
           ? { subirCon: (ritmo: number) => modelo.mandoParaSubir?.(ritmo) ?? 0 }
           : {}),

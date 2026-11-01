@@ -2885,10 +2885,32 @@ export const TIJERETA: AircraftConfig = {
     cd0: 0.018,
     oswald: 0.8,
     cyBeta: -0.9,
-    cm0: 0.04,
-    cmAlpha: -0.75,
+    /*
+     * **El cabeceo, el de un fuselaje ancho medido**: el 747 de la NASA CR-2144 en
+     * aproximación (tabla IX-2: nivel del mar, 165 nudos), que es el de su clase
+     * con las derivadas publicadas. Los de este siglo no las publican, así que el
+     * suyo sigue **por verificar**; lo que se copia es el orden de magnitud de un
+     * avión de verdad de este tamaño, y no el de uno que no es de su tamaño.
+     *
+     * - `cmAlpha`, −1,26, tal cual.
+     * - `cmElevator`, −1,34 por radián con unos veintitrés grados de elevador a
+     *   fondo —el recorrido, **por verificar**—: 0,54.
+     * - `cm0`, el que deja con la palanca en el centro el mismo ángulo de antes,
+     *   tres grados: no es del avión, es de dónde se le compensa.
+     *
+     * Estaban en −0,75 y 0,40, escalados desde el JAZ 90. Con eso su morro
+     * respondía más despacio de lo que responde uno de su tamaño —el corto período
+     * a la Vref en 0,77 rad/s, donde con estos va a 0,90 y el JAZ 90 a 1,35—, y el
+     * automático lo columpiaba: un golpe de aire en la senda seguía yendo y
+     * viniendo a ±3,8 m/s un minuto después, y este avión no aterrizaba en el
+     * banco. Lo de frenar no era: nivelado, al ralentí, con tren y todos los
+     * flaps, va de 200 a 144 nudos en 23 segundos. Ver también
+     * `AUTORIDAD_SUFICIENTE` en `piloto-automatico.ts`, que es la otra mitad.
+     */
+    cm0: 0.0672,
+    cmAlpha: -1.26,
     cmQ: -22,
-    cmElevator: 0.4,
+    cmElevator: 0.54,
     clBeta: -0.09,
     clP: -0.45,
     clAileron: 0.035, // ~25 °/s, lo del grande.
