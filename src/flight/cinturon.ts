@@ -195,6 +195,18 @@ export class Cinturon {
     this.paradoEnElPuesto = 0;
   }
 
+  /**
+   * **Al caer de un salto, en crucero y con el aire quieto**: la comandante ya
+   * dijo hace horas que se podían soltar, y el aire de antes del corte no es
+   * el de después. Sin esto, entrar en vuelo con el cartel de la puerta lo
+   * dejaba encendido toda la noche.
+   */
+  enCruceroTrasElSalto(): void {
+    this.soltado = true;
+    this.mando = "auto";
+    this.sacudiendo = false;
+  }
+
   /** Lo que ha decidido quien vuela. Ver `Mando`. */
   ponerMando(mando: Mando): void {
     this.mando = mando;

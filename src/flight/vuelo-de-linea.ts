@@ -291,6 +291,8 @@ const PARADO = 0.4;
 const RAYA_QUE_SOBRA = 25;
 /** Lo que se dejan los motores asentarse antes de rodar, s. */
 export const ASIENTAN_LOS_MOTORES = 12;
+/** Lo que se da por llevado en un tramo al caer en él de un salto, s: más que cualquier espera. */
+const YA_LLEVA_UN_RATO = 3600;
 /** Y lo que se queda parado en el puesto antes de apagar, s. */
 const ANTES_DE_APAGAR = 6;
 
@@ -546,6 +548,36 @@ export class VueloDeLinea {
     this.tramo = t;
     this.enTramo = 0;
   }
+
+  /**
+   * **La tripulación, ya arriba, llevando el crucero a esa velocidad**: es lo
+   * que hay que tener al caer de un salto o al entrar en vuelo en un capítulo
+   * (ADR 0023). Los tramos solo van hacia delante, y este es el único sitio
+   * que los pone a mano: sin pasar por el puesto no hay otra forma de estar
+   * arriba.
+   *
+   * Y con el rato ya hecho: lo que se fija en cuánto lleva nivelado o con esta
+   * potencia —la escena cuenta cada cambio que se oye— no puede leer el salto
+   * como un cambio que acaba de pasar.
+   */
+  ponerEnCrucero(velocidad: number): void {
+    this.tramo = "crucero";
+    this.enTramo = YA_LLEVA_UN_RATO;
+    this.vioElAire = true;
+    this.subidaPedida = 0;
+    this.velocidadDeCrucero = velocidad;
+    if (this.potencia !== "subida") this.potencias.push({ potencia: "subida", desde: this.reloj });
+    this.potencia = "subida";
+    this.conEstaPotencia = YA_LLEVA_UN_RATO;
+    this.empuje = EMPUJE.subida;
+  }
+
+  /**
+   * **A qué velocidad se cruza**, m/s, si no es la de un salto entre islas: en
+   * un vuelo largo, la del perfil. `V_ARRIBA`, doscientos ochenta nudos, sería
+   * frenar el avión a la mitad nada más caer. Ver `ponerEnCrucero`.
+   */
+  private velocidadDeCrucero: number | null = null;
 
   /** Un paso: lo que se lee, lo que deja la escena y lo que hacen las manos. */
   paso(dt: number, l: LecturaDeLinea, permisos: PermisosDeLaEscena): ManosDeLinea {
@@ -925,7 +957,7 @@ export class VueloDeLinea {
       // El tren dentro en cuanto sube de verdad: unos diez metros.
       tren = l.altura < 10;
     } else if (!bajando) {
-      v = l.altitud < DIEZ_MIL ? V_250 : V_ARRIBA;
+      v = l.altitud < DIEZ_MIL ? V_250 : (this.velocidadDeCrucero ?? V_ARRIBA);
     } else {
       v = l.altitud < DIEZ_MIL ? V_250 : V_ARRIBA;
       if (falta < CONFIGURA.frena) v = Math.min(v, V_BAJANDO_CERCA);
