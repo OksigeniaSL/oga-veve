@@ -638,7 +638,13 @@ async function elVuelo() {
         vistos.add(lamina.fichero ?? "dibujo");
         conSuIlustracion.set(esquema, vistos);
       }
-      for (const o of v.noSeTapa) if (sePisan(lamina.caja, o)) laminaPisa.add(`${lamina.sitio} pisa ${o.que}`);
+      for (const o of v.noSeTapa)
+        if (sePisan(lamina.caja, o)) {
+          const clave = `${lamina.sitio} pisa ${o.que}`;
+          // Solo el nombre no dice si la tarjeta creció o la lámina se movió: la primera vez, las dos cajas y el momento.
+          if (!laminaPisa.has(clave)) console.log(`  · ${clave} a los ${e.segundos.toFixed(0)} s: lámina ${JSON.stringify(lamina.caja)} · ${JSON.stringify(o)} · habla ${JSON.stringify(e.habla ?? e.diciendo ?? null)}`);
+          laminaPisa.add(clave);
+        }
       // Y lo nombrado de hace poco, donde cae ahora en la imagen: fuera de la lámina.
       const recientes = new Set((e.nombrados ?? []).filter((n) => n.desde >= e.segundos - 20).map((n) => n.sitio));
       if (e.paisaje) recientes.add(e.paisaje);
