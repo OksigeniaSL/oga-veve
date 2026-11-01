@@ -242,6 +242,55 @@ const SERVO = 1.2;
 const AMORTIGUA = 0.4;
 
 /**
+ * **Lo que tiene que mover un timón a fondo para que estos dos valgan**: medio
+ * radián por segundo al cuadrado de morro, en cada avión y a cada velocidad.
+ *
+ * `SERVO` y `AMORTIGUA` están en timón, y lo que hace un trozo de timón no es lo
+ * mismo en todos: va con la presión dinámica, el ala, la cuerda y la autoridad, y
+ * a la inversa con la inercia. Ver `autoridadDelTimon`. Afinados con los que
+ * responden deprisa —el JAZ 90 a su Vref, 0,92; a su crucero, once veces eso—,
+ * con los de fuselaje ancho, con todo fuera, se quedan cortos: 0,23 el JAZ 110 y
+ * 0,15 el JAZ 120. Con ese servo, un golpe de aire de cuatro metros por segundo
+ * en la senda no se apagaba: el JAZ 110 seguía yendo y viniendo a ±2 m/s un
+ * minuto después, a ±3,8 con su cabeceo de antes, y el JAZ 120 **crecía**, de 4,2 a
+ * 6,4. Un automático de línea que columpia así en la final no se certifica.
+ *
+ * Los de verdad programan sus ganancias con la presión dinámica. Aquí, por debajo
+ * de esta autoridad, servo y amortiguador crecen en la misma proporción; por
+ * encima no cambia nada, así que del JAZ 90 para abajo, y los grandes en crucero,
+ * vuelan como volaban. Con esto, el mismo golpe en los dos grandes deja 0,2 m/s a
+ * los veinte segundos y nada a los cuarenta.
+ */
+export const AUTORIDAD_SUFICIENTE = 0.5;
+
+/**
+ * Y hasta cuánto se refuerzan: el triple. Es el tope para lo que no es volar —un
+ * avión casi parado, en una pérdida— donde la autoridad se acaba y la cuenta pediría
+ * un servo enorme contra un timón que ya no hace nada.
+ */
+const REFUERZO_MAXIMO = 3;
+
+/**
+ * **Lo que acelera el morro un timón a fondo, aquí y ahora**, rad/s²: `q̄·S·c̄·cmδ/Iyy`.
+ *
+ * Es lo único que el automático necesita saber del avión para no columpiarlo, y
+ * se lo dice quien sabe cuál es. Ver `AUTORIDAD_SUFICIENTE`.
+ */
+export function autoridadDelTimon(
+  a: {
+    readonly wingArea: number;
+    readonly chord: number;
+    readonly inertia: { readonly yy: number };
+    readonly aero: { readonly cmElevator: number };
+  },
+  densidad: number,
+  verdadera: number,
+): number {
+  const q = 0.5 * densidad * verdadera * verdadera;
+  return (q * a.wingArea * a.chord * a.aero.cmElevator) / a.inertia.yy;
+}
+
+/**
  * Cuánto hay que mover un mando para que cuente como que lo tocaste.
  *
  * Una décima. Por debajo de eso es el centrado del teclado o el temblor de un
@@ -360,6 +409,11 @@ export interface Estado {
   readonly masa?: number;
   /** El gas que sostiene la velocidad pedida, si el modelo lo sabe de cierto. */
   readonly equilibrio?: number;
+  /**
+   * Lo que mueve el morro un timón a fondo, aquí y ahora, rad/s². Ver
+   * `autoridadDelTimon`. Sin él, las ganancias de siempre.
+   */
+  readonly autoridadDelTimon?: number;
 }
 
 /** A dónde se le manda ir. `null` en uno de los dos es no mandarle nada. */
@@ -621,8 +675,11 @@ export function mandosPara(
       const pedido =
         giro / Math.cos(phi) + delViraje + POR_MORRO * (m.morro - e.cabeceo);
       const falta = pedido - e.ritmoDeCabeceo;
-      m.timon = acotar(m.timon + SERVO * falta * dt, 1);
-      elevator = acotar(m.timon + AMORTIGUA * falta, 1);
+      const refuerzo = e.autoridadDelTimon
+        ? Math.min(REFUERZO_MAXIMO, Math.max(1, AUTORIDAD_SUFICIENTE / e.autoridadDelTimon))
+        : 1;
+      m.timon = acotar(m.timon + SERVO * refuerzo * falta * dt, 1);
+      elevator = acotar(m.timon + AMORTIGUA * refuerzo * falta, 1);
     }
   } else {
     m.ritmo = e.vertical;

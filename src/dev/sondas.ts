@@ -38,7 +38,8 @@ import type { Game } from "../game";
 import { CAMERA_MODES } from "../cameras";
 import { PANELES_DEL_VUELO, type PanelDelVuelo } from "../ui/paneles";
 import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
-import { indicatedAirspeed } from "../flight/atmosphere";
+import { airDensity, indicatedAirspeed } from "../flight/atmosphere";
+import { autoridadDelTimon } from "../flight/piloto-automatico";
 import { t, type TranslationKey } from "../i18n";
 import { cabeceraEnUso } from "../world/terrain";
 import { enEjesDePista } from "../world/rumbo";
@@ -2289,6 +2290,16 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
           juego.input.alternarTren();
       };
     },
+    /**
+     * Lo que mueve el morro un timón a fondo, aquí y ahora: lo que el juego le da
+     * a su automático, para que el banco se lo dé igual. Ver `autoridadDelTimon`.
+     */
+    autoridadDelTimon: () =>
+      autoridadDelTimon(
+        juego.aircraft,
+        airDensity(juego.flight.state.position.y, juego.flight.aireDelDia()),
+        juego.flight.state.airspeed,
+      ),
     /** La velocidad que recibe la pantalla de la cabina, en nudos. */
     velocidadDeCabina: () =>
       Math.round(
