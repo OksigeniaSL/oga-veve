@@ -959,6 +959,14 @@ export interface AircraftConfig {
    */
   ventanillas: "persiana" | "electrocromica" | null;
   /**
+   * **Cómo va el pasaje por dentro, si no es de un pasillo.** Solo lo dice el que
+   * tiene su cabina hecha: el JAZ 110, tres, tres y tres con dos pasillos y una
+   * pantalla en cada respaldo. El JAZ 120 también tiene dos pasillos de verdad,
+   * pero su cabina no está dibujada, y por no decirlo se queda como estaba. Ver
+   * `world/cabina-333.ts`.
+   */
+  disposicionDelPasaje?: "3-3-3";
+  /**
    * **El ala que se dobla**, en el avión cuya ala se ve doblarse desde la
    * ventanilla; sin poner, en los demás.
    *
@@ -2763,6 +2771,7 @@ export const TIJERETA: AircraftConfig = {
    * Gentex, sus fabricantes, 2005 y 2007). Y de 27 × 47 cm en su modelo.
    */
   ventanillas: "electrocromica",
+  disposicionDelPasaje: "3-3-3",
   /*
    * **La cifra del ensayo, sin escalar**, porque es la suya: unos 7,6 m de punta a
    * 3,75 g, ver `alaQueSeDobla` arriba. Y a 1,1 Hz, el extremo blando de la

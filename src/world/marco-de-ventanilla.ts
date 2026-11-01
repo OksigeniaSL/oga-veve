@@ -162,6 +162,14 @@ export function pasoDeVentanillas(ancho: number): number {
 }
 
 /**
+ * **Y el del único avión con cristal que se oscurece**, el JAZ 110, de la clase del
+ * 787: esos sesenta y uno, las veinticuatro pulgadas entre cuadernas. Su cristal es
+ * estrecho —veintisiete— y alto, y por la cuenta de arriba saldría con las
+ * ventanillas de un regional. La misma cifra lleva su cabina: ver `cabina-333.ts`.
+ */
+export const PASO_DE_CUADERNAS_ANCHAS = 0.61;
+
+/**
  * **El respaldo de la fila de delante**, m: medio metro por delante de los
  * ojos —ochenta centímetros entre filas, menos lo que se sienta uno por
  * delante de su respaldo y lo que abulta el de delante—, con lo alto un dedo
@@ -1084,7 +1092,8 @@ export class MarcoDeVentanilla {
     const m = medidasDelHueco(ventanilla);
     (u.uCristal!.value as Vector3).set(m.a, m.b, m.r);
     (u.uHueco!.value as Vector3).set(m.a1, m.b1, m.r1);
-    u.uPaso!.value = pasoDeVentanillas(ventanilla.ancho);
+    // El cristal que se oscurece va en un fuselaje de cuadernas a veinticuatro pulgadas: ver `PASO_DE_CUADERNAS_ANCHAS`.
+    u.uPaso!.value = cabina?.tipoDeVentanilla === "electrocromica" ? PASO_DE_CUADERNAS_ANCHAS : pasoDeVentanillas(ventanilla.ancho);
 
     /*
      * Hacia dónde queda la cola a lo largo de la pared, y dónde están los ojos

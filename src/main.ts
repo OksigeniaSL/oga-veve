@@ -435,7 +435,8 @@ if (conInicio) {
    * de quien viaja por primera vez. Ver `flight/inicio-pasaje.ts`.
    */
   if (escenaDelInicio === "pasaje") {
-    avion = AIRCRAFT.find((a) => a.id === AVION_DEL_PASAJE) ?? avion;
+    // Con `?avion=`, el que diga: es como se mira la cabina de otro avión sin volar su capítulo.
+    avion = AIRCRAFT.find((a) => a.id === params.get("avion")) ?? AIRCRAFT.find((a) => a.id === AVION_DEL_PASAJE) ?? avion;
     leccion = DESPEGUE;
     destino = DESTINO_DEL_PASAJE;
     /*
