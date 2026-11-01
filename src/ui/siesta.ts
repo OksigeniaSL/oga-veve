@@ -21,8 +21,17 @@
  * Mientras tanto, en la ventanita del juego, **el mapa de la ruta** con las
  * islas de verdad y el avión avanzando —ver `mapa-de-la-ruta.ts`—: la escena
  * la pide mientras Ara duerme. Es un dibujo del juego, en su marco, y no una
- * pantalla de la cabina, que el JAZ 90 no lleva. El vuelo sigue de verdad,
- * más deprisa: el avión no salta, vuela su ruta. Ver `frame` en `game.ts`.
+ * pantalla de la cabina, que el JAZ 90 no lleva.
+ *
+ * ## Y debajo, el vuelo corre o salta
+ *
+ * Lo decide la escena, no esta pantalla, que solo tapa (ADR 0023). En el vuelo
+ * corto, el vuelo sigue de verdad, más deprisa: el avión no salta, vuela su
+ * ruta. En el vuelo largo, siete horas no caben así: el reloj del vuelo salta
+ * al siguiente momento del guion y el avión aparece donde estaría a esa hora,
+ * sobre la ortodrómica. Por eso esta pantalla tiene que **tapar de verdad**
+ * antes de poner nada, y no se quita hasta que el avión y su mundo están
+ * puestos. Ver `frame` y `atenderAlSalto` en `game.ts`.
  *
  * ## Rápido
  *

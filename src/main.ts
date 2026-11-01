@@ -23,6 +23,7 @@ import { cargarOrtofoto } from "./world/ortofoto";
 import { cargarManifiesto, juegoDeTeselas } from "./world/teselas-de-ortofoto";
 import { mundoElegido } from "./ui/mundo";
 import { cargarCiudad } from "./world/ciudades";
+import { laFotoEnsenaLaCiudad } from "./world/mundo-del-tramo";
 import { conViento } from "./world/scenarios";
 import { leerMetar, pedirMetar, proxyDelParte, vientoDeCasa, type Meteo } from "./world/meteo";
 
@@ -211,6 +212,7 @@ function sitioDeLaEscena(e: EscenaDelInicio): string {
   return e === "pasaje" ? SITIO_DEL_PASAJE : SITIO_DEL_INICIO;
 }
 let conInicio = params.has("inicio") && !rearranque;
+const conVueloLargo = params.has("largo");
 let escenaDelInicio: EscenaDelInicio = escenaPedida(params.get("inicio"));
 const directo = conInicio
   ? SCENARIOS.find((s) => s.id === sitioDeLaEscena(escenaDelInicio))
@@ -432,6 +434,15 @@ if (conInicio) {
     avion = AIRCRAFT.find((a) => a.id === AVION_DEL_PASAJE) ?? avion;
     leccion = DESPEGUE;
     destino = DESTINO_DEL_PASAJE;
+    /*
+     * **Y con `?largo=<segundos>`, ya en el vuelo largo y arriba**, con el avión
+     * de la dirección y sin destino que cargar. No sale en ningún menú y solo lo
+     * abre el banco del salto: ver `Game.vueloLargoPedido`.
+     */
+    if (conVueloLargo) {
+      avion = AIRCRAFT.find((a) => a.id === params.get("avion")) ?? avion;
+      destino = escenario?.id;
+    }
   }
 }
 
@@ -557,7 +568,7 @@ const [conMapa, ciudad, meteo, ortofoto, ortofotoFina, vecinos] =
      * El primer vuelo, con un día tranquilo: sin viento ni nubes. Es lo que
      * elige un instructor de verdad para la primera clase.
      */
-    conInicio && escenaDelInicio === "pasaje"
+    conInicio && escenaDelInicio === "pasaje" && !conVueloLargo
       ? /*
          * **De pasaje, el día de siempre del norte de Tenerife**: el alisio
          * del nordeste y su mar de nubes, que se atraviesa al subir —tapando
@@ -630,11 +641,7 @@ miga("cargas");
  * aeródromo —terminal, hangares, torre—, que salen de OpenStreetMap y están
  * donde están. Chocar con uno inventado es peor que no chocar con ninguno.
  */
-const FINA_DE_VERDAD = 4;
-const laFotoYaEnsenaLaCiudad =
-  (ortofotoFina ?? ortofoto) !== undefined &&
-  ((ortofotoFina ?? ortofoto)!.ficha.metrosPorPixel ?? Infinity) <=
-    FINA_DE_VERDAD;
+const laFotoYaEnsenaLaCiudad = laFotoEnsenaLaCiudad(ortofotoFina ?? ortofoto);
 escenario = conViento(
   ciudad && !laFotoYaEnsenaLaCiudad ? { ...conMapa, ciudad } : conMapa,
   meteo,

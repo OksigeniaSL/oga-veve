@@ -3,7 +3,7 @@
 Fecha: 2026-11-01
 Estado: aceptado · cambia, para el vuelo largo, la regla de la siesta escrita
 en `ui/siesta.ts` y en `frame` de `game.ts` —«el avión no salta, vuela su
-ruta»—; el código de los capítulos y del salto, en otra tanda
+ruta»—; el salto ya está programado, y los capítulos, en otra tanda
 
 ## Contexto
 
@@ -214,11 +214,9 @@ rumbo y a qué velocidad va el avión a esa hora.
 
 ## Consecuencias
 
-- **Los capítulos y el salto se programan en otra tanda.** Este ADR fija el
-  porqué y deja hecha la ruta como datos, con sus pruebas. Los comentarios de
-  `ui/siesta.ts` y de `frame` en `game.ts` se cambian cuando el código salte,
-  apuntando aquí: un comentario que cuenta lo que el código todavía no hace
-  miente.
+- **Los capítulos se programan en otra tanda; el salto ya está**, y sin nada
+  nuevo en los menús. Ver «Lo que se programó del salto», más abajo. Los
+  comentarios de `ui/siesta.ts` y de `frame` en `game.ts` ya lo cuentan.
 - **Saltar es poner el avión en un estado**, y el estado no es solo el sitio:
   el modelo de vuelo compensado en crucero, la tripulación con el automático,
   el combustible gastado en esas horas, la cabina presurizada a su altura, el
@@ -248,3 +246,39 @@ rumbo y a qué velocidad va el avión a esa hora.
   desayuno, el amanecer y el anuncio de la bajada. Cuánto dura de verdad la
   aproximación lo dirá el banco con la llegada publicada. O el capítulo dura más, o algo de eso se cuenta de
   otro modo; se decide con el guion delante, en su tanda.
+
+## Lo que se programó del salto
+
+`flight/salto-bajo-tapa.ts` son las cuentas y `atenderAlSalto` en `game.ts`, lo
+que las pone. Lo prueba `scripts/verificar-salto.mjs`, con el JAZ 120 de avión
+de prueba. Cuatro decisiones que no estaban arriba:
+
+- **El reloj del juego no salta; salta la hora del vuelo.** Arriba se daba por
+  hecho que los relojes verían horas en un fotograma, y que cada cosa tendría
+  que enterarse y volver a contar. Hay una forma más barata de que nada se
+  dispare: dejarlos donde están. El reloj del juego, el de la escena y la agenda
+  cuentan pasos, y un salto no da ninguno; la hora del vuelo es otra cuenta,
+  `RelojDelVuelo`, y de ahí salen el sitio, la hora y el cielo. Lo que sí tiene
+  que enterarse es lo que mide **contra lo de antes** —lo más bajo de una
+  aproximación, las trazas del tráfico, lo que lleva nivelado— y lo que esperaba
+  turno para hablar: ver `enterarseDelSalto`.
+- **El cuaderno no apunta las horas saltadas.** Un pasajero dormido no vuela
+  horas, y una lluvia de avioncitos al despertar no sería de verdad.
+- **Cambiar de mundo es desmontarlo en caliente**, que es lo que el hangar evita
+  recargando la página. Aquí no se puede recargar: el audio se quedaría sin
+  permiso hasta el siguiente toque y la escena, sin lo contado. Se quita lo que
+  el constructor montó con el mundo de antes y se monta el nuevo por los mismos
+  caminos: ver `ponerElMundo`. Medido: el cambio de Canarias a Paraguay deja menos
+  geometrías en la tarjeta de las que había. Lo que no se monta lo dice allí su
+  comentario, y el tiempo sigue siendo el del vuelo hasta que la llegada ponga el
+  parte de Pettirossi.
+- **La red son veinte segundos de pared**, y el sueño dura tres y medio como
+  poco. Si el mundo no llega se destapa igual, con el avión en su sitio —la
+  cuenta no espera a ningún mundo— y sin nada debajo hasta el siguiente corte. Lo
+  que llega tarde se tira: un mundo no se cambia a la vista.
+
+Y una cifra que hay que tener delante: el JAZ 120 del juego no llega. Con la
+polar de su ficha quema unas once toneladas por hora, y sus tanques, con la
+proporción de `loQueCabe`, son ochenta y cuatro: unas siete horas y media, de once
+y cuarto que dura esto en el aire. El banco le carga ciento cincuenta a mano. El
+avión de esta ruta es el de la otra tanda, y habrá que mirarlo con él.
