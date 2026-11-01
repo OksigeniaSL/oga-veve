@@ -771,3 +771,83 @@ de Ara y tres de la tripulante—, en `PENDIENTE-VOCES-inicio-3.md`.
 - Con un kit en las manos, las charlas de la bajada se juntan al cerrarlo, y
   alguna puede quedarse sin decir: es lo que pasa en un vuelo de verdad con
   un juego delante, y lo que tiene su momento se dice igual.
+
+## La cuarta escena: el vuelo largo de Ara a casa
+
+Fecha: 2026-11-01
+
+### Contexto
+
+Después del primer vuelo de pasaje viene el largo: **de Madrid a Asunción,
+de noche**, con Ara volviendo a casa. Enrique pidió que se vea pasar la noche
+«como en una película, con Ara durmiendo», y que haya «más de un juego aunque
+Ara duerma». El 31-10-2026
+contestó las diez decisiones del plan; las que tocan a cómo pasa el tiempo
+—los capítulos, el salto bajo tapa, la fecha y el medio despertar— tienen su
+ADR, el 0023. Aquí va la escena.
+
+### Decisión
+
+**El vuelo es el de verdad**: el diario de esa ruta, que sale de Barajas a
+las 23:45 y para en Pettirossi a las 06:25 o a las 07:30 según la hora de
+España, por la ortodrómica y casi todo de noche. Ara vuelve a casa y va **a la
+izquierda**, junto a la ventanilla, como en el vuelo corto. **Sin marcas**: ni
+la aerolínea, ni el número de vuelo, ni el fabricante del avión salen en el
+juego.
+
+**El avión es nuevo**, el séptimo de la flota: el **JAZ 110 *Tijereta***, un
+bimotor de fuselaje ancho de la clase del que hace esta ruta, sin su cara
+(decisiones 1 y 2). La tijereta es el pájaro que se va del Paraguay en
+invierno y vuelve en primavera: el de volver a casa. Lleva las ventanillas que
+se oscurecen solas, y el JAZ 120 vuelve a las persianas, así siguen estando
+los dos tipos (decisión 3).
+
+**Jazlyn es la comandante, y hoy van tres pilotos.** Con la presentación
+hacia las once menos cuarto de la noche, el periodo de actividad llega a doce
+horas y cuarenta minutos, y la norma europea permite once con dos pilotos
+cuando se empieza de noche (EASA ORO.FTL.205, tabla 2): hace falta un
+tercero, y se descansa por turnos. Jazlyn también duerme, y sigue siendo la responsable
+mientras descansa: los galones no son mando, son responsabilidad.
+
+**Atienden a Ara en persona Idaira y Derlis**, con más tripulantes a bordo,
+que el vuelo es largo y la tripulación más numerosa (decisión 7): Idaira, la
+de Canarias que ya cuidó a Ara en el vuelo corto, y Derlis, la voz de la
+tripulación de Paraguay, con la chipa del desayuno al llegar a casa.
+
+**Madrid sí**, pero el último capítulo en hacerse, solo de noche y sin
+ortofoto (decisión 4).
+
+**La pantalla del respaldo**, que un largo radio lleva y el JAZ 90 no: el mapa
+del vuelo con el camino curvo, la raya del día y la noche y los dos relojes;
+los juegos —«Luz verde», «Armá tu avión» con el avión nuevo y uno nuevo, «La
+Cruz del Sur», que es lo que solo enseña este vuelo (decisión 10)—; los
+cuentos del camino; lo de Granja Óga, empezando por «Luz verde» (decisión 9);
+los ejercicios para las piernas y el cuaderno. Las pestañas, con iconos y sin
+leer.
+
+**El mismo motor que la tercera escena**: la conversación por turnos, los
+planos, la siesta, el ⏩, la ventanilla viva, el kit y el cuaderno. Se separa
+de `inicio-pasaje.ts` lo que es motor de lo que es el guion de Tenerife Norte
+a La Palma, con el banco `inicio-3` de red: tiene que seguir dando lo mismo.
+
+**Por capítulos y con saltos**: tres capítulos de unos quince minutos que se
+guardan, más el viaje seguido, y el reloj que salta mientras la pantalla está
+tapada. Ver el ADR 0023, que cambia para este vuelo la regla de la siesta.
+
+**Cómo se abre**: con su ficha en «¿A qué jugás?» y con
+`?inicio=4&capitulo=N`. **No es la primera experiencia**: esa sigue siendo el
+despegue.
+
+### Consecuencias
+
+- Está decidido y sin programar, salvo la ruta como datos
+  (`flight/ruta-larga.ts`, con las cifras del plan en sus pruebas). Se hace
+  por tandas: los cimientos y el avión a la vez; el mundo por el camino con la
+  pantalla del respaldo, que cambia el origen de los datos de terreno y lleva
+  su propio ADR; y los capítulos en orden inverso, publicando cada uno,
+  empezando por el tercero.
+- Unas cien frases nuevas por grabar, repartidas entre los tres capítulos,
+  por el camino de siempre.
+- El tercer capítulo cuenta dos llegadas: de noviembre a marzo, con el
+  amanecer por la ventanilla sobre Brasil y Paraguay de día; de mayo a agosto,
+  de noche cerrada, con Asunción en luces.
