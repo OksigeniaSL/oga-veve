@@ -17,16 +17,21 @@ import { dondeCae } from "../world/entre-aerodromos";
 import { PARAGUAY } from "../world/procedimientos-paraguay";
 import { AIRCRAFT } from "./aircraft";
 import { ArcadeFlightModel } from "./arcade";
+import { temperaturaExterior, velocidadDelSonido } from "./atmosphere";
+import { masaConCombustible, quemaPorSegundo, reservaEnKilos } from "./combustible";
 import { neutralControls } from "./model";
 import { laRecogidaDe } from "./recogida";
 import { rutaDe, Seguimiento, type Fijo } from "./ruta";
 import { dondeVa, entradaDeLaLlegada, horarioDelDia, perfilDelVuelo, PETTIROSSI } from "./ruta-larga";
-import { caminoEnElMundo, DEJA_LA_ORTODROMICA, enElMundo } from "./salto-bajo-tapa";
-import { enLosMandosDeLinea, VueloDeLinea, type LecturaDeLinea } from "./vuelo-de-linea";
+import { caminoEnElMundo, cargaDelVueloLargo, DEJA_LA_ORTODROMICA, enElMundo, estadoDelSalto } from "./salto-bajo-tapa";
+import { empujeQueSeQuema, enLosMandosDeLinea, VueloDeLinea, type LecturaDeLinea } from "./vuelo-de-linea";
 
 const DT = 1 / 30;
 const GRADO = Math.PI / 180;
 const PIE = 0.3048;
+const NUDO = 1852 / 3600;
+/** Desde dónde se mira que la velocidad sea la pedida, m hasta la pista. */
+const DESDE_PARA_LA_VELOCIDAD = 25_000;
 const AVION = AIRCRAFT.find((x) => x.id === "jaz-110")!;
 const CRUCERO = 40_000 * PIE;
 const COTA = PETTIROSSI.elevacion;
@@ -43,13 +48,27 @@ interface Muestra {
   readonly velocidad: number;
 }
 
+/** Lo que le falta a la velocidad para la pedida en lo peor del tramo, y dónde. */
+interface LoPeor {
+  readonly falta: number;
+  readonly velocidad: number;
+  readonly pedida: number;
+}
+
 function volar(masa?: number): {
   readonly muestras: readonly Muestra[];
   readonly bajaEn: number | null;
   readonly toque: { readonly t: number; readonly caida: number; readonly pasado: number; readonly lado: number } | null;
+  /** Lo que queda en los depósitos al tocar, o al acabarse el vuelo sin tocar, kg. */
+  readonly kilos: number;
+  /** Lo que faltaba hasta la pista cuando se pararon los motores, m, o `null` si no se pararon. */
+  readonly paradosA: number | null;
+  /** Lo más por debajo de la velocidad pedida que se fue desde `DESDE_PARA_LA_VELOCIDAD`. */
+  readonly loPeor: LoPeor | null;
 } {
   const perfil = perfilDelVuelo(horarioDelDia(new Date("2026-12-15T12:00:00Z")));
-  const d = dondeVa(perfil, entradaDeLaLlegada(perfil));
+  const entrada = entradaDeLaLlegada(perfil);
+  const d = dondeVa(perfil, entrada);
   const origen = { lat: PETTIROSSI.lat, lon: PETTIROSSI.lon };
   const inicio = enElMundo(perfil, origen, d.recorrido);
   const camino = caminoEnElMundo(perfil, origen, d.recorrido)
@@ -68,7 +87,13 @@ function volar(masa?: number): {
   plan.poner(ruta, CRUCERO, AVION);
   const m = new ArcadeFlightModel({ aircraft: AVION, ground: () => COTA });
   m.reset({ position: new Vector3(inicio.x, d.altitud, inicio.z), heading: inicio.rumbo, airspeed: d.velocidad, equilibrado: true });
-  if (masa !== undefined) m.ponerMasa(masa);
+  /*
+   * **El depósito, el de la cuenta del vuelo**, como `entrarEnElPerfil` en `game.ts`.
+   * Con una masa pedida se mira la toma de un avión que pesa eso, y el depósito no
+   * pinta: esa prueba no va de lo que queda.
+   */
+  let kilos = estadoDelSalto(perfil, entrada, AVION, { en: 0, kilos: cargaDelVueloLargo(AVION, perfil) }).combustible;
+  m.ponerMasa(masa ?? masaConCombustible(AVION, kilos));
   const c = { ...neutralControls(), engineOn: true, throttle: m.gasPara(d.velocidad, { flaps: 0, tren: 0 }), tren: 0, flaps: 0 };
   const tripulacion = new VueloDeLinea({
     vr: AVION.rotationSpeed,
@@ -82,6 +107,8 @@ function volar(masa?: number): {
   const [ux, uz] = [Math.sin(EJE), -Math.cos(EJE)];
   const muestras: Muestra[] = [];
   let bajaEn: number | null = null;
+  let paradosA: number | null = null;
+  let loPeor: LoPeor | null = null;
   for (let t = 0, siguiente = 0; t < 3600; t += DT) {
     const s = m.state;
     const lectura = {
@@ -143,15 +170,51 @@ function volar(masa?: number): {
     c.reversa = mandos.reversa;
     c.flaps += Math.max(-DT / 9, Math.min(DT / 9, manos.flaps - c.flaps));
     c.tren += Math.max(-DT / 8, Math.min(DT / 8, (manos.tren ? 1 : 0) - c.tren));
+    /*
+     * Hasta la recogida: ahí el gas sale con la altura —ver `fraccion`— y la
+     * velocidad pedida deja de ser lo que se lleva. Lo que se pierde al recoger es
+     * de la toma, no de este fallo.
+     */
+    if (
+      !s.onGround &&
+      tripulacion.estado.tramo !== "recogida" &&
+      l.faltaParaTocar < DESDE_PARA_LA_VELOCIDAD &&
+      (!loPeor || s.airspeed - manos.velocidad < loPeor.velocidad - loPeor.pedida)
+    )
+      loPeor = { falta: l.faltaParaTocar, velocidad: s.airspeed, pedida: manos.velocidad };
     m.step(DT, c);
+    /*
+     * **Lo que se quema**, con lo mismo que `quemarCombustible` en `game.ts`: y sin
+     * combustible, el motor se para. Esto es lo que faltaba aquí para ver el fallo:
+     * con el depósito sin contar, esta prueba volaba bien lo que en el banco era
+     * un planeo sin motores desde los veintiséis kilómetros.
+     */
+    if (masa === undefined) {
+      const q = m.state;
+      if (c.engineOn)
+        kilos = Math.max(
+          0,
+          kilos -
+            quemaPorSegundo(AVION, empujeQueSeQuema(m, manos), {
+              mach: q.airspeed / velocidadDelSonido(q.position.y),
+              theta: (temperaturaExterior(q.position.y) + 273.15) / 288.15,
+            }) *
+              DT,
+        );
+      m.ponerMasa(masaConCombustible(AVION, kilos));
+      if (kilos <= 0 && c.engineOn) {
+        c.engineOn = false;
+        paradosA = l.faltaParaTocar;
+      }
+    }
     if (t >= siguiente) {
       siguiente = t + 30;
       muestras.push({ t, falta: l.faltaParaTocar, altitud: s.position.y, senda, vertical: s.verticalSpeed, velocidad: s.airspeed });
     }
     const e = tripulacion.estado;
-    if (e.tocado) return { muestras, bajaEn, toque: { t, caida: e.caidaAlTocar ?? Infinity, pasado, lado } };
+    if (e.tocado) return { muestras, bajaEn, toque: { t, caida: e.caidaAlTocar ?? Infinity, pasado, lado }, kilos, paradosA, loPeor };
   }
-  return { muestras, bajaEn, toque: null };
+  return { muestras, bajaEn, toque: null, kilos, paradosA, loPeor };
 }
 
 describe("la bajada desde cuarenta mil pies", () => {
@@ -186,6 +249,18 @@ describe("la bajada desde cuarenta mil pies", () => {
     expect(t!.pasado).toBeGreaterThan(0);
     expect(t!.pasado).toBeLessThan(1000);
     expect(Math.abs(t!.lado)).toBeLessThan(10);
+  });
+
+  it("llega con los motores en marcha y por encima de la reserva", () => {
+    console.log(`al tocar: ${vuelo.kilos.toFixed(0)} kg · reserva ${reservaEnKilos(AVION).toFixed(0)} kg · parados a ${vuelo.paradosA}`);
+    expect(vuelo.paradosA).toBeNull();
+    expect(vuelo.kilos).toBeGreaterThan(reservaEnKilos(AVION));
+  });
+
+  it("y desde los veinticinco kilómetros hasta la recogida no baja de la velocidad pedida menos diez nudos", () => {
+    const p = vuelo.loPeor!;
+    console.log(`lo peor: ${(p.velocidad / NUDO).toFixed(1)} kt pidiendo ${(p.pedida / NUDO).toFixed(1)} kt a ${(p.falta / 1000).toFixed(2)} km`);
+    expect(p.velocidad - p.pedida).toBeGreaterThan(-10 * NUDO);
   });
 
   it("con los tanques casi vacíos, que es como llega de verdad, lo mismo", () => {

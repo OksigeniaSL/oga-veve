@@ -1110,6 +1110,32 @@ export function enLosMandosDeLinea(
   };
 }
 
+/**
+ * **El empuje que quema un vuelo largo llevado por su tripulación**, N: el que
+ * ponen sus manos —`ManosDeLinea.empuje`, el mismo que se oye— y no el del gas.
+ *
+ * En el modelo sencillo el gas es una palanca de velocidad: a doscientos cincuenta
+ * nudos lleva más de la mitad con los motores al ralentí. Quemando por él, el JAZ
+ * 110 se bebía 17 t/h bajando, y medido en el banco se quedaba seco por la 02 a 26
+ * km de la pista, con los motores parados y a la mínima de vuelo hasta el suelo: la
+ * final a 103 nudos para una Vref de 144.
+ *
+ * Sin `empuje` —en el suelo, y en la carrera— o en el modelo completo, donde el
+ * empuje ya es de verdad, lo de siempre. Lo usan `game.ts` y la prueba, para que la
+ * cuenta que se prueba sea la que vuela.
+ *
+ * Queda de más en crucero: lleva el escalón de subida, y la cuenta sale por unas
+ * 11 t/h donde el plan cuenta 6 (`quemadoEnElVuelo`). Con lo poco de crucero que se
+ * vuela sin saltos, el JAZ 110 toca por encima de lo que deja el plan.
+ */
+export function empujeQueSeQuema(
+  modelo: { empujeAhora(): number; empujeCon?(fraccion: number): number },
+  manos: Pick<ManosDeLinea, "empuje"> | null,
+): number {
+  const empuje = manos?.empuje;
+  return empuje !== undefined && modelo.empujeCon ? modelo.empujeCon(empuje) : modelo.empujeAhora();
+}
+
 // ── Lo que queda ─────────────────────────────────────────────────────────
 
 /** El rumbo de `a` a `b`, rad, cero al norte. Ver `rumbo` en `ruta.ts`. */

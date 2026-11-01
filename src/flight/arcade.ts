@@ -369,12 +369,14 @@ export class ArcadeFlightModel implements FlightModel {
    * Ver `flight/combustible.ts`.
    */
   empujeAhora(): number {
-    if (!this.ultimoGas) return 0;
+    return this.ultimoGas ? this.empujeCon(this.ultimoGas) : 0;
+  }
+
+  /** La misma cuenta para una parte cualquiera del empuje de despegue. Ver `empujeCon` en `model.ts`. */
+  empujeCon(fraccion: number): number {
     const densidad =
       airDensity(this.state.position.y, this.aire) / airDensity(0);
-    return (
-      this.ultimoGas * this.aircraft.maxThrust * loQueDaElMotor(this.aircraft, densidad)
-    );
+    return fraccion * this.aircraft.maxThrust * loQueDaElMotor(this.aircraft, densidad);
   }
 
   /** Aquí el cabeceo no es un timón. Ver `timonAhora` en `model.ts`. */

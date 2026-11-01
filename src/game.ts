@@ -1109,6 +1109,7 @@ import {
   type Punto as PuntoDelMundo,
 } from "./world/se-ve-desde-el-pasaje";
 import {
+  empujeQueSeQuema,
   enLosMandosDeLinea,
   segundosHastaElCrucero,
   VueloDeLinea,
@@ -19524,8 +19525,10 @@ export class Game {
      */
     const s0 = this.flight.state;
     const aire = this.flight.aireDelDia();
+    // En un vuelo largo, el de las manos de la tripulación. Ver `empujeQueSeQuema`.
+    const empuje = this.vueloLargo ? empujeQueSeQuema(this.flight, this.manosDeLinea) : this.flight.empujeAhora();
     this.quemaDeAhora = this.input.controls.engineOn
-      ? quemaPorSegundo(this.aircraft, this.flight.empujeAhora(), {
+      ? quemaPorSegundo(this.aircraft, empuje, {
           mach: s0.airspeed / velocidadDelSonido(s0.position.y, aire),
           theta: (temperaturaExterior(s0.position.y, aire) + 273.15) / 288.15,
         })
