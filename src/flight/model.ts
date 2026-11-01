@@ -336,6 +336,15 @@ export interface FlightModel {
    */
   empujeAhora(): number;
   /**
+   * **Lo que da aquí esa parte del empuje de despegue**, de 0 a 1, en newtons.
+   * Solo lo tiene el modelo cuyo gas es una palanca de velocidad: en él, el gas
+   * no dice lo que dan los motores, y quien lo sabe por otro lado —la tripulación
+   * de un vuelo largo, ver `empujeQueSeQuema` en `vuelo-de-linea.ts`— pregunta
+   * aquí para no repetir la cuenta de la altura. En el modelo completo el empuje
+   * ya es de verdad, y con `empujeAhora` basta.
+   */
+  empujeCon?(fraccion: number): number;
+  /**
    * **El timón que está sosteniendo el avión ahora mismo**, en unidades de
    * mando: el de quien vuela más el compensador, y más lo que empuje la ayuda
    * que sostiene la subida en los peldaños que la llevan, contado como el

@@ -22,6 +22,11 @@
  *   tres metros por segundo. Lo fino de la toma no es de este banco: se acepta
  *   esto (el plan lo dice, y el piloto de banco ya costó dos horas).
  * - **Llega al puesto**, con los motores parados, y acaba el guion.
+ * - **Con los motores en marcha en todo el vuelo y por encima de la reserva**, y
+ *   **desde 25 km hasta la recogida, a la velocidad pedida** con diez nudos de
+ *   margen. Quemando por el gas, el avión se quedaba seco a 26 km y volaba la final
+ *   a 103 nudos, planeando, sin que fallara nada de lo demás: tocaba bien. Ver
+ *   `empujeQueSeQuema` en `vuelo-de-linea.ts`.
  * - **Nunca suenan dos voces a la vez**, ni una voz que no sea de la escena.
  * - **Sin errores de consola.**
  *
@@ -164,6 +169,8 @@ const leer = (page) =>
       },
       tripulacion: i.tripulacion,
       manos: i.manos ?? null,
+      combustible: o.combustible(),
+      sinMotor: o.sinMotor(),
       faltaParaTocar: i.lecturaDeLinea?.faltaParaTocar ?? null,
       enLaFinal: i.lecturaDeLinea?.enLaFinal ?? null,
       lado: i.lecturaDeLinea?.pista?.lado ?? null,
@@ -356,6 +363,10 @@ async function elCapitulo() {
     let tocado = null;
     let flaps = false;
     const fotosDeLoNombrado = new Set();
+    let seParo = null;
+    let alLlegar = null;
+    let lecturasDeVelocidad = 0;
+    let loPeor = null;
     for (;;) {
       const l = await leer(page);
       ultimo = l;
@@ -363,6 +374,17 @@ async function elCapitulo() {
       const tramo = l.tripulacion?.tramo ?? "?";
       if (tramosVistos.at(-1)?.tramo !== tramo)
         tramosVistos.push({ tramo, pared: (Date.now() - pared0) / 1000, hora: l.salto.hora, y: l.y });
+      if (!seParo && tramo !== "apagado" && (!l.motor || l.sinMotor))
+        seParo = { hora: l.salto.hora, falta: l.faltaParaTocar, tramo, kilos: l.combustible.kilos };
+      // Lo último antes de apagar: al apagar en el campo de llegada se reposta para la vuelta. Ver `repostar`.
+      if (tramo !== "apagado") alLlegar = l.combustible.kilos;
+      // Solo en lo que lleva el gas: en la recogida sale con la altura, y lo que se pierde ahí es de la toma.
+      if (!l.enTierra && (tramo === "bajada" || tramo === "final") && l.manos && l.faltaParaTocar < 25_000) {
+        lecturasDeVelocidad++;
+        const margen = l.velocidad - l.manos.velocidad;
+        if (!loPeor || margen < loPeor.margen)
+          loPeor = { margen, velocidad: l.velocidad, pedida: l.manos.velocidad, falta: l.faltaParaTocar };
+      }
       if (Date.now() - trazaEn > 15_000) {
         trazaEn = Date.now();
         console.log(
@@ -454,6 +476,29 @@ async function elCapitulo() {
       "llega al puesto, con los motores parados",
       t?.tramo === "apagado" && l.motor === false && l.enTierra,
       `${t?.tramo} · ${l.fase} · motor ${l.motor}`,
+    );
+    const reserva = l.combustible.reserva;
+    const alTocar = tocado?.lectura.combustible.kilos ?? 0;
+    comprobar(
+      "con los motores en marcha en todo el vuelo, y por encima de la reserva al tocar y al llegar al puesto",
+      !seParo && alTocar > reserva && (alLlegar ?? 0) > reserva,
+      `al tocar ${alTocar.toFixed(0)} kg · antes de apagar ${(alLlegar ?? 0).toFixed(0)} kg · reserva ${reserva.toFixed(0)} kg · ${
+        seParo ? `parados en ${seParo.tramo} a las ${(seParo.hora / 3600).toFixed(3)} h, faltando ${(seParo.falta / 1000).toFixed(1)} km, con ${seParo.kilos.toFixed(0)} kg` : "sin pararse"
+      }`,
+    );
+    // Veinte lecturas como poco: una comprobación que apenas ha mirado no ha comprobado nada.
+    comprobar(
+      "desde 25 km hasta la recogida, la velocidad no baja de la pedida menos 10 kt",
+      lecturasDeVelocidad >= 20 && !!loPeor && loPeor.margen > -10 * 0.5144,
+      loPeor
+        ? `lo peor, ${(loPeor.margen / 0.5144).toFixed(1)} kt: ${(loPeor.velocidad / 0.5144).toFixed(0)} pidiendo ${(loPeor.pedida / 0.5144).toFixed(0)} a ${(loPeor.falta / 1000).toFixed(1)} km · ${lecturasDeVelocidad} lecturas`
+        : `${lecturasDeVelocidad} lecturas`,
+    );
+    const recogida = await page.evaluate(() => globalThis.__oga.inicio().recogida?.muestras ?? []);
+    const alRecoger = recogida.find((m) => m.tramo === "recogida");
+    const posado = recogida.find((m) => m.enTierra);
+    console.log(
+      `  la recogida: ${alRecoger ? (alRecoger.velocidad / 0.5144).toFixed(0) : "?"} kt al empezar · ${posado ? (posado.velocidad / 0.5144).toFixed(0) : "?"} kt al tocar`,
     );
     comprobar(
       "y el guion acaba: se puede volver",
