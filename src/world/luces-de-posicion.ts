@@ -243,8 +243,14 @@ export function puntasDe(cuerpo: Object3D): Puntas | null {
       v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
       if (v.x > ala.x) ala.copy(v);
       if (v.x < alaIzquierda.x) alaIzquierda.copy(v);
-      if (v.z > cola.z) cola.copy(v);
       const fuera = Math.abs(v.x - centro.x);
+      /*
+       * **La cola, en el eje.** Lo más atrás de un avión no es siempre su cono:
+       * en el JAZ 110 las puntas del estabilizador se pasan de él ochenta
+       * centímetros (Boeing, D6-58333, 2.2.2), y la blanca acababa en una de
+       * ellas, a diez metros del eje.
+       */
+      if (fuera < medido.x * 0.05 && v.z > cola.z) cola.copy(v);
       /*
        * El lomo se busca **solo en la franja central y a media eslora**: sin
        * acotar, el punto más alto del avión es la punta del timón, y la luz

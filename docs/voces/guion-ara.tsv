@@ -89,55 +89,56 @@
 089	inicio.ara.pasaje.kit.piezas.ruedas	¡Las ruedas! Son para correr por la pista y para aterrizar. Volando, se guardan adentro del avión.
 090	inicio.ara.pasaje.kit.piezas.ayuda	¡Casi! Esa pieza va en otro lugar del avión: mirá el que brilla.
 091	inicio.ara.pasaje.kit.piezas.fin	¡Armamos el avión entero! Con ala, motor, cola y ruedas, ya puede volar.
-092	inicio.ara.pasaje.meneo	¡Uy, el avión se mueve un poquito! Y el ala sube y baja, como si saludara.
-093	inicio.ara.pasaje.meneoBien	¡Entonces es normal que se mueva! Y yo llevo el cinturón puesto, bien ajustado.
-094	inicio.ara.pasaje.bajoLasNubes	¡Salimos por abajo de las nubes! Ahora las tenemos arriba, como un techo, y abajo se ve lejísimos.
-095	inicio.ara.pasaje.techo	Mamá me enseñó que la parte de abajo de las nubes se llama base, ¡y que para aterrizar hay que ver la pista a tiempo!
-096	inicio.ara.pasaje.marDeNubes	¡Mirá para abajo: nubes y más nubes, como un mar de algodón! Por eso le dicen mar de nubes.
-097	inicio.ara.pasaje.sigueLaNube	Seguimos adentro de la nube y el avión se mueve un poquito. ¡Pero ya sé que es normal, y tengo el cinturón puesto!
-098	inicio.ara.pasaje.dormirse	¡Aaah, qué sueño me da el ruidito del motor! Voy a cerrar los ojos un ratito.
-099	inicio.ara.pasaje.despertarse	¡Uy, me dormí un ratito! Y mientras tanto, el avión siguió volando por su camino.
-100	inicio.ara.pasaje.menosGas	¡Escuchá! Ahora los motores suenan más bajito, y seguimos subiendo igual.
-101	inicio.ara.pasaje.ralenti	¡Los motores suenan todavía más bajito! ¿Será que ya empezamos a bajar?
-102	inicio.ara.pasaje.oidosAlReves	¡Ahora se me tapan un poco los oídos! Es al revés que al subir: el aire tiene que entrar.
-103	inicio.ara.pasaje.masGas	¡Ahora los motores suenan más fuerte! ¿Para qué, si ya vamos a aterrizar?
-104	inicio.ara.pasaje.vueltaEnPista	¡Estamos dando la vuelta en la pista! Volvemos por el mismo camino.
-105	inicio.ara.pasaje.seLevantan	¡Escuchá! Hay gente que ya se suelta el cinturón y se levanta.
-106	inicio.ara.pasaje.luzApagada	¡Se apagó la luz del cinturón! Ahora sí me lo saco: ¡clic!
-107	inicio.ara.pasaje.uniforme	¡Entonces tu uniforme no es para servir: es para cuidarnos a todos!
-108	inicio.ara.pasaje.banoAntes	Antes de subir fui al baño: mamá dice que en los vuelos cortos casi no da tiempo.
-109	inicio.ara.pasaje.banoVuelta	¡Ya volví del baño! Y me abroché otra vez el cinturón, como dijo mamá.
-110	inicio.ara.pasaje.banoEspero	Con la luz del cinturón encendida, espero a que aterricemos. ¡Ya falta poquito!
-111	inicio.ara.pasaje.mascaraAhora	¿Hay que ponerse la máscara ahora?
-112	inicio.ara.pasaje.salidaAla	¿Y por la ventanilla no se sale, sobre el ala?
-113	inicio.ara.pasaje.kit.luz.radio	Los aviones hablan con la torre por radio. Si a uno se le rompe, la torre le habla con una linterna de colores.
-114	inicio.ara.pasaje.kit.luz.empezar	Ahora la torre sos vos: tocá el avión sin radio y dale luz verde para aterrizar, o roja para que espere.
-115	inicio.ara.pasaje.kit.luz.alas	¡Movió las alas! Así contesta el avión que vio la luz.
-116	inicio.ara.pasaje.kit.luz.sinAlas	En la base y en la final no mueve las alas: ahí tiene que ir derechito a la pista.
-117	inicio.ara.pasaje.kit.luz.roja	¡Luz roja! Da otra vuelta y espera su turno: esperar también es volar bien.
-118	inicio.ara.pasaje.kit.luz.alAire	La pista estaba ocupada y se fue al aire solo. ¡Bien! Irse al aire también es saber volar.
-119	inicio.ara.pasaje.kit.luz.conRadio	Ese tiene la radio bien: habla con la torre y aterriza sin linterna. Eso es lo normal.
-120	inicio.ara.pasaje.kit.luz.fin	¡Aterrizaron todos! Con la linterna de colores, como en una torre de verdad.
-121	inicio.ara.pasaje.kit.luz.destellosRojos	Hay un camión revisando la pista. Con la roja que parpadea, el avión sabe que no puede aterrizar.
-122	inicio.ara.pasaje.kit.luz.destellosVerdes	Ya se fue el camión. Con la verde que parpadea, el avión sabe que puede volver para aterrizar.
-123	inicio.ara.pasaje.kit.luz.noche	De noche no se ven las alas: el avión contesta apagando y encendiendo dos veces los faros.
-124	inicio.ara.pasaje.mazo	¡Ya se ven las fincas y las casitas, ahí en la ladera del monte!
-125	inicio.ara.pasaje.mazoBici	Seguro que por ahí sube gente caminando, y en bici.
-126	inicio.ara.pasaje.musica	¡Están poniendo música! ¿Por qué ponen música cuando bajamos?
-127	inicio.ara.pasaje.kit.avion.estabilizador	¡El estabilizador! Es un ala más corta, atrás en la cola, y con su timón el avión sube o baja la nariz.
-128	inicio.ara.pasaje.kit.avion.luces	Ahora las luces: la roja va en la punta del ala izquierda, la verde en la derecha y la blanca atrás.
-129	inicio.ara.pasaje.kit.avion.noche	De noche, con las luces, otro avión sabe para dónde vamos: si ve la roja y la verde a la vez, es que vamos hacia él.
-130	inicio.ara.pasaje.kit.avion.biplano	¡Un biplano! Tiene dos alas, una arriba y otra abajo, y su ruedita no va en la nariz: va en la cola.
-131	inicio.ara.pasaje.kit.avion.bimotor	Este lleva un motor en cada ala. Si uno se apaga, el otro sigue empujando y el avión puede seguir volando.
-132	inicio.ara.pasaje.kit.avion.colaEnT	¡La cola en T! El estabilizador va arriba de todo, lejos del aire revuelto del ala y de las hélices.
-133	inicio.ara.pasaje.kit.avion.reactor	¡Como el nuestro! Los motores cuelgan debajo del ala: su peso ayuda a que el ala no se doble tanto, y se llega fácil para cuidarlos.
-134	inicio.ara.pasaje.kit.avion.cuatrimotor	¡Cuatro motores y un montón de ruedas! Tantas ruedas reparten el peso, para no romper la pista.
-135	inicio.ara.pasaje.toque.invita	¡Mirá por la ventanilla! Si tocás algo con el dedo, te cuento lo que es.
-136	inicio.ara.pasaje.toque.motor	¡Ese es el motor! Por adelante se traga el aire, y por atrás lo tira con fuerza.
-137	inicio.ara.pasaje.toque.gomera	¡Esa isla redondita es La Gomera! Mamá dice que ahí se puede hablar silbando.
-138	inicio.ara.pasaje.toque.mar	¡Todo eso de abajo es el mar! Y entre isla e isla hay muchísima agua.
-139	inicio.ara.pasaje.silboOtras	¿Y en las otras islas también hablan silbando, o solamente en La Gomera?
-140	inicio.ara.pasaje.aerofrenos	¿Viste el ala cuando tocamos el suelo? Se le levantaron unas tapas por arriba: son los aerofrenos.
-141	inicio.ara.pasaje.aerofrenosPorque	Mamá me contó que así el ala deja de sostener al avión: el avión se queda pegado al suelo y las ruedas frenan bien.
-142	inicio.ara.pasaje.golpecito	¿Notaste el golpecito al tocar? Es a propósito: así las ruedas agarran bien y el avión no se pasa de largo.
-143	inicio.ara.pasaje.mazoCaminos	¡Y se ven los caminitos que suben entre las fincas!
+092	inicio.ara.pasaje.kit.avion.bimotorAncho	¡Tan grande y con dos motores nomás! Son enormes, y con dos solos este avión cruza el océano.
+093	inicio.ara.pasaje.meneo	¡Uy, el avión se mueve un poquito! Y el ala sube y baja, como si saludara.
+094	inicio.ara.pasaje.meneoBien	¡Entonces es normal que se mueva! Y yo llevo el cinturón puesto, bien ajustado.
+095	inicio.ara.pasaje.bajoLasNubes	¡Salimos por abajo de las nubes! Ahora las tenemos arriba, como un techo, y abajo se ve lejísimos.
+096	inicio.ara.pasaje.techo	Mamá me enseñó que la parte de abajo de las nubes se llama base, ¡y que para aterrizar hay que ver la pista a tiempo!
+097	inicio.ara.pasaje.marDeNubes	¡Mirá para abajo: nubes y más nubes, como un mar de algodón! Por eso le dicen mar de nubes.
+098	inicio.ara.pasaje.sigueLaNube	Seguimos adentro de la nube y el avión se mueve un poquito. ¡Pero ya sé que es normal, y tengo el cinturón puesto!
+099	inicio.ara.pasaje.dormirse	¡Aaah, qué sueño me da el ruidito del motor! Voy a cerrar los ojos un ratito.
+100	inicio.ara.pasaje.despertarse	¡Uy, me dormí un ratito! Y mientras tanto, el avión siguió volando por su camino.
+101	inicio.ara.pasaje.menosGas	¡Escuchá! Ahora los motores suenan más bajito, y seguimos subiendo igual.
+102	inicio.ara.pasaje.ralenti	¡Los motores suenan todavía más bajito! ¿Será que ya empezamos a bajar?
+103	inicio.ara.pasaje.oidosAlReves	¡Ahora se me tapan un poco los oídos! Es al revés que al subir: el aire tiene que entrar.
+104	inicio.ara.pasaje.masGas	¡Ahora los motores suenan más fuerte! ¿Para qué, si ya vamos a aterrizar?
+105	inicio.ara.pasaje.vueltaEnPista	¡Estamos dando la vuelta en la pista! Volvemos por el mismo camino.
+106	inicio.ara.pasaje.seLevantan	¡Escuchá! Hay gente que ya se suelta el cinturón y se levanta.
+107	inicio.ara.pasaje.luzApagada	¡Se apagó la luz del cinturón! Ahora sí me lo saco: ¡clic!
+108	inicio.ara.pasaje.uniforme	¡Entonces tu uniforme no es para servir: es para cuidarnos a todos!
+109	inicio.ara.pasaje.banoAntes	Antes de subir fui al baño: mamá dice que en los vuelos cortos casi no da tiempo.
+110	inicio.ara.pasaje.banoVuelta	¡Ya volví del baño! Y me abroché otra vez el cinturón, como dijo mamá.
+111	inicio.ara.pasaje.banoEspero	Con la luz del cinturón encendida, espero a que aterricemos. ¡Ya falta poquito!
+112	inicio.ara.pasaje.mascaraAhora	¿Hay que ponerse la máscara ahora?
+113	inicio.ara.pasaje.salidaAla	¿Y por la ventanilla no se sale, sobre el ala?
+114	inicio.ara.pasaje.kit.luz.radio	Los aviones hablan con la torre por radio. Si a uno se le rompe, la torre le habla con una linterna de colores.
+115	inicio.ara.pasaje.kit.luz.empezar	Ahora la torre sos vos: tocá el avión sin radio y dale luz verde para aterrizar, o roja para que espere.
+116	inicio.ara.pasaje.kit.luz.alas	¡Movió las alas! Así contesta el avión que vio la luz.
+117	inicio.ara.pasaje.kit.luz.sinAlas	En la base y en la final no mueve las alas: ahí tiene que ir derechito a la pista.
+118	inicio.ara.pasaje.kit.luz.roja	¡Luz roja! Da otra vuelta y espera su turno: esperar también es volar bien.
+119	inicio.ara.pasaje.kit.luz.alAire	La pista estaba ocupada y se fue al aire solo. ¡Bien! Irse al aire también es saber volar.
+120	inicio.ara.pasaje.kit.luz.conRadio	Ese tiene la radio bien: habla con la torre y aterriza sin linterna. Eso es lo normal.
+121	inicio.ara.pasaje.kit.luz.fin	¡Aterrizaron todos! Con la linterna de colores, como en una torre de verdad.
+122	inicio.ara.pasaje.kit.luz.destellosRojos	Hay un camión revisando la pista. Con la roja que parpadea, el avión sabe que no puede aterrizar.
+123	inicio.ara.pasaje.kit.luz.destellosVerdes	Ya se fue el camión. Con la verde que parpadea, el avión sabe que puede volver para aterrizar.
+124	inicio.ara.pasaje.kit.luz.noche	De noche no se ven las alas: el avión contesta apagando y encendiendo dos veces los faros.
+125	inicio.ara.pasaje.mazo	¡Ya se ven las fincas y las casitas, ahí en la ladera del monte!
+126	inicio.ara.pasaje.mazoBici	Seguro que por ahí sube gente caminando, y en bici.
+127	inicio.ara.pasaje.musica	¡Están poniendo música! ¿Por qué ponen música cuando bajamos?
+128	inicio.ara.pasaje.kit.avion.estabilizador	¡El estabilizador! Es un ala más corta, atrás en la cola, y con su timón el avión sube o baja la nariz.
+129	inicio.ara.pasaje.kit.avion.luces	Ahora las luces: la roja va en la punta del ala izquierda, la verde en la derecha y la blanca atrás.
+130	inicio.ara.pasaje.kit.avion.noche	De noche, con las luces, otro avión sabe para dónde vamos: si ve la roja y la verde a la vez, es que vamos hacia él.
+131	inicio.ara.pasaje.kit.avion.biplano	¡Un biplano! Tiene dos alas, una arriba y otra abajo, y su ruedita no va en la nariz: va en la cola.
+132	inicio.ara.pasaje.kit.avion.bimotor	Este lleva un motor en cada ala. Si uno se apaga, el otro sigue empujando y el avión puede seguir volando.
+133	inicio.ara.pasaje.kit.avion.colaEnT	¡La cola en T! El estabilizador va arriba de todo, lejos del aire revuelto del ala y de las hélices.
+134	inicio.ara.pasaje.kit.avion.reactor	¡Como el nuestro! Los motores cuelgan debajo del ala: su peso ayuda a que el ala no se doble tanto, y se llega fácil para cuidarlos.
+135	inicio.ara.pasaje.kit.avion.cuatrimotor	¡Cuatro motores y un montón de ruedas! Tantas ruedas reparten el peso, para no romper la pista.
+136	inicio.ara.pasaje.toque.invita	¡Mirá por la ventanilla! Si tocás algo con el dedo, te cuento lo que es.
+137	inicio.ara.pasaje.toque.motor	¡Ese es el motor! Por adelante se traga el aire, y por atrás lo tira con fuerza.
+138	inicio.ara.pasaje.toque.gomera	¡Esa isla redondita es La Gomera! Mamá dice que ahí se puede hablar silbando.
+139	inicio.ara.pasaje.toque.mar	¡Todo eso de abajo es el mar! Y entre isla e isla hay muchísima agua.
+140	inicio.ara.pasaje.silboOtras	¿Y en las otras islas también hablan silbando, o solamente en La Gomera?
+141	inicio.ara.pasaje.aerofrenos	¿Viste el ala cuando tocamos el suelo? Se le levantaron unas tapas por arriba: son los aerofrenos.
+142	inicio.ara.pasaje.aerofrenosPorque	Mamá me contó que así el ala deja de sostener al avión: el avión se queda pegado al suelo y las ruedas frenan bien.
+143	inicio.ara.pasaje.golpecito	¿Notaste el golpecito al tocar? Es a propósito: así las ruedas agarran bien y el avión no se pasa de largo.
+144	inicio.ara.pasaje.mazoCaminos	¡Y se ven los caminitos que suben entre las fincas!

@@ -1476,7 +1476,12 @@ const velocidades = readFileSync("src/flight/velocidad-dicha.ts", "utf8");
 const KMH = (() => {
   const m = /KMH_QUE_SE_DICEN\s*=\s*\[([^\]]*)\]/.exec(velocidades);
   if (!m) throw new Error("no encuentro KMH_QUE_SE_DICEN");
-  return m[1].split(",").map((x) => Number(x.trim())).filter((n) => n > 0);
+  // Y las que esperan su toma, que para eso esta es la lista de lo que hay que grabar.
+  const esperan = /KMH_QUE_ESPERAN_SU_TOMA\s*=\s*\[([^\]]*)\]/.exec(velocidades);
+  return [m[1], esperan?.[1] ?? ""]
+    .flatMap((l) => l.split(","))
+    .map((x) => Number(x.trim()))
+    .filter((n) => n > 0);
 })();
 /** Las centenas, en masculino: «doscientos kilómetros». */
 const CENTENAS = ["", "ciento", "doscientos", "trescientos", "cuatrocientos", "quinientos",

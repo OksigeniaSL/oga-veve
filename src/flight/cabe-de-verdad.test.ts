@@ -131,6 +131,48 @@ describe("y lo que dice, contra lo que vuela en cada campo", () => {
       expect(cabe("jaz-120", campo), campo).toBe(false);
   });
 
+  /*
+   * **Y el JAZ 110, campo por campo**, con la cuenta y no con la impresión. Pide unos
+   * 1.950 m para despegar y 1.300 para aterrizar a su peso de ficha, 193 toneladas,
+   * donde Boeing da 1.800 y 1.800 (D6-58333, 3.3.9 y 3.4.3); es de la categoría 9 de
+   * bomberos y acepta la 8. Así que entra en La Palma, donde el grande no, y **no en
+   * Guaraní ni en Encarnación, que son de la 7, ni en Estigarribia, que no tiene**,
+   * por mucha pista que les sobre.
+   */
+  it("el JAZ 110 opera donde le dan la pista y los bomberos", () => {
+    for (const campo of [
+      "pettirossi",
+      "tenerife-norte",
+      "tenerife-sur",
+      "gran-canaria",
+      "fuerteventura",
+      "lanzarote",
+      "la-palma",
+    ])
+      expect(cabe("jaz-110", campo), campo).toBe(true);
+    for (const campo of ["guarani", "encarnacion", "estigarribia"]) {
+      expect(cabe("jaz-110", campo), campo).toBe(false);
+      expect(cabeEn(aircraftById("jaz-110"), campoDe(scenarioById(campo))).porQueNo, campo).toBe(
+        "bomberos",
+      );
+    }
+    for (const campo of [
+      "concepcion",
+      "ayolas",
+      "pilar",
+      "pedro-juan",
+      "el-hierro",
+      "la-gomera",
+      "cuatro-vientos",
+      "yvytu-rape",
+    ]) {
+      expect(cabe("jaz-110", campo), campo).toBe(false);
+      expect(cabeEn(aircraftById("jaz-110"), campoDe(scenarioById(campo))).porQueNo, campo).toBe(
+        "corta",
+      );
+    }
+  });
+
   it("y en los novecientos metros de hierba de la granja, la avioneta y el fumigador", () => {
     expect(cabe("jaz-20", "yvytu-rape")).toBe(true);
     expect(cabe("jaz-25", "yvytu-rape")).toBe(true);

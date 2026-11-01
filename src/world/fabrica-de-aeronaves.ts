@@ -433,6 +433,8 @@ export function fabricarAeronave(
       "bimotor-ala-baja": 0.86,
       "cola-en-t": 0.96,
       reactor: 1.08,
+      // 62,81 m contra 60,12 de ala (D6-58333, 2.2.2): más corto que el reactor.
+      "bimotor-ancho": 1.04,
       /*
        * El cuatrimotor es **más corto en proporción**, no más largo: un
        * fuselaje ancho lleva su volumen en la sección y no en el largo. El
@@ -454,7 +456,12 @@ export function fabricarAeronave(
    * cambia el bucle de los motores.
    */
   const cuatrimotor = silueta === "cuatrimotor";
-  const reactor = silueta === "reactor" || cuatrimotor;
+  /**
+   * Y el bimotor de fuselaje ancho, otro reactor: dos motores, como el pequeño,
+   * pero más metidos hacia dentro y mucho más gordos respecto al ala.
+   */
+  const bimotorAncho = silueta === "bimotor-ancho";
+  const reactor = silueta === "reactor" || cuatrimotor || bimotorAncho;
   const bimotor = silueta === "bimotor-ala-baja" || silueta === "cola-en-t";
   const biplano = silueta === "biplano";
   const alaArriba = silueta === "ala-alta" || silueta === "cola-en-t";
@@ -586,7 +593,11 @@ export function fabricarAeronave(
      * interior a un cuarto del ala y el exterior a la mitad larga, que es lo
      * que deja sitio al tren y separa los chorros.
      */
-    const sitios = cuatrimotor ? [0.22, 0.42] : [reactor ? 0.28 : 0.24];
+    const sitios = cuatrimotor
+      ? [0.22, 0.42]
+      : bimotorAncho
+        ? [0.165]
+        : [reactor ? 0.28 : 0.24];
     const largoG = reactor ? c * 1.7 : c * 1.6;
     const radioG = c * (reactor ? 0.34 : 0.24);
     for (const lado of [-1, 1])

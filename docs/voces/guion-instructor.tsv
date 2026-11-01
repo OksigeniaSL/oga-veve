@@ -570,98 +570,100 @@
 570	vuelo.paso.velocidad.480	Son cuatrocientos ochenta kilómetros por hora.
 571	vuelo.paso.velocidad.520	Son quinientos veinte kilómetros por hora.
 572	vuelo.paso.velocidad.540	Son quinientos cuarenta kilómetros por hora.
-573	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
-574	gafas.ganadas	¡Tus gafas de sol!
-575	pitot.noMarca	El anemómetro no marca: gas atrás y frená, con calma.
-576	pitot.abortado	¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.
-577	pitot.enElAire	Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.
-578	parte.salgoIgual.voz	Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.
-579	parte.yaSePuede.voz	Miramos otra vez y ya mejoró: ahora sí podemos salir.
-580	parte.sigueIgual.voz	Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.
-581	parte.esperamos.voz	Esperamos un rato y volvemos a mirar el parte.
-582	parte.ganaste	¡Hoy ganaste: decidiste bien!
-583	explica.sello.veve.texto	¡Veve! Es el sello de tu primer despegue. Veve, en guaraní, quiere decir volar.
-584	explica.sello.karumbe.texto	Karumbe, la tortuga: rodaste la pista entera, despacito y por el medio. En los campos sin calle de rodaje se va así hasta la cabecera.
-585	explica.sello.mainumby.texto	Mainumby, el picaflor: volaste bien despacito, sin subir ni bajar y sin llegar a la pérdida. Volar lento se practica en la escuela para conocer bien al avión.
-586	explica.sello.nanduti.texto	Ñandutí: atravesaste una nube, blanca por dentro como el encaje. Adentro no se ve nada y se vuela mirando los instrumentos; por eso se hace solo en los aviones preparados para eso.
-587	explica.sello.tajamar.texto	La vuelta al tajamar: diste una vuelta entera alrededor del agua donde toma el ganado de la granja. Dar vueltas alrededor de un punto enseña a corregir el viento.
-588	explica.sello.tres-toques.texto	Tres toques: tocaste la pista y volviste a subir tres veces seguidas, sin parar. Así se practican los aterrizajes en la escuela, uno detrás de otro.
-589	explica.sello.primer-solo.texto	Tu primer solo: despegaste y aterrizaste sin instructora, por tu cuenta. Es el día que todo piloto recuerda para siempre.
-590	explica.sello.chipa-volandera.texto	Chipa volandera: saliste de un aeródromo y llegaste a otro. Es tu primera travesía, como la chipa que viaja de pueblo en pueblo.
-591	explica.sello.jasy.texto	Jasy, la luna: aterrizaste de noche. De noche la pista se encuentra por sus luces, y se baja con más calma todavía.
-592	explica.sello.mbarete.texto	Mbarete quiere decir fuerte. Renunciaste a tiempo, cuando algo no salía: hace falta ser fuerte para no seguir. Es lo que hacen los buenos pilotos.
-593	explica.sello.ruta-jesuitica.texto	Ruta Jesuítica: volaste en Encarnación y en Ayolas, la tierra de las misiones jesuíticas, con sus ruinas de piedra de hace más de doscientos años.
-594	explica.sello.pettirossi.texto	La hazaña de Pettirossi: volaste en todos los aeródromos del Paraguay. Silvio Pettirossi fue el primer aviador paraguayo, y el aeropuerto de Asunción lleva su nombre.
-595	explica.sello.planeador.texto	El planeador: llegaste a la pista sin motor, planeando. Es lo que se practica para el día que un motor se pare: con calma, a la velocidad de planeo y hacia la pista que se alcanza.
-596	explica.sello.manos-de-seda.texto	Manos de seda: bajaste por la senda, a tu velocidad, y te posaste bien en la pista. Una aproximación así, estabilizada, es lo que más mira quien examina a un piloto.
-597	explica.sello.transchaco.texto	Transchaco: volaste entre Asunción y Mariscal Estigarribia, por encima del Chaco, por donde va la ruta Transchaco. Un vuelo largo, de los que se planifican antes de salir.
-598	explica.sello.cien-horas.texto	Cien horas: tu cuaderno ya lleva cien horas de vuelo. Las horas son lo que cuenta de verdad un piloto, y estas son todas tuyas.
-599	ejercicio.tormenta.antes	Hoy volamos con una tormenta. ¿Ves esa nube enorme allá adelante, alta como una torre? Es una tormenta, y a una tormenta no se entra: la vamos a rodear de lejos, con calma
-600	ejercicio.tormenta.porQue	Adentro de esa nube el aire sube y baja muy fuerte, llueve mucho y puede caer granizo. Por eso no se entra. Girá a la derecha, del lado de donde viene el viento, y dejala bien lejos
-601	ejercicio.tormenta.radar	En el radar se ve: el rojo y el magenta son lo más fuerte, y ahí no se entra. A una tormenta así se la deja a veinte millas, unos treinta y siete kilómetros. Girá a la derecha, del lado del viento, lejos del yunque
-602	ejercicio.tormenta.avisamos	Le avisamos al control que vamos a rodear la tormenta, y prendemos el cartel del cinturón: cerca de una tormenta el aire se mueve, y con el cinturón puesto un salto no te levanta del asiento
-603	ejercicio.tormenta.masDerecha	Girá un poco más a la derecha: así todavía pasamos muy cerca de la tormenta
-604	ejercicio.tormenta.masIzquierda	Girá un poco más a la izquierda: así todavía pasamos muy cerca de la tormenta
-605	ejercicio.tormenta.asiVa	¡Así! Con este rumbo la dejamos lejos. Seguí derecho hasta que la tormenta quede atrás
-606	ejercicio.tormenta.rayoLejos	¿Viste el destello adentro de la nube? Fue un rayo. Las tormentas tienen muchos, y desde lejos no nos hacen nada. Y si algún día un rayo toca un avión, tampoco: el avión está hecho para eso
-607	ejercicio.tormenta.adentro	Entramos en la tormenta: por eso se sacude, llueve fuerte y suena el granizo. Con calma: cinturón puesto, alas derechas, y seguí derecho, que es el camino más corto para salir
-608	ejercicio.tormenta.rayoEnElAvion	Nos tocó un rayo, y no pasa nada. Casi toda la electricidad corre por la chapa de afuera del avión y sigue de largo: está hecho para eso. A cada avión de línea le pasa una o dos veces por año
-609	ejercicio.tormenta.salimos	Ya salimos. Así es adentro de una tormenta: sacude, llueve fuerte y graniza. Por eso no se entra: se la rodea de lejos. Vamos otra vez, desde el principio
-610	ejercicio.tormenta.bien	¡Muy bien! Rodeaste la tormenta y la dejaste bien lejos, como hacen los pilotos de verdad. Ahora, de vuelta a casa
-611	ejercicio.tormenta.bienCerca	La rodeaste sin entrar: bien hecho. Pasamos un poco cerca: la próxima, más lejos todavía, que de una tormenta así se pasa a veinte millas
-612	vuelo.tocasteLargo	Tocaste largo, lejos de las marcas: así se come la pista. Mejor firme y en su sitio que suave y lejos
-613	vuelo.tocasteDuro	Aterrizaje duro: ahora hay que revisar el avión. La próxima, recogé un poco más al final
-614	vuelo.tocasteLargoFacil	¡Aterrizaste! Pero lejos de las rayas blancas grandes: la próxima, tocá cerca de ellas, que así sobra pista para frenar
-615	vuelo.tocasteDuroFacil	¡Aterrizaste! Pero con un golpe fuerte: la próxima, llegá al suelo más despacito, sin empujar la nariz para abajo
-616	vuelo.alturaDeLaTorreRayaYMarca	La torre nos dice hasta dónde subir: hasta la raya de la altura. Y la velocidad en la marca rosa.
-617	vuelo.alturaDeLaTorreYMarca	La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí con la velocidad en la marca rosa, y nos quedamos.
-618	vuelo.paso.cruceroSolo	Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Ahora gas de crucero, hasta la marca del motor.
-619	vuelo.paso.cruceroSolo.sinVer	Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Ahora gas de crucero.
-620	vuelo.paso.cruceroSoloConAutomatico	Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Gas de crucero, hasta la marca del motor; y si querés, poné el piloto automático: es el botón que late.
-621	vuelo.comoSeAterriza.facil	Así se aterriza: llegamos al suelo despacito, sin empujar la nariz para abajo, y tocamos cerca de las rayas blancas grandes de la pista.
-622	vuelo.comoSeAterriza.helice	Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y el gas afuera, juntos. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.
-623	vuelo.comoSeAterriza.cables	Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y enseguida el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.
-624	vuelo.comoSeAterriza.electricos	Así se aterriza en este avión: con la velocidad de la final, y cuando el avión cuente thirty, la nariz un poquito arriba y el gas afuera, juntos. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.
-625	explica.papi.texto	El PAPI son cuatro luces al lado de la pista. Cada una se ve blanca desde arriba y roja desde abajo. Dos blancas y dos rojas: vas por la senda. Más blancas, vas alto; más rojas, vas bajo.
-626	seguir.pettirossi	¿Seguimos volando? Desde acá podemos ir hasta Asunción.
-627	seguir.guarani	¿Seguimos volando? Desde acá podemos ir hasta Ciudad del Este.
-628	seguir.encarnacion	¿Seguimos volando? Desde acá podemos ir hasta Encarnación.
-629	seguir.concepcion	¿Seguimos volando? Desde acá podemos ir hasta Concepción.
-630	seguir.pedro-juan	¿Seguimos volando? Desde acá podemos ir hasta Pedro Juan Caballero.
-631	seguir.estigarribia	¿Seguimos volando? Desde acá podemos ir hasta Mariscal Estigarribia.
-632	seguir.ayolas	¿Seguimos volando? Desde acá podemos ir hasta Ayolas.
-633	seguir.pilar	¿Seguimos volando? Desde acá podemos ir hasta Pilar.
-634	seguir.yvytu-rape	¿Seguimos volando? Desde acá podemos ir hasta Yvytu Rape, la pista de la Granja Óga.
-635	seguir.tenerife-norte	¿Seguimos volando? Desde acá podemos ir hasta Tenerife Norte.
-636	seguir.tenerife-sur	¿Seguimos volando? Desde acá podemos ir hasta Tenerife Sur.
-637	seguir.gran-canaria	¿Seguimos volando? Desde acá podemos ir hasta Gran Canaria.
-638	seguir.lanzarote	¿Seguimos volando? Desde acá podemos ir hasta Lanzarote.
-639	seguir.fuerteventura	¿Seguimos volando? Desde acá podemos ir hasta Fuerteventura.
-640	seguir.la-palma	¿Seguimos volando? Desde acá podemos ir hasta La Palma.
-641	seguir.el-hierro	¿Seguimos volando? Desde acá podemos ir hasta El Hierro.
-642	seguir.la-gomera	¿Seguimos volando? Desde acá podemos ir hasta La Gomera.
-643	tarjeta.voz.lucesPuntas	Estas son las luces de navegación: roja en la punta izquierda, verde en la derecha, y en cada punta, una blanca que mira para atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.
-644	tarjeta.voz.motorTurbo	Este avión lleva dos motores de seis cilindros, con turbo: el turbo les mete el aire apretado, y así, al subir, no pierden fuerza hasta muy arriba. Y mirá las hélices: giran al revés una de la otra.
-645	parte.explica.miramos	Antes de salir, miramos cómo está el tiempo.
-646	parte.explica.aca.tormenta	Hoy acá hay tormenta encima del campo, y con tormenta no se sale.
-647	parte.explica.aca.visibilidad	Hoy acá se ve muy poco, menos de lo que necesita este avión.
-648	parte.explica.aca.techo	Hoy acá las nubes están muy bajas, más de lo que aguanta este avión.
-649	parte.explica.aca.visibilidadYTecho	Hoy acá se ve muy poco y las nubes están muy bajas, más de lo que aguanta este avión.
-650	parte.explica.aca.cruzado	Hoy acá sopla mucho viento de costado, más del que aguanta este avión.
-651	parte.explica.aca.pista	Hoy a este avión no le alcanza la pista para despegar con su margen.
-652	parte.explica.alla.tormenta	Hoy donde vamos hay tormenta encima del campo, y con tormenta no se aterriza.
-653	parte.explica.alla.visibilidad	Hoy donde vamos se ve muy poco, menos de lo que necesita este avión.
-654	parte.explica.alla.techo	Hoy donde vamos las nubes están muy bajas, más de lo que aguanta este avión.
-655	parte.explica.alla.visibilidadYTecho	Hoy donde vamos se ve muy poco y las nubes están muy bajas, más de lo que aguanta este avión.
-656	parte.explica.alla.cruzado	Hoy donde vamos sopla mucho viento de costado, más del que aguanta este avión.
-657	parte.explica.elegis	Podemos quedarnos en tierra, esperar un rato o salir igual. Vos elegís.
-658	parte.explica.tambienSalir	Y si querés, también podés salir igual: la decisión es tuya.
-659	parte.explica.bien	Hoy el tiempo está bien para este avión: podemos salir cuando quieras.
-660	parte.senala.quedarse	Con este nos quedamos hoy en tierra, y eso también es ganar.
-661	parte.senala.esperar	Con este esperamos un ratito y volvemos a mirar el tiempo.
-662	parte.senala.salirIgual	Con este salimos igual, con cuidado, y si no se puede, volvemos.
-663	teclas.explica.abajo	Estas son las teclas para volar. Las que tienen dibujo son las que vas a usar: apretá una y mirá cómo se ilumina.
-664	teclas.explica.arriba	Estas son las teclas para volar y lo que hace cada una. Si alguna te queda incómoda, abrí «Cambiar las teclas» y elegí otra.
-665	fin.explica.hoja	En la hoja, cada visto es algo que te salió bien.
-666	fin.explica.abajo	La raya es por dónde volaste. Para volar otra vez, tocá la flecha redonda.
-667	fin.explica.arriba	En el plano, la raya es por dónde volaste. Para volar otra vez, tocá «Otro vuelo».
+573	vuelo.paso.velocidad.300	Son trescientos kilómetros por hora.
+574	vuelo.paso.velocidad.590	Son quinientos noventa kilómetros por hora.
+575	hud.landedShort	Bajaste antes de la barra blanca: las flechas son para rodar y despegar
+576	gafas.ganadas	¡Tus gafas de sol!
+577	pitot.noMarca	El anemómetro no marca: gas atrás y frená, con calma.
+578	pitot.abortado	¡Muy bien! Parar era lo correcto. Era la funda del pitot: volvemos al puesto a sacarla.
+579	pitot.enElAire	Volamos sin anemómetro: con el horizonte y el gas, tranquilos. Damos una vuelta y aterrizamos.
+580	parte.salgoIgual.voz	Está bien: salimos con cuidado. Y si allá arriba no se puede, volvemos.
+581	parte.yaSePuede.voz	Miramos otra vez y ya mejoró: ahora sí podemos salir.
+582	parte.sigueIgual.voz	Miramos otra vez y sigue igual. Podemos esperar otro rato, o quedarnos: las dos cosas están bien.
+583	parte.esperamos.voz	Esperamos un rato y volvemos a mirar el parte.
+584	parte.ganaste	¡Hoy ganaste: decidiste bien!
+585	explica.sello.veve.texto	¡Veve! Es el sello de tu primer despegue. Veve, en guaraní, quiere decir volar.
+586	explica.sello.karumbe.texto	Karumbe, la tortuga: rodaste la pista entera, despacito y por el medio. En los campos sin calle de rodaje se va así hasta la cabecera.
+587	explica.sello.mainumby.texto	Mainumby, el picaflor: volaste bien despacito, sin subir ni bajar y sin llegar a la pérdida. Volar lento se practica en la escuela para conocer bien al avión.
+588	explica.sello.nanduti.texto	Ñandutí: atravesaste una nube, blanca por dentro como el encaje. Adentro no se ve nada y se vuela mirando los instrumentos; por eso se hace solo en los aviones preparados para eso.
+589	explica.sello.tajamar.texto	La vuelta al tajamar: diste una vuelta entera alrededor del agua donde toma el ganado de la granja. Dar vueltas alrededor de un punto enseña a corregir el viento.
+590	explica.sello.tres-toques.texto	Tres toques: tocaste la pista y volviste a subir tres veces seguidas, sin parar. Así se practican los aterrizajes en la escuela, uno detrás de otro.
+591	explica.sello.primer-solo.texto	Tu primer solo: despegaste y aterrizaste sin instructora, por tu cuenta. Es el día que todo piloto recuerda para siempre.
+592	explica.sello.chipa-volandera.texto	Chipa volandera: saliste de un aeródromo y llegaste a otro. Es tu primera travesía, como la chipa que viaja de pueblo en pueblo.
+593	explica.sello.jasy.texto	Jasy, la luna: aterrizaste de noche. De noche la pista se encuentra por sus luces, y se baja con más calma todavía.
+594	explica.sello.mbarete.texto	Mbarete quiere decir fuerte. Renunciaste a tiempo, cuando algo no salía: hace falta ser fuerte para no seguir. Es lo que hacen los buenos pilotos.
+595	explica.sello.ruta-jesuitica.texto	Ruta Jesuítica: volaste en Encarnación y en Ayolas, la tierra de las misiones jesuíticas, con sus ruinas de piedra de hace más de doscientos años.
+596	explica.sello.pettirossi.texto	La hazaña de Pettirossi: volaste en todos los aeródromos del Paraguay. Silvio Pettirossi fue el primer aviador paraguayo, y el aeropuerto de Asunción lleva su nombre.
+597	explica.sello.planeador.texto	El planeador: llegaste a la pista sin motor, planeando. Es lo que se practica para el día que un motor se pare: con calma, a la velocidad de planeo y hacia la pista que se alcanza.
+598	explica.sello.manos-de-seda.texto	Manos de seda: bajaste por la senda, a tu velocidad, y te posaste bien en la pista. Una aproximación así, estabilizada, es lo que más mira quien examina a un piloto.
+599	explica.sello.transchaco.texto	Transchaco: volaste entre Asunción y Mariscal Estigarribia, por encima del Chaco, por donde va la ruta Transchaco. Un vuelo largo, de los que se planifican antes de salir.
+600	explica.sello.cien-horas.texto	Cien horas: tu cuaderno ya lleva cien horas de vuelo. Las horas son lo que cuenta de verdad un piloto, y estas son todas tuyas.
+601	ejercicio.tormenta.antes	Hoy volamos con una tormenta. ¿Ves esa nube enorme allá adelante, alta como una torre? Es una tormenta, y a una tormenta no se entra: la vamos a rodear de lejos, con calma
+602	ejercicio.tormenta.porQue	Adentro de esa nube el aire sube y baja muy fuerte, llueve mucho y puede caer granizo. Por eso no se entra. Girá a la derecha, del lado de donde viene el viento, y dejala bien lejos
+603	ejercicio.tormenta.radar	En el radar se ve: el rojo y el magenta son lo más fuerte, y ahí no se entra. A una tormenta así se la deja a veinte millas, unos treinta y siete kilómetros. Girá a la derecha, del lado del viento, lejos del yunque
+604	ejercicio.tormenta.avisamos	Le avisamos al control que vamos a rodear la tormenta, y prendemos el cartel del cinturón: cerca de una tormenta el aire se mueve, y con el cinturón puesto un salto no te levanta del asiento
+605	ejercicio.tormenta.masDerecha	Girá un poco más a la derecha: así todavía pasamos muy cerca de la tormenta
+606	ejercicio.tormenta.masIzquierda	Girá un poco más a la izquierda: así todavía pasamos muy cerca de la tormenta
+607	ejercicio.tormenta.asiVa	¡Así! Con este rumbo la dejamos lejos. Seguí derecho hasta que la tormenta quede atrás
+608	ejercicio.tormenta.rayoLejos	¿Viste el destello adentro de la nube? Fue un rayo. Las tormentas tienen muchos, y desde lejos no nos hacen nada. Y si algún día un rayo toca un avión, tampoco: el avión está hecho para eso
+609	ejercicio.tormenta.adentro	Entramos en la tormenta: por eso se sacude, llueve fuerte y suena el granizo. Con calma: cinturón puesto, alas derechas, y seguí derecho, que es el camino más corto para salir
+610	ejercicio.tormenta.rayoEnElAvion	Nos tocó un rayo, y no pasa nada. Casi toda la electricidad corre por la chapa de afuera del avión y sigue de largo: está hecho para eso. A cada avión de línea le pasa una o dos veces por año
+611	ejercicio.tormenta.salimos	Ya salimos. Así es adentro de una tormenta: sacude, llueve fuerte y graniza. Por eso no se entra: se la rodea de lejos. Vamos otra vez, desde el principio
+612	ejercicio.tormenta.bien	¡Muy bien! Rodeaste la tormenta y la dejaste bien lejos, como hacen los pilotos de verdad. Ahora, de vuelta a casa
+613	ejercicio.tormenta.bienCerca	La rodeaste sin entrar: bien hecho. Pasamos un poco cerca: la próxima, más lejos todavía, que de una tormenta así se pasa a veinte millas
+614	vuelo.tocasteLargo	Tocaste largo, lejos de las marcas: así se come la pista. Mejor firme y en su sitio que suave y lejos
+615	vuelo.tocasteDuro	Aterrizaje duro: ahora hay que revisar el avión. La próxima, recogé un poco más al final
+616	vuelo.tocasteLargoFacil	¡Aterrizaste! Pero lejos de las rayas blancas grandes: la próxima, tocá cerca de ellas, que así sobra pista para frenar
+617	vuelo.tocasteDuroFacil	¡Aterrizaste! Pero con un golpe fuerte: la próxima, llegá al suelo más despacito, sin empujar la nariz para abajo
+618	vuelo.alturaDeLaTorreRayaYMarca	La torre nos dice hasta dónde subir: hasta la raya de la altura. Y la velocidad en la marca rosa.
+619	vuelo.alturaDeLaTorreYMarca	La torre nos dio hasta dónde subir. La puse en la ventanilla de la altura, en magenta: subimos hasta ahí con la velocidad en la marca rosa, y nos quedamos.
+620	vuelo.paso.cruceroSolo	Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Ahora gas de crucero, hasta la marca del motor.
+621	vuelo.paso.cruceroSolo.sinVer	Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Ahora gas de crucero.
+622	vuelo.paso.cruceroSoloConAutomatico	Ya estamos arriba, y el avión se queda solo a esta altura: es una ayuda para aprender. Gas de crucero, hasta la marca del motor; y si querés, poné el piloto automático: es el botón que late.
+623	vuelo.comoSeAterriza.facil	Así se aterriza: llegamos al suelo despacito, sin empujar la nariz para abajo, y tocamos cerca de las rayas blancas grandes de la pista.
+624	vuelo.comoSeAterriza.helice	Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y el gas afuera, juntos. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.
+625	vuelo.comoSeAterriza.cables	Así se aterriza en este avión: con la velocidad de la final, y cerca del suelo, la nariz un poquito arriba y enseguida el gas afuera. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.
+626	vuelo.comoSeAterriza.electricos	Así se aterriza en este avión: con la velocidad de la final, y cuando el avión cuente thirty, la nariz un poquito arriba y el gas afuera, juntos. Se toca firme en las marcas grandes: mejor firme y en su sitio que suave y lejos.
+627	explica.papi.texto	El PAPI son cuatro luces al lado de la pista. Cada una se ve blanca desde arriba y roja desde abajo. Dos blancas y dos rojas: vas por la senda. Más blancas, vas alto; más rojas, vas bajo.
+628	seguir.pettirossi	¿Seguimos volando? Desde acá podemos ir hasta Asunción.
+629	seguir.guarani	¿Seguimos volando? Desde acá podemos ir hasta Ciudad del Este.
+630	seguir.encarnacion	¿Seguimos volando? Desde acá podemos ir hasta Encarnación.
+631	seguir.concepcion	¿Seguimos volando? Desde acá podemos ir hasta Concepción.
+632	seguir.pedro-juan	¿Seguimos volando? Desde acá podemos ir hasta Pedro Juan Caballero.
+633	seguir.estigarribia	¿Seguimos volando? Desde acá podemos ir hasta Mariscal Estigarribia.
+634	seguir.ayolas	¿Seguimos volando? Desde acá podemos ir hasta Ayolas.
+635	seguir.pilar	¿Seguimos volando? Desde acá podemos ir hasta Pilar.
+636	seguir.yvytu-rape	¿Seguimos volando? Desde acá podemos ir hasta Yvytu Rape, la pista de la Granja Óga.
+637	seguir.tenerife-norte	¿Seguimos volando? Desde acá podemos ir hasta Tenerife Norte.
+638	seguir.tenerife-sur	¿Seguimos volando? Desde acá podemos ir hasta Tenerife Sur.
+639	seguir.gran-canaria	¿Seguimos volando? Desde acá podemos ir hasta Gran Canaria.
+640	seguir.lanzarote	¿Seguimos volando? Desde acá podemos ir hasta Lanzarote.
+641	seguir.fuerteventura	¿Seguimos volando? Desde acá podemos ir hasta Fuerteventura.
+642	seguir.la-palma	¿Seguimos volando? Desde acá podemos ir hasta La Palma.
+643	seguir.el-hierro	¿Seguimos volando? Desde acá podemos ir hasta El Hierro.
+644	seguir.la-gomera	¿Seguimos volando? Desde acá podemos ir hasta La Gomera.
+645	tarjeta.voz.lucesPuntas	Estas son las luces de navegación: roja en la punta izquierda, verde en la derecha, y en cada punta, una blanca que mira para atrás. Si de noche ves la roja y la verde juntas, ese avión viene de frente.
+646	tarjeta.voz.motorTurbo	Este avión lleva dos motores de seis cilindros, con turbo: el turbo les mete el aire apretado, y así, al subir, no pierden fuerza hasta muy arriba. Y mirá las hélices: giran al revés una de la otra.
+647	parte.explica.miramos	Antes de salir, miramos cómo está el tiempo.
+648	parte.explica.aca.tormenta	Hoy acá hay tormenta encima del campo, y con tormenta no se sale.
+649	parte.explica.aca.visibilidad	Hoy acá se ve muy poco, menos de lo que necesita este avión.
+650	parte.explica.aca.techo	Hoy acá las nubes están muy bajas, más de lo que aguanta este avión.
+651	parte.explica.aca.visibilidadYTecho	Hoy acá se ve muy poco y las nubes están muy bajas, más de lo que aguanta este avión.
+652	parte.explica.aca.cruzado	Hoy acá sopla mucho viento de costado, más del que aguanta este avión.
+653	parte.explica.aca.pista	Hoy a este avión no le alcanza la pista para despegar con su margen.
+654	parte.explica.alla.tormenta	Hoy donde vamos hay tormenta encima del campo, y con tormenta no se aterriza.
+655	parte.explica.alla.visibilidad	Hoy donde vamos se ve muy poco, menos de lo que necesita este avión.
+656	parte.explica.alla.techo	Hoy donde vamos las nubes están muy bajas, más de lo que aguanta este avión.
+657	parte.explica.alla.visibilidadYTecho	Hoy donde vamos se ve muy poco y las nubes están muy bajas, más de lo que aguanta este avión.
+658	parte.explica.alla.cruzado	Hoy donde vamos sopla mucho viento de costado, más del que aguanta este avión.
+659	parte.explica.elegis	Podemos quedarnos en tierra, esperar un rato o salir igual. Vos elegís.
+660	parte.explica.tambienSalir	Y si querés, también podés salir igual: la decisión es tuya.
+661	parte.explica.bien	Hoy el tiempo está bien para este avión: podemos salir cuando quieras.
+662	parte.senala.quedarse	Con este nos quedamos hoy en tierra, y eso también es ganar.
+663	parte.senala.esperar	Con este esperamos un ratito y volvemos a mirar el tiempo.
+664	parte.senala.salirIgual	Con este salimos igual, con cuidado, y si no se puede, volvemos.
+665	teclas.explica.abajo	Estas son las teclas para volar. Las que tienen dibujo son las que vas a usar: apretá una y mirá cómo se ilumina.
+666	teclas.explica.arriba	Estas son las teclas para volar y lo que hace cada una. Si alguna te queda incómoda, abrí «Cambiar las teclas» y elegí otra.
+667	fin.explica.hoja	En la hoja, cada visto es algo que te salió bien.
+668	fin.explica.abajo	La raya es por dónde volaste. Para volar otra vez, tocá la flecha redonda.
+669	fin.explica.arriba	En el plano, la raya es por dónde volaste. Para volar otra vez, tocá «Otro vuelo».

@@ -24,7 +24,7 @@ import {
   type Oido,
   type Suceso,
 } from "./ruidos";
-import { AIRCRAFT, ARAI, ARASUNU, MAINUMBY, PANAMBI, PYKASU, YVAGA } from "../flight/aircraft";
+import { AIRCRAFT, ARAI, ARASUNU, MAINUMBY, PANAMBI, PYKASU, TIJERETA, YVAGA } from "../flight/aircraft";
 import { FIRMES } from "../world/firme";
 
 const EN_VUELO: LoQuePasa = {
@@ -568,11 +568,34 @@ describe("la ficha de cada avión dice lo mismo que el avión", () => {
 
   it("el aislamiento crece con el avión, y el que menos aísla es el fumigador", () => {
     // El fumigador no es el más ligero, pero es chapa y tirantes: va aparte.
+    // Y el JAZ 110, también: es más chico que el grande y lo que oye quien va dentro
+    // es menos, que es lo que se le pidió. Va aparte con su prueba.
     const resto = [...AIRCRAFT]
-      .filter((a) => a !== MAINUMBY)
+      .filter((a) => a !== MAINUMBY && a !== TIJERETA)
       .sort((x, y) => x.mass - y.mass)
       .map((a) => a.sound.ruidos.aislamiento);
     expect([...resto].sort((x, y) => x - y)).toEqual(resto);
     expect(Math.min(...resto)).toBeGreaterThan(MAINUMBY.sound.ruidos.aislamiento);
+  });
+
+  /*
+   * **Dos turbofanes grandes de mucho flujo secundario, más graves y más callados
+   * por dentro que los cuatro del JAZ 120.** Un fan enorme que gira despacio y con
+   * menos palas silba más grave, y el forro del tubo es el que más aísla.
+   */
+  it("el JAZ 110 suena más grave y más callado por dentro que los cuatro del JAZ 120", () => {
+    const silbidoA = (a: typeof YVAGA, vueltas: number): number =>
+      (a.sound.palasDeFan! * vueltas) / 60;
+    expect(silbidoA(TIJERETA, TIJERETA.sound.maxRpm)).toBeLessThan(
+      silbidoA(YVAGA, YVAGA.sound.maxRpm) * 0.5,
+    );
+    expect(silbidoA(TIJERETA, TIJERETA.sound.idleRpm)).toBeLessThan(
+      silbidoA(YVAGA, YVAGA.sound.idleRpm) * 0.5,
+    );
+    expect(TIJERETA.sound.growlHz).toBeLessThan(YVAGA.sound.growlHz);
+    expect(TIJERETA.sound.growlHz + TIJERETA.sound.growlRise).toBeLessThan(
+      YVAGA.sound.growlHz + YVAGA.sound.growlRise,
+    );
+    expect(TIJERETA.sound.ruidos.aislamiento).toBeGreaterThan(YVAGA.sound.ruidos.aislamiento);
   });
 });

@@ -110,6 +110,8 @@ export const ES_PY = {
     "Turbohélice regional, cola en T. Grande, y entra en pistas cortas.",
   "aircraft.arai.description":
     "Reactor de ala en flecha. Rápido, y todo pasa más despacio.",
+  "aircraft.tijereta.description":
+    "Bimotor de fuselaje ancho. Dos motores enormes, para irse lejos y volver.",
   "aircraft.yvaga.description":
     "Cuatrimotor de fuselaje ancho. El grande: cuenta los motores.",
 
@@ -4413,6 +4415,8 @@ export const ES_PY = {
     "¡La cola en T! El estabilizador va arriba de todo, lejos del aire revuelto del ala y de las hélices.",
   "inicio.ara.pasaje.kit.avion.reactor":
     "¡Como el nuestro! Los motores cuelgan debajo del ala: su peso ayuda a que el ala no se doble tanto, y se llega fácil para cuidarlos.",
+  "inicio.ara.pasaje.kit.avion.bimotorAncho":
+    "¡Tan grande y con dos motores nomás! Son enormes, y con dos solos este avión cruza el océano.",
   "inicio.ara.pasaje.kit.avion.cuatrimotor":
     "¡Cuatro motores y un montón de ruedas! Tantas ruedas reparten el peso, para no romper la pista.",
   "inicio.tripulacion.pasaje.cerca.kitGuardar":

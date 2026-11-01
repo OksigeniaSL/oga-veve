@@ -302,8 +302,9 @@ describe("lo que mide el radioaltímetro", () => {
 describe("qué cuenta lleva cada avión", () => {
   const conRadioaltimetro = AIRCRAFT.filter((a) => a.avisosHablados);
 
-  it("la llevan el turbohélice y los dos reactores", () => {
+  it("la llevan el turbohélice y los tres reactores", () => {
     expect(conRadioaltimetro.map((a) => a.id).sort()).toEqual([
+      "jaz-110",
       "jaz-120",
       "jaz-60",
       "jaz-90",

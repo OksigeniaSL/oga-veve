@@ -91,8 +91,8 @@ function cualEs(millas: number): number {
 describe("el tráfico en la carta, en las ocho direcciones", () => {
   const conTcas = AIRCRAFT.filter((a) => a.tcas);
 
-  it("los tres aviones que lo llevan: el turbohélice y los dos reactores", () => {
-    expect(conTcas.map((a) => a.tcas)).toEqual(["TCAS I", "TCAS II", "TCAS II"]);
+  it("los cuatro aviones que lo llevan: el turbohélice y los tres reactores", () => {
+    expect(conTcas.map((a) => a.tcas)).toEqual(["TCAS I", "TCAS II", "TCAS II", "TCAS II"]);
   });
 
   for (const avion of conTcas)

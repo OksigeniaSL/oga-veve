@@ -169,7 +169,7 @@ describe("el asiento de ventanilla", () => {
  * por el mismo código que los mueve en el juego.
  */
 describe("el asiento de encima del ala", () => {
-  const CON_FRENOS = ["jaz-90", "jaz-120"];
+  const CON_FRENOS = ["jaz-90", "jaz-110", "jaz-120"];
 
   async function montarMoviendo(a: AircraftConfig) {
     const b = fs.readFileSync(`public/assets/aeronaves/${a.id}.glb`);

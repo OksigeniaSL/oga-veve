@@ -570,6 +570,8 @@ Son cuatrocientos sesenta kilómetros por hora.
 Son cuatrocientos ochenta kilómetros por hora.
 Son quinientos veinte kilómetros por hora.
 Son quinientos cuarenta kilómetros por hora.
+Son trescientos kilómetros por hora.
+Son quinientos noventa kilómetros por hora.
 Bajaste antes de la barra blanca: las flechas son para rodar y despegar
 ¡Tus gafas de sol!
 El anemómetro no marca: gas atrás y frená, con calma.

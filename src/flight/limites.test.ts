@@ -268,7 +268,7 @@ describe("y la flota entera tiene sus topes en orden", () => {
     // Lo llevan el 737 y el 747 de verdad; una avioneta, un bimotor de pistón
     // o un turbohélice de diecinueve plazas, no.
     const conAlivio = AIRCRAFT.filter((a) => a.alivioDeFlaps).map((a) => a.id);
-    expect(conAlivio.sort()).toEqual(["jaz-120", "jaz-90"]);
+    expect(conAlivio.sort()).toEqual(["jaz-110", "jaz-120", "jaz-90"]);
   });
 });
 

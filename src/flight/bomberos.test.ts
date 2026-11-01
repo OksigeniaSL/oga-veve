@@ -44,6 +44,7 @@ describe("la categoría de un avión, por la tabla 9-1 del Anexo 14", () => {
       ["jaz-40", 1],
       ["jaz-60", 3],
       ["jaz-90", 6],
+      ["jaz-110", 9],
       ["jaz-120", 9],
     ]);
     for (const a of AIRCRAFT) expect(MEDIDAS_DEL_TIPO[a.id], a.id).toBeTruthy();

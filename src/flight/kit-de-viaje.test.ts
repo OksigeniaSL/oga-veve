@@ -91,8 +91,11 @@ function despegar(j: JuegoDelAvion): void {
 }
 
 describe("armá tu avión", () => {
-  it("un nivel por avión de la flota, de chico a grande, y cada uno con sus piezas", () => {
-    expect(NIVELES.map((n) => n.tipo)).toEqual(FLOTA.map((m) => m.id));
+  it("un nivel por avión de la flota, de chico a grande y el nuevo el séptimo, y cada uno con sus piezas", () => {
+    expect(NIVELES.map((n) => n.tipo)).toEqual([
+      ...FLOTA.map((m) => m.id).filter((id) => id !== "jaz-110"),
+      "jaz-110",
+    ]);
     for (const n of NIVELES) {
       expect(n.piezas.length, n.tipo).toBeGreaterThanOrEqual(5);
       expect(n.piezas.length, n.tipo).toBeLessThanOrEqual(7);

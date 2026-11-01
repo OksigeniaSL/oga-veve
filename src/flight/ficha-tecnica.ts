@@ -17,8 +17,9 @@
  *   despegue, el alcance, el techo y las plazas— es de **su avión de
  *   referencia**, el que ya nombra cada ficha: el Cessna 172R para el JAZ 20,
  *   el Ag Cat para el JAZ 25, el Seneca II para el JAZ 40, el Twin Otter y el
- *   Beech 1900D para el JAZ 60, el Embraer 170 para el JAZ 90 y el 747-100
- *   para el JAZ 120. Cada número lleva al lado de dónde se leyó.
+ *   Beech 1900D para el JAZ 60, el Embraer 170 para el JAZ 90, el 787-9 para el
+ *   JAZ 110 y el 747-100 para el JAZ 120. Cada número lleva al lado de dónde se
+ *   leyó.
  *
  * Lo que no se ha podido leer en una fuente se queda en `null` y **no sale en
  * la tarjeta**. Es preferible una fila menos a una cifra que alguien aprenda y
@@ -135,6 +136,25 @@ export const DE_SU_CLASE: Readonly<Record<string, DeSuClase>> = {
     techo: 41000 * PIE,
     // Setenta y ocho de pasaje y dos en cabina.
     plazas: 80,
+  },
+  "jaz-110": {
+    // Boeing, D6-58333 rev. Q, y ficha de tipo EASA IM.A.115, edición 30.
+    referencia: "Boeing 787-9",
+    // 206 ft 1 in hasta la punta del estabilizador (2.2.2); el tubo, 62,00.
+    largo: 62.81,
+    // 561.500 lb, en la hoja de tipo. Boeing da además una versión de 259.228 kg
+    // desde su rev. Q, que esa edición no recoge.
+    mtow: 254692,
+    /*
+     * Unas 7.600 NM, leídas a ojo en la gráfica de 3.2.2: 254 t al soltar frenos y
+     * 158 t sin combustible, las 290 personas y el avión vacío de su clase. Mach
+     * 0,85, viento en calma.
+     */
+    alcance: 7600 * MILLA,
+    // 43.100 ft, la altitud máxima de la hoja de tipo.
+    techo: 43100 * PIE,
+    // Doscientos noventa de pasaje en dos clases (2.1.2) y los dos de cabina.
+    plazas: 292,
   },
   "jaz-120": {
     // Láminas «747-100 Characteristics» de Boeing y ficha FAA A20WE.

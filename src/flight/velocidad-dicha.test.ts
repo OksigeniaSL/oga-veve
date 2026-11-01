@@ -11,6 +11,7 @@ import { topeDeLoSacado } from "./limites";
 import { PELDANOS_QUE_SE_DICEN } from "./siguiente-paso";
 import { TIERS } from "./tiers";
 import {
+  KMH_QUE_ESPERAN_SU_TOMA,
   KMH_QUE_SE_DICEN,
   piezaDeVelocidad,
   velocidadDicha,
@@ -62,11 +63,16 @@ function marcasDe(a: (typeof AIRCRAFT)[number]): Set<number> {
 }
 
 describe("la velocidad dicha con su número", () => {
-  it("se graban justo las cifras que pide la escalera de los seis aviones", () => {
+  it("se graban justo las cifras que pide la escalera de los siete aviones", () => {
     const pedidas = new Set<number>();
     for (const a of AIRCRAFT)
       for (const kt of marcasDe(a)) pedidas.add(velocidadDicha(kt, "metric"));
-    expect([...pedidas].sort((x, y) => x - y)).toEqual([...KMH_QUE_SE_DICEN]);
+    expect([...pedidas].sort((x, y) => x - y)).toEqual(
+      [...KMH_QUE_SE_DICEN, ...KMH_QUE_ESPERAN_SU_TOMA].sort((x, y) => x - y),
+    );
+    // Las que esperan, ni una dentro de la lista de las grabadas.
+    for (const n of KMH_QUE_ESPERAN_SU_TOMA)
+      expect(KMH_QUE_SE_DICEN as readonly number[], String(n)).not.toContain(n);
   });
 
   it("y el peldaño que las dice vuela en km/h: si alguno volara en nudos, faltarían sus tomas", () => {

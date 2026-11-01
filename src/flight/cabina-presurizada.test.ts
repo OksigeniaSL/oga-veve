@@ -9,12 +9,11 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT, ARAI, ARASUNU, PANAMBI, PYKASU, YVAGA } from "./aircraft";
+import { AIRCRAFT, ARAI, ARASUNU, PANAMBI, PYKASU, TIJERETA, YVAGA } from "./aircraft";
 import {
   BAJA_LA_CABINA,
   CabinaPresurizada,
   SUBE_LA_CABINA,
-  TOPE_DE_CABINA,
   alturaDelTope,
   altitudDeCabina,
 } from "./cabina-presurizada";
@@ -72,13 +71,10 @@ describe("la cabina de un presurizado", () => {
     // La regla de los aviones de transporte, CS 25.841: ocho mil pies a la
     // altura máxima de operación. Con el diferencial de cada uno.
     for (const a of reactores) {
-      expect(altitudDeCabina(a.alturaDeCrucero, a), a.id).toBeLessThanOrEqual(
-        TOPE_DE_CABINA + 1e-6,
-      );
-      expect(altitudDeCabina(alturaDelTope(a.presurizacion!), a), a.id).toBeCloseTo(
-        TOPE_DE_CABINA,
-        3,
-      );
+      const tope = a.presurizacion!.topeDeCabina;
+      expect(tope, a.id).toBeLessThanOrEqual(8000 * PIE + 1e-6);
+      expect(altitudDeCabina(a.alturaDeCrucero, a), a.id).toBeLessThanOrEqual(tope + 1e-6);
+      expect(altitudDeCabina(alturaDelTope(a.presurizacion!), a), a.id).toBeCloseTo(tope, 3);
     }
   });
 
@@ -88,6 +84,23 @@ describe("la cabina de un presurizado", () => {
     expect(alturaDelTope(ARAI.presurizacion!) / PIE).toBeGreaterThan(40500);
     expect(alturaDelTope(ARAI.presurizacion!) / PIE).toBeLessThan(42500);
     expect(alturaDelTope(YVAGA.presurizacion!) / PIE).toBeGreaterThan(45100);
+  });
+
+  /*
+   * **Y el tope es de cada tipo.** «Maintain pressurization at an altitude of
+   * 6,000-feet (2,000 feet lower than conventional jets)» (Boeing, *787 Dreamliner
+   * by design*): el JAZ 110 lleva seis mil pies hasta los 43.100 de su techo (EASA,
+   * IM.A.115), y el JAZ 90 en su crucero, ocho mil.
+   */
+  it("el JAZ 110 va a seis mil pies hasta su techo, y los demás reactores a ocho mil", () => {
+    expect(TIJERETA.presurizacion!.topeDeCabina).toBeCloseTo(6000 * PIE, 6);
+    expect(altitudDeCabina(TIJERETA.alturaDeCrucero, TIJERETA) / PIE).toBeLessThanOrEqual(6000 + 1e-6);
+    expect(alturaDelTope(TIJERETA.presurizacion!) / PIE).toBeGreaterThan(43100);
+    expect(altitudDeCabina(43100 * PIE, TIJERETA) / PIE).toBeLessThanOrEqual(6000 + 1e-6);
+    expect(altitudDeCabina(43100 * PIE, TIJERETA) / PIE).toBeGreaterThan(5900);
+    expect(ARAI.presurizacion!.topeDeCabina).toBeCloseTo(8000 * PIE, 6);
+    expect(YVAGA.presurizacion!.topeDeCabina).toBeCloseTo(8000 * PIE, 6);
+    expect(ARASUNU.presurizacion!.topeDeCabina).toBeCloseTo(8000 * PIE, 6);
   });
 
   it("y el turbohélice, con sus cinco psi, la lleva a unos nueve mil en su crucero, sin llegar al aviso", () => {
@@ -116,8 +129,9 @@ describe("y la cabina de verdad, paso a paso", () => {
       // Subiendo a 2500 ft/min y bajando igual, que es un vuelo de línea.
       const visto = volar(a, a.alturaDeCrucero, (2500 * PIE) / 60);
       const tope = Math.max(...visto.map((v) => v.cabina));
-      expect(tope, a.id).toBeLessThanOrEqual(TOPE_DE_CABINA + 1e-6);
-      expect(tope, a.id).toBeGreaterThan(TOPE_DE_CABINA * 0.6);
+      const suyo = a.presurizacion!.topeDeCabina;
+      expect(tope, a.id).toBeLessThanOrEqual(suyo + 1e-6);
+      expect(tope, a.id).toBeGreaterThan(suyo * 0.6);
       const sube = Math.max(...visto.map((v) => v.ritmo));
       expect(sube, a.id).toBeLessThanOrEqual(SUBE_LA_CABINA + 1e-9);
       // Bajando va a su ritmo cómodo mientras el avión no la alcanza.
@@ -148,7 +162,7 @@ describe("y la cabina de verdad, paso a paso", () => {
     const c = new CabinaPresurizada(ARAI);
     c.reiniciar(11000, false);
     expect(c.altitud).toBeCloseTo(altitudDeCabina(11000, ARAI), 6);
-    expect(c.altitud).toBeLessThan(TOPE_DE_CABINA + 1e-6);
+    expect(c.altitud).toBeLessThan(ARAI.presurizacion!.topeDeCabina + 1e-6);
   });
 });
 
@@ -216,7 +230,7 @@ describe("y la flota lo dice cada una de su manera", () => {
     }
   });
 
-  it("los tres presurizados son el turbohélice y los dos reactores", () => {
-    expect(presurizados.map((a) => a.id).sort()).toEqual(["jaz-120", "jaz-60", "jaz-90"]);
+  it("los cuatro presurizados son el turbohélice y los tres reactores", () => {
+    expect(presurizados.map((a) => a.id).sort()).toEqual(["jaz-110", "jaz-120", "jaz-60", "jaz-90"]);
   });
 });

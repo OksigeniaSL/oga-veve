@@ -48,7 +48,9 @@
  *
  * Los ocho mil pies son la regla de los aviones de transporte (CS 25.841 y 14
  * CFR 25.841). Un turbohélice de diecinueve plazas se certifica con otra, y
- * su diferencial no llega a tanto: a su techo lleva la cabina a nueve mil.
+ * su diferencial no llega a tanto: a su techo lleva la cabina a nueve mil. Y **el
+ * tope va en la ficha**, que no es el mismo para todos: el JAZ 110 lleva la cabina a
+ * seis mil, como su clase. Ver `topeDeCabina`.
  *
  * ## Y la avería
  *
@@ -61,15 +63,6 @@ import type { Presurizacion } from "./aircraft";
 import { alturaDePresion, presionEstandar } from "./atmosphere";
 
 const PIE = 0.3048;
-
-/**
- * Hasta dónde deja subir la cabina el programa, m: ocho mil pies.
- *
- * Es el tope que fija la normativa de los aviones de transporte y el que
- * llevan puesto todos. Por encima el aire empieza a no dar, y a diez mil ya
- * salta el aviso. Estaba en dos mil cuatrocientos redondos; son 2438,4.
- */
-export const TOPE_DE_CABINA = 8000 * PIE;
 
 /** Lo más deprisa que sube la cabina con todo en orden, m/s: 500 ft/min. */
 export const SUBE_LA_CABINA = (500 * PIE) / 60;
@@ -116,7 +109,7 @@ export function cabinaMasBaja(altura: number, p: Presurizacion): number {
  * la tiene más baja. Es el techo para el que se diseñó ese diferencial.
  */
 export function alturaDelTope(p: Presurizacion): number {
-  return alturaDePresion(presionEstandar(TOPE_DE_CABINA) - p.diferencialMaximo);
+  return alturaDePresion(presionEstandar(p.topeDeCabina) - p.diferencialMaximo);
 }
 
 /**
@@ -138,8 +131,8 @@ export function altitudDeCabina(
   const p = avion.presurizacion;
   if (!p) return alto;
   const programa = Math.min(
-    TOPE_DE_CABINA,
-    (alto / Math.max(1, alturaDelTope(p))) * TOPE_DE_CABINA,
+    p.topeDeCabina,
+    (alto / Math.max(1, alturaDelTope(p))) * p.topeDeCabina,
   );
   const conCampo =
     campo === undefined ? programa : Math.max(programa, campo - POR_DEBAJO_DEL_CAMPO);

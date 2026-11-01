@@ -1398,6 +1398,8 @@ instructor	instructor/vuelo.paso.velocidad.460.ogg	es-PY	Son cuatrocientos sesen
 instructor	instructor/vuelo.paso.velocidad.480.ogg	es-PY	Son cuatrocientos ochenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
 instructor	instructor/vuelo.paso.velocidad.520.ogg	es-PY	Son quinientos veinte kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
 instructor	instructor/vuelo.paso.velocidad.540.ogg	es-PY	Son quinientos cuarenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.300.ogg	es-PY	Son trescientos kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.590.ogg	es-PY	Son quinientos noventa kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
 torre	torre/torre.solo.subir.2.ogg	es	ascienda a dos mil pies	la altura que autoriza el control, en pies por debajo de la transición
 torre	torre/torre.solo.subir.3.ogg	es	ascienda a tres mil pies	la altura que autoriza el control, en pies por debajo de la transición
 torre-canarias	torre-canarias/torre.canario.solo.subir.2.ogg	es	suba a dos mil pies	la altura que autoriza el control, en pies por debajo de la transición
@@ -1558,6 +1560,7 @@ ara	ara/inicio.ara.pasaje.kit.piezas.cola.ogg	es-PY	¡La cola! Lleva al avión d
 ara	ara/inicio.ara.pasaje.kit.piezas.ruedas.ogg	es-PY	¡Las ruedas! Son para correr por la pista y para aterrizar. Volando, se guardan adentro del avión.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
 ara	ara/inicio.ara.pasaje.kit.piezas.ayuda.ogg	es-PY	¡Casi! Esa pieza va en otro lugar del avión: mirá el que brilla.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
 ara	ara/inicio.ara.pasaje.kit.piezas.fin.ogg	es-PY	¡Armamos el avión entero! Con ala, motor, cola y ruedas, ya puede volar.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
+ara	ara/inicio.ara.pasaje.kit.avion.bimotorAncho.ogg	es-PY	¡Tan grande y con dos motores nomás! Son enormes, y con dos solos este avión cruza el océano.	el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla
 comandante	comandante/inicio.mama.pasaje.espera.ogg	es-PY	Señores pasajeros, enseguida despegamos. Antes de entrar en la pista, siempre esperamos el permiso de la torre de control.	el modo inicio, de pasaje: la comandante Jazlyn, por la megafonía
 comandante	comandante/inicio.mama.pasaje.nubes.ogg	es-PY	Señores pasajeros, les habla la comandante. Para quienes vuelan hoy por primera vez: las nubes que pasamos al subir están hechas de agua, de millones de gotitas tan chiquitas y livianas que el aire las sostiene.	el modo inicio, de pasaje: la comandante Jazlyn, por la megafonía
 comandante	comandante/inicio.mama.pasaje.reversa.ogg	es-PY	Y para quienes volaron hoy por primera vez: ese ruido fuerte de los motores al aterrizar era para frenar. Los motores echan el aire hacia adelante, y eso frena el avión.	el modo inicio, de pasaje: la comandante Jazlyn, por la megafonía

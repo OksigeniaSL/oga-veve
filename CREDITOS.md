@@ -415,8 +415,8 @@ Desde septiembre de 2026 la marca va también **en los aviones**, con el mismo
 criterio de arriba:
 
 - **La firma** —el logotipo entero, y «Granja Óga» al lado en la letra del
-  juego— va pequeña detrás de la puerta de delante de los tres aviones de
-  pasaje, el JAZ 60, el 90 y el 120; y el logotipo solo, detrás de las
+  juego— va pequeña detrás de la puerta de delante de los cuatro aviones de
+  pasaje, el JAZ 60, el 90, el 110 y el 120; y el logotipo solo, detrás de las
   ventanillas del JAZ 20 y del JAZ 40. Se pinta desde este mismo SVG, trazo a
   trazo y con sus colores, no desde un dibujo parecido; y del derecho por los
   dos costados, que es lo único que un logotipo puede hacer mal en un avión.
@@ -457,8 +457,8 @@ registradas más abajo.
 
 ### Y las que se hacen en casa
 
-**Los seis aviones de la flota** no vienen de ningún sitio: se modelan aquí, con
-Blender, desde `modelos/jaz-20-pykasu.py` y los cinco que le siguen. El guion es el modelo — se ejecuta con
+**Los siete aviones de la flota** no vienen de ningún sitio: se modelan aquí, con
+Blender, desde `modelos/jaz-20-pykasu.py` y los seis que le siguen. El guion es el modelo — se ejecuta con
 `blender --background --python modelos/<el que sea>.py` y escribe
 `public/assets/aeronaves/<id>.glb`—, así que no hay un `.blend` binario que
 nadie pueda leer ni un fichero que dependa de acordarse de cómo se hizo.
@@ -476,6 +476,27 @@ pieza y el color se lo pone la ficha del avión al cargarlo, no el fichero. Ver
 que llevan —el motivo de la cola y la firma de Granja Óga— tampoco vienen en
 el `.glb`: las pinta el juego en un lienzo al cargar el avión, con los colores
 de la ficha. Ver `src/world/librea.ts` y el apartado del logotipo.
+
+**El JAZ 110 _Tijereta_** (`modelos/jaz-110-tijereta.py`, y su `public/assets/aeronaves/jaz-110.glb`)
+es de la clase del 787-9 y no lleva su nombre ni su cara: ni la máscara negra del
+parabrisas, ni los dientes de la tobera, ni la punta del morro caída. Su librea es la
+del retrato que aprobó Enrique, `tijereta-perfil.png`, hecho en casa. Los números y las
+medidas son hechos publicados, y salen de:
+
+- EASA, *Type Certificate Data Sheet* **IM.A.115**, *Boeing 787*, edición 30, 17-12-2025,
+  sección 2 (787-9): masas, combustible, VMO/MMO, techo, motores y salidas.
+  <https://www.easa.europa.eu/en/downloads/7302/en>
+- Boeing, **D6-58333** rev. Q, octubre de 2025, *787 Airplane Characteristics for Airport
+  Planning*: medidas, puertas, ruedas, visibilidad desde la cabina, y las pistas que pide.
+  La forma del ala y de la cola se ha medido sobre sus dibujos.
+  <https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf>
+- Boeing, *787 Dreamliner by design*: la cabina a 6.000 ft y las ventanillas que se
+  oscurecen. <https://www.boeing.com/commercial/787/by-design>
+- FAA, *Aircraft Characteristics Database*, fila B789: la Vref de 144 kt y la categoría D.
+  <https://www.faa.gov/airports/engineering/aircraft_char_database/aircraft_data>
+
+Lo que no sale de ahí lleva «por verificar» en su ficha, `TIJERETA` en
+`src/flight/aircraft.ts`.
 
 **Y uno más que no es de la flota**: el turbohélice regional de ala alta del
 tráfico, el que hace cola contigo en Los Rodeos, se modela igual desde

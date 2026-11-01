@@ -40,6 +40,7 @@ const GRADO = Math.PI / 180;
  *
  * - **JAZ 120**: 18° 26′, el 747-400 (Boeing D6-58326-1, *747-400 Airplane
  *   Characteristics for Airport Planning*, rev. F, apartado 4.4).
+ * - **JAZ 110**: 21°, el 787-9 (Boeing D6-58333 rev. Q, 4.4.1).
  * - **JAZ 90**: 15°, el E-170/175 (Embraer, *Airport Planning Manual* del
  *   175, figura 4.5).
  * - **Los de hélice**: los once grados y medio de antes, que es donde ahora
@@ -47,6 +48,7 @@ const GRADO = Math.PI / 180;
  *   publica.
  */
 const SOBRE_EL_MORRO: Record<string, number> = {
+  "jaz-110": 21.0,
   "jaz-120": 18.43,
   "jaz-90": 15,
 };
@@ -105,13 +107,14 @@ const CON_MODELO = AIRCRAFT.filter((a) => {
 });
 
 describe("el parabrisas visto desde el asiento", () => {
-  it("están los seis", () => {
+  it("están los siete", () => {
     expect(CON_MODELO.map((a) => a.id)).toEqual([
       "jaz-20",
       "jaz-25",
       "jaz-40",
       "jaz-60",
       "jaz-90",
+      "jaz-110",
       "jaz-120",
     ]);
   });
