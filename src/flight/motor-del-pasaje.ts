@@ -666,6 +666,13 @@ export interface GuionDelPasaje<M extends string = string, C extends string = st
     readonly puedenEsperar: ReadonlySet<C>;
     readonly trasAlDespertar: Readonly<Partial<Record<C, number>>>;
     readonly antesDeDormirse: readonly string[];
+    /**
+     * **Si esta siesta salta**, y adónde: los segundos de vuelo del siguiente
+     * momento que se vive. Es la escena quien decide si bajo tapa el vuelo corre
+     * o salta (ADR 0023): sin esto corre a dieciséis veces, que es lo de un
+     * vuelo corto, y con `null` tampoco salta. Ver `saltoPedido`.
+     */
+    salto?(e: MotorDelPasaje<M, C>, l: LecturaDelPasaje): number | null;
   };
   /**
    * **Lo que contesta Ara a lo señalado**, si va por su lado: su frase para
@@ -834,8 +841,11 @@ export interface Siesta {
   readonly hasta: number | null;
   /** Si despertó para bajar: entonces despierta a Ara la tripulante. */
   readonly paraBajar: boolean;
-  /** **Qué despertó a Ara**: el *ding* de la luz que se apaga, la tripulante para bajar u otra cosa que llegó. */
-  readonly porQue?: "ding" | "tripulante" | "otra";
+  /**
+   * **Qué despertó a Ara**: el *ding* de la luz que se apaga, la tripulante
+   * para bajar, un salto bajo tapa que ya llegó o otra cosa que llegó.
+   */
+  readonly porQue?: "ding" | "tripulante" | "salto" | "otra";
 }
 
 /**
@@ -1004,6 +1014,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   /** **La siesta de Ara**: la de ahora, si duerme, y todas. Ver `puedeDormirse`. */
   private siestaDeAhora: { desde: number; hasta: number | null; paraBajar: boolean; porQue?: Siesta["porQue"] } | null = null;
   private readonly siestas: { desde: number; hasta: number | null; paraBajar: boolean; porQue?: Siesta["porQue"] }[] = [];
+  /** Adónde salta esta siesta, s de vuelo, mientras no haya saltado. Ver `saltoPedido`. */
+  private saltoDeEstaSiesta: number | null = null;
   /** Si lo último que se pidió es el bostezo: al acabar, Ara cierra los ojos. */
   private bostezando = false;
   /** Si Ara se acaba de despertar con el *ding*: lo dice detrás del «ya estamos arriba». */
@@ -1391,6 +1403,48 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   /** **Si Ara duerme ahora.** Lo mira el juego en cada fotograma: ver `frame` en `game.ts`. */
   get durmiendo(): boolean {
     return this.siestaDeAhora !== null;
+  }
+
+  /**
+   * **Adónde pide saltar la escena**, s desde el despegue, o `null` si el vuelo
+   * no salta y corre. Solo con Ara durmiendo y una vez por siesta. Lo atiende
+   * el juego cuando la pantalla tapa del todo; la cuenta de adónde puede caer
+   * es `destinoDelSalto`, en `salto-bajo-tapa.ts`.
+   */
+  get saltoPedido(): number | null {
+    return this.siestaDeAhora ? this.saltoDeEstaSiesta : null;
+  }
+
+  /**
+   * **El salto ya está hecho**: el avión está donde estaría y el mundo, puesto.
+   * Lo que iba a contarse por la ventanilla era de otro sitio, y Ara se
+   * despierta con su frase: un suceso, una voz. Los relojes de la escena no se
+   * han movido, porque lo que salta es la hora del vuelo, no los pasos: lo que
+   * espera un rato callado sigue esperando su rato, y nada se dispara al
+   * destapar.
+   */
+  trasElSalto(): void {
+    this.saltoDeEstaSiesta = null;
+    this.porSenalar.length = 0;
+    this.contestacion = null;
+    this.toquePendiente = null;
+    this.mira = null;
+    this.falta = null;
+    this.faltaMiradaEn = -Infinity;
+    // Bajo un juego a pantalla completa puede haber alguien a media frase: esa frase era de hace horas.
+    this.charla.callar();
+    const s = this.siestaDeAhora;
+    if (!s) return;
+    this.despertar(s, "salto");
+    this.charla.decir([this.guion.siesta.seDespierta]);
+  }
+
+  /**
+   * **El salto se dejó**, porque no llegó a haber tapa: sin ella no se salta
+   * nunca, así que la siesta sigue, corriendo como la de un vuelo corto.
+   */
+  saltoDejado(): void {
+    this.saltoDeEstaSiesta = null;
   }
 
   /**
@@ -1822,7 +1876,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     if (this.bostezando) {
       this.bostezando = false;
       if (this.puedeDormirse(l, true)) {
-        this.dormirse();
+        this.dormirse(l);
         return;
       }
     }
@@ -2151,11 +2205,12 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   }
 
   /** **Y se duerme**: desde aquí, la escena calla y el juego funde la pantalla. */
-  private dormirse(): void {
+  private dormirse(l: LecturaDelPasaje): void {
     const s = { desde: this.reloj, hasta: null, paraBajar: false };
     this.siestaDeAhora = s;
     this.siestas.push(s);
     this.mira = null;
+    this.saltoDeEstaSiesta = this.guion.siesta.salto?.(this, l) ?? null;
     // El modo rápido sigue puesto, pero durmiendo corre la siesta: ver `sePuedeCorrer`.
     this.parar();
   }
@@ -2179,6 +2234,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   private atenderALaSiesta(l: LecturaDelPasaje): void {
     const s = this.siestaDeAhora;
     if (!s) return;
+    // Con un salto por delante manda él: lo de después del corte se mira después del corte.
+    if (this.saltoDeEstaSiesta !== null) return;
     const toca = this.def.cuando(l, this);
     if (toca && this.def.id === "arriba") {
       this.despertar(s, "ding");

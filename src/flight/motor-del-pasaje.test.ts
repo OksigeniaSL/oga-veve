@@ -136,6 +136,88 @@ describe("el motor del pasaje, con otro guion", () => {
     expect(escena.bajaMiAla(0.2)).toBe(true);
   });
 
+  describe("el salto bajo tapa", () => {
+    /** Un crucero tranquilo, con mucho por delante hasta bajar: lo que deja dormirse. */
+    const arribaYTranquilo: LecturaDelPasaje = { ...lectura("crucero"), hastaLaBajada: 5 * 3600 };
+    /** Un guion que solo espera a la bajada, con su siesta, que salta o no. */
+    const conSiesta = (salto?: () => number | null): GuionDelPasaje<"bajada" | "fin", "nube"> => ({
+      ...(DE_JUGUETE as unknown as GuionDelPasaje<"bajada" | "fin", "nube">),
+      momentos: [
+        { id: "bajada", cuando: (l) => l.tramo === "bajada", lineas: [] },
+        { id: "fin", cuando: () => true, lineas: [] },
+      ],
+      charlas: [],
+      seSenalaDesde: [],
+      siesta: {
+        seDuerme: DE_JUGUETE.siesta.seDuerme,
+        seDespierta: DE_JUGUETE.siesta.seDespierta,
+        laDespiertan: DE_JUGUETE.siesta.laDespiertan,
+        puedenEsperar: new Set(),
+        trasAlDespertar: {},
+        antesDeDormirse: [],
+        ...(salto ? { salto } : {}),
+      },
+    });
+
+    function hastaDormirse(salto?: () => number | null) {
+      let t = 0;
+      const v = vozDeUnSegundo(() => t);
+      const escena = new MotorDelPasaje(v.voz, conSiesta(salto), { pared: () => t });
+      const paso = (l: LecturaDelPasaje, segundos: number): void => {
+        for (let i = 0; i < segundos / DT; i++) {
+          t += DT;
+          v.tic();
+          escena.paso(DT, l);
+        }
+      };
+      paso(arribaYTranquilo, 60);
+      expect(escena.durmiendo).toBe(true);
+      return { escena, v, paso };
+    }
+
+    it("un vuelo que no lo pide no salta: es el vuelo corto, que corre", () => {
+      const { escena } = hastaDormirse();
+      expect(escena.saltoPedido).toBeNull();
+      const conNull = hastaDormirse(() => null);
+      expect(conNull.escena.saltoPedido).toBeNull();
+    });
+
+    it("el guion dice adónde; mientras tanto se duerme, aunque el vuelo se acerque a la bajada", () => {
+      const { escena, paso } = hastaDormirse(() => 34_000);
+      expect(escena.saltoPedido).toBe(34_000);
+      // Sin el salto, con esto se despertaría: ver `atenderALaSiesta`.
+      paso({ ...arribaYTranquilo, hastaLaBajada: 10 }, 5);
+      expect(escena.durmiendo).toBe(true);
+    });
+
+    it("hecho el salto, Ara se despierta con su frase, una sola, y no se vuelve a pedir", () => {
+      const { escena, v, paso } = hastaDormirse(() => 34_000);
+      const antes = v.dichas.length;
+      escena.trasElSalto();
+      expect(escena.durmiendo).toBe(false);
+      expect(escena.saltoPedido).toBeNull();
+      expect(escena.estado.siestas.at(-1)?.porQue).toBe("salto");
+      paso(arribaYTranquilo, 30);
+      expect(v.dichas.slice(antes)).toEqual(["juguete.despierta"]);
+    });
+
+    it("los relojes de la escena no ven el salto: lo que se cuenta por tiempo no se dispara", () => {
+      const { escena, paso } = hastaDormirse(() => 34_000);
+      const reloj = escena.segundos;
+      escena.trasElSalto();
+      expect(escena.segundos).toBe(reloj);
+      paso(arribaYTranquilo, 1);
+      expect(escena.segundos).toBeCloseTo(reloj + 1, 5);
+    });
+
+    it("sin tapa no se salta: la siesta sigue, corriendo como la de un vuelo corto", () => {
+      const { escena } = hastaDormirse(() => 34_000);
+      escena.saltoDejado();
+      expect(escena.saltoPedido).toBeNull();
+      expect(escena.durmiendo).toBe(true);
+    });
+  });
+
   it("no sabe de qué vuelo se trata: no importa ningún guion", () => {
     const importaciones = fuenteDelMotor.match(/^import[^;]*;/gm) ?? [];
     expect(importaciones.length).toBeGreaterThan(0);

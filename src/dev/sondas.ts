@@ -2355,6 +2355,9 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * como todo este fichero. Ver `scripts/verificar-crucero.mjs`.
      */
     juegoParaTrazas: () => juego,
+    /** **El salto bajo tapa**: cómo va, y pedirlo a esa hora del vuelo. Ver `scripts/verificar-salto.mjs`. */
+    salto: () => juego.saltoParaBanco,
+    saltar: (t: number) => juego.pedirSalto(t),
     /** Cambia el destino como si se tocara la tarjeta hasta llegar a él. */
     ponerDestino: (id: string) => juego.ponerDestinoParaBanco(id),
     /** Deja el depósito con estos kilos, para llegar a la reserva sin esperar. */

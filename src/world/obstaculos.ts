@@ -121,6 +121,12 @@ export class Obstaculos {
     return this.cuenta;
   }
 
+  /** Otro mundo: los edificios del de antes se quedaron allí. Ver `ponerElMundo` en `game.ts`. */
+  vaciar(): void {
+    this.celdas.clear();
+    this.cuenta = 0;
+  }
+
   /**
    * Mete un edificio.
    *

@@ -259,17 +259,22 @@
 
 import type { VozDelInicio } from "./conversacion";
 import { GUION_TENERIFE_LA_PALMA, type CharlaDelPasaje, type MomentoDelPasaje } from "./guion-tenerife-la-palma";
-import { MotorDelPasaje, type OpcionesDelPasaje } from "./motor-del-pasaje";
+import { MotorDelPasaje, type GuionDelPasaje, type OpcionesDelPasaje } from "./motor-del-pasaje";
 
 export * from "./motor-del-pasaje";
 export * from "./guion-tenerife-la-palma";
 
 /**
  * **La tercera escena**: el motor del pasaje con el guion de Los Rodeos a La
- * Palma. Es lo que abre el juego con `?inicio=3`.
+ * Palma. Es lo que abre el juego con `?inicio=3`. Con otro guion de sus mismos
+ * momentos, lo prueba el banco del salto: ver `guion-de-prueba-del-salto.ts`.
  */
 export class VueloDePasaje extends MotorDelPasaje<MomentoDelPasaje, CharlaDelPasaje> {
-  constructor(voz: VozDelInicio, opciones: OpcionesDelPasaje = {}) {
-    super(voz, GUION_TENERIFE_LA_PALMA, opciones);
+  constructor(
+    voz: VozDelInicio,
+    opciones: OpcionesDelPasaje = {},
+    guion: GuionDelPasaje<MomentoDelPasaje, CharlaDelPasaje> = GUION_TENERIFE_LA_PALMA,
+  ) {
+    super(voz, guion, opciones);
   }
 }

@@ -146,12 +146,35 @@ import {
 import type { FlightModel, FlightState } from "./flight/model";
 import { Terrain, cabeceraContraria, cabeceraEnUso } from "./world/terrain";
 import {
+  rutaDe,
   Seguimiento,
   minimaEnRuta,
   segundosPorElPerfil,
   type Lectura as LecturaDeRuta,
   type Ruta,
 } from "./flight/ruta";
+import {
+  caminoEnElMundo,
+  cargaDelVueloLargo,
+  destinoDelSalto,
+  enElMundo,
+  EsperaDelSalto,
+  estadoDelSalto,
+  mundoDelTramo,
+  RelojDelVuelo,
+  sitioDelMundo,
+  type EstadoDelSalto,
+} from "./flight/salto-bajo-tapa";
+import {
+  dondeVa,
+  horarioDelDia,
+  NIVELES_DE_CRUCERO,
+  PETTIROSSI as PETTIROSSI_DE_LA_RUTA,
+  perfilDelVuelo,
+  type PerfilDelVuelo,
+} from "./flight/ruta-larga";
+import { guionDePruebaDelSalto } from "./flight/guion-de-prueba-del-salto";
+import { cargarElMundo, type MundoCargado } from "./world/mundo-del-tramo";
 import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import {
   crearCircuito,
@@ -1640,6 +1663,24 @@ const TOPE_DE_ACELERACION = 16;
  */
 const VECES_DE_LA_SIESTA = TOPE_DE_ACELERACION;
 /**
+ * **Cada cuánto se repone el cielo del vuelo largo**, s de juego: el sol se
+ * mueve un cuarto de grado por minuto, y en un vuelo que amanece se tiene que
+ * notar sin pagar por contarlo en cada paso. Ver `seguirElVueloLargo`.
+ */
+const CADA_CUANTO_EL_CIELO_DEL_VUELO_LARGO = 60;
+/**
+ * **Los mundos que el vuelo largo puede poner hoy**: los que ya existen. El
+ * pasillo de crucero, cuando llegue, son más en esta lista. Ver `mundoDelTramo`.
+ */
+const IDS_DE_LOS_MUNDOS_DEL_VUELO_LARGO = ["tenerife-norte", "pettirossi"] as const;
+
+function mundosDelVueloLargo(): readonly { readonly id: string; readonly origen: { readonly lat: number; readonly lon: number } }[] {
+  return IDS_DE_LOS_MUNDOS_DEL_VUELO_LARGO.flatMap((id) => {
+    const origen = SCENARIOS.find((s) => s.id === id)?.aerodrome?.origin;
+    return origen ? [{ id, origen }] : [];
+  });
+}
+/**
  * Cada cuánto se pone al día el mapa de la ruta de la ventanita, s de pared:
  * y más a menudo con Ara durmiendo, que el vuelo va dieciséis veces más
  * deprisa y el avión se tiene que ver avanzar. Ver `refrescarLaRuta`.
@@ -2268,7 +2309,8 @@ export class Game {
   readonly camera: PerspectiveCamera;
   private readonly clock = new Clock();
 
-  readonly terrain: Terrain;
+  /** No es `readonly` por el salto bajo tapa, que cambia de mundo: ver `ponerElMundo`. */
+  terrain: Terrain;
 
   /**
    * Los otros aeropuertos de la ruta: escenarios enteros puestos a su
@@ -4900,7 +4942,7 @@ export class Game {
    * parte cara de la pregunta. El mismo que usa la vegetación para no plantar
    * árboles en el asfalto.
    */
-  private readonly pavimento: Pavimento | null;
+  private pavimento: Pavimento | null;
   /** Lo que se lleva sin catar la traza, s. */
   private sinCatar = 0;
   /** Cuánto ha durado este vuelo, s. Cuenta desde que se arrancó. */
@@ -6238,93 +6280,12 @@ export class Game {
       this.terrain.ponerOrtofotoFina(options.ortofotoFina);
     }
 
-    if (this.scenario.ciudad) {
-      this.scene.add(
-        crearCiudad(
-          this.scenario.ciudad,
-          (x, z) => this.terrain.sampleHeight(x, z),
-          // Con doscientos metros de margen: un edificio pegado a la pista es
-          // un obstáculo, y un aeropuerto de verdad tiene a su alrededor
-          // justamente eso, un vacío.
-          /*
-           * El margen baja de doscientos metros a la franja de pista. Con
-           * doscientos, la ciudad se excluía a trescientos cincuenta del eje
-           * y la superficie de transición —que llega a ciento cuarenta— no
-           * tocaba una sola casa: quedaba una calva de setecientos metros de
-           * ancho donde la foto enseña un barrio. Ahora la calva es la franja
-           * de verdad y lo demás lo achata la superficie, que es lo bonito.
-           */
-          zonaDeAeropuerto(this.scenario, 60),
-          this.scenario.waterLevel,
-          // Sobre la fotografía, sin calles: la foto ya las trae.
-          !options.ortofoto,
-          /*
-           * El color del suelo, preguntando primero a la foto fina.
-           *
-           * Donde llega, es la que sabe: a dos metros por píxel un tejado es
-           * un tejado, y a ocho es la media de la manzana con su calle. Fuera
-           * de su recorte devuelve `null` y contesta la ancha.
-           */
-          options.ortofoto
-            ? (x, z) =>
-                options.ortofotoFina?.color(x, z) ??
-                options.ortofoto!.color(x, z)
-            : undefined,
-          /*
-           * Y el techo de obstáculos, que es una norma y no un gusto: nada
-           * puede asomar por encima de las superficies que salen de la pista.
-           * Ver `world/superficie-de-aproximacion.ts`.
-           */
-          (x, z) =>
-            this.terrain.runwayElevation +
-            techoDeLoQueSeConstruye(x, z, this.scenario.runway),
-          /*
-           * Y el índice de bultos, que es lo que hace que la ciudad **esté**.
-           * Hasta hoy se atravesaba entera. Ver `world/obstaculos.ts`.
-           */
-          this.bultos,
-          /*
-           * Y sin cajas donde va el modelo de un sitio: la manzana del
-           * Palacio de López no es un bloque de pisos. Ver
-           * `scripts/huecos-de-ciudad.mjs`.
-           */
-          this.scenario.aerodrome
-            ? huecosDeLaCiudad(
-                this.scenario.aerodrome.origin,
-                HUECOS_DE_CIUDAD,
-                this.scenario.ciudad.tamanoM,
-              )
-            : [],
-        ),
-      );
-    }
+    this.montarLaCiudad(options.ortofoto, options.ortofotoFina);
     /*
-     * **Y las luces del pueblo, que de noche son la ciudad entera.**
-     *
-     * Contado jugando al llegar al anochecer: «Gran Canaria sin luces». Y no
-     * era de Gran Canaria: de noche se apagaba el mundo salvo el aeropuerto,
-     * y una isla a oscuras no es una isla de noche, es un agujero.
-     *
-     * Van de `luzDeCiudad` y no de `scenario.ciudad`, y esa es la mitad del
-     * arreglo: la segunda se quita cuando la fotografía fina ya enseña la
-     * ciudad, y eso vale de día — de noche la foto no enseña nada. Sin esto,
-     * los dos escenarios con ciudad extraída eran justo los dos que se
-     * quedaban a oscuras. Ver `world/luces-de-ciudad.ts`.
+     * **Y las luces del pueblo, que de noche son la ciudad entera.** Ver
+     * `montarLasLucesDeLaCiudad`.
      */
-    const paraLuces = options.luzDeCiudad ?? this.scenario.ciudad;
-    if (paraLuces) {
-      this.lucesDeCiudad = crearLucesDeCiudad(
-        paraLuces,
-        (x, z) => this.terrain.sampleHeight(x, z),
-        // El mismo vacío alrededor de la pista que usa la ciudad para no
-        // construir: una farola en la zona de toma dice «aquí hay calle»
-        // donde hay pista.
-        zonaDeAeropuerto(this.scenario, 60),
-        this.scenario.waterLevel,
-      );
-      this.scene.add(this.lucesDeCiudad.grupo);
-      this.lucesDeCiudad.ponerSol(this.sky.sunDirection.y);
-    }
+    this.montarLasLucesDeLaCiudad(options.luzDeCiudad ?? this.scenario.ciudad);
     // Y las de los vecinos, que se montaron antes de que hubiera cielo.
     for (const v of this.vecinos) v.mundo.ponerSol(this.sky.sunDirection.y);
     /*
@@ -6353,32 +6314,7 @@ export class Game {
      * **Y la granja, si el campo la tiene**, antes que el monte: el monte
      * pregunta dónde está para no plantarle un árbol en el camino.
      */
-    if (aero) {
-      this.granja = crearGranja(
-        aero,
-        (x, z) => this.terrain.sampleHeight(x, z),
-        new Date(),
-        this.scenario.seed,
-      );
-      if (this.granja) {
-        this.scene.add(this.granja.grupo);
-        // Y sus potreros, en el suelo: ver `potrerosDe`.
-        this.terrain.pintarEncima(this.granja.pintura);
-      }
-    }
-    const granja = this.granja;
-    this.vegetacion = createVegetation(
-      this.scenario,
-      (x, z) => this.terrain.sampleHeight(x, z),
-      // Sobre la fotografía, solo donde la fotografía es verde. Ver
-      // `createVegetation`.
-      options.ortofoto
-        ? (x, z) =>
-            options.ortofotoFina?.color(x, z) ?? options.ortofoto!.color(x, z)
-        : undefined,
-      granja ? (x, z) => granja.ocupa(x, z) : undefined,
-    );
-    this.scene.add(this.vegetacion);
+    this.montarLaGranjaYElMonte(options.ortofoto, options.ortofotoFina);
 
     /*
      * Y el mundo de verdad, si lo hay. Se añade apagado: no se enseña hasta que
@@ -7100,11 +7036,16 @@ export class Game {
        * asiento de Ara. El avión lo lleva su tripulación —ver
        * `flight/vuelo-de-linea.ts`— y la escena dice qué toca y cuándo.
        */
-      this.inicio = new VueloDePasaje(this.vozDelInicio, {
-        lado: LADO_DE_ARA,
-        pared: this.pared,
-        demostracion: () => this.laDemostracionDeHoy(),
-      });
+      const largo = this.vueloLargoPedido();
+      this.inicio = new VueloDePasaje(
+        this.vozDelInicio,
+        {
+          lado: LADO_DE_ARA,
+          pared: this.pared,
+          demostracion: () => this.laDemostracionDeHoy(),
+        },
+        largo ? guionDePruebaDelSalto(largo.hasta) : undefined,
+      );
       // Y su kit de viaje, que la tripulante trae en la bajada. Ver `flight/kit-de-viaje.ts`.
       this.pantallaDelKit?.quitar();
       const kit = document.getElementById("kit");
@@ -7154,6 +7095,8 @@ export class Game {
        * igual al subir. Ver `guionDeTurbulencia`.
        */
       this.turbulenciaPedida = [];
+      // Y con `?largo=`, ya arriba: no se pasa por el puesto. Ver `entrarEnElVueloLargo`.
+      if (largo) this.entrarEnElVueloLargo(largo.desde);
     } else if (aterrizar) {
       this.inicio = new InicioDeAterrizar(this.vozDelInicio, {
         primerSello,
@@ -7570,7 +7513,9 @@ export class Game {
     const desde = ruta?.fijos[i - 1];
     const hasta = ruta?.fijos[i];
     const lectura = this.lecturaDeRuta();
-    const crucero = this.navegacion.cruceroPlaneado;
+    // En un vuelo largo, el nivel de esta hora: los escalones van por el perfil. Ver `NIVELES_DE_CRUCERO`.
+    const delPerfil = this.vueloLargo ? dondeVa(this.vueloLargo.perfil, this.vueloLargo.reloj.ahora(this.relojDelJuego)) : null;
+    const crucero = delPerfil?.fase === "crucero" ? delPerfil.altitud : this.navegacion.cruceroPlaneado;
     const bajando = this.navegacion.bajando;
     const senda = bajando ? this.navegacion.alturaParaElAutomatico(lectura) : null;
     const enLaFinal = !s.onGround && !!ruta && this.navegacion.enElTramoFinal(lectura);
@@ -15585,6 +15530,8 @@ export class Game {
    * se vuelve a pintar lo que hubiera.
    */
   ponerAnillos(anillos: { horizonte?: Ortofoto; medio?: Ortofoto }): void {
+    // Lo que llega tarde es del mundo de arranque, y este ya es otro. Ver `ponerElMundo`.
+    if (this.mundoCambiado) return;
     if (anillos.horizonte) this.anilloHorizonte = anillos.horizonte;
     if (anillos.medio && !this.anilloMedio) {
       this.anilloMedio = anillos.medio;
@@ -15636,7 +15583,7 @@ export class Game {
     juego: string,
   ): TeselasDeOrtofoto | null {
     const origen = this.scenario.aerodrome?.origin;
-    if (!origen || this.teselasDeOrtofoto) return this.teselasDeOrtofoto;
+    if (!origen || this.teselasDeOrtofoto || this.mundoCambiado) return this.teselasDeOrtofoto;
     const teselas = new TeselasDeOrtofoto(
       manifiesto,
       juego,
@@ -16033,6 +15980,609 @@ export class Game {
     return Math.atan2(hacia[0] - desde.x, -(hacia[1] - desde.z));
   }
 
+  // ── Lo que se monta con el mundo ──────────────────────────────────────
+
+  /** La ciudad dibujada de este mundo, si la lleva: hay que poder quitarla. Ver `ponerElMundo`. */
+  private ciudadDelMundo: Group | null = null;
+
+  private montarLaCiudad(ortofoto: Ortofoto | undefined, ortofotoFina: Ortofoto | undefined): void {
+    if (!this.scenario.ciudad) return;
+    this.ciudadDelMundo = crearCiudad(
+      this.scenario.ciudad,
+      (x, z) => this.terrain.sampleHeight(x, z),
+      // Con doscientos metros de margen: un edificio pegado a la pista es
+      // un obstáculo, y un aeropuerto de verdad tiene a su alrededor
+      // justamente eso, un vacío.
+      /*
+       * El margen baja de doscientos metros a la franja de pista. Con
+       * doscientos, la ciudad se excluía a trescientos cincuenta del eje
+       * y la superficie de transición —que llega a ciento cuarenta— no
+       * tocaba una sola casa: quedaba una calva de setecientos metros de
+       * ancho donde la foto enseña un barrio. Ahora la calva es la franja
+       * de verdad y lo demás lo achata la superficie, que es lo bonito.
+       */
+      zonaDeAeropuerto(this.scenario, 60),
+      this.scenario.waterLevel,
+      // Sobre la fotografía, sin calles: la foto ya las trae.
+      !ortofoto,
+      /*
+       * El color del suelo, preguntando primero a la foto fina.
+       *
+       * Donde llega, es la que sabe: a dos metros por píxel un tejado es
+       * un tejado, y a ocho es la media de la manzana con su calle. Fuera
+       * de su recorte devuelve `null` y contesta la ancha.
+       */
+      ortofoto ? (x, z) => ortofotoFina?.color(x, z) ?? ortofoto.color(x, z) : undefined,
+      /*
+       * Y el techo de obstáculos, que es una norma y no un gusto: nada
+       * puede asomar por encima de las superficies que salen de la pista.
+       * Ver `world/superficie-de-aproximacion.ts`.
+       */
+      (x, z) =>
+        this.terrain.runwayElevation +
+        techoDeLoQueSeConstruye(x, z, this.scenario.runway),
+      /*
+       * Y el índice de bultos, que es lo que hace que la ciudad **esté**.
+       * Hasta hoy se atravesaba entera. Ver `world/obstaculos.ts`.
+       */
+      this.bultos,
+      /*
+       * Y sin cajas donde va el modelo de un sitio: la manzana del
+       * Palacio de López no es un bloque de pisos. Ver
+       * `scripts/huecos-de-ciudad.mjs`.
+       */
+      this.scenario.aerodrome
+        ? huecosDeLaCiudad(
+            this.scenario.aerodrome.origin,
+            HUECOS_DE_CIUDAD,
+            this.scenario.ciudad.tamanoM,
+          )
+        : [],
+    );
+    this.scene.add(this.ciudadDelMundo);
+  }
+
+  /**
+   * **Las luces del pueblo, que de noche son la ciudad entera.**
+   *
+   * Contado jugando al llegar al anochecer: «Gran Canaria sin luces». Y no
+   * era de Gran Canaria: de noche se apagaba el mundo salvo el aeropuerto,
+   * y una isla a oscuras no es una isla de noche, es un agujero.
+   *
+   * Van de `luzDeCiudad` y no de `scenario.ciudad`, y esa es la mitad del
+   * arreglo: la segunda se quita cuando la fotografía fina ya enseña la
+   * ciudad, y eso vale de día — de noche la foto no enseña nada. Sin esto,
+   * los dos escenarios con ciudad extraída eran justo los dos que se
+   * quedaban a oscuras. Ver `world/luces-de-ciudad.ts`.
+   */
+  private montarLasLucesDeLaCiudad(paraLuces: Ciudad | undefined): void {
+    if (!paraLuces) return;
+    this.lucesDeCiudad = crearLucesDeCiudad(
+      paraLuces,
+      (x, z) => this.terrain.sampleHeight(x, z),
+      // El mismo vacío alrededor de la pista que usa la ciudad para no
+      // construir: una farola en la zona de toma dice «aquí hay calle»
+      // donde hay pista.
+      zonaDeAeropuerto(this.scenario, 60),
+      this.scenario.waterLevel,
+    );
+    this.scene.add(this.lucesDeCiudad.grupo);
+    this.lucesDeCiudad.ponerSol(this.sky.sunDirection.y);
+  }
+
+  /** La granja, si el campo la tiene, y después el monte, que le pregunta dónde está. */
+  private montarLaGranjaYElMonte(ortofoto: Ortofoto | undefined, ortofotoFina: Ortofoto | undefined): void {
+    const aero = this.scenario.aerodrome;
+    if (aero) {
+      this.granja = crearGranja(
+        aero,
+        (x, z) => this.terrain.sampleHeight(x, z),
+        new Date(),
+        this.scenario.seed,
+      );
+      if (this.granja) {
+        this.scene.add(this.granja.grupo);
+        // Y sus potreros, en el suelo: ver `potrerosDe`.
+        this.terrain.pintarEncima(this.granja.pintura);
+      }
+    }
+    const granja = this.granja;
+    this.vegetacion = createVegetation(
+      this.scenario,
+      (x, z) => this.terrain.sampleHeight(x, z),
+      // Sobre la fotografía, solo donde la fotografía es verde. Ver
+      // `createVegetation`.
+      ortofoto ? (x, z) => ortofotoFina?.color(x, z) ?? ortofoto.color(x, z) : undefined,
+      granja ? (x, z) => granja.ocupa(x, z) : undefined,
+    );
+    this.scene.add(this.vegetacion);
+  }
+
+  // ── El vuelo largo: el salto bajo tapa ────────────────────────────────
+
+  /**
+   * **El vuelo largo, si este vuelo es uno**: su perfil y su hora. Sin él, nada
+   * de esta sección existe, y el vuelo corto sigue sin saltar. Ver el ADR 0023.
+   */
+  private vueloLargo: { readonly perfil: PerfilDelVuelo; readonly reloj: RelojDelVuelo } | null = null;
+
+  /** **El salto que está en marcha**, de que se pide a que está puesto. Ver `atenderAlSalto`. */
+  private saltoEnCurso: {
+    /** s desde el despegue. */
+    readonly hasta: number;
+    readonly espera: EsperaDelSalto;
+    /** Lo que había sobre la mesa: el mundo si llegó, y si ya se sabe si llega. */
+    mundo: MundoCargado | null;
+    resuelto: boolean;
+    /** El mundo que se pidió, para el banco. */
+    readonly mundoPedido: string | null;
+    /** Cuándo se pidió y cuándo se miró por última vez, ms de pared. */
+    readonly pedidoEn: number;
+    miradoEn: number;
+  } | null = null;
+
+  /** Lo que se saltó, para el banco. Ver `scripts/verificar-salto.mjs`. */
+  readonly saltosHechos: {
+    readonly desde: number;
+    readonly hasta: number;
+    readonly mundo: string;
+    readonly mundoPedido: string | null;
+    /** Si se destapó sin el mundo pedido, por la red o porque no se pudo bajar. */
+    readonly sinElMundo: boolean;
+    readonly porLaRed: boolean;
+    /** Lo que estuvo la pantalla esperando, s de pared. */
+    readonly pared: number;
+    readonly relojDelJuego: number;
+  }[] = [];
+
+  /** Si ya se cambió de mundo: lo que llegue tarde del de arranque, ya no es de aquí. */
+  private mundoCambiado = false;
+
+  /** Cuándo se puso el cielo por última vez, s de juego. Ver `seguirElVueloLargo`. */
+  private cieloPuestoEn = 0;
+
+  /**
+   * **`?largo=<s>&hasta=<s>`, si lo trae la dirección**: entrar arriba en el
+   * vuelo largo a esa hora, y a qué hora cae la siesta. Como `?kit` y los demás
+   * de la dirección: no sale en ningún menú. Para el banco del salto, hasta que
+   * lleguen los capítulos.
+   */
+  private vueloLargoPedido(): { readonly desde: number; readonly hasta: number } | null {
+    const q = new URLSearchParams(location.search);
+    const desde = Number(q.get("largo"));
+    if (!q.has("largo") || !Number.isFinite(desde)) return null;
+    const hasta = Number(q.get("hasta"));
+    return { desde, hasta: q.has("hasta") && Number.isFinite(hasta) ? hasta : desde + 7 * 3600 };
+  }
+
+  /**
+   * **Entrar en vuelo**: en un punto de la ruta, a esa hora. Es lo mismo que
+   * caer de un salto, sin nada de antes: lo que llevaba de combustible es lo de
+   * la carrera, por lo que se quema hasta aquí.
+   */
+  private entrarEnElVueloLargo(t: number): void {
+    const perfil = perfilDelVuelo(horarioDelDia(this.fechaDelVuelo()));
+    this.vueloLargo = { perfil, reloj: new RelojDelVuelo(t, this.relojDelJuego) };
+    this.ponerEnElEstado(
+      estadoDelSalto(perfil, t, this.aircraft, { en: 0, kilos: cargaDelVueloLargo(this.aircraft, perfil) }),
+    );
+    this.enterarseDelSalto(0, false);
+  }
+
+  /** **La hora del vuelo**, s desde el despegue, o `null` si no es un vuelo largo. */
+  get horaDelVueloLargo(): number | null {
+    return this.vueloLargo?.reloj.ahora(this.relojDelJuego) ?? null;
+  }
+
+  /**
+   * **Pedir un salto**, a esa hora del vuelo. Lo pide la escena —ver
+   * `atenderAlSalto`— o, con un juego a pantalla completa, quien lo abra; aquí
+   * se decide adónde puede caer y se empieza a bajar su mundo, sin tocar nada
+   * todavía. Devuelve si hay salto: bajo tapa, y solo a crucero. Las paradas son
+   * los momentos que se viven y no se saltan: ver `destinoDelSalto`.
+   */
+  pedirSalto(pedido: number, paradas: readonly number[] = []): boolean {
+    const vl = this.vueloLargo;
+    if (!vl || this.saltoEnCurso || !(this.inicio instanceof VueloDePasaje)) return false;
+    const hasta = destinoDelSalto(vl.perfil, vl.reloj.ahora(this.relojDelJuego), pedido, paradas);
+    if (hasta === null) return false;
+    const mundo = mundoDelTramo(mundosDelVueloLargo(), dondeVa(vl.perfil, hasta).sitio);
+    const otro = mundo && mundo.id !== this.scenario.id ? (SCENARIOS.find((s) => s.id === mundo.id) ?? null) : null;
+    const ahora = performance.now();
+    const salto: NonNullable<Game["saltoEnCurso"]> = {
+      hasta,
+      espera: new EsperaDelSalto(),
+      mundo: null,
+      resuelto: otro === null,
+      mundoPedido: otro?.id ?? null,
+      pedidoEn: ahora,
+      miradoEn: ahora,
+    };
+    this.saltoEnCurso = salto;
+    if (otro)
+      void cargarElMundo(otro, mundoElegido() === "foto").then(
+        (m) => {
+          salto.resuelto = true;
+          // Lo que llega con el salto ya resuelto por la red se tira: no se cambia de mundo a la vista.
+          if (this.saltoEnCurso === salto) salto.mundo = m;
+          else if (m) for (const f of [m.lejos, m.cerca, m.medio, m.horizonte]) f?.textura.dispose();
+        },
+        () => {
+          salto.resuelto = true;
+        },
+      );
+    return true;
+  }
+
+  /**
+   * **Un fotograma del salto**, con la pantalla ya pintada: si la escena lo
+   * pide, se pide; y si ya se puede, **todo de una vez**, entre dos fotogramas y
+   * con la pantalla opaca: el mundo, el avión, y una pasada de dibujo debajo de
+   * la tapa para que lo que tarda la primera vez —compilar los materiales del
+   * mundo nuevo, subir sus texturas— no se vea al destapar.
+   *
+   * Con el reloj de pared, y el de verdad: `real` está recortado a un segundo
+   * por fotograma, y lo que más tarda aquí son justo fotogramas largos.
+   */
+  private atenderAlSalto(): void {
+    const escena = this.inicio instanceof VueloDePasaje ? this.inicio : null;
+    const pedido = escena?.saltoPedido ?? null;
+    if (!this.saltoEnCurso && pedido !== null && this.siestaTapa && !this.pedirSalto(pedido)) escena?.saltoDejado();
+    const salto = this.saltoEnCurso;
+    const vl = this.vueloLargo;
+    if (!salto || !vl) return;
+    const ahora = performance.now();
+    const real = (ahora - salto.miradoEn) / 1000;
+    salto.miradoEn = ahora;
+    const estado = salto.espera.paso(real, this.siestaTapa, salto.resuelto);
+    if (estado === "dejado") {
+      this.saltoEnCurso = null;
+      escena?.saltoDejado();
+      return;
+    }
+    if (estado !== "listo") return;
+    const desde = vl.reloj.ahora(this.relojDelJuego);
+    const instante = dondeVa(vl.perfil, salto.hasta).instante;
+    if (salto.mundo) this.ponerElMundo(salto.mundo, instante);
+    const e = estadoDelSalto(vl.perfil, salto.hasta, this.aircraft, { en: desde, kilos: this.combustible });
+    vl.reloj.saltarA(salto.hasta, this.relojDelJuego);
+    this.ponerEnElEstado(e);
+    this.enterarseDelSalto(salto.hasta - desde, salto.mundo !== null);
+    escena?.trasElSalto();
+    // Un paso para que todo lo que se mira de un fotograma a otro parta de aquí, y un dibujo. Ver arriba.
+    this.unPaso(1 / 60);
+    this.pintar();
+    this.saltosHechos.push({
+      desde,
+      hasta: salto.hasta,
+      mundo: this.scenario.id,
+      mundoPedido: salto.mundoPedido,
+      sinElMundo: salto.mundoPedido !== null && salto.mundo === null,
+      porLaRed: salto.espera.saltoLaRed,
+      pared: (performance.now() - salto.pedidoEn) / 1000,
+      relojDelJuego: this.relojDelJuego,
+    });
+    this.saltoEnCurso = null;
+  }
+
+  /**
+   * **El avión en el estado que le toca**, con el modelo de vuelo compensado y
+   * la tripulación llevándolo. Lo que no sale de `EstadoDelSalto` no se inventa
+   * aquí: se pone donde cada cosa lo busca, sin avisar a nadie, que nada de
+   * esto ha pasado a la vista. Por eso el cartel se cambia sin su *ding*.
+   */
+  private ponerEnElEstado(e: EstadoDelSalto): void {
+    const vl = this.vueloLargo;
+    const origen = this.scenario.aerodrome?.origin;
+    if (!vl || !origen) return;
+    const p = enElMundo(vl.perfil, origen, e.recorrido);
+    this.flight.reset({
+      position: new Vector3(p.x, e.altitud, p.z),
+      heading: p.rumbo,
+      airspeed: e.velocidad,
+      equilibrado: true,
+    });
+    const c = this.input.controls;
+    c.engineOn = true;
+    c.elevator = 0;
+    c.aileron = 0;
+    c.rudder = 0;
+    c.brakes = 0;
+    c.reversa = 0;
+    this.input.ponerElTrenDentro();
+    this.input.ponerPalancaDeFlaps(0);
+    c.flaps = 0;
+    this.input.servoDelGas(this.flight.gasPara(e.velocidad, { flaps: 0, tren: 0 }));
+    this.tripulacionDeLinea?.ponerEnCrucero(e.velocidad);
+    this.combustible = e.combustible;
+    this.flight.ponerMasa?.(this.masaDeAhora());
+    this.cabinaDelAvion.reiniciar(e.altitud, false, this.aircraft);
+    this.cabinaPorPoner = false;
+    this.cabinaDe = this.aircraft;
+    this.cabinaAntes = null;
+    this.ritmoDeCabina = 0;
+    if (!e.cinturon) this.cinturon.enCruceroTrasElSalto();
+    this.cinturonPuesto = e.cinturon;
+    this.hud.ponerMandoDeCinturon(e.cinturon);
+    this.hud.ponerCinturon(e.cinturon);
+    this.ponerElCieloDe(e.sitio, e.instante);
+    this.ponerLaRutaLarga(e.recorrido, origen);
+    this.yaDespego = true;
+  }
+
+  /**
+   * **El cielo de ese instante, en ese sitio**: el del avión y no el del origen
+   * del mundo. Con la hora del sol, que es lo que el cielo entiende.
+   */
+  private ponerElCieloDe(sitio: { readonly lat: number; readonly lon: number }, instante: Date): void {
+    this.sky.ponerSitio(sitio);
+    this.sky.ponerFecha(instante);
+    this.ponerHora(horaSolarEn(sitio.lon, instante));
+    this.cieloPuestoEn = this.relojDelJuego;
+  }
+
+  /**
+   * **El plan de lo que queda**: la ortodrómica por puntos, en las coordenadas
+   * de este mundo. Lo sigue la tripulación con el seguimiento de siempre, y es
+   * de donde sale lo que falta para bajar. La aproximación a Pettirossi se le
+   * cuelga detrás cuando llegue el tercer capítulo: de momento el plan acaba en
+   * su punto de referencia.
+   */
+  private ponerLaRutaLarga(recorrido: number, origen: { readonly lat: number; readonly lon: number }): void {
+    const vl = this.vueloLargo;
+    if (!vl) return;
+    const fijos = caminoEnElMundo(vl.perfil, origen, recorrido).map((q) => ({
+      x: q.x,
+      z: q.z,
+      nombre: "",
+      papel: "ruta" as const,
+      minima: null,
+    }));
+    this.navegacion.poner(
+      rutaDe(fijos, PETTIROSSI_DE_LA_RUTA.elevacion),
+      NIVELES_DE_CRUCERO[NIVELES_DE_CRUCERO.length - 1],
+      this.aircraft,
+    );
+  }
+
+  /**
+   * **Un paso del vuelo largo**: el plan, sin trazar ninguno entre los campos
+   * del mundo —ver `seguirLaRuta`, a la que sustituye— y el cielo, que se mueve
+   * despacio pero se mueve: con una vez por minuto, el amanecer amanece.
+   */
+  private seguirElVueloLargo(): void {
+    const vl = this.vueloLargo;
+    const origen = this.scenario.aerodrome?.origin;
+    if (!vl || !origen) return;
+    this.navegacion.paso(this.lecturaDeRuta());
+    const p = this.navegacion.progreso;
+    const plan = this.navegacion.plan;
+    if (p && plan) {
+      this.hud.ponerTrayecto({ restante: p.restante, total: p.total, segundos: p.segundos, hora: this.horaDeLlegada(p.segundos) });
+      this.hud.mapa.ponerRuta({
+        fijos: plan.fijos,
+        activo: this.navegacion.indice,
+        descenso: p.puntoDeDescenso,
+        conNombres: false,
+        cotaDelUmbral: plan.cotaDelUmbral,
+      });
+    }
+    if (this.relojDelJuego - this.cieloPuestoEn < CADA_CUANTO_EL_CIELO_DEL_VUELO_LARGO) return;
+    const s = this.flight.state;
+    this.ponerElCieloDe(
+      sitioDelMundo(origen, s.position.x, s.position.z),
+      new Date(vl.perfil.horario.despegue.getTime() + vl.reloj.ahora(this.relojDelJuego) * 1000),
+    );
+  }
+
+  /**
+   * **Lo que tiene que enterarse del salto.**
+   *
+   * El reloj del juego no se ha movido, así que lo que espera un rato sigue
+   * esperándolo y no se dispara nada por tiempo: la agenda, los silencios de la
+   * escena, los turnos de la boca, la cuenta de las horas del cuaderno —un
+   * pasajero dormido no vuela horas, y una lluvia de avioncitos al despertar no
+   * sería de verdad—. Lo que sí se entera es lo que mide **contra lo de antes**,
+   * que leería un salto de miles de kilómetros como si se hubiera volado: lo más
+   * bajo de una aproximación, las trazas del tráfico, lo que lleva nivelado, lo
+   * que cambió en el cuadro. Vuelve a empezar desde aquí, y un aviso que vuelve
+   * lo hará porque cambie algo que pasa.
+   *
+   * Y lo que esperaba turno para hablar se calla: era de otro sitio y de hace
+   * horas, y sonaría todo junto al destapar. Solo se queda lo de la escena.
+   */
+  private enterarseDelSalto(saltadas: number, otroMundo: boolean): void {
+    const s = this.flight.state;
+    this.colocadoParaBanco();
+    this.tomaLarga.reiniciar();
+    this.laAproximacion.reiniciar();
+    this.antesAlUmbral = Infinity;
+    this.wasOnGround = false;
+    this.wasStalled = false;
+    this.wasCrashed = false;
+    this.dichoDeLaToma = false;
+    // Y no olvida lo que ya se dijo en este vuelo: eso es memoria, no la frase que sonaba. Ver `callar` en la boca.
+    BOCA.callar();
+    this.instructor.callar();
+    this.otroAvion.callar();
+    this.llamadas = [];
+    this.llamadasDelPasaje.reiniciar();
+    this.hud.ponerLlamadaDePasaje(false);
+    this.loQueCambia.reiniciar();
+    this.loSenalado = null;
+    this.mirada.reiniciar();
+    this.turbulenciaDelVuelo.empezar([]);
+    this.niveladoDesde = 0;
+    this.alturaNivelada = s.position.y;
+    this.desdeElViento = Infinity;
+    this.loMasAltoDelVuelo = Math.max(this.loMasAltoDelVuelo, s.position.y);
+    this.avisosDeAltura = this.laCuentaDeHoy(this.aircraft);
+    this.alturaEnGrande = new AvisosDeAltura(
+      this.tier.units === "aeronautical" ? EN_GRANDE_EN_PIES : EN_GRANDE,
+    );
+    // Las horas que duró de verdad este vuelo, las que no son del cuaderno. Ver arriba.
+    this.duracion += saltadas;
+    // La raya de por dónde se fue era de otro plano: el dibujo la uniría con una recta de mil kilómetros.
+    if (otroMundo) this.traza = [];
+  }
+
+  /**
+   * **Otro mundo debajo**: el del tramo, de una vez y con la pantalla opaca.
+   *
+   * Es lo que el hangar evita recargando la página —«el desmontaje en caliente
+   * de un escenario entero es donde se quedan las fugas de memoria»—, y la
+   * página no se puede recargar aquí: el audio se quedaría sin permiso hasta el
+   * siguiente toque y la escena, sin lo contado. Así que se quita lo que el
+   * constructor montó con el mundo de antes, y se monta otra vez con el nuevo,
+   * por los mismos caminos.
+   *
+   * **Lo que no se monta**, porque no hace falta para volar arriba y cada cosa
+   * vendrá con quien la necesite: los vecinos —el mundo nuevo se vuela solo—,
+   * sus aviones del corredor, y los barcos y los turbohélices, que son de
+   * Canarias. Volver a un mundo de Canarias dejaría esos sin montar. Y **el
+   * tiempo no cambia**: es el del vuelo, hasta que la tanda de la llegada ponga
+   * el parte de Pettirossi.
+   */
+  private ponerElMundo(m: MundoCargado, instante: Date): void {
+    this.mundoCambiado = true;
+    this.quitarElMundo();
+    this.scenario = conViento(m.escenario, this.scenario.meteo ?? TIEMPO_DE_CASA);
+    this.pavimento = this.scenario.aerodrome ? mapaDePavimento(this.scenario.aerodrome) : null;
+    // Con su instante, que es de donde sale la luz cocida en el relieve. Ver `solDelRelieve`.
+    this.terrain = new Terrain(this.scenario, instante);
+    this.scene.add(this.terrain.group);
+    this.sky.ponerMundo(this.scenario);
+    this.nieblaDeCasa = this.scenario.fog.density;
+    // Hasta donde llegue este mundo, como en el constructor: ver allí el porqué.
+    this.camera.far =
+      this.scenario.size * (this.scenario.relieveLejano ? vecesLejosDe(this.scenario) * 0.8 : 1.6);
+    this.camera.updateProjectionMatrix();
+    this.terrain.ponerMaterialDelAgua(this.sky.materialDelAgua, this.camera.far);
+    if (m.lejos) this.terrain.ponerOrtofoto(m.lejos);
+    // El anillo se parte antes de ponerles nada: ver `partirElHorizonte`.
+    this.anilloMedio = m.medio;
+    this.anilloPartido = m.medio !== undefined && this.terrain.partirElHorizonte((m.medio.ficha.tamanoM ?? 0) / 2);
+    this.anilloHorizonte = m.horizonte;
+    if (m.horizonte) this.terrain.ponerOrtofotoLejana(m.horizonte, exposicionDe(m.horizonte.ficha));
+    if (this.anilloPartido && m.medio)
+      this.terrain.ponerOrtofotoLejana(m.medio, exposicionDe(m.medio.ficha), "horizonte-medio");
+    if (m.cerca) this.terrain.ponerOrtofotoFina(m.cerca);
+    this.montarLaCiudad(m.lejos, m.cerca);
+    this.montarLasLucesDeLaCiudad(m.ciudad ?? this.scenario.ciudad);
+    const aero = this.scenario.aerodrome;
+    if (aero) this.apuntarLosEdificios(aero);
+    this.montarLaGranjaYElMonte(m.lejos, m.cerca);
+    if (aero) {
+      this.hitosDelVuelo = destacadosDesde(aero.origin);
+      this.ventanilla.ponerHitos(this.hitosDelVuelo);
+      this.sitios = new SitiosConModelo({
+        casa: aero.origin,
+        vecinos: [],
+        suelo: (x, z) => this.terrain.sampleHeight(x, z),
+        bultos: this.bultos,
+        preparar: (modelo) => this.renderer.compileAsync(modelo, this.camera, this.scene),
+      });
+      this.scene.add(this.sitios.grupo);
+    }
+    this.camposHechos = null;
+    this.pistasHechas = null;
+    this.casaHecha = null;
+    this.salidaId = this.scenario.id;
+    this.destinoId = this.scenario.id;
+    this.claveDeLaRuta = "";
+    this.hud.ponerMapa(this.scenario, (x, z) => this.terrain.cotaConocida(x, z));
+    this.hud.mapa.rehacer(this.scenario);
+    this.hud.mapa.ponerHitos(this.hitosDelVuelo, () => this.ventanilla.yaDichos);
+    this.hud.mapa.ponerOtrasPistas([]);
+    this.hud.mapa.ponerOtrosAerodromos([]);
+    this.hud.mapa.ponerCampos([]);
+    this.ponerAproximacion();
+    this.rehacerPlanDeVuelo();
+    this.rehacerLaSenda();
+    this.montarElCampo(this.laCasa);
+    this.poblarDeAves();
+  }
+
+  /** **Quitar lo que se montó con el mundo de ahora**: de la escena y de la tarjeta. */
+  private quitarElMundo(): void {
+    const fuera = (g: Object3D | null | undefined): void => {
+      if (!g) return;
+      this.scene.remove(g);
+      g.traverse((o) => {
+        const m = o as Mesh;
+        if (!m.isMesh) return;
+        m.geometry?.dispose();
+        const material = m.material;
+        if (Array.isArray(material)) material.forEach((x) => x.dispose());
+        else material?.dispose();
+      });
+    };
+    for (const v of this.vecinos) {
+      fuera(v.mundo.grupo);
+      v.aproximacion?.dispose();
+      v.rodadura?.dispose();
+    }
+    this.vecinos.length = 0;
+    if (this.avionesDeRuta) fuera(this.avionesDeRuta.grupo);
+    this.avionesDeRuta = null;
+    if (this.barcos) fuera(this.barcos.grupo);
+    this.barcos = null;
+    if (this.avionesDeLasIslas) fuera(this.avionesDeLasIslas.grupo);
+    this.avionesDeLasIslas = null;
+    this.islenos = null;
+    this.sitios?.soltarTodo();
+    if (this.sitios) this.scene.remove(this.sitios.grupo);
+    this.sitios = null;
+    this.teselasDeOrtofoto?.dispose();
+    this.teselasDeOrtofoto = null;
+    fuera(this.ciudadDelMundo);
+    this.ciudadDelMundo = null;
+    if (this.lucesDeCiudad) {
+      this.scene.remove(this.lucesDeCiudad.grupo);
+      this.lucesDeCiudad.dispose();
+    }
+    this.lucesDeCiudad = null;
+    if (this.granja) fuera(this.granja.grupo);
+    this.granja = null;
+    fuera(this.vegetacion);
+    this.vegetacion = null;
+    this.bultos.vaciar();
+    this.scene.remove(this.terrain.group);
+    this.terrain.dispose();
+  }
+
+  /** Lo que mira el banco del salto. Ver `scripts/verificar-salto.mjs`. */
+  get saltoParaBanco(): {
+    readonly hora: number | null;
+    readonly enCurso: { readonly hasta: number; readonly estado: string; readonly esperando: number; readonly mundoPedido: string | null } | null;
+    readonly hechos: Game["saltosHechos"];
+    readonly mundo: string;
+    readonly origen: { readonly lat: number; readonly lon: number } | null;
+    readonly combustible: number;
+    readonly cabina: number;
+    readonly cartel: boolean;
+    readonly horaDelCielo: number;
+    readonly alturaDelSol: number;
+    readonly tapa: boolean;
+    readonly tramoDelPlan: number;
+  } {
+    const e = this.saltoEnCurso;
+    return {
+      hora: this.horaDelVueloLargo,
+      enCurso: e ? { hasta: e.hasta, estado: e.espera.estado, esperando: e.espera.esperando, mundoPedido: e.mundoPedido } : null,
+      hechos: this.saltosHechos,
+      mundo: this.scenario.id,
+      origen: this.scenario.aerodrome?.origin ?? null,
+      combustible: this.combustible,
+      cabina: this.cabinaDelAvion.altitud,
+      cartel: this.cinturonPuesto,
+      horaDelCielo: this.horaDelVuelo,
+      alturaDelSol: this.alturaDelSol(),
+      tapa: this.siestaTapa,
+      tramoDelPlan: this.navegacion.indice,
+    };
+  }
+
   // ── Bucle ─────────────────────────────────────────────────────────────
 
   /**
@@ -16087,10 +16637,18 @@ export class Game {
      * **Y con Ara durmiendo, el vuelo pasa deprisa** (punto 304): con la
      * pantalla del sueño tapándolo todo, el mundo da varios pasos por
      * fotograma, como con el reloj acelerado de los bancos, y no se pinta,
-     * que no se ve. El avión vuela su ruta de verdad, paso a paso: no salta.
-     * Fuera de desarrollo también, que es para quien juega. Ver `ui/siesta.ts`.
+     * que no se ve. Fuera de desarrollo también, que es para quien juega. Ver
+     * `ui/siesta.ts`.
+     *
+     * **Bajo tapa, la escena decide si el vuelo corre o salta** (ADR 0023). En
+     * el vuelo corto corre: el avión vuela su ruta de verdad, paso a paso, en
+     * trece segundos de sueño, y todo lo demás se entera solo. En el vuelo largo
+     * siete horas no caben así, y salta al siguiente momento del guion: ver
+     * `atenderAlSalto`. Lo de arriba, repetir el paso y no alargarlo, sigue en
+     * pie para todo lo que corre: saltar no es un paso largo, es poner el avión
+     * en otro sitio. Y sin tapa no salta nunca.
      */
-    const duerme = this.siestaTapa && this.escenaDuerme;
+    const duerme = this.siestaTapa && this.escenaDuerme && !this.escenaSalta;
     /*
      * **Y con el botón ⏩ pulsado, también**, pero con el mundo pintado: lo
      * que se ve es el vuelo adelantado. Lo deprisa que va lo dice lo que
@@ -16127,6 +16685,7 @@ export class Game {
     this.nombrado.paso(real);
     this.ponerElAroDelPapi();
     this.pintarLaSiesta(real);
+    this.atenderAlSalto();
     this.ponerElBotonDeAdelantar();
     if (!this.siestaTapa) this.pintar();
     this.medirElAdelanto(real, dados, empiezaElDibujo - empiezaElMundo, performance.now() - empiezaElDibujo, adelanta);
@@ -16205,6 +16764,11 @@ export class Game {
     return this.inicio instanceof VueloDePasaje && this.inicio.durmiendo;
   }
 
+  /** **Si esta siesta salta**, y no corre. Lo dice la escena. Ver `frame`. */
+  private get escenaSalta(): boolean {
+    return this.inicio instanceof VueloDePasaje && this.inicio.saltoPedido !== null;
+  }
+
   /** La pantalla de la siesta, y si tapa del todo el mundo. Ver `ui/siesta.ts`. */
   private siesta: PantallaDeLaSiesta | null = null;
   private siestaTapa = false;
@@ -16217,7 +16781,8 @@ export class Game {
   private pintarLaSiesta(real: number): void {
     if (!(this.inicio instanceof VueloDePasaje) && !this.siesta) return;
     this.siesta ??= new PantallaDeLaSiesta(document.getElementById("siesta"));
-    this.siestaTapa = this.siesta.paso(real, this.escenaDuerme);
+    // Y con un salto en marcha, tapada hasta que esté puesto, se despierte quien se despierte.
+    this.siestaTapa = this.siesta.paso(real, this.escenaDuerme || this.saltoEnCurso !== null);
   }
 
   /**
@@ -23734,6 +24299,10 @@ export class Game {
    * una misión por su objetivo. Ver `flight/ruta.ts`.
    */
   private seguirLaRuta(): void {
+    if (this.vueloLargo) {
+      this.seguirElVueloLargo();
+      return;
+    }
     const destino = this.elDestino();
     const s = this.flight.state;
     const salida = this.elCampo(this.salidaId);

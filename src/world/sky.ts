@@ -1163,6 +1163,19 @@ export interface SkyRig {
    */
   ponerFecha(fecha: Date): void;
   /**
+   * **Desde dónde se mira el cielo**, en grados, sin volver a contarlo: va
+   * junto con la fecha y la hora, que son las que lo cuentan. En un vuelo corto
+   * da igual, pero en el vuelo largo el cielo es el del avión y no el del origen
+   * del mundo, que puede estar a miles de kilómetros. Ver `salto-bajo-tapa.ts`.
+   */
+  ponerSitio(sitio: { readonly lat: number; readonly lon: number }): void;
+  /**
+   * **Otro mundo debajo**: su agua, su nivel del mar, su sitio y su tamaño. Lo
+   * que cambia con la hora se queda como esté y se repinta. Ver `ponerElMundo`
+   * en `game.ts`.
+   */
+  ponerMundo(escenario: Scenario): void;
+  /**
    * La capa de nubes puesta, en altitudes del mundo, o `null` sin capa. Ver
    * `ponerNubes`.
    */
@@ -1722,6 +1735,23 @@ export function createSky(scenario: Scenario): SkyRig {
     },
     ponerFecha(fecha: Date) {
       sitio.fecha = fecha;
+      rig.ponerHora(rig.hora);
+    },
+    ponerSitio(donde: { readonly lat: number; readonly lon: number }) {
+      sitio.lat = donde.lat;
+      sitio.lon = donde.lon;
+    },
+    ponerMundo(nuevo: Scenario) {
+      // Lo de `scenario` que se mira con el juego en marcha —el tamaño, el nivel del mar— es del nuevo.
+      scenario = nuevo;
+      const donde = sitioDelCielo(nuevo);
+      sitio.lat = donde.lat;
+      sitio.lon = donde.lon;
+      (compartidos.colorDelAgua.value as Color).set(nuevo.water);
+      compartidos.nivelDelMar.value = nuevo.waterLevel;
+      dome.scale.setScalar(nuevo.size);
+      ambient.groundColor.set(nuevo.fill);
+      niebla.bruma = nuevo.fog.density;
       rig.ponerHora(rig.hora);
     },
     get capa() {
