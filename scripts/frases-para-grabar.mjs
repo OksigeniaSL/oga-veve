@@ -2009,6 +2009,13 @@ const DEL_VUELO_LARGO = [
   ["inicio.tripulacion.pasaje.cerca.largo.nubesAltas", "tripulacion-canarias", "la noche, en el ecuador: Idaira, sentada y atada, bajito y sin dramatizar: las nubes de tormenta son las más altas"],
   ["inicio.tripulacion.pasaje.cerca.largo.nubesCinturon", "tripulacion-canarias", "la noche, en el ecuador: Idaira, bajito: el radar y las rodean; en el asiento, el cinturón siempre puesto"],
   ["inicio.ara.pasaje.largo.sigoDurmiendo", "ara", "la noche, en el ecuador: Ara se vuelve a dormir, con mucho sueño"],
+  ["inicio.ara.pasaje.kit.elegirConLaCruz", "ara", "la pantalla del asiento: Ara dice los tres juegos al abrirlos"],
+  ["inicio.ara.pasaje.kit.cruz.explica", "ara", "la Cruz del Sur: Ara dice adónde mira este cielo, que no es el de la ventanilla"],
+  ["inicio.ara.pasaje.kit.cruz.empezar", "ara", "la Cruz del Sur: Ara dice qué hacer: tocar las cuatro estrellas, en cualquier orden"],
+  ["inicio.ara.pasaje.kit.cruz.punteros", "ara", "la Cruz del Sur, desde Taguato: Ara señala los dos punteros de Centauro"],
+  ["inicio.ara.pasaje.kit.cruz.encendida", "ara", "la Cruz del Sur: Ara celebra la Cruz encendida"],
+  ["inicio.ara.pasaje.kit.cruz.sur", "ara", "la Cruz del Sur: Ara cuenta cómo se encuentra el sur, mientras se dibuja la línea"],
+  ["inicio.ara.pasaje.kit.cruz.navegantes", "ara", "la Cruz del Sur, desde Taguato: los navegantes y la bandera de Brasil"],
 ];
 const LO_QUE_SE_VE = new Set(
   [...DEL_VUELO_LARGO, ...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA, ...DE_LOS_INSTRUMENTOS].map(

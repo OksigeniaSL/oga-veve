@@ -402,8 +402,8 @@ export class PantallaDeLaConsola {
     const alLado = !!volumen && volumen.left < W / 3 && volumen.bottom > arriba;
     const izquierda = deArriba ? HUECO : Math.max(alLado ? volumen.right + HUECO : HUECO, cartel ? cartel.right + HUECO : HUECO);
     const derecha = deArriba ? HUECO : W - barra.left + HUECO;
-    // Al kit solo le dice lo de la barra, que va centrado y del volumen ya se aparta él. Y 14 de su botón de cerrar, que asoma.
-    this.sitioDeLaBarra = { lados: derecha + 14, abajo: abajoDeLaBarra, arriba: Math.round(arriba) };
+    // Al kit solo le dice lo de la barra, que va centrado y del volumen ya se aparta él. Y 14 de sus botones de cerrar y atrás, que asoman por el lado y por arriba.
+    this.sitioDeLaBarra = { lados: derecha + 14, abajo: abajoDeLaBarra, arriba: Math.round(arriba) + 14 };
     const raiz = this.raiz.style;
     raiz.setProperty("--consola-arriba", `${Math.round(arriba)}px`);
     // De pie, el volumen cruza el ancho entero que tiene el panel: se queda encima de él.

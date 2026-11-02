@@ -464,6 +464,17 @@ export const CRUZ_DEL_SUR = {
   delta: { ra: 183.7863, dec: -58.7489 },
 } as const;
 
+/**
+ * **Los dos punteros de Centauro**: Alfa (HR 5459, la más brillante de la pareja
+ * que el catálogo da por separado, HR 5460) y Beta (HR 5267). Quien busca la Cruz
+ * los busca primero: hay otra cruz cerca, la falsa, y estas dos brillantes juntas
+ * son las que dicen cuál es. Ver `flight/cruz-del-sur.ts`.
+ */
+export const PUNTEROS_DE_CENTAURO = {
+  alfa: { ra: 219.9021, dec: -60.834 },
+  beta: { ra: 210.9559, dec: -60.373 },
+} as const;
+
 /** El centro de la Cruz: la media de sus cuatro brillantes, en J2000. */
 export const CENTRO_DE_LA_CRUZ: Vec3 = (() => {
   const s = Object.values(CRUZ_DEL_SUR)

@@ -2530,6 +2530,8 @@ export const ES_PY = {
   "ajustes.explicacionDelFinal.volver": "Volver a explicarlo",
   "ajustes.explicacionDeLaConsola": "La pantalla del asiento ya no se explica en voz.",
   "ajustes.explicacionDeLaConsola.volver": "Volver a explicarla",
+  "ajustes.explicacionDeLaCruz": "El juego de la Cruz del Sur ya no se explica en voz.",
+  "ajustes.explicacionDeLaCruz.volver": "Volver a explicarlo",
   "ajustes.inicio":
     "En el iPhone, el juego va a pantalla completa abierto desde su ícono: en Safari tocá Compartir (o «•••» y Compartir), elegí «Agregar a inicio» y abrilo desde ahí.",
   "gafas.ganadas": "¡Tus gafas de sol!",
@@ -4723,6 +4725,30 @@ export const ES_PY = {
   "inicio.ara.pasaje.largo.consolaAbre": "¡Mirá todo lo que tiene! El mapa, los juegos, los cuentos y mi cuaderno.",
   "inicio.tripulacion.pasaje.cerca.largo.consolaRecoge":
     "Ya vamos bajando: guardamos la pantalla y a la ventanilla, que la llegada no hay que perdérsela.",
+  /*
+   * **La Cruz del Sur**, el juego de la consola. Lo que dice Ara se graba; lo de abajo no
+   * se oye: los nombres de las estrellas, que solo lee Taguato Ruvicha, y lo que es para
+   * el lector de pantalla. Ver `src/flight/cruz-del-sur.ts`.
+   */
+  "inicio.ara.pasaje.kit.elegirConLaCruz":
+    "Hay tres juegos: ser la torre, armar aviones o encender la Cruz del Sur. ¿Cuál querés?",
+  "inicio.ara.pasaje.kit.cruz.explica": "Este cielo no es el de la ventanilla: es el de Asunción, adonde vamos.",
+  "inicio.ara.pasaje.kit.cruz.empezar": "Cuatro estrellas hacen una cruz. ¡Tocalas, en el orden que quieras!",
+  "inicio.ara.pasaje.kit.cruz.punteros": "Esas dos del Centauro son los punteros: señalan a la Cruz. ¡Tocalas también!",
+  "inicio.ara.pasaje.kit.cruz.encendida": "¡Se encendió! Esa es la Cruz del Sur, en el cielo de Asunción.",
+  "inicio.ara.pasaje.kit.cruz.sur": "Alargá su brazo largo cuatro veces y media y bajá derecho hasta el horizonte: ahí está el sur.",
+  "inicio.ara.pasaje.kit.cruz.navegantes":
+    "Los navegantes la usaban para orientarse de noche. Y está en la bandera de Brasil, el país que cruzamos para llegar.",
+  "inicio.kit.cruz": "La Cruz del Sur: tocá sus estrellas",
+  "inicio.kit.cruz.dondeEs": "Este es el cielo de Asunción, adonde vamos",
+  "inicio.kit.cruz.sur": "El sur",
+  "inicio.kit.cruz.letraDelSur": "S",
+  "inicio.kit.cruz.estrella.gacrux": "Gácrux",
+  "inicio.kit.cruz.estrella.acrux": "Ácrux",
+  "inicio.kit.cruz.estrella.mimosa": "Mimosa",
+  "inicio.kit.cruz.estrella.delta": "Delta Crucis",
+  "inicio.kit.cruz.estrella.alfa": "Alfa Centauri",
+  "inicio.kit.cruz.estrella.beta": "Beta Centauri",
   "inicio.kit.luz": "Luz verde: la torre sos vos",
   "inicio.kit.luz.verde": "Luz verde fija: puede aterrizar",
   "inicio.kit.luz.roja": "Luz roja fija: que dé otra vuelta",

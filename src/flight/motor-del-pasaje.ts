@@ -1252,6 +1252,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     this.charla = new Conversacion(voz, () => this.reloj, () => this.pared());
     this.tapa = guion.apertura ? TAPA_A_OSCURAS : null;
     this.consola = guion.consola && opciones.conPantalla ? new ConsolaDelAsiento() : null;
+    this.kit.conLaCruz = this.consola !== null;
   }
 
   /** **La lámina a pantalla completa de ahora**, o `null`: lo mira el juego en cada fotograma. */
@@ -2350,6 +2351,9 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     if ((this.kitAbierto && !abierto) || juego !== this.juegoDelKit || aGuardar) this.charla.quitar(esDelKit);
     this.kitAbierto = abierto;
     this.juegoDelKit = juego;
+    // Lo de la Cruz que seguía esperando turno y ya no viene a cuento, fuera, y antes de lo nuevo.
+    const sobra = this.kit.tomarLoQueSobra();
+    if (sobra.length) this.charla.quitar((x) => sobra.includes(x.clave));
     const lineas = this.kit.tomarLoQueDecir();
     if (lineas.length && !aGuardar) this.charla.decir(lineas);
   }

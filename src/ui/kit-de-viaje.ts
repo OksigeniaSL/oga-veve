@@ -56,6 +56,8 @@
 
 import { t, type TranslationKey } from "../i18n";
 import { JuegoDeLaLuz, type Senal } from "../flight/luz-verde";
+import { JuegoDeLaCruz, type EstrellaDelJuego } from "../flight/cruz-del-sur";
+import { hojaDeLaCruz, ICONO_DE_LA_CRUZ, PintorDeLaCruz } from "./cruz-del-sur";
 import { hojaDeLaLuz, ICONO_DE_LA_LUZ, PintorDeLaLuz } from "./luz-verde";
 import {
   JuegoDelAvion,
@@ -452,6 +454,7 @@ ${pieza("cola", 137, 26, 0.2)}${pieza("motor", 137, 56, 0.24)}
 const ICONO: Readonly<Record<JuegoDelKit, string>> = {
   luz: ICONO_DE_LA_LUZ,
   avion: iconoDelAvion(),
+  cruz: ICONO_DE_LA_CRUZ,
 };
 
 /** La estrella de lo ya hecho. */
@@ -469,6 +472,14 @@ const ATRAS = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 
 const ES_ARRASTRE = 8;
 /** Y lo cerca de otro hueco para entender que se quiso poner ahí, en puntos de la hoja. */
 const CERCA_DE_OTRO = 40;
+/** La proporción de siempre: la de sus dibujos. */
+const PROPORCION_DE_LA_HOJA = 640 / 340;
+/**
+ * **El cielo de la Cruz, en un teléfono de pie**: más alto que ancho, que el sur está
+ * debajo de la Cruz y con la hoja apaisada la Cruz saldría del tamaño de una uña. Fijo,
+ * no todo lo que quepa: la hoja no tiene que bailar con lo que crece la tarjeta.
+ */
+const PROPORCION_DEL_CIELO_DE_PIE = 3 / 4;
 
 export class PantallaDelKit {
   private readonly boton: HTMLButtonElement;
@@ -477,7 +488,7 @@ export class PantallaDelKit {
   private readonly atras: HTMLButtonElement;
   private readonly pausa: HTMLElement;
   /** Lo que hay montado en la hoja: elegir, o el juego de ahora. */
-  private montado: "elegir" | JuegoDelAvion | JuegoDeLaLuz | null = null;
+  private montado: "elegir" | JuegoDelAvion | JuegoDeLaLuz | JuegoDeLaCruz | null = null;
   /** El nivel del avión montado: al despegar, se monta el siguiente. */
   private nivelMontado = -1;
   /** El nivel que hay guardado en el dispositivo: se escribe solo al cambiar. */
@@ -485,6 +496,8 @@ export class PantallaDelKit {
   private piezas: readonly PiezaDibujada[] = [];
   /** Lo que pinta la luz verde, mientras está montada. */
   private pintorDeLaLuz: PintorDeLaLuz | null = null;
+  /** Y la Cruz del Sur. */
+  private pintorDeLaCruz: PintorDeLaCruz | null = null;
   private firma = "";
   private medido = 0;
   /** Dónde quedó el panel la última vez que se colocó: el ancho de la pantalla, su arriba y su ancho, en píxeles. */
@@ -553,6 +566,7 @@ export class PantallaDelKit {
     document.documentElement.classList.remove("kit-abierto");
     window.removeEventListener("resize", this.alCambiarDeTamano);
     this.laTarjetaCambia?.disconnect();
+    this.pintorDeLaCruz?.quitar();
     this.raiz.removeEventListener("click", this.alTocar);
     this.raiz.innerHTML = "";
     this.raiz.hidden = true;
@@ -615,6 +629,8 @@ export class PantallaDelKit {
     const juego = this.kit.juegoDeAhora;
     const quiere = juego ?? "elegir";
     if (quiere !== this.montado || (juego instanceof JuegoDelAvion && juego.numero !== this.nivelMontado)) this.montar(quiere);
+    // Otro tamaño de la hoja, o que llegó el fondo: el cielo se repinta aunque nada más cambie.
+    if (this.pintorDeLaCruz?.pendiente) this.firma = "";
     const firma = `${JSON.stringify(e)}|${suena ?? ""}`;
     if (firma === this.firma) return;
     this.firma = firma;
@@ -623,6 +639,7 @@ export class PantallaDelKit {
     this.atras.hidden = !juego;
     if (juego instanceof JuegoDelAvion) this.pintarElAvion(juego);
     else if (juego instanceof JuegoDeLaLuz && e.juego?.juego === "luz") this.pintorDeLaLuz?.pintar(e.juego);
+    else if (juego instanceof JuegoDeLaCruz && e.juego?.juego === "cruz") this.pintorDeLaCruz?.pintar(e.juego);
     else
       for (const b of this.hoja.querySelectorAll<HTMLElement>("[data-kit-juego]"))
         b.classList.toggle("kit-juego--hecho", e.hechos.includes(b.dataset.kitJuego as JuegoDelKit));
@@ -646,7 +663,7 @@ export class PantallaDelKit {
     const r = this.reserva;
     const arriba = Math.max(tarjeta && tarjeta.height > 2 ? tarjeta.bottom + 10 : 72, r?.arriba ?? 0);
     const marco = 26;
-    const proporcion = 640 / 340;
+    const proporcion = this.montado instanceof JuegoDeLaCruz && innerHeight > innerWidth ? PROPORCION_DEL_CIELO_DE_PIE : PROPORCION_DE_LA_HOJA;
     const anchoPara = (alto: number): number => (alto - marco) * proporcion + marco;
     const altoDe = (ancho: number): number => (ancho - marco) / proporcion + marco;
     const deLado = Math.min(780, innerWidth - (r ? 2 * r.lados : 150));
@@ -664,8 +681,9 @@ export class PantallaDelKit {
     }
     this.raiz.style.setProperty("--kit-arriba", `${Math.round(arriba)}px`);
     this.raiz.style.setProperty("--kit-ancho", `${Math.max(200, Math.floor(ancho))}px`);
+    this.raiz.style.setProperty("--kit-proporcion", proporcion.toFixed(4));
     // Centrado por la hoja: con otra pantalla se mueve aunque mida lo mismo.
-    const sitio = `${innerWidth}|${Math.round(arriba)}|${Math.max(200, Math.floor(ancho))}`;
+    const sitio = `${innerWidth}|${Math.round(arriba)}|${Math.max(200, Math.floor(ancho))}|${proporcion.toFixed(4)}`;
     if (sitio !== this.sitioDelPanel) {
       this.sitioDelPanel = sitio;
       this.movidas++;
@@ -673,17 +691,24 @@ export class PantallaDelKit {
   }
 
   /** Monta lo de la hoja: elegir, o un juego nuevo, o el avión del nivel siguiente. */
-  private montar(que: "elegir" | JuegoDelAvion | JuegoDeLaLuz): void {
+  private montar(que: "elegir" | JuegoDelAvion | JuegoDeLaLuz | JuegoDeLaCruz): void {
     this.montado = que;
     this.firma = "";
     this.arrastre = null;
     this.pintorDeLaLuz = null;
+    this.pintorDeLaCruz?.quitar();
+    this.pintorDeLaCruz = null;
     this.nivelMontado = -1;
+    // El cielo tiene su color y, de pie, su proporción: ver el final de esto.
+    this.panel.classList.toggle("kit__panel--cruz", que instanceof JuegoDeLaCruz);
     if (que instanceof JuegoDeLaLuz) {
       this.hoja.innerHTML = hojaDeLaLuz(que.luces);
       this.pintorDeLaLuz = new PintorDeLaLuz(this.hoja);
+    } else if (que instanceof JuegoDeLaCruz) {
+      this.hoja.innerHTML = hojaDeLaCruz();
+      this.pintorDeLaCruz = new PintorDeLaCruz(this.hoja);
     } else if (que === "elegir")
-      this.hoja.innerHTML = `<div class="kit-elegir">${(["luz", "avion"] as const)
+      this.hoja.innerHTML = `<div class="kit-elegir${this.kit.juegos.length > 2 ? " kit-elegir--tres" : ""}">${this.kit.juegos
         .map(
           (j) =>
             `<button class="kit-juego" type="button" data-kit-juego="${j}" aria-label="${t(`inicio.kit.${j}` as TranslationKey)}">${ICONO[j]}${ESTRELLA}</button>`,
@@ -694,6 +719,9 @@ export class PantallaDelKit {
       this.piezas = piezasDelNivel(que.numero);
       this.hoja.innerHTML = hojaDelAvion(que.numero);
     }
+    // Ya, y no en el vistazo siguiente: un fotograma con la proporción del juego de antes se ve.
+    this.medido = performance.now();
+    this.colocar();
   }
 
   private pieza(s: Sitio): PiezaDibujada | undefined {
@@ -743,6 +771,7 @@ export class PantallaDelKit {
       if (que === "abrir") this.kit.abrir();
       else if (que === "cerrar") this.kit.cerrar();
       else if (que === "elegir") this.kit.volverAElegir();
+      else if (que === "no-explicar") this.kit.noExplicarLaCruz();
       return;
     }
     const juego = donde?.closest<HTMLElement>("[data-kit-juego]")?.dataset.kitJuego as JuegoDelKit | undefined;
@@ -822,6 +851,20 @@ export class PantallaDelKit {
       this.kit.tocado();
       if (senal) j.encender(senal);
       else if (avion) j.apuntar(Number(avion));
+      return;
+    }
+    /*
+     * **La Cruz, al apretar**, como la luz verde: la estrella que le cae al dedo, con
+     * margen; y si no le cae ninguna, no pasa nada. El botón de «no volver a explicar»
+     * va dentro de la hoja y se atiende en su clic.
+     */
+    if (j instanceof JuegoDeLaCruz) {
+      if ((event.target as Element | null)?.closest("[data-kit]")) return;
+      event.preventDefault();
+      this.kit.tocado();
+      const cual = this.pintorDeLaCruz?.estrellaEn(event.clientX, event.clientY, j.faltan) ?? null;
+      if (cual) j.tocar(cual);
+      else j.tocarOtraCosa();
       return;
     }
     if (!(j instanceof JuegoDelAvion) || this.arrastre) return;
@@ -912,6 +955,13 @@ export class PantallaDelKit {
     if (event.key !== "Enter" && event.key !== " ") return;
     event.stopPropagation();
     const j = this.kit.juego;
+    const estrella = donde?.closest("[data-cruz-estrella]")?.getAttribute("data-cruz-estrella") as EstrellaDelJuego | null;
+    if (estrella && j instanceof JuegoDeLaCruz) {
+      event.preventDefault();
+      this.kit.tocado();
+      j.tocar(estrella);
+      return;
+    }
     const pieza = donde?.closest("[data-pieza]")?.getAttribute("data-pieza") as Sitio | null;
     if (pieza && j instanceof JuegoDelAvion) {
       event.preventDefault();
@@ -938,6 +988,7 @@ export class PantallaDelKit {
     readonly piezas: Readonly<Record<string, { readonly en: DOMRect; readonly sitio: DOMRect }>>;
     readonly juegos: Readonly<Record<string, DOMRect>>;
     readonly luz: ReturnType<PintorDeLaLuz["paraBanco"]> | null;
+    readonly cruz: ReturnType<PintorDeLaCruz["paraBanco"]> | null;
   } {
     const caja = (el: Element | null): DOMRect | null => (el && !el.closest("[hidden]") ? el.getBoundingClientRect() : null);
     const piezas: Record<string, { en: DOMRect; sitio: DOMRect }> = {};
@@ -962,6 +1013,13 @@ export class PantallaDelKit {
       const r = caja(b);
       if (r) juegos[b.dataset.kitJuego!] = r;
     }
-    return { boton: caja(this.boton), panel: caja(this.panel), piezas, juegos, luz: this.pintorDeLaLuz?.paraBanco() ?? null };
+    return {
+      boton: caja(this.boton),
+      panel: caja(this.panel),
+      piezas,
+      juegos,
+      luz: this.pintorDeLaLuz?.paraBanco() ?? null,
+      cruz: this.pintorDeLaCruz?.paraBanco() ?? null,
+    };
   }
 }
