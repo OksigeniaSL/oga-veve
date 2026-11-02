@@ -20,7 +20,7 @@ import {
 import type { Linea } from "./conversacion";
 import { GUION_LLEGADA_A_ASUNCION } from "./guion-llegada-a-asuncion";
 import { GUION_TENERIFE_LA_PALMA } from "./guion-tenerife-la-palma";
-import { MotorDelPasaje, type DelVueloLargo, type LecturaDelPasaje } from "./motor-del-pasaje";
+import { EXPLICA_EL_ADELANTO, MotorDelPasaje, type DelVueloLargo, type LecturaDelPasaje } from "./motor-del-pasaje";
 
 const EN_CRUCERO: LecturaDelPasaje = {
   tramo: "crucero",
@@ -218,17 +218,34 @@ describe("mirando la pantalla", () => {
     c.mirarElCuento("asuncion");
     correr(8, CRUCERO);
     expect(dichas.at(-1)?.clave).toBe("ventanilla.historia.asuncion");
-    expect(m.loCortadoCalla).toBe(false);
+    expect(m.loDichoSeBorra).toBe(false);
     c.cerrar();
     correr(1, CRUCERO);
     expect(dichas.at(-1)?.cortada).toBe(true);
-    expect(m.loCortadoCalla).toBe(true);
+    expect(m.loDichoSeBorra).toBe(true);
     c.abrir();
     correr(1, CRUCERO);
     c.mirarElCuento("asuncion");
     correr(8, CRUCERO);
     expect(dichas.filter((d) => d.clave === "ventanilla.historia.asuncion")).toHaveLength(2);
-    expect(m.loCortadoCalla).toBe(false);
+    expect(m.loDichoSeBorra).toBe(false);
+  });
+
+  it("un cuento contado entero tampoco se queda escrito: se borra pasado un rato de silencio", () => {
+    const { m, c, correr, conLaVentanillaAbierta, dichas } = unVuelo({ duraUnCuento: 10 });
+    conLaVentanillaAbierta();
+    c.abrir();
+    correr(1, CRUCERO);
+    c.mirarElCuento("asuncion");
+    correr(16, CRUCERO);
+    const cuento = dichas.find((d) => d.clave === "ventanilla.historia.asuncion");
+    expect(cuento?.hasta).not.toBeNull();
+    expect(cuento?.cortada).toBe(false);
+    // Recién acabado se deja leer; un rato después, fuera.
+    expect(m.loDichoSeBorra).toBe(false);
+    correr(10, CRUCERO);
+    expect(dichas.at(-1)?.clave).toBe("ventanilla.historia.asuncion");
+    expect(m.loDichoSeBorra).toBe(true);
   });
 
   it("y el guion sigue su curso: nada de lo imprescindible se queda sin decir", () => {
@@ -441,5 +458,59 @@ describe("una voz que lo cuenta", () => {
     correr(3, CRUCERO);
     expect(claves(dichas)).not.toContain(def.elBoton.clave);
     expect(claves(dichas)).not.toContain(def.loQueHay.clave);
+  });
+});
+
+describe("el ⏩, explicado por Ara", () => {
+  const clave = EXPLICA_EL_ADELANTO.clave;
+
+  it("sin pedirlo, ni una palabra", () => {
+    const { correr, conLaVentanillaAbierta, dichas } = unVuelo();
+    conLaVentanillaAbierta();
+    correr(40, CRUCERO);
+    expect(claves(dichas)).not.toContain(clave);
+  });
+
+  it("pedido, lo dice una vez en un rato largo sin nada, con la ventanilla delante, y el botón late mientras", () => {
+    const { m, correr, conLaVentanillaAbierta, dichas } = unVuelo();
+    conLaVentanillaAbierta();
+    m.explicarElAdelanto();
+    let latio = false;
+    correr(40, CRUCERO, () => {
+      if (m.boton.explica === "suena") latio = true;
+    });
+    expect(claves(dichas).filter((k) => k === clave)).toHaveLength(1);
+    expect(latio).toBe(true);
+    expect(m.estado.plano).toBe("ventanilla");
+    // Y lo dice con el botón a la vista, no antes de que salga.
+    expect(m.boton.sale).toBe(true);
+  });
+
+  it("con la pantalla del asiento abierta espera a que se vuelva a la ventanilla", () => {
+    const { m, c, correr, conLaVentanillaAbierta, dichas } = unVuelo();
+    conLaVentanillaAbierta();
+    m.explicarElAdelanto();
+    c.abrir();
+    correr(40, CRUCERO);
+    expect(claves(dichas)).not.toContain(clave);
+    c.cerrar();
+    correr(20, CRUCERO);
+    expect(claves(dichas)).toContain(clave);
+  });
+
+  it("si ya se puso el ⏩, no hace falta; y «ya lo sé» lo quita", () => {
+    const puesto = unVuelo();
+    puesto.conLaVentanillaAbierta();
+    puesto.m.explicarElAdelanto();
+    puesto.m.adelantar(true);
+    puesto.correr(40, CRUCERO);
+    expect(claves(puesto.dichas)).not.toContain(clave);
+
+    const quitado = unVuelo();
+    quitado.conLaVentanillaAbierta();
+    quitado.m.explicarElAdelanto();
+    quitado.m.olvidarLaExplicacionDelAdelanto();
+    quitado.correr(40, CRUCERO);
+    expect(claves(quitado.dichas)).not.toContain(clave);
   });
 });

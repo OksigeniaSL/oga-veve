@@ -275,7 +275,7 @@ export class Conversacion {
   /**
    * **Si la última se cortó a medias**: un cuento que se deja al salir de la pantalla
    * del asiento. Lo que se calla no se puede quedar escrito como si se hubiera dicho.
-   * Ver `MotorDelPasaje.loCortadoCalla`.
+   * Ver `MotorDelPasaje.loDichoSeBorra`.
    */
   get ultimaCortada(): boolean {
     return this.cortadaLaUltima;

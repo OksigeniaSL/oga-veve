@@ -55,6 +55,7 @@ export const PANTALLAS_QUE_SE_EXPLICAN = {
   fin: "explicacionDelFinal",
   consola: "explicacionDeLaConsola",
   cruz: "explicacionDeLaCruz",
+  adelantar: "explicacionDelAdelanto",
 } as const;
 
 export type PantallaQueSeExplica = keyof typeof PANTALLAS_QUE_SE_EXPLICAN;

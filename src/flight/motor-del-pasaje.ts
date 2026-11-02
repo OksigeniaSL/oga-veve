@@ -448,6 +448,28 @@ const ANTES_DEL_KIT = 6000;
  * el de después del anuncio. Más que lo que el anuncio espera, que va primero.
  */
 const EL_BOTON_SE_EXPLICA_TRAS = 3;
+/**
+ * **Ara explica el ⏩**: el botón sale solo, sin una palabra, y nadie decía qué es
+ * —«el botón no lo explica nadie»—. Lo dice Ara, que es quien explica en el pasaje lo que
+ * se toca —la mochilita, tocar por la ventanilla—, y no la tripulación: correr el viaje es
+ * del juego, no del avión. Ver `atenderALaExplicacionDelAdelanto`.
+ */
+export const EXPLICA_EL_ADELANTO: Linea = { quien: "ara", clave: "inicio.ara.pasaje.adelantar" };
+/** **El silencio que espera lo del ⏩**, s: más que lo del botón de la consola, que va antes. */
+const EL_ADELANTO_SE_EXPLICA_TRAS = 5;
+/**
+ * **Y el rato sin nada que tiene que venir por delante**, s de vuelo: si lo siguiente llega
+ * enseguida, el botón no haría nada, y explicarlo ahí es enseñar algo que no se ve.
+ */
+const RATO_LARGO_PARA_EL_ADELANTO = 60;
+/** **Lo que se queda a mano «ya lo sé» después de explicarlo**, s. */
+const SE_QUEDA_EL_YA_LO_SE = 8;
+
+/**
+ * **Lo que se queda escrita la última frase, ya callada**, s de silencio: lo que tarda en
+ * acabar de leerla quien la seguía con los ojos, que la voz ya la dijo. Ver `loDichoSeBorra`.
+ */
+const SE_QUEDA_ESCRITO = 8;
 /** **Lo que tarda en empezar un cuento tras un silencio**, s: más que lo que espera cualquier momento del guion. */
 const CALLA_ANTES_DEL_CUENTO = 1.2;
 
@@ -1192,6 +1214,10 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   /** Lo que queda por explicar de la consola en este vuelo. Ver `explicarLaConsola`. */
   private explicaElBoton = false;
   private explicaLoQueHay = false;
+  /** Si queda por explicar el ⏩ en este vuelo, cuándo se miró si viene un rato largo, y hasta cuándo sonó. */
+  private explicaElAdelanto = false;
+  private adelantoMiradoEn = -Infinity;
+  private adelantoSonoHasta: number | null = null;
   /** **La siesta de Ara**: la de ahora, si duerme, y todas. Ver `puedeDormirse`. */
   private siestaDeAhora: { desde: number; hasta: number | null; paraBajar: boolean; porQue?: Siesta["porQue"] } | null = null;
   private readonly siestas: { desde: number; hasta: number | null; paraBajar: boolean; porQue?: Siesta["porQue"] }[] = [];
@@ -1710,15 +1736,19 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   }
 
   /**
-   * **Lo cortado no se queda escrito**: un cuento que se deja a medias al salir de la
-   * pantalla del asiento se calla, y su texto encima de la ventanilla, con la cara de la
-   * comandante y sin voz, parecía el juego colgado —«se quedó el mensaje de la comandante
-   * escrito arriba y no seguía»—, y más de noche sobre el mar, donde no se mueve nada.
-   * Solo si no espera nada detrás: cuando la escena calla una frase para decir otra, la
-   * siguiente ya está en la cola, y la tarjeta no parpadea entre las dos.
+   * **Lo dicho hace rato no se queda escrito**: lo que se cortó, en cuanto calla, y lo que
+   * se dijo entero, pasado `SE_QUEDA_ESCRITO` de silencio. Un cuento dejado a medias al
+   * salir de la pantalla del asiento, o contado entero, se quedaba con su texto encima de la
+   * ventanilla, con la cara de la comandante y sin voz, hasta la frase siguiente: en la
+   * noche sobre el mar eso son muchos minutos, y parecía el juego colgado —«se quedó el
+   * mensaje de la comandante escrito arriba y no seguía», «se traba esto»—. Solo si no
+   * espera nada detrás: cuando la escena calla una frase para decir otra, la siguiente ya
+   * está en la cola, y la tarjeta no parpadea entre las dos. Y lo que se lee porque no pudo
+   * sonar tampoco: mientras se lee, la cola no está vacía.
    */
-  get loCortadoCalla(): boolean {
-    return this.charla.ultimaCortada && this.charla.vacia;
+  get loDichoSeBorra(): boolean {
+    if (!this.charla.vacia) return false;
+    return this.charla.ultimaCortada || this.callada >= SE_QUEDA_ESCRITO;
   }
 
   /**
@@ -1787,8 +1817,20 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
    * si sale, si el modo está puesto, si corre ahora y si se acaba de apagar
    * solo al empezar la llegada —entonces vuelve a su estado y se va—.
    */
-  get boton(): { readonly sale: boolean; readonly puesto: boolean; readonly corre: boolean; readonly seVa: boolean } {
-    return { sale: this.disponible, puesto: this.rapido, corre: this.adelantando, seVa: this.apagadoSolo && this.llegadaDesde !== null };
+  get boton(): {
+    readonly sale: boolean;
+    readonly puesto: boolean;
+    readonly corre: boolean;
+    readonly seVa: boolean;
+    readonly explica: "suena" | "acaba" | null;
+  } {
+    return {
+      sale: this.disponible,
+      puesto: this.rapido,
+      corre: this.adelantando,
+      seVa: this.apagadoSolo && this.llegadaDesde !== null,
+      explica: this.explicandoElAdelanto,
+    };
   }
 
   /** Si el vuelo corre ahora: lo mira el juego en cada paso. */
@@ -1996,6 +2038,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       this.atenderAlKit(dt, l);
     }
     this.atenderAlAdelanto(l);
+    if (this.charla.suena?.clave === EXPLICA_EL_ADELANTO.clave) this.adelantoSonoHasta = this.reloj;
     // Después del ⏩, que es quien sabe si ya empezó la llegada: los dos se van en el mismo paso.
     if (!this.acabado) this.atenderALaConsola(l);
     if (this.mira && this.reloj - this.miraDesde > SE_QUEDA_EL_DIBUJO && this.charla.callada) this.mira = null;
@@ -2223,6 +2266,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       if (this.atenderLoSenalado(l)) return;
       // Y lo que se acaba de tocar por la ventanilla, que es lo que se está mirando. Ver `tocar`.
       if (this.atenderAlToque(l)) return;
+      if (this.atenderALaExplicacionDelAdelanto(l)) return;
       /*
        * Y con el kit en las manos, lo que se cuenta cuando viene a cuento
        * espera: una explicación encima de un juego es un ruido. Lo que tiene
@@ -2396,6 +2440,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     c.paso({ sale: !this.enLaApertura && this.dicho(def.desde), escuchando: this.megafoniaSuena, pared });
     if (c.estaAbierta && !this.miraLaConsola) {
       this.miraLaConsola = true;
+      // Lo del ⏩, si esperaba turno, se dice al volver: con la pantalla delante no se ve el botón.
+      if (this.charla.quitar((x) => x.clave === EXPLICA_EL_ADELANTO.clave) > 0) this.explicaElAdelanto = true;
       this.ponerPlano("respaldo");
       this.mira = null;
       // Ya la está viendo: lo del botón sobra, y lo que hay dentro, una vez por vuelo.
@@ -2521,6 +2567,55 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     this.charla.decir([def.elBoton]);
     this.pedidas.add(def.elBoton.clave);
     return true;
+  }
+
+  /**
+   * **Se explica el ⏩ en este vuelo**: lo dice el juego la primera vez que sale el botón,
+   * con lo guardado de este perfil. Ver `atenderALaExplicacionDelAdelanto`.
+   */
+  explicarElAdelanto(): void {
+    this.explicaElAdelanto = true;
+  }
+
+  /** **«No volver a explicar»** el ⏩: si no ha sonado, fuera. */
+  olvidarLaExplicacionDelAdelanto(): void {
+    this.explicaElAdelanto = false;
+    this.charla.quitar((x) => x.clave === EXPLICA_EL_ADELANTO.clave);
+  }
+
+  /**
+   * **Lo del ⏩, en un rato largo sin nada**: con el botón a la vista y sin poner, con la
+   * ventanilla delante, en un silencio y solo si de verdad viene un rato largo por delante,
+   * que es cuando el botón hace algo. Si quien juega lo encontró antes, ya no hace falta.
+   * Una vez por vuelo. Devuelve si se dijo.
+   */
+  private atenderALaExplicacionDelAdelanto(l: LecturaDelPasaje): boolean {
+    if (!this.explicaElAdelanto) return false;
+    if (this.rapido) {
+      this.explicaElAdelanto = false;
+      return false;
+    }
+    if (!this.disponible || this.callada < EL_ADELANTO_SE_EXPLICA_TRAS || this.plano !== "ventanilla") return false;
+    // La pantalla abierta, aunque el motor todavía no la haya atendido en este paso.
+    if (this.miraLaConsola || this.consola?.estaAbierta) return false;
+    if (this.kit.estaAbierto || this.kit.ocupaAAra || this.porSenalar.length > 0 || this.contestacion || this.toquePendiente) return false;
+    // Mirar el vuelo de dentro de un rato cuesta: cada medio segundo, como el ⏩.
+    if (this.reloj - this.adelantoMiradoEn < ADELANTO.MIRA_CADA) return false;
+    this.adelantoMiradoEn = this.reloj;
+    if (this.loQueFalta(l) < RATO_LARGO_PARA_EL_ADELANTO) return false;
+    this.explicaElAdelanto = false;
+    this.charla.decir([EXPLICA_EL_ADELANTO]);
+    this.pedidas.add(EXPLICA_EL_ADELANTO.clave);
+    return true;
+  }
+
+  /**
+   * **Mientras Ara explica el ⏩**: `suena` mientras lo dice, y el botón late; `acaba` un rato
+   * después, con «ya lo sé» todavía a mano. Ver `SE_QUEDA_EL_YA_LO_SE`.
+   */
+  private get explicandoElAdelanto(): "suena" | "acaba" | null {
+    if (this.charla.suena?.clave === EXPLICA_EL_ADELANTO.clave) return "suena";
+    return this.adelantoSonoHasta !== null && this.reloj - this.adelantoSonoHasta < SE_QUEDA_EL_YA_LO_SE ? "acaba" : null;
   }
 
   /** Solo para el banco: se salta lo de antes de ver el mundo, y se va a abrir la ventanilla. */

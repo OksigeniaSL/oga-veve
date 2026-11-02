@@ -15707,6 +15707,20 @@
     }
   },
   {
+    "id": "inicio.ara.pasaje.adelantar",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¿Se te hace largo? Tocá las dos flechitas, al lado de la pausa, y el viaje pasa rapidito. Cuando haya algo para ver, se para solo.",
+    "para": "el modo inicio, de pasaje: Ara, en voz baja junto a la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
     "id": "inicio.mama.pasaje.espera",
     "voz": "comandante",
     "idioma": "es-PY",

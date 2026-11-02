@@ -5400,6 +5400,9 @@ export class Game {
   private pantallaDeLaConsola: PantallaDeLaConsola | null = null;
   /** Si en este vuelo ya se contó la consola, y qué enseña ya la pantalla. Ver `pintarLaConsola`. */
   private consolaContada = false;
+  /** Si en este vuelo ya se contó el ⏩, y si se ofrece «ya lo sé». Ver `ponerElBotonDeAdelantar`. */
+  private adelantoContado = false;
+  private yaLoSeDelAdelanto = false;
   private modoEnLaPantalla: ModoDeLaPantalla = "mapa";
   /** Si este vuelo es el del modo inicio, aunque ya se haya acabado. */
   private conInicio = false;
@@ -6659,6 +6662,7 @@ export class Game {
           { cual: "fin", explicacion: this.explicacionDelFinal },
           { cual: "consola", explicacion: this.explicacionDeLaConsola },
           { cual: "cruz", explicacion: this.explicacionDeLaCruz },
+          { cual: "adelantar", explicacion: this.explicacionDelAdelanto },
         ],
       );
     }
@@ -6769,6 +6773,7 @@ export class Game {
     this.hud.onAdelantar(() => {
       if (this.inicio instanceof MotorDelPasaje) this.inicio.adelantar();
     });
+    this.hud.onNoExplicarElAdelanto(() => this.noExplicarElAdelanto());
     this.hud.onCamara(() => this.cycleCamera());
     this.hud.onGafas(() => this.alternarGafas());
     // Antes de volar: la vuelta al avión y el tiempo de hoy.
@@ -7212,6 +7217,7 @@ export class Game {
           })
         : null;
     this.consolaContada = false;
+    this.adelantoContado = false;
     this.modoEnLaPantalla = "mapa";
     // Con `?inicio=3&kit`, ya en la mano en el puesto: después de leer el nivel guardado, que el pedido manda.
     if (dePrueba) {
@@ -7962,8 +7968,8 @@ export class Game {
         gesto: null,
         mando: this.input.ultimoMando,
         lado: 0,
-        // Ni lo que se cortó a medias: ver `loCortadoCalla`.
-        linea: p.linea && !inicio.laNocheCalla && !inicio.loCortadoCalla
+        // Ni lo dicho hace rato, ni lo que se cortó a medias: ver `loDichoSeBorra`.
+        linea: p.linea && !inicio.laNocheCalla && !inicio.loDichoSeBorra
           ? {
               quien: p.linea.quien,
               clave: p.linea.clave,
@@ -7972,8 +7978,8 @@ export class Game {
             }
           : null,
         congelado: false,
-        // Y sin nada escrito, sin recuadro: también en el vuelo corto, después de algo cortado.
-        sinTarjetaSiCalla: this.vueloLargo !== null || inicio.loCortadoCalla,
+        // Y sin nada escrito, sin recuadro: también en el vuelo corto, con lo dicho ya borrado.
+        sinTarjetaSiCalla: this.vueloLargo !== null || inicio.loDichoSeBorra,
         // Con el kit abierto, la tarjeta solo dice quién habla: lo que se mira es el kit. Y lo mismo con la consola.
         mira: p.kit.abierto || p.consola?.abierta ? null : p.mira,
         fin:
@@ -12685,6 +12691,7 @@ export class Game {
     this.explicacionDelFinal.releer();
     this.explicacionDeLaConsola.releer();
     this.explicacionDeLaCruz.releer();
+    this.explicacionDelAdelanto.releer();
     /*
      * **Vuelo nuevo: la instructora se olvida de lo que ya había dicho.**
      *
@@ -16425,8 +16432,10 @@ export class Game {
     this.capituloDelLargo = 3;
     // El botón de la consola se cuenta una vez por vuelo, y este salto no cambia de vuelo: al despertar no se repite.
     const consolaYaContada = this.consolaContada;
+    const adelantoYaContado = this.adelantoContado;
     this.montarLaEscenaDePasaje(null);
     this.consolaContada = consolaYaContada;
+    this.adelantoContado = adelantoYaContado;
     this.laminaGrande?.taparDeGolpe();
     this.vueloLargoMirado = null;
     // Se despierta con la cabina como la del capítulo suelto: la noche se queda en la noche.
@@ -17092,7 +17101,29 @@ export class Game {
    * el vuelo corre. Ver `adelanto` en `flight/inicio-pasaje.ts`.
    */
   private ponerElBotonDeAdelantar(): void {
-    this.hud.ponerAdelantar(this.inicio instanceof MotorDelPasaje ? this.inicio.boton : null);
+    const m = this.inicio instanceof MotorDelPasaje ? this.inicio : null;
+    const b = m?.boton ?? null;
+    /*
+     * **Y la primera vez que sale en el vuelo, se cuenta**: si toca, Ara lo explica en el
+     * primer rato largo sin nada; y desde la segunda vez, mientras lo dice y un poco después,
+     * «ya lo sé» al lado. Ver `atenderALaExplicacionDelAdelanto` y `flight/explicacion-al-abrir.ts`.
+     */
+    if (m && b?.sale && !this.adelantoContado) {
+      this.adelantoContado = true;
+      const vez = this.explicacionDelAdelanto.alAbrir();
+      if (vez.explicar) m.explicarElAdelanto();
+      this.yaLoSeDelAdelanto = vez.ofrecerQuitarla;
+    }
+    this.hud.ponerAdelantar(
+      b ? { ...b, yaLoSe: this.yaLoSeDelAdelanto && b.explica !== null ? canalesDe(rememberedTier().avisos).texto : null } : null,
+    );
+  }
+
+  /** **«Ya lo sé» del ⏩**: no se explica más en este perfil. Ver `ponerElBotonDeAdelantar`. */
+  private noExplicarElAdelanto(): void {
+    this.explicacionDelAdelanto.quitar();
+    this.yaLoSeDelAdelanto = false;
+    if (this.inicio instanceof MotorDelPasaje) this.inicio.olvidarLaExplicacionDelAdelanto();
   }
 
   /** Si Ara duerme ahora, en la escena de pasaje. Ver `flight/inicio-pasaje.ts`. */
@@ -32643,6 +32674,10 @@ export class Game {
     leer: () => leerProgreso(PANTALLAS_QUE_SE_EXPLICAN.cruz),
     escribir: (v) => ponerProgreso(PANTALLAS_QUE_SE_EXPLICAN.cruz, v),
   });
+  private readonly explicacionDelAdelanto = new ExplicacionAlAbrir({
+    leer: () => leerProgreso(PANTALLAS_QUE_SE_EXPLICAN.adelantar),
+    escribir: (v) => ponerProgreso(PANTALLAS_QUE_SE_EXPLICAN.adelantar, v),
+  });
 
   /** Para el banco: lo guardado de las tres explicaciones. */
   get explicacionesParaBanco(): Record<PantallaQueSeExplica, { veces: number; quitada: boolean }> {
@@ -32653,6 +32688,7 @@ export class Game {
       fin: de(this.explicacionDelFinal),
       consola: de(this.explicacionDeLaConsola),
       cruz: de(this.explicacionDeLaCruz),
+      adelantar: de(this.explicacionDelAdelanto),
     };
   }
 

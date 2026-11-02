@@ -94,6 +94,11 @@ const LINEA_DE: Record<PantallaQueSeExplica, { readonly accion: string; readonly
     dice: "ajustes.explicacionDeLaCruz",
     volver: "ajustes.explicacionDeLaCruz.volver",
   },
+  adelantar: {
+    accion: "explicacion-del-adelanto",
+    dice: "ajustes.explicacionDelAdelanto",
+    volver: "ajustes.explicacionDelAdelanto.volver",
+  },
 };
 
 export class PantallaDeAjustes {

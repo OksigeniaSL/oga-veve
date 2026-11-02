@@ -814,6 +814,9 @@ export class Hud {
   private otraLamina: (() => void) | null = null;
   private pausaHandler: (() => void) | null = null;
   private adelantarHandler: (() => void) | null = null;
+  private noExplicarElAdelantoHandler: (() => void) | null = null;
+  /** Cómo está ahora el «ya lo sé» del ⏩: `null` sin él; si no, si lleva la palabra. */
+  private yaLoSeDelAdelanto: boolean | null = null;
   private botonAdelantar: HTMLButtonElement | null = null;
   /** El plazo del ⏩ que se va solo, mientras se va. Ver `ponerAdelantar`. */
   private adelantarSeVa: ReturnType<typeof setTimeout> | null = null;
@@ -1447,6 +1450,14 @@ export class Hud {
           se busca cuando llaman a la puerta, y es el criterio 2.2.2 de WCAG:
           si algo se mueve, tiene que poder pararse.
         -->
+        <!--
+          **La pausa y el ⏩, en una fila que es suya.** El ⏩ va colgado a la
+          derecha de la pausa, y colgado de la columna quedaba a la altura de lo
+          primero de ella: de pasaje eso es la cámara, escondida pero en su
+          sitio, y el ⏩ salía en diagonal, encima de la pausa —«aparece en un
+          sitio un poco raro»—. Colgado de esta fila, va a su lado.
+        -->
+        <div class="hud__pausa">
         <button class="sonido" type="button" data-hud="pausa"
                 aria-label="${t("hud.pausa")}">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1459,8 +1470,10 @@ export class Hud {
           cualquier reproductor, que un niño de cuatro años ya conoce de los
           dibujos animados. Solo en la escena de pasaje, en el aire y antes de
           la llegada. Puesto, se enciende; y cuando el vuelo corre, las
-          flechas corren. Sin una palabra: lo que hace se ve por la
-          ventanilla. Ver «adelanto» en flight/inicio-pasaje.ts.
+          flechas corren. Y la primera vez que sale en un vuelo, Ara dice
+          qué es en el primer rato largo sin nada, con el botón latiendo:
+          sin explicar, «el botón no lo explica nadie». Ver «adelanto» en
+          flight/motor-del-pasaje.ts.
         -->
         <button class="sonido adelantar" type="button" data-hud="adelantar"
                 aria-label="${t("hud.adelantar")}" aria-pressed="false" hidden>
@@ -1469,6 +1482,9 @@ export class Hud {
             <path class="adelantar__flecha" d="M12.1 6.2 L20 12 L12.1 17.8 Z" />
           </svg>
         </button>
+        <!-- «Ya lo sé», al lado, mientras Ara explica el ⏩: desde la segunda vez. Ver ponerAdelantar. -->
+        <span class="adelantar__ya-lo-se" hidden></span>
+        </div>
         <!--
           El cartel del cinturón, el de verdad: el de la fila de arriba de un
           avión de pasaje. Se enciende solo —no se pilota— y solo en los aviones
@@ -2311,6 +2327,11 @@ export class Hud {
     alPulsar(this.mision, () => this.misionHandler?.());
     alPulsar(pick(this.root, "pausa"), () => this.pausaHandler?.());
     alPulsar(pick(this.root, "adelantar"), () => this.adelantarHandler?.());
+    // «Ya lo sé» se pinta y se quita al vuelo: se escucha en su hueco, que no se va.
+    this.root.querySelector(".adelantar__ya-lo-se")?.addEventListener("click", (ev) => {
+      if ((ev.target as Element | null)?.closest('[data-hud="adelantar-ya-lo-se"]')) this.noExplicarElAdelantoHandler?.();
+    });
+    this.yaLoSeDelAdelanto = null;
     alPulsar(pick(this.root, "keys"), () => this.keysHandler?.());
     alPulsar(pick(this.root, "ala"), () => this.alaHandler?.());
     alPulsar(pick(this.root, "credits"), () => this.creditsHandler?.());
@@ -4037,6 +4058,21 @@ export class Hud {
     this.adelantarHandler = handler;
   }
 
+  /** El «ya lo sé» del ⏩, solo si cambia. Ver `ponerAdelantar`. */
+  private ponerElYaLoSeDelAdelanto(conLetras: boolean | null): void {
+    if (conLetras === this.yaLoSeDelAdelanto) return;
+    this.yaLoSeDelAdelanto = conLetras;
+    const hueco = this.root.querySelector<HTMLElement>(".adelantar__ya-lo-se");
+    if (!hueco) return;
+    hueco.hidden = conLetras === null;
+    hueco.innerHTML = conLetras === null ? "" : botonDeNoExplicar(conLetras, "", 'data-hud="adelantar-ya-lo-se"');
+  }
+
+  /** Y su «ya lo sé»: que Ara no lo explique más. Ver `ponerAdelantar`. */
+  onNoExplicarElAdelanto(handler: () => void): void {
+    this.noExplicarElAdelantoHandler = handler;
+  }
+
   /**
    * **El botón ⏩ del modo rápido**: si sale, si está puesto —encendido en
    * ocre—, si el vuelo corre ahora —las flechas corren— y si se acaba de
@@ -4046,7 +4082,16 @@ export class Hud {
    * si cambia algo.
    */
   ponerAdelantar(
-    e: { readonly sale: boolean; readonly puesto: boolean; readonly corre: boolean; readonly seVa: boolean } | null,
+    e: {
+      readonly sale: boolean;
+      readonly puesto: boolean;
+      readonly corre: boolean;
+      readonly seVa: boolean;
+      /** Mientras Ara lo explica, `suena`: el botón late. */
+      readonly explica?: "suena" | "acaba" | null;
+      /** «Ya lo sé» al lado, y si lleva la palabra; `null`, sin él. */
+      readonly yaLoSe?: boolean | null;
+    } | null,
   ): void {
     this.botonAdelantar ??= this.root.querySelector<HTMLButtonElement>('[data-hud="adelantar"]');
     const b = this.botonAdelantar;
@@ -4056,6 +4101,9 @@ export class Hud {
     if ((b.getAttribute("aria-pressed") === "true") !== puesto) b.setAttribute("aria-pressed", String(puesto));
     b.classList.toggle("adelantar--puesto", puesto);
     b.classList.toggle("adelantar--corre", puesto && !!e?.corre);
+    // Mientras Ara dice qué es, late: lo que se nombra se señala, que no lee quien más lo necesita.
+    b.classList.toggle("adelantar--se-explica", sale && !puesto && e?.explica === "suena");
+    this.ponerElYaLoSeDelAdelanto(sale && !puesto ? (e?.yaLoSe ?? null) : null);
     if (sale) {
       if (this.adelantarSeVa !== null) {
         clearTimeout(this.adelantarSeVa);

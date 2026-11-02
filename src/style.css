@@ -1051,13 +1051,19 @@ body {
  * ── El botón ⏩ de la escena de pasaje: el modo rápido ──
  *
  * Al lado de la pausa, en su misma fila, como en cualquier reproductor: ⏸ y
- * ⏩. Fuera de la columna, colgado a su derecha, para no mover el cartel del
+ * ⏩. Fuera de la columna, colgado a la derecha de la fila de la pausa
+ * (`.hud__pausa`, en `ui/hud.ts`), para no mover el cartel del
  * cinturón cada vez que sale y se va. Al salir, asoma con un saltito, que hay
  * algo nuevo; puesto, se enciende en ocre, y **las flechas corren** cuando el
  * vuelo corre: se ve sin leer nada. Al empezar la llegada se apaga solo:
  * vuelve a su color de siempre, se queda un momento y se va. Ver
  * `ponerAdelantar` en `ui/hud.ts`.
  */
+.hud__pausa {
+  position: relative;
+  display: flex;
+}
+
 .hud .adelantar {
   position: absolute;
   top: 0;
@@ -1091,6 +1097,36 @@ body {
 
 .hud .adelantar--se-va {
   animation: adelantar-se-va 1300ms ease-in forwards;
+}
+
+/*
+ * **Mientras Ara dice qué es, late**, como la mochilita recién aparecida: lo que se nombra
+ * se señala. El aro se queda también sin movimiento, que es lo que señala de verdad.
+ */
+.hud .adelantar--se-explica {
+  border-color: var(--ocre);
+  box-shadow: 0 0 0 4px rgba(221, 146, 63, 0.35), var(--poso);
+  animation: kit-late 1.4s ease-in-out infinite;
+}
+
+/* «Ya lo sé», a la derecha del ⏩ y en su fila, con su barro: encima de la ventanilla no se leería. */
+.hud .adelantar__ya-lo-se {
+  position: absolute;
+  top: 0;
+  left: calc(200% + 20px);
+  display: flex;
+  align-items: center;
+  height: 100%;
+  pointer-events: auto;
+}
+
+.hud .adelantar__ya-lo-se[hidden] {
+  display: none;
+}
+
+.hud .adelantar__ya-lo-se .no-explicar {
+  background: var(--barro);
+  white-space: nowrap;
 }
 
 @keyframes adelantar-asoma {
@@ -1136,12 +1172,14 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .hud .adelantar,
   .hud .adelantar--corre .adelantar__flecha,
+  .hud .adelantar--se-explica,
   .hud .adelantar--se-va {
     animation: none;
   }
 }
 .sin-movimiento .hud .adelantar,
 .sin-movimiento .hud .adelantar--corre .adelantar__flecha,
+.sin-movimiento .hud .adelantar--se-explica,
 .sin-movimiento .hud .adelantar--se-va {
   animation: none;
 }

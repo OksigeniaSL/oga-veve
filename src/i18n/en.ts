@@ -895,6 +895,8 @@ export const EN: Dictionary = {
   "ajustes.explicacionDeLaConsola.volver": "Explain it again",
   "ajustes.explicacionDeLaCruz": "The Southern Cross game is no longer explained out loud.",
   "ajustes.explicacionDeLaCruz.volver": "Explain it again",
+  "ajustes.explicacionDelAdelanto": "The fast-forward button is no longer explained out loud.",
+  "ajustes.explicacionDelAdelanto.volver": "Explain it again",
   "ajustes.inicio":
     "On iPhone, the game runs full screen when opened from its icon: in Safari tap Share (or “•••”, then Share), choose “Add to Home Screen” and open it from there.",
   "gafas.ganadas": "Your sunglasses!",
@@ -2974,6 +2976,8 @@ export const EN: Dictionary = {
   "inicio.tripulacion.pasaje.cerca.musica":
     "So the time coming down feels calm, with no nerves. And lots of airlines play music from home: this one is from the Canaries.",
   "inicio.ara.pasaje.toque.invita": "Look out the window! If you touch something with your finger, I'll tell you what it is.",
+  "inicio.ara.pasaje.adelantar":
+    "Does it feel long? Tap the two little arrows next to pause, and the trip goes by quickly. When there's something to see, it stops by itself.",
   "inicio.ara.pasaje.toque.motor": "That's the engine! It gulps in air at the front and blows it out hard at the back.",
   "inicio.ara.pasaje.toque.gomera": "That round little island is La Gomera! Mom says people there can talk by whistling.",
   "inicio.ara.pasaje.toque.mar": "All of that down there is the sea! And there's so much water between the islands.",

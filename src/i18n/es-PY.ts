@@ -2532,6 +2532,8 @@ export const ES_PY = {
   "ajustes.explicacionDeLaConsola.volver": "Volver a explicarla",
   "ajustes.explicacionDeLaCruz": "El juego de la Cruz del Sur ya no se explica en voz.",
   "ajustes.explicacionDeLaCruz.volver": "Volver a explicarlo",
+  "ajustes.explicacionDelAdelanto": "El botón de adelantar el viaje ya no se explica en voz.",
+  "ajustes.explicacionDelAdelanto.volver": "Volver a explicarlo",
   "ajustes.inicio":
     "En el iPhone, el juego va a pantalla completa abierto desde su ícono: en Safari tocá Compartir (o «•••» y Compartir), elegí «Agregar a inicio» y abrilo desde ahí.",
   "gafas.ganadas": "¡Tus gafas de sol!",
@@ -4669,6 +4671,8 @@ export const ES_PY = {
    * silbo gomero, el de la historia de la comandante.
    */
   "inicio.ara.pasaje.toque.invita": "¡Mirá por la ventanilla! Si tocás algo con el dedo, te cuento lo que es.",
+  "inicio.ara.pasaje.adelantar":
+    "¿Se te hace largo? Tocá las dos flechitas, al lado de la pausa, y el viaje pasa rapidito. Cuando haya algo para ver, se para solo.",
   "inicio.ara.pasaje.toque.motor": "¡Ese es el motor! Por adelante se traga el aire, y por atrás lo tira con fuerza.",
   "inicio.ara.pasaje.toque.gomera": "¡Esa isla redondita es La Gomera! Mamá dice que ahí se puede hablar silbando.",
   "inicio.ara.pasaje.toque.mar": "¡Todo eso de abajo es el mar! Y entre isla e isla hay muchísima agua.",

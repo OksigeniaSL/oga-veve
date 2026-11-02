@@ -79,6 +79,10 @@
       "ms": 2617,
       "h": "710bea479d"
     },
+    "inicio.ara.pasaje.adelantar": {
+      "ms": 11207,
+      "h": "23c1f13d80"
+    },
     "inicio.ara.pasaje.aerofrenos": {
       "ms": 8607,
       "h": "752b427299"
@@ -773,6 +777,9 @@
     ],
     "inicio.ara.nivelar": [
       "inicio.ara.nivelar"
+    ],
+    "inicio.ara.pasaje.adelantar": [
+      "inicio.ara.pasaje.adelantar"
     ],
     "inicio.ara.pasaje.aerofrenos": [
       "inicio.ara.pasaje.aerofrenos"
