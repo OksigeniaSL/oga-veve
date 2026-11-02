@@ -1710,6 +1710,18 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   }
 
   /**
+   * **Lo cortado no se queda escrito**: un cuento que se deja a medias al salir de la
+   * pantalla del asiento se calla, y su texto encima de la ventanilla, con la cara de la
+   * comandante y sin voz, parecía el juego colgado —«se quedó el mensaje de la comandante
+   * escrito arriba y no seguía»—, y más de noche sobre el mar, donde no se mueve nada.
+   * Solo si no espera nada detrás: cuando la escena calla una frase para decir otra, la
+   * siguiente ya está en la cola, y la tarjeta no parpadea entre las dos.
+   */
+  get loCortadoCalla(): boolean {
+    return this.charla.ultimaCortada && this.charla.vacia;
+  }
+
+  /**
    * **El *ding* del medio despertar**, si hay uno por sonar: lo suena el juego, que es quien
    * tiene el audio. Se recoge una vez.
    */
@@ -2396,6 +2408,11 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     } else if (!c.estaAbierta && this.miraLaConsola) {
       this.miraLaConsola = false;
       this.cortarElCuento();
+      /*
+       * Lo que Ara iba a contar de lo que hay dentro, si no le llegó el turno, ya no viene a
+       * cuento con la pantalla cerrada: se queda para la próxima vez que se abra.
+       */
+      if (this.charla.quitar((x) => x.clave === def.loQueHay.clave) > 0) this.explicaLoQueHay = true;
       if (this.kit.estaAbierto) this.kit.cerrar();
       this.ponerPlano("ventanilla");
     }

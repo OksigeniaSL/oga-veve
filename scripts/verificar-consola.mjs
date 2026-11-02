@@ -351,11 +351,29 @@ async function unaPantalla(p) {
       comprobar(de("y al cerrarlo se vuelve a la pantalla"), !!l && l.estado.consola.abierta, "");
     }
 
-    // ── Volver ─
+    // ── Volver, a mitad de un cuento ─
+    l = await leer(page);
+    await tocar(page, l.consola.pestanas.cuentos, p.dedo);
+    l = await hastaQue(page, (x) => x.consola?.panel && Object.keys(x.consola.cuentos).length > 0, 3000);
+    let aMedias = null;
+    if (l) {
+      const cual = l.consola.losCuentos[0];
+      await tocar(page, l.consola.cuentos[cual], p.dedo);
+      // Sonando, que es lo que se corta; la tarjeta no, que de pie se esconde detrás de la lámina.
+      aMedias = await hastaQue(page, (x) => x.estado.linea === `ventanilla.historia.${cual}` && x.estado.hablando, 75_000);
+    }
     l = await leer(page);
     await tocar(page, l.consola.ventanilla, p.dedo);
     l = await hastaQue(page, (x) => !x.estado.consola?.abierta && x.planoVisto === "ventanilla", 5000);
     comprobar(de("la ventanilla: se vuelve a mirar afuera, y el botón sigue ahí"), !!l && !!l.consola.boton, "");
+    // «Se quedó el mensaje de la comandante escrito arriba y no seguía»: lo cortado no se queda escrito.
+    const sinCuento = await hastaQue(page, (x) => !x.estado.hablando, 3000);
+    comprobar(
+      de("y si se sale a mitad de un cuento, se calla y su texto no se queda arriba"),
+      !!aMedias && !!sinCuento && !sinCuento.tarjeta,
+      aMedias ? (sinCuento?.tarjeta ? "la tarjeta sigue a la vista" : "") : "el cuento no llegó a sonar",
+    );
+    await foto(page, p.nombre, "5-fuera-a-mitad-de-un-cuento");
 
     // ── «No volver a explicar», desde la segunda vez ─
     if (p.nombre === "telefono-de-pie") {

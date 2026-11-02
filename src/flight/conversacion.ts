@@ -142,6 +142,8 @@ export class Conversacion {
   private leyendoHasta = 0;
   /** Cuál de las pedidas empezó a sonar de verdad. Ver `suenaDeVerdad`. */
   private empezo = 0;
+  /** Si la última que empezó se cortó a medias. Ver `ultimaCortada`. */
+  private cortadaLaUltima = false;
 
   constructor(
     private readonly voz: VozDelInicio,
@@ -201,6 +203,7 @@ export class Conversacion {
     this.dicha = linea;
     const dicha: FraseDicha = { clave: linea.clave, desde: ahora, hasta: null, cortada: false, como: null };
     this.dichaAhora = dicha;
+    this.cortadaLaUltima = false;
     this.dichas.push(dicha);
     if (this.dichas.length > 200) this.dichas.shift();
     this.voz.decir(
@@ -230,6 +233,7 @@ export class Conversacion {
     const d = this.dichaAhora;
     this.dichaAhora = null;
     if (!d) return;
+    this.cortadaLaUltima = como === "cortada";
     d.hasta = this.reloj();
     d.cortada = como === "cortada";
     d.como = como;
@@ -269,6 +273,15 @@ export class Conversacion {
   }
 
   /**
+   * **Si la última se cortó a medias**: un cuento que se deja al salir de la pantalla
+   * del asiento. Lo que se calla no se puede quedar escrito como si se hubiera dicho.
+   * Ver `MotorDelPasaje.loCortadoCalla`.
+   */
+  get ultimaCortada(): boolean {
+    return this.cortadaLaUltima;
+  }
+
+  /**
    * **La que está sonando de verdad**, con su voz: ni esperando a que baje su
    * grabación, ni leyéndose porque no pudo sonar. Lo mira lo que solo puede
    * acompañar a una voz que se oye: la foto de una historia. Ver
@@ -297,9 +310,12 @@ export class Conversacion {
    * **Se quitan de la cola las que ya no vienen a cuento**, sin tocar la que
    * suena: lo que un juego quería decir y se cerró antes de que le llegara el
    * turno. Callar cortaría la que suena, y eso no lo hace nadie de fuera.
+   * Devuelve cuántas se quitaron.
    */
-  quitar(cuales: (l: Linea) => boolean): void {
+  quitar(cuales: (l: Linea) => boolean): number {
+    const antes = this.cola.length;
     this.cola = this.cola.filter((l) => !cuales(l));
+    return antes - this.cola.length;
   }
 
   /**

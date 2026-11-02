@@ -7962,7 +7962,8 @@ export class Game {
         gesto: null,
         mando: this.input.ultimoMando,
         lado: 0,
-        linea: p.linea && !inicio.laNocheCalla
+        // Ni lo que se cortó a medias: ver `loCortadoCalla`.
+        linea: p.linea && !inicio.laNocheCalla && !inicio.loCortadoCalla
           ? {
               quien: p.linea.quien,
               clave: p.linea.clave,
@@ -7971,7 +7972,8 @@ export class Game {
             }
           : null,
         congelado: false,
-        sinTarjetaSiCalla: this.vueloLargo !== null,
+        // Y sin nada escrito, sin recuadro: también en el vuelo corto, después de algo cortado.
+        sinTarjetaSiCalla: this.vueloLargo !== null || inicio.loCortadoCalla,
         // Con el kit abierto, la tarjeta solo dice quién habla: lo que se mira es el kit. Y lo mismo con la consola.
         mira: p.kit.abierto || p.consola?.abierta ? null : p.mira,
         fin:

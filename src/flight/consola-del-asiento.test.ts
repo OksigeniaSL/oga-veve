@@ -210,6 +210,27 @@ describe("mirando la pantalla", () => {
     expect(m.estado.charlas).toContain("amanece");
   });
 
+  it("salir a mitad de un cuento lo calla, y su texto no se queda escrito; el siguiente, sí", () => {
+    const { m, c, correr, conLaVentanillaAbierta, dichas } = unVuelo({ duraUnCuento: 30 });
+    conLaVentanillaAbierta();
+    c.abrir();
+    correr(1, CRUCERO);
+    c.mirarElCuento("asuncion");
+    correr(8, CRUCERO);
+    expect(dichas.at(-1)?.clave).toBe("ventanilla.historia.asuncion");
+    expect(m.loCortadoCalla).toBe(false);
+    c.cerrar();
+    correr(1, CRUCERO);
+    expect(dichas.at(-1)?.cortada).toBe(true);
+    expect(m.loCortadoCalla).toBe(true);
+    c.abrir();
+    correr(1, CRUCERO);
+    c.mirarElCuento("asuncion");
+    correr(8, CRUCERO);
+    expect(dichas.filter((d) => d.clave === "ventanilla.historia.asuncion")).toHaveLength(2);
+    expect(m.loCortadoCalla).toBe(false);
+  });
+
   it("y el guion sigue su curso: nada de lo imprescindible se queda sin decir", () => {
     const { m, c, correr, conLaVentanillaAbierta } = unVuelo();
     conLaVentanillaAbierta();
@@ -393,6 +414,21 @@ describe("una voz que lo cuenta", () => {
     correr(15, CRUCERO);
     expect(claves(dichas)).not.toContain(def.elBoton.clave);
     expect(claves(dichas)).toContain(def.loQueHay.clave);
+  });
+
+  it("cerrada antes de que le toque a Ara, lo de dentro no se dice con la ventanilla delante: espera a la próxima", () => {
+    const { m, c, correr, dichas } = unVuelo();
+    m.saltarLaAperturaParaBanco();
+    m.explicarLaConsola();
+    correr(1.5, CRUCERO);
+    c.abrir();
+    correr(0.1, CRUCERO);
+    c.cerrar();
+    correr(6, CRUCERO);
+    expect(claves(dichas)).not.toContain(def.loQueHay.clave);
+    c.abrir();
+    correr(3, CRUCERO);
+    expect(claves(dichas).filter((k) => k === def.loQueHay.clave)).toHaveLength(1);
   });
 
   it("«no volver a explicar» deja de decirlo", () => {
