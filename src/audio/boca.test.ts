@@ -946,6 +946,15 @@ describe("anotar sin voz", () => {
     expect(b.anotarSinVoz("normal", "vuelo.despacio")).toBe(true);
   });
 
+  it("y lo que se olvida a propósito se puede repetir ya, y solo eso", () => {
+    const b = boca();
+    b.anotarSinVoz("normal", "ventanilla.historia.chaco");
+    b.anotarSinVoz("normal", "vuelo.despacio");
+    b.olvidarQueSeDijo("ventanilla.historia.chaco");
+    expect(b.anotarSinVoz("normal", "ventanilla.historia.chaco")).toBe(true);
+    expect(b.anotarSinVoz("normal", "vuelo.despacio")).toBe(false);
+  });
+
   it("y lo urgente no se calla nunca, que para eso es urgente", () => {
     const b = boca();
     b.anotarSinVoz("urgente", "vuelo.terrenoSube");

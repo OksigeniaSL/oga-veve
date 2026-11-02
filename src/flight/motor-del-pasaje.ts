@@ -19,6 +19,7 @@ import type { GenteDeLaCabina } from "../audio/gente-del-pasaje";
 import { seLePasoElMomento } from "../audio/megafonia";
 import { Conversacion, type FraseDicha, type Linea, type VozDelInicio } from "./conversacion";
 import type { FormaDeLaDemostracion } from "./demostracion-con-gracia";
+import { ConsolaDelAsiento, esDeUnCuento, lineaDelCuento, type EstadoDeLaConsola } from "./consola-del-asiento";
 import { KitDeViaje, type EstadoDelKit } from "./kit-de-viaje";
 import { DICHO_DE_LA_LUZ, JuegoDeLaLuz } from "./luz-verde";
 import {
@@ -433,6 +434,14 @@ const ESPERA_A_QUE_SE_VEA = 45;
 const ANTES_DEL_KIT = 6000;
 
 /**
+ * **El silencio que espera lo del botón de la consola**, s: el de abrir la ventanilla,
+ * el de después del anuncio. Más que lo que el anuncio espera, que va primero.
+ */
+const EL_BOTON_SE_EXPLICA_TRAS = 3;
+/** **Lo que tarda en empezar un cuento tras un silencio**, s: más que lo que espera cualquier momento del guion. */
+const CALLA_ANTES_DEL_CUENTO = 1.2;
+
+/**
  * **Lo que tiene que sobrar por encima de los diez mil pies para traer el
  * kit**, m: mil seiscientos pies, que con el tramo nivelado de los 10.430 son
  * dos minutos largos de bajada. Por menos, la tripulante no lo trae para
@@ -767,6 +776,18 @@ export interface GuionDelPasaje<M extends string = string, C extends string = st
    * con el mundo a la vista, que es lo de todos los demás vuelos.
    */
   readonly apertura?: { readonly hasta: M; readonly laminas: readonly string[] };
+  /**
+   * **La consola de la pantalla del asiento**, si en este vuelo se ofrece, en el
+   * avión que la lleva: desde qué momento, y las tres frases que la cuentan: el botón
+   * que aparece, lo que hay dentro y por qué se recoge. Sin esto, no sale. Ver
+   * `consola-del-asiento.ts` y `OpcionesDelPasaje.conPantalla`.
+   */
+  readonly consola?: {
+    readonly desde: M;
+    readonly elBoton: Linea;
+    readonly loQueHay: Linea;
+    readonly seRecoge: Linea;
+  };
 }
 
 /** **La tapa de antes de la primera lámina**: la pantalla a oscuras, sin dibujo. */
@@ -881,6 +902,8 @@ export interface EstadoDelPasaje<M extends string = string, C extends string = s
   readonly megafonia: boolean;
   /** **El kit de viaje**, y sus juegos. Ver `kit-de-viaje.ts`. */
   readonly kit: EstadoDelKit;
+  /** **La consola de la pantalla del asiento**, o `null` donde no la hay. Ver `consola-del-asiento.ts`. */
+  readonly consola: EstadoDeLaConsola | null;
   /**
    * **Si Ara duerme ahora**, y sus siestas, de cuándo a cuándo en s de
    * escena: mientras duerme no se cuenta nada, y el juego funde la pantalla y
@@ -1024,6 +1047,11 @@ export interface OpcionesDelPasaje {
    * `demostracion-con-gracia.ts`.
    */
   readonly demostracion?: () => FormaDeLaDemostracion;
+  /**
+   * **Si este avión lleva pantalla en los respaldos**: lo dice su ficha, no su nombre.
+   * Ver `disposicionDelPasaje` en `aircraft.ts`. Sin decir, no la lleva.
+   */
+  readonly conPantalla?: boolean;
 }
 
 /**
@@ -1083,6 +1111,21 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   /** La luz verde ganada que está a la vista, y cuándo se vio ganada, s de escena. Ver `atenderAlKit`. */
   private luzGanada: { readonly juego: JuegoDeLaLuz; readonly en: number } | null = null;
   private juegoDelKit: KitDeViaje["juegoDeAhora"] = null;
+  /**
+   * **La consola de la pantalla del asiento**: `null` donde no la hay. Lo que se toca
+   * se lo pasa el dibujo directamente, como con el kit, y el motor se entera en su
+   * paso: ver `atenderALaConsola`.
+   */
+  readonly consola: ConsolaDelAsiento | null;
+  /** Si Ara está mirando su pantalla, y qué pestaña se atendió la última vez. */
+  private miraLaConsola = false;
+  private pestanaAtendida: ConsolaDelAsiento["pestanaDeAhora"] = "mapa";
+  /** El cuento que espera su silencio, y el que está sonando. Ver `atenderAlCuento`. */
+  private cuentoPorSonar: string | null = null;
+  private cuentoSonando: string | null = null;
+  /** Lo que queda por explicar de la consola en este vuelo. Ver `explicarLaConsola`. */
+  private explicaElBoton = false;
+  private explicaLoQueHay = false;
   /** **La siesta de Ara**: la de ahora, si duerme, y todas. Ver `puedeDormirse`. */
   private siestaDeAhora: { desde: number; hasta: number | null; paraBajar: boolean; porQue?: Siesta["porQue"] } | null = null;
   private readonly siestas: { desde: number; hasta: number | null; paraBajar: boolean; porQue?: Siesta["porQue"] }[] = [];
@@ -1135,6 +1178,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   ) {
     this.charla = new Conversacion(voz, () => this.reloj, () => this.pared());
     this.tapa = guion.apertura ? TAPA_A_OSCURAS : null;
+    this.consola = guion.consola && opciones.conPantalla ? new ConsolaDelAsiento() : null;
   }
 
   /** **La lámina a pantalla completa de ahora**, o `null`: lo mira el juego en cada fotograma. */
@@ -1354,6 +1398,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       dibujo: this.dibujo,
       megafonia: this.megafoniaSuena,
       kit: this.kit.estado,
+      consola: this.consola?.estado ?? null,
       durmiendo: this.durmiendo,
       siestas: this.siestas.map((s) => ({ ...s })),
       luzApagada: this.luzApagadaEnElPuesto,
@@ -1438,7 +1483,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
    */
   private atenderAlToque(l: LecturaDelPasaje): boolean {
     if (this.reloj < this.enCorteHasta || this.enLaApertura) return false;
-    if (this.kit.estaAbierto || this.kit.ocupaAAra || this.durmiendo || this.bostezando) return false;
+    if (this.kit.estaAbierto || this.kit.ocupaAAra || this.durmiendo || this.bostezando || this.miraLaConsola) return false;
     const p = this.toquePendiente;
     if (!p) {
       if (this.invitado || !l.tocable || this.callada < INVITA_TRAS || esDeFuera(this.plano) || esDeLaCabina(this.plano))
@@ -1755,6 +1800,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       !this.bostezando &&
       !this.durmiendo &&
       !this.enLaApertura &&
+      // Y con la pantalla delante, tampoco: lo que no se ve por el cristal no se nombra.
+      !this.miraLaConsola &&
       this.guion.seSenalaDesde.some((m) => this.dicho(m)) &&
       !this.dicho("aproximacion") &&
       this.charla.callada &&
@@ -1796,6 +1843,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       this.atenderAlKit(dt, l);
     }
     this.atenderAlAdelanto(l);
+    // Después del ⏩, que es quien sabe si ya empezó la llegada: los dos se van en el mismo paso.
+    if (!this.acabado) this.atenderALaConsola(l);
     if (this.mira && this.reloj - this.miraDesde > SE_QUEDA_EL_DIBUJO && this.charla.callada) this.mira = null;
     this.mirarLaVentanita();
     return this.permisos(l);
@@ -1852,6 +1901,12 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
    * escena calla su rato. Ver `CORTE_DE_PLANO` y `esCorte`.
    */
   private ponerPlano(p: Plano, sitio: SitioDelPaisaje | null = null): void {
+    /*
+     * Con la consola abierta, Ara mira su pantalla, y nada de lo que se diga le gira la
+     * cabeza: lo decidió quien juega, y lo que se dice se oye igual. De los diez mil
+     * pies para abajo, donde sí hay tomas que no se pueden perder, ya está recogida.
+     */
+    if (this.miraLaConsola && p !== "respaldo") return;
     // Los planos que buscan un sitio son otro plano con otro sitio: otra toma.
     const suyo = p === "asomado-paisaje" || p === "fuera-paisaje" ? sitio : null;
     if (p === this.plano && suyo === this.paisaje) return;
@@ -1879,6 +1934,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   private vistaDe(def: DefMomento<string, M, C>, l: LecturaDelPasaje): VistaDelSitio | null | undefined {
     const sitio = def.nombra ?? def.muestra;
     if (!sitio) return undefined;
+    // Mirando la pantalla no se ve nada de fuera: lo que lo nombra espera a que vuelva.
+    if (this.miraLaConsola) return def.nombra ? null : undefined;
     const v = this.comoSeVe(sitio, l, def.plano);
     if (v.como !== null) return v;
     return def.nombra ? null : undefined;
@@ -1928,6 +1985,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       this.indice++;
     }
     const def = this.def;
+    this.laMegafoniaMandaSobreElCuento(def, l);
     if (def.id === "fin") {
       if (this.seguirPedido && this.charla.callada) {
         this.acabado = true;
@@ -2003,6 +2061,9 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
        * antes, como el servicio de un salto entre islas: ver `DefMomento.pegado`.
        */
       if (def.pegado) return;
+      // Lo que se pidió en la consola, en cuanto hay hueco: nada del guion lo está esperando.
+      if (this.atenderAlCuento()) return;
+      if (this.atenderALaExplicacionDelBoton()) return;
       if (this.atenderLoSenalado(l)) return;
       // Y lo que se acaba de tocar por la ventanilla, que es lo que se está mirando. Ver `tocar`.
       if (this.atenderAlToque(l)) return;
@@ -2017,7 +2078,13 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
        * comía la siesta. Ver `PUEDEN_ESPERAR`.
        */
       const esperan = this.puedeDormirse(l, false, true) ? this.guion.siesta.puedenEsperar : undefined;
-      const charla = this.kit.ocupaAAra || this.kitAPuntoDeLlegar(def, l) ? undefined : this.charlaQueToca(l, esperan);
+      /*
+       * Y con la consola abierta, ninguna: «¡mirá por la ventanilla!» con una pantalla
+       * delante es mentira aunque no nombre un sitio. Esperan a que vuelva, y las que
+       * se pasen de su momento se saltan, que para eso son de cuando vienen a cuento.
+       */
+      const charla =
+        this.kit.ocupaAAra || this.miraLaConsola || this.kitAPuntoDeLlegar(def, l) ? undefined : this.charlaQueToca(l, esperan);
       if (charla) {
         this.charlasDichas.push(charla.def.id);
         this.decirDe(charla.def, l, charla.vista);
@@ -2142,6 +2209,165 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     this.juegoDelKit = juego;
     const lineas = this.kit.tomarLoQueDecir();
     if (lineas.length && !aGuardar) this.charla.decir(lineas);
+  }
+
+  /**
+   * **La consola de la pantalla del asiento, al ritmo del vuelo.** Lo que se toca lo
+   * apunta el dibujo y aquí se atiende: el plano, el kit, el cuento y las frases.
+   *
+   * - El botón sale desde el momento que diga el guion, nunca con láminas delante.
+   * - **A los diez mil pies bajando se recoge todo**, en el mismo paso en que se
+   *   apaga el ⏩: «ese momento es mágico», y se vive sin nada delante. Se le pide al
+   *   dibujo y, si no contesta, la red: ver `TOPE_DE_RECOGER`.
+   * - **El kit es el de siempre**: se da y se abre al tocar sus juegos, y se pausa con la
+   *   megafonía por su sitio, ver `atenderAlKit`. Si quien juega lo guarda con su
+   *   botón, la consola vuelve al mapa.
+   */
+  private atenderALaConsola(l: LecturaDelPasaje): void {
+    const c = this.consola;
+    const def = this.guion.consola;
+    if (!c || !def) return;
+    const pared = this.pared();
+    if ((this.llegadaDesde !== null || l.enTierra) && c.pedirRecoger(pared)) {
+      this.kit.recoger();
+      this.cortarElCuento();
+      this.charla.decir([def.seRecoge]);
+      this.pedidas.add(def.seRecoge.clave);
+    }
+    c.paso({ sale: !this.enLaApertura && this.dicho(def.desde), escuchando: this.megafoniaSuena, pared });
+    if (c.estaAbierta && !this.miraLaConsola) {
+      this.miraLaConsola = true;
+      this.ponerPlano("respaldo");
+      this.mira = null;
+      // Ya la está viendo: lo del botón sobra, y lo que hay dentro, una vez por vuelo.
+      this.explicaElBoton = false;
+      if (this.explicaLoQueHay) {
+        this.explicaLoQueHay = false;
+        this.charla.decir([def.loQueHay]);
+        this.pedidas.add(def.loQueHay.clave);
+      }
+    } else if (!c.estaAbierta && this.miraLaConsola) {
+      this.miraLaConsola = false;
+      this.cortarElCuento();
+      if (this.kit.estaAbierto) this.kit.cerrar();
+      this.ponerPlano("ventanilla");
+    }
+    if (!c.estaAbierta) {
+      this.pestanaAtendida = "mapa";
+      return;
+    }
+    const p = c.pestanaDeAhora;
+    if (p !== this.pestanaAtendida) {
+      if (this.pestanaAtendida === "juegos") this.kit.cerrar();
+      if (this.pestanaAtendida === "cuentos") this.cortarElCuento();
+      if (p === "juegos") {
+        this.kit.dar();
+        this.kit.abrir();
+      }
+      this.pestanaAtendida = p;
+    } else if (p === "juegos" && !this.kit.estaAbierto) c.elegir("mapa");
+    this.atenderAlCuentoDeLaConsola(c);
+  }
+
+  /** Lo que se ve y lo que suena de un cuento tienen que ir juntos, y lo manda quien lo toca. */
+  private atenderAlCuentoDeLaConsola(c: ConsolaDelAsiento): void {
+    const quiere = c.cuentoDeAhora;
+    // Se tocó «atrás», u otro: el que sonaba se calla.
+    if (this.cuentoSonando !== null && this.cuentoSonando !== quiere) this.cortarElCuento();
+    if (quiere === null) {
+      this.cuentoPorSonar = null;
+      return;
+    }
+    // Se acabó de contar: otra vez la lista. Con el silencio de después, no a media palabra.
+    if (this.cuentoSonando === quiere) {
+      if (this.charla.callada) {
+        this.cuentoSonando = null;
+        c.dejarElCuento();
+      }
+      return;
+    }
+    this.cuentoPorSonar = quiere;
+  }
+
+  /**
+   * **Un cuento pedido, en un hueco del guion.** Va detrás de lo que tiene su momento,
+   * con un silencio algo más largo que el que espera cualquier momento: así un cuento
+   * detrás de otro no le quita nunca el turno al anuncio de la bajada, que se salta si
+   * no le llega a tiempo. Devuelve si se empezó a contar.
+   */
+  private atenderAlCuento(): boolean {
+    const sitio = this.cuentoPorSonar;
+    if (sitio === null || this.callada < CALLA_ANTES_DEL_CUENTO) return false;
+    this.cuentoPorSonar = null;
+    this.cuentoSonando = sitio;
+    this.charla.decir([lineaDelCuento(sitio)]);
+    return true;
+  }
+
+  /** Si lo que suena es un cuento, se calla; solo entonces: a nadie más se le corta. */
+  private cortarElCuento(): void {
+    this.cuentoPorSonar = null;
+    if (this.cuentoSonando === null) return;
+    this.cuentoSonando = null;
+    if (esDeUnCuento(this.charla.ultima)) this.charla.callar();
+  }
+
+  /**
+   * **La megafonía manda**: lo que se juega se pausa y sigue, y un cuento no se puede
+   * pausar a media grabación, así que se corta y al acabar el anuncio vuelve a
+   * empezar: el dibujo se queda delante, con el altavoz encima. Se mira como si ya
+   * hubiera silencio, que es lo que le falta a lo que espera turno detrás de él.
+   */
+  private laMegafoniaMandaSobreElCuento(def: DefMomento<M, M, C>, l: LecturaDelPasaje): void {
+    if (this.cuentoSonando === null) return;
+    const e = this.dentroDe(CALLA_ANTES_DEL_CUENTO);
+    if (!def.cuando(l, e) || def.caduca?.(l, e) || !(def.segun?.(l, e) ?? def.lineas).some((x) => x.megafonia)) return;
+    const vuelve = this.cuentoSonando;
+    this.cortarElCuento();
+    this.cuentoPorSonar = vuelve;
+  }
+
+  /**
+   * **Se explica la consola en este vuelo**: lo dice el juego al salir el botón, con lo
+   * guardado de este perfil. El botón, en un hueco; lo que hay dentro, al abrirla.
+   */
+  explicarLaConsola(): void {
+    this.explicaElBoton = true;
+    this.explicaLoQueHay = true;
+  }
+
+  /** **«No volver a explicar»**: lo que quedaba por decir, fuera. */
+  olvidarLaExplicacionDeLaConsola(): void {
+    this.explicaElBoton = false;
+    this.explicaLoQueHay = false;
+    const def = this.guion.consola;
+    if (def) this.charla.quitar((x) => x.clave === def.elBoton.clave || x.clave === def.loQueHay.clave);
+  }
+
+  /**
+   * **Lo del botón, en un silencio y con la ventanilla delante**: detrás de lo que se
+   * dijo al abrirla y del anuncio, que espera algo menos. Una frase, y solo si nadie ha
+   * tocado todavía el botón. Devuelve si se dijo.
+   */
+  private atenderALaExplicacionDelBoton(): boolean {
+    const def = this.guion.consola;
+    if (!def || !this.explicaElBoton || this.callada < EL_BOTON_SE_EXPLICA_TRAS || this.miraLaConsola) return false;
+    if (!this.consola?.estado.sale) return false;
+    this.explicaElBoton = false;
+    this.charla.decir([def.elBoton]);
+    this.pedidas.add(def.elBoton.clave);
+    return true;
+  }
+
+  /** Solo para el banco: se salta lo de antes de ver el mundo, y se va a abrir la ventanilla. */
+  saltarLaAperturaParaBanco(): void {
+    const a = this.guion.apertura;
+    if (!a || !this.enLaApertura) return;
+    this.charla.callar();
+    while (this.def.id !== a.hasta && this.def.id !== "fin") {
+      this.saltados.push(this.def.id);
+      this.indice++;
+    }
   }
 
   /**
@@ -2270,7 +2496,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   }
 
   private puedeDormirse(l: LecturaDelPasaje, trasElBostezo = false, soloElRato = false): boolean {
-    if (this.guion.siesta.sinSiesta || this.siestas.length > 0 || this.acabado || this.bostezando) return false;
+    if (this.guion.siesta.sinSiesta || this.siestas.length > 0 || this.acabado || this.bostezando || this.miraLaConsola) return false;
     if (!volando(l) || l.tramo === "bajada" || l.altitud < DIEZ_MIL_PIES || l.enNube >= DENTRO_DE_LA_NUBE) return false;
     if (!trasElBostezo && !soloElRato && this.callada < CALLA_PARA_DORMIRSE) return false;
     if (this.porSenalar.length > 0 || this.contestacion || this.toquePendiente || this.kit.estaAbierto || this.kit.ocupaAAra)

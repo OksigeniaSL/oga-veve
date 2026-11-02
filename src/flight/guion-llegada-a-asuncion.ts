@@ -456,4 +456,11 @@ export const GUION_LLEGADA_A_ASUNCION: GuionDelPasaje<MomentoDeLaLlegada, Charla
   elOficio: [],
   bano: null,
   kit: null,
+  // Desde que se abre la ventanilla: lo de antes es un cuento con láminas, y no se ofrece encima.
+  consola: {
+    desde: "ventanilla",
+    elBoton: idaira("consolaBoton"),
+    loQueHay: delLargo("consolaAbre"),
+    seRecoge: idaira("consolaRecoge"),
+  },
 };

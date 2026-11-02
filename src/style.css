@@ -18012,6 +18012,307 @@ path.kit-hueco__forma {
   }
 }
 
+/* ── La consola de la pantalla del asiento ──
+   El botón con el respaldo y, abierta, la barra de pestañas: los mismos papel y tinta
+   que el kit, que es de su familia y los dos salen de la misma pantalla. Tumbado, la
+   barra en columna a la derecha, debajo del menú; de pie, en fila abajo. El lado lo
+   mide `PantallaDeLaConsola.colocar`, que sabe dónde están la pausa y el volumen; esto
+   es lo de antes de medir. Ver `src/ui/consola-del-asiento.ts`. */
+.consola {
+  /* Cinco botones en lo que queda debajo del menú, sin bajar de la yema (44 px). */
+  --consola-boton: clamp(44px, calc((100vh - 72px - 12px - 24px) / 5), 68px);
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+
+.consola[hidden],
+.consola__boton[hidden],
+.consola__pestana[hidden],
+.consola__barra[hidden],
+.consola__modos[hidden],
+.consola__panel[hidden],
+.consola__lista[hidden],
+.consola__cuento[hidden],
+.consola__pausa[hidden],
+.consola__no-explicar[hidden] {
+  display: none;
+}
+
+/* Grande y donde la mochilita: en este vuelo no hay mochilita, hay pantalla. */
+.consola__boton {
+  position: absolute;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  width: 84px;
+  height: 84px;
+  padding: 6px;
+  border: 3px solid #2a1c14;
+  border-radius: 24px;
+  background: #f3ead8;
+  box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.6);
+  pointer-events: auto;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.consola__boton svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Recién aparecido, late, igual que la mochilita: hay algo nuevo, sin una palabra. */
+.consola__boton--nuevo {
+  animation: kit-late 1.4s ease-in-out infinite;
+}
+
+.consola__barra {
+  position: absolute;
+  top: 72px;
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.consola__ventanilla,
+.consola__pestana,
+.consola__modo {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: var(--consola-boton);
+  height: var(--consola-boton);
+  padding: 4px;
+  border: 3px solid #2a1c14;
+  border-radius: 16px;
+  background: #f3ead8;
+  box-shadow: 0 4px 12px -5px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.consola__ventanilla svg,
+.consola__pestana svg,
+.consola__modo svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* La salida se reconoce: otro color, y la primera. */
+.consola__ventanilla {
+  background: #2f5243;
+}
+
+.consola__pestana--puesta,
+.consola__modo--puesto {
+  background: #f2c230;
+  box-shadow: 0 0 0 3px #f2c230, 0 4px 12px -5px rgba(0, 0, 0, 0.6);
+}
+
+.consola__cada-modo {
+  display: flex;
+  gap: 8px;
+}
+
+.consola__modos {
+  position: absolute;
+  bottom: var(--consola-modos-abajo, 12px);
+  left: var(--consola-modos-centro, 50%);
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  pointer-events: auto;
+}
+
+/* El de «no volver a explicar», en tinta suave: sobre el mapa no se leería sin su barro. */
+.consola__no-explicar .no-explicar {
+  background: var(--barro);
+}
+
+/*
+ * **Los cuentos**: el papel del kit, en lo que deja libre lo demás. La lista se reparte
+ * lo que hay en láminas de 4:3 sin sobrarle scroll a nadie; un cuento, entero.
+ */
+.consola__panel {
+  position: absolute;
+  top: var(--consola-arriba, 80px);
+  bottom: var(--consola-abajo, 12px);
+  left: var(--consola-izquierda, 12px);
+  right: var(--consola-derecha, 96px);
+  box-sizing: border-box;
+  display: grid;
+  padding: 10px;
+  border: 3px solid #2a1c14;
+  border-radius: 22px;
+  background: #f3ead8;
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.65);
+  pointer-events: auto;
+}
+
+.consola__lista {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.consola__tarjeta {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  overflow: hidden;
+  border: 3px solid #2a1c14;
+  border-radius: 12px;
+  background: #e9dcc0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.consola__tarjeta img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.consola__cuento {
+  position: relative;
+  min-height: 0;
+  margin: 0;
+  display: grid;
+  place-items: center;
+}
+
+.consola__foto {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: block;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.consola__atras {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  border: 3px solid #2a1c14;
+  border-radius: 50%;
+  background: #2a1c14;
+  color: #f3ead8;
+  cursor: pointer;
+}
+
+.consola__atras svg {
+  width: 100%;
+  height: 100%;
+}
+
+.consola__panel--pausa .consola__lista,
+.consola__panel--pausa .consola__foto {
+  opacity: 0.35;
+  filter: saturate(0.5);
+}
+
+.consola__panel--pausa .consola__lista {
+  pointer-events: none;
+}
+
+.consola__pausa {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.consola__pausa svg {
+  width: 96px;
+  height: 96px;
+  padding: 14px;
+  border-radius: 50%;
+  background: #f3ead8;
+  border: 3px solid #2a1c14;
+  animation: kit-escucha 1.6s ease-in-out infinite;
+}
+
+.consola__boton:focus-visible,
+.consola__ventanilla:focus-visible,
+.consola__pestana:focus-visible,
+.consola__modo:focus-visible,
+.consola__tarjeta:focus-visible,
+.consola__atras:focus-visible {
+  outline: 4px solid #f2c230;
+  outline-offset: 3px;
+}
+
+/*
+ * De pie, en fila abajo: ahí sobra alto y falta ancho. Los cinco botones en lo que dan
+ * los dedos, y la lista de dos en dos, que en una lámina lo que se mira es el dibujo.
+ */
+@media (orientation: portrait) {
+  .consola {
+    --consola-boton: clamp(44px, calc((100vw - 24px - 24px) / 5), 68px);
+  }
+
+  .consola__barra {
+    top: auto;
+    right: auto;
+    left: 50%;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    flex-direction: row;
+  }
+
+  .consola__lista {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Cinco modos y el «no volver a explicar», en lo que da el ancho de un teléfono: de este, solo el globo. */
+  .consola__modo {
+    --consola-boton: clamp(44px, calc((100vw - 16px - 92px) / 5), 60px);
+  }
+
+  .consola__no-explicar .no-explicar span {
+    display: none;
+  }
+}
+
+/* Teléfono tumbado: las láminas y los modos, con lo poco que hay de alto. */
+@media (max-height: 480px) and (orientation: landscape) {
+  .consola__modo {
+    --consola-boton: 52px;
+  }
+
+  :root.consola-abierta .inicio .inicio__tarjeta {
+    top: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consola__boton--nuevo,
+  .consola__pausa svg {
+    animation: none;
+  }
+}
+
+.sin-movimiento .consola__boton--nuevo,
+.sin-movimiento .consola__pausa svg {
+  animation: none;
+}
+
 /* ── Luz verde: la torre de La Palma ──
    Dos capas: el fondo, que no se toca, y lo que se mueve encima, en su propia
    capa para que mover un avioncito no vuelva a pintar el mapa. Ver
@@ -18200,6 +18501,16 @@ path.kit-hueco__forma {
 @media (pointer: coarse) and (orientation: portrait) {
   .kit {
     display: none !important;
+  }
+
+  /* Salvo desde la consola del asiento, que de pie también se usa: ahí se abrió con el dedo. */
+  :root.consola-abierta .kit {
+    display: block !important;
+  }
+
+  /* Y la fila de botones de arriba, que de pie baja en columna por encima de la pantalla: mientras se mira, fuera. */
+  :root.consola-abierta .hud .hud__menu {
+    display: none;
   }
 }
 

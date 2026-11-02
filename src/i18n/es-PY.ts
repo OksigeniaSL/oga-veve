@@ -2526,6 +2526,8 @@ export const ES_PY = {
   "ajustes.explicacionDeLasTeclas.volver": "Volver a explicarla",
   "ajustes.explicacionDelFinal": "El final del vuelo ya no se explica en voz.",
   "ajustes.explicacionDelFinal.volver": "Volver a explicarlo",
+  "ajustes.explicacionDeLaConsola": "La pantalla del asiento ya no se explica en voz.",
+  "ajustes.explicacionDeLaConsola.volver": "Volver a explicarla",
   "ajustes.inicio":
     "En el iPhone, el juego va a pantalla completa abierto desde su ícono: en Safari tocá Compartir (o «•••» y Compartir), elegí «Agregar a inicio» y abrilo desde ahí.",
   "gafas.ganadas": "¡Tus gafas de sol!",
@@ -4697,6 +4699,28 @@ export const ES_PY = {
   "inicio.kit.pieza.blanca": "La luz blanca",
   "inicio.kit.pieza.otraBlanca": "La otra luz blanca",
   "inicio.kit.pausa": "Habla la megafonía: escuchá",
+  /*
+   * **La consola de la pantalla del asiento**: nadie tiene que leer esto, va en los
+   * dibujos; es para el lector de pantalla. Ver `src/ui/consola-del-asiento.ts`.
+   */
+  "consola.abrir": "Mirar mi pantalla",
+  "consola.nombre": "La pantalla de mi asiento",
+  "consola.ventanilla": "Volver a la ventanilla",
+  "consola.pestana.mapa": "El mapa",
+  "consola.pestana.juegos": "Los juegos",
+  "consola.pestana.cuentos": "Los cuentos",
+  "consola.pestana.cuaderno": "Mi cuaderno",
+  "consola.modo.mapa": "El camino entero",
+  "consola.modo.cerca": "Lo que tenemos debajo",
+  "consola.modo.pelota": "La Tierra, como una pelota",
+  "consola.modo.relojes": "Los relojes de Madrid y Asunción",
+  "consola.modo.datos": "Los datos del vuelo",
+  "consola.cuentos.atras": "Volver a los cuentos",
+  "inicio.tripulacion.pasaje.cerca.largo.consolaBoton":
+    "Y ese botón es la pantalla de tu asiento: con un toque se enciende, y con otro volvemos a la ventanilla.",
+  "inicio.ara.pasaje.largo.consolaAbre": "¡Mirá todo lo que tiene! El mapa, los juegos, los cuentos y mi cuaderno.",
+  "inicio.tripulacion.pasaje.cerca.largo.consolaRecoge":
+    "Ya vamos bajando: guardamos la pantalla y a la ventanilla, que la llegada no hay que perdérsela.",
   "inicio.kit.luz": "Luz verde: la torre sos vos",
   "inicio.kit.luz.verde": "Luz verde fija: puede aterrizar",
   "inicio.kit.luz.roja": "Luz roja fija: que dé otra vuelta",

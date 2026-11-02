@@ -1984,6 +1984,9 @@ const DEL_VUELO_LARGO = [
   ["comandante.largo.llegada.verano", "comandante", "el vuelo largo: la hora al llegar, las 06:25, en verano de Europa"],
   ["comandante.largo.llegada.invierno", "comandante", "el vuelo largo: la hora al llegar, las 07:30, en invierno de Europa"],
   ["inicio.ara.pasaje.largo.llegamos", "ara", "el vuelo largo: Ara llega a Asunción"],
+  ["inicio.tripulacion.pasaje.cerca.largo.consolaBoton", "tripulacion-canarias", "el vuelo largo: Idaira le enseña el botón de la pantalla del asiento"],
+  ["inicio.ara.pasaje.largo.consolaAbre", "ara", "el vuelo largo: Ara abre su pantalla por primera vez y dice lo que hay"],
+  ["inicio.tripulacion.pasaje.cerca.largo.consolaRecoge", "tripulacion-canarias", "el vuelo largo: a los diez mil pies, Idaira pide guardar la pantalla"],
 ];
 const LO_QUE_SE_VE = new Set(
   [...DEL_VUELO_LARGO, ...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA, ...DE_LOS_INSTRUMENTOS].map(
