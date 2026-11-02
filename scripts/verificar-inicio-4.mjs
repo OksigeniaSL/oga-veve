@@ -313,6 +313,8 @@ const vigilarLaTapa = (page) =>
     const asomo = { maximo: 0, fotogramas: 0 };
     // Lo mismo con el mapa de la noche: cada fotograma con él puesto, si tapa, y si llena la pantalla.
     const noche = { fotogramas: 0, asomos: 0, loMenos: 1, desde: null, hasta: null, sinLlenar: 0 };
+    // Y cada vez que la marca entra o sale del lienzo.
+    const elLienzo = [];
     const deEl = (id) => {
       const el = document.getElementById(id);
       return el && !el.hidden ? Number(getComputedStyle(el).opacity) : 0;
@@ -331,6 +333,9 @@ const vigilarLaTapa = (page) =>
         asomo.fotogramas++;
       }
       antes = { x: s.position.x, z: s.position.z, tapa };
+      // Con la prisa del banco, el plano cambia a los pocos fotogramas de irse la marca: aquí se ve igual.
+      const conMarca = o.juegoParaTrazas().pasilloMontado?.pasillo?.pantalla?.paraBanco.conMarca;
+      if (conMarca !== undefined && conMarca !== elLienzo.at(-1)) elLienzo.push(conMarca);
       const mapa = document.querySelector("#siesta .siesta__mapa");
       if (mapa) {
         const ahora = performance.now();
@@ -348,6 +353,7 @@ const vigilarLaTapa = (page) =>
     globalThis.__saltosVistos = saltos;
     globalThis.__asomoTrasElSalto = asomo;
     globalThis.__laNoche = noche;
+    globalThis.__elLienzo = elLienzo;
   });
 
 /** Lo que queda a la derecha —positivo— de quien va en `l`, m, y a cuánto está. */
@@ -460,8 +466,10 @@ async function laNoche(page) {
         repintadosConMarca = [Math.min(repintadosConMarca[0], l.pantalla.repintados), Math.max(repintadosConMarca[1], l.pantalla.repintados)];
       }
     }
-    if (conMarca.size > 0 && !l.marca && lienzoTrasLaMarca === null && l.plano === "respaldo") lienzoTrasLaMarca = l.pantalla?.conMarca ?? null;
-    if (l.dichos.includes("luces") && marcaAlBajarLasLuces === null) marcaAlBajarLasLuces = l.marca;
+    if (l.dichos.includes("luces") && lienzoTrasLaMarca === null) {
+      marcaAlBajarLasLuces = l.marca;
+      lienzoTrasLaMarca = await page.evaluate(() => globalThis.__elLienzo);
+    }
     // Desde que se acaba lo de El Hierro: la captura de antes tiene que ser del mismo plano que la de después.
     if (process.env.OGA_PASILLO && conMarca.size > 0 && !l.marca)
       await page.evaluate(() => {
@@ -582,8 +590,8 @@ async function laNoche(page) {
   if (dejaContarElHierro(pedido))
     comprobar(
       "la marca de El Hierro sale en sus frases, llega al lienzo y late; y se va al acabar",
-      DE_LA_NOCHE.hierro.filter((c) => !conMarca.has(c)).length <= 1 && marcaEnElLienzo && repintadosConMarca[1] - repintadosConMarca[0] >= 10 && lienzoTrasLaMarca === false && marcaAlBajarLasLuces === null,
-      `en ${[...conMarca].map((c) => c.split(".").at(-1)).join(", ")} · en el lienzo ${marcaEnElLienzo} · repintada ${repintadosConMarca[1] - repintadosConMarca[0]} veces · tras acabar, en el lienzo ${lienzoTrasLaMarca} · al bajar las luces ${marcaAlBajarLasLuces}`,
+      DE_LA_NOCHE.hierro.filter((c) => !conMarca.has(c)).length <= 1 && marcaEnElLienzo && repintadosConMarca[1] - repintadosConMarca[0] >= 10 && lienzoTrasLaMarca?.includes(true) && lienzoTrasLaMarca?.at(-1) === false && marcaAlBajarLasLuces === null,
+      `en ${[...conMarca].map((c) => c.split(".").at(-1)).join(", ")} · en el lienzo ${marcaEnElLienzo} · repintada ${repintadosConMarca[1] - repintadosConMarca[0]} veces · en el lienzo, por orden: ${lienzoTrasLaMarca?.join(" → ")} · al bajar las luces ${marcaAlBajarLasLuces}`,
     );
 
   // ── La noche en el mapa ──────────────────────────────────────────────
@@ -1319,8 +1327,9 @@ async function laRedDelMedioDespertar() {
   const errores = [];
   page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
   try {
-    await page.route(/medio-despertar/, () => {});
-    await page.goto(`${BASE}/?inicio=4&capitulo=2&fecha=${FECHA}&viento=${VIENTO}`);
+    // El fichero y no su módulo, que en desarrollo se importa con `?url`: sin él no arranca nada.
+    await page.route(/medio-despertar\.webp$/, () => {});
+    await page.goto(`${BASE}/?inicio=4&capitulo=2&fecha=${FECHA}&viento=${VIENTO}`, { waitUntil: "domcontentloaded" });
     await page.bringToFront();
     await page.waitForFunction(() => globalThis.__oga?.salto?.().hora != null, null, { timeout: 240_000 });
     await page.keyboard.press("ShiftLeft");
