@@ -100,7 +100,8 @@ describe("las ilustraciones", () => {
       // Nunca más grande que su hueco ni que el trozo del original que se coge.
       expect(tamano.ancho, clave).toBeLessThanOrEqual(Math.min(TAMANO_DEL_HUECO[r.hueco].ancho, r.recorte[2]));
       expect(b.length, clave).toBeLessThan(TOPE_KB[r.hueco] * 1024);
-      expect(b.length, clave).toBeGreaterThan(4 * 1024);
+      // Solo para cazar un fichero vacío o roto: el perfil del Tijereta sobre papel liso pesa menos de 4 KB.
+      expect(b.length, clave).toBeGreaterThan(3 * 1024);
       /*
        * Sin EXIF, sin XMP y sin perfil de color: lo que traen los originales
        * de la herramienta con que se hicieron no sale del taller, y el color

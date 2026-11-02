@@ -1312,7 +1312,7 @@ export const ES_PY = {
   "ilustracion.cabina-jaz-60": "Jazlyn a los mandos del JAZ 60, con sus pantallas",
   "ilustracion.cabina-jaz-90": "Jazlyn a los mandos del JAZ 90, con el Teide delante",
   "ilustracion.cabina-jaz-120": "Jazlyn a los mandos del JAZ 120, de noche y con la Cruz del Sur",
-  "ilustracion.cabina-jaz-110": "La cabina del JAZ 110 de noche, con sus dos pasillos y los pasajeros de espaldas",
+  "ilustracion.cabina-jaz-110": "La cabina del JAZ 110 de noche, con dos pasillos y pasajeros de espaldas",
   "ilustracion.retrato-jazlyn": "Jazlyn, con su gorra de comandante y sus gafas de sol",
   // Los esquemas de lo que se explica en el vuelo de pasaje, y la torre de «Luz verde» (punto 311).
   "ilustracion.mascara": "El papá se pone su máscara primero y después ayuda a la criatura",

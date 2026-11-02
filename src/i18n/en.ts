@@ -1505,7 +1505,7 @@ export const EN: Dictionary = {
   "ilustracion.cabina-jaz-60": "Jazlyn at the controls of the JAZ 60 and its screens",
   "ilustracion.cabina-jaz-90": "Jazlyn at the controls of the JAZ 90, with Mount Teide ahead",
   "ilustracion.cabina-jaz-120": "Jazlyn at the controls of the JAZ 120, at night under the Southern Cross",
-  "ilustracion.cabina-jaz-110": "The JAZ 110 cabin at night, with its two aisles and the passengers seen from behind",
+  "ilustracion.cabina-jaz-110": "The JAZ 110 cabin at night, with two aisles and passengers seen from behind",
   "ilustracion.retrato-jazlyn": "Jazlyn, with the captain's cap and sunglasses",
   // Los esquemas de lo que se explica en el vuelo de pasaje, y la torre de «Luz verde» (punto 311).
   "ilustracion.mascara": "Oxygen masks drop: the dad puts one on first, then helps the little one",

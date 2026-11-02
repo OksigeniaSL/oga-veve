@@ -782,8 +782,8 @@ y soñando, que no tienen hueco.
 | `src/assets/ilustraciones/cabina-jaz-60.webp` | `cabina-jaz60.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/cabina-jaz-90.webp` | `cabina-jaz90.jpg` | La tarjeta del avión, en el hangar | recortada por la derecha, hasta dejar fuera el hombro del copiloto, que llevaba cuatro barras: el asiento de la derecha lleva tres; 360 × 270 |
 | `src/assets/ilustraciones/cabina-jaz-120.webp` | `cabina-jaz120.jpg` | La tarjeta del avión, en el hangar | recortada por la derecha, hasta dejar fuera el hombro del copiloto, que llevaba cuatro barras: el asiento de la derecha lleva tres; 360 × 270 |
-| `src/assets/ilustraciones/fuera-jaz-110.webp` | `fuera-jaz110.png` | La tarjeta del avión, en el hangar | de perfil y sobre papel, con más papel arriba y abajo hasta 4:3 |
-| `src/assets/ilustraciones/cabina-jaz-110.webp` | `cabina-jaz110.png` | La tarjeta del avión, en el hangar | la cabina de pasaje de noche, recortada a 4:3 por los dos lados |
+| `src/assets/ilustraciones/fuera-jaz-110.webp` | `fuera-jaz110.png` | La tarjeta del avión, en el hangar | de perfil y sobre papel, con más papel arriba y abajo hasta 4:3, 360 × 270 |
+| `src/assets/ilustraciones/cabina-jaz-110.webp` | `cabina-jaz110.png` | La tarjeta del avión, en el hangar | la cabina de pasaje de noche, a 4:3 por los dos lados, con el pasillo de la izquierda y las filas de delante a la vista, 360 × 270 |
 | `src/assets/ilustraciones/retrato-jazlyn.webp` | `jazlyn-cabina-dibujo.jpg` | La cara de Jazlyn cuando habla | recortada a la cara sola, por encima de los hombros, que en el dibujo llevan las tres barras de primera oficial; 96 × 96, en redondo |
 | `src/assets/ilustraciones/mascara.webp` | `esquemas/mascara.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo de las máscaras | entera, en 4:3, 1280 × 960 |
 | `src/assets/ilustraciones/nube.webp` | `esquemas/nube.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo de la nube de cerca | entera, en 4:3, 1280 × 960 |
