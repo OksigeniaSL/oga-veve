@@ -319,6 +319,47 @@ mapa pasa por la zona de tormentas. Leído el 2-11-2026.
   estrella del pie del crucero, porque al sur no hay estrella que marque el
   polo como la del norte.
 
+### El juego de la Cruz del Sur · `inicio.ara.pasaje.kit.cruz.*`
+
+No es una historia de la ventanilla: es el juego de la consola de la pantalla del
+asiento. Ver `src/flight/cruz-del-sur.ts`.
+
+- **Dónde están las estrellas.** Las posiciones del juego salen de
+  `src/world/cielo-de-noche.ts`, comprobadas en sus pruebas contra dos catálogos: el
+  Yale Bright Star Catalogue, 5.ª edición revisada (HEASARC, NASA), que es
+  `data/cielo/estrellas.json`, y Hipparcos, con la reducción de F. van Leeuwen (2007),
+  «Validation of the new Hipparcos reduction», *Astronomy & Astrophysics* 474(2),
+  653–664: las coordenadas J2000 tal como las citan las fichas de
+  [Ácrux](https://en.wikipedia.org/wiki/Acrux),
+  [Mimosa](https://en.wikipedia.org/wiki/Beta_Crucis),
+  [Gácrux](https://en.wikipedia.org/wiki/Gacrux),
+  [Delta Crucis](https://en.wikipedia.org/wiki/Delta_Crucis),
+  [Alfa Centauri](https://en.wikipedia.org/wiki/Alpha_Centauri) y
+  [Beta Centauri](https://en.wikipedia.org/wiki/Beta_Centauri). Se quiso leer en SIMBAD y
+  VizieR directamente, y desde aquí no contestaron.
+- **«Alargá su brazo largo cuatro veces y media y bajá derecho hasta el horizonte: ahí
+  está el sur.»** I. Ridpath y W. Tirion, *Stars and Planets Guide* (2017), pp. 134–135,
+  según lo cita [Wikipedia, «Crux»](https://en.wikipedia.org/wiki/Crux): de γ a α Crucis,
+  «about 4½ times beyond», un punto cercano al polo sur del cielo. Y lo cuentan igual
+  [Te Ara, la enciclopedia de Nueva Zelanda](https://teara.govt.nz/en/diagram/7486/navigating-by-the-southern-cross),
+  que además baja al horizonte, y [Astronomy WA](https://www.astronomywa.net.au/how-to-find-the-south-celestial-pole.html).
+  **La cuenta propia** (`cruz-del-sur.test.ts`): alargado por el cielo cuatro veces y
+  media desde Ácrux, queda a 2,68° del polo sur de esa fecha, que es el «cercano» de la
+  regla. El dibujo no lo fuerza: la línea acaba donde acaba y el aro marca el polo.
+- **Los punteros señalan a la Cruz.** Wikipedia, «Crux»: «the Southern Pointers», que
+  ayudan a identificar la Cruz, citando a D. H. Grainger, *Don't Die in the Bundu* (1969),
+  pp. 84–86. **La cuenta propia**: la línea de Alfa a Beta Centauri, seguida por el
+  cielo, pasa a 1,07° de Gácrux.
+- **«Los navegantes la usaban para orientarse de noche.»** Acosta, lib. I, cap. V, ya
+  citado arriba, en `cruz-del-sur`: los marineros tomaban la altura por la estrella del
+  pie del crucero.
+- **«Está en la bandera de Brasil.»** Lei n.º 5.700, de 1 de septiembre de 1971, art. 3.º,
+  § 1.º ([texto en la Cámara de los Diputados](https://www2.camara.leg.br/legin/fed/lei/1970-1979/lei-5700-1-setembro-1971-357915-normaatualizada-pl.html)):
+  las constelaciones de la bandera son las del cielo de Río de Janeiro a las 8:30 del 15
+  de noviembre de 1889. Qué estrellas son: [Wikipedia, «Flag of Brazil»](https://en.wikipedia.org/wiki/Flag_of_Brazil),
+  con α, β, γ, δ y ε Crucis. Lo de cruzar Brasil es de la propia ruta: ver
+  `src/flight/ruta-larga.ts`. **No se dice** que la Cruz esté en la bandera *por* orientarse.
+
 ### El Ybytyruzú · `tres-kandu`
 
 Es un sitio nuevo de la ventanilla, no una historia: lo único que se ve en el

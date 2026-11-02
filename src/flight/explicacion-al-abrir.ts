@@ -54,6 +54,7 @@ export const PANTALLAS_QUE_SE_EXPLICAN = {
   teclas: "explicacionDeLasTeclas",
   fin: "explicacionDelFinal",
   consola: "explicacionDeLaConsola",
+  cruz: "explicacionDeLaCruz",
 } as const;
 
 export type PantallaQueSeExplica = keyof typeof PANTALLAS_QUE_SE_EXPLICAN;
@@ -218,6 +219,6 @@ export function esDeLaExplicacion(que: PantallaQueSeExplica, clave: string | und
   if (que === "teclas") return clave.startsWith("teclas.explica.");
   if (que === "fin") return clave === RECETA_DEL_FINAL || clave.startsWith("fin.");
   // La dice la conversación de la escena, que es quien la quita: ver `olvidarLaExplicacionDeLaConsola`.
-  if (que === "consola") return false;
+  if (que === "consola" || que === "cruz") return false;
   return clave === "parte.explica" || clave.startsWith("parte.propone.") || clave.startsWith("parte.senala.");
 }

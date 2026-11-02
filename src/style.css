@@ -17487,7 +17487,7 @@ body.con-vuelta #tactil {
 
 .kit__hoja {
   width: 100%;
-  aspect-ratio: 640 / 340;
+  aspect-ratio: var(--kit-proporcion, 640 / 340);
   display: grid;
   place-items: center;
 }
@@ -17550,6 +17550,25 @@ body.con-vuelta #tactil {
   gap: 18px;
   padding: 12px;
   box-sizing: border-box;
+}
+
+/* Y los tres de la pantalla del asiento: que quepan de ancho y sigan siendo de yema. */
+.kit-elegir--tres {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 8px;
+}
+
+.kit-elegir--tres .kit-juego {
+  padding: 6px;
+  min-width: 0;
+}
+
+.kit-elegir--tres .kit-juego__estrella {
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
 }
 
 .kit-juego {
@@ -17622,6 +17641,186 @@ body.con-vuelta #tactil {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* ── La Cruz del Sur ──
+   El cielo es un lienzo; lo que late y lo que se toca, DOM encima, que lo mueve el
+   compositor sin repintar nada. Ver `src/ui/cruz-del-sur.ts`. */
+.kit__panel--cruz {
+  background: #050815;
+  border-color: #f3ead8;
+}
+
+.kit__panel--cruz > .kit__cerrar,
+.kit__panel--cruz > .kit__atras {
+  border-color: #f3ead8;
+}
+
+.cruz {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #050815;
+}
+
+.cruz__cielo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* De yema, para el teclado y para el lector: el dedo lo atiende la hoja, con más margen. */
+.cruz__estrella {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  pointer-events: none;
+}
+
+.cruz__estrella[hidden],
+.cruz__mano[hidden],
+.cruz__no-explicar[hidden] {
+  display: none;
+}
+
+.cruz__estrella:focus-visible {
+  outline: 3px solid #f2c230;
+  outline-offset: 0;
+}
+
+.cruz__halo {
+  position: absolute;
+  inset: 8px;
+  border: 2px solid rgba(255, 216, 115, 0.9);
+  border-radius: 50%;
+  animation: cruz-late 1.8s ease-in-out infinite;
+}
+
+.cruz__estrella--puntero .cruz__halo {
+  border-color: rgba(167, 211, 255, 0.9);
+}
+
+@keyframes cruz-late {
+  0%,
+  100% {
+    transform: scale(0.7);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+/* La tocada: un aro que se abre una vez y se va. */
+.cruz__estrella--tocada .cruz__halo {
+  animation: cruz-tocada 0.7s ease-out forwards;
+}
+
+@keyframes cruz-tocada {
+  from {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  to {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.cruz__mano {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 56px;
+  height: 56px;
+  margin: 8px 0 0 -28px;
+  pointer-events: none;
+}
+
+.cruz__mano-dedo {
+  animation: cruz-senala 1s ease-in-out infinite;
+}
+
+.cruz__mano svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes cruz-senala {
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+/* La Tierra chiquita y su marca en Asunción: el cielo es el de allí, sin leer. */
+.cruz__tierra {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  width: 64px;
+  height: 64px;
+  pointer-events: none;
+}
+
+.cruz__tierra svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cruz__marca {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cruz-marca 1.8s ease-out infinite;
+}
+
+@keyframes cruz-marca {
+  from {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+.cruz__no-explicar {
+  position: absolute;
+  left: 50%;
+  top: 4px;
+  transform: translateX(-50%);
+  color: #f3ead8;
+}
+
+.cruz__no-explicar .no-explicar {
+  color: #f3ead8;
+  white-space: nowrap;
+}
+
+.kit__panel--pausa .cruz__halo,
+.kit__panel--pausa .cruz__marca,
+.kit__panel--pausa .cruz__mano-dedo {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cruz__halo,
+  .cruz__marca,
+  .cruz__mano-dedo {
+    animation: none;
+  }
 }
 
 /* ── Armá tu avión ──

@@ -273,7 +273,7 @@ async function unaPantalla(p) {
     // ── Los juegos ─
     await tocar(page, (await leer(page)).consola.pestanas.juegos, p.dedo);
     l = await hastaQue(page, (x) => x.estado.kit?.abierto && x.kitUi?.panel, 5000);
-    comprobar(de("la pestaña de juegos abre el kit, a elegir"), !!l && Object.keys(l.kitUi.juegos).length === 2, l ? Object.keys(l.kitUi.juegos).join(", ") : "no se abrió");
+    comprobar(de("la pestaña de juegos abre el kit, a elegir"), !!l && Object.keys(l.kitUi.juegos).join() === "luz,avion,cruz", l ? Object.keys(l.kitUi.juegos).join(", ") : "no se abrió");
     if (l) {
       await pausa(700);
       l = await leer(page);

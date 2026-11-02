@@ -6658,6 +6658,7 @@ export class Game {
           { cual: "teclas", explicacion: this.explicacionDeLasTeclas },
           { cual: "fin", explicacion: this.explicacionDelFinal },
           { cual: "consola", explicacion: this.explicacionDeLaConsola },
+          { cual: "cruz", explicacion: this.explicacionDeLaCruz },
         ],
       );
     }
@@ -7186,6 +7187,9 @@ export class Game {
     this.pantallaDeLaConsola?.quitar();
     const raizDeLaConsola = document.getElementById("consola");
     const peldanoDeQuienJuega = rememberedTier().avisos;
+    // La Cruz del Sur, en el kit de la consola: con este peldaño y con lo explicado de este perfil.
+    this.inicio.kit.peldanoDeQuienJuega = peldanoDeQuienJuega;
+    this.inicio.kit.explicacionDeLaCruz = this.explicacionDeLaCruz;
     this.pantallaDeLaConsola =
       consola && raizDeLaConsola
         ? new PantallaDeLaConsola(raizDeLaConsola, consola, {
@@ -12678,6 +12682,7 @@ export class Game {
     this.explicacionDeLasTeclas.releer();
     this.explicacionDelFinal.releer();
     this.explicacionDeLaConsola.releer();
+    this.explicacionDeLaCruz.releer();
     /*
      * **Vuelo nuevo: la instructora se olvida de lo que ya había dicho.**
      *
@@ -32632,6 +32637,10 @@ export class Game {
     leer: () => leerProgreso(PANTALLAS_QUE_SE_EXPLICAN.consola),
     escribir: (v) => ponerProgreso(PANTALLAS_QUE_SE_EXPLICAN.consola, v),
   });
+  private readonly explicacionDeLaCruz = new ExplicacionAlAbrir({
+    leer: () => leerProgreso(PANTALLAS_QUE_SE_EXPLICAN.cruz),
+    escribir: (v) => ponerProgreso(PANTALLAS_QUE_SE_EXPLICAN.cruz, v),
+  });
 
   /** Para el banco: lo guardado de las tres explicaciones. */
   get explicacionesParaBanco(): Record<PantallaQueSeExplica, { veces: number; quitada: boolean }> {
@@ -32641,6 +32650,7 @@ export class Game {
       teclas: de(this.explicacionDeLasTeclas),
       fin: de(this.explicacionDelFinal),
       consola: de(this.explicacionDeLaConsola),
+      cruz: de(this.explicacionDeLaCruz),
     };
   }
 

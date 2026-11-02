@@ -36,6 +36,10 @@
  * (Enrique, 19-10-2026). Se resolvían sin pensar y el primero enseñaba algo
  * falso.
  *
+ * Y en la pantalla del asiento del avión que la lleva, un tercero: **La Cruz del Sur**
+ * (`JuegoDeLaCruz`, en `cruz-del-sur.ts`). En la mochilita de «Viajá con Jazlyn» no está:
+ * ver `KitDeViaje.conLaCruz`.
+ *
  * ## Se gana siempre
  *
  * Las normas se muestran, no se imponen. Una pieza que se suelta en otro sitio
@@ -60,20 +64,30 @@
 import { trozoDe, type PedidoDeCancion } from "../audio/cancion";
 import type { Linea } from "./conversacion";
 import type { Peldano } from "./escalera";
+import { JuegoDeLaCruz, LINEAS_DE_LA_CRUZ, type EstadoDeLaCruz } from "./cruz-del-sur";
+import type { AlAbrir } from "./explicacion-al-abrir";
 import { modeloPorId } from "./flota";
 import { JuegoDeLaLuz, LINEAS_DE_LA_LUZ, type EstadoDeLaLuz } from "./luz-verde";
 
 /** Los juegos del kit. */
-export type JuegoDelKit = "luz" | "avion";
+export type JuegoDelKit = "luz" | "avion" | "cruz";
 export const JUEGOS_DEL_KIT: readonly JuegoDelKit[] = ["luz", "avion"];
+/**
+ * **Los de la pantalla del asiento**: los de siempre y la Cruz del Sur, que enseña lo
+ * que solo enseña un vuelo que cruza al otro hemisferio. En el kit de la mochilita no
+ * está: ese es el de «Viajá con Jazlyn» y no cambia. Ver `flight/cruz-del-sur.ts`.
+ */
+export const JUEGOS_DE_LA_CONSOLA: readonly JuegoDelKit[] = [...JUEGOS_DEL_KIT, "cruz"];
 /** Un juego del kit, el que sea. */
-export type JuegoDeAhora = JuegoDelAvion | JuegoDeLaLuz;
+export type JuegoDeAhora = JuegoDelAvion | JuegoDeLaLuz | JuegoDeLaCruz;
 
 /** Lo que dice Ara en el kit: a quien juega a su lado, de vos. */
 const ara = (clave: string): Linea => ({ quien: "ara", clave: `inicio.ara.pasaje.kit.${clave}` });
 
 /** Al abrir el kit la primera vez: qué hay dentro. */
 export const LO_QUE_HAY = ara("elegir");
+/** Y en la consola, que son tres: «hay dos juegos» sería mentira con tres dibujos delante. */
+export const LO_QUE_HAY_EN_LA_CONSOLA = ara("elegirConLaCruz");
 
 /**
  * **Cuánto sin acertar antes de ayudar**, s de escena: se ilumina lo que toca.
@@ -586,7 +600,7 @@ export interface EstadoDelKit {
   readonly abierto: boolean;
   readonly pausado: boolean;
   /** El juego de ahora, o `null` si se está eligiendo. */
-  readonly juego: EstadoDelAvion | EstadoDeLaLuz | null;
+  readonly juego: EstadoDelAvion | EstadoDeLaLuz | EstadoDeLaCruz | null;
   /** Los juegos ya terminados alguna vez. */
   readonly hechos: readonly JuegoDelKit[];
   /** Si se abrió alguna vez: el botón deja de latir. */
@@ -607,6 +621,22 @@ export class KitDeViaje {
    * fijas, y arriba también los destellos. Lo pone la escena.
    */
   peldano: Peldano = "dibujo";
+  /**
+   * **Si este kit lleva la Cruz del Sur**: el de la consola, y solo ese. Lo pone el motor,
+   * que es quien sabe si hay pantalla en el asiento. Ver `JUEGOS_DE_LA_CONSOLA`.
+   */
+  conLaCruz = false;
+  /**
+   * **El peldaño de quien juega, para la Cruz.** No es `peldano`: la escena va siempre en
+   * Guyrami, que es el avión de Ara y no quien lo mira, y con ese no le saldrían los
+   * punteros a nadie. Es el mismo con el que la consola decide sus modos.
+   */
+  peldanoDeQuienJuega: Peldano = "dibujo";
+  /**
+   * **Quién lleva la cuenta de lo explicado de la Cruz**: lo guardado en el perfil, que
+   * es cosa del juego. Sin nadie, se explica. Ver `flight/explicacion-al-abrir.ts`.
+   */
+  explicacionDeLaCruz: { alAbrir(): AlAbrir; quitar(): void } | null = null;
   /**
    * **A qué ritmo va la luz verde**, veces el reloj de pared. Uno, salvo en el
    * banco, que juega las rondas enteras en cada pantalla sin esperar los tres
@@ -739,6 +769,22 @@ export class KitDeViaje {
     this.dado = true;
   }
 
+  /** **Los juegos que se ofrecen en este kit**, en el orden en que salen. */
+  get juegos(): readonly JuegoDelKit[] {
+    return this.conLaCruz ? JUEGOS_DE_LA_CONSOLA : JUEGOS_DEL_KIT;
+  }
+
+  /** «No volver a explicar», desde la hoja de la Cruz. */
+  noExplicarLaCruz(): void {
+    this.explicacionDeLaCruz?.quitar();
+    if (this.actual instanceof JuegoDeLaCruz) this.actual.dejarDeOfrecer();
+  }
+
+  /** Lo que la Cruz ya no quiere decir, si seguía esperando turno. Ver `JuegoDeLaCruz.tomarLoQueSobra`. */
+  tomarLoQueSobra(): readonly string[] {
+    return this.actual instanceof JuegoDeLaCruz ? this.actual.tomarLoQueSobra() : [];
+  }
+
   /** **Se abre**: donde se dejó, o a elegir. La primera vez, Ara dice qué hay. */
   abrir(): void {
     if (!this.aMano) return;
@@ -746,7 +792,7 @@ export class KitDeViaje {
     this.tocado();
     if (!this.visto) {
       this.visto = true;
-      this.porDecir.push(LO_QUE_HAY);
+      this.porDecir.push(this.conLaCruz ? LO_QUE_HAY_EN_LA_CONSOLA : LO_QUE_HAY);
     }
   }
 
@@ -761,11 +807,13 @@ export class KitDeViaje {
 
   /** **Se elige un juego**: uno nuevo, o el que se dejó a medias. */
   elegir(j: JuegoDelKit): void {
-    if (!this.abierto || this.pausado) return;
+    if (!this.abierto || this.pausado || !this.juegos.includes(j)) return;
     this.tocado();
     if (this.actual?.juego === j && !this.actual.terminado) return;
     // El avión, por el nivel en que se dejó: lo armado no se pierde por jugar a la torre.
-    this.actual = j === "avion" ? new JuegoDelAvion(this.nivelDelAvion) : new JuegoDeLaLuz(this.peldano);
+    if (j === "avion") this.actual = new JuegoDelAvion(this.nivelDelAvion);
+    else if (j === "luz") this.actual = new JuegoDeLaLuz(this.peldano);
+    else this.actual = new JuegoDeLaCruz(this.peldanoDeQuienJuega, this.explicacionDeLaCruz?.alAbrir());
     this.terminadoDesde = null;
     this.cancionSuena = null;
   }
@@ -814,9 +862,9 @@ export class KitDeViaje {
     if (this.cancionSuena && this.pared - this.cancionSuena.desde >= trozoDe("luz-verde").dura) this.cancionSuena = null;
     if (!this.abierto || this.pausado || !this.actual) return;
     /*
-     * Los dos juegos con el reloj de pared: lo suyo se mueve en la pantalla
-     * —los avioncitos, la noche y el despegue— y no puede ir con el del vuelo,
-     * que el botón de adelantar acelera.
+     * Los juegos con el reloj de pared: lo suyo se mueve en la pantalla —los
+     * avioncitos, la noche y el despegue, la línea del sur— y no puede ir con el
+     * del vuelo, que el botón de adelantar acelera.
      */
     this.actual.paso(this.actual instanceof JuegoDeLaLuz ? dePared * this.ritmo : dePared, s.callada);
     if (this.actual instanceof JuegoDelAvion) {
@@ -865,6 +913,8 @@ export const LINEAS_DEL_KIT: readonly Linea[] = [
   DICHO_DEL_AVION.noche,
   ...NIVELES.map((n) => LO_QUE_ENSENA[n.tipo]),
   ...LINEAS_DE_LA_LUZ,
+  LO_QUE_HAY_EN_LA_CONSOLA,
+  ...LINEAS_DE_LA_CRUZ,
 ];
 
 /**
