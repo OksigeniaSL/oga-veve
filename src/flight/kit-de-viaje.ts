@@ -36,6 +36,10 @@
  * (Enrique, 19-10-2026). Se resolvían sin pensar y el primero enseñaba algo
  * falso.
  *
+ * Y en la pantalla del asiento del avión que la lleva, un tercero: **La Cruz del Sur**
+ * (`JuegoDeLaCruz`, en `cruz-del-sur.ts`). En la mochilita de «Viajá con Jazlyn» no está:
+ * ver `KitDeViaje.conLaCruz`.
+ *
  * ## Se gana siempre
  *
  * Las normas se muestran, no se imponen. Una pieza que se suelta en otro sitio

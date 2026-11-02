@@ -11,7 +11,7 @@
  * —el hueco del ala tiene forma de ala— y lo que hay que tocar, brilla. Ara
  * dice qué hacer y qué es cada cosa, y el subtítulo va en la tarjeta de la
  * escena, arriba, como todo lo que se dice. La luz verde se dibuja aparte, en
- * `luz-verde.ts`.
+ * `luz-verde.ts`, y la Cruz del Sur, que solo sale en la consola, en `cruz-del-sur.ts`.
  *
  * ## Lo que se dibuja es lo de verdad, y en vistas de libro
  *
