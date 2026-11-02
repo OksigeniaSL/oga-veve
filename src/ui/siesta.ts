@@ -33,6 +33,14 @@
  * antes de poner nada, y no se quita hasta que el avión y su mundo están
  * puestos. Ver `frame` y `atenderAlSalto` en `game.ts`.
  *
+ * ## Y en la noche del vuelo largo, el mapa
+ *
+ * En el segundo capítulo la noche no se cuenta con el sueño, sino en el mapa del
+ * asiento: a toda pantalla, sin nada alrededor, con el avión cruzando el Atlántico y
+ * la raya de la noche moviéndose. Es el lienzo de `PantallaDelRespaldo`, el mismo, y
+ * no otro dibujo: lo que corre es lo que Ara tenía delante. Sigue tapando igual, y el
+ * mundo no se pinta. Ver `conElMapa` y `flight/noche-en-el-mapa.ts`.
+ *
  * ## Rápido
  *
  * Fundirse, unos segundos de sueño y volver: no un minuto de negro. Ver
@@ -63,6 +71,8 @@ export interface SiestaParaBanco {
   /** La ilustración que se ve ahora, y las que se vieron, en orden. */
   readonly ilustracion: string | null;
   readonly vistas: readonly string[];
+  /** Si lo que se ve es el mapa del asiento, puesto en el documento y sin haberse ido. */
+  readonly conElMapa: boolean;
 }
 
 export class PantallaDeLaSiesta {
@@ -73,8 +83,19 @@ export class PantallaDeLaSiesta {
   private dibujos: HTMLImageElement[] = [];
   private ahora: number | null = null;
   private readonly vistas: string[] = [];
+  /** El lienzo del mapa, si esta siesta lo enseña. Ver `conElMapa`. */
+  private lienzo: HTMLCanvasElement | null = null;
 
   constructor(private readonly raiz: HTMLElement | null) {}
+
+  /**
+   * **Esta siesta enseña el mapa**, en vez del sueño: se llama en cada fotograma, antes de
+   * `paso`. Con `seVa`, se funde a la noche de debajo, y lo que corte detrás ya corta a oscuras.
+   */
+  conElMapa(lienzo: HTMLCanvasElement, seVa: boolean): void {
+    this.lienzo = lienzo;
+    lienzo.classList.toggle("siesta__mapa--se-va", seVa);
+  }
 
   /**
    * **Un fotograma**: el fundido hacia donde toca, y la ilustración que toca.
@@ -107,9 +128,13 @@ export class PantallaDeLaSiesta {
     this.puesta = false;
     this.ahora = null;
     this.dibujos = [];
+    // El lienzo sigue siendo el de la pantalla del asiento: se le quita lo de aquí y se devuelve.
+    this.lienzo?.classList.remove("siesta__mapa", "siesta__mapa--se-va");
+    this.lienzo = null;
     if (!this.raiz) return;
     this.raiz.hidden = true;
     this.raiz.style.opacity = "0";
+    this.raiz.classList.remove("siesta--con-mapa");
     this.raiz.replaceChildren();
   }
 
@@ -120,6 +145,7 @@ export class PantallaDeLaSiesta {
       tapa: this.opacidad >= 1,
       ilustracion: i === null ? null : (this.dibujos[i]?.dataset.clave ?? null),
       vistas: [...this.vistas],
+      conElMapa: !!this.lienzo?.isConnected && !this.lienzo.classList.contains("siesta__mapa--se-va"),
     };
   }
 
@@ -127,6 +153,14 @@ export class PantallaDeLaSiesta {
     const alt = "inicio.siesta";
     raiz.setAttribute("role", "img");
     raiz.setAttribute("aria-label", hayTexto(alt) ? t(alt) : "");
+    if (this.lienzo) {
+      this.lienzo.classList.add("siesta__mapa");
+      raiz.classList.add("siesta--con-mapa");
+      raiz.replaceChildren(this.lienzo);
+      raiz.hidden = false;
+      this.puesta = true;
+      return;
+    }
     // Las que tengan fichero; sin ellas, la noche y las zetas, y el mapa en la ventanita.
     const hay = ILUSTRACIONES_DE_LA_SIESTA.map((c) => ilustracion(c)).filter((x) => x !== null);
     raiz.innerHTML = `<div class="siesta__sueno">

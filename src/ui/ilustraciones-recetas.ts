@@ -280,10 +280,12 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
   /*
    * **Lo de la noche sobre el mar**, a pantalla completa: ver
    * `flight/guion-noche-sobre-el-mar.ts`. La cena, con el tripulante y el carrito frenado
-   * y cerrado; y la manta, con el cinturón por encima, que es de lo que va.
+   * y cerrado; la manta, con el cinturón por encima, que es de lo que va; y el medio despertar
+   * del ecuador, con la cabina a oscuras y la tripulante en su asiento, con el arnés puesto.
    */
   cena: { original: "vuelo-largo/cena.png", hueco: "pantalla", recorte: ENTERA_DE_1672, conAra: true },
   manta: { original: "vuelo-largo/manta.png", hueco: "pantalla", recorte: ENTERA_DE_1672, conAra: true },
+  "medio-despertar": { original: "vuelo-largo/medio-despertar.png", hueco: "pantalla", recorte: ENTERA_DE_1672, conAra: true },
 };
 
 /**

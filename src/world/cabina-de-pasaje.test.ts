@@ -50,6 +50,42 @@ describe("cuándo va preparada la cabina", () => {
   });
 });
 
+describe("las luces para dormir", () => {
+  it("bajan poco a poco, y se quedan así", () => {
+    const c = new CabinaDePasaje("electrocromica");
+    for (let i = 0; i < 600; i++) c.paso(1 / 60, false, false);
+    expect(c.luz).toBeCloseTo(LUZ_DE_NOCHE.crucero, 3);
+    const lecturas: number[] = [];
+    for (let s = 1; s <= 12; s++) {
+      for (let i = 0; i < 60; i++) c.paso(1 / 60, false, false, true);
+      lecturas.push(c.luz);
+    }
+    // Ni de golpe: al segundo y a los tres sigue a medio camino, y va bajando sin subir nunca.
+    expect(lecturas[0]).toBeGreaterThan(0.23);
+    expect(lecturas[2]).toBeGreaterThan(0.15);
+    expect(lecturas[2]).toBeLessThan(0.2);
+    expect(lecturas.every((l, i) => i === 0 || l < lecturas[i - 1]!)).toBe(true);
+    // A los ocho, casi en su sitio; y a los doce se queda en él.
+    expect(lecturas[7]).toBeLessThan(0.115);
+    expect(lecturas[11]).toBeCloseTo(LUZ_DE_NOCHE.paraDormir, 2);
+  });
+
+  it("y al caer de un salto, la de crucero, sin subirla a la vista", () => {
+    const c = new CabinaDePasaje("electrocromica");
+    for (let i = 0; i < 1200; i++) c.paso(1 / 60, false, false, true);
+    c.ponerLasLucesDeCrucero();
+    expect(c.luz).toBe(LUZ_DE_NOCHE.crucero);
+    c.paso(1 / 60, false, false);
+    expect(c.luz).toBe(LUZ_DE_NOCHE.crucero);
+  });
+
+  it("preparar la cabina manda sobre esto, y sin pedirlas no se tocan", () => {
+    const c = new CabinaDePasaje("electrocromica");
+    for (let i = 0; i < 1200; i++) c.paso(1 / 60, true, false, true);
+    expect(c.luz).toBeCloseTo(LUZ_DE_NOCHE.preparada, 2);
+  });
+});
+
 describe("la persiana", () => {
   it("en crucero se baja a toques: media, entera, y arriba otra vez", () => {
     const c = new CabinaDePasaje("persiana", fijo(0.9));

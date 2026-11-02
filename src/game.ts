@@ -181,6 +181,7 @@ import {
   type PerfilDelVuelo,
 } from "./flight/ruta-larga";
 import { guionDePruebaDelSalto } from "./flight/guion-de-prueba-del-salto";
+import { planDeLaNoche } from "./flight/noche-en-el-mapa";
 import {
   COTA_DE_LAS_LUCES_DE_TENERIFE,
   GUION_NOCHE_SOBRE_EL_MAR,
@@ -993,7 +994,7 @@ import { CabinaDePasaje, cabinaPreparada, enLaPuerta } from "./world/cabina-de-p
 import type { AsientoDePasaje } from "./world/asiento-de-pasaje";
 import { CERCANO_EN_LA_CABINA } from "./world/cabina-333";
 import { montarElPasillo, type PasilloDePasaje } from "./world/pasillo-de-pasaje";
-import type { ModoDeLaPantalla } from "./world/pantalla-del-respaldo";
+import type { ModoDeLaPantalla, PantallaDelRespaldo } from "./world/pantalla-del-respaldo";
 import { diaEnLaCabina } from "./world/luz-de-cabina";
 import { nombreDeTecla } from "./flight/keymap";
 import {
@@ -7957,7 +7958,7 @@ export class Game {
         gesto: null,
         mando: this.input.ultimoMando,
         lado: 0,
-        linea: p.linea
+        linea: p.linea && !inicio.laNocheCalla
           ? {
               quien: p.linea.quien,
               clave: p.linea.clave,
@@ -8305,6 +8306,8 @@ export class Game {
     readonly musica: { readonly decide: string | null; readonly audio: Audio["musicaParaBanco"] };
     /** De pasaje: la pantalla de la siesta, si está puesta. Ver `ui/siesta.ts`. */
     readonly siesta: PantallaDeLaSiesta["paraBanco"] | null;
+    /** De pasaje: lo que se puso en la pantalla del asiento. Ver `world/pantalla-del-respaldo.ts`. */
+    readonly pantallaDelAsiento: PantallaDelRespaldo["paraBanco"] | null;
     readonly lamina: PantallaDeLaLamina["paraBanco"] | null;
     /**
      * **El botón ⏩**, medido: las veces de ahora, lo que cuestan aquí un paso
@@ -8389,6 +8392,7 @@ export class Game {
         : null,
       musica: this.musicaParaBanco,
       siesta: this.siesta?.paraBanco ?? null,
+      pantallaDelAsiento: this.pasilloMontado?.pasillo?.pantalla?.paraBanco ?? null,
       adelanto: {
         veces: this.escenaAdelanta ? this.vecesDelAdelanto() : null,
         pasoMs: this.costeDeUnPaso,
@@ -16418,6 +16422,8 @@ export class Game {
     this.consolaContada = consolaYaContada;
     this.laminaGrande?.taparDeGolpe();
     this.vueloLargoMirado = null;
+    // Se despierta con la cabina como la del capítulo suelto: la noche se queda en la noche.
+    this.cabinaDePasaje.ponerLasLucesDeCrucero();
   }
 
   private entrarEnElPerfil(perfil: PerfilDelVuelo, t: number): void {
@@ -16501,6 +16507,12 @@ export class Game {
     }
     if (estado !== "listo") return;
     /*
+     * **Con la noche en el mapa, el salto espera a que acabe**, y mientras tanto la espera de
+     * arriba sigue contando. Lo que se tarda en enseñar el mapa también vale para bajar el mundo:
+     * si al acabar no ha llegado, ya pasó la red y no se le hace esperar a nadie otros veinte segundos.
+     */
+    if (escena?.laNocheRetieneElSalto) return;
+    /*
      * **Caer en la llegada sin su mundo no se puede**: la red de arriba deja el avión en
      * su sitio y volando, pero la llegada acaba en una pista, y sin el mundo no hay ninguna.
      * Se abre por su camino de siempre, recargando: se pierde el permiso del audio hasta
@@ -16536,7 +16548,8 @@ export class Game {
       mundo: this.scenario.id,
       mundoPedido: salto.mundoPedido,
       sinElMundo: salto.mundoPedido !== null && salto.mundo === null,
-      porLaRed: salto.espera.saltoLaRed,
+      // Con la noche por medio el mundo puede llegar pasada la red y a tiempo: entonces no fue por ella.
+      porLaRed: salto.espera.saltoLaRed && !salto.mundo,
       pared: (performance.now() - salto.pedidoEn) / 1000,
       relojDelJuego: this.relojDelJuego,
       tarjeta: salto.mundo ? this.tarjetaAlCambiar : null,
@@ -17097,8 +17110,30 @@ export class Game {
   private pintarLaSiesta(real: number): void {
     if (!(this.inicio instanceof MotorDelPasaje) && !this.siesta) return;
     this.siesta ??= new PantallaDeLaSiesta(document.getElementById("siesta"));
+    this.ponerLaNocheEnElMapa(this.siesta);
     // Y con un salto en marcha, tapada hasta que esté puesto, se despierte quien se despierte.
     this.siestaTapa = this.siesta.paso(real, this.escenaDuerme || this.saltoEnCurso !== null);
+  }
+
+  /**
+   * **La noche en el mapa**: la pantalla del asiento, la de verdad, a toda pantalla y a la hora
+   * que diga la escena; y el *ding* del medio despertar, cuando lo pida. Sin pantalla —un avión
+   * que no la lleva— la cuenta corre igual y lo que se ve es la siesta. Ver
+   * `flight/noche-en-el-mapa.ts`.
+   */
+  private ponerLaNocheEnElMapa(siesta: PantallaDeLaSiesta): void {
+    const escena = this.inicio instanceof MotorDelPasaje ? this.inicio : null;
+    if (escena?.tomarElDing()) this.avisar("cinturon");
+    const noche = escena?.nocheEnElMapa;
+    const vl = this.vueloLargo;
+    if (!noche || !vl) return;
+    const pantalla = this.elPasillo()?.pantalla;
+    const lienzo = pantalla?.lienzo;
+    if (!pantalla || !lienzo) return;
+    pantalla.marcar(null);
+    pantalla.mostrar("mapa");
+    pantalla.poner(vl.perfil, noche.hora);
+    siesta.conElMapa(lienzo, noche.seVa);
   }
 
   /** La lámina a pantalla completa, y si tapa del todo el mundo. Ver `ui/lamina-grande.ts`. */
@@ -17138,6 +17173,7 @@ export class Game {
       solPorMiVentanilla: this.elSolPorLaVentanilla(),
       recorrido: dondeVa(perfil, ahora).recorrido,
       entraLaLlegada: alEntrar,
+      planDeLaNoche: planDeLaNoche(perfil, ahora, SE_DESAYUNA_A),
       anuncioDeLaBajada: () => {
         const meteo = this.scenario.meteo ?? TIEMPO_DE_CASA;
         return anuncioDeLaBajadaDelVueloLargo(
@@ -25907,6 +25943,7 @@ export class Game {
     const c = this.cabinaDePasaje;
     p.ponerLuz?.(diaEnLaCabina(this.sky.sunDirection.y), c.luz, c.tapan[0]);
     if (!p.pantalla) return;
+    p.pantalla.marcar(this.inicio instanceof MotorDelPasaje ? this.inicio.marcaDeLaPantalla : null);
     const perfil = this.vueloLargo?.perfil ?? (this.perfilDeLaPantalla ??= perfilDelVuelo(horarioDelDia(this.fechaDelVuelo())));
     // Antes de abrir la ventanilla, la hora del cuento: el desayuno, sobre Brasil. Ver `SE_DESAYUNA_A`.
     const enElCuento = this.inicio instanceof MotorDelPasaje && this.inicio.enLaApertura;
@@ -26269,6 +26306,7 @@ export class Game {
       dt,
       this.cabinaForzadaParaBanco ?? cabinaPreparada(fase, this.cinturon.pasajeSuelto),
       enLaPuerta(fase),
+      this.inicio instanceof MotorDelPasaje && this.inicio.lucesBajas,
     );
   }
 

@@ -6,7 +6,8 @@
  *   del día y la noche y la noche sombreada. Lo que ya se ha volado va en línea
  *   entera y lo que falta en puntos, que es lo que enseña la lámina aprobada y lo que
  *   entiende cualquiera que haya seguido un mapa con el dedo.
- * - **cerca**: el avión grande sobre el trozo de mapa que está cruzando.
+ * - **cerca**: el avión grande sobre el trozo de mapa que está cruzando, y el sitio que se
+ *   esté contando, si se cuenta alguno: ver `marcar`.
  * - **pelota**: la Tierra como pelota, donde el camino sale recto. Ver
  *   `flight/mapa-del-vuelo.ts`.
  * - **relojes**: Madrid y Asunción con sus agujas, y un sol o una luna. Cada reloj
@@ -66,6 +67,7 @@ import { COSTAS_DE_LA_PELOTA } from "../ui/costas-de-la-pelota";
 import { COSTAS_DE_LA_RUTA } from "../ui/costas-de-la-ruta";
 import { NUDOS, PIES } from "../ui/cuadro";
 import { GRADO } from "./cielo-de-noche";
+import type { Sitio } from "./entre-aerodromos";
 
 /** Lo que mide el lienzo, px: la pantalla entera llena la vista en el plano `respaldo`. */
 const ANCHO = 1024;
@@ -81,6 +83,8 @@ const COLOR = {
   camino: "#ffffff",
   avion: "#ffffff",
   sombra: "rgba(8,30,70,0.55)",
+  // El de la marca: el ámbar de los avisos que no asustan, que no se confunde con el mar ni con la tierra.
+  marca: "#ffc22e",
   // La noche deja ver lo de debajo: quien la mira tiene que seguir reconociendo la costa.
   noche: "rgba(6,14,52,0.58)",
   raya: "rgba(255,216,130,0.9)",
@@ -121,6 +125,17 @@ export const aPxDeLaPelota = (p: { readonly x: number; readonly y: number }): re
  * encuadre aguantan, y en medio del Atlántico sigue cabiendo tierra a los dos lados.
  */
 export const PX_POR_GRADO_DE_CERCA = 20;
+
+/**
+ * **La marca del sitio que se cuenta**: lo que se ve durante la frase en que el sitio queda
+ * debajo del avión del modo cerca. Con el avión encima, una isla de cinco píxeles no se ve,
+ * y es justo cuando se dice que estamos encima. Sin una letra, como el resto de este modo.
+ *
+ * `latido` es lo que dura uno y `cada` cada cuánto se repinta, ms: un aro no pide más, y
+ * subir la textura en cada fotograma sería pagar por él. `avion` es lo opaco que se queda el
+ * avión mientras tanto: sigue viéndose, y se ve lo que tiene debajo.
+ */
+const MARCA = { aro: 28, crece: 16, onda: 62, latido: 1600, cada: 100, avion: 0.55 } as const;
 
 /** Un punto del mapa, a píxeles del lienzo. */
 const aPx = (p: { readonly x: number; readonly y: number }): readonly [number, number] => [p.x * ANCHO, p.y * ALTO];
@@ -163,6 +178,53 @@ function dibujarElAvion(c: CanvasRenderingContext2D, x: number, y: number, apunt
   c.fillStyle = COLOR.avion;
   trazar();
   c.fill();
+  c.restore();
+}
+
+/**
+ * **La marca sobre su sitio**: la isla misma, por encima del avión y del color del aro; un aro
+ * que late, y una onda que sale de él. Con contorno oscuro, para que se lea sobre el mar, sobre
+ * la tierra y sobre el avión. `fase` va de 0 a 1 en cada latido.
+ */
+function pintarLaMarca(
+  c: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  fase: number,
+  costa: readonly (readonly [number, number])[],
+  proyectar: (lon: number, lat: number) => readonly [number, number],
+): void {
+  const aro = MARCA.aro + MARCA.crece * (0.5 - 0.5 * Math.cos(2 * Math.PI * fase));
+  const onda = MARCA.aro + MARCA.onda * fase;
+  c.save();
+  c.setLineDash([]);
+  c.fillStyle = COLOR.marca;
+  c.strokeStyle = COLOR.sombra;
+  c.lineWidth = 1.5;
+  c.beginPath();
+  costa.forEach(([lon, lat], i) => {
+    const [px, py] = proyectar(lon, lat);
+    if (i === 0) c.moveTo(px, py);
+    else c.lineTo(px, py);
+  });
+  c.closePath();
+  c.fill();
+  c.stroke();
+  c.globalAlpha = 0.85 * (1 - fase);
+  c.strokeStyle = COLOR.marca;
+  c.lineWidth = 4;
+  c.beginPath();
+  c.arc(x, y, onda, 0, 2 * Math.PI);
+  c.stroke();
+  c.globalAlpha = 1;
+  c.strokeStyle = COLOR.sombra;
+  c.lineWidth = 11;
+  c.beginPath();
+  c.arc(x, y, aro, 0, 2 * Math.PI);
+  c.stroke();
+  c.strokeStyle = COLOR.marca;
+  c.lineWidth = 6;
+  c.stroke();
   c.restore();
 }
 
@@ -332,6 +394,25 @@ const CAJAS_DE_LAS_COSTAS = COSTAS_DE_LA_RUTA.map((costa) => {
 });
 
 /**
+ * **La costa de un sitio**: la de caja más pequeña que lo contiene. Por la caja y no mirando si
+ * cae dentro: a esta escala las islas son triángulos, y el sitio puede quedarse a un lado.
+ */
+function costaDe(sitio: Sitio): readonly (readonly [number, number])[] {
+  let mejor: readonly (readonly [number, number])[] = [];
+  let menor = Infinity;
+  COSTAS_DE_LA_RUTA.forEach((costa, i) => {
+    const caja = CAJAS_DE_LAS_COSTAS[i]!;
+    if (sitio.lon < caja.oeste || sitio.lon > caja.este || sitio.lat < caja.sur || sitio.lat > caja.norte) return;
+    const area = (caja.este - caja.oeste) * (caja.norte - caja.sur);
+    if (area < menor) {
+      menor = area;
+      mejor = costa;
+    }
+  });
+  return mejor;
+}
+
+/**
  * **El trozo de mapa que se está cruzando**, con el avión en el centro y grande.
  *
  * Con el norte arriba, como el mapa de al lado, y a escala **de ese sitio**: el grado
@@ -339,7 +420,14 @@ const CAJAS_DE_LAS_COSTAS = COSTAS_DE_LA_RUTA.map((costa) => {
  * entero no lo hace, y por eso allí la península sale ancha; aquí, a este tamaño, se
  * notaría, y con esto España tiene la forma que tiene y el avión apunta a su rumbo.
  */
-function pintarDeCerca(c: CanvasRenderingContext2D, perfil: PerfilDelVuelo, t: number, instante: Date, camino: ReturnType<typeof caminoEnElMapa>): void {
+function pintarDeCerca(
+  c: CanvasRenderingContext2D,
+  perfil: PerfilDelVuelo,
+  t: number,
+  instante: Date,
+  camino: ReturnType<typeof caminoEnElMapa>,
+  marca: { readonly sitio: Sitio; readonly fase: number } | null = null,
+): void {
   const donde = dondeVa(perfil, t);
   const [lat0, lon0] = [donde.sitio.lat, donde.sitio.lon];
   const porLat = PX_POR_GRADO_DE_CERCA;
@@ -411,7 +499,11 @@ function pintarDeCerca(c: CanvasRenderingContext2D, perfil: PerfilDelVuelo, t: n
     const [x, y] = proyectar(s.lon, s.lat);
     pintarLaCiudad(c, x, y, 1.5);
   }
+  c.globalAlpha = marca ? MARCA.avion : 1;
   dibujarElAvion(c, ANCHO / 2, ALTO / 2, donde.rumbo, 2.4);
+  c.globalAlpha = 1;
+  // Con la misma cuenta que la costa: la marca cae donde cae la isla, esté donde esté el avión.
+  if (marca) pintarLaMarca(c, ...proyectar(marca.sitio.lon, marca.sitio.lat), marca.fase, costaDe(marca.sitio), proyectar);
 }
 
 // ── La pelota ───────────────────────────────────────────────────────────
@@ -804,6 +896,9 @@ const SE_REPINTA_CON: Readonly<Record<Exclude<ModoDeLaPantalla, "datos">, number
  */
 const DATOS_CADA = 500;
 
+/** **Si se ha pedido quitar el movimiento**: la clase la pone el juego, en el documento. */
+const haySinMovimiento = (): boolean => typeof document !== "undefined" && document.querySelector(".sin-movimiento") !== null;
+
 export class PantallaDelRespaldo {
   /** Lo que pinta la pantalla. `null` sin lienzo: en las pruebas. */
   readonly textura: CanvasTexture | null = null;
@@ -822,6 +917,11 @@ export class PantallaDelRespaldo {
   /** Lo último que dijeron las cifras y cuándo. */
   private datosPintados: string | null = null;
   private datosPintadosA = -Infinity;
+  /** El sitio que se marca, si se marca alguno, y cuándo se pintó. Ver `marcar`. */
+  private marca: Sitio | null = null;
+  private marcaPintadaA = -Infinity;
+  /** Lo que se puso en el lienzo por última vez, para el banco. */
+  private loPintado: { readonly hora: number; readonly conMarca: boolean; readonly veces: number } = { hora: -1, conMarca: false, veces: 0 };
 
   constructor() {
     if (typeof document === "undefined") return;
@@ -884,13 +984,22 @@ export class PantallaDelRespaldo {
     const antes = this.pintadoEn;
     const instante = new Date(perfil.horario.despegue.getTime() + t * 1000);
     const sol = Math.floor(instante.getTime() / 1000 / CADA_CUANTO_EL_SOL);
-    if (antes && sol === this.solPintado && Math.hypot(x - antes[0], y - antes[1]) < SE_REPINTA_CON[modo]) return false;
+    const marca = modo === "cerca" ? this.marca : null;
+    // La marca late; con el movimiento reducido se queda quieta y se repinta lo de siempre.
+    const late = marca !== null && !haySinMovimiento();
+    const ahora = performance.now();
+    if (late) {
+      if (ahora - this.marcaPintadaA < MARCA.cada) return false;
+    } else if (antes && sol === this.solPintado && Math.hypot(x - antes[0], y - antes[1]) < SE_REPINTA_CON[modo]) return false;
+    this.marcaPintadaA = ahora;
     this.pintadoEn = [x, y];
     this.solPintado = sol;
+    this.loPintado = { hora: t, conMarca: marca !== null, veces: this.loPintado.veces + 1 };
     if (!this.contexto || !this.fondo || !this.textura) return true;
     const c = this.contexto;
     if (modo === "mapa") pintarElMapa(c, this.fondo, enElMapaAhora, this.camino, instante);
-    else if (modo === "cerca") pintarDeCerca(c, perfil, t, instante, this.camino);
+    else if (modo === "cerca")
+      pintarDeCerca(c, perfil, t, instante, this.camino, marca && { sitio: marca, fase: late ? (ahora % MARCA.latido) / MARCA.latido : 0.5 });
     else if (modo === "relojes") pintarLosRelojes(c, this.fondo, enElMapaAhora, this.camino, instante);
     else {
       const fondo = this.elFondoDeLaPelota();
@@ -899,6 +1008,28 @@ export class PantallaDelRespaldo {
     }
     this.textura.needsUpdate = true;
     return true;
+  }
+
+  /**
+   * **Marca un sitio en el modo cerca**, o deja de marcarlo con `null`, mientras se cuenta. El
+   * siguiente `poner` lo repinta: al irse no se queda el último aro puesto en el lienzo.
+   */
+  marcar(sitio: Sitio | null): void {
+    if (sitio === this.marca) return;
+    this.marca = sitio;
+    this.pintadoEn = null;
+    this.solPintado = null;
+    this.marcaPintadaA = -Infinity;
+  }
+
+  /** **El lienzo**, para enseñarlo tal cual a toda pantalla: `null` sin él, en las pruebas. */
+  get lienzo(): HTMLCanvasElement | null {
+    return this.contexto?.canvas ?? null;
+  }
+
+  /** Lo que mira el banco. */
+  get paraBanco(): { readonly modo: ModoDeLaPantalla; readonly hora: number; readonly conMarca: boolean; readonly repintados: number } {
+    return { modo: this.modo, hora: this.loPintado.hora, conMarca: this.loPintado.conMarca, repintados: this.loPintado.veces };
   }
 
   /** Cambia lo que enseña. Devuelve si cambió: el siguiente `poner` lo repinta. */

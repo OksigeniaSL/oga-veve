@@ -95,7 +95,7 @@ pregunta dónde está el avión a esa hora.
 
 ### El salto bajo tapa
 
-Cuando la pantalla está tapada del todo —**Ara dormida**, con la pantalla de
+Cuando la pantalla está tapada del todo —**con Ara durmiendo**, con la pantalla de
 la siesta opaca, o **un juego de la pantalla del respaldo a pantalla
 completa**—, el reloj del vuelo **salta**: se adelanta de golpe, y el avión
 aparece **donde estaría a esa hora** sobre la ortodrómica, con su altitud, su
@@ -405,12 +405,56 @@ Ya lleva su guion, sus láminas y su ficha en «¿A qué jugás?». Lo que se de
 - **Desde el menú, sin `?capitulo=` y publicado**: la ficha lo pide por el hangar. La dirección
   sigue siendo solo de desarrollo. Y la red de la noche pone también `inicio=4` al recargar,
   porque quien entra por la ficha no lo lleva en la dirección y volvía al hangar.
-- **Lo que no entra aquí**: que la cabina se oscurezca de verdad, el mapa que corre durante la
-  siesta, el medio despertar del ecuador y «La Cruz del Sur». La comandante dice que baja las
-  luces y lo que se ve es la lámina de la manta, que ya las tiene bajas.
+- **Lo que no entró en esa tanda** y sí en la siguiente: que la cabina se oscurezca de verdad, el
+  mapa que corre durante la siesta y el medio despertar del ecuador. Ver más abajo. «La Cruz del
+  Sur» sigue sin entrar.
 
 Y **el crucero quema ya lo que dice el plan.** El escalón del empuje que se oye en crucero
 es el de subida, y quemando por él salían 1,8 veces lo que `quemadoEnElVuelo`. Nivelado, el
 empuje que hace falta es la resistencia, con la misma polar del plan
 (`resistenciaEnVuelo`): el rato volado y el rato saltado gastan lo mismo, y lo que se oye
 no cambia. Es del vuelo largo: el corto sigue quemando por el gas.
+
+## La noche del segundo capítulo
+
+La cabina se oscurece, El Hierro se marca, la noche se ve en el mapa y a media noche suena el
+*ding* (decisión 8). Lo que se decidió al hacerlo:
+
+- **Las luces bajan con el guion, no con la fase.** `GuionDelPasaje.lucesBajanCon`, y solo en este
+  avión y este capítulo: `CabinaDePasaje` baja a `paraDormir` en unos ocho segundos, mientras la
+  comandante lo dice, y todo lo que se mira por dentro lee esa luz. Al caer en el capítulo 3 se
+  pone la de crucero sin subirla a la vista: el despertar es el de siempre, y su propio amanecer es
+  otra cosa.
+- **Un solo salto, y el mapa corre aparte.** La regla de más arriba era que el salto se pararía en
+  el medio despertar. Se hizo otra cosa más barata: lo que corre es la hora que enseña el mapa, y el
+  avión sigue a su paso debajo de la tapa hasta saltar de una vez, al acabar la noche, a la hora de
+  siempre. Lo contrario era poner dos veces el mundo y el avión para enseñar lo mismo, porque nadie
+  los ve. El reloj y el sitio al despertar son los de la cuenta; `destinoDelSalto` conserva sus
+  `paradas` para quien las necesite.
+- **La siesta sigue tapando con Ara a medio despertar.** No es una segunda siesta: es un rato de la
+  misma, con la lámina encima. Así no hay ni un fotograma en que no tape nada, y el mundo no asoma ni
+  se pinta. La lámina va después de la siesta en el documento: entra y se va con su fundido, con el
+  mapa debajo.
+- **El mapa es el lienzo de la pantalla del asiento**, puesto tal cual en el documento, con
+  `object-fit` y sin dibujarlo otra vez. El mundo no se pinta, así que tampoco se sube su textura.
+- **El ritmo, mil doscientas veces**: unos veintidós segundos de mapa, unos veinte de medio despertar,
+  y la noche entera en menos de un minuto. Con el reloj de pared, y no con el del juego. Acaba a las
+  9 h 40 (`SE_DESAYUNA_A`), que es lo que enseña el mapa del capítulo 3 al abrirse: si llegara a la
+  hora del salto, el avión del mapa daría un salto atrás.
+- **Se despierta a quinientos kilómetros del ecuador**, por lo recorrido: unos treinta y cinco minutos
+  antes y a unos 4,5° N. Es dentro de la zona de tormentas en cualquier estación y deja cierta la frase
+  del capítulo 3, «mientras dormías cruzamos el ecuador».
+- **La red de veinte segundos sigue contando durante la noche.** Si el mundo de la llegada no ha
+  llegado cuando acaba el mapa, no se le hace esperar a nadie otros veinte: se recarga en el capítulo
+  3, como siempre. Y lo que se dice al despertar se suelta a los veintiocho segundos si no acaba, con
+  lo que tampoco ahí se queda nadie.
+- **El mundo sigue en marcha debajo**, sin pintarse: quien lo oye es la cabina, y el *ding* suena sobre
+  el ruido de siempre. El avión se sale de lo dibujado con la tapa puesta, y con eso no pasa nada: lo
+  siguiente es el salto.
+- **La marca de El Hierro es un aro ámbar y la isla del mismo color**, en su sitio de verdad y con la
+  misma cuenta que la costa, con el avión del mapa medio transparente mientras tanto: a esa escala la
+  isla mide cinco píxeles y el avión, ciento cuarenta. Se repinta diez veces por segundo mientras late.
+
+Queda sin hacer lo que le pediría lo real, y se dijo en vez de hacerse: en un avión de esta clase, al
+bajar las luces la tripulación oscurece también las ventanillas. Es el mismo botón de
+`CabinaDePasaje`, y un cambio pequeño cuando se quiera.

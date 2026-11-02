@@ -802,6 +802,7 @@ y soñando, que no tienen hueco.
 | `src/assets/ilustraciones/ecuador.webp` | `vuelo-largo/ecuador.png` | «Llegá a Asunción», a pantalla completa: el ecuador que se cruza mientras se duerme | entera, en 16:9, 1600 × 900 |
 | `src/assets/ilustraciones/cena.webp` | `vuelo-largo/cena.png` | «Cruzá el mar de noche», a pantalla completa: la cena de Ara, con el tripulante y el carrito frenado y con su cierre | entera, en 16:9, 1600 × 900 |
 | `src/assets/ilustraciones/manta.webp` | `vuelo-largo/manta.png` | «Cruzá el mar de noche», a pantalla completa: Ara con las luces bajas, con el cinturón por encima de la manta | entera, en 16:9, 1600 × 900 |
+| `src/assets/ilustraciones/medio-despertar.webp` | `vuelo-largo/medio-despertar.png` | «Cruzá el mar de noche», a pantalla completa: Ara a medio despertar en la zona de tormentas del ecuador, con el cinturón por encima de la manta; al fondo, la luz del cartel y la tripulante sentada y atada | entera, en 16:9, 1600 × 900 |
 | `src/assets/historias/teide.webp` | `historias/teide.jpeg` | La historia de el Teide, mientras se cuenta; y en «Viajá con Jazlyn», en lugar del dibujo de las islas que crecen desde el fondo del mar | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/canadas.webp` | `historias/canadas.jpeg` | La historia de los tajinastes de Las Cañadas, mientras se cuenta | entera, en 4:3, 1280 × 960 |
 | `src/assets/historias/anaga.webp` | `historias/anaga.jpeg` | La historia de Anaga, mientras se cuenta | entera, en 4:3, 1280 × 960 |

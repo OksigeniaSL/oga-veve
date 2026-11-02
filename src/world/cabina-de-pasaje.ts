@@ -84,11 +84,21 @@ export function cabinaPreparada(fase: Fase, pasajeSuelto: boolean): boolean {
  * - En crucero, bajas y cálidas: se lee, se duerme.
  * - Para despegar y aterrizar, casi apagadas: queda la luz del suelo que
  *   lleva a las salidas y poco más.
+ * - **Para dormir, en un vuelo largo**, cuando la comandante lo anuncia: casi
+ *   como para aterrizar, con la cabina a oscuras y sin que nadie se levante a
+ *   buscar nada. Lo pide el guion: ver `GuionDelPasaje.lucesBajanCon`.
  */
-export const LUZ_DE_NOCHE = { embarcando: 0.85, crucero: 0.3, preparada: 0.07 } as const;
+export const LUZ_DE_NOCHE = { embarcando: 0.85, crucero: 0.3, preparada: 0.07, paraDormir: 0.1 } as const;
 
 /** Cuánto tardan las luces en bajar o subir, s: la tripulación las baja por pasos. */
 const TARDAN_LAS_LUCES = 2.5;
+
+/**
+ * **Y lo que tardan en bajar para dormir**, s: despacio y a la vista, mientras la
+ * comandante lo dice, que le lleva unos ocho. Lo de arriba es un cambio de faena; esto
+ * es la cabina que se va a dormir, y un apagón no calma a nadie.
+ */
+const TARDAN_LAS_LUCES_PARA_DORMIR = 8;
 
 /**
  * Lo que tarda cada cosa en ir de un extremo al otro, s.
@@ -262,7 +272,7 @@ export class CabinaDePasaje {
    * `preparada` es lo de `cabinaPreparada`; `enLaPuerta`, si se está
    * embarcando o desembarcando, que es cuando la cabina va encendida.
    */
-  paso(dt: number, preparada: boolean, enLaPuerta: boolean): void {
+  paso(dt: number, preparada: boolean, enLaPuerta: boolean, paraDormir = false): void {
     if (!(dt > 0)) return;
     if (preparada && !this.yaPreparada) {
       // Se prepara la cabina: lo de uno arriba, y se olvida lo que se quería.
@@ -308,9 +318,19 @@ export class CabinaDePasaje {
       ? LUZ_DE_NOCHE.preparada
       : enLaPuerta
         ? LUZ_DE_NOCHE.embarcando
-        : LUZ_DE_NOCHE.crucero;
-    const k = 1 - Math.exp(-dt * (3 / TARDAN_LAS_LUCES));
+        : paraDormir
+          ? LUZ_DE_NOCHE.paraDormir
+          : LUZ_DE_NOCHE.crucero;
+    const k = 1 - Math.exp(-dt * (3 / (paraDormir ? TARDAN_LAS_LUCES_PARA_DORMIR : TARDAN_LAS_LUCES)));
     this.luzAhora += (luz - this.luzAhora) * k;
+  }
+
+  /**
+   * **Las luces de crucero, ya**, sin subirlas a la vista: para lo que cae de un salto bajo
+   * tapa, que no ha visto subirse nada. Ver `caerEnLaLlegada` en `game.ts`.
+   */
+  ponerLasLucesDeCrucero(): void {
+    this.luzAhora = LUZ_DE_NOCHE.crucero;
   }
 }
 

@@ -2,8 +2,8 @@
  * **El segundo capítulo del vuelo largo: «La noche sobre el mar»** (ADR 0023). Se abre
  * con su ficha de «¿A qué jugás?», o con `?inicio=4&capitulo=2` en desarrollo. El JAZ 110
  * Tijereta, con Ara de pasaje, en crucero y de noche, un rato antes de El Hierro; se
- * vuela de verdad hasta pasarlo, se bajan las luces, Ara se duerme, y del salto se cae en
- * el tercer capítulo, en su despertar.
+ * vuela de verdad hasta pasarlo, se bajan las luces, Ara se duerme, la noche corre en el mapa
+ * con su medio despertar en el ecuador, y del salto se cae en el tercer capítulo, en su despertar.
  *
  * ## Sin pasillo de crucero
  *
@@ -46,6 +46,14 @@
  * de llegar ahí. Por eso El Hierro no se cuenta si se le pasa el momento: con la pestaña de
  * un juego delante no se interrumpe para enseñar un mapa que no se está mirando, y el cuento
  * de la isla sigue en la consola.
+ *
+ * ## El medio despertar
+ *
+ * La noche no se ve y está en el mapa (`flight/noche-en-el-mapa.ts`), y a media noche, en la
+ * zona de convergencia intertropical, suena el *ding*: es donde las nubes de tormenta llegan más
+ * alto, y por eso se cuenta aquí lo del cinturón. Con Idaira sentada y atada, y sin dramatizar:
+ * las voces avisan, no asustan. Lo de las nubes, con su fuente en `docs/historias/fuentes.md`. Y
+ * **antes de cruzar el ecuador**, que en el tercer capítulo se dice que se cruzó durmiendo.
  */
 
 import type { Linea } from "./conversacion";
@@ -116,6 +124,12 @@ const derlis = (clave: string): Linea => ({ quien: "tripulacion", clave: `inicio
 /** La comandante, por la megafonía, con una frase de este vuelo. */
 const comandante = (clave: string): Linea => ({ quien: "mama", clave: `comandante.largo.${clave}`, megafonia: true });
 const con = (l: Linea, dibujo: string): Linea => ({ ...l, dibujo });
+
+/**
+ * **El centro de El Hierro**, para marcarlo en el mapa: el de la isla en las costas que pinta
+ * ese mapa, que a esa escala es un triángulo de cinco píxeles. Es también donde está de verdad.
+ */
+export const EL_HIERRO_EN_EL_MAPA = { lat: 27.73, lon: -18.03 } as const;
 
 /** Lo que se deja callado antes de seguir con lo que va sin prisa, s: una lámina no cambia a media frase. */
 const SE_MIRA = 1;
@@ -188,12 +202,14 @@ const MOMENTOS: readonly Momento[] = [
     caduca: bajanLasLuces,
     plano: "respaldo",
     pantalla: "cerca",
+    // El avión del mapa la tapa justo cuando se dice que estamos encima.
+    marca: EL_HIERRO_EN_EL_MAPA,
     lineas: [idaira("hierroEncima"), ara("hierroNoSeVe"), idaira("hierroDebajo"), idaira("meridiano"), idaira("greenwich")],
   },
   /*
    * **Las luces bajas**, ya pasado, y con la consola ya guardada: `seRecogeCuando` la
    * recoge con su frase, y esto espera a que se haya ido, para no hablarle a quien tiene
-   * la pantalla delante.
+   * la pantalla delante. La cabina se oscurece mientras lo dice: ver `lucesBajanCon`.
    */
   {
     id: "luces",
@@ -220,11 +236,12 @@ export const GUION_NOCHE_SOBRE_EL_MAR: GuionDelPasaje<MomentoDeLaNoche, never> =
   apertura: {
     hasta: "ventanilla",
     // Las suyas y las del capítulo que sigue: del salto se cae en ellas, sin tiempo de bajarlas.
-    laminas: ["cena", "manta", ...(GUION_LLEGADA_A_ASUNCION.apertura?.laminas ?? [])],
+    laminas: ["cena", "manta", "medio-despertar", ...(GUION_LLEGADA_A_ASUNCION.apertura?.laminas ?? [])],
   },
   // Lo de señalar por la ventanilla, con sus sitios y sus frases, es de otra tanda.
   seSenalaDesde: [],
   tripulanteEnElPasillo: () => false,
+  lucesBajanCon: "luces",
   siesta: {
     seDuerme: GUION_TENERIFE_LA_PALMA.siesta.seDuerme,
     seDespierta: GUION_TENERIFE_LA_PALMA.siesta.seDespierta,
@@ -232,9 +249,17 @@ export const GUION_NOCHE_SOBRE_EL_MAR: GuionDelPasaje<MomentoDeLaNoche, never> =
     puedenEsperar: new Set(),
     trasAlDespertar: {},
     antesDeDormirse: [],
-    // De una vez hasta el despertar: el medio despertar del ecuador es de otra tanda.
+    // De una vez hasta el despertar: lo del ecuador es de la noche en el mapa, no del salto.
     salto: (_e, l) => l.largo?.entraLaLlegada ?? null,
     sigueOtroCapitulo: true,
+    /*
+     * **El medio despertar**: a media noche, en la zona de tormentas. Ara, en su sitio, con el
+     * cinturón por encima de la manta; Idaira, sentada y atada. Ver «El medio despertar», arriba.
+     */
+    noche: {
+      tapa: "medio-despertar",
+      lineas: [ara("medioDespertar"), idaira("nubesAltas"), idaira("nubesCinturon"), ara("sigoDurmiendo")],
+    },
   },
   senalado: {
     suyas: {},
