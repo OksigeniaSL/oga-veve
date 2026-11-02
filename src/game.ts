@@ -181,7 +181,12 @@ import {
   type PerfilDelVuelo,
 } from "./flight/ruta-larga";
 import { guionDePruebaDelSalto } from "./flight/guion-de-prueba-del-salto";
-import { GUION_NOCHE_SOBRE_EL_MAR } from "./flight/guion-noche-sobre-el-mar";
+import {
+  COTA_DE_LAS_LUCES_DE_TENERIFE,
+  GUION_NOCHE_SOBRE_EL_MAR,
+  LAS_LUCES_DE_TENERIFE_LLEGAN_A,
+  LUCES_DE_TENERIFE,
+} from "./flight/guion-noche-sobre-el-mar";
 import { CHACO_ENFRENTE, GUION_LLEGADA_A_ASUNCION, MUNDO_DE_LA_LLEGADA, RIO_ENFRENTE, SE_DESAYUNA_A } from "./flight/guion-llegada-a-asuncion";
 import { cargarElMundo, type MundoCargado } from "./world/mundo-del-tramo";
 import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
@@ -2025,8 +2030,8 @@ export interface GameOptions {
    */
   inicio?: EscenaDelInicio;
   /**
-   * **El capítulo del vuelo largo, si no es el tercero**: `?capitulo=2`. Ver
-   * `flight/guion-noche-sobre-el-mar.ts`.
+   * **El capítulo del vuelo largo, si no es el tercero**: el de su ficha del menú o,
+   * en desarrollo, `?capitulo=2`. Ver `flight/guion-noche-sobre-el-mar.ts`.
    */
   capitulo?: 2;
 
@@ -16503,6 +16508,8 @@ export class Game {
       if (this.recargandoLaLlegada) return;
       this.recargandoLaLlegada = true;
       const q = new URLSearchParams(location.search);
+      // Desde la ficha del menú la dirección no lleva nada, y sin `inicio` se volvería al hangar.
+      q.set("inicio", "4");
       q.set("capitulo", "3");
       location.replace(`${location.pathname}?${q.toString()}`);
       return;
@@ -25649,7 +25656,8 @@ export class Game {
     const ahora = this.relojDePared;
     if (ahora - this.tocableMiradoEn > 0.5) {
       this.tocableMiradoEn = ahora;
-      this.tocableALaVista = this.buscarLoTocable(v, new Set(e.toques.map((x) => x.que)));
+      // Donde no se invita a tocar no late nada: un aro que aparece sin que nadie lo cuente no se entiende.
+      this.tocableALaVista = escena.invitaATocar ? this.buscarLoTocable(v, new Set(e.toques.map((x) => x.que))) : null;
     }
     const tocado = this.loTocado && ahora < this.loTocado.hasta ? this.loTocado : null;
     this.aroDeLoTocado.poner(tocado ? this.enLaPantalla(tocado.punto, tocado.delAvion) : null);
@@ -25770,6 +25778,16 @@ export class Game {
       if (!origen) return null;
       const { x, z } = dondeCae(origen, sitio === "chaco-enfrente" ? CHACO_ENFRENTE : RIO_ENFRENTE);
       return { puntos: [enElSuelo(x, z, null)], ventanilla: POR_LA_VENTANILLA, fuera: 0 };
+    }
+    // Una ciudad encendida de noche: por el cristal y de lejos. Sin toma de fuera, que lo que se dice es lo que ve Ara.
+    if (sitio === "luces-de-tenerife") {
+      const origen = this.scenario.aerodrome?.origin;
+      if (!origen) return null;
+      const puntos = LUCES_DE_TENERIFE.map((u) => {
+        const { x, z } = dondeCae(origen, u);
+        return enElSuelo(x, z, COTA_DE_LAS_LUCES_DE_TENERIFE);
+      });
+      return { puntos, ventanilla: LAS_LUCES_DE_TENERIFE_LLEGAN_A, fuera: 0 };
     }
     const llegada = this.vecinos.find((v) => v.base.id === DESTINO_DEL_PASAJE);
     if (!llegada) return null;

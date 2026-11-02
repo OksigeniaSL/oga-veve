@@ -4787,8 +4787,53 @@ export const ES_PY = {
   "comandante.largo.llegada.verano": "Aquí son las seis y veinticinco de la mañana. Que tengan un muy lindo día.",
   "comandante.largo.llegada.invierno": "Aquí son las siete y media de la mañana. Que tengan un muy lindo día.",
   "inicio.ara.pasaje.largo.llegamos": "¡Llegamos a Asunción! Crucé el océano entero.",
+  /*
+   * ── **El segundo capítulo del vuelo largo: «La noche sobre el mar»** ──────
+   *
+   * La cena bajo su lámina, Tenerife si se ve, El Hierro en la pantalla del asiento y
+   * las luces bajas. Idaira, de tú; Derlis y Ara, de vos; la comandante calla casi toda
+   * la noche. Las fuentes, en `docs/historias/fuentes.md` y en la cabecera de
+   * `src/flight/guion-noche-sobre-el-mar.ts`.
+   */
+  "inicio.tripulacion.pasaje.derlis.cena":
+    "Los chicos cenan primero. Acá tenés la tuya: pollo con mandioca de la Granja Óga, calentito.",
+  "inicio.ara.pasaje.largo.cena":
+    "¡Qué rico huele! ¿Cocinan acá arriba, en el avión?",
+  "inicio.tripulacion.pasaje.cerca.largo.hornos":
+    "No, se cocina en tierra. Aquí arriba solo se calienta, en unos hornos pequeños.",
+  "inicio.tripulacion.pasaje.cerca.largo.cierres":
+    "Y en la cocina todo va trabado con cierres, y nosotros los revisamos: si el avión se mueve, nada puede salir volando.",
+  "inicio.tripulacion.pasaje.derlis.aguaCena":
+    "Y un vasito de agua, para cuando tengas sed: el aire de acá arriba es muy seco.",
+  "inicio.tripulacion.pasaje.derlis.piernasCena":
+    "Cuando termines, mové los pies y las piernas sin levantarte: la punta arriba, la punta abajo.",
+  "inicio.ara.pasaje.largo.noche":
+    "¡Qué oscuro está afuera! Y cuántas estrellas.",
+  "inicio.ara.pasaje.largo.tenerife":
+    "¡Mirá, allá lejos brillan las luces de Tenerife! De ahí salió mi primer vuelo.",
+  "inicio.tripulacion.pasaje.cerca.largo.hierroEncima":
+    "Mira tu pantalla: estamos justo encima de El Hierro, la isla más al oeste de Canarias.",
+  "inicio.ara.pasaje.largo.hierroNoSeVe":
+    "¿Encima? ¡Pero por mi ventanilla no la veo!",
+  "inicio.tripulacion.pasaje.cerca.largo.hierroDebajo":
+    "Claro, la tenemos justo debajo, y desde el asiento no se ve. Por eso te la enseña el mapa.",
+  "inicio.tripulacion.pasaje.cerca.largo.meridiano":
+    "Durante siglos, los mapas empezaban a contar desde esta isla, porque era el borde del mundo conocido.",
+  "inicio.tripulacion.pasaje.cerca.largo.greenwich":
+    "Luego el mundo se puso de acuerdo en contar desde Greenwich, en Inglaterra, y así sigue.",
+  "inicio.tripulacion.pasaje.cerca.largo.consolaRecogeLuces":
+    "Guardamos la pantalla, que vamos a bajar las luces para dormir.",
+  "comandante.largo.luces":
+    "Señores pasajeros, vamos a bajar las luces, que para el cuerpo ya es de noche. Sentados, el cinturón siempre puesto.",
+  "inicio.tripulacion.pasaje.cerca.largo.antifaz":
+    "Para dormir, aquí tienes tu antifaz y tu manta.",
+  "inicio.tripulacion.pasaje.cerca.largo.cinturonManta":
+    "Y el cinturón, por encima de la manta: así lo vemos sin tener que despertarte.",
+  "inicio.ara.pasaje.largo.cinturonArriba":
+    "¡El cinturón por arriba! Así me cuidan mientras duermo.",
   // No se graban: son de la pantalla.
   "inicio.modo.largo": "Llegá a Asunción",
+  "inicio.modo.noche": "Cruzá el mar de noche",
   "inicio.modo.tripulanteDerlis": "El tripulante de cabina, a tu lado",
   "inicio.dibujo.piernas": "Un pie que sube y baja la punta, sin levantarse del asiento.",
   "ilustracion.desayuno": "Ara abre los ojos con el desayuno en la mesita; por la ventanilla sale el sol",
@@ -4796,4 +4841,6 @@ export const ES_PY = {
   "ilustracion.huso-invierno": "La Tierra, mitad de noche: las diez en Madrid y las seis en Asunción",
   "ilustracion.huso-verano": "La Tierra, mitad de noche: las diez en Madrid y las cinco en Asunción",
   "ilustracion.ecuador": "La Tierra con el ecuador en raya roja, y el avión cruzándolo",
+  "ilustracion.cena": "Ara recibe la cena del tripulante; detrás, el carrito frenado y con su cierre",
+  "ilustracion.manta": "Ara con sueño, bajo la manta y con el cinturón por encima, con las luces bajas",
 } as const;

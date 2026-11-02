@@ -174,6 +174,8 @@ describe("las ilustraciones", () => {
       "oido",
       "desayuno",
       "desayuno-noche",
+      "cena",
+      "manta",
     ]);
   });
 

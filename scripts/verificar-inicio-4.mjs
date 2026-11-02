@@ -56,6 +56,12 @@
  *   llegar sale en una línea, para compararlo con el tercero suelto, que es el mismo mundo.
  * - **Y cae con el parte de Asunción**, no con el de Canarias: vuela con el 040/12 del
  *   alisio, y `OGA_VIENTO` es el de allí. Con 200/8, tiene que entrar por la 20.
+ * - **Lo que se cuenta**: cada lámina con su fichero y en su orden, las frases en el suyo,
+ *   Tenerife solo si se ve por su cristal, y El Hierro nunca por el cristal: en el plano
+ *   `respaldo`, con la pantalla enseñando dónde va el avión.
+ * - **`OGA_CONSOLA=mapa` o `OGA_CONSOLA=juego`** abre la pantalla en cuanto sale, con el
+ *   dedo, y la deja abierta: tiene que recogerse con su frase al bajar las luces y Ara
+ *   dormirse igual. Con el juego, El Hierro no se cuenta encima.
  *
  * `OGA_SOLO_NOCHE=1` para al caer del salto, y `OGA_METAR=` da un parte a mano, que con el
  * alisio de siempre lleva una capa de nubes por debajo del avión: para las capturas.
@@ -78,6 +84,7 @@ const SOLO_APERTURA = !!process.env.OGA_APERTURA;
 const CAPITULO = process.env.OGA_CAPITULO ?? "3";
 const SOLO_NOCHE = !!process.env.OGA_SOLO_NOCHE;
 const METAR = process.env.OGA_METAR ?? null;
+const CONSOLA = process.env.OGA_CONSOLA ?? null;
 /** Lo que se aparta como mucho de lo que dan las cuentas al pasar por las islas, m. */
 const MARGEN_DE_LADO = 10_000;
 /** El mundo de Tenerife Norte llega a esto de su centro, m: dieciocho veces sus dieciocho kilómetros, y la mitad. */
@@ -102,6 +109,34 @@ const DE_LA_APERTURA = (temporada, sol) => [
   "inicio.tripulacion.pasaje.derlis.desfase",
   ...(sol),
 ];
+/** Las frases de la noche, por trozos: Tenerife y El Hierro, solo si hoy tocan. Ver `laNoche`. */
+const DE_LA_NOCHE = {
+  apertura: [
+    "inicio.tripulacion.pasaje.derlis.cena",
+    "inicio.ara.pasaje.largo.cena",
+    "inicio.tripulacion.pasaje.cerca.largo.hornos",
+    "inicio.tripulacion.pasaje.cerca.largo.cierres",
+    "inicio.tripulacion.pasaje.derlis.aguaCena",
+    "inicio.tripulacion.pasaje.derlis.piernasCena",
+    "inicio.ara.pasaje.largo.noche",
+  ],
+  tenerife: ["inicio.ara.pasaje.largo.tenerife"],
+  hierro: [
+    "inicio.tripulacion.pasaje.cerca.largo.hierroEncima",
+    "inicio.ara.pasaje.largo.hierroNoSeVe",
+    "inicio.tripulacion.pasaje.cerca.largo.hierroDebajo",
+    "inicio.tripulacion.pasaje.cerca.largo.meridiano",
+    "inicio.tripulacion.pasaje.cerca.largo.greenwich",
+  ],
+  luces: [
+    "comandante.largo.luces",
+    "inicio.tripulacion.pasaje.cerca.largo.antifaz",
+    "inicio.tripulacion.pasaje.cerca.largo.cinturonManta",
+    "inicio.ara.pasaje.largo.cinturonArriba",
+    "inicio.ara.pasaje.dormirse",
+  ],
+};
+const SE_RECOGE_LA_CONSOLA = "inicio.tripulacion.pasaje.cerca.largo.consolaRecogeLuces";
 /** De qué piezas tienen voz ya: lo que no, sale «sin grabar». */
 const manifiesto = (voz) => JSON.parse(readFileSync(`data/voces/${voz}/manifiesto.json`, "utf8")).piezas;
 const GRABADAS = new Set(["ara", "comandante", "tripulacion", "tripulacion-canarias"].flatMap((v) => Object.keys(manifiesto(v))));
@@ -218,6 +253,9 @@ const leer = (page) =>
       maquina: o.maquina(),
       coste: o.coste(),
       siesta: i.siesta ?? null,
+      kit: i.estado?.kit ?? null,
+      consola: i.estado?.consola ?? null,
+      enLaPantalla: i.consola?.enLaPantalla ?? null,
       plan: j.planParaBanco ?? null,
       tarjeta: tarjeta
         ? {
@@ -360,11 +398,26 @@ async function laNoche(page) {
   let dejoElCrucero = false;
   const pared0 = Date.now();
   let pedido = null;
+  let consolaTocada = false;
+  let enElHierro = null;
+  const tapas = [];
+  const planos = [];
   for (;;) {
     const l = await leer(page);
+    if (tapas.at(-1) !== l.tapa) tapas.push(l.tapa);
+    if (planos.at(-1) !== l.plano) planos.push(l.plano);
+    if (!enElHierro && l.linea?.endsWith("largo.hierroEncima")) enElHierro = { plano: l.plano, pantalla: l.enLaPantalla };
+    // Antes del `break`: la última lectura también cuenta para lo que se quedó a la vista.
     if (l.salto.enCurso) {
       pedido = l;
       break;
+    }
+    if (CONSOLA && !consolaTocada && l.consola?.sale) {
+      consolaTocada = true;
+      await page.locator('[data-consola="abrir"]').click({ timeout: 5000 });
+      if (CONSOLA === "juego") await page.locator('[data-consola-pestana="juegos"]').click({ timeout: 5000 });
+      await pausa(800);
+      await foto(page, `noche-consola-${CONSOLA}`);
     }
     if (l.percance || Date.now() - pared0 > 15 * 60_000) break;
     const dichos = l.dichos;
@@ -386,19 +439,27 @@ async function laNoche(page) {
       }
     }
     for (const [cual, cuando] of [
-      ["noche-1-ventanilla", dichos.includes("ventanilla")],
-      ["noche-2-tenerife-de-traves", dichos.includes("tenerife") && l.plano === "ventanilla" && l.linea?.endsWith("cerca.estrellas")],
-      ["noche-3-asomado-el-hierro", l.plano === "asomado-abajo" && l.linea?.endsWith("marAbajo")],
-      ["noche-4-luces", dichos.includes("luces")],
+      ["noche-lamina-cena", l.lamina?.vista === "cena" && l.lamina.tapa && !!l.linea],
+      ["noche-1-ventanilla", dichos.includes("ventanilla") && !l.sobreElMundo.visible],
+      ["noche-2-tenerife", l.linea?.endsWith("largo.tenerife")],
+      ["noche-3-pantalla-el-hierro", l.plano === "respaldo" && l.linea?.endsWith("largo.hierroEncima")],
+      ["noche-4-luces", dichos.includes("luces") && l.linea === "comandante.largo.luces"],
+      ["noche-lamina-manta", l.lamina?.vista === "manta" && l.lamina.tapa && !!l.linea],
     ])
       if (cuando && !fotosHechas.has(cual)) {
         fotosHechas.add(cual);
-        await pausa(cual === "noche-3-asomado-el-hierro" ? 900 : 300);
+        await pausa(900);
         await foto(page, cual);
       }
     await pausa(250);
   }
   comprobar("y el mundo no asoma antes de la ventanilla", desnudo === 0, `${desnudo} lecturas con el mundo a la vista`);
+  const laminas = pedido?.lamina ?? { vistas: [], sinFichero: ["(no se durmió)"] };
+  comprobar(
+    "cada lámina se ve, con su fichero, en su orden",
+    laminas.vistas.join() === "cena,manta" && laminas.sinFichero.length === 0 && tapas.filter((t) => t && t !== "a-oscuras").join() === "cena,manta",
+    `vistas ${laminas.vistas.join(" → ")} · pedidas ${tapas.join(" → ")} · sin fichero ${laminas.sinFichero.join(", ") || "ninguna"}`,
+  );
   comprobar("va todo el rato en crucero", !dejoElCrucero, "");
   const horaDeValverde = ruta.cuandoPasa(perfil, ruta.PASA_EL_HIERRO);
   const { valverde, tenerife, laPalma } = pasos;
@@ -482,11 +543,91 @@ async function laNoche(page) {
   const reg = delAntes?.registro ?? [];
   let pisadas = 0;
   for (let k = 1; k < reg.length; k++) if (reg[k].desde < (reg[k - 1].hasta ?? Infinity) - 1e-6) pisadas++;
+  const dichos = delAntes?.dichos ?? [];
+  const seVioTenerife = dichos.includes("tenerife");
+  const seContoElHierro = dichos.includes("hierro");
+  const momentos = ["cena", "cocina", "agua", "ventanilla", ...(seVioTenerife ? ["tenerife"] : []), ...(seContoElHierro ? ["hierro"] : []), "luces", "manta"];
   comprobar(
     "en este capítulo tampoco suenan dos voces a la vez, y se dice lo suyo en su orden",
-    pisadas === 0 && reg.every((d) => !d.cortada) && ["cena", "ventanilla", "tenerife", "hierro", "luces"].every((m, k) => delAntes.dichos[k] === m),
-    `${reg.length} frases · ${pisadas} pisadas · ${delAntes?.dichos.join(", ")}`,
+    pisadas === 0 && reg.every((d) => !d.cortada) && momentos.join() === dichos.filter((m) => m !== "bajada").join(),
+    `${reg.length} frases · ${pisadas} pisadas · ${dichos.join(", ")}`,
   );
+  const orden = [
+    ...DE_LA_NOCHE.apertura,
+    ...(seVioTenerife ? DE_LA_NOCHE.tenerife : []),
+    ...(seContoElHierro ? DE_LA_NOCHE.hierro : []),
+    ...(CONSOLA ? [SE_RECOGE_LA_CONSOLA] : []),
+    ...DE_LA_NOCHE.luces,
+  ];
+  const lasDichas = reg.map((d) => d.clave);
+  let hasta = -1;
+  const fueraDeOrden = orden.filter((c) => {
+    const j = lasDichas.indexOf(c);
+    if (j <= hasta) return true;
+    hasta = j;
+    return false;
+  });
+  comprobar("suena todo, en su orden", fueraDeOrden.length === 0, fueraDeOrden.length ? `fuera de orden o sin decir: ${fueraDeOrden.join(", ")}` : `${orden.length} frases`);
+  const sinSonar = reg.filter((d) => d.como !== null && d.como !== "sono").map((d) => d.clave);
+  const graves = sinSonar.filter((c) => GRABADAS.has(c));
+  comprobar(
+    "lo que no suena es solo lo que está sin grabar: ni una grabada muda",
+    graves.length === 0,
+    graves.length ? `grabadas y mudas: ${graves.join(", ")}` : `sin grabar, y por eso mudas: ${sinSonar.length} de ${reg.length}`,
+  );
+  if (sinSonar.length) console.log(`  sin grabar: ${sinSonar.join(" · ")}`);
+  comprobar(
+    "de lo de prueba, nada: ni el mar azul oscurito, ni lo de tocar con el dedo",
+    !lasDichas.some((c) => /marAbajo|toque\.invita|cerca\.estrellas|cerca\.persiana/.test(c)),
+    "",
+  );
+
+  // ── Lo que se nombra ─────────────────────────────────────────────────
+  const delTenerife = pedido.nombrados.filter((n) => n.sitio === "luces-de-tenerife");
+  comprobar(
+    "Tenerife, solo si se ve por su cristal, y por su lado",
+    seVioTenerife
+      ? delTenerife.length === 1 && ["ventanilla", "asomado"].includes(delTenerife[0].como) && delTenerife[0].lado === "izquierda"
+      : pedido.saltados.includes("tenerife") && delTenerife.length === 0 && !lasDichas.includes(DE_LA_NOCHE.tenerife[0]),
+    seVioTenerife ? `se nombró: ${delTenerife[0]?.como}, ${delTenerife[0]?.lado}` : "hoy no se veía, y no se nombró",
+  );
+  comprobar(
+    "Ara no nombra El Hierro por el cristal: nada mirando abajo, y nada nombrado de la isla",
+    !planos.includes("asomado-abajo") && !pedido.nombrados.some((n) => /hierro|valverde/i.test(n.sitio)),
+    `planos ${planos.join(" → ")} · nombrado ${pedido.nombrados.map((n) => n.sitio).join(", ") || "nada"}`,
+  );
+  if (CONSOLA !== "juego")
+    comprobar(
+      "El Hierro va en el plano del respaldo, con la pantalla enseñando dónde va el avión",
+      enElHierro?.plano === "respaldo" && enElHierro?.pantalla === "cerca",
+      enElHierro ? `plano ${enElHierro.plano} · pantalla ${enElHierro.pantalla}` : "no se contó",
+    );
+
+  // ── La consola ───────────────────────────────────────────────────────
+  const consolaAlDormirse = pedido.consola;
+  comprobar(
+    "la consola se ha ido al bajar las luces, y no vuelve a salir",
+    !!consolaAlDormirse && consolaAlDormirse.recogida && !consolaAlDormirse.abierta && !consolaAlDormirse.sale,
+    consolaAlDormirse ? `abierta ${consolaAlDormirse.abierta} · recogida ${consolaAlDormirse.recogida} · por la red ${consolaAlDormirse.porElTope}` : "sin consola",
+  );
+  if (CONSOLA) {
+    comprobar(
+      `con ${CONSOLA === "juego" ? "un juego abierto" : "la pantalla abierta"} al bajar las luces, se recoge con su frase, sin la de los diez mil pies, y Ara se duerme igual`,
+      consolaTocada &&
+        lasDichas.includes(SE_RECOGE_LA_CONSOLA) &&
+        !lasDichas.includes("inicio.tripulacion.pasaje.cerca.largo.consolaRecoge") &&
+        lasDichas.indexOf(SE_RECOGE_LA_CONSOLA) < lasDichas.indexOf("comandante.largo.luces") &&
+        pedido.siestas.length === 1 &&
+        !pedido.consola.abierta,
+      `tocada ${consolaTocada} · siestas ${pedido.siestas.length} · kit abierto ${!!pedido.kit?.abierto}`,
+    );
+    if (CONSOLA === "juego")
+      comprobar(
+        "y con el juego delante, El Hierro no se cuenta encima",
+        !seContoElHierro && pedido.saltados.includes("hierro") && !pedido.kit?.abierto,
+        `dichos ${dichos.join(", ")} · saltados ${pedido.saltados.join(", ")}`,
+      );
+  } else comprobar("sin abrirla, no se pide guardarla", !lasDichas.includes(SE_RECOGE_LA_CONSOLA), "");
   console.log(`  lo dicho: ${reg.map((d) => `${d.clave}(${d.como})`).join(" · ")}`);
   console.log(`  ${((Date.now() - pared0) / 1000).toFixed(0)} s de pared de la ventanilla al salto`);
   await foto(page, "noche-6-tras-el-salto");
@@ -889,8 +1030,12 @@ async function elCapitulo() {
   }
 }
 
-/** La ficha de «¿A qué jugás?», con el dedo: abre el capítulo, sin obligar a leer. */
-async function laFicha() {
+/**
+ * Una ficha de «¿A qué jugás?», con el dedo: abre su capítulo, sin obligar a leer. La de la
+ * noche es lo único que la abre fuera de desarrollo, así que aquí no se le da `?capitulo=`.
+ */
+async function laFicha(cual) {
+  const LA_ESPERADA = cual === "noche" ? { nombre: "de cruzar el mar de noche", mundo: "tenerife-norte", hora: ruta.entradaDeLaNoche(perfil) } : { nombre: "de llegar a Asunción", mundo: "pettirossi", hora: ruta.entradaDeLaLlegada(perfil) };
   const ctx = await navegador.newContext({ viewport: { width: 1280, height: 800 }, locale: "es-PY" });
   const page = await ctx.newPage();
   const errores = [];
@@ -903,18 +1048,23 @@ async function laFicha() {
     await page.click("[data-crear]");
     await page.waitForSelector('[data-pantalla="que"]', { timeout: 120_000 });
     await page.click('[data-pantalla="que"]');
-    await page.waitForSelector('[data-inicio-modo="largo"]', { timeout: 20_000 });
-    const ficha = await page.evaluate(() => {
-      const b = document.querySelector('[data-inicio-modo="largo"]');
+    const selector = `[data-inicio-modo="${cual}"]`;
+    await page.waitForSelector(selector, { timeout: 20_000 });
+    const ficha = await page.evaluate((sel) => {
+      const b = document.querySelector(sel);
       const c = b.getBoundingClientRect();
       return { alto: c.height, ancho: c.width, dibujo: !!b.querySelector("svg"), nombre: b.querySelector(".ficha__nombre")?.textContent?.trim() };
-    });
-    comprobar("la ficha de llegar a Asunción, con su dibujo y su nombre", ficha.dibujo && ficha.alto >= 44 && !!ficha.nombre, `«${ficha.nombre}» ${Math.round(ficha.ancho)} × ${Math.round(ficha.alto)} px`);
-    if (FOTOS) await page.screenshot({ path: `${FOTOS}/inicio-4-menu.png` });
-    await page.click('[data-inicio-modo="largo"]');
+    }, selector);
+    comprobar(`la ficha ${LA_ESPERADA.nombre}, con su dibujo y su nombre`, ficha.dibujo && ficha.alto >= 44 && !!ficha.nombre, `«${ficha.nombre}» ${Math.round(ficha.ancho)} × ${Math.round(ficha.alto)} px`);
+    if (FOTOS) await page.screenshot({ path: `${FOTOS}/inicio-4-menu-${cual}.png` });
+    await page.click(selector);
     await page.waitForFunction(() => globalThis.__oga?.inicio?.()?.estado && globalThis.__oga.salto?.()?.hora != null, null, { timeout: 240_000 });
-    const abre = await page.evaluate(() => ({ escena: globalThis.__oga.inicio().escena, avion: globalThis.__oga.avion().id, mundo: globalThis.__oga.salto().mundo }));
-    comprobar("y abre este capítulo", abre.escena === "largo" && abre.avion === "jaz-110" && abre.mundo === "pettirossi", `${abre.escena} · ${abre.avion} · ${abre.mundo}`);
+    const abre = await page.evaluate(() => ({ escena: globalThis.__oga.inicio().escena, avion: globalThis.__oga.avion().id, mundo: globalThis.__oga.salto().mundo, hora: globalThis.__oga.salto().hora, url: location.search }));
+    comprobar(
+      "y abre su capítulo, a su hora",
+      abre.escena === "largo" && abre.avion === "jaz-110" && abre.mundo === LA_ESPERADA.mundo && Math.abs(abre.hora - LA_ESPERADA.hora) < 60 && !abre.url.includes("capitulo"),
+      `${abre.escena} · ${abre.avion} · ${abre.mundo} · ${(abre.hora / 3600).toFixed(3)} h · dirección «${abre.url}»`,
+    );
     comprobar("sin errores de consola, desde el menú", errores.length === 0, errores.slice(0, 3).join(" · "));
   } catch (e) {
     comprobar("la ficha", false, `${String(e).slice(0, 300)} · ${errores.slice(0, 2).join(" · ")}`);
@@ -974,7 +1124,10 @@ async function laRedDeLaNoche() {
 }
 
 try {
-  if (process.env.OGA_MENU) await laFicha();
+  if (process.env.OGA_MENU) {
+    await laFicha("noche");
+    await laFicha("largo");
+  }
   else if (process.env.OGA_RED) await laRedDeLaNoche();
   else await elCapitulo();
 } finally {

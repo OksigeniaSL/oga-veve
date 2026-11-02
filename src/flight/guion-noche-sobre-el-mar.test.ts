@@ -1,17 +1,21 @@
 /**
- * El esqueleto del segundo capítulo: la entrada, las cifras de las islas y los pasos
- * del guion, con frases que ya están grabadas. El vuelo de verdad lo vuela
+ * El segundo capítulo: la entrada, las cifras de las islas, los pasos del guion, lo que
+ * se nombra y lo que se recoge. El vuelo de verdad lo vuela
  * `scripts/verificar-inicio-4.mjs`, con `OGA_CAPITULO=2`.
  */
 
 import { describe, expect, it } from "vitest";
 import ARA from "../../data/voces/ara/manifiesto.json";
+import COMANDANTE from "../../data/voces/comandante/manifiesto.json";
+import DERLIS from "../../data/voces/tripulacion/manifiesto.json";
 import TRIPULANTE from "../../data/voces/tripulacion-canarias/manifiesto.json";
+import { EN } from "../i18n/en";
+import { ES_PY } from "../i18n/es-PY";
 import { dondeCae } from "../world/entre-aerodromos";
 import type { Linea } from "./conversacion";
 import { GUION_NOCHE_SOBRE_EL_MAR, ISLAS_DE_LA_NOCHE } from "./guion-noche-sobre-el-mar";
 import { GUION_LLEGADA_A_ASUNCION } from "./guion-llegada-a-asuncion";
-import { MotorDelPasaje, type DelVueloLargo, type LecturaDelPasaje } from "./motor-del-pasaje";
+import { MotorDelPasaje, type DelVueloLargo, type LecturaDelPasaje, type SitioDelPaisaje, type VistaDelSitio } from "./motor-del-pasaje";
 import {
   cuandoPasa,
   DE_MADRID_A_ASUNCION,
@@ -29,6 +33,13 @@ import {
 } from "./ruta-larga";
 import { destinoDelSalto, mundoDelTramo } from "./salto-bajo-tapa";
 import { VECINOS_A_LA_VEZ } from "../world/vecinos-del-vuelo";
+
+/** Node, que las pruebas corren en él: el proyecto no lleva sus tipos. Como en `ui/ilustraciones.test.ts`. */
+const { readFileSync } = (
+  globalThis as unknown as {
+    process: { getBuiltinModule(nombre: string): unknown };
+  }
+).process.getBuiltinModule("node:fs") as { readFileSync(ruta: string, cod: string): string };
 
 const DT = 1 / 10;
 const VERANO = perfilDelVuelo(horarioDelDia(new Date("2026-07-15T12:00:00Z")));
@@ -93,21 +104,68 @@ describe("el salto de la noche", () => {
 });
 
 describe("el guion", () => {
-  const VOCES = new Set([...Object.keys(ARA.piezas), ...Object.keys(TRIPULANTE.piezas)]);
-  const lasFrases = (): readonly Linea[] => GUION_NOCHE_SOBRE_EL_MAR.momentos.flatMap((m) => m.lineas);
+  const GRABADAS = new Set(
+    [ARA, TRIPULANTE, DERLIS, COMANDANTE].flatMap((m) => Object.keys(m.piezas)),
+  );
+  const consola = GUION_NOCHE_SOBRE_EL_MAR.consola!;
+  const lasFrases = (): readonly Linea[] => [
+    ...GUION_NOCHE_SOBRE_EL_MAR.momentos.flatMap((m) => m.lineas),
+    consola.seRecoge,
+  ];
+  const texto = (l: Linea): string => String(ES_PY[l.clave as keyof typeof ES_PY]);
 
-  it("no trae frases nuevas: todas, ya grabadas", () => {
-    const frases = [...lasFrases(), GUION_NOCHE_SOBRE_EL_MAR.siesta.seDuerme];
-    expect(frases.length).toBeGreaterThan(0);
-    for (const f of frases) expect(VOCES.has(f.clave), f.clave).toBe(true);
+  it("cada frase, con su texto en los dos idiomas y en la lista de grabar; y treinta nuevas como mucho", () => {
+    const lista = readFileSync("scripts/frases-para-grabar.mjs", "utf8");
+    const nuevas = lasFrases().filter((f) => !GRABADAS.has(f.clave));
+    expect(nuevas.length).toBeGreaterThan(0);
+    expect(nuevas.length).toBeLessThanOrEqual(30);
+    for (const f of lasFrases()) {
+      expect(ES_PY[f.clave as keyof typeof ES_PY], f.clave).toBeTruthy();
+      expect(EN[f.clave as keyof typeof EN], f.clave).toBeTruthy();
+    }
+    for (const f of nuevas) expect(lista, f.clave).toContain(`"${f.clave}"`);
   });
 
-  it("las láminas del capítulo que sigue, ya bajadas antes de caer en ellas", () => {
-    expect(GUION_NOCHE_SOBRE_EL_MAR.apertura?.laminas).toEqual(GUION_LLEGADA_A_ASUNCION.apertura?.laminas);
+  it("no queda nada de lo de prueba", () => {
+    const claves = lasFrases().map((f) => f.clave);
+    for (const k of ["marAbajo", "cerca.estrellas", "cerca.persiana", "cerca.ruta", "pasaje.mapa"])
+      expect(claves.filter((c) => c.endsWith(k)), k).toEqual([]);
   });
+
+  it("lo de la salud, como lo dice la OMS: ni que el avión deshidrata, ni pastillas para dormir", () => {
+    const todo = lasFrases().map(texto).join(" ");
+    expect(todo).not.toMatch(/deshidrat|beber mucho|pastilla|melatonina/i);
+    expect(texto(lasFrases().find((f) => f.clave.endsWith("derlis.aguaCena"))!)).toMatch(/vasito de agua.*sed/);
+  });
+
+  it("la recogida de este capítulo no dice que se va bajando", () => {
+    expect(consola.seRecoge.clave).not.toBe(GUION_LLEGADA_A_ASUNCION.consola!.seRecoge.clave);
+    expect(texto(consola.seRecoge)).not.toMatch(/bajando/);
+    expect(texto(consola.seRecoge)).toMatch(/bajar las luces/);
+  });
+
+  it("las suyas y las del capítulo que sigue, ya bajadas antes de caer en ellas", () => {
+    expect(GUION_NOCHE_SOBRE_EL_MAR.apertura?.laminas).toEqual(["cena", "manta", ...GUION_LLEGADA_A_ASUNCION.apertura!.laminas]);
+  });
+
+  interface ComoSeVuela {
+    readonly ver?: (sitio: SitioDelPaisaje) => VistaDelSitio;
+    readonly tocable?: boolean;
+    /** Lo que se toca de la consola en cuanto sale. */
+    readonly enLaConsola?: "mapa" | "juegos";
+    /** Si el dibujo contesta al recoger; sin él, la red. */
+    readonly contesta?: boolean;
+  }
 
   /** Vuela lo que dura el capítulo con una voz de un segundo por frase, hasta que Ara se duerma. */
-  function hastaDormirse(): { readonly escena: MotorDelPasaje; readonly orden: readonly string[]; readonly planos: readonly string[] } {
+  function hastaDormirse(como: ComoSeVuela = {}): {
+    readonly escena: MotorDelPasaje;
+    readonly orden: readonly string[];
+    readonly planos: readonly string[];
+    readonly tapas: readonly (string | null)[];
+    readonly dichas: readonly string[];
+    readonly modos: readonly string[];
+  } {
     let t = 0;
     const dichas: string[] = [];
     let acaba: { fin: number; alAcabar: (esperaMas: number) => void } | null = null;
@@ -120,7 +178,10 @@ describe("el guion", () => {
         acaba = null;
       },
     };
-    const escena = new MotorDelPasaje(voz, GUION_NOCHE_SOBRE_EL_MAR, { pared: () => t }) as unknown as MotorDelPasaje;
+    const escena = new MotorDelPasaje(voz, GUION_NOCHE_SOBRE_EL_MAR, {
+      pared: () => t,
+      conPantalla: true,
+    }) as unknown as MotorDelPasaje;
     const delVuelo: Omit<DelVueloLargo, "recorrido"> = {
       temporada: "invierno",
       conSolAlDesayunar: true,
@@ -131,6 +192,9 @@ describe("el guion", () => {
     };
     const planos: string[] = [];
     const orden: string[] = [];
+    const tapas: (string | null)[] = [];
+    const modos: string[] = [];
+    let tocada = false;
     for (let recorrido = PASA_EL_HIERRO - ENTRA_LA_NOCHE_ANTES; t < 1800 && !escena.durmiendo; recorrido += 231 * DT) {
       t += DT;
       if (acaba && t >= (acaba as { fin: number }).fin) {
@@ -155,19 +219,94 @@ describe("el guion", () => {
         faltaParaTocar: 8_000_000,
         hastaLaBajada: 30_000,
         largo: { ...delVuelo, recorrido },
+        ...(como.ver ? { ver: como.ver } : {}),
+        ...(como.tocable ? { tocable: true } : {}),
       };
       escena.paso(DT, l);
+      const c = escena.consola!;
+      if (como.enLaConsola && !tocada && c.estado.sale) {
+        tocada = true;
+        c.abrir();
+        if (como.enLaConsola !== "mapa") c.elegir(como.enLaConsola);
+      }
+      if (como.contesta && c.estado.recogiendo) c.yaRecogida();
       const e = escena.estado;
       if (planos.at(-1) !== e.plano) planos.push(e.plano);
+      if (tapas.at(-1) !== e.tapa) tapas.push(e.tapa);
+      if (modos.at(-1) !== c.modoDeAhora) modos.push(c.modoDeAhora);
       for (const m of e.dichos) if (!orden.includes(m)) orden.push(m);
     }
-    return { escena, orden, planos };
+    return { escena, orden, planos, tapas, dichas, modos };
   }
 
-  it("arranca tapado, se abre la ventanilla, pasa Tenerife, se asoma a El Hierro y baja las luces", () => {
-    const { orden, planos } = hastaDormirse();
-    expect(orden).toEqual(["cena", "ventanilla", "tenerife", "hierro", "luces"]);
-    expect(planos).toContain("asomado-abajo");
+  it("arranca tapado, y pasa por la cena, la ventanilla, Tenerife, El Hierro y las luces, en su orden", () => {
+    const { orden, tapas } = hastaDormirse();
+    expect(orden).toEqual(["cena", "cocina", "agua", "ventanilla", "tenerife", "hierro", "luces", "manta"]);
+    expect(tapas).toEqual(["cena", null, "manta"]);
+  });
+
+  it("El Hierro, en la pantalla del asiento y enseñando el trozo de cerca; nunca mirando abajo por el cristal", () => {
+    const { planos, modos, escena } = hastaDormirse();
+    expect(planos).toContain("respaldo");
+    expect(planos).not.toContain("asomado-abajo");
+    expect(modos).toEqual(["mapa", "cerca"]);
+    expect(escena.estado.nombrados.map((n) => n.sitio)).toEqual(["luces-de-tenerife"]);
+  });
+
+  it("Tenerife, solo si se ve: si hoy no, Ara no la nombra y sigue lo demás", () => {
+    const nada: VistaDelSitio = { como: null, lado: null };
+    const { escena, dichas, orden } = hastaDormirse({ ver: () => nada });
+    expect(escena.estado.saltados).toContain("tenerife");
+    expect(dichas).not.toContain("inicio.ara.pasaje.largo.tenerife");
+    expect(escena.estado.nombrados).toEqual([]);
+    expect(orden).toEqual(["cena", "cocina", "agua", "ventanilla", "hierro", "luces", "manta"]);
+    expect(escena.durmiendo).toBe(true);
+  });
+
+  it("y si se ve, la nombra con lo que se ve, por su lado", () => {
+    const { escena, dichas } = hastaDormirse({ ver: () => ({ como: "asomado", lado: "izquierda" }) });
+    expect(dichas).toContain("inicio.ara.pasaje.largo.tenerife");
+    expect(escena.estado.nombrados[0]).toMatchObject({ sitio: "luces-de-tenerife", como: "asomado", lado: "izquierda" });
+  });
+
+  it("aquí no se invita a tocar, aunque el juego diga que hay algo a la vista", () => {
+    const { dichas } = hastaDormirse({ tocable: true });
+    expect(dichas).not.toContain("inicio.ara.pasaje.toque.invita");
+    // Y es de este guion: los demás siguen invitando.
+    expect(GUION_LLEGADA_A_ASUNCION.sinInvitarATocar).toBeUndefined();
+  });
+
+  it("la consola sale al abrirse la ventanilla y se va al bajar las luces, también sin abrirla", () => {
+    const { escena, dichas } = hastaDormirse();
+    const c = escena.consola!.estado;
+    expect(c.recogida).toBe(true);
+    expect(c.sale).toBe(false);
+    // Cerrada, no hay nada que pedir que se guarde.
+    expect(dichas).not.toContain(consola.seRecoge.clave);
+  });
+
+  for (const contesta of [true, false])
+    it(`con la pantalla abierta al bajar las luces, se recoge con su frase y Ara se duerme igual (${contesta ? "el dibujo contesta" : "por la red"})`, () => {
+      const { escena, dichas, orden } = hastaDormirse({ enLaConsola: "mapa", contesta });
+      const c = escena.consola!.estado;
+      expect(c.abierta).toBe(false);
+      expect(c.recogida).toBe(true);
+      expect(c.porElTope).toBe(!contesta);
+      expect(dichas.indexOf(consola.seRecoge.clave)).toBeGreaterThan(-1);
+      expect(dichas.indexOf(consola.seRecoge.clave)).toBeLessThan(dichas.indexOf("comandante.largo.luces"));
+      expect(orden).toContain("hierro");
+      expect(escena.durmiendo).toBe(true);
+    });
+
+  it("con un juego abierto, El Hierro no se cuenta encima, y se recoge y se duerme igual: nadie se queda atrapado", () => {
+    const { escena, dichas, orden } = hastaDormirse({ enLaConsola: "juegos", contesta: true });
+    expect(escena.estado.saltados).toContain("hierro");
+    expect(orden).not.toContain("hierro");
+    expect(dichas).not.toContain("inicio.tripulacion.pasaje.cerca.largo.hierroEncima");
+    expect(dichas).toContain(consola.seRecoge.clave);
+    expect(escena.kit.estaAbierto).toBe(false);
+    expect(escena.consola!.estado.abierta).toBe(false);
+    expect(escena.durmiendo).toBe(true);
   });
 
   it("y se duerme, pidiendo saltar a la hora del despertar", () => {

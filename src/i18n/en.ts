@@ -3070,7 +3070,44 @@ export const EN: Dictionary = {
   "comandante.largo.llegada.verano": "It's twenty-five past six in the morning here. Have a lovely day.",
   "comandante.largo.llegada.invierno": "It's half past seven in the morning here. Have a lovely day.",
   "inicio.ara.pasaje.largo.llegamos": "We've reached Asunción! I crossed the whole ocean.",
+  "inicio.tripulacion.pasaje.derlis.cena":
+    "Children eat first. Here's yours: chicken and cassava from Granja Óga, nice and warm.",
+  "inicio.ara.pasaje.largo.cena":
+    "That smells so good! Do they cook up here, on the plane?",
+  "inicio.tripulacion.pasaje.cerca.largo.hornos":
+    "No, it's cooked on the ground. Up here we only heat it, in small ovens.",
+  "inicio.tripulacion.pasaje.cerca.largo.cierres":
+    "And in the galley everything is locked with latches, and we check them: if the plane moves, nothing can go flying.",
+  "inicio.tripulacion.pasaje.derlis.aguaCena":
+    "And a little cup of water, for when you're thirsty: the air up here is very dry.",
+  "inicio.tripulacion.pasaje.derlis.piernasCena":
+    "When you finish, move your feet and legs without getting up: toes up, toes down.",
+  "inicio.ara.pasaje.largo.noche":
+    "It's so dark outside! And so many stars.",
+  "inicio.ara.pasaje.largo.tenerife":
+    "Look, the lights of Tenerife are shining far away! That's where my first flight left from.",
+  "inicio.tripulacion.pasaje.cerca.largo.hierroEncima":
+    "Look at your screen: we're right above El Hierro, the westernmost of the Canary Islands.",
+  "inicio.ara.pasaje.largo.hierroNoSeVe":
+    "Above it? But I can't see it from my window!",
+  "inicio.tripulacion.pasaje.cerca.largo.hierroDebajo":
+    "Of course, it's right below us, and you can't see it from your seat. That's why the map shows it to you.",
+  "inicio.tripulacion.pasaje.cerca.largo.meridiano":
+    "For centuries, maps started counting from this island, because it was the edge of the known world.",
+  "inicio.tripulacion.pasaje.cerca.largo.greenwich":
+    "Later the world agreed to count from Greenwich, in England, and it still does.",
+  "inicio.tripulacion.pasaje.cerca.largo.consolaRecogeLuces":
+    "Let's put the screen away, we're going to dim the lights for sleeping.",
+  "comandante.largo.luces":
+    "Ladies and gentlemen, we're going to dim the lights, because for your body it's already night. While seated, keep your seat belt on.",
+  "inicio.tripulacion.pasaje.cerca.largo.antifaz":
+    "For sleeping, here's your eye mask and your blanket.",
+  "inicio.tripulacion.pasaje.cerca.largo.cinturonManta":
+    "And the seat belt goes over the blanket: that way we can see it without waking you.",
+  "inicio.ara.pasaje.largo.cinturonArriba":
+    "The belt on top! That way they look after me while I sleep.",
   "inicio.modo.largo": "Arrive in Asunción",
+  "inicio.modo.noche": "Cross the sea at night",
   "inicio.modo.tripulanteDerlis": "The cabin crew member, right beside you",
   "inicio.dibujo.piernas": "A foot lifting and lowering its toes, without getting up from the seat.",
   "ilustracion.desayuno": "Ara wakes up with breakfast on the tray; the sun rises outside the window",
@@ -3078,6 +3115,8 @@ export const EN: Dictionary = {
   "ilustracion.huso-invierno": "The Earth half in night: ten in Madrid and six in Asunción",
   "ilustracion.huso-verano": "The Earth half in night: ten in Madrid and five in Asunción",
   "ilustracion.ecuador": "The Earth with the equator as a red line, and the plane crossing it",
+  "ilustracion.cena": "Ara gets dinner from the crew member; behind, the trolley braked and latched",
+  "ilustracion.manta": "Ara, sleepy, under the blanket with the seat belt on top, with the lights dimmed",
   "pantalla.datos.alt": "Height above the sea",
   "pantalla.datos.gs": "Speed over the ground",
   "pantalla.datos.oat": "Temperature outside",

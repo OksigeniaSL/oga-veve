@@ -348,10 +348,10 @@ que no estaba arriba y se decidió al escribirlo:
 
 ## Lo que se programó del segundo capítulo
 
-`?inicio=4&capitulo=2` abre el vuelo de la noche, sin guion definitivo y solo en
-desarrollo: `flight/guion-noche-sobre-el-mar.ts` sobre el motor de siempre, y lo vuela
-`scripts/verificar-inicio-4.mjs` con `OGA_CAPITULO=2`. Sus frases, sus láminas y su ficha
-son de otra tanda. Lo que se decidió aquí:
+`flight/guion-noche-sobre-el-mar.ts` sobre el motor de siempre, y lo vuela
+`scripts/verificar-inicio-4.mjs` con `OGA_CAPITULO=2`. Se escribió primero sin guion
+definitivo; lo que lleva ahora, en «Lo que se cuenta en el segundo capítulo». Lo que se
+decidió aquí:
 
 - **Sin pasillo de crucero.** El plan pedía una franja de mundo a lo largo de la ruta, con
   dos fotos de la NASA y el relieve de ETOPO, para que se viera algo entre Madrid y Canarias
@@ -382,7 +382,32 @@ son de otra tanda. Lo que se decidió aquí:
   materiales, y three.js no suelta las texturas con el material: al llegar quedaban 50 en la
   tarjeta, donde el tercer capítulo suelto tiene 32. Con `soltarElMaterial` quedan 36.
 - **Por el cristal de Ara, El Hierro no se ve**, contra lo que decía el plan. Las cuentas y lo
-  que se ve, en la cabecera del guion; lo que se haga con eso es de la tanda del guion.
+  que se ve, en la cabecera del guion.
+
+## Lo que se cuenta en el segundo capítulo
+
+Ya lleva su guion, sus láminas y su ficha en «¿A qué jugás?». Lo que se decidió al escribirlo:
+
+- **El Hierro se cuenta en la pantalla del asiento**, y Ara dice que por su cristal no la ve.
+  El plan lo ponía mirando abajo con la cara pegada, y eso no se puede: enseñar lo que es, que
+  lo que hay justo debajo no se ve desde un asiento, es la misma lección y además es verdad.
+- **Tenerife se nombra preguntando si se ve**, con un sitio propio, `luces-de-tenerife`, y
+  mirándolo en el `cuando` del momento, no solo en su `nombra`: con el `cuando` a secas el ⏩ se
+  paraba esperando algo que hoy quizá no se ve.
+- **La consola se recoge al bajar las luces**, con su frase y por el mismo camino que a los
+  diez mil pies: `seRecogeCuando`, con la misma red. El momento de las luces espera a que se
+  haya ido; si no, le hablaría a quien aún tiene la pantalla delante.
+- **Con un juego, un cuento o el cuaderno delante, El Hierro no se cuenta.** Se dice sobre la
+  isla o no se dice: dejarlo para después sería contarlo con la isla ya atrás, y sacar a nadie
+  de un juego para enseñarle un mapa no tiene sentido. El cuento de la isla sigue en la consola.
+- **No se invita a tocar**, ni con la frase ni con el aro (`sinInvitarATocar`): de noche y a
+  esta altura no hay nada por el cristal que contar con el dedo.
+- **Desde el menú, sin `?capitulo=` y publicado**: la ficha lo pide por el hangar. La dirección
+  sigue siendo solo de desarrollo. Y la red de la noche pone también `inicio=4` al recargar,
+  porque quien entra por la ficha no lo lleva en la dirección y volvía al hangar.
+- **Lo que no entra aquí**: que la cabina se oscurezca de verdad, el mapa que corre durante la
+  siesta, el medio despertar del ecuador y «La Cruz del Sur». La comandante dice que baja las
+  luces y lo que se ve es la lámina de la manta, que ya las tiene bajas.
 
 Y **el crucero quema ya lo que dice el plan.** El escalón del empuje que se oye en crucero
 es el de subida, y quemando por él salían 1,8 veces lo que `quemadoEnElVuelo`. Nivelado, el

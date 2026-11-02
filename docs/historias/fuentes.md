@@ -132,6 +132,26 @@ Los libros que se citan:
   lo mencionan. Por eso la frase dice que los marineros «oyeron hablar de él»,
   que es lo que cuenta el libro.
 
+### El meridiano de El Hierro · «Cruzá el mar de noche»
+
+Lo cuenta Idaira en la pantalla del asiento, sobre la isla, y no es una historia de las
+que se señalan por la ventanilla: desde el asiento de Ara, El Hierro no se ve.
+
+- **Que durante siglos los mapas contaron desde El Hierro, y que era el borde del mundo
+  conocido.** El Parque Nacional Mar de las Calmas (OAPN, MITECO), leído el 2-11-2026: la
+  isla «se consideraba el límite del mundo conocido en la antigüedad», y el meridiano de El
+  Hierro fue uno de los más usados «hasta que se adoptó en 1884, el meridiano de Greenwich
+  como referencia para la medición de longitudes». —
+  [OAPN, «Cultura»](https://www.miteco.gob.es/es/parques-nacionales-oapn/red-parques-nacionales/parques-nacionales/mardelascalmas/cultura.html).
+- **Que se pasó a Greenwich**: la Conferencia Internacional del Meridiano, en Washington,
+  en octubre de 1884. — [*Protocols of the Proceedings*, Project Gutenberg n.º 17759](https://www.gutenberg.org/ebooks/17759).
+  Las fuentes secundarias no coinciden en el día de la votación, así que la frase no da
+  ninguno, ni el año.
+- **Lo que no se cuenta**: que la raya pasara por la punta de Orchilla o por su faro, aunque
+  lo diga la misma página del OAPN y mucha gente con ella. La línea oficial, los «20° al
+  oeste de París», cae en el mar, al este de la isla. Y por eso la frase dice «desde esta
+  isla» y no da ningún punto.
+
 ### El centro de Gran Canaria · `nieves`
 
 - «Risco Caído y las Montañas Sagradas de Gran Canaria», Patrimonio de la
