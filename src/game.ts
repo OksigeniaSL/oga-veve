@@ -985,6 +985,7 @@ import { CabinaDePasaje, cabinaPreparada, enLaPuerta } from "./world/cabina-de-p
 import type { AsientoDePasaje } from "./world/asiento-de-pasaje";
 import { CERCANO_EN_LA_CABINA } from "./world/cabina-333";
 import { montarElPasillo, type PasilloDePasaje } from "./world/pasillo-de-pasaje";
+import type { ModoDeLaPantalla } from "./world/pantalla-del-respaldo";
 import { diaEnLaCabina } from "./world/luz-de-cabina";
 import { nombreDeTecla } from "./flight/keymap";
 import {
@@ -25641,6 +25642,11 @@ export class Game {
    */
   planoForzadoParaBanco: Plano | null = null;
 
+  /** **Lo que enseña la pantalla del asiento**, puesto a mano. Solo para el banco. Devuelve si cambió. */
+  modoDeLaPantallaParaBanco(modo: ModoDeLaPantalla): boolean {
+    return this.elPasillo()?.pantalla?.mostrar(modo) ?? false;
+  }
+
   /**
    * **La cabina de pasaje con lo de ahora**: la luz y el mapa de la pantalla. Solo
    * mientras se mira: el lienzo se repinta cuando el avión se mueve un píxel, y no
@@ -25655,7 +25661,13 @@ export class Game {
     const perfil = this.vueloLargo?.perfil ?? (this.perfilDeLaPantalla ??= perfilDelVuelo(horarioDelDia(this.fechaDelVuelo())));
     // Antes de abrir la ventanilla, la hora del cuento: el desayuno, sobre Brasil. Ver `SE_DESAYUNA_A`.
     const enElCuento = this.inicio instanceof MotorDelPasaje && this.inicio.enLaApertura;
-    p.pantalla.poner(perfil, enElCuento ? SE_DESAYUNA_A : (this.horaDelVueloLargo ?? this.relojDelJuego - RODAJE_DE_SALIDA));
+    // Lo que marca el avión de verdad, para los datos: la temperatura, la misma del EICAS.
+    const s = this.flight.state;
+    p.pantalla.poner(perfil, enElCuento ? SE_DESAYUNA_A : (this.horaDelVueloLargo ?? this.relojDelJuego - RODAJE_DE_SALIDA), {
+      altitud: s.position.y,
+      velocidad: s.groundSpeed,
+      temperatura: temperaturaExterior(s.position.y, this.flight.aireDelDia()),
+    });
   }
   private perfilDeLaPantalla: PerfilDelVuelo | null = null;
   /** El plano cercano de la cámara, el de todo el juego. Ver `CERCANO_EN_LA_CABINA`. */

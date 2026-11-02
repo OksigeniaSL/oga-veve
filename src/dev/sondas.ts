@@ -1300,6 +1300,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     ponerPlano: (plano: Plano | null) => {
       juego.planoForzadoParaBanco = plano;
     },
+    /** **Poner un modo en la pantalla del asiento** a mano: ver `world/pantalla-del-respaldo.ts`. */
+    modoDeLaPantalla: (modo: Parameters<typeof juego.modoDeLaPantallaParaBanco>[0]) => juego.modoDeLaPantallaParaBanco(modo),
     ponerVista: (cual: string) => {
       // Una vuelta entera como mucho: si la vista no es de este avión —la de
       // pasaje en una avioneta—, la tecla no llega nunca y se para ahí.

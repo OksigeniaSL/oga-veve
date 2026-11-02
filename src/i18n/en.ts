@@ -3058,4 +3058,10 @@ export const EN: Dictionary = {
   "ilustracion.huso-invierno": "The Earth half in night: ten in Madrid and six in Asunción",
   "ilustracion.huso-verano": "The Earth half in night: ten in Madrid and five in Asunción",
   "ilustracion.ecuador": "The Earth with the equator as a red line, and the plane crossing it",
+  "pantalla.datos.alt": "Height above the sea",
+  "pantalla.datos.gs": "Speed over the ground",
+  "pantalla.datos.oat": "Temperature outside",
+  "pantalla.datos.eta": "Arrival, Asunción time",
+  "pantalla.datos.dtg": "Distance to go",
+  "pantalla.datos.ete": "Time to go",
 };
