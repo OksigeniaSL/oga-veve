@@ -78,6 +78,20 @@ export class PantallaDeLaLamina {
     return this.opacidad >= 1;
   }
 
+  /**
+   * **Tapar ya, sin fundido**: para lo que empieza tapado con la pantalla ya en
+   * marcha, que es caer de un capítulo en otro. Va debajo de la pantalla que estaba
+   * tapando y que se está por ir. Lo que se ve lo dice el siguiente `paso`.
+   */
+  taparDeGolpe(): void {
+    if (!this.raiz) return;
+    this.raiz.hidden = false;
+    this.puesta = true;
+    this.empezada = true;
+    this.opacidad = 1;
+    this.raiz.style.opacity = "1";
+  }
+
   /** Se acabó: fuera, sin fundido. */
   quitar(): void {
     this.opacidad = 0;

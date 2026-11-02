@@ -309,6 +309,17 @@ export function enLosDosTriangulos(
   return e + (d - e) * (1 - u) + (b - e) * (1 - v);
 }
 
+/**
+ * **Soltar un material y lo que cuelga de él.** three.js no suelta las texturas con el
+ * material, porque pueden ser de otros: medido al cambiar de mundo bajo tapa, se quedaban
+ * en la tarjeta dieciocho de Canarias sobre las treinta y dos del Paraguay. Si alguna la
+ * usa otro, no se pierde: se vuelve a subir la próxima vez que se pinte.
+ */
+export function soltarElMaterial(m: Material): void {
+  for (const v of Object.values(m)) if ((v as { isTexture?: boolean } | null)?.isTexture) (v as Texture).dispose();
+  m.dispose();
+}
+
 export class Terrain {
   readonly group = new Group();
   /** Cota del terreno en cada nudo de la malla, en metros. */
@@ -1908,10 +1919,11 @@ export class Terrain {
       if (object instanceof Mesh) {
         object.geometry.dispose();
         const material = object.material;
-        if (Array.isArray(material)) material.forEach((m) => m.dispose());
-        else material.dispose();
+        if (Array.isArray(material)) material.forEach(soltarElMaterial);
+        else soltarElMaterial(material);
       }
     });
+    for (const m of [this.orillas?.fina, this.orillas?.lejana]) m?.textura.dispose();
   }
 
   // ── Construcción de mallas ────────────────────────────────────────────

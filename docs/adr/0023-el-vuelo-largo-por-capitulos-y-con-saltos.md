@@ -345,3 +345,47 @@ que no estaba arriba y se decidió al escribirlo:
   de abril a octubre no lo hay. La otra es la misma con los cristales repintados de
   noche, sin tocar lo demás: la cabina sigue con la luz del amanecer, que esa la pone la
   tripulación.
+
+## Lo que se programó del segundo capítulo
+
+`?inicio=4&capitulo=2` abre el vuelo de la noche, sin guion definitivo y solo en
+desarrollo: `flight/guion-noche-sobre-el-mar.ts` sobre el motor de siempre, y lo vuela
+`scripts/verificar-inicio-4.mjs` con `OGA_CAPITULO=2`. Sus frases, sus láminas y su ficha
+son de otra tanda. Lo que se decidió aquí:
+
+- **Sin pasillo de crucero.** El plan pedía una franja de mundo a lo largo de la ruta, con
+  dos fotos de la NASA y el relieve de ETOPO, para que se viera algo entre Madrid y Canarias
+  y sobre el océano. Se quita de esta tanda: son datos nuevos, un ADR de origen del terreno
+  y una medición en la tablet, para ver un mar negro casi todo el rato. Lo de antes de
+  Canarias va bajo una lámina, como la mañana del tercer capítulo; lo de después es noche
+  y va bajo la siesta. Lo único que el capítulo vuela de verdad es lo que hay dibujado.
+- **Dos mundos, los que ya existen.** Primero **el de Tenerife Norte**, el único de Canarias
+  que llega de Tenerife a El Hierro, con el avión entrando por el sitio y no por la hora,
+  doscientos ochenta kilómetros antes de Valverde (`entradaDeLaNoche`): a las 2 h 05 del
+  despegue, cuando ya está dentro. Lleva cuatro islas de vecinas aunque el avión no quepa en
+  sus pistas (`ISLAS_DE_LA_NOCHE`), porque aquí son lo que se ve y no adónde se va. Luego
+  **el del Paraguay**, el de la llegada, puesto bajo la siesta.
+- **Del salto se cae en el tercer capítulo, entero.** Un solo salto, de ahí a su hora de
+  entrada (`entradaDeLaLlegada`), y la escena se monta otra vez con su guion: es la misma
+  que abre su ficha, y no hay dos capítulos terceros que mantener. Es el salto el que
+  pone el mundo, el avión y el reloj del vuelo. El medio despertar del ecuador, que parte
+  este salto en dos, es de la tanda del guion.
+- **El parte de Asunción, pedido desde el principio.** Se vuela sobre Canarias con el de
+  Canarias, y `ponerElMundo` cae en la llegada con el suyo: decide por qué cabecera se entra
+  y es el que dice la comandante.
+- **Sin el mundo de la llegada no se puede caer en la llegada.** La red de veinte segundos
+  deja el avión volando y sin nada debajo, y eso vale para un salto en crucero, pero esta
+  llegada acaba en una pista. Si el mundo no baja, la página se recarga en
+  `?inicio=4&capitulo=3`: se pierde el permiso del audio hasta el siguiente toque, y es
+  el capítulo de siempre.
+- **El mundo de antes suelta también sus texturas.** `quitarElMundo` soltaba geometrías y
+  materiales, y three.js no suelta las texturas con el material: al llegar quedaban 50 en la
+  tarjeta, donde el tercer capítulo suelto tiene 32. Con `soltarElMaterial` quedan 36.
+- **Por el cristal de Ara, El Hierro no se ve**, contra lo que decía el plan. Las cuentas y lo
+  que se ve, en la cabecera del guion; lo que se haga con eso es de la tanda del guion.
+
+Y **el crucero quema ya lo que dice el plan.** El escalón del empuje que se oye en crucero
+es el de subida, y quemando por él salían 1,8 veces lo que `quemadoEnElVuelo`. Nivelado, el
+empuje que hace falta es la resistencia, con la misma polar del plan
+(`resistenciaEnVuelo`): el rato volado y el rato saltado gastan lo mismo, y lo que se oye
+no cambia. Es del vuelo largo: el corto sigue quemando por el gas.

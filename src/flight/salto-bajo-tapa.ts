@@ -117,6 +117,22 @@ export const ANTES_DE_BAJAR = 120;
 const CUENTA_DE_LA_QUEMA = 300;
 
 /**
+ * **La resistencia del avión a esa altitud, velocidad y peso**, N: la polar de
+ * su ficha. Nivelado, es también el empuje que hace falta: por eso sale de aquí
+ * tanto lo que se cuenta del rato saltado como lo que se quema volando el crucero
+ * (`empujeQueSeQuema` en `vuelo-de-linea.ts`), y las dos cuentas no se pueden
+ * separar.
+ */
+export function resistenciaEnVuelo(avion: AircraftConfig, altitud: number, velocidad: number, kilos: number): number {
+  const ar = (avion.wingSpan * avion.wingSpan) / avion.wingArea;
+  const k = 1 / (Math.PI * ar * avion.aero.oswald);
+  const peso = masaConCombustible(avion, kilos) * GRAVITY;
+  const q = 0.5 * airDensity(altitud) * velocidad * velocidad;
+  const cl = peso / (q * avion.wingArea);
+  return q * avion.wingArea * (avion.aero.cd0 + k * cl * cl);
+}
+
+/**
  * **Lo que quema el avión en un rato de ese perfil**, kilos: la resistencia
  * del avión a esa altura, velocidad y peso, por el consumo de sus motores
  * allí. Es la misma polar y el mismo consumo con los que se cuenta la reserva
@@ -134,18 +150,13 @@ export function quemadoEnElVuelo(
   hasta: number,
   kilosAlEmpezar: number,
 ): number {
-  const ar = (avion.wingSpan * avion.wingSpan) / avion.wingArea;
-  const k = 1 / (Math.PI * ar * avion.aero.oswald);
   let kilos = kilosAlEmpezar;
   for (let t = desde; t < hasta; t += CUENTA_DE_LA_QUEMA) {
     const rato = Math.min(CUENTA_DE_LA_QUEMA, hasta - t);
     const d = dondeVa(p, t + rato / 2);
     const altura = d.altitud;
     const v = Math.max(d.velocidad, 1);
-    const peso = masaConCombustible(avion, kilos) * GRAVITY;
-    const q = 0.5 * airDensity(altura) * v * v;
-    const cl = peso / (q * avion.wingArea);
-    const resistencia = q * avion.wingArea * (avion.aero.cd0 + k * cl * cl);
+    const resistencia = resistenciaEnVuelo(avion, altura, v, kilos);
     const quema = quemaPorSegundo(avion, resistencia, {
       mach: v / velocidadDelSonido(altura),
       theta: (temperaturaExterior(altura) + 273.15) / 288.15,

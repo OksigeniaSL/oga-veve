@@ -104,6 +104,7 @@ import {
   SITIO_DEL_PASAJE,
 } from "./flight/inicio-pasaje";
 import { AVION_DEL_LARGO, MUNDO_DE_LA_LLEGADA } from "./flight/guion-llegada-a-asuncion";
+import { ISLAS_DE_LA_NOCHE, MUNDO_DE_LA_NOCHE } from "./flight/guion-noche-sobre-el-mar";
 import {
   AVION_DEL_INICIO,
   escenaPedida,
@@ -213,8 +214,15 @@ const pedido = rearranque?.escenario ?? params.get("escenario");
  * Los Rodeos y el capítulo que hay del vuelo largo, sobre el Paraguay.
  */
 function sitioDeLaEscena(e: EscenaDelInicio): string {
-  return e === "largo" ? MUNDO_DE_LA_LLEGADA : e === "pasaje" ? SITIO_DEL_PASAJE : SITIO_DEL_INICIO;
+  return e === "largo" ? (conLaNoche ? MUNDO_DE_LA_NOCHE : MUNDO_DE_LA_LLEGADA) : e === "pasaje" ? SITIO_DEL_PASAJE : SITIO_DEL_INICIO;
 }
+/**
+ * **`?capitulo=2`, la noche sobre el mar**, solo en desarrollo: lleva el vuelo entero y
+ * un guion de prueba, sin sus frases ni sus láminas, y no es un vuelo que se pueda
+ * enseñar. Fuera de desarrollo, el capítulo es el tercero, como en la ficha del menú.
+ * Ver `flight/guion-noche-sobre-el-mar.ts`.
+ */
+const conLaNoche = import.meta.env.DEV && params.get("capitulo") === "2";
 let conInicio = params.has("inicio") && !rearranque;
 const conVueloLargo = params.has("largo");
 let escenaDelInicio: EscenaDelInicio = escenaPedida(params.get("inicio"));
@@ -547,14 +555,18 @@ const todosLosDestinos = aDondeSeVa
   .map((id) => SCENARIOS.find((e) => e.id === id))
   .filter((e): e is Scenario => e !== undefined);
 const alcanzables = destinosParaEsteAvion(avion, todosLosDestinos);
-const noCabenHoy = todosLosDestinos.filter((e) => !alcanzables.includes(e));
+// Y en la noche del vuelo largo, nada de eso se ofrece ni se dice: es lo que se ve. Ver `ISLAS_DE_LA_NOCHE`.
+const noCabenHoy = conLaNoche && escenaDelInicio === "largo" ? [] : todosLosDestinos.filter((e) => !alcanzables.includes(e));
 /*
  * **Y de los que valen, los que caben a la vez.** Hasta cuatro se montan
  * todos, como siempre; desde Asunción, que tiene seis rutas, se monta el
  * destino elegido, su alternativo y los más cercanos. Cada vecino son unos
  * treinta y seis megas en la tarjeta: ver `vecinosQueSeMontan` y el ADR 0010.
  */
-const destinosDeHoy = vecinosQueSeMontan(escenario, alcanzables, destino);
+const destinosDeHoy =
+  conLaNoche && escenaDelInicio === "largo"
+    ? SCENARIOS.filter((e) => (ISLAS_DE_LA_NOCHE as readonly string[]).includes(e.id))
+    : vecinosQueSeMontan(escenario, alcanzables, destino);
 for (const fuera of noCabenHoy)
   // Se dice, que cambiarle los destinos a alguien sin avisar es lo mismo que
   // cambiarle el avión sin avisar. Ver `elQueQuepa` arriba.
@@ -705,8 +717,18 @@ const game = new Game({
    */
   ...(params.get("curvatura") === "0" ? { curvatura: false } : {}),
   ...(conInicio ? { inicio: escenaDelInicio, tramo: GUYRAMI } : {}),
+  ...(conInicio && escenaDelInicio === "largo" && conLaNoche ? { capitulo: 2 as const } : {}),
 });
 miga("juego creado");
+/*
+ * **Y el parte de Asunción, para cuando se caiga allí**: se vuela sobre Canarias con el
+ * de Canarias, pero el salto cae en la llegada, con su viento decidiendo por qué cabecera
+ * se entra y su tiempo en el anuncio de la comandante. Con el tiempo a mano, el pedido.
+ */
+if (conInicio && escenaDelInicio === "largo" && conLaNoche) {
+  const llegada = SCENARIOS.find((s) => s.id === MUNDO_DE_LA_LLEGADA);
+  if (llegada) void tiempoPedido(llegada).then((suyo) => game.ponerTiempoDeLaLlegada(suyo));
+}
 /*
  * **Y si se vuela sin instructora, se pregunta si se quiere así.** Con la
  * dirección puesta no, por lo mismo que no se pregunta quién vuela: es un

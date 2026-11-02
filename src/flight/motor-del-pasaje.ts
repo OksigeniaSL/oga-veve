@@ -349,6 +349,10 @@ export interface DelVueloLargo {
   readonly sol: number;
   /** Si el sol cae ahora dentro del cristal de Ara, desde su asiento. */
   readonly solPorMiVentanilla: boolean;
+  /** **Lo recorrido por la ortodrómica**, m: es por donde un guion sabe qué isla tiene debajo. */
+  readonly recorrido: number;
+  /** **Cuándo entra el tercer capítulo**, s desde el despegue: adónde salta la noche. */
+  readonly entraLaLlegada: number;
   /**
    * **El anuncio de la bajada**, ya montado con la hora de allí, los minutos que
    * faltan y el parte de Pettirossi. Con una función porque se monta una vez y esto
@@ -737,6 +741,12 @@ export interface GuionDelPasaje<M extends string = string, C extends string = st
      */
     salto?(e: MotorDelPasaje<M, C>, l: LecturaDelPasaje): number | null;
     /**
+     * **Si del salto se cae en el capítulo siguiente**: lo de después del corte ya no
+     * es de este guion. Ara no se despierta con su frase de aquí, sino con lo que abra
+     * el de allí. Lo monta el juego: ver `atenderAlSalto` en `game.ts`.
+     */
+    readonly sigueOtroCapitulo?: boolean;
+    /**
      * **Si en este guion Ara no se duerme**: entra recién despierta, y lo que
      * queda por delante es bajar, que no se hace durmiendo. Ver `puedeDormirse`.
      */
@@ -1023,6 +1033,8 @@ export function proyectar(l: LecturaDelPasaje, dt: number): LecturaDelPasaje {
     ...(conEstaPotencia !== undefined ? { conEstaPotencia } : {}),
     hastaElCrucero: tramo === "subida" && nivela !== undefined ? Math.max(0, nivela - dt) : undefined,
     hastaLaBajada: tramo !== "bajada" && baja !== undefined ? Math.max(0, baja - dt) : undefined,
+    // Y lo recorrido, que es lo que espera un guion que cuenta por dónde se pasa. Ver `DelVueloLargo`.
+    ...(l.largo ? { largo: { ...l.largo, recorrido: l.largo.recorrido + l.porElSuelo * dt } } : {}),
   };
 }
 
@@ -1580,7 +1592,12 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     const s = this.siestaDeAhora;
     if (!s) return;
     this.despertar(s, "salto");
-    this.charla.decir([this.guion.siesta.seDespierta]);
+    if (!this.guion.siesta.sigueOtroCapitulo) this.charla.decir([this.guion.siesta.seDespierta]);
+  }
+
+  /** **Si del salto se cae en otro capítulo**. Ver `sigueOtroCapitulo`. */
+  get sigueOtroCapitulo(): boolean {
+    return !!this.guion.siesta.sigueOtroCapitulo;
   }
 
   /**
