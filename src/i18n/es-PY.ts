@@ -3119,6 +3119,18 @@ export const ES_PY = {
    * aquí porque no se traducen; lo que se traduce es la glosa de debajo. Ver
    * `ui/tarjeta-del-avion.ts` y `ui/explicaciones-del-avion.ts`.
    */
+  /*
+   * **Los datos de la pantalla del asiento**: ALT, GS, ETA, DTG, ETE y OAT no están
+   * aquí porque no se traducen; esto es la glosa de debajo. Ver
+   * `world/pantalla-del-respaldo.ts`.
+   */
+  "pantalla.datos.alt": "Altura sobre el mar",
+  "pantalla.datos.gs": "Velocidad sobre el suelo",
+  "pantalla.datos.oat": "Temperatura de afuera",
+  "pantalla.datos.eta": "Llegada, hora de Asunción",
+  "pantalla.datos.dtg": "Camino que falta",
+  "pantalla.datos.ete": "Tiempo que falta",
+
   "tarjeta.abrir": "Ver el avión de cerca",
   "tarjeta.ficha.envergadura": "De punta a punta del ala",
   "tarjeta.ficha.largo": "De la nariz a la cola",

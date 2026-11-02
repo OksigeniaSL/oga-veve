@@ -671,6 +671,18 @@ export function solEn(t: Date, s: Sitio, altitud = 0): LuzDelSol {
   };
 }
 
+/**
+ * **El punto de la Tierra que tiene el sol justo encima** en ese instante: su
+ * latitud es la declinación del Sol y su longitud, la que marca el tiempo sidéreo.
+ * Con el mismo Sol que `solEn`, para que la raya del día y la noche que pinta el
+ * mapa pase por donde la luz de ese sitio dice que pasa.
+ */
+export function puntoBajoElSol(t: Date): Sitio {
+  const [x, y, z] = solDeVerdad(siglos(t));
+  const lon = Math.atan2(y, x) / GRADO - tiempoSidereo(t);
+  return { lat: Math.asin(z) / GRADO, lon: ((((lon + 180) % 360) + 360) % 360) - 180 };
+}
+
 /** La luz donde va el avión, a `t` segundos del despegue. */
 export function solEnElVuelo(p: PerfilDelVuelo, t: number): LuzDelSol {
   const donde = dondeVa(p, t);
