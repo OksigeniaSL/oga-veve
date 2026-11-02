@@ -64,6 +64,7 @@ import { MILLA } from "../flight/ruta";
 import { DE_MADRID_A_ASUNCION, dondeVa, type PerfilDelVuelo } from "../flight/ruta-larga";
 import { t as texto } from "../i18n";
 import { COSTAS_DE_LA_PELOTA } from "../ui/costas-de-la-pelota";
+import { PAPEL, TINTAS } from "../ui/carta/estilo";
 import { COSTAS_DE_LA_RUTA } from "../ui/costas-de-la-ruta";
 import { NUDOS, PIES } from "../ui/cuadro";
 import { GRADO } from "./cielo-de-noche";
@@ -88,7 +89,6 @@ const COLOR = {
   // La noche deja ver lo de debajo: quien la mira tiene que seguir reconociendo la costa.
   noche: "rgba(6,14,52,0.58)",
   raya: "rgba(255,216,130,0.9)",
-  espacio: "#050b20",
   // Las esferas de los relojes, una de día y otra de noche: el color acompaña al dibujo del sol o la luna.
   esferaDia: "#fff9e8",
   esferaNoche: "#14234f",
@@ -141,7 +141,7 @@ const MARCA = { aro: 28, crece: 16, onda: 62, latido: 1600, cada: 100, avion: 0.
 const aPx = (p: { readonly x: number; readonly y: number }): readonly [number, number] => [p.x * ANCHO, p.y * ALTO];
 
 /** **El avión, visto desde arriba**: morro hacia arriba, sobre su propio centro, en px. */
-function dibujarElAvion(c: CanvasRenderingContext2D, x: number, y: number, apunta: number, escala = 1): void {
+function dibujarElAvion(c: CanvasRenderingContext2D, x: number, y: number, apunta: number, escala = 1, perfil: string | null = null): void {
   c.save();
   c.translate(x, y);
   c.rotate(apunta);
@@ -170,11 +170,20 @@ function dibujarElAvion(c: CanvasRenderingContext2D, x: number, y: number, apunt
     c.quadraticCurveTo(-4.5, -24, 0, -30);
     c.closePath();
   };
-  c.fillStyle = COLOR.sombra;
-  c.translate(2, 4);
-  trazar();
-  c.fill();
-  c.translate(-2, -4);
+  if (perfil) {
+    // Sobre papel, la sombra azul se ensucia: va con perfil de tinta.
+    c.strokeStyle = perfil;
+    c.lineWidth = 4;
+    c.lineJoin = "round";
+    trazar();
+    c.stroke();
+  } else {
+    c.fillStyle = COLOR.sombra;
+    c.translate(2, 4);
+    trazar();
+    c.fill();
+    c.translate(-2, -4);
+  }
   c.fillStyle = COLOR.avion;
   trazar();
   c.fill();
@@ -508,65 +517,53 @@ function pintarDeCerca(
 
 // ── La pelota ───────────────────────────────────────────────────────────
 
-/** Un pelo de estrellas detrás, siempre las mismas: sin ellas, la pelota parece un disco sobre un fondo. */
-function pintarLasEstrellas(c: CanvasRenderingContext2D): void {
-  let semilla = 7;
-  const azar = (): number => {
-    semilla = (semilla * 16807) % 2147483647;
-    return semilla / 2147483647;
-  };
-  for (let i = 0; i < 170; i++) {
-    const [x, y, brillo] = [azar() * ANCHO, azar() * ALTO, azar()];
-    c.fillStyle = `rgba(255,255,255,${(0.25 + brillo * 0.65).toFixed(2)})`;
-    c.beginPath();
-    c.arc(x, y, 0.7 + brillo * 0.9, 0, 2 * Math.PI);
-    c.fill();
+/**
+ * **La Tierra como una bola puesta sobre una hoja de carta**, no en el espacio: es el
+ * papel de la carta del juego, con sus tintas. La receta es de la dirección de arte
+ * (`globo-carta/receta.md`). Mar y tierra van un punto más fuertes que en la hoja de
+ * verdad: con los de la hoja no se distinguen de lejos, y a los cuatro años se tiene
+ * que entender de un vistazo que es la Tierra.
+ */
+const DE_LA_PELOTA = {
+  marDentro: "#a5cfe6",
+  marFuera: "#8fbedb",
+  tierra: "#c7d98f",
+  orilla: "rgba(37, 95, 134, .10)",
+  curvaDentro: "rgba(70, 55, 35, 0)",
+  curvaFuera: "rgba(70, 55, 35, .24)",
+  sombra: "rgba(90, 70, 40, .18)",
+  brilloDelPliegue: "rgba(255, 255, 255, .22)",
+  noche: "rgba(16, 32, 72, .52)",
+} as const;
+
+/** El marco de una carta: dos filetes y, entre ellos, la escala de tramos alternos. */
+function pintarElMarcoDeLaCarta(c: CanvasRenderingContext2D): void {
+  const [fuera, dentro] = [8, 15];
+  const tramo = 40;
+  c.fillStyle = TINTAS.tinta;
+  for (let x = fuera, i = 0; x < ANCHO - fuera; x += tramo, i++) {
+    if (i % 2) continue;
+    const ancho = Math.min(tramo, ANCHO - fuera - x);
+    c.fillRect(x, fuera, ancho, dentro - fuera);
+    c.fillRect(x, ALTO - dentro, ancho, dentro - fuera);
   }
+  for (let y = fuera, i = 0; y < ALTO - fuera; y += tramo, i++) {
+    if (i % 2) continue;
+    const alto = Math.min(tramo, ALTO - fuera - y);
+    c.fillRect(fuera, y, dentro - fuera, alto);
+    c.fillRect(ANCHO - dentro, y, dentro - fuera, alto);
+  }
+  c.strokeStyle = TINTAS.tinta;
+  c.lineWidth = 1.5;
+  c.strokeRect(fuera, fuera, ANCHO - 2 * fuera, ALTO - 2 * fuera);
+  c.strokeRect(dentro, dentro, ANCHO - 2 * dentro, ALTO - 2 * dentro);
 }
 
-/** **El fondo de la pelota**: lo que no cambia en todo el vuelo. Solo una vez, y solo si se pide. */
-function pintarElFondoDeLaPelota(c: CanvasRenderingContext2D): void {
-  const { x: cx, y: cy, radio: r } = LA_PELOTA;
-  c.fillStyle = COLOR.espacio;
-  c.fillRect(0, 0, ANCHO, ALTO);
-  pintarLasEstrellas(c);
-  // El halo de la atmósfera.
-  const halo = c.createRadialGradient(cx, cy, r - 2, cx, cy, r + 20);
-  halo.addColorStop(0, "rgba(130,190,255,0.55)");
-  halo.addColorStop(1, "rgba(130,190,255,0)");
-  c.fillStyle = halo;
-  c.beginPath();
-  c.arc(cx, cy, r + 20, 0, 2 * Math.PI);
-  c.fill();
-  c.save();
-  c.beginPath();
-  c.arc(cx, cy, r, 0, 2 * Math.PI);
-  c.clip();
-  c.fillStyle = COLOR.marAbajo;
-  c.fillRect(cx - r, cy - r, 2 * r, 2 * r);
-  // Una sola figura con todas las costas: con «evenodd», el Caspio queda como lo que es, un agujero en Eurasia.
-  c.beginPath();
-  for (const costa of COSTAS_DE_LA_PELOTA) {
-    costa.forEach(([lon, lat], i) => {
-      const [x, y] = aPxDeLaPelota(enLaPelota({ lon, lat }));
-      if (i === 0) c.moveTo(x, y);
-      else c.lineTo(x, y);
-    });
-    c.closePath();
-  }
-  c.fillStyle = COLOR.tierra;
-  c.fill("evenodd");
-  c.strokeStyle = COLOR.costa;
-  c.lineWidth = 1.2;
-  c.lineJoin = "round";
-  c.stroke();
-  // El ecuador, una elipse aplastada, y solo su mitad de delante.
-  c.strokeStyle = COLOR.ecuador;
-  c.lineWidth = 2;
-  c.beginPath();
+/** Una línea de la pelota, solo por su cara de delante. */
+function trazarEnLaPelota(c: CanvasRenderingContext2D, puntos: readonly { readonly lon: number; readonly lat: number }[]): void {
   let empezado = false;
-  for (let lon = -180; lon <= 180; lon += 3) {
-    const p = enLaPelota({ lon, lat: 0 });
+  for (const punto of puntos) {
+    const p = enLaPelota(punto);
     if (p.z < 0) {
       empezado = false;
       continue;
@@ -576,14 +573,153 @@ function pintarElFondoDeLaPelota(c: CanvasRenderingContext2D): void {
     else c.moveTo(x, y);
     empezado = true;
   }
+}
+
+/** **El fondo de la pelota**: lo que no cambia en todo el vuelo. Solo una vez, y solo si se pide. */
+function pintarElFondoDeLaPelota(c: CanvasRenderingContext2D): void {
+  const { x: cx, y: cy, radio: r } = LA_PELOTA;
+  c.fillStyle = PAPEL.fondo;
+  c.fillRect(0, 0, ANCHO, ALTO);
+  pintarElMarcoDeLaCarta(c);
+  // La sombra de la bola sobre la hoja: sin ella, parece un círculo impreso.
+  c.fillStyle = DE_LA_PELOTA.sombra;
+  c.beginPath();
+  c.arc(cx + 5, cy + 7, r + 2, 0, 2 * Math.PI);
+  c.fill();
+  c.save();
+  c.beginPath();
+  c.arc(cx, cy, r, 0, 2 * Math.PI);
+  c.clip();
+  const mar = c.createRadialGradient(cx, cy, r * 0.2, cx, cy, r);
+  mar.addColorStop(0, DE_LA_PELOTA.marDentro);
+  mar.addColorStop(1, DE_LA_PELOTA.marFuera);
+  c.fillStyle = mar;
+  c.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+  // Una sola figura con todas las costas: con «evenodd», el Caspio queda como lo que es, un agujero en Eurasia.
+  const costas = new Path2D();
+  for (const costa of COSTAS_DE_LA_PELOTA) {
+    costa.forEach(([lon, lat], i) => {
+      const [x, y] = aPxDeLaPelota(enLaPelota({ lon, lat }));
+      if (i === 0) costas.moveTo(x, y);
+      else costas.lineTo(x, y);
+    });
+    costas.closePath();
+  }
+  // La orilla en el agua, como en las cartas: tres trazos de la costa antes de rellenar la tierra.
+  c.lineJoin = "round";
+  c.strokeStyle = DE_LA_PELOTA.orilla;
+  for (const ancho of [15, 9, 4]) {
+    c.lineWidth = ancho;
+    c.stroke(costas);
+  }
+  c.fillStyle = DE_LA_PELOTA.tierra;
+  c.fill(costas, "evenodd");
+  // La retícula, cada treinta grados, también sobre la tierra. El ecuador, más grueso: es lo que se cruza.
+  c.strokeStyle = PAPEL.reticula;
+  c.lineWidth = 1;
+  c.beginPath();
+  for (let lon = -180; lon < 180; lon += 30) {
+    const puntos = [];
+    for (let lat = -90; lat <= 90; lat += 3) puntos.push({ lon, lat });
+    trazarEnLaPelota(c, puntos);
+  }
+  for (let lat = -60; lat <= 60; lat += 30) {
+    if (lat === 0) continue;
+    const puntos = [];
+    for (let lon = -180; lon <= 180; lon += 3) puntos.push({ lon, lat });
+    trazarEnLaPelota(c, puntos);
+  }
   c.stroke();
+  c.lineWidth = 2;
+  c.beginPath();
+  const ecuador = [];
+  for (let lon = -180; lon <= 180; lon += 3) ecuador.push({ lon, lat: 0 });
+  trazarEnLaPelota(c, ecuador);
+  c.stroke();
+  c.strokeStyle = TINTAS.agua;
+  c.lineWidth = 1.3;
+  c.lineJoin = "round";
+  c.stroke(costas);
   // Hacia el borde la pelota se oscurece un poco, y es lo que hace que parezca redonda.
-  const curva = c.createRadialGradient(cx, cy, r * 0.55, cx, cy, r);
-  curva.addColorStop(0, "rgba(4,16,48,0)");
-  curva.addColorStop(1, "rgba(4,16,48,0.42)");
+  const curva = c.createRadialGradient(cx, cy, r * 0.62, cx, cy, r);
+  curva.addColorStop(0, DE_LA_PELOTA.curvaDentro);
+  curva.addColorStop(1, DE_LA_PELOTA.curvaFuera);
   c.fillStyle = curva;
   c.fillRect(cx - r, cy - r, 2 * r, 2 * r);
   c.restore();
+  c.strokeStyle = TINTAS.tinta;
+  c.lineWidth = 2;
+  c.beginPath();
+  c.arc(cx, cy, r, 0, 2 * Math.PI);
+  c.stroke();
+  // Los dos pliegues de una carta doblada en cuatro, por encima de la bola.
+  const pliegue = (x0: number, y0: number, x1: number, y1: number): void => {
+    c.beginPath();
+    c.moveTo(x0, y0);
+    c.lineTo(x1, y1);
+    c.stroke();
+  };
+  c.lineWidth = 1.5;
+  c.strokeStyle = PAPEL.pliegue;
+  pliegue(cx, 0, cx, ALTO);
+  pliegue(0, cy, ANCHO, cy);
+  c.strokeStyle = DE_LA_PELOTA.brilloDelPliegue;
+  pliegue(cx + 1.5, 0, cx + 1.5, ALTO);
+  pliegue(0, cy + 1.5, ANCHO, cy + 1.5);
+}
+
+/** **El camino, como la ruta de la carta**: en su magenta, con una orla de papel que lo despega de lo de abajo. */
+function pintarElCaminoDeLaCarta(
+  c: CanvasRenderingContext2D,
+  camino: ReturnType<typeof caminoEnLaPelota>,
+  recorrido: number,
+  xAvion: number,
+  yAvion: number,
+): void {
+  const trazo = (desde: number, hasta: number, conElAvion: boolean): void => {
+    c.beginPath();
+    let empezado = false;
+    for (const p of camino) {
+      if (p.recorrido < desde || p.recorrido > hasta) continue;
+      const [x, y] = aPxDeLaPelota(p);
+      if (empezado) c.lineTo(x, y);
+      else c.moveTo(x, y);
+      empezado = true;
+    }
+    // Hasta el avión justo: los puntos del camino van cada cien kilómetros.
+    if (conElAvion && empezado) c.lineTo(xAvion, yAvion);
+    if (empezado) c.stroke();
+  };
+  c.lineCap = "round";
+  c.lineJoin = "round";
+  c.setLineDash([]);
+  c.strokeStyle = PAPEL.fondo;
+  c.lineWidth = 8;
+  trazo(0, Infinity, false);
+  c.strokeStyle = TINTAS.ruta;
+  c.lineWidth = 4;
+  c.setLineDash([9, 10]);
+  trazo(recorrido, Infinity, false);
+  c.setLineDash([]);
+  c.lineWidth = 5;
+  trazo(0, recorrido, true);
+}
+
+/** Una de las dos ciudades del viaje, como un punto de la carta: orla de papel, aro de la ruta y punto de tinta. */
+function pintarLaCiudadDeLaCarta(c: CanvasRenderingContext2D, x: number, y: number): void {
+  c.fillStyle = PAPEL.fondo;
+  c.beginPath();
+  c.arc(x, y, 9, 0, 2 * Math.PI);
+  c.fill();
+  c.strokeStyle = TINTAS.ruta;
+  c.lineWidth = 3.5;
+  c.beginPath();
+  c.arc(x, y, 7, 0, 2 * Math.PI);
+  c.stroke();
+  c.fillStyle = TINTAS.tinta;
+  c.beginPath();
+  c.arc(x, y, 2.6, 0, 2 * Math.PI);
+  c.fill();
 }
 
 /** La pelota entera, con el fondo ya pintado. */
@@ -601,7 +737,7 @@ function pintarLaPelota(c: CanvasRenderingContext2D, fondo: CanvasImageSource, p
     c.lineTo(x, y);
   }
   c.closePath();
-  c.fillStyle = COLOR.noche;
+  c.fillStyle = DE_LA_PELOTA.noche;
   c.fill();
   c.beginPath();
   raya.forEach((p, i) => {
@@ -609,18 +745,18 @@ function pintarLaPelota(c: CanvasRenderingContext2D, fondo: CanvasImageSource, p
     if (i === 0) c.moveTo(x, y);
     else c.lineTo(x, y);
   });
-  c.strokeStyle = COLOR.raya;
+  c.strokeStyle = TINTAS.elegido;
   c.lineWidth = 2.5;
   c.lineJoin = "round";
   c.stroke();
   const avion = avionEnLaPelota(perfil, t);
   const [xAvion, yAvion] = aPxDeLaPelota(avion);
-  pintarElCamino(c, camino, aPxDeLaPelota, avion.recorrido, xAvion, yAvion);
+  pintarElCaminoDeLaCarta(c, camino, avion.recorrido, xAvion, yAvion);
   for (const s of [DE_MADRID_A_ASUNCION.desde, DE_MADRID_A_ASUNCION.hasta]) {
     const [x, y] = aPxDeLaPelota(enLaPelota(s));
-    pintarLaCiudad(c, x, y);
+    pintarLaCiudadDeLaCarta(c, x, y);
   }
-  dibujarElAvion(c, xAvion, yAvion, avion.apunta, 0.9);
+  dibujarElAvion(c, xAvion, yAvion, avion.apunta, 0.9, TINTAS.tinta);
 }
 
 // ── Los relojes ─────────────────────────────────────────────────────────
