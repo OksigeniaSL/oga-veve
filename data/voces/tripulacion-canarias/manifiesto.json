@@ -135,6 +135,14 @@
       "ms": 5707,
       "h": "184d6e1db3"
     },
+    "inicio.tripulacion.pasaje.cerca.largo.nubesAltas": {
+      "ms": 5207,
+      "h": "a9b47693f7"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.nubesCinturon": {
+      "ms": 5907,
+      "h": "e4c3130306"
+    },
     "inicio.tripulacion.pasaje.cerca.largo.oidos": {
       "ms": 6307,
       "h": "4a06f5e7f8"
@@ -670,6 +678,12 @@
     ],
     "inicio.tripulacion.pasaje.cerca.largo.cinturonManta": [
       "inicio.tripulacion.pasaje.cerca.largo.cinturonManta"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.nubesAltas": [
+      "inicio.tripulacion.pasaje.cerca.largo.nubesAltas"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.nubesCinturon": [
+      "inicio.tripulacion.pasaje.cerca.largo.nubesCinturon"
     ]
   }
 }

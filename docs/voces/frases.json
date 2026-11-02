@@ -19736,5 +19736,47 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "inicio.ara.pasaje.largo.medioDespertar",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Mmm… ¿por qué sonó eso?",
+    "para": "la noche, en el ecuador: Ara se despierta a medias con el ding y pregunta, bajito y con sueño",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.nubesAltas",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Es el cartel del cinturón. Cerca del ecuador, las nubes de tormenta son las más altas de todas.",
+    "para": "la noche, en el ecuador: Idaira, sentada y atada, bajito y sin dramatizar: las nubes de tormenta son las más altas"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.nubesCinturon",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Los pilotos las ven en el radar y las rodean. Por eso, en el asiento, el cinturón siempre puesto.",
+    "para": "la noche, en el ecuador: Idaira, bajito: el radar y las rodean; en el asiento, el cinturón siempre puesto"
+  },
+  {
+    "id": "inicio.ara.pasaje.largo.sigoDurmiendo",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Entonces sigo durmiendo, con el cinturón puesto.",
+    "para": "la noche, en el ecuador: Ara se vuelve a dormir, con mucho sueño",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]

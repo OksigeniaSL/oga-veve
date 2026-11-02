@@ -427,6 +427,10 @@
       "ms": 4007,
       "h": "3430ffa978"
     },
+    "inicio.ara.pasaje.largo.medioDespertar": {
+      "ms": 1786,
+      "h": "33fff236fd"
+    },
     "inicio.ara.pasaje.largo.nariz": {
       "ms": 3807,
       "h": "419195b835"
@@ -438,6 +442,10 @@
     "inicio.ara.pasaje.largo.rio": {
       "ms": 4507,
       "h": "2c08f4c741"
+    },
+    "inicio.ara.pasaje.largo.sigoDurmiendo": {
+      "ms": 3407,
+      "h": "c60b4a0d6c"
     },
     "inicio.ara.pasaje.largo.tenerife": {
       "ms": 6507,
@@ -999,6 +1007,9 @@
     "inicio.ara.pasaje.largo.meDormi": [
       "inicio.ara.pasaje.largo.meDormi"
     ],
+    "inicio.ara.pasaje.largo.medioDespertar": [
+      "inicio.ara.pasaje.largo.medioDespertar"
+    ],
     "inicio.ara.pasaje.largo.nariz": [
       "inicio.ara.pasaje.largo.nariz"
     ],
@@ -1007,6 +1018,9 @@
     ],
     "inicio.ara.pasaje.largo.rio": [
       "inicio.ara.pasaje.largo.rio"
+    ],
+    "inicio.ara.pasaje.largo.sigoDurmiendo": [
+      "inicio.ara.pasaje.largo.sigoDurmiendo"
     ],
     "inicio.ara.pasaje.largo.tenerife": [
       "inicio.ara.pasaje.largo.tenerife"
