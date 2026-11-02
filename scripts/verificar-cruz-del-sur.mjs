@@ -174,8 +174,10 @@ async function hastaLaCruz(page, conDedo, chequeos = null) {
   if (!l) return null;
   await pausa(700);
   l = await leer(page);
-  if (chequeos) chequeos(l);
-  await foto(page, chequeos?.cual ?? "x", "1-juegos");
+  if (chequeos) {
+    chequeos(l);
+    await foto(page, chequeos.cual, "1-juegos");
+  }
   const c = centro(l.kitUi.juegos.cruz);
   await tocar(page, c.x, c.y, conDedo);
   return hastaQue(page, (x) => x.estado.kit?.juego?.juego === "cruz" && x.kitUi?.cruz?.hoja && x.kitUi.cruz.medida.repintes > 0, 6000);
