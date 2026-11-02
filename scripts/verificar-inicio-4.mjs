@@ -932,22 +932,26 @@ async function laRedDeLaNoche() {
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
-  // No contesta nunca, que es lo que hace una red caída; al recargar en el capítulo 3, ya sí.
-  await page.route(/\/data\/(terrain|ortho)\/pettirossi[^/]*\.(bin|jpg)/, (r) => {
-    if (page.url().includes("capitulo=3")) void r.continue();
-  });
   try {
     await page.goto(`${BASE}/?inicio=4&capitulo=2&fecha=${FECHA}&viento=${VIENTO}`);
     await page.bringToFront();
     await page.waitForFunction(() => globalThis.__oga?.salto?.().hora != null, null, { timeout: 240_000 });
+    /*
+     * No contesta nunca, que es lo que hace una red caída. Ya con el juego arrancado, como en
+     * `verificar-salto.mjs`: interceptar pasa por aquí cada petición, y en desarrollo son miles.
+     */
+    const elMundo = /\/data\/(terrain|ortho)\/pettirossi[^/]*\.(bin|jpg)/;
+    await page.route(elMundo, () => {});
     await page.keyboard.press("ShiftLeft");
     await page.evaluate(() => globalThis.__ogaEmpezar?.());
     await page.waitForFunction(() => globalThis.__oga.inicio().estado?.dichos?.includes("ventanilla"), null, { timeout: 120_000 });
     await page.evaluate(() => globalThis.__oga.acelerar(8));
     await page.waitForFunction(() => globalThis.__oga.salto().enCurso !== null, null, { timeout: 600_000 });
     const pedido = Date.now();
-    await page.waitForURL(/capitulo=3/, { timeout: 60_000 });
+    await page.waitForURL(/capitulo=3/, { timeout: 60_000, waitUntil: "commit" });
     const pared = (Date.now() - pedido) / 1000;
+    // Al recargar, ya sí contesta: lo que se prueba es que suelta, no una red que siga caída.
+    await page.unroute(elMundo);
     comprobar(
       "sin el mundo de la llegada, pasada la red, suelta y se abre el capítulo 3",
       pared >= 19 && pared < 30,
