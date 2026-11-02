@@ -7,6 +7,14 @@
       "ms": 7207,
       "h": "cc179eb3a9"
     },
+    "inicio.tripulacion.pasaje.derlis.aguaCena": {
+      "ms": 4807,
+      "h": "ee3a3a8222"
+    },
+    "inicio.tripulacion.pasaje.derlis.cena": {
+      "ms": 6607,
+      "h": "9769de444e"
+    },
     "inicio.tripulacion.pasaje.derlis.desayuno": {
       "ms": 8907,
       "h": "2fed2021d4"
@@ -18,6 +26,10 @@
     "inicio.tripulacion.pasaje.derlis.piernas": {
       "ms": 10207,
       "h": "07a4eeb32d"
+    },
+    "inicio.tripulacion.pasaje.derlis.piernasCena": {
+      "ms": 6107,
+      "h": "f4f4ea5a71"
     },
     "tripulacion.bienvenidos.encarnacion": {
       "ms": 2274,
@@ -166,6 +178,15 @@
     ],
     "inicio.tripulacion.pasaje.derlis.desfase": [
       "inicio.tripulacion.pasaje.derlis.desfase"
+    ],
+    "inicio.tripulacion.pasaje.derlis.cena": [
+      "inicio.tripulacion.pasaje.derlis.cena"
+    ],
+    "inicio.tripulacion.pasaje.derlis.aguaCena": [
+      "inicio.tripulacion.pasaje.derlis.aguaCena"
+    ],
+    "inicio.tripulacion.pasaje.derlis.piernasCena": [
+      "inicio.tripulacion.pasaje.derlis.piernasCena"
     ]
   }
 }

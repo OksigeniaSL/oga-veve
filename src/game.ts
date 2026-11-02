@@ -16412,7 +16412,10 @@ export class Game {
   private caerEnLaLlegada(escena: MotorDelPasaje): void {
     this.capituloDeAntes = { registro: escena.registro, estado: escena.estado };
     this.capituloDelLargo = 3;
+    // El botón de la consola se cuenta una vez por vuelo, y este salto no cambia de vuelo: al despertar no se repite.
+    const consolaYaContada = this.consolaContada;
     this.montarLaEscenaDePasaje(null);
+    this.consolaContada = consolaYaContada;
     this.laminaGrande?.taparDeGolpe();
     this.vueloLargoMirado = null;
   }

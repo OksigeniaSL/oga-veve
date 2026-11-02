@@ -261,5 +261,32 @@
   ],
   "inicio.tripulacion.pasaje.cerca.largo.consolaRecoge": [
     "inicio.tripulacion.pasaje.cerca.largo.consolaRecoge"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.hornos": [
+    "inicio.tripulacion.pasaje.cerca.largo.hornos"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.cierres": [
+    "inicio.tripulacion.pasaje.cerca.largo.cierres"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.hierroEncima": [
+    "inicio.tripulacion.pasaje.cerca.largo.hierroEncima"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.hierroDebajo": [
+    "inicio.tripulacion.pasaje.cerca.largo.hierroDebajo"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.meridiano": [
+    "inicio.tripulacion.pasaje.cerca.largo.meridiano"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.greenwich": [
+    "inicio.tripulacion.pasaje.cerca.largo.greenwich"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.consolaRecogeLuces": [
+    "inicio.tripulacion.pasaje.cerca.largo.consolaRecogeLuces"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.antifaz": [
+    "inicio.tripulacion.pasaje.cerca.largo.antifaz"
+  ],
+  "inicio.tripulacion.pasaje.cerca.largo.cinturonManta": [
+    "inicio.tripulacion.pasaje.cerca.largo.cinturonManta"
   ]
 }

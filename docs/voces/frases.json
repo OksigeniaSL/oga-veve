@@ -19568,5 +19568,173 @@
     "idioma": "es-PY",
     "texto": "Ya vamos bajando: guardamos la pantalla y a la ventanilla, que la llegada no hay que perdérsela.",
     "para": "el vuelo largo: a los diez mil pies, Idaira pide guardar la pantalla"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.derlis.cena",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Los chicos cenan primero. Acá tenés la tuya: pollo con mandioca de la Granja Óga, calentito.",
+    "para": "la noche: Derlis trae la cena de los niños, la primera, de la granja"
+  },
+  {
+    "id": "inicio.ara.pasaje.largo.cena",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Qué rico huele! ¿Cocinan acá arriba, en el avión?",
+    "para": "la noche: Ara huele la cena y pregunta si se cocina arriba",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.hornos",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "No, se cocina en tierra. Aquí arriba solo se calienta, en unos hornos pequeños.",
+    "para": "la noche: Idaira, se cocina en tierra y arriba se calienta"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.cierres",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Y en la cocina todo va trabado con cierres, y nosotros los revisamos: si el avión se mueve, nada puede salir volando.",
+    "para": "la noche: Idaira, la cocina trabada con cierres: la tripulación es seguridad"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.derlis.aguaCena",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Y un vasito de agua, para cuando tengas sed: el aire de acá arriba es muy seco.",
+    "para": "la noche: Derlis, un vasito cuando haya sed; nunca que el avión deshidrata"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.derlis.piernasCena",
+    "voz": "tripulacion",
+    "idioma": "es-PY",
+    "texto": "Cuando termines, mové los pies y las piernas sin levantarte: la punta arriba, la punta abajo.",
+    "para": "la noche: Derlis, mover pies y piernas sin levantarse"
+  },
+  {
+    "id": "inicio.ara.pasaje.largo.noche",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Qué oscuro está afuera! Y cuántas estrellas.",
+    "para": "la noche: se abre la ventanilla, de noche y con estrellas",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.largo.tenerife",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Mirá, allá lejos brillan las luces de Tenerife! De ahí salió mi primer vuelo.",
+    "para": "la noche: Ara ve Tenerife por su cristal, si se ve",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.hierroEncima",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Mira tu pantalla: estamos justo encima de El Hierro, la isla más al oeste de Canarias.",
+    "para": "la noche: Idaira, bajito, en la pantalla del asiento: justo encima de El Hierro"
+  },
+  {
+    "id": "inicio.ara.pasaje.largo.hierroNoSeVe",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¿Encima? ¡Pero por mi ventanilla no la veo!",
+    "para": "la noche: Ara no ve El Hierro por su cristal, y lo dice",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.hierroDebajo",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Claro, la tenemos justo debajo, y desde el asiento no se ve. Por eso te la enseña el mapa.",
+    "para": "la noche: Idaira, lo de abajo no se ve desde el asiento; lo enseña el mapa"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.meridiano",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Durante siglos, los mapas empezaban a contar desde esta isla, porque era el borde del mundo conocido.",
+    "para": "la noche: Idaira, bajito, el meridiano de El Hierro"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.greenwich",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Luego el mundo se puso de acuerdo en contar desde Greenwich, en Inglaterra, y así sigue.",
+    "para": "la noche: Idaira, bajito, luego se pasó a Greenwich"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.consolaRecogeLuces",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Guardamos la pantalla, que vamos a bajar las luces para dormir.",
+    "para": "la noche: Idaira pide guardar la pantalla al bajar las luces"
+  },
+  {
+    "id": "comandante.largo.luces",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, vamos a bajar las luces, que para el cuerpo ya es de noche. Sentados, el cinturón siempre puesto.",
+    "para": "la noche: la comandante baja las luces, sin más: a esta hora, la megafonía calla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.antifaz",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Para dormir, aquí tienes tu antifaz y tu manta.",
+    "para": "la noche: Idaira, el antifaz y la manta; sin pastillas"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.cinturonManta",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Y el cinturón, por encima de la manta: así lo vemos sin tener que despertarte.",
+    "para": "la noche: Idaira, el cinturón por encima de la manta"
+  },
+  {
+    "id": "inicio.ara.pasaje.largo.cinturonArriba",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡El cinturón por arriba! Así me cuidan mientras duermo.",
+    "para": "la noche: Ara con el cinturón por encima de la manta",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]

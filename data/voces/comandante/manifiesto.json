@@ -495,6 +495,10 @@
       "ms": 4107,
       "h": "c89bdaa2b6"
     },
+    "comandante.largo.luces": {
+      "ms": 6307,
+      "h": "f201d49da7"
+    },
     "comandante.llegada.ayolas": {
       "ms": 9507,
       "h": "286d20c253"
@@ -3618,6 +3622,9 @@
     ],
     "comandante.largo.llegada.invierno": [
       "comandante.largo.llegada.invierno"
+    ],
+    "comandante.largo.luces": [
+      "comandante.largo.luces"
     ]
   }
 }

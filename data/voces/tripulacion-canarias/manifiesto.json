@@ -67,6 +67,18 @@
       "ms": 6607,
       "h": "4b1410c892"
     },
+    "inicio.tripulacion.pasaje.cerca.largo.antifaz": {
+      "ms": 2384,
+      "h": "82621527ed"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.cierres": {
+      "ms": 7607,
+      "h": "412af0ac4c"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.cinturonManta": {
+      "ms": 4207,
+      "h": "0bd84370c3"
+    },
     "inicio.tripulacion.pasaje.cerca.largo.consolaBoton": {
       "ms": 6407,
       "h": "536c6314c6"
@@ -75,6 +87,10 @@
       "ms": 5607,
       "h": "f2cc2cb3a8"
     },
+    "inicio.tripulacion.pasaje.cerca.largo.consolaRecogeLuces": {
+      "ms": 2980,
+      "h": "c2eb55558c"
+    },
     "inicio.tripulacion.pasaje.cerca.largo.ecuador1": {
       "ms": 7007,
       "h": "a0329acd93"
@@ -82,6 +98,22 @@
     "inicio.tripulacion.pasaje.cerca.largo.ecuador2": {
       "ms": 9007,
       "h": "e694facba1"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.greenwich": {
+      "ms": 4707,
+      "h": "855131133c"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.hierroDebajo": {
+      "ms": 4407,
+      "h": "38e72bb5f8"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.hierroEncima": {
+      "ms": 4907,
+      "h": "6e93538c41"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.hornos": {
+      "ms": 4207,
+      "h": "ba217843d6"
     },
     "inicio.tripulacion.pasaje.cerca.largo.huso": {
       "ms": 5807,
@@ -98,6 +130,10 @@
     "inicio.tripulacion.pasaje.cerca.largo.mapa": {
       "ms": 8407,
       "h": "4e635fdbe2"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.meridiano": {
+      "ms": 5707,
+      "h": "184d6e1db3"
     },
     "inicio.tripulacion.pasaje.cerca.largo.oidos": {
       "ms": 6307,
@@ -607,6 +643,33 @@
     ],
     "inicio.tripulacion.pasaje.cerca.largo.consolaRecoge": [
       "inicio.tripulacion.pasaje.cerca.largo.consolaRecoge"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.hornos": [
+      "inicio.tripulacion.pasaje.cerca.largo.hornos"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.cierres": [
+      "inicio.tripulacion.pasaje.cerca.largo.cierres"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.hierroEncima": [
+      "inicio.tripulacion.pasaje.cerca.largo.hierroEncima"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.hierroDebajo": [
+      "inicio.tripulacion.pasaje.cerca.largo.hierroDebajo"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.meridiano": [
+      "inicio.tripulacion.pasaje.cerca.largo.meridiano"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.greenwich": [
+      "inicio.tripulacion.pasaje.cerca.largo.greenwich"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.consolaRecogeLuces": [
+      "inicio.tripulacion.pasaje.cerca.largo.consolaRecogeLuces"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.antifaz": [
+      "inicio.tripulacion.pasaje.cerca.largo.antifaz"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.cinturonManta": [
+      "inicio.tripulacion.pasaje.cerca.largo.cinturonManta"
     ]
   }
 }
