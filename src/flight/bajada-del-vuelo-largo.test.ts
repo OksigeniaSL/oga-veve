@@ -23,8 +23,8 @@ import { neutralControls } from "./model";
 import { laRecogidaDe } from "./recogida";
 import { rutaDe, Seguimiento, type Fijo } from "./ruta";
 import { dondeVa, entradaDeLaLlegada, horarioDelDia, perfilDelVuelo, PETTIROSSI } from "./ruta-larga";
-import { caminoEnElMundo, cargaDelVueloLargo, DEJA_LA_ORTODROMICA, enElMundo, estadoDelSalto } from "./salto-bajo-tapa";
-import { empujeQueSeQuema, enLosMandosDeLinea, VueloDeLinea, type LecturaDeLinea } from "./vuelo-de-linea";
+import { caminoEnElMundo, cargaDelVueloLargo, DEJA_LA_ORTODROMICA, enElMundo, estadoDelSalto, quemadoEnElVuelo, resistenciaEnVuelo } from "./salto-bajo-tapa";
+import { EMPUJE, empujeQueSeQuema, enLosMandosDeLinea, VueloDeLinea, type LecturaDeLinea } from "./vuelo-de-linea";
 
 const DT = 1 / 30;
 const GRADO = Math.PI / 180;
@@ -65,6 +65,8 @@ function volar(masa?: number): {
   readonly paradosA: number | null;
   /** Lo más por debajo de la velocidad pedida que se fue desde `DESDE_PARA_LA_VELOCIDAD`. */
   readonly loPeor: LoPeor | null;
+  /** Lo que se quemó de media volando el crucero, kg/s, o `null` si no se contó. */
+  readonly quemaEnCrucero: number | null;
 } {
   const perfil = perfilDelVuelo(horarioDelDia(new Date("2026-12-15T12:00:00Z")));
   const entrada = entradaDeLaLlegada(perfil);
@@ -109,6 +111,7 @@ function volar(masa?: number): {
   let bajaEn: number | null = null;
   let paradosA: number | null = null;
   let loPeor: LoPeor | null = null;
+  const enCruceroMedido = { kilos: 0, tiempo: 0 };
   for (let t = 0, siguiente = 0; t < 3600; t += DT) {
     const s = m.state;
     const lectura = {
@@ -191,16 +194,22 @@ function volar(masa?: number): {
      */
     if (masa === undefined) {
       const q = m.state;
+      const enCrucero = tripulacion.estado.tramo === "crucero";
+      const antes = kilos;
       if (c.engineOn)
         kilos = Math.max(
           0,
           kilos -
-            quemaPorSegundo(AVION, empujeQueSeQuema(m, manos), {
+            quemaPorSegundo(AVION, empujeQueSeQuema(m, manos, enCrucero ? resistenciaEnVuelo(AVION, q.position.y, q.airspeed, kilos) : null), {
               mach: q.airspeed / velocidadDelSonido(q.position.y),
               theta: (temperaturaExterior(q.position.y) + 273.15) / 288.15,
             }) *
               DT,
         );
+      if (enCrucero) {
+        enCruceroMedido.kilos += antes - kilos;
+        enCruceroMedido.tiempo += DT;
+      }
       m.ponerMasa(masaConCombustible(AVION, kilos));
       if (kilos <= 0 && c.engineOn) {
         c.engineOn = false;
@@ -212,9 +221,11 @@ function volar(masa?: number): {
       muestras.push({ t, falta: l.faltaParaTocar, altitud: s.position.y, senda, vertical: s.verticalSpeed, velocidad: s.airspeed });
     }
     const e = tripulacion.estado;
-    if (e.tocado) return { muestras, bajaEn, toque: { t, caida: e.caidaAlTocar ?? Infinity, pasado, lado }, kilos, paradosA, loPeor };
+    const quemaEnCrucero = (): number | null => (enCruceroMedido.tiempo > 0 ? enCruceroMedido.kilos / enCruceroMedido.tiempo : null);
+    if (e.tocado)
+      return { muestras, bajaEn, toque: { t, caida: e.caidaAlTocar ?? Infinity, pasado, lado }, kilos, paradosA, loPeor, quemaEnCrucero: quemaEnCrucero() };
   }
-  return { muestras, bajaEn, toque: null, kilos, paradosA, loPeor };
+  return { muestras, bajaEn, toque: null, kilos, paradosA, loPeor, quemaEnCrucero: null };
 }
 
 describe("la bajada desde cuarenta mil pies", () => {
@@ -269,5 +280,62 @@ describe("la bajada desde cuarenta mil pies", () => {
     expect(ligero.toque).not.toBeNull();
     expect(ligero.toque!.caida).toBeLessThan(3);
     expect(ligero.toque!.pasado).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * **Lo que quema el crucero**, con la cuenta que vuela `game.ts` y contra la que
+ * cuenta el plan, `quemadoEnElVuelo`. Sale de los dos extremos del capítulo 2 y del
+ * 3: el nivel 360, cargado, al pasar por Canarias, y el 400, ligero, ya sobre el
+ * Paraguay.
+ */
+describe("lo que quema el crucero", () => {
+  const perfil = perfilDelVuelo(horarioDelDia(new Date("2026-12-15T12:00:00Z")));
+  const carga = cargaDelVueloLargo(AVION, perfil);
+  const DIEZ_MINUTOS = 600;
+  const quemaAqui = (t: number, conLaResistencia: boolean): { readonly vuelo: number; readonly plan: number } => {
+    const d = dondeVa(perfil, t);
+    const kilos = carga - quemadoEnElVuelo(AVION, perfil, 0, t, carga);
+    const m = new ArcadeFlightModel({ aircraft: AVION, ground: () => 0 });
+    m.reset({ position: new Vector3(0, d.altitud, 0), heading: d.rumbo, airspeed: d.velocidad, equilibrado: true });
+    m.ponerMasa(masaConCombustible(AVION, kilos));
+    const s = m.state;
+    const empuje = empujeQueSeQuema(
+      m,
+      { empuje: EMPUJE.subida },
+      conLaResistencia ? resistenciaEnVuelo(AVION, s.position.y, s.airspeed, kilos) : null,
+    );
+    return {
+      vuelo: quemaPorSegundo(AVION, empuje, {
+        mach: s.airspeed / velocidadDelSonido(s.position.y),
+        theta: (temperaturaExterior(s.position.y) + 273.15) / 288.15,
+      }),
+      plan: quemadoEnElVuelo(AVION, perfil, t, t + DIEZ_MINUTOS, kilos) / DIEZ_MINUTOS,
+    };
+  };
+
+  it.each([
+    ["el nivel 360, sobre Canarias", 2.2 * 3600],
+    ["el nivel 400, sobre el Paraguay", entradaDeLaLlegada(perfil)],
+  ])("en %s, lo que cuenta el plan, ±15 %%", (_que, t) => {
+    const { vuelo, plan } = quemaAqui(t, true);
+    console.log(`${_que}: ${(vuelo * 3.6).toFixed(2)} t/h volando · ${(plan * 3.6).toFixed(2)} t/h en el plan`);
+    expect(vuelo / plan).toBeGreaterThan(0.85);
+    expect(vuelo / plan).toBeLessThan(1.15);
+  });
+
+  // El instrumento, antes de fiarse de él: con el escalón de lo que se oye, se ve de más.
+  it("y con el escalón de subida de lo que se oye, que es lo de antes, se pasaba", () => {
+    const { vuelo, plan } = quemaAqui(entradaDeLaLlegada(perfil), false);
+    expect(vuelo / plan).toBeGreaterThan(1.5);
+  });
+
+  it("volando de verdad el crucero del tercer capítulo, también", () => {
+    const { quemaEnCrucero } = volar();
+    const kilos = carga - quemadoEnElVuelo(AVION, perfil, 0, entradaDeLaLlegada(perfil), carga);
+    const plan = quemadoEnElVuelo(AVION, perfil, entradaDeLaLlegada(perfil), entradaDeLaLlegada(perfil) + DIEZ_MINUTOS, kilos) / DIEZ_MINUTOS;
+    expect(quemaEnCrucero).not.toBeNull();
+    expect(quemaEnCrucero! / plan).toBeGreaterThan(0.85);
+    expect(quemaEnCrucero! / plan).toBeLessThan(1.15);
   });
 });

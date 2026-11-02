@@ -144,7 +144,7 @@ import {
   type Indicativo,
 } from "./flight/matricula";
 import type { FlightModel, FlightState } from "./flight/model";
-import { Terrain, cabeceraContraria, cabeceraEnUso } from "./world/terrain";
+import { Terrain, cabeceraContraria, cabeceraEnUso, soltarElMaterial } from "./world/terrain";
 import {
   rutaDe,
   Seguimiento,
@@ -163,12 +163,14 @@ import {
   estadoDelSalto,
   mundoDelTramo,
   RelojDelVuelo,
+  resistenciaEnVuelo,
   sitioDelMundo,
   type EstadoDelSalto,
 } from "./flight/salto-bajo-tapa";
 import {
   dondeVa,
   entradaDeLaLlegada,
+  entradaDeLaNoche,
   horarioDelDia,
   horasEn,
   NIVELES_DE_CRUCERO,
@@ -179,6 +181,7 @@ import {
   type PerfilDelVuelo,
 } from "./flight/ruta-larga";
 import { guionDePruebaDelSalto } from "./flight/guion-de-prueba-del-salto";
+import { GUION_NOCHE_SOBRE_EL_MAR } from "./flight/guion-noche-sobre-el-mar";
 import { CHACO_ENFRENTE, GUION_LLEGADA_A_ASUNCION, MUNDO_DE_LA_LLEGADA, RIO_ENFRENTE, SE_DESAYUNA_A } from "./flight/guion-llegada-a-asuncion";
 import { cargarElMundo, type MundoCargado } from "./world/mundo-del-tramo";
 import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
@@ -2021,6 +2024,11 @@ export interface GameOptions {
    * `flight/inicio.ts`, `flight/inicio-aterrizar.ts` y `empezarElInicio`.
    */
   inicio?: EscenaDelInicio;
+  /**
+   * **El capítulo del vuelo largo, si no es el tercero**: `?capitulo=2`. Ver
+   * `flight/guion-noche-sobre-el-mar.ts`.
+   */
+  capitulo?: 2;
 
   /**
    * El peldaño de este vuelo, si no es el recordado: el modo inicio va en
@@ -5735,6 +5743,7 @@ export class Game {
     if (options.tramo) this.tier = options.tramo;
     this.conInicio = options.inicio !== undefined;
     this.escenaDelInicio = options.inicio ?? "despegar";
+    this.capituloDelLargo = options.capitulo ?? 3;
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
     this.sigueme = new Sigueme(this.scenario.aerodrome?.privado === true);
     this.pavimento = this.scenario.aerodrome
@@ -7063,96 +7072,12 @@ export class Game {
        * `flight/vuelo-de-linea.ts`— y la escena dice qué toca y cuándo.
        */
       const largo = this.vueloLargoPedido();
-      const opciones = {
-        lado: LADO_DE_ARA,
-        pared: this.pared,
-        demostracion: () => this.laDemostracionDeHoy(),
-        conPantalla: !!this.aircraft.disposicionDelPasaje,
-      };
-      // El vuelo corto, o el capítulo del vuelo largo: el mismo motor con otro guion.
-      this.inicio =
-        this.escenaDelInicio === "largo"
-          ? new MotorDelPasaje(this.vozDelInicio, GUION_LLEGADA_A_ASUNCION, opciones)
-          : new VueloDePasaje(this.vozDelInicio, opciones, largo ? guionDePruebaDelSalto(largo.hasta) : undefined);
-      // Y su kit de viaje, que la tripulante trae en la bajada. Ver `flight/kit-de-viaje.ts`.
-      this.pantallaDelKit?.quitar();
-      const kit = document.getElementById("kit");
-      // En la luz verde, abajo hay verde y roja fijas, y arriba también los destellos: el peldaño de quien juega.
-      this.inicio.kit.peldano = this.tier.avisos;
-      const dePrueba = this.kitDePrueba();
-      const consola = this.inicio.consola;
-      this.pantallaDelKit = kit ? new PantallaDelKit(kit, this.inicio.kit, !dePrueba, !consola) : null;
-      this.pantallaDeLaConsola?.quitar();
-      const raizDeLaConsola = document.getElementById("consola");
-      const peldanoDeQuienJuega = rememberedTier().avisos;
-      this.pantallaDeLaConsola =
-        consola && raizDeLaConsola
-          ? new PantallaDeLaConsola(raizDeLaConsola, consola, {
-              /*
-               * **El peldaño de quien juega, no el del vuelo**: la escena va siempre en
-               * Guyrami, que es el avión de Ara y no quien lo mira (ver `conInicio` en
-               * `main.ts`), y con ese no le saldrían los datos a nadie.
-               */
-              peldano: () => peldanoDeQuienJuega,
-              cuentos: () => this.cuentosQueSeOfrecen(),
-              cuaderno: {
-                abrir: () => this.cuadernoUI?.show(),
-                cerrar: () => this.cuadernoUI?.hide(),
-                abierto: () => !!this.cuadernoUI?.visible,
-              },
-              noExplicar: () => {
-                this.explicacionDeLaConsola.quitar();
-                if (this.inicio instanceof MotorDelPasaje) this.inicio.olvidarLaExplicacionDeLaConsola();
-              },
-            })
-          : null;
-      this.consolaContada = false;
-      this.modoEnLaPantalla = "mapa";
-      // Con `?inicio=3&kit`, ya en la mano en el puesto: después de leer el nivel guardado, que el pedido manda.
-      if (dePrueba) {
-        if (dePrueba.nivel !== null) this.inicio.kit.seguirArmandoDesde(dePrueba.nivel);
-        this.inicio.kit.dar();
-      }
-      this.tripulacionDeLinea = new VueloDeLinea({
-        vr: this.aircraft.rotationSpeed,
-        vref: this.aircraft.approachSpeed,
-        alturaDeLaRecogida: laRecogidaDe(this.aircraft).nariz,
-        alturaDelGas: laRecogidaDe(this.aircraft).gas,
-        reversa: tieneReversa(this.aircraft),
-        trenQueSeMete: this.input.hayPalancaDeTren,
-      });
-      this.inicioCongelado = false;
-      this.input.cerrarGas();
-      this.input.controls.engineOn = false;
-      // El gas de la final es de la tripulación: la ayuda del peldaño no se engancha.
-      this.soltarElGasDeLaFinal(false);
-      this.gasDeLaFinalDado = true;
-      // Desde el asiento, sin tocar la vista recordada de quien juega.
-      this.cameraMode = LADO_DE_ARA === "izquierda" ? "pasaje-izquierda" : "pasaje-derecha";
-      // Y desde la ventanilla, sin velo ni ventanita de antes. Ver `camaraDeLaEscena`.
-      this.fundidoDePlano = new FundidoDePlano();
-      this.planoDeAntes = "ventanilla";
-      this.ponerLaVentanitaDeLaEscena(null);
-      this.cinturonDeLaEscena = false;
-      this.clavesDeLaEscena.clear();
-      // Y lo que se miró del paisaje en otra escena, olvidado. Ver `verDesdeElPasaje`.
-      this.hitosDeLaEscena.clear();
-      this.puntoDelPaisaje.clear();
-      this.vistoHace.clear();
-      this.paisajeDeLaToma = null;
-      this.cabinaAntes = null;
-      this.ritmoDeCabina = 0;
-      this.comandante.callar();
-      this.tripulacion.callar();
-      /*
-       * Y un día sin turbulencia en el camino, que es lo más corriente con buen
-       * tiempo: la del aire de abajo, la del alisio rozando la isla, se nota
-       * igual al subir. Ver `guionDeTurbulencia`.
-       */
-      this.turbulenciaPedida = [];
+      this.montarLaEscenaDePasaje(largo);
       // Y con `?largo=` o en un capítulo, ya arriba: no se pasa por el puesto. Ver `entrarEnElVueloLargo`.
-      if (this.escenaDelInicio === "largo") this.entrarEnLaLlegada();
-      else if (largo) this.entrarEnElVueloLargo(largo.desde);
+      if (this.escenaDelInicio === "largo") {
+        if (this.capituloDelLargo === 2) this.entrarEnLaNoche();
+        else this.entrarEnLaLlegada();
+      } else if (largo) this.entrarEnElVueloLargo(largo.desde);
     } else if (aterrizar) {
       this.inicio = new InicioDeAterrizar(this.vozDelInicio, {
         primerSello,
@@ -7221,6 +7146,105 @@ export class Game {
       this.cuadroAntesDelInicio = this.hud.recogerElCuadro(true);
     this.pintarElInicio();
     this.encuadrarSobreElCuadro();
+  }
+
+  /**
+   * **La escena de pasaje, montada**: el motor con su guion y lo que cuelga de él, la
+   * tripulación y lo que quedó de otra escena. Sin colocar el avión: eso es de quien
+   * llama. Aparte porque se monta una vez al empezar y otra al caer de un capítulo en
+   * el siguiente: del salto de la noche se cae en la llegada, y la llegada tiene que
+   * correr igual que abierta por su ficha, con todo a estrenar. Ver `atenderAlSalto`.
+   */
+  private montarLaEscenaDePasaje(largo: { readonly hasta: number } | null): void {
+    const opciones = {
+      lado: LADO_DE_ARA,
+      pared: this.pared,
+      demostracion: () => this.laDemostracionDeHoy(),
+      conPantalla: !!this.aircraft.disposicionDelPasaje,
+    };
+    // El vuelo corto, o el capítulo del vuelo largo: el mismo motor con otro guion.
+    this.inicio =
+      this.escenaDelInicio === "largo"
+        ? this.capituloDelLargo === 2
+          ? new MotorDelPasaje(this.vozDelInicio, GUION_NOCHE_SOBRE_EL_MAR, opciones)
+          : new MotorDelPasaje(this.vozDelInicio, GUION_LLEGADA_A_ASUNCION, opciones)
+        : new VueloDePasaje(this.vozDelInicio, opciones, largo ? guionDePruebaDelSalto(largo.hasta) : undefined);
+    // Y su kit de viaje, que la tripulante trae en la bajada. Ver `flight/kit-de-viaje.ts`.
+    this.pantallaDelKit?.quitar();
+    const kit = document.getElementById("kit");
+    // En la luz verde, abajo hay verde y roja fijas, y arriba también los destellos: el peldaño de quien juega.
+    this.inicio.kit.peldano = this.tier.avisos;
+    const dePrueba = this.kitDePrueba();
+    const consola = this.inicio.consola;
+    this.pantallaDelKit = kit ? new PantallaDelKit(kit, this.inicio.kit, !dePrueba, !consola) : null;
+    this.pantallaDeLaConsola?.quitar();
+    const raizDeLaConsola = document.getElementById("consola");
+    const peldanoDeQuienJuega = rememberedTier().avisos;
+    this.pantallaDeLaConsola =
+      consola && raizDeLaConsola
+        ? new PantallaDeLaConsola(raizDeLaConsola, consola, {
+            /*
+             * **El peldaño de quien juega, no el del vuelo**: la escena va siempre en
+             * Guyrami, que es el avión de Ara y no quien lo mira (ver `conInicio` en
+             * `main.ts`), y con ese no le saldrían los datos a nadie.
+             */
+            peldano: () => peldanoDeQuienJuega,
+            cuentos: () => this.cuentosQueSeOfrecen(),
+            cuaderno: {
+              abrir: () => this.cuadernoUI?.show(),
+              cerrar: () => this.cuadernoUI?.hide(),
+              abierto: () => !!this.cuadernoUI?.visible,
+            },
+            noExplicar: () => {
+              this.explicacionDeLaConsola.quitar();
+              if (this.inicio instanceof MotorDelPasaje) this.inicio.olvidarLaExplicacionDeLaConsola();
+            },
+          })
+        : null;
+    this.consolaContada = false;
+    this.modoEnLaPantalla = "mapa";
+    // Con `?inicio=3&kit`, ya en la mano en el puesto: después de leer el nivel guardado, que el pedido manda.
+    if (dePrueba) {
+      if (dePrueba.nivel !== null) this.inicio.kit.seguirArmandoDesde(dePrueba.nivel);
+      this.inicio.kit.dar();
+    }
+    this.tripulacionDeLinea = new VueloDeLinea({
+      vr: this.aircraft.rotationSpeed,
+      vref: this.aircraft.approachSpeed,
+      alturaDeLaRecogida: laRecogidaDe(this.aircraft).nariz,
+      alturaDelGas: laRecogidaDe(this.aircraft).gas,
+      reversa: tieneReversa(this.aircraft),
+      trenQueSeMete: this.input.hayPalancaDeTren,
+    });
+    this.inicioCongelado = false;
+    this.input.cerrarGas();
+    this.input.controls.engineOn = false;
+    // El gas de la final es de la tripulación: la ayuda del peldaño no se engancha.
+    this.soltarElGasDeLaFinal(false);
+    this.gasDeLaFinalDado = true;
+    // Desde el asiento, sin tocar la vista recordada de quien juega.
+    this.cameraMode = LADO_DE_ARA === "izquierda" ? "pasaje-izquierda" : "pasaje-derecha";
+    // Y desde la ventanilla, sin velo ni ventanita de antes. Ver `camaraDeLaEscena`.
+    this.fundidoDePlano = new FundidoDePlano();
+    this.planoDeAntes = "ventanilla";
+    this.ponerLaVentanitaDeLaEscena(null);
+    this.cinturonDeLaEscena = false;
+    this.clavesDeLaEscena.clear();
+    // Y lo que se miró del paisaje en otra escena, olvidado. Ver `verDesdeElPasaje`.
+    this.hitosDeLaEscena.clear();
+    this.puntoDelPaisaje.clear();
+    this.vistoHace.clear();
+    this.paisajeDeLaToma = null;
+    this.cabinaAntes = null;
+    this.ritmoDeCabina = 0;
+    this.comandante.callar();
+    this.tripulacion.callar();
+    /*
+     * Y un día sin turbulencia en el camino, que es lo más corriente con buen
+     * tiempo: la del aire de abajo, la del alisio rozando la isla, se nota
+     * igual al subir. Ver `guionDeTurbulencia`.
+     */
+    this.turbulenciaPedida = [];
   }
 
   /** Cómo tenía el cuadro quien juega antes del modo inicio. */
@@ -8216,6 +8240,7 @@ export class Game {
     readonly escena: EscenaDelInicio;
     readonly estado: Inicio["estado"] | InicioDeAterrizar["estado"] | MotorDelPasaje["estado"] | null;
     readonly registro: Inicio["registro"] | null;
+    readonly capituloDeAntes: Game["capituloDeAntes"];
     readonly congelado: boolean;
     readonly mando: string;
     readonly lectura: LecturaDeAterrizar | null;
@@ -8308,6 +8333,7 @@ export class Game {
       estado: e ?? null,
       lamina: this.laminaGrande?.paraBanco ?? null,
       registro: this.inicio?.registro ?? null,
+      capituloDeAntes: this.capituloDeAntes,
       congelado: this.inicioCongelado,
       mando: this.input.ultimoMando,
       lectura: this.lecturaDelAterrizaje,
@@ -16281,7 +16307,19 @@ export class Game {
     /** Lo que estuvo la pantalla esperando, s de pared. */
     readonly pared: number;
     readonly relojDelJuego: number;
+    /** Lo que había en la tarjeta al quitar el mundo de antes: antes y después, si se cambió. */
+    readonly tarjeta: Game["tarjetaAlCambiar"];
   }[] = [];
+
+  /**
+   * **Lo que se va de la tarjeta al quitar un mundo**, medido justo ahí: es lo único que
+   * dice si se suelta. Comparar lo que hay antes y después de cambiar no lo dice, porque
+   * three.js solo cuenta lo que ya se ha pintado, y eso depende de adónde se mire.
+   */
+  private tarjetaAlCambiar: {
+    readonly geometrias: readonly [number, number];
+    readonly texturas: readonly [number, number];
+  } | null = null;
 
   /** Si ya se cambió de mundo: lo que llegue tarde del de arranque, ya no es de aquí. */
   private mundoCambiado = false;
@@ -16321,6 +16359,57 @@ export class Game {
   private entrarEnLaLlegada(): void {
     const perfil = perfilDelVuelo(horarioDelDia(this.fechaDelVuelo()));
     this.entrarEnElPerfil(perfil, entradaDeLaLlegada(perfil));
+  }
+
+  /**
+   * **Entrar en el segundo capítulo**, un rato antes de El Hierro, donde el mundo de
+   * Canarias ya está debajo. Como la llegada: el punto es fijo y la hora, la de ese punto
+   * con el horario de hoy. Ver `entradaDeLaNoche`.
+   */
+  private entrarEnLaNoche(): void {
+    const perfil = perfilDelVuelo(horarioDelDia(this.fechaDelVuelo()));
+    this.entrarEnElPerfil(perfil, entradaDeLaNoche(perfil));
+  }
+
+  /**
+   * **El capítulo del vuelo largo que se está volando.** Empieza en el que se abrió y
+   * cambia al caer del salto de la noche en la llegada.
+   */
+  private capituloDelLargo: 2 | 3 = 3;
+
+  /** **El parte de Asunción**, para cuando se caiga allí. Ver `ponerTiempoDeLaLlegada`. */
+  private tiempoDeLaLlegada: Meteo | null = null;
+
+  /**
+   * **El parte del sitio donde acaba el salto de la noche**: lo pide `main.ts` al
+   * arrancar y se guarda para entonces, sin tocar el de Canarias con el que se vuela.
+   * Sin él —la red no contestó a tiempo— se cae con el tiempo típico de allí, que es lo
+   * que hace cualquier campo sin parte.
+   */
+  ponerTiempoDeLaLlegada(meteo: Meteo): void {
+    this.tiempoDeLaLlegada = meteo;
+  }
+
+  /** **Lo que se contó en el capítulo de antes**, para el banco: la escena nueva empieza de cero. */
+  private capituloDeAntes: { readonly registro: Inicio["registro"]; readonly estado: MotorDelPasaje["estado"] } | null = null;
+
+  /** Si ya se está recargando la página, porque el mundo de la llegada no llegó. Ver `atenderAlSalto`. */
+  private recargandoLaLlegada = false;
+
+  /**
+   * **Del salto de la noche se cae en la llegada**, entero y con todo a estrenar: la
+   * escena nueva es la misma que abre su ficha, así que no hay dos capítulos terceros que
+   * mantener. Lo que no es de ella —el mundo, el avión, el reloj del vuelo— ya lo puso
+   * el salto. Y de golpe la lámina con la que abre, debajo de la siesta: si se fundieran
+   * las dos a la vez, una entrando y otra saliendo, el mundo asomaría a un cuarto de luz
+   * en mitad del fundido.
+   */
+  private caerEnLaLlegada(escena: MotorDelPasaje): void {
+    this.capituloDeAntes = { registro: escena.registro, estado: escena.estado };
+    this.capituloDelLargo = 3;
+    this.montarLaEscenaDePasaje(null);
+    this.laminaGrande?.taparDeGolpe();
+    this.vueloLargoMirado = null;
   }
 
   private entrarEnElPerfil(perfil: PerfilDelVuelo, t: number): void {
@@ -16403,14 +16492,31 @@ export class Game {
       return;
     }
     if (estado !== "listo") return;
+    /*
+     * **Caer en la llegada sin su mundo no se puede**: la red de arriba deja el avión en
+     * su sitio y volando, pero la llegada acaba en una pista, y sin el mundo no hay ninguna.
+     * Se abre por su camino de siempre, recargando: se pierde el permiso del audio hasta
+     * el siguiente toque, y si la red sigue caída ya contesta la página, que sabe qué hacer.
+     */
+    const sigue = escena?.sigueOtroCapitulo ? escena : null;
+    if (sigue && !salto.mundo) {
+      if (this.recargandoLaLlegada) return;
+      this.recargandoLaLlegada = true;
+      const q = new URLSearchParams(location.search);
+      q.set("capitulo", "3");
+      location.replace(`${location.pathname}?${q.toString()}`);
+      return;
+    }
     const desde = vl.reloj.ahora(this.relojDelJuego);
     const instante = dondeVa(vl.perfil, salto.hasta).instante;
-    if (salto.mundo) this.ponerElMundo(salto.mundo, instante);
+    if (salto.mundo)
+      this.ponerElMundo(salto.mundo, instante, sigue ? (this.tiempoDeLaLlegada ?? vientoDeCasa(salto.mundo.escenario.vientoDominante)) : null);
     const e = estadoDelSalto(vl.perfil, salto.hasta, this.aircraft, { en: desde, kilos: this.combustible });
     vl.reloj.saltarA(salto.hasta, this.relojDelJuego);
+    escena?.trasElSalto();
+    if (sigue) this.caerEnLaLlegada(sigue);
     this.ponerEnElEstado(e);
     this.enterarseDelSalto(salto.hasta - desde, salto.mundo !== null);
-    escena?.trasElSalto();
     // Un paso para que todo lo que se mira de un fotograma a otro parta de aquí, y un dibujo. Ver arriba.
     this.unPaso(1 / 60);
     this.pintar();
@@ -16423,6 +16529,7 @@ export class Game {
       porLaRed: salto.espera.saltoLaRed,
       pared: (performance.now() - salto.pedidoEn) / 1000,
       relojDelJuego: this.relojDelJuego,
+      tarjeta: salto.mundo ? this.tarjetaAlCambiar : null,
     });
     this.saltoEnCurso = null;
   }
@@ -16624,13 +16731,19 @@ export class Game {
    * vendrá con quien la necesite: los vecinos —el mundo nuevo se vuela solo—,
    * sus aviones del corredor, y los barcos y los turbohélices, que son de
    * Canarias. Volver a un mundo de Canarias dejaría esos sin montar. Y **el
-   * tiempo no cambia**: es el del vuelo, hasta que la tanda de la llegada ponga
-   * el parte de Pettirossi.
+   * tiempo no cambia** —es el del vuelo—, salvo que se traiga `parte`: el de la llegada,
+   * que manda por qué cabecera se entra.
    */
-  private ponerElMundo(m: MundoCargado, instante: Date): void {
+  private ponerElMundo(m: MundoCargado, instante: Date, parte: Meteo | null = null): void {
     this.mundoCambiado = true;
+    const enLaTarjeta = this.renderer.info.memory;
+    const antes = { geometrias: enLaTarjeta.geometries, texturas: enLaTarjeta.textures };
     this.quitarElMundo();
-    this.scenario = conViento(m.escenario, this.scenario.meteo ?? TIEMPO_DE_CASA);
+    this.tarjetaAlCambiar = {
+      geometrias: [antes.geometrias, enLaTarjeta.geometries],
+      texturas: [antes.texturas, enLaTarjeta.textures],
+    };
+    this.scenario = conViento(m.escenario, parte ?? this.scenario.meteo ?? TIEMPO_DE_CASA);
     this.pavimento = this.scenario.aerodrome ? mapaDePavimento(this.scenario.aerodrome) : null;
     // Con su instante, que es de donde sale la luz cocida en el relieve. Ver `solDelRelieve`.
     this.terrain = new Terrain(this.scenario, instante);
@@ -16685,6 +16798,8 @@ export class Game {
     this.rehacerLaSenda();
     this.montarElCampo(this.laCasa);
     this.poblarDeAves();
+    // Lo demás del parte: el altímetro, el viento en el modelo, las nubes y el agua. Ver `ponerTiempo`.
+    if (parte) this.ponerTiempo(parte);
   }
 
   /** **Quitar lo que se montó con el mundo de ahora**: de la escena y de la tarjeta. */
@@ -16697,8 +16812,8 @@ export class Game {
         if (!m.isMesh) return;
         m.geometry?.dispose();
         const material = m.material;
-        if (Array.isArray(material)) material.forEach((x) => x.dispose());
-        else material?.dispose();
+        if (Array.isArray(material)) material.forEach(soltarElMaterial);
+        else if (material) soltarElMaterial(material);
       });
     };
     for (const v of this.vecinos) {
@@ -17011,6 +17126,8 @@ export class Game {
       conSolAlDesayunar: solEnElVuelo(perfil, alEntrar).asoma,
       sol: (solEnElVuelo(perfil, ahora).altura * 180) / Math.PI,
       solPorMiVentanilla: this.elSolPorLaVentanilla(),
+      recorrido: dondeVa(perfil, ahora).recorrido,
+      entraLaLlegada: alEntrar,
       anuncioDeLaBajada: () => {
         const meteo = this.scenario.meteo ?? TIEMPO_DE_CASA;
         return anuncioDeLaBajadaDelVueloLargo(
@@ -19709,8 +19826,16 @@ export class Game {
      */
     const s0 = this.flight.state;
     const aire = this.flight.aireDelDia();
-    // En un vuelo largo, el de las manos de la tripulación. Ver `empujeQueSeQuema`.
-    const empuje = this.vueloLargo ? empujeQueSeQuema(this.flight, this.manosDeLinea) : this.flight.empujeAhora();
+    // En un vuelo largo, el de las manos de la tripulación, y nivelado, la resistencia. Ver `empujeQueSeQuema`.
+    const empuje = this.vueloLargo
+      ? empujeQueSeQuema(
+          this.flight,
+          this.manosDeLinea,
+          this.tripulacionDeLinea?.estado.tramo === "crucero"
+            ? resistenciaEnVuelo(this.aircraft, s0.position.y, s0.airspeed, this.combustible)
+            : null,
+        )
+      : this.flight.empujeAhora();
     this.quemaDeAhora = this.input.controls.engineOn
       ? quemaPorSegundo(this.aircraft, empuje, {
           mach: s0.airspeed / velocidadDelSonido(s0.position.y, aire),

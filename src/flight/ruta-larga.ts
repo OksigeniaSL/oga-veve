@@ -35,6 +35,8 @@
  * decide quien las pinte.
  */
 
+import GCLA from "../../data/aerodromes/gcla.aero.json";
+import GCXO from "../../data/aerodromes/gcxo.aero.json";
 import SGAS from "../../data/aerodromes/sgas.aero.json";
 import type { Sitio } from "../world/entre-aerodromos";
 import { bajadaDelHorizonte, RADIO_DE_LA_TIERRA } from "../world/curvatura";
@@ -249,6 +251,14 @@ export const SITIOS_DEL_CAMINO = {
    * relation/6614169. La ruta entra en Paraguay a su lado.
    */
   pedroJuanCaballero: { lat: -22.5497781, lon: -55.7384312 },
+  /**
+   * **Tenerife y La Palma**, por el punto de sus aeródromos, los mismos en los que
+   * se montan sus mundos: de ahí salen los «73 km a la izquierda» y los «43 km a la
+   * derecha» del plan. Una isla no es un punto: de Tenerife, lo más cerca de la ruta
+   * es la punta de Teno, a 39 km, y el Teide queda a 66.
+   */
+  tenerife: { lat: GCXO.origin.lat, lon: GCXO.origin.lon },
+  laPalma: { lat: GCLA.origin.lat, lon: GCLA.origin.lon },
 } as const satisfies Record<string, Sitio>;
 
 // ── El horario ──────────────────────────────────────────────────────────
@@ -610,6 +620,24 @@ export const ENTRA_LA_LLEGADA_A = 400_000;
 /** **Cuándo entra el tercer capítulo**, s desde el despegue. Ver `ENTRA_LA_LLEGADA_A`. */
 export function entradaDeLaLlegada(p: PerfilDelVuelo): number {
   return cuandoPasa(p, p.ruta.distancia - ENTRA_LA_LLEGADA_A);
+}
+
+/**
+ * **A cuántos metros antes de Valverde se entra en el segundo capítulo**, por la
+ * ortodrómica. Lo mismo que `ENTRA_LA_LLEGADA_A`, y por lo mismo: manda el mundo. El de
+ * Tenerife Norte llega a ciento sesenta y dos kilómetros de su centro, y a las 2 h del
+ * despegue el avión todavía va treinta más al norte. Con estos doscientos ochenta entra
+ * ciento cuarenta y tres kilómetros al norte de Los Rodeos, a las 2 h 05, y le quedan
+ * veinte minutos de vuelo hasta El Hierro.
+ */
+export const ENTRA_LA_NOCHE_ANTES = 280_000;
+
+/** **Lo recorrido al pasar junto a Valverde**, m: El Hierro, por debajo. */
+export const PASA_EL_HIERRO = respectoALaRuta(DE_MADRID_A_ASUNCION, SITIOS_DEL_CAMINO.valverde).recorrido;
+
+/** **Cuándo entra el segundo capítulo**, s desde el despegue. Ver `ENTRA_LA_NOCHE_ANTES`. */
+export function entradaDeLaNoche(p: PerfilDelVuelo): number {
+  return cuandoPasa(p, PASA_EL_HIERRO - ENTRA_LA_NOCHE_ANTES);
 }
 
 // ── Las horas y la luz ──────────────────────────────────────────────────

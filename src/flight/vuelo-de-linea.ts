@@ -1124,16 +1124,22 @@ export function enLosMandosDeLinea(
  * empuje ya es de verdad, lo de siempre. Lo usan `game.ts` y la prueba, para que la
  * cuenta que se prueba sea la que vuela.
  *
- * Queda de más en crucero: lleva el escalón de subida, y la cuenta sale por unas
- * 11 t/h donde el plan cuenta 6 (`quemadoEnElVuelo`). Con lo poco de crucero que se
- * vuela sin saltos, el JAZ 110 toca por encima de lo que deja el plan.
+ * **Y en crucero, con `nivelado`, la resistencia.** El escalón de lo que se oye
+ * en crucero es el de subida, que es el que el vuelo corto lleva hasta la bajada, y
+ * como empuje es de más: quemando por él salían unas 11 t/h —medidas en esta prueba,
+ * 1,8 veces lo del plan— donde `quemadoEnElVuelo` cuenta de 8 a 6. Nivelado, el
+ * empuje que hace falta es la resistencia, y es la misma cuenta del plan: el rato
+ * volado y el rato saltado gastan lo mismo, y lo que se oye no cambia. Es `game.ts`
+ * quien la da, y solo en un vuelo largo: el corto sigue como estaba.
  */
 export function empujeQueSeQuema(
   modelo: { empujeAhora(): number; empujeCon?(fraccion: number): number },
   manos: Pick<ManosDeLinea, "empuje"> | null,
+  nivelado: number | null = null,
 ): number {
   const empuje = manos?.empuje;
-  return empuje !== undefined && modelo.empujeCon ? modelo.empujeCon(empuje) : modelo.empujeAhora();
+  if (empuje === undefined || !modelo.empujeCon) return modelo.empujeAhora();
+  return nivelado ?? modelo.empujeCon(empuje);
 }
 
 // ── Lo que queda ─────────────────────────────────────────────────────────

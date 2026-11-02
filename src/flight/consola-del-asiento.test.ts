@@ -45,6 +45,8 @@ const HOY: DelVueloLargo = {
   conSolAlDesayunar: true,
   sol: 17,
   solPorMiVentanilla: true,
+  recorrido: 8_789_000,
+  entraLaLlegada: 38_400,
   anuncioDeLaBajada: () => ({ clave: "comandante.largo.anuncio", texto: "…", relleno: {} }),
 };
 
