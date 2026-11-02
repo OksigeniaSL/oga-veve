@@ -4831,6 +4831,12 @@ export const ES_PY = {
     "Y el cinturón, por encima de la manta: así lo vemos sin tener que despertarte.",
   "inicio.ara.pasaje.largo.cinturonArriba":
     "¡El cinturón por arriba! Así me cuidan mientras duermo.",
+  "inicio.ara.pasaje.largo.medioDespertar": "Mmm… ¿por qué sonó eso?",
+  "inicio.tripulacion.pasaje.cerca.largo.nubesAltas":
+    "Es el cartel del cinturón. Cerca del ecuador, las nubes de tormenta son las más altas de todas.",
+  "inicio.tripulacion.pasaje.cerca.largo.nubesCinturon":
+    "Los pilotos las ven en el radar y las rodean. Por eso, en el asiento, el cinturón siempre puesto.",
+  "inicio.ara.pasaje.largo.sigoDurmiendo": "Entonces sigo durmiendo, con el cinturón puesto.",
   // No se graban: son de la pantalla.
   "inicio.modo.largo": "Llegá a Asunción",
   "inicio.modo.noche": "Cruzá el mar de noche",
@@ -4843,4 +4849,5 @@ export const ES_PY = {
   "ilustracion.ecuador": "La Tierra con el ecuador en raya roja, y el avión cruzándolo",
   "ilustracion.cena": "Ara recibe la cena del tripulante; detrás, el carrito frenado y con su cierre",
   "ilustracion.manta": "Ara con sueño, bajo la manta y con el cinturón por encima, con las luces bajas",
+  "ilustracion.medio-despertar": "Ara abre los ojos a medias, con el cinturón sobre la manta y la cabina a oscuras",
 } as const;

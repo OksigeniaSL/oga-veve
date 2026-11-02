@@ -176,6 +176,7 @@ describe("las ilustraciones", () => {
       "desayuno-noche",
       "cena",
       "manta",
+      "medio-despertar",
     ]);
   });
 

@@ -302,6 +302,41 @@ describe("Repinta solo cuando cambia algo", () => {
     expect(p.poner(invierno, 4 * 3600)).toBe(true);
   });
 
+  it("la marca late en cerca sin repintar en cada fotograma, y al quitarse repinta una vez y deja de subir la textura", () => {
+    let ahora = 1000;
+    vi.spyOn(performance, "now").mockImplementation(() => ahora);
+    const p = new PantallaDelRespaldo();
+    p.mostrar("cerca");
+    p.poner(invierno, 3 * 3600);
+    p.marcar({ lat: 27.73, lon: -18.03 });
+    let veces = 0;
+    // Dos segundos, a sesenta fotogramas por segundo y con el avión quieto.
+    for (let i = 0; i < 120; i++) {
+      ahora += 1000 / 60;
+      if (p.poner(invierno, 3 * 3600)) veces++;
+    }
+    expect(veces).toBeGreaterThanOrEqual(15);
+    expect(veces).toBeLessThanOrEqual(21);
+    expect(p.paraBanco.conMarca).toBe(true);
+    p.marcar(null);
+    expect(p.poner(invierno, 3 * 3600)).toBe(true);
+    expect(p.paraBanco.conMarca).toBe(false);
+    ahora += 1000;
+    expect(p.poner(invierno, 3 * 3600)).toBe(false);
+  });
+
+  it("la marca es del modo cerca: con el mapa entero delante no late nada", () => {
+    let ahora = 1000;
+    vi.spyOn(performance, "now").mockImplementation(() => ahora);
+    const p = new PantallaDelRespaldo();
+    p.poner(invierno, 3 * 3600);
+    p.marcar({ lat: 27.73, lon: -18.03 });
+    expect(p.poner(invierno, 3 * 3600)).toBe(true);
+    ahora += 500;
+    expect(p.poner(invierno, 3 * 3600)).toBe(false);
+    expect(p.paraBanco.conMarca).toBe(false);
+  });
+
   it("con el avión quieto en el puesto, el sol solo repinta cuando mueve la raya", () => {
     const p = new PantallaDelRespaldo();
     // Rodando en Barajas el avión no se mueve del mapa.

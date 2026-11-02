@@ -14,7 +14,8 @@ import { ES_PY } from "../i18n/es-PY";
 import { dondeCae } from "../world/entre-aerodromos";
 import type { Linea } from "./conversacion";
 import { GUION_NOCHE_SOBRE_EL_MAR, ISLAS_DE_LA_NOCHE } from "./guion-noche-sobre-el-mar";
-import { GUION_LLEGADA_A_ASUNCION } from "./guion-llegada-a-asuncion";
+import { GUION_LLEGADA_A_ASUNCION, SE_DESAYUNA_A } from "./guion-llegada-a-asuncion";
+import { planDeLaNoche } from "./noche-en-el-mapa";
 import { MotorDelPasaje, type DelVueloLargo, type LecturaDelPasaje, type SitioDelPaisaje, type VistaDelSitio } from "./motor-del-pasaje";
 import {
   cuandoPasa,
@@ -144,7 +145,7 @@ describe("el guion", () => {
   });
 
   it("las suyas y las del capítulo que sigue, ya bajadas antes de caer en ellas", () => {
-    expect(GUION_NOCHE_SOBRE_EL_MAR.apertura?.laminas).toEqual(["cena", "manta", ...GUION_LLEGADA_A_ASUNCION.apertura!.laminas]);
+    expect(GUION_NOCHE_SOBRE_EL_MAR.apertura?.laminas).toEqual(["cena", "manta", "medio-despertar", ...GUION_LLEGADA_A_ASUNCION.apertura!.laminas]);
   });
 
   interface ComoSeVuela {
@@ -164,14 +165,26 @@ describe("el guion", () => {
     readonly tapas: readonly (string | null)[];
     readonly dichas: readonly string[];
     readonly modos: readonly string[];
+    readonly lucesBajasAlDecirlas: boolean;
+    readonly lucesBajasAntes: boolean;
+    readonly marcadoCon: ReadonlySet<string>;
+    /** Sigue la noche, hasta que suelte el salto, con la voz diciendo lo suyo o sin contestar. */
+    readonly seguirLaNoche: (lasVocesContestan: boolean) => {
+      readonly dichas: readonly string[];
+      readonly tapas: readonly (string | null)[];
+      readonly horas: readonly number[];
+      readonly pared: number;
+      readonly dings: number;
+    };
   } {
     let t = 0;
+    let contestan = true;
     const dichas: string[] = [];
     let acaba: { fin: number; alAcabar: (esperaMas: number) => void } | null = null;
     const voz = {
       decir: (linea: Linea, alAcabar: (esperaMas: number) => void) => {
         dichas.push(linea.clave);
-        acaba = { fin: t + 1, alAcabar };
+        acaba = contestan ? { fin: t + 1, alAcabar } : null;
       },
       callar: () => {
         acaba = null;
@@ -187,8 +200,12 @@ describe("el guion", () => {
       sol: -80,
       solPorMiVentanilla: false,
       entraLaLlegada: entradaDeLaLlegada(INVIERNO),
+      planDeLaNoche: planDeLaNoche(INVIERNO, cuandoPasa(INVIERNO, PASA_EL_HIERRO + 20_000), SE_DESAYUNA_A),
       anuncioDeLaBajada: () => ({ clave: "", texto: "", relleno: {} }),
     };
+    let lucesBajasAntes = false;
+    let lucesBajasAlDecirlas = false;
+    const marcadoCon = new Set<string>();
     const planos: string[] = [];
     const orden: string[] = [];
     const tapas: (string | null)[] = [];
@@ -230,13 +247,115 @@ describe("el guion", () => {
       }
       if (como.contesta && c.estado.recogiendo) c.yaRecogida();
       const e = escena.estado;
+      if (!e.dichos.includes("luces") && escena.lucesBajas) lucesBajasAntes = true;
+      if (e.dichos.includes("luces") && escena.lucesBajas) lucesBajasAlDecirlas = true;
+      if (escena.marcaDeLaPantalla && e.linea) marcadoCon.add(e.linea.clave);
       if (planos.at(-1) !== e.plano) planos.push(e.plano);
       if (tapas.at(-1) !== e.tapa) tapas.push(e.tapa);
       if (modos.at(-1) !== c.modoDeAhora) modos.push(c.modoDeAhora);
       for (const m of e.dichos) if (!orden.includes(m)) orden.push(m);
     }
-    return { escena, orden, planos, tapas, dichas, modos };
+    const seguirLaNoche = (lasVocesContestan: boolean) => {
+      contestan = lasVocesContestan;
+      const lectura = (recorrido: number): LecturaDelPasaje => ({
+        tramo: "crucero",
+        enTramo: 60,
+        motor: true,
+        enTierra: false,
+        porElSuelo: 231,
+        altura: 10_972,
+        altitud: 10_972,
+        vertical: 0,
+        autorizado: false,
+        flaps: 0,
+        nubes: null,
+        enNube: 0,
+        cabina: 0,
+        faltaParaTocar: 8_000_000,
+        hastaLaBajada: 30_000,
+        largo: { ...delVuelo, recorrido },
+      });
+      const desde = t;
+      const antes = dichas.length;
+      const lasTapas: (string | null)[] = [escena.estado.tapa];
+      const horas: number[] = [];
+      for (; t < desde + 200 && escena.laNocheRetieneElSalto; ) {
+        t += DT;
+        if (acaba && t >= (acaba as { fin: number }).fin) {
+          const a = acaba as { alAcabar: (esperaMas: number) => void };
+          acaba = null;
+          a.alAcabar(0);
+        }
+        escena.paso(DT, lectura(PASA_EL_HIERRO + 40_000));
+        const e = escena.estado;
+        if (lasTapas.at(-1) !== e.tapa) lasTapas.push(e.tapa);
+        if (e.noche) horas.push(e.noche.hora);
+      }
+      return { dichas: dichas.slice(antes), tapas: lasTapas, horas, pared: t - desde, dings: escena.estado.noche?.dings ?? 0 };
+    };
+    return { escena, orden, planos, tapas, dichas, modos, lucesBajasAlDecirlas, lucesBajasAntes, marcadoCon, seguirLaNoche };
   }
+
+  it("la cabina baja las luces al anunciarlo, no antes, y es cosa de este guion", () => {
+    const { lucesBajasAntes, lucesBajasAlDecirlas, escena } = hastaDormirse();
+    expect(lucesBajasAntes).toBe(false);
+    expect(lucesBajasAlDecirlas).toBe(true);
+    expect(escena.lucesBajas).toBe(true);
+    expect(GUION_LLEGADA_A_ASUNCION.lucesBajanCon).toBeUndefined();
+  });
+
+  it("la marca sale con lo que cuenta Idaira de El Hierro, en todas sus frases, y se va al acabar", () => {
+    const { marcadoCon, escena } = hastaDormirse();
+    // En el paso en que se pide, la última dicha aún es la de antes, y el plano ya es otro.
+    expect([...marcadoCon].filter((c) => c !== "inicio.ara.pasaje.largo.tenerife")).toEqual([
+      "inicio.tripulacion.pasaje.cerca.largo.hierroEncima",
+      "inicio.ara.pasaje.largo.hierroNoSeVe",
+      "inicio.tripulacion.pasaje.cerca.largo.hierroDebajo",
+      "inicio.tripulacion.pasaje.cerca.largo.meridiano",
+      "inicio.tripulacion.pasaje.cerca.largo.greenwich",
+    ]);
+    expect(escena.marcaDeLaPantalla).toBeNull();
+  });
+
+  it("la noche: se va la manta, corre el mapa, suena el ding una vez, hablan en su orden, y vuelve a dormirse", () => {
+    const { seguirLaNoche, escena } = hastaDormirse();
+    expect(escena.nocheEnElMapa).not.toBeNull();
+    // Mientras dure, la ventanita no pone otro mapa encima.
+    expect(escena.estado.dibujo).not.toBe("ruta");
+    const r = seguirLaNoche(true);
+    expect(r.tapas).toEqual(["manta", null, "medio-despertar", null]);
+    expect(r.dichas).toEqual([
+      "inicio.ara.pasaje.largo.medioDespertar",
+      "inicio.tripulacion.pasaje.cerca.largo.nubesAltas",
+      "inicio.tripulacion.pasaje.cerca.largo.nubesCinturon",
+      "inicio.ara.pasaje.largo.sigoDurmiendo",
+    ]);
+    expect(r.dings).toBe(1);
+    expect(escena.tomarElDing()).toBe(true);
+    expect(escena.tomarElDing()).toBe(false);
+    expect(r.horas.at(-1)).toBe(SE_DESAYUNA_A);
+    expect(r.horas.every((h, i) => i === 0 || h >= r.horas[i - 1]!)).toBe(true);
+    expect(r.pared).toBeLessThan(60);
+    // Y lo demás sigue siendo de la siesta: Ara no se ha despertado, y el salto sigue pedido.
+    expect(escena.durmiendo).toBe(true);
+    expect(escena.saltoPedido).toBe(entradaDeLaLlegada(INVIERNO));
+    expect(escena.estado.noche?.porElTope).toBe(false);
+  });
+
+  it("y si las voces no contestan, se suelta por el tope: nadie se queda en la siesta", () => {
+    const { seguirLaNoche, escena } = hastaDormirse();
+    const r = seguirLaNoche(false);
+    expect(escena.laNocheRetieneElSalto).toBe(false);
+    expect(r.pared).toBeLessThan(90);
+    expect(r.tapas.at(-1)).toBeNull();
+  });
+
+  it("si el salto se deja, la noche se va con él, y no se queda esperando un mapa que no acaba en nada", () => {
+    const { escena } = hastaDormirse();
+    escena.saltoDejado();
+    expect(escena.nocheEnElMapa).toBeNull();
+    expect(escena.laNocheRetieneElSalto).toBe(false);
+  });
 
   it("arranca tapado, y pasa por la cena, la ventanilla, Tenerife, El Hierro y las luces, en su orden", () => {
     const { orden, tapas } = hastaDormirse();

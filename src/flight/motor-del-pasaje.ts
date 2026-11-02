@@ -32,6 +32,8 @@ import {
   type Tocable,
 } from "./lo-que-se-toca";
 import type { ComoSeVe } from "../world/se-ve-desde-el-pasaje";
+import type { Sitio } from "../world/entre-aerodromos";
+import { NocheEnElMapa, type FaseDeLaNoche, type PlanDeLaNoche } from "./noche-en-el-mapa";
 import type { Fase } from "./vuelo";
 import type { PermisosDeLaEscena, PotenciaDeLinea, TramoDeLinea } from "./vuelo-de-linea";
 
@@ -355,6 +357,8 @@ export interface DelVueloLargo {
   readonly recorrido: number;
   /** **Cuándo entra el tercer capítulo**, s desde el despegue: adónde salta la noche. */
   readonly entraLaLlegada: number;
+  /** **Las horas de la noche en el mapa**, si dormirse ahora las enseña. Ver `flight/noche-en-el-mapa.ts`. */
+  readonly planDeLaNoche?: PlanDeLaNoche;
   /**
    * **El anuncio de la bajada**, ya montado con la hora de allí, los minutos que
    * faltan y el parte de Pettirossi. Con una función porque se monta una vez y esto
@@ -477,6 +481,8 @@ const KIT_POR_DEBAJO = 300;
 const CALLA_PARA_DORMIRSE = 5;
 const SIESTA_MINIMA = 120;
 const DESPIERTA_ANTES_DE_BAJAR = 22;
+/** **Lo que se deja tras el *ding* de la noche**, s: se oye, entra la lámina, y Ara abre los ojos. */
+const TRAS_EL_DING_DE_LA_NOCHE = 1.6;
 const LO_QUE_DURA_EL_BOSTEZO = 8;
 const ESPERA_A_LO_QUE_SE_VE = 25;
 /**
@@ -625,6 +631,12 @@ export interface DefMomento<Id extends string = string, M extends string = strin
   segun?(l: LecturaDelPasaje, e: MotorDelPasaje<M, C>): readonly Linea[];
   /** Qué se dibuja para mirar mientras se dice. */
   readonly mira?: QueMirar;
+  /**
+   * **El sitio que se marca en la pantalla del asiento mientras se dice**, y solo mientras se
+   * dice: lo que se cuenta queda debajo del avión del mapa. Ver `marcar` en
+   * `world/pantalla-del-respaldo.ts`.
+   */
+  readonly marca?: Sitio;
   /** **Desde dónde se ve mientras se dice.** Sin decir, la ventanilla. */
   readonly plano?: Plano;
   /**
@@ -755,6 +767,13 @@ export interface GuionDelPasaje<M extends string = string, C extends string = st
      */
     readonly sigueOtroCapitulo?: boolean;
     /**
+     * **Si esta siesta enseña la noche en el mapa**, con su medio despertar: la lámina y lo
+     * que se dice. El mapa corre y el salto espera a que acabe. Hacen falta las horas, en
+     * `DelVueloLargo.planDeLaNoche`; sin ellas, la siesta es la de siempre. Ver
+     * `flight/noche-en-el-mapa.ts`.
+     */
+    readonly noche?: { readonly tapa: string; readonly lineas: readonly Linea[] };
+    /**
      * **Si en este guion Ara no se duerme**: entra recién despierta, y lo que
      * queda por delante es bajar, que no se hace durmiendo. Ver `puedeDormirse`.
      */
@@ -794,6 +813,11 @@ export interface GuionDelPasaje<M extends string = string, C extends string = st
    * con el mundo a la vista, que es lo de todos los demás vuelos.
    */
   readonly apertura?: { readonly hasta: M; readonly laminas: readonly string[] };
+  /**
+   * **El momento con el que la cabina baja las luces para dormir**, y se quedan así. Sin
+   * decir, las de crucero todo el vuelo. Ver `lucesBajas`.
+   */
+  readonly lucesBajanCon?: M;
   /**
    * **Si en este vuelo no se invita a tocar lo que se ve**: ni la frase de Ara ni el aro
    * que late. Es para lo que no tiene nada que contar por el cristal, como la noche
@@ -940,6 +964,16 @@ export interface EstadoDelPasaje<M extends string = string, C extends string = s
    * deja pasar el vuelo deprisa. Ver `puedeDormirse`.
    */
   readonly durmiendo: boolean;
+  /** **La noche en el mapa**, mientras dura. Ver `flight/noche-en-el-mapa.ts`. */
+  readonly noche: {
+    readonly fase: FaseDeLaNoche;
+    readonly hora: number;
+    readonly plan: PlanDeLaNoche;
+    readonly porElTope: boolean;
+    readonly dings: number;
+  } | null;
+  /** **Lo que se marca en la pantalla del asiento**. Ver `DefMomento.marca`. */
+  readonly marca: Sitio | null;
   readonly siestas: readonly Siesta[];
   /** **La luz del cinturón, apagada en el puesto**, y la gente de la cabina. Ver `gente`. */
   readonly luzApagada: boolean;
@@ -1163,6 +1197,13 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   private readonly siestas: { desde: number; hasta: number | null; paraBajar: boolean; porQue?: Siesta["porQue"] }[] = [];
   /** Adónde salta esta siesta, s de vuelo, mientras no haya saltado. Ver `saltoPedido`. */
   private saltoDeEstaSiesta: number | null = null;
+  /** **La noche en el mapa**, mientras dura. Ver `atenderALaNoche`. */
+  private noche: NocheEnElMapa | null = null;
+  /** Si hay un *ding* de la noche por sonar, y los que han sonado: el juego lo recoge en su fotograma. */
+  private dingPorSonar = false;
+  private dingsDeLaNoche = 0;
+  /** **Lo que se marca ahora en la pantalla del asiento**. Ver `DefMomento.marca`. */
+  private marca: Sitio | null = null;
   /** Si lo último que se pidió es el bostezo: al acabar, Ara cierra los ojos. */
   private bostezando = false;
   /** Si Ara se acaba de despertar con el *ding*: lo dice detrás del «ya estamos arriba». */
@@ -1442,6 +1483,10 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       kit: this.kit.estado,
       consola: this.consola?.estado ?? null,
       durmiendo: this.durmiendo,
+      noche: this.noche
+        ? { fase: this.noche.fase, hora: this.noche.hora, plan: this.noche.plan, porElTope: this.noche.soltadoPorElTope, dings: this.dingsDeLaNoche }
+        : null,
+      marca: this.marca,
       siestas: this.siestas.map((s) => ({ ...s })),
       luzApagada: this.luzApagadaEnElPuesto,
       gente: this.gente,
@@ -1611,6 +1656,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
    */
   trasElSalto(): void {
     this.saltoDeEstaSiesta = null;
+    this.noche = null;
     this.porSenalar.length = 0;
     this.contestacion = null;
     this.toquePendiente = null;
@@ -1636,6 +1682,51 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
    */
   saltoDejado(): void {
     this.saltoDeEstaSiesta = null;
+    // Sin salto al final, el mapa no acabaría en nada: la siesta sigue como la de un vuelo corto.
+    this.noche = null;
+  }
+
+  /** **Lo que enseña el mapa con Ara durmiendo**, si esta noche se enseña. Lo mira el juego en cada fotograma. */
+  get nocheEnElMapa(): { readonly hora: number; readonly seVa: boolean } | null {
+    return this.noche ? { hora: this.noche.hora, seVa: this.noche.seVaElMapa } : null;
+  }
+
+  /** **Si el salto tiene que esperar a que acabe la noche**. Ver `atenderAlSalto` en `game.ts`. */
+  get laNocheRetieneElSalto(): boolean {
+    return !!this.noche?.retieneElSalto;
+  }
+
+  /**
+   * **Si lo último que se dijo se quita de delante**: en la noche, la tarjeta solo sale con lo
+   * que se dice en el medio despertar. El bostezo no se queda encima del mapa, ni vuelve a salir
+   * en los segundos que van del *ding* a la primera frase.
+   */
+  get laNocheCalla(): boolean {
+    const n = this.noche;
+    if (!n) return false;
+    const u = this.charla.ultima;
+    return n.fase !== "despierta" || !u || !this.guion.siesta.noche?.lineas.includes(u);
+  }
+
+  /**
+   * **El *ding* del medio despertar**, si hay uno por sonar: lo suena el juego, que es quien
+   * tiene el audio. Se recoge una vez.
+   */
+  tomarElDing(): boolean {
+    const hay = this.dingPorSonar;
+    this.dingPorSonar = false;
+    return hay;
+  }
+
+  /** **Si la cabina lleva las luces bajas para dormir**. Lo mira el juego en cada paso. */
+  get lucesBajas(): boolean {
+    const con = this.guion.lucesBajanCon;
+    return con !== undefined && this.dicho(con);
+  }
+
+  /** **Lo que se marca ahora en la pantalla del asiento**, o `null`. Ver `DefMomento.marca`. */
+  get marcaDeLaPantalla(): Sitio | null {
+    return this.marca;
   }
 
   /**
@@ -1886,6 +1977,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       this.charla.atender();
       this.avanzar(l);
       this.charla.atender();
+      // Con el silencio se va: la marca es de lo que se está contando, no de la pantalla.
+      if (this.marca && this.charla.callada) this.marca = null;
       // Después de lo que empieza a sonar en este paso: si es la megafonía, el kit se pausa ya.
       this.atenderAlKit(dt, l);
     }
@@ -1939,7 +2032,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
      * como se ve que el vuelo sigue mientras pasa deprisa. Y al despertar se
      * queda con lo que dice Ara. Ver `ui/siesta.ts`.
      */
-    if (this.siestaDeAhora) this.dibujo = "ruta";
+    // Con la noche en el mapa no: ya está a toda pantalla, y encima no se pone otro.
+    if (this.siestaDeAhora && !this.noche) this.dibujo = "ruta";
   }
 
   /**
@@ -1995,6 +2089,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       def.planoSegun?.(l, this) ?? def.plano ?? (vista?.como && sitio ? planoParaVer(vista.como, sitio) : "ventanilla");
     this.ponerPlano(plano, sitio);
     if (def.pantalla) this.consola?.ensenar(def.pantalla);
+    this.marca = def.marca ?? null;
     const tapa = def.tapaSegun ? def.tapaSegun(l, this) : def.tapa;
     if (tapa !== undefined) {
       this.tapa = tapa;
@@ -2591,6 +2686,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     this.siestas.push(s);
     this.mira = null;
     this.saltoDeEstaSiesta = this.guion.siesta.salto?.(this, l) ?? null;
+    const plan = this.saltoDeEstaSiesta !== null && this.guion.siesta.noche ? l.largo?.planDeLaNoche : undefined;
+    this.noche = plan ? new NocheEnElMapa(plan, this.pared()) : null;
     // El modo rápido sigue puesto, pero durmiendo corre la siesta: ver `sePuedeCorrer`.
     this.parar();
   }
@@ -2614,6 +2711,10 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   private atenderALaSiesta(l: LecturaDelPasaje): void {
     const s = this.siestaDeAhora;
     if (!s) return;
+    if (this.noche) {
+      this.atenderALaNoche();
+      return;
+    }
     // Con un salto por delante manda él: lo de después del corte se mira después del corte.
     if (this.saltoDeEstaSiesta !== null) return;
     const toca = this.def.cuando(l, this);
@@ -2628,6 +2729,42 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     this.despertar(s, paraBajar ? "tripulante" : "otra");
     const { laDespiertan, seDespierta } = this.guion.siesta;
     this.charla.decir(paraBajar ? [laDespiertan, seDespierta] : [seDespierta]);
+  }
+
+  /**
+   * **La noche en el mapa**: lo que le toca decir y poner a la escena. Ara sigue durmiendo a
+   * efectos de todo lo demás —ni ⏩, ni lo señalado, ni nada del guion— también con el medio
+   * despertar, que es un rato dentro de la misma siesta y no una segunda: la siesta tapa
+   * igual, y la lámina se le pone encima. Ver `flight/noche-en-el-mapa.ts`.
+   *
+   * El *ding* suena una vez y la lámina entra con él; lo primero que se dice espera a que se
+   * haya visto, porque es lo que ha despertado a Ara. Al volver a dormirse, el mapa sigue.
+   */
+  private atenderALaNoche(): void {
+    const n = this.noche;
+    const def = this.guion.siesta.noche;
+    if (!n || !def) return;
+    switch (n.paso(this.pared(), this.charla.callada)) {
+      case "se-destapa":
+        // La de la manta, que se quedó hasta que la siesta tapase debajo.
+        this.tapa = null;
+        break;
+      case "ding":
+        this.dingPorSonar = true;
+        this.dingsDeLaNoche++;
+        this.tapa = def.tapa;
+        this.tapaEnciende = false;
+        this.charla.esperar(TRAS_EL_DING_DE_LA_NOCHE);
+        this.charla.decir(def.lineas);
+        break;
+      case "se-vuelve-a-dormir":
+        this.tapa = null;
+        // Si fue por el tope, lo que quedara por decir ya no viene a cuento. Si no, no corta nada.
+        this.charla.callar();
+        break;
+      case null:
+        break;
+    }
   }
 
   /** Se acabó la siesta, por lo que sea. */

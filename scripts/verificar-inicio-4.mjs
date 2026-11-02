@@ -49,6 +49,13 @@
  * - **Pasa por El Hierro a su hora**, ±5 minutos, con Valverde debajo, Tenerife a 73 km a
  *   la izquierda y La Palma a 43 a la derecha, ±10 km: lo mide donde va el avión de verdad,
  *   no la cuenta.
+ * - **Las luces bajan de verdad**: con la luz de la cabina leída, antes y a medio camino, que
+ *   la bajada se vea gradual; y al caer en el capítulo 3, la de siempre.
+ * - **La marca de El Hierro**: sale con lo que cuenta Idaira, en el lienzo, y se va al acabar.
+ * - **La noche en el mapa**, en cada fotograma de la página: el mapa a toda pantalla, el mundo
+ *   sin asomar y sin pintarse, el avión del mapa avanzando, y menos de un minuto de pared.
+ * - **El medio despertar**: el *ding* una vez, su lámina con su fichero, el mapa quieto antes
+ *   del ecuador, lo que se dice en su orden y sin pisarse, y a dormir otra vez.
  * - **Se puede dormir**: la siesta tapa, el salto cae a la hora del despertar y en el punto
  *   de la ortodrómica de esa hora, y nunca se ve saltar: lo mira cada fotograma de la página.
  * - **Lo que queda en los depósitos al despertar cuadra con la cuenta**.
@@ -66,8 +73,10 @@
  * `OGA_SOLO_NOCHE=1` para al caer del salto, y `OGA_METAR=` da un parte a mano, que con el
  * alisio de siempre lleva una capa de nubes por debajo del avión: para las capturas.
  *
- * `OGA_RED=1` mira la red: con los ficheros de Pettirossi que no contestan, a los veinte
- * segundos de pared la noche suelta y se abre el tercer capítulo por su camino de siempre.
+ * `OGA_RED=1` mira la red: con los ficheros de Pettirossi que no contestan, al acabar la noche
+ * se suelta y se abre el tercer capítulo por su camino de siempre. `OGA_RED=noche`, con la lámina
+ * del medio despertar que no contesta: la noche sigue igual, sin nadie atrapado en ella.
+ * `OGA_PASILLO=1` mira las luces desde el pasillo, para las capturas.
  */
 import { mkdirSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";
@@ -134,6 +143,12 @@ const DE_LA_NOCHE = {
     "inicio.tripulacion.pasaje.cerca.largo.cinturonManta",
     "inicio.ara.pasaje.largo.cinturonArriba",
     "inicio.ara.pasaje.dormirse",
+  ],
+  medioDespertar: [
+    "inicio.ara.pasaje.largo.medioDespertar",
+    "inicio.tripulacion.pasaje.cerca.largo.nubesAltas",
+    "inicio.tripulacion.pasaje.cerca.largo.nubesCinturon",
+    "inicio.ara.pasaje.largo.sigoDurmiendo",
   ],
 };
 const SE_RECOGE_LA_CONSOLA = "inicio.tripulacion.pasaje.cerca.largo.consolaRecogeLuces";
@@ -248,6 +263,13 @@ const leer = (page) =>
       ultimaToma: i.ultimaToma ?? null,
       vista: i.vista,
       salto: o.salto(),
+      luz: j.cabinaParaBanco.luz,
+      noche: i.estado?.noche ?? null,
+      marca: i.estado?.marca ?? null,
+      pantalla: i.pantallaDelAsiento ?? null,
+      dings: j.loQueSono.filter((x) => x.que === "cinturon").length,
+      siestaConElMapa: i.siesta?.conElMapa ?? false,
+      fotogramasPintados: j.renderer.info.render.frame,
       reloj: j.relojDelJuego,
       habladas: o.habladas(),
       maquina: o.maquina(),
@@ -289,6 +311,10 @@ const vigilarLaTapa = (page) =>
     const o = globalThis.__oga;
     const saltos = [];
     const asomo = { maximo: 0, fotogramas: 0 };
+    // Lo mismo con el mapa de la noche: cada fotograma con él puesto, si tapa, y si llena la pantalla.
+    const noche = { fotogramas: 0, asomos: 0, loMenos: 1, desde: null, hasta: null, sinLlenar: 0 };
+    // Y cada vez que la marca entra o sale del lienzo.
+    const elLienzo = [];
     const deEl = (id) => {
       const el = document.getElementById(id);
       return el && !el.hidden ? Number(getComputedStyle(el).opacity) : 0;
@@ -307,11 +333,27 @@ const vigilarLaTapa = (page) =>
         asomo.fotogramas++;
       }
       antes = { x: s.position.x, z: s.position.z, tapa };
+      // Con la prisa del banco, el plano cambia a los pocos fotogramas de irse la marca: aquí se ve igual.
+      const conMarca = o.juegoParaTrazas().pasilloMontado?.pasillo?.pantalla?.paraBanco.conMarca;
+      if (conMarca !== undefined && conMarca !== elLienzo.at(-1)) elLienzo.push(conMarca);
+      const mapa = document.querySelector("#siesta .siesta__mapa");
+      if (mapa) {
+        const ahora = performance.now();
+        noche.desde ??= ahora;
+        noche.hasta = ahora;
+        noche.fotogramas++;
+        noche.loMenos = Math.min(noche.loMenos, tapa);
+        if (tapa < 0.999) noche.asomos++;
+        const caja = mapa.getBoundingClientRect();
+        if (caja.width < innerWidth - 1 || caja.height < innerHeight - 1) noche.sinLlenar++;
+      }
       requestAnimationFrame(mirar);
     };
     requestAnimationFrame(mirar);
     globalThis.__saltosVistos = saltos;
     globalThis.__asomoTrasElSalto = asomo;
+    globalThis.__laNoche = noche;
+    globalThis.__elLienzo = elLienzo;
   });
 
 /** Lo que queda a la derecha —positivo— de quien va en `l`, m, y a cuánto está. */
@@ -402,10 +444,37 @@ async function laNoche(page) {
   let enElHierro = null;
   const tapas = [];
   const planos = [];
+  // Las luces: lo último que marcaba antes de anunciarlo, y lo que va marcando desde ahí.
+  let luzAntes = null;
+  const lucesBajando = [];
+  // La marca: las frases en que estaba puesta, si llegó al lienzo, y lo que queda al acabar.
+  const conMarca = new Set();
+  let marcaEnElLienzo = false;
+  let repintadosConMarca = [Infinity, 0];
+  let lienzoTrasLaMarca = null;
+  let marcaAlBajarLasLuces = null;
   for (;;) {
     const l = await leer(page);
     if (tapas.at(-1) !== l.tapa) tapas.push(l.tapa);
     if (planos.at(-1) !== l.plano) planos.push(l.plano);
+    if (!l.dichos.includes("luces")) luzAntes = l.luz;
+    else if (l.tapa !== "manta" || !l.lamina?.tapa) lucesBajando.push({ pared: Date.now(), luz: l.luz, linea: l.linea });
+    if (l.marca && l.linea) {
+      conMarca.add(l.linea);
+      if (l.pantalla?.conMarca) {
+        marcaEnElLienzo = true;
+        repintadosConMarca = [Math.min(repintadosConMarca[0], l.pantalla.repintados), Math.max(repintadosConMarca[1], l.pantalla.repintados)];
+      }
+    }
+    if (l.dichos.includes("luces") && lienzoTrasLaMarca === null) {
+      marcaAlBajarLasLuces = l.marca;
+      lienzoTrasLaMarca = await page.evaluate(() => globalThis.__elLienzo);
+    }
+    // Desde que se acaba lo de El Hierro: la captura de antes tiene que ser del mismo plano que la de después.
+    if (process.env.OGA_PASILLO && conMarca.size > 0 && !l.marca)
+      await page.evaluate(() => {
+        globalThis.__oga.juegoParaTrazas().planoForzadoParaBanco = "pasillo";
+      });
     if (!enElHierro && l.linea?.endsWith("largo.hierroEncima")) enElHierro = { plano: l.plano, pantalla: l.enLaPantalla };
     // Antes del `break`: la última lectura también cuenta para lo que se quedó a la vista.
     if (l.salto.enCurso) {
@@ -453,12 +522,16 @@ async function laNoche(page) {
       ["noche-1-ventanilla", dichos.includes("ventanilla") && !l.sobreElMundo.visible],
       ["noche-2-tenerife", l.linea?.endsWith("largo.tenerife")],
       ["noche-3-pantalla-el-hierro", l.plano === "respaldo" && l.linea?.endsWith("largo.hierroEncima")],
-      ["noche-4-luces", dichos.includes("luces") && l.linea === "comandante.largo.luces"],
+      ["noche-3-la-marca", l.plano === "respaldo" && l.linea?.endsWith("largo.hierroDebajo")],
+      ["noche-3-sin-la-marca", conMarca.size > 0 && !l.marca && l.plano === "respaldo"],
+      ["noche-4-luces-antes", dichos.includes("luces") && l.linea === "comandante.largo.luces" && l.luz > 0.26],
+      ["noche-4-luces-despues", dichos.includes("luces") && l.luz < 0.135 && !l.lamina?.tapa],
       ["noche-lamina-manta", l.lamina?.vista === "manta" && l.lamina.tapa && !!l.linea],
     ])
       if (cuando && !fotosHechas.has(cual)) {
         fotosHechas.add(cual);
-        await pausa(900);
+        // Las de las luces y la de sin la marca, sin esperar: lo que enseñan dura poco.
+        if (!cual.startsWith("noche-4-luces") && cual !== "noche-3-sin-la-marca") await pausa(900);
         await foto(page, cual);
       }
     await pausa(250);
@@ -498,19 +571,120 @@ async function laNoche(page) {
     pedido ? `a las ${(pedido.salto.hora / 3600).toFixed(3)} h · tapa ${pedido.salto.tapa} · opacidad ${pedido.siesta?.opacidad} · siestas ${pedido.siestas.length}` : "no se durmió",
   );
   if (!pedido) throw new Error("Ara no se durmió");
-  await foto(page, "noche-5-durmiendo");
   const kilosAntes = pedido.salto.combustible;
-  await page.waitForFunction(() => globalThis.__oga.salto().hechos.length > 0, null, { timeout: 60_000 });
+
+  // ── Las luces ────────────────────────────────────────────────────────
+  const aMedias = lucesBajando.filter((x) => x.luz > 0.11 && x.luz < 0.29);
+  comprobar(
+    "al anunciarlo, la cabina baja de luz: de la de crucero a la de dormir",
+    Math.abs(luzAntes - 0.3) < 0.005 && pedido.luz < 0.115,
+    `antes ${luzAntes?.toFixed(3)} · al dormirse ${pedido.luz.toFixed(3)}`,
+  );
+  comprobar(
+    "y gradual, medido en sus lecturas: varias a medio camino, sin subir nunca, y a lo largo de varios segundos",
+    aMedias.length >= 3 && lucesBajando.every((x, i) => i === 0 || x.luz <= lucesBajando[i - 1].luz + 1e-6) && (aMedias.at(-1)?.pared ?? 0) - (aMedias[0]?.pared ?? 0) >= 3000,
+    `${lucesBajando.slice(0, 8).map((x) => x.luz.toFixed(3)).join(" → ")}… · ${aMedias.length} lecturas a medias, en ${(((aMedias.at(-1)?.pared ?? 0) - (aMedias[0]?.pared ?? 0)) / 1000).toFixed(1)} s`,
+  );
+
+  // ── La marca ─────────────────────────────────────────────────────────
+  if (dejaContarElHierro(pedido))
+    comprobar(
+      "la marca de El Hierro sale en sus frases, llega al lienzo y late; y se va al acabar",
+      DE_LA_NOCHE.hierro.filter((c) => !conMarca.has(c)).length <= 1 && marcaEnElLienzo && repintadosConMarca[1] - repintadosConMarca[0] >= 10 && lienzoTrasLaMarca?.includes(true) && lienzoTrasLaMarca?.at(-1) === false && marcaAlBajarLasLuces === null,
+      `en ${[...conMarca].map((c) => c.split(".").at(-1)).join(", ")} · en el lienzo ${marcaEnElLienzo} · repintada ${repintadosConMarca[1] - repintadosConMarca[0]} veces · en el lienzo, por orden: ${lienzoTrasLaMarca?.join(" → ")} · al bajar las luces ${marcaAlBajarLasLuces}`,
+    );
+
+  // ── La noche en el mapa ──────────────────────────────────────────────
+  const dingsAntes = pedido.dings;
+  const pintadosAntes = pedido.fotogramasPintados;
+  const laNocheDe = { horas: [], parado: [], fases: [], conMapa: 0, sinMapa: 0, lamina: null, dings: 0, pintados: 0, ultimaFase: null, tope: false };
+  const fotosDeLaNoche = new Set();
+  const paredDeLaNoche = Date.now();
+  for (;;) {
+    const n = await leer(page);
+    if (n.salto.hechos.length > 0) break;
+    if (Date.now() - paredDeLaNoche > 150_000) break;
+    if (!n.noche) {
+      await pausa(100);
+      continue;
+    }
+    const f = n.noche.fase;
+    if (laNocheDe.ultimaFase !== f) {
+      laNocheDe.fases.push(f);
+      laNocheDe.ultimaFase = f;
+    }
+    laNocheDe.tope ||= n.noche.porElTope;
+    laNocheDe.dings = n.dings - dingsAntes;
+    if (n.noche.fase !== "acaba" && n.noche.fase !== "acabada") laNocheDe.pintados = n.fotogramasPintados - pintadosAntes;
+    if (f === "corre" && !n.lamina?.tapa && n.lamina?.opacidad === 0) {
+      if (n.siestaConElMapa && n.pantalla?.modo === "mapa") laNocheDe.conMapa++;
+      else laNocheDe.sinMapa++;
+      laNocheDe.horas.push(n.pantalla?.hora ?? -1);
+    }
+    if (f === "despierta") {
+      laNocheDe.parado.push({ noche: n.noche.hora, pantalla: n.pantalla?.hora ?? -1 });
+      if (n.lamina?.vista === "medio-despertar" && n.lamina?.tapa) laNocheDe.lamina ??= { vista: n.lamina.vista, sinFichero: n.lamina.sinFichero };
+    }
+    const dormidoOtraVez = laNocheDe.fases.includes("despierta") && f === "corre";
+    for (const [cual, cuando] of [
+      ["noche-5-mapa-corre", f === "corre" && !dormidoOtraVez && !n.lamina?.tapa && n.lamina?.opacidad === 0 && n.noche.hora > n.noche.plan.desde + 3600],
+      ["noche-6-medio-despertar", f === "despierta" && n.lamina?.tapa && !!n.linea && DE_LA_NOCHE.medioDespertar.includes(n.linea)],
+      ["noche-7-mapa-sigue", dormidoOtraVez && n.lamina?.opacidad === 0 && n.noche.hora > n.noche.plan.seDespiertaEn + 3600],
+    ])
+      if (cuando && !fotosDeLaNoche.has(cual)) {
+        fotosDeLaNoche.add(cual);
+        await foto(page, cual);
+      }
+    await pausa(150);
+  }
   // Lo que quede de la prisa no es del tercero: suelto, su apertura corre a su paso.
   await page.evaluate(() => globalThis.__oga.acelerar(1));
   const despierto = await leer(page);
   const hecho = despierto.salto.hechos[0];
+  if (!hecho) throw new Error(`la noche no acabó: ${JSON.stringify(laNocheDe.fases)}`);
+  const enLaPagina = await page.evaluate(() => globalThis.__laNoche);
+  const elEcuador = ruta.cuandoPasa(perfil, ruta.cruceDelEcuador(ruta.DE_MADRID_A_ASUNCION).recorrido);
+  const planDeHoy = pedido.noche?.plan;
+  comprobar(
+    "la noche enseña el mapa, a toda pantalla, y el mundo no asoma: ni una lectura, ni un fotograma pintado",
+    laNocheDe.conMapa > 10 && laNocheDe.sinMapa === 0 && enLaPagina.asomos === 0 && enLaPagina.sinLlenar === 0 && laNocheDe.pintados === 0,
+    `${laNocheDe.conMapa} lecturas con el mapa · ${laNocheDe.sinMapa} sin él · ${enLaPagina.fotogramas} fotogramas: ${enLaPagina.asomos} con el mundo asomando (lo menos tapado: ${enLaPagina.loMenos.toFixed(3)}), ${enLaPagina.sinLlenar} sin llenar · ${laNocheDe.pintados} pintados`,
+  );
+  comprobar(
+    "el avión del mapa avanza, y acaba donde lo enseña el capítulo que sigue",
+    laNocheDe.horas.length > 10 && laNocheDe.horas.every((h, i) => i === 0 || h >= laNocheDe.horas[i - 1]) && (laNocheDe.horas.at(-1) ?? 0) > 8 * 3600 && (laNocheDe.horas[0] ?? Infinity) < 5 * 3600,
+    `de ${((laNocheDe.horas[0] ?? 0) / 3600).toFixed(2)} h a ${((laNocheDe.horas.at(-1) ?? 0) / 3600).toFixed(2)} h del despegue, en ${laNocheDe.horas.length} lecturas`,
+  );
+  comprobar("y la noche dura menos de un minuto de pared", hecho.pared < 60 && hecho.pared > 25, `${hecho.pared.toFixed(1)} s desde que tapa hasta el corte (en la página, ${((enLaPagina.hasta - enLaPagina.desde) / 1000).toFixed(1)} s con el mapa puesto)`);
+  comprobar(
+    "suena el ding, una vez, y por él se despierta",
+    laNocheDe.dings === 1 && /^(tapando,)?corre,despierta,corre,acaba/.test(laNocheDe.fases.join()),
+    `${laNocheDe.dings} ding · ${laNocheDe.fases.join(" → ")}`,
+  );
+  comprobar(
+    "con su lámina, con su fichero",
+    laNocheDe.lamina?.vista === "medio-despertar" && despierto.lamina.vistas.includes("medio-despertar") && despierto.lamina.sinFichero.length === 0,
+    `${laNocheDe.lamina?.vista ?? "no se vio"} · sin fichero ${despierto.lamina.sinFichero.join(", ") || "ninguna"}`,
+  );
+  comprobar(
+    "el mapa se queda quieto mientras tanto, en la zona de tormentas y antes del ecuador",
+    // Lo pintado va hasta un píxel por detrás: es lo que tarda en repintar, un minuto largo de vuelo.
+    laNocheDe.parado.length > 0 && laNocheDe.parado.every((x) => x.noche === planDeHoy?.seDespiertaEn && Math.abs(x.pantalla - x.noche) < 120) && planDeHoy.seDespiertaEn > 6 * 3600 && planDeHoy.seDespiertaEn < Math.min(elEcuador, 6.95 * 3600),
+    `quieto a las ${((planDeHoy?.seDespiertaEn ?? 0) / 3600).toFixed(3)} h (el ecuador, a las ${(elEcuador / 3600).toFixed(3)} h) · ${laNocheDe.parado.length} lecturas`,
+  );
+  comprobar("y no se suelta por el tope, con todo respondiendo", !laNocheDe.tope, "");
+
   const elParte = await page.evaluate(() => {
     const m = globalThis.__oga.juegoParaTrazas().scenario.meteo;
     return { vientoDe: m?.vientoDe, vientoKt: m?.vientoKt };
   });
   const ultimoFijo = despierto.plan?.fijos?.at(-1)?.nombre;
   const cabecera = de > 90 && de < 270 ? "RW20" : "RW02";
+  comprobar(
+    "y al caer en el capítulo 3, la luz de crucero, la de siempre",
+    Math.abs(despierto.luz - 0.3) < 0.005,
+    `${despierto.luz.toFixed(3)}`,
+  );
   comprobar(
     "cae con el parte de Asunción, y entra por la cabecera que da su viento",
     elParte.vientoDe === de && elParte.vientoKt === kt && ultimoFijo === cabecera,
@@ -571,6 +745,7 @@ async function laNoche(page) {
     ...(seContoElHierro ? DE_LA_NOCHE.hierro : []),
     ...(CONSOLA ? [SE_RECOGE_LA_CONSOLA] : []),
     ...DE_LA_NOCHE.luces,
+    ...DE_LA_NOCHE.medioDespertar,
   ];
   const lasDichas = reg.map((d) => d.clave);
   let hasta = -1;
@@ -643,8 +818,11 @@ async function laNoche(page) {
   } else comprobar("sin abrirla, no se pide guardarla", !lasDichas.includes(SE_RECOGE_LA_CONSOLA), "");
   console.log(`  lo dicho: ${reg.map((d) => `${d.clave}(${d.como})`).join(" · ")}`);
   console.log(`  ${((Date.now() - pared0) / 1000).toFixed(0)} s de pared de la ventanilla al salto`);
-  await foto(page, "noche-6-tras-el-salto");
+  await foto(page, "noche-8-tras-el-salto");
 }
+
+/** **Si hoy se contó El Hierro**: con un juego delante no se cuenta, y no hay marca que mirar. */
+const dejaContarElHierro = (l) => l.dichos.includes("hierro");
 
 async function elCapitulo() {
   const ctx = await navegador.newContext({ viewport: { width: 1280, height: 720 }, locale: "es-PY" });
@@ -751,6 +929,7 @@ async function elCapitulo() {
     const a = abierta;
     comprobar("la apertura se acaba, y se abre la ventanilla", !!a, a ? `${((Date.now() - pared00) / 1000).toFixed(0)} s de pared` : "no se abrió");
     if (a) {
+      comprobar("con la cabina como siempre: la luz de crucero, no la de dormir", Math.abs(a.luz - 0.3) < 0.005, `${a.luz.toFixed(3)}`);
       const temporada = perfil.horario.temporada;
       const conSol = ruta.solEnElVuelo(perfil, ruta.entradaDeLaLlegada(perfil)).asoma;
       const desayuno = conSol ? "desayuno" : "desayuno-noche";
@@ -1111,13 +1290,14 @@ async function laRedDeLaNoche() {
     await page.evaluate(() => globalThis.__oga.acelerar(8));
     await page.waitForFunction(() => globalThis.__oga.salto().enCurso !== null, null, { timeout: 600_000 });
     const pedido = Date.now();
-    await page.waitForURL(/capitulo=3/, { timeout: 60_000, waitUntil: "commit" });
+    // Con la noche en el mapa por delante: la red de veinte segundos ya pasó cuando acaba.
+    await page.waitForURL(/capitulo=3/, { timeout: 120_000, waitUntil: "commit" });
     const pared = (Date.now() - pedido) / 1000;
     // Al recargar, ya sí contesta: lo que se prueba es que suelta, no una red que siga caída.
     await page.unroute(elMundo);
     comprobar(
-      "sin el mundo de la llegada, pasada la red, suelta y se abre el capítulo 3",
-      pared >= 19 && pared < 30,
+      "sin el mundo de la llegada, pasada la red y acabada la noche, suelta y se abre el capítulo 3",
+      pared >= 19 && pared < 70,
       `a los ${pared.toFixed(1)} s de pared · ${page.url().replace(BASE, "")}`,
     );
     await page.waitForFunction(() => globalThis.__oga?.salto?.().hora != null, null, { timeout: 240_000 });
@@ -1136,11 +1316,51 @@ async function laRedDeLaNoche() {
   }
 }
 
+/**
+ * **La red de lo nuevo**: si la lámina del medio despertar no contesta nunca, la noche sigue
+ * igual. Lo que se queda sin dibujo se queda a oscuras, y se oye lo mismo. Lo de las voces que
+ * no contestan lo prueba `guion-noche-sobre-el-mar.test.ts`, y se suelta por el tope.
+ */
+async function laRedDelMedioDespertar() {
+  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 720 }, locale: "es-PY" });
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
+  try {
+    // El fichero y no su módulo, que en desarrollo se importa con `?url`: sin él no arranca nada.
+    await page.route(/medio-despertar\.webp$/, () => {});
+    await page.goto(`${BASE}/?inicio=4&capitulo=2&fecha=${FECHA}&viento=${VIENTO}`, { waitUntil: "domcontentloaded" });
+    await page.bringToFront();
+    await page.waitForFunction(() => globalThis.__oga?.salto?.().hora != null, null, { timeout: 240_000 });
+    await page.keyboard.press("ShiftLeft");
+    await page.evaluate(() => globalThis.__ogaEmpezar?.());
+    await page.waitForFunction(() => globalThis.__oga.inicio().estado?.dichos?.includes("ventanilla"), null, { timeout: 120_000 });
+    await page.evaluate(() => globalThis.__oga.acelerar(8));
+    await page.waitForFunction(() => globalThis.__oga.salto().enCurso !== null, null, { timeout: 600_000 });
+    const pedido = Date.now();
+    await page.waitForFunction(() => globalThis.__oga.salto().hechos.length > 0, null, { timeout: 120_000 });
+    const pared = (Date.now() - pedido) / 1000;
+    const l = await leer(page);
+    const alCaer = l.salto.hechos[0];
+    comprobar(
+      "con la lámina que no contesta, nadie se queda en la siesta: la noche acaba a su hora y cae en el capítulo 3",
+      pared < 60 && alCaer.mundo === "pettirossi" && !alCaer.sinElMundo,
+      `${pared.toFixed(1)} s de pared · ${alCaer.mundo} · ${l.escena}`,
+    );
+    comprobar("sin errores de consola", errores.length === 0, errores.slice(0, 3).join(" · "));
+  } catch (e) {
+    comprobar("la red del medio despertar", false, `${String(e).slice(0, 300)} · ${errores.slice(0, 2).join(" · ")}`);
+  } finally {
+    await ctx.close();
+  }
+}
+
 try {
   if (process.env.OGA_MENU) {
     await laFicha("noche");
     await laFicha("largo");
   }
+  else if (process.env.OGA_RED === "noche") await laRedDelMedioDespertar();
   else if (process.env.OGA_RED) await laRedDeLaNoche();
   else await elCapitulo();
 } finally {

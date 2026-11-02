@@ -2005,6 +2005,10 @@ const DEL_VUELO_LARGO = [
   ["inicio.tripulacion.pasaje.cerca.largo.antifaz", "tripulacion-canarias", "la noche: Idaira, el antifaz y la manta; sin pastillas"],
   ["inicio.tripulacion.pasaje.cerca.largo.cinturonManta", "tripulacion-canarias", "la noche: Idaira, el cinturón por encima de la manta"],
   ["inicio.ara.pasaje.largo.cinturonArriba", "ara", "la noche: Ara con el cinturón por encima de la manta"],
+  ["inicio.ara.pasaje.largo.medioDespertar", "ara", "la noche, en el ecuador: Ara se despierta a medias con el ding y pregunta, bajito y con sueño"],
+  ["inicio.tripulacion.pasaje.cerca.largo.nubesAltas", "tripulacion-canarias", "la noche, en el ecuador: Idaira, sentada y atada, bajito y sin dramatizar: las nubes de tormenta son las más altas"],
+  ["inicio.tripulacion.pasaje.cerca.largo.nubesCinturon", "tripulacion-canarias", "la noche, en el ecuador: Idaira, bajito: el radar y las rodean; en el asiento, el cinturón siempre puesto"],
+  ["inicio.ara.pasaje.largo.sigoDurmiendo", "ara", "la noche, en el ecuador: Ara se vuelve a dormir, con mucho sueño"],
 ];
 const LO_QUE_SE_VE = new Set(
   [...DEL_VUELO_LARGO, ...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA, ...DE_LOS_INSTRUMENTOS].map(

@@ -152,6 +152,26 @@ que se señalan por la ventanilla: desde el asiento de Ara, El Hierro no se ve.
   oeste de París», cae en el mar, al este de la isla. Y por eso la frase dice «desde esta
   isla» y no da ningún punto.
 
+### Las nubes del ecuador · `inicio.tripulacion.pasaje.cerca.largo.nubesAltas` y `.nubesCinturon`
+
+Lo cuenta Idaira en el medio despertar de «Cruzá el mar de noche», sentada y atada, cuando el
+mapa pasa por la zona de tormentas. Leído el 2-11-2026.
+
+- **Que cerca del ecuador hay una franja de tormentas**, la zona de convergencia intertropical:
+  «a band of clouds consisting of showers and occasional thunderstorms» que «encircles the globe
+  near the equator», y que se mueve al norte en el verano del norte y al sur en su invierno. —
+  [NOAA, JetStream, «Inter-Tropical Convergence Zone»](https://www.noaa.gov/jetstream/tropical/convergence-zone).
+  La NOAA no da latitudes; los «del ecuador a los 10° N» en esta longitud son del plan del largo
+  radio, y Ara se despierta a unos 4,5° N, dentro en cualquier estación.
+- **Que allí son las más altas**: el nivel alto de las nubes llega a los 18 km en los trópicos, a
+  los 13 en las zonas templadas y a los 8 en las polares, y el cumulonimbo arranca abajo y «their
+  tops may reach into the middle and high levels». —
+  [OMM, *International Cloud Atlas*, «Levels», tabla 6](https://cloudatlas.wmo.int/en/some-useful-concepts-levels.html).
+- **Que los pilotos las ven en el radar y las rodean**: es lo que manda la FAA, ya citada en
+  `flight/practica-de-tormenta.ts`: AIM 7-1-27 y FAA-H-8083-28B, cap. 22.
+- **Lo que no se cuenta**: que meneen, cuánto, ni nada de rayos. Se dice lo que hay y lo que se
+  hace, que el cinturón ya va puesto: las voces avisan, no asustan.
+
 ### El centro de Gran Canaria · `nieves`
 
 - «Risco Caído y las Montañas Sagradas de Gran Canaria», Patrimonio de la

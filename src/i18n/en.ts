@@ -3106,6 +3106,12 @@ export const EN: Dictionary = {
     "And the seat belt goes over the blanket: that way we can see it without waking you.",
   "inicio.ara.pasaje.largo.cinturonArriba":
     "The belt on top! That way they look after me while I sleep.",
+  "inicio.ara.pasaje.largo.medioDespertar": "Mmm… why did that sound?",
+  "inicio.tripulacion.pasaje.cerca.largo.nubesAltas":
+    "That's the seat belt sign. Near the equator, storm clouds are the tallest of all.",
+  "inicio.tripulacion.pasaje.cerca.largo.nubesCinturon":
+    "The pilots see them on the radar and fly around them. That's why, in your seat, your seat belt always stays on.",
+  "inicio.ara.pasaje.largo.sigoDurmiendo": "Then I'll keep sleeping, with my seat belt on.",
   "inicio.modo.largo": "Arrive in Asunción",
   "inicio.modo.noche": "Cross the sea at night",
   "inicio.modo.tripulanteDerlis": "The cabin crew member, right beside you",
@@ -3117,6 +3123,7 @@ export const EN: Dictionary = {
   "ilustracion.ecuador": "The Earth with the equator as a red line, and the plane crossing it",
   "ilustracion.cena": "Ara gets dinner from the crew member; behind, the trolley braked and latched",
   "ilustracion.manta": "Ara, sleepy, under the blanket with the seat belt on top, with the lights dimmed",
+  "ilustracion.medio-despertar": "Ara half awake, the seat belt over the blanket, in the dark cabin",
   "pantalla.datos.alt": "Height above the sea",
   "pantalla.datos.gs": "Speed over the ground",
   "pantalla.datos.oat": "Temperature outside",
