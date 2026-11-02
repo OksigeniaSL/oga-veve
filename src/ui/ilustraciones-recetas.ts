@@ -195,6 +195,8 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
   "fuera-jaz-60": { original: "fuera-jaz60.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
   "fuera-jaz-90": { original: "fuera-jaz90.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
   "fuera-jaz-120": { original: "fuera-jaz120.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
+  // De perfil y sobre papel, el retrato aprobado del Tijereta, con más papel arriba y abajo para llegar a 4:3.
+  "fuera-jaz-110": { original: "fuera-jaz110.png", hueco: "tarjeta", recorte: [0, 0, 1774, 1330] },
   // ── Y por dentro, con Jazlyn a los mandos ─────────────────────────────
   "cabina-jaz-20": { original: "cabina-jaz20.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
   "cabina-jaz-25": { original: "cabina-jaz25.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
@@ -213,6 +215,13 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
     recorte: [0, 150, 1812, 1359],
     porque:
       "por la derecha, hasta dejar fuera el hombro del copiloto, que llevaba cuatro barras: el asiento de la derecha lleva tres",
+  },
+  // El único que por dentro no enseña a Jazlyn a los mandos: lo propio de este avión son sus dos pasillos, de noche.
+  "cabina-jaz-110": {
+    original: "cabina-jaz110.png",
+    hueco: "tarjeta",
+    recorte: [209, 0, 1254, 941],
+    porque: "a 4:3 por los dos lados, con el pasillo de la izquierda y las filas de delante a la vista",
   },
   // ── La cara de Jazlyn, la de quien habla ──────────────────────────────
   "retrato-jazlyn": {

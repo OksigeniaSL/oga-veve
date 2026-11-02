@@ -180,14 +180,7 @@ describe("las ilustraciones", () => {
     ]);
   });
 
-  /*
-   * **El JAZ 110 todavía no tiene las suyas**: el retrato aprobado es de perfil, sobre
-   * papel, y el dibujo de cabina que hay, el del largo radio, lleva lo que se apuntó
-   * en su plan —un copiloto de cuatro barras, el sol de frente—. Sin los dos, la
-   * tarjeta enseña el modelo, como con cualquier avión sin dibujos. Al llegar, sale
-   * de aquí.
-   */
-  const SIN_DIBUJOS: readonly string[] = ["jaz-110"];
+  const SIN_DIBUJOS: readonly string[] = [];
 
   it("cada avión de la flota, por fuera y por dentro; y nada de lo que no es de la flota", () => {
     for (const id of ESTA_HECHO.filter((x) => !SIN_DIBUJOS.includes(x))) {
