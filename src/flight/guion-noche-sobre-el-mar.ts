@@ -100,7 +100,7 @@ const MOMENTOS: readonly Momento[] = [
   /*
    * **Tenerife, de su lado**, cuando está de través. Sin nombrarla con el motor de lo
    * que se ve porque la frase es de prueba: lo que diga la de verdad tendrá que preguntar
-   * si se ve, que con la capa de nubes del alisio no se ve.
+   * si se ve.
    */
   { id: "tenerife", cuando: (l) => yaPor(l, PASA_TENERIFE), caduca: (l) => yaPor(l, PASA_EL_HIERRO), plano: "ventanilla", lineas: [tripulante("estrellas")] },
   // **El Hierro, por debajo**, con la cara pegada al cristal.

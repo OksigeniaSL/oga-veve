@@ -58,7 +58,7 @@
  *   alisio, y `OGA_VIENTO` es el de allí. Con 200/8, tiene que entrar por la 20.
  *
  * `OGA_SOLO_NOCHE=1` para al caer del salto, y `OGA_METAR=` da un parte a mano, que con el
- * alisio de siempre hay una capa de nubes y lo de abajo no se ve: para las capturas.
+ * alisio de siempre lleva una capa de nubes por debajo del avión: para las capturas.
  *
  * `OGA_RED=1` mira la red: con los ficheros de Pettirossi que no contestan, a los veinte
  * segundos de pared la noche suelta y se abre el tercer capítulo por su camino de siempre.
