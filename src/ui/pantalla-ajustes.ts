@@ -84,6 +84,11 @@ const LINEA_DE: Record<PantallaQueSeExplica, { readonly accion: string; readonly
     dice: "ajustes.explicacionDelFinal",
     volver: "ajustes.explicacionDelFinal.volver",
   },
+  consola: {
+    accion: "explicacion-de-la-consola",
+    dice: "ajustes.explicacionDeLaConsola",
+    volver: "ajustes.explicacionDeLaConsola.volver",
+  },
 };
 
 export class PantallaDeAjustes {

@@ -372,7 +372,7 @@ filo, no una superficie.
 | El HUD: tutor, señal, rincón y el cuadro bajado | 5 |
 | El aviso, el volumen | 6 |
 | El trim, la pantalla de inicio; los subtítulos en pantalla baja | 7 |
-| La torre, el mapa, el tiempo, la misión, el kit | 8 |
+| La torre, el mapa, el tiempo, la misión, el kit, la consola del asiento | 8 |
 | Créditos, el ala | 10 |
 | V1 | 11 |
 | La pregunta suelta, el fin del vuelo | 12 |

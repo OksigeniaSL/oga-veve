@@ -516,6 +516,11 @@ export class PantallaDelKit {
      * que empezar por donde lo dejó quien juega.
      */
     private readonly guardar = true,
+    /**
+     * **Si lleva su mochilita.** Donde hay pantalla en el asiento, el kit se abre desde
+     * la consola: dos botones para lo mismo y una mochilita que nadie ha traído no.
+     */
+    private readonly conMochilita = true,
   ) {
     raiz.innerHTML = `
       <button class="kit__boton" type="button" data-kit="abrir" aria-label="${t("inicio.kit.abrir")}" hidden>${MOCHILITA}</button>
@@ -558,6 +563,13 @@ export class PantallaDelKit {
   };
 
   /**
+   * **Lo que le quita al kit la barra de la consola**, px, si está abierta: a cada lado,
+   * que va centrado, abajo, y arriba hasta dónde empezar. Sin ella, las dos columnas de
+   * siempre y el borde.
+   */
+  reserva: { readonly lados: number; readonly abajo: number; readonly arriba: number } | null = null;
+
+  /**
    * **Cuántas veces se ha abierto, cerrado o movido el panel**, para lo que
    * tiene que apartarse de él en el mismo fotograma: la lámina de lo que se
    * explica. Ver `vigilar` en `ventana-de-historia.ts`.
@@ -578,7 +590,7 @@ export class PantallaDelKit {
       if (this.guardar) ponerProgreso(NIVEL_GUARDADO, this.nivelGuardado);
     }
     const abierto = e.abierto;
-    this.boton.hidden = !this.kit.aMano || abierto;
+    this.boton.hidden = !this.conMochilita || !this.kit.aMano || abierto;
     this.boton.classList.toggle("kit__boton--nuevo", !e.visto);
     if (this.panel.hidden === abierto) {
       this.panel.hidden = !abierto;
@@ -588,7 +600,7 @@ export class PantallaDelKit {
       // En el teléfono apaisado la tarjeta sube para dejarle sitio: ver la hoja.
       document.documentElement.classList.toggle("kit-abierto", abierto);
       if (abierto) requestAnimationFrame(() => this.panel.querySelector<HTMLElement>(".kit__cerrar")?.focus({ preventScroll: true }));
-      else if (this.kit.aMano) this.boton.focus({ preventScroll: true });
+      else if (this.conMochilita && this.kit.aMano) this.boton.focus({ preventScroll: true });
     }
     if (!abierto) {
       this.arrastre = null;
@@ -631,13 +643,15 @@ export class PantallaDelKit {
       this.tarjetaMirada = laTarjeta;
     }
     const tarjeta = laTarjeta?.getBoundingClientRect();
-    const arriba = tarjeta && tarjeta.height > 2 ? tarjeta.bottom + 10 : 72;
+    const r = this.reserva;
+    const arriba = Math.max(tarjeta && tarjeta.height > 2 ? tarjeta.bottom + 10 : 72, r?.arriba ?? 0);
     const marco = 26;
     const proporcion = 640 / 340;
     const anchoPara = (alto: number): number => (alto - marco) * proporcion + marco;
     const altoDe = (ancho: number): number => (ancho - marco) / proporcion + marco;
-    const deLado = Math.min(780, innerWidth - 150);
-    let ancho = Math.min(deLado, anchoPara(innerHeight - arriba - 12));
+    const deLado = Math.min(780, innerWidth - (r ? 2 * r.lados : 150));
+    const abajo = r ? r.abajo : 12;
+    let ancho = Math.min(deLado, anchoPara(innerHeight - arriba - abajo));
     const volumen = document.querySelector(".volumen");
     const v = volumen && !volumen.closest("[hidden]") ? volumen.getBoundingClientRect() : null;
     const izquierda = (innerWidth - ancho) / 2;
@@ -645,7 +659,7 @@ export class PantallaDelKit {
       !!v && v.width > 2 && v.right > izquierda && v.left < innerWidth - izquierda && v.bottom > arriba && v.top < arriba + altoDe(ancho);
     if (v && pisa) {
       const encima = Math.min(deLado, anchoPara(v.top - 8 - arriba));
-      const alLado = Math.min(innerWidth - 2 * (v.right + 10), anchoPara(innerHeight - arriba - 12));
+      const alLado = Math.min(innerWidth - 2 * (v.right + 10), anchoPara(innerHeight - arriba - abajo));
       ancho = Math.max(encima, alLado);
     }
     this.raiz.style.setProperty("--kit-arriba", `${Math.round(arriba)}px`);

@@ -1129,6 +1129,10 @@ import {
   type TeclaQueToca,
 } from "./flight/teclas-que-tocan";
 import { PantallaDelKit } from "./ui/kit-de-viaje";
+import { PantallaDeLaConsola } from "./ui/consola-del-asiento";
+import { CUENTOS_DEL_CAMINO, claveDelCuento } from "./flight/consola-del-asiento";
+import { ilustracionDeLaHistoria } from "./ui/ilustraciones-de-las-historias";
+import type { ModoDeLaPantalla } from "./world/pantalla-del-respaldo";
 import { NIVELES } from "./flight/kit-de-viaje";
 import { selloDe } from "./ui/sellos";
 import { nombresDelPeldano } from "./ui/hoja";
@@ -5378,6 +5382,11 @@ export class Game {
   private pantallaDelInicio: PantallaDelInicio | null = null;
   /** El kit de viaje de Ara, en la escena de pasaje. Ver `ui/kit-de-viaje.ts`. */
   private pantallaDelKit: PantallaDelKit | null = null;
+  /** Y la consola de la pantalla del asiento, en el avión que la lleva. Ver `ui/consola-del-asiento.ts`. */
+  private pantallaDeLaConsola: PantallaDeLaConsola | null = null;
+  /** Si en este vuelo ya se contó la consola, y qué enseña ya la pantalla. Ver `pintarLaConsola`. */
+  private consolaContada = false;
+  private modoEnLaPantalla: ModoDeLaPantalla = "mapa";
   /** Si este vuelo es el del modo inicio, aunque ya se haya acabado. */
   private conInicio = false;
   /** Y cuál de las dos escenas. */
@@ -6633,6 +6642,7 @@ export class Game {
           { cual: "parte", explicacion: this.explicacionDelParte },
           { cual: "teclas", explicacion: this.explicacionDeLasTeclas },
           { cual: "fin", explicacion: this.explicacionDelFinal },
+          { cual: "consola", explicacion: this.explicacionDeLaConsola },
         ],
       );
     }
@@ -7057,6 +7067,7 @@ export class Game {
         lado: LADO_DE_ARA,
         pared: this.pared,
         demostracion: () => this.laDemostracionDeHoy(),
+        conPantalla: !!this.aircraft.disposicionDelPasaje,
       };
       // El vuelo corto, o el capítulo del vuelo largo: el mismo motor con otro guion.
       this.inicio =
@@ -7069,7 +7080,34 @@ export class Game {
       // En la luz verde, abajo hay verde y roja fijas, y arriba también los destellos: el peldaño de quien juega.
       this.inicio.kit.peldano = this.tier.avisos;
       const dePrueba = this.kitDePrueba();
-      this.pantallaDelKit = kit ? new PantallaDelKit(kit, this.inicio.kit, !dePrueba) : null;
+      const consola = this.inicio.consola;
+      this.pantallaDelKit = kit ? new PantallaDelKit(kit, this.inicio.kit, !dePrueba, !consola) : null;
+      this.pantallaDeLaConsola?.quitar();
+      const raizDeLaConsola = document.getElementById("consola");
+      const peldanoDeQuienJuega = rememberedTier().avisos;
+      this.pantallaDeLaConsola =
+        consola && raizDeLaConsola
+          ? new PantallaDeLaConsola(raizDeLaConsola, consola, {
+              /*
+               * **El peldaño de quien juega, no el del vuelo**: la escena va siempre en
+               * Guyrami, que es el avión de Ara y no quien lo mira (ver `conInicio` en
+               * `main.ts`), y con ese no le saldrían los datos a nadie.
+               */
+              peldano: () => peldanoDeQuienJuega,
+              cuentos: () => this.cuentosQueSeOfrecen(),
+              cuaderno: {
+                abrir: () => this.cuadernoUI?.show(),
+                cerrar: () => this.cuadernoUI?.hide(),
+                abierto: () => !!this.cuadernoUI?.visible,
+              },
+              noExplicar: () => {
+                this.explicacionDeLaConsola.quitar();
+                if (this.inicio instanceof MotorDelPasaje) this.inicio.olvidarLaExplicacionDeLaConsola();
+              },
+            })
+          : null;
+      this.consolaContada = false;
+      this.modoEnLaPantalla = "mapa";
       // Con `?inicio=3&kit`, ya en la mano en el puesto: después de leer el nivel guardado, que el pedido manda.
       if (dePrueba) {
         if (dePrueba.nivel !== null) this.inicio.kit.seguirArmandoDesde(dePrueba.nivel);
@@ -7858,6 +7896,8 @@ export class Game {
     if (inicio instanceof MotorDelPasaje) {
       const p = inicio.estado;
       this.ponerLaVentanitaDeLaEscena(p.dibujo);
+      // Antes que el kit, que se coloca con lo que la barra le deja libre.
+      this.pintarLaConsola(inicio);
       // El kit, con la pieza de la que habla Ara brillando mientras lo dice.
       this.pantallaDelKit?.pintar(p.hablando ? (p.linea?.clave ?? null) : null);
       /*
@@ -7896,8 +7936,8 @@ export class Game {
           : null,
         congelado: false,
         sinTarjetaSiCalla: this.vueloLargo !== null,
-        // Con el kit abierto, la tarjeta solo dice quién habla: lo que se mira es el kit.
-        mira: p.kit.abierto ? null : p.mira,
+        // Con el kit abierto, la tarjeta solo dice quién habla: lo que se mira es el kit. Y lo mismo con la consola.
+        mira: p.kit.abierto || p.consola?.abierta ? null : p.mira,
         fin:
           p.momento === "fin" || this.cuadernoForzadoParaBanco
             ? {
@@ -8015,6 +8055,8 @@ export class Game {
     const cam = this.camera;
     cam.updateMatrixWorld();
     const plano = this.fundidoDePlano.plano;
+    // Con la pantalla del asiento delante, nada encima: si no cabe, no sale, y lo que se explica se oye igual.
+    if (plano === "respaldo") return { cajas: [{ left: 0, top: 0, right: W, bottom: H }] };
     const margen = Math.max(40, Math.min(W, H) * 0.1);
     const alrededor = (p: { x: number; y: number; z: number }, m: number): void => {
       const v = new Vector3(p.x, p.y, p.z);
@@ -8139,6 +8181,8 @@ export class Game {
   private acabarElInicio(): void {
     this.pantallaDelKit?.quitar();
     this.pantallaDelKit = null;
+    this.pantallaDeLaConsola?.quitar();
+    this.pantallaDeLaConsola = null;
     this.siesta?.quitar();
     this.siestaTapa = false;
     this.ponerLaVentanitaDeLaEscena(null);
@@ -8217,6 +8261,14 @@ export class Game {
     readonly asientoDeAra: { readonly z: number; readonly motor: number; readonly ala: number } | null;
     /** De pasaje: el kit de viaje en la pantalla, dónde está cada cosa. Ver `PantallaDelKit.paraBanco`. */
     readonly kit: PantallaDelKit["paraBanco"] | null;
+    /** Y la consola del asiento: dónde está cada cosa, qué enseña la pantalla de verdad y lo que se ofrece. */
+    readonly consola:
+      | (PantallaDeLaConsola["paraBanco"] & {
+          readonly enLaPantalla: ModoDeLaPantalla | null;
+          readonly losCuentos: readonly string[];
+          readonly cuaderno: boolean;
+        })
+      | null;
     /** Y el hilo musical: lo que decide y lo que suena. Ver `audio/hilo-musical.ts`. */
     readonly musica: { readonly decide: string | null; readonly audio: Audio["musicaParaBanco"] };
     /** De pasaje: la pantalla de la siesta, si está puesta. Ver `ui/siesta.ts`. */
@@ -8294,6 +8346,14 @@ export class Game {
         };
       })(),
       kit: this.pantallaDelKit?.paraBanco ?? null,
+      consola: this.pantallaDeLaConsola
+        ? {
+            ...this.pantallaDeLaConsola.paraBanco,
+            enLaPantalla: this.elPasillo()?.pantalla?.modo ?? null,
+            losCuentos: this.cuentosQueSeOfrecen(),
+            cuaderno: !!this.cuadernoUI?.visible,
+          }
+        : null,
       musica: this.musicaParaBanco,
       siesta: this.siesta?.paraBanco ?? null,
       adelanto: {
@@ -8330,6 +8390,47 @@ export class Game {
     if (!q.has("kit") && !q.has("nivel")) return null;
     const n = Number(q.get("nivel"));
     return { nivel: Number.isInteger(n) && n >= 1 && n <= NIVELES.length ? n - 1 : null };
+  }
+
+  /**
+   * **La consola de la pantalla del asiento, en cada fotograma**: lo que se ve lo pinta
+   * su dibujo, y aquí se enganchan las tres cosas que son del juego: la explicación
+   * guardada en el perfil, el modo de la pantalla de verdad y el kit.
+   */
+  private pintarLaConsola(m: MotorDelPasaje): void {
+    const ui = this.pantallaDeLaConsola;
+    const c = m.consola;
+    if (!ui || !c) return;
+    const e = c.estado;
+    // Se cuenta una vez por vuelo, y al salir el botón, que es lo que aparece de golpe.
+    if (e.sale && !this.consolaContada) {
+      this.consolaContada = true;
+      const vez = this.explicacionDeLaConsola.alAbrir();
+      if (vez.explicar) m.explicarLaConsola();
+      ui.ofrecerNoExplicar(vez.ofrecerQuitarla, canalesDe(rememberedTier().avisos).texto);
+    }
+    ui.pintar();
+    if (this.pantallaDelKit) this.pantallaDelKit.reserva = e.abierta ? ui.reservaParaElKit : null;
+    if (e.modo !== this.modoEnLaPantalla) {
+      this.modoEnLaPantalla = e.modo;
+      this.elPasillo()?.pantalla?.mostrar(e.modo);
+    }
+  }
+
+  /**
+   * **Los cuentos del camino que se pueden contar de verdad**: con su dibujo y con su
+   * grabación. Lo que no tiene voz no se ofrece: un cuento mudo no es un cuento, y a los
+   * cuatro años tampoco se lee. Sin pack cargado, ninguno.
+   */
+  private cuentosQueSeOfrecen(): readonly string[] {
+    return CUENTOS_DEL_CAMINO.filter((c) => ilustracionDeLaHistoria(c) && this.mama.vozDe(claveDelCuento(c)) !== null);
+  }
+
+  /** Solo para el banco: ver `saltarLaApertura` en `dev/sondas.ts`. */
+  saltarLaAperturaParaBanco(): boolean {
+    if (!(this.inicio instanceof MotorDelPasaje)) return false;
+    this.inicio.saltarLaAperturaParaBanco();
+    return true;
   }
 
   /** El kit de viaje, dado ya, para el banco: ver `darElKit` en `dev/sondas.ts`. */
@@ -12539,6 +12640,7 @@ export class Game {
     this.explicacionDelParte.releer();
     this.explicacionDeLasTeclas.releer();
     this.explicacionDelFinal.releer();
+    this.explicacionDeLaConsola.releer();
     /*
      * **Vuelo nuevo: la instructora se olvida de lo que ya había dicho.**
      *
@@ -26024,6 +26126,8 @@ export class Game {
    * cabina preparada da un respingo y vuelve. Ver `CabinaDePasaje.tocar`.
    */
   private tocarLaPared(x: number, y: number): boolean {
+    // Mirando la pantalla del asiento, la pared queda a un lado: un dedo en el mapa no le baja la persiana a nadie.
+    if (this.inicio instanceof MotorDelPasaje && this.inicio.consola?.estaAbierta) return false;
     const asiento = this.asientoDe(this.vistaQueHay());
     if (!asiento) return false;
     const que = queSeTocaEnLaPared(
@@ -32327,6 +32431,10 @@ export class Game {
     leer: () => leerProgreso(PANTALLAS_QUE_SE_EXPLICAN.fin),
     escribir: (v) => ponerProgreso(PANTALLAS_QUE_SE_EXPLICAN.fin, v),
   });
+  private readonly explicacionDeLaConsola = new ExplicacionAlAbrir({
+    leer: () => leerProgreso(PANTALLAS_QUE_SE_EXPLICAN.consola),
+    escribir: (v) => ponerProgreso(PANTALLAS_QUE_SE_EXPLICAN.consola, v),
+  });
 
   /** Para el banco: lo guardado de las tres explicaciones. */
   get explicacionesParaBanco(): Record<PantallaQueSeExplica, { veces: number; quitada: boolean }> {
@@ -32335,6 +32443,7 @@ export class Game {
       parte: de(this.explicacionDelParte),
       teclas: de(this.explicacionDeLasTeclas),
       fin: de(this.explicacionDelFinal),
+      consola: de(this.explicacionDeLaConsola),
     };
   }
 
