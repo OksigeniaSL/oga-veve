@@ -342,7 +342,7 @@ asiento. Ver `src/flight/cruz-del-sur.ts`.
   según lo cita [Wikipedia, «Crux»](https://en.wikipedia.org/wiki/Crux): de γ a α Crucis,
   «about 4½ times beyond», un punto cercano al polo sur del cielo. Y lo cuentan igual
   [Te Ara, la enciclopedia de Nueva Zelanda](https://teara.govt.nz/en/diagram/7486/navigating-by-the-southern-cross),
-  que además baja al horizonte, y [Astronomy WA](https://www.astronomywa.net.au/how-to-find-the-south-celestial-pole.html).
+  que además baja al horizonte, y [Astronomy WA](https://www.astronomywa.net.au/how-to-find-the-south-celestial-pole.html). Te Ara y Astronomy WA, vistas solo en el buscador: la primera dio 403 y a la segunda no se entró.
   **La cuenta propia** (`cruz-del-sur.test.ts`): alargado por el cielo cuatro veces y
   media desde Ácrux, queda a 2,68° del polo sur de esa fecha, que es el «cercano» de la
   regla. El dibujo no lo fuerza: la línea acaba donde acaba y el aro marca el polo.

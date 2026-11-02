@@ -19778,5 +19778,103 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.elegirConLaCruz",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Hay tres juegos: ser la torre, armar aviones o encender la Cruz del Sur. ¿Cuál querés?",
+    "para": "la pantalla del asiento: Ara dice los tres juegos al abrirlos",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.cruz.explica",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Este cielo no es el de la ventanilla: es el de Asunción, adonde vamos.",
+    "para": "la Cruz del Sur: Ara dice adónde mira este cielo, que no es el de la ventanilla",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.cruz.empezar",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Cuatro estrellas hacen una cruz. ¡Tocalas, en el orden que quieras!",
+    "para": "la Cruz del Sur: Ara dice qué hacer: tocar las cuatro estrellas, en cualquier orden",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.cruz.punteros",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Esas dos del Centauro son los punteros: señalan a la Cruz. ¡Tocalas también!",
+    "para": "la Cruz del Sur, desde Taguato: Ara señala los dos punteros de Centauro",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.cruz.encendida",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Se encendió! Esa es la Cruz del Sur, en el cielo de Asunción.",
+    "para": "la Cruz del Sur: Ara celebra la Cruz encendida",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.cruz.sur",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Alargá su brazo largo cuatro veces y media y bajá derecho hasta el horizonte: ahí está el sur.",
+    "para": "la Cruz del Sur: Ara cuenta cómo se encuentra el sur, mientras se dibuja la línea",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.cruz.navegantes",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Los navegantes la usaban para orientarse de noche. Y está en la bandera de Brasil, el país que cruzamos para llegar.",
+    "para": "la Cruz del Sur, desde Taguato: los navegantes y la bandera de Brasil",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]

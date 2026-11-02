@@ -283,9 +283,37 @@
       "ms": 5807,
       "h": "b32ef56834"
     },
+    "inicio.ara.pasaje.kit.cruz.empezar": {
+      "ms": 5407,
+      "h": "78abddc1b1"
+    },
+    "inicio.ara.pasaje.kit.cruz.encendida": {
+      "ms": 4707,
+      "h": "0213114b70"
+    },
+    "inicio.ara.pasaje.kit.cruz.explica": {
+      "ms": 5307,
+      "h": "a384a9a43d"
+    },
+    "inicio.ara.pasaje.kit.cruz.navegantes": {
+      "ms": 7807,
+      "h": "392e90a9c8"
+    },
+    "inicio.ara.pasaje.kit.cruz.punteros": {
+      "ms": 6107,
+      "h": "a40c1bfa6b"
+    },
+    "inicio.ara.pasaje.kit.cruz.sur": {
+      "ms": 7507,
+      "h": "2184afddd2"
+    },
     "inicio.ara.pasaje.kit.elegir": {
       "ms": 8507,
       "h": "82c150022b"
+    },
+    "inicio.ara.pasaje.kit.elegirConLaCruz": {
+      "ms": 6807,
+      "h": "b7aa3b2621"
     },
     "inicio.ara.pasaje.kit.luz.alAire": {
       "ms": 8207,
@@ -899,8 +927,29 @@
     "inicio.ara.pasaje.kit.camino.teide": [
       "inicio.ara.pasaje.kit.camino.teide"
     ],
+    "inicio.ara.pasaje.kit.cruz.empezar": [
+      "inicio.ara.pasaje.kit.cruz.empezar"
+    ],
+    "inicio.ara.pasaje.kit.cruz.encendida": [
+      "inicio.ara.pasaje.kit.cruz.encendida"
+    ],
+    "inicio.ara.pasaje.kit.cruz.explica": [
+      "inicio.ara.pasaje.kit.cruz.explica"
+    ],
+    "inicio.ara.pasaje.kit.cruz.navegantes": [
+      "inicio.ara.pasaje.kit.cruz.navegantes"
+    ],
+    "inicio.ara.pasaje.kit.cruz.punteros": [
+      "inicio.ara.pasaje.kit.cruz.punteros"
+    ],
+    "inicio.ara.pasaje.kit.cruz.sur": [
+      "inicio.ara.pasaje.kit.cruz.sur"
+    ],
     "inicio.ara.pasaje.kit.elegir": [
       "inicio.ara.pasaje.kit.elegir"
+    ],
+    "inicio.ara.pasaje.kit.elegirConLaCruz": [
+      "inicio.ara.pasaje.kit.elegirConLaCruz"
     ],
     "inicio.ara.pasaje.kit.luz.alAire": [
       "inicio.ara.pasaje.kit.luz.alAire"
