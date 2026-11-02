@@ -117,6 +117,8 @@ export interface Eleccion {
    * `flight/inicio.ts`, `flight/inicio-aterrizar.ts` y `main.ts`.
    */
   readonly inicio?: EscenaDelInicio;
+  /** **El capítulo del vuelo largo, si no es el tercero**: el de la ficha de la noche. */
+  readonly capitulo?: 2;
 }
 
 // ── Qué cambia en cada tramo ─────────────────────────────────────────────
@@ -1250,13 +1252,40 @@ const LEC_INICIO_LARGO = `
   </svg>
 `;
 
+/*
+ * **La ficha de la noche**: el cielo oscuro con sus estrellas, las islas con sus luces
+ * abajo y el avión que las cruza. Sin una letra, y distinta a primera vista de la de
+ * llegar, que es la Tierra de día con su camino.
+ */
+const LEC_INICIO_NOCHE = `
+  <svg class="ficha__panel" viewBox="0 0 120 84" aria-hidden="true">
+    <rect fill="#101d45" x="0" y="0" width="120" height="84" rx="3" />
+    <g fill="#fff">
+      <circle cx="58" cy="10" r="1" /><circle cx="74" cy="20" r="0.8" /><circle cx="88" cy="9" r="1.1" />
+      <circle cx="108" cy="16" r="0.8" /><circle cx="48" cy="24" r="0.7" /><circle cx="98" cy="30" r="0.9" />
+    </g>
+    <path fill="#f4e3a1" d="M112 34 a7 7 0 1 1 -6 -11 a5.6 5.6 0 0 0 6 11 Z" />
+    <rect fill="#1c3a78" x="0" y="60" width="120" height="24" />
+    <path fill="#0a1430" d="M38 66 q9 -11 18 -2 q5 -6 10 2 Z" />
+    <path fill="#0a1430" d="M82 72 q6 -7 12 0 Z" />
+    <g fill="#ffd27a">
+      <circle cx="46" cy="64" r="1" /><circle cx="52" cy="65" r="0.9" /><circle cx="60" cy="65" r="1" /><circle cx="88" cy="70.5" r="0.9" />
+    </g>
+    <path d="M112 40 Q84 46 62 42" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-dasharray="0.1 5" />
+    <g transform="translate(55 41) rotate(-96)">
+      <path fill="#fff" stroke="#0a1430" stroke-width="0.8" d="M0 -10 q1.6 2 1.6 5 v2.6 l8.4 5.4 v2 l-8.4 -2.6 l-0.4 5 l3 2.4 v1.4 l-4.2 -1.2 l-4.2 1.2 v-1.4 l3 -2.4 l-0.4 -5 l-8.4 2.6 v-2 l8.4 -5.4 v-2.6 q0 -3 1.6 -5 Z" />
+    </g>
+    ${caraDentro("ara", 4, 48, 30)}
+  </svg>
+`;
+
 /**
  * Las fichas del modo inicio. **No son lecciones más del grupo**: no se eligen
  * y se despega después, sino que se tocan y se vuelan, con su sitio, su avión
  * y su peldaño. Por eso van fuera del grupo de radio, delante de todo: la de
  * aprender a volar y, al lado, la de aterrizar.
  */
-function fichaDelInicio(cual: EscenaDelInicio): string {
+function fichaDelInicio(cual: EscenaDelInicio | "noche"): string {
   const dibujo =
     cual === "aterrizar"
       ? LEC_INICIO_ATERRIZAR
@@ -1264,7 +1293,9 @@ function fichaDelInicio(cual: EscenaDelInicio): string {
         ? LEC_INICIO_PASAJE
         : cual === "largo"
           ? LEC_INICIO_LARGO
-          : LEC_INICIO;
+          : cual === "noche"
+            ? LEC_INICIO_NOCHE
+            : LEC_INICIO;
   const nombre =
     cual === "aterrizar"
       ? "inicio.modo.aterrizar"
@@ -1272,7 +1303,9 @@ function fichaDelInicio(cual: EscenaDelInicio): string {
         ? "inicio.modo.pasaje"
         : cual === "largo"
           ? "inicio.modo.largo"
-          : "inicio.modo.nombre";
+          : cual === "noche"
+            ? "inicio.modo.noche"
+            : "inicio.modo.nombre";
   return `
     <button class="ficha ficha--leccion ficha--inicio" type="button" data-inicio-modo="${cual}">
       <span class="ficha__lienzo ficha__lienzo--panel">${dibujo}</span>
@@ -2002,7 +2035,7 @@ export function abrirHangar(
         -->
         <section class="hangar__bloque" aria-labelledby="hangar-leccion">
           <h2 class="hangar__pregunta" id="hangar-leccion">${t("hangar.aque")}</h2>
-          <div class="hangar__rejilla hangar__rejilla--suelta hangar__inicio">${fichaDelInicio("despegar")}${fichaDelInicio("aterrizar")}${fichaDelInicio("pasaje")}${fichaDelInicio("largo")}</div>
+          <div class="hangar__rejilla hangar__rejilla--suelta hangar__inicio">${fichaDelInicio("despegar")}${fichaDelInicio("aterrizar")}${fichaDelInicio("pasaje")}${fichaDelInicio("noche")}${fichaDelInicio("largo")}</div>
           <div class="hangar__grupos" role="radiogroup" aria-labelledby="hangar-leccion">
             ${grupo(
               MARCA_TRAMOS,
@@ -2501,8 +2534,9 @@ export function abrirHangar(
        */
       const conInicio = boton.hasAttribute("data-inicio-modo");
       const modo = boton.getAttribute("data-inicio-modo");
+      // La noche es el mismo vuelo largo que la llegada, con otro capítulo: la escena es la misma.
       const escenaDelInicio: EscenaDelInicio =
-        modo === "aterrizar" ? "aterrizar" : modo === "pasaje" ? "pasaje" : modo === "largo" ? "largo" : "despegar";
+        modo === "aterrizar" ? "aterrizar" : modo === "pasaje" ? "pasaje" : modo === "largo" || modo === "noche" ? "largo" : "despegar";
       if (boton.hasAttribute("data-despegar") || conInicio) {
         if (reposo !== null) clearTimeout(reposo);
         apuntarReciente(sitio.id);
@@ -2524,6 +2558,7 @@ export function abrirHangar(
           aircraft: avion,
           destino: destinoDeAhora(),
           ...(conInicio ? { inicio: escenaDelInicio } : {}),
+          ...(modo === "noche" ? { capitulo: 2 as const } : {}),
         });
       }
     });

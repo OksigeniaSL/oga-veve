@@ -217,12 +217,12 @@ function sitioDeLaEscena(e: EscenaDelInicio): string {
   return e === "largo" ? (conLaNoche ? MUNDO_DE_LA_NOCHE : MUNDO_DE_LA_LLEGADA) : e === "pasaje" ? SITIO_DEL_PASAJE : SITIO_DEL_INICIO;
 }
 /**
- * **`?capitulo=2`, la noche sobre el mar**, solo en desarrollo: lleva el vuelo entero y
- * un guion de prueba, sin sus frases ni sus láminas, y no es un vuelo que se pueda
- * enseñar. Fuera de desarrollo, el capítulo es el tercero, como en la ficha del menú.
- * Ver `flight/guion-noche-sobre-el-mar.ts`.
+ * **La noche sobre el mar**: la abre su ficha del menú, en el hangar, más abajo. Con la
+ * dirección, `?capitulo=2`, solo en desarrollo: fuera de él un enlace con `?inicio=4` es
+ * siempre el tercero, que es también adonde recarga la red de la noche. Ver
+ * `flight/guion-noche-sobre-el-mar.ts`.
  */
-const conLaNoche = import.meta.env.DEV && params.get("capitulo") === "2";
+let conLaNoche = import.meta.env.DEV && params.get("capitulo") === "2";
 let conInicio = params.has("inicio") && !rearranque;
 const conVueloLargo = params.has("largo");
 let escenaDelInicio: EscenaDelInicio = escenaPedida(params.get("inicio"));
@@ -415,6 +415,8 @@ if (!escenario) {
   if (elegido.inicio) {
     conInicio = true;
     escenaDelInicio = elegido.inicio;
+    // Antes de buscar el sitio, que es de lo que depende.
+    conLaNoche = elegido.capitulo === 2;
     escenario = SCENARIOS.find((s) => s.id === sitioDeLaEscena(escenaDelInicio)) ?? escenario;
   } else {
     rememberTier(tramo);

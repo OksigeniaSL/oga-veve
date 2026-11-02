@@ -20,6 +20,7 @@ import { seLePasoElMomento } from "../audio/megafonia";
 import { Conversacion, type FraseDicha, type Linea, type VozDelInicio } from "./conversacion";
 import type { FormaDeLaDemostracion } from "./demostracion-con-gracia";
 import { ConsolaDelAsiento, esDeUnCuento, lineaDelCuento, type EstadoDeLaConsola } from "./consola-del-asiento";
+import type { ModoDeLaPantalla } from "../world/pantalla-del-respaldo";
 import { KitDeViaje, type EstadoDelKit } from "./kit-de-viaje";
 import { DICHO_DE_LA_LUZ, JuegoDeLaLuz } from "./luz-verde";
 import {
@@ -183,6 +184,7 @@ export type SitioDelPaisaje =
   | "ladera-de-mazo"
   | "chaco-enfrente"
   | "rio-enfrente"
+  | "luces-de-tenerife"
   | "tierra-abajo"
   | "mar-abajo"
   | "nubes-abajo"
@@ -667,6 +669,12 @@ export interface DefMomento<Id extends string = string, M extends string = strin
   tapaSegun?(l: LecturaDelPasaje, e: MotorDelPasaje<M, C>): string | null;
   /** **Si esa lámina sale a oscuras y se va encendiendo**: la luz de la cabina que sube. */
   readonly enciende?: boolean;
+  /**
+   * **Lo que enseña la pantalla del asiento mientras se dice**, en lo que se cuenta con
+   * el plano `respaldo`: quien juega puede haberla dejado en los relojes, y lo que se
+   * dice es de lo que se ve. Se queda puesto: es una pantalla, no un cartel.
+   */
+  readonly pantalla?: ModoDeLaPantalla;
 }
 
 /**
@@ -787,6 +795,12 @@ export interface GuionDelPasaje<M extends string = string, C extends string = st
    */
   readonly apertura?: { readonly hasta: M; readonly laminas: readonly string[] };
   /**
+   * **Si en este vuelo no se invita a tocar lo que se ve**: ni la frase de Ara ni el aro
+   * que late. Es para lo que no tiene nada que contar por el cristal, como la noche
+   * sobre el mar. Lo que se toque igualmente se contesta como siempre.
+   */
+  readonly sinInvitarATocar?: boolean;
+  /**
    * **La consola de la pantalla del asiento**, si en este vuelo se ofrece, en el
    * avión que la lleva: desde qué momento, y las tres frases que la cuentan: el botón
    * que aparece, lo que hay dentro y por qué se recoge. Sin esto, no sale. Ver
@@ -797,6 +811,12 @@ export interface GuionDelPasaje<M extends string = string, C extends string = st
     readonly elBoton: Linea;
     readonly loQueHay: Linea;
     readonly seRecoge: Linea;
+    /**
+     * **Si se recoge antes que a los diez mil pies**: en la noche, al bajar las luces, y
+     * ahí `seRecoge` lleva su frase. Con la misma red: ver `TOPE_DE_RECOGER`. El momento
+     * que viene detrás tiene que esperar a `conLaConsolaDelante`, que le toca después.
+     */
+    seRecogeCuando?(l: LecturaDelPasaje, e: MotorDelPasaje<M, C>): boolean;
   };
 }
 
@@ -1208,6 +1228,16 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     return this.guion.apertura?.laminas ?? [];
   }
 
+  /** **Si Ara tiene la pantalla delante**, y nada de lo de la ventanilla se le puede decir. */
+  get conLaConsolaDelante(): boolean {
+    return this.miraLaConsola;
+  }
+
+  /** **Si en este vuelo se invita a tocar lo que se ve**. Ver `GuionDelPasaje.sinInvitarATocar`. */
+  get invitaATocar(): boolean {
+    return !this.guion.sinInvitarATocar;
+  }
+
   /** **Si se está contando lo de antes de ver el mundo**. Ver `GuionDelPasaje.apertura`. */
   get enLaApertura(): boolean {
     const a = this.guion.apertura;
@@ -1498,7 +1528,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     if (this.kit.estaAbierto || this.kit.ocupaAAra || this.durmiendo || this.bostezando || this.miraLaConsola) return false;
     const p = this.toquePendiente;
     if (!p) {
-      if (this.invitado || !l.tocable || this.callada < INVITA_TRAS || esDeFuera(this.plano) || esDeLaCabina(this.plano))
+      if (this.invitado || !l.tocable || !this.invitaATocar || this.callada < INVITA_TRAS || esDeFuera(this.plano) || esDeLaCabina(this.plano))
         return false;
       this.invitado = true;
       /*
@@ -1964,6 +1994,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     const plano =
       def.planoSegun?.(l, this) ?? def.plano ?? (vista?.como && sitio ? planoParaVer(vista.como, sitio) : "ventanilla");
     this.ponerPlano(plano, sitio);
+    if (def.pantalla) this.consola?.ensenar(def.pantalla);
     const tapa = def.tapaSegun ? def.tapaSegun(l, this) : def.tapa;
     if (tapa !== undefined) {
       this.tapa = tapa;
@@ -2245,7 +2276,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     const def = this.guion.consola;
     if (!c || !def) return;
     const pared = this.pared();
-    if ((this.llegadaDesde !== null || l.enTierra) && c.pedirRecoger(pared)) {
+    if ((this.llegadaDesde !== null || l.enTierra || def.seRecogeCuando?.(l, this)) && c.pedirRecoger(pared)) {
       this.kit.recoger();
       this.cortarElCuento();
       this.charla.decir([def.seRecoge]);

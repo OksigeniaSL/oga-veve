@@ -277,6 +277,13 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
   "huso-invierno": { original: "vuelo-largo/huso-invierno.png", hueco: "pantalla", recorte: ENTERA_DE_1672 },
   "huso-verano": { original: "vuelo-largo/huso-verano.png", hueco: "pantalla", recorte: ENTERA_DE_1672 },
   ecuador: { original: "vuelo-largo/ecuador.png", hueco: "pantalla", recorte: ENTERA_DE_1672 },
+  /*
+   * **Lo de la noche sobre el mar**, a pantalla completa: ver
+   * `flight/guion-noche-sobre-el-mar.ts`. La cena, con el tripulante y el carrito frenado
+   * y cerrado; y la manta, con el cinturón por encima, que es de lo que va.
+   */
+  cena: { original: "vuelo-largo/cena.png", hueco: "pantalla", recorte: ENTERA_DE_1672, conAra: true },
+  manta: { original: "vuelo-largo/manta.png", hueco: "pantalla", recorte: ENTERA_DE_1672, conAra: true },
 };
 
 /**

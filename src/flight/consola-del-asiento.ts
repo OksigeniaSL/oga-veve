@@ -22,11 +22,11 @@
  *
  * ## Se recoge, y con red
  *
- * A los diez mil pies bajando el motor le pide a esto que se recoja, y el dibujo
- * contesta cuando ya ha guardado lo suyo. Si no contesta —un HUD rehecho, un
- * dibujo que se cayó—, `TOPE_DE_RECOGER` la cierra igual: una espera entre dos
- * sistemas lleva siempre su red, y nadie se queda mirando un mapa con el avión en
- * la final.
+ * A los diez mil pies bajando, o antes si el guion lo dice —en la noche, al bajar las
+ * luces—, el motor le pide a esto que se recoja, y el dibujo contesta cuando ya ha
+ * guardado lo suyo. Si no contesta —un HUD rehecho, un dibujo que se cayó—,
+ * `TOPE_DE_RECOGER` la cierra igual: una espera entre dos sistemas lleva siempre su
+ * red, y nadie se queda mirando un mapa con el avión en la final.
  */
 
 import type { Linea } from "./conversacion";
@@ -162,6 +162,14 @@ export class ConsolaDelAsiento {
   /** Un modo de la pantalla, si se le ofrece a este peldaño. */
   ponerModo(m: ModoDeLaPantalla, peldano: Peldano): void {
     if (modosDe(peldano).includes(m)) this.modo = m;
+  }
+
+  /**
+   * **El guion pone lo que enseña la pantalla**, sin mirar el peldaño: lo que cuenta con
+   * ella delante es para todos, y solo pide modos que se miran sin leer.
+   */
+  ensenar(m: ModoDeLaPantalla): void {
+    this.modo = m;
   }
 
   /** Se toca un cuento. Quién lo cuenta y cuándo lo decide la conversación del motor. */
