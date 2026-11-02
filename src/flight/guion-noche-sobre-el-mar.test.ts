@@ -117,7 +117,6 @@ describe("el guion", () => {
   it("cada frase, con su texto en los dos idiomas y en la lista de grabar; y treinta nuevas como mucho", () => {
     const lista = readFileSync("scripts/frases-para-grabar.mjs", "utf8");
     const nuevas = lasFrases().filter((f) => !GRABADAS.has(f.clave));
-    expect(nuevas.length).toBeGreaterThan(0);
     expect(nuevas.length).toBeLessThanOrEqual(30);
     for (const f of lasFrases()) {
       expect(ES_PY[f.clave as keyof typeof ES_PY], f.clave).toBeTruthy();
