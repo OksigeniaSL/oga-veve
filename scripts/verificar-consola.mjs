@@ -325,6 +325,16 @@ async function unaPantalla(p) {
         const vuelta = await hastaQue(page, (x) => x.estado.consola?.cuento === null && !x.estado.hablando, 4000);
         const cortado = vuelta?.registro.filter((d) => d.clave === clave).at(-1);
         comprobar(de("«atrás» calla el cuento y vuelve a la lista"), !!vuelta && cortado?.cortada, `${cortado?.como}`);
+        // Y otra vez el mismo, enseguida: lo pide quien lo toca, y la regla de no repetirse no es para él.
+        const hechas = vuelta?.registro.filter((d) => d.clave === clave).length ?? 0;
+        await tocar(page, vuelta.consola.cuentos[cual], p.dedo);
+        const otra = await hastaQue(page, (x) => x.registro.filter((d) => d.clave === clave).length > hechas, 8000);
+        await pausa(1200);
+        const denuevo = (await leer(page)).registro.filter((d) => d.clave === clave).at(-1);
+        comprobar(de("tocar el mismo otra vez lo vuelve a contar, con su voz"), !!otra && denuevo?.como !== "muda", `${denuevo?.como ?? "sonando"}`);
+        const quedaAtras = (await leer(page)).consola.atras;
+        if (quedaAtras) await tocar(page, quedaAtras, p.dedo);
+        await hastaQue(page, (x) => x.estado.consola?.cuento === null && !x.estado.hablando, 4000);
       }
     }
 
@@ -544,7 +554,8 @@ async function elCapitulo() {
       `${r.length} frases · ${pisadas} pisadas · ${r.filter((d) => d.cortada).length} cuentos cortados · ajenas cortadas ${cortadasAjenas.join(", ") || "ninguna"}`,
     );
     const sonados = r.filter((d) => d.clave.startsWith("ventanilla.historia.") && d.como === "sono").map((d) => d.clave.split(".").pop());
-    comprobar("los cuentos suenan con su grabación, enteros, sin el altavoz del techo", sonados.length > 0, `enteros: ${sonados.join(", ")}`);
+    const mudos = r.filter((d) => d.clave.startsWith("ventanilla.historia.") && d.como === "muda").length;
+    comprobar("los cuentos suenan con su grabación, enteros, y ninguno se queda mudo", sonados.length > 0 && mudos === 0, `${sonados.length} enteros · ${mudos} mudos`);
     const lasDelCuento = ultimo.estado.dichos;
     comprobar(
       "lo imprescindible para aterrizar se dijo",

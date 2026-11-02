@@ -1130,7 +1130,7 @@ import {
 } from "./flight/teclas-que-tocan";
 import { PantallaDelKit } from "./ui/kit-de-viaje";
 import { PantallaDeLaConsola } from "./ui/consola-del-asiento";
-import { CUENTOS_DEL_CAMINO, claveDelCuento } from "./flight/consola-del-asiento";
+import { CUENTOS_DEL_CAMINO, claveDelCuento, esDeUnCuento } from "./flight/consola-del-asiento";
 import { ilustracionDeLaHistoria } from "./ui/ilustraciones-de-las-historias";
 import type { ModoDeLaPantalla } from "./world/pantalla-del-respaldo";
 import { NIVELES } from "./flight/kit-de-viaje";
@@ -7265,6 +7265,8 @@ export class Game {
               : this.mama;
       const texto = linea.texto ?? t(linea.clave as TranslationKey);
       this.textoDeLaEscena.set(linea, texto);
+      // Un cuento lo pide quien lo toca, las veces que quiera: ver `olvidarQueSeDijo`.
+      if (esDeUnCuento(linea)) BOCA.olvidarQueSeDijo(linea.clave);
       const acabar = this.alAcabarLaFrase(linea.clave, texto, alAcabar);
       boca.decir(texto, linea.clave, "normal", linea.relleno, (que) => {
         // Y cuándo empieza a oírse: la foto de una historia va con su voz.

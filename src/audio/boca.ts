@@ -1267,6 +1267,16 @@ export class Boca {
 
   private reservadaPara: ((clave: string | undefined) => boolean) | null = null;
 
+  /**
+   * **Esta frase ya se puede volver a decir.** No repetirse es para lo que dice el juego
+   * por su cuenta, que cansa. Un cuento de la consola lo pide quien lo toca, las veces que
+   * quiera, y el que cortó la megafonía vuelve a empezar: con la regla de siempre, antes
+   * de veinticinco segundos se caía sin sonar. Ver `flight/consola-del-asiento.ts`.
+   */
+  olvidarQueSeDijo(clave: string): void {
+    this.dichas.delete(clave);
+  }
+
   /** Vuelo nuevo: se olvida hasta lo que ya había dicho. */
   empezarDeCero(): void {
     this.callar();
