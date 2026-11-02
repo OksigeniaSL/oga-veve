@@ -67,6 +67,14 @@
       "ms": 6607,
       "h": "4b1410c892"
     },
+    "inicio.tripulacion.pasaje.cerca.largo.consolaBoton": {
+      "ms": 6407,
+      "h": "536c6314c6"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.consolaRecoge": {
+      "ms": 5607,
+      "h": "f2cc2cb3a8"
+    },
     "inicio.tripulacion.pasaje.cerca.largo.ecuador1": {
       "ms": 7007,
       "h": "a0329acd93"
@@ -593,6 +601,12 @@
     ],
     "inicio.tripulacion.pasaje.cerca.largo.oidos": [
       "inicio.tripulacion.pasaje.cerca.largo.oidos"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.consolaBoton": [
+      "inicio.tripulacion.pasaje.cerca.largo.consolaBoton"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.consolaRecoge": [
+      "inicio.tripulacion.pasaje.cerca.largo.consolaRecoge"
     ]
   }
 }

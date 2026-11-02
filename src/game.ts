@@ -1133,7 +1133,6 @@ import { PantallaDelKit } from "./ui/kit-de-viaje";
 import { PantallaDeLaConsola } from "./ui/consola-del-asiento";
 import { CUENTOS_DEL_CAMINO, claveDelCuento, esDeUnCuento } from "./flight/consola-del-asiento";
 import { ilustracionDeLaHistoria } from "./ui/ilustraciones-de-las-historias";
-import type { ModoDeLaPantalla } from "./world/pantalla-del-respaldo";
 import { NIVELES } from "./flight/kit-de-viaje";
 import { selloDe } from "./ui/sellos";
 import { nombresDelPeldano } from "./ui/hoja";

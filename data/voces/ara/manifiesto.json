@@ -383,6 +383,10 @@
       "ms": 3907,
       "h": "fe91b5b248"
     },
+    "inicio.ara.pasaje.largo.consolaAbre": {
+      "ms": 5407,
+      "h": "c53dd6c37f"
+    },
     "inicio.ara.pasaje.largo.deDia": {
       "ms": 3207,
       "h": "ec4fd7a25f"
@@ -941,6 +945,9 @@
     ],
     "inicio.ara.pasaje.largo.chipa": [
       "inicio.ara.pasaje.largo.chipa"
+    ],
+    "inicio.ara.pasaje.largo.consolaAbre": [
+      "inicio.ara.pasaje.largo.consolaAbre"
     ],
     "inicio.ara.pasaje.largo.deDia": [
       "inicio.ara.pasaje.largo.deDia"

@@ -19540,5 +19540,33 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.consolaBoton",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Y ese botón es la pantalla de tu asiento: con un toque se enciende, y con otro volvemos a la ventanilla.",
+    "para": "el vuelo largo: Idaira le enseña el botón de la pantalla del asiento"
+  },
+  {
+    "id": "inicio.ara.pasaje.largo.consolaAbre",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Mirá todo lo que tiene! El mapa, los juegos, los cuentos y mi cuaderno.",
+    "para": "el vuelo largo: Ara abre su pantalla por primera vez y dice lo que hay",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.consolaRecoge",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Ya vamos bajando: guardamos la pantalla y a la ventanilla, que la llegada no hay que perdérsela.",
+    "para": "el vuelo largo: a los diez mil pies, Idaira pide guardar la pantalla"
   }
 ]
