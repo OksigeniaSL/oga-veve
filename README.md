@@ -1,6 +1,8 @@
 # Óga Veve
 
 Simulador de vuelo para navegador. Se vuela sobre Paraguay —el relieve es
+
+[![Óga Veve on StartupScores](https://startupscores.com/badge/oga-veve.svg?style=shield&v=combo&theme=dark)](https://startupscores.com/open-source/oga-veve)
 real, el paisaje lo pintamos nosotros— y se aterriza donde se pueda.
 
 ### ▶ Para jugar: `npm install && npm run dev`
