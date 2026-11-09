@@ -28,7 +28,8 @@ const ZONA = {
 } as const;
 
 const CAMPOS = {
-  canarias: SCENARIOS.filter((e) => e.pais === "es" && e.id !== "cuatro-vientos"),
+  // Los de España menos los dos de Madrid, que no son de las islas.
+  canarias: SCENARIOS.filter((e) => e.pais === "es" && e.id !== "cuatro-vientos" && e.id !== "barajas"),
   paraguay: SCENARIOS.filter((e) => e.pais !== "es" && e.aerodrome),
 };
 

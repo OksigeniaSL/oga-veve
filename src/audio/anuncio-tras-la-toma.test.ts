@@ -128,6 +128,9 @@ describe("y cada campo donde cabe un avión con auxiliares, su bienvenida", () =
     const conAuxiliares = AIRCRAFT.filter((a) => conTripulacion(a.mass));
     for (const e of SCENARIOS) {
       if (!e.aerodrome) continue;
+      // Barajas es de donde sale el viaje largo; ahí no se aterriza, y no
+      // tiene bienvenida que grabar. Ver `fueraDelHangar`.
+      if (e.fueraDelHangar) continue;
       if (!conAuxiliares.some((a) => cabeEn(a, campoDe(e)).cabe)) continue;
       const habla = hablaDe(e.aerodrome.id);
       const a = anuncioTrasLaToma(habla, { id: e.id, nombre: "x" }, undefined, () => 0);

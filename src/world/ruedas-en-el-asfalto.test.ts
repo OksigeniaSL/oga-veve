@@ -185,6 +185,12 @@ describe("las ruedas apoyan en el asfalto que se ve", () => {
         }
       }
       expect(enHierba).toBeGreaterThan(0);
-    });
+      /*
+       * Diez minutos de tope y no los cinco de siempre: Barajas son setecientas
+       * cincuenta y seis calles y cuatrocientos veinticinco puestos, cada punto
+       * con sus nueve rayos contra mallas de cien mil triángulos. Medido: tres
+       * minutos sola, cinco y pico con la tanda entera a la vez.
+       */
+    }, 600_000);
   }
 });

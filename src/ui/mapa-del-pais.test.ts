@@ -10,7 +10,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { SCENARIOS, scenarioById, destinosDe } from "../world/scenarios";
+import { DEL_HANGAR, SCENARIOS, scenarioById, destinosDe } from "../world/scenarios";
 import { AIRCRAFT } from "../flight/aircraft";
 import { SILUETAS, type Anillo } from "./siluetas";
 import { anchoDeNumeroDePista, CAJA_DEL_NORTE, mapaDelPais, numerosDePista } from "./mapa-del-pais";
@@ -165,8 +165,9 @@ describe("los calcos de la carta", () => {
  * cada uno al lado del otro.
  */
 describe("los números de pista de la ficha", () => {
+  // Los del hangar, que son los que tienen ficha: Barajas no sale en él.
   it("no se pisan y caen dentro del dibujo, en todos los campos", () => {
-    for (const e of SCENARIOS.filter((s) => s.aerodrome)) {
+    for (const e of DEL_HANGAR.filter((s) => s.aerodrome)) {
       const n = numerosDePista(e);
       const cajas = n.map((u) => {
         const w = anchoDeNumeroDePista(u.nombre);

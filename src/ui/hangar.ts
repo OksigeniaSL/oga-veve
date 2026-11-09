@@ -63,6 +63,7 @@ import {
 import { missionsFor } from "../content/missions";
 import { objectiveTarget, type Mission } from "../missions/types";
 import {
+  DEL_HANGAR,
   SCENARIOS,
   destinosDe,
   oaciDe,
@@ -499,7 +500,7 @@ export const nombreCorto = (nombre: string): string =>
 
 // ── La pantalla ──────────────────────────────────────────────────────────
 
-const ESCALA = Math.max(...SCENARIOS.map((e) => caja(e).lado));
+const ESCALA = Math.max(...DEL_HANGAR.map((e) => caja(e).lado));
 
 function fichaDeSitio(escenario: Scenario, elegido: boolean): string {
   const { cielo, suelo } = pieles(escenario);
@@ -1673,7 +1674,7 @@ const bandera = (pais: (typeof PAISES)[number]): string =>
 
 /** Un grupo de sitios con su bandera, o nada si ese país no tiene ninguno. */
 function grupoDeSitios(pais: (typeof PAISES)[number], elegido: string): string {
-  const hechos = SCENARIOS.filter((e) => e.pais === pais);
+  const hechos = DEL_HANGAR.filter((e) => e.pais === pais);
   const pronto = PROXIMAMENTE.filter((p) => p.pais === pais);
   return grupo(
     bandera(pais),
@@ -1763,9 +1764,9 @@ export function recientes(elegido: Scenario): Scenario[] {
     if (e && vistos.length < 3 && !vistos.some((v) => v.id === e.id))
       vistos.push(e);
   };
-  for (const id of ids) anadir(SCENARIOS.find((e) => e.id === id));
-  for (const e of SCENARIOS) if (e.aerodrome) anadir(e);
-  for (const e of SCENARIOS) anadir(e);
+  for (const id of ids) anadir(DEL_HANGAR.find((e) => e.id === id));
+  for (const e of DEL_HANGAR) if (e.aerodrome) anadir(e);
+  for (const e of DEL_HANGAR) anadir(e);
   return vistos;
 }
 
@@ -2002,7 +2003,7 @@ export function abrirHangar(
           <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-destino">
             ${mapaDelPais(
               sitio,
-              SCENARIOS.filter((e) => e.pais === sitio.pais && e.aerodrome),
+              DEL_HANGAR.filter((e) => e.pais === sitio.pais && e.aerodrome),
               rutasDelMapa(sitio, avion),
               destinoDeAhora(),
               // Los calcos de la carta van con el peldaño del piloto elegido.

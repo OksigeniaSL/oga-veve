@@ -134,6 +134,36 @@ export const UMBRALES: Readonly<Record<string, Readonly<Record<string, UmbralPub
    * pone es el largo de la pista.
    */
   SGAY: { "02": { desplazado: 0, lda: 1850, tora: 1850 }, "20": { desplazado: 0, lda: 1850, tora: 1850 } },
+  /*
+   * Barajas, de la ficha AD 2-LEMD leída el 9 de noviembre de 2026 (en vigor
+   * desde el 29 de octubre). 2.12: «THR RWY 18R displaced 814 m», «32L
+   * displaced 928 m», «18L displaced 500 m» y «32R displaced 500 m». 2.13,
+   * las distancias declaradas.
+   *
+   * **Y aquí hay NU, que no había en ningún otro campo**: Barajas separa las
+   * pistas de salida de las de llegada, y la 36L, la 36R, la 14L y la 14R no
+   * publican LDA —no se aterriza por ellas—, igual que la 18L, la 18R, la 32L y
+   * la 32R no publican TORA. Donde pone NU va **el asfalto que el juego corre
+   * por esa cabecera**, para que la cuenta de qué avión cabe no se invente
+   * una cifra; no es un número publicado y no se enseña como tal. Las que sí
+   * publica, tal cual: TORA de 4.179 m por la 36L y LDA de 3.365 por la 18R,
+   * que son 4.179 menos los 814 del umbral desplazado.
+   *
+   * El fichero de OpenStreetMap traía la 18R/36L con 180 m de más al norte y
+   * la 14R/32L con 113 m de más al sureste, y los desplazados de OurAirports
+   * —985 y 1.050 m— contados desde esas puntas. Las cuatro pistas se pusieron
+   * a mano con los umbrales del AIP (2.12) y van marcadas `manual`.
+   */
+  LEMD: {
+    "36L": { desplazado: 0, lda: 4179, tora: 4179 },
+    "18R": { desplazado: 814, lda: 3365, tora: 4179 },
+    "36R": { desplazado: 0, lda: 3500, tora: 3500 },
+    "18L": { desplazado: 500, lda: 3000, tora: 3500 },
+    "14R": { desplazado: 0, lda: 3988, tora: 3988 },
+    "32L": { desplazado: 928, lda: 3060, tora: 3988 },
+    "14L": { desplazado: 0, lda: 3500, tora: 3500 },
+    "32R": { desplazado: 500, lda: 3000, tora: 3500 },
+  },
 };
 
 /** Lo publicado para esa cabecera, o `null` si el campo no sale en ningún AIP. */

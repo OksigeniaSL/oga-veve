@@ -613,6 +613,12 @@ const OPERAN: Readonly<Record<string, readonly TipoDeTrafico["id"][]>> = {
   GCHI: ["turbohelice"],
   GCGM: ["turbohelice"],
   LECU: ["avioneta", "avioneta", "bimotor"],
+  /*
+   * Barajas es de línea: reactores casi todo, y el turbohélice regional que
+   * sale a provincias. Las avionetas de escuela de Madrid están en Cuatro
+   * Vientos, que es para lo que está; aquí no se hace circuito con una.
+   */
+  LEMD: ["reactor", "reactor", "reactor", "turbohelice"],
 };
 
 /**

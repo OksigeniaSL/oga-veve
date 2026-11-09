@@ -10,7 +10,7 @@
 // HUD ya está maquetado antes de que el navegador termine de leer el módulo,
 // en vez de aparecer sin estilo durante un instante.
 import { Game } from "./game";
-import { destinosDe, SCENARIOS, type Scenario } from "./world/scenarios";
+import { DEL_HANGAR, destinosDe, SCENARIOS, type Scenario } from "./world/scenarios";
 import {
   leccionPorId,
   leccionRecordada,
@@ -381,8 +381,9 @@ if (!escenario) {
   }
 }
 
+// Del hangar: un mundo de cuento que se quedara recordado abriría el menú en él.
 const recordado =
-  SCENARIOS.find((s) => {
+  DEL_HANGAR.find((s) => {
     try {
       return s.id === leerTexto("escenario");
     } catch {

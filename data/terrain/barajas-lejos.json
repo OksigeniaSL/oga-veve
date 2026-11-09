@@ -1,0 +1,13 @@
+{
+  "id": "barajas-lejos",
+  "fuente": "Copernicus DEM GLO-30",
+  "atribucion": "© DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved",
+  "origen": {
+    "lat": 40.493407,
+    "lon": -3.572249
+  },
+  "tamanoM": 156000,
+  "resolucion": 385,
+  "minM": 388,
+  "maxM": 2385
+}

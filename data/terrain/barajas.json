@@ -1,0 +1,13 @@
+{
+  "id": "barajas",
+  "fuente": "PNOA-LiDAR MDT05 (IGN)",
+  "atribucion": "Modelo Digital del Terreno MDT05 del PNOA-LiDAR © Instituto Geográfico Nacional de España, CC BY 4.0",
+  "origen": {
+    "lat": 40.493407,
+    "lon": -3.572249
+  },
+  "tamanoM": 26000,
+  "resolucion": 385,
+  "minM": 539,
+  "maxM": 784
+}

@@ -212,7 +212,13 @@ const VUELTA_POR_LA_PISTA: Readonly<Record<string, Listado>> = {
   },
 };
 
-const CAMPOS = SCENARIOS.filter((e) => e.aerodrome);
+/*
+ * Los del vuelo libre. Barajas, que es el mundo del viaje largo, se mira en
+ * `salida-de-barajas.test.ts` por lo que vuela su capítulo —del T5 de la T1 a
+ * la 36L con el JAZ 110—, y no de cada uno de sus cuatrocientos veinticinco
+ * puestos con toda la flota: ahí no sale nadie más.
+ */
+const CAMPOS = SCENARIOS.filter((e) => e.aerodrome && !e.fueraDelHangar);
 
 /** Las cabeceras en uso posibles: las que da el viento, como en el juego. */
 function cabeceras(esc0: Scenario): Scenario[] {

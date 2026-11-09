@@ -31,6 +31,7 @@ import GCLP from "../../data/aerodromes/gclp.aero.json";
 import GCRR from "../../data/aerodromes/gcrr.aero.json";
 import GCFV from "../../data/aerodromes/gcfv.aero.json";
 import LECU from "../../data/aerodromes/lecu.aero.json";
+import LEMD from "../../data/aerodromes/lemd.aero.json";
 import SGES from "../../data/aerodromes/sges.aero.json";
 import SGME from "../../data/aerodromes/sgme.aero.json";
 import SGPJ from "../../data/aerodromes/sgpj.aero.json";
@@ -354,6 +355,21 @@ export interface Scenario {
    * viento en cola no exceda de 10 kt» (AIP España, AD 2-GCLA, 20.3).
    */
   colaPreferente?: number;
+  /**
+   * **Un mundo que no sale en el hangar**, porque es el de un cuento y no el de
+   * un vuelo suelto: Barajas, donde empieza el viaje largo de Ara. Está en la
+   * lista como los demás —con su relieve, su ciudad y sus pruebas— y lo abre
+   * su capítulo; en el menú del vuelo libre no aparece.
+   */
+  fueraDelHangar?: boolean;
+  /**
+   * **Si el viento no cambia la cabecera**, porque la otra punta de esta pista
+   * no es una salida. En Barajas, la 18R no publica TORA —no se despega por
+   * ella nunca— y lo que hace el aeropuerto con viento del sur es pasarse a la
+   * configuración sur, que sale por la 14L: otra pista, y el juego opera una
+   * sola. Ver `MADRID_BARAJAS`.
+   */
+  sinCambioDeCabecera?: boolean;
 }
 
 /** Un lado publicado, para todos o separando las avionetas del resto. */
@@ -482,7 +498,7 @@ const COLA_QUE_SE_AGUANTA = 5;
  */
 export function conViento(esc: Scenario, meteo: Meteo): Scenario {
   const aero = esc.aerodrome;
-  if (!aero || meteo.vientoDe === null) return { ...esc, meteo };
+  if (!aero || meteo.vientoDe === null || esc.sinCambioDeCabecera) return { ...esc, meteo };
   const pista = aero.runways[0];
   const nombres = pista
     ? Object.entries(pista.thresholds)
@@ -1721,12 +1737,13 @@ export const LA_GOMERA: Scenario = {
 /**
  * Madrid–Cuatro Vientos, que es el aeródromo de las avionetas.
  *
- * Y no Barajas, a propósito. Barajas es el aeropuerto de Madrid y en este
- * juego sería un decorado enorme por el que rodar veinte minutos; **Cuatro
- * Vientos es donde se aprende a volar en Madrid** desde 1911 —es el más
- * antiguo de España en servicio— y es donde estaría de verdad un Pykasu un
+ * Y no Barajas, para volar suelto. Barajas es el aeropuerto de Madrid y para
+ * una avioneta sería un decorado enorme por el que rodar veinte minutos;
+ * **Cuatro Vientos es donde se aprende a volar en Madrid** desde 1911 —es el
+ * más antiguo de España en servicio— y es donde estaría de verdad un Pykasu un
  * sábado por la mañana. Pista de kilómetro y medio, mucha escuela, y la
- * meseta alrededor.
+ * meseta alrededor. Barajas entró después, y solo para el vuelo largo de Ara:
+ * ver `MADRID_BARAJAS`, más abajo.
  *
  * La meseta importa: setecientos metros de altitud es aire menos denso, más
  * carrera de despegue y más velocidad real para la misma indicada. Es el
@@ -1780,6 +1797,142 @@ export const CUATRO_VIENTOS: Scenario = {
   magneticVariation: 1,
   aerodrome: conPlataformasCosidas(LECU as unknown as Aerodrome),
 };
+
+/**
+ * Madrid–Barajas, que es donde empieza el viaje largo de Ara.
+ *
+ * **No es un campo para volar suelto**, y por eso no sale en el hangar (ver
+ * `fueraDelHangar`): es el mundo del primer capítulo del vuelo de Madrid a
+ * Asunción —el embarque, el rodaje y el despegue de noche—, y a Barajas no va
+ * ninguno de los aviones del vuelo libre. Se hace **solo de noche y sin
+ * ortofoto**, que es lo que decidió el dueño del producto: el capítulo es de
+ * noche entero y de noche lo que se ve son las luces.
+ *
+ * Cuatro pistas, dos parejas: la 18R/36L y la 18L/36R de norte a sur, y la
+ * 14R/32L y la 14L/32R en diagonal. **Y una configuración de verdad**, del
+ * AIP de ENAIRE (AD 2-LEMD, 2.20, AIRAC 10/26):
+ *
+ *                     de día (07-23 h)              de noche (23-07 h)
+ *     norte, la preferente   llegadas 32L/32R · salidas 36L/36R   llegadas 32R · salidas 36L
+ *     sur                    llegadas 18L/18R · salidas 14L/14R   llegadas 18L · salidas 14L
+ *
+ * La norte se mantiene con hasta diez nudos de cola, rachas incluidas, o
+ * veinte de costado; con siete de cola ya se puede pensar en cambiar. El vuelo
+ * de Asunción sale a las 23:45, de noche, y por eso la cabecera de este
+ * escenario es **la 36L**: la única de salidas de la configuración preferente
+ * nocturna. El juego opera una sola pista por campo —la primera del fichero,
+ * que aquí es justo la 18R/36L—, así que la configuración sur, que despega
+ * por la 14L, no se puede poner todavía. Y la otra punta de la que sí se
+ * opera, la 18R, no es una salida —el AIP no le publica TORA—, así que aquí
+ * el viento no da la vuelta a la pista (`sinCambioDeCabecera`): con viento del
+ * sur de verdad, que es cuando Barajas se pasa a la sur, la 36L llevaría cola.
+ * El tiempo del capítulo es cosa del capítulo; queda apuntado.
+ *
+ * Veintiséis kilómetros de lado: el aeropuerto mide nueve de norte a sur y la
+ * Puerta del Sol está a catorce del centro del mapa, hacia el suroeste, que es
+ * por donde se va a Asunción. Madrid entera no cabe; el centro sí.
+ */
+export const MADRID_BARAJAS: Scenario = {
+  id: "barajas",
+  fueraDelHangar: true,
+  /*
+   * Seis nudos del suroeste: el dominante de Madrid —el mismo que pone a
+   * Cuatro Vientos por la 28—, flojo como suele de noche. Con él la 36L lleva
+   * unos tres nudos de cola, que la configuración norte aguanta (ver
+   * `colaPreferente`). Sin techo: la noche de la meseta suele estar raso.
+   */
+  vientoDominante: { vientoDe: 240, vientoKt: 6, techoM: null, temp: 12 },
+  nameKey: "scenario.barajas.name",
+  pais: "es",
+  seed: 19310422,
+  size: 26000,
+  segments: 384,
+  // La red por si falta el relieve medido: la meseta, como en Cuatro Vientos.
+  reliefHeight: 900,
+  reliefScale: 4.6,
+  ridgeMix: 0.15,
+  /*
+   * Sin mar. El Jarama pasa al lado de la pista, pero su agua la trae la
+   * ciudad de OpenStreetMap y no la lámina. Y la lámina a 350, no a 400 como en
+   * Cuatro Vientos: el anillo lejano de aquí baja hasta el Tajo, a 388 m, y a
+   * 400 salía un lago donde está la vega de Aranjuez.
+   */
+  waterLevel: 350,
+  riverWidth: 0,
+  /*
+   * La vega del Jarama a quinientos cincuenta metros y los altos de Madrid y
+   * Alcobendas a setecientos. De noche estos colores casi no se ven: los pone
+   * la red de día por si alguien entra a otra hora.
+   */
+  bands: [
+    { from: 450, colour: 0x8a8a5c },
+    { from: 560, colour: 0x7d8a55 },
+    { from: 620, colour: 0x94925f },
+    { from: 680, colour: 0x8f8f60 },
+    { from: 740, colour: 0xa39670 },
+    { from: 820, colour: 0xa89681 },
+  ],
+  water: 0x4d7d95,
+  fill: 0x6f7350,
+  sky: { horizon: 0xe8ecec, zenith: 0x4d8ecb },
+  fog: { colour: 0xdfe3dc, density: 0.00003 },
+  runway: pistaDe(LEMD as unknown as Aerodrome, "36L"),
+  /*
+   * **Ocho décimas al este, y con el signo cambiado.** El AIP da 0° en 2020 con
+   * 8,1' al este por año (AD 2-LEMD, 2.2): en 2026 son unos 0,8° E, y el
+   * magnético es el verdadero **menos** eso. La 36L corre a 359,76°
+   * verdaderos, 359° magnéticos: el 36 pintado.
+   */
+  magneticVariation: -0.8,
+  aerodrome: conPlataformasCosidas(LEMD as unknown as Aerodrome),
+  /*
+   * Diez nudos de cola, rachas incluidas, antes de dejar la norte: «including
+   * 10 kt gusts of tailwind» (AIP España, AD 2-LEMD, 2.20).
+   */
+  colaPreferente: 10,
+  sinCambioDeCabecera: true,
+};
+
+/**
+ * **La salida de Barajas del vuelo de Asunción**, como datos para el capítulo
+ * que la vuela: de qué puesto, por dónde se espera y por qué salida
+ * publicada. Coordenadas en metros del fichero del aeródromo —x al este, y al
+ * norte—, como los puestos.
+ *
+ * - **El puesto**: Air Europa es la única que vuela Madrid-Asunción sin
+ *   escalas —el UX023 de las 23:45, a diario—, y opera los vuelos de fuera de
+ *   Schengen desde la T1 (Aena, ficha de Air Europa en Madrid-Barajas: «Vuelos
+ *   no Schengen. Terminal T1»). El T5 de OpenStreetMap es un puesto de contacto
+ *   frente a las puertas B26-B29 del dique de la T1, las de largo radio. El
+ *   juego, solo, sacaría el avión de la T4S, que es lo más cerca de la 36L:
+ *   el capítulo lo tiene que poner aquí con `reiniciarDesde`.
+ * - **La espera**: la doble raya de la Z4, al oeste de la cabecera, que es la
+ *   que elige el juego desde el T5 por las calles A, sin cruzar ninguna pista.
+ *   Unos cuatro kilómetros cien de rodaje.
+ * - **La salida**: la CCS6L, la de la 36L hacia Cáceres, que es por donde se
+ *   va al suroeste; de noche se puede usar, y el 787 no está en la lista de
+ *   los que tienen que ir por las «X» (AD 2-LEMD, 2.21). De la carta AD 2-LEMD
+ *   SID 5, AIRAC AMDT 05/25: recto al norte hasta SSY, por encima de 2.400
+ *   ft; a la izquierda a rumbo 285 hasta cortar la 320 hacia MD039, por encima
+ *   de 5.200 ft y a 210 kt como mucho; a AVILA por la 269, por encima de
+ *   12.000 ft; y a LONGA y CCS por la 234. Pendiente mínima del 7,5 % hasta
+ *   MD039, 250 kt hasta los 10.000 ft y autorización inicial a 13.000 ft.
+ *   SSY cae seis kilómetros al norte, dentro del mapa fino; MD039, ya fuera.
+ */
+export const SALIDA_DE_BARAJAS = {
+  puesto: "T5",
+  espera: [-320, -95.1] as const,
+  cabecera: "36L",
+  sid: "CCS6L",
+  tramos: [
+    { fijo: "SSY", lat: 40.546417, lon: -3.575361, xy: [-263, 5894], rumbo: 360, porEncimaFt: 2400 },
+    { rumboDeVuelo: 285, viraje: "izquierda", maxKt: 205 },
+    { fijo: "MD039", lat: 40.640444, lon: -3.678778, xy: [-9008, 16350], rumbo: 320, porEncimaFt: 5200, maxKt: 210 },
+    { fijo: "AVILA", lat: 40.624611, lon: -4.549889, rumbo: 269, porEncimaFt: 12000 },
+    { fijo: "LONGA", lat: 40.438361, lon: -4.877111, rumbo: 234, porEncimaFt: 13000 },
+    { fijo: "CCS", lat: 39.524361, lon: -6.434667, rumbo: 234, porEncimaFt: 13000 },
+  ],
+} as const;
 
 /**
  * Guaraní — el segundo aeropuerto internacional del país, y el que cae.
@@ -2421,7 +2574,16 @@ export const SCENARIOS: readonly Scenario[] = [
   EL_HIERRO,
   LA_GOMERA,
   CUATRO_VIENTOS,
+  MADRID_BARAJAS,
 ];
+
+/**
+ * **Los que se eligen en el hangar**: todos menos los mundos de un cuento. Ver
+ * `fueraDelHangar`. Lo usa todo lo que enseña sitios para volar —las fichas,
+ * el mapa del país, los recientes— y también la escala de los planos, que si
+ * contara con Barajas encogería el dibujo de todos los demás campos.
+ */
+export const DEL_HANGAR: readonly Scenario[] = SCENARIOS.filter((e) => !e.fueraDelHangar);
 
 export function scenarioById(id: string): Scenario {
   const found = SCENARIOS.find((s) => s.id === id);
