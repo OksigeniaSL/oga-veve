@@ -714,6 +714,27 @@ async function loQueSigueIgual() {
       l ? `${Math.round(l.tarjeta.width)} px desde y=${Math.round(l.tarjeta.top)} · menú ${columna}` : "nadie habló",
     );
     if (l) await foto(page, "tumbado", "pasaje");
+    if (l?.alrededor.menu) {
+      // Con el menú abierto, la tarjeta tapaba la pantalla completa y medio botón del ala. Se mira
+      // por cajas y no con `elementFromPoint`: la tarjeta deja pasar el dedo, pero tapa a la vista.
+      await tocar(page, l.alrededor.menu, true);
+      await pausa(400);
+      const tapados = await page.evaluate(() => {
+        const t = document.querySelector("#inicio .inicio__tarjeta");
+        const r = t?.getBoundingClientRect();
+        if (!t || !r || r.width === 0 || getComputedStyle(t).visibility === "hidden") return [];
+        return [...document.querySelectorAll('[data-hud="menu-caja"] > button')]
+          .filter((b) => !b.hidden && getComputedStyle(b).display !== "none")
+          .filter((b) => {
+            const c = b.getBoundingClientRect();
+            return c.left < r.right && c.right > r.left && c.top < r.bottom && c.bottom > r.top;
+          })
+          .map((b) => b.dataset.hud ?? b.className);
+      });
+      comprobar("tumbado: con el menú abierto, la tarjeta no tapa ningún botón", tapados.length === 0, tapados.join(" · ") || "ninguno tapado");
+      await foto(page, "tumbado", "menu");
+      await tocar(page, l.alrededor.menu, true);
+    }
   } catch (e) {
     comprobar("tumbado", false, String(e).slice(0, 300));
   } finally {

@@ -17283,6 +17283,17 @@ body.con-vuelta #tactil {
  *   y las láminas donde quepan sin tapar nada de esto: las coloca el juego
  *   midiendo lo que hay (`dondeCabeLaLamina`).
  */
+/*
+ * Tumbado, en el teléfono, pasa lo mismo que de pie con el menú abierto (ver
+ * abajo): la rejilla cuelga de los cuatro puntos y la tarjeta, que va por
+ * encima del HUD, tapaba la pantalla completa y medio botón del ala.
+ */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  :root.con-pasaje:has(.hud.hud--menu) .inicio .inicio__tarjeta {
+    visibility: hidden;
+  }
+}
+
 @media (pointer: coarse) and (orientation: portrait) {
   :root.con-pasaje .inicio .inicio__tarjeta {
     top: calc(max(var(--inicio-arriba, 64px), var(--vistas-abajo, 132px)) + 10px);
