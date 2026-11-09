@@ -17383,6 +17383,17 @@ body.con-vuelta #tactil {
   :root.con-pasaje .siesta__sueno {
     width: min(calc(100vw - 32px), 560px);
   }
+
+  /* Sin movimiento, la tarjeta baja de golpe: se queda la información, no el deslizarse. */
+  :root.con-pasaje.sin-movimiento .inicio .inicio__tarjeta {
+    transition: none;
+  }
+}
+
+@media (pointer: coarse) and (orientation: portrait) and (prefers-reduced-motion: reduce) {
+  :root.con-pasaje .inicio .inicio__tarjeta {
+    transition: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
