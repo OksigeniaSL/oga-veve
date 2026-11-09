@@ -359,7 +359,14 @@ export function anchoDeLaLamina(
   const { ancho: W, alto: H } = pantalla;
   const m = VENTANA.marco;
   const porAlto = (H * LAMINA.alto - 2 * m) * proporcion + 2 * m;
-  return Math.max(VENTANA.minimo, Math.min(W * LAMINA.ancho, porAlto, LAMINA.tope, W - 2 * VENTANA.hueco));
+  /*
+   * **De pie, el ancho entero**: el cristal va de borde a borde y no deja pared
+   * a sus lados, así que la lámina va encima o debajo de lo que se enseña, no
+   * a su lado. Con cuatro décimas de un teléfono de pie, la de siempre: un
+   * sello de 168 píxeles con media pantalla vacía alrededor.
+   */
+  const porAncho = H > W ? W : W * LAMINA.ancho;
+  return Math.max(VENTANA.minimo, Math.min(porAncho, porAlto, LAMINA.tope, W - 2 * VENTANA.hueco));
 }
 
 /**

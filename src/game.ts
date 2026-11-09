@@ -8178,9 +8178,18 @@ export class Game {
       top: Math.max(0, Math.min(...ys)),
       bottom: Math.min(H, Math.max(...ys)),
     };
-    if (plano === "ventanilla") return { cajas: [...cajas, cristal] };
+    /*
+     * **De pie, el cristal va de borde a borde** y no deja pared a su lado para
+     * la lámina; arriba van los botones y la tarjeta de quien habla. Se le deja
+     * el tercio de abajo, el mismo que asomada —justo aquí debajo—: lo de en
+     * medio sigue a la vista, y lo nombrado por la ventanilla, que lleva sus
+     * propias cajas, no se tapa nunca. Sin esto, de pie no salía ninguna.
+     */
+    const deAbajo = H * 0.68;
+    if (plano === "ventanilla")
+      return { cajas: [...cajas, H > W ? { ...cristal, bottom: Math.min(cristal.bottom, deAbajo) } : cristal] };
     // Con la cara contra el cristal: lo del medio, que es adonde se mira, y por el cristal el motor y el ala.
-    cajas.push({ left: W * 0.36, right: W * 0.64, top: H * 0.32, bottom: H * 0.68 });
+    cajas.push({ left: W * 0.36, right: W * 0.64, top: H * 0.32, bottom: deAbajo });
     if (plano !== "asomado-motor") return { cajas };
     return {
       cajas,

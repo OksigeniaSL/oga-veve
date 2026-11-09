@@ -17244,13 +17244,144 @@ body.con-vuelta #tactil {
   }
 }
 
-/* De pie y con el dedo manda el cartel de girar: ver `.gira`. */
+/*
+ * De pie y con el dedo manda el cartel de girar —ver `.gira`—, que tapa el
+ * juego entero porque con la palanca y el motor fuera de la pantalla no se
+ * puede pilotar. **Salvo de pasaje**, donde no se pilota: ahí el cartel no
+ * sale (`:root.con-pasaje … [data-hud="gira"]`) y el teléfono de pie es tan
+ * bueno como tumbado para mirar por la ventanilla. Escondido también de
+ * pasaje, el vuelo se veía mudo: ni la cara de quien habla, ni lo que dice,
+ * ni el sueño de Ara, ni los fundidos de los planos.
+ */
 @media (pointer: coarse) and (orientation: portrait) {
-  .inicio,
-  .inicio-velo,
-  .plano-velo,
-  .siesta {
+  :root:not(.con-pasaje) .inicio,
+  :root:not(.con-pasaje) .inicio-velo,
+  :root:not(.con-pasaje) .plano-velo,
+  :root:not(.con-pasaje) .siesta {
     display: none !important;
+  }
+}
+
+/*
+ * ── **El pasaje, de pie** ──
+ *
+ * Lo mismo que tumbado, colocado para una pantalla alta y estrecha. Todo con
+ * `:root.con-pasaje` delante, que de pie fuera del pasaje manda el cartel de
+ * girar y aquí no cambia nada:
+ *
+ * - **Arriba, la fila del teléfono tumbado**: a la izquierda la columna de la
+ *   pausa, con el ⏩ y el cartel del cinturón debajo, como siempre; a la
+ *   derecha los cuatro puntos del menú y, a su lado, el volumen. Sin esto, la
+ *   barra de botones no cabía en una fila y bajaba en columna por el medio de
+ *   la pantalla, encima de la ventanilla, de la tarjeta y de las láminas.
+ * - **Debajo, la tarjeta de quien habla, de lado a lado.** Con la mitad del
+ *   ancho, como tumbado, la frase salía de tres en tres palabras. Empieza
+ *   donde acaba la columna de la pausa, que crece cuando se enciende el
+ *   cinturón o la luz de llamada: la mide el HUD y la deja en
+ *   `--vistas-abajo`. Al crecer, la tarjeta baja deslizándose, sin saltar.
+ * - **Abajo, la mochila o el botón de la pantalla del asiento**, como tumbado,
+ *   y las láminas donde quepan sin tapar nada de esto: las coloca el juego
+ *   midiendo lo que hay (`dondeCabeLaLamina`).
+ */
+@media (pointer: coarse) and (orientation: portrait) {
+  :root.con-pasaje .inicio .inicio__tarjeta {
+    top: calc(max(var(--inicio-arriba, 64px), var(--vistas-abajo, 132px)) + 10px);
+    width: calc(100vw - max(16px, env(safe-area-inset-left)) - max(16px, env(safe-area-inset-right)));
+    transition: top 0.3s ease;
+  }
+
+  /*
+   * **Con el menú abierto, la tarjeta se aparta.** El menú cuelga de los
+   * cuatro puntos, encima de donde va la tarjeta, y vive dentro del HUD, que
+   * va por debajo de ella: abierto, sus botones quedaban tapados a medias. Se
+   * abre un momento, se elige y se cierra; la voz sigue mientras tanto.
+   */
+  :root.con-pasaje:has(.hud.hud--menu) .inicio .inicio__tarjeta {
+    visibility: hidden;
+  }
+
+  :root.con-pasaje .hud .hud__menu {
+    display: none;
+  }
+
+  :root.con-pasaje .hud .hud__menu-boton {
+    display: grid;
+    position: absolute;
+    top: max(16px, env(safe-area-inset-top));
+    right: max(16px, env(safe-area-inset-right));
+  }
+
+  :root.con-pasaje .hud.hud--menu .hud__menu-boton {
+    border-color: var(--ocre);
+    color: var(--ocre);
+  }
+
+  /*
+   * Abierto, en rejilla y colgando de su botón, como tumbado; de tres en tres
+   * y no de cuatro, que con cuatro la rejilla llegaba hasta la pausa.
+   */
+  :root.con-pasaje .hud.hud--menu .hud__menu {
+    display: grid;
+    position: absolute;
+    top: calc(max(16px, env(safe-area-inset-top)) + var(--tacto) + 10px);
+    right: max(16px, env(safe-area-inset-right));
+    grid-template-columns: repeat(3, auto);
+    gap: 14px;
+    padding: 16px;
+    border-radius: var(--r-l);
+    background: var(--barniz), var(--barro);
+    border: 1px solid var(--linea);
+    box-shadow: var(--filo), var(--poso);
+    pointer-events: auto;
+    z-index: 30;
+  }
+
+  :root.con-pasaje .hud.hud--menu .hud__menu > .sonido {
+    width: calc(var(--tacto) * 1.25);
+    height: calc(var(--tacto) * 1.25);
+  }
+
+  :root.con-pasaje .hud.hud--menu .hud__menu > .sonido svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  /*
+   * **El volumen, a la vista y al lado de los cuatro puntos**, como tumbado.
+   * Donde estaba, encima de la palanca que de pasaje no hay, partía en dos lo
+   * que queda para la pantalla del asiento y las láminas. En fila y no de
+   * pie: arriba sobra ancho.
+   */
+  :root.con-pasaje .hud .volumen {
+    top: max(16px, env(safe-area-inset-top));
+    right: calc(max(16px, env(safe-area-inset-right)) + var(--tacto) + 10px);
+    bottom: auto;
+    left: auto;
+    width: auto;
+    container-type: normal;
+  }
+
+  :root.con-pasaje .hud .volumen__capsula {
+    padding-right: 12px;
+  }
+
+  :root.con-pasaje .hud .volumen__carril,
+  :root.con-pasaje .hud .volumen__mando {
+    width: 104px;
+  }
+
+  /*
+   * El sueño de Ara, de lado a lado y por debajo de la tarjeta: a un tercio
+   * del ancho, como tumbado, era un sello. El cuadro va centrado en lo que
+   * queda, así que basta con dejarle arriba la tarjeta y una frase de tres
+   * líneas.
+   */
+  :root.con-pasaje .siesta {
+    padding-top: calc(var(--vistas-abajo, 132px) + 150px);
+  }
+
+  :root.con-pasaje .siesta__sueno {
+    width: min(calc(100vw - 32px), 560px);
   }
 }
 
@@ -18753,19 +18884,23 @@ path.kit-hueco__forma {
   animation: none !important;
 }
 
-/* De pie y con el dedo manda el cartel de girar, como con la tarjeta. */
+/*
+ * De pie y con el dedo manda el cartel de girar, como con la tarjeta. **Salvo
+ * de pasaje**, que es el único sitio donde hay kit: la mochilita sale de pie
+ * igual que tumbada, abajo a la derecha, y el kit abierto se coloca solo
+ * debajo de la tarjeta (`PantallaDelKit.colocar`).
+ */
 @media (pointer: coarse) and (orientation: portrait) {
-  .kit {
+  :root:not(.con-pasaje) .kit {
     display: none !important;
   }
 
-  /* Salvo desde la consola del asiento, que de pie también se usa: ahí se abrió con el dedo. */
-  :root.consola-abierta .kit {
-    display: block !important;
-  }
-
-  /* Y la fila de botones de arriba, que de pie baja en columna por encima de la pantalla: mientras se mira, fuera. */
-  :root.consola-abierta .hud .hud__menu {
+  /*
+   * Y con la pantalla del asiento abierta, fuera el menú de arriba y su botón:
+   * la consola lleva su propia barra, y su panel empieza debajo de la pausa.
+   */
+  :root.consola-abierta .hud .hud__menu,
+  :root.consola-abierta .hud .hud__menu-boton {
     display: none;
   }
 }

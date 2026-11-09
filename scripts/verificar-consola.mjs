@@ -2,7 +2,7 @@
  * **La consola de la pantalla del asiento, con el dedo**: `?inicio=4&capitulo=3`. Ver
  * `src/flight/consola-del-asiento.ts` y `src/ui/consola-del-asiento.ts`.
  *
- * Dos cosas distintas, cada una con su tiempo:
+ * Cosas distintas, cada una con su tiempo:
  *
  * - **Las cuatro pantallas** —portátil, tablet, teléfono tumbado y teléfono de pie, cada
  *   una en un peldaño—: el botón, las pestañas, los modos, los juegos, los cuentos y el
@@ -15,6 +15,12 @@
  *   acaba, y nunca dos voces a la vez. `OGA_SOLO=capitulo`. El mismo capítulo sin tocar
  *   la consola lo mira `verificar-inicio-4.mjs`.
  * - **Y el vuelo de Ara a La Palma**, sin pantalla en los respaldos: nada de esto sale.
+ * - **Y ese mismo vuelo con el teléfono de pie**, con el dedo: la tarjeta de quien habla
+ *   con su cara y su texto, el menú de los cuatro puntos, una lámina, la mochila con su
+ *   kit y la llegada con el botón de volver, cada cosa entera y sin pisar lo de arriba; y
+ *   lo que no cambia: tumbado, y de pie fuera del pasaje, donde manda el cartel de girar.
+ *   `OGA_SOLO=de-pie`. De pie en el capítulo 3, con la consola, lo mira la pantalla
+ *   `telefono-de-pie` de arriba.
  *
  * `OGA_FOTOS=<dir>` para las capturas, `OGA_GPU=1` como los demás, `OGA_FECHA` y
  * `OGA_VIENTO` como `verificar-inicio-4`; `OGA_PRISA` es el reloj de los bancos durante
@@ -143,6 +149,22 @@ function revisar(l, cajas) {
   return malas;
 }
 
+/**
+ * **Lo que le falta a la tarjeta de quien habla para verse**: que esté, entera
+ * dentro de la pantalla y sin caer encima de nada de lo de alrededor —la fila
+ * de la pausa con el ⏩, el cinturón, el menú y el volumen— ni del botón de la
+ * pantalla del asiento. Hasta el 9-11-2026, de pie no salía: se escondía con
+ * el cartel de girar, que de pasaje no sale.
+ */
+function tarjetaQueNoSeve(l) {
+  const t = l.tarjeta;
+  if (!t) return ["no se ve"];
+  const malas = [];
+  if (!entera(t, l.ancho, l.alto)) malas.push("se sale");
+  for (const [otro, o] of Object.entries({ ...l.alrededor, boton: l.consola?.boton ?? null })) if (pisan(t, o)) malas.push(`pisa ${otro}`);
+  return malas;
+}
+
 /** Y que el dedo le llegue: en su centro, lo primero que hay es él o algo suyo. */
 const leLlega = (page, c) =>
   page.evaluate(({ x, y }) => {
@@ -224,6 +246,17 @@ async function unaPantalla(p) {
     await foto(page, p.nombre, "1-ventanilla");
     const botonMal = revisar(l, { boton: l.consola.boton });
     comprobar(de("el botón, de yema, dentro y sin pisar nada"), botonMal.length === 0, botonMal.join(" · ") || `${Math.round(l.consola.boton.width)} px`);
+
+    // ── Quien habla, con su tarjeta: también de pie ─
+    const conVoz = await hastaQue(page, (x) => x.estado.hablando && !!x.tarjeta, 45_000);
+    const tarjetaMal = conVoz ? tarjetaQueNoSeve(conVoz) : ["nadie habló"];
+    comprobar(
+      de("mientras alguien habla, su tarjeta se ve, entera y sin pisar la pausa, el ⏩, el cinturón, el menú, el volumen ni el botón"),
+      tarjetaMal.length === 0,
+      tarjetaMal.join(" · ") || `${Math.round(conVoz.tarjeta.width)}×${Math.round(conVoz.tarjeta.height)} px desde y=${Math.round(conVoz.tarjeta.top)}`,
+    );
+    if (conVoz) await foto(page, p.nombre, "1-quien-habla");
+    l = await leer(page);
 
     await tocar(page, l.consola.boton, p.dedo);
     l = await hastaQue(page, (x) => x.estado.consola?.abierta && x.planoVisto === "respaldo", 8000);
@@ -359,8 +392,8 @@ async function unaPantalla(p) {
     if (l) {
       const cual = l.consola.losCuentos[0];
       await tocar(page, l.consola.cuentos[cual], p.dedo);
-      // Sonando, que es lo que se corta; la tarjeta no, que de pie se esconde detrás de la lámina.
-      aMedias = await hastaQue(page, (x) => x.estado.linea === `ventanilla.historia.${cual}` && x.estado.hablando, 75_000);
+      // Sonando, que es lo que se corta, y con su tarjeta a la vista, que de pie también sale.
+      aMedias = await hastaQue(page, (x) => x.estado.linea === `ventanilla.historia.${cual}` && x.estado.hablando && !!x.tarjeta, 75_000);
     }
     l = await leer(page);
     await tocar(page, l.consola.ventanilla, p.dedo);
@@ -408,6 +441,301 @@ async function unaPantalla(p) {
   } finally {
     await ctx.close();
   }
+}
+
+// ── El pasaje de pie ─────────────────────────────────────────────────────
+
+/**
+ * **El vuelo de Ara a La Palma con el teléfono de pie**, que no tiene pantalla en el
+ * respaldo: lo que la consola no mira. Hasta el 9-11-2026, de pie y con el dedo se
+ * escondían la tarjeta de quien habla, los velos, la siesta y la mochila, por la regla
+ * del cartel de girar, que de pasaje no sale: el vuelo se veía, pero mudo de cara y de
+ * texto. Y lo que sigue igual: tumbado, y de pie fuera del pasaje, donde manda el cartel.
+ */
+const leerElPasaje = (page) =>
+  page.evaluate(() => {
+    const o = globalThis.__oga;
+    const i = o.inicio();
+    const caja = (q) => {
+      const el = document.querySelector(q);
+      if (!el || el.closest("[hidden]")) return null;
+      const c = getComputedStyle(el);
+      if (c.display === "none" || c.visibility === "hidden") return null;
+      const r = el.getBoundingClientRect();
+      return r.width > 2 && r.height > 2 ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height } : null;
+    };
+    const dice = document.querySelector("#inicio .inicio__dice");
+    const historia = document.querySelector('[data-hud="historia"]');
+    const gl = o.pintor().getContext();
+    const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+    return {
+      ancho: innerWidth,
+      alto: innerHeight,
+      tarjeta: caja("#inicio .inicio__tarjeta"),
+      cara: caja("#inicio .inicio__cara"),
+      dice: dice?.textContent?.trim() ?? "",
+      letra: dice ? Number.parseFloat(getComputedStyle(dice).fontSize) : 0,
+      hablando: i.estado?.hablando ?? false,
+      linea: i.estado?.linea?.clave ?? null,
+      plano: i.planoVisto,
+      lamina: caja('[data-hud="historia"]'),
+      laminaOpaca: historia ? Number(getComputedStyle(historia).opacity) : 0,
+      ventanita: i.ventanita,
+      mochila: caja(".kit__boton"),
+      kit: caja(".kit__panel"),
+      kitAbierto: i.estado?.kit?.abierto ?? false,
+      gira: caja('[data-hud="gira"]'),
+      inicioDisplay: getComputedStyle(document.getElementById("inicio")).display,
+      cajaDelMenu: getComputedStyle(document.querySelector('[data-hud="menu-caja"]')).display,
+      alrededor: {
+        pausa: caja('[data-hud="pausa"]'),
+        adelantar: caja('[data-hud="adelantar"]'),
+        cinturon: caja('[data-hud="cinturon"]'),
+        llamada: caja('[data-hud="llamada-de-pasaje"]'),
+        menu: caja('[data-hud="menu"]'),
+        volumen: caja(".volumen__capsula"),
+      },
+      tarjetaDeVideo: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : "sin nombre",
+    };
+  });
+
+/** Lo que pisa una caja de lo de alrededor y de las demás que se den. */
+const loQuePisa = (c, l, otras = {}) =>
+  Object.entries({ ...l.alrededor, ...otras })
+    .filter(([, o]) => pisan(c, o))
+    .map(([n]) => `pisa ${n}`);
+
+async function abrirElPasaje(ctx, url, errores) {
+  const page = await ctx.newPage();
+  page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
+  page.on("console", (m) => {
+    if (m.type() === "error") errores.push(m.text().slice(0, 200));
+  });
+  await page.goto(`${BASE}/${url}`);
+  await page.bringToFront();
+  await page.waitForFunction(() => !!globalThis.__oga?.inicio?.()?.estado, null, { timeout: 240_000 });
+  await page.keyboard.press("ShiftLeft");
+  await page.evaluate(() => globalThis.__ogaEmpezar?.());
+  return page;
+}
+
+async function hastaQueElPasaje(page, cumple, ms) {
+  const desde = Date.now();
+  for (;;) {
+    const l = await leerElPasaje(page);
+    if (cumple(l)) return l;
+    if (Date.now() - desde > ms) return null;
+    await pausa(150);
+  }
+}
+
+async function elPasajeDePie() {
+  console.log("\n── el vuelo de Ara a La Palma, con el teléfono de pie: 390×844 con el dedo");
+  const ctx = await navegador.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, locale: "es-PY" });
+  const errores = [];
+  const de = (n) => `de pie: ${n}`;
+  try {
+    const page = await abrirElPasaje(ctx, `?inicio=3&fecha=${FECHA}`, errores);
+    console.log(`  (${(await leerElPasaje(page)).tarjetaDeVideo})`);
+
+    // ── Quien habla ─
+    let l = await hastaQueElPasaje(page, (x) => x.hablando && !!x.tarjeta && !!x.cara && x.dice.length > 0, 45_000);
+    const tarjetaMal = l ? [...(entera(l.tarjeta, l.ancho, l.alto) ? [] : ["se sale"]), ...loQuePisa(l.tarjeta, l)] : ["nadie habló con su tarjeta"];
+    comprobar(
+      de("mientras alguien habla, su tarjeta se ve con la cara y lo que dice, entera y sin pisar lo de arriba"),
+      tarjetaMal.length === 0,
+      tarjetaMal.join(" · ") || `«${l.dice.slice(0, 40)}…» · ${Math.round(l.tarjeta.width)}×${Math.round(l.tarjeta.height)} px desde y=${Math.round(l.tarjeta.top)}`,
+    );
+    if (l) {
+      comprobar(
+        de("de lado a lado, con la letra a 16 px como poco"),
+        l.tarjeta.width >= l.ancho - 40 && l.letra >= 16 - 0.01,
+        `${Math.round(l.tarjeta.width)} de ${l.ancho} px · letra ${l.letra} px`,
+      );
+      comprobar(de("y sin el cartel de girar, que de pasaje no se pilota"), !l.gira, "");
+      // La barra de botones, recogida en los cuatro puntos: de pie bajaba en columna por el medio de la pantalla.
+      comprobar(
+        de("la barra de botones, recogida en los cuatro puntos y no en columna por el medio"),
+        !!l.alrededor.menu &&
+          !!l.alrededor.volumen &&
+          l.alrededor.menu.width >= YEMA - 0.5 &&
+          entera(l.alrededor.menu, l.ancho, l.alto) &&
+          loQuePisa(l.alrededor.menu, l, { menu: null }).length === 0 &&
+          l.cajaDelMenu === "none",
+        `menú ${l.alrededor.menu ? `${Math.round(l.alrededor.menu.width)} px arriba a la derecha` : "no sale"} · volumen ${l.alrededor.volumen ? "arriba" : "no sale"} · caja del menú ${l.cajaDelMenu}`,
+      );
+      await foto(page, "de-pie", "1-quien-habla");
+    }
+
+    // ── El menú abierto ─
+    await tocar(page, (await leerElPasaje(page)).alrededor.menu, true);
+    await pausa(400);
+    const menu = await page.evaluate(() =>
+      [...document.querySelectorAll('[data-hud="menu-caja"] > button')]
+        .filter((b) => !b.hidden && getComputedStyle(b).display !== "none")
+        .map((b) => {
+          const r = b.getBoundingClientRect();
+          const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+          return { nombre: b.dataset.hud ?? b.className, left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height, llega: b.contains(el) };
+        }),
+    );
+    l = await leerElPasaje(page);
+    const menuMal = menu.flatMap((b) => [
+      ...(b.width < YEMA - 0.5 || b.height < YEMA - 0.5 ? [`${b.nombre} ${Math.round(b.width)} px`] : []),
+      ...(entera(b, l.ancho, l.alto) ? [] : [`${b.nombre} se sale`]),
+      ...(b.llega ? [] : [`a ${b.nombre} no le llega el dedo`]),
+      ...loQuePisa(b, l, { menu: null, volumen: null }).map((p) => `${b.nombre} ${p}`),
+    ]);
+    comprobar(de("los cuatro puntos abren el menú: de yema, dentro, sin pisar la pausa y sin nada encima"), menu.length >= 6 && menuMal.length === 0, menuMal.join(" · ") || `${menu.length} botones`);
+    await foto(page, "de-pie", "2-menu");
+    // Se cierra con los mismos cuatro puntos: un toque en la ventanilla explicaría lo que hay detrás.
+    await tocar(page, l.alrededor.menu, true);
+    await pausa(400);
+
+    // ── Los velos y la siesta: de pie, de pasaje, no se esconden ─
+    const escondidos = await page.evaluate(() =>
+      ["siesta", "plano-velo", "inicio-velo", "lamina-grande"].filter((id) => {
+        const el = document.getElementById(id);
+        if (!el) return true;
+        const antes = el.hidden;
+        el.hidden = false;
+        const nada = getComputedStyle(el).display === "none";
+        el.hidden = antes;
+        return nada;
+      }),
+    );
+    comprobar(de("la siesta, los fundidos de los planos, el velo y la lámina grande no se esconden"), escondidos.length === 0, escondidos.join(", "));
+
+    // ── Una lámina, la que salga sola, y si no, una pedida ─
+    l = await hastaQueElPasaje(page, (x) => x.ventanita?.donde === "grande" && !!x.lamina && x.laminaOpaca > 0.95, 45_000);
+    let pedida = false;
+    if (!l) {
+      pedida = true;
+      await hastaQueElPasaje(page, (x) => x.plano === "ventanilla", 20_000);
+      await page.evaluate(() => globalThis.__oga.historia("ilustracion:cabina-jaz-90"));
+      l = await hastaQueElPasaje(page, (x) => x.ventanita?.donde === "grande" && !!x.lamina && x.laminaOpaca > 0.95, 8000);
+    }
+    const laminaMal = l
+      ? [
+          ...(entera(l.lamina, l.ancho, l.alto) ? [] : ["se sale"]),
+          ...(l.lamina.width < 168 - 0.5 ? [`${Math.round(l.lamina.width)} px`] : []),
+          ...loQuePisa(l.lamina, l, { tarjeta: l.tarjeta, mochila: l.mochila }),
+        ]
+      : ["no salió ninguna"];
+    comprobar(
+      de("sale una lámina y se ve entera, sin pisar la tarjeta ni lo de arriba"),
+      laminaMal.length === 0,
+      laminaMal.join(" · ") || `${l.ventanita.sitio}${pedida ? " (pedida)" : ""} · ${Math.round(l.lamina.width)}×${Math.round(l.lamina.height)} px en y=${Math.round(l.lamina.top)}`,
+    );
+    if (l) await foto(page, "de-pie", "3-lamina");
+
+    // ── La mochila ─
+    await page.evaluate(() => globalThis.__oga.darElKit());
+    l = await hastaQueElPasaje(page, (x) => !!x.mochila, 10_000);
+    const mochilaMal = l
+      ? [
+          ...(l.mochila.width < YEMA - 0.5 || l.mochila.height < YEMA - 0.5 ? [`${Math.round(l.mochila.width)} px`] : []),
+          ...(entera(l.mochila, l.ancho, l.alto) ? [] : ["se sale"]),
+          ...loQuePisa(l.mochila, l, { tarjeta: l.tarjeta }),
+        ]
+      : ["no sale"];
+    comprobar(de("sale la mochila, de yema, dentro y sin pisar nada"), mochilaMal.length === 0, mochilaMal.join(" · ") || `${Math.round(l.mochila.width)} px`);
+    if (l) {
+      await pausa(1500);
+      l = await leerElPasaje(page);
+      if (l.lamina) comprobar(de("y la lámina se aparta de la mochila"), !pisan(l.lamina, l.mochila), "");
+      await foto(page, "de-pie", "4-mochila");
+      await tocar(page, l.mochila, true);
+      l = await hastaQueElPasaje(page, (x) => x.kitAbierto && !!x.kit, 6000);
+      if (l) {
+        await pausa(600);
+        l = await leerElPasaje(page);
+      }
+      const kitMal = l
+        ? [
+            ...(entera(l.kit, l.ancho, l.alto) ? [] : ["se sale"]),
+            ...(l.kit.width >= l.ancho * 0.8 ? [] : [`de ${Math.round(l.kit.width)} px en ${l.ancho}`]),
+            ...loQuePisa(l.kit, l, { tarjeta: l.tarjeta }),
+          ]
+        : ["no se abrió"];
+      comprobar(de("tocarla abre el kit, de lado a lado, entero y sin pisar la tarjeta ni lo de arriba"), kitMal.length === 0, kitMal.join(" · ") || `${Math.round(l.kit.width)}×${Math.round(l.kit.height)} px`);
+      if (l) await foto(page, "de-pie", "5-kit");
+      await page.locator(".kit__cerrar").first().click();
+      await hastaQueElPasaje(page, (x) => !x.kitAbierto, 4000);
+    }
+
+    // ── Y el final: el sello, la página del viaje y el botón de volver, que de pie no salía ─
+    await page.evaluate(() =>
+      globalThis.__oga.juegoParaTrazas().verElCuadernoDeViajeParaBanco(["motor", "ala", "nubes", "teide", "gomera"], ["teide"]),
+    );
+    await pausa(2500);
+    const fin = await page.evaluate(() => {
+      const b = document.querySelector('#inicio [data-inicio="seguir"]');
+      if (!b || b.closest("[hidden]")) return null;
+      const r = b.getBoundingClientRect();
+      const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height, llega: b.contains(el) };
+    });
+    l = await leerElPasaje(page);
+    const finMal = fin
+      ? [
+          ...(fin.width < YEMA - 0.5 || fin.height < YEMA - 0.5 ? [`el botón de ${Math.round(fin.width)}×${Math.round(fin.height)} px`] : []),
+          ...(entera(l.tarjeta, l.ancho, l.alto) ? [] : ["la tarjeta se sale"]),
+          ...(fin.llega ? [] : ["al botón no le llega el dedo"]),
+          ...loQuePisa(l.tarjeta, l),
+        ]
+      : ["no sale el botón de volver"];
+    comprobar(
+      de("al llegar, el sello, la página del viaje y el botón de volver al hangar, enteros y a mano"),
+      finMal.length === 0,
+      finMal.join(" · ") || `tarjeta de ${Math.round(l.tarjeta.height)} px · botón ${Math.round(fin.width)}×${Math.round(fin.height)} px`,
+    );
+    await foto(page, "de-pie", "6-llegada");
+    comprobar(de("sin errores de consola"), errores.length === 0, errores.slice(0, 3).join(" · "));
+  } catch (e) {
+    comprobar(de("el vuelo"), false, `${String(e).slice(0, 300)} · ${errores.slice(0, 2).join(" · ")}`);
+  } finally {
+    await ctx.close();
+  }
+}
+
+/** Y lo que no cambia: tumbado, el pasaje como estaba; de pie fuera del pasaje, el cartel de girar. */
+async function loQueSigueIgual() {
+  console.log("\n── lo que no cambia: tumbado, y de pie fuera del pasaje");
+  const errores = [];
+  let ctx = await navegador.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, locale: "es-PY" });
+  try {
+    const page = await abrirElPasaje(ctx, `?inicio=3&fecha=${FECHA}`, errores);
+    const l = await hastaQueElPasaje(page, (x) => x.hablando && !!x.tarjeta, 45_000);
+    const columna = await page.evaluate(() => getComputedStyle(document.querySelector(".hud__menu")).display);
+    comprobar(
+      "tumbado: la tarjeta, a media pantalla y arriba, y la barra recogida en los cuatro puntos, como antes",
+      !!l && Math.abs(l.tarjeta.width - l.ancho / 2) < 2 && l.tarjeta.top < 80 && !!l.alrededor.menu && columna === "none" && loQuePisa(l.tarjeta, l).length === 0,
+      l ? `${Math.round(l.tarjeta.width)} px desde y=${Math.round(l.tarjeta.top)} · menú ${columna}` : "nadie habló",
+    );
+    if (l) await foto(page, "tumbado", "pasaje");
+  } catch (e) {
+    comprobar("tumbado", false, String(e).slice(0, 300));
+  } finally {
+    await ctx.close();
+  }
+  ctx = await navegador.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, locale: "es-PY" });
+  try {
+    const page = await abrirElPasaje(ctx, "?inicio=1&hora=12", errores);
+    await pausa(2500);
+    const l = await leerElPasaje(page);
+    comprobar(
+      "de pie fuera del pasaje —Jazlyn enseña a volar—: el cartel de girar tapa el juego, y sin la tarjeta",
+      !!l.gira && l.gira.width >= l.ancho - 1 && l.inicioDisplay === "none",
+      `cartel ${l.gira ? "sí" : "no"} · tarjeta ${l.inicioDisplay}`,
+    );
+    await foto(page, "de-pie", "0-fuera-del-pasaje");
+  } catch (e) {
+    comprobar("de pie fuera del pasaje", false, String(e).slice(0, 300));
+  } finally {
+    await ctx.close();
+  }
+  comprobar("sin errores de consola, tumbado y fuera del pasaje", errores.length === 0, errores.slice(0, 3).join(" · "));
 }
 
 // ── El capítulo entero ───────────────────────────────────────────────────
@@ -629,8 +957,10 @@ async function sinPantalla() {
 
 try {
   if (!SOLO || SOLO === "sin") await sinPantalla();
+  if (!SOLO || SOLO === "de-pie") await elPasajeDePie();
+  if (!SOLO || SOLO === "de-pie") await loQueSigueIgual();
   if (!SOLO || SOLO === "pantallas") for (const p of PANTALLAS) await unaPantalla(p);
-  if (SOLO && !["sin", "pantallas", "capitulo"].includes(SOLO)) await unaPantalla(PANTALLAS.find((p) => p.nombre === SOLO));
+  if (SOLO && !["sin", "de-pie", "pantallas", "capitulo"].includes(SOLO)) await unaPantalla(PANTALLAS.find((p) => p.nombre === SOLO));
   if (!SOLO || SOLO === "capitulo") await elCapitulo();
 } finally {
   await navegador.close();

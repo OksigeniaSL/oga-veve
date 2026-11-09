@@ -457,6 +457,10 @@ nada.
   (`src/ui/telefono.ts`): el cuadro pasa a cuatro losas y los botones de la barra de arriba se recogen en un menú que
   se abre con un botón y sale en rejilla encima del vuelo, con botones más grandes.
 - **De pie, con el dedo, no se vuela**: los mandos se esconden y el juego pide girar el teléfono con un dibujo.
+  **Salvo de pasaje**, que no se pilota: ahí de pie sale todo lo de tumbado, colocado para una pantalla alta
+  («El pasaje, de pie» en `src/style.css`). Arriba la columna de la pausa a la izquierda y los cuatro puntos con el
+  volumen a la derecha; debajo, la tarjeta de quien habla de lado a lado; la lámina, en el tercio de abajo, de todo
+  el ancho que quepa; y la mochila abajo a la derecha. Lo comprueba `OGA_SOLO=de-pie` de `verificar-consola.mjs`.
 - El zoom de la página no se bloquea (sin `user-scalable=no`); el `touch-action: none` de los mandos ya evita el zoom
   por accidente.
 - Antes de publicar un cambio de HUD se mira en tablet, en teléfono apaisado y de pie, con dedo.

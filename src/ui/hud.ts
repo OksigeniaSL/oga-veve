@@ -4006,14 +4006,33 @@ export class Hud {
       );
       this.root.style.setProperty("--columna-ancho", `${ancho}px`);
     };
+    /*
+     * **Y dónde acaba la columna de la pausa**, para la tarjeta de quien habla
+     * del pasaje, que de pie va de lado a lado y empieza debajo de ella —ver
+     * «El pasaje, de pie» en la hoja—. En la raíz del documento y en píxeles
+     * de pantalla, sin `aPxDelHud`: quien la lee vive fuera del HUD y no va
+     * con su `zoom`. Crece al encenderse el cinturón o la luz de llamada, así
+     * que se observa con lo demás.
+     */
+    const vistas = this.root.querySelector<HTMLElement>(".hud__vistas");
+    const escribirVistas = (): void => {
+      const caja = vistas?.getBoundingClientRect();
+      if (caja && caja.height > 0)
+        document.documentElement.style.setProperty(
+          "--vistas-abajo",
+          `${Math.round(caja.bottom)}px`,
+        );
+    };
     escribir();
     escribirColumna();
+    escribirVistas();
     this.barraObservada?.disconnect();
     if (typeof ResizeObserver === "undefined") return;
     const rincon = this.root.querySelector(".rincon");
     this.barraObservada = new ResizeObserver(() => {
       escribir();
       escribirColumna();
+      escribirVistas();
       /*
        * Y lo que ocupa todo lo de arriba, que también cambia: se medía una
        * sola vez al pintar, y los botones que se encienden después —el
@@ -4026,6 +4045,7 @@ export class Hud {
     this.barraObservada.observe(barra);
     if (columna) this.barraObservada.observe(columna);
     if (rincon) this.barraObservada.observe(rincon);
+    if (vistas) this.barraObservada.observe(vistas);
   }
 
   /**

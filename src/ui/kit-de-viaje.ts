@@ -666,7 +666,15 @@ export class PantallaDelKit {
     const proporcion = this.montado instanceof JuegoDeLaCruz && innerHeight > innerWidth ? PROPORCION_DEL_CIELO_DE_PIE : PROPORCION_DE_LA_HOJA;
     const anchoPara = (alto: number): number => (alto - marco) * proporcion + marco;
     const altoDe = (ancho: number): number => (ancho - marco) / proporcion + marco;
-    const deLado = Math.min(780, innerWidth - (r ? 2 * r.lados : 150));
+    /*
+     * Tumbado se apartan las dos columnas de los lados, la de la pausa y la de
+     * la mochila. De pie las dos quedan fuera de su camino —la pausa arriba,
+     * encima de la tarjeta, y la mochila abajo—, y con ellas apartadas el kit
+     * se quedaba en 240 píxeles de un teléfono de 390: de lado a lado, con
+     * sitio para el aspa que asoma por la esquina.
+     */
+    const lados = r ? 2 * r.lados : innerHeight > innerWidth ? 2 * 24 : 150;
+    const deLado = Math.min(780, innerWidth - lados);
     const abajo = r ? r.abajo : 12;
     let ancho = Math.min(deLado, anchoPara(innerHeight - arriba - abajo));
     const volumen = document.querySelector(".volumen");
