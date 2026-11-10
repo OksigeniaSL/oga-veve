@@ -81,6 +81,7 @@ import {
   sitioDelCielo,
 } from "./cielo-de-noche";
 import { factorDeCurvatura } from "./curvatura";
+import { ponerLaNoche } from "./de-noche-sin-color";
 import { cargarEstrellas, crearCieloEstrellado } from "./estrellas";
 import type { Scenario } from "./scenarios";
 
@@ -1856,6 +1857,8 @@ export function createSky(scenario: Scenario): SkyRig {
       deNoche = m.estrellas;
       if (deNoche > 0) pedirEstrellas();
       ponerElBrilloDeNoche();
+      // Y con la noche, el color de la pintura del avión: ver `de-noche-sin-color.ts`.
+      ponerLaNoche(deNoche);
 
       /*
        * **La niebla toma el color del horizonte.**

@@ -66,6 +66,7 @@ import {
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { conPlazo, PLAZO_DE_IMAGEN } from "../datos/con-plazo";
+import { sinColorDeNoche } from "./de-noche-sin-color";
 import { puntasDe } from "./luces-de-posicion";
 
 /** Una librea del tráfico: el blanco y el color que la distingue. */
@@ -311,6 +312,9 @@ function materialesDe(librea: LibreaDelTrafico): {
       fijo: new MeshLambertMaterial({ vertexColors: true, color: librea.casco }),
       pintado: new MeshLambertMaterial({ color: librea.color }),
     };
+    // Y de noche, sin color, como el tuyo: ver `de-noche-sin-color.ts`.
+    sinColorDeNoche(m.fijo);
+    sinColorDeNoche(m.pintado);
     materiales.set(clave, m);
   }
   return m;

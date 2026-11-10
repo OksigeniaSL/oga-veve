@@ -8,14 +8,24 @@
  * terreno más cerca de la cota del aeródromo, que es lo que hace que una
  * meseta parezca una meseta.
  *
- * Uso: `npx tsx scripts/buscar-semilla.mjs tenerife-norte`
+ * Uso: `node scripts/buscar-semilla.mjs tenerife-norte`
+ *
+ * Por Vite y no con `tsx`: el terreno lee sus relieves con `import.meta.glob`,
+ * que solo entiende Vite, y desde el 27 de octubre de 2026 esto no llegaba ni a
+ * empezar. Como `mapa-aerodromo.mjs`.
  */
-import { SCENARIOS } from '../src/world/scenarios.ts';
-import { buildHeightfield } from '../src/world/terrain.ts';
+import { createServer } from 'vite';
+
+const vite = await createServer({ root: process.cwd(), server: { middlewareMode: true }, logLevel: 'warn' });
+const { conSuAerodromo, SCENARIOS } = await vite.ssrLoadModule('/src/world/scenarios.ts');
+const { buildHeightfield } = await vite.ssrLoadModule('/src/world/terrain.ts');
 
 const id = process.argv[2] ?? 'tenerife-norte';
-const base = SCENARIOS.find((s) => s.id === id);
-if (!base) throw new Error(`no hay escenario ${id}`);
+const hallado = SCENARIOS.find((s) => s.id === id);
+if (!hallado) throw new Error(`no hay escenario ${id}`);
+// Con el aeródromo de los que lo traen aparte, como Barajas: sin él, la cota
+// sería cero y la pista, la escrita a mano. Ver `aerodromoAparte`.
+const base = await conSuAerodromo(hallado);
 const cota = base.aerodrome?.elevationM ?? 0;
 
 /**
@@ -108,3 +118,5 @@ for (const c of (conMar.length ? conMar : candidatas).slice(0, 10)) {
       `  · ${c.mar ? "sí" : "no"} (error ${c.error.toFixed(0)} m)`,
   );
 }
+
+await vite.close();

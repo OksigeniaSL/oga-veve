@@ -61,6 +61,7 @@ import { prepararReversas } from "./reversas";
 import { prepararMandos } from "./superficies-de-mando";
 import { recorridoDeMandos } from "../flight/recorrido-de-mandos";
 import { prepararElAla } from "./ala-que-se-dobla";
+import { pinturaSinColorDeNoche } from "./de-noche-sin-color";
 import { prepararPalancaDeAerofrenos } from "./palanca-de-aerofrenos";
 import { encenderRelojes } from "./relojes-cabina";
 import { encenderBotones } from "./botones-cabina";
@@ -808,6 +809,13 @@ export async function cargarModelo(
   if (!raiz) return null;
 
   const group = colocarModelo(raiz, aircraft);
+  /*
+   * **Y que de noche la pintura no tenga color**, como no lo tiene para el ojo.
+   * Aquí y no en `colocarModelo`, que lo usa también la tarjeta del avión, con su
+   * luz de día; y antes del ala que se dobla, que clona los materiales del ala y
+   * tiene que llevárselo. Ver `de-noche-sin-color.ts`.
+   */
+  pinturaSinColorDeNoche(raiz);
   const helices = ejesDeHelice(raiz);
   /*
    * **Y dónde está cada cosa de la vuelta al avión**, con el modelo recién
