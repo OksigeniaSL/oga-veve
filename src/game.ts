@@ -7313,6 +7313,12 @@ export class Game {
         return;
       }
       /*
+       * **Y el cartel del cinturón, con el anuncio que lo apaga**, aunque no sea de los de
+       * siempre: el del primer capítulo del viaje largo lo apaga subiendo, que el de crucero
+       * diría que ya se llegó a la altura. Como `comandante.crucero` en `decirElAnuncioDeLaEscena`.
+       */
+      if (linea.clave === "comandante.largo.cinturon") this.dijoSoltarse = true;
+      /*
        * Ara, con su voz y a su lado; la tripulación, por el altavoz del techo;
        * y Jazlyn, al lado en las dos primeras escenas y por la megafonía, desde
        * la cabina de mando, en la de pasaje.
@@ -7395,11 +7401,7 @@ export class Game {
     alAcabar: (esperaMas: number, cortada?: boolean) => void,
   ): void {
     const anuncio = linea.clave as Anuncio;
-    /*
-     * El cartel se apaga con el anuncio que lo dice: el de siempre, que es de crucero, o el
-     * del primer capítulo del viaje largo, que lo apaga subiendo. Ver `SE_APAGA_EL_CINTURON`.
-     */
-    if (anuncio === "comandante.crucero" || linea.clave === "comandante.largo.cinturon") this.dijoSoltarse = true;
+    if (anuncio === "comandante.crucero") this.dijoSoltarse = true;
     if (anuncio === "comandante.descenso") this.pidioAbrocharse = true;
     // En el vuelo largo, la comandante avisa antes de bajar: el cartel se enciende con la bajada.
     if (anuncio === "tripulacion.cinturones" && this.vueloLargo) this.pidioAbrocharse = true;
