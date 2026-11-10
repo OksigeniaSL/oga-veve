@@ -127,6 +127,10 @@
       "ms": 6607,
       "h": "9ba093e41f"
     },
+    "inicio.tripulacion.pasaje.cerca.largo.lucesVerdes": {
+      "ms": 6407,
+      "h": "28ef7a6983"
+    },
     "inicio.tripulacion.pasaje.cerca.largo.mapa": {
       "ms": 8407,
       "h": "4e635fdbe2"
@@ -146,6 +150,14 @@
     "inicio.tripulacion.pasaje.cerca.largo.oidos": {
       "ms": 6307,
       "h": "4a06f5e7f8"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.vientoBarco": {
+      "ms": 8907,
+      "h": "7eacc03902"
+    },
+    "inicio.tripulacion.pasaje.cerca.largo.vientoRios": {
+      "ms": 5107,
+      "h": "28b987d10b"
     },
     "inicio.tripulacion.pasaje.cerca.maleteros": {
       "ms": 7007,
@@ -286,6 +298,10 @@
     "inicio.tripulacion.pasaje.demo.salidas": {
       "ms": 15207,
       "h": "ed8a45729c"
+    },
+    "inicio.tripulacion.pasaje.demo.salidasLargo": {
+      "ms": 12807,
+      "h": "44c5582c3a"
     },
     "inicio.tripulacion.pasaje.demo.tarjeta": {
       "ms": 9707,
@@ -684,6 +700,18 @@
     ],
     "inicio.tripulacion.pasaje.cerca.largo.nubesCinturon": [
       "inicio.tripulacion.pasaje.cerca.largo.nubesCinturon"
+    ],
+    "inicio.tripulacion.pasaje.demo.salidasLargo": [
+      "inicio.tripulacion.pasaje.demo.salidasLargo"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.lucesVerdes": [
+      "inicio.tripulacion.pasaje.cerca.largo.lucesVerdes"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.vientoRios": [
+      "inicio.tripulacion.pasaje.cerca.largo.vientoRios"
+    ],
+    "inicio.tripulacion.pasaje.cerca.largo.vientoBarco": [
+      "inicio.tripulacion.pasaje.cerca.largo.vientoBarco"
     ]
   }
 }

@@ -19890,5 +19890,180 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "inicio.ara.pasaje.largo.embarque",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Qué grande es este avión, tiene dos pasillos! Y ahí está Idaira, la de mi otro viaje, ayudando a un señor con su valija.",
+    "para": "la noche de Madrid: embarcando, Ara ve los dos pasillos y a Idaira, la de su otro viaje, ayudando a un señor",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.largo.nocheDeMadrid",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Afuera ya es de noche! Y este avión nos lleva a casa, a Asunción.",
+    "para": "la noche de Madrid: se abre la ventanilla en el puesto, de noche, camino de casa",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.largo.bienvenida",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas noches, les habla la comandante Jazlyn. Ya cerramos las puertas: bienvenidos a bordo de este vuelo a Asunción.",
+    "para": "la noche de Madrid: puertas cerradas, la bienvenida de la comandante",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.largo.vueloVerano",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar once horas y cuarto, a unos once mil metros de altura y con algo de viento de cara. Llegamos a Asunción a las seis y veinticinco de la mañana, hora de allá.",
+    "para": "la noche de Madrid: once horas y cuarto de vuelo, once mil metros, algo de viento de cara y llegada a las 06:25, en verano de Europa; con la lámina del viento de arriba",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.largo.vueloInvierno",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Vamos a volar once horas y cuarto, a unos once mil metros de altura y con algo de viento de cara. Llegamos a Asunción a las siete y media de la mañana, hora de allá.",
+    "para": "la noche de Madrid: once horas y cuarto de vuelo, once mil metros, algo de viento de cara y llegada a las 07:30, en invierno de Europa; con la lámina del viento de arriba",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "comandante.largo.tresPilotos",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Como el vuelo es largo, hoy vamos tres pilotos, y nos turnamos para descansar en unas camas que hay encima de la cabina de mando. Aunque descanse, sigo siendo la responsable del vuelo: si hace falta, me despiertan. Que tengan un buen vuelo.",
+    "para": "la noche de Madrid: hoy van tres pilotos y se turnan en las camas de encima de la cabina; descansando, sigue siendo la responsable; con la lámina de la litera",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.demo.salidasLargo",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Este avión tiene ocho salidas de emergencia, cuatro a cada lado. Busquen la más cercana, que puede estar detrás de ustedes. Unas luces en el suelo de los pasillos marcan el camino hasta ellas.",
+    "para": "la noche de Madrid: las ocho salidas del JAZ 110, cuatro por lado, y las luces del suelo de los dos pasillos",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.largo.lucesVerdes",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Mirá, en el suelo hay una fila de lucecitas verdes!",
+    "para": "la noche de Madrid: rodando, Ara ve la fila verde del eje de las calles",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.lucesVerdes",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Marcan el medio de la calle por donde rueda el avión: de noche, los pilotos van siguiendo esa fila verde.",
+    "para": "la noche de Madrid: Idaira, la fila verde marca el medio de la calle, y de noche la siguen los pilotos"
+  },
+  {
+    "id": "comandante.largo.cinturon",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, seguimos subiendo, pero ya apagamos la luz del cinturón. Mientras estén sentados, manténganlo abrochado, por favor.",
+    "para": "la noche de Madrid: subiendo, la comandante apaga la luz del cinturón; sentados, abrochado",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.largo.madrid",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Mirá cuántas luces allá abajo! Es Madrid, de mi lado.",
+    "para": "la noche de Madrid: Ara ve Madrid encendida por su cristal, si se ve",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.ara.pasaje.largo.vientoPregunta",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "Idaira, mamá dijo que tenemos viento de cara. ¿Acá arriba también hay viento?",
+    "para": "la noche de Madrid: con la luz del cinturón apagada, Ara le pregunta a Idaira por el viento de cara",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.vientoRios",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Sí, y mucho. Un poco más arriba, donde vamos a volar, corren ríos de viento rapidísimo.",
+    "para": "la noche de Madrid: Idaira, de pie y en persona, un poco más arriba corren ríos de viento rapidísimo"
+  },
+  {
+    "id": "inicio.tripulacion.pasaje.cerca.largo.vientoBarco",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "El avión va en ellos como un barco en un río: a favor llegas antes, y en contra tardas más. Por eso el viaje de vuelta a Madrid dura unos tres cuartos de hora menos.",
+    "para": "la noche de Madrid: Idaira, como un barco en un río; por eso la vuelta dura unos tres cuartos de hora menos"
   }
 ]
