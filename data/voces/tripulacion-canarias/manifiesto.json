@@ -203,6 +203,10 @@
       "ms": 6107,
       "h": "8e67d8f3a6"
     },
+    "inicio.tripulacion.pasaje.cerca.pasador": {
+      "ms": 11307,
+      "h": "081636d0cd"
+    },
     "inicio.tripulacion.pasaje.cerca.persiana": {
       "ms": 7007,
       "h": "bd8a7cba9c"
@@ -242,6 +246,10 @@
     "inicio.tripulacion.pasaje.cerca.techoHoy": {
       "ms": 8107,
       "h": "8928bb78dd"
+    },
+    "inicio.tripulacion.pasaje.cerca.tractor": {
+      "ms": 15707,
+      "h": "bd0068627a"
     },
     "inicio.tripulacion.pasaje.cerca.visibilidad": {
       "ms": 8907,
@@ -712,6 +720,12 @@
     ],
     "inicio.tripulacion.pasaje.cerca.largo.vientoBarco": [
       "inicio.tripulacion.pasaje.cerca.largo.vientoBarco"
+    ],
+    "inicio.tripulacion.pasaje.cerca.tractor": [
+      "inicio.tripulacion.pasaje.cerca.tractor"
+    ],
+    "inicio.tripulacion.pasaje.cerca.pasador": [
+      "inicio.tripulacion.pasaje.cerca.pasador"
     ]
   }
 }
