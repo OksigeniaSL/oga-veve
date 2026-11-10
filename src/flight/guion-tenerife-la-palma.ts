@@ -10,6 +10,8 @@ import type { DibujoDelPasaje } from "../ui/dibujos-del-pasaje";
 import type { IlustracionDelPasaje } from "../ui/ilustraciones";
 import { APAGA_LA_LUZ } from "./cinturon";
 import type { Linea } from "./conversacion";
+import { charlasDelRemolque } from "./charlas-del-remolque";
+import { motoresYaEnMarcha } from "./vuelo-de-linea";
 import { conGracia, FORMAS_CON_GRACIA, GRACIA, type FormaDeLaDemostracion } from "./demostracion-con-gracia";
 import { LINEAS_DEL_KIT } from "./kit-de-viaje";
 import { LINEAS_DE_LA_LUZ } from "./luz-verde";
@@ -116,6 +118,9 @@ export type MomentoDelPasaje =
 /** Lo que se cuenta cuando viene a cuento. Ver `CHARLAS_DEL_PASAJE`. */
 export type CharlaDelPasaje =
   | "tren"
+  // Las dos del remolque, si se sale empujado: ver `charlasDelRemolque`.
+  | "marchaAtras"
+  | "saludo"
   | "plop"
   | "giro"
   | "marArriba"
@@ -625,7 +630,8 @@ export const GUION_DEL_PASAJE: readonly DefMomento<MomentoDelPasaje, MomentoDelP
   },
   {
     id: "motores",
-    cuando: (l) => l.motor && l.tramo === "arrancando" && l.enTramo >= MOTORES_EN_MARCHA,
+    // Con el remolque se arrancan empujando: se dicen en cuanto se oyen, no al acabar de empujar.
+    cuando: (l) => l.motor && motoresYaEnMarcha(l, MOTORES_EN_MARCHA),
     lineas: [ara("motores")],
     mira: "motor",
     plano: "asomado-motor",
@@ -1126,6 +1132,8 @@ export const GUION_DEL_PASAJE: readonly DefMomento<MomentoDelPasaje, MomentoDelP
  * quede callado**. Ver `inicio-pasaje.test.ts`.
  */
 export const CHARLAS_DEL_PASAJE: readonly DefCharla<MomentoDelPasaje, CharlaDelPasaje>[] = [
+  // El remolque del puesto de Los Rodeos: hacia atrás, y el saludo de la persona de tierra.
+  ...charlasDelRemolque<MomentoDelPasaje, CharlaDelPasaje>({ marchaAtras: "marchaAtras", saludo: "saludo" }),
   {
     // El tren se guarda en cuanto se despega, con un golpe que se oye en el pasaje.
     id: "tren",

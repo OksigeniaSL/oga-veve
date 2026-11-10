@@ -1063,6 +1063,16 @@ import {
 import { comoDibujo, type DibujoDeSenal } from "./ui/senal";
 import { dibujoDeCierre } from "./ui/cierre-de-ejercicio";
 import { Senalero } from "./world/senalero";
+import {
+  largoPorLaBatalla,
+  paredMasCercana,
+  Remolque,
+  rumboEnElPuesto,
+  saleConRemolque,
+  trayectoriaDelEmpuje,
+  vector,
+} from "./world/remolque";
+import { DibujoDelRemolque } from "./world/tractor-de-remolque";
 import type { Gesto } from "./flight/senalero";
 import {
   Sigueme,
@@ -2320,6 +2330,72 @@ interface PiezasDeAra {
   readonly mallas: Object3D[];
   readonly motor: Vector3 | null;
   readonly ala: readonly Vector3[];
+}
+
+/** **Lo medido del remolque**, para el banco. Ver `Game.medirElRemolque`. */
+interface MedidaDelRemolque {
+  /** El peor coseno entre lo que se mueve el avión empujando y su morro: −1 es de culo del todo. */
+  peorAdelante: number;
+  empujado: number;
+  /** Cómo es el empuje: lo que gira, grados, el radio y lo que mide, m. */
+  giro: number;
+  radio: number;
+  largo: number;
+  /**
+   * **Lo que hay del avión a la pared a la que miraba en el puesto**, m, al empezar y al
+   * acabar de empujar: la de enfrente, no la más cercana de ahora, que al girar puede ser
+   * otro edificio. Y ese punto de la pared, en el mundo.
+   */
+  paredAlEmpezar: number;
+  paredAlAcabar: number | null;
+  paredDelPuesto: { readonly x: number; readonly z: number };
+  /** El rumbo al acabar, grados, y lo que gira rodando los primeros treinta metros. */
+  rumboAlAcabar: number | null;
+  giroRodando30: number | null;
+  /** Lo más cerca que pasan: el tractor suelto y la persona del fuselaje, y el uno del otro, m. */
+  tractorAlFuselaje: number;
+  personaAlFuselaje: number;
+  tractorALaPersona: number;
+  /** Fotogramas con alguno de los dos dentro de un edificio. */
+  dentroDeUnEdificio: number;
+  /** Al quedar libre, lo que quedan fuera del ala por donde va a rodar, m. */
+  tractorFuera: number | null;
+  personaFuera: number | null;
+  fases: { fase: string; reloj: number }[];
+  /** Si los motores se arrancaron empujando, y si estaban en marcha al acabar. */
+  motorEmpujando: boolean;
+  motorAlAcabar: boolean | null;
+  /** Si al echar a andar el tractor ya estaba la baliza encendida, con los motores todavía parados. */
+  balizaAlEmpujar: boolean | null;
+}
+
+/** Lo que se aparta `p` del segmento `a`–`b`, m. */
+function aLaRecta(p: { x: number; z: number }, a: { x: number; z: number }, b: { x: number; z: number }): number {
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const l2 = dx * dx + dz * dz || 1;
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2));
+  return Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z);
+}
+
+/** Si un punto del mundo cae dentro de algún edificio del aeródromo, cuyos polígonos llevan la `y` al norte. */
+function dentroDeAlgunEdificio(
+  x: number,
+  z: number,
+  edificios: readonly { readonly polygon: readonly (readonly [number, number])[] }[],
+): boolean {
+  const y = -z;
+  for (const e of edificios) {
+    const pol = e.polygon;
+    let dentro = false;
+    for (let i = 0, j = pol.length - 1; i < pol.length; j = i++) {
+      const [xi, yi] = pol[i]!;
+      const [xj, yj] = pol[j]!;
+      if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi || 1e-9) + xi) dentro = !dentro;
+    }
+    if (dentro) return true;
+  }
+  return false;
 }
 
 export class Game {
@@ -5397,6 +5473,19 @@ export class Game {
    * llevando el avión del puesto al puesto. Ver `flight/vuelo-de-linea.ts`.
    */
   private tripulacionDeLinea: VueloDeLinea | null = null;
+  /**
+   * **El remolque del puesto**, si el vuelo de pasaje sale empujado de uno de contacto:
+   * lo que dice dónde va el avión mientras lo empujan, y su dibujo. Se mira en el primer
+   * paso de la escena, con el avión ya en su puesto y la raya pintada. Ver
+   * `prepararElRemolque` y `world/remolque.ts`.
+   */
+  private remolque: Remolque | null = null;
+  private dibujoDelRemolque: DibujoDelRemolque | null = null;
+  private remolquePorMirar = false;
+  /** La baliza encendida antes de arrancar, que la pide la tripulación para empujar. */
+  private balizaDelRemolque = false;
+  /** Lo medido del remolque, fotograma a fotograma: para el banco. Ver `medirElRemolque`. */
+  private medidaDelRemolque: MedidaDelRemolque | null = null;
   /** Lo último que leyó y lo último que hizo, para el banco. */
   private lecturaDeLinea: LecturaDeLinea | null = null;
   private manosDeLinea: ManosDeLinea | null = null;
@@ -7258,6 +7347,9 @@ export class Game {
       if (dePrueba.nivel !== null) this.inicio.kit.seguirArmandoDesde(dePrueba.nivel);
       this.inicio.kit.dar();
     }
+    // Y el remolque, que se mira en el primer paso: con el avión ya en su puesto. Ver `prepararElRemolque`.
+    this.quitarElRemolque();
+    this.remolquePorMirar = true;
     this.tripulacionDeLinea = new VueloDeLinea({
       vr: this.aircraft.rotationSpeed,
       vref: this.aircraft.approachSpeed,
@@ -7477,6 +7569,7 @@ export class Game {
   private atenderALaEscenaDePasaje(escena: MotorDelPasaje, dt: number): void {
     const tripulacion = this.tripulacionDeLinea;
     if (!tripulacion) return;
+    if (this.remolquePorMirar && tripulacion.estado.tramo === "puerta") this.prepararElRemolque();
     this.inicioCongelado = false;
     this.hud.tutor.silenciar(true);
     const s = this.flight.state;
@@ -7492,6 +7585,7 @@ export class Game {
     const lectura: LecturaDelPasaje = {
       tramo: e.tramo,
       enTramo: e.enTramo,
+      ...(this.remolque ? { remolque: this.remolque.fase } : {}),
       motor: c.engineOn,
       enTierra: s.onGround,
       porElSuelo: s.groundSpeed,
@@ -7581,6 +7675,9 @@ export class Game {
     this.lecturaDeLinea = linea;
     this.manosDeLinea = manos;
     this.ponerLasManosDeLinea(manos);
+    // La baliza antes de arrancar, y el tractor, que empuja cuando la cabina lo dice. Ver `empujarElAvion`.
+    this.balizaDelRemolque = !!manos.baliza;
+    if (manos.empujar) this.remolque?.empezar();
     this.apuntarLaRecogida(dt, linea, tripulacion);
     /*
      * **Al final, el sello del campo de llegada, de visita**: Ara no ha
@@ -7710,6 +7807,7 @@ export class Game {
       fase: this.faseDeAhora as Fase,
       autorizado: this.plan?.autorizado ?? false,
       raya: s.onGround ? this.rayaParaLaTripulacion() : [],
+      remolque: this.remolque ? { acabado: this.remolque.acabado, libre: this.remolque.libre } : null,
       pista: {
         rumbo: (pista.heading * Math.PI) / 180,
         lado: ejes.across,
@@ -8358,6 +8456,10 @@ export class Game {
     };
     /** De pasaje: lo que hace la tripulación, lo que lee y lo que tiene en las manos. */
     readonly tripulacion: VueloDeLinea["estado"] | null;
+    /** Y el remolque del puesto, si se sale empujado, con lo medido. Ver `medirElRemolque`. */
+    readonly remolque: ReturnType<Game["remolqueParaBanco"]>;
+    /** Y el edificio de delante, en el suelo: si se llegó de frente a un puesto de contacto. */
+    readonly alEdificio: ReturnType<Game["alEdificioParaBanco"]>;
     readonly lecturaDeLinea: LecturaDeLinea | null;
     readonly manos: ManosDeLinea | null;
     /** Y la vista, el subtítulo de ahora y si la cabina de pasaje se oye desde el asiento. */
@@ -8452,6 +8554,8 @@ export class Game {
         deViaje: this.cuaderno.deViaje,
       },
       tripulacion: this.tripulacionDeLinea?.estado ?? null,
+      remolque: this.remolqueParaBanco(),
+      alEdificio: this.alEdificioParaBanco(),
       lecturaDeLinea: this.lecturaDeLinea,
       manos: this.manosDeLinea,
       vista: this.vistaQueHay(),
@@ -12732,6 +12836,9 @@ export class Game {
     this.mudarElPlanA(campo);
     const rodando =
       this.plan?.reiniciar(this.leccion.arranque === "pista") ?? false;
+    // Y el remolque, a mirar otra vez con el avión recolocado en su puesto. Ver `prepararElRemolque`.
+    this.quitarElRemolque();
+    this.remolquePorMirar = this.dePasaje;
     this.colocarSenalero();
     const start = this.startPosition(campo);
     const heading = rodando
@@ -14598,6 +14705,8 @@ export class Game {
     this.plan.diaDeDespegue = () => this.diaDeDespegue();
     // Y su puesto, si es el de casa: el plan se rehace al asentar el aeródromo, antes de colocar el avión.
     if (aero === this.scenario.aerodrome) this.plan.puestoPedido = this.puestoDeEsteVuelo;
+    // Y con pasaje, de una pasarela a otra: se sale empujado y se llega de frente. Ver `PlanDeVuelo.deContacto`.
+    this.plan.deContacto = this.dePasaje;
     // Y el dibujo con él, en todas las lecciones. Ver dónde se monta.
     this.scene.add(this.plan.grupo);
     this.colocarSenalero();
@@ -17714,6 +17823,8 @@ export class Game {
       const reversa = this.reversa.paso(dt, mandos.reversa);
       if (reversa !== mandos.reversa) mandos = { ...mandos, reversa };
       this.flight.step(dt, mandos);
+      // Y si lo está empujando el tractor, va donde lo lleva él. Ver `empujarElAvion`.
+      this.empujarElAvion(dt);
       /*
        * Y lo que le ha llegado, para las superficies. **El compensador mueve
        * la profundidad en los de hélice** —es una aleta en su borde de
@@ -19344,15 +19455,17 @@ export class Game {
        */
       this.pruebaDeLuces > 0
         ? { navegacion: true, baliza: true, estroboscopicas: true, rodaje: true, aterrizaje: true }
-        : lucesDelTrafico(
-            faseDelTuyo({
-              motor: this.input.controls.engineOn,
-              enElSuelo: s.onGround,
-              enLaPista: s.onRunway,
-              velocidad: Math.hypot(s.velocity.x, s.velocity.z),
-            }),
-            s.position.y,
-            this.input.controls.tren > 0.5,
+        : this.conLaBalizaDelRemolque(
+            lucesDelTrafico(
+              faseDelTuyo({
+                motor: this.input.controls.engineOn,
+                enElSuelo: s.onGround,
+                enLaPista: s.onRunway,
+                velocidad: Math.hypot(s.velocity.x, s.velocity.z),
+              }),
+              s.position.y,
+              this.input.controls.tren > 0.5,
+            ),
           ),
     );
     // La luz de dentro sigue al sol: de día la que rebota, de noche la roja
@@ -19819,6 +19932,8 @@ export class Game {
     // rodando por su cuenta es peor que no tener coche.
     this.senalero.reiniciar();
     this.sigueme.reiniciar();
+    // Del puesto de contacto saca el avión el tractor, y al lado va la persona de tierra: ver `prepararElRemolque`.
+    if (this.remolque) return;
     const puesto = this.plan?.arranque();
     if (!puesto) return;
     // Sobre el asfalto, no sobre el terreno de debajo. Ver `resalteEn`.
@@ -20079,6 +20194,221 @@ export class Game {
    * enseñar que el combustible no importa, que es lo contrario de por qué está
    * aquí.
    */
+  /**
+   * **Si el vuelo de pasaje sale empujado**, se prepara el remolque: en el primer paso de
+   * la escena, con el avión parado en su puesto y la raya ya pintada. Si el puesto es de
+   * contacto y el avión de línea, se le pone con el morro al edificio —como se aparca en
+   * una pasarela—, se traza el empuje hasta la calle y se ponen el tractor y la persona
+   * de tierra. Si no, sale de frente como siempre. Ver `world/remolque.ts`.
+   */
+  private prepararElRemolque(): void {
+    this.remolquePorMirar = false;
+    const s = this.flight.state;
+    const puesto = this.plan?.arranque();
+    const aero = this.plan?.aerodromoActual;
+    if (!puesto || !aero || !s.onGround) return;
+    if (Math.hypot(s.position.x - puesto[0], s.position.z - puesto[1]) > 5) return;
+    const edificios = aero.buildings ?? [];
+    const largo = largoPorLaBatalla(this.aircraft.batalla);
+    if (!saleConRemolque(esDeLinea(this.aircraft), puesto[0], puesto[1], edificios, largo)) return;
+    const raya = this.rayaParaLaTripulacion();
+    const rumbo = rumboEnElPuesto(puesto[0], puesto[1], edificios, raya);
+    if (rumbo === null) return;
+    const empuje = trayectoriaDelEmpuje({ x: puesto[0], z: puesto[1], rumbo }, raya, this.aircraft.batalla);
+    if (!empuje) return;
+    this.posicionDelEmpuje.copy(s.position);
+    this.flight.reset({ position: this.posicionDelEmpuje, heading: rumbo, airspeed: 0 });
+    this.remolque = new Remolque(empuje, { batalla: this.aircraft.batalla, envergadura: this.aircraft.wingSpan });
+    this.dibujoDelRemolque = new DibujoDelRemolque(this.remolque.medidasDelTractor);
+    this.scene.add(this.dibujoDelRemolque.grupo);
+    this.dibujoDelRemolque.poner(this.remolque, (x, z) => this.terrain.sampleSurface(x, z), 0);
+    // El señalero de la salida, fuera: del puesto saca el avión el tractor.
+    this.senalero.reiniciar();
+    const pared = paredMasCercana(puesto[0], puesto[1], edificios);
+    const haciaLaPared = vector(pared?.rumbo ?? rumbo);
+    this.medidaDelRemolque = {
+      peorAdelante: -1,
+      empujado: 0,
+      giro: (empuje.giro * 180) / Math.PI,
+      radio: empuje.radio,
+      largo: empuje.largo,
+      paredAlEmpezar: pared?.distancia ?? 0,
+      paredAlAcabar: null,
+      paredDelPuesto: {
+        x: puesto[0] + haciaLaPared.x * (pared?.distancia ?? 0),
+        z: puesto[1] + haciaLaPared.z * (pared?.distancia ?? 0),
+      },
+      rumboAlAcabar: null,
+      giroRodando30: null,
+      tractorAlFuselaje: Infinity,
+      personaAlFuselaje: Infinity,
+      tractorALaPersona: Infinity,
+      dentroDeUnEdificio: 0,
+      tractorFuera: null,
+      personaFuera: null,
+      fases: [{ fase: "enganchado", reloj: this.relojDePared }],
+      motorEmpujando: false,
+      motorAlAcabar: null,
+      balizaAlEmpujar: null,
+    };
+  }
+
+  private readonly posicionDelEmpuje = new Vector3();
+
+  /** **El remolque fuera**, con su dibujo: vuelo nuevo, o escena nueva. */
+  private quitarElRemolque(): void {
+    this.dibujoDelRemolque?.quitar();
+    this.dibujoDelRemolque = null;
+    this.remolque = null;
+    this.balizaDelRemolque = false;
+    this.remolquePorMirar = false;
+  }
+
+  /**
+   * **Un paso del remolque**: mientras empuja, el avión va donde lo lleva el tractor, por la
+   * trayectoria del empuje y a su paso —no por sus motores ni sus frenos, que no son los que
+   * lo mueven—; y el tractor y la persona, a su sitio. Va justo detrás del modelo de vuelo,
+   * que es quien movería el avión si no.
+   */
+  private empujarElAvion(dt: number): void {
+    const r = this.remolque;
+    if (!r) return;
+    const antes = r.fase;
+    r.paso(dt);
+    if (antes === "empujando") {
+      const p = r.avion;
+      this.posicionDelEmpuje.set(p.x, this.terrain.sampleSurface(p.x, p.z) + this.aircraft.gearHeight, p.z);
+      this.flight.reset({ position: this.posicionDelEmpuje, heading: p.rumbo, airspeed: 0 });
+    }
+    // La persona de tierra saluda a la altura de la ventanilla de Ara: ver `Remolque.saludaA`.
+    if (r.saludaA === null && antes === "empujando") r.saludaA = this.ventanillaDeAraPorDelante();
+    this.medirElRemolque(antes);
+    const d = this.dibujoDelRemolque;
+    if (d) {
+      // Ya volando, el tractor y la persona se quedan en su plataforma, y no hace falta pintarlos.
+      d.grupo.visible = this.flight.state.onGround;
+      if (d.grupo.visible) d.poner(r, (x, z) => this.terrain.sampleSurface(x, z), dt);
+    }
+  }
+
+  /**
+   * **Lo que va la ventanilla de Ara por delante del centro del avión**, m: la del lado
+   * en que se sienta, medida con el modelo de ahora. `null` si el avión no la tiene.
+   */
+  private ventanillaDeAraPorDelante(): number | null {
+    const ara = this.aircraftMesh.pasaje?.deAra[LADO_DE_ARA];
+    if (!ara) return null;
+    const g = this.aircraftMesh.group;
+    g.updateMatrixWorld();
+    const c = ara.ventanilla.centro;
+    const v = new Vector3(c.x, c.y, c.z).applyMatrix4(g.matrixWorld);
+    const s = this.flight.state;
+    const n = vector(s.heading);
+    return (v.x - s.position.x) * n.x + (v.z - s.position.z) * n.z;
+  }
+
+  /** La baliza encendida antes de arrancar, si la pide la tripulación para empujar. */
+  private conLaBalizaDelRemolque<T extends { readonly baliza: boolean }>(luces: T): T {
+    return this.balizaDelRemolque && !luces.baliza ? { ...luces, baliza: true } : luces;
+  }
+
+  /**
+   * **Lo medido del remolque**, fotograma a fotograma, para el banco: que va hacia atrás,
+   * cómo acaba, que el tractor y la persona no atraviesan el avión, ni a nadie, ni un
+   * edificio, y que al acabar quedan fuera de por donde va a rodar.
+   */
+  private medirElRemolque(antes: string): void {
+    const r = this.remolque;
+    const m = this.medidaDelRemolque;
+    if (!r || !m) return;
+    const s = this.flight.state;
+    if (r.fase !== m.fases[m.fases.length - 1]?.fase) m.fases.push({ fase: r.fase, reloj: this.relojDePared });
+    const a = r.avion;
+    const n = vector(a.rumbo);
+    if (r.fase === "empujando" && m.balizaAlEmpujar === null)
+      m.balizaAlEmpujar = this.balizaDelRemolque && !this.input.controls.engineOn;
+    if (antes === "empujando") {
+      const ant = this.antesDelPaso;
+      const dx = s.position.x - ant.x;
+      const dz = s.position.z - ant.z;
+      const d = Math.hypot(dx, dz);
+      // Lo que se mueve en este paso, contra el morro: con el avión ya en marcha.
+      if (d > 0.01) m.peorAdelante = Math.max(m.peorAdelante, (dx * n.x + dz * n.z) / d);
+      m.empujado = r.empujado;
+      if (this.input.controls.engineOn) m.motorEmpujando = true;
+    }
+    const edificios = this.plan?.aerodromoActual.buildings ?? [];
+    if (r.acabado && m.paredAlAcabar === null) {
+      m.paredAlAcabar = Math.hypot(a.x - m.paredDelPuesto.x, a.z - m.paredDelPuesto.z);
+      m.rumboAlAcabar = (a.rumbo * 180) / Math.PI;
+      m.motorAlAcabar = this.input.controls.engineOn;
+    }
+    /*
+     * El fuselaje, de la rueda de morro a la cola. El tractor, suelto, se mide desde dos metros
+     * por detrás de la rueda: delante de ella está su sitio, debajo del morro, y de ahí sale.
+     */
+    const largo = largoPorLaBatalla(this.aircraft.batalla);
+    const rueda = r.ruedaDeMorro;
+    const cola = { x: a.x - n.x * largo * 0.55, z: a.z - n.z * largo * 0.55 };
+    const trasLaRueda = { x: rueda.x - n.x * 2, z: rueda.z - n.z * 2 };
+    const t = r.tractor;
+    const p = r.persona;
+    if (!r.enganchado)
+      m.tractorAlFuselaje = Math.min(m.tractorAlFuselaje, aLaRecta(t, trasLaRueda, cola) - r.medidasDelTractor.ancho / 2);
+    m.personaAlFuselaje = Math.min(m.personaAlFuselaje, aLaRecta(p, rueda, cola));
+    m.tractorALaPersona = Math.min(m.tractorALaPersona, Math.hypot(t.x - p.x, t.z - p.z) - r.medidasDelTractor.ancho / 2);
+    if (dentroDeAlgunEdificio(t.x, t.z, edificios) || dentroDeAlgunEdificio(p.x, p.z, edificios)) m.dentroDeUnEdificio++;
+    if (r.libre && m.tractorFuera === null) {
+      const lado = (q: { x: number; z: number }): number => Math.abs((q.x - a.x) * -n.z + (q.z - a.z) * n.x);
+      m.tractorFuera = lado(t) - r.medidasDelTractor.ancho / 2 - this.aircraft.wingSpan / 2;
+      m.personaFuera = lado(p) - this.aircraft.wingSpan / 2;
+    }
+    if (r.libre && m.giroRodando30 === null && m.rumboAlAcabar !== null && Math.hypot(s.position.x - a.x, s.position.z - a.z) >= 30) {
+      let g = ((s.heading * 180) / Math.PI - m.rumboAlAcabar) % 360;
+      if (g > 180) g -= 360;
+      if (g < -180) g += 360;
+      m.giroRodando30 = g;
+    }
+  }
+
+  /**
+   * **El edificio más cercano, visto desde el avión**, para el banco: lo que queda del morro a
+   * su pared, m, y lo que se aparta el morro de mirarla de frente, grados. Lo que dice si se
+   * llegó a un puesto de contacto con el morro al edificio. En el aire, nada.
+   */
+  private alEdificioParaBanco(): { readonly delMorro: number; readonly desviado: number } | null {
+    const s = this.flight.state;
+    if (!s.onGround) return null;
+    const pared = paredMasCercana(s.position.x, s.position.z, this.plan?.aerodromoActual.buildings ?? []);
+    if (!pared) return null;
+    let desviado = ((pared.rumbo - s.heading) * 180) / Math.PI;
+    desviado = ((((desviado + 180) % 360) + 360) % 360) - 180;
+    return { delMorro: pared.distancia - largoPorLaBatalla(this.aircraft.batalla) / 2, desviado };
+  }
+
+  /** **El remolque, para el banco**: la fase, lo medido y dónde está cada uno. */
+  private remolqueParaBanco(): {
+    readonly fase: string;
+    readonly gesto: string;
+    readonly avion: { readonly x: number; readonly z: number; readonly rumbo: number };
+    readonly tractor: { readonly x: number; readonly z: number; readonly rumbo: number };
+    readonly persona: { readonly x: number; readonly z: number; readonly rumbo: number };
+    readonly baliza: boolean;
+    readonly medida: MedidaDelRemolque | null;
+  } | null {
+    const r = this.remolque;
+    if (!r) return null;
+    return {
+      fase: r.fase,
+      gesto: r.gesto,
+      avion: { ...r.avion },
+      tractor: { ...r.tractor },
+      persona: { ...r.persona },
+      baliza: this.balizaDelRemolque,
+      medida: this.medidaDelRemolque && { ...this.medidaDelRemolque, fases: [...this.medidaDelRemolque.fases] },
+    };
+  }
+
   private quemarCombustible(dt: number): void {
     // Antes que nada, dónde empieza el tramo: el desvío de la reserva se
     // calcula contra él. Ver `mirarSiSeLlego`.

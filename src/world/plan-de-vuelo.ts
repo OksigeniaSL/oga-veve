@@ -61,6 +61,7 @@ import { radioDeGiro } from "../flight/cabe";
 import { DE_LADO_RODANDO } from "../flight/fdm";
 import { ESPERA_MAXIMA } from "../flight/radio";
 import { PuertaAsignada } from "./puerta-asignada";
+import { esPuestoDeContacto, largoPorLaBatalla } from "./remolque";
 import {
   construirGrafo,
   rectaPorPavimento,
@@ -1817,6 +1818,7 @@ export class PlanDeVuelo {
     this.bocasPermitidasGuardadas = null;
     this.candidatosGuardados = null;
     this.deLineaGuardados = null;
+    this.deContactoGuardados = null;
     this.puestoElegido = null;
     this.puerta.olvidar();
     this.destino = null;
@@ -2053,7 +2055,7 @@ export class PlanDeVuelo {
      * de ese grupo se sigue eligiendo el más cercano a la cabecera, que es lo
      * que evita quince minutos de rodaje.
      */
-    const donde = this.puestosCandidatos();
+    const donde = this.puestosDeSalidaPosibles();
     /*
      * **Y de ese grupo, el que menos rodaje tiene por delante — rodando.**
      *
@@ -2205,21 +2207,64 @@ export class PlanDeVuelo {
    */
   private puestosParaLlegar(): { ref: string | null; xy: Punto }[] {
     if (!esDeLinea(this.avion)) return this.puestosCandidatos();
+    // Con pasaje, a una pasarela, donde quepa: ver `deContacto`.
+    if (this.deContacto) {
+      const caben = this.puestosDeContacto().filter((p) => this.cabeDeLinea(p.xy));
+      if (caben.length) return caben;
+    }
     if (this.deLineaGuardados) return this.deLineaGuardados;
-    const holgura = this.avion.wingSpan / 2 + MARGEN_ENTRE_ALAS;
-    const caben = this.puestosEnElAsfalto().filter((p) => {
-      for (const e of this.aero.buildings ?? []) {
-        if (e.polygon.length < 2) continue;
-        if (aLaPolilinea(p.xy, [...e.polygon, e.polygon[0]!]) < holgura) return false;
-      }
-      return true;
-    });
+    const caben = this.puestosEnElAsfalto().filter((p) => this.cabeDeLinea(p.xy));
     this.deLineaGuardados = caben.length ? caben : this.puestosCandidatos();
     return this.deLineaGuardados;
   }
 
+  /** Si un avión de línea cabe en este puesto: con sus alas y su margen lejos de toda pared. */
+  private cabeDeLinea(xy: Punto): boolean {
+    const holgura = this.avion.wingSpan / 2 + MARGEN_ENTRE_ALAS;
+    for (const e of this.aero.buildings ?? []) {
+      if (e.polygon.length < 2) continue;
+      if (aLaPolilinea(xy, [...e.polygon, e.polygon[0]!]) < holgura) return false;
+    }
+    return true;
+  }
+
   /** Ver `puestosParaLlegar`. Se tira al mudarse de campo. */
   private deLineaGuardados: { ref: string | null; xy: Punto }[] | null = null;
+
+  /**
+   * **Si el vuelo lleva pasaje: sale de un puesto de contacto y llega a otro.**
+   *
+   * Un avión de línea con pasaje embarca y desembarca pegado a la terminal, con
+   * el morro hacia el edificio: se sale empujado por un tractor y se llega de
+   * frente, con el señalero. Lo pone el juego en los vuelos de pasaje —ver
+   * `world/remolque.ts` y el ADR 0025—; quien vuela su propio avión sigue con
+   * la regla de siempre, la de la avioneta, que es la de `puestosCandidatos`.
+   * Si el campo no tiene ninguno de contacto para este avión, como siempre.
+   */
+  deContacto = false;
+
+  /**
+   * **Los puestos de contacto para este avión**: los de línea, pegados a un
+   * edificio con el morro sin meterse en él. Ver `esPuestoDeContacto`.
+   */
+  private puestosDeContacto(): { ref: string | null; xy: Punto }[] {
+    if (this.deContactoGuardados) return this.deContactoGuardados;
+    const largo = largoPorLaBatalla(this.avion.batalla);
+    const edificios = this.aero.buildings ?? [];
+    this.deContactoGuardados = esDeLinea(this.avion)
+      ? this.puestosEnElAsfalto().filter((p) => esPuestoDeContacto(p.xy[0], -p.xy[1], edificios, largo))
+      : [];
+    return this.deContactoGuardados;
+  }
+
+  /** Ver `puestosDeContacto`. Se tira al mudarse de campo. */
+  private deContactoGuardados: { ref: string | null; xy: Punto }[] | null = null;
+
+  /** De dónde se puede salir: los de contacto con pasaje, si los hay, y si no los de siempre. */
+  private puestosDeSalidaPosibles(): { ref: string | null; xy: Punto }[] {
+    const contacto = this.deContacto ? this.puestosDeContacto() : [];
+    return contacto.length ? contacto : this.puestosCandidatos();
+  }
 
   /**
    * El par puesto + punto de espera con el que menos se rueda.
@@ -2241,7 +2286,7 @@ export class PlanDeVuelo {
   } | null {
     if (this.par !== undefined) return this.par;
     this.par = null;
-    const pares = this.paresDeSalida(this.puestosCandidatos(), false);
+    const pares = this.paresDeSalida(this.puestosDeSalidaPosibles(), false);
     this.paresVistos = pares.map((p) => ({
       ref: p.puesto.ref,
       ida: Math.round(p.ida),

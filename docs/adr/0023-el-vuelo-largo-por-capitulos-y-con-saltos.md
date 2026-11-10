@@ -500,8 +500,10 @@ láminas de la bienvenida, las voces y la ficha del menú son de la tanda siguie
 - **Del final se pasa al segundo**: la tarjeta lleva el botón de seguir y no el de volver, y deja el
   recado en la pestaña (`flight/capitulo-pedido.ts`), que es también por donde podrá ir el viaje
   seguido. La dirección `?capitulo=` sigue siendo solo de desarrollo.
-- **No hay remolque**: los puestos del juego son de salir de frente, y el T5 también. Queda dicho y
-  sin hacer.
+- **Se sale del T5 empujado por un tractor**, que es un puesto de contacto: el avión aparca con el
+  morro a la T1, la baliza se enciende, el tractor lo saca de espaldas hasta la calle y los motores se
+  arrancan empujando. Aquí ponía que no había remolque, que los puestos del juego eran de salir de
+  frente; el ADR 0025 lo corrige y cuenta cómo es.
 - **Rodando se nombra la fila verde del eje de las calles con el avión visto por fuera**, y solo si
   la calle por la que va la lleva en el fichero del aeródromo (`ejeVerde`). Por el cristal de Ara se
   intentó primero y no se pudo asegurar: el juego decía que se veía y la captura del banco, con la
