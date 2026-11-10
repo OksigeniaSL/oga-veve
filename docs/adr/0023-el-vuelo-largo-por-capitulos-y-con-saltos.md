@@ -556,3 +556,37 @@ Lo que se decidió al escribirlo:
   yéndose al oeste y la ciudad encendida en el horizonte. Con la lámina del embarque, cada visita al hangar
   bajaría cien kilobytes de dibujo para una ficha de ciento veinte píxeles. Abre el capítulo sin
   `?capitulo=`, como la de la noche.
+
+## Lo que se programó del viaje seguido
+
+Los tres capítulos enganchados son los mismos tres, uno detrás de otro: la ficha de Madrid, «Seguir
+volando» al final del primero y el segundo, que cae en el tercero. Lo que se decidió:
+
+- **Del segundo al tercero no hay tarjeta ni recarga.** Ya se caía en el tercero por el salto, con la misma
+  escena que abre su ficha («Lo que se programó del segundo capítulo»): caer en él es el final del segundo.
+  Una tarjeta con «Seguir volando» ahí sería despertar a quien duerme para que toque un botón en mitad del
+  corte de película, y recargar perdería el permiso del audio. El segundo no tiene sello que quitar.
+- **Un viaje es un vuelo, y el día es del vuelo.** Cada página elegía el día con su reloj, por la fecha UTC,
+  y el segundo capítulo caía en el vuelo de la noche siguiente si entre los dos pasaba la medianoche UTC: la
+  una de la madrugada en Madrid en invierno, las dos en verano, las nueve de la noche en Asunción. De las
+  23:50 de Madrid a pasada su medianoche no cambiaba; a la una y media, sí. Lo que se notaba era el cielo de
+  otra noche y, el fin de semana del cambio de hora de Europa, la otra temporada: la comandante anunciaba la
+  llegada a las seis y veinticinco y al llegar decía las siete y media. Ahora el recado de la pestaña lleva
+  el día del horario que se vuela (`flight/capitulo-pedido.ts`) y `fechaDelVuelo` lo usa antes que nada. La
+  red de la noche, que recarga en el tercero si no llega su mundo, deja también su recado con el día.
+- **Suelto, el del día.** Un capítulo abierto desde su ficha otro día es el vuelo de ese día, con su cielo
+  (decisión 5): lo jugado se guarda, el día no.
+- **Lo demás sigue por construcción**, y lo mira el banco: el avión es el del largo en los tres, el peldaño
+  es Guyrami en todo el modo inicio, el lado de Ara es `LADO_DE_ARA` en los tres guiones, y con la misma
+  salida el reloj del vuelo solo va hacia delante. El tiempo es el parte de donde se está; el de Asunción lo
+  pide el segundo al abrirse, y es el mismo que pide el tercero suelto.
+- **Lo jugado se guarda** con el perfil, como el cuaderno: `capitulosDelLargo`, solo los números de los
+  acabados (`flight/capitulos-hechos.ts`), y en el acto, porque el final del primero recarga enseguida. El
+  primero y el tercero se apuntan al llegar a su final, con la tarjeta delante, se pulse o no su botón; el
+  segundo, al caer en el tercero.
+- **La marca de hecho es la de los pasos de una misión**, la ✓ verde, en un disco sobre la esquina de la
+  ficha, y la etiqueta lo dice con `mision.hecho`. Las lecciones no llevan ninguna de hecho: la ✓ naranja que
+  se les ve es la de elegida, y por eso esta es otra, verde. Sin «continuar»: se elige la ficha que se quiera,
+  hecha o no.
+- **El banco**: `OGA_CAPITULO=seguido` en `scripts/verificar-inicio-4.mjs`, con las mismas funciones que
+  vuelan cada capítulo suelto sobre una sola página.
