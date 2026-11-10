@@ -401,8 +401,9 @@ describe("el paso al segundo capítulo", () => {
       setItem: (k: string, v: string) => void guardado.set(k, v),
       removeItem: (k: string) => void guardado.delete(k),
     };
-    expect(pedirElCapitulo(almacen, 2)).toBe(true);
-    expect(leerElCapituloPedido(almacen)).toBe(2);
+    expect(pedirElCapitulo(almacen, 2, "2026-12-15")).toBe(true);
+    // Con el día del vuelo que se viene volando: ver `capitulo-pedido.test.ts`.
+    expect(leerElCapituloPedido(almacen)).toEqual({ capitulo: 2, dia: "2026-12-15" });
     expect(leerElCapituloPedido(almacen)).toBeNull();
     expect(leerElCapituloPedido(null)).toBeNull();
   });

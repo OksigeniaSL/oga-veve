@@ -99,6 +99,24 @@
  *   Con el anuncio y «Seguir volando», que lleva al segundo capítulo.
  * - **Nunca dos voces a la vez**, y sin errores de consola.
  *
+ * ## Con `OGA_CAPITULO=seguido`, el viaje seguido
+ *
+ * Los tres enganchados, como los juega quien no para: un piloto nuevo abre la ficha de Madrid
+ * en el hangar, vuela el primero entero, pulsa «Seguir volando», vuela el segundo, que cae en el
+ * tercero por el salto, y el tercero hasta el puesto de Pettirossi. Cada capítulo mira lo mismo
+ * que en su modo suelto —son las mismas funciones, con la misma página—, y además:
+ *
+ * - **Las costuras**: los tres son el mismo vuelo, con la salida del día del primero aunque la
+ *   dirección del segundo ya no lleve `?fecha=`; sale de noche de Madrid y llega a la mañana
+ *   siguiente a Asunción; la misma temporada; el reloj del vuelo solo va hacia delante; el mismo
+ *   avión, el mismo peldaño y Ara del mismo lado. Y del segundo al tercero no se recarga.
+ * - **La tarjeta de cada final**: la del primero, sin sello y con «Seguir volando»; la del
+ *   tercero, con su sello y «Volver al hangar». El segundo no tiene: acaba cayendo en el tercero.
+ * - **Lo jugado se guarda**: al volver al hangar, las tres fichas llevan su marca de hecho.
+ * - **Sin errores de página** en todo el viaje.
+ *
+ * Con `OGA_PRISA=8`, unos veinticinco minutos.
+ *
  * `OGA_RED=1` mira la red: con los ficheros de Pettirossi que no contestan, al acabar la noche
  * se suelta y se abre el tercer capítulo por su camino de siempre. `OGA_RED=noche`, con la lámina
  * del medio despertar que no contesta: la noche sigue igual, sin nadie atrapado en ella.
@@ -117,6 +135,8 @@ const VIENTO = process.env.OGA_VIENTO ?? "020/8";
 const VECES = Number(process.env.OGA_VECES ?? 8);
 const SOLO_APERTURA = !!process.env.OGA_APERTURA;
 const CAPITULO = process.env.OGA_CAPITULO ?? "3";
+/** El que vuela `elCapitulo` si no se le da otro: en el viaje seguido, el segundo. */
+const CAPITULO_PEDIDO = CAPITULO === "seguido" ? "2" : CAPITULO;
 const SOLO_NOCHE = !!process.env.OGA_SOLO_NOCHE;
 const METAR = process.env.OGA_METAR ?? null;
 const CONSOLA = process.env.OGA_CONSOLA ?? null;
@@ -869,9 +889,10 @@ const grados = (r) => ((((r * 180) / Math.PI) % 360) + 360) % 360;
 /**
  * **El primer capítulo, del embarque a la luz del cinturón apagada.** Ver la cabecera.
  */
-async function laNocheDeMadrid() {
-  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 720 }, locale: "es-PY" });
-  const page = await ctx.newPage();
+async function laNocheDeMadrid(dada = null) {
+  // En el viaje seguido, la página ya abierta desde su ficha: ver `elViajeSeguido`.
+  const ctx = dada ? null : await navegador.newContext({ viewport: { width: 1280, height: 720 }, locale: "es-PY" });
+  const page = dada?.page ?? (await ctx.newPage());
   const errores = [];
   page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
   page.on("console", (m) => {
@@ -879,7 +900,7 @@ async function laNocheDeMadrid() {
   });
   const pared0 = Date.now();
   try {
-    await page.goto(`${BASE}/?inicio=4&capitulo=1&fecha=${FECHA}&viento=${process.env.OGA_VIENTO ?? "240/6"}`);
+    if (!dada) await page.goto(`${BASE}/?inicio=4&capitulo=1&fecha=${FECHA}&viento=${process.env.OGA_VIENTO ?? "240/6"}`);
     await page.bringToFront();
     await page.waitForFunction(() => globalThis.__oga?.salto?.().hora != null, null, { timeout: 240_000 });
     await page.keyboard.press("ShiftLeft");
@@ -1153,6 +1174,7 @@ async function laNocheDeMadrid() {
     comprobar("sin errores de consola", errores.length === 0, errores.slice(0, 4).join(" · "));
     // ── Y el botón de la tarjeta, que lleva al segundo capítulo ──────────
     if (l.momento === "fin" && l.puedeSeguir) {
+      if (dada) COSTURAS.c1 = await costura(page);
       const boton = page.locator("[data-inicio='seguir']");
       const texto = (await boton.textContent().catch(() => "")) ?? "";
       await boton.click({ timeout: 5000 }).catch(() => page.evaluate(() => document.querySelector("[data-inicio='seguir']")?.click()));
@@ -1161,6 +1183,7 @@ async function laNocheDeMadrid() {
         .then(() => true)
         .catch(() => false);
       const alli = llega ? await leer(page) : null;
+      if (dada && llega) COSTURAS.c2 = await costura(page);
       comprobar(
         "y su botón, «seguir volando», lleva al segundo capítulo: la noche sobre el mar, tapada con su lámina",
         /seguir/i.test(texto) && llega && !!alli && alli.sobreElMundo.visible && (alli.tapa === "cena" || alli.tapa === "a-oscuras"),
@@ -1170,6 +1193,218 @@ async function laNocheDeMadrid() {
   } catch (e) {
     comprobar("el capítulo", false, `${String(e).slice(0, 300)} · ${errores.slice(0, 2).join(" · ")}`);
   } finally {
+    await ctx?.close();
+  }
+}
+
+/**
+ * **Lo que tiene que seguir de un capítulo al otro**, leído del juego: el vuelo —su salida,
+ * que dice de qué día es—, la hora del reloj del vuelo, el avión, el peldaño y el lado de Ara.
+ * Lo apuntan los capítulos en `COSTURAS` cuando corren dentro del viaje seguido.
+ */
+const COSTURAS = {};
+const costura = (page) =>
+  page.evaluate(() => {
+    const o = globalThis.__oga;
+    const j = o.juegoParaTrazas();
+    const vl = j.vueloLargo;
+    return {
+      capitulo: j.capituloDelLargo,
+      salida: vl ? vl.perfil.horario.salida.getTime() : null,
+      despegue: vl ? vl.perfil.horario.despegue.getTime() : null,
+      temporada: vl?.perfil.horario.temporada ?? null,
+      hora: o.salto().hora,
+      mundo: o.salto().mundo,
+      avion: o.avion().id,
+      tramo: j.tier?.id ?? null,
+      vista: o.vista(),
+      escena: o.inicio().escena,
+      url: location.search,
+    };
+  });
+
+/** Las fichas de los tres capítulos en «¿A qué jugás?», y cuáles llevan la marca de hecho. */
+const marcasDelHangar = (page) =>
+  page.evaluate(() =>
+    ["madrid", "noche", "largo"].map((cual) => {
+      const b = document.querySelector(`[data-inicio-modo="${cual}"]`);
+      const m = b?.querySelector(".ficha__hecha");
+      const c = m?.getBoundingClientRect();
+      return { cual, hay: !!b, hecha: !!m && !!c && c.width > 10, etiqueta: b?.getAttribute("aria-label") ?? "" };
+    }),
+  );
+
+/** La hora y el día de un instante en Asunción, UTC−3 todo el año. */
+const enAsuncion = (ms) => {
+  const d = new Date(ms - 3 * 3600_000);
+  return { dia: d.toISOString().slice(0, 10), hora: d.getUTCHours() + d.getUTCMinutes() / 60 };
+};
+/** Y en Madrid, con su hora de verano o de invierno. */
+const enMadrid = (ms) => {
+  const d = new Date(ms + ruta.husoDeMadrid(new Date(ms)) * 1000);
+  return { dia: d.toISOString().slice(0, 10), hora: d.getUTCHours() + d.getUTCMinutes() / 60 };
+};
+
+/**
+ * **El viaje seguido**: los tres capítulos enganchados, como los juega quien no para. Ver la
+ * cabecera.
+ */
+async function elViajeSeguido() {
+  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 720 }, locale: "es-PY" });
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
+  page.on("console", (m) => {
+    if (m.type() === "error") errores.push(m.text().slice(0, 200));
+  });
+  const cargas = [];
+  page.on("framenavigated", (f) => {
+    if (f === page.mainFrame()) cargas.push(f.url().replace(BASE, "") || "/");
+  });
+  // Como en `laFicha`, y solo la primera vez: sin eso un piloto nuevo va a la primera experiencia; después, Ara habla.
+  await page.route("**/data/voces/ara/manifiesto.json", (r) => r.fulfill({ status: 404, body: "" }), { times: 1 });
+  const pared0 = Date.now();
+  try {
+    // ── El hangar, con un piloto nuevo, y la ficha de Madrid ─────────────
+    await page.goto(`${BASE}/?fecha=${FECHA}&viento=${process.env.OGA_VIENTO ?? "240/6"}`);
+    await page.click("[data-nuevo]", { timeout: 120_000 });
+    await page.click("[data-crear]");
+    await page.waitForSelector('[data-pantalla="que"]', { timeout: 120_000 });
+    await page.click('[data-pantalla="que"]');
+    await page.waitForSelector('[data-inicio-modo="madrid"]', { timeout: 20_000 });
+    const antes = await marcasDelHangar(page);
+    comprobar(
+      "un piloto nuevo no tiene ningún capítulo hecho",
+      antes.every((f) => f.hay && !f.hecha),
+      antes.map((f) => `${f.cual} ${f.hecha ? "✓" : "—"}`).join(" · "),
+    );
+    await page.click('[data-inicio-modo="madrid"]');
+    await page.waitForFunction(() => globalThis.__oga?.inicio?.()?.estado && globalThis.__oga.salto?.()?.hora != null, null, { timeout: 240_000 });
+    const abre = await costura(page);
+    comprobar(
+      "el viaje empieza por la ficha de Madrid: el capítulo 1, sin `?capitulo=`",
+      abre.capitulo === 1 && abre.mundo === "barajas" && abre.escena === "largo" && !abre.url.includes("capitulo"),
+      `capítulo ${abre.capitulo} · ${abre.mundo} · dirección «${abre.url}»`,
+    );
+    COSTURAS.c1Empieza = abre;
+
+    // ── Los capítulos, con lo que ya miran sus modos ─────────────────────
+    console.log("\n  ── capítulo 1 ──");
+    await laNocheDeMadrid({ page });
+    if (!COSTURAS.c2) throw new Error("el botón del primero no llevó al segundo");
+    console.log("\n  ── capítulo 2, y del salto, el 3 ──");
+    await elCapitulo({ page, capitulo: "2" });
+    if (!COSTURAS.c3fin) throw new Error("el tercero no llegó a su final");
+
+    // ── La tarjeta del final del tercero ─────────────────────────────────
+    const fin = await page.evaluate(() => {
+      const f = document.querySelector("#inicio .inicio__fin");
+      const b = f?.querySelector("[data-inicio='seguir']");
+      return { sello: !!f?.querySelector(".inicio__sello"), boton: b ? { texto: b.textContent.trim(), visible: !b.hidden } : null };
+    });
+    await foto(page, "seguido-final");
+    comprobar(
+      "el tercero acaba como suelto: con su sello y «Volver al hangar»",
+      fin.sello && !!fin.boton?.visible && /volver al hangar/i.test(fin.boton.texto),
+      `sello ${fin.sello} · botón «${fin.boton?.texto ?? "ninguno"}»`,
+    );
+
+    // ── Las costuras ─────────────────────────────────────────────────────
+    const { c1Empieza, c1, c2, c3, c3fin } = COSTURAS;
+    const todas = [c1Empieza, c1, c2, c3, c3fin];
+    const esperado = perfil.horario.salida.getTime();
+    comprobar(
+      "los tres, el mismo vuelo: la misma salida de principio a fin, la del día del primero",
+      todas.every((c) => c.salida === esperado),
+      todas.map((c) => `${c.capitulo}: ${c.salida ? new Date(c.salida).toISOString().slice(0, 16) : "?"}`).join(" · ") + ` · cuenta ${new Date(esperado).toISOString().slice(0, 16)}`,
+    );
+    comprobar(
+      "y el segundo y el tercero lo saben sin `?fecha=`: la dirección del segundo no la lleva",
+      !c2.url.includes("fecha") && !c3fin.url.includes("fecha"),
+      `segundo «${c2.url}» · tercero «${c3fin.url}»`,
+    );
+    // La salida del horario, a las 23:45 de Madrid; la llegada, la hora del vuelo en el puesto de Pettirossi.
+    const sale = enMadrid(c1.salida);
+    const llega = enAsuncion(c3fin.despegue + c3fin.hora * 1000);
+    const manana = new Date(new Date(`${sale.dia}T12:00:00Z`).getTime() + 86_400_000).toISOString().slice(0, 10);
+    comprobar(
+      "sale de noche de Madrid y llega a la mañana siguiente a Asunción",
+      sale.dia === FECHA && sale.hora >= 23 && llega.dia === manana && llega.hora >= 5 && llega.hora < 9,
+      `salida ${sale.dia} ${sale.hora.toFixed(2)} h de Madrid · en el puesto ${llega.dia} ${llega.hora.toFixed(2)} h de Asunción · ${c1.temporada}`,
+    );
+    comprobar(
+      "la misma temporada en los tres, y la hora de llegada que anunció la comandante es la que se dice al llegar",
+      todas.every((c) => c.temporada === perfil.horario.temporada),
+      todas.map((c) => c.temporada).join(" → "),
+    );
+    const horas = [c1.hora, c2.hora, c3.hora, c3fin.hora];
+    comprobar(
+      "el reloj del vuelo solo va hacia delante: del final del primero al segundo, y del segundo al tercero",
+      horas.every((h, k) => h !== null && (k === 0 || h > horas[k - 1])) &&
+        Math.abs(c2.hora - ruta.entradaDeLaNoche(perfil)) < 60 &&
+        Math.abs(c3.hora - ruta.entradaDeLaLlegada(perfil)) < 60,
+      horas.map((h) => (h === null ? "?" : `${(h / 3600).toFixed(3)} h`)).join(" → "),
+    );
+    comprobar(
+      "el mismo avión, el mismo peldaño y Ara del mismo lado en los tres",
+      todas.every((c) => c.avion === "jaz-110" && c.tramo === "guyrami" && /^pasaje-izquierda/.test(c.vista) && c.escena === "largo"),
+      todas.map((c) => `${c.capitulo}: ${c.avion} · ${c.tramo} · ${c.vista}`).join(" | "),
+    );
+    comprobar(
+      "y del segundo al tercero no se recarga: cae en él por el salto, sin tarjeta entre medias",
+      c3.capitulo === 3 && c3.mundo === "pettirossi" && cargas.filter((u) => u.includes("inicio=4")).length === 1,
+      `cargas: ${cargas.join(" → ")}`,
+    );
+
+    // ── Y al volver al hangar, los tres hechos ───────────────────────────
+    /*
+     * De pasajero no se apunta ningún despegue, y el piloto sigue siendo nuevo: otra vez sin el pack de Ara.
+     * Y sin la copia que guardó el vuelo, que es a lo que cae el manifiesto cuando no contesta: con ella, la
+     * vuelta iba a la primera experiencia, en el Chaco, y no al hangar. Lo guardado, antes, por si acaso.
+     */
+    const guardado = await page.evaluate(async () => {
+      const g = JSON.parse(localStorage.getItem("oga-veve:guardado") ?? "null");
+      const p = g?.perfiles?.find((x) => x.id === g.activo) ?? g?.perfiles?.[0];
+      for (const k of (await globalThis.caches?.keys()) ?? []) await caches.delete(k);
+      return p ? { capitulos: p.progreso?.capitulosDelLargo ?? null, claves: Object.keys(p.progreso ?? {}) } : null;
+    });
+    comprobar(
+      "lo jugado, guardado con el perfil: los tres capítulos, y solo sus números",
+      JSON.stringify(guardado?.capitulos) === "[1,2,3]",
+      `${JSON.stringify(guardado?.capitulos)} · lo que guarda el perfil: ${guardado?.claves.join(", ")}`,
+    );
+    await page.route("**/data/voces/ara/manifiesto.json", (r) => r.fulfill({ status: 404, body: "" }));
+    // Y si un paso no llega, se dice cuál, dónde estaba la página y qué se veía: sin eso, un plazo pasado no dice nada.
+    const paso = async (que, hacer) => {
+      try {
+        await hacer();
+      } catch (e) {
+        const donde = await page.evaluate(() => ({ url: location.search || "/", visibles: [...document.querySelectorAll("body > [id]")].filter((n) => !n.hidden && n.getBoundingClientRect().height > 0).map((n) => n.id).join(",") })).catch(() => null);
+        if (FOTOS) await page.screenshot({ path: `${FOTOS}/inicio-4-seguido-vuelta-${que}.png` }).catch(() => {});
+        throw new Error(`al volver al hangar, ${que}: ${String(e).slice(0, 120)} · ${JSON.stringify(donde)} · cargas ${cargas.join(" → ")}`);
+      }
+    };
+    await paso("el botón", async () => {
+      await page.click("[data-inicio='seguir']", { timeout: 5000 }).catch(() => page.evaluate(() => document.querySelector("[data-inicio='seguir']")?.click()));
+      await page.waitForURL((u) => !u.search.includes("inicio"), { timeout: 60_000 });
+    });
+    // El que voló, que es el de ahora: el primero de la lista es el que el juego crea solo al estrenarse.
+    await paso("los pilotos", () => page.click(".piloto__boton--tuyo[data-elegir]", { timeout: 120_000 }));
+    await paso("el hangar", () => page.click('[data-pantalla="que"]', { timeout: 120_000 }));
+    await paso("las fichas", () => page.waitForSelector('[data-inicio-modo="largo"]', { timeout: 20_000 }));
+    const despues = await marcasDelHangar(page);
+    await page.locator('[data-inicio-modo="madrid"]').scrollIntoViewIfNeeded().catch(() => {});
+    if (FOTOS) await page.screenshot({ path: `${FOTOS}/inicio-4-seguido-hangar.png` });
+    comprobar(
+      "al volver al hangar, los tres capítulos llevan su marca de hecho, que también se lee",
+      despues.every((f) => f.hecha && /hecho/i.test(f.etiqueta)),
+      despues.map((f) => `${f.cual} ${f.hecha ? "✓" : "—"} «${f.etiqueta}»`).join(" · "),
+    );
+    console.log(`  ${((Date.now() - pared0) / 60_000).toFixed(1)} min de pared, el viaje entero`);
+    comprobar("sin errores de página en todo el viaje", errores.length === 0, errores.slice(0, 4).join(" · "));
+  } catch (e) {
+    comprobar("el viaje seguido", false, `${String(e).slice(0, 300)} · ${errores.slice(0, 2).join(" · ")}`);
+  } finally {
     await ctx.close();
   }
 }
@@ -1177,9 +1412,11 @@ async function laNocheDeMadrid() {
 /** **Si hoy se contó El Hierro**: con un juego delante no se cuenta, y no hay marca que mirar. */
 const dejaContarElHierro = (l) => l.dichos.includes("hierro");
 
-async function elCapitulo() {
-  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 720 }, locale: "es-PY" });
-  const page = await ctx.newPage();
+async function elCapitulo(dada = null) {
+  // En el viaje seguido, la página que dejó el botón del primero, ya en el segundo.
+  const CAPITULO = dada?.capitulo ?? CAPITULO_PEDIDO;
+  const ctx = dada ? null : await navegador.newContext({ viewport: { width: 1280, height: 720 }, locale: "es-PY" });
+  const page = dada?.page ?? (await ctx.newPage());
   const errores = [];
   const avisos = [];
   page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
@@ -1189,7 +1426,7 @@ async function elCapitulo() {
   });
   try {
     // En la noche, el alisio de Canarias: `VIENTO` es el de allí. Ver `laNoche`.
-    await page.goto(`${BASE}/?inicio=4&capitulo=${CAPITULO}&fecha=${FECHA}&viento=${CAPITULO === "2" ? "040/12" : VIENTO}${METAR ? `&metar=${encodeURIComponent(METAR)}` : ""}`);
+    if (!dada) await page.goto(`${BASE}/?inicio=4&capitulo=${CAPITULO}&fecha=${FECHA}&viento=${CAPITULO === "2" ? "040/12" : VIENTO}${METAR ? `&metar=${encodeURIComponent(METAR)}` : ""}`);
     await page.bringToFront();
     await page.waitForFunction(() => globalThis.__oga?.salto?.().hora != null, null, { timeout: 240_000 });
     await page.keyboard.press("ShiftLeft");
@@ -1203,6 +1440,7 @@ async function elCapitulo() {
 
     // ── Se abre, y entra donde toca ──────────────────────────────────────
     const uno = await leer(page);
+    if (dada) COSTURAS.c3 = await costura(page);
     comprobar(
       "arranca tapado: el mundo no asoma antes de abrirse la ventanilla",
       uno.sobreElMundo.visible && uno.sobreElMundo.opacidad === 1 && uno.tapa !== null,
@@ -1568,10 +1806,11 @@ async function elCapitulo() {
     }
     comprobar("sin errores de consola", errores.length === 0, errores.slice(0, 4).join(" · "));
     if (avisos.length) console.log(`  avisos de consola: ${avisos.length}; el primero: ${avisos[0]}`);
+    if (dada) COSTURAS.c3fin = await costura(page);
   } catch (e) {
     comprobar("el capítulo", false, `${String(e).slice(0, 300)} · ${errores.slice(0, 2).join(" · ")}`);
   } finally {
-    await ctx.close();
+    await ctx?.close();
   }
 }
 
@@ -1721,6 +1960,7 @@ try {
   }
   else if (process.env.OGA_RED === "noche") await laRedDelMedioDespertar();
   else if (process.env.OGA_RED) await laRedDeLaNoche();
+  else if (CAPITULO === "seguido") await elViajeSeguido();
   else if (CAPITULO === "1") {
     // Primero su ficha, que es por donde se abre fuera de desarrollo; y luego el capítulo entero.
     if (!process.env.OGA_SIN_FICHA) await laFicha("madrid");

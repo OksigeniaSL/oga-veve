@@ -7697,6 +7697,31 @@ button.motor__tecla::after {
   border-top: 1px solid var(--linea);
 }
 
+/*
+ * La marca de hecho de un capítulo del viaje largo: la de los pasos hechos de una misión,
+ * en un disco claro sobre la esquina del dibujo, que de noche el dibujo es casi negro.
+ */
+.ficha__hecha {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--barro-claro);
+  box-shadow: var(--poso);
+  color: var(--ok);
+  pointer-events: none;
+}
+
+.ficha__hecha svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
 .ficha--tramo .ficha__pie {
   justify-items: start;
 }

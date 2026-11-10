@@ -181,7 +181,8 @@ import {
   type PerfilDelVuelo,
 } from "./flight/ruta-larga";
 import { guionDePruebaDelSalto } from "./flight/guion-de-prueba-del-salto";
-import { pedirElCapitulo } from "./flight/capitulo-pedido";
+import { diaDelHorario, fechaDelDia, pedirElCapitulo } from "./flight/capitulo-pedido";
+import { apuntarCapituloHecho, type CapituloDelLargo } from "./flight/capitulos-hechos";
 import { planDeLaNoche } from "./flight/noche-en-el-mapa";
 import {
   COTA_DE_LAS_LUCES_DE_TENERIFE,
@@ -2056,6 +2057,12 @@ export interface GameOptions {
    * y `flight/guion-noche-sobre-el-mar.ts`.
    */
   capitulo?: 1 | 2;
+  /**
+   * **El día del vuelo que se viene volando**, `AAAA-MM-DD`, si este capítulo sigue a otro:
+   * el que lleva el recado de la pestaña. Sin él, el de hoy. Ver `fechaDelVuelo` y
+   * `flight/capitulo-pedido.ts`.
+   */
+  diaDelViaje?: string;
 
   /**
    * El peldaño de este vuelo, si no es el recordado: el modo inicio va en
@@ -5774,6 +5781,8 @@ export class Game {
     this.conInicio = options.inicio !== undefined;
     this.escenaDelInicio = options.inicio ?? "despegar";
     this.capituloDelLargo = options.capitulo ?? 3;
+    // Antes que nada que mire el día: el relieve lo hornea con su sol. Ver `fechaDelVuelo`.
+    this.diaDelViaje = fechaDelDia(options.diaDelViaje ?? null);
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
     this.sigueme = new Sigueme(this.scenario.aerodrome?.privado === true);
     this.pavimento = this.scenario.aerodrome
@@ -7581,6 +7590,12 @@ export class Game {
     if (escena.estado.momento === "fin" && !(this.escenaDelInicio === "largo" && this.capituloDelLargo === 1))
       this.apuntarElViaje();
     /*
+     * **Y el capítulo del viaje largo, como acabado**, al llegar a su final: con la tarjeta
+     * delante ya está hecho, se pulse o no su botón. El segundo no llega aquí: acaba al caer
+     * en el tercero. Ver `caerEnLaLlegada`.
+     */
+    if (escena.estado.momento === "fin" && this.escenaDelInicio === "largo") this.apuntarElCapitulo(this.capituloDelLargo);
+    /*
      * Y el botón del final vuelve al hangar: un avión de línea que se acaba de
      * traer de pasajero no se sigue volando.
      */
@@ -7591,7 +7606,7 @@ export class Game {
        * el botón de su tarjeta: el recado en la pestaña, y la página en el vuelo largo.
        * Ver `flight/capitulo-pedido.ts`.
        */
-      if (this.escenaDelInicio === "largo" && this.capituloDelLargo === 1 && pedirElCapitulo(sesionDeLaPestana(), 2)) {
+      if (this.escenaDelInicio === "largo" && this.capituloDelLargo === 1 && pedirElCapitulo(sesionDeLaPestana(), 2, this.diaDelVueloLargo())) {
         window.location.assign(`${window.location.pathname}?inicio=4`);
         return;
       }
@@ -12906,14 +12921,42 @@ export class Game {
   }
 
   /**
-   * **El día del vuelo**: el pedido o el de hoy. Es el del sol y la noche del
-   * cielo, y también el de la luz cocida en el relieve, que sale del mismo
-   * sol: con días distintos, el suelo se alumbraría con un sol y el cielo
+   * **El día del vuelo**: el del viaje que se viene volando, el pedido o el de hoy. Es
+   * el del sol y la noche del cielo, y también el de la luz cocida en el relieve, que
+   * sale del mismo sol: con días distintos, el suelo se alumbraría con un sol y el cielo
    * tendría otro. Ver `solDelRelieve` en `world/terrain.ts`.
+   *
+   * **Y un viaje es un vuelo.** El capítulo que sigue a otro no elige el día con su
+   * propio reloj: lo trae el recado del que acabó. Elegirlo otra vez lo cambiaba si entre
+   * los dos pasaba la medianoche UTC, que en Asunción son las nueve de la noche. Ver
+   * `flight/capitulo-pedido.ts`.
    */
   private fechaDelVuelo(): Date {
-    return this.fechaPedida() ?? new Date();
+    return this.diaDelViaje ?? this.fechaPedida() ?? new Date();
   }
+
+  /** El día del vuelo que se viene volando, si este capítulo sigue a otro. Ver `fechaDelVuelo`. */
+  private readonly diaDelViaje: Date | null;
+
+  /**
+   * **El día del vuelo largo de ahora**, en la forma del recado, para el capítulo que siga.
+   * El de su horario, que es lo que se vuela: no el de hoy, que puede ser otro.
+   */
+  private diaDelVueloLargo(): string | null {
+    return this.vueloLargo ? diaDelHorario(this.vueloLargo.perfil.horario.salida) : null;
+  }
+
+  /**
+   * **Apunta el capítulo del vuelo largo como acabado**, una vez por capítulo. Ver
+   * `flight/capitulos-hechos.ts`. Solo con el vuelo de verdad: el guion de prueba del
+   * salto también es una escena larga, y no es ningún capítulo.
+   */
+  private apuntarElCapitulo(c: CapituloDelLargo): void {
+    if (this.escenaDelInicio !== "largo" || this.capitulosApuntados.has(c)) return;
+    this.capitulosApuntados.add(c);
+    apuntarCapituloHecho(c);
+  }
+  private readonly capitulosApuntados = new Set<CapituloDelLargo>();
 
   /**
    * La clave de las teselas: la de la construcción, o la de la dirección.
@@ -16560,6 +16603,8 @@ export class Game {
    * en mitad del fundido.
    */
   private caerEnLaLlegada(escena: MotorDelPasaje): void {
+    // Caer en el tercero es el final del segundo: no tiene otro, ni tarjeta. Ver el ADR 0023.
+    this.apuntarElCapitulo(2);
     this.capituloDeAntes = { registro: escena.registro, estado: escena.estado };
     this.capituloDelLargo = 3;
     // El botón de la consola se cuenta una vez por vuelo, y este salto no cambia de vuelo: al despertar no se repite.
@@ -16670,6 +16715,9 @@ export class Game {
     if (sigue && !salto.mundo) {
       if (this.recargandoLaLlegada) return;
       this.recargandoLaLlegada = true;
+      this.apuntarElCapitulo(2);
+      // Con el día de este vuelo, que la recarga no cae en otro: ver `fechaDelVuelo`.
+      pedirElCapitulo(sesionDeLaPestana(), 3, this.diaDelVueloLargo());
       const q = new URLSearchParams(location.search);
       // Desde la ficha del menú la dirección no lleva nada, y sin `inicio` se volvería al hangar.
       q.set("inicio", "4");

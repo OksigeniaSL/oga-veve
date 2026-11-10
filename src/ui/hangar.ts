@@ -54,6 +54,7 @@ import { AVES, LADO_DEL_AVE } from "./aves";
 import { TarjetaDelAvion } from "./tarjeta-del-avion";
 import { caraDentro } from "./inicio";
 import type { EscenaDelInicio } from "../flight/inicio";
+import { capitulosHechos } from "../flight/capitulos-hechos";
 import { LECCIONES, VUELTA, type Leccion } from "../flight/lecciones";
 import {
   ejerciciosPara,
@@ -1342,9 +1343,28 @@ function fichaDelInicio(cual: EscenaDelInicio | "noche" | "madrid"): string {
             : cual === "madrid"
               ? "inicio.modo.madrid"
               : "inicio.modo.nombre";
+  /*
+   * **Y si es un capítulo del viaje largo ya acabado, su marca de hecho**: la misma de
+   * los pasos hechos de una misión. Se ve sin leer, y la lee quien no ve. No cambia lo que
+   * abre la ficha: se vuelve a jugar igual. Ver `flight/capitulos-hechos.ts`.
+   */
+  const capitulo = cual === "madrid" ? 1 : cual === "noche" ? 2 : cual === "largo" ? 3 : null;
+  const hecho = capitulo !== null && capitulosHechos().has(capitulo);
   return `
-    <button class="ficha ficha--leccion ficha--inicio" type="button" data-inicio-modo="${cual}">
+    <button class="ficha ficha--leccion ficha--inicio${hecho ? " ficha--hecha" : ""}" type="button" data-inicio-modo="${cual}"${
+      hecho ? ` aria-label="${t(nombre)} — ${t("mision.hecho")}"` : ""
+    }>
       <span class="ficha__lienzo ficha__lienzo--panel">${dibujo}</span>
+      ${
+        hecho
+          ? `<span class="ficha__hecha" aria-hidden="true">
+               <svg viewBox="0 0 24 24">
+                 <path d="M4 12.6 L9.6 18 L20 6.4" fill="none" stroke="currentColor" stroke-width="3"
+                       stroke-linecap="round" stroke-linejoin="round" />
+               </svg>
+             </span>`
+          : ""
+      }
       <span class="ficha__pie">
         <span class="ficha__nombre">${t(nombre)}</span>
       </span>
