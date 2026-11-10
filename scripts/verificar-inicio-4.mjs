@@ -1056,6 +1056,8 @@ async function laNocheDeMadrid() {
       await pausa(250);
     }
     const paredes = (Date.now() - pared0) / 60_000;
+    // Pasado el fundido de la lámina que se quita, que la foto sea de lo que queda: la ventanilla y la tarjeta.
+    await pausa(1200);
     await foto(page, "c1-final");
     comprobar(
       "la lámina del embarque se ve, con su fichero",

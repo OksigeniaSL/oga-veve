@@ -468,3 +468,81 @@ describe("del puesto al puesto con el JAZ 90 de Guyrami", () => {
     expect(CONFIGURA.flapsTodos).toBeGreaterThan(CONFIGURA.estabilizado);
   });
 });
+
+/**
+ * **El tope de velocidad de una salida publicada**, el «MAX IAS» de la carta: la tripulación
+ * no lo pasa, ni subiendo ni recién despegada. Sin él, en el modelo sencillo, el gas de
+ * despegue hasta los quince metros embalaba al JAZ 110 cargado de 157 nudos a 229. Lo que se
+ * vuela de verdad lo mide `scripts/verificar-inicio-4.mjs` con `OGA_CAPITULO=1`.
+ */
+describe("con un tope de la salida por delante", () => {
+  const NUDO = 0.514444;
+  const TOPE = 205 * NUDO;
+  const ficha = {
+    vr: ARAI.rotationSpeed,
+    vref: ARAI.approachSpeed,
+    alturaDeLaRecogida: laRecogidaDe(ARAI).nariz,
+    alturaDelGas: laRecogidaDe(ARAI).gas,
+    reversa: true,
+    trenQueSeMete: true,
+  };
+  const lectura = (cambios: Partial<LecturaDeLinea>): LecturaDeLinea => ({
+    enTierra: false,
+    enPista: false,
+    x: 0,
+    z: -2000,
+    rumbo: 0,
+    velocidad: ARAI.rotationSpeed + 5,
+    porElSuelo: ARAI.rotationSpeed + 5,
+    altitud: 8,
+    altura: 8,
+    vertical: 3,
+    motor: true,
+    flaps: 1 / 3,
+    tren: 1,
+    fase: "en-vuelo",
+    autorizado: true,
+    raya: [],
+    pista: { rumbo: 0, lado: 0, queda: 500 },
+    tramo: { desde: RUTA.fijos[0]!, hasta: RUTA.fijos[1]!, recta: false },
+    alturaPedida: CRUCERO,
+    ritmoPedido: 0,
+    faltaParaTocar: RUTA.total,
+    enLaFinal: false,
+    localizador: null,
+    senda: null,
+    cotaDelCampo: 0,
+    ...cambios,
+  });
+  const en = (tramo: TramoDeLinea): VueloDeLinea => {
+    const t = new VueloDeLinea(ficha);
+    (t as unknown as { pasarA(tramo: TramoDeLinea): void }).pasarA(tramo);
+    return t;
+  };
+  const permisos = { arrancar: true, rodar: true, entrar: true, despegar: true };
+
+  it("recién despegada, la de la subida con flaps y no el gas de despegue; y se oye el despegue igual", () => {
+    const manos = en("carrera").paso(DT, lectura({ topeDeVelocidad: TOPE }), permisos);
+    expect(manos.gas).toBe("velocidad");
+    expect(manos.velocidad).toBeLessThanOrEqual(TOPE);
+    expect(manos.velocidad).toBeCloseTo(ARAI.rotationSpeed + 10, 5);
+    expect(manos.empuje).toBe(EMPUJE.despegue);
+  });
+
+  it("sin tope, como siempre: el gas de despegue hasta los quince metros", () => {
+    const manos = en("carrera").paso(DT, lectura({}), permisos);
+    expect(manos.gas).toBe("despegue");
+    expect(manos.empuje).toBeUndefined();
+  });
+
+  it("y en el suelo, con tope o sin él, el gas de despegue", () => {
+    const manos = en("carrera").paso(DT, lectura({ enTierra: true, altura: 0, topeDeVelocidad: TOPE }), permisos);
+    expect(manos.gas).toBe("despegue");
+  });
+
+  it("subiendo, con los flaps ya dentro, el tope y no los 250", () => {
+    const arriba = { altitud: 900, altura: 900, flaps: 0 };
+    expect(en("subida").paso(DT, lectura({ ...arriba, topeDeVelocidad: TOPE }), permisos).velocidad).toBeCloseTo(TOPE, 5);
+    expect(en("subida").paso(DT, lectura(arriba), permisos).velocidad).toBeCloseTo(250 * NUDO, 1);
+  });
+});
