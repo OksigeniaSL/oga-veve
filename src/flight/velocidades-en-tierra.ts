@@ -138,6 +138,24 @@ export function esDeLinea(a: ClaseEnTierra): boolean {
 }
 
 /**
+ * **Si embarca por una pasarela, y por eso sale empujado**: los reactores de la
+ * flota —el regional del JAZ 90, que vuela como un E-170; el de fuselaje ancho del
+ * JAZ 110, como un 787-9; y el cuatrimotor del JAZ 120, como un 747—. Los tres
+ * aparcan con el morro pegado a la terminal y los saca un tractor. Ver
+ * `world/remolque.ts` y el ADR 0025.
+ *
+ * **El turbohélice de cercanías no.** El JAZ 60 vuela como un Beech 1900D: diecinueve
+ * plazas y una puerta con su propia escalerilla, detrás del ala y a un metro del
+ * suelo, que ninguna pasarela alcanza. Embarca a pie en la plataforma y sale por sus
+ * medios, girando, como sale de verdad. Es de línea —rueda con las reglas de los de
+ * línea y va a un puesto de la terminal— pero no es de pasarela. Y la avioneta,
+ * tampoco: sale de frente de la plataforma de aviación general.
+ */
+export function vaALaPasarela(a: ClaseEnTierra): boolean {
+  return a.sound.engine === "turbofan";
+}
+
+/**
  * **A qué velocidad se toma una salida** que se aparta `giro` grados del eje
  * de la pista, m/s: la rápida, a la suya; la que sale en ángulo, a la de
  * viraje.

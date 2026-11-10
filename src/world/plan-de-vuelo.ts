@@ -39,6 +39,7 @@ import {
   DE_TRANSPORTE,
   RECTA_LARGA,
   esDeLinea,
+  vaALaPasarela,
   velocidadDeLaSalida,
   velocidadesEnTierra,
   type VelocidadesEnTierra,
@@ -2232,26 +2233,27 @@ export class PlanDeVuelo {
   private deLineaGuardados: { ref: string | null; xy: Punto }[] | null = null;
 
   /**
-   * **Si el vuelo lleva pasaje: sale de un puesto de contacto y llega a otro.**
+   * **Si el vuelo sale de un puesto de contacto y llega a otro.**
    *
-   * Un avión de línea con pasaje embarca y desembarca pegado a la terminal, con
-   * el morro hacia el edificio: se sale empujado por un tractor y se llega de
-   * frente, con el señalero. Lo pone el juego en los vuelos de pasaje —ver
-   * `world/remolque.ts` y el ADR 0025—; quien vuela su propio avión sigue con
-   * la regla de siempre, la de la avioneta, que es la de `puestosCandidatos`.
-   * Si el campo no tiene ninguno de contacto para este avión, como siempre.
+   * Un avión de pasarela embarca y desembarca pegado a la terminal, con el morro
+   * hacia el edificio: se sale empujado por un tractor y se llega de frente, con
+   * el señalero. Lo pone el juego en los vuelos de pasaje y en los de quien juega
+   * pilotando uno de los reactores —ver `vaALaPasarela`, `world/remolque.ts` y el
+   * ADR 0025—. Los demás siguen con la regla de siempre, la de la avioneta, que es
+   * la de `puestosCandidatos`. Si el campo no tiene ninguno de contacto para este
+   * avión, como siempre.
    */
   deContacto = false;
 
   /**
-   * **Los puestos de contacto para este avión**: los de línea, pegados a un
+   * **Los puestos de contacto para este avión**: los de pasarela, pegados a un
    * edificio con el morro sin meterse en él. Ver `esPuestoDeContacto`.
    */
   private puestosDeContacto(): { ref: string | null; xy: Punto }[] {
     if (this.deContactoGuardados) return this.deContactoGuardados;
     const largo = largoPorLaBatalla(this.avion.batalla);
     const edificios = this.aero.buildings ?? [];
-    this.deContactoGuardados = esDeLinea(this.avion)
+    this.deContactoGuardados = vaALaPasarela(this.avion)
       ? this.puestosEnElAsfalto().filter((p) => esPuestoDeContacto(p.xy[0], -p.xy[1], edificios, largo))
       : [];
     return this.deContactoGuardados;

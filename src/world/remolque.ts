@@ -3,7 +3,9 @@
  * puesto de contacto, y la persona de tierra que va a su lado.
  *
  * Un avión de línea que aparca pegado a la terminal lo hace **con el morro
- * hacia el edificio**, y de ahí no puede salir solo: no tiene marcha atrás. Le
+ * hacia el edificio**, y de ahí no sale solo: desde la cabina no se ve lo que
+ * hay detrás, y para ir marcha atrás con las reversas el chorro iría contra la
+ * terminal y la gente de tierra. Le
  * empuja un tractor enganchado a la rueda de morro, hacia atrás, hasta la
  * calle de rodaje, girándolo para que se quede mirando hacia donde va a rodar.
  * Al lado camina una persona con casco y cascos de oír, enchufada al avión por
@@ -549,6 +551,19 @@ export class Remolque {
     return { x: a.x + n.x * this.avionMide.batalla, z: a.z + n.z * this.avionMide.batalla };
   }
 
+  /**
+   * **Si al acabar de empujar se espera a los motores para soltarse.** La persona
+   * de tierra sigue enchufada al avión mientras se arrancan —mira los motores desde
+   * fuera, que es lo que ve si algo va mal— y no suelta el tractor hasta que la
+   * cabina le dice que están en marcha. La tripulación los arranca empujando y
+   * nunca llega a esperar; quien juega puede no haberlo hecho todavía, y entonces
+   * el tractor se queda enganchado, con el freno puesto, hasta que los arranque.
+   * Ver `Game.prepararElRemolque`.
+   */
+  esperaLosMotores = false;
+  /** Y si ya están en marcha: lo pone quien lleva el avión en cada paso. */
+  motoresEnMarcha = false;
+
   /** **Que empiece a empujar**: lo pide la cabina. Solo vale enganchado. */
   empezar(): void {
     if (this.faseAhora === "enganchado") this.pasarA("empujando");
@@ -575,7 +590,7 @@ export class Remolque {
         break;
       }
       case "frenado":
-        if (this.enFase >= SE_FRENA) this.pasarA("soltando");
+        if (this.enFase >= SE_FRENA && (!this.esperaLosMotores || this.motoresEnMarcha)) this.pasarA("soltando");
         break;
       case "soltando":
         if (this.enFase >= SE_SUELTA) {

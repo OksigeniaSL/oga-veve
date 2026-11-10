@@ -1745,6 +1745,17 @@ export const ES_PY = {
   "palabra.roto": "Se rompió",
   "vuelo.estacionado": "Arrancá el motor",
   "vuelo.arrancando": "Soltá el freno y andá despacito",
+  /*
+   * **El remolque de quien juega** (ADR 0025): en un puesto de contacto, lo primero no es
+   * arrancar sino pedir que te saquen; los motores, empujando; y al final, el pasador y el
+   * saludo. Lo dice la instructora; el último, solo en los peldaños de abajo. Ver
+   * `Game.tarjetaDelRemolque`.
+   */
+  "vuelo.remolque": "Pedí el tractor: nos empuja para atrás hasta la calle",
+  "vuelo.remolqueArranca":
+    "El tractor nos lleva para atrás, que desde la cabina no se ve. Arrancá los motores mientras tanto",
+  "vuelo.remolqueSuelta":
+    "Mirá a la izquierda: te enseña el pasador con su cinta roja y te saluda. Sin él, la rueda de adelante vuelve a ser tuya: ya podés rodar",
   "vuelo.rodando": "Seguí la raya verde",
   "vuelo.esperando": "Pará del todo y esperá la luz",
   /*
