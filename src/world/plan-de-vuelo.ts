@@ -81,6 +81,7 @@ import {
   desdeLaInterseccion,
 } from "./salidas-por-interseccion";
 import {
+  dondeSeAcerca,
   porDelanteDe,
   tramoDeFrente,
   type QuienTieneElTramo,
@@ -3730,12 +3731,14 @@ export class PlanDeVuelo {
     let coche = Infinity;
     let quien: QuienTieneElTramo | null = null;
     for (const suyo of suyos) {
-      const t = tramoDeFrente(delante, suyo.porDelante, separacion);
+      // Al que empuja un tractor no se le mira solo de frente: lo que barre es suyo.
+      const tramo = suyo.empuja ? dondeSeAcerca : tramoDeFrente;
+      const t = tramo(delante, suyo.porDelante, separacion);
       if (t && this.avance + t.entra - ANTES_DEL_TRAMO < avion) {
         avion = this.avance + t.entra - ANTES_DEL_TRAMO;
         quien = suyo;
       }
-      const tc = tramoDeFrente(delante, suyo.porDelante, EL_COCHE_SE_APARTA);
+      const tc = tramo(delante, suyo.porDelante, EL_COCHE_SE_APARTA);
       if (tc) coche = Math.min(coche, this.avance + tc.entra - ANTES_DEL_TRAMO);
     }
     // El coche no espera más atrás que el avión: va delante de él.

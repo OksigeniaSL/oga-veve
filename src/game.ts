@@ -14145,6 +14145,7 @@ export class Game {
           const yo = this.flight.state.position;
           const ruta = this.plan?.rutaVisible() ?? [];
           const raya = ruta.at(-1);
+          const arranque = this.plan?.arranque() ?? null;
           return {
             suelo: sueloDelCampo,
             /*
@@ -14159,6 +14160,8 @@ export class Game {
             evitar: [
               { x: yo.x, z: yo.z },
               ...(raya ? [{ x: raya[0], z: raya[1] }] : []),
+              // Y el puesto que tiene tu plan, aunque ya no estés en él: es tuyo.
+              ...(arranque ? [{ x: arranque[0], z: arranque[1] }] : []),
             ],
             /*
              * **Y tu raya entera, no solo su final.** Se apartaba de tu
@@ -15464,8 +15467,14 @@ export class Game {
      */
     if (a.recula) return;
     this.pasoDadoA.add(a.matricula);
+    /*
+     * Ni al que empuja un tractor desde su puesto: no viene de frente, y la frase de casa
+     * dice que sí. Lo cuentan la raya cortada, la baliza y el tractor; por radio, «give
+     * way to departing traffic» sí es verdad.
+     */
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (a.empuja && !conCifras) return;
     if (!conCifras) {
       if (laInstructoraLoExplica(this.tier.avisos)) this.decirLoGrabado("vuelo.dasPaso");
       return;

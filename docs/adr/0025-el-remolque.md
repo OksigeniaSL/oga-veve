@@ -1,6 +1,6 @@
 # ADR 0025 — El remolque: se sale empujado de un puesto de contacto
 
-**Fecha**: 2026-11-10 · **Estado**: aceptada; segunda mitad hecha salvo el tráfico · **Corrige**: [ADR 0023](0023-el-vuelo-largo-por-capitulos-y-con-saltos.md), «No hay remolque»
+**Fecha**: 2026-11-10 · **Estado**: aceptada; hecho también en el tráfico · **Corrige**: [ADR 0023](0023-el-vuelo-largo-por-capitulos-y-con-saltos.md), «No hay remolque»
 
 ## Contexto
 
@@ -180,14 +180,109 @@ puesto con el radio más cerrado. Rodando hacia delante, la raya se rehace desde
 pero con el cruce a treinta y cincuenta metros a un lado: en un campo así no hay pasarelas, y un edificio a menos de
 cincuenta metros del morro basta para que `esPuestoDeContacto` lo tome por una.
 
+## El tráfico
+
+### Qué aviones, y de dónde a dónde
+
+- **El reactor del tráfico, y solo él** (`pasarelaDelTrafico` en `world/trafico.ts`): es el que embarca por pasarela,
+  con el mismo criterio que `vaALaPasarela` para quien juega. Se empuja con la batalla del modelo con que se dibuja, el
+  JAZ 90 (11,5 m), que es la que se ve girar. El turbohélice regional embarca a pie con su escalerilla y sale por sus
+  medios; la avioneta y el bimotor, de la plataforma de aviación general. No cambian.
+- **Sale de un puesto de contacto y llega a uno**, si el campo tiene alguno para su largo, igual que el plan de quien
+  juega. Llega por la raya del puesto, los últimos veinticinco metros en su eje, con el morro al edificio
+  (`alPuestoPorSuRaya` en `world/suelo-del-trafico.ts`): el buscador remataba en recta desde el último nudo y el avión se
+  quedaba mirando hacia donde viniera.
+- **El camino de salida empieza por el empuje** (`empujado`): las posturas de `trayectoriaDelEmpuje` cada cuatro metros,
+  de espaldas, y desde donde se para, hacia delante hasta el primer punto de la raya pasado el cruce que le queda por
+  delante del morro —con doce metros rectos antes si le queda de lado—. La doble raya, el eje y el remonte se cuentan
+  con esos metros. Así lo que reserva un camino por delante ve también por dónde va a pasar empujado.
+- **En Barajas el asfalto de los datos no llega a la fachada**, y el buscador recortaba el remate al puesto: el avión
+  salía de un nudo de la plataforma. Para un puesto de contacto el remate se queda si lo demás va por asfalto.
+
+### El orden, y quién lo mueve
+
+`empujar` en `world/trafico.ts`, con la clase `Remolque` y el dibujo `DibujoDelRemolque` de quien juega: en el puesto,
+enganchado y sin baliza, con los motores parados; con permiso para rodar —retenido por la torre, no—, un tractor libre
+y la calle libre, la baliza; a los tres segundos, el empuje, a paso de persona; los motores se arrancan empujando, así
+que el tractor no espera a nadie; freno, se suelta, la persona enseña el pasador y saluda, y desde ese saludo rueda por
+su camino. Mientras tanto la postura es la del remolque, con el morro hacia donde miraba, y no rueda ni cede por sí
+mismo: lo mueve el tractor. Sus luces: sin baliza en el puesto, con ella y sin foco de rodaje desde que se pide el
+empuje.
+
+### Mientras empuja, la calle es suya
+
+- **Lo que barre** (`zonaDelEmpuje`): una línea por el eje, del tractor a la cola en el sitio donde para. Para el resto
+  del tráfico entra en lo que mira `cedeALosOtros`, como un avión más en cada punto: no se acercan a la separación de ala.
+- **Y para quien juega**: va en `tramosQueTienen` marcada `empuja`, y tu raya se corta antes **venga por donde venga**
+  (`dondeSeAcerca` en `world/tramo-de-frente.ts`), no solo de frente como con el que rueda. Esperas como esperas a otro
+  avión; en casa no se dice la frase de «viene de frente», que no es verdad, y en cabina sí la de «give way to departing
+  traffic».
+- **No se empieza con alguien dentro ni a punto de pasar** (`calleLibreParaEmpujar`): tú dentro de la zona o por donde
+  vas a pasar en los próximos segundos, o uno del tráfico dentro o rodando hacia ella en los próximos ciento veinte
+  metros. El que está parado no cuenta, que si espera por éste se esperarían los dos para siempre. Es lo que mira el
+  control de tierra antes de autorizar un remolque.
+- Enganchado, no entra en el reparto de tramos de frente (`repartirLosTramos`): no rueda, y lo que reserva es lo que
+  barre.
+
+### Dos tractores a la vez, como mucho
+
+`TRACTORES_A_LA_VEZ`: cada tractor es un vehículo y una persona con sus mallas y sus materiales, y el juego tiene que ir
+a sesenta fotogramas en una tableta de gama media (AGENTS.md, regla 6). En los campos del juego no suele haber más de un
+reactor del tráfico saliendo a la vez; un tercero espera enganchado en su puesto a que se suelte uno, que es lo que pasa
+en un aeropuerto cuando faltan tractores. El dibujo existe solo de la baliza al saludo, y se suelta al acabar o al
+retirar el avión. No se ha medido el coste en fotogramas con dos tractores en pantalla.
+
+### Cada puesto, de un avión
+
+Los caminos del tráfico se trazaban una vez por tipo, para todos: dos reactores salían del mismo puesto, y en el banco
+de Los Rodeos un turbohélice de la frecuencia esperaba en el mismo puesto del que acababan de empujar al reactor, que se
+quedaba en la calle sin poder pasarle al lado. En un aeropuerto cada puesto es de un avión.
+
+- **Qué puesto tiene cada uno** (`puestosDelTrafico`): el que sale, el de su salida hasta que lo deja —empujado o
+  rodando, una envergadura más allá—; el que llega, el del final de su llegada, desde que se le dibuja hasta que se
+  retira.
+- **Uno nuevo coge uno libre** (`caminosConSuPuesto`): si el que le tocan los caminos de su tipo es de otro, o está tan
+  al lado que las alas se tocarían con el margen de la clave C en un puesto (4,5 m, `MARGEN_EN_EL_PUESTO`), se le trazan
+  los suyos sin esos puestos. Solo se paga la búsqueda cuando hay choque. Y lo mismo al volver a elegir la salida de la
+  pista al tomar tierra (`rehacerLaLlegada`).
+- **Contra el sitio de verdad**: donde el buscador recorta el remate al asfalto, el camino acaba en el último nudo de la
+  plataforma, y dos puestos distintos acababan en el mismo sitio; se mira dónde acaba el camino, no el puesto pedido.
+- **Los reactores, en los de contacto; los demás, en cualquiera**, y nadie en el tuyo: el tráfico ya se apartaba de
+  donde estás y de tu doble raya, y ahora también del puesto de tu plan.
+- **Si no queda ninguno libre**, como antes: un avión sin camino no puede aterrizar. `trafico-empujado.test.ts` pone en
+  cada campo un avión por cada tres puestos dibujados, hasta seis, y mira que no compartan puesto ni se toquen las alas.
+  Uno por cada tres porque en El Hierro los nueve puestos están a once metros unos de otros, en tres grupos, y un ATR de
+  veintisiete metros ocupa un grupo entero.
+
+### Lo medido
+
+- `world/trafico-empujado.test.ts`: en cada campo con calles, el reactor del tráfico sale empujado de un puesto de
+  contacto en Pettirossi, Los Rodeos (46 m de empuje), La Palma, Tenerife Sur, Gran Canaria, Lanzarote, La Gomera y
+  Barajas (25 m); de culo, sin morro en ninguna pared, con la doble raya por detrás del empuje y rodando hacia delante
+  al soltarse. Y llega con el morro al edificio. En Los Rodeos, con el tráfico entero: espera a que pases, empuja, la
+  zona corta tu raya y rueda después.
+- `scripts/ver-remolque-del-trafico.mjs`, en el navegador y con la tarjeta de verdad: en Los Rodeos, 52,6 m de culo en
+  unos veintiséis segundos de reloj con el juego a cuatro veces, nada hacia delante con el tractor, el tractor 13,7 m
+  por delante del centro del avión, la calle reservada todo el empuje, nada dentro de un edificio y, suelto, 43,7 m
+  rodados hacia delante.
+
 ## Lo que queda
 
-- **El tráfico**: los aviones de línea del tráfico que salen de un puesto de contacto, con las mismas piezas, y que
-  mientras empujan ocupen la calle para los demás (`tramo-de-frente.ts`, `repartirLosTramos`). No cupo en la segunda
-  mitad.
+- **Los puestos de contacto falsos en el tráfico**: con la regla de los cincuenta metros, para el reactor del tráfico
+  también salen «de contacto» Ayolas, Mariscal Estigarribia, Pedro Juan Caballero, Concepción, El Hierro y Cuatro
+  Vientos. No se nota porque en esos campos no opera el reactor del tráfico (`OPERAN`), pero es la misma cuenta que la
+  de quien juega: ver «Los cinco empujes con el cruce detrás».
+- **Lo que dicen los datos para distinguir un puesto de contacto**, mirado y sin tocar: ningún aeródromo extraído trae
+  pasarelas (`aeroway=jet_bridge`), y la clase `terminal` del edificio no basta. La tienen seis edificios de Barajas, uno
+  de Los Rodeos, cinco de La Gomera y el único de Ayolas, y ninguno de Cuatro Vientos. Exigir una terminal quitaría los
+  puestos falsos de Cuatro Vientos, pero no los de La Gomera, que tiene terminal y no pasarelas, ni los de Ayolas, cuya
+  terminal es su único edificio. Lo que separa de verdad un puesto de contacto es la pasarela, y eso pide volver a
+  extraer los aeródromos con ella.
 - **La radio de tierra en el peldaño de cabina**: el «pushback and start approved» y la conversación por el cable con
   la persona de tierra. Hace falta la pieza de la torre con sus recetas —el indicativo, los dos acentos— o una voz de
   tierra nueva; mientras, ese peldaño tiene las tarjetas y la frase de arrancar de siempre.
 - **La baliza en el cuadro**: el cuadro del juego no tiene panel de luces —en los de verdad la baliza va en el panel
   del techo—, así que la baliza se ve en el avión y no en la cabina.
 - **Los cinco empujes con el cruce detrás**, y Ayolas: ver «Lo que se mide en cada campo».
+- **Lo que cuesta un tractor del tráfico en fotogramas**, con dos en pantalla en una tableta de gama media: no se ha
+  medido. El tope de dos es el que se puso sin esa medida.
