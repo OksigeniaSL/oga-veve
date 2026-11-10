@@ -159,8 +159,10 @@
  *   se espera de un vuelo con nubes no vale ahí;
  *   `OGA_SIN_JUGAR=1` no abre el kit en vuelo, para que las capturas de lo
  *   que se nombra bajando salgan sin él delante; y `OGA_SOLO_LAMINA=1` solo
- *   mira la lámina con el kit que se abre y se mueve, en un minuto; y
- *   `OGA_SOLO_ESQUEMAS=1`, solo los esquemas, puestos uno a uno.
+ *   mira la lámina con el kit que se abre y se mueve, en un minuto;
+ *   `OGA_SOLO_ESQUEMAS=1`, solo los esquemas, puestos uno a uno; y
+ *   `OGA_SOLO_HANGAR=1`, solo las fichas del hangar y la escena que abre la de
+ *   pasaje: para cuando se añade o se mueve una ficha.
  *
  * **Los esquemas de lo que se explica** (punto 311): que cada dibujo que ya
  * tiene ilustración —el oído, las máscaras, lo alto…— la enseña a ella y no
@@ -2929,7 +2931,8 @@ async function jugarLaLuz(page, nombre, tocar) {
 
 /**
  * **Y desde el hangar**: su ficha, la tercera, al lado de las dos de Jazlyn,
- * abre la escena de pasaje. Como en el banco de la segunda escena, se esconde
+ * abre la escena de pasaje; detrás, los tres capítulos del viaje largo en su
+ * orden, Madrid, la noche y la llegada. Como en el banco de la segunda escena, se esconde
  * el pack de Ara para que un piloto nuevo vaya al hangar y no a la primera
  * experiencia.
  */
@@ -2954,9 +2957,9 @@ async function desdeElHangar() {
       })),
     );
     comprobar(
-      "hangar: la ficha de viajar con Jazlyn, al lado de las otras dos, y la de llegar a Asunción detrás",
-      fichas.length === 5 &&
-        fichas.map((f) => f.cual).join() === "despegar,aterrizar,pasaje,noche,largo" &&
+      "hangar: la ficha de viajar con Jazlyn, al lado de las otras dos, y detrás las del viaje largo en su orden",
+      fichas.length === 6 &&
+        fichas.map((f) => f.cual).join() === "despegar,aterrizar,pasaje,madrid,noche,largo" &&
         fichas.every((f) => f.alto >= 44),
       fichas.map((f) => `${f.cual}: «${f.nombre}» ${f.alto} px`).join(" · "),
     );
@@ -3306,6 +3309,7 @@ async function losEsquemasUnoAUno() {
 try {
   if (process.env.OGA_SOLO_LAMINA) await laLaminaYElKit();
   else if (process.env.OGA_SOLO_ESQUEMAS) await losEsquemasUnoAUno();
+  else if (process.env.OGA_SOLO_HANGAR) await desdeElHangar();
   else {
     if (!process.env.OGA_SIN_HANGAR) await desdeElHangar();
     await enElTelefono();
