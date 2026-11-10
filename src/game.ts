@@ -8022,8 +8022,13 @@ export class Game {
         gesto: null,
         mando: this.input.ultimoMando,
         lado: 0,
-        // Ni lo dicho hace rato, ni lo que se cortó a medias: ver `loDichoSeBorra`.
-        linea: p.linea && !inicio.laNocheCalla && !inicio.loDichoSeBorra
+        /*
+         * Ni lo dicho hace rato, ni lo que se cortó a medias: ver `loDichoSeBorra`. Salvo en el
+         * final sin llegada, que no tiene sello que ponga en la tarjeta: lo último que se dijo se
+         * queda escrito con el botón, que ya dice que se espera a quien juega, y la tarjeta no se
+         * queda en un recuadro vacío con el botón debajo.
+         */
+        linea: p.linea && !inicio.laNocheCalla && (!inicio.loDichoSeBorra || (sinLlegada && p.momento === "fin"))
           ? {
               quien: p.linea.quien,
               clave: p.linea.clave,

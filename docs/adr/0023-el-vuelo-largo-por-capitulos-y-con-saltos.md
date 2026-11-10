@@ -549,8 +549,9 @@ Lo que se decidió al escribirlo:
   dicho y sin tocar.
 - **La tarjeta del final, sin sello y sin la página del viaje.** No se llega a ningún campo: el sello de
   Barajas, que no lo tiene, salía en blanco, y la página era la de lo visto entre las islas. Queda el
-  anuncio con «Seguir volando». Y Barajas no se apunta en el cuaderno de viaje, que es de los campos a los
-  que se llega. Nada enseña todavía el avance del viaje por capítulos, y no se inventa aquí.
+  anuncio con «Seguir volando»: lo último que se dijo se queda escrito, que sin sello la tarjeta era un
+  recuadro vacío con el botón debajo. Y Barajas no se apunta en el cuaderno de viaje, que es de los campos a
+  los que se llega. Nada enseña todavía el avance del viaje por capítulos, y no se inventa aquí.
 - **La ficha, «Salí de Madrid de noche», dibujada como las otras dos**: la pista con sus luces, el avión
   yéndose al oeste y la ciudad encendida en el horizonte. Con la lámina del embarque, cada visita al hangar
   bajaría cien kilobytes de dibujo para una ficha de ciento veinte píxeles. Abre el capítulo sin
