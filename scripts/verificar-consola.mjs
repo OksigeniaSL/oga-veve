@@ -886,7 +886,10 @@ async function elCapitulo() {
     );
     comprobar("el dibujo contestó: no hizo falta la red del tope", !!yaFuera && !yaFuera.estado.consola?.porElTope, "");
     await foto(page, "capitulo", "3-recogida");
-    const sinBoton = await leer(page);
+    // El porqué va en su turno: si al recogerse aún hablaba Ara (el «empezamos» del juego que se
+    // acababa de abrir), la tripulante espera a que acabe, que es un suceso, una voz.
+    const sinBoton =
+      (await hastaQue(page, (x) => x.registro.some((d) => d.clave.endsWith("consolaRecoge")), 10_000)) ?? (await leer(page));
     comprobar("y desaparece el botón, y se dice por qué", !sinBoton.consola?.boton && sinBoton.registro.some((d) => d.clave.endsWith("consolaRecoge")), `${sinBoton.estado.linea}`);
 
     // ── Y el vuelo acaba ─
