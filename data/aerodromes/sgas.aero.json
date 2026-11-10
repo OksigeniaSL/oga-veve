@@ -1,6 +1,7 @@
 {
   "id": "SGAS",
   "name": "Silvio Pettirossi International Airport",
+  "pasarelas": {"hay": true, "fuente": "DINAC: cuatro mangas en el ala sur y dos nuevas en el ala norte, puertas 5 y 6; OpenStreetMap trae las seis (consulta del 10-11-2026)."},
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",

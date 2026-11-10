@@ -1,6 +1,7 @@
 {
   "id": "GCLP",
   "name": "Gran Canaria Airport",
+  "pasarelas": {"hay": true, "fuente": "Aena, licitación LPA 001/2024 (TED 040893-2024): modernizar y adecuar las pasarelas T1, T9, T10 y T11 del aeropuerto de Gran Canaria."},
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",

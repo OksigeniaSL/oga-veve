@@ -144,6 +144,21 @@ export interface Aerodrome {
    */
   readonly afis?: boolean;
   /**
+   * **Si el campo embarca por pasarela**, con de dónde sale el dato.
+   *
+   * Es lo que separa un puesto de contacto —morro a la terminal, pasarela a la
+   * puerta, y de ahí se sale empujado por un tractor— de uno de plataforma, del
+   * que un reactor sale de frente. OpenStreetMap lo trae a medias: preguntado
+   * el 10-11-2026, solo Pettirossi, Lanzarote y Fuerteventura tenían sus
+   * pasarelas dibujadas, y Gran Canaria y los dos de Tenerife, que las tienen,
+   * ninguna. Así que va escrito a mano, con la cita, como
+   * `salidasPorInterseccion`. Sin él,
+   * el campo no tiene pasarelas: en La Gomera, Ayolas o Cuatro Vientos un
+   * reactor aparcaba junto al edificio y salía empujado de una pasarela que no
+   * existe. Ver `edificiosDePasarela` en `remolque.ts` y el ADR 0025.
+   */
+  readonly pasarelas?: { readonly hay: boolean; readonly fuente: string };
+  /**
    * Si alrededor de la pista hay una granja: la casa, los potreros, el
    * ganado. Entonces la casa, el galpón y el hangar del fichero los dibuja
    * ella, con su tejado y su corredor, y no como prismas de aeropuerto. Ver

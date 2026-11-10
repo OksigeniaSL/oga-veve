@@ -9,6 +9,7 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  edificiosDePasarela,
   esPuestoDeContacto,
   largoPorLaBatalla,
   paredMasCercana,
@@ -34,9 +35,6 @@ const GRADO = Math.PI / 180;
  * ADR 0025.
  */
 const CON_EL_CRUCE_DETRAS: ReadonlySet<string> = new Set([
-  "la-gomera · jaz-110",
-  "la-gomera · jaz-120",
-  "cuatro-vientos · jaz-90",
   "barajas · jaz-110",
   "barajas · jaz-120",
 ]);
@@ -50,6 +48,40 @@ describe("qué aviones se empujan", () => {
     expect(esDeLinea(de("jaz-60"))).toBe(true);
     expect(vaALaPasarela(de("jaz-60"))).toBe(false);
     for (const id of ["jaz-20", "jaz-25", "jaz-40"]) expect(vaALaPasarela(de(id)), id).toBe(false);
+  });
+});
+
+/**
+ * **Los campos que embarcan por pasarela**, escritos a mano con su fuente en el fichero de
+ * cada uno: OpenStreetMap solo trae las de tres. En los demás no hay puesto de contacto, y
+ * un reactor sale de frente. Ver `Aerodrome.pasarelas` y el ADR 0025.
+ */
+const CON_PASARELAS = ["GCFV", "GCLA", "GCLP", "GCRR", "GCTS", "GCXO", "LEMD", "SGAS"];
+
+describe("solo hay puestos de contacto donde hay pasarelas", async () => {
+  const conAerodromo = await Promise.all(SCENARIOS.map((e) => conSuAerodromo(e)));
+  it("los ocho campos que las tienen, cada uno con su fuente", () => {
+    const vistos = new Map<string, string>();
+    for (const s of conAerodromo) {
+      const p = s.aerodrome?.pasarelas;
+      if (p?.hay) vistos.set(s.aerodrome!.id, p.fuente);
+    }
+    expect([...vistos.keys()].sort()).toEqual(CON_PASARELAS);
+    for (const [id, fuente] of vistos) expect(fuente.length, `${id} sin fuente`).toBeGreaterThan(20);
+  });
+  it("y en los demás, ningún puesto es de contacto para ningún reactor", () => {
+    for (const s of conAerodromo) {
+      const aero = s.aerodrome;
+      if (!aero || aero.pasarelas?.hay) continue;
+      const edificios = edificiosDePasarela(aero);
+      expect(edificios.length, s.id).toBe(0);
+      for (const id of DE_PASARELA) {
+        const avion = AIRCRAFT.find((a) => a.id === id)!;
+        const largo = largoPorLaBatalla(avion.batalla);
+        for (const p of aero.parkingPositions ?? [])
+          expect(saleConRemolque(true, p.xy[0], -p.xy[1], edificios, largo), `${s.id} · ${id}`).toBe(false);
+      }
+    }
   });
 });
 
@@ -158,7 +190,7 @@ describe("el empuje cabe y acaba en la raya en cada campo con aeródromo", async
         plan.deContacto = true;
         const sale = plan.reiniciar();
         const puesto = plan.arranque();
-        const edificios = aero.buildings ?? [];
+        const edificios = edificiosDePasarela(aero);
         const largo = largoPorLaBatalla(avion.batalla);
         if (!sale || !puesto || !saleConRemolque(vaALaPasarela(avion), puesto[0], puesto[1], edificios, largo)) {
           medidas.push({ campo: s.id, avion: id, empujado: false });

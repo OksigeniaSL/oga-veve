@@ -1070,6 +1070,7 @@ import {
   Remolque,
   rumboEnElPuesto,
   saleConRemolque,
+  edificiosDePasarela,
   trayectoriaDelEmpuje,
   vector,
 } from "./world/remolque";
@@ -20255,7 +20256,8 @@ export class Game {
     const aero = this.plan?.aerodromoActual;
     if (!puesto || !aero || !s.onGround) return;
     if (Math.hypot(s.position.x - puesto[0], s.position.z - puesto[1]) > 5) return;
-    const edificios = aero.buildings ?? [];
+    // Solo en un campo con pasarelas: ver `edificiosDePasarela`.
+    const edificios = edificiosDePasarela(aero);
     const largo = largoPorLaBatalla(this.aircraft.batalla);
     if (!saleConRemolque(vaALaPasarela(this.aircraft), puesto[0], puesto[1], edificios, largo)) return;
     const raya = this.rayaParaLaTripulacion();
@@ -20345,7 +20347,7 @@ export class Game {
     const c = this.input.controls;
     if (c.engineOn || this.remolque || !this.quienJuegaSaleEmpujado || !s.onGround || s.groundSpeed > 0.5) return false;
     if (!arrancarAbreOtroTramo(this.leccion, this.faseDeAhora, this.vueloTerminado)) return false;
-    const edificios = this.plan?.aerodromoActual.buildings ?? [];
+    const edificios = edificiosDePasarela(this.plan?.aerodromoActual);
     const largo = largoPorLaBatalla(this.aircraft.batalla);
     const aqui: [number, number] = [s.position.x, s.position.z];
     if (!saleConRemolque(true, aqui[0], aqui[1], edificios, largo)) return false;

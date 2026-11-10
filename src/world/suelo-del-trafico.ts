@@ -22,6 +22,7 @@
 
 import { enElPavimento, type Aerodrome, type Punto } from "./aerodrome";
 import {
+  edificiosDePasarela,
   esPuestoDeContacto,
   largoPorLaBatalla,
   rumboEnElPuesto,
@@ -432,7 +433,8 @@ export function sueloDelTrafico(
   };
 
   const puestos = (aero.parkingPositions ?? []).map((p) => p.xy);
-  const edificios = aero.buildings ?? [];
+  // Los de un campo que embarca por pasarela: en otro no hay puesto de contacto. Ver `edificiosDePasarela`.
+  const edificios = edificiosDePasarela(aero);
   /**
    * **Los puestos de contacto para un avión de esta batalla**, o todos si el
    * campo no tiene ninguno: un avión que embarca por pasarela va a la terminal,

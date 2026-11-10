@@ -19,7 +19,7 @@ import {
   type EnTierra,
   type QuienJuega,
 } from "./trafico";
-import { esPuestoDeContacto, largoPorLaBatalla, paredMasCercana, vector } from "./remolque";
+import { edificiosDePasarela, esPuestoDeContacto, largoPorLaBatalla, paredMasCercana, vector } from "./remolque";
 import { dondeSeAcerca } from "./tramo-de-frente";
 import { RETENIDO } from "../flight/radio";
 
@@ -55,9 +55,12 @@ describe("el reactor del tráfico sale empujado de un puesto de contacto, en cad
       const aero = esc.aerodrome as Aerodrome;
       const suelo = sueloDelTrafico(aero, esc.runway, aero.runways[0]?.widthM ?? 45);
       if (!suelo) return;
-      const edificios = aero.buildings ?? [];
+      // Los de un campo con pasarelas, que en otro no hay puesto de contacto: ver `edificiosDePasarela`.
+      const edificios = edificiosDePasarela(aero);
       const sale = suelo.salida(undefined, undefined, pistaQuePideConSuMargen(REACTOR), PASARELA);
       const llega = suelo.llegada(REACTOR.toca + REACTOR.frena, undefined, undefined, PASARELA);
+      // Y donde no las hay, ni tractor: sale de frente, como de cualquier plataforma.
+      if (!aero.pasarelas?.hay) expect(sale?.empuje, "sin pasarelas, sin tractor").toBeFalsy();
       // Al llegar, si el puesto es de contacto, con el morro al edificio: el último tramo va hacia la pared.
       let llegaDeContacto = false;
       let morroAlEdificio = false;

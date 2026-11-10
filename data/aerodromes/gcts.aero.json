@@ -1,6 +1,7 @@
 {
   "id": "GCTS",
   "name": "Tenerife Sur Airport",
+  "pasarelas": {"hay": true, "fuente": "Aena, nota de prensa del 29-05-2017: licitación del mantenimiento de las pasarelas del aeropuerto de Tenerife Sur."},
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",

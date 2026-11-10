@@ -1,6 +1,7 @@
 {
   "id": "LEMD",
   "name": "Adolfo Suárez Madrid–Barajas Airport",
+  "pasarelas": {"hay": true, "fuente": "Aena: Barajas embarca por pasarela en sus terminales; el capítulo 1 sale de una, en el T5 de la T1 (ADR 0025)."},
   "source": {
     "osm": "overpass",
     "extracted": "2026-11-09",

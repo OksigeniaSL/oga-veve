@@ -62,7 +62,7 @@ import { radioDeGiro } from "../flight/cabe";
 import { DE_LADO_RODANDO } from "../flight/fdm";
 import { ESPERA_MAXIMA } from "../flight/radio";
 import { PuertaAsignada } from "./puerta-asignada";
-import { esPuestoDeContacto, largoPorLaBatalla } from "./remolque";
+import { edificiosDePasarela, esPuestoDeContacto, largoPorLaBatalla } from "./remolque";
 import {
   construirGrafo,
   rectaPorPavimento,
@@ -2248,12 +2248,13 @@ export class PlanDeVuelo {
 
   /**
    * **Los puestos de contacto para este avión**: los de pasarela, pegados a un
-   * edificio con el morro sin meterse en él. Ver `esPuestoDeContacto`.
+   * edificio con el morro sin meterse en él, y solo en un campo que embarca por
+   * pasarela. Ver `esPuestoDeContacto` y `edificiosDePasarela`.
    */
   private puestosDeContacto(): { ref: string | null; xy: Punto }[] {
     if (this.deContactoGuardados) return this.deContactoGuardados;
     const largo = largoPorLaBatalla(this.avion.batalla);
-    const edificios = this.aero.buildings ?? [];
+    const edificios = edificiosDePasarela(this.aero);
     this.deContactoGuardados = vaALaPasarela(this.avion)
       ? this.puestosEnElAsfalto().filter((p) => esPuestoDeContacto(p.xy[0], -p.xy[1], edificios, largo))
       : [];

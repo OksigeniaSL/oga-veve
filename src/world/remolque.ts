@@ -39,7 +39,7 @@
  * al norte: se le da la vuelta aquí.
  */
 
-import type { Punto } from "./aerodrome";
+import type { Aerodrome, Punto } from "./aerodrome";
 
 const GRADO = Math.PI / 180;
 
@@ -139,6 +139,17 @@ export function esPuestoDeContacto(x: number, z: number, edificios: Edificios, l
   if (!pared) return false;
   const delMorro = pared.distancia - largo / 2;
   return delMorro >= HOLGURA_DEL_MORRO && delMorro <= ALCANCE_DE_LA_PASARELA;
+}
+
+/**
+ * **Los edificios junto a los que puede haber un puesto de contacto**: los del
+ * campo si embarca por pasarela, y ninguno si no. La regla de los cincuenta
+ * metros sola daba por puestos de pasarela los de cualquier campo con un
+ * edificio cerca de la plataforma —La Gomera, Ayolas, Cuatro Vientos—, y allí un
+ * reactor salía empujado de una pasarela que no hay. Ver `Aerodrome.pasarelas`.
+ */
+export function edificiosDePasarela(aero: Pick<Aerodrome, "pasarelas" | "buildings"> | null | undefined): Edificios {
+  return aero?.pasarelas?.hay === true ? (aero.buildings ?? []) : [];
 }
 
 /**
