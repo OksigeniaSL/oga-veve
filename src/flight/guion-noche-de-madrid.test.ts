@@ -136,9 +136,7 @@ function volarElCapitulo(seVeMadrid: boolean, seVenLasCalles = true): { readonly
     enTramo = 0;
   };
   const ver = (sitio: SitioDelPaisaje): VistaDelSitio =>
-    (sitio === "luces-de-madrid" && seVeMadrid && altitud > 1500) || (sitio === "luces-de-las-calles" && seVenLasCalles)
-      ? { como: "ventanilla", lado: "izquierda" }
-      : { como: null, lado: null };
+    sitio === "luces-de-madrid" && seVeMadrid && altitud > 1500 ? { como: "ventanilla", lado: "izquierda" } : { como: null, lado: null };
   const DT = 0.1;
   for (; t < 3000 && !escena.estado.terminado; ) {
     t += DT;
@@ -166,6 +164,7 @@ function volarElCapitulo(seVeMadrid: boolean, seVenLasCalles = true): { readonly
       faltaParaTocar: 9_000_000,
       alabeo: volandoYa && altitud > 1000 && altitud < 1600 ? -20 * GRADO : 0,
       ver,
+      ...(tramo === "rodando" ? { ejeVerde: seVenLasCalles } : {}),
       largo: { temporada: "invierno" } as LecturaDelPasaje["largo"],
     };
     const p = escena.paso(DT, l);
@@ -217,7 +216,7 @@ describe("el capítulo, de puerta a puerta", () => {
     expect(v.terminado).toBe(true);
   });
 
-  it("la fila verde de las calles, solo si se ve; y si no, no hace esperar a nadie en la doble raya", () => {
+  it("la fila verde de las calles, solo si la calle la lleva; y si no, no hace esperar a nadie en la doble raya", () => {
     const v = volarElCapitulo(true, false);
     expect(v.dichos).not.toContain("lucesDeLasCalles");
     expect(v.dichas).not.toContain("inicio.ara.pasaje.largo.lucesVerdes");

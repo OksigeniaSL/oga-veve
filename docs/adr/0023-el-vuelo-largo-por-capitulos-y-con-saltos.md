@@ -502,10 +502,12 @@ láminas de la bienvenida, las voces y la ficha del menú son de la tanda siguie
   seguido. La dirección `?capitulo=` sigue siendo solo de desarrollo.
 - **No hay remolque**: los puestos del juego son de salir de frente, y el T5 también. Queda dicho y
   sin hacer.
-- **Rodando se nombra la fila verde del eje de las calles**, y solo si cae en el cristal de Ara,
-  sentada: las del fichero del aeródromo, a su izquierda y a unos cientos de metros. Las de al lado y
-  las azules del borde las tapan el ala y el motor, mirado en la captura del banco. Si no se ve, no
-  se dice, y en la doble raya ya no espera a nadie.
+- **Rodando se nombra la fila verde del eje de las calles con el avión visto por fuera**, y solo si
+  la calle por la que va la lleva en el fichero del aeródromo (`ejeVerde`). Por el cristal de Ara se
+  intentó primero y no se pudo asegurar: el juego decía que se veía y la captura del banco, con la
+  tarjeta de verdad, no enseñaba ninguna; las de al lado las tapan el ala y el motor, y las de lejos
+  los edificios, que no se miran al decir si algo se ve. Si la calle no la lleva, no se dice, y en la
+  doble raya ya no espera a nadie.
 - **El ⏩ no corre en tierra**, que es regla del motor (`sePuedeCorrer`): el rodaje de la T1 a la
   Z4, cuatro kilómetros y medio, va a su paso, unos diez minutos, y el capítulo entero sale en unos
   trece. Si se quiere más corto, es el motor el que tiene que aprender a correr rodando.
