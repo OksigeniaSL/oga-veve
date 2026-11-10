@@ -1,26 +1,24 @@
 /**
- * **El primer capítulo del vuelo largo: «La noche de Madrid»** (ADR 0023). Se abre con
- * `?inicio=4&capitulo=1` en desarrollo. El JAZ 110 Tijereta, con Ara de pasaje, desde el
- * embarque en el puesto T5 de la T1 de Barajas hasta que se apaga la luz del cinturón,
- * subiendo de noche sobre la meseta. Del vuelo de verdad, de −0:40 a +0:30: se embarca
- * hacia las 23:05 de Madrid, se cierran las puertas, calzos fuera a las 23:45, unos veinte
- * minutos de rodaje y la subida.
- *
- * Esto es el esqueleto: los turnos en su sitio, con sus claves. Las frases que no
- * existían llevan un texto provisional corto; el guion de verdad, las láminas de la
- * bienvenida (la litera y el viento de arriba) y las voces son de la tanda siguiente.
+ * **El primer capítulo del vuelo largo: «La noche de Madrid»** (ADR 0023). Se abre desde su
+ * ficha de «¿A qué jugás?» y, en desarrollo, con `?inicio=4&capitulo=1`. El JAZ 110
+ * Tijereta, con Ara de pasaje, desde el embarque en el puesto T5 de la T1 de Barajas hasta
+ * un rato después de apagarse la luz del cinturón, subiendo de noche sobre la meseta. Del
+ * vuelo de verdad, de −0:40 a +0:30: se embarca hacia las 23:05 de Madrid, se cierran las
+ * puertas, calzos fuera a las 23:45, unos veinte minutos de rodaje y la subida.
  *
  * ## Lo que pasa, en el orden de un vuelo de verdad
  *
  * 1. **El embarque**, bajo su lámina: Ara ya en su ventanilla, la cabina con las luces
- *    encendidas y la gente guardando bultos. Es la apertura del capítulo: el mundo no
- *    asoma hasta que se abre la ventanilla, ya de noche en el puesto.
+ *    encendidas, la gente guardando bultos e Idaira ayudando a un señor con su maleta. Es
+ *    la apertura del capítulo: el mundo no asoma hasta que se abre la ventanilla, ya de
+ *    noche en el puesto.
  * 2. **La bienvenida de la tripulación** y el cinturón, como en el vuelo corto.
  * 3. **Puertas cerradas: la bienvenida de la comandante**, la primera de su megafonía en
  *    un vuelo de verdad: tiempo de vuelo, altura, viento de cara, hora de llegada en hora
- *    de allá —según el horario de hoy, el de verano o el de invierno de Europa— y que hoy
- *    van tres pilotos que se turnan (EASA ORO.FTL.205: ver «La cuarta escena» en el ADR
- *    0020). En el puesto, antes de arrancar: por debajo de los diez mil pies, volando, la
+ *    de Asunción —según el horario de hoy, el de verano o el de invierno de Europa— y que
+ *    hoy van tres pilotos que se turnan (EASA ORO.FTL.205: ver «La cuarta escena» en el ADR
+ *    0020). Cada una de las dos cosas nuevas, con su lámina: el viento de arriba y la
+ *    litera. En el puesto, antes de arrancar: por debajo de los diez mil pies, volando, la
  *    comandante ya no habla de nada que no sea volar.
  * 4. **Toboganes armados y motores**, que es lo que da permiso a la tripulación de mando
  *    para arrancar y rodar. No hay remolque: los puestos del juego son de salir de frente.
@@ -32,10 +30,44 @@
  *    Por el cristal de Ara no se puede asegurar que se vea: las de al lado las tapan el ala
  *    y el motor, y las de lejos los edificios.
  * 7. **El despegue por la 36L y la salida CCS6L**: recto al norte, a la izquierda a rumbo
- *    285 y después al oeste, con Madrid encendida del lado de Ara. Se nombra si se ve.
+ *    285 y después al oeste, con Madrid encendida del lado de Ara. Se nombra si se ve. Y a
+ *    205 nudos como mucho en el viraje y a 210 hasta MD039, que es lo que pide la carta:
+ *    ver `topeHasta`.
  * 8. **La luz del cinturón**, que apaga la comandante con su anuncio pasados los diez mil
- *    pies, y el final del capítulo, con el paso al segundo. No el de siempre, que dice que ya
- *    se llegó a la altura: aquí se sigue subiendo hasta el 360.
+ *    pies. No el de siempre, que dice que ya se llegó a la altura: aquí se sigue subiendo
+ *    hasta el 360.
+ * 9. **Y el viento de arriba, contado en persona.** Con la luz apagada la tripulación ya se
+ *    levanta, e Idaira pasa por el pasillo: Ara le pregunta por el viento de cara que dijo
+ *    su mamá, y ella se lo cuenta con la lámina. Es el final del capítulo, con el paso al
+ *    segundo.
+ *
+ * ## Las dos explicaciones de la bienvenida: cuál va en persona
+ *
+ * La bienvenida es un suceso, y lo dice una voz: la de la comandante, por la megafonía, sin
+ * nadie que la explique encima. Cada cosa nueva lleva su lámina mientras se dice, y de las
+ * dos, **la litera se entiende sola**: es un dibujo de lo que hay, un piloto dormido en su
+ * cama con su cortina, encima de la cabina de mando, y los otros dos volando debajo. Lo que
+ * no se ve en el dibujo —que quien manda sigue siendo responsable aunque descanse— lo dice
+ * la comandante en primera persona, que es como enseña los galones: cuatro barras no
+ * quieren decir que mandes, quieren decir que respondes. **El viento de arriba, no**: es un
+ * esquema, la Tierra con dos ríos de aire, y sin palabras no dice nada a quien tiene cuatro
+ * años. Así que el viento es lo que Ara pregunta, y otro suceso: con la luz del cinturón
+ * apagada, a Idaira, que lo cuenta de pie y con su lámina. Sin decir de qué dirección sopla
+ * en cada punto de la ruta, que no está comprobado: lo de que hoy viene de cara lo dijo la
+ * comandante, que es quien tiene el parte.
+ *
+ * ## Los números de la bienvenida
+ *
+ * Lo que da la comandante es el tiempo de vuelo, no el de calzos a calzos: de las 11 h 40
+ * del horario de verano y las 11 h 45 del de invierno, menos los veinte minutos de rodaje
+ * en Barajas y los siete en Pettirossi (`RODAJE_DE_SALIDA`, `RODAJE_DE_LLEGADA`), quedan
+ * 11 h 13 y 11 h 18 en el aire: «once horas y cuarto», las dos. La altura, la del primer
+ * nivel de crucero, el 360: unos once mil metros. Y la llegada, la de calzos del horario
+ * en hora de Asunción, que es la que se anuncia: las 06:25 o las 07:30.
+ *
+ * Y que la vuelta dura menos: el vuelo de vuelta tarda once horas de calzos a calzos, unos
+ * tres cuartos de hora menos que la ida (ver `plan-largo-radio.md`, 1.1). Se dice así, y no
+ * «casi una hora», que serían quince minutos de más.
  *
  * ## Quién dice qué
  *
@@ -161,14 +193,18 @@ export function caminoDeLaSalida(
   const [x, z] = finalDeLaPista;
   const despegue: Fijo = { x, z, nombre: `RW${SALIDA_DE_BARAJAS.cabecera}`, papel: "despegue", minima: null, carrera };
   const conNombre = SALIDA_DE_BARAJAS.tramos.flatMap((t) => ("fijo" in t ? [t] : []));
-  const fijos: Fijo[] = conNombre.map((t, i) => ({
-    ...dondeCae(origen, t),
-    nombre: t.fijo,
-    papel: "salida",
-    minima: t.porEncimaFt * PIE,
-    // El primero se sobrevuela: hasta él no se vira.
-    ...(i === 0 ? { recta: true } : {}),
-  }));
+  const fijos: Fijo[] = conNombre.map((t, i) => {
+    const tope = topeHasta(t.fijo);
+    return {
+      ...dondeCae(origen, t),
+      nombre: t.fijo,
+      papel: "salida",
+      minima: t.porEncimaFt * PIE,
+      // El primero se sobrevuela: hasta él no se vira.
+      ...(i === 0 ? { recta: true } : {}),
+      ...(tope !== null ? { maxKt: tope } : {}),
+    };
+  });
   const ultimo = conNombre[conNombre.length - 1]!;
   /*
    * Desde bastante por delante del través del último: Cáceres queda unos cien kilómetros
@@ -181,11 +217,37 @@ export function caminoDeLaSalida(
   return [despegue, ...fijos, ...camino];
 }
 
+/**
+ * **Lo más rápido que se puede ir hasta pasar un punto de la salida**, nudos indicados, o
+ * `null` sin tope: el suyo y el de los tramos sin nombre que tiene a los dos lados. Los de
+ * delante, porque llegan a él; los de detrás, porque empiezan en él, y un viraje con tope se
+ * empieza ya a esa velocidad. En la CCS6L, los 205 nudos del viraje a rumbo 285 valen hasta
+ * SSY, donde empieza, y hasta MD039, donde acaba en el 320, que lleva además los suyos, 210.
+ * Así se sube a 205 desde que se recogen los flaps hasta pasar MD039, como sube quien lee la
+ * carta: acelerar a 250 al recogerlos, que era lo que se hacía, son 236 a 250 en el viraje.
+ */
+export function topeHasta(fijo: string): number | null {
+  const tramos = SALIDA_DE_BARAJAS.tramos;
+  const i = tramos.findIndex((t) => "fijo" in t && t.fijo === fijo);
+  if (i < 0) return null;
+  const topes: number[] = [];
+  const delTramo = (t: (typeof tramos)[number]): void => {
+    if ("maxKt" in t) topes.push(t.maxKt);
+  };
+  delTramo(tramos[i]!);
+  for (let j = i - 1; j >= 0 && !("fijo" in tramos[j]!); j--) delTramo(tramos[j]!);
+  for (let j = i + 1; j < tramos.length && !("fijo" in tramos[j]!); j++) delTramo(tramos[j]!);
+  return topes.length ? Math.min(...topes) : null;
+}
+
 export type MomentoDeMadrid =
   | "embarque"
   | "ventanilla"
   | "cinturon"
   | "bienvenida"
+  | "vientoDeCara"
+  | "pilotos"
+  | "esMama"
   | "puertas"
   | "motores"
   | "demostracion"
@@ -197,6 +259,8 @@ export type MomentoDeMadrid =
   | "carrera"
   | "madrid"
   | "arriba"
+  | "pregunta"
+  | "viento"
   | "fin";
 
 export type CharlaDeMadrid = "tren" | "giro";
@@ -217,6 +281,8 @@ const con = (l: Linea, dibujo: string): Linea => ({ ...l, dibujo });
 
 /** Lo que se deja callado antes de seguir con lo que va sin prisa, s. */
 const SE_MIRA = 1;
+/** Entre dos trozos de un mismo anuncio, o de una misma charla, s: lo que se respira, no un silencio. */
+const SIGUE_EL_ANUNCIO = 0.3;
 /** Lo que se espera sentado antes de hablar, s: el rato de mirar la cabina. */
 const AL_SENTARSE = 1.5;
 /** El rato de embarcar después de abrirse la ventanilla, s: lo que tarda en sentarse el resto. */
@@ -232,6 +298,12 @@ const YA_RUEDA = 3;
 const GRADO = Math.PI / 180;
 /** El alabeo que se nota desde el asiento. */
 const SE_NOTA_EL_GIRO = 12 * GRADO;
+/**
+ * **Lo que tarda la tripulación en levantarse** tras apagarse la luz del cinturón, s desde
+ * que empieza el anuncio: lo que dura y un rato. Es el rato de soltarse el arnés y salir al
+ * pasillo; antes, Idaira sigue sentada en su asiento, y no se le pregunta nada.
+ */
+const SE_LEVANTA_LA_TRIPULACION = 20;
 
 const callados = (_l: LecturaDelPasaje, e: { readonly callaDesde: number }): boolean => e.callaDesde >= SE_MIRA;
 /** Si se está rodando hacia la pista o esperando en la doble raya. */
@@ -270,24 +342,33 @@ const MOMENTOS: readonly Momento[] = [
     lineas: [tripulacion("cinturon"), con(ara("cinturon"), "cinturon")],
     mira: "cinturon",
   },
+  /*
+   * **Puertas cerradas: la bienvenida de la comandante**, en el puesto y con los motores
+   * parados. Es un solo anuncio en tres trozos, para que cada cosa nueva salga con su
+   * lámina mientras se dice: lo que sigue no vuelve a saludar a nadie. Ver «Las dos
+   * explicaciones de la bienvenida», en la cabecera.
+   */
+  { id: "bienvenida", cuando: callados, caduca: (l) => !enElSuelo(l.tramo), lineas: [comandante("bienvenida")] },
   {
-    /*
-     * **Puertas cerradas: la bienvenida de la comandante**, en el puesto y con los motores
-     * parados. Lo que se dice depende del horario de hoy: la hora de llegada, en la de
-     * Asunción, es una en verano de Europa y otra en invierno. Las láminas de la litera y
-     * del viento de arriba van aquí, en la tanda del guion.
-     */
-    id: "bienvenida",
-    cuando: callados,
+    // El tiempo, la altura, el viento y la llegada: la hora es una en verano de Europa y otra en invierno.
+    id: "vientoDeCara",
+    cuando: (_l, e) => e.callaDesde >= SIGUE_EL_ANUNCIO,
     caduca: (l) => !enElSuelo(l.tramo),
-    lineas: [comandante("bienvenida"), comandante("vueloVerano"), comandante("tresPilotos"), ara("comandante")],
-    segun: (l) => [
-      comandante("bienvenida"),
-      comandante(l.largo?.temporada === "invierno" ? "vueloInvierno" : "vueloVerano"),
-      comandante("tresPilotos"),
-      ara("comandante"),
-    ],
+    tapa: "viento-de-arriba",
+    lineas: [comandante("vueloVerano")],
+    segun: (l) => [comandante(l.largo?.temporada === "invierno" ? "vueloInvierno" : "vueloVerano")],
+    sigue: "bienvenida",
   },
+  {
+    id: "pilotos",
+    cuando: (_l, e) => e.callaDesde >= SIGUE_EL_ANUNCIO,
+    caduca: (l) => !enElSuelo(l.tramo),
+    tapa: "litera",
+    lineas: [comandante("tresPilotos")],
+    sigue: "bienvenida",
+  },
+  // Y se quita la lámina: lo que Ara dice es de quien acaba de hablar, allá adelante.
+  { id: "esMama", cuando: callados, caduca: (l) => !enElSuelo(l.tramo), tapa: null, lineas: [ara("comandante")] },
   // Los toboganes armados: con esto, la tripulación de mando arranca.
   { id: "puertas", cuando: callados, lineas: [anuncio("comandante.crosscheck"), ara("puertas")] },
   {
@@ -377,8 +458,24 @@ const MOMENTOS: readonly Momento[] = [
     cuando: (l, e) => !l.enTierra && l.altitud >= SE_APAGA_EL_CINTURON && e.callaDesde >= SE_MIRA,
     lineas: [comandante("cinturon")],
   },
-  // Y el final del capítulo, con su tarjeta: el botón lleva al segundo.
-  { id: "fin", cuando: callados, lineas: [] },
+  /*
+   * **El viento de arriba, en persona.** Con la luz apagada, Idaira ya puede estar de pie, y
+   * Ara le pregunta por lo que dijo su mamá en la bienvenida. Lo cuenta ella, de tú y con la
+   * lámina, que es otro suceso y otra voz que la de la megafonía. Ver la cabecera.
+   */
+  {
+    id: "pregunta",
+    cuando: (_l, e) => e.desdeQueSeDijo("arriba") >= SE_LEVANTA_LA_TRIPULACION && e.callaDesde >= SE_MIRA,
+    lineas: [araLargo("vientoPregunta")],
+  },
+  {
+    id: "viento",
+    cuando: (_l, e) => e.callaDesde >= SIGUE_EL_ANUNCIO,
+    tapa: "viento-de-arriba",
+    lineas: [idaira("vientoRios"), idaira("vientoBarco")],
+  },
+  // Y el final del capítulo, sin la lámina y con su tarjeta: el botón lleva al segundo.
+  { id: "fin", cuando: callados, tapa: null, lineas: [] },
 ];
 
 const CHARLAS: readonly DefCharla<MomentoDeMadrid, CharlaDeMadrid>[] = [
@@ -407,7 +504,8 @@ export const GUION_NOCHE_DE_MADRID: GuionDelPasaje<MomentoDeMadrid, CharlaDeMadr
   lado: LADO_DE_ARA,
   momentos: MOMENTOS,
   charlas: CHARLAS,
-  apertura: { hasta: "ventanilla", laminas: ["embarque"] },
+  // Con las dos de la bienvenida: se piden en el puesto, y no se pintan a trozos delante de nadie.
+  apertura: { hasta: "ventanilla", laminas: ["embarque", "viento-de-arriba", "litera"] },
   // Lo de señalar por la ventanilla, con sus sitios y sus frases, es de la tanda del guion.
   seSenalaDesde: [],
   tripulanteEnElPasillo: () => false,

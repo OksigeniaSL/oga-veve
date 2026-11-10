@@ -644,10 +644,12 @@ export interface VistaDelInicio {
   /**
    * El sello del final, en SVG, y si ya se puede seguir. Con `volver`, el
    * botón no es seguir volando sino volver al hangar: de pasaje no se sigue
-   * volando el avión de otro.
+   * volando el avión de otro. **Sin sello**, el final que no llega a ningún
+   * campo: el primer capítulo del viaje largo acaba subiendo, y un sello en
+   * blanco diría que se llegó a algún sitio.
    */
   readonly fin: {
-    readonly sello: string;
+    readonly sello: string | null;
     readonly puedeSeguir: boolean;
     readonly volver?: boolean;
     /**
@@ -846,11 +848,15 @@ export class PantallaDelInicio {
          * Y de pasaje, al lado del sello del campo, **la página del viaje**:
          * lo visto por la ventanilla, con sus huecos. Ver `ui/sellos-del-viaje.ts`.
          */
+        const llegada =
+          v.fin.sello !== null || v.fin.viaje
+            ? `<div class="inicio__llegada">
+                 ${v.fin.sello !== null ? `<div class="inicio__sello">${v.fin.sello}</div>` : ""}
+                 ${v.fin.viaje ?? ""}
+               </div>`
+            : "";
         this.fin.innerHTML = `
-          <div class="inicio__llegada">
-            <div class="inicio__sello">${v.fin.sello}</div>
-            ${v.fin.viaje ?? ""}
-          </div>
+          ${llegada}
           <button class="inicio__seguir" type="button" data-inicio="seguir" hidden>
             <svg viewBox="0 0 48 32" aria-hidden="true">${icono}</svg>
             <span>${t(v.fin.volver ? "inicio.modo.volver" : "inicio.modo.seguir")}</span>

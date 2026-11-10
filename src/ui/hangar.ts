@@ -118,8 +118,8 @@ export interface Eleccion {
    * `flight/inicio.ts`, `flight/inicio-aterrizar.ts` y `main.ts`.
    */
   readonly inicio?: EscenaDelInicio;
-  /** **El capítulo del vuelo largo, si no es el tercero**: el de la ficha de la noche. */
-  readonly capitulo?: 2;
+  /** **El capítulo del vuelo largo, si no es el tercero**: el de la ficha de Madrid o el de la noche. */
+  readonly capitulo?: 1 | 2;
 }
 
 // ── Qué cambia en cada tramo ─────────────────────────────────────────────
@@ -1280,13 +1280,44 @@ const LEC_INICIO_NOCHE = `
   </svg>
 `;
 
+/*
+ * **La ficha de Madrid**: la pista de noche con sus luces, el avión que se va hacia el
+ * oeste y la ciudad encendida en el horizonte. Sin una letra, y distinta de la de la noche,
+ * que es el mar con sus islas: aquí se ve que se despega.
+ */
+const LEC_INICIO_MADRID = `
+  <svg class="ficha__panel" viewBox="0 0 120 84" aria-hidden="true">
+    <rect fill="#101d45" x="0" y="0" width="120" height="84" rx="3" />
+    <g fill="#fff">
+      <circle cx="14" cy="10" r="0.9" /><circle cx="30" cy="20" r="0.7" /><circle cx="52" cy="8" r="1" />
+      <circle cx="96" cy="12" r="0.8" /><circle cx="110" cy="26" r="1" /><circle cx="78" cy="22" r="0.7" />
+    </g>
+    <rect fill="#0a1430" x="0" y="58" width="120" height="26" />
+    <path fill="#3a3f78" opacity="0.55" d="M30 58 q22 -9 46 0 Z" />
+    <g fill="#ffd27a">
+      <circle cx="36" cy="60" r="0.9" /><circle cx="41" cy="61.5" r="1" /><circle cx="46" cy="60.5" r="0.8" /><circle cx="50" cy="62" r="1" />
+      <circle cx="55" cy="60.6" r="0.9" /><circle cx="60" cy="61.8" r="0.8" /><circle cx="65" cy="60.4" r="1" /><circle cx="70" cy="61.6" r="0.8" />
+    </g>
+    <path fill="#262a36" d="M78 84 L118 84 L101 60 L97 60 Z" />
+    <g fill="#fff">
+      <circle cx="80" cy="81" r="1.1" /><circle cx="85" cy="74" r="0.9" /><circle cx="89" cy="68.5" r="0.8" /><circle cx="92.5" cy="64" r="0.6" />
+      <circle cx="116" cy="81" r="1.1" /><circle cx="111" cy="74" r="0.9" /><circle cx="107" cy="68.5" r="0.8" /><circle cx="103.5" cy="64" r="0.6" />
+    </g>
+    <path d="M99 58 Q90 40 70 30" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-dasharray="0.1 5" />
+    <g transform="translate(62 26) rotate(-62)">
+      <path fill="#fff" stroke="#0a1430" stroke-width="0.8" d="M0 -10 q1.6 2 1.6 5 v2.6 l8.4 5.4 v2 l-8.4 -2.6 l-0.4 5 l3 2.4 v1.4 l-4.2 -1.2 l-4.2 1.2 v-1.4 l3 -2.4 l-0.4 -5 l-8.4 2.6 v-2 l8.4 -5.4 v-2.6 q0 -3 1.6 -5 Z" />
+    </g>
+    ${caraDentro("ara", 4, 48, 30)}
+  </svg>
+`;
+
 /**
  * Las fichas del modo inicio. **No son lecciones más del grupo**: no se eligen
  * y se despega después, sino que se tocan y se vuelan, con su sitio, su avión
  * y su peldaño. Por eso van fuera del grupo de radio, delante de todo: la de
  * aprender a volar y, al lado, la de aterrizar.
  */
-function fichaDelInicio(cual: EscenaDelInicio | "noche"): string {
+function fichaDelInicio(cual: EscenaDelInicio | "noche" | "madrid"): string {
   const dibujo =
     cual === "aterrizar"
       ? LEC_INICIO_ATERRIZAR
@@ -1296,7 +1327,9 @@ function fichaDelInicio(cual: EscenaDelInicio | "noche"): string {
           ? LEC_INICIO_LARGO
           : cual === "noche"
             ? LEC_INICIO_NOCHE
-            : LEC_INICIO;
+            : cual === "madrid"
+              ? LEC_INICIO_MADRID
+              : LEC_INICIO;
   const nombre =
     cual === "aterrizar"
       ? "inicio.modo.aterrizar"
@@ -1306,7 +1339,9 @@ function fichaDelInicio(cual: EscenaDelInicio | "noche"): string {
           ? "inicio.modo.largo"
           : cual === "noche"
             ? "inicio.modo.noche"
-            : "inicio.modo.nombre";
+            : cual === "madrid"
+              ? "inicio.modo.madrid"
+              : "inicio.modo.nombre";
   return `
     <button class="ficha ficha--leccion ficha--inicio" type="button" data-inicio-modo="${cual}">
       <span class="ficha__lienzo ficha__lienzo--panel">${dibujo}</span>
@@ -2036,7 +2071,7 @@ export function abrirHangar(
         -->
         <section class="hangar__bloque" aria-labelledby="hangar-leccion">
           <h2 class="hangar__pregunta" id="hangar-leccion">${t("hangar.aque")}</h2>
-          <div class="hangar__rejilla hangar__rejilla--suelta hangar__inicio">${fichaDelInicio("despegar")}${fichaDelInicio("aterrizar")}${fichaDelInicio("pasaje")}${fichaDelInicio("noche")}${fichaDelInicio("largo")}</div>
+          <div class="hangar__rejilla hangar__rejilla--suelta hangar__inicio">${fichaDelInicio("despegar")}${fichaDelInicio("aterrizar")}${fichaDelInicio("pasaje")}${fichaDelInicio("madrid")}${fichaDelInicio("noche")}${fichaDelInicio("largo")}</div>
           <div class="hangar__grupos" role="radiogroup" aria-labelledby="hangar-leccion">
             ${grupo(
               MARCA_TRAMOS,
@@ -2535,9 +2570,15 @@ export function abrirHangar(
        */
       const conInicio = boton.hasAttribute("data-inicio-modo");
       const modo = boton.getAttribute("data-inicio-modo");
-      // La noche es el mismo vuelo largo que la llegada, con otro capítulo: la escena es la misma.
+      // Madrid y la noche son el mismo vuelo largo que la llegada, con otro capítulo: la escena es la misma.
       const escenaDelInicio: EscenaDelInicio =
-        modo === "aterrizar" ? "aterrizar" : modo === "pasaje" ? "pasaje" : modo === "largo" || modo === "noche" ? "largo" : "despegar";
+        modo === "aterrizar"
+          ? "aterrizar"
+          : modo === "pasaje"
+            ? "pasaje"
+            : modo === "largo" || modo === "noche" || modo === "madrid"
+              ? "largo"
+              : "despegar";
       if (boton.hasAttribute("data-despegar") || conInicio) {
         if (reposo !== null) clearTimeout(reposo);
         apuntarReciente(sitio.id);
@@ -2559,7 +2600,7 @@ export function abrirHangar(
           aircraft: avion,
           destino: destinoDeAhora(),
           ...(conInicio ? { inicio: escenaDelInicio } : {}),
-          ...(modo === "noche" ? { capitulo: 2 as const } : {}),
+          ...(modo === "madrid" ? { capitulo: 1 as const } : modo === "noche" ? { capitulo: 2 as const } : {}),
         });
       }
     });

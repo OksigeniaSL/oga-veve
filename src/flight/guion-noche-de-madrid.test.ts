@@ -1,5 +1,5 @@
 /**
- * El primer capítulo: el esqueleto de sus turnos, su camino de salida y su tiempo. El vuelo
+ * El primer capítulo: sus turnos y lo que se dice en ellos, su camino de salida y su tiempo. El vuelo
  * de verdad lo vuela `scripts/verificar-inicio-4.mjs`, con `OGA_CAPITULO=1`.
  */
 
@@ -17,9 +17,10 @@ import {
   LUCES_DE_MADRID,
   SE_APAGA_EL_CINTURON,
   tiempoDeLaNocheDeMadrid,
+  topeHasta,
 } from "./guion-noche-de-madrid";
 import { DIEZ_MIL_PIES, MotorDelPasaje, type LecturaDelPasaje, type SitioDelPaisaje, type VistaDelSitio } from "./motor-del-pasaje";
-import { horarioDelDia, perfilDelVuelo } from "./ruta-larga";
+import { horarioDelDia, NIVELES_DE_CRUCERO, perfilDelVuelo } from "./ruta-larga";
 import type { TramoDeLinea } from "./vuelo-de-linea";
 import { vientoDeCasa } from "../world/meteo";
 
@@ -57,20 +58,82 @@ describe("el guion del primer capítulo", () => {
 
   it("la bienvenida de la comandante va con las puertas cerradas, antes de arrancar, y dice la llegada de hoy", () => {
     const ids = GUION_NOCHE_DE_MADRID.momentos.map((m) => m.id);
-    expect(ids.indexOf("bienvenida")).toBeLessThan(ids.indexOf("puertas"));
-    const bienvenida = GUION_NOCHE_DE_MADRID.momentos.find((m) => m.id === "bienvenida")!;
+    const trozos = ["bienvenida", "vientoDeCara", "pilotos", "esMama", "puertas"].map((id) => ids.indexOf(id as never));
+    expect(trozos.every((i) => i >= 0)).toBe(true);
+    expect([...trozos].sort((a, b) => a - b)).toEqual(trozos);
+    const de = (id: string) => GUION_NOCHE_DE_MADRID.momentos.find((m) => m.id === id)!;
     const conTemporada = (temporada: "verano" | "invierno") =>
-      bienvenida.segun!({ largo: { temporada } } as unknown as LecturaDelPasaje, null as never).map((l) => l.clave);
-    expect(conTemporada("verano")).toContain("comandante.largo.vueloVerano");
-    expect(conTemporada("invierno")).toContain("comandante.largo.vueloInvierno");
-    expect(conTemporada("invierno")).toContain("comandante.largo.tresPilotos");
+      de("vientoDeCara").segun!({ largo: { temporada } } as unknown as LecturaDelPasaje, null as never).map((l) => l.clave);
+    expect(conTemporada("verano")).toEqual(["comandante.largo.vueloVerano"]);
+    expect(conTemporada("invierno")).toEqual(["comandante.largo.vueloInvierno"]);
+    expect(de("pilotos").lineas.map((l) => l.clave)).toEqual(["comandante.largo.tresPilotos"]);
     // Y es megafonía: nada de lo suyo se le dice a Ara en persona.
-    for (const l of bienvenida.lineas) if (l.quien === "mama") expect(l.megafonia).toBe(true);
+    for (const id of ["bienvenida", "vientoDeCara", "pilotos"])
+      for (const l of de(id).lineas) expect(l.quien === "mama" && l.megafonia, `${id}: ${l.clave}`).toBe(true);
+  });
+
+  it("cada cosa nueva de la bienvenida sale con su lámina, y se quita al acabar", () => {
+    const de = (id: string) => GUION_NOCHE_DE_MADRID.momentos.find((m) => m.id === id)!;
+    expect(de("bienvenida").tapa).toBeUndefined();
+    expect(de("vientoDeCara").tapa).toBe("viento-de-arriba");
+    expect(de("pilotos").tapa).toBe("litera");
+    expect(de("esMama").tapa).toBeNull();
+    expect(de("esMama").lineas.map((l) => l.clave)).toEqual(["inicio.ara.pasaje.comandante"]);
+  });
+
+  it("los números de la bienvenida: el tiempo de vuelo, no el de calzos, y la llegada del horario", () => {
+    // 11 h 40 y 11 h 45 de calzos a calzos, menos los dos rodajes: 11 h 13 y 11 h 18 en el aire.
+    for (const [fecha, minutos] of [
+      ["2026-07-15T12:00:00Z", 11 * 60 + 13],
+      ["2026-12-15T12:00:00Z", 11 * 60 + 18],
+    ] as const) {
+      const enElAire = perfilDelVuelo(horarioDelDia(new Date(fecha))).enElAire / 60;
+      expect(enElAire).toBeCloseTo(minutos, 0);
+      // «Once horas y cuarto», las dos: a menos de cinco minutos.
+      expect(Math.abs(enElAire - (11 * 60 + 15))).toBeLessThan(5);
+    }
+    for (const c of ["comandante.largo.vueloVerano", "comandante.largo.vueloInvierno"] as const) {
+      expect(ES_PY[c]).toMatch(/once horas y cuarto/);
+      expect(ES_PY[c]).toMatch(/once mil metros/);
+      expect(ES_PY[c]).toMatch(/viento de cara/);
+    }
+    expect(ES_PY["comandante.largo.vueloVerano"]).toMatch(/seis y veinticinco/);
+    expect(ES_PY["comandante.largo.vueloInvierno"]).toMatch(/siete y media/);
+    // Y el primer nivel de crucero, el 360, son unos once mil metros.
+    expect(Math.abs(NIVELES_DE_CRUCERO[0] - 11_000)).toBeLessThan(100);
+  });
+
+  it("el viento de arriba lo cuenta Idaira en persona, con su lámina, cuando Ara pregunta con la luz del cinturón apagada", () => {
+    const ids = GUION_NOCHE_DE_MADRID.momentos.map((m) => m.id);
+    expect(ids.slice(ids.indexOf("arriba"))).toEqual(["arriba", "pregunta", "viento", "fin"]);
+    const de = (id: string) => GUION_NOCHE_DE_MADRID.momentos.find((m) => m.id === id)!;
+    expect(de("pregunta").lineas.map((l) => [l.quien, l.clave])).toEqual([["ara", "inicio.ara.pasaje.largo.vientoPregunta"]]);
+    const viento = de("viento");
+    expect(viento.tapa).toBe("viento-de-arriba");
+    expect(viento.lineas.length).toBe(2);
+    for (const l of viento.lineas) {
+      expect(l.quien).toBe("tripulacion");
+      expect(l.megafonia).toBeFalsy();
+      expect(l.clave).toMatch(/^inicio\.tripulacion\.pasaje\.cerca\.largo\./);
+    }
+    expect(de("fin").tapa).toBeNull();
+    // De tú, que es Idaira, la de Canarias; y sin decir de dónde sopla en cada punto de la ruta.
+    const dice = viento.lineas.map((l) => ES_PY[l.clave as keyof typeof ES_PY]).join(" ");
+    expect(dice).toMatch(/llegas antes/);
+    expect(dice).toMatch(/tardas más/);
+    expect(dice).not.toMatch(/\b(oeste|este|norte|sur)\b/i);
   });
 
   it("se abre bajo la lámina del embarque, que tiene su receta, y no se duerme nadie", () => {
-    expect(GUION_NOCHE_DE_MADRID.apertura).toEqual({ hasta: "ventanilla", laminas: ["embarque"] });
+    expect(GUION_NOCHE_DE_MADRID.apertura).toEqual({ hasta: "ventanilla", laminas: ["embarque", "viento-de-arriba", "litera"] });
     expect(RECETAS.embarque?.original).toBe("vuelo-largo/embarque.png");
+    expect(RECETAS["viento-de-arriba"]?.original).toBe("vuelo-largo/viento-de-arriba.png");
+    expect(RECETAS.litera?.original).toBe("vuelo-largo/litera.png");
+    // Las de la bienvenida, con su texto alternativo corto en los dos idiomas.
+    for (const c of ["ilustracion.viento-de-arriba", "ilustracion.litera"] as const) {
+      expect(ES_PY[c].length).toBeLessThanOrEqual(80);
+      expect(EN[c]?.length ?? 99).toBeLessThanOrEqual(80);
+    }
     expect(GUION_NOCHE_DE_MADRID.momentos[0]!.tapa).toBe("embarque");
     expect(GUION_NOCHE_DE_MADRID.siesta.sinSiesta).toBe(true);
   });
@@ -95,14 +158,23 @@ describe("el guion del primer capítulo", () => {
       if (/largo|salidasLargo/.test(f.clave)) nuevas.add(f.clave);
     }
     for (const c of ["comandante.largo.vueloVerano", "comandante.largo.vueloInvierno"]) nuevas.add(c);
-    expect(nuevas.size).toBeLessThanOrEqual(13);
+    expect(nuevas.size).toBeLessThanOrEqual(14);
     for (const c of nuevas) expect(lista, c).toContain(`"${c}"`);
+    // Y ninguna se queda de prueba: el texto es el que se graba.
+    expect(lista).not.toMatch(/noche de Madrid[^\n]*provisional/);
   });
 
   it("sin marcas: ni la aerolínea, ni el número de vuelo, ni el fabricante", () => {
     for (const f of lasFrases()) {
       const texto = String(ES_PY[f.clave as keyof typeof ES_PY]);
       expect(texto, f.clave).not.toMatch(/Air Europa|UX ?0?23|Boeing|787|Airbus/i);
+    }
+  });
+
+  it("Ara, sin género: ni dormido ni dormida, ni cansado ni cansada", () => {
+    for (const f of lasFrases().filter((l) => l.quien === "ara")) {
+      const texto = String(ES_PY[f.clave as keyof typeof ES_PY]);
+      expect(texto, f.clave).not.toMatch(/\b(dormid|cansad|content|asustad)[oa]s?\b/i);
     }
   });
 });
@@ -192,6 +264,9 @@ describe("el capítulo, de puerta a puerta", () => {
       "ventanilla",
       "cinturon",
       "bienvenida",
+      "vientoDeCara",
+      "pilotos",
+      "esMama",
       "puertas",
       "motores",
       "demostracion",
@@ -203,6 +278,8 @@ describe("el capítulo, de puerta a puerta", () => {
       "carrera",
       "madrid",
       "arriba",
+      "pregunta",
+      "viento",
     ];
     expect(v.dichos.filter((d) => orden.includes(d))).toEqual(orden);
     expect(v.terminado).toBe(true);
@@ -226,6 +303,16 @@ describe("el capítulo, de puerta a puerta", () => {
 
   it("la luz del cinturón se apaga pasados los diez mil pies, que por debajo la comandante solo habla de volar", () => {
     expect(SE_APAGA_EL_CINTURON).toBeGreaterThan(DIEZ_MIL_PIES);
+  });
+
+  it("y lo de Idaira, después de apagarse: con la tripulación ya de pie", () => {
+    const v = volarElCapitulo(true);
+    expect(v.dichas.indexOf("inicio.ara.pasaje.largo.vientoPregunta")).toBeGreaterThan(v.dichas.indexOf("comandante.largo.cinturon"));
+    expect(v.dichas.slice(-3)).toEqual([
+      "inicio.ara.pasaje.largo.vientoPregunta",
+      "inicio.tripulacion.pasaje.cerca.largo.vientoRios",
+      "inicio.tripulacion.pasaje.cerca.largo.vientoBarco",
+    ]);
   });
 });
 
@@ -262,6 +349,16 @@ describe("la salida CCS6L", () => {
     // Con x al este y z al sur, lo que queda a la izquierda tiene el producto cruzado negativo.
     const cruz = (b.x - a.x) * (sol.z - a.z) - (b.z - a.z) * (sol.x - a.x);
     expect(cruz).toBeLessThan(0);
+  });
+
+  it("y a 205 nudos como mucho hasta pasar MD039: el viraje y los 210 del tramo, que dice la carta", () => {
+    expect(de("SSY").maxKt).toBe(205);
+    expect(de("MD039").maxKt).toBe(205);
+    expect(de("AVILA").maxKt).toBeUndefined();
+    expect(topeHasta("MD039")).toBe(205);
+    expect(topeHasta("LONGA")).toBeNull();
+    // Del despegue en adelante no hay más topes que los de la salida.
+    expect(camino.filter((f) => f.maxKt !== undefined).map((f) => f.nombre)).toEqual(["SSY", "MD039"]);
   });
 
   it("y desde Cáceres, la ortodrómica hacia el suroeste", () => {

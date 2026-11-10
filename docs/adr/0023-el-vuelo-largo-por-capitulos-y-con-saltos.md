@@ -511,3 +511,41 @@ láminas de la bienvenida, las voces y la ficha del menú son de la tanda siguie
 - **El ⏩ no corre en tierra**, que es regla del motor (`sePuedeCorrer`): el rodaje de la T1 a la
   Z4, cuatro kilómetros y medio, va a su paso, unos diez minutos, y el capítulo entero sale en unos
   trece. Si se quiere más corto, es el motor el que tiene que aprender a correr rodando.
+
+## Lo que se cuenta en el primer capítulo
+
+Ya no es un esqueleto: lleva su guion, sus dos láminas de la bienvenida y su ficha en «¿A qué jugás?».
+Lo que se decidió al escribirlo:
+
+- **La bienvenida, en tres trozos y con una sola voz.** Es un anuncio de la comandante con las puertas
+  cerradas, y cada cosa nueva sale con su lámina mientras se dice: el viento de arriba con el tiempo y el
+  viento, y la litera con los tres pilotos. Lo que sigue no vuelve a saludar a nadie, y al acabar se quita
+  la lámina para que Ara mire hacia delante: «¡Es mamá!».
+- **El viento va en persona, y la litera no.** La litera se entiende sola: es el dibujo de lo que hay, un
+  piloto dormido en su cama con cortina, encima de la cabina de mando, y los otros dos volando. Lo que no
+  se ve —que quien manda sigue respondiendo aunque descanse, y que si hace falta la despiertan— lo dice la
+  comandante en primera persona, que es como se enseñan los galones. El viento de arriba es un esquema, la
+  Tierra con dos ríos de aire, y sin palabras no dice nada a quien tiene cuatro años: es lo que pregunta
+  Ara, otro suceso y otra voz, la de Idaira, de pie y con la lámina. Sin decir de dónde sopla en cada punto
+  de la ruta.
+- **Un minuto más, con la tripulación de pie.** El capítulo ya no acaba con la luz del cinturón: veinte
+  segundos después del anuncio, que es lo que tarda la tripulación en soltarse y salir al pasillo, Ara
+  pregunta. Antes Idaira está sentada y atada, y no se le pregunta nada.
+- **Los números de la bienvenida son los del vuelo, no los de calzos.** De las 11 h 40 y las 11 h 45 del
+  horario, menos los dos rodajes, quedan 11 h 13 y 11 h 18 en el aire: «once horas y cuarto», las dos. La
+  altura es la del 360, unos once mil metros; la llegada, la de calzos en hora de Asunción. Y la vuelta,
+  que tarda once horas de calzos a calzos, dura «unos tres cuartos de hora menos»: «casi una hora», que
+  pedía el plan, eran quince minutos de más.
+- **A 205 nudos hasta pasar MD039.** La carta pide 205 en el viraje a rumbo 285 y 210 hasta MD039, y la
+  tripulación del pasaje aceleraba a los 250 al recoger los flaps: subía a 236–250 nudos por el viraje. El
+  tope va en el plan, en cada punto (`Fijo.maxKt`), y el de un tramo sin nombre vale también hasta el punto
+  donde empieza, porque un viraje con tope se empieza ya a esa velocidad. Lo pasa a verdadera, con el aire
+  del día, quien lo lee (`topeDeVelocidad` en `vuelo-de-linea.ts`).
+- **La tarjeta del final, sin sello y sin la página del viaje.** No se llega a ningún campo: el sello de
+  Barajas, que no lo tiene, salía en blanco, y la página era la de lo visto entre las islas. Queda el
+  anuncio con «Seguir volando». Y Barajas no se apunta en el cuaderno de viaje, que es de los campos a los
+  que se llega. Nada enseña todavía el avance del viaje por capítulos, y no se inventa aquí.
+- **La ficha, «Salí de Madrid de noche», dibujada como las otras dos**: la pista con sus luces, el avión
+  yéndose al oeste y la ciudad encendida en el horizonte. Con la lámina del embarque, cada visita al hangar
+  bajaría cien kilobytes de dibujo para una ficha de ciento veinte píxeles. Abre el capítulo sin
+  `?capitulo=`, como la de la noche.

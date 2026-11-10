@@ -4823,32 +4823,50 @@ export const ES_PY = {
   /*
    * ── **El primer capítulo del vuelo largo: «La noche de Madrid»** ──────────
    *
-   * El esqueleto: el embarque, la bienvenida de la comandante, las ocho salidas, las luces
-   * de las calles y Madrid de noche. **Textos provisionales**: el guion de verdad, con sus
-   * voces, es de la tanda siguiente. Ver `src/flight/guion-noche-de-madrid.ts`.
+   * El embarque, la bienvenida de la comandante con sus dos láminas, las ocho salidas, las
+   * luces de las calles, Madrid de noche, la luz del cinturón y el viento de arriba, que
+   * cuenta Idaira en persona. Ver `src/flight/guion-noche-de-madrid.ts`: allí están las
+   * cuentas de los números de la bienvenida y por qué el viento va en persona y la litera no.
    */
-  "inicio.ara.pasaje.largo.embarque": "¡Ya estoy en mi ventanilla! Todos guardan sus bolsos arriba.",
-  "inicio.ara.pasaje.largo.nocheDeMadrid": "¡Afuera ya es de noche! Y este avión nos lleva a casa.",
+  "inicio.ara.pasaje.largo.embarque":
+    "¡Qué grande es este avión, tiene dos pasillos! Y ahí está Idaira, la de mi otro viaje, ayudando a un señor con su valija.",
+  "inicio.ara.pasaje.largo.nocheDeMadrid": "¡Afuera ya es de noche! Y este avión nos lleva a casa, a Asunción.",
   "comandante.largo.bienvenida":
     "Señores pasajeros, buenas noches, les habla la comandante Jazlyn. Ya cerramos las puertas: bienvenidos a bordo de este vuelo a Asunción.",
+  /*
+   * El tiempo de vuelo y no el de calzos a calzos: 11 h 13 en verano de Europa y 11 h 18 en
+   * invierno, «once horas y cuarto» las dos. La llegada, la de calzos, en hora de Asunción.
+   */
   "comandante.largo.vueloVerano":
-    "Vamos a volar unas once horas, a unos once mil metros de altura y con viento de cara, y llegamos a Asunción a las seis y veinticinco de la mañana, hora de allá.",
+    "Vamos a volar once horas y cuarto, a unos once mil metros de altura y con algo de viento de cara. Llegamos a Asunción a las seis y veinticinco de la mañana, hora de allá.",
   "comandante.largo.vueloInvierno":
-    "Vamos a volar unas once horas, a unos once mil metros de altura y con viento de cara, y llegamos a Asunción a las siete y media de la mañana, hora de allá.",
+    "Vamos a volar once horas y cuarto, a unos once mil metros de altura y con algo de viento de cara. Llegamos a Asunción a las siete y media de la mañana, hora de allá.",
+  // Con la lámina de la litera. Los galones: quien manda sigue respondiendo aunque descanse.
   "comandante.largo.tresPilotos":
-    "Como el vuelo es largo, hoy vamos tres pilotos, y nos turnamos para descansar. Que tengan un buen vuelo.",
+    "Como el vuelo es largo, hoy vamos tres pilotos, y nos turnamos para descansar en unas camas que hay encima de la cabina de mando. Aunque descanse, sigo siendo la responsable del vuelo: si hace falta, me despiertan. Que tengan un buen vuelo.",
   /*
    * Las del JAZ 110, las de su clase: ocho puertas de salida, cuatro por lado, y ninguna
-   * sobre el ala. Como la del JAZ 90, con su número.
+   * sobre el ala. Como la del JAZ 90, con su número, y con los dos pasillos de este avión.
    */
   "inicio.tripulacion.pasaje.demo.salidasLargo":
-    "Este avión tiene ocho salidas de emergencia, cuatro a cada lado. Busquen la más cercana, que puede estar detrás de ustedes. Unas luces en el suelo del pasillo marcan el camino hasta ellas.",
+    "Este avión tiene ocho salidas de emergencia, cuatro a cada lado. Busquen la más cercana, que puede estar detrás de ustedes. Unas luces en el suelo de los pasillos marcan el camino hasta ellas.",
   "inicio.ara.pasaje.largo.lucesVerdes": "¡Mirá, en el suelo hay una fila de lucecitas verdes!",
   "inicio.tripulacion.pasaje.cerca.largo.lucesVerdes":
-    "Van por el medio de la calle por donde rueda el avión: el verde dice «por aquí».",
+    "Marcan el medio de la calle por donde rueda el avión: de noche, los pilotos van siguiendo esa fila verde.",
   "inicio.ara.pasaje.largo.madrid": "¡Mirá cuántas luces allá abajo! Es Madrid, de mi lado.",
   "comandante.largo.cinturon":
-    "Señores pasajeros, todavía seguimos subiendo, pero ya apagamos la luz del cinturón. Si se quedan sentados, déjenselo puesto.",
+    "Señores pasajeros, seguimos subiendo, pero ya apagamos la luz del cinturón. Mientras estén sentados, manténganlo abrochado, por favor.",
+  /*
+   * El viento de arriba, en persona y con su lámina. Sin decir de dónde sopla en cada punto
+   * de la ruta, que no está comprobado. La vuelta tarda once horas de calzos a calzos, unos
+   * tres cuartos de hora menos que la ida.
+   */
+  "inicio.ara.pasaje.largo.vientoPregunta":
+    "Idaira, mamá dijo que tenemos viento de cara. ¿Acá arriba también hay viento?",
+  "inicio.tripulacion.pasaje.cerca.largo.vientoRios":
+    "Sí, y mucho. Un poco más arriba, donde vamos a volar, corren ríos de viento rapidísimo.",
+  "inicio.tripulacion.pasaje.cerca.largo.vientoBarco":
+    "El avión va en ellos como un barco en un río: a favor llegas antes, y en contra tardas más. Por eso el viaje de vuelta a Madrid dura unos tres cuartos de hora menos.",
   /*
    * ── **El segundo capítulo del vuelo largo: «La noche sobre el mar»** ──────
    *
@@ -4901,6 +4919,7 @@ export const ES_PY = {
   "inicio.ara.pasaje.largo.sigoDurmiendo": "Entonces sigo durmiendo, con el cinturón puesto.",
   // No se graban: son de la pantalla.
   "inicio.modo.largo": "Llegá a Asunción",
+  "inicio.modo.madrid": "Salí de Madrid de noche",
   "inicio.modo.noche": "Cruzá el mar de noche",
   "inicio.modo.tripulanteDerlis": "El tripulante de cabina, a tu lado",
   "inicio.dibujo.piernas": "Un pie que sube y baja la punta, sin levantarse del asiento.",
@@ -4913,4 +4932,6 @@ export const ES_PY = {
   "ilustracion.manta": "Ara con sueño, bajo la manta y con el cinturón por encima, con las luces bajas",
   "ilustracion.medio-despertar": "Ara abre los ojos a medias, con el cinturón sobre la manta y la cabina a oscuras",
   "ilustracion.embarque": "Ara en su ventanilla; la gente guarda los bolsos arriba, y afuera es de noche",
+  "ilustracion.viento-de-arriba": "La Tierra con dos ríos de viento, y el avión que va de España a Paraguay",
+  "ilustracion.litera": "Un piloto duerme arriba, en su cama con cortina; abajo, los otros dos vuelan",
 } as const;

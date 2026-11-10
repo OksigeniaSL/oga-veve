@@ -140,6 +140,13 @@ export interface Fijo extends Punto {
    * para llegar ahí**, m, desde la cabecera. Ver `libra`.
    */
   readonly carrera?: number;
+  /**
+   * **Lo más rápido que se puede ir hasta pasarlo**, nudos indicados, si la
+   * salida publicada lo limita: el «MAX IAS 210 kt» de una carta. Lo cumple la
+   * tripulación del pasaje; ver `topeDeVelocidad` en `vuelo-de-linea.ts` y
+   * `caminoDeLaSalida` en `guion-noche-de-madrid.ts`.
+   */
+  readonly maxKt?: number;
 }
 
 /** Un plan de vuelo hecho: sus puntos y lo que mide. */

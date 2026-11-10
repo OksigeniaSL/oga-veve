@@ -80,14 +80,23 @@
  * bancos desde que se abre la ventanilla. Con la fecha fija, como los otros, y con el viento
  * flojo del suroeste, `240/6`, salvo que `OGA_VIENTO` diga otro.
  *
+ * - **Se abre desde su ficha** de «¿A qué jugás?», con el dedo y sin `?capitulo=`, en Barajas y a
+ *   la hora de embarcar: lo mismo que `OGA_MENU=1` mira de las otras dos. `OGA_SIN_FICHA=1` se
+ *   la salta.
  * - **Arranca tapado con la lámina del embarque**, con su fichero, y se abre la ventanilla.
  * - **En el puesto T5, de noche**: el JAZ 110 con los motores parados, a la hora de embarcar
  *   del horario de ese día y con el sol bien por debajo del horizonte.
  * - **Rueda hasta la Z4 sin pisar pista**, para en la doble raya y despega por la 36L.
  * - **Sigue la salida**: recto al norte hasta SSY y a la izquierda, al oeste.
  * - **Al decir las salidas Ara se asoma al pasillo** y se ve el letrero de la más cercana.
- * - **Madrid, a la izquierda**, si Ara la nombra; y el capítulo llega a su final con la luz del
- *   cinturón apagada y la tarjeta de seguir.
+ * - **Las dos láminas de la bienvenida, en su turno**: el viento de arriba mientras la comandante
+ *   dice el tiempo y el viento, y la litera con los tres pilotos; y se quitan al acabar.
+ * - **Por debajo de 210 nudos indicados hasta pasar MD039**, que es lo que pide la CCS6L.
+ * - **Madrid, a la izquierda**, si Ara la nombra; la luz del cinturón apagada con su anuncio, y
+ *   detrás, **el viento de arriba contado en persona**: Ara pregunta e Idaira contesta, a su
+ *   lado y no por la megafonía, con la lámina.
+ * - **La tarjeta del final, sin sello y sin la página de Canarias**: no se llega a ningún campo.
+ *   Con el anuncio y «Seguir volando», que lleva al segundo capítulo.
  * - **Nunca dos voces a la vez**, y sin errores de consola.
  *
  * `OGA_RED=1` mira la red: con los ficheros de Pettirossi que no contestan, al acabar la noche
@@ -296,6 +305,7 @@ const leer = (page) =>
       consola: i.estado?.consola ?? null,
       enLaPantalla: i.consola?.enLaPantalla ?? null,
       plan: j.planParaBanco ?? null,
+      indicada: j.indicadaParaBanco,
       tarjeta: tarjeta
         ? {
             alto: caja.height,
@@ -843,6 +853,14 @@ const EL_T5 = { x: 293.6, z: 3407.2 };
 const LA_Z4 = { x: -320, z: 95.1 };
 /** Las tiras de luz del suelo del pasillo que se tienen que ver, como poco, con Ara asomada. */
 const UNAS_CUANTAS_TIRAS = 4;
+/** **Lo que se dice con lámina** en el primer capítulo, y cuál. Ver `guion-noche-de-madrid.ts`. */
+const PIDEN_LAMINA = {
+  "comandante.largo.vueloVerano": "viento-de-arriba",
+  "comandante.largo.vueloInvierno": "viento-de-arriba",
+  "comandante.largo.tresPilotos": "litera",
+  "inicio.tripulacion.pasaje.cerca.largo.vientoRios": "viento-de-arriba",
+  "inicio.tripulacion.pasaje.cerca.largo.vientoBarco": "viento-de-arriba",
+};
 /** El centro de Madrid: ver `LUCES_DE_MADRID`. */
 const MADRID = { lat: 40.4169, lon: -3.7035 };
 /** Grados, de rumbo en radianes del juego. */
@@ -899,6 +917,11 @@ async function laNocheDeMadrid() {
     let giroALaIzquierda = null;
     let madridDicha = null;
     let laminaDelEmbarque = null;
+    /** La lámina que se veía con cada frase que la pide, la primera vez que se lee diciéndose. */
+    const conSuLamina = new Map();
+    /** La indicada más alta en el aire hasta pasar MD039, y la de después, hasta los diez mil pies. */
+    const indicadas = { hastaMD039: 0, donde: null, despues: 0, pasado: false };
+    let laTarjetaDeIdaira = null;
     let prisa = false;
     let pulsado = false;
     const rumbosAntesDeSSY = [];
@@ -908,6 +931,29 @@ async function laNocheDeMadrid() {
       l = await leer(page);
       const tramo = l.tripulacion?.tramo ?? "?";
       if (tramos.at(-1) !== tramo) tramos.push(tramo);
+      // Las láminas de la bienvenida y la de Idaira, en su turno: lo que se ve mientras se dice.
+      if (l.linea && PIDEN_LAMINA[l.linea] && !conSuLamina.has(l.linea)) {
+        // La que pide, al empezar a decirse; y la que se ve, pasado el fundido, si se sigue diciendo.
+        conSuLamina.set(l.linea, { tapa: l.tapa, vista: null });
+        if (/vientoRios/.test(l.linea)) laTarjetaDeIdaira = l.tarjeta?.texto ?? "";
+        await pausa(900);
+        const ahora = await leer(page);
+        if (ahora.linea === l.linea) {
+          conSuLamina.set(l.linea, { tapa: ahora.tapa, vista: ahora.lamina?.vista ?? null });
+          await foto(page, `c1-lamina-${l.linea.split(".").at(-1)}`);
+        }
+      }
+      // La indicada hasta pasar MD039, con el plan de verdad: el punto activo es el que se busca.
+      const md039 = l.plan?.fijos?.findIndex((f) => f.nombre === "MD039") ?? -1;
+      if (!l.enTierra && md039 >= 0 && l.altura > 15) {
+        if (l.plan.activo <= md039) {
+          if (l.indicada > indicadas.hastaMD039) indicadas.hastaMD039 = l.indicada;
+          indicadas.donde = { x: l.x, z: l.z, y: l.y };
+        } else {
+          indicadas.pasado = true;
+          if (l.y < 3048 && l.indicada > indicadas.despues) indicadas.despues = l.indicada;
+        }
+      }
       if (!laminaDelEmbarque && l.lamina?.vista === "embarque" && l.lamina.tapa) {
         laminaDelEmbarque = l.lamina;
         await pausa(900);
@@ -1026,6 +1072,51 @@ async function laNocheDeMadrid() {
       "llega a su final con la luz del cinturón apagada, y con la tarjeta de seguir",
       l.momento === "fin" && l.dichos.includes("arriba") && l.cartel === false && l.dings >= 1,
       `${l.momento} · cartel ${l.cartel ? "encendido" : "apagado"} · dings ${l.dings} · FL${(l.y / 30.48).toFixed(0)} · dichos ${l.dichos.join(", ")} · saltados ${l.saltados.join(", ") || "ninguno"}`,
+    );
+    const enSuTurno = Object.entries(PIDEN_LAMINA).filter(([clave]) => l.registro.some((d) => d.clave === clave));
+    // La pedida, siempre; la vista, si se llegó a leer pasado el fundido, que con prisa una frase muda dura poco.
+    const malPuestas = enSuTurno.filter(([clave, lamina]) => conSuLamina.get(clave)?.tapa !== lamina || ![null, lamina].includes(conSuLamina.get(clave)?.vista ?? null));
+    const vistasEnSuTurno = enSuTurno.filter(([clave, lamina]) => conSuLamina.get(clave)?.vista === lamina).length;
+    comprobar(
+      "las láminas de la bienvenida y la de Idaira, cada una con lo suyo y en su turno",
+      enSuTurno.length === 4 && malPuestas.length === 0 && vistasEnSuTurno >= 2 && (l.lamina?.sinFichero ?? []).length === 0,
+      `${enSuTurno.map(([c]) => `${c.split(".").at(-1)} → ${conSuLamina.get(c)?.tapa ?? "nada"}/${conSuLamina.get(c)?.vista ?? "?"}`).join(" · ")} · ${vistasEnSuTurno} vistas pasado el fundido${malPuestas.length ? ` · mal: ${malPuestas.map(([c]) => c).join(", ")}` : ""}`,
+    );
+    const vistas = l.lamina?.vistas ?? [];
+    comprobar(
+      "y se quitan al acabar: Ara mira a su mamá por la ventanilla, y el final no lleva lámina",
+      l.dichos.includes("esMama") && l.tapa === null && vistas.join(" ").includes("embarque viento-de-arriba litera"),
+      `vistas ${vistas.join(" → ")} · al final ${l.tapa ?? "sin lámina"}`,
+    );
+    comprobar(
+      "por debajo de 210 nudos indicados hasta pasar MD039, y a acelerar después",
+      indicadas.pasado && indicadas.hastaMD039 > 150 && indicadas.hastaMD039 <= 210,
+      `hasta MD039, ${indicadas.hastaMD039.toFixed(1)} kt como mucho${indicadas.donde ? ` (lo último, en x ${(indicadas.donde.x / 1000).toFixed(1)} z ${(indicadas.donde.z / 1000).toFixed(1)} km, FL${(indicadas.donde.y / 30.48).toFixed(0)})` : ""} · después, por debajo de los diez mil, ${indicadas.despues.toFixed(1)} kt · ${indicadas.pasado ? "pasado" : "sin pasarlo"}`,
+    );
+    const lasDichas = l.registro.map((d) => d.clave);
+    const deIdaira = ["inicio.ara.pasaje.largo.vientoPregunta", "inicio.tripulacion.pasaje.cerca.largo.vientoRios", "inicio.tripulacion.pasaje.cerca.largo.vientoBarco"];
+    comprobar(
+      "y tras la luz del cinturón, Ara pregunta por el viento e Idaira lo cuenta en persona, a su lado",
+      lasDichas.indexOf("comandante.largo.cinturon") >= 0 &&
+        deIdaira.every((c, k) => lasDichas.indexOf(c) > (k ? lasDichas.indexOf(deIdaira[k - 1]) : lasDichas.indexOf("comandante.largo.cinturon"))) &&
+        !!laTarjetaDeIdaira && /a tu lado/i.test(laTarjetaDeIdaira) && !/megafon/i.test(laTarjetaDeIdaira),
+      `${deIdaira.map((c) => `${c.split(".").at(-1)} en ${lasDichas.indexOf(c)}`).join(" · ")} · tarjeta «${(laTarjetaDeIdaira ?? "").slice(0, 60)}»`,
+    );
+    const finDom = await page.evaluate(() => {
+      const fin = document.querySelector("#inicio .inicio__fin");
+      const boton = fin?.querySelector("[data-inicio='seguir']");
+      return {
+        sello: !!fin?.querySelector(".inicio__sello"),
+        llegada: !!fin?.querySelector(".inicio__llegada"),
+        viaje: !!fin?.querySelector("[class*='viaje']"),
+        boton: boton ? { texto: boton.textContent.trim(), visible: !boton.hidden } : null,
+        tarjeta: document.querySelector("#inicio .inicio__tarjeta")?.textContent?.trim().slice(0, 120) ?? "",
+      };
+    });
+    comprobar(
+      "la tarjeta del final, sin sello en blanco ni la página de Canarias: el anuncio y «Seguir volando»",
+      !finDom.sello && !finDom.llegada && !finDom.viaje && !!finDom.boton?.visible && /seguir volando/i.test(finDom.boton.texto),
+      `sello ${finDom.sello} · llegada ${finDom.llegada} · página ${finDom.viaje} · botón «${finDom.boton?.texto ?? "ninguno"}» · tarjeta «${finDom.tarjeta}»`,
     );
     const registro = l.registro;
     let pisadas = 0;
@@ -1467,7 +1558,12 @@ async function elCapitulo() {
  * noche es lo único que la abre fuera de desarrollo, así que aquí no se le da `?capitulo=`.
  */
 async function laFicha(cual) {
-  const LA_ESPERADA = cual === "noche" ? { nombre: "de cruzar el mar de noche", mundo: "tenerife-norte", hora: ruta.entradaDeLaNoche(perfil) } : { nombre: "de llegar a Asunción", mundo: "pettirossi", hora: ruta.entradaDeLaLlegada(perfil) };
+  const LA_ESPERADA =
+    cual === "madrid"
+      ? { nombre: "de salir de Madrid de noche", mundo: "barajas", hora: -(ruta.RODAJE_DE_SALIDA + 40 * 60) }
+      : cual === "noche"
+        ? { nombre: "de cruzar el mar de noche", mundo: "tenerife-norte", hora: ruta.entradaDeLaNoche(perfil) }
+        : { nombre: "de llegar a Asunción", mundo: "pettirossi", hora: ruta.entradaDeLaLlegada(perfil) };
   const ctx = await navegador.newContext({ viewport: { width: 1280, height: 800 }, locale: "es-PY" });
   const page = await ctx.newPage();
   const errores = [];
@@ -1597,12 +1693,17 @@ async function laRedDelMedioDespertar() {
 
 try {
   if (process.env.OGA_MENU) {
+    await laFicha("madrid");
     await laFicha("noche");
     await laFicha("largo");
   }
   else if (process.env.OGA_RED === "noche") await laRedDelMedioDespertar();
   else if (process.env.OGA_RED) await laRedDeLaNoche();
-  else if (CAPITULO === "1") await laNocheDeMadrid();
+  else if (CAPITULO === "1") {
+    // Primero su ficha, que es por donde se abre fuera de desarrollo; y luego el capítulo entero.
+    if (!process.env.OGA_SIN_FICHA) await laFicha("madrid");
+    await laNocheDeMadrid();
+  }
   else await elCapitulo();
 } finally {
   await navegador.close();

@@ -2016,18 +2016,21 @@ const DEL_VUELO_LARGO = [
   ["inicio.ara.pasaje.kit.cruz.encendida", "ara", "la Cruz del Sur: Ara celebra la Cruz encendida"],
   ["inicio.ara.pasaje.kit.cruz.sur", "ara", "la Cruz del Sur: Ara cuenta cómo se encuentra el sur, mientras se dibuja la línea"],
   ["inicio.ara.pasaje.kit.cruz.navegantes", "ara", "la Cruz del Sur, desde Taguato: los navegantes y la bandera de Brasil"],
-  // El primer capítulo, «La noche de Madrid»: textos provisionales, los escribe la tanda del guion.
-  ["inicio.ara.pasaje.largo.embarque", "ara", "la noche de Madrid: Ara ya en su ventanilla, con la gente guardando bultos (provisional)"],
-  ["inicio.ara.pasaje.largo.nocheDeMadrid", "ara", "la noche de Madrid: se abre la ventanilla en el puesto, de noche (provisional)"],
-  ["comandante.largo.bienvenida", "comandante", "la noche de Madrid: puertas cerradas, la bienvenida de la comandante (provisional)"],
-  ["comandante.largo.vueloVerano", "comandante", "la noche de Madrid: tiempo, altura, viento de cara y llegada a las 06:25, en verano de Europa (provisional)"],
-  ["comandante.largo.vueloInvierno", "comandante", "la noche de Madrid: tiempo, altura, viento de cara y llegada a las 07:30, en invierno de Europa (provisional)"],
-  ["comandante.largo.tresPilotos", "comandante", "la noche de Madrid: hoy van tres pilotos y se turnan (provisional)"],
-  ["inicio.tripulacion.pasaje.demo.salidasLargo", "tripulacion-canarias", "la noche de Madrid: las ocho salidas del JAZ 110, cuatro por lado (provisional)"],
-  ["inicio.ara.pasaje.largo.lucesVerdes", "ara", "la noche de Madrid: rodando, Ara ve la fila verde del eje de las calles (provisional)"],
-  ["inicio.tripulacion.pasaje.cerca.largo.lucesVerdes", "tripulacion-canarias", "la noche de Madrid: Idaira, para qué es la fila verde (provisional)"],
-  ["comandante.largo.cinturon", "comandante", "la noche de Madrid: subiendo, la comandante apaga la luz del cinturón; sentados, puesto (provisional)"],
-  ["inicio.ara.pasaje.largo.madrid", "ara", "la noche de Madrid: Ara ve Madrid encendida por su cristal, si se ve (provisional)"],
+  // El primer capítulo, «La noche de Madrid».
+  ["inicio.ara.pasaje.largo.embarque", "ara", "la noche de Madrid: embarcando, Ara ve los dos pasillos y a Idaira, la de su otro viaje, ayudando a un señor"],
+  ["inicio.ara.pasaje.largo.nocheDeMadrid", "ara", "la noche de Madrid: se abre la ventanilla en el puesto, de noche, camino de casa"],
+  ["comandante.largo.bienvenida", "comandante", "la noche de Madrid: puertas cerradas, la bienvenida de la comandante"],
+  ["comandante.largo.vueloVerano", "comandante", "la noche de Madrid: once horas y cuarto de vuelo, once mil metros, algo de viento de cara y llegada a las 06:25, en verano de Europa; con la lámina del viento de arriba"],
+  ["comandante.largo.vueloInvierno", "comandante", "la noche de Madrid: once horas y cuarto de vuelo, once mil metros, algo de viento de cara y llegada a las 07:30, en invierno de Europa; con la lámina del viento de arriba"],
+  ["comandante.largo.tresPilotos", "comandante", "la noche de Madrid: hoy van tres pilotos y se turnan en las camas de encima de la cabina; descansando, sigue siendo la responsable; con la lámina de la litera"],
+  ["inicio.tripulacion.pasaje.demo.salidasLargo", "tripulacion-canarias", "la noche de Madrid: las ocho salidas del JAZ 110, cuatro por lado, y las luces del suelo de los dos pasillos"],
+  ["inicio.ara.pasaje.largo.lucesVerdes", "ara", "la noche de Madrid: rodando, Ara ve la fila verde del eje de las calles"],
+  ["inicio.tripulacion.pasaje.cerca.largo.lucesVerdes", "tripulacion-canarias", "la noche de Madrid: Idaira, la fila verde marca el medio de la calle, y de noche la siguen los pilotos"],
+  ["comandante.largo.cinturon", "comandante", "la noche de Madrid: subiendo, la comandante apaga la luz del cinturón; sentados, abrochado"],
+  ["inicio.ara.pasaje.largo.madrid", "ara", "la noche de Madrid: Ara ve Madrid encendida por su cristal, si se ve"],
+  ["inicio.ara.pasaje.largo.vientoPregunta", "ara", "la noche de Madrid: con la luz del cinturón apagada, Ara le pregunta a Idaira por el viento de cara"],
+  ["inicio.tripulacion.pasaje.cerca.largo.vientoRios", "tripulacion-canarias", "la noche de Madrid: Idaira, de pie y en persona, un poco más arriba corren ríos de viento rapidísimo"],
+  ["inicio.tripulacion.pasaje.cerca.largo.vientoBarco", "tripulacion-canarias", "la noche de Madrid: Idaira, como un barco en un río; por eso la vuelta dura unos tres cuartos de hora menos"],
 ];
 const LO_QUE_SE_VE = new Set(
   [...DEL_VUELO_LARGO, ...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA, ...DE_LOS_INSTRUMENTOS].map(

@@ -301,6 +301,16 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
    * bultos, de noche por los cristales. Es con lo que se abre el primer capítulo.
    */
   embarque: { original: "vuelo-largo/embarque.png", hueco: "pantalla", recorte: ENTERA_DE_1672, conAra: true },
+  /*
+   * **Las dos de la bienvenida de la comandante**, enteras: ver `flight/guion-noche-de-madrid.ts`.
+   * El viento de arriba, la Tierra con los dos ríos de aire y el avión metido en el del norte,
+   * sin cifras, que cuánto frena un día concreto no está comprobado; y la litera de los
+   * pilotos, el corte de la parte de delante con uno durmiendo en su cama con cortina, encima
+   * de la cabina de mando, y los otros dos volando. De dónde sale cada cosa, en el `LEEME` de
+   * la entrega: la litera, de las condiciones especiales de la FAA para esta clase de avión.
+   */
+  "viento-de-arriba": { original: "vuelo-largo/viento-de-arriba.png", hueco: "pantalla", recorte: ENTERA_DE_1672 },
+  litera: { original: "vuelo-largo/litera.png", hueco: "pantalla", recorte: ENTERA_DE_1672 },
 };
 
 /**

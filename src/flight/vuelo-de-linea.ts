@@ -158,6 +158,12 @@ export interface LecturaDeLinea {
   readonly senda: { readonly altitud: number; readonly ritmo: number } | null;
   /** La cota del campo donde se está o del de llegada, m. */
   readonly cotaDelCampo: number;
+  /**
+   * **El tope de velocidad de la salida publicada**, m/s de verdadera, o nada: el
+   * «MAX IAS» de la carta hasta su punto, pasado a verdadera con el aire del día por
+   * quien lo lee, que es quien lo tiene. Ver `Fijo.maxKt`.
+   */
+  readonly topeDeVelocidad?: number;
 }
 
 /** Lo que la tripulación sabe de su avión: la ficha y lo que contesta el modelo. */
@@ -956,11 +962,18 @@ export class VueloDeLinea {
     if (this.tramo === "subida") {
       const conFlaps = sobreElCampo < RECOGE_LOS_FLAPS;
       v = conFlaps ? this.ficha.vr + 10 : l.altitud < DIEZ_MIL ? V_250 : V_ARRIBA;
+      /*
+       * Y nunca por encima de lo que pide la carta de la salida hasta su punto: los 210
+       * nudos de la CCS6L hasta MD039 eran 236 a 250 sin esto, que es lo que hace quien
+       * acelera a los 250 en cuanto recoge los flaps.
+       */
+      if (l.topeDeVelocidad !== undefined) v = Math.min(v, l.topeDeVelocidad);
       flaps = conFlaps ? 1 / 3 : 0;
       // El tren dentro en cuanto sube de verdad: unos diez metros.
       tren = l.altura < 10;
     } else if (!bajando) {
       v = l.altitud < DIEZ_MIL ? V_250 : (this.velocidadDeCrucero ?? V_ARRIBA);
+      if (l.topeDeVelocidad !== undefined) v = Math.min(v, l.topeDeVelocidad);
     } else {
       v = l.altitud < DIEZ_MIL ? V_250 : this.velocidadBajando(l.altitud);
       if (falta < CONFIGURA.frena) v = Math.min(v, V_BAJANDO_CERCA);
