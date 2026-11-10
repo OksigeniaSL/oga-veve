@@ -5158,11 +5158,17 @@ export class Game {
    *   ciclo al siguiente: ver `Tcas`. Un salto de kilómetros en un ciclo es
    *   un acercamiento que ningún avión vuela, y daba avisos de tráfico a
    *   aviones a diez kilómetros que no se acercaban.
+   * - Y el tractor de quien juega, si seguía enganchado: hasta el saludo, el
+   *   avión va donde lo lleva él —ver `empujarElAvion`—, y devolvía al puesto,
+   *   en cada paso, al avión que el banco ponía en una final o en el aire.
+   *   Jugando no pasa: reiniciar o cambiar de lección ya lo quitan. El del
+   *   pasaje se queda, que la tripulación lo suelta antes de cualquier salto.
    */
   colocadoParaBanco(): void {
     this.frustrada.reiniciar();
     this.finalDeLaTorre.reiniciar();
     this.tcas.reiniciar();
+    if (this.remolqueDeQuienJuega) this.quitarElRemolque();
   }
   /**
    * Cuántas veces el juego ha decidido decir «ya podés tocar».

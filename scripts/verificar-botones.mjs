@@ -217,6 +217,32 @@ for (const avion of AVIONES) {
   );
 
   if (donde.motor) {
+    /*
+     * **Con un reactor en un puesto de contacto, el contacto pide antes el tractor**
+     * (ADR 0025): lo primero no es arrancar, es pedir que te saquen. Se mira que lo
+     * pida —la baliza y el tractor echando a andar— y, ya empujando, que arranque.
+     */
+    const conTractor = await page.evaluate(
+      () => globalThis.__oga.inicio().remolque?.fase === "enganchado",
+    );
+    if (conTractor) {
+      await pulsar(donde.motor);
+      const empuja = await page
+        .waitForFunction(
+          () => globalThis.__oga.inicio().remolque?.fase === "empujando",
+          null,
+          { timeout: 20000 },
+        )
+        .then(() => true)
+        .catch(() => false);
+      const r = await page.evaluate(() => globalThis.__oga.inicio().remolque);
+      comprobar(
+        `${avion}: en el puesto de contacto, el contacto pide el tractor`,
+        empuja && r?.baliza === true,
+        `${r?.fase ?? "sin tractor"} · baliza ${r?.baliza ? "encendida" : "apagada"}`,
+        "la baliza al pedirlo y, a los tres segundos, el tractor empujando",
+      );
+    }
     const antes = await page.evaluate(
       () => globalThis.__oga.controles().engineOn,
     );

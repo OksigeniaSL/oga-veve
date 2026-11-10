@@ -109,6 +109,12 @@ try {
         const alto = suelo + 900 * 0.3048;
         const rumbo = rumboHacia(f0.x, f0.z, f1.x, f1.z);
         o.colocar(f0.x, alto, f0.z, trueFromIndicated(190 / 1.94384, alto, j.flight.aireDelDia()), rumbo);
+        /*
+         * Y con los motores en marcha, que la «i» de arriba no siempre los arranca: con un
+         * reactor en un puesto de contacto lo primero que pide es el tractor (ADR 0025), y
+         * colocar el avión a mano lo suelta con los motores todavía parados.
+         */
+        o.controles().engineOn = true;
         await espera(300);
         o.pedirTren(false);
         o.pedirFlaps(0);
