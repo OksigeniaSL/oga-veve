@@ -14,6 +14,7 @@ import {
   paredMasCercana,
   Remolque,
   rumboAlEdificio,
+  rumboEnElPuesto,
   saleConRemolque,
   trayectoriaDelEmpuje,
   VA_EMPUJANDO,
@@ -24,7 +25,7 @@ import {
   type PuntoXZ,
 } from "./remolque";
 import { PlanDeVuelo } from "./plan-de-vuelo";
-import { conSuAerodromo, MADRID_BARAJAS, SALIDA_DE_BARAJAS } from "./scenarios";
+import { conSuAerodromo, MADRID_BARAJAS, SALIDA_DE_BARAJAS, TENERIFE_NORTE } from "./scenarios";
 import { AIRCRAFT } from "../flight/aircraft";
 import { esDeLinea } from "../flight/velocidades-en-tierra";
 
@@ -243,6 +244,47 @@ describe("en los puestos de verdad", () => {
     // Y ni un paso del empuje con el avión dentro de un edificio: el centro, a media envergadura de toda pared.
     for (const p of e.poses) expect(paredMasCercana(p.x, p.z, aero.buildings ?? [])!.distancia).toBeGreaterThan(largo / 2);
   });
+
+  it("de Los Rodeos, con pasaje, el JAZ 90 sale de un puesto de contacto, se aleja de su pared y nadie se le cruza", async () => {
+    const s = await conSuAerodromo(TENERIFE_NORTE);
+    const aero = s.aerodrome!;
+    const avion = AIRCRAFT.find((a) => a.id === "jaz-90")!;
+    const plan = new PlanDeVuelo(aero, s.runway, () => 600, avion);
+    plan.deContacto = true;
+    expect(plan.reiniciar()).toBe(true);
+    const [x, z] = plan.arranque()!;
+    const edificios = aero.buildings ?? [];
+    expect(saleConRemolque(esDeLinea(avion), x, z, edificios, largoPorLaBatalla(avion.batalla))).toBe(true);
+    const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
+    const rumbo = rumboEnElPuesto(x, z, edificios, raya)!;
+    const e = trayectoriaDelEmpuje({ x, z, rumbo }, raya, avion.batalla)!;
+    expect(vaDeCulo(e.poses)).toBeLessThan(-0.95);
+    // La pared a la que miraba, cada vez más lejos: la terminal se aleja hacia delante.
+    const pared = paredMasCercana(x, z, edificios)!;
+    const h = vector(pared.rumbo);
+    const enLaPared = { x: x + h.x * pared.distancia, z: z + h.z * pared.distancia };
+    const fin = e.poses.at(-1)!;
+    // En Los Rodeos la calle está a veintiséis metros del puesto: se aleja poco, pero se aleja.
+    expect(Math.hypot(fin.x - enLaPared.x, fin.z - enLaPared.z)).toBeGreaterThan(pared.distancia + 5);
+    // Y del remolque entero, nadie se mete en el fuselaje: el tractor, suelto, ni la persona.
+    const r = new Remolque(e, { batalla: avion.batalla, envergadura: avion.wingSpan });
+    r.empezar();
+    let tractor = Infinity;
+    let persona = Infinity;
+    for (let i = 0; i < 6000 && !r.libre; i++) {
+      r.paso(0.05);
+      const a = r.avion;
+      const n = vector(a.rumbo);
+      const rueda = r.ruedaDeMorro;
+      const cola = { x: a.x - n.x * largoPorLaBatalla(avion.batalla) * 0.55, z: a.z - n.z * largoPorLaBatalla(avion.batalla) * 0.55 };
+      const trasLaRueda = { x: rueda.x - n.x * 2, z: rueda.z - n.z * 2 };
+      if (!r.enganchado) tractor = Math.min(tractor, alSegmento(r.tractor, trasLaRueda, cola) - r.medidasDelTractor.ancho / 2);
+      persona = Math.min(persona, alSegmento(r.persona, rueda, cola));
+    }
+    expect(r.libre).toBe(true);
+    expect(tractor).toBeGreaterThan(1);
+    expect(persona).toBeGreaterThan(2);
+  });
 });
 
 /** Lo que se aparta `p` de la recta `a`–`b`, m. */
@@ -251,5 +293,14 @@ function aLaRecta(p: PuntoXZ, a: PuntoXZ, b: PuntoXZ): number {
   const dz = b.z - a.z;
   const l2 = dx * dx + dz * dz || 1;
   const t = ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2;
+  return Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z);
+}
+
+/** Lo que se aparta `p` del segmento `a`–`b`, m. */
+function alSegmento(p: PuntoXZ, a: PuntoXZ, b: PuntoXZ): number {
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const l2 = dx * dx + dz * dz || 1;
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2));
   return Math.hypot(a.x + dx * t - p.x, a.z + dz * t - p.z);
 }

@@ -2341,9 +2341,14 @@ interface MedidaDelRemolque {
   giro: number;
   radio: number;
   largo: number;
-  /** La pared más cercana al avión, m, en el puesto y al acabar de empujar. */
+  /**
+   * **Lo que hay del avión a la pared a la que miraba en el puesto**, m, al empezar y al
+   * acabar de empujar: la de enfrente, no la más cercana de ahora, que al girar puede ser
+   * otro edificio. Y ese punto de la pared, en el mundo.
+   */
   paredAlEmpezar: number;
   paredAlAcabar: number | null;
+  paredDelPuesto: { readonly x: number; readonly z: number };
   /** El rumbo al acabar, grados, y lo que gira rodando los primeros treinta metros. */
   rumboAlAcabar: number | null;
   giroRodando30: number | null;
@@ -20219,15 +20224,20 @@ export class Game {
     this.dibujoDelRemolque.poner(this.remolque, (x, z) => this.terrain.sampleSurface(x, z), 0);
     // El señalero de la salida, fuera: del puesto saca el avión el tractor.
     this.senalero.reiniciar();
-    const pared = paredMasCercana(puesto[0], puesto[1], edificios)?.distancia ?? 0;
+    const pared = paredMasCercana(puesto[0], puesto[1], edificios);
+    const haciaLaPared = vector(pared?.rumbo ?? rumbo);
     this.medidaDelRemolque = {
       peorAdelante: -1,
       empujado: 0,
       giro: (empuje.giro * 180) / Math.PI,
       radio: empuje.radio,
       largo: empuje.largo,
-      paredAlEmpezar: pared,
+      paredAlEmpezar: pared?.distancia ?? 0,
       paredAlAcabar: null,
+      paredDelPuesto: {
+        x: puesto[0] + haciaLaPared.x * (pared?.distancia ?? 0),
+        z: puesto[1] + haciaLaPared.z * (pared?.distancia ?? 0),
+      },
       rumboAlAcabar: null,
       giroRodando30: null,
       tractorAlFuselaje: Infinity,
@@ -20329,17 +20339,22 @@ export class Game {
     }
     const edificios = this.plan?.aerodromoActual.buildings ?? [];
     if (r.acabado && m.paredAlAcabar === null) {
-      m.paredAlAcabar = paredMasCercana(a.x, a.z, edificios)?.distancia ?? null;
+      m.paredAlAcabar = Math.hypot(a.x - m.paredDelPuesto.x, a.z - m.paredDelPuesto.z);
       m.rumboAlAcabar = (a.rumbo * 180) / Math.PI;
       m.motorAlAcabar = this.input.controls.engineOn;
     }
-    // El fuselaje, de la rueda de morro a la cola: el tractor va debajo del morro mientras empuja.
+    /*
+     * El fuselaje, de la rueda de morro a la cola. El tractor, suelto, se mide desde dos metros
+     * por detrás de la rueda: delante de ella está su sitio, debajo del morro, y de ahí sale.
+     */
     const largo = largoPorLaBatalla(this.aircraft.batalla);
     const rueda = r.ruedaDeMorro;
     const cola = { x: a.x - n.x * largo * 0.55, z: a.z - n.z * largo * 0.55 };
+    const trasLaRueda = { x: rueda.x - n.x * 2, z: rueda.z - n.z * 2 };
     const t = r.tractor;
     const p = r.persona;
-    if (!r.enganchado) m.tractorAlFuselaje = Math.min(m.tractorAlFuselaje, aLaRecta(t, rueda, cola) - r.medidasDelTractor.ancho / 2);
+    if (!r.enganchado)
+      m.tractorAlFuselaje = Math.min(m.tractorAlFuselaje, aLaRecta(t, trasLaRueda, cola) - r.medidasDelTractor.ancho / 2);
     m.personaAlFuselaje = Math.min(m.personaAlFuselaje, aLaRecta(p, rueda, cola));
     m.tractorALaPersona = Math.min(m.tractorALaPersona, Math.hypot(t.x - p.x, t.z - p.z) - r.medidasDelTractor.ancho / 2);
     if (dentroDeAlgunEdificio(t.x, t.z, edificios) || dentroDeAlgunEdificio(p.x, p.z, edificios)) m.dentroDeUnEdificio++;

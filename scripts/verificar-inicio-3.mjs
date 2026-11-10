@@ -332,9 +332,9 @@ function comprobarElRemolque(r, charlas, donde) {
   const f = (x, d = 1) => (x === null || x === undefined ? "?" : Number(x).toFixed(d));
   comprobar(
     `sale ${donde} empujado por el tractor, hacia atrás: la terminal se aleja hacia delante`,
-    !!m && m.peorAdelante < -0.95 && m.empujado > 20 && m.paredAlAcabar !== null && m.paredAlAcabar > m.paredAlEmpezar + 10,
+    !!m && m.peorAdelante < -0.95 && m.empujado > 20 && m.paredAlAcabar !== null && m.paredAlAcabar > m.paredAlEmpezar + 5,
     m
-      ? `${f(m.empujado)} de ${f(m.largo)} m empujado · el peor paso, a ${f(m.peorAdelante, 3)} del morro (−1, de culo) · pared ${f(m.paredAlEmpezar)} → ${f(m.paredAlAcabar)} m · giro ${f(m.giro, 0)}° con radio ${f(m.radio)} m`
+      ? `${f(m.empujado)} de ${f(m.largo)} m empujado · el peor paso, a ${f(m.peorAdelante, 3)} del morro (−1, de culo) · de la pared de enfrente ${f(m.paredAlEmpezar)} → ${f(m.paredAlAcabar)} m · giro ${f(m.giro, 0)}° con radio ${f(m.radio)} m`
       : "sin remolque",
   );
   comprobar(
