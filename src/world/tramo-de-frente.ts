@@ -65,6 +65,13 @@ export interface QuienTieneElTramo {
    * pero no se le «da paso»: cuando se aparta, pasas tú.
    */
   readonly recula?: boolean;
+  /**
+   * Si **le empuja un tractor** de espaldas desde su puesto: entonces
+   * `porDelante` es lo que barre el empuje, con el tractor y la cola, y no se
+   * entra en ello venga de donde venga, no solo de frente. Ver `dondeSeAcerca`
+   * y `zonaDelEmpuje` en `trafico.ts`.
+   */
+  readonly empuja?: boolean;
 }
 
 /** Dónde se mete un camino en un tramo de frente con otro. */
@@ -136,6 +143,31 @@ export function tramoDeFrente(
       desdeElPrimero = k === 0;
     }
     if (deFrente) return { entra: desde, dentro: desdeElPrimero };
+  }
+  return null;
+}
+
+/**
+ * **Dónde se acerca `camino` a menos de `separacion` de `otro`**, venga en el
+ * sentido que venga: es lo que pide un avión empujado de espaldas desde su
+ * puesto, que no va de frente con nadie y ocupa la calle igual. Un empuje se
+ * hace con la calle libre, y quien rueda espera fuera a que acabe (el «hold
+ * position» del control de tierra). `null` si no se acerca en ningún punto.
+ */
+export function dondeSeAcerca(
+  camino: readonly EnElPlano[],
+  otro: readonly EnElPlano[],
+  separacion: number,
+): TramoDeFrente | null {
+  if (camino.length < 1 || otro.length < 2 || !(separacion > 0)) return null;
+  const rejilla = enRejilla(otro, separacion);
+  const s2 = separacion * separacion;
+  let recorrido = 0;
+  for (let k = 0; k < camino.length; k++) {
+    if (k > 0) recorrido += distancia(camino[k - 1]!, camino[k]!);
+    const p = camino[k]!;
+    for (const j of rejilla.tramosCerca(p))
+      if (distancia2AlTramo(p, otro[j]!, otro[j + 1]!) < s2) return { entra: recorrido, dentro: k === 0 };
   }
   return null;
 }

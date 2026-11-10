@@ -77,6 +77,15 @@ import {
   type Pista,
 } from "./circuito";
 import { desplazadoDe } from "./umbral-desplazado";
+import { aircraftById } from "../flight/aircraft";
+import {
+  largoPorLaBatalla,
+  poseDelEmpuje,
+  Remolque,
+  vector,
+  type Empuje,
+} from "./remolque";
+import { DibujoDelRemolque } from "./tractor-de-remolque";
 import {
   PASO_DEL_TRAMO,
   porDelanteDe,
@@ -285,6 +294,12 @@ export interface Caminos {
      * `salida`, si remonta. Ver `alRemontar`.
      */
     readonly remonte?: { readonly entra: number; readonly vira: number } | null;
+    /**
+     * **Si sale empujado** de un puesto de contacto: el empuje del tractor, y
+     * hasta qué metro de `salida` llega. Ver `empujado` en
+     * `suelo-del-trafico.ts` y `empujar`.
+     */
+    readonly empuje?: { readonly trayectoria: Empuje; readonly hasta: number } | null;
   } | null;
 }
 
@@ -569,6 +584,42 @@ export function pistaQuePideConSuMargen(t: TipoDeTrafico): number {
   const deLinea = t.id === "turbohelice" || t.id === "reactor";
   return t.pistaQuePide * (deLinea ? MARGEN_DE_CERTIFICACION : FACTOR_DE_ESCUELA);
 }
+
+/**
+ * **Si embarca por pasarela**, y la batalla con la que se empuja: el reactor,
+ * como los reactores de quien juega (`vaALaPasarela`). El turbohélice regional
+ * embarca a pie en la plataforma, con su escalerilla, y sale por sus medios; la
+ * avioneta y el bimotor, de la plataforma de aviación general. La batalla es la
+ * del modelo con que se dibuja —el JAZ 90, la de un E-170—, que es la que se ve
+ * girar empujado. Ver el ADR 0025.
+ */
+export function pasarelaDelTrafico(t: Pick<TipoDeTrafico, "id">): { readonly batalla: number } | undefined {
+  if (t.id !== "reactor") return undefined;
+  batallaDelReactor ??= aircraftById(MODELO_DEL_TIPO.reactor ?? "jaz-90").batalla;
+  return { batalla: batallaDelReactor };
+}
+let batallaDelReactor: number | undefined;
+
+/**
+ * **Cuántos tractores empujan a la vez en el tráfico**: dos. Cada uno es un
+ * tractor y una persona con sus mallas, y en un aeródromo del juego no suele
+ * haber más de un reactor del tráfico saliendo a la vez; un tercero espera en
+ * su puesto, enganchado, a que se suelte uno. Ver `empujar`.
+ */
+export const TRACTORES_A_LA_VEZ = 2;
+
+/**
+ * **Lo que va encendida la baliza antes de que el tractor eche a andar**, s: los
+ * mismos tres segundos que en el vuelo de pasaje. Ver `BALIZA_ANTES_DE_EMPUJAR`
+ * en `game.ts`.
+ */
+const BALIZA_ANTES = 3;
+
+/**
+ * **Lo que se mira por delante de los demás antes de empujar**, m: quien va a
+ * pasar por la calle en los próximos segundos pasa antes, y luego se empuja.
+ */
+const MIRA_ANTES_DE_EMPUJAR = 120;
 
 /**
  * **Qué tráfico opera en este campo**, por su código OACI, y en qué
@@ -983,7 +1034,8 @@ export function trazar(
       y: tierra.alto(p.x, p.z) + EN_TIERRA,
       z: p.z,
     });
-    const llega = tierra.suelo.llegada(t.toca + t.frena, tierra.evitar, tierra.ocupados);
+    const pasarela = pasarelaDelTrafico(t);
+    const llega = tierra.suelo.llegada(t.toca + t.frena, tierra.evitar, tierra.ocupados, pasarela);
     if (llega && llega.camino.length > 1) {
       const tomaDeVerdad = sobre(en(desplazado + t.toca, 0, 0));
       const rodando = llega.camino.map(sobre);
@@ -1016,6 +1068,7 @@ export function trazar(
       tierra.evitar,
       tierra.porDondeVas,
       pistaQuePideConSuMargen(t),
+      pasarela,
     );
     if (sale && sale.camino.length > 1) {
       const rodando = sale.camino.map(sobre);
@@ -1067,6 +1120,7 @@ export function trazar(
         tipo: t,
         remonta: sale.remonta,
         remonte: sale.remonta > 0 ? (sale.remonte ?? null) : null,
+        empuje: sale.empuje ?? null,
       };
     }
   }
@@ -1672,6 +1726,20 @@ interface Volando {
    * pases. `null` si no recula. Ver `reculaHasta`.
    */
   recula: number | null;
+  /**
+   * **El tractor que le saca de su puesto de contacto**, si sale empujado y
+   * todavía no es de sus pilotos. Ver `empujar`.
+   */
+  remolque: Remolque | null;
+  /** Y su dibujo, solo mientras hace falta: de la baliza al saludo. */
+  dibujoDelRemolque: DibujoDelRemolque | null;
+  /** Lo que falta para que el tractor eche a andar, con la baliza ya encendida, s. */
+  paraEmpujar: number | null;
+  /**
+   * **Lo que barre el empuje desde donde va**, con el tractor y la cola: lo que
+   * ningún otro pisa mientras tanto. Vacía si no empuja. Ver `zonaDelEmpuje`.
+   */
+  zona: EnElPlano[];
 }
 
 /** Un tres sesenta de espera. Ver `tresSesentaDesde`. */
@@ -2482,11 +2550,10 @@ export function crearTrafico(
     const otros: { x: number; z: number; separacion: number }[] = [];
     for (const b of aviones.values()) {
       if (b === quien || !porTierra(b)) continue;
-      otros.push({
-        x: b.grupo.position.x,
-        z: b.grupo.position.z,
-        separacion: (quien.tipo.envergadura + b.tipo.envergadura) / 2 + MARGEN_DE_ALA,
-      });
+      const separacion = (quien.tipo.envergadura + b.tipo.envergadura) / 2 + MARGEN_DE_ALA;
+      otros.push({ x: b.grupo.position.x, z: b.grupo.position.z, separacion });
+      // Y lo que barre si le están empujando: ahí no se entra hasta que acabe.
+      for (const p of b.zona) otros.push({ x: p.x, z: p.z, separacion });
     }
     if (!otros.length) return quiere;
     const camino = quien.marca.camino;
@@ -2606,7 +2673,8 @@ export function crearTrafico(
     const enCalles: [string, Volando][] = [];
     for (const [m, q] of aviones) {
       q.hastaElTramo = Infinity;
-      if (q.tresSesenta || !(porLasCalles(q) || corriendoPorLaPista(q))) {
+      // Enganchado al tractor no rueda: lo que reserva es lo que barre el empuje, más abajo.
+      if (q.tresSesenta || q.remolque || !(porLasCalles(q) || corriendoPorLaPista(q))) {
         q.porDelante = [];
         q.frenteATi = null;
         continue;
@@ -2704,6 +2772,15 @@ export function crearTrafico(
         );
       }
     for (const par of [...tramoDe.keys()]) if (!vistos.has(par)) tramoDe.delete(par);
+    /*
+     * **Y lo que barre un empuje es de quien empujan**, también para ti: tu raya
+     * se corta antes, venga por donde venga, y esperas como esperas a otro que
+     * rueda. Ver `dondeSeAcerca` en `tramo-de-frente.ts`.
+     */
+    for (const [m, q] of aviones) {
+      q.zona = empujando(q) ? zonaDelEmpuje(q) : [];
+      if (q.zona.length > 1) tienen.push({ matricula: m, sale: true, porDelante: q.zona, empuja: true });
+    }
     losQueTienen = tienen;
   };
 
@@ -2920,6 +2997,13 @@ export function crearTrafico(
       if (r < c.fuera) return "carrera";
       return r >= largoDe(camino) - 0.5 ? "aparcado" : "rodando";
     }
+    /*
+     * Enganchado al tractor, con los motores parados hasta que se pide el
+     * empuje; desde la baliza, con ella encendida y sin el foco de rodaje: no
+     * rueda, le empujan. Ver `empujar`.
+     */
+    if (quien.remolque && camino === c.salida)
+      return quien.paraEmpujar === null && quien.remolque.fase === "enganchado" ? "aparcado" : "esperando";
     if (camino === c.salida) {
       // Sin calles no hay eje apuntado en los tramos de tierra: es el tope de
       // «line up and wait», y de ahí el camino ya sube.
@@ -3012,7 +3096,163 @@ export function crearTrafico(
     return null;
   };
 
+  /**
+   * **Al ponerle en una marca**: si queda en su puesto de contacto, al principio
+   * de su salida, se le engancha el tractor; si ya no va por la salida, se le
+   * suelta. Lo que lleve empujado no se toca: una llamada a mitad del empuje
+   * no lo devuelve al puesto. Ver `empujar`.
+   */
+  const engancharOSoltar = (quien: Volando): void => {
+    const c = quien.caminos;
+    const e = c?.enTierra?.empuje;
+    const porLaSalida = !!c && quien.marca.camino === c.salida;
+    if (quien.remolque && !porLaSalida) {
+      guardarElTractor(quien);
+      quien.remolque = null;
+      quien.paraEmpujar = null;
+      quien.zona = [];
+    } else if (!quien.remolque && e && porLaSalida && quien.recorrido < 0.5) {
+      const pasarela = pasarelaDelTrafico(quien.tipo);
+      if (!pasarela) return;
+      quien.remolque = new Remolque(e.trayectoria, {
+        batalla: pasarela.batalla,
+        envergadura: quien.tipo.envergadura,
+      });
+      quien.recorrido = 0;
+    }
+  };
+
+  /** Si tiene la calle cogida por el empuje: de la baliza al saludo. */
+  const empujando = (q: Volando): boolean =>
+    !!q.remolque && (q.paraEmpujar !== null || q.remolque.fase !== "enganchado") && !q.remolque.libre;
+
+  /**
+   * **Lo que barre el empuje desde donde va**: el tractor, el avión y su camino
+   * de espaldas hasta donde se para, y la cola en ese sitio. Una línea por el
+   * eje, cada pocos metros: quien pasa a la separación de ala de ella no toca
+   * ni al avión ni al tractor.
+   */
+  const zonaDelEmpuje = (q: Volando): EnElPlano[] => {
+    const r = q.remolque!;
+    const t = r.tractor;
+    const puntos: EnElPlano[] = [{ x: t.x, z: t.z }];
+    const largo = r.empuje.largo;
+    for (let s = r.empujado; s < largo; s += PASO_DEL_TRAMO) {
+      const p = poseDelEmpuje(r.empuje, s);
+      puntos.push({ x: p.x, z: p.z });
+    }
+    const fin = poseDelEmpuje(r.empuje, largo);
+    const atras = vector(fin.rumbo + Math.PI);
+    const cola = largoPorLaBatalla(pasarelaDelTrafico(q.tipo)?.batalla ?? 12) / 2;
+    puntos.push({ x: fin.x, z: fin.z }, { x: fin.x + atras.x * cola, z: fin.z + atras.z * cola });
+    return puntos;
+  };
+
+  /** A qué distancia está un punto de una línea, m. */
+  const aLaLinea = (p: EnElPlano, linea: readonly EnElPlano[]): number => {
+    let d = Infinity;
+    for (let i = 1; i < linea.length; i++) {
+      const a = linea[i - 1]!;
+      const b = linea[i]!;
+      const dx = b.x - a.x;
+      const dz = b.z - a.z;
+      const l2 = dx * dx + dz * dz;
+      const k = l2 > 0 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / l2)) : 0;
+      d = Math.min(d, Math.hypot(a.x + dx * k - p.x, a.z + dz * k - p.z));
+    }
+    return d;
+  };
+
+  /**
+   * **Si la calle está libre para empujar**: nadie en lo que va a barrer, ni a
+   * punto de pasar por ello. Es lo que mira el control de tierra antes de decir
+   * «pushback approved»: el que rueda por detrás del puesto pasa primero. Quien
+   * está parado esperando no cuenta como a punto de pasar, que si espera por
+   * éste se esperarían los dos para siempre.
+   */
+  const calleLibreParaEmpujar = (q: Volando, tu: EnTierra | null): boolean => {
+    const zona = zonaDelEmpuje(q);
+    if (tu) {
+      if (aLaLinea(tu, zona) < tu.separacion) return false;
+      if (tu.porDondeVa.some((p) => aLaLinea(p, zona) < tu.separacion)) return false;
+    }
+    for (const b of aviones.values()) {
+      if (b === q || !porTierra(b)) continue;
+      const separacion = (q.tipo.envergadura + b.tipo.envergadura) / 2 + MARGEN_DE_ALA;
+      if (aLaLinea(b.grupo.position, zona) < separacion) return false;
+      if (b.zona.length && b.zona.some((p) => aLaLinea(p, zona) < separacion)) return false;
+      if (!b.avanza || !porLasCalles(b)) continue;
+      const delante = porDelanteDe(b.marca.camino, b.recorrido, b.recorrido + MIRA_ANTES_DE_EMPUJAR);
+      if (delante.some((p) => aLaLinea(p, zona) < separacion)) return false;
+    }
+    return true;
+  };
+
+  /**
+   * **Empujado por el tractor**, de su puesto de contacto a la calle, con las
+   * mismas piezas que el vuelo de pasaje: con permiso para rodar —su tope ya no
+   * es el puesto—, un tractor libre y la calle libre, se enciende la baliza; a
+   * los tres segundos empuja, a paso de persona; los motores se arrancan
+   * empujando, así que al acabar no se espera a nadie; y con el saludo de la
+   * persona de tierra el avión es de sus pilotos y rueda hacia delante por su
+   * camino. Mientras tanto no rueda por sí mismo ni cede a nadie: lo mueve el
+   * tractor, y lo que barre es suyo. Ver `Remolque` en `remolque.ts` y el ADR 0025.
+   */
+  const empujar = (
+    quien: Volando,
+    c: Caminos,
+    tope: number,
+    tu: EnTierra | null,
+    dt: number,
+  ): void => {
+    const r = quien.remolque!;
+    const e = c.enTierra?.empuje;
+    if (!e) {
+      quien.remolque = null;
+      return;
+    }
+    if (r.fase === "enganchado") {
+      if (quien.paraEmpujar === null) {
+        let tractores = 0;
+        for (const b of aviones.values()) if (b.dibujoDelRemolque) tractores++;
+        if (tope > 0.5 && tractores < TRACTORES_A_LA_VEZ && calleLibreParaEmpujar(quien, tu)) {
+          quien.paraEmpujar = BALIZA_ANTES;
+          quien.zona = zonaDelEmpuje(quien);
+          quien.dibujoDelRemolque = new DibujoDelRemolque(r.medidasDelTractor);
+          grupo.add(quien.dibujoDelRemolque.grupo);
+        }
+      } else {
+        quien.paraEmpujar -= dt;
+        if (quien.paraEmpujar <= 0) r.empezar();
+      }
+    }
+    // La tripulación arranca los motores empujando: al acabar no se espera a nadie.
+    r.motoresEnMarcha = true;
+    r.paso(dt);
+    quien.recorrido = Math.min(e.hasta, (r.empujado / Math.max(1e-6, r.empuje.largo)) * e.hasta);
+    const suelo = (porElCamino(quien.marca.camino, quien.recorrido)?.sitio.y ?? cota + EN_TIERRA) - EN_TIERRA;
+    quien.dibujoDelRemolque?.poner(r, () => suelo, dt);
+    if (r.libre) {
+      guardarElTractor(quien);
+      quien.remolque = null;
+      quien.paraEmpujar = null;
+      quien.zona = [];
+      // Un pelo pasado el empuje, que en su último punto el camino aún mira hacia atrás.
+      quien.recorrido = Math.min(e.hasta + 0.05, tope);
+    }
+    quien.cedido = 0;
+    quien.atascado = 0;
+    quien.aguarda = 0;
+  };
+
+  /** El tractor y la persona, fuera: ya no hacen falta. */
+  const guardarElTractor = (quien: Volando): void => {
+    quien.dibujoDelRemolque?.quitar();
+    quien.dibujoDelRemolque = null;
+  };
+
   const quitar = (matricula: string, quien: Volando): void => {
+    guardarElTractor(quien);
     grupo.remove(quien.grupo);
     quien.luces.dispose();
     aviones.delete(matricula);
@@ -3446,6 +3686,7 @@ export function crearTrafico(
           quien.recorrido = suyo.metros;
           quien.olvidado = 0;
           quien.quieto = 0;
+          engancharOSoltar(quien);
           colocar(quien);
           return;
         }
@@ -3480,6 +3721,10 @@ export function crearTrafico(
           aguarda: 0,
           atascado: 0,
           recula: null,
+          remolque: null,
+          dibujoDelRemolque: null,
+          paraEmpujar: null,
+          zona: [],
         };
         aviones.set(matricula, quien);
       }
@@ -3496,6 +3741,7 @@ export function crearTrafico(
       quien.quieto = 0;
       // Puesto en otra marca, se mueve: si le toca esperar, lo dirá el paso.
       quien.avanza = true;
+      engancharOSoltar(quien);
       colocar(quien);
       alumbrar(quien);
     },
@@ -3521,7 +3767,9 @@ export function crearTrafico(
         const c = quien.caminos;
         const antes = quien.recorrido;
         const tope = quien.marca.tope ?? Infinity;
-        if (quien.tresSesenta) {
+        if (quien.remolque && c && quien.marca.camino === c.salida) {
+          empujar(quien, c, tope, tuEnTierra, dt);
+        } else if (quien.tresSesenta) {
           /*
            * **Dando la vuelta de espera, su camino no avanza**: está en la
            * esquina, esperando. Al cerrar la vuelta mira otra vez si ya le
@@ -4066,6 +4314,7 @@ export function crearTrafico(
     dispose() {
       desmontado = true;
       for (const quien of aviones.values()) {
+        guardarElTractor(quien);
         grupo.remove(quien.grupo);
         quien.luces.dispose();
       }
@@ -4081,6 +4330,20 @@ export function crearTrafico(
 }
 
 function colocar(quien: Volando): void {
+  /*
+   * **Empujado, donde le lleva el tractor**, con el morro hacia donde miraba: el
+   * camino va de espaldas, y su rumbo es el de la marcha, no el del morro. La
+   * altura, la del camino. Ver `empujar`.
+   */
+  const r = quien.remolque;
+  if (r && quien.caminos && quien.marca.camino === quien.caminos.salida) {
+    const a = r.avion;
+    const y = porElCamino(quien.marca.camino, quien.recorrido)?.sitio.y ?? quien.grupo.position.y;
+    quien.grupo.position.set(a.x, y, a.z);
+    quien.grupo.rotation.y = giroDelModelo(a.rumbo);
+    quien.grupo.rotation.x = 0;
+    return;
+  }
   const donde = quien.tresSesenta
     ? enElTresSesenta(quien.tresSesenta)
     : porElCamino(quien.marca.camino, quien.recorrido);

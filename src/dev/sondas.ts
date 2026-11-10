@@ -2015,6 +2015,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       juego.trafico?.anuncia(matricula, clave, puedeAterrizar),
     /** Cómo va cada uno del tráfico por dentro. Ver `porDentro` en `trafico.ts`. */
     traficoPorDentro: () => juego.trafico?.porDentro() ?? [],
+    /**
+     * Quién del tráfico tiene una calle de tu raya, y lo que barre el que empujan.
+     * Ver `tramosQueTienen` en `trafico.ts`.
+     */
+    traficoTramos: () => juego.trafico?.tramosQueTienen() ?? [],
+    /** El grupo del tráfico, para mirar sus tractores. Ver `empujar` en `trafico.ts`. */
+    traficoGrupo: () => juego.trafico?.grupo ?? null,
     /** La fila de llegadas del tráfico. Ver `secuencia` en `trafico.ts`. */
     secuencia: () => juego.trafico?.secuencia() ?? [],
     /**
