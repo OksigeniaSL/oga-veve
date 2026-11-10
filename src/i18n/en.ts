@@ -366,6 +366,11 @@ export const EN: Dictionary = {
   "palabra.roto": "Broken",
   "vuelo.estacionado": "Start the engine",
   "vuelo.arrancando": "Release the brakes and roll slowly",
+  "vuelo.remolque": "Ask for the tug: it pushes us back to the taxiway",
+  "vuelo.remolqueArranca":
+    "The tug is pushing us back, since you can't see behind from the cockpit. Start the engines meanwhile",
+  "vuelo.remolqueSuelta":
+    "Look left: they show you the pin with its red streamer and wave. With it out, the nose wheel is yours again: you can taxi now",
   "vuelo.rodando": "Follow the green line",
   "vuelo.esperando": "Stop completely and wait for the light",
   "vuelo.esperaQueAterrice": "We wait: a plane is coming in to land",

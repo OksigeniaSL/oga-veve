@@ -1097,6 +1097,35 @@ const vueltaEntera = (izquierda: boolean): string =>
   </g>
 `);
 
+/**
+ * **El remolque**: el avión visto desde arriba con el morro hacia arriba —hacia el
+ * edificio, como está en un puesto de contacto—, el tractor pegado a su morro y la
+ * flecha hacia abajo, que es hacia donde lo lleva: para atrás. Es la tarjeta de
+ * pedir el empuje y la de esperar a que se suelte. Ver `Game.tarjetaDelRemolque`.
+ */
+const REMOLQUE = icono(`
+  <g transform="translate(9.5 12) scale(0.8) translate(-12 -12)">
+    <path d="M12 4 13.4 11 21 12.6v1.6l-7.6-1.2L12 20l-1.4-6.2L3 14.2v-1.6L10.6 11Z" />
+  </g>
+  <rect x="7.6" y="1.4" width="3.8" height="3.8" rx="0.9" />
+  <path d="M20.5 4 V16.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M17 15.6 H24 L20.5 21.4 Z" />
+`);
+
+/**
+ * **El pasador de la rueda de morro, con su cinta roja**: la anilla, la varilla y la
+ * cinta colgando. Es lo que la persona de tierra enseña en alto al acabar el empuje,
+ * para que la cabina vea que ya lo quitó: sin él, la rueda de morro vuelve a ser de
+ * los pilotos. La cinta, oscura y con filo claro, como la luz roja del PAPI, que
+ * sobre el barro de la tarjeta un rojo vivo no se ve.
+ */
+const PASADOR = icono(`
+  <circle cx="7" cy="6" r="3.6" />
+  <circle class="senal__hueco" cx="7" cy="6" r="1.7" />
+  <rect x="6" y="9" width="2" height="12.4" rx="1" />
+  <path class="senal__roja" d="M10.2 4.6 L21.4 6.6 L19 9.6 L21.4 12.6 L10.2 9.4 Z" />
+`);
+
 const MEDIA_VUELTA = icono(`
   <path d="M4.6 2 h14.8 v20 H4.6 Z" opacity="0.26" />
   <path d="M9 4 v11 q0 4 3 4 q3 0 3-4 V9.6" fill="none" stroke="currentColor"
@@ -1512,6 +1541,8 @@ export const DIBUJOS = {
   nopara: NO_PARAR,
   verde: VERDE,
   "media-vuelta": MEDIA_VUELTA,
+  remolque: REMOLQUE,
+  pasador: PASADOR,
   "vuelta-derecha": vueltaEntera(false),
   "vuelta-izquierda": vueltaEntera(true),
   eje: EJE,

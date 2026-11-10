@@ -1064,6 +1064,7 @@ import { comoDibujo, type DibujoDeSenal } from "./ui/senal";
 import { dibujoDeCierre } from "./ui/cierre-de-ejercicio";
 import { Senalero } from "./world/senalero";
 import {
+  diferencia as diferenciaDeRumbo,
   largoPorLaBatalla,
   paredMasCercana,
   Remolque,
@@ -1146,6 +1147,7 @@ import {
   type Punto as PuntoDelMundo,
 } from "./world/se-ve-desde-el-pasaje";
 import {
+  BALIZA_ANTES_DE_EMPUJAR,
   empujeQueSeQuema,
   enLosMandosDeLinea,
   segundosHastaElCrucero,
@@ -1194,7 +1196,7 @@ import {
   guionSinTorre,
   type Fase,
 } from "./flight/vuelo";
-import { barraDeRodaje, esDeLinea, velocidadesEnTierra } from "./flight/velocidades-en-tierra";
+import { barraDeRodaje, esDeLinea, vaALaPasarela, velocidadesEnTierra } from "./flight/velocidades-en-tierra";
 import {
   DEJA_DE_PEDIR,
   NADA_DICHO_EN_LA_PISTA,
@@ -5548,6 +5550,16 @@ export class Game {
   private get dePasaje(): boolean {
     return this.conInicio && (this.escenaDelInicio === "pasaje" || this.escenaDelInicio === "largo");
   }
+
+  /**
+   * **Si quien juega sale empujado de un puesto de contacto**: pilotando un avión de
+   * pasarela —los reactores, ver `vaALaPasarela`— y fuera del modo inicio, cuyas
+   * escenas guían el arranque paso a paso y no saben de tractores. Ver
+   * `prepararElRemolque` y el ADR 0025.
+   */
+  private get quienJuegaSaleEmpujado(): boolean {
+    return !this.conInicio && vaALaPasarela(this.aircraft);
+  }
   /** Lo último que leyó la escena de aterrizar, y cómo se tocó: para el banco. */
   private lecturaDelAterrizaje: LecturaDeAterrizar | null = null;
   /**
@@ -6336,6 +6348,8 @@ export class Game {
       this.plan.tramosDeOtros = () => this.trafico?.tramosQueTienen() ?? [];
       this.plan.diaDeDespegue = () => this.diaDeDespegue();
       this.plan.puestoPedido = this.puestoDeEsteVuelo;
+      // Con un avión de pasarela, de un puesto de contacto a otro. Ver `PlanDeVuelo.deContacto`.
+      this.plan.deContacto = this.dePasaje || this.quienJuegaSaleEmpujado;
     }
     /*
      * **Y el dibujo va con el plan, no con la lección.**
@@ -12591,6 +12605,16 @@ export class Game {
   private toggleEngine(): void {
     // De pasaje, los motores son de la tripulación: la tecla no hace nada.
     if (this.dePasaje) return;
+    /*
+     * **Y con el tractor enganchado en el puesto, la llave pide el empuje**: lo primero que
+     * se hace en un puesto de contacto no es arrancar, es pedir que te saquen. Los motores
+     * se arrancan después, empujando, con esta misma llave. Ver `pedirElRemolque`.
+     */
+    if (this.remolqueDeQuienJuega?.fase === "enganchado") {
+      this.pedirElRemolque();
+      return;
+    }
+    if (this.salirEmpujadoDeDondeSeLlego()) return;
     const s = this.flight.state;
     const c = this.input.controls;
     /*
@@ -12838,7 +12862,7 @@ export class Game {
       this.plan?.reiniciar(this.leccion.arranque === "pista") ?? false;
     // Y el remolque, a mirar otra vez con el avión recolocado en su puesto. Ver `prepararElRemolque`.
     this.quitarElRemolque();
-    this.remolquePorMirar = this.dePasaje;
+    this.remolquePorMirar = this.dePasaje || this.quienJuegaSaleEmpujado;
     this.colocarSenalero();
     const start = this.startPosition(campo);
     const heading = rodando
@@ -14705,8 +14729,11 @@ export class Game {
     this.plan.diaDeDespegue = () => this.diaDeDespegue();
     // Y su puesto, si es el de casa: el plan se rehace al asentar el aeródromo, antes de colocar el avión.
     if (aero === this.scenario.aerodrome) this.plan.puestoPedido = this.puestoDeEsteVuelo;
-    // Y con pasaje, de una pasarela a otra: se sale empujado y se llega de frente. Ver `PlanDeVuelo.deContacto`.
-    this.plan.deContacto = this.dePasaje;
+    /*
+     * Y con pasaje, o pilotando un avión de pasarela, de una pasarela a otra: se sale
+     * empujado y se llega de frente. Ver `PlanDeVuelo.deContacto`.
+     */
+    this.plan.deContacto = this.dePasaje || this.quienJuegaSaleEmpujado;
     // Y el dibujo con él, en todas las lecciones. Ver dónde se monta.
     this.scene.add(this.plan.grupo);
     this.colocarSenalero();
@@ -17823,8 +17850,11 @@ export class Game {
       const reversa = this.reversa.paso(dt, mandos.reversa);
       if (reversa !== mandos.reversa) mandos = { ...mandos, reversa };
       this.flight.step(dt, mandos);
+      // El remolque de quien juega se mira con el avión ya en su puesto, como el del pasaje.
+      if (this.remolquePorMirar && !this.dePasaje) this.prepararElRemolque();
       // Y si lo está empujando el tractor, va donde lo lleva él. Ver `empujarElAvion`.
       this.empujarElAvion(dt);
+      this.atenderAlRemolque();
       /*
        * Y lo que le ha llegado, para las superficies. **El compensador mueve
        * la profundidad en los de hélice** —es una aleta en su borde de
@@ -20201,16 +20231,18 @@ export class Game {
    * una pasarela—, se traza el empuje hasta la calle y se ponen el tractor y la persona
    * de tierra. Si no, sale de frente como siempre. Ver `world/remolque.ts`.
    */
-  private prepararElRemolque(): void {
+  private prepararElRemolque(
+    /** El puesto del que se sale: el de salida del plan, o donde se aparcó al llegar. */
+    puesto: readonly [number, number] | null = this.plan?.arranque() ?? null,
+  ): void {
     this.remolquePorMirar = false;
     const s = this.flight.state;
-    const puesto = this.plan?.arranque();
     const aero = this.plan?.aerodromoActual;
     if (!puesto || !aero || !s.onGround) return;
     if (Math.hypot(s.position.x - puesto[0], s.position.z - puesto[1]) > 5) return;
     const edificios = aero.buildings ?? [];
     const largo = largoPorLaBatalla(this.aircraft.batalla);
-    if (!saleConRemolque(esDeLinea(this.aircraft), puesto[0], puesto[1], edificios, largo)) return;
+    if (!saleConRemolque(vaALaPasarela(this.aircraft), puesto[0], puesto[1], edificios, largo)) return;
     const raya = this.rayaParaLaTripulacion();
     const rumbo = rumboEnElPuesto(puesto[0], puesto[1], edificios, raya);
     if (rumbo === null) return;
@@ -20219,6 +20251,11 @@ export class Game {
     this.posicionDelEmpuje.copy(s.position);
     this.flight.reset({ position: this.posicionDelEmpuje, heading: rumbo, airspeed: 0 });
     this.remolque = new Remolque(empuje, { batalla: this.aircraft.batalla, envergadura: this.aircraft.wingSpan });
+    /*
+     * Quien juega arranca cuando quiere, y el tractor no se suelta con los motores parados: la
+     * persona de tierra sigue enchufada hasta que están en marcha. Ver `Remolque.esperaLosMotores`.
+     */
+    if (!this.dePasaje) this.remolque.esperaLosMotores = true;
     this.dibujoDelRemolque = new DibujoDelRemolque(this.remolque.medidasDelTractor);
     this.scene.add(this.dibujoDelRemolque.grupo);
     this.dibujoDelRemolque.poner(this.remolque, (x, z) => this.terrain.sampleSurface(x, z), 0);
@@ -20262,7 +20299,154 @@ export class Game {
     this.remolque = null;
     this.balizaDelRemolque = false;
     this.remolquePorMirar = false;
+    this.paraEmpujar = null;
+    this.remolqueContado = "";
   }
+
+  /**
+   * **Quien juega pide el empuje**: con la llave del motor o tocando la tarjeta del
+   * tractor, en el puesto. Es el «solicito remolque y puesta en marcha» de una cabina de
+   * verdad dicho con un gesto: se enciende la baliza —«esto está vivo, no te acerques»—,
+   * la persona de tierra la ve y, al rato, el tractor empuja. Los motores, después y
+   * empujando, con la misma llave. Ver `toggleEngine` y `tarjetaDelRemolque`.
+   */
+  private pedirElRemolque(): void {
+    const r = this.remolque;
+    if (!r || this.dePasaje || r.fase !== "enganchado" || this.paraEmpujar !== null) return;
+    this.balizaDelRemolque = true;
+    this.paraEmpujar = BALIZA_ANTES_DE_EMPUJAR;
+  }
+
+  /**
+   * **El tramo siguiente, desde el puesto de contacto al que se llegó**: se entra de frente,
+   * con el morro al edificio, y de ahí también se sale empujado. Con la llave, en vez de
+   * arrancar, se abre el tramo con los motores parados, se engancha el tractor donde está el
+   * avión y sale su tarjeta, con la que se pide el empuje. Devuelve si lo hizo; si no hay
+   * por dónde empujar, arranca, que el tramo ya está abierto y abrirlo otra vez sería
+   * empezarlo dos veces.
+   */
+  private salirEmpujadoDeDondeSeLlego(): boolean {
+    const s = this.flight.state;
+    const c = this.input.controls;
+    if (c.engineOn || this.remolque || !this.quienJuegaSaleEmpujado || !s.onGround || s.groundSpeed > 0.5) return false;
+    if (!arrancarAbreOtroTramo(this.leccion, this.faseDeAhora, this.vueloTerminado)) return false;
+    const edificios = this.plan?.aerodromoActual.buildings ?? [];
+    const largo = largoPorLaBatalla(this.aircraft.batalla);
+    const aqui: [number, number] = [s.position.x, s.position.z];
+    if (!saleConRemolque(true, aqui[0], aqui[1], edificios, largo)) return false;
+    // Y con el morro al edificio, que si no se sale de frente como siempre.
+    const pared = paredMasCercana(aqui[0], aqui[1], edificios);
+    if (!pared || Math.abs(diferenciaDeRumbo(s.heading, pared.rumbo)) > Math.PI / 3) return false;
+    this.empezarOtroTramo();
+    // Enganchado y nada más: la tarjeta del tractor sale sola, y el empuje se pide con ella.
+    this.prepararElRemolque(aqui);
+    if (!this.remolque) {
+      c.engineOn = true;
+      this.hud.flash(t("hud.engineOn"));
+    }
+    return true;
+  }
+
+  /** Lo que falta para que el tractor eche a andar, s, si quien juega ya lo pidió. */
+  private paraEmpujar: number | null = null;
+
+  /**
+   * **El remolque de quien juega**, si sale empujado y el avión todavía no es suyo: lo
+   * que dice qué tarjeta va en cada momento. Ver `tarjetaDelRemolque`.
+   */
+  private get remolqueDeQuienJuega(): Remolque | null {
+    return !this.dePasaje && this.remolque && !this.remolque.libre ? this.remolque : null;
+  }
+
+  /**
+   * **La tarjeta de la fase, con el tractor enganchado**: la clave y el dibujo que van en
+   * vez de los de la fase, o `null` si va la de siempre. Engancha con la misma tarjeta y
+   * la misma llave que el arranque, sin otra máquina de fases:
+   *
+   * - **En el puesto**, con la fase de arrancar: el tractor, y la llave pide el empuje.
+   * - **Empujando con los motores parados**: la llave, y lo que se cuenta es que nos
+   *   empuja el tractor y que se arrancan mientras tanto. En el peldaño de cabina, la
+   *   frase de siempre: ya no hace falta contar por qué.
+   *
+   * Con los motores en marcha y el tractor todavía enganchado, la fase se calla —ver
+   * `elRemolqueLlevaLaSalida`— y la tarjeta la pone `atenderAlRemolque`.
+   */
+  private tarjetaDelRemolque(vista: Vista): { readonly clave: string; readonly icono: string } | null {
+    const r = this.remolqueDeQuienJuega;
+    if (!r || vista.fase !== "estacionado") return null;
+    if (r.fase === "enganchado") return { clave: "vuelo.remolque", icono: "remolque" };
+    return {
+      clave: laInstructoraLoExplica(this.tier.avisos) ? "vuelo.remolqueArranca" : "vuelo.estacionado",
+      icono: "llave",
+    };
+  }
+
+  /**
+   * **Si el remolque lleva la salida**, y entonces la fase no se anuncia: con los motores
+   * ya en marcha y el tractor todavía enganchado, la fase dice «soltá el freno y andá»,
+   * y eso no se hace hasta que la persona de tierra enseña el pasador y saluda. La fase
+   * se apunta igual, callada, como con el señalero. Ver `elSenaleroLlevaLaLlegada`.
+   */
+  private elRemolqueLlevaLaSalida(vista: Vista): boolean {
+    const r = this.remolqueDeQuienJuega;
+    return r !== null && vista.fase !== "estacionado" && vista.fase !== "apagado";
+  }
+
+  /**
+   * **Lo que se cuenta del remolque de quien juega**, al cambiar lo que pasa: la tarjeta
+   * de la fase, otra vez, cuando el tractor echa a andar y cuando se suelta el avión; el
+   * dibujo del tractor mientras se espera con los motores en marcha; y el del pasador
+   * al enseñarlo, con la instructora contando qué es en los peldaños de abajo.
+   */
+  private atenderAlRemolque(): void {
+    const r = this.remolque;
+    if (!r || this.dePasaje) return;
+    const motor = this.input.controls.engineOn;
+    const ahora = r.libre
+      ? "libre"
+      : r.fase === "enganchado"
+        ? this.paraEmpujar !== null
+          ? "pedido"
+          : "enganchado"
+        : !motor
+          ? "sin-motores"
+          : r.fase === "saludando"
+            ? "saludo"
+            : "con-motores";
+    if (ahora === this.remolqueContado) return;
+    const antes = this.remolqueContado;
+    this.remolqueContado = ahora;
+    if (antes === "") return;
+    const puesta = this.hud.senal.puesto;
+    const delRemolque = puesta.dibujo === "remolque" || puesta.dibujo === "pasador";
+    switch (ahora) {
+      case "pedido":
+        // Pedido: la tarjeta se queda, sin la llave, que ya no hay nada que hacer.
+        this.hud.senal.mostrar(comoDibujo("remolque"), "", null, { segundos: Infinity });
+        break;
+      case "sin-motores":
+        // Empuja: vuelve la tarjeta de la fase, que ahora es la de arrancar. Ver `tarjetaDelRemolque`.
+        if (delRemolque) this.hud.senal.caducar(puesta.dibujo);
+        this.faseAnunciada = "";
+        break;
+      case "con-motores":
+        this.hud.senal.mostrar(comoDibujo("remolque"), "", null, { segundos: Infinity });
+        break;
+      case "saludo":
+        this.hud.senal.mostrar(comoDibujo("pasador"), "", null, { segundos: Infinity });
+        if (laInstructoraLoExplica(this.tier.avisos))
+          this.instructor.decir(t("vuelo.remolqueSuelta"), "vuelo.remolqueSuelta");
+        break;
+      case "libre":
+        // Ya es de quien juega: la tarjeta de la fase, con su voz, que ahora sí toca rodar.
+        if (delRemolque) this.hud.senal.caducar(puesta.dibujo);
+        this.faseAnunciada = "";
+        break;
+    }
+  }
+
+  /** Lo último que se contó del remolque de quien juega. Ver `atenderAlRemolque`. */
+  private remolqueContado = "";
 
   /**
    * **Un paso del remolque**: mientras empuja, el avión va donde lo lleva el tractor, por la
@@ -20273,9 +20457,24 @@ export class Game {
   private empujarElAvion(dt: number): void {
     const r = this.remolque;
     if (!r) return;
+    // Lo de quien juega: el tractor echa a andar al rato de pedirlo, y espera a sus motores.
+    if (this.paraEmpujar !== null) {
+      this.paraEmpujar -= dt;
+      if (this.paraEmpujar <= 0) {
+        this.paraEmpujar = null;
+        r.empezar();
+      }
+    }
+    if (r.esperaLosMotores) r.motoresEnMarcha = this.input.controls.engineOn;
     const antes = r.fase;
     r.paso(dt);
-    if (antes === "empujando") {
+    /*
+     * **Y el de quien juega se queda donde está hasta que es suyo**: enganchado al tractor
+     * en el puesto, y con el freno de aparcamiento puesto al acabar de empujar, hasta el
+     * saludo. Lo que se toque del gas no lo mueve, que es lo que hace un freno puesto y un
+     * tractor debajo del morro. La tripulación no da gas hasta el saludo, y no hace falta.
+     */
+    if (antes === "empujando" || (r.esperaLosMotores && !r.libre)) {
       const p = r.avion;
       this.posicionDelEmpuje.set(p.x, this.terrain.sampleSurface(p.x, p.z) + this.aircraft.gearHeight, p.z);
       this.flight.reset({ position: this.posicionDelEmpuje, heading: p.rumbo, airspeed: 0 });
@@ -23105,6 +23304,8 @@ export class Game {
         // contrario es ponerlo a correr por una pista en uso. Ver `espera`.
         rodando &&
           s.onGround &&
+          // Ni con el tractor enganchado: el coche saldría por la raya, que va por detrás del avión.
+          !this.remolqueDeQuienJuega &&
           !((fase === "aterrizado" || enLaPistaAun) && !espera),
         cede,
         // Por el asfalto, como el avión: ver `Terrain.resalteEn`.
@@ -24625,7 +24826,7 @@ export class Game {
        * anuncia**: ni su tarjeta ni su voz. La llave sale con su seña de
        * cortar motores. Ver `elSenaleroLlevaLaLlegada`.
        */
-      const callada = this.elSenaleroLlevaLaLlegada(vista);
+      const callada = this.elSenaleroLlevaLaLlegada(vista) || this.elRemolqueLlevaLaSalida(vista);
       /*
        * **Y alineado en la pista, su número.**
        *
@@ -24789,8 +24990,11 @@ export class Game {
        */
       const remontaUnTrecho =
         vista.fase === "back-taxi" && this.plan?.comoSeSale?.hastaElFinal === false;
-      const clave =
-        this.leccion.id === "aterrizaje" && vista.fase === "en-vuelo"
+      // Y con el tractor enganchado, la suya. Ver `tarjetaDelRemolque`.
+      const delRemolque = this.tarjetaDelRemolque(vista);
+      const clave = delRemolque
+        ? delRemolque.clave
+        : this.leccion.id === "aterrizaje" && vista.fase === "en-vuelo"
           ? "vuelo.enVueloAterrizando"
           : vista.fase === "en-vuelo" && this.haciaOtroCampo()
             ? "vuelo.enVueloDestino"
@@ -24846,7 +25050,7 @@ export class Game {
        */
       const seQueda = SE_QUEDAN.has(vista.fase);
       if (!callada) this.hud.senal.mostrar(
-        comoDibujo(guion.icono),
+        comoDibujo(delRemolque?.icono ?? guion.icono),
         conLetras ? frase : "",
         letra,
         {
