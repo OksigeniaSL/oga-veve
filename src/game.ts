@@ -15468,16 +15468,16 @@ export class Game {
      */
     if (a.recula) return;
     this.pasoDadoA.add(a.matricula);
-    /*
-     * Ni al que empuja un tractor desde su puesto: no viene de frente, y la frase de casa
-     * dice que sí. Lo cuentan la raya cortada, la baliza y el tractor; por radio, «give
-     * way to departing traffic» sí es verdad.
-     */
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
-    if (a.empuja && !conCifras) return;
+    /*
+     * Al que empuja un tractor desde su puesto no se le dice «viene de frente», que no
+     * viene: se dice lo que pasa, que lo sacan marcha atrás con la baliza encendida. Por
+     * radio, «give way to departing traffic» vale para los dos.
+     */
     if (!conCifras) {
-      if (laInstructoraLoExplica(this.tier.avisos)) this.decirLoGrabado("vuelo.dasPaso");
+      if (laInstructoraLoExplica(this.tier.avisos))
+        this.decirLoGrabado(a.empuja ? "vuelo.dasPasoEmpujado" : "vuelo.dasPaso");
       return;
     }
     if (!a.sale || !this.hayTorreQueHable() || this.esAfisAqui()) return;

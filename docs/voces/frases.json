@@ -2165,6 +2165,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.dasPasoEmpujado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Paramos acá: a ese avión lo saca un tractor para atrás, y su luz roja avisa que arranca los motores. Esperamos a que lo suelten",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.calor",
     "voz": "instructor",
     "idioma": "es-PY",

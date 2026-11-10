@@ -2773,6 +2773,13 @@ export const ES_PY = {
   "vuelo.dasPaso":
     "Paramos acá: por esa calle viene otro avión de frente, y por una calle pasa uno por vez. Lo dejamos pasar y seguimos",
   /*
+   * Y si el que te corta la raya no viene de frente sino que lo sacan de su puesto con el
+   * tractor, marcha atrás: la luz roja que destella es la baliza, que se enciende al pedir
+   * el empuje porque los motores arrancan mientras tanto. Ver `decirQueDasPaso`.
+   */
+  "vuelo.dasPasoEmpujado":
+    "Paramos acá: a ese avión lo saca un tractor para atrás, y su luz roja avisa que arranca los motores. Esperamos a que lo suelten",
+  /*
    * «Caliente y alto», antes de despegar y solo cuando pesa: la voz lo dice
    * sin números y la tarjeta los pone. Dice **pista para despegar** y no
    * que la pista se alargue, que es lo que se entendería: lo que se alarga

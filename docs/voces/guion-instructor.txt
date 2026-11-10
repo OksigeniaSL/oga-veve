@@ -263,6 +263,7 @@ Muy bien: acá ya se respira. Nivelamos y vamos al aeropuerto más cercano, con 
 Esa no es la pista en uso: hoy el viento manda entrar por la otra punta
 Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima
 Paramos acá: por esa calle viene otro avión de frente, y por una calle pasa uno por vez. Lo dejamos pasar y seguimos
+Paramos acá: a ese avión lo saca un tractor para atrás, y su luz roja avisa que arranca los motores. Esperamos a que lo suelten
 Hace calor: vamos a necesitar más pista para despegar
 Por esa punta no: andate al aire y volvé por la otra
 Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta
