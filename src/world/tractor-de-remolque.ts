@@ -26,6 +26,7 @@
 
 import {
   BoxGeometry,
+  type BufferGeometry,
   CapsuleGeometry,
   CylinderGeometry,
   Group,
@@ -35,6 +36,7 @@ import {
   SphereGeometry,
   type Material,
 } from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { GestoDeTierra, MedidasDelTractor, Remolque } from "./remolque";
 
 /** El amarillo del material de plataforma, el mismo de los calzos. */
@@ -69,11 +71,9 @@ const PASO = 1.6;
 const SALUDO = 1.5;
 
 /** Un brazo, colgado del hombro: gira en `x` hacia delante —la figura mira hacia −Z— y en `z` hacia el lado. */
-function brazo(lado: 1 | -1, materiales: Material[]): Group {
+function brazo(lado: 1 | -1, ropa: Material): Group {
   const hombro = new Group();
   hombro.position.set(lado * 0.27, 1.42, 0);
-  const ropa = new MeshLambertMaterial({ color: ROPA });
-  materiales.push(ropa);
   const miembro = new Mesh(new CapsuleGeometry(0.07, 0.48, 4, 8), ropa);
   miembro.position.y = -0.32;
   hombro.add(miembro);
@@ -81,15 +81,47 @@ function brazo(lado: 1 | -1, materiales: Material[]): Group {
 }
 
 /** Una pierna, colgada de la cadera. */
-function pierna(lado: 1 | -1, materiales: Material[]): Group {
+function pierna(lado: 1 | -1, ropa: Material): Group {
   const cadera = new Group();
   cadera.position.set(lado * 0.11, 0.86, 0);
-  const ropa = new MeshLambertMaterial({ color: ROPA });
-  materiales.push(ropa);
   const miembro = new Mesh(new CapsuleGeometry(0.08, 0.6, 4, 8), ropa);
   miembro.position.y = -0.42;
   cadera.add(miembro);
   return cadera;
+}
+
+/**
+ * **Las piezas quietas de un grupo, juntas en una por material.** Cada pieza suelta es
+ * una llamada de dibujo, y el tractor con su persona eran treinta y una: con uno a la vista,
+ * la escena de Los Rodeos pasaba de 202 llamadas a 231, un 14 % más por una cosa del
+ * tamaño de un coche. Lo que se mueve —brazos, piernas, el pasador, el cable— va en sus
+ * propios grupos o es otro objeto, y no se toca: solo se juntan las mallas que cuelgan
+ * directamente del grupo. Y la baliza tiene su propio material, que es el que destella,
+ * así que se junta aparte de la pintura sin hacer nada más.
+ */
+function juntarPorMaterial(grupo: Group): void {
+  const porMaterial = new Map<Material, BufferGeometry[]>();
+  for (const o of [...grupo.children]) {
+    if (!(o instanceof Mesh)) continue;
+    o.updateMatrix();
+    const trozo = (o.geometry as BufferGeometry).clone().applyMatrix4(o.matrix);
+    (o.geometry as BufferGeometry).dispose();
+    const material = o.material as Material;
+    const lista = porMaterial.get(material);
+    if (lista) lista.push(trozo);
+    else porMaterial.set(material, [trozo]);
+    grupo.remove(o);
+  }
+  for (const [material, trozos] of porMaterial) {
+    const junta = trozos.length > 1 ? mergeGeometries(trozos, false) : trozos[0]!;
+    // Si no casan los atributos, como estaban: se ve igual, solo cuesta más.
+    if (!junta) {
+      for (const t of trozos) grupo.add(new Mesh(t, material));
+      continue;
+    }
+    if (junta !== trozos[0]) for (const t of trozos) t.dispose();
+    grupo.add(new Mesh(junta, material));
+  }
 }
 
 /**
@@ -114,6 +146,9 @@ export class DibujoDelRemolque {
 
   constructor(medidas: MedidasDelTractor) {
     this.grupo.name = "remolque";
+    // Antes que el tractor, que sus balizas se hacen ya con ella.
+    this.baliza = new MeshBasicMaterial({ color: AMBAR });
+    this.materiales.push(this.baliza);
     this.construirElTractor(medidas);
     const m = this.materiales;
     // ── La persona, mirando hacia −Z ──
@@ -146,10 +181,13 @@ export class DibujoDelRemolque {
       copa.position.set(lado * 0.16, 1.65, 0);
       p.add(copa);
     }
-    this.izq = brazo(1, m);
-    this.der = brazo(-1, m);
-    this.piernaIzq = pierna(1, m);
-    this.piernaDer = pierna(-1, m);
+    // Una sola ropa para los cuatro miembros: son el mismo pantalón y la misma manga.
+    const ropa = new MeshLambertMaterial({ color: ROPA });
+    m.push(ropa);
+    this.izq = brazo(1, ropa);
+    this.der = brazo(-1, ropa);
+    this.piernaIzq = pierna(1, ropa);
+    this.piernaDer = pierna(-1, ropa);
     // El pasador: una varilla con su argolla y la cinta roja colgando, más larga que la de verdad.
     const rojo = new MeshBasicMaterial({ color: ROJO });
     m.push(rojo);
@@ -160,6 +198,7 @@ export class DibujoDelRemolque {
     this.pasador.position.set(0, -0.66, 0);
     this.der.add(this.pasador);
     p.add(cuerpo, cabeza, cascoDeObra, banda, this.izq, this.der, this.piernaIzq, this.piernaDer);
+    juntarPorMaterial(p);
 
     // ── El cable, de los cascos a la toma de al lado de la rueda de morro ──
     const cable = new MeshLambertMaterial({ color: NEGRO });
@@ -168,15 +207,9 @@ export class DibujoDelRemolque {
     this.cable.geometry.translate(0, 0.5, 0);
     this.cable.geometry.rotateX(Math.PI / 2);
 
-    this.baliza = new MeshBasicMaterial({ color: AMBAR });
-    m.push(this.baliza);
     this.grupo.add(this.tractor, this.persona, this.cable);
     this.grupo.traverse((o) => {
       if (o instanceof Mesh) this.geometrias.push(o.geometry);
-    });
-    // Y la baliza del techo, que se apaga y se enciende: ver `poner`.
-    this.tractor.getObjectByName("baliza")?.traverse((o) => {
-      if (o instanceof Mesh) o.material = this.baliza;
     });
   }
 
@@ -213,16 +246,15 @@ export class DibujoDelRemolque {
     cabina.position.set(-t.ancho * 0.32, yCabina, -t.largo * 0.36);
     const vidrio = new Mesh(new BoxGeometry(t.ancho * 0.3, (t.alto - alto) * 0.55, 0.04), cristal);
     vidrio.position.set(-t.ancho * 0.32, yCabina + 0.08, -t.largo * 0.46 - 0.01);
-    // La baliza ámbar en el techo de la cabina, y otra en la esquina de la cuna: se ve desde cualquier lado.
-    const balizas = new Group();
-    balizas.name = "baliza";
+    // La baliza ámbar en el techo de la cabina, y otra en la esquina de la cuna: se ve desde
+    // cualquier lado. Con su propio material, que es el que destella: ver `poner`.
     for (const [x, y, z] of [
       [-t.ancho * 0.32, 0.25 + t.alto + 0.12, -t.largo * 0.36],
       [t.ancho * 0.4, 0.25 + alto + 0.12, -t.largo * 0.4],
     ] as const) {
-      const b = new Mesh(new CylinderGeometry(0.14, 0.14, 0.24, 10), pintura);
+      const b = new Mesh(new CylinderGeometry(0.14, 0.14, 0.24, 10), this.baliza);
       b.position.set(x, y, z);
-      balizas.add(b);
+      this.tractor.add(b);
     }
     // Los faros delante, los pilotos rojos detrás.
     for (const lado of [-1, 1]) {
@@ -240,7 +272,8 @@ export class DibujoDelRemolque {
         rueda.position.set(lado * (t.ancho / 2 - 0.15), 0.42, z);
         this.tractor.add(rueda);
       }
-    this.tractor.add(chasis, pala, cabina, vidrio, balizas);
+    this.tractor.add(chasis, pala, cabina, vidrio);
+    juntarPorMaterial(this.tractor);
   }
 
   /**
