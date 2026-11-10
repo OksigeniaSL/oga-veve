@@ -146,8 +146,8 @@ arrancar y la llave del motor, sin otra máquina de fases (`tarjetaDelRemolque`,
    atrás hasta la calle». Si no se toca nada no pasa nada: el avión sigue enganchado y la tarjeta, puesta.
 2. **Al tocarla** (o con la tecla) se enciende la baliza y, a los tres segundos —los mismos que la tripulación—, el
    tractor empuja. Del freno de aparcamiento no hay mando en el juego: se suelta y se pone solo, a su hora.
-3. **Empujando, vuelve la llave**: «El tractor nos lleva para atrás, que desde la cabina no se ve. Arrancá los motores
-   mientras tanto». En el peldaño de cabina, la frase de siempre, «Arrancá el motor»: ahí ya no se cuenta el porqué.
+3. **Empujando, vuelve la llave**: «El tractor nos lleva para atrás, porque desde la cabina no se ve lo que hay detrás.
+   Mientras tanto, arrancá los motores». En el peldaño de cabina, la frase de siempre, «Arrancá el motor»: ahí ya no se cuenta el porqué.
 4. **Si al acabar de empujar los motores siguen parados, el tractor espera** enganchado y con el freno puesto
    (`Remolque.esperaLosMotores`), con la tarjeta de la llave delante. Es lo de verdad: la persona de tierra sigue
    enchufada mientras se arranca, mirando los motores desde fuera, y no suelta hasta que la cabina le dice que están en
