@@ -528,6 +528,8 @@ Lo que se decidió al escribirlo:
   Tierra con dos ríos de aire, y sin palabras no dice nada a quien tiene cuatro años: es lo que pregunta
   Ara, otro suceso y otra voz, la de Idaira, de pie y con la lámina. Sin decir de dónde sopla en cada punto
   de la ruta.
+- **Y se acaba mirando por la ventanilla.** Tras lo de Idaira se quita la lámina, con un momento sin frases:
+  `fin` no se dice, y una lámina que se quitara con él no se quitaba nunca.
 - **Un minuto más, con la tripulación de pie.** El capítulo ya no acaba con la luz del cinturón: veinte
   segundos después del anuncio, que es lo que tarda la tripulación en soltarse y salir al pasillo, Ara
   pregunta. Antes Idaira está sentada y atada, y no se le pregunta nada.
@@ -540,7 +542,11 @@ Lo que se decidió al escribirlo:
   tripulación del pasaje aceleraba a los 250 al recoger los flaps: subía a 236–250 nudos por el viraje. El
   tope va en el plan, en cada punto (`Fijo.maxKt`), y el de un tramo sin nombre vale también hasta el punto
   donde empieza, porque un viraje con tope se empieza ya a esa velocidad. Lo pasa a verdadera, con el aire
-  del día, quien lo lee (`topeDeVelocidad` en `vuelo-de-linea.ts`).
+  del día, quien lo lee (`topeDeVelocidad` en `vuelo-de-linea.ts`). Y con un tope por delante, la tripulación
+  ya no lleva el gas de despegue hasta los quince metros: en el modelo sencillo el gas es la velocidad, y en
+  esos tres segundos el JAZ 110 cargado pasaba de los 157 nudos de la Vr a 229. Ahí lleva la de la subida con
+  flaps, y se oye el despegue igual. Sin tope —el vuelo corto— sigue como estaba: también se embala, y queda
+  dicho y sin tocar.
 - **La tarjeta del final, sin sello y sin la página del viaje.** No se llega a ningún campo: el sello de
   Barajas, que no lo tiene, salía en blanco, y la página era la de lo visto entre las islas. Queda el
   anuncio con «Seguir volando». Y Barajas no se apunta en el cuaderno de viaje, que es de los campos a los

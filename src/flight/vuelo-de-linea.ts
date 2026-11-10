@@ -615,7 +615,8 @@ export class VueloDeLinea {
      */
     if (potencia === "tierra" || this.tramo === "carrera") {
       this.empuje = potencia === "despegue" ? EMPUJE.despegue : 0;
-      return manos;
+      // Salvo ya en el aire con la velocidad sujeta, que el gas es la velocidad y se oye el despegue: ver `correr`.
+      return manos.gas === "velocidad" ? { ...manos, empuje: this.empuje } : manos;
     }
     // En la recogida el empuje sale con el gas, al ralentí al tocar. Ver `alturaDelGas`.
     const objetivo = EMPUJE[potencia] * (this.tramo === "recogida" ? (manos.fraccion ?? 1) : 1);
@@ -868,10 +869,18 @@ export class VueloDeLinea {
     const eje = this.alEje(l);
     const rota = l.velocidad >= this.ficha.vr || !l.enTierra;
     if (rota) this.subidaPedida = Math.min(SUBE_ABAJO, this.subidaPedida + CAMBIA_EN_LA_ROTACION * dt);
+    /*
+     * **Ya en el aire y con un tope de la carta por delante**, la de la subida con flaps y
+     * no el gas de despegue hasta los quince metros. En el modelo sencillo el gas es la
+     * velocidad, y la sube deprisa: medido con el JAZ 110 cargado para Asunción, de los 157
+     * nudos de la Vr a 229 en los tres segundos que tarda en llegar a los quince metros, con
+     * la salida pidiendo 205. Quien vuela de verdad lleva ahí la V2 y diez, con el morro.
+     */
+    const sujeta = !l.enTierra && l.topeDeVelocidad !== undefined;
     return {
       motor: true,
-      velocidad: Infinity,
-      gas: "despegue",
+      velocidad: sujeta ? Math.min(this.ficha.vr + 10, l.topeDeVelocidad!) : Infinity,
+      gas: sujeta ? "velocidad" : "despegue",
       subida: rota ? Math.max(2, this.subidaPedida) : null,
       alabeo: rota && !l.enTierra ? 0 : null,
       volante: l.enTierra ? eje : null,

@@ -907,6 +907,36 @@ async function laNocheDeMadrid() {
     );
     console.log(`  el plan: ${uno.plan?.fijos?.filter((f) => f.nombre).map((f) => `${f.nombre}(${f.papel})`).join(" → ") ?? "?"}`);
 
+    /*
+     * **La indicada hasta pasar MD039, fotograma a fotograma**, con el plan de verdad: el punto
+     * activo es el que se busca. Entre dos lecturas del banco, con prisa, pasan dos segundos, y
+     * un pico al despegar cabe entre ellas. Y cómo iba el avión al dar el pico, y al despegar.
+     */
+    await page.evaluate(() => {
+      const o = globalThis.__oga;
+      const j = o.juegoParaTrazas();
+      const r = (globalThis.__indicadasDeLaSalida = { hastaMD039: 0, pico: null, despues: 0, pasado: false, despegue: null });
+      const paso = () => {
+        const s = o.estado();
+        const p = j.planParaBanco;
+        const md = p?.fijos?.findIndex((f) => f.nombre === "MD039") ?? -1;
+        const ias = j.indicadaParaBanco;
+        if (!s.onGround && md >= 0) {
+          if (!r.despegue) r.despegue = { ias, z: s.position.z };
+          if (p.activo <= md) {
+            if (ias > r.hastaMD039) {
+              r.hastaMD039 = ias;
+              r.pico = { altura: s.heightAboveGround, y: s.position.y, x: s.position.x, z: s.position.z, flaps: o.controles().flaps, activo: p.activo, tramo: globalThis.__oga.inicio().tripulacion?.tramo ?? "?" };
+            }
+          } else {
+            r.pasado = true;
+            if (s.position.y < 3048 && ias > r.despues) r.despues = ias;
+          }
+        }
+        requestAnimationFrame(paso);
+      };
+      requestAnimationFrame(paso);
+    });
     const fotos = new Set();
     const tramos = [];
     const pasillo = { muestras: 0, buenas: 0, peor: null, tiras: [] };
@@ -919,8 +949,6 @@ async function laNocheDeMadrid() {
     let laminaDelEmbarque = null;
     /** La lámina que se veía con cada frase que la pide, la primera vez que se lee diciéndose. */
     const conSuLamina = new Map();
-    /** La indicada más alta en el aire hasta pasar MD039, y la de después, hasta los diez mil pies. */
-    const indicadas = { hastaMD039: 0, donde: null, despues: 0, pasado: false };
     let laTarjetaDeIdaira = null;
     let prisa = false;
     let pulsado = false;
@@ -935,23 +963,13 @@ async function laNocheDeMadrid() {
       if (l.linea && PIDEN_LAMINA[l.linea] && !conSuLamina.has(l.linea)) {
         // La que pide, al empezar a decirse; y la que se ve, pasado el fundido, si se sigue diciendo.
         conSuLamina.set(l.linea, { tapa: l.tapa, vista: null });
-        if (/vientoRios/.test(l.linea)) laTarjetaDeIdaira = l.tarjeta?.texto ?? "";
+        if (/vientoRios/.test(l.linea))
+          laTarjetaDeIdaira = await page.evaluate(() => document.querySelector("#inicio .inicio__cara-hueco")?.getAttribute("aria-label") ?? "");
         await pausa(900);
         const ahora = await leer(page);
         if (ahora.linea === l.linea) {
           conSuLamina.set(l.linea, { tapa: ahora.tapa, vista: ahora.lamina?.vista ?? null });
           await foto(page, `c1-lamina-${l.linea.split(".").at(-1)}`);
-        }
-      }
-      // La indicada hasta pasar MD039, con el plan de verdad: el punto activo es el que se busca.
-      const md039 = l.plan?.fijos?.findIndex((f) => f.nombre === "MD039") ?? -1;
-      if (!l.enTierra && md039 >= 0 && l.altura > 15) {
-        if (l.plan.activo <= md039) {
-          if (l.indicada > indicadas.hastaMD039) indicadas.hastaMD039 = l.indicada;
-          indicadas.donde = { x: l.x, z: l.z, y: l.y };
-        } else {
-          indicadas.pasado = true;
-          if (l.y < 3048 && l.indicada > indicadas.despues) indicadas.despues = l.indicada;
         }
       }
       if (!laminaDelEmbarque && l.lamina?.vista === "embarque" && l.lamina.tapa) {
@@ -1085,13 +1103,15 @@ async function laNocheDeMadrid() {
     const vistas = l.lamina?.vistas ?? [];
     comprobar(
       "y se quitan al acabar: Ara mira a su mamá por la ventanilla, y el final no lleva lámina",
-      l.dichos.includes("esMama") && l.tapa === null && vistas.join(" ").includes("embarque viento-de-arriba litera"),
+      l.dichos.includes("esMama") && l.dichos.includes("mirar") && l.tapa === null && vistas.join(" ").includes("embarque viento-de-arriba litera"),
       `vistas ${vistas.join(" → ")} · al final ${l.tapa ?? "sin lámina"}`,
     );
+    const indicadas = await page.evaluate(() => globalThis.__indicadasDeLaSalida);
+    const pico = indicadas.pico;
     comprobar(
-      "por debajo de 210 nudos indicados hasta pasar MD039, y a acelerar después",
-      indicadas.pasado && indicadas.hastaMD039 > 150 && indicadas.hastaMD039 <= 210,
-      `hasta MD039, ${indicadas.hastaMD039.toFixed(1)} kt como mucho${indicadas.donde ? ` (lo último, en x ${(indicadas.donde.x / 1000).toFixed(1)} z ${(indicadas.donde.z / 1000).toFixed(1)} km, FL${(indicadas.donde.y / 30.48).toFixed(0)})` : ""} · después, por debajo de los diez mil, ${indicadas.despues.toFixed(1)} kt · ${indicadas.pasado ? "pasado" : "sin pasarlo"}`,
+      "por debajo de 210 nudos indicados hasta pasar MD039, desde que despega, y a acelerar después",
+      indicadas.pasado && indicadas.hastaMD039 > 150 && indicadas.hastaMD039 <= 210 && indicadas.despues > indicadas.hastaMD039 + 5,
+      `hasta MD039, ${indicadas.hastaMD039.toFixed(1)} kt como mucho${pico ? ` (a ${pico.altura.toFixed(0)} m del suelo, FL${(pico.y / 30.48).toFixed(0)}, flaps ${pico.flaps.toFixed(2)}, ${pico.tramo}, punto ${pico.activo})` : ""} · al despegar, ${indicadas.despegue?.ias.toFixed(1) ?? "?"} kt · después, por debajo de los diez mil, ${indicadas.despues.toFixed(1)} kt · ${indicadas.pasado ? "pasado" : "sin pasarlo"}`,
     );
     const lasDichas = l.registro.map((d) => d.clave);
     const deIdaira = ["inicio.ara.pasaje.largo.vientoPregunta", "inicio.tripulacion.pasaje.cerca.largo.vientoRios", "inicio.tripulacion.pasaje.cerca.largo.vientoBarco"];
@@ -1100,7 +1120,7 @@ async function laNocheDeMadrid() {
       lasDichas.indexOf("comandante.largo.cinturon") >= 0 &&
         deIdaira.every((c, k) => lasDichas.indexOf(c) > (k ? lasDichas.indexOf(deIdaira[k - 1]) : lasDichas.indexOf("comandante.largo.cinturon"))) &&
         !!laTarjetaDeIdaira && /a tu lado/i.test(laTarjetaDeIdaira) && !/megafon/i.test(laTarjetaDeIdaira),
-      `${deIdaira.map((c) => `${c.split(".").at(-1)} en ${lasDichas.indexOf(c)}`).join(" · ")} · tarjeta «${(laTarjetaDeIdaira ?? "").slice(0, 60)}»`,
+      `${deIdaira.map((c) => `${c.split(".").at(-1)} en ${lasDichas.indexOf(c)}`).join(" · ")} · quien habla: «${laTarjetaDeIdaira ?? ""}»`,
     );
     const finDom = await page.evaluate(() => {
       const fin = document.querySelector("#inicio .inicio__fin");

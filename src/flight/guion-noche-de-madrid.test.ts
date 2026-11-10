@@ -105,7 +105,7 @@ describe("el guion del primer capítulo", () => {
 
   it("el viento de arriba lo cuenta Idaira en persona, con su lámina, cuando Ara pregunta con la luz del cinturón apagada", () => {
     const ids = GUION_NOCHE_DE_MADRID.momentos.map((m) => m.id);
-    expect(ids.slice(ids.indexOf("arriba"))).toEqual(["arriba", "pregunta", "viento", "fin"]);
+    expect(ids.slice(ids.indexOf("arriba"))).toEqual(["arriba", "pregunta", "viento", "mirar", "fin"]);
     const de = (id: string) => GUION_NOCHE_DE_MADRID.momentos.find((m) => m.id === id)!;
     expect(de("pregunta").lineas.map((l) => [l.quien, l.clave])).toEqual([["ara", "inicio.ara.pasaje.largo.vientoPregunta"]]);
     const viento = de("viento");
@@ -116,7 +116,8 @@ describe("el guion del primer capítulo", () => {
       expect(l.megafonia).toBeFalsy();
       expect(l.clave).toMatch(/^inicio\.tripulacion\.pasaje\.cerca\.largo\./);
     }
-    expect(de("fin").tapa).toBeNull();
+    expect(de("mirar").tapa).toBeNull();
+    expect(de("mirar").lineas).toEqual([]);
     // De tú, que es Idaira, la de Canarias; y sin decir de dónde sopla en cada punto de la ruta.
     const dice = viento.lineas.map((l) => ES_PY[l.clave as keyof typeof ES_PY]).join(" ");
     expect(dice).toMatch(/llegas antes/);
@@ -280,6 +281,7 @@ describe("el capítulo, de puerta a puerta", () => {
       "arriba",
       "pregunta",
       "viento",
+      "mirar",
     ];
     expect(v.dichos.filter((d) => orden.includes(d))).toEqual(orden);
     expect(v.terminado).toBe(true);

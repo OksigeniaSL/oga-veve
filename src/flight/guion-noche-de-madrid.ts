@@ -261,6 +261,7 @@ export type MomentoDeMadrid =
   | "arriba"
   | "pregunta"
   | "viento"
+  | "mirar"
   | "fin";
 
 export type CharlaDeMadrid = "tren" | "giro";
@@ -474,8 +475,14 @@ const MOMENTOS: readonly Momento[] = [
     tapa: "viento-de-arriba",
     lineas: [idaira("vientoRios"), idaira("vientoBarco")],
   },
-  // Y el final del capítulo, sin la lámina y con su tarjeta: el botón lleva al segundo.
-  { id: "fin", cuando: callados, tapa: null, lineas: [] },
+  /*
+   * Y se quita la lámina, que lo último que se ve es la noche por la ventanilla, subiendo. Un
+   * momento sin frases, porque `fin` no se dice: el motor llega a él y para, y lo que pidiera
+   * no se pondría nunca.
+   */
+  { id: "mirar", cuando: callados, tapa: null, plano: "ventanilla", lineas: [] },
+  // Y el final del capítulo, con su tarjeta: el botón lleva al segundo.
+  { id: "fin", cuando: callados, lineas: [] },
 ];
 
 const CHARLAS: readonly DefCharla<MomentoDeMadrid, CharlaDeMadrid>[] = [
