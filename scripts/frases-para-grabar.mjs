@@ -2024,8 +2024,8 @@ const DEL_VUELO_LARGO = [
   ["comandante.largo.vueloInvierno", "comandante", "la noche de Madrid: tiempo, altura, viento de cara y llegada a las 07:30, en invierno de Europa (provisional)"],
   ["comandante.largo.tresPilotos", "comandante", "la noche de Madrid: hoy van tres pilotos y se turnan (provisional)"],
   ["inicio.tripulacion.pasaje.demo.salidasLargo", "tripulacion-canarias", "la noche de Madrid: las ocho salidas del JAZ 110, cuatro por lado (provisional)"],
-  ["inicio.ara.pasaje.largo.lucesAzules", "ara", "la noche de Madrid: rodando, Ara ve las luces azules de las calles (provisional)"],
-  ["inicio.tripulacion.pasaje.cerca.largo.lucesAzules", "tripulacion-canarias", "la noche de Madrid: Idaira, para qué son las azules (provisional)"],
+  ["inicio.ara.pasaje.largo.lucesVerdes", "ara", "la noche de Madrid: rodando, Ara ve la fila verde del eje de las calles (provisional)"],
+  ["inicio.tripulacion.pasaje.cerca.largo.lucesVerdes", "tripulacion-canarias", "la noche de Madrid: Idaira, para qué es la fila verde (provisional)"],
   ["inicio.ara.pasaje.largo.madrid", "ara", "la noche de Madrid: Ara ve Madrid encendida por su cristal, si se ve (provisional)"],
 ];
 const LO_QUE_SE_VE = new Set(

@@ -964,6 +964,8 @@ import {
 import { Medidor } from "./ui/rendimiento";
 import {
   crearLucesDeRodadura,
+  dondeVanLasLuces,
+  VERDE as VERDE_DEL_EJE,
   type LucesDeRodadura,
 } from "./world/luces-de-rodadura";
 import {
@@ -1689,6 +1691,8 @@ import {
 
 /** Un punto por el que se mira un sitio del paisaje, y si es el suelo mismo. Ver `casiTodo`. */
 type PuntoDeUnSitio = PuntoDelMundo & { readonly deSuelo?: boolean };
+/** Hasta dónde se distingue una luz del eje de una calle por el cristal de Ara, m: rodando, lo de al lado. */
+const LAS_CALLES_SE_VEN_HASTA = 400;
 
 /** Lo más deprisa que se le deja ir al reloj del juego. Ver `Game.acelerar`. */
 const TOPE_DE_ACELERACION = 16;
@@ -16477,6 +16481,8 @@ export class Game {
    * cambia al caer del salto de la noche en la llegada.
    */
   private capituloDelLargo: 1 | 2 | 3 = 3;
+  /** Las luces verdes del eje de las calles del campo de casa, una vez. Ver `puntosDelPaisaje`. */
+  private verdesDelEje: readonly (readonly [number, number])[] | null = null;
 
   /** **El parte de Asunción**, para cuando se caiga allí. Ver `ponerTiempoDeLaLlegada`. */
   private tiempoDeLaLlegada: Meteo | null = null;
@@ -25943,6 +25949,28 @@ export class Game {
         return enElSuelo(x, z, COTA_DE_LAS_LUCES_DE_TENERIFE);
       });
       return { puntos, ventanilla: LAS_LUCES_DE_TENERIFE_LLEGAN_A, fuera: 0 };
+    }
+    /*
+     * **La fila verde del eje de las calles**, rodando: las luces de verdad del fichero, las
+     * que están del lado de Ara y cerca, que son las que pueden caer en su cristal. Las del
+     * borde no: por ese cristal quedan debajo del ala. Ver `lucesDeLasCalles` en
+     * `flight/guion-noche-de-madrid.ts`.
+     */
+    if (sitio === "luces-de-las-calles") {
+      const aero = this.scenario.aerodrome;
+      if (!aero) return null;
+      this.verdesDelEje ??= dondeVanLasLuces(aero).flatMap(([p, color]) => (color === VERDE_DEL_EJE ? [p] : []));
+      const s = this.flight.state;
+      const [dx, dz] = [Math.cos(s.heading), Math.sin(s.heading)];
+      const puntos = this.verdesDelEje.flatMap(([x, y]): PuntoDeUnSitio[] => {
+        const ax = x - s.position.x;
+        const az = -y - s.position.z;
+        const aLaIzquierda = -(ax * dx + az * dz);
+        const delante = ax * dz - az * dx;
+        if (aLaIzquierda < 15 || aLaIzquierda > LAS_CALLES_SE_VEN_HASTA || delante < -50) return [];
+        return [{ x, y: (this.terrain.cotaConocida(x, -y) ?? s.position.y) + 0.5, z: -y }];
+      });
+      return { puntos, ventanilla: LAS_CALLES_SE_VEN_HASTA, fuera: 0 };
     }
     // Y Madrid, lo mismo: saliendo de Barajas, del lado de Ara. Ver `LUCES_DE_MADRID`.
     if (sitio === "luces-de-madrid") {

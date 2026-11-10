@@ -841,6 +841,8 @@ async function laNoche(page) {
 /** El T5 de la T1 y la doble raya de la Z4, en el mundo: x al este, z al sur. Ver `SALIDA_DE_BARAJAS`. */
 const EL_T5 = { x: 293.6, z: 3407.2 };
 const LA_Z4 = { x: -320, z: 95.1 };
+/** Las tiras de luz del suelo del pasillo que se tienen que ver, como poco, con Ara asomada. */
+const UNAS_CUANTAS_TIRAS = 4;
 /** El centro de Madrid: ver `LUCES_DE_MADRID`. */
 const MADRID = { lat: 40.4169, lon: -3.7035 };
 /** Grados, de rumbo en radianes del juego. */
@@ -889,7 +891,7 @@ async function laNocheDeMadrid() {
 
     const fotos = new Set();
     const tramos = [];
-    const pasillo = { muestras: 0, buenas: 0, peor: null };
+    const pasillo = { muestras: 0, buenas: 0, peor: null, tiras: [] };
     let pisaPista = 0;
     let enLaEspera = null;
     let alDespegar = null;
@@ -940,9 +942,19 @@ async function laNocheDeMadrid() {
         if (visto.plano === "pasillo" && visto.velo < 0.02) {
           const p = await page.evaluate(() => globalThis.__oga.pasillo?.() ?? null).catch(() => null);
           pasillo.muestras++;
-          const bien = !!p?.letrero && p.letrero.entero && !p.letrero.tapado && p.colgado && !p.marco && p.tiras.vistas >= 0.3 * p.tiras.de;
+          /*
+           * Las tiras del suelo, unas cuantas: el pasillo de este avión mide más de cincuenta
+           * metros, y desde el asiento de Ara se ve su trozo de delante, no el treinta por
+           * ciento que se le pide al del vuelo corto.
+           */
+          const bien = !!p?.letrero && p.letrero.entero && !p.letrero.tapado && p.colgado && !p.marco && p.tiras.vistas >= Math.min(UNAS_CUANTAS_TIRAS, p.tiras.de);
+          if (p) pasillo.tiras.push(`${p.tiras.vistas}/${p.tiras.de}`);
           if (bien) pasillo.buenas++;
-          else pasillo.peor ??= p;
+          else pasillo.peor ??= p && { ...p, letrero: p.letrero && { entero: p.letrero.entero, tapado: p.letrero.tapado } };
+          if (!fotos.has("pasillo-primero")) {
+            fotos.add("pasillo-primero");
+            await foto(page, "c1-pasillo");
+          }
           if (bien && !fotos.has("pasillo")) {
             fotos.add("pasillo");
             await foto(page, "c1-pasillo-exit");
@@ -1001,7 +1013,7 @@ async function laNocheDeMadrid() {
     comprobar(
       "al decir las salidas Ara se asoma al pasillo y se ve el letrero de la más cercana",
       pasillo.muestras > 0 && pasillo.buenas >= Math.max(1, 0.8 * pasillo.muestras),
-      `${pasillo.buenas} de ${pasillo.muestras} muestras buenas${pasillo.peor ? ` · la peor: ${JSON.stringify(pasillo.peor).slice(0, 200)}` : ""}`,
+      `${pasillo.buenas} de ${pasillo.muestras} muestras buenas · tiras vistas ${[...new Set(pasillo.tiras)].slice(0, 6).join(", ")}${pasillo.peor ? ` · la peor: ${JSON.stringify(pasillo.peor).slice(0, 300)}` : ""}`,
     );
     comprobar(
       "Madrid, si Ara la nombra, a su izquierda",
@@ -1024,6 +1036,22 @@ async function laNocheDeMadrid() {
     console.log(`  lo dicho: ${registro.map((d) => `${d.clave}(${d.como})`).join(" · ")}`);
     console.log(`  ${paredes.toFixed(1)} min de pared${process.env.OGA_PRISA ? `, con el reloj ×${process.env.OGA_PRISA}` : ""}`);
     comprobar("sin errores de consola", errores.length === 0, errores.slice(0, 4).join(" · "));
+    // ── Y el botón de la tarjeta, que lleva al segundo capítulo ──────────
+    if (l.momento === "fin" && l.puedeSeguir) {
+      const boton = page.locator("[data-inicio='seguir']");
+      const texto = (await boton.textContent().catch(() => "")) ?? "";
+      await boton.click({ timeout: 5000 }).catch(() => page.evaluate(() => document.querySelector("[data-inicio='seguir']")?.click()));
+      const llega = await page
+        .waitForFunction(() => globalThis.__oga?.salto?.().mundo === "tenerife-norte" && globalThis.__oga.salto().hora != null, null, { timeout: 240_000 })
+        .then(() => true)
+        .catch(() => false);
+      const alli = llega ? await leer(page) : null;
+      comprobar(
+        "y su botón, «seguir volando», lleva al segundo capítulo: la noche sobre el mar, tapada con su lámina",
+        /seguir/i.test(texto) && llega && !!alli && alli.sobreElMundo.visible && (alli.tapa === "cena" || alli.tapa === "a-oscuras"),
+        `«${texto.trim()}» · ${page.url().replace(BASE, "")} · ${alli ? `${alli.salto.mundo} · lámina ${alli.tapa}` : "no llegó"}`,
+      );
+    }
   } catch (e) {
     comprobar("el capítulo", false, `${String(e).slice(0, 300)} · ${errores.slice(0, 2).join(" · ")}`);
   } finally {

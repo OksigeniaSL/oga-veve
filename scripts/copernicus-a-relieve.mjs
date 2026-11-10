@@ -34,7 +34,7 @@
 
 import { inflateSync } from 'node:zlib';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { SCENARIOS, vecesLejosDe } from '../src/world/scenarios.ts';
+import { conSuAerodromo, SCENARIOS, vecesLejosDe } from '../src/world/scenarios.ts';
 
 const BASE = 'https://copernicus-dem-30m.s3.amazonaws.com';
 const SALIDA = 'data/terrain';
@@ -272,7 +272,9 @@ class Grado {
 // ── El programa ───────────────────────────────────────────────────────────
 
 const id = process.argv[2];
-const esc = SCENARIOS.find((s) => s.id === id);
+// Con el aeródromo de los que lo traen aparte, como Barajas: ver `aerodromoAparte`.
+const hallado = SCENARIOS.find((s) => s.id === id);
+const esc = hallado && (await conSuAerodromo(hallado));
 if (!esc) {
   console.error(`Uso: npx tsx scripts/copernicus-a-relieve.mjs <escenario>`);
   console.error(`Escenarios: ${SCENARIOS.map((s) => s.id).join(', ')}`);

@@ -110,7 +110,7 @@ describe("el guion del primer capítulo", () => {
  * escena, con una voz que tarda un segundo por frase. Lo que se mira es el orden de lo que
  * se cuenta y lo que espera a qué; el vuelo de verdad es del banco.
  */
-function volarElCapitulo(seVeMadrid: boolean): { readonly dichos: readonly string[]; readonly dichas: readonly string[]; readonly arrancaTrasLosToboganes: boolean; readonly terminado: boolean } {
+function volarElCapitulo(seVeMadrid: boolean, seVenLasCalles = true): { readonly dichos: readonly string[]; readonly dichas: readonly string[]; readonly arrancaTrasLosToboganes: boolean; readonly terminado: boolean } {
   let t = 0;
   const dichas: string[] = [];
   let acaba: { fin: number; alAcabar: (esperaMas: number) => void } | null = null;
@@ -134,7 +134,9 @@ function volarElCapitulo(seVeMadrid: boolean): { readonly dichos: readonly strin
     enTramo = 0;
   };
   const ver = (sitio: SitioDelPaisaje): VistaDelSitio =>
-    sitio === "luces-de-madrid" && seVeMadrid && altitud > 1500 ? { como: "ventanilla", lado: "izquierda" } : { como: null, lado: null };
+    (sitio === "luces-de-madrid" && seVeMadrid && altitud > 1500) || (sitio === "luces-de-las-calles" && seVenLasCalles)
+      ? { como: "ventanilla", lado: "izquierda" }
+      : { como: null, lado: null };
   const DT = 0.1;
   for (; t < 3000 && !escena.estado.terminado; ) {
     t += DT;
@@ -210,6 +212,14 @@ describe("el capítulo, de puerta a puerta", () => {
     expect(v.dichos).not.toContain("madrid");
     expect(v.dichas).not.toContain("inicio.ara.pasaje.largo.madrid");
     expect(v.dichos).toContain("arriba");
+    expect(v.terminado).toBe(true);
+  });
+
+  it("la fila verde de las calles, solo si se ve; y si no, no hace esperar a nadie en la doble raya", () => {
+    const v = volarElCapitulo(true, false);
+    expect(v.dichos).not.toContain("lucesDeLasCalles");
+    expect(v.dichas).not.toContain("inicio.ara.pasaje.largo.lucesVerdes");
+    expect(v.dichos).toContain("despegue");
     expect(v.terminado).toBe(true);
   });
 

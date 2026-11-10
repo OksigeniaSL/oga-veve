@@ -37,7 +37,7 @@
  */
 
 import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
-import { SCENARIOS } from '../src/world/scenarios.ts';
+import { conSuAerodromo, SCENARIOS } from '../src/world/scenarios.ts';
 import { overpass, simplificar, proyector, R_TIERRA } from './osm-comun.mjs';
 
 const SALIDA = 'data/cities';
@@ -79,7 +79,9 @@ const VIAS = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary'];
 const CALLES = ['residential', 'unclassified', 'living_street'];
 
 const id = process.argv[2];
-const esc = SCENARIOS.find((s) => s.id === id);
+// Con el aeródromo de los que lo traen aparte, como Barajas: ver `aerodromoAparte`.
+const hallado = SCENARIOS.find((s) => s.id === id);
+const esc = hallado && (await conSuAerodromo(hallado));
 if (!esc?.aerodrome) {
   console.error('Uso: npx tsx scripts/osm-a-ciudad.mjs <escenario con aeródromo>');
   console.error(`Escenarios: ${SCENARIOS.filter((s) => s.aerodrome).map((s) => s.id).join(', ')}`);

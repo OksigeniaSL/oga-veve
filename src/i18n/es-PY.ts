@@ -4843,9 +4843,9 @@ export const ES_PY = {
    */
   "inicio.tripulacion.pasaje.demo.salidasLargo":
     "Este avión tiene ocho salidas de emergencia, cuatro a cada lado. Busquen la más cercana, que puede estar detrás de ustedes. Unas luces en el suelo del pasillo marcan el camino hasta ellas.",
-  "inicio.ara.pasaje.largo.lucesAzules": "¡Mirá, a los costados del camino hay lucecitas azules!",
-  "inicio.tripulacion.pasaje.cerca.largo.lucesAzules":
-    "Marcan el borde de la calle por donde rueda el avión: el azul dice «por aquí, sin salirse».",
+  "inicio.ara.pasaje.largo.lucesVerdes": "¡Mirá, en el suelo hay una fila de lucecitas verdes!",
+  "inicio.tripulacion.pasaje.cerca.largo.lucesVerdes":
+    "Van por el medio de la calle por donde rueda el avión: el verde dice «por aquí».",
   "inicio.ara.pasaje.largo.madrid": "¡Mirá cuántas luces allá abajo! Es Madrid, de mi lado.",
   /*
    * ── **El segundo capítulo del vuelo largo: «La noche sobre el mar»** ──────

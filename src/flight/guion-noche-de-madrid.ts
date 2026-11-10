@@ -27,8 +27,9 @@
  * 5. **La demostración, con las ocho salidas**, cuatro por lado, la de esta clase de avión,
  *    y Ara asomada al pasillo mirando la suya. Rodando, como en el vuelo corto.
  * 6. **El rodaje de noche**, del T5 a la doble raya de la Z4 por las calles A, sin pisar
- *    pista: unos cuatro kilómetros. Lo que se ve por el cristal son las luces azules del
- *    borde de las calles, y es lo que se nombra.
+ *    pista: unos cuatro kilómetros. Lo que se ve por el cristal, mirado con la tarjeta de
+ *    verdad, es la fila verde del eje de las calles —las azules del borde quedan debajo del
+ *    ala—, y es lo que se nombra.
  * 7. **El despegue por la 36L y la salida CCS6L**: recto al norte, a la izquierda a rumbo
  *    285 y después al oeste, con Madrid encendida del lado de Ara. Se nombra si se ve.
  * 8. **La luz del cinturón**, que apaga la comandante con su anuncio de siempre pasados
@@ -318,16 +319,17 @@ const MOMENTOS: readonly Momento[] = [
   },
   {
     /*
-     * **Las luces de las calles**, que es lo que se ve rodando de noche: las azules del
-     * borde, a los dos lados. Idaira, que pasa revisando cinturones, cuenta para qué son.
-     * Solo las azules: las verdes del eje no las tiene cualquier calle.
+     * **Las luces de las calles**, que es lo que se ve rodando de noche: la fila verde del
+     * eje, que en Barajas llevan las calles. Las azules del borde, por el cristal de Ara,
+     * quedan debajo del ala y no se ven: no se nombran. Idaira, que pasa revisando
+     * cinturones, cuenta para qué son.
      */
     id: "lucesDeLasCalles",
-    cuando: (l, e) => l.tramo === "rodando" && l.porElSuelo > YA_RUEDA && e.callaDesde >= 1.5,
+    cuando: (l, e) => l.tramo === "rodando" && l.porElSuelo > YA_RUEDA && e.callaDesde >= 1.5 && e.seVe("luces-de-las-calles", l),
     // Rodando y nada más: parado en la doble raya ya no es lo que se ve, y no hace esperar a la torre.
     caduca: (l) => l.tramo === "esperando" || yaEnLaPista(l),
-    lineas: [araLargo("lucesAzules"), idaira("lucesAzules")],
-    mira: "ventanilla",
+    lineas: [araLargo("lucesVerdes"), idaira("lucesVerdes")],
+    nombra: "luces-de-las-calles",
   },
   {
     id: "espera",

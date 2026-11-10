@@ -3110,9 +3110,9 @@ export const EN: Dictionary = {
     "As it's a long flight, there are three pilots today, and we take turns to rest. Have a good flight.",
   "inicio.tripulacion.pasaje.demo.salidasLargo":
     "This aircraft has eight emergency exits, four on each side. Find the one nearest to you, which may be behind you. Lights on the floor of the aisle will guide you to them.",
-  "inicio.ara.pasaje.largo.lucesAzules": "Look, there are little blue lights on both sides of the way!",
-  "inicio.tripulacion.pasaje.cerca.largo.lucesAzules":
-    "They mark the edge of the taxiway the plane is rolling along: blue means \"this way, don't go off\".",
+  "inicio.ara.pasaje.largo.lucesVerdes": "Look, there's a row of little green lights on the ground!",
+  "inicio.tripulacion.pasaje.cerca.largo.lucesVerdes":
+    "They run down the middle of the taxiway the plane is rolling along: green means \"this way\".",
   "inicio.ara.pasaje.largo.madrid": "Look at all the lights down there! That's Madrid, on my side.",
   "inicio.tripulacion.pasaje.derlis.cena":
     "Children eat first. Here's yours: chicken and cassava from Granja Óga, nice and warm.",
