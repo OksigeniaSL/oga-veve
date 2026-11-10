@@ -2,6 +2,9 @@ voz	fichero	idioma	texto	dónde suena
 instructor	instructor/vuelo.solo-vuelta.ogg	es-PY	Desde acá, vuelta al campo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.estacionado.ogg	es-PY	Arrancá el motor	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.arrancando.ogg	es-PY	Soltá el freno y andá despacito	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.remolque.ogg	es-PY	Pedí el tractor: nos empuja para atrás hasta la calle	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.remolqueArranca.ogg	es-PY	El tractor nos lleva para atrás, porque desde la cabina no se ve lo que hay detrás. Mientras tanto, arrancá los motores	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.remolqueSuelta.ogg	es-PY	Mirá a la izquierda: te enseña el pasador con su cinta roja y te saluda. Sin él, la rueda de adelante vuelve a ser tuya: ya podés rodar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.rodando.ogg	es-PY	Seguí la raya verde	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.esperando.ogg	es-PY	Pará del todo y esperá la luz	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.esperaQueAterrice.ogg	es-PY	Esperamos: viene un avión a aterrizar	lo que toca hacer ahora, en vuelo y en tierra

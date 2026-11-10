@@ -2108,5 +2108,14 @@
   ],
   "vuelo.paso.velocidad.590": [
     "vuelo.paso.velocidad.590"
+  ],
+  "vuelo.remolque": [
+    "vuelo.remolque"
+  ],
+  "vuelo.remolqueArranca": [
+    "vuelo.remolqueArranca"
+  ],
+  "vuelo.remolqueSuelta": [
+    "vuelo.remolqueSuelta"
   ]
 }

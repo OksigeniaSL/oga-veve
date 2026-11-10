@@ -2423,6 +2423,18 @@
       "ms": 1068,
       "h": "236cd05800"
     },
+    "vuelo.remolque": {
+      "ms": 2830,
+      "h": "42056afa3f"
+    },
+    "vuelo.remolqueArranca": {
+      "ms": 5907,
+      "h": "adbebdbca8"
+    },
+    "vuelo.remolqueSuelta": {
+      "ms": 7607,
+      "h": "39639d2677"
+    },
     "vuelo.remontar.calor": {
       "ms": 5707,
       "h": "a2f48fe088"
@@ -4794,6 +4806,15 @@
     ],
     "vuelo.paso.velocidad.590": [
       "vuelo.paso.velocidad.590"
+    ],
+    "vuelo.remolque": [
+      "vuelo.remolque"
+    ],
+    "vuelo.remolqueArranca": [
+      "vuelo.remolqueArranca"
+    ],
+    "vuelo.remolqueSuelta": [
+      "vuelo.remolqueSuelta"
     ]
   }
 }
