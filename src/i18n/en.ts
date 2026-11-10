@@ -153,6 +153,7 @@ export const EN: Dictionary = {
   "scenario.elHierro.name": "El Hierro",
   "scenario.laGomera.name": "La Gomera",
   "scenario.cuatroVientos.name": "Cuatro Vientos",
+  "scenario.barajas.name": "Madrid-Barajas",
 
   "tutor.throttle": "Add power",
   "tutor.speed": "Let her run",

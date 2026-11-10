@@ -65,6 +65,9 @@ export const BOMBEROS: Readonly<Record<string, BomberosPublicados>> = {
   GCGM: { categoria: 5 },
   // «CIV: 4», y en la nota: «category increase requests are not accepted».
   LECU: { categoria: 4 },
+  // «10.», la más alta que hay: la del A380 (AD 2-LEMD, 2.6, leído el 9 de
+  // noviembre de 2026).
+  LEMD: { categoria: 10 },
   // «CAT 8».
   SGAS: { categoria: 8 },
   // «Categoría VII».

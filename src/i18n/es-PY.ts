@@ -154,6 +154,7 @@ export const ES_PY = {
   "scenario.elHierro.name": "El Hierro",
   "scenario.laGomera.name": "La Gomera",
   "scenario.cuatroVientos.name": "Cuatro Vientos",
+  "scenario.barajas.name": "Madrid-Barajas",
 
   "tutor.throttle": "Dale motor",
   "tutor.speed": "Esperá a que corra",

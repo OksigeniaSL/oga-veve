@@ -853,6 +853,7 @@ import { aDondeSenala, type Por as PorDeLaAguja } from "./flight/aguja";
 import { missionsFor } from "./content/missions";
 import {
   conViento,
+  DEL_HANGAR,
   oaciDe,
   SCENARIOS,
   VALLE_CORDILLERA,
@@ -10222,7 +10223,7 @@ export class Game {
     this.hud.ofrecerElSiguiente({
       mapa: mapaDelPais(
         aqui,
-        SCENARIOS.filter((e) => e.pais === aqui.pais),
+        DEL_HANGAR.filter((e) => e.pais === aqui.pais),
         rutas,
         siguiente.id,
       ),

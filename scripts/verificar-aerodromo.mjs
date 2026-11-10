@@ -17,7 +17,8 @@
  *   rótulo, que a escala de aeródromo mide dos píxeles.
  *
  * Uso: `node scripts/verificar-aerodromo.mjs [carpeta]`, la de las dos imágenes
- * (por defecto, la temporal del sistema).
+ * (por defecto, la temporal del sistema). Mira Asunción y Los Rodeos; otros,
+ * con `OGA_CAMPOS=lemd`.
  */
 
 import { chromium } from 'playwright';
@@ -39,7 +40,10 @@ const page = await b.newPage();
 page.on('pageerror', (e) => console.log('ERROR:', e.message));
 await page.goto(`${BASE}/?escenario=valle-cordillera&hora=16`);
 
-for (const id of ['sgas', 'gcxo']) {
+// Los de siempre, o los que se pidan: `OGA_CAMPOS=lemd`.
+const CAMPOS = (process.env.OGA_CAMPOS ?? 'sgas,gcxo').split(',');
+try {
+for (const id of CAMPOS) {
   const r = await page.evaluate(async (id) => {
     const { createAerodrome } = await import('/src/world/aerodrome.ts');
     const aero = await (await fetch(`/data/aerodromes/${id}.aero.json`)).json();
@@ -155,6 +159,7 @@ for (const id of ['sgas', 'gcxo']) {
     console.log(`  acercamiento  → ${cerca}`);
   }
 }
-
-await b.close();
-await server.close();
+} finally {
+  await b.close();
+  await server.close();
+}

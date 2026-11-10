@@ -516,6 +516,21 @@ interface VueltaDelBackTaxi {
 const EN_LA_CABECERA = 150;
 
 /**
+ * Lo que puede quedar un cruce por detrás de la punta de la pista y seguir
+ * siendo su entrada, m: la calle que llega a la cabecera y la zona de viraje
+ * de las que la tienen. Más allá ya no es la pista, es su prolongación. Ver
+ * `esperasPorInterseccion`.
+ */
+const ANTES_DE_LA_PISTA = 400;
+
+/**
+ * Hasta dónde un punto de espera es de la pista que tiene al lado, m. Los de
+ * verdad van a noventa del eje, o a ciento siete y medio con ILS de categoría
+ * II o III. Ver `juntoALaPista`.
+ */
+const DE_SU_PISTA = 250;
+
+/**
  * Cuánto de una salida de pista se mira para ver si se toma al revés, m: lo
  * que mide una salida rápida de la pista a su paralela. Ver
  * `salidaPorDelanteQue`.
@@ -2706,6 +2721,7 @@ export class PlanDeVuelo {
      */
     for (const e of this.aero.holdingPositions) {
       if (this.alGrafo(e.xy) > SALTO_A_LA_ESPERA) continue;
+      if (!this.juntoALaPista(e.xy)) continue;
       sitios.push(e.xy);
     }
     /*
@@ -2715,6 +2731,36 @@ export class PlanDeVuelo {
     if (publicada) sitios.push(publicada);
     this.esperasVistas = sitios;
     return sitios;
+  }
+
+  /**
+   * **Si un punto de espera es de la pista en la que se opera.**
+   *
+   * Con una pista no hacía falta preguntarlo: todos los puntos de espera del
+   * campo eran suyos. Barajas tiene cuatro pistas y OpenStreetMap le trae
+   * doscientos noventa y tres puntos de espera, de las cuatro y de las calles
+   * de la plataforma, y la cuenta de cuánta pista queda por delante, que mira
+   * a lo largo del eje, daba la pista entera a uno de la plataforma de la T1
+   * a tres kilómetros y medio de la 36L. La raya verde de un puesto de la T1
+   * acababa ahí, a seiscientos metros, junto a la 14R/32L.
+   *
+   * Así que un punto de espera es de esta pista si está a su lado: a lo largo
+   * de ella y a menos de `DE_SU_PISTA` de su eje, que es más de lo que se
+   * aparta cualquier punto de espera de verdad. Medido en los diecinueve
+   * campos: quita doscientos sesenta y ocho en Barajas, los cuatro de la 03R
+   * en Gran Canaria, cuatro de la plataforma de Tenerife Sur que quedan a más
+   * de doscientos cincuenta metros de la pista, y ninguno en los demás.
+   */
+  private juntoALaPista(p: Punto): boolean {
+    const queda = this.pistaQueQueda(p);
+    if (queda < -ANTES_DE_LA_PISTA || queda > this.pista.length + ANTES_DE_LA_PISTA) return false;
+    const [fx, fz] = delante(this.pista.heading);
+    const media = this.pista.length / 2;
+    const esta: Punto[] = [
+      [this.pista.x - fx * media, -(this.pista.z - fz * media)],
+      [this.pista.x + fx * media, -(this.pista.z + fz * media)],
+    ];
+    return aLaPolilinea(p, esta) <= DE_SU_PISTA;
   }
 
   /**
@@ -3000,6 +3046,16 @@ export class PlanDeVuelo {
        * intersecciones.
        */
       const queda = this.pistaQueQueda(nudo);
+      /*
+       * **Y sobre la pista, no sobre su prolongación.** Lo de arriba mira solo
+       * de lado, contra la recta entera del eje, y en Barajas esa recta sigue
+       * hacia el sur desde la 36L y cruza la plataforma de la T1, la T2 y la T3
+       * tres kilómetros y medio más allá: un cruce de calles de la plataforma
+       * salía como «la cabecera» —toda la pista por delante— y la raya verde
+       * de un puesto de la T1 acababa a seiscientos metros, en mitad de la
+       * plataforma.
+       */
+      if (queda > this.pista.length + ANTES_DE_LA_PISTA) return;
       if (queda < this.pista.length - EN_LA_CABECERA) {
         if (queda < this.pistaQueSeQuiere()) return;
         // Y la intersección, solo si el AIP deja salir desde ella.

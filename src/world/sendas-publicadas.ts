@@ -87,6 +87,22 @@ export const SENDAS: Readonly<Record<string, Readonly<Record<string, SendaPublic
   SGEN: { "02": { papi: 3, senda: null }, "20": { papi: 3, senda: null } },
   SGCO: { "03": { papi: null, senda: null }, "21": { papi: null, senda: null } },
   SGME: { "01": { papi: null, senda: null }, "19": { papi: null, senda: null } },
+  /*
+   * Barajas (AD 2-LEMD, 2.14 y 2.19, leído el 9 de noviembre de 2026): PAPI a
+   * tres grados e ILS de categoría III en las cuatro de llegadas —32L, 32R,
+   * 18L y 18R—, y nada en las cuatro de salidas, ni PAPI ni ILS ni luces de
+   * aproximación. Ver `MADRID_BARAJAS`.
+   */
+  LEMD: {
+    "32L": { papi: 3, senda: 3, ils: true },
+    "32R": { papi: 3, senda: 3, ils: true },
+    "18L": { papi: 3, senda: 3, ils: true },
+    "18R": { papi: 3, senda: 3, ils: true },
+    "36L": { papi: null, senda: null },
+    "36R": { papi: null, senda: null },
+    "14L": { papi: null, senda: null },
+    "14R": { papi: null, senda: null },
+  },
 };
 
 /**

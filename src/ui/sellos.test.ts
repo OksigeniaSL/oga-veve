@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { SCENARIOS } from "../world/scenarios";
+import { DEL_HANGAR, SCENARIOS } from "../world/scenarios";
 import { designador } from "./hangar";
 import { camposDeLosSellos, DE_CADA_CAMPO, selloDe, siluetaDe } from "./sellos";
 import { SILUETAS } from "./siluetas";
@@ -15,10 +15,14 @@ import { SILUETAS } from "./siluetas";
 const por = (id: string) => SCENARIOS.find((e) => e.id === id)!;
 
 describe("un sello por campo", () => {
+  /*
+   * Los del hangar: Barajas es el mundo de un cuento, no un campo al que se
+   * vuela, y no tiene sello —`selloDe` no pinta nada donde no hay entrada—.
+   */
   it("cada campo del juego tiene el suyo", () => {
-    const sinSello = SCENARIOS.filter((e) => !DE_CADA_CAMPO[e.id]).map((e) => e.id);
+    const sinSello = DEL_HANGAR.filter((e) => !DE_CADA_CAMPO[e.id]).map((e) => e.id);
     expect(sinSello).toEqual([]);
-    for (const e of SCENARIOS) expect(selloDe(e, e.id), e.id).toContain("<svg");
+    for (const e of DEL_HANGAR) expect(selloDe(e, e.id), e.id).toContain("<svg");
   });
 
   it("y ninguno sobra: cada sello es de un campo que existe", () => {
@@ -32,7 +36,7 @@ describe("un sello por campo", () => {
   });
 
   it("con los números de su pista, los de verdad", () => {
-    for (const e of SCENARIOS) {
+    for (const e of DEL_HANGAR) {
       const svg = selloDe(e, e.id);
       for (const numero of designador(e).split("/"))
         expect(svg, `${e.id} ${numero}`).toContain(`>${numero}</text>`);

@@ -44,7 +44,7 @@
  * - cuadro: mediana y p95 en el puesto, sobre el campo y en crucero mirando al
  *   vecino más lejano, con llamadas y triángulos.
  *
- * Opciones: `--escenario pettirossi`, `--avion jaz-20`, `--vueltas 3`,
+ * Opciones: `--escenario pettirossi`, `--avion jaz-20`, `--vueltas 3`, `--hora 16`,
  * `--rumbo 95` (hacia dónde mira el crucero, grados verdaderos),
  * `--salida fichero.json`. Y cada variante puede llevar su propio escenario y
  * su rumbo —`gc=dist,gran-canaria,290`—, que es como se pone al lado una
@@ -79,6 +79,12 @@ const ESCENARIO = opcion("escenario", "pettirossi");
 const AVION = opcion("avion", "jaz-20");
 const VUELTAS = Number(opcion("vueltas", "3"));
 const RUMBO = Number(opcion("rumbo", "95"));
+/*
+ * La hora que se juega. Las cuatro de la tarde si no se dice otra cosa; Barajas
+ * es de noche entero, y de noche se encienden las luces de la ciudad y de las
+ * calles de rodaje, que es lo que hay que medir allí: `--hora 23.75`.
+ */
+const HORA = Number(opcion("hora", "16"));
 const SALIDA = opcion("salida", null);
 /** Los triángulos del sitio de prueba, o `null` para no medir el sitio. */
 const SITIO = opcion("sitio", null) === null ? null : Number(opcion("sitio", "20000"));
@@ -318,7 +324,7 @@ try {
       await cdp.send("Performance.enable");
       await cdp.send("Emulation.setCPUThrottlingRate", { rate: APRIETE });
       const url =
-        `${v.base}/?escenario=${v.escenario}&hora=16&leccion=despegue` +
+        `${v.base}/?escenario=${v.escenario}&hora=${HORA}&leccion=despegue` +
         `&tramo=guyrami&avion=${AVION}`;
       const t0 = Date.now();
       await page.goto(url);

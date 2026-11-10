@@ -53,7 +53,7 @@ import {
 } from "three";
 import { RESALTE } from "./terrain";
 import { sinTemblor } from "./sin-temblor";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { mergeGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { partirLoLargo } from "./curvatura";
 import { alturaDelPavimento } from "./mapa-del-pavimento";
 import { letreroAtlasTexture, numberTexture } from "./runway-markings";
@@ -684,10 +684,26 @@ function cinta(
 function desdePoligono(
   contorno: readonly Punto[],
   altura: (p: Punto) => number,
+  /**
+   * Lo más largo que puede quedar un lado antes de ponerle la altura, m, o
+   * nada para dejar los triángulos de *earcut* tal cual. Ver
+   * `LADO_DE_PLATAFORMA`.
+   */
+  lado?: number,
 ): BufferGeometry | null {
   if (contorno.length < 3) return null;
   const forma = new Shape(contorno.map(([x, y]) => new Vector2(x, y)));
-  const geo = new ShapeGeometry(forma);
+  const tal = new ShapeGeometry(forma);
+  /*
+   * Partida en llano, antes de subir cada vértice a su cota: así los puntos
+   * nuevos toman la del terreno y no la de la recta entre dos esquinas. Y
+   * **con índice otra vez**, como sale de *earcut*: las plataformas de una
+   * superficie se funden en una malla con las que no hizo falta partir, y
+   * `mergeGeometries` no junta una con índice y otra sin él — devuelve nada,
+   * y la plataforma entera de La Palma desaparecía.
+   */
+  const partida = lado ? partirLoLargo(tal, lado) : tal;
+  const geo = partida.index ? partida : mergeVertices(partida);
 
   // ShapeGeometry vive en el plano XY. Se tumba a XZ, cada vértice sube a la
   // cota que le toca —eso es la pendiente de la pista— y **la Z se invierte**.
@@ -709,8 +725,31 @@ function desdePoligono(
     arr[i * 3 + 2] = -y;
   }
   geo.computeVertexNormals();
+  /*
+   * Y la caja y la esfera, de nuevo: `partirLoLargo` las deja calculadas sobre
+   * el polígono en llano, y con ellas puestas el rayo y el recorte de la
+   * cámara miraban dónde estaba la plataforma antes de tumbarla. La de La
+   * Palma no la encontraba el rayo de las ruedas.
+   */
+  geo.computeBoundingBox();
+  geo.computeBoundingSphere();
   return geo;
 }
+
+/**
+ * **Lo más largo que puede ser un triángulo de plataforma**, m.
+ *
+ * *Earcut* triangula una plataforma de esquina a esquina, y en una de
+ * seiscientos metros eso son triángulos de seiscientos metros que solo tocan
+ * el terreno en sus esquinas. Las calles de rodaje, en cambio, van en trozos
+ * cortos que siguen el terreno, así que donde una calle se mete en la
+ * plataforma quedaba un escalón. En Barajas, con nueve kilómetros de
+ * aeropuerto y treinta y seis metros de desnivel, el escalón era de diez
+ * centímetros entre la plataforma de la T4 y su calle: la pintura se hundía
+ * en el asfalto y las ruedas, en el borde. Partidas a cincuenta metros —lo que
+ * miden los trozos de las calles—, las dos siguen el mismo terreno.
+ */
+const LADO_DE_PLATAFORMA = 50;
 
 /** Altura constante. Para lo que no tiene pendiente conocida. */
 const plano = (h: number) => () => h;
@@ -918,7 +957,7 @@ export function createAerodrome(
       deHierba && (!plataforma.surface || !esDura(plataforma.surface));
     anotar(
       blanda ? "hierba-segada" : "concrete",
-      desdePoligono(plataforma.polygon, cota),
+      desdePoligono(plataforma.polygon, cota, LADO_DE_PLATAFORMA),
     );
   }
 
