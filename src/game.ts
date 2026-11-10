@@ -1691,8 +1691,14 @@ import {
 
 /** Un punto por el que se mira un sitio del paisaje, y si es el suelo mismo. Ver `casiTodo`. */
 type PuntoDeUnSitio = PuntoDelMundo & { readonly deSuelo?: boolean };
-/** Hasta dónde se distingue una luz del eje de una calle por el cristal de Ara, m: rodando, lo de al lado. */
-const LAS_CALLES_SE_VEN_HASTA = 400;
+/**
+ * **Dónde cae en el cristal de Ara una luz del eje de otra calle**, m a su izquierda. Más
+ * cerca la tapan el ala y el motor, que es lo que se ve desde su asiento: mirado en la
+ * captura del banco, con la tarjeta de verdad, la fila verde asoma a unos cientos de
+ * metros, junto al horizonte, y las de al lado no se ven. Más lejos ya es un punto.
+ */
+const LAS_CALLES_SE_VEN_DESDE = 120;
+const LAS_CALLES_SE_VEN_HASTA = 700;
 
 /** Lo más deprisa que se le deja ir al reloj del juego. Ver `Game.acelerar`. */
 const TOPE_DE_ACELERACION = 16;
@@ -7390,7 +7396,11 @@ export class Game {
     alAcabar: (esperaMas: number, cortada?: boolean) => void,
   ): void {
     const anuncio = linea.clave as Anuncio;
-    if (anuncio === "comandante.crucero") this.dijoSoltarse = true;
+    /*
+     * El cartel se apaga con el anuncio que lo dice: el de siempre, que es de crucero, o el
+     * del primer capítulo del viaje largo, que lo apaga subiendo. Ver `SE_APAGA_EL_CINTURON`.
+     */
+    if (anuncio === "comandante.crucero" || linea.clave === "comandante.largo.cinturon") this.dijoSoltarse = true;
     if (anuncio === "comandante.descenso") this.pidioAbrocharse = true;
     // En el vuelo largo, la comandante avisa antes de bajar: el cartel se enciende con la bajada.
     if (anuncio === "tripulacion.cinturones" && this.vueloLargo) this.pidioAbrocharse = true;
@@ -25967,7 +25977,7 @@ export class Game {
         const az = -y - s.position.z;
         const aLaIzquierda = -(ax * dx + az * dz);
         const delante = ax * dz - az * dx;
-        if (aLaIzquierda < 15 || aLaIzquierda > LAS_CALLES_SE_VEN_HASTA || delante < -50) return [];
+        if (aLaIzquierda < LAS_CALLES_SE_VEN_DESDE || aLaIzquierda > LAS_CALLES_SE_VEN_HASTA || delante < -50) return [];
         return [{ x, y: (this.terrain.cotaConocida(x, -y) ?? s.position.y) + 0.5, z: -y }];
       });
       return { puntos, ventanilla: LAS_CALLES_SE_VEN_HASTA, fuera: 0 };

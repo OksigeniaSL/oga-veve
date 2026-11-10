@@ -4847,6 +4847,8 @@ export const ES_PY = {
   "inicio.tripulacion.pasaje.cerca.largo.lucesVerdes":
     "Van por el medio de la calle por donde rueda el avión: el verde dice «por aquí».",
   "inicio.ara.pasaje.largo.madrid": "¡Mirá cuántas luces allá abajo! Es Madrid, de mi lado.",
+  "comandante.largo.cinturon":
+    "Señores pasajeros, todavía seguimos subiendo, pero ya apagamos la luz del cinturón. Si se quedan sentados, déjenselo puesto.",
   /*
    * ── **El segundo capítulo del vuelo largo: «La noche sobre el mar»** ──────
    *

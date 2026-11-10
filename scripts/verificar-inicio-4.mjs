@@ -934,6 +934,8 @@ async function laNocheDeMadrid() {
       }
       if (l.dichos.includes("lucesDeLasCalles") && !fotos.has("luces")) {
         fotos.add("luces");
+        // Pasado el corte de plano, que la foto sea de lo que se mira al decirlo.
+        await pausa(1500);
         await foto(page, `c1-luces-${l.plano}`);
       }
       if (tramo === "esperando" && !enLaEspera) enLaEspera = { x: l.x, z: l.z };

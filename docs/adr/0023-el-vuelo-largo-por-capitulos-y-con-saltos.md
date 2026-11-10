@@ -492,11 +492,20 @@ láminas de la bienvenida, las voces y la ficha del menú son de la tanda siguie
   kilobytes de OpenStreetMap que solo usa este capítulo. Va por `import()` desde
   `Scenario.aerodromoAparte`, `main.ts` lo pide antes del relieve (`conSuAerodromo`) y el trabajador
   de servicio no lo precarga.
-- **La luz del cinturón la apaga el anuncio de siempre**, «ya estamos arriba… si están sentados,
-  déjenselo puestito», dos mil pies por encima de los diez mil: por debajo, la comandante no habla
-  de nada que no sea volar. Ese es el final del capítulo.
+- **La luz del cinturón la apaga un anuncio suyo**, dos mil pies por encima de los diez mil: por
+  debajo, la comandante no habla de nada que no sea volar. No el de siempre, que dice que ya se ha
+  llegado a la altura —aquí se sigue subiendo hasta el 360—, sino «todavía seguimos subiendo… si
+  se quedan sentados, déjenselo puesto», que apaga el cartel igual (`comandante.largo.cinturon`).
+  Ese es el final del capítulo.
 - **Del final se pasa al segundo**: la tarjeta lleva el botón de seguir y no el de volver, y deja el
   recado en la pestaña (`flight/capitulo-pedido.ts`), que es también por donde podrá ir el viaje
   seguido. La dirección `?capitulo=` sigue siendo solo de desarrollo.
 - **No hay remolque**: los puestos del juego son de salir de frente, y el T5 también. Queda dicho y
   sin hacer.
+- **Rodando se nombra la fila verde del eje de las calles**, y solo si cae en el cristal de Ara,
+  sentada: las del fichero del aeródromo, a su izquierda y a unos cientos de metros. Las de al lado y
+  las azules del borde las tapan el ala y el motor, mirado en la captura del banco. Si no se ve, no
+  se dice, y en la doble raya ya no espera a nadie.
+- **El ⏩ no corre en tierra**, que es regla del motor (`sePuedeCorrer`): el rodaje de la T1 a la
+  Z4, cuatro kilómetros y medio, va a su paso, unos diez minutos, y el capítulo entero sale en unos
+  trece. Si se quiere más corto, es el motor el que tiene que aprender a correr rodando.

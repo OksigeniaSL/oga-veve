@@ -3114,6 +3114,8 @@ export const EN: Dictionary = {
   "inicio.tripulacion.pasaje.cerca.largo.lucesVerdes":
     "They run down the middle of the taxiway the plane is rolling along: green means \"this way\".",
   "inicio.ara.pasaje.largo.madrid": "Look at all the lights down there! That's Madrid, on my side.",
+  "comandante.largo.cinturon":
+    "Ladies and gentlemen, we're still climbing, but we've switched off the seat belt sign. If you stay seated, please keep it fastened.",
   "inicio.tripulacion.pasaje.derlis.cena":
     "Children eat first. Here's yours: chicken and cassava from Granja Óga, nice and warm.",
   "inicio.ara.pasaje.largo.cena":

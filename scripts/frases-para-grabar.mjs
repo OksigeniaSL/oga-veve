@@ -2026,6 +2026,7 @@ const DEL_VUELO_LARGO = [
   ["inicio.tripulacion.pasaje.demo.salidasLargo", "tripulacion-canarias", "la noche de Madrid: las ocho salidas del JAZ 110, cuatro por lado (provisional)"],
   ["inicio.ara.pasaje.largo.lucesVerdes", "ara", "la noche de Madrid: rodando, Ara ve la fila verde del eje de las calles (provisional)"],
   ["inicio.tripulacion.pasaje.cerca.largo.lucesVerdes", "tripulacion-canarias", "la noche de Madrid: Idaira, para qué es la fila verde (provisional)"],
+  ["comandante.largo.cinturon", "comandante", "la noche de Madrid: subiendo, la comandante apaga la luz del cinturón; sentados, puesto (provisional)"],
   ["inicio.ara.pasaje.largo.madrid", "ara", "la noche de Madrid: Ara ve Madrid encendida por su cristal, si se ve (provisional)"],
 ];
 const LO_QUE_SE_VE = new Set(

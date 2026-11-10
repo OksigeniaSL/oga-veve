@@ -32,8 +32,9 @@
  *    ala—, y es lo que se nombra.
  * 7. **El despegue por la 36L y la salida CCS6L**: recto al norte, a la izquierda a rumbo
  *    285 y después al oeste, con Madrid encendida del lado de Ara. Se nombra si se ve.
- * 8. **La luz del cinturón**, que apaga la comandante con su anuncio de siempre pasados
- *    los diez mil pies, y el final del capítulo, con el paso al segundo.
+ * 8. **La luz del cinturón**, que apaga la comandante con su anuncio pasados los diez mil
+ *    pies, y el final del capítulo, con el paso al segundo. No el de siempre, que dice que ya
+ *    se llegó a la altura: aquí se sigue subiendo hasta el 360.
  *
  * ## Quién dice qué
  *
@@ -330,6 +331,8 @@ const MOMENTOS: readonly Momento[] = [
     caduca: (l) => l.tramo === "esperando" || yaEnLaPista(l),
     lineas: [araLargo("lucesVerdes"), idaira("lucesVerdes")],
     nombra: "luces-de-las-calles",
+    // Sentada en su ventanilla: asomada, la cara contra el cristal mira abajo, al ala.
+    plano: "ventanilla",
   },
   {
     id: "espera",
@@ -367,12 +370,13 @@ const MOMENTOS: readonly Momento[] = [
   },
   {
     /*
-     * **La luz del cinturón**, con el anuncio de siempre: es el que la apaga, con su *ding*.
-     * «Si están sentados, déjenselo puesto». Ver `SE_APAGA_EL_CINTURON`.
+     * **La luz del cinturón**, con su anuncio, que es el que la apaga, con su *ding*: «si se
+     * quedan sentados, déjenselo puesto». No el de siempre, «ya llegamos a nuestra altura»,
+     * que aquí sería falso: el avión sigue subiendo. Ver `SE_APAGA_EL_CINTURON`.
      */
     id: "arriba",
     cuando: (l, e) => !l.enTierra && l.altitud >= SE_APAGA_EL_CINTURON && e.callaDesde >= SE_MIRA,
-    lineas: [anuncio("comandante.crucero")],
+    lineas: [comandante("cinturon")],
   },
   // Y el final del capítulo, con su tarjeta: el botón lleva al segundo.
   { id: "fin", cuando: callados, lineas: [] },

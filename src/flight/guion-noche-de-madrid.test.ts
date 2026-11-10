@@ -50,7 +50,9 @@ describe("el guion del primer capítulo", () => {
     // Los toboganes dan el arranque, «sentados para el despegue» la pista y el anuncio de siempre apaga el cartel.
     expect(de("puertas")).toContain("comandante.crosscheck");
     expect(de("despegue")).toContain("comandante.despegue");
-    expect(de("arriba")).toEqual(["comandante.crucero"]);
+    expect(de("arriba")).toEqual(["comandante.largo.cinturon"]);
+    // Y no el de crucero: aquí se sigue subiendo.
+    expect(ES_PY["comandante.largo.cinturon"]).toMatch(/subiendo/);
   });
 
   it("la bienvenida de la comandante va con las puertas cerradas, antes de arrancar, y dice la llegada de hoy", () => {
@@ -93,7 +95,7 @@ describe("el guion del primer capítulo", () => {
       if (/largo|salidasLargo/.test(f.clave)) nuevas.add(f.clave);
     }
     for (const c of ["comandante.largo.vueloVerano", "comandante.largo.vueloInvierno"]) nuevas.add(c);
-    expect(nuevas.size).toBeLessThanOrEqual(12);
+    expect(nuevas.size).toBeLessThanOrEqual(13);
     for (const c of nuevas) expect(lista, c).toContain(`"${c}"`);
   });
 
