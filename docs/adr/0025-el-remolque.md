@@ -272,6 +272,12 @@ quedaba en la calle sin poder pasarle al lado. En un aeropuerto cada puesto es d
   también salen «de contacto» Ayolas, Mariscal Estigarribia, Pedro Juan Caballero, Concepción, El Hierro y Cuatro
   Vientos. No se nota porque en esos campos no opera el reactor del tráfico (`OPERAN`), pero es la misma cuenta que la
   de quien juega: ver «Los cinco empujes con el cruce detrás».
+- **Lo que dicen los datos para distinguir un puesto de contacto**, mirado y sin tocar: ningún aeródromo extraído trae
+  pasarelas (`aeroway=jet_bridge`), y la clase `terminal` del edificio no basta. La tienen seis edificios de Barajas, uno
+  de Los Rodeos, cinco de La Gomera y el único de Ayolas, y ninguno de Cuatro Vientos. Exigir una terminal quitaría los
+  puestos falsos de Cuatro Vientos, pero no los de La Gomera, que tiene terminal y no pasarelas, ni los de Ayolas, cuya
+  terminal es su único edificio. Lo que separa de verdad un puesto de contacto es la pasarela, y eso pide volver a
+  extraer los aeródromos con ella.
 - **La radio de tierra en el peldaño de cabina**: el «pushback and start approved» y la conversación por el cable con
   la persona de tierra. Hace falta la pieza de la torre con sus recetas —el indicativo, los dos acentos— o una voz de
   tierra nueva; mientras, ese peldaño tiene las tarjetas y la frase de arrancar de siempre.
