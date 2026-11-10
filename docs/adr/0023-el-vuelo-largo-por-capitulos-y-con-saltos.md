@@ -458,3 +458,56 @@ La cabina se oscurece, El Hierro se marca, la noche se ve en el mapa y a media n
 Queda sin hacer lo que le pediría lo real, y se dijo en vez de hacerse: en un avión de esta clase, al
 bajar las luces la tripulación oscurece también las ventanillas. Es el mismo botón de
 `CabinaDePasaje`, y un cambio pequeño cuando se quiera.
+
+## Lo que se programó del primer capítulo
+
+`?inicio=4&capitulo=1` abre el esqueleto de «La noche de Madrid»: `flight/guion-noche-de-madrid.ts`
+sobre el motor de siempre, en el mundo de Barajas, y lo vuela `scripts/verificar-inicio-4.mjs` con
+`OGA_CAPITULO=1`. Las frases que no existían llevan un texto provisional; el guion de verdad, las
+láminas de la bienvenida, las voces y la ficha del menú son de la tanda siguiente. Lo que se decidió:
+
+- **Se entra por el puesto, no por el perfil.** Los otros dos capítulos caen en vuelo; este empieza
+  como el vuelo corto, en tierra y con los motores parados, y el avión va del puesto a la pista por
+  el plan de tierra de siempre. Del T5 de la T1, que es de donde sale el vuelo de verdad, y no del
+  que elegiría el juego: el plan sale del puesto que le pidan (`PlanDeVuelo.puestoPedido`) sin
+  mirar los ciento cuarenta y dos candidatos de Barajas, que eran seis décimas de segundo para
+  tirar lo elegido.
+- **El reloj del vuelo empieza al embarcar y corre a su paso.** A las 23:05 de Madrid, una hora
+  antes del despegue del horario de ese día, y con el cielo de ese instante. No se reajusta al
+  despegar: lo que tarde la tripulación del juego en llegar a la pista es lo que pasa, y la hora de
+  llegada que anuncia la comandante es la del horario, como en cualquier vuelo.
+- **El camino es la salida publicada y después la ortodrómica**: el final de la 36L, SSY por
+  encima, MD039, AVILA, LONGA y CCS, y desde trescientos kilómetros por delante del través de
+  Cáceres, la ortodrómica (`caminoDeLaSalida`). El corte del rumbo 285 con el 320 hacia MD039 cae a
+  menos de trescientos metros de SSY: el tramo que se sigue es de SSY a MD039, y el 285 sale del
+  radio de viraje.
+- **Los depósitos, llenos para Asunción**, con la misma cuenta que los otros capítulos
+  (`cargaDelVueloLargo`): el avión despega con el peso del vuelo de verdad.
+- **El tiempo es el de Barajas solo si la deja en configuración norte.** La 36L es la única pista
+  de salidas de la norte de noche, y el juego no sabe pasarse a la sur, que sale por la 14L. Con un
+  parte que sacaría al aeropuerto de la norte —más de diez nudos de cola o veinte de costado, AIP
+  2.20—, el capítulo vuela la noche de casi siempre, la del `vientoDominante`, en vez de despegar
+  con un viento con el que nadie despegaría por ahí (`tiempoDeLaNocheDeMadrid`).
+- **El aeródromo de Barajas se baja al abrir el capítulo**, no con el juego: novecientos cuarenta
+  kilobytes de OpenStreetMap que solo usa este capítulo. Va por `import()` desde
+  `Scenario.aerodromoAparte`, `main.ts` lo pide antes del relieve (`conSuAerodromo`) y el trabajador
+  de servicio no lo precarga.
+- **La luz del cinturón la apaga un anuncio suyo**, dos mil pies por encima de los diez mil: por
+  debajo, la comandante no habla de nada que no sea volar. No el de siempre, que dice que ya se ha
+  llegado a la altura —aquí se sigue subiendo hasta el 360—, sino «todavía seguimos subiendo… si
+  se quedan sentados, déjenselo puesto», que apaga el cartel igual (`comandante.largo.cinturon`).
+  Ese es el final del capítulo.
+- **Del final se pasa al segundo**: la tarjeta lleva el botón de seguir y no el de volver, y deja el
+  recado en la pestaña (`flight/capitulo-pedido.ts`), que es también por donde podrá ir el viaje
+  seguido. La dirección `?capitulo=` sigue siendo solo de desarrollo.
+- **No hay remolque**: los puestos del juego son de salir de frente, y el T5 también. Queda dicho y
+  sin hacer.
+- **Rodando se nombra la fila verde del eje de las calles con el avión visto por fuera**, y solo si
+  la calle por la que va la lleva en el fichero del aeródromo (`ejeVerde`). Por el cristal de Ara se
+  intentó primero y no se pudo asegurar: el juego decía que se veía y la captura del banco, con la
+  tarjeta de verdad, no enseñaba ninguna; las de al lado las tapan el ala y el motor, y las de lejos
+  los edificios, que no se miran al decir si algo se ve. Si la calle no la lleva, no se dice, y en la
+  doble raya ya no espera a nadie.
+- **El ⏩ no corre en tierra**, que es regla del motor (`sePuedeCorrer`): el rodaje de la T1 a la
+  Z4, cuatro kilómetros y medio, va a su paso, unos diez minutos, y el capítulo entero sale en unos
+  trece. Si se quiere más corto, es el motor el que tiene que aprender a correr rodando.

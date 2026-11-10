@@ -70,6 +70,15 @@ const ICONOS = /^(favicon\.svg|icono-[\w-]+\.png)$/i;
  */
 const RETRATOS = /^assets\/aeronaves\/retratos\/[\w-]+\.webp$/i;
 
+/**
+ * **Y lo que el juego trocea a propósito para bajarlo solo al usarlo**, fuera:
+ * el aeródromo de Barajas, que es código porque entra por `import()` pero solo
+ * lo abre el primer capítulo del viaje largo. Precargarlo sería bajárselo a
+ * todo el mundo igual que antes de trocearlo. Se guarda al usarlo, como un
+ * relieve. Ver `aerodromoAparte` en `src/world/scenarios.ts`.
+ */
+const SE_BAJA_AL_USARLO = /^assets\/[\w-]+\.aero-[\w-]+\.js$/i;
+
 /** Un tope de seguridad, no una regla: nada de esto debería acercarse. */
 const DEMASIADO_GRANDE = 4 * 1024 * 1024;
 
@@ -87,6 +96,7 @@ for (const camino of todos(RAIZ)) {
   const nombre = relative(RAIZ, camino).split("\\").join("/");
   if (!DEL_ARMAZON.test(nombre) && !ICONOS.test(nombre) && !RETRATOS.test(nombre))
     continue;
+  if (SE_BAJA_AL_USARLO.test(nombre)) continue;
   // El propio service worker no se precarga a sí mismo.
   if (nombre === "sw.js") continue;
   const tam = statSync(camino).size;

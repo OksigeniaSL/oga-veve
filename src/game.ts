@@ -181,6 +181,7 @@ import {
   type PerfilDelVuelo,
 } from "./flight/ruta-larga";
 import { guionDePruebaDelSalto } from "./flight/guion-de-prueba-del-salto";
+import { pedirElCapitulo } from "./flight/capitulo-pedido";
 import { planDeLaNoche } from "./flight/noche-en-el-mapa";
 import {
   COTA_DE_LAS_LUCES_DE_TENERIFE,
@@ -189,6 +190,14 @@ import {
   LUCES_DE_TENERIFE,
 } from "./flight/guion-noche-sobre-el-mar";
 import { CHACO_ENFRENTE, GUION_LLEGADA_A_ASUNCION, MUNDO_DE_LA_LLEGADA, RIO_ENFRENTE, SE_DESAYUNA_A } from "./flight/guion-llegada-a-asuncion";
+import {
+  caminoDeLaSalida,
+  COTA_DE_LAS_LUCES_DE_MADRID,
+  GUION_NOCHE_DE_MADRID,
+  LAS_LUCES_DE_MADRID_LLEGAN_A,
+  LUCES_DE_MADRID,
+  SE_EMBARCA_ANTES,
+} from "./flight/guion-noche-de-madrid";
 import { cargarElMundo, type MundoCargado } from "./world/mundo-del-tramo";
 import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import {
@@ -856,6 +865,7 @@ import {
   DEL_HANGAR,
   oaciDe,
   SCENARIOS,
+  SALIDA_DE_BARAJAS,
   VALLE_CORDILLERA,
   vecesLejosDe,
   type Scenario,
@@ -954,6 +964,8 @@ import {
 import { Medidor } from "./ui/rendimiento";
 import {
   crearLucesDeRodadura,
+  dondeVanLasLuces,
+  VERDE as VERDE_DEL_EJE,
   type LucesDeRodadura,
 } from "./world/luces-de-rodadura";
 import {
@@ -1460,7 +1472,7 @@ import {
   avisoDeLaTorre,
 } from "./flight/aviso-de-aves";
 import { dondeCae } from "./world/entre-aerodromos";
-import { cruceroDelTramo, rutaDelTramo, type DelJuego } from "./world/ruta-del-tramo";
+import { cruceroDelTramo, finalDeLaPista, rutaDelTramo, type DelJuego } from "./world/ruta-del-tramo";
 import { crearBarcos, luzDeLaEstela, type Barcos } from "./world/barcos";
 import {
   TraficoDeLasIslas,
@@ -1679,6 +1691,13 @@ import {
 
 /** Un punto por el que se mira un sitio del paisaje, y si es el suelo mismo. Ver `casiTodo`. */
 type PuntoDeUnSitio = PuntoDelMundo & { readonly deSuelo?: boolean };
+/**
+ * **Lo cerca que tienen que estar las luces verdes del eje para decir que se rueda por una
+ * calle que las lleva**, m, y cuántas: las de su eje van cada quince metros, así que por
+ * una calle con luces siempre hay unas cuantas a menos de esto. Ver `porUnaCalleConLuces`.
+ */
+const EJE_VERDE_A_MENOS_DE = 40;
+const EJE_VERDE_LUCES = 3;
 
 /** Lo más deprisa que se le deja ir al reloj del juego. Ver `Game.acelerar`. */
 const TOPE_DE_ACELERACION = 16;
@@ -2033,9 +2052,10 @@ export interface GameOptions {
   inicio?: EscenaDelInicio;
   /**
    * **El capítulo del vuelo largo, si no es el tercero**: el de su ficha del menú o,
-   * en desarrollo, `?capitulo=2`. Ver `flight/guion-noche-sobre-el-mar.ts`.
+   * en desarrollo, `?capitulo=2`. Ver `flight/guion-noche-sobre-el-mar.ts`. Y el
+   * primero, de momento solo con `?capitulo=1`: ver `flight/guion-noche-de-madrid.ts`.
    */
-  capitulo?: 2;
+  capitulo?: 1 | 2;
 
   /**
    * El peldaño de este vuelo, si no es el recordado: el modo inicio va en
@@ -6217,6 +6237,7 @@ export class Game {
       this.plan.colaQueHay = () => this.paradosEnLasCalles(true, true);
       this.plan.tramosDeOtros = () => this.trafico?.tramosQueTienen() ?? [];
       this.plan.diaDeDespegue = () => this.diaDeDespegue();
+      this.plan.puestoPedido = this.puestoDeEsteVuelo;
     }
     /*
      * **Y el dibujo va con el plan, no con la lección.**
@@ -7088,7 +7109,8 @@ export class Game {
       this.montarLaEscenaDePasaje(largo);
       // Y con `?largo=` o en un capítulo, ya arriba: no se pasa por el puesto. Ver `entrarEnElVueloLargo`.
       if (this.escenaDelInicio === "largo") {
-        if (this.capituloDelLargo === 2) this.entrarEnLaNoche();
+        if (this.capituloDelLargo === 1) this.embarcarEnBarajas();
+        else if (this.capituloDelLargo === 2) this.entrarEnLaNoche();
         else this.entrarEnLaLlegada();
       } else if (largo) this.entrarEnElVueloLargo(largo.desde);
     } else if (aterrizar) {
@@ -7178,9 +7200,11 @@ export class Game {
     // El vuelo corto, o el capítulo del vuelo largo: el mismo motor con otro guion.
     this.inicio =
       this.escenaDelInicio === "largo"
-        ? this.capituloDelLargo === 2
-          ? new MotorDelPasaje(this.vozDelInicio, GUION_NOCHE_SOBRE_EL_MAR, opciones)
-          : new MotorDelPasaje(this.vozDelInicio, GUION_LLEGADA_A_ASUNCION, opciones)
+        ? this.capituloDelLargo === 1
+          ? new MotorDelPasaje(this.vozDelInicio, GUION_NOCHE_DE_MADRID, opciones)
+          : this.capituloDelLargo === 2
+            ? new MotorDelPasaje(this.vozDelInicio, GUION_NOCHE_SOBRE_EL_MAR, opciones)
+            : new MotorDelPasaje(this.vozDelInicio, GUION_LLEGADA_A_ASUNCION, opciones)
         : new VueloDePasaje(this.vozDelInicio, opciones, largo ? guionDePruebaDelSalto(largo.hasta) : undefined);
     // Y su kit de viaje, que la tripulante trae en la bajada. Ver `flight/kit-de-viaje.ts`.
     this.pantallaDelKit?.quitar();
@@ -7288,6 +7312,12 @@ export class Game {
         this.decirElAnuncioDeLaEscena(linea, alAcabar);
         return;
       }
+      /*
+       * **Y el cartel del cinturón, con el anuncio que lo apaga**, aunque no sea de los de
+       * siempre: el del primer capítulo del viaje largo lo apaga subiendo, que el de crucero
+       * diría que ya se llegó a la altura. Como `comandante.crucero` en `decirElAnuncioDeLaEscena`.
+       */
+      if (linea.clave === "comandante.largo.cinturon") this.dijoSoltarse = true;
       /*
        * Ara, con su voz y a su lado; la tripulación, por el altavoz del techo;
        * y Jazlyn, al lado en las dos primeras escenas y por la megafonía, desde
@@ -7525,6 +7555,8 @@ export class Game {
        * lleva el aro suave. Ver `ponerLosArosDeLaVentanilla`.
        */
       tocable: this.tocableALaVista !== null,
+      // Y si la calle por la que se rueda lleva la fila verde del eje. Ver `porUnaCalleConLuces`.
+      ...(s.onGround && linea.porElSuelo > 1 ? { ejeVerde: this.porUnaCalleConLuces() } : {}),
     };
     const permisos = escena.paso(dt, lectura);
     /*
@@ -7553,6 +7585,15 @@ export class Game {
      */
     if (escena.estado.terminado) {
       this.acabarElInicio();
+      /*
+       * **Y el primer capítulo del viaje largo sigue en el segundo**, que es lo que dice
+       * el botón de su tarjeta: el recado en la pestaña, y la página en el vuelo largo.
+       * Ver `flight/capitulo-pedido.ts`.
+       */
+      if (this.escenaDelInicio === "largo" && this.capituloDelLargo === 1 && pedirElCapitulo(sesionDeLaPestana(), 2)) {
+        window.location.assign(`${window.location.pathname}?inicio=4`);
+        return;
+      }
       window.location.assign(window.location.pathname);
       return;
     }
@@ -7988,7 +8029,8 @@ export class Game {
             ? {
                 sello: selloDe(destino, t(destino.nameKey as TranslationKey)),
                 puedeSeguir: p.puedeSeguir || this.cuadernoForzadoParaBanco,
-                volver: true,
+                // Del primer capítulo del viaje largo no se vuelve: se sigue al segundo.
+                volver: !(this.escenaDelInicio === "largo" && this.capituloDelLargo === 1),
                 // Y la página del viaje, con lo visto por la ventanilla. Ver `apuntarElViaje`.
                 viaje: this.paginaDelViaje ?? paginaDelViaje(leerSellosDelViaje()),
               }
@@ -12794,6 +12836,16 @@ export class Game {
      * ventanilla, y de noche no se ve el Teide. Es el horario de ese vuelo,
      * como los que salen siempre a la misma hora. Ver `HORA_DEL_PASAJE`.
      */
+    /*
+     * **Y el primer capítulo del viaje largo, de noche**: la hora del sol en Barajas a
+     * la hora de embarcar de hoy. Antes de montar el mundo, que la luz del relieve sale
+     * de aquí; el cielo se pone al empezar. Ver `embarcarEnBarajas`.
+     */
+    if (this.dePasaje && this.escenaDelInicio === "largo" && this.capituloDelLargo === 1) {
+      const lon = this.scenario.aerodrome?.origin.lon;
+      const embarque = horarioDelDia(this.fechaDelVuelo()).salida.getTime() - SE_EMBARCA_ANTES * 1000;
+      if (lon !== undefined) return horaSolarEn(lon, new Date(embarque));
+    }
     if (this.dePasaje) return HORA_DEL_PASAJE;
     /*
      * **Y la tormenta, de tarde**: la tormenta de verano es la de la tarde,
@@ -14448,6 +14500,15 @@ export class Game {
    * el suelo la deja enterrada o flotando. La usan el cambio de viento —que
    * cambia la cabecera y con ella la ruta entera— y la llegada de la foto.
    */
+  /**
+   * **El puesto del que sale este vuelo, si es uno concreto**: el primer capítulo del
+   * viaje largo sale del T5 de la T1, que es de donde sale de verdad el vuelo de Asunción;
+   * el juego, solo, elegiría la T4S. Ver `SALIDA_DE_BARAJAS` y `PlanDeVuelo.puestoPedido`.
+   */
+  private get puestoDeEsteVuelo(): string | null {
+    return this.escenaDelInicio === "largo" && this.capituloDelLargo === 1 ? SALIDA_DE_BARAJAS.puesto : null;
+  }
+
   private rehacerPlanDeVuelo(): void {
     if (!this.plan || !this.scenario.aerodrome) return;
     /*
@@ -14475,6 +14536,8 @@ export class Game {
     this.plan.colaQueHay = () => this.paradosEnLasCalles(true, true);
     this.plan.tramosDeOtros = () => this.trafico?.tramosQueTienen() ?? [];
     this.plan.diaDeDespegue = () => this.diaDeDespegue();
+    // Y su puesto, si es el de casa: el plan se rehace al asentar el aeródromo, antes de colocar el avión.
+    if (aero === this.scenario.aerodrome) this.plan.puestoPedido = this.puestoDeEsteVuelo;
     // Y el dibujo con él, en todas las lecciones. Ver dónde se monta.
     this.scene.add(this.plan.grupo);
     this.colocarSenalero();
@@ -16405,10 +16468,52 @@ export class Game {
   }
 
   /**
+   * **El primer capítulo, en el puesto**: el avión ya está en el T5, donde lo puso el
+   * plan (`puestoPedido`), con los motores parados. Lo que se pone aquí es lo del vuelo
+   * de verdad: el reloj del vuelo a las 23:05 de Madrid, que es cuando se embarca —una
+   * hora antes del despegue del horario—, el cielo de esa noche, los depósitos llenos para
+   * Asunción y el camino de la salida publicada y la ortodrómica. El reloj corre a su paso
+   * desde ahí: lo que la tripulación tarde en llegar a la pista es lo que pasa, y la hora
+   * de llegada que anuncia la comandante es la del horario, como la de cualquier vuelo.
+   */
+  private embarcarEnBarajas(): void {
+    const perfil = perfilDelVuelo(horarioDelDia(this.fechaDelVuelo()));
+    const origen = this.scenario.aerodrome?.origin;
+    if (!origen) return;
+    this.vueloLargo = { perfil, reloj: new RelojDelVuelo(-(RODAJE_DE_SALIDA + SE_EMBARCA_ANTES), this.relojDelJuego) };
+    this.ponerElCieloDe(origen, new Date(perfil.horario.salida.getTime() - SE_EMBARCA_ANTES * 1000));
+    this.combustible = cargaDelVueloLargo(this.aircraft, perfil);
+    this.flight.ponerMasa?.(this.masaDeAhora());
+    const campo = this.laCasa;
+    const camino = caminoDeLaSalida(origen, finalDeLaPista(campo), campo.pista.length, perfil);
+    this.navegacion.poner(rutaDe(camino, PETTIROSSI_DE_LA_RUTA.elevacion), NIVELES_DE_CRUCERO[0], this.aircraft);
+  }
+
+  /**
    * **El capítulo del vuelo largo que se está volando.** Empieza en el que se abrió y
    * cambia al caer del salto de la noche en la llegada.
    */
-  private capituloDelLargo: 2 | 3 = 3;
+  private capituloDelLargo: 1 | 2 | 3 = 3;
+  /** Las luces verdes del eje de las calles del campo de casa, una vez. Ver `porUnaCalleConLuces`. */
+  private verdesDelEje: readonly (readonly [number, number])[] | null = null;
+
+  /**
+   * **Si se rueda por una calle con la fila verde del eje**, la del fichero del aeródromo:
+   * unas cuantas luces suyas debajo y alrededor del avión. Es lo que deja contarlas viendo
+   * el avión por fuera, rodando por encima de ellas. Por el cristal de Ara no se puede
+   * asegurar: mirado en el banco, las de al lado las tapan el ala y el motor, y las de lejos
+   * los edificios, que el juego no mira al decir si se ve algo.
+   */
+  private porUnaCalleConLuces(): boolean {
+    const aero = this.scenario.aerodrome;
+    if (!aero) return false;
+    this.verdesDelEje ??= dondeVanLasLuces(aero).flatMap(([p, color]) => (color === VERDE_DEL_EJE ? [p] : []));
+    const s = this.flight.state;
+    let cerca = 0;
+    for (const [x, y] of this.verdesDelEje)
+      if (Math.hypot(x - s.position.x, -y - s.position.z) < EJE_VERDE_A_MENOS_DE && ++cerca >= EJE_VERDE_LUCES) return true;
+    return false;
+  }
 
   /** **El parte de Asunción**, para cuando se caiga allí. Ver `ponerTiempoDeLaLlegada`. */
   private tiempoDeLaLlegada: Meteo | null = null;
@@ -25875,6 +25980,16 @@ export class Game {
         return enElSuelo(x, z, COTA_DE_LAS_LUCES_DE_TENERIFE);
       });
       return { puntos, ventanilla: LAS_LUCES_DE_TENERIFE_LLEGAN_A, fuera: 0 };
+    }
+    // Y Madrid, lo mismo: saliendo de Barajas, del lado de Ara. Ver `LUCES_DE_MADRID`.
+    if (sitio === "luces-de-madrid") {
+      const origen = this.scenario.aerodrome?.origin;
+      if (!origen) return null;
+      const puntos = LUCES_DE_MADRID.map((u) => {
+        const { x, z } = dondeCae(origen, u);
+        return enElSuelo(x, z, COTA_DE_LAS_LUCES_DE_MADRID);
+      });
+      return { puntos, ventanilla: LAS_LUCES_DE_MADRID_LLEGAN_A, fuera: 0 };
     }
     const llegada = this.vecinos.find((v) => v.base.id === DESTINO_DEL_PASAJE);
     if (!llegada) return null;

@@ -20,10 +20,12 @@ const ANCHO = 78;
 const ALTO = 38;
 
 const s = await createServer({ root: process.cwd(), server: { middlewareMode: true } });
-const { SCENARIOS } = await s.ssrLoadModule('/src/world/scenarios.ts');
+const { SCENARIOS, conSuAerodromo } = await s.ssrLoadModule('/src/world/scenarios.ts');
 const { createAerodrome, arranqueEnPista } = await s.ssrLoadModule('/src/world/aerodrome.ts');
 
-const esc = SCENARIOS.find((e) => e.id === id);
+// Con el aeródromo de los que lo traen aparte, como Barajas: ver `aerodromoAparte`.
+const hallado = SCENARIOS.find((e) => e.id === id);
+const esc = hallado && (await conSuAerodromo(hallado));
 if (!esc?.aerodrome) {
   console.error(`El escenario "${id}" no tiene aeródromo extraído.`);
   process.exit(1);

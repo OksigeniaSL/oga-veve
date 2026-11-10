@@ -10,13 +10,25 @@
 import { describe, expect, it } from "vitest";
 import { aLaPolilinea, type Punto } from "./aerodrome";
 import { PlanDeVuelo } from "./plan-de-vuelo";
-import { MADRID_BARAJAS, SALIDA_DE_BARAJAS } from "./scenarios";
+import { conSuAerodromo, MADRID_BARAJAS as SIN_AERODROMO, SALIDA_DE_BARAJAS } from "./scenarios";
 import { AIRCRAFT } from "../flight/aircraft";
 
+// El aeródromo se baja al abrir el capítulo: ver `aerodromoAparte`.
+const MADRID_BARAJAS = await conSuAerodromo(SIN_AERODROMO);
 const aero = MADRID_BARAJAS.aerodrome!;
 const avion = AIRCRAFT.find((a) => a.id === "jaz-110")!;
 
 describe("la salida de Barajas del vuelo de Asunción", () => {
+  it("el aeródromo no va en el juego: se baja al abrirlo, y la pista escrita es la del fichero", () => {
+    expect(SIN_AERODROMO.aerodrome).toBeUndefined();
+    const escrita = SIN_AERODROMO.runway;
+    const delFichero = MADRID_BARAJAS.runway;
+    expect(escrita.x).toBeCloseTo(delFichero.x, 1);
+    expect(escrita.z).toBeCloseTo(delFichero.z, 1);
+    expect(escrita.heading).toBeCloseTo(delFichero.heading, 2);
+    expect({ ...escrita, x: 0, z: 0, heading: 0 }).toEqual({ ...delFichero, x: 0, z: 0, heading: 0 });
+  });
+
   it("el puesto está en el fichero, frente al dique de la T1", () => {
     const puesto = (aero.parkingPositions ?? []).find((p) => p.ref === SALIDA_DE_BARAJAS.puesto);
     expect(puesto).toBeDefined();
@@ -51,5 +63,19 @@ describe("la salida de Barajas del vuelo de Asunción", () => {
     // Y la doble raya, junto a la cabecera 36L: al lado de la pista y cerca de su punta sur.
     const umbral = aero.runways[0]!.thresholds["36L"]!.xy!;
     expect(Math.hypot(fin[0] - umbral[0], fin[1] - umbral[1])).toBeLessThan(250);
+  });
+
+  it("y con el puesto pedido, el vuelo sale de él sin elegir entre todos", () => {
+    const plan = new PlanDeVuelo(aero, MADRID_BARAJAS.runway, () => 600, avion);
+    plan.puestoPedido = SALIDA_DE_BARAJAS.puesto;
+    expect(plan.reiniciar()).toBe(true);
+    const puesto = (aero.parkingPositions ?? []).find((p) => p.ref === SALIDA_DE_BARAJAS.puesto)!;
+    const [x, z] = plan.arranque()!;
+    expect(Math.hypot(x - puesto.xy[0], z + puesto.xy[1])).toBeLessThan(1);
+    const ruta = plan.rutaCruda() as readonly Punto[];
+    const fin = ruta[ruta.length - 1]!;
+    expect(Math.hypot(fin[0] - SALIDA_DE_BARAJAS.espera[0], fin[1] - SALIDA_DE_BARAJAS.espera[1])).toBeLessThan(1);
+    // Sin haber mirado los demás: lo que se miró para elegir se queda vacío.
+    expect(plan.paresVistos.length).toBe(0);
   });
 });

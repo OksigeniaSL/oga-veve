@@ -45,7 +45,7 @@
  */
 
 import { mkdirSync, writeFileSync } from "node:fs";
-import { SCENARIOS } from "../src/world/scenarios.ts";
+import { conSuAerodromo, SCENARIOS } from "../src/world/scenarios.ts";
 
 /** El servicio de coberturas del IDEE. Sin clave y sin registro. */
 const WCS = "https://servicios.idee.es/wcs-inspire/mdt";
@@ -175,7 +175,9 @@ if (!ids.length) {
 mkdirSync(SALIDA, { recursive: true });
 
 for (const id of ids) {
-  const esc = SCENARIOS.find((s) => s.id === id);
+  // Con el aeródromo de los que lo traen aparte, como Barajas: ver `aerodromoAparte`.
+  const hallado = SCENARIOS.find((s) => s.id === id);
+  const esc = hallado && (await conSuAerodromo(hallado));
   if (!esc?.aerodrome) {
     console.error(`«${id}» no existe o no tiene aeródromo real.`);
     process.exit(1);

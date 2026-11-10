@@ -73,6 +73,23 @@
  * `OGA_SOLO_NOCHE=1` para al caer del salto, y `OGA_METAR=` da un parte a mano, que con el
  * alisio de siempre lleva una capa de nubes por debajo del avión: para las capturas.
  *
+ * ## Con `OGA_CAPITULO=1`, la noche de Madrid
+ *
+ * `?inicio=4&capitulo=1`: ver `src/flight/guion-noche-de-madrid.ts`. Del embarque a la luz del
+ * cinturón apagada, a su paso y con el ⏩ de quien juega; `OGA_PRISA` acelera el reloj de los
+ * bancos desde que se abre la ventanilla. Con la fecha fija, como los otros, y con el viento
+ * flojo del suroeste, `240/6`, salvo que `OGA_VIENTO` diga otro.
+ *
+ * - **Arranca tapado con la lámina del embarque**, con su fichero, y se abre la ventanilla.
+ * - **En el puesto T5, de noche**: el JAZ 110 con los motores parados, a la hora de embarcar
+ *   del horario de ese día y con el sol bien por debajo del horizonte.
+ * - **Rueda hasta la Z4 sin pisar pista**, para en la doble raya y despega por la 36L.
+ * - **Sigue la salida**: recto al norte hasta SSY y a la izquierda, al oeste.
+ * - **Al decir las salidas Ara se asoma al pasillo** y se ve el letrero de la más cercana.
+ * - **Madrid, a la izquierda**, si Ara la nombra; y el capítulo llega a su final con la luz del
+ *   cinturón apagada y la tarjeta de seguir.
+ * - **Nunca dos voces a la vez**, y sin errores de consola.
+ *
  * `OGA_RED=1` mira la red: con los ficheros de Pettirossi que no contestan, al acabar la noche
  * se suelta y se abre el tercer capítulo por su camino de siempre. `OGA_RED=noche`, con la lámina
  * del medio despertar que no contesta: la noche sigue igual, sin nadie atrapado en ella.
@@ -821,6 +838,229 @@ async function laNoche(page) {
   await foto(page, "noche-8-tras-el-salto");
 }
 
+/** El T5 de la T1 y la doble raya de la Z4, en el mundo: x al este, z al sur. Ver `SALIDA_DE_BARAJAS`. */
+const EL_T5 = { x: 293.6, z: 3407.2 };
+const LA_Z4 = { x: -320, z: 95.1 };
+/** Las tiras de luz del suelo del pasillo que se tienen que ver, como poco, con Ara asomada. */
+const UNAS_CUANTAS_TIRAS = 4;
+/** El centro de Madrid: ver `LUCES_DE_MADRID`. */
+const MADRID = { lat: 40.4169, lon: -3.7035 };
+/** Grados, de rumbo en radianes del juego. */
+const grados = (r) => ((((r * 180) / Math.PI) % 360) + 360) % 360;
+
+/**
+ * **El primer capítulo, del embarque a la luz del cinturón apagada.** Ver la cabecera.
+ */
+async function laNocheDeMadrid() {
+  const ctx = await navegador.newContext({ viewport: { width: 1280, height: 720 }, locale: "es-PY" });
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
+  page.on("console", (m) => {
+    if (m.type() === "error") errores.push(m.text().slice(0, 200));
+  });
+  const pared0 = Date.now();
+  try {
+    await page.goto(`${BASE}/?inicio=4&capitulo=1&fecha=${FECHA}&viento=${process.env.OGA_VIENTO ?? "240/6"}`);
+    await page.bringToFront();
+    await page.waitForFunction(() => globalThis.__oga?.salto?.().hora != null, null, { timeout: 240_000 });
+    await page.keyboard.press("ShiftLeft");
+    await page.evaluate(() => globalThis.__ogaEmpezar?.());
+    await pausa(1200);
+    const uno = await leer(page);
+    const avion = await page.evaluate(() => globalThis.__oga.avion().id);
+    comprobar(
+      "arranca tapado, con la lámina del embarque",
+      uno.sobreElMundo.visible && uno.sobreElMundo.opacidad === 1 && (uno.tapa === "embarque" || uno.tapa === "a-oscuras"),
+      `lámina ${uno.tapa} · opacidad ${uno.sobreElMundo.opacidad}`,
+    );
+    comprobar(
+      "con el JAZ 110, de pasajero, en Barajas, en tierra y con los motores parados",
+      avion === "jaz-110" && uno.escena === "largo" && uno.salto.mundo === "barajas" && uno.enTierra && !uno.motor && uno.vista === "pasaje-izquierda",
+      `${avion} · ${uno.escena} · ${uno.salto.mundo} · en tierra ${uno.enTierra} · motor ${uno.motor} · vista ${uno.vista}`,
+    );
+    const enElT5 = Math.hypot(uno.x - EL_T5.x, uno.z - EL_T5.z);
+    comprobar("en el puesto T5 de la T1", enElT5 < 30, `a ${enElT5.toFixed(1)} m del T5 · x ${uno.x.toFixed(0)} z ${uno.z.toFixed(0)}`);
+    const embarque = -(ruta.RODAJE_DE_SALIDA + 40 * 60);
+    comprobar(
+      "a la hora de embarcar de ese día, y de noche",
+      Math.abs(uno.salto.hora - embarque) < 60 && uno.salto.alturaDelSol < -12,
+      `${(uno.salto.hora / 60).toFixed(1)} min del despegue (cuenta: ${embarque / 60}) · el sol a ${uno.salto.alturaDelSol.toFixed(1)}° · ${perfil.horario.temporada}`,
+    );
+    console.log(`  el plan: ${uno.plan?.fijos?.filter((f) => f.nombre).map((f) => `${f.nombre}(${f.papel})`).join(" → ") ?? "?"}`);
+
+    const fotos = new Set();
+    const tramos = [];
+    const pasillo = { muestras: 0, buenas: 0, peor: null, tiras: [] };
+    let pisaPista = 0;
+    let enLaEspera = null;
+    let alDespegar = null;
+    let alNorteDeSSY = null;
+    let giroALaIzquierda = null;
+    let madridDicha = null;
+    let laminaDelEmbarque = null;
+    let prisa = false;
+    let pulsado = false;
+    const rumbosAntesDeSSY = [];
+    let l = uno;
+    let trazaEn = 0;
+    for (;;) {
+      l = await leer(page);
+      const tramo = l.tripulacion?.tramo ?? "?";
+      if (tramos.at(-1) !== tramo) tramos.push(tramo);
+      if (!laminaDelEmbarque && l.lamina?.vista === "embarque" && l.lamina.tapa) {
+        laminaDelEmbarque = l.lamina;
+        await pausa(900);
+        await foto(page, "c1-lamina-embarque");
+      }
+      if (l.dichos.includes("ventanilla") && !fotos.has("puesto") && l.tapa === null && !l.sobreElMundo.visible) {
+        fotos.add("puesto");
+        await pausa(600);
+        await foto(page, "c1-puesto");
+      }
+      // Desde que se abre la ventanilla: el ⏩, con el dedo, y la prisa del banco si se pide.
+      if (l.dichos.includes("ventanilla") && process.env.OGA_PRISA && !prisa) {
+        prisa = true;
+        await page.evaluate((v) => globalThis.__oga.acelerar(v), Number(process.env.OGA_PRISA));
+      }
+      if (l.adelanto?.sale && !l.adelanto.puesto && !pulsado) {
+        pulsado = true;
+        await page.locator('[data-hud="adelantar"]').click({ timeout: 5000 }).catch(() => page.evaluate(() => document.querySelector('[data-hud="adelantar"]')?.click()));
+      }
+      if ((tramo === "rodando" || tramo === "esperando") && l.enPista) pisaPista++;
+      if (tramo === "rodando" && l.suelo > 3 && !fotos.has("rodando") && l.plano !== "pasillo") {
+        fotos.add("rodando");
+        await foto(page, `c1-rodando-${l.plano}`);
+      }
+      if (l.dichos.includes("lucesDeLasCalles") && !fotos.has("luces")) {
+        fotos.add("luces");
+        // Pasado el corte de plano, que la foto sea de lo que se mira al decirlo.
+        await pausa(1500);
+        await foto(page, `c1-luces-${l.plano}`);
+      }
+      if (tramo === "esperando" && !enLaEspera) enLaEspera = { x: l.x, z: l.z };
+      if (l.plano === "pasillo") {
+        const visto = await page.evaluate(() => ({ plano: globalThis.__oga.inicio().planoVisto, velo: Number(globalThis.__oga.inicio().velo) || 0 }));
+        if (visto.plano === "pasillo" && visto.velo < 0.02) {
+          const p = await page.evaluate(() => globalThis.__oga.pasillo?.() ?? null).catch(() => null);
+          pasillo.muestras++;
+          /*
+           * Las tiras del suelo, unas cuantas: el pasillo de este avión mide más de cincuenta
+           * metros, y desde el asiento de Ara se ve su trozo de delante, no el treinta por
+           * ciento que se le pide al del vuelo corto.
+           */
+          const bien = !!p?.letrero && p.letrero.entero && !p.letrero.tapado && p.colgado && !p.marco && p.tiras.vistas >= Math.min(UNAS_CUANTAS_TIRAS, p.tiras.de);
+          if (p) pasillo.tiras.push(`${p.tiras.vistas}/${p.tiras.de}`);
+          if (bien) pasillo.buenas++;
+          else pasillo.peor ??= p && { ...p, letrero: p.letrero && { entero: p.letrero.entero, tapado: p.letrero.tapado } };
+          if (!fotos.has("pasillo-primero")) {
+            fotos.add("pasillo-primero");
+            await foto(page, "c1-pasillo");
+          }
+          if (bien && !fotos.has("pasillo")) {
+            fotos.add("pasillo");
+            await foto(page, "c1-pasillo-exit");
+          }
+        }
+      }
+      if (tramo === "carrera" && !fotos.has("despegue") && l.suelo > 40) {
+        fotos.add("despegue");
+        await foto(page, `c1-despegue-${l.plano}`);
+      }
+      if (!l.enTierra && !alDespegar) alDespegar = { x: l.x, z: l.z, rumbo: grados(l.rumbo) };
+      if (!l.enTierra && l.z > -5500) rumbosAntesDeSSY.push(grados(l.rumbo));
+      if (!l.enTierra && l.z < -6500 && !alNorteDeSSY) alNorteDeSSY = { x: l.x, z: l.z };
+      if (alNorteDeSSY && !giroALaIzquierda) {
+        const r = grados(l.rumbo);
+        if (r > 270 && r < 330) giroALaIzquierda = { rumbo: r, x: l.x, z: l.z, y: l.y };
+      }
+      if (l.dichos.includes("madrid") && !madridDicha) {
+        madridDicha = { ...respectoAlAvion(l, MADRID), rumbo: grados(l.rumbo), y: l.y };
+        await foto(page, "c1-madrid");
+      }
+      if (giroALaIzquierda && !fotos.has("giro") && l.y > giroALaIzquierda.y + 300) {
+        fotos.add("giro");
+        await foto(page, `c1-subiendo-${l.plano}`);
+      }
+      if (Date.now() - trazaEn > 15_000) {
+        trazaEn = Date.now();
+        console.log(
+          `  · ${((Date.now() - pared0) / 1000).toFixed(0).padStart(4)} s · ${tramo} · ${l.fase} · x ${(l.x / 1000).toFixed(2)} z ${(l.z / 1000).toFixed(2)} km · FL${(l.y / 30.48).toFixed(0)} · ${(l.velocidad / 0.5144).toFixed(0)} kt · rumbo ${grados(l.rumbo).toFixed(0)} · ${l.momento} · plano ${l.plano} · ⏩ ${l.adelanto?.adelantando ? "corre" : "—"} · ${l.linea ?? ""}`,
+        );
+      }
+      if (l.terminado || (l.momento === "fin" && l.puedeSeguir) || l.percance || Date.now() - pared0 > TOPE) break;
+      await pausa(250);
+    }
+    const paredes = (Date.now() - pared0) / 60_000;
+    await foto(page, "c1-final");
+    comprobar(
+      "la lámina del embarque se ve, con su fichero",
+      (l.lamina?.vistas ?? []).includes("embarque") && (l.lamina?.sinFichero ?? []).length === 0,
+      `vistas ${(l.lamina?.vistas ?? []).join(" → ")} · sin fichero ${(l.lamina?.sinFichero ?? []).join(", ") || "ninguna"}`,
+    );
+    comprobar("rueda sin pisar ninguna pista", pisaPista === 0 && tramos.includes("rodando"), `${pisaPista} lecturas en una pista · tramos ${tramos.join(" → ")}`);
+    const aLaZ4 = enLaEspera ? Math.hypot(enLaEspera.x - LA_Z4.x, enLaEspera.z - LA_Z4.z) : Infinity;
+    comprobar("y para en la doble raya de la Z4", aLaZ4 < 60, enLaEspera ? `a ${aLaZ4.toFixed(0)} m de la Z4` : "no llegó a esperar");
+    comprobar(
+      "despega por la 36L, hacia el norte",
+      !!alDespegar && Math.abs(alDespegar.x + 210) < 60 && Math.min(alDespegar.rumbo, 360 - alDespegar.rumbo) < 6,
+      alDespegar ? `x ${alDespegar.x.toFixed(0)} z ${alDespegar.z.toFixed(0)} · rumbo ${alDespegar.rumbo.toFixed(0)}` : "no despegó",
+    );
+    const torcido = rumbosAntesDeSSY.filter((r) => Math.min(r, 360 - r) > 10).length;
+    comprobar(
+      "sigue la salida: recto al norte hasta SSY, y a la izquierda, al oeste",
+      rumbosAntesDeSSY.length > 0 && torcido === 0 && !!giroALaIzquierda,
+      `${torcido} de ${rumbosAntesDeSSY.length} lecturas torcidas antes de SSY · ${giroALaIzquierda ? `a rumbo ${giroALaIzquierda.rumbo.toFixed(0)} en x ${(giroALaIzquierda.x / 1000).toFixed(1)} z ${(giroALaIzquierda.z / 1000).toFixed(1)} km` : "sin giro a la izquierda"}`,
+    );
+    comprobar(
+      "al decir las salidas Ara se asoma al pasillo y se ve el letrero de la más cercana",
+      pasillo.muestras > 0 && pasillo.buenas >= Math.max(1, 0.8 * pasillo.muestras),
+      `${pasillo.buenas} de ${pasillo.muestras} muestras buenas · tiras vistas ${[...new Set(pasillo.tiras)].slice(0, 6).join(", ")}${pasillo.peor ? ` · la peor: ${JSON.stringify(pasillo.peor).slice(0, 300)}` : ""}`,
+    );
+    comprobar(
+      "Madrid, si Ara la nombra, a su izquierda",
+      !madridDicha || madridDicha.lado < 0,
+      madridDicha ? `a ${(madridDicha.distancia / 1000).toFixed(1)} km, ${madridDicha.lado < 0 ? "a la izquierda" : "a la derecha"} · rumbo ${madridDicha.rumbo.toFixed(0)} · FL${(madridDicha.y / 30.48).toFixed(0)}` : "hoy no se nombró",
+    );
+    comprobar(
+      "llega a su final con la luz del cinturón apagada, y con la tarjeta de seguir",
+      l.momento === "fin" && l.dichos.includes("arriba") && l.cartel === false && l.dings >= 1,
+      `${l.momento} · cartel ${l.cartel ? "encendido" : "apagado"} · dings ${l.dings} · FL${(l.y / 30.48).toFixed(0)} · dichos ${l.dichos.join(", ")} · saltados ${l.saltados.join(", ") || "ninguno"}`,
+    );
+    const registro = l.registro;
+    let pisadas = 0;
+    for (let k = 1; k < registro.length; k++) if (registro[k].desde < (registro[k - 1].hasta ?? Infinity) - 1e-6) pisadas++;
+    comprobar(
+      "nunca suenan dos voces a la vez",
+      registro.length >= 15 && pisadas === 0 && registro.every((d) => !d.cortada),
+      `${registro.length} frases · ${pisadas} pisadas · ${registro.filter((d) => d.cortada).length} cortadas · ${registro.filter((d) => d.como === "sono").length} sonadas`,
+    );
+    console.log(`  lo dicho: ${registro.map((d) => `${d.clave}(${d.como})`).join(" · ")}`);
+    console.log(`  ${paredes.toFixed(1)} min de pared${process.env.OGA_PRISA ? `, con el reloj ×${process.env.OGA_PRISA}` : ""}`);
+    comprobar("sin errores de consola", errores.length === 0, errores.slice(0, 4).join(" · "));
+    // ── Y el botón de la tarjeta, que lleva al segundo capítulo ──────────
+    if (l.momento === "fin" && l.puedeSeguir) {
+      const boton = page.locator("[data-inicio='seguir']");
+      const texto = (await boton.textContent().catch(() => "")) ?? "";
+      await boton.click({ timeout: 5000 }).catch(() => page.evaluate(() => document.querySelector("[data-inicio='seguir']")?.click()));
+      const llega = await page
+        .waitForFunction(() => globalThis.__oga?.salto?.().mundo === "tenerife-norte" && globalThis.__oga.salto().hora != null, null, { timeout: 240_000 })
+        .then(() => true)
+        .catch(() => false);
+      const alli = llega ? await leer(page) : null;
+      comprobar(
+        "y su botón, «seguir volando», lleva al segundo capítulo: la noche sobre el mar, tapada con su lámina",
+        /seguir/i.test(texto) && llega && !!alli && alli.sobreElMundo.visible && (alli.tapa === "cena" || alli.tapa === "a-oscuras"),
+        `«${texto.trim()}» · ${page.url().replace(BASE, "")} · ${alli ? `${alli.salto.mundo} · lámina ${alli.tapa}` : "no llegó"}`,
+      );
+    }
+  } catch (e) {
+    comprobar("el capítulo", false, `${String(e).slice(0, 300)} · ${errores.slice(0, 2).join(" · ")}`);
+  } finally {
+    await ctx.close();
+  }
+}
+
 /** **Si hoy se contó El Hierro**: con un juego delante no se cuenta, y no hay marca que mirar. */
 const dejaContarElHierro = (l) => l.dichos.includes("hierro");
 
@@ -1362,6 +1602,7 @@ try {
   }
   else if (process.env.OGA_RED === "noche") await laRedDelMedioDespertar();
   else if (process.env.OGA_RED) await laRedDeLaNoche();
+  else if (CAPITULO === "1") await laNocheDeMadrid();
   else await elCapitulo();
 } finally {
   await navegador.close();

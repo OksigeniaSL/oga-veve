@@ -10,7 +10,7 @@
 // HUD ya está maquetado antes de que el navegador termine de leer el módulo,
 // en vez de aparecer sin estilo durante un instante.
 import { Game } from "./game";
-import { DEL_HANGAR, destinosDe, SCENARIOS, type Scenario } from "./world/scenarios";
+import { conSuAerodromo, DEL_HANGAR, destinosDe, SCENARIOS, type Scenario } from "./world/scenarios";
 import {
   leccionPorId,
   leccionRecordada,
@@ -105,6 +105,8 @@ import {
 } from "./flight/inicio-pasaje";
 import { AVION_DEL_LARGO, MUNDO_DE_LA_LLEGADA } from "./flight/guion-llegada-a-asuncion";
 import { ISLAS_DE_LA_NOCHE, MUNDO_DE_LA_NOCHE } from "./flight/guion-noche-sobre-el-mar";
+import { MUNDO_DE_MADRID, tiempoDeLaNocheDeMadrid } from "./flight/guion-noche-de-madrid";
+import { leerElCapituloPedido } from "./flight/capitulo-pedido";
 import {
   AVION_DEL_INICIO,
   escenaPedida,
@@ -214,15 +216,22 @@ const pedido = rearranque?.escenario ?? params.get("escenario");
  * Los Rodeos y el capítulo que hay del vuelo largo, sobre el Paraguay.
  */
 function sitioDeLaEscena(e: EscenaDelInicio): string {
-  return e === "largo" ? (conLaNoche ? MUNDO_DE_LA_NOCHE : MUNDO_DE_LA_LLEGADA) : e === "pasaje" ? SITIO_DEL_PASAJE : SITIO_DEL_INICIO;
+  if (e === "largo")
+    return capituloDelLargo === 1 ? MUNDO_DE_MADRID : capituloDelLargo === 2 ? MUNDO_DE_LA_NOCHE : MUNDO_DE_LA_LLEGADA;
+  return e === "pasaje" ? SITIO_DEL_PASAJE : SITIO_DEL_INICIO;
 }
 /**
- * **La noche sobre el mar**: la abre su ficha del menú, en el hangar, más abajo. Con la
- * dirección, `?capitulo=2`, solo en desarrollo: fuera de él un enlace con `?inicio=4` es
- * siempre el tercero, que es también adonde recarga la red de la noche. Ver
- * `flight/guion-noche-sobre-el-mar.ts`.
+ * **El capítulo del vuelo largo**: el tercero si no se dice otro. La noche sobre el mar
+ * la abre su ficha del menú, en el hangar, más abajo; el primero, de momento, solo la
+ * dirección. Con la dirección, `?capitulo=1` o `?capitulo=2`, solo en desarrollo: fuera
+ * de él un enlace con `?inicio=4` es siempre el tercero, que es también adonde recarga
+ * la red de la noche. Y el recado de la pestaña, que deja la tarjeta del final del
+ * primero para seguir en el segundo: ver `flight/capitulo-pedido.ts`.
  */
-let conLaNoche = import.meta.env.DEV && params.get("capitulo") === "2";
+const capituloDeLaDireccion = import.meta.env.DEV ? params.get("capitulo") : null;
+const capituloPedido = leerElCapituloPedido(sesionDeLaPestana());
+let capituloDelLargo: 1 | 2 | 3 =
+  capituloPedido ?? (capituloDeLaDireccion === "1" ? 1 : capituloDeLaDireccion === "2" ? 2 : 3);
 let conInicio = params.has("inicio") && !rearranque;
 const conVueloLargo = params.has("largo");
 let escenaDelInicio: EscenaDelInicio = escenaPedida(params.get("inicio"));
@@ -417,7 +426,7 @@ if (!escenario) {
     conInicio = true;
     escenaDelInicio = elegido.inicio;
     // Antes de buscar el sitio, que es de lo que depende.
-    conLaNoche = elegido.capitulo === 2;
+    capituloDelLargo = elegido.capitulo ?? 3;
     escenario = SCENARIOS.find((s) => s.id === sitioDeLaEscena(escenaDelInicio)) ?? escenario;
   } else {
     rememberTier(tramo);
@@ -478,6 +487,13 @@ if (conInicio) {
  * otra isla.
  */
 if (ejercicio && escenario) destino = escenario.id;
+
+/*
+ * **Y el aeródromo, si este mundo lo trae aparte**: Barajas no va en el juego que se
+ * baja al entrar, y se pide aquí, al abrir su capítulo, antes de nada que lo mire. Ver
+ * `Scenario.aerodromoAparte`. A los demás no les hace nada.
+ */
+escenario = await conMiga("aeródromo", conSuAerodromo(escenario));
 
 /*
  * **Y que el avión quepa en el campo, se haya pasado por el hangar o no.**
@@ -559,7 +575,7 @@ const todosLosDestinos = aDondeSeVa
   .filter((e): e is Scenario => e !== undefined);
 const alcanzables = destinosParaEsteAvion(avion, todosLosDestinos);
 // Y en la noche del vuelo largo, nada de eso se ofrece ni se dice: es lo que se ve. Ver `ISLAS_DE_LA_NOCHE`.
-const noCabenHoy = conLaNoche && escenaDelInicio === "largo" ? [] : todosLosDestinos.filter((e) => !alcanzables.includes(e));
+const noCabenHoy = capituloDelLargo === 2 && escenaDelInicio === "largo" ? [] : todosLosDestinos.filter((e) => !alcanzables.includes(e));
 /*
  * **Y de los que valen, los que caben a la vez.** Hasta cuatro se montan
  * todos, como siempre; desde Asunción, que tiene seis rutas, se monta el
@@ -567,7 +583,7 @@ const noCabenHoy = conLaNoche && escenaDelInicio === "largo" ? [] : todosLosDest
  * treinta y seis megas en la tarjeta: ver `vecinosQueSeMontan` y el ADR 0010.
  */
 const destinosDeHoy =
-  conLaNoche && escenaDelInicio === "largo"
+  capituloDelLargo === 2 && escenaDelInicio === "largo"
     ? SCENARIOS.filter((e) => (ISLAS_DE_LA_NOCHE as readonly string[]).includes(e.id))
     : vecinosQueSeMontan(escenario, alcanzables, destino);
 for (const fuera of noCabenHoy)
@@ -613,7 +629,13 @@ const [conMapa, ciudad, meteo, ortofoto, ortofotoFina, vecinos] =
          */
         conInicio && escenaDelInicio !== "largo"
         ? Promise.resolve({ ...TIEMPO_DE_CASA, vientoDe: null, vientoKt: 0, fuente: "mano" as const })
-        : tiempoPedido(escenario),
+        : /*
+           * Y el primero, con el de Barajas si deja la configuración norte, que es la única
+           * que el juego sabe volar: ver `tiempoDeLaNocheDeMadrid`.
+           */
+          conInicio && capituloDelLargo === 1
+          ? ((madrid) => tiempoPedido(madrid).then((parte) => tiempoDeLaNocheDeMadrid(parte, madrid.runway, madrid.vientoDominante)))(escenario)
+          : tiempoPedido(escenario),
   ),
   /*
    * La ortofoto, si el escenario la tiene y se juega el mundo de la foto.
@@ -720,7 +742,7 @@ const game = new Game({
    */
   ...(params.get("curvatura") === "0" ? { curvatura: false } : {}),
   ...(conInicio ? { inicio: escenaDelInicio, tramo: GUYRAMI } : {}),
-  ...(conInicio && escenaDelInicio === "largo" && conLaNoche ? { capitulo: 2 as const } : {}),
+  ...(conInicio && escenaDelInicio === "largo" && capituloDelLargo !== 3 ? { capitulo: capituloDelLargo } : {}),
 });
 miga("juego creado");
 /*
@@ -728,7 +750,7 @@ miga("juego creado");
  * de Canarias, pero el salto cae en la llegada, con su viento decidiendo por qué cabecera
  * se entra y su tiempo en el anuncio de la comandante. Con el tiempo a mano, el pedido.
  */
-if (conInicio && escenaDelInicio === "largo" && conLaNoche) {
+if (conInicio && escenaDelInicio === "largo" && capituloDelLargo === 2) {
   const llegada = SCENARIOS.find((s) => s.id === MUNDO_DE_LA_LLEGADA);
   if (llegada) void tiempoPedido(llegada).then((suyo) => game.ponerTiempoDeLaLlegada(suyo));
 }

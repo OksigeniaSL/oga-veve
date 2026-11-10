@@ -21,13 +21,17 @@ import {
 import { enElPavimento } from "./aerodrome";
 import {
   CHACO,
-  SCENARIOS,
+  conSuAerodromo,
+  SCENARIOS as SIN_COMPLETAR,
   VALLE_CORDILLERA,
   vecesLejosDe,
   type Scenario,
 } from "./scenarios";
 import { uniformesDeOrillas } from "./sky";
 import { esAguaDeCasa } from "./agua-de-casa";
+
+/** Con el aeródromo de los que lo traen aparte, como los monta `main.ts`: ver `aerodromoAparte`. */
+const SCENARIOS = await Promise.all(SIN_COMPLETAR.map(conSuAerodromo));
 
 describe("terreno del Valle de la Cordillera", () => {
   const terrain = new Terrain(VALLE_CORDILLERA);

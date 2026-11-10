@@ -31,7 +31,6 @@ import GCLP from "../../data/aerodromes/gclp.aero.json";
 import GCRR from "../../data/aerodromes/gcrr.aero.json";
 import GCFV from "../../data/aerodromes/gcfv.aero.json";
 import LECU from "../../data/aerodromes/lecu.aero.json";
-import LEMD from "../../data/aerodromes/lemd.aero.json";
 import SGES from "../../data/aerodromes/sges.aero.json";
 import SGME from "../../data/aerodromes/sgme.aero.json";
 import SGPJ from "../../data/aerodromes/sgpj.aero.json";
@@ -370,6 +369,36 @@ export interface Scenario {
    * sola. Ver `MADRID_BARAJAS`.
    */
   sinCambioDeCabecera?: boolean;
+  /**
+   * **El aeródromo, bajado al abrir el mundo** y no con el juego. Barajas son
+   * novecientos cuarenta kilobytes de OpenStreetMap —noventa comprimidos— que
+   * solo usa el primer capítulo del viaje largo, y con un `import` de los de
+   * arriba los bajaba todo el mundo en la primera visita, vuele o no a Madrid.
+   * Así el escenario está en la lista sin `aerodrome`, y con la pista de la
+   * cabecera escrita a mano para que nada se rompa si alguien lo mira antes de
+   * tiempo; quien lo abre lo completa con `conSuAerodromo`, y una prueba mira
+   * que esa pista sea la misma que sale del fichero.
+   */
+  aerodromoAparte?: {
+    readonly cargar: () => Promise<{ readonly default: unknown }>;
+    /** La cabecera por la que se opera, la que se le pasaría a `pistaDe`. */
+    readonly despegaPor: string;
+  };
+}
+
+/**
+ * **El escenario entero**, con su aeródromo, si lo trae aparte. Ver
+ * `Scenario.aerodromoAparte`: lo llama quien va a montar el mundo, antes del
+ * relieve, y a los demás escenarios no les hace nada.
+ */
+export async function conSuAerodromo(e: Scenario): Promise<Scenario> {
+  if (e.aerodrome || !e.aerodromoAparte) return e;
+  const aero = (await e.aerodromoAparte.cargar()).default as Aerodrome;
+  return {
+    ...e,
+    runway: pistaDe(aero, e.aerodromoAparte.despegaPor),
+    aerodrome: conPlataformasCosidas(aero),
+  };
 }
 
 /** Un lado publicado, para todos o separando las avionetas del resto. */
@@ -1876,7 +1905,23 @@ export const MADRID_BARAJAS: Scenario = {
   fill: 0x6f7350,
   sky: { horizon: 0xe8ecec, zenith: 0x4d8ecb },
   fog: { colour: 0xdfe3dc, density: 0.00003 },
-  runway: pistaDe(LEMD as unknown as Aerodrome, "36L"),
+  /*
+   * La 36L, como la da `pistaDe` con el fichero de OpenStreetMap: está escrita
+   * porque el fichero se baja al abrir el capítulo y no antes. Ver
+   * `aerodromoAparte`; la prueba de `salida-de-barajas.test.ts` mira que sean
+   * la misma.
+   */
+  runway: {
+    x: -209.9,
+    z: -2000.6,
+    heading: 359.748,
+    length: 4183,
+    width: 60,
+    desplazado: 0,
+    desplazadoEnfrente: 814,
+    acabaEnElOtroUmbral: false,
+    acabaEnElOtroUmbralEnfrente: false,
+  },
   /*
    * **Ocho décimas al este, y con el signo cambiado.** El AIP da 0° en 2020 con
    * 8,1' al este por año (AD 2-LEMD, 2.2): en 2026 son unos 0,8° E, y el
@@ -1884,7 +1929,7 @@ export const MADRID_BARAJAS: Scenario = {
    * verdaderos, 359° magnéticos: el 36 pintado.
    */
   magneticVariation: -0.8,
-  aerodrome: conPlataformasCosidas(LEMD as unknown as Aerodrome),
+  aerodromoAparte: { cargar: () => import("../../data/aerodromes/lemd.aero.json"), despegaPor: "36L" },
   /*
    * Diez nudos de cola, rachas incluidas, antes de dejar la norte: «including
    * 10 kt gusts of tailwind» (AIP España, AD 2-LEMD, 2.20).

@@ -176,6 +176,8 @@ export const DURA_EL_PLANO: Readonly<Record<Plano, number>> = {
  *   es lo que se ve al llegar. El hito `chaco` está en Pozo Colorado y Filadelfia,
  *   a doscientos kilómetros de esta final. Ver `CHACO_ENFRENTE`. Y `rio-enfrente`,
  *   el río a la altura de la bahía: ver `RIO_ENFRENTE`.
+ * - `luces-de-tenerife` y `luces-de-madrid`: una ciudad encendida de noche, por el
+ *   cristal y de lejos. Ver `LUCES_DE_TENERIFE` y `LUCES_DE_MADRID`.
  *
  * Si se ve lo dice el juego, que es quien tiene el mundo: ver `LecturaDelPasaje.ver`
  * y `world/se-ve-desde-el-pasaje.ts`.
@@ -187,6 +189,7 @@ export type SitioDelPaisaje =
   | "chaco-enfrente"
   | "rio-enfrente"
   | "luces-de-tenerife"
+  | "luces-de-madrid"
   | "tierra-abajo"
   | "mar-abajo"
   | "nubes-abajo"
@@ -331,6 +334,11 @@ export interface LecturaDelPasaje {
    * `flight/lo-que-se-toca.ts`.
    */
   readonly tocable?: boolean;
+  /**
+   * **Si la calle por la que se rueda lleva la fila verde del eje**, según el fichero del
+   * aeródromo. Solo rodando; sin esto, no se sabe. Ver `porUnaCalleConLuces` en `game.ts`.
+   */
+  readonly ejeVerde?: boolean;
   /**
    * **El vuelo largo de hoy**: lo que cambia con la fecha, y que por eso lo saca
    * el juego de la cuenta y no lo escribe nadie en el guion. Sin esto —las pruebas

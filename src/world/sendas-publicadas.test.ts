@@ -6,11 +6,14 @@
 import { describe, expect, it } from "vitest";
 import { Color, type InstancedMesh } from "three";
 import { angulosDelPapi, blancasDePapi, crearAproximacion } from "./aproximacion";
-import { SCENARIOS, oaciDe } from "./scenarios";
+import { SCENARIOS as SIN_COMPLETAR, conSuAerodromo, oaciDe } from "./scenarios";
 import { SENDAS, SENDA_DE_SIEMPRE, sendaDeLaCabecera, tieneIls } from "./sendas-publicadas";
 import { alturaDeLaSendaDeLaFinal, desvioEnLaFinal, ritmoDeLaSenda } from "../flight/perfil-vertical";
 import { altitudDelPerfil, MILLA, perfilDeLaBajada } from "../flight/ruta";
 import type { Pista, Umbral } from "./aerodrome";
+
+/** Con el aeródromo de los que lo traen aparte, como los monta `main.ts`: ver `aerodromoAparte`. */
+const SCENARIOS = await Promise.all(SIN_COMPLETAR.map(conSuAerodromo));
 
 describe("la senda de cada cabecera, la de su AIP", () => {
   it("la 21 de Lanzarote, a 3,7°; la 19 de Fuerteventura, a 3,45°; la 09 de Cuatro Vientos, a 2,8°", () => {

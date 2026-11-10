@@ -3098,6 +3098,24 @@ export const EN: Dictionary = {
   "comandante.largo.llegada.verano": "It's twenty-five past six in the morning here. Have a lovely day.",
   "comandante.largo.llegada.invierno": "It's half past seven in the morning here. Have a lovely day.",
   "inicio.ara.pasaje.largo.llegamos": "We've reached Asunción! I crossed the whole ocean.",
+  "inicio.ara.pasaje.largo.embarque": "I'm in my window seat already! Everyone's putting their bags up top.",
+  "inicio.ara.pasaje.largo.nocheDeMadrid": "It's already night outside! And this plane is taking us home.",
+  "comandante.largo.bienvenida":
+    "Ladies and gentlemen, good evening, this is Captain Jazlyn speaking. The doors are now closed: welcome aboard this flight to Asunción.",
+  "comandante.largo.vueloVerano":
+    "Our flight time will be about eleven hours, at around eleven thousand metres and with a headwind, and we'll arrive in Asunción at twenty-five past six in the morning, local time.",
+  "comandante.largo.vueloInvierno":
+    "Our flight time will be about eleven hours, at around eleven thousand metres and with a headwind, and we'll arrive in Asunción at half past seven in the morning, local time.",
+  "comandante.largo.tresPilotos":
+    "As it's a long flight, there are three pilots today, and we take turns to rest. Have a good flight.",
+  "inicio.tripulacion.pasaje.demo.salidasLargo":
+    "This aircraft has eight emergency exits, four on each side. Find the one nearest to you, which may be behind you. Lights on the floor of the aisle will guide you to them.",
+  "inicio.ara.pasaje.largo.lucesVerdes": "Look, there's a row of little green lights on the ground!",
+  "inicio.tripulacion.pasaje.cerca.largo.lucesVerdes":
+    "They run down the middle of the taxiway the plane is rolling along: green means \"this way\".",
+  "inicio.ara.pasaje.largo.madrid": "Look at all the lights down there! That's Madrid, on my side.",
+  "comandante.largo.cinturon":
+    "Ladies and gentlemen, we're still climbing, but we've switched off the seat belt sign. If you stay seated, please keep it fastened.",
   "inicio.tripulacion.pasaje.derlis.cena":
     "Children eat first. Here's yours: chicken and cassava from Granja Óga, nice and warm.",
   "inicio.ara.pasaje.largo.cena":
@@ -3152,6 +3170,7 @@ export const EN: Dictionary = {
   "ilustracion.cena": "Ara gets dinner from the crew member; behind, the trolley braked and latched",
   "ilustracion.manta": "Ara, sleepy, under the blanket with the seat belt on top, with the lights dimmed",
   "ilustracion.medio-despertar": "Ara half awake, the seat belt over the blanket, in the dark cabin",
+  "ilustracion.embarque": "Ara at the window; people put their bags up top, and it is night outside",
   "pantalla.datos.alt": "Height above the sea",
   "pantalla.datos.gs": "Speed over the ground",
   "pantalla.datos.oat": "Temperature outside",
