@@ -3101,6 +3101,15 @@ export class PlanDeVuelo {
     return null;
   }
 
+  /**
+   * **El puesto del que sale este vuelo, si es uno concreto**: su `ref` en el
+   * fichero del aeródromo. Lo pone quien sabe de dónde sale de verdad —el
+   * primer capítulo del viaje largo, del T5 de la T1 de Barajas— y el juego, sin
+   * él, elegiría el que menos se rueda. Si no está o no lleva a ninguna espera,
+   * se elige como siempre. Ver `reiniciar`.
+   */
+  puestoPedido: string | null = null;
+
   /** Empieza un vuelo. Devuelve `false` si este aeródromo no da para rodar. */
   /** Si esta lección empieza alineado en la cabecera. Ver `reiniciar`. */
   private desdeLaPista = false;
@@ -3124,6 +3133,14 @@ export class PlanDeVuelo {
      * anterior y la raya saldría del puesto de siempre. Ver `reiniciarDesde`.
      */
     this.puestoElegido = null;
+    /*
+     * **Y si el vuelo trae su puesto, de ese**, sin elegir. Va antes de
+     * `puestoDeSalida` porque elegir es caro: en Barajas son ciento cuarenta y
+     * dos candidatos con su rodaje cada uno, seis décimas de segundo para
+     * acabar tirando lo elegido. Ver `puestoPedido`.
+     */
+    const pedido = desdeLaPista || !this.puestoPedido ? undefined : this.aero.parkingPositions?.find((p) => p.ref === this.puestoPedido);
+    if (pedido && this.reiniciarDesde(pedido.xy)) return true;
     const puesto = desdeLaPista ? null : this.puestoDeSalida();
     const espera = this.esperaDeSalida();
     if (!puesto || !espera) {

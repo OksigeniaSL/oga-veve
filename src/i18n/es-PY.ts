@@ -4821,6 +4821,33 @@ export const ES_PY = {
   "comandante.largo.llegada.invierno": "Aquí son las siete y media de la mañana. Que tengan un muy lindo día.",
   "inicio.ara.pasaje.largo.llegamos": "¡Llegamos a Asunción! Crucé el océano entero.",
   /*
+   * ── **El primer capítulo del vuelo largo: «La noche de Madrid»** ──────────
+   *
+   * El esqueleto: el embarque, la bienvenida de la comandante, las ocho salidas, las luces
+   * de las calles y Madrid de noche. **Textos provisionales**: el guion de verdad, con sus
+   * voces, es de la tanda siguiente. Ver `src/flight/guion-noche-de-madrid.ts`.
+   */
+  "inicio.ara.pasaje.largo.embarque": "¡Ya estoy en mi ventanilla! Todos guardan sus bolsos arriba.",
+  "inicio.ara.pasaje.largo.nocheDeMadrid": "¡Afuera ya es de noche! Y este avión nos lleva a casa.",
+  "comandante.largo.bienvenida":
+    "Señores pasajeros, buenas noches, les habla la comandante Jazlyn. Ya cerramos las puertas: bienvenidos a bordo de este vuelo a Asunción.",
+  "comandante.largo.vueloVerano":
+    "Vamos a volar unas once horas, a unos once mil metros de altura y con viento de cara, y llegamos a Asunción a las seis y veinticinco de la mañana, hora de allá.",
+  "comandante.largo.vueloInvierno":
+    "Vamos a volar unas once horas, a unos once mil metros de altura y con viento de cara, y llegamos a Asunción a las siete y media de la mañana, hora de allá.",
+  "comandante.largo.tresPilotos":
+    "Como el vuelo es largo, hoy vamos tres pilotos, y nos turnamos para descansar. Que tengan un buen vuelo.",
+  /*
+   * Las del JAZ 110, las de su clase: ocho puertas de salida, cuatro por lado, y ninguna
+   * sobre el ala. Como la del JAZ 90, con su número.
+   */
+  "inicio.tripulacion.pasaje.demo.salidasLargo":
+    "Este avión tiene ocho salidas de emergencia, cuatro a cada lado. Busquen la más cercana, que puede estar detrás de ustedes. Unas luces en el suelo del pasillo marcan el camino hasta ellas.",
+  "inicio.ara.pasaje.largo.lucesAzules": "¡Mirá, a los costados del camino hay lucecitas azules!",
+  "inicio.tripulacion.pasaje.cerca.largo.lucesAzules":
+    "Marcan el borde de la calle por donde rueda el avión: el azul dice «por aquí, sin salirse».",
+  "inicio.ara.pasaje.largo.madrid": "¡Mirá cuántas luces allá abajo! Es Madrid, de mi lado.",
+  /*
    * ── **El segundo capítulo del vuelo largo: «La noche sobre el mar»** ──────
    *
    * La cena bajo su lámina, Tenerife si se ve, El Hierro en la pantalla del asiento y
@@ -4883,4 +4910,5 @@ export const ES_PY = {
   "ilustracion.cena": "Ara recibe la cena del tripulante; detrás, el carrito frenado y con su cierre",
   "ilustracion.manta": "Ara con sueño, bajo la manta y con el cinturón por encima, con las luces bajas",
   "ilustracion.medio-despertar": "Ara abre los ojos a medias, con el cinturón sobre la manta y la cabina a oscuras",
+  "ilustracion.embarque": "Ara en su ventanilla; la gente guarda los bolsos arriba, y afuera es de noche",
 } as const;

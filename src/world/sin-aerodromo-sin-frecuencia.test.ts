@@ -10,7 +10,10 @@
 
 import { describe, expect, it } from "vitest";
 import { esAfis, sinTorre } from "./aerodrome";
-import { SCENARIOS } from "./scenarios";
+import { SCENARIOS as SIN_COMPLETAR, conSuAerodromo } from "./scenarios";
+
+/** Con el aeródromo de los que lo traen aparte, como los monta `main.ts`: ver `aerodromoAparte`. */
+const SCENARIOS = await Promise.all(SIN_COMPLETAR.map(conSuAerodromo));
 
 describe("donde no hay aeródromo no hay torre", () => {
   it("sin aeródromo no contesta nadie", () => {

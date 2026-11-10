@@ -295,6 +295,12 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
   cena: { original: "vuelo-largo/cena.png", hueco: "pantalla", recorte: ENTERA_DE_1672, conAra: true },
   manta: { original: "vuelo-largo/manta.png", hueco: "pantalla", recorte: ENTERA_DE_1672, conAra: true },
   "medio-despertar": { original: "vuelo-largo/medio-despertar.png", hueco: "pantalla", recorte: ENTERA_DE_1672, conAra: true },
+  /*
+   * **El embarque en Barajas**, a pantalla completa: ver `flight/guion-noche-de-madrid.ts`.
+   * Ara ya en su ventanilla, la cabina con las luces encendidas y la gente guardando
+   * bultos, de noche por los cristales. Es con lo que se abre el primer capítulo.
+   */
+  embarque: { original: "vuelo-largo/embarque.png", hueco: "pantalla", recorte: ENTERA_DE_1672, conAra: true },
 };
 
 /**

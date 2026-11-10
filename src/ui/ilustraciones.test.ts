@@ -178,6 +178,7 @@ describe("las ilustraciones", () => {
       "cena",
       "manta",
       "medio-despertar",
+      "embarque",
     ]);
   });
 
