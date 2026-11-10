@@ -20,8 +20,13 @@
  *    0020). Cada una de las dos cosas nuevas, con su lámina: el viento de arriba y la
  *    litera. En el puesto, antes de arrancar: por debajo de los diez mil pies, volando, la
  *    comandante ya no habla de nada que no sea volar.
- * 4. **Toboganes armados y motores**, que es lo que da permiso a la tripulación de mando
- *    para arrancar y rodar. No hay remolque: los puestos del juego son de salir de frente.
+ * 4. **Toboganes armados, el remolque y los motores.** Con los toboganes armados la
+ *    tripulación de mando enciende la baliza y el tractor saca el avión de espaldas del
+ *    T5, que es un puesto de contacto: con el morro a la T1. Los motores se arrancan
+ *    empujando, y Ara se da cuenta de que van hacia atrás —la terminal se aleja hacia
+ *    delante— y pregunta quién empuja. Al acabar, freno, el tractor se suelta y se aparta,
+ *    y la persona de tierra enseña el pasador y saluda, del lado de Ara. Ver
+ *    `world/remolque.ts` y `charlasDelRemolque`.
  * 5. **La demostración, con las ocho salidas**, cuatro por lado, la de esta clase de avión,
  *    y Ara asomada al pasillo mirando la suya. Rodando, como en el vuelo corto.
  * 6. **El rodaje de noche**, del T5 a la doble raya de la Z4 por las calles A, sin pisar
@@ -93,6 +98,8 @@ import { dondeCae } from "../world/entre-aerodromos";
 import { SALIDA_DE_BARAJAS } from "../world/scenarios";
 import type { Fijo } from "./ruta";
 import { caminoEnElMundo } from "./salto-bajo-tapa";
+import { charlasDelRemolque } from "./charlas-del-remolque";
+import { motoresYaEnMarcha } from "./vuelo-de-linea";
 import { DE_MADRID_A_ASUNCION, respectoALaRuta, type PerfilDelVuelo } from "./ruta-larga";
 
 /** **El mundo de este capítulo**: Barajas, de noche y sin ortofoto. Ver `MADRID_BARAJAS`. */
@@ -264,7 +271,8 @@ export type MomentoDeMadrid =
   | "mirar"
   | "fin";
 
-export type CharlaDeMadrid = "tren" | "giro";
+/** Las charlas: el tren, el giro de la salida y las dos del remolque —ver `charlasDelRemolque`—. */
+export type CharlaDeMadrid = "tren" | "giro" | "marchaAtras" | "saludo";
 
 const ara = (clave: string): Linea => ({ quien: "ara", clave: `inicio.ara.pasaje.${clave}` });
 const araLargo = (clave: string): Linea => ara(`largo.${clave}`);
@@ -374,7 +382,8 @@ const MOMENTOS: readonly Momento[] = [
   { id: "puertas", cuando: callados, lineas: [anuncio("comandante.crosscheck"), ara("puertas")] },
   {
     id: "motores",
-    cuando: (l) => l.motor && l.tramo === "arrancando" && l.enTramo >= MOTORES_EN_MARCHA,
+    // Con el remolque se arrancan empujando: se dicen en cuanto se oyen, no al acabar de empujar.
+    cuando: (l) => l.motor && motoresYaEnMarcha(l, MOTORES_EN_MARCHA),
     lineas: [ara("motores")],
     mira: "motor",
     plano: "asomado-motor",
@@ -486,6 +495,8 @@ const MOMENTOS: readonly Momento[] = [
 ];
 
 const CHARLAS: readonly DefCharla<MomentoDeMadrid, CharlaDeMadrid>[] = [
+  // El remolque del T5, que se nota desde la ventanilla: hacia atrás, y el saludo de la persona de tierra.
+  ...charlasDelRemolque<MomentoDeMadrid, CharlaDeMadrid>({ marchaAtras: "marchaAtras", saludo: "saludo" }),
   {
     // El tren se guarda en cuanto se despega, con un golpe que se oye en el pasaje.
     id: "tren",

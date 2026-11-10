@@ -4244,6 +4244,17 @@ export const ES_PY = {
   "inicio.tripulacion.pasaje.cerca.revision":
     "¡Hola! Déjame ver ese cinturón… ¡perfecto, así se lleva! Y la cortinilla, siempre subida para despegar.",
   "inicio.ara.pasaje.persiana": "¿Y por qué la persiana tiene que estar arriba para despegar?",
+  /*
+   * **El remolque** (ADR 0025): Ara se da cuenta de que van hacia atrás y la tripulante,
+   * a su lado y de tú, le cuenta lo del tractor; y al acabar, el saludo de la persona de
+   * tierra con el pasador en alto. Ver `flight/charlas-del-remolque.ts`.
+   */
+  "inicio.ara.pasaje.marchaAtras": "¡Eh, estamos yendo para atrás! ¿Quién nos empuja?",
+  "inicio.tripulacion.pasaje.cerca.tractor":
+    "Un tractor, enganchado a la rueda de delante. Los aviones no tienen marcha atrás: él nos saca hasta la calle, y de ahí ya seguimos solos, con nuestros motores.",
+  "inicio.ara.pasaje.saluda": "¡Ese señor nos saluda! ¿Y qué es la cinta roja que levanta?",
+  "inicio.tripulacion.pasaje.cerca.pasador":
+    "Es el pasador de la rueda de delante: mientras está puesto, la rueda la gira el tractor. Se lo enseña a los pilotos para que vean que ya lo quitó, y ahora sí nos podemos ir.",
   "inicio.tripulacion.pasaje.cerca.persiana":
     "Así vemos bien fuera si pasa algo. Y de noche apagamos las luces de la cabina, para que los ojos ya estén hechos a lo de fuera.",
   "inicio.ara.pasaje.tren": "¡Sonó un golpe abajo del avión! Son las ruedas, que se guardan para volar.",

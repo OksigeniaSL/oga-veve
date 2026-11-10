@@ -300,6 +300,8 @@ const leer = (page) =>
         opacidad: Number(document.querySelector("#lamina-grande")?.style.opacity ?? 0),
       },
       tripulacion: i.tripulacion,
+      remolque: i.remolque ?? null,
+      alEdificio: i.alEdificio ?? null,
       manos: i.manos ?? null,
       combustible: o.combustible(),
       sinMotor: o.sinMotor(),
@@ -868,6 +870,107 @@ async function laNoche(page) {
   await foto(page, "noche-8-tras-el-salto");
 }
 
+/**
+ * **El remolque del puesto, mirado** (ADR 0025): lo que se apunta mientras pasa —sus fases, y
+ * las fotos desde la ventanilla y desde fuera— y lo que se comprueba al final con lo medido en
+ * cada fotograma por `medirElRemolque` en `game.ts`. Lo del empuje va a la velocidad del banco;
+ * de que echa a andar la persona de tierra hasta su saludo, a ×1, que el saludo dura seis
+ * segundos y a toda prisa no se llega a ver.
+ */
+function nuevoRemolque() {
+  return { fases: [], ultimo: null, fotos: new Set(), aUno: false, devuelto: false };
+}
+
+async function seguirElRemolque(page, r, rem, plano, prefijo, prisa) {
+  if (!rem) return;
+  r.ultimo = rem;
+  if (r.fases.at(-1) !== rem.fase) r.fases.push(rem.fase);
+  if (rem.fase === "empujando" && (rem.medida?.empujado ?? 0) > 10 && !r.fotos.has("empuje")) {
+    r.fotos.add("empuje");
+    await foto(page, `${prefijo}remolque-empuje-${plano}`);
+    await fotoDeFuera(page, `${prefijo}remolque-empuje-fuera`);
+  }
+  if (rem.fase === "empujando" && (rem.medida?.empujado ?? 0) > 35 && !r.fotos.has("empuje-2")) {
+    r.fotos.add("empuje-2");
+    await foto(page, `${prefijo}remolque-empuje-2-${plano}`);
+  }
+  if ((rem.fase === "andando" || rem.fase === "saludando") && !r.aUno) {
+    r.aUno = true;
+    await page.evaluate(() => globalThis.__oga.acelerar(1));
+  }
+  if (rem.fase === "saludando" && !r.fotos.has("saludo")) {
+    r.fotos.add("saludo");
+    await pausa(1200);
+    await foto(page, `${prefijo}remolque-saludo-${plano}`);
+    await fotoDeFuera(page, `${prefijo}remolque-saludo-fuera`);
+  }
+  if (rem.fase === "libre" && r.aUno && !r.devuelto) {
+    r.devuelto = true;
+    if (prisa) await page.evaluate((x) => globalThis.__oga.acelerar(x), prisa);
+  }
+}
+
+/** **Una foto desde fuera**, con la vista de la izquierda un momento, y vuelta al asiento. */
+async function fotoDeFuera(page, nombre) {
+  if (!FOTOS) return;
+  const antes = await page.evaluate(() => {
+    const j = globalThis.__oga.juegoParaTrazas();
+    const a = j.cameraMode;
+    j.cameraMode = "izquierda";
+    return a;
+  });
+  await pausa(700);
+  await foto(page, nombre);
+  await page.evaluate((a) => {
+    globalThis.__oga.juegoParaTrazas().cameraMode = a;
+  }, antes);
+}
+
+function comprobarElRemolque(r, charlas, donde) {
+  const m = r.ultimo?.medida;
+  const f = (x, d = 1) => (x === null || x === undefined ? "?" : Number(x).toFixed(d));
+  comprobar(
+    `sale ${donde} empujado por el tractor, hacia atrás: la terminal se aleja hacia delante`,
+    !!m && m.peorAdelante < -0.95 && m.empujado > 20 && m.paredAlAcabar !== null && m.paredAlAcabar > m.paredAlEmpezar + 10,
+    m
+      ? `${f(m.empujado)} de ${f(m.largo)} m empujado · el peor paso, a ${f(m.peorAdelante, 3)} del morro (−1, de culo) · pared ${f(m.paredAlEmpezar)} → ${f(m.paredAlAcabar)} m · giro ${f(m.giro, 0)}° con radio ${f(m.radio)} m`
+      : "sin remolque",
+  );
+  comprobar(
+    "en su orden: baliza, empuje con los motores arrancando, freno, se suelta, se aparta, saluda y a rodar",
+    !!m &&
+      m.balizaAlEmpujar === true &&
+      m.motorEmpujando &&
+      m.motorAlAcabar === true &&
+      r.fases.join(" ").includes("empujando") &&
+      r.fases.includes("saludando") &&
+      r.fases.at(-1) === "libre",
+    m ? `baliza al empujar ${m.balizaAlEmpujar} · motores empujando ${m.motorEmpujando}, al acabar ${m.motorAlAcabar} · fases ${m.fases.map((x) => x.fase).join(" → ")}` : "sin remolque",
+  );
+  comprobar(
+    "acaba con el morro hacia la raya: rodando los primeros treinta metros gira poco",
+    !!m && m.giroRodando30 !== null && Math.abs(m.giroRodando30) < 30,
+    m ? `rumbo al acabar ${f(m.rumboAlAcabar, 0)}° · gira ${f(m.giroRodando30, 0)}° en los primeros 30 m rodando` : "sin remolque",
+  );
+  comprobar(
+    "el tractor se aparta y la persona saluda fuera de lo que barre el ala",
+    !!m && m.tractorFuera !== null && m.tractorFuera > 3 && m.personaFuera !== null && m.personaFuera > 3,
+    m ? `tractor a ${f(m.tractorFuera)} m de la punta del ala · persona a ${f(m.personaFuera)} m` : "sin remolque",
+  );
+  comprobar(
+    "y nadie atraviesa nada: ni el avión, ni el uno al otro, ni un edificio",
+    !!m && m.tractorAlFuselaje > 1 && m.personaAlFuselaje > 2 && m.tractorALaPersona > 1 && m.dentroDeUnEdificio === 0,
+    m
+      ? `tractor suelto a ${f(m.tractorAlFuselaje)} m del fuselaje · persona a ${f(m.personaAlFuselaje)} m · entre ellos ${f(m.tractorALaPersona)} m · ${m.dentroDeUnEdificio} fotogramas dentro de un edificio`
+      : "sin remolque",
+  );
+  comprobar(
+    "Ara se da cuenta de que van hacia atrás, y pregunta por el saludo",
+    charlas.includes("marchaAtras") && charlas.includes("saludo"),
+    `charlas: ${charlas.join(", ") || "ninguna"}`,
+  );
+}
+
 /** El T5 de la T1 y la doble raya de la Z4, en el mundo: x al este, z al sur. Ver `SALIDA_DE_BARAJAS`. */
 const EL_T5 = { x: 293.6, z: 3407.2 };
 const LA_Z4 = { x: -320, z: 95.1 };
@@ -961,6 +1064,7 @@ async function laNocheDeMadrid(dada = null) {
     const fotos = new Set();
     const tramos = [];
     const pasillo = { muestras: 0, buenas: 0, peor: null, tiras: [] };
+    const remolque = nuevoRemolque();
     let pisaPista = 0;
     let enLaEspera = null;
     let alDespegar = null;
@@ -980,6 +1084,8 @@ async function laNocheDeMadrid(dada = null) {
       l = await leer(page);
       const tramo = l.tripulacion?.tramo ?? "?";
       if (tramos.at(-1) !== tramo) tramos.push(tramo);
+      // El remolque del T5, con sus fotos: ver `seguirElRemolque`.
+      await seguirElRemolque(page, remolque, l.remolque, l.plano, "c1-", process.env.OGA_PRISA ? Number(process.env.OGA_PRISA) : null);
       // Las láminas de la bienvenida y la de Idaira, en su turno: lo que se ve mientras se dice.
       if (l.linea && PIDEN_LAMINA[l.linea] && !conSuLamina.has(l.linea)) {
         // La que pide, al empezar a decirse; y la que se ve, pasado el fundido, si se sigue diciendo.
@@ -1086,6 +1192,7 @@ async function laNocheDeMadrid(dada = null) {
       `vistas ${(l.lamina?.vistas ?? []).join(" → ")} · sin fichero ${(l.lamina?.sinFichero ?? []).join(", ") || "ninguna"}`,
     );
     comprobar("rueda sin pisar ninguna pista", pisaPista === 0 && tramos.includes("rodando"), `${pisaPista} lecturas en una pista · tramos ${tramos.join(" → ")}`);
+    comprobarElRemolque(remolque, l.charlas ?? [], "del T5 de la T1");
     const aLaZ4 = enLaEspera ? Math.hypot(enLaEspera.x - LA_Z4.x, enLaEspera.z - LA_Z4.z) : Infinity;
     comprobar("y para en la doble raya de la Z4", aLaZ4 < 60, enLaEspera ? `a ${aLaZ4.toFixed(0)} m de la Z4` : "no llegó a esperar");
     comprobar(
@@ -1702,6 +1809,13 @@ async function elCapitulo(dada = null) {
       "llega al puesto, con los motores parados",
       t?.tramo === "apagado" && l.motor === false && l.enTierra,
       `${t?.tramo} · ${l.fase} · motor ${l.motor}`,
+    );
+    // Con pasaje, a un puesto de contacto, de frente y con el morro al edificio: ver `PlanDeVuelo.deContacto`.
+    const ed = l.alEdificio;
+    comprobar(
+      "y entra de frente a un puesto de contacto, con el morro al edificio",
+      !!ed && ed.delMorro >= 3 && ed.delMorro <= 55 && Math.abs(ed.desviado) < 45,
+      ed ? `el morro a ${ed.delMorro.toFixed(1)} m de la pared · ${ed.desviado.toFixed(0)}° de mirarla de frente` : "sin edificio",
     );
     /*
      * **Lo que hay en la tarjeta al llegar**: si el mundo de antes se quedara, aquí se

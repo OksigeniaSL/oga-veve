@@ -12,30 +12,38 @@
  * ## Lo que hace, en el orden de siempre
  *
  * 1. **En la puerta**, parado, con los motores apagados, hasta que la escena
- *    dice que ya se cerraron las puertas y se armaron los toboganes. Sin
- *    remolque, que este juego no lo tiene: los puestos son de salir de frente.
- * 2. **Arranca** y deja que los motores se asienten antes de moverse.
- * 3. **Rueda por la raya del plan**, la verde que pinta el juego: despacio en
+ *    dice que ya se cerraron las puertas y se armaron los toboganes.
+ * 2. **El remolque**, si el puesto es de contacto: la baliza encendida, que
+ *    dice «este avión se va a mover», y el tractor lo empuja hacia atrás
+ *    hasta la calle. Los motores se arrancan **empujando**, que es como se
+ *    hace en los aeropuertos grandes con un reactor: al acabar ya están en
+ *    marcha. Freno de aparcamiento, se suelta el tractor, la persona de
+ *    tierra enseña el pasador y saluda, y desde ese saludo el avión es de sus
+ *    pilotos. Ver `world/remolque.ts`. Un puesto de plataforma se deja de
+ *    frente, y ahí se arranca parado.
+ * 3. **Arranca** y deja que los motores se asienten antes de moverse.
+ * 4. **Rueda por la raya del plan**, la verde que pinta el juego: despacio en
  *    las curvas y frenando con tiempo para parar en la doble raya.
- * 4. **Espera en la doble raya** el permiso de la torre —el de la máquina de
+ * 5. **Espera en la doble raya** el permiso de la torre —el de la máquina de
  *    fases, que es el mismo que recibe quien juega— y que la escena haya
  *    dicho «sentados para el despegue». No entra en pista sin las dos cosas.
- * 5. **Entra, se alinea y despega**: gas de despegue, el eje con los pedales,
+ * 6. **Entra, se alinea y despega**: gas de despegue, el eje con los pedales,
  *    y a la Vr de su ficha, la rotación.
- * 6. **Sube** por la ruta del plan —la salida publicada, ver `ruta.ts`— con
+ * 7. **Sube** por la ruta del plan —la salida publicada, ver `ruta.ts`— con
  *    el tren dentro en cuanto sube y los flaps recogidos a mil pies, a
  *    doscientos cincuenta nudos por debajo de diez mil pies y luego más.
- * 7. **Crucero** a la altura del plan, y **baja** por la senda del plan desde
+ * 8. **Crucero** a la altura del plan, y **baja** por la senda del plan desde
  *    su punto de descenso, la misma que sigue el automático (`VNAV PTH`).
- * 8. **La final**: por el localizador y la senda de la pista, con los flaps
+ * 9. **La final**: por el localizador y la senda de la pista, con los flaps
  *    saliendo por escalones, el tren fuera a unos doce kilómetros, los
  *    aerofrenos armados y el autofreno puesto, y a su velocidad de
  *    aproximación.
- * 9. **La recogida** a la altura de su manual —ver `recogida.ts`—, el gas
+ * 10. **La recogida** a la altura de su manual —ver `recogida.ts`—, el gas
  *    fuera, y tocar suave.
- * 10. **La carrera**: los frenos de tierra salen solos, la reversa hasta
+ * 11. **La carrera**: los frenos de tierra salen solos, la reversa hasta
  *     sesenta y tantos nudos y el autofreno; luego, a paso de rodaje, por la
- *     raya hasta el puesto, y allí, motores fuera.
+ *     raya hasta el puesto —de frente, con el señalero, y con pasaje a uno de
+ *     contacto, con el morro al edificio—, y allí, motores fuera.
  *
  * Y **los motores suenan como en un vuelo de verdad**: toda la fuerza para
  * despegar, la de subida a mil quinientos pies, el ralentí para bajar y la de
@@ -79,6 +87,7 @@ export interface PuntoXZ {
 /** Lo que va haciendo la tripulación, en el orden en que se hace. */
 export type TramoDeLinea =
   | "puerta"
+  | "empujando"
   | "arrancando"
   | "rodando"
   | "esperando"
@@ -159,6 +168,12 @@ export interface LecturaDeLinea {
   /** La cota del campo donde se está o del de llegada, m. */
   readonly cotaDelCampo: number;
   /**
+   * **El remolque del puesto**, si se sale de uno de contacto: si ya acabó de
+   * empujar y si ya está libre —tractor fuera y la persona de tierra ha
+   * saludado—. Sin él, el puesto es de salir de frente. Ver `world/remolque.ts`.
+   */
+  readonly remolque?: { readonly acabado: boolean; readonly libre: boolean } | null;
+  /**
    * **El tope de velocidad de la salida publicada**, m/s de verdadera, o nada: el
    * «MAX IAS» de la carta hasta su punto, pasado a verdadera con el aire del día por
    * quien lo lee, que es quien lo tiene. Ver `Fijo.maxKt`.
@@ -217,6 +232,13 @@ export interface ManosDeLinea {
   /** El autofreno: 0 apagado, 1 LO, 2 MED. Ver `PalancaDeAerofrenos`. */
   readonly autofreno: 0 | 1 | 2;
   readonly reversa: number;
+  /**
+   * **La baliza encendida antes de arrancar**: con el remolque, desde que se va a
+   * empujar. Sin poner, la de siempre, que va con los motores.
+   */
+  readonly baliza?: boolean;
+  /** Y si se le dice al tractor que empuje: con la baliza ya encendida un rato. */
+  readonly empujar?: boolean;
   /**
    * **Lo que dan los motores de verdad**, 0 a 1 del empuje de despegue: lo que
    * se oye desde el asiento. En el aire no es el gas de arriba, que en el
@@ -297,6 +319,26 @@ const PARADO = 0.4;
 const RAYA_QUE_SOBRA = 25;
 /** Lo que se dejan los motores asentarse antes de rodar, s. */
 export const ASIENTAN_LOS_MOTORES = 12;
+/**
+ * **El remolque**: lo que está la baliza encendida antes de que el tractor
+ * empiece a empujar, s —la persona de tierra la ve y avisa de que empuja—, y
+ * cuándo se arrancan los motores, s desde que se enciende: ya empujando, con el
+ * avión en marcha y lejos de la pasarela y de la gente del puesto. Es lo que se
+ * hace en los aeropuertos grandes con un reactor, y lo que deja los motores
+ * asentados para cuando se suelta el tractor.
+ */
+export const BALIZA_ANTES_DE_EMPUJAR = 3;
+export const ARRANCA_EMPUJANDO = 13;
+
+/**
+ * **Si los motores llevan ya `rato` segundos en marcha**, para lo que se cuenta de
+ * ellos: parado en el puesto tras arrancar, o empujando, que con el remolque se
+ * arrancan ahí.
+ */
+export function motoresYaEnMarcha(l: { readonly tramo: TramoDeLinea; readonly enTramo: number }, rato: number): boolean {
+  if (l.tramo === "arrancando") return l.enTramo >= rato;
+  return l.tramo === "empujando" && l.enTramo >= ARRANCA_EMPUJANDO + rato;
+}
 /** Lo que se da por llevado en un tramo al caer en él de un salto, s: más que cualquier espera. */
 const YA_LLEVA_UN_RATO = 3600;
 /** Y lo que se queda parado en el puesto antes de apagar, s. */
@@ -654,10 +696,17 @@ export class VueloDeLinea {
   private decidir(l: LecturaDeLinea, p: PermisosDeLaEscena): void {
     switch (this.tramo) {
       case "puerta":
-        if (p.arrancar) this.pasarA("arrancando");
+        // Con las puertas cerradas y los toboganes armados: de un puesto de contacto, empujado.
+        if (p.arrancar) this.pasarA(l.remolque ? "empujando" : "arrancando");
+        return;
+      case "empujando":
+        // Hasta que el tractor deja el avión en la calle; ahí, con el freno puesto, los motores asentándose.
+        if (!l.remolque || l.remolque.acabado) this.pasarA("arrancando");
         return;
       case "arrancando":
-        if (l.motor && this.enTramo >= ASIENTAN_LOS_MOTORES && p.rodar) this.pasarA("rodando");
+        // Y no se rueda con el tractor enganchado ni con la persona de tierra a su lado: hasta su saludo.
+        if (l.motor && this.enTramo >= ASIENTAN_LOS_MOTORES && p.rodar && (!l.remolque || l.remolque.libre))
+          this.pasarA("rodando");
         return;
       case "rodando":
         // La doble raya: la raya se acaba ahí y la fase lo dice.
@@ -736,7 +785,22 @@ export class VueloDeLinea {
     switch (this.tramo) {
       case "puerta":
         return quieto;
+      case "empujando":
+        /*
+         * **Empujado**: sin frenos, al ralentí y con la rueda de morro suelta —el
+         * pasador la deja en manos del tractor—. La baliza, desde el principio;
+         * el tractor, cuando ya lleva un rato encendida; y los motores, empujando.
+         */
+        return {
+          ...quieto,
+          freno: 0,
+          motor: this.enTramo >= ARRANCA_EMPUJANDO,
+          baliza: true,
+          empujar: this.enTramo >= BALIZA_ANTES_DE_EMPUJAR,
+        };
       case "arrancando":
+        // Con el freno de aparcamiento puesto, y la baliza, que ya no se apaga hasta el puesto.
+        return { ...quieto, motor: true, baliza: true };
       case "aparcado":
         return { ...quieto, motor: true };
       case "apagado":

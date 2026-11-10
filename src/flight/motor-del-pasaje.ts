@@ -21,6 +21,7 @@ import { Conversacion, type FraseDicha, type Linea, type VozDelInicio } from "./
 import type { FormaDeLaDemostracion } from "./demostracion-con-gracia";
 import { ConsolaDelAsiento, esDeUnCuento, lineaDelCuento, type EstadoDeLaConsola } from "./consola-del-asiento";
 import type { ModoDeLaPantalla } from "../world/pantalla-del-respaldo";
+import type { FaseDelRemolque } from "../world/remolque";
 import { KitDeViaje, type EstadoDelKit } from "./kit-de-viaje";
 import { DICHO_DE_LA_LUZ, JuegoDeLaLuz } from "./luz-verde";
 import {
@@ -213,6 +214,12 @@ export interface LecturaDelPasaje {
   /** Lo que va haciendo la tripulación, y desde cuándo. Ver `vuelo-de-linea.ts`. */
   readonly tramo: TramoDeLinea;
   readonly enTramo: number;
+  /**
+   * **El remolque del puesto**, si se sale empujado de uno de contacto: por dónde
+   * va, del tractor enganchado al saludo de la persona de tierra. Sin él, el
+   * puesto es de salir de frente. Ver `world/remolque.ts` y `charlasDelRemolque`.
+   */
+  readonly remolque?: FaseDelRemolque;
   readonly motor: boolean;
   readonly enTierra: boolean;
   readonly porElSuelo: number;
@@ -879,6 +886,7 @@ export const TAPA_A_OSCURAS = "a-oscuras";
 
 export const enElSuelo = (t: TramoDeLinea): boolean =>
   t === "puerta" ||
+  t === "empujando" ||
   t === "arrancando" ||
   t === "rodando" ||
   t === "esperando" ||

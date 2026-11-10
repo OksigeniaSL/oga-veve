@@ -271,6 +271,107 @@ async function foto(page, nombre) {
   console.log(`  📷 ${ruta}  —  ${r}`);
 }
 
+/**
+ * **El remolque del puesto, mirado** (ADR 0025): lo que se apunta mientras pasa —sus fases, y
+ * las fotos desde la ventanilla y desde fuera— y lo que se comprueba al final con lo medido en
+ * cada fotograma por `medirElRemolque` en `game.ts`. Lo del empuje va a la velocidad del banco;
+ * de que echa a andar la persona de tierra hasta su saludo, a ×1, que el saludo dura seis
+ * segundos y a toda prisa no se llega a ver.
+ */
+function nuevoRemolque() {
+  return { fases: [], ultimo: null, fotos: new Set(), aUno: false, devuelto: false };
+}
+
+async function seguirElRemolque(page, r, rem, plano, prefijo, prisa) {
+  if (!rem) return;
+  r.ultimo = rem;
+  if (r.fases.at(-1) !== rem.fase) r.fases.push(rem.fase);
+  if (rem.fase === "empujando" && (rem.medida?.empujado ?? 0) > 10 && !r.fotos.has("empuje")) {
+    r.fotos.add("empuje");
+    await foto(page, `${prefijo}remolque-empuje-${plano}`);
+    await fotoDeFuera(page, `${prefijo}remolque-empuje-fuera`);
+  }
+  if (rem.fase === "empujando" && (rem.medida?.empujado ?? 0) > 35 && !r.fotos.has("empuje-2")) {
+    r.fotos.add("empuje-2");
+    await foto(page, `${prefijo}remolque-empuje-2-${plano}`);
+  }
+  if ((rem.fase === "andando" || rem.fase === "saludando") && !r.aUno) {
+    r.aUno = true;
+    await page.evaluate(() => globalThis.__oga.acelerar(1));
+  }
+  if (rem.fase === "saludando" && !r.fotos.has("saludo")) {
+    r.fotos.add("saludo");
+    await pausa(1200);
+    await foto(page, `${prefijo}remolque-saludo-${plano}`);
+    await fotoDeFuera(page, `${prefijo}remolque-saludo-fuera`);
+  }
+  if (rem.fase === "libre" && r.aUno && !r.devuelto) {
+    r.devuelto = true;
+    if (prisa) await page.evaluate((x) => globalThis.__oga.acelerar(x), prisa);
+  }
+}
+
+/** **Una foto desde fuera**, con la vista de la izquierda un momento, y vuelta al asiento. */
+async function fotoDeFuera(page, nombre) {
+  if (!FOTOS) return;
+  const antes = await page.evaluate(() => {
+    const j = globalThis.__oga.juegoParaTrazas();
+    const a = j.cameraMode;
+    j.cameraMode = "izquierda";
+    return a;
+  });
+  await pausa(700);
+  await foto(page, nombre);
+  await page.evaluate((a) => {
+    globalThis.__oga.juegoParaTrazas().cameraMode = a;
+  }, antes);
+}
+
+function comprobarElRemolque(r, charlas, donde) {
+  const m = r.ultimo?.medida;
+  const f = (x, d = 1) => (x === null || x === undefined ? "?" : Number(x).toFixed(d));
+  comprobar(
+    `sale ${donde} empujado por el tractor, hacia atrás: la terminal se aleja hacia delante`,
+    !!m && m.peorAdelante < -0.95 && m.empujado > 20 && m.paredAlAcabar !== null && m.paredAlAcabar > m.paredAlEmpezar + 10,
+    m
+      ? `${f(m.empujado)} de ${f(m.largo)} m empujado · el peor paso, a ${f(m.peorAdelante, 3)} del morro (−1, de culo) · pared ${f(m.paredAlEmpezar)} → ${f(m.paredAlAcabar)} m · giro ${f(m.giro, 0)}° con radio ${f(m.radio)} m`
+      : "sin remolque",
+  );
+  comprobar(
+    "en su orden: baliza, empuje con los motores arrancando, freno, se suelta, se aparta, saluda y a rodar",
+    !!m &&
+      m.balizaAlEmpujar === true &&
+      m.motorEmpujando &&
+      m.motorAlAcabar === true &&
+      r.fases.join(" ").includes("empujando") &&
+      r.fases.includes("saludando") &&
+      r.fases.at(-1) === "libre",
+    m ? `baliza al empujar ${m.balizaAlEmpujar} · motores empujando ${m.motorEmpujando}, al acabar ${m.motorAlAcabar} · fases ${m.fases.map((x) => x.fase).join(" → ")}` : "sin remolque",
+  );
+  comprobar(
+    "acaba con el morro hacia la raya: rodando los primeros treinta metros gira poco",
+    !!m && m.giroRodando30 !== null && Math.abs(m.giroRodando30) < 30,
+    m ? `rumbo al acabar ${f(m.rumboAlAcabar, 0)}° · gira ${f(m.giroRodando30, 0)}° en los primeros 30 m rodando` : "sin remolque",
+  );
+  comprobar(
+    "el tractor se aparta y la persona saluda fuera de lo que barre el ala",
+    !!m && m.tractorFuera !== null && m.tractorFuera > 3 && m.personaFuera !== null && m.personaFuera > 3,
+    m ? `tractor a ${f(m.tractorFuera)} m de la punta del ala · persona a ${f(m.personaFuera)} m` : "sin remolque",
+  );
+  comprobar(
+    "y nadie atraviesa nada: ni el avión, ni el uno al otro, ni un edificio",
+    !!m && m.tractorAlFuselaje > 1 && m.personaAlFuselaje > 2 && m.tractorALaPersona > 1 && m.dentroDeUnEdificio === 0,
+    m
+      ? `tractor suelto a ${f(m.tractorAlFuselaje)} m del fuselaje · persona a ${f(m.personaAlFuselaje)} m · entre ellos ${f(m.tractorALaPersona)} m · ${m.dentroDeUnEdificio} fotogramas dentro de un edificio`
+      : "sin remolque",
+  );
+  comprobar(
+    "Ara se da cuenta de que van hacia atrás, y pregunta por el saludo",
+    charlas.includes("marchaAtras") && charlas.includes("saludo"),
+    `charlas: ${charlas.join(", ") || "ninguna"}`,
+  );
+}
+
 /** Lo que se ve de la escena, de una vez. */
 const leer = (page) =>
   page.evaluate(() => {
@@ -596,6 +697,7 @@ async function elVuelo() {
    * juega, que vuela a ×1. Y las muestras de los paneles, con su plano.
    */
   const alTocar = { aUno: false, devuelto: false, muestras: [] };
+  const remolque = nuevoRemolque();
   const t0 = Date.now();
 
   while (Date.now() - t0 < TOPE_S * 1000) {
@@ -611,6 +713,8 @@ async function elVuelo() {
       tramos.push({ tramo, t: e.segundos });
       adelanto.reloj.push({ tramo, quienJuega: i.adelanto?.quienJuega ?? null });
     }
+    // El remolque del puesto de Los Rodeos, con sus fotos: ver `seguirElRemolque`.
+    await seguirElRemolque(page, remolque, i.remolque ?? null, i.planoVisto ?? "ventanilla", "", VECES);
     if (tramo === "recogida" && !alTocar.aUno) {
       alTocar.aUno = true;
       await page.evaluate(() => globalThis.__oga.acelerar(1));
@@ -1133,7 +1237,7 @@ async function elVuelo() {
   comprobar(
     "la tripulación vuela del puesto al puesto, sin saltarse nada",
     tramos.map((x) => x.tramo).join(" ") ===
-      "puerta arrancando rodando esperando entrando carrera subida crucero bajada final recogida frenando al-puesto aparcado apagado",
+      "puerta empujando arrancando rodando esperando entrando carrera subida crucero bajada final recogida frenando al-puesto aparcado apagado",
     tramos.map((x) => `${x.tramo}@${x.t.toFixed(0)}s`).join(" "),
   );
   comprobar(
@@ -1142,6 +1246,7 @@ async function elVuelo() {
     e ? `${e.dichos.join(" ")}${e.saltados.length ? ` · saltados: ${e.saltados.join(" ")}` : ""}` : "no llegó",
   );
   comprobar("no se arranca antes de armar los toboganes", arrancoCon === true, String(arrancoCon));
+  comprobarElRemolque(remolque, e?.charlas ?? [], "de su puesto de Los Rodeos");
   comprobar(
     "no se entra en la pista antes de «tripulación, sentados para el despegue»",
     entroEnPista === true,

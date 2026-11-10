@@ -190,8 +190,10 @@ const SIN_LA_TRIPULACION: ReadonlySet<Anuncio> = new Set<Anuncio>(["comandante.c
  * anuncio esperaba a que bajara su grabación o a que acabara la instructora
  * con «arrancá el motor»: salía con los motores ya en marcha, y Enrique lo
  * oyó así. En un avión de verdad va con las puertas cerradas, **antes del
- * remolque y del arranque**: aquí no hay remolque, así que es el puesto con
- * el motor parado y nada más. Si el motor se arranca antes de que suene, se
+ * remolque y del arranque**: es el puesto con el motor parado. Con pasaje y
+ * un puesto de contacto, el tractor no echa a andar hasta que se ha oído —ver
+ * `world/remolque.ts`—, y los motores, que se arrancan empujando, tampoco: la
+ * fase sigue siendo `estacionado`. Si el motor se arranca antes de que suene, se
  * le pasó el momento y no se dice: ver `VALE_MIENTRAS`. Y para que suene a
  * tiempo, se pide en cuanto se puede —ver `ESPERA_DE`— y la instructora espera
  * a que acabe para decir «arrancá el motor»: ver `Game.decirLaFase`.

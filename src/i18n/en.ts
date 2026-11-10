@@ -2736,6 +2736,12 @@ export const EN: Dictionary = {
   "inicio.tripulacion.pasaje.cerca.revision":
     "Hi there! Let me check that seat belt... perfect, that's how it's worn! And the window blind always goes up for take-off.",
   "inicio.ara.pasaje.persiana": "And why does the window blind have to be up for take-off?",
+  "inicio.ara.pasaje.marchaAtras": "Hey, we're going backwards! Who's pushing us?",
+  "inicio.tripulacion.pasaje.cerca.tractor":
+    "A tug, hooked onto the front wheel. Planes have no reverse gear: it pushes us out to the taxiway, and from there we carry on by ourselves, with our own engines.",
+  "inicio.ara.pasaje.saluda": "That man is waving at us! And what's that red ribbon up in the air?",
+  "inicio.tripulacion.pasaje.cerca.pasador":
+    "It's the pin from the front wheel: while it's in, the tug does the steering. It's held up for the pilots so they can see it's out, and now we're free to go.",
   "inicio.tripulacion.pasaje.cerca.persiana":
     "So we can see outside if anything happens. And at night we dim the cabin lights, so our eyes are already used to the dark outside.",
   "inicio.ara.pasaje.tren": "Something went clunk under the plane! It's the wheels, tucking away so we can fly.",
