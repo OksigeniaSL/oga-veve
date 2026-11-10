@@ -1571,5 +1571,20 @@
   ],
   "comandante.largo.luces": [
     "comandante.largo.luces"
+  ],
+  "comandante.largo.bienvenida": [
+    "comandante.largo.bienvenida"
+  ],
+  "comandante.largo.vueloVerano": [
+    "comandante.largo.vueloVerano"
+  ],
+  "comandante.largo.vueloInvierno": [
+    "comandante.largo.vueloInvierno"
+  ],
+  "comandante.largo.tresPilotos": [
+    "comandante.largo.tresPilotos"
+  ],
+  "comandante.largo.cinturon": [
+    "comandante.largo.cinturon"
   ]
 }

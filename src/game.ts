@@ -2052,8 +2052,8 @@ export interface GameOptions {
   inicio?: EscenaDelInicio;
   /**
    * **El capítulo del vuelo largo, si no es el tercero**: el de su ficha del menú o,
-   * en desarrollo, `?capitulo=2`. Ver `flight/guion-noche-sobre-el-mar.ts`. Y el
-   * primero, de momento solo con `?capitulo=1`: ver `flight/guion-noche-de-madrid.ts`.
+   * en desarrollo, `?capitulo=1` o `?capitulo=2`. Ver `flight/guion-noche-de-madrid.ts`
+   * y `flight/guion-noche-sobre-el-mar.ts`.
    */
   capitulo?: 1 | 2;
 
@@ -7578,7 +7578,8 @@ export class Game {
      * pilotado, así que no es un aterrizaje ni un despegue del cuaderno. Ver
      * `apuntarElViaje`.
      */
-    if (escena.estado.momento === "fin") this.apuntarElViaje();
+    if (escena.estado.momento === "fin" && !(this.escenaDelInicio === "largo" && this.capituloDelLargo === 1))
+      this.apuntarElViaje();
     /*
      * Y el botón del final vuelve al hangar: un avión de línea que se acaba de
      * traer de pasajero no se sigue volando.
@@ -7712,6 +7713,10 @@ export class Game {
       localizador: enLaFinal ? this.rumboDelLocalizador() : null,
       senda: enLaFinal ? this.sendaDelGs() : null,
       cotaDelCampo: cota,
+      // El tope de la salida hasta su punto, en verdadera con el aire de hoy. Ver `Fijo.maxKt`.
+      ...(hasta?.maxKt !== undefined
+        ? { topeDeVelocidad: trueFromIndicated(hasta.maxKt * NUDO, s.position.y, this.flight.aireDelDia()) }
+        : {}),
     };
   }
 
@@ -8006,12 +8011,24 @@ export class Game {
       this.refrescarLaRuta();
       // El sello del campo al que se llegó, que es donde se está.
       const destino = this.elCampoDeAhora();
+      /*
+       * **Salvo en el primer capítulo del viaje largo**, que acaba subiendo sobre la meseta:
+       * no se llega a ningún campo, y ni el sello de Barajas, que no lo tiene, ni la página
+       * del viaje, que es la de lo visto entre las islas, dicen nada de lo que se hizo. Queda
+       * el anuncio, con el botón de seguir al segundo.
+       */
+      const sinLlegada = this.escenaDelInicio === "largo" && this.capituloDelLargo === 1;
       pantalla.pintar({
         gesto: null,
         mando: this.input.ultimoMando,
         lado: 0,
-        // Ni lo dicho hace rato, ni lo que se cortó a medias: ver `loDichoSeBorra`.
-        linea: p.linea && !inicio.laNocheCalla && !inicio.loDichoSeBorra
+        /*
+         * Ni lo dicho hace rato, ni lo que se cortó a medias: ver `loDichoSeBorra`. Salvo en el
+         * final sin llegada, que no tiene sello que ponga en la tarjeta: lo último que se dijo se
+         * queda escrito con el botón, que ya dice que se espera a quien juega, y la tarjeta no se
+         * queda en un recuadro vacío con el botón debajo.
+         */
+        linea: p.linea && !inicio.laNocheCalla && (!inicio.loDichoSeBorra || (sinLlegada && p.momento === "fin"))
           ? {
               quien: p.linea.quien,
               clave: p.linea.clave,
@@ -8027,12 +8044,12 @@ export class Game {
         fin:
           p.momento === "fin" || this.cuadernoForzadoParaBanco
             ? {
-                sello: selloDe(destino, t(destino.nameKey as TranslationKey)),
+                sello: sinLlegada ? null : selloDe(destino, t(destino.nameKey as TranslationKey)),
                 puedeSeguir: p.puedeSeguir || this.cuadernoForzadoParaBanco,
                 // Del primer capítulo del viaje largo no se vuelve: se sigue al segundo.
-                volver: !(this.escenaDelInicio === "largo" && this.capituloDelLargo === 1),
+                volver: !sinLlegada,
                 // Y la página del viaje, con lo visto por la ventanilla. Ver `apuntarElViaje`.
-                viaje: this.paginaDelViaje ?? paginaDelViaje(leerSellosDelViaje()),
+                ...(sinLlegada ? {} : { viaje: this.paginaDelViaje ?? paginaDelViaje(leerSellosDelViaje()) }),
               }
             : null,
       });
@@ -25053,6 +25070,12 @@ export class Game {
   /** A dónde manda ir el piloto automático, para los bancos. */
   get objetivosParaBanco(): Objetivos {
     return this.objetivos;
+  }
+
+  /** **La indicada de ahora**, nudos, la del anemómetro y con el aire del día: para los bancos. */
+  get indicadaParaBanco(): number {
+    const s = this.flight.state;
+    return indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) / NUDO;
   }
 
   /** El plan de vuelo y su progreso, para los bancos. */

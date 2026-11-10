@@ -3098,24 +3098,30 @@ export const EN: Dictionary = {
   "comandante.largo.llegada.verano": "It's twenty-five past six in the morning here. Have a lovely day.",
   "comandante.largo.llegada.invierno": "It's half past seven in the morning here. Have a lovely day.",
   "inicio.ara.pasaje.largo.llegamos": "We've reached Asunción! I crossed the whole ocean.",
-  "inicio.ara.pasaje.largo.embarque": "I'm in my window seat already! Everyone's putting their bags up top.",
-  "inicio.ara.pasaje.largo.nocheDeMadrid": "It's already night outside! And this plane is taking us home.",
+  "inicio.ara.pasaje.largo.embarque":
+    "This plane is so big, it has two aisles! And there's Idaira, from my other trip, helping a man with a big suitcase.",
+  "inicio.ara.pasaje.largo.nocheDeMadrid": "It's already night outside! And this plane is taking us home, to Asunción.",
   "comandante.largo.bienvenida":
     "Ladies and gentlemen, good evening, this is Captain Jazlyn speaking. The doors are now closed: welcome aboard this flight to Asunción.",
   "comandante.largo.vueloVerano":
-    "Our flight time will be about eleven hours, at around eleven thousand metres and with a headwind, and we'll arrive in Asunción at twenty-five past six in the morning, local time.",
+    "Our flight time will be eleven and a quarter hours, at around eleven thousand metres and with some headwind. We'll arrive in Asunción at twenty-five past six in the morning, local time.",
   "comandante.largo.vueloInvierno":
-    "Our flight time will be about eleven hours, at around eleven thousand metres and with a headwind, and we'll arrive in Asunción at half past seven in the morning, local time.",
+    "Our flight time will be eleven and a quarter hours, at around eleven thousand metres and with some headwind. We'll arrive in Asunción at half past seven in the morning, local time.",
   "comandante.largo.tresPilotos":
-    "As it's a long flight, there are three pilots today, and we take turns to rest. Have a good flight.",
+    "As it's a long flight, there are three pilots today, and we take turns to rest in beds above the flight deck. Even while I rest, I'm still responsible for the flight: if needed, they wake me up. Have a good flight.",
   "inicio.tripulacion.pasaje.demo.salidasLargo":
-    "This aircraft has eight emergency exits, four on each side. Find the one nearest to you, which may be behind you. Lights on the floor of the aisle will guide you to them.",
+    "This aircraft has eight emergency exits, four on each side. Find the one nearest to you, which may be behind you. Lights on the floor of the aisles will guide you to them.",
   "inicio.ara.pasaje.largo.lucesVerdes": "Look, there's a row of little green lights on the ground!",
   "inicio.tripulacion.pasaje.cerca.largo.lucesVerdes":
-    "They run down the middle of the taxiway the plane is rolling along: green means \"this way\".",
+    "They mark the middle of the taxiway the plane is rolling along: at night, the pilots follow that green line.",
   "inicio.ara.pasaje.largo.madrid": "Look at all the lights down there! That's Madrid, on my side.",
   "comandante.largo.cinturon":
-    "Ladies and gentlemen, we're still climbing, but we've switched off the seat belt sign. If you stay seated, please keep it fastened.",
+    "Ladies and gentlemen, we're still climbing, but we've switched off the seat belt sign. While you're seated, please keep it fastened.",
+  "inicio.ara.pasaje.largo.vientoPregunta": "Idaira, Mum said we have a headwind. Is there wind up here too?",
+  "inicio.tripulacion.pasaje.cerca.largo.vientoRios":
+    "Yes, lots. A bit higher, where we're going to fly, there are rivers of really fast wind.",
+  "inicio.tripulacion.pasaje.cerca.largo.vientoBarco":
+    "The plane moves in them like a boat in a river: with the current you get there sooner, against it you take longer. That's why the trip back to Madrid takes about three quarters of an hour less.",
   "inicio.tripulacion.pasaje.derlis.cena":
     "Children eat first. Here's yours: chicken and cassava from Granja Óga, nice and warm.",
   "inicio.ara.pasaje.largo.cena":
@@ -3159,6 +3165,7 @@ export const EN: Dictionary = {
     "The pilots see them on the radar and fly around them. That's why, in your seat, your seat belt always stays on.",
   "inicio.ara.pasaje.largo.sigoDurmiendo": "Then I'll keep sleeping, with my seat belt on.",
   "inicio.modo.largo": "Arrive in Asunción",
+  "inicio.modo.madrid": "Leave Madrid at night",
   "inicio.modo.noche": "Cross the sea at night",
   "inicio.modo.tripulanteDerlis": "The cabin crew member, right beside you",
   "inicio.dibujo.piernas": "A foot lifting and lowering its toes, without getting up from the seat.",
@@ -3171,6 +3178,8 @@ export const EN: Dictionary = {
   "ilustracion.manta": "Ara, sleepy, under the blanket with the seat belt on top, with the lights dimmed",
   "ilustracion.medio-despertar": "Ara half awake, the seat belt over the blanket, in the dark cabin",
   "ilustracion.embarque": "Ara at the window; people put their bags up top, and it is night outside",
+  "ilustracion.viento-de-arriba": "The Earth with two rivers of wind, and the plane flying from Spain to Paraguay",
+  "ilustracion.litera": "A pilot sleeps up top, in a curtained bunk; below, the other two fly the plane",
   "pantalla.datos.alt": "Height above the sea",
   "pantalla.datos.gs": "Speed over the ground",
   "pantalla.datos.oat": "Temperature outside",

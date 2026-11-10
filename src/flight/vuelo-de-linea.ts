@@ -158,6 +158,12 @@ export interface LecturaDeLinea {
   readonly senda: { readonly altitud: number; readonly ritmo: number } | null;
   /** La cota del campo donde se está o del de llegada, m. */
   readonly cotaDelCampo: number;
+  /**
+   * **El tope de velocidad de la salida publicada**, m/s de verdadera, o nada: el
+   * «MAX IAS» de la carta hasta su punto, pasado a verdadera con el aire del día por
+   * quien lo lee, que es quien lo tiene. Ver `Fijo.maxKt`.
+   */
+  readonly topeDeVelocidad?: number;
 }
 
 /** Lo que la tripulación sabe de su avión: la ficha y lo que contesta el modelo. */
@@ -609,7 +615,8 @@ export class VueloDeLinea {
      */
     if (potencia === "tierra" || this.tramo === "carrera") {
       this.empuje = potencia === "despegue" ? EMPUJE.despegue : 0;
-      return manos;
+      // Salvo ya en el aire con la velocidad sujeta, que el gas es la velocidad y se oye el despegue: ver `correr`.
+      return manos.gas === "velocidad" ? { ...manos, empuje: this.empuje } : manos;
     }
     // En la recogida el empuje sale con el gas, al ralentí al tocar. Ver `alturaDelGas`.
     const objetivo = EMPUJE[potencia] * (this.tramo === "recogida" ? (manos.fraccion ?? 1) : 1);
@@ -862,10 +869,18 @@ export class VueloDeLinea {
     const eje = this.alEje(l);
     const rota = l.velocidad >= this.ficha.vr || !l.enTierra;
     if (rota) this.subidaPedida = Math.min(SUBE_ABAJO, this.subidaPedida + CAMBIA_EN_LA_ROTACION * dt);
+    /*
+     * **Ya en el aire y con un tope de la carta por delante**, la de la subida con flaps y
+     * no el gas de despegue hasta los quince metros. En el modelo sencillo el gas es la
+     * velocidad, y la sube deprisa: medido con el JAZ 110 cargado para Asunción, de los 157
+     * nudos de la Vr a 229 en los tres segundos que tarda en llegar a los quince metros, con
+     * la salida pidiendo 205. Quien vuela de verdad lleva ahí la V2 y diez, con el morro.
+     */
+    const sujeta = !l.enTierra && l.topeDeVelocidad !== undefined;
     return {
       motor: true,
-      velocidad: Infinity,
-      gas: "despegue",
+      velocidad: sujeta ? Math.min(this.ficha.vr + 10, l.topeDeVelocidad!) : Infinity,
+      gas: sujeta ? "velocidad" : "despegue",
       subida: rota ? Math.max(2, this.subidaPedida) : null,
       alabeo: rota && !l.enTierra ? 0 : null,
       volante: l.enTierra ? eje : null,
@@ -956,11 +971,18 @@ export class VueloDeLinea {
     if (this.tramo === "subida") {
       const conFlaps = sobreElCampo < RECOGE_LOS_FLAPS;
       v = conFlaps ? this.ficha.vr + 10 : l.altitud < DIEZ_MIL ? V_250 : V_ARRIBA;
+      /*
+       * Y nunca por encima de lo que pide la carta de la salida hasta su punto: los 210
+       * nudos de la CCS6L hasta MD039 eran 236 a 250 sin esto, que es lo que hace quien
+       * acelera a los 250 en cuanto recoge los flaps.
+       */
+      if (l.topeDeVelocidad !== undefined) v = Math.min(v, l.topeDeVelocidad);
       flaps = conFlaps ? 1 / 3 : 0;
       // El tren dentro en cuanto sube de verdad: unos diez metros.
       tren = l.altura < 10;
     } else if (!bajando) {
       v = l.altitud < DIEZ_MIL ? V_250 : (this.velocidadDeCrucero ?? V_ARRIBA);
+      if (l.topeDeVelocidad !== undefined) v = Math.min(v, l.topeDeVelocidad);
     } else {
       v = l.altitud < DIEZ_MIL ? V_250 : this.velocidadBajando(l.altitud);
       if (falta < CONFIGURA.frena) v = Math.min(v, V_BAJANDO_CERCA);

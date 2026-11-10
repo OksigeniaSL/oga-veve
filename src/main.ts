@@ -221,9 +221,8 @@ function sitioDeLaEscena(e: EscenaDelInicio): string {
   return e === "pasaje" ? SITIO_DEL_PASAJE : SITIO_DEL_INICIO;
 }
 /**
- * **El capítulo del vuelo largo**: el tercero si no se dice otro. La noche sobre el mar
- * la abre su ficha del menú, en el hangar, más abajo; el primero, de momento, solo la
- * dirección. Con la dirección, `?capitulo=1` o `?capitulo=2`, solo en desarrollo: fuera
+ * **El capítulo del vuelo largo**: el tercero si no se dice otro. La noche de Madrid y la
+ * noche sobre el mar las abren sus fichas del menú, en el hangar, más abajo. Con la dirección, `?capitulo=1` o `?capitulo=2`, solo en desarrollo: fuera
  * de él un enlace con `?inicio=4` es siempre el tercero, que es también adonde recarga
  * la red de la noche. Y el recado de la pestaña, que deja la tarjeta del final del
  * primero para seguir en el segundo: ver `flight/capitulo-pedido.ts`.

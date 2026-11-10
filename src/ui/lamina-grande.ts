@@ -14,7 +14,9 @@
  * sol y la luna del huso. La del desayuno es una escena: esa llena la pantalla, y lo
  * que tapa la tarjeta es techo. La de la cena también lo es, pero con el tripulante de
  * pie, y a toda pantalla la tarjeta le caía justo en la cara: esa va enmarcada. La del medio
- * despertar, también: la tripulante atada y la luz del cartel quedan arriba, al fondo.
+ * despertar, también: la tripulante atada y la luz del cartel quedan arriba, al fondo. Y las
+ * dos de la bienvenida de Barajas: el viento de arriba es la Tierra entera, como el huso, y en
+ * la litera lo que cuenta está arriba, la cama con su cortina, justo donde caería la tarjeta.
  *
  * Y cuando tapa del todo no se pinta el mundo: ver `pintar` en `game.ts`.
  */
@@ -25,7 +27,15 @@ import { ilustracion } from "./ilustraciones";
 const FUNDIDO = { entra: 0.8, sale: 0.9 } as const;
 
 /** **Las que tienen que verse enteras**, por debajo de la tarjeta: ver arriba. */
-const SE_VEN_ENTERAS: ReadonlySet<string> = new Set(["huso-invierno", "huso-verano", "ecuador", "cena", "medio-despertar"]);
+const SE_VEN_ENTERAS: ReadonlySet<string> = new Set([
+  "huso-invierno",
+  "huso-verano",
+  "ecuador",
+  "cena",
+  "medio-despertar",
+  "viento-de-arriba",
+  "litera",
+]);
 
 /** Lo que mira el banco. */
 export interface LaminaParaBanco {
