@@ -30,7 +30,7 @@ await page.goto(`${BASE}/?escenario=valle-cordillera&hora=16`);
 
 const r = await page.evaluate(async (id) => {
   const THREE = await import('/node_modules/three/build/three.module.js');
-  const { SCENARIOS } = await import('/src/world/scenarios.ts');
+  const { conSuAerodromo, SCENARIOS } = await import('/src/world/scenarios.ts');
   const { Terrain } = await import('/src/world/terrain.ts');
   const { conRelieve } = await import('/src/world/relieve.ts');
   const crudo = SCENARIOS.find((s) => s.id === id);
@@ -38,7 +38,10 @@ const r = await page.evaluate(async (id) => {
   // **Con el relieve medido puesto**, igual que lo carga el juego. Sin esto la
   // comprobación miraba el terreno generado y seguía diciendo que Asunción
   // tenía el once por ciento bajo el agua después de haberlo arreglado.
-  const esc = await conRelieve(crudo);
+  // Y antes, el aeródromo de los que lo traen aparte, como Barajas, en el mismo
+  // orden que `main.ts`: sin él, el terreno no aplana su campo ni da su cota.
+  // Ver `aerodromoAparte`.
+  const esc = await conRelieve(await conSuAerodromo(crudo));
 
   const terreno = new Terrain(esc);
   const escena = new THREE.Scene();

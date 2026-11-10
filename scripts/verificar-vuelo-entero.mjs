@@ -6838,11 +6838,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const enPantalla = !!caja && !caja.hidden;
       const aqui = o.campoDeAhora?.() ?? null;
       if (!propuesto) return { propuesto, enPantalla, aqui, deAqui: null, cabe: null };
-      const { SCENARIOS, destinosDe } = await import("/src/world/scenarios.ts");
+      const { conSuAerodromo, SCENARIOS, destinosDe } = await import("/src/world/scenarios.ts");
       const { cabeEn, campoDe } = await import("/src/flight/cabe.ts");
       const { aircraftById } = await import("/src/flight/aircraft.ts");
       const sitio = SCENARIOS.find((e) => e.id === aqui);
-      const alla = SCENARIOS.find((e) => e.id === propuesto);
+      // Con su aeródromo, si lo trae aparte: `campoDe` lee de él la superficie y las
+      // distancias publicadas. Ver `aerodromoAparte`.
+      const hallado = SCENARIOS.find((e) => e.id === propuesto);
+      const alla = hallado && (await conSuAerodromo(hallado));
       return {
         propuesto,
         enPantalla,
