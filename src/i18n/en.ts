@@ -2738,7 +2738,7 @@ export const EN: Dictionary = {
   "inicio.ara.pasaje.persiana": "And why does the window blind have to be up for take-off?",
   "inicio.ara.pasaje.marchaAtras": "Hey, we're going backwards! Who's pushing us?",
   "inicio.tripulacion.pasaje.cerca.tractor":
-    "A tug, hooked onto the front wheel. Planes have no reverse gear: it pushes us out to the taxiway, and from there we carry on by ourselves, with our own engines.",
+    "A tug, hooked onto the front wheel. From the cockpit you can't see what's behind us, and backing out on the engines would blast the terminal: it pushes us out to the taxiway, and from there we carry on by ourselves.",
   "inicio.ara.pasaje.saluda": "That man is waving at us! And what's that red ribbon up in the air?",
   "inicio.tripulacion.pasaje.cerca.pasador":
     "It's the pin from the front wheel: while it's in, the tug does the steering. It's held up for the pilots so they can see it's out, and now we're free to go.",

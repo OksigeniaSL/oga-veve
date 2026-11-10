@@ -4251,7 +4251,7 @@ export const ES_PY = {
    */
   "inicio.ara.pasaje.marchaAtras": "¡Eh, estamos yendo para atrás! ¿Quién nos empuja?",
   "inicio.tripulacion.pasaje.cerca.tractor":
-    "Un tractor, enganchado a la rueda de delante. Los aviones no tienen marcha atrás: él nos saca hasta la calle, y de ahí ya seguimos solos, con nuestros motores.",
+    "Un tractor, enganchado a la rueda de delante. Desde la cabina no se ve lo que hay detrás, y para ir marcha atrás con los motores habría que soplar contra el edificio: él nos saca hasta la calle, y de ahí ya seguimos solos.",
   "inicio.ara.pasaje.saluda": "¡Ese señor nos saluda! ¿Y qué es la cinta roja que levanta?",
   "inicio.tripulacion.pasaje.cerca.pasador":
     "Es el pasador de la rueda de delante: mientras está puesto, la rueda la gira el tractor. Se lo enseña a los pilotos para que vean que ya lo quitó, y ahora sí nos podemos ir.",

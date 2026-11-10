@@ -9,7 +9,9 @@ de la megafonía y del primer capítulo del viaje largo, y el ADR 0023 lo dejaba
 salir de frente, y el T5 también. Queda dicho y sin hacer».
 
 Y no es lo que pasa. Un avión de línea que embarca pegado a la terminal aparca **con el morro hacia el edificio**, y de
-ahí no puede salir solo: no tiene marcha atrás. Le empuja un tractor hasta la calle de rodaje. Es de lo primero que ve
+ahí no sale solo: desde la cabina no se ve lo que hay detrás, y para ir marcha atrás con las reversas —el «powerback», que
+existe y casi ningún aeropuerto deja usar— el chorro iría contra la terminal, la pasarela y la gente de tierra. Le empuja un
+tractor hasta la calle de rodaje. Es de lo primero que ve
 quien se sube a un avión, y quien lo aprenda aquí tiene que reconocerlo ese día (AGENTS.md, regla 4). El dueño lo quiere
 en todo el juego. Esta es la primera mitad: los vuelos de pasaje, en los que el avión lo lleva su tripulación y Ara mira
 por la ventanilla. La segunda —quien juega pilotando un avión de línea, y el tráfico— queda para otro encargo, con las

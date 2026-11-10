@@ -10,7 +10,10 @@
  * - **Hacia atrás.** Lo primero que se nota desde la ventanilla es que la
  *   terminal se aleja hacia delante: se va de culo. Ara se da cuenta y
  *   pregunta quién empuja; la tripulante de cabina, a su lado, se lo cuenta:
- *   un tractor, porque los aviones no tienen marcha atrás.
+ *   un tractor, porque desde la cabina no se ve lo que hay detrás, y para ir
+ *   marcha atrás con los motores —las reversas, el «powerback»— habría que
+ *   soplar contra el edificio. No se dice que un avión no pueda ir hacia
+ *   atrás, porque puede, y quien lo aprenda tendría que desaprenderlo.
  * - **El saludo.** Al acabar, la persona de tierra se pone a la vista de la
  *   cabina, del lado de Ara, enseña el pasador con su cinta roja y saluda. Ara
  *   le pregunta por la cinta, y la tripulante le cuenta qué es: el pasador que
