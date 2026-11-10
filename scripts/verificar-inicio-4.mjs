@@ -1254,8 +1254,12 @@ async function elViajeSeguido() {
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
+  /*
+   * Menos los 404 del manifiesto de Ara: esos los pone el banco a propósito, con las dos `route` de
+   * abajo, y la consola los cuenta como errores. Cualquier otro 404 sí cuenta.
+   */
   page.on("console", (m) => {
-    if (m.type() === "error") errores.push(m.text().slice(0, 200));
+    if (m.type() === "error" && !m.location().url?.endsWith("/data/voces/ara/manifiesto.json")) errores.push(m.text().slice(0, 200));
   });
   const cargas = [];
   page.on("framenavigated", (f) => {
