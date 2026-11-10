@@ -27,6 +27,9 @@ piezas comunes ya hechas.
   se pone con su centro en el punto del puesto, así que el morro queda a medio largo; el largo sale de la batalla,
   multiplicada por dos y medio, que es lo que dan los de verdad con un par de metros de error. Una avioneta en la
   plataforma de aviación general sigue saliendo de frente: cada aparato hace lo que hace ese aparato.
+- **Y solo en un campo que embarca por pasarela** (`edificiosDePasarela`, `Aerodrome.pasarelas`): ver «Los campos con
+  pasarelas», más abajo. La regla de los cincuenta metros sola tomaba por pasarela cualquier edificio junto a una
+  plataforma.
 - **Con el morro al edificio** (`rumboEnElPuesto`): en el eje de la raya del puesto, que es la línea de entrada, si esa
   raya sale del puesto alejándose de la pared; si no, mirando a la pared más cercana.
 - **Con pasaje, el plan elige puestos de contacto** (`PlanDeVuelo.deContacto`): para salir, el que menos se rueda entre
@@ -168,17 +171,41 @@ está enganchado: iría por la raya, que va por detrás del avión.
 `world/remolque-en-cada-campo.test.ts` recorre los diecinueve escenarios con aeródromo con los tres reactores: elige el
 puesto de salida como el juego, y si es de contacto traza el empuje y mira que vaya hacia atrás, que el morro no entre
 en ningún edificio, que acabe a menos de un largo de avión de la raya y que el cruce con la calle quede por delante del
-morro, que rodando hacia delante se pase por él. Sale empujado en 47 de las 57 combinaciones; en las otras diez el
-puesto que se elige no es de contacto y se sale de frente (Pilar con los tres; Guaraní, Encarnación y Fuerteventura con
-el JAZ 90; Concepción y El Hierro con los dos grandes).
+morro, que rodando hacia delante se pase por él. Con la regla de los cincuenta metros sola salía empujado en 47 de las
+57 combinaciones, también en campos sin una sola pasarela. Desde «Los campos con pasarelas», en 23: los ocho campos que
+las tienen, con los tres reactores, menos Fuerteventura con el JAZ 90, cuyo puesto no es de contacto.
 
-**Cinco acaban con el cruce detrás del morro**: La Gomera y Barajas —fuera del T5— con los dos grandes, y Cuatro
-Vientos con el JAZ 90. En los cinco la raya sale del puesto de lado, a más de cincuenta grados de lo contrario a la
-pared; el avión se pone mirando a la pared, la recta de su cola y la de la calle casi no se cortan, y se gira desde el
-puesto con el radio más cerrado. Rodando hacia delante, la raya se rehace desde donde queda. Están apuntados en el test
-(`CON_EL_CRUCE_DETRAS`), que falla si alguno se arregla para que salga de la lista. Y en Ayolas el empuje acaba bien,
-pero con el cruce a treinta y cincuenta metros a un lado: en un campo así no hay pasarelas, y un edificio a menos de
-cincuenta metros del morro basta para que `esPuestoDeContacto` lo tome por una.
+**Dos acaban con el cruce detrás del morro**: Barajas —fuera del T5— con los dos grandes. Eran cinco; los otros tres,
+La Gomera con los dos grandes y Cuatro Vientos con el JAZ 90, eran puestos de una pasarela que no existe. En los dos
+la raya sale del puesto de lado, a más de cincuenta grados de lo contrario a la pared; el avión se pone mirando a la
+pared, la recta de su cola y la de la calle casi no se cortan, y se gira desde el puesto con el radio más cerrado.
+Rodando hacia delante, la raya se rehace desde donde queda. Están apuntados en el test (`CON_EL_CRUCE_DETRAS`), que
+falla si alguno se arregla para que salga de la lista.
+
+### Los campos con pasarelas
+
+Lo que separa de verdad un puesto de contacto es la pasarela, y eso no lo trae ningún fichero de aeródromo:
+OpenStreetMap tiene la etiqueta (`aeroway=jet_bridge`), pero preguntado el 10-11-2026 alrededor de cada campo solo la
+tenían dibujada Pettirossi (seis), Lanzarote (seis) y Fuerteventura (trece); Gran Canaria y los dos de Tenerife, que
+las tienen, ninguna. Reextraer no lo arreglaba. Así que va escrito a mano en el fichero de cada campo, con la cita,
+como `salidasPorInterseccion`, y la extracción lo conserva:
+
+| Campo | De dónde sale |
+| --- | --- |
+| Barajas | Aena; el capítulo 1 sale de una, en el T5 de la T1 |
+| Gran Canaria | Aena, licitación LPA 001/2024 (TED 040893-2024): las pasarelas T1, T9, T10 y T11 |
+| Tenerife Norte | Aena, nota de prensa del 09-05-2017: seis pasarelas nuevas |
+| Tenerife Sur | Aena, nota de prensa del 29-05-2017: mantenimiento de sus pasarelas |
+| Lanzarote | OpenStreetMap: seis |
+| Fuerteventura | OpenStreetMap: trece |
+| La Palma | Aena, nota de prensa del 26-07-2012: dos, en los extremos norte y sur del edificio |
+| Pettirossi | DINAC: cuatro mangas en el ala sur y dos en el ala norte; OpenStreetMap trae las seis |
+
+Sin el dato, el campo no tiene pasarelas: `edificiosDePasarela` le da cero edificios a `esPuestoDeContacto`, y ni quien
+juega ni el tráfico salen empujados. **Guaraní queda sin ellas por falta de fuente**, no porque se sepa que no las
+tiene: ni la DINAC ni OpenStreetMap ni las enciclopedias las mencionan. Si aparece, es una línea en `sges.aero.json`.
+En La Palma hay dos y el juego da por contacto cualquier puesto a menos de cincuenta metros de la fachada; afinar
+puesto a puesto pediría saber dónde está cada pasarela, y solo tres campos lo traen.
 
 ## El tráfico
 
@@ -215,8 +242,9 @@ empuje.
   del tráfico entra en lo que mira `cedeALosOtros`, como un avión más en cada punto: no se acercan a la separación de ala.
 - **Y para quien juega**: va en `tramosQueTienen` marcada `empuja`, y tu raya se corta antes **venga por donde venga**
   (`dondeSeAcerca` en `world/tramo-de-frente.ts`), no solo de frente como con el que rueda. Esperas como esperas a otro
-  avión; en casa no se dice la frase de «viene de frente», que no es verdad, y en cabina sí la de «give way to departing
-  traffic».
+  avión. En casa la instructora no dice «viene de frente», que no es verdad: dice lo que pasa, que a ese avión lo saca
+  un tractor para atrás y que su luz roja avisa que arranca los motores (`vuelo.dasPasoEmpujado`); en cabina, la torre
+  dice «give way to departing traffic», que vale para los dos.
 - **No se empieza con alguien dentro ni a punto de pasar** (`calleLibreParaEmpujar`): tú dentro de la zona o por donde
   vas a pasar en los próximos segundos, o uno del tráfico dentro o rodando hacia ella en los próximos ciento veinte
   metros. El que está parado no cuenta, que si espera por éste se esperarían los dos para siempre. Es lo que mira el
@@ -230,7 +258,14 @@ empuje.
 a sesenta fotogramas en una tableta de gama media (AGENTS.md, regla 6). En los campos del juego no suele haber más de un
 reactor del tráfico saliendo a la vez; un tercero espera enganchado en su puesto a que se suelte uno, que es lo que pasa
 en un aeropuerto cuando faltan tractores. El dibujo existe solo de la baliza al saludo, y se suelta al acabar o al
-retirar el avión. No se ha medido el coste en fotogramas con dos tractores en pantalla.
+retirar el avión.
+
+**Lo que cuesta uno, medido** en la escena de Los Rodeos con la tarjeta de verdad: con las piezas sueltas, treinta y una
+mallas y diecisiete materiales, de 202 llamadas de dibujo a 231 con un tractor a la vista, un 14 % más. Las piezas
+quietas del tractor y de la persona se juntan ahora en una por material (`juntarPorMaterial` en
+`world/tractor-de-remolque.ts`), con las mismas cajas y los mismos vértices: dieciocho mallas, y 218 llamadas, un 8 %.
+Lo que se mueve —brazos, piernas, el pasador, el cable— sigue suelto, y la baliza lleva su propio material, que es el
+que destella. No se ha medido en fotogramas con dos tractores en pantalla, que eso pide una tableta.
 
 ### Cada puesto, de un avión
 
@@ -257,8 +292,9 @@ quedaba en la calle sin poder pasarle al lado. En un aeropuerto cada puesto es d
 ### Lo medido
 
 - `world/trafico-empujado.test.ts`: en cada campo con calles, el reactor del tráfico sale empujado de un puesto de
-  contacto en Pettirossi, Los Rodeos (46 m de empuje), La Palma, Tenerife Sur, Gran Canaria, Lanzarote, La Gomera y
-  Barajas (25 m); de culo, sin morro en ninguna pared, con la doble raya por detrás del empuje y rodando hacia delante
+  contacto en Pettirossi, Los Rodeos (46 m de empuje), La Palma, Tenerife Sur, Gran Canaria, Lanzarote y Barajas
+  (25 m) —en La Gomera también, hasta «Los campos con pasarelas»; ahora, en los campos sin ellas, el test mira que no
+  haya tractor—; de culo, sin morro en ninguna pared, con la doble raya por detrás del empuje y rodando hacia delante
   al soltarse. Y llega con el morro al edificio. En Los Rodeos, con el tráfico entero: espera a que pases, empuja, la
   zona corta tu raya y rueda después.
 - `scripts/ver-remolque-del-trafico.mjs`, en el navegador y con la tarjeta de verdad: en Los Rodeos, 52,6 m de culo en
@@ -268,21 +304,12 @@ quedaba en la calle sin poder pasarle al lado. En un aeropuerto cada puesto es d
 
 ## Lo que queda
 
-- **Los puestos de contacto falsos en el tráfico**: con la regla de los cincuenta metros, para el reactor del tráfico
-  también salen «de contacto» Ayolas, Mariscal Estigarribia, Pedro Juan Caballero, Concepción, El Hierro y Cuatro
-  Vientos. No se nota porque en esos campos no opera el reactor del tráfico (`OPERAN`), pero es la misma cuenta que la
-  de quien juega: ver «Los cinco empujes con el cruce detrás».
-- **Lo que dicen los datos para distinguir un puesto de contacto**, mirado y sin tocar: ningún aeródromo extraído trae
-  pasarelas (`aeroway=jet_bridge`), y la clase `terminal` del edificio no basta. La tienen seis edificios de Barajas, uno
-  de Los Rodeos, cinco de La Gomera y el único de Ayolas, y ninguno de Cuatro Vientos. Exigir una terminal quitaría los
-  puestos falsos de Cuatro Vientos, pero no los de La Gomera, que tiene terminal y no pasarelas, ni los de Ayolas, cuya
-  terminal es su único edificio. Lo que separa de verdad un puesto de contacto es la pasarela, y eso pide volver a
-  extraer los aeródromos con ella.
 - **La radio de tierra en el peldaño de cabina**: el «pushback and start approved» y la conversación por el cable con
   la persona de tierra. Hace falta la pieza de la torre con sus recetas —el indicativo, los dos acentos— o una voz de
   tierra nueva; mientras, ese peldaño tiene las tarjetas y la frase de arrancar de siempre.
 - **La baliza en el cuadro**: el cuadro del juego no tiene panel de luces —en los de verdad la baliza va en el panel
   del techo—, así que la baliza se ve en el avión y no en la cabina.
-- **Los cinco empujes con el cruce detrás**, y Ayolas: ver «Lo que se mide en cada campo».
-- **Lo que cuesta un tractor del tráfico en fotogramas**, con dos en pantalla en una tableta de gama media: no se ha
-  medido. El tope de dos es el que se puso sin esa medida.
+- **Barajas fuera del T5 con los dos grandes**, con el cruce detrás: ver «Lo que se mide en cada campo».
+- **Lo que cuesta un tractor en fotogramas**, con dos en pantalla en una tableta de gama media: medido en llamadas de
+  dibujo (ver «Dos tractores a la vez, como mucho»), no en fotogramas, que eso pide la tableta.
+- **Las pasarelas de Guaraní**, si las tiene: ver «Los campos con pasarelas».
