@@ -368,7 +368,7 @@ export const EN: Dictionary = {
   "vuelo.arrancando": "Release the brakes and roll slowly",
   "vuelo.remolque": "Ask for the tug: it pushes us back to the taxiway",
   "vuelo.remolqueArranca":
-    "The tug is pushing us back, since you can't see behind from the cockpit. Start the engines meanwhile",
+    "The tug pushes us back, because you can't see what's behind us from the cockpit. Meanwhile, start the engines",
   "vuelo.remolqueSuelta":
     "Look left: they show you the pin with its red streamer and wave. With it out, the nose wheel is yours again: you can taxi now",
   "vuelo.rodando": "Follow the green line",

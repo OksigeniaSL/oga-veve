@@ -1753,7 +1753,7 @@ export const ES_PY = {
    */
   "vuelo.remolque": "Pedí el tractor: nos empuja para atrás hasta la calle",
   "vuelo.remolqueArranca":
-    "El tractor nos lleva para atrás, que desde la cabina no se ve. Arrancá los motores mientras tanto",
+    "El tractor nos lleva para atrás, porque desde la cabina no se ve lo que hay detrás. Mientras tanto, arrancá los motores",
   "vuelo.remolqueSuelta":
     "Mirá a la izquierda: te enseña el pasador con su cinta roja y te saluda. Sin él, la rueda de adelante vuelve a ser tuya: ya podés rodar",
   "vuelo.rodando": "Seguí la raya verde",
