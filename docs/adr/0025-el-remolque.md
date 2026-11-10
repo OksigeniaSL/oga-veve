@@ -1,6 +1,6 @@
 # ADR 0025 — El remolque: se sale empujado de un puesto de contacto
 
-**Fecha**: 2026-11-10 · **Estado**: aceptada, primera mitad · **Corrige**: [ADR 0023](0023-el-vuelo-largo-por-capitulos-y-con-saltos.md), «No hay remolque»
+**Fecha**: 2026-11-10 · **Estado**: aceptada; segunda mitad hecha salvo el tráfico · **Corrige**: [ADR 0023](0023-el-vuelo-largo-por-capitulos-y-con-saltos.md), «No hay remolque»
 
 ## Contexto
 
@@ -108,12 +108,86 @@ es lo que hace un avión empujado, que no derrapa.
   morro hacia la raya, que el tractor y la persona quedan fuera del ala y que nadie atraviesa nada. El del tercer
   capítulo mira que se llega de frente a un puesto de contacto.
 
-## Lo que queda para la segunda mitad
+## La segunda mitad: quien juega pilotando un avión de línea
 
-- **Quien juega pilotando un avión de línea**: elegir el puesto de contacto con `deContacto`, ponerlo con
-  `rumboEnElPuesto`, trazar con `trayectoriaDelEmpuje` y llevarlo con `Remolque` y `DibujoDelRemolque`, como hace
-  `prepararElRemolque` en `game.ts`; lo que falta es lo de quien juega: cómo pide el empuje, la baliza en su cuadro, la
-  voz de la instructora y el arranque con el tractor enganchado.
-- **El tráfico**: los aviones de línea del tráfico que salen de un puesto de contacto, con las mismas piezas.
-- **La segunda mitad tendrá que revisar el alcance de la calle** en campos que no se han mirado: está medido en
-  Barajas, Los Rodeos, La Palma y Pettirossi.
+### Qué aviones se empujan
+
+- **Los que embarcan por pasarela** (`vaALaPasarela` en `flight/velocidades-en-tierra.ts`): los tres reactores. El
+  JAZ 90 vuela como un E-170, el JAZ 110 «Tijereta» como un 787-9 y el JAZ 120 «Yvága» como un 747; los tres aparcan
+  con el morro pegado a la terminal y los saca un tractor. (El encargo los nombraba al revés: el 787 es el JAZ 110 y el
+  JAZ 120 es el cuatrimotor; se empujan los dos.)
+- **El JAZ 60 no.** Vuela como un Beech 1900D: diecinueve plazas y una puerta con su propia escalerilla detrás del ala,
+  a un metro del suelo, que ninguna pasarela alcanza. Embarca a pie en la plataforma y sale por sus medios. Sigue siendo
+  «de línea» para rodar y para ir a un puesto de la terminal (`esDeLinea`), pero no es de pasarela. Las avionetas,
+  tampoco: salen de frente de la plataforma de aviación general.
+- `saleConRemolque` y los puestos de contacto del plan usan ya este criterio, también en los vuelos de pasaje, que solo
+  usan reactores y no cambian.
+
+### De dónde sale y adónde llega
+
+- **Con un reactor, fuera del modo inicio, el plan elige puestos de contacto** (`PlanDeVuelo.deContacto` con
+  `Game.quienJuegaSaleEmpujado`): para salir, el de contacto con el que menos se rueda hasta la cabecera, que es el
+  criterio de `puestoDeSalida` y su queja de los quince minutos de rodaje; para llegar, el de contacto más cercano
+  rodando donde quepan las alas. Se llega de frente, con el señalero. Las escenas del modo inicio guían el arranque
+  paso a paso y no saben de tractores: con ellas, como antes.
+- **Del puesto al que se llegó también se sale empujado** (`salirEmpujadoDeDondeSeLlego`): con el morro al edificio, la
+  llave abre el tramo siguiente con los motores parados y engancha el tractor donde está el avión. Si no hay por dónde
+  empujar, arranca como siempre.
+
+### Cómo lo pide quien juega, y qué hace mientras
+
+En una cabina de verdad se pide a tierra «remolque y puesta en marcha», se suelta el freno cuando lo pide la persona
+de tierra, se arrancan los motores con su permiso empujando, y al acabar se pone el freno, se suelta el tractor y la
+persona enseña el pasador. En el juego es **el mismo gesto que arrancar, en el mismo sitio**: la tarjeta de la fase de
+arrancar y la llave del motor, sin otra máquina de fases (`tarjetaDelRemolque`, `pedirElRemolque`, `atenderAlRemolque`).
+
+1. **En el puesto**, la tarjeta de la fase es el tractor —el avión visto desde arriba, el tractor en el morro y la
+   flecha hacia atrás— con la tecla de la llave al lado, y se toca. La instructora: «Pedí el tractor: nos empuja para
+   atrás hasta la calle». Si no se toca nada no pasa nada: el avión sigue enganchado y la tarjeta, puesta.
+2. **Al tocarla** (o con la tecla) se enciende la baliza y, a los tres segundos —los mismos que la tripulación—, el
+   tractor empuja. Del freno de aparcamiento no hay mando en el juego: se suelta y se pone solo, a su hora.
+3. **Empujando, vuelve la llave**: «El tractor nos lleva para atrás, que desde la cabina no se ve. Arrancá los motores
+   mientras tanto». En el peldaño de cabina, la frase de siempre, «Arrancá el motor»: ahí ya no se cuenta el porqué.
+4. **Si al acabar de empujar los motores siguen parados, el tractor espera** enganchado y con el freno puesto
+   (`Remolque.esperaLosMotores`), con la tarjeta de la llave delante. Es lo de verdad: la persona de tierra sigue
+   enchufada mientras se arranca, mirando los motores desde fuera, y no suelta hasta que la cabina le dice que están en
+   marcha. La tripulación los arranca empujando y nunca llega a esperar.
+5. **Con los motores en marcha y el tractor enganchado**, la fase se calla (`elRemolqueLlevaLaSalida`), como con el
+   señalero en la llegada: diría «soltá el freno y andá», y eso no toca todavía. Queda el dibujo del tractor, sin tecla.
+6. **El saludo**: la tarjeta del pasador con su cinta roja y, en los tres peldaños de abajo, la instructora: «Mirá a la
+   izquierda: te enseña el pasador con su cinta roja y te saluda. Sin él, la rueda de adelante vuelve a ser tuya: ya
+   podés rodar». En el de cabina, el dibujo solo.
+7. **Libre**: vuelve la tarjeta de la fase, con su voz —«Soltá el freno y andá despacito»—, y se rueda hacia delante.
+
+Hasta el saludo **el avión no se mueve más que con el tractor** (`empujarElAvion`): enganchado en el puesto, empujado,
+y con el freno puesto al acabar. Lo que se toque del gas no lo mueve. Y el coche del sígame no sale mientras el tractor
+está enganchado: iría por la raya, que va por detrás del avión.
+
+### Lo que se mide en cada campo
+
+`world/remolque-en-cada-campo.test.ts` recorre los diecinueve escenarios con aeródromo con los tres reactores: elige el
+puesto de salida como el juego, y si es de contacto traza el empuje y mira que vaya hacia atrás, que el morro no entre
+en ningún edificio, que acabe a menos de un largo de avión de la raya y que el cruce con la calle quede por delante del
+morro, que rodando hacia delante se pase por él. Sale empujado en 47 de las 57 combinaciones; en las otras diez el
+puesto que se elige no es de contacto y se sale de frente (Pilar con los tres; Guaraní, Encarnación y Fuerteventura con
+el JAZ 90; Concepción y El Hierro con los dos grandes).
+
+**Cinco acaban con el cruce detrás del morro**: La Gomera y Barajas —fuera del T5— con los dos grandes, y Cuatro
+Vientos con el JAZ 90. En los cinco la raya sale del puesto de lado, a más de cincuenta grados de lo contrario a la
+pared; el avión se pone mirando a la pared, la recta de su cola y la de la calle casi no se cortan, y se gira desde el
+puesto con el radio más cerrado. Rodando hacia delante, la raya se rehace desde donde queda. Están apuntados en el test
+(`CON_EL_CRUCE_DETRAS`), que falla si alguno se arregla para que salga de la lista. Y en Ayolas el empuje acaba bien,
+pero con el cruce a treinta y cincuenta metros a un lado: en un campo así no hay pasarelas, y un edificio a menos de
+cincuenta metros del morro basta para que `esPuestoDeContacto` lo tome por una.
+
+## Lo que queda
+
+- **El tráfico**: los aviones de línea del tráfico que salen de un puesto de contacto, con las mismas piezas, y que
+  mientras empujan ocupen la calle para los demás (`tramo-de-frente.ts`, `repartirLosTramos`). No cupo en la segunda
+  mitad.
+- **La radio de tierra en el peldaño de cabina**: el «pushback and start approved» y la conversación por el cable con
+  la persona de tierra. Hace falta la pieza de la torre con sus recetas —el indicativo, los dos acentos— o una voz de
+  tierra nueva; mientras, ese peldaño tiene las tarjetas y la frase de arrancar de siempre.
+- **La baliza en el cuadro**: el cuadro del juego no tiene panel de luces —en los de verdad la baliza va en el panel
+  del techo—, así que la baliza se ve en el avión y no en la cabina.
+- **Los cinco empujes con el cruce detrás**, y Ayolas: ver «Lo que se mide en cada campo».
