@@ -88,6 +88,8 @@ export interface SueloDelTrafico {
      * raya, con el morro al edificio. Ver `alPuestoPorSuRaya`.
      */
     pasarela?: { readonly batalla: number },
+    /** Los puestos que ya tienen otros aviones del tráfico. Ver `PuestosDeOtros`. */
+    deOtros?: PuestosDeOtros,
   ): {
     /** Metros desde el umbral de aterrizar hasta la boca de la salida. */
     readonly boca: number;
@@ -118,6 +120,8 @@ export interface SueloDelTrafico {
      * empujado por un tractor, de espaldas, hasta la calle. Ver `empujado`.
      */
     pasarela?: { readonly batalla: number },
+    /** Los puestos que ya tienen otros aviones del tráfico. Ver `PuestosDeOtros`. */
+    deOtros?: PuestosDeOtros,
   ): SalidaDelPuesto | null;
   /**
    * **Si entre la plataforma y la pista no hay más que una calle**: todo lo
@@ -132,6 +136,35 @@ export interface SueloDelTrafico {
    * la vez por ella. Ver `Momento.calleOcupada` en `flight/radio.ts`.
    */
   unaSolaCalle(): boolean;
+}
+
+/**
+ * **Los puestos que ya son de otro**, y la semiala de quien busca uno. En un
+ * aeropuerto cada puesto es de un avión: el que sale lo tiene hasta que lo deja
+ * y el que llega, desde que se le asigna. Y uno al lado vale si las alas no se
+ * tocan, con el margen de un puesto (`MARGEN_EN_EL_PUESTO`). Ver
+ * `puestosDelTrafico` en `trafico.ts`.
+ */
+export interface PuestosDeOtros {
+  readonly semiala: number;
+  /** Ya mirando: para la vuelta sin ellos si con ellos no queda ninguno. */
+  readonly conTodos?: boolean;
+  readonly ocupados: readonly { readonly x: number; readonly z: number; readonly semiala: number }[];
+}
+
+/**
+ * **Lo que se deja entre las puntas de las alas de dos aviones en puestos de al
+ * lado**, m: el de la clave C en un puesto (OACI, Anexo 14, 3.13.6), que es la
+ * del mayor del tráfico.
+ */
+export const MARGEN_EN_EL_PUESTO = 4.5;
+
+/** Si un puesto queda libre de los de otros, con sus alas y su margen. */
+export function puestoLibre(x: number, z: number, deOtros: PuestosDeOtros | undefined): boolean {
+  if (!deOtros) return true;
+  return deOtros.ocupados.every(
+    (o) => Math.hypot(o.x - x, o.z - z) >= deOtros.semiala + o.semiala + MARGEN_EN_EL_PUESTO,
+  );
 }
 
 /** **La salida de un puesto**, del puesto a la doble raya, al eje y alineado. */
@@ -417,6 +450,27 @@ export function sueloDelTrafico(
     deContacto.set(pasarela.batalla, lista);
     return lista;
   };
+  /**
+   * **Entre qué puestos elige**: los suyos —los de contacto si embarca por
+   * pasarela— que no son de otro avión del tráfico; si todos lo son, cualquiera
+   * libre; si ni así, uno que al menos no sea el mismo que el de otro. Dos aviones
+   * en el mismo puesto se metían el uno dentro del otro.
+   */
+  const candidatosPara = (
+    pasarela: { readonly batalla: number } | undefined,
+    deOtros: PuestosDeOtros | undefined,
+  ): { readonly lista: readonly Punto[]; readonly deContacto: boolean } => {
+    const suyos = puestosPara(pasarela);
+    const deContactoDeVerdad = suyos !== puestos;
+    if (!deOtros?.ocupados.length) return { lista: suyos, deContacto: deContactoDeVerdad };
+    const libres = suyos.filter((xy) => puestoLibre(xy[0], -xy[1], deOtros));
+    if (libres.length) return { lista: libres, deContacto: deContactoDeVerdad };
+    const otros = puestos.filter((xy) => puestoLibre(xy[0], -xy[1], deOtros));
+    if (otros.length) return { lista: otros, deContacto: false };
+    const distintos = puestos.filter((xy) => deOtros.ocupados.every((o) => Math.hypot(o.x - xy[0], o.z + xy[1]) > 5));
+    return { lista: distintos.length ? distintos : puestos, deContacto: false };
+  };
+
   /** Si el camino empieza o acaba en un puesto de contacto para ese avión. */
   const enUnPuestoDeContacto = (p: EnElPlano, pasarela: { readonly batalla: number }): boolean =>
     puestos.some((xy) => Math.hypot(xy[0] - p.x, -xy[1] - p.z) < 1) &&
@@ -548,7 +602,8 @@ export function sueloDelTrafico(
     hacia: "puesto" | "punto",
     evitar: readonly EnElPlano[] | undefined,
     ocupados?: OcupadosEnElMundo,
-    candidatos: readonly Punto[] = puestos,
+    candidatos: { readonly lista: readonly Punto[]; readonly deContacto: boolean } = { lista: puestos, deContacto: false },
+    deOtros?: PuestosDeOtros,
   ): { puntos: Punto[]; ocupada: boolean } | null => {
     const porDondeNo = ocupados?.puntos.length
       ? {
@@ -556,7 +611,7 @@ export function sueloDelTrafico(
           radio: ocupados.radio,
         }
       : undefined;
-    const cerca = [...lejosDe(candidatos, evitar)]
+    const cerca = [...lejosDe(candidatos.lista, evitar)]
       .sort(
         (a, b) =>
           Math.hypot(a[0] - punto[0], a[1] - punto[1]) -
@@ -595,10 +650,17 @@ export function sueloDelTrafico(
        */
       const sinRemate = hacia === "puesto" ? r.puntos.slice(0, -1) : r.puntos.slice(1);
       const puntos =
-        candidatos !== puestos && sinRemate.length >= 2 && porElAsfalto(sinRemate)
+        candidatos.deContacto && sinRemate.length >= 2 && porElAsfalto(sinRemate)
           ? [...r.puntos]
           : recortarAlAsfalto([...r.puntos], hacia, porElAsfalto);
       if (!puntos) continue;
+      /*
+       * Y donde acaba de verdad, libre de los demás: recortado al asfalto, el camino
+       * acaba en el último nudo de la plataforma, y ahí dos puestos distintos se
+       * quedaban en el mismo sitio.
+       */
+      const extremo = hacia === "puesto" ? puntos[puntos.length - 1]! : puntos[0]!;
+      if (!puestoLibre(extremo[0], -extremo[1], deOtros)) continue;
       mejor = { puntos, largo: r.largo, ocupada };
     }
     return mejor ? { puntos: mejor.puntos, ocupada: mejor.ocupada } : null;
@@ -606,7 +668,17 @@ export function sueloDelTrafico(
 
   let unaSola: boolean | undefined;
   const suelo: SueloDelTrafico = {
-    llegada(desdeElUmbral, evitar, ocupados, pasarela) {
+    llegada(desdeElUmbral, evitar, ocupados, pasarela, deOtros) {
+      /*
+       * Con los puestos de los demás, si queda alguno libre; si no, como antes, que
+       * un avión sin camino no puede aterrizar. Ver `PuestosDeOtros`.
+       */
+      if (deOtros?.ocupados.length && !deOtros.conTodos)
+        return (
+          suelo.llegada(desdeElUmbral, evitar, ocupados, pasarela, { ...deOtros, conTodos: true }) ??
+          suelo.llegada(desdeElUmbral, evitar, ocupados, pasarela)
+        );
+
       /*
        * **La salida que antes deja la pista libre**, no la primera que hay.
        *
@@ -637,7 +709,7 @@ export function sueloDelTrafico(
         const hastaLaBoca = hastaLa(boca.along);
         if (mejor && hastaLaBoca >= mejor.coste) continue;
         const desde = grafo.nudos[boca.nudo]!;
-        const hecha = rutaConPuesto(desde, "puesto", evitar, ocupados, puestosPara(pasarela));
+        const hecha = rutaConPuesto(desde, "puesto", evitar, ocupados, candidatosPara(pasarela, deOtros), deOtros);
         if (!hecha) continue;
         const ruta = hecha.puntos;
         const derecho = [enElEje(boca.along), ...ruta.map(alMundo)];
@@ -687,7 +759,12 @@ export function sueloDelTrafico(
         : null;
     },
 
-    salida(evitar, porDondeVas, pistaQueNecesita = 0, pasarela) {
+    salida(evitar, porDondeVas, pistaQueNecesita = 0, pasarela, deOtros) {
+      if (deOtros?.ocupados.length && !deOtros.conTodos)
+        return (
+          suelo.salida(evitar, porDondeVas, pistaQueNecesita, pasarela, { ...deOtros, conTodos: true }) ??
+          suelo.salida(evitar, porDondeVas, pistaQueNecesita, pasarela)
+        );
       /*
        * Por la boca más cerca de la cabecera de salida —la que deja más pista
        * por delante—: del puesto a la boca por las calles, y en el camino, la
@@ -740,7 +817,7 @@ export function sueloDelTrafico(
         const daSuPista = pistaDesde(boca) >= pistaQueNecesita;
         if (!daSuPista && remonte) continue;
         const nudo = grafo.nudos[boca.nudo]!;
-        const ruta = rutaConPuesto(nudo, "punto", evitar, undefined, puestosPara(pasarela))?.puntos;
+        const ruta = rutaConPuesto(nudo, "punto", evitar, undefined, candidatosPara(pasarela, deOtros), deOtros)?.puntos;
         if (!ruta) continue;
         const hecha = cortarEnLaRaya(ruta.map(alMundo), ejes, ancho, mitad);
         if (!hecha) continue;

@@ -21,6 +21,7 @@ import {
 } from "./trafico";
 import { esPuestoDeContacto, largoPorLaBatalla, paredMasCercana, vector } from "./remolque";
 import { dondeSeAcerca } from "./tramo-de-frente";
+import { RETENIDO } from "../flight/radio";
 
 const REACTOR = TIPOS.reactor;
 const PASARELA = pasarelaDelTrafico(REACTOR)!;
@@ -238,5 +239,64 @@ describe("en Los Rodeos, un reactor del tráfico empujado de su puesto", async (
     const corta = dondeSeAcerca(tuRaya, zona!.porDelante, enTierra.separacion);
     expect(corta, "tu raya se corta antes").not.toBeNull();
     expect(corta!.dentro).toBe(false);
+  });
+});
+
+/**
+ * **Cada puesto es de un avión**, como en un aeropuerto de verdad: tres que salen,
+ * retenidos en su puesto, y tres que acaban de dejar la pista camino del suyo, con
+ * los tipos de cada campo. Ni el mismo puesto ni uno de al lado con las alas
+ * tocándose, si el campo tiene puestos para todos.
+ */
+describe("cada puesto es de un avión del tráfico, en cada campo", async () => {
+  const campos = (await Promise.all(SCENARIOS.map((e) => conSuAerodromo(e)))).filter(
+    (e) => e.aerodrome && !e.aerodrome.privado && e.aerodrome.taxiways.length,
+  );
+  const medidas: { campo: string; puestos: number; conPuesto: number; masCerca: number }[] = [];
+  for (const esc of campos) {
+    it(esc.id, () => {
+      const aero = esc.aerodrome as Aerodrome;
+      const tipos = tiposDelCampo(aero.id, esc.runway.length, sinTorre(aero));
+      if (!tipos.length) return;
+      const cota = aero.elevationM ?? 0;
+      const suelo = sueloDelTrafico(aero, esc.runway, aero.runways[0]?.widthM ?? 45);
+      const trafico = crearTrafico(esc.runway, cota, "ala-alta", "izquierda", 1, undefined, {
+        tipos,
+        tierra: () => (suelo ? { suelo, alto: () => cota } : null),
+      });
+      /*
+       * Tantos como quepan con holgura, hasta seis: la mitad saliendo, retenidos en su
+       * puesto, y la otra mitad recién salidos de la pista camino del suyo. Uno por cada
+       * tres puestos dibujados: en El Hierro los nueve están a once metros unos de otros,
+       * en tres grupos, y un ATR de veintisiete metros de envergadura ocupa un grupo
+       * entero; caben tres. En Pilar, con un puesto, uno.
+       */
+      const puestos = aero.parkingPositions?.length ?? 0;
+      const cuantos = Math.max(1, Math.min(6, Math.floor(puestos / 3)));
+      const matriculas = ["EC-AAA", "EC-DDD", "EC-BBB", "EC-EEE", "EC-CCC", "EC-FFF"].slice(0, cuantos);
+      matriculas.forEach((m, i) =>
+        i % 2 === 0 ? trafico.anuncia(m, RETENIDO) : trafico.anuncia(m, "otro.pistaLibre", true),
+      );
+      const con = trafico
+        .porDentro()
+        .map((q) => ({ m: q.matricula, p: q.puesto, ala: TIPOS[q.tipo].envergadura / 2 }))
+        .filter((q) => q.p);
+      let masCerca = Infinity;
+      for (let i = 0; i < con.length; i++)
+        for (let j = i + 1; j < con.length; j++) {
+          const a = con[i]!;
+          const b = con[j]!;
+          const d = Math.hypot(a.p!.x - b.p!.x, a.p!.z - b.p!.z);
+          masCerca = Math.min(masCerca, d - a.ala - b.ala);
+          // Ni el mismo puesto ni uno de al lado con las alas tocándose.
+          expect(d, `${a.m} y ${b.m}: las alas en los puestos`).toBeGreaterThanOrEqual(a.ala + b.ala);
+        }
+      medidas.push({ campo: esc.id, puestos, conPuesto: con.length, masCerca: +masCerca.toFixed(1) });
+    });
+  }
+  it("lo medido", () => {
+    const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env;
+    if (env?.OGA_MEDIDAS === "1") console.table(medidas);
+    expect(medidas.length).toBeGreaterThan(0);
   });
 });

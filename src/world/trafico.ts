@@ -58,8 +58,10 @@ import {
 import { FACTOR_DE_ESCUELA, MARGEN_DE_CERTIFICACION } from "../flight/carrera";
 import {
   PASA_A_TU_LADO,
+  puestoLibre,
   type EnElPlano,
   type OcupadosEnElMundo,
+  type PuestosDeOtros,
   type SueloDelTrafico,
 } from "./suelo-del-trafico";
 import {
@@ -729,6 +731,12 @@ export interface TierraDelTrafico {
    * `suelo-del-trafico.ts`.
    */
   readonly ocupados?: OcupadosEnElMundo;
+  /**
+   * **Y los puestos que ya son de otros del tráfico**: no se aparca ni se sale
+   * de uno de ellos, ni de uno de al lado en el que las alas se tocarían. Ver
+   * `puestosDelTrafico`.
+   */
+  readonly deOtros?: PuestosDeOtros;
   readonly tipo: TipoDeTrafico;
 }
 
@@ -1035,7 +1043,7 @@ export function trazar(
       z: p.z,
     });
     const pasarela = pasarelaDelTrafico(t);
-    const llega = tierra.suelo.llegada(t.toca + t.frena, tierra.evitar, tierra.ocupados, pasarela);
+    const llega = tierra.suelo.llegada(t.toca + t.frena, tierra.evitar, tierra.ocupados, pasarela, tierra.deOtros);
     if (llega && llega.camino.length > 1) {
       const tomaDeVerdad = sobre(en(desplazado + t.toca, 0, 0));
       const rodando = llega.camino.map(sobre);
@@ -1069,6 +1077,7 @@ export function trazar(
       tierra.porDondeVas,
       pistaQuePideConSuMargen(t),
       pasarela,
+      tierra.deOtros,
     );
     if (sale && sale.camino.length > 1) {
       const rodando = sale.camino.map(sobre);
@@ -2012,6 +2021,8 @@ export interface Trafico {
     frenteATi: "espera" | "pasa" | "frente" | null;
     /** Segundos esperando fuera de un tramo. Ver `hastaElTramo`. */
     aguarda: number;
+    /** El puesto que tiene, si tiene uno. Ver `puestosDelTrafico`. */
+    puesto: { x: number; z: number } | null;
   }[];
   /**
    * **Todos fuera.** Lo pide volver a empezar: la frecuencia empieza de cero
@@ -2095,6 +2106,8 @@ export function crearTrafico(
     tipo: TipoDeTrafico,
     /** Por dónde no salir de la pista, si no son solo los tuyos. */
     ocupados?: OcupadosEnElMundo,
+    /** Los puestos de los demás del tráfico. Ver `puestosDelTrafico`. */
+    deOtros?: PuestosDeOtros,
   ): Caminos | null => {
     const esc = conTipos ? escalaDeCircuito(tipo.aproximacion) : escala;
     const forma = opciones.forma?.(esc) ?? { mano, altura };
@@ -2105,7 +2118,7 @@ export function crearTrafico(
       forma.mano,
       esc,
       forma.altura,
-      suelo ? { ...suelo, tipo, ...(ocupados ? { ocupados } : {}) } : null,
+      suelo ? { ...suelo, tipo, ...(ocupados ? { ocupados } : {}), ...(deOtros ? { deOtros } : {}) } : null,
       tipo.subeAlAire,
     );
   };
@@ -2183,7 +2196,7 @@ export function crearTrafico(
     if (!pisa.size) return;
     const puntos = sitios.filter((_, k) => pisa.has(k)).map((q) => q.p);
     const radio = Math.max(...sitios.filter((_, k) => pisa.has(k)).map((q) => q.radio));
-    const nuevo = trazarAhora(quien.tipo, { puntos, radio });
+    const nuevo = trazarAhora(quien.tipo, { puntos, radio }, puestosDelTrafico(quien));
     if (!nuevo?.enTierra || Math.abs(nuevo.toca - viejo.toca) > 0.5) return;
     /*
      * Y sin moverlo: corriendo ya por la pista, solo vale una salida a la que
@@ -3097,6 +3110,66 @@ export function crearTrafico(
   };
 
   /**
+   * **El puesto que tiene un avión del tráfico**, si tiene uno: el que sale, el
+   * de su salida hasta que lo deja —empujado o rodando, una envergadura más
+   * allá—; el que llega, el del final de su llegada, desde que se le dibuja
+   * hasta que se retira. Ver `puestosDelTrafico`.
+   */
+  const puestoDe = (
+    c: Caminos | null,
+    camino: readonly Sitio[] | null,
+    recorrido: number,
+    tipo: TipoDeTrafico,
+  ): EnElPlano | null => {
+    const t = c?.enTierra;
+    if (!c || !t) return null;
+    if (camino === c.salida) {
+      if (!(t.despega > 0) || recorrido > (t.empuje?.hasta ?? 0) + tipo.envergadura) return null;
+      const p = c.salida[0];
+      return p ? { x: p.x, z: p.z } : null;
+    }
+    if (!(t.boca > 0)) return null;
+    const p = c.llegada[c.llegada.length - 1];
+    return p ? { x: p.x, z: p.z } : null;
+  };
+
+  /**
+   * **Los puestos que ya son de alguien del tráfico**, menos el de `excepto`,
+   * con la semiala de cada uno: lo que no puede coger otro. En un aeropuerto de
+   * verdad cada puesto es de un avión, y los caminos de cada tipo se trazaban una
+   * vez para todos: dos reactores salían del mismo puesto, y el turbohélice que
+   * llegaba se metía en el que acababa de dejar el empujado, con el empujado
+   * todavía en la calle de detrás.
+   */
+  const puestosDelTrafico = (excepto: Volando | null, semiala?: number): PuestosDeOtros => {
+    const ocupados: { x: number; z: number; semiala: number }[] = [];
+    for (const b of aviones.values()) {
+      if (b === excepto) continue;
+      const p = puestoDe(b.caminos, b.marca.camino, b.recorrido, b.tipo);
+      if (p) ocupados.push({ ...p, semiala: b.tipo.envergadura / 2 });
+    }
+    return { semiala: semiala ?? (excepto ? excepto.tipo.envergadura / 2 : 0), ocupados };
+  };
+
+  /**
+   * **Los caminos de uno nuevo, con un puesto que sea suyo.** Los del tipo, si
+   * el puesto que le tocan —el de salida si sale, el de llegada si llega— está
+   * libre de los demás; si no, se le trazan los suyos sin los puestos de los
+   * demás. Solo se paga una búsqueda de caminos cuando hay choque.
+   */
+  const caminosConSuPuesto = (tipo: TipoDeTrafico, clave: string): Caminos | null => {
+    const c = caminosDe(tipo);
+    const marca = c?.marcas[clave];
+    if (!c || !marca || !aviones.size) return c;
+    const deOtros = puestosDelTrafico(null, tipo.envergadura / 2);
+    if (!deOtros.ocupados.length) return c;
+    const p = puestoDe(c, marca.camino, marca.metros, tipo);
+    if (!p || puestoLibre(p.x, p.z, deOtros)) return c;
+    const suyos = trazarAhora(tipo, undefined, deOtros);
+    return suyos?.marcas[clave] ? suyos : c;
+  };
+
+  /**
    * **Al ponerle en una marca**: si queda en su puesto de contacto, al principio
    * de su salida, se le engancha el tractor; si ya no va por la salida, se le
    * suelta. Lo que lleve empujado no se toca: una llamada a mitad del empuje
@@ -3633,7 +3706,7 @@ export function crearTrafico(
     anuncia(matricula, clave, puedeAterrizar = false) {
       let quien = aviones.get(matricula);
       const tipo = quien?.tipo ?? tipoDe(matricula);
-      const c = quien ? quien.caminos : caminosDe(tipo);
+      const c = quien ? quien.caminos : caminosConSuPuesto(tipo, clave);
       const marca = c?.marcas[clave];
       if (quien) quien.conPermiso = puedeAterrizar;
       if (!marca) {
@@ -4275,6 +4348,8 @@ export function crearTrafico(
           cedido: +quien.cedido.toFixed(1),
           quieto: +quien.quieto.toFixed(1),
           alto: Math.round(quien.grupo.position.y - cota),
+          /** El puesto que tiene, si tiene uno. Ver `puestosDelTrafico`. */
+          puesto: puestoDe(c, quien.marca.camino, quien.recorrido, quien.tipo),
           frenteATi: quien.frenteATi,
           aguarda: +quien.aguarda.toFixed(1),
         };

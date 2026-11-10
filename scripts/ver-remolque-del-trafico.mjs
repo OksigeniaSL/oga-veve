@@ -47,21 +47,27 @@ const fallos = [];
 const f = (v, d = 1) => (typeof v === "number" ? v.toFixed(d) : String(v));
 
 /** Una foto desde encima del avión del tráfico, a un lado y por delante del morro. */
-async function foto(page, nombre) {
-  const datos = await page.evaluate((m) => {
+async function foto(page, nombre, deCerca = false) {
+  const datos = await page.evaluate(([m, deCerca]) => {
     const o = globalThis.__oga;
     const q = o.trafico().find((x) => x.matricula === m);
     if (!q) return null;
     const cam = o.camaraViva().clone();
     const r = (q.rumbo * Math.PI) / 180;
     const n = { x: Math.sin(r), z: -Math.cos(r) };
-    cam.position.set(q.x + n.x * 70 - n.z * 55, q.y + 60, q.z + n.z * 70 + n.x * 55);
-    cam.lookAt(q.x - n.x * 10, q.y, q.z - n.z * 10);
+    if (deCerca) {
+      // Por detrás y a un lado, algo alto, con el morro y la fachada que tiene delante en el cuadro.
+      cam.position.set(q.x - n.x * 45 - n.z * 40, q.y + 14, q.z - n.z * 45 + n.x * 40);
+      cam.lookAt(q.x + n.x * 40, q.y + 2, q.z + n.z * 40);
+    } else {
+      cam.position.set(q.x + n.x * 70 - n.z * 55, q.y + 60, q.z + n.z * 70 + n.x * 55);
+      cam.lookAt(q.x - n.x * 10, q.y, q.z - n.z * 10);
+    }
     cam.updateMatrixWorld();
     const pintor = o.pintor();
     pintor.render(o.escena(), cam);
     return pintor.domElement.toDataURL("image/png");
-  }, MATRICULA);
+  }, [MATRICULA, deCerca]);
   if (!datos) return;
   writeFileSync(`${FOTOS}/${nombre}.png`, Buffer.from(datos.split(",")[1], "base64"));
 }
@@ -120,6 +126,8 @@ try {
       };
     }, MATRICULA);
 
+  await page.waitForTimeout(300);
+  await foto(page, "trafico-0-en-el-puesto-de-cerca", true);
   const m0 = await muestra();
   console.log(`al anunciarlo: ${JSON.stringify(m0)}`);
   if (m0.q?.tipo !== "reactor") fallos.push(`${MATRICULA} no es un reactor (${m0.q?.tipo})`);

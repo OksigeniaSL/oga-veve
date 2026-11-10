@@ -14139,6 +14139,7 @@ export class Game {
           const yo = this.flight.state.position;
           const ruta = this.plan?.rutaVisible() ?? [];
           const raya = ruta.at(-1);
+          const arranque = this.plan?.arranque() ?? null;
           return {
             suelo: sueloDelCampo,
             /*
@@ -14153,6 +14154,8 @@ export class Game {
             evitar: [
               { x: yo.x, z: yo.z },
               ...(raya ? [{ x: raya[0], z: raya[1] }] : []),
+              // Y el puesto que tiene tu plan, aunque ya no estés en él: es tuyo.
+              ...(arranque ? [{ x: arranque[0], z: arranque[1] }] : []),
             ],
             /*
              * **Y tu raya entera, no solo su final.** Se apartaba de tu
