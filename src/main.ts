@@ -225,12 +225,13 @@ function sitioDeLaEscena(e: EscenaDelInicio): string {
  * noche sobre el mar las abren sus fichas del menú, en el hangar, más abajo. Con la dirección, `?capitulo=1` o `?capitulo=2`, solo en desarrollo: fuera
  * de él un enlace con `?inicio=4` es siempre el tercero, que es también adonde recarga
  * la red de la noche. Y el recado de la pestaña, que deja la tarjeta del final del
- * primero para seguir en el segundo: ver `flight/capitulo-pedido.ts`.
+ * primero para seguir en el segundo, y la red de la noche para caer en el tercero, los dos
+ * con el día del vuelo que se viene volando: ver `flight/capitulo-pedido.ts`.
  */
 const capituloDeLaDireccion = import.meta.env.DEV ? params.get("capitulo") : null;
 const capituloPedido = leerElCapituloPedido(sesionDeLaPestana());
 let capituloDelLargo: 1 | 2 | 3 =
-  capituloPedido ?? (capituloDeLaDireccion === "1" ? 1 : capituloDeLaDireccion === "2" ? 2 : 3);
+  capituloPedido?.capitulo ?? (capituloDeLaDireccion === "1" ? 1 : capituloDeLaDireccion === "2" ? 2 : 3);
 let conInicio = params.has("inicio") && !rearranque;
 const conVueloLargo = params.has("largo");
 let escenaDelInicio: EscenaDelInicio = escenaPedida(params.get("inicio"));
@@ -742,6 +743,8 @@ const game = new Game({
   ...(params.get("curvatura") === "0" ? { curvatura: false } : {}),
   ...(conInicio ? { inicio: escenaDelInicio, tramo: GUYRAMI } : {}),
   ...(conInicio && escenaDelInicio === "largo" && capituloDelLargo !== 3 ? { capitulo: capituloDelLargo } : {}),
+  // Y el día del vuelo que se viene volando, si se sigue uno: ver `flight/capitulo-pedido.ts`.
+  ...(conInicio && escenaDelInicio === "largo" && capituloPedido?.dia ? { diaDelViaje: capituloPedido.dia } : {}),
 });
 miga("juego creado");
 /*
