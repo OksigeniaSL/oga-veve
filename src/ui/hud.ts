@@ -97,6 +97,12 @@ import { DURA_EL_SENALADO, type Pieza } from "../flight/lo-que-se-nombra";
 const TRECHO_DE_LA_RUEDA = 18;
 
 /**
+ * Lo menos que se queda a la vista una frase de la radio antes de que la tape la
+ * siguiente, ms. Ver `Hud.radio`.
+ */
+const RADIO_A_LA_VISTA_MS = 2500;
+
+/**
  * **Tu avión, dibujado**: la silueta que marca en la tira de la radio y en la
  * lámpara de la torre lo que te dicen **a vos**. Es la misma silueta que ya
  * señala otros aviones en la ventanilla —ver `hito-avion` en `ui/senal.ts`—,
@@ -845,6 +851,10 @@ export class Hud {
   /** La tira de la radio, y el reloj que la esconde. */
   private radioCaja: HTMLElement | null = null;
   private radioReloj = 0;
+  /** Desde cuándo está a la vista la frase de ahora, y las que esperan turno. Ver `radio`. */
+  private radioDesde = 0;
+  private readonly radioEnCola: { texto: string; segundos: number; paraTi: boolean | null }[] = [];
+  private radioTurno = 0;
   private hintTimer = 0;
 
   constructor(root: HTMLElement) {
@@ -5028,6 +5038,42 @@ export class Hud {
   ): void {
     const caja = this.radioCaja;
     if (!caja) return;
+    /*
+     * **Y por turnos: la de ahora no tapa a la de antes en el mismo instante.**
+     *
+     * La voz ya las dice una detrás de otra —ver `audio/boca.ts`—, pero la tira
+     * escribía la última al llegar, y dos que llegaban juntas se quedaban en una.
+     * Se vio al salir empujado: el tractor suelta en el instante en que arrancan
+     * los motores, que es cuando la torre da «cleared to», y el «Desconecto» de la
+     * persona de tierra se oía y no se leía nunca. Para quien no oye, lo que no se
+     * escribe no se dijo. Así que la nueva espera a que la de ahora lleve un rato a
+     * la vista, y las que se junten salen en orden; tres como mucho, que si la
+     * frecuencia corre más que eso, lo viejo ya no importa.
+     */
+    const falta = RADIO_A_LA_VISTA_MS - (performance.now() - this.radioDesde);
+    if (!caja.hidden && (falta > 0 || this.radioEnCola.length > 0)) {
+      this.radioEnCola.push({ texto, segundos, paraTi });
+      if (this.radioEnCola.length > 3) this.radioEnCola.shift();
+      if (!this.radioTurno)
+        this.radioTurno = window.setTimeout(() => this.siguienteDeLaRadio(), Math.max(0, falta));
+      return;
+    }
+    this.ponerLaRadio(caja, texto, segundos, paraTi);
+  }
+
+  /** La siguiente frase de la radio que esperaba turno. Ver `radio`. */
+  private siguienteDeLaRadio(): void {
+    this.radioTurno = 0;
+    const caja = this.radioCaja;
+    const siguiente = this.radioEnCola.shift();
+    if (!caja || !siguiente) return;
+    this.ponerLaRadio(caja, siguiente.texto, siguiente.segundos, siguiente.paraTi);
+    if (this.radioEnCola.length > 0)
+      this.radioTurno = window.setTimeout(() => this.siguienteDeLaRadio(), RADIO_A_LA_VISTA_MS);
+  }
+
+  private ponerLaRadio(caja: HTMLElement, texto: string, segundos: number, paraTi: boolean | null): void {
+    this.radioDesde = performance.now();
     caja.classList.toggle("radio--tuya", paraTi === true);
     caja.classList.toggle("radio--otro", paraTi === false);
     /*

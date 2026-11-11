@@ -117,6 +117,24 @@ describe("lo que dice la torre canaria", () => {
   });
 });
 
+describe("lo que dice la persona de tierra", () => {
+  const dicc = ES_PY as Record<string, string>;
+
+  it("dice lo mismo en Asunción y en las islas, y le habla de ustedes a la cabina", () => {
+    /*
+     * Por el interfono al salir empujado: cambia la voz —Celso o Airam—, no la
+     * frase. Y la cabina son dos, así que ni «vos» ni «tú», que es lo que deja
+     * que una misma frase valga en los dos sitios. Ver `hablaLaTierra`.
+     */
+    for (const que of ["empujamos", "freno", "suelto"]) {
+      const clave = `tierra.${que}`;
+      expect(dicc[clave], clave).toBeTruthy();
+      expect(dicc[comoSeDiceAqui(clave, "canario")], clave).toBe(dicc[clave]);
+      expect(dicc[clave]).not.toMatch(/\b(podés|puedes|pongás|pongas|mirá|mira|arrancá|arranca)\b/u);
+    }
+  });
+});
+
 describe("lo que se lee en la tarjeta de la torre", () => {
   it("con la matrícula puesta, no queda ningún hueco sin llenar", () => {
     /*

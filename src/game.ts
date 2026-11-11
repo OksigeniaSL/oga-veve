@@ -17885,6 +17885,7 @@ export class Game {
       // Y si lo está empujando el tractor, va donde lo lleva él. Ver `empujarElAvion`.
       this.empujarElAvion(dt);
       this.atenderAlRemolque();
+      this.atenderALaTierra();
       /*
        * Y lo que le ha llegado, para las superficies. **El compensador mueve
        * la profundidad en los de hélice** —es una aleta en su borde de
@@ -20334,6 +20335,7 @@ export class Game {
     this.remolquePorMirar = false;
     this.paraEmpujar = null;
     this.remolqueContado = "";
+    this.empujeAutorizado = false;
   }
 
   /**
@@ -20503,11 +20505,18 @@ export class Game {
       case "pedido":
         // Pedido: la tarjeta se queda, sin la llave, que ya no hay nada que hacer.
         this.hud.senal.mostrar(comoDibujo("remolque"), "", null, { segundos: Infinity });
+        this.autorizarElEmpuje();
         break;
       case "sin-motores":
         // Empuja: vuelve la tarjeta de la fase, que ahora es la de arrancar. Ver `tarjetaDelRemolque`.
         if (delRemolque) this.hud.senal.caducar(puesta.dibujo);
         this.faseAnunciada = "";
+        /*
+         * En el peldaño de cabina, sin la voz de la instructora: «ya pueden arrancar los
+         * motores» lo dice en ese momento la persona de tierra, y dos voces para lo mismo
+         * es una de más. La tarjeta sale igual, con su llave. Ver `atenderALaTierra`.
+         */
+        if (!laInstructoraLoExplica(this.tier.avisos)) this.soloLaTarjeta = true;
         break;
       case "con-motores":
         this.hud.senal.mostrar(comoDibujo("remolque"), "", null, { segundos: Infinity });
@@ -20527,6 +20536,77 @@ export class Game {
 
   /** Lo último que se contó del remolque de quien juega. Ver `atenderAlRemolque`. */
   private remolqueContado = "";
+
+  /**
+   * **El permiso de la torre para salir empujado**, al pedir el tractor: «pushback and
+   * start-up approved», con tu indicativo delante y la voz de la torre del campo, y escrito
+   * en la tira de la radio. Una vez por salida: apagar la baliza y volver a pedirlo no lo
+   * repite, que el permiso ya está dado.
+   *
+   * De Taguató para arriba, como «cleared to», que es el otro permiso que se recibe en el
+   * puesto: a los cuatro años la fraseología en inglés no enseña nada, y allí cuenta el
+   * tractor la instructora. Ni en un campo sin torre ni con AFIS, que no autoriza. Ver
+   * `autorizarLaRuta` y el ADR 0025, «La radio de tierra».
+   */
+  private autorizarElEmpuje(): void {
+    if (this.empujeAutorizado) return;
+    this.empujeAutorizado = true;
+    /*
+     * **Y antes, la autorización de la ruta**, si no se dio: es lo primero que se recibe
+     * en el puesto, y el permiso de empuje va detrás. Se daba al arrancar, que saliendo
+     * empujado es al acabar el empuje: «cleared to» llegaba después de «pushback» y en el
+     * mismo instante que el «Desconecto» de la persona de tierra. Ver `autorizarLaRuta`.
+     */
+    this.autorizarLaRuta();
+    const conCifras = this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (!conCifras) return;
+    const aqui = this.elCampo().escenario.aerodrome;
+    if (sinTorre(aqui) || esAfis(aqui)) return;
+    this.porRadio("pushback and start-up approved", "mando", undefined, true);
+  }
+
+  /** Si la torre ya dio el permiso de esta salida empujada. Ver `autorizarElEmpuje`. */
+  private empujeAutorizado = false;
+
+  /**
+   * **La persona de tierra, por el cable del interfono**, en el peldaño de cabina: lo que
+   * dice de verdad en los tres momentos en que habla. Al echar a andar el tractor, que
+   * empieza a empujar y que ya se pueden arrancar los motores; al parar, que se ponga el
+   * freno de aparcamiento —que el juego pone solo, a su hora—; y al soltar, que desconecta
+   * y que se mire su señal a la izquierda, justo antes de salir a enseñar el pasador.
+   *
+   * En los peldaños de abajo lo cuenta la instructora, y dos voces contando lo mismo es una
+   * de más. Ver `hablaLaTierra`.
+   */
+  private atenderALaTierra(): void {
+    const fase = this.remolqueDeQuienJuega?.fase ?? "";
+    if (fase === this.faseOidaALaTierra) return;
+    const antes = this.faseOidaALaTierra;
+    this.faseOidaALaTierra = fase;
+    if (antes === "" || laInstructoraLoExplica(this.tier.avisos)) return;
+    if (fase === "empujando") this.hablaLaTierra("empujamos");
+    else if (fase === "frenado") this.hablaLaTierra("freno");
+    else if (fase === "soltando") this.hablaLaTierra("suelto");
+  }
+
+  /** La fase del tractor que ya se miró para la persona de tierra. Ver `atenderALaTierra`. */
+  private faseOidaALaTierra = "";
+
+  /**
+   * **Una frase de la persona de tierra**, con la voz del sitio —Celso en Paraguay, Airam
+   * en las islas— y por la misma boca que la torre: también suena en los auriculares, y así
+   * las dos no se pisan. Se escribe en la tira de la radio, que es el canal de quien no oye,
+   * sin tu avión dibujado: no es la radio, es el cable.
+   */
+  private hablaLaTierra(que: "empujamos" | "freno" | "suelto"): void {
+    const clave = comoSeDiceAqui(
+      `tierra.${que}`,
+      hablaDe(this.elCampo().escenario.aerodrome?.id),
+    ) as TranslationKey;
+    const texto = t(clave);
+    this.torre.decir(texto, clave, "mando");
+    if (this.tier.instruments !== "none") this.hud.radio(texto);
+  }
 
   /**
    * **Un paso del remolque**: mientras empuja, el avión va donde lo lleva el tractor, por la

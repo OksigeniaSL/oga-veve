@@ -290,6 +290,13 @@ export const EN: Dictionary = {
   // El límite de la autorización: a dónde va el vuelo. Ver `torre.destino`.
   "torre.destino": "{indicativo}, cleared to {destino}",
   "torre.canario.destino": "{indicativo}, cleared to {destino}",
+  // La persona de tierra, por el interfono. Ver `tierra.empujamos` en `es-PY.ts`.
+  "tierra.empujamos": "Flight deck, ground: starting the push. Cleared to start engines.",
+  "tierra.freno": "Set parking brake, please.",
+  "tierra.suelto": "Disconnecting. Look for my signal on the left.",
+  "tierra.canario.empujamos": "Flight deck, ground: starting the push. Cleared to start engines.",
+  "tierra.canario.freno": "Set parking brake, please.",
+  "tierra.canario.suelto": "Disconnecting. Look for my signal on the left.",
   // La altura va ya dicha: «three thousand feet», «flight level one one zero».
   // Ver `alturaEnRadio` en `flight/autorizacion-de-altitud.ts`.
   "torre.subir": "{indicativo}, climb to {altura}",

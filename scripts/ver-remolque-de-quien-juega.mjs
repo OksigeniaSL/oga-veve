@@ -18,6 +18,9 @@
  *    puesto hasta que se arrancan con la tecla.
  * 4. El pasador y el saludo, con su tarjeta, y que al quedar libre se rueda hacia
  *    delante hacia la raya.
+ * 5. La radio de tierra: en el de cabina, la autorización de la ruta y el permiso de la
+ *    torre al pedir el tractor, y las tres frases de la persona de tierra, todo en su
+ *    orden y cada frase a la vista en la tira; en Guyrami, nada de eso.
  *
  * Uso: `node scripts/ver-remolque-de-quien-juega.mjs carpeta`. Con `OGA_GPU=1`, con
  * la tarjeta de verdad; con `OGA_PRISA`, el reloj del juego más deprisa; con
@@ -90,7 +93,20 @@ try {
       console.log(t(`ERROR ${e.message}`));
       fallos.push(t(`error de página: ${e.message}`));
     });
-    await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
+    await page.addInitScript(() => {
+      localStorage.setItem("oga-veve:teclas-vistas", "1");
+      /*
+       * Y lo que pasa por la tira de la radio, en orden: el permiso de la torre y lo que
+       * dice la persona de tierra. Cada cincuenta milisegundos, que con prisa el freno y
+       * el «desconecto» llegan casi juntos.
+       */
+      globalThis.__radios = [];
+      setInterval(() => {
+        const r = document.querySelector('[data-hud="radio"]');
+        const x = r && !r.hidden ? (r.textContent ?? "").trim() : "";
+        if (x && globalThis.__radios.at(-1) !== x) globalThis.__radios.push(x);
+      }, 50);
+    });
     await page.goto(`${BASE}/?escenario=${ESCENARIO}&hora=12&leccion=despegue&tramo=${tramo}&avion=${AVION}`);
     await page.bringToFront();
     await page.waitForFunction(() => globalThis.__oga?.aeronave?.().deVerdad === true, null, { timeout: 120000 });
@@ -270,6 +286,27 @@ try {
     if (!(m.paredAlAcabar > m.paredAlEmpezar)) fallos.push(t("la terminal no se aleja"));
     if (m.giroRodando30 === null) fallos.push(t("no rueda 30 m tras soltarse"));
     else if (Math.abs(m.giroRodando30) > 60) fallos.push(t(`al rodar gira ${m.giroRodando30}°: no salía mirando hacia la raya`));
+
+    // ── 5. La radio de tierra: el permiso de la torre y la persona de tierra, en cabina ──
+    const radios = await page.evaluate(() => globalThis.__radios);
+    const deLaSalida = radios.filter((x) => /cleared to|pushback|Cabina, tierra|aparcamiento|Desconecto/.test(x));
+    console.log(t(`la radio de la salida: ${deLaSalida.join(" | ") || "nada"}`));
+    if (tramo === "guyrami") {
+      if (deLaSalida.some((x) => !/cleared to/.test(x)))
+        fallos.push(t("en Guyrami no habla la radio de tierra: lo cuenta la instructora"));
+    } else {
+      // La ruta primero, que es lo primero que se recibe en el puesto; y cada frase a la vista.
+      const orden = [
+        /cleared to/,
+        /pushback and start-up approved/,
+        /Cabina, tierra: empezamos a empujar/,
+        /freno de aparcamiento/,
+        /Desconecto\. Miren mi señal/,
+      ].map((re) => deLaSalida.findIndex((x) => re.test(x)));
+      if (orden.some((i) => i < 0)) fallos.push(t(`en cabina falta algo de la radio de tierra (${orden.join(", ")})`));
+      else if (orden.some((i, n) => n > 0 && i < orden[n - 1])) fallos.push(t(`la radio de tierra, fuera de orden (${orden.join(", ")})`));
+      if (deLaSalida.filter((x) => /pushback/.test(x)).length > 1) fallos.push(t("el permiso de la torre se dijo más de una vez"));
+    }
     await page.screenshot({ path: `${FOTOS}/${tramo}-4-rodando.png` });
     await page.close();
   }

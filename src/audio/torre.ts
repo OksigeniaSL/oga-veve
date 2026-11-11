@@ -109,6 +109,12 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
    */
   "roger, minimum fuel, no delay expected": "torre.minimumFuel",
   /*
+   * **Y el permiso para salir empujado**, al pedir el tractor en el puesto de
+   * contacto (Doc 4444, 12.3.4.7), con la puesta en marcha, que es como se da
+   * cuando se piden las dos a la vez. Ver `autorizarElEmpuje` en `game.ts`.
+   */
+  "pushback and start-up approved": "torre.pushback",
+  /*
    * Y a quien se pasó la salida: abandone por la próxima disponible. Ver
    * `decirSalPorLaSiguiente` en `game.ts`.
    */

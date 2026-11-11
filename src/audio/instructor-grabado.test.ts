@@ -432,6 +432,9 @@ describe("todas las voces", () => {
       "tripulacion-canarias",
       // Y Ara, del modo inicio. Ver `flight/inicio.ts`.
       "ara",
+      // Y la persona de tierra, por el interfono al salir empujado.
+      "tierra",
+      "tierra-canarias",
     ]);
   });
 

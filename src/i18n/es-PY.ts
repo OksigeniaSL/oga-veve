@@ -449,6 +449,19 @@ export const ES_PY = {
     "{indicativo}, aterrizó sin autorización; llame a la torre por teléfono a su llegada",
   "torre.canario.destino": "{indicativo}, autorizado a {destino}",
   /*
+   * **La persona de tierra, por el cable del interfono**, al salir empujado del
+   * puesto de contacto: al echar a andar el tractor, al parar y al soltar. Le
+   * habla de ustedes a la cabina, que son dos, y por eso la frase es la misma en
+   * Asunción y en las islas; cambia la voz, Celso o Airam. Solo en el peldaño
+   * de cabina. Ver `hablaLaTierra` en `game.ts` y el ADR 0025.
+   */
+  "tierra.empujamos": "Cabina, tierra: empezamos a empujar. Ya pueden arrancar los motores.",
+  "tierra.freno": "Pongan el freno de aparcamiento, por favor.",
+  "tierra.suelto": "Desconecto. Miren mi señal a la izquierda.",
+  "tierra.canario.empujamos": "Cabina, tierra: empezamos a empujar. Ya pueden arrancar los motores.",
+  "tierra.canario.freno": "Pongan el freno de aparcamiento, por favor.",
+  "tierra.canario.suelto": "Desconecto. Miren mi señal a la izquierda.",
+  /*
    * **Y en España se sube con «suba»**, no con «ascienda»: es la palabra del
    * anexo V del RD 1180/2018 —«SUBA A (nivel)», 1.1.2—. Lo que cambia aquí
    * no es el acento, es el reglamento. Los niveles, cifra a cifra como en

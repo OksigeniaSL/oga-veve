@@ -377,6 +377,19 @@ const REPARTO = [
    */
   ["torre", "torre.contactDeparture", "torre"],
   ["torre", "torre.canario.contactDeparture", "torre-canarias"],
+  /*
+   * **Y la salida empujada**: el permiso de la torre, con tu matrícula, y la
+   * persona de tierra por el interfono, con su voz en cada sitio. Lo pide
+   * `autorizarElEmpuje` y `hablaLaTierra`, por la boca de la torre.
+   */
+  ["torre", "torre.pushback", "torre"],
+  ["torre", "torre.canario.pushback", "torre-canarias"],
+  ["torre", "tierra.empujamos", "tierra"],
+  ["torre", "tierra.freno", "tierra"],
+  ["torre", "tierra.suelto", "tierra"],
+  ["torre", "tierra.canario.empujamos", "tierra-canarias"],
+  ["torre", "tierra.canario.freno", "tierra-canarias"],
+  ["torre", "tierra.canario.suelto", "tierra-canarias"],
 ];
 
 const server = await createServer({

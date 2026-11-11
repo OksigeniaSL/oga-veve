@@ -912,6 +912,11 @@ export class InstructorGrabado implements Instructor {
       // Ara, que aprende a volar con Jazlyn en el modo inicio. Ver
       // `flight/inicio.ts`.
       "ara",
+      // Y la persona de tierra, por el interfono al salir empujado, con el habla
+      // de cada sitio: `tierra.canario.*` no se pisa con la de casa. Ver
+      // `hablaLaTierra` en `game.ts`.
+      "tierra",
+      "tierra-canarias",
     ],
     base = BASE,
     puede: (mime: string) => string = miraSiPuede,
