@@ -944,12 +944,12 @@ export class Tablero {
     const franja = 128;
     return `
       <g data-caja="pfd" transform="translate(${pfd.x} ${BANDA.y})">
-        ${pantallaDeActitud(pfd.ancho, BANDA.alto, c, { rosa: true, mach: false })}
+        ${pantallaDeActitud(pfd.ancho, BANDA.alto, c, { rosa: true, mach: false, helicoptero: !!a.helicoptero })}
       </g>
       <g data-caja="mfd" transform="translate(${mfd.x} ${BANDA.y})">
         <rect width="${mfd.ancho}" height="${BANDA.alto}" rx="6" class="tablero__pantalla" />
         <g transform="translate(${franja + 8} 0)">
-          ${pantallaDeNavegacion(mfd.ancho - franja - 8, BANDA.alto)}
+          ${pantallaDeNavegacion(mfd.ancho - franja - 8, BANDA.alto, !!a.helicoptero)}
         </g>
         ${franjaDeMotor(franja, BANDA.alto, c, a)}
       </g>
@@ -963,10 +963,10 @@ export class Tablero {
     const eicas = cajaDe("linea", "eicas");
     return `
       <g data-caja="pfd" transform="translate(${pfd.x} ${BANDA.y})">
-        ${pantallaDeActitud(pfd.ancho, BANDA.alto, c, { rosa: false, mach: true, fma: true })}
+        ${pantallaDeActitud(pfd.ancho, BANDA.alto, c, { rosa: false, mach: true, fma: true, helicoptero: !!a.helicoptero })}
       </g>
       <g data-caja="nd" transform="translate(${nd.x} ${BANDA.y})">
-        ${pantallaDeNavegacion(nd.ancho, BANDA.alto)}
+        ${pantallaDeNavegacion(nd.ancho, BANDA.alto, !!a.helicoptero)}
       </g>
       <g data-caja="eicas" transform="translate(${eicas.x} ${BANDA.y})">
         ${pantallaDeMotores(eicas.ancho, BANDA.alto, c, a)}

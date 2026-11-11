@@ -1128,13 +1128,16 @@ export class InputManager {
       }
     } else {
       const delta = clamp(teclado + empuje, -1, 1);
-      this.controls.throttle = clamp(
-        this.controls.throttle + delta * dt * this.ritmoDelGas,
-        0,
-        1,
-      );
+      /*
+       * Con muelle, la tecla lleva la palanca enseguida —en un tercio de segundo— y
+       * al soltarla vuelve al centro: la suavidad la pone la estabilización, que
+       * cambia la subida pedida poco a poco. Al ritmo del colectivo, un toque corto
+       * no salía de la zona del centro y el helicóptero no llegaba a despegar.
+       */
+      const ritmo = this.colectivoConMuelle ? 3 : this.ritmoDelGas;
+      this.controls.throttle = clamp(this.controls.throttle + delta * dt * ritmo, 0, 1);
       if (this.colectivoConMuelle && delta === 0)
-        this.controls.throttle += clamp(0.5 - this.controls.throttle, -dt, dt);
+        this.controls.throttle += clamp(0.5 - this.controls.throttle, -3 * dt, 3 * dt);
     }
     this.pintarPalanca();
 

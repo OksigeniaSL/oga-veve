@@ -68,7 +68,7 @@ cada eje (TCDS R.002, III.16)—. Va por capas, de menos a más (`Estabilizacion
 | `ninguna` | El helicóptero tal cual | — |
 | `amortiguada` | Frena los giros, con autoridad limitada | El canal de amortiguación de cualquier piloto automático |
 | `actitud` | El cíclico mueve la actitud y al soltarlo se queda; los pies sostienen el rumbo parado y el vuelo coordinado deprisa | El modo básico del piloto automático del Super Puma |
-| `estacionario` | Además, el cíclico pide velocidad sobre el suelo —hasta unos 80 kt; deprisa, a los lados inclina para virar— y al soltarlo se para y se queda, sople lo que sople; y el colectivo pide subir o bajar, con las vueltas guardadas | El modo de estacionario y el de mantener la altura de un sistema de mandos moderno |
+| `estacionario` | Además, el cíclico pide velocidad sobre el suelo —hasta los 136 kt del crucero; deprisa, a los lados inclina para virar— y al soltarlo se para y se queda, sople lo que sople; y el colectivo pide subir o bajar, con las vueltas guardadas | El modo de estacionario y el de mantener la altura de un sistema de mandos moderno |
 
 **Qué nivel lleva cada peldaño, propuesto para juzgarlo volando** (`estabilizacionDelPeldano` en
 `flight/fdm-helicoptero.ts`):

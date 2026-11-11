@@ -109,7 +109,7 @@ export function pantallaDeActitud(
   ancho: number,
   alto: number,
   c: Cuadro,
-  opciones: { rosa: boolean; mach: boolean; fma?: boolean },
+  opciones: { rosa: boolean; mach: boolean; fma?: boolean; helicoptero?: boolean },
 ): string {
   const yo = nuevoNombre();
   const act = huecoDeActitud(ancho);
@@ -136,6 +136,7 @@ export function pantallaDeActitud(
               altoAct - rr - 10,
               rr,
               true,
+              opciones.helicoptero,
             );
           })()
         : cintaDeRumbo(act.x, alto - ALTO_RUMBO, act.ancho, ALTO_RUMBO, yo)
@@ -1131,12 +1132,14 @@ export const CUANTOS_FIJOS = 10;
  *
  * @param conAvion si lleva el avioncito fijo en el centro (la del horizonte) o
  *                 no (la de navegación, que lo lleva abajo).
+ * @param helicoptero si lo que va en el centro es un helicóptero: ver `SIMBOLO`.
  */
 export function rosaDeRumbo(
   cx: number,
   cy: number,
   r: number,
   conAvion: boolean,
+  helicoptero = false,
 ): string {
   let carta = `<circle cx="0" cy="0" r="${r}" class="cr__rosa" />`;
   for (let g = 0; g < 360; g += 5) {
@@ -1174,7 +1177,7 @@ export function rosaDeRumbo(
         <g data-bug="rosa"><path class="cr__bug" d="M0 ${-r} l-6 -9 l12 0 Z" /></g>
       </g>
       <path class="cr__fe" d="M0 ${-r - 4} l0 10" />
-      ${conAvion ? `<path class="cr__simbolo" d="M0 -12 l0 24 M-10 4 l20 0 M-5 12 l10 0" />` : ""}
+      ${conAvion ? `<path class="cr__simbolo" d="${helicoptero ? SIMBOLO.helicoptero : SIMBOLO.avion}" />` : ""}
     </g>
   `;
 }
@@ -1184,8 +1187,20 @@ export function rosaDeRumbo(
 /** Lo que mide la barra de lo que falta del tramo, px. */
 export const BARRA_DEL_TRAMO = 64;
 
+/**
+ * **Lo que va fijo en el centro de la rosa: el propio aparato visto desde arriba.**
+ * Un avión, o un helicóptero —el disco del rotor, el fuselaje y el rotor de cola—,
+ * como en la pantalla de cualquier helicóptero. Con el Super Puma salía un avioncito
+ * («¿qué sentido tiene dibujar un avión en los cuadros de mandos si es un
+ * helicóptero?»).
+ */
+const SIMBOLO = {
+  avion: "M0 -12 l0 24 M-10 4 l20 0 M-5 12 l10 0",
+  helicoptero: "M-9 -3 a9 9 0 1 0 18 0 a9 9 0 1 0 -18 0 M0 -9 l0 21 M-3.5 12 l7 0",
+} as const;
+
 /** La rosa grande, la ruta en magenta y el viento en cian. */
-export function pantallaDeNavegacion(ancho: number, alto: number): string {
+export function pantallaDeNavegacion(ancho: number, alto: number, helicoptero = false): string {
   const cx = ancho / 2;
   const cy = alto * 0.54;
   /*
@@ -1201,13 +1216,13 @@ export function pantallaDeNavegacion(ancho: number, alto: number): string {
   return `
     <rect data-fondo="nd" data-explica="carta" data-explica-fondo data-nombra="carta" width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
     ${arcos}
-    ${rosaDeRumbo(cx, cy, r, false)}
+    ${rosaDeRumbo(cx, cy, r, false, helicoptero)}
     ${carta(cx, cy, r)}
     <g data-cristal="ruta" transform="translate(${cx} ${cy})">
       <path class="cr__ruta" d="M0 0 l0 0" />
     </g>
-    <path class="cr__simbolo" transform="translate(${cx} ${cy})"
-          d="M0 -14 l0 26 M-12 4 l24 0 M-6 12 l12 0" />
+    <path class="cr__simbolo" transform="translate(${cx} ${cy}) scale(1.15)"
+          d="${helicoptero ? SIMBOLO.helicoptero : SIMBOLO.avion}" />
     <text data-cristal="nd-rumbo" x="${cx}" y="22" ${MARCA_CIFRA} class="cr__valor" text-anchor="middle"></text>
     <text x="${cx}" y="36" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">HDG</text>
     <text data-cristal="viento" x="12" y="22" ${MARCA_CIFRA} class="cr__aux"></text>

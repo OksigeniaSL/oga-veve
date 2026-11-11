@@ -220,11 +220,11 @@ try {
         const quiere = (d) => Math.max(-tope, Math.min(tope, 0.25 * d));
         /*
          * +1 de profundidad es tirar, morro arriba: hacia atrás. A tope, adelante y atrás
-         * piden 40 m/s sobre el suelo (`VA_EN_ESTACIONARIO` en `flight/helicoptero.ts`), y a
+         * piden 70 m/s sobre el suelo (`VA_EN_ESTACIONARIO` en `flight/helicoptero.ts`), y a
          * los lados, despacio, ocho. Con los ocho de antes en los dos ejes, la vuelta pedía
          * cinco veces más de lo que quería y llegaba lanzado al helipuerto.
          */
-        c.elevator = -quiere(adelante) / 40;
+        c.elevator = -quiere(adelante) / 70;
         c.aileron = quiere(derecha) / 8;
         return Math.hypot(dx, dz);
       };
@@ -241,7 +241,8 @@ try {
         altura(b.alto);
       } else if (b.fase === "adelante") {
         altura(b.alto);
-        c.elevator = -0.6;
+        // Unos 24 m/s, con el tope de 70 de `VA_EN_ESTACIONARIO`.
+        c.elevator = -0.35;
       } else if (b.fase === "volver") {
         altura(b.alto);
         b.lejos = ir(b.destino.x, b.destino.z, 6);

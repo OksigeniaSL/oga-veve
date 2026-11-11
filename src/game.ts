@@ -29119,6 +29119,8 @@ export class Game {
    */
   private laSpdDelPanel(): { kt: number; mach: number | null } | null {
     if (this.apagadoHastaElPuesto()) return null;
+    // El helicóptero, sin velocidad seleccionada de avión: ver `hayMarcaDeVelocidad`.
+    if (this.aircraft.helicoptero) return null;
     const v = this.laVelocidadQueToca();
     return { kt: v.kt, mach: v.mach };
   }
@@ -29160,6 +29162,8 @@ export class Game {
     rapido: boolean;
   } | null {
     const s = this.flight.state;
+    // El helicóptero no rueda a la pista: la barra de la velocidad de rodaje es de avión.
+    if (this.aircraft.helicoptero) return null;
     if (!s.onGround || EN_DESPEGUE.has(this.faseDeAhora as Fase)) return null;
     const vista = this.vistaActual;
     const maxima =
@@ -30088,6 +30092,12 @@ export class Game {
    * anemómetro redondo de una avioneta, no.
    */
   private hayMarcaDeVelocidad(): boolean {
+    /*
+     * El helicóptero, ninguna: la velocidad que toca es la de un avión en su fase de
+     * vuelo, y en la cinta salía un 130 en magenta que quien lo probaba tomaba por
+     * lo que tenía que alcanzar («me dice 130 pero no paso de 80»).
+     */
+    if (this.aircraft.helicoptero) return false;
     return (
       familiaDe(this.aircraft) !== "esferas" ||
       this.tier.instruments === "none" ||
@@ -31509,6 +31519,12 @@ export class Game {
    * con dos cuentas es la vía rápida a que un día digan cosas distintas.
    */
   private get aDondeVoy(): { rumbo: number; distancia: number } | null {
+    /*
+     * El helicóptero todavía no tiene misión suya: el objetivo era el de la lección de
+     * aterrizar, la pista, y en la pantalla salía la raya magenta de la entrada a una
+     * pista en la que no se posa. Ver el ADR 0026, paso 4.
+     */
+    if (this.aircraft.helicoptero) return null;
     const objetivo = this.missions.current;
     if (!objetivo) return null;
     const donde = objectiveTarget(objetivo);
@@ -34078,6 +34094,8 @@ export class Game {
     const m: Mapa = {
       x: this.flight.state.position.x,
       z: this.flight.state.position.z,
+      // El helicóptero, sin la raya de la entrada a la pista: ver `Mapa.sinEje`.
+      sinEje: !!this.aircraft.helicoptero,
       /*
        * **La pista que se dibuja es la del campo que se tiene debajo.**
        *

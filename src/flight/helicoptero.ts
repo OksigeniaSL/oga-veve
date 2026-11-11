@@ -392,10 +392,10 @@ function desvioDeLaEstela(enElPlano: number, enElDisco: number): number {
 
 /**
  * **Lo más deprisa que pide el cíclico a tope en la estabilización de estacionario**,
- * m/s sobre el suelo: unos ochenta nudos, para ir de un sitio a otro sin dejar de
- * pararse solo al soltarlo.
+ * m/s sobre el suelo: los 136 nudos del crucero recomendado de Airbus. Era la mitad,
+ * unos ochenta, y quien lo probaba no pasaba de ahí sin saber por qué.
  */
-export const VA_EN_ESTACIONARIO = 40;
+export const VA_EN_ESTACIONARIO = 70;
 
 /**
  * **Lo que sube o baja el colectivo por segundo con la tecla**: de abajo a tope

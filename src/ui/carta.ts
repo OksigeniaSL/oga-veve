@@ -298,6 +298,13 @@ export interface Mapa {
    * ventana. En los que no llevan el equipo, nada.
    */
   readonly relieve?: RelieveDeLaCarta | null;
+  /**
+   * **Sin el eje de entrada**: el helicóptero no entra a la pista por su final, y
+   * la raya magenta de la entrada a aterrizar no le decía nada («¿qué sentido tiene
+   * dibujar la línea de entrada de aterrizaje si es un helicóptero?»). La pista se
+   * sigue dibujando: está ahí.
+   */
+  readonly sinEje?: boolean;
 
   /**
    * **El plan de vuelo**, si se va a otro campo: sus puntos, a cuál se va y
@@ -726,6 +733,8 @@ export function dibujarLaCarta(
     const pa = aqui(a);
     const pb = aqui(b);
     pista = [pa, pb];
+  }
+  if (m.pista && !m.sinEje) {
     /*
      * **Por la cabecera en uso, que es la que dice el viento.**
      *
