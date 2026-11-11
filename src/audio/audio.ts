@@ -25,6 +25,7 @@
  *    que en este juego llegan de todos modos.
  */
 
+import type { LoQueSuenaElRotor } from "./rotor";
 import type { ControlInputs, FlightState } from "../flight/model";
 import { vueltasDelMotor, type AircraftSound } from "../flight/aircraft";
 import { indicatedAirspeed } from "../flight/atmosphere";
@@ -599,6 +600,21 @@ export class Audio {
 
   // Motor
   private engineGain: GainNode | null = null;
+  /**
+   * **El helicóptero**: lo que suena, que cuenta `audio/rotor.ts`, y sus voces,
+   * que se montan la primera vez que hace falta. Con él, las del motor de avión
+   * callan.
+   */
+  private sonidoDelRotor: LoQueSuenaElRotor | null = null;
+  private vocesDelRotor: {
+    readonly soplido: GainNode;
+    readonly golpe: GainNode;
+    readonly latido: OscillatorNode;
+    readonly cola: OscillatorNode;
+    readonly colaGain: GainNode;
+    readonly turbina: OscillatorNode;
+    readonly turbinaGain: GainNode;
+  } | null = null;
   private engineFilter: BiquadFilterNode | null = null;
   private engineTone: OscillatorNode | null = null;
   private growl: BiquadFilterNode | null = null;
@@ -1028,17 +1044,21 @@ export class Audio {
      */
     // La parte que suena: con uno de dos parado, la mitad. Ver `enMarcha`.
     const parte = clamp(enMarcha, 0, 1);
+    // Con el helicóptero, el motor de avión calla: suenan su rotor y sus turbinas.
+    const deAvion = this.sonidoDelRotor ? 0 : 1;
     this.engineGain?.gain.setTargetAtTime(
       ((controls.engineOn ? 0.1 : 0) + gas * 0.14 + load * 0.03 + carga * 0.02) *
-        parte,
+        parte *
+        deAvion,
       now,
       0.1,
     );
     this.propGain?.gain.setTargetAtTime(
-      ((controls.engineOn ? 0.03 : 0) + gas * 0.075) * parte,
+      ((controls.engineOn ? 0.03 : 0) + gas * 0.075) * parte * deAvion,
       now,
       1.4,
     );
+    this.sonarElRotor(now);
     this.propFilter?.frequency.setTargetAtTime(120 + rpm * 0.08, now, 0.1);
 
     // ── Viento ──────────────────────────────────────────────────────────
@@ -1503,6 +1523,84 @@ export class Audio {
     this.build();
   }
   private sinRuidos = false;
+
+  /**
+   * **Lo que suena del helicóptero en este fotograma**, o `null` en un avión. Lo
+   * pone el juego cada fotograma; ver `sonidoDelRotor` en `audio/rotor.ts`.
+   */
+  ponerRotor(s: LoQueSuenaElRotor | null): void {
+    this.sonidoDelRotor = s;
+  }
+
+  /**
+   * **Las voces del helicóptero**: el soplido grave del rotor que late con el paso
+   * de las palas, la nota del rotor de cola y el silbido de las turbinas.
+   *
+   * El latido es un oscilador al ritmo de las palas, afilado para que cada pasada
+   * sea un golpe corto y no una ola, que modula la ganancia del soplido. Es la
+   * forma barata del «flap-flap»: dos nodos, sin muestras grabadas.
+   */
+  private sonarElRotor(now: number): void {
+    const s = this.sonidoDelRotor;
+    const ctx = this.context;
+    if (!ctx) return;
+    if (!s && !this.vocesDelRotor) return;
+    const v = this.vocesDelRotor ?? (this.vocesDelRotor = this.montarElRotor(ctx));
+    const rotor = s?.rotor ?? 0;
+    const golpe = s?.golpe ?? 0;
+    v.latido.frequency.setTargetAtTime(Math.max(0.1, s?.golpesHz ?? 0.1), now, 0.1);
+    // La base del soplido, y encima los golpes: cuanto más marcados, menos soplido liso.
+    v.soplido.gain.setTargetAtTime(rotor * 0.07 * (1 - golpe * 0.5), now, 0.15);
+    v.golpe.gain.setTargetAtTime(rotor * 0.22 * golpe, now, 0.15);
+    v.cola.frequency.setTargetAtTime(Math.max(1, s?.colaHz ?? 1), now, 0.1);
+    v.colaGain.gain.setTargetAtTime((s?.cola ?? 0) * 0.025, now, 0.2);
+    v.turbina.frequency.setTargetAtTime(s?.turbinaHz ?? 900, now, 0.3);
+    v.turbinaGain.gain.setTargetAtTime((s?.turbina ?? 0) * 0.012, now, 0.3);
+  }
+
+  private montarElRotor(ctx: BaseAudioContext): NonNullable<typeof this.vocesDelRotor> {
+    const motor = this.bus("motor");
+    // El soplido: ruido por debajo de unos cuatrocientos hercios.
+    const grave = ctx.createBiquadFilter();
+    grave.type = "lowpass";
+    grave.frequency.value = 380;
+    grave.Q.value = 0.7;
+    const soplido = ctx.createGain();
+    soplido.gain.value = 0;
+    this.loopNoise(this.noiseBuffer()).connect(grave).connect(soplido).connect(motor);
+    // El latido: una onda que es casi cero y sube en un pico corto en cada pala.
+    const latido = ctx.createOscillator();
+    latido.type = "sine";
+    latido.frequency.value = 1;
+    const afilar = ctx.createWaveShaper();
+    const curva = new Float32Array(512);
+    for (let i = 0; i < curva.length; i++) curva[i] = Math.pow(i / (curva.length - 1), 6);
+    afilar.curve = curva;
+    const golpe = ctx.createGain();
+    golpe.gain.value = 0;
+    latido.connect(afilar).connect(golpe).connect(soplido.gain);
+    latido.start();
+    // El rotor de cola: una nota grave y zumbona.
+    const cola = ctx.createOscillator();
+    cola.type = "sawtooth";
+    cola.frequency.value = 1;
+    const colaFiltro = ctx.createBiquadFilter();
+    colaFiltro.type = "lowpass";
+    colaFiltro.frequency.value = 700;
+    const colaGain = ctx.createGain();
+    colaGain.gain.value = 0;
+    cola.connect(colaFiltro).connect(colaGain).connect(motor);
+    cola.start();
+    // Las turbinas: un silbido agudo y bajito.
+    const turbina = ctx.createOscillator();
+    turbina.type = "sine";
+    turbina.frequency.value = 900;
+    const turbinaGain = ctx.createGain();
+    turbinaGain.gain.value = 0;
+    turbina.connect(turbinaGain).connect(motor);
+    turbina.start();
+    return { soplido, golpe, latido, cola, colaGain, turbina, turbinaGain };
+  }
 
   /** Dos segundos de ruido blanco generados en memoria. Cero bytes de red. */
   private noiseBuffer(): AudioBuffer {

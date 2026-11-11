@@ -273,6 +273,7 @@ import {
 import type { Lluvia } from "./world/meteo";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { HelicopteroComoModelo, estabilizacionDelPeldano } from "./flight/fdm-helicoptero";
+import { sonidoDelRotor } from "./audio/rotor";
 import { cargarModelo } from "./world/aeronave-modelo";
 import {
   alUmbralEnLaAproximacion,
@@ -19344,6 +19345,17 @@ export class Game {
       TRAQUETEO[this.superficie],
       // Con uno parado, se oye la parte que va. Ver `enMarcha` en `audio.ts`.
       estados ? enMarcha(estados) / Math.max(1, estados.length) : 1,
+    );
+    // Y el helicóptero suena a helicóptero: su rotor, su rotor de cola y sus turbinas.
+    const heli = this.flight instanceof HelicopteroComoModelo ? this.flight.modelo : null;
+    this.audio.ponerRotor(
+      heli
+        ? sonidoDelRotor(heli.ficha, heli.rotor(), {
+            velocidad: this.flight.state.airspeed,
+            vertical: this.flight.state.verticalSpeed,
+            masa: heli.masaAhora(),
+          })
+        : null,
     );
     // El mapa, si está abierto. Solo mueve la flecha: el mundo ya está pintado.
     /*
