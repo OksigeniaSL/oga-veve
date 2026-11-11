@@ -244,6 +244,7 @@ export const ES_PY = {
   "tecla.tren": "Tren",
   "tecla.aerofrenos": "Aerofrenos",
   "tecla.autofreno": "Autofreno",
+  "tecla.baliza": "Baliza",
   "tecla.camera": "Cambiar cámara",
   "tecla.assist": "Nivel de dificultad",
   "tecla.reset": "Volver a empezar",
@@ -1751,6 +1752,9 @@ export const ES_PY = {
    * saludo. Lo dice la instructora; el último, solo en los peldaños de abajo. Ver
    * `Game.tarjetaDelRemolque`.
    */
+  // Antes que el tractor, la baliza: sin ella no empuja. Ver `flight/baliza.ts`.
+  "vuelo.remolqueBaliza":
+    "Prendé la baliza: avisa a los de tierra que nos vamos a mover",
   "vuelo.remolque": "Pedí el tractor: nos empuja para atrás hasta la calle",
   "vuelo.remolqueArranca":
     "El tractor nos lleva para atrás, porque desde la cabina no se ve lo que hay detrás. Mientras tanto, arrancá los motores",
@@ -2499,6 +2503,7 @@ export const ES_PY = {
    */
   "avion.cambiarParado": "Para cambiar de avión, pará en tierra",
   "hud.mandarCinturon": "Cartel del cinturón",
+  "hud.baliza": "Baliza",
   "hud.subirCuadro": "Subir el tablero",
   // El cuadro del teléfono: cada losa pone grande su pantalla, y las dos
   // teclas de la ventanilla ALT. Ver ui/cuadro-telefono.ts.

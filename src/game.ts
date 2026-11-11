@@ -1507,6 +1507,7 @@ import {
 } from "./flight/tormentas";
 import { horaSolarEn } from "./world/hora";
 import { Cinturon, SACUDE, YA_NO_SACUDE } from "./flight/cinturon";
+import { InterruptorDeBaliza } from "./flight/baliza";
 import { calorQuePesa } from "./flight/caliente-y-alto";
 import {
   aCuantoCaptura,
@@ -5491,8 +5492,15 @@ export class Game {
   private remolque: Remolque | null = null;
   private dibujoDelRemolque: DibujoDelRemolque | null = null;
   private remolquePorMirar = false;
-  /** La baliza encendida antes de arrancar, que la pide la tripulación para empujar. */
-  private balizaDelRemolque = false;
+  /**
+   * **El interruptor de la baliza**: lo mueven quien juega —botón, tecla o tarjeta— y el
+   * motor al arrancar y al parar; en el pasaje, la tripulación. Sin ella, el tractor no
+   * empuja. Ver `flight/baliza.ts` y `atenderALaBaliza`.
+   */
+  private readonly baliza = new InterruptorDeBaliza();
+  /** Lo que se pintó en su botón, para no repintarlo cada fotograma. */
+  private balizaPintada: boolean | null = null;
+  private balizaOfrecida = false;
   /** Lo medido del remolque, fotograma a fotograma: para el banco. Ver `medirElRemolque`. */
   private medidaDelRemolque: MedidaDelRemolque | null = null;
   /** Lo último que leyó y lo último que hizo, para el banco. */
@@ -7013,6 +7021,7 @@ export class Game {
     // El interruptor del cinturón, en los aviones que llevan gente detrás.
     this.hud.ponerHayCinturon(conPasaje(this.aircraft.mass));
     this.hud.onCinturon(() => this.mandarElCinturon());
+    this.hud.onBaliza(() => this.moverLaBaliza());
     /*
      * **Y el piloto automático, en el avión que lo lleva.**
      *
@@ -7370,6 +7379,7 @@ export class Game {
     }
     // Y el remolque, que se mira en el primer paso: con el avión ya en su puesto. Ver `prepararElRemolque`.
     this.quitarElRemolque();
+    this.baliza.reiniciar();
     this.remolquePorMirar = true;
     this.tripulacionDeLinea = new VueloDeLinea({
       vr: this.aircraft.rotationSpeed,
@@ -7697,7 +7707,7 @@ export class Game {
     this.manosDeLinea = manos;
     this.ponerLasManosDeLinea(manos);
     // La baliza antes de arrancar, y el tractor, que empuja cuando la cabina lo dice. Ver `empujarElAvion`.
-    this.balizaDelRemolque = !!manos.baliza;
+    if (manos.baliza) this.baliza.encender();
     if (manos.empujar) this.remolque?.empezar();
     this.apuntarLaRecogida(dt, linea, tripulacion);
     /*
@@ -12859,7 +12869,10 @@ export class Game {
      * para las lecciones que empiezan en el aire— y lo que se reinicia en cada
      * uno se fue copiando a mano hasta divergir. Todo lo que sea «estado de
      * este vuelo» tiene que quedar limpio por los dos.
+     *
+     * La baliza, también: en el primer paso se pone como esté el motor. Ver `flight/baliza.ts`.
      */
+    this.baliza.reiniciar();
     if (this.leccion.arranque === "aire") return this.reiniciarEnFinal();
     // El plan se reinicia **antes** de colocar el avión: es él quien decide si
     // hoy se sale del puesto o de la cabecera, y de eso depende dónde y hacia
@@ -19491,8 +19504,11 @@ export class Game {
      * faro rodando y los focos en la carrera y por debajo de diez mil pies o
      * con el tren fuera, que es donde hay tráfico y pájaros y el foco es lo
      * que hace que te vean. Ver `world/luces-del-trafico.ts`.
+     *
+     * La baliza, no: la lleva su interruptor. Ver `atenderALaBaliza`.
      */
     const s = this.flight.state;
+    this.atenderALaBaliza();
     this.aircraftMesh.luces?.paso(
       this.relojDeRuta,
       /*
@@ -19501,7 +19517,7 @@ export class Game {
        */
       this.pruebaDeLuces > 0
         ? { navegacion: true, baliza: true, estroboscopicas: true, rodaje: true, aterrizaje: true }
-        : this.conLaBalizaDelRemolque(
+        : this.conLaBaliza(
             lucesDelTrafico(
               faseDelTuyo({
                 motor: this.input.controls.engineOn,
@@ -20314,7 +20330,6 @@ export class Game {
     this.dibujoDelRemolque?.quitar();
     this.dibujoDelRemolque = null;
     this.remolque = null;
-    this.balizaDelRemolque = false;
     this.remolquePorMirar = false;
     this.paraEmpujar = null;
     this.remolqueContado = "";
@@ -20323,15 +20338,49 @@ export class Game {
   /**
    * **Quien juega pide el empuje**: con la llave del motor o tocando la tarjeta del
    * tractor, en el puesto. Es el «solicito remolque y puesta en marcha» de una cabina de
-   * verdad dicho con un gesto: se enciende la baliza —«esto está vivo, no te acerques»—,
-   * la persona de tierra la ve y, al rato, el tractor empuja. Los motores, después y
-   * empujando, con la misma llave. Ver `toggleEngine` y `tarjetaDelRemolque`.
+   * verdad dicho con un gesto: la persona de tierra lo oye y, al rato, el tractor empuja.
+   * Los motores, después y empujando, con la misma llave. Ver `toggleEngine` y
+   * `tarjetaDelRemolque`.
+   *
+   * **Con la baliza encendida antes**, que es lo que pide la gente de tierra en cualquier
+   * aeropuerto: «esto está vivo, no te acerques». Sin ella el tractor no empuja; la llave
+   * suena a «así no» y la tarjeta y el botón siguen pidiendo la baliza, que es lo que
+   * falta. No hay espera sin salida: la propia tarjeta la enciende. Ver `flight/baliza.ts`.
    */
   private pedirElRemolque(): void {
     const r = this.remolque;
     if (!r || this.dePasaje || r.fase !== "enganchado" || this.paraEmpujar !== null) return;
-    this.balizaDelRemolque = true;
+    if (!this.baliza.encendida) {
+      this.avisar("error");
+      return;
+    }
     this.paraEmpujar = BALIZA_ANTES_DE_EMPUJAR;
+  }
+
+  /** **El interruptor de la baliza**, a mano: el botón, la tecla o la tarjeta del puesto. */
+  private moverLaBaliza(): void {
+    // De pasaje, la baliza es de la tripulación, como los motores.
+    if (this.dePasaje) return;
+    this.baliza.mover();
+    this.atenderALaBaliza();
+  }
+
+  /**
+   * **La baliza, cada fotograma**: el motor la enciende al arrancar y la apaga al parar,
+   * su botón dice cómo está, y se ofrece mientras es lo que falta en el puesto.
+   */
+  private atenderALaBaliza(): void {
+    this.baliza.paso(this.input.controls.engineOn);
+    const encendida = this.baliza.encendida;
+    if (encendida !== this.balizaPintada) {
+      this.balizaPintada = encendida;
+      this.hud.ponerBaliza(encendida);
+    }
+    const ofrecida = !encendida && this.remolqueDeQuienJuega?.fase === "enganchado";
+    if (ofrecida !== this.balizaOfrecida) {
+      this.balizaOfrecida = ofrecida;
+      this.hud.proponerBaliza(ofrecida);
+    }
   }
 
   /**
@@ -20388,10 +20437,15 @@ export class Game {
    * Con los motores en marcha y el tractor todavía enganchado, la fase se calla —ver
    * `elRemolqueLlevaLaSalida`— y la tarjeta la pone `atenderAlRemolque`.
    */
-  private tarjetaDelRemolque(vista: Vista): { readonly clave: string; readonly icono: string } | null {
+  private tarjetaDelRemolque(
+    vista: Vista,
+  ): { readonly clave: string; readonly icono: string; readonly baliza?: boolean } | null {
     const r = this.remolqueDeQuienJuega;
     if (!r || vista.fase !== "estacionado") return null;
-    if (r.fase === "enganchado") return { clave: "vuelo.remolque", icono: "remolque" };
+    if (r.fase === "enganchado")
+      return this.baliza.encendida || this.paraEmpujar !== null
+        ? { clave: "vuelo.remolque", icono: "remolque" }
+        : { clave: "vuelo.remolqueBaliza", icono: "baliza", baliza: true };
     return {
       clave: laInstructoraLoExplica(this.tier.avisos) ? "vuelo.remolqueArranca" : "vuelo.estacionado",
       icono: "llave",
@@ -20424,7 +20478,9 @@ export class Game {
       : r.fase === "enganchado"
         ? this.paraEmpujar !== null
           ? "pedido"
-          : "enganchado"
+          : this.baliza.encendida
+            ? "enganchado"
+            : "sin-baliza"
         : !motor
           ? "sin-motores"
           : r.fase === "saludando"
@@ -20435,8 +20491,14 @@ export class Game {
     this.remolqueContado = ahora;
     if (antes === "") return;
     const puesta = this.hud.senal.puesto;
-    const delRemolque = puesta.dibujo === "remolque" || puesta.dibujo === "pasador";
+    const delRemolque = puesta.dibujo === "remolque" || puesta.dibujo === "pasador" || puesta.dibujo === "baliza";
     switch (ahora) {
+      case "sin-baliza":
+      case "enganchado":
+        // Encendida o apagada la baliza en el puesto: otra vez la tarjeta de la fase, que ahora pide lo otro.
+        if (delRemolque) this.hud.senal.caducar(puesta.dibujo);
+        this.faseAnunciada = "";
+        break;
       case "pedido":
         // Pedido: la tarjeta se queda, sin la llave, que ya no hay nada que hacer.
         this.hud.senal.mostrar(comoDibujo("remolque"), "", null, { segundos: Infinity });
@@ -20475,6 +20537,8 @@ export class Game {
     const r = this.remolque;
     if (!r) return;
     // Lo de quien juega: el tractor echa a andar al rato de pedirlo, y espera a sus motores.
+    // Y si se apaga la baliza antes de que eche a andar, no empuja: vuelve a pedirla.
+    if (this.paraEmpujar !== null && !this.baliza.encendida) this.paraEmpujar = null;
     if (this.paraEmpujar !== null) {
       this.paraEmpujar -= dt;
       if (this.paraEmpujar <= 0) {
@@ -20523,9 +20587,10 @@ export class Game {
     return (v.x - s.position.x) * n.x + (v.z - s.position.z) * n.z;
   }
 
-  /** La baliza encendida antes de arrancar, si la pide la tripulación para empujar. */
-  private conLaBalizaDelRemolque<T extends { readonly baliza: boolean }>(luces: T): T {
-    return this.balizaDelRemolque && !luces.baliza ? { ...luces, baliza: true } : luces;
+  /** La baliza, como esté su interruptor. Ver `flight/baliza.ts`. */
+  private conLaBaliza<T extends { readonly baliza: boolean }>(luces: T): T {
+    const encendida = this.baliza.encendida;
+    return luces.baliza === encendida ? luces : { ...luces, baliza: encendida };
   }
 
   /**
@@ -20542,7 +20607,7 @@ export class Game {
     const a = r.avion;
     const n = vector(a.rumbo);
     if (r.fase === "empujando" && m.balizaAlEmpujar === null)
-      m.balizaAlEmpujar = this.balizaDelRemolque && !this.input.controls.engineOn;
+      m.balizaAlEmpujar = this.baliza.encendida && !this.input.controls.engineOn;
     if (antes === "empujando") {
       const ant = this.antesDelPaso;
       const dx = s.position.x - ant.x;
@@ -20620,7 +20685,7 @@ export class Game {
       avion: { ...r.avion },
       tractor: { ...r.tractor },
       persona: { ...r.persona },
-      baliza: this.balizaDelRemolque,
+      baliza: this.baliza.encendida,
       medida: this.medidaDelRemolque && { ...this.medidaDelRemolque, fases: [...this.medidaDelRemolque.fases] },
     };
   }
@@ -24966,8 +25031,9 @@ export class Game {
       }
       // Al lado del mensaje va **la tecla**, cuando la fase pide una. «Arrancá
       // el motor» no le sirve de nada a quien no sabe cuál es el motor.
-      const tecla =
-        vista.fase === "estacionado" || vista.fase === "en-puesto"
+      const tecla = this.tarjetaDelRemolque(vista)?.baliza
+        ? ` · ${nombreDeTecla(this.input.preferredKey("baliza"))}`
+        : vista.fase === "estacionado" || vista.fase === "en-puesto"
           ? ` · ${nombreDeTecla(this.input.preferredKey("engine"))}`
           : vista.fase === "esperando" || vista.fase === "aterrizado"
             ? ` · ${nombreDeTecla(this.input.preferredKey("brakes"))}`
@@ -25079,7 +25145,9 @@ export class Game {
                 : 6,
           // La tecla, dibujada. Sin esto, en el peldaño sin palabras no había
           // ninguna manera de saber que el contacto es la I.
-          tecla: pendiente
+          tecla: delRemolque?.baliza
+            ? nombreDeTecla(this.input.preferredKey("baliza"))
+            : pendiente
             ? nombreDeTecla(this.input.preferredKey("engine"))
             : esperando
               ? nombreDeTecla(this.input.preferredKey("brakes"))
@@ -25087,7 +25155,11 @@ export class Game {
           // Y la tarjeta **hace** lo que dice al tocarla. En una tablet no había
           // ninguna forma de arrancar el motor: los mandos táctiles son palanca,
           // timón, gas y freno, y el contacto no estaba por ningún lado.
-          accion: pendiente ? () => this.toggleEngine() : null,
+          accion: delRemolque?.baliza
+            ? () => this.moverLaBaliza()
+            : pendiente
+              ? () => this.toggleEngine()
+              : null,
         },
       );
       // Y con su clave: los ficheros de voz se llaman por clave, no por

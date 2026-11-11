@@ -1649,6 +1649,16 @@ export class Hud {
           <svg viewBox="0 0 24 24" aria-hidden="true">${CINTURON}</svg>
         </button>
         <!--
+          **Y la baliza**, la luz roja que destella: el interruptor que en un reactor va en
+          el panel del techo, que aquí no hay, y que se enciende antes de arrancar o de que
+          te saquen empujado. Va con los mandos que gobiernan el avión sin pilotarlo, y con
+          el mismo dibujo que la tarjeta que la pide en el puesto. En todos los aviones,
+          que todos la llevan. Ver flight/baliza.ts.
+        -->
+        <button class="sonido baliza-mando" type="button"
+                data-hud="baliza-mando" aria-pressed="false"
+                aria-label="${t("hud.baliza")}">${DIBUJOS.baliza}</button>
+        <!--
           La radio: lo que se acaba de oír decir a otro avión.
 
           Va aparte de todo lo demás y en pequeño **porque no es una
@@ -2320,6 +2330,8 @@ export class Hud {
     alPulsar(this.gafas, () => this.gafasHandler?.());
     const cinturon = this.root.querySelector<HTMLElement>('[data-hud="cinturon-mando"]');
     if (cinturon) alPulsar(cinturon, () => this.cinturonHandler?.());
+    const baliza = this.root.querySelector<HTMLElement>('[data-hud="baliza-mando"]');
+    if (baliza) alPulsar(baliza, () => this.balizaHandler?.());
     const automatico = this.root.querySelector<HTMLElement>('[data-hud="piloto-auto"]');
     if (automatico) alPulsar(automatico, () => this.pilotoAutoHandler?.());
     alPulsar(this.home, () => this.destinoHandler?.());
@@ -2463,6 +2475,8 @@ export class Hud {
     this.ponerHayPilotoAutomatico(this.hayPilotoAuto);
     this.ponerHayCinturon(this.hayCinturon);
     this.ponerMandoDeCinturon(this.cinturonEncendido);
+    this.ponerBaliza(this.balizaEncendida);
+    this.proponerBaliza(this.balizaPropuesta);
     this.ponerGasDeNivel(this.gasDeNivel);
     this.ponerQuienLlevaElGas(this.quienLlevaElGas);
     // Y la ilustración de la historia, si había una puesta: el marcado es nuevo.
@@ -4924,6 +4938,33 @@ export class Hud {
     if (raiz) this.tablero.ponerLucesDeAviso(raiz, estado);
   }
 
+
+  /** Quién se entera de que han tocado el interruptor de la baliza. */
+  private balizaHandler: (() => void) | null = null;
+
+  onBaliza(fn: () => void): void {
+    this.balizaHandler = fn;
+  }
+
+  /** Si la baliza está encendida, y si se ofrece. Se recuerdan: `render()` rehace el botón. */
+  private balizaEncendida = false;
+  private balizaPropuesta = false;
+
+  /** Y si está encendida, en su interruptor: un mando dice en qué posición está. */
+  ponerBaliza(encendida: boolean): void {
+    this.balizaEncendida = encendida;
+    this.root.querySelector<HTMLElement>('[data-hud="baliza-mando"]')?.setAttribute("aria-pressed", String(encendida));
+  }
+
+  /**
+   * **El botón de la baliza se ofrece** mientras es lo que falta: en el puesto, con el
+   * tractor enganchado y la baliza apagada. El mismo latido que el del automático, que
+   * es el dedo de la instructora señalando el botón. Ver `.baliza-mando--propuesto`.
+   */
+  proponerBaliza(si: boolean): void {
+    this.balizaPropuesta = si;
+    this.root.querySelector<HTMLElement>('[data-hud="baliza-mando"]')?.classList.toggle("baliza-mando--propuesto", si);
+  }
 
   /** Si el cartel está encendido. Se recuerda: `render()` rehace el botón. */
   private cinturonEncendido = false;

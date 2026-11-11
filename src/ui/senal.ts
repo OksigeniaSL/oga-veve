@@ -1126,6 +1126,19 @@ const PASADOR = icono(`
   <path class="senal__roja" d="M10.2 4.6 L21.4 6.6 L19 9.6 L21.4 12.6 L10.2 9.4 Z" />
 `);
 
+/**
+ * **La baliza**: la cúpula roja sobre su base, con los rayos de que destella. Es la
+ * tarjeta que la pide en el puesto antes de pedir el tractor, y el mismo dibujo va en su
+ * interruptor. La cúpula, en el rojo oscuro con filo claro de la luz del PAPI, por lo
+ * mismo: sobre el barro de la tarjeta un rojo vivo no se ve. Ver `flight/baliza.ts`.
+ */
+const BALIZA = icono(`
+  <rect x="5" y="17.2" width="14" height="3.6" rx="1" />
+  <path class="senal__roja" d="M7.4 17.2 V13 A4.6 4.6 0 0 1 16.6 13 V17.2 Z" />
+  <path d="M12 2.2 V5.4 M4.4 5.8 L6.4 8 M19.6 5.8 L17.6 8 M1.8 12.6 H4.6 M19.4 12.6 H22.2"
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+`);
+
 const MEDIA_VUELTA = icono(`
   <path d="M4.6 2 h14.8 v20 H4.6 Z" opacity="0.26" />
   <path d="M9 4 v11 q0 4 3 4 q3 0 3-4 V9.6" fill="none" stroke="currentColor"
@@ -1543,6 +1556,7 @@ export const DIBUJOS = {
   "media-vuelta": MEDIA_VUELTA,
   remolque: REMOLQUE,
   pasador: PASADOR,
+  baliza: BALIZA,
   "vuelta-derecha": vueltaEntera(false),
   "vuelta-izquierda": vueltaEntera(true),
   eje: EJE,

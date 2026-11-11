@@ -207,6 +207,7 @@ export const EN: Dictionary = {
   "tecla.tren": "Gear",
   "tecla.aerofrenos": "Speed brakes",
   "tecla.autofreno": "Autobrake",
+  "tecla.baliza": "Beacon",
   "tecla.camera": "Change view",
   "tecla.assist": "Difficulty tier",
   "tecla.reset": "Start again",
@@ -366,6 +367,8 @@ export const EN: Dictionary = {
   "palabra.roto": "Broken",
   "vuelo.estacionado": "Start the engine",
   "vuelo.arrancando": "Release the brakes and roll slowly",
+  "vuelo.remolqueBaliza":
+    "Beacon on: it tells the ground crew we are about to move",
   "vuelo.remolque": "Ask for the tug: it pushes us back to the taxiway",
   "vuelo.remolqueArranca":
     "The tug pushes us back, because you can't see what's behind us from the cockpit. Meanwhile, start the engines",
@@ -876,6 +879,7 @@ export const EN: Dictionary = {
   "avion.noCabeAqui": "No other aircraft fits on this runway",
   "avion.cambiarParado": "Stop on the ground to change aircraft",
   "hud.mandarCinturon": "Seatbelt sign",
+  "hud.baliza": "Beacon",
   "hud.subirCuadro": "Raise the panel",
   "hud.telGrande": "Show the screen big",
   "hud.altBajar": "Lower the selected altitude",

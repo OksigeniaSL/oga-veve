@@ -41,6 +41,7 @@ export type Accion =
   | "tren"
   | "aerofrenos"
   | "autofreno"
+  | "baliza"
   | "reversa"
   | "camera"
   | "assist"
@@ -176,6 +177,12 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
    * aerofrenos, porque se arman juntos antes de aterrizar.
    */
   autofreno: { label: "tecla.autofreno", defecto: ["."], held: false },
+  /*
+   * **Y la baliza, en la coma**: las letras ya están todas, y la coma está en el mismo
+   * sitio en el teclado español y en el americano, a la izquierda del punto. Se pulsa y
+   * se queda, como el interruptor de verdad. Ver `flight/baliza.ts`.
+   */
+  baliza: { label: "tecla.baliza", defecto: [","], held: false },
   camera: { label: "tecla.camera", defecto: ["KeyC"], held: false },
   assist: { label: "tecla.assist", defecto: ["KeyM"], held: false },
   reset: { label: "tecla.reset", defecto: ["KeyR"], held: false },

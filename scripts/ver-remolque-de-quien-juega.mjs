@@ -5,11 +5,13 @@
  *
  * Mira, con el dedo y no por dentro:
  *
- * 1. Que empieza en un puesto de contacto con el morro al edificio, con la tarjeta
- *    del tractor puesta y tocable, y que si no se toca nada no pasa nada: sigue
- *    enganchado, sin moverse, con la misma tarjeta.
- * 2. Que tocar la tarjeta pide el empuje: la baliza, y al rato el tractor empuja,
- *    hacia atrás, sin motores; y vuelve la tarjeta de la llave.
+ * 1. Que empieza en un puesto de contacto con el morro al edificio, con la baliza
+ *    apagada y la tarjeta que la pide puesta y tocable, y su botón ofreciéndose; y que
+ *    si no se toca nada no pasa nada: sigue enganchado, sin moverse, con la misma
+ *    tarjeta. Y que la llave, sin baliza, no lo saca: el tractor no empuja sin ella.
+ * 2. Que la baliza se enciende —tocando la tarjeta en Guyrami, con su botón en el de
+ *    cabina— y sale la tarjeta del tractor; y que tocarla pide el empuje: al rato el
+ *    tractor empuja, hacia atrás, sin motores; y vuelve la tarjeta de la llave.
  * 3. Los motores: en Guyrami se arrancan empujando, tocando la tarjeta; en el de
  *    cabina se dejan para el final, y el tractor espera enganchado y con el freno
  *    puesto hasta que se arrancan con la tecla.
@@ -116,7 +118,14 @@ try {
     );
     if (!alEdificio || alEdificio.delMorro > 50 || Math.abs(alEdificio.desviado) > 50)
       fallos.push(t(`no empieza con el morro al edificio (${JSON.stringify(alEdificio)})`));
-    if (t0.dibujo !== "remolque" || !t0.tocable) fallos.push(t(`la tarjeta del puesto no es la del tractor tocable (${t0.dibujo}, ${t0.tocable})`));
+    if (t0.dibujo !== "baliza" || !t0.tocable) fallos.push(t(`la tarjeta del puesto no es la de la baliza tocable (${t0.dibujo}, ${t0.tocable})`));
+    if (r0.baliza) fallos.push(t("en el puesto ya está la baliza encendida"));
+    const boton0 = await page.evaluate(() => {
+      const b = document.querySelector('[data-hud="baliza-mando"]');
+      return { visible: !!b && !b.hidden && b.getBoundingClientRect().width > 0, pulsado: b?.getAttribute("aria-pressed"), ofrecido: !!b?.classList.contains("baliza-mando--propuesto") };
+    });
+    console.log(t(`botón de la baliza: ${JSON.stringify(boton0)}`));
+    if (!boton0.visible || boton0.pulsado !== "false" || !boton0.ofrecido) fallos.push(t(`el botón de la baliza no está, o no se ofrece (${JSON.stringify(boton0)})`));
     await page.screenshot({ path: `${FOTOS}/${tramo}-1-en-el-puesto.png` });
 
     // Quieto, sin tocar nada: no pasa nada, ni se castiga. Sigue enganchado y con su tarjeta.
@@ -127,15 +136,41 @@ try {
       return { movido: Math.hypot(q.x - p.x, q.z - p.z), fase: globalThis.__oga.inicio().remolque?.fase, dibujo: globalThis.__oga.tarjeta().dibujo };
     }, p0);
     console.log(t(`sin tocar nada: se movió ${f(quieto.movido, 2)} m, ${quieto.fase}, tarjeta ${quieto.dibujo}`));
-    if (quieto.movido > 0.2 || quieto.fase !== "enganchado" || quieto.dibujo !== "remolque")
+    if (quieto.movido > 0.2 || quieto.fase !== "enganchado" || quieto.dibujo !== "baliza")
       fallos.push(t(`sin tocar nada cambió algo (${JSON.stringify(quieto)})`));
 
-    // ── 2. Se pide con el dedo ──
+    // La llave sin baliza: no pide el empuje. El tractor no empuja un avión con la baliza apagada.
+    await page.keyboard.press("KeyI");
+    await page.waitForTimeout(PRISA ? 2500 : 6000);
+    const sinBaliza = await remolque(page);
+    const tSin = await tarjeta(page);
+    console.log(t(`la llave sin baliza: ${sinBaliza.fase}, baliza ${sinBaliza.baliza}, tarjeta ${tSin.dibujo}`));
+    if (sinBaliza.fase !== "enganchado" || sinBaliza.baliza || tSin.dibujo !== "baliza")
+      fallos.push(t(`la llave sin baliza cambió algo (${sinBaliza.fase}, ${sinBaliza.baliza}, ${tSin.dibujo})`));
+
+    // ── 2. La baliza: con la tarjeta en Guyrami, con su botón en el de cabina ──
+    if (tramo === "guyrami") await page.locator('[data-hud="senal"]').tap();
+    else await page.locator('[data-hud="baliza-mando"]').tap();
+    await page.waitForTimeout(600);
+    const conBaliza = await remolque(page);
+    const tCon = await tarjeta(page);
+    const boton1 = await page.evaluate(() => {
+      const b = document.querySelector('[data-hud="baliza-mando"]');
+      return { pulsado: b?.getAttribute("aria-pressed"), ofrecido: !!b?.classList.contains("baliza-mando--propuesto") };
+    });
+    console.log(t(`baliza encendida: ${conBaliza.baliza}, ${conBaliza.fase}, tarjeta ${tCon.dibujo} «${tCon.texto}» tocable ${tCon.tocable} · botón ${JSON.stringify(boton1)}`));
+    if (!conBaliza.baliza) fallos.push(t("tocar la baliza no la enciende"));
+    if (conBaliza.fase !== "enganchado") fallos.push(t(`encender la baliza ya movió el tractor (${conBaliza.fase})`));
+    if (tCon.dibujo !== "remolque" || !tCon.tocable) fallos.push(t(`con la baliza, la tarjeta no es la del tractor tocable (${tCon.dibujo}, ${tCon.tocable})`));
+    if (boton1.pulsado !== "true" || boton1.ofrecido) fallos.push(t(`el botón no dice que está encendida (${JSON.stringify(boton1)})`));
+    await page.screenshot({ path: `${FOTOS}/${tramo}-1b-con-la-baliza.png` });
+
+    // ── 2b. Se pide con el dedo ──
     await page.locator('[data-hud="senal"]').tap();
     await page.waitForTimeout(300);
     const pedido = await remolque(page);
     console.log(t(`tocado: baliza ${pedido.baliza}, ${pedido.fase}`));
-    if (!pedido.baliza) fallos.push(t("pedir el empuje no enciende la baliza"));
+    if (!pedido.baliza) fallos.push(t("al pedir el empuje se apagó la baliza"));
     if (!(await esperar(page, () => globalThis.__oga.inicio().remolque?.fase === "empujando", null, 20)))
       fallos.push(t("el tractor no echa a andar"));
     await page.waitForTimeout(PRISA ? 600 : 5000);

@@ -4856,7 +4856,8 @@ button.motor__tecla::after {
  * posición está. Ver flight/cinturon.ts.
  */
 .piloto-auto,
-.cinturon-mando {
+.cinturon-mando,
+.baliza-mando {
   display: grid;
   place-items: center;
   /* Cuarenta y cuatro de pantalla también en el teléfono: ver `--yema`. */
@@ -4871,21 +4872,39 @@ button.motor__tecla::after {
 }
 
 .piloto-auto svg,
-.cinturon-mando svg {
+.cinturon-mando svg,
+.baliza-mando svg {
   width: 24px;
   height: 24px;
 }
 
 .piloto-auto[aria-pressed="true"],
-.cinturon-mando[aria-pressed="true"] {
+.cinturon-mando[aria-pressed="true"],
+.baliza-mando[aria-pressed="true"] {
   background: var(--aviso-ambar, #e0a13a);
   color: #1b1b1b;
 }
 
 .piloto-auto:focus-visible,
-.cinturon-mando:focus-visible {
+.cinturon-mando:focus-visible,
+.baliza-mando:focus-visible {
   outline: 3px solid var(--foco, #ffb454);
   outline-offset: 2px;
+}
+
+/*
+ * La cúpula de la baliza en su interruptor: apagada, del gris del botón; encendida, roja
+ * sobre el ámbar de «puesto», con filo oscuro para que se separe de él.
+ */
+.baliza-mando .senal__roja {
+  fill: currentcolor;
+  stroke: none;
+}
+
+.baliza-mando[aria-pressed="true"] .senal__roja {
+  fill: #c8231a;
+  stroke: #1b1b1b;
+  stroke-width: 0.8;
 }
 
 /*
@@ -4934,7 +4953,8 @@ button.motor__tecla::after {
  * querés, poné el automático»— para quien no lee. Se apaga al ponerlo o al
  * dejar el nivel. Ver `proponerPilotoAutomatico` en `ui/hud.ts`.
  */
-.piloto-auto--propuesto {
+.piloto-auto--propuesto,
+.baliza-mando--propuesto {
   box-shadow: 0 0 0 0 rgb(224 161 58 / 0.7);
   animation: piloto-se-ofrece 1.6s ease-out infinite;
 }
@@ -4950,13 +4970,15 @@ button.motor__tecla::after {
 
 /* Sin movimiento, un aro quieto: se ve igual que se ofrece. */
 @media (prefers-reduced-motion: reduce) {
-  .piloto-auto--propuesto {
+  .piloto-auto--propuesto,
+  .baliza-mando--propuesto {
     animation: none;
     box-shadow: 0 0 0 3px rgb(224 161 58 / 0.8);
   }
 }
 
-.sin-movimiento .piloto-auto--propuesto {
+.sin-movimiento .piloto-auto--propuesto,
+.sin-movimiento .baliza-mando--propuesto {
   animation: none;
   box-shadow: 0 0 0 3px rgb(224 161 58 / 0.8);
 }
@@ -17129,6 +17151,7 @@ body.con-vuelta #tactil {
 :root.con-pasaje .hud [data-hud="gafas"],
 :root.con-pasaje .hud [data-hud="gira"],
 :root.con-pasaje .hud [data-hud="cinturon-mando"],
+:root.con-pasaje .hud [data-hud="baliza-mando"],
 :root.con-pasaje .hud [data-hud="reversa"],
 :root.con-pasaje .hud [data-hud="trim"] {
   visibility: hidden !important;
