@@ -487,6 +487,10 @@
       "ms": 935,
       "h": "165905901e"
     },
+    "torre.canario.solo.pushback": {
+      "ms": 1485,
+      "h": "259191ecfa"
+    },
     "torre.canario.solo.rogerMayday": {
       "ms": 949,
       "h": "f35cab6522"
@@ -2083,6 +2087,17 @@
       "{c4}",
       "{c5}",
       "torre.canario.solo.desvioIzquierda"
+    ],
+    "torre.canario.solo.pushback": [
+      "torre.canario.solo.pushback"
+    ],
+    "torre.canario.pushback": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.pushback"
     ]
   }
 }

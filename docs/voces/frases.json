@@ -8656,6 +8656,48 @@
     "para": "la lámpara de la torre, dicha en casa"
   },
   {
+    "id": "tierra.canario.empujamos",
+    "voz": "tierra-canarias",
+    "idioma": "es-PY",
+    "texto": "Cabina, tierra: empezamos a empujar. Ya pueden arrancar los motores.",
+    "para": "la persona de tierra en Canarias, por el interfono"
+  },
+  {
+    "id": "tierra.canario.freno",
+    "voz": "tierra-canarias",
+    "idioma": "es-PY",
+    "texto": "Pongan el freno de aparcamiento, por favor.",
+    "para": "la persona de tierra en Canarias, por el interfono"
+  },
+  {
+    "id": "tierra.canario.suelto",
+    "voz": "tierra-canarias",
+    "idioma": "es-PY",
+    "texto": "Desconecto. Miren mi señal a la izquierda.",
+    "para": "la persona de tierra en Canarias, por el interfono"
+  },
+  {
+    "id": "tierra.empujamos",
+    "voz": "tierra",
+    "idioma": "es-PY",
+    "texto": "Cabina, tierra: empezamos a empujar. Ya pueden arrancar los motores.",
+    "para": "la persona de tierra, por el interfono"
+  },
+  {
+    "id": "tierra.freno",
+    "voz": "tierra",
+    "idioma": "es-PY",
+    "texto": "Pongan el freno de aparcamiento, por favor.",
+    "para": "la persona de tierra, por el interfono"
+  },
+  {
+    "id": "tierra.suelto",
+    "voz": "tierra",
+    "idioma": "es-PY",
+    "texto": "Desconecto. Miren mi señal a la izquierda.",
+    "para": "la persona de tierra, por el interfono"
+  },
+  {
     "id": "cabina.v1",
     "voz": "cabina",
     "idioma": "en",
@@ -10148,6 +10190,13 @@
     "para": "la torre oyó «minimum fuel»: sin demora"
   },
   {
+    "id": "torre.solo.pushback",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "pushback and start-up approved",
+    "para": "pediste el tractor: te dejan salir empujado y arrancar"
+  },
+  {
     "id": "torre.solo.birdsOnFinal",
     "voz": "torre",
     "idioma": "en",
@@ -11512,6 +11561,13 @@
     "idioma": "en",
     "texto": "roger, minimum fuel, no delay expected",
     "para": "la torre oyó «minimum fuel»: sin demora, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.pushback",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "pushback and start-up approved",
+    "para": "pediste el tractor: te dejan salir empujado y arrancar, en Canarias"
   },
   {
     "id": "torre.canario.solo.birdsOnFinal",

@@ -240,6 +240,15 @@ const HABLADOS = [
   ["torre.canario", "torre-canarias", "la torre de Canarias, que no vosea"],
   ["torre", "torre", "la lámpara de la torre, dicha en casa"],
   ["otro", "otro", "el otro avión de la frecuencia"],
+  /*
+   * **Y la persona de tierra**, por el cable del interfono, con el habla del
+   * sitio como la torre y la tripulación: Celso en Asunción, Airam en las
+   * islas. La de Canarias va primero por lo mismo que allí. Solo en el peldaño
+   * de cabina, que es donde la instructora ya no cuenta el remolque. Ver
+   * `hablaLaTierra` en `src/game.ts` y el ADR 0025.
+   */
+  ["tierra.canario", "tierra-canarias", "la persona de tierra en Canarias, por el interfono"],
+  ["tierra", "tierra", "la persona de tierra, por el interfono"],
 ];
 
 /**
@@ -785,6 +794,17 @@ const TORRE_SOLO = [
     "torre.solo.minimumFuel",
     "roger, minimum fuel, no delay expected",
     "la torre oyó «minimum fuel»: sin demora",
+  ],
+  /*
+   * **Y el permiso para salir empujado del puesto de contacto** (Doc 4444,
+   * 12.3.4.7: «pushback approved»), con la puesta en marcha, que es como se da
+   * cuando se piden las dos a la vez. Tu indicativo delante, en la receta. Ver
+   * `atenderAlRemolque` en `src/game.ts` y el ADR 0025.
+   */
+  [
+    "torre.solo.pushback",
+    "pushback and start-up approved",
+    "pediste el tractor: te dejan salir empujado y arrancar",
   ],
   /*
    * **Y lo que dice un AFIS**, que informa y no autoriza: la pista libre u

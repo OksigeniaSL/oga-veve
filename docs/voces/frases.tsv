@@ -809,6 +809,12 @@ torre-canarias	torre-canarias/torre.canario.solo.subirNivel.ogg	es-PY	suba a niv
 torre	torre/torre.solo.subirNivel.ogg	es-PY	ascienda a nivel de vuelo	la lámpara de la torre, dicha en casa
 torre	torre/torre.numeroDos.ogg	es-PY	número dos para la salida	la lámpara de la torre, dicha en casa
 torre	torre/torre.numeroTres.ogg	es-PY	número tres para la salida	la lámpara de la torre, dicha en casa
+tierra-canarias	tierra-canarias/tierra.canario.empujamos.ogg	es-PY	Cabina, tierra: empezamos a empujar. Ya pueden arrancar los motores.	la persona de tierra en Canarias, por el interfono
+tierra-canarias	tierra-canarias/tierra.canario.freno.ogg	es-PY	Pongan el freno de aparcamiento, por favor.	la persona de tierra en Canarias, por el interfono
+tierra-canarias	tierra-canarias/tierra.canario.suelto.ogg	es-PY	Desconecto. Miren mi señal a la izquierda.	la persona de tierra en Canarias, por el interfono
+tierra	tierra/tierra.empujamos.ogg	es-PY	Cabina, tierra: empezamos a empujar. Ya pueden arrancar los motores.	la persona de tierra, por el interfono
+tierra	tierra/tierra.freno.ogg	es-PY	Pongan el freno de aparcamiento, por favor.	la persona de tierra, por el interfono
+tierra	tierra/tierra.suelto.ogg	es-PY	Desconecto. Miren mi señal a la izquierda.	la persona de tierra, por el interfono
 cabina	cabina/cabina.v1.ogg	en	V one	el punto de no retorno del despegue
 cabina	cabina/cabina.vr.ogg	en	rotate	la velocidad de rotación: tirar
 cabina	cabina/cabina.terrainPullUp.ogg	en	terrain, pull up	aviso de terreno, el más urgente
@@ -1022,6 +1028,7 @@ torre	torre/torre.solo.contactControl.ogg	en	contact Asunción control	lejos del
 torre	torre/torre.solo.contactApproach.ogg	en	contact approach	cerca del campo al que vas: te habla aproximación
 torre	torre/torre.solo.contactTower.ogg	en	contact tower	entrás en la zona de la torre: te habla ella otra vez
 torre	torre/torre.solo.minimumFuel.ogg	en	roger, minimum fuel, no delay expected	la torre oyó «minimum fuel»: sin demora
+torre	torre/torre.solo.pushback.ogg	en	pushback and start-up approved	pediste el tractor: te dejan salir empujado y arrancar
 torre	torre/torre.solo.birdsOnFinal.ogg	en	caution, flock of birds on final	aves en la final; detrás, a cuántos pies
 torre	torre/torre.solo.free.ogg	en	free	un AFIS: la pista, libre; detrás de su número
 torre	torre/torre.solo.occupied.ogg	en	occupied	un AFIS: la pista, ocupada; detrás de su número
@@ -1217,6 +1224,7 @@ torre-canarias	torre-canarias/torre.canario.solo.contactControl.ogg	en	contact C
 torre-canarias	torre-canarias/torre.canario.solo.contactApproach.ogg	en	contact approach	cerca del campo al que vas: te habla aproximación, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.contactTower.ogg	en	contact tower	entrás en la zona de la torre: te habla ella otra vez, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.minimumFuel.ogg	en	roger, minimum fuel, no delay expected	la torre oyó «minimum fuel»: sin demora, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.pushback.ogg	en	pushback and start-up approved	pediste el tractor: te dejan salir empujado y arrancar, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.birdsOnFinal.ogg	en	caution, birds on final	aves en la final; detrás, a cuántos pies, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.free.ogg	en	free	un AFIS: la pista, libre; detrás de su número, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.occupied.ogg	en	occupied	un AFIS: la pista, ocupada; detrás de su número, en Canarias

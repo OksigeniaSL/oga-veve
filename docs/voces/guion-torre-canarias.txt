@@ -112,6 +112,7 @@ contact Canarias control
 contact approach
 contact tower
 roger, minimum fuel, no delay expected
+pushback and start-up approved
 caution, birds on final
 free
 occupied

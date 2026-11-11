@@ -491,6 +491,10 @@
       "ms": 526,
       "h": "ef9b4093f2"
     },
+    "torre.solo.pushback": {
+      "ms": 1823,
+      "h": "cea1e6b6d8"
+    },
     "torre.solo.rogerMayday": {
       "ms": 1086,
       "h": "0524247a69"
@@ -2069,6 +2073,17 @@
       "{c4}",
       "{c5}",
       "torre.solo.desvioIzquierda"
+    ],
+    "torre.solo.pushback": [
+      "torre.solo.pushback"
+    ],
+    "torre.pushback": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.pushback"
     ]
   }
 }

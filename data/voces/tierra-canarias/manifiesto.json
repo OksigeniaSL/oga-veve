@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "voz": "tierra-canarias",
+  "idioma": "es-PY",
+  "piezas": {
+    "tierra.canario.empujamos": {
+      "ms": 3607,
+      "h": "8d82e0d656"
+    },
+    "tierra.canario.freno": {
+      "ms": 1750,
+      "h": "6b34836a4c"
+    },
+    "tierra.canario.suelto": {
+      "ms": 1829,
+      "h": "542a5f4c47"
+    }
+  },
+  "recetas": {
+    "tierra.canario.empujamos": [
+      "tierra.canario.empujamos"
+    ],
+    "tierra.canario.freno": [
+      "tierra.canario.freno"
+    ],
+    "tierra.canario.suelto": [
+      "tierra.canario.suelto"
+    ]
+  }
+}

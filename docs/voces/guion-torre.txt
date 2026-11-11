@@ -78,6 +78,7 @@ contact Asunción control
 contact approach
 contact tower
 roger, minimum fuel, no delay expected
+pushback and start-up approved
 caution, flock of birds on final
 free
 occupied

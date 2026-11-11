@@ -1,6 +1,6 @@
 # Las voces del juego
 
-Nueve voces —cuántas frases y caracteres lleva cada una lo dice el guion al
+Once voces —cuántas frases y caracteres lleva cada una lo dice el guion al
 acabar—. Esto dice **qué se graba, con qué voz, cómo vuelve y qué se le
 hace después**.
 
@@ -19,7 +19,7 @@ Escribe en esta carpeta:
 | `guion-<voz>.txt` | **solo el texto**, una frase por línea: es lo que se pega en el estudio |
 | `guion-<voz>.tsv` | el mismo guion numerado, para casar los audios que vuelven              |
 
-## Las nueve voces
+## Las once voces
 
 | voz                | idioma                                  | frases | cómo suena                                                      | por qué                                                                                                                                                                                                                                                                                                |
 | ------------------ | --------------------------------------- | ------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -32,6 +32,8 @@ Escribe en esta carpeta:
 | **tripulacion** | castellano paraguayo | 8 | **Derlis**: hombre joven, cálido y atento, por el altavoz del techo | La tripulación de cabina de los vuelos de Paraguay: el servicio a bordo con lo de la granja —fruta deshidratada, maní, chipa, mbejú— y los cinturones al empezar a bajar. Solo en los aviones que llevan auxiliares: del JAZ 90 para arriba. Le habla al pasaje de usted, como cualquier tripulación. Ver `src/audio/servicio-a-bordo.ts`. |
 | **tripulacion-canarias** | castellano canario | 10 | **Idaira**: mujer canaria, serena y amable, por el altavoz del techo | Lo mismo en los vuelos entre islas, con el habla de allí: «plátano» y «manises», y a veces «un sabor de Paraguay». Claves `tripulacion.canario.*`, que no se pisan con las de casa. |
 | **ara** | castellano paraguayo | 10 | **Ara**: una voz blanca, curiosa y alegre, que no dice si es niño o niña, en el asiento de al lado | Solo en el modo inicio, donde Jazlyn le enseña a volar: Ara pregunta y ella enseña. Jazlyn habla ahí con la voz de la comandante pero **sin megafonía**: le habla a Ara, no al pasaje (`inicio.mama.*`, en la voz `comandante`). Nada de lo que dice Ara lleva género: «¡Volé yo, sin ayuda!», no «yo solito». Ver `src/flight/inicio.ts`. |
+| **tierra** | castellano paraguayo | 3 | **Celso**: hombre paraguayo de unos cuarenta, técnico de rampa, firme y tranquilo, por los auriculares | La persona de tierra que empuja el avión con el tractor y habla con la cabina por el cable del interfono, al salir de un puesto con pasarela: «Cabina, tierra: empezamos a empujar», el freno de aparcamiento y «Desconecto. Miren mi señal a la izquierda». Solo en el peldaño de cabina: en los de abajo lo cuenta la instructora. Le habla de ustedes a la cabina. Ver `hablaLaTierra` en `src/game.ts` y el ADR 0025. |
+| **tierra-canarias** | castellano canario | 3 | **Airam**: hombre canario de unos treinta y cinco, más joven y más agudo que Yeray | Lo mismo en los campos de las islas, con el habla de allí. Se eligió entre tres muestras por ser la más distinta de Yeray, la torre, que habla en la misma salida (0,78 de parecido medido con huellas de voz; la propuesta daba 0,85). Claves `tierra.canario.*`. |
 
 Tres cosas que no cambian:
 

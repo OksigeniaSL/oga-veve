@@ -1397,5 +1397,16 @@
     "{c4}",
     "{c5}",
     "torre.canario.solo.desvioIzquierda"
+  ],
+  "torre.canario.solo.pushback": [
+    "torre.canario.solo.pushback"
+  ],
+  "torre.canario.pushback": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.pushback"
   ]
 }

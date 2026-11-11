@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "voz": "tierra",
+  "idioma": "es-PY",
+  "piezas": {
+    "tierra.empujamos": {
+      "ms": 5107,
+      "h": "f225fff78c"
+    },
+    "tierra.freno": {
+      "ms": 2236,
+      "h": "a60038a630"
+    },
+    "tierra.suelto": {
+      "ms": 2100,
+      "h": "5c0cc50640"
+    }
+  },
+  "recetas": {
+    "tierra.empujamos": [
+      "tierra.empujamos"
+    ],
+    "tierra.freno": [
+      "tierra.freno"
+    ],
+    "tierra.suelto": [
+      "tierra.suelto"
+    ]
+  }
+}

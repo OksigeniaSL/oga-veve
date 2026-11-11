@@ -1391,5 +1391,16 @@
     "{c4}",
     "{c5}",
     "torre.solo.desvioIzquierda"
+  ],
+  "torre.solo.pushback": [
+    "torre.solo.pushback"
+  ],
+  "torre.pushback": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.pushback"
   ]
 }
