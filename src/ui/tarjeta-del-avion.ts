@@ -583,6 +583,7 @@ export class TarjetaDelAvion {
       }`;
     globo.dataset.explicacion = e.id;
     globo.hidden = false;
+    this.queQuepaElGlobo(globo);
     this.colocarGlobo();
     this.pintarPuntos();
     this.opciones.decir?.(t(e.voz), e.voz);
@@ -602,6 +603,21 @@ export class TarjetaDelAvion {
    * El globo, junto a su punto y dentro del visor: a la derecha del punto si
    * cabe y si no a la izquierda, y nunca fuera del borde.
    */
+  /**
+   * **Que el globo quepa de alto en el visor.** Se coloca junto a su punto y se
+   * aprieta contra los bordes, pero si es más alto que el visor no hay sitio
+   * donde ponerlo: en un teléfono apaisado se cortaba por abajo, con el botón
+   * de «Por dentro» medio fuera. Entonces se ensancha hasta el visor, que con
+   * menos renglones baja. Se mira al abrirlo, no en cada fotograma: cambiarle
+   * el ancho mientras se dibuja lo haría temblar.
+   */
+  private queQuepaElGlobo(globo: HTMLElement): void {
+    const visor = this.root.querySelector<HTMLElement>('[data-tarjeta="visor"]');
+    globo.style.width = "";
+    if (!visor || globo.offsetHeight <= visor.clientHeight - 16) return;
+    globo.style.width = `${Math.max(0, visor.clientWidth - 16)}px`;
+  }
+
   private colocarGlobo(): void {
     const globo = this.root.querySelector<HTMLElement>('[data-tarjeta="globo"]');
     const visor = this.root.querySelector<HTMLElement>('[data-tarjeta="visor"]');

@@ -15051,9 +15051,21 @@ svg .ex-raya {
     font-size: 22px;
   }
 
+  /*
+   * **El globo, ancho y bajo.** De 260 px y con el dibujo de 52, el texto del
+   * plato oscilante o del tren del Super Puma y el botón de «Por dentro» le
+   * sacaban al visor hasta 47 px por abajo, con 170 libres al lado. Más ancho,
+   * menos renglones; y si aun así no cabe, lo ensancha `abrirGlobo`.
+   */
   .tav__globo {
-    width: min(260px, 80%);
+    width: min(380px, calc(100% - 16px));
+    grid-template-columns: 40px 1fr;
     padding: 8px 10px;
+  }
+
+  .tav__globo-dibujo {
+    width: 40px;
+    height: 40px;
   }
 
   /*

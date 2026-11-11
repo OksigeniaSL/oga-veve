@@ -18559,8 +18559,19 @@ export class Game {
        * configuración, y ahí el aviso tiene que seguir. Ver
        * `puestoParaAterrizar` en `flight/aviso-de-terreno.ts`.
        */
-      puestoParaAterrizar:
-        this.input.controls.tren > 0.9 &&
+      /*
+       * **El helicóptero, despacio, está maniobrando para posarse**, y se posa
+       * en cualquier sitio: bajo y por debajo de su velocidad de aproximación
+       * con un poco de margen, sin caer a plomo, es lo que hace al llegar y al
+       * salir. El tren no cuenta aquí —tiene su propio aviso, «sacá el tren»—, y
+       * con él dentro el juego cantaba «vas muy bajo» al volver al helipuerto
+       * a treinta metros. Deprisa y bajo, en cambio, sí se avisa: eso ya no es
+       * llegar ni salir. Ver `vieneSinTren`.
+       */
+      puestoParaAterrizar: this.aircraft.helicoptero
+        ? this.flight.state.airspeed < this.aircraft.approachSpeed * 1.2 &&
+          this.flight.state.verticalSpeed > MARGENES.cayendo
+        : this.input.controls.tren > 0.9 &&
         /*
          * Los flaps fuera son el «vas lento» de los tres. En el avión que no
          * los lleva lo dice la velocidad, que es lo que ellos decían: la de
