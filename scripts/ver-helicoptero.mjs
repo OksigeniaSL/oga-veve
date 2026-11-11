@@ -210,8 +210,13 @@ try {
         const adelante = dx * Math.sin(r) - dz * Math.cos(r);
         const derecha = dx * Math.cos(r) + dz * Math.sin(r);
         const quiere = (d) => Math.max(-tope, Math.min(tope, 0.25 * d));
-        // +1 de profundidad es tirar, morro arriba: hacia atrás. Ocho metros por segundo a tope.
-        c.elevator = -quiere(adelante) / 8;
+        /*
+         * +1 de profundidad es tirar, morro arriba: hacia atrás. A tope, adelante y atrás
+         * piden 40 m/s sobre el suelo (`VA_EN_ESTACIONARIO` en `flight/helicoptero.ts`), y a
+         * los lados, despacio, ocho. Con los ocho de antes en los dos ejes, la vuelta pedía
+         * cinco veces más de lo que quería y llegaba lanzado al helipuerto.
+         */
+        c.elevator = -quiere(adelante) / 40;
         c.aileron = quiere(derecha) / 8;
         return Math.hypot(dx, dz);
       };
