@@ -319,7 +319,14 @@ export class CamaraDeFuera implements CameraRig {
       ctx.aLaVista ?? 0,
       state.airspeed * MIRA_LEJOS,
     );
-    if (this.sitio === "cola" && state.velocity.lengthSq() > 1) {
+    if (this.sitio === "cola" && ctx.aircraft.miraAlMorro) {
+      // El helicóptero: hacia donde apunta el morro, en horizontal. Ver `miraAlMorro`.
+      this.mirando.set(0, 0, -1).applyQuaternion(state.orientation);
+      this.mirando.y = 0;
+      if (this.mirando.lengthSq() < 1e-6) this.mirando.set(0, 0, -1);
+      this.mirando.normalize().multiplyScalar(lejos).add(state.position);
+      this.sinPerderElAvion(camera, state, ctx);
+    } else if (this.sitio === "cola" && state.velocity.lengthSq() > 1) {
       this.mirando
         .copy(state.velocity)
         .normalize()

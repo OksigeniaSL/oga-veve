@@ -33,6 +33,13 @@ export interface Contexto {
     readonly wingSpan: number;
     readonly chord: number;
     readonly largo: number;
+    /**
+     * **Si la cámara de detrás mira hacia el morro y no hacia donde va.** Un avión
+     * va siempre hacia delante y da lo mismo; un helicóptero va de lado, hacia
+     * atrás o se queda quieto con viento, y mirando hacia donde iba la vista se
+     * salía hacia un lado en cuanto derivaba un poco.
+     */
+    readonly miraAlMorro?: boolean;
   };
   /**
    * Dónde tiene los ojos el piloto en este modelo, si el modelo lo dice.

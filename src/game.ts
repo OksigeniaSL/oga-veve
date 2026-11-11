@@ -5852,7 +5852,7 @@ export class Game {
    * ni recoger. Se rellena justo antes de mover la cámara.
    */
   private readonly contextoDeCamara = {
-    aircraft: { wingSpan: 0, chord: 0, largo: 0 },
+    aircraft: { wingSpan: 0, chord: 0, largo: 0, miraAlMorro: false },
     ojo: null as Contexto["ojo"],
     aLaVista: 0,
     suelo: (x: number, z: number): number => this.terrain.sampleSurface(x, z),
@@ -6578,7 +6578,8 @@ export class Game {
      * guardando altura para llegar: «too high, come down» en pleno planeo.
      * Lo que guía un ejercicio es el ejercicio, y el PAPI sigue en su sitio.
      */
-    if (this.leccion.id === "aterrizaje" && !this.ejercicioDeHoy) {
+    // Y el helicóptero, sin aros: no vuela la senda de una pista. Ver más abajo, «Y los aros».
+    if (this.leccion.id === "aterrizaje" && !this.ejercicioDeHoy && !this.aircraft.helicoptero) {
       this.scene.add(this.runwayGuide.group);
       this.seVenLosAros = true;
     }
@@ -18724,7 +18725,7 @@ export class Game {
      * Vuelve sola al levantarse la orden —la pista vuelve a ser tuya y la
      * senda también—, que es lo que hace `levantarLaOrden`.
      */
-    if (this.leccion.id === "aterrizaje" && !this.ejercicioDeHoy) {
+    if (this.leccion.id === "aterrizaje" && !this.ejercicioDeHoy && !this.aircraft.helicoptero) {
       const conSenda = !this.laAproximacion.mandanFrustrar;
       if (this.runwayGuide.group.visible !== conSenda) {
         this.runwayGuide.group.visible = conSenda;
@@ -18898,8 +18899,13 @@ export class Game {
      * pantalla.
      */
     const enCasa = this.elCampo().esCasa;
+    /*
+     * **Ni con el helicóptero**, que no vuela la senda de una pista: volando cerca de
+     * Los Rodeos, cada aro que dejaba atrás sonaba a «aro fallado», y quien lo
+     * probaba lo oía como una alarma sin saber de qué.
+     */
     const aro =
-      this.flight.state.onGround || !acercandose || !enCasa
+      this.flight.state.onGround || !acercandose || !enCasa || this.aircraft.helicoptero
         ? null
         : this.runwayGuide.check(this.flight.state.position);
     if (aro === "cruzado") this.avisar("aro");
@@ -26133,6 +26139,7 @@ export class Game {
     ctx.aircraft.wingSpan = this.aircraft.wingSpan;
     ctx.aircraft.chord = this.aircraft.chord;
     ctx.aircraft.largo = this.largoDelAvion;
+    ctx.aircraft.miraAlMorro = !!this.aircraft.helicoptero;
     ctx.ojo = this.aircraftMesh.ojo ?? null;
     ctx.aLaVista = this.adelantoDelSigueme;
     ctx.movimientoReducido = this.reducedMotion;
