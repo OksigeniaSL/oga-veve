@@ -10,7 +10,8 @@
  *    si no se toca nada no pasa nada: sigue enganchado, sin moverse, con la misma
  *    tarjeta. Y que la llave, sin baliza, no lo saca: el tractor no empuja sin ella.
  * 2. Que la baliza se enciende —tocando la tarjeta en Guyrami, con su botón en el de
- *    cabina— y sale la tarjeta del tractor; y que tocarla pide el empuje: al rato el
+ *    cabina— y sale la tarjeta del tractor; que la coma del teclado la apaga y la
+ *    enciende; y que tocar la tarjeta del tractor pide el empuje: al rato el
  *    tractor empuja, hacia atrás, sin motores; y vuelve la tarjeta de la llave.
  * 3. Los motores: en Guyrami se arrancan empujando, tocando la tarjeta; en el de
  *    cabina se dejan para el final, y el tractor espera enganchado y con el freno
@@ -164,6 +165,19 @@ try {
     if (tCon.dibujo !== "remolque" || !tCon.tocable) fallos.push(t(`con la baliza, la tarjeta no es la del tractor tocable (${tCon.dibujo}, ${tCon.tocable})`));
     if (boton1.pulsado !== "true" || boton1.ofrecido) fallos.push(t(`el botón no dice que está encendida (${JSON.stringify(boton1)})`));
     await page.screenshot({ path: `${FOTOS}/${tramo}-1b-con-la-baliza.png` });
+
+    // La coma del teclado la apaga y la vuelve a encender: salió publicada sin hacer nada.
+    await page.keyboard.press("Comma");
+    await page.waitForTimeout(400);
+    const conComa = await remolque(page);
+    const tComa = await tarjeta(page);
+    await page.keyboard.press("Comma");
+    await page.waitForTimeout(400);
+    const otraComa = await remolque(page);
+    const tOtra = await tarjeta(page);
+    console.log(t(`la coma: ${conComa.baliza} (tarjeta ${tComa.dibujo}) y otra vez ${otraComa.baliza} (tarjeta ${tOtra.dibujo})`));
+    if (conComa.baliza || tComa.dibujo !== "baliza" || !otraComa.baliza || tOtra.dibujo !== "remolque")
+      fallos.push(t(`la coma no mueve la baliza (${conComa.baliza}, ${tComa.dibujo}, ${otraComa.baliza}, ${tOtra.dibujo})`));
 
     // ── 2b. Se pide con el dedo ──
     await page.locator('[data-hud="senal"]').tap();

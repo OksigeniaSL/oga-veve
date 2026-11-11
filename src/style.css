@@ -13116,6 +13116,34 @@ button.motor__tecla::after {
   }
 
   /*
+   * **Y con la radio hablando, la orden se queda en su dibujo.** En la fila de
+   * arriba no caben las dos frases: la orden llega al 46 % del ancho y la radio
+   * al 36 %, y con el piloto automático, el cinturón, la baliza, el volumen y
+   * el menú la fila pasaba del ancho de un teléfono. La de los botones crecía
+   * hacia la izquierda por debajo de la tarjeta, que se quedaba con sus toques:
+   * en cada salida empujada desde una pasarela, mientras la megafonía decía lo
+   * de los toboganes, no se podían tocar ni el cinturón ni la baliza.
+   *
+   * Cede la orden y no la radio: la orden tiene además su dibujo —que es lo
+   * que mira quien no lee, y sigue ahí, latiendo y tocable— y la voz de la
+   * instructora, y la radio no tiene otro canal que se vea. Son los segundos
+   * que dura la radio, y al callarse vuelve la frase. Escondida solo a la
+   * vista: es lo que nombra el botón para un lector de pantalla.
+   */
+  .hud:has(.radio:not([hidden])) .rincon .senal__texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .hud:has(.radio:not([hidden])) .rincon .senal:has(.senal__texto:not(:empty)) {
+    padding-right: 4px;
+  }
+
+  /*
    * **El cuadro, legible cuando se abre.** Medio alto de pantalla, que es lo
    * que hace falta para leer una esfera en un teléfono, y nunca más ancho que
    * el hueco entre la palanca y la columna de mandos.
