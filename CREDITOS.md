@@ -331,7 +331,7 @@ es nuestro, con su licencia; lo que es nuestro, con quién lo hizo.
 | [WMM2025](https://www.ncei.noaa.gov/products/world-magnetic-model) | NCEI / NOAA y BGS | La declinación de la rosa y de cada aeródromo, calculada el día que se juega; los coeficientes, copiados en `src/ui/carta/declinacion.ts` | **Dominio público** |
 | AIP España, AD 2.18 de cada aeródromo | ENAIRE | Las frecuencias de la ficha y de la carta en el calco de la radio (`src/world/frecuencias-publicadas.ts`), con la página de cada una | **Hechos de una publicación oficial**: se citan, no se reproduce ninguna carta |
 | AIP Paraguay, AMDT AIRAC 02/2026, AD 2.x-18 y AD 3 | DINAC | Lo mismo para los campos paraguayos | **Hechos de una publicación oficial** |
-| Barlow Semi Condensed y Barlow Condensed | Jeremy Tribby, de Google Fonts (github.com/google/fonts, carpetas `ofl/barlowsemicondensed` y `ofl/barlowcondensed`) | Las letras de la carta, recortadas y dentro del paquete (`src/assets/letras/`, con su `OFL.txt`; `scripts/letras-de-la-carta.sh`) | **SIL Open Font License 1.1** |
+| Barlow Semi Condensed y Barlow Condensed | Jeremy Tribby, de Google Fonts (github.com/google/fonts, carpetas `ofl/barlowsemicondensed` y `ofl/barlowcondensed`) | Las letras de la carta, recortadas y dentro del paquete (`src/assets/letras/`, con su `OFL.txt`; `scripts/letras-de-la-carta.sh`); y el «RESCATE» del costado del helicóptero, hecho malla desde la misma letra en `modelos/jaz-super-puma.py` | **SIL Open Font License 1.1** |
 | La hoja de estilo de la carta: tokens, símbolos (`src/ui/carta/simbolos/`) y grano del papel (`src/assets/carta/papel.webp`) | Gaudí, director de arte de Oksigenia, sobre la carta 1:500 000 de ENAIRE hoja GC 2025 | Los colores, la rampa, los símbolos de aeródromo, la rosa, el avión en planta y el papel | Propio (Oksigenia SL) |
 
 La atribución de WorldCover va también en la pantalla de créditos del juego,
@@ -518,6 +518,24 @@ tráfico, el que hace cola contigo en Los Rodeos, se modela igual desde
 `public/assets/aeronaves/trafico-turbohelice.glb`. Es la forma de su clase —ala
 alta con las góndolas colgadas, carenados del tren en la panza y cola en T—, sin
 el nombre ni la librea de nadie. Ver `src/world/cuerpos-del-trafico.ts`.
+
+**El helicóptero de rescate** (`modelos/jaz-super-puma.py`, y su
+`public/assets/aeronaves/super-puma.glb`) es el AS 332 B1 Super Puma de fuselaje
+corto del batallón de helicópteros de Los Rodeos, con la librea de la flota y
+«RESCATE» en el cono. Las medidas salen de:
+
+- EASA, *Type Certificate Data Sheet* **R.002** (AS 332): el largo, el alto y los
+  dos rotores con sus palas.
+- Airbus: la «D-value» de 18,70 m, que pone el rotor de cola a 9,375 m del mástil.
+- La muestra de Gaudí del 11-11-2026, que aprobó Enrique: lo que la ficha no trae
+  —las ruedas, la altura de las palas, de qué lado van el rotor de cola, el
+  estabilizador y la grúa—, medido a la escala de la ficha sobre el plano de tres
+  vistas del AS 332 de Jetijones (CC BY 3.0) y sobre las fotos de Wikimedia
+  Commons (CC BY-SA 2.0) que cita la muestra. El plano y las fotos sirvieron para
+  medir y no entran en el juego.
+
+«RESCATE» es malla, no imagen: sale de Barlow Condensed SemiBold, la letra de la
+carta, que ya está en el paquete (ver «La carta aeronáutica»).
 
 Son obra de Oksigenia SL y van bajo la licencia del proyecto, Apache-2.0. Los
 únicos nombres que no son libres dentro de los guiones son del juego:

@@ -2892,7 +2892,7 @@ def aBlender(piezas):
     return eje
 
 
-def exportar(piezas, salida, envergadura):
+def exportar(piezas, salida, envergadura, largo=None, rotores=()):
     """
     **Primero se comprueba, y después se escribe.**
 
@@ -2911,8 +2911,23 @@ def exportar(piezas, salida, envergadura):
       patas y palanca salían tumbados a lo largo del fuselaje.
     - **Que el cono de la hélice mire al frente.** Iban apuntando al suelo.
 
+    Y en un helicóptero, que no tiene ala, dos más. `envergadura` es entonces
+    el diámetro del rotor: dos de las palas paradas apuntan a los costados,
+    y lo ancho del modelo es lo que el juego mide para ponerlo a escala.
+
+    - **`largo`**: el del fuselaje sin los rotores, que es como lo da la ficha.
+    - **`rotores`**: cada uno `dict(eje, diametro, palas, mastil)`. Se mira
+      que el vacío que gira exista; que lleve colgando `palas` palas con
+      `pala` en el nombre (las puntas, aparte, no cuentan); que midan el
+      diámetro **en el plano de su Z local tal como sale al glTF**, que es lo
+      que el rotor del juego toma por mástil; que vengan **rectas**, sin
+      caída —la pone el juego, y dos se sumarían—, y que esa Z apunte a
+      `mastil`, en los ejes del juego.
+
     Se mira por el nombre, que en esta casa dice lo que la pieza es.
     """
+    # Aparte, porque más abajo `largo` pasa a ser lo que mide el modelo.
+    largo_de_ficha = largo
     aBlender(piezas)
     bpy.context.view_layer.update()
 
@@ -2943,6 +2958,76 @@ def exportar(piezas, salida, envergadura):
             f"El avión no mide de ancho su envergadura ({ancho:.2f} vs "
             f"{envergadura}): está tumbado o mal escalado."
         )
+    # Lo que de verdad se escribe: con las simetrías ya hechas, que es lo que
+    # cuesta en la tableta.
+    deps = bpy.context.evaluated_depsgraph_get()
+    escritas = sum(len(p.evaluated_get(deps).data.polygons) for p in mallas)
+    print(f"CARAS AL EXPORTAR: {escritas}")
+
+    # ── Y si tiene rotores, el rotor y el largo ─────────────────────────
+    #
+    # El glTF cambia la Y y la Z de sitio: lo que en el fichero es la Z local
+    # de un nodo es aquí su −Y, y un punto del mundo de Blender pasa al del
+    # juego como (x, z, −y). Se mira en esos ejes porque es en los que el
+    # rotor del juego buscará el mástil.
+    def al_juego(v):
+        return Vector((v.x, v.z, -v.y))
+
+    def bajo(o, raiz):
+        while o is not None:
+            if o is raiz:
+                return True
+            o = o.parent
+        return False
+
+    ejes = []
+    for r in rotores:
+        e = bpy.data.objects.get(r["eje"])
+        if e is None:
+            raise SystemExit(f"No está el vacío del rotor «{r['eje']}».")
+        ejes.append(e)
+        palas = [p for p in mallas if bajo(p, e) and "pala" in p.name.lower()]
+        enteras = [p for p in palas if "punta" not in p.name.lower()]
+        if len(enteras) != r["palas"]:
+            raise SystemExit(
+                f"El rotor «{r['eje']}» tiene {len(enteras)} palas y son "
+                f"{r['palas']}.")
+        a_local = e.matrix_world.inverted()
+        radio, fuera = 0.0, 0.0
+        for p in palas:
+            for v in p.data.vertices:
+                q = a_local @ (p.matrix_world @ v.co)
+                radio = max(radio, math.hypot(q.x, q.z))
+                fuera = max(fuera, abs(q.y))
+        mastil = al_juego(e.matrix_world.to_3x3() @ Vector((0, -1, 0)))
+        mastil.normalize()
+        quiere = Vector(r["mastil"]).normalized()
+        torcido = math.degrees(mastil.angle(quiere))
+        print(f"ROTOR: {r['eje']} · {len(enteras)} palas · diámetro "
+              f"{2 * radio:.2f} · mástil ({mastil.x:.3f}, {mastil.y:.3f}, "
+              f"{mastil.z:.3f}) · fuera del plano {fuera:.2f}")
+        if abs(2 * radio - r["diametro"]) > 0.03:
+            raise SystemExit(
+                f"El rotor «{r['eje']}» mide {2 * radio:.2f} y son "
+                f"{r['diametro']}.")
+        if fuera > 0.15:
+            raise SystemExit(
+                f"Las palas de «{r['eje']}» salen {fuera:.2f} m de su plano: "
+                "vienen caídas o el vacío no tiene el mástil en su Z. La "
+                "caída la pone el juego.")
+        if torcido > 0.5:
+            raise SystemExit(
+                f"El mástil de «{r['eje']}» se desvía {torcido:.1f}° de "
+                "donde tiene que estar.")
+    if largo_de_ficha is not None:
+        cuerpo = [c for p, c in zip(mallas, cajas)
+                  if not any(bajo(p, e) for e in ejes)]
+        mide = (max(c[2][1] for c in cuerpo) - min(c[2][0] for c in cuerpo))
+        print(f"LARGO: {mide:.2f} sin los rotores")
+        if abs(mide - largo_de_ficha) > 0.05:
+            raise SystemExit(
+                f"El fuselaje mide {mide:.2f} de largo y son "
+                f"{largo_de_ficha}.")
 
     # ── Y cada pieza mirando a donde tiene que mirar ────────────────────
     #
