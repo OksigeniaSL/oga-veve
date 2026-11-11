@@ -137,17 +137,30 @@ export function ilustracionDelDibujo(clave: string): Ilustracion | null {
 
 // ── La tarjeta del avión ─────────────────────────────────────────────────
 
+/** Lo que enseña la segunda lámina de la tarjeta: la cabina, o lo que hace ese aparato. */
+export type SegundaLamina = "cabina" | "grua";
+
+/**
+ * **La segunda lámina de quien aún no tiene cabina.** El Super Puma no la
+ * tiene: su lámina con la tripulación de rescate dentro espera a que la haya,
+ * para decir lo mismo que el juego. Hasta entonces enseña su trabajo, un
+ * rescate con la grúa, y lo dice: no se hace pasar por la cabina.
+ */
+const SEGUNDA_LAMINA: Readonly<Record<string, SegundaLamina>> = { "super-puma": "grua" };
+
 /**
  * **Cómo es por fuera y cómo es por dentro**, para la tarjeta del avión: los
- * dos dibujos de ese avión de la flota, o `null` si no los tiene. Por fuera,
- * volando sobre el sitio que le toca; por dentro, con Jazlyn a los mandos.
+ * dos dibujos de ese avión, o `null` si no los tiene. Por fuera, volando sobre
+ * el sitio que le toca; por dentro, con Jazlyn a los mandos. Y en el que no
+ * tiene cabina, en el segundo sitio, lo suyo: ver `SEGUNDA_LAMINA`.
  */
 export function ilustracionesDelAvion(
   id: string,
-): { readonly fuera: Ilustracion; readonly cabina: Ilustracion } | null {
+): { readonly fuera: Ilustracion; readonly segunda: Ilustracion; readonly cual: SegundaLamina } | null {
+  const cual = SEGUNDA_LAMINA[id] ?? "cabina";
   const fuera = ilustracion(`fuera-${id}`);
-  const cabina = ilustracion(`cabina-${id}`);
-  return fuera && cabina ? { fuera, cabina } : null;
+  const segunda = ilustracion(`${cual}-${id}`);
+  return fuera && segunda ? { fuera, segunda, cual } : null;
 }
 
 // ── La cara de Jazlyn ────────────────────────────────────────────────────

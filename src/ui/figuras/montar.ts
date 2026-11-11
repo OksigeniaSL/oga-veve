@@ -49,6 +49,9 @@
  *   palanca son los suyos, de la clase del Cessna 172S; el biplano lleva
  *   bastón, el Seneca un estabilizador entero, el reactor mandos eléctricos y
  *   los otros, otros topes. Ver `figuraEnLaTarjeta`.
+ * - **El plato oscilante**, en el punto del plato de la tarjeta del Super
+ *   Puma, el único helicóptero: es su cabeza, con sus cuatro palas, sus tres
+ *   servos y las cifras de su ficha.
  *
  * Cada figura es un trozo aparte del paquete, que se pide con `import()` la
  * primera vez que se abre: el juego no las carga para volar.
@@ -67,6 +70,7 @@ import {
   textosDelAltimetro,
   textosDelPapi,
   textosDelPiston,
+  textosDelPlato,
   textosDelTrenE170,
   textosDelTrenFijo,
   textosDelTrenRetractil,
@@ -87,7 +91,8 @@ export type CualFigura =
   | "tren-fijo"
   | "tren-retractil"
   | "tren-e170"
-  | "luces";
+  | "luces"
+  | "plato";
 
 /** La figura que lleva una explicación, y lo que cambia según el punto o el avión. */
 export interface FiguraPedida {
@@ -124,6 +129,7 @@ export const FIGURAS = {
   "avion.luz-baliza": { cual: "luces", luz: "beacon" },
   "avion.luz-estrobos": { cual: "luces", luz: "strobe" },
   "avion.luz-aterrizaje": { cual: "luces", luz: "land" },
+  "avion.plato": { cual: "plato" },
 } as const satisfies Readonly<Record<string, FiguraPedida>>;
 
 /** La figura de la explicación con ese `id`, si lleva. */
@@ -134,7 +140,8 @@ export function figuraDe(id: string): FiguraPedida | undefined {
 /**
  * **El avión que dibuja cada figura de la tarjeta**, cuando dibuja uno: los
  * mandos, los flaps, el motor de pistones y el tren fijo son los del JAZ 20;
- * el tren que se recoge, el del JAZ 60.
+ * el tren que se recoge, el del JAZ 60; y el plato oscilante, el del Super
+ * Puma.
  */
 const AVION_DE_LA_FIGURA: Partial<Record<CualFigura, string>> = {
   mandos: "jaz-20",
@@ -143,6 +150,7 @@ const AVION_DE_LA_FIGURA: Partial<Record<CualFigura, string>> = {
   "tren-fijo": "jaz-20",
   "tren-retractil": "jaz-60",
   "tren-e170": "jaz-90",
+  plato: "super-puma",
 };
 
 /**
@@ -218,5 +226,7 @@ export async function montarFigura(el: HTMLElement, f: FiguraPedida, edad: Edad)
         ...(f.blanca ? { blanca: f.blanca } : {}),
         ...(f.luz ? { enciende: f.luz } : {}),
       });
+    case "plato":
+      return (await import("./plato")).montarPlato(el, { edad, textos: textosDelPlato() });
   }
 }

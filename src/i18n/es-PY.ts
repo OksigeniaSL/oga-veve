@@ -1337,6 +1337,8 @@ export const ES_PY = {
   "ilustracion.fuera-jaz-90": "El JAZ 90 volando por encima de las nubes",
   "ilustracion.fuera-jaz-120": "El JAZ 120, con sus cuatro motores, por encima de las nubes",
   "ilustracion.fuera-jaz-110": "El JAZ 110 Tijereta, de perfil, con sus dos motores bajo las alas",
+  "ilustracion.fuera-super-puma": "El Super Puma vuela junto al faro de Teno, en Tenerife",
+  "ilustracion.grua-super-puma": "Un rescatador baja por la grúa del Super Puma hacia una lancha",
   "ilustracion.cabina-jaz-20": "Jazlyn a los mandos del JAZ 20, en el asiento de la izquierda",
   "ilustracion.cabina-jaz-25": "Jazlyn a los mandos del JAZ 25, el biplano de una plaza",
   "ilustracion.cabina-jaz-40": "Jazlyn a los mandos del JAZ 40, con un motor en cada ala",
@@ -3334,6 +3336,27 @@ export const ES_PY = {
     "Los faros de aterrizaje se encienden para despegar, para aterrizar y siempre que volás por debajo de diez mil pies, donde hay más aviones y pájaros: así te ven.",
   "tarjeta.voz.matricula":
     "La matrícula es como la cédula del avión: no hay otro en el mundo que se llame igual. Las primeras letras dicen de qué país es: zeta pe es Paraguay, y e ce es España.",
+  /*
+   * **Las piezas del helicóptero**, solo en la tarjeta del Super Puma. Las
+   * cifras son las de `flight/super-puma.ts` —cuatro palas, 15,6 m de
+   * diámetro, 265 vueltas por minuto, cinco palas en el de cola— y una prueba
+   * mira que digan lo mismo. Ver `ui/explicaciones-del-avion.ts`.
+   */
+  "tarjeta.pieza.rotor": "Rotor principal",
+  "tarjeta.pieza.plato": "Plato oscilante",
+  "tarjeta.pieza.rotor-de-cola": "Rotor de cola",
+  "tarjeta.rotor":
+    "Rotor principal. Sus cuatro palas son alas que giran, 265 vueltas por minuto, y miden 15,6 metros de punta a punta. Sostienen al helicóptero en el aire, y si el rotor se inclina, el helicóptero va para ese lado.",
+  "tarjeta.plato":
+    "Plato oscilante. Está debajo del rotor y lleva los mandos a las palas: el colectivo lo sube y les da más paso a todas a la vez; el cíclico lo inclina, y cada pala toma más paso de un lado que del otro.",
+  "tarjeta.rotorDeCola":
+    "Rotor de cola, con cinco palas, en el costado derecho de la cola. El rotor grande, al girar, quiere hacer girar al helicóptero para el otro lado; el de cola empuja la cola y no lo deja. Con los pedales se le cambia el paso, y la nariz gira.",
+  "tarjeta.voz.rotor":
+    "Este es el rotor principal. Sus cuatro palas son alas que giran doscientas sesenta y cinco vueltas por minuto, y sostienen al helicóptero en el aire. Si el rotor se inclina, el helicóptero va para ese lado.",
+  "tarjeta.voz.plato":
+    "Este es el plato oscilante, debajo del rotor. Cuando subís el colectivo, el plato sube, las palas se inclinan más y empujan más aire para abajo. Cuando movés el cíclico, el plato se inclina, y el rotor se inclina con él.",
+  "tarjeta.voz.rotorDeCola":
+    "Este es el rotor de cola, en el costado derecho. El rotor grande, al girar, empuja al helicóptero a girar para el otro lado, y el de cola lo aguanta. Con los pedales empuja más o menos, y la nariz gira.",
 
   "language.label": "Idioma",
   "language.changed": "Idioma: {name}",
@@ -3877,6 +3900,49 @@ export const ES_PY = {
     "medio: el ventilador y el núcleo giran más rápido; el aire que rodea el núcleo es el que más empuja",
   "figura.turbofan.valorTodo":
     "todo: el ventilador y el núcleo giran lo más rápido y los dos chorros empujan lo más que pueden",
+  /*
+   * **El plato oscilante del Super Puma**: las piezas de Taguato, los mandos
+   * de Tukã y la frase de lo que hace el helicóptero. Ver `ui/figuras/plato.ts`.
+   */
+  "figura.plato.aria":
+    "Cómo se vuela un helicóptero: la cabeza del rotor del Super Puma, con sus palas, el plato oscilante y sus servos, y los mandos del piloto. El colectivo sube el plato y las cuatro palas toman más paso; el cíclico lo inclina y el disco del rotor se inclina con él; los pedales mueven el rotor de cola, que aguanta el giro que el rotor le da al helicóptero. Al lado, el Super Puma volando.",
+  "figura.plato.plato": "Plato",
+  "figura.plato.platoFijo": "Plato fijo",
+  "figura.plato.platoQueGira": "Plato que gira",
+  "figura.plato.servo": "Servo",
+  "figura.plato.varilla": "Varilla de paso",
+  "figura.plato.pala": "Pala",
+  "figura.plato.ciclico": "Cíclico",
+  "figura.plato.colectivo": "Colectivo",
+  "figura.plato.pedales": "Pedales",
+  "figura.plato.camaraLenta": "A cámara lenta: de verdad da {vueltas} vueltas por segundo",
+  "figura.plato.quieto": "Quieto en el aire",
+  "figura.plato.sube": "Sube",
+  "figura.plato.baja": "Baja",
+  "figura.plato.adelante": "Va para adelante",
+  "figura.plato.atras": "Va para atrás",
+  "figura.plato.derecha": "Va a la derecha",
+  "figura.plato.izquierda": "Va a la izquierda",
+  "figura.plato.narizDer": "Gira la nariz a la derecha",
+  "figura.plato.narizIzq": "Gira la nariz a la izquierda",
+  "figura.plato.par": "Gira solo: pisá el pedal derecho",
+  "figura.plato.parIzq": "Gira solo: pisá el pedal izquierdo",
+  "figura.plato.ciclicoAdelante": "Cíclico: adelante y atrás",
+  "figura.plato.ciclicoLado": "Cíclico: a los costados",
+  "figura.plato.paso": "Paso: {grados}°",
+  "figura.plato.pasoEntre": "Paso: de {de}° a {a}°",
+  "figura.plato.narizCero": "Nariz 0°",
+  "figura.plato.narizDerecha": "Nariz {grados}° a la derecha",
+  "figura.plato.narizIzquierda": "Nariz {grados}° a la izquierda",
+  "figura.plato.vColectivo": "{porciento} %: las cuatro palas, {grados}° de paso",
+  "figura.plato.vAdelante": "adelante: el plato y el disco se inclinan hacia adelante",
+  "figura.plato.vAtras": "atrás: el plato y el disco se inclinan hacia atrás",
+  "figura.plato.vDerecha": "a la derecha: el disco se inclina a la derecha",
+  "figura.plato.vIzquierda": "a la izquierda: el disco se inclina a la izquierda",
+  "figura.plato.alCentro": "al centro",
+  "figura.plato.vPedalDer": "el derecho, pisado: el rotor de cola empuja más y la nariz va a la derecha",
+  "figura.plato.vPedalIzq": "el izquierdo, pisado: el rotor de cola empuja menos y la nariz va a la izquierda",
+  "figura.plato.parejos": "parejos",
   // ── Antes de volar: la vuelta al avión (punto 125) y el tiempo (punto 129) ──
   "vuelta.titulo": "La vuelta al avión",
   "vuelta.abrir": "Dar la vuelta al avión",

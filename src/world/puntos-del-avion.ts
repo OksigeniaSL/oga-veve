@@ -30,7 +30,15 @@ export type PiezaDelAvion =
   | "pitot"
   | "motor"
   | "tren"
-  | "luces";
+  | "luces"
+  /*
+   * Las del helicóptero, que un avión no lleva: el rotor que lo sostiene, el
+   * plato que le lleva los mandos a las palas y el rotor de cola que aguanta
+   * el par. Ver el final de `puntosDelAvion`.
+   */
+  | "rotor"
+  | "plato"
+  | "rotor-de-cola";
 
 /** Un punto que se toca: la pieza, dónde está y si tiene gemelo al otro lado. */
 export interface PuntoDelAvion {
@@ -119,8 +127,11 @@ function sitioDelPitot(a: AircraftConfig): SitioDelPitot {
   return "morro";
 }
 
-/** Las piezas que el helicóptero tiene como las tiene un avión. Ver el final de `puntosDelAvion`. */
-const DEL_HELICOPTERO: ReadonlySet<PiezaDelAvion> = new Set(["pitot", "luces"]);
+/**
+ * Las piezas del helicóptero: las suyas y las que tiene como las tiene un
+ * avión. Ver el final de `puntosDelAvion`.
+ */
+const DEL_HELICOPTERO: ReadonlySet<PiezaDelAvion> = new Set(["rotor", "plato", "rotor-de-cola", "pitot", "luces"]);
 
 /**
  * Los puntos de este avión, medidos en su modelo ya colocado.
@@ -295,10 +306,56 @@ export function puntosDelAvion(
    * profundidad y el de dirección —el estabilizador y la deriva, que en él
    * son fijos: el morro lo lleva el cíclico y la cola, el rotor de cola— y el
    * tren con la explicación del tren fijo de una avioneta, cuando el suyo se
-   * recoge. Sus piezas propias —el rotor, el plato, el rotor de cola— llegan
-   * con sus láminas.
+   * recoge. Y las suyas, que un avión no tiene. Ver `piezasDelHelicoptero`.
    */
-  if (a.helicoptero) return fuera.filter((p) => DEL_HELICOPTERO.has(p.pieza));
+  if (a.helicoptero) {
+    for (const p of piezasDelHelicoptero(raiz, aGrupo)) poner(p.pieza, p.donde, p.espejo);
+    return fuera.filter((p) => DEL_HELICOPTERO.has(p.pieza));
+  }
+  return fuera;
+}
+
+/**
+ * **El rotor, el plato y el rotor de cola**, medidos en las piezas del
+ * modelo que se llaman así —las mismas que busca `rotoresDelModelo` para
+ * hacerlas girar—.
+ *
+ * - **El rotor**, en una pala y no en el buje: el plato va justo debajo del
+ *   buje, a un palmo, y dos puntos en el mismo sitio no se pueden tocar. A
+ *   media pala, en la que más se va hacia la izquierda: la que se ve. Las
+ *   cuatro van en cruz, y en espejo cae en la de enfrente.
+ * - **El plato**, en el borde de la izquierda del plato fijo, que es el que
+ *   asoma entre la caja de la transmisión y el buje.
+ * - **El rotor de cola**, en su buje, **en el costado derecho** de la cola,
+ *   que es donde lo lleva el Super Puma. Sin espejo: por el lado izquierdo
+ *   se queda detrás de la cola, como el de verdad.
+ */
+function piezasDelHelicoptero(raiz: Object3D, aGrupo: Matrix4): PuntoDelAvion[] {
+  const fuera: PuntoDelAvion[] = [];
+  const buje = cajaDe(vertices(mallasDe(raiz, /^rotor-principal-buje$/), aGrupo));
+  if (buje) {
+    const centro = buje.getCenter(new Vector3());
+    // Las palas, cada una por su lado: la que tiene la punta más a la izquierda.
+    let mejor: { punta: Vector3; x: number } | null = null;
+    for (let i = 1; i <= 8; i++) {
+      const pala = vertices(mallasDe(raiz, new RegExp(`^rotor-principal-pala-${i}$`)), aGrupo);
+      if (!pala.length) continue;
+      const punta = pala.reduce((a, v) =>
+        Math.hypot(v.x - centro.x, v.z - centro.z) > Math.hypot(a.x - centro.x, a.z - centro.z) ? v : a,
+      );
+      if (!mejor || punta.x < mejor.x) mejor = { punta, x: punta.x };
+    }
+    if (mejor) fuera.push({ pieza: "rotor", donde: centro.clone().lerp(mejor.punta, 0.5), espejo: true });
+  }
+  const plato = cajaDe(vertices(mallasDe(raiz, /^plato-fijo$/), aGrupo));
+  if (plato)
+    fuera.push({
+      pieza: "plato",
+      donde: new Vector3(plato.min.x, (plato.min.y + plato.max.y) / 2, (plato.min.z + plato.max.z) / 2),
+      espejo: true,
+    });
+  const cola = cajaDe(vertices(mallasDe(raiz, /^rotor-de-cola-buje$/), aGrupo));
+  if (cola) fuera.push({ pieza: "rotor-de-cola", donde: cola.getCenter(new Vector3()), espejo: false });
   return fuera;
 }
 

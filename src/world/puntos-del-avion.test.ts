@@ -15,6 +15,8 @@ import { montarModeloDeLaTarjeta } from "./modelo-de-la-tarjeta";
 import { explicacionDe } from "../ui/explicaciones-del-avion";
 import { ES_PY } from "../i18n/es-PY";
 import { EN } from "../i18n/en";
+import { SUPER_PUMA_EN_EL_JUEGO } from "../flight/helicoptero-en-el-juego";
+import { SUPER_PUMA } from "../flight/super-puma";
 
 const fs = (
   globalThis as unknown as {
@@ -126,5 +128,61 @@ describe("los puntos de la tarjeta en cada modelo", () => {
       expect(EN[k]).not.toMatch(/tail/);
     }
     expect(sinConfirmar.voz).toBe("tarjeta.voz.luces");
+  });
+});
+
+/*
+ * **El Super Puma, con sus piezas.** Hasta ahora su tarjeta solo llevaba el
+ * pitot y las luces, porque lo que se buscaba eran piezas de avión. Ahora
+ * lleva las suyas —el rotor, el plato y el rotor de cola—, y ninguna de avión:
+ * ni timones, que en él son fijos, ni el tren de una avioneta.
+ */
+describe("los puntos de la tarjeta del helicóptero", () => {
+  it("el rotor, el plato y el rotor de cola, cada uno sobre su pieza", async () => {
+    const raiz = await escenaDe("super-puma");
+    const m = montarModeloDeLaTarjeta(raiz, SUPER_PUMA_EN_EL_JUEGO);
+    const de = (p: string) => m.puntos.find((x) => x.pieza === p);
+    const piezas = m.puntos.map((p) => p.pieza).sort();
+    // Las luces de navegación se ponen en la punta del ala, y él no tiene: sin punto.
+    expect(piezas).toEqual(["pitot", "plato", "rotor", "rotor-de-cola"]);
+    m.grupo.updateWorldMatrix(true, true);
+    const caja = new Box3().setFromObject(m.grupo).expandByScalar(0.6);
+    for (const p of m.puntos) expect(caja.containsPoint(p.donde), p.pieza).toBe(true);
+
+    const rotor = de("rotor")!;
+    const plato = de("plato")!;
+    const cola = de("rotor-de-cola")!;
+    // El rotor, arriba, en una pala y lejos del buje: a media pala son casi cuatro metros.
+    expect(Math.hypot(rotor.donde.x, rotor.donde.z)).toBeGreaterThan(SUPER_PUMA.rotor.radio * 0.35);
+    expect(rotor.donde.y).toBeGreaterThan(plato.donde.y);
+    // El plato, debajo del buje y pegado al mástil: a menos de un metro del eje.
+    expect(Math.hypot(plato.donde.x, plato.donde.z)).toBeLessThan(1);
+    // El de cola, atrás —el morro va hacia la −Z— y a la derecha, sin espejo.
+    expect(cola.donde.z).toBeGreaterThan(SUPER_PUMA.cola.brazo * 0.8);
+    expect(cola.donde.x).toBeGreaterThan(0.2);
+    expect(cola.espejo).toBe(false);
+  });
+
+  it("y cada una con su explicación, en los dos idiomas, con las cifras de su ficha", () => {
+    const a = SUPER_PUMA_EN_EL_JUEGO;
+    for (const pieza of ["rotor", "plato", "rotor-de-cola"] as const) {
+      const e = explicacionDe(pieza, a);
+      expect(e.id).toBe(`avion.${pieza}`);
+      for (const k of [e.texto, e.voz, e.corta]) {
+        expect(ES_PY[k], k).toBeTruthy();
+        expect(EN[k], k).toBeTruthy();
+      }
+    }
+    // Las cifras que se leen son las de `flight/super-puma.ts`, no otras.
+    const rotor = ES_PY["tarjeta.rotor"];
+    const diametro = (SUPER_PUMA.rotor.radio * 2).toLocaleString("es-PY", { maximumFractionDigits: 1 });
+    const vueltas = String(Math.round((SUPER_PUMA.rotor.vueltas * 60) / (2 * Math.PI)));
+    expect(rotor).toContain(`${diametro} metros`);
+    expect(rotor).toContain(`${vueltas} vueltas por minuto`);
+    expect(SUPER_PUMA.rotor.palas).toBe(4);
+    expect(rotor).toMatch(/cuatro palas/);
+    expect(SUPER_PUMA.cola.palas).toBe(5);
+    expect(ES_PY["tarjeta.rotorDeCola"]).toMatch(/cinco palas/);
+    expect(EN["tarjeta.rotor"]).toContain(`${(SUPER_PUMA.rotor.radio * 2).toFixed(1)} metres`);
   });
 });

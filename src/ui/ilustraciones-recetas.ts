@@ -124,9 +124,11 @@ const ENTERA_DE_1672 = [0, 0, 1672, 940] as const;
  *   con las demás;
  * - `cabina-pasaje-gente-3x3.png`, que es la cabina de otro avión —tres y tres
  *   asientos— y aquí se vuela en uno de dos y dos;
- * - **el largo radio y el helicóptero**, por fuera y por dentro: no son de la
- *   flota —ver `flight/flota.ts`— y ninguna historia de Jazlyn habla de ellos.
- *   Inventarles un sitio sería enseñar un avión que en el juego no hay.
+ * - **el largo radio y el helicóptero de antes**, por fuera y por dentro: el
+ *   largo radio no es de la flota —ver `flight/flota.ts`— y ninguna historia
+ *   de Jazlyn lo cuenta; y `fuera-helicoptero.jpg` es un H135, que en el
+ *   juego no hay. El helicóptero que sí hay, el Super Puma, tiene las suyas:
+ *   ver `fuera-super-puma`.
 
  */
 export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
@@ -197,6 +199,19 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
   "fuera-jaz-120": { original: "fuera-jaz120.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
   // De perfil y sobre papel, el retrato aprobado del Tijereta, con más papel arriba y abajo para llegar a 4:3.
   "fuera-jaz-110": { original: "fuera-jaz110.png", hueco: "tarjeta", recorte: [0, 0, 1774, 1330] },
+  /*
+   * El Super Puma, escondido —`?avion=super-puma`—, frente al faro de Teno y
+   * con el morro a la derecha: se ve el costado derecho, el del rotor de cola,
+   * la puerta y la grúa. Pintado por Oksigenia. Ver `CREDITOS.md`.
+   */
+  "fuera-super-puma": { original: "super-puma-teno.png", hueco: "tarjeta", recorte: ENTERA_DE_1448 },
+  /*
+   * **Y su segunda lámina, que no es la cabina**: aún no tiene, y la lámina
+   * con la tripulación de rescate dentro espera a que la tenga, para que diga
+   * lo mismo que el juego. Hasta entonces, lo que hace: un rescate en
+   * estacionario, con la grúa. Ver `ilustracionesDelAvion`.
+   */
+  "grua-super-puma": { original: "super-puma-grua.png", hueco: "tarjeta", recorte: ENTERA_DE_1448 },
   // ── Y por dentro, con Jazlyn a los mandos ─────────────────────────────
   "cabina-jaz-20": { original: "cabina-jaz20.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
   "cabina-jaz-25": { original: "cabina-jaz25.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },

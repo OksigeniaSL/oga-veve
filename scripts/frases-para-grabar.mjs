@@ -186,8 +186,8 @@ const HABLADOS = [
     "tarjeta.voz",
     "instructor",
     "lo que explica cada punto de la tarjeta del avión",
-    // Lo de cada avión va al final: ver `DE_CADA_AVION`.
-    /^tarjeta\.voz\.(?:lucesPuntas|motorTurbo)$/,
+    // Lo de cada avión va al final: ver `DE_CADA_AVION` y `DEL_HELICOPTERO`.
+    /^tarjeta\.voz\.(?:lucesPuntas|motorTurbo|rotor|plato|rotorDeCola)$/,
   ],
   /*
    * **La torre de Canarias va primero, y por eso el grupo más concreto gana.**
@@ -2578,6 +2578,23 @@ for (const [id, voz, para] of DEL_VUELO_LARGO) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });
+  total += texto.length;
+}
+/*
+ * **Y las piezas del helicóptero** (11-11-2026): lo que cuenta la instructora
+ * al tocar el rotor, el plato oscilante y el rotor de cola en la tarjeta del
+ * Super Puma. Detrás de todo, que lo grabado no se renumera. Ver
+ * `piezasDelHelicoptero` en `src/world/puntos-del-avion.ts`.
+ */
+const DEL_HELICOPTERO = [
+  ["tarjeta.voz.rotor", "lo que explica el punto del rotor principal en la tarjeta del Super Puma"],
+  ["tarjeta.voz.plato", "lo que explica el punto del plato oscilante en la tarjeta del Super Puma"],
+  ["tarjeta.voz.rotorDeCola", "lo que explica el punto del rotor de cola en la tarjeta del Super Puma"],
+];
+for (const [id, para] of DEL_HELICOPTERO) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
   total += texto.length;
 }
 const AJUSTES_CON_CHISPA = {
