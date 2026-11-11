@@ -152,11 +152,13 @@ arrancar y la llave del motor, sin otra máquina de fases (`tarjetaDelRemolque`,
 2. **Con la baliza encendida**, la tarjeta pasa a ser el tractor —el avión visto desde arriba, el tractor en el morro
    y la flecha hacia atrás— con la tecla de la llave al lado, y se toca. La instructora: «Pedí el tractor: nos empuja
    para atrás hasta la calle». Si no se toca nada no pasa nada: el avión sigue enganchado y la tarjeta, puesta.
-   **Al tocarla** (o con la llave), a los tres segundos —los mismos que la tripulación—, el tractor empuja. Si se apaga
+   **Al tocarla** (o con la llave), a los tres segundos —los mismos que la tripulación—, el tractor empuja; de Taguató
+   para arriba, con el permiso de la torre por la radio. Si se apaga
    la baliza antes de que eche a andar, no echa a andar y vuelve la tarjeta de la baliza. Del freno de aparcamiento no
    hay mando en el juego: se suelta y se pone solo, a su hora.
 3. **Empujando, vuelve la llave**: «El tractor nos lleva para atrás, porque desde la cabina no se ve lo que hay detrás.
-   Mientras tanto, arrancá los motores». En el peldaño de cabina, la frase de siempre, «Arrancá el motor»: ahí ya no se cuenta el porqué.
+   Mientras tanto, arrancá los motores». En el peldaño de cabina, la tarjeta de siempre, «Arrancá el motor», sin la voz
+   de la instructora: lo dice la persona de tierra por el interfono (ver «La radio de tierra»).
 4. **Si al acabar de empujar los motores siguen parados, el tractor espera** enganchado y con el freno puesto
    (`Remolque.esperaLosMotores`), con la tarjeta de la llave delante. Es lo de verdad: la persona de tierra sigue
    enchufada mientras se arranca, mirando los motores desde fuera, y no suelta hasta que la cabina le dice que están en
@@ -165,7 +167,7 @@ arrancar y la llave del motor, sin otra máquina de fases (`tarjetaDelRemolque`,
    señalero en la llegada: diría «soltá el freno y andá», y eso no toca todavía. Queda el dibujo del tractor, sin tecla.
 6. **El saludo**: la tarjeta del pasador con su cinta roja y, en los tres peldaños de abajo, la instructora: «Mirá a la
    izquierda: te enseña el pasador con su cinta roja y te saluda. Sin él, la rueda de adelante vuelve a ser tuya: ya
-   podés rodar». En el de cabina, el dibujo solo.
+   podés rodar». En el de cabina, el dibujo, detrás del «Desconecto» de la persona de tierra.
 7. **Libre**: vuelve la tarjeta de la fase, con su voz —«Soltá el freno y andá despacito»—, y se rueda hacia delante.
 
 Hasta el saludo **el avión no se mueve más que con el tractor** (`empujarElAvion`): enganchado en el puesto, empujado,
@@ -192,6 +194,43 @@ mismo sitio en el teclado español y en el americano. En todos los aviones, que 
 - **No es una espera sin salida**: la misma tarjeta que la pide la enciende con un toque, y el botón late mientras
   falta.
 - **En el pasaje la mueve la tripulación**, como los motores: el botón no se enseña.
+- **Y en un teléfono apaisado no tapa nada.** En la fila de arriba van la tarjeta de la fase, a la izquierda, y el
+  piloto automático, el cinturón, la baliza, la radio, el volumen y el menú, a la derecha. Con la radio hablando no
+  caben las dos frases: la tarjeta llega al 46 % del ancho y la radio al 36 %, y los botones se metían por debajo de la
+  tarjeta, que se quedaba con sus toques. Pasaba en cada salida empujada mientras la megafonía decía lo de los
+  toboganes. Mientras habla la radio, la tarjeta se queda en su dibujo —sigue latiendo y se toca— y la frase vuelve al
+  callarse. Cede la tarjeta y no la radio porque la tarjeta tiene además el dibujo y la voz, y la radio no tiene otro
+  canal que se vea. La frase se esconde solo a la vista: es el nombre del botón para un lector de pantalla.
+
+### La radio de tierra
+
+En una cabina de verdad, salir empujado son dos conversaciones: por la radio con el control, que da el permiso, y por
+el cable del interfono con la persona de tierra, que lleva el tractor. El juego las tiene las dos, cada una donde toca.
+
+- **El permiso, por la radio**, al pedir el tractor: la torre del campo, con su voz y tu indicativo delante, dice
+  «pushback and start-up approved» (Doc 4444, 12.3.4.7, con la puesta en marcha, que es como se da cuando se piden las
+  dos a la vez), y se escribe en la tira de la radio. Una vez por salida: apagar la baliza y volver a pedirlo no lo
+  repite. **Y antes, la autorización de la ruta** —«cleared to Tenerife Sur»—, que es lo primero que se recibe en el
+  puesto: se daba al arrancar, y saliendo empujado eso es al acabar el empuje, así que llegaba después del permiso y en
+  el mismo instante que el «Desconecto» de la persona de tierra. De Taguató para arriba, como «cleared to», que es el otro permiso que se recibe en el puesto: la fraseología
+  en inglés no enseña nada a los cuatro años. La da la torre y no una dependencia de rodadura aparte, que el juego no
+  tiene: se simplifica quién habla, no lo que se dice. En un campo sin torre o con AFIS no se dice, que un AFIS no
+  autoriza.
+- **La persona de tierra, por el interfono**, solo en el peldaño de cabina. En los de abajo lo cuenta la instructora, y
+  dos voces contando lo mismo es una de más. Tres frases, en los tres momentos en que habla de verdad: al echar a andar,
+  «Cabina, tierra: empezamos a empujar. Ya pueden arrancar los motores» —y entonces la tarjeta de arrancar sale sin la
+  voz de la instructora, que diría lo mismo—; al parar, «Pongan el freno de aparcamiento, por favor»; y al soltar,
+  «Desconecto. Miren mi señal a la izquierda», justo antes de que salga a enseñar el pasador. Le habla de ustedes a la
+  cabina, que son dos, así que la frase vale igual en Asunción que en las islas. Va por la misma boca que la torre —un
+  suceso, una voz: no se pisan— y con su efecto de auriculares, y se escribe en la tira, que es el canal de quien no oye.
+  **La tira va por turnos** (`Hud.radio`): la voz ya decía una frase detrás de otra, pero la tira escribía la última al
+  llegar, y dos que llegaban juntas se quedaban en una. Ahora la nueva espera a que la de antes lleve dos segundos y
+  medio a la vista, y las que se juntan salen en orden. Vale para toda la radio, no solo para esto.
+- **Con su voz y su habla**, como la torre y la tripulación: **Celso**, técnico de rampa paraguayo, y **Airam**,
+  canario, diseñadas para esto como Derlis e Idaira. Airam se eligió entre tres muestras por ser la más distinta de
+  Yeray, la torre de las islas, que habla en la misma salida: medidas con huellas de voz, la propuesta salía a 0,85 de
+  Yeray, que es ya la misma persona, y la elegida a 0,78, una voz más joven y más aguda. Las claves son `tierra.*` y
+  `tierra.canario.*`.
 
 ### Lo que se mide en cada campo
 
@@ -331,9 +370,6 @@ quedaba en la calle sin poder pasarle al lado. En un aeropuerto cada puesto es d
 
 ## Lo que queda
 
-- **La radio de tierra en el peldaño de cabina**: el «pushback and start approved» y la conversación por el cable con
-  la persona de tierra. Hace falta la pieza de la torre con sus recetas —el indicativo, los dos acentos— o una voz de
-  tierra nueva; mientras, ese peldaño tiene las tarjetas y la frase de arrancar de siempre.
 - **El interruptor de la baliza en la cabina en 3D**: está en la pantalla, no en el modelo. Ver «El interruptor de la
   baliza».
 - **Barajas fuera del T5 con los dos grandes**, con el cruce detrás: ver «Lo que se mide en cada campo».
