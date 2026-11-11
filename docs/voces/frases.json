@@ -21,6 +21,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.remolqueBaliza",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Prendé la baliza: avisa a los de tierra que nos vamos a mover",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.remolque",
     "voz": "instructor",
     "idioma": "es-PY",

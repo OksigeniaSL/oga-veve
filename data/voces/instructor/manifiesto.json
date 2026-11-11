@@ -2435,6 +2435,10 @@
       "ms": 5907,
       "h": "adbebdbca8"
     },
+    "vuelo.remolqueBaliza": {
+      "ms": 2903,
+      "h": "f017cd436e"
+    },
     "vuelo.remolqueSuelta": {
       "ms": 7607,
       "h": "39639d2677"
@@ -4822,6 +4826,9 @@
     ],
     "vuelo.dasPasoEmpujado": [
       "vuelo.dasPasoEmpujado"
+    ],
+    "vuelo.remolqueBaliza": [
+      "vuelo.remolqueBaliza"
     ]
   }
 }
