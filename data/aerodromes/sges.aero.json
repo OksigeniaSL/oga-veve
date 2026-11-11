@@ -1,6 +1,7 @@
 {
   "id": "SGES",
   "name": "Guaraní International Airport",
+  "pasarelas": {"hay": true, "fuente": "DINAC, licitación 425264 de la DNCP (julio de 2023), «Mantenimiento de mangas telescópicas del AISP y del AIG»: su lote 2 es el «mantenimiento preventivo y correctivo de mangas telescópicas JBT y Jetway del AIG», el Aeropuerto Internacional Guaraní. No dice cuántas son."},
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",

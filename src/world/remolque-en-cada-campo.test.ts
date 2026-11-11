@@ -29,15 +29,6 @@ import { esDeLinea, vaALaPasarela } from "../flight/velocidades-en-tierra";
 
 const GRADO = Math.PI / 180;
 
-/**
- * **Los puestos en los que el empuje acaba con el cruce detrás del morro**, medidos: en
- * todos, la raya sale del puesto de lado. Ver «el empuje cabe y acaba en la raya» y el
- * ADR 0025.
- */
-const CON_EL_CRUCE_DETRAS: ReadonlySet<string> = new Set([
-  "barajas · jaz-110",
-  "barajas · jaz-120",
-]);
 const DE_PASARELA = ["jaz-90", "jaz-110", "jaz-120"] as const;
 
 describe("qué aviones se empujan", () => {
@@ -56,11 +47,11 @@ describe("qué aviones se empujan", () => {
  * cada uno: OpenStreetMap solo trae las de tres. En los demás no hay puesto de contacto, y
  * un reactor sale de frente. Ver `Aerodrome.pasarelas` y el ADR 0025.
  */
-const CON_PASARELAS = ["GCFV", "GCLA", "GCLP", "GCRR", "GCTS", "GCXO", "LEMD", "SGAS"];
+const CON_PASARELAS = ["GCFV", "GCLA", "GCLP", "GCRR", "GCTS", "GCXO", "LEMD", "SGAS", "SGES"];
 
 describe("solo hay puestos de contacto donde hay pasarelas", async () => {
   const conAerodromo = await Promise.all(SCENARIOS.map((e) => conSuAerodromo(e)));
-  it("los ocho campos que las tienen, cada uno con su fuente", () => {
+  it("los nueve campos que las tienen, cada uno con su fuente", () => {
     const vistos = new Map<string, string>();
     for (const s of conAerodromo) {
       const p = s.aerodrome?.pasarelas;
@@ -249,15 +240,11 @@ describe("el empuje cabe y acaba en la raya en cada campo con aeródromo", async
         // Y cabe: acaba a menos de un largo de avión de la raya, que es por donde se rueda.
         expect(m.deLaRaya!, "acaba junto a la raya").toBeLessThan(largo);
         /*
-         * **Y con el cruce por delante**, que rodando hacia delante se pasa por él. Donde no,
-         * está apuntado y dicho en el ADR: la raya sale del puesto de lado —más de cincuenta
-         * grados de lo contrario a la pared—, el avión se pone mirando a la pared, y la recta
-         * de su cola y la de la calle casi no se cortan; se gira desde el puesto con el radio
-         * más cerrado y el cruce queda detrás. Si alguno se arregla, que salga de la lista.
+         * **Y con el cruce por delante**, que rodando hacia delante se pasa por él. También
+         * donde la raya sale del puesto de lado, a lo largo de la fachada: ahí el morro acaba
+         * mirando hacia donde va la raya. Ver `trayectoriaDelEmpuje`.
          */
-        const clave = `${s.id} · ${id}`;
-        if (CON_EL_CRUCE_DETRAS.has(clave)) expect(m.delante!, `${clave} ya lo tiene delante: sácalo de la lista`).toBeLessThan(0);
-        else expect(m.delante!, "el cruce, por delante del morro").toBeGreaterThan(0);
+        expect(m.delante!, "el cruce, por delante del morro").toBeGreaterThan(0);
       });
     }
   }

@@ -229,6 +229,11 @@ export const ENDEREZA = 8;
 
 /** Cuánto tiene que torcer la raya para que eso sea la calle, y no el puesto. */
 const LA_CALLE_TUERCE = 40 * GRADO;
+/**
+ * **Cuándo sale la raya del puesto de lado**, y no hacia atrás: los mismos cincuenta
+ * grados que en `rumboEnElPuesto`, que con menos pone el avión en el eje de la raya.
+ */
+const SALE_DE_LADO = 50 * GRADO;
 /** Cuántos metros de raya se miran para saber hacia dónde va la calle. */
 const MIRA_LA_CALLE = 30;
 /**
@@ -270,6 +275,8 @@ export interface Empuje {
  *   desde el puesto.
  * - **Y si la raya da media vuelta** —una calle que sigue de frente, por donde
  *   se vino—, el empuje gira noventa grados y lo demás lo rueda el avión.
+ * - **Y si sale del puesto de lado**, a lo largo de la fachada y sin torcer
+ *   cerca, el morro acaba mirando hacia donde va la raya.
  *
  * `desde` es el avión en el puesto, mirando al edificio; `raya`, la del plan,
  * que empieza en el puesto. `null` si no hay raya que seguir.
@@ -315,8 +322,18 @@ export function trayectoriaDelEmpuje(desde: Pose, raya: readonly PuntoXZ[], bata
      * hace cuando el puesto da a una calle que sale de frente.
      */
     cruce = enLaRaya(Math.min(total, largoDelAvion / 2 + 15));
-    const lado = tuerce ? Math.sign(diferencia(salida, tuerce.va)) || 1 : 1;
-    calle = salida + lado * (Math.PI / 2);
+    if (Math.abs(diferencia(desde.rumbo + Math.PI, salida)) > SALE_DE_LADO) {
+      /*
+       * **Y si sale del puesto de lado**, a lo largo de la fachada, la calle es la propia raya:
+       * el morro acaba mirando hacia donde va. Con el giro de noventa grados de la de frente
+       * se quedaba de espaldas a ella en la mitad de los casos —Barajas fuera del T5, con los
+       * dos grandes—, y tenía que dar media vuelta rodando por la plataforma.
+       */
+      calle = salida;
+    } else {
+      const lado = tuerce ? Math.sign(diferencia(salida, tuerce.va)) || 1 : 1;
+      calle = salida + lado * (Math.PI / 2);
+    }
   }
 
   // ── Las dos rectas: la de la cola saliendo del puesto y la de la calle ──
