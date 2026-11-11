@@ -1525,7 +1525,8 @@ def boton(que, ancho, alto, en, fondo=True):
     faltaba era **el mando que está en la cabina**, que es donde lo busca quien
     se ha sentado ahí.
 
-    El nombre manda: `boton-<qué>` con `qué` en {`motor`, `flaps`, `freno`}. El
+    El nombre manda: `boton-<qué>` con `qué` en {`baliza`, `motor`, `flaps`,
+    `freno`, `tren`}. El
     juego los busca por ese prefijo, los ilumina al pasar por encima y dispara
     la acción al soltar. Ver `world/botones-cabina.ts`.
     """
@@ -2269,8 +2270,15 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     # **Y el de los flaps, solo donde hay flaps**, por lo mismo: el fumigador
     # no los lleva, y ahí el botón encendía una aguja de «10°» con el ala
     # quieta. Su reloj tampoco: ver la columna de motor, abajo.
-    mandos = (("motor",) + (("flaps",) if flaps else ()) + ("freno",)
-              + (("tren",) if tren else ()))
+    #
+    # **Y la baliza, la primera de la fila**, a la izquierda del contacto: se
+    # enciende antes de arrancar y antes de que el tractor eche a andar, y la
+    # fila se lee en el orden en que se usa. La llevan todos. En un reactor de
+    # verdad va en el panel del techo, que desde el asiento no se alcanza: se
+    # simplifica dónde está, no lo que hace, como su botón en la pantalla.
+    # Ver «El interruptor de la baliza» en el ADR 0025.
+    mandos = (("baliza", "motor") + (("flaps",) if flaps else ())
+              + ("freno",) + (("tren",) if tren else ()))
     #
     # **La visera cae un palmo por debajo de los ojos. En todos.**
     #

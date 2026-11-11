@@ -34,7 +34,7 @@ const AVIONES = ["jaz-20", "jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
  * lo que ve el comandante, exactamente el fallo que este banco nació para
  * cazar.
  */
-const MANDOS = ["motor", "flaps", "freno"];
+const MANDOS = ["baliza", "motor", "flaps", "freno"];
 /**
  * Y el de los flaps, igual que el del tren: **solo donde hay flaps**. El
  * fumigador no los lleva, y su botón encendía una palanca que no mueve nada.
@@ -215,6 +215,27 @@ for (const avion of AVIONES) {
       .join(" · "),
     "el ojo está en el asiento del piloto, no en el eje del avión",
   );
+
+  /*
+   * **La baliza, la primera de la fila**, y la primera que se pulsa: sin ella, en el
+   * puesto de contacto la llave no pide el tractor (ADR 0025, «El interruptor de la
+   * baliza»). Lo que dice cómo está es su botón de la pantalla, el mismo interruptor.
+   */
+  if (donde.baliza) {
+    const pulsado = () =>
+      page.evaluate(() =>
+        document.querySelector('[data-hud="baliza-mando"]')?.getAttribute("aria-pressed"),
+      );
+    const antes = await pulsado();
+    await pulsar(donde.baliza);
+    const despues = await pulsado();
+    comprobar(
+      `${avion}: y el de la baliza la enciende`,
+      antes === "false" && despues === "true",
+      `${antes} → ${despues}`,
+      "el mismo interruptor que su botón de la pantalla y la coma",
+    );
+  }
 
   if (donde.motor) {
     /*

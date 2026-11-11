@@ -27375,7 +27375,8 @@ export class Game {
   }
 
   pulsarMandoDeCabina(cual: MandoDeCabina): void {
-    if (cual === "motor") this.toggleEngine();
+    if (cual === "baliza") this.moverLaBaliza();
+    else if (cual === "motor") this.toggleEngine();
     else if (cual === "flaps") this.input.alternarFlaps();
     else if (cual === "tren") this.input.alternarTren();
     else this.input.pisarElFreno();

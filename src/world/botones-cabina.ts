@@ -11,9 +11,9 @@
  *
  * ## Pocos y de verdad
  *
- * Cuatro, y los cuatro hacen algo que el juego ya sabe hacer: arrancar y parar
- * el motor, mover los flaps, el freno y —en el avión que lo mete— el tren. Ni
- * uno más. Los interruptores del techo y
+ * Cinco, y los cinco hacen algo que el juego ya sabe hacer: la baliza, arrancar
+ * y parar el motor, mover los flaps, el freno y —en el avión que lo mete— el
+ * tren. Ni uno más. Los interruptores del techo y
  * las palancas del pedestal siguen siendo escenografía y no fingen otra cosa
  * —en una cabina de verdad tampoco se toca casi nada de lo que se ve—, pero lo
  * que se anuncia como mando responde. Es la misma regla que los relojes: lo que
@@ -45,7 +45,7 @@ import {
 import { DIBUJOS } from "../ui/senal";
 
 /** Lo que se puede pulsar en la cabina. */
-export type MandoDeCabina = "motor" | "flaps" | "freno" | "tren";
+export type MandoDeCabina = "baliza" | "motor" | "flaps" | "freno" | "tren";
 
 /*
  * El del tren solo existe en el avión que lo mete: en un entrenador de escuela
@@ -53,7 +53,7 @@ export type MandoDeCabina = "motor" | "flaps" | "freno" | "tren";
  * mandos son decoración. El modelo solo lo dibuja donde toca, así que aquí
  * basta con buscarlo: si no está, no está.
  */
-const CUALES: readonly MandoDeCabina[] = ["motor", "flaps", "freno", "tren"];
+const CUALES: readonly MandoDeCabina[] = ["baliza", "motor", "flaps", "freno", "tren"];
 
 /** Cuánto se ilumina el mando cuando el dedo está encima. */
 const ENCENDIDO = 0.55;
@@ -68,6 +68,7 @@ const ENCENDIDO = 0.55;
  * rueda—: el que ha aprendido uno ha aprendido los tres.
  */
 const DIBUJO: Record<MandoDeCabina, keyof typeof DIBUJOS> = {
+  baliza: "baliza",
   motor: "llave",
   flaps: "flaps",
   freno: "freno",
