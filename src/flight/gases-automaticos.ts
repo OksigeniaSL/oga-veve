@@ -67,9 +67,12 @@ import { GRAVITY as GRAVEDAD } from "./atmosphere";
  * Tukã para arriba en los seis y en Guyrami en ninguno, así que el JAZ 120 de
  * los pequeños tenía que sostener veintinueve mil pies a flechazos. «El
  * peldaño no le quita equipo al avión.»
+ *
+ * **El helicóptero lleva el suyo, pero no es este**: su piloto automático es
+ * la estabilización, y va por dentro de su modelo de vuelo. Ver el ADR 0026.
  */
-export function llevaPilotoAutomatico(a: Pick<AircraftConfig, "sound">): boolean {
-  return a.sound.engine !== "radial";
+export function llevaPilotoAutomatico(a: Pick<AircraftConfig, "sound" | "helicoptero">): boolean {
+  return a.sound.engine !== "radial" && !a.helicoptero;
 }
 
 /** **Si lleva gases automáticos**: los reactores. Ver la cabecera. */

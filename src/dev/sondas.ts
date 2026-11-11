@@ -24,6 +24,7 @@
  * Si alguna cambia de nombre, esto deja de compilar, que es justo lo que se
  * quiere: la alternativa era un `as unknown as` y enterarse en la pista.
  */
+import { HelicopteroComoModelo } from "../flight/fdm-helicoptero";
 import { velocidadesEnTierra } from "../flight/velocidades-en-tierra";
 import {
   Box3,
@@ -164,6 +165,29 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
   if (!import.meta.env.DEV) return;
   (globalThis as { __oga?: unknown }).__oga = {
     estado: () => juego.flight.state,
+    /**
+     * **El helicóptero**, si es lo que se vuela: el rotor, los mandos que le
+     * llegan con su estabilización, la actitud, el colectivo del estacionario
+     * y dónde está su helipuerto. `null` en un avión. Lo usa
+     * `scripts/ver-helicoptero.mjs`.
+     */
+    helicoptero: () => {
+      const f = juego.flight;
+      if (!(f instanceof HelicopteroComoModelo)) return null;
+      const r = f.modelo.rotor();
+      const sitio = juego.scenario.aerodrome?.helipads?.[0] ?? null;
+      return {
+        nr: r.vueltasPorUno,
+        par: r.par,
+        rpm: (r.vueltas * 60) / (2 * Math.PI),
+        mandos: { ...f.modelo.mandosAhora() },
+        actitud: f.modelo.actitud(),
+        estacionario: f.gasPara(0),
+        helipuerto: sitio ? { x: sitio[0], z: -sitio[1] } : null,
+        anguloDelRotor: juego.aircraftMesh.rotores?.angulo ?? null,
+        percance: juego.percance,
+      };
+    },
     /**
      * La tarjeta del avión: abrirla o cerrarla como al tocar la placa, y
      * cuánto ha pintado su visor. Lo usa `verificar-rendimiento.mjs` para

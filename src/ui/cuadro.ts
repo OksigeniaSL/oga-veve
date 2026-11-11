@@ -586,7 +586,7 @@ function motorDe(a: AircraftConfig, queMarca: Motor): Escala {
     };
   }
   return {
-    rotulo: queMarca === "n1" ? "N1" : "TRQ",
+    rotulo: queMarca === "n1" ? "N1" : a.helicoptero ? "TQ" : "TRQ",
     unidad: "%",
     min: 0,
     max: 100,
@@ -723,7 +723,8 @@ function calcularCuadro(a: AircraftConfig): Cuadro {
     rosa: ROSA,
     motores: a.motores,
     queMarca,
-    rotulo: queMarca === "n1" ? "N1" : queMarca === "par" ? "TRQ" : "RPM",
+    // El helicóptero marca su par como en su cabina: TQ.
+    rotulo: queMarca === "n1" ? "N1" : a.helicoptero ? "TQ" : queMarca === "par" ? "TRQ" : "RPM",
     motor: motorDe(a, queMarca),
     maxDelMotor: queMarca === "rpm" ? a.sound.maxRpm : 100,
     flaps,

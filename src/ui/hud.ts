@@ -631,6 +631,9 @@ export class Hud {
   readonly historia = new VentanaDeHistoria();
 
   private speed: HTMLElement | null = null;
+  /** Las vueltas del rotor y el par, en el helicóptero. Ver `ponerRotor`. */
+  private rotorNr: HTMLElement | null = null;
+  private rotorTq: HTMLElement | null = null;
   private altitude: HTMLElement | null = null;
   private heading: HTMLElement | null = null;
   /** Grados que hay que sumar al rumbo verdadero para obtener el magnético. */
@@ -1781,13 +1784,19 @@ export class Hud {
         ${numbers ? gauge("altitude", INSTRUMENTS.altitude, t("hud.altitude"), this.units.altitudeLabel()) : ""}
         ${numbers ? gauge("heading", INSTRUMENTS.heading, t("hud.heading"), "°") : ""}
         <!--
+          En el helicóptero, lo que se mira para volarlo: las vueltas del rotor
+          y el par de los motores, en tanto por ciento y con su rótulo de
+          cabina. Ver ponerRotor.
+        -->
+        ${this.ficha.helicoptero ? gauge("rotor", "NR", t("hud.rotor"), "%") + gauge("par", "TQ", t("hud.par"), "%") : ""}
+        <!--
           El motor lleva sus dos teclas dibujadas al lado, y no una sola en
           el tutor cuando toca. Un mando que solo enseña la mitad de su
           pareja no se puede deducir: se veía «baja el motor» y no había
           manera de saber con qué se sube.
         -->
         <div class="tarjeta medidor motor">
-          ${gauges ? `<span class="medidor__etiqueta">${INSTRUMENTS.throttle}</span>` : ""}
+          ${gauges ? `<span class="medidor__etiqueta">${this.ficha.helicoptero ? "COLL" : INSTRUMENTS.throttle}</span>` : ""}
           <!--
             Y son botones de verdad, no dibujos. Estaban ahí para enseñar qué
             tecla usar y alguien intentó pulsarlos con el ratón, que es lo
@@ -2236,6 +2245,8 @@ export class Hud {
     // Los instrumentos que este peldaño no enseña sencillamente no están en
     // el DOM, así que la actualización tiene que tolerar su ausencia.
     this.speed = optional(this.root, "speed");
+    this.rotorNr = optional(this.root, "rotor");
+    this.rotorTq = optional(this.root, "par");
     this.tarjetaVelocidad = optional(this.root, "tarjeta-speed");
     this.fps = optional(this.root, "fps");
     if (this.fps) this.fps.hidden = !this.conFps;
@@ -3597,6 +3608,15 @@ export class Hud {
    *
    * `null` esconde la fila: en vuelo libre no hay nada que contar.
    */
+  /**
+   * **Las vueltas del rotor y el par**, en tanto por uno de las nominales y del
+   * de despegue. Solo las enseña el helicóptero; en los aviones no hay dónde.
+   */
+  ponerRotor(nr: number, tq: number): void {
+    if (this.rotorNr) this.rotorNr.textContent = Math.round(nr * 100).toString();
+    if (this.rotorTq) this.rotorTq.textContent = Math.round(tq * 100).toString();
+  }
+
   setMissionProgress(progress: { done: number; total: number } | null): void {
     this.progressState = progress;
     this.paintProgress();

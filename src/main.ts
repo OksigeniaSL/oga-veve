@@ -89,6 +89,7 @@ import type { Mission } from "./missions/types";
 import { MISSIONS } from "./content/missions";
 import { rememberTier, rememberedTier } from "./flight/tiers";
 import { AIRCRAFT, type AircraftConfig } from "./flight/aircraft";
+import { ESCENARIO_DEL_HELICOPTERO, SUPER_PUMA_EN_EL_JUEGO } from "./flight/helicoptero-en-el-juego";
 import { campoDe, destinosParaEsteAvion, elQueQuepa } from "./flight/cabe";
 import { vecinosQueSeMontan } from "./world/vecinos-del-vuelo";
 import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
@@ -241,7 +242,15 @@ const directo = conInicio
     ? SCENARIOS.find((s) => s.id === pedido)
     : undefined;
 
-let escenario = directo;
+/*
+ * **El helicóptero, escondido**: `?avion=super-puma` lo vuela en Gran Canaria,
+ * desde su helipuerto, sin pasar por quién vuela ni por el hangar y sin
+ * guardar nada en el perfil. No está en la flota ni en ningún menú: es para
+ * probarlo en la web y afinar sus mandos. Ver `flight/helicoptero-en-el-juego.ts`.
+ */
+const conHelicoptero = !rearranque && params.get("avion") === SUPER_PUMA_EN_EL_JUEGO.id;
+if (conHelicoptero) conInicio = false;
+let escenario = conHelicoptero ? SCENARIOS.find((s) => s.id === ESCENARIO_DEL_HELICOPTERO) : directo;
 // `?tramo=guyrami` entra directo en ese peldaño; lo resuelve `rememberedTier`,
 // que es a quien pregunta también el juego.
 let tramo = rememberedTier();
@@ -481,6 +490,18 @@ if (conInicio) {
 }
 
 /*
+ * Y el helicóptero vuela suelto: la vuelta al campo, sin misión, sin ejercicio
+ * y sin destino que cargar.
+ */
+if (conHelicoptero && escenario) {
+  avion = SUPER_PUMA_EN_EL_JUEGO;
+  leccion = VUELTA;
+  mision = null;
+  ejercicio = null;
+  destino = escenario.id;
+}
+
+/*
  * **Y un ejercicio se practica en casa**: la vuelta al campo, sin destino que
  * cargar ni ruta que seguir. Sin esto, con `?ejercicio=` y sin `?destino=`, el
  * juego proponía el vecino más cercano y el motor parado llegaba camino de
@@ -512,7 +533,8 @@ escenario = await conMiga("aeródromo", conSuAerodromo(escenario));
  * la pista de una isla pequeña enseña, sin decirlo, que el tamaño de la pista
  * da igual — y es de lo poco que no da igual. Ver `elQueQuepa`.
  */
-{
+// El helicóptero no necesita pista: se posa en su helipuerto.
+if (!conHelicoptero) {
   const cabe = elQueQuepa(avion, campoDe(escenario), AIRCRAFT);
   if (cabe !== avion) {
     // Y se dice en la consola, que es donde mira quien juega con la dirección
@@ -552,7 +574,8 @@ escenario = await conMiga("aeródromo", conSuAerodromo(escenario));
  * manía: `escenario` es una variable que el hangar reasigna, y TypeScript no
  * se fía de lo que valga dentro de una función que la capture.
  */
-const aDondeSeVa = destinosDe(escenario);
+// Y sin vecinos que montar: el helicóptero vuela por casa.
+const aDondeSeVa = conHelicoptero ? [] : destinosDe(escenario);
 /*
  * **Y los que no valgan para este avión no son destinos.**
  *

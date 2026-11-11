@@ -272,6 +272,7 @@ import {
 } from "./world/gotas-en-el-parabrisas";
 import type { Lluvia } from "./world/meteo";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
+import { HelicopteroComoModelo, estabilizacionDelPeldano } from "./flight/fdm-helicoptero";
 import { cargarModelo } from "./world/aeronave-modelo";
 import {
   alUmbralEnLaAproximacion,
@@ -6349,7 +6350,13 @@ export class Game {
      * nada fallara, y se oyó jugando: «¿por qué no veo V1 cuando despego con el
      * 747?», «¿por qué no oigo a la comandante?». Las dos cosas eran la misma.
      */
-    if (this.scenario.aerodrome) {
+    /*
+     * **El helicóptero, sin plan**: el plan es el de un avión —del puesto a la
+     * pista por las calles, la lámpara de la torre, la carrera y sus cantos— y
+     * el helicóptero despega y se posa en su helipuerto. Vuela suelto, sin
+     * fases (ADR 0026, paso 3).
+     */
+    if (this.scenario.aerodrome && !this.aircraft.helicoptero) {
       this.plan = new PlanDeVuelo(
         this.scenario.aerodrome,
         this.scenario.runway,
@@ -6686,8 +6693,10 @@ export class Game {
       },
     });
     // Ver `buildFlightModel`: el primer modelo se construyó antes que esto.
-    this.input.compensadorVivo = this.tier.model !== "simple";
-    this.input.ponerTimon(this.tier.model === "simple" ? null : this.aircraft.aero.cnRudder);
+    this.input.compensadorVivo = this.tier.model !== "simple" && !this.aircraft.helicoptero;
+    this.input.ponerTimon(
+      this.tier.model === "simple" || this.aircraft.helicoptero ? null : this.aircraft.aero.cnRudder,
+    );
 
     /*
      * **Los sellos que el cuaderno ya demostraba**, estampados sin fiesta: un
@@ -8995,6 +9004,13 @@ export class Game {
    * desde fuera después.
    */
   private checkLanding(dt: number): Aterrizaje {
+    /*
+     * El helicóptero se posa donde puede posarse: el helipuerto, la plataforma,
+     * un claro. Los juicios de una toma —en la pista o fuera, con tren, a qué
+     * velocidad— son de avión; si se rompe al tocar, lo dice su modelo y lo
+     * recoge el percance de siempre. Ver `HelicopteroComoModelo.step`.
+     */
+    if (this.aircraft.helicoptero) return null;
     const s = this.flight.state;
     const veredicto = this.landing.update(
       s.onGround,
@@ -9714,6 +9730,8 @@ export class Game {
    * cada altura bajando, en la zona de la pista.
    */
   private acompanarLaRecogida(l: Lectura): void {
+    // Un helicóptero no recoge: llega parado y baja en vertical.
+    if (this.aircraft.helicoptero) return;
     const r = laRecogidaDe(this.aircraft);
     if (this.laRecogida.de !== this.aircraft.id)
       this.laRecogida = {
@@ -10808,6 +10826,8 @@ export class Game {
 
     /** El PAPI: alto, bajo o en la senda, con su dibujo. */
     this.hechos.on("papi", ({ blancas }) => {
+      // La senda del PAPI es la de un avión a su pista; el helicóptero se acerca a su helipuerto.
+      if (this.aircraft.helicoptero) return;
       this.hud.senal.mostrar(
         comoDibujo(`papi${blancas}`),
         blancas >= 3
@@ -12956,6 +12976,7 @@ export class Game {
     // Y lo que explicaba la pantalla de las teclas, si sigue abierta y no sonó.
     if (this.keyScreen?.visible) this.decirLasTeclas();
     this.updateBadge();
+    if (this.aircraft.helicoptero) this.posarEnElHelipuerto();
     /*
      * **Y el modo inicio, si estaba a medias, otra vez desde la llave.** Si no
      * había empezado —saludando o esperando la llave—, sigue donde iba: el
@@ -12964,6 +12985,36 @@ export class Game {
      * el reinicio de la cabecera lo arranca. Ver `recolocarTrasElMoldeado`.
      */
     this.retomarElInicio();
+  }
+
+  /**
+   * **El helicóptero empieza posado en el helipuerto**, con los motores en
+   * marcha, el rotor en sus vueltas y el colectivo abajo: arrancar llega
+   * aparte (ADR 0026, paso 3). Cara al viento, que es como se despega y se
+   * posa un helicóptero; sin viento, con el rumbo de la pista.
+   *
+   * Va al final del reinicio de siempre y lo recoloca, en vez de abrir otro
+   * camino: todo lo que el reinicio limpia lo sigue limpiando.
+   */
+  private posarEnElHelipuerto(): void {
+    const sitio = this.scenario.aerodrome?.helipads?.[0];
+    if (!sitio) return;
+    // Coordenadas del aeródromo, con la Y al revés que la Z del mundo.
+    const x = sitio[0];
+    const z = -sitio[1];
+    const viento = this.vientoAqui?.aire ?? vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA);
+    const rumbo =
+      Math.hypot(viento.x, viento.z) > 1.5
+        ? Math.atan2(-viento.x, viento.z)
+        : MathUtils.degToRad(this.laCasa.pista.heading);
+    this.flight.reset({
+      position: new Vector3(x, this.terrain.sampleSurface(x, z), z),
+      heading: rumbo,
+      airspeed: 0,
+    });
+    this.input.controls.engineOn = true;
+    // El colectivo abajo, también el de la palanca de la pantalla.
+    this.input.cerrarGas();
   }
 
   /**
@@ -14010,7 +14061,8 @@ export class Game {
       this.circuito = null;
     }
     this.laAproximacion.tramoDelCircuito = null;
-    if (!this.tier.circuito) return;
+    // El circuito es el de un avión que vuelve a su pista: el helicóptero vuelve a su helipuerto.
+    if (!this.tier.circuito || this.aircraft.helicoptero) return;
     const campo = this.elCampoMontado();
     // El circuito de **este** avión: el del de fuselaje ancho es tres veces
     // el de la avioneta. Ver `escalaDeCircuito`.
@@ -14622,6 +14674,11 @@ export class Game {
   }
 
   private async ponerModeloSiLoHay(): Promise<void> {
+    /*
+     * El helicóptero vuela con su silueta provisional hasta que llegue su
+     * modelo (paso 2 del ADR 0026): no hay fichero que pedir.
+     */
+    if (this.aircraft.helicoptero) return;
     const idAlPedir = this.aircraft.id;
     const modelo = await cargarModelo(this.aircraft);
     // Puede haberse cambiado de aeronave mientras cargaba.
@@ -17802,7 +17859,9 @@ export class Game {
      * ella sostiene lo conseguido. Con el piloto de pruebas no: el banco
      * escribe en los mandos como siempre. Ver `flight/mano.ts`.
      */
-    this.input.ponerAvion(this.pilotoDePruebas ? null : this.loQueVeLaMano());
+    // En el helicóptero, tampoco: la mano es la de un avión, y el que sostiene
+    // lo conseguido es su estabilización. Ver `HelicopteroComoModelo`.
+    this.input.ponerAvion(this.pilotoDePruebas || this.aircraft.helicoptero ? null : this.loQueVeLaMano());
     this.input.update(dt);
     this.explicarLosMandos();
     // El piloto de pruebas hace de teclado, así que va donde va el teclado: y
@@ -17833,8 +17892,12 @@ export class Game {
     const tocoElGas =
       this.input.mueveElGas ||
       Math.abs(this.input.controls.throttle - gasAntesDelBanco) > 1e-4;
-    this.limitarElRodaje();
-    this.asistirRodaje(dt);
+    // El tope y la ayuda de rodaje son de un avión que rueda a la pista: el
+    // helicóptero se posa y despega donde está.
+    if (!this.aircraft.helicoptero) {
+      this.limitarElRodaje();
+      this.asistirRodaje(dt);
+    }
     if (this.flight.state.crashed) {
       /*
        * **Romper el avión es un percance como los demás.**
@@ -17862,23 +17925,37 @@ export class Game {
        * en los mandos de la persona, y el automático los leía como si alguien
        * hubiera tocado la palanca: abrir el mapa lo soltaba, con su alarma.
        */
-      // La velocidad de la final de Guyrami, antes que el automático: lo que
-      // ella escribe en el gas lo copian él y la nivelada. Ver abajo.
-      this.sostenerLaVelocidadDeLaFinal(dt, tocoElGas);
-      let mandos = this.conElPilotoAutomatico(dt);
-      // La nivelada de los peldaños de abajo, si no manda el automático.
-      if (!this.pilotoPuesto) mandos = this.sostenerElNivel(dt, mandos);
-      if (this.hayInstrumentoAbierto && !this.pilotoPuesto && !this.nivelada)
-        mandos = this.mantenerElVueloRecto(mandos);
-      /*
-       * **Y la reversa empuja cuando está abierta**, no al apretar: el chorro
-       * se da la vuelta cuando el manguito ha dejado a la vista la cascada,
-       * un par de segundos después. Los mandos siguen diciendo lo que se pide
-       * —el REV del cuadro, la toma larga—; al modelo de vuelo le llega lo
-       * que empuja. Ver `flight/reversa.ts`.
-       */
-      const reversa = this.reversa.paso(dt, mandos.reversa);
-      if (reversa !== mandos.reversa) mandos = { ...mandos, reversa };
+      let mandos: ControlInputs;
+      if (this.aircraft.helicoptero) {
+        /*
+         * **El helicóptero, con los mandos tal cual.** Las ayudas de aquí abajo
+         * —la velocidad de la final, el piloto automático, la nivelada, el
+         * vuelo recto con un instrumento abierto y la reversa— son de avión;
+         * lo que sostiene al helicóptero es su estabilización, por dentro de
+         * su modelo. Y posado, con el freno de estacionamiento puesto, que es
+         * como se despega en uno de verdad: rodar llega aparte (ADR 0026).
+         */
+        const c = this.input.controls;
+        mandos = this.flight.state.onGround ? { ...c, brakes: 1 } : c;
+      } else {
+        // La velocidad de la final de Guyrami, antes que el automático: lo que
+        // ella escribe en el gas lo copian él y la nivelada. Ver abajo.
+        this.sostenerLaVelocidadDeLaFinal(dt, tocoElGas);
+        mandos = this.conElPilotoAutomatico(dt);
+        // La nivelada de los peldaños de abajo, si no manda el automático.
+        if (!this.pilotoPuesto) mandos = this.sostenerElNivel(dt, mandos);
+        if (this.hayInstrumentoAbierto && !this.pilotoPuesto && !this.nivelada)
+          mandos = this.mantenerElVueloRecto(mandos);
+        /*
+         * **Y la reversa empuja cuando está abierta**, no al apretar: el chorro
+         * se da la vuelta cuando el manguito ha dejado a la vista la cascada,
+         * un par de segundos después. Los mandos siguen diciendo lo que se pide
+         * —el REV del cuadro, la toma larga—; al modelo de vuelo le llega lo
+         * que empuja. Ver `flight/reversa.ts`.
+         */
+        const reversa = this.reversa.paso(dt, mandos.reversa);
+        if (reversa !== mandos.reversa) mandos = { ...mandos, reversa };
+      }
       this.flight.step(dt, mandos);
       // El remolque de quien juega se mira con el avión ya en su puesto, como el del pasaje.
       if (this.remolquePorMirar && !this.dePasaje) this.prepararElRemolque();
@@ -18103,6 +18180,8 @@ export class Game {
       banda = b.banda;
       sinMotorDe = b.de;
     }
+    // Un helicóptero no tiene pérdida ni velocidad de aproximación de ala: ni lento ni rápido.
+    if (this.aircraft.helicoptero) banda = null;
     this.bandaDeAhora = banda;
     this.hud.setBandaDeVelocidad(banda);
     /*
@@ -18541,6 +18620,7 @@ export class Game {
      * Una vez por aproximación: se rearma al despegar o al alejarse.
      */
     const puedeTocar =
+      !this.aircraft.helicoptero &&
       !this.flight.state.onGround &&
       // Y no en el bote de después de tocar: ahí ya se dijo «frená», y «ya
       // podés tocar» detrás es contar el pasado. Ver `yaTocoTierra`.
@@ -19596,6 +19676,10 @@ export class Game {
      * por tanto hay que poder verlo sin tocarlo. Ver `ControlInputs.trim`.
      */
     this.hud.setTrim(this.input.controls.trim);
+    if (this.flight instanceof HelicopteroComoModelo) {
+      const rotor = this.flight.modelo.rotor();
+      this.hud.ponerRotor(rotor.vueltasPorUno, rotor.par);
+    }
     this.hud.update(
       this.flight.state,
       this.input.controls.throttle,
@@ -19756,6 +19840,8 @@ export class Game {
       return;
     }
     if (!this.tomaPorContar || this.tomaContada) return;
+    // Cómo se aterriza es cómo aterriza un avión.
+    if (this.aircraft.helicoptero) return;
     if (this.instructor.hablando || this.hud.senal.ocupada) return;
     this.tomaPorContar = false;
     this.tomaContada = true;
@@ -21561,6 +21647,11 @@ export class Game {
    * cuenta para las tres superficies que las pintan. Ver `agujaDelMotor`.
    */
   private agujasDeLosMotores(): number[] {
+    // En el helicóptero, el par que dan de verdad, el mismo en los dos. Ver `EstadoDelRotor.par`.
+    if (this.flight instanceof HelicopteroComoModelo) {
+      const par = this.input.controls.engineOn ? this.flight.modelo.rotor().par : 0;
+      return Array.from({ length: this.aircraft.motores }, () => par);
+    }
     const va = regimen(
       this.aircraft,
       this.input.controls.throttle,
@@ -25888,6 +25979,10 @@ export class Game {
       // Cada una hacia donde gira la suya: ver `signoDelGiro`.
       h.rotation.z = signoDelGiro(this.aircraft, h.position.x) * this.propellerAngle;
     }
+    // Y los rotores del helicóptero, a las vueltas de su modelo y no con el gas:
+    // si caen las vueltas, se ve. Ver `world/silueta-de-helicoptero.ts`.
+    if (this.flight instanceof HelicopteroComoModelo)
+      this.aircraftMesh.rotores?.avanzar(dt, this.flight.modelo.rotor().vueltas);
 
     this.updateBlobShadow(state);
   }
@@ -32553,8 +32648,15 @@ export class Game {
     // chicos, y amerizar de morro y desaparecer no le divierte a nadie.
     const ground = (x: number, z: number): number =>
       this.terrain.sampleSurface(x, z);
-    const modelo =
-      tier.model === "simple"
+    /*
+     * **El helicóptero, con el suyo** y en cualquier peldaño: lo que cambia de
+     * uno a otro es cuánto lo sostiene su estabilización, no el modelo. Ver
+     * `estabilizacionDelPeldano` y el ADR 0026.
+     */
+    const ficha = this.aircraft.helicoptero;
+    const modelo = ficha
+      ? new HelicopteroComoModelo({ ficha, ground, estabilizacion: estabilizacionDelPeldano(tier.id) })
+      : tier.model === "simple"
         ? new ArcadeFlightModel({ aircraft: this.aircraft, ground })
         : new CoefficientFlightModel({
             aircraft: this.aircraft,
@@ -32570,7 +32672,7 @@ export class Game {
      * en todos. Ver `pieDeTecla` en `palanca-de-teclado.ts`.
      */
     // Al construir el primero todavía no hay mandos: ver el constructor.
-    this.input?.ponerTimon(tier.model === "simple" ? null : this.aircraft.aero.cnRudder);
+    this.input?.ponerTimon(tier.model === "simple" || ficha ? null : this.aircraft.aero.cnRudder);
     /*
      * Y si el toque de flecha tiene compensador que mover: en el modelo
      * sencillo no lo hay. Ver `compensadorVivo` en `flight/input.ts`.
@@ -32580,7 +32682,8 @@ export class Game {
      */
     const mandos = this.input as InputManager | undefined;
     if (mandos) {
-      mandos.compensadorVivo = tier.model !== "simple";
+      // Ni en el helicóptero, que no tiene timón que compensar.
+      mandos.compensadorVivo = tier.model !== "simple" && !ficha;
       if (!mandos.compensadorVivo) mandos.controls.trim = 0;
     }
     /*
@@ -32731,8 +32834,16 @@ export class Game {
     this.alturaEnGrande = new AvisosDeAltura(
       next.units === "aeronautical" ? EN_GRANDE_EN_PIES : EN_GRANDE,
     );
-    this.flight = this.buildFlightModel(next);
-    this.flight.reset(carried);
+    /*
+     * El helicóptero no cambia de modelo al cambiar de peldaño: cambia lo que
+     * lo sostiene su estabilización, y se la cambia volando, sin soltar nada.
+     */
+    if (this.flight instanceof HelicopteroComoModelo)
+      this.flight.ponerEstabilizacion(estabilizacionDelPeldano(next.id));
+    else {
+      this.flight = this.buildFlightModel(next);
+      this.flight.reset(carried);
+    }
     /*
      * **Y nada queda mandando sin verse.**
      *

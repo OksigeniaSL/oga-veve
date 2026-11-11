@@ -77,6 +77,8 @@ export const EN: Dictionary = {
     "This browser has no speech voices installed: the instructor cannot talk.",
   "hud.throttle": "Throttle",
   "hud.vspeed": "Vertical speed",
+  "hud.rotor": "Rotor speed",
+  "hud.par": "Engine torque",
   "hud.stall": "Stall! Lower the nose",
   "hud.pullUp": "Ground. Pull up",
   "hud.runwayEnd": "Runway ending",
@@ -102,6 +104,8 @@ export const EN: Dictionary = {
   "units.fpm": "ft/min",
 
   "aircraft.pykasu.description": "Trainer. Steady and forgiving.",
+  "aircraft.superPuma.description":
+    "Large rescue helicopter. Its rotor holds it up, and it can stay still in the air.",
   "aircraft.mainumby.description": "Crop duster biplane. Nimble and strong.",
   "aircraft.panambi.description":
     "Low-wing twin. Two engines, faster, and the legs tuck away.",
