@@ -49,9 +49,10 @@ export const SUPER_PUMA: FichaDeHelicoptero = {
     // de excentricidad y palas de unos cien kilos.
     lock: 8,
     rigidez: 180_000,
-    // Supuesto: el disco a unos 4,6 m del suelo con el helicóptero posado (la
-    // altura total es 4,95 m, TCDS III.4.1) y el centro de gravedad a 1,8 m.
-    alturaDelBuje: 2.8,
+    // De la muestra de Gaudí (plano de tres vistas a la escala de la ficha, 11-11):
+    // el plano de las palas a 4,30 m del suelo posado —la tapa del buje sobresale
+    // hasta 4,72—, y el centro de gravedad, supuesto, a 1,8.
+    alturaDelBuje: 2.5,
     bujeAdelante: 0,
     // Supuesto: el mástil cae cinco grados hacia delante, como en el Puma.
     inclinacionDelMastil: 5 * GRADO,
@@ -78,8 +79,8 @@ export const SUPER_PUMA: FichaDeHelicoptero = {
     // De la ficha: la «D-value» de Airbus, 18,70 m de la punta delantera del rotor
     // a la trasera del de cola, menos un radio de cada uno.
     brazo: 18.7 - 7.8 - 1.525,
-    // Supuesto: el centro del rotor de cola, 1,8 m por encima del centro de gravedad.
-    altura: 1.8,
+    // De la muestra: el buje del rotor de cola a 3,5 m del suelo, a la derecha.
+    altura: 1.7,
     // Supuestos: el paso con los pies al centro y lo que mueve cada pedal a tope.
     // Con el derecho a fondo, el rotor de cola para vez y media el par de los dos
     // motores a plena potencia, que es el margen que se le pide para maniobrar.
@@ -115,15 +116,16 @@ export const SUPER_PUMA: FichaDeHelicoptero = {
     // vuelo. Con él, el rotor llega a sus vueltas a los 27 s de empezar.
     arranque: 30,
   },
-  // Supuestos: el tren de morro unos 3,8 m por delante y el principal 1,5 m por
-  // detrás, con tres metros de vía, y el centro de gravedad a 1,8 m del suelo.
+  // De la muestra de Gaudí: las de morro 3,6 m por delante del mástil y las
+  // principales 1,7 m por detrás, con unos 3,1 m de vía. El centro de gravedad,
+  // supuesto bajo el mástil y a 1,8 m del suelo.
   // Supuestos: el freno del rotor para el rotor desde el 40 % de sus vueltas en
   // unos quince segundos, y no se pone por encima.
   frenoDelRotor: { par: 8_000, hasta: 0.4 },
   ruedas: [
     // La de morro se orienta sola: se rueda girando con los pedales.
-    { x: 3.8, y: 0, z: 1.8, loca: true },
-    { x: -1.5, y: -1.5, z: 1.8 },
-    { x: -1.5, y: 1.5, z: 1.8 },
+    { x: 3.6, y: 0, z: 1.8, loca: true },
+    { x: -1.7, y: -1.55, z: 1.8 },
+    { x: -1.7, y: 1.55, z: 1.8 },
   ],
 };

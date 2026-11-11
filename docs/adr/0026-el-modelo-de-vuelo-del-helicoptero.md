@@ -87,7 +87,8 @@ informe de la NASA. Cada número dice cuál es en `super-puma.ts`.
 | Del rotor al de cola | 9,4 m: la «D-value» de 18,70 m menos un radio de cada uno | Airbus |
 | Techos en estacionario | 2.300 m fuera del efecto suelo; 3.250 m dentro | Airbus, sin decir a qué peso; se toman al máximo |
 | Crucero recomendado | 136 kt | Airbus |
-| Cuerda de la pala, torsión, perfil, inercias, ruedas | Supuestos | Valores normales; las inercias, del orden del UH-60 del informe de la NASA |
+| Ruedas, altura del rotor y del rotor de cola | De rueda a rueda 5,2 m, vía de 3,1 m, el plano de las palas a 4,30 m del suelo | La muestra de Gaudí: el plano de tres vistas del AS 332 de fuselaje corto, a la escala de la ficha |
+| Cuerda de la pala, torsión, perfil, inercias, centro de gravedad | Supuestos | Valores normales; las inercias, del orden del UH-60 del informe de la NASA |
 | Sentido de giro | Horario visto desde arriba | aerospaceweb.org; tripulaciones del Puma |
 
 **Lo que se ajusta, y con qué:**
@@ -100,8 +101,9 @@ informe de la NASA. Cada número dice cuál es en `super-puma.ts`.
 
 **Lo que no se ajusta, y se mira:**
 
-- **El techo dentro del efecto suelo**: sale en **3.188 m** con las ruedas a un metro del suelo, frente a los 3.250 de
-  Airbus. Es la prueba de que el efecto suelo y la potencia están bien a la vez.
+- **El techo dentro del efecto suelo**: sale en **3.296 m** con las ruedas a un metro del suelo —el plano de las palas a
+  5,3 m, con la altura de la muestra de Gaudí—, frente a los 3.250 de Airbus. Es la prueba de que el efecto suelo y la potencia
+  están bien a la vez.
 - **El estacionario a nivel del mar** pide 1.993 kW, el 73 % de la potencia de despegue, y volado pide lo mismo que la
   cuenta sin volarlo.
 - **La curva de la potencia**, en vuelo nivelado al peso máximo: 1.306 kW a 40 kt, el mínimo de 1.019 kW hacia 80 kt,
@@ -124,10 +126,12 @@ informe de la NASA. Cada número dice cuál es en `super-puma.ts`.
   pone el freno.
 - **Se rueda** con un poco de colectivo y el cíclico adelante, como se rueda un helicóptero con ruedas; la de morro se
   orienta sola y **se gira con los pedales**, que mueven el rotor de cola. Las principales agarran de lado y frenan.
-- **El vuelco dinámico**, que es real: al despegar, el rotor de cola empuja a un lado y el helicóptero, que se aligera,
-  pivota sobre la rueda de ese lado; sin cíclico en contra, vuelca. Sin estabilización pasa; con ella, no, porque posada
-  sigue sosteniendo la actitud. Lo que no hace posada es acumular: la actitud que sostiene sigue despacio la que tiene
-  sobre las ruedas, y en el modo de actitud el cíclico de la mano llega además tal cual al rotor para poder rodar.
+- **Despegar sin corregir con el cíclico**: el helicóptero que se aligera se inclina sobre sus ruedas —el mástil cae
+  hacia delante y el rotor de cola empuja a un lado—, sale torcido y, sin nadie que lo sostenga, en el aire se va. Con
+  las medidas de la muestra de Gaudí se inclina veinte grados de morro antes de despegar; con las supuestas de antes,
+  más estrechas, volcaba de lado, que es el vuelco dinámico. Con la estabilización sube derecho, porque posada sigue
+  sosteniendo la actitud. Lo que no hace posada es acumular: la actitud que sostiene sigue despacio la que tiene sobre
+  las ruedas, y en el modo de actitud el cíclico de la mano llega además tal cual al rotor para poder rodar.
 
 ## Lo que se prueba
 
@@ -145,7 +149,7 @@ informe de la NASA. Cada número dice cuál es en `super-puma.ts`.
   estacionario lejos del suelo, por el efecto suelo.
 - **Arrancar, parar y rodar**: el rotor coge vueltas cuando los motores dan potencia; con el freno del rotor no gira;
   parado sigue girando solo y el freno no entra deprisa; rueda, gira con los pies y para con el freno; y sin
-  estabilización, despegar sin cíclico en contra lo vuelca.
+  estabilización ni mano en el cíclico, al despegar se va.
 
 ## Lo que no hace, todavía
 

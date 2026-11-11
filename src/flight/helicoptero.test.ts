@@ -93,8 +93,8 @@ describe("lo que puede sostener, contra lo que publica Airbus", () => {
   });
 
   it("y el de dentro, cerca de los 3.250 m, sin ajustar nada: con las ruedas a un metro del suelo", () => {
-    // El disco va a 4,6 m del suelo posado; con las ruedas a un metro, a 5,6.
-    const dentro = techo(5.6);
+    // El plano de las palas va a 4,3 m del suelo posado (la muestra de Gaudí); con las ruedas a un metro, a 5,3.
+    const dentro = techo(5.3);
     expect(dentro).toBeGreaterThan(3050);
     expect(dentro).toBeLessThan(3450);
   });
@@ -424,19 +424,23 @@ describe("arrancar, parar y rodar", () => {
   });
 
   /**
-   * **El vuelco dinámico**, que es real y se enseña en cualquier curso: el rotor de
-   * cola empuja a un lado, el helicóptero que se aligera pivota sobre la rueda de ese
-   * lado y, sin cíclico en contra, vuelca. La estabilización lo para.
+   * **Despegar sin corregir con el cíclico**: el helicóptero que se aligera se
+   * inclina sobre sus ruedas —el mástil cae hacia delante y el rotor de cola empuja
+   * a un lado—, sale del suelo torcido y, sin nadie que lo sostenga, en el aire se
+   * va. Con la estabilización sube derecho. Con las medidas de la muestra de Gaudí
+   * se inclina veinte grados de morro antes de despegar y no llega a volcar en el
+   * suelo; con las supuestas de antes, más estrechas, volcaba de lado.
    */
-  it("sin estabilización, despegar sin cíclico en contra lo vuelca; con ella, sube derecho", () => {
+  it("sin estabilización ni mano en el cíclico, al despegar se va; con ella, sube derecho", () => {
     const despega = (modo: Estabilizacion): number => {
       const { h, m } = posado(true, modo);
       for (let t = 0; t < 5; t += DT) h.step(DT, m);
       let peor = 0;
-      for (let t = 0; t < 15; t += DT) {
+      for (let t = 0; t < 20; t += DT) {
         m.colectivo = Math.min(0.6, t * 0.05);
         h.step(DT, m);
-        peor = Math.max(peor, Math.abs(h.actitud().alabeo));
+        const a = h.actitud();
+        peor = Math.max(peor, Math.abs(a.alabeo), Math.abs(a.cabeceo));
       }
       return peor;
     };
