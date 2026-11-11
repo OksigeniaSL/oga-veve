@@ -6651,6 +6651,7 @@ export class Game {
       toggleCuadro: () => this.hud.alternarCuadro(),
       togglePausa: () => this.alternarPausa(),
       toggleEngine: () => this.toggleEngine(),
+      toggleBaliza: () => this.moverLaBaliza(),
       toggleCredits: () => this.credits.toggle(),
       cycleAircraft: () => this.cycleAircraft(),
       cycleMission: () => this.cycleMission(),

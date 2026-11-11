@@ -22,6 +22,7 @@ function mando(trabado = vi.fn(), retractil = true): InputManager {
     toggleCuadro: nada,
     togglePausa: nada,
     toggleEngine: nada,
+    toggleBaliza: nada,
     toggleCredits: nada,
     cycleAircraft: nada,
     cycleMission: nada,

@@ -231,6 +231,7 @@ describe("la palanca y los flaps, en el mando", () => {
       toggleCuadro: nada,
       togglePausa: nada,
       toggleEngine: nada,
+      toggleBaliza: nada,
       toggleCredits: nada,
       cycleAircraft: nada,
       cycleMission: nada,

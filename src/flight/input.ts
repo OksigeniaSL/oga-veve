@@ -141,8 +141,12 @@ export interface InputActions {
   toggleCuadro: () => void;
   togglePausa: () => void;
   toggleEngine: () => void;
-  /** El interruptor de la baliza. Opcional: sin él la tecla no hace nada. Ver `flight/baliza.ts`. */
-  toggleBaliza?: () => void;
+  /**
+   * El interruptor de la baliza. Obligatorio a propósito: cuando era opcional,
+   * la coma salió publicada sin hacer nada y ninguna comprobación lo vio. Ver
+   * `flight/baliza.ts`.
+   */
+  toggleBaliza: () => void;
   toggleCredits: () => void;
   cycleAircraft: () => void;
   cycleMission: () => void;
@@ -1346,7 +1350,7 @@ export class InputManager {
         this.alternarAutofreno();
         break;
       case "baliza":
-        this.actions.toggleBaliza?.();
+        this.actions.toggleBaliza();
         break;
       /*
        * **Y las flechas de cabeceo, que ahora también tienen toque.** Se
