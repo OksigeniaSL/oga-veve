@@ -112,6 +112,23 @@ informe de la NASA. Cada número dice cuál es en `super-puma.ts`.
 - **La autorrotación** baja a 11,6 m/s al peso máximo, unos 2.300 pies por minuto, a 70 kt; y con el pedal izquierdo
   pisado a media carrera, porque el par cambia de lado.
 
+## Arrancar, parar y rodar
+
+- **Arrancar lleva su rato.** Un motor parado no da nada mientras el arrancador lo mueve y se enciende, y después la
+  potencia que puede dar sube hasta la de vuelo: medio minuto en total, supuesto. El regulador pide la que haga falta
+  para las vueltas nominales, así que el rotor coge vueltas tan deprisa como deja esa potencia contra su inercia: a los
+  27 s de empezar está en sus 265 rpm.
+- **El freno del rotor** lo para desde el 40 % de sus vueltas en unos quince segundos, y por encima no se pone, que se
+  quemaría. Puesto, los motores arrancan y se quedan al ralentí sin mover el rotor. Las dos cifras son supuestas.
+- **Al parar los motores, el rotor sigue girando solo** minutos, frenado por el aire, como en uno de verdad, si no se le
+  pone el freno.
+- **Se rueda** con un poco de colectivo y el cíclico adelante, como se rueda un helicóptero con ruedas; la de morro se
+  orienta sola y **se gira con los pedales**, que mueven el rotor de cola. Las principales agarran de lado y frenan.
+- **El vuelco dinámico**, que es real: al despegar, el rotor de cola empuja a un lado y el helicóptero, que se aligera,
+  pivota sobre la rueda de ese lado; sin cíclico en contra, vuelca. Sin estabilización pasa; con ella, no, porque posada
+  sigue sosteniendo la actitud. Lo que no hace posada es acumular: la actitud que sostiene sigue despacio la que tiene
+  sobre las ruedas, y en el modo de actitud el cíclico de la mano llega además tal cual al rotor para poder rodar.
+
 ## Lo que se prueba
 
 `flight/helicoptero.test.ts`, sin pantalla, con pilotos de prueba sencillos que llevan el colectivo y el cíclico:
@@ -126,6 +143,9 @@ informe de la NASA. Cada número dice cuál es en `super-puma.ts`.
 - **Por encima del techo**, pidiendo más de lo que hay, las vueltas caen por debajo de las 245 de la ficha y se hunde.
 - **En el suelo**: posado con el rotor girando y el freno puesto, quieto; y despega con el colectivo más bajo que el del
   estacionario lejos del suelo, por el efecto suelo.
+- **Arrancar, parar y rodar**: el rotor coge vueltas cuando los motores dan potencia; con el freno del rotor no gira;
+  parado sigue girando solo y el freno no entra deprisa; rueda, gira con los pies y para con el freno; y sin
+  estabilización, despegar sin cíclico en contra lo vuelca.
 
 ## Lo que no hace, todavía
 
@@ -136,5 +156,5 @@ informe de la NASA. Cada número dice cuál es en `super-puma.ts`.
   haga falta.
 - **La velocidad máxima** no la pone la potencia: el modelo pasaría de los 167 kt de la ficha (TCDS, III.8). Lo que
   limita de verdad es la pala que se retira; en el juego será un aviso, en el paso 3.
-- **Rodar por el suelo**: la rueda de morro del Super Puma se orienta sola y se gira con los pedales y los frenos. Va
-  con los mandos, en el paso 3, como **arrancar**, que en uno de verdad lleva su minuto.
+- **Cuánto tarda de verdad en arrancar** el Super Puma, y desde qué vueltas se pone su freno del rotor: son supuestos
+  hasta que aparezca su manual de vuelo.

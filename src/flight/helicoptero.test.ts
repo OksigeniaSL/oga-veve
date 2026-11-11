@@ -337,3 +337,111 @@ describe("en el suelo", () => {
     expect(despega).toBeLessThan(lejos.m.colectivo);
   });
 });
+
+describe("arrancar, parar y rodar", () => {
+  /** Posado en el suelo, con el rotor parado o girando. */
+  const posado = (rotorEnMarcha: boolean, modo: Estabilizacion = "estacionario") => {
+    const h = new ModeloDeHelicoptero(F);
+    h.ponerEstabilizacion(modo);
+    h.reset({ position: new Vector3(0, 0, 0), heading: 0, rotorEnMarcha });
+    const m = mandosNeutros();
+    m.motores = rotorEnMarcha;
+    m.frenos = 1;
+    return { h, m };
+  };
+
+  it("arranca en frío: el rotor coge vueltas cuando los motores dan potencia, y sin despegar", () => {
+    const { h, m } = posado(false);
+    m.motores = true;
+    let llega = -1;
+    for (let t = 0; t < 120; t += DT) {
+      h.step(DT, m);
+      expect(h.state.onGround).toBe(true);
+      if (llega < 0 && h.rotor().vueltasPorUno >= 0.98) llega = t;
+    }
+    // Los motores no dan nada en la primera mitad de su arranque, quince segundos.
+    expect(llega).toBeGreaterThan(15);
+    expect(llega).toBeLessThan(90);
+    expect(Math.abs(h.rotor().vueltasPorUno - 1)).toBeLessThan(0.01);
+  });
+
+  it("con el freno del rotor puesto, los motores arrancan y el rotor no gira; al quitarlo, sí", () => {
+    const { h, m } = posado(false);
+    m.motores = true;
+    m.frenoDelRotor = true;
+    for (let t = 0; t < 60; t += DT) h.step(DT, m);
+    expect(h.rotor().arranque).toBe(1);
+    expect(h.rotor().vueltasPorUno).toBeLessThan(0.02);
+    m.frenoDelRotor = false;
+    for (let t = 0; t < 60; t += DT) h.step(DT, m);
+    expect(h.rotor().vueltasPorUno).toBeGreaterThan(0.98);
+  });
+
+  it("al parar los motores, el rotor sigue girando solo; el freno no se pone deprisa, y despacio lo para", () => {
+    const { h, m } = posado(true);
+    m.motores = false;
+    m.frenoDelRotor = true;
+    for (let t = 0; t < 5; t += DT) h.step(DT, m);
+    // Por encima del 40 % de las vueltas el freno no entra: se quemaría.
+    expect(h.rotor().frenoDelRotor).toBe(false);
+    m.frenoDelRotor = false;
+    for (let t = 0; t < 15; t += DT) h.step(DT, m);
+    const aLos20 = h.rotor().vueltasPorUno;
+    expect(aLos20).toBeGreaterThan(0.4);
+    expect(aLos20).toBeLessThan(0.9);
+    let t = 0;
+    while (h.rotor().vueltasPorUno > 0.39 && t < 300) {
+      h.step(DT, m);
+      t += DT;
+    }
+    m.frenoDelRotor = true;
+    for (let k = 0; k < 30; k += DT) h.step(DT, m);
+    expect(h.rotor().frenoDelRotor).toBe(true);
+    expect(h.rotor().vueltasPorUno).toBeLessThan(0.01);
+  });
+
+  it("rueda con un poco de colectivo y el cíclico adelante, gira con los pies y para con el freno", () => {
+    const { h, m } = posado(true, "actitud");
+    m.frenos = 0;
+    m.colectivo = 0.15;
+    m.cabeceo = -0.25;
+    for (let t = 0; t < 10; t += DT) h.step(DT, m);
+    expect(h.state.onGround).toBe(true);
+    // A paso de rodaje: de unos pocos nudos a quince.
+    expect(h.state.groundSpeed).toBeGreaterThan(1);
+    expect(h.state.groundSpeed).toBeLessThan(8);
+    const rumbo = h.actitud().rumbo;
+    m.pedales = 0.5;
+    for (let t = 0; t < 5; t += DT) h.step(DT, m);
+    // A la derecha: la rueda de morro se orienta sola y el rotor de cola gira el helicóptero.
+    expect(h.actitud().rumbo - rumbo).toBeGreaterThan(10 * GRADO);
+    m.pedales = 0;
+    m.cabeceo = 0;
+    m.colectivo = 0;
+    m.frenos = 1;
+    for (let t = 0; t < 10; t += DT) h.step(DT, m);
+    expect(h.state.groundSpeed).toBeLessThan(0.3);
+  });
+
+  /**
+   * **El vuelco dinámico**, que es real y se enseña en cualquier curso: el rotor de
+   * cola empuja a un lado, el helicóptero que se aligera pivota sobre la rueda de ese
+   * lado y, sin cíclico en contra, vuelca. La estabilización lo para.
+   */
+  it("sin estabilización, despegar sin cíclico en contra lo vuelca; con ella, sube derecho", () => {
+    const despega = (modo: Estabilizacion): number => {
+      const { h, m } = posado(true, modo);
+      for (let t = 0; t < 5; t += DT) h.step(DT, m);
+      let peor = 0;
+      for (let t = 0; t < 15; t += DT) {
+        m.colectivo = Math.min(0.6, t * 0.05);
+        h.step(DT, m);
+        peor = Math.max(peor, Math.abs(h.actitud().alabeo));
+      }
+      return peor;
+    };
+    expect(despega("ninguna")).toBeGreaterThan(30 * GRADO);
+    expect(despega("estacionario")).toBeLessThan(10 * GRADO);
+  });
+});
+

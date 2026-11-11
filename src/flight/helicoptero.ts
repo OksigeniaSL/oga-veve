@@ -122,9 +122,26 @@ export interface FichaDeHelicoptero {
     readonly rendimiento: number;
     /** Lo que tardan en responder, s. */
     readonly respuesta: number;
+    /**
+     * Lo que tarda un motor parado en dar potencia de vuelo, s: el arrancador, el
+     * encendido y la subida del generador de gas. Sin poner, medio minuto.
+     */
+    readonly arranque?: number;
   };
   /** Las ruedas, respecto al centro de gravedad y en ejes cuerpo (z abajo), m. */
-  readonly ruedas: readonly { readonly x: number; readonly y: number; readonly z: number }[];
+  readonly ruedas: readonly {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+    /** Si se orienta sola, como la de morro: no agarra de lado ni frena. */
+    readonly loca?: boolean;
+  }[];
+  /**
+   * **El freno del rotor**: el par que hace, N·m, y por debajo de qué vueltas se
+   * puede poner, en tanto por uno de las nominales. Más arriba no se pone: se
+   * quemaría el disco.
+   */
+  readonly frenoDelRotor?: { readonly par: number; readonly hasta: number };
 }
 
 // ── Los mandos ───────────────────────────────────────────────────────────
@@ -145,6 +162,8 @@ export interface MandosDeHelicoptero {
   motores: boolean;
   /** El freno de las ruedas, 0 a 1. */
   frenos: number;
+  /** El freno del rotor, puesto o quitado. Sin poner, quitado. */
+  frenoDelRotor?: boolean;
 }
 
 export function mandosNeutros(): MandosDeHelicoptero {
@@ -381,6 +400,10 @@ export interface EstadoDelRotor {
   readonly b1: number;
   /** El aire que atraviesa el disco, m/s. */
   readonly inducida: number;
+  /** Cuánto han arrancado los motores: 0 parados, 1 dando potencia de vuelo. */
+  readonly arranque: number;
+  /** Si el freno del rotor está puesto: pedido y por debajo de sus vueltas. */
+  readonly frenoDelRotor: boolean;
 }
 
 export class ModeloDeHelicoptero {
@@ -399,6 +422,9 @@ export class ModeloDeHelicoptero {
   // El rotor y los motores.
   private vueltas = 0;
   private potenciaMotores = 0;
+  /** Cuánto ha arrancado el motor: 0 parado, 1 en vuelo. */
+  private arranque = 0;
+  private frenoDelRotorPuesto = false;
   private a1 = 0;
   private b1 = 0;
   private inducida = 10;
@@ -515,6 +541,7 @@ export class ModeloDeHelicoptero {
     s.touchdownSinkRate = 0;
     const enMarcha = inicial.rotorEnMarcha ?? true;
     this.vueltas = enMarcha ? this.ficha.rotor.vueltas : 0;
+    this.arranque = enMarcha ? 1 : 0;
     this.potenciaMotores = 0;
     this.a1 = 0;
     this.b1 = 0;
@@ -668,18 +695,38 @@ export class ModeloDeHelicoptero {
     this.inducidaCola = deCola.inducida;
     aplicar(0, deCola.empuje * lado, 0, tx, 0, tz);
 
-    // ── Los motores, el regulador y las vueltas ──
-    const disponible = piloto.motores ? potenciaDisponible(f, densidad) : 0;
+    /*
+     * ── Los motores, el regulador y las vueltas ──
+     *
+     * **Arrancar lleva su rato.** El motor parado no da nada mientras el
+     * arrancador lo mueve y se enciende —la primera mitad del arranque—, y
+     * después la potencia que puede dar sube hasta la de vuelo. El regulador
+     * pide la que haga falta para las vueltas nominales, así que el rotor sube
+     * de vueltas tan deprisa como deja esa potencia contra su inercia. Al
+     * pararlo, se apaga en unos segundos y el rotor sigue girando solo, frenado
+     * por el aire, minutos, si no se le pone el freno.
+     */
+    const tardaEnArrancar = f.motores.arranque ?? 30;
+    this.arranque = piloto.motores
+      ? Math.min(1, this.arranque + dt / tardaEnArrancar)
+      : Math.max(0, this.arranque - dt / 8);
+    const encendido = Math.max(0, (this.arranque - 0.5) / 0.5);
+    const disponible = potenciaDisponible(f, densidad) * encendido * encendido;
+    const freno = f.frenoDelRotor;
+    // El freno solo se pone por debajo de sus vueltas; y puesto, los motores se quedan al ralentí.
+    if (!piloto.frenoDelRotor) this.frenoDelRotorPuesto = false;
+    else if (freno && vueltas <= freno.hasta * rot.vueltas) this.frenoDelRotorPuesto = true;
     const piden = (principal.potencia + deCola.potencia) / f.motores.rendimiento;
     const corrige = (rot.inercia * rot.vueltas * (rot.vueltas - vueltas)) / REGULADOR;
-    const objetivo = Math.max(0, Math.min(disponible, piden + corrige / f.motores.rendimiento));
+    const objetivo = this.frenoDelRotorPuesto
+      ? 0
+      : Math.max(0, Math.min(disponible, piden + corrige / f.motores.rendimiento));
     const respuesta = piloto.motores ? f.motores.respuesta : 2;
     this.potenciaMotores += (objetivo - this.potenciaMotores) * (1 - Math.exp(-dt / respuesta));
     const alEje = this.potenciaMotores * f.motores.rendimiento;
-    this.vueltas = Math.max(
-      0,
-      vueltas + ((alEje - principal.potencia - deCola.potencia) / (rot.inercia * Math.max(5, vueltas))) * dt,
-    );
+    let nuevas = vueltas + ((alEje - principal.potencia - deCola.potencia) / (rot.inercia * Math.max(5, vueltas))) * dt;
+    if (this.frenoDelRotorPuesto && freno) nuevas = Math.min(nuevas, Math.max(0, vueltas - (freno.par / rot.inercia) * dt));
+    this.vueltas = Math.max(0, nuevas);
     /*
      * **El par**: lo que el eje da al rotor principal lo devuelve el fuselaje
      * girando al revés. Es el par del eje y no el del aire: mientras las vueltas
@@ -722,7 +769,7 @@ export class ModeloDeHelicoptero {
 
     // ── Las ruedas ──
     let enElSuelo = false;
-    const freno = Math.max(0, Math.min(1, piloto.frenos));
+    const frenoRuedas = Math.max(0, Math.min(1, piloto.frenos));
     for (let i = 0; i < f.ruedas.length; i++) {
       const rueda = f.ruedas[i]!;
       const py = s.position.y + this.forward.y * rueda.x + this.right.y * rueda.y + this.down.y * rueda.z;
@@ -753,10 +800,13 @@ export class ModeloDeHelicoptero {
        * centímetros y lo giraban un grado cada diez segundos.
        */
       const ancla = this.anclas[i] ?? (this.anclas[i] = { x: px, z: pz });
-      const agarres = [
-        [this.right, AGARRE, vy],
-        [this.forward, AGARRE * freno, vx],
-      ] as const;
+      // La de morro se orienta sola: ni agarra de lado ni lleva freno, y por eso se gira con los pies.
+      const agarres = rueda.loca
+        ? ([] as const)
+        : ([
+            [this.right, AGARRE, vy],
+            [this.forward, AGARRE * frenoRuedas, vx],
+          ] as const);
       let fx = 0;
       let fy = 0;
       for (const [eje, agarre, velocidadEnEje] of agarres) {
@@ -780,7 +830,7 @@ export class ModeloDeHelicoptero {
         else fy += tira;
       }
       // Y sin freno, rodando, apenas lo que frena el neumático.
-      fx += -apoyo * RODADURA * (1 - freno) * Math.tanh(vx / 0.1);
+      fx += -apoyo * RODADURA * (rueda.loca ? 1 : 1 - frenoRuedas) * Math.tanh(vx / 0.1);
       // El apoyo es vertical en el mundo: se pasa a ejes cuerpo.
       const fzMundo = apoyo;
       aplicar(
@@ -835,6 +885,8 @@ export class ModeloDeHelicoptero {
       a1: this.a1,
       b1: this.b1,
       inducida: this.inducida,
+      arranque: this.arranque,
+      frenoDelRotor: this.frenoDelRotorPuesto,
     };
   }
 
@@ -863,9 +915,24 @@ export class ModeloDeHelicoptero {
     const a = this.actitud();
     this.tmp.copy(s.velocity).sub(this.viento);
     const aire = Math.sqrt(this.tmp.x * this.tmp.x + this.tmp.z * this.tmp.z);
+    /*
+     * **Posado**, la estabilización sigue sosteniendo la actitud, que es lo que
+     * impide el vuelco dinámico al despegar —el rotor de cola empuja a un lado y
+     * el helicóptero pivota sobre la rueda de ese lado—, pero no acumula: la
+     * actitud que sostiene va siguiendo despacio la que tiene sobre las ruedas, y
+     * lo aprendido se queda quieto. Sin eso iba sumando una actitud que el suelo
+     * no le deja tomar y la soltaba de golpe al despegar. En `actitud`, el cíclico
+     * de la mano llega además tal cual al rotor, que es como se rueda.
+     */
+    const posado = s.onGround;
+    const conLaMano = posado && modo === "actitud";
 
     // Lo que se pide: en `actitud`, el cíclico mueve la actitud y al soltarlo se queda.
-    if (modo === "actitud" || aire > 12) {
+    if (conLaMano) {
+      const sigue = 1 - Math.exp(-dt / 2);
+      this.cabeceoPedido += (a.cabeceo - this.cabeceoPedido) * sigue;
+      this.alabeoPedido += diferencia(a.alabeo, this.alabeoPedido) * sigue;
+    } else if (modo === "actitud" || aire > 12) {
       this.cabeceoPedido = acotar(this.cabeceoPedido + piloto.cabeceo * 10 * GRADO * dt, 30 * GRADO);
       this.alabeoPedido = acotar(this.alabeoPedido + piloto.alabeo * 15 * GRADO * dt, 45 * GRADO);
     } else {
@@ -893,10 +960,13 @@ export class ModeloDeHelicoptero {
      */
     const faltaCabeceo = this.cabeceoPedido - a.cabeceo;
     const faltaAlabeo = diferencia(this.alabeoPedido, a.alabeo);
-    this.sostieneCabeceo = acotar(this.sostieneCabeceo + 0.8 * faltaCabeceo * dt, 0.7);
-    this.sostieneAlabeo = acotar(this.sostieneAlabeo + 0.6 * faltaAlabeo * dt, 0.7);
-    salida.cabeceo = acotar(2.7 * faltaCabeceo - 2.1 * q + this.sostieneCabeceo, 1);
-    salida.alabeo = acotar(1.7 * faltaAlabeo - 0.9 * p + this.sostieneAlabeo, 1);
+    if (!posado) {
+      this.sostieneCabeceo = acotar(this.sostieneCabeceo + 0.8 * faltaCabeceo * dt, 0.7);
+      this.sostieneAlabeo = acotar(this.sostieneAlabeo + 0.6 * faltaAlabeo * dt, 0.7);
+    }
+    const mano = conLaMano ? piloto : { cabeceo: 0, alabeo: 0 };
+    salida.cabeceo = acotar(mano.cabeceo + 2.7 * faltaCabeceo - 2.1 * q + this.sostieneCabeceo, 1);
+    salida.alabeo = acotar(mano.alabeo + 1.7 * faltaAlabeo - 0.9 * p + this.sostieneAlabeo, 1);
 
     /*
      * **Los pies**: parado, se sostiene el rumbo; volando, el derrape a cero y el

@@ -111,11 +111,18 @@ export const SUPER_PUMA: FichaDeHelicoptero = {
     // Supuesto: lo que se pierde en la caja de transmisión y los accesorios.
     rendimiento: 0.94,
     respuesta: 0.6,
+    // Supuesto: medio minuto de arrancador, encendido y subida hasta la potencia de
+    // vuelo. Con él, el rotor llega a sus vueltas a los 27 s de empezar.
+    arranque: 30,
   },
   // Supuestos: el tren de morro unos 3,8 m por delante y el principal 1,5 m por
   // detrás, con tres metros de vía, y el centro de gravedad a 1,8 m del suelo.
+  // Supuestos: el freno del rotor para el rotor desde el 40 % de sus vueltas en
+  // unos quince segundos, y no se pone por encima.
+  frenoDelRotor: { par: 8_000, hasta: 0.4 },
   ruedas: [
-    { x: 3.8, y: 0, z: 1.8 },
+    // La de morro se orienta sola: se rueda girando con los pedales.
+    { x: 3.8, y: 0, z: 1.8, loca: true },
     { x: -1.5, y: -1.5, z: 1.8 },
     { x: -1.5, y: 1.5, z: 1.8 },
   ],
