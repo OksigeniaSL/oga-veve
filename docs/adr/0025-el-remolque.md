@@ -182,8 +182,12 @@ piloto automático y el cartel del cinturón—, con el mismo dibujo que su tarj
 mismo sitio en el teclado español y en el americano. En todos los aviones, que todos la llevan.
 
 - **En un reactor de verdad va en el panel del techo**, que el juego no tiene. Se pone con los otros interruptores de
-  la pantalla: se simplifica dónde se ve, no lo que hace. Tampoco está en la cabina en 3D: sus botones salen del
-  modelo, y añadir uno es rehacer los modelos.
+  la pantalla: se simplifica dónde se ve, no lo que hace.
+- **Y en la cabina en 3D, la primera de la fila de mandos del tablero**, a la izquierda del contacto, con el mismo
+  dibujo: la fila se lee en el orden en que se usa, la baliza antes de arrancar y antes de que eche a andar el
+  tractor. En los siete aviones, que la llevan todos; en la avioneta va de verdad en el tablero, y en el reactor es
+  la misma simplificación que en la pantalla, que el techo desde el asiento no se alcanza. Sale del modelo
+  (`modelos/comun.py`), como los otros mandos, y la comprueba `npm run botones`.
 - **Lo mueven quien juega y el motor.** El motor, en sus dos cambios: al arrancar la enciende si no lo estaba y al
   parar la apaga, que es la señal para que la gente de tierra se acerque. Entre medias manda quien la mueve: apagada a
   mano con los motores en marcha, se queda apagada. Así, quien no la toca la tiene como antes, y nadie se queda
@@ -238,15 +242,18 @@ el cable del interfono con la persona de tierra, que lleva el tractor. El juego 
 puesto de salida como el juego, y si es de contacto traza el empuje y mira que vaya hacia atrás, que el morro no entre
 en ningún edificio, que acabe a menos de un largo de avión de la raya y que el cruce con la calle quede por delante del
 morro, que rodando hacia delante se pase por él. Con la regla de los cincuenta metros sola salía empujado en 47 de las
-57 combinaciones, también en campos sin una sola pasarela. Desde «Los campos con pasarelas», en 23: los ocho campos que
-las tienen, con los tres reactores, menos Fuerteventura con el JAZ 90, cuyo puesto no es de contacto.
+57 combinaciones, también en campos sin una sola pasarela. Desde «Los campos con pasarelas», en 25: los nueve campos
+que las tienen, con los tres reactores, menos el JAZ 90 en Fuerteventura y en Guaraní, cuyos puestos no son de
+contacto.
 
-**Dos acaban con el cruce detrás del morro**: Barajas —fuera del T5— con los dos grandes. Eran cinco; los otros tres,
-La Gomera con los dos grandes y Cuatro Vientos con el JAZ 90, eran puestos de una pasarela que no existe. En los dos
-la raya sale del puesto de lado, a más de cincuenta grados de lo contrario a la pared; el avión se pone mirando a la
-pared, la recta de su cola y la de la calle casi no se cortan, y se gira desde el puesto con el radio más cerrado.
-Rodando hacia delante, la raya se rehace desde donde queda. Están apuntados en el test (`CON_EL_CRUCE_DETRAS`), que
-falla si alguno se arregla para que salga de la lista.
+**Todos acaban con el cruce por delante del morro.** Hubo cinco que no: tres eran puestos de una pasarela que no
+existe —La Gomera con los dos grandes y Cuatro Vientos con el JAZ 90— y los otros dos, Barajas fuera del T5 con los
+dos grandes. Allí la raya sale del puesto de lado, a lo largo de la fachada y sin torcer en lo que se busca la calle,
+y el empuje la trataba como una que sale recta hacia atrás: giraba noventa grados hacia el lado al que tuerce
+después, y el avión se quedaba de espaldas a la raya, con el cruce a treinta metros detrás del morro. Ahora, si la
+raya sale a más de cincuenta grados de lo contrario al morro —los mismos que en `rumboEnElPuesto`—, la calle es la
+propia raya y el morro acaba mirando hacia donde va: el cruce, a sesenta y cuatro metros por delante. Se gira desde
+el puesto con el radio más cerrado, que la raya pasa por él.
 
 ### Los campos con pasarelas
 
@@ -266,10 +273,12 @@ como `salidasPorInterseccion`, y la extracción lo conserva:
 | Fuerteventura | OpenStreetMap: trece |
 | La Palma | Aena, nota de prensa del 26-07-2012: dos, en los extremos norte y sur del edificio |
 | Pettirossi | DINAC: cuatro mangas en el ala sur y dos en el ala norte; OpenStreetMap trae las seis |
+| Guaraní | DINAC, licitación 425264 de la DNCP (julio de 2023): el lote 2 es el mantenimiento de las «mangas telescópicas JBT y Jetway del AIG»; no dice cuántas |
 
 Sin el dato, el campo no tiene pasarelas: `edificiosDePasarela` le da cero edificios a `esPuestoDeContacto`, y ni quien
-juega ni el tráfico salen empujados. **Guaraní queda sin ellas por falta de fuente**, no porque se sepa que no las
-tiene: ni la DINAC ni OpenStreetMap ni las enciclopedias las mencionan. Si aparece, es una línea en `sges.aero.json`.
+juega ni el tráfico salen empujados. Guaraní estuvo así un día, por falta de fuente: ni la DINAC en su web ni
+OpenStreetMap ni las enciclopedias las mencionan, y las nombra una licitación de su mantenimiento. Allí salen
+empujados los dos grandes; el JAZ 90 aparca en un puesto más lejos de la fachada de lo que alcanza una pasarela.
 En La Palma hay dos y el juego da por contacto cualquier puesto a menos de cincuenta metros de la fachada; afinar
 puesto a puesto pediría saber dónde está cada pasarela, y solo tres campos lo traen.
 
@@ -370,9 +379,8 @@ quedaba en la calle sin poder pasarle al lado. En un aeropuerto cada puesto es d
 
 ## Lo que queda
 
-- **El interruptor de la baliza en la cabina en 3D**: está en la pantalla, no en el modelo. Ver «El interruptor de la
-  baliza».
-- **Barajas fuera del T5 con los dos grandes**, con el cruce detrás: ver «Lo que se mide en cada campo».
-- **Lo que cuesta un tractor en fotogramas**, con dos en pantalla en una tableta de gama media: medido en llamadas de
-  dibujo (ver «Dos tractores a la vez, como mucho»), no en fotogramas, que eso pide la tableta.
-- **Las pasarelas de Guaraní**, si las tiene: ver «Los campos con pasarelas».
+Del remolque, solo una medida que no se puede tomar desde aquí: **lo que cuesta en fotogramas**, con dos tractores en
+pantalla en una tableta de gama media. Está medido en llamadas de dibujo —un 8 % más con uno a la vista, ver «Dos
+tractores a la vez, como mucho»—, y los fotogramas se miran en la tableta con `?fps=1`, saliendo empujado de Los
+Rodeos, y mejor si coincide con uno del tráfico empujando a la vez. Si bajan de sesenta, lo primero es
+`TRACTORES_A_LA_VEZ`.
