@@ -242,6 +242,14 @@ export interface Aerodrome {
    */
   readonly helipads?: readonly Punto[];
   /**
+   * **Los helipuertos puestos a mano**, con su fuente, que OpenStreetMap no trae:
+   * el del Ejército de Tierra junto a Los Rodeos (GCXM), de donde sale el Super
+   * Puma, está publicado en el AIP y no dibujado en el mapa. La extracción los
+   * conserva, como las pasarelas. Van delante de los de OpenStreetMap: ver
+   * `helipuertosDe`.
+   */
+  readonly helipuertosAMano?: { readonly puntos: readonly Punto[]; readonly fuente: string };
+  /**
    * Dónde para un avión que rueda antes de pisar la pista.
    *
    * `source` dice si el dato está medido o calculado, y no es un detalle
@@ -2369,13 +2377,22 @@ function luces(
  * señaliza uno de verdad, y quien lo vea desde el aire está viendo lo que hay.
  * El día que haya helicópteros, el sitio ya está marcado.
  */
+/**
+ * **Todos los helipuertos del campo**: primero los puestos a mano con su fuente,
+ * y luego los de OpenStreetMap. El primero es de donde sale el helicóptero.
+ */
+export function helipuertosDe(aero: Pick<Aerodrome, "helipads" | "helipuertosAMano"> | null | undefined): readonly Punto[] {
+  if (!aero) return [];
+  return [...(aero.helipuertosAMano?.puntos ?? []), ...(aero.helipads ?? [])];
+}
+
 function helipuertos(
   aero: Aerodrome,
   altura: (p: Punto) => number,
 ): Group {
   const grupo = new Group();
   grupo.name = "helipuertos";
-  const sitios = aero.helipads ?? [];
+  const sitios = helipuertosDe(aero);
   if (sitios.length === 0) return grupo;
   const textura = helipuertoTextura();
   if (!textura) return grupo;

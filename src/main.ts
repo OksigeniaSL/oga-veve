@@ -243,7 +243,7 @@ const directo = conInicio
     : undefined;
 
 /*
- * **El helicóptero, escondido**: `?avion=super-puma` lo vuela en Gran Canaria,
+ * **El helicóptero, escondido**: `?avion=super-puma` lo vuela en Tenerife Norte,
  * desde su helipuerto, sin pasar por quién vuela ni por el hangar y sin
  * guardar nada en el perfil. No está en la flota ni en ningún menú: es para
  * probarlo en la web y afinar sus mandos. Ver `flight/helicoptero-en-el-juego.ts`.

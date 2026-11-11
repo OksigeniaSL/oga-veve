@@ -368,6 +368,13 @@ function desvioDeLaEstela(enElPlano: number, enElDisco: number): number {
 
 // ── El modelo ────────────────────────────────────────────────────────────
 
+/**
+ * **Lo más deprisa que pide el cíclico a tope en la estabilización de estacionario**,
+ * m/s sobre el suelo: unos ochenta nudos, para ir de un sitio a otro sin dejar de
+ * pararse solo al soltarlo.
+ */
+export const VA_EN_ESTACIONARIO = 40;
+
 /** El paso de integración más largo, s: el disco tarda unas centésimas en seguir al cíclico. */
 const PASO_MAXIMO = 1 / 240;
 /** Lo que el regulador tarda en recuperar las vueltas, s. */
@@ -770,6 +777,9 @@ export class ModeloDeHelicoptero {
     // ── Las ruedas ──
     let enElSuelo = false;
     const frenoRuedas = Math.max(0, Math.min(1, piloto.frenos));
+    // La velocidad de la toma es la de esta toma, no la peor del vuelo: se apunta al tocar.
+    const veniaEnElAire = !s.onGround;
+    let primeraRueda = true;
     for (let i = 0; i < f.ruedas.length; i++) {
       const rueda = f.ruedas[i]!;
       const py = s.position.y + this.forward.y * rueda.x + this.right.y * rueda.y + this.down.y * rueda.z;
@@ -841,7 +851,10 @@ export class ModeloDeHelicoptero {
         rueda.y,
         rueda.z,
       );
-      if (!s.onGround) s.touchdownSinkRate = Math.max(s.touchdownSinkRate, -s.velocity.y);
+      if (veniaEnElAire) {
+        s.touchdownSinkRate = primeraRueda ? -s.velocity.y : Math.max(s.touchdownSinkRate, -s.velocity.y);
+        primeraRueda = false;
+      }
     }
     s.onGround = enElSuelo;
 
@@ -932,25 +945,38 @@ export class ModeloDeHelicoptero {
       const sigue = 1 - Math.exp(-dt / 2);
       this.cabeceoPedido += (a.cabeceo - this.cabeceoPedido) * sigue;
       this.alabeoPedido += diferencia(a.alabeo, this.alabeoPedido) * sigue;
-    } else if (modo === "actitud" || aire > 12) {
+    } else if (modo === "actitud") {
       this.cabeceoPedido = acotar(this.cabeceoPedido + piloto.cabeceo * 10 * GRADO * dt, 30 * GRADO);
       this.alabeoPedido = acotar(this.alabeoPedido + piloto.alabeo * 15 * GRADO * dt, 45 * GRADO);
     } else {
       /*
-       * **En estacionario, el cíclico pide velocidad sobre el suelo** —hasta ocho
-       * metros por segundo— y soltarlo pide estar quieto. La actitud que lo da la
-       * busca este lazo, que aprende la del estacionario con su integral.
+       * **En estacionario, el cíclico pide velocidad sobre el suelo**, y soltarlo
+       * pide estar quieto encima del mismo sitio, sople lo que sople. Adelante y
+       * atrás, hasta `VA_EN_ESTACIONARIO`; a los lados, despacio, ir de lado, y
+       * deprisa, inclinarse para virar, que al soltar se nivela. La actitud que lo
+       * da la busca este lazo, que aprende con su integral la del estacionario.
+       *
+       * Sobre el suelo y no respecto al aire, y sin cambiar de modo por el camino:
+       * pasaba a mandar la actitud en cuanto el aire iba a más de 12 m/s, y con 20
+       * nudos de viento eso era empujar el cíclico. Soltarlo dejaba entonces el
+       * morro abajo, y el helicóptero se iba a 95 nudos sin volver.
        */
       const sen = Math.sin(a.rumbo);
       const cos = Math.cos(a.rumbo);
       const adelante = s.velocity.x * sen - s.velocity.z * cos;
       const derecha = s.velocity.x * cos + s.velocity.z * sen;
-      const errAdelante = -piloto.cabeceo * 8 - adelante;
-      const errDerecha = piloto.alabeo * 8 - derecha;
-      this.integralCabeceo = acotar(this.integralCabeceo - 0.01 * errAdelante * dt, 10 * GRADO);
-      this.integralAlabeo = acotar(this.integralAlabeo + 0.01 * errDerecha * dt, 10 * GRADO);
+      const deprisa = Math.max(0, Math.min(1, (Math.abs(adelante) - 8) / 6));
+      const errAdelante = -piloto.cabeceo * VA_EN_ESTACIONARIO - adelante;
+      const errDerecha = piloto.alabeo * 8 * (1 - deprisa) - derecha * (1 - deprisa);
+      if (!posado) {
+        this.integralCabeceo = acotar(this.integralCabeceo - 0.01 * errAdelante * dt, 10 * GRADO);
+        this.integralAlabeo = acotar(this.integralAlabeo + 0.01 * errDerecha * dt, 10 * GRADO);
+      }
       this.cabeceoPedido = acotar(-0.04 * errAdelante + this.integralCabeceo + 3 * GRADO, 12 * GRADO);
-      this.alabeoPedido = acotar(0.04 * errDerecha + this.integralAlabeo, 12 * GRADO);
+      this.alabeoPedido = acotar(
+        (1 - deprisa) * (0.04 * errDerecha + this.integralAlabeo) + deprisa * piloto.alabeo * 20 * GRADO,
+        20 * GRADO,
+      );
     }
     /*
      * El lazo de actitud: proporcional a lo que falta, frenando el giro, y con lo

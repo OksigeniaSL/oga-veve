@@ -2,6 +2,7 @@
   "id": "GCXO",
   "name": "Tenerife Norte-Ciudad de La Laguna Airport",
   "pasarelas": {"hay": true, "fuente": "Aena, nota de prensa del 09-05-2017: seis pasarelas nuevas en Tenerife Norte, en lugar de las cuatro de 2002 y las dos de 2005."},
+  "helipuertosAMano": {"puntos": [[-924.6, 101.7]], "fuente": "AIP de España, AD 3 GCXM (ENAIRE): helipuerto del Ejército de Tierra en el acuartelamiento de Los Rodeos (BHELMA VI), de uso militar, a 638 m; el centro de su TLOF de 257 × 22 m, en 282901.20N 0162104.20W, orientada 114°/294° magnéticos."},
   "salidasPorInterseccion": {"permitidas": true, "soloDesde": ["E-2", "E-4"], "tora": {"12": {"E-2": 2546}, "30": {"E-4": 1906}}, "fuente": "AIP España AD 2-GCXO, 2.20.1.2 K (AIRAC AMDT 09/26, WEF 01-OCT-26; ya en la AMDT 410/26, 03-SEP-26): «TWY E-2 and E-4 can be used for take-off from the intersection.» / «Las TWY E-2 y E-4 pueden emplearse para despegue desde intersección.» Y 2.13, las dos únicas filas de intersección: «12 INT E-2» TORA 2546, TODA 2739, ASDA 2546; «30 INT E-4» TORA 1906, TODA 1906, ASDA 1906. Y para la letra de clave E, 2.20.5.2 3: «Code Letter E aircraft shall enter and vacate the runway via TWY E-1 or TWY E-5, depending on the runway in use.»"},
   "source": {
     "osm": "overpass",

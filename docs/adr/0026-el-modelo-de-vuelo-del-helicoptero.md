@@ -21,9 +21,13 @@ El trabajo va en cuatro pasos, y cada uno se mira antes de lanzar el siguiente:
 ## Qué helicóptero
 
 **El Super Puma**, el AS 332 C1/L1 que desde 2016 se vende como H215. Es grande de verdad —8.600 kg al despegue,
-un rotor de 15,60 m— y es el helicóptero de rescate de Canarias: el 802 Escuadrón del Ejército del Aire lo vuela
-desde Gando, en Gran Canaria. En Paraguay no hay uno tan grande; lo que vuela allí es el Bell UH-1H de la Fuerza
-Aérea, que puede venir después sobre el mismo modelo con su propia ficha.
+un rotor de 15,60 m— y vuela en Canarias: el 802 Escuadrón del Ejército del Aire lo lleva para el rescate desde Gando,
+y **el batallón de helicópteros del Ejército de Tierra (BHELMA VI) vuela tres AS332B1 en Los Rodeos**, junto a
+Tenerife Norte, con la UME en el mismo acuartelamiento. El B1 es la versión militar del de la ficha, con los mismos
+motores y el mismo rotor. En el juego vive en Los Rodeos, la casa del juego (Enrique, 11-11: «Hay una división de
+helicópteros justo al lado de GCXO»), con la pintura de la flota y sus marcas de rescate. En Paraguay no hay uno tan
+grande; lo que vuela allí es el Bell UH-1H de la Fuerza Aérea, que puede venir después sobre el mismo modelo con su
+propia ficha.
 
 ## Decisión
 
@@ -85,9 +89,9 @@ el nivel sin soltar nada (`ponerEstabilizacion` se queda con la actitud y el rum
 
 Para probarlo en la web y afinar los mandos antes de que llegue el modelo en 3D, el helicóptero se vuela con
 **`?avion=super-puma`** en la dirección, y solo así. No está en `AIRCRAFT`: no sale en el hangar, ni en el cambio de
-avión, ni en ninguna lección, y no se guarda en el perfil. Entra directo en Gran Canaria —Gando, la base del 802
-Escuadrón—, **posado en el helipuerto** del campo (el de los datos de OpenStreetMap), cara al viento, con el rotor en
-sus vueltas y el colectivo abajo. Se vuela suelto: la vuelta al campo, sin misión, sin destino y sin vecinos.
+avión, ni en ninguna lección, y no se guarda en el perfil. Entra directo en Tenerife Norte, **posado en el helipuerto
+del Ejército** junto a Los Rodeos (GCXM, puesto a mano con los datos del AIP, que OpenStreetMap no lo trae: ver
+`helipuertosAMano`), cara al viento, con el rotor en sus vueltas y el colectivo abajo. Se vuela suelto: la vuelta al campo, sin misión, sin destino y sin vecinos.
 
 - **El adaptador** (`flight/fdm-helicoptero.ts`) pone el modelo detrás del contrato `FlightModel` de los aviones. El
   gas es el colectivo (no vuelve solo, como la palanca de verdad, que tiene fricción); la profundidad, el cíclico

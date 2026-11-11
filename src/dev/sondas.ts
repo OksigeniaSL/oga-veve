@@ -60,6 +60,7 @@ import {
   alturaDeEdificio,
   enElPavimento,
   esAfis,
+  helipuertosDe,
   paraUnAvion,
   sinTorre,
 } from "../world/aerodrome";
@@ -175,7 +176,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       const f = juego.flight;
       if (!(f instanceof HelicopteroComoModelo)) return null;
       const r = f.modelo.rotor();
-      const sitio = juego.scenario.aerodrome?.helipads?.[0] ?? null;
+      const sitio = helipuertosDe(juego.scenario.aerodrome)[0] ?? null;
       return {
         nr: r.vueltasPorUno,
         par: r.par,

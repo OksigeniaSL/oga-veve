@@ -1,6 +1,6 @@
 /**
  * **El Super Puma como aeronave del juego**, escondido: solo se vuela con
- * `?avion=super-puma` en la dirección, en Gran Canaria y desde su helipuerto.
+ * `?avion=super-puma` en la dirección, en Tenerife Norte y desde el helipuerto del Ejército.
  * No está en `AIRCRAFT` a propósito, y así no sale en el hangar, ni en el
  * cambio de avión, ni en ninguna lección, y a quien juega no le cambia nada.
  * Es para probarlo en la web y afinar los mandos antes de que llegue su modelo
@@ -21,11 +21,14 @@ const NUDO = 0.514444;
 export const ID_DEL_HELICOPTERO = SUPER_PUMA.id;
 
 /**
- * **Dónde vuela**: Gran Canaria, donde el 802 Escuadrón tiene sus Super Puma
- * (en Gando, que es este aeropuerto). Su helipuerto está en los datos del
- * campo. Ver `helipads` en `world/aerodrome.ts`.
+ * **Dónde vuela**: Tenerife Norte. Junto a Los Rodeos está el batallón de
+ * helicópteros del Ejército de Tierra, que vuela tres Super Puma AS332B1, con
+ * la UME en el mismo acuartelamiento (Enrique, 11-11: «Hay una división de
+ * helicópteros justo al lado de GCXO»). Su helipuerto, GCXM, está en el AIP y
+ * se pone a mano en los datos del campo: ver `helipuertosAMano` en
+ * `world/aerodrome.ts`.
  */
-export const ESCENARIO_DEL_HELICOPTERO = "gran-canaria";
+export const ESCENARIO_DEL_HELICOPTERO = "tenerife-norte";
 
 /** Lo que gasta cada vatio contado como empuje: ver `NEWTON_POR_VATIO` en `fdm-helicoptero.ts`. */
 const NEWTON_POR_VATIO = (0.36 / 1000) / 0.05;

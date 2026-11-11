@@ -1,6 +1,6 @@
 /**
  * **El Super Puma en el juego de verdad**: `?avion=super-puma`, escondido, en
- * Gran Canaria y desde su helipuerto. Ver `flight/helicoptero-en-el-juego.ts` y
+ * Tenerife Norte y desde el helipuerto del Ejército. Ver `flight/helicoptero-en-el-juego.ts` y
  * el paso 3 del ADR 0026.
  *
  * Lo vuela entero un piloto de banco que escribe en los mandos del juego —el
@@ -128,7 +128,7 @@ try {
   console.log("\nPosado en el helipuerto");
   const posado = await leerApuntando();
   comprobar(
-    "empieza posado en el helipuerto de Gran Canaria",
+    "empieza posado en el helipuerto del Ejército, junto a Los Rodeos",
     posado.enTierra && posado.alHelipuerto < 5,
     `a ${posado.alHelipuerto.toFixed(1)} m de su centro, ${posado.enTierra ? "en tierra" : "en el aire"}`,
   );

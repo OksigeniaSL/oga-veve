@@ -1212,6 +1212,7 @@ import { reconocer } from "./flight/reconocimiento";
 import {
   alturaDeEdificio,
   arranqueEnPista,
+  helipuertosDe,
   paraUnAvion,
   type Punto,
 } from "./world/aerodrome";
@@ -12997,7 +12998,7 @@ export class Game {
    * camino: todo lo que el reinicio limpia lo sigue limpiando.
    */
   private posarEnElHelipuerto(): void {
-    const sitio = this.scenario.aerodrome?.helipads?.[0];
+    const sitio = helipuertosDe(this.scenario.aerodrome)[0];
     if (!sitio) return;
     // Coordenadas del aeródromo, con la Y al revés que la Z del mundo.
     const x = sitio[0];

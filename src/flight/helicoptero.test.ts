@@ -185,6 +185,63 @@ describe("estacionario", () => {
     expect(actitud.final).toBeLessThan(0.5 * GRADO);
   });
 
+  /**
+   * **Con viento, soltar el cíclico lo para sobre el suelo.** La estabilización de
+   * estacionario miraba la velocidad respecto al aire, y con veinte nudos de viento
+   * empujar el cíclico la hacía cambiar de modo: al soltarlo se iba a 95 nudos con
+   * el morro abajo (el banco del juego, con el viento de Gando).
+   */
+  it("con veinte nudos de viento, empujar el cíclico y soltarlo lo deja parado sobre el suelo", () => {
+    const { h, m, colectivo } = enElAire(60, "estacionario");
+    h.ponerViento(0, 10);
+    for (let t = 0; t < 30; t += DT) {
+      colectivo();
+      h.step(DT, m);
+    }
+    let peor = 0;
+    m.cabeceo = -1;
+    for (let t = 0; t < 8; t += DT) {
+      colectivo();
+      h.step(DT, m);
+    }
+    m.cabeceo = 0;
+    for (let t = 0; t < 40; t += DT) {
+      colectivo();
+      h.step(DT, m);
+      const a = h.actitud();
+      peor = Math.max(peor, Math.abs(a.cabeceo), Math.abs(a.alabeo));
+    }
+    expect(h.state.groundSpeed).toBeLessThan(1);
+    expect(peor).toBeLessThan(15 * GRADO);
+  });
+
+  it("con el cíclico a tope va deprisa, vira inclinándose y al soltar se para solo", () => {
+    const { h, m, colectivo, adelante } = enElAire(150, "estacionario");
+    m.cabeceo = -1;
+    for (let t = 0; t < 40; t += DT) {
+      colectivo();
+      h.step(DT, m);
+    }
+    expect(adelante()).toBeGreaterThan(30);
+    const rumbo = h.actitud().rumbo;
+    m.alabeo = 1;
+    for (let t = 0; t < 8; t += DT) {
+      colectivo();
+      h.step(DT, m);
+    }
+    // Deprisa, el cíclico a un lado inclina y vira, como un avión; despacio sería ir de lado.
+    expect(h.actitud().alabeo).toBeGreaterThan(10 * GRADO);
+    expect(h.actitud().rumbo - rumbo).toBeGreaterThan(15 * GRADO);
+    m.alabeo = 0;
+    m.cabeceo = 0;
+    for (let t = 0; t < 40; t += DT) {
+      colectivo();
+      h.step(DT, m);
+    }
+    expect(h.state.groundSpeed).toBeLessThan(1);
+    expect(Math.abs(h.actitud().alabeo)).toBeLessThan(5 * GRADO);
+  });
+
   it("al dar potencia sin pisar, el morro se va a la izquierda: el rotor gira en horario", () => {
     const { h, m, colectivo } = enElAire(60, "estacionario");
     for (let t = 0; t < 40; t += DT) {
