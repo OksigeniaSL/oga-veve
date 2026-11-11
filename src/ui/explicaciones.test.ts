@@ -449,8 +449,12 @@ describe("dónde cae el dedo", () => {
 describe("los puntos de la tarjeta del avión", () => {
   beforeEach(() => ponerLasDeSerie());
 
-  it("los veintiuno están en el registro, con su palabra corta", () => {
-    expect(EXPLICACIONES_DEL_AVION).toHaveLength(21);
+  /*
+   * Veinticuatro desde que el Super Puma tiene las suyas: el rotor, el plato
+   * oscilante y el rotor de cola, que un avión no lleva.
+   */
+  it("los veinticuatro están en el registro, con su palabra corta", () => {
+    expect(EXPLICACIONES_DEL_AVION).toHaveLength(24);
     const falta: string[] = [];
     for (const e of EXPLICACIONES_DEL_AVION) {
       const r = explicacionDe(e.id);
@@ -469,8 +473,8 @@ describe("los puntos de la tarjeta del avión", () => {
       }
     }
     expect(falta).toEqual([]);
-    // Y los veintiuno son distintos: un `id` repetido taparía a otro.
-    expect(new Set(EXPLICACIONES_DEL_AVION.map((e) => e.id)).size).toBe(21);
+    // Y los veinticuatro son distintos: un `id` repetido taparía a otro.
+    expect(new Set(EXPLICACIONES_DEL_AVION.map((e) => e.id)).size).toBe(24);
   });
 
   it("y se abren por su id, con su dibujo y su palabra", () => {

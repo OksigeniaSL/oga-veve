@@ -184,20 +184,36 @@ describe("las ilustraciones", () => {
 
   const SIN_DIBUJOS: readonly string[] = [];
 
-  it("cada avión de la flota, por fuera y por dentro; y nada de lo que no es de la flota", () => {
+  it("cada avión de la flota, por fuera y por dentro; el Super Puma, por fuera y con la grúa; y nada más", () => {
     for (const id of ESTA_HECHO.filter((x) => !SIN_DIBUJOS.includes(x))) {
       const d = ilustracionesDelAvion(id);
       expect(d?.fuera.url, id).toMatch(new RegExp(`fuera-${id}.*\\.webp`));
-      expect(d?.cabina.url, id).toMatch(new RegExp(`cabina-${id}.*\\.webp`));
+      expect(d?.segunda.url, id).toMatch(new RegExp(`cabina-${id}.*\\.webp`));
+      expect(d?.cual, id).toBe("cabina");
     }
     const deLaTarjeta = claves.filter((c) => RECETAS[c]!.hueco === "tarjeta");
     expect(deLaTarjeta.sort()).toEqual(
-      ESTA_HECHO.filter((x) => !SIN_DIBUJOS.includes(x))
-        .flatMap((id) => [`fuera-${id}`, `cabina-${id}`])
-        .sort(),
+      [
+        ...ESTA_HECHO.filter((x) => !SIN_DIBUJOS.includes(x)).flatMap((id) => [`fuera-${id}`, `cabina-${id}`]),
+        "fuera-super-puma",
+        "grua-super-puma",
+      ].sort(),
     );
     for (const id of SIN_DIBUJOS) expect(ilustracionesDelAvion(id), id).toBeNull();
-    // El largo radio y el helicóptero no son de la flota: no tienen sitio.
+    /*
+     * **El helicóptero que hay sí tiene sitio**, el Super Puma, aunque no sea
+     * de la flota: se vuela —escondido, con `?avion=super-puma`— y su tarjeta
+     * lo enseña. Lo que no tiene es cabina todavía, así que en el segundo sitio
+     * va su trabajo, el rescate con la grúa, y no se llama «cabina». El largo
+     * radio sigue sin sitio, y el helicóptero de antes, un H135, también: en
+     * el juego no hay ninguno de los dos.
+     */
+    const puma = ilustracionesDelAvion("super-puma");
+    expect(puma?.fuera.url).toMatch(/fuera-super-puma.*\.webp/);
+    expect(puma?.segunda.url).toMatch(/grua-super-puma.*\.webp/);
+    expect(puma?.cual).toBe("grua");
+    expect(puma?.segunda.alt).toBe(ES_PY["ilustracion.grua-super-puma"]);
+    expect(RECETAS["cabina-super-puma"]).toBeUndefined();
     for (const c of claves) expect(RECETAS[c]!.original, c).not.toMatch(/largo-radio|helicoptero/);
     expect(ilustracionesDelAvion("guyrami")).toBeNull();
   });

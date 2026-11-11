@@ -125,6 +125,18 @@ const DIBUJOS = {
   // La placa de la matrícula.
   matricula: `<rect x="3" y="14" width="42" height="20" rx="3" ${T} />
     <path ${T} d="M10 24 h8 M22 24 h4 M30 24 h8" />`,
+  // El rotor desde arriba: las cuatro palas en cruz, su buje y el disco que barren.
+  rotor: `<circle cx="24" cy="24" r="20" ${T} stroke-dasharray="3 5" opacity="0.6" />
+    <path ${T} d="M24 20 V5 M24 28 V43 M20 24 H5 M28 24 H43" /><circle cx="24" cy="24" r="4" ${F} />`,
+  // De lado: las palas arriba, el mástil, el plato inclinado y las dos varillas que suben.
+  plato: `<path ${T} d="M4 10 H44 M24 10 V44" /><circle cx="24" cy="10" r="3" ${F} />
+    <ellipse cx="24" cy="31" rx="14" ry="4" ${T} transform="rotate(-12 24 31)" />
+    <path ${T} d="M11 34 L11 14 M37 28 L37 14" opacity="0.8" />`,
+  // La cola de lado con el rotor de cola: cinco palas, como el del Super Puma.
+  "rotor-de-cola": `<path ${T} d="M4 34 H28 L34 14" />
+    <circle cx="34" cy="20" r="10" ${T} opacity="0.55" />
+    <path ${T} d="M34 20 V10 M34 20 l9.5 3.1 M34 20 l5.9 8.1 M34 20 l-5.9 8.1 M34 20 l-9.5 3.1" />
+    <circle cx="34" cy="20" r="2.5" ${F} />`,
 } as const;
 
 /** El dibujo de una explicación, ya montado en su SVG. */
@@ -188,6 +200,14 @@ export const EXPLICACIONES_DEL_AVION: readonly ExplicacionDelAvion[] = [
   de("avion.luz-estrobos", "estrobos", "luzEstrobos", "tarjeta.luz.estroboscopicas"),
   de("avion.luz-aterrizaje", "aterrizaje", "luzAterrizaje", "tarjeta.luz.aterrizaje"),
   de("avion.matricula", "matricula", "matricula", "tarjeta.corta.matricula"),
+  /*
+   * **Las del helicóptero**: el rotor que lo sostiene, el plato que le lleva
+   * los mandos a las palas y el rotor de cola que aguanta el par. Solo salen
+   * en su tarjeta: ver `DEL_HELICOPTERO` en `world/puntos-del-avion.ts`.
+   */
+  de("avion.rotor", "rotor", "rotor", "tarjeta.pieza.rotor"),
+  de("avion.plato", "plato", "plato", "tarjeta.pieza.plato"),
+  de("avion.rotor-de-cola", "rotor-de-cola", "rotorDeCola", "tarjeta.pieza.rotor-de-cola"),
 ];
 
 const POR_ID = new Map(EXPLICACIONES_DEL_AVION.map((e) => [e.id, e]));

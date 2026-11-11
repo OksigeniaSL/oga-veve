@@ -703,10 +703,11 @@ como es; esas fotos no entran en el juego, solo sirvieron de referencia.
 
 ### Los instrumentos por dentro
 
-Las doce figuras que se tocan en la ventana de explicación —el PAPI, el
+Las trece figuras que se tocan en la ventana de explicación —el PAPI, el
 pitot con su velocímetro, el altímetro, los mandos, los flaps, el
 turbohélice, el turbofán, el motor de pistones, el tren fijo, el tren que
-se recoge, el tren de los E-Jets y las luces (`src/ui/figuras/`)— son **figuras propias**: las dibujó Gaudí, director de
+se recoge, el tren de los E-Jets, las luces y el plato oscilante del Super
+Puma (`src/ui/figuras/`)— son **figuras propias**: las dibujó Gaudí, director de
 arte de Oksigenia, con cara de manual de vuelo antiguo y las tintas y letras
 de la carta, y van con el código bajo Apache-2.0. Lo único de fuera es lo
 que dice el software de terceros, arriba: la hoja isométrica de Anatomy (MIT)
@@ -753,6 +754,19 @@ módulo:
   sector), 91.209 y el AIM 4-3-24 de la FAA (cuándo se enciende cada una),
   y 14 CFR 91.113 con SERA.3210 del Reglamento (UE) 923/2012 (quién cede el
   paso); la avioneta, del manual del Cessna 172S, sección 7.
+- **El plato oscilante** (`src/ui/figuras/plato.ts`, 11-11-2026): FAA,
+  *Helicopter Flying Handbook* (FAA-H-8083-21B), de dominio público:
+  capítulo 4, «Swash Plate Assembly», con su figura 4-11 (el plato fijo, el
+  que gira, sus tijeras y las varillas de paso), y capítulos 2 y 3 (la
+  precesión: la pala sube un cuarto de vuelta después). Las cifras —el paso
+  colectivo de 9,5° a 26°, el cíclico de ±10° y ±7°, la torsión de −8°, el
+  sentido de giro y las 265 vueltas por minuto— son las de
+  `src/flight/super-puma.ts`, que salen de la hoja de tipo de la EASA (TCDS
+  R.002). La forma de la cabeza se miró en una foto de la cabeza de un
+  Cougar de Rama (Wikimedia Commons, CeCILL), **solo como referencia**: la
+  foto no entra en el juego, y las medidas del buje, los platos y las
+  varillas se sacaron de ella a ojo. Lo supuesto —el aleteo, la conicidad y
+  el estacionario— está en la cabecera del módulo.
 
 ### Las ilustraciones
 
@@ -786,11 +800,23 @@ no dejan entrar una que no esté en esta tabla.
 
 Antes de entrar se miró cada una de cerca. **Una comandante lleva cuatro
 barras y quien va a su derecha, tres**: lo que no cuadraba se recortó hasta
-dejarlo fuera, y así se dice en su fila. Se quedaron sin usar el largo radio y
-el helicóptero, por fuera y por dentro, que no son de la flota; dos retratos
+dejarlo fuera, y así se dice en su fila. Se quedaron sin usar el largo radio,
+que no es de la flota, y el helicóptero de antes, un H135 que en el juego no
+hay, por fuera y por dentro; dos retratos
 casi fotográficos que no van con los demás; la cabina de tres y tres
 asientos, que es la de otro avión; y las versiones cuadradas de Ara durmiendo
 y soñando, que no tienen hueco.
+
+**Las dos del Super Puma** (11-11-2026) son de otra mano: las pintó Oksigenia
+para su tarjeta, en el estilo de las de la flota y con la pintura de su
+muestra, y como el resto del arte original son contenido de Oksigenia SL. Las
+dos van con el morro a la derecha, para que se vea el costado derecho, el del
+rotor de cola, la puerta y la grúa, y no llevan ni una letra. Como referencia
+de forma se usaron el plano de tres vistas del AS 332 de Jetijones (CC BY 3.0)
+y fotos de los AS 332 B1 del Ejército de Tierra (CC BY-SA 2.0), las dos de
+Wikimedia Commons: solo se miraron, no entra nada de ellas en el juego. Su
+lámina por dentro, con la tripulación de rescate, espera a que el Super Puma
+tenga cabina, para que diga lo mismo que el juego.
 
 | Fichero | Original | Dónde sale | Cambios |
 | --- | --- | --- | --- |
@@ -815,6 +841,8 @@ y soñando, que no tienen hueco.
 | `src/assets/ilustraciones/cabina-jaz-120.webp` | `cabina-jaz120.jpg` | La tarjeta del avión, en el hangar | recortada por la derecha, hasta dejar fuera el hombro del copiloto, que llevaba cuatro barras: el asiento de la derecha lleva tres; 360 × 270 |
 | `src/assets/ilustraciones/fuera-jaz-110.webp` | `fuera-jaz110.png` | La tarjeta del avión, en el hangar | de perfil y sobre papel, con más papel arriba y abajo hasta 4:3, 360 × 270 |
 | `src/assets/ilustraciones/cabina-jaz-110.webp` | `cabina-jaz110.png` | La tarjeta del avión, en el hangar | la cabina de pasaje de noche, a 4:3 por los dos lados, con el pasillo de la izquierda y las filas de delante a la vista, 360 × 270 |
+| `src/assets/ilustraciones/fuera-super-puma.webp` | `super-puma-teno.png` | La tarjeta del Super Puma, en el vuelo: por fuera, junto al faro de Teno | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/grua-super-puma.webp` | `super-puma-grua.png` | La tarjeta del Super Puma, en el vuelo, en el segundo sitio: un rescate con la grúa en estacionario, porque aún no tiene cabina | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/retrato-jazlyn.webp` | `jazlyn-cabina-dibujo.jpg` | La cara de Jazlyn cuando habla | recortada a la cara sola, por encima de los hombros, que en el dibujo llevan las tres barras de primera oficial; 96 × 96, en redondo |
 | `src/assets/ilustraciones/mascara.webp` | `esquemas/mascara.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo de las máscaras | entera, en 4:3, 1280 × 960 |
 | `src/assets/ilustraciones/nube.webp` | `esquemas/nube.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo de la nube de cerca | entera, en 4:3, 1280 × 960 |

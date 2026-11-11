@@ -13,8 +13,10 @@
  * la placa «FLAPS» del panel, que van fijos en el dibujo.
  */
 
-import { t, type TranslationKey } from "../../i18n";
+import { getLocale, t, type TranslationKey } from "../../i18n";
+import { SUPER_PUMA } from "../../flight/super-puma";
 import type { TextosDelMotor } from "./motor-comun";
+import type { TextosDelPlato } from "./plato";
 import type { PalabrasDelPiston, TextosDelPiston } from "./piston";
 import type { TextosDeLasLuces } from "./luces";
 import type { TextosDelTrenE170 } from "./tren-e170";
@@ -409,5 +411,63 @@ export function textosDelTurbofan(): TextosDelMotor & { readonly dibujo: Palabra
       ventilador: t("figura.turbofan.ventilador"),
       aria: t("figura.turbofan.aria"),
     },
+  };
+}
+
+/**
+ * **El plato oscilante del Super Puma.** Los grados, a medio grado y con la
+ * coma o el punto del idioma; las vueltas por segundo, las de su ficha.
+ */
+export function textosDelPlato(): TextosDelPlato {
+  const idioma = getLocale() === "en" ? "en" : "es-PY";
+  const grados = (v: number): string =>
+    (Math.round(v * 2) / 2).toLocaleString(idioma, { maximumFractionDigits: 1 });
+  const vueltas = (SUPER_PUMA.rotor.vueltas / (2 * Math.PI)).toLocaleString(idioma, {
+    maximumFractionDigits: 1,
+  });
+  const k = (clave: string): string => t(`figura.plato.${clave}` as TranslationKey);
+  return {
+    dibujo: {
+      plato: k("plato"),
+      platoFijo: k("platoFijo"),
+      servo: k("servo"),
+      platoQueGira: k("platoQueGira"),
+      varilla: k("varilla"),
+      pala: k("pala"),
+      ciclico: k("ciclico"),
+      colectivo: k("colectivo"),
+      pedales: k("pedales"),
+      camaraLenta: t("figura.plato.camaraLenta", { vueltas }),
+      aria: k("aria"),
+    },
+    quieto: k("quieto"),
+    sube: k("sube"),
+    baja: k("baja"),
+    adelante: k("adelante"),
+    atras: k("atras"),
+    derecha: k("derecha"),
+    izquierda: k("izquierda"),
+    narizDer: k("narizDer"),
+    narizIzq: k("narizIzq"),
+    par: k("par"),
+    parIzq: k("parIzq"),
+    colectivo: k("colectivo"),
+    ciclicoAdelante: k("ciclicoAdelante"),
+    ciclicoLado: k("ciclicoLado"),
+    pedales: k("pedales"),
+    paso: (de, a) =>
+      Math.abs(a - de) < 0.5
+        ? t("figura.plato.paso", { grados: grados(de) })
+        : t("figura.plato.pasoEntre", { de: grados(de), a: grados(a) }),
+    nariz: (y) =>
+      Math.abs(y) < 0.5
+        ? k("narizCero")
+        : t(y > 0 ? "figura.plato.narizDerecha" : "figura.plato.narizIzquierda", {
+            grados: String(Math.round(Math.abs(y))),
+          }),
+    vColectivo: (porciento, paso) => t("figura.plato.vColectivo", { porciento, grados: grados(paso) }),
+    vAdelante: (v) => (v > 0.05 ? k("vAdelante") : v < -0.05 ? k("vAtras") : k("alCentro")),
+    vLado: (v) => (v > 0.05 ? k("vDerecha") : v < -0.05 ? k("vIzquierda") : k("alCentro")),
+    vPedales: (v) => (v > 0.05 ? k("vPedalDer") : v < -0.05 ? k("vPedalIzq") : k("parejos")),
   };
 }
