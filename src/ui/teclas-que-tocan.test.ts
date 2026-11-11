@@ -5,7 +5,7 @@ import { dibujoDeLaTecla, mandoSenalado, vecinasDe } from "./teclas-que-tocan";
 /** Las teclas de fábrica, la primera de cada acción: la de la mano derecha. */
 const DE_FABRICA = {
   teclaDe: (a: Accion) => ACCIONES[a].defecto[0]!,
-  chorro: false,
+  motor: "helice" as const,
 };
 
 /** Las teclas encendidas y apagadas de un dibujo, por su letra. */

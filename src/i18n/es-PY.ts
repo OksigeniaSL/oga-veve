@@ -70,6 +70,9 @@ export const ES_PY = {
   "hud.sinVoz":
     "Este navegador no tiene voces instaladas: el instructor no puede hablar.",
   "hud.throttle": "Motor",
+  "hud.colectivo": "Colectivo",
+  "hud.colectivoArriba": "Subir el colectivo",
+  "hud.colectivoAbajo": "Bajar el colectivo",
   "hud.vspeed": "Subida",
   "hud.rotor": "Vueltas del rotor",
   "hud.par": "Par de los motores",
@@ -89,7 +92,9 @@ export const ES_PY = {
     "Bajaste antes de la barra blanca: las flechas son para rodar y despegar",
   "hud.brakes": "Frenos",
   "hud.crashed": "Se rompió algo. Volvemos a la pista…",
+  "hud.crashedHelicoptero": "Se rompió algo. Volvemos al helipuerto…",
   "hud.home": "Pista",
+  "hud.helipuerto": "Helipuerto",
   "hud.objective": "Objetivo",
   "sound.normal": "Sonido normal",
   "sound.bajo": "Sonido bajo",
@@ -161,6 +166,7 @@ export const ES_PY = {
   "scenario.barajas.name": "Madrid-Barajas",
 
   "tutor.throttle": "Dale motor",
+  "tutor.colectivo": "Subí el colectivo",
   "tutor.speed": "Esperá a que corra",
   "tutor.pull": "Tirá para arriba",
   "tutor.flying": "¡Estás volando!",
@@ -221,6 +227,8 @@ export const ES_PY = {
    */
   "teclas.mando":
     "También se juega con mando o con joystick de vuelo: enchufalo y movelo. Con el joystick, la seta es el TRIM, el gatillo frena y los botones de la base mueven los flaps y el tren.",
+  "teclas.mandoHelicoptero":
+    "También se juega con mando o con joystick de vuelo: enchufalo y movelo. La palanca del gas del joystick es el colectivo, y el gatillo frena las ruedas.",
   "teclas.restore": "Como venía",
   "teclas.close": "Cerrar",
   "tecla.pitchUp": "Subir el morro",
@@ -242,6 +250,10 @@ export const ES_PY = {
   "tecla.yawRight": "Timón a la derecha",
   "tecla.throttleUp": "Más motor",
   "tecla.throttleDown": "Menos motor",
+  "tecla.colectivoArriba": "Subir el colectivo",
+  "tecla.colectivoAbajo": "Bajar el colectivo",
+  "tecla.pedalIzquierdo": "Pedal izquierdo",
+  "tecla.pedalDerecho": "Pedal derecho",
   "tecla.brakes": "Frenos",
   "tecla.reversa": "Reversa",
   "tecla.flaps": "Flaps",
@@ -3133,6 +3145,9 @@ export const ES_PY = {
   "tactil.palanca": "Palanca",
   "tactil.timon": "Pedales del timón",
   "tactil.motor": "Motor",
+  "tactil.ciclico": "Cíclico",
+  "tactil.pedales": "Pedales",
+  "tactil.colectivo": "Colectivo",
   /*
    * **La hoja de la instructora**: lo que se gana en cada vuelo, una fila por
    * parte con su visto. Las claves siguen llamándose `galon` porque así se
@@ -3182,6 +3197,7 @@ export const ES_PY = {
 
   "tarjeta.abrir": "Ver el avión de cerca",
   "tarjeta.ficha.envergadura": "De punta a punta del ala",
+  "tarjeta.ficha.rotor": "De punta a punta de las palas",
   "tarjeta.ficha.largo": "De la nariz a la cola",
   "tarjeta.ficha.mtow": "Lo más que puede pesar para despegar",
   "tarjeta.ficha.crucero": "A qué velocidad viaja",
@@ -3190,10 +3206,12 @@ export const ES_PY = {
   "tarjeta.ficha.motores": "Cuántos motores lleva, y de qué clase",
   "tarjeta.ficha.plazas": "Cuántas personas caben, con quien pilota",
   "tarjeta.ficha.vref": "A qué velocidad cruza el umbral para aterrizar",
+  "tarjeta.ficha.vne": "La velocidad que no se pasa nunca",
   "tarjeta.motor.piston": "de pistón",
   "tarjeta.motor.radial": "radial",
   "tarjeta.motor.turbohelice": "turbohélice",
   "tarjeta.motor.turbofan": "turbofán",
+  "tarjeta.motor.turboeje": "turboeje",
   "tarjeta.pieza.alerones": "Alerones",
   "tarjeta.pieza.profundidad": "Timón de profundidad",
   "tarjeta.pieza.timon": "Timón de dirección",

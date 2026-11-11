@@ -99,12 +99,19 @@ export interface DatoDeLaFicha {
  */
 export function datosDeLaFicha(f: FichaTecnica): DatoDeLaFicha[] {
   const filas: DatoDeLaFicha[] = [
-    {
-      rotulo: "WINGSPAN",
-      valor: cifra(f.envergadura, 1),
-      unidad: "m",
-      glosa: "tarjeta.ficha.envergadura",
-    },
+    f.helicoptero
+      ? {
+          rotulo: "ROTOR",
+          valor: cifra(f.envergadura, 1),
+          unidad: "m",
+          glosa: "tarjeta.ficha.rotor",
+        }
+      : {
+          rotulo: "WINGSPAN",
+          valor: cifra(f.envergadura, 1),
+          unidad: "m",
+          glosa: "tarjeta.ficha.envergadura",
+        },
   ];
   if (f.largo !== null)
     filas.push({
@@ -156,6 +163,16 @@ export function datosDeLaFicha(f: FichaTecnica): DatoDeLaFicha[] {
       unidad: "",
       glosa: "tarjeta.ficha.plazas",
     });
+  if (f.helicoptero && f.vne !== null) {
+    filas.push({
+      rotulo: "VNE",
+      valor: cifra(f.vne * KT),
+      unidad: "kt",
+      tambien: `${cifra(aLas(f.vne * 3.6, 10))} km/h`,
+      glosa: "tarjeta.ficha.vne",
+    });
+    return filas;
+  }
   filas.push({
     rotulo: "VREF",
     valor: cifra(f.vref * KT),

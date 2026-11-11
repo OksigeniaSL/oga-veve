@@ -22,7 +22,12 @@
  * La idea de la tortuga vino de las maquetas de diseño; el resto es la misma
  * regla de siempre: si hace falta explicarlo, no vale para este peldaño.
  */
-
+import type { Propulsion } from "../flight/aircraft";
+import {
+  HELICOPTERO_DE_ESPALDAS,
+  helicopteroDePerfil,
+  palasDeRotor,
+} from "./dibujos-del-helicoptero";
 /**
  * El motor del gas, con su flecha: más motor y menos motor. Hélice en los
  * aviones de hélice y reactor en los de reactor: ver `fan`.
@@ -106,14 +111,21 @@ export function fan(
   return { aro, palas };
 }
 
-/** El motor de este avión, entero, centrado en (cx, cy) y de radio r. */
+/**
+ * El motor de este aparato, entero, centrado en (cx, cy) y de radio r: la
+ * hélice, el fan o, en el helicóptero, **el helicóptero de perfil**. Su palanca
+ * es el colectivo, que no da más motor sino más paso a las palas: el aparato
+ * sube. El dibujo es eso, el aparato con la flecha de hacia dónde va. Ver
+ * `ui/dibujos-del-helicoptero.ts`.
+ */
 export function dibujoDelMotor(
-  chorro: boolean,
+  motor: Propulsion,
   cx: number,
   cy: number,
   r: number,
 ): string {
-  if (!chorro) return palasDeHelice(cx, cy, r);
+  if (motor === "rotor") return helicopteroDePerfil(cx, cy, r);
+  if (motor === "helice") return palasDeHelice(cx, cy, r);
   const { aro, palas } = fan(cx, cy, r);
   return aro + palas;
 }
@@ -121,24 +133,36 @@ export function dibujoDelMotor(
 const FLECHA_MAS = "M20 1.5 L24 10 H16 Z";
 const FLECHA_MENOS = "M20 22.5 L16 14 H24 Z";
 
-/** Más motor: el motor de este avión con la flecha hacia arriba. */
-export const motorMas = (chorro: boolean): string =>
-  conFlecha(dibujoDelMotor(chorro, 9, 12, chorro ? 8.4 : 10), FLECHA_MAS);
+/**
+ * Dónde va el motor en el botón, al lado de la flecha. El helicóptero va un
+ * poco más a la izquierda y más pequeño: de perfil es más largo que una hélice
+ * de frente y, con el centro de la hélice, el morro se metía en la flecha.
+ */
+const enElBoton = (motor: Propulsion): string =>
+  motor === "rotor"
+    ? dibujoDelMotor(motor, 7.8, 12, 7.6)
+    : dibujoDelMotor(motor, 9, 12, motor === "chorro" ? 8.4 : 10);
+
+/** Más motor: el motor de este aparato con la flecha hacia arriba. */
+export const motorMas = (motor: Propulsion): string =>
+  conFlecha(enElBoton(motor), FLECHA_MAS);
 /** Menos motor: el mismo motor con la flecha hacia abajo. */
-export const motorMenos = (chorro: boolean): string =>
-  conFlecha(dibujoDelMotor(chorro, 9, 12, chorro ? 8.4 : 10), FLECHA_MENOS);
+export const motorMenos = (motor: Propulsion): string =>
+  conFlecha(enElBoton(motor), FLECHA_MENOS);
 
 /** Los de hélice, que son los de siempre y los que salen si no se sabe el avión. */
-export const HELICE_MAS = motorMas(false);
-export const HELICE_MENOS = motorMenos(false);
+export const HELICE_MAS = motorMas("helice");
+export const HELICE_MENOS = motorMenos("helice");
 
 /**
  * Los dos dibujos de la palanca táctil del gas: el motor grande arriba —más— y
  * pequeño abajo —menos—, en su lienzo alto de 24 por 60.
  */
-export const dibujoDelGasTactil = (chorro: boolean): string =>
-  dibujoDelMotor(chorro, 12, 13, chorro ? 10.4 : 13) +
-  dibujoDelMotor(chorro, 12, 48.5, chorro ? 5.4 : 7);
+export const dibujoDelGasTactil = (motor: Propulsion): string =>
+  motor === "rotor"
+    ? dibujoDelMotor(motor, 12, 13, 11) + dibujoDelMotor(motor, 12, 48.5, 6)
+    : dibujoDelMotor(motor, 12, 13, motor === "chorro" ? 10.4 : 13) +
+      dibujoDelMotor(motor, 12, 48.5, motor === "chorro" ? 5.4 : 7);
 
 /** Silueta de tortuga: caparazón, cabeza y patas. Despacio. */
 const TORTUGA = `
@@ -176,7 +200,7 @@ const CERRO = `
 `;
 
 /** El avioncito que se mueve. Visto desde detrás: alas y deriva. */
-const AVION = `
+const AVION_DE_ESPALDAS = `
   <path d="M8 5.2 v3.4 M1.6 8.2 h12.8 M5.4 10.4 h5.2" />
 `;
 
@@ -250,8 +274,14 @@ export class Pictogramas {
   /** Giro acumulado de la hélice, en grados. */
   private spin = 0;
 
-  /** @param chorro si el avión de hoy es de reactor. Ver `fan`. */
-  static markup(chorro = false): string {
+  /**
+   * @param motor el de la aeronave de hoy: hélice, reactor —ver `fan`— o
+   * rotor. Con el rotor, **el que se mueve por las tarjetas es el helicóptero**
+   * de espaldas, y el que gira es el rotor: un avioncito subiendo por el cerro
+   * de un helicóptero enseña que se vuela otra cosa.
+   */
+  static markup(motor: Propulsion = "helice"): string {
+    const AVION = motor === "rotor" ? HELICOPTERO_DE_ESPALDAS : AVION_DE_ESPALDAS;
     return `
       <div class="pictos" data-hud="pictos">
         <!--
@@ -364,11 +394,14 @@ export class Pictogramas {
         <div class="picto">
           <svg viewBox="0 0 34 34" aria-hidden="true">
             ${
-              chorro
+              motor === "chorro"
                 ? `${fan(17, 17, 16).aro.replace("<path ", '<path class="picto__helice" ')}
                    <g class="picto__helice" data-picto="prop">${fan(17, 17, 16).palas}</g>`
-                : `<g class="picto__helice" data-picto="prop">${palasDeHelice(17, 17, 15)}</g>
-                   <circle class="picto__buje" cx="17" cy="17" r="3.2" />`
+                : motor === "rotor"
+                  ? `<g class="picto__helice" data-picto="prop">${palasDeRotor(17, 17, 16)}</g>
+                     <circle class="picto__buje" cx="17" cy="17" r="2.6" />`
+                  : `<g class="picto__helice" data-picto="prop">${palasDeHelice(17, 17, 15)}</g>
+                     <circle class="picto__buje" cx="17" cy="17" r="3.2" />`
             }
           </svg>
         </div>

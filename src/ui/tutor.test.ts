@@ -207,3 +207,35 @@ describe("el primer despegue se celebra una vez", () => {
     expect(pasoQueToca(m, mirada(enElAire(32), true)).paso).toBe("flying");
   });
 });
+
+/*
+ * **El helicóptero no corre por la pista.** El tutor le pedía «dale motor», y
+ * al posarse con algo de velocidad, «frená»: los pasos de un avión. Ver
+ * `Mirada.helicoptero`.
+ */
+describe("el helicóptero despega subiendo el colectivo, y nada más", () => {
+  const delHelicoptero = (state: FlightState) => ({ ...mirada(state, true), helicoptero: true });
+
+  it("posado sin haber volado, pide subir el colectivo, aunque corra o esté en una pista", () => {
+    const antes = { paso: "throttle" as const, celebrando: 0, haVolado: false };
+    expect(pasoQueToca(antes, delHelicoptero(enElSuelo(0))).paso).toBe("colectivo");
+    expect(pasoQueToca(antes, delHelicoptero(enElSuelo(20))).paso).toBe("colectivo");
+  });
+
+  it("al despegar celebra como el avión, y luego calla", () => {
+    const r = pasoQueToca(
+      { paso: "colectivo", celebrando: 0, haVolado: false },
+      delHelicoptero(enElAire(0, 4)),
+    );
+    expect(r.paso).toBe("flying");
+    const despues = pasoQueToca({ paso: "done", celebrando: 0, haVolado: true }, delHelicoptero(enElAire(30, 50)));
+    expect(despues.paso).toBe("done");
+  });
+
+  it("ni en final pide bajar el motor, ni posado pide frenar ni salir de la pista", () => {
+    const volado = { paso: "done" as const, celebrando: 0, haVolado: true };
+    expect(pasoQueToca(volado, { ...delHelicoptero(enElAire(40, 150)), throttle: 0.9, enFinal: true }).paso).toBe("done");
+    expect(pasoQueToca(volado, delHelicoptero(enElSuelo(30))).paso).toBe("done");
+    expect(pasoQueToca(volado, delHelicoptero(enElSuelo(3))).paso).toBe("done");
+  });
+});

@@ -50,6 +50,7 @@ export interface DeSuClase {
 const PIE = 0.3048;
 const LIBRA = 0.45359237;
 const MILLA = 1852;
+const NUDO = 1852 / 3600;
 
 /**
  * Por avión, con su fuente al lado. Ver la cabecera.
@@ -171,10 +172,23 @@ export const DE_SU_CLASE: Readonly<Record<string, DeSuClase>> = {
     // cabina: piloto, copiloto y mecánico de a bordo.
     plazas: 455,
   },
+  "super-puma": {
+    // La hoja del certificado de tipo de la EASA, R.002, la de toda la
+    // familia AS 332: ver `flight/super-puma.ts`.
+    referencia: "Airbus Helicopters AS 332 Super Puma",
+    largo: null,
+    // 8.600 kg (TCDS R.002, III.12).
+    mtow: 8600,
+    alcance: null,
+    techo: null,
+    // Las plazas dependen de cómo se monte la cabina —rescate, transporte,
+    // camillas—, y la hoja de tipo no da una sola cifra.
+    plazas: null,
+  },
 };
 
 /** La clase de motor, para el dibujo y el rótulo. */
-export type ClaseDeMotor = "piston" | "radial" | "turbohelice" | "turbofan";
+export type ClaseDeMotor = "piston" | "radial" | "turbohelice" | "turbofan" | "turboeje";
 
 /** La ficha entera, en SI. `null` es «no se sabe con fuente»: no se enseña. */
 export interface FichaTecnica {
@@ -190,9 +204,19 @@ export interface FichaTecnica {
   /** Vref, m/s: la del modelo de vuelo. */
   readonly vref: number;
   readonly referencia: string | null;
+  /**
+   * **Si es un helicóptero.** Su «envergadura» es el diámetro del rotor, y en
+   * lugar de la Vref —no cruza ningún umbral a una velocidad: se posa
+   * parado— lleva su VNE, la que no se pasa nunca. Ver `datosDeLaFicha`.
+   */
+  readonly helicoptero: boolean;
+  /** La VNE, m/s, solo en el helicóptero. */
+  readonly vne: number | null;
 }
 
 function claseDe(a: AircraftConfig): ClaseDeMotor {
+  // Un helicóptero suena de prestado a turbohélice, pero lleva turboejes.
+  if (a.helicoptero) return "turboeje";
   switch (a.sound.engine) {
     case "turbofan":
       return "turbofan";
@@ -222,5 +246,7 @@ export function fichaTecnicaDe(a: AircraftConfig): FichaTecnica {
     plazas: clase?.plazas ?? null,
     vref: a.approachSpeed,
     referencia: clase?.referencia ?? null,
+    helicoptero: !!a.helicoptero,
+    vne: a.helicoptero ? a.vmoKt * NUDO : null,
   };
 }

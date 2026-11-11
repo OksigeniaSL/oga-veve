@@ -55,12 +55,14 @@ import {
   AIRCRAFT,
   PYKASU,
   conMasa,
+  propulsionDe,
   esDeChorro,
   tieneReversa,
   velocidadDePerdida,
   type AircraftConfig,
 } from "./flight/aircraft";
 import { dibujoDelGasTactil } from "./ui/pictogramas";
+import { HELICOPTERO_DESDE_ARRIBA } from "./ui/dibujos-del-helicoptero";
 import { InputManager } from "./flight/input";
 import type { LoQueVeLaMano } from "./flight/mano";
 import {
@@ -6811,7 +6813,8 @@ export class Game {
     this.keyScreen?.setSimple(
       this.tier.instruments === "none" || this.tier.instruments === "pictorial",
     );
-    this.keyScreen?.setCompensador(this.tier.model !== "simple");
+    // El helicóptero no lleva compensador que mover con las flechas: ver `compensadorVivo`.
+    this.keyScreen?.setCompensador(this.tier.model !== "simple" && !this.aircraft.helicoptero);
     const ajustesRoot = document.getElementById("ajustes");
     if (ajustesRoot) {
       this.ajustesUI = new PantallaDeAjustes(
@@ -7307,7 +7310,7 @@ export class Game {
         document.getElementById("inicio-velo"),
         () => ({
           teclaDe: (accion) => this.input.preferredKey(accion),
-          chorro: esDeChorro(this.aircraft),
+          motor: propulsionDe(this.aircraft),
         }),
         {
           arrancar: () => this.toggleEngine(),
@@ -13003,6 +13006,20 @@ export class Game {
   }
 
   /**
+   * **El helipuerto de casa** del helicóptero, en coordenadas del mundo y con
+   * su indicativo si lo tiene, o `null` si no se vuela un helicóptero o el
+   * campo no tiene ninguno. Es de donde sale y adonde vuelve.
+   */
+  private helipuertoDeCasa(): { x: number; z: number; oaci: string | null } | null {
+    if (!this.aircraft.helicoptero) return null;
+    const aero = this.scenario.aerodrome;
+    const sitio = helipuertosDe(aero)[0];
+    if (!sitio) return null;
+    // Coordenadas del aeródromo, con la Y al revés que la Z del mundo.
+    return { x: sitio[0], z: -sitio[1], oaci: aero?.helipuertosAMano?.oaci ?? null };
+  }
+
+  /**
    * **El helicóptero empieza posado en el helipuerto**, con los motores en
    * marcha, el rotor en sus vueltas y el colectivo abajo: arrancar llega
    * aparte (ADR 0026, paso 3). Cara al viento, que es como se despega y se
@@ -13012,11 +13029,9 @@ export class Game {
    * camino: todo lo que el reinicio limpia lo sigue limpiando.
    */
   private posarEnElHelipuerto(): void {
-    const sitio = helipuertosDe(this.scenario.aerodrome)[0];
+    const sitio = this.helipuertoDeCasa();
     if (!sitio) return;
-    // Coordenadas del aeródromo, con la Y al revés que la Z del mundo.
-    const x = sitio[0];
-    const z = -sitio[1];
+    const { x, z } = sitio;
     const viento = this.vientoAqui?.aire ?? vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA);
     const rumbo =
       Math.hypot(viento.x, viento.z) > 1.5
@@ -19797,7 +19812,10 @@ export class Game {
     this.updateHomeIndicator();
     this.hud.tutor.update(
       this.flight.state,
-      this.input.controls.throttle,
+      // En el helicóptero, el paso de las palas para despegar: ver `STEPS.colectivo`.
+      this.flight instanceof HelicopteroComoModelo
+        ? this.flight.pasoParaDespegar()
+        : this.input.controls.throttle,
       dt,
       /*
        * Y si viene **de verdad** en final, que es el mismo embudo que usan los
@@ -19968,7 +19986,7 @@ export class Game {
             mando: this.input.ultimoMando,
             teclas: {
               teclaDe: (accion) => this.input.preferredKey(accion),
-              chorro: esDeChorro(this.aircraft),
+              motor: propulsionDe(this.aircraft),
             },
             peldano: (PELDANOS.indexOf(this.tier.avisos) + 1) as 1 | 2 | 3 | 4,
           }
@@ -25686,9 +25704,16 @@ export class Game {
      * aeropuerto: la aguja al campo llevaba al avión en línea recta hasta
      * encima de la pista, y desde ahí no se entra en final; los puntos de la
      * aproximación te dejan en el eje a diez millas.
+     *
+     * **Y el helicóptero vuelve a su helipuerto**, no a la cabecera: la
+     * tarjeta decía «Pista» y señalaba la de Los Rodeos, a setecientos metros
+     * de donde despega y se posa. Ver `helipuertoDeCasa`.
      */
-    const [ux, uz] = umbralEnUso(campo);
-    const [tx, tz] = umbralEnUso(this.elCampo(this.destinoId));
+    const helipuerto = this.helipuertoDeCasa();
+    const [ux, uz] = helipuerto ? [helipuerto.x, helipuerto.z] : umbralEnUso(campo);
+    const [tx, tz] = helipuerto
+      ? [helipuerto.x, helipuerto.z]
+      : umbralEnUso(this.elCampo(this.destinoId));
     const senalado = aDondeSenala({
       enTierra: this.flight.state.onGround,
       enFinal: this.faseDeAhora === "final",
@@ -25737,13 +25762,16 @@ export class Game {
         ? "objetivo"
         : destino
           ? "destino"
-          : "pista",
+          : helipuerto
+            ? "helipuerto"
+            : "pista",
       // El destino del vuelo va siempre, aunque la flecha señale otra cosa:
       // ver `setHome`.
       delVuelo
         ? {
             nombre: t(delVuelo.nameKey as TranslationKey),
-            oaci: delVuelo.oaci,
+            // Y con el indicativo del helipuerto, que tiene el suyo: GCXM y no GCXO.
+            oaci: helipuerto?.oaci ?? delVuelo.oaci,
             escenario: delVuelo.escenario,
           }
         : undefined,
@@ -32892,6 +32920,7 @@ export class Game {
     if (this.flight instanceof HelicopteroComoModelo) {
       this.flight.ponerEstabilizacion(estabilizacionDelPeldano(next.id));
       this.input.ponerMuelleDelColectivo(estabilizacionDelPeldano(next.id) === "estacionario");
+      this.ponerLasMarcasDeLaPalanca();
     } else {
       this.flight = this.buildFlightModel(next);
       this.flight.reset(carried);
@@ -32958,7 +32987,7 @@ export class Game {
     this.keyScreen?.setSimple(
       next.instruments === "none" || next.instruments === "pictorial",
     );
-    this.keyScreen?.setCompensador(next.model !== "simple");
+    this.keyScreen?.setCompensador(next.model !== "simple" && !this.aircraft.helicoptero);
     this.updateBadge();
     /*
      * El nombre del peldaño, y **no la edad**.
@@ -34036,22 +34065,60 @@ export class Game {
    *
    * Un reactor con una hélice dibujada en la palanca de gases enseña algo que
    * luego hay que desaprender. Ver `fan` en ui/pictogramas.ts.
+   *
+   * **Y el helicóptero, con lo suyo**: el colectivo con el helicóptero de
+   * perfil, la palanca de la pantalla —el cíclico— con el helicóptero visto
+   * desde arriba, y los tres mandos con su nombre de helicóptero para quien
+   * los oye leer. Ver `ui/dibujos-del-helicoptero.ts`.
    */
   private ponerElDibujoDelMotor(): void {
-    const chorro = esDeChorro(this.aircraft);
-    this.keyScreen?.setChorro(chorro);
+    const motor = propulsionDe(this.aircraft);
+    const helicoptero = motor === "rotor";
+    this.keyScreen?.setMotor(motor);
     const gas = document.querySelector<SVGElement>(
       '[data-touch="throttle"] .pad__dibujo',
     );
-    if (gas) gas.innerHTML = dibujoDelGasTactil(chorro);
-    /*
-     * Y las marcas de la palanca, que también son de este avión y de este
-     * modelo de vuelo: el gas de rodaje de un reactor no es el de una
-     * avioneta, ni el del modelo sencillo el del completo. La misma cuenta que
-     * usa el tope de rodaje, para que la marca y el tope digan lo mismo. Ver
-     * `flight/palanca-de-gas.ts`.
-     */
-    this.input.ponerMarcasDeGas(this.flight.gasParaRodar(RODAJE));
+    if (gas) gas.innerHTML = dibujoDelGasTactil(motor);
+    const palanca = document.querySelector<SVGElement>('[data-touch="stick"] .pad__dibujo');
+    if (palanca) {
+      // El avión que trae la página, guardado para volver a él si se cambia de aparato.
+      this.palancaDelAvion ??= palanca.innerHTML;
+      palanca.innerHTML = helicoptero ? HELICOPTERO_DESDE_ARRIBA : this.palancaDelAvion;
+    }
+    for (const [mando, delAvion, delHelicoptero] of [
+      ["stick", "tactil.palanca", "tactil.ciclico"],
+      ["rudder", "tactil.timon", "tactil.pedales"],
+      ["throttle", "tactil.motor", "tactil.colectivo"],
+    ] as const) {
+      const el = document.querySelector<HTMLElement>(`[data-touch="${mando}"]`);
+      if (!el) continue;
+      const clave = helicoptero ? delHelicoptero : delAvion;
+      el.dataset.i18nLabel = clave;
+      el.setAttribute("aria-label", t(clave));
+    }
+    this.ponerLasMarcasDeLaPalanca();
+  }
+
+  /** La palanca del avión de la página, para devolvérsela. Ver `ponerElDibujoDelMotor`. */
+  private palancaDelAvion: string | null = null;
+
+  /**
+   * Las marcas de la palanca, que también son de este avión y de este modelo
+   * de vuelo: el gas de rodaje de un reactor no es el de una avioneta, ni el
+   * del modelo sencillo el del completo. La misma cuenta que usa el tope de
+   * rodaje, para que la marca y el tope digan lo mismo. Ver
+   * `flight/palanca-de-gas.ts`.
+   *
+   * **En el helicóptero, la marca es la que lo sostiene**: media palanca en la
+   * estabilización de estacionario, donde la palanca pide subir o bajar, y el
+   * colectivo del estacionario en las demás. Un helicóptero no rueda con el
+   * colectivo, y la marca de rodaje caía abajo del todo: soltar el dedo cerca
+   * del suelo lo dejaba pegado al colectivo de posarse.
+   */
+  private ponerLasMarcasDeLaPalanca(): void {
+    this.input.ponerMarcasDeGas(
+      this.aircraft.helicoptero ? this.flight.gasPara(0) : this.flight.gasParaRodar(RODAJE),
+    );
   }
 
   private onResize = (): void => {

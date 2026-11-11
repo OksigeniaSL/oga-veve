@@ -14,6 +14,7 @@
  * lección. Aquí solo se pintan.
  */
 
+import type { Propulsion } from "../flight/aircraft";
 import { escribirRincon } from "./escala";
 import { alPulsar } from "./pulsar";
 import { fan, motorMas, motorMenos } from "./pictogramas";
@@ -1626,12 +1627,15 @@ export const DIBUJOS = {
    * **Más gas y menos gas**: el motor de este avión con su flecha, el mismo
    * dibujo que llevan los botones del gas. Un dibujo, un significado: lo que
    * pide la tarjeta es justo el botón que hay que tocar. Hélice en los de
-   * hélice y reactor en los reactores, como el de arrancar: ver `chorro`.
+   * hélice y reactor en los reactores, como el de arrancar: ver `motor`. Y el
+   * helicóptero de perfil en el colectivo del helicóptero.
    */
-  "gas-mas": motorMas(false),
-  "gas-menos": motorMenos(false),
-  "gas-mas-reactor": motorMas(true),
-  "gas-menos-reactor": motorMenos(true),
+  "gas-mas": motorMas("helice"),
+  "gas-menos": motorMenos("helice"),
+  "gas-mas-reactor": motorMas("chorro"),
+  "gas-menos-reactor": motorMenos("chorro"),
+  "gas-mas-rotor": motorMas("rotor"),
+  "gas-menos-rotor": motorMenos("rotor"),
   aves: AVES,
   "aves-subi": AVES_SUBI,
   papi0: papi(0),
@@ -1763,17 +1767,22 @@ export function comoDibujo(nombre: string): DibujoDeSenal {
  */
 export class Senal {
   /**
-   * Si el avión de hoy es de reactor. La fase de arrancar pide `"helice"` en
+   * Qué motor lleva el aparato de hoy. La fase de arrancar pide `"helice"` en
    * el guion, que es de todos los aviones; el dibujo que sale es el del motor
    * que lleva este. Lo pone el HUD. Ver `REACTOR`.
    */
-  chorro = false;
+  motor: Propulsion = "helice";
   /**
    * El dibujo del motor que lleva **este** avión: la hélice o el reactor, y
    * los del gas con el suyo.
    */
   private delMotorDeHoy(dibujo: DibujoDeSenal): DibujoDeSenal {
-    if (!this.chorro) return dibujo;
+    if (this.motor === "rotor") {
+      if (dibujo === "gas-mas") return "gas-mas-rotor";
+      if (dibujo === "gas-menos") return "gas-menos-rotor";
+      return dibujo;
+    }
+    if (this.motor !== "chorro") return dibujo;
     if (dibujo === "helice") return "reactor";
     if (dibujo === "gas-mas") return "gas-mas-reactor";
     if (dibujo === "gas-menos") return "gas-menos-reactor";

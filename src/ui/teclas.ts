@@ -22,12 +22,14 @@ import {
   type Accion,
   type Keymap,
 } from "../flight/keymap";
-import { t } from "../i18n";
+import { t, type TranslationKey } from "../i18n";
+import type { Propulsion } from "../flight/aircraft";
 import { Panel } from "./panel";
 import { armarPanel } from "./concha";
 import { botonDeNoExplicar } from "./no-volver-a-explicar";
 import { motorMas, motorMenos } from "./pictogramas";
 import { DIBUJOS } from "./senal";
+import { FRENO_DEL_HELICOPTERO } from "./dibujos-del-helicoptero";
 
 /*
  * Los dibujos de las teclas. En SVG y no emoji: un emoji se ve distinto en
@@ -59,7 +61,7 @@ export const FLECHAS = {
  * también los botones del motor del HUD. Estaban dibujados dos veces y solo
  * uno de los dos llevaba flecha: la del HUD eran dos hélices del mismo dibujo
  * en dos tamaños, y no se distinguían. Y es hélice o reactor según el avión:
- * ver `setChorro`.
+ * ver `setMotor`.
  */
 
 /*
@@ -120,6 +122,17 @@ const GLIFOS: Partial<Record<Accion, string>> = {
    * no existe, y la vista desde la cabina es de las cosas que más se piden.
    */
   camera: OJO,
+};
+
+/**
+ * Los mandos que en el helicóptero se llaman de otra manera: el gas es el
+ * colectivo y el timón, los pedales del rotor de cola.
+ */
+const NOMBRE_EN_EL_HELICOPTERO: Partial<Record<Accion, TranslationKey>> = {
+  throttleUp: "tecla.colectivoArriba",
+  throttleDown: "tecla.colectivoAbajo",
+  yawLeft: "tecla.pedalIzquierdo",
+  yawRight: "tecla.pedalDerecho",
 };
 
 /**
@@ -193,12 +206,44 @@ export class KeyScreen {
   /** Sin letras: teclado dibujado. Con letras: la tabla de siempre. */
   private simple = false;
 
-  /** Si el avión de hoy es de reactor: el gas lleva su fan y no una hélice. */
-  private chorro = false;
-  setChorro(chorro: boolean): void {
-    if (chorro === this.chorro) return;
-    this.chorro = chorro;
+  /**
+   * Qué mueve la palanca de hoy: el gas lleva su hélice o su fan, y el
+   * colectivo del helicóptero, el helicóptero. Ver `glifoDe`.
+   */
+  private motor: Propulsion = "helice";
+  setMotor(motor: Propulsion): void {
+    if (motor === this.motor) return;
+    this.motor = motor;
     if (!this.root.hidden) this.render();
+  }
+
+  /**
+   * El dibujo de cada mando, con el aparato de hoy.
+   *
+   * **Y en el helicóptero, los pedales.** En un avión de los peldaños de abajo
+   * el timón va solo y no se anuncia; en el helicóptero, parado en el aire, los
+   * pedales son lo único que lo hace girar —la palanca lo mueve de lado—, así
+   * que sin ellos no hay forma de encararlo hacia donde se quiere ir.
+   */
+  private glifoDe(accion: Accion | null): string | undefined {
+    if (accion === null) return undefined;
+    const helicoptero = this.motor === "rotor";
+    if (accion === "throttleUp") return motorMas(this.motor);
+    if (accion === "throttleDown") return motorMenos(this.motor);
+    if (helicoptero && accion === "brakes")
+      return `<svg viewBox="0 0 24 24" aria-hidden="true">${FRENO_DEL_HELICOPTERO}</svg>`;
+    if (helicoptero && accion === "yawLeft") return DIBUJOS["pie-izquierdo"];
+    if (helicoptero && accion === "yawRight") return DIBUJOS["pie-derecho"];
+    return GLIFOS[accion];
+  }
+
+  /** El nombre de cada mando en la tabla, con el de los mandos del helicóptero. */
+  private nombreDe(accion: Accion): TranslationKey {
+    if (this.motor === "rotor") {
+      const suyo = NOMBRE_EN_EL_HELICOPTERO[accion];
+      if (suyo) return suyo;
+    }
+    return ACCIONES[accion].label;
   }
 
   /**
@@ -408,14 +453,7 @@ export class KeyScreen {
     const accion = this.keymap.isAnnounced(code)
       ? this.keymap.actionFor(code)
       : null;
-    const glifo =
-      accion === "throttleUp"
-        ? motorMas(this.chorro)
-        : accion === "throttleDown"
-          ? motorMenos(this.chorro)
-          : accion
-            ? GLIFOS[accion]
-            : undefined;
+    const glifo = this.glifoDe(accion);
     const clases = ["tecla", extra, glifo ? "tecla--activa" : ""]
       .filter(Boolean)
       .join(" ");
@@ -528,7 +566,7 @@ export class KeyScreen {
           <circle cx="99" cy="9" r="1.8" class="teclas__toque-golpe" />
         </svg>
         <span class="teclas__toque-rotulo"></span>
-        ${this.simple ? "" : `<p class="teclas__pista">${t("teclas.mando")}</p>`}
+        ${this.simple ? "" : `<p class="teclas__pista">${t(this.motor === "rotor" ? "teclas.mandoHelicoptero" : "teclas.mando")}</p>`}
       </div>
     `;
   }
@@ -546,7 +584,7 @@ export class KeyScreen {
         .join(" · ");
       return `
         <tr>
-          <th scope="row">${t(ACCIONES[accion].label)}</th>
+          <th scope="row">${t(this.nombreDe(accion))}</th>
           <td>
             <button class="teclas__tecla${esperando ? " teclas__tecla--esperando" : ""}"
                     type="button" data-accion="${accion}">

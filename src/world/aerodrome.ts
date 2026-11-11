@@ -248,7 +248,12 @@ export interface Aerodrome {
    * conserva, como las pasarelas. Van delante de los de OpenStreetMap: ver
    * `helipuertosDe`.
    */
-  readonly helipuertosAMano?: { readonly puntos: readonly Punto[]; readonly fuente: string };
+  readonly helipuertosAMano?: {
+    readonly puntos: readonly Punto[];
+    readonly fuente: string;
+    /** El indicativo del helipuerto, si tiene uno propio en el AIP. */
+    readonly oaci?: string;
+  };
   /**
    * Dónde para un avión que rueda antes de pisar la pista.
    *

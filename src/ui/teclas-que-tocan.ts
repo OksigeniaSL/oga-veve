@@ -74,9 +74,9 @@ function glifoDe(que: TeclaQueToca, o: ConQueTeclas): string {
     case "aerofrenos":
       return DIBUJOS.aerofrenos;
     case "masGas":
-      return motorMas(o.chorro);
+      return motorMas(o.motor);
     case "menosGas":
-      return motorMenos(o.chorro);
+      return motorMenos(o.motor);
     default:
       return "";
   }
@@ -90,8 +90,8 @@ function conTeclado(que: TeclaQueToca, o: ConQueTeclas): string {
   if (que === "masGas" || que === "menosGas")
     return `
       <span class="inicio__fila">
-        ${tecla(motorMenos(o.chorro), letra("throttleDown"), que === "menosGas")}
-        ${tecla(motorMas(o.chorro), letra("throttleUp"), que === "masGas")}
+        ${tecla(motorMenos(o.motor), letra("throttleDown"), que === "menosGas")}
+        ${tecla(motorMas(o.motor), letra("throttleUp"), que === "masGas")}
       </span>`;
   const suya = o.teclaDe(ACCION_DE[que]);
   return `
@@ -274,7 +274,7 @@ export class PistaDeTeclas {
   }
 
   pintar(v: VistaDeLaTecla | null): void {
-    const clave = v ? `${v.tecla}|${v.mando}|${v.teclas.chorro}|${v.teclas.teclaDe(ACCION_DE[v.tecla])}` : "";
+    const clave = v ? `${v.tecla}|${v.mando}|${v.teclas.motor}|${v.teclas.teclaDe(ACCION_DE[v.tecla])}` : "";
     if (v && String(v.peldano) !== this.raiz.dataset.peldano) {
       this.raiz.dataset.peldano = String(v.peldano);
       const texto = this.raiz.querySelector<HTMLElement>(".ttq__aprendida-texto");

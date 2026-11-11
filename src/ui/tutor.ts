@@ -37,8 +37,10 @@
 import type { FlightState } from "../flight/model";
 import { nombreDeTecla, type Accion } from "../flight/keymap";
 import { t, type TranslationKey } from "../i18n";
+import type { Propulsion } from "../flight/aircraft";
 import { DIBUJOS } from "./senal";
 import { motorMas, motorMenos } from "./pictogramas";
+import { FRENO_DEL_HELICOPTERO, HELICOPTERO_VOLANDO } from "./dibujos-del-helicoptero";
 
 /*
  * **Los dibujos del tutor son los del resto del juego, no caracteres.**
@@ -51,12 +53,16 @@ import { motorMas, motorMenos } from "./pictogramas";
  * Un dibujo por significado: el que se ve aquí es el que se busca en pantalla.
  */
 const DIBUJO_DEL_TUTOR = {
-  masMotor: (chorro: boolean) => motorMas(chorro),
-  menosMotor: (chorro: boolean) => motorMenos(chorro),
+  masMotor: (motor: Propulsion) => motorMas(motor),
+  menosMotor: (motor: Propulsion) => motorMenos(motor),
   acelerar: () => DIBUJOS.motor,
   tirar: () => DIBUJOS.tirar,
-  volando: () => DIBUJOS.ala,
-  frenar: () => DIBUJOS.freno,
+  // Y con el aparato que se vuela: ver `ui/dibujos-del-helicoptero.ts`.
+  volando: (motor: Propulsion) => (motor === "rotor" ? HELICOPTERO_VOLANDO : DIBUJOS.ala),
+  frenar: (motor: Propulsion) =>
+    motor === "rotor"
+      ? `<svg viewBox="0 0 24 24" aria-hidden="true">${FRENO_DEL_HELICOPTERO}</svg>`
+      : DIBUJOS.freno,
   salir: () => DIBUJOS.salida,
 } as const;
 type DibujoDelTutor = keyof typeof DIBUJO_DEL_TUTOR;
@@ -65,6 +71,7 @@ type DibujoDelTutor = keyof typeof DIBUJO_DEL_TUTOR;
 const ROTATION_SPEED = 30;
 
 type Step =
+  | "colectivo"
   | "throttle"
   | "speed"
   | "pull"
@@ -143,6 +150,19 @@ interface StepView {
 }
 
 const STEPS: Record<Exclude<Step, "done">, StepView> = {
+  /*
+   * **El despegue del helicóptero es un paso**: subir el colectivo. No hay
+   * carrera, ni velocidad que esperar, ni tirar de la palanca: con más paso en
+   * las palas, el helicóptero sube. La barra es ese paso frente al que lo
+   * sostiene en el aire, que el juego le da en lugar del gas: se llena hasta
+   * que despega. Ver `pasoParaDespegar` en `flight/fdm-helicoptero.ts`.
+   */
+  colectivo: {
+    cue: { kind: "action", accion: "throttleUp" },
+    touchCue: { kind: "dibujo", dibujo: "masMotor" },
+    key: "tutor.colectivo",
+    progress: (_state, paso) => paso,
+  },
   throttle: {
     cue: { kind: "action", accion: "throttleUp" },
     touchCue: { kind: "dibujo", dibujo: "masMotor" },
@@ -216,10 +236,13 @@ export class Tutor {
   /** De dónde sale la tecla que se dibuja. Ver `renderCue`. */
   private teclaDe: ((accion: Accion) => string) | null = null;
 
-  /** Si el avión de hoy es de reactor: decide el dibujo del motor. */
-  private chorro = false;
-  setChorro(chorro: boolean): void {
-    this.chorro = chorro;
+  /**
+   * Qué mueve la palanca de hoy: decide el dibujo del motor, y con el rotor,
+   * los pasos —ver `pasoQueToca`—.
+   */
+  private motor: Propulsion = "helice";
+  setMotor(motor: Propulsion): void {
+    this.motor = motor;
   }
 
   /** Lo último que se pintó en la tarjeta, para no rehacerla en cada fotograma. */
@@ -343,7 +366,7 @@ export class Tutor {
       const cue = renderCue(
         isTouch() ? view.touchCue : view.cue,
         this.teclaDe,
-        this.chorro,
+        this.motor,
       );
       // Solo si cambia: con un SVG dentro, rehacerlo sesenta veces por
       // segundo es tirar el DOM y la animación de respirar con él.
@@ -388,7 +411,7 @@ export class Tutor {
         celebrando: this.celebrating,
         haVolado: this.hasFlown,
       },
-      { state, throttle, dt, hayRaya, enFinal, velocidad },
+      { state, throttle, dt, hayRaya, enFinal, velocidad, helicoptero: this.motor === "rotor" },
     );
     this.celebrating = salida.celebrando;
     this.hasFlown = salida.haVolado;
@@ -399,10 +422,10 @@ export class Tutor {
 function renderCue(
   cue: StepView["cue"],
   teclaDe: ((accion: Accion) => string) | null,
-  chorro = false,
+  motor: Propulsion = "helice",
 ): string {
   if (cue.kind === "dibujo")
-    return `<span class="tutor__glifo">${DIBUJO_DEL_TUTOR[cue.dibujo](chorro)}</span>`;
+    return `<span class="tutor__glifo">${DIBUJO_DEL_TUTOR[cue.dibujo](motor)}</span>`;
 
   if (cue.kind === "action") {
     // **Una sola tecla, y la que usa quien está jugando.** Se probó a
@@ -465,6 +488,12 @@ export interface Mirada {
    * es lo mismo que mira ella. Ver `flight/consejo-de-la-bajada.ts`.
    */
   readonly velocidad?: "lento" | "bien" | "rapido" | null;
+  /**
+   * **Si es un helicóptero**, que no corre por la pista: despega subiendo el
+   * colectivo, se posa donde estaba y no hay carrera que frenar ni pista de
+   * la que salir. Pedirle «frená» al posarse era cosa de avión.
+   */
+  readonly helicoptero?: boolean;
 }
 
 /**
@@ -486,6 +515,11 @@ export function pasoQueToca(
   if (antes.paso === "flying") {
     celebrando -= dt;
     return { paso: celebrando > 0 ? "flying" : "done", celebrando, haVolado };
+  }
+
+  if (state.onGround && mirada.helicoptero) {
+    // Posado tras volar, ya está; si no, a subir el colectivo.
+    return { paso: haVolado ? "done" : "colectivo", celebrando, haVolado };
   }
 
   if (state.onGround) {
@@ -540,6 +574,8 @@ export function pasoQueToca(
     celebrando = 2.6;
     return { paso: "flying", celebrando, haVolado };
   }
+  // El helicóptero, ya en el aire, no tiene más pasos: ver `Mirada.helicoptero`.
+  if (mirada.helicoptero) return { paso: "done", celebrando, haVolado };
 
   /*
    * En el aire y **de verdad** viniendo a aterrizar: dentro del embudo de

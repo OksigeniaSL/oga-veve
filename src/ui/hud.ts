@@ -45,7 +45,8 @@ import { Tablero, type DatosDelTablero } from "./tablero";
 import type { Estado as EstadoDeAvisos } from "../flight/avisos-de-cabina";
 import { regimen } from "./cuadro";
 import { comoSeDiceAqui, type Habla } from "../i18n/habla";
-import { PYKASU, esDeChorro, type AircraftConfig } from "../flight/aircraft";
+import { PYKASU, propulsionDe, esDeChorro, type AircraftConfig } from "../flight/aircraft";
+import { FRENO_DEL_HELICOPTERO, HELICOPTERO_DE_LA_TARJETA } from "./dibujos-del-helicoptero";
 import { Pictogramas, motorMas, motorMenos } from "./pictogramas";
 import { DIBUJOS, Senal } from "./senal";
 import { VentanaDeHistoria } from "./ventana-de-historia";
@@ -1367,10 +1368,11 @@ export class Hud {
     this.antesPuesto = -1;
     const gauges = this.instruments !== "none";
     const pictorial = this.instruments === "pictorial";
-    // Reactor o hélice: decide el dibujo del motor en todo el HUD. Ver `fan`.
-    const chorro = esDeChorro(this.ficha);
-    this.tutor.setChorro(chorro);
-    this.senal.chorro = chorro;
+    // Hélice, reactor o rotor: decide el dibujo del motor en todo el HUD. Ver `dibujoDelMotor`.
+    const motor = propulsionDe(this.ficha);
+    const helicoptero = motor === "rotor";
+    this.tutor.setMotor(motor);
+    this.senal.motor = motor;
     /*
      * **El cuadro de mandos sale en los cuatro peldaños.**
      *
@@ -1748,12 +1750,15 @@ export class Hud {
         -->
         <button class="sonido tarjeta-avion-boton" type="button" data-tarjeta-avion=""
                 aria-label="${t("tarjeta.abrir")}">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true">${
+            helicoptero
+              ? HELICOPTERO_DE_LA_TARJETA
+              : `
             <path d="M12 7.2 l1 3.2 4.4 1.6 v1.2 l-4.4-.8 -.4 2.8 1.4 1 v.9 l-2-.5 -2 .5 v-.9
                      l1.4-1 -.4-2.8 -4.4.8 v-1.2 l4.4-1.6 Z" fill="currentColor" />
             <path d="M4.2 9.4 A8.6 8.6 0 0 1 19.6 8 M19.8 14.6 A8.6 8.6 0 0 1 4.4 16"
-                  fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-          </svg>
+                  fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />`
+          }</svg>
         </button>
         <!--
           Y la puerta de vuelta al hangar. Un hangar al que solo se entra al
@@ -1796,7 +1801,7 @@ export class Hud {
           manera de saber con qué se sube.
         -->
         <div class="tarjeta medidor motor">
-          ${gauges ? `<span class="medidor__etiqueta">${this.ficha.helicoptero ? "COLL" : INSTRUMENTS.throttle}</span>` : ""}
+          ${gauges ? `<span class="medidor__etiqueta">${helicoptero ? "COLL" : INSTRUMENTS.throttle}</span>` : ""}
           <!--
             Y son botones de verdad, no dibujos. Estaban ahí para enseñar qué
             tecla usar y alguien intentó pulsarlos con el ratón, que es lo
@@ -1807,7 +1812,8 @@ export class Hud {
             En los peldaños con dibujos, los botones llevan **el motor con
             su flecha**: arriba para más motor, abajo para menos. El motor
             es el de este avión —hélice o reactor—; ver fan en
-            pictogramas.ts.
+            pictogramas.ts. Y en el helicóptero, el colectivo: el helicóptero
+            de perfil, que sube o baja.
 
             Llevaron la misma hélice en dos tamaños, y no valía: una hélice de
             cuatro palas de frente es una cruz, y en pantalla los dos botones
@@ -1825,14 +1831,14 @@ export class Hud {
           <div class="motor__fila">
             <button class="motor__tecla" type="button" data-hud="throttle-down"
                     data-objetivo="extendido"
-                    aria-label="${t("hud.throttleDown")}">${pictos ? motorMenos(chorro) : "−"}</button>
+                    aria-label="${t(helicoptero ? "hud.colectivoAbajo" : "hud.throttleDown")}">${pictos ? motorMenos(motor) : "−"}</button>
             <!--
               Y la marca del gas que **sostiene el nivel**, en el peldaño donde
               eso existe. Ver ponerGasDeNivel.
             -->
             <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div><span class="motor__nivel" data-hud="gas-nivel" data-nombra="motor" hidden></span></div>
             <button class="motor__tecla" type="button" data-hud="throttle-up" data-objetivo="extendido"
-                    aria-label="${t("hud.throttleUp")}">${pictos ? motorMas(chorro) : "+"}</button>
+                    aria-label="${t(helicoptero ? "hud.colectivoArriba" : "hud.throttleUp")}">${pictos ? motorMas(motor) : "+"}</button>
           </div>
           <!--
             **Quién lleva el gas**, cuando no lo lleva quien vuela: el avión
@@ -1849,7 +1855,7 @@ export class Hud {
             </svg>
             <span class="motor__quien-ayuda" aria-hidden="true">${DIBUJOS.mano}</span>
           </span>
-          ${gauges ? `<span class="medidor__glosa">${t("hud.throttle")}</span>` : ""}
+          ${gauges ? `<span class="medidor__glosa">${t(helicoptero ? "hud.colectivo" : "hud.throttle")}</span>` : ""}
           <!--
             Y la reversa, encima del gas y solo cuando está metida.
 
@@ -1893,13 +1899,17 @@ export class Hud {
             eso mismo. Se ve una vez en la pantalla, se busca en los mandos, y
             está. Ver el dibujo FRENO de ui/senal.ts.
           -->
-          <svg viewBox="0 0 24 24" aria-hidden="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true">${
+            helicoptero
+              ? FRENO_DEL_HELICOPTERO
+              : `
             <rect x="2.4" y="3.2" width="19.2" height="3" rx="1.5" />
             <path d="M2.6 16.6 L11.2 15.8 V9.6 a0.9 0.9 0 0 1 1.8 0 v6.2 l8.4 0.9 v2
                      l-8.4 0.9 v3 l2.1 1.2 v1 L12 24 L6.9 24.2 v-1 l2.1-1.2 v-3
                      l-6.4-0.9 Z"
                   transform="translate(0 -1.6)" />
-          </svg>
+          `
+          }</svg>
         </button>
         <div class="tarjeta medidor freno" data-hud="brakes" hidden>
           ${gauges ? `<span class="medidor__etiqueta">${INSTRUMENTS.brakes}</span>` : ""}
@@ -2060,7 +2070,7 @@ export class Hud {
         al despegar. Ver .rincon y .pictos en style.css.
       -->
       <div class="rincon">
-      ${pictos ? Pictogramas.markup(chorro) : ""}
+      ${pictos ? Pictogramas.markup(motor) : ""}
       <!--
         La señal del vuelo: qué toca hacer ahora, dibujado. Va en **todos** los
         peldaños y no solo en los que llevan texto — hay quien juega en
@@ -2679,7 +2689,7 @@ export class Hud {
   setHome(
     relativeBearing: number,
     metres: number,
-    modo: "pista" | "objetivo" | "destino" = "pista",
+    modo: "pista" | "helipuerto" | "objetivo" | "destino" = "pista",
     destino?: {
       readonly nombre: string;
       readonly oaci: string | null;
@@ -2752,7 +2762,7 @@ export class Hud {
           ? this.cuentaDelTrayecto
           : modo === "destino" && nombre
             ? (nombre.split(" · ")[0] ?? nombre)
-            : t(toObjective ? "hud.objective" : "hud.home");
+            : t(toObjective ? "hud.objective" : modo === "helipuerto" ? "hud.helipuerto" : "hud.home");
     }
     /*
      * **Y el código del destino se ve siempre, no solo volando.** La flecha
@@ -3088,9 +3098,16 @@ export class Hud {
        * aproximación —por ahí abajo está el peligro— y el pájaro, bastante por
        * encima. De la ficha del avión, como todo lo demás.
        */
-      const lenta = this.vref * 0.8;
+      /*
+       * **En el helicóptero, de quieto al crucero.** Lo lento no es peligro: un
+       * helicóptero se para en el aire, y es lo primero que hace. La tortuga es
+       * el estacionario y el pájaro, los 136 nudos de su crucero.
+       */
+      const lenta = this.ficha.helicoptero ? 0 : this.vref * 0.8;
       // El pájaro, donde de verdad se llega. Ver `vmax`.
-      const rapida = Math.min(this.vref * 1.6, this.vmax);
+      const rapida = this.ficha.helicoptero
+        ? this.ficha.cruiseSpeed
+        : Math.min(this.vref * 1.6, this.vmax);
       /*
        * **Y hasta dónde se sube, en el avión que lo lleva marcado.** Con la
        * escala de siempre —cuatrocientos metros arriba— un turbohélice que
@@ -3126,9 +3143,14 @@ export class Hud {
       this.pictos.update(
         (ias - lenta) / (rapida - lenta),
         enLaTarjeta(state.heightAboveGround),
-        engineOn ? throttle : 0,
+        /*
+         * El rotor gira con sus vueltas y no con el colectivo: a sus vueltas
+         * siempre, con más o con menos paso, y girando todavía con los motores
+         * parados. Ver `ponerRotor`.
+         */
+        this.ficha.helicoptero ? this.vueltasDelRotor : engineOn ? throttle : 0,
         dt,
-        engineOn,
+        this.ficha.helicoptero ? this.vueltasDelRotor > 0.02 : engineOn,
         this.bandaActual,
         // Cómo está puesto el avión. Se calcula más abajo para las esferas y
         // la tarjeta del horizonte, pero esos dos solo existen de Taguato
@@ -3612,7 +3634,11 @@ export class Hud {
    * **Las vueltas del rotor y el par**, en tanto por uno de las nominales y del
    * de despegue. Solo las enseña el helicóptero; en los aviones no hay dónde.
    */
+  /** Las vueltas del rotor, por uno: hacen girar su pictograma. */
+  private vueltasDelRotor = 0;
+
   ponerRotor(nr: number, tq: number): void {
+    this.vueltasDelRotor = nr;
     if (this.rotorNr) this.rotorNr.textContent = Math.round(nr * 100).toString();
     if (this.rotorTq) this.rotorTq.textContent = Math.round(tq * 100).toString();
   }
@@ -5180,7 +5206,8 @@ export class Hud {
     let corta: TranslationKey | null = null;
 
     if (state.crashed) {
-      text = t("hud.crashed");
+      // El helicóptero no vuelve a la pista: vuelve a su helipuerto.
+      text = t(this.ficha.helicoptero ? "hud.crashedHelicoptero" : "hud.crashed");
       corta = "palabra.roto";
       arrow = "↺";
     } else if (avisaLaPerdida(state)) {

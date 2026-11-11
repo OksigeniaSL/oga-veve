@@ -29,6 +29,7 @@
  * probarlas sin navegador. `PantallaDelInicio` es lo único que lo toca.
  */
 
+import type { Propulsion } from "../flight/aircraft";
 import type { Accion } from "../flight/keymap";
 import { nombreDeTecla } from "../flight/keymap";
 import type { Gesto, Mando, Quien } from "../flight/inicio";
@@ -37,14 +38,15 @@ import { t } from "../i18n";
 import { RETRATO_DE_JAZLYN } from "./ilustraciones";
 import { motorMas, motorMenos } from "./pictogramas";
 import { DIBUJOS } from "./senal";
+import { HELICOPTERO_VOLANDO } from "./dibujos-del-helicoptero";
 import { FLECHAS } from "./teclas";
 
 /** Lo que hace falta para dibujar las teclas de quien juega. */
 export interface ConQueTeclas {
   /** La tecla que se enseña para cada acción: depende de la mano elegida. */
   readonly teclaDe: (accion: Accion) => string;
-  /** Si el avión es de reactor: el gas lleva su fan y no una hélice. */
-  readonly chorro: boolean;
+  /** Qué mueve la palanca: el gas lleva su hélice o su fan; el colectivo, el helicóptero. */
+  readonly motor: Propulsion;
 }
 
 /**
@@ -256,10 +258,10 @@ function conTeclado(gesto: Gesto, lado: Lado, o: ConQueTeclas): string {
     case "motor":
       return tecla(DIBUJOS.llave, nombreDeTecla(o.teclaDe("engine")), true);
     case "gas":
-      return tecla(motorMas(o.chorro), nombreDeTecla(o.teclaDe("throttleUp")), true);
+      return tecla(motorMas(o.motor), nombreDeTecla(o.teclaDe("throttleUp")), true);
     // El motor con su flecha para abajo, en la tecla del menos: la misma que lleva el botón.
     case "menosGas":
-      return tecla(motorMenos(o.chorro), nombreDeTecla(o.teclaDe("throttleDown")), true);
+      return tecla(motorMenos(o.motor), nombreDeTecla(o.teclaDe("throttleDown")), true);
     case "subir":
       return lasFlechas("arriba", o);
     case "bajar":
@@ -519,14 +521,17 @@ const AVION_DE_LADO = `
  * y baja el ala de ese lado. Ver los mandos en `ui/senal.ts`, que hablan el
  * mismo idioma.
  */
-function loQuePasa(gesto: Gesto, lado: Lado, chorro: boolean): string {
+function loQuePasa(gesto: Gesto, lado: Lado, motor: Propulsion): string {
   switch (gesto) {
     case "motor":
-      return `<span class="inicio__pasa inicio__pasa--motor">${chorro ? DIBUJOS.reactor : DIBUJOS.helice}</span>`;
+      // Arrancado, lo que gira: la hélice, el fan o el rotor con sus cuatro palas.
+      return `<span class="inicio__pasa inicio__pasa--motor">${
+        motor === "chorro" ? DIBUJOS.reactor : motor === "rotor" ? HELICOPTERO_VOLANDO : DIBUJOS.helice
+      }</span>`;
     case "gas":
-      return `<span class="inicio__pasa inicio__pasa--gas">${motorMas(chorro)}</span>`;
+      return `<span class="inicio__pasa inicio__pasa--gas">${motorMas(motor)}</span>`;
     case "menosGas":
-      return `<span class="inicio__pasa inicio__pasa--gas">${motorMenos(chorro)}</span>`;
+      return `<span class="inicio__pasa inicio__pasa--gas">${motorMenos(motor)}</span>`;
     case "subir":
       return `
         <svg class="inicio__pasa" viewBox="0 0 64 64" aria-hidden="true">
@@ -592,7 +597,7 @@ export function dibujoDelGesto(gesto: Gesto, mando: Mando, lado: Lado, o: ConQue
   return `
     <span class="inicio__mando inicio__mando--${mando}" data-mando="${mando}" data-gesto="${gesto}">
       ${hueco}
-      ${loQuePasa(gesto, lado, o.chorro)}
+      ${loQuePasa(gesto, lado, o.motor)}
     </span>`;
 }
 
@@ -798,7 +803,7 @@ export class PantallaDelInicio {
     const mira = v.gesto ? null : (v.mira ?? null);
     this.tarjeta.classList.toggle("inicio__tarjeta--callada", !!v.sinTarjetaSiCalla && !v.linea && !v.gesto && !mira && !v.fin);
     const dibujo = v.gesto
-      ? `${v.gesto}|${v.mando}|${v.lado}|${o.chorro}|${o.teclaDe("pitchUp")}`
+      ? `${v.gesto}|${v.mando}|${v.lado}|${o.motor}|${o.teclaDe("pitchUp")}`
       : mira
         ? `mirar|${mira}`
         : "";

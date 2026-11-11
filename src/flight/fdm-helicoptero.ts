@@ -219,8 +219,25 @@ export class HelicopteroComoModelo implements FlightModel {
    */
   gasPara(_velocidad: number): number {
     if (this.modelo.estabilizacionAhora() === "estacionario") return 0.5;
+    return this.colectivoQueSostiene();
+  }
+
+  private colectivoQueSostiene(): number {
     const densidad = airDensity(this.modelo.state.position.y, this.aire);
     return colectivoDeEstacionario(this.opciones.ficha, this.modelo.masaAhora(), densidad);
+  }
+
+  /**
+   * **Cuánto le falta para despegar**, de 0 a 1: el paso que llevan las palas
+   * frente al que sostiene el estacionario. Es lo que llena la barra del tutor
+   * mientras se sube el colectivo; la palanca no sirve para eso, porque en la
+   * estabilización de estacionario vuelve sola a media altura y el paso lo va
+   * subiendo la estabilización. Ver `STEPS.colectivo` en `ui/tutor.ts`.
+   */
+  pasoParaDespegar(): number {
+    const sostiene = this.colectivoQueSostiene();
+    if (!(sostiene > 0)) return 0;
+    return Math.max(0, Math.min(1, this.modelo.mandosAhora().colectivo / sostiene));
   }
 
   /**

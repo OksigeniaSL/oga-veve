@@ -356,6 +356,21 @@ export function esDeChorro(a: AircraftConfig): boolean {
 }
 
 /**
+ * **Qué mueve la palanca de este aparato**: el gas de una hélice, el de un
+ * reactor o el colectivo de un rotor. Es lo que dibujan sus botones, su tecla
+ * y la palanca de la pantalla: ver `dibujoDelMotor` en `ui/pictogramas.ts`.
+ *
+ * Era un sí o no —reactor o hélice— hasta que llegó el helicóptero, y con dos
+ * respuestas el Super Puma salía con una hélice en el colectivo.
+ */
+export type Propulsion = "helice" | "chorro" | "rotor";
+
+export function propulsionDe(a: AircraftConfig): Propulsion {
+  if (a.helicoptero) return "rotor";
+  return esDeChorro(a) ? "chorro" : "helice";
+}
+
+/**
  * **Las vueltas del motor con el gas puesto**, en las de su ficha.
  *
  * En un motor de pistón o de hélice, en línea recta entre el ralentí y el

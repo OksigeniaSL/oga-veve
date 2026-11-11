@@ -22,7 +22,7 @@ const DE_FABRICA: Record<string, string> = {
 };
 const teclas: ConQueTeclas = {
   teclaDe: (a: Accion) => DE_FABRICA[a] ?? "",
-  chorro: false,
+  motor: "helice",
 };
 
 /** Los del despegue, y los del aterrizaje. Ver `flight/inicio-aterrizar.ts`. */
@@ -74,7 +74,7 @@ describe("con teclado, la tecla de verdad, latiendo", () => {
   it("con la mano izquierda, las suyas", () => {
     const zurda: ConQueTeclas = {
       teclaDe: (a) => ({ throttleUp: "KeyX", pitchUp: "KeyW", rollLeft: "KeyA" })[a as string] ?? "",
-      chorro: false,
+      motor: "helice",
     };
     expect(dibujoDelGesto("gas", "teclado", 0, zurda)).toContain('class="tecla__letra">X<');
     expect(dibujoDelGesto("subir", "teclado", 0, zurda)).toContain('class="tecla__letra">W<');
