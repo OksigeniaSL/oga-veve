@@ -12679,7 +12679,13 @@ export class Game {
      * ya arranca. Dejar a un chico de cuatro años delante de una tecla que no
      * hace nada es peor que moverle un mando y contárselo.
      */
-    if (s.onGround && s.groundSpeed <= 2 && c.throttle > 0.05) {
+    /*
+     * El helicóptero no: su palanca es el colectivo, y en la estabilización de
+     * estacionario vuelve sola a media palanca, que ahí es «quedarse a esta
+     * altura» —posado, con las palas sin paso—. Con esta regla la I no arrancaba
+     * ni paraba nunca. Ver `Input.ponerMuelleDelColectivo`.
+     */
+    if (!this.aircraft.helicoptero && s.onGround && s.groundSpeed <= 2 && c.throttle > 0.05) {
       // Y la palanca de la pantalla también, que si no lo vuelve a abrir en
       // el fotograma siguiente. Ver `cerrarGas`.
       this.input.cerrarGas();

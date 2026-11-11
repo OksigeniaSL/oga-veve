@@ -492,6 +492,8 @@ export class ModeloDeHelicoptero {
   private colectivoAprendido = 0.3;
   /** Y el que llega al rotor, que se mueve suave. */
   private colectivoSuave = 0;
+  /** La subida que se va pidiendo, m/s, que llega poco a poco a la de la palanca. */
+  private subidaPedida = 0;
   /** El colectivo con el que se aprendió el pie, para adelantarlo al par cuando cambia. */
   private colectivoDePie = 0.3;
 
@@ -1087,12 +1089,21 @@ export class ModeloDeHelicoptero {
       // Y cerca del suelo la bajada se frena sola: a medio metro por segundo en los últimos metros.
       const ruedas = s.heightAboveGround - Math.max(...this.ficha.ruedas.map((r) => r.z));
       pide = Math.max(pide, -Math.max(0.5, 0.5 * ruedas));
+      /*
+       * **La subida pedida cambia poco a poco**, metro y medio por segundo cada
+       * segundo, y el colectivo se adelanta lo que esa subida pide. Saltando de cero a
+       * cuatro, el colectivo daba un tirón arriba al apretar y otro abajo al soltar, y
+       * el par bailaba entre el 33 y el 87 % (Enrique: «el indicador de potencia me
+       * pasa de 80 a 130 todo el rato»).
+       */
+      this.subidaPedida += acotar(pide - this.subidaPedida, 1.5 * dt);
       if (posado && pide <= 0) {
+        this.subidaPedida = 0;
         salida.colectivo = this.colectivoSuave = Math.max(0, this.colectivoSuave - 0.25 * dt);
       } else {
-        const falta = pide - s.velocity.y;
-        this.colectivoAprendido = Math.max(0, Math.min(1, this.colectivoAprendido + 0.08 * falta * dt));
-        let colectivo = this.colectivoAprendido + 0.06 * falta;
+        const falta = this.subidaPedida - s.velocity.y;
+        this.colectivoAprendido = Math.max(0, Math.min(1, this.colectivoAprendido + 0.05 * falta * dt));
+        let colectivo = this.colectivoAprendido + 0.012 * this.subidaPedida + 0.04 * falta;
         const vueltas = this.vueltas / this.ficha.rotor.vueltas;
         if (vueltas < VUELTAS_QUE_SE_GUARDAN) {
           const sobra = (VUELTAS_QUE_SE_GUARDAN - vueltas) * 6;
