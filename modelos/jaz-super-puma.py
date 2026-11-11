@@ -122,6 +122,11 @@ COLORES.update({
     # y no lee la ficha, y una punta que no casara con su aro se vería al
     # arrancar.
     "punta-de-rotor": (0.745, 0.365, 0.22, 1.0),
+    # El ocre de la casa, el del sol de las colas (`CASA.ocre` en
+    # `src/flight/aircraft.ts`, #dd923f) y el de la muestra: va en el sol de la
+    # base de la deriva y en la franja de rescate del cono. Fijo, como la
+    # punta de las palas: es marca de rescate, no color de la ficha.
+    "ocre": (0.867, 0.573, 0.247, 1.0),
 })
 
 
@@ -217,6 +222,19 @@ CAJA_DE_COLA = Piel([
     (10.00, 0.12, 1.66, 1.36, 1.52),
     (COLA, 0.00, 1.51, 1.51, 1.51),
 ], n=2.4)
+
+
+# La deriva: `(y, borde de ataque, borde de salida, medio grueso)` de abajo
+# arriba. Ver `deriva`.
+DERIVA = [
+    (-0.075, 8.00, 8.74, 0.32),
+    (0.36, 8.00, 9.04, 0.30),
+    (0.71, 8.02, 9.33, 0.27),
+    (0.98, 8.27, 9.56, 0.22),
+    (1.25, 8.58, 9.80, 0.17),
+    (1.45, 8.80, 9.96, 0.15),
+]
+N_DERIVA = 2.6
 
 
 def raya(z):
@@ -549,8 +567,9 @@ def librea(piezas):
     """
     La de la flota, como en la muestra: el casco crema, la franja terracota en
     lo bajo de la cabina que sube por el cono, la raya verde encima con un
-    filete de crema entre las dos, la deriva verde con el sol —lo dibuja el
-    juego sobre el material `cola`— y «RESCATE» en grande en el cono.
+    filete de crema entre las dos, la deriva verde con el sol ocre naciendo en
+    su base (ver `sol_de_la_deriva`), «RESCATE» en grande en el cono y, entre
+    las letras y la deriva, la franja ocre de rescate de las láminas.
     """
     # La franja terracota, de bajo la raya hasta la panza: en la cabina es lo
     # bajo del costado, y en el cono, que es estrecho, su mitad de abajo.
@@ -576,6 +595,22 @@ def librea(piezas):
         bm.from_mesh(malla)
         bpy.data.meshes.remove(malla)
     piezas.append(liso(_malla_en_escena("rescate", bm, ["capo"]), angulo=80))
+    # Y la franja ocre de rescate, una vuelta entera al cono entre las letras y
+    # la deriva, por encima de la franja y de la raya: es la marca que pidió
+    # Enrique junto a «RESCATE», y la que llevan las dos láminas.
+    bm = bmesh.new()
+    vuelta, filas = 48, 2
+    z0, z1 = 7.00, 7.55
+    anillos = [[bm.verts.new(FUSELAJE.punto(z0 + (z1 - z0) * k / filas,
+                                            math.tau * i / vuelta, 0.016))
+                for i in range(vuelta)] for k in range(filas + 1)]
+    for a, b in zip(anillos, anillos[1:]):
+        for i in range(vuelta):
+            j = (i + 1) % vuelta
+            bm.faces.new((a[i], a[j], b[j], b[i]))
+    _orientar(bm, FUSELAJE)
+    piezas.append(liso(_malla_en_escena("franja-de-rescate", bm, ["ocre"]),
+                       angulo=80))
 
 
 # ── La cabina por fuera ───────────────────────────────────────────────────
@@ -830,14 +865,8 @@ def construir():
     # así que no es un ala de canto sino un pilón de esquinas redondas. Va en
     # el material `cola`, el verde de la flota sobre el que el juego dibuja el
     # sol; empieza donde acaba la franja, como en la muestra.
-    piezas.append(deriva("deriva", [
-        (-0.075, 8.00, 8.74, 0.32),
-        (0.36, 8.00, 9.04, 0.30),
-        (0.71, 8.02, 9.33, 0.27),
-        (0.98, 8.27, 9.56, 0.22),
-        (1.25, 8.58, 9.80, 0.17),
-        (1.45, 8.80, 9.96, 0.15),
-    ]))
+    piezas.append(deriva("deriva", DERIVA))
+    piezas += sol_de_la_deriva()
     # Un solo estabilizador, a la izquierda: a la derecha va el rotor de cola.
     piezas.append(superficie("estabilizador", [
         de_ala(-0.20, 0.75, 8.40, 0.95, 0.12, 0.0, -2.0),
@@ -866,12 +895,11 @@ def construir():
     bloque(bm, (0, 1.10, 1.20), (0.012, 0.10, 0.12))
     bloque(bm, (0.0, FUSELAJE.abajo(-4.20) - 0.07, -4.20), (0.012, 0.08, 0.10))
     piezas.append(malla_de("antenas", bm, "rotor"))
-    # Las juntas que se ven de lejos: donde el cono se atornilla a la cabina y
-    # donde empieza su último tramo, y las tapas de registro de los motores y
-    # de la caja a los lados del lomo. Rayas finas, como las puertas: dicen
+    # Las juntas que se ven de lejos: donde el cono se atornilla a la cabina, y
+    # las tapas de registro de los motores y de la caja a los lados del lomo. Rayas finas, como las puertas: dicen
     # «esto está hecho de piezas» sin ensuciar la librea.
     bm = bmesh.new()
-    for z in (3.30, 6.95):
+    for z in (3.30,):
         vuelta = 48
         a = [bm.verts.new(FUSELAJE.punto(z - 0.011, math.tau * i / vuelta,
                                          0.012)) for i in range(vuelta)]
@@ -915,7 +943,81 @@ def construir():
     return piezas
 
 
-def deriva(nombre, anillos, n=2.6, lados=24):
+def en_la_deriva(z, y, lado, fuera=0.0):
+    """
+    El punto del costado de la deriva a esa altura y esa distancia a lo largo.
+
+    Entre dos anillos la piel es la mezcla lineal de los dos —cada vértice va
+    en línea recta al de arriba—, así que basta con mezclar sus medidas.
+    """
+    for (ya, za, zb, ba), (yb, zc, zd, bb) in zip(DERIVA, DERIVA[1:]):
+        if y <= yb:
+            break
+    k = max(0.0, min(1.0, (y - ya) / (yb - ya)))
+    ataque = za + (zc - za) * k
+    salida = zb + (zd - zb) * k
+    b = ba + (bb - ba) * k
+    a = (salida - ataque) / 2
+    u = min(1.0, abs(z - (ataque + salida) / 2) / a)
+    x = b * (1 - u ** N_DERIVA) ** (1 / N_DERIVA)
+    return Vector((lado * (x + fuera), y, z)), ataque, salida
+
+
+def sol_de_la_deriva():
+    """
+    El sol que nace en la base de la deriva, como en la muestra: un disco ocre
+    cuyo centro queda por debajo del cono, así que de él solo asoma el trozo
+    que cae en el pie de la deriva, recortado por su borde de ataque, por el
+    de salida y por abajo. Lo separa del verde un filete del crema del casco,
+    que es como la casa despega el ocre del verde (ver `librea.ts`).
+
+    Va por filas de abajo arriba: en cada altura, de dónde a dónde cae el
+    disco en la cuerda. Así el arco sale redondo y no en escalera.
+    """
+    centro_z, centro_y = 8.04, -0.39
+    radio, filete = 0.88, 0.95
+    y_pie = DERIVA[0][0]
+    salen = []
+    for nombre, material_, r0, r1 in (("sol-de-la-deriva", "ocre", None, radio),
+                                     ("filete-del-sol", "casco", radio, filete)):
+        bm = bmesh.new()
+        for lado in (-1, 1):
+            filas = []
+            pasos = 18
+            alto = centro_y + r1
+            for k in range(pasos + 1):
+                y = y_pie + (alto - y_pie) * k / pasos
+                _, ataque, salida = en_la_deriva(8.3, y, lado)
+
+                def borde(r):
+                    d = r * r - (y - centro_y) ** 2
+                    return centro_z + math.sqrt(d) if d > 0 else None
+
+                fin = borde(r1)
+                if fin is None:
+                    continue
+                ini = ataque if r0 is None else (borde(r0) or ataque)
+                ini, fin = max(ini, ataque), min(fin, salida)
+                if fin - ini < 0.005:
+                    continue
+                fila = [bm.verts.new(en_la_deriva(
+                    ini + (fin - ini) * j / 6, y, lado, 0.012)[0])
+                    for j in range(7)]
+                filas.append(fila)
+            for a, b in zip(filas, filas[1:]):
+                for j in range(6):
+                    bm.faces.new((a[j], a[j + 1], b[j + 1], b[j]))
+        bm.normal_update()
+        for f in bm.faces:
+            c = f.calc_center_median()
+            if f.normal.x * c.x < 0:
+                f.normal_flip()
+        salen.append(liso(_malla_en_escena(nombre, bm, [material_]),
+                          angulo=80))
+    return salen
+
+
+def deriva(nombre, anillos, n=N_DERIVA, lados=24):
     """
     Un pilón de esquinas redondas tendido entre anillos horizontales:
     `(y, borde de ataque, borde de salida, medio grueso)`.
