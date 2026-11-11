@@ -135,7 +135,8 @@ describe("los puntos de la tarjeta en cada modelo", () => {
  * **El Super Puma, con sus piezas.** Hasta ahora su tarjeta solo llevaba el
  * pitot y las luces, porque lo que se buscaba eran piezas de avión. Ahora
  * lleva las suyas —el rotor, el plato y el rotor de cola—, y ninguna de avión:
- * ni timones, que en él son fijos, ni el tren de una avioneta.
+ * ni timones, que en él son fijos. Y su tren, que se recoge, con lo que cuenta
+ * un helicóptero de él.
  */
 describe("los puntos de la tarjeta del helicóptero", () => {
   it("el rotor, el plato y el rotor de cola, cada uno sobre su pieza", async () => {
@@ -144,7 +145,8 @@ describe("los puntos de la tarjeta del helicóptero", () => {
     const de = (p: string) => m.puntos.find((x) => x.pieza === p);
     const piezas = m.puntos.map((p) => p.pieza).sort();
     // Las luces de navegación se ponen en la punta del ala, y él no tiene: sin punto.
-    expect(piezas).toEqual(["pitot", "plato", "rotor", "rotor-de-cola"]);
+    // El tren sí, que el suyo se recoge: ver `explicacionDe`.
+    expect(piezas).toEqual(["pitot", "plato", "rotor", "rotor-de-cola", "tren"]);
     m.grupo.updateWorldMatrix(true, true);
     const caja = new Box3().setFromObject(m.grupo).expandByScalar(0.6);
     for (const p of m.puntos) expect(caja.containsPoint(p.donde), p.pieza).toBe(true);

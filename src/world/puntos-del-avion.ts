@@ -131,7 +131,16 @@ function sitioDelPitot(a: AircraftConfig): SitioDelPitot {
  * Las piezas del helicóptero: las suyas y las que tiene como las tiene un
  * avión. Ver el final de `puntosDelAvion`.
  */
-const DEL_HELICOPTERO: ReadonlySet<PiezaDelAvion> = new Set(["rotor", "plato", "rotor-de-cola", "pitot", "luces"]);
+const DEL_HELICOPTERO: ReadonlySet<PiezaDelAvion> = new Set([
+  "rotor",
+  "plato",
+  "rotor-de-cola",
+  "pitot",
+  "luces",
+  // El tren, que se recoge como el del Super Puma de verdad: con su explicación.
+  // Ver `explicacionDe` en `ui/explicaciones-del-avion.ts`.
+  "tren",
+]);
 
 /**
  * Los puntos de este avión, medidos en su modelo ya colocado.
@@ -304,9 +313,9 @@ export function puntosDelAvion(
    * **En el helicóptero, solo lo que es suyo.** Las piezas se buscan en el
    * modelo por su forma y su sitio, y en el Super Puma salían el timón de
    * profundidad y el de dirección —el estabilizador y la deriva, que en él
-   * son fijos: el morro lo lleva el cíclico y la cola, el rotor de cola— y el
-   * tren con la explicación del tren fijo de una avioneta, cuando el suyo se
-   * recoge. Y las suyas, que un avión no tiene. Ver `piezasDelHelicoptero`.
+   * son fijos: el morro lo lleva el cíclico y la cola, el rotor de cola—. El
+   * tren sí se queda, con su explicación de helicóptero. Y las suyas, que un
+   * avión no tiene. Ver `piezasDelHelicoptero`.
    */
   if (a.helicoptero) {
     for (const p of piezasDelHelicoptero(raiz, aGrupo)) poner(p.pieza, p.donde, p.espejo);

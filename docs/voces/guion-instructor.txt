@@ -316,6 +316,7 @@ La velocidad
 El rodaje
 Frustrada cuando tocaba
 Dale motor
+Subí el colectivo
 Esperá a que corra
 Tirá para arriba
 ¡Estás volando!
@@ -672,3 +673,7 @@ Estas son las teclas para volar y lo que hace cada una. Si alguna te queda incó
 En la hoja, cada visto es algo que te salió bien.
 La raya es por dónde volaste. Para volar otra vez, tocá la flecha redonda.
 En el plano, la raya es por dónde volaste. Para volar otra vez, tocá «Otro vuelo».
+Este es el rotor principal. Sus cuatro palas son alas que giran doscientas sesenta y cinco vueltas por minuto, y sostienen al helicóptero en el aire. Si el rotor se inclina, el helicóptero va para ese lado.
+Este es el plato oscilante, debajo del rotor. Cuando subís el colectivo, el plato sube, las palas se inclinan más y empujan más aire para abajo. Cuando movés el cíclico, el plato se inclina, y el rotor se inclina con él.
+Este es el rotor de cola, en el costado derecho. El rotor grande, al girar, empuja al helicóptero a girar para el otro lado, y el de cola lo aguanta. Con los pedales empuja más o menos, y la nariz gira.
+Este es el tren de aterrizaje. Sale para posarse, y después de despegar se recoge: la rueda de adelante, hacia atrás, y las de los costados, para arriba. Así el aire pasa mejor y el helicóptero va más rápido.

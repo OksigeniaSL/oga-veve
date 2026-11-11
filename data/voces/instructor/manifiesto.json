@@ -1011,6 +1011,10 @@
       "ms": 9507,
       "h": "38523a62d7"
     },
+    "tarjeta.voz.plato": {
+      "ms": 13007,
+      "h": "9d71b8229f"
+    },
     "tarjeta.voz.profundidad": {
       "ms": 5307,
       "h": "f66f9a6d46"
@@ -1018,6 +1022,14 @@
     "tarjeta.voz.reactor": {
       "ms": 9507,
       "h": "0e6aa5250c"
+    },
+    "tarjeta.voz.rotor": {
+      "ms": 11307,
+      "h": "313f93f932"
+    },
+    "tarjeta.voz.rotorDeCola": {
+      "ms": 12907,
+      "h": "0f0560bdc0"
     },
     "tarjeta.voz.timon": {
       "ms": 5107,
@@ -1031,6 +1043,10 @@
       "ms": 6307,
       "h": "d07fb1386f"
     },
+    "tarjeta.voz.trenHelicoptero": {
+      "ms": 12207,
+      "h": "ef480030aa"
+    },
     "tarjeta.voz.turbohelice": {
       "ms": 6707,
       "h": "f543397a06"
@@ -1042,6 +1058,10 @@
     "teclas.explica.arriba": {
       "ms": 6907,
       "h": "fad9946e14"
+    },
+    "tutor.colectivo": {
+      "ms": 1214,
+      "h": "cf247a5f16"
     },
     "tutor.dobleToque": {
       "ms": 2150,
@@ -4829,6 +4849,21 @@
     ],
     "vuelo.remolqueBaliza": [
       "vuelo.remolqueBaliza"
+    ],
+    "tarjeta.voz.rotor": [
+      "tarjeta.voz.rotor"
+    ],
+    "tarjeta.voz.plato": [
+      "tarjeta.voz.plato"
+    ],
+    "tarjeta.voz.rotorDeCola": [
+      "tarjeta.voz.rotorDeCola"
+    ],
+    "tarjeta.voz.trenHelicoptero": [
+      "tarjeta.voz.trenHelicoptero"
+    ],
+    "tutor.colectivo": [
+      "tutor.colectivo"
     ]
   }
 }

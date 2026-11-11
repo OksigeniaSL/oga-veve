@@ -317,6 +317,7 @@ instructor	instructor/galon.velocidad.ogg	es-PY	La velocidad	lo que marca la hoj
 instructor	instructor/galon.rodaje.ogg	es-PY	El rodaje	lo que marca la hoja de la instructora en cada vuelo
 instructor	instructor/galon.frustrada.ogg	es-PY	Frustrada cuando tocaba	lo que marca la hoja de la instructora en cada vuelo
 instructor	instructor/tutor.throttle.ogg	es-PY	Dale motor	los consejos de los primeros minutos
+instructor	instructor/tutor.colectivo.ogg	es-PY	Subí el colectivo	los consejos de los primeros minutos
 instructor	instructor/tutor.speed.ogg	es-PY	Esperá a que corra	los consejos de los primeros minutos
 instructor	instructor/tutor.pull.ogg	es-PY	Tirá para arriba	los consejos de los primeros minutos
 instructor	instructor/tutor.flying.ogg	es-PY	¡Estás volando!	los consejos de los primeros minutos
@@ -1952,3 +1953,7 @@ ara	ara/inicio.ara.pasaje.largo.madrid.ogg	es-PY	¡Mirá cuántas luces allá ab
 ara	ara/inicio.ara.pasaje.largo.vientoPregunta.ogg	es-PY	Idaira, mamá dijo que tenemos viento de cara. ¿Acá arriba también hay viento?	la noche de Madrid: con la luz del cinturón apagada, Ara le pregunta a Idaira por el viento de cara
 tripulacion-canarias	tripulacion-canarias/inicio.tripulacion.pasaje.cerca.largo.vientoRios.ogg	es-PY	Sí, y mucho. Un poco más arriba, donde vamos a volar, corren ríos de viento rapidísimo.	la noche de Madrid: Idaira, de pie y en persona, un poco más arriba corren ríos de viento rapidísimo
 tripulacion-canarias	tripulacion-canarias/inicio.tripulacion.pasaje.cerca.largo.vientoBarco.ogg	es-PY	El avión va en ellos como un barco en un río: a favor llegas antes, y en contra tardas más. Por eso el viaje de vuelta a Madrid dura unos tres cuartos de hora menos.	la noche de Madrid: Idaira, como un barco en un río; por eso la vuelta dura unos tres cuartos de hora menos
+instructor	instructor/tarjeta.voz.rotor.ogg	es-PY	Este es el rotor principal. Sus cuatro palas son alas que giran doscientas sesenta y cinco vueltas por minuto, y sostienen al helicóptero en el aire. Si el rotor se inclina, el helicóptero va para ese lado.	lo que explica el punto del rotor principal en la tarjeta del Super Puma
+instructor	instructor/tarjeta.voz.plato.ogg	es-PY	Este es el plato oscilante, debajo del rotor. Cuando subís el colectivo, el plato sube, las palas se inclinan más y empujan más aire para abajo. Cuando movés el cíclico, el plato se inclina, y el rotor se inclina con él.	lo que explica el punto del plato oscilante en la tarjeta del Super Puma
+instructor	instructor/tarjeta.voz.rotorDeCola.ogg	es-PY	Este es el rotor de cola, en el costado derecho. El rotor grande, al girar, empuja al helicóptero a girar para el otro lado, y el de cola lo aguanta. Con los pedales empuja más o menos, y la nariz gira.	lo que explica el punto del rotor de cola en la tarjeta del Super Puma
+instructor	instructor/tarjeta.voz.trenHelicoptero.ogg	es-PY	Este es el tren de aterrizaje. Sale para posarse, y después de despegar se recoge: la rueda de adelante, hacia atrás, y las de los costados, para arriba. Así el aire pasa mejor y el helicóptero va más rápido.	lo que explica el punto del tren en la tarjeta del Super Puma, que se recoge

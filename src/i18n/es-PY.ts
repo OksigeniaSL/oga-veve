@@ -3355,6 +3355,10 @@ export const ES_PY = {
     "Este es el rotor principal. Sus cuatro palas son alas que giran doscientas sesenta y cinco vueltas por minuto, y sostienen al helicóptero en el aire. Si el rotor se inclina, el helicóptero va para ese lado.",
   "tarjeta.voz.plato":
     "Este es el plato oscilante, debajo del rotor. Cuando subís el colectivo, el plato sube, las palas se inclinan más y empujan más aire para abajo. Cuando movés el cíclico, el plato se inclina, y el rotor se inclina con él.",
+  "tarjeta.trenHelicoptero":
+    "Tren de aterrizaje. Sale para posarse y se recoge después de despegar: la rueda de adelante se pliega hacia atrás y las de los costados suben a sus carenados, aunque asoman un poco. Recogido, el aire pasa mejor y el helicóptero va más rápido.",
+  "tarjeta.voz.trenHelicoptero":
+    "Este es el tren de aterrizaje. Sale para posarse, y después de despegar se recoge: la rueda de adelante, hacia atrás, y las de los costados, para arriba. Así el aire pasa mejor y el helicóptero va más rápido.",
   "tarjeta.voz.rotorDeCola":
     "Este es el rotor de cola, en el costado derecho. El rotor grande, al girar, empuja al helicóptero a girar para el otro lado, y el de cola lo aguanta. Con los pedales empuja más o menos, y la nariz gira.",
 

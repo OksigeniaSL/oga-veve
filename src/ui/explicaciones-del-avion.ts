@@ -208,6 +208,7 @@ export const EXPLICACIONES_DEL_AVION: readonly ExplicacionDelAvion[] = [
   de("avion.rotor", "rotor", "rotor", "tarjeta.pieza.rotor"),
   de("avion.plato", "plato", "plato", "tarjeta.pieza.plato"),
   de("avion.rotor-de-cola", "rotor-de-cola", "rotorDeCola", "tarjeta.pieza.rotor-de-cola"),
+  de("avion.tren-helicoptero", "tren", "trenHelicoptero", "tarjeta.pieza.tren"),
 ];
 
 const POR_ID = new Map(EXPLICACIONES_DEL_AVION.map((e) => [e.id, e]));
@@ -245,6 +246,11 @@ export function explicacionDe(
                 : "avion.motor-piston",
       );
     case "tren":
+      /*
+       * El del helicóptero se recoge también, pero no es el de un avión: sale
+       * para posarse, no para aterrizar en una pista, y se va a sus carenados.
+       */
+      if (a.helicoptero) return explicacion("avion.tren-helicoptero");
       return explicacion(a.trenRetractil ? "avion.tren" : "avion.tren-fijo");
     case "pitot":
       return explicacion(

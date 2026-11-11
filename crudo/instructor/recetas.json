@@ -2123,5 +2123,20 @@
   ],
   "vuelo.remolqueBaliza": [
     "vuelo.remolqueBaliza"
+  ],
+  "tarjeta.voz.rotor": [
+    "tarjeta.voz.rotor"
+  ],
+  "tarjeta.voz.plato": [
+    "tarjeta.voz.plato"
+  ],
+  "tarjeta.voz.rotorDeCola": [
+    "tarjeta.voz.rotorDeCola"
+  ],
+  "tarjeta.voz.trenHelicoptero": [
+    "tarjeta.voz.trenHelicoptero"
+  ],
+  "tutor.colectivo": [
+    "tutor.colectivo"
   ]
 }

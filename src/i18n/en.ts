@@ -2506,6 +2506,10 @@ export const EN: Dictionary = {
     "This is the main rotor. Its four blades are wings that spin two hundred and sixty-five turns a minute, and they hold the helicopter up in the air. When the rotor tilts, the helicopter goes that way.",
   "tarjeta.voz.plato":
     "This is the swashplate, under the rotor. When you raise the collective, the plate goes up, the blades tilt more and push more air down. When you move the cyclic, the plate tilts, and the rotor tilts with it.",
+  "tarjeta.trenHelicoptero":
+    "Landing gear. It comes down to set down and goes up after take-off: the front wheel folds backwards and the side wheels go up into their fairings, though they still show a little. With it up the air flows better and the helicopter goes faster.",
+  "tarjeta.voz.trenHelicoptero":
+    "This is the landing gear. It comes down to set down, and after take-off it goes up: the front wheel backwards, and the side wheels upwards. That way the air flows better and the helicopter goes faster.",
   "tarjeta.voz.rotorDeCola":
     "This is the tail rotor, on the right side. As the big rotor turns, it pushes the helicopter to spin the other way, and the tail rotor holds it. With the pedals it pushes more or less, and the nose turns.",
   // ── Before flying: the walk-around (item 125) and the weather (item 129) ──

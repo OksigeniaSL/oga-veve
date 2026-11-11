@@ -2552,6 +2552,13 @@
     "para": "los consejos de los primeros minutos"
   },
   {
+    "id": "tutor.colectivo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Subí el colectivo",
+    "para": "los consejos de los primeros minutos"
+  },
+  {
     "id": "tutor.speed",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -20198,5 +20205,33 @@
     "idioma": "es-PY",
     "texto": "El avión va en ellos como un barco en un río: a favor llegas antes, y en contra tardas más. Por eso el viaje de vuelta a Madrid dura unos tres cuartos de hora menos.",
     "para": "la noche de Madrid: Idaira, como un barco en un río; por eso la vuelta dura unos tres cuartos de hora menos"
+  },
+  {
+    "id": "tarjeta.voz.rotor",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este es el rotor principal. Sus cuatro palas son alas que giran doscientas sesenta y cinco vueltas por minuto, y sostienen al helicóptero en el aire. Si el rotor se inclina, el helicóptero va para ese lado.",
+    "para": "lo que explica el punto del rotor principal en la tarjeta del Super Puma"
+  },
+  {
+    "id": "tarjeta.voz.plato",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este es el plato oscilante, debajo del rotor. Cuando subís el colectivo, el plato sube, las palas se inclinan más y empujan más aire para abajo. Cuando movés el cíclico, el plato se inclina, y el rotor se inclina con él.",
+    "para": "lo que explica el punto del plato oscilante en la tarjeta del Super Puma"
+  },
+  {
+    "id": "tarjeta.voz.rotorDeCola",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este es el rotor de cola, en el costado derecho. El rotor grande, al girar, empuja al helicóptero a girar para el otro lado, y el de cola lo aguanta. Con los pedales empuja más o menos, y la nariz gira.",
+    "para": "lo que explica el punto del rotor de cola en la tarjeta del Super Puma"
+  },
+  {
+    "id": "tarjeta.voz.trenHelicoptero",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este es el tren de aterrizaje. Sale para posarse, y después de despegar se recoge: la rueda de adelante, hacia atrás, y las de los costados, para arriba. Así el aire pasa mejor y el helicóptero va más rápido.",
+    "para": "lo que explica el punto del tren en la tarjeta del Super Puma, que se recoge"
   }
 ]

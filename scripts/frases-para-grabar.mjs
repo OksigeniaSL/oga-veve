@@ -187,7 +187,7 @@ const HABLADOS = [
     "instructor",
     "lo que explica cada punto de la tarjeta del avión",
     // Lo de cada avión va al final: ver `DE_CADA_AVION` y `DEL_HELICOPTERO`.
-    /^tarjeta\.voz\.(?:lucesPuntas|motorTurbo|rotor|plato|rotorDeCola)$/,
+    /^tarjeta\.voz\.(?:lucesPuntas|motorTurbo|rotor|plato|rotorDeCola|trenHelicoptero)$/,
   ],
   /*
    * **La torre de Canarias va primero, y por eso el grupo más concreto gana.**
@@ -2590,6 +2590,7 @@ const DEL_HELICOPTERO = [
   ["tarjeta.voz.rotor", "lo que explica el punto del rotor principal en la tarjeta del Super Puma"],
   ["tarjeta.voz.plato", "lo que explica el punto del plato oscilante en la tarjeta del Super Puma"],
   ["tarjeta.voz.rotorDeCola", "lo que explica el punto del rotor de cola en la tarjeta del Super Puma"],
+  ["tarjeta.voz.trenHelicoptero", "lo que explica el punto del tren en la tarjeta del Super Puma, que se recoge"],
 ];
 for (const [id, para] of DEL_HELICOPTERO) {
   const texto = es.get(id);
