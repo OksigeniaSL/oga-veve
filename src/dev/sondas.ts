@@ -186,8 +186,21 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         estacionario: f.gasPara(0),
         helipuerto: sitio ? { x: sitio[0], z: -sitio[1] } : null,
         anguloDelRotor: juego.aircraftMesh.rotores?.angulo ?? null,
+        // Si lo que se dibuja es el modelo de verdad (con el rotor de Gaudí) o la silueta de cajas.
+        modeloDeVerdad: juego.aircraftMesh.deVerdad === true,
         percance: juego.percance,
       };
+    },
+    /**
+     * **Para el rotor del helicóptero posado**, con los motores parados: para ver
+     * las palas caídas. Lo usan las capturas del rotor.
+     */
+    pararElRotor: () => {
+      const f = juego.flight;
+      if (!(f instanceof HelicopteroComoModelo)) return false;
+      juego.input.controls.engineOn = false;
+      f.modelo.reset({ position: f.state.position.clone(), heading: f.state.heading, rotorEnMarcha: false });
+      return true;
     },
     /**
      * La tarjeta del avión: abrirla o cerrarla como al tocar la placa, y

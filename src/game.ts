@@ -274,6 +274,8 @@ import type { Lluvia } from "./world/meteo";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { HelicopteroComoModelo, estabilizacionDelPeldano } from "./flight/fdm-helicoptero";
 import { sonidoDelRotor } from "./audio/rotor";
+import { RITMO_DEL_COLECTIVO } from "./flight/helicoptero";
+import { RITMO_DEL_GAS_DE_AVION } from "./flight/input";
 import { cargarModelo } from "./world/aeronave-modelo";
 import {
   alUmbralEnLaAproximacion,
@@ -6698,6 +6700,10 @@ export class Game {
     this.input.compensadorVivo = this.tier.model !== "simple" && !this.aircraft.helicoptero;
     this.input.ponerTimon(
       this.tier.model === "simple" || this.aircraft.helicoptero ? null : this.aircraft.aero.cnRudder,
+    );
+    this.input.ponerRitmoDelGas(this.aircraft.helicoptero ? RITMO_DEL_COLECTIVO : RITMO_DEL_GAS_DE_AVION);
+    this.input.ponerMuelleDelColectivo(
+      !!this.aircraft.helicoptero && estabilizacionDelPeldano(this.tier.id) === "estacionario",
     );
 
     /*
@@ -14676,11 +14682,7 @@ export class Game {
   }
 
   private async ponerModeloSiLoHay(): Promise<void> {
-    /*
-     * El helicóptero vuela con su silueta provisional hasta que llegue su
-     * modelo (paso 2 del ADR 0026): no hay fichero que pedir.
-     */
-    if (this.aircraft.helicoptero) return;
+    // El helicóptero también: su silueta de cajas vale mientras llega el modelo.
     const idAlPedir = this.aircraft.id;
     const modelo = await cargarModelo(this.aircraft);
     // Puede haberse cambiado de aeronave mientras cargaba.
@@ -25994,8 +25996,12 @@ export class Game {
     }
     // Y los rotores del helicóptero, a las vueltas de su modelo y no con el gas:
     // si caen las vueltas, se ve. Ver `world/silueta-de-helicoptero.ts`.
-    if (this.flight instanceof HelicopteroComoModelo)
-      this.aircraftMesh.rotores?.avanzar(dt, this.flight.modelo.rotor().vueltas);
+    if (this.flight instanceof HelicopteroComoModelo) {
+      const r = this.flight.modelo.rotor();
+      // Lo que empuja, contra lo que pesa: sube las palas al cono. Ver `rotor-del-helicoptero.ts`.
+      const empuje = r.empuje / (this.flight.modelo.masaAhora() * 9.80665);
+      this.aircraftMesh.rotores?.avanzar(dt, r.vueltas, empuje);
+    }
 
     this.updateBlobShadow(state);
   }
@@ -32686,6 +32692,9 @@ export class Game {
      */
     // Al construir el primero todavía no hay mandos: ver el constructor.
     this.input?.ponerTimon(tier.model === "simple" || ficha ? null : this.aircraft.aero.cnRudder);
+    // Y el colectivo del helicóptero, despacio, y con muelle en la de estacionario: ver `ponerRitmoDelGas`.
+    this.input?.ponerRitmoDelGas(ficha ? RITMO_DEL_COLECTIVO : RITMO_DEL_GAS_DE_AVION);
+    this.input?.ponerMuelleDelColectivo(!!ficha && estabilizacionDelPeldano(tier.id) === "estacionario");
     /*
      * Y si el toque de flecha tiene compensador que mover: en el modelo
      * sencillo no lo hay. Ver `compensadorVivo` en `flight/input.ts`.
@@ -32851,9 +32860,10 @@ export class Game {
      * El helicóptero no cambia de modelo al cambiar de peldaño: cambia lo que
      * lo sostiene su estabilización, y se la cambia volando, sin soltar nada.
      */
-    if (this.flight instanceof HelicopteroComoModelo)
+    if (this.flight instanceof HelicopteroComoModelo) {
       this.flight.ponerEstabilizacion(estabilizacionDelPeldano(next.id));
-    else {
+      this.input.ponerMuelleDelColectivo(estabilizacionDelPeldano(next.id) === "estacionario");
+    } else {
       this.flight = this.buildFlightModel(next);
       this.flight.reset(carried);
     }

@@ -23,14 +23,14 @@
  */
 
 import type { Vector3 } from "three";
-import { AIRE_ESTANDAR, type Aire, GRAVITY, airDensity } from "./atmosphere";
+import { AIRE_ESTANDAR, type Aire, airDensity } from "./atmosphere";
 import {
+  colectivoDeEstacionario,
   type Estabilizacion,
   type FichaDeHelicoptero,
   type MandosDeHelicoptero,
   ModeloDeHelicoptero,
   mandosNeutros,
-  resolverDisco,
 } from "./helicoptero";
 import type { ControlInputs, FlightModel, FlightState, GroundSampler, InitialConditions } from "./model";
 import type { TierId } from "./tiers";
@@ -91,22 +91,7 @@ export function estabilizacionDelPeldano(tier: TierId): Estabilizacion {
  * rotor de cola, así que se queda un poco corto; vale para colocar la palanca
  * cerca, no para sostenerse sin tocarla.
  */
-export function colectivoDeEstacionario(f: FichaDeHelicoptero, masa: number, densidad: number): number {
-  const peso = masa * GRAVITY;
-  let bajo = -0.2;
-  let alto = 0.6;
-  let vi = 10;
-  for (let k = 0; k < 40; k++) {
-    const medio = (bajo + alto) / 2;
-    const r = resolverDisco(f.rotor, densidad, f.rotor.vueltas, medio, 0, 0, vi);
-    vi = r.inducida;
-    if (r.empuje < peso) bajo = medio;
-    else alto = medio;
-  }
-  const paso = (bajo + alto) / 2;
-  const { minimo, maximo } = f.rotor.paso;
-  return Math.max(0, Math.min(1, (paso - minimo) / (maximo - minimo)));
-}
+export { colectivoDeEstacionario };
 
 /** Lo que el juego le pasa al construirlo. */
 export interface OpcionesDelHelicoptero {
@@ -227,8 +212,13 @@ export class HelicopteroComoModelo implements FlightModel {
    * sostiene la altura: el del estacionario es el más alto de los de vuelo
    * —con velocidad se sostiene con menos—, así que quien coloca el
    * helicóptero en el aire con esto no se cae, como mucho sube un poco.
+   *
+   * **Con la estabilización de estacionario, media palanca**: ahí la palanca pide
+   * subir o bajar y a media se queda a la altura que tiene. Ver
+   * `SUBE_EN_ESTACIONARIO`.
    */
   gasPara(_velocidad: number): number {
+    if (this.modelo.estabilizacionAhora() === "estacionario") return 0.5;
     const densidad = airDensity(this.modelo.state.position.y, this.aire);
     return colectivoDeEstacionario(this.opciones.ficha, this.modelo.masaAhora(), densidad);
   }

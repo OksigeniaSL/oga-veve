@@ -242,6 +242,41 @@ describe("estacionario", () => {
     expect(Math.abs(h.actitud().alabeo)).toBeLessThan(5 * GRADO);
   });
 
+  /**
+   * **Lo que vio Enrique**: con la tecla apretada, la palanca de verdad llegaba a
+   * tope en dos segundos, las vueltas caían al 77 %, el rotor de cola se quedaba
+   * sin fuerza y el helicóptero giraba sobre sí mismo a cien grados por segundo.
+   * En la de estacionario la palanca pide subir o bajar y las vueltas se guardan.
+   */
+  it("en la de estacionario, el colectivo a tope sube sin girar ni perder vueltas; a media se queda; abajo se posa suave", () => {
+    const h = new ModeloDeHelicoptero(F);
+    h.ponerEstabilizacion("estacionario");
+    h.reset({ position: new Vector3(0, 0, 0), heading: 0, rotorEnMarcha: true });
+    const m = mandosNeutros();
+    m.colectivo = 1;
+    let peorGiro = 0;
+    let menosVueltas = 1;
+    for (let t = 0; t < 15; t += DT) {
+      h.step(DT, m);
+      peorGiro = Math.max(peorGiro, Math.abs(h.state.yawRate));
+      menosVueltas = Math.min(menosVueltas, h.rotor().vueltasPorUno);
+    }
+    expect(h.state.velocity.y).toBeGreaterThan(3);
+    expect(h.state.velocity.y).toBeLessThan(4.5);
+    // Nunca por debajo del mínimo con motor de la ficha, 245 rpm (TCDS III.9).
+    expect(menosVueltas * 265).toBeGreaterThan(245);
+    expect(peorGiro).toBeLessThan(10 * GRADO);
+    m.colectivo = 0.5;
+    for (let t = 0; t < 6; t += DT) h.step(DT, m);
+    const alto = h.state.position.y;
+    for (let t = 0; t < 10; t += DT) h.step(DT, m);
+    expect(Math.abs(h.state.position.y - alto)).toBeLessThan(2);
+    m.colectivo = 0;
+    for (let t = 0; t < 60 && !h.state.onGround; t += DT) h.step(DT, m);
+    expect(h.state.onGround).toBe(true);
+    expect(h.state.touchdownSinkRate).toBeLessThan(1);
+  });
+
   it("al dar potencia sin pisar, el morro se va a la izquierda: el rotor gira en horario", () => {
     const { h, m, colectivo } = enElAire(60, "estacionario");
     for (let t = 0; t < 40; t += DT) {
@@ -368,9 +403,10 @@ describe("sin motor", () => {
 });
 
 describe("en el suelo", () => {
-  it("posado con el rotor girando y el freno puesto, quieto; y despega antes de lo que pide lejos del suelo", () => {
+  it("posado con el rotor girando y el freno puesto, quieto; y subiendo el colectivo despega y sube", () => {
+    // Con la palanca de verdad, la de actitud: en la de estacionario la palanca pide subir o bajar.
     const h = new ModeloDeHelicoptero(F);
-    h.ponerEstabilizacion("estacionario");
+    h.ponerEstabilizacion("actitud");
     h.reset({ position: new Vector3(0, 0, 0), heading: 0, rotorEnMarcha: true });
     const m = mandosNeutros();
     m.frenos = 1;
@@ -384,14 +420,8 @@ describe("en el suelo", () => {
       if (despega < 0 && !h.state.onGround) despega = m.colectivo;
     }
     expect(h.state.position.y).toBeGreaterThan(10);
-    // El colectivo del estacionario lejos del suelo, medido volándolo.
-    const lejos = enElAire(60, "estacionario");
-    for (let t = 0; t < 40; t += DT) {
-      lejos.colectivo();
-      lejos.h.step(DT, lejos.m);
-    }
-    expect(despega).toBeGreaterThan(0.5 * lejos.m.colectivo);
-    expect(despega).toBeLessThan(lejos.m.colectivo);
+    // Que pide menos cerca del suelo lo mide «cerca del suelo pide menos», sin volar.
+    expect(despega).toBeGreaterThan(0);
   });
 });
 

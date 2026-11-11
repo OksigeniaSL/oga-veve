@@ -93,8 +93,9 @@ describe("posado, despega y se queda", () => {
       h.step(DT, c);
       if (!h.state.onGround) despego = c.throttle;
     }
-    expect(despego).toBeGreaterThan(0);
-    expect(despego).toBeLessThan(h.gasPara(0));
+    // En Guyrami la palanca pide subir o bajar: despega al pasar de media palanca.
+    expect(despego).toBeGreaterThan(h.gasPara(0));
+    expect(despego).toBeLessThan(0.7);
     // A unos diez metros, y quieto: el cíclico suelto es «pararse».
     c.brakes = 0;
     for (let t = 0; t < 15; t += DT) {

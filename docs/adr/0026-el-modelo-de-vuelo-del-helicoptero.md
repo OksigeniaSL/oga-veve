@@ -68,7 +68,7 @@ cada eje (TCDS R.002, III.16)—. Va por capas, de menos a más (`Estabilizacion
 | `ninguna` | El helicóptero tal cual | — |
 | `amortiguada` | Frena los giros, con autoridad limitada | El canal de amortiguación de cualquier piloto automático |
 | `actitud` | El cíclico mueve la actitud y al soltarlo se queda; los pies sostienen el rumbo parado y el vuelo coordinado deprisa | El modo básico del piloto automático del Super Puma |
-| `estacionario` | Además, despacio, el cíclico pide velocidad sobre el suelo y al soltarlo se para y se queda | El modo de estacionario de un sistema de mandos moderno |
+| `estacionario` | Además, el cíclico pide velocidad sobre el suelo —hasta unos 80 kt; deprisa, a los lados inclina para virar— y al soltarlo se para y se queda, sople lo que sople; y el colectivo pide subir o bajar, con las vueltas guardadas | El modo de estacionario y el de mantener la altura de un sistema de mandos moderno |
 
 **Qué nivel lleva cada peldaño, propuesto para juzgarlo volando** (`estabilizacionDelPeldano` en
 `flight/fdm-helicoptero.ts`):
@@ -79,6 +79,23 @@ cada eje (TCDS R.002, III.16)—. Va por capas, de menos a más (`Estabilizacion
 | Tukã | `estacionario` | Igual: es el peldaño en el que todavía se aprende qué hace cada mano |
 | Taguato | `actitud` | El cíclico mueve el morro y al soltarlo se queda donde estaba; la deriva ya es de quien vuela |
 | Taguato Ruvicha | `actitud` | Igual, como el modo básico del piloto automático del Super Puma |
+
+**El colectivo, en la de estacionario, pide subir o bajar** (`SUBE_EN_ESTACIONARIO`). Con la palanca de verdad, la
+tecla la llevaba a tope en dos segundos: el rotor pedía más potencia de la que hay, las vueltas caían al 77 %, el rotor
+de cola —engranado— perdía la fuerza justo cuando más par había, y el helicóptero giraba sobre sí mismo a cien grados
+por segundo (Enrique, probándolo: «va dando vueltas en el aire como un loco»). Es lo que le pasa de verdad a quien tira
+del colectivo de golpe, y en los peldaños de abajo no tiene que poder pasar. Así que ahí:
+
+- a media palanca se queda a la altura que tiene; arriba sube y abajo baja, hasta 4 m/s, y cerca del suelo la bajada se
+  frena sola para posarse sin golpe;
+- el paso lo pone la estabilización, suave, sin dejar caer las vueltas del 98,5 %, y el pie se adelanta al par cuando
+  cambia el colectivo;
+- **con la tecla, la palanca tiene muelle**: soltada, vuelve sola a media palanca (`Input.ponerMuelleDelColectivo`).
+  Mantener X sube, mantener Z baja, soltar se queda: lo mismo que el cíclico en ese nivel. La palanca de la pantalla y
+  la del mando se quedan donde se dejan.
+
+En la de actitud la palanca es la de verdad, pero la tecla la mueve a un ritmo de colectivo (`RITMO_DEL_COLECTIVO`, de
+abajo a tope en unos seis segundos) y no al del gas de un avión.
 
 Es la misma idea que la escalera de los avisos (`flight/escalera.ts`): lo que crece con el peldaño es lo que se le deja
 a quien vuela, no lo que hace el helicóptero. Ningún peldaño baja a `amortiguada` ni a `ninguna`: el Super Puma de
@@ -118,8 +135,16 @@ del Ejército** junto a Los Rodeos (GCXM, puesto a mano con los datos del AIP, q
   motores, en tanto por ciento. Las agujas de los motores del cuadro marcan también el par, rotuladas TQ, y la tarjeta
   del gas se llama **COLL**: es el colectivo, no un gas. Velocidad, altura y velocidad vertical, las del cuadro de
   siempre. Ni flaps, ni tren, ni aerofrenos, ni reversa, ni piloto automático: no los lleva.
-- **La silueta provisional** (`world/silueta-de-helicoptero.ts`), hecha con piezas por código, se tira cuando llegue
-  el modelo del paso 2. Mide lo de la ficha —rotor de 15,60 m y cuatro palas, el de cola de 3,05 m y cinco, a 9,4 m
+- **El modelo de verdad** (`modelos/jaz-super-puma.py`, el paso 2) se carga como los de los aviones, y la silueta de
+  cajas se queda solo mientras llega. **Su rotor es el de Gaudí** (`world/rotor-del-helicoptero.ts`, del kit de arte
+  de hq): parado, las palas caen sobre su bisagra; girando, se enderezan, suben al cono con el empuje y se funden en un
+  disco translúcido con el aro de las puntas en terracota y cuatro sombras de pala que giran despacio. Nunca las palas
+  de verdad a toda velocidad, que a sesenta imágenes por segundo harían la rueda de carro: mientras se ven, el eje no
+  gira a más de 0,6 vueltas por segundo, y según se funden se para y giran las sombras. El disco toma el color de las
+  palas y lleva luz, así que de noche se apaga con el helicóptero. Las luces de posición se buscan con los rotores
+  quitados, que si no salían en las puntas de las palas.
+- **La silueta provisional** (`world/silueta-de-helicoptero.ts`), hecha con piezas por código, es el respaldo mientras
+  carga el modelo. Mide lo de la ficha —rotor de 15,60 m y cuatro palas, el de cola de 3,05 m y cinco, a 9,4 m
   detrás del mástil y a la derecha de la deriva— y **gira a las vueltas del modelo**, el principal en horario visto
   desde arriba: si caen las vueltas, se ve. La vista de cabina funciona sin cabina por dentro: los ojos van en el
   asiento de la derecha y se ve el mundo por donde iría el cristal.

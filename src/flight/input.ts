@@ -74,7 +74,8 @@ const KEY_CENTRE = 3.4;
  * Lo que sube o baja el gas por segundo con una tecla o un botón mantenido:
  * de ralentí a despegue en un segundo y dos tercios.
  */
-const RITMO_DEL_GAS = 0.6;
+export const RITMO_DEL_GAS_DE_AVION = 0.6;
+const RITMO_DEL_GAS = RITMO_DEL_GAS_DE_AVION;
 
 /*
  * Lo que tardan los aerofrenos y el gas que los cierra viven ahora con su
@@ -505,6 +506,31 @@ export class InputManager {
   ponerTimon(cnRudder: number | null): void {
     this.pieCorto = cnRudder === null ? 1 : pieDeTecla(cnRudder);
   }
+
+  /**
+   * **Lo que sube el gas por segundo con la tecla, en esta aeronave.** En el
+   * helicóptero el gas es el colectivo, y al ritmo de los aviones iba de abajo a
+   * tope en menos de dos segundos con la tecla apretada: las vueltas caían, el
+   * rotor de cola se quedaba sin fuerza y el helicóptero giraba como un loco.
+   */
+  ponerRitmoDelGas(porSegundo: number): void {
+    this.ritmoDelGas = porSegundo;
+  }
+  private ritmoDelGas = RITMO_DEL_GAS;
+
+  /**
+   * **El colectivo con muelle**, en la estabilización de estacionario del
+   * helicóptero: soltada la tecla, la palanca vuelve sola a media altura, que ahí
+   * es «quedarse a esta altura». Así el colectivo hace lo mismo que el cíclico en
+   * ese nivel: mantener la tecla sube o baja, soltarla se queda. Con la palanca
+   * que se queda donde se deja, quien soltaba la X seguía subiendo sin parar.
+   * Solo con la tecla y los botones; la palanca de la pantalla y la del mando se
+   * quedan donde se dejan.
+   */
+  ponerMuelleDelColectivo(conMuelle: boolean): void {
+    this.colectivoConMuelle = conMuelle;
+  }
+  private colectivoConMuelle = false;
 
   /** Los toques de las flechas. Ver `flight/palanca-de-teclado.ts`. */
   private readonly toques = new ToquesDeCabeceo();
@@ -1079,7 +1105,7 @@ export class InputManager {
     if (this.touchThrottle !== null) {
       if (empuje !== 0)
         this.touchThrottle = clamp(
-          this.touchThrottle + empuje * dt * RITMO_DEL_GAS,
+          this.touchThrottle + empuje * dt * this.ritmoDelGas,
           0,
           1,
         );
@@ -1103,10 +1129,12 @@ export class InputManager {
     } else {
       const delta = clamp(teclado + empuje, -1, 1);
       this.controls.throttle = clamp(
-        this.controls.throttle + delta * dt * RITMO_DEL_GAS,
+        this.controls.throttle + delta * dt * this.ritmoDelGas,
         0,
         1,
       );
+      if (this.colectivoConMuelle && delta === 0)
+        this.controls.throttle += clamp(0.5 - this.controls.throttle, -dt, dt);
     }
     this.pintarPalanca();
 

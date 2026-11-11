@@ -35,6 +35,7 @@
  *    Pykasu y 1,80 el Mainumby, medidos con el avión parado en la pista.
  */
 
+import { rotoresDelModelo } from "./rotor-del-helicoptero";
 import { puntosDelAvion } from "./puntos-del-avion";
 import { puntosDeLaVuelta } from "./puntos-de-la-vuelta";
 import {
@@ -838,10 +839,32 @@ export async function cargarModelo(
    */
   // Con el avión ya montado: las puntas de ala son las suyas, no las de la
   // ficha. Ver `crearLucesDePosicion`.
+  /*
+   * **En el helicóptero, sin los rotores**: lo más ancho de un helicóptero son
+   * las palas, y las luces de las puntas salían en las puntas de las palas. Se
+   * miden con los rotores quitados un momento.
+   */
+  const sinRotores = aircraft.helicoptero
+    ? ["rotor-principal", "rotor-de-cola"]
+        .map((n) => raiz.getObjectByName(n))
+        .filter((o): o is Object3D => !!o?.parent)
+        .map((o) => {
+          const padre = o.parent!;
+          padre.remove(o);
+          return [o, padre] as const;
+        })
+    : [];
   const luces = crearLucesDePosicion(aircraft, raiz);
+  for (const [o, padre] of sinRotores) padre.add(o);
   group.add(luces.grupo);
 
-  const ojo = ojoDelModelo(raiz, group);
+  /*
+   * Los ojos, del asiento de delante. **El helicóptero aún no tiene cabina por
+   * dentro** (va aparte, en la cuarta familia de cabinas): se sientan en el
+   * asiento de la derecha, que es el del comandante en un helicóptero, a la
+   * altura de los ojos de quien va sentado detrás del parabrisas.
+   */
+  const ojo = ojoDelModelo(raiz, group) ?? (aircraft.helicoptero ? { x: 0.6, y: 0.5, z: -3.8 } : undefined);
   /*
    * Y los asientos de ventanilla, con el modelo recién colocado y antes de
    * tocarle nada: se miden sus ventanillas y su ala. Ver
@@ -918,5 +941,7 @@ export async function cargarModelo(
     // Y que esto es el modelo, no el respaldo. Ver `AircraftMesh.deVerdad`.
     deVerdad: true,
     vuelta,
+    // Y los rotores del helicóptero, con el rotor de Gaudí. Ver `rotor-del-helicoptero.ts`.
+    rotores: aircraft.helicoptero ? rotoresDelModelo(raiz, aircraft.helicoptero) : undefined,
   };
 }

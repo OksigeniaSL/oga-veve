@@ -287,6 +287,28 @@ export function potenciaDisponible(f: FichaDeHelicoptero, densidad: number): num
   return f.motores.cuantos * f.motores.potencia * Math.pow(densidad / SEA_LEVEL_DENSITY, f.motores.caida);
 }
 
+/**
+ * **El colectivo que sostiene el peso, quieto y lejos del suelo**, de 0 a 1: el
+ * paso que da ese empuje, sin el rotor de cola ni la estela sobre el fuselaje, así
+ * que se queda un poco corto. Vale para colocar la palanca cerca.
+ */
+export function colectivoDeEstacionario(f: FichaDeHelicoptero, masa: number, densidad: number): number {
+  const peso = masa * GRAVITY;
+  let bajo = -0.2;
+  let alto = 0.6;
+  let vi = 10;
+  for (let k = 0; k < 40; k++) {
+    const medio = (bajo + alto) / 2;
+    const r = resolverDisco(f.rotor, densidad, f.rotor.vueltas, medio, 0, 0, vi);
+    vi = r.inducida;
+    if (r.empuje < peso) bajo = medio;
+    else alto = medio;
+  }
+  const paso = (bajo + alto) / 2;
+  const { minimo, maximo } = f.rotor.paso;
+  return Math.max(0, Math.min(1, (paso - minimo) / (maximo - minimo)));
+}
+
 /** (R/4z)² para el efecto suelo, con z la altura del buje: acotado a medio radio, donde la fórmula deja de valer. */
 export function terminoDelSuelo(radio: number, alturaDelBuje: number): number {
   const z = Math.max(0.5 * radio, alturaDelBuje);
@@ -375,6 +397,22 @@ function desvioDeLaEstela(enElPlano: number, enElDisco: number): number {
  */
 export const VA_EN_ESTACIONARIO = 40;
 
+/**
+ * **Lo que sube o baja el colectivo por segundo con la tecla**: de abajo a tope
+ * en unos seis segundos, y no en uno y medio como el gas de un avión. Ver
+ * `Input.ponerRitmoDelGas`.
+ */
+export const RITMO_DEL_COLECTIVO = 0.16;
+
+/**
+ * **En la estabilización de estacionario, el colectivo pide subir o bajar**, m/s:
+ * a media palanca se queda a la altura que tiene, y a tope arriba o abajo, esto.
+ */
+export const SUBE_EN_ESTACIONARIO = 4;
+
+/** Por debajo de estas vueltas, en tanto por uno, la estabilización de estacionario quita colectivo. */
+const VUELTAS_QUE_SE_GUARDAN = 0.985;
+
 /** El paso de integración más largo, s: el disco tarda unas centésimas en seguir al cíclico. */
 const PASO_MAXIMO = 1 / 240;
 /** Lo que el regulador tarda en recuperar las vueltas, s. */
@@ -450,6 +488,12 @@ export class ModeloDeHelicoptero {
   private integralPedales = 0;
   private sostieneCabeceo = 0;
   private sostieneAlabeo = 0;
+  /** El colectivo que sostiene la altura, aprendido: ver el colectivo en `estabilizar`. */
+  private colectivoAprendido = 0.3;
+  /** Y el que llega al rotor, que se mueve suave. */
+  private colectivoSuave = 0;
+  /** El colectivo con el que se aprendió el pie, para adelantarlo al par cuando cambia. */
+  private colectivoDePie = 0.3;
 
   constructor(
     readonly ficha: FichaDeHelicoptero,
@@ -500,6 +544,11 @@ export class ModeloDeHelicoptero {
   /** El viento, m/s, hacia donde va: x al este, z al sur. */
   ponerViento(x: number, z: number): void {
     this.viento.set(x, 0, z);
+  }
+
+  /** La estabilización que lleva ahora. */
+  estabilizacionAhora(): Estabilizacion {
+    return this.estabilizacion;
   }
 
   ponerEstabilizacion(e: Estabilizacion): void {
@@ -557,6 +606,15 @@ export class ModeloDeHelicoptero {
     this.ultimosMandos = mandosNeutros();
     this.anclas.length = 0;
     this.sostenerLoQueHay();
+    /*
+     * Y el colectivo de la estabilización de estacionario, el que toca: colocado en
+     * el aire, el del estacionario, que si no caía segundo y medio mientras lo
+     * cogía; posado, abajo, y aprendido cerca del de despegar.
+     */
+    const sostiene = colectivoDeEstacionario(this.ficha, this.masa, airDensity(s.position.y, this.aire));
+    const enElAire = s.position.y > cota + apoyo + 0.5;
+    this.colectivoAprendido = enElAire ? sostiene : 0.9 * sostiene;
+    this.colectivoSuave = enElAire ? sostiene : 0;
     this.derivados();
   }
 
@@ -576,6 +634,8 @@ export class ModeloDeHelicoptero {
     this.integralPedales = this.ultimosMandos.pedales;
     this.sostieneCabeceo = this.ultimosMandos.cabeceo;
     this.sostieneAlabeo = this.ultimosMandos.alabeo;
+    this.colectivoAprendido = this.ultimosMandos.colectivo || 0.3;
+    this.colectivoSuave = this.ultimosMandos.colectivo;
   }
 
   // ── El paso ──
@@ -968,10 +1028,15 @@ export class ModeloDeHelicoptero {
       const deprisa = Math.max(0, Math.min(1, (Math.abs(adelante) - 8) / 6));
       const errAdelante = -piloto.cabeceo * VA_EN_ESTACIONARIO - adelante;
       const errDerecha = piloto.alabeo * 8 * (1 - deprisa) - derecha * (1 - deprisa);
-      if (!posado) {
+      /*
+       * Lo aprendido, solo cerca de la velocidad pedida: frenando desde veinte metros
+       * por segundo se iba acumulando, y al llegar se pasaba y volvía a ir a dos y
+       * medio; con viento tardaba medio minuto en quedarse quieto.
+       */
+      if (!posado && Math.abs(errAdelante) < 3)
         this.integralCabeceo = acotar(this.integralCabeceo - 0.01 * errAdelante * dt, 10 * GRADO);
+      if (!posado && Math.abs(errDerecha) < 3)
         this.integralAlabeo = acotar(this.integralAlabeo + 0.01 * errDerecha * dt, 10 * GRADO);
-      }
       this.cabeceoPedido = acotar(-0.04 * errAdelante + this.integralCabeceo + 3 * GRADO, 12 * GRADO);
       this.alabeoPedido = acotar(
         (1 - deprisa) * (0.04 * errDerecha + this.integralAlabeo) + deprisa * piloto.alabeo * 20 * GRADO,
@@ -1005,9 +1070,52 @@ export class ModeloDeHelicoptero {
     const derrape = Math.atan2(this.tmp.dot(this.right), Math.max(1, aire));
     const giro = (GRAVITY * Math.tan(a.alabeo)) / Math.max(5, aire);
     const coordinar = 1.5 * derrape - 1.2 * (r - giro);
+    /*
+     * **El colectivo, en la de estacionario, pide subir o bajar**: a media palanca
+     * se queda a la altura que tiene; arriba sube y abajo baja, hasta
+     * `SUBE_EN_ESTACIONARIO`. El paso lo pone la estabilización, que aprende el del
+     * estacionario y **nunca deja caer las vueltas**: con la palanca de verdad, la
+     * tecla la llevaba a tope en dos segundos, las vueltas caían al 77 %, el rotor
+     * de cola —engranado— perdía la fuerza justo cuando más par había y el
+     * helicóptero giraba sobre sí mismo a cien grados por segundo. Es lo que hace el
+     * modo de mantener la altura de un piloto automático moderno; en la de actitud,
+     * la palanca es la de verdad.
+     */
+    if (modo === "estacionario") {
+      const palanca = piloto.colectivo - 0.5;
+      let pide = Math.abs(palanca) < 0.05 ? 0 : acotar(palanca * 2 * SUBE_EN_ESTACIONARIO * 1.1, SUBE_EN_ESTACIONARIO);
+      // Y cerca del suelo la bajada se frena sola: a medio metro por segundo en los últimos metros.
+      const ruedas = s.heightAboveGround - Math.max(...this.ficha.ruedas.map((r) => r.z));
+      pide = Math.max(pide, -Math.max(0.5, 0.5 * ruedas));
+      if (posado && pide <= 0) {
+        salida.colectivo = this.colectivoSuave = Math.max(0, this.colectivoSuave - 0.25 * dt);
+      } else {
+        const falta = pide - s.velocity.y;
+        this.colectivoAprendido = Math.max(0, Math.min(1, this.colectivoAprendido + 0.08 * falta * dt));
+        let colectivo = this.colectivoAprendido + 0.06 * falta;
+        const vueltas = this.vueltas / this.ficha.rotor.vueltas;
+        if (vueltas < VUELTAS_QUE_SE_GUARDAN) {
+          const sobra = (VUELTAS_QUE_SE_GUARDAN - vueltas) * 6;
+          colectivo -= sobra;
+          this.colectivoAprendido = Math.max(0, this.colectivoAprendido - sobra * dt);
+        }
+        // Y suave, como lo movería una mano: de golpe, el regulador no llega y las vueltas caen.
+        const quiere = Math.max(0, Math.min(1, colectivo));
+        this.colectivoSuave += acotar(quiere - this.colectivoSuave, 0.25 * dt);
+        salida.colectivo = this.colectivoSuave;
+      }
+    }
     this.integralPedales = acotar(this.integralPedales + 0.4 * (sostener * (1 - volando) + coordinar * volando) * dt, 0.6);
+    /*
+     * **Y el pie se adelanta al par**: al subir el colectivo sube el par y el morro
+     * se va, así que la estabilización mete pie con el colectivo, sin esperar a que
+     * el rumbo se tuerza. Lo que falte lo sigue poniendo lo aprendido.
+     */
+    const adelantaPar = this.ficha.rotor.sentido * 2 * (salida.colectivo - this.colectivoDePie);
+    // Solo mientras cambia: lo que se queda, lo aprende la integral.
+    this.colectivoDePie += (salida.colectivo - this.colectivoDePie) * (1 - Math.exp(-dt / 4));
     salida.pedales = acotar(
-      piloto.pedales + (1 - volando) * sostener + volando * coordinar + this.integralPedales,
+      piloto.pedales + (1 - volando) * sostener + volando * coordinar + this.integralPedales + adelantaPar,
       1,
     );
     return salida;

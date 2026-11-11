@@ -79,8 +79,9 @@ export const SUPER_PUMA: FichaDeHelicoptero = {
     // De la ficha: la «D-value» de Airbus, 18,70 m de la punta delantera del rotor
     // a la trasera del de cola, menos un radio de cada uno.
     brazo: 18.7 - 7.8 - 1.525,
-    // De la muestra: el buje del rotor de cola a 3,5 m del suelo, a la derecha.
-    altura: 1.7,
+    // De la muestra y el modelo: el buje del rotor de cola a 3,43 m del suelo, a la
+    // derecha, para que la pala de arriba dé los 4,95 m de alto de la ficha.
+    altura: 1.63,
     // Supuestos: el paso con los pies al centro y lo que mueve cada pedal a tope.
     // Con el derecho a fondo, el rotor de cola para vez y media el par de los dos
     // motores a plena potencia, que es el margen que se le pide para maniobrar.

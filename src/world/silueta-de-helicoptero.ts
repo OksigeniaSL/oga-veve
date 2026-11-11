@@ -36,9 +36,11 @@ import { medirVistaAlFrente } from "./vista-al-frente";
 export interface RotoresDeHelicoptero {
   /**
    * Avanza los dos rotores `dt` segundos a estas vueltas del principal, rad/s.
-   * El de cola va engranado: gira a las suyas en la misma proporción.
+   * El de cola va engranado: gira a las suyas en la misma proporción. `empuje`,
+   * de 0 a 1, sube las palas al cono en el modelo de verdad (ver
+   * `world/rotor-del-helicoptero.ts`); la silueta no lo usa.
    */
-  avanzar(dt: number, vueltas: number): void;
+  avanzar(dt: number, vueltas: number, empuje?: number): void;
   /** El ángulo del principal, rad, contado en horario visto desde arriba. */
   readonly angulo: number;
 }
