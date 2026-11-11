@@ -144,11 +144,17 @@ de tierra, se arrancan los motores con su permiso empujando, y al acabar se pone
 persona enseña el pasador. En el juego es **el mismo gesto que arrancar, en el mismo sitio**: la tarjeta de la fase de
 arrancar y la llave del motor, sin otra máquina de fases (`tarjetaDelRemolque`, `pedirElRemolque`, `atenderAlRemolque`).
 
-1. **En el puesto**, la tarjeta de la fase es el tractor —el avión visto desde arriba, el tractor en el morro y la
-   flecha hacia atrás— con la tecla de la llave al lado, y se toca. La instructora: «Pedí el tractor: nos empuja para
-   atrás hasta la calle». Si no se toca nada no pasa nada: el avión sigue enganchado y la tarjeta, puesta.
-2. **Al tocarla** (o con la tecla) se enciende la baliza y, a los tres segundos —los mismos que la tripulación—, el
-   tractor empuja. Del freno de aparcamiento no hay mando en el juego: se suelta y se pone solo, a su hora.
+1. **En el puesto, primero la baliza**: la tarjeta de la fase es la baliza —la cúpula roja con sus rayos— con la tecla
+   de la baliza, la coma, al lado, y su interruptor se ofrece con un latido (ver «El interruptor de la baliza»). La
+   instructora: «Prendé la baliza: avisa a los de tierra que nos vamos a mover»; corta, que la tarjeta no puede pasar de
+   dos líneas sin pisar el cuadro en una pantalla de 900 × 600. Tocar la tarjeta la enciende, igual que el interruptor o la tecla. La llave, sin baliza, suena a «así no» y
+   no pide nada: **el tractor no empuja un avión con la baliza apagada**, como en cualquier aeropuerto.
+2. **Con la baliza encendida**, la tarjeta pasa a ser el tractor —el avión visto desde arriba, el tractor en el morro
+   y la flecha hacia atrás— con la tecla de la llave al lado, y se toca. La instructora: «Pedí el tractor: nos empuja
+   para atrás hasta la calle». Si no se toca nada no pasa nada: el avión sigue enganchado y la tarjeta, puesta.
+   **Al tocarla** (o con la llave), a los tres segundos —los mismos que la tripulación—, el tractor empuja. Si se apaga
+   la baliza antes de que eche a andar, no echa a andar y vuelve la tarjeta de la baliza. Del freno de aparcamiento no
+   hay mando en el juego: se suelta y se pone solo, a su hora.
 3. **Empujando, vuelve la llave**: «El tractor nos lleva para atrás, porque desde la cabina no se ve lo que hay detrás.
    Mientras tanto, arrancá los motores». En el peldaño de cabina, la frase de siempre, «Arrancá el motor»: ahí ya no se cuenta el porqué.
 4. **Si al acabar de empujar los motores siguen parados, el tractor espera** enganchado y con el freno puesto
@@ -165,6 +171,27 @@ arrancar y la llave del motor, sin otra máquina de fases (`tarjetaDelRemolque`,
 Hasta el saludo **el avión no se mueve más que con el tractor** (`empujarElAvion`): enganchado en el puesto, empujado,
 y con el freno puesto al acabar. Lo que se toque del gas no lo mueve. Y el coche del sígame no sale mientras el tractor
 está enganchado: iría por la raya, que va por detrás del avión.
+
+### El interruptor de la baliza
+
+La baliza era del motor: se encendía al arrancar, se apagaba al parar y, en el puesto, al pedir el tractor. Ahora tiene
+**interruptor** (`flight/baliza.ts`), con su botón en la fila de los mandos que gobiernan el avión sin pilotarlo —el
+piloto automático y el cartel del cinturón—, con el mismo dibujo que su tarjeta, y su tecla, la coma, que está en el
+mismo sitio en el teclado español y en el americano. En todos los aviones, que todos la llevan.
+
+- **En un reactor de verdad va en el panel del techo**, que el juego no tiene. Se pone con los otros interruptores de
+  la pantalla: se simplifica dónde se ve, no lo que hace. Tampoco está en la cabina en 3D: sus botones salen del
+  modelo, y añadir uno es rehacer los modelos.
+- **Lo mueven quien juega y el motor.** El motor, en sus dos cambios: al arrancar la enciende si no lo estaba y al
+  parar la apaga, que es la señal para que la gente de tierra se acerque. Entre medias manda quien la mueve: apagada a
+  mano con los motores en marcha, se queda apagada. Así, quien no la toca la tiene como antes, y nadie se queda
+  volando sin ella por no saber que existe.
+- **Donde manda es en el puesto de contacto**: sin ella el tractor no empuja, y es lo único que se le exige a quien
+  juega. Arrancar sin remolque no la pide: la enciende el arranque. Pedirla también ahí pondría un paso más en cada
+  salida de cada vuelo, en todos los peldaños, por algo que el juego ya enseña aquí con su porqué.
+- **No es una espera sin salida**: la misma tarjeta que la pide la enciende con un toque, y el botón late mientras
+  falta.
+- **En el pasaje la mueve la tripulación**, como los motores: el botón no se enseña.
 
 ### Lo que se mide en cada campo
 
@@ -307,8 +334,8 @@ quedaba en la calle sin poder pasarle al lado. En un aeropuerto cada puesto es d
 - **La radio de tierra en el peldaño de cabina**: el «pushback and start approved» y la conversación por el cable con
   la persona de tierra. Hace falta la pieza de la torre con sus recetas —el indicativo, los dos acentos— o una voz de
   tierra nueva; mientras, ese peldaño tiene las tarjetas y la frase de arrancar de siempre.
-- **La baliza en el cuadro**: el cuadro del juego no tiene panel de luces —en los de verdad la baliza va en el panel
-  del techo—, así que la baliza se ve en el avión y no en la cabina.
+- **El interruptor de la baliza en la cabina en 3D**: está en la pantalla, no en el modelo. Ver «El interruptor de la
+  baliza».
 - **Barajas fuera del T5 con los dos grandes**, con el cruce detrás: ver «Lo que se mide en cada campo».
 - **Lo que cuesta un tractor en fotogramas**, con dos en pantalla en una tableta de gama media: medido en llamadas de
   dibujo (ver «Dos tractores a la vez, como mucho»), no en fotogramas, que eso pide la tableta.
