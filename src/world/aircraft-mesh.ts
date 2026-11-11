@@ -37,6 +37,7 @@ import {
 } from "./luces-de-posicion";
 import { fabricarAeronave, RADIO_DE_HELICE } from "./fabrica-de-aeronaves";
 import { medirVistaAlFrente } from "./vista-al-frente";
+import { crearSiluetaDeHelicoptero } from "./silueta-de-helicoptero";
 
 export interface AircraftMesh {
   group: Group;
@@ -172,6 +173,12 @@ export interface AircraftMesh {
    * va el coche del sígame. Ver `vista-al-frente.ts`.
    */
   vista?: import("./vista-al-frente").VistaAlFrente | null;
+  /**
+   * Y los rotores, en el helicóptero: el juego los hace girar a las vueltas
+   * que dice su modelo de vuelo, no con el gas. Ver
+   * `world/silueta-de-helicoptero.ts`.
+   */
+  rotores?: import("./silueta-de-helicoptero").RotoresDeHelicoptero | null;
 }
 
 /**
@@ -184,6 +191,8 @@ export interface AircraftMesh {
  * fusionada.
  */
 export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
+  // El helicóptero no sale de la fábrica de aviones: no tiene ala ni hélice.
+  if (aircraft.helicoptero) return crearSiluetaDeHelicoptero(aircraft, aircraft.helicoptero);
   const group = new Group();
   group.name = `aeronave:${aircraft.id}`;
 

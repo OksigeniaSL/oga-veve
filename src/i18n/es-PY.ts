@@ -71,6 +71,8 @@ export const ES_PY = {
     "Este navegador no tiene voces instaladas: el instructor no puede hablar.",
   "hud.throttle": "Motor",
   "hud.vspeed": "Subida",
+  "hud.rotor": "Vueltas del rotor",
+  "hud.par": "Par de los motores",
   "hud.stall": "¡Pérdida! Bajá el morro",
   "hud.pullUp": "El suelo. Subí",
   "hud.runwayEnd": "¡Se acaba la pista!",
@@ -102,6 +104,8 @@ export const ES_PY = {
 
   "aircraft.pykasu.description":
     "Avioneta de escuela. Tranquila y perdonadora.",
+  "aircraft.superPuma.description":
+    "Helicóptero grande de rescate. Lo sostiene su rotor, y se queda quieto en el aire.",
   "aircraft.mainumby.description":
     "Biplano fumigador. Ágil y con mucha fuerza.",
   "aircraft.panambi.description":

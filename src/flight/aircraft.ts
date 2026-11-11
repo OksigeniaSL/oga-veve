@@ -4,6 +4,7 @@ import type { EquipoTcas } from "./tcas";
 import type { FrenosDelTipo } from "./frenada";
 import type { TardaElTren } from "./tren";
 import type { PiesDeLaCuenta } from "./avisos-de-altura";
+import type { FichaDeHelicoptero } from "./helicoptero";
 
 /**
  * Fichas técnicas de las aeronaves.
@@ -400,8 +401,12 @@ const EMPUJE_POR_VUELTAS = 1 / 2.5;
  *
  * Se decide por el motor y no por una lista, que es la misma regla con la que
  * el cuadro decide si la aguja marca RPM, par o N1. Ver `ui/cuadro.ts`.
+ *
+ * **Y el helicóptero tampoco**, aunque suene a turbina: sus motores mueven un
+ * rotor, no una hélice que cambie de paso hacia atrás.
  */
 export function tieneReversa(a: AircraftConfig): boolean {
+  if (a.helicoptero) return false;
   return a.sound.engine === "turbofan" || a.sound.engine === "turboprop";
 }
 
@@ -1296,6 +1301,14 @@ export interface AircraftConfig {
   appearance: AircraftAppearance;
   sound: AircraftSound;
   aero: AeroCoefficients;
+  /**
+   * **Y si es un helicóptero, la ficha de su rotor.** Con ella el juego vuela
+   * el modelo del helicóptero y no el de los aviones, y dibuja su silueta; lo
+   * de ala de esta ficha queda solo para lo que el juego pregunta por debajo
+   * —la escala de la cámara, el depósito— y va puesto para que no estorbe. Ver
+   * `flight/helicoptero-en-el-juego.ts` y el ADR 0026.
+   */
+  helicoptero?: FichaDeHelicoptero;
 }
 
 /**

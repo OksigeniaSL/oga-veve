@@ -1,6 +1,6 @@
 # ADR 0026 — El modelo de vuelo del helicóptero, sobre el Super Puma
 
-**Fecha**: 2026-11-11 · **Estado**: aceptada; hecho el paso 1 (el modelo de vuelo) · **Amplía**: [ADR 0002](0002-modelo-de-vuelo-propio.md)
+**Fecha**: 2026-11-11 · **Estado**: aceptada; hecho el paso 1 (el modelo de vuelo) y la primera mitad del 3 (en el juego, escondido) · **Amplía**: [ADR 0002](0002-modelo-de-vuelo-propio.md)
 
 ## Contexto
 
@@ -14,7 +14,8 @@ El trabajo va en cuatro pasos, y cada uno se mira antes de lanzar el siguiente:
 1. **El modelo de vuelo y este documento.** Hecho.
 2. El helicóptero en Blender: por fuera, con el rotor girando, y la cabina con sus botones.
 3. Los mandos —teclado, dedo y mando— y la pantalla: el par y las vueltas del rotor en vez de lo de un reactor; qué
-   estabilización lleva cada peldaño; arrancar y rodar.
+   estabilización lleva cada peldaño; arrancar y rodar. **Hecha la primera mitad**: se vuela en el juego, escondido, con
+   una silueta provisional (ver «En el juego, escondido», abajo). Faltan el sonido, arrancar y rodar.
 4. Una misión tranquila, con las frases de la instructora grabadas.
 
 ## Qué helicóptero
@@ -65,9 +66,61 @@ cada eje (TCDS R.002, III.16)—. Va por capas, de menos a más (`Estabilizacion
 | `actitud` | El cíclico mueve la actitud y al soltarlo se queda; los pies sostienen el rumbo parado y el vuelo coordinado deprisa | El modo básico del piloto automático del Super Puma |
 | `estacionario` | Además, despacio, el cíclico pide velocidad sobre el suelo y al soltarlo se para y se queda | El modo de estacionario de un sistema de mandos moderno |
 
-Qué nivel lleva cada peldaño se decide en el paso 3, con la escalera (`flight/escalera.ts`). Lo esperable es el de
-estacionario en los de abajo y el de actitud arriba, como los avisos: lo que crece es lo que se le deja a quien vuela,
-no lo que hace el helicóptero.
+**Qué nivel lleva cada peldaño, propuesto para juzgarlo volando** (`estabilizacionDelPeldano` en
+`flight/fdm-helicoptero.ts`):
+
+| Peldaño | Nivel | Qué se nota |
+| --- | --- | --- |
+| Guyrami | `estacionario` | Soltar el cíclico es pararse y quedarse quieto; empujarlo es pedir velocidad |
+| Tukã | `estacionario` | Igual: es el peldaño en el que todavía se aprende qué hace cada mano |
+| Taguato | `actitud` | El cíclico mueve el morro y al soltarlo se queda donde estaba; la deriva ya es de quien vuela |
+| Taguato Ruvicha | `actitud` | Igual, como el modo básico del piloto automático del Super Puma |
+
+Es la misma idea que la escalera de los avisos (`flight/escalera.ts`): lo que crece con el peldaño es lo que se le deja
+a quien vuela, no lo que hace el helicóptero. Ningún peldaño baja a `amortiguada` ni a `ninguna`: el Super Puma de
+verdad no se vuela sin su automático, y aquí no se enseña lo que allí no se hace. Cambiar de peldaño en el aire cambia
+el nivel sin soltar nada (`ponerEstabilizacion` se queda con la actitud y el rumbo de ese momento).
+
+## En el juego, escondido
+
+Para probarlo en la web y afinar los mandos antes de que llegue el modelo en 3D, el helicóptero se vuela con
+**`?avion=super-puma`** en la dirección, y solo así. No está en `AIRCRAFT`: no sale en el hangar, ni en el cambio de
+avión, ni en ninguna lección, y no se guarda en el perfil. Entra directo en Gran Canaria —Gando, la base del 802
+Escuadrón—, **posado en el helipuerto** del campo (el de los datos de OpenStreetMap), cara al viento, con el rotor en
+sus vueltas y el colectivo abajo. Se vuela suelto: la vuelta al campo, sin misión, sin destino y sin vecinos.
+
+- **El adaptador** (`flight/fdm-helicoptero.ts`) pone el modelo detrás del contrato `FlightModel` de los aviones. El
+  gas es el colectivo (no vuelve solo, como la palanca de verdad, que tiene fricción); la profundidad, el cíclico
+  adelante y atrás, con el mismo sentido —tirar es morro arriba—; los alerones, el cíclico a los lados; el timón, los
+  pedales; el motor, los motores, y los frenos, los de las ruedas. Lo que el contrato pregunta y solo tiene sentido en
+  un avión se contesta con lo que significa en un helicóptero, y cada método dice por qué: el gas «para una velocidad»
+  es el colectivo del estacionario, la velocidad máxima es la VNE de la ficha, y los dos límites de la toma son los de
+  la norma de certificación del tren (CS 29.725 y 29.727: unos 2,0 m/s de caída sin más y 2,4 de reserva). Una toma
+  por encima de eso rompe el helicóptero, como en los aviones lo dice su modelo.
+- **La ficha del juego** (`flight/helicoptero-en-el-juego.ts`) es lo que el juego pregunta a cualquier aeronave —el
+  peso, el depósito, el sonido, las velocidades con que se juzga— contestado como un helicóptero, con la ficha del
+  rotor colgada en `AircraftConfig.helicoptero`. El combustible se cuenta con el empuje, así que la potencia de los
+  motores se pasa a un empuje equivalente con el consumo de un turboeje (unos 0,36 kg/kWh): en estacionario gasta del
+  orden de 600 kg a la hora.
+- **Lo de avión que sobra se aparta en su sitio**, mirando `aircraft.helicoptero`: sin plan de vuelo (ni fases, ni
+  calles, ni lámpara de la torre, ni carrera con sus cantos), sin los juicios de la toma (en la pista o fuera, con
+  tren), sin tope ni ayuda de rodaje, sin la mano del teclado, sin la nivelada ni el piloto automático del avión —su
+  automático es la estabilización—, sin reversa y sin compensador; y sin lo que acompaña la vuelta a una pista: el
+  circuito dibujado, la tarjeta del PAPI, los consejos de la recogida y la banda de velocidad lenta o rápida, que es
+  de un ala que entra en pérdida. El choque contra un edificio y el golpe al tocar
+  siguen: eso le pasa igual a un helicóptero. Posado, lleva el freno de estacionamiento puesto, que es como se despega
+  en uno de verdad; rodar llega con el resto del paso 3.
+- **En pantalla**, dos tarjetas con sus rótulos de cabina: **NR**, las vueltas del rotor, y **TQ**, el par de los
+  motores, en tanto por ciento. Las agujas de los motores del cuadro marcan también el par, rotuladas TQ, y la tarjeta
+  del gas se llama **COLL**: es el colectivo, no un gas. Velocidad, altura y velocidad vertical, las del cuadro de
+  siempre. Ni flaps, ni tren, ni aerofrenos, ni reversa, ni piloto automático: no los lleva.
+- **La silueta provisional** (`world/silueta-de-helicoptero.ts`), hecha con piezas por código, se tira cuando llegue
+  el modelo del paso 2. Mide lo de la ficha —rotor de 15,60 m y cuatro palas, el de cola de 3,05 m y cinco, a 9,4 m
+  detrás del mástil y a la derecha de la deriva— y **gira a las vueltas del modelo**, el principal en horario visto
+  desde arriba: si caen las vueltas, se ve. La vista de cabina funciona sin cabina por dentro: los ojos van en el
+  asiento de la derecha y se ve el mundo por donde iría el cristal.
+- **El banco** `scripts/ver-helicoptero.mjs` lo vuela entero en el juego de verdad: posado, despega con el colectivo,
+  estacionario, adelante con el cíclico, vuelta al helipuerto y toma, y mira la pantalla.
 
 ## Los números, y de dónde salen
 
