@@ -887,18 +887,15 @@ def construir():
                            radio=0.06, grueso=0.016, fuera=0.010))
     piezas.append(contorno("tapas-de-la-caja", LOMO, 0.70, 1.45, 0.50, 1.30,
                            radio=0.08, grueso=0.016, fuera=0.010))
-    # Los dos tubos de Pitot a los lados del morro, apuntando al frente, y
-    # los limpiaparabrisas, tumbados sobre el borde de abajo del parabrisas.
+    # Los dos tubos de Pitot a los lados del morro, apuntando al frente. Los
+    # limpiaparabrisas no: sobre un cristal opaco y oscuro solo se leían como
+    # rayas claras sueltas, y de verdad son negros.
     tubos = []
     for lado in (-1, 1):
         base = FUSELAJE.en(-4.70, -0.20, lado, 0.0)
         punta = base + Vector((0.0, 0.0, -0.32))
         tubos.append((tuple(base), tuple(punta), 0.014))
-        a = FUSELAJE.punto(-4.40, math.radians(lado * 8.0), 0.03)
-        b = FUSELAJE.punto(-4.36, math.radians(lado * 34.0), 0.03)
-        tubos.append((tuple(a), tuple(b), 0.010))
-    piezas.append(varillas("pitot-y-limpias", tubos, material_="rotor",
-                           lados=6))
+    piezas.append(varillas("pitot", tubos, material_="rotor", lados=6))
 
     # ── Los rotores y el tren ────────────────────────────────────────────
     piezas += rotor_principal()
