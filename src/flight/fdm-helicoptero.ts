@@ -195,6 +195,8 @@ export class HelicopteroComoModelo implements FlightModel {
     m.pedales = c.rudder;
     m.motores = c.engineOn;
     m.frenos = c.brakes;
+    // El tren, donde esté: lo mueve la palanca del juego. Ver `tren` en la ficha del juego.
+    m.tren = c.tren;
     const s = this.modelo.state;
     const enElAire = !s.onGround;
     if (enElAire) this.bajaba = -s.velocity.y;

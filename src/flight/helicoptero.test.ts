@@ -46,6 +46,9 @@ function enElAire(altura: number, modo: Estabilizacion, nudos = 0) {
   h.reset({ position: new Vector3(0, altura, 0), heading: 0, airspeed: nudos * NUDO, rotorEnMarcha: true });
   const m: MandosDeHelicoptero = mandosNeutros();
   m.colectivo = 0.45;
+  // En el aire, con el tren recogido, que es como vuela: el área de frente de la
+  // ficha es la del helicóptero limpio. Ver «el tren», más abajo.
+  m.tren = 0;
   let integral = 0;
   const colectivo = (objetivo = altura): void => {
     const quiere = Math.max(-3, Math.min(3, 0.5 * (objetivo - h.state.position.y)));
@@ -378,6 +381,39 @@ describe("de estacionario a crucero", () => {
   });
 });
 
+/**
+ * **El tren fuera frena**, y cuánto lo dice un Super Puma de verdad: en el
+ * boletín 11/99 de la AAIB británica, un AS 332L que volaba sin saberlo con el
+ * tren fuera iba a 118 kt de verdadera, unos 5 menos de lo que esperaba la
+ * tripulación con esa potencia. Con el área del tren de la ficha, a la misma
+ * potencia, la misma diferencia.
+ */
+describe("el tren", () => {
+  it("fuera gasta a 118 kt lo que recogido a 123, como el AS 332L de la AAIB", () => {
+    const potenciaA = (nudos: number, tren: number): number => {
+      const { h, m, colectivo, ciclico } = enElAire(900, "actitud", nudos);
+      m.tren = tren;
+      let suma = 0;
+      let n = 0;
+      for (let t = 0; t < 90; t += DT) {
+        colectivo();
+        ciclico(nudos);
+        h.step(DT, m);
+        if (t > 60) {
+          suma += h.rotor().potenciaMotores;
+          n++;
+        }
+      }
+      return suma / n;
+    };
+    const recogido = potenciaA(123, 0);
+    const fuera = potenciaA(118, 1);
+    expect(Math.abs(fuera - recogido) / recogido).toBeLessThan(0.02);
+    // Y a la misma velocidad, fuera gasta más.
+    expect(potenciaA(123, 1)).toBeGreaterThan(recogido * 1.03);
+  });
+});
+
 describe("sin motor", () => {
   it("en autorrotación las vueltas se quedan en las de la ficha sin motor y baja a su ritmo", () => {
     const { h, m, ciclico } = enElAire(3000, "actitud", 70);
@@ -533,6 +569,62 @@ describe("arrancar, parar y rodar", () => {
     };
     expect(despega("ninguna")).toBeGreaterThan(30 * GRADO);
     expect(despega("estacionario")).toBeLessThan(10 * GRADO);
+  });
+
+  /**
+   * **Y en la de actitud, al despegar con el cíclico suelto se queda encima.**
+   * Posada, la estabilización sostenía la actitud de las ruedas, casi plana, y
+   * al despegar se quedaba con ella: dos grados más de morro abajo y de ala
+   * izquierda que los del estacionario. A un minuto iba a cincuenta nudos
+   * hacia delante y a la izquierda, y girando. Lo que hace un piloto es dejar
+   * el cíclico donde sabe que está el estacionario antes de subir el
+   * colectivo, y eso es lo que tiene que sostener posada.
+   */
+  it("en la de actitud, despegando con el cíclico suelto se queda encima del sitio", () => {
+    const { h, m } = posado(true, "actitud");
+    for (let t = 0; t < 5; t += DT) h.step(DT, m);
+    let integral = 0;
+    for (let t = 0; t < 40; t += DT) {
+      const s = h.state;
+      // El colectivo lo lleva un lazo hasta diez metros; el cíclico y los pies, sueltos.
+      const quiere = Math.max(-1.5, Math.min(1.5, 0.5 * (12 - s.position.y)));
+      const falta = quiere - s.velocity.y;
+      integral = Math.max(-0.3, Math.min(0.3, integral + falta * DT * 0.05));
+      m.colectivo = s.onGround && t < 4 ? Math.min(1, t * 0.2) : Math.max(0, Math.min(1, 0.45 + integral + 0.08 * falta));
+      if (!s.onGround) m.frenos = 0;
+      h.step(DT, m);
+    }
+    /*
+     * Lo que queda —un par de metros por segundo en medio minuto— es lo que tiene
+     * sostener la actitud y no el sitio: una décima de grado de más ya acelera.
+     * Lo corrige quien pilota, que para eso está en este peldaño; en los de abajo
+     * lo corrige la de estacionario. Antes eran veintisiete.
+     */
+    expect(h.state.onGround).toBe(false);
+    expect(h.state.groundSpeed).toBeLessThan(3);
+    expect(Math.hypot(h.state.position.x, h.state.position.z)).toBeLessThan(50);
+    expect(Math.abs(h.actitud().rumbo)).toBeLessThan(10 * GRADO);
+  });
+
+  /**
+   * La actitud del estacionario de la ficha es la que sostiene quieto el modelo:
+   * si se cambia el modelo y deja de serlo, la de actitud vuelve a irse sola.
+   */
+  it("la actitud y el cíclico de estacionario de la ficha son los que sostienen el modelo quieto", () => {
+    const { h, m } = posado(true, "estacionario");
+    for (let t = 0; t < 5; t += DT) h.step(DT, m);
+    for (let t = 0; t < 40; t += DT) {
+      m.colectivo = h.state.onGround && t < 6 ? 0.9 : 0.5;
+      if (!h.state.onGround) m.frenos = 0;
+      h.step(DT, m);
+    }
+    const a = h.actitud();
+    expect(h.state.groundSpeed).toBeLessThan(0.3);
+    expect(Math.abs(a.cabeceo - F.actitudDeEstacionario.cabeceo)).toBeLessThan(0.7 * GRADO);
+    expect(Math.abs(a.alabeo - F.actitudDeEstacionario.alabeo)).toBeLessThan(0.7 * GRADO);
+    const ciclico = h.mandosAhora();
+    expect(Math.abs(ciclico.cabeceo - F.ciclicoDeEstacionario.cabeceo)).toBeLessThan(0.04);
+    expect(Math.abs(ciclico.alabeo - F.ciclicoDeEstacionario.alabeo)).toBeLessThan(0.04);
   });
 });
 

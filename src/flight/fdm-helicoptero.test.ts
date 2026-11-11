@@ -190,10 +190,12 @@ describe("escondido", () => {
     expect(esHelicoptero(SUPER_PUMA_EN_EL_JUEGO)).toBe(true);
   });
 
-  it("no lleva nada de avión que se vea: ni flaps, ni tren que meter, ni reversa, ni aerofrenos", () => {
+  it("no lleva nada de avión que se vea: ni flaps, ni reversa, ni aerofrenos", () => {
     const a = SUPER_PUMA_EN_EL_JUEGO;
     expect(a.llevaFlaps).toBe(false);
-    expect(a.trenRetractil).toBe(false);
+    // El tren sí se mete, que el del Super Puma de verdad se recoge: ver la ficha.
+    expect(a.trenRetractil).toBe(true);
+    expect(a.tardaElTren).not.toBeNull();
     expect(a.aerofrenos).toBeNull();
     expect(a.frenosDeTierra).toBeNull();
     expect(a.autofreno).toBe(false);

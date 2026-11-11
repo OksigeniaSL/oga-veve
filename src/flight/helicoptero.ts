@@ -72,6 +72,18 @@ export interface FichaDeHelicoptero {
   /** kg. */
   readonly masaVacia: number;
   readonly masaMaxima: number;
+  /**
+   * **La actitud con la que se queda quieto en el aire**, rad: la que el piloto
+   * deja puesta en el cíclico antes de despegar. Sale del propio modelo —el
+   * mástil inclinado, el centro de gravedad y el empuje del rotor de cola—, y
+   * una prueba mira que siga siéndolo. Ver la de actitud en `estabilizar`.
+   */
+  readonly actitudDeEstacionario: { readonly cabeceo: number; readonly alabeo: number };
+  /**
+   * Y **dónde va el cíclico** para sostenerla, de −1 a 1: lo que la
+   * estabilización aprende en el aire, puesto ya en el suelo.
+   */
+  readonly ciclicoDeEstacionario: { readonly cabeceo: number; readonly alabeo: number };
   readonly rotor: Disco & {
     /**
      * **Hacia dónde gira, visto desde arriba**: 1 en el sentido de las agujas del
@@ -107,6 +119,8 @@ export interface FichaDeHelicoptero {
     readonly frente: number;
     readonly lado: number;
     readonly planta: number;
+    /** La que añade el tren fuera, de frente, m². Ver `tren` en los mandos. */
+    readonly tren: number;
     /** kg·m², en ejes cuerpo. */
     readonly inercia: { readonly xx: number; readonly yy: number; readonly zz: number };
   };
@@ -164,6 +178,11 @@ export interface MandosDeHelicoptero {
   frenos: number;
   /** El freno del rotor, puesto o quitado. Sin poner, quitado. */
   frenoDelRotor?: boolean;
+  /**
+   * Dónde está el tren, de 0 dentro a 1 fuera y trabado; sin poner, fuera. Lo
+   * mueve la palanca del juego, que es la de los aviones: ver `flight/tren.ts`.
+   */
+  tren?: number;
 }
 
 export function mandosNeutros(): MandosDeHelicoptero {
@@ -811,8 +830,10 @@ export class ModeloDeHelicoptero {
     const estela = 1.5 * principal.enElDisco * desvioDeLaEstela(enElPlanoDelDisco, principal.enElDisco);
     const wf = w - estela;
     const vf = Math.sqrt(u * u + v * v + wf * wf);
+    // Y el tren fuera, que frena: ver `fuselaje.tren` en la ficha.
+    const frente = fus.frente + fus.tren * Math.max(0, Math.min(1, mandos.tren ?? 1));
     aplicar(
-      -0.5 * densidad * fus.frente * vf * u,
+      -0.5 * densidad * frente * vf * u,
       -0.5 * densidad * fus.lado * vf * v,
       -0.5 * densidad * fus.planta * vf * wf,
       0,
@@ -1002,11 +1023,26 @@ export class ModeloDeHelicoptero {
     const posado = s.onGround;
     const conLaMano = posado && modo === "actitud";
 
-    // Lo que se pide: en `actitud`, el cíclico mueve la actitud y al soltarlo se queda.
+    /*
+     * Lo que se pide: en `actitud`, el cíclico mueve la actitud y al soltarlo se
+     * queda. **Y posado, la del estacionario**, que es donde un piloto deja el
+     * cíclico antes de subir el colectivo. Sostenía la de las ruedas, casi plana,
+     * y al despegar con el cíclico suelto se quedaba con ella: dos grados de
+     * morro abajo y de ala izquierda de más, y a un minuto el helicóptero iba a
+     * cincuenta nudos hacia delante y a la izquierda. Con la actitud y el
+     * cíclico que la sostiene, los dos: con la actitud sola, el cíclico se
+     * quedaba a media distancia mientras despegaba y salía a nueve nudos. Se
+     * llega despacio y a valores fijos, sin acumular nada que el suelo no deje
+     * tomar: ver la nota de arriba.
+     */
     if (conLaMano) {
       const sigue = 1 - Math.exp(-dt / 2);
-      this.cabeceoPedido += (a.cabeceo - this.cabeceoPedido) * sigue;
-      this.alabeoPedido += diferencia(a.alabeo, this.alabeoPedido) * sigue;
+      const quieto = this.ficha.actitudDeEstacionario;
+      const ciclico = this.ficha.ciclicoDeEstacionario;
+      this.cabeceoPedido += (quieto.cabeceo - this.cabeceoPedido) * sigue;
+      this.alabeoPedido += diferencia(quieto.alabeo, this.alabeoPedido) * sigue;
+      this.sostieneCabeceo += (ciclico.cabeceo - this.sostieneCabeceo) * sigue;
+      this.sostieneAlabeo += (ciclico.alabeo - this.sostieneAlabeo) * sigue;
     } else if (modo === "actitud") {
       this.cabeceoPedido = acotar(this.cabeceoPedido + piloto.cabeceo * 10 * GRADO * dt, 30 * GRADO);
       this.alabeoPedido = acotar(this.alabeoPedido + piloto.alabeo * 15 * GRADO * dt, 45 * GRADO);

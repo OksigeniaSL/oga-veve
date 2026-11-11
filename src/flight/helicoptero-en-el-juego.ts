@@ -77,7 +77,8 @@ export const SUPER_PUMA_EN_EL_JUEGO: AircraftConfig = {
   cuentaSoloSinIls: false,
   cantaLosMinimos: false,
   ventanillas: null,
-  // La VNE de la ficha, 167 kt (TCDS, III.8). No hay tren que sacar ni flaps.
+  // La VNE de la ficha, 167 kt (TCDS, III.8). Sin flaps; y sin límite propio
+  // para el tren fuera, que no lo da ninguna fuente a mano.
   vmoKt: 167,
   vleKt: 167,
   vfePorMuesca: [],
@@ -98,9 +99,21 @@ export const SUPER_PUMA_EN_EL_JUEGO: AircraftConfig = {
   batalla: 5.3,
   // El centro de gravedad sobre el suelo, que es donde el juego pone el origen.
   gearHeight: SUPER_PUMA.ruedas[0]!.z,
-  trenRetractil: false,
-  meteElTrenA: null,
-  tardaElTren: null,
+  /*
+   * **El tren se recoge**: triciclo semirretráctil, hidráulico, con el de morro
+   * hacia atrás y los principales hacia arriba, a los carenados de los costados
+   * (las descripciones del tipo y el boletín 11/99 de la AAIB, de un AS 332L,
+   * que cuenta además que recogido asoman las ruedas principales). Fuera frena: ver
+   * `fuselaje.tren` en `super-puma.ts`. El modelo de Gaudí ya lo traía con sus
+   * bisagras.
+   *
+   * Se sube en la lista de después de despegar: en el boletín, a 70 ft del
+   * radioaltímetro. Lo que tarda no está en ninguna fuente a mano: supuesto,
+   * seis segundos, del orden de un tren hidráulico de su tamaño.
+   */
+  trenRetractil: true,
+  meteElTrenA: 70 * 0.3048,
+  tardaElTren: { sale: 6, entra: 6 },
   maxGroundPitch: 0.15,
   minGroundPitch: -0.1,
   llevaFlaps: false,
@@ -116,7 +129,10 @@ export const SUPER_PUMA_EN_EL_JUEGO: AircraftConfig = {
     ...ARASUNU.sound,
     // Un turboeje suena a turbina, y de prestado el del turbohélice: el sonido
     // propio del helicóptero llega aparte (ADR 0026, paso 3).
-    ruidos: { ...ARASUNU.sound.ruidos, tren: 0, flaps: null },
+    // El tren, que ahora se mueve: va en los carenados de los costados y en el
+    // morro, a un palmo de la cabina y sin forro, pero con el rotor encima
+    // tapándolo casi todo. Supuesto, a medias.
+    ruidos: { ...ARASUNU.sound.ruidos, tren: 0.5, flaps: null },
   },
   helicoptero: SUPER_PUMA,
 };

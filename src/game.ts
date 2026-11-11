@@ -2297,6 +2297,12 @@ const SE_REARMA = 3;
  */
 const METE_EL_TREN = 300;
 
+/**
+ * Por debajo de cuánto, m sobre el suelo, el helicóptero que baja despacio
+ * viene a posarse: cien pies. Ver `vieneSinTren`.
+ */
+const POSARSE_DESDE = 100 * 0.3048;
+
 const EN_DESPEGUE: ReadonlySet<Fase> = new Set<Fase>([
   "alineando",
   "despegando",
@@ -9007,6 +9013,23 @@ export class Game {
   }
 
   /** Coloca el avión al principio de la pista, parado y con el motor al ralentí. */
+  /** Si el helicóptero estaba posado en el fotograma de antes. Ver `posarseSinTren`. */
+  private helicopteroPosado = true;
+
+  /**
+   * **El helicóptero que se posa con el tren dentro**, que es lo único de una
+   * toma que se le juzga aparte del golpe. El Super Puma recogido asoma las
+   * ruedas principales, pero el morro va sin la suya: se apoya en la panza del
+   * morro y algo se rompe. Avisado antes por «sacá el tren», como el avión.
+   * Ver `vieneSinTren`.
+   */
+  private posarseSinTren(): void {
+    const s = this.flight.state;
+    const tocaAhora = s.onGround && !this.helicopteroPosado;
+    this.helicopteroPosado = s.onGround;
+    if (tocaAhora && !s.crashed && this.input.controls.tren < 0.99) this.sufrirPercance("sintren");
+  }
+
   /**
    * Mira si se ha aterrizado y lo dice. La lógica vive en `aterrizaje.ts`.
    *
@@ -9022,7 +9045,10 @@ export class Game {
      * velocidad— son de avión; si se rompe al tocar, lo dice su modelo y lo
      * recoge el percance de siempre. Ver `HelicopteroComoModelo.step`.
      */
-    if (this.aircraft.helicoptero) return null;
+    if (this.aircraft.helicoptero) {
+      this.posarseSinTren();
+      return null;
+    }
     const s = this.flight.state;
     const veredicto = this.landing.update(
       s.onGround,
@@ -27622,9 +27648,16 @@ export class Game {
        * pega una bajadita de un par de segundos y sigue por debajo de los
        * doscientos cincuenta metros. Es el mismo embudo que usan los mínimos
        * y la orden de frustrar. Ver `enElEmbudoDeFinal`.
+       *
+       * **El helicóptero no viene en final a una pista**: viene a posarse, y
+       * eso es despacio y bajo —por debajo de su velocidad de aproximación y
+       * de cien pies—, que es donde se posa en cualquier sitio.
        */
-      enElEmbudoDeFinal(this.laPistaDeAhora(), s.position.x, s.position.z) !==
-        null,
+      this.aircraft.helicoptero
+        ? indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) <
+            this.aircraft.approachSpeed && s.heightAboveGround < POSARSE_DESDE
+        : enElEmbudoDeFinal(this.laPistaDeAhora(), s.position.x, s.position.z) !==
+          null,
     );
   }
 

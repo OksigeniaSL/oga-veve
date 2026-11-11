@@ -11,8 +11,9 @@
  * - **Que se queda en estacionario**: medio minuto a diez metros sin irse.
  * - **Que avanza con el cíclico** y se para al soltarlo.
  * - **Que vuelve, baja y se posa** en el helipuerto, suave y entero.
+ * - **Que recoge el tren** en el aire, y no en el suelo, y lo saca para posarse.
  * - Y en pantalla, **NR y TQ** con sus cifras, y ninguno de los mandos de avión
- *   que no lleva: ni flaps, ni tren, ni aerofrenos, ni piloto automático.
+ *   que no lleva: ni flaps, ni aerofrenos, ni piloto automático.
  *
  * Saca capturas de fuera, del HUD y de la cabina con `OGA_FOTOS=<carpeta>`.
  * `OGA_GPU=1` como los demás; `OGA_TRAMO` para el peldaño (de fábrica
@@ -164,7 +165,6 @@ try {
       tqValor: texto('[data-hud="par"]'),
       rotulos: [...document.querySelectorAll(".medidor__etiqueta")].map((e) => e.textContent.trim()),
       flaps: visible('[data-hud="flaps-touch"]'),
-      tren: visible('[data-hud="tren-touch"]'),
       aerofrenos: visible('[data-hud="aerofrenos-touch"]'),
       reversa: visible('[data-hud="reversa"]'),
       automatico: visible('[data-hud="piloto-auto"]'),
@@ -177,8 +177,20 @@ try {
   );
   comprobar(
     "ninguno de los mandos de avión que no lleva",
-    !pantalla.flaps && !pantalla.tren && !pantalla.aerofrenos && !pantalla.reversa && !pantalla.automatico,
-    `flaps ${pantalla.flaps}, tren ${pantalla.tren}, aerofrenos ${pantalla.aerofrenos}, reversa ${pantalla.reversa}, automático ${pantalla.automatico}`,
+    !pantalla.flaps && !pantalla.aerofrenos && !pantalla.reversa && !pantalla.automatico,
+    `flaps ${pantalla.flaps}, aerofrenos ${pantalla.aerofrenos}, reversa ${pantalla.reversa}, automático ${pantalla.automatico}`,
+  );
+  /*
+   * **El tren no se recoge con el peso encima**: la G posado no hace nada, como
+   * en el de verdad, que tiene su lógica de tierra y vuelo. Ver `alternarTren`.
+   */
+  await page.keyboard.press("g");
+  await pausa(1500);
+  const trenPosado = await page.evaluate(() => ({ pide: globalThis.__oga.trenQueSePide(), donde: globalThis.__oga.controles().tren, patas: globalThis.__oga.patas() }));
+  comprobar(
+    "posado, el tren no se recoge, y el modelo tiene sus patas",
+    trenPosado.pide === true && trenPosado.donde > 0.99 && trenPosado.patas >= 3,
+    `pedido ${trenPosado.pide ? "fuera" : "dentro"}, en ${trenPosado.donde.toFixed(2)}, ${trenPosado.patas} patas que se mueven`,
   );
   await foto("1-posado-fuera");
   await foto("1-posado-hud-derecha", { clip: { x: ANCHO - 420, y: 0, width: 420, height: ALTO } });
@@ -334,6 +346,12 @@ try {
   // Por encima de los hangares y la terminal: a diez metros, adelante hay un edificio.
   await page.evaluate(() => (globalThis.__banco.alto = 30));
   await esperar((r) => Math.abs(r.alto - 30) < 1.5 && Math.abs(r.vs) < 0.4, 40);
+  // En el aire y subido, el tren dentro: es lo que se hace tras despegar.
+  await page.keyboard.press("g");
+  await pausa(7500);
+  const trenDentro = await page.evaluate(() => globalThis.__oga.controles().tren);
+  comprobar("en el aire, el tren se recoge", trenDentro < 0.01, `tren en ${trenDentro.toFixed(2)}`);
+  await foto("4b-tren-dentro");
   const salida = await leerApuntando();
   await page.evaluate(() => (globalThis.__banco.fase = "adelante"));
   let gsMax = 0;
@@ -368,6 +386,11 @@ try {
     desdeLejos > 40 && encima.alHelipuerto < 3 && !encima.percance,
     `desde ${desdeLejos.toFixed(0)} m, se queda a ${encima.alHelipuerto.toFixed(1)} m, ${encima.gs.toFixed(2)} m/s`,
   );
+  // Y fuera otra vez para posarse.
+  await page.keyboard.press("g");
+  await pausa(7000);
+  const trenFuera = await page.evaluate(() => globalThis.__oga.controles().tren);
+  comprobar("y antes de posarse, el tren sale", trenFuera > 0.99, `tren en ${trenFuera.toFixed(2)}`);
   await page.evaluate(() => (globalThis.__banco.fase = "bajar"));
   const abajo = await esperar((r) => r.enTierra, 60);
   await pausa(3000);

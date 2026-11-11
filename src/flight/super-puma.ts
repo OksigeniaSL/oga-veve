@@ -27,6 +27,15 @@ export const SUPER_PUMA: FichaDeHelicoptero = {
   // máximo menos la carga útil de 3.889 kg de la página de Airbus.
   masaMaxima: 8600,
   masaVacia: 8600 - 3889,
+  /*
+   * Medida en el modelo: la que sostiene quieto, sin viento, la estabilización
+   * de estacionario, entre la de dentro del efecto suelo y la de fuera
+   * (2,33° y 2,47° a dos metros; 2,35° y 2,85° a veinticinco). Morro arriba por
+   * el mástil, que cae cinco grados hacia delante, y el lado derecho bajo por el
+   * rotor de cola, que empuja a la izquierda.
+   */
+  actitudDeEstacionario: { cabeceo: 2.35 * GRADO, alabeo: 2.7 * GRADO },
+  ciclicoDeEstacionario: { cabeceo: 0.27, alabeo: 0.2 },
   rotor: {
     // 15,60 m de diámetro y cuatro palas (TCDS, III.4.2).
     radio: 7.8,
@@ -92,6 +101,7 @@ export const SUPER_PUMA: FichaDeHelicoptero = {
     // 136 kt —el crucero recomendado de Airbus— gasta un tercio más que en el
     // mínimo, que es lo que sale de su autonomía y su alcance. Ver el ADR.
     frente: 2.8,
+    tren: 0.35,
     lado: 12,
     planta: 14,
     // Supuestos: del orden de los del UH-60 del informe de la NASA, que pesa casi
