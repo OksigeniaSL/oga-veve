@@ -244,13 +244,14 @@ export function pistaNecesariaHoy(a: AircraftConfig, dia: DiaDeDespegue = DIA_DE
  * - **El Seneca II**, la del JAZ 40, rueda 870 ft y pasa los cincuenta pies a
  *   los 1.240, a sus 4.570 lb: 1,43 (tabla comparativa de la Grumman Owners
  *   and Pilots Association, aya.org). **Y aun así se le deja el 1,8**, porque
- *   su toma en esta cuenta sale corta: 393 m desde los cincuenta pies —84 en
- *   el aire y 309 rodando—, donde esa misma tabla da 2.110 ft, 643 m —unos
- *   220 en el aire y 1.380 ft, 421 m, rodando—. Ver `enPlaneoDesdeElUmbral`.
- *   Con el 1,43 y esa toma corta, el bimotor pasaría a caber en los
- *   novecientos metros de hierba de la granja, y uno de verdad no aterriza ahí
- *   con el margen de su clase: 643 m por el 1,15 de la hierba, entre 0,7, son
- *   1.056. Bajarlo va con arreglar la toma, no antes (revisado el 12-11-2026).
+ *   su toma en esta cuenta sale corta: 538 m desde los cincuenta pies —229 en
+ *   el aire y 309 rodando—, donde esa misma tabla da 2.110 ft, 643 m —222 en
+ *   el aire y 1.380 ft, 421 m, rodando—. El aire ya es el suyo (ver
+ *   `enPlaneoDesdeElUmbral`); lo que falta es la frenada. Con el 1,43 y esa
+ *   toma corta, el bimotor pasaría a caber en los novecientos metros de hierba
+ *   de la granja —834 m para despegar y 890 para aterrizar—, y uno de verdad
+ *   no aterriza ahí con el margen de su clase: 643 m por el 1,15 de la hierba,
+ *   entre 0,7, son 1.056. Bajarlo va con su frenada, no antes (12-11-2026).
  */
 export function deRodarADespegar(a: AircraftConfig): number {
   return esDeChorro(a) ? 2500 / 1800 : 1.8;
@@ -377,10 +378,8 @@ export function remontaHastaLaCabecera(a: AircraftConfig): boolean {
  *
  * Son dos trozos, como en cualquier manual:
  *
- * - **El aire**, desde los quince metros del umbral hasta tocar. Se recorre en
- *   planeo poco profundo a la velocidad de aproximación, y se toma la cuenta
- *   de siempre: la altura por la fineza en configuración de aterrizaje, que
- *   con flaps anda por siete.
+ * - **El aire**, desde los cincuenta pies sobre el umbral hasta tocar, por la
+ *   senda de su clase: ver `enPlaneoDesdeElUmbral`.
  * - **El suelo**, integrando la frenada desde la velocidad de toma —un pelo
  *   por debajo de la de umbral— con el rozamiento de frenar y la resistencia
  *   aerodinámica, que a esa velocidad todavía cuenta.
@@ -398,27 +397,47 @@ export function distanciaDeAterrizaje(
   return enPlaneoDesdeElUmbral(a) + rodaduraDeFrenada(a, superficie);
 }
 
+/** Los cincuenta pies sobre el umbral desde los que cuenta todo manual, m. */
+const ALTURA_DEL_UMBRAL = 50 * 0.3048;
+
 /**
- * Lo que se recorre en el aire desde los quince metros del umbral, m.
+ * **La senda por la que llega su clase a la pista**, en radianes: la que
+ * convierte los cincuenta pies del umbral en el tramo en el aire de sus
+ * manuales.
  *
- * La altura por la fineza en configuración de aterrizaje, que con flaps anda
- * por siete. Es la mitad de la distancia de aterrizaje que **no** se frena.
+ * - **Los de línea, por los tres grados** de la senda de siempre —«el ángulo
+ *   óptimo de la senda de planeo es de 3°», OACI, Doc 8168, volumen II—, que
+ *   es como se vuela y como se certifica su toma: una aproximación
+ *   estabilizada hasta los cincuenta pies (CS 25.125 a 2). Dan 291 m, y sus
+ *   manuales, entre 290 y 350: el Twin Otter aterriza en 460 m desde los
+ *   cincuenta pies con 169 de rodadura, 291 en el aire (De Havilland,
+ *   especificaciones del DHC-6); el 1900D lleva unos mil pies de aire en sus
+ *   2.800, y el Embraer 170 unos trescientos en sus 737 m
+ *   (`distancia-de-aterrizaje.test.ts`); y el 787-9, unos 350 en sus 1.080
+ *   (D6-58333, 3.4.3).
+ * - **Las avionetas, algo más empinadas**, con la técnica de pista corta de
+ *   sus manuales —gas al mínimo y flaps a tope—: el Cessna 172S toma en 1.335
+ *   ft desde los cincuenta pies con 575 de rodadura, 760 ft en el aire
+ *   (manual de vuelo, sección 5, a 2.550 lb), y el Seneca II en 2.110 con
+ *   1.380, 730 ft (tabla comparativa de la Grumman Owners and Pilots
+ *   Association, aya.org). Son 3,8° y 3,9°: 3,8.
  */
-export function enPlaneoDesdeElUmbral(a: AircraftConfig): number {
-  return 15 * finezaDeAterrizaje(a);
+function sendaDeSuClase(a: AircraftConfig): number {
+  return ((esDeLinea(a) ? 3 : 3.8) * Math.PI) / 180;
 }
 
-/** La fineza con los flaps puestos, que es como se aterriza. */
-function finezaDeAterrizaje(a: AircraftConfig): number {
-  const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
-  const cl = a.aero.cl0 + a.flapsLift;
-  // Y con el tren fuera, que se aterriza con él. Ver `resistenciaDelTren`.
-  const cd =
-    a.aero.cd0 +
-    (cl * cl) / (Math.PI * alargamiento * a.aero.oswald) +
-    a.flapsDrag +
-    resistenciaDelTren(a, 1, 1);
-  return cl / cd;
+/**
+ * Lo que se recorre en el aire desde los cincuenta pies sobre el umbral hasta
+ * tocar, m: esa altura por la senda de su clase. Ver `sendaDeSuClase`.
+ *
+ * Era la altura por la fineza con flaps, que es como planea un avión con el
+ * motor parado y no como llega a una pista: salían unos cien metros para
+ * todos, donde los manuales dan entre doscientos y trescientos cincuenta, y la
+ * toma de cada avión era entre un 15 % y un 40 % más corta que la de su tipo
+ * (12-11-2026).
+ */
+export function enPlaneoDesdeElUmbral(a: AircraftConfig): number {
+  return ALTURA_DEL_UMBRAL / Math.tan(sendaDeSuClase(a));
 }
 
 /**

@@ -191,6 +191,16 @@ tres de la pista:
   los márgenes nuevos sigue mandando el despegue en los seis, y por eso no se
   tocó; con el aire de un manual la toma del JAZ 20 pasaría a mandar sin cambiar
   ningún veredicto.
+
+  **Hecho el 12 de noviembre de 2026**: el aire sale ya de los cincuenta pies
+  por la senda de su clase —tres grados los de línea, 3,8 las avionetas, la de
+  sus manuales—, 291 y 229 m (ver `sendaDeSuClase` en `carrera.ts`). Ningún
+  veredicto cambia, ni la cifra que enseña ninguno: en todos los campos donde
+  un avión no cabe sigue mandando el despegue. La toma del JAZ 20 manda ahora
+  en la suya, como estaba previsto, y cabe en todas partes. Al Seneca se le
+  deja el 1,8 de despegue y no su 1,43: con su frenada todavía corta, cabría
+  en la hierba de la granja, donde el de verdad no aterriza con su margen
+  (ver `deRodarADespegar`).
 - **La cuenta del día en la intersección** sigue midiendo la pista desde la
   geometría y no desde la TORA publicada; en Lanzarote por la 21 y en La Palma
   por la 18 eso son 90 y 142 m que no se pueden correr.
