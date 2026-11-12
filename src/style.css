@@ -6337,6 +6337,11 @@ button.motor__tecla::after {
   fill: none;
 }
 
+/* El sitio del dedo de cada dial: no se ve. Ver `toque` en `ui/vms.ts`. */
+.vms__toque {
+  fill: transparent;
+}
+
 .vms__cifra {
   font-size: 13px;
 }

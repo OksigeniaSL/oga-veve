@@ -119,6 +119,39 @@ const MOTOR = pantalla(`
   <path d="M57 26 l3 -6 l3 6 Z" class="ex-f-magenta" />
 `);
 
+/**
+ * **El FLI del helicóptero**: el arco verde, el ámbar del despegue y la raya
+ * roja, y las dos agujas de los motores con su disco a dos alturas, como en la
+ * VMS. Sin el 1 ni el 2 escritos: el dibujo va en los cuatro peldaños.
+ */
+const FLI = pantalla(`
+  <circle cx="60" cy="42" r="34" class="ex-s-bisel" />
+  <path d="M34 57 A30 30 0 1 1 89.2 34.9" class="ex-s-verde ex-grueso" />
+  <path d="M89.2 34.9 A30 30 0 0 1 89.7 46.3" class="ex-s-ambar ex-grueso" />
+  <path d="M80.2 50.8 L89.4 54.7" class="ex-s-rojo ex-grueso" />
+  <path d="M60 42 L61 16.2 M60 42 L66.8 17.1" class="ex-s-blanco" />
+  <circle cx="60.5" cy="29.4" r="4.2" class="ex-f-negro" />
+  <circle cx="60.5" cy="29.4" r="4.2" class="ex-s-blanco ex-fino" />
+  <circle cx="65.7" cy="21.2" r="4.2" class="ex-f-negro" />
+  <circle cx="65.7" cy="21.2" r="4.2" class="ex-s-blanco ex-fino" />
+  <circle cx="60" cy="42" r="3" class="ex-f-blanco" />
+`);
+
+/**
+ * **El reloj del rotor**: las bandas de las vueltas, la aguja ancha y blanca
+ * del rotor en el cien por cien y, encima, la fina de las turbinas en cian.
+ */
+const ROTOR = pantalla(`
+  <circle cx="60" cy="42" r="34" class="ex-s-bisel" />
+  <path d="M81.6 21.2 A30 30 0 0 1 87.2 29.3" class="ex-s-ambar ex-grueso" />
+  <path d="M87.2 29.3 A30 30 0 0 1 90 40.7" class="ex-s-verde ex-grueso" />
+  <path d="M90 40.7 A30 30 0 0 1 89.6 46.6" class="ex-s-ambar ex-grueso" />
+  <path d="M75.8 26.7 L83 19.8 M81.7 45.4 L91.6 46.9" class="ex-s-rojo ex-grueso" />
+  <path d="M60.6 45.2 L83.6 37.8 L59.4 38.8 Z" class="ex-f-blanco" />
+  <path d="M60 42 L88.1 37.1" class="ex-s-cian" />
+  <circle cx="60" cy="42" r="3.4" class="ex-f-blanco" />
+`);
+
 const TREN = pantalla(`
   <path d="M14 30 q46 -18 92 0 v6 q-46 -10 -92 0 Z" class="ex-f-blanco" />
   <path d="M60 30 v24 M30 34 v22 M90 34 v22" class="ex-s-blanco ex-grueso" />
@@ -418,6 +451,15 @@ const DEL_CUADRO = enRincon("cuadro", [
   { id: "variometro", rotulo: "V/S", dibujo: { svg: VARIOMETRO }, ...claves("variometro") },
   { id: "coordinador", dibujo: { svg: COORDINADOR }, ...claves("coordinador") },
   { id: "motor", dibujo: { svg: MOTOR }, ...claves("motor") },
+  /*
+   * **Y los dos diales de la VMS del helicóptero**, uno por dial, como el
+   * resto del cuadro: el FLI, que dice cuánta fuerza le queda a cada motor
+   * antes de su primer límite, y el reloj del rotor, con sus turbinas casadas.
+   * La de «motor» habla de RPM y de N1, que un helicóptero no enseña. Ver
+   * `ui/vms.ts` y `flight/vms.ts`.
+   */
+  { id: "fli", rotulo: "FLI", dibujo: { svg: FLI }, ...claves("fli") },
+  { id: "rotor", rotulo: "NR", dibujo: { svg: ROTOR }, ...claves("rotor") },
   { id: "flaps", rotulo: "FLAPS", dibujo: { senal: "flaps" }, ...claves("flaps") },
   { id: "tren", rotulo: "GEAR", dibujo: { svg: TREN }, ...claves("tren") },
   { id: "combustible", rotulo: "FUEL", dibujo: { senal: "combustible" }, ...claves("combustible") },

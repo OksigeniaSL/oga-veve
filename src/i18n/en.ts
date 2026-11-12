@@ -1918,6 +1918,12 @@ export const EN: Dictionary = {
   "explica.motor.corta": "Engine",
   "explica.motor.texto":
     "How hard the engine is working. On propeller planes it is measured in turns per minute, RPM; on jets, by how fast the big fan at the front spins, N1. More power means going faster or climbing; less power, going slower or descending. On a jet the needle takes a few seconds to reach what you asked for: a big engine doesn't hurry.",
+  "explica.fli.corta": "Power left",
+  "explica.fli.texto":
+    "The FLI shows how much power each engine has left before it reaches its first limit. A helicopter engine has three: torque, the force the gearbox that turns the rotor can take; the turbine temperature; and the gas generator speed, NG. Needles 1 and 2 show whichever is closest. In the green there is power to spare; amber is takeoff power, used only for a short while; and the red line is the top.",
+  "explica.rotor.corta": "The rotor",
+  "explica.rotor.texto":
+    "The wide white needle is rotor speed, NR. The engine governor holds it almost still at one hundred percent, whether the collective goes up or down. On top are the two thin needles of the engines' turbines, NF, married to the rotor while they drive it. If NR drops, it is the first thing to look at: the rotor is what holds you up, and without its speed it can't. To let it recover, lower the collective.",
   "explica.flaps.corta": "Flaps",
   "explica.flaps.texto":
     "The flaps are the back part of the wing, and they slide down and out. They make the wing bigger and more curved, so it holds the plane up at a lower speed. They come out for take-off and landing, and go back in for the cruise, because they also slow you down.",
