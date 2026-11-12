@@ -25,6 +25,8 @@ import { ensenarAnadirAInicio } from "./ui/anadir-a-inicio";
 import { pedirAlPrimerToque } from "./ui/pantalla-completa";
 import { elegirPiloto } from "./ui/pantalla-pilotos";
 import { arrancarPizarra } from "./ui/pizarra";
+import { espejoDeHas } from "./ui/espejo-de-has";
+import { medirContenedoresSiFalta } from "./ui/medidas-de-contenedor";
 import { echarElDeDesarrollo, registrarElTrabajador } from "./service-worker";
 
 echarElDeDesarrollo();
@@ -44,6 +46,15 @@ pedirAlPrimerToque();
  * `main.ts`, que llega después de pintar esa pantalla. Ver `ui/pizarra.ts`.
  */
 arrancarPizarra();
+
+/*
+ * **Y lo que la hoja de estilos pide y un navegador viejo no sabe** —`:has()`
+ * y las unidades de contenedor—, hecho a mano solo donde falta: Firefox 98, el
+ * de una pizarra de aula con Android 8. Donde está, no hacen nada. Aquí, en la
+ * entrada, para que ya la primera pantalla salga bien.
+ */
+espejoDeHas();
+medirContenedoresSiFalta();
 
 const params = new URLSearchParams(location.search);
 const directo =

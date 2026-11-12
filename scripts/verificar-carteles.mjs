@@ -1500,6 +1500,94 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
 }
 
 /*
+ * **«¿A dónde vas?», entera y sin desplazar, en la pizarra de un aula.**
+ *
+ * La carta medía todo el alto de la lista y las fichas de destino quedaban
+ * debajo: había que desplazar para verlas, y quien tiene cuatro años no sabe
+ * que debajo hay más. Aquí, en lo que queda a la vista en una pizarra
+ * —1280 × 600, con el dedo—, en 960 × 540 y en el Chromebook duplicado de
+ * 1366 × 768, con la carta tumbada (Canarias) y de pie (el Paraguay): la
+ * lista no se desplaza, la carta y cada ficha están enteras por encima de la
+ * barra de abajo, y en la carta, más pequeña ahora, ningún rótulo pisa a otro.
+ */
+for (const [ancho, alto, dedo] of [
+  [1280, 600, "dedo"],
+  [960, 540, "dedo"],
+  [1366, 768],
+]) {
+  const page = await navegador.newPage({
+    viewport: { width: ancho, height: alto },
+    hasTouch: !!dedo,
+    isMobile: !!dedo,
+  });
+  const tam = `${ancho}×${alto}${dedo ? " con el dedo" : ""}`;
+  try {
+    await page.addInitScript(() => {
+      localStorage.setItem("oga-veve:teclas-vistas", "1");
+      if (localStorage.getItem("oga-veve:guardado") === null)
+        localStorage.setItem("oga-veve:cuaderno", JSON.stringify({ despegues: 1, segundos: 600 }));
+    });
+    await page.goto(`${BASE}/`);
+    await page.waitForSelector(".piloto__boton", { timeout: 90000 });
+    await page.click(".piloto__boton");
+    await page.waitForSelector(".ficha--sitio", { timeout: 90000 });
+    for (const { sitio } of CARTAS)
+      for (const calco of CALCOS) {
+        await page.click('[data-pantalla="donde"]');
+        await page.click(`[data-sitio="${sitio}"]`);
+        await page.click('[data-pantalla="quien"]');
+        await page.click(`[data-tramo="${calco}"]`);
+        await page.click('[data-pantalla="adonde"]');
+        await page.waitForSelector(".pais__lienzo");
+        await page.evaluate(() => document.fonts.ready);
+        await page.waitForTimeout(150);
+        const v = await page.evaluate(() => {
+          const rejilla = document.querySelector(".hangar__rejilla--destinos");
+          const barra = document.querySelector(".hangar__barra")?.getBoundingClientRect().top ?? innerHeight;
+          const fuera = [];
+          for (const el of rejilla.querySelectorAll(":scope > .pais, :scope > .ficha")) {
+            const r = el.getBoundingClientRect();
+            const que = el.classList.contains("pais") ? "la carta" : (el.querySelector(".ficha__nombre")?.textContent ?? "").trim().slice(0, 18);
+            if (r.top < -0.5 || r.left < -0.5 || r.right > innerWidth + 0.5 || r.bottom > barra + 0.5)
+              fuera.push(`${que} (${Math.round(r.top)}–${Math.round(r.bottom)}, barra en ${Math.round(barra)})`);
+          }
+          const pais = rejilla.querySelector(".pais").getBoundingClientRect();
+          return {
+            rueda: rejilla.scrollHeight - rejilla.clientHeight,
+            fuera,
+            fichas: rejilla.querySelectorAll(":scope > .ficha").length,
+            carta: `${Math.round(pais.width)}×${Math.round(pais.height)}`,
+          };
+        });
+        comprobar(
+          `destinos de ${sitio} en ${calco}, ${tam}: la carta y las fichas, enteras y sin desplazar`,
+          v.rueda <= 1 && !v.fuera.length,
+          v.rueda > 1 || v.fuera.length
+            ? [v.rueda > 1 ? `la lista rueda ${v.rueda} px` : "", ...v.fuera].filter(Boolean).slice(0, 4).join(" · ")
+            : `carta de ${v.carta} y ${v.fichas} fichas a la vista`,
+          "lo que queda debajo, para quien no sabe que se puede desplazar, no existe",
+        );
+        const c = await page.evaluate(medirLaCarta);
+        comprobar(
+          `destinos de ${sitio} en ${calco}, ${tam}: ningún rótulo pisa a otro`,
+          c && !c.choques.length && !c.fuera.length,
+          c
+            ? c.choques.length || c.fuera.length
+              ? [...c.choques, ...c.fuera].slice(0, 4).join(" · ")
+              : `${c.letras} rótulos en ${c.alto} px de carta`
+            : "no hay carta",
+          "una carta más pequeña no puede montar los nombres",
+        );
+        await page.click('[data-pantalla="inicio"]');
+      }
+  } catch (e) {
+    comprobar(`destinos ${tam}: se abren`, false, String(e).slice(0, 160), "");
+  } finally {
+    await page.close();
+  }
+}
+
+/*
  * **El plano en vuelo: que ningún rótulo pise a otro.**
  *
  * Lo mismo que la carta del hangar, en el plano que se abre volando: sus
