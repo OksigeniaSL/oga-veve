@@ -48,6 +48,11 @@ page.on("pageerror", (e) => console.log("ERROR:", e.message));
 page.on("console", (m) => {
   if (m.type() === "error") console.log("CONSOLA:", m.text());
 });
+// El mensaje de consola de un 404 no dice qué fichero falta: se dice aquí.
+// (El icono no pasa por aquí: Playwright no cuenta su petición.)
+page.on("response", (r) => {
+  if (r.status() >= 400) console.log("FALTA:", r.status(), r.url());
+});
 
 await page.goto(`${BASE}/scripts/ver-cuadros.html`);
 await page.waitForFunction(() => globalThis.__listo === true, null, {
