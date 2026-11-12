@@ -63,3 +63,7 @@ __pycache__/
 # de aula con Android 8. Pesa doscientos megas y se baja solo. Sin barra al
 # final, para que valga también si es un enlace a otra carpeta.
 /.firefox-98
+
+# La lámina que deja `npm run cuadro` (`scripts/verificar-cuadro.mjs`) si no se
+# le dice otra salida: es para mirarla, no para guardarla.
+/cuadros.png
