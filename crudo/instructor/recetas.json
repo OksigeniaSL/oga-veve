@@ -2138,5 +2138,23 @@
   ],
   "tutor.colectivo": [
     "tutor.colectivo"
+  ],
+  "vuelo.apapiBien": [
+    "vuelo.apapiBien"
+  ],
+  "vuelo.consejo.narizAbajoApapi": [
+    "vuelo.consejo.narizAbajoApapi"
+  ],
+  "vuelo.consejo.narizArribaApapi": [
+    "vuelo.consejo.narizArribaApapi"
+  ],
+  "vuelo.consejo.masGasApapi": [
+    "vuelo.consejo.masGasApapi"
+  ],
+  "vuelo.consejo.menosGasApapi": [
+    "vuelo.consejo.menosGasApapi"
+  ],
+  "explica.apapi.texto": [
+    "explica.apapi.texto"
   ]
 }
