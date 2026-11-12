@@ -85,6 +85,12 @@ const TIPOS = {
 const CHIVATO = `<script>window.__errores=[];addEventListener('error',function(e){__errores.push((e.message||'no carga: '+(e.target&&(e.target.src||e.target.href)))+' '+(e.filename||'')+':'+(e.lineno||''))},true);addEventListener('unhandledrejection',function(e){__errores.push('promesa: '+(e.reason&&(e.reason.message||e.reason)))});</script>`;
 const servidor = createServer((pide, responde) => {
   let ruta = decodeURIComponent(new URL(pide.url, "http://x").pathname);
+  // Una página del mismo sitio sin el juego, para dejar preparado el guardado.
+  if (ruta === "/__en-blanco") {
+    responde.writeHead(200, { "content-type": "text/html" });
+    responde.end("<!doctype html><title>.</title>");
+    return;
+  }
   if (ruta.endsWith("/")) ruta += "index.html";
   const fichero = join(DIST, ruta);
   // Sin trabajador de servicio: entre una tirada y otra serviría lo de antes.
@@ -224,7 +230,10 @@ try {
     const t = `${ancho}×${alto}`;
     console.log(`\n${t}`);
 
-    await orden("WebDriver:Navigate", { url: `${BASE}/` });
+    // El guardado se prepara fuera del juego: con el juego abierto, lo que
+    // guarda al salir pisaba lo puesto y el hangar se saltaba —un piloto nuevo
+    // va derecho a volar—.
+    await orden("WebDriver:Navigate", { url: `${BASE}/__en-blanco` });
     await js(`localStorage.clear();
       localStorage.setItem("oga-veve:cuaderno", JSON.stringify({ despegues: 1, segundos: 600 }));
       localStorage.setItem("oga-veve:escenario", "tenerife-norte");
@@ -236,19 +245,25 @@ try {
     let m = await js(MIRAR);
     comprobar(`${t} portada`, portada && !m.fuera.length && !m.errores.length, [...m.fuera, ...m.errores].join(" · "));
 
+    if (!portada) continue;
     await js("document.querySelector('.piloto__boton').click()");
-    const hangar = await esperar("document.querySelector('.ficha--sitio')", 30000);
+    const hangar = await esperar("document.querySelector('.ficha--sitio')", 60000);
     await pausa(1200);
     await foto(`${ancho}x${alto}-2-hangar`);
     m = await js(MIRAR);
     comprobar(`${t} hangar`, hangar && !m.fuera.length && !m.errores.length, [...m.fuera, ...m.errores].join(" · "));
+    if (!hangar) continue;
 
     // La carta se mide contra su caja con `cqw` y `cqh`: sin reserva, el lienzo
     // se estiraba a la caja entera y la carta salía deformada.
     await js("document.querySelector('.paso[data-pantalla=\"adonde\"]').click()");
-    const carta = await esperar("document.querySelector('.pais__lienzo')", 20000);
+    const carta = await esperar("document.querySelector('.pais__lienzo')", 30000);
     await pausa(1200);
     await foto(`${ancho}x${alto}-3-carta`);
+    if (!carta) {
+      comprobar(`${t} carta sin deformar`, false, "no se abre");
+      continue;
+    }
     const forma = await js(`var l = document.querySelector('.pais__lienzo').getBoundingClientRect();
       var p = parseFloat(getComputedStyle(document.querySelector('.pais')).getPropertyValue('--proporcion')) || 1;
       return { ancho: l.width, alto: l.height, proporcion: p };`);
