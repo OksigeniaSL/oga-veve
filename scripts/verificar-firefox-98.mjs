@@ -50,14 +50,29 @@ if (!existsSync(join(DIST, "index.html"))) {
 // ── El navegador: el de la versión 98, bajado una vez ─────────────────────
 const CARPETA = resolve(".firefox-98");
 const FIREFOX = join(CARPETA, "firefox", "firefox");
-if (!existsSync(FIREFOX)) {
-  console.log("Bajando Firefox 98 a .firefox-98/ …");
+const INI = join(CARPETA, "firefox", "application.ini");
+/*
+ * **Y que siga siendo el 98.** Firefox se actualiza solo aunque vaya sin
+ * ventana y manejado por Marionette: baja la versión nueva en segundo plano y
+ * la pone al arrancar la siguiente vez. Pasó al probar esto —la cuarta tirada
+ * ya era el 160, y todo pasaba—. Así que la política de empresa que lo
+ * prohíbe va en su carpeta, y si aun así no es el 98, se baja otra vez.
+ */
+const version = existsSync(INI) ? /^Version=(.*)$/m.exec(readFileSync(INI, "utf8"))?.[1] : null;
+if (version !== "98.0") {
+  console.log(`Bajando Firefox 98 a .firefox-98/ …${version ? ` (había el ${version})` : ""}`);
+  rmSync(join(CARPETA, "firefox"), { recursive: true, force: true });
   mkdirSync(CARPETA, { recursive: true });
   const tar = join(CARPETA, "firefox-98.0.tar.bz2");
   execFileSync("curl", ["-sSfL", "-o", tar, "https://archive.mozilla.org/pub/firefox/releases/98.0/linux-x86_64/es-ES/firefox-98.0.tar.bz2"], { stdio: "inherit" });
   execFileSync("tar", ["xjf", tar, "-C", CARPETA], { stdio: "inherit" });
   rmSync(tar);
 }
+mkdirSync(join(CARPETA, "firefox", "distribution"), { recursive: true });
+writeFileSync(
+  join(CARPETA, "firefox", "distribution", "policies.json"),
+  JSON.stringify({ policies: { DisableAppUpdate: true } }, null, 2),
+);
 
 // ── El servidor: el `dist/` tal cual, con un chivato de errores ──────────
 const TIPOS = {
@@ -172,11 +187,22 @@ function comprobar(nombre, ok, detalle = "") {
   console.log(`  ${ok ? "✓" : "✗"} ${nombre}${detalle ? `  —  ${detalle}` : ""}`);
 }
 
-/** Lo que se toca y queda fuera de la pantalla, y los errores apuntados. Corre en la página. */
+/**
+ * Lo que se toca y queda fuera de la pantalla, y los errores apuntados. Corre
+ * en la página. Lo que va dentro de una lista que se desplaza no cuenta: está
+ * fuera porque se llega desplazando, también en un navegador nuevo.
+ */
 const MIRAR = `
   var fuera = [];
+  var enLista = function (el) {
+    for (var p = el.parentElement; p; p = p.parentElement) {
+      var o = getComputedStyle(p).overflowY;
+      if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight + 1) return true;
+    }
+    return false;
+  };
   document.querySelectorAll('button, [role=button], a[href], input, select').forEach(function (b) {
-    if (b.closest('[hidden]')) return;
+    if (b.closest('[hidden]') || enLista(b)) return;
     var r = b.getBoundingClientRect(), cs = getComputedStyle(b);
     if (!r.width || !r.height || cs.visibility === 'hidden' || Number(cs.opacity) === 0) return;
     if (r.left < -1 || r.top < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1)
