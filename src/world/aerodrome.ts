@@ -62,7 +62,7 @@ import { laDibujaLaGranja } from "./granja";
 import { esDura } from "./superficie";
 import { ANCHO_RODADURA } from "./ancho-de-rodadura";
 import { umbralPublicado } from "./umbrales-publicados";
-import { lucesDePistaPublicadas } from "./sendas-publicadas";
+import { lucesDePistaPublicadas, separacionDelBorde } from "./sendas-publicadas";
 import { puntoDeVisada } from "../flight/toma-larga";
 
 /**
@@ -2162,9 +2162,10 @@ export function lucesDePista(
     });
   };
 
-  // ── Las de borde, cada sesenta metros por los dos lados ──────────────────
+  // ── Las de borde, cada cincuenta o sesenta metros por los dos lados ──────
   const { blanca, ambar, verde, roja } = COLOR_DE_PISTA;
-  const SEPARACION = 60;
+  // La que publica su AIP: cincuenta metros en casi todas las de Canarias.
+  const SEPARACION = separacionDelBorde(oaci);
   for (let s = SEPARACION / 2; s < largo; s += SEPARACION) {
     // Quien va hacia el fin: rojas en la zona desplazada de su umbral, ámbar
     // en los últimos seiscientos metros por delante, blancas en medio.

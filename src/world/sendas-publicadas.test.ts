@@ -4,7 +4,7 @@
  * Ver `sendas-publicadas.ts`.
  */
 import { describe, expect, it } from "vitest";
-import { Color, type InstancedMesh } from "three";
+import { Color, Mesh, type InstancedMesh } from "three";
 import {
   angulosDelIndicador,
   angulosDelPapi,
@@ -12,6 +12,7 @@ import {
   blancasDePapi,
   blancasEnLaSenda,
   crearAproximacion,
+  destelloEncendido,
   sitiarPapi,
 } from "./aproximacion";
 import { DIBUJOS } from "../ui/senal";
@@ -20,6 +21,7 @@ import {
   ayudasVisuales,
   CALVERT,
   lucesDePistaPublicadas,
+  separacionDelBorde,
   SENDAS,
   SENDA_DE_SIEMPRE,
   SIN_AYUDAS_VISUALES,
@@ -473,5 +475,121 @@ describe("el ámbar del borde, con los metros que da su AIP", () => {
   it("y donde el AIP no da la cifra, la regla de la OACI", () => {
     expect(lucesDePistaPublicadas("SGAS", "20").ambarM).toBeNull();
     expect(lucesDePistaPublicadas("SGOG", "15").ambarM).toBeNull();
+  });
+});
+
+describe("las luces de borde, cada los metros que publica su AIP", () => {
+  /** La separación entre las luces de borde de un costado, m, medida sobre el eje. */
+  const separacionMedida = (oaci: string): number => {
+    const esc = SCENARIOS.find((e) => oaciDe(e) === oaci)!;
+    const pista = esc.aerodrome!.runways[0]!;
+    const [a, b] = Object.values(pista.thresholds).map((u) => u?.xy).filter((xy) => !!xy) as (readonly [number, number])[];
+    const l = Math.hypot(b![0] - a![0], b![1] - a![1]);
+    const [ux, uy] = [(b![0] - a![0]) / l, (b![1] - a![1]) / l];
+    const sobre = lucesDePista(pista, () => 0, oaci)
+      .map((luz) => {
+        const px = luz.p[0] - a![0];
+        const py = -luz.p[2] - a![1];
+        return { adentro: px * ux + py * uy, lado: px * -uy + py * ux };
+      })
+      // Las de un costado. Las de cabecera, que cruzan la pista, quedan juntas
+      // y dan pasos de nada: fuera con los de menos de cinco metros.
+      .filter((p) => p.lado > 0)
+      .map((p) => p.adentro)
+      .sort((x, y) => x - y);
+    const pasos = sobre
+      .slice(1)
+      .map((d, i) => d - sobre[i]!)
+      .filter((d) => d > 5)
+      .sort((x, y) => x - y);
+    expect(pasos.length, `${oaci}: luces de borde`).toBeGreaterThan(10);
+    // La mediana: el paso de casi todas.
+    return pasos[Math.floor(pasos.length / 2)]!;
+  };
+
+  it("cincuenta en Tenerife Norte, El Hierro y Cuatro Vientos, como dice su 2.14", () => {
+    expect(separacionDelBorde("GCXO")).toBe(50);
+    expect(separacionMedida("GCXO")).toBeCloseTo(50, 0);
+    expect(separacionMedida("GCHI")).toBeCloseTo(50, 0);
+    expect(separacionMedida("LECU")).toBeCloseTo(50, 0);
+  });
+
+  it("sesenta en La Gomera, Barajas y Asunción, y donde no se da la cifra", () => {
+    expect(separacionMedida("GCGM")).toBeCloseTo(60, 0);
+    expect(separacionMedida("SGAS")).toBeCloseTo(60, 0);
+    expect(separacionDelBorde("LEMD")).toBe(60);
+    // Concepción solo dice «1.850M Blanca», y Yvytu Rape no tiene AIP.
+    expect(separacionDelBorde("SGCO")).toBe(60);
+    expect(separacionDelBorde("SGOG")).toBe(60);
+  });
+});
+
+describe("las luces de identificación de umbral, donde las publica su AIP", () => {
+  const montado = (id: string, cabecera: string) => {
+    const esc = SCENARIOS.find((e) => e.id === id)!;
+    const aero = esc.aerodrome!;
+    const pista = aero.runways.find((r) => r.thresholds[cabecera]?.xy)!;
+    return { pista, a: crearAproximacion(pista, cabecera, () => 0, aero.visualAids ?? [], ayudasVisuales(oaciDe(esc), cabecera))! };
+  };
+
+  it("en La Gomera, el SLIU: dos, una a cada lado del umbral y diez metros por fuera del borde", () => {
+    const { pista, a } = montado("la-gomera", "09");
+    const luces = a.grupo.getObjectByName("identificacion-de-umbral") as InstancedMesh;
+    expect(luces.count).toBe(2);
+    const u = pista.thresholds["09"]!.xy!;
+    const otro = pista.thresholds["27"]!.xy!;
+    const l = Math.hypot(otro[0] - u[0], otro[1] - u[1]);
+    const [ux, uy] = [(otro[0] - u[0]) / l, (otro[1] - u[1]) / l];
+    const m = new Mesh().matrix;
+    const lados = [0, 1].map((k) => {
+      luces.getMatrixAt(k, m);
+      const px = m.elements[12]! - u[0];
+      const py = -m.elements[14]! - u[1];
+      expect(Math.abs(px * ux + py * uy), "en línea con el umbral").toBeLessThan(0.5);
+      return px * -uy + py * ux;
+    });
+    const borde = (pista.widthM ?? 45) / 2 + 1.5;
+    expect(Math.min(...lados)).toBeCloseTo(-(borde + 10), 1);
+    expect(Math.max(...lados)).toBeCloseTo(borde + 10, 1);
+  });
+
+  it("y donde su AIP no las nombra, no las hay: Tenerife Norte, Cuatro Vientos, Barajas, Asunción", () => {
+    for (const [id, cab] of [["tenerife-norte", "12"], ["cuatro-vientos", "09"], ["pettirossi", "20"]] as const)
+      expect(montado(id, cab).a.grupo.getObjectByName("identificacion-de-umbral"), `${id} ${cab}`).toBeUndefined();
+    expect(ayudasVisuales("LEMD", "18R").identificacion).toBe(false);
+    for (const [oaci, cab] of [["GCLP", "21L"], ["GCFV", "19"], ["GCRR", "03"], ["GCLA", "18"], ["GCHI", "34"], ["GCGM", "27"]] as const)
+      expect(ayudasVisuales(oaci, cab).identificacion, `${oaci} ${cab}`).toBe(true);
+  });
+
+  it("destellan a sesenta por minuto, una décima cada vez", () => {
+    expect(destelloEncendido(0)).toBe(true);
+    expect(destelloEncendido(0.05)).toBe(true);
+    expect(destelloEncendido(0.5)).toBe(false);
+    expect(destelloEncendido(12.04)).toBe(true);
+    // En un minuto, una décima de cada segundo.
+    let encendido = 0;
+    for (let t = 0; t < 60; t += 0.01) if (destelloEncendido(t)) encendido++;
+    expect(encendido / 6000).toBeCloseTo(0.1, 2);
+  });
+
+  it("y solo de noche y desde la final: de día y pasado el umbral, apagadas", () => {
+    const { pista, a } = montado("la-gomera", "09");
+    const luces = a.grupo.getObjectByName("identificacion-de-umbral") as InstancedMesh;
+    const u = pista.thresholds["09"]!.xy!;
+    const otro = pista.thresholds["27"]!.xy!;
+    const l = Math.hypot(otro[0] - u[0], otro[1] - u[1]);
+    const [ux, uy] = [(otro[0] - u[0]) / l, (otro[1] - u[1]) / l];
+    const enLaFinal = { x: u[0] - ux * 1500, z: -(u[1] - uy * 1500) };
+    const enLaPista = { x: u[0] + ux * 500, z: -(u[1] + uy * 500) };
+    a.ponerSol(0.8);
+    a.destellar(0, enLaFinal.x, enLaFinal.z);
+    expect(luces.visible, "de día").toBe(false);
+    a.ponerSol(-0.2);
+    a.destellar(0, enLaFinal.x, enLaFinal.z);
+    expect(luces.visible, "de noche, en el destello").toBe(true);
+    a.destellar(0.5, enLaFinal.x, enLaFinal.z);
+    expect(luces.visible, "de noche, entre destellos").toBe(false);
+    a.destellar(0, enLaPista.x, enLaPista.z);
+    expect(luces.visible, "pasado el umbral").toBe(false);
   });
 });

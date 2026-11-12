@@ -150,6 +150,14 @@ export interface SendaPublicada {
   /** Sus luces de aproximación, o `null` si su AIP dice que no tiene. */
   readonly luces: LucesDeAproximacion | null;
   /**
+   * **Si tiene luces de identificación de umbral**: dos destellos blancos, uno
+   * a cada lado del umbral, que dicen «la pista empieza aquí» donde no hay luces
+   * de aproximación que lo digan, o no bastan. «Threshold identification
+   * lights» en el 2.14 de ENAIRE —«SLIU» en La Gomera, «White flashing
+   * lights» en Fuerteventura—. Ver `crearAproximacion`.
+   */
+  readonly identificacion?: true;
+  /**
    * Y las de la pista, del mismo apartado, solo donde no son las de siempre:
    * `false` si **no tiene** la barra verde de umbral («Threshold: No» en las
    * de despegar de Barajas, NIL en Concepción), la roja de final de pista, o
@@ -202,34 +210,34 @@ export const SENDAS: Readonly<Record<string, Readonly<Record<string, SendaPublic
     "25": { papi: 3, senda: 3, ils: true, luces: precision1(720) },
   },
   GCLP: {
-    "03L": { papi: 3, senda: 3, ils: true, luces: precision1(900, CALVERT) },
-    "21R": { papi: 3, senda: 3, ils: true, luces: precision1(300) },
+    "03L": { papi: 3, senda: 3, ils: true, identificacion: true, luces: precision1(900, CALVERT) },
+    "21R": { papi: 3, senda: 3, ils: true, identificacion: true, luces: precision1(300) },
     // Sin ILS: la RNP, a 3,00° (LPV) y a 3,05° (LNAV/VNAV).
-    "03R": { papi: 3, senda: 3, luces: precision1(900, CALVERT) },
+    "03R": { papi: 3, senda: 3, identificacion: true, luces: precision1(900, CALVERT) },
     // «Simple, 210 m»: más corta que la barra de los trescientos, y el AIP no
     // dice dónde va la suya. Sin barra, que es no inventarla.
-    "21L": { papi: 3, senda: 3.05, luces: sencillas(210, []) },
+    "21L": { papi: 3, senda: 3.05, identificacion: true, luces: sencillas(210, []) },
   },
   GCFV: {
-    "01": { papi: 3, senda: 3, ils: true, luces: precision1(900) },
-    "19": { papi: 3.45, senda: 3.45, ils: true, luces: precision1(900) },
+    "01": { papi: 3, senda: 3, ils: true, identificacion: true, luces: precision1(900) },
+    "19": { papi: 3.45, senda: 3.45, ils: true, identificacion: true, luces: precision1(900) },
   },
   // La barra de la 03, a 377 m del umbral: «Crossbar to 377 m of threshold».
   GCRR: {
-    "03": { papi: 3, senda: 3, ils: true, luces: sencillas(510, [377]) },
-    "21": { papi: 3.7, senda: null, luces: sencillas(420) },
+    "03": { papi: 3, senda: 3, ils: true, identificacion: true, luces: sencillas(510, [377]) },
+    "21": { papi: 3.7, senda: null, identificacion: true, luces: sencillas(420) },
   },
   // Sin ILS en su 2.19: la senda de la 36 es la de su RNP. La 18, sin luces
   // de aproximación: solo las de identificación de umbral.
   GCLA: {
-    "18": { papi: 3, senda: null, luces: null },
-    "36": { papi: 3, senda: 3, luces: sencillas(360) },
+    "18": { papi: 3, senda: null, identificacion: true, luces: null },
+    "36": { papi: 3, senda: 3, identificacion: true, luces: sencillas(360) },
   },
-  GCHI: { "16": { papi: 3, senda: null, luces: null }, "34": { papi: 3, senda: null, luces: null } },
+  GCHI: { "16": { papi: 3, senda: null, identificacion: true, luces: null }, "34": { papi: 3, senda: null, identificacion: true, luces: null } },
   // El borde, «1500 m white»: sin ámbar al final.
   GCGM: {
-    "09": { papi: 3, senda: null, luces: null, ambarAlFinal: false },
-    "27": { papi: 3, senda: null, luces: null, ambarAlFinal: false },
+    "09": { papi: 3, senda: null, identificacion: true, luces: null, ambarAlFinal: false },
+    "27": { papi: 3, senda: null, identificacion: true, luces: null, ambarAlFinal: false },
   },
   LECU: {
     "09": { papi: 2.8, senda: null, luces: sencillas(420) },
@@ -316,6 +324,8 @@ export interface AyudasVisualesPublicadas {
   /** Si es un APAPI, de dos luces. Ver `SendaPublicada.apapi`. */
   readonly apapi?: boolean;
   readonly papiALaDerecha: boolean;
+  /** Si tiene luces de identificación de umbral. Ver `SendaPublicada.identificacion`. */
+  readonly identificacion?: boolean;
   /** Sus luces de aproximación, o `null` si no se pintan. */
   readonly luces: LucesDeAproximacion | null;
 }
@@ -325,6 +335,7 @@ export const SIN_AYUDAS_VISUALES: AyudasVisualesPublicadas = {
   papi: null,
   apapi: false,
   papiALaDerecha: false,
+  identificacion: false,
   luces: null,
 };
 
@@ -343,6 +354,7 @@ export function ayudasVisuales(
     papi: s.papi,
     apapi: s.apapi === true,
     papiALaDerecha: s.papiALaDerecha === true,
+    identificacion: s.identificacion === true,
     luces: s.luces,
   };
 }
@@ -402,4 +414,42 @@ export function lucesDePistaPublicadas(
     ambar: s?.ambarAlFinal !== false,
     ambarM: oaci ? (AMBAR_PUBLICADO[oaci] ?? null) : null,
   };
+}
+
+/**
+ * **Cada cuántos metros van las luces de borde de pista**, las que publica su
+ * AIP: «Distance between lights» del «Runway edge» en el 2.14 de ENAIRE, y el
+ * «60 M» de la columna de borde en el de la DINAC, leídos el 12 de noviembre
+ * de 2026 con las enmiendas de la cabecera de este fichero. Las mismas en
+ * todas las pistas de cada aeródromo. Donde no da la cifra —Concepción, solo
+ * «1.850M Blanca»—, las de siempre: ver `SEPARACION_DEL_BORDE_DE_SIEMPRE`.
+ */
+const SEPARACION_DEL_BORDE: Readonly<Record<string, number>> = {
+  GCXO: 50,
+  GCTS: 50,
+  GCLP: 50,
+  GCFV: 60,
+  GCRR: 50,
+  GCLA: 50,
+  GCHI: 50,
+  GCGM: 60,
+  LECU: 50,
+  LEMD: 60,
+  SGAS: 60,
+  SGES: 60,
+  SGME: 60,
+  SGEN: 60,
+  SGPJ: 60,
+};
+
+/**
+ * **La separación de borde donde el AIP no la da**, m: sesenta, el máximo que
+ * pide la OACI para las de una pista de vuelo por instrumentos, y la que tenía
+ * el juego en todas.
+ */
+export const SEPARACION_DEL_BORDE_DE_SIEMPRE = 60;
+
+/** Cada cuántos metros van las luces de borde de las pistas de ese aeródromo. */
+export function separacionDelBorde(oaci: string | null | undefined): number {
+  return (oaci ? SEPARACION_DEL_BORDE[oaci] : undefined) ?? SEPARACION_DEL_BORDE_DE_SIEMPRE;
 }

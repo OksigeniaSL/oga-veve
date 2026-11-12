@@ -45,6 +45,7 @@ import {
 import type { Pista, Punto, Umbral } from "./aerodrome";
 import { PAPI_SE_DISTINGUE_PX, PAPI_SE_VE_DESDE } from "../flight/lo-que-se-nombra";
 import type { AyudasVisualesPublicadas, LucesDeAproximacion } from "./sendas-publicadas";
+import { encendidoSegunElSol } from "./luces-de-rodadura";
 
 /** Un umbral del que sí sabemos dónde está. */
 type Situado = Umbral & { readonly xy: Punto };
@@ -106,6 +107,26 @@ export function blancasEnLaSenda(unidades: 2 | 4 = 4): number {
 /** Blanco de luz y rojo de luz. Ni uno ni otro son el blanco y el rojo del HUD. */
 const BLANCO = 0xfff4e2;
 const ROJO = 0xe8402c;
+
+/**
+ * **Los destellos de las luces de identificación de umbral**: blancos, «with a
+ * flash frequency between 60 and 120 per minute», y a unos diez metros por
+ * fuera de cada fila de luces de borde, en línea con el umbral (OACI, Anexo
+ * 14, 5.3.8). Van a sesenta por minuto, que es el más lento que permite, y
+ * cada destello dura una décima: una luz de la pista que se reconoce, no un
+ * parpadeo que llame la atención como un aviso. Las dos a la vez.
+ */
+export const DESTELLOS_POR_MINUTO = 60;
+const DURA_EL_DESTELLO = 0.1;
+/** Por fuera de la fila de borde, que va a metro y medio del filo: ver `lucesDePista`. */
+const IDENTIFICACION_DEL_BORDE = 1.5 + 10;
+
+/** Si el destello está encendido en ese segundo del reloj. */
+export function destelloEncendido(segundos: number): boolean {
+  const periodo = 60 / DESTELLOS_POR_MINUTO;
+  const fase = ((segundos % periodo) + periodo) % periodo;
+  return fase < DURA_EL_DESTELLO;
+}
 
 /** Separación entre luces de la fila, que es la de verdad. */
 const PASO_APROXIMACION = 30;
@@ -371,6 +392,19 @@ export interface Aproximacion {
    */
   verDesde(x: number, y: number, z: number, pixelesPorRadian: number): void;
   /**
+   * **Los destellos de identificación de umbral**, si los tiene: encendidos a
+   * su ritmo y solo vistos desde la aproximación, que es hacia donde apuntan
+   * —«visible only in the direction of approach»—. Se llama cada fotograma
+   * con el reloj, s, y dónde está quien mira. Ver `destelloEncendido`.
+   */
+  destellar(segundos: number, x: number, z: number): void;
+  /**
+   * Y si se encienden: con el sol bajo, como las de las calles de rodaje. De
+   * día, con sol, no se distinguen, y un punto que parpadea en pleno día se lee
+   * como un aviso. `seno` es `sunDirection.y`. Ver `encendidoSegunElSol`.
+   */
+  ponerSol(seno: number): void;
+  /**
    * A cuántos metros del umbral están las luces, pista adentro. Del umbral de
    * aterrizar, que con el umbral desplazado no es la punta.
    *
@@ -412,7 +446,8 @@ export interface Aproximacion {
 /**
  * Monta las luces de aproximación y el PAPI de una pista, **los que publica su
  * AIP en esa cabecera** y ninguno más: ver `ayudasVisuales` en
- * `sendas-publicadas.ts`. Si no tiene ni lo uno ni lo otro, nada.
+ * `sendas-publicadas.ts`. Y sus luces de identificación de umbral, si las
+ * tiene. Sin ninguna de las tres, nada.
  *
  * `altura` tiene que ser el suelo **de verdad** —el de la fotografía si la
  * hay—, y por eso esto se construye después de moldear el terreno y no con el
@@ -430,7 +465,7 @@ export function crearAproximacion(
 ): Aproximacion | null {
   const senda = publicado.papi;
   const deAproximacion = publicado.luces;
-  if (senda === null && !deAproximacion) return null;
+  if (senda === null && !deAproximacion && !publicado.identificacion) return null;
   const unidades: 2 | 4 = publicado.apapi ? 2 : 4;
   const ANGULOS = angulosDelIndicador(senda ?? 3, unidades);
   const conNombre = Object.entries(pista.thresholds).filter(
@@ -576,6 +611,39 @@ export function crearAproximacion(
    * y las de fuera blancas. Ver `angulosDelPapi`.
    */
   const luces: { x: number; y: number; z: number }[] = [];
+  /*
+   * **Las luces de identificación de umbral**, donde las publica su AIP: dos
+   * destellos blancos, uno a cada lado del umbral de aterrizar. Una malla de
+   * dos y una llamada de dibujo, que solo se pinta en el instante del destello
+   * y de noche; encender y apagar es cambiar `visible`.
+   */
+  const identificacion = publicado.identificacion
+    ? new InstancedMesh(new SphereGeometry(0.9, 6, 4), new MeshBasicMaterial({ color: BLANCO }), 2)
+    : null;
+  if (identificacion) {
+    identificacion.name = "identificacion-de-umbral";
+    [-1, 1].forEach((signo, k) => {
+      const lado = signo * (ancho / 2 + IDENTIFICACION_DEL_BORDE);
+      const x = toma[0] - uy * lado;
+      const y = toma[1] + ux * lado;
+      m.makeTranslation(x, Math.max(cotaUmbral, altura([x, y])) + 0.6, -y);
+      identificacion.setMatrixAt(k, m);
+    });
+    identificacion.visible = false;
+    grupo.add(identificacion);
+  }
+  let deNoche = false;
+  const destellar = (segundos: number, x: number, z: number): void => {
+    if (!identificacion) return;
+    // Por delante del umbral, del lado de la aproximación: el eje apunta pista adentro.
+    const desdeLaFinal = (x - toma[0]) * ux + (-z - toma[1]) * uy < 0;
+    identificacion.visible = deNoche && desdeLaFinal && destelloEncendido(segundos);
+  };
+  const ponerSol = (seno: number): void => {
+    deNoche = encendidoSegunElSol(seno) > 0.01;
+    if (!deNoche && identificacion) identificacion.visible = false;
+  };
+
   if (sitio && papi) {
     papi.name = "papi";
     sitio.luces.forEach(([cx, cy], k) => {
@@ -678,6 +746,8 @@ export function crearAproximacion(
     papiAdentro,
     senda,
     unidades: sitio ? unidades : 0,
+    destellar,
+    ponerSol,
     dispose() {
       grupo.traverse((o) => {
         const g = (o as { geometry?: BufferGeometry }).geometry;

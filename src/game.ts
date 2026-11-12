@@ -13318,6 +13318,8 @@ export class Game {
     );
     if (this.aproximacion) {
       this.scene.add(this.aproximacion.grupo);
+      // Los destellos del umbral, con el sol que hay. Ver `ponerHora`.
+      this.aproximacion.ponerSol(this.sky.sunDirection.y);
       this.tienePapi.set(
         this.aproximacion,
         !!this.aproximacion.grupo.getObjectByName("papi"),
@@ -13385,6 +13387,7 @@ export class Game {
     );
     if (v.aproximacion) {
       v.mundo.colgarDeCerca(v.aproximacion.grupo);
+      v.aproximacion.ponerSol(this.sky.sunDirection.y);
       this.tienePapi.set(
         v.aproximacion,
         !!v.aproximacion.grupo.getObjectByName("papi"),
@@ -15190,10 +15193,12 @@ export class Game {
     // Y con ella se enciende o se apaga el balizamiento. `sunDirection.y` es
     // el seno de la altura del sol, que el cielo acaba de recalcular.
     this.rodadura?.ponerSol(this.sky.sunDirection.y);
+    this.aproximacion?.ponerSol(this.sky.sunDirection.y);
     this.lucesDeCiudad?.ponerSol(this.sky.sunDirection.y);
     for (const v of this.vecinos) {
       v.mundo.ponerSol(this.sky.sunDirection.y);
       v.rodadura?.ponerSol(this.sky.sunDirection.y);
+      v.aproximacion?.ponerSol(this.sky.sunDirection.y);
     }
     // Y las aves, que salen con el sol y suben con la térmica de la tarde.
     this.poblarDeAves();
@@ -19448,6 +19453,18 @@ export class Game {
     alli?.aproximacion?.mirarDesde(
       this.flight.state.position.x - alli.mundo.desplazamiento.x,
       this.flight.state.position.y,
+      this.flight.state.position.z - alli.mundo.desplazamiento.z,
+    );
+    /*
+     * Y los destellos de identificación del umbral, a su ritmo, de los dos.
+     * Con el reloj de la página: una luz de la pista no se para porque el
+     * vuelo esté en pausa.
+     */
+    const segundos = performance.now() / 1000;
+    this.aproximacion?.destellar(segundos, this.flight.state.position.x, this.flight.state.position.z);
+    alli?.aproximacion?.destellar(
+      segundos,
+      this.flight.state.position.x - alli.mundo.desplazamiento.x,
       this.flight.state.position.z - alli.mundo.desplazamiento.z,
     );
     // El plan de vuelo, antes que todo lo que lo enseña. Ver `seguirLaRuta`.
