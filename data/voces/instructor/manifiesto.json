@@ -251,6 +251,10 @@
       "ms": 12407,
       "h": "42b661d160"
     },
+    "explica.fli.texto": {
+      "ms": 25307,
+      "h": "8ed620a7d9"
+    },
     "explica.galones.texto": {
       "ms": 20707,
       "h": "a211ccaa44"
@@ -318,6 +322,10 @@
     "explica.presurizacion.texto": {
       "ms": 16206,
       "h": "2acecc7fe2"
+    },
+    "explica.rotor.texto": {
+      "ms": 23907,
+      "h": "cc0462dde0"
     },
     "explica.rumbo.texto": {
       "ms": 14907,
@@ -4976,6 +4984,12 @@
     ],
     "explica.sello.teno.texto": [
       "explica.sello.teno.texto"
+    ],
+    "explica.fli.texto": [
+      "explica.fli.texto"
+    ],
+    "explica.rotor.texto": [
+      "explica.rotor.texto"
     ]
   }
 }

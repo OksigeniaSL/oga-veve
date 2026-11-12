@@ -20422,5 +20422,35 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "explica.fli.texto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El FLI dice cuánta fuerza le queda a cada motor antes de llegar a su primer límite. Un motor de helicóptero tiene tres: el par, que es la fuerza que aguanta la caja que mueve el rotor; la temperatura de la turbina, y las vueltas del generador de gas, el NG. La aguja del 1 y la del 2 marcan el que esté más cerca. En el verde sobra fuerza; el ámbar es la potencia de despegue, que se usa solo un rato, y la raya roja es el tope.",
+    "para": "lo que explica tocar el FLI en la pantalla de motores del helicóptero",
+    "dicho": "El ef-el-ai dice cuánta fuerza le queda a cada motor antes de llegar a su primer límite. Un motor de helicóptero tiene tres: el par, que es la fuerza que aguanta la caja que mueve el rotor; la temperatura de la turbina, y las vueltas del generador de gas, el en-yi. La aguja del 1 y la del 2 marcan el que esté más cerca. En el verde sobra fuerza; el ámbar es la potencia de despegue, que se usa solo un rato, y la raya roja es el tope.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "explica.rotor.texto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La aguja ancha y blanca son las vueltas del rotor, el NR. El regulador de los motores las sostiene casi quietas en el cien por cien, se suba o se baje el colectivo. Encima van las dos agujas finas de las turbinas de los motores, el NF, casadas con el rotor mientras lo mueven. Si el NR cae, es lo primero que hay que mirar: el rotor es lo que te sostiene, y sin vueltas no sostiene. Para que recupere, se baja el colectivo.",
+    "para": "lo que explica tocar el reloj del rotor en la pantalla de motores del helicóptero",
+    "dicho": "La aguja ancha y blanca son las vueltas del rotor, el en-ar. El regulador de los motores las sostiene casi quietas en el cien por cien, se suba o se baje el colectivo. Encima van las dos agujas finas de las turbinas de los motores, el en-ef, casadas con el rotor mientras lo mueven. Si el en-ar cae, es lo primero que hay que mirar: el rotor es lo que te sostiene, y sin vueltas no sostiene. Para que recupere, se baja el colectivo.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]
