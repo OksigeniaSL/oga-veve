@@ -60,5 +60,6 @@ __pycache__/
 .claude/settings.local.json
 
 # El Firefox 98 que baja `scripts/verificar-firefox-98.mjs`: el de las pizarras
-# de aula con Android 8. Pesa doscientos megas y se baja solo.
-/.firefox-98/
+# de aula con Android 8. Pesa doscientos megas y se baja solo. Sin barra al
+# final, para que valga también si es un enlace a otra carpeta.
+/.firefox-98
