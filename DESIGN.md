@@ -470,9 +470,9 @@ nada.
   paneles, la tarjeta del avión y los interruptores de cabina, a un cajón de cuatro puntos que se abre en esa misma
   franja; en Guyrami y Tukã, la señal, que se toca para arrancar, abajo a la derecha entre el cuadro y el freno, con
   el dibujo encima de su palabra (desde Taguato lleva frase, no cabe ahí y la mano ya llega arriba); y el cuadro, sin
-  pasar del hueco que dejan las dos. Lo del adulto se queda arriba: el sonido de la sala, los créditos y el hangar. En
-  el hangar, las fichas del «¿seguimos?» crecen hasta la mano. En un teléfono no hace nada. Lo mide
-  `npm run carteles` a 1280 × 600, 960 × 540 y 1366 × 768.
+  pasar del hueco que dejan las dos; y abierta la pausa, sus puertas abajo. Lo del adulto se queda arriba: el sonido de
+  la sala, los créditos y el hangar. En el hangar, las fichas del «¿seguimos?» crecen hasta la mano. En un teléfono
+  no hace nada. Lo mide `npm run carteles` a 1280 × 600, 960 × 540 y 1366 × 768.
 - El zoom de la página no se bloquea (sin `user-scalable=no`); el `touch-action: none` de los mandos ya evita el zoom
   por accidente.
 - Antes de publicar un cambio de HUD se mira en tablet, en teléfono apaisado y de pie, con dedo.

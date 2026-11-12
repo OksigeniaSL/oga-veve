@@ -45,6 +45,8 @@ export class PantallaDePausa {
   private readonly root: HTMLElement;
   private readonly panel: Panel;
   private readonly acciones: AccionesDePausa;
+  /** Si el último dedo que bajó lo hizo dentro de la pausa. Ver el clic, abajo. */
+  private bajoAqui = false;
 
   constructor(
     root: HTMLElement,
@@ -113,7 +115,22 @@ export class PantallaDePausa {
         </div>
       </div>
     `;
+    /*
+     * **Un clic cuenta si el dedo bajó aquí.** Con el dedo, el botón de la
+     * pausa la abre al levantarlo (`ui/pulsar.ts`), y el clic que el navegador
+     * manda detrás cae ya sobre lo recién abierto: en el velo contaba como
+     * «tocar fuera», y en una pizarra, con las puertas abajo, caía en la de
+     * seguir. La cerraba en el mismo gesto, y en una tablet la pausa no se
+     * quedaba abierta nunca. Un toque de verdad empieza aquí; el del teclado
+     * no lleva dedo (`detail` es cero) y vale siempre.
+     */
+    root.addEventListener("pointerdown", () => {
+      this.bajoAqui = true;
+    });
     root.addEventListener("click", (e) => {
+      const fantasma = e.detail > 0 && !this.bajoAqui;
+      this.bajoAqui = false;
+      if (fantasma) return;
       const boton = (e.target as HTMLElement)?.closest?.("[data-pausa]");
       const cual = boton?.getAttribute("data-pausa");
       if (cual === "seguir") this.acciones.seguir();
@@ -132,6 +149,7 @@ export class PantallaDePausa {
   }
 
   abrir(): void {
+    this.bajoAqui = false;
     this.panel.abrir();
   }
 

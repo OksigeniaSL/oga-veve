@@ -1882,6 +1882,41 @@ for (const [ancho, alto] of PIZARRAS)
         );
       if (process.env.OGA_FOTOS)
         await page.screenshot({ path: `${process.env.OGA_FOTOS}/pizarra-${donde.nombre}-${ancho}x${alto}.png` });
+      /*
+       * **Y la pausa, con el dedo de verdad.** Medirla no basta: con un toque,
+       * el clic que manda el navegador detrás caía sobre el velo recién abierto
+       * y la volvía a cerrar, y en una tablet la pausa no se quedaba abierta
+       * nunca. Se toca, se mira que siga abierta con sus puertas abajo, y se
+       * sigue tocando la de seguir.
+       */
+      const centro = async (q) => {
+        const r = await page.locator(q).first().boundingBox();
+        return r ? [r.x + r.width / 2, r.y + r.height / 2] : null;
+      };
+      const enPausa = () => page.evaluate(() => document.querySelector("#pausa")?.hidden === false);
+      const boton = await centro('[data-hud="pausa"]');
+      if (boton) await page.touchscreen.tap(...boton);
+      await page.waitForTimeout(500);
+      const abierta = await enPausa();
+      const puertas = await page.evaluate(() => {
+        const tercio = (innerHeight * 2) / 3;
+        return [...document.querySelectorAll("#pausa .pausa__puerta")]
+          .map((b) => b.getBoundingClientRect())
+          .filter((r) => r.width > 2)
+          .map((r) => r.top >= tercio - 0.5 && r.bottom <= innerHeight + 0.5);
+      });
+      const seguir = abierta ? await centro('[data-pausa="seguir"]') : null;
+      if (seguir) await page.touchscreen.tap(...seguir);
+      await page.waitForTimeout(500);
+      const cerrada = !(await enPausa());
+      comprobar(
+        `${tam}: la pausa se abre con el dedo, con sus puertas abajo, y la de seguir la cierra`,
+        abierta && puertas.length > 0 && puertas.every(Boolean) && cerrada,
+        !abierta
+          ? "el toque no la deja abierta"
+          : `${puertas.filter(Boolean).length} de ${puertas.length} puertas abajo · ${cerrada ? "seguir la cierra" : "seguir no la cierra"}`,
+        "un niño que para el vuelo tiene que poder seguir solo, sin ir a buscar al profesor",
+      );
     } catch (e) {
       comprobar(`${tam}: arranca`, false, String(e).slice(0, 160), "");
     } finally {

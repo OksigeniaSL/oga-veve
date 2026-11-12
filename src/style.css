@@ -19515,3 +19515,12 @@ path.kit-hueco__forma {
   flex: 1;
   aspect-ratio: auto;
 }
+
+/*
+ * **Y la pausa, abajo.** Se para desde la franja, y la puerta de seguir tiene
+ * que estar donde llega la misma mano: centradas, las puertas caían en el
+ * tercio de en medio. Tocar fuera también sigue, como siempre.
+ */
+:root.pizarra .pausa {
+  place-items: end center;
+}
