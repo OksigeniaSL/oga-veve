@@ -97,6 +97,8 @@ import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
 import { elegirPiloto } from "./ui/pantalla-pilotos";
 import { leerRearranque } from "./flight/cambio-de-avion";
 import { pedirAlPrimerToque } from "./ui/pantalla-completa";
+import { espejoDeHas } from "./ui/espejo-de-has";
+import { medirContenedoresSiFalta } from "./ui/medidas-de-contenedor";
 import { ensenarAnadirAInicio } from "./ui/anadir-a-inicio";
 import { GUYRAMI } from "./flight/tiers";
 import { ATERRIZAJE, DESPEGUE, VUELTA } from "./flight/lecciones";
@@ -152,6 +154,14 @@ setLocale(detectLocale());
  * Ver `ui/pantalla-completa.ts`.
  */
 pedirAlPrimerToque();
+
+/*
+ * **Y lo que la hoja de estilos pide y un navegador viejo no sabe** —`:has()`
+ * y las unidades de contenedor—, hecho a mano solo donde falta: Firefox 98, el
+ * de una pizarra de aula con Android 8. Donde está, no hacen nada.
+ */
+espejoDeHas();
+medirContenedoresSiFalta();
 
 /**
  * **Las migas del arranque**, solo en desarrollo.

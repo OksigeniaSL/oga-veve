@@ -88,6 +88,15 @@
 }
 
 :root {
+  /*
+   * **El alto que se ve**, para todo lo que se mide contra la pantalla.
+   * `dvh` descuenta la barra del navegador cuando está puesta; Firefox 98, el
+   * de una pizarra de aula con Android 8, no lo conoce. Y no basta con poner
+   * `vh` delante: una declaración con `var()` no se descarta al leerla, sino
+   * al aplicarla, y entonces se queda sin valor. Así que se elige aquí una vez.
+   */
+  --alto-visible: 100vh;
+
   /* ── Marca Granja Óga ── */
   --terracota: #be5d38;
   --ocre: #dd923f;
@@ -202,6 +211,12 @@
   --cabina-fuente:
     "Roboto Condensed", "Liberation Sans Narrow", "Arial Narrow",
     "DejaVu Sans Condensed", ui-sans-serif, sans-serif;
+}
+
+@supports (height: 1dvh) {
+  :root {
+    --alto-visible: 100dvh;
+  }
 }
 
 /*
@@ -436,9 +451,23 @@ body {
   color: var(--precaucion, #ffb454);
 }
 
-.version-nueva:hover,
-.version-nueva:focus-visible {
+/*
+ * **Pasar por encima solo donde hay ratón.** En una pantalla táctil —una
+ * tablet, la pizarra del aula— no hay «encima»: el navegador da el `:hover`
+ * al tocar y lo deja puesto hasta que se toca otra cosa, así que el botón se
+ * queda resaltado como si siguiera elegido. Todos los `:hover` van dentro de
+ * `@media (hover: hover)`, y lo que se aprieta responde con `:active`. Lo
+ * vigila `navegador-viejo.test.ts`.
+ */
+.version-nueva:focus-visible,
+.version-nueva:active {
   border-color: var(--precaucion, #ffb454);
+}
+
+@media (hover: hover) {
+  .version-nueva:hover {
+    border-color: var(--precaucion, #ffb454);
+  }
 }
 
 /*
@@ -1025,8 +1054,10 @@ body {
     border-color 90ms ease;
 }
 
-.sonido:hover {
-  border-color: var(--ocre);
+@media (hover: hover) {
+  .sonido:hover {
+    border-color: var(--ocre);
+  }
 }
 
 /*
@@ -1227,8 +1258,15 @@ body {
 /*
  * Sin cuadro a la vista —recogido, o en la cabina, donde el panel es el del
  * avión—, el hueco es la pantalla entera.
+ *
+ * **Cada `:has()` de esta hoja va con su clase al lado**, `:is(:has(X),
+ * .hay-…)`. Firefox 98, el de una pizarra de aula con Android 8, no conoce
+ * `:has()` y tira la regla entera, también lo que va con ella en la misma
+ * lista —aquí, la cabina—. Dentro de `:is()` se salta solo lo que no entiende
+ * y se queda con la clase, que allí pone `ui/espejo-de-has.ts`. Lo vigila
+ * `navegador-viejo.test.ts`.
  */
-.hud:has(.cuadro--bajado) .volumen,
+.hud:is(:has(.cuadro--bajado), .hay-cuadro-bajado) .volumen,
 .hud--cabina .volumen {
   --volumen-cuadro: 0px;
 }
@@ -1364,8 +1402,10 @@ body {
   }
 }
 
-.sonido:hover {
-  border-color: var(--ocre);
+@media (hover: hover) {
+  .sonido:hover {
+    border-color: var(--ocre);
+  }
 }
 
 /* La manga del grado y la hoja de la instructora, al lado de la insignia.
@@ -2765,7 +2805,7 @@ body {
  * Viven en otra capa, por encima del HUD, y la barra del timón quedaba
  * dibujada encima de «Otro vuelo».
  */
-body:has([data-hud="fin"]:not([hidden])) .pad {
+body:is(:has([data-hud="fin"]:not([hidden])), .hay-fin) .pad {
   visibility: hidden;
 }
 
@@ -2832,7 +2872,7 @@ body:has([data-hud="fin"]:not([hidden])) .pad {
     height: 96px;
   }
 
-  .fin .fin__manga:not(:has(.hoja)) .fin__mi-manga svg {
+  .fin .fin__manga:not(:is(:has(.hoja), .hay-hoja)) .fin__mi-manga svg {
     height: 128px;
   }
 }
@@ -3054,7 +3094,7 @@ body:has([data-hud="fin"]:not([hidden])) .pad {
 }
 
 /* Y sola, en el ascenso, del tamaño de antes: ahí es lo único que se mira. */
-.fin__manga:not(:has(.hoja)) .fin__mi-manga svg {
+.fin__manga:not(:is(:has(.hoja), .hay-hoja)) .fin__mi-manga svg {
   height: 168px;
 }
 
@@ -3173,7 +3213,7 @@ body:has([data-hud="fin"]:not([hidden])) .pad {
 
 /* Con dibujo dentro, el botón necesita sitio: una tortuga de diecinueve
    píxeles no es una tortuga, es una mancha. */
-.motor__tecla:has(svg) {
+.motor__tecla:is(:has(svg), .hay-dibujo) {
   width: 30px;
   height: 26px;
 }
@@ -4820,7 +4860,7 @@ button.motor__tecla::after {
  * Y con el MCP en la visera, las cuarenta y cuatro de siempre. Ver
  * `--cuadro-alto` en `.hud`.
  */
-.hud:has(.tablero[data-visera="mcp"]) {
+.hud:is(:has(.tablero[data-visera="mcp"]), .hay-mcp-en-la-visera) {
   --cuadro-alto: 44vh;
 }
 
@@ -5296,9 +5336,14 @@ button.motor__tecla::after {
   fill: var(--cabina-valor);
 }
 
-.tablero__rueda:hover rect,
 .tablero__rueda:active rect {
   stroke: var(--cabina-valor);
+}
+
+@media (hover: hover) {
+  .tablero__rueda:hover rect {
+    stroke: var(--cabina-valor);
+  }
 }
 
 .tablero__mcp[data-mcp-alt] {
@@ -7060,9 +7105,15 @@ button.motor__tecla::after {
   cursor: pointer;
 }
 
-.teclas__tecla:hover,
-.teclas__tecla:focus-visible {
+.teclas__tecla:focus-visible,
+.teclas__tecla:active {
   border-color: var(--ocre, #dd923f);
+}
+
+@media (hover: hover) {
+  .teclas__tecla:hover {
+    border-color: var(--ocre, #dd923f);
+  }
 }
 
 /* Esperando tecla: se ve de lejos que el juego está pendiente de ti. */
@@ -7353,7 +7404,7 @@ button.motor__tecla::after {
    * pregunta, los huecos de arriba y la barra fija de abajo. Y el `max` es el
    * suelo, para que en una pantalla muy baja la lista no se quede en nada.
    */
-  --hangar-lista: max(220px, calc(100dvh - 300px));
+  --hangar-lista: max(220px, calc(var(--alto-visible) - 300px));
   /*
    * Y sitio abajo para la barra fija, que si no tapa el pie: los enlaces de
    * Granja Óga, de Oksigenia y del código fuente quedaban debajo de ella en
@@ -7535,10 +7586,17 @@ button.motor__tecla::after {
   text-decoration: none;
 }
 
-.pie__enlace:hover,
-.pie__enlace:focus-visible {
+.pie__enlace:focus-visible,
+.pie__enlace:active {
   color: var(--terracota-tinta);
   text-decoration: underline;
+}
+
+@media (hover: hover) {
+  .pie__enlace:hover {
+    color: var(--terracota-tinta);
+    text-decoration: underline;
+  }
 }
 
 .pie__promesa {
@@ -7655,9 +7713,15 @@ button.motor__tecla::after {
   cursor: pointer;
 }
 
-.mundo:hover,
-.mundo:focus-visible {
+.mundo:focus-visible,
+.mundo:active {
   border-color: var(--ocre, #d9a441);
+}
+
+@media (hover: hover) {
+  .mundo:hover {
+    border-color: var(--ocre, #d9a441);
+  }
 }
 
 .mundo[aria-checked="true"] {
@@ -7768,8 +7832,10 @@ button.motor__tecla::after {
     border-color 140ms ease;
 }
 
-.ficha:hover {
-  transform: translateY(-3px);
+@media (hover: hover) {
+  .ficha:hover {
+    transform: translateY(-3px);
+  }
 }
 
 .ficha:active {
@@ -8396,10 +8462,17 @@ button.motor__tecla::after {
   cursor: pointer;
 }
 
-.paso:hover,
-.paso:focus-visible {
+.paso:focus-visible,
+.paso:active {
   color: var(--tinta);
   border-color: var(--ocre);
+}
+
+@media (hover: hover) {
+  .paso:hover {
+    color: var(--tinta);
+    border-color: var(--ocre);
+  }
 }
 
 /* Del tamaño del dedo, como todo lo que se toca: con su relleno y el icono se
@@ -8703,7 +8776,7 @@ button.motor__tecla::after {
  */
 @media (max-height: 460px) {
   .hangar:not([data-pantalla="inicio"]) {
-    --hangar-lista: calc(100dvh - 150px);
+    --hangar-lista: calc(var(--alto-visible) - 150px);
   }
 
   .hangar:not([data-pantalla="inicio"]) .hangar__marca {
@@ -8817,7 +8890,7 @@ button.motor__tecla::after {
  */
 @media (max-width: 560px) {
   .hangar {
-    --hangar-lista: max(260px, calc(100dvh - 230px));
+    --hangar-lista: max(260px, calc(var(--alto-visible) - 230px));
   }
 
   .hangar[data-pantalla="inicio"] {
@@ -8979,9 +9052,11 @@ button.motor__tecla::after {
     filter 140ms ease;
 }
 
-.hangar__despegar:hover {
-  filter: brightness(1.08);
-  transform: translateY(-2px);
+@media (hover: hover) {
+  .hangar__despegar:hover {
+    filter: brightness(1.08);
+    transform: translateY(-2px);
+  }
 }
 
 .hangar__despegar:active {
@@ -9012,26 +9087,25 @@ button.motor__tecla::after {
   .hangar__despegar {
     transition: none;
   }
+}
 
-  .ficha:hover {
-    transform: none;
-  }
-
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .ficha:hover,
   .hangar__despegar:hover {
     transform: none;
   }
 }
+
 .sin-movimiento .ficha,
 .sin-movimiento .hangar__despegar {
   transition: none;
 }
 
-.sin-movimiento .ficha:hover {
-  transform: none;
-}
-
-.sin-movimiento .hangar__despegar:hover {
-  transform: none;
+@media (hover: hover) {
+  .sin-movimiento .ficha:hover,
+  .sin-movimiento .hangar__despegar:hover {
+    transform: none;
+  }
 }
 
 /*
@@ -9334,8 +9408,10 @@ button.motor__tecla::after {
   cursor: pointer;
 }
 
-.senal--pulsable:hover {
-  filter: brightness(1.08);
+@media (hover: hover) {
+  .senal--pulsable:hover {
+    filter: brightness(1.08);
+  }
 }
 
 .senal--pulsable:active {
@@ -9639,6 +9715,18 @@ button.motor__tecla::after {
     width: min(78vmin, 460px, calc(100cqh - 150px));
     height: min(78vmin, 460px, calc(100cqh - 150px));
   }
+
+  /*
+   * **Sin unidades de contenedor** —Firefox 98, el de una pizarra de aula con
+   * Android 8—, las mismas cuentas con el tamaño que mide
+   * `ui/medidas-de-contenedor.ts`: `--cqh` es la centésima parte del alto.
+   */
+  @supports not (container-type: size) {
+    .mapa__lienzos {
+      width: min(78vmin, 460px, calc(var(--cqh) * 100 - 150px));
+      height: min(78vmin, 460px, calc(var(--cqh) * 100 - 150px));
+    }
+  }
 }
 
 /*
@@ -9682,6 +9770,13 @@ button.motor__tecla::after {
   .mapa__lienzos {
     width: min(78vmin, 460px, calc(100cqh - 24px));
     height: min(78vmin, 460px, calc(100cqh - 24px));
+  }
+
+  @supports not (container-type: size) {
+    .mapa__lienzos {
+      width: min(78vmin, 460px, calc(var(--cqh) * 100 - 24px));
+      height: min(78vmin, 460px, calc(var(--cqh) * 100 - 24px));
+    }
   }
 }
 
@@ -9998,9 +10093,15 @@ button.motor__tecla::after {
   cursor: pointer;
 }
 
-.tiempo__boton:hover,
-.tiempo__boton:focus-visible {
+.tiempo__boton:focus-visible,
+.tiempo__boton:active {
   border-color: var(--ocre-tinta);
+}
+
+@media (hover: hover) {
+  .tiempo__boton:hover {
+    border-color: var(--ocre-tinta);
+  }
 }
 
 .tiempo__boton svg {
@@ -10042,9 +10143,15 @@ button.motor__tecla::after {
   cursor: pointer;
 }
 
-.tiempo__cielo:hover,
-.tiempo__cielo:focus-visible {
+.tiempo__cielo:focus-visible,
+.tiempo__cielo:active {
   border-color: var(--ocre-tinta);
+}
+
+@media (hover: hover) {
+  .tiempo__cielo:hover {
+    border-color: var(--ocre-tinta);
+  }
 }
 
 .tiempo__cielo--puesto {
@@ -10192,8 +10299,14 @@ button.motor__tecla::after {
   list-style-position: inside;
 }
 
-.teclas__cambiar > summary:hover {
+.teclas__cambiar > summary:active {
   color: var(--tinta);
+}
+
+@media (hover: hover) {
+  .teclas__cambiar > summary:hover {
+    color: var(--tinta);
+  }
 }
 
 .teclas__cambiar[open] > summary {
@@ -10485,8 +10598,10 @@ button.motor__tecla::after {
   border-color: transparent;
 }
 
-.pausa__puerta:hover {
-  border-color: var(--ocre);
+@media (hover: hover) {
+  .pausa__puerta:hover {
+    border-color: var(--ocre);
+  }
 }
 
 .pausa__puerta:active {
@@ -10563,8 +10678,14 @@ button.motor__tecla::after {
   cursor: pointer;
 }
 
-.ajustes__opcion:hover {
+.ajustes__opcion:active {
   border-color: var(--ocre);
+}
+
+@media (hover: hover) {
+  .ajustes__opcion:hover {
+    border-color: var(--ocre);
+  }
 }
 
 .ajustes__opcion--puesta {
@@ -10661,8 +10782,14 @@ button.motor__tecla::after {
   cursor: pointer;
 }
 
-.piloto__boton:hover {
+.piloto__boton:active {
   border-color: var(--ocre);
+}
+
+@media (hover: hover) {
+  .piloto__boton:hover {
+    border-color: var(--ocre);
+  }
 }
 
 /* El tuyo, el que estabas usando: marcado sin palabras. */
@@ -10723,9 +10850,16 @@ button.motor__tecla::after {
   cursor: pointer;
 }
 
-.piloto__quitar:hover {
+.piloto__quitar:active {
   border-color: var(--peligro);
   color: var(--tinta);
+}
+
+@media (hover: hover) {
+  .piloto__quitar:hover {
+    border-color: var(--peligro);
+    color: var(--tinta);
+  }
 }
 
 .pilotos__muestra .piloto__avion {
@@ -11389,7 +11523,7 @@ button.motor__tecla::after {
 .mision__panel {
   display: flex;
   flex-direction: column;
-  max-height: calc(100dvh - 16px);
+  max-height: calc(var(--alto-visible) - 16px);
 }
 
 .mision__panel > * {
@@ -11637,6 +11771,19 @@ button.motor__tecla::after {
   height: min(calc(100cqh - 16px), calc((100cqw - 16px) / var(--proporcion, 1)));
 }
 
+/*
+ * Sin unidades de contenedor, con el tamaño medido (ver `.mapa__lienzos`). Aquí
+ * no vale poner la cuenta en `vh` delante: lleva `var()`, y una declaración así
+ * Firefox 98 no la descarta al leerla sino al aplicarla, y el lienzo se quedaba
+ * sin ancho —la carta, estirada a lo que midiera la caja—.
+ */
+@supports not (container-type: size) {
+  .pais__lienzo {
+    width: min(calc(var(--cqw) * 100 - 16px), calc((var(--cqh) * 100 - 16px) * var(--proporcion, 1)));
+    height: min(calc(var(--cqh) * 100 - 16px), calc((var(--cqw) * 100 - 16px) / var(--proporcion, 1)));
+  }
+}
+
 .pais__relieve {
   position: absolute;
   inset: 0;
@@ -11803,6 +11950,12 @@ button.motor__tecla::after {
   width: clamp(46px, 16cqh, 72px);
   transform: translate(-50%, -50%);
   pointer-events: none;
+}
+
+@supports not (container-type: size) {
+  .pais__rosa {
+    width: clamp(46px, calc(var(--cqh) * 16), 72px);
+  }
 }
 
 .pais__rosa svg {
@@ -11989,6 +12142,18 @@ button.motor__tecla::after {
   height: calc(100cqh - 16px);
 }
 
+@supports not (container-type: size) {
+  .pais--margen {
+    --lienzo-ancho: calc((var(--cqh) * 100 - 16px) * var(--proporcion, 1));
+    --ficha-ancho: min(620px, var(--cqw) * 100 - 24px - var(--lienzo-ancho));
+    --margen-izq: calc((var(--cqw) * 100 - var(--lienzo-ancho) - 8px - var(--ficha-ancho)) / 2);
+  }
+
+  .pais--margen .pais__lienzo {
+    height: calc(var(--cqh) * 100 - 16px);
+  }
+}
+
 .pais--margen .ficha-carta {
   inset: 8px auto 8px calc(var(--margen-izq) + var(--lienzo-ancho) + 8px);
   width: var(--ficha-ancho);
@@ -12074,6 +12239,23 @@ button.motor__tecla::after {
   grid-template-areas:
     "sello dibujo ."
     "avion avion ir";
+}
+
+/* Sin unidades de contenedor, con lo que mide la ficha (ver `.mapa__lienzos`). */
+@supports not (container-type: size) {
+  .ficha-carta {
+    --abajo: clamp(56px, calc(var(--cqh) * 28), 150px);
+    --lado: min(calc(var(--cqh) * 100 - 32px - var(--abajo)), calc(var(--cqw) * 25));
+  }
+
+  .ficha-carta--dibujo {
+    --abajo: clamp(60px, calc(var(--cqh) * 34), 170px);
+    --lado: min(
+      calc(var(--cqh) * 100 - 32px - var(--abajo)),
+      calc(var(--cqw) * 40),
+      calc((var(--cqw) * 100 - 100px) / 2)
+    );
+  }
 }
 
 /*
@@ -12736,7 +12918,7 @@ button.motor__tecla::after {
  * avión a un lado y lo que se elige al otro, con el botón a la vista.
  */
 @media (max-height: 460px) {
-  .pilotos__panel:has(.pilotos__muestra) {
+  .pilotos__panel:is(:has(.pilotos__muestra), .hay-muestra) {
     grid-template-columns: auto auto;
     justify-content: center;
     align-items: center;
@@ -12744,25 +12926,25 @@ button.motor__tecla::after {
     row-gap: 10px;
   }
 
-  .pilotos__panel:has(.pilotos__muestra) > .pilotos__titulo {
+  .pilotos__panel:is(:has(.pilotos__muestra), .hay-muestra) > .pilotos__titulo {
     grid-column: 1 / -1;
   }
 
   /* El avión y su nombre, juntos: el dibujo pegado abajo y el nombre arriba. */
-  .pilotos__panel:has(.pilotos__muestra) > .pilotos__muestra {
+  .pilotos__panel:is(:has(.pilotos__muestra), .hay-muestra) > .pilotos__muestra {
     grid-column: 1;
     grid-row: 2 / span 2;
     align-self: end;
   }
 
-  .pilotos__panel:has(.pilotos__muestra) > .pilotos__nombre {
+  .pilotos__panel:is(:has(.pilotos__muestra), .hay-muestra) > .pilotos__nombre {
     grid-column: 1;
     grid-row: 4;
     align-self: start;
   }
 
-  .pilotos__panel:has(.pilotos__muestra) > .pilotos__opciones,
-  .pilotos__panel:has(.pilotos__muestra) > .creditos__cerrar {
+  .pilotos__panel:is(:has(.pilotos__muestra), .hay-muestra) > .pilotos__opciones,
+  .pilotos__panel:is(:has(.pilotos__muestra), .hay-muestra) > .creditos__cerrar {
     grid-column: 2;
   }
 
@@ -12814,7 +12996,7 @@ button.motor__tecla::after {
 }
 
 /* Y si hay subtítulo, la lámpara baja una línea en vez de montarse. */
-.hud:has(.hud__abajo > [data-hud="hint"]:not(:empty)) .torre {
+.hud:is(:has(.hud__abajo > [data-hud="hint"]:not(:empty)), .hay-subtitulo) .torre {
   top: calc(var(--arriba-alto, 14%) + 14px + 36px);
 }
 
@@ -12863,7 +13045,7 @@ button.motor__tecla::after {
  * Mientras hay tarjeta en el rincón, que es lo más urgente, el tutor espera.
  */
 @media (max-height: 460px) {
-  .hud.hud--cabina:has(.rincon .senal:not([hidden])) .tutor {
+  .hud.hud--cabina:is(:has(.rincon .senal:not([hidden])), .hay-senal-en-el-rincon) .tutor {
     display: none;
   }
 }
@@ -13280,7 +13462,7 @@ button.motor__tecla::after {
     border-radius: var(--r-m);
   }
 
-  .hud .senal:has(.senal__texto:not(:empty)) {
+  .hud .senal:is(:has(.senal__texto:not(:empty)), .hay-texto) {
     padding-right: 14px;
   }
 
@@ -13316,7 +13498,7 @@ button.motor__tecla::after {
    * que dura la radio, y al callarse vuelve la frase. Escondida solo a la
    * vista: es lo que nombra el botón para un lector de pantalla.
    */
-  .hud:has(.radio:not([hidden])) .rincon .senal__texto {
+  .hud:is(:has(.radio:not([hidden])), .hay-radio) .rincon .senal__texto {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -13325,7 +13507,7 @@ button.motor__tecla::after {
     white-space: nowrap;
   }
 
-  .hud:has(.radio:not([hidden])) .rincon .senal:has(.senal__texto:not(:empty)) {
+  .hud:is(:has(.radio:not([hidden])), .hay-radio) .rincon .senal:is(:has(.senal__texto:not(:empty)), .hay-texto) {
     padding-right: 4px;
   }
 
@@ -13610,9 +13792,8 @@ button.motor__tecla::after {
    * teléfono.
    */
   .pad--throttle {
-    height: clamp(190px, calc(100vh - 110px), 260px);
     /* Con la barra del navegador puesta, lo que se ve de verdad. */
-    height: clamp(190px, calc(100dvh - 110px), 260px);
+    height: clamp(190px, calc(var(--alto-visible) - 110px), 260px);
   }
 
   /*
@@ -13622,7 +13803,7 @@ button.motor__tecla::after {
    * menú abierto no se pilota: el primer toque fuera de él lo cierra, y con él
    * vuelve la palanca. Lo vigila `verificar-carteles`.
    */
-  body:has(.hud--menu) .pad--throttle {
+  body:is(:has(.hud--menu), .hay-menu) .pad--throttle {
     visibility: hidden;
   }
 }
@@ -13634,7 +13815,7 @@ button.motor__tecla::after {
    * del juego en el aparato donde más grande tenía que ser.
    */
   .hud .motor__fila .motor__tecla,
-  .hud .motor__fila .motor__tecla:has(svg) {
+  .hud .motor__fila .motor__tecla:is(:has(svg), .hay-dibujo) {
     width: calc(38px / var(--escala, 1));
     height: calc(36px / var(--escala, 1));
     min-width: 0;
@@ -13998,23 +14179,18 @@ button.motor__tecla::after {
    * 14 % de ese alto —el de `.cuadro--grande > .tablero`, aquí abajo— y queda
    * encima de la franja, en cualquier teléfono. Ver `scripts/ver-hoja.mjs`.
    */
-  .hud:has(.cuadro--grande) .hud__abajo > [data-hud="hint"] {
+  .hud:is(:has(.cuadro--grande), .hay-cuadro-grande) .hud__abajo > [data-hud="hint"] {
     top: auto;
     bottom: calc(
       (20px + 56px + 12px) / var(--escala, 1) +
-        (100vh - 64px - 92px) / var(--escala, 1) * 0.14
-    );
-    bottom: calc(
-      (20px + 56px + 12px) / var(--escala, 1) +
-        (100dvh - 64px - 92px) / var(--escala, 1) * 0.14
+        (var(--alto-visible) - 64px - 92px) / var(--escala, 1) * 0.14
     );
   }
 
   .hud .cuadro.cuadro--grande > .tablero {
     display: block;
     width: auto;
-    height: calc((100vh - 64px - 92px) / var(--escala, 1));
-    height: calc((100dvh - 64px - 92px) / var(--escala, 1));
+    height: calc((var(--alto-visible) - 64px - 92px) / var(--escala, 1));
     pointer-events: auto;
     cursor: zoom-out;
   }
@@ -14027,7 +14203,7 @@ button.motor__tecla::after {
    * que no decía nada nuevo. Sale solo con la reversa metida, que es lo único
    * suyo que la palanca no cuenta.
    */
-  .hud .tarjeta.motor:not(:has(.motor__reversa:not([hidden]))) {
+  .hud .tarjeta.motor:not(:is(:has(.motor__reversa:not([hidden])), .hay-reversa)) {
     display: none;
   }
 }
@@ -14099,8 +14275,7 @@ button.motor__tecla::after {
 .explica__medio > svg {
   width: min(100%, 320px);
   height: auto;
-  max-height: 34vh;
-  max-height: 34dvh;
+  max-height: calc(var(--alto-visible) * 0.34);
 }
 
 .explica__medio > svg:not(.ex-trazo) {
@@ -14146,13 +14321,13 @@ button.motor__tecla::after {
 
 .explica__figura {
   container: figura / inline-size;
-  width: min(100%, calc((100dvh - 240px) * 1.39));
+  width: min(100%, calc((var(--alto-visible) - 240px) * 1.39));
   margin-inline: auto;
 }
 
 /* En el PAPI lo que no puede pasarse de alto es el perfil, el de arrastrar. */
 .explica--figura-papi .explica__figura {
-  width: min(100%, calc((100dvh - 240px) * 2.25));
+  width: min(100%, calc((var(--alto-visible) - 240px) * 2.25));
 }
 
 /* Mientras llega la figura, o si no llega, el dibujo de siempre. */
@@ -14160,7 +14335,7 @@ button.motor__tecla::after {
   display: block;
   width: min(100%, 320px);
   height: auto;
-  max-height: 34dvh;
+  max-height: calc(var(--alto-visible) * 0.34);
   margin: auto;
   fill: currentColor;
 }
@@ -14171,7 +14346,7 @@ button.motor__tecla::after {
  * un dedo.
  */
 @media (max-width: 480px) {
-  .explicacion:has(.explica--figura) {
+  .explicacion:is(:has(.explica--figura), .hay-figura) {
     padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
       max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
   }
@@ -14187,7 +14362,7 @@ button.motor__tecla::after {
  * alto, y son para el dibujo y para cerrar.
  */
 @media (max-height: 480px) {
-  .explicacion:has(.explica--figura) {
+  .explicacion:is(:has(.explica--figura), .hay-figura) {
     padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
       max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
   }
@@ -14212,7 +14387,7 @@ button.motor__tecla::after {
   }
 
   .explica__figura {
-    width: min(100%, calc((100dvh - 110px) * 1.39));
+    width: min(100%, calc((var(--alto-visible) - 110px) * 1.39));
   }
 
   /*
@@ -14222,7 +14397,7 @@ button.motor__tecla::after {
    * de alto siete décimas de esa columna.
    */
   .explica--figura-papi .explica__figura {
-    width: min(100%, max(640px, calc((100dvh - 110px) * 2.39)));
+    width: min(100%, max(640px, calc((var(--alto-visible) - 110px) * 2.39)));
   }
 }
 
@@ -14280,9 +14455,15 @@ button.motor__tecla::after {
   cursor: pointer;
 }
 
-.explica__curiosidad:hover,
-.explica__curiosidad:focus-visible {
+.explica__curiosidad:focus-visible,
+.explica__curiosidad:active {
   border-color: var(--ocre-tinta);
+}
+
+@media (hover: hover) {
+  .explica__curiosidad:hover {
+    border-color: var(--ocre-tinta);
+  }
 }
 
 .explica__miniatura {
@@ -14305,8 +14486,7 @@ button.motor__tecla::after {
  */
 @media (max-height: 480px) {
   .explica__medio > svg {
-    max-height: 30vh;
-    max-height: 30dvh;
+    max-height: calc(var(--alto-visible) * 0.3);
   }
 
   .explica__texto {
@@ -14908,7 +15088,7 @@ svg .ex-raya {
 }
 
 /* Solo el engranaje, en Guyrami: redondo y con el dibujo en medio. */
-.tav__por-dentro:not(:has(span)) {
+.tav__por-dentro:not(:is(:has(span), .hay-texto)) {
   justify-content: center;
   padding: 6px;
 }
@@ -16248,13 +16428,22 @@ body.con-vuelta #tactil {
   flex: none;
 }
 
-.parte__arriba:hover,
 .parte__arriba:focus-visible,
-.no-explicar:hover,
-.no-explicar:focus-visible {
+.no-explicar:focus-visible,
+.parte__arriba:active,
+.no-explicar:active {
   color: var(--tinta);
   border-color: var(--linea-fuerte);
   background: var(--barro-claro);
+}
+
+@media (hover: hover) {
+  .parte__arriba:hover,
+  .no-explicar:hover {
+    color: var(--tinta);
+    border-color: var(--linea-fuerte);
+    background: var(--barro-claro);
+  }
 }
 
 .parte__arriba:focus-visible,
@@ -17563,7 +17752,7 @@ body.con-vuelta #tactil {
  * encima del HUD, tapaba la pantalla completa y medio botón del ala.
  */
 @media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
-  :root.con-pasaje:has(.hud.hud--menu) .inicio .inicio__tarjeta {
+  :root.con-pasaje:is(:has(.hud.hud--menu), .hay-menu-abierto) .inicio .inicio__tarjeta {
     visibility: hidden;
   }
 }
@@ -17581,7 +17770,7 @@ body.con-vuelta #tactil {
    * va por debajo de ella: abierto, sus botones quedaban tapados a medias. Se
    * abre un momento, se elige y se cierra; la voz sigue mientras tanto.
    */
-  :root.con-pasaje:has(.hud.hud--menu) .inicio .inicio__tarjeta {
+  :root.con-pasaje:is(:has(.hud.hud--menu), .hay-menu-abierto) .inicio .inicio__tarjeta {
     visibility: hidden;
   }
 
