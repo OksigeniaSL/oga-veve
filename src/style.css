@@ -8576,9 +8576,12 @@ button.motor__tecla::after {
  *   huecos y las fichas a su lado, en tres filas que reparten el alto.
  *
  * Si aun así no cupiera —más destinos de los que hay hoy—, la lista vuelve a
- * desplazarse, que es mejor que cortar. Lo vigila `verificar-carteles`.
+ * desplazarse, que es mejor que cortar. Desde 950 de ancho: en 900 × 600 la
+ * carta tumbada quedaba tan baja que la ficha de un campo, abierta encima, no
+ * cabía en ella —el avión y el botón de ir se salían—. Lo vigila
+ * `verificar-carteles`.
  */
-@media (min-width: 900px) and (min-height: 461px) and (max-height: 820px) {
+@media (min-width: 950px) and (min-height: 461px) and (max-height: 820px) {
   .hangar[data-pantalla="adonde"] {
     --hangar-lista: calc(var(--alto-visible) - 160px);
   }
