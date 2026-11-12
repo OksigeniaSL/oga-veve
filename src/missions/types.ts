@@ -12,6 +12,7 @@
  * alguien que no programa.
  */
 
+import type { Sello } from "../flight/sellos";
 import type { TranslationKey } from "../i18n";
 import type { DibujoDeSenal } from "../ui/senal";
 
@@ -113,6 +114,12 @@ export interface Mission {
   presenta?: DichoDeLaMision;
   /** Y al acabar: lo que pasó de verdad. */
   cierra?: DichoDeLaMision;
+  /**
+   * **El sello del cuaderno que se gana al acabarla**, si tiene uno. Se gana
+   * al cumplir el último objetivo y se celebra como todos, en tierra y cuando
+   * nadie habla: ver `ganarLosSellos` en `game.ts` y `SELLOS`.
+   */
+  sello?: Sello;
   objectives: readonly Objective[];
 }
 

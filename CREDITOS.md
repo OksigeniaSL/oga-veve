@@ -554,9 +554,10 @@ el motivo y la firma de Granja Óga.
 
 ### Los retratos de la flota
 
-`public/assets/aeronaves/retratos/*.webp` son las seis fotos de «¿Con qué
-volás?» en el hangar. No son dibujos aparte: son **los mismos seis modelos de
-arriba**, cargados y vestidos por el juego —los colores de su ficha, el motivo
+`public/assets/aeronaves/retratos/*.webp` son las fotos de «¿Con qué volás?»
+en el hangar, una por aparato de la flota: los siete aviones y el helicóptero,
+el JAZ 70 Kirikiri'i (`super-puma-*.webp`). No son dibujos aparte: son **los
+mismos modelos de arriba**, cargados y vestidos por el juego —los colores de su ficha, el motivo
 de la cola y la firma de Granja Óga— y fotografiados con `npm run retratos`
 (`scripts/hacer-retratos.mjs` y `scripts/retratos.html`), que pone la luz, la
 cámara y la sombra. Son de Oksigenia SL como los modelos, bajo Apache-2.0, y

@@ -11,7 +11,8 @@
  * las luces de la pista en Jasy, la senda que baja y se vuelve a ir arriba en
  * Mbarete —el mismo dibujo que la frustrada de la tarjeta de señal: un
  * significado, un dibujo—, las arcadas de Trinidad en la Ruta Jesuítica, el
- * Paraguay con sus nueve campos en la hazaña de Pettirossi…
+ * helicóptero que baja junto al faro en Teno, el Paraguay con sus nueve
+ * campos en la hazaña de Pettirossi…
  *
  * Y la forma dice de qué altura es, para quien no distingue colores: los de
  * escuela, un aro; los de piloto, dos; los de comandante, el borde festoneado
@@ -40,6 +41,7 @@ import { CAMPOS_DEL_PARAGUAY, SELLOS, tramoDe, type Sello } from "../flight/sell
 import { t, type TranslationKey } from "../i18n";
 import { explicacionDe, registrarExplicacion } from "./explicaciones";
 import { SILUETAS } from "./siluetas";
+import { helicopteroDePerfil } from "./dibujos-del-helicoptero";
 
 /* ── Las piezas de los dibujos ────────────────────────────────────────────
  *
@@ -230,6 +232,24 @@ const DIBUJO: Readonly<Record<Sello, () => string>> = {
     <path ${trazo(1.5)} d="M30.25 10 V5.6 M28.5 7.2 H32" />
     <path ${LLENO} d="M29.2 18.2 A1.05 1.05 0 0 1 31.3 18.2 V20.4 H29.2 Z" />
     <path ${trazo(2)} d="M6 32 H34" />`,
+  /*
+   * El faro de Teno: el helicóptero bajando a la punta, junto al faro, con el
+   * mar debajo. El faro de Punta de Teno es un cilindro de hormigón blanco
+   * con bandas rojas, de 1978, y aquí las bandas son de tinta; el helicóptero,
+   * el mismo de perfil de sus mandos y su tarjeta (`dibujos-del-helicoptero.ts`).
+   */
+  teno: () => `
+    <path ${trazo(1.1)} d="M7 33.6 q2.2 -1.3 4.4 0 t4.4 0 t4.4 0 t4.4 0 t4.4 0 t4.4 0" />
+    <path ${TINTE} d="M8.5 30.6 Q11.5 27.6 17.5 27.4 H35 V30.6 Z" />
+    <path ${trazo(1.5)} d="M8.5 30.6 Q11.5 27.6 17.5 27.4 H35" />
+    <path ${TINTE} d="M27.7 27.4 L28.4 13 H31 L31.7 27.4 Z" />
+    <path ${trazo(1.3)} d="M27.7 27.4 L28.4 13 H31 L31.7 27.4" />
+    <path ${LLENO} d="M28.2 16.4 H31.2 L31.3 18.8 H28.1 Z M28 21.4 H31.4 L31.5 23.8 H27.9 Z" />
+    <rect ${LLENO} x="28.1" y="10.2" width="3.2" height="2.8" rx="0.4" />
+    <path ${LLENO} d="M27.6 10.4 L29.7 8 L31.8 10.4 Z" />
+    <path ${trazo(1)} d="M33.4 9.4 L35.8 8.2 M33.6 11.6 L36.2 11.6" />
+    <path ${trazo(1.1)} stroke-dasharray="1.6 1.6" d="M14.2 23.6 V26.6" />
+    <g ${LLENO}>${helicopteroDePerfil(14, 16, 7.6)}</g>`,
   /* La hazaña de Pettirossi: el Paraguay, con todos sus campos. */
   pettirossi: () => paraguayConSusCampos(6.5, 6.5, 27),
   /* El planeador: alas largas y finas, y el aire que lo lleva. */
@@ -372,6 +392,7 @@ export const DIBUJOS_DE_LOS_SELLOS = {
   "sello-jasy": dibujoDelSello("jasy"),
   "sello-mbarete": dibujoDelSello("mbarete"),
   "sello-ruta-jesuitica": dibujoDelSello("ruta-jesuitica"),
+  "sello-teno": dibujoDelSello("teno"),
   "sello-pettirossi": dibujoDelSello("pettirossi"),
   "sello-planeador": dibujoDelSello("planeador"),
   "sello-manos-de-seda": dibujoDelSello("manos-de-seda"),
@@ -418,7 +439,8 @@ export const HUECO = `<svg class="album__vacio" viewBox="0 0 48 48" aria-hidden=
 </svg>`;
 
 /**
- * **El álbum**: los dieciséis sitios, por alturas, en el orden del issue. Los
+ * **El álbum**: los diecisiete sitios, por alturas, en el orden del issue y el
+ * de Teno al final de la fila de piloto (ver `SELLOS`). Los
  * ganados con su sello, que se toca para que la instructora cuente qué es;
  * los que faltan, un hueco.
  *

@@ -10,6 +10,8 @@
  */
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT, aircraftById } from "./aircraft";
+import { AERONAVES } from "./aeronaves";
+import { SUPER_PUMA_EN_EL_JUEGO } from "./helicoptero-en-el-juego";
 import { MEDIDAS_DEL_TIPO } from "./bomberos";
 import {
   ESTA_HECHO,
@@ -82,6 +84,24 @@ describe("la flota", () => {
     expect(nombreEntero(FLOTA[0]!)).toBe(`${FABRICANTE} 20 Pykasu`);
   });
 
+  /*
+   * **El helicóptero es de la flota**, con su número entre el 60 y el 90, su
+   * pájaro sin usar y su silueta, y con el identificador de siempre: con él se
+   * lanza y se guarda. Ver `flota.ts`.
+   */
+  it("el helicóptero es el JAZ 70 Kirikiri'i, con su silueta y el identificador de siempre", () => {
+    const m = modeloPorId("super-puma")!;
+    expect(nombreEntero(m)).toBe("JAZ 70 Kirikiri'i");
+    expect(m.silueta).toBe("helicoptero");
+    expect(SUPER_PUMA_EN_EL_JUEGO.name).toBe("JAZ 70 Kirikiri'i");
+    expect(SUPER_PUMA_EN_EL_JUEGO.id).toBe("super-puma");
+    const numeros = FLOTA.map((x) => x.numero);
+    expect(numeros.indexOf(70)).toBe(numeros.indexOf(60) + 1);
+    expect(numeros.indexOf(90)).toBe(numeros.indexOf(70) + 1);
+    // Y no es un avión: no está en lo que recorren las lecciones y las cuentas de pista.
+    expect(AIRCRAFT.map((a) => a.id)).not.toContain("super-puma");
+  });
+
   it("se encuentra por identificador, y lo que no es de la flota no aparece", () => {
     expect(modeloPorId("jaz-25")?.nombre).toBe("Mainumby");
     expect(modeloPorId("oga-172")).toBeNull();
@@ -90,17 +110,17 @@ describe("la flota", () => {
 
 describe("lo construido y lo reservado", () => {
   it("todo lo que vuela es de la flota", () => {
-    for (const a of AIRCRAFT) {
+    for (const a of AERONAVES) {
       expect(modeloPorId(a.id), `${a.id} no está en la flota`).not.toBeNull();
     }
   });
 
   it("y lo que vuela es exactamente lo que se dice construido", () => {
-    expect(AIRCRAFT.map((a) => a.id).sort()).toEqual([...ESTA_HECHO].sort());
+    expect(AERONAVES.map((a) => a.id).sort()).toEqual([...ESTA_HECHO].sort());
   });
 
   it("cada avión se llama como dice la flota", () => {
-    for (const a of AIRCRAFT) {
+    for (const a of AERONAVES) {
       expect(a.name).toBe(nombreEntero(modeloPorId(a.id)!));
     }
   });
@@ -118,7 +138,7 @@ describe("lo construido y lo reservado", () => {
   });
 
   it("y ninguno de los que ya vuelan está en disputa", () => {
-    for (const a of AIRCRAFT) {
+    for (const a of AERONAVES) {
       expect(modeloPorId(a.id)?.enDisputa, a.id).toBeUndefined();
     }
   });

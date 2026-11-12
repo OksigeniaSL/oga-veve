@@ -94,5 +94,18 @@
       "motivo": "sol"
     },
     "retrato": "jaz-110-cdcc829b.webp"
+  },
+  "super-puma": {
+    "glb": "989a1d4d403d075ac6a0dceaeb829b53734bb50dbf7b5f3886a46b3eb334f4d1",
+    "librea": "0a056c732b4fc40863e8845c518c628f3c36120bd8b82aad668dd1a661c953bf",
+    "ficha": {
+      "body": 15527142,
+      "accent": 12475704,
+      "trim": 3101251,
+      "cola": 3101251,
+      "remate": 12475704,
+      "blades": 4
+    },
+    "retrato": "super-puma-951aa545.webp"
   }
 }

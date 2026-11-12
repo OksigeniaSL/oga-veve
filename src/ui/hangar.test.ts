@@ -9,12 +9,15 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  aeronavesDelHangar,
   caja,
   designador,
   destinosPosibles,
   destinosQueNoCaben,
+  misionesDe,
   recientes,
 } from "./hangar";
+import { SUPER_PUMA_EN_EL_JUEGO } from "../flight/helicoptero-en-el-juego";
 import { AIRCRAFT } from "../flight/aircraft";
 import { cabeEn, campoDe } from "../flight/cabe";
 import {
@@ -172,5 +175,31 @@ describe("los destinos que no caben", () => {
 
   it("el que cabe en todo no tiene ninguno fuera", () => {
     expect(destinosQueNoCaben(PETTIROSSI, jaz("jaz-20"))).toHaveLength(0);
+  });
+});
+
+/*
+ * **El helicóptero en el hangar**: solo en Tenerife Norte, que es donde tiene
+ * su helipuerto, y con lo que hace un helicóptero —su vuelo libre y su misión—,
+ * sin las misiones de avión. Y un avión no vuela la suya.
+ */
+describe("el helicóptero en el hangar", () => {
+  const helicoptero = SUPER_PUMA_EN_EL_JUEGO;
+
+  it("sale entre los aparatos de Tenerife Norte, entre el JAZ 60 y el JAZ 90, y en ningún otro campo", () => {
+    const aqui = aeronavesDelHangar(TENERIFE_NORTE).map((a) => a.id);
+    expect(aqui).toContain("super-puma");
+    expect(aqui.indexOf("super-puma")).toBe(aqui.indexOf("jaz-60") + 1);
+    for (const e of SCENARIOS.filter((x) => x.id !== TENERIFE_NORTE.id))
+      expect(aeronavesDelHangar(e).map((a) => a.id), e.id).not.toContain("super-puma");
+    // Los aviones siguen todos, los que no caben también: apagados y con su porqué.
+    for (const e of SCENARIOS) expect(aeronavesDelHangar(e).filter((a) => !a.helicoptero)).toEqual(AIRCRAFT);
+  });
+
+  it("con el helicóptero, la misión de Teno; con un avión, las de avión y no la de Teno", () => {
+    expect(misionesDe(TENERIFE_NORTE, helicoptero).map((m) => m.id)).toEqual(["teno"]);
+    const deAvion = misionesDe(TENERIFE_NORTE, AIRCRAFT[0]!).map((m) => m.id);
+    expect(deAvion.length).toBeGreaterThan(0);
+    expect(deAvion).not.toContain("teno");
   });
 });

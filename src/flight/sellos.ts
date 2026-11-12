@@ -6,7 +6,9 @@
  * no había era la parte que un crío le enseña a su padre: **¡Veve!**,
  * **Karumbe**, **Mainumby**… Dieciséis, con los nombres del issue tal cual,
  * repartidos como los repartía el issue: seis de escuela —un tercio, que se
- * sacan con cinco años—, cinco de piloto y cinco de comandante.
+ * sacan con cinco años—, cinco de piloto y cinco de comandante. Y uno más,
+ * que el issue no podía tener porque no había helicóptero: **el faro de
+ * Teno**, el de la misión de rescate. Ver `SELLOS`.
  *
  * ## Cada uno premia algo que existe
  *
@@ -61,7 +63,18 @@ import type { Galon } from "./galones";
 export type Tramo = "escuela" | "piloto" | "comandante";
 
 /**
- * **Los dieciséis**, en el orden del álbum: el del issue.
+ * **Los dieciséis del issue y el de Teno**, en el orden del álbum: el del
+ * issue, y el nuevo al final de su altura.
+ *
+ * **El de Teno va con los de piloto**, el último de la fila. No es de
+ * escuela: no premia una maniobra que se aprende en el circuito, sino un
+ * vuelo de servicio entero —veinte minutos de costa, dos tomas fuera de un
+ * aeropuerto y gente a bordo—. Tampoco de comandante, que son las hazañas de
+ * mucho tiempo o de mucha precisión: todos los campos del país, cien horas,
+ * la pista sin motor. Es de la familia de la chipa volandera y de la Ruta
+ * Jesuítica —ir de un sitio a otro y llegar—, con lo que el helicóptero añade:
+ * llegar donde no llega nadie más. Y la fila de piloto se queda en seis, como
+ * la de escuela: una altura, una fila entera en la tablet y en el teléfono.
  *
  * El `id` es lo que se guarda en el perfil, y por eso no se cambia nunca: un
  * sello renombrado aquí sería un sello perdido en cada tablet que ya lo tenía.
@@ -80,6 +93,7 @@ export const SELLOS = [
   { id: "jasy", tramo: "piloto" },
   { id: "mbarete", tramo: "piloto" },
   { id: "ruta-jesuitica", tramo: "piloto" },
+  { id: "teno", tramo: "piloto" },
   { id: "pettirossi", tramo: "comandante" },
   { id: "planeador", tramo: "comandante" },
   { id: "manos-de-seda", tramo: "comandante" },

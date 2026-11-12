@@ -49,10 +49,14 @@ import {
 import { camposDeLaRuta, tramosDelPlan } from "../flight/alterno";
 import { cargaParaElPlan, loQueCabe } from "../flight/combustible";
 import { FABRICANTE, modeloPorId } from "../flight/flota";
+import { AERONAVES, aeronavePorId, laQueSeVuelaEn, seVuelaEn } from "../flight/aeronaves";
+import { esHelicoptero } from "../flight/helicoptero-en-el-juego";
+import { helicopteroDePerfil } from "./dibujos-del-helicoptero";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
 import { AVES, LADO_DEL_AVE } from "./aves";
 import { TarjetaDelAvion } from "./tarjeta-del-avion";
 import { caraDentro } from "./inicio";
+import { DIBUJOS } from "./senal";
 import type { EscenaDelInicio } from "../flight/inicio";
 import { capitulosHechos } from "../flight/capitulos-hechos";
 import { LECCIONES, VUELTA, type Leccion } from "../flight/lecciones";
@@ -1426,8 +1430,12 @@ function ruta(escenario: Scenario, mision: Mission): [number, number][] {
  *
  * El dibujo enseña la ida y el número dice el viaje entero, y eso no es una
  * incoherencia: el número tiene que decir en qué te estás metiendo.
+ *
+ * **Y sin vuelta si la misión acaba en otro sitio**: la de Teno termina
+ * posada en el puerto de Garachico, y sumarle los cuarenta kilómetros de
+ * vuelta a Los Rodeos sería prometer un viaje que no se vuela.
  */
-function largoDeRuta(puntos: readonly [number, number][]): number {
+function largoDeRuta(puntos: readonly [number, number][], vuelve = true): number {
   let d = 0;
   for (let i = 1; i < puntos.length; i++) {
     d += Math.hypot(
@@ -1436,8 +1444,14 @@ function largoDeRuta(puntos: readonly [number, number][]): number {
     );
   }
   const ultimo = puntos[puntos.length - 1]!;
-  d += Math.hypot(ultimo[0] - puntos[0]![0], ultimo[1] - puntos[0]![1]);
+  if (vuelve) d += Math.hypot(ultimo[0] - puntos[0]![0], ultimo[1] - puntos[0]![1]);
   return d / 1000;
+}
+
+/** Si la misión acaba en casa: su último objetivo no es posarse ni esperar en un sitio. */
+function vuelveACasa(mision: Mission): boolean {
+  const ultimo = mision.objectives[mision.objectives.length - 1];
+  return !(ultimo && (ultimo.kind === "land" || ultimo.kind === "wait") && ultimo.sitio);
 }
 
 function planoDeMision(puntos: readonly [number, number][]): string {
@@ -1480,17 +1494,76 @@ function fichaDeMision(
   elegida: boolean,
 ): string {
   const puntos = ruta(escenario, mision);
+  /*
+   * **Y su dibujo, si lo tiene**: el mismo con que se presenta en el vuelo
+   * —el faro de Teno—, en la esquina del plano. Un plano con tres puntos no le
+   * dice nada a quien no lee; el faro, sí, y es el que verá al despegar. Un
+   * significado, un dibujo.
+   */
+  const dibujo = mision.presenta?.dibujo;
+  const insignia = dibujo ? `<span class="ficha__insignia">${DIBUJOS[dibujo]}</span>` : "";
   return `
     <button class="ficha ficha--mision" type="button" role="radio"
             aria-checked="${elegida}" tabindex="${elegida ? 0 : -1}"
             data-mision="${mision.id}">
-      <span class="ficha__lienzo ficha__lienzo--mision">${planoDeMision(puntos)}</span>
+      <span class="ficha__lienzo ficha__lienzo--mision">${planoDeMision(puntos)}${insignia}</span>
       <span class="ficha__pie">
         <span class="ficha__renglon">
           <span class="ficha__numero">${numero}</span>
-          <span class="ficha__dato">${largoDeRuta(puntos).toFixed(1).replace(".", ",")} km</span>
+          <span class="ficha__dato">${largoDeRuta(puntos, vuelveACasa(mision)).toFixed(1).replace(".", ",")} km</span>
         </span>
         <span class="ficha__nombre">${t(mision.nameKey)}</span>
+      </span>
+    </button>`;
+}
+
+/**
+ * **Las misiones de este sitio con este aparato**: el helicóptero, solo las
+ * suyas —se posa junto a un faro y no aterriza en una pista—; un avión, las
+ * que no piden ninguno. Ver `missionsFor`.
+ */
+export function misionesDe(sitio: Scenario, avion: AircraftConfig): readonly Mission[] {
+  const todas = missionsFor(sitio.id, avion.id);
+  return esHelicoptero(avion) ? todas.filter((m) => m.aeronave === avion.id) : todas;
+}
+
+/**
+ * **Las aeronaves que se enseñan al elegir con qué se vuela**: todos los
+ * aviones —los que no caben, apagados y con su porqué— y el helicóptero solo
+ * en el campo de su helipuerto. Fuera de él no se apaga con un porqué de
+ * pista, que no es el suyo: no está, como no está un helicóptero del Ejército
+ * en el hangar de otro aeropuerto.
+ */
+export function aeronavesDelHangar(sitio: Scenario): readonly AircraftConfig[] {
+  return AERONAVES.filter((a) => !esHelicoptero(a) || seVuelaEn(a, sitio));
+}
+
+/** El veredicto del helicóptero donde se ofrece: no mira pista, que no la usa. */
+const SE_VUELA_AQUI: Veredicto = { cabe: true, porQueNo: null, necesita: 0, hay: 0 };
+
+/**
+ * **El vuelo libre del helicóptero**: el helicóptero quieto en el aire encima
+ * de la hache de su helipuerto, con la estela recta hacia arriba, que es como
+ * despega. Es la pareja de «Dar una vuelta» de los aviones —el paisaje es el
+ * premio— con lo que lo distingue a la vista: no hay pista, se sube derecho.
+ */
+const LEC_VUELO_LIBRE_HELICOPTERO = escena(`
+  <path class="leccion__loma" d="M0 62 q22-12 40-2 q18 10 34-4 q16-13 46 2 v26 H0 Z" />
+  <ellipse class="leccion__asfalto" cx="60" cy="73" rx="25" ry="7.5" />
+  <ellipse class="leccion__amarilla" cx="60" cy="73" rx="17" ry="5" />
+  <path class="leccion__amarilla" d="M55.5 70.4 v5.2 M64.5 70.4 v5.2 M55.5 73 h9" />
+  <path class="leccion__estela" d="M60 64 V46" />
+  <g class="leccion__avion">${helicopteroDePerfil(60, 25, 21)}</g>
+`);
+
+function fichaDeVueloLibreDelHelicoptero(elegida: boolean): string {
+  return `
+    <button class="ficha ficha--leccion" type="button" role="radio"
+            aria-checked="${elegida}" tabindex="${elegida ? 0 : -1}"
+            data-leccion="${VUELTA.id}">
+      <span class="ficha__lienzo ficha__lienzo--panel">${LEC_VUELO_LIBRE_HELICOPTERO}</span>
+      <span class="ficha__pie">
+        <span class="ficha__nombre">${t("mission.none")}</span>
       </span>
     </button>`;
 }
@@ -1881,9 +1954,16 @@ export function abrirHangar(
    * Se baja al mayor que quepa, que es lo mismo que hace el cambio de sitio y
    * lo que haría cualquiera: el avión más grande que entre en esa pista.
    */
-  let avion = inicial.aircraft ?? AIRCRAFT[0]!;
-  avion = elQueQuepa(avion, campoDe(sitio), AIRCRAFT);
-  let leccion = inicial.leccion;
+  /*
+   * **El último avión elegido**, aparte: el helicóptero solo se ofrece en
+   * Tenerife Norte, y quien lo deja puesto y se va a otro campo vuelve al
+   * avión que tenía —si cabe allí—, no al primero de la lista. Ver
+   * `laQueSeVuelaEn`.
+   */
+  let avionDeAla: AircraftConfig =
+    inicial.aircraft && !esHelicoptero(inicial.aircraft) ? inicial.aircraft : AIRCRAFT[0]!;
+  let avion = laQueSeVuelaEn(inicial.aircraft ?? AIRCRAFT[0]!, sitio, avionDeAla);
+  let leccion = esHelicoptero(avion) ? VUELTA : inicial.leccion;
   let mision: Mission | null = null;
   /*
    * **El ejercicio, que no se recuerda**: una emergencia se elige cada vez.
@@ -1910,6 +1990,8 @@ export function abrirHangar(
   let destinoElegido: string | null = recordarDestino(sitio);
   /** El destino de ahora: el elegido si vale para este avión, o el propuesto. */
   const destinoDeAhora = (): string => {
+    // El helicóptero vuela por casa: su vuelo libre y su misión salen de su helipuerto.
+    if (esHelicoptero(avion)) return sitio.id;
     if (
       destinoElegido === sitio.id ||
       destinosPosibles(sitio, avion).some((d) => d.id === destinoElegido)
@@ -1993,6 +2075,13 @@ export function abrirHangar(
       <path d="M9 5 L9 17 M19.5 8 L19.5 17" stroke="currentColor"
             stroke-width="1.1" opacity=".5" />
     </svg>`;
+
+  /*
+   * **El paso de a dónde se va**, solo donde hay a dónde ir, y no con el
+   * helicóptero: vuela por casa, y un paso que no se puede cambiar es un paso
+   * que sobra.
+   */
+  const hayAdonde = (): boolean => destinosDeLaRuta(sitio).length > 0 && !esHelicoptero(avion);
 
   const pintar = (): void => {
     root.innerHTML = `
@@ -2081,7 +2170,30 @@ export function abrirHangar(
         }
 
         ${
-          pantalla === "que"
+          pantalla === "que" && esHelicoptero(avion)
+            ? `
+        <!--
+          **Con el helicóptero, lo que hace el helicóptero**: su vuelo libre y
+          su misión, cada uno con su dibujo. Ni las lecciones ni los ejercicios
+          de avión —despegar de una pista, la frustrada, el motor que se para
+          en la carrera—, que no son suyos, ni las escenas del modo inicio, que
+          se vuelan en avioneta y cambiarían de aparato sin decirlo.
+        -->
+        <section class="hangar__bloque" aria-labelledby="hangar-leccion">
+          <h2 class="hangar__pregunta" id="hangar-leccion">${t("hangar.aque")}</h2>
+          <div class="hangar__rejilla hangar__rejilla--suelta" role="radiogroup"
+               aria-labelledby="hangar-leccion">
+            ${fichaDeVueloLibreDelHelicoptero(!mision)}
+            ${misionesDe(sitio, avion)
+              .map((m, i) => fichaDeMision(sitio, m, i + 1, mision?.id === m.id))
+              .join("")}
+          </div>
+        </section>`
+            : ""
+        }
+
+        ${
+          pantalla === "que" && !esHelicoptero(avion)
             ? `
         <!--
           **A qué se juega dice también desde dónde se empieza.**
@@ -2110,7 +2222,7 @@ export function abrirHangar(
             ${grupo(
               MARCA_MISIONES,
               t("hangar.misiones"),
-              missionsFor(sitio.id)
+              misionesDe(sitio, avion)
                 .map((m, i) =>
                   fichaDeMision(sitio, m, i + 1, mision?.id === m.id),
                 )
@@ -2149,14 +2261,16 @@ export function abrirHangar(
         <section class="hangar__bloque" aria-labelledby="hangar-avion">
           <h2 class="hangar__pregunta" id="hangar-avion">${t("hangar.conque")}</h2>
           <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-avion">
-            ${AIRCRAFT.map((a) =>
-              fichaDeAvion(
-                a,
-                retratoDe(a.id),
-                a.id === avion.id,
-                cabeEn(a, campoDe(sitio)),
-              ),
-            ).join("")}
+            ${aeronavesDelHangar(sitio)
+              .map((a) =>
+                fichaDeAvion(
+                  a,
+                  retratoDe(a.id),
+                  a.id === avion.id,
+                  esHelicoptero(a) ? SE_VUELA_AQUI : cabeEn(a, campoDe(sitio)),
+                ),
+              )
+              .join("")}
           </div>
         </section>`
             : ""
@@ -2225,7 +2339,7 @@ export function abrirHangar(
           pantalla === "inicio"
             ? `
         <div class="hangar__pasos" style="--pasos: ${
-          destinosDeLaRuta(sitio).length > 0 ? 6 : 5
+          hayAdonde() ? 6 : 5
         }">
           ${[
             [
@@ -2245,7 +2359,7 @@ export function abrirHangar(
              * él la única pista de que ahí había a dónde ir. Ahora se ve, y
              * dentro se ve por qué no.
              */
-            ...(destinosDeLaRuta(sitio).length > 0
+            ...(hayAdonde()
               ? [
                   [
                     "adonde",
@@ -2269,7 +2383,9 @@ export function abrirHangar(
                 ? t(mision.nameKey)
                 : ejercicio
                   ? t(`hangar.ejercicio.${ejercicio.id}` as never)
-                  : t(`leccion.${leccion.id}` as never),
+                  : esHelicoptero(avion)
+                    ? t("mission.none")
+                    : t(`leccion.${leccion.id}` as never),
               PASO_QUE,
             ],
             ["quien", t("hangar.como"), tramo.name, PASO_QUIEN],
@@ -2374,7 +2490,7 @@ export function abrirHangar(
          * quepa, que es lo que haría cualquiera: el avión más grande que entre
          * en esa pista.
          */
-        avion = elQueQuepa(avion, campoDe(sitio), AIRCRAFT);
+        avion = laQueSeVuelaEn(avion, sitio, avionDeAla);
       } else if (atributo === "data-tramo")
         tramo = TIERS.find((x) => x.id === id) ?? tramo;
       else {
@@ -2499,6 +2615,7 @@ export function abrirHangar(
         )
           return;
         avion = con;
+        avionDeAla = con;
         avionCambiado = true;
         destinoElegido = lejos;
         try {
@@ -2513,18 +2630,29 @@ export function abrirHangar(
 
       const deCerca = boton.getAttribute("data-de-cerca");
       if (deCerca) {
-        const a = AIRCRAFT.find((x) => x.id === deCerca);
+        const a = aeronavePorId(deCerca);
         if (a) abrirTarjeta(a);
         return;
       }
 
       const idAvion = boton.getAttribute("data-avion");
       if (idAvion) {
-        const pedido = AIRCRAFT.find((a) => a.id === idAvion);
+        const pedido = aeronavePorId(idAvion);
         // Un avión que no cabe no se puede elegir. El botón ya va apagado, y
         // esto es el cinturón: el teclado y los lectores llegan por otro lado.
-        if (pedido && !cabeEn(pedido, campoDe(sitio)).cabe) return;
+        if (pedido && !seVuelaEn(pedido, sitio)) return;
         avion = pedido ?? avion;
+        if (!esHelicoptero(avion)) avionDeAla = avion;
+        /*
+         * **Y lo elegido para jugar, si no es de este aparato**: el helicóptero
+         * vuela su vuelo libre o su misión, sin lección ni ejercicio de avión;
+         * y un avión no vuela la misión del helicóptero.
+         */
+        if (mision && !misionesDe(sitio, avion).includes(mision)) mision = null;
+        if (esHelicoptero(avion)) {
+          leccion = VUELTA;
+          ejercicio = null;
+        }
         sigueValiendo();
         pantalla = "inicio";
         pintar();
@@ -2543,7 +2671,7 @@ export function abrirHangar(
 
       const idMision = boton.getAttribute("data-mision");
       if (idMision) {
-        mision = missionsFor(sitio.id).find((m) => m.id === idMision) ?? null;
+        mision = misionesDe(sitio, avion).find((m) => m.id === idMision) ?? null;
         // Una misión empieza despegando, así que se vuela con la lección de
         // dar una vuelta: en la pista, con el motor en marcha y sin guías por
         // medio. Lo que guía en una misión es la misión.

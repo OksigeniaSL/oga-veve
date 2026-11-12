@@ -1603,8 +1603,8 @@ export const EN: Dictionary = {
   "ilustracion.fuera-jaz-90": "The JAZ 90 flying above the clouds",
   "ilustracion.fuera-jaz-120": "The JAZ 120, with its four engines, above the clouds",
   "ilustracion.fuera-jaz-110": "The JAZ 110 Tijereta in profile, with its two engines under the wings",
-  "ilustracion.fuera-super-puma": "The Super Puma flies past the Teno lighthouse, Tenerife",
-  "ilustracion.grua-super-puma": "A rescuer is lowered on the Super Puma's hoist to a boat",
+  "ilustracion.fuera-super-puma": "The JAZ 70 flying past the Teno lighthouse, Tenerife",
+  "ilustracion.grua-super-puma": "A rescuer is lowered on the JAZ 70's hoist to a boat",
   "ilustracion.cabina-jaz-20": "Jazlyn at the controls of the JAZ 20, in the left seat",
   "ilustracion.cabina-jaz-25": "Jazlyn at the controls of the JAZ 25, the single-seat biplane",
   "ilustracion.cabina-jaz-40": "Jazlyn at the controls of the JAZ 40, with an engine on each wing",
@@ -2021,6 +2021,9 @@ export const EN: Dictionary = {
   "explica.sello.ruta-jesuitica.corta": "Jesuit Route",
   "explica.sello.ruta-jesuitica.texto":
     "Jesuit Route: you flew at Encarnación and Ayolas, the land of the Jesuit missions, with their stone ruins more than two hundred years old.",
+  "explica.sello.teno.corta": "Teno Lighthouse",
+  "explica.sello.teno.texto":
+    "Teno Lighthouse: you went to fetch the people stranded by the lighthouse and flew them to Garachico harbour, as the Army helicopters did in 2016. That's what a helicopter is for: it sets down where there's no runway, and sometimes not even a road.",
   "explica.sello.pettirossi.corta": "Pettirossi's feat",
   "explica.sello.pettirossi.texto":
     "Pettirossi's feat: you have flown at every airfield in Paraguay. Silvio Pettirossi was the first Paraguayan aviator, and Asunción's airport bears his name.",
@@ -2392,7 +2395,7 @@ export const EN: Dictionary = {
     "medium: the fan and the core turn faster; the air going around the core is what pushes most",
   "figura.turbofan.valorTodo": "full: the fan and the core turn their fastest and both jets push as hard as they can",
   "figura.plato.aria":
-    "How a helicopter is flown: the Super Puma's rotor head, with its blades, the swashplate and its servos, and the pilot's controls. The collective raises the plate and the four blades take more pitch; the cyclic tilts it and the rotor disc tilts with it; the pedals work the tail rotor, which holds the turn the rotor gives the helicopter. Beside it, the Super Puma flying.",
+    "How a helicopter is flown: the JAZ 70's rotor head, with its blades, the swashplate and its servos, and the pilot's controls. The collective raises the plate and the four blades take more pitch; the cyclic tilts it and the rotor disc tilts with it; the pedals work the tail rotor, which holds the turn the rotor gives the helicopter. Beside it, the JAZ 70 flying.",
   "figura.plato.plato": "Swashplate",
   "figura.plato.platoFijo": "Stationary plate",
   "figura.plato.platoQueGira": "Rotating plate",

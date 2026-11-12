@@ -9,7 +9,16 @@
  */
 import { Box3, Vector3 } from "three";
 import { describe, expect, it } from "vitest";
-import { FLOTA, type Silueta } from "../flight/flota";
+import { FLOTA, type SiluetaDeAvion } from "../flight/flota";
+
+/**
+ * **Los de ala fija de la flota**, que son los que monta la fábrica. El
+ * helicóptero tiene su silueta aparte, `world/silueta-de-helicoptero.ts`: sin
+ * ala ni hélice, nada de lo que se mide aquí es suyo.
+ */
+const AVIONES = FLOTA.filter(
+  (m): m is (typeof FLOTA)[number] & { silueta: SiluetaDeAvion } => m.silueta !== "helicoptero",
+);
 import {
   fabricarAeronave,
   superficie,
@@ -21,7 +30,7 @@ import {
 const MEDIDAS: Medidas = { envergadura: 11, cuerda: 1.5, tren: 0.9 };
 const PALETA = { body: 0xdddddd, accent: 0xcc3311, trim: 0x333333 };
 
-const cajaDe = (silueta: Silueta): Box3 =>
+const cajaDe = (silueta: SiluetaDeAvion): Box3 =>
   new Box3().setFromBufferAttribute(
     fabricarAeronave(silueta, MEDIDAS, PALETA).geometria.getAttribute(
       "position",
@@ -117,8 +126,8 @@ describe("las dos primitivas", () => {
   });
 });
 
-describe("las cinco siluetas", () => {
-  const siluetas = FLOTA.map((m) => m.silueta);
+describe("las siluetas de ala fija", () => {
+  const siluetas = AVIONES.map((m) => m.silueta);
 
   it("todas miden la envergadura que dice su ficha", () => {
     for (const s of siluetas) {
@@ -148,7 +157,7 @@ describe("las cinco siluetas", () => {
    * que el álbum de postales no puede enseñar a distinguir.
    */
   it("no hay dos que se dibujen igual", () => {
-    const huellas = new Map<string, Silueta>();
+    const huellas = new Map<string, SiluetaDeAvion>();
     for (const s of siluetas) {
       const g = fabricarAeronave(s, MEDIDAS, PALETA).geometria;
       const caja = cajaDe(s);
@@ -189,7 +198,7 @@ describe("el tren y el suelo", () => {
   });
 
   it("y ninguna hélice queda bajo tierra al posarlo", () => {
-    for (const m of FLOTA) {
+    for (const m of AVIONES) {
       const { helices } = fabricarAeronave(m.silueta, MEDIDAS, PALETA);
       for (const h of helices) {
         // En coordenadas de la aeronave el suelo está en `-tren`.
@@ -225,7 +234,7 @@ describe("las hélices", () => {
 
 describe("dónde se sienta el piloto", () => {
   it("va delante del centro y por encima del suelo", () => {
-    for (const m of FLOTA) {
+    for (const m of AVIONES) {
       const { ojo } = fabricarAeronave(m.silueta, MEDIDAS, PALETA);
       expect(ojo.z, m.nombre).toBeLessThan(0);
       expect(ojo.y, m.nombre).toBeGreaterThan(0);

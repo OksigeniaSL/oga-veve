@@ -215,8 +215,8 @@ import {
   type PuntoDeCircuito,
 } from "./world/circuito";
 import { TOPE_DE_LA_VUELTA, type TuLlegadaALaPista } from "./flight/salida-tapada";
-import { FLOTA, modeloPorId } from "./flight/flota";
-import { cabeEn, campoDe } from "./flight/cabe";
+import { FLOTA, modeloPorId, type SiluetaDeAvion } from "./flight/flota";
+import { AERONAVES, seVuelaEn } from "./flight/aeronaves";
 import {
   crearTrafico,
   tiposDelCampo,
@@ -14301,7 +14301,10 @@ export class Game {
      * o el biplano si el entrenador sos vos.
      */
     const mia = modeloPorId(this.aircraft.id)?.silueta;
-    const otra = FLOTA.find((m) => m.silueta !== mia)?.silueta;
+    // De ala fija: el que da vueltas al circuito es un avión.
+    const otra = FLOTA.map((m) => m.silueta).find(
+      (x): x is SiluetaDeAvion => x !== mia && x !== "helicoptero",
+    );
     if (!otra) return;
     const cota = this.cotaDelCampo(campo);
     /*
@@ -33014,10 +33017,12 @@ export class Game {
     // La pista que se tiene debajo, no la de casa: en El Hierro, llegando de
     // La Palma, se podía pasar al JAZ 90, que ahí no cabe.
     const aqui = this.elCampo().escenario;
-    const campo = campoDe(aqui);
-    const quepan = AIRCRAFT.filter(
-      (a) => a === this.aircraft || cabeEn(a, campo).cabe,
-    );
+    /*
+     * Por toda la flota, el helicóptero incluido donde tiene su helipuerto:
+     * en Tenerife Norte la tecla pasa del JAZ 60 al Kirikiri'i y de él al JAZ
+     * 90, como en el hangar. Ver `seVuelaEn`.
+     */
+    const quepan = AERONAVES.filter((a) => a === this.aircraft || seVuelaEn(a, aqui));
     const next =
       quepan[(quepan.indexOf(this.aircraft) + 1) % quepan.length] ?? PYKASU;
     /*
@@ -33314,6 +33319,13 @@ export class Game {
       this.avisar("achieved");
       this.hud.flash(t("mission.done"), 5);
       this.decirDeLaMision(this.missions.active.cierra);
+      /*
+       * Y su sello, si tiene: se gana ahora y se celebra cuando toca —posado,
+       * despacio y con el cierre ya dicho—, como cualquier otro. Ver
+       * `celebrarLosSellosSiToca`.
+       */
+      const sello = this.missions.active.sello;
+      if (sello) this.ganarLosSellos([sello]);
     } else {
       this.avisar("success");
       this.hud.flash(t("mission.step"), 2);

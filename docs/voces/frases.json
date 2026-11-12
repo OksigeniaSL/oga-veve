@@ -20408,5 +20408,19 @@
     "idioma": "es-PY",
     "texto": "Evacuación terminada. En 2016 fueron 123 personas y cinco perros, en dos Super Puma como este y otros tres helicópteros.",
     "para": "misión de Teno, la tripulación, en el peldaño de cabina: al acabar: lo que pasó de verdad"
+  },
+  {
+    "id": "explica.sello.teno.texto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El faro de Teno: fuiste a buscar a la gente que se quedó aislada junto al faro y la llevaste al puerto de Garachico, como hicieron los helicópteros del Ejército en 2016. Para eso sirve un helicóptero: se posa donde no hay pista, y a veces ni carretera.",
+    "para": "los sellos del cuaderno: el de Teno, al acabar la misión y al tocarlo en el álbum",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]

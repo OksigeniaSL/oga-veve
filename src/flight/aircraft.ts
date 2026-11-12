@@ -1,4 +1,4 @@
-import { FLOTA, nombreEntero } from "./flota";
+import { nombreEnteroDe } from "./flota";
 import { airDensity, SEA_LEVEL_DENSITY } from "./atmosphere";
 import type { EquipoTcas } from "./tcas";
 import type { FrenosDelTipo } from "./frenada";
@@ -1341,7 +1341,7 @@ export interface AircraftConfig {
  */
 export const PYKASU: AircraftConfig = {
   id: "jaz-20",
-  name: nombreEntero(FLOTA[0]!),
+  name: nombreEnteroDe("jaz-20"),
   descriptionKey: "aircraft.pykasu.description",
   mass: 1100,
   /*
@@ -1507,7 +1507,7 @@ export const PYKASU: AircraftConfig = {
  */
 export const MAINUMBY: AircraftConfig = {
   id: "jaz-25",
-  name: nombreEntero(FLOTA[1]!),
+  name: nombreEnteroDe("jaz-25"),
   descriptionKey: "aircraft.mainumby.description",
   mass: 1500,
   /*
@@ -1678,7 +1678,7 @@ export const MAINUMBY: AircraftConfig = {
  */
 export const PANAMBI: AircraftConfig = {
   id: "jaz-40",
-  name: nombreEntero(FLOTA[2]!),
+  name: nombreEnteroDe("jaz-40"),
   descriptionKey: "aircraft.panambi.description",
   mass: 2000,
   /*
@@ -1895,7 +1895,7 @@ export const PANAMBI: AircraftConfig = {
  */
 export const ARASUNU: AircraftConfig = {
   id: "jaz-60",
-  name: nombreEntero(FLOTA[3]!),
+  name: nombreEnteroDe("jaz-60"),
   descriptionKey: "aircraft.arasunu.description",
   mass: 5600,
   /*
@@ -2109,7 +2109,7 @@ export const ARASUNU: AircraftConfig = {
  */
 export const ARAI: AircraftConfig = {
   id: "jaz-90",
-  name: nombreEntero(FLOTA[4]!),
+  name: nombreEnteroDe("jaz-90"),
   descriptionKey: "aircraft.arai.description",
   mass: 30000,
   /*
@@ -2425,7 +2425,7 @@ export const ARAI: AircraftConfig = {
  */
 export const YVAGA: AircraftConfig = {
   id: "jaz-120",
-  name: nombreEntero(FLOTA[6]!),
+  name: nombreEnteroDe("jaz-120"),
   descriptionKey: "aircraft.yvaga.description",
   mass: 255826,
   /*
@@ -2681,7 +2681,7 @@ export const YVAGA: AircraftConfig = {
  */
 export const TIJERETA: AircraftConfig = {
   id: "jaz-110",
-  name: nombreEntero(FLOTA[5]!),
+  name: nombreEnteroDe("jaz-110"),
   descriptionKey: "aircraft.tijereta.description",
   /*
    * **192.776 kg, el máximo al aterrizaje de la hoja de tipo** (425.000 lb), como

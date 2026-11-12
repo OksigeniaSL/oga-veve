@@ -2076,8 +2076,10 @@ for (const [prefijo, voz, para, salvo] of DEL_INICIO) {
  * `PENDIENTE-VOCES-sellos.md`.
  */
 const DE_LOS_SELLOS = /^explica\.sello\.[\w-]+\.texto$/;
+/** Los sellos que llegaron después de grabar los del issue: van al final. Ver `DE_LOS_SELLOS_NUEVOS`. */
+const SELLOS_NUEVOS = new Set(["explica.sello.teno.texto"]);
 for (const [k, v] of es) {
-  if (!DE_LOS_SELLOS.test(k) || filas.some((f) => f.id === k)) continue;
+  if (!DE_LOS_SELLOS.test(k) || SELLOS_NUEVOS.has(k) || filas.some((f) => f.id === k)) continue;
   filas.push({
     id: k,
     voz: "instructor",
@@ -2651,6 +2653,22 @@ for (const [paso, para] of DE_LA_MISION_DE_TENO) {
     filas.push({ id, voz, idioma: "es-PY", texto, para: `misión de Teno, ${quien}: ${para}` });
     total += texto.length;
   }
+}
+/*
+ * **Y el sello de Teno** (12-11-2026), el del final de la misión del
+ * helicóptero: lo que dice la instructora al ganarlo y al tocarlo en el
+ * álbum. Es del grupo de los sellos, pero esos ya están grabados y metido con
+ * ellos renumeraría los que van detrás: va al final, detrás de la misión que
+ * lo da. Ver `SELLOS` en `src/flight/sellos.ts`.
+ */
+const DE_LOS_SELLOS_NUEVOS = [
+  ["explica.sello.teno.texto", "los sellos del cuaderno: el de Teno, al acabar la misión y al tocarlo en el álbum"],
+];
+for (const [id, para] of DE_LOS_SELLOS_NUEVOS) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
 }
 const AJUSTES_CON_CHISPA = {
   stability: 0.35,

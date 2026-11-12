@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { escribirYa, olvidar, ponerProgreso } from "../datos/guardado";
 import { SCENARIOS } from "../world/scenarios";
 import { CUADERNO_VACIO } from "./cuaderno";
+import { MISSIONS, TENO } from "../content/missions";
 import {
   CAMPOS_DEL_PARAGUAY,
   CIEN_HORAS,
@@ -85,13 +86,26 @@ function durante(m: MedidorDeSellos, segundos: number, l: LecturaDeLosSellos) {
   return salen;
 }
 
-describe("los dieciséis del issue", () => {
-  it("son dieciséis, cada uno una vez, y un tercio de escuela", () => {
+describe("los dieciséis del issue y el de Teno", () => {
+  it("son diecisiete, cada uno una vez: seis de escuela, seis de piloto y cinco de comandante", () => {
     const ids = SELLOS.map((s) => s.id);
-    expect(ids).toHaveLength(16);
-    expect(new Set(ids).size).toBe(16);
+    expect(ids).toHaveLength(17);
+    expect(new Set(ids).size).toBe(17);
     const de = (tramo: string) => SELLOS.filter((s) => s.tramo === tramo).length;
-    expect([de("escuela"), de("piloto"), de("comandante")]).toEqual([6, 5, 5]);
+    expect([de("escuela"), de("piloto"), de("comandante")]).toEqual([6, 6, 5]);
+  });
+
+  /*
+   * **El de Teno se gana acabando su misión**, y solo esa lo da: lo pide la
+   * misión, y el juego lo gana al cumplir el último objetivo. Ver
+   * `advanceMission` en `game.ts`.
+   */
+  it("el de Teno es de piloto y lo da la misión de Teno, y ninguna otra", () => {
+    expect(SELLOS.find((s) => s.id === "teno")?.tramo).toBe("piloto");
+    expect(TENO.sello).toBe("teno");
+    for (const m of MISSIONS.filter((x) => x !== TENO)) expect(m.sello, m.id).toBeUndefined();
+    // Y no sale de ninguna cuenta del cuaderno ni de ninguna maniobra: es de la misión.
+    expect(sellosDelCuaderno({ ...CUADERNO_VACIO, despegues: 999, frustradas: 99 })).not.toContain("teno");
   });
 
   it("y uno es el de renunciar: Mbarete, con la primera frustrada", () => {

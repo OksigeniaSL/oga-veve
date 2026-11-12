@@ -49,7 +49,7 @@ import {
   MeshLambertMaterial,
   type Object3D,
 } from "three";
-import type { Silueta } from "../flight/flota";
+import type { SiluetaDeAvion } from "../flight/flota";
 import { fabricarAeronave } from "./fabrica-de-aeronaves";
 import {
   fabricarTurbohelice,
@@ -318,7 +318,7 @@ export interface Caminos {
  */
 export interface TipoDeTrafico {
   readonly id: "avioneta" | "bimotor" | "turbohelice" | "reactor";
-  readonly silueta: Silueta;
+  readonly silueta: SiluetaDeAvion;
   readonly envergadura: number;
   /** Velocidad de aproximación, m/s. */
   readonly aproximacion: number;
@@ -2072,7 +2072,7 @@ export interface OpcionesDelTrafico {
 export function crearTrafico(
   runway: Pista,
   cota: number,
-  silueta: Silueta,
+  silueta: SiluetaDeAvion,
   mano: Mano = "izquierda",
   escala = 1,
   altura?: number,

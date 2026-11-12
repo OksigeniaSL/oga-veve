@@ -58,7 +58,7 @@ import {
   Vector3,
 } from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import type { Silueta } from "../flight/flota";
+import type { SiluetaDeAvion } from "../flight/flota";
 
 /** Un anillo del fuselaje: dónde está y cuánto mide. */
 export interface Anillo {
@@ -413,7 +413,7 @@ function pata(
  * persecución y lo que el álbum de postales enseña a reconocer.
  */
 export function fabricarAeronave(
-  silueta: Silueta,
+  silueta: SiluetaDeAvion,
   medidas: Medidas,
   paleta: Paleta,
 ): Fabricado {

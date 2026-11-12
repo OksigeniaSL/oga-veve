@@ -303,6 +303,8 @@ export const TENO: Mission = {
   nameKey: "mission.teno.name",
   scenario: "tenerife-norte",
   aeronave: "super-puma",
+  // El sello del faro de Teno, en el cuaderno, al dejar a la gente en Garachico.
+  sello: "teno",
   presenta: {
     dibujo: "faro",
     instructora: "mission.teno.presenta",
@@ -325,7 +327,7 @@ export const TENO: Mission = {
       rotulo: "mision.teno.ir",
       dice: {
         dibujo: "hito-montana-izquierda",
-    instructora: "mission.teno.ir",
+        instructora: "mission.teno.ir",
         corta: "mission.teno.ir.corta",
         tripulacion: "mission.teno.tripulacion.ir",
       },
@@ -337,7 +339,7 @@ export const TENO: Mission = {
       rotulo: "mision.teno.posarse",
       dice: {
         dibujo: "posarse",
-    instructora: "mission.teno.posarse",
+        instructora: "mission.teno.posarse",
         corta: "mission.teno.posarse.corta",
         tripulacion: "mission.teno.tripulacion.posarse",
       },
@@ -350,13 +352,13 @@ export const TENO: Mission = {
       rotulo: "mision.teno.suben",
       dice: {
         dibujo: "gente",
-    instructora: "mission.teno.suben",
+        instructora: "mission.teno.suben",
         corta: "mission.teno.suben.corta",
         tripulacion: "mission.teno.tripulacion.suben",
       },
       aMitad: {
         dibujo: "gente",
-    instructora: "mission.teno.porDelante",
+        instructora: "mission.teno.porDelante",
         corta: "mission.teno.porDelante.corta",
         tripulacion: "mission.teno.tripulacion.porDelante",
       },
@@ -365,7 +367,7 @@ export const TENO: Mission = {
       kind: "takeoff",
       dice: {
         dibujo: "gas-mas-rotor",
-    instructora: "mission.teno.despegar",
+        instructora: "mission.teno.despegar",
         corta: "mission.teno.despegar.corta",
         tripulacion: "mission.teno.tripulacion.despegar",
       },
@@ -377,7 +379,7 @@ export const TENO: Mission = {
       rotulo: "mision.teno.garachico",
       dice: {
         dibujo: "posarse",
-    instructora: "mission.teno.garachico",
+        instructora: "mission.teno.garachico",
         corta: "mission.teno.garachico.corta",
         tripulacion: "mission.teno.tripulacion.garachico",
       },
@@ -390,7 +392,7 @@ export const TENO: Mission = {
       rotulo: "mision.teno.bajan",
       dice: {
         dibujo: "gente",
-    instructora: "mission.teno.bajan",
+        instructora: "mission.teno.bajan",
         corta: "mission.teno.bajan.corta",
         tripulacion: "mission.teno.tripulacion.bajan",
       },

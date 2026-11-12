@@ -7920,6 +7920,28 @@ button.motor__tecla::after {
   background: linear-gradient(#33413a, #202b26);
 }
 
+/* El dibujo de la misión, si tiene: el de la tarjeta con que se presenta en
+   el vuelo, en la esquina del plano. Ver `fichaDeMision`. */
+.ficha__insignia {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 38px;
+  height: 38px;
+  padding: 6px;
+  border-radius: 50%;
+  background: rgb(228 226 218 / 0.92);
+  color: #2a1c14;
+  box-sizing: border-box;
+}
+
+.ficha__insignia svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
 .ficha__plano {
   width: 100%;
   height: 100%;
@@ -8254,8 +8276,11 @@ button.motor__tecla::after {
   border-color: var(--ocre);
 }
 
+/* Del tamaño del dedo, como todo lo que se toca: con su relleno y el icono se
+   quedaba en 42 px de alto. */
 .paso--volver {
   flex: none;
+  min-height: 48px;
 }
 
 .paso__icono {

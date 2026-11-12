@@ -2,7 +2,8 @@
 
 **Estado**: aprobada por Enrique el 11-11, con los cambios del 12-11 que salen de las fuentes: el destino es el puerto
 de Garachico y no Buenavista, se sabe por qué estaban aislados, y no hay grúa. Hecha la misión en `src/content/missions.ts`
-(`TENO`) y su banco en `scripts/ver-mision-teno.mjs`; las voces, por grabar. Es el paso 4 del helicóptero (ADR 0026). La
+(`TENO`) y su banco en `scripts/ver-mision-teno.mjs`; las voces, grabadas, y la del sello, por grabar. Desde el 12-11 se
+elige en el hangar de Tenerife Norte. Es el paso 4 del helicóptero (ADR 0026). La
 primera versión iba en Gran Canaria, con el 802 Escuadrón de Gando; Enrique, 11-11: «Hay una división de helicópteros
 justo al lado de GCXO», «La UME del ejército, junto al matadero municipal».
 
@@ -29,8 +30,9 @@ cinco perros (defensa.com; The Local, 13-07-2016). El Diario de Avisos del 13-07
 cambia según la fuente, y se usa la de los rescatados. **Ninguna fuente habla de grúa**: esta misión no la usa, y la grúa
 queda para otra.
 
-**La misión**, tranquila: día claro, el alisio de siempre y sin prisa. Se lanza con `?avion=super-puma&mision=teno`; sin
-`mision`, el helicóptero sigue en vuelo libre.
+**La misión**, tranquila: día claro, el alisio de siempre y sin prisa. Se elige en el hangar de Tenerife Norte con el
+helicóptero, el JAZ 70 Kirikiri'i, que es su única misión junto al vuelo libre; o se lanza con
+`?avion=super-puma&mision=teno`.
 
 1. **Despegar** del helipuerto del Ejército en Los Rodeos (GCXM).
 2. **Llegar a Teno**: unos 58 km al oeste por la costa norte, con el Teide a la izquierda.
@@ -41,6 +43,9 @@ queda para otra.
 6. **Posarse en el puerto de Garachico**, en la explanada del aparcamiento.
 7. **Esperar a que baje la gente**, unos 20 s. Y el final: el sonido de logro y el dato real, 123 personas y cinco perros
    en dos Super Puma como este y otros helicópteros.
+8. **El sello del faro de Teno**, en el cuaderno: se gana al acabar y se celebra ya posado, como todos, con su dibujo
+   —el helicóptero bajando junto al faro—. Va con los de piloto, al final de la fila: ver `SELLOS` en
+   `src/flight/sellos.ts`.
 
 **Los dos sitios**, con coordenadas de OpenStreetMap llevadas al mundo con la proyección de `huecosDeLaCiudad` y el origen
 de GCXO, y medidos en el relieve del juego —menos de 5° en un círculo de 20 m, seco, sin edificios ni árboles—:
@@ -76,6 +81,7 @@ existe: la de Airam (`tierra-canarias`), un hombre canario de unos treinta y cin
 
 - **La gente**, que sube y baja: otro encargo, con el enganche ya puesto.
 - **Las voces**: nueve frases de la instructora y nueve de la tripulación, en la lista de `scripts/frases-para-grabar.mjs`.
+- **La voz del sello**, la frase de la instructora al ganarlo, al final de `scripts/frases-para-grabar.mjs`.
 - **Las frases y el faro**: se escribieron cuando el faro no estaba dibujado, y dicen Punta de Teno y el aro verde, no
   «ahí está el faro». Ahora el faro está (ver abajo); si se quiere que lo nombren, son frases nuevas que grabar.
 

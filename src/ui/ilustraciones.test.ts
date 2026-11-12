@@ -26,7 +26,7 @@ import {
 } from "./ilustraciones";
 import { ilustracionDeLaHistoria } from "./ilustraciones-de-las-historias";
 import { DIBUJOS_DEL_PASAJE } from "./dibujos-del-pasaje";
-import { ESTA_HECHO } from "../flight/flota";
+import { ESTA_HECHO, SIN_CABINA } from "../flight/flota";
 import { DICHO_DE_LA_LUZ } from "../flight/luz-verde";
 
 /*
@@ -183,9 +183,11 @@ describe("las ilustraciones", () => {
   });
 
   const SIN_DIBUJOS: readonly string[] = [];
+  /** Los que tienen su lámina de fuera y de cabina: todos menos los que aún no tienen cabina. */
+  const CON_CABINA = ESTA_HECHO.filter((x) => !SIN_DIBUJOS.includes(x) && !SIN_CABINA.includes(x));
 
-  it("cada avión de la flota, por fuera y por dentro; el Super Puma, por fuera y con la grúa; y nada más", () => {
-    for (const id of ESTA_HECHO.filter((x) => !SIN_DIBUJOS.includes(x))) {
+  it("cada avión de la flota, por fuera y por dentro; el helicóptero, por fuera y con la grúa; y nada más", () => {
+    for (const id of CON_CABINA) {
       const d = ilustracionesDelAvion(id);
       expect(d?.fuera.url, id).toMatch(new RegExp(`fuera-${id}.*\\.webp`));
       expect(d?.segunda.url, id).toMatch(new RegExp(`cabina-${id}.*\\.webp`));
@@ -194,19 +196,19 @@ describe("las ilustraciones", () => {
     const deLaTarjeta = claves.filter((c) => RECETAS[c]!.hueco === "tarjeta");
     expect(deLaTarjeta.sort()).toEqual(
       [
-        ...ESTA_HECHO.filter((x) => !SIN_DIBUJOS.includes(x)).flatMap((id) => [`fuera-${id}`, `cabina-${id}`]),
+        ...CON_CABINA.flatMap((id) => [`fuera-${id}`, `cabina-${id}`]),
         "fuera-super-puma",
         "grua-super-puma",
       ].sort(),
     );
     for (const id of SIN_DIBUJOS) expect(ilustracionesDelAvion(id), id).toBeNull();
     /*
-     * **El helicóptero que hay sí tiene sitio**, el Super Puma, aunque no sea
-     * de la flota: se vuela —escondido, con `?avion=super-puma`— y su tarjeta
-     * lo enseña. Lo que no tiene es cabina todavía, así que en el segundo sitio
-     * va su trabajo, el rescate con la grúa, y no se llama «cabina». El largo
-     * radio sigue sin sitio, y el helicóptero de antes, un H135, también: en
-     * el juego no hay ninguno de los dos.
+     * **El helicóptero de la flota**, el JAZ 70 Kirikiri'i, con su lámina de
+     * fuera. Lo que no tiene es cabina todavía —está encargada a Gaudí, ver
+     * `SIN_CABINA`—, así que en el segundo sitio va su trabajo, el rescate
+     * con la grúa, y no se llama «cabina». El largo radio sigue sin sitio, y
+     * el helicóptero de antes, un H135, también: en el juego no hay ninguno de
+     * los dos.
      */
     const puma = ilustracionesDelAvion("super-puma");
     expect(puma?.fuera.url).toMatch(/fuera-super-puma.*\.webp/);
