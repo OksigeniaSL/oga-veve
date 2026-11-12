@@ -1223,12 +1223,33 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * tocó a 2,2; preguntándolo, en el banco de mesa los cuatro mayores
      * tocan a 1,2 y la avioneta y el fumigador, como antes, a 1,5–1,7.
      */
+    /*
+     * **Y lo que se hunde de más, se corrige con la mano firme y un pelo de
+     * gas**, que es lo que hace cualquiera cuando una racha le baja el avión en
+     * la recogida. El banco de mesa de arriba se afinó en aire quieto, y en
+     * aire quieto esta recogida toca a 1,20 m/s siempre; pero en Los Rodeos el
+     * alisio de doce nudos entra por un relieve muy rugoso —ver `rugosidadDe`
+     * en `flight/turbulencia.ts`— y a dos metros del suelo el aire sube y baja
+     * con σ_w ≈ 1 m/s. En el modelo sencillo ese bache se suma tal cual a lo
+     * que baja —ver `ponerRacha` en `flight/arcade.ts`—, y con media parte de
+     * lo que faltaba de corrección una bajada de 1,5–2 m/s en los últimos
+     * metros llegaba entera al suelo: el JAZ 20 tocaba a 2,2 y 2,75 m/s en dos
+     * de cada seis vuelos enteros. Medido en un banco de mesa con el modelo y
+     * las rachas del juego, ciento veinte recogidas por avión: con media parte
+     * pasaban de 2 m/s el 8 % del JAZ 20, el 12 % del JAZ 25 y el 5 % del JAZ 40
+     * y el JAZ 60; con tres partes y media palanca de gas por cada m/s que se
+     * hunde de más, ninguna del JAZ 20 —la peor, 1,99— y una del JAZ 25, a
+     * 2,15, y la recogida se alarga unos diez metros. En aire quieto no cambia
+     * nada: sigue tocando a 1,20 en el mismo sitio. Los reactores apenas lo
+     * notan, que una ráfaga mueve poco a un ala tan cargada.
+     */
     if (recogida.porAngulo === 0 && o.mandoParaSubir) {
       const quiere =
-        pide + pistaBaja + acelera / 2.2 + 0.5 * falta;
+        pide + pistaBaja + acelera / 2.2 + 3 * falta;
       const m = o.mandoParaSubir(quiere);
       if (typeof m === "number" && Number.isFinite(m)) {
         mandos.elevator = Math.max(-0.8, Math.min(0.8, m));
+        if (SENCILLO) mandos.throttle = Math.min(1, recogida.gas + 0.5 * Math.max(0, falta));
         recogida.ultimoMando = mandos.elevator;
         return;
       }
@@ -6079,7 +6100,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * donde estaba: ahí el gas es la velocidad y además la mitad de lo que
          * baja, y si la ley de la final lo sigue moviendo sobre la pista —la
          * senda ya no pide nada y lo va quitando— la palanca pierde mano a la
-         * vez que el avión se hunde. La palanca la lleva `recoger`.
+         * vez que el avión se hunde. La palanca la lleva `recoger`, que en
+         * Guyrami le suma un pelo de gas si una racha lo hunde de más.
          */
         c.throttle = SENCILLO ? recogida.gas : 0;
       } else {
