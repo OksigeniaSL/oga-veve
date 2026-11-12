@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 import {
   ALTURA_DE_CIRCUITO,
   crearCircuito,
+  loQueQuedaDeCircuito,
   verticesDelCircuito,
 } from "./circuito";
 
@@ -104,5 +105,34 @@ describe("el techo del circuito", () => {
     // Cien metros por encima de su altura sigue siendo el circuito: es un
     // error de pilotaje, no una salida. Ahí la lección es bajar.
     expect(ALTURA_DE_CIRCUITO + 100).toBeLessThan(ALTURA_DE_CIRCUITO * 2);
+  });
+});
+
+/*
+ * **Lo que la torre te cuenta de circuito.** Quien alarga el viento en cola
+ * —por un tráfico, o un niño que se pasa de la esquina— sigue en el circuito
+ * para la torre, y lo que le queda por volar incluye lo alargado: sin eso, la
+ * torre soltaba una salida y le mandaba al aire en la final. Ver
+ * `tuCircuitoParaLaTorre` en `game.ts`.
+ */
+describe("lo que te queda de circuito, para la torre", () => {
+  const v = verticesDelCircuito(PISTA, 0);
+  const esquina = v[3]!;
+  const entrada = v[4]!;
+  const deLaBase = Math.hypot(entrada.x - esquina.x, entrada.z - esquina.z);
+
+  it("en la esquina de la base, la base y nada más", () => {
+    // Justo en la esquina el punto es de los dos tramos; lo que cuenta es lo que queda.
+    const q = loQueQuedaDeCircuito(v, esquina.x, esquina.z);
+    expect(q!.metros).toBeCloseTo(deLaBase, 0);
+  });
+
+  it("con el viento en cola alargado 1.558 m, la torre aún le ve con el doble de ancho, y le cuenta lo alargado", () => {
+    // Pasado de la esquina, siguiendo el viento en cola: hacia el oeste.
+    const x = esquina.x - 1558;
+    expect(loQueQuedaDeCircuito(v, x, esquina.z)).toBeNull();
+    const q = loQueQuedaDeCircuito(v, x, esquina.z, 2);
+    expect(q).not.toBeNull();
+    expect(q!.metros).toBeCloseTo(deLaBase + 1558, 0);
   });
 });

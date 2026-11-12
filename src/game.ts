@@ -14688,7 +14688,15 @@ export class Game {
     if (campo.id !== c.campo) return null;
     const alto = s.position.y - this.cotaDelCampo(campo);
     if (alto < ALTO_PARA_EL_CIRCUITO || alto > 2 * c.altura) return null;
-    const queda = loQueQuedaDeCircuito(c.vertices, s.position.x, s.position.z, c.escala);
+    /*
+     * Con el doble de ancho que el aviso de «estás en el circuito»: para la
+     * torre sigue en él quien alarga el viento en cola —por un tráfico, o un
+     * niño que se pasa de la esquina—, y con el ancho de siempre dejaba de
+     * verle a 1.200 m y soltaba una salida que le mandaba al aire en la final
+     * (el JAZ 20 del banco, alargado 1.558 m, dos motorales en una tirada).
+     * La altura y el campo ya dicen que vuelves aquí.
+     */
+    const queda = loQueQuedaDeCircuito(c.vertices, s.position.x, s.position.z, 2 * c.escala);
     const ultimo = c.vertices[c.vertices.length - 1];
     if (!queda || !ultimo) return null;
     const metros = queda.metros + distanciaAlUmbral(campo, ultimo.x, ultimo.z);

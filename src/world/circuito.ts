@@ -553,6 +553,10 @@ export function verticesDelCircuito(
  * quebrada, como `tramoEn`, y de ahí lo que falta por ella hasta el último
  * vértice. Con eso la torre sabe cuándo llegas aunque todavía no estés en la
  * final. Ver `tuLlegadaParaLaTorre` en `game.ts` y `flight/salida-tapada.ts`.
+ *
+ * Cuenta también lo que te separa de la línea: quien alarga el viento en cola
+ * y está pasado de la esquina de la base vuela luego esa misma distancia de
+ * más en la final, y sin ella la torre le esperaba antes de tiempo.
  */
 export function loQueQuedaDeCircuito(
   vertices: readonly PuntoDeCircuito[],
@@ -576,7 +580,7 @@ export function loQueQuedaDeCircuito(
     const tramo = TRAMOS[i - 1];
     if (!tramo) continue;
     menor = d;
-    let metros = Math.sqrt(largo2) * (1 - t);
+    let metros = Math.sqrt(d) + Math.sqrt(largo2) * (1 - t);
     for (let k = i + 1; k < vertices.length; k++) {
       const p = vertices[k - 1]!;
       const q = vertices[k]!;
