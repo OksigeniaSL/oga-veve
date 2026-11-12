@@ -916,6 +916,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       e: +mandos.elevator.toFixed(3),
       g: +mandos.throttle.toFixed(2),
       vy: +s.velocity.y.toFixed(2),
+      /*
+       * Y de eso, lo que pone el aire: el bache que el modelo sencillo suma a
+       * lo que pide la palanca —ver `ponerRacha` en `flight/arcade.ts`—. Sin
+       * él no se distingue una recogida floja de una ráfaga que baja.
+       */
+      pa: (() => {
+        const aire = o.juegoParaTrazas?.()?.flight?.porElAire;
+        return typeof aire === "number" ? +aire.toFixed(2) : null;
+      })(),
       // Y el rumbo y la trayectoria por el suelo, en grados: si llega cruzado.
       hd: Math.round((s.heading * 180) / Math.PI),
       tr: Math.round((Math.atan2(s.velocity.x, -s.velocity.z) * 180) / Math.PI),
@@ -1529,10 +1538,23 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * viento en cola hasta tener una final en la que quepan unos segundos
    * derecho antes de la puerta.
    *
-   * Diez segundos a la de la base más el viraje, y como mucho un kilómetro
-   * más: el circuito del juego se sigue viendo y se sigue volando, solo más
-   * largo por detrás, que es lo que dice el controlador cuando pide «alargue
-   * el viento en cola».
+   * Diez segundos a la de la base más el viraje: el circuito del juego se
+   * sigue viendo y se sigue volando, solo más largo por detrás, que es lo que
+   * dice el controlador cuando pide «alargue el viento en cola».
+   *
+   * **Y sin el tope de un kilómetro, que se comía justo a la avioneta.** La
+   * cuenta de aquí pide 1.558 m para el JAZ 20 —su entrada en final está a
+   * 1.800 m del umbral y la puerta a 2.658—, y el tope la dejaba en mil: el
+   * viraje a final empezaba a 2.800 m y, con los 350 m de radio que de verdad
+   * vira a la Vref en Guyrami, acababa a 2.430, o sea **pasada la puerta**.
+   * Medido en Los Rodeos con la traza de la final: a los quinientos pies,
+   * 15,7° todavía virando y 20 m del eje; alineado cuatro segundos después, a
+   * 476 ft. Era el «cruzado» de 11,5° a 23° que el banco daba en rojo en cada
+   * tirada, y no era viento: en Guyrami el modelo sencillo no tiene, y el
+   * rumbo y la trayectoria son el mismo número. Al JAZ 25 le faltaban 447 m,
+   * al JAZ 40 240 y al JAZ 60 145; a los reactores, que entran en final más
+   * lejos, el tope no los tocaba. Queda uno de dos kilómetros por si una
+   * cuenta se va, no como medida.
    */
   function alargarElVientoEnCola(v) {
     if (!v || v.length < 5) return v;
@@ -1550,7 +1572,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     const radio =
       (DE_BASE * DE_BASE) / (9.81 * Math.tan(TOPE_DE_INCLINACION_EN_LA_BASE));
     const hace = hastaLaPuerta + 10 * DE_BASE + radio - entrada;
-    const mas = Math.max(0, Math.min(1000, hace));
+    const mas = Math.max(0, Math.min(2000, hace));
     if (mas <= 0) return v;
     const atras = (p) => ({ ...p, x: p.x - fx * mas, z: p.z - fz * mas });
     return [
@@ -6128,6 +6150,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             (falta + r.length - (r.desplazado ?? 0) + 300) *
               Math.tan((0.5 * Math.PI) / 180),
           ).toFixed(1),
+          /*
+           * La trayectoria por el suelo, no la nariz: `velocity` va contra el
+           * suelo —el aire es `velocity` menos el viento, ver `fdm.ts`—, así
+           * que con viento cruzado la nariz metida al viento, que es la
+           * corrección de deriva de verdad, no cuenta como «cruzado».
+           */
           rumbo: +((Math.abs(error(trayectoria, hp)) * 180) / Math.PI).toFixed(1),
           baja: +(
             bajadaReciente.reduce((a, b) => a + b.baja, 0) /
