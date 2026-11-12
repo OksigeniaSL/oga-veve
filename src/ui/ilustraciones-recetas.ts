@@ -128,7 +128,10 @@ const ENTERA_DE_1672 = [0, 0, 1672, 940] as const;
  *   largo radio no es de la flota —ver `flight/flota.ts`— y ninguna historia
  *   de Jazlyn lo cuenta; y `fuera-helicoptero.jpg` es un H135, que en el
  *   juego no hay. El helicóptero que sí hay, el Super Puma, tiene las suyas:
- *   ver `fuera-super-puma`.
+ *   ver `fuera-super-puma` y `cabina-super-puma`;
+ * - y `super-puma-grua.png`, el rescate con la grúa, que ocupó el sitio de
+ *   la cabina mientras el Super Puma no la tuvo: la tarjeta tiene dos huecos,
+ *   por fuera y por dentro, y ahora el de dentro es de su cabina.
 
  */
 export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
@@ -205,13 +208,6 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
    * la puerta y la grúa. Pintado por Oksigenia. Ver `CREDITOS.md`.
    */
   "fuera-super-puma": { original: "super-puma-teno.png", hueco: "tarjeta", recorte: ENTERA_DE_1448 },
-  /*
-   * **Y su segunda lámina, que no es la cabina**: aún no tiene, y la lámina
-   * con la tripulación de rescate dentro espera a que la tenga, para que diga
-   * lo mismo que el juego. Hasta entonces, lo que hace: un rescate en
-   * estacionario, con la grúa. Ver `ilustracionesDelAvion`.
-   */
-  "grua-super-puma": { original: "super-puma-grua.png", hueco: "tarjeta", recorte: ENTERA_DE_1448 },
   // ── Y por dentro, con Jazlyn a los mandos ─────────────────────────────
   "cabina-jaz-20": { original: "cabina-jaz20.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
   "cabina-jaz-25": { original: "cabina-jaz25.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
@@ -231,6 +227,15 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
     porque:
       "por la derecha, hasta dejar fuera el hombro del copiloto, que llevaba cuatro barras: el asiento de la derecha lleva tres",
   },
+  /*
+   * **El Super Puma por dentro**, pintado sobre la cabina del juego: las tres
+   * pantallas, la visera, el pedestal, las ventanas de los pies y las palancas
+   * del techo. Jazlyn de comandante en el asiento de la derecha, que en el
+   * helicóptero es el suyo, con el cíclico en la derecha y el colectivo en la
+   * izquierda; y la tripulación de rescate —el copiloto y el operador de grúa
+   * en la puerta—, porque es lo que hace ese aparato.
+   */
+  "cabina-super-puma": { original: "super-puma-cabina.png", hueco: "tarjeta", recorte: ENTERA_DE_1448 },
   // El único que por dentro no enseña a Jazlyn a los mandos: lo propio de este avión son sus dos pasillos, de noche.
   "cabina-jaz-110": {
     original: "cabina-jaz110.png",

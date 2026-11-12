@@ -282,11 +282,6 @@ export const FLOTA: readonly Modelo[] = [
 
 /**
  * Cuáles están construidos de verdad. Los demás son número y nombre reservados.
- *
- * El helicóptero, con todo lo que tiene un aparato de la flota —su modelo, su
- * retrato, su tarjeta con sus láminas, su sonido y su banco— **menos la
- * cabina por dentro**, que está encargada a Gaudí: hasta que llegue no se pide
- * en ninguna prueba ni se ofrece en ningún sitio. Ver `SIN_CABINA`.
  */
 export const ESTA_HECHO: readonly string[] = [
   "jaz-20",
@@ -314,14 +309,6 @@ export function nombreEntero(m: Modelo): string {
 export function modeloPorId(id: string): Modelo | null {
   return FLOTA.find((m) => m.id === id) ?? null;
 }
-
-/**
- * **Los que todavía no tienen la cabina por dentro**: el helicóptero, cuya
- * cabina está encargada a Gaudí. Las pruebas que recorren la flota pidiendo
- * la lámina de la cabina, su retrato o su recorrido no se la piden en falso, y
- * cuando llegue se quita de aquí y se piden solas.
- */
-export const SIN_CABINA: readonly string[] = ["super-puma"];
 
 /** El nombre entero del que tiene ese identificador: «JAZ 70 Kirikiri'i». */
 export function nombreEnteroDe(id: string): string {

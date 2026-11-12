@@ -173,7 +173,7 @@ try {
       "su tarjeta se llama como en la flota y lleva sus dos láminas",
       tarjeta.texto.includes("JAZ 70 Kirikiri'i") &&
         tarjeta.laminas.some((s) => /fuera-super-puma/.test(s)) &&
-        tarjeta.laminas.some((s) => /grua-super-puma/.test(s)),
+        tarjeta.laminas.some((s) => /cabina-super-puma/.test(s)),
       tarjeta.laminas.map((s) => s.replace(/.*\//, "")).join(", "),
     );
     await foto(page, "2-tarjeta-en-el-hangar", sufijo);

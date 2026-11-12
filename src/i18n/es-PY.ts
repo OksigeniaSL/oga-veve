@@ -1398,7 +1398,7 @@ export const ES_PY = {
   "ilustracion.fuera-jaz-120": "El JAZ 120, con sus cuatro motores, por encima de las nubes",
   "ilustracion.fuera-jaz-110": "El JAZ 110 Tijereta, de perfil, con sus dos motores bajo las alas",
   "ilustracion.fuera-super-puma": "El JAZ 70 volando junto al faro de Teno, en Tenerife",
-  "ilustracion.grua-super-puma": "Un rescatador baja por la grúa del JAZ 70 hacia una lancha",
+  "ilustracion.cabina-super-puma": "Jazlyn pilota el JAZ 70; abajo, el mar y la lancha del rescate",
   "ilustracion.cabina-jaz-20": "Jazlyn a los mandos del JAZ 20, en el asiento de la izquierda",
   "ilustracion.cabina-jaz-25": "Jazlyn a los mandos del JAZ 25, el biplano de una plaza",
   "ilustracion.cabina-jaz-40": "Jazlyn a los mandos del JAZ 40, con un motor en cada ala",

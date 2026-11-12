@@ -34,7 +34,7 @@
  * Como las de las historias —ver `ilustraciones-de-las-historias.ts`—: no van
  * en la precarga del trabajador de servicio, entran por `import.meta.glob`
  * como URL con la huella en el nombre, y se guardan la primera vez que se
- * piden. Son unos 1,2 MB entre las veintinueve —la mitad, los esquemas del
+ * piden. Son unos 2,2 MB entre las cuarenta y ocho —la mitad, los esquemas del
  * pasaje, a 1280 × 960—, y se bajan de una en una: en el hangar, las dos de
  * la tarjeta que se abre; en el vuelo de pasaje, las que se van contando.
  * Sin red y sin copia, la ventanita no sale y la cara se queda dibujada.
@@ -137,30 +137,17 @@ export function ilustracionDelDibujo(clave: string): Ilustracion | null {
 
 // ── La tarjeta del avión ─────────────────────────────────────────────────
 
-/** Lo que enseña la segunda lámina de la tarjeta: la cabina, o lo que hace ese aparato. */
-export type SegundaLamina = "cabina" | "grua";
-
-/**
- * **La segunda lámina de quien aún no tiene cabina.** El Super Puma no la
- * tiene: su lámina con la tripulación de rescate dentro espera a que la haya,
- * para decir lo mismo que el juego. Hasta entonces enseña su trabajo, un
- * rescate con la grúa, y lo dice: no se hace pasar por la cabina.
- */
-const SEGUNDA_LAMINA: Readonly<Record<string, SegundaLamina>> = { "super-puma": "grua" };
-
 /**
  * **Cómo es por fuera y cómo es por dentro**, para la tarjeta del avión: los
  * dos dibujos de ese avión, o `null` si no los tiene. Por fuera, volando sobre
- * el sitio que le toca; por dentro, con Jazlyn a los mandos. Y en el que no
- * tiene cabina, en el segundo sitio, lo suyo: ver `SEGUNDA_LAMINA`.
+ * el sitio que le toca; por dentro, con Jazlyn a los mandos.
  */
 export function ilustracionesDelAvion(
   id: string,
-): { readonly fuera: Ilustracion; readonly segunda: Ilustracion; readonly cual: SegundaLamina } | null {
-  const cual = SEGUNDA_LAMINA[id] ?? "cabina";
+): { readonly fuera: Ilustracion; readonly cabina: Ilustracion } | null {
   const fuera = ilustracion(`fuera-${id}`);
-  const segunda = ilustracion(`${cual}-${id}`);
-  return fuera && segunda ? { fuera, segunda, cual } : null;
+  const cabina = ilustracion(`cabina-${id}`);
+  return fuera && cabina ? { fuera, cabina } : null;
 }
 
 // ── La cara de Jazlyn ────────────────────────────────────────────────────

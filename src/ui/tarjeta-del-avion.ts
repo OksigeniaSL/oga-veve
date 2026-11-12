@@ -260,14 +260,7 @@ const TAMANO = `<svg viewBox="0 0 48 48" aria-hidden="true">
  * mira un avión antes de elegirlo; en el vuelo la tarjeta es un instrumento y
  * lo que se mira es el avión que se tiene. Van encima de la ficha, en su
  * columna, y no tapan nada del 3D: se miran sin leer. Ver `ui/ilustraciones.ts`.
- *
- * **Salvo el helicóptero**, que no sale en el hangar —está escondido, ver
- * `flight/helicoptero-en-el-juego.ts`— y solo tiene la tarjeta del vuelo: si
- * no las llevara ahí, sus láminas no las vería nadie.
  */
-function conDibujos(a: AircraftConfig, enVuelo: boolean): boolean {
-  return !enVuelo || !!a.helicoptero;
-}
 
 function dibujosDelAvion(id: string): string {
   const d = ilustracionesDelAvion(id);
@@ -276,7 +269,7 @@ function dibujosDelAvion(id: string): string {
     `<img class="tav__dibujo" data-dibujo="${cual}" src="${i.url}" alt="${i.alt.replace(/"/g, "&quot;")}"
           width="${TAMANO_DEL_HUECO.tarjeta.ancho}" height="${TAMANO_DEL_HUECO.tarjeta.alto}"
           loading="lazy" decoding="async" />`;
-  return `<div class="tav__dibujos">${img(d.fuera, "fuera")}${img(d.segunda, d.cual)}</div>`;
+  return `<div class="tav__dibujos">${img(d.fuera, "fuera")}${img(d.cabina, "cabina")}</div>`;
 }
 
 /** La mano que gira: el aviso de que esto se mueve con el dedo. */
@@ -461,7 +454,7 @@ export class TarjetaDelAvion {
           <p class="tav__cuenta" data-tarjeta="cuenta" hidden></p>
         </div>
         <div class="tav__datos">
-          ${conDibujos(a, this.opciones.enVuelo) ? dibujosDelAvion(a.id) : ""}
+          ${this.opciones.enVuelo ? "" : dibujosDelAvion(a.id)}
           <p class="tav__clase">${t(a.descriptionKey as TranslationKey)}</p>
           <dl class="tav__ficha">
             ${ficha

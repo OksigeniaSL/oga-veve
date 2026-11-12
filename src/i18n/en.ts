@@ -1604,7 +1604,7 @@ export const EN: Dictionary = {
   "ilustracion.fuera-jaz-120": "The JAZ 120, with its four engines, above the clouds",
   "ilustracion.fuera-jaz-110": "The JAZ 110 Tijereta in profile, with its two engines under the wings",
   "ilustracion.fuera-super-puma": "The JAZ 70 flying past the Teno lighthouse, Tenerife",
-  "ilustracion.grua-super-puma": "A rescuer is lowered on the JAZ 70's hoist to a boat",
+  "ilustracion.cabina-super-puma": "Jazlyn flies the JAZ 70 over the rescue boat",
   "ilustracion.cabina-jaz-20": "Jazlyn at the controls of the JAZ 20, in the left seat",
   "ilustracion.cabina-jaz-25": "Jazlyn at the controls of the JAZ 25, the single-seat biplane",
   "ilustracion.cabina-jaz-40": "Jazlyn at the controls of the JAZ 40, with an engine on each wing",

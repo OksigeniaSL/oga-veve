@@ -26,7 +26,7 @@ import {
 } from "./ilustraciones";
 import { ilustracionDeLaHistoria } from "./ilustraciones-de-las-historias";
 import { DIBUJOS_DEL_PASAJE } from "./dibujos-del-pasaje";
-import { ESTA_HECHO, SIN_CABINA } from "../flight/flota";
+import { ESTA_HECHO } from "../flight/flota";
 import { DICHO_DE_LA_LUZ } from "../flight/luz-verde";
 
 /*
@@ -183,40 +183,28 @@ describe("las ilustraciones", () => {
   });
 
   const SIN_DIBUJOS: readonly string[] = [];
-  /** Los que tienen su lámina de fuera y de cabina: todos menos los que aún no tienen cabina. */
-  const CON_CABINA = ESTA_HECHO.filter((x) => !SIN_DIBUJOS.includes(x) && !SIN_CABINA.includes(x));
+  /** Los que tienen su lámina de fuera y de cabina: todos los construidos, el helicóptero también. */
+  const CON_CABINA = ESTA_HECHO.filter((x) => !SIN_DIBUJOS.includes(x));
 
-  it("cada avión de la flota, por fuera y por dentro; el helicóptero, por fuera y con la grúa; y nada más", () => {
+  it("cada aparato de la flota, por fuera y por dentro, el helicóptero también; y nada más", () => {
+    expect(CON_CABINA).toContain("super-puma");
     for (const id of CON_CABINA) {
       const d = ilustracionesDelAvion(id);
       expect(d?.fuera.url, id).toMatch(new RegExp(`fuera-${id}.*\\.webp`));
-      expect(d?.segunda.url, id).toMatch(new RegExp(`cabina-${id}.*\\.webp`));
-      expect(d?.cual, id).toBe("cabina");
+      expect(d?.cabina.url, id).toMatch(new RegExp(`cabina-${id}.*\\.webp`));
+      expect(d?.cabina.alt, id).toBe(ES_PY[`ilustracion.cabina-${id}` as keyof typeof ES_PY]);
     }
     const deLaTarjeta = claves.filter((c) => RECETAS[c]!.hueco === "tarjeta");
-    expect(deLaTarjeta.sort()).toEqual(
-      [
-        ...CON_CABINA.flatMap((id) => [`fuera-${id}`, `cabina-${id}`]),
-        "fuera-super-puma",
-        "grua-super-puma",
-      ].sort(),
-    );
+    expect(deLaTarjeta.sort()).toEqual(CON_CABINA.flatMap((id) => [`fuera-${id}`, `cabina-${id}`]).sort());
     for (const id of SIN_DIBUJOS) expect(ilustracionesDelAvion(id), id).toBeNull();
     /*
-     * **El helicóptero de la flota**, el JAZ 70 Kirikiri'i, con su lámina de
-     * fuera. Lo que no tiene es cabina todavía —está encargada a Gaudí, ver
-     * `SIN_CABINA`—, así que en el segundo sitio va su trabajo, el rescate
-     * con la grúa, y no se llama «cabina». El largo radio sigue sin sitio, y
-     * el helicóptero de antes, un H135, también: en el juego no hay ninguno de
-     * los dos.
+     * **El rescate con la grúa ya no está**: ocupó el sitio de la cabina del
+     * JAZ 70 mientras no la tuvo, y la tarjeta tiene dos huecos. El largo
+     * radio sigue sin sitio, y el helicóptero de antes, un H135, también: en
+     * el juego no hay ninguno de los dos.
      */
-    const puma = ilustracionesDelAvion("super-puma");
-    expect(puma?.fuera.url).toMatch(/fuera-super-puma.*\.webp/);
-    expect(puma?.segunda.url).toMatch(/grua-super-puma.*\.webp/);
-    expect(puma?.cual).toBe("grua");
-    expect(puma?.segunda.alt).toBe(ES_PY["ilustracion.grua-super-puma"]);
-    expect(RECETAS["cabina-super-puma"]).toBeUndefined();
-    for (const c of claves) expect(RECETAS[c]!.original, c).not.toMatch(/largo-radio|helicoptero/);
+    expect(RECETAS["grua-super-puma"]).toBeUndefined();
+    for (const c of claves) expect(RECETAS[c]!.original, c).not.toMatch(/largo-radio|helicoptero|grua/);
     expect(ilustracionesDelAvion("guyrami")).toBeNull();
   });
 });

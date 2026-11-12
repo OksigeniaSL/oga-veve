@@ -819,16 +819,20 @@ casi fotográficos que no van con los demás; la cabina de tres y tres
 asientos, que es la de otro avión; y las versiones cuadradas de Ara durmiendo
 y soñando, que no tienen hueco.
 
-**Las dos del Super Puma** (11-11-2026) son de otra mano: las pintó Oksigenia
-para su tarjeta, en el estilo de las de la flota y con la pintura de su
-muestra, y como el resto del arte original son contenido de Oksigenia SL. Las
-dos van con el morro a la derecha, para que se vea el costado derecho, el del
-rotor de cola, la puerta y la grúa, y no llevan ni una letra. Como referencia
+**Las dos del Super Puma** son de otra mano: las pintó Oksigenia para su
+tarjeta, en el estilo de las de la flota y con la pintura de su muestra, y como
+el resto del arte original son contenido de Oksigenia SL. Ninguna lleva una
+letra. La de fuera (11-11-2026) va con el morro a la derecha, para que se vea
+el costado derecho, el del rotor de cola, la puerta y la grúa; como referencia
 de forma se usaron el plano de tres vistas del AS 332 de Jetijones (CC BY 3.0)
-y fotos de los AS 332 B1 del Ejército de Tierra (CC BY-SA 2.0), las dos de
-Wikimedia Commons: solo se miraron, no entra nada de ellas en el juego. Su
-lámina por dentro, con la tripulación de rescate, espera a que el Super Puma
-tenga cabina, para que diga lo mismo que el juego.
+y fotos de los AS 332 B1 del Ejército de Tierra (CC BY-SA 2.0). La de dentro
+(12-11-2026), con la tripulación de rescate, se pintó sobre la cabina del
+juego, para que diga lo mismo que él; como referencia de encuadre se usó una
+foto de la cabina de un AS 532 U2 de la Fuerza Aérea de los Países Bajos
+(Staffotografen Directie Voorlichting, Ministerie van Defensie; CC BY-SA 4.0).
+Las tres fotos y el plano son de Wikimedia Commons y solo se miraron: no entra
+nada de ellos en el juego. La del rescate con la grúa, que ocupó el sitio de la
+cabina mientras no la hubo, ya no entra.
 
 | Fichero | Original | Dónde sale | Cambios |
 | --- | --- | --- | --- |
@@ -853,8 +857,8 @@ tenga cabina, para que diga lo mismo que el juego.
 | `src/assets/ilustraciones/cabina-jaz-120.webp` | `cabina-jaz120.jpg` | La tarjeta del avión, en el hangar | recortada por la derecha, hasta dejar fuera el hombro del copiloto, que llevaba cuatro barras: el asiento de la derecha lleva tres; 360 × 270 |
 | `src/assets/ilustraciones/fuera-jaz-110.webp` | `fuera-jaz110.png` | La tarjeta del avión, en el hangar | de perfil y sobre papel, con más papel arriba y abajo hasta 4:3, 360 × 270 |
 | `src/assets/ilustraciones/cabina-jaz-110.webp` | `cabina-jaz110.png` | La tarjeta del avión, en el hangar | la cabina de pasaje de noche, a 4:3 por los dos lados, con el pasillo de la izquierda y las filas de delante a la vista, 360 × 270 |
-| `src/assets/ilustraciones/fuera-super-puma.webp` | `super-puma-teno.png` | La tarjeta del Super Puma, en el vuelo: por fuera, junto al faro de Teno | entera, en 4:3, 360 × 270 |
-| `src/assets/ilustraciones/grua-super-puma.webp` | `super-puma-grua.png` | La tarjeta del Super Puma, en el vuelo, en el segundo sitio: un rescate con la grúa en estacionario, porque aún no tiene cabina | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/fuera-super-puma.webp` | `super-puma-teno.png` | La tarjeta del avión, en el hangar: el Super Puma por fuera, junto al faro de Teno | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/cabina-super-puma.webp` | `super-puma-cabina.png` | La tarjeta del avión, en el hangar: el Super Puma por dentro, con la tripulación de rescate | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/retrato-jazlyn.webp` | `jazlyn-cabina-dibujo.jpg` | La cara de Jazlyn cuando habla | recortada a la cara sola, por encima de los hombros, que en el dibujo llevan las tres barras de primera oficial; 96 × 96, en redondo |
 | `src/assets/ilustraciones/mascara.webp` | `esquemas/mascara.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo de las máscaras | entera, en 4:3, 1280 × 960 |
 | `src/assets/ilustraciones/nube.webp` | `esquemas/nube.jpg` | La lámina de lo que se explica en «Viajá con Jazlyn», en lugar del dibujo de la nube de cerca | entera, en 4:3, 1280 × 960 |
