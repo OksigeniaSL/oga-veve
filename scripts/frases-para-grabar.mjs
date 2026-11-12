@@ -130,7 +130,8 @@ const HABLADOS = [
     // La tormenta va al final de la lista: ver `DE_LA_TORMENTA`.
     /^ejercicio\.tormenta\./,
   ],
-  ["mission", "instructor", "las misiones"],
+  // Menos la de Teno, que es nueva y va al final: ver `DE_LA_MISION_DE_TENO`.
+  ["mission", "instructor", "las misiones", /^mission\.teno\./],
   /*
    * Aquí estaba «la cuenta de la toma, en casa»: la instructora contando en
    * metros en los aviones sin radioaltímetro. Esa cuenta no existe en ninguna
@@ -2597,6 +2598,38 @@ for (const [id, para] of DEL_HELICOPTERO) {
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
   total += texto.length;
+}
+/*
+ * **Y la misión de Teno con el Super Puma** (12-11-2026): lo que cuenta la
+ * instructora en cada paso, en los tres peldaños de abajo, y lo que dice la
+ * tripulación en el de cabina. La tripulación, con la voz de Airam
+ * (`tierra-canarias`): un tripulante del batallón de helicópteros de Los
+ * Rodeos es de allí y habla por el interfono, que es lo que ya hace Airam con
+ * el tractor; y en un helicóptero no hay tractor que empujar, así que no se
+ * pisan. Detrás de todo, que lo grabado no se renumera. Las palabras cortas de
+ * la tarjeta se leen y no se graban. Ver `TENO` en `src/content/missions.ts`.
+ */
+const DE_LA_MISION_DE_TENO = [
+  ["presenta", "al empezar: qué pasó en Punta de Teno en 2016"],
+  ["ir", "al despegar de Los Rodeos: por dónde se va a Teno"],
+  ["posarse", "llegando a Teno: posarse en el llano junto al faro"],
+  ["suben", "posado junto al faro: la tripulación ayuda a subir"],
+  ["porDelante", "a mitad de la subida: por delante, nunca por la cola"],
+  ["despegar", "ya a bordo: despegar de Teno"],
+  ["garachico", "en el aire: al puerto de Garachico"],
+  ["bajan", "posado en Garachico: la gente baja"],
+  ["cierre", "al acabar: lo que pasó de verdad"],
+];
+for (const [paso, para] of DE_LA_MISION_DE_TENO) {
+  for (const [id, voz, quien] of [
+    [`mission.teno.${paso}`, "instructor", "la instructora"],
+    [`mission.teno.tripulacion.${paso}`, "tierra-canarias", "la tripulación, en el peldaño de cabina"],
+  ]) {
+    const texto = es.get(id);
+    if (!texto || filas.some((f) => f.id === id)) continue;
+    filas.push({ id, voz, idioma: "es-PY", texto, para: `misión de Teno, ${quien}: ${para}` });
+    total += texto.length;
+  }
 }
 const AJUSTES_CON_CHISPA = {
   stability: 0.35,

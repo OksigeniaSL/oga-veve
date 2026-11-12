@@ -490,16 +490,25 @@ if (conInicio) {
 }
 
 /*
- * Y el helicóptero vuela suelto: la vuelta al campo, sin misión, sin ejercicio
- * y sin destino que cargar.
+ * Y el helicóptero vuela suelto: la vuelta al campo, sin ejercicio y sin
+ * destino que cargar. **Y sin misión, salvo la suya**: `?mision=teno` lo lleva
+ * a Punta de Teno; sin ella, vuelo libre como siempre. Ver `TENO` en
+ * `content/missions.ts`.
  */
 if (conHelicoptero && escenario) {
   avion = SUPER_PUMA_EN_EL_JUEGO;
   leccion = VUELTA;
-  mision = null;
+  if (mision?.aeronave !== avion.id) mision = null;
   ejercicio = null;
   destino = escenario.id;
 }
+/*
+ * **Y una misión de otra aeronave no se vuela con ésta**: `?mision=teno` en
+ * una avioneta no tiene dónde posarse. Ni en otro escenario: el faro de Teno
+ * no está en el mundo de Asunción.
+ */
+if (mision?.aeronave !== undefined && (mision.aeronave !== avion.id || mision.scenario !== escenario?.id))
+  mision = null;
 
 /*
  * **Y un ejercicio se practica en casa**: la vuelta al campo, sin destino que

@@ -53,6 +53,14 @@ export interface FichaDeParche {
   readonly dibujo: number;
   /** Dónde se aparta el dibujo bajo un sitio con modelo. Ver `asentar`. */
   readonly asientos?: readonly Asiento[];
+  /**
+   * **Si es para posarse**: el dibujo va siempre a su `dibujo`, sin
+   * embastecerse con la distancia a casa. Lo que se dibuja es también lo que
+   * se pisa, y un helicóptero que se posa en Punta de Teno, a cincuenta y
+   * siete kilómetros de Los Rodeos, lo pisa a veinte metros por muestra o se
+   * queda sin llano. Ver `LEJANIA`.
+   */
+  readonly paraPosarse?: boolean;
   readonly minM: number;
   readonly maxM: number;
 }
@@ -210,6 +218,36 @@ export interface ParcheRefinado {
   refinado(fila: number, col: number): boolean;
 }
 
+/**
+ * **Si un parche tiene tierra en un recuadro**: alguna de sus muestras por
+ * encima de `nivel`, que es el agua del mundo. El recuadro, en grados.
+ *
+ * Lo pregunta el horizonte por los cuadros que él da por mar abierto —las
+ * cuatro esquinas bajo el agua— y que no dibuja: a trescientos metros por
+ * muestra, una punta de cien metros de ancho cae entera en el mar. Punta de
+ * Teno era eso: el faro, la carretera y su llano estaban en el parche y el
+ * horizonte no los dejaba asomar, porque solo se refina lo que él dibuja.
+ */
+export function tierraDelParche(
+  p: ParcheDeRelieve,
+  sur: number,
+  norte: number,
+  oeste: number,
+  este: number,
+  nivel: number,
+): boolean {
+  if (norte < p.sur || sur > p.norte || este < p.oeste || oeste > p.este) return false;
+  const fila = (lat: number): number => ((p.norte - lat) / (p.norte - p.sur)) * (p.filas - 1);
+  const col = (lon: number): number => ((lon - p.oeste) / (p.este - p.oeste)) * (p.columnas - 1);
+  const f0 = Math.max(0, Math.floor(fila(norte)));
+  const f1 = Math.min(p.filas - 1, Math.ceil(fila(sur)));
+  const c0 = Math.max(0, Math.floor(col(oeste)));
+  const c1 = Math.min(p.columnas - 1, Math.ceil(col(este)));
+  for (let f = f0; f <= f1; f++)
+    for (let c = c0; c <= c1; c++) if (p.datos[f * p.columnas + c]! > nivel) return true;
+  return false;
+}
+
 /** Todos los parches de un mundo, y la cota que dan. */
 export interface HorizonteRefinado {
   readonly parches: readonly ParcheRefinado[];
@@ -326,7 +364,10 @@ export function refinarElHorizonte(
      * del parche al centro del mundo.
      */
     const centro = aMetros((p.norte + p.sur) / 2, (p.oeste + p.este) / 2);
-    const s = subdivisionDe(paso, Math.max(p.dibujo, Math.hypot(centro.x, centro.z) / LEJANIA));
+    const s = subdivisionDe(
+      paso,
+      p.paraPosarse ? p.dibujo : Math.max(p.dibujo, Math.hypot(centro.x, centro.z) / LEJANIA),
+    );
     const filas = alto * s + 1;
     const columnas = ancho * s + 1;
     const alturas = new Float32Array(filas * columnas);

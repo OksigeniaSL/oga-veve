@@ -677,3 +677,12 @@
 677	tarjeta.voz.plato	Este es el plato oscilante, debajo del rotor. Cuando subís el colectivo, el plato sube, las palas se inclinan más y empujan más aire para abajo. Cuando movés el cíclico, el plato se inclina, y el rotor se inclina con él.
 678	tarjeta.voz.rotorDeCola	Este es el rotor de cola, en el costado derecho. El rotor grande, al girar, empuja al helicóptero a girar para el otro lado, y el de cola lo aguanta. Con los pedales empuja más o menos, y la nariz gira.
 679	tarjeta.voz.trenHelicoptero	Este es el tren de aterrizaje. Sale para posarse, y después de despegar se recoge: la rueda de adelante, hacia atrás, y las de los costados, para arriba. Así el aire pasa mejor y el helicóptero va más rápido.
+680	mission.teno.presenta	En 2016 se hundió un pedazo de la carretera de Punta de Teno, y la gente quedó aislada junto al faro. El mar estaba muy bravo para los barcos. Vamos a buscarla en helicóptero.
+681	mission.teno.ir	Vamos al oeste, por la costa norte, hasta la punta de la isla. El Teide te queda a la izquierda.
+682	mission.teno.posarse	Ya estamos en Punta de Teno. Bajá al llano, donde está el aro verde, y posate despacio, de cara al viento.
+683	mission.teno.suben	Ya estamos en el suelo. El rotor sigue girando, y la tripulación baja a ayudar a subir a la gente.
+684	mission.teno.porDelante	La gente se acerca por delante, donde la ve el piloto, y nunca por la cola: ahí gira el rotor de cola, que casi no se ve.
+685	mission.teno.despegar	Ya subieron todos y la puerta está cerrada. Despegá despacio, derecho para arriba.
+686	mission.teno.garachico	Ahora vamos al puerto de Garachico, por la costa hacia el este. Posate en la explanada, de cara al viento.
+687	mission.teno.bajan	Llegamos. La tripulación los ayuda a bajar con cuidado, por delante y lejos de la cola.
+688	mission.teno.cierre	¡Lo hiciste! En 2016 fueron 123 personas y cinco perros, en dos Super Puma como este y otros tres helicópteros.

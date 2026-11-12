@@ -864,7 +864,13 @@ import {
   QNH_ESTANDAR,
 } from "./flight/altimetro";
 import { MissionRunner } from "./missions/runner";
-import { objectiveTarget, type Mission } from "./missions/types";
+import {
+  objectiveTarget,
+  sitioPorDelante,
+  type DichoDeLaMision,
+  type Mission,
+} from "./missions/types";
+import { SIN_GENTE, type GenteDeLaMision, type PuntoDeLaPuerta } from "./missions/gente";
 import { aDondeSenala, type Por as PorDeLaAguja } from "./flight/aguja";
 import { missionsFor } from "./content/missions";
 import {
@@ -4572,6 +4578,44 @@ export class Game {
   readonly input: InputManager;
   readonly audio = new Audio();
   private readonly missions = new MissionRunner();
+  /**
+   * **Quien dibuja la gente que sube y baja** en las esperas de una misión:
+   * nadie todavía, y la espera funciona igual. Lo pondrá el encargo de las
+   * figuras. Ver `missions/gente.ts` y `seguirALaGente`.
+   */
+  gente: GenteDeLaMision = SIN_GENTE;
+  /** Si la gente está subiendo o bajando ahora. Ver `seguirALaGente`. */
+  private genteEnMarcha = false;
+  /**
+   * Lo que se ha dicho de la misión y lo que ha hecho la gente, en orden y con
+   * la hora del juego. Para los bancos: ver `scripts/ver-mision-teno.mjs`.
+   */
+  readonly loDeLaMision: { que: string; quien: string; cuando: number }[] = [];
+
+  /** Cómo va la misión, para los bancos. `null` sin misión. */
+  get misionParaBanco(): {
+    id: string;
+    hechos: number;
+    total: number;
+    ahora: string | null;
+    espera: { lleva: number; pide: number; corre: boolean } | null;
+    terminada: boolean;
+    sitio: { x: number; z: number } | null;
+    dicho: { que: string; quien: string; cuando: number }[];
+  } | null {
+    const m = this.missions.active;
+    if (!m) return null;
+    return {
+      id: m.id,
+      hechos: this.missions.progress.done,
+      total: this.missions.progress.total,
+      ahora: this.missions.current?.kind ?? null,
+      espera: this.missions.espera,
+      terminada: this.missions.finished,
+      sitio: this.sitioDeLaMision,
+      dicho: this.loDeLaMision.map((d) => ({ ...d })),
+    };
+  }
   vegetacion: Group | null = null;
   /**
    * La granja alrededor de la pista de casa, si la tiene: la casa, los
@@ -8800,7 +8844,7 @@ export class Game {
     const mision = this.misionInicial;
     if (!mision) return;
     this.misionInicial = null;
-    this.missionIndex = missionsFor(this.scenario.id).findIndex(
+    this.missionIndex = this.misionesDeAqui().findIndex(
       (m) => m.id === mision.id,
     );
     this.missions.start(mision);
@@ -8809,6 +8853,66 @@ export class Game {
     this.hud.flash(t("mission.started", { name: t(mision.nameKey) }), 4);
     this.avisar("mision");
     this.updateMissionMarker();
+    this.contarElPrincipio();
+  }
+
+  /**
+   * **Las misiones que se pueden volar aquí con esta aeronave.** El
+   * helicóptero, solo las suyas: las de los aviones acaban en una pista y él
+   * vuelve a su helipuerto. Ver `missionsFor`.
+   */
+  private misionesDeAqui(): readonly Mission[] {
+    const todas = missionsFor(this.scenario.id, this.aircraft.id);
+    return this.aircraft.helicoptero ? todas.filter((m) => m.aeronave === this.aircraft.id) : todas;
+  }
+
+  /**
+   * **Lo que se dice al empezar una misión**: qué pasó y a qué se va, y lo del
+   * primer objetivo si tiene. En una que no dice nada, nada: las de los
+   * aviones se presentan con su nombre en pantalla y su tono, como siempre.
+   */
+  private contarElPrincipio(): void {
+    const mision = this.missions.active;
+    if (!mision) return;
+    this.decirDeLaMision(mision.presenta);
+    this.decirDeLaMision(this.missions.current?.dice);
+  }
+
+  /**
+   * **Un paso de la misión, contado por quien lo cuenta en este peldaño.**
+   *
+   * En los tres de abajo, la instructora, con calma y en casa, y la tarjeta
+   * con el dibujo —y la palabra en Tukã, y la frase en Taguató—. En el de
+   * cabina ya no explica nadie: habla la tripulación por el interfono, con
+   * su registro de cabina, y lo suyo va escrito en la tira de la radio. Es la
+   * regla de la persona de tierra al empujar —ver `hablaLaTierra`— y la de la
+   * escalera: el dibujo en los cuatro peldaños. Una sola voz por suceso.
+   *
+   * La tripulación sale por la boca de la torre, que es la que suena por los
+   * auriculares; la voz la pone la clave. Ver `docs/voces/LEEME.md`.
+   */
+  private decirDeLaMision(dicho: DichoDeLaMision | undefined): void {
+    if (!dicho) return;
+    const enCabina = !laInstructoraLoExplica(this.tier.avisos);
+    const clave = enCabina ? dicho.tripulacion : dicho.instructora;
+    if (dicho.dibujo) {
+      const rotulo = !enCabina && clave && dicho.corta ? this.rotulo(clave, dicho.corta) : "";
+      this.hud.senal.mostrar(dicho.dibujo, rotulo, null, { segundos: 7 });
+    }
+    if (!clave) return;
+    const texto = t(clave);
+    if (enCabina) {
+      this.torre.decir(texto, clave, "normal");
+      this.hud.radio(texto);
+    } else {
+      this.instructor.decir(texto, clave, "normal");
+    }
+    if (import.meta.env.DEV)
+      this.loDeLaMision.push({
+        que: clave,
+        quien: enCabina ? "tripulacion" : "instructora",
+        cuando: Math.round(this.relojDelJuego * 10) / 10,
+      });
   }
 
   stop(): void {
@@ -12967,6 +13071,11 @@ export class Game {
       this.hud.setMissionProgress(this.missions.progress);
       this.contarLaMision();
       this.updateMissionMarker();
+      // Y si había gente a medio subir, se queda donde estaba: el vuelo vuelve a empezar.
+      if (this.genteEnMarcha) {
+        this.genteEnMarcha = false;
+        this.gente.para();
+      }
     }
     this.runwayGuide.reset();
     this.landing.reset();
@@ -19394,7 +19503,7 @@ export class Game {
         void escritos;
       }
     }
-    this.advanceMission();
+    this.advanceMission(dt);
     this.announce(this.flight.state);
     /*
      * **Y desde dónde se escucha**, que es la vista: fuera, la cabina de mando
@@ -19740,7 +19849,7 @@ export class Game {
       this.flight.state.position.x,
       this.flight.state.position.z,
       this.flight.state.heading,
-      objetivo ? objectiveTarget(objetivo) : this.elOtroCampo(),
+      objetivo ? this.sitioDeLaMision : this.elOtroCampo(),
       objetivo ? null : this.alternoParaLaCarta(),
       // Y si es una ruta a otro aeropuerto, para pintarla. Ver `Mapa.update`.
       !objetivo,
@@ -25678,8 +25787,7 @@ export class Game {
      * que ir primero. En cuanto vuelves, vuelve ella también a lo de siempre.
      * Es la misma aguja otra vez: sigue habiendo una sola cosa que aprender.
      */
-    const objective = this.missions.current;
-    const target = objective ? objectiveTarget(objective) : null;
+    const target = this.sitioDeLaMision;
     const aLaRaya =
       this.vistaActual?.fuera === true && this.plan
         ? puntoMasCercanoDe(
@@ -31592,14 +31700,12 @@ export class Game {
    */
   private get aDondeVoy(): { rumbo: number; distancia: number } | null {
     /*
-     * El helicóptero todavía no tiene misión suya: el objetivo era el de la lección de
-     * aterrizar, la pista, y en la pantalla salía la raya magenta de la entrada a una
-     * pista en la que no se posa. Ver el ADR 0026, paso 4.
+     * El helicóptero, solo con una misión suya y a su sitio: sin ella, el objetivo
+     * era el de la lección de aterrizar, la pista, y en la pantalla salía la raya
+     * magenta de la entrada a una pista en la que no se posa. Ver el ADR 0026, paso 4.
      */
-    if (this.aircraft.helicoptero) return null;
-    const objetivo = this.missions.current;
-    if (!objetivo) return null;
-    const donde = objectiveTarget(objetivo);
+    if (this.aircraft.helicoptero && this.missions.active?.aeronave !== this.aircraft.id) return null;
+    const donde = this.sitioDeLaMision;
     if (!donde) return null;
     const p = this.flight.state.position;
     return {
@@ -33104,7 +33210,7 @@ export class Game {
    * un niño pequeño puede ser la única durante semanas.
    */
   private cycleMission(): void {
-    const available = missionsFor(this.scenario.id);
+    const available = this.misionesDeAqui();
     if (!available.length) return;
 
     this.missionIndex =
@@ -33122,6 +33228,7 @@ export class Game {
       this.hud.flash(t("mission.started", { name: t(mission.nameKey) }), 4);
       this.avisar("mision");
       this.contarLaMision();
+      this.contarElPrincipio();
     }
     this.updateMissionMarker();
   }
@@ -33145,10 +33252,24 @@ export class Game {
     this.hud.setMisionVisible(mision !== null);
   }
 
-  /** Avanza la misión y celebra lo que se haya cumplido. */
-  private advanceMission(): void {
+  /**
+   * Avanza la misión y celebra lo que se haya cumplido.
+   *
+   * Y cuenta lo que toca: a la mitad de una espera, lo que pasa mientras;
+   * al empezar cada objetivo, lo suyo; al acabar, el cierre. Ver
+   * `decirDeLaMision`.
+   */
+  private advanceMission(dt: number): void {
     if (!this.missions.active) return;
-    const event = this.missions.update(this.flight.state);
+    const event = this.missions.update(this.flight.state, {
+      dt,
+      motorEnMarcha: this.input.controls.engineOn,
+    });
+    this.seguirALaGente(event.completed);
+    if (event.mitad) {
+      const espera = this.missions.current;
+      if (espera?.kind === "wait") this.decirDeLaMision(espera.aMitad);
+    }
     if (!event.completed) return;
 
     this.hud.setMissionProgress(this.missions.progress);
@@ -33158,19 +33279,100 @@ export class Game {
     if (event.finished) {
       this.avisar("achieved");
       this.hud.flash(t("mission.done"), 5);
+      this.decirDeLaMision(this.missions.active.cierra);
     } else {
       this.avisar("success");
       this.hud.flash(t("mission.step"), 2);
+      this.decirDeLaMision(this.missions.current?.dice);
     }
   }
 
+  /**
+   * **La gente de la espera**: cuándo empieza a subir o a bajar, cuándo se
+   * para y cuándo acaba. Empieza cuando corre el reloj de la espera —posado,
+   * parado, en el llano y con el motor en marcha—; si se despega antes, se
+   * para; y acaba al cumplirse. Quien la dibuje se entera por `gente`; hoy no
+   * la dibuja nadie y la espera funciona igual. Ver `missions/gente.ts`.
+   */
+  private seguirALaGente(cumplido: boolean): void {
+    if (cumplido && this.genteEnMarcha) {
+      this.genteEnMarcha = false;
+      this.gente.acaba();
+      this.apuntarLaGente("acaba");
+      return;
+    }
+    const o = this.missions.current;
+    const corre = o?.kind === "wait" && o.gente !== undefined && this.missions.espera?.corre === true;
+    if (corre && !this.genteEnMarcha && o?.kind === "wait" && o.gente) {
+      this.genteEnMarcha = true;
+      const p = this.flight.state.position;
+      const puerta = this.puertaDelHelicoptero();
+      this.gente.empieza({
+        que: o.gente,
+        sitio: o.sitio ? { x: o.sitio.x, z: o.sitio.z } : { x: p.x, z: p.z },
+        puerta,
+        rumbo: this.flight.state.heading,
+        segundos: o.seconds,
+      });
+      this.apuntarLaGente(`empieza:${o.gente}:${puerta ? "con puerta" : "sin puerta"}`);
+    } else if (!corre && this.genteEnMarcha) {
+      this.genteEnMarcha = false;
+      this.gente.para();
+      this.apuntarLaGente("para");
+    }
+  }
+
+  private apuntarLaGente(que: string): void {
+    if (import.meta.env.DEV)
+      this.loDeLaMision.push({ que, quien: "gente", cuando: Math.round(this.relojDelJuego * 10) / 10 });
+  }
+
+  /**
+   * **La puerta por la que sube la gente**, en el mundo: la corredera del
+   * costado derecho del Super Puma, el vacío `puerta-corredera` del modelo de
+   * Gaudí —ver `modelos/jaz-super-puma.py`—, en el centro del hueco y a ras del
+   * fuselaje. `null` con la silueta de cajas, que no tiene puerta.
+   */
+  private puertaDelHelicoptero(): PuntoDeLaPuerta | null {
+    const grupo = this.aircraftMesh.group;
+    const puerta = grupo.getObjectByName("puerta-corredera");
+    if (!puerta) return null;
+    grupo.updateMatrixWorld();
+    const v = puerta.getWorldPosition(new Vector3());
+    return { x: v.x, y: v.y, z: v.z };
+  }
+
+  /**
+   * **A qué sitio se va**, para la aguja, la carta, la señal del mundo y la
+   * pantalla de navegación: el del objetivo de ahora. El helicóptero, además,
+   * mira por delante en un despegue —ver `sitioPorDelante`—: posado junto al
+   * faro, lo que necesita saber es hacia dónde queda Garachico, no dónde
+   * está su helipuerto.
+   */
+  private get sitioDeLaMision(): { x: number; z: number } | null {
+    const mision = this.missions.active;
+    const objetivo = this.missions.current;
+    if (!mision || !objetivo) return null;
+    return this.aircraft.helicoptero
+      ? sitioPorDelante(mision.objectives, this.missions.progress.done)
+      : objectiveTarget(objetivo);
+  }
+
+  /**
+   * **La señal del objetivo**: la columna y el aro a la altura del vuelo para
+   * ir a un sitio; y para posarse o esperar, el aro **en el suelo**, del
+   * tamaño del llano, que es donde hay que poner las ruedas.
+   */
   private updateMissionMarker(): void {
     const objective = this.missions.current;
-    const target = objective ? objectiveTarget(objective) : null;
+    const target = this.sitioDeLaMision;
+    const sitio =
+      objective && (objective.kind === "land" || objective.kind === "wait") ? objective.sitio : undefined;
     this.missionMarker.moveTo(
       target,
       target ? this.terrain.sampleSurface(target.x, target.z) : 0,
-      objective && objective.kind === "reach" ? objective.radius : undefined,
+      objective && objective.kind === "reach" ? objective.radius : sitio?.radius,
+      sitio !== undefined,
     );
   }
 

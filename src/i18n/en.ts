@@ -142,6 +142,59 @@ export const EN: Dictionary = {
   "mission.done": "Mission complete!",
   "mission.none": "Free flight",
 
+  "mission.teno.name": "Rescue at Teno",
+  "mision.teno.ir": "Fly to Punta de Teno",
+  "mision.teno.posarse": "Land by the lighthouse",
+  "mision.teno.suben": "Wait while people board",
+  "mision.teno.garachico": "Land at Garachico harbour",
+  "mision.teno.bajan": "Wait while people get off",
+  "mision.esperar": "Wait on the ground",
+  "mission.teno.presenta":
+    "In 2016 part of the Punta de Teno road collapsed, and the people there were cut off by the lighthouse. The sea was too rough for boats. Let's go and get them by helicopter.",
+  "mission.teno.presenta.corta": "To Teno!",
+  "mission.teno.ir":
+    "Head west along the north coast, to the tip of the island. The Teide is on your left.",
+  "mission.teno.ir.corta": "West",
+  "mission.teno.posarse":
+    "We're at Punta de Teno. Go down to the flat ground, where the green ring is, and set down gently, facing the wind.",
+  "mission.teno.posarse.corta": "Land",
+  "mission.teno.suben":
+    "We're on the ground. The rotor keeps turning, and the crew gets out to help people board.",
+  "mission.teno.suben.corta": "Boarding",
+  "mission.teno.porDelante":
+    "People come from the front, where the pilot can see them, and never from the tail: the tail rotor spins there and is hard to see.",
+  "mission.teno.porDelante.corta": "From the front",
+  "mission.teno.despegar":
+    "Everyone's aboard and the door is closed. Lift off gently, straight up.",
+  "mission.teno.despegar.corta": "Take off!",
+  "mission.teno.garachico":
+    "Now to Garachico harbour, east along the coast. Set down on the open ground, facing the wind.",
+  "mission.teno.garachico.corta": "Garachico",
+  "mission.teno.bajan":
+    "We're here. The crew helps them off carefully, from the front and away from the tail.",
+  "mission.teno.bajan.corta": "Getting off",
+  "mission.teno.cierre":
+    "You did it! In 2016 it was 123 people and five dogs, in two Super Pumas like this one and three other helicopters.",
+  "mission.teno.cierre.corta": "You did it!",
+  "mission.teno.tripulacion.presenta":
+    "Evacuation at Punta de Teno. The road has collapsed and people are cut off by the lighthouse; it can't be done by sea. Ready when you are.",
+  "mission.teno.tripulacion.ir":
+    "Heading west along the north coast, Teide on the left, to Punta de Teno.",
+  "mission.teno.tripulacion.posarse":
+    "Punta de Teno in sight. Landing on the marked flat ground, into the wind.",
+  "mission.teno.tripulacion.suben":
+    "On the ground. Getting out to help them board; rotor stays running.",
+  "mission.teno.tripulacion.porDelante":
+    "Boarding from the front, in the pilot's view. Tail clear.",
+  "mission.teno.tripulacion.despegar":
+    "Everyone aboard and seated, door closed. Ready for take-off.",
+  "mission.teno.tripulacion.garachico":
+    "Heading for Garachico harbour. Land on the open ground, into the wind.",
+  "mission.teno.tripulacion.bajan":
+    "On the ground. Disembarking from the front, calmly; nobody near the tail.",
+  "mission.teno.tripulacion.cierre":
+    "Evacuation complete. In 2016 it was 123 people and five dogs, in two Super Pumas like this one and three other helicopters.",
+
   "scenario.guarani.name": "Guaraní · Ciudad del Este",
   "scenario.estigarribia.name": "Mariscal Estigarribia · the Chaco",
   "scenario.pedroJuan.name": "Pedro Juan Caballero · Amambay",

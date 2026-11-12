@@ -7,16 +7,45 @@
  */
 
 import type { FlightState } from "../flight/model";
-import type { Mission, Objective } from "./types";
+import type { Mission, Objective, Sitio } from "./types";
 
 export interface MissionEvent {
   /** Se acaba de cumplir un objetivo. */
   completed: boolean;
   /** Se ha cumplido el último: la misión está terminada. */
   finished: boolean;
+  /**
+   * **Y en una espera, si acaba de pasar la mitad**: es cuando se dice lo que
+   * pasa mientras tanto. Ver `aMitad` en `types.ts`.
+   */
+  mitad?: boolean;
 }
 
 const NOTHING: MissionEvent = { completed: false, finished: false };
+
+/**
+ * **Lo que el runner necesita saber además del vuelo**, para esperar posado.
+ *
+ * El estado de vuelo no dice si el motor gira —es un mando, no física—, y una
+ * espera con el rotor parado no es lo que se pide: la gente sube con el rotor
+ * girando, que es como se hace cuando hay que irse enseguida.
+ */
+export interface MasDelVuelo {
+  /** Segundos desde la última llamada. Sin ellos, el reloj de la espera no corre. */
+  dt: number;
+  /** Si el motor está en marcha. Sin decirlo, se da por hecho que sí. */
+  motorEnMarcha?: boolean;
+}
+
+/** Por debajo de esto, en m/s, se está parado en el suelo. Un helicóptero posado no rueda. */
+const PARADO = 1.5;
+
+function dentro(sitio: Sitio, state: FlightState): boolean {
+  return (
+    Math.hypot(state.position.x - sitio.x, state.position.z - sitio.z) <=
+    sitio.radius
+  );
+}
 
 export class MissionRunner {
   private mission: Mission | null = null;
@@ -24,12 +53,15 @@ export class MissionRunner {
   private done = false;
   /** Hace falta recordar si estuvo en el aire para validar el aterrizaje. */
   private hasFlown = false;
+  /** Lo que lleva esperado posado en el objetivo de ahora, s. */
+  private esperado = 0;
 
   start(mission: Mission): void {
     this.mission = mission;
     this.index = 0;
     this.done = false;
     this.hasFlown = false;
+    this.esperado = 0;
   }
 
   abandon(): void {
@@ -56,23 +88,64 @@ export class MissionRunner {
   }
 
   /**
+   * **Cómo va la espera**, si el objetivo de ahora es esperar: cuánto lleva,
+   * cuánto pide y si el reloj corre ahora mismo. `null` en cualquier otro.
+   */
+  get espera(): { lleva: number; pide: number; corre: boolean } | null {
+    const o = this.current;
+    if (!o || o.kind !== "wait") return null;
+    return { lleva: this.esperado, pide: o.seconds, corre: this.corriendo };
+  }
+  private corriendo = false;
+
+  /**
    * Avanza la misión con el estado actual del vuelo.
    *
    * Se llama una vez por fotograma y devuelve qué ha cambiado, para que quien
    * llama decida si celebrar, sonar o repintar. No hace nada de eso: no es
    * asunto suyo.
    */
-  update(state: FlightState): MissionEvent {
+  update(state: FlightState, mas?: MasDelVuelo): MissionEvent {
     if (!this.mission || this.done) return NOTHING;
     if (!state.onGround) this.hasFlown = true;
 
     const objective = this.current;
-    if (!objective || !this.satisfied(objective, state)) return NOTHING;
+    if (!objective) return NOTHING;
+    const mitad = this.esperar(objective, state, mas);
+    if (!this.satisfied(objective, state)) return mitad ? { ...NOTHING, mitad } : NOTHING;
 
     this.index++;
+    this.esperado = 0;
+    this.corriendo = false;
+    /*
+     * **Y cada aterrizaje pide un vuelo suyo.** Con el «ha volado» de toda la
+     * misión, después de posarse y esperar, el siguiente aterrizaje se daba
+     * por hecho en el mismo sitio y sin moverse. Se apunta otra vez en cuanto
+     * se separa del suelo, que en un despegue es en este mismo fotograma.
+     */
+    this.hasFlown = !state.onGround;
     const finished = this.index >= this.mission.objectives.length;
     if (finished) this.done = true;
     return { completed: true, finished };
+  }
+
+  /**
+   * **El reloj de la espera**: corre parado en el suelo, dentro del sitio y
+   * con el motor en marcha; si no, se para donde iba. Devuelve si acaba de
+   * pasar la mitad.
+   */
+  private esperar(objective: Objective, state: FlightState, mas?: MasDelVuelo): boolean {
+    if (objective.kind !== "wait") return false;
+    this.corriendo =
+      state.onGround &&
+      state.groundSpeed < PARADO &&
+      (objective.sitio === undefined || dentro(objective.sitio, state)) &&
+      mas?.motorEnMarcha !== false;
+    if (!this.corriendo) return false;
+    const antes = this.esperado;
+    this.esperado += Math.max(0, mas?.dt ?? 0);
+    const mitad = objective.seconds / 2;
+    return antes < mitad && this.esperado >= mitad;
   }
 
   private satisfied(objective: Objective, state: FlightState): boolean {
@@ -98,10 +171,15 @@ export class MissionRunner {
         // Y hay que haberse parado, o casi. Tocar y seguir rodando a ciento
         // veinte por hora no es haber aterrizado.
         if (state.groundSpeed > 12) return false;
+        // Y en el sitio, si lo hay: posarse al lado del llano no es posarse en él.
+        if (objective.sitio && !dentro(objective.sitio, state)) return false;
         return (
           objective.gentle === undefined ||
           state.touchdownSinkRate <= objective.gentle
         );
+
+      case "wait":
+        return this.esperado >= objective.seconds;
     }
   }
 }

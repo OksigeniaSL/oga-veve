@@ -20233,5 +20233,131 @@
     "idioma": "es-PY",
     "texto": "Este es el tren de aterrizaje. Sale para posarse, y después de despegar se recoge: la rueda de adelante, hacia atrás, y las de los costados, para arriba. Así el aire pasa mejor y el helicóptero va más rápido.",
     "para": "lo que explica el punto del tren en la tarjeta del Super Puma, que se recoge"
+  },
+  {
+    "id": "mission.teno.presenta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "En 2016 se hundió un pedazo de la carretera de Punta de Teno, y la gente quedó aislada junto al faro. El mar estaba muy bravo para los barcos. Vamos a buscarla en helicóptero.",
+    "para": "misión de Teno, la instructora: al empezar: qué pasó en Punta de Teno en 2016"
+  },
+  {
+    "id": "mission.teno.tripulacion.presenta",
+    "voz": "tierra-canarias",
+    "idioma": "es-PY",
+    "texto": "Misión de evacuación en Punta de Teno. Se hundió la carretera y hay gente aislada junto al faro; por mar no se puede. Cuando estés listo, despegamos.",
+    "para": "misión de Teno, la tripulación, en el peldaño de cabina: al empezar: qué pasó en Punta de Teno en 2016"
+  },
+  {
+    "id": "mission.teno.ir",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vamos al oeste, por la costa norte, hasta la punta de la isla. El Teide te queda a la izquierda.",
+    "para": "misión de Teno, la instructora: al despegar de Los Rodeos: por dónde se va a Teno"
+  },
+  {
+    "id": "mission.teno.tripulacion.ir",
+    "voz": "tierra-canarias",
+    "idioma": "es-PY",
+    "texto": "Rumbo oeste por la costa norte, Teide a la izquierda, hasta Punta de Teno.",
+    "para": "misión de Teno, la tripulación, en el peldaño de cabina: al despegar de Los Rodeos: por dónde se va a Teno"
+  },
+  {
+    "id": "mission.teno.posarse",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya estamos en Punta de Teno. Bajá al llano, donde está el aro verde, y posate despacio, de cara al viento.",
+    "para": "misión de Teno, la instructora: llegando a Teno: posarse en el llano junto al faro"
+  },
+  {
+    "id": "mission.teno.tripulacion.posarse",
+    "voz": "tierra-canarias",
+    "idioma": "es-PY",
+    "texto": "Punta de Teno a la vista. Toma en el llano marcado, proa al viento.",
+    "para": "misión de Teno, la tripulación, en el peldaño de cabina: llegando a Teno: posarse en el llano junto al faro"
+  },
+  {
+    "id": "mission.teno.suben",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya estamos en el suelo. El rotor sigue girando, y la tripulación baja a ayudar a subir a la gente.",
+    "para": "misión de Teno, la instructora: posado junto al faro: la tripulación ayuda a subir"
+  },
+  {
+    "id": "mission.teno.tripulacion.suben",
+    "voz": "tierra-canarias",
+    "idioma": "es-PY",
+    "texto": "En tierra. Bajo a ayudar con el embarque; el rotor sigue en marcha.",
+    "para": "misión de Teno, la tripulación, en el peldaño de cabina: posado junto al faro: la tripulación ayuda a subir"
+  },
+  {
+    "id": "mission.teno.porDelante",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La gente se acerca por delante, donde la ve el piloto, y nunca por la cola: ahí gira el rotor de cola, que casi no se ve.",
+    "para": "misión de Teno, la instructora: a mitad de la subida: por delante, nunca por la cola"
+  },
+  {
+    "id": "mission.teno.tripulacion.porDelante",
+    "voz": "tierra-canarias",
+    "idioma": "es-PY",
+    "texto": "Embarcando por delante, a la vista del piloto. Cola despejada.",
+    "para": "misión de Teno, la tripulación, en el peldaño de cabina: a mitad de la subida: por delante, nunca por la cola"
+  },
+  {
+    "id": "mission.teno.despegar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya subieron todos y la puerta está cerrada. Despegá despacio, derecho para arriba.",
+    "para": "misión de Teno, la instructora: ya a bordo: despegar de Teno"
+  },
+  {
+    "id": "mission.teno.tripulacion.despegar",
+    "voz": "tierra-canarias",
+    "idioma": "es-PY",
+    "texto": "Todos a bordo y sentados, puerta cerrada. Listos para despegar.",
+    "para": "misión de Teno, la tripulación, en el peldaño de cabina: ya a bordo: despegar de Teno"
+  },
+  {
+    "id": "mission.teno.garachico",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ahora vamos al puerto de Garachico, por la costa hacia el este. Posate en la explanada, de cara al viento.",
+    "para": "misión de Teno, la instructora: en el aire: al puerto de Garachico"
+  },
+  {
+    "id": "mission.teno.tripulacion.garachico",
+    "voz": "tierra-canarias",
+    "idioma": "es-PY",
+    "texto": "Rumbo al puerto de Garachico. Toma en la explanada, proa al viento.",
+    "para": "misión de Teno, la tripulación, en el peldaño de cabina: en el aire: al puerto de Garachico"
+  },
+  {
+    "id": "mission.teno.bajan",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Llegamos. La tripulación los ayuda a bajar con cuidado, por delante y lejos de la cola.",
+    "para": "misión de Teno, la instructora: posado en Garachico: la gente baja"
+  },
+  {
+    "id": "mission.teno.tripulacion.bajan",
+    "voz": "tierra-canarias",
+    "idioma": "es-PY",
+    "texto": "En tierra. Desembarco por delante y con calma; nadie hacia la cola.",
+    "para": "misión de Teno, la tripulación, en el peldaño de cabina: posado en Garachico: la gente baja"
+  },
+  {
+    "id": "mission.teno.cierre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Lo hiciste! En 2016 fueron 123 personas y cinco perros, en dos Super Puma como este y otros tres helicópteros.",
+    "para": "misión de Teno, la instructora: al acabar: lo que pasó de verdad"
+  },
+  {
+    "id": "mission.teno.tripulacion.cierre",
+    "voz": "tierra-canarias",
+    "idioma": "es-PY",
+    "texto": "Evacuación terminada. En 2016 fueron 123 personas y cinco perros, en dos Super Puma como este y otros tres helicópteros.",
+    "para": "misión de Teno, la tripulación, en el peldaño de cabina: al acabar: lo que pasó de verdad"
   }
 ]

@@ -1535,6 +1535,34 @@ const MANDO_JOYSTICK = icono(`
 `);
 
 /**
+ * **Lo de la misión de Teno**: el faro, la gente y posarse en un sitio.
+ *
+ * El faro es lo que se busca —una torre con su linterna y los dos haces—, la
+ * gente es lo que se va a buscar, y posarse es bajar derecho a un llano, que
+ * es lo que hace un helicóptero y no un avión. Los mismos dibujos que la
+ * lista de la misión: un significado, un dibujo. Ver `ui/pantalla-mision.ts`.
+ */
+const FARO = icono(`
+  <path d="M9.6 21.5 L10.6 9.6 H13.4 L14.4 21.5 Z" />
+  <rect x="9.6" y="5.6" width="4.8" height="3.2" rx="0.6" />
+  <path d="M10.2 5.6 L12 3 L13.8 5.6 Z" />
+  <path d="M8.6 6.4 L2.4 4.6 V9.2 Z M15.4 6.4 L21.6 4.6 V9.2 Z" opacity="0.55" />
+  <path d="M4 21.5 H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none" />
+`);
+const GENTE = icono(`
+  <circle cx="8" cy="6.2" r="2.7" />
+  <path d="M3.6 20.5 V15 a4.4 4.4 0 0 1 8.8 0 V20.5 Z" />
+  <circle cx="16.6" cy="8" r="2.3" />
+  <path d="M12.9 20.5 V16.2 a3.7 3.7 0 0 1 7.4 0 V20.5 Z" />
+`);
+const POSARSE = icono(`
+  <path d="M2.5 20.5 h19" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none" />
+  <ellipse cx="12" cy="17.2" rx="7.2" ry="2.1" fill="none" stroke="currentColor" stroke-width="1.9" />
+  <path d="M12 2.6 V12.4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none" />
+  <path d="M7.6 9.2 L12 14 L16.4 9.2 Z" />
+`);
+
+/**
  * Todos los dibujos, por su nombre.
  *
  * Se exporta para poder comprobar la única regla que tienen en común: **cada
@@ -1544,6 +1572,9 @@ const MANDO_JOYSTICK = icono(`
  */
 export const DIBUJOS = {
   llave: LLAVE,
+  faro: FARO,
+  gente: GENTE,
+  posarse: POSARSE,
   "mando-consola": MANDO_DE_CONSOLA,
   "mando-joystick": MANDO_JOYSTICK,
   "pitot-tapado": PITOT_TAPADO,

@@ -21,6 +21,7 @@ import {
   mallarElParche,
   refinarElHorizonte,
   subdivisionDe,
+  tierraDelParche,
   type ParcheDeRelieve,
   type RejillaDelHorizonte,
 } from "./parches-de-relieve";
@@ -341,5 +342,52 @@ describe("el asiento del Monday, en el parche de Itaipú", () => {
     const a = nublo.asientos![0]!;
     expect(asentar(1800, a.lat, a.lon, nublo.asientos)).toBeCloseTo(12, 5);
     expect(asentar(1600, a.lat, a.lon, nublo.asientos)).toBe(0);
+  });
+});
+
+/*
+ * **La tierra de un parche donde el horizonte ve mar.** Punta de Teno, a
+ * trescientos metros por muestra, cae entera en cuadros de mar; el parche la
+ * tiene, y el horizonte le pregunta por ella para dejarla asomar. Ver
+ * `dibujable` en `world/terrain.ts`.
+ */
+describe("la tierra de un parche en el mar del horizonte", () => {
+  // Tres por tres muestras sobre un grado: todo mar menos la esquina del noreste.
+  const isla: ParcheDeRelieve = {
+    id: "prueba",
+    nombre: "prueba",
+    fuente: "prueba",
+    atribucion: "prueba",
+    sur: 0,
+    norte: 1,
+    oeste: 0,
+    este: 1,
+    filas: 3,
+    columnas: 3,
+    dibujo: 30,
+    minM: 0,
+    maxM: 12,
+    datos: Int16Array.from([0, 0, 12, 0, 0, 0, 0, 0, 0]),
+  };
+
+  it("la encuentra en el recuadro que la tiene, y no en los demás", () => {
+    expect(tierraDelParche(isla, 0.6, 1, 0.6, 1, 2)).toBe(true);
+    expect(tierraDelParche(isla, 0, 0.4, 0, 0.4, 2)).toBe(false);
+  });
+
+  it("lo que queda bajo el agua no es tierra", () => {
+    expect(tierraDelParche(isla, 0.6, 1, 0.6, 1, 12)).toBe(false);
+  });
+
+  it("fuera del parche no hay nada que mirar", () => {
+    expect(tierraDelParche(isla, 2, 3, 2, 3, 2)).toBe(false);
+  });
+
+  it("y en el de Punta de Teno, el faro está en tierra", () => {
+    const teno = leerParche("teno");
+    const faro = { lat: 28.34209, lon: -16.92286 };
+    expect(
+      tierraDelParche(teno, faro.lat - 0.0005, faro.lat + 0.0005, faro.lon - 0.0005, faro.lon + 0.0005, 2),
+    ).toBe(true);
   });
 });

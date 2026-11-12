@@ -129,6 +129,34 @@ export const PARCHES = [
     fuente: "ign",
   },
   {
+    /*
+     * **Punta de Teno**, para la misión del Super Puma. El horizonte, a
+     * trescientos metros por muestra, hundía la punta entera: alrededor del
+     * faro no quedaba ni una muestra seca en ciento cincuenta metros, y el
+     * helicóptero no tenía dónde posarse junto a él. Pequeño y fino, que es
+     * para posarse: a Los Rodeos le queda a cincuenta y siete kilómetros, y a
+     * esa distancia se dibujaría a veintinueve metros (ver `LEJANIA`), que en
+     * la lava de la punta no deja ni un círculo de veinte metros con menos de
+     * cinco grados; `paraPosarse` lo deja en los veinte que se piden. **Y con
+     * dos kilómetros de mar al oeste del
+     * faro**: el parche se funde con el horizonte en los cuadros que éste
+     * dibuja, y con la punta en la primera columna, el cuadro de al lado
+     * —también con tierra del parche— la dejaba con su peso casi a cero, en
+     * el agua. El puerto de Garachico, el otro sitio de la misión, no lo
+     * necesita: en el horizonte ya es un llano.
+     */
+    id: "teno",
+    nombre: "Punta de Teno",
+    lat: 28.345,
+    lon: -16.912,
+    ancho: 6000,
+    alto: 5000,
+    paso: 20,
+    dibujo: 20,
+    paraPosarse: true,
+    fuente: "ign",
+  },
+  {
     id: "tajogaite",
     nombre: "Tajogaite y la Cumbre Vieja",
     lat: 28.6133,
@@ -680,6 +708,7 @@ async function hacerParche(p) {
         columnas,
         dibujo: p.dibujo,
         ...(p.asientos ? { asientos: p.asientos } : {}),
+        ...(p.paraPosarse ? { paraPosarse: true } : {}),
         minM: min,
         maxM: max,
       },

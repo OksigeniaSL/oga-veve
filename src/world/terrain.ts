@@ -51,6 +51,7 @@ import { mallarConDetalle } from "./malla-lejana";
 import {
   mallarElParche,
   refinarElHorizonte,
+  tierraDelParche,
   type HorizonteRefinado,
 } from "./parches-de-relieve";
 import {
@@ -829,7 +830,20 @@ export class Terrain {
         mitad,
         cota,
         dibujable: (f, c) => {
-          if (cota(f, c) <= hundido && cota(f + 1, c) <= hundido && cota(f, c + 1) <= hundido && cota(f + 1, c + 1) <= hundido)
+          /*
+           * **El mar abierto no se dibuja, salvo que un parche tenga tierra en él.**
+           * A trescientos metros por muestra, Punta de Teno cae entera en cuadros
+           * de mar, y lo que el horizonte no dibuja no se refina: el faro se
+           * quedaba en el agua con el parche que lo tiene puesto. Ver
+           * `tierraDelParche`.
+           */
+          if (
+            cota(f, c) <= hundido &&
+            cota(f + 1, c) <= hundido &&
+            cota(f, c + 1) <= hundido &&
+            cota(f + 1, c + 1) <= hundido &&
+            !this.tierraDeParcheEn(f, c, paso, mitad)
+          )
             return false;
           const cx = -mitad + (c + 0.5) * paso;
           const cz = -mitad + (f + 0.5) * paso;
@@ -860,6 +874,19 @@ export class Terrain {
       },
     );
     return this.refinado;
+  }
+
+  /**
+   * **Si algún parche tiene tierra en el cuadro (f, c) del horizonte.** Ver
+   * `tierraDelParche` y `horizonteRefinado`.
+   */
+  private tierraDeParcheEn(f: number, c: number, paso: number, mitad: number): boolean {
+    const parches = this.scenario.parches;
+    if (!parches?.length) return false;
+    // La esquina del noroeste y la del sureste: la Z del mundo crece hacia el sur.
+    const no = this.aGrados(-mitad + c * paso, -mitad + f * paso);
+    const se = this.aGrados(-mitad + (c + 1) * paso, -mitad + (f + 1) * paso);
+    return parches.some((p) => tierraDelParche(p, se.lat, no.lat, no.lon, se.lon, this.scenario.waterLevel));
   }
 
   /**

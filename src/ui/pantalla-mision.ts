@@ -33,9 +33,9 @@ import type { Mission, Objective } from "../missions/types";
 /**
  * Un dibujo por clase de objetivo.
  *
- * Tres, que son las tres que existen. Cada uno cuenta el gesto entero y no la
- * palabra: el suelo está en los tres, porque lo que distingue despegar de
- * aterrizar es hacia dónde va el avión respecto de él.
+ * Uno por clase. Cada uno cuenta el gesto entero y no la palabra: el suelo
+ * está en los tres primeros, porque lo que distingue despegar de aterrizar es
+ * hacia dónde va el avión respecto de él.
  */
 const DIBUJO: Record<Objective["kind"], string> = {
   /** Despegar: la raya abajo y el avión saliendo hacia arriba. */
@@ -55,13 +55,43 @@ const DIBUJO: Record<Objective["kind"], string> = {
           stroke-linecap="round" fill="none" />
     <path d="M4.2 6.4 L19.4 13.6 a2 2 0 0 1 -1.4 3.8 L3.2 10.4 Z" />
     <path d="M19.6 17.4 L20.8 12.6 L16 13.8" />`,
+  /**
+   * Esperar posado mientras sube o baja la gente: **la gente**, dos personas,
+   * que es lo que se espera. Un reloj se entiende a los siete años; dos
+   * personas, a los cuatro.
+   */
+  wait: `
+    <circle cx="8" cy="6.2" r="2.7" />
+    <path d="M3.6 20.5 V15 a4.4 4.4 0 0 1 8.8 0 V20.5 Z" />
+    <circle cx="16.6" cy="8" r="2.3" />
+    <path d="M12.9 20.5 V16.2 a3.7 3.7 0 0 1 7.4 0 V20.5 Z" />`,
 };
+
+/**
+ * **Posarse en un sitio**: el suelo, el círculo del llano y la flecha que baja
+ * derecha a él. Un helicóptero no baja en rampa hacia una raya, como el
+ * avión del dibujo de aterrizar: baja a un sitio.
+ */
+const POSARSE = `
+    <path d="M2.5 20.5 h19" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" fill="none" />
+    <ellipse cx="12" cy="17.2" rx="7.2" ry="2.1" fill="none" stroke="currentColor"
+             stroke-width="1.9" />
+    <path d="M12 2.6 V12.4" stroke="currentColor" stroke-width="2.4"
+          stroke-linecap="round" fill="none" />
+    <path d="M7.6 9.2 L12 14 L16.4 9.2 Z" />`;
+
+/** El dibujo de un objetivo: el de su clase, o el de posarse si se baja a un sitio. */
+function dibujoDe(o: Objective): string {
+  return o.kind === "land" && o.sitio ? POSARSE : DIBUJO[o.kind];
+}
 
 /** Cómo se llama cada clase de objetivo, en una frase corta. */
 const DICE: Record<Objective["kind"], TranslationKey> = {
   takeoff: "mision.despegar",
   reach: "mision.llegar",
   land: "mision.aterrizar",
+  wait: "mision.esperar",
 };
 
 export class PantallaDeMision {
@@ -153,9 +183,9 @@ export class PantallaDeMision {
             <li class="mision__paso mision__paso--${estado}"
                 ${i === m.hechos ? 'aria-current="step"' : ""}>
               <span class="mision__dibujo" aria-hidden="true">
-                <svg viewBox="0 0 24 24">${DIBUJO[o.kind]}</svg>
+                <svg viewBox="0 0 24 24">${dibujoDe(o)}</svg>
               </span>
-              <span class="mision__que">${t(DICE[o.kind])}</span>
+              <span class="mision__que">${t(o.rotulo ?? DICE[o.kind])}</span>
               ${
                 estado === "hecho"
                   ? `<span class="mision__visto" aria-label="${t("mision.hecho")}">

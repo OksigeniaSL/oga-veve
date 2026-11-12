@@ -11226,6 +11226,41 @@ button.motor__tecla::after {
   width: min(80vmin, 320px);
 }
 
+/*
+ * **Y la lista se desplaza si no cabe.** El cuadro va con aspecto de
+ * instrumento, que no se desplaza para que las lupas del plano puedan salirse
+ * de su caja; aquí no hay lupas. La misión de Teno tiene siete pasos, y en un
+ * teléfono apaisado de 390 px el último y el botón de cerrar se quedaban
+ * fuera de la pantalla, sin forma de llegar a ellos. En columna flexible y no
+ * en rejilla: con solo un alto máximo, la fila elástica de una rejilla crece
+ * con lo que lleva dentro y empuja el botón fuera de la caja.
+ */
+.mision__panel {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 16px);
+}
+
+.mision__panel > * {
+  flex: none;
+}
+
+.mision__panel > .concha__cuerpo {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@media (max-height: 500px) {
+  .mision__lista {
+    gap: 2px;
+  }
+
+  .mision__paso {
+    padding: 5px 12px;
+  }
+}
+
 .mision__paso {
   display: flex;
   align-items: center;
