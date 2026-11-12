@@ -84,6 +84,9 @@
          * `onerror` en la etiqueta lo quita Vite al construir. Un módulo que
          * no baja —él o cualquiera de los que importa— da error en su
          * etiqueta, y los errores de etiqueta no suben: por eso en captura.
+         * Lo que la entrada pide en marcha —el resto del juego, ver
+         * `src/boot.ts`— no tiene etiqueta, y la entrada llama a
+         * `__ogaFallo` ella misma.
          */
         window.addEventListener(
           "error",
@@ -582,6 +585,6 @@
       </main>
     </noscript>
 
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/boot.ts"></script>
   </body>
 </html>

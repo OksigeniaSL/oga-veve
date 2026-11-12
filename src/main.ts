@@ -1,15 +1,18 @@
 /**
- * Punto de entrada.
+ * El arranque: quién vuela, dónde y con qué, y el vuelo.
  *
- * Solo busca los nodos del DOM, elige idioma y arranca. Toda la lógica está
- * en `game.ts`: si este fichero crece, algo se ha puesto en el sitio
- * equivocado.
+ * Solo busca los nodos del DOM, pregunta y arranca. Toda la lógica está en
+ * `game.ts`: si este fichero crece, algo se ha puesto en el sitio equivocado.
+ *
+ * **No es la entrada.** La entrada es `boot.ts`, que enseña la primera
+ * pantalla —la de pilotos— sin esperar a esto, y lo pide en cuanto se ve. Y
+ * esto pide a su vez el juego, que es lo más gordo, mientras se elige. Ver
+ * `boot.ts` para el porqué y las cifras.
  */
 
 // La hoja de estilos se enlaza desde index.html y no se importa aquí: así el
 // HUD ya está maquetado antes de que el navegador termine de leer el módulo,
 // en vez de aparecer sin estilo durante un instante.
-import { Game } from "./game";
 import { conSuAerodromo, DEL_HANGAR, destinosDe, SCENARIOS, type Scenario } from "./world/scenarios";
 import {
   leccionPorId,
@@ -83,7 +86,6 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
   const proxy = proxyDelParte(q);
   return pedirMetar(icao, proxy, deCasa);
 }
-import { detectLocale, setLocale, t } from "./i18n";
 import { abrirHangar } from "./ui/hangar";
 import type { Mission } from "./missions/types";
 import { MISSIONS } from "./content/missions";
@@ -94,9 +96,8 @@ import { aeronavePorId, laQueSeVuelaEn } from "./flight/aeronaves";
 import { campoDe, destinosParaEsteAvion, elQueQuepa } from "./flight/cabe";
 import { vecinosQueSeMontan } from "./world/vecinos-del-vuelo";
 import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
-import { elegirPiloto } from "./ui/pantalla-pilotos";
+import { cerrarPilotos, elegirPiloto } from "./ui/pantalla-pilotos";
 import { leerRearranque } from "./flight/cambio-de-avion";
-import { pedirAlPrimerToque } from "./ui/pantalla-completa";
 import { ensenarAnadirAInicio } from "./ui/anadir-a-inicio";
 import { GUYRAMI } from "./flight/tiers";
 import { ATERRIZAJE, DESPEGUE, VUELTA } from "./flight/lecciones";
@@ -143,15 +144,17 @@ try {
   // Sin almacenamiento se juega igual.
 }
 
-setLocale(detectLocale());
-
 /*
- * **Y en el teléfono, la pantalla entera al primer toque.** Aquí y no en el
- * vuelo porque el primer toque es el de elegir piloto: esperar al vuelo sería
- * pasar la elección entera con la barra del navegador comiéndose un tercio.
- * Ver `ui/pantalla-completa.ts`.
+ * **El juego, pedido ya y esperado al final.** Es la mitad del código —el
+ * vuelo entero, con su cabina y su tráfico— y no hace falta hasta después del
+ * hangar: se baja mientras se elige quién vuela y a dónde, en vez de antes de
+ * enseñar nada. El idioma y la pantalla entera al primer toque los pone la
+ * entrada, que llega antes. Ver `boot.ts`.
  */
-pedirAlPrimerToque();
+const elJuego = import("./game");
+// Si no baja, lo dice quien lo espera; sin esto, el navegador lo contaría
+// como un fallo sin atender antes de que nadie llegue a esperarlo.
+elJuego.catch(() => {});
 
 /**
  * **Las migas del arranque**, solo en desarrollo.
@@ -399,6 +402,12 @@ if (!escenario) {
     escenaDelInicio = "despegar";
     escenario = SCENARIOS.find((s) => s.id === SITIO_DEL_INICIO);
   }
+  /*
+   * Y la pantalla de pilotos se esconde aquí, con lo siguiente ya decidido, y
+   * no al tocar: quien elige antes de que llegue esto la veía irse y se
+   * quedaba mirando una página en blanco. Ver `cerrarPilotos`.
+   */
+  if (pilotosRoot) cerrarPilotos(pilotosRoot);
 }
 
 // Del hangar: un mundo de cuento que se quedara recordado abriría el menú en él.
@@ -762,6 +771,7 @@ if (!conInicio) {
 miga("antes del juego");
 // Y la ortofoto al terreno, si la hay. Ver `Terrain.ponerOrtofoto`.
 quitarLoDeInicio();
+const { Game } = await conMiga("juego", elJuego);
 const game = new Game({
   canvas,
   hudRoot,
@@ -992,261 +1002,3 @@ window.addEventListener(
  * se pierde es justo el vuelo que se acaba de terminar. Ver `datos/guardado.ts`.
  */
 guardarAlSalir();
-
-/*
- * Y el service worker, que es lo que hace que esto funcione sin conexión.
- *
- * Solo en lo publicado: en desarrollo estorbaría —serviría ficheros viejos
- * mientras se edita— y los bancos de pruebas corren contra el servidor de
- * desarrollo, así que ahí ni existe.
- *
- * Falla en silencio a propósito. Un navegador sin service workers, una
- * ventana privada o un servidor sin HTTPS son razones para no tener el juego
- * sin conexión, no para no tener juego. Ver `scripts/hacer-sw.mjs`.
- */
-/*
- * **Y en desarrollo se echa al que hubiera, que no basta con no registrarlo.**
- *
- * Un service worker vive atado al **origen, puerto incluido**, y no a lo que
- * lo puso ahí. Así que basta con haber abierto una vez una compilación de
- * producción en `localhost:5173` para que su worker se quede mandando en ese
- * puerto: después sirve su caché a cualquier cosa que se levante ahí, incluido
- * el servidor de desarrollo, y lo hace sobre todo **cuando el servidor se
- * cae** — que es cuando parece que todo sigue bien.
- *
- * Eso costó una tarde: al reiniciar la máquina se cayó vite, la pestaña siguió
- * funcionando con la caché de semanas atrás, y lo que se vio en pantalla era
- * un juego viejo que ya no existía en el disco. Dicho por quien lo sufrió:
- * «se cayó y lo que quedaba siguió funcionando con algún tipo de caché».
- *
- * No registrar en desarrollo no impide nada de esto: el que ya está puesto no
- * se va solo. Hay que echarlo.
- */
-if (import.meta.env.DEV && "serviceWorker" in navigator) {
-  void navigator.serviceWorker
-    .getRegistrations()
-    .then((puestos) => Promise.all(puestos.map((r) => r.unregister())))
-    .catch(() => {});
-}
-
-if (import.meta.env.PROD && "serviceWorker" in navigator) {
-  const registrar = (): void => {
-    /*
-     * **Y se le pide con el nombre de esta compilación detrás.**
-     *
-     * `sw.js` se llama igual en todas las versiones, así que una caché por
-     * delante —la del navegador o la del CDN— puede servir el de ayer durante
-     * horas, y con él un armazón que precachea ficheros con nombres que ya no
-     * existen. Medido en producción: `cache-control: max-age=53257` y ocho
-     * horas de antigüedad, con el `index.html` pidiendo `index-CxRfK_OS.js`
-     * mientras el `sw.js` publicado listaba `index-WRFM5t_5.js`. El resultado
-     * es el peor de todos: se despliega, el servidor lo tiene, y **quien
-     * juega sigue en la versión de anteayer por mucho que recargue**, porque
-     * lo que le sirve el trabajador de servicio no pasa por la red.
-     *
-     * El nombre de este propio módulo lleva la huella de la compilación, así
-     * que sirve de versión sin tener que inventarse ninguna: cada compilación
-     * pide una dirección que ninguna caché ha visto nunca. La consulta no
-     * cambia el ámbito del trabajador —eso lo fija la ruta— así que esto no
-     * es un truco con efectos: es pedir el fichero de hoy.
-     *
-     * Y `updateViaCache: "none"`, que es lo mismo por el otro lado: cuando el
-     * navegador vaya a comprobar si hay uno nuevo, que no se conteste solo
-     * con lo que tiene guardado.
-     */
-    const huella = new URL(import.meta.url).pathname.split("/").pop() ?? "";
-    void navigator.serviceWorker
-      .register(`./sw.js?v=${encodeURIComponent(huella)}`, {
-        updateViaCache: "none",
-      })
-      .then((registro) => avisarDeLaVersionNueva(registro))
-      .catch(() => {});
-  };
-  /*
-   * **Y se mira si la página ya cargó, en vez de esperar a que cargue.**
-   *
-   * Esto colgaba de `window.addEventListener("load", …)` y no se registraba
-   * nunca. El motivo: este fichero es un módulo con `await` de primer nivel
-   * —espera al relieve, a la ciudad, al tiempo y a las dos ortofotos— así que
-   * para cuando llega aquí, el evento `load` **ya pasó hace rato** y el oyente
-   * se queda esperando algo que no va a volver a ocurrir.
-   *
-   * Lo cazó el banco: cero cachés, cero piezas, el juego sin red en blanco.
-   */
-  if (document.readyState === "complete") registrar();
-  else window.addEventListener("load", registrar);
-}
-
-/**
- * Y avisar de que hay una versión nueva esperando.
- *
- * **Esto es la otra mitad de una decisión que estaba a medias.** El trabajador
- * de servicio no se salta la espera a propósito —cambiar los ficheros por
- * debajo de una pestaña que está volando deja al avión sin lo que pida
- * después— y eso está bien. Lo que faltaba es que alguien lo dijera: quien
- * tiene la pestaña abierta se queda en la versión de ayer sin enterarse, y
- * entonces vuelve a contar un fallo que ya está arreglado.
- *
- * Costó caro y por eso está escrito: el tirador del cuadro de mandos se
- * arregló, se desplegó y se midió funcionando, y seguía sin funcionar —porque
- * lo que corría en esa pestaña era el juego de antes—.
- *
- * Así que se avisa y se ofrece. No se cambia nada por las bravas: se enciende
- * un botón pequeño en una esquina, y si lo tocan, entonces sí. Ver el mensaje
- * `estrenar` en `scripts/plantilla-sw.js`.
- */
-function avisarDeLaVersionNueva(registro: ServiceWorkerRegistration): void {
-  const enseñar = (): void => {
-    if (document.querySelector(".version-nueva")) return;
-    const boton = document.createElement("button");
-    boton.type = "button";
-    boton.className = "version-nueva";
-    // Con nombre también cuando la frase no se ve: en el teléfono va solo la
-    // flecha. Ver `.version-nueva` en la hoja.
-    boton.setAttribute("aria-label", t("version.nueva"));
-    boton.innerHTML =
-      `<svg viewBox="0 0 24 24" aria-hidden="true">` +
-      `<path d="M20 12a8 8 0 1 1-2.3-5.6" fill="none" stroke="currentColor"` +
-      ` stroke-width="2.2" stroke-linecap="round"/>` +
-      `<path d="M20 3.5V9h-5.5" fill="none" stroke="currentColor"` +
-      ` stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>` +
-      `</svg><span>${t("version.nueva")}</span>`;
-    boton.addEventListener("click", () => estrenar(registro, boton));
-    document.body.appendChild(boton);
-  };
-
-  // El que ya estaba esperando cuando se abrió la página.
-  if (registro.waiting && navigator.serviceWorker.controller) enseñar();
-
-  /*
-   * **Y se pregunta cada tanto, que si no nadie pregunta.**
-   *
-   * Esto solo miraba al registrarse, o sea una vez por carga de página. Quien
-   * deja la pestaña abierta —que es exactamente lo que hace quien está
-   * probando— se queda en la versión de hace horas y **vuelve a contar fallos
-   * que ya están arreglados**: pasó una tarde entera con las luces de
-   * posición, con capturas de un juego que ya no existía.
-   *
-   * Dos minutos es un compromiso cómodo: es una petición condicional de unos
-   * pocos cientos de bytes, y el navegador contesta 304 casi siempre. Y al
-   * volver a la pestaña también, que es cuando se mira.
-   */
-  const preguntar = (): void => void registro.update().catch(() => {});
-  setInterval(preguntar, 120_000);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") preguntar();
-  });
-
-  // Y el que llegue mientras se juega.
-  registro.addEventListener("updatefound", () => {
-    const nuevo = registro.installing;
-    if (!nuevo) return;
-    nuevo.addEventListener("statechange", () => {
-      if (nuevo.state === "installed" && navigator.serviceWorker.controller)
-        enseñar();
-    });
-  });
-}
-
-/**
- * Cuánto se espera a que el trabajador nuevo tome el mando antes de recargar
- * igual, ms. Ver `estrenar`.
- *
- * **Quince segundos y no cuatro.** Con la página ya callada —ver
- * `callarLaRed`— lo único que retrasa al nuevo es lo que el viejo tenía en
- * camino, y en un teléfono con datos una tesela o un modelo tardan varios
- * segundos en llegar. Recargar antes es recargar con el viejo al mando, que
- * es justo lo que colgaba la página; la flecha que gira ya dice mientras
- * tanto que el toque se oyó.
- */
-const ESPERA_AL_NUEVO = 15_000;
-
-/**
- * **Estrenar la versión que espera ahora, no la que esperaba al salir el
- * botón.**
- *
- * «Al pulsar sobre el botón de actualizar no respondía», en el teléfono. No
- * era el dedo: el botón guardaba el trabajador que estaba esperando **cuando
- * se encendió**, y si mientras tanto se publica otra versión —que es lo que
- * pasa cuando se prueba con la pestaña abierta: se publica, se vuelve a
- * publicar—, esa segunda llega, se instala y **deja al primero jubilado**. El
- * botón seguía encendido, porque ya había uno, y al tocarlo le mandaba
- * `estrenar` a un trabajador que ya no existía para nadie: ni se estrenaba
- * nada ni se recargaba nada. Reproducido con el banco: con una versión nueva
- * recarga en un segundo; con dos seguidas, veinte segundos tocado y nada.
- * Ver `scripts/verificar-actualizar.mjs`.
- *
- * Así que el que se estrena se busca **al tocar**, que es cuando importa.
- *
- * Y dos redes, porque esto cruza dos sistemas —la página y el trabajador— y
- * un candado entre dos sistemas sin salida es una espera eterna:
- *
- * - si al tocar ya no espera nadie —lo estrenó otra pestaña—, se recarga y
- *   ya: lo nuevo está al mando;
- * - si el nuevo no toma el mando en unos segundos —el navegador lo retrasa
- *   mientras el viejo termina lo que estaba bajando—, se recarga igual. La
- *   página se pide primero a la red —ver `plantilla-sw.js`— y las piezas del
- *   armazón nuevo ya están en su caché, así que lo que abre es lo nuevo.
- *   **Pero es una red, no el camino**: recargar con el viejo al mando puede
- *   colgar la página, y por eso antes se le quita el trabajo al viejo —ver
- *   `callarLaRed`— para que el camino sea el de `controllerchange`.
- *
- * Y el botón **dice que lo ha oído** en cuanto se toca: la flecha gira. Sin
- * eso, un segundo de espera hasta la recarga se lee igual que un botón que
- * no hace nada.
- */
-function estrenar(
-  registro: ServiceWorkerRegistration,
-  boton: HTMLButtonElement,
-): void {
-  if (boton.classList.contains("version-nueva--yendo")) return;
-  boton.classList.add("version-nueva--yendo");
-  boton.setAttribute("aria-busy", "true");
-  let recargando = false;
-  const recargar = (): void => {
-    if (recargando) return;
-    recargando = true;
-    location.reload();
-  };
-  /*
-   * Primero se le dice que se estrene y **después se recarga**, cuando el
-   * navegador avisa de que hay otro al mando. Recargar antes vuelve a pedirle
-   * las piezas al de siempre, que es la forma más fácil de que esto parezca
-   * que no hace nada.
-   */
-  navigator.serviceWorker.addEventListener("controllerchange", recargar, {
-    once: true,
-  });
-  const esperando = registro.waiting;
-  if (!esperando) {
-    recargar();
-    return;
-  }
-  esperando.postMessage("estrenar");
-  callarLaRed();
-  window.setTimeout(recargar, ESPERA_AL_NUEVO);
-}
-
-/**
- * **Y la página deja de pedir cosas, que si no el nuevo no entra.**
- *
- * Chrome no deja tomar el mando al trabajador nuevo mientras el viejo tenga
- * peticiones a medias, aunque al nuevo se le haya dicho que no espere: para
- * al viejo en cuanto se queda sin trabajo, y si en ese instante la página le
- * pide otra cosa —una tesela, un modelo—, lo vuelve a arrancar para
- * atenderla y el nuevo sigue esperando. Volando, con las teselas llegando,
- * eso pasa casi siempre. Medido con el banco, la recarga de socorro de
- * `ESPERA_AL_NUEVO` caía entonces con el viejo al mando y salía de dos
- * maneras, las dos malas: o abría la página otra vez con el botón puesto y
- * el nuevo esperando, o el navegador mataba al viejo a media navegación y la
- * página se quedaba colgada para siempre.
- *
- * La página se va a recargar de todas formas, así que no pierde nada: lo que
- * estaba bajando se corta y lo que se pida desde aquí se queda esperando a
- * una recarga que ya viene. En cuanto el viejo termina, entra el nuevo y
- * `controllerchange` recarga. Ver `scripts/verificar-actualizar.mjs`.
- */
-function callarLaRed(): void {
-  globalThis.fetch = () => new Promise<Response>(() => {});
-  window.stop();
-}

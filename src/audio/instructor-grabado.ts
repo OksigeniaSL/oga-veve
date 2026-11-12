@@ -202,6 +202,8 @@ export class InstructorGrabado implements Instructor {
    * una vez y las cuatro ven lo mismo.
    */
   private readonly banco: BancoDeVoces;
+  /** A qué espera lo que se baja de fondo. Ver `fondoDespuesDe`. */
+  private antesDelFondo: Promise<void> = Promise.resolve();
   private cortar: (() => void) | null = null;
   private sonando = false;
   /** Lo último dicho, para no repetirlo mientras siga siendo lo mismo. */
@@ -874,6 +876,27 @@ export class InstructorGrabado implements Instructor {
   readonly piezasDelHistorial: (readonly string[] | null)[] = [];
 
   /**
+   * **Y lo de fondo, detrás de lo que el vuelo necesita ya.**
+   *
+   * El fondo son dos mil piezas de seis en seis, y en la wifi de un aula
+   * —1,6 Mbps medidos— se comían la red justo al empezar el primer vuelo:
+   * con el modo inicio, el modelo del avión, que son 650 kB, tardaba catorce
+   * segundos en llegar en vez de tres o cuatro, y la tarjeta de Jazlyn salía
+   * doce segundos después del clic. Lo que se dice ya no espera a esto —se
+   * pide aparte, ver `estaLista`—; lo que espera es el resto, que es para
+   * después y para cuando no haya red.
+   *
+   * De fábrica no espera a nada: el hangar no tiene vuelo que proteger, y
+   * las pruebas tampoco. El juego le pone el modelo del avión.
+   */
+  fondoDespuesDe(antes: Promise<unknown>): void {
+    this.antesDelFondo = antes.then(
+      () => {},
+      () => {},
+    );
+  }
+
+  /**
    * Baja el pack y lo deja listo. Se llama después del primer gesto.
    *
    * Devuelve cuántas piezas quedaron cargadas, que es cero cuando no hay pack
@@ -971,6 +994,7 @@ export class InstructorGrabado implements Instructor {
     for (const m of manifiestos) if (m) b.manifiestos.push(m);
     b.estado = "bajando";
     if (!conFondo) return b.piezas.size;
+    await this.antesDelFondo;
     /*
      * **Y las piezas, de fondo y de seis en seis**, en el orden de las voces.
      * Lo que se necesita ya no espera a este turno: se pide aparte, por

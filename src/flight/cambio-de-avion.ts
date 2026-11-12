@@ -91,6 +91,19 @@ export function pedirRearranque(
   }
 }
 
+/**
+ * **Si hay un rearranque pedido, sin gastarlo.** Lo mira la entrada para no
+ * enseñar la pantalla de pilotos a quien vuelve de cambiar de avión, y lo lee
+ * después `main.ts`, que es quien lo gasta. Ver `boot.ts`.
+ */
+export function hayRearranque(almacen: Pick<Storage, "getItem"> | null): boolean {
+  try {
+    return (almacen?.getItem(CLAVE) ?? null) !== null;
+  } catch {
+    return false;
+  }
+}
+
 /** Lee el recado, si lo hay, y lo borra. Ver `Rearranque`. */
 export function leerRearranque(
   almacen: Pick<Storage, "getItem" | "removeItem"> | null,

@@ -9,6 +9,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  hayRearranque,
   leerRearranque,
   pedirRearranque,
   sePuedeCambiarDeAvion,
@@ -70,6 +71,19 @@ describe("el recado entre el vuelo que acaba y el que empieza", () => {
       avion: "jaz-90",
       destino: "pettirossi",
     });
+  });
+
+  it("y la entrada lo mira sin gastarlo, que lo gasta quien arranca el vuelo", () => {
+    const s = sesion();
+    expect(hayRearranque(s)).toBe(false);
+    pedirRearranque(s, { escenario: "pettirossi", avion: "jaz-20" });
+    expect(hayRearranque(s)).toBe(true);
+    // Mirado dos veces, sigue ahí: si lo gastara, `main.ts` no se enteraría
+    // y volvería a preguntar quién vuela a quien solo cambiaba de avión.
+    expect(hayRearranque(s)).toBe(true);
+    expect(leerRearranque(s)).toEqual({ escenario: "pettirossi", avion: "jaz-20" });
+    expect(hayRearranque(s)).toBe(false);
+    expect(hayRearranque(null)).toBe(false);
   });
 
   it("sin almacén, o con algo raro dentro, no hay recado", () => {

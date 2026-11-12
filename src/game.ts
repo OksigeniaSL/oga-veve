@@ -408,6 +408,16 @@ const SE_QUEDA_LA_FRUSTRADA = 4.5;
 const SE_QUEDA_EL_BULTO = 3;
 
 /**
+ * Cuánto espera como mucho el pack de voz de fondo a que llegue el modelo del
+ * avión, ms. Ver `fondoDespuesDe` en `audio/instructor-grabado.ts`.
+ *
+ * Veinte segundos: el modelo más gordo de la flota, el del JAZ 120, son 1,7 MB
+ * y unos nueve segundos en la wifi de un aula, y un modelo que no llega —sin
+ * red y sin copia— no puede dejar el pack para siempre sin bajar.
+ */
+const ESPERA_DEL_FONDO = 20_000;
+
+/**
  * Cuánto más cerca tiene que estar la pista de otro campo para que se monte
  * lo suyo, m. Ver `mirarSiCambiaDeCampo`.
  *
@@ -6673,7 +6683,15 @@ export class Game {
     // Y si hay un modelo de verdad, se cambia por él cuando termine de cargar.
     // Las cajas se ponen primero a propósito: nadie espera mirando un cielo
     // vacío a que llegue un fichero.
-    void this.ponerModeloSiLoHay();
+    const modeloPuesto = this.ponerModeloSiLoHay();
+    /*
+     * Y el pack de voz que se baja de fondo, detrás del modelo y no a la vez:
+     * en una red lenta se lo comía. Con tope, que un modelo que no llega no
+     * puede dejar el pack sin bajar. Ver `fondoDespuesDe`.
+     */
+    this.instructor.fondoDespuesDe(
+      Promise.race([modeloPuesto, new Promise<void>((listo) => setTimeout(listo, ESPERA_DEL_FONDO))]),
+    );
 
     this.blobShadow = createBlobShadow(this.aircraft.wingSpan);
     this.scene.add(this.blobShadow);

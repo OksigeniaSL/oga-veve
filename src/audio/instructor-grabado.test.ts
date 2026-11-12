@@ -335,6 +335,31 @@ describe("el instructor grabado", () => {
       expect(suplente.dichas).toEqual(["Seguí la raya verde"]);
       globalThis.fetch = antes;
     });
+
+    /*
+     * **Lo de fondo, detrás del modelo del avión.** En la wifi de un aula, el
+     * fondo se comía la red justo cuando bajaba el avión del primer vuelo.
+     * Los manifiestos sí van ya: sin ellos no se sabe qué hay grabado.
+     */
+    it("y lo de fondo espera a lo que se le diga", async () => {
+      const antes = globalThis.fetch;
+      const pedidas: string[] = [];
+      globalThis.fetch = vi.fn(async (ruta: unknown) => {
+        pedidas.push(String(ruta));
+        return String(ruta).endsWith("manifiesto.json")
+          ? new Response(JSON.stringify(PACK))
+          : new Response(new ArrayBuffer(64));
+      }) as typeof fetch;
+      const i = new InstructorGrabado(new Grabadora(), new Suplente(), bocaDePrueba());
+      let soltar = (): void => {};
+      i.fondoDespuesDe(new Promise<void>((listo) => (soltar = listo)));
+      const carga = i.cargar(["instructor"], "data/voces", () => "probably");
+      await new Promise((listo) => setTimeout(listo, 20));
+      expect(pedidas).toEqual(["data/voces/instructor/manifiesto.json"]);
+      soltar();
+      expect(await carga).toBe(3);
+      globalThis.fetch = antes;
+    });
   });
 });
 

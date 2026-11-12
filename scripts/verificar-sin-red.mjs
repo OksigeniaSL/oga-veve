@@ -111,6 +111,16 @@ const mirarLaPagina = () =>
 
 // ── Primera visita: aquí es donde se instala el service worker ───────────
 await entrar();
+/*
+ * **Esperándolo, que no se registra al arrancar el vuelo sino cuando la
+ * página se calla**, veinte segundos como mucho: su precarga no compite con
+ * el avión que se está bajando. Ver `registrarElTrabajador` en
+ * `src/service-worker.ts`. Con los catorce segundos de `entrar` a secas, el
+ * banco miraba a veces antes de que lo hubiera.
+ */
+await page
+  .waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 60_000 })
+  .catch(() => {});
 const controla = await page.evaluate(
   () => !!navigator.serviceWorker.controller,
 );

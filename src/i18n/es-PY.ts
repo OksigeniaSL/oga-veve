@@ -2593,7 +2593,7 @@ export const ES_PY = {
   /*
    * El aviso de versión nueva. Corto porque es un botón pequeño en una
    * esquina, y con la flecha circular al lado, que es lo que se entiende sin
-   * leer. Ver `avisarDeLaVersionNueva` en `main.ts`.
+   * leer. Ver `avisarDeLaVersionNueva` en `service-worker.ts`.
    */
   "version.nueva": "Hay una versión nueva",
 

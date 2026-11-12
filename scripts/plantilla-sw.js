@@ -12,9 +12,51 @@ const ARMAZON = __ARMAZON__;
 const CACHE_ARMAZON = `oga-veve-armazon-${VERSION}`;
 const CACHE_USO = "oga-veve-uso";
 
+/** Si el nombre lleva la huella del contenido: `-` y ocho caracteres antes de la extensión. */
+const llevaHuella = (url) => /-[A-Za-z0-9_-]{8}\.[a-z0-9]+$/.test(new URL(url, self.location.href).pathname);
+
 self.addEventListener("install", (evento) => {
+  /*
+   * **Lo que ya está guardado con su huella no se vuelve a bajar.**
+   *
+   * Era `cache.addAll(ARMAZON)`: el armazón entero pedido otra vez cada vez
+   * que se estrena una versión, unos cinco megas. Lo que la caché del
+   * navegador conservara no tocaba la red, pero esa caché no promete nada
+   * —es la primera que se vacía en una tablet con poco disco, y el pack de
+   * voz pasa por ella—. Y el día después de publicar, en un aula, eso lo
+   * hacen todas las tablets a la vez y justo al abrir el juego, que es cuando
+   * el navegador comprueba si hay trabajador nuevo: el armazón repetido
+   * compitiendo con la primera pantalla por una wifi de 1,6 Mbps. Casi todo
+   * es lo mismo que ayer —three.js, las fuentes, los retratos, los textos—, y
+   * un fichero con la huella en el nombre es por definición el mismo
+   * fichero: si cambia, cambia de nombre. Así que se copia del armazón de
+   * ayer, que está en la Cache API y ahí sí se queda, o de la caché del uso
+   * si la página ya lo bajó, y solo se pide lo que no esté.
+   *
+   * Lo que no lleva huella —el `index.html`, el manifiesto, los iconos— se
+   * pide siempre, como antes.
+   *
+   * Y con la misma garantía que `addAll`: si algo no llega, la instalación
+   * falla entera y se queda el trabajador de antes, con su armazón completo.
+   * Lo que se hubiera copiado a medias se queda en una caché que borra el
+   * próximo que se estrene. Un trabajador con medio armazón sería un juego
+   * que abre sin red y se rompe al elegir avión.
+   */
   evento.waitUntil(
-    caches.open(CACHE_ARMAZON).then((cache) => cache.addAll(ARMAZON)),
+    (async () => {
+      const cache = await caches.open(CACHE_ARMAZON);
+      await Promise.all(
+        ARMAZON.map(async (ruta) => {
+          if (llevaHuella(ruta)) {
+            const guardado = await caches.match(ruta);
+            if (guardado) return cache.put(ruta, guardado);
+          }
+          const respuesta = await fetch(ruta);
+          if (!respuesta.ok) throw new Error(`${ruta}: ${respuesta.status}`);
+          return cache.put(ruta, respuesta);
+        }),
+      );
+    })(),
   );
   /*
    * **Sin `skipWaiting`, y es una decisión.**
@@ -72,8 +114,7 @@ self.addEventListener("activate", (evento) => {
         // Las teselas y su índice se quedan: ver `esTesela`. Sin índice, las
         // teselas guardadas no se pueden usar sin red.
         if (esDeLasTeselas(peticion.url)) continue;
-        if (!/-[A-Za-z0-9_-]{8}\.[a-z0-9]+$/.test(new URL(peticion.url).pathname))
-          await uso.delete(peticion);
+        if (!llevaHuella(peticion.url)) await uso.delete(peticion);
       }
       await self.clients.claim();
     })(),
@@ -209,9 +250,7 @@ self.addEventListener("fetch", (evento) => {
    * rehiciera la cabina entera. Así siguen funcionando sin red y se ponen al
    * día solos, un vuelo después.
    */
-  const conHuella =
-    /-[A-Za-z0-9_-]{8}\.[a-z0-9]+$/.test(new URL(peticion.url).pathname) ||
-    esTesela(peticion.url);
+  const conHuella = llevaHuella(peticion.url) || esTesela(peticion.url);
   const renovar = () =>
     fetch(peticion).then((res) => {
       // Solo lo que salió bien. Un 404 guardado es un 404 para siempre.
