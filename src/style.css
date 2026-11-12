@@ -8642,10 +8642,29 @@ button.motor__tecla::after {
     grid-row: 1 / -1;
   }
 
-  /* El nombre, en un renglón: el entero va en la ficha de la carta, al tocar el campo. */
+  /*
+   * El nombre, en un renglón y entero: la comarca —«· Amambay», «· Granja
+   * Óga»— se aparta, y sigue para el lector de pantalla y en la ficha de la
+   * carta al tocar el campo. Cortado con «…» salía «Yvytu Rape · Granja Ó…»,
+   * y en dos renglones, en 960 × 540, al plano no le quedaba sitio y el
+   * «SGOG» se montaba en el «146 km». El «…» queda solo por si un nombre
+   * futuro no cupiera ni sin comarca.
+   */
   .hangar .hangar__rejilla--carta-de-pie .ficha__nombre {
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    /* Un punto menos, como el «146 km»: a 15, en 960 × 540, «Pedro Juan
+       Caballero» no entraba en su ficha de 174. */
+    font-size: calc(14px * var(--escala-hud));
+  }
+
+  .hangar .hangar__rejilla--carta-de-pie .ficha__comarca {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
     white-space: nowrap;
   }
 
@@ -8658,16 +8677,21 @@ button.motor__tecla::after {
     padding: 7px 10px 8px;
   }
 
-  .hangar .hangar__rejilla--carta-de-pie .ficha__dato {
+  /*
+   * Y el «146 km» y su alternativo un punto más pequeños, con las dos cartas:
+   * así el alternativo cabe a su lado. Solo en la de pie, en Canarias el de La
+   * Palma y El Hierro —«ALTN GCGM», la eme es ancha— bajaba a su renglón y las
+   * fichas de la fila quedaban cada una a su manera.
+   */
+  .hangar .hangar__rejilla--destinos .ficha__dato {
     font-size: 13px;
   }
 
-  /* Y el «146 km» un punto más pequeño: así el alternativo cabe a su lado. */
-  .hangar .hangar__rejilla--carta-de-pie .ficha__renglon {
+  .hangar .hangar__rejilla--destinos .ficha__renglon {
     gap: 6px;
   }
 
-  .hangar .hangar__rejilla--carta-de-pie .ficha__numero {
+  .hangar .hangar__rejilla--destinos .ficha__numero {
     font-size: 13px;
     padding: 1px 5px;
   }

@@ -744,6 +744,20 @@ const CIRCUITO = `
   </svg>`;
 
 /**
+ * **El nombre de un campo y su comarca**, por separado: «Pedro Juan
+ * Caballero» y «· Amambay». En la ficha estrecha de la pizarra, con la carta
+ * de pie, la comarca no cabe y se aparta —sigue ahí para el lector de
+ * pantalla, y entera en la ficha de la carta al tocar el campo—; cortar el
+ * nombre con «…» dejaba «Yvytu Rape · Granja Ó…». Ver `style.css`,
+ * «¿A dónde vas?», entera y sin desplazar.
+ */
+function nombreYComarca(nombre: string): string {
+  const i = nombre.indexOf(" · ");
+  if (i < 0) return nombre;
+  return `${nombre.slice(0, i)}<span class="ficha__comarca"> · ${nombre.slice(i + 3)}</span>`;
+}
+
+/**
  * La ficha de un destino: su plano, su distancia, su alternativo y su carga.
  *
  * `destino` nulo es la vuelta al campo: el plano de casa con el circuito
@@ -790,7 +804,7 @@ function fichaDeDestino(
           }
         </span>
         <span class="ficha__nombre">${
-          destino ? t(destino.nameKey as never) : t("hangar.vuelta")
+          destino ? nombreYComarca(t(destino.nameKey as never)) : t("hangar.vuelta")
         }</span>
         ${deposito(avion, carga)}
       </span>
