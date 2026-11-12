@@ -18,7 +18,7 @@ import {
   sobreElAguaEn,
   Terrain,
 } from "./terrain";
-import { enElPavimento } from "./aerodrome";
+import { cercaDelPavimento } from "./aerodrome";
 import {
   CHACO,
   conSuAerodromo,
@@ -217,13 +217,55 @@ describe("el aeródromo se asienta en tierra", () => {
         deMar++;
         if (pos.getY(i) <= nivel) continue;
         // En los ejes del fichero del aeródromo: la Y apunta al norte.
-        const enSuSitio = enElPavimento(aero, [pos.getX(i), -pos.getZ(i)], 2 * paso);
+        const enSuSitio = cercaDelPavimento(aero, [pos.getX(i), -pos.getZ(i)], 2 * paso);
         if (!enSuSitio) sacados++;
       }
       // Que no pase en vacío en las islas, que tienen mar que mirar. Las
       // lecciones de Paraguay pueden no tener un solo nudo bajo su río.
       if (escenario.waterLevel <= 2) expect(deMar).toBeGreaterThan(0);
       expect(sacados).toBe(0);
+    });
+
+    /*
+     * **Pero lo que lleva pavimento al lado sí se sostiene**, y la plataforma
+     * es pavimento. Los dos nudos de margen solo veían pistas y calles, y en
+     * Gando siete nudos de mar pegados a la plataforma grande se quedaron a la
+     * cota del agua: la rejilla interpola hacia ellos y el suelo de la
+     * plataforma caía hasta veintisiete centímetros por metro. Rodando a
+     * treinta por hora eso despega las ruedas —ver `verificar-suelo.mjs`, que
+     * lo mide igual en el juego—.
+     *
+     * Se recorre lo mismo que allí: el contorno de cada plataforma y las
+     * cuerdas entre vértices opuestos, metro a metro.
+     */
+    it(`${escenario.id}: la plataforma no cae bajo las ruedas`, () => {
+      const t = new Terrain(escenario);
+      const CAIDA_QUE_DESPEGA = 0.12;
+      let saltos = 0;
+      let peor = 0;
+      for (const a of aero.aprons) {
+        const c = a.polygon.map(([x, y]) => [x, -y] as const);
+        const mitad = Math.floor(c.length / 2);
+        const cruces = c.slice(0, mitad).flatMap((p, i) => [p, c[i + mitad]!]);
+        const puntos = [...c, c[0]!, ...cruces];
+        for (let i = 0; i < puntos.length - 1; i++) {
+          const [ax, az] = puntos[i]!;
+          const [bx, bz] = puntos[i + 1]!;
+          const largo = Math.hypot(bx - ax, bz - az);
+          if (largo < 1) continue;
+          let antes = t.sampleHeight(ax, az);
+          for (let d = 1; d <= largo; d++) {
+            const y = t.sampleHeight(ax + ((bx - ax) * d) / largo, az + ((bz - az) * d) / largo);
+            if (antes - y > CAIDA_QUE_DESPEGA) saltos++;
+            peor = Math.max(peor, antes - y);
+            antes = y;
+          }
+        }
+      }
+      expect({ saltos, peor: +peor.toFixed(2) }).toEqual({
+        saltos: 0,
+        peor: expect.any(Number),
+      });
     });
   }
 });

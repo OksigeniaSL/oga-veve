@@ -14,7 +14,7 @@
 
 import { describe, expect, it } from "vitest";
 import sgas from "../../data/aerodromes/sgas.aero.json";
-import { enElPavimento, type Aerodrome, type Punto } from "./aerodrome";
+import { cercaDelPavimento, enElPavimento, type Aerodrome, type Punto } from "./aerodrome";
 
 const aero = sgas as unknown as Aerodrome;
 
@@ -63,5 +63,25 @@ describe("dónde hay asfalto en Pettirossi", () => {
     const [x, y] = pista.centerline[0]!;
     const justoFuera: Punto = [x + 1000, y + 1000];
     expect(enElPavimento(aero, justoFuera, 2000)).toBe(true);
+  });
+
+  /*
+   * **Y cerca del pavimento cuenta también la plataforma**, que es lo que
+   * pregunta el aplanado para saber qué mar sostener. Con `enElPavimento`
+   * solo veía pistas y calles, y en Gando dejó en el agua siete nudos pegados
+   * a la plataforma grande: el avión rodaba dando saltos. Ver
+   * `flattenAerodrome`.
+   */
+  it("y cerca del pavimento cuenta también la plataforma", () => {
+    const soloPlataforma = {
+      ...aero,
+      runways: [],
+      taxiways: [],
+      aprons: [{ polygon: [[0, 0], [100, 0], [100, 100], [0, 100]] as Punto[], surface: null }],
+    } as unknown as Aerodrome;
+    const fuera: Punto = [110, 50];
+    expect(cercaDelPavimento(soloPlataforma, fuera, 5)).toBe(false);
+    expect(cercaDelPavimento(soloPlataforma, fuera, 20)).toBe(true);
+    expect(cercaDelPavimento(soloPlataforma, [50, 50], 5)).toBe(true);
   });
 });
