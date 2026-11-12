@@ -19499,11 +19499,12 @@ path.kit-hueco__forma {
 }
 
 /*
- * Y más altas, con el cielo de su dibujo estirado, y con el hueco que sobre
- * encima y no repartido: su borde de abajo, en la mano.
+ * Y más altas donde sobra pantalla, con el cielo de su dibujo estirado, y con
+ * el hueco que sobre encima y no repartido: su borde de abajo, en la mano. No
+ * más: crecidas de más, empujaban el pie debajo de la barra.
  */
 :root.pizarra .hangar .hangar__fila--tres .ficha {
-  min-height: 55vh;
+  min-height: 53vh;
 }
 
 :root.pizarra .hangar > .pie {
