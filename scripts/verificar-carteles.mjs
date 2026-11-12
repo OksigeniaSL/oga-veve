@@ -1824,10 +1824,16 @@ const PIZARRA_EN = [
   },
 ];
 
-for (const [ancho, alto] of PIZARRAS)
+/*
+ * **Y el Chromebook que la pizarra duplica, con su touchpad**: 1366 × 768 y
+ * puntero fino, sin pantalla táctil. No hay palanca ni gas en pantalla, la
+ * franja va contra el borde, y todo se pulsa con el ratón.
+ */
+for (const [ancho, alto, fino] of [...PIZARRAS, [1366, 768, "fino"]])
   for (const donde of PIZARRA_EN) {
-    const page = await navegador.newPage({ viewport: { width: ancho, height: alto }, hasTouch: true, isMobile: true });
-    const tam = `pizarra ${donde.nombre} ${ancho}×${alto}`;
+    const dedo = !fino;
+    const page = await navegador.newPage({ viewport: { width: ancho, height: alto }, hasTouch: dedo, isMobile: dedo });
+    const tam = `pizarra ${donde.nombre} ${ancho}×${alto}${fino ? " con puntero fino" : ""}`;
     try {
       await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
       await page.goto(`${BASE}/${donde.url}&pizarra=1`);
@@ -1881,7 +1887,11 @@ for (const [ancho, alto] of PIZARRAS)
           "los paneles y los interruptores de cabina viven ahí: si no se alcanzan, no existen",
         );
       if (process.env.OGA_FOTOS)
-        await page.screenshot({ path: `${process.env.OGA_FOTOS}/pizarra-${donde.nombre}-${ancho}x${alto}.png` });
+        await page.screenshot({
+          path: `${process.env.OGA_FOTOS}/pizarra-${donde.nombre}-${ancho}x${alto}${fino ? "-fino" : ""}.png`,
+        });
+      // Con el dedo de verdad o con el ratón, según el aparato.
+      const pulsar = (xy) => (dedo ? page.touchscreen.tap(...xy) : page.mouse.click(...xy));
       /*
        * **Y la pausa, con el dedo de verdad.** Medirla no basta: con un toque,
        * el clic que manda el navegador detrás caía sobre el velo recién abierto
@@ -1895,7 +1905,7 @@ for (const [ancho, alto] of PIZARRAS)
       };
       const enPausa = () => page.evaluate(() => document.querySelector("#pausa")?.hidden === false);
       const boton = await centro('[data-hud="pausa"]');
-      if (boton) await page.touchscreen.tap(...boton);
+      if (boton) await pulsar(boton);
       await page.waitForTimeout(500);
       const abierta = await enPausa();
       const puertas = await page.evaluate(() => {
@@ -1906,11 +1916,11 @@ for (const [ancho, alto] of PIZARRAS)
           .map((r) => r.top >= tercio - 0.5 && r.bottom <= innerHeight + 0.5);
       });
       const seguir = abierta ? await centro('[data-pausa="seguir"]') : null;
-      if (seguir) await page.touchscreen.tap(...seguir);
+      if (seguir) await pulsar(seguir);
       await page.waitForTimeout(500);
       const cerrada = !(await enPausa());
       comprobar(
-        `${tam}: la pausa se abre con el dedo, con sus puertas abajo, y la de seguir la cierra`,
+        `${tam}: la pausa se abre ${dedo ? "con el dedo" : "con el ratón"}, con sus puertas abajo, y la de seguir la cierra`,
         abierta && puertas.length > 0 && puertas.every(Boolean) && cerrada,
         !abierta
           ? "el toque no la deja abierta"
@@ -1991,6 +2001,116 @@ for (const [ancho, alto] of PIZARRAS) {
     );
     if (process.env.OGA_FOTOS)
       await page.screenshot({ path: `${process.env.OGA_FOTOS}/pizarra-hangar-ajustes-${ancho}x${alto}.png` });
+  } catch (e) {
+    comprobar(`${tam}: el hangar sale`, false, String(e).slice(0, 160), "");
+  } finally {
+    await page.close();
+  }
+}
+
+/*
+ * **Y el hangar a 960 × 540, con la pizarra y sin ella**, que es lo más pequeño
+ * que se prueba para el aula: cabe entero sin rodar y no se pisa nada. Ahí la
+ * pregunta de cada paso ocupaba cuatro renglones, la barra subía y el pie —la
+ * firma y los enlaces— quedaba debajo de ella. Se mira la entrada y los
+ * ajustes, con el texto de cada letrero y la caja de cada cosa que se toca.
+ */
+/** Corre en la página: lo que se pisa en el hangar, y si hay que rodarlo. */
+function medirElHangar() {
+  const W = innerWidth;
+  const H = innerHeight;
+  const hangar = document.querySelector(".hangar");
+  const caja = (el) => {
+    // Los letreros, por su texto: la caja de un título va de lado a lado.
+    if (el.matches(".hangar__marca, .hangar__pregunta, .hangar__reposo, .pie__hecho, .pie__promesa, .ajuste__titulo")) {
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      return r.getBoundingClientRect();
+    }
+    return el.getBoundingClientRect();
+  };
+  const piezas = [
+    ...hangar.querySelectorAll(
+      ".marca, .hangar__marca, .hangar__pregunta, .hangar__reposo, .ficha, .ajuste__titulo, .idioma, .mundo, .pizarra-boton, " +
+        ".pie__marca, .pie__hecho, .pie__enlace, .pie__promesa, .paso, .hangar__despegar",
+    ),
+  ].filter((el) => {
+    if (el.closest("[hidden]")) return false;
+    const cs = getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    return cs.display !== "none" && cs.visibility !== "hidden" && r.width > 2 && r.height > 2;
+  });
+  const nombre = (el) => String(el.className).split(" ")[0];
+  const fuera = [];
+  const pisan = [];
+  const tapados = [];
+  for (const [i, a] of piezas.entries()) {
+    const ra = caja(a);
+    if (ra.left < -0.5 || ra.top < -0.5 || ra.right > W + 0.5 || ra.bottom > H + 0.5)
+      fuera.push(`${nombre(a)} ${Math.round(ra.top)}–${Math.round(ra.bottom)}`);
+    for (const b of piezas.slice(i + 1)) {
+      if (a.contains(b) || b.contains(a)) continue;
+      const rb = caja(b);
+      if (
+        Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left) > 1 &&
+        Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top) > 1
+      )
+        pisan.push(`${nombre(a)} y ${nombre(b)}`);
+    }
+    if (a.matches("button, a")) {
+      const x = Math.min(W - 1, Math.max(0, ra.left + ra.width / 2));
+      const y = Math.min(H - 1, Math.max(0, ra.top + ra.height / 2));
+      const p = document.elementFromPoint(x, y);
+      if (!p || !(p === a || a.contains(p))) tapados.push(`${nombre(a)} bajo ${p ? nombre(p) : "nada"}`);
+    }
+  }
+  return {
+    rueda: hangar.scrollHeight - hangar.clientHeight,
+    cuantas: piezas.length,
+    fuera,
+    pisan: [...new Set(pisan)],
+    tapados,
+  };
+}
+
+for (const pizarra of [false, true]) {
+  const page = await navegador.newPage({ viewport: { width: 960, height: 540 }, hasTouch: true, isMobile: true });
+  const tam = `hangar 960×540 ${pizarra ? "con la pizarra" : "sin pizarra"}`;
+  try {
+    await page.addInitScript(() => {
+      if (localStorage.getItem("oga-veve:guardado") === null)
+        localStorage.setItem("oga-veve:cuaderno", JSON.stringify({ despegues: 1, segundos: 600 }));
+    });
+    await page.goto(`${BASE}/?pizarra=${pizarra ? 1 : 0}`);
+    await page.waitForSelector(".piloto__boton", { timeout: 60000 });
+    await page.click(".piloto__boton");
+    await page.waitForSelector(".ficha--sitio", { timeout: 60000 });
+    await page.waitForTimeout(500);
+    for (const pantalla of ["entrada", "ajustes"]) {
+      if (pantalla === "ajustes") {
+        await page.click('[data-pantalla="ajustes"]');
+        await page.waitForSelector(".hangar__ajustes", { timeout: 10000 });
+        await page.waitForTimeout(300);
+      }
+      const h = await page.evaluate(medirElHangar);
+      comprobar(
+        `${tam}, ${pantalla}: cabe sin rodar y no se pisa nada`,
+        h.rueda <= 1 && h.fuera.length + h.pisan.length + h.tapados.length === 0,
+        [
+          h.rueda > 1 ? `sobran ${h.rueda} px: hay que rodar` : "",
+          ...h.fuera.map((f) => `fuera ${f}`),
+          ...h.pisan.map((f) => `se pisan ${f}`),
+          ...h.tapados,
+        ]
+          .filter(Boolean)
+          .join(" · ") || `${h.cuantas} piezas en su sitio`,
+        "960 × 540 es lo más pequeño que se prueba para el aula: el pie quedaba debajo de la barra de los pasos",
+      );
+      if (process.env.OGA_FOTOS)
+        await page.screenshot({
+          path: `${process.env.OGA_FOTOS}/hangar-960x540-${pizarra ? "pizarra" : "normal"}-${pantalla}.png`,
+        });
+    }
   } catch (e) {
     comprobar(`${tam}: el hangar sale`, false, String(e).slice(0, 160), "");
   } finally {

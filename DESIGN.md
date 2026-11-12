@@ -472,7 +472,9 @@ nada.
   el dibujo encima de su palabra (desde Taguato lleva frase, no cabe ahí y la mano ya llega arriba); y el cuadro, sin
   pasar del hueco que dejan las dos; y abierta la pausa, sus puertas abajo. Lo del adulto se queda arriba: el sonido de
   la sala, los créditos y el hangar. En el hangar, las fichas del «¿seguimos?» crecen hasta la mano. En un teléfono
-  no hace nada. Lo mide `npm run carteles` a 1280 × 600, 960 × 540 y 1366 × 768.
+  no hace nada. Lo mide `npm run carteles` a 1280 × 600, 960 × 540 y 1366 × 768 con el dedo, y a 1366 × 768 con el
+  puntero fino del Chromebook que la pizarra duplica; y el hangar a 960 × 540, con la pizarra y sin ella, cabe sin
+  rodar y sin pisarse (hasta 560 de alto, los pasos van en baldosa, sin su pregunta).
 - El zoom de la página no se bloquea (sin `user-scalable=no`); el `touch-action: none` de los mandos ya evita el zoom
   por accidente.
 - Antes de publicar un cambio de HUD se mira en tablet, en teléfono apaisado y de pie, con dedo.

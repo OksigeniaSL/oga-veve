@@ -8586,8 +8586,15 @@ button.motor__tecla::after {
  * 800 × 360 hasta el centro de dos tarjetas, que no se podían tocar. En
  * pantalla baja: la barra en una fila, la foto de la tarjeta más apaisada y el
  * título más pequeño —el sello sigue arriba a la izquierda—.
+ *
+ * **Y hasta 560 de alto, no solo en el teléfono.** En una pizarra de aula a
+ * 960 × 540, el tamaño más pequeño que se prueba para el aula, cada paso medía
+ * 131 de ancho y su pregunta ocupaba cuatro renglones: la barra subía hasta
+ * 438 y el pie —la firma y los enlaces— quedaba entero debajo de ella, y la
+ * página había que rodarla. Lo mide `verificar-carteles` a 960 × 540, con la
+ * pizarra y sin ella.
  */
-@media (max-height: 460px) {
+@media (max-height: 560px) {
   .hangar {
     padding-bottom: calc(104px + env(safe-area-inset-bottom));
   }
@@ -8622,7 +8629,7 @@ button.motor__tecla::after {
  * renglones. Es la misma baldosa que en un teléfono de pie, que es donde se
  * vio primero: ver «El hangar en un teléfono de pie», más abajo.
  */
-@media (max-height: 460px), (max-width: 560px) {
+@media (max-height: 560px), (max-width: 560px) {
   /*
    * La pregunta, fuera de la vista y no fuera de la página: con
    * `display: none` el botón se quedaba sin la mitad de su nombre, y un
@@ -19509,6 +19516,40 @@ path.kit-hueco__forma {
 
 :root.pizarra .hangar > .pie {
   margin-top: 0;
+}
+
+/*
+ * En pantalla baja no hay alto que darles: con la foto más apaisada ya cabe
+ * todo sin rodar, y lo que sobra lo pone el margen de encima del panel, que
+ * las deja apoyadas en el pie. El pie, más fino, y la reserva de la barra, la
+ * que mide de verdad con los pasos en baldosa.
+ */
+@media (max-height: 560px) {
+  :root.pizarra .hangar {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+
+  :root.pizarra .hangar > .pie {
+    padding-block: 4px;
+  }
+
+  /*
+   * Y en un renglón: la promesa —«sin cuentas ni permisos»— lo partía en dos y
+   * dejaba las fichas a veinte píxeles del tercio de abajo. Es para el adulto,
+   * y en una pantalla estrecha ya se quitaba (ver `.pie__promesa`).
+   */
+  :root.pizarra .hangar .pie__promesa {
+    display: none;
+  }
+
+  :root.pizarra .hangar .hangar__fila--tres .ficha {
+    min-height: 0;
+  }
+
+  :root.pizarra .hangar .hangar__fila--tres .ficha__lienzo {
+    flex: none;
+    aspect-ratio: 5 / 2;
+  }
 }
 
 :root.pizarra .hangar .hangar__fila--tres .ficha__lienzo {
