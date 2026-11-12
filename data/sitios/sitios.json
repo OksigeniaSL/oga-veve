@@ -128,9 +128,9 @@
       "lat": 28.342096,
       "lon": -16.922865,
       "giro": 0,
-      "cota": null,
+      "cota": 29.0,
       "alcance": 9500,
-      "de": "en.wikipedia, Punta de Teno Lighthouse; osm way/570082211, a metro y medio",
+      "de": "en.wikipedia, Punta de Teno Lighthouse; osm way/570082211, a metro y medio. La cota, del MDT05 del PNOA-LiDAR (IGN) a 5 m al pie de la torre",
       "luz": {
         "altura": 17.75,
         "fases": [0.3, 8.3, 0.3, 2.5, 0.3, 8.3],

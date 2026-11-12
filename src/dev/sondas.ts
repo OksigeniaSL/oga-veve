@@ -2576,9 +2576,20 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     lucesDeFaro: () => juego.sitios?.lucesAhora() ?? [],
     /** Pone el reloj de los destellos en un segundo, y lo para si se pide: para fotografiar uno encendido. */
     ponerSegundoDeLosFaros: (segundos: number, quieto = false) => juego.sitios?.ponerSegundo(segundos, quieto),
-    /** Enseña u oculta los sitios con modelo, para medir lo que cuestan. */
-    verLosSitios: (si: boolean) => {
-      if (juego.sitios) juego.sitios.grupo.visible = si;
+    /**
+     * Enseña u oculta los sitios con modelo, para medir lo que cuestan: todos,
+     * o solo lo que se llame así —`sitio:faro-de-teno`, `luces-de-faro`—.
+     * Cerca de Teno también está puesto el roque de Agando, y ocultarlos todos
+     * cargaba sus triángulos en la cuenta del faro.
+     */
+    verLosSitios: (si: boolean, ...nombres: string[]) => {
+      const grupo = juego.sitios?.grupo;
+      if (!grupo) return;
+      if (!nombres.length) grupo.visible = si;
+      for (const n of nombres) {
+        const uno = grupo.getObjectByName(n);
+        if (uno) uno.visible = si;
+      }
     },
     /**
      * **Un sitio de prueba en `x`, `z`**, con el `.glb` hecho por código de

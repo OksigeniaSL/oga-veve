@@ -11,7 +11,8 @@
  * El helicóptero se recoloca cada poco en el mismo punto para que no se mueva
  * mientras se mira: aquí no se vuela, se mira.
  *
- * Uso: `OGA_PUERTO=5661 OGA_FOTOS=fotos node scripts/ver-faro-de-teno.mjs`.
+ * Uso: `OGA_PUERTO=5661 OGA_FOTOS=fotos node scripts/ver-faro-de-teno.mjs`; `OGA_SUFIJO=-x`
+ * añade eso al nombre de cada foto.
  * Con la tarjeta de verdad por omisión; `OGA_GPU=0` para dibujar por programa.
  */
 import { mkdirSync } from "node:fs";
@@ -21,6 +22,8 @@ import { baseDe } from "./servidor.mjs";
 
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5661);
 const FOTOS = process.env.OGA_FOTOS ?? "fotos-faro";
+/** Lo que se añade al nombre de cada foto, para tener dos tandas al lado: `-cota`. */
+const SUFIJO = process.env.OGA_SUFIJO ?? "";
 mkdirSync(FOTOS, { recursive: true });
 
 /** El faro y el llano, en el mundo de Los Rodeos: los de `content/missions.ts`. */
@@ -94,8 +97,8 @@ try {
   const foto = async (nombre, vista = "chase") => {
     await page.evaluate((v) => globalThis.__oga.ponerVista(v), vista);
     await pausa(600);
-    await page.screenshot({ path: `${FOTOS}/${nombre}.png` });
-    console.log(`    foto: ${FOTOS}/${nombre}.png`);
+    await page.screenshot({ path: `${FOTOS}/${nombre}${SUFIJO}.png` });
+    console.log(`    foto: ${FOTOS}/${nombre}${SUFIJO}.png`);
     await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
   };
   /** Cuadro mediano y percentil 95, ms, y lo dibujado en el último. */
@@ -129,9 +132,9 @@ try {
   const coste = async (p, alto, hacia, nombre) => {
     await ponerEn(p, alto, hacia, 800);
     const con = await medir();
-    await page.evaluate(() => globalThis.__oga.verLosSitios(false));
+    await page.evaluate(() => globalThis.__oga.verLosSitios(false, "sitio:faro-de-teno", "luces-de-faro"));
     const sin = await medir();
-    await page.evaluate(() => globalThis.__oga.verLosSitios(true));
+    await page.evaluate(() => globalThis.__oga.verLosSitios(true, "sitio:faro-de-teno", "luces-de-faro"));
     console.log(
       `  coste ${nombre}: con el faro ${con.triangulos} triángulos y ${con.llamadas} llamadas, cuadro ${con.mediana.toFixed(1)} ms (p95 ${con.p95.toFixed(1)}); ` +
         `sin él ${sin.triangulos} y ${sin.llamadas}, ${sin.mediana.toFixed(1)} ms (p95 ${sin.p95.toFixed(1)})`,

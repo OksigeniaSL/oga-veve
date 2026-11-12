@@ -82,9 +82,12 @@ existe: la de Airam (`tierra-canarias`), un hombre canario de unos treinta y cin
 ## El faro
 
 Es un sitio con modelo desde el 12 de noviembre de 2026 (`data/sitios/sitios.json`, `modelos/sitio-faro-de-teno.py`):
-la torre de 1978 y, pegado al oeste, el faro de 1897 con su casa y su torre de piedra, sobre el parche fino de la punta y
-a más de veinte metros del borde del llano. De noche destella con su ritmo publicado, tres destellos blancos cada
-veinte segundos. Fotos y coste con `scripts/ver-faro-de-teno.mjs`.
+la torre de 1978 y, pegado al oeste, el faro de 1897 con su casa y su torre de piedra, a más de veinte metros del borde
+del llano. Está a su cota medida, 29 m, la del MDT05 a cinco metros, en lo alto de un promontorio de roca que el
+relieve a veinte metros alisa un par de metros. De noche destella con su ritmo publicado, tres destellos blancos cada
+veinte segundos, a 46,75 m sobre el mar. La altura focal publicada es de 59,6, pero no cuadra con el suelo medido ni con
+las fotos con el horizonte del mar (ver `modelos/sitio-faro-de-teno.py`), y se queda en lo medido. Fotos y coste con
+`scripts/ver-faro-de-teno.mjs`.
 - **La grúa**, para la otra misión.
 
 ## Lo que decidió Enrique

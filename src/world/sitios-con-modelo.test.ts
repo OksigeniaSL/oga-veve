@@ -258,8 +258,11 @@ describe("la luz de un faro", () => {
     expect(sitios.estado()[0]!.estado).toBe("fuera");
     expect(luz!.visible).toBe(true);
     expect(luz!.brillo).toBeCloseTo(1, 5);
-    // En el centro de la linterna, sobre el suelo del juego.
-    expect(luz!.y).toBeCloseTo(28 + teno.luz!.altura, 5);
+    // En el centro de la linterna, sobre la cota de su ficha y no sobre el
+    // suelo dibujado, que alisa el promontorio: 46,75 m sobre el mar.
+    expect(teno.cota).toBe(29);
+    expect(luz!.y).toBeCloseTo(teno.cota! + teno.luz!.altura, 5);
+    expect(luz!.y).toBeCloseTo(46.75, 5);
     // A cincuenta y siete kilómetros del origen, en coma flotante de 32 bits.
     expect(luz!.x).toBeCloseTo(s.x, 1);
     // Entre destellos, apagada.

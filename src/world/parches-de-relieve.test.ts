@@ -396,15 +396,16 @@ describe("la tierra de un parche en el mar del horizonte", () => {
 });
 
 /*
- * **El faro de Teno, apoyado en Punta de Teno.** Va con `cota: null`: el juego
- * lo pone a la cota del suelo en su origen, que en la punta es la del parche
- * fino (`teno.bin`, a veinte metros). Las paredes bajan treinta metros por
- * debajo del cero, porque el suelo dibujado no es el medido al metro; aquí se
- * mira, contra el horizonte de Los Rodeos refinado con ese parche —lo que se
- * carga en la misión—, que cada pared salga del suelo dibujado en cada esquina:
- * ni colgando, con su pie por encima, ni enterrada, con menos de una planta a
- * la vista. Y que no pise el llano donde se posa el helicóptero, a setenta
- * metros al oestesuroeste.
+ * **El faro de Teno, en lo alto de Punta de Teno.** Va a su cota de verdad, 29
+ * m, la del MDT05 a cinco metros al pie de la torre; el parche fino
+ * (`teno.bin`, a veinte metros) alisa el promontorio y lo deja un par de metros
+ * más abajo, y lo que queda entre los dos lo pone el peñasco del modelo. Aquí
+ * se mira, contra el horizonte de Los Rodeos refinado con ese parche —lo que se
+ * carga en la misión—, que cada pared salga del suelo dibujado en cada esquina
+ * —ni colgando, con su pie por encima, ni enterrada, con menos de una planta a
+ * la vista—, que el peñasco baje por debajo de él por todo su contorno, y que
+ * no pise el llano donde se posa el helicóptero, a setenta metros al
+ * oestesuroeste.
  */
 describe("el faro de Teno, en su suelo", () => {
   const m = leerMapa("tenerife-norte-lejos");
@@ -450,24 +451,33 @@ describe("el faro de Teno, en su suelo", () => {
     return salida;
   }
 
-  it("sin girar y apoyado en el suelo del juego", () => {
+  it("sin girar, a la cota del MDT05, y el promontorio por encima del suelo dibujado", () => {
     expect(ficha.giro).toBe(0);
-    expect(ficha.cota).toBeNull();
-    expect(r.cota(origen.x, origen.z)).not.toBeNull();
+    expect(ficha.cota).toBe(29);
+    // Lo que alisa el parche: lo pone el peñasco, y es de un par de metros.
+    const alisado = ficha.cota! - r.cota(origen.x, origen.z)!;
+    expect(alisado).toBeGreaterThan(1);
+    expect(alisado).toBeLessThan(5);
   });
 
-  it("cada pared sale del suelo dibujado: ni colgando ni enterrada", async () => {
-    const cota0 = r.cota(origen.x, origen.z)!;
-    // Las columnas de vértices que bajan con la falda: las esquinas de las paredes.
-    const columnas = new Map<string, { x: number; z: number; abajo: number; arriba: number }>();
+  /** Las columnas de vértices, por su sitio en planta: lo más bajo y lo más alto de cada una. */
+  async function columnas() {
+    const salida = new Map<string, { x: number; z: number; abajo: number; arriba: number }>();
     for (const v of await vertices()) {
       const clave = `${v.x.toFixed(2)},${v.z.toFixed(2)}`;
-      const c = columnas.get(clave) ?? { x: v.x, z: v.z, abajo: Infinity, arriba: -Infinity };
+      const c = salida.get(clave) ?? { x: v.x, z: v.z, abajo: Infinity, arriba: -Infinity };
       c.abajo = Math.min(c.abajo, v.y);
       c.arriba = Math.max(c.arriba, v.y);
-      columnas.set(clave, c);
+      salida.set(clave, c);
     }
-    const conFalda = [...columnas.values()].filter((c) => c.abajo < -29);
+    return [...salida.values()];
+  }
+
+  it("cada pared sale del suelo dibujado: ni colgando ni enterrada", async () => {
+    const cota0 = ficha.cota!;
+    // Las esquinas de las paredes: las columnas que bajan de arriba a la falda.
+    // Las del peñasco se abren hacia abajo y no hacen columna.
+    const conFalda = (await columnas()).filter((c) => c.abajo < -29 && c.arriba - c.abajo > 20);
     // Dieciséis del fuste, doce de la casa, cuatro del patio y cuatro de la torre vieja.
     expect(conFalda.length).toBe(36);
     for (const c of conFalda) {
@@ -476,6 +486,17 @@ describe("el faro de Teno, en su suelo", () => {
       expect(c.abajo, `pie en ${donde}`).toBeLessThan(suelo - 10);
       // Lo más bajo que asoma es la pared del patio: tres metros y medio.
       expect(c.arriba - suelo, `a la vista en ${donde}`).toBeGreaterThan(2.5);
+    }
+  });
+
+  it("y el peñasco baja por debajo del suelo dibujado por todo su contorno", async () => {
+    const cota0 = ficha.cota!;
+    // Su pie: los vértices sueltos de la falda, fuera de las columnas de las paredes.
+    const pie = (await columnas()).filter((c) => c.abajo < -29 && c.arriba - c.abajo < 1);
+    expect(pie.length).toBe(32);
+    for (const c of pie) {
+      const suelo = r.cota(origen.x + c.x, origen.z + c.z)! - cota0;
+      expect(c.abajo, `pie del peñasco en (${c.x.toFixed(1)}, ${c.z.toFixed(1)})`).toBeLessThan(suelo - 10);
     }
   });
 

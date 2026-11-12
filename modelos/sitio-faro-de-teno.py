@@ -12,11 +12,8 @@ Dos piezas, una al lado de la otra, y las dos son de verdad:
   queda detrás de la roca. Los montantes en triángulo de la linterna, las
   ventanas de las franjas, la puerta de la galería y el panel solar no
   están: no se ven desde el aire y de las ventanas no se sabe a dónde dan.
-- **La luz**, a 17,75 m del suelo en el modelo; la ficha del faro dice que
-  su señal está a 20 m del suelo y a 59,6 sobre el mar. La diferencia es la
-  del pie: en las fotos la roca lo tapa, y aquí se mide del suelo de la foto
-  del camino. El suelo del juego en la punta, el del MDT05 a veinte metros,
-  queda más bajo que el de verdad, y la luz sale a unos 44 m sobre el mar.
+- **La luz**, a 17,75 m del pie de la torre en el modelo, medida desde el
+  suelo de la foto del camino. Su altura sobre el mar, más abajo.
 - **El faro de 1897**, pegado al oeste: una casa encalada de una planta en
   torno a un patio, con las esquinas, los marcos y la cornisa de piedra
   volcánica oscura, y en el centro de su fachada oeste la torre de piedra sin
@@ -31,10 +28,22 @@ suelo a la veleta, con su margen: el fuste, de 2,8 m, sale 7,3 veces en el
 alto; las galerías, de 4,2; la linterna, de 2,3, que es casi lo que da la
 ficha del faro, 2,4. La luz, en el centro de la linterna, a 17,75 m del suelo.
 
-**El suelo** es el parche fino de Punta de Teno (`data/terrain/parches/teno.bin`,
-MDT05 a veinte metros), leído aquí para dos cosas: dónde empieza cada pared
-—con su falda de treinta metros por debajo, que el suelo dibujado no es el
-medido al metro— y contra qué se calcula la oclusión.
+**La cota** es la del MDT05 a su resolución entera, cinco metros: 29,0 m al pie
+de la torre y 28,4 en la casa. El parche fino de Punta de Teno
+(`data/terrain/parches/teno.bin`, el mismo MDT05 a veinte metros) alisa el
+promontorio y deja el pie en unos 27, y lo que falta entre los dos es roca: un
+peñasco de lava bajo la explanada de los dos edificios, que se abre hacia
+abajo hasta la falda. El parche se lee aquí para dos cosas: dónde quedan las
+paredes y la roca respecto al suelo dibujado y contra qué se calcula la
+oclusión.
+
+**Y la altura de la luz**, que no cuadra con la publicada. La ficha del faro da
+la señal a 59,6 m sobre el mar y a 20 del suelo, lo que pondría el pie a 39,6;
+el MDT05 lo pone a 29, y lo confirma «Lighthouses at Punta de Teno»
+(Dreizung), tomada desde la costa con el horizonte del mar a la vista: el pie
+de la torre queda 22 m por encima del ojo, y el ojo, a unos 5 sobre el agua.
+Aquí se queda en lo medido: el pie a 29 y la luz a 46,75. Un promontorio de
+trece metros más para cuadrar con la cifra publicada sería inventarlo.
 
 **El color**, en los vértices y en lineal, con la oclusión ambiente cocida:
 rayos desde cada esquina de cada cara contra el modelo y ese suelo, sin sol.
@@ -96,11 +105,17 @@ def cota_medida(lat, lon):
     ) * ty
 
 
-COTA0 = cota_medida(LAT0, LON0)
+# **La cota del faro**, m sobre el mar: la del MDT05 a su resolución entera,
+# cinco metros, pedido al WCS del IDEE (cobertura Elevacion4258_5) el
+# 12-11-2026. Al pie de la torre, 29,0 m; en el centro de la casa, 28,4. Es la
+# `cota` de su ficha en `sitios.json`. El parche, a veinte metros, alisa el
+# promontorio y deja el pie en unos 27: lo que falta lo pone el peñasco.
+COTA0 = 29.0
+CASA_SOBRE_EL_PIE = 28.38 - COTA0
 
 
 def suelo(x, y):
-    """El suelo bajo (x, y) —este y norte en metros—, sobre el del origen."""
+    """El suelo del parche bajo (x, y) —este y norte en metros—, sobre el pie de la torre."""
     lat = LAT0 + y / (R_TIERRA * RAD)
     lon = LON0 + x / (R_TIERRA * RAD * math.cos(LAT0 * RAD))
     return cota_medida(lat, lon) - COTA0
@@ -118,6 +133,11 @@ COLORES = {
     "piedra": (0.33, 0.31, 0.29),
     # La azotea, gris en la ortofoto.
     "azotea": (0.60, 0.60, 0.58),
+    # El promontorio: la lava oscura de la punta, la del suelo de alrededor
+    # medida en las capturas, algo más clara porque sus caras miran de lado.
+    "roca": (0.36, 0.33, 0.29),
+    # Y la explanada de encima, el pavimento gris claro de la ortofoto.
+    "explanada": (0.50, 0.50, 0.48),
     # La cúpula de la linterna vieja, de cobre verdeado en las fotos.
     "cobre": (0.36, 0.52, 0.46),
 }
@@ -319,9 +339,9 @@ def en_la_casa(u, v):
 
 
 def casa_vieja():
-    # La cota de la casa: la del suelo medido en su centro. Por donde el suelo
-    # baja, asoma un zócalo de piedra, que es el muro que la asienta.
-    h0 = suelo(CASA["x"], CASA["y"])
+    # La cota de la casa: la del MDT05 en su centro, sobre el pie de la torre.
+    # Lo de debajo queda dentro del peñasco.
+    h0 = CASA_SOBRE_EL_PIE
     a, f = CASA["ancho"] / 2, CASA["fondo"] / 2
     # Los rectángulos, en sentido antihorario visto desde arriba: SO, SE, NE, NO.
     # `pared` deja el exterior a la derecha del recorrido, así que el contorno
@@ -413,6 +433,103 @@ def torre_vieja(h0, oeste):
     corona(vidrio[-1], domo[0], "cobre", arriba=False)
     tapa(domo[-1], "cobre")
     caja(cx - 0.02, cx + 0.02, cy - 0.02, cy + 0.02, h0 + 7.6, h0 + 8.0, "oscuro", abajo=False)
+
+
+# ── El promontorio ───────────────────────────────────────────────────────
+
+# Lo que sobresale la explanada de las paredes, m, y cómo se abre la roca
+# hacia abajo: (cuánto baja, cuánto se abre) en cada anillo.
+MARGEN = 1.0
+ANILLOS_DE_ROCA = ((1.0, 0.6), (3.0, 1.5), (7.0, 2.2))
+LADOS_DE_ROCA = 32
+
+
+def envolvente(puntos):
+    """La envolvente convexa de unos puntos en planta, en sentido antihorario."""
+    p = sorted(set(puntos))
+
+    def giro(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    abajo, arriba = [], []
+    for q in p:
+        while len(abajo) >= 2 and giro(abajo[-2], abajo[-1], q) <= 0:
+            abajo.pop()
+        abajo.append(q)
+    for q in reversed(p):
+        while len(arriba) >= 2 and giro(arriba[-2], arriba[-1], q) <= 0:
+            arriba.pop()
+        arriba.append(q)
+    return abajo[:-1] + arriba[:-1]
+
+
+def repartir(poligono, n):
+    """`n` puntos repartidos a partes iguales por el contorno de un polígono cerrado."""
+    lados = [(poligono[i], poligono[(i + 1) % len(poligono)]) for i in range(len(poligono))]
+    largos = [math.dist(a, b) for a, b in lados]
+    total = sum(largos)
+    salida = []
+    for k in range(n):
+        d = total * k / n
+        for (a, b), largo in zip(lados, largos):
+            if d <= largo:
+                t = d / largo if largo else 0
+                salida.append((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t))
+                break
+            d -= largo
+    return salida
+
+
+def penasco(h0):
+    """
+    **El promontorio de roca en el que están la torre y la casa.** El MDT05 a
+    cinco metros pone su pie a 29 m y el parche, a veinte, lo alisa hasta unos
+    27: lo que queda entre los dos es roca, no pared. Una explanada a la cota
+    de cada edificio —la del pie de la torre en ella, la de la casa en la
+    suya— y por fuera un peñasco de lava que se abre hacia abajo, irregular,
+    hasta la falda. Las paredes siguen bajando por dentro de él.
+    """
+    # Lo que tiene que quedar encima: las paredes de los tres, con su margen.
+    a, f = CASA["ancho"] / 2, CASA["fondo"] / 2
+    bordes = [en_la_casa(*p) for p in [(-a, -f), (a, -f), (a, f), (-a, f)]]
+    u0 = -a - 1.2
+    bordes += [en_la_casa(*p) for p in [(u0 - 1.2, -1.2), (u0 - 1.2, 1.2)]]
+    bordes += [(R_FUSTE * math.cos(2 * math.pi * i / 16), R_FUSTE * math.sin(2 * math.pi * i / 16)) for i in range(16)]
+    con_margen = [
+        (x + MARGEN * math.cos(2 * math.pi * k / 8), y + MARGEN * math.sin(2 * math.pi * k / 8))
+        for x, y in bordes
+        for k in range(8)
+    ]
+    contorno = repartir(envolvente(con_margen), LADOS_DE_ROCA)
+    cx = sum(p[0] for p in contorno) / len(contorno)
+    cy = sum(p[1] for p in contorno) / len(contorno)
+
+    # La cota de la explanada: la de la casa hasta su pared del este y la del
+    # pie de la torre desde su margen, y en medio, la rampa entre las dos.
+    este_casa = max(p[0] for p in bordes[:4])
+    def nivel(x, y):
+        t = min(1.0, max(0.0, (x - este_casa) / (-R_FUSTE - MARGEN - este_casa)))
+        return h0 + (0.0 - h0) * t
+
+    def fuera(x, y, cuanto, k, anillo):
+        """Hacia fuera del centro, con un quiebro que no se repite: es roca, no un cono."""
+        dx, dy = x - cx, y - cy
+        d = math.hypot(dx, dy) or 1.0
+        quiebro = 0.45 * math.sin(2.7 * k + 1.3 * anillo) + 0.3 * math.sin(5.1 * k + 0.7 * anillo + 1.0)
+        m = cuanto * (1 + 0.35 * quiebro)
+        return x + dx / d * m, y + dy / d * m
+
+    arriba = [vert((x, y, nivel(x, y))) for x, y in contorno]
+    anillos = [arriba]
+    for n, (baja, abre) in enumerate(ANILLOS_DE_ROCA, start=1):
+        anillos.append([vert((*fuera(x, y, abre, k, n), nivel(x, y) - baja)) for k, (x, y) in enumerate(contorno)])
+    anillos.append([vert((*fuera(x, y, 2.6, k, 9), FALDA)) for k, (x, y) in enumerate(contorno)])
+    # Las caras van de cada anillo al de abajo, hacia fuera: el contorno es
+    # antihorario, así que se recorren del de abajo al de arriba.
+    for i in range(len(anillos) - 1):
+        costado(anillos[i + 1], anillos[i], "roca", liso=False)
+    tapa(arriba, "explanada")
+    return contorno
 
 
 # ── La oclusión cocida ───────────────────────────────────────────────────
@@ -516,7 +633,9 @@ def a_blender(ao):
         base = lineal(COLORES[color])
         for esquina, cielo in zip(poli.loop_indices, luces):
             # Nunca negro del todo: lo que no ve el cielo ve el suelo y las paredes.
-            f = 0.3 + 0.7 * cielo
+            # La roca, menos: su pie está bajo tierra, y con toda la oclusión
+            # salía negra junto al suelo, que a su lado es lava al sol.
+            f = (0.55 + 0.45 * cielo) if color == "roca" else (0.3 + 0.7 * cielo)
             attr.data[esquina].color = (base[0] * f, base[1] * f, base[2] * f, 1.0)
             k += 1
     mat = bpy.data.materials.new("faro")
@@ -549,12 +668,24 @@ def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     torre_nueva()
     h0 = casa_vieja()
+    contorno = penasco(h0)
     ao = oclusion()
     a_blender(ao)
     bulto("bulto-torre", 2 * R_GALERIA, 2 * R_GALERIA, -5.0, 20.0, 0, 0, 0)
     bulto("bulto-casa", CASA["ancho"], CASA["fondo"], -5.0, h0 + PRETIL, CASA["x"], CASA["y"], CASA["giro"])
     tx, ty = en_la_casa(-CASA["ancho"] / 2 - 1.2, 0)
     bulto("bulto-torre-vieja", 2.8, 2.8, -5.0, h0 + 8.0, tx, ty, CASA["giro"])
+    # Y el peñasco, en una caja en el marco de la casa que envuelve su explanada.
+    g = CASA["giro"] * RAD
+    en_su_marco = [
+        ((x - CASA["x"]) * math.cos(g) + (y - CASA["y"]) * math.sin(g),
+         -(x - CASA["x"]) * math.sin(g) + (y - CASA["y"]) * math.cos(g))
+        for x, y in contorno
+    ]
+    us = [p[0] for p in en_su_marco]
+    vs = [p[1] for p in en_su_marco]
+    px, py = en_la_casa((min(us) + max(us)) / 2, (min(vs) + max(vs)) / 2)
+    bulto("bulto-penasco", max(us) - min(us), max(vs) - min(vs), -5.0, 0.0, px, py, CASA["giro"])
 
     os.makedirs(os.path.dirname(SALIDA), exist_ok=True)
     bpy.ops.export_scene.gltf(
@@ -578,7 +709,7 @@ def main():
     xs = [v[0] for v in V]
     ys = [v[1] for v in V]
     zs = [v[2] for v in V if v[2] > FALDA + 1]
-    print(f"PIEZAS: 1 malla y 3 bultos · triángulos: {tris} · luz a {LUZ} m · cota de la casa {h0:+.2f} m")
+    print(f"PIEZAS: 1 malla y 4 bultos · triángulos: {tris} · luz a {LUZ} m · cota de la casa {h0:+.2f} m")
     print(
         f"MEDIDAS: ancho {max(xs) - min(xs):.2f} · alto {max(zs) - min(zs):.2f} · largo {max(ys) - min(ys):.2f}"
     )
