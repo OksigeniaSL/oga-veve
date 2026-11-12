@@ -277,12 +277,27 @@ export const A_LA_CUMBRE: Mission = {
 export const LLANO_DEL_FARO_DE_TENO: Sitio = { x: -56863.6, z: 15668.9, radius: 20 };
 
 /**
- * **La explanada del puerto de Garachico**, el aparcamiento de tierra
- * compactada del puerto (OpenStreetMap, vía 888471906; 28,37389 N 16,75652
- * O): 2,8° en el círculo de veinte metros, a 7 m. Es adonde llevaron a la
- * gente en 2016. Aquí basta el horizonte: es un llano de cientos de metros.
+ * **Donde espera la gente en Teno**, entre el llano y el faro: a treinta y
+ * seis metros del centro del llano hacia el faro, dieciséis más allá de su
+ * borde, y a treinta y tres del faro. Así, se pose donde se pose dentro del
+ * llano, el disco del rotor les queda a más de siete metros, y se les ve al
+ * llegar.
  */
-export const EXPLANADA_DEL_PUERTO_DE_GARACHICO: Sitio = { x: -40542.2, z: 12104.9, radius: 20 };
+export const GENTE_EN_TENO = { x: -56830.6, z: 15654.4 };
+
+/**
+ * **La explanada del puerto de Garachico**, el aparcamiento de tierra
+ * compactada del puerto (OpenStreetMap, vía 888471906): noventa metros de
+ * noroeste a sudeste, junto al muelle. Es adonde llevaron a la gente en 2016.
+ * Lleva su parche de relieve fino, `data/terrain/parches/garachico.bin`, del
+ * MDT05: el horizonte metía el mar, el pueblo y el risco en el mismo cuadro y
+ * la dibujaba como una ladera de casi cinco grados. Con él, el sitio va en el
+ * extremo noroeste, donde el círculo de veinte metros cabe casi entero en el
+ * aparcamiento: 2,0° y a 2,6 m. Es lo que da el LiDAR: la explanada sube un
+ * par de grados del muelle hacia el pueblo. Medido con el suelo que se dibuja,
+ * que es también el que se pisa.
+ */
+export const EXPLANADA_DEL_PUERTO_DE_GARACHICO: Sitio = { x: -40561.5, z: 12080.1, radius: 20 };
 
 /**
  * **Teno.** Del helipuerto del Ejército en Los Rodeos a la punta de la isla,
@@ -291,8 +306,8 @@ export const EXPLANADA_DEL_PUERTO_DE_GARACHICO: Sitio = { x: -40542.2, z: 12104.
  * Solo para el Super Puma: posarse junto a un faro no lo hace una avioneta.
  * Las esperas, las de la petición: veinticinco segundos para subir y veinte
  * para bajar, con el rotor girando, que es como se hace cuando hay que irse
- * enseguida. La gente que sube y baja la pondrá otro encargo: ver
- * `missions/gente.ts`.
+ * enseguida. La gente que sube y baja la dibuja `world/gente-de-la-mision.ts`:
+ * ver `missions/gente.ts`.
  *
  * Lo que se dice: en los tres peldaños de abajo, la instructora cuenta cada
  * paso con calma; en el de cabina habla la tripulación, corto y operativo, y
@@ -349,6 +364,7 @@ export const TENO: Mission = {
       seconds: 25,
       sitio: LLANO_DEL_FARO_DE_TENO,
       gente: "suben",
+      esperan: GENTE_EN_TENO,
       rotulo: "mision.teno.suben",
       dice: {
         dibujo: "gente",

@@ -1140,8 +1140,10 @@ export class Terrain {
    * La cota que dice el mapa del horizonte, o `null` si no hay mapa o si el
    * punto tampoco cabe en él.
    *
-   * Interpola igual que el mapa fino: un escalón de trescientos metros entre
-   * muestras se nota volando aunque no se vea.
+   * Interpola como la malla que lo dibuja, en sus dos triángulos: un escalón
+   * de trescientos metros entre muestras se nota volando aunque no se vea, y
+   * uno entre lo que se pisa y lo que se ve, posado. Ver
+   * `cotaDelHorizonteSinLagos`.
    */
   private cotaDelHorizonte(x: number, z: number): number | null {
     const h = this.cotaDelHorizonteSinLagos(x, z);
@@ -1171,17 +1173,22 @@ export class Terrain {
     const max = lejos.resolucion - 1;
     const x0 = clampInt(Math.floor(gx), 0, max);
     const z0 = clampInt(Math.floor(gz), 0, max);
-    const x1 = clampInt(x0 + 1, 0, max);
-    const z1 = clampInt(z0 + 1, 0, max);
     const tx = clamp01(gx - x0);
     const tz = clamp01(gz - z0);
+    /*
+     * **Lo que se pisa es lo que se dibuja**: las cotas de la malla —con el
+     * mar de la orilla hundido— y repartidas en sus dos triángulos, no a
+     * cuatro esquinas. En un cuadro de trescientos metros con mar y
+     * acantilado, las dos cuentas se separan metros: en la explanada del
+     * puerto de Garachico, donde se posa el Super Puma de la misión de Teno,
+     * el suelo de vuelo iba cuatro metros por debajo del dibujado, y el
+     * helicóptero —y la gente que bajaba— se posaba enterrado hasta los
+     * motores. Ver `enLosDosTriangulos` y `cotasLejanas`.
+     */
+    const alturas = this.cotasLejanas(lejos);
     const h = (col: number, fila: number): number =>
-      lejos.datos[fila * lejos.resolucion + col] ?? 0;
-    return lerp(
-      lerp(h(x0, z0), h(x1, z0), tx),
-      lerp(h(x0, z1), h(x1, z1), tx),
-      tz,
-    );
+      alturas[clampInt(fila, 0, max) * lejos.resolucion + clampInt(col, 0, max)] ?? 0;
+    return enLosDosTriangulos(h, x0, z0, tx, tz);
   }
 
   ponerSueloLejano(

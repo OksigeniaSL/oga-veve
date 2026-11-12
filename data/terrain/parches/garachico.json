@@ -1,0 +1,16 @@
+{
+  "id": "garachico",
+  "nombre": "El puerto de Garachico",
+  "fuente": "PNOA-LiDAR MDT05 (IGN)",
+  "atribucion": "Modelo Digital del Terreno MDT05 del PNOA-LiDAR © Instituto Geográfico Nacional de España, CC BY 4.0",
+  "sur": 28.3622548,
+  "norte": 28.3856372,
+  "oeste": -16.7698725,
+  "este": -16.7432975,
+  "filas": 261,
+  "columnas": 261,
+  "dibujo": 20,
+  "paraPosarse": true,
+  "minM": 0,
+  "maxM": 539
+}

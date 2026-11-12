@@ -30,6 +30,13 @@ import { Matrix3, Vector3, type Object3D } from "three";
  */
 export const REVERSA = /^reversa-/;
 
+/**
+ * **Y la puerta corredera del Super Puma**, que es lo mismo: un vacío con su
+ * `eje` y su `recorrido`, que se desliza hacia el morro. Ver `puerta_corredera`
+ * en `modelos/jaz-super-puma.py`.
+ */
+export const PUERTA_CORREDERA = /^puerta-corredera$/;
+
 interface Manguito {
   readonly nodo: Object3D;
   readonly reposo: Vector3;
@@ -62,11 +69,19 @@ function vector(v: unknown): Vector3 | null {
  * respaldo de cajas tampoco. Que falte un recurso no deja a nadie sin volar.
  */
 export function prepararReversas(raiz: Object3D): Reversas | null {
+  return prepararDeslizantes(raiz, REVERSA);
+}
+
+/**
+ * Lo mismo para cualquier pieza que se desliza por su `eje` y su `recorrido`:
+ * las reversas y la puerta corredera. `null` si el modelo no trae ninguna.
+ */
+export function prepararDeslizantes(raiz: Object3D, nombre: RegExp): Reversas | null {
   raiz.updateWorldMatrix(true, true);
   const manguitos: Manguito[] = [];
   const recorridos: number[] = [];
   raiz.traverse((o) => {
-    if (!REVERSA.test(o.name) || !o.parent) return;
+    if (!nombre.test(o.name) || !o.parent) return;
     const eje = vector(o.userData["eje"]);
     const recorrido = Number(o.userData["recorrido"]);
     if (!eje || !Number.isFinite(recorrido) || recorrido <= 0) return;

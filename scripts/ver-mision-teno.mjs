@@ -19,6 +19,11 @@
  *   de logro y el cierre.
  * - **Y que en el peldaño de cabina habla la tripulación** y la instructora
  *   calla: una vuelta corta, solo el principio.
+ * - **La gente**: que espera junto al faro y se la ve al llegar; que sube
+ *   entera, por delante y nunca por detrás de la cola, con la corredera
+ *   abierta y el tripulante fuera, y que la puerta se cierra; y que en
+ *   Garachico baja y se queda fuera del disco. Y lo que cuesta dibujarla:
+ *   llamadas, triángulos y tiempo de cuadro posado en Teno, con y sin ella.
  *
  * Capturas con `OGA_FOTOS=<carpeta>`; `OGA_TELEFONO=1` las saca en un
  * teléfono apaisado de 844×390 con dedo, en vez de en 1280×800.
@@ -41,8 +46,20 @@ const VIENTO = process.env.OGA_VIENTO ?? "000/0";
 
 /** Los dos sitios de la misión, los mismos de `content/missions.ts`. */
 const FARO = { x: -56863.6, z: 15668.9, radio: 20 };
-const GARACHICO = { x: -40542.2, z: 12104.9, radio: 20 };
+const GARACHICO = { x: -40561.5, z: 12080.1, radio: 20 };
 const GCXM = { x: -924.6, z: -101.7 };
+/** Donde espera la gente, el de `GENTE_EN_TENO`, y cuántos son: doce y un perro. */
+const GENTE = { x: -56830.6, z: 15654.4 };
+const CUANTOS = 13;
+/** Lo que hay que esquivar del Super Puma: disco, mástil al rotor de cola y la puerta, m. */
+const ROTOR = 7.8;
+const COLA = 9.375;
+/**
+ * El borde de atrás del hueco de la puerta, m por delante del mástil: la
+ * corredera va de 0,87 m por delante a 0,56 por detrás (`PUERTA` en
+ * `modelos/jaz-super-puma.py`). Quien está en el hueco no está por la cola.
+ */
+const PUERTA_ATRAS = -0.56;
 /**
  * **A qué se llega**, m/s: los cuarenta nudos de aproximación del helicóptero
  * (`approachSpeed` en `helicoptero-en-el-juego.ts`). Más deprisa, bajo y hacia
@@ -158,6 +175,135 @@ try {
       detalle: `por «${r.aguja.por}», ${(r.aguja.metros / 1000).toFixed(2)} km (el sitio a ${(d / 1000).toFixed(2)})`,
     };
   };
+  /** Cómo va la gente, y dónde está cada uno en los ejes del helicóptero. */
+  const leerGente = () =>
+    page.evaluate(() => {
+      const o = globalThis.__oga;
+      const g = o.gente();
+      const s = o.estado();
+      const h = s.heading;
+      const ejes = (q) => {
+        const dx = q.x - s.position.x;
+        const dz = q.z - s.position.z;
+        return { f: dx * Math.sin(h) - dz * Math.cos(h), r: dx * Math.cos(h) + dz * Math.sin(h), estado: q.estado };
+      };
+      return { ...g, locales: g.sitios.map(ejes) };
+    });
+  /**
+   * **Nadie por la cola**: mientras dura una espera, cada cuarto de segundo y
+   * dentro de la página —para que no lo tapen las fotos ni las medidas del
+   * banco—, nadie de los que andan dentro del estadio del helicóptero —el
+   * disco más tres metros alrededor del segmento del mástil al rotor de cola—
+   * por detrás del hueco de la puerta. `empezarAVigilar` lo pone en marcha y
+   * `dejarDeVigilar` dice lo que vio.
+   */
+  const empezarAVigilar = () =>
+    page.evaluate(
+      ({ ROTOR, COLA, PUERTA_ATRAS }) => {
+        const v = (globalThis.__cola = { malos: [], muestras: 0 });
+        v.id = setInterval(() => {
+          const o = globalThis.__oga;
+          const s = o.estado();
+          const h = s.heading;
+          v.muestras++;
+          for (const q of o.gente().sitios) {
+            if (q.estado !== "andando") continue;
+            const dx = q.x - s.position.x;
+            const dz = q.z - s.position.z;
+            const f = dx * Math.sin(h) - dz * Math.cos(h);
+            const r = dx * Math.cos(h) + dz * Math.sin(h);
+            const fc = Math.max(-COLA, Math.min(0, f));
+            if (Math.hypot(f - fc, r) < ROTOR + 3 - 0.3 && f < PUERTA_ATRAS) v.malos.push(`f=${f.toFixed(1)} r=${r.toFixed(1)}`);
+          }
+        }, 250);
+      },
+      { ROTOR, COLA, PUERTA_ATRAS },
+    );
+  const dejarDeVigilar = () =>
+    page.evaluate(() => {
+      const v = globalThis.__cola;
+      clearInterval(v.id);
+      return { malos: v.malos, muestras: v.muestras };
+    });
+  /** Cuánto ha tardado la gente: de que empieza a que acaba, en segundos del juego. */
+  const cuantoTardo = (r, que) => {
+    const d = r.mision?.dicho ?? [];
+    const empieza = d.filter((x) => x.quien === "gente" && x.que.startsWith(`empieza:${que}`)).pop();
+    const acaba = d.filter((x) => x.quien === "gente" && x.que === "acaba" && empieza && x.cuando >= empieza.cuando)[0];
+    return empieza && acaba ? (acaba.cuando - empieza.cuando).toFixed(1) : "?";
+  };
+  /**
+   * **Lo que cuesta la gente**: llamadas de dibujo, triángulos y tiempo de
+   * cuadro en ciento veinte cuadros, con ella y sin dibujarla.
+   */
+  const medirCoste = (apagada) =>
+    page.evaluate(async (apagada) => {
+      const o = globalThis.__oga;
+      o.genteApagada(apagada);
+      const cuadro = () => new Promise((r) => requestAnimationFrame(() => r(performance.now())));
+      for (let i = 0; i < 10; i++) await cuadro();
+      const tiempos = [];
+      let llamadas = 0;
+      let triangulos = 0;
+      let antes = await cuadro();
+      for (let i = 0; i < 120; i++) {
+        const ahora = await cuadro();
+        tiempos.push(ahora - antes);
+        antes = ahora;
+        const c = o.coste();
+        llamadas += c.llamadas;
+        triangulos += c.triangulos;
+      }
+      o.genteApagada(false);
+      tiempos.sort((a, b) => a - b);
+      return {
+        llamadas: llamadas / 120,
+        triangulos: Math.round(triangulos / 120),
+        mediana: +tiempos[60].toFixed(2),
+        p90: +tiempos[108].toFixed(2),
+        cpuGente: o.gente().msPorPaso,
+      };
+    }, apagada);
+  /**
+   * **Que se pisa el suelo que se ve**: en el mástil y donde está cada uno de
+   * la gente, el suelo dibujado —un rayo de arriba abajo contra el terreno—
+   * frente al que pisan, `sueloDeVuelo`.
+   * Devuelve la peor diferencia, m. Sin esto, la gente de Garachico estuvo
+   * metro y medio bajo tierra con todo lo demás en verde.
+   */
+  const pisaLoQueSeVe = () =>
+    page.evaluate(async () => {
+      const THREE = await import("/node_modules/three/build/three.module.js");
+      const o = globalThis.__oga;
+      const j = o.juegoParaTrazas();
+      const s = o.estado();
+      // El mástil, si está posado; en el aire, lo de debajo no lo pisa nadie.
+      const puntos = [...(s.onGround ? [{ x: s.position.x, z: s.position.z }] : []), ...o.gente().sitios.filter((q) => q.estado === "fuera")];
+      let peor = 0;
+      let donde = "";
+      for (const q of puntos) {
+        // Desde poco por encima, que más arriba hay nubes y cielo.
+        const rayo = new THREE.Raycaster(new THREE.Vector3(q.x, o.sueloDeVuelo(q.x, q.z) + 50, q.z), new THREE.Vector3(0, -1, 0));
+        const t = rayo
+          .intersectObject(j.scene, true)
+          // Solo el terreno: el aro de la misión y lo demás que hay encima no se pisa.
+          .find((t) => t.object.isMesh && j.terrain.group.getObjectById(t.object.id));
+        if (!t) continue;
+        const d = Math.abs(t.point.y - o.sueloDeVuelo(q.x, q.z));
+        if (d > peor) {
+          peor = d;
+          donde = `${t.object.name || "?"} en (${q.x.toFixed(0)}, ${q.z.toFixed(0)})`;
+        }
+      }
+      return { peor: +peor.toFixed(2), donde, cuantos: puntos.length };
+    });
+  const conVista = async (vista, nombre) => {
+    await page.evaluate((v) => globalThis.__oga.ponerVista(v), vista);
+    await pausa(700);
+    await foto(nombre);
+    await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
+  };
+
   /** La pendiente del suelo en un círculo de veinte metros, con agua, edificios y árboles. */
   const llano = (sitio) =>
     page.evaluate(({ x, z }) => {
@@ -306,9 +452,10 @@ try {
    * Va a un sitio y se posa en él: a `alto` metros hasta tenerlo encima, y
    * luego abajo. Devuelve la lectura ya posado.
    */
-  const irYPosarse = async (sitio, alto) => {
+  const irYPosarse = async (sitio, alto, alLlegar = null) => {
     await fase("ir", { destino: sitio, alto, tope: APROXIMACION });
     const encima = await esperar((r) => Math.hypot(r.x - sitio.x, r.z - sitio.z) < 4 && r.gs < 0.8, 240);
+    if (alLlegar) await alLlegar();
     await fase("bajar");
     await esperar((r) => r.enTierra, 90);
     await pausa(2500);
@@ -328,10 +475,40 @@ try {
 
   // ── A Teno ─────────────────────────────────────────────────────────────
   console.log("\nA Teno, saltando el crucero");
-  // Por el mar, al nordeste del faro, para llegar por la costa.
-  await saltar(FARO.x + 1700, FARO.z - 1700, 120, FARO);
+  // Por el mar, al suroeste de la punta, para posarse de cara al alisio, que
+  // sopla del nordeste, como dice la instructora: con la gente y el faro delante.
+  await saltar(FARO.x - 1700, FARO.z + 1700, 120, FARO);
   await fase("ir", { destino: FARO, alto: 80, tope: APROXIMACION });
   const llegando = await esperar((r) => r.mision?.ahora === "land", 120);
+  // Llegando, con la gente esperando delante, junto al faro.
+  const cerca = await esperar((r) => Math.hypot(r.x - GENTE.x, r.z - GENTE.z) < 220, 60);
+  const esperando = await leerGente();
+  const junto = esperando.sitios.filter((q) => Math.hypot(q.x - GENTE.x, q.z - GENTE.z) < 6).length;
+  comprobar(
+    "la gente espera junto al faro desde que empieza la misión, y se ve al llegar",
+    esperando.visible && esperando.fuera === CUANTOS && junto === CUANTOS,
+    `${esperando.fuera} fuera, ${junto} en su sitio, ${esperando.visible ? "se ve" : "no se ve"}, a ${Math.hypot(cerca.x - GENTE.x, cerca.z - GENTE.z).toFixed(0)} m`,
+  );
+  await foto("g1-llegando-con-la-gente-esperando");
+  const pisaEnTeno = await pisaLoQueSeVe();
+  comprobar(
+    "la gente que espera en Teno pisa el suelo que se ve",
+    pisaEnTeno.peor < 0.3 && pisaEnTeno.cuantos === CUANTOS,
+    `la peor diferencia, ${pisaEnTeno.peor} m${pisaEnTeno.donde ? `, ${pisaEnTeno.donde}` : ""}`,
+  );
+  const dondeEsperan = await page.evaluate(({ x, z }) => {
+    const o = globalThis.__oga;
+    const b = o.bultoCerca(x, z);
+    // La pendiente entre los del corro: que estén de pie en algo que se pueda pisar.
+    const cotas = o.gente().sitios.map((q) => o.sueloDeVuelo(q.x, q.z));
+    const agua = o.gente().sitios.filter((q) => o.sueloDeVuelo(q.x, q.z) > o.suelo(q.x, q.z) + 0.05).length;
+    return { bulto: b ? b.d : Infinity, desnivel: Math.max(...cotas) - Math.min(...cotas), agua };
+  }, GENTE);
+  comprobar(
+    "donde espera la gente no hay edificios, ni agua, ni escalones",
+    dondeEsperan.bulto > 4 && dondeEsperan.agua === 0 && dondeEsperan.desnivel < 2,
+    `edificio a ${dondeEsperan.bulto} m, ${dondeEsperan.agua} en el agua, ${dondeEsperan.desnivel.toFixed(1)} m de desnivel en el corro`,
+  );
   comprobar(
     "llega a Teno y toca posarse",
     llegando.mision?.ahora === "land",
@@ -343,7 +520,11 @@ try {
     medidoFaro.pendiente < 5 && medidoFaro.agua === 0 && medidoFaro.bulto > 20 && medidoFaro.arbol > 20,
     `${medidoFaro.pendiente.toFixed(1)}° en 20 m, a ${medidoFaro.cota.toFixed(1)} m, ${medidoFaro.agua} muestras de agua, bulto a ${medidoFaro.bulto}, árbol a ${medidoFaro.arbol}`,
   );
-  const teno = await irYPosarse(FARO, 30);
+  // Encima del llano, antes de bajar: la gente saluda desde junto al faro.
+  const teno = await irYPosarse(FARO, 30, async () => {
+    await foto("g1b-encima-del-llano-la-gente-saluda");
+    await conVista("morro", "g1c-encima-del-llano-de-frente");
+  });
   comprobar(
     "se posa en el llano del faro, suave",
     teno.posado.enTierra && Math.hypot(teno.posado.x - FARO.x, teno.posado.z - FARO.z) < FARO.radio && teno.posado.toma < 2 && !teno.posado.percance,
@@ -356,8 +537,57 @@ try {
   console.log("\nSube la gente");
   await fase("posado");
   const corriendo = await esperar((r) => r.mision?.espera?.corre === true, 20);
+  await empezarAVigilar();
   comprobar("la espera corre posado y con el rotor en marcha", corriendo.mision?.espera?.corre, JSON.stringify(corriendo.mision?.espera));
-  const subidos = await esperar((r) => r.mision?.ahora === "takeoff", 45);
+  // Lo que cuesta, posado en Teno con la gente andando: con ella y sin dibujarla.
+  await pausa(1500);
+  const conGente = await medirCoste(false);
+  const sinGente = await medirCoste(true);
+  const tarjeta = await page.evaluate(() => {
+    const gl = globalThis.__oga.juegoParaTrazas().renderer.getContext();
+    const ext = gl.getExtension("WEBGL_debug_renderer_info");
+    return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+  });
+  console.log(`    dibuja con: ${tarjeta}`);
+  console.log(`    coste con gente: ${JSON.stringify(conGente)}`);
+  console.log(`    coste sin gente: ${JSON.stringify(sinGente)}`);
+  comprobar(
+    "la gente cuesta una llamada de dibujo, y unos pocos miles de triángulos",
+    conGente.llamadas - sinGente.llamadas <= 1.5 && conGente.triangulos - sinGente.triangulos < 6000,
+    `${(conGente.llamadas - sinGente.llamadas).toFixed(1)} llamadas y ${conGente.triangulos - sinGente.triangulos} triángulos más; cuadro ${sinGente.mediana} → ${conGente.mediana} ms (p90 ${sinGente.p90} → ${conGente.p90}); ${conGente.cpuGente} ms de CPU por cuadro`,
+  );
+  let aLaMitad = await leerGente();
+  for (let i = 0; i < 120 && !(aLaMitad.dentro >= 3 && aLaMitad.andando >= 3); i++) {
+    await pausa(250);
+    aLaMitad = await leerGente();
+  }
+  comprobar(
+    "a mitad de la subida, el tripulante fuera y la corredera abierta",
+    aLaMitad.tripulante === "fuera" && aLaMitad.puerta === 1 && aLaMitad.dentro >= 3,
+    `${aLaMitad.dentro} dentro, ${aLaMitad.andando} andando, tripulante ${aLaMitad.tripulante}, puerta ${aLaMitad.puerta}`,
+  );
+  await conVista("wing", "g2-a-mitad-de-la-subida");
+  await conVista("morro", "g2b-a-mitad-de-la-subida-de-frente");
+  if (process.env.OGA_NOCHE !== "0") {
+    await page.evaluate(() => globalThis.__oga.ponerHora(21.5));
+    await pausa(1200);
+    await conVista("wing", "g4-de-noche");
+    await page.evaluate(() => globalThis.__oga.ponerHora(12));
+    await pausa(600);
+  }
+  const subidos = await esperar((r) => r.mision?.ahora === "takeoff", 70);
+  const vigilado = await dejarDeVigilar();
+  comprobar(
+    "nadie pasa por detrás de la cola mientras sube la gente",
+    vigilado.malos.length === 0 && vigilado.muestras > 40,
+    vigilado.malos.slice(0, 4).join("; ") || `${vigilado.muestras} vistazos, ninguno; subieron en ${cuantoTardo(subidos, "suben")} s`,
+  );
+  const yaDentro = await leerGente();
+  comprobar(
+    "al acabar la espera, todos dentro, el tripulante también y la puerta cerrada",
+    yaDentro.dentro === CUANTOS && yaDentro.tripulante === "dentro" && yaDentro.puerta === 0,
+    `${yaDentro.dentro} dentro, tripulante ${yaDentro.tripulante}, puerta ${yaDentro.puerta}, la espera ${JSON.stringify(subidos.mision?.espera)}`,
+  );
   comprobar("pasados unos 25 s, toca despegar", subidos.mision?.ahora === "takeoff", JSON.stringify(subidos.mision?.espera));
   const gente = subidos.mision?.dicho.filter((d) => d.quien === "gente").map((d) => d.que) ?? [];
   comprobar(
@@ -414,8 +644,42 @@ try {
   );
   await foto("5-posado-en-garachico");
   await fase("posado");
-  const fin = await esperar((r) => r.mision?.terminada === true, 45);
+  await esperar((r) => r.mision?.espera?.corre === true, 20);
+  await empezarAVigilar();
+  const fin = await esperar((r) => r.mision?.terminada === true, 70);
+  const bajando = await dejarDeVigilar();
   comprobar("baja la gente y la misión se termina", fin.mision?.terminada === true, JSON.stringify(fin.mision?.espera));
+  comprobar(
+    "nadie pasa por detrás de la cola mientras baja la gente",
+    bajando.malos.length === 0 && bajando.muestras > 40,
+    bajando.malos.slice(0, 4).join("; ") || `${bajando.muestras} vistazos, ninguno; bajaron en ${cuantoTardo(fin, "bajan")} s`,
+  );
+  // El último, ya fuera del disco, aún anda hasta el grupo: se le deja llegar.
+  let abajo = await leerGente();
+  for (let i = 0; i < 40 && abajo.andando > 0; i++) {
+    await pausa(250);
+    abajo = await leerGente();
+  }
+  const lejos = abajo.locales.filter((l) => Math.hypot(l.f, l.r) > ROTOR + 0.5);
+  comprobar(
+    "en Garachico baja toda la gente y se queda fuera del disco, por delante",
+    abajo.fuera === CUANTOS && lejos.length === CUANTOS && abajo.locales.every((l) => l.f > 0) && abajo.tripulante === "dentro" && abajo.puerta === 0,
+    `${abajo.fuera} fuera, ${lejos.length} fuera del disco, lo más cerca a ${Math.min(...abajo.locales.map((l) => Math.hypot(l.f, l.r))).toFixed(1)} m del mástil; tripulante ${abajo.tripulante}, puerta ${abajo.puerta}`,
+  );
+  const pisa = await pisaLoQueSeVe();
+  comprobar(
+    "el helicóptero y la gente pisan en Garachico el suelo que se ve",
+    pisa.peor < 0.3 && pisa.cuantos === CUANTOS + 1,
+    `la peor diferencia, ${pisa.peor} m${pisa.donde ? `, ${pisa.donde}` : ""}, en ${pisa.cuantos} puntos`,
+  );
+  await conVista("morro", "g3-en-garachico-con-la-gente-abajo");
+  if (process.env.OGA_NOCHE !== "0") {
+    await page.evaluate(() => globalThis.__oga.ponerHora(21.5));
+    await pausa(1500);
+    await conVista("morro", "g4b-de-noche-en-garachico");
+    await page.evaluate(() => globalThis.__oga.ponerHora(12));
+    await pausa(800);
+  }
   await pausa(1500);
   await foto("6-final");
 
@@ -461,6 +725,19 @@ try {
   await foto("6c-album-con-el-sello");
   await page.keyboard.press("Escape");
   await pausa(400);
+
+  // ── Y al irse de Garachico, la gente se queda ─────────────────────────
+  await fase("subir", { alto: 25 });
+  await esperar((r) => !r.enTierra && r.alto > 12, 40);
+  await pausa(2500);
+  const despedida = await leerGente();
+  const quietos = despedida.sitios.filter((q, i) => Math.hypot(q.x - abajo.sitios[i].x, q.z - abajo.sitios[i].z) < 0.5).length;
+  comprobar(
+    "al despegar de Garachico, la gente se queda donde estaba",
+    despedida.fuera === CUANTOS && quietos === CUANTOS && despedida.visible,
+    `${despedida.fuera} fuera, ${quietos} en el mismo sitio`,
+  );
+  await foto("g3b-despegando-de-garachico");
 
   // ── Lo que se dijo y lo que sonó ───────────────────────────────────────
   const final = await leerApuntando();

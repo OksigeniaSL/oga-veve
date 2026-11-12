@@ -34,6 +34,8 @@
  */
 
 import { mallarConDetalle } from "./malla-lejana";
+// Una función, que se llama al pisar y no al cargar: el ciclo con `terrain.ts` no molesta.
+import { enLosDosTriangulos } from "./terrain";
 
 /** La ficha de un parche, tal cual la escribe el extractor. */
 export interface FichaDeParche {
@@ -136,6 +138,15 @@ export const LEJANIA = 2000;
 
 /** Cuánto puede apartarse un bloque llano de sus muestras, m. */
 const TOLERANCIA = 3;
+/**
+ * **Y en un parche para posarse, casi nada**: lo que se pisa son las muestras,
+ * y un bloque juntado con tres metros de margen deja la rueda o el pie por
+ * encima o por debajo de lo que se ve. En la explanada del puerto de
+ * Garachico, que es casi llana y se juntaba entera, el Super Puma y la gente
+ * que bajaba quedaban metro y medio bajo el suelo dibujado. Veinte
+ * centímetros: el mar, que es plano del todo, se sigue juntando.
+ */
+const TOLERANCIA_PARA_POSARSE = 0.2;
 /** El bloque llano más grande, en cuadros pequeños. */
 const BLOQUE = 16;
 
@@ -424,13 +435,14 @@ export function refinarElHorizonte(
         const j = (gc - p.c0) * p.s;
         const i0 = Math.min(p.filas - 2, Math.floor(i));
         const j0 = Math.min(p.columnas - 2, Math.floor(j));
-        const ti = i - i0;
-        const tj = j - j0;
-        const h = (a: number, b: number): number => p.alturas[a * p.columnas + b]!;
-        return (
-          (h(i0, j0) * (1 - tj) + h(i0, j0 + 1) * tj) * (1 - ti) +
-          (h(i0 + 1, j0) * (1 - tj) + h(i0 + 1, j0 + 1) * tj) * ti
-        );
+        /*
+         * En los dos triángulos de la malla y no a cuatro esquinas: lo que se
+         * pisa es lo que se dibuja. A cuatro esquinas, en la lava de Punta de
+         * Teno la gente que espera junto al faro quedaba a cuarenta
+         * centímetros del suelo que se ve. Ver `enLosDosTriangulos`.
+         */
+        const h = (col: number, fila: number): number => p.alturas[fila * p.columnas + col]!;
+        return enLosDosTriangulos(h, j0, i0, j - j0, i - i0);
       }
       return null;
     },
@@ -467,7 +479,7 @@ export function mallarElParche(
      * nudo del horizonte al siguiente se saltaría el quiebro entre los dos.
      */
     (i, j) => i === 0 || j === 0 || i >= p.filas - 2 || j >= p.columnas - 2,
-    TOLERANCIA,
+    p.parche.paraPosarse ? TOLERANCIA_PARA_POSARSE : TOLERANCIA,
     BLOQUE,
   );
   // De la rejilla cuadrada a la de verdad.

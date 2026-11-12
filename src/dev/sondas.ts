@@ -2407,6 +2407,15 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     mision: () => juego.misionParaBanco,
     /**
+     * **La gente de la misión**: cuántos esperan, andan y están dentro, el
+     * tripulante, la puerta y dónde está cada uno. Ver `world/gente-de-la-mision.ts`.
+     */
+    gente: () => juego.genteParaBanco,
+    /** Y quitarla del dibujo sin tocar lo que hace, para medir lo que cuesta. */
+    genteApagada: (apagada: boolean) => {
+      juego.genteDibujada.apagada = apagada;
+    },
+    /**
      * La ruta de este tramo: de dónde sale, a dónde va, el desvío de la
      * reserva si lo hay, el alternativo y a qué campo apunta la flecha.
      */
