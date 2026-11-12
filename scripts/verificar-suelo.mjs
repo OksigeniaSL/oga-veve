@@ -29,14 +29,56 @@ import { baseDe } from './servidor.mjs';
 /** Caída por metro, en metros, que ya despega al avión rodando. */
 const CAIDA_QUE_DESPEGA = 0.12;
 
+/**
+ * Lo más que se espera a que un escenario arranque, ms.
+ *
+ * **Se espera a que esté, no a un reloj.** Esto esperaba noventa y cinco
+ * segundos fijos por escenario y luego medía, y el juego está listo para
+ * medir en dos a cinco: abre la ventana de pruebas al final de su
+ * constructor, con el terreno ya aplanado bajo el aeródromo. Así que se
+ * pregunta cada segundo si ya está. Y con tope, que una espera sin salida
+ * deja un navegador vivo para nada: pasado este, el escenario se da por no
+ * arrancado, se dice hasta dónde llegó y se sigue con el siguiente.
+ */
+const TOPE_DEL_ARRANQUE = 3 * 60_000;
+
+/**
+ * Espera a que el escenario esté listo para medirle el suelo, o lanza un error
+ * que dice cuál, cuánto se esperó y la última etapa del arranque a la que
+ * llegó —las migas de `main.ts`—.
+ *
+ * Preguntando con `evaluate` y no con `waitForFunction`: si la página se
+ * recarga sola mientras arranca —lo hace el vigilante de `index.html` cuando
+ * un módulo no baja—, `waitForFunction` muere con el contexto y esto sigue
+ * preguntando.
+ */
+async function esperarAlEscenario(page, esc) {
+  const desde = Date.now();
+  while (Date.now() - desde < TOPE_DEL_ARRANQUE) {
+    const listo = await page
+      .evaluate(
+        () =>
+          typeof globalThis.__oga?.caminos === 'function' &&
+          typeof globalThis.__oga?.suelo === 'function',
+      )
+      .catch(() => false);
+    if (listo) return (Date.now() - desde) / 1000;
+    await page.waitForTimeout(1000);
+  }
+  const miga = await page
+    .evaluate(() => globalThis.__arranque?.at(-1) ?? null)
+    .catch(() => null);
+  throw new Error(
+    `${esc} no arrancó en ${TOPE_DEL_ARRANQUE / 1000} s: el juego no llegó a ` +
+      `abrir la ventana de pruebas (__oga.caminos); lo último del arranque, ` +
+      `${miga ? `«${miga}»` : 'nada'}`,
+  );
+}
+
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5278);
 const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
 const BASE = baseDe(server, PUERTO);
-const b = await chromium.launch({
-  executablePath: '/usr/bin/google-chrome',
-  args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'],
-});
 
 /*
  * **Y se miran todos, que es lo que no se hacía.**
@@ -47,25 +89,32 @@ const b = await chromium.launch({
  * banco de vuelo entero lo contaba como «este avión frena mal». No frenaba
  * mal: no tocaba el suelo. Un instrumento que solo mira donde ya se sabe que
  * hay un problema no encuentra ninguno nuevo.
+ *
+ * **Y «todos» son los del juego, no una lista copiada a mano.** La de aquí
+ * llevaba un «ciudad-del-este» que no es ningún escenario —el aeropuerto de
+ * Ciudad del Este es Guaraní, que ya estaba—, y con un nombre que no conoce
+ * el juego abre el hangar y espera a que alguien elija: el banco reventaba a
+ * los noventa y cinco segundos con «Cannot read properties of undefined
+ * (reading 'caminos')», y se tomó por un escenario pesado que no llegaba a
+ * tiempo. Así que la lista sale de `SCENARIOS`, y un nombre pedido que no
+ * esté ahí se dice sin abrir el navegador.
  */
+const { SCENARIOS } = await server.ssrLoadModule('/src/world/scenarios.ts');
+const DEL_JUEGO = SCENARIOS.map((e) => e.id);
 const ESCENARIOS = process.argv.slice(2);
-if (!ESCENARIOS.length)
-  ESCENARIOS.push(
-    'valle-cordillera', 'chaco', 'pettirossi', 'guarani', 'yvytu-rape',
-    'encarnacion', 'ciudad-del-este', 'estigarribia', 'pedro-juan',
-    'tenerife-norte', 'tenerife-sur', 'la-palma', 'gran-canaria',
-    'el-hierro', 'la-gomera', 'lanzarote', 'fuerteventura', 'cuatro-vientos',
-  );
+if (!ESCENARIOS.length) ESCENARIOS.push(...DEL_JUEGO);
+const desconocidos = ESCENARIOS.filter((e) => !DEL_JUEGO.includes(e));
+for (const esc of desconocidos)
+  console.log(`\n=== ${esc} ===\n  SIN MEDIR: no es un escenario del juego (los hay: ${DEL_JUEGO.join(', ')})`);
 
-let peorDeTodos = { esc: null, porKm: 0 };
-for (const esc of ESCENARIOS) {
-  const page = await b.newPage({ viewport: { width: 900, height: 600 }, locale: 'es-PY' });
-  page.on('pageerror', (e) => console.log('ERROR:', e.message));
-  await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-  await page.goto(`${BASE}/?escenario=${esc}&hora=16`);
-  await page.waitForTimeout(95000);
+const b = await chromium.launch({
+  executablePath: '/usr/bin/google-chrome',
+  args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'],
+});
 
-  const r = await page.evaluate((umbral) => {
+/** Recorre la pista, las calles y las plataformas metro a metro y cuenta las caídas. */
+function medirElSuelo(page) {
+  return page.evaluate((umbral) => {
     const o = globalThis.__oga;
     const caminos = o.caminos();
     const salida = {};
@@ -90,26 +139,60 @@ for (const esc of ESCENARIOS) {
     }
     return salida;
   }, CAIDA_QUE_DESPEGA);
-
-  console.log(`\n=== ${esc} ===`);
-  for (const [que, s] of Object.entries(r)) {
-    const porKm = s.metros ? (s.saltos / s.metros) * 1000 : 0;
-    if (que === 'pista' && porKm > peorDeTodos.porKm)
-      peorDeTodos = { esc, porKm, peor: s.peor };
-    console.log(
-      `  ${que.padEnd(9)} ${String(s.metros).padStart(6)} m recorridos · ` +
-        `${String(s.saltos).padStart(4)} caídas de más de ${CAIDA_QUE_DESPEGA} m ` +
-        `(${porKm.toFixed(0)} por km) · la peor ${s.peor.toFixed(2)} m`,
-    );
-  }
-  await page.close();
 }
 
-if (peorDeTodos.esc)
-  console.log(
-    `\nla pista más basta de todas: ${peorDeTodos.esc}, ` +
-      `${peorDeTodos.porKm.toFixed(0)} caídas por km, la peor ${peorDeTodos.peor.toFixed(2)} m`,
-  );
+let peorDeTodos = { esc: null, porKm: 0 };
+const sinArrancar = [...desconocidos];
+try {
+  for (const esc of ESCENARIOS.filter((e) => DEL_JUEGO.includes(e))) {
+    const page = await b.newPage({ viewport: { width: 900, height: 600 }, locale: 'es-PY' });
+    page.on('pageerror', (e) => console.log('ERROR:', e.message));
+    await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
+    /*
+     * **El mundo dibujado, dicho y no supuesto** (`teselas=0`). Con la
+     * fotografía 3D el suelo se reescribe con ella cuando se posa, a su
+     * ritmo, y ese «listo» no tiene fecha; y Google no la sirve a cuentas del
+     * Espacio Económico Europeo, así que el suelo que se rueda es el
+     * dibujado. Ver `claveDeTeselas` en `game.ts`.
+     */
+    await page.goto(`${BASE}/?escenario=${esc}&hora=16&teselas=0`);
+    let r;
+    let segundos;
+    try {
+      segundos = await esperarAlEscenario(page, esc);
+      r = await medirElSuelo(page);
+    } catch (e) {
+      console.log(`\n=== ${esc} ===\n  SIN MEDIR: ${e.message}`);
+      sinArrancar.push(esc);
+      continue;
+    } finally {
+      await page.close();
+    }
 
-await b.close();
-await server.close();
+    console.log(`\n=== ${esc} === (listo a los ${segundos.toFixed(0)} s)`);
+    for (const [que, s] of Object.entries(r)) {
+      const porKm = s.metros ? (s.saltos / s.metros) * 1000 : 0;
+      if (que === 'pista' && porKm > peorDeTodos.porKm)
+        peorDeTodos = { esc, porKm, peor: s.peor };
+      console.log(
+        `  ${que.padEnd(9)} ${String(s.metros).padStart(6)} m recorridos · ` +
+          `${String(s.saltos).padStart(4)} caídas de más de ${CAIDA_QUE_DESPEGA} m ` +
+          `(${porKm.toFixed(0)} por km) · la peor ${s.peor.toFixed(2)} m`,
+      );
+    }
+  }
+
+  if (peorDeTodos.esc)
+    console.log(
+      `\nla pista más basta de todas: ${peorDeTodos.esc}, ` +
+        `${peorDeTodos.porKm.toFixed(0)} caídas por km, la peor ${peorDeTodos.peor.toFixed(2)} m`,
+    );
+  // Un escenario sin medir no es un escenario sin caídas: se dice y se sale mal.
+  if (sinArrancar.length) {
+    console.log(`\nsin medir: ${sinArrancar.join(', ')}`);
+    process.exitCode = 1;
+  }
+} finally {
+  await b.close();
+  await server.close();
+}

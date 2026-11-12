@@ -357,8 +357,15 @@ export { ANCHO_RODADURA };
  * metros de desvío ahí siguen siendo asfalto, mientras que en una calle de
  * veintitrés metros doce ya son hierba.
  *
- * `margen` ensancha el pavimento para preguntar por el ala en vez de por el eje
- * del avión.
+ * `margen` ensancha **las pistas y las calles** para preguntar por el ala en
+ * vez de por el eje del avión. **Las plataformas no**: con ellas solo se mira
+ * si el punto está dentro del polígono, con margen o sin él. Y así se queda,
+ * porque de ese borde exacto dependen el tráfico —por dónde rueda y dónde se
+ * para: con el margen también en las plataformas, en Los Rodeos la raya verde
+ * dejaba de rodear a los aviones parados, ver `trafico-en-tu-calle.test.ts`—,
+ * las aves y la fauna. Para saber si hay pavimento cerca, plataformas
+ * incluidas —lo que necesita el aplanado del recinto—, está
+ * `cercaDelPavimento`.
  */
 /**
  * Si un punto cae sobre **la pista** —no sobre cualquier asfalto—.
@@ -400,6 +407,44 @@ export function enElPavimento(aero: Aerodrome, p: Punto, margen = 0): boolean {
   for (const plataforma of aero.aprons)
     if (dentroDelRecinto(p, plataforma.polygon)) return true;
   return false;
+}
+
+/**
+ * ¿Hay pavimento a menos de `margen` metros? **Plataformas incluidas.**
+ *
+ * `enElPavimento` ensancha con su margen las pistas y las calles, pero no las
+ * plataformas: con ellas solo mira si se está dentro. Para el ala y para el
+ * tráfico eso está medido así, y cambiarlo cambia por dónde ruedan. Para
+ * sostener el suelo no vale, y de ahí esta pregunta aparte.
+ *
+ * El aplanado del recinto sostiene lo que el mapa pone bajo el agua «si tiene
+ * pavimento encima o a dos nudos», y lo preguntaba con `enElPavimento`. En
+ * Gando la plataforma grande llega al mar por levante, y siete nudos de mar a
+ * entre veinticuatro y cincuenta y seis metros de su borde se quedaron a la
+ * cota del agua: la rejilla interpola hacia ellos dentro de la plataforma, el
+ * suelo caía hasta veintisiete centímetros por metro y el avión iba dando
+ * saltos al rodar. Ver «el mar se queda en el mar» en `flattenAerodrome`.
+ */
+export function cercaDelPavimento(aero: Aerodrome, p: Punto, margen: number): boolean {
+  if (enElPavimento(aero, p, margen)) return true;
+  for (const plataforma of aero.aprons)
+    if (alContorno(p, plataforma.polygon) < margen) return true;
+  return false;
+}
+
+/** Lo que dista un punto del borde de un polígono cerrado, m. */
+function alContorno(p: Punto, poligono: readonly Punto[]): number {
+  let mejor = Infinity;
+  for (let i = 0, j = poligono.length - 1; i < poligono.length; j = i++) {
+    const [ax, ay] = poligono[j]!;
+    const [bx, by] = poligono[i]!;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const l = dx * dx + dy * dy || 1;
+    const t = Math.max(0, Math.min(1, ((p[0] - ax) * dx + (p[1] - ay) * dy) / l));
+    mejor = Math.min(mejor, Math.hypot(p[0] - (ax + t * dx), p[1] - (ay + t * dy)));
+  }
+  return mejor;
 }
 
 /** Punto dentro de un polígono, por el número de cruces. */

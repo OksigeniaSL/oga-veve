@@ -38,8 +38,8 @@ import { ValueNoise2D } from "./noise";
 import { createRunwayMarkings } from "./runway-markings";
 import {
   aLaPolilinea,
+  cercaDelPavimento,
   createAerodrome,
-  enElPavimento,
   type Aerodrome,
   type Punto,
 } from "./aerodrome";
@@ -2904,6 +2904,10 @@ function flattenAerodrome(
    * pista ganada al mar que el mapa no llegara a ver no puede quedarse
    * colgando. Todo lo demás es mar, y lo pinta el agua. La caja es solo para
    * no preguntar al pavimento por cada nudo del mar abierto.
+   *
+   * Y a dos nudos **también de la plataforma**, que la rejilla interpola
+   * entre nudos: uno solo de mar junto al borde baja el suelo de toda la
+   * celda que pisa la plataforma. Ver `cercaDelPavimento`.
    */
   const nivel = scenario.waterLevel;
   const sostener = step * 2;
@@ -2929,7 +2933,7 @@ function flattenAerodrome(
           x <= caja.x1 &&
           z >= caja.y0 &&
           z <= caja.y1 &&
-          enElPavimento(aero, [x, z], sostener)
+          cercaDelPavimento(aero, [x, z], sostener)
         )
       )
         continue;
