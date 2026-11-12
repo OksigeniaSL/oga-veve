@@ -2695,6 +2695,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let etapa = "arrancar";
   /** Lo que lleva esperando en el puesto a que suene el crosscheck, s. */
   let esperandoParaArrancar = 0;
+  /** Si ya se pidió el empuje al tractor del puesto. Ver la etapa «arrancar». */
+  let empujePedido = false;
   /** En qué campo se puso el avión al cruzar, si se cruzó. Ver `destino`. */
   let enElDestino = null;
   /**
@@ -2705,6 +2707,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const ordenesDeIrse = [];
   let habiaOrden = false;
+  /** Quién entró en la pista, cuándo y dónde estábamos. Ver «quién entra en la pista». */
+  const entradasEnLaPista = [];
+  const enLaPistaAntes = new Set();
   /** Cuántas frases llevaba la boca al cruzar y al tocar: la final, en voces. */
   let vocesAlCruzar = null;
   let vocesAlTocar = null;
@@ -3731,8 +3736,44 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * tardar legítimamente a la velocidad que el juego dice que va.
    */
   const paredEmpezo = Date.now();
-  const TOPE_DE_PARED = Math.max(180, (TOPE / veces) * 2) * 1000;
+  /*
+   * **Pero «el doble de lo que dice el juego» cortaba tiradas sanas.** Era
+   * `max(180, TOPE / veces · 2)`: trescientos segundos de pared a ×12, como si
+   * el juego fuera siempre a lo que pide. No va: con la máquina sola da ×4, y
+   * con otros bancos al lado, ×2,4 o ×2,9 —medido el 12-11-2026, tres vuelos
+   * enteros de Los Rodeos cortados así, uno ya rodando de vuelta—. Y en los
+   * aviones con megafonía la tierra va a tiempo real —ver `fasesATiempoReal`—,
+   * así que el JAZ 90 gastaba en el puesto los trescientos segundos enteros.
+   *
+   * Lo que este tope tenía que cazar son dos cosas, y se cazan cada una con
+   * su medida, sin suponer a qué va la máquina:
+   *
+   * - **El reloj del juego parado**: si en un minuto de pared el juego no
+   *   avanza un segundo, no hay nada que esperar. Ver `RELOJ_PARADO`.
+   * - **Un vuelo atascado**: en tierra, sin moverse dos metros ni cambiar de
+   *   fase en cinco minutos de juego. Dice en qué fase. Ver `ATASCADO`.
+   *
+   * Y por si las dos fallan, uno de último recurso: el presupuesto entero a
+   * tiempo real y diez minutos más, que un vuelo sano nunca gasta.
+   */
+  /** Cuánto de pared sin que avance el reloj del juego se tolera, ms. */
+  const RELOJ_PARADO = 60 * 1000;
+  /**
+   * Cuánto se tolera en tierra sin moverse ni cambiar de fase, s de juego.
+   *
+   * Cinco minutos: la espera legítima más larga en tierra es la roja, que
+   * tiene ciento setenta segundos —ver «ninguna roja dura más de lo que dura
+   * de verdad»—, y la de los toboganes en el puesto, sesenta.
+   */
+  const ATASCADO = 300;
+  const TOPE_DE_PARED = (TOPE + 600) * 1000;
   let seQuedoSinPared = false;
+  /** Por qué se cortó: `reloj`, `atascado` o `pared`. */
+  let porQueSeCorto = null;
+  /** Dónde se quedó, si se quedó atascado. */
+  let atascadoEn = null;
+  let relojVivo = { pared: paredEmpezo, juego: o.reloj() };
+  let quietoDesde = null;
 
   /** La última altura a la que el piloto creía que tenía que ir, m. */
   let ultimoAltoQueToca = null;
@@ -3811,17 +3852,41 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let i = 0;
   for (; t < TOPE; i++) {
     await new Promise((r) => setTimeout(r, (PASO / veces) * 1000));
-    if (Date.now() - paredEmpezo > TOPE_DE_PARED) {
+    const ahoraDePared = Date.now();
+    if (ahoraDePared - paredEmpezo > TOPE_DE_PARED) {
       seQuedoSinPared = true;
+      porQueSeCorto = "pared";
       break;
     }
     const ahora = o.reloj();
+    // Ver `RELOJ_PARADO`: el reloj del juego, vivo si avanza un segundo.
+    if (ahora - relojVivo.juego >= 1) relojVivo = { pared: ahoraDePared, juego: ahora };
+    else if (ahoraDePared - relojVivo.pared > RELOJ_PARADO) {
+      seQuedoSinPared = true;
+      porQueSeCorto = "reloj";
+      break;
+    }
     /** Lo que ha pasado de verdad desde la muestra anterior. */
     const paso = ahora - leidoAntes;
     leidoAntes = ahora;
     t = ahora - empezo;
     const s = o.estado();
     const fase = o.fase();
+    // Ver `ATASCADO`: en tierra, quieto y en la misma fase.
+    if (
+      !s.onGround ||
+      etapa === "apagar" ||
+      !quietoDesde ||
+      quietoDesde.fase !== fase ||
+      Math.hypot(s.position.x - quietoDesde.x, s.position.z - quietoDesde.z) > 2
+    )
+      quietoDesde = { t, x: s.position.x, z: s.position.z, fase };
+    else if (t - quietoDesde.t > ATASCADO) {
+      seQuedoSinPared = true;
+      porQueSeCorto = "atascado";
+      atascadoEn = { fase, etapa, segundos: Math.round(t - quietoDesde.t), t: Math.round(t) };
+      break;
+    }
     if (rutaPedida && t - muestraDeRuta >= 1) {
       muestraDeRuta = t;
       await apuntarLaRuta(s, fase, t);
@@ -4944,11 +5009,44 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * que se hace lo que se enseña: subir por el eje y dar otra vuelta al
      * circuito. Ver `autorizarCuandoToque` en `game.ts`.
      */
+    /*
+     * **Y quién entra en la pista, y dónde estábamos entonces.** Una orden de
+     * irse por pista ocupada puede ser la torre haciendo bien su trabajo —el de
+     * delante tarda en dejarla— o la torre dejando entrar a uno con nosotros
+     * ya en final corta. El parte de la orden solo decía «pistaOcupada», y eso
+     * no distingue las dos.
+     */
+    if (t >= 1) {
+      const encima = (o.trafico?.() ?? []).filter((a) => a.enLaPista);
+      for (const a of encima) {
+        if (enLaPistaAntes.has(a.matricula) || entradasEnLaPista.length >= 40) continue;
+        let umbral = null;
+        try {
+          umbral = Math.round(alUmbral(s));
+        } catch {
+          // Aún sin pista a la que medir.
+        }
+        entradasEnLaPista.push({
+          t: +t.toFixed(1),
+          quien: a.matricula,
+          llegando: a.llegando,
+          alto: Math.round(a.y - (o.cotaDePistaDeAhora?.(a.x, a.z) ?? 0)),
+          nosotros: { etapa, umbral, alto: s.onGround ? 0 : Math.round(alto(s)) },
+        });
+      }
+      enLaPistaAntes.clear();
+      for (const a of encima) enLaPistaAntes.add(a.matricula);
+    }
     {
       const hayOrden = !!o.ordenDeFrustrar?.();
       if (hayOrden && !habiaOrden) {
         const sp = o.sendaYPermiso?.() ?? {};
         ordenesDeIrse.push({
+          // Y quién había en la pista y qué esperaba turno en la boca.
+          encima: (o.trafico?.() ?? [])
+            .filter((a) => a.enLaPista)
+            .map((a) => `${a.matricula}${a.llegando ? " llegando" : ""}`),
+          boca: o.bocaAhora?.()?.espera ?? null,
           t: +t.toFixed(1),
           porque: o.porQueMandaron?.() ?? null,
           alto: Math.round(alto(s)),
@@ -5080,9 +5178,43 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         fase === "estacionado" &&
         o.listoParaArrancar?.() === false &&
         esperandoParaArrancar < 60;
-      c.engineOn = !aLosToboganes;
-      c.brakes = aLosToboganes ? 1 : 0;
-      if (fase === "rodando" || fase === "arrancando") etapa = "rodar";
+      /*
+       * **Y del puesto de contacto se sale empujado, con la baliza y la llave.**
+       *
+       * Desde que los reactores salen de Los Rodeos empujados por un tractor
+       * —ver `prepararElRemolque` en `game.ts`—, este piloto se quedaba en el
+       * puesto: escribía `engineOn` en los mandos, como siempre, y así no
+       * pasaba por la llave, que con el tractor enganchado no arranca sino que
+       * pide el empuje, ni encendía la baliza, sin la que el tractor no empuja.
+       * Con los motores en marcha y el tractor enganchado la fase se calla
+       * —ver `elRemolqueLlevaLaSalida`— y nadie pedía nada: el JAZ 90 de
+       * Guyrami pasó 296 s en «arrancando», sin rodar un metro y sin tarjeta.
+       * Quien juega no llega ahí: su llave, su tecla y su tarjeta pasan por
+       * `toggleEngine`. Así que el banco hace lo que hace quien juega, con los
+       * mismos mandos: la baliza, la llave para pedir el empuje y, empujando,
+       * la llave otra vez para arrancar; y no rueda hasta que lo sueltan.
+       */
+      const elRemolque = o.inicio?.()?.remolque ?? null;
+      if (elRemolque && elRemolque.fase !== "libre" && o.tocarMando) {
+        c.throttle = 0;
+        c.brakes = aLosToboganes ? 1 : 0;
+        if (!aLosToboganes) {
+          if (elRemolque.fase === "enganchado") {
+            if (!elRemolque.baliza) o.tocarMando("baliza");
+            else if (!empujePedido) {
+              o.tocarMando("motor");
+              empujePedido = true;
+            }
+          } else if (!o.controles().engineOn) o.tocarMando("motor");
+        }
+        // Los mandos de este banco se escriben enteros cada fotograma: el
+        // motor, como lo dejó la llave, que si no lo apagaría por detrás.
+        c.engineOn = !!o.controles().engineOn;
+      } else {
+        c.engineOn = !aLosToboganes;
+        c.brakes = aLosToboganes ? 1 : 0;
+        if (fase === "rodando" || fase === "arrancando") etapa = "rodar";
+      }
     } else if (etapa === "rodar") {
       tiempoDeRodajeIda += paso;
       if (antesIda)
@@ -6652,6 +6784,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      */
     paredSegundos: +((Date.now() - paredEmpezo) / 1000).toFixed(1),
     seQuedoSinPared,
+    porQueSeCorto,
+    atascadoEn,
     vueltas: i,
     fases: [...fases].join(" "),
     cambiosDeFase,
@@ -6717,6 +6851,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     frustradasPorLaPista,
     frustradasPorElJuego,
     ordenesDeIrse,
+    entradasEnLaPista,
     laFinalDeAlli: { ...laFinalDeAlli, subidaMaxima: Math.round(laFinalDeAlli.subidaMaxima) },
     vocesAlCruzar,
     vocesAlTocar,
@@ -7604,9 +7739,22 @@ if (seQuedoSinTiempo) {
  * si el juego pidió ×4 y de verdad se movió a ×0,2, no hay nada que afinar en
  * el vuelo — hay algo que no corre.
  */
-if (seQuedoSinPared) {
+/*
+ * Y por qué se cortó, que son tres cosas distintas: el reloj del juego parado,
+ * un vuelo atascado en tierra o el tope de último recurso. Ver `ATASCADO`.
+ */
+const atascado = vuelo.porQueSeCorto === "atascado" ? vuelo.atascadoEn : null;
+const relojParado = seQuedoSinPared && !atascado;
+if (atascado) {
   console.log(
-    `\n  ⏱  el vuelo no avanzó: ${vuelo.segundos.toFixed(0)} s de juego en` +
+    `\n  ⏱  el vuelo se atascó: ${atascado.segundos} s en tierra sin moverse ni cambiar de fase,` +
+      ` en la fase «${atascado.fase}» (etapa «${atascado.etapa}»), a los ${atascado.t} s.\n` +
+      `     Lo que depende de haber volado no se juzga en esta pasada.\n`,
+  );
+} else if (seQuedoSinPared) {
+  console.log(
+    `\n  ⏱  el vuelo no avanzó${vuelo.porQueSeCorto === "reloj" ? " —el reloj del juego se paró—" : ""}:` +
+      ` ${vuelo.segundos.toFixed(0)} s de juego en` +
       ` ${vuelo.paredSegundos.toFixed(0)} s de pared, o sea ×${relojDeVerdad.toFixed(2)}` +
       ` donde el juego dijo ×${vuelo.veces}.\n` +
       `     Se quedó en «${vuelo.etapa}», fase «${vuelo.fases.split(" ").pop()}».` +
@@ -7616,8 +7764,8 @@ if (seQuedoSinPared) {
 
 comprobar(
   "el vuelo avanza al ritmo que dice que avanza",
-  !seQuedoSinPared,
-  seQuedoSinPared
+  !relojParado,
+  relojParado
     ? `×${relojDeVerdad.toFixed(2)} de verdad frente a ×${vuelo.veces} pedidos` +
       ` · ${vuelo.segundos.toFixed(0)} s de juego en ${vuelo.paredSegundos.toFixed(0)} s de pared` +
       ` · ${vuelo.vueltas} vueltas · se quedó en «${vuelo.etapa}»`
@@ -7629,6 +7777,8 @@ comprobar(
   "un vuelo entero se puede completar sin ayuda de nadie",
   vuelo.etapa === "apagar",
   `acabó en «${vuelo.etapa}» a los ${vuelo.segundos.toFixed(0)} s${
+    atascado ? ` · atascado ${atascado.segundos} s en «${atascado.fase}» sin moverse` : ""
+  }${
     vuelo.percance ? ` · percance: ${vuelo.percance}` : ""
   }${
     /*
@@ -9601,6 +9751,9 @@ console.log(
     (BAMBOLEO.length ? ` · bamboleo ±${BAMBOLEO[0]} m cada ${BAMBOLEO[1] ?? 30} s` : ""),
 );
 for (const r of vuelo.ordenesDeIrse ?? []) console.log(`    ${JSON.stringify(r)}`);
+// Y quién entró en la pista mientras volábamos, con dónde estábamos.
+if (vuelo.ordenesDeIrse?.length)
+  for (const e of vuelo.entradasEnLaPista ?? []) console.log(`    en la pista: ${JSON.stringify(e)}`);
 {
   const f = vuelo.laFinalDeAlli ?? {};
   console.log(
