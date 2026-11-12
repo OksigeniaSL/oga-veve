@@ -145,6 +145,12 @@ export interface AircraftMesh {
     | import("./palanca-de-aerofrenos").PalancaDeAerofrenos
     | null;
   /**
+   * Y los mandos de la cabina que se mueven con los de verdad: el colectivo,
+   * el cíclico, los pedales y las palancas del techo del helicóptero. `null`
+   * en el modelo que no los trae. Ver `world/mandos-de-cabina.ts`.
+   */
+  mandosDeCabina?: import("./mandos-de-cabina").MandosDeCabina | null;
+  /**
    * Si esto es el modelo de verdad y no las cajas de respaldo.
    *
    * Existe para poder **mirarlo desde fuera**, y hace falta porque el respaldo

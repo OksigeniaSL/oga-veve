@@ -64,6 +64,7 @@ import { recorridoDeMandos } from "../flight/recorrido-de-mandos";
 import { prepararElAla } from "./ala-que-se-dobla";
 import { pinturaSinColorDeNoche } from "./de-noche-sin-color";
 import { prepararPalancaDeAerofrenos } from "./palanca-de-aerofrenos";
+import { prepararMandosDeCabina } from "./mandos-de-cabina";
 import { encenderRelojes } from "./relojes-cabina";
 import { encenderBotones } from "./botones-cabina";
 import { luzDeCabina } from "./luz-de-cabina";
@@ -859,10 +860,10 @@ export async function cargarModelo(
   group.add(luces.grupo);
 
   /*
-   * Los ojos, del asiento de delante. **El helicóptero aún no tiene cabina por
-   * dentro** (va aparte, en la cuarta familia de cabinas): se sientan en el
-   * asiento de la derecha, que es el del comandante en un helicóptero, a la
-   * altura de los ojos de quien va sentado detrás del parabrisas.
+   * Los ojos, del asiento de delante: en el helicóptero, el de la derecha, que
+   * es el del comandante y el que su modelo pone primero. Si un modelo de
+   * helicóptero no trajera asientos, ahí mismo, a la altura de los ojos de
+   * quien va sentado detrás del parabrisas.
    */
   const ojo = ojoDelModelo(raiz, group) ?? (aircraft.helicoptero ? { x: 0.6, y: 0.5, z: -3.8 } : undefined);
   /*
@@ -918,6 +919,9 @@ export async function cargarModelo(
     // palanca en el pedestal. Ver `aerofrenos.ts` y `palanca-de-aerofrenos.ts`.
     aerofrenos: prepararAerofrenos(raiz),
     palancaDeAerofrenos: prepararPalancaDeAerofrenos(raiz),
+    // Y los mandos de la cabina del helicóptero, que se mueven con los de
+    // verdad. Ver `mandos-de-cabina.ts`.
+    mandosDeCabina: prepararMandosDeCabina(raiz),
     // Y las reversas, en los turbofanes: el manguito que se va hacia la cola.
     // Ver `reversas.ts`.
     reversas: prepararReversas(raiz),

@@ -25,6 +25,13 @@
  * `modelos/comun.py`—. Aquí se buscan por ese nombre, se iluminan al pasar por
  * encima y se dispara la acción al soltar. Quien decide qué hace cada una es
  * `game.ts`, que es el único que sabe lo que significa arrancar un motor.
+ *
+ * **Y las palancas de los motores del helicóptero**, `palanca-motor-<n>`: en
+ * el Super Puma los motores no se arrancan con una llave en el panel sino con
+ * las dos palancas rojas del techo, y son esas las que responden al dedo,
+ * como el contacto. No se llaman `boton-…` porque eso las metería en el
+ * encuadre de la cabina, que abre la vista hasta que quepa lo que se pulsa: y
+ * están en el techo, donde se miran levantando la cabeza.
  */
 
 import {
@@ -168,6 +175,15 @@ export interface BotonesDeCabina {
   dispose(): void;
 }
 
+/** Qué mando es una malla por su nombre, o `null` si no es ninguno. */
+export function deQueEs(nombre: string): MandoDeCabina | null {
+  if (nombre.startsWith("boton-")) {
+    const cual = nombre.slice("boton-".length) as MandoDeCabina;
+    return CUALES.includes(cual) ? cual : null;
+  }
+  return /^palanca-motor-\d+$/.test(nombre) ? "motor" : null;
+}
+
 /**
  * `ojo`: dónde están los ojos del piloto, en coordenadas del mundo, para saber
  * qué cara de cada mando se ve. Sin él los mandos se quedan sin dibujo.
@@ -179,9 +195,9 @@ export function encenderBotones(
   const botones: Boton[] = [];
   raiz.traverse((o) => {
     const m = o as Mesh;
-    if (!m.isMesh || !m.name.startsWith("boton-")) return;
-    const cual = m.name.slice("boton-".length) as MandoDeCabina;
-    if (!CUALES.includes(cual)) return;
+    if (!m.isMesh) return;
+    const cual = deQueEs(m.name);
+    if (!cual) return;
     /*
      * **Cada mando con su propio material.** Los seis botones del avión salen
      * del mismo material del fichero, así que iluminar uno los iluminaría

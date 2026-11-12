@@ -1019,6 +1019,7 @@ import {
 import { CabinaDePasaje, cabinaPreparada, enLaPuerta } from "./world/cabina-de-pasaje";
 import type { AsientoDePasaje } from "./world/asiento-de-pasaje";
 import { CERCANO_EN_LA_CABINA } from "./world/cabina-333";
+import { CERCANO_EN_EL_HELICOPTERO } from "./cameras/dentro";
 import { montarElPasillo, type PasilloDePasaje } from "./world/pasillo-de-pasaje";
 import type { ModoDeLaPantalla, PantallaDelRespaldo } from "./world/pantalla-del-respaldo";
 import { diaEnLaCabina } from "./world/luz-de-cabina";
@@ -19795,6 +19796,25 @@ export class Game {
       dt,
     );
     this.aircraftMesh.mandos?.poner(this.mandosQueSeVen);
+    /*
+     * **Y los de la cabina, con los mismos**: el cíclico y los pedales del
+     * helicóptero van a donde van las superficies, y a su ritmo; el colectivo,
+     * con la palanca del gas, que es su mando en el juego; y las palancas del
+     * techo, con los motores y con el freno del rotor tal como está. Ver
+     * `world/mandos-de-cabina.ts`.
+     */
+    if (this.aircraftMesh.mandosDeCabina) {
+      const freno =
+        this.flight instanceof HelicopteroComoModelo && this.flight.modelo.rotor().frenoDelRotor;
+      this.aircraftMesh.mandosDeCabina.poner({
+        alabeo: this.mandosQueSeVen.alabeo,
+        cabeceo: this.mandosQueSeVen.cabeceo,
+        guinada: this.mandosQueSeVen.guinada,
+        colectivo: this.input.controls.throttle,
+        motor: this.input.controls.engineOn ? 1 : 0,
+        "freno-rotor": freno ? 1 : 0,
+      });
+    }
     const deTierra = this.input.controls.frenosDeTierra ?? 0;
     this.aircraftMesh.aerofrenos?.poner(
       this.input.controls.aerofrenos ?? 0,
@@ -27570,7 +27590,18 @@ export class Game {
     const asiento = this.asientoDe(modo);
     // Asomada al pasillo, la pared de la ventanilla no está delante: la cabina la pone el pasillo.
     const pasillo = !!asiento && this.enElPasillo;
-    const cercano = pasillo && this.elPasillo()?.pantalla ? CERCANO_EN_LA_CABINA : this.cercanoDeSiempre;
+    /*
+     * **Y en la cabina del helicóptero, más cerca.** Su consola de techo, sus
+     * palancas y los montantes de la pecera quedan a medio metro de los ojos,
+     * y el cíclico entre las rodillas: con los sesenta centímetros de siempre
+     * se cortaban o no salían. Ver `CERCANO_EN_EL_HELICOPTERO`.
+     */
+    const cercano =
+      pasillo && this.elPasillo()?.pantalla
+        ? CERCANO_EN_LA_CABINA
+        : modo === "cockpit" && this.aircraft.helicoptero
+          ? CERCANO_EN_EL_HELICOPTERO
+          : this.cercanoDeSiempre;
     if (this.camera.near !== cercano) {
       this.camera.near = cercano;
       this.camera.updateProjectionMatrix();

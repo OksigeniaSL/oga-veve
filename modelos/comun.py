@@ -139,6 +139,13 @@ COLORES = {
     # que significan. Ver `_avisos_del_guardasol`.
     "aviso_rojo": (0.36, 0.05, 0.05, 1.0),
     "aviso_ambar": (0.46, 0.29, 0.04, 1.0),
+    # Las palancas del techo de un helicóptero: **rojas las de los motores y
+    # amarilla la del freno del rotor**, que son los colores que llevan en el
+    # Super Puma y en casi todos los de su clase. No son luces: son el color
+    # del mango, el que se busca con la mano sin mirar. Ver
+    # `_cabina_de_helicoptero`.
+    "palanca_roja": (0.80, 0.13, 0.10, 1.0),
+    "palanca_amarilla": (0.95, 0.72, 0.12, 1.0),
 }
 
 # El acabado de cada material del interior: rugosidad y metal. Todo lo que no
@@ -159,6 +166,8 @@ ACABADOS = {
     "tapiceria": (0.8, 0.0),
     "gris_linea": (0.65, 0.05),
     "boton": (0.4, 0.0),
+    "palanca_roja": (0.35, 0.0),
+    "palanca_amarilla": (0.35, 0.0),
     "aviso_rojo": (0.18, 0.0),
     "aviso_ambar": (0.18, 0.0),
 }
@@ -2159,7 +2168,7 @@ def _mcp(arriba, z_labio, puntos):
 def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
            suelo_atras=0.80, y_suelo=0.32, y_respaldo=0.88, pantallas_en=0.155,
            palancas=0, relojes=0, clase="avioneta", mando="cuerno",
-           mide="rpm", tren=False, flaps=True, parabrisas=None):
+           mide="rpm", tren=False, flaps=True, parabrisas=None, hueco=None):
     """
     Lo que se ve desde el asiento: suelo, panel, visera, pantallas y silla.
 
@@ -2218,9 +2227,22 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     guardasol, y el lomo del morro que asoma por encima. Ver
     `parabrisas_por_dentro`. Sin él, el panel y el guardasol sin marco.
 
+    - `"helicoptero"`: la del Super Puma, que no es la de un avión sin ala.
+      Ver `_cabina_de_helicoptero`. Va aparte y vuelve antes de tocar nada de
+      lo de los aviones, así que sus `.glb` no cambian.
+
+    `hueco(z, y)` es cuánto sitio hay por dentro a esa altura, de medio ancho:
+    solo lo usa el helicóptero, cuyo morro se estrecha justo donde va el panel.
+
     Dos nombres no son libres: **`asiento`**, porque `ojoDePiloto` lo busca por
     nombre, y **`g1000_display`**, que es lo que busca `pantallas-cabina.ts`.
     """
+    if clase == "helicoptero":
+        return _cabina_de_helicoptero(
+            ojos_z, ancho, alto_panel, y_suelo, y_respaldo, plazas,
+            hueco or (lambda z, y: ancho),
+            ("baliza", "freno") + (("tren",) if tren else ()),
+        )
     piezas = []
     # Dónde van los tornillos de todo el panel: se juntan en una sola malla al
     # final. Ver `tornillos`.
@@ -2836,6 +2858,477 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
                  (plazas[0], y_suelo + 0.05, z_b), "tapiceria", lados=12)
     )
     return piezas
+
+
+def _que_se_mueve(nombre, donde, mueve, eje, rango, grados, hijos):
+    """
+    Un mando de cabina que se mueve: un vacío en su pivote del que cuelgan sus
+    piezas.
+
+    Es la palanca de aerofrenos dicha para cualquier mando —ver
+    `world/palanca-de-aerofrenos.ts`—: el modelo dice **por dónde gira** y
+    **cuánto**, y el juego solo lo pone. En las propiedades del vacío, en los
+    ejes del avión (x a la derecha, y arriba, z a la cola):
+
+    - `mueve`: quién lo mueve —`colectivo`, `alabeo`, `cabeceo`, `guinada`,
+      `motor` o `freno-rotor`—, con el nombre de `world/mandos-de-cabina.ts`;
+    - `eje`: el eje de giro;
+    - `rango` y `grados`: con el mando en `rango[0]`, gira `grados[0]`; en
+      `rango[1]`, `grados[1]`; en medio, lo que haya en medio.
+
+    Se modela en reposo, con el mando al centro o abajo, y el juego lo gira
+    desde ahí.
+    """
+    bpy.ops.object.empty_add(location=donde)
+    v = bpy.context.object
+    v.name = nombre
+    v["mueve"] = mueve
+    v["eje"] = [float(c) for c in eje]
+    v["rango"] = [float(c) for c in rango]
+    v["grados"] = [float(c) for c in grados]
+    bpy.context.view_layer.update()
+    for h in hijos:
+        h.parent = v
+        h.matrix_parent_inverse = v.matrix_world.inverted()
+    return [v] + list(hijos)
+
+
+def _bm_a_objeto(nombre, bm, material_):
+    """Un bmesh hecho objeto, con las normales hacia fuera."""
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    malla = bpy.data.meshes.new(nombre)
+    bm.to_mesh(malla)
+    bm.free()
+    obj = bpy.data.objects.new(nombre, malla)
+    bpy.context.collection.objects.link(obj)
+    return pintar(obj, material_)
+
+
+def _caja_en(bm, x0, x1, y0, y1, z0, z1):
+    """Una caja recta dentro de un bmesh: para juntar muchas en una malla."""
+    bmesh.ops.create_cube(
+        bm, size=1.0,
+        matrix=Matrix.Translation(((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2))
+        @ Matrix.Diagonal((x1 - x0, y1 - y0, z1 - z0, 1.0)),
+    )
+
+
+def _cano_en(bm, a, b, r, lados=8):
+    """Un tubo tapado entre dos puntos dentro de un bmesh."""
+    a, b = Vector(a), Vector(b)
+    eje = (b - a).normalized()
+    ref = Vector((1, 0, 0)) if abs(eje.x) < 0.9 else Vector((0, 1, 0))
+    u = eje.cross(ref).normalized()
+    w = eje.cross(u).normalized()
+    ra, rb = [], []
+    for i in range(lados):
+        ang = math.tau * i / lados
+        d = u * math.cos(ang) * r + w * math.sin(ang) * r
+        ra.append(bm.verts.new(a + d))
+        rb.append(bm.verts.new(b + d))
+    for i in range(lados):
+        j = (i + 1) % lados
+        bm.faces.new((ra[i], ra[j], rb[j], rb[i]))
+    bm.faces.new(list(reversed(ra)))
+    bm.faces.new(rb)
+
+
+def se_busca_por_nombre(nombre):
+    """
+    Lo de la cabina que el juego busca por su nombre, y que por eso no se
+    junta con nada: la visera (el encuadre), las pantallas
+    (`pantallas-cabina.ts`), los botones (`botones-cabina.ts`) y los asientos
+    (`ojoDePiloto`).
+    """
+    return (
+        nombre in ("visera", "pantalla-horizonte", "pantalla-rumbo",
+                   "pantalla-motores")
+        or nombre.startswith("asiento")
+        or (nombre.startswith("boton-") and not nombre.endswith("-hueco"))
+    )
+
+
+def juntar_por_material(piezas, prefijo, deja=lambda nombre: False):
+    """
+    Junta en una malla por material lo que está quieto.
+
+    **Por las llamadas de dibujo**, que en la tablet del colegio son lo que
+    cuesta: una cabina son cuarenta piezas sueltas y cada una es una llamada.
+    Lo que no se mueve ni se busca por su nombre se junta, y de cuarenta
+    quedan una docena. Lo que se busca por nombre —la visera, las pantallas,
+    los botones y los asientos, `deja`— y lo que cuelga de un mando que se
+    mueve se quedan como están.
+    """
+    por = {}
+    salen = []
+    for p in piezas:
+        suelta = (
+            p.type == "MESH" and p.parent is None
+            and len(p.data.materials) == 1 and not deja(p.name)
+        )
+        if suelta:
+            por.setdefault(p.data.materials[0].name, []).append(p)
+        else:
+            salen.append(p)
+    for mat, objs in por.items():
+        if len(objs) == 1:
+            salen += objs
+            continue
+        bpy.ops.object.select_all(action="DESELECT")
+        for o in objs:
+            o.select_set(True)
+        bpy.context.view_layer.objects.active = objs[0]
+        # Con los biseles puestos: unir sin aplicarlos se quedaría solo con
+        # los de la primera pieza.
+        bpy.ops.object.convert(target="MESH")
+        bpy.ops.object.join()
+        o = bpy.context.view_layer.objects.active
+        o.name = f"{prefijo}-{mat}"
+        salen.append(o)
+    return salen
+
+
+def _cabina_de_helicoptero(ojos_z, ancho, alto_panel, y_suelo, y_respaldo,
+                           plazas, hueco, mandos):
+    """
+    La cabina de un helicóptero, la del Super Puma: la de la muestra de Gaudí
+    del 12-11-2026, aprobada por Enrique, con pantallas
+    (`arte-local/entregas/oga-veve/super-puma/cabina/`).
+
+    **No es la de un avión con el ala quitada**, y por eso va aparte:
+
+    - **El cuadro es bajo** y la visera ancha. Un helicóptero se posa mirando
+      el suelo por delante y por debajo del morro, así que el panel no puede
+      tapar lo que en un avión tapa.
+    - **Las ventanas de los pies**, por debajo del cuadro: por ahí se ve el
+      helipuerto al posarse. Son las de Gaudí por fuera; por dentro son el
+      hueco que dejan los forros, que dibuja el guion del aparato.
+    - **La consola del techo**, con dos palancas rojas —los motores— y una
+      amarilla —el freno del rotor—: en un Super Puma se arrancan y se paran
+      por arriba, no con una llave en el panel.
+    - **Los mandos de cada asiento**: el colectivo a la izquierda, que sube y
+      baja; el cíclico entre las rodillas, que en el Puma es un tubo curvo
+      que sale del suelo; y los pedales. Los dos puestos se mueven juntos,
+      como en el de verdad, donde van unidos por varillas.
+    - **El comandante a la derecha**, como en casi todos los helicópteros: el
+      primer asiento de `plazas` es el suyo, se llama `asiento` y ahí se
+      sientan los ojos. Aquí no se corre al eje como en los aviones: el
+      pedestal va en medio, y un helicóptero se ve desde su asiento.
+
+    **Las tres pantallas, centradas en su cara**, como en la familia C: es la
+    regla del cuadro, que centra el grupo y encoge lo de dentro si no cabe. El
+    morro del Puma se estrecha justo donde va el panel —`hueco`—, así que
+    salen algo más pequeñas que las de un reactor y del tamaño de las de
+    verdad (las del H215 son de quince por veinte). Horizonte, mapa y motores,
+    en el orden del cuadro plano. *Desviación consciente:* en el de verdad la
+    de motores va en el centro, entre los dos; aquí no hay dos.
+
+    Todo son cajas y tubos, y al final se junta por material lo que está
+    quieto. Ver `juntar_por_material`.
+    """
+    piezas = []
+    puntos = []
+    ojo_y = y_respaldo + 0.10
+    ojo_z = ojos_z + 0.145
+    cx = plazas[0]
+    # El panel, al brazo estirado, como en todos: ver `cabina`.
+    panel_z = ojos_z - 0.58
+    hondo = 0.05
+
+    # ── Las pantallas, primero: el panel se hace a su medida ──
+    hueco_p = 0.012
+    # Cinco centímetros y medio por debajo del canto del panel, y no tres
+    # como en los reactores: el panel del automático va en el labio de la
+    # visera, más cerca de los ojos, y con el cuadro tan bajo su canto de
+    # abajo se comía el borde de arriba de las pantallas —las cifras de la
+    # rosa y de la cinta de velocidad—.
+    arriba_p = alto_panel - 0.055
+    tope = hueco(panel_z, arriba_p) - 0.045
+    grupo = 2 * (tope - cx)
+    ancho_p = max(0.14, min(0.26, (grupo - 2 * hueco_p) / 3))
+    alto_p = ancho_p * 0.75
+    grupo = ancho_p * 3 + hueco_p * 2
+    borde = cx - grupo / 2
+    y_p = arriba_p - alto_p / 2
+    for k, nombre in enumerate(("horizonte", "rumbo", "motores")):
+        centro = (borde + ancho_p / 2 + k * (ancho_p + hueco_p), y_p,
+                  panel_z + 0.006)
+        piezas.append(cuadro(f"pantalla-{nombre}", ancho_p, alto_p, centro,
+                             "g1000_display"))
+        piezas.append(marco(f"pantalla-{nombre}-marco", centro, ancho_p,
+                            alto_p, hueco_p * 0.45, 0.006, "bisel"))
+    piezas.append(
+        marco("bastidor-de-pantallas", (cx, y_p, panel_z + 0.004),
+              grupo + hueco_p * 0.9, alto_p + hueco_p * 0.9, 0.016, 0.005,
+              "bisel")
+    )
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            puntos.append((cx + sx * (grupo / 2 + 0.016),
+                           y_p + sy * (alto_p / 2 + 0.016), panel_z + 0.009))
+
+    # Los mandos que se pulsan, bajo las pantallas y centrados en su cara,
+    # como en los reactores. **Sin el del motor**: en el Puma los motores se
+    # arrancan y se paran con las palancas rojas del techo, que son las que
+    # responden al dedo. Ver `palanca-motor-…` abajo.
+    lado_boton = ancho_p * 0.2
+    paso_boton = lado_boton * 1.2
+    y_boton = y_p - alto_p / 2 - lado_boton * 0.85
+    for i, que in enumerate(mandos):
+        piezas += boton(
+            que, lado_boton * 0.95, lado_boton * 0.75,
+            (cx + (i - (len(mandos) - 1) / 2) * paso_boton, y_boton,
+             panel_z + 0.008),
+        )
+    y_pb = y_boton - lado_boton * 0.75 / 2 - 0.035
+
+    # ── El panel, a la medida del morro ──
+    #
+    # Un trapecio y no una caja: el morro del Puma es más estrecho arriba que
+    # abajo, y una caja con el ancho de abajo asomaba por fuera del cristal.
+    def ancho_en(y):
+        return hueco(panel_z - hondo, y) - 0.012
+
+    wt, wb = ancho_en(alto_panel), ancho_en(y_pb)
+    verts = []
+    for z in (panel_z - hondo, panel_z):
+        verts += [(-wb, y_pb, z), (wb, y_pb, z), (wt, alto_panel, z),
+                  (-wt, alto_panel, z)]
+    caras = [(0, 1, 2, 3), (4, 7, 6, 5), (0, 4, 5, 1), (1, 5, 6, 2),
+             (2, 6, 7, 3), (3, 7, 4, 0)]
+    piezas.append(solido("panel", verts, caras, "tablero"))
+
+    # ── La visera, ancha, de lado a lado del panel ──
+    arriba = alto_panel + 0.045
+    z_labio = panel_z + 0.07
+    z_delante = panel_z - 0.12
+    medio = min(wt + 0.02, hueco(z_delante, arriba) - 0.02,
+                hueco(z_labio, arriba) - 0.02)
+    piezas.append(_visera(medio, arriba, alto_panel + 0.008, z_delante,
+                          z_labio, 0.02, (ojo_y, ojo_z)))
+    # Y en su labio, las tres ventanillas del automático —velocidad, rumbo y
+    # altura—, que el de cuatro ejes del H215 también tiene y que el cuadro
+    # plano de la familia D pone en la visera. Delante del comandante, como
+    # sus pantallas.
+    de_mcp = []
+    piezas_mcp = _mcp(arriba, z_labio, de_mcp)
+    for o in piezas_mcp:
+        o.location.x += cx
+    puntos += [(x + cx, y, z) for x, y, z in de_mcp]
+    piezas += piezas_mcp
+
+    # ── Por debajo del panel: la caja de los pies ──
+    #
+    # Una tapa desde el canto de abajo del panel hacia el morro y el mamparo
+    # de la bahía de aviónica delante de los pedales. Sin ellas, por debajo
+    # del panel se veía el mundo a través del morro: la piel solo se pinta
+    # por fuera. **Las ventanas de los pies no van aquí**: van en los
+    # costados, donde las lleva el Puma por fuera. Ver el guion del aparato.
+    z_nariz = ojos_z - 0.86
+    w_n = hueco(z_nariz, y_pb) - 0.01
+    piezas.append(caja("bajo-el-panel", -w_n, w_n, y_pb - 0.02, y_pb,
+                       z_nariz, panel_z - hondo, "forro"))
+    w_m = min(hueco(z_nariz, y_suelo + 0.05), w_n) - 0.01
+    piezas.append(caja("mamparo-de-los-pies", -w_m, w_m, y_suelo, y_pb,
+                       z_nariz - 0.02, z_nariz, "forro"))
+
+    # La raya de lo que se lee: lo que va delante del panel, por debajo de
+    # ella, no tapa nada. Ver «Lo que va delante del panel» en `cabina`.
+    y_linea = y_pb
+    baja = (ojo_y - y_linea) / (ojo_z - panel_z)
+
+    def techo_en(z):
+        return ojo_y - baja * (ojo_z - z)
+
+    # ── El pedestal, largo, entre los dos asientos ──
+    #
+    # Del panel a la altura de las rodillas, con la tapa bajando hacia los
+    # asientos por debajo de la raya: es la que lleva las radios y las filas
+    # de interruptores, y en la foto de los Países Bajos va casi hasta el
+    # respaldo.
+    medio_p = 0.10
+    z_pf, z_pr = panel_z - 0.01, ojos_z + 0.30
+    y_pf = min(y_pb - 0.005, techo_en(z_pf) - 0.005)
+    y_pr = min(y_suelo + 0.42, techo_en(z_pr) - 0.005)
+    verts = []
+    for z, yt in ((z_pf, y_pf), (z_pr, y_pr)):
+        verts += [(-medio_p, y_suelo, z), (medio_p, y_suelo, z),
+                  (medio_p, yt, z), (-medio_p, yt, z)]
+    piezas.append(solido("pedestal", verts, caras, "gris_linea"))
+    # Las radios y los paneles de mando, en filas sobre la tapa: una cara
+    # oscura por cajetín, con dos pomos y su rótulo encendido.
+    caras_r, pomos, rotulos = bmesh.new(), bmesh.new(), bmesh.new()
+    filas = 6
+    for f in range(filas):
+        u0 = 0.04 + f * (0.92 / filas)
+        u1 = u0 + 0.92 / filas - 0.02
+        za, zb = z_pf + (z_pr - z_pf) * u0, z_pf + (z_pr - z_pf) * u1
+        ya, yb = y_pf + (y_pr - y_pf) * u0, y_pf + (y_pr - y_pf) * u1
+        bm_ = caras_r
+        # La cara del cajetín, un pelo por encima de la tapa.
+        bmesh.ops.create_cube(
+            bm_, size=1.0,
+            matrix=Matrix.Translation((0, (ya + yb) / 2 + 0.004, (za + zb) / 2))
+            @ Matrix.Rotation(math.atan2(ya - yb, zb - za), 4, "X")
+            @ Matrix.Diagonal((medio_p * 1.7, 0.008,
+                               math.hypot(zb - za, yb - ya), 1.0)),
+        )
+        for x in (-0.055, 0.055):
+            zc, yc = (za * 0.6 + zb * 0.4), (ya * 0.6 + yb * 0.4)
+            bmesh.ops.create_cone(
+                pomos, cap_ends=True, segments=6, radius1=0.011,
+                radius2=0.010, depth=0.018,
+                matrix=Matrix.Translation((x, yc + 0.016, zc))
+                @ Matrix.Rotation(math.radians(-90), 4, "X"),
+            )
+        zr, yr = (za * 0.2 + zb * 0.8), (ya * 0.2 + yb * 0.8)
+        _caja_en(rotulos, -0.04, 0.04, yr + 0.008, yr + 0.011, zr - 0.006,
+                 zr + 0.006)
+    piezas.append(_bm_a_objeto("pedestal-radios", caras_r, "bisel"))
+    piezas.append(_bm_a_objeto("pedestal-pomos", pomos, "pomo"))
+    piezas.append(_bm_a_objeto("pedestal-rotulos", rotulos, "retro"))
+
+    # ── Los asientos ──
+    for i, x in enumerate(plazas):
+        silla = asiento_de_una_pieza(
+            "asiento" if i == 0 else f"asiento-{i}", ojos_z,
+            medio_ancho=0.22, y_cojin=y_suelo + 0.40, y_respaldo=y_respaldo,
+        )
+        silla.location.x += x
+        piezas.append(silla)
+
+    # ── Los mandos de cada asiento, que se mueven ──
+    #
+    # Unidos, como en el de verdad: los dos colectivos, los dos cíclicos y
+    # los dos pares de pedales hacen lo mismo a la vez. Ver
+    # `world/mandos-de-cabina.ts`, que los mueve.
+    for i, x in enumerate(plazas):
+        n = i + 1
+        # **El colectivo**, a la izquierda del asiento: un brazo que sale de
+        # atrás, junto al cojín, y sube hacia delante hasta el puño, que lleva
+        # la caja de interruptores. Sube y baja girando en su pie: arriba es
+        # más paso en las palas.
+        xc = x - 0.265
+        pie = (xc, y_suelo + 0.20, ojos_z + 0.40)
+        puno = (xc, y_suelo + 0.40, ojos_z - 0.08)
+        bm = bmesh.new()
+        _cano_en(bm, pie, puno, 0.016, 10)
+        _caja_en(bm, xc - 0.03, xc + 0.03, puno[1] - 0.035, puno[1] + 0.04,
+                 puno[2] - 0.06, puno[2] + 0.05)
+        _caja_en(bm, xc - 0.025, xc + 0.025, pie[1] - 0.05, pie[1] + 0.03,
+                 pie[2] - 0.04, pie[2] + 0.04)
+        brazo = _bm_a_objeto(f"colectivo-{n}-brazo", bm, "pomo")
+        # Unos quince grados de recorrido, que en el puño son unos quince
+        # centímetros: lo que sube la mano de un piloto de verdad.
+        piezas += _que_se_mueve(f"colectivo-{n}", pie, "colectivo", (1, 0, 0),
+                                (0, 1), (0, 15), [brazo])
+
+        # **El cíclico**, un tubo curvo que sale del suelo por delante del
+        # asiento y sube hacia el piloto hasta el puño, entre las rodillas.
+        # Gira en su pie: hacia delante y atrás con la profundidad, a los
+        # lados con los alerones.
+        zb_ = ojos_z - 0.30
+        base = Vector((x, y_suelo, zb_))
+        camino = [base + Vector(d) for d in (
+            (0, 0.0, 0.0), (0, 0.16, -0.05), (0, 0.32, -0.02),
+            (0, 0.46, 0.06), (0, 0.55, 0.13))]
+        bm = bmesh.new()
+        for a, b in zip(camino, camino[1:]):
+            _cano_en(bm, a, b, 0.016, 10)
+        punta = camino[-1]
+        _cano_en(bm, punta, punta + Vector((0, 0.12, 0.02)), 0.021, 10)
+        _cano_en(bm, base - Vector((0, 0.01, 0)), base + Vector((0, 0.05, 0)),
+                 0.05, 12)
+        tubo_c = _bm_a_objeto(f"ciclico-{n}-tubo", bm, "pomo")
+        dentro = _que_se_mueve(f"ciclico-{n}-profundidad", tuple(base),
+                               "cabeceo", (1, 0, 0), (-1, 1), (-12, 12),
+                               [tubo_c])
+        # Tirar es positivo y lleva el puño hacia el piloto, a la cola: un
+        # giro positivo sobre la x. Y a la derecha, un giro negativo sobre la
+        # z, que es el que lleva arriba hacia la x positiva.
+        piezas += _que_se_mueve(f"ciclico-{n}", tuple(base), "alabeo",
+                                (0, 0, 1), (-1, 1), (10, -10), [dentro[0]])
+        piezas += dentro[1:]
+
+        # **Los pedales**, al fondo, bajo el panel: uno por pie, colgados de
+        # su pivote en el suelo. Con el pie derecho, el derecho va hacia el
+        # morro y el izquierdo vuelve, que es como se mueven unidos.
+        for lado, sx in (("izquierdo", -1), ("derecho", 1)):
+            px = x + sx * 0.11
+            zp = ojos_z - 0.70
+            pivote = (px, y_suelo + 0.02, zp + 0.04)
+            bm = bmesh.new()
+            # La chapa, algo tumbada hacia el piloto, y el brazo hasta el
+            # pivote.
+            bmesh.ops.create_cube(
+                bm, size=1.0,
+                matrix=Matrix.Translation((px, y_suelo + 0.17, zp))
+                @ Matrix.Rotation(math.radians(-20), 4, "X")
+                @ Matrix.Diagonal((0.075, 0.20, 0.016, 1.0)),
+            )
+            _cano_en(bm, (px, y_suelo + 0.08, zp + 0.02), pivote, 0.012, 8)
+            chapa = _bm_a_objeto(f"pedal-{n}-{lado}-chapa", bm, "metal")
+            # Con la guiñada a la derecha, el derecho se va hacia el morro:
+            # giro negativo sobre la x. El izquierdo, al revés.
+            piezas += _que_se_mueve(f"pedal-{n}-{lado}", pivote, "guinada",
+                                    (1, 0, 0), (-1, 1),
+                                    (14 * sx, -14 * sx), [chapa])
+
+    # ── La consola del techo ──
+    #
+    # Entre los dos asientos y algo por delante de los ojos, colgando del
+    # techo: no puede ir más adelante, que ahí empieza el parabrisas. Una caja gris con sus filas de interruptores y, en el canto de
+    # delante, **las tres palancas**: las dos rojas de los motores, juntas,
+    # y la amarilla del freno del rotor, aparte. Es lo que se ve colgando
+    # arriba en la foto de los Países Bajos.
+    z_cf, z_cr = ojo_z - 0.17, ojo_z + 0.40
+    y_cb = ojo_y + 0.28
+    techo_c = ojo_y + 0.44
+    w_c = 0.20
+    piezas.append(redondear(caja("consola-de-techo", -w_c, w_c, y_cb, techo_c,
+                                 z_cf, z_cr, "gris_linea"), radio=0.015))
+    placas, llaves = bmesh.new(), bmesh.new()
+    for f in range(4):
+        z = z_cf + 0.10 + f * 0.13
+        for k in range(5):
+            x = -0.15 + k * 0.075
+            _caja_en(placas, x - 0.025, x + 0.025, y_cb - 0.004, y_cb - 0.001,
+                     z + 0.03, z + 0.05)
+            _cano_en(llaves, (x, y_cb, z), (x, y_cb - 0.022, z + 0.006),
+                     0.004, 4)
+    piezas.append(_bm_a_objeto("rotulos-de-techo", placas, "retro"))
+    piezas.append(_bm_a_objeto("interruptores-de-techo", llaves, "metal"))
+    # Las palancas, colgando del canto de delante: un vástago y un mango en
+    # T. Con los motores en marcha van hacia delante, al vuelo; paradas,
+    # atrás. La del freno, atrás es puesto.
+    #
+    # **Las de los motores se llaman `palanca-motor-…`** y responden al dedo
+    # como el botón del contacto: ver `world/botones-cabina.ts`. No se llaman
+    # `boton-…` porque eso las metería en el encuadre de la cabina, que
+    # encoge la vista hasta que quepa todo lo que se pulsa; y estas están en
+    # el techo, donde se miran levantando la cabeza.
+    for nombre, x, mat, mueve, grados in (
+        ("palanca-motor-1", -0.10, "palanca_roja", "motor", (-25, 20)),
+        ("palanca-motor-2", -0.04, "palanca_roja", "motor", (-25, 20)),
+        ("palanca-freno-rotor", 0.10, "palanca_amarilla", "freno-rotor",
+         (20, -25)),
+    ):
+        # El vástago y el mango, aparte: el mango es el que se pulsa y el
+        # que lleva el dibujo de la llave, que el juego centra en su caja.
+        pivote = (x, y_cb + 0.01, z_cf + 0.05)
+        bm = bmesh.new()
+        _cano_en(bm, pivote, (x, y_cb - 0.09, z_cf + 0.05), 0.006, 8)
+        vastago = _bm_a_objeto(f"{nombre}-vastago", bm, "metal")
+        bm = bmesh.new()
+        _caja_en(bm, x - 0.022, x + 0.022, y_cb - 0.118, y_cb - 0.086,
+                 z_cf + 0.038, z_cf + 0.062)
+        mango = _bm_a_objeto(nombre, bm, mat)
+        piezas += _que_se_mueve(f"{nombre}-pivote", pivote, mueve, (1, 0, 0),
+                                (0, 1), grados, [vastago, mango])
+
+    if puntos:
+        piezas.append(tornillos("tornillos", puntos))
+    return juntar_por_material(piezas, "cabina", deja=se_busca_por_nombre)
 
 
 def _palancas_de_gas(cuantas, x_centro, ancho, y_base, y_pomo, z):
