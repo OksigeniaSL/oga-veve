@@ -1678,6 +1678,291 @@ for (const [ancho, alto, dedo] of [
   }
 }
 
+/*
+ * **El modo pizarra: lo que toca un niño, al tercio de abajo.** Una pizarra de
+ * aula cuelga con el borde de abajo a noventa centímetros del suelo y un niño
+ * de cuatro años llega con la mano al tercio de abajo y poco más: la pausa, el
+ * ⏩, la cámara y la fila de arriba le quedaban fuera. Con `?pizarra=1` bajan a
+ * una franja al lado de la palanca, y la señal —la que se toca para arrancar—
+ * abajo a la derecha. Ver `src/ui/pizarra.ts`.
+ *
+ * En los tres tamaños de pizarra de la guía de las aulas: lo que da una
+ * pizarra a ×1,5 (1280 × 600 a la vista), la más pequeña que se prueba y la de
+ * un Chromebook. Se mira que lo que baja quede entero en el tercio de abajo,
+ * de yema y sin nada encima; que no pise los mandos de vuelo, el cuadro, la
+ * tarjeta de quien habla ni lo demás que vive abajo; que lo del adulto se
+ * quede arriba; y que el cajón de los cuatro puntos se abra en la misma
+ * franja sin tapar los mandos.
+ */
+const PIZARRAS = [
+  [1280, 600],
+  [960, 540],
+  [1366, 768],
+];
+
+/** Corre en la página: lo que se mide del modo pizarra, cerrado y con el cajón abierto. */
+async function medirLaPizarra() {
+  const H = innerHeight;
+  const W = innerWidth;
+  const tercio = (H * 2) / 3;
+  const pisa = (a, b) =>
+    Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+    Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+  const visible = (el) => {
+    if (!el || el.closest("[hidden]")) return false;
+    const cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden" || Number(cs.opacity) === 0) return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 2 && r.height > 2;
+  };
+  const nombre = (el) =>
+    el.dataset?.hud ?? el.dataset?.inicio ?? String(el.className?.baseVal ?? el.className).split(" ")[0];
+  /** Lo que no se puede tapar: los mandos de vuelo, el cuadro, quien habla y lo demás de abajo. */
+  const intocables = () =>
+    [
+      ".pad--stick",
+      ".pad--rudder",
+      ".pad--throttle",
+      '[data-hud="brakes-touch"]',
+      ".hud__derecha > *",
+      '[data-hud="tablero"]',
+      '[data-hud="cuadro-tirador"]',
+      '[data-hud="tutor"]',
+      "#inicio .inicio__tarjeta",
+      ".kit__boton",
+      ".consola__boton",
+      ".volumen__capsula",
+    ]
+      .flatMap((q) => [...document.querySelectorAll(q)])
+      .filter(visible);
+  const medir = (botones, contra) => {
+    const fuera = [];
+    const pisados = [];
+    const tapados = [];
+    const chicos = [];
+    for (const b of botones) {
+      const r = b.getBoundingClientRect();
+      if (r.top < tercio - 0.5 || r.bottom > H + 0.5 || r.left < -0.5 || r.right > W + 0.5)
+        fuera.push(`${nombre(b)} ${Math.round(r.top)}–${Math.round(r.bottom)}`);
+      if (r.width < 43.5 || r.height < 43.5) chicos.push(`${nombre(b)} ${Math.round(r.width)}×${Math.round(r.height)}`);
+      for (const o of contra)
+        if (o !== b && !o.contains(b) && !b.contains(o) && pisa(r, o.getBoundingClientRect()))
+          pisados.push(`${nombre(b)} pisa ${nombre(o)}`);
+      const p = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      if (!p || !(p === b || b.contains(p))) tapados.push(`${nombre(b)} bajo ${p ? nombre(p) : "nada"}`);
+    }
+    return { fuera, pisados, tapados, chicos };
+  };
+  const hud = document.querySelector(".hud");
+  const franja = document.querySelector(".hud__pizarra");
+  const botones = franja ? [...franja.querySelectorAll("button")].filter(visible) : [];
+  // Lo del adulto: el sonido de la sala, los créditos y la puerta del hangar, arriba.
+  const delAdulto = ['.volumen__capsula', '[data-hud="credits"]', '[data-hud="hangar"]']
+    .map((q) => document.querySelector(q))
+    .filter(visible)
+    .filter((e) => e.getBoundingClientRect().bottom > H / 3 + 0.5)
+    .map(nombre);
+  // Y lo que pidió la escena: la pausa siempre, la cámara fuera del pasaje.
+  const faltan = ["pausa", ...(document.documentElement.classList.contains("con-pasaje") ? [] : ["camara"])]
+    .filter((q) => !botones.some((b) => b.dataset.hud === q));
+  const cerrado = medir(botones, intocables());
+  /*
+   * La señal, si está y se toca, en los dos peldaños de los pequeños: entera en
+   * el tercio de abajo. Desde Taguato lleva frase y se queda en su rincón de
+   * arriba, que a los diez años la mano ya llega.
+   */
+  const senal = document.querySelector('[data-hud="senal"]');
+  let laSenal = null;
+  if (hud.classList.contains("hud--pequenos") && visible(senal) && senal.matches(".senal--pulsable, .senal--explica")) {
+    const r = senal.getBoundingClientRect();
+    const contra = [...intocables(), ...botones];
+    laSenal = {
+      caja: `${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}×${Math.round(r.height)}`,
+      abajo: r.top >= tercio - 0.5 && r.bottom <= H + 0.5 && r.left >= -0.5 && r.right <= W + 0.5,
+      pisa: contra.filter((o) => pisa(r, o.getBoundingClientRect())).map(nombre),
+    };
+  }
+  // Y el cajón: se abre, cabe en la franja y no tapa los mandos; el cuadro sí, mientras se elige.
+  let cajon = null;
+  const boton = franja?.querySelector('[data-hud="menu"]');
+  if (visible(boton)) {
+    boton.click();
+    await new Promise((r) => setTimeout(r, 300));
+    const caja = document.querySelector('[data-hud="menu-caja"]');
+    const abierto = hud.classList.contains("hud--menu") && visible(caja);
+    const dentro = abierto ? [...caja.querySelectorAll("button")].filter(visible) : [];
+    const mandos = intocables().filter((o) => !o.matches('[data-hud="tablero"], [data-hud="cuadro-tirador"], [data-hud="tutor"]'));
+    cajon = { abierto, cuantos: dentro.length, ...medir(dentro, mandos) };
+    if (abierto) {
+      boton.click();
+      await new Promise((r) => setTimeout(r, 300));
+      cajon.cierra = !hud.classList.contains("hud--menu");
+    }
+  }
+  return {
+    hay: !!franja && hud.classList.contains("hud--pizarra"),
+    botones: botones.map(nombre),
+    faltan,
+    delAdulto,
+    cerrado,
+    laSenal,
+    cajon,
+  };
+}
+
+const PIZARRA_EN = [
+  ...JUEGOS.map((j) => ({
+    nombre: j.tramo,
+    url: `?escenario=${j.escenario}&hora=16&leccion=despegue&tramo=${j.tramo}&avion=${j.avion}&meteo=`,
+    listo: () => !!globalThis.__oga?.estado?.(),
+  })),
+  {
+    nombre: "pasaje",
+    url: "?inicio=3&fecha=2026-12-15",
+    listo: () => !!globalThis.__oga?.inicio?.()?.estado,
+    empezar: true,
+  },
+];
+
+for (const [ancho, alto] of PIZARRAS)
+  for (const donde of PIZARRA_EN) {
+    const page = await navegador.newPage({ viewport: { width: ancho, height: alto }, hasTouch: true, isMobile: true });
+    const tam = `pizarra ${donde.nombre} ${ancho}×${alto}`;
+    try {
+      await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
+      await page.goto(`${BASE}/${donde.url}&pizarra=1`);
+      await page.waitForFunction(donde.listo, null, { timeout: 240000 });
+      if (donde.empezar) await page.evaluate(() => globalThis.__ogaEmpezar?.());
+      await page.waitForTimeout(donde.empezar ? 5000 : 2000);
+      const m = await page.evaluate(medirLaPizarra);
+      comprobar(
+        `${tam}: lo que toca un niño está en la franja de abajo`,
+        m.hay && m.faltan.length === 0,
+        m.hay ? (m.faltan.length ? `faltan ${m.faltan.join(", ")}` : m.botones.join(" · ")) : "sin franja",
+        "la pausa y la cámara arriba no las alcanza un niño de pie delante de la pizarra",
+      );
+      comprobar(
+        `${tam}: la franja, entera en el tercio de abajo, de yema y sin nada encima`,
+        m.cerrado.fuera.length + m.cerrado.chicos.length + m.cerrado.tapados.length === 0,
+        [...m.cerrado.fuera.map((f) => `fuera ${f}`), ...m.cerrado.chicos, ...m.cerrado.tapados].join(" · ") || "todo a mano",
+        "lo que se sale del tercio de abajo no lo alcanza la mano de un niño de cuatro años",
+      );
+      comprobar(
+        `${tam}: la franja no pisa los mandos, el cuadro ni a quien habla`,
+        m.cerrado.pisados.length === 0,
+        m.cerrado.pisados.join(" · ") || "libre",
+        "bajar la pausa no puede taparle a nadie la palanca, el cuadro ni la tarjeta de la escena",
+      );
+      comprobar(
+        `${tam}: lo del adulto se queda arriba`,
+        m.delAdulto.length === 0,
+        m.delAdulto.length ? `abajo: ${m.delAdulto.join(", ")}` : "el sonido, los créditos y el hangar, arriba",
+        "el sonido de la sala y la puerta del hangar son de quien pone el juego, no de la mano de un niño",
+      );
+      if (m.laSenal)
+        comprobar(
+          `${tam}: la señal que se toca, al alcance y sin pisar nada`,
+          m.laSenal.abajo && m.laSenal.pisa.length === 0,
+          `en ${m.laSenal.caja}` +
+            (m.laSenal.pisa.length ? ` · pisa ${m.laSenal.pisa.join(", ")}` : ""),
+          "es la que se toca para arrancar el motor: arriba, el niño no arranca",
+        );
+      if (m.cajon)
+        comprobar(
+          `${tam}: el cajón de los cuatro puntos se abre abajo, sin tapar los mandos, y se cierra`,
+          m.cajon.abierto &&
+            m.cajon.cuantos > 0 &&
+            m.cajon.fuera.length + m.cajon.chicos.length + m.cajon.tapados.length + m.cajon.pisados.length === 0 &&
+            m.cajon.cierra,
+          !m.cajon.abierto
+            ? "no se abre"
+            : [...m.cajon.fuera.map((f) => `fuera ${f}`), ...m.cajon.chicos, ...m.cajon.tapados, ...m.cajon.pisados].join(" · ") ||
+                (m.cajon.cierra ? `${m.cajon.cuantos} botones a mano` : "no se cierra"),
+          "los paneles y los interruptores de cabina viven ahí: si no se alcanzan, no existen",
+        );
+      if (process.env.OGA_FOTOS)
+        await page.screenshot({ path: `${process.env.OGA_FOTOS}/pizarra-${donde.nombre}-${ancho}x${alto}.png` });
+    } catch (e) {
+      comprobar(`${tam}: arranca`, false, String(e).slice(0, 160), "");
+    } finally {
+      await page.close();
+    }
+  }
+
+/*
+ * **Y en el hangar**: las fichas se tocan para elegir, y con la pizarra su
+ * parte de abajo —el nombre, la pista— cae en el tercio de abajo; los pasos y
+ * despegar ya vivían abajo. Y el botón que lo enciende, en los ajustes, con
+ * su dibujo y su glosa.
+ */
+for (const [ancho, alto] of PIZARRAS) {
+  const page = await navegador.newPage({ viewport: { width: ancho, height: alto }, hasTouch: true, isMobile: true });
+  const tam = `pizarra hangar ${ancho}×${alto}`;
+  try {
+    await page.addInitScript(() => {
+      if (localStorage.getItem("oga-veve:guardado") === null)
+        localStorage.setItem("oga-veve:cuaderno", JSON.stringify({ despegues: 1, segundos: 600 }));
+    });
+    await page.goto(`${BASE}/?pizarra=1`);
+    await page.waitForSelector(".piloto__boton", { timeout: 60000 });
+    await page.click(".piloto__boton");
+    await page.waitForSelector(".ficha--sitio", { timeout: 60000 });
+    await page.waitForTimeout(500);
+    const h = await page.evaluate(() => {
+      const H = innerHeight;
+      const tercio = (H * 2) / 3;
+      const nombre = (el) => String(el.className).split(" ")[0];
+      const lejos = [...document.querySelectorAll(".hangar .ficha, .hangar .paso, .hangar__despegar")]
+        .filter((e) => e.getBoundingClientRect().width > 2)
+        .filter((e) => {
+          const r = e.getBoundingClientRect();
+          // Cuánto de la pieza cae en el tercio de abajo, dentro de la pantalla.
+          return Math.min(r.bottom, H) - Math.max(r.top, tercio) < 44;
+        })
+        .map((e) => `${nombre(e)} ${Math.round(e.getBoundingClientRect().top)}–${Math.round(e.getBoundingClientRect().bottom)}`);
+      return { lejos, fichas: document.querySelectorAll(".hangar .ficha").length };
+    });
+    comprobar(
+      `${tam}: las fichas, los pasos y despegar llegan al tercio de abajo`,
+      h.fichas > 0 && h.lejos.length === 0,
+      h.lejos.join(" · ") || `${h.fichas} fichas a mano`,
+      "elegir el campo y el avión es de quien juega: lo que no baja hasta su mano, lo elige el profesor",
+    );
+    await page.click('[data-pantalla="ajustes"]');
+    await page.waitForSelector("[data-pizarra]", { timeout: 10000 });
+    const b = await page.evaluate(() => {
+      const el = document.querySelector("[data-pizarra]");
+      const r = el.getBoundingClientRect();
+      return {
+        puesto: el.getAttribute("aria-pressed"),
+        dibujo: !!el.querySelector("svg"),
+        glosa: el.querySelector(".pizarra-boton__glosa")?.textContent?.trim() ?? "",
+        w: Math.round(r.width),
+        h: Math.round(r.height),
+      };
+    });
+    await page.click("[data-pizarra]");
+    const quitado = await page.evaluate(() => ({
+      raiz: document.documentElement.classList.contains("pizarra"),
+      guardado: localStorage.getItem("oga-veve:pizarra"),
+      boton: document.querySelector("[data-pizarra]")?.getAttribute("aria-pressed"),
+    }));
+    comprobar(
+      `${tam}: el botón de la pizarra, con su dibujo y su glosa, se enciende y se apaga`,
+      b.puesto === "true" && b.dibujo && b.glosa.length > 0 && b.w >= 44 && b.h >= 44 &&
+        !quitado.raiz && quitado.guardado === "0" && quitado.boton === "false",
+      `encendido ${b.puesto} · «${b.glosa}» · ${b.w}×${b.h} · al tocarlo: raíz ${quitado.raiz}, guardado ${quitado.guardado}`,
+      "se elige una vez y se recuerda en el aparato; sin dibujo no lo encuentra quien no lee",
+    );
+    if (process.env.OGA_FOTOS)
+      await page.screenshot({ path: `${process.env.OGA_FOTOS}/pizarra-hangar-ajustes-${ancho}x${alto}.png` });
+  } catch (e) {
+    comprobar(`${tam}: el hangar sale`, false, String(e).slice(0, 160), "");
+  } finally {
+    await page.close();
+  }
+}
+
 for (const r of resultados) {
   console.log(`  ${r.ok ? "✓" : "✗"} ${r.nombre}  —  ${r.detalle}`);
   if (!r.ok && r.porque) console.log(`      ${r.porque}`);

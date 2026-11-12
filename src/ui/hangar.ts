@@ -79,6 +79,7 @@ import { abrirFichaDeLaCarta, campoTocado, colocarLaCarta, mapaDelPais, type Rut
 import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from "../i18n";
 import { cielo, marca, pie } from "./marca";
 import { elegirMundo, mundoElegido } from "./mundo";
+import { hayPizarra, ponerPizarra, PIZARRA } from "./pizarra";
 import {
   leerProgreso,
   leerTexto,
@@ -2330,6 +2331,21 @@ export function abrirHangar(
                   .join("")}
               </div>
             </div>
+            <!--
+              **La pizarra del aula**, que se elige porque no se puede
+              adivinar: una pizarra y una tablet apaisada dan lo mismo a la
+              hoja de estilos. Un botón que se enciende, con su dibujo —la
+              pizarra y el niño de pie que llega a su franja de abajo— y su
+              glosa debajo. Ver ui/pizarra.ts.
+            -->
+            <div class="ajuste">
+              <span class="ajuste__titulo" id="hangar-pizarra">${t("pizarra.label")}</span>
+              <button class="pizarra-boton" type="button" data-pizarra=""
+                      aria-pressed="${hayPizarra()}" aria-describedby="hangar-pizarra">
+                ${PIZARRA}
+                <span class="pizarra-boton__glosa">${t("pizarra.glosa")}</span>
+              </button>
+            </div>
           </div>
         </section>`
             : ""
@@ -2565,6 +2581,13 @@ export function abrirHangar(
         setLocale(idIdioma as (typeof LOCALES)[number]);
         pintar();
         root.querySelector<HTMLElement>(`[data-idioma="${idIdioma}"]`)?.focus();
+        return;
+      }
+
+      if (boton.hasAttribute("data-pizarra")) {
+        ponerPizarra(!hayPizarra());
+        pintar();
+        root.querySelector<HTMLElement>("[data-pizarra]")?.focus();
         return;
       }
 

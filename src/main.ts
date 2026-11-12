@@ -97,6 +97,7 @@ import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
 import { elegirPiloto } from "./ui/pantalla-pilotos";
 import { leerRearranque } from "./flight/cambio-de-avion";
 import { pedirAlPrimerToque } from "./ui/pantalla-completa";
+import { arrancarPizarra } from "./ui/pizarra";
 import { ensenarAnadirAInicio } from "./ui/anadir-a-inicio";
 import { GUYRAMI } from "./flight/tiers";
 import { ATERRIZAJE, DESPEGUE, VUELTA } from "./flight/lecciones";
@@ -144,6 +145,12 @@ try {
 }
 
 setLocale(detectLocale());
+
+/*
+ * **Y el modo pizarra, antes de pintar nada**: la primera pantalla —quién
+ * vuela, el hangar— ya sale con lo de los pequeños abajo. Ver `ui/pizarra.ts`.
+ */
+arrancarPizarra();
 
 /*
  * **Y en el teléfono, la pantalla entera al primer toque.** Aquí y no en el

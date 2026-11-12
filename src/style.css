@@ -19213,3 +19213,304 @@ path.kit-hueco__forma {
   animation: none !important;
   transition: none !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * ── El modo pizarra: lo que toca un niño, al tercio de abajo ──
+ *
+ * Una pizarra de aula mide unos 190 × 107 cm y se cuelga con el borde de abajo
+ * a unos 90 del suelo: un niño de Infantil, de pie, llega con la mano al tercio
+ * de abajo de la pantalla y poco más. Con `:root.pizarra` puesto, lo que él
+ * tiene que tocar baja a ese tercio; lo que es del adulto —el sonido de la
+ * sala, la pantalla completa, los créditos, la puerta del hangar— se queda
+ * arriba, donde llega quien lo pone. Se elige y no se adivina: ver
+ * `src/ui/pizarra.ts`.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/*
+ * El botón que lo enciende, en los ajustes del hangar: el dibujo de la pizarra
+ * con el niño de pie y su glosa debajo. Encendido, como un botón redondo
+ * encendido: barro cálido con el dibujo en blanco, y el borde ocre.
+ */
+.pizarra-boton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 2px solid var(--linea);
+  border-radius: var(--r-m);
+  background: var(--barro-claro);
+  background-image: var(--barniz);
+  box-shadow: var(--filo);
+  color: var(--tinta-suave);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.pizarra-boton svg {
+  width: 56px;
+  height: 46px;
+}
+
+.pizarra-boton__glosa {
+  font-size: var(--voz-glosa, 16px);
+  line-height: 1.25;
+}
+
+.pizarra-boton[aria-pressed="true"] {
+  border-color: var(--ocre);
+  background: var(--barro-calido);
+  background-image: var(--barniz);
+  color: #fff;
+}
+
+.pizarra-boton:focus-visible {
+  outline: 3px solid var(--ocre);
+  outline-offset: 3px;
+}
+
+/*
+ * **En el vuelo, la franja de los pequeños**: abajo a la izquierda, al lado de
+ * la palanca y a la altura de su mano. Los botones los baja el HUD a una caja
+ * suya (`Hud.bajarALaPizarra`); aquí se colocan. En dos columnas y llenando
+ * desde abajo, con la pausa y la cámara en la fila más baja y los carteles que
+ * no se tocan —el cinturón, la llamada— los últimos, arriba de todo.
+ *
+ * Las medidas que se apoyan en la pantalla —la palanca, el borde— se dividen
+ * por la escala, que en las pantallas bajas el HUD se dibuja reducido y lo de
+ * fuera no. Ver `.hud` y su `zoom`.
+ */
+.hud.hud--pizarra {
+  /* Lo que ocupa la palanca desde el borde, con su respiro: 20 + 150 + 14. */
+  --pizarra-izquierda: 184px;
+  /* Lo que ocupan desde el borde derecho el gas y el freno, con su respiro. */
+  --pizarra-derecha: 188px;
+  /* Y lo que mide la señal de los pequeños, de pie: el dibujo y su palabra. */
+  --pizarra-senal: 136px;
+}
+
+/* Sin dedo —el Chromebook con su touchpad— no hay palanca ni gas en pantalla. */
+@media not all and (pointer: coarse) {
+  .hud.hud--pizarra {
+    --pizarra-izquierda: 16px;
+    --pizarra-derecha: 16px;
+  }
+}
+
+/* Y de pasaje no se pilota: sin palanca, la franja va contra el borde. */
+:root.con-pasaje .hud.hud--pizarra {
+  --pizarra-izquierda: 16px;
+}
+
+.hud.hud--pizarra .hud__pizarra {
+  position: absolute;
+  z-index: 6;
+  left: calc(
+    (var(--pizarra-izquierda) + env(safe-area-inset-left, 0px)) /
+      var(--escala, 1)
+  );
+  bottom: calc(max(16px, env(safe-area-inset-bottom)) / var(--escala, 1));
+  width: calc(2 * var(--tacto) + 10px);
+  display: flex;
+  flex-wrap: wrap-reverse;
+  align-content: flex-start;
+  gap: 10px;
+  pointer-events: none;
+}
+
+/* Las cajas de siempre se deshacen dentro: sus botones van a la rejilla. */
+.hud.hud--pizarra .hud__pizarra .hud__vistas,
+.hud.hud--pizarra .hud__pizarra .hud__pausa,
+.hud.hud--pizarra .hud__pizarra .antes {
+  display: contents;
+}
+
+.hud.hud--pizarra .hud__pizarra .adelantar {
+  position: static;
+}
+
+/* «Ya lo sé», encima de la franja y no a su lado, que ahí empieza el cuadro. */
+.hud.hud--pizarra .hud__pizarra .adelantar__ya-lo-se {
+  top: auto;
+  bottom: calc(100% + 10px);
+  left: 0;
+  height: auto;
+}
+
+.hud.hud--pizarra [data-hud="pausa"] {
+  order: 1;
+}
+.hud.hud--pizarra [data-hud="adelantar"] {
+  order: 2;
+}
+.hud.hud--pizarra [data-hud="camara"] {
+  order: 3;
+}
+.hud.hud--pizarra .hud__menu-boton {
+  order: 4;
+}
+.hud.hud--pizarra [data-hud="gafas"] {
+  order: 5;
+}
+.hud.hud--pizarra .antes__boton {
+  order: 6;
+}
+.hud.hud--pizarra .hud__pizarra .cinturon {
+  order: 9;
+}
+
+/*
+ * **Los cuatro puntos, y su cajón en la misma franja.** Cerrado no está; abierto
+ * es una fila al lado de la franja, por encima de la barra del timón y debajo
+ * del tercio de abajo, encima del cuadro mientras se elige. Se cierra al tocar
+ * fuera o al elegir, como el menú del teléfono (`Hud.abrirMenu`).
+ */
+.hud.hud--pizarra .hud__menu-boton {
+  display: grid;
+}
+
+.hud.hud--pizarra .hud__menu {
+  display: none;
+}
+
+.hud.hud--pizarra.hud--menu .hud__menu {
+  display: flex;
+  position: absolute;
+  left: calc(100% + 10px);
+  bottom: 0;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--r-l);
+  background: var(--barniz), var(--barro);
+  border: 1px solid var(--linea);
+  box-shadow: var(--filo), var(--poso);
+  pointer-events: auto;
+}
+
+/* Con dedo, por encima de la barra del timón: 20 + 56 de ella y un respiro. */
+@media (pointer: coarse) {
+  .hud.hud--pizarra.hud--menu .hud__menu {
+    bottom: calc(
+      (20px + 56px + 8px - max(16px, env(safe-area-inset-bottom))) /
+        var(--escala, 1)
+    );
+  }
+}
+
+/*
+ * **La señal, abajo a la derecha**, entre el cuadro y el freno, en los dos
+ * peldaños de los pequeños (`.hud--pequenos`). Es la que se toca para
+ * arrancar el motor o encender la baliza, así que es lo primero que tiene que
+ * estar a mano. Con los pictogramas, que van con ella, y de pie: el dibujo
+ * arriba y su palabra debajo, que a lo ancho no cabe entre el cuadro y el
+ * freno.
+ *
+ * Desde Taguato lleva la frase entera, y una frase no cabe en ese hueco; ahí
+ * se queda en su rincón de arriba. A partir de los diez años la mano llega a
+ * casi toda la pizarra, y la regla que manda es la de siempre: todo lo que
+ * avisa, en el mismo sitio.
+ */
+.hud.hud--pizarra.hud--pequenos {
+  /*
+   * El rincón ya no está arriba: ni empuja la columna de mandos ni descentra
+   * la lámpara de la torre y los subtítulos. Gana a la medida que escribe el
+   * HUD en la raíz.
+   */
+  --rincon-alto: 0px !important;
+  --rincon-izquierda: 100% !important;
+}
+
+.hud.hud--pizarra.hud--pequenos .rincon {
+  top: auto;
+  bottom: calc(max(16px, env(safe-area-inset-bottom)) / var(--escala, 1));
+  right: calc(
+    (var(--pizarra-derecha) + env(safe-area-inset-right, 0px)) /
+      var(--escala, 1)
+  );
+  flex-direction: row-reverse;
+  align-items: flex-end;
+}
+
+.hud.hud--pizarra.hud--pequenos .rincon .senal {
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+/*
+ * El cuadro, con la franja a un lado y la señal al otro, nunca más ancho de lo
+ * que dejan: lo más ancho de los dos lados, a cada lado, que va centrado.
+ */
+.hud.hud--pizarra .cuadro {
+  width: min(
+    calc(100vw - 16px),
+    1400px,
+    calc(var(--cuadro-alto) * var(--cuadro-proporcion)),
+    calc(
+      100vw / var(--escala, 1) - 2 *
+        max(
+          var(--pizarra-izquierda) / var(--escala, 1) + 2 * var(--tacto) + 24px,
+          var(--pizarra-derecha) / var(--escala, 1) + var(--pizarra-senal) + 12px
+        )
+    )
+  );
+}
+
+/*
+ * **De pasaje**, lo que no se pilota se esconde sin dejar hueco: arriba ocupaba
+ * su sitio para no mover la columna (ver «Y de pasaje, nada de pilotar»), y en
+ * la franja y en el cajón eran huecos entre los botones.
+ */
+:root.con-pasaje .hud.hud--pizarra [data-hud="camara"],
+:root.con-pasaje .hud.hud--pizarra [data-hud="gafas"],
+:root.con-pasaje .hud.hud--pizarra [data-hud="antes"],
+:root.con-pasaje .hud.hud--pizarra [data-hud="piloto-auto"],
+:root.con-pasaje .hud.hud--pizarra [data-hud="cinturon-mando"],
+:root.con-pasaje .hud.hud--pizarra [data-hud="baliza-mando"] {
+  display: none;
+}
+
+/*
+ * **El sonido es de la sala**: sube arriba a la izquierda, al sitio que dejó la
+ * pausa, donde llega quien lo ajusta y no la mano de un niño de cuatro años.
+ */
+.hud.hud--pizarra .volumen {
+  top: max(16px, env(safe-area-inset-top));
+  bottom: auto;
+}
+
+/*
+ * **En el hangar, las fichas bajan hasta la mano.** Quien tiene cuatro años ve
+ * fichas y un botón naranja: el botón y los pasos ya viven abajo, y las fichas
+ * del «¿seguimos?» acababan justo donde empieza el tercio que alcanza, con la
+ * línea de reposo debajo. Con la pizarra, esa línea —que es para el adulto—
+ * va debajo de la pregunta, y las fichas bajan lo que ella ocupaba.
+ */
+:root.pizarra .hangar .hangar__reposo {
+  order: 1;
+  margin: 0;
+}
+
+:root.pizarra .hangar .hangar__fila--tres {
+  order: 2;
+}
+
+/*
+ * Y más altas, con el cielo de su dibujo estirado, y con el hueco que sobre
+ * encima y no repartido: su borde de abajo, en la mano.
+ */
+:root.pizarra .hangar .hangar__fila--tres .ficha {
+  min-height: 55vh;
+}
+
+:root.pizarra .hangar > .pie {
+  margin-top: 0;
+}
+
+:root.pizarra .hangar .hangar__fila--tres .ficha__lienzo {
+  flex: 1;
+  aspect-ratio: auto;
+}

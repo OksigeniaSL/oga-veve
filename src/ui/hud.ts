@@ -76,6 +76,7 @@ import {
   esTelefono,
   esTelefonoApaisado,
 } from "./telefono";
+import { hayPizarra } from "./pizarra";
 import { alPulsar, alPulsarDentro } from "./pulsar";
 import { botonDeNoExplicar } from "./no-volver-a-explicar";
 import { ponerLasDeSerie } from "./explicaciones-de-serie";
@@ -458,6 +459,8 @@ function cuadroElegido(): boolean {
 const LO_QUE_TAPA = [
   ".hud__arriba",
   ".hud__vistas",
+  // La franja de la pizarra, con lo de la columna de la pausa dentro. Ver `bajarALaPizarra`.
+  ".hud__pizarra",
   '[data-hud="radio"]',
   '[data-hud="torre"]',
   '[data-hud="warning"]',
@@ -1089,6 +1092,60 @@ export class Hud {
         if (this.grande) this.ponerGrande(null);
       });
     this.render();
+  }
+
+  /**
+   * **En el modo pizarra, lo que toca un niño baja a su franja.** Ver
+   * `ui/pizarra.ts`.
+   *
+   * Se mueven los botones, no se dibujan otros: son los mismos nodos, con sus
+   * escuchas y sus estados, y en la tablet y el portátil el marcado sigue
+   * siendo el de siempre. Bajan a una caja abajo a la izquierda, al lado de
+   * la palanca:
+   *
+   * - **directos**, lo que se toca a menudo o lo que pide la escena: la
+   *   cámara, la pausa con el ⏩, las gafas y, antes de volar, la vuelta al
+   *   avión y el tiempo;
+   * - **detrás de los cuatro puntos**, en un cajón que se abre en la misma
+   *   franja, lo que abre cosas —los paneles, la tarjeta del avión— y los
+   *   interruptores de cabina —el automático, el cinturón y la baliza—. Abajo
+   *   no hay sitio para doce botones sin tapar el cuadro ni los mandos, y lo
+   *   que el vuelo pide de verdad ya lo pide la señal, que se toca para
+   *   hacerlo y en los peldaños de los pequeños también baja (`.hud--pequenos`).
+   *
+   * Lo que es del adulto se queda arriba, donde llega él: el sonido de la
+   * sala, los créditos y la puerta del hangar. En un teléfono no hace nada:
+   * ahí manda su propio reparto, y una pizarra no es un teléfono.
+   */
+  private bajarALaPizarra(): void {
+    const pizarra = hayPizarra() && !esTelefono();
+    this.root.classList.toggle("hud--pizarra", pizarra);
+    if (!pizarra) return;
+    const de = (q: string): HTMLElement | null => this.root.querySelector<HTMLElement>(q);
+    const arriba = de(".hud__arriba");
+    const cajon = de('[data-hud="menu-caja"]');
+    const boton = de('[data-hud="menu"]');
+    if (!arriba || !cajon || !boton) return;
+    // Lo del adulto sale del cajón y se queda en la barra.
+    for (const q of ['[data-hud="pantalla-completa"]', '[data-hud="credits"]', '[data-hud="hangar"]']) {
+      const b = de(q);
+      if (b) arriba.append(b);
+    }
+    // Los interruptores de cabina entran en el cajón, delante de los paneles.
+    cajon.prepend(
+      ...['[data-hud="piloto-auto"]', '[data-hud="cinturon-mando"]', '[data-hud="baliza-mando"]']
+        .map(de)
+        .filter((b): b is HTMLElement => !!b),
+    );
+    const franja = document.createElement("div");
+    franja.className = "hud__pizarra";
+    franja.dataset.hud = "pizarra";
+    franja.append(
+      ...[de(".hud__vistas"), de('[data-hud="antes"]'), boton, cajon].filter(
+        (b): b is HTMLElement => !!b,
+      ),
+    );
+    this.root.append(franja);
   }
 
   /** Abre o cierra el menú del teléfono. Fuera del teléfono no se ve. */
@@ -2251,6 +2308,7 @@ export class Hud {
         </div>
       </div>
     `;
+    this.bajarALaPizarra();
 
     // Los instrumentos que este peldaño no enseña sencillamente no están en
     // el DOM, así que la actualización tiene que tolerar su ausencia.
@@ -2548,7 +2606,10 @@ export class Hud {
     const lista = ['[data-hud="pictos"]', ".hud__arriba", ".hud__vistas"];
     if (esTelefonoApaisado()) lista.push('[data-hud="senal"]');
     for (const sel of lista) {
-      const caja = this.root.querySelector(sel)?.getBoundingClientRect();
+      const el = this.root.querySelector(sel);
+      // Lo que bajó en la pizarra —la columna de la pausa, el rincón— no ocupa nada arriba.
+      if (el?.closest(".hud--pizarra .hud__pizarra, .hud--pizarra.hud--pequenos .rincon")) continue;
+      const caja = el?.getBoundingClientRect();
       if (!caja) continue;
       /*
        * Y solo cuenta mientras **siga siendo una barra**. En una pantalla
@@ -2907,6 +2968,8 @@ export class Hud {
   /** En qué peldaño de la escalera de comunicación avisa este tramo. */
   setEscalera(peldano: Peldano): void {
     this.escalera = peldano;
+    // Los dos peldaños de los pequeños: en la pizarra, su señal baja a la mano. Ver `.hud--pequenos`.
+    this.root.classList.toggle("hud--pequenos", peldano === "dibujo" || peldano === "palabra");
     // Y el plano lleva los calcos de la carta de ese peldaño.
     this.mapa.ponerPeldano(peldano);
   }
