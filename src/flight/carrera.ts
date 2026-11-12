@@ -219,8 +219,12 @@ export function pistaNecesariaHoy(a: AircraftConfig, dia: DiaDeDespegue = DIA_DE
  * 290 m hasta rotar y pasa los cincuenta pies a los 500 —960 y 1.630 ft en el
  * manual del 172S a su peso máximo, 1,7; otras tablas de la misma clase dan
  * 1,9—, porque sube despacio y su tramo en el aire es largo. Un reactor se
- * separa enseguida y sube mucho más empinado: un 747 a este peso rueda 1.800
- * y despega en 2.500, 1,39. Con el 1,8 y el 1,15 de su
+ * separa enseguida y sube mucho más empinado: un 747 a su peso máximo al
+ * despegar rueda 1.800 y despega en 2.500, 1,39. **A su peso máximo, y no al
+ * de la ficha**: a esas 710.000 lb el manual de aeropuertos de Boeing pide
+ * unos 9.300 ft de pista, 2.835 m, que son esos 2.500 por el 1,15; a las
+ * 564.000 lb de la ficha pide unos 5.600 ft, 1.710 m (D6-58326, 3.3.1, 747-100
+ * con JT9D-3A, nivel del mar y día estándar). Con el 1,8 y el 1,15 de su
  * certificación, el JAZ 120 «necesitaba» 3.627 m en Los Rodeos a veinte
  * grados y la tarjeta del tiempo le proponía no salir por falta de pista, por
  * la pista por la que salían los 747 de verdad (5-oct-2026).
@@ -229,10 +233,25 @@ export function pistaNecesariaHoy(a: AircraftConfig, dia: DiaDeDespegue = DIA_DE
  * haciendo de margen del aterrizaje que la cuenta no llevaba. Ahora cada
  * margen va en su sitio: ver `pistaQueNecesita`.
  *
- * **Los de hélice, turbohélice incluido, con el 1,8**: la proporción de un
- * turbohélice de su clase no se ha encontrado publicada con su rodadura al
- * lado —el Twin Otter da la distancia a cincuenta pies y no la rodadura—, y
- * de las dos cifras que hay, la de la avioneta es la que pide más pista.
+ * **Los de hélice, turbohélice incluido, con el 1,8**, que de las cifras
+ * publicadas de su clase es la que pide más pista:
+ *
+ * - **El Twin Otter**, la clase del JAZ 60, sí publica las dos: 244 m de
+ *   rodadura y 455 m hasta los cincuenta pies a su peso máximo (De Havilland,
+ *   especificaciones del DHC-6 en dehavilland.com/twin-otter). Son 1,86, pero
+ *   esos 455 son la longitud de campo de la SFAR 23, que ya lleva su margen:
+ *   la proporción sin él queda algo por debajo, y el 1,8 cae dentro.
+ * - **El Seneca II**, la del JAZ 40, rueda 870 ft y pasa los cincuenta pies a
+ *   los 1.240, a sus 4.570 lb: 1,43 (tabla comparativa de la Grumman Owners
+ *   and Pilots Association, aya.org). **Y aun así se le deja el 1,8**, porque
+ *   su toma en esta cuenta sale corta: 538 m desde los cincuenta pies —229 en
+ *   el aire y 309 rodando—, donde esa misma tabla da 2.110 ft, 643 m —222 en
+ *   el aire y 1.380 ft, 421 m, rodando—. El aire ya es el suyo (ver
+ *   `enPlaneoDesdeElUmbral`); lo que falta es la frenada. Con el 1,43 y esa
+ *   toma corta, el bimotor pasaría a caber en los novecientos metros de hierba
+ *   de la granja —834 m para despegar y 890 para aterrizar—, y uno de verdad
+ *   no aterriza ahí con el margen de su clase: 643 m por el 1,15 de la hierba,
+ *   entre 0,7, son 1.056. Bajarlo va con su frenada, no antes (12-11-2026).
  */
 export function deRodarADespegar(a: AircraftConfig): number {
   return esDeChorro(a) ? 2500 / 1800 : 1.8;
@@ -292,9 +311,10 @@ export const FACTOR_DE_ESCUELA = 1.33;
  * los aeródromos del juego siguen siendo los mismos— y por encima manda lo que
  * corre este avión. Con el Pykasu la cuenta da quinientos cuarenta, por debajo
  * del suelo, así que **no cambia nada de lo que ya estaba medido**. Con el
- * JAZ 120 da tres mil quinientos, que es tanto como decir que a ese avión no
- * se le entra por una intersección casi nunca: se hace el back-taxi hasta la
- * cabecera, como en la vida real.
+ * JAZ 120 da dos mil setecientos —eran tres mil quinientos con el 1,8 de
+ * rodar a despegar que llevaba antes—, que es tanto como decir que a ese
+ * avión no se le entra por una intersección casi nunca: se hace el back-taxi
+ * hasta la cabecera, como en la vida real.
  */
 export function paraEntrarYDespegar(a: AircraftConfig): number {
   return Math.max(600, distanciaDeDespegue(a) * FACTOR_DE_ESCUELA);
@@ -358,10 +378,8 @@ export function remontaHastaLaCabecera(a: AircraftConfig): boolean {
  *
  * Son dos trozos, como en cualquier manual:
  *
- * - **El aire**, desde los quince metros del umbral hasta tocar. Se recorre en
- *   planeo poco profundo a la velocidad de aproximación, y se toma la cuenta
- *   de siempre: la altura por la fineza en configuración de aterrizaje, que
- *   con flaps anda por siete.
+ * - **El aire**, desde los cincuenta pies sobre el umbral hasta tocar, por la
+ *   senda de su clase: ver `enPlaneoDesdeElUmbral`.
  * - **El suelo**, integrando la frenada desde la velocidad de toma —un pelo
  *   por debajo de la de umbral— con el rozamiento de frenar y la resistencia
  *   aerodinámica, que a esa velocidad todavía cuenta.
@@ -379,27 +397,47 @@ export function distanciaDeAterrizaje(
   return enPlaneoDesdeElUmbral(a) + rodaduraDeFrenada(a, superficie);
 }
 
+/** Los cincuenta pies sobre el umbral desde los que cuenta todo manual, m. */
+const ALTURA_DEL_UMBRAL = 50 * 0.3048;
+
 /**
- * Lo que se recorre en el aire desde los quince metros del umbral, m.
+ * **La senda por la que llega su clase a la pista**, en radianes: la que
+ * convierte los cincuenta pies del umbral en el tramo en el aire de sus
+ * manuales.
  *
- * La altura por la fineza en configuración de aterrizaje, que con flaps anda
- * por siete. Es la mitad de la distancia de aterrizaje que **no** se frena.
+ * - **Los de línea, por los tres grados** de la senda de siempre —«el ángulo
+ *   óptimo de la senda de planeo es de 3°», OACI, Doc 8168, volumen II—, que
+ *   es como se vuela y como se certifica su toma: una aproximación
+ *   estabilizada hasta los cincuenta pies (CS 25.125 a 2). Dan 291 m, y sus
+ *   manuales, entre 290 y 350: el Twin Otter aterriza en 460 m desde los
+ *   cincuenta pies con 169 de rodadura, 291 en el aire (De Havilland,
+ *   especificaciones del DHC-6); el 1900D lleva unos mil pies de aire en sus
+ *   2.800, y el Embraer 170 unos trescientos en sus 737 m
+ *   (`distancia-de-aterrizaje.test.ts`); y el 787-9, unos 350 en sus 1.080
+ *   (D6-58333, 3.4.3).
+ * - **Las avionetas, algo más empinadas**, con la técnica de pista corta de
+ *   sus manuales —gas al mínimo y flaps a tope—: el Cessna 172S toma en 1.335
+ *   ft desde los cincuenta pies con 575 de rodadura, 760 ft en el aire
+ *   (manual de vuelo, sección 5, a 2.550 lb), y el Seneca II en 2.110 con
+ *   1.380, 730 ft (tabla comparativa de la Grumman Owners and Pilots
+ *   Association, aya.org). Son 3,8° y 3,9°: 3,8.
  */
-export function enPlaneoDesdeElUmbral(a: AircraftConfig): number {
-  return 15 * finezaDeAterrizaje(a);
+function sendaDeSuClase(a: AircraftConfig): number {
+  return ((esDeLinea(a) ? 3 : 3.8) * Math.PI) / 180;
 }
 
-/** La fineza con los flaps puestos, que es como se aterriza. */
-function finezaDeAterrizaje(a: AircraftConfig): number {
-  const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
-  const cl = a.aero.cl0 + a.flapsLift;
-  // Y con el tren fuera, que se aterriza con él. Ver `resistenciaDelTren`.
-  const cd =
-    a.aero.cd0 +
-    (cl * cl) / (Math.PI * alargamiento * a.aero.oswald) +
-    a.flapsDrag +
-    resistenciaDelTren(a, 1, 1);
-  return cl / cd;
+/**
+ * Lo que se recorre en el aire desde los cincuenta pies sobre el umbral hasta
+ * tocar, m: esa altura por la senda de su clase. Ver `sendaDeSuClase`.
+ *
+ * Era la altura por la fineza con flaps, que es como planea un avión con el
+ * motor parado y no como llega a una pista: salían unos cien metros para
+ * todos, donde los manuales dan entre doscientos y trescientos cincuenta, y la
+ * toma de cada avión era entre un 15 % y un 40 % más corta que la de su tipo
+ * (12-11-2026).
+ */
+export function enPlaneoDesdeElUmbral(a: AircraftConfig): number {
+  return ALTURA_DEL_UMBRAL / Math.tan(sendaDeSuClase(a));
 }
 
 /**
