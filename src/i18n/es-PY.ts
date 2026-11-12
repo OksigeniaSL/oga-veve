@@ -143,6 +143,66 @@ export const ES_PY = {
   "mission.done": "¡Misión cumplida!",
   "mission.none": "Vuelo libre",
 
+  /*
+   * La misión de Teno, con el Super Puma. Lo que cuenta la instructora en los
+   * tres peldaños de abajo, con su palabra corta para la tarjeta de Tukã; y lo
+   * que dice la tripulación en el de cabina, con el habla de Tenerife, que no
+   * vosea, y el registro de una cabina: corto y operativo. Ver `TENO` en
+   * `content/missions.ts`.
+   */
+  "mission.teno.name": "Rescate en Teno",
+  "mision.teno.ir": "Ir a Punta de Teno",
+  "mision.teno.posarse": "Posarse junto al faro",
+  "mision.teno.suben": "Esperar a que suba la gente",
+  "mision.teno.garachico": "Posarse en el puerto de Garachico",
+  "mision.teno.bajan": "Esperar a que baje la gente",
+  "mision.esperar": "Esperar posado",
+  "mission.teno.presenta":
+    "En 2016 se hundió un pedazo de la carretera de Punta de Teno, y la gente quedó aislada junto al faro. El mar estaba muy bravo para los barcos. Vamos a buscarla en helicóptero.",
+  "mission.teno.presenta.corta": "¡A Teno!",
+  "mission.teno.ir":
+    "Vamos al oeste, por la costa norte, hasta la punta de la isla. El Teide te queda a la izquierda.",
+  "mission.teno.ir.corta": "Al oeste",
+  "mission.teno.posarse":
+    "Ya estamos en Punta de Teno. Bajá al llano, donde está el aro verde, y posate despacio, de cara al viento.",
+  "mission.teno.posarse.corta": "Posate",
+  "mission.teno.suben":
+    "Ya estamos en el suelo. El rotor sigue girando, y la tripulación baja a ayudar a subir a la gente.",
+  "mission.teno.suben.corta": "Suben",
+  "mission.teno.porDelante":
+    "La gente se acerca por delante, donde la ve el piloto, y nunca por la cola: ahí gira el rotor de cola, que casi no se ve.",
+  "mission.teno.porDelante.corta": "Por delante",
+  "mission.teno.despegar":
+    "Ya subieron todos y la puerta está cerrada. Despegá despacio, derecho para arriba.",
+  "mission.teno.despegar.corta": "¡Despegá!",
+  "mission.teno.garachico":
+    "Ahora vamos al puerto de Garachico, por la costa hacia el este. Posate en la explanada, de cara al viento.",
+  "mission.teno.garachico.corta": "Garachico",
+  "mission.teno.bajan":
+    "Llegamos. La tripulación los ayuda a bajar con cuidado, por delante y lejos de la cola.",
+  "mission.teno.bajan.corta": "Bajan",
+  "mission.teno.cierre":
+    "¡Lo hiciste! En 2016 fueron 123 personas y cinco perros, en dos Super Puma como este y otros tres helicópteros.",
+  "mission.teno.cierre.corta": "¡Lo hiciste!",
+  "mission.teno.tripulacion.presenta":
+    "Misión de evacuación en Punta de Teno. Se hundió la carretera y hay gente aislada junto al faro; por mar no se puede. Cuando estés listo, despegamos.",
+  "mission.teno.tripulacion.ir":
+    "Rumbo oeste por la costa norte, Teide a la izquierda, hasta Punta de Teno.",
+  "mission.teno.tripulacion.posarse":
+    "Punta de Teno a la vista. Toma en el llano marcado, proa al viento.",
+  "mission.teno.tripulacion.suben":
+    "En tierra. Bajo a ayudar con el embarque; el rotor sigue en marcha.",
+  "mission.teno.tripulacion.porDelante":
+    "Embarcando por delante, a la vista del piloto. Cola despejada.",
+  "mission.teno.tripulacion.despegar":
+    "Todos a bordo y sentados, puerta cerrada. Listos para despegar.",
+  "mission.teno.tripulacion.garachico":
+    "Rumbo al puerto de Garachico. Toma en la explanada, proa al viento.",
+  "mission.teno.tripulacion.bajan":
+    "En tierra. Desembarco por delante y con calma; nadie hacia la cola.",
+  "mission.teno.tripulacion.cierre":
+    "Evacuación terminada. En 2016 fueron 123 personas y cinco perros, en dos Super Puma como este y otros tres helicópteros.",
+
   "scenario.guarani.name": "Guaraní · Ciudad del Este",
   "scenario.estigarribia.name": "Mariscal Estigarribia · el Chaco",
   "scenario.pedroJuan.name": "Pedro Juan Caballero · Amambay",

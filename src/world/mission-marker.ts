@@ -33,6 +33,8 @@ const OBJECTIVE_COLOUR = 0x7ec86a;
  */
 const APAGADO = 0xc98a3a;
 const ENCENDIDO = 0x7ef07a;
+/** Radio del aro, en metros, cuando no se agranda ni se encoge. */
+const RADIO_DEL_ARO = 46;
 /** Alto de la columna, en metros. Tiene que verse por encima de las lomas. */
 const BEAM_HEIGHT = 520;
 
@@ -80,7 +82,7 @@ export class MissionMarker {
     // El aro gira despacio: un objeto quieto en un paisaje quieto se pierde,
     // y el movimiento es lo que hace que el ojo lo encuentre.
     this.ring = new Mesh(
-      new TorusGeometry(46, 3.4, 6, 26),
+      new TorusGeometry(RADIO_DEL_ARO, 3.4, 6, 26),
       new MeshBasicMaterial({
         color: OBJECTIVE_COLOUR,
         transparent: true,
@@ -93,11 +95,18 @@ export class MissionMarker {
     this.group.add(this.ring);
   }
 
-  /** Coloca la señal, o la esconde si no hay objetivo con sitio. */
+  /**
+   * Coloca la señal, o la esconde si no hay objetivo con sitio.
+   *
+   * `enElSuelo` es para posarse: el aro baja al suelo y toma el tamaño del
+   * llano, que es donde van las ruedas. A noventa metros de altura y de
+   * noventa de ancho decía «pasá por aquí», que es lo contrario de «bajá aquí».
+   */
   moveTo(
     target: { x: number; z: number } | null,
     groundHeight: number,
     radio = 400,
+    enElSuelo = false,
   ): void {
     if (!target) {
       this.group.visible = false;
@@ -106,8 +115,11 @@ export class MissionMarker {
     this.radio = radio;
     this.group.visible = true;
     this.group.position.set(target.x, groundHeight, target.z);
-    this.ring.position.y = 90;
+    this.ring.position.y = enElSuelo ? 1.5 : 90;
+    this.escalaDelAro = enElSuelo ? radio / RADIO_DEL_ARO : 1;
   }
+  /** Lo que se agranda o se encoge el aro: ver `moveTo`. */
+  private escalaDelAro = 1;
 
   /**
    * Gira el aro, y **lo enciende cuando vas bien**.
@@ -175,7 +187,7 @@ export class MissionMarker {
       mat.opacity = Math.min(1, base * (0.55 + e * 0.9) + late);
       mat.color.setHex(APAGADO).lerp(new Color(ENCENDIDO), e);
     }
-    this.ring.scale.setScalar(1 + late * 1.6);
+    this.ring.scale.setScalar(this.escalaDelAro * (1 + late * 1.6));
 
     // Y gira más deprisa cuanto más cerca: el movimiento también informa.
     this.spin += dt * (0.6 + e * 2.4);

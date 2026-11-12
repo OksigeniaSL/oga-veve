@@ -1,0 +1,16 @@
+{
+  "id": "teno",
+  "nombre": "Punta de Teno",
+  "fuente": "PNOA-LiDAR MDT05 (IGN)",
+  "atribucion": "Modelo Digital del Terreno MDT05 del PNOA-LiDAR © Instituto Geográfico Nacional de España, CC BY 4.0",
+  "sur": 28.322517,
+  "norte": 28.367483,
+  "oeste": -16.942655,
+  "este": -16.881345,
+  "filas": 251,
+  "columnas": 301,
+  "dibujo": 20,
+  "paraPosarse": true,
+  "minM": 0,
+  "maxM": 886
+}

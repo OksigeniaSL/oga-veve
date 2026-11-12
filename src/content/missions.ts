@@ -12,7 +12,7 @@
  * ese es el hueco.
  */
 
-import type { Mission } from "../missions/types";
+import type { Mission, Sitio } from "../missions/types";
 
 /**
  * El primer vuelo. Despegar, ir hasta el cerro y volver a casa.
@@ -238,6 +238,166 @@ export const A_LA_CUMBRE: Mission = {
   ],
 };
 
+/*
+ * ## La del Super Puma, en Tenerife
+ *
+ * **Lo que pasó de verdad.** El 12 de julio de 2016 se hundió un tramo de la
+ * TF-445, la carretera de Buenavista del Norte a Punta de Teno, en una curva
+ * sobre el acantilado, y la gente que estaba en la punta se quedó aislada. Se
+ * descartó pasar andando junto al derrumbe y sacarla por mar, que estaba mal.
+ * Cuatro helicópteros del batallón de helicópteros de maniobra VI del
+ * Ejército de Tierra, de Los Rodeos —dos Super Puma y dos AB-212—, y uno de
+ * la Guardia Civil la llevaron al puerto de Garachico: 123 personas y cinco
+ * perros (defensa.com; The Local, 13-07-2016). El Diario de Avisos de ese día
+ * habla de 174 aisladas: la cifra cambia según la fuente, y aquí se cuenta la
+ * de los rescatados. **Ninguna fuente habla de grúa**, así que esta misión no
+ * la usa. Ver `docs/misiones/super-puma-en-tenerife.md`.
+ *
+ * **Los dos sitios están medidos en el relieve del juego**, como las demás:
+ * coordenadas de OpenStreetMap llevadas al mundo con la proyección de
+ * `huecosDeLaCiudad` (`world/ciudad.ts`) y el origen de GCXO, y el llano
+ * buscado con las sondas del juego. Un llano es un círculo de veinte metros
+ * con menos de cinco grados de pendiente, seco y sin edificios ni árboles.
+ * Para que hubiera uno junto al faro hizo falta el parche de relieve fino de
+ * Punta de Teno, `data/terrain/parches/teno.bin`, dibujado a veinte metros:
+ * el horizonte, a trescientos metros por muestra, hundía la punta entera en
+ * el mar. Medido con `scripts/ver-mision-teno.mjs`, que lo comprueba en cada
+ * vuelo.
+ */
+
+/**
+ * **El llano junto al faro de Teno.** El faro está en 28,34209 N 16,92286 O
+ * (OpenStreetMap), en (−56.800, 15.641) del mundo; el llano, a setenta metros
+ * al oestesuroeste, hacia la punta: 4,3° de pendiente en el círculo de veinte
+ * metros, a 20 m sobre el mar. Es el único de los ciento cincuenta metros
+ * alrededor del faro que baja de cinco grados: la punta es lava, y entre
+ * muestra y muestra quedan escalones de un metro. Al lado del faro y no
+ * encima: el faro es una torre.
+ */
+export const LLANO_DEL_FARO_DE_TENO: Sitio = { x: -56863.6, z: 15668.9, radius: 20 };
+
+/**
+ * **La explanada del puerto de Garachico**, el aparcamiento de tierra
+ * compactada del puerto (OpenStreetMap, vía 888471906; 28,37389 N 16,75652
+ * O): 2,8° en el círculo de veinte metros, a 7 m. Es adonde llevaron a la
+ * gente en 2016. Aquí basta el horizonte: es un llano de cientos de metros.
+ */
+export const EXPLANADA_DEL_PUERTO_DE_GARACHICO: Sitio = { x: -40542.2, z: 12104.9, radius: 20 };
+
+/**
+ * **Teno.** Del helipuerto del Ejército en Los Rodeos a la punta de la isla,
+ * a buscar a la gente junto al faro, y al puerto de Garachico.
+ *
+ * Solo para el Super Puma: posarse junto a un faro no lo hace una avioneta.
+ * Las esperas, las de la petición: veinticinco segundos para subir y veinte
+ * para bajar, con el rotor girando, que es como se hace cuando hay que irse
+ * enseguida. La gente que sube y baja la pondrá otro encargo: ver
+ * `missions/gente.ts`.
+ *
+ * Lo que se dice: en los tres peldaños de abajo, la instructora cuenta cada
+ * paso con calma; en el de cabina habla la tripulación, corto y operativo, y
+ * ella calla. Es la misma regla que la persona de tierra al empujar.
+ */
+export const TENO: Mission = {
+  id: "teno",
+  nameKey: "mission.teno.name",
+  scenario: "tenerife-norte",
+  aeronave: "super-puma",
+  presenta: {
+    dibujo: "faro",
+    instructora: "mission.teno.presenta",
+    corta: "mission.teno.presenta.corta",
+    tripulacion: "mission.teno.tripulacion.presenta",
+  },
+  cierra: {
+    dibujo: "gente",
+    instructora: "mission.teno.cierre",
+    corta: "mission.teno.cierre.corta",
+    tripulacion: "mission.teno.tripulacion.cierre",
+  },
+  objectives: [
+    { kind: "takeoff" },
+    {
+      kind: "reach",
+      x: LLANO_DEL_FARO_DE_TENO.x,
+      z: LLANO_DEL_FARO_DE_TENO.z,
+      radius: 700,
+      rotulo: "mision.teno.ir",
+      dice: {
+        dibujo: "hito-montana-izquierda",
+    instructora: "mission.teno.ir",
+        corta: "mission.teno.ir.corta",
+        tripulacion: "mission.teno.tripulacion.ir",
+      },
+    },
+    {
+      kind: "land",
+      sitio: LLANO_DEL_FARO_DE_TENO,
+      gentle: 2,
+      rotulo: "mision.teno.posarse",
+      dice: {
+        dibujo: "posarse",
+    instructora: "mission.teno.posarse",
+        corta: "mission.teno.posarse.corta",
+        tripulacion: "mission.teno.tripulacion.posarse",
+      },
+    },
+    {
+      kind: "wait",
+      seconds: 25,
+      sitio: LLANO_DEL_FARO_DE_TENO,
+      gente: "suben",
+      rotulo: "mision.teno.suben",
+      dice: {
+        dibujo: "gente",
+    instructora: "mission.teno.suben",
+        corta: "mission.teno.suben.corta",
+        tripulacion: "mission.teno.tripulacion.suben",
+      },
+      aMitad: {
+        dibujo: "gente",
+    instructora: "mission.teno.porDelante",
+        corta: "mission.teno.porDelante.corta",
+        tripulacion: "mission.teno.tripulacion.porDelante",
+      },
+    },
+    {
+      kind: "takeoff",
+      dice: {
+        dibujo: "gas-mas-rotor",
+    instructora: "mission.teno.despegar",
+        corta: "mission.teno.despegar.corta",
+        tripulacion: "mission.teno.tripulacion.despegar",
+      },
+    },
+    {
+      kind: "land",
+      sitio: EXPLANADA_DEL_PUERTO_DE_GARACHICO,
+      gentle: 2,
+      rotulo: "mision.teno.garachico",
+      dice: {
+        dibujo: "posarse",
+    instructora: "mission.teno.garachico",
+        corta: "mission.teno.garachico.corta",
+        tripulacion: "mission.teno.tripulacion.garachico",
+      },
+    },
+    {
+      kind: "wait",
+      seconds: 20,
+      sitio: EXPLANADA_DEL_PUERTO_DE_GARACHICO,
+      gente: "bajan",
+      rotulo: "mision.teno.bajan",
+      dice: {
+        dibujo: "gente",
+    instructora: "mission.teno.bajan",
+        corta: "mission.teno.bajan.corta",
+        tripulacion: "mission.teno.tripulacion.bajan",
+      },
+    },
+  ],
+};
+
 export const MISSIONS: readonly Mission[] = [
   PRIMER_VUELO,
   VUELTA_AL_VALLE,
@@ -248,8 +408,18 @@ export const MISSIONS: readonly Mission[] = [
   SALIR_AL_MAR,
   A_ANAGA,
   A_LA_CUMBRE,
+  TENO,
 ];
 
-export function missionsFor(scenarioId: string): readonly Mission[] {
-  return MISSIONS.filter((mission) => mission.scenario === scenarioId);
+/**
+ * Las misiones de un escenario que se pueden volar con esta aeronave: las que
+ * no piden ninguna y las que piden esta. Sin aeronave, solo las primeras: el
+ * hangar no ofrece la de Teno a una avioneta.
+ */
+export function missionsFor(scenarioId: string, aeronave?: string): readonly Mission[] {
+  return MISSIONS.filter(
+    (mission) =>
+      mission.scenario === scenarioId &&
+      (mission.aeronave === undefined || mission.aeronave === aeronave),
+  );
 }

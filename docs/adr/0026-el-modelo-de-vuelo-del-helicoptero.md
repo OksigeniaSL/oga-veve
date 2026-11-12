@@ -16,7 +16,10 @@ El trabajo va en cuatro pasos, y cada uno se mira antes de lanzar el siguiente:
 3. Los mandos —teclado, dedo y mando— y la pantalla: el par y las vueltas del rotor en vez de lo de un reactor; qué
    estabilización lleva cada peldaño; arrancar y rodar. **Hecha la primera mitad**: se vuela en el juego, escondido, con
    una silueta provisional (ver «En el juego, escondido», abajo). Faltan el sonido, arrancar y rodar.
-4. Una misión tranquila, con las frases de la instructora grabadas.
+4. Una misión tranquila, con las frases de la instructora grabadas. **Hecha, salvo grabar**: la de Teno
+   (`?avion=super-puma&mision=teno`), de Los Rodeos a Punta de Teno y al puerto de Garachico, como la evacuación de
+   2016; ver `docs/misiones/super-puma-en-tenerife.md`. Faltan la gente que sube y baja (con su enganche puesto, en
+   `missions/gente.ts`) y grabar las frases.
 
 ## Qué helicóptero
 
@@ -108,7 +111,7 @@ Para probarlo en la web y afinar los mandos antes de que llegue el modelo en 3D,
 **`?avion=super-puma`** en la dirección, y solo así. No está en `AIRCRAFT`: no sale en el hangar, ni en el cambio de
 avión, ni en ninguna lección, y no se guarda en el perfil. Entra directo en Tenerife Norte, **posado en el helipuerto
 del Ejército** junto a Los Rodeos (GCXM, puesto a mano con los datos del AIP, que OpenStreetMap no lo trae: ver
-`helipuertosAMano`), cara al viento, con el rotor en sus vueltas y el colectivo abajo. Se vuela suelto: la vuelta al campo, sin misión, sin destino y sin vecinos.
+`helipuertosAMano`), cara al viento, con el rotor en sus vueltas y el colectivo abajo. Se vuela suelto: la vuelta al campo, sin misión, sin destino y sin vecinos. Con `&mision=teno`, la suya, la única que se le ofrece.
 
 - **El adaptador** (`flight/fdm-helicoptero.ts`) pone el modelo detrás del contrato `FlightModel` de los aviones. El
   gas es el colectivo (no vuelve solo, como la palanca de verdad, que tiene fricción); la profundidad, el cíclico

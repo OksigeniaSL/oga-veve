@@ -2402,6 +2402,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** A cuánto y hacia dónde señala la aguja. Ver `Game.agujaParaBanco`. */
     aguja: () => juego.agujaParaBanco,
     /**
+     * **Cómo va la misión**: el objetivo de ahora, la espera, el sitio al que se
+     * va, y lo dicho y lo de la gente en orden. Lo usa `scripts/ver-mision-teno.mjs`.
+     */
+    mision: () => juego.misionParaBanco,
+    /**
      * La ruta de este tramo: de dónde sale, a dónde va, el desvío de la
      * reserva si lo hay, el alternativo y a qué campo apunta la flecha.
      */
