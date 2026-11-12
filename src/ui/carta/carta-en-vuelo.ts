@@ -13,6 +13,7 @@ import { dondeCae, type Sitio } from "../../world/entre-aerodromos";
 import { REGIONES, SIMBOLOS, TINTAS, PAPEL, type IdRegion } from "./estilo";
 import { imagenDe, regionDe } from "./region";
 import { AVION_EN_PLANTA } from "./simbolos";
+import { rectanguloRedondeado } from "../../navegador-viejo";
 
 /** Radio terrestre medio, m: el de `entre-aerodromos.ts`. */
 const R = 6371008;
@@ -125,7 +126,7 @@ export function dibujarAerodromo(
       g.save();
       g.rotate((k * Math.PI) / 2);
       g.beginPath();
-      g.roundRect(-2.6, -15, 5.2, 5, 1);
+      rectanguloRedondeado(g, -2.6, -15, 5.2, 5, 1);
       g.fill();
       g.restore();
     }
@@ -135,7 +136,7 @@ export function dibujarAerodromo(
     g.shadowBlur = 0;
     g.rotate(rumboRad);
     g.beginPath();
-    g.roundRect(-2, -12.2, 4, 24.4, 1);
+    rectanguloRedondeado(g, -2, -12.2, 4, 24.4, 1);
     g.fill();
     g.fillStyle = "#fff";
     g.fillRect(-1.25, -11.2, 2.5, 22.4);
@@ -150,7 +151,7 @@ export function dibujarAerodromo(
     g.stroke();
     g.rotate(rumboRad);
     g.beginPath();
-    g.roundRect(-2.3, -6.6, 4.6, 13.2, 0.8);
+    rectanguloRedondeado(g, -2.3, -6.6, 4.6, 13.2, 0.8);
     g.fill();
     g.lineWidth = 1.5;
     g.stroke();

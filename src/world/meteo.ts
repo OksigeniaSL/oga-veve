@@ -33,6 +33,7 @@
  */
 
 import { AIRE_ESTANDAR, aireDelParte, type Aire } from "../flight/atmosphere";
+import { senalConPlazo } from "../navegador-viejo";
 
 /** El tiempo, reducido a lo que cambia el vuelo. */
 export interface Meteo {
@@ -394,7 +395,7 @@ export async function pedirMetar(
 ): Promise<Meteo> {
   if (!proxy) return siNoHay;
   try {
-    const corte = AbortSignal.timeout(4000);
+    const corte = senalConPlazo(4000);
     const res = await fetch(`${proxy}?icao=${encodeURIComponent(icao)}`, {
       signal: corte,
     });

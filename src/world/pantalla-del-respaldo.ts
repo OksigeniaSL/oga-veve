@@ -69,6 +69,7 @@ import { COSTAS_DE_LA_RUTA } from "../ui/costas-de-la-ruta";
 import { NUDOS, PIES } from "../ui/cuadro";
 import { GRADO } from "./cielo-de-noche";
 import type { Sitio } from "./entre-aerodromos";
+import { rectanguloRedondeado } from "../navegador-viejo";
 
 /** Lo que mide el lienzo, px: la pantalla entera llena la vista en el plano `respaldo`. */
 const ANCHO = 1024;
@@ -953,7 +954,7 @@ function pintarLosDatos(c: CanvasRenderingContext2D, fichas: readonly FichaDeDat
     const y = margen + Math.floor(i / 3) * (alto + hueco);
     c.fillStyle = COLOR.ficha;
     c.beginPath();
-    c.roundRect(x, y, ancho, alto, 14);
+    rectanguloRedondeado(c, x, y, ancho, alto, 14);
     c.fill();
     c.textBaseline = "alphabetic";
     c.textAlign = "left";

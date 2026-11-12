@@ -22,6 +22,7 @@ import { vecesLejosDe, type Scenario } from "./scenarios";
 import { conPlazo, PLAZO_DE_DATO } from "../datos/con-plazo";
 import { cargarParches } from "./parches-de-relieve";
 import { cargarLagos } from "./lagos";
+import { descomprimirGzip } from "../navegador-viejo";
 
 /**
  * Con `import.meta.glob` y no con una URL construida a mano.
@@ -74,16 +75,14 @@ export async function cargarRelieve(id: string): Promise<Scenario["relieve"]> {
  * y en desarrollo llegan en crudo, así que se mira la cabecera. No se puede
  * confundir: `1f 8b` leído como el primer entero sería una cota de -29 921 m.
  *
- * Sin `DecompressionStream` (Safari antes de la 16.4) se lanza, y quien llama
- * se queda con el relieve generado, que es lo que había antes.
+ * Sin `DecompressionStream` (Firefox antes del 113, el de una pizarra con
+ * Android 8) se lanzaba, y quien llama se quedaba con el relieve generado: un
+ * Teide inventado. Ahora lo descomprime `desgzip`, a mano y más despacio.
  */
 export async function descomprimir(bytes: ArrayBuffer): Promise<ArrayBuffer> {
   const v = new Uint8Array(bytes, 0, Math.min(2, bytes.byteLength));
   if (v[0] !== 0x1f || v[1] !== 0x8b) return bytes;
-  const flujo = new Blob([bytes])
-    .stream()
-    .pipeThrough(new DecompressionStream("gzip"));
-  return new Response(flujo).arrayBuffer();
+  return descomprimirGzip(bytes);
 }
 
 /**
