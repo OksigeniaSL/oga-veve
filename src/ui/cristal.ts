@@ -119,7 +119,7 @@ export function pantallaDeActitud(
     <rect data-fondo="pfd" width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
     ${horizonte(act.x, 0, act.ancho, altoAct, yo)}
     ${cintaDeVelocidad(0, 0, ANCHO_CINTA, altoAct, c, yo)}
-    ${cintaDeAltitud(xAlt, 0, ANCHO_CINTA, altoAct, yo)}
+    ${cintaDeAltitud(xAlt, 0, ANCHO_CINTA, altoAct, yo, !!opciones.helicoptero)}
     ${variometro(ancho - ANCHO_VSI, 0, ANCHO_VSI, altoAct, c)}
     ${
       opciones.rosa
@@ -143,7 +143,7 @@ export function pantallaDeActitud(
     }
     ${opciones.mach ? `<text data-cristal="mach" x="${ANCHO_CINTA / 2}" y="${alto - 8}" data-desde="4" class="cr__aux" text-anchor="middle"></text>` : ""}
     <text data-cristal="gs" x="${xAlt + ANCHO_CINTA / 2}" y="${alto - 8}" ${MARCA_ROTULO} class="cr__aux" text-anchor="middle"></text>
-    ${radioaltimetro(act.x + act.ancho / 2, altoAct - 30)}
+    ${radioaltimetro(act.x + act.ancho / 2, altoAct - 30, !!opciones.helicoptero)}
     ${minimos(act.x + act.ancho - 8, opciones.fma ? 52 : 20)}
     ${escalaDeLaSenda(act.x + act.ancho - 13, altoAct * ANCLA_DE_ACTITUD, altoAct * 0.085)}
     ${opciones.fma ? fma(act.x, act.ancho) : ""}
@@ -284,7 +284,25 @@ function flechasDeLaMarca(que: "spd" | "alt", cx: number): string {
  * Y se pone ámbar en los últimos doscientos pies: ahí ya no es un dato, es un
  * aviso.
  */
-function radioaltimetro(cx: number, y: number): string {
+function radioaltimetro(cx: number, y: number, helicoptero = false): string {
+  /*
+   * **En el helicóptero, en grande y desde el segundo peldaño**, con su
+   * aparato: al posarse es lo que se mira, y un helicóptero se posa en
+   * cualquier sitio, no a la cota de una pista. En los aviones sale con las
+   * cifras del peldaño de cabina. Y mientras no se lee «RA», en su sitio va
+   * el dibujo de lo que mide: el helicóptero, la flecha y el suelo.
+   */
+  if (helicoptero)
+    return `
+    <g data-cristal="radio" ${MARCA_CON_SU_APARATO} visibility="hidden">
+      <text x="${cx}" y="${y - 2}" class="cr__radio cr__radio--grande" text-anchor="middle"></text>
+      <text x="${cx}" y="${y + 13}" ${MARCA_ROTULO} class="cr__rotulo cr__rotulo--menudo"
+            text-anchor="middle">RA</text>
+      <svg ${MARCA_HASTA_LETRAS} x="${cx - 12}" y="${y}" width="24" height="24" viewBox="0 0 24 24">
+        ${DIBUJO_DE_LA_RADIOALTURA}
+      </svg>
+    </g>
+  `;
   return `
     <g data-cristal="radio" data-desde="4" visibility="hidden">
       <text x="${cx}" y="${y}" class="cr__radio" text-anchor="middle"></text>
@@ -293,6 +311,14 @@ function radioaltimetro(cx: number, y: number): string {
     </g>
   `;
 }
+
+/**
+ * **Lo que mide la radioaltura, dibujado**: el helicóptero, la flecha hasta el
+ * suelo y el suelo. Ocupa el sitio de «RA» mientras no se lee.
+ */
+const DIBUJO_DE_LA_RADIOALTURA = `
+  <path class="cr__radio-dibujo" d="M4 2.5 H20 M12 2.5 V5 M17 8.5 H22.5 M11 12 V19.5 M8.6 17 L11 19.8 L13.4 17 M2.5 22 H21.5" />
+  <ellipse class="cr__radio-dibujo-cuerpo" cx="11" cy="8.5" rx="6" ry="3.4" />`;
 
 /**
  * El horizonte.
@@ -546,6 +572,7 @@ function cintaDeAltitud(
   w: number,
   h: number,
   yo: string,
+  helicoptero = false,
 ): string {
   const tambor = [-1, 0, 1]
     .map(
@@ -576,7 +603,19 @@ function cintaDeAltitud(
           -->
           <g data-cristal="pista-cinta" data-porunidad="${POR_PIE}" transform="translate(0 0)">
             <rect x="2" y="1" width="${w - 18}" height="${h}" fill="url(#${yo}-suelo)" />
-            <path class="cr__pista" d="M2 -1 l${w - 20} 0 l0 2 l${-(w - 20)} 0 Z" />
+            ${
+              /*
+               * **Y en el helicóptero, el helipuerto**: el aro con la H, a la
+               * cota del suelo al que se va, sobre la raya del suelo. Un
+               * helicóptero no aterriza en una pista; se posa en su sitio, y
+               * lo que la cinta tiene que decir es a qué altura está ese sitio.
+               * Ver Game.cotaParaLaCinta.
+               */
+              helicoptero
+                ? `<path class="cr__suelo-cinta" d="M2 0 L${w - 18} 0" />
+            ${helipuerto(w - 30, -11, 9)}`
+                : `<path class="cr__pista" d="M2 -1 l${w - 20} 0 l0 2 l${-(w - 20)} 0 Z" />`
+            }
           </g>
         </g>
         <rect data-tendencia="alt" data-medio="${h / 2}" data-porunidad="${POR_PIE}"
@@ -649,13 +688,29 @@ function cintaDeAltitud(
       -->
       <g data-cristal="cota-pista" data-nombra="cota" visibility="hidden">
         <rect x="2" y="${h - 44}" width="${w - 4}" height="22" rx="3" class="cr__cota-caja" />
-        <path class="cr__cota-dibujo" d="M5 ${h - 25} L11 ${h - 41} L16 ${h - 41} L22 ${h - 25} Z" />
-        <path class="cr__cota-eje" d="M13.5 ${h - 39} L13.5 ${h - 27}" />
+        ${
+          helicoptero
+            ? helipuerto(13.5, h - 33, 7.5)
+            : `<path class="cr__cota-dibujo" d="M5 ${h - 25} L11 ${h - 41} L16 ${h - 41} L22 ${h - 25} Z" />
+        <path class="cr__cota-eje" d="M13.5 ${h - 39} L13.5 ${h - 27}" />`
+        }
         <text data-cristal="cota-pista-cifra" x="${w - 6}" y="${h - 27}" ${MARCA_CIFRA}
               class="cr__cota-cifra" text-anchor="end"></text>
       </g>
     </g>
   `;
+}
+
+/**
+ * **El helipuerto**: el aro con la H, dibujado y no escrito. La H de un
+ * helipuerto es una señal pintada en el suelo, no una letra que se lea, y así
+ * la ve también quien todavía no lee.
+ */
+function helipuerto(cx: number, cy: number, r: number): string {
+  const a = r * 0.4;
+  const b = r * 0.55;
+  return `<circle class="cr__helipuerto" cx="${cx}" cy="${cy}" r="${r}" />
+            <path class="cr__helipuerto-h" d="M${cx - a} ${cy - b} V${cy + b} M${cx + a} ${cy - b} V${cy + b} M${cx - a} ${cy} H${cx + a}" />`;
 }
 
 /**

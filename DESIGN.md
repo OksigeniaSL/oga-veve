@@ -26,7 +26,8 @@ Tres materiales, cada uno en su superficie:
   su contraste no depende de lo que pase por debajo, sea cielo claro, campo o pista.
 - **La cabina de verdad** en el cuadro de mandos: pantalla negra, colores con significado cerrado, cintas que se
   desplazan y dígitos que ruedan. Cada avión lleva la de su familia: esferas en los de pistón, dos pantallas en el
-  turbohélice y cabina de línea con EICAS en los reactores.
+  turbohélice, cabina de línea con EICAS en los reactores y, en el helicóptero, la retícula de la de línea con la VMS
+  —el FLI y el reloj del rotor— en el sitio del EICAS (`src/ui/vms.ts`).
 
 En una frase: **una cabina tranquila**, donde nada grita y todo lo que se ve se reconocerá el día que se suba a un
 avión. Las dudas las resuelve la regla de las tres eses de [AGENTS.md](AGENTS.md): una frustrada se felicita, nada se

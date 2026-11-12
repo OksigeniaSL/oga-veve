@@ -33,6 +33,7 @@
 import { CIFRAS_DE_AVISO_DESDE } from "../flight/escalera";
 import type { AircraftConfig } from "../flight/aircraft";
 import { luzDeTren } from "../flight/tren";
+import { llevaVentanillaDeAltitud } from "../flight/altitud-seleccionada";
 import { parteDeLaBarra } from "../flight/velocidades-en-tierra";
 import { RODAR } from "./cristal";
 import { luceLaVentanilla } from "../flight/lo-que-cambia";
@@ -99,9 +100,13 @@ export class CuadroDelTelefono {
   private readonly piezas = new Map<string, Element | null>();
   private luces: readonly Element[] = [];
 
-  /** Si este avión lleva la ventanilla ALT en la visera. */
+  /**
+   * Si este avión lleva la ventanilla ALT en la visera: la misma cuenta que
+   * decide si la ventanilla hace algo en el juego, y no la familia del cuadro.
+   * Ver `llevaVentanillaDeAltitud`.
+   */
   static llevaVentanilla(a: AircraftConfig): boolean {
-    return familiaDe(a) !== "esferas";
+    return llevaVentanillaDeAltitud(a);
   }
 
   markup(a: AircraftConfig, peldano: number): string {
@@ -248,6 +253,8 @@ export class CuadroDelTelefono {
     const f = this.familia;
     if (f === "esferas") return cual === "motor" ? "motor" : "seispack";
     if (f === "cristal") return cual === "actitud" ? "pfd" : "mfd";
+    // El helicóptero, con la retícula de la de línea: los motores son la VMS.
+    if (f === "helicoptero") return cual === "actitud" ? "pfd" : cual === "rumbo" ? "nd" : "vms";
     return cual === "actitud" ? "pfd" : cual === "rumbo" ? "nd" : "eicas";
   }
 

@@ -31,8 +31,9 @@ import {
   PYKASU,
   YVAGA,
 } from "../flight/aircraft";
+import { SUPER_PUMA_EN_EL_JUEGO } from "../flight/helicoptero-en-el-juego";
 
-const FAMILIAS: Familia[] = ["esferas", "cristal", "linea"];
+const FAMILIAS: Familia[] = ["esferas", "cristal", "linea", "helicoptero"];
 
 describe("el reparto de cada familia", () => {
   for (const familia of FAMILIAS) {
@@ -90,6 +91,18 @@ describe("a qué familia va cada avión", () => {
   it("los reactores llevan cabina de línea", () => {
     expect(familiaDe(ARAI)).toBe("linea");
     expect(familiaDe(YVAGA)).toBe("linea");
+  });
+
+  it("y el helicóptero, la suya, aunque su turbina suene de prestado a turbohélice", () => {
+    expect(SUPER_PUMA_EN_EL_JUEGO.sound.engine).toBe("turboprop");
+    expect(familiaDe(SUPER_PUMA_EN_EL_JUEGO)).toBe("helicoptero");
+  });
+
+  it("la retícula del helicóptero es la de línea, caja por caja: cambia lo de dentro", () => {
+    const linea = RETICULA.linea.map(({ x, ancho }) => ({ x, ancho }));
+    const heli = RETICULA.helicoptero.map(({ x, ancho }) => ({ x, ancho }));
+    expect(heli).toEqual(linea);
+    expect(RETICULA.helicoptero.map((c) => c.que)).toEqual(["pfd", "nd", "vms"]);
   });
 });
 

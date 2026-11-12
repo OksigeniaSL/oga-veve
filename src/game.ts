@@ -275,6 +275,7 @@ import {
 import type { Lluvia } from "./world/meteo";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { HelicopteroComoModelo, estabilizacionDelPeldano } from "./flight/fdm-helicoptero";
+import { lecturaDeLaVms } from "./flight/vms";
 import { sonidoDelRotor } from "./audio/rotor";
 import { RITMO_DEL_COLECTIVO } from "./flight/helicoptero";
 import { RITMO_DEL_GAS_DE_AVION } from "./flight/input";
@@ -19690,7 +19691,8 @@ export class Game {
         patas: patasDe(this.aircraft),
         tren: this.input.controls.tren,
         sobreElSuelo: this.flight.state.groundSpeed,
-        sobreElTerreno: this.flight.state.heightAboveGround,
+        // Desde las ruedas, como el radioaltímetro de verdad y como el cuadro plano.
+        sobreElTerreno: Math.max(0, this.flight.state.heightAboveGround - this.aircraft.gearHeight),
         perdida:
           !this.flight.state.onGround &&
           this.flight.state.alpha > this.aircraft.aero.alphaStall,
@@ -20010,6 +20012,15 @@ export class Game {
          */
         ra: this.franjaDelRa(),
         motores: this.agujasDeLosMotores(),
+        // Y en el helicóptero, la VMS: el FLI, el rotor y sus turbinas. Ver `flight/vms.ts`.
+        rotor:
+          this.flight instanceof HelicopteroComoModelo
+            ? lecturaDeLaVms(
+                this.flight.modelo.ficha,
+                this.flight.modelo.rotor(),
+                temperaturaExterior(this.flight.state.position.y, this.flight.aireDelDia()),
+              )
+            : null,
       },
     );
     // Lo que se ve de lo que nombra la instructora, con la cámara y el cuadro de este paso.
@@ -25826,6 +25837,15 @@ export class Game {
    */
   agujaParaBanco: { metros: number; relativo: number; por: PorDeLaAguja } | null = null;
 
+  /**
+   * **El sitio al que señala la aguja**, en el mundo: el objetivo, la raya, el
+   * punto del plan o el helipuerto. El helicóptero lo pinta además en su
+   * pantalla de navegación —la raya magenta— y en la cinta de altitud —el
+   * helipuerto a la cota de ese suelo—: una cuenta, tres dibujos. Ver
+   * `aDondeVoy` y `cotaParaLaCinta`.
+   */
+  private puntoDeLaAguja: { x: number; z: number } | null = null;
+
   private updateHomeIndicator(): void {
     /*
      * **El umbral de la pista que se tiene debajo**, no el de casa. En la
@@ -25937,6 +25957,7 @@ export class Game {
     const destino = senalado.destino;
     const punto = senalado.delPlan;
 
+    this.puntoDeLaAguja = { x: senalado.punto.x, z: senalado.punto.z };
     const dx = senalado.punto.x - this.flight.state.position.x;
     const dz = senalado.punto.z - this.flight.state.position.z;
     const bearing = Math.atan2(dx, -dz);
@@ -31771,7 +31792,24 @@ export class Game {
      * era el de la lección de aterrizar, la pista, y en la pantalla salía la raya
      * magenta de la entrada a una pista en la que no se posa. Ver el ADR 0026, paso 4.
      */
-    if (this.aircraft.helicoptero && this.missions.active?.aeronave !== this.aircraft.id) return null;
+    /*
+     * **Y ahora, a donde señala la aguja de la tarjeta**, que con el
+     * helicóptero es su objetivo o su helipuerto: la misma cuenta, para que la
+     * raya magenta y la aguja no puedan señalar dos sitios. Sin helipuerto
+     * —un campo sin él— la aguja señala la pista, y a una pista no se le pinta
+     * camino: el helicóptero no se posa en ella.
+     */
+    if (this.aircraft.helicoptero) {
+      const conSuSitio =
+        this.missions.active?.aeronave === this.aircraft.id || this.helipuertoDeCasa() !== null;
+      const punto = conSuSitio ? this.puntoDeLaAguja : null;
+      if (!punto) return null;
+      const p = this.flight.state.position;
+      return {
+        rumbo: rumboHacia(p.x, p.z, punto.x, punto.z),
+        distancia: Math.hypot(punto.x - p.x, punto.z - p.z),
+      };
+    }
     const donde = this.sitioDeLaMision;
     if (!donde) return null;
     const p = this.flight.state.position;
@@ -34636,7 +34674,12 @@ export class Game {
    * vuelo de los que la llevan; ver `minimos` en `ui/cristal.ts`.
    */
   private losMinimosPuestos(): { pies: number; enEllos: boolean } | null {
-    if (!this.scenario.aerodrome) return null;
+    /*
+     * El helicóptero no vuela la aproximación de la pista: se posa en su
+     * helipuerto, a la vista. Unos mínimos de la pista en su pantalla de vuelo
+     * serían los de un vuelo que no hace.
+     */
+    if (!this.scenario.aerodrome || this.aircraft.helicoptero) return null;
     const altura = Math.round(ALTURA_DE_DECISION / PIE_EN_METROS / 10) * 10;
     const pies = Math.round(this.cotaDeLaPistaALaQueSeVa() / PIE_EN_METROS) + altura;
     const enEllos =
@@ -34711,6 +34754,15 @@ export class Game {
    * `ui/cristal.ts`.
    */
   private cotaParaLaCinta(): number | null {
+    /*
+     * **El helicóptero, a la cota del suelo al que va**: el de su objetivo o
+     * el de su helipuerto, el mismo sitio al que señala la aguja. La cinta
+     * pinta ahí el helipuerto. Ver `puntoDeLaAguja`.
+     */
+    if (this.aircraft.helicoptero && this.puntoDeLaAguja) {
+      const p = this.puntoDeLaAguja;
+      return Math.round(this.terrain.sampleSurface(p.x, p.z) / PIE_EN_METROS);
+    }
     if (!this.scenario.aerodrome) return null;
     return Math.round(this.cotaDeLaPistaALaQueSeVa() / PIE_EN_METROS);
   }

@@ -66,6 +66,9 @@ import type { Franja } from "../flight/tcas";
 import { dibujarLaCarta, pixelesPorMetro, type Mapa } from "./carta";
 import { PUNTOS_A_FONDO, type PerfilEnElCuadro } from "../flight/perfil-vertical";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
+import { anguloDelDial, pantallaVms } from "./vms";
+import { bandasDelRotor, FLI, NR_MAXIMO, type LecturaDeLaVms } from "../flight/vms";
+import { llevaVentanillaDeAltitud } from "../flight/altitud-seleccionada";
 import { decima as n1, escribir, poner } from "./si-cambia";
 import { apareceEnPantalla, pasaElTiempoDelCuadro, seVeEnPantalla } from "./explicaciones";
 import type { Pieza } from "../flight/lo-que-se-nombra";
@@ -280,6 +283,12 @@ export interface DatosDelTablero {
    * sin maniobra. Ver `Franja` en `flight/tcas.ts`.
    */
   readonly ra?: Franja | null;
+  /**
+   * **La VMS del helicóptero**: el FLI de cada motor, las vueltas del rotor y
+   * las de las turbinas libres. `null` en lo que no tiene rotor. Ver
+   * `flight/vms.ts`.
+   */
+  readonly rotor?: LecturaDeLaVms | null;
 }
 
 /**
@@ -541,7 +550,9 @@ export class Tablero {
         ? this.deEsferas(a, c)
         : familia === "cristal"
           ? this.deCristal(a, c)
-          : this.deLinea(a, c);
+          : familia === "helicoptero"
+            ? this.deHelicoptero(a, c)
+            : this.deLinea(a, c);
     const escalon = Math.max(1, Math.min(4, peldano));
     const corte = corteDeArriba(familia, escalon);
     this.corte = corte;
@@ -610,10 +621,27 @@ export class Tablero {
       -->
       <g data-caja="visera">
       ${familia === "linea" ? this.mcp(["SPD", "HDG", "ALT"]) : familia === "cristal" ? this.mcp(["ALT"]) : ""}
+      ${
+        /*
+         * **El helicóptero, solo la de altitud**, y solo si la lleva. Las
+         * ventanillas de la visera de un H215 son las de su piloto automático
+         * de cuatro ejes, y aquí no lleva automático: SPD y HDG serían dos
+         * mandos que no hacen nada, que es enseñar una mentira. La de altitud
+         * sí hace: pone la raya en la cinta y suena el avisador al irse de
+         * ella. Ver `flight/altitud-seleccionada.ts`.
+         */
+        familia === "helicoptero" && llevaVentanillaDeAltitud(a) ? this.mcp(["ALT"]) : ""
+      }
       ${this.panelDeAvisos(corte, esDeChorro(a))}
       </g>
-      <text x="${ANCHO_DEL_CUADRO / 2}" y="${ALTO_DEL_CUADRO - 10}"
-            ${MARCA_ROTULO} class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>
+      ${
+        // El helicóptero lleva la placa con el nombre bajo la pantalla de vuelo, y
+        // en el centro las luces del tren. Ver `deHelicoptero`.
+        familia === "helicoptero"
+          ? ""
+          : `<text x="${ANCHO_DEL_CUADRO / 2}" y="${ALTO_DEL_CUADRO - 10}"
+            ${MARCA_ROTULO} class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>`
+      }
       ${placaDeMatricula(matriculaDe(a.id).matricula)}
     `;
   }
@@ -974,6 +1002,44 @@ export class Tablero {
     `;
   }
 
+  /**
+   * **Familia del helicóptero**: la retícula de la de línea, y lo que cambia
+   * es lo de dentro. La pantalla de vuelo sin FMA —no hay automático del que
+   * decir qué hace— y con el helipuerto en la cinta y la radioaltura en
+   * grande; la de navegación con el helicóptero en medio; y en el sitio de
+   * los motores, la VMS. Debajo de las pantallas, la placa con el nombre y las
+   * tres luces del tren, que el del Super Puma se recoge.
+   */
+  private deHelicoptero(a: AircraftConfig, c: Cuadro): string {
+    const pfd = cajaDe("helicoptero", "pfd");
+    const nd = cajaDe("helicoptero", "nd");
+    const vms = cajaDe("helicoptero", "vms");
+    const patas = patasDe(a);
+    const abajo = BANDA.y + BANDA.alto;
+    /*
+     * La placa, a la derecha de la de la matrícula y bajo la pantalla de
+     * vuelo, con el nombre desde el peldaño de las letras: sin él no se pinta
+     * el marco, que un marco vacío parece un instrumento roto.
+     */
+    const placa = { x: pfd.x + 136, ancho: pfd.ancho - 146 };
+    return `
+      <g data-caja="pfd" transform="translate(${pfd.x} ${BANDA.y})">
+        ${pantallaDeActitud(pfd.ancho, BANDA.alto, c, { rosa: false, mach: false, helicoptero: true })}
+      </g>
+      <g data-caja="nd" transform="translate(${nd.x} ${BANDA.y})">
+        ${pantallaDeNavegacion(nd.ancho, BANDA.alto, true)}
+      </g>
+      <g data-caja="vms" transform="translate(${vms.x} ${BANDA.y})">
+        ${pantallaVms(vms.ancho, BANDA.alto, a)}
+      </g>
+      <g ${MARCA_ROTULO}>
+        <rect x="${placa.x}" y="${abajo + 6}" width="${placa.ancho}" height="26" rx="3" class="tablero__chapa-heli" />
+        <text x="${placa.x + placa.ancho / 2}" y="${abajo + 24}" class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>
+      </g>
+      ${lucesDeTren(nd.x + nd.ancho / 2 - (patas * 30 - 8) / 2, abajo + 7, patas)}
+    `;
+  }
+
   bind(raiz: HTMLElement, a: AircraftConfig): void {
     this.raiz = raiz.querySelector<SVGElement>('[data-hud="tablero"]');
     this.lectura = raiz.querySelector<HTMLElement>('[data-hud="lectura"]');
@@ -988,6 +1054,8 @@ export class Tablero {
     this.desdeLasCifras = Infinity;
     this.ecos = "";
     this.relieve = null;
+    this.vmsFli = [];
+    this.bandasDelRotor = a.helicoptero ? bandasDelRotor(a.helicoptero) : null;
     if (this.familia === "esferas") this.seisPack.bind(raiz);
   }
 
@@ -1079,8 +1147,9 @@ export class Tablero {
       this.cintas(d, dt, cifras);
     }
     this.motores(c, d, dt, cifras);
+    if (this.familia === "helicoptero") this.vms(d.rotor ?? null, dt, cifras);
     this.mandos(d, cifras);
-    // Los avisos, en las tres familias: la avioneta también se cae.
+    // Los avisos, en todas las familias: la avioneta también se cae.
     this.avisos(raiz, d, dt);
     if (cifras) this.texto("gs", `GS ${Math.round(d.sobreElSuelo)}`);
     this.rodaje(d.rodaje ?? null, cifras);
@@ -1203,7 +1272,15 @@ export class Tablero {
     if (radio) {
       const cerca = d.sobreElTerreno < DESDE_EL_RADIO;
       poner(radio, "visibility", cerca ? "visible" : "hidden");
-      radio.classList.toggle("cr--bajito", d.sobreElTerreno < YA_ES_BAJO);
+      /*
+       * Ámbar en los últimos doscientos pies, que en un avión es la final. En
+       * el helicóptero no: ahí abajo es donde vuela y donde se posa, y una
+       * cifra en ámbar todo el rato enseña a no hacer caso del ámbar.
+       */
+      radio.classList.toggle(
+        "cr--bajito",
+        this.familia !== "helicoptero" && d.sobreElTerreno < YA_ES_BAJO,
+      );
       const cifra = this.pieza('[data-cristal="radio"] text');
       if (cifra && cerca)
         escribir(cifra, String(Math.max(0, Math.round(d.sobreElTerreno))));
@@ -1230,12 +1307,14 @@ export class Tablero {
     // La ruta, en magenta, desde el avión hacia donde se va.
     const ruta = this.pieza('[data-cristal="ruta"] path');
     if (ruta) {
-      if (!d.objetivo) poner(ruta, "d", "M0 0");
+      // Y ya en el sitio, sin raya. Ver `lejos`.
+      const objetivo = lejos(d.objetivo);
+      if (!objetivo) poner(ruta, "d", "M0 0");
       else {
         // El objetivo viene en verdaderos: se pasa a magnéticos para
         // restarlo del rumbo, que ya lo está.
         const rel =
-          ((d.objetivo.rumbo * GRADOS + decl - rumbo) * Math.PI) / 180;
+          ((objetivo.rumbo * GRADOS + decl - rumbo) * Math.PI) / 180;
         poner(
           ruta,
           "d",
@@ -1498,8 +1577,10 @@ export class Tablero {
       poner(tope, "visibility", kt < vne ? "visible" : "hidden");
     }
 
-    const quiero = d.objetivo
-      ? (((d.objetivo.rumbo * GRADOS + (d.declinacion ?? 0)) % 360) + 360) %
+    // Y ya en el sitio, como sin objetivo: la marca se queda en el rumbo. Ver `lejos`.
+    const objetivo = lejos(d.objetivo);
+    const quiero = objetivo
+      ? (((objetivo.rumbo * GRADOS + (d.declinacion ?? 0)) % 360) + 360) %
         360
       : rumbo;
     const corto = ((quiero - this.bugDeRumbo + 540) % 360) - 180;
@@ -1724,6 +1805,65 @@ export class Tablero {
         poner(mando, "width", n1(pedido * Number(mando.dataset.ancho)));
       this.pieza(`[data-motor="${i}"]`)?.classList.toggle("cr--tope", f > 0.95);
     }
+  }
+
+  /** El FLI de cada motor, en coma flotante. Ver `vms`. */
+  private vmsFli: number[] = [];
+  /** Las bandas del reloj del rotor de este helicóptero. Ver `bandasDelRotor`. */
+  private bandasDelRotor: ReturnType<typeof bandasDelRotor> | null = null;
+
+  /**
+   * **La VMS**: las agujas del FLI con sus discos, la del rotor y las de las
+   * turbinas libres, y sus lecturas.
+   *
+   * El NR va tal cual, sin suavizar: lo sostiene el regulador y casi no se
+   * mueve, y si cae tiene que verse en el momento. El FLI sigue al colectivo
+   * en un segundo, más o menos, como el par de un turbohélice: el modelo ya
+   * tarda lo que tardan los motores, y aquí se le suma el poco de la aguja.
+   */
+  private vms(l: LecturaDeLaVms | null, dt: number, cifras: boolean): void {
+    if (!l) return;
+    for (let i = 0; i < l.motores.length; i++) {
+      const m = l.motores[i]!;
+      const fli = conRetardo(this.vmsFli[i] ?? m.fli, m.fli, dt, SIGUE_EL_FLI);
+      this.vmsFli[i] = fli;
+      const g = anguloDelDial(fli, FLI.maximo);
+      poner(this.pieza(`[data-vms-fli="${i}"]`), "transform", `rotate(${n1(g)})`);
+      const disco = this.pieza(`[data-vms-disco="${i}"]`);
+      if (disco) {
+        const rr = Number(disco.dataset.radio);
+        const a = (g * Math.PI) / 180;
+        poner(disco, "transform", `translate(${n1(Math.sin(a) * rr)} ${n1(-Math.cos(a) * rr)})`);
+      }
+      poner(
+        this.pieza(`[data-vms-nf="${i}"]`),
+        "transform",
+        `rotate(${n1(anguloDelDial(m.nf, NR_MAXIMO))})`,
+      );
+      if (!cifras) continue;
+      const lectura = this.pieza(`[data-vms-lectura="fli-${i}"]`);
+      lectura?.classList.toggle("vms--precaucion", fli >= FLI.continua && fli <= FLI.despegue);
+      lectura?.classList.toggle("vms--limite", fli > FLI.despegue);
+      escribir(this.pieza(`[data-vms-fli-cifra="${i}"]`), fli.toFixed(1));
+      escribir(this.pieza(`[data-vms-ng="${i}"]`), `${Math.round(m.ng)}%`);
+      escribir(this.pieza(`[data-vms-t4="${i}"]`), `${Math.round(m.t4)}°`);
+    }
+    poner(this.pieza("[data-vms-nr]"), "transform", `rotate(${n1(anguloDelDial(l.nr, NR_MAXIMO))})`);
+    if (!cifras) return;
+    escribir(this.pieza("[data-vms-nr-cifra]"), String(Math.round(l.nr)));
+    /*
+     * La cifra del rotor en ámbar fuera de las vueltas con motor, y en rojo
+     * fuera de las que se admiten sin él. Parado en el suelo no avisa: un
+     * rotor parado no está fuera de nada.
+     */
+    const b = this.bandasDelRotor;
+    const lectura = this.pieza('[data-vms-lectura="nr"]');
+    const girando = l.nr > 5;
+    const fuera = !!b && girando && (l.nr < b.conMotor[0] || l.nr > b.conMotor[1]);
+    const limite = !!b && girando && (l.nr < b.sinMotor[0] || l.nr > b.sinMotor[1]);
+    const conMotor = l.motores.some((m) => m.nf > 1);
+    lectura?.classList.toggle("vms--precaucion", conMotor && fuera && !limite);
+    lectura?.classList.toggle("vms--limite", conMotor && limite);
   }
 
   private mandos(d: DatosDelTablero, cifras: boolean): void {
@@ -2302,6 +2442,19 @@ const AVISA_CINCO_ANTES = 5;
  * doscientos se pone ámbar: ahí ya no es un dato, es un aviso.
  */
 const DESDE_EL_RADIO = 2500;
+/** A cuántos metros del sitio ya no se le pinta camino en la carta. */
+const YA_ESTA_AHI = 30;
+
+/**
+ * **El objetivo, si queda camino hasta él.** Posado en su helipuerto, el
+ * helicóptero lo tenía a cero metros, y la raya magenta y la marca de la rosa
+ * señalaban hacia donde cayera la cuenta de un rumbo a ninguna parte.
+ */
+function lejos<T extends { readonly distancia: number }>(o: T | null): T | null {
+  return o && o.distancia >= YA_ESTA_AHI ? o : null;
+}
+/** Lo que tarda la aguja del FLI en seguir al modelo, s. Ver `Tablero.vms`. */
+const SIGUE_EL_FLI = 0.4;
 const YA_ES_BAJO = 200;
 
 function pad3(g: number): string {

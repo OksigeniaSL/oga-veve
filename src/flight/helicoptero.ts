@@ -156,6 +156,15 @@ export interface FichaDeHelicoptero {
    * quemaría el disco.
    */
   readonly frenoDelRotor?: { readonly par: number; readonly hasta: number };
+  /**
+   * **Las vueltas del rotor que se admiten**, rpm: con motor y sin él. No las
+   * usa el modelo —el regulador lleva las nominales— sino el reloj del rotor,
+   * que pinta con ellas sus bandas. Ver `bandasDelRotor` en `vms.ts`.
+   */
+  readonly vueltasPermitidas?: {
+    readonly conMotor: readonly [number, number];
+    readonly sinMotor: readonly [number, number];
+  };
 }
 
 // ── Los mandos ───────────────────────────────────────────────────────────

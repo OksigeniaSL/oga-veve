@@ -61,7 +61,9 @@ const partes = await page.evaluate(() => {
     "jaz-40": "esferas",
     "jaz-60": "cristal",
     "jaz-90": "linea",
+    "jaz-110": "linea",
     "jaz-120": "linea",
+    "super-puma": "helicoptero",
   };
   const MOTORES = {
     "jaz-20": 1,
@@ -69,7 +71,9 @@ const partes = await page.evaluate(() => {
     "jaz-40": 2,
     "jaz-60": 2,
     "jaz-90": 2,
+    "jaz-110": 2,
     "jaz-120": 4,
+    "super-puma": 2,
   };
   return [...document.querySelectorAll(".ficha")].map((ficha, i) => {
     const id = globalThis.__cuadros[i];
@@ -121,7 +125,8 @@ const partes = await page.evaluate(() => {
       familiaEsperada: FAMILIA[id],
       familia: svg.dataset.familia,
       motoresEsperados: MOTORES[id],
-      motores: svg.querySelectorAll("[data-motor-cifra]").length,
+      // Las del EICAS y las del FLI del helicóptero: una por motor en los dos.
+      motores: svg.querySelectorAll("[data-motor-cifra], [data-vms-fli-cifra]").length,
       sobraIzq: izq - caja.left,
       sobraDer: caja.right - der,
       sobraArriba: arriba - caja.top,

@@ -7,7 +7,7 @@
  * cambiadas, y eso es exactamente lo contrario: un turbohélice de línea y una
  * avioneta de escuela no se parecen en nada por dentro.
  *
- * Tres familias, y la flota se reparte sola por el motor que lleva:
+ * Cuatro familias, y la flota se reparte sola por lo que la mueve:
  *
  * - **Esferas** — los de pistón. Llevan relojes redondos porque los llevan de
  *   verdad, y además la esfera es el mejor primer instrumento que existe: una
@@ -19,6 +19,12 @@
  * - **Línea** — los dos reactores. Horizonte, navegación y motores: la
  *   arquitectura de un avión de línea. Y el motor es la firma: el grande lleva
  *   **cuatro columnas**, que es al 747 lo que la joroba al fuselaje.
+ * - **Helicóptero** — el de rotor. La retícula de la de línea sin tocarla, y
+ *   lo que cambia es lo de dentro: en el sitio de los motores, la pantalla de
+ *   los motores y el rotor de un helicóptero de cristal —el FLI y el reloj del
+ *   rotor con sus turbinas—, y en la de vuelo, el helipuerto y la radioaltura.
+ *   No lo decide el motor —un turboeje suena de prestado a turbohélice— sino
+ *   que lleve rotor. Ver `ui/vms.ts`.
  *
  * ## La regla de anclaje
  *
@@ -30,14 +36,14 @@
  * es justo lo que estaba pasando.
  *
  * Y va con margen duro: ni un píxel de instrumento fuera de los veinte de cada
- * borde. Los tres repartos de aquí abajo suman los mil doscientos ochenta
+ * borde. Los repartos de aquí abajo suman los mil doscientos ochenta
  * clavados y son simétricos, y eso lo comprueba `familia.test.ts` en vez de
  * fiarse de que los números escritos en un comentario cuadren.
  */
 
 import type { AircraftConfig } from "../flight/aircraft";
 
-export type Familia = "esferas" | "cristal" | "linea";
+export type Familia = "esferas" | "cristal" | "linea" | "helicoptero";
 
 /** El ancho de referencia del cuadro. Todo lo demás son fracciones de esto. */
 export const ANCHO_DEL_CUADRO = 1280;
@@ -129,10 +135,26 @@ export const RETICULA: Record<Familia, readonly Caja[]> = {
     { que: "nd", x: 440, ancho: 400 },
     { que: "eicas", x: 860, ancho: 400 },
   ],
+  /*
+   * **La de línea, caja por caja**, con la de los motores llamada por lo que
+   * es en un helicóptero: la VMS, la pantalla de los motores y del rotor. Que
+   * sea la misma retícula es a propósito: quien sabe barrer la cabina de un
+   * reactor sabe barrer esta, y lo que tiene que aprender nuevo está dentro.
+   */
+  helicoptero: [
+    { que: "pfd", x: 20, ancho: 400 },
+    { que: "nd", x: 440, ancho: 400 },
+    { que: "vms", x: 860, ancho: 400 },
+  ],
 };
 
-/** De qué familia es este avión. Lo dice el motor, que es lo que manda. */
+/**
+ * De qué familia es este avión. Lo dice el motor, que es lo que manda; y en el
+ * helicóptero, el rotor, que manda más: su turboeje suena de prestado a
+ * turbohélice, y por el motor salía con el cuadro del JAZ 60.
+ */
 export function familiaDe(a: AircraftConfig): Familia {
+  if (a.helicoptero) return "helicoptero";
   switch (a.sound.engine) {
     case "turbofan":
       return "linea";

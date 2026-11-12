@@ -15,7 +15,7 @@ import { retratoDe } from "./retratos";
 import { matriculaDe } from "../flight/matricula";
 import { hayQueMoverElTrozo, marcasDeAltitud, POR_PIE } from "./cristal";
 import { LUCES } from "../flight/avisos-de-cabina";
-import { AIRCRAFT, aircraftById } from "../flight/aircraft";
+import { AERONAVES as AIRCRAFT, aeronavePorId } from "../flight/aeronaves";
 import {
   ALTO_DEL_CUADRO,
   ANCHO_DEL_CUADRO,
@@ -26,7 +26,8 @@ import {
   VISERA_FINA,
 } from "./familia";
 
-const dibujo = (id: string) => new Tablero().markup(aircraftById(id));
+// Toda la flota, el helicóptero incluido: vive en `AERONAVES` y no en `AIRCRAFT`.
+const dibujo = (id: string) => new Tablero().markup(aeronavePorId(id)!);
 
 describe("el cuadro de cada avión", () => {
   it("lleva la caja de siempre, que es lo que lo mantiene centrado", () => {
@@ -79,7 +80,8 @@ describe("el cuadro de cada avión", () => {
   it("una aguja por motor, en todos", () => {
     for (const a of AIRCRAFT) {
       const marcado = new Tablero().markup(a);
-      expect(marcado.match(/data-motor-cifra="/g)?.length).toBe(a.motores);
+      // En el helicóptero, las del FLI de su VMS: ver `ui/vms.ts`.
+      expect(marcado.match(/data-motor-cifra="|data-vms-fli-cifra="/g)?.length).toBe(a.motores);
     }
   });
 
@@ -121,6 +123,41 @@ describe("lo que lleva cada familia", () => {
     expect(marcado.match(/data-tira="hdg"/g)).toHaveLength(1);
     expect(marcado.match(/data-cristal="rosa"/g)).toHaveLength(1);
     expect(marcado).toContain('data-fondo="eicas"');
+  });
+
+  /*
+   * **La familia del helicóptero**: la retícula de la de línea con la VMS en
+   * el sitio del EICAS, el helipuerto en la cinta y la radioaltura desde el
+   * segundo peldaño. Ver `deHelicoptero`.
+   */
+  it("el helicóptero, su VMS con el FLI de cada motor y el reloj del rotor", () => {
+    const marcado = dibujo("super-puma");
+    expect(marcado).toContain('data-familia="helicoptero"');
+    expect(marcado).toContain('data-fondo="vms"');
+    expect(marcado).not.toContain('data-fondo="eicas"');
+    expect(marcado.match(/data-vms-fli="/g)).toHaveLength(2);
+    expect(marcado.match(/data-vms-disco="/g)).toHaveLength(2);
+    expect(marcado.match(/data-vms-nf="/g)).toHaveLength(2);
+    expect(marcado.match(/data-vms-nr=""/g)).toHaveLength(1);
+    for (const r of [">FLI<", ">NR<", ">NF<", ">NG<", ">T4<"]) expect(marcado, r).toContain(r);
+  });
+
+  it("y en su pantalla de vuelo, el helipuerto y la radioaltura con su aparato", () => {
+    const marcado = dibujo("super-puma");
+    expect(marcado).toContain('class="cr__helipuerto"');
+    expect(marcado).not.toContain('class="cr__pista" d=');
+    expect(marcado).toMatch(/data-cristal="radio" data-desde="2"/);
+    expect(dibujo("jaz-90")).toMatch(/data-cristal="radio" data-desde="4"/);
+    // Sin automático no hay FMA que diga lo que hace, ni mínimos de una pista.
+    expect(marcado).not.toContain('data-cristal="fma"');
+  });
+
+  it("el helicóptero, sin SPD ni HDG en la visera: no lleva automático", () => {
+    const marcado = dibujo("super-puma");
+    expect(marcado).not.toContain('data-mcp="spd"');
+    expect(marcado).not.toContain('data-mcp="hdg"');
+    // La de altitud sí, que pone su raya en la cinta y su avisador suena.
+    expect(marcado).toContain('data-mcp="alt"');
   });
 
   it("y el MCP de la visera solo en los de línea", () => {

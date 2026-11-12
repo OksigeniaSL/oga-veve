@@ -3038,6 +3038,8 @@ export class Hud {
       readonly perfil?: DatosDelTablero["perfil"];
       /** La franja del RA en el variómetro. Ver `DatosDelTablero.ra`. */
       readonly ra?: DatosDelTablero["ra"];
+      /** La VMS del helicóptero. Ver `DatosDelTablero.rotor`. */
+      readonly rotor?: DatosDelTablero["rotor"];
       /** En tierra, la GS de rodar. Ver `DatosDelTablero.rodaje`. */
       readonly rodaje?: DatosDelTablero["rodaje"];
       /** Lo que acaba de cambiar, resaltado. Ver `DatosDelTablero.resaltes`. */
@@ -3522,7 +3524,12 @@ export class Hud {
         // Y la altura **sobre el suelo**, que es otra cosa: la del
         // radioaltímetro. En La Palma o El Hierro la diferencia con la del
         // altímetro son seiscientos metros de montaña.
-        sobreElTerreno: state.heightAboveGround * 3.28084,
+        //
+        // **Y desde las ruedas**, que es como va calibrado el de verdad: posado
+        // marca cero. Desde el centro de gravedad, el helicóptero posado
+        // marcaba 6 ft, y la cuenta de la voz —que ya restaba las ruedas— y la
+        // cifra no decían lo mismo. Ver `lecturaDeLaTripulacion` en `game.ts`.
+        sobreElTerreno: Math.max(0, state.heightAboveGround - this.ficha.gearHeight) * 3.28084,
         alabeo: bank,
         cabeceo: pitch,
         sobreElSuelo:
@@ -3572,6 +3579,7 @@ export class Hud {
         cotaDeLaPista: mandos?.cotaDeLaPista ?? null,
         perfil: mandos?.perfil ?? null,
         ra: mandos?.ra ?? null,
+        rotor: mandos?.rotor ?? null,
         rodaje: mandos?.rodaje ?? null,
         resaltes: mandos?.resaltes ?? null,
       };

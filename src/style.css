@@ -5200,6 +5200,13 @@ button.motor__tecla::after {
   letter-spacing: 0.22em;
 }
 
+/* La placa del nombre del helicóptero, bajo la pantalla de vuelo. Ver `deHelicoptero`. */
+.tablero__chapa-heli {
+  fill: rgb(0 0 0 / 0.28);
+  stroke: var(--cabina-filo);
+  stroke-width: 1;
+}
+
 /*
  * La placa de la matrícula en el cuadro: chapa clara, dos tornillos y la
  * letra negra grabada. La misma pinta que `.placa-matricula` del HUD, que es
@@ -6317,6 +6324,120 @@ button.motor__tecla::after {
  */
 .cr__tren-buje {
   fill: var(--cabina-pantalla);
+}
+
+/*
+ * ── La VMS del helicóptero ──
+ *
+ * Los mismos diales que el EICAS, con lo que es suyo: el disco con el número
+ * de cada motor en su aguja del FLI, la aguja ancha del rotor y las finas de
+ * las turbinas libres en cian, que es el color de lo auxiliar. Ver `ui/vms.ts`.
+ */
+.vms__arco {
+  fill: none;
+}
+
+.vms__cifra {
+  font-size: 13px;
+}
+
+.vms__disco {
+  fill: #05070a;
+  stroke: var(--cabina-valor);
+  stroke-width: 1.4;
+}
+
+.vms__disco-cifra {
+  fill: var(--cabina-valor);
+  font-family: var(--cabina-fuente);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.vms__aguja-nf {
+  stroke: var(--cabina-auxiliar);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.vms__rotulo-nr {
+  fill: var(--cabina-valor);
+}
+
+.vms__rotulo-nf {
+  fill: var(--cabina-auxiliar);
+}
+
+.vms__caja {
+  fill: #05070a;
+  stroke: #3a3f45;
+  stroke-width: 1;
+}
+
+.vms__valor {
+  font-size: 22px;
+}
+
+.vms__numero {
+  font-size: 11px;
+}
+
+.vms__aux {
+  fill: var(--cabina-valor);
+}
+
+.vms__raya {
+  stroke: #2c3136;
+  stroke-width: 1;
+}
+
+/* En la potencia de despegue, la cifra en ámbar; pasada, en rojo. Ver `Tablero.vms`. */
+.vms--precaucion .vms__valor {
+  fill: var(--cabina-precaucion);
+}
+
+.vms--limite .vms__valor {
+  fill: var(--cabina-limite);
+}
+
+/*
+ * **El helipuerto en la cinta de altitud**, a la altura del suelo al que se
+ * va, en vez de la pista: el aro con la H de cualquier helipuerto. Y la
+ * radioaltura del helicóptero, en grande, que al posarse es lo que se mira.
+ */
+.cr__helipuerto {
+  fill: none;
+  stroke: var(--cabina-valor);
+  stroke-width: 1.6;
+}
+
+.cr__helipuerto-h {
+  fill: none;
+  stroke: var(--cabina-valor);
+  stroke-width: 1.8;
+}
+
+.cr__radio--grande {
+  font-size: 34px;
+  paint-order: stroke;
+  stroke: rgb(5 7 10 / 0.55);
+  stroke-width: 3px;
+}
+
+.cr__radio-dibujo {
+  fill: none;
+  stroke: var(--cabina-valor);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.cr__radio-dibujo-cuerpo {
+  fill: var(--cabina-valor);
+}
+
+.cr__suelo-cinta {
+  stroke: var(--cabina-valor);
+  stroke-width: 2;
 }
 
 /*

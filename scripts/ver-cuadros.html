@@ -46,7 +46,9 @@
   import { Quaternion, Vector3 } from "three";
   import { Tablero } from "/src/ui/tablero.ts";
   import { FLOTA } from "/src/flight/flota.ts";
-  import { aircraftById } from "/src/flight/aircraft.ts";
+  // Toda la flota, el helicóptero incluido: vive en `AERONAVES`.
+  import { aeronavePorId } from "/src/flight/aeronaves.ts";
+  import { lecturaDeLaVms } from "/src/flight/vms.ts";
   import {
     cargaParaLaRuta,
     comoVaElDeposito,
@@ -88,7 +90,10 @@
     "jaz-40": [140, 4500],
     "jaz-60": [190, 9000],
     "jaz-90": [280, 18000],
+    "jaz-110": [300, 25000],
     "jaz-120": [320, 31000],
+    // El helicóptero, en crucero bajo: a 90 kt y 1.500 ft, a 300 ft del suelo.
+    "super-puma": [90, 1500],
   };
 
   const todo = document.getElementById("todo");
@@ -101,9 +106,10 @@
     new URLSearchParams(location.search).get("peldano") ?? 4,
   );
   for (const m of FLOTA) {
-    const id = `jaz-${m.numero}`;
+    // Por su identificador, que el del helicóptero no es `jaz-70`. Ver `Modelo.id`.
+    const id = m.id;
     if (solo && id !== solo) continue;
-    const ficha = aircraftById(id);
+    const ficha = aeronavePorId(id);
     const [kt, pies] = VUELO[id];
     const caja = document.createElement("div");
     caja.className = "ficha";
@@ -132,6 +138,26 @@
           vr: kt * 0.6,
           vref: kt * 0.5,
           objetivo: { rumbo: (300 * Math.PI) / 180, distancia: 24000 },
+          sobreElTerreno: ficha.helicoptero ? 300 : pies,
+          cotaDeLaPista: ficha.helicoptero ? 1200 : null,
+          /*
+           * Y la VMS del helicóptero, a la potencia de crucero: el modelo a
+           * mitad de lo que puede dar, con el rotor en sus vueltas.
+           */
+          rotor: ficha.helicoptero
+            ? lecturaDeLaVms(
+                ficha.helicoptero,
+                {
+                  vueltasPorUno: 1,
+                  par: 0.62,
+                  potenciaMotores: 0.6 * 2 * 1_357_000,
+                  potenciaDisponible: 0.93 * 2 * 1_357_000,
+                  arranque: 1,
+                  frenoDelRotor: false,
+                },
+                12,
+              )
+            : null,
           viento: { desde: 210, nudos: 14 },
           perdida: false,
           /*

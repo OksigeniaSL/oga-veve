@@ -133,6 +133,9 @@ export const SUPER_PUMA: FichaDeHelicoptero = {
   // Supuestos: el freno del rotor para el rotor desde el 40 % de sus vueltas en
   // unos quince segundos, y no se pone por encima.
   frenoDelRotor: { par: 8_000, hasta: 0.4 },
+  // Con motor, de 245 a 275 rpm; sin motor, de 220 a 290 por debajo de 100 kt
+  // (TCDS, III.9). Son las bandas del reloj del rotor: ver `flight/vms.ts`.
+  vueltasPermitidas: { conMotor: [245, 275], sinMotor: [220, 290] },
   ruedas: [
     // La de morro se orienta sola: se rueda girando con los pedales.
     { x: 3.6, y: 0, z: 1.8, loca: true },
