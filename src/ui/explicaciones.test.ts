@@ -439,6 +439,26 @@ describe("dónde cae el dedo", () => {
     const luz = pieza("avisos", 0, 0, 100, 20, true);
     expect(piezaEn([luz], 10, 10, 0)).toBeNull();
   });
+
+  /*
+   * **Lo que no se ve no se toca.** El cielo y la tierra del horizonte son
+   * mucho más grandes que su esfera, y su caja entera llegaba a media
+   * pantalla: un clic en el mundo, encima del helicóptero, abría la
+   * explicación del horizonte y paraba el vuelo. «Pulso la X y no despega».
+   */
+  it("y una pieza más grande que su pantalla solo se toca dentro de la pantalla", () => {
+    const pantalla = { getBoundingClientRect: () => ({ left: 300, top: 500, width: 300, height: 250 }), ownerSVGElement: null };
+    const actitud = {
+      id: "actitud",
+      getBoundingClientRect: () => ({ left: -200, top: 100, width: 1300, height: 1200 }),
+      closest: () => null,
+      ownerSVGElement: pantalla,
+    } as unknown as Element & { id: string };
+    // Encima del mundo, fuera de la pantalla: nada.
+    expect(piezaEn([actitud], 640, 300, 0)).toBeNull();
+    // Dentro de la pantalla, sí.
+    expect(piezaEn([actitud], 450, 600, 0)).toBe(actitud);
+  });
 });
 
 /*

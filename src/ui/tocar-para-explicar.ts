@@ -84,8 +84,8 @@ export function piezaEn(
   let area = Infinity;
   for (const el of piezas) {
     if (!seVe(el)) continue;
-    const r = el.getBoundingClientRect();
-    if (r.width === 0 && r.height === 0) continue;
+    const r = cajaQueSeVe(el);
+    if (!r || (r.width === 0 && r.height === 0)) continue;
     // Lo pequeño, del tamaño del dedo, centrado donde está.
     const w = Math.max(r.width, margen);
     const h = Math.max(r.height, margen);
@@ -99,6 +99,42 @@ export function piezaEn(
     }
   }
   return mejor;
+}
+
+/**
+ * **La caja que se ve de una pieza, no la que ocupa**: la suya recortada por
+ * la de cada pantalla que la contiene —sus `<svg>`— y por la del cuadro.
+ *
+ * El horizonte artificial lleva un cielo y una tierra mucho más grandes que su
+ * esfera, para poder girar sin que se le vean los bordes, y su caja entera
+ * llegaba hasta media pantalla, por encima del cuadro. Un clic en el mundo,
+ * encima del helicóptero, abría la explicación del horizonte y paraba el
+ * vuelo, y la X ya no hacía nada: «Pulso la X y no despega». Lo que no se ve
+ * no se toca.
+ */
+function cajaQueSeVe(el: Element): { left: number; top: number; width: number; height: number } | null {
+  const r = el.getBoundingClientRect();
+  let izquierda = r.left;
+  let arriba = r.top;
+  let derecha = r.left + r.width;
+  let abajo = r.top + r.height;
+  const recortes: Element[] = [];
+  let pantalla = (el as SVGGraphicsElement).ownerSVGElement ?? null;
+  while (pantalla) {
+    recortes.push(pantalla);
+    pantalla = pantalla.ownerSVGElement ?? null;
+  }
+  const cuadro = el.closest?.(".cuadro");
+  if (cuadro) recortes.push(cuadro);
+  for (const c of recortes) {
+    const q = c.getBoundingClientRect();
+    izquierda = Math.max(izquierda, q.left);
+    arriba = Math.max(arriba, q.top);
+    derecha = Math.min(derecha, q.left + q.width);
+    abajo = Math.min(abajo, q.top + q.height);
+  }
+  if (derecha <= izquierda || abajo <= arriba) return null;
+  return { left: izquierda, top: arriba, width: derecha - izquierda, height: abajo - arriba };
 }
 
 /**
