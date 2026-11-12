@@ -18,8 +18,12 @@
  * ## Qué se precarga y qué no
  *
  * **El armazón**: el HTML, el JavaScript, la hoja de estilos, el manifiesto y
- * los iconos. Son unos setecientos kilobytes y son lo que hace que el juego
- * abra sin red.
+ * los iconos. Eran unos setecientos kilobytes y hoy son cinco megas y medio
+ * —dos comprimidos—, casi todo código, y son lo que hace que el juego abra
+ * sin red. No compiten con la primera pantalla: el trabajador se registra con
+ * el vuelo ya en marcha y la página quieta, y al estrenar versión solo baja lo
+ * que cambió de nombre. Ver `registrarElTrabajador` en
+ * `src/service-worker.ts` y el `install` de `plantilla-sw.js`.
  *
  * **Lo gordo, no**: el modelo del avión son 2,4 MB, los relieves 3,1 y las
  * ortofotos 4,3. Precargarlos todos serían once megas en la primera visita de
