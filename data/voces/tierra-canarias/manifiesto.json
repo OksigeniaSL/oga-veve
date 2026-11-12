@@ -3,6 +3,42 @@
   "voz": "tierra-canarias",
   "idioma": "es-PY",
   "piezas": {
+    "mission.teno.tripulacion.bajan": {
+      "ms": 3807,
+      "h": "340ce1dacb"
+    },
+    "mission.teno.tripulacion.cierre": {
+      "ms": 7107,
+      "h": "1c79350d4d"
+    },
+    "mission.teno.tripulacion.despegar": {
+      "ms": 2734,
+      "h": "b79902d46a"
+    },
+    "mission.teno.tripulacion.garachico": {
+      "ms": 3207,
+      "h": "99ca7cc504"
+    },
+    "mission.teno.tripulacion.ir": {
+      "ms": 3607,
+      "h": "bd1dec078a"
+    },
+    "mission.teno.tripulacion.porDelante": {
+      "ms": 3107,
+      "h": "4507b2e67f"
+    },
+    "mission.teno.tripulacion.posarse": {
+      "ms": 3307,
+      "h": "38dcbb7e4e"
+    },
+    "mission.teno.tripulacion.presenta": {
+      "ms": 6707,
+      "h": "e048982bac"
+    },
+    "mission.teno.tripulacion.suben": {
+      "ms": 3607,
+      "h": "e56c0e78ab"
+    },
     "tierra.canario.empujamos": {
       "ms": 3607,
       "h": "8d82e0d656"
@@ -17,6 +53,33 @@
     }
   },
   "recetas": {
+    "mission.teno.tripulacion.bajan": [
+      "mission.teno.tripulacion.bajan"
+    ],
+    "mission.teno.tripulacion.cierre": [
+      "mission.teno.tripulacion.cierre"
+    ],
+    "mission.teno.tripulacion.despegar": [
+      "mission.teno.tripulacion.despegar"
+    ],
+    "mission.teno.tripulacion.garachico": [
+      "mission.teno.tripulacion.garachico"
+    ],
+    "mission.teno.tripulacion.ir": [
+      "mission.teno.tripulacion.ir"
+    ],
+    "mission.teno.tripulacion.porDelante": [
+      "mission.teno.tripulacion.porDelante"
+    ],
+    "mission.teno.tripulacion.posarse": [
+      "mission.teno.tripulacion.posarse"
+    ],
+    "mission.teno.tripulacion.presenta": [
+      "mission.teno.tripulacion.presenta"
+    ],
+    "mission.teno.tripulacion.suben": [
+      "mission.teno.tripulacion.suben"
+    ],
     "tierra.canario.empujamos": [
       "tierra.canario.empujamos"
     ],

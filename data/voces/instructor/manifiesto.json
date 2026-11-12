@@ -679,6 +679,42 @@
       "ms": 785,
       "h": "8c3a7c3051"
     },
+    "mission.teno.bajan": {
+      "ms": 4807,
+      "h": "402d3656f3"
+    },
+    "mission.teno.cierre": {
+      "ms": 7807,
+      "h": "51ad8802d5"
+    },
+    "mission.teno.despegar": {
+      "ms": 4407,
+      "h": "bcecfb7d4a"
+    },
+    "mission.teno.garachico": {
+      "ms": 5607,
+      "h": "c89b81dc06"
+    },
+    "mission.teno.ir": {
+      "ms": 5407,
+      "h": "039be3733c"
+    },
+    "mission.teno.porDelante": {
+      "ms": 6107,
+      "h": "43ee713915"
+    },
+    "mission.teno.posarse": {
+      "ms": 5907,
+      "h": "6d694df3f4"
+    },
+    "mission.teno.presenta": {
+      "ms": 10207,
+      "h": "d681ad4844"
+    },
+    "mission.teno.suben": {
+      "ms": 5107,
+      "h": "5ff69af32f"
+    },
     "mission.transfer.name": {
       "ms": 844,
       "h": "241db35e40"
@@ -4906,6 +4942,33 @@
     ],
     "explica.apapi.texto": [
       "explica.apapi.texto"
+    ],
+    "mission.teno.presenta": [
+      "mission.teno.presenta"
+    ],
+    "mission.teno.ir": [
+      "mission.teno.ir"
+    ],
+    "mission.teno.posarse": [
+      "mission.teno.posarse"
+    ],
+    "mission.teno.suben": [
+      "mission.teno.suben"
+    ],
+    "mission.teno.porDelante": [
+      "mission.teno.porDelante"
+    ],
+    "mission.teno.despegar": [
+      "mission.teno.despegar"
+    ],
+    "mission.teno.garachico": [
+      "mission.teno.garachico"
+    ],
+    "mission.teno.bajan": [
+      "mission.teno.bajan"
+    ],
+    "mission.teno.cierre": [
+      "mission.teno.cierre"
     ]
   }
 }
