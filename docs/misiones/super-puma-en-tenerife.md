@@ -76,8 +76,15 @@ existe: la de Airam (`tierra-canarias`), un hombre canario de unos treinta y cin
 
 - **La gente**, que sube y baja: otro encargo, con el enganche ya puesto.
 - **Las voces**: nueve frases de la instructora y nueve de la tripulación, en la lista de `scripts/frases-para-grabar.mjs`.
-- **El faro de Teno no está dibujado**: el juego no tiene faros, y uno inventado enseñaría lo que no es. Mientras no
-  haya modelo, las frases no dicen «ahí está el faro»: dicen Punta de Teno y el aro verde.
+- **Las frases y el faro**: se escribieron cuando el faro no estaba dibujado, y dicen Punta de Teno y el aro verde, no
+  «ahí está el faro». Ahora el faro está (ver abajo); si se quiere que lo nombren, son frases nuevas que grabar.
+
+## El faro
+
+Es un sitio con modelo desde el 12 de noviembre de 2026 (`data/sitios/sitios.json`, `modelos/sitio-faro-de-teno.py`):
+la torre de 1978 y, pegado al oeste, el faro de 1897 con su casa y su torre de piedra, sobre el parche fino de la punta y
+a más de veinte metros del borde del llano. De noche destella con su ritmo publicado, tres destellos blancos cada
+veinte segundos. Fotos y coste con `scripts/ver-faro-de-teno.mjs`.
 - **La grúa**, para la otra misión.
 
 ## Lo que decidió Enrique

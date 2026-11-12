@@ -1,5 +1,6 @@
 /**
- * Rehace los aviones desde sus guiones de Blender, y falla si alguno no corre.
+ * Rehace los aviones —y los sitios con guion, como el faro de Teno— desde sus
+ * guiones de Blender, y falla si alguno no corre.
  *
  * Existe porque pasó: al meter la fila de ventanillas en el Panambi se le quitó
  * del `import` la función `caja`, que el guion seguía usando para los asientos
@@ -29,7 +30,7 @@ import { join } from "node:path";
 
 const CARPETA = "modelos";
 const guiones = readdirSync(CARPETA)
-  .filter((f) => (f.startsWith("jaz-") || f.startsWith("trafico-")) && f.endsWith(".py"))
+  .filter((f) => /^(jaz|trafico|sitio)-.*\.py$/.test(f))
   .sort();
 
 if (!guiones.length) {
@@ -85,7 +86,7 @@ for (const p of partes) {
 }
 
 console.log(
-  `\n  ${partes.length - mal} de ${partes.length} aviones se rehacen\n`,
+  `\n  ${partes.length - mal} de ${partes.length} modelos se rehacen\n`,
 );
 // Y los retratos del hangar son fotos de estos modelos: si un `.glb` cambió,
 // su retrato ya es de otro avión. `src/ui/retratos.test.ts` lo caza, pero

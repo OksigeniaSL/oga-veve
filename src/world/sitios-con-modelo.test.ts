@@ -14,7 +14,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { BufferGeometry, Mesh } from "three";
+import { ShaderLib, type BufferGeometry, type Mesh, type Points, type PointsMaterial } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { enTeselas, LADO_DE_TESELA } from "./cobertura-de-teselas";
 import { dondeCae } from "./entre-aerodromos";
@@ -22,9 +22,11 @@ import { glbDePrueba } from "./glb-de-prueba";
 import { Obstaculos } from "./obstaculos";
 import { SCENARIOS } from "./scenarios";
 import {
+  GLSL_DEL_FARO,
   SITIOS,
   SUELTA,
   SitiosConModelo,
+  destello,
   dondeSeDibuja,
   enSuMarco,
   queToca,
@@ -201,6 +203,107 @@ describe("el ciclo entero, con el .glb de prueba", () => {
   });
 });
 
+describe("la luz de un faro", () => {
+  const teno = SITIOS.find((s) => s.id === "faro-de-teno")!;
+  const fases = teno.luz!.fases;
+
+  /** Cuándo empieza cada destello en un periodo, muestreando cada centésima. */
+  function destellos(): number[] {
+    const salida: number[] = [];
+    let antes = false;
+    for (let i = 0; i < 2000; i++) {
+      const encendida = destello(fases, i / 100) > 0.5;
+      if (encendida && !antes) salida.push(i / 100);
+      antes = encendida;
+    }
+    return salida;
+  }
+
+  it("Teno: tres destellos cada veinte segundos, uno y luego dos, con sus fases publicadas", () => {
+    expect(fases.reduce((a, b) => a + b, 0)).toBeCloseTo(20, 6);
+    const t = destellos();
+    expect(t).toHaveLength(3);
+    // De uno al siguiente: 0,3 + 8,3; 0,3 + 2,5; y 0,3 + 8,3 hasta el del periodo siguiente.
+    expect(t[1]! - t[0]!).toBeCloseTo(8.6, 1);
+    expect(t[2]! - t[1]!).toBeCloseTo(2.8, 1);
+    expect(20 - t[2]! + t[0]!).toBeCloseTo(8.6, 1);
+    // Entera en medio del destello y apagada del todo entre uno y otro.
+    expect(destello(fases, 0.15)).toBe(1);
+    expect(destello(fases, 4)).toBe(0);
+    expect(destello(fases, 20.15)).toBe(1);
+  });
+
+  it("y su alcance, el de dieciocho millas", () => {
+    expect(teno.luz!.alcance).toBe(Math.round(18 * 1852));
+  });
+
+  /** El faro, desde Los Rodeos, sin red: el modelo no hace falta para la luz. */
+  function conElFaro() {
+    const casa = origenDe("tenerife-norte");
+    const sitios = new SitiosConModelo(
+      { casa, vecinos: [], suelo: () => 28, bultos: null, leer: async () => null },
+      [teno],
+    );
+    const [s] = sitios.estado();
+    return { sitios, s: s! };
+  }
+
+  it("se enciende con el crepúsculo, sin esperar a que se baje el modelo", () => {
+    const { sitios, s } = conElFaro();
+    // A veinte kilómetros: el modelo no se pide, la luz sí se ve.
+    sitios.ponerSol(-0.3);
+    sitios.ponerSegundo(0.15);
+    sitios.paso(0, s.x + 20_000, s.z);
+    const [luz] = sitios.lucesAhora();
+    expect(sitios.estado()[0]!.estado).toBe("fuera");
+    expect(luz!.visible).toBe(true);
+    expect(luz!.brillo).toBeCloseTo(1, 5);
+    // En el centro de la linterna, sobre el suelo del juego.
+    expect(luz!.y).toBeCloseTo(28 + teno.luz!.altura, 5);
+    // A cincuenta y siete kilómetros del origen, en coma flotante de 32 bits.
+    expect(luz!.x).toBeCloseTo(s.x, 1);
+    // Entre destellos, apagada.
+    sitios.ponerSegundo(4);
+    sitios.paso(0, s.x + 20_000, s.z);
+    expect(sitios.lucesAhora()[0]!.brillo).toBe(0);
+    sitios.soltarTodo();
+  });
+
+  it("de día no luce, y más allá de su alcance tampoco", () => {
+    const { sitios, s } = conElFaro();
+    sitios.ponerSegundo(0.15);
+    sitios.ponerSol(0.5);
+    sitios.paso(0, s.x + 20_000, s.z);
+    expect(sitios.lucesAhora()[0]!.visible).toBe(false);
+    sitios.ponerSol(-0.3);
+    sitios.paso(0, s.x + teno.luz!.alcance + 1_000, s.z);
+    expect(sitios.lucesAhora()[0]!.brillo).toBe(0);
+    expect(sitios.lucesAhora()[0]!.visible).toBe(false);
+    sitios.soltarTodo();
+  });
+
+  it("el punto se adelanta hacia el ojo tras proyectarse, para que no lo tape su propio cristal", () => {
+    const { sitios } = conElFaro();
+    const puntos = sitios.grupo.getObjectByName("luces-de-faro") as Points<BufferGeometry, PointsMaterial>;
+    const shader = {
+      uniforms: {} as Record<string, { value: unknown }>,
+      vertexShader: ShaderLib.points.vertexShader,
+      fragmentShader: ShaderLib.points.fragmentShader,
+    };
+    puntos.material.onBeforeCompile(shader as never, null as never);
+    const v = shader.vertexShader;
+    const proyectado = v.indexOf("#include <project_vertex>");
+    expect(proyectado).toBeGreaterThan(0);
+    expect(v.indexOf(GLSL_DEL_FARO)).toBeGreaterThan(proyectado);
+    expect(v.indexOf(GLSL_DEL_FARO)).toBeLessThan(v.indexOf("gl_PointSize = size *"));
+    // Y sigue siendo una luz lejana: encoge y se apaga con la distancia.
+    expect(v).toContain("lucesCerca");
+    expect(shader.uniforms.lucesAdelante).toBeDefined();
+    expect(puntos.material.customProgramCacheKey()).toBe("luces-de-faro");
+    sitios.soltarTodo();
+  });
+});
+
 describe("el catálogo", () => {
   const creditos = fs().readFileSync("CREDITOS.md", "utf8");
 
@@ -221,6 +324,13 @@ describe("el catálogo", () => {
       expect(s.giro, s.id).toBeLessThan(360);
       expect(s.alcance, s.id).toBeGreaterThan(0);
       expect(s.alcance, s.id).toBeLessThanOrEqual(80_000);
+      // La luz, si la tiene: pares de luz y oscuridad, con su fuente.
+      if (!s.luz) continue;
+      expect(s.luz.fases.length % 2, s.id).toBe(0);
+      expect(s.luz.fases.every((f) => f > 0), s.id).toBe(true);
+      expect(s.luz.altura, s.id).toBeGreaterThan(0);
+      expect(s.luz.alcance, s.id).toBeGreaterThan(0);
+      expect(s.luz.de.length, s.id).toBeGreaterThan(5);
     }
   });
 });

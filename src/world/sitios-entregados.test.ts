@@ -39,6 +39,7 @@ const TOPE: Record<string, number> = {
   izana: 4_000,
   monday: 2_500,
   muchachos: 3_000,
+  "faro-de-teno": 2_000,
 };
 
 /**
@@ -97,10 +98,11 @@ describe("los modelos entregados", () => {
       if (!SIN_BULTOS.has(s.id)) expect(bultos, `${s.id}: bultos`).toBeGreaterThan(0);
       expect(sinColor, `${s.id}: mallas sin color en los vértices`).toBe(0);
       expect(conTextura, `${s.id}: con textura`).toBe(false);
-      // Y de su tamaño: ni un milímetro ni un continente (escala aplicada).
+      // Y de su tamaño: ni un milímetro ni un continente (escala aplicada). El
+      // más pequeño, el faro de Teno con su casa: veintiséis metros.
       const caja = new Box3().setFromObject(escena);
       const largo = Math.max(caja.max.x - caja.min.x, caja.max.z - caja.min.z);
-      expect(largo, s.id).toBeGreaterThan(50);
+      expect(largo, s.id).toBeGreaterThan(20);
       expect(largo, s.id).toBeLessThan(10_000);
     });
   }

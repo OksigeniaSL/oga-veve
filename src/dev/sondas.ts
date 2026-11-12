@@ -2572,6 +2572,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `world/sitios-con-modelo.ts`.
      */
     sitios: () => juego.sitios?.estado() ?? [],
+    /** **Las luces de los faros**: cuánto lucen ahora y dónde. */
+    lucesDeFaro: () => juego.sitios?.lucesAhora() ?? [],
+    /** Pone el reloj de los destellos en un segundo, y lo para si se pide: para fotografiar uno encendido. */
+    ponerSegundoDeLosFaros: (segundos: number, quieto = false) => juego.sitios?.ponerSegundo(segundos, quieto),
+    /** Enseña u oculta los sitios con modelo, para medir lo que cuestan. */
+    verLosSitios: (si: boolean) => {
+      if (juego.sitios) juego.sitios.grupo.visible = si;
+    },
     /**
      * **Un sitio de prueba en `x`, `z`**, con el `.glb` hecho por código de
      * `triangulos` triángulos, para medir el camino sin arte. Lo usa

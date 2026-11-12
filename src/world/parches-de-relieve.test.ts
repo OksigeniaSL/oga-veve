@@ -25,6 +25,9 @@ import {
   type ParcheDeRelieve,
   type RejillaDelHorizonte,
 } from "./parches-de-relieve";
+import { LLANO_DEL_FARO_DE_TENO } from "../content/missions";
+import { SCENARIOS } from "./scenarios";
+import { dondeSeDibuja } from "./sitios-con-modelo";
 
 const R = 6371008;
 const RAD = Math.PI / 180;
@@ -389,5 +392,103 @@ describe("la tierra de un parche en el mar del horizonte", () => {
     expect(
       tierraDelParche(teno, faro.lat - 0.0005, faro.lat + 0.0005, faro.lon - 0.0005, faro.lon + 0.0005, 2),
     ).toBe(true);
+  });
+});
+
+/*
+ * **El faro de Teno, apoyado en Punta de Teno.** Va con `cota: null`: el juego
+ * lo pone a la cota del suelo en su origen, que en la punta es la del parche
+ * fino (`teno.bin`, a veinte metros). Las paredes bajan treinta metros por
+ * debajo del cero, porque el suelo dibujado no es el medido al metro; aquí se
+ * mira, contra el horizonte de Los Rodeos refinado con ese parche —lo que se
+ * carga en la misión—, que cada pared salga del suelo dibujado en cada esquina:
+ * ni colgando, con su pie por encima, ni enterrada, con menos de una planta a
+ * la vista. Y que no pise el llano donde se posa el helicóptero, a setenta
+ * metros al oestesuroeste.
+ */
+describe("el faro de Teno, en su suelo", () => {
+  const m = leerMapa("tenerife-norte-lejos");
+  const { aGrados, aMetros } = proyeccion(m.lat, m.lon);
+  const rej: RejillaDelHorizonte = {
+    lado: m.n,
+    paso: m.tamano / (m.n - 1),
+    mitad: m.tamano / 2,
+    cota: (f, col) => m.datos[Math.min(m.n - 1, f) * m.n + Math.min(m.n - 1, col)]!,
+    dibujable: () => true,
+  };
+  const r = refinarElHorizonte(rej, [leerParche("teno")], aGrados, aMetros);
+  const catalogo = JSON.parse(fs().readFileSync("data/sitios/sitios.json", "utf8") as string) as {
+    sitios: { id: string; lat: number; lon: number; giro: number; cota: number | null }[];
+  };
+  const ficha = catalogo.sitios.find((s) => s.id === "faro-de-teno")!;
+  const origen = aMetros(ficha.lat, ficha.lon);
+
+  /** Los vértices de lo que se ve, en metros desde el origen del modelo: x al este, y arriba, z al sur. */
+  async function vertices(): Promise<{ x: number; y: number; z: number }[]> {
+    const b = fs().readFileSync("public/assets/sitios/faro-de-teno.glb") as Uint8Array;
+    const escena = (
+      await new GLTFLoader().parseAsync(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer, "")
+    ).scene;
+    escena.updateMatrixWorld(true);
+    const salida: { x: number; y: number; z: number }[] = [];
+    escena.traverse((o) => {
+      const malla = o as Mesh;
+      if (!malla.isMesh || /^bulto/i.test(malla.name)) return;
+      const pos = (malla.geometry as BufferGeometry).getAttribute("position");
+      const e = malla.matrixWorld.elements;
+      for (let i = 0; i < pos.count; i++) {
+        const px = pos.getX(i);
+        const py = pos.getY(i);
+        const pz = pos.getZ(i);
+        salida.push({
+          x: e[0]! * px + e[4]! * py + e[8]! * pz + e[12]!,
+          y: e[1]! * px + e[5]! * py + e[9]! * pz + e[13]!,
+          z: e[2]! * px + e[6]! * py + e[10]! * pz + e[14]!,
+        });
+      }
+    });
+    return salida;
+  }
+
+  it("sin girar y apoyado en el suelo del juego", () => {
+    expect(ficha.giro).toBe(0);
+    expect(ficha.cota).toBeNull();
+    expect(r.cota(origen.x, origen.z)).not.toBeNull();
+  });
+
+  it("cada pared sale del suelo dibujado: ni colgando ni enterrada", async () => {
+    const cota0 = r.cota(origen.x, origen.z)!;
+    // Las columnas de vértices que bajan con la falda: las esquinas de las paredes.
+    const columnas = new Map<string, { x: number; z: number; abajo: number; arriba: number }>();
+    for (const v of await vertices()) {
+      const clave = `${v.x.toFixed(2)},${v.z.toFixed(2)}`;
+      const c = columnas.get(clave) ?? { x: v.x, z: v.z, abajo: Infinity, arriba: -Infinity };
+      c.abajo = Math.min(c.abajo, v.y);
+      c.arriba = Math.max(c.arriba, v.y);
+      columnas.set(clave, c);
+    }
+    const conFalda = [...columnas.values()].filter((c) => c.abajo < -29);
+    // Dieciséis del fuste, doce de la casa, cuatro del patio y cuatro de la torre vieja.
+    expect(conFalda.length).toBe(36);
+    for (const c of conFalda) {
+      const suelo = r.cota(origen.x + c.x, origen.z + c.z)! - cota0;
+      const donde = `(${c.x.toFixed(1)}, ${c.z.toFixed(1)})`;
+      expect(c.abajo, `pie en ${donde}`).toBeLessThan(suelo - 10);
+      // Lo más bajo que asoma es la pared del patio: tres metros y medio.
+      expect(c.arriba - suelo, `a la vista en ${donde}`).toBeGreaterThan(2.5);
+    }
+  });
+
+  it("y no pisa el llano donde se posa el helicóptero", async () => {
+    const tfn = SCENARIOS.find((e) => e.id === "tenerife-norte")!.aerodrome!.origin;
+    const faro = dondeSeDibuja(ficha, tfn, []);
+    let masCerca = Infinity;
+    for (const v of await vertices())
+      masCerca = Math.min(
+        masCerca,
+        Math.hypot(faro.x + v.x - LLANO_DEL_FARO_DE_TENO.x, faro.z + v.z - LLANO_DEL_FARO_DE_TENO.z),
+      );
+    // El llano tiene veinte metros de radio; el faro, a más de veinte de su borde.
+    expect(masCerca - LLANO_DEL_FARO_DE_TENO.radius).toBeGreaterThan(20);
   });
 });

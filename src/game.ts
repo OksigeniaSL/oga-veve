@@ -6543,6 +6543,8 @@ export class Game {
     this.montarLasLucesDeLaCiudad(options.luzDeCiudad ?? this.scenario.ciudad);
     // Y las de los vecinos, que se montaron antes de que hubiera cielo.
     for (const v of this.vecinos) v.mundo.ponerSol(this.sky.sunDirection.y);
+    // Y los faros, que se encienden con el crepúsculo como la ciudad.
+    this.sitios?.ponerSol(this.sky.sunDirection.y);
     /*
      * **Y los edificios del aeródromo también paran a un avión.**
      *
@@ -15304,6 +15306,7 @@ export class Game {
     this.rodadura?.ponerSol(this.sky.sunDirection.y);
     this.aproximacion?.ponerSol(this.sky.sunDirection.y);
     this.lucesDeCiudad?.ponerSol(this.sky.sunDirection.y);
+    this.sitios?.ponerSol(this.sky.sunDirection.y);
     for (const v of this.vecinos) {
       v.mundo.ponerSol(this.sky.sunDirection.y);
       v.rodadura?.ponerSol(this.sky.sunDirection.y);
@@ -17397,6 +17400,8 @@ export class Game {
         preparar: (modelo) => this.renderer.compileAsync(modelo, this.camera, this.scene),
       });
       this.scene.add(this.sitios.grupo);
+      // Los faros se encienden con el crepúsculo, como la ciudad.
+      this.sitios.ponerSol(this.sky.sunDirection.y);
     }
     this.camposHechos = null;
     this.pistasHechas = null;

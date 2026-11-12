@@ -26,6 +26,21 @@ Un sitio entra con las tres cosas a la vez, o no entra:
 | `cota`    | `null` para apoyarlo en el suelo del juego —lo normal—, o m sobre el mar   |
 | `alcance` | Desde cuántos metros en planta se baja y se pone                           |
 | `de`      | De dónde salen las coordenadas: `osm way/…`, `osm node/…`                  |
+| `luz`     | Solo si es un faro: su luz de noche. Ver abajo                             |
+
+## La luz de un faro
+
+Un faro lleva su `luz`, y con eso el juego la enciende sin código nuevo: un
+punto en el centro de la linterna que destella con su ritmo, se enciende con el
+crepúsculo y se ve hasta su alcance, aunque el modelo todavía no se haya bajado.
+Es la luz de un faro y no un aviso: no suena ni pide nada.
+
+| Campo     | Qué es                                                                      |
+| --------- | --------------------------------------------------------------------------- |
+| `altura`  | El centro de la linterna, m sobre el origen del modelo                      |
+| `fases`   | El ritmo, s: luz, oscuridad, luz, oscuridad…, empezando por un destello; las publicadas del faro (el libro de faros, o `seamark:light:sequence` de OSM) |
+| `alcance` | Hasta dónde se ve, m: su alcance nominal en millas por 1 852                |
+| `de`      | De dónde salen el ritmo y el alcance                                        |
 
 El `alcance` es la distancia a la que el sitio empieza a medir un par de
 píxeles en una tablet: su medida más larga por 360 (`800 px / (2·tan 29°) /

@@ -53,6 +53,21 @@
  * se choca, y se apuntan en el índice de bultos la primera vez que el sitio
  * se pone. No se borran al soltarlo, porque lejos no hay con qué chocar, y
  * no se apuntan dos veces. Ver `world/obstaculos.ts`.
+ *
+ * ## Y el que tiene luz, la enciende
+ *
+ * Un faro se reconoce de noche por su luz, y su luz se ve mucho más lejos que
+ * su torre: la de Punta de Teno, a dieciocho millas, y la torre mide un par de
+ * píxeles a nueve kilómetros. Así que la luz **no espera al modelo**: es un
+ * punto en el centro de la linterna, con el ritmo publicado del faro, que está
+ * desde que empieza el vuelo y se enciende con el crepúsculo, como la de
+ * verdad. Un punto por faro en una sola malla y un solo dibujo, con el
+ * material de las luces lejanas —se apaga con la distancia y la bruma, y de
+ * lejos solo se ve con el cielo oscuro—. Va en los datos del sitio, en su
+ * `luz`, para que el faro siguiente se ponga sin tocar el código.
+ *
+ * Es la luz de un faro y no un aviso: no suena, no sale en el visor y no pide
+ * nada a quien vuela. Ver `destello`.
  */
 
 import {
@@ -62,9 +77,11 @@ import {
   Group,
   Mesh,
   MeshLambertMaterial,
+  Points,
   Vector3,
   type Material,
   type Object3D,
+  type PointsMaterial,
   type Texture,
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -72,6 +89,8 @@ import CATALOGO from "../../data/sitios/sitios.json";
 import { conPlazo, PLAZO_DE_IMAGEN } from "../datos/con-plazo";
 import { partirLoLargo } from "./curvatura";
 import type { Sitio } from "./entre-aerodromos";
+import { encendidoSegunElSol } from "./luces-de-rodadura";
+import { materialDeLuces, ponerOscuridad } from "./material-de-luces";
 import type { Obstaculos } from "./obstaculos";
 import { giroDelModelo } from "./rumbo";
 
@@ -99,7 +118,103 @@ export interface FichaDeSitio {
   readonly alcance: number;
   /** De dónde salen las coordenadas: el elemento de OpenStreetMap o la fuente. */
   readonly de: string;
+  /** La luz, si es un faro. Ver la cabecera. */
+  readonly luz?: LuzDeSitio;
 }
+
+/** La luz de un faro, como viene en su ficha. */
+export interface LuzDeSitio {
+  /** El centro de la linterna, m sobre el origen del modelo. */
+  readonly altura: number;
+  /**
+   * El ritmo, s: encendida, apagada, encendida, apagada…, empezando por un
+   * destello, y la suma es el periodo. Son las fases publicadas del faro, que
+   * es lo que lo distingue de los demás de la costa.
+   */
+  readonly fases: readonly number[];
+  /** Hasta dónde se ve, m en planta: su alcance nominal. */
+  readonly alcance: number;
+  /** De dónde salen el ritmo y el alcance. */
+  readonly de: string;
+}
+
+/**
+ * Lo que tarda un destello en subir y en bajar, s. La luz de un faro gira, y
+ * lo que se ve como destello es el haz pasando por delante: sube y baja en
+ * un pelo, no se enciende de golpe. De golpe, en tres décimas de segundo a
+ * sesenta cuadros, el primero y el último cuadro hacían parpadear el punto.
+ */
+const SUBIDA_DEL_DESTELLO = 0.06;
+
+/**
+ * **Cuánto luce un faro en el segundo `t`** de su ritmo, de cero a uno.
+ *
+ * Con las fases de la ficha y nada más: la de Teno es «GpD(1+2)B 20s», tres
+ * destellos blancos cada veinte segundos, uno y luego dos, con sus tiempos
+ * publicados —0,3 s de luz, 8,3 de oscuridad, 0,3, 2,5, 0,3 y 8,3—. Quien la
+ * vea desde el mar la reconoce por eso, y es lo que hay que enseñar.
+ */
+export function destello(fases: readonly number[], t: number): number {
+  const periodo = fases.reduce((a, b) => a + b, 0);
+  if (!(periodo > 0)) return 0;
+  let resto = ((t % periodo) + periodo) % periodo;
+  for (let i = 0; i < fases.length; i++) {
+    const fase = fases[i]!;
+    if (resto < fase) {
+      if (i % 2 === 1) return 0;
+      const subida = Math.min(SUBIDA_DEL_DESTELLO, fase / 2);
+      return Math.min(1, resto / subida, (fase - resto) / subida);
+    }
+    resto -= fase;
+  }
+  return 0;
+}
+
+/**
+ * El tamaño de la luz de un faro de cerca, px, y cómo se apaga de lejos. Más
+ * grande que una farola —tres píxeles— y que una luz de pista —cinco—: es la
+ * luz más fuerte de la costa, la que se ve a dieciocho millas. A treinta
+ * kilómetros queda en menos de la mitad del tamaño y algo más de la mitad del
+ * brillo, con el cielo ya oscuro. Ver `materialDeLuces`.
+ */
+const LUZ_DE_FARO = { tamano: 14, cerca: 6000, suelo: 0.6, menor: 0.35 } as const;
+
+/**
+ * Cuánto se adelanta el punto hacia el ojo, m. El punto está en el centro de
+ * la linterna, y el cristal de la linterna lo tapaba: se adelanta algo más
+ * que su radio. No se mueve en la pantalla —va por la misma visual—, solo en
+ * la profundidad, y lo que de verdad la tapa —el monte, la galería vista
+ * desde debajo— la sigue tapando.
+ */
+const ADELANTE = 2;
+
+/** Lo que se inyecta tras proyectar el vértice. Ver `ADELANTE`. */
+export const GLSL_DEL_FARO = /* glsl */ `
+  {
+    float lejosDelPunto = length(mvPosition.xyz);
+    mvPosition.xyz *= max(lejosDelPunto - lucesAdelante, 0.5) / max(lejosDelPunto, 0.001);
+    gl_Position = projectionMatrix * mvPosition;
+  }
+`;
+
+function materialDelFaro(): PointsMaterial {
+  const { tamano, ...opciones } = LUZ_DE_FARO;
+  const material = materialDeLuces(tamano, opciones);
+  const deLasLuces = material.onBeforeCompile;
+  material.onBeforeCompile = (shader, renderer) => {
+    deLasLuces.call(material, shader, renderer);
+    shader.uniforms.lucesAdelante = { value: ADELANTE };
+    shader.vertexShader = shader.vertexShader
+      .replace("void main() {", "uniform float lucesAdelante;\nvoid main() {")
+      .replace("#include <project_vertex>", "#include <project_vertex>" + GLSL_DEL_FARO);
+  };
+  // Otro programa que el de las luces lejanas: lleva el adelanto.
+  material.customProgramCacheKey = () => "luces-de-faro";
+  return material;
+}
+
+/** El color de la luz encendida, en lineal: blanca, algo cálida. */
+const BLANCA = [1, 0.96, 0.88] as const;
 
 /** La lista entera, tal cual está en el fichero. */
 export const SITIOS: readonly FichaDeSitio[] = (
@@ -230,11 +345,20 @@ async function leerPorLaRed(url: string, nombre: string): Promise<Object3D | nul
 }
 
 export class SitiosConModelo {
-  /** Lo que se cuelga de la escena: los modelos puestos y nada más. */
+  /** Lo que se cuelga de la escena: los modelos puestos y las luces de los faros. */
   readonly grupo = new Group();
   private readonly sitios: EnElMundo[] = [];
   private reloj = 0;
   private bajando = false;
+  /** Los sitios con luz, en el orden de sus puntos. Ver la cabecera. */
+  private readonly conLuz: EnElMundo[] = [];
+  private luces: Points<BufferGeometry, PointsMaterial> | null = null;
+  /** Cuánto encienden los faros con el sol de esta hora, de cero a uno. */
+  private encendido = 0;
+  /** El reloj de los destellos, s. */
+  private segundos = 0;
+  /** Si un banco lo ha parado. Ver `ponerSegundo`. */
+  private relojQuieto = false;
   /**
    * El material con el que se compiló, en vacío, el sombreado que llevan
    * todos. Se guarda: la tarjeta suelta un programa cuando se suelta el último
@@ -258,7 +382,7 @@ export class SitiosConModelo {
     const p = dondeSeDibuja(ficha, this.mundo.casa, this.mundo.vecinos);
     if (Math.hypot(p.x, p.z) > HASTA) return;
     const base = this.mundo.base ?? import.meta.env.BASE_URL ?? "/";
-    this.sitios.push({
+    const sitio: EnElMundo = {
       ficha,
       url: url ?? `${base}${base.endsWith("/") ? "" : "/"}assets/sitios/${ficha.id}.glb`,
       x: p.x,
@@ -266,7 +390,12 @@ export class SitiosConModelo {
       estado: "fuera",
       modelo: null,
       apuntado: false,
-    });
+    };
+    this.sitios.push(sitio);
+    if (ficha.luz) {
+      this.conLuz.push(sitio);
+      this.montarLasLuces();
+    }
     // Sin esperar al medio segundo: un sitio añadido encima del avión se pide ya.
     this.reloj = CADA;
     this.calentar();
@@ -298,11 +427,17 @@ export class SitiosConModelo {
       .finally(() => g.dispose());
   }
 
-  /** Mira, cada medio segundo, qué hay que bajar y qué soltar. */
+  /**
+   * Mira, cada medio segundo, qué hay que bajar y qué soltar. Y en cada
+   * cuadro, cómo lucen los faros: un destello dura tres décimas.
+   */
   paso(dt: number, x: number, z: number): void {
+    if (!this.relojQuieto) this.segundos += dt;
+    this.encenderLasLuces(x, z);
     this.reloj += dt;
     if (this.reloj < CADA) return;
     this.reloj = 0;
+    this.subirLasLuces();
     let siguiente: EnElMundo | null = null;
     let masCerca = Infinity;
     for (const s of this.sitios) {
@@ -328,11 +463,111 @@ export class SitiosConModelo {
     }));
   }
 
+  /**
+   * Enciende o apaga los faros según dónde esté el sol: con el crepúsculo,
+   * como las farolas y el balizamiento. `seno` es `sunDirection.y`.
+   */
+  ponerSol(seno: number): void {
+    this.encendido = encendidoSegunElSol(seno);
+    if (this.luces) ponerOscuridad(this.luces.material, seno);
+  }
+
+  /** Cuánto luce ahora cada faro, de cero a uno, y dónde: para los bancos. */
+  lucesAhora(): { id: string; brillo: number; x: number; y: number; z: number; visible: boolean }[] {
+    const pos = this.luces?.geometry.getAttribute("position");
+    const col = this.luces?.geometry.getAttribute("color");
+    return this.conLuz.map((s, i) => ({
+      id: s.ficha.id,
+      brillo: col ? col.getX(i) / BLANCA[0] : 0,
+      x: pos ? pos.getX(i) : s.x,
+      y: pos ? pos.getY(i) : 0,
+      z: pos ? pos.getZ(i) : s.z,
+      visible: this.luces?.visible ?? false,
+    }));
+  }
+
+  /**
+   * Pone el reloj de los destellos en un segundo dado, y lo para ahí si se
+   * pide. Para los bancos, que fotografían la luz encendida: un destello dura
+   * tres décimas, y un cuadro del navegador del banco puede durar más.
+   */
+  ponerSegundo(segundos: number, quieto = false): void {
+    this.segundos = segundos;
+    this.relojQuieto = quieto;
+  }
+
   /** Lo suelta todo: al cambiar de vuelo o al cerrar. */
   soltarTodo(): void {
     for (const s of this.sitios) this.soltar(s);
     this.calentado?.dispose();
     this.calentado = null;
+    if (this.luces) {
+      this.luces.removeFromParent();
+      this.luces.geometry.dispose();
+      this.luces.material.dispose();
+      this.luces = null;
+    }
+  }
+
+  /** Un punto por faro, en una sola malla: se rehace al añadir uno. */
+  private montarLasLuces(): void {
+    const material = this.luces?.material ?? materialDelFaro();
+    if (this.luces) {
+      this.luces.removeFromParent();
+      this.luces.geometry.dispose();
+    }
+    const n = this.conLuz.length;
+    const geo = new BufferGeometry();
+    geo.setAttribute("position", new BufferAttribute(new Float32Array(n * 3), 3));
+    geo.setAttribute("color", new BufferAttribute(new Float32Array(n * 3), 3));
+    this.luces = new Points(geo, material);
+    this.luces.name = "luces-de-faro";
+    // Unos pocos puntos que se mueven al saberse el suelo: la esfera que los
+    // envuelve se quedaría vieja, y mirar si caben en pantalla no ahorra nada.
+    this.luces.frustumCulled = false;
+    this.luces.visible = false;
+    this.grupo.add(this.luces);
+    this.subirLasLuces();
+  }
+
+  /**
+   * Cada luz, a su altura sobre el suelo del juego, que es donde se apoya el
+   * modelo. Cada medio segundo y no una vez: el relieve fino puede llegar
+   * después que el sitio.
+   */
+  private subirLasLuces(): void {
+    const pos = this.luces?.geometry.getAttribute("position") as BufferAttribute | undefined;
+    if (!pos) return;
+    let cambia = false;
+    this.conLuz.forEach((s, i) => {
+      const y = (s.ficha.cota ?? this.mundo.suelo(s.x, s.z)) + s.ficha.luz!.altura;
+      if (pos.getX(i) !== s.x || pos.getY(i) !== y || pos.getZ(i) !== s.z) {
+        pos.setXYZ(i, s.x, y, s.z);
+        cambia = true;
+      }
+    });
+    if (cambia) pos.needsUpdate = true;
+  }
+
+  /** El destello de cada faro en este cuadro, con el sol de la hora y su alcance. */
+  private encenderLasLuces(x: number, z: number): void {
+    const luces = this.luces;
+    if (!luces) return;
+    if (this.encendido <= 0.01) {
+      luces.visible = false;
+      return;
+    }
+    const col = luces.geometry.getAttribute("color") as BufferAttribute;
+    let alguna = false;
+    this.conLuz.forEach((s, i) => {
+      const luz = s.ficha.luz!;
+      const dentro = Math.hypot(s.x - x, s.z - z) <= luz.alcance;
+      const b = dentro ? destello(luz.fases, this.segundos) * this.encendido : 0;
+      if (b > 0) alguna = true;
+      col.setXYZ(i, BLANCA[0] * b, BLANCA[1] * b, BLANCA[2] * b);
+    });
+    col.needsUpdate = true;
+    luces.visible = alguna;
   }
 
   private async bajar(s: EnElMundo): Promise<void> {

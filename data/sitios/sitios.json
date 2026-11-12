@@ -121,6 +121,22 @@
       "cota": 150,
       "alcance": 40000,
       "de": "osm node/4218536799"
+    },
+    {
+      "id": "faro-de-teno",
+      "nombre": "Faro de Punta de Teno",
+      "lat": 28.342096,
+      "lon": -16.922865,
+      "giro": 0,
+      "cota": null,
+      "alcance": 9500,
+      "de": "en.wikipedia, Punta de Teno Lighthouse; osm way/570082211, a metro y medio",
+      "luz": {
+        "altura": 17.75,
+        "fases": [0.3, 8.3, 0.3, 2.5, 0.3, 8.3],
+        "alcance": 33336,
+        "de": "osm way/570082211, seamark:light:sequence (US NGA Pub. 113); es.wikipedia, Faro de Punta de Teno: GpD(1+2)B 20s, 18 millas"
+      }
     }
   ]
 }
