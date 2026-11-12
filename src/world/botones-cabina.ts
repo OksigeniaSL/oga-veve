@@ -13,7 +13,8 @@
  *
  * Cinco, y los cinco hacen algo que el juego ya sabe hacer: la baliza, arrancar
  * y parar el motor, mover los flaps, el freno y —en el avión que lo mete— el
- * tren. Ni uno más. Los interruptores del techo y
+ * tren. Y en el helicóptero, el freno del rotor. Ni uno más. Los interruptores
+ * del techo y
  * las palancas del pedestal siguen siendo escenografía y no fingen otra cosa
  * —en una cabina de verdad tampoco se toca casi nada de lo que se ve—, pero lo
  * que se anuncia como mando responde. Es la misma regla que los relojes: lo que
@@ -25,6 +26,18 @@
  * `modelos/comun.py`—. Aquí se buscan por ese nombre, se iluminan al pasar por
  * encima y se dispara la acción al soltar. Quien decide qué hace cada una es
  * `game.ts`, que es el único que sabe lo que significa arrancar un motor.
+ *
+ * **Y las palancas de los motores del helicóptero**, `palanca-motor-<n>`: en
+ * el Super Puma los motores no se arrancan con una llave en el panel sino con
+ * las dos palancas rojas del techo, y son esas las que responden al dedo,
+ * como el contacto. No se llaman `boton-…` porque eso las metería en el
+ * encuadre de la cabina, que abre la vista hasta que quepa lo que se pulsa: y
+ * están en el techo, donde se miran levantando la cabeza.
+ *
+ * **Y la amarilla del freno del rotor**, `palanca-freno-rotor`, que se pone y
+ * se quita igual. Esa va **sin dibujo y sin tecla**: es un mando del techo que
+ * se usa al parar, la palanca ya es el mando y en el HUD no tiene botón. Ver
+ * `InputManager.alternarFrenoDelRotor`.
  */
 
 import {
@@ -45,7 +58,7 @@ import {
 import { DIBUJOS } from "../ui/senal";
 
 /** Lo que se puede pulsar en la cabina. */
-export type MandoDeCabina = "baliza" | "motor" | "flaps" | "freno" | "tren";
+export type MandoDeCabina = "baliza" | "motor" | "flaps" | "freno" | "tren" | "freno-rotor";
 
 /*
  * El del tren solo existe en el avión que lo mete: en un entrenador de escuela
@@ -67,7 +80,7 @@ const ENCENDIDO = 0.55;
  * el HUD y su tarjeta en el rincón —la llave, los flaps, el freno, la
  * rueda—: el que ha aprendido uno ha aprendido los tres.
  */
-const DIBUJO: Record<MandoDeCabina, keyof typeof DIBUJOS> = {
+const DIBUJO: Partial<Record<MandoDeCabina, keyof typeof DIBUJOS>> = {
   baliza: "baliza",
   motor: "llave",
   flaps: "flaps",
@@ -77,7 +90,8 @@ const DIBUJO: Record<MandoDeCabina, keyof typeof DIBUJOS> = {
 
 /** El dibujo, en crema sobre el naranja del mando, y sus huecos en naranja. */
 function lienzoDelDibujo(cual: MandoDeCabina): CanvasTexture | null {
-  if (typeof document === "undefined") return null;
+  const dibujo = DIBUJO[cual];
+  if (!dibujo || typeof document === "undefined") return null;
   const lado = 128;
   const lienzo = document.createElement("canvas");
   lienzo.width = lado;
@@ -86,7 +100,7 @@ function lienzoDelDibujo(cual: MandoDeCabina): CanvasTexture | null {
   if (!g) return null;
   const textura = new CanvasTexture(lienzo);
   textura.colorSpace = SRGBColorSpace;
-  const svg = DIBUJOS[DIBUJO[cual]].replace(
+  const svg = DIBUJOS[dibujo].replace(
     /<svg[^>]*>/,
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${lado}"
           height="${lado}" fill="#f2f1ec" color="#f2f1ec">
@@ -168,6 +182,16 @@ export interface BotonesDeCabina {
   dispose(): void;
 }
 
+/** Qué mando es una malla por su nombre, o `null` si no es ninguno. */
+export function deQueEs(nombre: string): MandoDeCabina | null {
+  if (nombre.startsWith("boton-")) {
+    const cual = nombre.slice("boton-".length) as MandoDeCabina;
+    return CUALES.includes(cual) ? cual : null;
+  }
+  if (/^palanca-motor-\d+$/.test(nombre)) return "motor";
+  return nombre === "palanca-freno-rotor" ? "freno-rotor" : null;
+}
+
 /**
  * `ojo`: dónde están los ojos del piloto, en coordenadas del mundo, para saber
  * qué cara de cada mando se ve. Sin él los mandos se quedan sin dibujo.
@@ -179,9 +203,9 @@ export function encenderBotones(
   const botones: Boton[] = [];
   raiz.traverse((o) => {
     const m = o as Mesh;
-    if (!m.isMesh || !m.name.startsWith("boton-")) return;
-    const cual = m.name.slice("boton-".length) as MandoDeCabina;
-    if (!CUALES.includes(cual)) return;
+    if (!m.isMesh) return;
+    const cual = deQueEs(m.name);
+    if (!cual) return;
     /*
      * **Cada mando con su propio material.** Los seis botones del avión salen
      * del mismo material del fichero, así que iluminar uno los iluminaría

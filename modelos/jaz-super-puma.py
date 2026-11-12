@@ -49,6 +49,11 @@ caídas. Ver `rotor_principal` y `rotor_de_cola`.
 - El tren, con las bisagras de siempre: `bisagra-morro`,
   `bisagra-principal-derecha` e `-izquierda`, y las tapas del pozo de morro,
   `bisagra-tapa-morro-derecha` e `-izquierda`.
+- Y en la cabina, los mandos de los dos puestos —`colectivo-N`,
+  `ciclico-N` con `ciclico-N-profundidad` dentro, `pedal-N-derecho` e
+  `-izquierdo`— y las palancas del techo, `palanca-motor-1` y `-2` y
+  `palanca-freno-rotor`, cada una en su `…-pivote`. Ver `_que_se_mueve` en
+  `comun.py`.
 
     blender --background --python modelos/jaz-super-puma.py
 
@@ -65,11 +70,14 @@ import bmesh
 from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from comun import COLORES, exportar, limpiar  # noqa: E402
+from comun import (  # noqa: E402
+    COLORES, cabina, exportar, juntar_por_material, limpiar,
+    se_busca_por_nombre,
+)
 from exterior import (  # noqa: E402
     Piel, _malla_en_escena, _orientar, _tubo, banda, bisagra,
-    centro_de_gravedad, contorno, curva, de_ala, espejo, estacion, liso,
-    llantas, neumaticos, paneles, paneles_zy, recogido, simetricos,
+    centro_de_gravedad, contorno, curva, de_ala, dentro_de, espejo, estacion,
+    liso, llantas, neumaticos, paneles, paneles_zy, recogido, simetricos,
     superficie, torno, varillas, ventanas,
 )
 
@@ -620,8 +628,9 @@ def cristales(piezas):
     """
     El parabrisas, las ventanillas de la cabina de mando y las de la de carga.
 
-    La cabina por dentro no está —va aparte—: el cristal es opaco, como en el
-    resto de la flota, y lo que se ve a través es su reflejo oscuro.
+    La cabina por dentro va aparte —ver `cabina_por_dentro`—: el cristal es
+    opaco, como en el resto de la flota, y lo que se ve a través es su reflejo
+    oscuro.
     """
     # **Una pecera, no ventanillas sueltas.** La cabina de mando del Puma es
     # casi toda cristal: de perfil se ve una sola mancha oscura con montantes
@@ -660,6 +669,219 @@ def cristales(piezas):
     piezas.append(contorno("puerta-izquierda", FUSELAJE, -0.155, -0.29, 1.73,
                            1.43, radio=0.08, grueso=0.022, fuera=0.012,
                            lados=(-1,)))
+
+
+# ── La cabina por dentro ──────────────────────────────────────────────────
+#
+# Los muebles —panel, pantallas, pedestal, consola del techo, asientos y
+# mandos— los pone `cabina` en `comun.py`, con la clase «helicóptero». Aquí va
+# lo que depende de **este** fuselaje: el suelo, los forros que siguen su piel
+# y dejan el hueco de sus ventanas, los montantes y el techo.
+#
+# **Por qué hace falta.** La piel y el cristal solo se pintan por fuera (ver
+# `material` en `comun.py`), así que desde el asiento un fuselaje sin forros es
+# una pecera entera: se veía el mundo por todas partes y, por debajo, la pata
+# de la rueda de morro. Por dentro, **lo que no se forra es ventana**; por eso
+# los forros dejan justo los huecos de las ventanas de Gaudí, y ninguno más.
+#
+# El ojo: el del comandante, en el asiento de la derecha, a 3,55 m por delante
+# del mástil y 2,30 sobre el suelo posado —el de la silueta de cajas era
+# parecido—. El suelo de la cabina, a la altura de la raya verde, que es la del
+# suelo de dentro.
+OJOS_Z = -3.695
+Y_SUELO = -0.70
+Y_RESPALDO = 0.40
+PLAZAS = (0.40, -0.40)
+ATRAS = -3.05          # el mamparo entre la cabina de mando y la de carga
+# Las ventanas de abajo de Gaudí, `(z0, z1, y0, y1)`: la de los pies, en el
+# costado del morro hasta el radomo, y la de la puerta. Ver `cristales`.
+VENTANA_DE_LOS_PIES = (-4.54, -4.04, -0.62, -0.07)
+VENTANA_DE_LA_PUERTA = (-3.98, -3.56, -0.58, -0.07)
+DENTRO = 0.03          # lo que se separa el forro de la piel
+
+
+def hueco(z, y):
+    """Medio ancho de la cabina por dentro a esa altura: la piel, menos el forro."""
+    return FUSELAJE.en(z, y, 1).x - DENTRO
+
+
+def _rejilla(bm, filas, hacia_dentro):
+    """
+    Caras entre filas de puntos, con la cara buena hacia `hacia_dentro`.
+
+    Los forros se ven solo por la cara que mira al piloto, así que cada cara se
+    vuelve hacia ahí: hacia el eje del avión en los costados, hacia abajo en el
+    techo, hacia arriba en el suelo.
+    """
+    for a, b in zip(filas, filas[1:]):
+        for i in range(len(a) - 1):
+            if a[i] is None or a[i + 1] is None or b[i] is None \
+                    or b[i + 1] is None:
+                continue
+            f = bm.faces.new((a[i], a[i + 1], b[i + 1], b[i]))
+            f.normal_update()
+            c = f.calc_center_median()
+            if f.normal.dot(hacia_dentro(c)) < 0:
+                f.normal_flip()
+
+
+def _pasos(desde, hasta, cada, tambien=()):
+    """De `desde` a `hasta` cada tanto, sin saltarse los cortes de `tambien`."""
+    n = max(1, round(abs(hasta - desde) / cada))
+    xs = {round(desde + (hasta - desde) * k / n, 4) for k in range(n + 1)}
+    xs |= {round(t, 4) for t in tambien if min(desde, hasta) <= t <= max(desde, hasta)}
+    return sorted(xs)
+
+
+def cabina_por_dentro(z_nariz):
+    """
+    El suelo, los forros de los costados con sus ventanas, los montantes del
+    parabrisas, la tapa del morro y el techo. Todo en pocas mallas.
+    """
+    piezas = []
+    zs = _pasos(z_nariz, ATRAS, 0.10, VENTANA_DE_LOS_PIES[:2]
+                + VENTANA_DE_LA_PUERTA[:2])
+
+    # El suelo, a lo ancho entre los dos forros.
+    bm = bmesh.new()
+    filas = []
+    for z in zs:
+        w = hueco(z, Y_SUELO + 0.02)
+        filas.append([bm.verts.new((x, Y_SUELO, z)) for x in (-w, 0.0, w)])
+    _rejilla(bm, filas, lambda c: Vector((0, 1, 0)))
+    piezas.append(_malla_en_escena("suelo-cabina", bm, ["forro"]))
+
+    # Los costados, de bajo el suelo al alféizar, **con el hueco de sus dos
+    # ventanas**: por la de los pies se ve el helipuerto al posarse, y por la
+    # de la puerta, el suelo junto a la rueda.
+    ys = [Y_SUELO - 0.01, -0.62, -0.58, -0.35, -0.07, 0.0]
+    bm = bmesh.new()
+    for lado in (-1, 1):
+        filas = []
+        for z in zs:
+            fila = []
+            for y in ys:
+                fila.append(bm.verts.new((lado * hueco(z, y), y, z)))
+            filas.append(fila)
+        # Se quita la cara que cae dentro de una ventana: se marca su vértice
+        # de arriba a la izquierda y `_rejilla` se la salta.
+        caras = []
+        for i, (za, zb) in enumerate(zip(zs, zs[1:])):
+            for j, (ya, yb) in enumerate(zip(ys, ys[1:])):
+                hueca = any(
+                    v[0] <= za and zb <= v[1] and v[2] <= ya and yb <= v[3]
+                    for v in (VENTANA_DE_LOS_PIES, VENTANA_DE_LA_PUERTA))
+                if not hueca:
+                    caras.append((filas[i][j], filas[i][j + 1],
+                                  filas[i + 1][j + 1], filas[i + 1][j]))
+        for c in caras:
+            f = bm.faces.new(c)
+            f.normal_update()
+            if f.normal.x * lado > 0:
+                f.normal_flip()
+    piezas.append(_malla_en_escena("forros", bm, ["forro"]))
+
+    # **La tapa del morro**, por dentro de la piel, de donde acaba el
+    # parabrisas hacia delante, mirando al piloto. Desde el asiento, por encima de la visera se
+    # ve el borde de abajo del parabrisas; y entre él y la visera lo que hay
+    # de verdad es el morro, opaco. Sin esta tapa ahí se veía el suelo a
+    # través de la piel.
+    #
+    # Hasta la punta, y por los lados hasta donde lo tapa la visera: la raya
+    # que va de los ojos al labio baja unos veintiocho grados, y lo que queda
+    # por debajo de ella no se ve. Con la tapa más corta se colaba una media
+    # luna de suelo entre la tapa y la visera.
+    ojo_y, ojo_z = Y_RESPALDO + 0.10, OJOS_Z + 0.145
+    bm = bmesh.new()
+    filas = []
+    fuera = []
+    for z in _pasos(MORRO + 0.02, -4.50, 0.08):
+        raya_ = ojo_y - math.tan(math.radians(28)) * (ojo_z - z) - 0.06
+        _, yt, yb, _, _ = FUSELAJE.seccion(z)
+        tl = FUSELAJE.t_de_y(z, max(yb + 0.02, min(-0.07, raya_, yt - 0.05)), 1)
+        ts = [tl * k / 8 for k in range(-8, 9)]
+        filas.append([bm.verts.new(FUSELAJE.punto(z, t, -DENTRO)) for t in ts])
+        fuera += [FUSELAJE.normal(z, t) for t in ts]
+    _rejilla(bm, filas, lambda c: Vector((0, -0.55, c.z)) - c)
+    # Del color del casco, que es el que tiene el morro por fuera y el que se
+    # ve por el parabrisas: lo repinta el juego con el de la ficha.
+    #
+    # **Y alumbrada como la piel de fuera**: se ve por su cara de dentro, pero
+    # lo que hace de ella es la chapa de fuera, que el sol pega desde arriba.
+    # Con las normales hacia dentro salía una cúpula oscura sobre la visera,
+    # de noche a mediodía. Se le dan las de la piel: la cara buena sigue
+    # siendo la de dentro, y la luz, la de fuera.
+    tapa = _malla_en_escena("tapa-del-morro", bm, ["casco"])
+    me = tapa.data
+    for pol in me.polygons:
+        pol.use_smooth = True
+    me.normals_split_custom_set(
+        [tuple(fuera[me.loops[i].vertex_index]) for i in range(len(me.loops))])
+    piezas.append(tapa)
+
+    # El techo, entre las ventanas de la ceja, hasta el mamparo.
+    bm = bmesh.new()
+    filas = []
+    for z in _pasos(-3.74, ATRAS, 0.10):
+        tc = FUSELAJE.t_de_y(z, 0.95, 1)
+        filas.append([bm.verts.new(FUSELAJE.punto(z, tc * k / 6, -DENTRO))
+                      for k in range(-6, 7)])
+    _rejilla(bm, filas, lambda c: Vector((0, -1, 0)))
+    piezas.append(_malla_en_escena("techo-cabina", bm, ["forro"]))
+
+    # El mamparo de atrás, entero: la cabina de carga no tiene dentro, y
+    # mirando hacia atrás se vería el mundo por la piel.
+    bm = bmesh.new()
+    filas = []
+    for y in (Y_SUELO, -0.30, 0.10, 0.50, 0.80, 0.95):
+        w = hueco(ATRAS, y)
+        filas.append([bm.verts.new((x, y, ATRAS)) for x in (-w, 0.0, w)])
+    _rejilla(bm, filas, lambda c: Vector((0, 0, -1)))
+    piezas.append(_malla_en_escena("mamparo", bm, ["forro"]))
+
+    # Los montantes: lo que queda de piel entre cristal y cristal, visto por
+    # dentro. Sin ellos la pecera no tenía marco y el mundo entraba entero.
+    def por_la_piel(puntos_zy, lado):
+        return [tuple(FUSELAJE.en(z, y, lado, -0.035)) for z, y in puntos_zy]
+
+    def tramo_recto(a, b, n=6):
+        return [(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n)
+                for k in range(n + 1)]
+
+    tramos = []
+    for lado in (-1, 1):
+        for a, b in (((-4.49, 0.0), (-3.77, 0.70)),     # parabrisas y costado
+                     ((-3.975, 0.0), (-3.735, 0.76)),   # entre las de costado
+                     ((-3.53, 0.0), (-3.31, 0.76)),
+                     ((-3.08, 0.0), (-3.08, 0.95)),
+                     ((-4.49, 0.0), (ATRAS, 0.0)),      # el alféizar
+                     ((-3.77, 0.79), (ATRAS, 0.79))):   # bajo la ceja
+            p = por_la_piel(tramo_recto(a, b, 3), lado)
+            tramos += [(p[k], p[k + 1], 0.018) for k in range(len(p) - 1)]
+    # El del medio del parabrisas, por el lomo, y el travesaño de arriba.
+    p = [tuple(FUSELAJE.punto(z, 0.0, -0.035))
+         for z in _pasos(-4.52, -3.74, 0.26)]
+    tramos += [(p[k], p[k + 1], 0.018) for k in range(len(p) - 1)]
+    t1 = FUSELAJE.t_de_y(-3.75, 0.70, 1)
+    p = [tuple(FUSELAJE.punto(-3.75, t1 * k / 4, -0.035)) for k in range(-4, 5)]
+    tramos += [(p[k], p[k + 1], 0.026) for k in range(len(p) - 1)]
+    # Y el marco de las dos ventanas de abajo, que sin él eran un hueco en el
+    # forro: por la de los pies tiene que leerse «ventana», que es por donde
+    # se mira el helipuerto al posarse.
+    for lado in (-1, 1):
+        for z0, z1, y0, y1 in (VENTANA_DE_LOS_PIES, VENTANA_DE_LA_PUERTA):
+            for a, b in (((z0, y0), (z1, y0)), ((z1, y0), (z1, y1)),
+                         ((z1, y1), (z0, y1)), ((z0, y1), (z0, y0))):
+                p = por_la_piel(tramo_recto(a, b, 2), lado)
+                tramos += [(p[k], p[k + 1], 0.014) for k in range(len(p) - 1)]
+    # Oscuros, como los de verdad: los de un gris claro se leían como barras
+    # cruzando el parabrisas más que como su marco.
+    #
+    # De seis caras y en pocos tramos: son ciento y pico tubos, y con ocho
+    # caras y tramos cortos pesaban más que el fuselaje entero.
+    piezas.append(varillas("pilares-de-cabina", tramos, material_="tablero",
+                           lados=6))
+    return piezas
 
 
 PUERTA = (-0.87, 0.56, -1.16, 0.58)   # z0, z1, y0, y1
@@ -886,6 +1108,17 @@ def construir():
     # ── La librea, los cristales y lo pequeño ────────────────────────────
     librea(piezas)
     cristales(piezas)
+    # ── La cabina por dentro: ver «La cabina por dentro», arriba ─────────
+    cab = cabina(
+        OJOS_Z, ancho=1.0, alto_panel=0.13, y_suelo=Y_SUELO,
+        y_respaldo=Y_RESPALDO, plazas=PLAZAS, clase="helicoptero",
+        # El tren se recoge: lleva su mando, como el cuadro plano sus luces.
+        tren=True, hueco=hueco,
+    )
+    dentro = juntar_por_material(cab + cabina_por_dentro(OJOS_Z - 0.86),
+                                 "interior", deja=se_busca_por_nombre)
+    dentro_de(FUSELAJE, dentro)
+    piezas += dentro
     piezas += puerta_corredera()
     piezas += grua()
     # Las antenas de cuchilla del lomo del cono y la del techo.

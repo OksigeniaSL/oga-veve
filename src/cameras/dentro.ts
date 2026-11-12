@@ -64,6 +64,17 @@ const VISERA_EN_PANTALLA = 0.42;
  */
 const HORIZONTE_EN_PANTALLA = 0.22;
 
+/**
+ * **El plano cercano en la cabina del helicóptero**, m: el del juego son
+ * sesenta centímetros, y en el Super Puma la consola del techo, sus palancas
+ * y los montantes de la pecera quedan a medio metro de los ojos, y el puño del
+ * cíclico, entre las rodillas. Como en la cabina de pasaje —ver
+ * `CERCANO_EN_LA_CABINA` en `world/cabina-333.ts`—, se acerca solo mientras se
+ * mira desde ahí. Lo lejano pierde algo de precisión, que con el helipuerto a
+ * unos metros no se nota.
+ */
+export const CERCANO_EN_EL_HELICOPTERO = 0.25;
+
 /** Hasta dónde se abre el ángulo para que quepan los instrumentos, grados. */
 const FOV_MAXIMO = 78;
 

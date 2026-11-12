@@ -195,6 +195,9 @@ export class HelicopteroComoModelo implements FlightModel {
     m.pedales = c.rudder;
     m.motores = c.engineOn;
     m.frenos = c.brakes;
+    // El freno del rotor, tal como está la palanca: el modelo no lo deja morder
+    // por encima de sus vueltas. Ver `frenoDelRotor` en `helicoptero.ts`.
+    m.frenoDelRotor = c.frenoDelRotor ?? false;
     // El tren, donde esté: lo mueve la palanca del juego. Ver `tren` en la ficha del juego.
     m.tren = c.tren;
     const s = this.modelo.state;
