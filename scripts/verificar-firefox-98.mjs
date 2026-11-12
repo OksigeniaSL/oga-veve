@@ -274,6 +274,21 @@ try {
       carta && torcida < 0.03 && !m.fuera.length && !m.errores.length,
       `${Math.round(forma.ancho)}×${Math.round(forma.alto)} para ${forma.proporcion.toFixed(2)} ${[...m.fuera, ...m.errores].join(" · ")}`,
     );
+    // Y entera, sin desplazar: la carta y cada destino, por encima de la barra de abajo.
+    const entera = await js(`var r = document.querySelector('.hangar__rejilla--destinos');
+      var barra = document.querySelector('.hangar__barra');
+      var tope = barra ? barra.getBoundingClientRect().top : innerHeight;
+      var fuera = 0;
+      r.querySelectorAll(':scope > .pais, :scope > .ficha').forEach(function (e) {
+        var b = e.getBoundingClientRect();
+        if (b.top < -0.5 || b.right > innerWidth + 0.5 || b.bottom > tope + 0.5) fuera++;
+      });
+      return { rueda: r.scrollHeight - r.clientHeight, fuera: fuera, fichas: r.querySelectorAll(':scope > .ficha').length };`);
+    comprobar(
+      `${t} destinos enteros y sin desplazar`,
+      entera.rueda <= 1 && !entera.fuera,
+      `${entera.fichas} fichas, ${entera.fuera} fuera, la lista rueda ${entera.rueda} px`,
+    );
     await js("var c = document.querySelector('.pais__campo[data-ficha]'); c && c.click()");
     await pausa(1000);
     await foto(`${ancho}x${alto}-4-ficha`);

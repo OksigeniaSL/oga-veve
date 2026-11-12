@@ -8560,6 +8560,128 @@ button.motor__tecla::after {
 }
 
 /*
+ * **«¿A dónde vas?», entera y sin desplazar, en una pantalla apaisada.**
+ *
+ * La carta medía todo el alto de la lista y las fichas de destino quedaban
+ * debajo: en la pizarra de un aula —1280 × 600 a la vista—, en 960 × 540 y en
+ * el Chromebook de 1366 × 768 había que desplazar para verlas, y quien tiene
+ * cuatro años no sabe que debajo hay más. Aquí el alto se reparte:
+ *
+ * - el título se aparta, como en el teléfono tumbado —el sello sigue arriba a
+ *   la izquierda y la pregunta es lo que hay que leer—, y la lista llega hasta
+ *   la barra de abajo;
+ * - con la carta tumbada (Canarias), las fichas van en una fila debajo, con
+ *   el plano más apaisado, y la carta se queda con lo que sobra;
+ * - con la carta de pie (el Paraguay), la carta va a la izquierda en tres
+ *   huecos y las fichas a su lado, en tres filas que reparten el alto.
+ *
+ * Si aun así no cupiera —más destinos de los que hay hoy—, la lista vuelve a
+ * desplazarse, que es mejor que cortar. Lo vigila `verificar-carteles`.
+ */
+@media (min-width: 900px) and (min-height: 461px) and (max-height: 820px) {
+  .hangar[data-pantalla="adonde"] {
+    --hangar-lista: calc(var(--alto-visible) - 160px);
+  }
+
+  .hangar[data-pantalla="adonde"] .hangar__marca {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /*
+   * Con la carta tumbada, una columna por ficha mientras quepan a 140 px; si
+   * hubiera más, se envuelven. Y la fila de la carta se queda con lo que dejan.
+   */
+  .hangar .hangar__rejilla--destinos {
+    height: var(--hangar-lista);
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(max(140px, calc((100% - (var(--destinos, 6) - 1) * 12px) / var(--destinos, 6))), 1fr)
+    );
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  /* El «54 km» de una pieza, y el alternativo debajo si no cabe al lado. */
+  .hangar .hangar__rejilla--destinos .ficha__renglon {
+    flex-wrap: wrap;
+    row-gap: 3px;
+  }
+
+  .hangar .hangar__rejilla--destinos .ficha__numero {
+    white-space: nowrap;
+  }
+
+  .hangar .hangar__rejilla--destinos .pais {
+    height: auto;
+    min-height: 0;
+  }
+
+  .hangar .hangar__rejilla--destinos .ficha__lienzo {
+    aspect-ratio: 5 / 2;
+    padding: 4px;
+  }
+
+  /*
+   * Con la carta de pie, fichas de 170 como poco —a 140 el nombre iba en tres
+   * renglones y no quedaba plano— y la carta en dos de esas columnas.
+   */
+  .hangar .hangar__rejilla--carta-de-pie {
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+
+  .hangar .hangar__rejilla--carta-de-pie .pais {
+    grid-column: 1 / span 2;
+    grid-row: 1 / -1;
+  }
+
+  /* El nombre, en un renglón: el entero va en la ficha de la carta, al tocar el campo. */
+  .hangar .hangar__rejilla--carta-de-pie .ficha__nombre {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /*
+   * Y el pie, apretado: con el alternativo en su propio renglón, en 960 × 540
+   * al plano le quedaban veinte píxeles y el «SGOG» se montaba en el «146 km».
+   */
+  .hangar .hangar__rejilla--carta-de-pie .ficha__pie {
+    gap: 4px;
+    padding: 7px 10px 8px;
+  }
+
+  .hangar .hangar__rejilla--carta-de-pie .ficha__dato {
+    font-size: 13px;
+  }
+
+  /* Y el «146 km» un punto más pequeño: así el alternativo cabe a su lado. */
+  .hangar .hangar__rejilla--carta-de-pie .ficha__renglon {
+    gap: 6px;
+  }
+
+  .hangar .hangar__rejilla--carta-de-pie .ficha__numero {
+    font-size: 13px;
+    padding: 1px 5px;
+  }
+
+  .hangar .hangar__rejilla--carta-de-pie .ficha__lienzo {
+    min-height: 30px;
+  }
+
+  /* Cada ficha mide lo que su fila, y el plano se queda con lo que deja el pie. */
+  .hangar .hangar__rejilla--carta-de-pie .ficha__lienzo {
+    flex: 1 1 0;
+    aspect-ratio: auto;
+    min-height: 0;
+  }
+}
+
+/*
  * Los sitios agrupados por país. El que rueda es el contenedor de los grupos,
  * no cada rejilla: si rodara cada una, un país con muchos aeropuertos tendría
  * su propia barra dentro de la barra grande, y habría que rodar dos veces para

@@ -75,7 +75,14 @@ import {
   type Scenario,
 } from "../world/scenarios";
 import { PROXIMAMENTE } from "../world/proximamente";
-import { abrirFichaDeLaCarta, campoTocado, colocarLaCarta, mapaDelPais, type RutaEnElMapa } from "./mapa-del-pais";
+import {
+  abrirFichaDeLaCarta,
+  campoTocado,
+  cartaDePie,
+  colocarLaCarta,
+  mapaDelPais,
+  type RutaEnElMapa,
+} from "./mapa-del-pais";
 import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from "../i18n";
 import { cielo, marca, pie } from "./marca";
 import { elegirMundo, mundoElegido } from "./mundo";
@@ -2157,7 +2164,13 @@ export function abrirHangar(
         -->
         <section class="hangar__bloque" aria-labelledby="hangar-destino">
           <h2 class="hangar__pregunta" id="hangar-destino">${t("hangar.adonde")}</h2>
-          <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-destino">
+          <div class="hangar__rejilla hangar__rejilla--destinos${
+            cartaDePie(sitio) ? " hangar__rejilla--carta-de-pie" : ""
+          }" role="radiogroup" aria-labelledby="hangar-destino"
+               style="--destinos: ${
+                 // Cuántas fichas van: con la carta tumbada, todas en una fila.
+                 1 + destinosPosibles(sitio, avion).length + destinosQueNoCaben(sitio, avion).length
+               }">
             ${mapaDelPais(
               sitio,
               DEL_HANGAR.filter((e) => e.pais === sitio.pais && e.aerodrome),

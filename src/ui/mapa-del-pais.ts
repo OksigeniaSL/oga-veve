@@ -435,6 +435,23 @@ const AVION_DE_IR = `<svg viewBox="-17 -16 34 30" aria-hidden="true" focusable="
  * Vacío si el sitio no está en ninguna carta: los escenarios inventados no
  * están en ningún mapa.
  */
+/** Más ancha que esto, la carta va tumbada: ocupa dos huecos de la rejilla (`.pais--apaisado`). */
+const TUMBADA = 1.6;
+
+/**
+ * **Si la carta del sitio va de pie**, más alta que tumbada: el Paraguay sí,
+ * Canarias no. En la pantalla de destinos decide si las fichas van debajo de
+ * la carta o a su lado. `false` también cuando no hay carta.
+ */
+export function cartaDePie(sitio: Scenario): boolean {
+  if (sitio.pais === "inventado") return false;
+  const aqui = dondeEsta(sitio);
+  const id = aqui ? regionDe({ lon: aqui[0], lat: aqui[1] }) : null;
+  if (!id) return false;
+  const { ancho, alto } = proyeccionDe(id);
+  return ancho / alto <= TUMBADA;
+}
+
 export function mapaDelPais(
   sitio: Scenario,
   campos: readonly Scenario[],
@@ -665,7 +682,7 @@ export function mapaDelPais(
   const imagen = imagenDe(id, pequenos);
   const grosorRuta = pequenos ? LINEAS.rutaPequenos : LINEAS.ruta;
   return `
-    <div class="pais carta-papel${ancho / alto > 1.6 ? " pais--apaisado" : ""}" aria-hidden="true"
+    <div class="pais carta-papel${ancho / alto > TUMBADA ? " pais--apaisado" : ""}" aria-hidden="true"
          data-region="${id}" data-peldano="${peldano}" data-elegido="${elegido}"
          style="--proporcion: ${r3(ancho / alto)}; ${variablesDeLaCarta()};
                 --ruta-grosor: ${grosorRuta}px; --ruta-orla: ${grosorRuta + 2 * LINEAS.rutaOrla}px;
