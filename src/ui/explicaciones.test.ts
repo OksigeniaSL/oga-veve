@@ -7,7 +7,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { EN } from "../i18n/en";
 import { ES_PY } from "../i18n/es-PY";
-import { AIRCRAFT } from "../flight/aircraft";
+// Toda la flota, el helicóptero incluido: vive en `AERONAVES` y no en `AIRCRAFT`.
+import { AERONAVES as AIRCRAFT, aeronavePorId } from "../flight/aeronaves";
 import { DIBUJOS } from "./senal";
 import { Tablero } from "./tablero";
 import {
@@ -403,6 +404,28 @@ describe("las de serie", () => {
         `${a.id}: el horizonte, la vuelta a las losas`,
       ).toBe(true);
     }
+  });
+
+  /*
+   * **La VMS del helicóptero se explica dial a dial**: el FLI y el reloj del
+   * rotor, cada uno con la suya. La de «motor» habla de RPM y de N1, que un
+   * helicóptero no enseña, y no está en su cuadro. Y los dos son
+   * instrumentos enteros: en la pantalla grande del teléfono, la vuelta a
+   * las losas, como el EICAS.
+   */
+  it("y la VMS del helicóptero, el FLI y el reloj del rotor, cada uno la suya", () => {
+    const marcado = new Tablero().markup(aeronavePorId("super-puma")!, 4);
+    const etiquetas = [...marcado.matchAll(/<[^>]*data-explica="([^"]+)"[^>]*>/g)];
+    const ids = etiquetas.map((m) => m[1]);
+    expect(ids).toContain("fli");
+    expect(ids).toContain("rotor");
+    expect(ids).not.toContain("motor");
+    for (const id of ["fli", "rotor"]) {
+      expect(explicacionDe(id), id).toBeTruthy();
+      for (const m of etiquetas.filter((e) => e[1] === id)) expect(m[0], id).toContain("data-explica-fondo");
+    }
+    expect(explicacionDe("fli")?.rotulo).toBe("FLI");
+    expect(explicacionDe("rotor")?.rotulo).toBe("NR");
   });
 
   it("y no se pisan las que alguien ya afinó", () => {

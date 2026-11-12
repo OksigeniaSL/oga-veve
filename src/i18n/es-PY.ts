@@ -3476,6 +3476,12 @@ export const ES_PY = {
   "explica.motor.corta": "Motor",
   "explica.motor.texto":
     "Cuánta fuerza hace el motor. En los de hélice se mide en vueltas por minuto, RPM; en los reactores, en lo rápido que gira el ventilador de adelante, N1. Más motor es ir más rápido o subir; menos motor, ir más despacio o bajar. En un reactor la aguja tarda unos segundos en llegar a lo que pediste: un motor grande no se apura.",
+  "explica.fli.corta": "La fuerza",
+  "explica.fli.texto":
+    "El FLI dice cuánta fuerza le queda a cada motor antes de llegar a su primer límite. Un motor de helicóptero tiene tres: el par, que es la fuerza que aguanta la caja que mueve el rotor; la temperatura de la turbina, y las vueltas del generador de gas, el NG. La aguja del 1 y la del 2 marcan el que esté más cerca. En el verde sobra fuerza; el ámbar es la potencia de despegue, que se usa solo un rato, y la raya roja es el tope.",
+  "explica.rotor.corta": "El rotor",
+  "explica.rotor.texto":
+    "La aguja ancha y blanca son las vueltas del rotor, el NR. El regulador de los motores las sostiene casi quietas en el cien por cien, se suba o se baje el colectivo. Encima van las dos agujas finas de las turbinas de los motores, el NF, casadas con el rotor mientras lo mueven. Si el NR cae, es lo primero que hay que mirar: el rotor es lo que te sostiene, y sin vueltas no sostiene. Para que recupere, se baja el colectivo.",
   "explica.flaps.corta": "Flaps",
   "explica.flaps.texto":
     "Los flaps son la parte de atrás del ala, que sale para abajo. Hacen el ala más grande y más curva, y así sostiene al avión yendo más despacio. Se sacan para despegar y para aterrizar, y en el crucero se guardan, porque también frenan.",

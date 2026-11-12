@@ -91,6 +91,20 @@ function escala(cx: number, cy: number, r: number, max: number, paso: number, ca
   return s;
 }
 
+/**
+ * **El sitio del dedo de cada dial**: su mitad de la pantalla, del borde de
+ * arriba a la última de sus lecturas. Cada dial se explica a sí mismo —el
+ * FLI y el reloj del rotor—, y un toque entre los dos o junto a una lectura
+ * tiene que caer en uno: con la caja del dial sola, el hueco del medio no era
+ * de nadie. No se pinta.
+ */
+const ANCHO_DE_LA_VMS = 400;
+const ALTO_DEL_TOQUE = DIALES_DE_LA_VMS.fli.cy + RADIO_DE_LA_VMS + 98;
+function toque(mitad: 0 | 1): string {
+  const ancho = ANCHO_DE_LA_VMS / 2;
+  return `<rect x="${mitad * ancho}" y="0" width="${ancho}" height="${ALTO_DEL_TOQUE}" class="vms__toque" />`;
+}
+
 /** Una aguja que sale del buje: el triángulo afilado de las de motor. */
 function aguja(r: number, ancho: number, largo: number): string {
   return `M0 ${(r * 0.12).toFixed(1)} L${-ancho} ${(-r * largo * 0.86).toFixed(1)} L0 ${(-r * largo).toFixed(1)} L${ancho} ${(-r * largo * 0.86).toFixed(1)} Z`;
@@ -139,7 +153,8 @@ function dialDelFli(motores: number): string {
   }
   const yCabina = cy + r + 16;
   return `
-    <g data-vms="fli">
+    <g data-vms="fli" data-explica="fli" data-explica-fondo>
+      ${toque(0)}
       <circle cx="${cx}" cy="${cy}" r="${r}" class="cr__dial" />
       ${arco(cx, cy, r - 3, 0, FLI.continua, FLI.maximo, "cr__arco cr__arco--verde")}
       ${arco(cx, cy, r - 3, FLI.continua, FLI.despegue, FLI.maximo, "cr__arco cr__arco--ambar vms__arco")}
@@ -169,7 +184,8 @@ function dialDelRotor(a: AircraftConfig, motores: number): string {
     nf += `<g data-vms-nf="${i}" transform="rotate(${INICIO})"><path class="vms__aguja-nf" d="M0 ${(-r * 0.2).toFixed(1)} L0 ${(-r * 0.92).toFixed(1)}" /></g>`;
   const y = cy + r + 16;
   return `
-    <g data-vms="rotor">
+    <g data-vms="rotor" data-explica="rotor" data-explica-fondo>
+      ${toque(1)}
       <circle cx="${cx}" cy="${cy}" r="${r}" class="cr__dial" />
       ${arco(cx, cy, r - 3, b.sinMotor[0], b.conMotor[0], NR_MAXIMO, "cr__arco cr__arco--ambar vms__arco")}
       ${arco(cx, cy, r - 3, b.conMotor[0], b.conMotor[1], NR_MAXIMO, "cr__arco cr__arco--verde")}
@@ -197,7 +213,11 @@ function dialDelRotor(a: AircraftConfig, motores: number): string {
 export function pantallaVms(ancho: number, alto: number, a: AircraftConfig): string {
   const motores = a.helicoptero?.motores.cuantos ?? a.motores;
   return `
-    <rect data-fondo="vms" data-explica="motor" data-explica-fondo width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
+    <!--
+      Sin data-explica en el fondo: la explicación es la de cada dial, y la
+      de «motor» habla de RPM y de N1, que esta pantalla no enseña.
+    -->
+    <rect data-fondo="vms" width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
     <line x1="${ancho / 2}" y1="26" x2="${ancho / 2}" y2="${DIALES_DE_LA_VMS.fli.cy + RADIO_DE_LA_VMS + 100}" class="vms__raya" />
     ${dialDelFli(motores)}
     ${dialDelRotor(a, motores)}

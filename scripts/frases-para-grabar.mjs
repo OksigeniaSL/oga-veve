@@ -163,10 +163,10 @@ const HABLADOS = [
     "lo que explica tocar una pieza del cuadro",
     /*
      * La palabra corta y los nombres de los botones se leen, no se dicen. Y
-     * los sellos y el PAPI van al final de la lista: ver `DE_LOS_SELLOS` y
-     * `DE_LOS_INSTRUMENTOS`.
+     * los sellos, el PAPI y los diales de la VMS van al final de la lista: ver
+     * `DE_LOS_SELLOS`, `DE_LOS_INSTRUMENTOS` y `DE_LA_VMS`.
      */
-    /\.corta$|^explica\.(oir|curiosidades)$|^explica\.sello\.|^explica\.a?papi\./,
+    /\.corta$|^explica\.(oir|curiosidades)$|^explica\.sello\.|^explica\.a?papi\.|^explica\.(?:fli|rotor)\./,
   ],
   /*
    * **Y lo que se cuenta antes de volar y al tocar el avión**: cada sitio de
@@ -2537,6 +2537,11 @@ const SIGLAS = [
   ["T/C", "ti-si"],
   ["GS", "yi-es"],
   ["N1", "en uan"],
+  // Los del helicóptero, letra a letra en inglés, como se dicen en su cabina.
+  ["FLI", "ef-el-ai"],
+  ["NR", "en-ar"],
+  ["NF", "en-ef"],
+  ["NG", "en-yi"],
   ["RPM", "ar-pi-em"],
   ["ZP", "zeta pe"],
 ];
@@ -2668,6 +2673,26 @@ for (const [id, para] of DE_LOS_SELLOS_NUEVOS) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
+}
+/*
+ * **Y los dos diales de la VMS del helicóptero** (12-11-2026): lo que cuenta
+ * la instructora al tocar el FLI y el reloj del rotor en el cuadro del Super
+ * Puma. Son del grupo de las explicaciones, pero metidas con ellas
+ * renumerarían las ya grabadas: van detrás de todo. Ver `FLI` y `ROTOR` en
+ * `src/ui/explicaciones-de-serie.ts`.
+ */
+const DE_LA_VMS = [
+  ["explica.fli.texto", "lo que explica tocar el FLI en la pantalla de motores del helicóptero"],
+  ["explica.rotor.texto", "lo que explica tocar el reloj del rotor en la pantalla de motores del helicóptero"],
+];
+for (const [id, para] of DE_LA_VMS) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  // Con los rótulos como se dicen en cabina —«ef-el-ai», «en-ar»—, que el
+  // repaso de `SIGLAS` de más arriba ya pasó cuando estas llegan.
+  const dicho = conSiglas(texto);
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para, ...(dicho !== texto ? { dicho } : {}) });
   total += texto.length;
 }
 const AJUSTES_CON_CHISPA = {
