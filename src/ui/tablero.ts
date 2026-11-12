@@ -63,7 +63,7 @@ import {
   TRAMOS_ROJOS,
 } from "./cristal";
 import type { Franja } from "../flight/tcas";
-import { dibujarLaCarta, pixelesPorMetro, type Mapa } from "./carta";
+import { dibujarLaCarta, pixelesPorMetro, siQuedaCamino as lejos, type Mapa } from "./carta";
 import { PUNTOS_A_FONDO, type PerfilEnElCuadro } from "../flight/perfil-vertical";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
 import { anguloDelDial, pantallaVms } from "./vms";
@@ -2442,17 +2442,6 @@ const AVISA_CINCO_ANTES = 5;
  * doscientos se pone ámbar: ahí ya no es un dato, es un aviso.
  */
 const DESDE_EL_RADIO = 2500;
-/** A cuántos metros del sitio ya no se le pinta camino en la carta. */
-const YA_ESTA_AHI = 30;
-
-/**
- * **El objetivo, si queda camino hasta él.** Posado en su helipuerto, el
- * helicóptero lo tenía a cero metros, y la raya magenta y la marca de la rosa
- * señalaban hacia donde cayera la cuenta de un rumbo a ninguna parte.
- */
-function lejos<T extends { readonly distancia: number }>(o: T | null): T | null {
-  return o && o.distancia >= YA_ESTA_AHI ? o : null;
-}
 /** Lo que tarda la aguja del FLI en seguir al modelo, s. Ver `Tablero.vms`. */
 const SIGUE_EL_FLI = 0.4;
 const YA_ES_BAJO = 200;

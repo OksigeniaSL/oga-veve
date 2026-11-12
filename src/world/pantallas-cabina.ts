@@ -61,7 +61,24 @@ const COLOR_DEL_ECO: Record<Exclude<Eco, "nada">, string> = {
 };
 import { luzDeTren } from "../flight/tren";
 import { parteDeLaBarra } from "../flight/velocidades-en-tierra";
-import { franjaEnElVariometro, RODAR } from "../ui/cristal";
+import {
+  franjaEnElVariometro,
+  RADIOALTURA_DIBUJADA,
+  RODAR,
+  SIMBOLO as TRAZO_DEL_SIMBOLO,
+  trazoDeLaH,
+} from "../ui/cristal";
+import {
+  DISCO_DEL_MOTOR,
+  RADIO_DE_LA_VMS,
+  anguloDelDial,
+  escalaDelFli,
+  lecturasDeLaVms,
+  puntoDelDial,
+  trazoDeAguja,
+  type EscalaDeDial,
+} from "../ui/vms";
+import { FLI, NR_MAXIMO, type LecturaDeLaVms } from "../flight/vms";
 import type { Franja } from "../flight/tcas";
 import {
   COLUMNAS_DEL_FMA,
@@ -96,10 +113,13 @@ import {
   dibujarLaCarta,
   millasHasta,
   pixelesPorMetro,
+  siQuedaCamino,
   type Mapa,
 } from "../ui/carta";
 import {
+  BANDA,
   CIFRAS_DESDE,
+  CON_SU_APARATO_DESDE,
   LETRAS_DESDE,
   apunta,
   desdePara,
@@ -151,6 +171,14 @@ const AUXILIAR = PALETA.auxiliar;
 const PRECAUCION = PALETA.precaucion;
 
 export interface DatosDeCabina {
+  /**
+   * **La VMS del helicóptero**: lo que marca, de la misma cuenta que el cuadro
+   * plano (`lecturaDeLaVms` en `flight/vms.ts`), y la escala de su reloj del
+   * rotor, de su ficha (`escalaDelRotor` en `ui/vms.ts`). Solo en el
+   * helicóptero. Ver `pintarVms`.
+   */
+  readonly rotor?: LecturaDeLaVms | null;
+  readonly escalaDelRotor?: EscalaDeDial | null;
   /** Velocidad indicada, m/s. */
   readonly velocidad: number;
   /**
@@ -702,7 +730,9 @@ export function encenderPantallas(
         p.g.setTransform(-1, 0, 0, 1, ANCHO, 0);
         const toca = queLeToca(i, pantallas.length, nombres[i] ?? "");
         if (toca === "horizonte") pintarHorizonte(p.g, datos);
-        else if (toca === "motores") pintarMotores(p.g, datos);
+        else if (toca === "motores")
+          // En el helicóptero, su VMS: la pantalla de los motores y del rotor.
+          (datos.cuadro.familia === "helicoptero" ? pintarVms : pintarMotores)(p.g, datos);
         else pintarRumbo(p.g, datos);
         p.textura.needsUpdate = true;
       });
@@ -1040,6 +1070,10 @@ function radioaltimetro(
 ): void {
   const pies = d.sobreElTerreno * PIES;
   if (pies >= DESDE_EL_RADIO) return;
+  if (d.cuadro.familia === "helicoptero") {
+    radioalturaDelHelicoptero(g, cx, y, pies);
+    return;
+  }
   const color = pies < YA_ES_BAJO ? PALETA.precaucion : TINTA;
   escribir(
     g,
@@ -1050,6 +1084,57 @@ function radioaltimetro(
     color,
   );
   escribir(g, "RA", cx, y + 15, "500 10px " + FUENTE, TENUE);
+}
+
+/**
+ * **La radioaltura del helicóptero**, como en su cuadro plano (`radioaltimetro`
+ * en `ui/cristal.ts`): en grande y desde el segundo peldaño, que al posarse es
+ * lo que se mira; sin el ámbar de los últimos doscientos pies, que en un
+ * helicóptero es donde vuela; y mientras no se lee «RA», en su sitio el dibujo
+ * de lo que mide, con el mismo trazo que el cuadro plano.
+ */
+function radioalturaDelHelicoptero(
+  g: CanvasRenderingContext2D,
+  cx: number,
+  y: number,
+  pies: number,
+): void {
+  if (peldanoDeAhora < CON_SU_APARATO_DESDE) return;
+  escribir(g, String(Math.max(0, Math.round(pies))), cx, y - 8, "600 34px " + FUENTE, TINTA, "center", "rgba(5, 7, 10, 0.55)");
+  if (peldanoDeAhora >= LETRAS_DESDE) {
+    escribir(g, "RA", cx, y + 16, "500 10px " + FUENTE, TENUE);
+    return;
+  }
+  // El dibujo es de 24, como en el cuadro plano.
+  g.save();
+  g.translate(cx - 12, y + 8);
+  g.strokeStyle = TINTA;
+  g.fillStyle = TINTA;
+  g.lineWidth = 1.8;
+  g.lineCap = "round";
+  g.stroke(new Path2D(RADIOALTURA_DIBUJADA.trazo));
+  const c = RADIOALTURA_DIBUJADA.cuerpo;
+  g.beginPath();
+  g.ellipse(c.cx, c.cy, c.rx, c.ry, 0, 0, Math.PI * 2);
+  g.fill();
+  g.restore();
+}
+
+/**
+ * **El helipuerto, en la cinta de altitud**: el aro con la H, con el trazo del
+ * cuadro plano (`helipuerto` en `ui/cristal.ts`). Un helicóptero no aterriza
+ * en una pista; se posa en su sitio.
+ */
+function helipuertoEnLaCinta(g: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
+  g.save();
+  g.strokeStyle = TINTA;
+  g.lineWidth = 1.6;
+  g.beginPath();
+  g.arc(cx, cy, r, 0, Math.PI * 2);
+  g.stroke();
+  g.lineWidth = 1.8;
+  g.stroke(new Path2D(trazoDeLaH(cx, cy, r)));
+  g.restore();
 }
 
 /** Desde qué altura sobre el suelo aparece, y dónde se pone ámbar. Pies. */
@@ -1549,6 +1634,10 @@ function cintaDeAltitud(
   }
   g.fillStyle = SIMBOLO;
   g.fillRect(x + 2, suelo - 1, w - 16, 2);
+  // Y en el helicóptero, el helipuerto encima de la raya del suelo, como en
+  // su cuadro plano.
+  if (d.cuadro.familia === "helicoptero" && cota !== null && suelo > y && suelo < y + h + 20)
+    helipuertoEnLaCinta(g, x + w - 30, suelo - 11, 9);
 
   const salto = tendencia(
     (d.vertical * PIES_POR_MINUTO) / 60,
@@ -1623,14 +1712,17 @@ function cintaDeAltitud(
     g.strokeStyle = "#2c3136";
     g.lineWidth = 1;
     g.strokeRect(x + 2, yb, w - 4, 22);
-    g.fillStyle = "#6f757b";
-    g.beginPath();
-    g.moveTo(x + 5, yb + 19);
-    g.lineTo(x + 11, yb + 3);
-    g.lineTo(x + 16, yb + 3);
-    g.lineTo(x + 22, yb + 19);
-    g.closePath();
-    g.fill();
+    if (d.cuadro.familia === "helicoptero") helipuertoEnLaCinta(g, x + 13.5, yb + 11, 7.5);
+    else {
+      g.fillStyle = "#6f757b";
+      g.beginPath();
+      g.moveTo(x + 5, yb + 19);
+      g.lineTo(x + 11, yb + 3);
+      g.lineTo(x + 16, yb + 3);
+      g.lineTo(x + 22, yb + 19);
+      g.closePath();
+      g.fill();
+    }
     escribir(g, String(cota), x + w - 6, yb + 11, "600 15px " + FUENTE, TINTA, "right");
   }
 
@@ -2025,14 +2117,28 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   g.strokeStyle = SIMBOLO;
   g.lineWidth = 4;
   g.lineCap = "round";
-  g.beginPath();
-  g.moveTo(cx, cy - 20);
-  g.lineTo(cx, cy + 22);
-  g.moveTo(cx - 20, cy + 4);
-  g.lineTo(cx + 20, cy + 4);
-  g.moveTo(cx - 9, cy + 20);
-  g.lineTo(cx + 9, cy + 20);
-  g.stroke();
+  if (d.cuadro.familia === "helicoptero") {
+    /*
+     * **Y en el helicóptero, el helicóptero**: el disco del rotor y el cono de
+     * cola, con el trazo del cuadro plano (`SIMBOLO` en `ui/cristal.ts`), a
+     * escala del avioncito de aquí.
+     */
+    g.save();
+    g.translate(cx, cy);
+    g.scale(1.8, 1.8);
+    g.lineWidth = 4 / 1.8;
+    g.stroke(new Path2D(TRAZO_DEL_SIMBOLO.helicoptero));
+    g.restore();
+  } else {
+    g.beginPath();
+    g.moveTo(cx, cy - 20);
+    g.lineTo(cx, cy + 22);
+    g.moveTo(cx - 20, cy + 4);
+    g.lineTo(cx + 20, cy + 4);
+    g.moveTo(cx - 9, cy + 20);
+    g.lineTo(cx + 9, cy + 20);
+    g.stroke();
+  }
   g.lineCap = "butt";
 
   // Y el rumbo en cifras, arriba, con su rótulo debajo.
@@ -2073,15 +2179,19 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
    * dónde sopla y cuánto: es el dato que decide por qué cabecera se aterriza,
    * y hasta hoy solo estaba en el panel del tiempo.
    */
+  // Y ya en el sitio, sin raya, como en el cuadro plano. Ver `siQuedaCamino`.
+  const conCamino = siQuedaCamino(d.objetivo);
   if (d.objetivo) {
     const rel = ((d.objetivo.rumbo * 180) / Math.PI - grados) * (Math.PI / 180);
     g.strokeStyle = PALETA.objetivo;
     g.lineWidth = 3;
     g.lineCap = "round";
-    g.beginPath();
-    g.moveTo(cx, cy);
-    g.lineTo(cx + Math.sin(rel) * r * 0.92, cy - Math.cos(rel) * r * 0.92);
-    g.stroke();
+    if (conCamino) {
+      g.beginPath();
+      g.moveTo(cx, cy);
+      g.lineTo(cx + Math.sin(rel) * r * 0.92, cy - Math.cos(rel) * r * 0.92);
+      g.stroke();
+    }
     g.lineCap = "butt";
     escribir(
       g,
@@ -2416,6 +2526,214 @@ function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
  * precaución en ámbar, y cada cosa hecha en blanco con su marca verde. Con la
  * letra de las cifras de la pantalla, que es la que se lee de un vistazo.
  */
+/**
+ * Lo que lleva la VMS del cuadro plano, de arriba abajo, en sus unidades: del
+ * canto de arriba de los diales al pie del depósito. Lo de fuera es margen.
+ */
+const ARRIBA_DE_LA_VMS = 40;
+const ABAJO_DE_LA_VMS = 380;
+
+/**
+ * **La VMS del helicóptero**: el FLI de cada motor a la izquierda y el reloj
+ * del rotor con sus turbinas a la derecha, sus lecturas debajo y el depósito
+ * abajo. Es la pantalla de motores de su cuadro plano (`pantallaVms` en
+ * `ui/vms.ts`), **con sus mismas medidas y sus mismas escalas**: los diales,
+ * sus centros y su radio, las bandas y las rayas rojas, el sitio de cada
+ * lectura y la forma de cada aguja salen de allí, y las cuentas de
+ * `flight/vms.ts`. Aquí solo se pinta, con pincel.
+ *
+ * La pantalla de 400 entera, centrada y algo más grande que en el cuadro
+ * plano: se le quitan los márgenes de arriba y de abajo, que no llevan nada,
+ * para que lo que lleva llene el cristal de 4 por 3 de la cabina, que desde el
+ * asiento se ve a la mitad de tamaño que el cuadro plano.
+ */
+function pintarVms(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
+  g.save();
+  g.fillStyle = FONDO;
+  g.fillRect(0, 0, ANCHO, ALTO);
+  const l = d.rotor;
+  const escalaRotor = d.escalaDelRotor;
+  if (!l || !escalaRotor) {
+    g.restore();
+    return;
+  }
+  const s = Math.min(ALTO / (ABAJO_DE_LA_VMS - ARRIBA_DE_LA_VMS), ANCHO / 400);
+  g.translate((ANCHO - 400 * s) / 2, -ARRIBA_DE_LA_VMS * s);
+  g.scale(s, s);
+  const r = RADIO_DE_LA_VMS;
+  const fli = escalaDelFli();
+  const cajas = lecturasDeLaVms(l.motores.length);
+
+  // La raya que separa los dos diales.
+  g.strokeStyle = "#2c3136";
+  g.lineWidth = 1;
+  g.beginPath();
+  g.moveTo(200, 26);
+  g.lineTo(200, fli.cy + r + 100);
+  g.stroke();
+
+  dialDeLaVms(g, fli, r);
+  dialDeLaVms(g, escalaRotor, r);
+  escribir(g, "FLI", fli.cx, fli.cy + 30, "500 12px " + FUENTE, TENUE);
+  escribir(g, "NR", escalaRotor.cx, escalaRotor.cy + 30, "500 12px " + FUENTE, TINTA);
+  escribir(g, "NF", escalaRotor.cx, escalaRotor.cy + 44, "500 12px " + FUENTE, AUXILIAR);
+
+  // Las agujas del FLI, cada una con su disco con el 1 o el 2.
+  l.motores.forEach((m, i) => {
+    const grados = anguloDelDial(m.fli, FLI.maximo);
+    agujaDeLaVms(g, fli.cx, fli.cy, grados, trazoDeAguja(r, 2.6, 0.84), TINTA);
+    const [dx, dy] = puntoDelDial(fli.cx, fli.cy, grados, r * (DISCO_DEL_MOTOR[i] ?? 0.6));
+    g.fillStyle = "#05070a";
+    g.strokeStyle = TINTA;
+    g.lineWidth = 1.4;
+    g.beginPath();
+    g.arc(dx, dy, 8.5, 0, Math.PI * 2);
+    g.fill();
+    g.stroke();
+    escribir(g, String(i + 1), dx, dy + 0.5, "700 11px " + FUENTE, TINTA);
+  });
+  bujeDeLaVms(g, fli.cx, fli.cy, 4);
+  // La del rotor, ancha, y encima las finas de las turbinas libres.
+  agujaDeLaVms(g, escalaRotor.cx, escalaRotor.cy, anguloDelDial(l.nr, NR_MAXIMO), trazoDeAguja(r, 6, 0.8), TINTA);
+  for (const m of l.motores) {
+    g.save();
+    g.translate(escalaRotor.cx, escalaRotor.cy);
+    g.rotate((anguloDelDial(m.nf, NR_MAXIMO) * Math.PI) / 180);
+    g.strokeStyle = AUXILIAR;
+    g.lineWidth = 2;
+    g.lineCap = "round";
+    g.beginPath();
+    g.moveTo(0, -r * 0.2);
+    g.lineTo(0, -r * 0.92);
+    g.stroke();
+    g.restore();
+  }
+  bujeDeLaVms(g, escalaRotor.cx, escalaRotor.cy, 5);
+
+  // Las lecturas: ámbar en la potencia de despegue y rojo pasada, como el cuadro plano.
+  l.motores.forEach((m, i) => {
+    const c = cajas.fli[i];
+    if (!c) return;
+    cajaDeLaVms(g, c);
+    escribir(g, String(i + 1), c.x + 7, c.y + 16, "500 11px " + FUENTE, TENUE, "left");
+    const color = m.fli > FLI.despegue ? PALETA.limite : m.fli >= FLI.continua ? PRECAUCION : TINTA;
+    escribir(g, m.fli.toFixed(1), c.x + c.ancho - 6, c.y + 16, "600 22px " + FUENTE, color, "right");
+    // El NG y la T4, en el peldaño de cabina, bajo su aguja.
+    if (d.peldano >= 4) {
+      escribir(g, `${Math.round(m.ng)}%`, c.x + c.ancho - 6, c.y + 48, "500 14px " + FUENTE, AUXILIAR, "right");
+      escribir(g, `${Math.round(m.t4)}°`, c.x + c.ancho - 6, c.y + 68, "500 14px " + FUENTE, AUXILIAR, "right");
+    }
+  });
+  if (d.peldano >= 4 && cajas.fli[0]) {
+    const x = fli.cx - 2 * 37 - 4;
+    escribir(g, "NG", x, cajas.fli[0].y + 48, "500 12px " + FUENTE, TENUE, "left");
+    escribir(g, "T4", x, cajas.fli[0].y + 68, "500 12px " + FUENTE, TENUE, "left");
+  }
+  const n = cajas.nr;
+  cajaDeLaVms(g, n);
+  /*
+   * La cifra del rotor en ámbar fuera de las vueltas con motor y en rojo fuera
+   * de las que se admiten sin él; parado no avisa. La misma regla que el
+   * cuadro plano: ver `Tablero.vms`.
+   */
+  const conMotor = escalaRotor.arcos.find((a) => a.color === "verde");
+  const girando = l.nr > 5;
+  const [lim0, lim1] = [escalaRotor.limites[0] ?? 0, escalaRotor.limites[1] ?? NR_MAXIMO];
+  const fuera = !!conMotor && girando && (l.nr < conMotor.desde || l.nr > conMotor.hasta);
+  const limite = girando && (l.nr < lim0 || l.nr > lim1);
+  const motorEnElRotor = l.motores.some((m) => m.nf > 1);
+  const colorNr = motorEnElRotor && limite ? PALETA.limite : motorEnElRotor && fuera ? PRECAUCION : TINTA;
+  escribir(g, String(Math.round(l.nr)), n.x + n.ancho / 2 + 18, n.y + 16, "600 22px " + FUENTE, colorNr, "right");
+  escribir(g, "%", n.x + n.ancho / 2 + 22, n.y + 16, "500 15px " + FUENTE, TINTA, "left");
+
+  // Y el depósito, abajo y a lo ancho, en el sitio del cuadro plano.
+  reglaDeCombustible(g, 56, BANDA.alto - 58, 400 - 96, 16, d.combustible);
+  g.restore();
+}
+
+/** El fondo de un dial de la VMS: su esfera, sus arcos, sus marcas, sus cifras y sus rayas rojas. */
+function dialDeLaVms(g: CanvasRenderingContext2D, e: EscalaDeDial, r: number): void {
+  const { cx, cy, maximo } = e;
+  // Los grados del dial van desde arriba y a derechas; los del lienzo, desde la derecha.
+  const enElLienzo = (v: number) => ((anguloDelDial(v, maximo) - 90) * Math.PI) / 180;
+  g.fillStyle = "#05070a";
+  g.strokeStyle = "#2c3136";
+  g.lineWidth = 1;
+  g.beginPath();
+  g.arc(cx, cy, r, 0, Math.PI * 2);
+  g.fill();
+  g.stroke();
+  g.lineWidth = 4;
+  for (const a of e.arcos) {
+    g.strokeStyle = a.color === "verde" ? PALETA.normal : PRECAUCION;
+    g.beginPath();
+    g.arc(cx, cy, r - 3, enElLienzo(a.desde), enElLienzo(a.hasta));
+    g.stroke();
+  }
+  for (let v = 0; v <= maximo + 1e-6; v += e.paso) {
+    const larga = Math.abs(v / e.cadaCifra - Math.round(v / e.cadaCifra)) < 1e-6;
+    const grados = anguloDelDial(v, maximo);
+    const [x0, y0] = puntoDelDial(cx, cy, grados, r - (larga ? 10 : 6));
+    const [x1, y1] = puntoDelDial(cx, cy, grados, r);
+    g.strokeStyle = TINTA;
+    g.lineWidth = 1.2;
+    g.beginPath();
+    g.moveTo(x0, y0);
+    g.lineTo(x1, y1);
+    g.stroke();
+    if (larga) {
+      const [x, y] = puntoDelDial(cx, cy, grados, r - 18);
+      escribir(g, String(Math.round(v)), x, y, "500 13px " + FUENTE, TINTA);
+    }
+  }
+  g.strokeStyle = PALETA.limite;
+  g.lineWidth = 3;
+  for (const v of e.limites) {
+    const grados = anguloDelDial(v, maximo);
+    const [x0, y0] = puntoDelDial(cx, cy, grados, r - 12);
+    const [x1, y1] = puntoDelDial(cx, cy, grados, r + 3);
+    g.beginPath();
+    g.moveTo(x0, y0);
+    g.lineTo(x1, y1);
+    g.stroke();
+  }
+}
+
+/** Una aguja de la VMS, con la forma de la del cuadro plano, girada desde el buje. */
+function agujaDeLaVms(
+  g: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  grados: number,
+  trazo: string,
+  color: string,
+): void {
+  g.save();
+  g.translate(cx, cy);
+  g.rotate((grados * Math.PI) / 180);
+  g.fillStyle = color;
+  g.fill(new Path2D(trazo));
+  g.restore();
+}
+
+function bujeDeLaVms(g: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
+  g.fillStyle = "#2a2f35";
+  g.beginPath();
+  g.arc(cx, cy, r, 0, Math.PI * 2);
+  g.fill();
+}
+
+function cajaDeLaVms(
+  g: CanvasRenderingContext2D,
+  c: { readonly x: number; readonly y: number; readonly ancho: number; readonly alto: number },
+): void {
+  g.fillStyle = "#05070a";
+  g.strokeStyle = "#3a3f45";
+  g.lineWidth = 1;
+  g.fillRect(c.x, c.y, c.ancho, c.alto);
+  g.strokeRect(c.x, c.y, c.ancho, c.alto);
+}
+
 function pintarMensajes(
   g: CanvasRenderingContext2D,
   y: number,

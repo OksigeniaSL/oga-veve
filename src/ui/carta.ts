@@ -171,6 +171,19 @@ export function pixelesPorMetro(rangoEnMillas: number, radio: number): number {
  * misma cuenta: **dos fuentes para una misma distancia** es cómo se llega a
  * una carta que dice «4,0 NM» con el aeródromo fuera del cristal.
  */
+/** A cuántos metros del sitio ya no se le pinta camino en la carta. */
+export const YA_ESTA_AHI = 30;
+
+/**
+ * **El objetivo, si queda camino hasta él.** Posado en su helipuerto, el
+ * helicóptero lo tenía a cero metros, y la raya magenta y la marca de la rosa
+ * señalaban hacia donde cayera la cuenta de un rumbo a ninguna parte. Lo usan
+ * las dos pantallas de navegación: la del cuadro plano y la de la cabina en 3D.
+ */
+export function siQuedaCamino<T extends { readonly distancia: number }>(o: T | null): T | null {
+  return o && o.distancia >= YA_ESTA_AHI ? o : null;
+}
+
 export function millasHasta(p: Punto, yo: Punto): number {
   return Math.hypot(p.x - yo.x, p.z - yo.z) / MILLA;
 }

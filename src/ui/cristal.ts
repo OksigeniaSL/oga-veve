@@ -316,9 +316,18 @@ function radioaltimetro(cx: number, y: number, helicoptero = false): string {
  * **Lo que mide la radioaltura, dibujado**: el helicóptero, la flecha hasta el
  * suelo y el suelo. Ocupa el sitio de «RA» mientras no se lee.
  */
+/*
+ * En datos y aparte del SVG porque lo pintan dos: este cuadro y la pantalla de
+ * vuelo de la cabina en 3D, en su lienzo. Ver `world/pantallas-cabina.ts`.
+ */
+export const RADIOALTURA_DIBUJADA = {
+  trazo: "M4 2.5 H20 M12 2.5 V5 M17 8.5 H22.5 M11 12 V19.5 M8.6 17 L11 19.8 L13.4 17 M2.5 22 H21.5",
+  cuerpo: { cx: 11, cy: 8.5, rx: 6, ry: 3.4 },
+} as const;
+
 const DIBUJO_DE_LA_RADIOALTURA = `
-  <path class="cr__radio-dibujo" d="M4 2.5 H20 M12 2.5 V5 M17 8.5 H22.5 M11 12 V19.5 M8.6 17 L11 19.8 L13.4 17 M2.5 22 H21.5" />
-  <ellipse class="cr__radio-dibujo-cuerpo" cx="11" cy="8.5" rx="6" ry="3.4" />`;
+  <path class="cr__radio-dibujo" d="${RADIOALTURA_DIBUJADA.trazo}" />
+  <ellipse class="cr__radio-dibujo-cuerpo" cx="${RADIOALTURA_DIBUJADA.cuerpo.cx}" cy="${RADIOALTURA_DIBUJADA.cuerpo.cy}" rx="${RADIOALTURA_DIBUJADA.cuerpo.rx}" ry="${RADIOALTURA_DIBUJADA.cuerpo.ry}" />`;
 
 /**
  * El horizonte.
@@ -707,10 +716,18 @@ function cintaDeAltitud(
  * la ve también quien todavía no lee.
  */
 function helipuerto(cx: number, cy: number, r: number): string {
+  return `<circle class="cr__helipuerto" cx="${cx}" cy="${cy}" r="${r}" />
+            <path class="cr__helipuerto-h" d="${trazoDeLaH(cx, cy, r)}" />`;
+}
+
+/**
+ * La H del helipuerto, como trazo: la pinta este cuadro y la cinta de altitud
+ * de la cabina en 3D, que la dibuja con el mismo trazo en su lienzo.
+ */
+export function trazoDeLaH(cx: number, cy: number, r: number): string {
   const a = r * 0.4;
   const b = r * 0.55;
-  return `<circle class="cr__helipuerto" cx="${cx}" cy="${cy}" r="${r}" />
-            <path class="cr__helipuerto-h" d="M${cx - a} ${cy - b} V${cy + b} M${cx + a} ${cy - b} V${cy + b} M${cx - a} ${cy} H${cx + a}" />`;
+  return `M${cx - a} ${cy - b} V${cy + b} M${cx + a} ${cy - b} V${cy + b} M${cx - a} ${cy} H${cx + a}`;
 }
 
 /**
@@ -1249,7 +1266,7 @@ export const BARRA_DEL_TRAMO = 64;
  * («¿qué sentido tiene dibujar un avión en los cuadros de mandos si es un
  * helicóptero?»).
  */
-const SIMBOLO = {
+export const SIMBOLO = {
   avion: "M0 -12 l0 24 M-10 4 l20 0 M-5 12 l10 0",
   helicoptero: "M-9 -3 a9 9 0 1 0 18 0 a9 9 0 1 0 -18 0 M0 -9 l0 21 M-3.5 12 l7 0",
 } as const;
