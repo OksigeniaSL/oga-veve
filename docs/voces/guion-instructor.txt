@@ -677,3 +677,9 @@ Este es el rotor principal. Sus cuatro palas son alas que giran doscientas sesen
 Este es el plato oscilante, debajo del rotor. Cuando subís el colectivo, el plato sube, las palas se inclinan más y empujan más aire para abajo. Cuando movés el cíclico, el plato se inclina, y el rotor se inclina con él.
 Este es el rotor de cola, en el costado derecho. El rotor grande, al girar, empuja al helicóptero a girar para el otro lado, y el de cola lo aguanta. Con los pedales empuja más o menos, y la nariz gira.
 Este es el tren de aterrizaje. Sale para posarse, y después de despegar se recoge: la rueda de adelante, hacia atrás, y las de los costados, para arriba. Así el aire pasa mejor y el helicóptero va más rápido.
+Una roja y una blanca: vas bien
+Nariz un poquito abajo, hasta ver una blanca y una roja en las dos luces de al lado de la pista.
+Nariz un poquito arriba, hasta ver una blanca y una roja en las dos luces de al lado de la pista.
+Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver una blanca y una roja en las dos luces de al lado de la pista.
+Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver una blanca y una roja en las dos luces de al lado de la pista.
+El APAPI son dos luces al lado de la pista: es el PAPI corto de los aeropuertos chicos. Cada una se ve blanca desde arriba y roja desde abajo. Una blanca y una roja: vas por la senda. Las dos blancas, vas alto; las dos rojas, vas bajo.

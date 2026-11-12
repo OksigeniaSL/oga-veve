@@ -747,7 +747,8 @@ function claseDe(l: Lectura): string {
  *
  * - `marca`: la muesca magenta de la cinta de velocidad —«la marca rosa»—.
  * - `papi`: las cuatro luces al costado de la pista —dos blancas y dos
- *   rojas—. Solo donde las hay y se ven.
+ *   rojas—, o las dos del APAPI —una blanca y una roja—. Solo donde las hay
+ *   y se ven.
  * - `senda`: el rombo del desvío vertical en la pantalla de vuelo, en el
  *   avión que lo lleva —ver `equipoDeSenda`—.
  * - `aro`: los aros de la lección de aterrizar, en casa.
@@ -807,9 +808,17 @@ export function fraseDe(
    * pista» a siete mil pies no es verdad. Sin decir, la de la final.
    */
   modo: "bajada" | "final" = "final",
+  /**
+   * **Y qué luces son**: las cuatro del PAPI o las dos del APAPI, que en la
+   * senda no se ven «dos blancas y dos rojas» sino una de cada. Cada frase
+   * del PAPI tiene la suya del APAPI, con la misma clave acabada en `Apapi`.
+   */
+  indicador: "papi" | "apapi" = "papi",
 ): Frase {
   const perfil = modo === "bajada";
   const luces = objetivo === "papi";
+  const deLasLuces = (clave: string): string =>
+    indicador === "apapi" ? clave.replace(/Papi$/, "Apapi") : clave;
   /*
    * **Y lo que no se ve, no se nombra** (272, 273): sin el rombo ni las luces a
    * la vista —`objetivo` «nada»—, la misma frase sin el «hasta», que es su
@@ -822,7 +831,7 @@ export function fraseDe(
         ? delPerfil
         : (SIN_VER[delPerfil] ?? delPerfil)
       : luces
-        ? conLuces
+        ? deLasLuces(conLuces)
         : objetivo === "senda"
           ? conRombo
           : (SIN_VER[conRombo] ?? conRombo);
@@ -969,7 +978,7 @@ export function fraseDe(
       return {
         nueva:
           objetivo === "papi"
-            ? "vuelo.consejo.narizArribaPapi"
+            ? deLasLuces("vuelo.consejo.narizArribaPapi")
             : objetivo === "senda"
               ? "vuelo.consejo.narizArribaSenda"
               : null,

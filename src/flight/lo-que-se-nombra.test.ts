@@ -116,7 +116,11 @@ describe("no se nombra lo que no se ve", () => {
     for (const [clave, piezas] of Object.entries(NOMBRA)) {
       const texto = t(clave as TranslationKey);
       if (piezas.includes("rombo")) expect(texto, clave).toMatch(/rombo rosa.*al lado de la altura/);
-      if (piezas.includes("papi")) expect(texto, clave).toMatch(/cuatro luces de al lado de la pista/);
+      // Las cuatro del PAPI, y las dos del APAPI: cada una cuenta las suyas.
+      if (piezas.includes("papi"))
+        expect(texto, clave).toMatch(
+          /Apapi$/.test(clave) ? /una blanca y una roja en las dos luces de al lado de la pista/ : /cuatro luces de al lado de la pista/,
+        );
       if (piezas.includes("trafico")) expect(texto, clave).toMatch(/rombo del mapa/);
       // «La marca rosa» sola no dice cuál: hay cuatro cosas rosas en la pantalla.
       if (piezas.includes("marca")) expect(texto, clave).toMatch(/marca rosa de la velocidad|velocidad de la marca rosa|velocidad (siga )?en la marca rosa|velocidad la llevás vos, hasta la marca rosa/);

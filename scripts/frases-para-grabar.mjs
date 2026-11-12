@@ -90,7 +90,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -165,7 +165,7 @@ const HABLADOS = [
      * los sellos y el PAPI van al final de la lista: ver `DE_LOS_SELLOS` y
      * `DE_LOS_INSTRUMENTOS`.
      */
-    /\.corta$|^explica\.(oir|curiosidades)$|^explica\.sello\.|^explica\.papi\./,
+    /\.corta$|^explica\.(oir|curiosidades)$|^explica\.sello\.|^explica\.a?papi\./,
   ],
   /*
    * **Y lo que se cuenta antes de volar y al tocar el avión**: cada sitio de
@@ -2593,6 +2593,27 @@ const DEL_HELICOPTERO = [
   ["tarjeta.voz.trenHelicoptero", "lo que explica el punto del tren en la tarjeta del Super Puma, que se recoge"],
 ];
 for (const [id, para] of DEL_HELICOPTERO) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
+}
+/*
+ * **Y el APAPI** (12-11-2026): las dos luces de la 21 de Pedro Juan
+ * Caballero, que en la senda son una blanca y una roja y no dos y dos. La
+ * tarjeta de la senda, los cuatro consejos que apuntan a sus luces y lo que
+ * explica tocar la tarjeta. Detrás de todo, que lo grabado no se renumera.
+ * Ver `apapi` en `src/world/sendas-publicadas.ts`.
+ */
+const DEL_APAPI = [
+  ["vuelo.apapiBien", "en la final con APAPI, en la senda: una roja y una blanca"],
+  ["vuelo.consejo.narizAbajoApapi", "consejo de la final con APAPI: un poco alto, la nariz abajo hasta ver una de cada"],
+  ["vuelo.consejo.narizArribaApapi", "consejo de la final con APAPI: un poco bajo, la nariz arriba hasta ver una de cada"],
+  ["vuelo.consejo.masGasApapi", "consejo de la final con APAPI en el avión de cables: bajo, un toque de gas"],
+  ["vuelo.consejo.menosGasApapi", "consejo de la final con APAPI en el avión de cables: alto, menos gas"],
+  ["explica.apapi.texto", "lo que explica tocar la tarjeta del APAPI en la final"],
+];
+for (const [id, para] of DEL_APAPI) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });

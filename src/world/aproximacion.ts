@@ -16,7 +16,8 @@
  * cuatro luces al costado, cada una regulada a un ángulo distinto. Si vienes
  * alto las ves blancas, si vienes bajo las ves rojas, y si vienes bien ves dos
  * y dos. No hay número, no hay texto, no hay que saber nada. Rojo abajo,
- * blanco arriba, dos y dos es que vas bien.
+ * blanco arriba, dos y dos es que vas bien. Y en los campos pequeños, su
+ * hermano corto, el APAPI: dos luces, y bien es una de cada.
  *
  * Y hay un dicho entre pilotos para acordarse de lo que significa el rojo:
  * *red over red, you're dead*. Cuatro rojas quiere decir que vienes por debajo
@@ -49,30 +50,57 @@ import type { AyudasVisualesPublicadas, LucesDeAproximacion } from "./sendas-pub
 type Situado = Umbral & { readonly xy: Punto };
 
 /**
- * **Los cuatro ángulos del PAPI**, en grados, del más cerca de la pista al más
- * lejos, para una senda de `senda` grados: treinta y diez minutos por debajo
- * y por encima de ella, que es como se reglan las cuatro unidades (OACI,
- * Anexo 14, 5.3.5, y su manual de diseño, parte 4). Para tres grados, 2°30',
- * 2°50', 3°10' y 3°30'; para los 3,7° de la 21 de Lanzarote, de 3°12' a
- * 4°12'. Ver `sendas-publicadas.ts`.
+ * **Los cuatro ángulos del PAPI**, en grados, de la luz de junto a la pista a
+ * la de fuera, para una senda de `senda` grados: treinta y diez minutos por
+ * encima y por debajo de ella, que es como se reglan las cuatro unidades, **la
+ * más alta junto a la pista** (OACI, Doc 9157, *Manual de diseño de
+ * aeródromos*, parte 4, 8.3.5 y tabla 8-1). Para tres grados, 3°30', 3°10',
+ * 2°50' y 2°30'; para los 3,7° de la 21 de Lanzarote, de 4°12' a 3°12'. Ver
+ * `sendas-publicadas.ts`.
+ *
+ * **Y el orden es lo que se ve.** Bajando, la primera que se pone roja es la
+ * de más arriba, que es la de junto a la pista; en la senda, las dos rojas
+ * van junto a la pista y las dos blancas por fuera. Estaba al revés, con la
+ * de junto a la pista reglada la más baja: en la final se veían las rojas
+ * por fuera, al contrario que en cualquier aeropuerto y que en la figura del
+ * PAPI del propio juego (`ui/figuras/papi.ts`).
  */
 export function angulosDelPapi(senda = 3): readonly number[] {
-  return [senda - 0.5, senda - 1 / 6, senda + 1 / 6, senda + 0.5];
+  return angulosDelIndicador(senda, 4);
 }
 
 /**
- * Cuántas de las cuatro luces se ven blancas desde un ángulo dado, de 0 a 4.
+ * **Los ángulos de las luces de un PAPI o de un APAPI**, de la de junto a la
+ * pista a la de fuera. Las cuatro del PAPI, en `angulosDelPapi`; las dos del
+ * APAPI, quince minutos por encima y por debajo de la senda: 3°15' y 2°45'
+ * para tres grados (Doc 9157, parte 4, 8.3.6 y tabla 8-1).
+ */
+export function angulosDelIndicador(senda: number, unidades: 2 | 4): readonly number[] {
+  return unidades === 2
+    ? [senda + 0.25, senda - 0.25]
+    : [senda + 0.5, senda + 1 / 6, senda - 1 / 6, senda - 0.5];
+}
+
+/**
+ * Cuántas luces se ven blancas desde un ángulo dado: de 0 a 4 en un PAPI, de
+ * 0 a 2 en un APAPI.
  *
  * Es **la lectura del PAPI**, y la usan dos: las luces del mundo, para
  * pintarse, y la pantalla, para explicarlas. Tiene que salir de un solo sitio
  * o acabarían diciendo cosas distintas del mismo avión.
  *
- * Cuatro blancas es venir alto; cuatro rojas, bajo; dos y dos, en la senda. La
- * unidad más cercana a la pista es la del ángulo más pequeño, así que las
- * blancas se cuentan desde ella hacia fuera.
+ * Todas blancas es venir alto; todas rojas, bajo; la mitad de cada, en la
+ * senda: dos y dos en el PAPI, una y una en el APAPI. Ver `enLaSenda`. La
+ * unidad de fuera es la del ángulo más pequeño, así que las blancas se
+ * cuentan desde ella hacia la pista.
  */
-export function blancasDePapi(grados: number, senda = 3): number {
-  return angulosDelPapi(senda).filter((a) => grados >= a).length;
+export function blancasDePapi(grados: number, senda = 3, unidades: 2 | 4 = 4): number {
+  return angulosDelIndicador(senda, unidades).filter((a) => grados >= a).length;
+}
+
+/** Cuántas blancas son la senda: la mitad de las luces. Dos en el PAPI, una en el APAPI. */
+export function blancasEnLaSenda(unidades: 2 | 4 = 4): number {
+  return unidades / 2;
 }
 
 /** Blanco de luz y rojo de luz. Ni uno ni otro son el blanco y el rojo del HUD. */
@@ -127,6 +155,12 @@ export function medioAnchoDeLaBarra(d: number): number {
 const PAPI_ADENTRO = 300;
 const PAPI_DEL_BORDE = 15;
 const PAPI_SEPARACION = 9;
+/**
+ * Y las del APAPI: la luz de dentro a diez metros del borde de la pista y seis
+ * entre las dos (Doc 9157, parte 4, 8.3.2 y 8.3.3).
+ */
+const APAPI_DEL_BORDE = 10;
+const APAPI_SEPARACION = 6;
 
 /** El radio de cada luz del PAPI dibujada a su tamaño, m. */
 const RADIO_DE_LUZ_DEL_PAPI = 1.1;
@@ -199,9 +233,9 @@ export interface AyudaVisual {
   readonly xy: Punto;
 }
 
-/** Dónde acaban las cuatro luces, y si eso se midió o se dedujo. */
+/** Dónde acaban las luces, y si eso se midió o se dedujo. */
 export interface SitioDelPapi {
-  /** Las cuatro, de la más cercana al eje a la más lejana. */
+  /** Las cuatro, o las dos del APAPI, de la más cercana al eje a la más lejana. */
   readonly luces: readonly Punto[];
   readonly origen: "osm" | "calculado";
 }
@@ -244,14 +278,18 @@ export function sitiarPapi(
    * trae, mandan ellas.
    */
   aLaDerecha = false,
+  /** Cuatro luces, o las dos de un APAPI. */
+  unidades: 2 | 4 = 4,
 ): SitioDelPapi {
   const [ux, uy] = eje;
   // A la izquierda vista desde la aproximación, que es donde va un PAPI solo.
   const izquierda: Punto = [-uy, ux];
+  const separacion = unidades === 2 ? APAPI_SEPARACION : PAPI_SEPARACION;
+  const delBorde = unidades === 2 ? APAPI_DEL_BORDE : PAPI_DEL_BORDE;
 
   const calculada = (adentro: number, sitio: number, signo: number): Punto[] =>
-    Array.from({ length: 4 }, (_, k) => {
-      const lado = signo * (sitio + k * PAPI_SEPARACION);
+    Array.from({ length: unidades }, (_, k) => {
+      const lado = signo * (sitio + k * separacion);
       return [
         entrada[0] + ux * adentro + izquierda[0] * lado,
         entrada[1] + uy * adentro + izquierda[1] * lado,
@@ -259,7 +297,7 @@ export function sitiarPapi(
     });
 
   const porDefecto: SitioDelPapi = {
-    luces: calculada(PAPI_ADENTRO, ancho / 2 + PAPI_DEL_BORDE, aLaDerecha ? -1 : 1),
+    luces: calculada(PAPI_ADENTRO, ancho / 2 + delBorde, aLaDerecha ? -1 : 1),
     origen: "calculado",
   };
 
@@ -298,8 +336,8 @@ export function sitiarPapi(
   const signo = grupo === izq ? 1 : -1;
   grupo.sort((a, b) => Math.abs(a.lado) - Math.abs(b.lado));
 
-  if (grupo.length >= 4) {
-    return { luces: grupo.slice(0, 4).map((a) => a.xy), origen: "osm" };
+  if (grupo.length >= unidades) {
+    return { luces: grupo.slice(0, unidades).map((a) => a.xy), origen: "osm" };
   }
 
   /*
@@ -362,6 +400,12 @@ export interface Aproximacion {
    * tiene. Ver `sendas-publicadas.ts`.
    */
   readonly senda: number | null;
+  /**
+   * **Cuántas luces tiene**: cuatro el PAPI, dos el APAPI, y ninguna si la
+   * cabecera no tiene ni lo uno ni lo otro. La senda es la mitad blancas: ver
+   * `blancasEnLaSenda`.
+   */
+  readonly unidades: 0 | 2 | 4;
   dispose(): void;
 }
 
@@ -387,7 +431,8 @@ export function crearAproximacion(
   const senda = publicado.papi;
   const deAproximacion = publicado.luces;
   if (senda === null && !deAproximacion) return null;
-  const ANGULOS = angulosDelPapi(senda ?? 3);
+  const unidades: 2 | 4 = publicado.apapi ? 2 : 4;
+  const ANGULOS = angulosDelIndicador(senda ?? 3, unidades);
   const conNombre = Object.entries(pista.thresholds).filter(
     (e): e is [string, Situado] => e[1] !== null && e[1].xy !== null,
   );
@@ -517,18 +562,18 @@ export function crearAproximacion(
   const sitio =
     senda === null
       ? null
-      : sitiarPapi(toma, [ux, uy], ancho, largo - desplazado, ayudas, publicado.papiALaDerecha);
+      : sitiarPapi(toma, [ux, uy], ancho, largo - desplazado, ayudas, publicado.papiALaDerecha, unidades);
   const papi = sitio
     ? new InstancedMesh(
         new SphereGeometry(RADIO_DE_LUZ_DEL_PAPI, 8, 6),
         new MeshBasicMaterial(),
-        4,
+        unidades,
       )
     : null;
   /*
-   * Las cuatro, en el orden que importa: la más cerca del eje es la del ángulo
-   * más bajo. Así, en la senda, las dos de dentro salen blancas y las dos de
-   * fuera rojas.
+   * Las cuatro, o las dos, en el orden que importa: la más cerca del eje es la
+   * del ángulo más alto. Así, en la senda, las de junto a la pista salen rojas
+   * y las de fuera blancas. Ver `angulosDelPapi`.
    */
   const luces: { x: number; y: number; z: number }[] = [];
   if (sitio && papi) {
@@ -566,7 +611,7 @@ export function crearAproximacion(
       pixelesPorRadian,
       filaDelPapi,
     );
-    // Mover cuatro matrices cuesta poco, pero sin cambio no se mueve nada.
+    // Mover cuatro matrices cuesta poco, pero sin cambio no se mueve ninguna.
     if (
       Math.abs(e.fila - escalaPuesta.fila) < 0.01 * escalaPuesta.fila &&
       Math.abs(e.luz - escalaPuesta.luz) < 0.01 * escalaPuesta.luz
@@ -596,7 +641,7 @@ export function crearAproximacion(
   const tono = new Color();
   const mirarDesde = (x: number, y: number, z: number): void => {
     if (!papi) return;
-    for (let k = 0; k < 4; k++) {
+    for (let k = 0; k < unidades; k++) {
       const l = luces[k]!;
       const suelo = Math.hypot(x - l.x, z - l.z);
       /*
@@ -632,6 +677,7 @@ export function crearAproximacion(
     verDesde,
     papiAdentro,
     senda,
+    unidades: sitio ? unidades : 0,
     dispose() {
       grupo.traverse((o) => {
         const g = (o as { geometry?: BufferGeometry }).geometry;

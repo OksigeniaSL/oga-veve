@@ -681,22 +681,35 @@ const SENALERO_CORTAR = senalero(`
  * se lee igual sin distinguir el rojo del verde — que es medio hombre de cada
  * doce. En el mundo las luces son rojas y blancas de verdad, como manda; aquí
  * lo que hay que entender es **cuántas de cada** y hacia dónde.
+ *
+ * **Y en su orden**, que es el que se ve desde la final con el PAPI a la
+ * izquierda de la pista: las blancas por fuera y las rojas junto a la pista,
+ * a la derecha. Bajando, la primera que se pone roja es la de junto a la
+ * pista, que es la reglada más alta (OACI, Doc 9157, parte 4, 8.3.5). Estaba
+ * al revés, con las rojas por fuera. Ver `angulosDelPapi` en
+ * `world/aproximacion.ts`.
+ *
+ * El APAPI, el PAPI corto de los campos chicos, con sus dos luces: `unidades`
+ * dos, y la senda es una de cada.
  */
-const papi = (blancas: number): string => {
-  const luces = [0, 1, 2, 3]
+const papi = (blancas: number, unidades: 2 | 4 = 4): string => {
+  // Las dos del APAPI, con la misma separación y centradas en el hueco.
+  const desde = unidades === 4 ? 3.4 : 3.4 + 5.7;
+  const luces = Array.from({ length: unidades }, (_, i) => i)
     .map(
       (i) =>
-        `<circle cx="${3.4 + i * 5.7}" cy="7.5" r="2.5"${
-          i < 4 - blancas ? ' class="senal__roja"' : ""
+        `<circle cx="${(desde + i * 5.7).toFixed(1)}" cy="7.5" r="2.5"${
+          i >= blancas ? ' class="senal__roja"' : ""
         } />`,
     )
     .join("");
   // La flecha dice qué hacer: subir si sobran rojas, bajar si sobran blancas.
-  // Con dos y dos no hay nada que hacer, y entonces lo que sale es el visto.
+  // Con la mitad de cada no hay nada que hacer, y entonces lo que sale es el visto.
+  const mitad = unidades / 2;
   const gesto =
-    blancas >= 3
+    blancas > mitad
       ? '<path d="M12 22 L7 15 h3.4 v-2.4 h3.2 V15 H17 Z" />'
-      : blancas <= 1
+      : blancas < mitad
         ? '<path d="M12 12.4 L17 19.4 h-3.4 v2.4 h-3.2 v-2.4 H7 Z" />'
         : '<path d="M6.2 17.2 l1.9-1.9 2.5 2.5 5.3-5.3 1.9 1.9-7.2 7.2 Z" />';
   return icono(`${luces}${gesto}`);
@@ -1643,6 +1656,9 @@ export const DIBUJOS = {
   papi2: papi(2),
   papi3: papi(3),
   papi4: papi(4),
+  apapi0: papi(0, 2),
+  apapi1: papi(1, 2),
+  apapi2: papi(2, 2),
   "aro-alto": ARO_ALTO,
   "aro-bajo": ARO_BAJO,
   "senalero-adelante": SENALERO_ADELANTE,

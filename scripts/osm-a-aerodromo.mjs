@@ -1224,8 +1224,20 @@ for (const icao of icaos) {
    * fichero de arriba, no objetos con `manual`, y sin esto se caían en la
    * primera extracción. Ver `Aerodrome.sinTorre`.
    */
-  for (const clave of ["privado", "granja", "sinTorre", "afis", "salidasPorInterseccion", "pasarelas", "helipuertosAMano"])
+  for (const clave of ["privado", "granja", "sinTorre", "afis", "salidasPorInterseccion", "pasarelas", "helipuertosAMano", "lucesAMano"])
     if (previo && clave in previo) salida[clave] = previo[clave];
+  /*
+   * **Y las luces de la pista que publica el AIP**, que mandan sobre las dos
+   * fuentes. OpenStreetMap y OurAirports traen la de Pedro Juan Caballero sin
+   * luces, y su AIP le publica las de borde, de umbral, de final y de rodaje:
+   * con `lit` sacado de ellas, el juego no pintaba ninguna. Van en
+   * `lucesAMano`, con su fuente, y se ponen aquí en cada pista que nombra, para
+   * que la próxima extracción no vuelva a apagarla. Ver `Aerodrome.lucesAMano`.
+   */
+  for (const pista of salida.runways) {
+    const conLuces = salida.lucesAMano?.pistas?.[pista.ref];
+    if (typeof conLuces === "boolean") pista.lit = conLuces;
+  }
   /*
    * Y la nota escrita a mano se queda.
    *

@@ -2272,6 +2272,12 @@ export const ES_PY = {
   "vuelo.papiBajo": "Luces rojas: vas bajo, subí",
   "vuelo.papiBien": "Dos rojas y dos blancas: vas bien",
   /*
+   * **Y el APAPI**, el PAPI corto de los campos chicos: dos luces, y la senda
+   * es una de cada. Alto y bajo se dicen igual —luces blancas, luces rojas—.
+   * Ver `apapi` en `world/sendas-publicadas.ts`.
+   */
+  "vuelo.apapiBien": "Una roja y una blanca: vas bien",
+  /*
    * **Los consejos de la bajada y la final: la acción y el objetivo.**
    *
    * «No es que la instructora me corrija, es que no sé lo que tengo que
@@ -2299,6 +2305,15 @@ export const ES_PY = {
     "Nariz un poquito abajo, hasta ver dos blancas y dos rojas en las cuatro luces de al lado de la pista.",
   "vuelo.consejo.narizArribaPapi":
     "Nariz un poquito arriba, hasta ver dos blancas y dos rojas en las cuatro luces de al lado de la pista.",
+  // Y las del APAPI, que son dos luces: en la senda, una blanca y una roja.
+  "vuelo.consejo.narizAbajoApapi":
+    "Nariz un poquito abajo, hasta ver una blanca y una roja en las dos luces de al lado de la pista.",
+  "vuelo.consejo.narizArribaApapi":
+    "Nariz un poquito arriba, hasta ver una blanca y una roja en las dos luces de al lado de la pista.",
+  "vuelo.consejo.masGasApapi":
+    "Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver una blanca y una roja en las dos luces de al lado de la pista.",
+  "vuelo.consejo.menosGasApapi":
+    "Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver una blanca y una roja en las dos luces de al lado de la pista.",
   "vuelo.consejo.narizAbajoSenda":
     "Nariz un poquito abajo, hasta que el rombo rosa, el de al lado de la altura, quede en el medio.",
   "vuelo.consejo.narizArribaSenda":
@@ -3577,6 +3592,14 @@ export const ES_PY = {
   "explica.papi.corta": "Las luces de la senda",
   "explica.papi.texto":
     "El PAPI son cuatro luces al lado de la pista. Cada una se ve blanca desde arriba y roja desde abajo. Dos blancas y dos rojas: vas por la senda. Más blancas, vas alto; más rojas, vas bajo.",
+  /*
+   * **Y el APAPI**, que se abre tocando su tarjeta en la final de la 21 de
+   * Pedro Juan Caballero: dos luces y no cuatro. Sin la figura del PAPI, que
+   * enseña cuatro.
+   */
+  "explica.apapi.corta": "Las dos luces de la senda",
+  "explica.apapi.texto":
+    "El APAPI son dos luces al lado de la pista: es el PAPI corto de los aeropuertos chicos. Cada una se ve blanca desde arriba y roja desde abajo. Una blanca y una roja: vas por la senda. Las dos blancas, vas alto; las dos rojas, vas bajo.",
   // ── Las figuras de los instrumentos por dentro. Ver `ui/figuras/` ──
   "tarjeta.porDentro": "Por dentro",
   "tarjeta.porDentro.lector": "Ver cómo funciona por dentro",

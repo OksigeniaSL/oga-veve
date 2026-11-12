@@ -580,6 +580,17 @@ const DEL_MUNDO: readonly Explicacion[] = [
     ...claves("papi"),
     figura: FIGURAS.papi,
   },
+  /*
+   * **Y el APAPI**, el de dos luces, que se abre tocando su tarjeta en la
+   * final de la 21 de Pedro Juan Caballero. Sin la figura del PAPI, que enseña
+   * cuatro luces y no dos.
+   */
+  {
+    id: "apapi",
+    rotulo: "APAPI",
+    dibujo: { senal: "apapi1" },
+    ...claves("apapi"),
+  },
 ];
 
 /**

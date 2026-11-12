@@ -677,3 +677,9 @@
 677	tarjeta.voz.plato	Este es el plato oscilante, debajo del rotor. Cuando subís el colectivo, el plato sube, las palas se inclinan más y empujan más aire para abajo. Cuando movés el cíclico, el plato se inclina, y el rotor se inclina con él.
 678	tarjeta.voz.rotorDeCola	Este es el rotor de cola, en el costado derecho. El rotor grande, al girar, empuja al helicóptero a girar para el otro lado, y el de cola lo aguanta. Con los pedales empuja más o menos, y la nariz gira.
 679	tarjeta.voz.trenHelicoptero	Este es el tren de aterrizaje. Sale para posarse, y después de despegar se recoge: la rueda de adelante, hacia atrás, y las de los costados, para arriba. Así el aire pasa mejor y el helicóptero va más rápido.
+680	vuelo.apapiBien	Una roja y una blanca: vas bien
+681	vuelo.consejo.narizAbajoApapi	Nariz un poquito abajo, hasta ver una blanca y una roja en las dos luces de al lado de la pista.
+682	vuelo.consejo.narizArribaApapi	Nariz un poquito arriba, hasta ver una blanca y una roja en las dos luces de al lado de la pista.
+683	vuelo.consejo.masGasApapi	Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver una blanca y una roja en las dos luces de al lado de la pista.
+684	vuelo.consejo.menosGasApapi	Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver una blanca y una roja en las dos luces de al lado de la pista.
+685	explica.apapi.texto	El APAPI son dos luces al lado de la pista: es el PAPI corto de los aeropuertos chicos. Cada una se ve blanca desde arriba y roja desde abajo. Una blanca y una roja: vas por la senda. Las dos blancas, vas alto; las dos rojas, vas bajo.

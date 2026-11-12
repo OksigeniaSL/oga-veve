@@ -44,7 +44,10 @@ fuentes sale como `null`:
   —precisión, no precisión, visual— y se dibujan procedimentalmente.
 - **PAPI y luces de aproximación** (`papi`, `approachLights`). En OSM hay
   nodos `aeroway=navigationaid`, que son ayudas **visuales**, pero sin decir
-  cuál es cuál. Salen en `visualAids` como posiciones y ya está.
+  cuál es cuál. Salen en `visualAids` como posiciones y ya está. Si cada
+  cabecera tiene PAPI, APAPI o luces de aproximación, y de qué tipo, lo dice
+  su AIP, y está en `src/world/sendas-publicadas.ts` con su enmienda: aquí se
+  quedan en `null`.
 - **Altura de los edificios**, salvo que alguien la haya mapeado.
 
 Para retocar algo sin perderlo, se le añade `"manual": true` al objeto:
@@ -56,6 +59,16 @@ Para retocar algo sin perderlo, se le añade `"manual": true` al objeto:
 El extractor conserva intacto cualquier objeto con esa marca. Sin eso, un
 ajuste duraría hasta la siguiente extracción y nadie volvería a ejecutar el
 extractor.
+
+Y si una pista tiene luces, que las dos fuentes sacan de `lit` en OSM y
+`lighted` en OurAirports, se corrige con `lucesAMano`, con su fuente: la
+extracción lo conserva y lo copia a `lit` de cada pista que nombra. Pedro Juan
+Caballero salía sin luces y su AIP le publica las de borde, umbral, final y
+rodaje:
+
+```json
+"lucesAMano": { "pistas": { "03/21": true }, "fuente": "AIP Paraguay (DINAC), AD 2.4-14…" }
+```
 
 ## Verificación
 

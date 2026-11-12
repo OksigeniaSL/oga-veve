@@ -2,6 +2,7 @@
   "id": "SGPJ",
   "name": "Aeropuerto Nacional Dr. Augusto Roberto Fuster",
   "afis": true,
+  "lucesAMano": {"pistas": {"03/21": true}, "fuente": "AIP Paraguay (DINAC), AD 2.4-14 y AD 2.4-15 SGPJ, página AD 2.4-6 del 19 JUL 18 en el paquete AMDT AIRAC 02/2026 (en vigor desde el 1-OCT-2026), leído el 12-NOV-2026: luces de borde de pista de 1800 M cada 60 M, ámbar y blancas, umbral verde y final rojo en las dos cabeceras, APAPI a la izquierda de la 21 y luces de borde en toda la calle de rodaje. OpenStreetMap y OurAirports la traen sin luces."},
   "source": {
     "osm": "overpass",
     "extracted": "2026-09-24",
@@ -18,7 +19,7 @@
       "ref": "03/21",
       "widthM": 29.9,
       "surface": "ASP",
-      "lit": false,
+      "lit": true,
       "centerline": [
         [
           -227.8,

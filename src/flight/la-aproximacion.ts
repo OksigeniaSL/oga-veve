@@ -40,7 +40,7 @@ import {
 import type { MotivoDeIrse, Reparto } from "../hechos";
 import type { Circuito, TramoDeCircuito } from "../world/circuito";
 import { ALTURA_DE_CIRCUITO } from "../world/circuito";
-import { blancasDePapi } from "../world/aproximacion";
+import { blancasDePapi, blancasEnLaSenda } from "../world/aproximacion";
 import { enElEmbudoDeFinal } from "../world/runway-guide";
 import { enEjesDePista } from "../world/rumbo";
 import type { Vaca } from "../world/vaca";
@@ -128,6 +128,11 @@ export interface CampoDeLaAproximacion {
    * casi todas; 3,7 en la 21 de Lanzarote. Ver `world/sendas-publicadas.ts`.
    */
   readonly angulo?: number;
+  /**
+   * **Cuántas luces tiene su PAPI**: cuatro, o dos si es un APAPI, como el de
+   * la 21 de Pedro Juan Caballero. Sin decir, cuatro. Ver `blancasDePapi`.
+   */
+  readonly unidadesDelPapi?: 2 | 4;
   /**
    * **Si no tiene torre**: una pista particular o sin servicio. Ahí lo que
    * puede cruzarse es la vaca, y se ve. Ver `mirarSiMandanFrustrar`.
@@ -794,14 +799,15 @@ export class LaAproximacion {
     // Muy cerca del umbral el ángulo se dispara y el PAPI de verdad tampoco
     // sirve: se mira hasta la valla y a partir de ahí se mira la pista.
     if (suelo < 150 || suelo > 6000) return;
-    const blancas = blancasDePapi((Math.atan2(alto, suelo) * 180) / Math.PI, this.campo.angulo);
+    const unidades = this.campo.unidadesDelPapi ?? 4;
+    const blancas = blancasDePapi((Math.atan2(alto, suelo) * 180) / Math.PI, this.campo.angulo, unidades);
     if (blancas === this.papiEnPantalla) return;
     // La primera lectura no se anuncia si ya venís bien: la tarjeta es para
     // enseñar a corregir, no para felicitar a quien todavía no ha hecho nada.
     const primera = this.papiEnPantalla === null;
     this.papiEnPantalla = blancas;
-    if (primera && blancas === 2) return;
-    this.mundo.hechos.emit("papi", { blancas });
+    if (primera && blancas === blancasEnLaSenda(unidades)) return;
+    this.mundo.hechos.emit("papi", { blancas, unidades });
   }
 
   /**

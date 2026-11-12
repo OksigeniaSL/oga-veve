@@ -5,7 +5,16 @@
  */
 import { describe, expect, it } from "vitest";
 import { Color, type InstancedMesh } from "three";
-import { angulosDelPapi, barrasDe, blancasDePapi, crearAproximacion } from "./aproximacion";
+import {
+  angulosDelIndicador,
+  angulosDelPapi,
+  barrasDe,
+  blancasDePapi,
+  blancasEnLaSenda,
+  crearAproximacion,
+  sitiarPapi,
+} from "./aproximacion";
+import { DIBUJOS } from "../ui/senal";
 import { SCENARIOS as SIN_COMPLETAR, conSuAerodromo, oaciDe } from "./scenarios";
 import {
   ayudasVisuales,
@@ -20,7 +29,7 @@ import {
 import { cabeceraEnUso } from "./terrain";
 import { alturaDeLaSendaDeLaFinal, desvioEnLaFinal, ritmoDeLaSenda } from "../flight/perfil-vertical";
 import { altitudDelPerfil, MILLA, perfilDeLaBajada } from "../flight/ruta";
-import { COLOR_DE_PISTA, lucesDePista, type Pista, type Umbral } from "./aerodrome";
+import { COLOR_DE_PISTA, colorVisto, lucesDePista, type Pista, type Umbral } from "./aerodrome";
 
 /** Con el aeródromo de los que lo traen aparte, como los monta `main.ts`: ver `aerodromoAparte`. */
 const SCENARIOS = await Promise.all(SIN_COMPLETAR.map(conSuAerodromo));
@@ -116,12 +125,34 @@ describe("el PAPI reglado a la senda de su pista", () => {
     return n;
   };
 
-  it("los cuatro ángulos, treinta y diez minutos a cada lado de la senda", () => {
+  it("los cuatro ángulos, treinta y diez minutos a cada lado de la senda, el más alto junto a la pista", () => {
+    // Doc 9157, parte 4, tabla 8-1: de la de junto a la pista a la de fuera.
     const a = angulosDelPapi(3);
-    expect(a[0]).toBeCloseTo(2.5, 6);
-    expect(a[1]).toBeCloseTo(2 + 50 / 60, 6);
-    expect(a[2]).toBeCloseTo(3 + 10 / 60, 6);
-    expect(a[3]).toBeCloseTo(3.5, 6);
+    expect(a[0]).toBeCloseTo(3.5, 6);
+    expect(a[1]).toBeCloseTo(3 + 10 / 60, 6);
+    expect(a[2]).toBeCloseTo(2 + 50 / 60, 6);
+    expect(a[3]).toBeCloseTo(2.5, 6);
+  });
+
+  it("en la senda, las rojas junto a la pista y las blancas por fuera, como el de verdad", () => {
+    const a = crearAproximacion(PISTA, "21", () => 0, [], { ...SIN_AYUDAS_VISUALES, papi: 3 })!;
+    const d = 2000 + a.papiAdentro;
+    a.mirarDesde(-2000, Math.tan((3 * Math.PI) / 180) * d + 1, 0);
+    const papi = a.grupo.getObjectByName("papi") as InstancedMesh;
+    const c = new Color();
+    // La malla va de la de junto a la pista a la de fuera.
+    const colores = Array.from({ length: 4 }, (_, k) => (papi.getColorAt(k, c), c.b > 0.5 ? "blanca" : "roja"));
+    expect(colores).toEqual(["roja", "roja", "blanca", "blanca"]);
+  });
+
+  it("y la tarjeta las dibuja igual: blancas a la izquierda, rojas junto a la pista", () => {
+    const rojas = (svg: string) =>
+      [...svg.matchAll(/<circle[^>]*>/g)].map((m) => m[0].includes("senal__roja"));
+    expect(rojas(DIBUJOS.papi2)).toEqual([false, false, true, true]);
+    expect(rojas(DIBUJOS.papi1)).toEqual([false, true, true, true]);
+    expect(rojas(DIBUJOS.apapi1)).toEqual([false, true]);
+    expect(rojas(DIBUJOS.apapi2)).toEqual([false, false]);
+    expect(rojas(DIBUJOS.apapi0)).toEqual([true, true]);
   });
 
   it("en la 21 de Lanzarote, a 3,7° dos y dos; y por tres grados, cuatro rojas", () => {
@@ -297,7 +328,7 @@ describe("las luces de umbral, de final y de borde, las de su AIP", () => {
     luces.filter((l) => l.desdeElFin === color || l.desdeElPrincipio === color).length;
 
   it("en la 18R/36L de Barajas, la barra verde solo en la 18R: la 36L es de despegar", () => {
-    expect(lucesDePistaPublicadas("LEMD", "36L")).toEqual({ umbral: false, extremo: true, ambar: true });
+    expect(lucesDePistaPublicadas("LEMD", "36L")).toEqual({ umbral: false, extremo: true, ambar: true, ambarM: 600 });
     expect(lucesDePistaPublicadas("LEMD", "18R").umbral).toBe(true);
     // Una fila de once, y no dos.
     expect(cuantas(lucesDe("LEMD", "36L"), verde)).toBe(11);
@@ -319,6 +350,128 @@ describe("las luces de umbral, de final y de borde, las de su AIP", () => {
   });
 
   it("y lo que no está en la tabla, con las de siempre", () => {
-    expect(lucesDePistaPublicadas("SGOG", "15")).toEqual({ umbral: true, extremo: true, ambar: true });
+    expect(lucesDePistaPublicadas("SGOG", "15")).toEqual({ umbral: true, extremo: true, ambar: true, ambarM: null });
+  });
+});
+
+/*
+ * **El APAPI de la 21 de Pedro Juan Caballero**: dos luces y no cuatro, a
+ * 3°15' la de junto a la pista y a 2°45' la de fuera (Doc 9157, parte 4,
+ * 8.3.6 y tabla 8-1). Las dos blancas, alto; una de cada, en la senda; las
+ * dos rojas, bajo.
+ */
+describe("el APAPI: dos luces, y la senda es una de cada", () => {
+  it("sus dos ángulos, quince minutos a cada lado de la senda", () => {
+    const a = angulosDelIndicador(3, 2);
+    expect(a).toHaveLength(2);
+    expect(a[0]).toBeCloseTo(3.25, 6);
+    expect(a[1]).toBeCloseTo(2.75, 6);
+    expect(blancasEnLaSenda(2)).toBe(1);
+    expect(blancasEnLaSenda(4)).toBe(2);
+  });
+
+  it("alto, las dos blancas; en la senda, una y una; bajo, las dos rojas", () => {
+    expect(blancasDePapi(3.6, 3, 2)).toBe(2);
+    expect(blancasDePapi(3.0, 3, 2)).toBe(1);
+    expect(blancasDePapi(2.5, 3, 2)).toBe(0);
+    // Y un PAPI desde los mismos ángulos, con las suyas.
+    expect(blancasDePapi(3.0)).toBe(2);
+  });
+
+  it("la de dentro a diez metros del borde, y seis entre las dos", () => {
+    const s = sitiarPapi([0, 0], [1, 0], 30, 1800, [], false, 2);
+    expect(s.luces).toHaveLength(2);
+    expect(s.luces[0]![1]).toBeCloseTo(15 + 10, 6);
+    expect(s.luces[1]![1] - s.luces[0]![1]).toBeCloseTo(6, 6);
+  });
+
+  it("la 21 de Pedro Juan monta un APAPI, y no un PAPI; la 03, nada", () => {
+    const esc = SCENARIOS.find((e) => e.id === "pedro-juan")!;
+    const aero = esc.aerodrome!;
+    const publicado = ayudasVisuales(oaciDe(esc), "21");
+    expect(publicado.apapi).toBe(true);
+    expect(publicado.papi).toBe(3);
+    const a = crearAproximacion(aero.runways[0]!, "21", () => 0, aero.visualAids ?? [], publicado)!;
+    const luces = a.grupo.getObjectByName("papi") as InstancedMesh;
+    expect(luces.count).toBe(2);
+    expect(a.unidades).toBe(2);
+    // Sin luces de aproximación: «NIL» en su 2.14.
+    expect(a.grupo.getObjectByName("luces-aproximacion")).toBeUndefined();
+    // Y en la senda, la de junto a la pista roja y la de fuera blanca.
+    const dentro = 2000 + a.papiAdentro;
+    const { u, ux, uy } = (() => {
+      const pista = aero.runways[0]!;
+      const p = pista.thresholds["21"]!.xy!;
+      const q = pista.thresholds["03"]!.xy!;
+      const l = Math.hypot(q[0] - p[0], q[1] - p[1]);
+      return { u: p, ux: (q[0] - p[0]) / l, uy: (q[1] - p[1]) / l };
+    })();
+    a.mirarDesde(u[0] - ux * 2000, Math.tan((3 * Math.PI) / 180) * dentro + 1, -(u[1] - uy * 2000));
+    const c = new Color();
+    const colores = [0, 1].map((k) => (luces.getColorAt(k, c), c.b > 0.5 ? "blanca" : "roja"));
+    expect(colores).toEqual(["roja", "blanca"]);
+    expect(crearAproximacion(aero.runways[0]!, "03", () => 0, aero.visualAids ?? [], ayudasVisuales("SGPJ", "03"))).toBeNull();
+  });
+
+  it("y su pista, con las luces que publica su AIP: puestas a mano, con su fuente", () => {
+    const esc = SCENARIOS.find((e) => e.id === "pedro-juan")!;
+    const aero = esc.aerodrome!;
+    expect(aero.runways[0]!.lit).toBe(true);
+    expect(aero.lucesAMano?.pistas["03/21"]).toBe(true);
+    expect(aero.lucesAMano?.fuente).toMatch(/AD 2\.4-14.*AMDT AIRAC 02\/2026/);
+    const { verde, roja, ambar } = COLOR_DE_PISTA;
+    const luces = lucesDePista(aero.runways[0]!, () => 0, "SGPJ");
+    const con = (color: number) => luces.some((l) => l.desdeElFin === color || l.desdeElPrincipio === color);
+    expect(con(verde) && con(roja) && con(ambar)).toBe(true);
+  });
+
+  it("y en todos los ficheros, cada pista puesta a mano con las luces que dice su nota", () => {
+    for (const esc of SCENARIOS) {
+      const aero = esc.aerodrome;
+      if (!aero?.lucesAMano) continue;
+      for (const [ref, conLuces] of Object.entries(aero.lucesAMano.pistas)) {
+        const pista = aero.runways.find((r) => r.ref === ref);
+        expect(pista, `${aero.id} ${ref}`).toBeDefined();
+        expect(pista!.lit, `${aero.id} ${ref}`).toBe(conLuces);
+      }
+    }
+  });
+});
+
+describe("el ámbar del borde, con los metros que da su AIP", () => {
+  const { ambar } = COLOR_DE_PISTA;
+  /** A cuántos metros del final de la pista está la luz ámbar más lejana, vista llegando por `cabecera`. */
+  const ambarHasta = (oaci: string, cabecera: string): number => {
+    const esc = SCENARIOS.find((e) => oaciDe(e) === oaci)!;
+    const pista = esc.aerodrome!.runways.find((r) => r.thresholds[cabecera]?.xy)!;
+    const u = pista.thresholds[cabecera]!.xy!;
+    const otra = Object.entries(pista.thresholds).find(([n, v]) => n !== cabecera && v?.xy)![1]!.xy!;
+    const l = Math.hypot(otra[0] - u[0], otra[1] - u[1]);
+    const [ux, uy] = [(otra[0] - u[0]) / l, (otra[1] - u[1]) / l];
+    // El ojo, en la final de esa cabecera: ve el lado de las luces que mira hacia ella.
+    const ojo = { x: u[0] - ux * 1000, z: -(u[1] - uy * 1000) };
+    let mas = 0;
+    for (const luz of lucesDePista(pista, () => 0, oaci)) {
+      if (colorVisto(luz, ojo) !== ambar) continue;
+      const adentro = (luz.p[0] - u[0]) * ux + (-luz.p[2] - u[1]) * uy;
+      mas = Math.max(mas, l - adentro);
+    }
+    return mas;
+  };
+
+  it("El Hierro, 400 m: «1250 m: 850 m white + 400 m yellow»", () => {
+    expect(lucesDePistaPublicadas("GCHI", "16").ambarM).toBe(400);
+    expect(ambarHasta("GCHI", "16")).toBeLessThan(400);
+  });
+
+  it("Cuatro Vientos, 600 m, que la regla del tercio dejaba en 500", () => {
+    expect(lucesDePistaPublicadas("LECU", "09").ambarM).toBe(600);
+    expect(ambarHasta("LECU", "09")).toBeGreaterThan(500);
+    expect(ambarHasta("LECU", "09")).toBeLessThan(600);
+  });
+
+  it("y donde el AIP no da la cifra, la regla de la OACI", () => {
+    expect(lucesDePistaPublicadas("SGAS", "20").ambarM).toBeNull();
+    expect(lucesDePistaPublicadas("SGOG", "15").ambarM).toBeNull();
   });
 });

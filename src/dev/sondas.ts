@@ -285,17 +285,23 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** La cota que da la foto sin filtrar, para comprobar lejos del aeropuerto. */
     cotaCruda: (x: number, z: number) =>
       juego.teselas?.medidaDirecta(x, z) ?? null,
-    /** De qué color se ven las cuatro del PAPI ahora mismo. */
+    /**
+     * De qué color se ven las luces del PAPI ahora mismo —las cuatro, o las
+     * dos del APAPI—, **de la de fuera a la de junto a la pista**, que es como
+     * las lee quien llega con el PAPI a su izquierda: en la senda, «blanca
+     * blanca roja roja».
+     */
     papi: () => {
       // El del campo que se tiene debajo: en el de llegada, el suyo.
       const m = juego.papiDeAhora?.grupo.getObjectByName("papi") as
-        { instanceColor?: { array: ArrayLike<number> } } | undefined;
+        { count: number; instanceColor?: { array: ArrayLike<number> } } | undefined;
       const a = m?.instanceColor?.array;
-      if (!a) return null;
-      // Azul alto es blanco; azul bajo es rojo. Es la separación que hay.
-      return Array.from({ length: 4 }, (_, k) =>
+      if (!m || !a) return null;
+      // Azul alto es blanco; azul bajo es rojo. Es la separación que hay. Y la
+      // malla las guarda de la de junto a la pista hacia fuera: se dan al revés.
+      return Array.from({ length: m.count }, (_, k) =>
         a[k * 3 + 2]! > 0.5 ? "blanca" : "roja",
-      );
+      ).reverse();
     },
     /**
      * Dónde está la cinta verde respecto del suelo, en metros.

@@ -202,7 +202,7 @@ import {
   SE_EMBARCA_ANTES,
 } from "./flight/guion-noche-de-madrid";
 import { cargarElMundo, type MundoCargado } from "./world/mundo-del-tramo";
-import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
+import { blancasEnLaSenda, crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import {
   crearCircuito,
   escalaDeCircuito,
@@ -2160,7 +2160,7 @@ const GAS_EN_LA_RECOGIDA = 0.15;
  * grabación. Ver `decirElConsejo` y `decirElPaso`.
  */
 const DEL_AIRE =
-  /^vuelo\.(?:quitaElGas|narizEnLaRecogida|narizYQuitaElGas|yaPodesTocar|lentoYBajo|rapido|pediFlaps|bajasRapido|muyInclinado|minimos|final|aroAlto|aroBajo|papi\w*|terrenoBajo|terrenoSube|terrenoDelante|consejo\.\w+|paso\.\w+)(?:[~@].*)?$/;
+  /^vuelo\.(?:quitaElGas|narizEnLaRecogida|narizYQuitaElGas|yaPodesTocar|lentoYBajo|rapido|pediFlaps|bajasRapido|muyInclinado|minimos|final|aroAlto|aroBajo|papi\w*|apapi\w*|terrenoBajo|terrenoSube|terrenoDelante|consejo\.\w+|paso\.\w+)(?:[~@].*)?$/;
 
 /**
  * **La carrera de aterrizaje**, en m/s y en segundos. Ver `contarLaCarrera`.
@@ -10862,15 +10862,20 @@ export class Game {
       this.cantar("minimums", t("vuelo.minimos"), "vuelo.minimos");
     });
 
-    /** El PAPI: alto, bajo o en la senda, con su dibujo. */
-    this.hechos.on("papi", ({ blancas }) => {
+    /**
+     * El PAPI: alto, bajo o en la senda, con su dibujo. Y el APAPI, con el
+     * suyo: dos luces, y la senda es una blanca y una roja.
+     */
+    this.hechos.on("papi", ({ blancas, unidades = 4 }) => {
       // La senda del PAPI es la de un avión a su pista; el helicóptero se acerca a su helipuerto.
       if (this.aircraft.helicoptero) return;
+      const enLaSenda = blancasEnLaSenda(unidades);
+      const apapi = unidades === 2;
       this.hud.senal.mostrar(
-        comoDibujo(`papi${blancas}`),
-        blancas >= 3
+        comoDibujo(apapi ? `apapi${blancas}` : `papi${blancas}`),
+        blancas > enLaSenda
           ? this.rotulo("vuelo.papiAlto", "palabra.baja")
-          : blancas <= 1
+          : blancas < enLaSenda
             ? this.sinMotor
               ? /*
                  * **Sin motor, bajo no se arregla subiendo**: tirar sin gas
@@ -10884,7 +10889,7 @@ export class Game {
                 ? // Bajo **por ir lento**: lo que falta es gas, no cabeceo.
                   this.rotulo("vuelo.lentoYBajo", "palabra.gas")
                 : this.rotulo("vuelo.papiBajo", "palabra.subi")
-            : this.rotulo("vuelo.papiBien", "palabra.bien"),
+            : this.rotulo(apapi ? "vuelo.apapiBien" : "vuelo.papiBien", "palabra.bien"),
         null,
         {
           segundos: SE_QUEDA_EL_ARO,
@@ -10894,9 +10899,10 @@ export class Game {
            * abanico de sus haces y una caja desarmada, que se tocan. Es la
            * explicación de cualquier pieza del cuadro —congela el vuelo
            * mientras se mira— y la tarjeta no llama a tocarla: en la final
-           * las manos van en los mandos. Ver `ui/figuras/papi.ts`.
+           * las manos van en los mandos. Ver `ui/figuras/papi.ts`. El APAPI
+           * abre la suya, con sus dos luces y sin la figura de cuatro.
            */
-          accion: () => void abrirExplicacion("papi"),
+          accion: () => void abrirExplicacion(apapi ? "apapi" : "papi"),
           llama: false,
         },
       );
@@ -24003,6 +24009,7 @@ export class Game {
             )
           : null,
       angulo: this.sendaDe(campo),
+      unidadesDelPapi: luces?.unidades === 2 ? 2 : 4,
       sinTorre: sinTorre(campo.escenario.aerodrome),
       sinAerodromo: !campo.escenario.aerodrome,
     };
@@ -29798,11 +29805,12 @@ export class Game {
     if (!deFuera && vista !== "cockpit") return;
     const luces = this.lucesDe(this.elCampo());
     const papi = luces?.grupo.getObjectByName("papi") as InstancedMesh | undefined;
-    if (!luces || !papi || !luces.grupo.visible || papi.count < 4) return;
+    // Las cuatro del PAPI, o las dos del APAPI: de la primera a la última.
+    if (!luces || !papi || !luces.grupo.visible || papi.count < 2) return;
     papi.updateWorldMatrix(true, false);
     papi.getMatrixAt(0, this.papiMatriz);
     const a = this.papiDesde.setFromMatrixPosition(this.papiMatriz).applyMatrix4(papi.matrixWorld);
-    papi.getMatrixAt(3, this.papiMatriz);
+    papi.getMatrixAt(papi.count - 1, this.papiMatriz);
     const b = this.papiHasta.setFromMatrixPosition(this.papiMatriz).applyMatrix4(papi.matrixWorld);
     const centro = this.papiCentro.copy(a).add(b).multiplyScalar(0.5);
     const cam = this.camera;
@@ -30220,7 +30228,8 @@ export class Game {
     const apunta = this.loQueSeVeDe(hay);
     const modo = this.desvioAhora?.modo ?? "final";
     const frena = modo === "bajada" ? "aerofrenos" : "flaps";
-    const f = fraseDe(c, apunta, frena, modo);
+    // Y con las luces que tiene esa pista: las cuatro del PAPI o las dos del APAPI.
+    const f = fraseDe(c, apunta, frena, modo, this.lucesDe(this.elCampo())?.unidades === 2 ? "apapi" : "papi");
     let forma: { readonly texto: string; readonly id: string } | null = null;
     if (f.nueva && this.instructor.vozDe(f.nueva))
       forma = { texto: t(f.nueva as TranslationKey), id: f.nueva };
@@ -33070,7 +33079,7 @@ export class Game {
        * suelo sin más: el dibujo del motor es también el de «motor a fondo»
        * en la carrera de despegue, y ésa sí vale en tierra.
        */
-      for (const d of ["motor", "papi0", "papi1", "papi2", "papi3", "papi4"])
+      for (const d of ["motor", "papi0", "papi1", "papi2", "papi3", "papi4", "apapi0", "apapi1", "apapi2"])
         this.hud.senal.caducar(d);
     }
     /*

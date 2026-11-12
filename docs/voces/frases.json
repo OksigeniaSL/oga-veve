@@ -20233,5 +20233,54 @@
     "idioma": "es-PY",
     "texto": "Este es el tren de aterrizaje. Sale para posarse, y después de despegar se recoge: la rueda de adelante, hacia atrás, y las de los costados, para arriba. Así el aire pasa mejor y el helicóptero va más rápido.",
     "para": "lo que explica el punto del tren en la tarjeta del Super Puma, que se recoge"
+  },
+  {
+    "id": "vuelo.apapiBien",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Una roja y una blanca: vas bien",
+    "para": "en la final con APAPI, en la senda: una roja y una blanca"
+  },
+  {
+    "id": "vuelo.consejo.narizAbajoApapi",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Nariz un poquito abajo, hasta ver una blanca y una roja en las dos luces de al lado de la pista.",
+    "para": "consejo de la final con APAPI: un poco alto, la nariz abajo hasta ver una de cada"
+  },
+  {
+    "id": "vuelo.consejo.narizArribaApapi",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Nariz un poquito arriba, hasta ver una blanca y una roja en las dos luces de al lado de la pista.",
+    "para": "consejo de la final con APAPI: un poco bajo, la nariz arriba hasta ver una de cada"
+  },
+  {
+    "id": "vuelo.consejo.masGasApapi",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Un poco bajo para la pista: un toque de gas, la nariz quieta, hasta ver una blanca y una roja en las dos luces de al lado de la pista.",
+    "para": "consejo de la final con APAPI en el avión de cables: bajo, un toque de gas"
+  },
+  {
+    "id": "vuelo.consejo.menosGasApapi",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Un poco alto para la pista: un poquito menos de gas, la nariz quieta, hasta ver una blanca y una roja en las dos luces de al lado de la pista.",
+    "para": "consejo de la final con APAPI en el avión de cables: alto, menos gas"
+  },
+  {
+    "id": "explica.apapi.texto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El APAPI son dos luces al lado de la pista: es el PAPI corto de los aeropuertos chicos. Cada una se ve blanca desde arriba y roja desde abajo. Una blanca y una roja: vas por la senda. Las dos blancas, vas alto; las dos rojas, vas bajo.",
+    "para": "lo que explica tocar la tarjeta del APAPI en la final",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]

@@ -389,11 +389,12 @@ describe("el PAPI se distingue de lejos, como el de verdad", () => {
   });
 
   it("y dice lo mismo que a su tamaño: en la senda, dos blancas y dos rojas", () => {
+    // De la de junto a la pista a la de fuera: las rojas, junto a la pista.
     for (const d of [400, 2000, 6000])
       expect(
         dibujadasDesde(d).luces.map((l) => l.blanca),
         `${d} m`,
-      ).toEqual([true, true, false, false]);
+      ).toEqual([false, false, true, true]);
   });
 
   it("pasadas las cinco millas del AIM vuelve a su tamaño, poco a poco", () => {

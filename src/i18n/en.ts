@@ -756,6 +756,7 @@ export const EN: Dictionary = {
   "vuelo.lentoYBajo": "You are slow: add power",
   "vuelo.papiBajo": "Reds: you are low, climb",
   "vuelo.papiBien": "Two red, two white: on the glide path",
+  "vuelo.apapiBien": "One red, one white: on the glide path",
   "vuelo.consejo.masGas":
     "A little more power, up to the pink mark on the speed. Keep the nose still.",
   "vuelo.consejo.menosGas": "A little less power, down to the pink mark on the speed.",
@@ -763,6 +764,14 @@ export const EN: Dictionary = {
     "Nose a little down, until you see two white and two red on the four lights beside the runway.",
   "vuelo.consejo.narizArribaPapi":
     "Nose a little up, until you see two white and two red on the four lights beside the runway.",
+  "vuelo.consejo.narizAbajoApapi":
+    "Nose a little down, until you see one white and one red on the two lights beside the runway.",
+  "vuelo.consejo.narizArribaApapi":
+    "Nose a little up, until you see one white and one red on the two lights beside the runway.",
+  "vuelo.consejo.masGasApapi":
+    "A little low for the runway: a touch of power, nose still, until you see one white and one red on the two lights beside the runway.",
+  "vuelo.consejo.menosGasApapi":
+    "A little high for the runway: a little less power, nose still, until you see one white and one red on the two lights beside the runway.",
   "vuelo.consejo.narizAbajoSenda":
     "Nose a little down, until the pink diamond, the one next to the altitude, is in the middle.",
   "vuelo.consejo.narizArribaSenda":
@@ -2004,6 +2013,9 @@ export const EN: Dictionary = {
   "explica.papi.corta": "The glide path lights",
   "explica.papi.texto":
     "The PAPI is four lights beside the runway. Each one looks white from above and red from below. Two white and two red: you're on the glide path. More white, you're high; more red, you're low.",
+  "explica.apapi.corta": "The two glide path lights",
+  "explica.apapi.texto":
+    "The APAPI is two lights beside the runway: the short PAPI of small airports. Each one looks white from above and red from below. One white and one red: you're on the glide path. Both white, you're high; both red, you're low.",
   "tarjeta.porDentro": "Inside",
   "tarjeta.porDentro.lector": "See how it works inside",
   "figura.papi.caja": "Housing",

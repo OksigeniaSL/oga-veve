@@ -75,9 +75,7 @@
  *   izquierda; Concepción, Mariscal Estigarribia y Pilar publican NIL en PAPI
  *   y en luces de aproximación. La senda del ILS de la 23 de Guaraní, de su
  *   edición electrónica del 24 de febrero de 2022. **Pedro Juan Caballero**
- *   publica un APAPI en la 21, que son dos luces y no cuatro y se leen de
- *   otra manera: no es un PAPI, el juego no lo dibuja y su fichero lleva la
- *   pista sin luces, así que no está en la tabla.
+ *   publica un APAPI en la 21, que son dos luces y no cuatro: ver `apapi`.
  */
 
 /**
@@ -119,6 +117,16 @@ export const CALVERT: readonly number[] = [150, 300, 450, 600, 750];
 export interface SendaPublicada {
   /** El ángulo del PAPI, grados, o `null` si su AIP dice que no tiene. */
   readonly papi: number | null;
+  /**
+   * **Si no es un PAPI sino un APAPI**: dos luces y no cuatro, a 2°45′ y
+   * 3°15′ para una senda de tres grados —la de junto a la pista quince
+   * minutos por encima de la senda y la de fuera quince por debajo—, y se
+   * leen así: las dos blancas, alto; una roja y una blanca, en la senda; las
+   * dos rojas, bajo (OACI, Doc 9157, *Manual de diseño de aeródromos*, parte
+   * 4, 8.3.6 y tabla 8-1). Es el de la 21 de Pedro Juan Caballero. Ver
+   * `angulosDelIndicador` en `aproximacion.ts`.
+   */
+  readonly apapi?: true;
   /**
    * Si el PAPI está **solo a la derecha** vista desde la aproximación: lo
    * normal es a la izquierda, y así se calcula cuando el fichero del
@@ -242,6 +250,18 @@ export const SENDAS: Readonly<Record<string, Readonly<Record<string, SendaPublic
   SGEN: { "02": { papi: 3, senda: null, luces: null }, "20": { papi: 3, senda: null, luces: null } },
   SGCO: { "03": SIN_LUCES_DE_CABECERA, "21": SIN_LUCES_DE_CABECERA },
   SGME: { "01": NADA, "19": NADA },
+  /*
+   * Pedro Juan Caballero: un **APAPI** a la izquierda de la 21, y nada en la
+   * 03 (AD 2.4-14). El 2.14 no imprime su ángulo, y va al de la senda que
+   * publica su aproximación, que es con la que tiene que casar (Doc 9157,
+   * parte 4, 8.3.51 b): las dos RNP Z, la de la 03 y la de la 21, bajan al
+   * 5,24 % con Baro-VNAV, tres grados, «5.2% (3.0°)» en la carta de la 21 (AD
+   * 2.4-12, 07 AUG 2025). Sus luces de pista, en su fichero: ver `lucesAMano`.
+   */
+  SGPJ: {
+    "03": { papi: null, senda: 3, luces: null },
+    "21": { papi: 3, apapi: true, senda: 3, luces: null },
+  },
   // Pilar: NIL en todo el 2.14, ni luces de pista. Es de vuelo visual.
   SGPI: { "02": SIN_LUCES_DE_CABECERA, "20": SIN_LUCES_DE_CABECERA },
   /*
@@ -293,6 +313,8 @@ export function tieneIls(
 export interface AyudasVisualesPublicadas {
   /** El ángulo de su PAPI, grados, o `null` si no se pinta. */
   readonly papi: number | null;
+  /** Si es un APAPI, de dos luces. Ver `SendaPublicada.apapi`. */
+  readonly apapi?: boolean;
   readonly papiALaDerecha: boolean;
   /** Sus luces de aproximación, o `null` si no se pintan. */
   readonly luces: LucesDeAproximacion | null;
@@ -301,6 +323,7 @@ export interface AyudasVisualesPublicadas {
 /** Nada que pintar. */
 export const SIN_AYUDAS_VISUALES: AyudasVisualesPublicadas = {
   papi: null,
+  apapi: false,
   papiALaDerecha: false,
   luces: null,
 };
@@ -316,7 +339,12 @@ export function ayudasVisuales(
 ): AyudasVisualesPublicadas {
   const s = oaci && cabecera ? SENDAS[oaci]?.[cabecera] : undefined;
   if (!s) return SIN_AYUDAS_VISUALES;
-  return { papi: s.papi, papiALaDerecha: s.papiALaDerecha === true, luces: s.luces };
+  return {
+    papi: s.papi,
+    apapi: s.apapi === true,
+    papiALaDerecha: s.papiALaDerecha === true,
+    luces: s.luces,
+  };
 }
 
 /** Las luces de pista de una cabecera, vistas por quien aterriza por ella. */
@@ -327,7 +355,34 @@ export interface LucesDePistaPublicadas {
   readonly extremo: boolean;
   /** Los últimos seiscientos metros de borde, en ámbar. */
   readonly ambar: boolean;
+  /**
+   * **Cuántos metros de ámbar**, si su AIP da la cifra: 400 en El Hierro, 600
+   * en Cuatro Vientos, que con 1.500 m de pista la regla del tercio dejaba en
+   * 500. `null` donde no la da —«Ámbar Blanca» en Paraguay—, y entonces va la
+   * regla de la OACI: seiscientos metros o un tercio de la pista.
+   */
+  readonly ambarM: number | null;
 }
+
+/**
+ * **Los metros de ámbar del borde que publica cada AIP**, del apartado 2.14
+ * («Runway edge»: «2571 m white + 600 m yellow»), los mismos en todas las
+ * cabeceras de cada aeródromo. Leído el 12 de noviembre de 2026, con las
+ * enmiendas de la cabecera de este fichero. Las de Paraguay no dan la cifra.
+ */
+const AMBAR_PUBLICADO: Readonly<Record<string, number>> = {
+  GCXO: 600,
+  GCTS: 600,
+  GCLP: 600,
+  GCFV: 600,
+  GCRR: 600,
+  GCLA: 600,
+  // «1250 m: 850 m white + 400 m yellow».
+  GCHI: 400,
+  // «1500 m: 900 m white + 600 m yellow».
+  LECU: 600,
+  LEMD: 600,
+};
 
 /**
  * **Las luces de pista de esa cabecera**, como las publica su AIP: las de
@@ -345,5 +400,6 @@ export function lucesDePistaPublicadas(
     umbral: s?.luzDeUmbral !== false,
     extremo: s?.luzDeExtremo !== false,
     ambar: s?.ambarAlFinal !== false,
+    ambarM: oaci ? (AMBAR_PUBLICADO[oaci] ?? null) : null,
   };
 }

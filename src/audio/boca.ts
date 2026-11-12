@@ -596,6 +596,7 @@ export const NO_A_LA_VEZ: readonly (readonly [string, string])[] = [
   ["vuelo.lentoYBajo", "vuelo.consejo.narizArribaRitmo"],
   ["vuelo.lentoYBajo", "vuelo.consejo.narizArribaSuave"],
   ["vuelo.consejo.narizArribaPapi", "vuelo.consejo.narizAbajoPapi"],
+  ["vuelo.consejo.narizArribaApapi", "vuelo.consejo.narizAbajoApapi"],
   ["vuelo.consejo.narizArribaSenda", "vuelo.consejo.narizAbajoSenda"],
 ];
 

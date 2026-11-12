@@ -86,7 +86,7 @@ function montar(campo: () => CampoDeLaAproximacion): {
   const dicho: string[] = [];
   hechos.on("minimos", () => dicho.push("minimos"));
   hechos.on("mandaronIrseAlAire", (d) => dicho.push(`frustrar:${d.porque}`));
-  hechos.on("papi", (d) => dicho.push(`papi:${d.blancas}`));
+  hechos.on("papi", (d) => dicho.push(d.unidades === 2 ? `apapi:${d.blancas}` : `papi:${d.blancas}`));
   hechos.on("proponenIrseAlAire", (d) => dicho.push(`propone:${d.motivo}`));
   const vaca = { quitar: () => {} } as unknown as Vaca;
   const aproximacion = new LaAproximacion({
@@ -164,6 +164,15 @@ describe("la aproximación en el campo de llegada", () => {
     aproximacion.ordenes = "nunca";
     paso(aproximacion, s);
     expect(dicho).toContain("papi:0");
+  });
+
+  it("y con un APAPI, sus dos luces: bajo son las dos rojas", () => {
+    const s = enFinal(LOS_RODEOS, 1500, 25);
+    const { aproximacion, dicho } = montar(() => ({ ...visto(LOS_RODEOS, s, 300), unidadesDelPapi: 2 }));
+    aproximacion.ordenes = "nunca";
+    paso(aproximacion, s);
+    expect(dicho).toContain("apapi:0");
+    expect(dicho.some((d) => d.startsWith("papi:"))).toBe(false);
   });
 
   it("donde no hay PAPI, se calla", () => {

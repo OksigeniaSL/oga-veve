@@ -256,6 +256,17 @@ export interface Aerodrome {
     readonly oaci?: string;
   };
   /**
+   * **Las luces de pista puestas a mano**, con su fuente: si cada pista, por
+   * su `ref`, tiene luces, cuando lo publica el AIP y las dos fuentes de la
+   * extracción no lo traen. Pedro Juan Caballero salía sin ninguna y su AIP
+   * le publica las de borde, de umbral, de final y de rodaje. La extracción
+   * las conserva y las copia a `lit`: ver `scripts/osm-a-aerodromo.mjs`.
+   */
+  readonly lucesAMano?: {
+    readonly pistas: Readonly<Record<string, boolean>>;
+    readonly fuente: string;
+  };
+  /**
    * Dónde para un avión que rueda antes de pisar la pista.
    *
    * `source` dice si el dato está medido o calculado, y no es un detalle
@@ -2126,6 +2137,9 @@ export function lucesDePista(
    */
   const porElPrincipio = lucesDePistaPublicadas(oaci, nombrePrincipio);
   const porElFin = lucesDePistaPublicadas(oaci, nombreFin);
+  // Y los metros de ámbar que da su AIP, donde los da: 400 en El Hierro.
+  const ambarHaciaElFin = porElPrincipio.ambarM ?? AMBAR;
+  const ambarHaciaElPrincipio = porElFin.ambarM ?? AMBAR;
 
   const luces: LuzDePista[] = [];
   const poner = (
@@ -2158,14 +2172,14 @@ export function lucesDePista(
     const haciaElFin =
       s < dPrincipio || s > hastaFin
         ? roja
-        : hastaFin - s < AMBAR && porElPrincipio.ambar
+        : hastaFin - s < ambarHaciaElFin && porElPrincipio.ambar
           ? ambar
           : blanca;
     // Y quien va hacia el principio, lo mismo desde la otra punta.
     const haciaElPrincipio =
       largo - s < dFin || s < hastaPrincipio
         ? roja
-        : s - hastaPrincipio < AMBAR && porElFin.ambar
+        : s - hastaPrincipio < ambarHaciaElPrincipio && porElFin.ambar
           ? ambar
           : blanca;
     for (const lado of [-1, 1])

@@ -122,11 +122,13 @@ export interface Hechos {
     readonly desde: number;
   };
   /**
-   * El PAPI ha cambiado de lectura: `blancas` luces de cuatro.
+   * El PAPI ha cambiado de lectura: `blancas` luces de `unidades`, cuatro en
+   * un PAPI y dos en un APAPI.
    *
-   * Tres o cuatro es venir alto, una o ninguna es venir bajo, dos es la senda.
+   * Más de la mitad es venir alto, menos es venir bajo, la mitad es la senda:
+   * dos de cuatro, una de dos. Sin `unidades`, cuatro.
    */
-  papi: { readonly blancas: number };
+  papi: { readonly blancas: number; readonly unidades?: 2 | 4 };
   /**
    * Te han mandado irte al aire, y por qué. Solo lo manda quien puede
    * mandarlo, y por lo que es suyo:

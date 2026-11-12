@@ -59,7 +59,8 @@
  * - `carta`: la pantalla del mapa.
  * - `trafico`: un rombo de otro avión en el mapa.
  * - `motor`: la marca del motor, en la palanca del gas.
- * - `papi`: las cuatro luces al lado de la pista. Es la única del mundo.
+ * - `papi`: las cuatro luces al lado de la pista, o las dos del APAPI. Es la
+ *   única del mundo.
  */
 export type Pieza =
   | "rombo"
@@ -131,6 +132,11 @@ export const NOMBRA: Readonly<Record<string, readonly Pieza[]>> = {
   "vuelo.consejo.narizArribaPapi": ["papi"],
   "vuelo.consejo.masGasPapi": ["papi"],
   "vuelo.consejo.menosGasPapi": ["papi"],
+  // Y las del APAPI, que es la misma pieza con dos luces.
+  "vuelo.consejo.narizAbajoApapi": ["papi"],
+  "vuelo.consejo.narizArribaApapi": ["papi"],
+  "vuelo.consejo.masGasApapi": ["papi"],
+  "vuelo.consejo.menosGasApapi": ["papi"],
   // ── La marca rosa de la velocidad ──────────────────────────────────
   "vuelo.consejo.masGas": ["marca"],
   "vuelo.consejo.menosGas": ["marca"],
