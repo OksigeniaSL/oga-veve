@@ -357,8 +357,15 @@ export { ANCHO_RODADURA };
  * metros de desvío ahí siguen siendo asfalto, mientras que en una calle de
  * veintitrés metros doce ya son hierba.
  *
- * `margen` ensancha el pavimento para preguntar por el ala en vez de por el eje
- * del avión.
+ * `margen` ensancha **las pistas y las calles** para preguntar por el ala en
+ * vez de por el eje del avión. **Las plataformas no**: con ellas solo se mira
+ * si el punto está dentro del polígono, con margen o sin él. Y así se queda,
+ * porque de ese borde exacto dependen el tráfico —por dónde rueda y dónde se
+ * para: con el margen también en las plataformas, en Los Rodeos la raya verde
+ * dejaba de rodear a los aviones parados, ver `trafico-en-tu-calle.test.ts`—,
+ * las aves y la fauna. Para saber si hay pavimento cerca, plataformas
+ * incluidas —lo que necesita el aplanado del recinto—, está
+ * `cercaDelPavimento`.
  */
 /**
  * Si un punto cae sobre **la pista** —no sobre cualquier asfalto—.
