@@ -1,18 +1,21 @@
 /**
- * **El Super Puma como aeronave del juego**, escondido: solo se vuela con
- * `?avion=super-puma` en la dirección, en Tenerife Norte y desde el helipuerto del Ejército.
- * No está en `AIRCRAFT` a propósito, y así no sale en el hangar, ni en el
- * cambio de avión, ni en ninguna lección, y a quien juega no le cambia nada.
- * Es para probarlo en la web y afinar los mandos antes de que llegue su modelo
- * en 3D. Ver el ADR 0026, paso 3.
+ * **El JAZ 70 Kirikiri'i**, el helicóptero de la flota, como aeronave del
+ * juego. Su clase es la del Super Puma: la ficha de verdad es la del rotor,
+ * `SUPER_PUMA`, y lo de aquí es lo que el juego pregunta a cualquier aeronave
+ * —cuánto pesa, cuánto cabe en el depósito, cómo suena, a qué velocidades se
+ * juzga—, contestado como lo haría un helicóptero; lo que es de ala va puesto
+ * para que no estorbe y lo dice.
  *
- * La ficha de verdad es la del rotor, `SUPER_PUMA`. Lo de aquí es lo que el
- * juego pregunta a cualquier aeronave —cuánto pesa, cuánto cabe en el
- * depósito, cómo suena, a qué velocidades se juzga—, contestado como lo haría
- * un helicóptero; lo que es de ala va puesto para que no estorbe y lo dice.
+ * Nació escondido, con `?avion=super-puma`, para afinar los mandos antes de
+ * que llegara su modelo en 3D (ADR 0026, paso 3). Ya está en el hangar, pero
+ * **solo en Tenerife Norte**, que es donde tiene su helipuerto: cada aparato
+ * va solo donde puede ir. No está en `AIRCRAFT`, que son los de ala fija y lo
+ * que recorren las lecciones, los ejercicios y las cuentas de pista; la lista
+ * de todo lo que se vuela es `AERONAVES`, en `aeronaves.ts`.
  */
 
 import { ARASUNU, type AircraftConfig, LIBREA } from "./aircraft";
+import { nombreEnteroDe } from "./flota";
 import { SUPER_PUMA } from "./super-puma";
 
 const NUDO = 0.514444;
@@ -38,7 +41,8 @@ export const SUPER_PUMA_EN_EL_JUEGO: AircraftConfig = {
   // de su peso; lo que importa se pone encima, uno a uno.
   ...ARASUNU,
   id: ID_DEL_HELICOPTERO,
-  name: "Super Puma",
+  // El de la flota, «JAZ 70 Kirikiri'i»: el Super Puma es su clase. Ver `flota.ts`.
+  name: nombreEnteroDe(ID_DEL_HELICOPTERO),
   descriptionKey: "aircraft.superPuma.description",
   // 8.600 kg al despegue (TCDS R.002, III.12). El depósito de serie, unos
   // 2.000 litros: 1.600 kg, que es lo que separa los dos pesos.

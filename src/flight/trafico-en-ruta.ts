@@ -33,7 +33,7 @@
  */
 
 import { nivelPara } from "./nivel-de-crucero";
-import type { Silueta } from "./flota";
+import type { SiluetaDeAvion } from "./flota";
 
 /** Un punto del mundo, en metros. */
 export interface Punto {
@@ -45,7 +45,7 @@ export interface Punto {
 export interface EnRuta {
   readonly id: string;
   /** Qué forma tiene. Es lo que se reconoce desde lejos. Ver `EN_EL_CORREDOR`. */
-  readonly silueta: Silueta;
+  readonly silueta: SiluetaDeAvion;
   readonly x: number;
   /** Altitud en metros, ya convertida desde su nivel. */
   readonly y: number;
@@ -93,7 +93,7 @@ const EN_EL_CORREDOR = [
   { silueta: "cola-en-t", kt: 420 },
   /** Y el de fuselaje ancho, que pasa alto y de largo. */
   { silueta: "cuatrimotor", kt: 480 },
-] as const satisfies readonly { silueta: Silueta; kt: number }[];
+] as const satisfies readonly { silueta: SiluetaDeAvion; kt: number }[];
 
 /** De nudos a metros por segundo. */
 const NUDO = 0.514444;

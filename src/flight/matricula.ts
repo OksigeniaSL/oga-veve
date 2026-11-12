@@ -242,7 +242,7 @@ export function sortearIndicativo(
  * te están hablando a vos.
  *
  * Las tres letras son las de su nombre, que es lo que un hangar hace de verdad con
- * sus aviones. Y el prefijo es ZP-, de Paraguay, en los siete: la
+ * sus aviones. Y el prefijo es ZP-, de Paraguay, en los ocho: la
  * flota es de allí y **un avión no cambia de matrícula al cruzar una frontera**
  * —por eso en Tenerife te llamarán «Zulu Papa…» y estará bien—.
  */
@@ -251,6 +251,8 @@ const MATRICULAS: Readonly<Record<string, string>> = {
   "jaz-25": "ZP-MBY",
   "jaz-40": "ZP-PNB",
   "jaz-60": "ZP-ARS",
+  // El helicóptero, el JAZ 70 Kirikiri'i: con el identificador de su ficha del rotor.
+  "super-puma": "ZP-KRK",
   "jaz-90": "ZP-ARI",
   "jaz-110": "ZP-TJT",
   "jaz-120": "ZP-YVA",

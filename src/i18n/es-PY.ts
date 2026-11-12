@@ -1397,8 +1397,8 @@ export const ES_PY = {
   "ilustracion.fuera-jaz-90": "El JAZ 90 volando por encima de las nubes",
   "ilustracion.fuera-jaz-120": "El JAZ 120, con sus cuatro motores, por encima de las nubes",
   "ilustracion.fuera-jaz-110": "El JAZ 110 Tijereta, de perfil, con sus dos motores bajo las alas",
-  "ilustracion.fuera-super-puma": "El Super Puma vuela junto al faro de Teno, en Tenerife",
-  "ilustracion.grua-super-puma": "Un rescatador baja por la grúa del Super Puma hacia una lancha",
+  "ilustracion.fuera-super-puma": "El JAZ 70 volando junto al faro de Teno, en Tenerife",
+  "ilustracion.grua-super-puma": "Un rescatador baja por la grúa del JAZ 70 hacia una lancha",
   "ilustracion.cabina-jaz-20": "Jazlyn a los mandos del JAZ 20, en el asiento de la izquierda",
   "ilustracion.cabina-jaz-25": "Jazlyn a los mandos del JAZ 25, el biplano de una plaza",
   "ilustracion.cabina-jaz-40": "Jazlyn a los mandos del JAZ 40, con un motor en cada ala",
@@ -3586,6 +3586,9 @@ export const ES_PY = {
   "explica.sello.ruta-jesuitica.corta": "Ruta Jesuítica",
   "explica.sello.ruta-jesuitica.texto":
     "Ruta Jesuítica: volaste en Encarnación y en Ayolas, la tierra de las misiones jesuíticas, con sus ruinas de piedra de hace más de doscientos años.",
+  "explica.sello.teno.corta": "El faro de Teno",
+  "explica.sello.teno.texto":
+    "El faro de Teno: fuiste a buscar a la gente que se quedó aislada junto al faro y la llevaste al puerto de Garachico, como hicieron los helicópteros del Ejército en 2016. Para eso sirve un helicóptero: se posa donde no hay pista, y a veces ni carretera.",
   "explica.sello.pettirossi.corta": "La hazaña de Pettirossi",
   "explica.sello.pettirossi.texto":
     "La hazaña de Pettirossi: volaste en todos los aeródromos del Paraguay. Silvio Pettirossi fue el primer aviador paraguayo, y el aeropuerto de Asunción lleva su nombre.",
@@ -3988,11 +3991,11 @@ export const ES_PY = {
   "figura.turbofan.valorTodo":
     "todo: el ventilador y el núcleo giran lo más rápido y los dos chorros empujan lo más que pueden",
   /*
-   * **El plato oscilante del Super Puma**: las piezas de Taguato, los mandos
+   * **El plato oscilante del JAZ 70 Kirikiri'i**: las piezas de Taguato, los mandos
    * de Tukã y la frase de lo que hace el helicóptero. Ver `ui/figuras/plato.ts`.
    */
   "figura.plato.aria":
-    "Cómo se vuela un helicóptero: la cabeza del rotor del Super Puma, con sus palas, el plato oscilante y sus servos, y los mandos del piloto. El colectivo sube el plato y las cuatro palas toman más paso; el cíclico lo inclina y el disco del rotor se inclina con él; los pedales mueven el rotor de cola, que aguanta el giro que el rotor le da al helicóptero. Al lado, el Super Puma volando.",
+    "Cómo se vuela un helicóptero: la cabeza del rotor del JAZ 70, con sus palas, el plato oscilante y sus servos, y los mandos del piloto. El colectivo sube el plato y las cuatro palas toman más paso; el cíclico lo inclina y el disco del rotor se inclina con él; los pedales mueven el rotor de cola, que aguanta el giro que el rotor le da al helicóptero. Al lado, el JAZ 70 volando.",
   "figura.plato.plato": "Plato",
   "figura.plato.platoFijo": "Plato fijo",
   "figura.plato.platoQueGira": "Plato que gira",

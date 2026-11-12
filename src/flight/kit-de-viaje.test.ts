@@ -91,9 +91,17 @@ function despegar(j: JuegoDelAvion): void {
 }
 
 describe("armá tu avión", () => {
+  /*
+   * **Un nivel por avión**, y el helicóptero no tiene: armar un avión es poner
+   * ala, motores, cola y tren, y lo suyo son otras piezas —el rotor, el plato,
+   * el botalón y el rotor de cola— que este juego todavía no dibuja. No se
+   * pide en falso; cuando tenga las suyas, se quita el filtro.
+   */
   it("un nivel por avión de la flota, de chico a grande y el nuevo el séptimo, y cada uno con sus piezas", () => {
     expect(NIVELES.map((n) => n.tipo)).toEqual([
-      ...FLOTA.map((m) => m.id).filter((id) => id !== "jaz-110"),
+      ...FLOTA.filter((m) => m.silueta !== "helicoptero")
+        .map((m) => m.id)
+        .filter((id) => id !== "jaz-110"),
       "jaz-110",
     ]);
     for (const n of NIVELES) {

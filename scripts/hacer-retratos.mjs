@@ -88,10 +88,16 @@ export function huellaDe(id, ficha, retrato) {
  */
 export const nombreDelRetrato = (id, datos) => `${id}-${sha(datos).slice(0, 8)}.webp`;
 
+/*
+ * Los de la flota: los `jaz-NN` y el helicóptero, el JAZ 70, que conserva el
+ * identificador de su ficha del rotor. Por número, que es el orden del hangar.
+ */
+const HELICOPTERO = { id: "super-puma", numero: 70 };
+const numeroDe = (id) => (id === HELICOPTERO.id ? HELICOPTERO.numero : Number(id.slice(4)));
 const ids = readdirSync(MODELOS)
-  .filter((f) => /^jaz-\d+\.glb$/.test(f))
+  .filter((f) => /^jaz-\d+\.glb$/.test(f) || f === `${HELICOPTERO.id}.glb`)
   .map((f) => f.replace(/\.glb$/, ""))
-  .sort((a, b) => Number(a.slice(4)) - Number(b.slice(4)))
+  .sort((a, b) => numeroDe(a) - numeroDe(b))
   .filter((id) => !SOLO || SOLO.includes(id));
 
 mkdirSync(DESTINO, { recursive: true });

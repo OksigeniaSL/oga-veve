@@ -177,9 +177,12 @@ export function figuraEnLaTarjeta(id: string, a: Pick<AircraftConfig, "id">): Fi
     /*
      * Las luces, con la blanca donde la lleva este avión. Y no en el que no
      * lleva destellos —el fumigador—: la figura los tiene, y diría que sí.
+     * Ni en el helicóptero, que la figura es un avión con sus alas: el suyo
+     * se queda con el dibujo de la explicación.
      */
     const modelo = modeloPorId(a.id);
-    if (!modelo || equipoDe(modelo.silueta).estroboscopicas === "ninguna") return null;
+    if (!modelo || modelo.silueta === "helicoptero" || equipoDe(modelo.silueta).estroboscopicas === "ninguna")
+      return null;
     return { ...f, blanca: modelo.blanca ?? "cola" };
   }
   return f;

@@ -73,9 +73,10 @@ describe("cada sello, su dibujo", () => {
 
 describe("cada sello, su nombre y su frase", () => {
   /*
-   * Los nombres del issue #25, tal cual: los de guaraní no se tocan.
+   * Los nombres del issue #25, tal cual: los de guaraní no se tocan. Y el del
+   * faro de Teno, el de la misión del helicóptero, al final de los de piloto.
    */
-  it("con los nombres del issue", () => {
+  it("con los nombres del issue, y el de Teno con los de piloto", () => {
     expect(ids.map((id) => ES_PY[`explica.sello.${id}.corta` as keyof typeof ES_PY])).toEqual([
       "¡Veve!",
       "Karumbe",
@@ -88,6 +89,7 @@ describe("cada sello, su nombre y su frase", () => {
       "Jasy",
       "Mbarete",
       "Ruta Jesuítica",
+      "El faro de Teno",
       "La hazaña de Pettirossi",
       "El planeador",
       "Manos de seda",
@@ -122,16 +124,32 @@ describe("cada sello, su nombre y su frase", () => {
 describe("la página del álbum", () => {
   const sitios = (html: string) => html.match(/class="album__sitio[^"]*"/g) ?? [];
 
-  it("los dieciséis sitios, por alturas", () => {
+  it("los diecisiete sitios, por alturas: seis, seis y cinco", () => {
     const html = album(["veve"], false);
-    expect(sitios(html)).toHaveLength(16);
-    expect(html.match(/class="album__tramo /g)).toHaveLength(3);
+    expect(sitios(html)).toHaveLength(17);
+    const filas = html.split(/class="album__tramo /).slice(1);
+    expect(filas).toHaveLength(3);
+    expect(filas.map((f) => sitios(f).length)).toEqual([6, 6, 5]);
+  });
+
+  /*
+   * **El de Teno, el último de la fila de piloto**, con la tinta azul y los
+   * dos aros de esa altura: ver `SELLOS` en `flight/sellos.ts`.
+   */
+  it("el de Teno, ganado, va al final de la fila de piloto", () => {
+    const html = album(["teno"], true);
+    const piloto = html.split(/class="album__tramo /)[2]!;
+    const sitiosDePiloto = piloto.split("</li>").filter((x) => x.includes("album__sitio"));
+    expect(sitiosDePiloto).toHaveLength(6);
+    expect(sitiosDePiloto[5]).toContain('data-sello="teno"');
+    expect(sitiosDePiloto[5]).toContain("sello-nombrado--piloto");
+    expect(sitiosDePiloto[5]).toContain(">El faro de Teno</span>");
   });
 
   it("los ganados con su sello, que se toca; los que faltan, un hueco", () => {
     const html = album(["veve", "mbarete"], false);
     expect(html.match(/class="album__sello"/g)).toHaveLength(2);
-    expect(html.match(/album__sitio--hueco/g)).toHaveLength(14);
+    expect(html.match(/album__sitio--hueco/g)).toHaveLength(15);
     expect(html).toContain('data-sello="veve"');
     expect(html).toContain('data-sello="mbarete"');
   });

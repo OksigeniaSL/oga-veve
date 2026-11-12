@@ -22,7 +22,7 @@
 
 import { Group, Mesh, MeshLambertMaterial, type BufferGeometry } from "three";
 import { fabricarAeronave } from "./fabrica-de-aeronaves";
-import type { Silueta } from "../flight/flota";
+import type { SiluetaDeAvion } from "../flight/flota";
 import {
   traficoEnRuta,
   type EnRuta,
@@ -76,7 +76,7 @@ export interface AvionesDeRuta {
  * deshace la mitad de lo que enseña tener cuatro siluetas. Son los números
  * redondos de aparatos de verdad.
  */
-const ENVERGADURA: Partial<Record<Silueta, number>> = {
+const ENVERGADURA: Partial<Record<SiluetaDeAvion, number>> = {
   "bimotor-ala-baja": 27,
   reactor: 34,
   "cola-en-t": 17,
@@ -96,7 +96,7 @@ export function crearAvionesDeRuta(
    * mucho y varios aviones pueden compartir la misma. Fabricar un avión entero
    * por cada uno sigue siendo lo que no se hace.
    */
-  const geometrias = new Map<Silueta, BufferGeometry>();
+  const geometrias = new Map<SiluetaDeAvion, BufferGeometry>();
   const cuerpos = new Map<string, Mesh>();
   let ultimos: readonly EnRuta[] = [];
   /*
@@ -107,9 +107,9 @@ export function crearAvionesDeRuta(
    */
   const materialDeLasLuces = materialDeLuces();
   const luces = new Map<string, LucesDeUnAvion>();
-  const sitiosPorSilueta = new Map<Silueta, SitiosDeLuz>();
+  const sitiosPorSilueta = new Map<SiluetaDeAvion, SitiosDeLuz>();
 
-  const cuerpo = (silueta: Silueta): Mesh => {
+  const cuerpo = (silueta: SiluetaDeAvion): Mesh => {
     let geo = geometrias.get(silueta);
     if (!geo) {
       geo = fabricarAeronave(

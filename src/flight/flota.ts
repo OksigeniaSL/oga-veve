@@ -27,9 +27,10 @@
  *
  * ## Lo que falta
  *
- * Los cinco están decididos; **dos están construidos**. Los otros tres están
- * aquí con su número y su nombre reservados, que es el sitio donde tienen que
- * estar para que nadie los bautice dos veces. Ver `ESTA_HECHO`.
+ * Hoy no falta ninguno: los ocho están construidos y vuelan. Cuando llegue
+ * uno nuevo, primero se reserva aquí su número y su nombre, que es el sitio
+ * donde tienen que estar para que nadie los bautice dos veces, y se apunta en
+ * `ESTA_HECHO` el día que vuele.
  *
  * Y los nombres salen a producción sin esperar a nadie. Si alguno resulta
  * tener un sentido coloquial desafortunado en guaraní, se cambia la palabra y
@@ -43,13 +44,20 @@ export const FABRICANTE = "JAZ";
 /**
  * Las siluetas, que son lo que de verdad distingue un avión de otro.
  *
- * Siete siluetas y no siete pinturas: ala alta, biplano, bimotor de ala baja,
- * cola en T, reactor en flecha, bimotor de fuselaje ancho y cuatrimotor de
- * fuselaje ancho. Es exactamente la destreza que enseña el álbum de postales
- * —reconocer un avión por su forma—, así que la flota tiene que darle siete
- * respuestas distintas o el álbum no tiene nada que enseñar.
+ * Ocho siluetas y no ocho pinturas: ala alta, biplano, bimotor de ala baja,
+ * cola en T, reactor en flecha, bimotor de fuselaje ancho, cuatrimotor de
+ * fuselaje ancho y helicóptero. Es exactamente la destreza que enseña el álbum
+ * de postales —reconocer una aeronave por su forma—, así que la flota tiene
+ * que darle ocho respuestas distintas o el álbum no tiene nada que enseñar.
  */
-export type Silueta =
+export type Silueta = SiluetaDeAvion | "helicoptero";
+
+/**
+ * **Las de ala fija**, que son las que sabe montar la fábrica de siluetas y
+ * las que vuelan en el tráfico. El helicóptero no sale de ahí: no tiene ala
+ * ni hélice, y su silueta la monta `world/silueta-de-helicoptero.ts`.
+ */
+export type SiluetaDeAvion =
   | "ala-alta"
   | "biplano"
   | "bimotor-ala-baja"
@@ -108,7 +116,7 @@ export interface Modelo {
 }
 
 /**
- * Los cinco, por número.
+ * Los ocho, por número.
  *
  * El orden es el del número, y el número es el del tamaño: quien recorra la
  * lista en el hangar la recorre de pequeño a grande sin que nadie se lo
@@ -150,6 +158,46 @@ export const FLOTA: readonly Modelo[] = [
      */
     blanca: "cola",
     blancaSinConfirmar: true,
+  },
+  {
+    numero: 70,
+    nombre: "Kirikiri'i",
+    pajaro: "halconcito colorado",
+    silueta: "helicoptero",
+    /*
+     * El identificador es el de la ficha del rotor, `super-puma`, y no
+     * `jaz-70`: con él se lanzaba escondido —`?avion=super-puma`— y con él
+     * siguen funcionando las direcciones, los bancos y lo guardado. El número
+     * y el nombre son los de la flota; el identificador no se ve.
+     */
+    id: "super-puma",
+    /*
+     * **El halconcito que se queda quieto en el aire.** El *Falco sparverius*
+     * —halconcito colorado, cernícalo americano— caza parado en el aire,
+     * aleteando de cara al viento encima de donde va a bajar, que es lo que
+     * hace un helicóptero en estacionario y lo primero que se aprende con él.
+     *
+     * El nombre sale de la lista de aves del plan de manejo ambiental de la
+     * ANDE (anexo 7, «listado de aves»), que da «Falco sparverius (Linneo,
+     * 1758) Kiri kiri`i». Se escribe *Kirikiri'i*, junto y con apóstrofo, por
+     * dos motivos de ortografía: el acento grave de esa lista es el sustituto
+     * de máquina de escribir del *puso*, la oclusión glotal, que el alfabeto
+     * guaraní escribe con apóstrofo —igual que *karanda'y*—; y *kirikiri* es
+     * una palabra sola, duplicada como tantos nombres de pájaro que imitan su
+     * canto, la misma que el portugués de Brasil tomó del tupí como
+     * *quiriquiri*. El *'i* del final es el diminutivo: el halconcito.
+     *
+     * **Su clase es la del Airbus Helicopters AS 332 Super Puma**, el AS332B1
+     * que vuela el batallón de helicópteros del Ejército en Los Rodeos, con
+     * los números de la ficha de la EASA y de Airbus: ver `super-puma.ts`. Como
+     * los demás, vuela los números de su clase y no lleva su rótulo: cuando el
+     * juego habla del helicóptero de verdad —el de Teno en 2016— lo llama
+     * Super Puma, y cuando habla del suyo, Kirikiri'i.
+     *
+     * El 70, entre el JAZ 60 y el JAZ 90: con sus 8.600 kg al despegar es más
+     * pesado que el turbohélice de diecinueve plazas y menos de un tercio del
+     * reactor de ochenta.
+     */
   },
   {
     numero: 90,
@@ -232,12 +280,20 @@ export const FLOTA: readonly Modelo[] = [
   },
 ];
 
-/** Cuáles están construidos de verdad. Los demás son número y nombre reservados. */
+/**
+ * Cuáles están construidos de verdad. Los demás son número y nombre reservados.
+ *
+ * El helicóptero, con todo lo que tiene un aparato de la flota —su modelo, su
+ * retrato, su tarjeta con sus láminas, su sonido y su banco— **menos la
+ * cabina por dentro**, que está encargada a Gaudí: hasta que llegue no se pide
+ * en ninguna prueba ni se ofrece en ningún sitio. Ver `SIN_CABINA`.
+ */
 export const ESTA_HECHO: readonly string[] = [
   "jaz-20",
   "jaz-25",
   "jaz-40",
   "jaz-60",
+  "super-puma",
   "jaz-90",
   "jaz-110",
   "jaz-120",
@@ -257,4 +313,19 @@ export function nombreEntero(m: Modelo): string {
 /** El modelo con ese identificador, o `null` si no es de la flota. */
 export function modeloPorId(id: string): Modelo | null {
   return FLOTA.find((m) => m.id === id) ?? null;
+}
+
+/**
+ * **Los que todavía no tienen la cabina por dentro**: el helicóptero, cuya
+ * cabina está encargada a Gaudí. Las pruebas que recorren la flota pidiendo
+ * la lámina de la cabina, su retrato o su recorrido no se la piden en falso, y
+ * cuando llegue se quita de aquí y se piden solas.
+ */
+export const SIN_CABINA: readonly string[] = ["super-puma"];
+
+/** El nombre entero del que tiene ese identificador: «JAZ 70 Kirikiri'i». */
+export function nombreEnteroDe(id: string): string {
+  const m = modeloPorId(id);
+  if (!m) throw new Error(`No es de la flota: ${id}`);
+  return nombreEntero(m);
 }

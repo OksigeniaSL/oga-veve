@@ -9,7 +9,7 @@
  * hay ahora.
  */
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT } from "../flight/aircraft";
+import { AERONAVES } from "../flight/aeronaves";
 import huellas from "./retratos-huellas.json";
 import { CARPETA_DE_RETRATOS, TAMANO_DE_RETRATO, retratoDe } from "./retratos";
 
@@ -35,7 +35,7 @@ const crypto = pedir("node:crypto") as {
 const sha = (ruta: string): string =>
   crypto.createHash("sha256").update(fs.readFileSync(ruta)).digest("hex");
 
-const CON_MODELO = AIRCRAFT.filter((a) =>
+const CON_MODELO = AERONAVES.filter((a) =>
   fs.existsSync(`public/assets/aeronaves/${a.id}.glb`),
 );
 const HUELLAS = huellas as Record<

@@ -11,6 +11,7 @@
 
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT } from "./aircraft";
+import { AERONAVES } from "./aeronaves";
 import torre from "../../data/voces/torre/manifiesto.json";
 import torreCanarias from "../../data/voces/torre-canarias/manifiesto.json";
 import instructora from "../../data/voces/instructor/manifiesto.json";
@@ -119,7 +120,7 @@ describe("el indicativo se monta letra a letra", () => {
  */
 describe("la matrícula de tu avión", () => {
   it("es fija y del país de la flota", () => {
-    for (const a of AIRCRAFT) {
+    for (const a of AERONAVES) {
       const i = matriculaDe(a.id);
       expect(i.matricula).toMatch(/^ZP-[A-Z]{3}$/);
       expect(i.letras).toHaveLength(5);
@@ -128,8 +129,8 @@ describe("la matrícula de tu avión", () => {
   });
 
   it("y cada avión tiene la suya, sin repetir", () => {
-    const todas = AIRCRAFT.map((a) => matriculaDe(a.id).matricula);
-    expect(new Set(todas).size).toBe(AIRCRAFT.length);
+    const todas = AERONAVES.map((a) => matriculaDe(a.id).matricula);
+    expect(new Set(todas).size).toBe(AERONAVES.length);
   });
 
   /*

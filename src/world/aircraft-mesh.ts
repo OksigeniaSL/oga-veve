@@ -197,7 +197,8 @@ export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
   group.name = `aeronave:${aircraft.id}`;
 
   const look = aircraft.appearance;
-  const silueta = modeloPorId(aircraft.id)?.silueta ?? "ala-alta";
+  const deLaFlota = modeloPorId(aircraft.id)?.silueta;
+  const silueta = deLaFlota && deLaFlota !== "helicoptero" ? deLaFlota : "ala-alta";
   const hecho = fabricarAeronave(
     silueta,
     {

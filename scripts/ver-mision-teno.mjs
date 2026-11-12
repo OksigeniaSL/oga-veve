@@ -419,6 +419,49 @@ try {
   await pausa(1500);
   await foto("6-final");
 
+  /*
+   * **Y el sello del faro de Teno**, que se gana al acabar y se celebra como
+   * todos: posado, despacio y cuando nadie habla, con su dibujo en la tarjeta.
+   * Ver `TENO.sello` y `celebrarLosSellosSiToca` en `game.ts`.
+   */
+  const ganado = await page.evaluate(() => globalThis.__oga.sellos().ganados);
+  comprobar("gana el sello del faro de Teno al acabar", ganado.includes("teno"), ganado.join(", ") || "ninguno");
+  let celebrado = null;
+  for (let s = 0; s < 40 && !celebrado; s++) {
+    await pausa(1000);
+    celebrado = await page.evaluate(() => {
+      const c = globalThis.__oga.sellos().celebrados.find((x) => x.sello === "teno");
+      const t = globalThis.__oga.tarjeta();
+      return c ? { ...c, tarjeta: t?.dibujo ?? t?.id ?? null } : null;
+    });
+  }
+  comprobar(
+    "y lo celebra posado, con su dibujo en la tarjeta",
+    celebrado?.enTierra === true,
+    celebrado ? `en tierra a ${celebrado.porElSuelo.toFixed(2)} m/s · tarjeta ${celebrado.tarjeta}` : "no llegó",
+  );
+  await pausa(600);
+  await foto("6b-sello-de-teno");
+  // Y en el cuaderno, en su sitio del álbum: el último de la fila de piloto.
+  await page.evaluate(() => document.querySelector('[data-hud="cuaderno"]')?.click());
+  await pausa(900);
+  const enElAlbum = await page.evaluate(() => {
+    const filas = [...document.querySelectorAll(".album__tramo")];
+    const piloto = filas[1] ? [...filas[1].querySelectorAll(".album__sitio")] : [];
+    const sello = document.querySelector('.album [data-sello="teno"]');
+    sello?.scrollIntoView({ block: "center" });
+    return { sitios: piloto.length, ultimo: piloto[piloto.length - 1]?.querySelector("[data-sello]")?.getAttribute("data-sello") ?? null };
+  });
+  comprobar(
+    "y en el álbum del cuaderno, al final de la fila de piloto",
+    enElAlbum.sitios === 6 && enElAlbum.ultimo === "teno",
+    `${enElAlbum.sitios} sitios en la fila de piloto, el último ${enElAlbum.ultimo}`,
+  );
+  await pausa(400);
+  await foto("6c-album-con-el-sello");
+  await page.keyboard.press("Escape");
+  await pausa(400);
+
   // ── Lo que se dijo y lo que sonó ───────────────────────────────────────
   const final = await leerApuntando();
   const dichas = final.mision?.dicho.filter((d) => d.quien === "instructora").map((d) => d.que) ?? [];

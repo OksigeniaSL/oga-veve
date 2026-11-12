@@ -35,7 +35,7 @@
     Vector3,
   } from "three";
   import { WebGLRenderer } from "three";
-  import { AIRCRAFT } from "/src/flight/aircraft.ts";
+  import { aeronavePorId } from "/src/flight/aeronaves.ts";
   import { cargarModelo } from "/src/world/aeronave-modelo.ts";
 
   const q = new URLSearchParams(location.search);
@@ -234,7 +234,7 @@
 
   /** El retrato de un avión, como `data:` en el formato pedido. */
   globalThis.__retrato = async (id, formato = "image/webp", calidad = 0.8) => {
-    const aircraft = AIRCRAFT.find((a) => a.id === id);
+    const aircraft = aeronavePorId(id);
     if (!aircraft) throw new Error(`no hay ficha para ${id}`);
     const malla = await cargarModelo(aircraft, "/");
     if (!malla) throw new Error(`no hay modelo para ${id}`);

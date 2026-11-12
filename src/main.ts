@@ -89,7 +89,8 @@ import type { Mission } from "./missions/types";
 import { MISSIONS } from "./content/missions";
 import { rememberTier, rememberedTier } from "./flight/tiers";
 import { AIRCRAFT, type AircraftConfig } from "./flight/aircraft";
-import { ESCENARIO_DEL_HELICOPTERO, SUPER_PUMA_EN_EL_JUEGO } from "./flight/helicoptero-en-el-juego";
+import { ESCENARIO_DEL_HELICOPTERO, esHelicoptero, SUPER_PUMA_EN_EL_JUEGO } from "./flight/helicoptero-en-el-juego";
+import { aeronavePorId, laQueSeVuelaEn } from "./flight/aeronaves";
 import { campoDe, destinosParaEsteAvion, elQueQuepa } from "./flight/cabe";
 import { vecinosQueSeMontan } from "./world/vecinos-del-vuelo";
 import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
@@ -243,14 +244,15 @@ const directo = conInicio
     : undefined;
 
 /*
- * **El helicóptero, escondido**: `?avion=super-puma` lo vuela en Tenerife Norte,
+ * **El helicóptero, directo**: `?avion=super-puma` lo vuela en Tenerife Norte,
  * desde su helipuerto, sin pasar por quién vuela ni por el hangar y sin
- * guardar nada en el perfil. No está en la flota ni en ningún menú: es para
- * probarlo en la web y afinar sus mandos. Ver `flight/helicoptero-en-el-juego.ts`.
+ * guardar nada en el perfil. Es como nació, escondido, y se queda para los
+ * bancos y para mirarlo con un enlace; en el juego se elige en el hangar, en
+ * Tenerife Norte. Ver `flight/helicoptero-en-el-juego.ts`.
  */
-const conHelicoptero = !rearranque && params.get("avion") === SUPER_PUMA_EN_EL_JUEGO.id;
-if (conHelicoptero) conInicio = false;
-let escenario = conHelicoptero ? SCENARIOS.find((s) => s.id === ESCENARIO_DEL_HELICOPTERO) : directo;
+const helicopteroPedido = !rearranque && params.get("avion") === SUPER_PUMA_EN_EL_JUEGO.id;
+if (helicopteroPedido) conInicio = false;
+let escenario = helicopteroPedido ? SCENARIOS.find((s) => s.id === ESCENARIO_DEL_HELICOPTERO) : directo;
 // `?tramo=guyrami` entra directo en ese peldaño; lo resuelve `rememberedTier`,
 // que es a quien pregunta también el juego.
 let tramo = rememberedTier();
@@ -300,7 +302,7 @@ if (ejercicio) leccion = leccionPorId(ejercicio.leccion);
  * los bancos no pueden dar clics en el hangar cuando entran directos.
  */
 let avion: AircraftConfig =
-  AIRCRAFT.find((a) => a.id === (rearranque?.avion ?? params.get("avion"))) ??
+  aeronavePorId(rearranque?.avion ?? params.get("avion")) ??
   AIRCRAFT[0]!;
 /*
  * **A dónde se va**, elegido en el hangar. `?destino=tenerife-sur` lo fija
@@ -372,7 +374,7 @@ if (!escenario) {
    * versión en la que ese avión se llamaba de otra forma — pasó al renombrar
    * la flota.
    */
-  avion = AIRCRAFT.find((a) => a.id === leerTexto("aeronave")) ?? AIRCRAFT[0]!;
+  avion = aeronavePorId(leerTexto("aeronave")) ?? AIRCRAFT[0]!;
   /*
    * **Y quien vuela por primera vez, al modo inicio, si ya tiene voz.**
    *
@@ -490,10 +492,24 @@ if (conInicio) {
 }
 
 /*
+ * **Y el helicóptero, solo donde tiene su helipuerto**, venga de donde venga:
+ * del hangar ya llega bien, pero con `?escenario=` en la dirección, o con el
+ * perfil guardado de otro día, se podía pedir en un campo donde no está. Ahí
+ * se vuela el avión que quepa, como cuando un avión no cabe en una pista.
+ */
+if (escenario && esHelicoptero(avion) && !helicopteroPedido) {
+  const queda = laQueSeVuelaEn(avion, escenario);
+  if (queda !== avion)
+    console.info(`Óga Veve · ${avion.name} no vuela en ${escenario.id}: se vuela ${queda.name}.`);
+  avion = queda;
+}
+const conHelicoptero = helicopteroPedido || esHelicoptero(avion);
+
+/*
  * Y el helicóptero vuela suelto: la vuelta al campo, sin ejercicio y sin
- * destino que cargar. **Y sin misión, salvo la suya**: `?mision=teno` lo lleva
- * a Punta de Teno; sin ella, vuelo libre como siempre. Ver `TENO` en
- * `content/missions.ts`.
+ * destino que cargar. **Y sin misión, salvo la suya**: `?mision=teno` o la
+ * ficha de Teno del hangar lo llevan a Punta de Teno; sin ella, vuelo libre.
+ * Ver `TENO` en `content/missions.ts`.
  */
 if (conHelicoptero && escenario) {
   avion = SUPER_PUMA_EN_EL_JUEGO;

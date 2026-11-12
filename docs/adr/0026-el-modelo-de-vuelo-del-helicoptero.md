@@ -1,6 +1,6 @@
 # ADR 0026 — El modelo de vuelo del helicóptero, sobre el Super Puma
 
-**Fecha**: 2026-11-11 · **Estado**: aceptada; hecho el paso 1 (el modelo de vuelo) y la primera mitad del 3 (en el juego, escondido) · **Amplía**: [ADR 0002](0002-modelo-de-vuelo-propio.md)
+**Fecha**: 2026-11-11 · **Estado**: aceptada; hecho el paso 1 (el modelo de vuelo) y la primera mitad del 3 (en el juego, y desde el 12-11 en el hangar de Tenerife Norte, como el JAZ 70 Kirikiri'i) · **Amplía**: [ADR 0002](0002-modelo-de-vuelo-propio.md)
 
 ## Contexto
 
@@ -105,11 +105,19 @@ a quien vuela, no lo que hace el helicóptero. Ningún peldaño baja a `amortigu
 verdad no se vuela sin su automático, y aquí no se enseña lo que allí no se hace. Cambiar de peldaño en el aire cambia
 el nivel sin soltar nada (`ponerEstabilizacion` se queda con la actitud y el rumbo de ese momento).
 
-## En el juego, escondido
+## En el juego, escondido, y después en el hangar
 
-Para probarlo en la web y afinar los mandos antes de que llegue el modelo en 3D, el helicóptero se vuela con
-**`?avion=super-puma`** en la dirección, y solo así. No está en `AIRCRAFT`: no sale en el hangar, ni en el cambio de
-avión, ni en ninguna lección, y no se guarda en el perfil. Entra directo en Tenerife Norte, **posado en el helipuerto
+**Desde el 12-11 está en la flota y en el hangar** (Enrique: «Dale por ahí»): es el **JAZ 70 Kirikiri'i**, el
+halconcito colorado que se queda quieto en el aire, con su silueta propia, entre el JAZ 60 y el JAZ 90 (ver
+`flight/flota.ts`). Se elige en «¿Con qué volás?» **solo en Tenerife Norte**, donde tiene su helipuerto; ofrece su
+vuelo libre y la misión de Teno, y la tecla de cambiar de aparato lo incluye allí. Sigue fuera de `AIRCRAFT`, que es lo
+que recorren las lecciones, los ejercicios y las cuentas de pista: la lista de todo lo que se vuela es `AERONAVES`
+(`flight/aeronaves.ts`), con la regla de dónde se ofrece cada uno. Lo que sigue es cómo entró, escondido, y sigue
+valiendo con la dirección.
+
+Para probarlo en la web y afinar los mandos antes de que llegue el modelo en 3D, el helicóptero se volaba con
+**`?avion=super-puma`** en la dirección, y solo así. No estaba en `AIRCRAFT`: no salía en el hangar, ni en el cambio de
+avión, ni en ninguna lección, y no se guardaba en el perfil. Entra directo en Tenerife Norte, **posado en el helipuerto
 del Ejército** junto a Los Rodeos (GCXM, puesto a mano con los datos del AIP, que OpenStreetMap no lo trae: ver
 `helipuertosAMano`), cara al viento, con el rotor en sus vueltas y el colectivo abajo. Se vuela suelto: la vuelta al campo, sin misión, sin destino y sin vecinos. Con `&mision=teno`, la suya, la única que se le ofrece.
 
