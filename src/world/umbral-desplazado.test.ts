@@ -20,6 +20,7 @@ import {
   type LuzDePista,
 } from "./aerodrome";
 import { crearAproximacion } from "./aproximacion";
+import { ayudasVisuales } from "./sendas-publicadas";
 import { campoDeCasa, umbralEnUso } from "./campo-del-vuelo";
 import { BASE_A_FINAL, verticesDelCircuito } from "./circuito";
 import {
@@ -206,7 +207,7 @@ describe("las luces de aproximación y el PAPI, en el umbral de aterrizar", () =
     (x - u01[0]) * ux + (-z - u01[1]) * uy;
 
   it("la fila de luces acaba en la barra y el PAPI está pista adentro de ella", () => {
-    const ap = crearAproximacion(pista, "01", () => 0)!;
+    const ap = crearAproximacion(pista, "01", () => 0, [], ayudasVisuales("GCFV", "01"))!;
     expect(ap).not.toBeNull();
     const fila = ap.grupo.getObjectByName("luces-aproximacion") as InstancedMesh;
     const papi = ap.grupo.getObjectByName("papi") as InstancedMesh;

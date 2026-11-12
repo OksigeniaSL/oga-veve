@@ -15,6 +15,7 @@ import { InstancedMesh } from "three";
 import { COLOR_DE_PISTA, colorVisto, createAerodrome, lucesDePista } from "./aerodrome";
 import type { Aerodrome, LuzDePista } from "./aerodrome";
 import { crearAproximacion } from "./aproximacion";
+import { ayudasVisuales } from "./sendas-publicadas";
 import { conViento, LA_PALMA, LANZAROTE, PILAR, SCENARIOS } from "./scenarios";
 import { cabeceraEnUso } from "./terrain";
 import { TIEMPO_DE_CASA } from "./meteo";
@@ -158,7 +159,7 @@ describe("La Palma: la pista entera del AIP", () => {
     const pista = LA_PALMA.aerodrome!.runways[0]!;
     const ayudas = LA_PALMA.aerodrome!.visualAids ?? [];
     for (const cabecera of ["36", "18"]) {
-      const ap = crearAproximacion(pista, cabecera, () => 0, ayudas)!;
+      const ap = crearAproximacion(pista, cabecera, () => 0, ayudas, ayudasVisuales("GCLA", cabecera))!;
       expect(ap.papiAdentro, cabecera).toBeGreaterThan(290);
       expect(ap.papiAdentro, cabecera).toBeLessThan(360);
     }

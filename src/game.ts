@@ -877,7 +877,7 @@ import {
   vecesLejosDe,
   type Scenario,
 } from "./world/scenarios";
-import { SENDA_DE_SIEMPRE, sendaDeLaCabecera, tieneIls } from "./world/sendas-publicadas";
+import { SENDA_DE_SIEMPRE, ayudasVisuales, sendaDeLaCabecera, tieneIls } from "./world/sendas-publicadas";
 import { crearTeselas, type Teselas } from "./world/teselas";
 import {
   TeselasDeOrtofoto,
@@ -13286,10 +13286,12 @@ export class Game {
      * algo, sí, pero para aterrizar de noche en un aeropuerto con luces, y ese
      * campo no lo es.
      *
-     * Lo dice el propio fichero: `lit`. Una pista con luces de borde tiene
-     * detrás toda la instalación —balizamiento, PAPI, luces de aproximación—
-     * y una pista sin ellas no tiene ninguna. Un campo de hierba se queda con
-     * su manga, que es lo que tiene de verdad.
+     * Lo dice el propio fichero: `lit`. Una pista sin luces de borde no tiene
+     * PAPI ni luces de aproximación, y un campo de hierba se queda con su
+     * manga, que es lo que tiene de verdad. Y una con luces de borde no por
+     * eso tiene las otras dos: la 36L de Barajas, que es de despegar, no
+     * tiene ninguna, y Concepción tiene las de borde y nada más. Esas van
+     * cabecera por cabecera, como las publica su AIP: ver `ayudasVisuales`.
      */
     if (!pista.lit) return;
     if (this.aproximacion) {
@@ -13304,8 +13306,9 @@ export class Game {
       // Y si el fichero trae las luces mapeadas, el PAPI va donde está de
       // verdad y no donde lo pondríamos nosotros. Ver `sitiarPapi`.
       this.scenario.aerodrome?.visualAids ?? [],
-      // Reglado a la senda que publica su AIP. Ver `sendas-publicadas.ts`.
-      sendaDeLaCabecera(oaciDe(this.scenario), cabeceraEnUso(this.scenario)),
+      // Solo lo que publica su AIP en esa cabecera, y el PAPI reglado a su
+      // ángulo. Ver `sendas-publicadas.ts`.
+      ayudasVisuales(oaciDe(this.scenario), cabeceraEnUso(this.scenario)),
     );
     if (this.aproximacion) {
       this.scene.add(this.aproximacion.grupo);
@@ -13372,7 +13375,7 @@ export class Game {
       cabeceraEnUso(v.campo.escenario),
       suelo,
       aero.visualAids ?? [],
-      sendaDeLaCabecera(oaciDe(v.campo.escenario), cabeceraEnUso(v.campo.escenario)),
+      ayudasVisuales(oaciDe(v.campo.escenario), cabeceraEnUso(v.campo.escenario)),
     );
     if (v.aproximacion) {
       v.mundo.colgarDeCerca(v.aproximacion.grupo);

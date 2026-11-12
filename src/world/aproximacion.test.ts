@@ -17,6 +17,14 @@ import {
 import { PAPI_SE_DISTINGUE_PX } from "../flight/lo-que-se-nombra";
 import { GLIDE_SLOPE, SENDA_DESDE } from "./runway-guide";
 import type { Pista, Umbral } from "./aerodrome";
+import type { AyudasVisualesPublicadas } from "./sendas-publicadas";
+
+/** Un PAPI a tres grados y una fila sencilla de 420 m, como la 09 de Cuatro Vientos. */
+const CON_TODO: AyudasVisualesPublicadas = {
+  papi: 3,
+  papiALaDerecha: false,
+  luces: { sistema: "sencillas", largo: 420 },
+};
 
 const umbral = (xy: [number, number], headingTrue: number): Umbral => ({
   elevM: 0,
@@ -41,7 +49,7 @@ const PISTA: Pista = {
 
 /** Cuántas de las cuatro se ven blancas, mirando desde ese punto. */
 function blancas(x: number, y: number, z: number): number {
-  const a = crearAproximacion(PISTA, "09", () => 0);
+  const a = crearAproximacion(PISTA, "09", () => 0, [], CON_TODO);
   if (!a) throw new Error("no se montó la aproximación");
   a.mirarDesde(x, y, z);
   const papi = a.grupo.getObjectByName("papi") as InstancedMesh;
@@ -92,7 +100,7 @@ describe("el PAPI", () => {
 
 describe("las luces de aproximación", () => {
   it("van por delante del umbral por el que se entra, no por el otro", () => {
-    const a = crearAproximacion(PISTA, "09", () => 0);
+    const a = crearAproximacion(PISTA, "09", () => 0, [], CON_TODO);
     const fila = a!.grupo.getObjectByName(
       "luces-aproximacion",
     ) as InstancedMesh;
@@ -106,7 +114,7 @@ describe("las luces de aproximación", () => {
   });
 
   it("se mudan al otro extremo cuando cambia la cabecera en uso", () => {
-    const a = crearAproximacion(PISTA, "27", () => 0);
+    const a = crearAproximacion(PISTA, "27", () => 0, [], CON_TODO);
     const fila = a!.grupo.getObjectByName(
       "luces-aproximacion",
     ) as InstancedMesh;
@@ -119,7 +127,7 @@ describe("las luces de aproximación", () => {
   });
 
   it("llegan a los cuatrocientos veinte metros, que es lo que mide una fila", () => {
-    const a = crearAproximacion(PISTA, "09", () => 0);
+    const a = crearAproximacion(PISTA, "09", () => 0, [], CON_TODO);
     const fila = a!.grupo.getObjectByName(
       "luces-aproximacion",
     ) as InstancedMesh;
@@ -322,7 +330,7 @@ describe("el PAPI se distingue de lejos, como el de verdad", () => {
 
   /** Dónde quedan dibujadas las cuatro, mirando desde `d` m antes del umbral por la senda. */
   function dibujadasDesde(d: number) {
-    const a = crearAproximacion(PISTA, "09", () => 0)!;
+    const a = crearAproximacion(PISTA, "09", () => 0, [], CON_TODO)!;
     const y = alturaPara(3, d);
     a.verDesde(-d, y, 0, PPR);
     a.mirarDesde(-d, y, 0);

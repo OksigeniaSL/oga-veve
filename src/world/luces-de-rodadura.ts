@@ -156,9 +156,10 @@ export function crearLucesDeRodadura(
   /*
    * Sin pista iluminada no hay balizamiento ninguno.
    *
-   * Detrás de una pista con luces está toda la instalación —balizamiento,
-   * PAPI, luces de aproximación— y detrás de un campo de hierba no hay nada
-   * de eso. Es la misma regla que ya usa el resto del aeródromo.
+   * Detrás de un campo de hierba no hay calles con luces, ni PAPI, ni luces
+   * de aproximación. Es la misma regla que ya usa el resto del aeródromo; el
+   * PAPI y las de aproximación, además, solo donde las publica su AIP: ver
+   * `world/sendas-publicadas.ts`.
    */
   if (!aero.runways.some((p) => p.lit)) return null;
 

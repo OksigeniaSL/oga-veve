@@ -21,6 +21,13 @@
  * Y hay un dicho entre pilotos para acordarse de lo que significa el rojo:
  * *red over red, you're dead*. Cuatro rojas quiere decir que vienes por debajo
  * de la senda, y por debajo de la senda es donde están los cerros.
+ *
+ * **Las dos, solo donde las hay.** No todas las cabeceras tienen PAPI ni luces
+ * de aproximación, y las que las tienen no las tienen iguales: novecientos
+ * metros de categoría II/III en las de llegar de Barajas, nada en las de
+ * despegar.
+ * Se monta lo que publica el AIP de cada cabecera, y nada donde no se sabe:
+ * ver `sendas-publicadas.ts`.
  */
 
 import {
@@ -36,6 +43,7 @@ import {
 } from "three";
 import type { Pista, Punto, Umbral } from "./aerodrome";
 import { PAPI_SE_DISTINGUE_PX, PAPI_SE_VE_DESDE } from "../flight/lo-que-se-nombra";
+import type { AyudasVisualesPublicadas, LucesDeAproximacion } from "./sendas-publicadas";
 
 /** Un umbral del que sí sabemos dónde está. */
 type Situado = Umbral & { readonly xy: Punto };
@@ -71,12 +79,41 @@ export function blancasDePapi(grados: number, senda = 3): number {
 const BLANCO = 0xfff4e2;
 const ROJO = 0xe8402c;
 
-/** Hasta dónde llega la fila de luces por delante del umbral. */
-const LARGO_APROXIMACION = 420;
 /** Separación entre luces de la fila, que es la de verdad. */
 const PASO_APROXIMACION = 30;
 /** A qué distancia va la barra cruzada. */
 const BARRA = 300;
+/**
+ * Hasta dónde llegan las filas rojas de los lados en las de categoría II/III,
+ * m del umbral, y a cuánto del eje va su luz de dentro: «not less than 18 m
+ * nor more than 22.5 m, and preferably 18 m» entre las dos de dentro (OACI,
+ * Anexo 14, las de categoría II y III), que son las de la zona de toma.
+ */
+const FILAS_ROJAS_HASTA = 270;
+const FILA_ROJA_DEL_EJE = 9;
+
+/**
+ * **A cuántos metros del umbral va cada barra cruzada**: las que publique el
+ * AIP, o las de su sistema —la de trescientos metros, y en las de categoría
+ * II/III otra a ciento cincuenta—, y solo las que caben en el largo de la
+ * fila: una barra más allá de la última luz no la hay.
+ */
+export function barrasDe(luces: LucesDeAproximacion): readonly number[] {
+  const suyas =
+    luces.barras ?? (luces.sistema === "precision2" ? [150, BARRA] : [BARRA]);
+  return suyas.filter((d) => d <= luces.largo);
+}
+
+/**
+ * **El medio ancho de una barra cruzada**, m: quince a trescientos metros, que
+ * es la de treinta de la OACI, y más ancha cuanto más lejos. Es la cuenta que
+ * casa con las cinco barras Calvert de las 03 de Gran Canaria mapeadas en
+ * OpenStreetMap —once, quince, diecinueve, veintidós y veintisiete metros a
+ * cada lado—, y de lejos hace que todas se vean más o menos igual de anchas.
+ */
+export function medioAnchoDeLaBarra(d: number): number {
+  return 7.5 + d / 40;
+}
 
 /**
  * Y las medidas del PAPI cuando hay que calcularlo, sacadas de las de verdad.
@@ -201,6 +238,12 @@ export function sitiarPapi(
   ancho: number,
   largo: number,
   ayudas: readonly AyudaVisual[] = [],
+  /**
+   * Si su AIP lo pone **solo a la derecha**, como la 12 de Tenerife Norte. Es
+   * el costado que se calcula cuando el fichero no trae las luces; si las
+   * trae, mandan ellas.
+   */
+  aLaDerecha = false,
 ): SitioDelPapi {
   const [ux, uy] = eje;
   // A la izquierda vista desde la aproximación, que es donde va un PAPI solo.
@@ -216,7 +259,7 @@ export function sitiarPapi(
     });
 
   const porDefecto: SitioDelPapi = {
-    luces: calculada(PAPI_ADENTRO, ancho / 2 + PAPI_DEL_BORDE, 1),
+    luces: calculada(PAPI_ADENTRO, ancho / 2 + PAPI_DEL_BORDE, aLaDerecha ? -1 : 1),
     origen: "calculado",
   };
 
@@ -309,15 +352,23 @@ export interface Aproximacion {
    * trae mapeadas, de ahí; si no, de la medida normalizada. En Cuatro Vientos
    * están a 162 m y en La Palma a 297, y esos ciento treinta y cinco metros de
    * diferencia son siete de altura sobre el umbral.
+   *
+   * Sin PAPI, la medida normalizada, que es más o menos donde empieza la senda
+   * de un ILS y donde están las señales de punto de visada.
    */
   readonly papiAdentro: number;
-  /** El ángulo de la senda de esta cabecera, grados: al que va reglado el PAPI. */
-  readonly senda: number;
+  /**
+   * El ángulo al que va reglado el PAPI, grados, o `null` si esta cabecera no
+   * tiene. Ver `sendas-publicadas.ts`.
+   */
+  readonly senda: number | null;
   dispose(): void;
 }
 
 /**
- * Monta las luces de aproximación y el PAPI de una pista.
+ * Monta las luces de aproximación y el PAPI de una pista, **los que publica su
+ * AIP en esa cabecera** y ninguno más: ver `ayudasVisuales` en
+ * `sendas-publicadas.ts`. Si no tiene ni lo uno ni lo otro, nada.
  *
  * `altura` tiene que ser el suelo **de verdad** —el de la fotografía si la
  * hay—, y por eso esto se construye después de moldear el terreno y no con el
@@ -329,24 +380,29 @@ export function crearAproximacion(
   pista: Pista,
   cabecera: string | null,
   altura: (p: Punto) => number,
-  ayudas: readonly AyudaVisual[] = [],
-  /** El ángulo de la senda de esta cabecera, grados. Ver `sendas-publicadas.ts`. */
-  senda = 3,
+  ayudas: readonly AyudaVisual[],
+  /** Lo que publica el AIP de esa cabecera. Ver `sendas-publicadas.ts`. */
+  publicado: AyudasVisualesPublicadas,
 ): Aproximacion | null {
-  const ANGULOS = angulosDelPapi(senda);
+  const senda = publicado.papi;
+  const deAproximacion = publicado.luces;
+  if (senda === null && !deAproximacion) return null;
+  const ANGULOS = angulosDelPapi(senda ?? 3);
   const conNombre = Object.entries(pista.thresholds).filter(
     (e): e is [string, Situado] => e[1] !== null && e[1].xy !== null,
   );
   if (conNombre.length < 2) return null;
 
   /*
-   * El umbral por el que se entra. Si no se sabe cuál está en uso —sin viento,
-   * o sin cabecera elegida— se coge el primero: da igual, porque lo que importa
-   * es que las luces estén en **una** cabecera y no repartidas entre las dos.
+   * El umbral por el que se entra. Si no se dice cuál, el primero: lo que
+   * importa es que las luces estén en **una** cabecera y no repartidas entre
+   * las dos. Pero si se dice y la pista no la tiene, nada: lo publicado es de
+   * esa cabecera y no de la otra.
    */
   const i = cabecera ? conNombre.findIndex(([n]) => n === cabecera) : 0;
-  const [, entrada] = conNombre[i >= 0 ? i : 0]!;
-  const [, salida] = conNombre[(i >= 0 ? i : 0) === 0 ? 1 : 0]!;
+  if (i < 0) return null;
+  const [, entrada] = conNombre[i]!;
+  const [, salida] = conNombre[i === 0 ? 1 : 0]!;
 
   const [ux, uy] = (() => {
     const dx = salida.xy[0] - entrada.xy[0];
@@ -390,68 +446,101 @@ export function crearAproximacion(
    * fila quede plana y alineada con la pista. Una fila que siguiera el terreno
    * no sería una guía, sería una cuesta de bombillas.
    */
-  const puntos: [number, number, number][] = [];
-  const ponerLuz = (x: number, y: number): void => {
-    const suelo = altura([x, y]);
-    puntos.push([x, Math.max(cotaUmbral, suelo) + 0.6, -y]);
+  const m = new Matrix4();
+  /** Una fila de luces de un color, en una sola llamada de dibujo. */
+  const montarFila = (
+    nombre: string,
+    color: number,
+    puntos: readonly (readonly [number, number, number])[],
+  ): void => {
+    if (!puntos.length) return;
+    const fila = new InstancedMesh(
+      new SphereGeometry(0.75, 6, 4),
+      new MeshBasicMaterial({ color }),
+      puntos.length,
+    );
+    fila.name = nombre;
+    puntos.forEach((p, k) => {
+      m.makeTranslation(p[0], p[1], p[2]);
+      fila.setMatrixAt(k, m);
+    });
+    grupo.add(fila);
   };
 
-  for (
-    let d = PASO_APROXIMACION;
-    d <= LARGO_APROXIMACION;
-    d += PASO_APROXIMACION
-  ) {
-    // Hacia fuera del umbral: al contrario del eje, que apunta pista adentro.
-    const cx = toma[0] - ux * d;
-    const cy = toma[1] - uy * d;
-    // Tres por travesaño, que es lo que hace legible la fila desde lejos.
-    for (const lado of [-3, 0, 3]) ponerLuz(cx - uy * lado, cy + ux * lado);
-  }
-  // La barra cruzada: la referencia de alineación, y la que dice cuánto falta.
-  for (let k = -7; k <= 7; k++) {
-    if (k === 0) continue;
-    const cx = toma[0] - ux * BARRA - uy * (k * 2);
-    const cy = toma[1] - uy * BARRA + ux * (k * 2);
-    ponerLuz(cx, cy);
-  }
+  if (deAproximacion) {
+    const blancas: [number, number, number][] = [];
+    const rojas: [number, number, number][] = [];
+    /** Una luz a `d` metros del umbral hacia fuera y `lado` del eje. */
+    const ponerLuz = (
+      donde: [number, number, number][],
+      d: number,
+      lado: number,
+    ): void => {
+      // Hacia fuera del umbral: al contrario del eje, que apunta pista adentro.
+      const x = toma[0] - ux * d - uy * lado;
+      const y = toma[1] - uy * d + ux * lado;
+      donde.push([x, Math.max(cotaUmbral, altura([x, y])) + 0.6, -y]);
+    };
 
-  const m = new Matrix4();
-  const fila = new InstancedMesh(
-    new SphereGeometry(0.75, 6, 4),
-    new MeshBasicMaterial({ color: BLANCO }),
-    puntos.length,
-  );
-  fila.name = "luces-aproximacion";
-  puntos.forEach((p, k) => {
-    m.makeTranslation(p[0], p[1], p[2]);
-    fila.setMatrixAt(k, m);
-  });
-  grupo.add(fila);
+    // El largo que publica su AIP: de 210 m en la 21L de Gran Canaria a 900.
+    for (let d = PASO_APROXIMACION; d <= deAproximacion.largo; d += PASO_APROXIMACION) {
+      // Tres por travesaño, que es lo que hace legible la fila desde lejos.
+      for (const lado of [-3, 0, 3]) ponerLuz(blancas, d, lado);
+    }
+    // Las barras cruzadas: la referencia de alineación, y las que dicen cuánto falta.
+    for (const d of barrasDe(deAproximacion)) {
+      for (let k = 1; 2 * k <= medioAnchoDeLaBarra(d); k++) {
+        ponerLuz(blancas, d, 2 * k);
+        ponerLuz(blancas, d, -2 * k);
+      }
+    }
+    /*
+     * Y en las de categoría II/III, las dos filas de barras rojas a los lados,
+     * de tres luces a metro y medio, en línea con las de la zona de toma.
+     */
+    if (deAproximacion.sistema === "precision2") {
+      const hasta = Math.min(FILAS_ROJAS_HASTA, deAproximacion.largo);
+      for (let d = PASO_APROXIMACION; d <= hasta; d += PASO_APROXIMACION) {
+        for (const signo of [-1, 1])
+          for (let k = 0; k < 3; k++) ponerLuz(rojas, d, signo * (FILA_ROJA_DEL_EJE + 1.5 * k));
+      }
+    }
+    montarFila("luces-aproximacion", BLANCO, blancas);
+    montarFila("luces-aproximacion-rojas", ROJO, rojas);
+  }
 
   /*
    * El PAPI, a trescientos metros pista adentro y al costado izquierdo visto
-   * desde la aproximación, que es donde va.
+   * desde la aproximación, que es donde va; o donde lo diga el fichero, o a
+   * la derecha si su AIP lo pone ahí. Solo si lo tiene.
    */
-  const papi = new InstancedMesh(
-    new SphereGeometry(RADIO_DE_LUZ_DEL_PAPI, 8, 6),
-    new MeshBasicMaterial(),
-    4,
-  );
-  papi.name = "papi";
+  const sitio =
+    senda === null
+      ? null
+      : sitiarPapi(toma, [ux, uy], ancho, largo - desplazado, ayudas, publicado.papiALaDerecha);
+  const papi = sitio
+    ? new InstancedMesh(
+        new SphereGeometry(RADIO_DE_LUZ_DEL_PAPI, 8, 6),
+        new MeshBasicMaterial(),
+        4,
+      )
+    : null;
   /*
    * Las cuatro, en el orden que importa: la más cerca del eje es la del ángulo
    * más bajo. Así, en la senda, las dos de dentro salen blancas y las dos de
    * fuera rojas.
    */
-  const sitio = sitiarPapi(toma, [ux, uy], ancho, largo - desplazado, ayudas);
   const luces: { x: number; y: number; z: number }[] = [];
-  sitio.luces.forEach(([cx, cy], k) => {
-    const y = Math.max(cotaUmbral, altura([cx, cy])) + 1;
-    luces.push({ x: cx, y, z: -cy });
-    m.makeTranslation(cx, y, -cy);
-    papi.setMatrixAt(k, m);
-  });
-  grupo.add(papi);
+  if (sitio && papi) {
+    papi.name = "papi";
+    sitio.luces.forEach(([cx, cy], k) => {
+      const y = Math.max(cotaUmbral, altura([cx, cy])) + 1;
+      luces.push({ x: cx, y, z: -cy });
+      m.makeTranslation(cx, y, -cy);
+      papi.setMatrixAt(k, m);
+    });
+    grupo.add(papi);
+  }
 
   /*
    * **Y dibujadas para verse de lejos**: ver `escalaDelPapi`. Lo que se mueve
@@ -471,7 +560,7 @@ export function crearAproximacion(
   let escalaPuesta: EscalaDelPapi = { fila: 1, luz: 1 };
   const verDesde = (x: number, y: number, z: number, pixelesPorRadian: number): void => {
     const primera = luces[0];
-    if (!primera) return;
+    if (!primera || !papi) return;
     const e = escalaDelPapi(
       Math.hypot(x - centroDelPapi.x, y - centroDelPapi.y, z - centroDelPapi.z),
       pixelesPorRadian,
@@ -506,6 +595,7 @@ export function crearAproximacion(
 
   const tono = new Color();
   const mirarDesde = (x: number, y: number, z: number): void => {
+    if (!papi) return;
     for (let k = 0; k < 4; k++) {
       const l = luces[k]!;
       const suelo = Math.hypot(x - l.x, z - l.z);
@@ -529,7 +619,7 @@ export function crearAproximacion(
    * sobre el umbral. Ver `papiAdentro`.
    */
   const papiAdentro =
-    sitio.luces.length > 0
+    sitio && sitio.luces.length > 0
       ? Math.abs(
           (sitio.luces[0]![0] - toma[0]) * ux +
             (sitio.luces[0]![1] - toma[1]) * uy,

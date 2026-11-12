@@ -62,6 +62,7 @@ import { laDibujaLaGranja } from "./granja";
 import { esDura } from "./superficie";
 import { ANCHO_RODADURA } from "./ancho-de-rodadura";
 import { umbralPublicado } from "./umbrales-publicados";
+import { lucesDePistaPublicadas } from "./sendas-publicadas";
 import { puntoDeVisada } from "../flight/toma-larga";
 
 /**
@@ -2117,6 +2118,14 @@ export function lucesDePista(
   const hastaPrincipio = acabaEnSuUmbral(nombreFin) ? dPrincipio : 0;
   // Seiscientos metros o un tercio de la pista, lo que sea menos: OACI.
   const AMBAR = Math.min(600, largo / 3);
+  /*
+   * **Y las que publica su AIP para quien aterriza por cada cabecera**, que no
+   * siempre son todas: las de despegar de Barajas no tienen barra verde,
+   * Concepción no tiene ni verde ni roja, y en La Gomera el borde es blanco
+   * hasta el final. Ver `lucesDePistaPublicadas`.
+   */
+  const porElPrincipio = lucesDePistaPublicadas(oaci, nombrePrincipio);
+  const porElFin = lucesDePistaPublicadas(oaci, nombreFin);
 
   const luces: LuzDePista[] = [];
   const poner = (
@@ -2147,12 +2156,16 @@ export function lucesDePista(
     // en los últimos seiscientos metros por delante, blancas en medio.
     // Y pasado el final de su pista para aterrizar, rojas: ahí ya no es suya.
     const haciaElFin =
-      s < dPrincipio || s > hastaFin ? roja : hastaFin - s < AMBAR ? ambar : blanca;
+      s < dPrincipio || s > hastaFin
+        ? roja
+        : hastaFin - s < AMBAR && porElPrincipio.ambar
+          ? ambar
+          : blanca;
     // Y quien va hacia el principio, lo mismo desde la otra punta.
     const haciaElPrincipio =
       largo - s < dFin || s < hastaPrincipio
         ? roja
-        : s - hastaPrincipio < AMBAR
+        : s - hastaPrincipio < AMBAR && porElFin.ambar
           ? ambar
           : blanca;
     for (const lado of [-1, 1])
@@ -2173,9 +2186,19 @@ export function lucesDePista(
     desdeElFin: number | null,
     desdeElPrincipio: number | null,
   ): void => {
+    // Una fila que no se ve desde ningún lado no es una fila.
+    if (desdeElFin === null && desdeElPrincipio === null) return;
     for (let k = -5; k <= 5; k++)
       poner(s, k * (ancho / 11), desdeElFin, desdeElPrincipio);
   };
+  /*
+   * La verde de cada punta es el umbral de quien llega por ella, y la roja,
+   * el final de la pista de quien llega por la otra.
+   */
+  const verdeDelPrincipio = porElPrincipio.umbral ? verde : null;
+  const rojaDelPrincipio = porElFin.extremo ? roja : null;
+  const verdeDelFin = porElFin.umbral ? verde : null;
+  const rojaDelFin = porElPrincipio.extremo ? roja : null;
   // En la punta del principio, quien está fuera está del lado del principio.
   /*
    * Y donde la pista de enfrente acaba en el umbral, las dos filas son una:
@@ -2184,20 +2207,20 @@ export function lucesDePista(
    * de despegue de esa cabecera, y no lleva fila. Es La Palma.
    */
   if (hastaPrincipio > 0) {
-    fila(dPrincipio, roja, verde);
+    fila(dPrincipio, rojaDelPrincipio, verdeDelPrincipio);
   } else if (dPrincipio > 0) {
-    fila(0, roja, null);
-    fila(dPrincipio, null, verde);
+    fila(0, rojaDelPrincipio, null);
+    fila(dPrincipio, null, verdeDelPrincipio);
   } else {
-    fila(0, roja, verde);
+    fila(0, rojaDelPrincipio, verdeDelPrincipio);
   }
   if (hastaFin < largo) {
-    fila(largo - dFin, verde, roja);
+    fila(largo - dFin, verdeDelFin, rojaDelFin);
   } else if (dFin > 0) {
-    fila(largo, null, roja);
-    fila(largo - dFin, verde, null);
+    fila(largo, null, rojaDelFin);
+    fila(largo - dFin, verdeDelFin, null);
   } else {
-    fila(largo, verde, roja);
+    fila(largo, verdeDelFin, rojaDelFin);
   }
   return luces;
 }
