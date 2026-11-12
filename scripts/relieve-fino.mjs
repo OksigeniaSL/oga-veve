@@ -142,10 +142,7 @@ export const PARCHES = [
      * faro**: el parche se funde con el horizonte en los cuadros que éste
      * dibuja, y con la punta en la primera columna, el cuadro de al lado
      * —también con tierra del parche— la dejaba con su peso casi a cero, en
-     * el agua. El puerto de Garachico, el otro sitio de la misión, va de
-     * momento con el horizonte, que lo dibuja como una ladera de 4,8°, justo
-     * por debajo de los cinco que se piden: un parche suyo lo dejaría llano,
-     * como es.
+     * el agua. El puerto de Garachico, el otro sitio, tiene el suyo: ver abajo.
      */
     id: "teno",
     nombre: "Punta de Teno",
@@ -154,6 +151,31 @@ export const PARCHES = [
     ancho: 6000,
     alto: 5000,
     paso: 20,
+    dibujo: 20,
+    paraPosarse: true,
+    fuente: "ign",
+  },
+  {
+    /*
+     * **El puerto de Garachico**, el otro sitio de la misión de Teno: adonde
+     * llevaron a la gente en 2016. El horizonte, a trescientos metros por
+     * muestra, metía en el mismo cuadro el mar, el pueblo y el risco de
+     * detrás, y dibujaba la explanada del aparcamiento del puerto —noventa
+     * metros, de tierra compactada y llana— como una ladera de casi cinco
+     * grados. Centrado en ella (OpenStreetMap, vía 888471906) y del tamaño
+     * justo: el kilómetro de fundido con el horizonte a cada lado y un núcleo
+     * fino de unos seiscientos metros con el puerto dentro. Dibujado a veinte
+     * metros, como el de Teno, la explanada queda en 2,0° en su círculo de
+     * veinte metros: no hace falta más malla. Las muestras van a diez, que
+     * cuestan kilobytes y no triángulos.
+     */
+    id: "garachico",
+    nombre: "El puerto de Garachico",
+    lat: 28.373946,
+    lon: -16.756585,
+    ancho: 2600,
+    alto: 2600,
+    paso: 10,
     dibujo: 20,
     paraPosarse: true,
     fuente: "ign",

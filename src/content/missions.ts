@@ -287,16 +287,17 @@ export const GENTE_EN_TENO = { x: -56830.6, z: 15654.4 };
 
 /**
  * **La explanada del puerto de Garachico**, el aparcamiento de tierra
- * compactada del puerto (OpenStreetMap, vía 888471906; 28,37389 N 16,75652
- * O). Es adonde llevaron a la gente en 2016. Aquí no hay parche fino y manda
- * el horizonte, a trescientos metros por muestra, que la dibuja como una
- * ladera suave: 4,8° en el círculo de veinte metros, a 10,8 m, catorce metros
- * al noroeste del punto de OpenStreetMap, que caía en la arista de dos
- * triángulos y daba 5,1°. Medido con el suelo que se dibuja, que desde que lo
- * es también el que se pisa —ver `cotaDelHorizonteSinLagos` en `terrain.ts`—
- * ya no deja el helicóptero enterrado cuatro metros.
+ * compactada del puerto (OpenStreetMap, vía 888471906): noventa metros de
+ * noroeste a sudeste, junto al muelle. Es adonde llevaron a la gente en 2016.
+ * Lleva su parche de relieve fino, `data/terrain/parches/garachico.bin`, del
+ * MDT05: el horizonte metía el mar, el pueblo y el risco en el mismo cuadro y
+ * la dibujaba como una ladera de casi cinco grados. Con él, el sitio va en el
+ * extremo noroeste, donde el círculo de veinte metros cabe casi entero en el
+ * aparcamiento: 2,0° y a 2,6 m. Es lo que da el LiDAR: la explanada sube un
+ * par de grados del muelle hacia el pueblo. Medido con el suelo que se dibuja,
+ * que es también el que se pisa.
  */
-export const EXPLANADA_DEL_PUERTO_DE_GARACHICO: Sitio = { x: -40552.2, z: 12094.9, radius: 20 };
+export const EXPLANADA_DEL_PUERTO_DE_GARACHICO: Sitio = { x: -40561.5, z: 12080.1, radius: 20 };
 
 /**
  * **Teno.** Del helipuerto del Ejército en Los Rodeos a la punta de la isla,

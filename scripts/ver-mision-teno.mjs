@@ -46,7 +46,7 @@ const VIENTO = process.env.OGA_VIENTO ?? "000/0";
 
 /** Los dos sitios de la misión, los mismos de `content/missions.ts`. */
 const FARO = { x: -56863.6, z: 15668.9, radio: 20 };
-const GARACHICO = { x: -40552.2, z: 12094.9, radio: 20 };
+const GARACHICO = { x: -40561.5, z: 12080.1, radio: 20 };
 const GCXM = { x: -924.6, z: -101.7 };
 /** Donde espera la gente, el de `GENTE_EN_TENO`, y cuántos son: doce y un perro. */
 const GENTE = { x: -56830.6, z: 15654.4 };
@@ -264,6 +264,39 @@ try {
         cpuGente: o.gente().msPorPaso,
       };
     }, apagada);
+  /**
+   * **Que se pisa el suelo que se ve**: en el mástil y donde está cada uno de
+   * la gente, el suelo dibujado —un rayo de arriba abajo contra el terreno—
+   * frente al que pisan, `sueloDeVuelo`.
+   * Devuelve la peor diferencia, m. Sin esto, la gente de Garachico estuvo
+   * metro y medio bajo tierra con todo lo demás en verde.
+   */
+  const pisaLoQueSeVe = () =>
+    page.evaluate(async () => {
+      const THREE = await import("/node_modules/three/build/three.module.js");
+      const o = globalThis.__oga;
+      const j = o.juegoParaTrazas();
+      const s = o.estado();
+      // El mástil, si está posado; en el aire, lo de debajo no lo pisa nadie.
+      const puntos = [...(s.onGround ? [{ x: s.position.x, z: s.position.z }] : []), ...o.gente().sitios.filter((q) => q.estado === "fuera")];
+      let peor = 0;
+      let donde = "";
+      for (const q of puntos) {
+        // Desde poco por encima, que más arriba hay nubes y cielo.
+        const rayo = new THREE.Raycaster(new THREE.Vector3(q.x, o.sueloDeVuelo(q.x, q.z) + 50, q.z), new THREE.Vector3(0, -1, 0));
+        const t = rayo
+          .intersectObject(j.scene, true)
+          // Solo el terreno: el aro de la misión y lo demás que hay encima no se pisa.
+          .find((t) => t.object.isMesh && j.terrain.group.getObjectById(t.object.id));
+        if (!t) continue;
+        const d = Math.abs(t.point.y - o.sueloDeVuelo(q.x, q.z));
+        if (d > peor) {
+          peor = d;
+          donde = `${t.object.name || "?"} en (${q.x.toFixed(0)}, ${q.z.toFixed(0)})`;
+        }
+      }
+      return { peor: +peor.toFixed(2), donde, cuantos: puntos.length };
+    });
   const conVista = async (vista, nombre) => {
     await page.evaluate((v) => globalThis.__oga.ponerVista(v), vista);
     await pausa(700);
@@ -457,6 +490,12 @@ try {
     `${esperando.fuera} fuera, ${junto} en su sitio, ${esperando.visible ? "se ve" : "no se ve"}, a ${Math.hypot(cerca.x - GENTE.x, cerca.z - GENTE.z).toFixed(0)} m`,
   );
   await foto("g1-llegando-con-la-gente-esperando");
+  const pisaEnTeno = await pisaLoQueSeVe();
+  comprobar(
+    "la gente que espera en Teno pisa el suelo que se ve",
+    pisaEnTeno.peor < 0.3 && pisaEnTeno.cuantos === CUANTOS,
+    `la peor diferencia, ${pisaEnTeno.peor} m${pisaEnTeno.donde ? `, ${pisaEnTeno.donde}` : ""}`,
+  );
   const dondeEsperan = await page.evaluate(({ x, z }) => {
     const o = globalThis.__oga;
     const b = o.bultoCerca(x, z);
@@ -626,6 +665,12 @@ try {
     "en Garachico baja toda la gente y se queda fuera del disco, por delante",
     abajo.fuera === CUANTOS && lejos.length === CUANTOS && abajo.locales.every((l) => l.f > 0) && abajo.tripulante === "dentro" && abajo.puerta === 0,
     `${abajo.fuera} fuera, ${lejos.length} fuera del disco, lo más cerca a ${Math.min(...abajo.locales.map((l) => Math.hypot(l.f, l.r))).toFixed(1)} m del mástil; tripulante ${abajo.tripulante}, puerta ${abajo.puerta}`,
+  );
+  const pisa = await pisaLoQueSeVe();
+  comprobar(
+    "el helicóptero y la gente pisan en Garachico el suelo que se ve",
+    pisa.peor < 0.3 && pisa.cuantos === CUANTOS + 1,
+    `la peor diferencia, ${pisa.peor} m${pisa.donde ? `, ${pisa.donde}` : ""}, en ${pisa.cuantos} puntos`,
   );
   await conVista("morro", "g3-en-garachico-con-la-gente-abajo");
   if (process.env.OGA_NOCHE !== "0") {
