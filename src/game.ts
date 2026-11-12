@@ -19800,19 +19800,18 @@ export class Game {
      * **Y los de la cabina, con los mismos**: el cíclico y los pedales del
      * helicóptero van a donde van las superficies, y a su ritmo; el colectivo,
      * con la palanca del gas, que es su mando en el juego; y las palancas del
-     * techo, con los motores y con el freno del rotor tal como está. Ver
-     * `world/mandos-de-cabina.ts`.
+     * techo, con los motores y con el freno del rotor **tal como se pidió**: la
+     * palanca se puede poner con el rotor en vueltas aunque el freno no muerda
+     * hasta que bajen. Ver `world/mandos-de-cabina.ts`.
      */
     if (this.aircraftMesh.mandosDeCabina) {
-      const freno =
-        this.flight instanceof HelicopteroComoModelo && this.flight.modelo.rotor().frenoDelRotor;
       this.aircraftMesh.mandosDeCabina.poner({
         alabeo: this.mandosQueSeVen.alabeo,
         cabeceo: this.mandosQueSeVen.cabeceo,
         guinada: this.mandosQueSeVen.guinada,
         colectivo: this.input.controls.throttle,
         motor: this.input.controls.engineOn ? 1 : 0,
-        "freno-rotor": freno ? 1 : 0,
+        "freno-rotor": this.input.controls.frenoDelRotor ? 1 : 0,
       });
     }
     const deTierra = this.input.controls.frenosDeTierra ?? 0;
@@ -27775,6 +27774,7 @@ export class Game {
     else if (cual === "motor") this.toggleEngine();
     else if (cual === "flaps") this.input.alternarFlaps();
     else if (cual === "tren") this.input.alternarTren();
+    else if (cual === "freno-rotor") this.input.alternarFrenoDelRotor();
     else this.input.pisarElFreno();
   }
 

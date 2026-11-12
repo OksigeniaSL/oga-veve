@@ -157,6 +157,15 @@ export interface ControlInputs {
    * pisa más, manda. Ver `flight/frenada.ts`.
    */
   autofreno?: number;
+  /**
+   * **El freno del rotor**, en el helicóptero: la palanca amarilla del techo,
+   * puesta o quitada. Sin poner, quitada, que es como empieza un vuelo con
+   * los motores en marcha. Es lo que se pide; el freno muerde cuando el rotor
+   * baja de las vueltas a las que se puede poner, y eso lo decide el modelo
+   * (`frenoDelRotor.hasta` en la ficha). Ver
+   * `InputManager.alternarFrenoDelRotor`.
+   */
+  frenoDelRotor?: boolean;
 }
 
 /**

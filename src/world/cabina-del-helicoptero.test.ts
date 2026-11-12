@@ -107,12 +107,22 @@ describe("la cabina del Super Puma", () => {
     expect(centroDe(grupo, "palanca-motor-1").z).toBeLessThan(motor.z - 0.02);
   });
 
-  it("las palancas rojas responden como el contacto, y la del freno del rotor no finge", () => {
+  it("las palancas rojas responden como el contacto, y la amarilla es el freno del rotor", () => {
     expect(deQueEs("palanca-motor-1")).toBe("motor");
     expect(deQueEs("palanca-motor-2")).toBe("motor");
     expect(deQueEs("palanca-motor-1-vastago")).toBeNull();
-    expect(deQueEs("palanca-freno-rotor")).toBeNull();
+    expect(deQueEs("palanca-freno-rotor")).toBe("freno-rotor");
+    expect(deQueEs("palanca-freno-rotor-vastago")).toBeNull();
     expect(deQueEs("boton-tren")).toBe("tren");
+  });
+
+  it("la palanca amarilla va hacia atrás con el freno puesto", async () => {
+    const { raiz, grupo } = await superPuma();
+    const m = prepararMandosDeCabina(raiz)!;
+    m.poner({ "freno-rotor": 0 });
+    const quitado = centroDe(grupo, "palanca-freno-rotor");
+    m.poner({ "freno-rotor": 1 });
+    expect(centroDe(grupo, "palanca-freno-rotor").z).toBeGreaterThan(quitado.z + 0.02);
   });
 
   it("entre los dos topes, lo que haya en medio; fuera de ellos, el tope", () => {

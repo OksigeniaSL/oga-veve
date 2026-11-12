@@ -3302,8 +3302,9 @@ def _cabina_de_helicoptero(ojos_z, ancho, alto_panel, y_suelo, y_respaldo,
     # T. Con los motores en marcha van hacia delante, al vuelo; paradas,
     # atrás. La del freno, atrás es puesto.
     #
-    # **Las de los motores se llaman `palanca-motor-…`** y responden al dedo
-    # como el botón del contacto: ver `world/botones-cabina.ts`. No se llaman
+    # **Las tres responden al dedo**: las de los motores, `palanca-motor-…`,
+    # como el botón del contacto, y la del freno, `palanca-freno-rotor`, que
+    # lo pone y lo quita. Ver `world/botones-cabina.ts`. No se llaman
     # `boton-…` porque eso las metería en el encuadre de la cabina, que
     # encoge la vista hasta que quepa todo lo que se pulsa; y estas están en
     # el techo, donde se miran levantando la cabeza.

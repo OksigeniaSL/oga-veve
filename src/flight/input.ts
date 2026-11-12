@@ -805,6 +805,25 @@ export class InputManager {
     return this.keymap.keys(accion).some((k) => this.keys.has(k));
   }
 
+  /**
+   * **El freno del rotor**: la palanca amarilla del techo del helicóptero, que
+   * se pone y se quita tocándola, como las rojas de los motores.
+   *
+   * **Sin tecla y sin botón en el HUD**, a propósito: es un mando del techo que
+   * se usa al parar, con los motores ya apagados, y la palanca dibujada ya es
+   * el mando. Ver `world/botones-cabina.ts`.
+   *
+   * Se puede poner con el rotor en vueltas, como en el de verdad se puede
+   * mover la palanca; el freno no muerde hasta que el rotor baja de las
+   * vueltas de su ficha, y eso lo lleva el modelo. Sin avisos: nadie se hace
+   * daño y no hay nada que castigar. En el Super Puma ese límite es el 40 % de
+   * las vueltas, **un supuesto** de su ficha y no un dato publicado: ver
+   * `frenoDelRotor` en `flight/super-puma.ts`.
+   */
+  alternarFrenoDelRotor(): void {
+    this.controls.frenoDelRotor = !this.controls.frenoDelRotor;
+  }
+
   releaseAll(): void {
     this.touchThrottle = null;
     this.buttonThrottle = 0;
@@ -818,6 +837,12 @@ export class InputManager {
      * mismo fallo que el gas clavado, y más difícil de ver.
      */
     this.controls.trim = 0;
+    /*
+     * Y el freno del rotor, quitado: el helicóptero empieza su vuelo con los
+     * motores en marcha y el rotor en vueltas, y con él puesto el rotor se
+     * pararía —o no arrancaría— sin que nadie lo hubiera pedido en este vuelo.
+     */
+    this.controls.frenoDelRotor = false;
     // Y la mano, que empieza un vuelo sin coger nada: ni inclinación ni
     // trayectoria del vuelo anterior. La palanca del dedo, al centro.
     this.mano.soltar();
