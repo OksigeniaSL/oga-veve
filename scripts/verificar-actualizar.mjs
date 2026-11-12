@@ -6,7 +6,7 @@
  * que esperaba **cuando se encendió**, y si mientras tanto se publicaba otra
  * versión, ésa lo jubilaba y el toque iba a parar a un trabajador que ya no
  * existía. Con la pestaña abierta mientras se prueba —publicar, volver a
- * publicar— es justo lo que pasa. Ver `estrenar` en `main.ts`.
+ * publicar— es justo lo que pasa. Ver `estrenar` en `src/service-worker.ts`.
  *
  * Esto no se puede comprobar en el servidor de desarrollo, donde no hay
  * trabajador de servicio. Así que se compila, se sirve `dist/` con su `sw.js`
@@ -39,7 +39,8 @@ const PUERTO = Number(process.env.OGA_PUERTO ?? 5323);
  *
  * Una página colgada no contesta a nada, y este banco le preguntaba sin plazo:
  * cuando el toque dejaba la página a media navegación —ver `callarLaRed` en
- * `main.ts`—, se quedaba esperando la respuesta para siempre y no decía nada.
+ * `src/service-worker.ts`—, se quedaba esperando la respuesta para siempre y
+ * no decía nada.
  * Ahora cada pregunta tiene su plazo y, si se pasa, es un fallo con nombre; y
  * por si algo se escapa, el banco entero se rinde a los quince minutos
  * contando lo que llevaba.
@@ -372,7 +373,7 @@ async function probar(caso) {
      * **Y si recargó con el nuevo ya al mando**, o por la red de socorro.
      * Las dos acaban en una recarga, pero la segunda es la que colgaba: se
      * apunta en la sesión, que sobrevive a la recarga, si el relevo llegó
-     * antes. Ver `estrenar` en `main.ts`.
+     * antes. Ver `estrenar` en `src/service-worker.ts`.
      */
     await preguntar(
       () =>

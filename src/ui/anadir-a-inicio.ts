@@ -58,6 +58,9 @@ export function seEnsenaAnadirAInicio(): boolean {
   );
 }
 
+/** Con qué quitar la tarjeta mientras está puesta. */
+let puesta: (() => void) | null = null;
+
 /** Lo que se guarda al enseñarla, para no volver a enseñarla. */
 const YA_ENSENADO = "inicio-ensenado";
 
@@ -88,6 +91,13 @@ const dibujo = (trazo: string, clase = ""): string =>
  * en cuanto el juego se abre desde el ícono deja de hacer falta para todos.
  */
 export function ensenarAnadirAInicio(): () => void {
+  /*
+   * **Y si ya está puesta, la misma.** La pone la entrada con la primera
+   * pantalla y `main.ts` la vuelve a pedir para quitarla al volar: sin esto,
+   * la segunda vez ya constaba como enseñada, devolvía un quitar que no quita
+   * nada y la tarjeta se quedaba encima del vuelo. Ver `boot.ts`.
+   */
+  if (puesta) return puesta;
   if (!seEnsenaAnadirAInicio() || leerTexto(YA_ENSENADO) === "1") return () => {};
   ponerTexto(YA_ENSENADO, "1");
   const tarjeta = document.createElement("div");
@@ -106,7 +116,11 @@ export function ensenarAnadirAInicio(): () => void {
     <p class="a-inicio__texto">${t("inicio.pasos")}</p>
     <button type="button" class="a-inicio__cerrar"
             aria-label="${t("inicio.cerrar")}">×</button>`;
-  const quitar = (): void => tarjeta.remove();
+  const quitar = (): void => {
+    tarjeta.remove();
+    puesta = null;
+  };
+  puesta = quitar;
   // Toda la tarjeta cierra, no solo la cruz: con cuatro años se toca el
   // dibujo, no la esquina.
   tarjeta.addEventListener("click", quitar);

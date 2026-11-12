@@ -408,7 +408,7 @@ body {
  *
  * Abajo a la derecha, pequeño y sin tapar nada. No interrumpe ni bloquea: lo
  * que hace es **existir**, que era justo lo que faltaba. Ver
- * `avisarDeLaVersionNueva` en `main.ts`.
+ * `avisarDeLaVersionNueva` en `service-worker.ts`.
  */
 .version-nueva {
   position: fixed;
@@ -444,7 +444,7 @@ body {
 /*
  * Tocado, la flecha gira hasta que la página se recarga: entre el toque y la
  * recarga pasa un segundo, y un segundo sin respuesta se lee como un botón
- * que no va. Ver `estrenar` en `main.ts`.
+ * que no va. Ver `estrenar` en `service-worker.ts`.
  */
 .version-nueva--yendo {
   border-color: var(--precaucion, #ffb454);
@@ -500,7 +500,7 @@ body {
  * derecha— y con la frase entera el botón se montaba encima del último
  * pictograma. La flecha que vuelve sobre sí misma es el dibujo de «recargar»
  * de cualquier teléfono; la frase queda como nombre del botón para quien no
- * ve la pantalla. Ver `avisarDeLaVersionNueva` en `main.ts`.
+ * ve la pantalla. Ver `avisarDeLaVersionNueva` en `service-worker.ts`.
  */
 @media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
   .version-nueva {
@@ -10595,6 +10595,20 @@ button.motor__tecla::after {
   overflow: auto;
   background: var(--barro);
   background-image: var(--barniz);
+}
+
+/*
+ * Elegido el piloto y el hangar todavía en camino: la pantalla se queda,
+ * apagada, hasta que la tape la siguiente. Un toque que no cambia nada se lee
+ * como un botón que no va; apagada se lee como «ya va». Ver `cerrarPilotos`.
+ */
+.pilotos--yendo {
+  cursor: progress;
+}
+
+.pilotos--yendo .pilotos__panel {
+  opacity: 0.55;
+  transition: opacity 0.3s;
 }
 
 /*

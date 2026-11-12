@@ -85,7 +85,26 @@ function avion(color: string, bicho: Bicho): string {
 
 type Vista = "lista" | "nuevo";
 
+/** La elección en curso o hecha de cada pantalla, para no abrirla dos veces. */
+const ELEGIDOS = new WeakMap<HTMLElement, Promise<void>>();
+
+/**
+ * Enseña la pantalla y se resuelve cuando hay piloto.
+ *
+ * **Una vez por carga, la pidan los que la pidan.** La abre la entrada, para
+ * que se vea sin esperar al juego, y `main.ts` la vuelve a pedir cuando llega
+ * para esperar a que se elija: la segunda vez se le devuelve la misma
+ * elección, esté hecha o no. Ver `boot.ts`.
+ */
 export function elegirPiloto(root: HTMLElement): Promise<void> {
+  const ya = ELEGIDOS.get(root);
+  if (ya) return ya;
+  const eleccion = abrir(root);
+  ELEGIDOS.set(root, eleccion);
+  return eleccion;
+}
+
+function abrir(root: HTMLElement): Promise<void> {
   return new Promise((listo) => {
     let vista: Vista = "lista";
     let propuesta = siguienteLibre(perfiles().lista);
@@ -220,7 +239,21 @@ export function elegirPiloto(root: HTMLElement): Promise<void> {
         </button>
       </div>`;
 
+    /*
+     * **Elegido, la pantalla se queda hasta que la tape la siguiente.** Con
+     * la primera pantalla aparte —ver `boot.ts`—, quien elige deprisa en la
+     * wifi de un aula elige antes de que haya llegado el hangar, y escondida
+     * aquí quedaba la página en blanco mientras tanto. Así se queda quieta y
+     * sin atender más toques, y la esconde quien sigue: ver `cerrarPilotos`.
+     */
+    const elegido = (): void => {
+      root.classList.add("pilotos--yendo");
+      root.setAttribute("aria-busy", "true");
+      listo();
+    };
+
     root.addEventListener("click", (e) => {
+      if (root.classList.contains("pilotos--yendo")) return;
       const el = e.target as HTMLElement;
       const elegir = el.closest("[data-elegir]")?.getAttribute("data-elegir");
       if (elegir) {
@@ -233,8 +266,7 @@ export function elegirPiloto(root: HTMLElement): Promise<void> {
          * tras un par de recargas se corrigió».
          */
         setLocale(detectLocale());
-        root.hidden = true;
-        listo();
+        elegido();
         return;
       }
       const idIdioma = el.closest("[data-idioma]")?.getAttribute("data-idioma");
@@ -277,13 +309,22 @@ export function elegirPiloto(root: HTMLElement): Promise<void> {
         const idioma = getLocale();
         crearPerfil(propuesta.bicho, propuesta.color);
         setLocale(idioma);
-        root.hidden = true;
-        listo();
+        elegido();
       }
     });
 
     pintar();
   });
+}
+
+/**
+ * **Y la esconde quien sigue**, cuando ya tiene qué enseñar: el hangar o el
+ * vuelo. Ver `elegirPiloto`.
+ */
+export function cerrarPilotos(root: HTMLElement): void {
+  root.hidden = true;
+  root.classList.remove("pilotos--yendo");
+  root.removeAttribute("aria-busy");
 }
 
 /** «Tero Rojo». Para quien lee, y para el lector de pantalla de quien no. */
