@@ -3587,10 +3587,25 @@ export function crearTrafico(
       tiempoDeCarrera(tipo) +
       hastaElFinal +
       (clave === "torre.lineUpWait" ? ESPERA_MAXIMA : 0);
-    // Y quien viene por la ruta y todavía no está en la fila: ver `QuienJuega.deRuta`.
+    /*
+     * Y quien viene y todavía no está en la fila: por la ruta —ver
+     * `QuienJuega.deRuta`— **o por el circuito**, que es `llegada`.
+     *
+     * Solo se miraba la ruta. Volando el circuito de casa, la fila no te cuenta
+     * hasta la fase de final —ver `tuLlegada` en `game.ts`—, así que con vos en
+     * la base, a un minuto del umbral, la torre le daba la pista a uno que sale
+     * —alinearse y esperar, o despegar— sin mirar si se habría ido antes de
+     * que llegaras: lo comprueba `salida-con-tu-circuito.test.ts`. Se buscó
+     * por las dos frustradas por «pista ocupada» a 168 ft en nueve vuelos
+     * enteros del JAZ 20 en Los Rodeos. Una torre de verdad te ve en la base y
+     * no le da la pista a quien no habrá pasado el final de ella antes de que
+     * cruces el umbral (OACI, PANS-ATM 7.10). Como con la ruta, no te pone en
+     * la fila de llegadas —eso sigue siendo la final—: solo no le da la pista
+     * a quien no se habría ido antes.
+     */
     const tu = contigo ? opciones.quienJuega?.() : null;
-    const deRuta = tu && tu.alUmbral == null ? (tu.deRuta ?? null) : null;
-    if (deRuta !== null && deRuta < hueco) return true;
+    const vienes = tu && tu.alUmbral == null ? (tu.deRuta ?? tu.llegada ?? null) : null;
+    if (vienes !== null && vienes < hueco) return true;
     return laFila(null, contigo).some(
       (b) => !b.sale && b.hora >= reloj && b.hora - reloj < hueco,
     );
