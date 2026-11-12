@@ -121,6 +121,12 @@ export interface AircraftMesh {
    */
   reversas?: import("./reversas").Reversas | null;
   /**
+   * Y la puerta corredera del Super Puma, que se abre hacia el morro cuando
+   * sale el tripulante a por la gente. `null` en los demás y en el respaldo de
+   * cajas. Ver `world/reversas.ts` y `world/gente-de-la-mision.ts`.
+   */
+  puertaCorredera?: import("./reversas").Reversas | null;
+  /**
    * Y los alerones, la profundidad y el timón de dirección, en los modelos
    * que los traen sueltos: los seis de la flota. `null` en el respaldo de
    * cajas. Ver `world/superficies-de-mando.ts`.

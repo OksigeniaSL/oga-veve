@@ -58,7 +58,7 @@ import { encenderPantallas } from "./pantallas-cabina";
 import { prepararPatas } from "./patas";
 import { prepararFlaps } from "./flaps";
 import { prepararAerofrenos } from "./aerofrenos";
-import { prepararReversas } from "./reversas";
+import { PUERTA_CORREDERA, prepararDeslizantes, prepararReversas } from "./reversas";
 import { prepararMandos } from "./superficies-de-mando";
 import { recorridoDeMandos } from "../flight/recorrido-de-mandos";
 import { prepararElAla } from "./ala-que-se-dobla";
@@ -921,6 +921,8 @@ export async function cargarModelo(
     // Y las reversas, en los turbofanes: el manguito que se va hacia la cola.
     // Ver `reversas.ts`.
     reversas: prepararReversas(raiz),
+    // Y la corredera del helicóptero, que se abre cuando sube o baja la gente.
+    puertaCorredera: prepararDeslizantes(raiz, PUERTA_CORREDERA),
     // Y los alerones, la profundidad y el timón, con los grados de su ficha.
     // Ver `superficies-de-mando.ts`.
     mandos: prepararMandos(raiz, recorridoDeMandos(aircraft.id)),

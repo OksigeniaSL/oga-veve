@@ -35,7 +35,22 @@ export interface MasDelVuelo {
   dt: number;
   /** Si el motor está en marcha. Sin decirlo, se da por hecho que sí. */
   motorEnMarcha?: boolean;
+  /**
+   * **Si la gente de la espera ha terminado**: todos dentro con la puerta
+   * cerrada, o todos fuera del disco. Sin decirlo, que sí. Ver `lista` en
+   * `missions/gente.ts`.
+   */
+  genteLista?: boolean;
 }
+
+/**
+ * **La red de la espera**, s: lo más que se espera a la gente después de que
+ * se cumpla el reloj. La gente tarda lo que tarda —no se despega con nadie
+ * andando hacia el rotor—, pero un candado entre dos sistemas lleva siempre
+ * algo que lo suelte: si la gente no acabara nunca, la misión no se queda
+ * parada en el llano.
+ */
+export const SIN_ESPERAR_MAS_DE = 30;
 
 /** Por debajo de esto, en m/s, se está parado en el suelo. Un helicóptero posado no rueda. */
 const PARADO = 1.5;
@@ -97,6 +112,7 @@ export class MissionRunner {
     return { lleva: this.esperado, pide: o.seconds, corre: this.corriendo };
   }
   private corriendo = false;
+  private genteLista = true;
 
   /**
    * Avanza la misión con el estado actual del vuelo.
@@ -111,6 +127,7 @@ export class MissionRunner {
 
     const objective = this.current;
     if (!objective) return NOTHING;
+    this.genteLista = mas?.genteLista !== false;
     const mitad = this.esperar(objective, state, mas);
     if (!this.satisfied(objective, state)) return mitad ? { ...NOTHING, mitad } : NOTHING;
 
@@ -179,7 +196,14 @@ export class MissionRunner {
         );
 
       case "wait":
-        return this.esperado >= objective.seconds;
+        /*
+         * El reloj, y además la gente: «ya subieron todos y la puerta está
+         * cerrada» tiene que ser verdad cuando se dice. Ver `SIN_ESPERAR_MAS_DE`.
+         */
+        return (
+          this.esperado >= objective.seconds &&
+          (this.genteLista || objective.gente === undefined || this.esperado >= objective.seconds + SIN_ESPERAR_MAS_DE)
+        );
     }
   }
 }

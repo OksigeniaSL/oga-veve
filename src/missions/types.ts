@@ -96,6 +96,12 @@ export type Objective =
       sitio?: Sitio;
       /** Qué pasa mientras: sube la gente o baja. Ver `missions/gente.ts`. */
       gente?: "suben" | "bajan";
+      /**
+       * **Dónde espera la gente** que sube, desde que empieza la misión: un
+       * punto medido, fuera del llano y a una distancia segura de él, para
+       * que se la vea al llegar. Ver `GENTE_EN_TENO`.
+       */
+      esperan?: { x: number; z: number };
       aMitad?: DichoDeLaMision;
     } & Comun);
 

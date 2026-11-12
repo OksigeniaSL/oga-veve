@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest";
 import { Quaternion, Vector3 } from "three";
-import { MissionRunner } from "./runner";
+import { MissionRunner, SIN_ESPERAR_MAS_DE } from "./runner";
 import { objectiveTarget, sitioPorDelante, type Mission } from "./types";
 import type { FlightState } from "../flight/model";
 
@@ -309,5 +309,40 @@ describe("a dónde señala la aguja", () => {
     expect(sitioPorDelante(objetivos, 4)).toEqual({ x: 50, z: 60 });
     // Y un aterrizaje «donde sea» no tiene sitio al que señalar.
     expect(sitioPorDelante(objetivos, 6)).toBeNull();
+  });
+});
+
+describe("la espera espera a la gente", () => {
+  const sitio = { x: 0, z: 0, radius: 20 };
+  const mision: Mission = {
+    id: "gente",
+    nameKey: "mission.teno.name",
+    scenario: "x",
+    objectives: [{ kind: "wait", seconds: 10, sitio, gente: "suben" }, { kind: "takeoff" }],
+  };
+  const posado = state({ onGround: true, groundSpeed: 0 });
+
+  it("no se cumple con el reloj si la gente no ha terminado, y sí en cuanto termina", () => {
+    const r = new MissionRunner();
+    r.start(mision);
+    for (let i = 0; i < 15; i++) expect(r.update(posado, { dt: 1, genteLista: false }).completed).toBe(false);
+    expect(r.update(posado, { dt: 1, genteLista: true }).completed).toBe(true);
+  });
+
+  it("y con su red: si la gente no acabara nunca, se suelta pasado el tope", () => {
+    const r = new MissionRunner();
+    r.start(mision);
+    let hecho = -1;
+    for (let i = 1; i <= 10 + SIN_ESPERAR_MAS_DE + 2 && hecho < 0; i++)
+      if (r.update(posado, { dt: 1, genteLista: false }).completed) hecho = i;
+    expect(hecho).toBe(10 + SIN_ESPERAR_MAS_DE);
+  });
+
+  it("sin gente que dibujar, el reloj y nada más", () => {
+    const r = new MissionRunner();
+    r.start(mision);
+    let hecho = -1;
+    for (let i = 1; i <= 12 && hecho < 0; i++) if (r.update(posado, { dt: 1 }).completed) hecho = i;
+    expect(hecho).toBe(10);
   });
 });

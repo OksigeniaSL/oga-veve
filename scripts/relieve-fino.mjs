@@ -142,8 +142,10 @@ export const PARCHES = [
      * faro**: el parche se funde con el horizonte en los cuadros que éste
      * dibuja, y con la punta en la primera columna, el cuadro de al lado
      * —también con tierra del parche— la dejaba con su peso casi a cero, en
-     * el agua. El puerto de Garachico, el otro sitio de la misión, no lo
-     * necesita: en el horizonte ya es un llano.
+     * el agua. El puerto de Garachico, el otro sitio de la misión, va de
+     * momento con el horizonte, que lo dibuja como una ladera de 4,8°, justo
+     * por debajo de los cinco que se piden: un parche suyo lo dejaría llano,
+     * como es.
      */
     id: "teno",
     nombre: "Punta de Teno",

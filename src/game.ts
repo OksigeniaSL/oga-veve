@@ -1075,6 +1075,7 @@ import {
 import { comoDibujo, type DibujoDeSenal } from "./ui/senal";
 import { dibujoDeCierre } from "./ui/cierre-de-ejercicio";
 import { Senalero } from "./world/senalero";
+import { GenteDeLaMisionDibujada } from "./world/gente-de-la-mision";
 import {
   diferencia as diferenciaDeRumbo,
   largoPorLaBatalla,
@@ -4579,11 +4580,13 @@ export class Game {
   readonly audio = new Audio();
   private readonly missions = new MissionRunner();
   /**
-   * **Quien dibuja la gente que sube y baja** en las esperas de una misión:
-   * nadie todavía, y la espera funciona igual. Lo pondrá el encargo de las
-   * figuras. Ver `missions/gente.ts` y `seguirALaGente`.
+   * **Quien dibuja la gente que sube y baja** en las esperas de una misión.
+   * Las figuras, desde el constructor; sin ellas, la espera funciona igual.
+   * Ver `missions/gente.ts` y `seguirALaGente`.
    */
   gente: GenteDeLaMision = SIN_GENTE;
+  /** Las figuras de la gente de la misión. Ver `world/gente-de-la-mision.ts`. */
+  readonly genteDibujada: GenteDeLaMisionDibujada;
   /** Si la gente está subiendo o bajando ahora. Ver `seguirALaGente`. */
   private genteEnMarcha = false;
   /**
@@ -4591,6 +4594,11 @@ export class Game {
    * la hora del juego. Para los bancos: ver `scripts/ver-mision-teno.mjs`.
    */
   readonly loDeLaMision: { que: string; quien: string; cuando: number }[] = [];
+
+  /** Cómo va la gente de la misión, para los bancos. Ver `scripts/ver-mision-teno.mjs`. */
+  get genteParaBanco(): GenteDeLaMisionDibujada["paraBanco"] {
+    return this.genteDibujada.paraBanco;
+  }
 
   /** Cómo va la misión, para los bancos. `null` sin misión. */
   get misionParaBanco(): {
@@ -6455,6 +6463,25 @@ export class Game {
       this.scene.add(this.sigueme.grupo);
       this.scene.add(this.vaca.grupo);
     }
+
+    /*
+     * **La gente de las misiones**, que espera, sube y baja. Pisa la cota del
+     * vuelo, y para apartarse busca suelo seco, sin edificio y sin escalón con
+     * el helicóptero. Ver `world/gente-de-la-mision.ts`.
+     */
+    this.genteDibujada = new GenteDeLaMisionDibujada(
+      (x, z) => this.terrain.sampleSurface(x, z),
+      (q, posado) => {
+        const suelo = this.terrain.sampleSurface(q.x, q.z);
+        return (
+          suelo <= this.terrain.sampleHeight(q.x, q.z) + 0.05 &&
+          Math.abs(suelo - this.terrain.sampleSurface(posado.x, posado.z)) < 3 &&
+          !this.bultos.choca(q.x, suelo + 1, q.z)
+        );
+      },
+    );
+    this.gente = this.genteDibujada;
+    this.scene.add(this.genteDibujada.malla);
 
     this.sky = createSky(this.scenario);
     /*
@@ -8850,6 +8877,7 @@ export class Game {
       (m) => m.id === mision.id,
     );
     this.missions.start(mision);
+    this.ponerALaGente();
     this.hud.setMissionProgress(this.missions.progress);
     this.contarLaMision();
     this.hud.flash(t("mission.started", { name: t(mision.nameKey) }), 4);
@@ -13079,11 +13107,12 @@ export class Game {
       this.hud.setMissionProgress(this.missions.progress);
       this.contarLaMision();
       this.updateMissionMarker();
-      // Y si había gente a medio subir, se queda donde estaba: el vuelo vuelve a empezar.
+      // Y si había gente a medio subir, para; y vuelve a su sitio, que el vuelo vuelve a empezar.
       if (this.genteEnMarcha) {
         this.genteEnMarcha = false;
         this.gente.para();
       }
+      this.ponerALaGente();
     }
     this.runwayGuide.reset();
     this.landing.reset();
@@ -19526,6 +19555,7 @@ export class Game {
       }
     }
     this.advanceMission(dt);
+    this.moverALaGente(dt);
     this.announce(this.flight.state);
     /*
      * **Y desde dónde se escucha**, que es la vista: fuera, la cabina de mando
@@ -33258,11 +33288,13 @@ export class Game {
 
     if (!mission) {
       this.missions.abandon();
+      this.ponerALaGente();
       this.hud.setMissionProgress(null);
       this.hud.flash(t("mission.none"), 3);
       this.contarLaMision();
     } else {
       this.missions.start(mission);
+      this.ponerALaGente();
       this.hud.setMissionProgress(this.missions.progress);
       this.hud.flash(t("mission.started", { name: t(mission.nameKey) }), 4);
       this.avisar("mision");
@@ -33303,6 +33335,7 @@ export class Game {
     const event = this.missions.update(this.flight.state, {
       dt,
       motorEnMarcha: this.input.controls.engineOn,
+      genteLista: this.gente.lista,
     });
     this.seguirALaGente(event.completed);
     if (event.mitad) {
@@ -33353,12 +33386,17 @@ export class Game {
       this.genteEnMarcha = true;
       const p = this.flight.state.position;
       const puerta = this.puertaDelHelicoptero();
+      const ficha = this.aircraft.helicoptero;
       this.gente.empieza({
         que: o.gente,
         sitio: o.sitio ? { x: o.sitio.x, z: o.sitio.z } : { x: p.x, z: p.z },
         puerta,
+        donde: { x: p.x, z: p.z },
         rumbo: this.flight.state.heading,
+        // Sin ficha de helicóptero —no debería pasar en una espera—, un rotor como el del Super Puma.
+        rotor: { radio: ficha?.rotor.radio ?? 7.8, cola: ficha?.cola.brazo ?? 9.4 },
         segundos: o.seconds,
+        quedan: Math.max(0, o.seconds - (this.missions.espera?.lleva ?? 0)),
       });
       this.apuntarLaGente(`empieza:${o.gente}:${puerta ? "con puerta" : "sin puerta"}`);
     } else if (!corre && this.genteEnMarcha) {
@@ -33366,6 +33404,27 @@ export class Game {
       this.gente.para();
       this.apuntarLaGente("para");
     }
+  }
+
+  /**
+   * **Dónde espera la gente** de la misión de ahora, si la tiene: al empezarla
+   * y cada vez que el vuelo vuelve a empezar, que la gente vuelve a su sitio.
+   * Sin misión, o con una sin gente, no hay nadie.
+   */
+  private ponerALaGente(): void {
+    const espera = this.missions.active?.objectives.find((o) => o.kind === "wait" && o.gente === "suben");
+    this.gente.esperan(
+      espera?.kind === "wait" && espera.esperan && espera.sitio
+        ? { en: espera.esperan, mirando: { x: espera.sitio.x, z: espera.sitio.z } }
+        : null,
+    );
+  }
+
+  /** La gente anda, y la corredera se abre y se cierra con ella. */
+  private moverALaGente(dt: number): void {
+    const s = this.flight.state;
+    this.genteDibujada.paso(dt, { x: s.position.x, z: s.position.z, enElSuelo: s.onGround });
+    this.aircraftMesh.puertaCorredera?.poner(this.genteDibujada.puertaAbierta);
   }
 
   private apuntarLaGente(que: string): void {
