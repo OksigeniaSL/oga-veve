@@ -275,7 +275,8 @@ import {
 import type { Lluvia } from "./world/meteo";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { HelicopteroComoModelo, estabilizacionDelPeldano } from "./flight/fdm-helicoptero";
-import { lecturaDeLaVms } from "./flight/vms";
+import { lecturaDeLaVms, type LecturaDeLaVms } from "./flight/vms";
+import { escalaDelRotor, type EscalaDeDial } from "./ui/vms";
 import { sonidoDelRotor } from "./audio/rotor";
 import { RITMO_DEL_COLECTIVO } from "./flight/helicoptero";
 import { RITMO_DEL_GAS_DE_AVION } from "./flight/input";
@@ -19732,6 +19733,12 @@ export class Game {
         mapa: this.elMapa(),
         // Y la ventanilla ALT, la misma que el cuadro plano. Ver `ventanillaAlt`.
         ventanilla: this.ventanillaParaElCuadro(),
+        /*
+         * Y en el helicóptero, su VMS: lo mismo que marca la del cuadro plano,
+         * de la misma cuenta y con la escala de su ficha. Ver `pintarVms`.
+         */
+        rotor: this.laVms,
+        escalaDelRotor: this.laEscalaDelRotor(),
         // Y la velocidad que toca y el FMA, los mismos que el cuadro plano.
         spd: this.laSpdDelPanel(),
         fma: this.elFma(),
@@ -20032,14 +20039,7 @@ export class Game {
         ra: this.franjaDelRa(),
         motores: this.agujasDeLosMotores(),
         // Y en el helicóptero, la VMS: el FLI, el rotor y sus turbinas. Ver `flight/vms.ts`.
-        rotor:
-          this.flight instanceof HelicopteroComoModelo
-            ? lecturaDeLaVms(
-                this.flight.modelo.ficha,
-                this.flight.modelo.rotor(),
-                temperaturaExterior(this.flight.state.position.y, this.flight.aireDelDia()),
-              )
-            : null,
+        rotor: this.laVms,
       },
     );
     // Lo que se ve de lo que nombra la instructora, con la cámara y el cuadro de este paso.
@@ -25864,6 +25864,37 @@ export class Game {
    * `aDondeVoy` y `cotaParaLaCinta`.
    */
   private puntoDeLaAguja: { x: number; z: number } | null = null;
+
+  /**
+   * **Lo que marca la VMS del helicóptero en este paso**, una vez para las dos
+   * pantallas que la pintan: la del cuadro plano y la de la cabina en 3D. Una
+   * cuenta, dos dibujos. `null` en los aviones. Ver `flight/vms.ts`.
+   */
+  private get laVms(): LecturaDeLaVms | null {
+    if (!(this.flight instanceof HelicopteroComoModelo)) return null;
+    const ahora = this.relojDelJuego;
+    if (this.vmsDeAhora?.reloj !== ahora || this.vmsDeAhora.flight !== this.flight)
+      this.vmsDeAhora = {
+        reloj: ahora,
+        flight: this.flight,
+        lectura: lecturaDeLaVms(
+          this.flight.modelo.ficha,
+          this.flight.modelo.rotor(),
+          temperaturaExterior(this.flight.state.position.y, this.flight.aireDelDia()),
+        ),
+      };
+    return this.vmsDeAhora.lectura;
+  }
+  private vmsDeAhora: { reloj: number; flight: unknown; lectura: LecturaDeLaVms } | null = null;
+
+  /** La escala del reloj del rotor de este helicóptero, de su ficha; una vez por aeronave. */
+  private laEscalaDelRotor(): EscalaDeDial | null {
+    if (!this.aircraft.helicoptero) return null;
+    if (this.escalaDelRotorDe?.aeronave !== this.aircraft)
+      this.escalaDelRotorDe = { aeronave: this.aircraft, escala: escalaDelRotor(this.aircraft) };
+    return this.escalaDelRotorDe.escala;
+  }
+  private escalaDelRotorDe: { aeronave: AircraftConfig; escala: EscalaDeDial } | null = null;
 
   private updateHomeIndicator(): void {
     /*

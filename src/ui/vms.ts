@@ -57,7 +57,7 @@ export function anguloDelDial(valor: number, maximo: number): number {
 }
 
 /** Un punto del dial a un ángulo y un radio. */
-function punto(cx: number, cy: number, grados: number, rr: number): [number, number] {
+export function puntoDelDial(cx: number, cy: number, grados: number, rr: number): [number, number] {
   const a = (grados * Math.PI) / 180;
   return [cx + Math.sin(a) * rr, cy - Math.cos(a) * rr];
 }
@@ -65,15 +65,15 @@ function punto(cx: number, cy: number, grados: number, rr: number): [number, num
 function arco(cx: number, cy: number, r: number, desde: number, hasta: number, max: number, clase: string): string {
   const a0 = anguloDelDial(desde, max);
   const a1 = anguloDelDial(hasta, max);
-  const [x0, y0] = punto(cx, cy, a0, r);
-  const [x1, y1] = punto(cx, cy, a1, r);
+  const [x0, y0] = puntoDelDial(cx, cy, a0, r);
+  const [x1, y1] = puntoDelDial(cx, cy, a1, r);
   return `<path class="${clase}" d="M${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}" />`;
 }
 
 function raya(cx: number, cy: number, r: number, valor: number, max: number, dentro: number, fuera: number, clase: string): string {
   const g = anguloDelDial(valor, max);
-  const [x0, y0] = punto(cx, cy, g, r - dentro);
-  const [x1, y1] = punto(cx, cy, g, r + fuera);
+  const [x0, y0] = puntoDelDial(cx, cy, g, r - dentro);
+  const [x1, y1] = puntoDelDial(cx, cy, g, r + fuera);
   return `<line class="${clase}" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" />`;
 }
 
@@ -84,7 +84,7 @@ function escala(cx: number, cy: number, r: number, max: number, paso: number, ca
     const larga = Math.abs(v / cadaCifra - Math.round(v / cadaCifra)) < 1e-6;
     s += raya(cx, cy, r, v, max, larga ? 10 : 6, 0, "cr__marca");
     if (larga) {
-      const [x, y] = punto(cx, cy, anguloDelDial(v, max), r - 18);
+      const [x, y] = puntoDelDial(cx, cy, anguloDelDial(v, max), r - 18);
       s += `<text x="${x.toFixed(1)}" y="${(y + 5).toFixed(1)}" ${MARCA_CIFRA} class="cr__cifra vms__cifra" text-anchor="middle">${Math.round(v)}</text>`;
     }
   }
@@ -105,8 +105,97 @@ function toque(mitad: 0 | 1): string {
   return `<rect x="${mitad * ancho}" y="0" width="${ancho}" height="${ALTO_DEL_TOQUE}" class="vms__toque" />`;
 }
 
+/**
+ * **Lo que lleva cada dial, en datos**: su fondo de escala, cada cuánto una
+ * marca y una cifra, sus arcos de color y sus rayas rojas.
+ *
+ * Aparte del dibujo porque lo pintan dos: el cuadro plano, en SVG, y las
+ * pantallas de la cabina en 3D, en su lienzo (`pintarVms` en
+ * `world/pantallas-cabina.ts`). Una escala, dos dibujos: si un día cambia una
+ * banda, cambia en los dos.
+ */
+export interface EscalaDeDial {
+  readonly cx: number;
+  readonly cy: number;
+  readonly maximo: number;
+  readonly paso: number;
+  readonly cadaCifra: number;
+  readonly arcos: readonly { readonly desde: number; readonly hasta: number; readonly color: "verde" | "ambar" }[];
+  readonly limites: readonly number[];
+}
+
+/** La escala del FLI: verde hasta la continua, ámbar la de despegue, raya roja en la transitoria. */
+export function escalaDelFli(): EscalaDeDial {
+  return {
+    ...DIALES_DE_LA_VMS.fli,
+    maximo: FLI.maximo,
+    paso: 1,
+    cadaCifra: 2,
+    arcos: [
+      { desde: 0, hasta: FLI.continua, color: "verde" },
+      { desde: FLI.continua, hasta: FLI.despegue, color: "ambar" },
+    ],
+    limites: [FLI.transitoria],
+  };
+}
+
+/** La del rotor: las bandas de la ficha, con una raya roja en cada límite. */
+export function escalaDelRotor(a: AircraftConfig): EscalaDeDial {
+  const f = a.helicoptero;
+  const b = f ? bandasDelRotor(f) : { sinMotor: [90, 110] as const, conMotor: [95, 105] as const };
+  return {
+    ...DIALES_DE_LA_VMS.rotor,
+    maximo: NR_MAXIMO,
+    paso: 10,
+    cadaCifra: 40,
+    arcos: [
+      { desde: b.sinMotor[0], hasta: b.conMotor[0], color: "ambar" },
+      { desde: b.conMotor[0], hasta: b.conMotor[1], color: "verde" },
+      { desde: b.conMotor[1], hasta: b.sinMotor[1], color: "ambar" },
+    ],
+    limites: [b.sinMotor[0], b.sinMotor[1]],
+  };
+}
+
+/** Las marcas, los arcos y las rayas rojas de un dial, en SVG. */
+function fondoDelDial(e: EscalaDeDial, r: number): string {
+  const { cx, cy, maximo } = e;
+  return `
+      <circle cx="${cx}" cy="${cy}" r="${r}" class="cr__dial" />
+      ${e.arcos
+        .map((x) =>
+          arco(cx, cy, r - 3, x.desde, x.hasta, maximo,
+            x.color === "verde" ? "cr__arco cr__arco--verde" : "cr__arco cr__arco--ambar vms__arco"),
+        )
+        .join("")}
+      ${escala(cx, cy, r, maximo, e.paso, e.cadaCifra)}
+      ${e.limites.map((v) => raya(cx, cy, r, v, maximo, 12, 3, "cr__limite")).join("")}`;
+}
+
+/**
+ * **Dónde va cada lectura**, debajo de su dial: una caja por motor bajo el
+ * FLI y la del rotor bajo el suyo. En las unidades de la pantalla de 400.
+ */
+export function lecturasDeLaVms(motores: number): {
+  readonly fli: readonly { readonly x: number; readonly y: number; readonly ancho: number; readonly alto: number }[];
+  readonly nr: { readonly x: number; readonly y: number; readonly ancho: number; readonly alto: number };
+} {
+  const r = RADIO_DE_LA_VMS;
+  const anchoCaja = 64;
+  const { fli, rotor } = DIALES_DE_LA_VMS;
+  return {
+    fli: Array.from({ length: motores }, (_, i) => ({
+      x: fli.cx + (i - (motores - 1) / 2) * (anchoCaja + 10) - anchoCaja / 2,
+      y: fli.cy + r + 16,
+      ancho: anchoCaja,
+      alto: 30,
+    })),
+    nr: { x: rotor.cx - 44, y: rotor.cy + r + 16, ancho: 88, alto: 30 },
+  };
+}
+
 /** Una aguja que sale del buje: el triángulo afilado de las de motor. */
-function aguja(r: number, ancho: number, largo: number): string {
+export function trazoDeAguja(r: number, ancho: number, largo: number): string {
   return `M0 ${(r * 0.12).toFixed(1)} L${-ancho} ${(-r * largo * 0.86).toFixed(1)} L0 ${(-r * largo).toFixed(1)} L${ancho} ${(-r * largo * 0.86).toFixed(1)} Z`;
 }
 
@@ -121,16 +210,18 @@ function dialDelFli(motores: number): string {
   let discos = "";
   let lecturas = "";
   let cabina = "";
-  const anchoCaja = 64;
+  const cajas = lecturasDeLaVms(motores).fli;
   for (let i = 0; i < motores; i++) {
-    agujas += `<g data-vms-fli="${i}" transform="rotate(${INICIO})"><path class="cr__aguja vms__aguja-fli" d="${aguja(r, 2.6, 0.84)}" /></g>`;
+    agujas += `<g data-vms-fli="${i}" transform="rotate(${INICIO})"><path class="cr__aguja vms__aguja-fli" d="${trazoDeAguja(r, 2.6, 0.84)}" /></g>`;
     discos += `
       <g data-vms-disco="${i}" data-radio="${(r * (DISCO_DEL_MOTOR[i] ?? 0.6)).toFixed(1)}">
         <circle r="8.5" class="vms__disco" />
         <text y="4" ${MARCA_CIFRA} class="vms__disco-cifra" text-anchor="middle">${i + 1}</text>
       </g>`;
-    const x = cx + (i - (motores - 1) / 2) * (anchoCaja + 10);
-    const y = cy + r + 16;
+    const caja = cajas[i]!;
+    const anchoCaja = caja.ancho;
+    const x = caja.x + anchoCaja / 2;
+    const y = caja.y;
     lecturas += `
       <g data-vms-lectura="fli-${i}">
         <rect x="${x - anchoCaja / 2}" y="${y}" width="${anchoCaja}" height="30" rx="2" class="vms__caja" />
@@ -155,11 +246,7 @@ function dialDelFli(motores: number): string {
   return `
     <g data-vms="fli" data-explica="fli" data-explica-fondo>
       ${toque(0)}
-      <circle cx="${cx}" cy="${cy}" r="${r}" class="cr__dial" />
-      ${arco(cx, cy, r - 3, 0, FLI.continua, FLI.maximo, "cr__arco cr__arco--verde")}
-      ${arco(cx, cy, r - 3, FLI.continua, FLI.despegue, FLI.maximo, "cr__arco cr__arco--ambar vms__arco")}
-      ${escala(cx, cy, r, FLI.maximo, 1, 2)}
-      ${raya(cx, cy, r, FLI.transitoria, FLI.maximo, 12, 3, "cr__limite")}
+      ${fondoDelDial(escalaDelFli(), r)}
       <text x="${cx}" y="${cy + 34}" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">FLI</text>
       <g transform="translate(${cx} ${cy})">${agujas}${discos}</g>
       <circle cx="${cx}" cy="${cy}" r="4" class="cr__buje" />
@@ -177,26 +264,18 @@ function dialDelFli(motores: number): string {
 function dialDelRotor(a: AircraftConfig, motores: number): string {
   const { cx, cy } = DIALES_DE_LA_VMS.rotor;
   const r = RADIO_DE_LA_VMS;
-  const f = a.helicoptero;
-  const b = f ? bandasDelRotor(f) : { sinMotor: [90, 110] as const, conMotor: [95, 105] as const };
   let nf = "";
   for (let i = 0; i < motores; i++)
     nf += `<g data-vms-nf="${i}" transform="rotate(${INICIO})"><path class="vms__aguja-nf" d="M0 ${(-r * 0.2).toFixed(1)} L0 ${(-r * 0.92).toFixed(1)}" /></g>`;
-  const y = cy + r + 16;
+  const y = lecturasDeLaVms(motores).nr.y;
   return `
     <g data-vms="rotor" data-explica="rotor" data-explica-fondo>
       ${toque(1)}
-      <circle cx="${cx}" cy="${cy}" r="${r}" class="cr__dial" />
-      ${arco(cx, cy, r - 3, b.sinMotor[0], b.conMotor[0], NR_MAXIMO, "cr__arco cr__arco--ambar vms__arco")}
-      ${arco(cx, cy, r - 3, b.conMotor[0], b.conMotor[1], NR_MAXIMO, "cr__arco cr__arco--verde")}
-      ${arco(cx, cy, r - 3, b.conMotor[1], b.sinMotor[1], NR_MAXIMO, "cr__arco cr__arco--ambar vms__arco")}
-      ${escala(cx, cy, r, NR_MAXIMO, 10, 40)}
-      ${raya(cx, cy, r, b.sinMotor[0], NR_MAXIMO, 12, 3, "cr__limite")}
-      ${raya(cx, cy, r, b.sinMotor[1], NR_MAXIMO, 12, 3, "cr__limite")}
+      ${fondoDelDial(escalaDelRotor(a), r)}
       <text x="${cx}" y="${cy + 34}" ${MARCA_ROTULO} class="cr__rotulo vms__rotulo-nr" text-anchor="middle">NR</text>
       <text x="${cx}" y="${cy + 48}" ${MARCA_ROTULO} class="cr__rotulo vms__rotulo-nf" text-anchor="middle">NF</text>
       <g transform="translate(${cx} ${cy})">
-        <g data-vms-nr="" transform="rotate(${INICIO})"><path class="cr__aguja" d="${aguja(r, 6, 0.8)}" /></g>
+        <g data-vms-nr="" transform="rotate(${INICIO})"><path class="cr__aguja" d="${trazoDeAguja(r, 6, 0.8)}" /></g>
         ${nf}
       </g>
       <circle cx="${cx}" cy="${cy}" r="5" class="cr__buje" />
