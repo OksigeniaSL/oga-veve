@@ -1270,6 +1270,8 @@ export const EN: Dictionary = {
   "mundo.label": "How the world looks",
   "mundo.foto": "The real world, in photos",
   "mundo.dibujado": "The drawn world",
+  "pizarra.label": "Classroom whiteboard",
+  "pizarra.glosa": "Buttons low down, where children can reach",
   "tiempo.despejado": "Clear sky",
   "tiempo.algunas": "A few clouds",
   "tiempo.cubierto": "Overcast",

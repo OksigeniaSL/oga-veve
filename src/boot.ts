@@ -24,6 +24,7 @@ import { hayRearranque } from "./flight/cambio-de-avion";
 import { ensenarAnadirAInicio } from "./ui/anadir-a-inicio";
 import { pedirAlPrimerToque } from "./ui/pantalla-completa";
 import { elegirPiloto } from "./ui/pantalla-pilotos";
+import { arrancarPizarra } from "./ui/pizarra";
 import { echarElDeDesarrollo, registrarElTrabajador } from "./service-worker";
 
 echarElDeDesarrollo();
@@ -36,6 +37,13 @@ setLocale(detectLocale());
  * Ver `ui/pantalla-completa.ts`.
  */
 pedirAlPrimerToque();
+
+/*
+ * **Y el modo pizarra, antes de pintar nada**: la primera pantalla —quién
+ * vuela, el hangar— ya sale con lo de los pequeños abajo. Aquí y no en
+ * `main.ts`, que llega después de pintar esa pantalla. Ver `ui/pizarra.ts`.
+ */
+arrancarPizarra();
 
 const params = new URLSearchParams(location.search);
 const directo =

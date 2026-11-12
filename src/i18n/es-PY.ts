@@ -3056,6 +3056,9 @@ export const ES_PY = {
   "mundo.label": "Cómo se ve el mundo",
   "mundo.foto": "El mundo de verdad, en foto",
   "mundo.dibujado": "El mundo dibujado",
+  // El modo pizarra: ver ui/pizarra.ts. Lo lee quien pone el juego en el aula.
+  "pizarra.label": "Pizarra del aula",
+  "pizarra.glosa": "Los botones abajo, donde llegan los chicos",
   "tiempo.despejado": "Cielo despejado",
   "tiempo.algunas": "Algunas nubes",
   "tiempo.cubierto": "Cielo cubierto",

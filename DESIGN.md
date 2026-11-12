@@ -462,6 +462,19 @@ nada.
   («El pasaje, de pie» en `src/style.css`). Arriba la columna de la pausa a la izquierda y los cuatro puntos con el
   volumen a la derecha; debajo, la tarjeta de quien habla de lado a lado; la lámina, en el tercio de abajo, de todo
   el ancho que quepa; y la mochila abajo a la derecha. Lo comprueba `OGA_SOLO=de-pie` de `verificar-consola.mjs`.
+- **La pizarra del aula se elige, no se adivina** (`src/ui/pizarra.ts`): una pizarra cuelga con el borde de abajo a
+  unos 90 cm del suelo y un niño de Infantil llega con la mano al tercio de abajo, pero a la hoja de estilos le parece
+  una tablet apaisada. Con `?pizarra=1` o con su botón en los ajustes del hangar (la pizarra con el niño de pie y su
+  glosa), guardado en el aparato (`oga-veve:pizarra`) y no en el perfil, como el volumen: en el vuelo, la pausa con el
+  ⏩, la cámara, las gafas y la vuelta y el tiempo de antes de volar bajan a una franja al lado de la palanca, y los
+  paneles, la tarjeta del avión y los interruptores de cabina, a un cajón de cuatro puntos que se abre en esa misma
+  franja; en Guyrami y Tukã, la señal, que se toca para arrancar, abajo a la derecha entre el cuadro y el freno, con
+  el dibujo encima de su palabra (desde Taguato lleva frase, no cabe ahí y la mano ya llega arriba); y el cuadro, sin
+  pasar del hueco que dejan las dos; y abierta la pausa, sus puertas abajo. Lo del adulto se queda arriba: el sonido de
+  la sala, los créditos y el hangar. En el hangar, las fichas del «¿seguimos?» crecen hasta la mano. En un teléfono
+  no hace nada. Lo mide `npm run carteles` a 1280 × 600, 960 × 540 y 1366 × 768 con el dedo, y a 1366 × 768 con el
+  puntero fino del Chromebook que la pizarra duplica; y el hangar a 960 × 540, con la pizarra y sin ella, cabe sin
+  rodar y sin pisarse (hasta 560 de alto, los pasos van en baldosa, sin su pregunta).
 - El zoom de la página no se bloquea (sin `user-scalable=no`); el `touch-action: none` de los mandos ya evita el zoom
   por accidente.
 - Antes de publicar un cambio de HUD se mira en tablet, en teléfono apaisado y de pie, con dedo.
