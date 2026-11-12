@@ -1699,6 +1699,19 @@ const DESPEGA = `
 `;
 
 /**
+ * **Y el helicóptero, que despega hacia arriba**: el suelo y el helicóptero de
+ * perfil separándose de él. Con el JAZ 70 elegido, el botón llevaba el avión
+ * subiendo en diagonal desde una pista, que es justo lo que un helicóptero no
+ * hace. Ver `ui/dibujos-del-helicoptero.ts`.
+ */
+const DESPEGA_EL_HELICOPTERO = `
+  <svg viewBox="0 0 48 32" aria-hidden="true">
+    <path d="M8 28 h32" class="despega__pista" />
+    ${helicopteroDePerfil(24, 12, 13)}
+  </svg>
+`;
+
+/**
  * Abre el hangar y no vuelve hasta que alguien elige.
  *
  * Devuelve una promesa a propósito: el juego no se construye hasta que hay
@@ -2425,7 +2438,7 @@ export function abrirHangar(
         </button>`
         }
         <button class="hangar__despegar" type="button" data-despegar>
-          ${DESPEGA}
+          ${esHelicoptero(avion) ? DESPEGA_EL_HELICOPTERO : DESPEGA}
           <span>${t("hangar.despegar")}</span>
         </button>
       </div>

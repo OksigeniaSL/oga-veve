@@ -375,6 +375,10 @@
       "ms": 9307,
       "h": "ceb1bbb61a"
     },
+    "explica.sello.teno.texto": {
+      "ms": 13707,
+      "h": "6120b21299"
+    },
     "explica.sello.transchaco.texto": {
       "ms": 9307,
       "h": "212290435d"
@@ -4969,6 +4973,9 @@
     ],
     "mission.teno.cierre": [
       "mission.teno.cierre"
+    ],
+    "explica.sello.teno.texto": [
+      "explica.sello.teno.texto"
     ]
   }
 }
