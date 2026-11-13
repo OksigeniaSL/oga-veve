@@ -19723,7 +19723,10 @@ export class Game {
     this.atenderALaVentanilla();
     // Las pantallas de la cabina, si el avión las trae. Van aquí y no en el
     // HUD porque son parte del avión: se ven desde dentro y desde fuera, y se
-    // apagan solas cuando se cambia a un modelo que no las tiene.
+    // apagan solas cuando se cambia a un modelo que no las tiene. Todos los
+    // que las llevan pasan por aquí: los JAZ 60, 90, 110 y 120 y el Super
+    // Puma, por sus mallas `g1000_display`; y los relojes de los JAZ 20, 25 y
+    // 40, más abajo. Ver `encenderPantallas` y `encenderRelojes`.
     this.aircraftMesh.pantallas?.actualizar(
       {
         /*
@@ -19862,6 +19865,9 @@ export class Game {
         senalados: this.nombrado.edades,
       },
       dt,
+      // Desde fuera se ven, pero no se leen: menos veces por segundo. Ver
+      // `POR_SEGUNDO_DESDE_FUERA` en `world/pantallas-cabina.ts`.
+      this.cameraMode !== "cockpit",
     );
     /*
      * Y los relojes del panel, que marcan lo que el juego sabe de verdad: el
@@ -20032,6 +20038,8 @@ export class Game {
         cuadro: cuadroDe(this.aircraft),
       },
       dt,
+      // Lo mismo que las pantallas: desde fuera, menos veces por segundo.
+      this.cameraMode !== "cockpit",
     );
 
     /*

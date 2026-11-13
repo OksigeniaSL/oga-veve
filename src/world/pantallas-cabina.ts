@@ -145,6 +145,20 @@ const ALTO = 384;
 
 /** Cuántas veces por segundo se repinta. Ver `Pantallas.actualizar`. */
 const POR_SEGUNDO = 12;
+/**
+ * **Y cuántas con la cámara fuera de la cabina.**
+ *
+ * Desde fuera las pantallas se siguen viendo por el parabrisas, encendidas y
+ * con los números cambiando —por eso se pintan—, pero miden unos pocos
+ * píxeles y nadie lee doce cambios por segundo a esa distancia. Cada repintado
+ * son las dos o tres pantallas pintadas en el lienzo y subidas a la tarjeta.
+ * Medido con el Super Puma en el aire sobre Los Rodeos, en la vista de
+ * persecución y con la CPU estrangulada a ×4 —una tablet de gama media—,
+ * alternando con y sin el cambio, de media por imagen: pintarlas pasa de
+ * 1,1–1,4 ms a 0,2–0,4, y subir texturas a la tarjeta de 1,0–1,1 ms a
+ * 0,3–0,4. Desde la cabina, que es donde se leen, siguen a doce.
+ */
+export const POR_SEGUNDO_DESDE_FUERA = 4;
 
 /*
  * Los colores salen de la paleta de la cabina, **la misma que el cuadro del
@@ -565,8 +579,11 @@ export interface Pantallas {
     readonly uuid: string;
     readonly dibujo: string;
   }[];
-  /** Repinta las dos, si toca. Se llama cada fotograma. */
-  actualizar(datos: DatosDeCabina, dt: number): void;
+  /**
+   * Repinta las dos, si toca. Se llama cada fotograma. Con `desdeFuera`, a
+   * menos veces por segundo: ver `POR_SEGUNDO_DESDE_FUERA`.
+   */
+  actualizar(datos: DatosDeCabina, dt: number, desdeFuera?: boolean): void;
   /**
    * **Si la cámara tiene delante esa pantalla**: su centro dentro de lo que
    * enseña la cámara y delante de ella. Desde la cabina es lo que decide si
@@ -707,7 +724,7 @@ export function encenderPantallas(
     pintadas(dibujo) {
       return PINTADAS[dibujo];
     },
-    actualizar(datos, dt) {
+    actualizar(datos, dt, desdeFuera = false) {
       /*
        * Lo que tarda cada cosa se mide **con el paso de tiempo de verdad**, no
        * con el del repintado: si se midiera solo al pintar, el retardo de un
@@ -716,7 +733,7 @@ export function encenderPantallas(
        */
       medirLoQueTarda(datos, dt);
       desde += dt;
-      if (desde < 1 / POR_SEGUNDO) return;
+      if (desde < 1 / (desdeFuera ? POR_SEGUNDO_DESDE_FUERA : POR_SEGUNDO)) return;
       desde = 0;
       // El peldaño de este repintado, para las veintisiete letras. Y la cuenta
       // a cero: lo que se mide es lo que sale **en esta pasada**.
