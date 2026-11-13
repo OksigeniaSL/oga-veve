@@ -5995,6 +5995,7 @@ export class Game {
     // Antes que nada que mire el día: el relieve lo hornea con su sol. Ver `fechaDelVuelo`.
     this.diaDelViaje = fechaDelDia(options.diaDelViaje ?? null);
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
+    this.parteDelMontaje = this.scenario.meteo ?? null;
     this.sigueme = new Sigueme(this.scenario.aerodrome?.privado === true);
     this.pavimento = this.scenario.aerodrome
       ? mapaDePavimento(this.scenario.aerodrome)
@@ -15457,8 +15458,42 @@ export class Game {
     this.avisar("attention");
   }
 
+  /**
+   * El parte con el que se montó el mundo al construir el juego, hasta que
+   * llega el primer `ponerTiempo`. Ver «Y lo que ya está montado con este
+   * parte» en `ponerTiempo`.
+   */
+  private parteDelMontaje: Meteo | null = null;
+
   ponerTiempo(meteo: Meteo): void {
-    this.scenario = conViento(this.scenario, meteo);
+    /*
+     * **Y lo que ya está montado con este parte no se vuelve a montar.**
+     *
+     * `main.ts` construye el juego con el escenario ya pasado por `conViento`
+     * con este mismo parte, y justo después llama aquí con él para lo que el
+     * constructor no hace: el altímetro, el viento en el modelo, las nubes y el
+     * agua. Y aquí se rehacía además todo lo que depende de la cabecera —el
+     * aeródromo entero, las luces de aproximación, el plan de vuelo con su
+     * puesto, el plano y la senda—, con las mismas entradas con las que el
+     * constructor lo acababa de hacer. Era el arranque montado dos veces.
+     *
+     * Medido en Barajas con la CPU estrangulada a cuatro, como una tablet de
+     * gama media: 4,8 s de los 16 del arranque se iban aquí —2,2 s el
+     * aeródromo, 1,4 s volver a elegir puesto entre 142 candidatos y 0,8 s el
+     * mapa del pavimento, que se tira al rehacer el aeródromo—. Sin montarlo
+     * dos veces, el mismo arranque pasa de 15,7 s a 11,2 s, con el avión en el
+     * mismo puesto y con el mismo rumbo. Ver `OGA_ARRANQUE_APRIETE` en
+     * `scripts/verificar-rendimiento.mjs`.
+     *
+     * Solo la primera vez y solo con **el mismo objeto** de parte: cualquier
+     * parte nuevo —el panel del tiempo, el METAR que llega luego, otro mundo—
+     * lo rehace todo como siempre. Y `recolocarTrasElMoldeado` sigue: ahora es
+     * barato, porque el plan y el pavimento ya están hechos y guardados, y es
+     * lo que deja el avión puesto con el viento ya en el modelo.
+     */
+    const yaMontado = meteo === this.parteDelMontaje;
+    this.parteDelMontaje = null;
+    if (!yaMontado) this.scenario = conViento(this.scenario, meteo);
     /*
      * **Y el altímetro se entera del día que hace.**
      *
@@ -15502,7 +15537,7 @@ export class Game {
      */
     this.visibilidadDelParte = meteo.visibilidadM;
     this.ponerLluvia(meteo.lluvia, meteo.fuerzaDeLluvia, meteo.granizo ?? 0);
-    this.terrain.rehacerAerodromo(this.scenario);
+    if (!yaMontado) this.terrain.rehacerAerodromo(this.scenario);
     /*
      * **Y los otros campos, con el suyo.**
      *
@@ -15526,9 +15561,11 @@ export class Game {
       this.hud.mapa.ponerOtrasPistas(this.vecinos.map((v) => v.campo.pista));
     // Y las luces de aproximación, que van en la cabecera por la que se entra:
     // si el viento gira, se mudan al otro extremo con todo lo demás.
-    this.ponerAproximacion();
-    this.rehacerPlanDeVuelo();
-    this.hud.mapa.rehacer(this.scenario);
+    if (!yaMontado) {
+      this.ponerAproximacion();
+      this.rehacerPlanDeVuelo();
+      this.hud.mapa.rehacer(this.scenario);
+    }
     /*
      * **Y la senda de aros, que se quedaba en la cabecera vieja.**
      *
@@ -15538,7 +15575,7 @@ export class Game {
      * girado, los aros quedaban a nueve kilómetros y medio de donde tocaba y
      * el juego seguía midiendo contra ellos. Medido con `npm run viento`.
      */
-    this.rehacerLaSenda();
+    if (!yaMontado) this.rehacerLaSenda();
     /*
      * **Y sin tirar el vuelo.** Aquí había un `resetFlight` y era el mismo
      * error que ya se había arreglado una vez para el moldeado del terreno:

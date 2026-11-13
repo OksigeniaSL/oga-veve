@@ -90,6 +90,25 @@
  * mismo sitio con la nube escondida (`sinNube`), que es lo que dice cuánto
  * cuesta ella; y dentro, con el agua y la niebla (`dentro`). Ver
  * `world/cumulonimbo.ts`.
+ *
+ * ## Y solo a cuatro, y con el arranque de una tablet
+ *
+ * `OGA_APRIETES=4` mide solo a esas veces (lista con comas): la foto entera de
+ * todos los escenarios a ×1, ×4 y ×6 son tres cuartos de hora, y lo que se
+ * exige es el ×4. `OGA_ARRANQUE_APRIETE=4` estrangula además **el arranque**,
+ * desde que se pide la página hasta el primer cuadro con el juego en marcha,
+ * que es lo que espera quien abre el juego en la tablet; y escribe las migas
+ * del arranque (`__arranque` en `main.ts`) para ver dónde se va. Sin estrangular
+ * el arranque, Barajas y Asunción salían casi iguales y en una tablet uno
+ * tardaba el doble que el otro. Con `OGA_JSON=<fichero>` deja además las filas
+ * en crudo, para hacer la tabla sin copiar a mano.
+ *
+ * ## Y Teno con el helicóptero
+ *
+ * `OGA_MISION=teno` (con `OGA_AVION=super-puma`) carga la misión y mide un
+ * sitio más, **llegando al faro**: a cien metros del suelo y a un kilómetro de
+ * él, de frente, que es donde se juntan el faro, la gente, los acantilados y el
+ * mar. Ver `TENO` en `content/missions.ts`.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -101,11 +120,19 @@ const ESCENARIOS = process.argv.slice(2).length
   : ["yvytu-rape", "pettirossi", "tenerife-norte"];
 
 /** Cuánto se estrangula la CPU, y qué aparato es cada cosa. */
-const APRIETES = [
+const TODOS_LOS_APRIETES = [
   { veces: 1, nombre: "esta máquina" },
   { veces: 4, nombre: "tablet de gama media" },
   { veces: 6, nombre: "tablet vieja" },
 ];
+const APRIETES = process.env.OGA_APRIETES
+  ? TODOS_LOS_APRIETES.filter((a) => process.env.OGA_APRIETES.split(",").map(Number).includes(a.veces))
+  : TODOS_LOS_APRIETES;
+/** Cuánto se estrangula el arranque; 1 es sin estrangular, como siempre. */
+const APRIETE_DEL_ARRANQUE = Number(process.env.OGA_ARRANQUE_APRIETE ?? 1);
+const MISION = process.env.OGA_MISION ?? "";
+/** El faro de Teno, el de `content/missions.ts`. */
+const FARO_DE_TENO = { x: -56863.6, z: 15668.9 };
 
 /** Lo que se exige a cuatro veces: treinta fotogramas por segundo. */
 const CUADRO_MAXIMO = 33.3;
@@ -115,7 +142,8 @@ const MIDE = 4000;
 
 const server = await createServer({
   root: process.cwd(),
-  server: { port: PUERTO, hmr: false },
+  // Con el puerto pedido a mano, ése o ninguno: medir en el servidor de otro no vale.
+  server: { port: PUERTO, hmr: false, strictPort: !!process.env.OGA_PUERTO },
 });
 await server.listen();
 const BASE = baseDe(server, PUERTO);
@@ -173,6 +201,8 @@ for (const escenario of ESCENARIOS) {
       bajado.nTeselas++;
     } else if (u.includes("/ortho/") && /\.jpg(\?|$)/.test(u)) bajado.fotos += largo;
   });
+  if (APRIETE_DEL_ARRANQUE !== 1)
+    await cdp.send("Emulation.setCPUThrottlingRate", { rate: APRIETE_DEL_ARRANQUE });
   const t0 = Date.now();
   await page.goto(
     `${BASE}/?escenario=${escenario}&hora=16&leccion=despegue&tramo=guyrami` +
@@ -182,6 +212,7 @@ for (const escenario of ESCENARIOS) {
           ? "&avion=jaz-90"
           : "") +
       (CON_TORMENTA ? "&ejercicio=tormenta" : "") +
+      (MISION ? `&mision=${MISION}` : "") +
       /*
        * Sin parte pedido, el tiempo de casa y no el del día: con el proxy del
        * `.env`, el 5-oct-2026 Los Rodeos daba OVC003, la tarjeta del tiempo
@@ -196,10 +227,22 @@ for (const escenario of ESCENARIOS) {
           : "&meteo="),
   );
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
-    timeout: 60000,
+    timeout: 60000 * APRIETE_DEL_ARRANQUE,
   });
-  /** Hasta poder jugar, s: el tiempo de carga que se nota. */
-  const arranque = (Date.now() - t0) / 1000;
+  /*
+   * Hasta poder jugar, s: el tiempo de carga que se nota. **Hasta el primer
+   * cuadro dibujado con el juego ya creado**, contado por el reloj de la
+   * página desde que se pidió: `__oga` aparece al crear el juego, y lo que se
+   * toca es el cuadro que viene detrás.
+   */
+  const { arranque, migas } = await page.evaluate(async () => {
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    return { arranque: performance.now() / 1000, migas: globalThis.__arranque ?? [] };
+  }).catch(() => ({ arranque: (Date.now() - t0) / 1000, migas: [] }));
+  if (APRIETE_DEL_ARRANQUE !== 1) {
+    await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+    console.log(`  ${escenario}: arranque ×${APRIETE_DEL_ARRANQUE} ${arranque.toFixed(1)} s · ${migas.join(" · ")}`);
+  }
   await page.waitForTimeout(14000);
 
   if (!tarjeta) tarjeta = await page.evaluate(() => {
@@ -274,6 +317,7 @@ for (const escenario of ESCENARIOS) {
     ...(CON_HISTORIA ? ["historia"] : []),
     ...(hayCapa ? ["nube"] : []),
     ...(hayBandadas ? ["bandada"] : []),
+    ...(MISION === "teno" ? ["teno"] : []),
   ]) {
     const deLaTormenta = ["lejos", "cerca", "sinNube", "dentro"].includes(sitio);
     if (deLaTormenta) {
@@ -343,6 +387,22 @@ for (const escenario of ESCENARIOS) {
       // Lo que haya que bajar para ese sitio, que en crucero es lo que más.
       await page.waitForTimeout(8000);
     }
+    /*
+     * **Llegando al faro de Teno**, de frente y a cien metros del suelo. Se
+     * vuelve a plantar antes de cada medida, como la bandada: el helicóptero
+     * sin manos se va.
+     */
+    const aTeno = () =>
+      page.evaluate((f) => {
+        const o = globalThis.__oga;
+        const x = f.x + 1000;
+        const z = f.z;
+        o.colocar(x, o.suelo(x, z) + 100, z, 20, -Math.PI / 2);
+      }, FARO_DE_TENO);
+    if (sitio === "teno") {
+      await aTeno();
+      await page.waitForTimeout(3000);
+    }
     if (sitio === "aire") {
       // Sobre el aeródromo y a la altura del circuito, que es donde se ve
       // todo a la vez: el aeropuerto, el pueblo y el monte.
@@ -355,6 +415,7 @@ for (const escenario of ESCENARIOS) {
     }
     for (const { veces, nombre } of APRIETES) {
       if (sitio === "bandada") await aLaBandada();
+      if (sitio === "teno") await aTeno();
       if (deLaTormenta && sitio !== "lejos") await dondeLaTormenta(sitio);
       await cdp.send("Emulation.setCPUThrottlingRate", { rate: veces });
       // Un respiro para que se estabilice antes de contar.
@@ -475,6 +536,7 @@ for (const escenario of ESCENARIOS) {
         veces,
         nombre,
         arranque,
+        migas,
         bajadoMB: bajado.total / 1048576,
         teselasMB: bajado.teselas / 1048576,
         nTeselas: bajado.nTeselas,
@@ -514,9 +576,9 @@ for (const f of filas) {
       (f.gpu !== null && f.gpu !== undefined ? ` · GPU ${f.gpu.toFixed(2)} ms` : "") +
       (f.aves ? ` · aves ${f.aves.cerca}+${f.aves.lejos}` : "") +
       ` · texturas ${f.texturasMB.toFixed(0)} MB` +
-      (f.veces === 1
+      (f.veces === APRIETES[0].veces
         ? ` · bajado ${f.bajadoMB.toFixed(1)} MB (fotos ${f.fotosMB.toFixed(1)}, ` +
-          `teselas ${f.nTeselas}: ${f.teselasMB.toFixed(1)}) · arranque ${f.arranque.toFixed(1)} s`
+          `teselas ${f.nTeselas}: ${f.teselasMB.toFixed(1)}) · arranque${APRIETE_DEL_ARRANQUE !== 1 ? ` ×${APRIETE_DEL_ARRANQUE}` : ""} ${f.arranque.toFixed(1)} s`
         : "") +
       (f.sitio === "tarjeta" || f.sitio === "girando"
         ? ` · tarjeta ${Math.round((f.pintadas * 1000) / MIDE)}/s`
@@ -524,6 +586,8 @@ for (const f of filas) {
       (exige ? `  ← ${f.nombre}` : ""),
   );
 }
+// Y las filas en crudo, para hacer tablas sin copiar a mano.
+if (process.env.OGA_JSON) (await import("node:fs")).writeFileSync(process.env.OGA_JSON, JSON.stringify(filas, null, 1));
 console.log(
   `\n  Se exige a ×4 (tablet de gama media): mediana ≤ ${CUADRO_MAXIMO} ms.` +
     `  ${fallos ? `${fallos} por encima` : "todo dentro"}\n`,
