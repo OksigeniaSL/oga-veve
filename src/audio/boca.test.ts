@@ -1031,6 +1031,26 @@ describe("lo que deja de ser verdad se retira de la cola", () => {
     acabar["roja"]!();
     expect(dicho).toEqual(["roja", "por qué"]);
   });
+
+  /*
+   * Y el de la fila y el de la estela, que van detrás de la roja y del
+   * «número dos»: con el reloj de un aviso caducaban siempre, y la torre
+   * repetía su número tres veces sin que la instructora contara por qué.
+   */
+  it("y el de la fila y el de la estela, también", () => {
+    for (const clave of ["vuelo.esperaTurnoDeSalida", "vuelo.esperaLaEstela"]) {
+      const b = boca();
+      const { dicho, acabar, frase } = coro();
+      b.pedir("mando", frase("roja"), "torre.canario.roja@yo");
+      b.pedir("mando", frase("número dos"), "torre.canario.numeroDos");
+      b.pedir("normal", frase("por qué"), clave);
+      reloj += CADUCA + 1000;
+      acabar["roja"]!();
+      reloj += CADUCA + 1000;
+      acabar["número dos"]!();
+      expect(dicho, clave).toEqual(["roja", "número dos", "por qué"]);
+    }
+  });
 });
 
 describe("lo que espera turno, y lo que ya se dijo", () => {

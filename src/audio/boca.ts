@@ -378,9 +378,22 @@ const SUELTA_LA_PISTA =
  * pide al encenderse la roja, justo detrás de la propia orden de la torre, y
  * en Pettirossi caducaba mientras sonaban la orden y el «final» del que
  * venía. La espera de tres minutos volvía a quedarse sin explicar.
+ *
+ * **Y los dos porqués que llegaron después, la fila y la estela**, que son
+ * de la roja igual que éstos. Se quedaron con el reloj de un aviso y les
+ * pasaba lo mismo, con una vuelta más: detrás de la roja y del «número dos
+ * para la salida» caducaban siempre, y al no oírse se volvían a pedir con
+ * su número delante. En el banco de Los Rodeos con el JAZ 90 y Guyrami la
+ * torre dijo «número dos» tres veces y la instructora no contó nunca por qué
+ * se esperaba. Ver `vigilarQueSeOyoElPorque` en `game.ts`.
  */
 export function explicaLaEspera(clave: string | undefined): boolean {
-  return !!clave && /^vuelo\.esperaQue(?:Aterrice|Despegue)(?:~\d+)?$/.test(clave);
+  return (
+    !!clave &&
+    /^vuelo\.(?:esperaQue(?:Aterrice|Despegue)|esperaTurnoDeSalida|esperaLaEstela)(?:~\d+)?$/.test(
+      clave,
+    )
+  );
 }
 
 /**
