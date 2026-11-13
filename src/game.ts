@@ -16399,6 +16399,7 @@ export class Game {
   ponerAnillos(anillos: { horizonte?: Ortofoto; medio?: Ortofoto }): void {
     // Lo que llega tarde es del mundo de arranque, y este ya es otro. Ver `ponerElMundo`.
     if (this.mundoCambiado) return;
+    for (const f of [anillos.horizonte, anillos.medio]) if (f) this.subirLaFotoYa(f);
     if (anillos.horizonte) this.anilloHorizonte = anillos.horizonte;
     if (anillos.medio && !this.anilloMedio) {
       this.anilloMedio = anillos.medio;
@@ -16481,7 +16482,34 @@ export class Game {
 
   /** La foto del vecino `i`, cuando llegue. Ver `ponerAnillos`. */
   ponerFotoDelVecino(i: number, foto: Ortofoto): void {
-    this.vecinos[i]?.mundo.ponerFoto(foto);
+    const v = this.vecinos[i];
+    if (!v) return;
+    v.mundo.ponerFoto(foto);
+    this.subirLaFotoYa(foto);
+  }
+
+  /**
+   * **Una foto que llega tarde, a la tarjeta en cuanto llega**, y no la
+   * primera vez que se dibuja.
+   *
+   * three sube una textura la primera vez que algo que la lleva entra en el
+   * cuadro, y una foto de una pieza es un `<img>` que Chrome no decodifica
+   * hasta ese momento: el JPEG entero, en el hilo principal y en medio de un
+   * fotograma. La de una isla vecina entraba en el cuadro al virar hacia ella
+   * o al despegar en su dirección, en pleno vuelo. Medido en El Hierro con la
+   * CPU ×4 y la Intel (H9c, 13-11-2026): 229 ms la de La Palma (2560 × 2304)
+   * y 229 la de La Gomera (2304 × 2304), un cuadro de un cuarto de segundo
+   * cada una.
+   *
+   * Lo que cuesta no cambia —sigue siendo decodificar y subir—, pero pasa al
+   * llegar la foto, que es en los primeros segundos de la partida, con el
+   * avión todavía en el puesto. Decodificarla fuera del hilo principal
+   * (`createImageBitmap`) lo quitaría del todo, pero dejaría en memoria la
+   * foto decodificada: con las de El Hierro y sus dos vecinas, unos ciento
+   * cincuenta megas más en la tableta.
+   */
+  private subirLaFotoYa(foto: Ortofoto): void {
+    this.renderer.initTexture(foto.textura);
   }
 
   /**
