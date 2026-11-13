@@ -44,7 +44,13 @@ import {
   type Punto,
 } from "./aerodrome";
 import { discoDeAgua, LADO_SIN_CURVA } from "./curvatura";
-import { mapaDelPavimento, type MapaDelPavimento } from "./mapa-del-pavimento";
+import {
+  mapaDesdeRejilla,
+  rejillaDelPavimento,
+  type MapaDelPavimento,
+  type RejillaDelPavimento,
+} from "./mapa-del-pavimento";
+import { huellaDelPavimento, pavimentoHorneado } from "./pavimento-horneado";
 import { delante } from "./rumbo";
 import { esAguaDeCasa } from "./agua-de-casa";
 import { mallarConDetalle } from "./malla-lejana";
@@ -1329,19 +1335,64 @@ export class Terrain {
     const aero = this.scenario.aerodrome;
     if (!aero) return this.resalteDeLaPistaDeJuguete(x, z);
     if (!this.pavimento) {
-      const mallas: Mesh[] = [];
+      const hecha = this.rejillaDelPavimento();
+      this.pavimentoHorneado = hecha.horneada;
+      this.pavimento = mapaDesdeRejilla(hecha.rejilla);
+    }
+    return this.pavimento.alzadoEn(x, z);
+  }
+
+  /**
+   * **La rejilla del pavimento: la horneada, si es de este dibujo, o hecha
+   * aquí.** Ver `world/pavimento-horneado.ts` y el ADR 0028.
+   *
+   * La horneada solo vale si su huella es la de los triángulos que hay
+   * dibujados y el mapa de alturas que hay debajo, y si cae entera dentro del
+   * mapa fino: fuera, la cota la contesta el vecino o el horizonte, y eso no
+   * va en la huella. `viva` la hace aquí siempre: es lo que hornea y lo que
+   * compara `scripts/hornear-pavimento.mjs`.
+   */
+  rejillaDelPavimento(viva = false): {
+    rejilla: RejillaDelPavimento | null;
+    huella: string;
+    horneada: boolean;
+    /** Si cae entera en el mapa fino, que es cuando se puede hornear. */
+    enElMapaFino: boolean;
+  } {
+    const aero = this.scenario.aerodrome;
+    const mallas: Mesh[] = [];
+    if (aero)
       this.group
         .getObjectByName(`aerodromo:${aero.id}`)
         ?.traverse((o) => {
           if (o instanceof Mesh && o.name.startsWith("pavimento:"))
             mallas.push(o);
         });
-      this.pavimento = mapaDelPavimento(mallas, (px, pz) =>
-        this.sampleHeight(px, pz),
-      );
+    const huella = huellaDelPavimento(mallas, [
+      this.heights,
+      this.resolution,
+      this.step,
+      this.half,
+    ]);
+    const enMapaFino = (r: RejillaDelPavimento | null): boolean =>
+      !!r &&
+      r.x0 + r.celda / 2 >= -this.half &&
+      r.z0 + r.celda / 2 >= -this.half &&
+      r.x0 + (r.nx - 0.5) * r.celda <= this.half &&
+      r.z0 + (r.nz - 0.5) * r.celda <= this.half;
+    if (!viva && aero) {
+      const horneada = pavimentoHorneado(aero.id, huella);
+      if (horneada && enMapaFino(horneada))
+        return { rejilla: horneada, huella, horneada: true, enElMapaFino: true };
     }
-    return this.pavimento.alzadoEn(x, z);
+    const rejilla = rejillaDelPavimento(mallas, (px, pz) =>
+      this.sampleHeight(px, pz),
+    );
+    return { rejilla, huella, horneada: false, enElMapaFino: enMapaFino(rejilla) };
   }
+
+  /** Si la rejilla del pavimento que se pisa vino horneada. Para los bancos. */
+  pavimentoHorneado = false;
 
   /**
    * El pavimento dibujado, pasado a rejilla la primera vez que se pisa. Se

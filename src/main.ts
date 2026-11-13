@@ -26,6 +26,7 @@ import { cargarOrtofoto } from "./world/ortofoto";
 import { cargarManifiesto, juegoDeTeselas } from "./world/teselas-de-ortofoto";
 import { mundoElegido } from "./ui/mundo";
 import { cargarCiudad } from "./world/ciudades";
+import { cargarPavimentoHorneado } from "./world/pavimento-horneado";
 import { laFotoEnsenaLaCiudad } from "./world/mundo-del-tramo";
 import { conViento } from "./world/scenarios";
 import { leerMetar, pedirMetar, proxyDelParte, vientoDeCasa, type Meteo } from "./world/meteo";
@@ -727,6 +728,13 @@ const [conMapa, ciudad, meteo, ortofoto, ortofotoFina, vecinos] =
    * kilobytes.
    */
   conMiga("relieve vecinos", Promise.all(destinosDeHoy.map((d) => conRelieve(d)))),
+  /*
+   * Y la rejilla del pavimento, horneada en los datos: es la mayor cuenta del
+   * arranque que sale siempre igual, y aquí viaja a la vez que lo demás. Si no
+   * está, o es de otro dibujo, el juego la hace como siempre. Ver
+   * `world/pavimento-horneado.ts` y el ADR 0028.
+   */
+  conMiga("pavimento", cargarPavimentoHorneado(escenario.aerodrome?.id)),
 ]);
 miga("cargas");
 /**

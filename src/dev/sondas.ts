@@ -26,6 +26,7 @@
  */
 import { HelicopteroComoModelo } from "../flight/fdm-helicoptero";
 import { velocidadesEnTierra } from "../flight/velocidades-en-tierra";
+import { codificarRejilla, ficheroDelPavimento } from "../world/pavimento-horneado";
 import {
   Box3,
   InstancedMesh,
@@ -2813,6 +2814,25 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     gasPara: (velocidad: number) => juego.flight.gasPara(velocidad),
     /** Los pares puesto + espera que se consideraron, con sus metros. */
     pares: () => juego.plan?.paresVistos ?? [],
+    /**
+     * **La rejilla del pavimento hecha aquí, para hornearla o compararla**:
+     * en el fichero de `data/aerodromes/`, en base 64, o `null` si no hay
+     * aeródromo o no cae entera en el mapa fino. Ver
+     * `scripts/hornear-pavimento.mjs` y el ADR 0028.
+     */
+    pavimentoParaHornear: () => {
+      const aero = juego.scenario.aerodrome;
+      if (!aero) return null;
+      const { rejilla, huella, enElMapaFino } = juego.terrain.rejillaDelPavimento(true);
+      if (!rejilla || !enElMapaFino) return null;
+      const bytes = codificarRejilla(rejilla, huella);
+      let bin = "";
+      for (let i = 0; i < bytes.length; i += 0x8000)
+        bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      return { id: aero.id, fichero: ficheroDelPavimento(aero.id), huella, base64: btoa(bin) };
+    },
+    /** Si el pavimento que se pisa vino horneado. */
+    pavimentoHorneado: () => juego.terrain.pavimentoHorneado,
     /**
      * A qué velocidad pide el juego que se ruede **aquí**, m/s.
      *

@@ -783,8 +783,26 @@ export class Pavimento {
  * Este mapa es la parte cara de esa pregunta —se pinta una vez y se consulta
  * miles— y ya estaba aquí, así que el módulo de superficies lo pide prestado
  * en vez de construir otro igual. Ver `world/superficie.ts`.
+ *
+ * **Y se pinta una vez por aeródromo, no una por quien lo pide.** Lo pedían el
+ * juego, el monte, la ciudad y sus luces, cada uno el suyo y todos del mismo
+ * fichero: en Barajas, con la CPU de una tablet, cuatro veces 0,17 s en el
+ * arranque. El mapa solo depende del aeródromo, que no cambia una vez
+ * cargado, así que se guarda contra ese objeto y los demás se llevan el
+ * mismo. Nadie lo pinta después de hecho: `disco` y `franja` son de esta
+ * función. Ver el ADR 0028.
  */
 export function mapaDePavimento(aero: Aerodrome): Pavimento | null {
+  if (PINTADOS.has(aero)) return PINTADOS.get(aero)!;
+  const pav = pintarPavimento(aero);
+  PINTADOS.set(aero, pav);
+  return pav;
+}
+
+/** Ver `mapaDePavimento`. Débil, para que un aeródromo que se deja se vaya con su mapa. */
+const PINTADOS = new WeakMap<Aerodrome, Pavimento | null>();
+
+function pintarPavimento(aero: Aerodrome): Pavimento | null {
   let minX = Infinity;
   let maxX = -Infinity;
   let minZ = Infinity;

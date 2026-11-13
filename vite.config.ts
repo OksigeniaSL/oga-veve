@@ -255,8 +255,17 @@ export default defineConfig({
      * visita: justo lo contrario de bajarla solo cuando se cuenta su
      * historia. Ver `ui/ilustraciones-de-las-historias.ts`.
      */
+    /*
+     * **Y los binarios de datos, tampoco**, por lo mismo que las fichas: la
+     * rejilla del pavimento horneada de los campos pequeños pesa menos de
+     * cuatro kilobytes y se pide por `fetch` (ver el ADR 0028). Como `data:`,
+     * la política del sitio no la deja leer, y además viajaría dentro del
+     * JavaScript que se baja todo el mundo, vuele a ese campo o no.
+     */
     assetsInlineLimit: (ruta: string) =>
-      ruta.endsWith(".json") || /[\\/]assets[\\/]historias[\\/]/.test(ruta) ? false : undefined,
+      ruta.endsWith(".json") || ruta.endsWith(".bin") || /[\\/]assets[\\/]historias[\\/]/.test(ruta)
+        ? false
+        : undefined,
     // three.js son ~600 KB min. Va en su propio chunk para que el navegador
     // lo cachee entre despliegues: el motor cambia mucho menos que el juego.
     rollupOptions: {
