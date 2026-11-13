@@ -71,6 +71,7 @@ import {
 import { matriculaDe } from "../flight/matricula";
 import { reconocer } from "../flight/reconocimiento";
 import { aPxDelHud, escribirRincon } from "./escala";
+import { escribir } from "./si-cambia";
 import {
   TELEFONO_APAISADO,
   ahoraEsTelefonoApaisado,
@@ -3267,17 +3268,28 @@ export class Hud {
       // Nada más que hacer: los pictogramas ya están actualizados arriba y
       // estos peldaños no tienen cifras que escribir.
     } else {
+      /*
+       * **Y solo si cambia**, como el cuadro: ver `ui/si-cambia.ts`. Escribir
+       * la misma cifra no es gratis —el navegador da la pieza por cambiada y
+       * la vuelve a maquetar y a pintar— y estas cuatro, más las dos del
+       * rotor, se escribían en cada imagen digan lo que digan. Medido con el
+       * Super Puma en el aire sobre Los Rodeos y la CPU de una tablet (×4),
+       * con y sin esto y alternando: recalcular estilos pasa de 3,4 a 2,4 ms
+       * por imagen y maquetar de 1,3 a 0,9.
+       */
       if (this.speed)
-        this.speed.textContent = Math.round(this.units.speed(ias)).toString();
+        escribir(this.speed, Math.round(this.units.speed(ias)).toString());
       if (this.altitude) {
-        this.altitude.textContent = Math.round(
-          this.units.altitude(state.position.y),
-        ).toString();
+        escribir(
+          this.altitude,
+          Math.round(this.units.altitude(state.position.y)).toString(),
+        );
       }
       if (this.vspeed) {
-        this.vspeed.textContent = this.units
-          .vspeed(state.verticalSpeed)
-          .toFixed(this.units.vspeedDecimals);
+        escribir(
+          this.vspeed,
+          this.units.vspeed(state.verticalSpeed).toFixed(this.units.vspeedDecimals),
+        );
       }
       if (this.heading) {
         // **Magnético, no verdadero.** La brújula de un avión apunta al norte
@@ -3289,7 +3301,7 @@ export class Hud {
         const verdadero = (state.heading * 180) / Math.PI;
         const degrees =
           Math.round(verdadero + this.magneticVariation + 720) % 360;
-        this.heading.textContent = degrees.toString().padStart(3, "0");
+        escribir(this.heading, degrees.toString().padStart(3, "0"));
       }
     }
 
@@ -3713,8 +3725,8 @@ export class Hud {
 
   ponerRotor(nr: number, tq: number): void {
     this.vueltasDelRotor = nr;
-    if (this.rotorNr) this.rotorNr.textContent = Math.round(nr * 100).toString();
-    if (this.rotorTq) this.rotorTq.textContent = Math.round(tq * 100).toString();
+    escribir(this.rotorNr, Math.round(nr * 100).toString());
+    escribir(this.rotorTq, Math.round(tq * 100).toString());
   }
 
   setMissionProgress(progress: { done: number; total: number } | null): void {
