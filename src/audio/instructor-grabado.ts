@@ -878,7 +878,7 @@ export class InstructorGrabado implements Instructor {
   /**
    * **Y lo de fondo, detrás de lo que el vuelo necesita ya.**
    *
-   * El fondo son dos mil piezas de seis en seis, y en la wifi de un aula
+   * El fondo son dos mil piezas de seis en seis, y con una conexión lenta
    * —1,6 Mbps medidos— se comían la red justo al empezar el primer vuelo:
    * con el modo inicio, el modelo del avión, que son 650 kB, tardaba catorce
    * segundos en llegar en vez de tres o cuatro, y la tarjeta de Jazlyn salía

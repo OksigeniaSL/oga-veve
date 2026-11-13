@@ -103,7 +103,7 @@ export function registrarElTrabajador(direccionDeLaEntrada: string): void {
    * trabajador pide de golpe nada más instalarse. Casi todos están ya en la
    * caché del navegador —el juego acaba de bajarlos—, pero no todos: los
    * retratos de la flota, los instrumentos de los aviones que no se vuelan,
-   * las fuentes que esta pantalla no usa. En la wifi de un aula —1,6 Mbps
+   * las fuentes que esta pantalla no usa. Con una conexión lenta —1,6 Mbps
    * medidos— eso son segundos de red quitados al modelo del avión y al
    * relieve, justo cuando el niño está mirando la pista. Así que se espera a
    * que la página deje de bajar cosas, con un tope para que el juego sin red

@@ -412,7 +412,7 @@ const SE_QUEDA_EL_BULTO = 3;
  * avión, ms. Ver `fondoDespuesDe` en `audio/instructor-grabado.ts`.
  *
  * Veinte segundos: el modelo más gordo de la flota, el del JAZ 120, son 1,7 MB
- * y unos nueve segundos en la wifi de un aula, y un modelo que no llega —sin
+ * y unos nueve segundos con una conexión lenta de 1,6 Mbps, y un modelo que no llega —sin
  * red y sin copia— no puede dejar el pack para siempre sin bajar.
  */
 const ESPERA_DEL_FONDO = 20_000;

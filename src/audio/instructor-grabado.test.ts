@@ -337,7 +337,7 @@ describe("el instructor grabado", () => {
     });
 
     /*
-     * **Lo de fondo, detrás del modelo del avión.** En la wifi de un aula, el
+     * **Lo de fondo, detrás del modelo del avión.** Con una conexión lenta, el
      * fondo se comía la red justo cuando bajaba el avión del primer vuelo.
      * Los manifiestos sí van ya: sin ellos no se sabe qué hay grabado.
      */

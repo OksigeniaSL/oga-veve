@@ -19,7 +19,8 @@ de unos datos que no cambian. La propuesta, aprobada, era **dejarlo calculado
 en los datos**, en el paso que los prepara y nunca en el navegador, con tres
 condiciones: que valga para todos los aeródromos y no solo para Barajas, que lo
 precalculado dé exactamente lo mismo que la cuenta del navegador, y que pese lo
-que ahorra o menos, porque la wifi de un aula puede ser de 1,6 Mbps.
+que ahorra o menos, porque quien juegue puede tener una conexión lenta: con
+1,6 Mbps, cada kilobyte cuenta en el arranque.
 
 La pregunta no es si se puede precalcular —se puede precalcular cualquier
 cosa—, sino **qué parte es cuenta pura sobre datos fijos** y cuánto pesa

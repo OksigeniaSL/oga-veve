@@ -241,8 +241,8 @@ function abrir(root: HTMLElement): Promise<void> {
 
     /*
      * **Elegido, la pantalla se queda hasta que la tape la siguiente.** Con
-     * la primera pantalla aparte —ver `boot.ts`—, quien elige deprisa en la
-     * wifi de un aula elige antes de que haya llegado el hangar, y escondida
+     * la primera pantalla aparte —ver `boot.ts`—, quien elige deprisa con una
+     * conexión lenta elige antes de que haya llegado el hangar, y escondida
      * aquí quedaba la página en blanco mientras tanto. Así se queda quieta y
      * sin atender más toques, y la esconde quien sigue: ver `cerrarPilotos`.
      */

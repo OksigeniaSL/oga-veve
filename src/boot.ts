@@ -1,7 +1,7 @@
 /**
  * **La entrada: la primera pantalla, sin esperar al juego.**
  *
- * Medido con la wifi de un aula —1,6 Mbps de bajada y 80 ms—, el juego era un
+ * Medido con una conexión lenta —1,6 Mbps de bajada y 80 ms—, el juego era un
  * solo paquete de 3,6 MB (1,1 comprimido) más three.js, y no se pintaba nada
  * hasta tenerlo entero: siete segundos y medio de pantalla vacía antes de
  * «¿Cuál es tu avión?». En clase, cada espera cuesta la atención de los niños.
