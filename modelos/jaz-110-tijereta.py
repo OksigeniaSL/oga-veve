@@ -132,9 +132,25 @@ OJOS_Y = 5.48 - TREN
 # punta, medio metro más arriba de lo que dibuja Boeing: esa punta caída es de lo
 # que dice qué avión es, y en el retrato no está.
 #
-# La cola, medida sobre el mismo dibujo: la panza empieza a subir a 47 m del morro
-# y el cono acaba a 62,00, un metro por encima del eje. Más larga y más baja que
-# la de sus hermanos, y por eso pega antes contra la pista: ver `maxGroundPitch`.
+# **La cola, la que deja rotar los 9,7° de Boeing.** El cono acaba a 62,00, un
+# metro por encima del eje, como en el dibujo de 2.2.2. La panza no: medida ahí
+# empezaba a subir a 47 m del morro, y con eso este modelo pegaba la cola a 6,6°
+# girando sobre la rueda de atrás del bogie, que es donde gira un avión al rotar.
+# El fabricante da 9,7° con las ruedas en la pista y las patas extendidas (AAIB,
+# Bulletin 11/2020, VH-ZND), que es su `maxGroundPitch`, y un dibujo que pega
+# antes enseña la cola dentro del asfalto en cada despegue.
+#
+# Ahora sube desde los 40 m, justo detrás del carenado del ala, en una rampa
+# larga y limpia que va unos centímetros por encima de la recta de 9,7° desde
+# esa rueda hasta el cono: toca a 9,9°, y a 9,7° le quedan siete centímetros
+# bajo la quilla, a 24 m por detrás del centro de gravedad. Es más que lo que
+# deja el avión parado de verdad, que pega antes, porque aquí no hay recorrido
+# de amortiguador: el modelo de vuelo no alarga las patas cuando el ala se lleva
+# el peso, y Boeing mide con ellas extendidas.
+#
+# Solo cambia lo de abajo: el lomo, el ancho y la altura de lo más ancho son los
+# de antes en cada estación —por eso van escritos aunque sean la media—, y la
+# estación nueva cae donde todo era recto, así que no los mueve.
 PIEL = Piel([
     (MORRO, 0.0, -0.60, -0.60),
     (MORRO + 0.12, 0.62, -0.20, -0.95),
@@ -147,11 +163,12 @@ PIEL = Piel([
     (MORRO + 6.40, 2.72, 2.78, -2.92),
     (MORRO + 8.00, 2.84, 2.94, PANZA),
     (MORRO + 10.00, ANCHO, TECHO, PANZA, CINTURA),
-    (COLA - 15.00, ANCHO, TECHO, PANZA, CINTURA),
-    (COLA - 12.80, 2.70, 2.84, -2.79, 0.10),
-    (COLA - 7.20, 1.76, 2.40, -1.84),
-    (COLA - 3.90, 1.05, 1.95, -0.84),
-    (COLA - 1.65, 0.50, 1.50, 0.06),
+    (COLA - 22.00, ANCHO, TECHO, PANZA, CINTURA),
+    (COLA - 15.00, ANCHO, TECHO, -2.14, CINTURA),
+    (COLA - 12.80, 2.70, 2.84, -1.77, 0.10),
+    (COLA - 7.20, 1.76, 2.40, -0.82, 0.28),
+    (COLA - 3.90, 1.05, 1.95, -0.24, 0.555),
+    (COLA - 1.65, 0.50, 1.50, 0.18, 0.78),
     (COLA, 0.10, 1.17, 0.84),
 ])
 

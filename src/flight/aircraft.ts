@@ -1194,6 +1194,27 @@ export interface AircraftConfig {
   /** Distancia del centro de gravedad al tren, m. */
   gearHeight: number;
   /**
+   * **Por dónde apoya el avión al levantar el morro en el suelo**: cuánto va
+   * por detrás del centro de gravedad el eje de la rueda principal de más
+   * atrás, m.
+   *
+   * Un avión que rota gira sobre esas ruedas, que se quedan en el asfalto, y
+   * su centro de gravedad **sube**. El modelo de vuelo lo giraba sobre el
+   * centro de gravedad a `gearHeight` del suelo, así que al levantar el morro
+   * las ruedas de atrás se hundían en la pista: el 787 a sus 9,7°, 0,38 m,
+   * medido en el juego; el 747 a sus 12,5°, 0,77 sobre su dibujo colocado
+   * como lo coloca el juego, porque apoya en el bogie de la panza, cuatro
+   * metros por detrás. Ver `alturaSobreLasRuedas` en `flight/apoyo.ts`.
+   *
+   * **Es la del dibujo**, `modelos/*.py`, que pone el tren donde lo tiene su
+   * tipo, y `apoyo.test.ts` la compara con el `.glb`. No sale de `batalla` por
+   * `CARGA_EN_EL_MORRO`, que da el brazo con el que el peso carga las ruedas
+   * principales —ver `momentoDelTren` en `fdm.ts`— y no dónde apoyan: en un
+   * bogie, el eje de atrás va medio bogie por detrás de su centro, y el 747
+   * apoya en el de la panza, no en el centro de los cuatro.
+   */
+  mainWheelsAft: number;
+  /**
    * Si el tren se mete.
    *
    * No lo lleva todo el mundo, y esa es media lección: meter las patas cuesta
@@ -1439,6 +1460,9 @@ export const PYKASU: AircraftConfig = {
   rotationSpeed: 28,
   batalla: 1.65,
   gearHeight: 1.4,
+  // Apoyo al rotar: el eje de las principales, 0,36 m por detrás del centro de
+  // gravedad: `MAINS_Z` y `centro_de_gravedad` en `modelos/jaz-20-pykasu.py`.
+  mainWheelsAft: 0.36,
   trenRetractil: false,
   // Tren fijo: un entrenador de escuela lleva las patas al aire a propósito.
   meteElTrenA: null,
@@ -1573,12 +1597,24 @@ export const MAINUMBY: AircraftConfig = {
   rotationSpeed: 26,
   batalla: 5.4,
   gearHeight: 1.8,
+  // Apoyo al rotar: las principales, 0,18 m por detrás del centro de gravedad
+  // del dibujo (`modelos/jaz-25-mainumby.py`). Es de rueda de cola: ver
+  // `maxGroundPitch`.
+  mainWheelsAft: 0.18,
   trenRetractil: false,
   // Tren fijo: un fumigador trabaja bajo y no le compensa el peso ni la avería.
   meteElTrenA: null,
   tardaElTren: null,
-  maxGroundPitch: 0.26, // 15°: es un patín de cola, se apoya de morro arriba
-  // Patín de cola: se apoya de morro arriba, y bajarlo
+  /*
+   * **12°, los de su rueda de cola tocando el suelo**: girando sobre las
+   * principales, es la actitud a la que la rueda de cola de su dibujo llega a
+   * la pista —0,95 m más alta que las principales y 4,46 por detrás—, la de
+   * tres puntos de un avión de rueda atrás. Eran 15° sin fuente, y con el
+   * avión apoyado en las principales la rueda de cola se metía 0,23 m en el
+   * suelo.
+   */
+  maxGroundPitch: Math.atan(0.95 / 4.46),
+  // Rueda de cola: se apoya de morro arriba, y bajarlo
   // clava la hélice. Poco juego a propósito.
   minGroundPitch: -0.020,
   /*
@@ -1805,6 +1841,9 @@ export const PANAMBI: AircraftConfig = {
   deRodarADespegar: 1240 / 870,
   batalla: 2.8,
   gearHeight: 1.6,
+  // Apoyo al rotar: el eje de las principales, 0,35 m por detrás del centro de
+  // gravedad: `PRINCIPAL_Z` en `modelos/jaz-40-panambi.py`.
+  mainWheelsAft: 0.35,
   trenRetractil: true,
   // Sesenta metros: cuando ya no queda pista donde posarse delante, que es la
   // regla de escuela. Sale de una pista corta, así que tarda en quedarse sin.
@@ -2147,6 +2186,13 @@ export const ARASUNU: AircraftConfig = {
   // Del eje del fuselaje al suelo, como en su modelo: la punta de la pala a
   // 35 cm del suelo (13,82 in en la vista en tres planos).
   gearHeight: 2.1,
+  /*
+   * Apoyo al rotar: el eje de las principales, 0,66 m por detrás del centro
+   * de gravedad: `PRINCIPAL_Z` y `centro_de_gravedad` en
+   * `modelos/jaz-60-arasunu.py`. Eran 0,58 con el ala del Twin Otter, de más
+   * cuerda.
+   */
+  mainWheelsAft: 0.66,
   trenRetractil: true,
   // Veinticinco: «positive rate, gear up». Un turbohélice regional mete el tren
   // a los pocos segundos de despegar, no a trescientos metros.
@@ -2464,6 +2510,9 @@ export const ARAI: AircraftConfig = {
   // escaso y el tren apenas asomaba bajo el motor: «ruedas enterradas». Tiene
   // que decir lo mismo que `TREN` en `modelos/jaz-90-arai.py`.
   gearHeight: 3.35,
+  // Apoyo al rotar: el eje de las principales, 1,38 m por detrás del centro de
+  // gravedad: `PRINCIPAL_Z` en `modelos/jaz-90-arai.py`.
+  mainWheelsAft: 1.38,
   trenRetractil: true,
   // Veinte: el tren entra en cuanto el variómetro dice que sube. Con las patas
   // fuera a más de doscientos cinco nudos se pasaría de su propio límite.
@@ -2779,6 +2828,11 @@ export const YVAGA: AircraftConfig = {
   // quedaban tapadas por los motores y se leía «ruedas enterradas». Tiene que
   // decir lo mismo que `TREN` en `modelos/jaz-120-yvaga.py`.
   gearHeight: 5.9,
+  // Apoyo al rotar: el eje de atrás del bogie de la panza, que es el que se
+  // queda en la pista cuando el de las alas ya se levanta: 0,72 m por detrás de
+  // su pata, que va 3,42 por detrás del centro de gravedad (`PATAS_PANZA` en
+  // `modelos/jaz-120-yvaga.py`).
+  mainWheelsAft: 4.14,
   trenRetractil: true,
   // Veinte: igual que el de pasillo único. Un avión de línea no vuela con el
   // tren fuera más que los segundos de después del despegue.
@@ -3069,6 +3123,10 @@ export const TIJERETA: AircraftConfig = {
   // Con ella la panza queda a 1,86 m del suelo y el lomo a 7,80, los de 2.3.2. Tiene
   // que decir lo mismo que `TREN` en `modelos/jaz-110-tijereta.py`.
   gearHeight: 4.8,
+  // Apoyo al rotar: el eje de atrás del bogie, 0,76 m por detrás de la pata,
+  // que va 1,80 por detrás del centro de gravedad (`PATA_Z` en
+  // `modelos/jaz-110-tijereta.py`).
+  mainWheelsAft: 2.56,
   trenRetractil: true,
   meteElTrenA: 20,
   // Tres patas grandes: entre sus dos hermanos. Estimación de su clase, por lo
