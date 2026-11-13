@@ -178,6 +178,17 @@ export const DIA_DE_TABLAS: DiaDeDespegue = {
  *   —la regla de la norma de los aviones de transporte, CS 25.113 a 2 y
  *   14 CFR 25.113 a 2—, que es la que manda con los motores bien. La de un
  *   motor parado no está en este juego, que no los para.
+ *
+ *   **El turbohélice de cercanías, con la misma regla.** El JAZ 60 es un
+ *   Beech 1900D, certificado en la categoría de cercanías de la norma de los
+ *   aviones pequeños (14 CFR 23 hasta la enmienda 34; CAA de Nueva Zelanda,
+ *   TAR 98/07), y esa categoría pide lo mismo que la de transporte: la
+ *   distancia de despegue es la mayor de la de un motor parado y la de todos
+ *   por 1,15 (14 CFR 23.59 a), y además la de acelerar y parar (23.55). Para
+ *   operarlo, la norma europea lo pone en la clase A —turbohélice de más de
+ *   nueve plazas o más de 5.700 kg, Reglamento (UE) 965/2012, anexo I— con
+ *   la CAT.POL.A.205. Ni la regla ni el número cambian al hacerlo un 1900D;
+ *   cambia la cita.
  */
 export function margenDeSuClase(a: AircraftConfig): {
   readonly factor: number;
@@ -244,11 +255,14 @@ export function pistaNecesariaHoy(a: AircraftConfig, dia: DiaDeDespegue = DIA_DE
  * **Los de hélice, turbohélice incluido, con el 1,8**, que de las cifras
  * publicadas de su clase es la que pide más pista:
  *
- * - **El Twin Otter**, la clase del JAZ 60, sí publica las dos: 244 m de
- *   rodadura y 455 m hasta los cincuenta pies a su peso máximo (De Havilland,
- *   especificaciones del DHC-6 en dehavilland.com/twin-otter). Son 1,86, pero
- *   esos 455 son la longitud de campo de la SFAR 23, que ya lleva su margen:
- *   la proporción sin él queda algo por debajo, y el 1,8 cae dentro.
+ * - **El Twin Otter**, un turbohélice de diecinueve plazas, sí publica las
+ *   dos: 244 m de rodadura y 455 m hasta los cincuenta pies a su peso máximo
+ *   (De Havilland, especificaciones del DHC-6 en dehavilland.com/twin-otter).
+ *   Son 1,86, pero esos 455 son la longitud de campo de la SFAR 23, que ya
+ *   lleva su margen: la proporción sin él queda algo por debajo, y el 1,8 cae
+ *   dentro. El JAZ 60 es un 1900D desde el 13-11-2026, y el 1900D publica su
+ *   longitud de campo pero no su rodadura: se queda con la de su clase, y el
+ *   banco de mesa comprueba que su volado no se aparta de ella (ADR 0027).
  * - **El Seneca II**, la del JAZ 40, rueda 870 ft y pasa los cincuenta pies a
  *   los 1.240, a sus 4.570 lb: 1,43 (tabla comparativa de la Grumman Owners
  *   and Pilots Association, aya.org). **Lleva la suya**, en su ficha, desde
@@ -419,7 +433,7 @@ const ALTURA_DEL_UMBRAL = 50 * 0.3048;
  *   manuales, entre 290 y 350: el Twin Otter aterriza en 460 m desde los
  *   cincuenta pies con 169 de rodadura, 291 en el aire (De Havilland,
  *   especificaciones del DHC-6); el 1900D lleva unos mil pies de aire en sus
- *   2.800, y el Embraer 170 unos trescientos en sus 737 m
+ *   2.790, y el Embraer 170 unos trescientos en sus 737 m
  *   (`distancia-de-aterrizaje.test.ts`); y el 787-9, unos 350 en sus 1.080
  *   (D6-58333, 3.4.3).
  * - **Las avionetas, algo más empinadas**, con la técnica de pista corta de

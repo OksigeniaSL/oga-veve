@@ -285,9 +285,10 @@ describe("de El Hierro a La Gomera, lo que se ve", () => {
   const vuelo = volar("el-hierro", "la-gomera", "jaz-60", CANARIAS_OESTE);
 
   it("el crucero ya no es cabina estéril: hay rato para contar", () => {
-    // Cuatro minutos largos de crucero; con la regla de los treinta
-    // kilómetros, un par de minutos sueltos en medio del canal.
-    expect(vuelo.abierta).toBeGreaterThan(200);
+    // Dos minutos y medio largos de crucero en el 1900D, que va más deprisa
+    // que el Twin Otter con el que se escribió esto —eran cuatro—; con la
+    // regla de los treinta kilómetros, un rato suelto en medio del canal.
+    expect(vuelo.abierta).toBeGreaterThan(140);
   });
 
   it("y lo que se cuente, en crucero y sin repetir", () => {

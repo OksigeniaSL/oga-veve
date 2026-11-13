@@ -889,15 +889,16 @@ export interface AircraftConfig {
    * lleva quien la norma obliga a llevarlo, que es justo lo que hay que poder
    * reconocer el día que se suba uno a una cabina.
    *
-   * - **TCAS II** en los dos reactores. La OACI obliga a llevar ACAS II a todo
-   *   avión de turbina de más de 5 700 kg o con más de diecinueve pasajeros
-   *   (Anexo 6, parte I; en Europa, Reglamento 1332/2011). Da el aviso de
-   *   tráfico y además la maniobra para apartarse, el RA.
-   * - **TCAS I** en el turbohélice de diecinueve plazas. Con 5 600 kg y
-   *   diecinueve asientos se queda justo debajo de la raya de la OACI, y lo
-   *   que lleva un avión así es lo que exige la norma de EE. UU. para los de
-   *   turbina de pasaje de diez a treinta plazas (14 CFR 135.180): el TCAS I,
-   *   que **solo avisa** —el tráfico, dónde y a qué altura— y no da maniobra.
+   * - **TCAS II** en los reactores y en el turbohélice. La OACI obliga a
+   *   llevar ACAS II a todo avión de turbina de más de 5 700 kg o con más de
+   *   diecinueve pasajeros (Anexo 6, parte I; en Europa, Reglamento
+   *   1332/2011). Da el aviso de tráfico y además la maniobra para apartarse,
+   *   el RA. El JAZ 60 pasa la raya por el peso: es un Beech 1900D de 7.766
+   *   kg. Con los 5.600 del Twin Otter se quedaba debajo, y llevaba el TCAS I.
+   * - **TCAS I**, ninguno ahora. Es el que exige la norma de EE. UU. para los
+   *   de turbina de pasaje de diez a treinta plazas por debajo de esa raya
+   *   (14 CFR 135.180), y **solo avisa** —el tráfico, dónde y a qué altura—
+   *   sin dar maniobra.
    * - **Ninguno** en la avioneta de escuela, el fumigador y el bimotor de
    *   pistón. Ninguna norma se lo pide y ninguno lo lleva de serie: en ellos
    *   el tráfico se busca por la ventanilla y se oye por la radio.
@@ -1902,53 +1903,154 @@ export const PANAMBI: AircraftConfig = {
  * aviones, y está ahí por un motivo que se puede contar — mantener la cola
  * fuera de la estela del ala y de las hélices.
  *
- * La referencia de tamaño es el **DHC-6 Twin Otter**, que #54 señala como «la
- * base defendible para el turbohélice regional» porque tiene derivadas
- * identificadas en vuelo y publicadas. No es ese avión: es de su clase, y de
- * ahí salen el peso, la envergadura y la superficie.
+ * **Es un Beech 1900D**, por fuera y por dentro (13-11-2026, ADR 0027). Era
+ * una mezcla: la silueta, la cabina, los frenos y los flaps del 1900D, y el
+ * ala, el peso y la velocidad del DHC-6 Twin Otter, que el #54 había señalado
+ * como «la base defendible para el turbohélice regional» porque tiene
+ * derivadas identificadas en vuelo. Con el ala de uno y el freno del otro
+ * rodaba 459 m donde el Twin Otter rueda 244 y no se parecía a ninguno de los
+ * dos, así que su despegue y su toma no se podían comparar con ningún manual.
+ * Enrique: «hacemos el 1900D». El Twin Otter será otro avión.
  *
- * Los coeficientes, por el mismo camino que el Panambi: `clAlpha` de la línea
- * sustentadora con su alargamiento —diez, que es de ala larga y por eso planea
- * tan bien—, `cmAlpha` de un margen del 17 %, `clP` de la proporción de
- * siempre, y `clAileron` de la regla de la casa. **Sesenta grados por segundo
- * y no setenta**: un avión grande rueda más despacio, y eso también se aprende.
+ * Las fuentes, de las que salen los números de abajo:
+ *
+ * - **CAA de Nueva Zelanda, *Type Acceptance Report* 98/07**, rev. 1 (2022):
+ *   la aceptación de la hoja de tipo FAA A24CE, con el peso máximo, el motor,
+ *   la hélice, la base de certificación —14 CFR 23 hasta la enmienda 34,
+ *   categoría de cercanías— y, en su apéndice 2, la vista en tres planos del
+ *   1900D con sus cotas.
+ * - **Flight Safety Foundation, *Accident Prevention***, julio de 1998 y mayo
+ *   de 2004, la ficha del avión que acompaña a cada informe: motores, pesos,
+ *   crucero y pérdida.
+ * - **TSB de Canadá, informe A97C0229**, con las velocidades de despegue de
+ *   su manual de vuelo a 16.000 lb.
+ *
+ * Los coeficientes, por el mismo camino que el Panambi y con el ala del 1900D:
+ * `clAlpha` de la línea sustentadora con su alargamiento —once, de ala
+ * larga—, `cmAlpha` de un margen del 17 %, `clP` de la proporción de siempre,
+ * y `clAileron` de la regla de la casa.
  */
+/**
+ * **Lo que pesa el JAZ 60 en su vuelo típico**, kg: su masa sin combustible
+ * más la mediana de lo que carga en sus rutas, 724 kg (ADR 0019). Lo
+ * comprueba `peso.test.ts`.
+ */
+const MASA_DEL_ARASUNU = 6572 + 724;
+
+/**
+ * **Las velocidades del 1900D a la masa de su ficha**, m/s indicados, sacadas
+ * de su ala con las reglas de su categoría, la de cercanías, que son las de
+ * los aviones de transporte:
+ *
+ * - **Vr, 1,1 veces la pérdida con los flaps de despegue** (14 CFR 23.51 c 2
+ *   iii). Con esa regla y este ala, a 16.000 lb sale 101 nudos, y su manual
+ *   da 102 (TSB, A97C0229).
+ * - **V1, en la proporción de su manual**: 100 nudos por 102 de Vr a 16.000 lb
+ *   (el mismo informe). Y por encima de su Vmc, que la norma no la deja bajar.
+ * - **Vref, 1,3 veces la pérdida con los flaps de aterrizaje** (14 CFR 23.73).
+ *
+ * Eran 80, 74 y 93 nudos, con el ala y el peso del Twin Otter.
+ */
+const VELOCIDADES_DEL_ARASUNU = {
+  vr: 101.5 * 0.514444,
+  v1: 99.5 * 0.514444,
+  vref: 107.7 * 0.514444,
+} as const;
+
 export const ARASUNU: AircraftConfig = {
   id: "jaz-60",
   name: nombreEnteroDe("jaz-60"),
   descriptionKey: "aircraft.arasunu.description",
-  mass: 5600,
   /*
-   * La carga con la que el vuelo más largo que tiene en el juego —de
-   * Pettirossi a Estigarribia, 784 kg de combustible— despega justo con las
-   * 12.500 lb del Twin Otter, que es su peso. Su vuelo típico sale a 5,3 t.
+   * **Su vuelo típico**, 7.296 kg: un 6 % por debajo de su peso máximo, que
+   * es como sale un 1900D en un salto corto. Eran 5.600 kg, el peso del Twin
+   * Otter. Ver `masaSinCombustible` y `peso.test.ts`.
    */
-  masaSinCombustible: 4886,
-  wingArea: 39.0,
-  wingSpan: 19.8,
-  chord: 2.0,
+  mass: MASA_DEL_ARASUNU,
+  /*
+   * **Lo que le deja su peso máximo para el vuelo más largo que tiene en el
+   * juego**: de Pettirossi a Pedro Juan Caballero, con el alternativo y la
+   * reserva, 1.194 kg de combustible, que con las 17.120 lb del 1900D (7.766
+   * kg, FSF 2004 y TAR 98/07) dejan 6.572 kg para el avión y la gente.
+   *
+   * Es menos que el pasaje lleno, y es lo de verdad: el 1900D vacío pesa
+   * 4.932 kg (10.874 lb, hoja de especificaciones de Raytheon) y con dos de
+   * cabina y diecinueve de pasaje con su maleta, a las masas estándar de la
+   * norma europea para diez a diecinueve plazas (CAT.POL.MAB.100, tablas 1 a
+   * 3), son 6.926: con todos sentados no cabe ese combustible, y salen tres
+   * o cuatro menos. Un 1900D lleno hace unas 380 millas; más lejos, deja
+   * gente en tierra.
+   *
+   * Eran 4.886, la carga que dejaba el peso del Twin Otter.
+   */
+  masaSinCombustible: 6572,
+  /*
+   * **El ala del 1900D**: 17,66 m de envergadura —57 ft 11,17 in hasta la
+   * punta de los winglets, en la vista en tres planos del TAR 98/07— y
+   * 28,8 m², la que da su operador Chalair. Eran 19,8 m y 39 m², las del Twin
+   * Otter. La cuerda media, la superficie entre la envergadura.
+   */
+  wingArea: 28.8,
+  wingSpan: 17.66,
+  chord: 1.63,
   // Escaladas por masa y envergadura con la proporción que comparten el Navion
-  // y los tres de la flota: `Ixx ≈ 0,012·m·b²`.
-  inertia: { xx: 26000, yy: 32000, zz: 52000 },
-  maxThrust: 14000,
+  // y los tres de la flota: `Ixx ≈ 0,012·m·b²`; las otras dos, en la misma
+  // proporción que tenían con ella.
+  inertia: { xx: 27000, yy: 40000, zz: 62000 },
+  /*
+   * **El empuje de dos PT6A-67D**, de 1.279 shp cada uno (954 kW, FSF 2004;
+   * el motor, también en el TAR 98/07), con la hélice Hartzell de cuatro palas
+   * de 2,79 m. La recta de empuje de un avión de hélice tiene dos números, el
+   * de parado y la velocidad a la que llega a cero, y salen de dos cifras del
+   * 1900D:
+   *
+   * - **Sube 2.615 ft/min** a su peso máximo al nivel del mar (hoja de
+   *   especificaciones de Raytheon). A unos 140 nudos, con la resistencia de
+   *   este ala, eso pide 19,2 kN.
+   * - **Cruza a 274 nudos a 25.000 ft** con 15.000 lb (FSF): allí arriba la
+   *   recta tiene que dar, como poco, lo que frena el avión, unos 5,8 kN.
+   *
+   * Una recta que acaba en 230 m/s y sale de 28 kN pasa por las dos. Es menos
+   * de lo que daría la teoría del disco a esa potencia —unos 36 kN con una
+   * figura de mérito de 0,65— porque la recta es recta y la hélice de verdad
+   * no: lo que se pide es que suba y corra como el avión. Eran 14.000 N, los
+   * del Twin Otter.
+   */
+  maxThrust: 28000,
+  heliceSinEmpujeA: 230,
+  /*
+   * **665 galones US de queroseno**, 4.456 lb a 6,7 lb el galón (*Plane &
+   * Pilot*, «Beechcraft 1900»; 4.458 en la hoja de Raytheon). Sin él, la
+   * cuenta de su clase le dejaba 1.075 kg, un catorce por ciento de lo que
+   * pesa, y los vuelos largos salían con el depósito «lleno» a media carga.
+   */
+  combustibleUtilizable: 2021,
   motores: 2,
-  // Cables, como el Beech 1900D y el Twin Otter de su clase: ninguno de los
-  // dos lleva mandos eléctricos. Ver `mandos`.
+  // Cables, como el Beech 1900D: no lleva mandos eléctricos. Ver `mandos`.
   mandos: "convencionales",
-  // A tres metros diez, que es `MOTOR` en su modelo.
-  motoresA: [-3.1, 3.1],
+  // A 2,62 m del eje, la mitad de la vía del tren, que se mete en la góndola:
+  // 8 ft 7 in en la vista en tres planos del TAR 98/07. Eran 3,10, las del ala
+  // del Twin Otter. Es `MOTOR` en su modelo.
+  motoresA: [-2.62, 2.62],
   alturaCritica: null,
   helicesContrarrotativas: false,
   /*
-   * La hélice de dos metros sesenta y cuatro: el doble de disco que la del
-   * bimotor de pistón, y el doble de freno en molinete. Por eso un turbohélice
-   * de línea la pone en bandera **solo**: la *autofeather* va armada en cada
-   * despegue.
+   * La hélice de 2,79 m del 1900D: más del doble de disco que la del bimotor
+   * de pistón, y más del doble de freno en molinete. Por eso un turbohélice de
+   * línea la pone en bandera **solo**: la *autofeather* va armada en cada
+   * despegue. Eran 0,72 con una de 2,64: en molinete frena el disco, un 12 %
+   * más grande. En bandera se queda en 0,06: lo que frena ahí es el canto de
+   * cuatro palas, que casi no cambia.
    */
-  motorParado: { molinete: 0.72, bandera: 0.06, autoBandera: true },
-  cruiseSpeed: 90,
-  // Siete mil seiscientos: veinticinco mil pies, el techo de servicio típico de
-  // un turbohélice regional presurizado.
+  motorParado: { molinete: 0.81, bandera: 0.06, autoBandera: true },
+  /*
+   * **274 nudos**, su crucero máximo a 25.000 ft y 15.000 lb (FSF, 1998 y
+   * 2004). Eran 90 m/s, 175 nudos, el crucero del Twin Otter: el 1900D va
+   * más de la mitad más rápido, y se nota en todos los tiempos de vuelo.
+   */
+  cruiseSpeed: 274 * 0.514444,
+  // Siete mil seiscientos: veinticinco mil pies, la altitud máxima de
+  // operación del 1900D (TAR 98/07, que cita la sección 2 de su manual).
   alturaDeCrucero: 7600,
   reglasDeVuelo: "instrumentos",
   /*
@@ -1966,13 +2068,22 @@ export const ARASUNU: AircraftConfig = {
    * con el antideslizante que el 1900D lleva como opción. Lo que le quita la
    * pista de verdad es la hélice en reversa —ver `tieneReversa`—; ni frenos de
    * tierra ni autofreno, que no los lleva ningún avión de su clase.
+   *
+   * **0,30, el que para en su manual con su Vref.** Su toma es de 2.790 ft
+   * desde los cincuenta pies (*Plane & Pilot*, «Beechcraft 1900»), que a su
+   * peso máximo al aterrizar, 16.765 lb (FSF, 2004), son los 4.667 ft de
+   * pista que se le publican partidos por 0,6. El 0,38 se calibró con el peso
+   * y la Vref del Twin Otter, 93 nudos; con el peso y la Vref del 1900D se
+   * quedaba un 10 % corto de su manual (ADR 0027).
    */
-  frenos: { enSeco: 0.38, psi: 100, antideslizante: 0.5 },
+  frenos: { enSeco: 0.3, psi: 100, antideslizante: 0.5 },
   frenosDeTierra: null,
   autofreno: false,
   cantosDeLaCarrera: null,
-  // Diecinueve plazas y 5 600 kg: debajo de la raya del ACAS II. Ver `tcas`.
-  tcas: "TCAS I",
+  // 7.766 kg, por encima de los 5.700 de la raya del ACAS II: lo lleva por
+  // norma (TAR 98/07, sobre la regla 125.381 de Nueva Zelanda). Con el peso
+  // del Twin Otter se quedaba debajo, con el TCAS I. Ver `tcas`.
+  tcas: "TCAS II",
   avisosHablados: true,
   /*
    * **Solo *five hundred*, y solo sin ILS delante**: lo único que se puede
@@ -2000,8 +2111,14 @@ export const ARASUNU: AircraftConfig = {
   cantaLosMinimos: false,
   // Persiana de plástico, como cualquier turbohélice regional.
   ventanillas: "persiana",
-  // Turbohélice de línea corta: rápido abajo y con techo de treinta mil.
-  vmoKt: 250,
+  /*
+   * **248 nudos indicados hasta 13.200 ft, y Mach 0,48 por encima.** Las dos
+   * cifras de su placa se sostienen una a otra: 248 indicados a 13.200 ft son
+   * Mach 0,47, que es donde una toma el relevo de la otra. Eran 250 sin
+   * fuente. La hoja de tipo A24CE no se ha podido leer entera: se dejan las
+   * de la placa que circulan con el avión.
+   */
+  vmoKt: 248,
   vleKt: 184,
   /*
    * La placa de un turbohélice de diecinueve plazas y cola en T, el Beech
@@ -2012,15 +2129,24 @@ export const ARASUNU: AircraftConfig = {
    */
   vfePorMuesca: [188, 154, 154],
   alivioDeFlaps: false,
-  mmo: 0.55,
-  approachSpeed: 48,
-  // 120 nudos: Vref más veintisiete, con los flaps de aproximación; su
-  // categoría, la B, deja hasta 135.
-  velocidadDeCircuito: 120 * 0.514444,
-  decisionSpeed: 38,
-  rotationSpeed: 41,
-  batalla: 7.21,
-  gearHeight: 2.2,
+  mmo: 0.48,
+  /*
+   * **Vref, 1,3 veces la pérdida con los flaps de aterrizaje** a la masa de la
+   * ficha (14 CFR 23.73). Eran 93 nudos, con el ala del Twin Otter. Ver
+   * `VELOCIDADES_DEL_ARASUNU`.
+   */
+  approachSpeed: VELOCIDADES_DEL_ARASUNU.vref,
+  // 130 nudos: Vref más veintitantos con los flaps de aproximación, por
+  // debajo de los 135 de su categoría, la B (OACI, Doc 8168, vol. I, tabla
+  // I-4-1-2). Eran 120, con la Vref del Twin Otter.
+  velocidadDeCircuito: 130 * 0.514444,
+  decisionSpeed: VELOCIDADES_DEL_ARASUNU.v1,
+  rotationSpeed: VELOCIDADES_DEL_ARASUNU.vr,
+  // 23 ft 9,35 in, en la vista en tres planos del TAR 98/07.
+  batalla: 7.25,
+  // Del eje del fuselaje al suelo, como en su modelo: la punta de la pala a
+  // 35 cm del suelo (13,82 in en la vista en tres planos).
+  gearHeight: 2.1,
   trenRetractil: true,
   // Veinticinco: «positive rate, gear up». Un turbohélice regional mete el tren
   // a los pocos segundos de despegar, no a trescientos metros.
@@ -2083,21 +2209,57 @@ export const ARASUNU: AircraftConfig = {
   },
   aero: {
     cl0: 0.3,
-    clAlpha: 5.03,
-    alphaStall: 0.27, // ~15°
-    cd0: 0.028,
+    // `2π/(1+2/(AR·e))` con su alargamiento, 10,83. Era 5,03 con el 10,05 del
+    // Twin Otter.
+    clAlpha: 5.1,
+    /*
+     * **~14,4°: el que da su pérdida limpia**, 101 nudos a 16.950 lb y su peso
+     * máximo de entonces (FSF, 1998), un `CL` máximo de 1,58. Eran 0,27, ~15°,
+     * sin cifra con la que medirlo.
+     */
+    alphaStall: 0.2515,
+    /*
+     * **Treinta milésimas, el que deja ir a fondo a su crucero.** Con sus 36 kN
+     * y la recta que acaba en 210 m/s, a 1.500 m a fondo va a unos 145 m/s, y
+     * a 25.000 ft sostiene sus 274 nudos. Eran 28, las del Twin Otter: el
+     * 1900D lleva más apéndices —winglets, aletas bajo la cola y estabilones—
+     * y un fuselaje más alto.
+     */
+    cd0: 0.03,
     oswald: 0.8,
     cyBeta: -0.55,
     cm0: 0.045,
-    cmAlpha: -0.855,
-    cmQ: -16,
+    // Un margen del 17 % de la cuerda: `−0,17·clAlpha`.
+    cmAlpha: -0.867,
+    /*
+     * **El amortiguamiento de cabeceo lo pone la cola**, y va referido al ala:
+     * `cmQ ∝ S_t·l_t²/(S·c²)`. Con el plano de cola del 1900D, 5,63 m de punta
+     * a punta donde el modelo llevaba 6,9, sobre un ala de 28,8 m² y 1,63 de
+     * cuerda donde eran 39 y 2,0, la cuenta da unos −27: con los −16 de antes
+     * el ala nueva le quitaba la mitad. Se queda en −24, al borde de lo que
+     * amortigua un avión de verdad —el Navion por 2,5, `referencia.test.ts`—.
+     */
+    cmQ: -24,
     cmElevator: 0.5,
     clBeta: -0.095,
-    clP: -0.47,
-    clAileron: 0.054, // ~60 °/s: un avión grande rueda más despacio.
+    // `clAlpha/10,7`, la proporción de siempre.
+    clP: -0.48,
+    // ~55 °/s a 175 nudos: con menos envergadura, el mismo alerón rueda más
+    // deprisa, y se baja en proporción. Era 0,054, 60 °/s con el ala del Twin
+    // Otter.
+    clAileron: 0.047,
     cnBeta: 0.09,
     cnR: -0.16,
-    cnRudder: 0.035,
+    /*
+     * **El timón que da su Vmc por debajo de lo que su manual permite.** La
+     * Vmc del 1900D no se ha encontrado publicada, pero sus velocidades de
+     * despegue la acotan: la Vr no puede bajar de 1,05 veces la Vmc (14 CFR
+     * 23.51 c 2 ii), y su manual rota a 102 nudos a 16.000 lb (TSB,
+     * A97C0229). La Vmc del 1900D va así por debajo de 97 nudos; con este
+     * timón, la del modelo sale en 85. Era 0,035, que con el empuje y el ala
+     * del 1900D la subía por encima de su V1.
+     */
+    cnRudder: 0.05,
     cnAileron: -0.003,
   },
 };

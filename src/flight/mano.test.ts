@@ -381,7 +381,10 @@ describe("el dedo", () => {
     volar(v, 10, (t) => (t === 0 ? { palanca: { x: 0.8, y: 0.7 } } : {}));
     expect(Math.abs(v.modelo.state.verticalSpeed)).toBeGreaterThan(1);
     const picos: number[] = [];
-    const fin = ultima(v, 25, (t) => (t === 0 ? { centrar: true } : {}));
+    // Cuarenta segundos: el JAZ 60 es un 1900D que maniobra a unos 190 nudos,
+    // sube ahí a once metros por segundo y su fugoide dura veinticinco. Eran
+    // veinticinco con el Twin Otter, que maniobraba a 120.
+    const fin = ultima(v, 40, (t) => (t === 0 ? { centrar: true } : {}));
     volar(v, 0.1, () => ({}), (m) => picos.push(m.alabeo));
     expect(Math.abs(fin.alabeo) * EN_GRADOS).toBeLessThan(1.5);
     expect(Math.abs(fin.vertical)).toBeLessThan(0.6);

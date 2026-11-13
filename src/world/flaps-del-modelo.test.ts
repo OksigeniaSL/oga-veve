@@ -259,7 +259,9 @@ describe("el foco de aterrizaje, donde estaba antes de los flaps", () => {
      * de siempre de la envergadura. Ver «Y fuera de las góndolas» en
      * `puntasDe`.
      */
-    "jaz-60": [2.375, -0.1258, -1.006],
+    // Y con el ala del 1900D, por dentro de su góndola, que ahora va a 2,62
+    // del eje: el foco se iba al otro lado del motor (ADR 0027).
+    "jaz-60": [2.1141, -0.1895, -0.9897],
     "jaz-90": [3.9753, -0.7022, -1.7613],
     "jaz-120": [9.3855, -0.9135, -7.0682],
   };

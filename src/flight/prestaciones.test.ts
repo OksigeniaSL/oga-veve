@@ -93,6 +93,7 @@ import {
   AIRCRAFT,
   RESERVADOS,
   esDeChorro,
+  velocidadSinEmpuje,
   type AircraftConfig,
 } from "./aircraft";
 
@@ -544,7 +545,13 @@ function mejorPlaneo(a: AircraftConfig): { razon: number; a: number } {
    * falta saber de antemano a qué velocidad está** — sale del propio vuelo,
    * que es lo que después se compara con la cuenta.
    */
-  for (let g = -2; g >= -12; g -= 0.5) {
+  /*
+   * **Y desde cuatro arriba en el turbohélice.** El 1900D lleva el ala del
+   * alargamiento de once, que planea mejor con más `CL` del que da su actitud
+   * a dos grados abajo: su mejor planeo, `CL = √(π·AR·e·CD0)` = 0,90, va con
+   * el morro unos tres grados arriba, y el barrido se quedaba en el borde.
+   */
+  for (let g = a.id === "jaz-60" ? 4 : -2; g >= -12; g -= 0.5) {
     const salida = planeoConActitud(a, g);
     if (salida.razon > mejor.razon) mejor = salida;
   }
@@ -732,7 +739,9 @@ function carreraTeorica(a: AircraftConfig, superficie: Superficie): number {
   for (let i = 0; i < pasos; i++) {
     const v = (i + 0.5) * dv;
     const q = 0.5 * RHO * v * v * a.wingArea;
-    const empuje = a.maxThrust * Math.max(0.2, 1 - v / (2.4 * a.cruiseSpeed));
+    // La recta de la ficha: con `heliceSinEmpujeA`, la suya, y sin ella, 2,4
+    // veces el crucero. Ver `velocidadSinEmpuje`.
+    const empuje = a.maxThrust * Math.max(0.2, 1 - v / velocidadSinEmpuje(a));
     const acc = (empuje - q * cd - mu * Math.max(0, peso - q * cl)) / a.mass;
     if (acc <= 0) return Infinity;
     s += (v / acc) * dv;
@@ -780,7 +789,14 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
       const { hastaVr, hastaIrse, seVaA } = carreraDeDespegue(a, "asfalto");
       const rotacion = hastaIrse - hastaVr;
       expect(rotacion).toBeGreaterThan(5);
-      expect(rotacion).toBeLessThan(hastaVr * 0.5);
+      /*
+       * Algo más en el turbohélice: el 1900D rota a 1,1 veces su pérdida con
+       * los flaps de despegue y su cola en T toca a los diez grados, que es
+       * menos de lo que pide para irse a esa Vr. Se va del suelo a 1,03 veces
+       * la Vr, como el de verdad —102 nudos de Vr y 108 de V2 a 16.000 lb,
+       * TSB A97C0229—, unos cuatro segundos y medio después de rotar.
+       */
+      expect(rotacion).toBeLessThan(hastaVr * (a.id === "jaz-60" ? 0.6 : 0.5));
       // Y se va por encima de Vr, nunca por debajo.
       expect(seVaA).toBeGreaterThanOrEqual(a.rotationSpeed);
     });
