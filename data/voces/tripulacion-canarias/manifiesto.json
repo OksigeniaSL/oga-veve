@@ -319,6 +319,10 @@
       "ms": 11007,
       "h": "b8ad5e84f8"
     },
+    "tripulacion.canario.bienvenidos.el-hierro": {
+      "ms": 2149,
+      "h": "e61c792445"
+    },
     "tripulacion.canario.bienvenidos.fuerteventura": {
       "ms": 2470,
       "h": "4e8992c02e"
@@ -462,6 +466,9 @@
     ],
     "tripulacion.canario.bienvenidos.la-gomera": [
       "tripulacion.canario.bienvenidos.la-gomera"
+    ],
+    "tripulacion.canario.bienvenidos.el-hierro": [
+      "tripulacion.canario.bienvenidos.el-hierro"
     ],
     "tripulacion.canario.bienvenidos.la-palma": [
       "tripulacion.canario.bienvenidos.la-palma"

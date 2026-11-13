@@ -8466,6 +8466,13 @@
     "para": "la tripulación de cabina de Canarias, por megafonía"
   },
   {
+    "id": "tripulacion.canario.bienvenidos.el-hierro",
+    "voz": "tripulacion-canarias",
+    "idioma": "es-PY",
+    "texto": "Señoras y señores, bienvenidos a El Hierro.",
+    "para": "la tripulación de cabina de Canarias, por megafonía"
+  },
+  {
     "id": "tripulacion.canario.trasLaToma",
     "voz": "tripulacion-canarias",
     "idioma": "es-PY",

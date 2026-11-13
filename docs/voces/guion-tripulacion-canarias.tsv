@@ -18,85 +18,86 @@
 018	tripulacion.canario.bienvenidos.fuerteventura	Señoras y señores, bienvenidos a Fuerteventura.
 019	tripulacion.canario.bienvenidos.la-palma	Señoras y señores, bienvenidos a La Palma.
 020	tripulacion.canario.bienvenidos.la-gomera	Señoras y señores, bienvenidos a La Gomera.
-021	tripulacion.canario.trasLaToma	Por favor, permanezcan sentados y con el cinturón abrochado hasta que el avión se detenga por completo y se apague la señal de cinturones. Ya pueden utilizar sus teléfonos móviles. Tengan cuidado al abrir los compartimentos superiores, porque el equipaje puede haberse movido durante el vuelo. Muchas gracias.
-022	tripulacion.canario.trasLaToma~2	Les rogamos que sigan sentados, con el cinturón abrochado, hasta que el avión se pare del todo y se apague la señal. Desde ahora pueden encender el móvil. Abran los compartimentos con cuidado, que en el vuelo las maletas también viajan. Y antes de salir, miren en el bolsillo del asiento por si se dejan algo.
-023	tripulacion.canario.trasLaToma~3	Por su seguridad, permanezcan sentados con el cinturón puesto hasta que el avión se detenga y se apague la señal de cinturones. Ya pueden usar el teléfono. Cuidado al abrir los compartimentos de arriba, y no olviden sus pertenencias. Muchas gracias y hasta pronto.
-024	inicio.tripulacion.pasaje.cinturon	Señoras y señores, bienvenidos a bordo. Por favor, tomen asiento y abróchense el cinturón: bajito y bien ajustado.
-025	inicio.tripulacion.pasaje.oidos	Señoras y señores, si al bajar se les tapan los oídos, es normal: va cambiando la presión del aire. Tragar saliva o bostezar ayuda a destaparlos.
-026	inicio.tripulacion.pasaje.demo.intro	Señoras y señores, les rogamos un momento de atención: les vamos a mostrar el equipo de seguridad de este avión.
-027	inicio.tripulacion.pasaje.demo.cinturon	El cinturón se abrocha metiendo la hebilla hasta oír clic, se ajusta tirando de la cinta y se suelta levantando la tapa.
-028	inicio.tripulacion.pasaje.demo.salidas	Este avión tiene cuatro salidas de emergencia: dos delante y dos detrás. Busquen la más cercana, que puede estar detrás de ustedes. Unas luces en el suelo del pasillo marcan el camino hasta ellas.
-029	inicio.tripulacion.pasaje.demo.mascaras	Si la cabina perdiera presión, caerán automáticamente del techo unas mascarillas de oxígeno. Tiren de una hacia ustedes, colóquensela sobre la nariz y la boca, y respiren con normalidad. Primero la suya, y después ayuden a quien lo necesite.
-030	inicio.tripulacion.pasaje.demo.chaleco	Su chaleco salvavidas está debajo del asiento, y solo se usa si el avión tuviera que posarse en el agua. Se pasa por la cabeza y se abrocha a la cintura. No lo inflen dentro del avión: se infla al salir, tirando de las anillas rojas.
-031	inicio.tripulacion.pasaje.demo.tarjeta	En el bolsillo del asiento de delante tienen la tarjeta de seguridad, con todo esto en dibujos. Por favor, léanla antes del despegue.
-032	inicio.tripulacion.pasaje.demo.aparatos	Y los teléfonos y aparatos electrónicos, en modo avión durante todo el vuelo. Muchas gracias por su atención.
-033	inicio.tripulacion.pasaje.cerca.revision	¡Hola! Déjame ver ese cinturón… ¡perfecto, así se lleva! Y la cortinilla, siempre subida para despegar.
-034	inicio.tripulacion.pasaje.cerca.tractor	Un tractor, enganchado a la rueda de delante. Desde la cabina no se ve lo que hay detrás, y para ir marcha atrás con los motores habría que soplar contra el edificio: él nos saca hasta la calle, y de ahí ya seguimos solos.
-035	inicio.tripulacion.pasaje.cerca.pasador	Es el pasador de la rueda de delante: mientras está puesto, la rueda la gira el tractor. Se lo enseña a los pilotos para que vean que ya lo quitó, y ahora sí nos podemos ir.
-036	inicio.tripulacion.pasaje.cerca.persiana	Así vemos bien fuera si pasa algo. Y de noche apagamos las luces de la cabina, para que los ojos ya estén hechos a lo de fuera.
-037	inicio.tripulacion.pasaje.cerca.hola	¡Hola otra vez! Aquí tienes agua y algo rico. Te vi mirando las nubes por la ventanilla: ¿es tu primer vuelo?
-038	inicio.tripulacion.pasaje.cerca.nubes1	¡De verdad! Una nube son millones de gotitas de agua, tan chiquititas que no se ven una a una, y el aire las sostiene.
-039	inicio.tripulacion.pasaje.cerca.nubes2	Y muy arriba, donde hace mucho frío, son cristalitos de hielo. Se ven blancas porque las gotitas desparraman toda la luz del sol.
-040	inicio.tripulacion.pasaje.cerca.nubes3	Cuando las cruzamos, todo se ve blanco, el avión se mueve un poquito y a veces se moja la ventanilla. No pasa nada: el avión está hecho para eso.
-041	inicio.tripulacion.pasaje.cerca.frio	¿Sabes qué? Fuera, tan alto, hace un frío de congelador, bajo cero. Aquí dentro metemos aire de fuera y lo calentamos, para ir a gusto.
-042	inicio.tripulacion.pasaje.cerca.motor1	¿Ves el motor, ahí debajo del ala? Delante tiene un ventilador gigante que se traga muchísimo aire.
-043	inicio.tripulacion.pasaje.cerca.motor2	Casi todo ese aire lo empuja el ventilador hacia atrás, por fuera del motor, y eso es lo que más empuja el avión. Un poco entra en el centro, se calienta con el combustible y hace girar el ventilador.
-044	inicio.tripulacion.pasaje.cerca.islas1	¿Sabes que las islas Canarias salieron del fondo del mar? Son volcanes que fueron creciendo, durante millones de años, hasta asomar.
-045	inicio.tripulacion.pasaje.cerca.islas2	La Palma, adonde vamos, es de las más jovencitas, y tiene unas montañas altísimas.
-046	inicio.tripulacion.pasaje.cerca.ruta	¿Y cómo sabe el avión el camino? La comandante y el copiloto llevan el mapa en una pantalla, y hablan por radio con la torre de control.
-047	inicio.tripulacion.pasaje.cerca.papi	Al lado de la pista hay cuatro lucecitas. Si se ven dos blancas y dos rojas, el avión baja justo por su camino.
-048	inicio.tripulacion.pasaje.cerca.bano	¡Claro que hay! Pero ahora, con la luz del cinturón encendida, mejor esperamos a aterrizar.
-049	inicio.tripulacion.pasaje.cerca.estrellas	¿Sabes qué hay arriba de todo en La Palma? Unos telescopios enormes para mirar las estrellas: el cielo de la isla es de los más limpios del mundo.
-050	inicio.tripulacion.pasaje.cerca.aterrizaje	Ya vamos a aterrizar: cinturón bien abrochado, respaldo derecho y la cortinilla arriba. ¡Lo estás haciendo genial!
-051	inicio.tripulacion.pasaje.cerca.adios	¡Hasta pronto, y gracias por volar con nosotros! Ahora ya sabes un montón de cosas de los aviones.
-052	inicio.tripulacion.pasaje.cerca.kitAqui	¡Mira lo que te traigo: tu kit de viaje, con dos juegos dentro! Siempre llevamos unos cuantos a bordo.
-053	inicio.tripulacion.pasaje.cerca.kitRato	Volar es apasionante, pero los vuelos duran un ratito. Con esto, el rato hasta La Palma se te pasa volando.
-054	inicio.tripulacion.pasaje.cerca.kitGuardar	Ahora guarda el kit en el bolsillo del asiento, que vamos a aterrizar: todo bien recogido.
-055	inicio.tripulacion.pasaje.cerca.techo	¿Ves? La parte de abajo de las nubes se llama base. Y cuando tapan más de medio cielo, los pilotos la llaman techo.
-056	inicio.tripulacion.pasaje.cerca.techoHoy	Hoy la base está a unos cinco mil pies, mil quinientos metros. Vamos justo debajo, así que hasta el mar nos falta más o menos eso.
-057	inicio.tripulacion.pasaje.cerca.visibilidad	Por debajo se ve lejísimos, más de diez kilómetros: eso es la visibilidad. Para aterrizar, los pilotos tienen que ver la pista a tiempo.
-058	inicio.tripulacion.pasaje.cerca.despertar	Despierta, que vamos a empezar a bajar: el cinturón bien puesto. Durmiendo se traga menos saliva, y al bajar los oídos lo notan.
-059	inicio.tripulacion.pasaje.cerca.plop1	Y al subir, ¿te hicieron plop los oídos? Es normal: la presión del aire de la cabina baja, y el aire que tienes dentro del oído sale.
-060	inicio.tripulacion.pasaje.cerca.plop2	Eso es el plop. Si lo notas, traga saliva o bosteza: así la presión de dentro del oído se iguala con la de la cabina.
-061	inicio.tripulacion.pasaje.cerca.gracias	¡Gracias por esperar con el cinturón hasta que se apagó la luz! Mientras el avión se mueve, todavía puede frenar de golpe.
-062	inicio.tripulacion.pasaje.cerca.maleteros	Y al abrir los compartimentos de arriba hay que tener cuidado: las maletas se pudieron mover en el vuelo, y se pueden caer.
-063	inicio.tripulacion.pasaje.cerca.seria	¿Y sabes por qué al aterrizar ponemos cara seria? Porque estamos trabajando, y lo primero es la seguridad. Yo también voy con el cinturón puesto hasta que el avión para: por eso lo recordamos por el altavoz.
-064	inicio.tripulacion.pasaje.cerca.oficio1	¿Sabes qué? Lo más importante de mi trabajo no es traer agua: es la seguridad. Sé cuidar a alguien que se pone malo, y hasta ayudar a su corazón con el desfibrilador que llevamos a bordo.
-065	inicio.tripulacion.pasaje.cerca.oficio2	Y sé apagar un fuego con la capucha para el humo puesta, sacar a todo el mundo del avión en noventa segundos y usar los chalecos en el agua. Lo practicamos todos los años.
-066	inicio.tripulacion.pasaje.cerca.banoLuz	¡Claro que hay! Pero con la luz del cinturón encendida no se levanta nadie. Cuando se apague, te acompaño.
-067	inicio.tripulacion.pasaje.cerca.banoAhora	Ya se apagó la luz del cinturón: ahora sí se puede ir al baño. ¡Vamos, te acompaño!
-068	inicio.tripulacion.pasaje.cerca.banoATiempo	¿Ves? Fuiste justo a tiempo: ahora, con la luz encendida, ya no se levanta nadie hasta aterrizar.
-069	inicio.tripulacion.pasaje.cerca.mascaraAhora	No, no: solo caen si el aire de dentro del avión se escapara, y eso pasa poquísimas veces. Si no caen, no hacen falta. Te lo explicamos por si acaso, como el chaleco: ese solo se usa si el avión se posara en el agua.
-070	inicio.tripulacion.pasaje.cerca.salidaAla	En muchos aviones, sí: tienen ventanillas de salida sobre el ala, con su letrero encima. En este, las salidas son las puertas.
-071	inicio.tripulacion.pasaje.cerca.musica	Para que el ratito de bajar sea un rato de calma, sin nervios. Y muchas compañías ponen música de su tierra: esta es de Canarias.
-072	inicio.tripulacion.pasaje.demo.gracia.ventanilla.entrada	Ya sé que por la ventanilla hay mejores vistas que nosotros, pero el paisaje no se va a ninguna parte: se lo prometo.
-073	inicio.tripulacion.pasaje.demo.gracia.ventanilla.despedida	Y ahora sí, ya pueden volver a la ventanilla: el paisaje seguía ahí, como les prometí.
-074	inicio.tripulacion.pasaje.demo.gracia.examen.entrada	Si ya se lo saben de memoria, repásenlo igual con nosotros: la tripulación lo repasa tanto que hasta tiene examen todos los años.
-075	inicio.tripulacion.pasaje.demo.gracia.examen.despedida	Y a quien quiera repasarlo, la tarjeta del bolsillo se lo vuelve a contar, con dibujos y sin examen.
-076	inicio.tripulacion.pasaje.demo.gracia.primeraVez.entrada	Hoy hay a bordo quien vuela por primera vez, así que se lo vamos a contar con todo el cariño del mundo. Y a los demás, también.
-077	inicio.tripulacion.pasaje.demo.gracia.primeraVez.despedida	Y quien vuela hoy por primera vez ya sabe lo mismo que quien ha volado cien veces. ¡Buen viaje a todos!
-078	inicio.tripulacion.pasaje.cerca.silbo	¡No solo allí! También se silbaba en El Hierro, en Tenerife, de donde venimos, y en Gran Canaria. Pero donde más se conserva hoy es en La Gomera: allí se aprende en la escuela.
-079	inicio.tripulacion.pasaje.cerca.largo.mapa	Míralo en tu pantalla: ese avioncito somos nosotros. La raya seguida es lo que ya volamos, y los puntitos, lo que nos falta.
-080	inicio.tripulacion.pasaje.cerca.largo.huso	Porque la Tierra gira, ¿ves? El sol llega antes a Madrid y después a Asunción, y cada sitio pone el reloj con su sol.
-081	inicio.tripulacion.pasaje.cerca.largo.husoInvierno	Hoy son cuatro horas de diferencia. En verano de Europa son cinco, porque España cambia la hora y Paraguay ya no.
-082	inicio.tripulacion.pasaje.cerca.largo.husoVerano	Hoy son cinco horas de diferencia. En invierno de Europa son cuatro, porque España cambia la hora y Paraguay ya no.
-083	inicio.tripulacion.pasaje.cerca.largo.ecuador1	Y mientras dormías cruzamos el ecuador: la raya que parte la Tierra en dos, como la cintura de una pelota.
-084	inicio.tripulacion.pasaje.cerca.largo.ecuador2	Las estaciones van al revés: cuando en Madrid es invierno, aquí es verano. Y en el cielo de noche se esconde la Polar y aparece la Cruz del Sur.
-085	inicio.tripulacion.pasaje.cerca.largo.oidos	Traga, bosteza o mastica algo, y verás cómo se destapan. Por eso te desperté antes de bajar.
-086	inicio.tripulacion.pasaje.cerca.largo.consolaBoton	Y ese botón es la pantalla de tu asiento: con un toque se enciende, y con otro volvemos a la ventanilla.
-087	inicio.tripulacion.pasaje.cerca.largo.consolaRecoge	Ya vamos bajando: guardamos la pantalla y a la ventanilla, que la llegada no hay que perdérsela.
-088	inicio.tripulacion.pasaje.cerca.largo.hornos	No, se cocina en tierra. Aquí arriba solo se calienta, en unos hornos pequeños.
-089	inicio.tripulacion.pasaje.cerca.largo.cierres	Y en la cocina todo va trabado con cierres, y nosotros los revisamos: si el avión se mueve, nada puede salir volando.
-090	inicio.tripulacion.pasaje.cerca.largo.hierroEncima	Mira tu pantalla: estamos justo encima de El Hierro, la isla más al oeste de Canarias.
-091	inicio.tripulacion.pasaje.cerca.largo.hierroDebajo	Claro, la tenemos justo debajo, y desde el asiento no se ve. Por eso te la enseña el mapa.
-092	inicio.tripulacion.pasaje.cerca.largo.meridiano	Durante siglos, los mapas empezaban a contar desde esta isla, porque era el borde del mundo conocido.
-093	inicio.tripulacion.pasaje.cerca.largo.greenwich	Luego el mundo se puso de acuerdo en contar desde Greenwich, en Inglaterra, y así sigue.
-094	inicio.tripulacion.pasaje.cerca.largo.consolaRecogeLuces	Guardamos la pantalla, que vamos a bajar las luces para dormir.
-095	inicio.tripulacion.pasaje.cerca.largo.antifaz	Para dormir, aquí tienes tu antifaz y tu manta.
-096	inicio.tripulacion.pasaje.cerca.largo.cinturonManta	Y el cinturón, por encima de la manta: así lo vemos sin tener que despertarte.
-097	inicio.tripulacion.pasaje.cerca.largo.nubesAltas	Es el cartel del cinturón. Cerca del ecuador, las nubes de tormenta son las más altas de todas.
-098	inicio.tripulacion.pasaje.cerca.largo.nubesCinturon	Los pilotos las ven en el radar y las rodean. Por eso, en el asiento, el cinturón siempre puesto.
-099	inicio.tripulacion.pasaje.demo.salidasLargo	Este avión tiene ocho salidas de emergencia, cuatro a cada lado. Busquen la más cercana, que puede estar detrás de ustedes. Unas luces en el suelo de los pasillos marcan el camino hasta ellas.
-100	inicio.tripulacion.pasaje.cerca.largo.lucesVerdes	Marcan el medio de la calle por donde rueda el avión: de noche, los pilotos van siguiendo esa fila verde.
-101	inicio.tripulacion.pasaje.cerca.largo.vientoRios	Sí, y mucho. Un poco más arriba, donde vamos a volar, corren ríos de viento rapidísimo.
-102	inicio.tripulacion.pasaje.cerca.largo.vientoBarco	El avión va en ellos como un barco en un río: a favor llegas antes, y en contra tardas más. Por eso el viaje de vuelta a Madrid dura unos tres cuartos de hora menos.
+021	tripulacion.canario.bienvenidos.el-hierro	Señoras y señores, bienvenidos a El Hierro.
+022	tripulacion.canario.trasLaToma	Por favor, permanezcan sentados y con el cinturón abrochado hasta que el avión se detenga por completo y se apague la señal de cinturones. Ya pueden utilizar sus teléfonos móviles. Tengan cuidado al abrir los compartimentos superiores, porque el equipaje puede haberse movido durante el vuelo. Muchas gracias.
+023	tripulacion.canario.trasLaToma~2	Les rogamos que sigan sentados, con el cinturón abrochado, hasta que el avión se pare del todo y se apague la señal. Desde ahora pueden encender el móvil. Abran los compartimentos con cuidado, que en el vuelo las maletas también viajan. Y antes de salir, miren en el bolsillo del asiento por si se dejan algo.
+024	tripulacion.canario.trasLaToma~3	Por su seguridad, permanezcan sentados con el cinturón puesto hasta que el avión se detenga y se apague la señal de cinturones. Ya pueden usar el teléfono. Cuidado al abrir los compartimentos de arriba, y no olviden sus pertenencias. Muchas gracias y hasta pronto.
+025	inicio.tripulacion.pasaje.cinturon	Señoras y señores, bienvenidos a bordo. Por favor, tomen asiento y abróchense el cinturón: bajito y bien ajustado.
+026	inicio.tripulacion.pasaje.oidos	Señoras y señores, si al bajar se les tapan los oídos, es normal: va cambiando la presión del aire. Tragar saliva o bostezar ayuda a destaparlos.
+027	inicio.tripulacion.pasaje.demo.intro	Señoras y señores, les rogamos un momento de atención: les vamos a mostrar el equipo de seguridad de este avión.
+028	inicio.tripulacion.pasaje.demo.cinturon	El cinturón se abrocha metiendo la hebilla hasta oír clic, se ajusta tirando de la cinta y se suelta levantando la tapa.
+029	inicio.tripulacion.pasaje.demo.salidas	Este avión tiene cuatro salidas de emergencia: dos delante y dos detrás. Busquen la más cercana, que puede estar detrás de ustedes. Unas luces en el suelo del pasillo marcan el camino hasta ellas.
+030	inicio.tripulacion.pasaje.demo.mascaras	Si la cabina perdiera presión, caerán automáticamente del techo unas mascarillas de oxígeno. Tiren de una hacia ustedes, colóquensela sobre la nariz y la boca, y respiren con normalidad. Primero la suya, y después ayuden a quien lo necesite.
+031	inicio.tripulacion.pasaje.demo.chaleco	Su chaleco salvavidas está debajo del asiento, y solo se usa si el avión tuviera que posarse en el agua. Se pasa por la cabeza y se abrocha a la cintura. No lo inflen dentro del avión: se infla al salir, tirando de las anillas rojas.
+032	inicio.tripulacion.pasaje.demo.tarjeta	En el bolsillo del asiento de delante tienen la tarjeta de seguridad, con todo esto en dibujos. Por favor, léanla antes del despegue.
+033	inicio.tripulacion.pasaje.demo.aparatos	Y los teléfonos y aparatos electrónicos, en modo avión durante todo el vuelo. Muchas gracias por su atención.
+034	inicio.tripulacion.pasaje.cerca.revision	¡Hola! Déjame ver ese cinturón… ¡perfecto, así se lleva! Y la cortinilla, siempre subida para despegar.
+035	inicio.tripulacion.pasaje.cerca.tractor	Un tractor, enganchado a la rueda de delante. Desde la cabina no se ve lo que hay detrás, y para ir marcha atrás con los motores habría que soplar contra el edificio: él nos saca hasta la calle, y de ahí ya seguimos solos.
+036	inicio.tripulacion.pasaje.cerca.pasador	Es el pasador de la rueda de delante: mientras está puesto, la rueda la gira el tractor. Se lo enseña a los pilotos para que vean que ya lo quitó, y ahora sí nos podemos ir.
+037	inicio.tripulacion.pasaje.cerca.persiana	Así vemos bien fuera si pasa algo. Y de noche apagamos las luces de la cabina, para que los ojos ya estén hechos a lo de fuera.
+038	inicio.tripulacion.pasaje.cerca.hola	¡Hola otra vez! Aquí tienes agua y algo rico. Te vi mirando las nubes por la ventanilla: ¿es tu primer vuelo?
+039	inicio.tripulacion.pasaje.cerca.nubes1	¡De verdad! Una nube son millones de gotitas de agua, tan chiquititas que no se ven una a una, y el aire las sostiene.
+040	inicio.tripulacion.pasaje.cerca.nubes2	Y muy arriba, donde hace mucho frío, son cristalitos de hielo. Se ven blancas porque las gotitas desparraman toda la luz del sol.
+041	inicio.tripulacion.pasaje.cerca.nubes3	Cuando las cruzamos, todo se ve blanco, el avión se mueve un poquito y a veces se moja la ventanilla. No pasa nada: el avión está hecho para eso.
+042	inicio.tripulacion.pasaje.cerca.frio	¿Sabes qué? Fuera, tan alto, hace un frío de congelador, bajo cero. Aquí dentro metemos aire de fuera y lo calentamos, para ir a gusto.
+043	inicio.tripulacion.pasaje.cerca.motor1	¿Ves el motor, ahí debajo del ala? Delante tiene un ventilador gigante que se traga muchísimo aire.
+044	inicio.tripulacion.pasaje.cerca.motor2	Casi todo ese aire lo empuja el ventilador hacia atrás, por fuera del motor, y eso es lo que más empuja el avión. Un poco entra en el centro, se calienta con el combustible y hace girar el ventilador.
+045	inicio.tripulacion.pasaje.cerca.islas1	¿Sabes que las islas Canarias salieron del fondo del mar? Son volcanes que fueron creciendo, durante millones de años, hasta asomar.
+046	inicio.tripulacion.pasaje.cerca.islas2	La Palma, adonde vamos, es de las más jovencitas, y tiene unas montañas altísimas.
+047	inicio.tripulacion.pasaje.cerca.ruta	¿Y cómo sabe el avión el camino? La comandante y el copiloto llevan el mapa en una pantalla, y hablan por radio con la torre de control.
+048	inicio.tripulacion.pasaje.cerca.papi	Al lado de la pista hay cuatro lucecitas. Si se ven dos blancas y dos rojas, el avión baja justo por su camino.
+049	inicio.tripulacion.pasaje.cerca.bano	¡Claro que hay! Pero ahora, con la luz del cinturón encendida, mejor esperamos a aterrizar.
+050	inicio.tripulacion.pasaje.cerca.estrellas	¿Sabes qué hay arriba de todo en La Palma? Unos telescopios enormes para mirar las estrellas: el cielo de la isla es de los más limpios del mundo.
+051	inicio.tripulacion.pasaje.cerca.aterrizaje	Ya vamos a aterrizar: cinturón bien abrochado, respaldo derecho y la cortinilla arriba. ¡Lo estás haciendo genial!
+052	inicio.tripulacion.pasaje.cerca.adios	¡Hasta pronto, y gracias por volar con nosotros! Ahora ya sabes un montón de cosas de los aviones.
+053	inicio.tripulacion.pasaje.cerca.kitAqui	¡Mira lo que te traigo: tu kit de viaje, con dos juegos dentro! Siempre llevamos unos cuantos a bordo.
+054	inicio.tripulacion.pasaje.cerca.kitRato	Volar es apasionante, pero los vuelos duran un ratito. Con esto, el rato hasta La Palma se te pasa volando.
+055	inicio.tripulacion.pasaje.cerca.kitGuardar	Ahora guarda el kit en el bolsillo del asiento, que vamos a aterrizar: todo bien recogido.
+056	inicio.tripulacion.pasaje.cerca.techo	¿Ves? La parte de abajo de las nubes se llama base. Y cuando tapan más de medio cielo, los pilotos la llaman techo.
+057	inicio.tripulacion.pasaje.cerca.techoHoy	Hoy la base está a unos cinco mil pies, mil quinientos metros. Vamos justo debajo, así que hasta el mar nos falta más o menos eso.
+058	inicio.tripulacion.pasaje.cerca.visibilidad	Por debajo se ve lejísimos, más de diez kilómetros: eso es la visibilidad. Para aterrizar, los pilotos tienen que ver la pista a tiempo.
+059	inicio.tripulacion.pasaje.cerca.despertar	Despierta, que vamos a empezar a bajar: el cinturón bien puesto. Durmiendo se traga menos saliva, y al bajar los oídos lo notan.
+060	inicio.tripulacion.pasaje.cerca.plop1	Y al subir, ¿te hicieron plop los oídos? Es normal: la presión del aire de la cabina baja, y el aire que tienes dentro del oído sale.
+061	inicio.tripulacion.pasaje.cerca.plop2	Eso es el plop. Si lo notas, traga saliva o bosteza: así la presión de dentro del oído se iguala con la de la cabina.
+062	inicio.tripulacion.pasaje.cerca.gracias	¡Gracias por esperar con el cinturón hasta que se apagó la luz! Mientras el avión se mueve, todavía puede frenar de golpe.
+063	inicio.tripulacion.pasaje.cerca.maleteros	Y al abrir los compartimentos de arriba hay que tener cuidado: las maletas se pudieron mover en el vuelo, y se pueden caer.
+064	inicio.tripulacion.pasaje.cerca.seria	¿Y sabes por qué al aterrizar ponemos cara seria? Porque estamos trabajando, y lo primero es la seguridad. Yo también voy con el cinturón puesto hasta que el avión para: por eso lo recordamos por el altavoz.
+065	inicio.tripulacion.pasaje.cerca.oficio1	¿Sabes qué? Lo más importante de mi trabajo no es traer agua: es la seguridad. Sé cuidar a alguien que se pone malo, y hasta ayudar a su corazón con el desfibrilador que llevamos a bordo.
+066	inicio.tripulacion.pasaje.cerca.oficio2	Y sé apagar un fuego con la capucha para el humo puesta, sacar a todo el mundo del avión en noventa segundos y usar los chalecos en el agua. Lo practicamos todos los años.
+067	inicio.tripulacion.pasaje.cerca.banoLuz	¡Claro que hay! Pero con la luz del cinturón encendida no se levanta nadie. Cuando se apague, te acompaño.
+068	inicio.tripulacion.pasaje.cerca.banoAhora	Ya se apagó la luz del cinturón: ahora sí se puede ir al baño. ¡Vamos, te acompaño!
+069	inicio.tripulacion.pasaje.cerca.banoATiempo	¿Ves? Fuiste justo a tiempo: ahora, con la luz encendida, ya no se levanta nadie hasta aterrizar.
+070	inicio.tripulacion.pasaje.cerca.mascaraAhora	No, no: solo caen si el aire de dentro del avión se escapara, y eso pasa poquísimas veces. Si no caen, no hacen falta. Te lo explicamos por si acaso, como el chaleco: ese solo se usa si el avión se posara en el agua.
+071	inicio.tripulacion.pasaje.cerca.salidaAla	En muchos aviones, sí: tienen ventanillas de salida sobre el ala, con su letrero encima. En este, las salidas son las puertas.
+072	inicio.tripulacion.pasaje.cerca.musica	Para que el ratito de bajar sea un rato de calma, sin nervios. Y muchas compañías ponen música de su tierra: esta es de Canarias.
+073	inicio.tripulacion.pasaje.demo.gracia.ventanilla.entrada	Ya sé que por la ventanilla hay mejores vistas que nosotros, pero el paisaje no se va a ninguna parte: se lo prometo.
+074	inicio.tripulacion.pasaje.demo.gracia.ventanilla.despedida	Y ahora sí, ya pueden volver a la ventanilla: el paisaje seguía ahí, como les prometí.
+075	inicio.tripulacion.pasaje.demo.gracia.examen.entrada	Si ya se lo saben de memoria, repásenlo igual con nosotros: la tripulación lo repasa tanto que hasta tiene examen todos los años.
+076	inicio.tripulacion.pasaje.demo.gracia.examen.despedida	Y a quien quiera repasarlo, la tarjeta del bolsillo se lo vuelve a contar, con dibujos y sin examen.
+077	inicio.tripulacion.pasaje.demo.gracia.primeraVez.entrada	Hoy hay a bordo quien vuela por primera vez, así que se lo vamos a contar con todo el cariño del mundo. Y a los demás, también.
+078	inicio.tripulacion.pasaje.demo.gracia.primeraVez.despedida	Y quien vuela hoy por primera vez ya sabe lo mismo que quien ha volado cien veces. ¡Buen viaje a todos!
+079	inicio.tripulacion.pasaje.cerca.silbo	¡No solo allí! También se silbaba en El Hierro, en Tenerife, de donde venimos, y en Gran Canaria. Pero donde más se conserva hoy es en La Gomera: allí se aprende en la escuela.
+080	inicio.tripulacion.pasaje.cerca.largo.mapa	Míralo en tu pantalla: ese avioncito somos nosotros. La raya seguida es lo que ya volamos, y los puntitos, lo que nos falta.
+081	inicio.tripulacion.pasaje.cerca.largo.huso	Porque la Tierra gira, ¿ves? El sol llega antes a Madrid y después a Asunción, y cada sitio pone el reloj con su sol.
+082	inicio.tripulacion.pasaje.cerca.largo.husoInvierno	Hoy son cuatro horas de diferencia. En verano de Europa son cinco, porque España cambia la hora y Paraguay ya no.
+083	inicio.tripulacion.pasaje.cerca.largo.husoVerano	Hoy son cinco horas de diferencia. En invierno de Europa son cuatro, porque España cambia la hora y Paraguay ya no.
+084	inicio.tripulacion.pasaje.cerca.largo.ecuador1	Y mientras dormías cruzamos el ecuador: la raya que parte la Tierra en dos, como la cintura de una pelota.
+085	inicio.tripulacion.pasaje.cerca.largo.ecuador2	Las estaciones van al revés: cuando en Madrid es invierno, aquí es verano. Y en el cielo de noche se esconde la Polar y aparece la Cruz del Sur.
+086	inicio.tripulacion.pasaje.cerca.largo.oidos	Traga, bosteza o mastica algo, y verás cómo se destapan. Por eso te desperté antes de bajar.
+087	inicio.tripulacion.pasaje.cerca.largo.consolaBoton	Y ese botón es la pantalla de tu asiento: con un toque se enciende, y con otro volvemos a la ventanilla.
+088	inicio.tripulacion.pasaje.cerca.largo.consolaRecoge	Ya vamos bajando: guardamos la pantalla y a la ventanilla, que la llegada no hay que perdérsela.
+089	inicio.tripulacion.pasaje.cerca.largo.hornos	No, se cocina en tierra. Aquí arriba solo se calienta, en unos hornos pequeños.
+090	inicio.tripulacion.pasaje.cerca.largo.cierres	Y en la cocina todo va trabado con cierres, y nosotros los revisamos: si el avión se mueve, nada puede salir volando.
+091	inicio.tripulacion.pasaje.cerca.largo.hierroEncima	Mira tu pantalla: estamos justo encima de El Hierro, la isla más al oeste de Canarias.
+092	inicio.tripulacion.pasaje.cerca.largo.hierroDebajo	Claro, la tenemos justo debajo, y desde el asiento no se ve. Por eso te la enseña el mapa.
+093	inicio.tripulacion.pasaje.cerca.largo.meridiano	Durante siglos, los mapas empezaban a contar desde esta isla, porque era el borde del mundo conocido.
+094	inicio.tripulacion.pasaje.cerca.largo.greenwich	Luego el mundo se puso de acuerdo en contar desde Greenwich, en Inglaterra, y así sigue.
+095	inicio.tripulacion.pasaje.cerca.largo.consolaRecogeLuces	Guardamos la pantalla, que vamos a bajar las luces para dormir.
+096	inicio.tripulacion.pasaje.cerca.largo.antifaz	Para dormir, aquí tienes tu antifaz y tu manta.
+097	inicio.tripulacion.pasaje.cerca.largo.cinturonManta	Y el cinturón, por encima de la manta: así lo vemos sin tener que despertarte.
+098	inicio.tripulacion.pasaje.cerca.largo.nubesAltas	Es el cartel del cinturón. Cerca del ecuador, las nubes de tormenta son las más altas de todas.
+099	inicio.tripulacion.pasaje.cerca.largo.nubesCinturon	Los pilotos las ven en el radar y las rodean. Por eso, en el asiento, el cinturón siempre puesto.
+100	inicio.tripulacion.pasaje.demo.salidasLargo	Este avión tiene ocho salidas de emergencia, cuatro a cada lado. Busquen la más cercana, que puede estar detrás de ustedes. Unas luces en el suelo de los pasillos marcan el camino hasta ellas.
+101	inicio.tripulacion.pasaje.cerca.largo.lucesVerdes	Marcan el medio de la calle por donde rueda el avión: de noche, los pilotos van siguiendo esa fila verde.
+102	inicio.tripulacion.pasaje.cerca.largo.vientoRios	Sí, y mucho. Un poco más arriba, donde vamos a volar, corren ríos de viento rapidísimo.
+103	inicio.tripulacion.pasaje.cerca.largo.vientoBarco	El avión va en ellos como un barco en un río: a favor llegas antes, y en contra tardas más. Por eso el viaje de vuelta a Madrid dura unos tres cuartos de hora menos.
