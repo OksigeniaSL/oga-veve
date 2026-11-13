@@ -30,6 +30,7 @@
 
 import { Euler, Quaternion, Vector3 } from "three";
 import { AIRE_ESTANDAR, type Aire, airDensity, GRAVITY, SEA_LEVEL_DENSITY } from "./atmosphere";
+import { alturaSobreLasRuedas } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
 import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
 import {
@@ -1506,7 +1507,9 @@ export class ArcadeFlightModel implements FlightModel {
   private apply(dt: number): void {
     const s = this.state;
     const ground = this.ground(s.position.x, s.position.z);
-    const wheelLevel = ground + this.aircraft.gearHeight;
+    // Con las ruedas principales en el suelo y el morro donde esté: al tirar en
+    // la carrera el morro sube y el centro con él. Ver `flight/apoyo.ts`.
+    const wheelLevel = ground + alturaSobreLasRuedas(this.aircraft, this.pitch);
 
     const wasFlying = !s.onGround;
 

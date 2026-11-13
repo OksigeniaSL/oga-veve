@@ -1639,6 +1639,7 @@ import type { Urgencia } from "./audio/boca";
 import { Agenda } from "./flight/agenda";
 import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
+import { alturaSobreLasRuedas } from "./flight/apoyo";
 import {
   avisaLaPerdida,
   avisoDeActitud,
@@ -18245,9 +18246,11 @@ export class Game {
      * con peso en las ruedas— lo decide ella. Ver `flight/avisos-de-altura.ts`.
      */
     const ya = this.flight.state;
+    // Las ruedas principales con el cabeceo de ahora: en la recogida, con el
+    // morro arriba, van más bajas que a nivel. Ver `flight/apoyo.ts`.
     this.radioAltura = radioaltimetro(
       ya.heightAboveGround,
-      this.aircraft.gearHeight,
+      alturaSobreLasRuedas(this.aircraft, pitchAngleOf(ya.orientation)),
     );
     const lectura: Lectura = {
       radioAltura: this.radioAltura,
@@ -19720,7 +19723,11 @@ export class Game {
         tren: this.input.controls.tren,
         sobreElSuelo: this.flight.state.groundSpeed,
         // Desde las ruedas, como el radioaltímetro de verdad y como el cuadro plano.
-        sobreElTerreno: Math.max(0, this.flight.state.heightAboveGround - this.aircraft.gearHeight),
+        sobreElTerreno: Math.max(
+          0,
+          this.flight.state.heightAboveGround -
+            alturaSobreLasRuedas(this.aircraft, pitchAngleOf(this.flight.state.orientation)),
+        ),
         perdida:
           !this.flight.state.onGround &&
           this.flight.state.alpha > this.aircraft.aero.alphaStall,

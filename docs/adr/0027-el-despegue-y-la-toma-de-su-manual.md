@@ -284,6 +284,83 @@ ADR.
   casos, la única manera de cuadrar era un número sin fuente.
 - La cola del E170 no se ha cambiado, por la misma razón.
 
+## Enmienda H7c (13-11-2026): el avión rota sobre sus ruedas
+
+H7b dejó que el 787 levantara el morro hasta los 9,7° de Boeing, y al mirarlo
+de perfil en la pista salieron dos fallos que no se veían desde la cámara de
+seguir.
+
+**El modelo de vuelo giraba el avión en el suelo sobre su centro de gravedad.**
+Lo mantenía a `gearHeight` del suelo fuera cual fuera el cabeceo, y como las
+ruedas principales van por detrás de ese centro, al levantar el morro bajaban.
+Medido en el juego, en el tope de cada uno, se metían en el asfalto:
+
+| JAZ 20 | JAZ 25 | JAZ 40 | JAZ 60 | JAZ 90 | JAZ 110 | JAZ 120 |
+|---|---|---|---|---|---|---|
+| 0,05 m | 0,22 (la de cola) | 0,04 | 0,07 | 0,18 | 0,38 | 0,77 |
+
+Un avión de verdad hace lo contrario: las ruedas se quedan en la pista, el
+avión gira sobre su eje y **es el centro de gravedad el que sube**. Por eso
+pega la cola un avión largo: gira sobre un punto que la tiene cerca. Ahora el
+apoyo en el suelo es el de las ruedas principales con el cabeceo de ese
+momento —`gearHeight·cos θ + mainWheelsAft·sen θ`, en `flight/apoyo.ts`—, en
+los dos modelos, y de él cuelgan el palmo de holgura antes de dar el avión
+por volando, el trinquete que lo pega al suelo y lo que leen el radioaltímetro
+y el cuadro, que se calibran para marcar cero con las ruedas en el suelo.
+
+La distancia de esas ruedas por detrás del centro, `mainWheelsAft`, **es la de
+su dibujo**, que pone el tren donde lo tiene su tipo, y una prueba la compara
+con el `.glb`. No sale de la batalla por la carga de la rueda de morro, que es
+lo que usa `momentoDelTren`: eso da el brazo del peso sobre el centro de las
+principales, y no dónde apoyan. En los seis de una sola rueda por pata cae a
+unos centímetros, pero un bogie apoya en su eje de atrás, medio bogie más
+allá, y el 747 en el bogie de la panza: 4,14 m por detrás del centro, donde la
+cuenta de la batalla da 2,56.
+
+**Y la cola del dibujo del 787 no dejaba llegar a los 9,7°.** Su panza empezaba
+a subir a 47 m del morro y pegaba a 6,6°: en el tope, un metro bajo la pista.
+Boeing da los 9,7° con las patas extendidas, y aquí no hay recorrido de
+amortiguador, así que el dibujo los toma a la altura del avión parado: la
+panza sube ahora desde los 40 m, detrás del carenado del ala, en una rampa que
+va unos centímetros por encima de la recta de 9,7° hasta el cono, y toca a
+9,9°. El lomo, el largo, el tren y el ala no se tocan. Con el dibujo así y el
+apoyo en las ruedas, el 747 toca a 13,0° —Boeing, 12,5—, y el JAZ 20, el 40,
+el 60 y el 90 dejan la cola a más de 0,4 m en su tope, que no sale de la cola.
+
+**El JAZ 25, que es de rueda de cola, tenía 15° de tope sin fuente**, y su
+dibujo apoya la rueda de cola a 12,0°, la actitud de tres puntos que sale de su
+tren: 0,95 m más alta que las principales y 4,46 m por detrás. Pasa a esos 12°.
+
+### Lo que cambia al despegar
+
+Casi nada, y es lo esperable: el centro sube sin velocidad, girando, y el
+avión se va cuando lo sostiene el ala, no antes. Con el piloto del banco de
+mesa, la carrera hasta la Vr no se mueve un metro en ninguno, y la distancia
+hasta los treinta y cinco pies, tampoco más de un 0,5 %: 1.565 → 1.558 m el
+747, 1.404 → 1.402 el 787, 1.103 → 1.102 el E170.
+
+Lo que sí se mueve es **cuándo se da por ido**. Antes el banco miraba
+`onGround`, que se apagaba con las ruedas todavía dentro del asfalto; ahora ese
+palmo se cuenta desde las ruedas, y con el piloto rotando a tres grados por
+segundo se apagaría a 11,2° en el 747. Así que el banco mira lo que se mira en
+un avión de verdad, **las ruedas dejando la pista**: el 747 se va a 9,8°
+—Boeing, 10,1, donde antes salían 10,7— y el 787 a 9,2°, por debajo de su
+cola.
+
+### Lo que sigue abierto
+
+- **El JAZ 25 descansa a nivel**, con la rueda de cola 0,95 m en el aire:
+  `momentoDelTren` lo trata como triciclo, con una pata de morro que no tiene,
+  y un avión de rueda atrás parado se apoya en la de cola. Que se siente en sus
+  tres puntos es cambiarle la física del suelo, y va aparte.
+- **El recorrido de las patas.** El avión que rota se descarga y sus
+  amortiguadores se extienden: es la diferencia entre la cola del 787 parado y
+  los 9,7° de Boeing. Aquí el tren mide siempre lo mismo, y el dibujo se lo
+  come.
+- `momentoDelTren` sigue con su brazo de la batalla, que en el 747 y el 787
+  no es el de su dibujo. Cambiarlo cambia cuándo levanta el morro cada uno, y
+  eso es su propia medida.
+
 ## Consecuencias
 
 - El JAZ 120 rota a 145 nudos y el JAZ 90 a 133, como sus tipos a esa masa. El
@@ -293,3 +370,6 @@ ADR.
   ir, como al de verdad.
 - El 747 y el 787-9 pueden levantar el morro en el suelo hasta donde les toca la
   cola de verdad (H7b), y el 747 se va del suelo a la actitud del suyo.
+- Al levantar el morro, todos giran sobre sus ruedas principales y el centro
+  sube, en los dos modelos; las ruedas no se meten en la pista y la cola del 787
+  llega a sus 9,7° sin tocar (H7c).

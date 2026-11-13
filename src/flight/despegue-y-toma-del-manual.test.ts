@@ -56,11 +56,11 @@
  * ```
  *            despegar (m)                 aterrizar (m)
  *            hangar  volado  manual       hangar  manual
- *   jaz-20     406     470     449          407     387   sin margen
+ *   jaz-20     406     469     449          407     387   sin margen
  *   jaz-40     536     672     352          633     620   sin margen
- *   jaz-90   1.124   1.268  ≤1.151        1.243   1.123   con margen
- *   jaz-110  1.544   1.615  ≤1.800        1.591   1.800   con margen
- *   jaz-120  1.869   1.800   1.710        1.652   1.875   con margen
+ *   jaz-90   1.124   1.267  ≤1.151        1.243   1.123   con margen
+ *   jaz-110  1.544   1.612  ≤1.800        1.591   1.800   con margen
+ *   jaz-120  1.869   1.792   1.710        1.652   1.875   con margen
  * ```
  *
  * «Volado», en los reactores, es la distancia hasta los treinta y cinco pies
@@ -70,7 +70,9 @@
  * es el de su clase en los dos.
  *
  * El volado del 110 y del 120 es el de la cola de su fabricante (H7b): eran
- * 1.625 y 1.841 con los 8,5° y 8,6° de antes, sin fuente.
+ * 1.625 y 1.841 con los 8,5° y 8,6° de antes, sin fuente. Y el de todos, con el
+ * avión girando sobre sus ruedas principales al rotar (H7c): el 110 y el 120
+ * eran 1.615 y 1.800 girando sobre el centro de gravedad.
  *
  * Lo que queda fuera de su banda, dicho y no escondido, avión por avión (ver la
  * enmienda H7b del ADR 0027):
@@ -86,7 +88,8 @@
  *   se cambia el modelo de la hélice o no se cambia. Se comprueba que no
  *   empeore.
  * - **El JAZ 120 ya despega volando en lo que dice la cuenta**, al 5 %: con la
- *   cola de Boeing se va del suelo a 10,7°, donde el suyo se va a 10,1°.
+ *   cola de Boeing sus ruedas dejan la pista a 9,8°, donde el suyo se va a
+ *   10,1°.
  * - **El JAZ 110 todavía se va del suelo tarde**, a 1,13 veces su Vr, un 11 %
  *   más largo que la cuenta: para sostenerse a su Vr necesita 11,6° y su cola,
  *   la de Boeing, le deja 9,7. El de verdad se va a 6–7,5° (AAIB, *Bulletin*
@@ -120,6 +123,7 @@ import { Vector3 } from "three";
 import { CoefficientFlightModel } from "./fdm";
 import { AIRCRAFT, esDeChorro, type AircraftConfig } from "./aircraft";
 import { neutralControls } from "./model";
+import { alturaSobreLasRuedas } from "./apoyo";
 import {
   carreraHastaVr,
   distanciaDeAterrizaje,
@@ -199,7 +203,18 @@ function despegar(a: AircraftConfig): {
     const paso = Math.hypot(s.position.x - antes.x, s.position.z - antes.z);
     x += paso;
     if (v < a.rotationSpeed) hastaVr += paso;
-    if (!Number.isFinite(hastaIrse) && !s.onGround) {
+    /*
+     * Se va del suelo cuando las ruedas principales lo dejan, y no cuando se
+     * apaga `onGround`: eso es un palmo más arriba —ver `PEGADO_AL_SUELO`—, y
+     * con el piloto rotando a tres grados por segundo, ese palmo es más de un
+     * grado de actitud en el 747. Con el apoyo en el centro de gravedad
+     * (antes de H7c) las dos cosas pasaban con las ruedas aún dentro de la
+     * pista. Ver `flight/apoyo.ts`.
+     */
+    const ruedas =
+      s.position.y -
+      alturaSobreLasRuedas(a, Math.asin(new Vector3(0, 0, -1).applyQuaternion(s.orientation).y));
+    if (!Number.isFinite(hastaIrse) && ruedas > 0.01) {
       hastaIrse = x;
       actitudAlIrse = cabeceo;
     }
