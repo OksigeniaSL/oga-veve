@@ -56,13 +56,12 @@ import {
   NearestFilter,
   RGBAFormat,
   SRGBColorSpace,
-  Texture,
   UnsignedByteType,
   Vector2,
-  Vector3,
   Vector4,
   type Material,
   type MeshLambertMaterial,
+  type Texture,
   type WebGLRenderer,
 } from "three";
 import {
@@ -147,6 +146,30 @@ const A_LA_VEZ = 6;
 
 /** Cuántas se suben a la tarjeta por fotograma, como mucho. */
 const SUBIDAS_POR_CUADRO = 4;
+
+/** La textura de la tarjeta que three ha creado para una suya, si ya la hay. */
+function texturaDeLaTarjeta(pintor: WebGLRenderer, t: Texture): WebGLTexture | undefined {
+  return (pintor.properties.get(t) as { __webglTexture?: WebGLTexture }).__webglTexture;
+}
+
+/**
+ * **El desempaquetado de una subida tal cual**: sin voltear, sin
+ * premultiplicar, filas seguidas y sin saltarse nada. Se pone en vez de leer
+ * cómo estaba, porque leerlo es lo que espera a la tarjeta (ver `subir`); three
+ * pone él mismo el volteo, el premultiplicado y la alineación antes de cada
+ * subida suya, y deja el largo de fila y los saltos a cero, que es como se
+ * quedan aquí.
+ */
+function desempaquetarTalCual(gl: WebGL2RenderingContext): void {
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+  gl.pixelStorei(gl.UNPACK_ROW_LENGTH, 0);
+  gl.pixelStorei(gl.UNPACK_IMAGE_HEIGHT, 0);
+  gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, 0);
+  gl.pixelStorei(gl.UNPACK_SKIP_ROWS, 0);
+  gl.pixelStorei(gl.UNPACK_SKIP_IMAGES, 0);
+}
 
 export interface ManifiestoDeTeselas {
   readonly fuente: string;
@@ -818,6 +841,7 @@ export class TeselasDeOrtofoto {
       this.pedir();
     }
     this.subir(pintor);
+    this.subirIndice(pintor);
   }
 
   /** Lo que hay, para la sonda del banco. */
@@ -895,7 +919,7 @@ export class TeselasDeOrtofoto {
       if (quiere && !this.celdas.tiene(p.t)) this.celdas.poner(p.t, p.capa);
       else if (!quiere && this.celdas.tiene(p.t)) this.celdas.quitar(p.t);
     }
-    this.subirIndice();
+    // Las filas tocadas se suben en este mismo paso, detrás: ver `alPaso`.
   }
 
   private url(t: Tesela): string {
@@ -961,6 +985,30 @@ export class TeselasDeOrtofoto {
     return vieja.capa;
   }
 
+  /**
+   * **Cada tesela a su capa, a mano y sin esperar a la tarjeta.**
+   *
+   * Se subía con `copyTextureToTexture` de three, y eso es el tirón que se
+   * notaba al llegar las teselas (H9c, 13-11-2026). Por cada nivel de la
+   * cadena —nueve por tesela— three lee cinco parámetros de desempaquetado
+   * con `getParameter` para dejarlos luego como estaban, y dos de ellos
+   * (`UNPACK_ROW_LENGTH` y `UNPACK_IMAGE_HEIGHT`) Chrome no los guarda en el
+   * proceso de la página: cada lectura es un viaje de ida y vuelta al de la
+   * tarjeta, que antes de contestar termina todo lo que tenga en cola. Y al
+   * subir el nivel 0, three hace además `generateMipmap` sobre la textura
+   * entera —las 192 capas—, que es lo que esa espera se tenía que comer, y
+   * para nada: los niveles ya vienen hechos y se sobrescriben justo detrás.
+   *
+   * Medido en El Hierro, CPU ×4 con la Intel, en los 5,2 s que siguen a
+   * saltar junto a la bandada: 48 teselas, 870 lecturas que esperan y 938 ms
+   * parados en ellas, en cuadros de hasta 130 ms. Y volando sin saltar, cada
+   * tesela que entraba daba un cuadro de 40 a 73 ms.
+   *
+   * Aquí se sube cada nivel con un `texSubImage3D` directo, sin leer nada:
+   * lo que hay que dejar puesto se pone (`desempaquetarTalCual`), y three no
+   * guarda esos valores, los pone él mismo antes de cada subida suya. La
+   * textura se ata con `state.bindTexture` para que three sepa qué hay atado.
+   */
   private subir(pintor: WebGLRenderer): void {
     if (!this.listas.length) return;
     if (!this.reservada) {
@@ -968,33 +1016,65 @@ export class TeselasDeOrtofoto {
       pintor.initTexture(this.capas);
       this.reservada = true;
     }
+    const tex = texturaDeLaTarjeta(pintor, this.capas);
+    if (!tex) return;
+    const gl = pintor.getContext() as WebGL2RenderingContext;
+    pintor.state.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
+    desempaquetarTalCual(gl);
     for (let n = 0; n < SUBIDAS_POR_CUADRO && this.listas.length; n++) {
       const lista = this.listas.shift()!;
       const llave = llaveNumerica(lista.t);
       const capa = this.puestas.has(llave) ? null : this.capaLibre();
       if (capa !== null) {
-        lista.mips.forEach((bmp, nivel) => {
-          const src = new Texture(bmp);
-          pintor.copyTextureToTexture(src, this.capas, null, new Vector3(0, 0, capa), 0, nivel);
-          src.dispose();
-        });
+        lista.mips.forEach((bmp, nivel) =>
+          gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, nivel, 0, 0, capa, bmp.width, bmp.height, 1, gl.RGBA, gl.UNSIGNED_BYTE, bmp),
+        );
         this.puestas.set(llave, { t: lista.t, capa, vuelta: this.vuelta });
         this.celdas.poner(lista.t, capa);
         this.cuentas.subidas++;
       }
       for (const b of lista.mips) b.close();
     }
-    this.subirIndice();
+    pintor.state.unbindTexture();
   }
 
-  /** Sube al índice de la tarjeta solo las filas que han cambiado. */
-  private subirIndice(): void {
+  /**
+   * Sube al índice de la tarjeta solo las filas que han cambiado, en tramos
+   * seguidos y también a mano.
+   *
+   * Por lo mismo que las capas: con `addUpdateRange`, three lee
+   * `UNPACK_ROW_LENGTH` antes de cada subida del índice, y esa lectura espera
+   * a la tarjeta. Volando El Hierro sin una tesela nueva, una sola esperó
+   * 90 ms: el índice cambia cada vez que una tesela entra o sale de las que se
+   * quieren, no solo cuando llega una.
+   *
+   * Antes de que three la haya subido por primera vez no hay textura que
+   * tocar: se le deja a él, que la sube entera —sin trozos, y sin lecturas—
+   * la primera vez que se dibuja el suelo.
+   */
+  private subirIndice(pintor: WebGLRenderer): void {
     const filas = this.celdas.filasTocadas;
     if (!filas.size) return;
-    const ancho = this.rejilla.ancho * 4;
-    for (const f of filas) this.indice.addUpdateRange(f * ancho, ancho);
+    const tex = texturaDeLaTarjeta(pintor, this.indice);
+    if (!tex) {
+      filas.clear();
+      this.indice.needsUpdate = true;
+      return;
+    }
+    const orden = [...filas].sort((a, b) => a - b);
     filas.clear();
-    this.indice.needsUpdate = true;
+    const gl = pintor.getContext() as WebGL2RenderingContext;
+    pintor.state.bindTexture(gl.TEXTURE_2D, tex);
+    desempaquetarTalCual(gl);
+    const ancho = this.rejilla.ancho;
+    for (let i = 0; i < orden.length; ) {
+      let j = i + 1;
+      while (j < orden.length && orden[j] === orden[j - 1]! + 1) j++;
+      const y = orden[i]!;
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, y, ancho, j - i, gl.RGBA, gl.UNSIGNED_BYTE, this.celdas.datos, y * ancho * 4);
+      i = j;
+    }
+    pintor.state.unbindTexture();
   }
 
   dispose(): void {
