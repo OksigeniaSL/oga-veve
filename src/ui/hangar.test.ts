@@ -131,8 +131,11 @@ describe("los destinos que no caben", () => {
      * Estigarribia— y a ninguno más. **Con la regla de los bomberos, a
      * ninguno**: Ciudad del Este es de la categoría 7 y Estigarribia no tiene,
      * y un avión de la 9 pide la 8 como poco. Los ocho se ven apagados, con
-     * su porqué —la pista corta en seis, los bomberos en dos— y el avión que
+     * su porqué —la pista corta en cinco, los bomberos en tres— y el avión que
      * sí iría. Ningún 747 vuela dentro de Paraguay. Ver `flight/bomberos.ts`.
+     * Encarnación pasó de la pista a los bomberos cuando el grande llevó la Vr
+     * de su peso: pide 1.869 de sus 2.000, y sus bomberos son de la 7 (ADR
+     * 0027).
      */
     const grande = jaz("jaz-120");
     expect(destinosPosibles(PETTIROSSI, grande).map((d) => d.id)).toEqual([]);
@@ -149,7 +152,7 @@ describe("los destinos que no caben", () => {
     ]);
     expect(
       fuera.filter((f) => f.veredicto.porQueNo === "bomberos").map((f) => f.destino.id).sort(),
-    ).toEqual(["estigarribia", "guarani"]);
+    ).toEqual(["encarnacion", "estigarribia", "guarani"]);
     for (const f of fuera) {
       expect(f.veredicto.cabe).toBe(false);
       expect(f.veredicto.porQueNo).not.toBeNull();

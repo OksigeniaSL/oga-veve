@@ -37,16 +37,22 @@ describe("qué avión cabe dónde", () => {
       expect(cabeEn(pequeno, campoDe(e)).cabe, e.id).toBe(true);
   });
 
-  it("el de fuselaje ancho no cabe en La Palma, y ahí está el fallo que se vio", () => {
+  /*
+   * **Y en La Palma, desde el 13-11-2026, sí.** El fallo que se vio fue el
+   * hangar ofreciéndolo sin mirar, y con la Vr de su peso máximo el avión del
+   * juego no cabía. Con la de su peso pide 1.869 m para despegar —la de abortar
+   * desde su V1— y 1.652 para aterrizar, en 2.200 de TORA y 2.058 de LDA; Boeing
+   * da unos 1.710 y 1.875 a ese peso (D6-58326, 3.3.1 y 3.4.2). Puede ir; que no
+   * haya ido ninguno es cosa de pasaje. Ver el ADR 0027.
+   */
+  it("el de fuselaje ancho cabe en La Palma con la pista de su manual", () => {
     const laPalma = SCENARIOS.find((e) => e.id === "la-palma")!;
     const v = cabeEn(grande, campoDe(laPalma));
-    expect(v.cabe).toBe(false);
-    expect(v.porQueNo).toBe("corta");
-    // Y con los metros a mano, que es lo que hay que poder enseñar sin palabras.
-    expect(v.necesita).toBeGreaterThan(v.hay);
+    expect(v.cabe).toBe(true);
+    expect(v.necesita).toBeLessThan(v.hay);
   });
 
-  it("y en El Hierro no cabe ni el turbohélice, que es lo que pasa de verdad", () => {
+  it("y en El Hierro no cabe el de fuselaje ancho, y el reactor regional sí", () => {
     /*
      * Mil doscientos cincuenta y cuatro metros de asfalto. Es el campo más
      * pequeño del juego con designador propio y el que enseña esta lección
@@ -57,14 +63,20 @@ describe("qué avión cabe dónde", () => {
      * comprobaba `cabeEn` al pulsar una ficha y al cambiar de aeropuerto, y no
      * al abrirse con un par ya puesto. La regla decía que no desde el primer
      * día; lo que faltaba era preguntárselo.
+     *
+     * **El JAZ 90 sí, desde el 13-11-2026**: con la Vr de su peso pide 1.124 m
+     * para despegar y 1.243 para aterrizar, en 1.250. Un E170 de verdad a esa
+     * masa también cabe —Embraer da 1.151 para despegar con el pasaje lleno y
+     * 1.228 para aterrizar a su máximo— y sus bomberos, de la 6, aceptan la 5
+     * de El Hierro con pocos vuelos. Que allí no vaya ningún reactor es cosa
+     * de la flota de quien vuela allí. Ver el ADR 0027.
      */
     const elHierro = SCENARIOS.find((e) => e.id === "el-hierro")!;
-    for (const a of [grande, AIRCRAFT.find((x) => x.id === "jaz-90")!]) {
-      const v = cabeEn(a, campoDe(elHierro));
-      expect(v.cabe, a.id).toBe(false);
-      expect(v.porQueNo, a.id).toBe("corta");
-      expect(v.necesita, a.id).toBeGreaterThan(v.hay);
-    }
+    const v = cabeEn(grande, campoDe(elHierro));
+    expect(v.cabe).toBe(false);
+    expect(v.porQueNo).toBe("corta");
+    expect(v.necesita).toBeGreaterThan(v.hay);
+    expect(cabeEn(AIRCRAFT.find((x) => x.id === "jaz-90")!, campoDe(elHierro)).cabe).toBe(true);
   });
 
   it("pero sí los cuatro pequeños, que son los que vuelan allí", () => {
@@ -222,10 +234,11 @@ describe("los destinos también tienen que dar la talla", () => {
     const valen = destinosParaEsteAvion(ancho, deLosRodeos()).map((e) => e.id);
     expect(valen).toContain("tenerife-sur");
     expect(valen).toContain("gran-canaria");
-    // Las tres que no: 1.500, 1.250 y 2.200 m de TORA contra los 2.361 que pide.
+    // Las dos que no: 1.500 y 1.250 m de TORA contra los 1.869 que pide. La
+    // Palma, con 2.200, le da desde que lleva la Vr de su peso (ADR 0027).
     expect(valen).not.toContain("la-gomera");
     expect(valen).not.toContain("el-hierro");
-    expect(valen).not.toContain("la-palma");
+    expect(valen).toContain("la-palma");
   });
 
   it("y la avioneta las conserva todas, que para eso es una avioneta", () => {

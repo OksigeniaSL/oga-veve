@@ -1166,6 +1166,12 @@ export interface AircraftConfig {
    */
   rotationSpeed: number;
   /**
+   * **De la rodadura a la distancia de despegue**, la de su manual, si lo
+   * publica con las dos cifras al lado. Sin ella, la de su clase: ver
+   * `deRodarADespegar` en `carrera.ts`.
+   */
+  readonly deRodarADespegar?: number;
+  /**
    * La batalla: del tren de morro al principal, en metros.
    *
    * **Es lo que decide cómo gira en el suelo**, y no estaba. El radio de un
@@ -1754,8 +1760,14 @@ export const PANAMBI: AircraftConfig = {
   // los tres mil ochocientos metros se vuela con la máscara de oxígeno puesta.
   presurizacion: null,
   aerofrenos: null,
-  // Frenos de bimotor ligero, sin antideslizante: como la avioneta.
-  frenos: { enSeco: 0.35, psi: 55, antideslizante: 0.5 },
+  /*
+   * Frenos de bimotor ligero, sin antideslizante, **con la frenada de su
+   * manual**: 0,23, que le hace rodar 404 m a la masa de la ficha. El Seneca II
+   * rueda 1.380 ft, 421 m, a sus 4.570 lb, que son 406 a 2.000 kg (tabla
+   * comparativa de la Grumman Owners and Pilots Association, aya.org). Llevaba
+   * el 0,35 de la avioneta, con el que rodaba 309 (H7, 13-11-2026).
+   */
+  frenos: { enSeco: 0.23, psi: 55, antideslizante: 0.5 },
   frenosDeTierra: null,
   autofreno: false,
   cantosDeLaCarrera: null,
@@ -1782,6 +1794,14 @@ export const PANAMBI: AircraftConfig = {
   velocidadDeCircuito: 100 * 0.514444,
   decisionSpeed: 34,
   rotationSpeed: 37,
+  /*
+   * **La de su manual**: el Seneca II rueda 870 ft y pasa los cincuenta pies a
+   * los 1.240, a sus 4.570 lb (tabla comparativa de la Grumman Owners and
+   * Pilots Association, aya.org). Llevaba el 1,8 de su clase porque con su
+   * frenada corta y el 1,43 cabía en la hierba de la granja; con la frenada de
+   * su manual ya no cabe, y no cabe por la toma, como el de verdad (H7).
+   */
+  deRodarADespegar: 1240 / 870,
   batalla: 2.8,
   gearHeight: 1.6,
   trenRetractil: true,
@@ -2263,8 +2283,19 @@ export const ARAI: AircraftConfig = {
    * circuito contra el terreno. Ver `pasilloDelCircuito`.
    */
   velocidadDeCircuito: 170 * 0.514444,
-  decisionSpeed: 72,
-  rotationSpeed: 78,
+  /*
+   * **Ciento treinta y tres nudos, la Vr de su peso**: 1,1 veces su pérdida con
+   * los flaps de despegue, 121. Ver `VR_SOBRE_LA_PERDIDA`.
+   *
+   * Eran 152, sin fuente, y por encima de su propia V2: con ellos rodaba 901 m
+   * hasta rotar y el hangar le pedía 1.439 de pista, donde Embraer da 1.151 con
+   * el pasaje lleno en un vuelo de quinientas millas, más pesado que el de la
+   * ficha (hoja de especificaciones del E170). Con 133 pide 1.124, la de abortar
+   * desde su V1 (`acelerarYPararDeSuNorma`). La V1 baja en la misma proporción,
+   * de 140 a 123 (H7, 13-11-2026).
+   */
+  decisionSpeed: 123 * 0.514444,
+  rotationSpeed: 133 * 0.514444,
   batalla: 11.5,
   // 3,35: la panza a metro setenta del asfalto y las góndolas a medio metro,
   // que es como va un reactor de esta clase. Con 2,8 la panza quedaba a metro
@@ -2562,8 +2593,24 @@ export const YVAGA: AircraftConfig = {
    * de sus flaps de aterrizaje, que es la más baja.
    */
   velocidadDeCircuito: 180 * 0.514444,
-  decisionSpeed: 80,
-  rotationSpeed: 86,
+  /*
+   * **Ciento cuarenta y cinco nudos, la Vr de su peso**: 1,1 veces su pérdida
+   * con los flaps de despegue, 132. Ver `VR_SOBRE_LA_PERDIDA`.
+   *
+   * Eran 167, la Vr de un 747-100 **a su peso máximo al despegar** puesta en una
+   * ficha que pesa su máximo al aterrizar: por encima de la V2 que tiene a este
+   * peso. Jenkinson, Simpkin y Rhodes, *Civil Jet Aircraft Design* (1999),
+   * fichero de datos A, dan al 747-100 una V2 de 169 nudos a sus 340.195 kg; las
+   * velocidades de despegue van con la raíz del peso, así que a las 255.826 de la
+   * ficha son 147, y la Vr va por debajo. Con 145, la cuenta de todos los
+   * motores por 1,15 da 1.715 m de pista, donde Boeing da unos 1.710 a este peso
+   * (D6-58326, 3.3.1, 564.000 lb, nivel del mar y día estándar): dos fuentes
+   * que no se conocen y dicen lo mismo. El hangar le pide 1.869, la de abortar
+   * desde su V1, que es más larga: ver `acelerarYPararDeSuNorma`. La V1 baja de 155 a 140, y no más: su Vmc es de 139,5, y la V1 no
+   * puede ir por debajo (CS 25.107 a; ver `vmc`) (H7, 13-11-2026).
+   */
+  decisionSpeed: 140 * 0.514444,
+  rotationSpeed: 145 * 0.514444,
   batalla: 25.6,
   // 5,9: la panza a dos metros y medio largos y los motores de dentro a casi
   // un metro del suelo, como en un avión de esta clase. Con 5,2 las ruedas
@@ -2829,12 +2876,20 @@ export const TIJERETA: AircraftConfig = {
    */
   velocidadDeCircuito: 165 * 0.514444,
   /*
-   * **Por verificar**: el manual de vuelo no es público. Son las que hacen que a
-   * este peso ruede lo que dice Boeing, y V1 y Vr salen de la misma cuenta que los
-   * demás. Ver `prestaciones.test.ts`.
+   * **Ciento treinta y ocho nudos, la Vr de su peso**: 1,1 veces su pérdida con
+   * los flaps de despegue, 125, la misma regla que los otros dos reactores. Ver
+   * `VR_SOBRE_LA_PERDIDA`.
+   *
+   * Eran 157, puestas para que la cuenta de todos los motores por 1,15 diera los
+   * 1.800 m de Boeing (D6-58333, 3.3.9). Pero en un bimotor esa longitud de campo
+   * la manda casi siempre el despegue con un motor parado, que este juego no
+   * cuenta, y la de todos los motores por 1,15 sale por debajo. Con 138 pide
+   * 1.544, la de abortar desde su V1. El manual de vuelo no es público: **por
+   * verificar**. La V1 baja en la
+   * misma proporción, de 148 a 129 (H7, 13-11-2026).
    */
-  decisionSpeed: 76,
-  rotationSpeed: 81,
+  decisionSpeed: 129 * 0.514444,
+  rotationSpeed: 138 * 0.514444,
   // 84 ft 9 in (D6-58333, 2.2.2).
   batalla: 25.83,
   // Con ella la panza queda a 1,86 m del suelo y el lomo a 7,80, los de 2.3.2. Tiene

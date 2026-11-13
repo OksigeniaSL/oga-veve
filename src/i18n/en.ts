@@ -1888,6 +1888,7 @@ export const EN: Dictionary = {
   "tripulacion.canario.bienvenidos.fuerteventura": "Ladies and gentlemen, welcome to Fuerteventura.",
   "tripulacion.canario.bienvenidos.la-palma": "Ladies and gentlemen, welcome to La Palma.",
   "tripulacion.canario.bienvenidos.la-gomera": "Ladies and gentlemen, welcome to La Gomera.",
+  "tripulacion.canario.bienvenidos.el-hierro": "Ladies and gentlemen, welcome to El Hierro.",
   "tripulacion.canario.trasLaToma":
     "Please remain seated with your seatbelt fastened until the aircraft has come to a complete stop and the seatbelt sign has been switched off. You may now use your mobile phones. Please take care when opening the overhead bins, as items may have moved during the flight. Thank you.",
   "servicio.rotulo": "In-flight service",

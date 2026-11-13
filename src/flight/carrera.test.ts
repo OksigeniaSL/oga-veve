@@ -70,11 +70,12 @@ describe("la pista que hace falta", () => {
      * Aquí ponía lo contrario, y decía la verdad de entonces: con la ley de
      * empuje de una hélice aplicada a un turbofán, este avión necesitaba 4.404
      * metros para irse del suelo y no despegaba en ningún escenario del juego.
-     * Ahora rueda 1.423 hasta la rotación, que es lo que dice el manual de
-     * aeropuertos para un 747 a este peso.
+     * Ahora rueda unos 1.070 m hasta la rotación, con la Vr de su peso, y el
+     * hangar le pide 1.715 de pista, que es lo que da el manual de aeropuertos
+     * de Boeing para un 747-100 a este peso (ADR 0027).
      */
-    expect(carreraHastaVr(grande)).toBeLessThan(2200);
-    expect(carreraHastaVr(grande)).toBeGreaterThan(1200);
+    expect(carreraHastaVr(grande)).toBeLessThan(1300);
+    expect(carreraHastaVr(grande)).toBeGreaterThan(900);
   });
 
   it("dice que no despega el avión que no acelera", () => {

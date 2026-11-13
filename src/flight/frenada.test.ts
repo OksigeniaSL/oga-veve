@@ -190,10 +190,13 @@ describe("la frenada en tierra", () => {
      * hierba seca, la rodadura de aterrizaje un 45 % más larga—, y aquí se
      * comprobaba al revés, porque solo se contaba la rodadura. Que la hierba
      * pida más pista para parar, de un veinte a un sesenta por ciento.
+     *
+     * Del quince en el Seneca, que con la frenada de su manual frena menos en
+     * asfalto y pierde menos al pasar a la hierba: 1,20 (ADR 0027).
      */
     for (const a of AIRCRAFT) {
       const r = rodaduraDeFrenada(a, "hierba") / rodaduraDeFrenada(a, "asfalto");
-      expect(r, a.id).toBeGreaterThan(1.2);
+      expect(r, a.id).toBeGreaterThan(1.15);
       expect(r, a.id).toBeLessThan(1.6);
     }
   });

@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 import { aircraftById } from "./aircraft";
 import { cabeEn, campoDe } from "./cabe";
 import {
+  acelerarYPararDeSuNorma,
   deRodarADespegar,
   distanciaDeAterrizaje,
   margenDeSuClase,
@@ -53,8 +54,28 @@ describe("los márgenes de cada clase, con su norma", () => {
   it("la pista para aterrizar es la distancia de aterrizaje partida por su parte de la LDA", () => {
     const a = aircraftById("jaz-90");
     expect(pistaQueNecesita(a).aterrizar).toBeCloseTo(distanciaDeAterrizaje(a) / 0.6, 6);
-    // Y la de despegar, la del día de tablas.
-    expect(pistaQueNecesita(a).despegar).toBeCloseTo(pistaNecesariaHoy(a), 6);
+    // Y la de despegar, la del día de tablas, o la de abortar desde su V1 si
+    // es más larga: la longitud de campo de su norma (CS 25.109 y 25.113).
+    expect(pistaQueNecesita(a).despegar).toBeCloseTo(
+      Math.max(pistaNecesariaHoy(a), acelerarYPararDeSuNorma(a)),
+      6,
+    );
+  });
+
+  it("y la cuenta del día pide lo mismo: la parada desde la V1, también con aire fino", () => {
+    // Es la que decide si se entra por una intersección. Con la parada solo en
+    // el hangar, el JAZ 120 aceptaba 1.800 m por delante en un día de tablas,
+    // donde parar desde su V1 pide unos 1.870 (ADR 0027).
+    const a = aircraftById("jaz-120");
+    expect(acelerarYPararDeSuNorma(a)).toBeGreaterThan(1800);
+    expect(pistaNecesariaHoy(a)).toBeGreaterThan(1800);
+    // Treinta grados a 600 m: aire más fino, se corre más y se para desde más
+    // rápido en verdadera.
+    const fino = { densidad: 1.1, vientoDeFrente: 0, superficie: "asfalto" as const };
+    expect(acelerarYPararDeSuNorma(a, 1.1)).toBeGreaterThan(acelerarYPararDeSuNorma(a));
+    expect(pistaNecesariaHoy(a, fino)).toBeGreaterThanOrEqual(acelerarYPararDeSuNorma(a, 1.1));
+    // La avioneta no la cuenta.
+    expect(acelerarYPararDeSuNorma(aircraftById("jaz-20"))).toBe(0);
   });
 });
 
@@ -85,9 +106,20 @@ describe("y lo que dice, contra lo que vuela en cada campo", () => {
     expect(cabe("jaz-60", "la-gomera")).toBe(true);
   });
 
-  it("ningún 747 opera en La Palma, ni en El Hierro, ni en La Gomera", () => {
-    for (const campo of ["la-palma", "el-hierro", "la-gomera"])
+  it("ningún 747 opera en El Hierro ni en La Gomera", () => {
+    for (const campo of ["el-hierro", "la-gomera"])
       expect(cabe("jaz-120", campo), campo).toBe(false);
+  });
+
+  it("y en La Palma podría: le dan la pista y los bomberos, aunque no ha ido ninguno", () => {
+    /*
+     * 2.200 m de TORA y 2.058 de LDA, y Boeing pide a un 747-100 a esta masa
+     * unos 1.710 y 1.875 (D6-58326, 3.3.1 y 3.4.2); bomberos de la 8 a
+     * petición, una por debajo de su 9. Han ido 787 de TUI, de fuselaje ancho
+     * como él. Que no haya ido ningún 747 es cosa de pasaje: «cabe» quiere decir
+     * que puede ir (ADR 0027).
+     */
+    expect(cabe("jaz-120", "la-palma")).toBe(true);
   });
 
   it("pero sí en Los Rodeos, en Tenerife Sur, en Gran Canaria y en Fuerteventura", () => {
@@ -95,21 +127,27 @@ describe("y lo que dice, contra lo que vuela en cada campo", () => {
       expect(cabe("jaz-120", campo), campo).toBe(true);
   });
 
-  it("y en Lanzarote, justo, por la 03: los 747 de los chárter llegaban hasta allí", () => {
+  it("y en Lanzarote, por las dos cabeceras: los 747 de los chárter llegaban hasta allí", () => {
     /*
      * Un Lufthansa en los ochenta y, en 2018, el de un chárter de Gatwick a
-     * Arrecife con 284 personas a bordo. 2.400 m de TORA por la 03; por la 21
-     * son 2.310 y ahí no le da: qué cabecera da hoy el viento lo dice la
-     * cuenta del día.
+     * Arrecife con 284 personas a bordo. 2.400 m de TORA por la 03 y 2.310
+     * por la 21. Con la Vr de su peso máximo solo le daba la 03; con la de su
+     * peso le dan las dos (ADR 0027).
      */
     expect(cabe("jaz-120", "lanzarote")).toBe(true);
     const v = cabeEn(aircraftById("jaz-120"), campoDe(scenarioById("lanzarote")));
-    expect(v.necesita).toBeGreaterThan(2310);
-    expect(v.necesita).toBeLessThan(2400);
+    expect(v.necesita).toBeLessThan(2310);
   });
 
-  it("en El Hierro no opera ningún reactor", () => {
-    expect(cabe("jaz-90", "el-hierro")).toBe(false);
+  it("en El Hierro podría el reactor regional, aunque no vaya ninguno", () => {
+    /*
+     * Con la Vr de su peso, el JAZ 90 pide 1.124 m para despegar y 1.243 para
+     * aterrizar, en 1.250. Un E170 a esta masa también: Embraer da 1.151 para
+     * despegar con el pasaje lleno y 1.228 para aterrizar a su máximo (hoja de
+     * especificaciones del E170). Que no vaya ninguno es la flota de quien vuela
+     * allí, como en La Gomera (ADR 0019 y 0027).
+     */
+    expect(cabe("jaz-90", "el-hierro")).toBe(true);
   });
 
   it("y en Paraguay, el de fuselaje ancho solo en Asunción", () => {
@@ -133,11 +171,12 @@ describe("y lo que dice, contra lo que vuela en cada campo", () => {
 
   /*
    * **Y el JAZ 110, campo por campo**, con la cuenta y no con la impresión. Pide unos
-   * 1.950 m para despegar y 1.300 para aterrizar a su peso de ficha, 193 toneladas,
+   * 1.540 m para despegar y 1.590 para aterrizar a su peso de ficha, 193 toneladas,
    * donde Boeing da 1.800 y 1.800 (D6-58333, 3.3.9 y 3.4.3); es de la categoría 9 de
-   * bomberos y acepta la 8. Así que entra en La Palma, donde el grande no, y **no en
-   * Guaraní ni en Encarnación, que son de la 7, ni en Estigarribia, que no tiene**,
-   * por mucha pista que les sobre.
+   * bomberos y acepta la 8. Así que entra en La Palma, y **no en Guaraní ni en
+   * Encarnación, que son de la 7, ni en Estigarribia, Concepción, Ayolas ni Pedro Juan
+   * Caballero, que no tienen o tienen la 5**, por mucha pista que les sobre. Las tres
+   * últimas eran «corta» con la Vr de su peso máximo (ADR 0027).
    */
   it("el JAZ 110 opera donde le dan la pista y los bomberos", () => {
     for (const campo of [
@@ -150,17 +189,14 @@ describe("y lo que dice, contra lo que vuela en cada campo", () => {
       "la-palma",
     ])
       expect(cabe("jaz-110", campo), campo).toBe(true);
-    for (const campo of ["guarani", "encarnacion", "estigarribia"]) {
+    for (const campo of ["guarani", "encarnacion", "estigarribia", "concepcion", "ayolas", "pedro-juan"]) {
       expect(cabe("jaz-110", campo), campo).toBe(false);
       expect(cabeEn(aircraftById("jaz-110"), campoDe(scenarioById(campo))).porQueNo, campo).toBe(
         "bomberos",
       );
     }
     for (const campo of [
-      "concepcion",
-      "ayolas",
       "pilar",
-      "pedro-juan",
       "el-hierro",
       "la-gomera",
       "cuatro-vientos",

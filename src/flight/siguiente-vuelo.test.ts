@@ -82,13 +82,15 @@ describe("el vuelo siguiente", () => {
   });
 
   it("y si de aquí no sale ninguna ruta para este avión, no propone nada", () => {
-    // El JAZ 120 no cabe en las pistas de El Hierro, La Gomera ni La Palma.
+    // El JAZ 120 no cabe en las pistas de El Hierro ni de La Gomera. En La Palma
+    // sí, desde que lleva la Vr de su peso (ADR 0027): sin ella en la lista, de
+    // El Hierro solo sale La Gomera, y ahí no le da.
     expect(
       elSiguienteVuelo({
         aqui: esc("el-hierro"),
         vinoDe: null,
         avion: JAZ_120,
-        escenarios: SCENARIOS,
+        escenarios: SCENARIOS.filter((e) => e.id !== "la-palma"),
         hora: 12,
         ultimo: null,
       }),

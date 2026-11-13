@@ -907,6 +907,7 @@ export const ES_PY = {
     "Señoras y señores, bienvenidos a Fuerteventura.",
   "tripulacion.canario.bienvenidos.la-palma": "Señoras y señores, bienvenidos a La Palma.",
   "tripulacion.canario.bienvenidos.la-gomera": "Señoras y señores, bienvenidos a La Gomera.",
+  "tripulacion.canario.bienvenidos.el-hierro": "Señoras y señores, bienvenidos a El Hierro.",
   "tripulacion.canario.trasLaToma":
     "Por favor, permanezcan sentados y con el cinturón abrochado hasta que el avión se detenga por completo y se apague la señal de cinturones. Ya pueden utilizar sus teléfonos móviles. Tengan cuidado al abrir los compartimentos superiores, porque el equipaje puede haberse movido durante el vuelo. Muchas gracias.",
   // Y lo que pone la tarjeta del servicio debajo de la botella, desde el
