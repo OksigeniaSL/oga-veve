@@ -4356,8 +4356,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       }
       if ((o.pistaDeLosDemas?.() ?? []).length || (o.trafico?.() ?? []).some((a) => a.enLaPista)) ultimaConOtroEnLaPista = t;
       for (const x of nuevas) {
+        /*
+         * **Y tu número en la fila también es el porqué.** Con uno corriendo
+         * su despegue y otro listo delante de ti, lo que dice una torre de
+         * verdad es tu número en la secuencia de salida —«hold short of runway
+         * one two, number two for departure»—, que es información de tráfico
+         * y no una autorización (Doc 4444, 12.3.4.14 b): esperas por el que
+         * sale antes que tú, y el que ya corre va delante de ése. No se nombra
+         * aparte con un «departing traffic». En castellano es el «número dos
+         * para la salida» de la lámpara y el «esperamos nuestro turno» de la
+         * instructora. El banco no lo contaba —la fila llegó después que esta
+         * comprobación— y en Los Rodeos dio «no se dijo por qué» con la torre
+         * diciéndolo. Ver `porQueEsperasDe` en `flight/turno-de-pista.ts`.
+         */
         if (
-          /^[\d.]+s (?:torre\.(?:[a-z]+\.)?(?:holdShort|afisInUse)(?:Landing|Departing)@|vuelo\.esperaQue)/.test(x) &&
+          /^[\d.]+s (?:torre\.(?:[a-z]+\.)?(?:(?:holdShort|afisInUse)(?:Landing|Departing)|holdShortNumber(?:Two|Three))@|torre\.(?:[a-z]+\.)?numero(?:Dos|Tres)\b|vuelo\.(?:esperaQue|esperaTurnoDeSalida))/.test(x) &&
           (!/@/.test(x) || (!!misLetrasEnLaTorre && x.includes(`@${misLetrasEnLaTorre}`)))
         )
           porQueSeDijo ??= `${t.toFixed(0)} s en «${fase}»: ${x.replace(/^[\d.]+s /, "").replace(/@.*$/, "")}`;
@@ -8347,6 +8360,8 @@ if (vuelo.radar) {
  * fraseología —«hold short of the runway, landing traffic»— de Taguató para
  * arriba; la instructora en castellano, en los de abajo. Si al llegar a la
  * raya la pista estaba libre, no hay porqué que decir, y no se da por medido.
+ * Y con alguien delante en la fila, tu número es el porqué: ver el comentario
+ * de `porQueSeDijo`, donde se apunta.
  */
 if (vuelo.esperandoPorAlguien)
   comprobar(

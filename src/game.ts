@@ -5745,6 +5745,11 @@ export class Game {
   /** Cuántas veces se ha pedido ya cada porqué de esta roja. */
   private readonly vecesDelPorque = new Map<string, number>();
   /**
+   * **Y el «número dos» pedido en esta roja**: con qué clave, desde cuántas
+   * frases habladas y por quién. Ver `laFilaYaSeDijo`.
+   */
+  private filaPedida: { clave: string; desde: number; quien: string } | null = null;
+  /**
    * **Lo que la radio ha dicho de otros aviones, y de cuál**: la clave y la
    * matrícula —o el nombre que le da el TCAS— de cada vez que la torre, el
    * AFIS, otro avión, la instructora o la caja nombran a un tráfico. Es lo que
@@ -12386,6 +12391,7 @@ export class Game {
     this.porQuesExplicados.clear();
     this.vecesDelPorque.clear();
     this.porQuePendiente = null;
+    this.filaPedida = null;
     if (porQueDe) this.porQuesExplicados.add(esperaPorQuien(porQueDe));
     // Y el tráfico que da un AFIS ya va dicho en su frase: no se repite.
     if (conocido) this.porQuesExplicados.add(esperaPorQuien(conocido));
@@ -12516,7 +12522,27 @@ export class Game {
       base,
       hablaDe(this.elCampo().escenario.aerodrome?.id),
     ) as TranslationKey;
-    if (this.instructor.vozDe(clave)) this.torre.decir(t(clave), clave, "mando");
+    if (this.laFilaYaSeDijo(clave, esperaPorQuien(por))) return;
+    if (!this.instructor.vozDe(clave)) return;
+    // Contado antes de pedirla: con la boca libre suena en el acto.
+    const desde = BOCA.cuantasHabladas;
+    this.torre.decir(t(clave), clave, "mando");
+    this.filaPedida = { clave, desde, quien: esperaPorQuien(por) };
+  }
+
+  /**
+   * **Si ese número ya sonó en esta roja, o está a punto.** Cuando lo que no
+   * se oye es el porqué que va detrás —la instructora o la fraseología—, se
+   * vuelve a pedir ése, no el número: en el banco de Los Rodeos la torre dijo
+   * «número dos para la salida» tres veces seguidas porque la instructora se
+   * caía las tres. Un suceso, una voz. Ver `vigilarQueSeOyoElPorque`.
+   */
+  private laFilaYaSeDijo(clave: string, quien: string): boolean {
+    const f = this.filaPedida;
+    if (!f || f.clave !== clave || f.quien !== quien) return false;
+    if (BOCA.espera(clave)) return true;
+    const nuevas = BOCA.cuantasHabladas - f.desde;
+    return nuevas > 0 && BOCA.habladas.slice(-nuevas).some((h) => h.clave === clave);
   }
 
   /**
