@@ -558,12 +558,12 @@ Son ciento noventa kilómetros por hora.
 Son doscientos kilómetros por hora.
 Son doscientos diez kilómetros por hora.
 Son doscientos veinte kilómetros por hora.
-Son doscientos treinta kilómetros por hora.
 Son doscientos cuarenta kilómetros por hora.
 Son doscientos cincuenta kilómetros por hora.
 Son doscientos sesenta kilómetros por hora.
 Son doscientos setenta kilómetros por hora.
 Son doscientos ochenta kilómetros por hora.
+Son doscientos noventa kilómetros por hora.
 Son trescientos kilómetros por hora.
 Son trescientos diez kilómetros por hora.
 Son trescientos cuarenta kilómetros por hora.

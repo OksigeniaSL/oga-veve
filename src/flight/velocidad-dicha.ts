@@ -47,8 +47,8 @@ export const KMH_CADA = 10;
  * dos familias hay huecos que no pide nadie.
  */
 export const KMH_QUE_SE_DICEN = [
-  110, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 240, 250, 260, 270, 280, 300,
-  310, 340, 350, 360, 390, 410, 420, 440, 460, 480, 520, 540, 590,
+  110, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 240, 250, 260, 270, 280, 290,
+  300, 310, 340, 350, 360, 390, 410, 420, 440, 460, 480, 520, 540, 590,
 ] as const;
 
 /**
@@ -57,11 +57,12 @@ export const KMH_QUE_SE_DICEN = [
  * una lista en la que hubiera una cifra sin grabar rompería el horneado. Al grabarlas
  * pasan a `KMH_QUE_SE_DICEN`.
  *
- * Hoy, la que pide el JAZ 60 desde que es un Beech 1900D (13-11-2026): su marca de
- * 155 nudos, que son 290. Y los 230, que eran suyos con el ala del Twin Otter, ya no
- * los pide nadie: salen de la lista y su toma se queda guardada.
+ * Hoy, ninguna. La última fueron los 290 del JAZ 60 desde que es un Beech 1900D
+ * —su marca de 155 nudos—, grabados el mismo día (13-11-2026). Y los 230, que eran
+ * suyos con el ala del Twin Otter, ya no los pide nadie: salieron de la lista y su
+ * toma se queda guardada.
  */
-export const KMH_QUE_ESPERAN_SU_TOMA = [290] as const;
+export const KMH_QUE_ESPERAN_SU_TOMA = [] as readonly number[];
 
 /** Las unidades de un peldaño. Ver `Tier.units`. */
 export type Unidades = "metric" | "aeronautical";

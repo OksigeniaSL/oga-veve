@@ -2307,6 +2307,10 @@
       "ms": 2323,
       "h": "070ed94d83"
     },
+    "vuelo.paso.velocidad.290": {
+      "ms": 2149,
+      "h": "79248365a5"
+    },
     "vuelo.paso.velocidad.300": {
       "ms": 1544,
       "h": "877ff18f51"
@@ -4355,6 +4359,9 @@
     ],
     "vuelo.paso.velocidad.280": [
       "vuelo.paso.velocidad.280"
+    ],
+    "vuelo.paso.velocidad.290": [
+      "vuelo.paso.velocidad.290"
     ],
     "vuelo.paso.velocidad.310": [
       "vuelo.paso.velocidad.310"
