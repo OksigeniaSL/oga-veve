@@ -59,8 +59,8 @@
  *   jaz-20     406     470     449          407     387   sin margen
  *   jaz-40     536     672     352          633     620   sin margen
  *   jaz-90   1.124   1.268  ≤1.151        1.243   1.123   con margen
- *   jaz-110  1.544   1.625  ≤1.800        1.591   1.800   con margen
- *   jaz-120  1.869   1.841   1.710        1.652   1.875   con margen
+ *   jaz-110  1.544   1.615  ≤1.800        1.591   1.800   con margen
+ *   jaz-120  1.869   1.800   1.710        1.652   1.875   con margen
  * ```
  *
  * «Volado», en los reactores, es la distancia hasta los treinta y cinco pies
@@ -69,23 +69,50 @@
  * volada frena lo mismo que la cuenta, al uno por ciento, y el aire de la toma
  * es el de su clase en los dos.
  *
- * Lo que queda fuera de su banda, dicho y no escondido:
+ * El volado del 110 y del 120 es el de la cola de su fabricante (H7b): eran
+ * 1.625 y 1.841 con los 8,5° y 8,6° de antes, sin fuente.
+ *
+ * Lo que queda fuera de su banda, dicho y no escondido, avión por avión (ver la
+ * enmienda H7b del ADR 0027):
  *
  * - **El Seneca rueda demasiado para despegar**: 376 m hasta la Vr donde el
  *   suyo rueda unos 247 a esta masa. No es la proporción —ésa ya es la suya, la
- *   de `deRodarADespegar` de su ficha—, es el empuje o la Vr, y ninguno de los
- *   dos tiene todavía cifra de su manual. Se comprueba que no empeore.
- * - **El reactor volado se va del suelo más tarde que la cuenta**, a 1,12–1,16
- *   veces su Vr: la cola toca a los ocho o nueve grados y la primera muesca de
- *   flaps da poca sustentación. Por eso el despegue volado de los reactores
- *   sale entre un 7 y un 18 % más largo que el del hangar.
- * - **Los dos de fuselaje ancho aterrizan un 12 % más corto que su manual.** No
- *   es el freno: bajarlo hasta su cifra dejaría el pie a fondo por debajo del
- *   autofreno MED, y el freno a fondo de un avión de línea frena bastante más
- *   que el MED. Lo que la cuenta no lleva y la certificación sí es la
- *   transición: los segundos entre tocar y tener todo el freno, y un aire
- *   desde los cincuenta pies algo más largo que los tres grados en un avión de
- *   ese tamaño. Es de su clase y no de un avión, y queda para su ADR.
+ *   de `deRodarADespegar` de su ficha— ni la Vr: para rodar 247 m con su
+ *   empuje tendría que rotar a unos 58 nudos, por debajo de su pérdida con los
+ *   flaps de despegue, 62. Le falta empuje en la carrera: rodar 247 m hasta 72
+ *   nudos pide una aceleración media de 2,8 m/s², y con sus 5 kN y la recta de
+ *   empuje de todos los de hélice lleva 1,8. Esa recta es con la que están
+ *   calibradas su subida, su Vmc y su crucero, así que no se toca el número:
+ *   se cambia el modelo de la hélice o no se cambia. Se comprueba que no
+ *   empeore.
+ * - **El JAZ 120 ya despega volando en lo que dice la cuenta**, al 5 %: con la
+ *   cola de Boeing se va del suelo a 10,7°, donde el suyo se va a 10,1°.
+ * - **El JAZ 110 todavía se va del suelo tarde**, a 1,13 veces su Vr, un 11 %
+ *   más largo que la cuenta: para sostenerse a su Vr necesita 11,6° y su cola,
+ *   la de Boeing, le deja 9,7. El de verdad se va a 6–7,5° (AAIB, *Bulletin*
+ *   11/2020). No es la cola: es que la primera muesca de flaps del modelo
+ *   sustenta poco y la Vr de 1,1 veces esa pérdida lo tapa. El VH-ZND de ese
+ *   boletín rotó a 172 nudos con 253.400 kg; la regla le daría 158. Y en el
+ *   747 lo mismo: Jenkinson da 2,03 de CL máximo con flaps de despegue, el
+ *   modelo 1,73. Arreglarlo es volver sobre la regla de la Vr, no un número.
+ * - **El JAZ 90**, un 18 % más largo volando: sin la cola de Embraer, con los
+ *   9° de su ficha.
+ * - **Los dos de fuselaje ancho aterrizan un 12 % más corto que su manual**, y
+ *   no por lo mismo que el E170, que aterriza largo. En los dos la Vref no es:
+ *   la del 787-9 es la de la FAA, y la del 747-100, la de Jenkinson —141
+ *   nudos—, es más baja que la de la ficha y acortaría la toma hasta un 16 %.
+ *   Tampoco el freno: llegar a su cifra con la rodadura pide un pie a fondo de
+ *   2,88 y 2,97 m/s² al acabar, por debajo del autofreno MED, y el pie a fondo
+ *   de un avión de línea frena más que el MED. Lo que falta es el aire: con su
+ *   freno, el manual pide 425 y 416 m desde los cincuenta pies, unos 5,6
+ *   segundos a su Vref, donde la senda de tres grados da 291. Sin la cifra del
+ *   tramo en el aire de su manual, no se toca.
+ * - **El JAZ 90 aterriza un 7–11 % largo**, según se escalen los 2.800 kg que
+ *   pesa menos que la cifra de Embraer: todo con la masa o solo la rodadura. La
+ *   causa es suya: su Vref de 132 nudos no tiene fuente —sale de un CL máximo
+ *   de su clase— y su frenada se calibró con la toma de Embraer cruzando a
+ *   unos 127 a su máximo, 121 a esta masa. Con 121 pediría 1.125. Sin la Vref
+ *   de Embraer, no se toca.
  */
 
 import { describe, expect, it } from "vitest";
@@ -133,6 +160,8 @@ function despegar(a: AircraftConfig): {
   readonly hastaVr: number;
   readonly hastaIrse: number;
   readonly hastaLaAltura: number;
+  /** La actitud con la que se va del suelo, rad. */
+  readonly actitudAlIrse: number;
 } {
   const m = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: 0 });
   m.reset({ position: new Vector3(0, a.gearHeight, 0), heading: 0, airspeed: 0 });
@@ -141,6 +170,7 @@ function despegar(a: AircraftConfig): {
   let x = 0;
   let hastaVr = 0;
   let hastaIrse = Infinity;
+  let actitudAlIrse = NaN;
   let rotando = false;
   let actitud = 0;
   const antes = new Vector3();
@@ -169,10 +199,15 @@ function despegar(a: AircraftConfig): {
     const paso = Math.hypot(s.position.x - antes.x, s.position.z - antes.z);
     x += paso;
     if (v < a.rotationSpeed) hastaVr += paso;
-    if (!Number.isFinite(hastaIrse) && !s.onGround) hastaIrse = x;
-    if (s.position.y - a.gearHeight >= altura) return { hastaVr, hastaIrse, hastaLaAltura: x };
+    if (!Number.isFinite(hastaIrse) && !s.onGround) {
+      hastaIrse = x;
+      actitudAlIrse = cabeceo;
+    }
+    if (s.position.y - a.gearHeight >= altura) {
+      return { hastaVr, hastaIrse, hastaLaAltura: x, actitudAlIrse };
+    }
   }
-  return { hastaVr, hastaIrse, hastaLaAltura: Infinity };
+  return { hastaVr, hastaIrse, hastaLaAltura: Infinity, actitudAlIrse };
 }
 
 /** Posa el avión a su velocidad de toma y lo frena como su manual, m. */
@@ -274,8 +309,9 @@ describe("el despegue y la toma de cada avión, contra su manual", () => {
      * La toma, con un diez por ciento a cada lado en la cuenta del hangar: las
      * cifras de los reactores son lecturas de una gráfica y las de las
      * avionetas, de un manual que mide a su manera. Sale entre el −12 y el
-     * +11 %; los dos de fuselaje ancho, por debajo, con su porqué en la
-     * cabecera, y con un listón que no les deja acortar más.
+     * +11 %; los dos de fuselaje ancho, por debajo, y el E170, por arriba, cada
+     * uno con su porqué en la cabecera, y con un listón que no les deja
+     * alejarse más.
      */
     it(`${id} aterriza en lo que dice su manual`, () => {
       const r = hangar.aterrizar / manual.aterrizar;
@@ -295,8 +331,9 @@ describe("el despegue y la toma de cada avión, contra su manual", () => {
   }
 
   it("el Seneca no despega peor que hoy, aunque todavía rueda de más", () => {
-    // Ver la cabecera: 376 m hasta la Vr donde el suyo rueda unos 247. Hasta que
-    // tenga empuje o Vr de su manual, se fija que no se aleje más.
+    // Ver la cabecera: 376 m hasta la Vr donde el suyo rueda unos 247, y no es
+    // la Vr sino el empuje en la carrera. Hasta que la hélice tenga su modelo,
+    // se fija que no se aleje más.
     const a = avion("jaz-40");
     const r = distanciaDeDespegue(a) / MANUALES["jaz-40"]!(a).despegar;
     expect(r).toBeLessThan(1.55);
@@ -319,9 +356,10 @@ describe("la cuenta del hangar y el avión que se vuela dicen lo mismo", () => {
     });
 
     /*
-     * Hasta la altura de su norma. Más ancho, y torcido hacia arriba: el reactor
-     * volado se va del suelo más tarde que la cuenta (ver la cabecera), y eso
-     * no puede pasar de una quinta parte.
+     * Hasta la altura de su norma. Al cinco por ciento el que tiene la cola de
+     * su fabricante y se va del suelo a su actitud, el JAZ 120 (H7b). Los demás,
+     * más ancho y torcido hacia arriba: se van del suelo más tarde que la
+     * cuenta (ver la cabecera), y eso no puede pasar de una quinta parte.
      *
      * Sin el biplano: es de rueda de cola, y se despega levantando la cola y
      * dejándolo irse, no rotando sobre el tren principal como hace este piloto.
@@ -331,8 +369,9 @@ describe("la cuenta del hangar y el avión que se vuela dicen lo mismo", () => {
       expect(hastaIrse).toBeLessThan(hastaLaAltura);
       const r = hastaLaAltura / distanciaDeDespegue(a);
       const dicho = `${a.id}: volado ${Math.round(hastaLaAltura)} m, cuenta ${Math.round(distanciaDeDespegue(a))}`;
-      expect(r, dicho).toBeGreaterThan(0.9);
-      expect(r, dicho).toBeLessThan(a.id === "jaz-40" ? 1.3 : 1.2);
+      const cerrado = a.id === "jaz-120";
+      expect(r, dicho).toBeGreaterThan(cerrado ? 0.95 : 0.9);
+      expect(r, dicho).toBeLessThan(cerrado ? 1.05 : a.id === "jaz-40" ? 1.3 : 1.2);
     });
 
     /* Y la frenada: la misma cuenta de `frenada.ts` por dos caminos. */
@@ -353,6 +392,41 @@ describe("la Vr de los reactores es la de su peso", () => {
       expect(a.decisionSpeed).toBeLessThan(a.rotationSpeed);
     });
   }
+});
+
+/*
+ * **La cola toca donde dice su fabricante** (H7b). Es lo que decide a qué
+ * actitud puede irse del suelo un avión de línea: con la cola de 8,6° sin
+ * fuente, el 747 no llegaba a la actitud a la que se va del suelo el de verdad
+ * y esperaba a correr un 12 % más que su Vr.
+ *
+ * - **JAZ 120**: 12,5° con los flaps a diez y a veinte, y se va del suelo a
+ *   10,1° con los de diez (D. Carbaugh, «Tail Strikes: Prevention», *AERO*
+ *   QTR_01 2007, figura 1, 747-400, que tiene el fuselaje y el tren del -100).
+ * - **JAZ 110**: 9,7° con las ruedas en la pista y las patas extendidas (AAIB,
+ *   *Bulletin* 11/2020, VH-ZND, un 787-9, citando al fabricante).
+ *
+ * El JAZ 90 no está: no se ha encontrado la cifra de Embraer para el E170, y
+ * sigue con los 9° de su ficha.
+ */
+describe("la cola de cada reactor toca donde dice su fabricante", () => {
+  const COLA: Readonly<Record<string, number>> = { "jaz-120": 12.5, "jaz-110": 9.7 };
+
+  for (const [id, grados] of Object.entries(COLA)) {
+    it(`${id} toca la cola a ${grados}°`, () => {
+      expect(avion(id).maxGroundPitch / GRADO).toBeCloseTo(grados, 1);
+    });
+  }
+
+  it("el 747 se va del suelo a la actitud de Boeing, sin tocar la cola", () => {
+    // 10,1° con los flaps de despegue, un grado arriba o abajo: este modelo no
+    // tiene efecto suelo, que adelanta un poco la separación.
+    const a = avion("jaz-120");
+    const { actitudAlIrse } = despegar(a);
+    expect(actitudAlIrse / GRADO).toBeGreaterThan(9.1);
+    expect(actitudAlIrse / GRADO).toBeLessThan(11.1);
+    expect(actitudAlIrse).toBeLessThan(a.maxGroundPitch);
+  });
 });
 
 /*

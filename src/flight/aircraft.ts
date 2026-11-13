@@ -2629,7 +2629,19 @@ export const YVAGA: AircraftConfig = {
    * mantenimiento, que no es público.
    */
   tardaElTren: { sale: 10, entra: 10 },
-  maxGroundPitch: 0.15, // 8,6°: un fuselaje de setenta metros toca antes.
+  /*
+   * **Doce grados y medio, los que da Boeing para la cola de un 747**: «Tail
+   * Strike Pitch Attitude 12.5» con los flaps a diez y a veinte, y una actitud de
+   * diez grados al irse del suelo, 10,1 y 10,0 (D. Carbaugh, «Tail Strikes:
+   * Prevention», *AERO* QTR_01 2007, figura 1). La tabla es del 747-400, que
+   * tiene el mismo fuselaje de setenta metros y el mismo tren que el -100: el
+   * -400 alargó la cubierta de arriba, no el avión.
+   *
+   * Eran 8,6°, sin fuente: con ellos la cola tocaba antes de la actitud a la que
+   * se va del suelo, el avión volado no se separaba hasta 1,12 veces su Vr y
+   * despegaba un 7 % más largo que la cuenta del hangar (H7b, 13-11-2026).
+   */
+  maxGroundPitch: 12.5 * (Math.PI / 180),
   // 25 m de morro y quince centímetros: 0,34°.
   minGroundPitch: -0.006,
   // Triple ranura y Krueger: un ala de línea saca mucho más CL que una
@@ -2901,12 +2913,17 @@ export const TIJERETA: AircraftConfig = {
   // mismo que en ellos: el tiempo está en el manual de mantenimiento.
   tardaElTren: { sale: 9, entra: 9 },
   /*
-   * **Ocho grados y medio: lo que da su cola**, medida en el dibujo de 2.2.2, con la
-   * pata sin comprimir y la actitud de 0,52° de morro abajo con que está parado
-   * (4.4.1). La panza empieza a subir a dieciséis metros por detrás de la pata, y
-   * es de lo poco que no ata la hoja de tipo: **por verificar**.
+   * **Nueve grados y siete décimas, lo que da Boeing para su cola**: «The pitch
+   * attitude for tail contact is 9.7° with wheels on the runway and landing gear
+   * struts extended», en un 787-9 con los flaps a cinco, y se va del suelo
+   * normalmente entre 6° y 7,5° (AAIB, *Bulletin* 11/2020, VH-ZND, citando al
+   * fabricante y su manual de entrenamiento).
+   *
+   * Eran 8,5°, medidos en el dibujo de 2.2.2 del D6-58333 y por verificar: la
+   * panza empieza a subir a dieciséis metros por detrás de la pata, y en el
+   * dibujo no se ve dónde la para el asfalto (H7b, 13-11-2026).
    */
-  maxGroundPitch: 0.15,
+  maxGroundPitch: 9.7 * (Math.PI / 180),
   // 25,8 m de morro y quince centímetros: 0,33°.
   minGroundPitch: -0.006,
   llevaFlaps: true,
