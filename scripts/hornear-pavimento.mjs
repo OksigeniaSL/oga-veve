@@ -50,28 +50,39 @@ const server = await createServer({
 await server.listen();
 const BASE = baseDe(server, PUERTO);
 
-// Los escenarios con aeródromo de verdad, cada aeródromo una vez.
-const { SCENARIOS, conSuAerodromo } = await server.ssrLoadModule("/src/world/scenarios.ts");
-const campos = [];
-const vistos = new Map();
-for (const e of SCENARIOS) {
-  if (PEDIDOS.length && !PEDIDOS.includes(e.id)) continue;
-  const id = (await conSuAerodromo(e)).aerodrome?.id;
-  if (!id) continue;
-  if (vistos.has(id)) {
-    console.log(`  ${e.id}: ${id} ya sale de ${vistos.get(id)}`);
-    continue;
-  }
-  vistos.set(id, e.id);
-  campos.push({ escenario: e.id, id });
-}
-
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
   args: ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader"],
 });
 let malos = 0;
 try {
+  /*
+   * Los escenarios con aeródromo de verdad, cada aeródromo una vez. Se le
+   * preguntan al navegador y no a `ssrLoadModule`: con la máquina cargada,
+   * Barajas y sus novecientos kilobytes pasaban del minuto que vite le da a
+   * un módulo del lado del servidor, y el guion se caía antes de empezar.
+   */
+  const lista = await navegador.newPage();
+  await lista.goto(`${BASE}/robots.txt`);
+  const todos = await lista.evaluate(async () => {
+    const { SCENARIOS, conSuAerodromo } = await import("/src/world/scenarios.ts");
+    const fuera = [];
+    for (const e of SCENARIOS) fuera.push({ escenario: e.id, id: (await conSuAerodromo(e)).aerodrome?.id ?? null });
+    return fuera;
+  });
+  await lista.close();
+  const campos = [];
+  const vistos = new Map();
+  for (const { escenario, id } of todos) {
+    if (!id || (PEDIDOS.length && !PEDIDOS.includes(escenario))) continue;
+    if (vistos.has(id)) {
+      console.log(`  ${escenario}: ${id} ya sale de ${vistos.get(id)}`);
+      continue;
+    }
+    vistos.set(id, escenario);
+    campos.push({ escenario, id });
+  }
+
   for (const { escenario, id } of campos) {
     const page = await navegador.newPage({ viewport: { width: 1280, height: 720 } });
     page.on("pageerror", (e) => console.log(`  ${escenario}: error en la página: ${e.message}`));
@@ -121,6 +132,6 @@ try {
   await server.close();
 }
 if (COMPROBAR) {
-  console.log(malos ? `\n${malos} sin cuadrar: npm run pavimento` : `\nLas ${campos.length} cuadran.`);
+  console.log(malos ? `\n${malos} sin cuadrar: npm run pavimento` : `\nCuadran todas.`);
   process.exit(malos ? 1 : 0);
 }
