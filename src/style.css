@@ -3629,6 +3629,17 @@ button.motor__tecla::after {
   color: var(--ocre);
   transform-origin: 50% 50%;
   margin-bottom: 2px;
+  /*
+   * **En su capa.** Gira en cada imagen con el rumbo, solo con `transform`
+   * —ver `Hud.setHome`—, y sin capa propia cada giro volvía a rasterizar la
+   * capa del HUD entero. Con el Super Puma en el aire sobre Los Rodeos y la
+   * CPU a ×4, alternando con y sin: la capa del HUD pasa de 1,4 teselas
+   * rasterizadas por imagen a 0,4–0,6, y el reparto en capas (`Layerize`)
+   * de 3,5–3,9 ms a 2,9–3,1. Cuesta una capa de 26×33 px: unos 3 KB de
+   * tarjeta. Por qué las agujas y las cintas del cuadro no van así: ver
+   * `.tablero`.
+   */
+  will-change: transform;
 }
 
 /*
@@ -5148,6 +5159,22 @@ button.motor__tecla::after {
     brightness(calc(0.82 + 0.18 * var(--luz-de-fuera)))
     saturate(calc(1 + 0.35 * var(--cuadro-encendido)));
 }
+
+/*
+ * **Y lo que se mueve dentro del cuadro no va en capas propias: se midió.**
+ *
+ * Las cintas, la rosa, el horizonte, el variómetro y las agujas de la VMS se
+ * mueven en cada imagen, y lo natural sería darles `will-change: transform`
+ * como a la flecha de casa. Dentro de un SVG no sirve: Chrome no compone el
+ * movimiento de un hijo de SVG —cambiarle el `transform` vuelve a maquetar y
+ * a pintar el SVG entero, tenga capa o no—, y cada capa de más encarece el
+ * reparto en capas. Con las veintidós piezas que se mueven en su capa, en el
+ * Super Puma en el aire sobre Los Rodeos con la CPU a ×4: de 21 capas a 49,
+ * de 21,9 a 26,8 MB de tarjeta y el reparto en capas (`Layerize`) de 3,0 a
+ * 5,2 ms por imagen, con el pintado igual. Lo que de verdad lo bajaría es
+ * sacar cada pieza que se mueve a su propio `<svg>` dentro de un elemento
+ * HTML que se mueva con `transform`, que es rehacer cómo se monta el cuadro.
+ */
 
 /*
  * El halo de los números encendidos, solo de noche.
@@ -9552,6 +9579,19 @@ button.motor__tecla::after {
   cursor: pointer;
   border: 2px solid var(--ocre);
   animation: senal-llama 1.8s ease-in-out infinite;
+  /*
+   * **En su capa**, como el botón de la vuelta que late (ver
+   * `.antes__boton--late`): el halo es una sombra que cambia en cada imagen.
+   */
+  will-change: transform;
+}
+
+/*
+ * En el rincón no: ahí su texto puede ir en `position: absolute`, y una capa
+ * propia lo haría medirse desde la tarjeta y no desde donde se mide hoy.
+ */
+.hud .rincon .senal--pulsable {
+  will-change: auto;
 }
 
 /*
@@ -15903,6 +15943,18 @@ svg .ex-raya {
 .antes__boton--late {
   border-color: var(--ocre);
   animation: antes-late 2.4s ease-out infinite;
+  /*
+   * **En su capa.** El latido es una sombra que crece, y una sombra no la
+   * anima el compositor: se repinta en cada imagen. Sin capa propia eso
+   * volvía a rasterizar la capa del HUD entero; con ella, solo la del botón.
+   * En Guaraní, en el puesto, con la CPU a ×4 y alternando con y sin (con
+   * `.senal--pulsable`, que late a la vez): la capa del HUD pasa de 2
+   * teselas rasterizadas por imagen a ninguna, por tres capas pequeñas y
+   * 0,2 MB de tarjeta. El hilo principal pinta lo mismo: lo que se ahorra es
+   * el trabajo de rasterizar, que en una tablet compite por los mismos
+   * núcleos.
+   */
+  will-change: transform;
 }
 
 /* Y el tiempo, en ámbar, si algo pasa del límite de este avión. */

@@ -80,6 +80,7 @@ import { PALETA } from "../ui/paleta";
 import { enLaMuesca } from "../flight/flaps";
 import { bienPuesta } from "../flight/altimetro";
 import { luzDeTren } from "../flight/tren";
+import { POR_SEGUNDO_DESDE_FUERA } from "./pantallas-cabina";
 
 /** Lado del lienzo de cada reloj, en píxeles. */
 const LADO = 256;
@@ -203,7 +204,12 @@ interface Esfera {
 export interface Relojes {
   /** Qué relojes hay y qué mide cada uno. Para comprobarlo desde fuera. */
   readonly hay: readonly { readonly uuid: string; readonly que: QueMide }[];
-  actualizar(datos: DatosDeRelojes, dt: number): void;
+  /**
+   * Con `desdeFuera`, a las mismas veces por segundo que las pantallas vistas
+   * desde fuera, y por lo mismo: ver `POR_SEGUNDO_DESDE_FUERA` en
+   * `pantallas-cabina.ts`.
+   */
+  actualizar(datos: DatosDeRelojes, dt: number, desdeFuera?: boolean): void;
   dispose(): void;
 }
 
@@ -322,9 +328,9 @@ export function encenderRelojes(raiz: Object3D): Relojes | null {
   let desde = 0;
   return {
     hay,
-    actualizar(datos, dt) {
+    actualizar(datos, dt, desdeFuera = false) {
       desde += dt;
-      if (desde < 1 / POR_SEGUNDO) return;
+      if (desde < 1 / (desdeFuera ? POR_SEGUNDO_DESDE_FUERA : POR_SEGUNDO)) return;
       desde = 0;
       for (const e of esferas) {
         /*
