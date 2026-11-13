@@ -53,8 +53,9 @@ describe("quién lleva TCAS", () => {
       expect(aircraftById(id).tcas, id).toBeNull();
   });
 
-  it("el turbohélice de diecinueve plazas, el TCAS I, que solo avisa", () => {
-    expect(aircraftById("jaz-60").tcas).toBe("TCAS I");
+  it("el turbohélice de diecinueve plazas, el TCAS II: un 1900D pesa más de 5.700 kg", () => {
+    // Llevaba el TCAS I con el peso del Twin Otter, por debajo de la raya.
+    expect(aircraftById("jaz-60").tcas).toBe("TCAS II");
   });
 
   it("los dos reactores, el TCAS II", () => {

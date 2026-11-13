@@ -33,7 +33,10 @@ export interface CruzadoDemostrado {
  * Por avión. Ver la cabecera.
  *
  * Del biplano no se ha encontrado la cifra del manual del Ag Cat, y no está:
- * para él manda la regla de certificación de `cruzadoDemostrado`.
+ * para él manda la regla de certificación de `cruzadoDemostrado`. Tampoco la
+ * del Beech 1900D, desde que el JAZ 60 es ese avión (ADR 0027): llevaba los
+ * veinticinco nudos del manual del Twin Otter, y el 1900D se certificó con la
+ * misma regla de los aviones pequeños que manda aquí.
  */
 export const CRUZADO_DEMOSTRADO: Readonly<Record<string, CruzadoDemostrado>> = {
   "jaz-20": {
@@ -44,16 +47,6 @@ export const CRUZADO_DEMOSTRADO: Readonly<Record<string, CruzadoDemostrado>> = {
   "jaz-40": {
     kt: 17,
     fuente: "Piper PA-34-200T Seneca II, manual de vuelo (1976, rev. 1979), sección 4",
-  },
-  "jaz-60": {
-    /*
-     * El manual del Twin Otter lo da medido a seis pies del suelo —veinte
-     * nudos con todo el flap, «no se considera limitativo»— y lo traduce a
-     * otras alturas. Medido en la torre, a treinta y tres pies, que es donde
-     * mide el METAR, son veinticinco.
-     */
-    kt: 25,
-    fuente: "DHC-6 Twin Otter, manual de vuelo, sección de prestaciones",
   },
   "jaz-90": {
     kt: 28,

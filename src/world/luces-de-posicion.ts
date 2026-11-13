@@ -234,6 +234,20 @@ export function puntasDe(cuerpo: Object3D): Puntas | null {
     for (const c of bandas) if (!c.isEmpty()) gondolas.push(c.expandByScalar(0.05));
   });
   const enUnaGondola = (p: Vector3): boolean => gondolas.some((g) => g.containsPoint(p));
+  /*
+   * **Y no al otro lado de ella.** Con el ala del 1900D, más corta, la franja
+   * de la raíz pasa la góndola y sigue unos centímetros por fuera, y el foco
+   * se iba ahí, al otro lado del motor. Va entre el fuselaje y la góndola: lo
+   * que queda más allá del borde de fuera de una góndola de su lado tampoco
+   * cuenta. Lo que cae a su altura sin estar dentro —el borde de ataque
+   * encima del motor de un reactor— sigue contando.
+   */
+  const pasadaLaGondola = (p: Vector3): boolean =>
+    gondolas.some((g) => {
+      const lado = Math.sign((g.min.x + g.max.x) / 2 - centro.x);
+      const fuera = lado > 0 ? g.max.x : g.min.x;
+      return lado !== 0 && lado * (p.x - fuera) > 0;
+    });
 
   cuerpo.traverse((o) => {
     const geo = (o as Mesh).geometry;
@@ -269,7 +283,8 @@ export function puntasDe(cuerpo: Object3D): Puntas | null {
         fuera > medido.x * 0.07 &&
         fuera < medido.x * 0.18 &&
         v.z < foco.z &&
-        !enUnaGondola(v)
+        !enUnaGondola(v) &&
+        !pasadaLaGondola(v)
       )
         foco.copy(v);
     }

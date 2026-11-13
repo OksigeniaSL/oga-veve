@@ -136,7 +136,9 @@ describe("lo que cuesta llevar el tren fuera", () => {
     const limpio = (id: string) => resistenciaDelTren(aircraftById(id), 1, 0);
     expect(limpio("jaz-90")).toBeCloseTo(0.0259, 3);
     expect(limpio("jaz-120")).toBeCloseTo(0.0196, 3);
-    expect(limpio("jaz-60")).toBeCloseTo(0.0128, 3);
+    // Con el peso y el ala del 1900D: más masa sobre menos ala. Era 0,0128 con
+    // los del Twin Otter.
+    expect(limpio("jaz-60")).toBeCloseTo(0.021, 3);
     expect(limpio("jaz-40")).toBeCloseTo(0.0117, 3);
     for (const a of AIRCRAFT.filter((x) => x.trenRetractil)) {
       expect(resistenciaDelTren(a, 1, 0), a.id).toBeGreaterThan(0.01);

@@ -370,6 +370,121 @@ cola.
   era así; en el suelo, rotando, ahora marca hasta 0,8 m en el 747. No se ha
   revisado uno por uno.
 
+## Enmienda (13-11-2026): el JAZ 60 es un Beech 1900D
+
+### Por qué
+
+H7 lo dejó fuera porque no tenía manual con el que medirse: por fuera era un
+1900D —ala baja, cola en T, tren que se mete en las góndolas, cinco psi de
+presurización y su parabrisas—, y por dentro volaba con el ala, el peso y el
+crucero del DHC-6 Twin Otter, que el #54 había elegido porque tiene derivadas
+identificadas en vuelo. Con la frenada y los flaps del 1900D encima, rodaba
+459 m donde el Twin Otter rueda 244 y no se parecía a ninguno de los dos. A qué
+tipo tenía que parecerse era una decisión, y la tomó Enrique: **«hacemos el
+1900D»**. Es el que ya se ve, el que nombran su cabina, su tren y sus luces, y
+el que tiene papeles con los que medirlo. El Twin Otter será otro avión.
+
+### Las fuentes
+
+- **CAA de Nueva Zelanda, *Type Acceptance Report* 98/07**, rev. 1 (2022),
+  sobre la hoja de tipo FAA A24CE: 17.120 lb de peso máximo, los PT6A-67D, la
+  hélice Hartzell de cuatro palas, la base de certificación —14 CFR 23 hasta la
+  enmienda 34, categoría de cercanías— y la vista en tres planos con sus cotas:
+  57 ft 11,17 in de envergadura, 57 ft 10 in de largo, 14 ft 10,8 in de alto,
+  hélice de 9 ft 2 in, motores a 8 ft 7 in del eje y batalla de 23 ft 9,35 in.
+- **Flight Safety Foundation, *Accident Prevention***, julio de 1998 y mayo de
+  2004: 1.279 shp por motor, 16.765 lb al aterrizar, 274 nudos a 25.000 ft con
+  15.000 lb y 101 nudos de pérdida limpia.
+- **TSB de Canadá, A97C0229**: V1 100, Vr 102 y V2 108 nudos a 16.000 lb, de
+  su manual de vuelo.
+- ***Plane & Pilot*, «Beechcraft 1900»**: 3.813 ft para despegar, 2.790 para
+  aterrizar y 665 galones de combustible. Y *Business & Commercial Aviation*,
+  diciembre de 1991: 3.740 ft a 16.950 lb, que con el cuadrado de la masa son
+  los mismos.
+
+La hoja de tipo A24CE no se ha podido leer entera, y con ella faltan la Vmo, el
+Mach máximo, la Vmc y el viento cruzado demostrado del manual. Se dice en cada
+número qué se ha hecho sin ellos.
+
+### La ficha, antes y ahora
+
+| | Antes (Twin Otter) | Ahora (1900D) | De dónde |
+|---|---|---|---|
+| Envergadura y ala | 19,8 m, 39 m² | 17,66 m, 28,8 m² | TAR 98/07; Chalair |
+| Vuelo típico | 5.600 kg | 7.296 kg | ADR 0019 |
+| Sin combustible | 4.886 kg | 6.572 kg | lo que deja su máximo al vuelo más largo |
+| Peso máximo | 12.500 lb | 17.120 lb | FSF 2004, TAR 98/07 |
+| Empuje | 14 kN | 28 kN, la recta acaba en 230 m/s | su subida de 2.615 ft/min y su crucero |
+| Crucero | 175 kt | 274 kt a 25.000 ft | FSF |
+| Vr / V1 / Vref | 80 / 74 / 93 kt | 101,5 / 99,5 / 107,7 kt | 14 CFR 23.51 y 23.73; TSB |
+| Vmo / Mmo | 250 / 0,55 | 248 / 0,48 | su placa; las dos se cruzan a 13.200 ft |
+| Frenada | 0,38 | 0,30 | sus 2.790 ft |
+| TCAS | I | II | más de 5.700 kg |
+
+La Vr sale de la misma regla que la de los reactores, que en la categoría de
+cercanías es la misma (14 CFR 23.51 c 2 iii): 1,1 veces la pérdida con los
+flaps de despegue. A 16.000 lb da 101 nudos, y su manual, 102.
+
+### Las distancias, contra su manual
+
+A la masa de la ficha:
+
+| | El hangar | Volado | Su manual |
+|---|---|---|---|
+| Despegar | 983 m, la de abortar desde su V1 | 866 hasta los cincuenta pies | 1.025 de longitud de campo, un techo |
+| Aterrizar | 815 sin margen | — | 816 |
+
+**La norma no cambia**, cambia la cita. El 1900D es de la categoría de
+cercanías, y esa categoría pide lo mismo que la de transporte: la mayor de la
+de un motor parado y la de todos por 1,15 (14 CFR 23.59 a), y la de acelerar y
+parar (23.55). Para operarlo, la norma europea lo pone en la clase A
+—turbohélice de más de nueve plazas o de 5.700 kg— con el 70 % de la LDA
+(CAT.POL.A.230 a 2). En EE. UU. aterrizaría en el 60 % (14 CFR 135.398 c), que
+es de donde salen los 4.667 ft que se le publican: 2.800 entre 0,6.
+
+### Lo que cambia de veredicto
+
+| Campo | TORA / LDA | Antes pedía | Ahora pide | ¿Cabe? | Un 1900D de verdad |
+|---|---|---|---|---|---|
+| Valle de la Cordillera (inventado) | 1.100 / 1.100 | 950 | 1.164 | **sí → no**, la toma | es inventado; con la norma europea, no |
+| El Hierro | 1.250 / 1.250 | 950 | 1.164 | sí | podría; allí vuela el ATR 72 |
+| La Gomera, Cuatro Vientos | 1.500 / 1.500 | 950 | 1.164 | sí | podría |
+| Chaco (inventado) | 1.400 / 1.400 | 950 | 1.164 | sí | podría |
+| Pedro Juan Caballero | 1.800 / 1.800 | 950 | 1.164 | sí | podría |
+| Encarnación, La Palma, Lanzarote y los grandes | 2.000 o más | 950 | 1.164 | sí | podría |
+| Concepción, Ayolas, Pilar, Estigarribia | 1.440 a 3.503 de LDA | — | — | no, bomberos | la pista le da; los bomberos, no |
+| Yvytu Rape | 900 de hierba | 1.108 | 1.371 | no | no |
+
+Pide más para aterrizar que para despegar: 1.164 m de LDA. Es lo que pasa con un
+turbohélice de su clase, que despega corto y aterriza a 108 nudos.
+
+### Lo que cambia por ir más rápido
+
+- **Los vuelos son más cortos**: de El Hierro a La Gomera, dos minutos y medio
+  de crucero donde eran cuatro.
+- **El combustible**: el plan carga 583 a 1.194 kg, con el tope de sus 665
+  galones; eran 1.075 kg de tope por la cuenta de su clase. El plan cuenta
+  con un tercio del empuje, unos 470 kg/h.
+- **La marca de velocidad de un turbohélice no pasa de su Vmo**: el 1900D no
+  puede llevar los 250 nudos de bajo los diez mil pies.
+- **Una cifra nueva para la voz**: `vuelo.paso.velocidad.290`, sin grabar.
+
+### Lo que no
+
+- **La Vmc del 1900D no se ha encontrado publicada.** El timón se ha puesto para
+  que la del modelo, 85 nudos, quede por debajo de la que su manual permite (97,
+  por la Vr de 102 a 16.000 lb).
+- **Sus flaps siguen en cuatro posiciones**, 0, 10, 20 y 35. Los del 1900D son
+  tres —arriba, 17 y 35— y despega con 17. Sus placas de velocidad ya eran
+  las suyas.
+- **El TAWS**: el TAR 98/07 dice que el 1900D lleva de serie un EGPWS Mark VI
+  de clase A, y la ficha canta solo *five hundred* porque no se había
+  encontrado. Queda por mirar qué canta ese equipo.
+- **El fuselaje del modelo sigue siendo el de antes**, de 1,85 m de ancho. El del
+  1900D es de unos 1,5 (OACI, Doc 9137): la hélice pasa a 30 cm del costado
+  donde en el dibujo pasa a 43.
+- El alcance de la tarjeta sigue sin cifra: la de Raytheon no se ha podido abrir.
+
 ## Consecuencias
 
 - El JAZ 120 rota a 145 nudos y el JAZ 90 a 133, como sus tipos a esa masa. El
@@ -382,3 +497,6 @@ cola.
 - Al levantar el morro, todos giran sobre sus ruedas principales y el centro
   sube, en los dos modelos; las ruedas no se meten en la pista y la cola del 787
   llega a sus 9,7° sin tocar (H7c).
+- El JAZ 60 es un Beech 1900D: despega y aterriza en las distancias de su
+  manual, va a 274 nudos y deja de caber en el valle de la Cordillera, por la
+  toma.

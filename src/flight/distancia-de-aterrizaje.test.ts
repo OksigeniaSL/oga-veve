@@ -15,9 +15,10 @@
  *   mar y 15 °C (manual de vuelo, sección 5).
  * - **JAZ 40**, con el Beechcraft Baron 58: 1.440 ft de rodadura a su peso
  *   máximo de 5.400 lb.
- * - **JAZ 60**, con el Beechcraft 1900D: 2.800 ft de distancia de aterrizaje
- *   sobre quince metros a su peso máximo de 16.765 lb; quitando los mil pies
- *   del aire, unos 550 m de rodadura.
+ * - **JAZ 60**, con el Beechcraft 1900D: 2.790 ft de distancia de aterrizaje
+ *   sobre quince metros (*Plane & Pilot*, «Beechcraft 1900») a su peso máximo
+ *   al aterrizar, 16.765 lb (FSF, *Accident Prevention*, mayo de 2004);
+ *   quitando los mil pies del aire, unos 545 m de rodadura.
  * - **JAZ 90**, con el Embraer 170: 1.228 m de pista de aterrizaje a su peso
  *   máximo de 32.800 kg (manual de aeropuertos), que es la distancia de
  *   verdad partida por 0,6: unos 737 m, y quitando los trescientos del aire,
@@ -135,7 +136,7 @@ function comoElManual(a: AircraftConfig): Partial<ControlInputs> {
 const DEL_MANUAL: Readonly<Record<string, { metros: number; kilos: number }>> = {
   "jaz-20": { metros: 575 * PIE, kilos: 2550 * LIBRA },
   "jaz-40": { metros: 1440 * PIE, kilos: 5400 * LIBRA },
-  "jaz-60": { metros: 2800 * PIE - 1000 * PIE, kilos: 16765 * LIBRA },
+  "jaz-60": { metros: 2790 * PIE - 1000 * PIE, kilos: 16765 * LIBRA },
   "jaz-90": { metros: 1228 * 0.6 - 300, kilos: 32800 },
   "jaz-120": { metros: 1900 * 0.6 - 350, kilos: 574000 * LIBRA },
   // 1.800 m a su máximo al aterrizaje, flaps 30, seco (D6-58333, 3.4.3).

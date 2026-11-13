@@ -277,7 +277,14 @@ export function indicadaDeSubida(a: AircraftConfig): number {
 function cruceroDeHelice(a: AircraftConfig, altitud: number, aire: Aire): number {
   const ias =
     (verdaderaDeCrucero(a, altitud, aire) * Math.sqrt(airDensity(altitud, aire) / SEA_LEVEL_DENSITY)) / NUDO;
-  return Math.max(indicadaDeSubida(a), Math.round(ias / 5) * 5);
+  /*
+   * **Y nunca contra su Vmo.** El turbohélice que cruza a 274 nudos arriba, el
+   * 1900D del JAZ 60, los daría abajo en indicada, y su Vmo son 248: se vuela
+   * diez por debajo, a la cinco de abajo. Sin esto la marca pedía 250 bajo
+   * los diez mil pies, que es una velocidad que ese avión no puede llevar.
+   */
+  const debajoDeLaVmo = Math.floor((a.vmoKt - 10) / 5) * 5;
+  return Math.max(indicadaDeSubida(a), Math.min(debajoDeLaVmo, Math.round(ias / 5) * 5));
 }
 
 /**

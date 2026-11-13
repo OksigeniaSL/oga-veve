@@ -16,8 +16,8 @@
  * - **Lo que el juego no necesita para volar** —el largo, el peso máximo al
  *   despegue, el alcance, el techo y las plazas— es de **su avión de
  *   referencia**, el que ya nombra cada ficha: el Cessna 172R para el JAZ 20,
- *   el Ag Cat para el JAZ 25, el Seneca II para el JAZ 40, el Twin Otter y el
- *   Beech 1900D para el JAZ 60, el Embraer 170 para el JAZ 90, el 787-9 para el
+ *   el Ag Cat para el JAZ 25, el Seneca II para el JAZ 40, el Beech 1900D para
+ *   el JAZ 60, el Embraer 170 para el JAZ 90, el 787-9 para el
  *   JAZ 110 y el 747-100 para el JAZ 120. Cada número lleva al lado de dónde se
  *   leyó.
  *
@@ -110,17 +110,20 @@ export const DE_SU_CLASE: Readonly<Record<string, DeSuClase>> = {
   },
   "jaz-60": {
     /*
-     * De dos, y se dice cuál es cuál: la cola en T y el largo son del 1900D
-     * (hoja de especificaciones de Raytheon), y el peso y el ala, del Twin
-     * Otter (ficha FAA A9EA), que son los que vuela el modelo de vuelo.
+     * Del 1900D entero desde el 13-11-2026 (ADR 0027). Era de dos aviones: la
+     * cola en T y el largo, del 1900D, y el peso y el ala, del Twin Otter.
      */
-    referencia: "DHC-6 Twin Otter serie 300 y Beechcraft 1900D",
-    // 57,8 ft.
-    largo: 17.62,
-    // 12.500 lb.
-    mtow: Math.round(12500 * LIBRA),
+    referencia: "Beechcraft 1900D",
+    // 57 ft 10 in, en la vista en tres planos del TAR 98/07 de la CAA de
+    // Nueva Zelanda.
+    largo: 17.63,
+    // 17.120 lb (FSF, *Accident Prevention*, mayo de 2004; TAR 98/07). Eran
+    // las 12.500 lb del Twin Otter.
+    mtow: Math.round(17120 * LIBRA),
+    // Sin cifra leída en su fuente: la de Raytheon con diecinueve de pasaje no
+    // se ha podido abrir.
     alcance: null,
-    // 25.000 ft, el techo certificado del 1900D y el del Twin Otter.
+    // 25.000 ft, la altitud máxima de operación del 1900D (TAR 98/07).
     techo: 25000 * PIE,
     // Diecinueve de pasaje y dos en cabina.
     plazas: 21,

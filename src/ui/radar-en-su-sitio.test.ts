@@ -92,7 +92,8 @@ describe("el tráfico en la carta, en las ocho direcciones", () => {
   const conTcas = AIRCRAFT.filter((a) => a.tcas);
 
   it("los cuatro aviones que lo llevan: el turbohélice y los tres reactores", () => {
-    expect(conTcas.map((a) => a.tcas)).toEqual(["TCAS I", "TCAS II", "TCAS II", "TCAS II"]);
+    // El turbohélice, con el TCAS II desde que es un 1900D de 7.766 kg.
+    expect(conTcas.map((a) => a.tcas)).toEqual(["TCAS II", "TCAS II", "TCAS II", "TCAS II"]);
   });
 
   for (const avion of conTcas)

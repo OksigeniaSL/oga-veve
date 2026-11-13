@@ -29,6 +29,19 @@
  *     aterrizar (manual de vuelo, sección 5).
  *   - JAZ 40 con el Piper Seneca II a 4.570 lb: 1.240 y 2.110 ft (tabla
  *     comparativa de la Grumman Owners and Pilots Association, aya.org).
+ * - **JAZ 60 con el Beech 1900D**, de la categoría de cercanías (14 CFR 23
+ *   hasta la enmienda 34), que publica las dos cosas de manera distinta:
+ *   - **para despegar, su longitud de campo**, ya con sus márgenes: 3.811 ft
+ *     a sus 17.120 lb, nivel del mar y día estándar (*Plane & Pilot*,
+ *     «Beechcraft 1900», 3.813; y 3.740 a las 16.950 lb del primero,
+ *     *Business & Commercial Aviation*, diciembre de 1991, que escaladas con
+ *     el cuadrado de la masa dan lo mismo). Es la equilibrada: la que deja
+ *     abortar o seguir con un motor parado, y como en los bimotores de
+ *     línea, es un techo;
+ *   - **para aterrizar, la distancia sin margen** desde los cincuenta pies:
+ *     2.790 ft (*Plane & Pilot*) a su máximo al aterrizar, 16.765 lb (FSF,
+ *     *Accident Prevention*, mayo de 2004). Los 4.667 ft de pista que se le
+ *     publican son esos partidos por 0,6.
  * - **Reactores**, la pista que publica el fabricante, que ya lleva los
  *   márgenes de su norma, contra la que pide el hangar con los mismos:
  *   - JAZ 120 con el 747-100 a 564.000 lb: unos 5.600 ft para despegar y 6.150
@@ -47,9 +60,9 @@
  * debajo. En el cuatrimotor manda la de todos los motores, y se compara de
  * frente.
  *
- * El JAZ 25, el fumigador, no tiene tipo con el que medirlo. El JAZ 60 se mide
- * y no se compara: es un tipo mezclado y su manual está por decidir (ver el ADR
- * 0027).
+ * El JAZ 25, el fumigador, no tiene tipo con el que medirlo. El JAZ 60 era un
+ * tipo mezclado —el ala y el peso del Twin Otter con la frenada del 1900D— y
+ * no se comparaba; desde el 13-11-2026 es un 1900D (ver el ADR 0027).
  *
  * ## Lo que salió al escribirlo
  *
@@ -58,14 +71,17 @@
  *            hangar  volado  manual       hangar  manual
  *   jaz-20     406     469     449          407     387   sin margen
  *   jaz-40     536     672     352          633     620   sin margen
+ *   jaz-60     983     959  ≤1.025          815     816   con / sin
  *   jaz-90   1.124   1.267  ≤1.151        1.243   1.123   con margen
  *   jaz-110  1.544   1.612  ≤1.800        1.591   1.800   con margen
  *   jaz-120  1.869   1.792   1.710        1.652   1.875   con margen
  * ```
  *
- * «Volado», en los reactores, es la distancia hasta los treinta y cinco pies
- * por 1,15; el hangar pide además la de abortar desde su V1 si es más larga,
- * que en el JAZ 90, el 110 y el 120 lo es (`acelerarYPararDeSuNorma`). La toma
+ * «Volado», en los reactores y en el 1900D, es la distancia hasta los treinta
+ * y cinco pies por 1,15; el hangar pide además la de abortar desde su V1 si es
+ * más larga, que en el JAZ 60, el 90, el 110 y el 120 lo es
+ * (`acelerarYPararDeSuNorma`). El JAZ 60 despega con margen —su longitud de
+ * campo— y aterriza sin él, que es como publica cada cosa. La toma
  * volada frena lo mismo que la cuenta, al uno por ciento, y el aire de la toma
  * es el de su clase en los dos.
  *
@@ -259,6 +275,11 @@ interface DelManual {
   readonly aterrizar: number;
   /** Si las cifras son de pista, con los márgenes, o de distancia, sin ellos. */
   readonly conMargen: boolean;
+  /**
+   * Si la de aterrizar va de otra manera que la de despegar: el 1900D publica
+   * la pista para despegar y la distancia sin margen para aterrizar.
+   */
+  readonly aterrizajeConMargen?: boolean;
   /** Si el despegue publicado es solo un techo: ver la cabecera. */
   readonly despegueEsTecho: boolean;
 }
@@ -295,6 +316,16 @@ const MANUALES: Readonly<Record<string, (a: AircraftConfig) => DelManual>> = {
     ),
   // El despegue de Embraer es con el pasaje lleno a quinientas millas: más
   // pesado que la ficha, así que no se escala, y es un techo.
+  "jaz-60": (a) => ({
+    ...escalado(
+      a,
+      { metros: 3811 * PIE, kilos: 17120 * LIBRA },
+      { metros: 2790 * PIE, kilos: 16765 * LIBRA },
+      true,
+      true,
+    ),
+    aterrizajeConMargen: false,
+  }),
   "jaz-90": (a) =>
     escalado(a, { metros: 1151, kilos: a.mass }, { metros: 1228, kilos: 32800 }, true, true),
   "jaz-110": (a) =>
@@ -318,7 +349,10 @@ describe("el despegue y la toma de cada avión, contra su manual", () => {
   for (const [id, manualDe] of Object.entries(MANUALES)) {
     const a = avion(id);
     const manual = manualDe(a);
-    const hangar = delHangar(a, manual.conMargen);
+    const hangar = {
+      despegar: delHangar(a, manual.conMargen).despegar,
+      aterrizar: delHangar(a, manual.aterrizajeConMargen ?? manual.conMargen).aterrizar,
+    };
 
     /*
      * La toma, con un diez por ciento a cada lado en la cuenta del hangar: las

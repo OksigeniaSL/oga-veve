@@ -3,8 +3,10 @@ El JAZ 60 *Arasunu*, modelado en Blender.
 
 El turbohélice regional: cola en T, diecinueve plazas y la fila de ventanillas
 que dice de lejos que esto lleva pasaje. Es el primero de la flota que ya no es
-una avioneta — cinco toneladas y media, veinte metros de ala— y el salto se
-tiene que notar al verlo aparcado al lado del Panambi.
+una avioneta —siete toneladas, dieciocho metros de ala— y el salto se tiene
+que notar al verlo aparcado al lado del Panambi. Es un Beech 1900D, con sus
+cotas: las de la vista en tres planos del 1900D en el *Type Acceptance Report*
+98/07 de la CAA de Nueva Zelanda (apéndice 2).
 
 **La cola en T es su silueta**, y no un adorno: el estabilizador va encima de
 la deriva, fuera de la estela del ala y de las hélices. Reconocerla es
@@ -42,37 +44,42 @@ from exterior import (  # noqa: E402
 
 # ── Las medidas, que son las de su ficha de vuelo ─────────────────────────
 #
-# De `src/flight/aircraft.ts`: envergadura 19,8 m, cuerda 2,0 y cinco toneladas
-# y media. El juego reescala el modelo a la envergadura de la ficha al
-# cargarlo, así que modelar con las de verdad es lo único que garantiza que no
-# se deforme.
-ENVERGADURA = 19.8
-CUERDA = 2.0
+# De `src/flight/aircraft.ts`: envergadura 17,66 m —57 ft 11,17 in hasta la
+# punta de los winglets— y cuerda media de 1,63, las del 1900D. Eran 19,8 y
+# 2,0, las del Twin Otter. El juego reescala el modelo a la envergadura de la
+# ficha al cargarlo, así que modelar con las de verdad es lo único que
+# garantiza que no se deforme: con el largo del 1900D y el ala del otro, el
+# avión entero salía estirado de lado.
+ENVERGADURA = 17.66
+CUERDA = 1.63
 MORRO = -7.60
-COLA = 9.60
+# 57 ft 10 in de morro a cola, 17,63 m.
+COLA = 10.03
 
 ALA_Y = -0.55
 ALA_Z = -0.95
 DIEDRO = math.radians(6.5)
 
-# Los motores. Hélice de dos metros sesenta y cuatro, que es lo que mueve un
-# turbohélice de este porte, y por eso van a tres metros diez del eje: la punta
-# de pala pasa a ochenta centímetros del costado.
-MOTOR = 3.10
-RADIO_HELICE = 1.32
-EJE_HELICE = -0.50
+# Los motores, a 8 ft 7 in del eje —2,62 m, la mitad de la vía, porque el
+# tren se mete en la góndola— con su hélice de 9 ft 2 in, 2,79 m. Eran 3,10 y
+# 2,64, a ojo de su clase.
+MOTOR = 2.62
+RADIO_HELICE = 1.40
+# La punta de la pala pasa a 35 cm del suelo (13,82 in): con el tren de abajo,
+# el eje de la hélice va a 1,75 m.
+EJE_HELICE = -0.35
 Z_HELICE = -2.86
 
-# El tren: 2,2 m del eje al suelo, el `gearHeight` de su ficha. Las ruedas,
-# treinta centímetros por debajo de la punta de la pala: ese hueco es lo que
-# decide lo largas que son las patas en un avión de ala baja con hélices
-# grandes.
-TREN = 2.20
+# El tren: 2,1 m del eje al suelo, el `gearHeight` de su ficha, que deja la
+# cola en T a 4,54 m —14 ft 10,8 in—. Las ruedas, treinta y cinco centímetros
+# por debajo de la punta de la pala: ese hueco es lo que decide lo largas que
+# son las patas en un avión de ala baja con hélices grandes.
+TREN = 2.10
 RUEDA = 0.39
 RUEDA_MORRO = 0.30
 PRINCIPAL_Z = 0.30
-# La batalla de la ficha: 7,21 m.
-MORRO_Z = PRINCIPAL_Z - 7.21
+# La batalla de la ficha: 7,25 m, 23 ft 9,35 in.
+MORRO_Z = PRINCIPAL_Z - 7.25
 
 SALIDA = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -97,6 +104,7 @@ PIEL = Piel([
     (6.60, 0.62, 0.88, -0.22),
     (8.10, 0.40, 0.83, 0.18),
     (9.20, 0.20, 0.78, 0.46),
+    (9.65, 0.13, 0.76, 0.53),
     (COLA, 0.08, 0.74, 0.58),
 ])
 
@@ -242,29 +250,30 @@ def construir():
     # hora. Flaps de dentro y de fuera del motor y alerones en la punta.
     semi = ENVERGADURA / 2
     estaciones = [
-        de_ala(0.0, y_ala(0.0), ALA_Z, 2.60, 0.17, 6.5, 2.0),
-        de_ala(MOTOR, y_ala(MOTOR), ALA_Z + 0.10, 2.35, 0.16, 6.5, 1.5),
+        # Las cuerdas, las que dan sus 28,8 m² con esta envergadura.
+        de_ala(0.0, y_ala(0.0), ALA_Z, 2.20, 0.17, 6.5, 2.0),
+        de_ala(MOTOR, y_ala(MOTOR), ALA_Z + 0.10, 2.05, 0.16, 6.5, 1.5),
         # Menos la punta redonda, que sobresale medio espesor.
-        de_ala(semi - 0.07, y_ala(semi), ALA_Z + 0.45, 1.15, 0.12, 6.5, -1.0),
+        de_ala(semi - 0.07, y_ala(semi), ALA_Z + 0.40, 0.85, 0.12, 6.5, -1.0),
     ]
     j = "oscuro"
     # El de dentro acaba **antes de la góndola**, no en la junta pintada de
     # detrás de ella: un flap no baja a través de un motor. El trozo de
     # encima de la góndola se queda quieto, como el carenado de detrás del
     # motor de un turbohélice de verdad. Ver `jaz-40-panambi.py`.
-    flaps = [flap("dentro", 1.02, 2.64, 0.73), flap("fuera", 3.70, 6.3, 0.73)]
+    flaps = [flap("dentro", 1.02, 2.15, 0.73), flap("fuera", 3.17, 5.54, 0.73)]
     # **Y el alerón, que se mueve**: veinticuatro grados arriba y diecisiete
     # abajo, los del Beech 1900D en su ficha de tipo (FAA A24CE, hoja X).
     # Ver `mando`.
-    alerones = [mando("aleron", 6.45, 9.35, 0.755, "alabeo", 24, 17)]
+    alerones = [mando("aleron", 5.68, 8.33, 0.755, "alabeo", 24, 17)]
     ala = superficie("ala", estaciones, curvatura=0.02, flaps=flaps,
                      mandos=alerones, zonas=[
-        (j, 0.95, 6.3, 0.715, 0.73),
+        (j, 0.95, 5.54, 0.715, 0.73),
         (j, 0.95, 1.02, 0.73, 1.0),
-        (j, 3.62, 3.70, 0.73, 1.0),
-        (j, 6.3, 6.38, 0.73, 1.0),
-        (j, 6.45, 9.4, 0.74, 0.755),
-        (j, 9.35, 9.42, 0.755, 1.0),
+        (j, 3.10, 3.17, 0.73, 1.0),
+        (j, 5.54, 5.61, 0.73, 1.0),
+        (j, 5.68, 8.38, 0.74, 0.755),
+        (j, 8.33, 8.40, 0.755, 1.0),
     ])
     piezas.append(ala)
     # Ranurados, con los topes de un turbohélice de diecinueve plazas: diez,
@@ -313,8 +322,9 @@ def construir():
 
     # ── Cola en T ─────────────────────────────────────────────────────────
     #
-    # **Aquí está la silueta.** La deriva sube dos metros y medio sobre el lomo
-    # y el estabilizador va **en su punta**, no en el fuselaje: esa T es lo que
+    # **Aquí está la silueta.** La deriva sube metro y medio sobre el lomo
+    # —hasta los 4,54 m del suelo del 1900D; eran dos y medio, los de la cola
+    # del Twin Otter— y el estabilizador va **en su punta**, no en el fuselaje: esa T es lo que
     # separa a este avión del Panambi de un vistazo, y es la razón de que la
     # ficha le ponga menos actitud en tierra que a los demás —una cola en T no
     # perdona rotar de más, porque al hacerlo se mete ella sola en la estela
@@ -323,7 +333,7 @@ def construir():
     # Y el estabilizador sale de la punta de la deriva, no de un número
     # escrito aparte: si se escribieran los dos por separado, mover la deriva
     # dejaría el plano flotando en el aire.
-    alto = 3.55
+    alto = 2.28
     punta_z = 7.30
     punta_c = 1.75
     #
@@ -340,7 +350,7 @@ def construir():
         de_deriva(0.0, alto, punta_z, punta_c, 0.12),
     ]
     pie = largo_hasta(de_la_deriva, 1)
-    techo = pie + (3.30 - 1.10) / (alto - 1.10) * (
+    techo = pie + (alto - 0.25 - 1.10) / (alto - 1.10) * (
         largo_hasta(de_la_deriva, 2) - pie)
     timon = [mando("timon-de-direccion", pie, techo, 0.675, "guinada",
                    25, 25)]
@@ -355,12 +365,13 @@ def construir():
     # **El estabilizador, del color del casco**, como en su ilustración: la T
     # se lee por su forma, blanca encima de la deriva verde. Iba del color de
     # la franja, y con la franja terracota era una T de otro avión.
-    profundidad = [mando("profundidad", 0.3, 3.2, 0.64, "cabeceo", 20, 14)]
+    # 18 ft 5,8 in de punta a punta, 5,63 m; eran 6,9.
+    profundidad = [mando("profundidad", 0.3, 2.6, 0.64, "cabeceo", 20, 14)]
     estabilizador = superficie("estabilizador", [
         de_ala(0.0, alto - 0.02, punta_z - 0.05, 1.85, 0.11),
-        de_ala(3.45, alto - 0.02, punta_z + 0.55, 1.00, 0.10),
+        de_ala(2.82, alto - 0.02, punta_z + 0.45, 1.00, 0.10),
     ], material_="casco", mandos=profundidad, zonas=[
-        ("oscuro", 0.3, 3.2, 0.62, 0.64),
+        ("oscuro", 0.3, 2.6, 0.62, 0.64),
     ])
     piezas.append(estabilizador)
     piezas += mandos_moviles(estabilizador, profundidad)
@@ -441,7 +452,7 @@ def construir():
                                 "bala-de-cola"))
     mandos_libres(profundidad, mallas("deriva", "timon-", "bala-de-cola"))
 
-    piezas.append(centro_de_gravedad(ALA_Z + 0.08 + 2.2 * 0.27))
+    piezas.append(centro_de_gravedad(ALA_Z + 0.08 + 1.9 * 0.27))
     return piezas
 
 
