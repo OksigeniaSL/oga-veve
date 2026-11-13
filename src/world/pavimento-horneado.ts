@@ -30,18 +30,19 @@
  * Cabecera de 48 bytes —firma, versión, huella, celda, esquina y tamaño— y
  * después la rejilla en carreras: cuántas celdas seguidas valen lo mismo, en
  * base 128, y ese valor en un byte. Casi toda la rejilla es hierba o asfalto
- * a la cota de su resalte, así que las carreras son largas. Y todo eso, en
- * gzip: Barajas son once megas de rejilla, 149 KB en carreras y 43 KB
- * comprimidas. Se comprime en el fichero y no se confía en el servidor, que
- * a un binario no le suele poner compresión ninguna.
+ * a la cota de su resalte, así que las carreras son largas: Barajas son once
+ * megas de rejilla y 149 KB en carreras.
  *
- * Se abre con `DecompressionStream`, del navegador. Donde no lo hay —el
- * Firefox 98 que se prueba— no se baja nada y la rejilla se hace en el
- * navegador, que es lo de antes.
+ * Y viaja en gzip, 43 KB, como los relieves: en `data/aerodromes` van en
+ * crudo y se comprimen al empaquetar —`relievesComprimidos` en
+ * `vite.config.ts` comprime todo `.bin`—, porque el servidor no sabe qué es
+ * un `.bin` y no lo comprime. Se abren con lo mismo que los relieves,
+ * `descomprimirGzip`, que sin `DecompressionStream` tira de `desgzip`.
  */
 import type { Mesh } from "three";
 import type { RejillaDelPavimento } from "./mapa-del-pavimento";
 import { conPlazo, PLAZO_DE_DATO } from "../datos/con-plazo";
+import { descomprimirGzip } from "../navegador-viejo";
 
 /** «OVPV» al principio del fichero, para no leer como rejilla lo que no lo es. */
 const FIRMA = 0x5650564f;
@@ -221,26 +222,18 @@ export async function cargarPavimentoHorneado(id: string | null | undefined): Pr
   if (!id || BAJADOS.has(id)) return;
   const ruta = Object.entries(HORNEADOS).find(([k]) => k.endsWith(`/${ficheroDelPavimento(id)}`))?.[1];
   if (!ruta) return;
-  if (typeof DecompressionStream === "undefined") return;
   try {
     const res = await conPlazo(fetch(ruta), PLAZO_DE_DATO, `el pavimento de ${id}`);
     if (!res?.ok) return;
-    const bytes = await abrir(new Uint8Array(await res.arrayBuffer()));
-    if (bytes) BAJADOS.set(id, bytes);
+    // Comprimido al empaquetar y en crudo en desarrollo: lo dice la cabecera,
+    // que la nuestra empieza por «OV» y no por los `1f 8b` del gzip.
+    const llegado = await res.arrayBuffer();
+    const v = new Uint8Array(llegado, 0, Math.min(2, llegado.byteLength));
+    const bytes = v[0] === 0x1f && v[1] === 0x8b ? await descomprimirGzip(llegado) : llegado;
+    BAJADOS.set(id, new Uint8Array(bytes));
   } catch {
     // Sin el fichero se hace la cuenta: es lo que se hacía antes de tenerlo.
   }
-}
-
-/**
- * Los bytes del fichero, sin el gzip. Y si llegan ya abiertos —hay servidores
- * que sirven un gzip con su cabecera de compresión y el navegador lo abre por
- * su cuenta—, tal cual: lo dicen los dos primeros bytes.
- */
-async function abrir(bytes: Uint8Array): Promise<Uint8Array | null> {
-  if (bytes[0] !== 0x1f || bytes[1] !== 0x8b) return bytes;
-  const flujo = new Blob([bytes as Uint8Array<ArrayBuffer>]).stream().pipeThrough(new DecompressionStream("gzip"));
-  return new Uint8Array(await new Response(flujo).arrayBuffer());
 }
 
 /**

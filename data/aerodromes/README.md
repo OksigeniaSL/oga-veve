@@ -35,6 +35,27 @@ node scripts/osm-a-aerodromo.mjs SGAS GCXO
 Hace falta conexión. Tarda un par de minutos: la mayor parte es descargar los
 CSV de OurAirports, que son grandes.
 
+## La rejilla del pavimento, horneada
+
+Cada `<id>.pavimento.bin` es la rejilla de dos metros con la que las ruedas
+pisan el asfalto dibujado de ese aeródromo, hecha por el propio juego y
+guardada para no hacerla en cada arranque. Es un dato derivado de la geometría
+de aquí y del relieve de `data/terrain/`, y va con la licencia de esta
+carpeta. Ver el ADR 0028.
+
+Después de regenerar un aeródromo, de tocar cómo se dibuja su asfalto o de
+cambiar su relieve, se vuelve a hornear:
+
+```
+npm run pavimento                  # todos
+npm run pavimento -- barajas       # uno, por escenario
+npm run pavimento -- --comprobar   # sin escribir: ¿cuadran con la cuenta del juego?
+```
+
+Una rejilla vieja no rompe nada: el juego ve que su huella no es la del
+dibujo que tiene delante y la hace él, como antes. Lo que se pierde es lo que
+ahorra.
+
 ## Lo que hay que retocar a mano
 
 El extractor **no inventa nada**. Lo que no está en ninguna de las dos

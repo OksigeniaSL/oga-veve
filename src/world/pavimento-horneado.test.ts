@@ -27,8 +27,8 @@ import {
 } from "./pavimento-horneado";
 
 /*
- * **El `fs` y el `zlib` de Node pedidos en marcha**, como en
- * `compilacion.test.ts`: importarlos por su nombre obligaría a meter los
+ * **El `fs` de Node pedido en marcha**, como en
+ * `compilacion.test.ts`: importarlo por su nombre obligaría a meter los
  * tipos de Node en el `tsconfig`.
  */
 const nodo = (
@@ -39,9 +39,6 @@ const nodo = (
 const { readdirSync, readFileSync } = nodo.getBuiltinModule("node:fs") as {
   readdirSync(ruta: string): string[];
   readFileSync(ruta: string): Uint8Array;
-};
-const { gunzipSync } = nodo.getBuiltinModule("node:zlib") as {
-  gunzipSync(b: Uint8Array): Uint8Array;
 };
 const leerTexto = (ruta: string): string => new TextDecoder().decode(readFileSync(ruta));
 const igual = (a: Int8Array, b: Int8Array): boolean =>
@@ -137,7 +134,7 @@ describe("los ficheros horneados", () => {
 
   it("se leen enteros y son de esta versión", () => {
     for (const f of horneados) {
-      const bytes = new Uint8Array(gunzipSync(readFileSync(`${carpeta}/${f}`)));
+      const bytes = new Uint8Array(readFileSync(`${carpeta}/${f}`));
       expect(huellaDeLaRejilla(bytes), f).not.toBeNull();
       const r = descodificarRejilla(bytes);
       expect(r, f).not.toBeNull();

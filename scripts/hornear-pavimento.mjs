@@ -30,13 +30,13 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { gunzipSync, gzipSync } from "node:zlib";
+import { gzipSync } from "node:zlib";
 import { baseDe } from "./servidor.mjs";
 
 const argumentos = process.argv.slice(2);
 const COMPROBAR = argumentos.includes("--comprobar");
 const PEDIDOS = argumentos.filter((a) => !a.startsWith("--"));
-const PUERTO = Number(process.env.OGA_PUERTO ?? 5289);
+const PUERTO = Number(process.env.OGA_PUERTO ?? 5290);
 const CARPETA = resolve("data/aerodromes");
 
 // El suelo de la fotografía no se hornea: ver arriba.
@@ -95,8 +95,7 @@ try {
     }
     const bytes = Buffer.from(hecha.base64, "base64");
     if (COMPROBAR) {
-      // Se compara lo de dentro: el gzip puede salir distinto de una versión de zlib a otra.
-      const guardado = existsSync(fichero) ? gunzipSync(readFileSync(fichero)) : null;
+      const guardado = existsSync(fichero) ? readFileSync(fichero) : null;
       const igual = !!guardado && guardado.equals(bytes);
       if (!igual || !usada) malos++;
       console.log(
@@ -109,11 +108,11 @@ try {
               : `vieja: la cuenta de ahora tiene la huella ${hecha.huella}; hay que hornear`),
       );
     } else {
-      const comprimido = gzipSync(bytes, { level: 9 });
-      writeFileSync(fichero, comprimido);
+      // En crudo, como los relieves: se comprime al empaquetar. Ver `relievesComprimidos`.
+      writeFileSync(fichero, bytes);
       console.log(
-        `  ${escenario} (${id}): ${(comprimido.length / 1024).toFixed(1)} KB ` +
-          `(${(bytes.length / 1024).toFixed(1)} KB sin comprimir), huella ${hecha.huella}`,
+        `  ${escenario} (${id}): ${(bytes.length / 1024).toFixed(1)} KB, ` +
+          `${(gzipSync(bytes, { level: 9 }).length / 1024).toFixed(1)} KB al empaquetar; huella ${hecha.huella}`,
       );
     }
   }
