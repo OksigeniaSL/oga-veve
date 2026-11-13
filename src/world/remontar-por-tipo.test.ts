@@ -270,15 +270,15 @@ describe("remontar la pista según el avión", () => {
     expect(radio).toBeLessThan(9);
   });
 
-  it("en Estigarribia, por la 19, salen desde la calle; el de fuselaje ancho, una tarde de calor del Chaco con viento de cola, remonta", () => {
+  it("en Estigarribia, por la 19, salen desde la calle; el de fuselaje ancho, una tarde de calor del Chaco con viento de cola, pide un tercio más", () => {
     const pykasu = AIRCRAFT.find((a) => a.id === "jaz-20")!;
     const jaz90 = AIRCRAFT.find((a) => a.id === "jaz-90")!;
     const jaz120 = AIRCRAFT.find((a) => a.id === "jaz-120")!;
     /*
      * Un día de tablas le dan a los tres los 2.948 m que quedan desde la calle:
-     * el de fuselaje ancho necesita unos 2.400 con el 1,15 de su
+     * el de fuselaje ancho necesita unos 1.715 con el 1,15 de su
      * certificación, porque un reactor despega en 1,39 veces su rodadura y no
-     * en el 1,8 de una avioneta. Ver `deRodarADespegarHoy` en `carrera.ts`.
+     * en el 1,8 de una avioneta, y rota a la Vr de su peso (ADR 0027).
      */
     for (const avion of [pykasu, jaz90, jaz120]) {
       const r = entrada(ESTIGARRIBIA, avion, 180)!;
@@ -287,8 +287,10 @@ describe("remontar la pista según el avión", () => {
       expect(r.sale!.porDelante, avion.id).toBeGreaterThan(2900);
     }
     // Y una tarde de 38 grados con cinco metros por segundo de cola —en el
-    // Chaco no es raro—, el grande ya no cabe desde la calle: pide la pista
-    // entera.
+    // Chaco no es raro— el grande pide un tercio más de pista: 2.298 m. Con la
+    // Vr de su peso máximo pedía más de los 2.948 de la calle y remontaba; con
+    // la de su peso le siguen dando, como a un 747 de verdad a esta masa, que
+    // pediría unos 2.700 (ADR 0027).
     const cota = 155;
     const tarde: DiaDeDespegue = {
       densidad: airDensity(cota, aireDelParte(38, cota)),
@@ -296,33 +298,40 @@ describe("remontar la pista según el avión", () => {
       superficie: "asfalto",
     };
     const grande = entrada(ESTIGARRIBIA, jaz120, 180, tarde)!;
-    expect(grande.sale!.necesitaHoy).toBeGreaterThan(grande.sale!.desdeLaEntrada);
-    expect(grande.sale!.desde).toBe("remonte");
-    expect(grande.sale!.hastaElFinal).toBe(true);
-    expect(grande.sale!.porDelante).toBeGreaterThan(3450);
+    const tablas = entrada(ESTIGARRIBIA, jaz120, 180)!;
+    expect(grande.sale!.necesitaHoy).toBeGreaterThan(tablas.sale!.necesitaHoy * 1.25);
+    expect(grande.sale!.necesitaHoy).toBeLessThan(grande.sale!.desdeLaEntrada);
+    expect(grande.sale!.porQue).not.toBeNull();
   });
 
+  /*
+   * **En El Hierro, y no en Pedro Juan Caballero**, desde que el Seneca despega
+   * con su proporción de verdad (ADR 0027): en Pedro Juan la calle le deja 877 m
+   * y ni una tarde de 38 grados le pide tanto —831—. En El Hierro, con el viento
+   * del norte, la calle le deja 725 y un día de tablas pide 713.
+   */
   it("la misma avioneta, en el mismo campo: sale desde la calle un día de tablas y remonta una tarde de calor", () => {
-    // Pedro Juan Caballero, 571 m, por la 21: la calle deja 924 m al bimotor.
     const jaz40 = AIRCRAFT.find((a) => a.id === "jaz-40")!;
-    const fresco = entrada(PEDRO_JUAN, jaz40, 210)!;
+    const fresco = entrada(EL_HIERRO, jaz40, 0)!;
     expect(fresco.sale!.desde).toBe("interseccion");
-    const cota = 571;
+    const cota = 30;
     const calor: DiaDeDespegue = {
       densidad: airDensity(cota, aireDelParte(38, cota)),
       vientoDeFrente: 0,
       superficie: "asfalto",
     };
-    const caliente = entrada(PEDRO_JUAN, jaz40, 210, calor)!;
+    const caliente = entrada(EL_HIERRO, jaz40, 0, calor)!;
     expect(caliente.sale!.desde).toBe("remonte");
-    expect(caliente.sale!.porQue).toBe("calor");
-    expect(caliente.sale!.necesitaHoy).toBeGreaterThan(fresco.sale!.necesitaHoy * 1.1);
+    // Un 9 % más: al nivel del mar el calor solo no llega a la décima con la
+    // que `porQueHoyMasPista` lo cuenta como el porqué. En Pedro Juan, a 571 m,
+    // eran un 17 %.
+    expect(caliente.sale!.necesitaHoy).toBeGreaterThan(fresco.sale!.necesitaHoy * 1.05);
   });
 
   it("y con viento de cola, también, y dice que es por el viento", () => {
     const jaz40 = AIRCRAFT.find((a) => a.id === "jaz-40")!;
     const cola: DiaDeDespegue = { densidad: 1.225, vientoDeFrente: -4, superficie: "asfalto" };
-    const r = entrada(PEDRO_JUAN, jaz40, 210, cola)!;
+    const r = entrada(EL_HIERRO, jaz40, 0, cola)!;
     expect(r.sale!.desde).toBe("remonte");
     expect(r.sale!.porQue).toBe("cola");
   });
@@ -350,4 +359,5 @@ describe("remontar la pista según el avión", () => {
     expect(remontaGrande).toBeGreaterThan(2800);
     expect(grande.sale!.hastaElFinal).toBe(true);
   });
+
 });

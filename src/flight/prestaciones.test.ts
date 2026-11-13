@@ -107,6 +107,7 @@ const TODOS = [...AIRCRAFT, ...RESERVADOS];
 import { neutralControls } from "./model";
 import { resistenciaDelTren } from "./tren";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
+import { FLAPS_DE_DESPEGUE, perdidaCon } from "./velocidades-de-despegue";
 import {
   derivadasDeLaFicha,
   modosDe,
@@ -384,11 +385,18 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
      * Y las dos de la carrera de despegue, en su orden: se rota por encima de
      * la pérdida —si no, el avión se levanta y se cae— y la de decisión va
      * antes que la de rotación, que es lo que significa.
+     *
+     * **La pérdida con los flaps de despegue, no la limpia**, por lo mismo que
+     * la Vref va con la de aterrizar: se despega con ellos puestos. Un avión de
+     * línea rota por debajo de su pérdida limpia —el 747-100 a la masa de su
+     * ficha rota a 145 nudos y pierde limpio a 147— y es lo correcto: ver
+     * `VR_SOBRE_LA_PERDIDA` y el ADR 0027.
      */
     it("rota por encima de la pérdida y después de la de decisión", () => {
-      expect(a.rotationSpeed).toBeGreaterThan(vs * 1.02);
+      const vsDespegue = perdidaCon(a, FLAPS_DE_DESPEGUE);
+      expect(a.rotationSpeed).toBeGreaterThan(vsDespegue * 1.02);
       expect(a.rotationSpeed).toBeGreaterThan(a.decisionSpeed);
-      expect(a.decisionSpeed).toBeGreaterThan(vs);
+      expect(a.decisionSpeed).toBeGreaterThan(vsDespegue);
     });
 
     /*
@@ -625,7 +633,10 @@ function planeoConActitud(
 /** Lo más que sube, y a qué velocidad. A tope. */
 function mejorAscenso(a: AircraftConfig): { subida: number; a: number } {
   let mejor = { subida: -99, a: 0 };
-  for (let v = a.rotationSpeed; v <= a.cruiseSpeed; v += 1.5) {
+  // Limpio, que es como se sube: por encima de su pérdida sin flaps, que en un
+  // reactor ya está por encima de la Vr. Ver `VR_SOBRE_LA_PERDIDA`.
+  const desde = Math.max(a.rotationSpeed, perdidaDeLaFicha(a) * 1.1);
+  for (let v = desde; v <= a.cruiseSpeed; v += 1.5) {
     const m = nuevo(a, v, 500);
     const paso = () => {
       const e = Math.max(-0.5, Math.min(0.5, (m.state.airspeed - v) * 0.06));
@@ -680,6 +691,9 @@ function carreraDeDespegue(
       ...neutralControls(),
       engineOn: true,
       throttle: 1,
+      // Con los flaps de despegue, que es como se despega: con la Vr de su
+      // peso, un reactor sin ellos no se va del suelo hasta mucho después.
+      flaps: FLAPS_DE_DESPEGUE,
       // Se tira al llegar a Vr, que es lo que hace quien pilota.
       elevator: v >= a.rotationSpeed ? 0.55 : 0,
     });

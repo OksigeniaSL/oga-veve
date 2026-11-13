@@ -200,7 +200,8 @@ tres de la pista:
   en la suya, como estaba previsto, y cabe en todas partes. Al Seneca se le
   deja el 1,8 de despegue y no su 1,43: con su frenada todavía corta, cabría
   en la hierba de la granja, donde el de verdad no aterriza con su margen
-  (ver `deRodarADespegar`).
+  (ver `deRodarADespegar`). **Cambiado el 13 de noviembre**: con la frenada de
+  su manual lleva ya su 1,43 y no cabe en la granja por la toma (ADR 0027).
 - **La cuenta del día en la intersección** sigue midiendo la pista desde la
   geometría y no desde la TORA publicada; en Lanzarote por la 21 y en La Palma
   por la 18 eso son 90 y 142 m que no se pueden correr.

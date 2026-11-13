@@ -51,6 +51,7 @@ describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
 
 it("el JAZ 120 ya no se va a ciento veinte nudos", () => {
   const a = AIRCRAFT.find((x) => x.id === "jaz-120")!;
-  // Su Vr de reactor grande: ciento sesenta y siete nudos.
-  expect(a.rotationSpeed / 0.514444).toBeGreaterThan(160);
+  // Su Vr de reactor grande a la masa de su ficha: ciento cuarenta y cinco
+  // nudos. Eran 167, la de su peso máximo al despegar (ADR 0027).
+  expect(a.rotationSpeed / 0.514444).toBeGreaterThan(140);
 });

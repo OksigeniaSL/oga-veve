@@ -239,13 +239,15 @@ export function elQueQuepa(
  * aplicaba al campo del que se sale y a ninguno más, o sea a la mitad del
  * vuelo. Desde Los Rodeos con el de fuselaje ancho, el juego cargaba La
  * Gomera, El Hierro y La Palma, las pintaba en la carta y dejaba poner rumbo
- * a ellas — y ese avión no cabe en ninguna de las tres: pide 2.361 m de TORA
- * y la más larga, La Palma, tiene 2.200. No hay pilotaje que arregle eso, y la
- * consecuencia no enseña nada porque el error no fue de quien volaba.
+ * a ellas — y ese avión, con la Vr de su peso máximo, no cabía en ninguna de
+ * las tres: pedía 2.361 m de TORA y la más larga, La Palma, tiene 2.200. No
+ * hay pilotaje que arregle eso, y la consecuencia no enseña nada porque el
+ * error no fue de quien volaba.
  *
- * Filtrado, desde Los Rodeos el grande tiene Tenerife Sur y Gran Canaria y la
- * avioneta las cinco, que es lo que pasa de verdad: a La Gomera no va el
- * de fuselaje ancho, y por este mismo motivo.
+ * Filtrado, desde Los Rodeos el grande tiene Tenerife Sur, Gran Canaria y La
+ * Palma —con la Vr de su peso pide 1.869, ADR 0027— y la avioneta las cinco,
+ * que es lo que pasa de verdad: a La Gomera y a El Hierro no va el de fuselaje
+ * ancho, y por este mismo motivo.
  */
 export function destinosParaEsteAvion<T extends Scenario>(
   a: AircraftConfig,

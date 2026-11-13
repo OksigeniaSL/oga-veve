@@ -35,6 +35,7 @@ import {
   type AircraftConfig,
 } from "./aircraft";
 import { resistenciaDelTren } from "./tren";
+import { acelerarYParar, vmc } from "./velocidades-de-despegue";
 import { esDeLinea } from "./velocidades-en-tierra";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 import {
@@ -243,18 +244,18 @@ export function pistaNecesariaHoy(a: AircraftConfig, dia: DiaDeDespegue = DIA_DE
  *   la proporción sin él queda algo por debajo, y el 1,8 cae dentro.
  * - **El Seneca II**, la del JAZ 40, rueda 870 ft y pasa los cincuenta pies a
  *   los 1.240, a sus 4.570 lb: 1,43 (tabla comparativa de la Grumman Owners
- *   and Pilots Association, aya.org). **Y aun así se le deja el 1,8**, porque
- *   su toma en esta cuenta sale corta: 538 m desde los cincuenta pies —229 en
- *   el aire y 309 rodando—, donde esa misma tabla da 2.110 ft, 643 m —222 en
- *   el aire y 1.380 ft, 421 m, rodando—. El aire ya es el suyo (ver
- *   `enPlaneoDesdeElUmbral`); lo que falta es la frenada. Con el 1,43 y esa
- *   toma corta, el bimotor pasaría a caber en los novecientos metros de hierba
- *   de la granja —834 m para despegar y 890 para aterrizar—, y uno de verdad
- *   no aterriza ahí con el margen de su clase: 643 m por el 1,15 de la hierba,
- *   entre 0,7, son 1.056. Bajarlo va con su frenada, no antes (12-11-2026).
+ *   and Pilots Association, aya.org). **Lleva la suya**, en su ficha, desde
+ *   que frena como su manual: rodaba 309 m al aterrizar donde esa tabla da
+ *   1.380 ft, y con esa toma corta y el 1,43 cabía en los novecientos metros
+ *   de hierba de la granja, donde uno de verdad no aterriza con el margen de
+ *   su clase. Con su frenada, 404 m, la toma en hierba le pide 1.019 y no cabe,
+ *   por la toma, como el de verdad (H7, 13-11-2026).
+ *
+ * El avión que publica las dos cifras lleva la suya en `deRodarADespegar` de
+ * su ficha; el que no, la de su clase.
  */
 export function deRodarADespegar(a: AircraftConfig): number {
-  return esDeChorro(a) ? 2500 / 1800 : 1.8;
+  return a.deRodarADespegar ?? (esDeChorro(a) ? 2500 / 1800 : 1.8);
 }
 
 /**
@@ -311,8 +312,8 @@ export const FACTOR_DE_ESCUELA = 1.33;
  * los aeródromos del juego siguen siendo los mismos— y por encima manda lo que
  * corre este avión. Con el Pykasu la cuenta da quinientos cuarenta, por debajo
  * del suelo, así que **no cambia nada de lo que ya estaba medido**. Con el
- * JAZ 120 da dos mil setecientos —eran tres mil quinientos con el 1,8 de
- * rodar a despegar que llevaba antes—, que es tanto como decir que a ese
+ * JAZ 120 da casi dos mil —eran tres mil quinientos con el 1,8 de rodar a
+ * despegar y la Vr de su peso máximo—, que es tanto como decir que a ese
  * avión no se le entra por una intersección casi nunca: se hace el back-taxi
  * hasta la cabecera, como en la vida real.
  */
@@ -373,8 +374,7 @@ export function remontaHastaLaCabecera(a: AircraftConfig): boolean {
  *
  * **No estaba, y hace falta tanto como la de despegue.** Un avión que cabe
  * despegando puede no caber aterrizando: llega más rápido de lo que sale y con
- * el peso todavía alto, y frenar cuesta más que acelerar. El JAZ 120 rueda
- * 1.423 m hasta la rotación y necesita más del doble para pararse.
+ * el peso todavía alto, y frenar cuesta más que acelerar.
  *
  * Son dos trozos, como en cualquier manual:
  *
@@ -617,7 +617,9 @@ export function parteDeLaLda(a: AircraftConfig): {
  *
  * - **Despegar**: la distancia de despegue —la rodadura por la proporción de
  *   su clase, `deRodarADespegar`— por el margen de su clase,
- *   `margenDeSuClase`. Es `pistaNecesariaHoy` en un día de tablas.
+ *   `margenDeSuClase`. Es `pistaNecesariaHoy` en un día de tablas. Y en el de
+ *   línea de más de un motor, no menos que la de abortar desde su V1:
+ *   `acelerarYPararDeSuNorma`.
  * - **Aterrizar**: la distancia de aterrizaje partida por la parte de la LDA
  *   que se puede gastar, `parteDeLaLda`.
  *
@@ -635,7 +637,27 @@ export function pistaQueNecesita(
   superficie: Superficie = "asfalto",
 ): { readonly despegar: number; readonly aterrizar: number } {
   return {
-    despegar: pistaNecesariaHoy(a, { ...DIA_DE_TABLAS, superficie }),
+    despegar: Math.max(
+      pistaNecesariaHoy(a, { ...DIA_DE_TABLAS, superficie }),
+      acelerarYPararDeSuNorma(a),
+    ),
     aterrizar: distanciaDeAterrizaje(a, superficie) / parteDeLaLda(a).parte,
   };
+}
+
+/**
+ * **La distancia de acelerar y parar**, m, en el avión de línea de más de un
+ * motor: correr hasta su V1 —la de la ficha, y nunca por debajo de su Vmc—,
+ * dos segundos decidiendo y frenar a fondo hasta pararse. Cero en los demás.
+ *
+ * La longitud de campo de un avión de transporte es la mayor de las dos: la de
+ * todos los motores por 1,15 y la de abortar (CS 25.109 y 25.113, y la ASDA de
+ * CAT.POL.A.210). Con las Vr de su peso, en el JAZ 120 manda la de abortar:
+ * 1.869 m contra 1.715, porque su Vmc, 139,5 nudos, no deja bajar la V1 de 140
+ * (ADR 0027). La avioneta y el bimotor de pistón no la cuentan: su norma de
+ * despegue es la distancia hasta los cincuenta pies (CAT.POL.A.305).
+ */
+export function acelerarYPararDeSuNorma(a: AircraftConfig): number {
+  if (!esDeLinea(a) || a.motoresA.length < 2) return 0;
+  return acelerarYParar(a, Math.max(a.decisionSpeed, vmc(a) ?? 0));
 }

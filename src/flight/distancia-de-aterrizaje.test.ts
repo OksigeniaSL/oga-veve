@@ -332,9 +332,13 @@ describe("y en la ficha", () => {
     expect(avion("jaz-60").frenosDeTierra).toBeNull();
   });
 
+  /*
+   * Y el Seneca, por debajo: 0,23, que es lo que hace rodar lo que dice su
+   * manual. Frena como su tipo, no como su clase (ADR 0027).
+   */
   it("frenan entre tres décimas y media g, según su clase", () => {
     for (const a of AIRCRAFT) {
-      expect(a.frenos.enSeco, a.id).toBeGreaterThanOrEqual(0.3);
+      expect(a.frenos.enSeco, a.id).toBeGreaterThanOrEqual(a.id === "jaz-40" ? 0.2 : 0.3);
       expect(a.frenos.enSeco, a.id).toBeLessThanOrEqual(0.45);
     }
   });

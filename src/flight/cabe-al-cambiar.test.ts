@@ -34,8 +34,9 @@ function elSiguiente(
 
 describe("la vuelta de la tecla de cambiar de avión", () => {
   it("en El Hierro no llega nunca al de fuselaje ancho", () => {
-    // 1.254 metros de pista contra los 2.562 que pide. Ni dando la vuelta
-    // entera a la flota.
+    // 1.250 metros de pista contra los 1.869 que pide. Ni dando la vuelta
+    // entera a la flota. Al reactor regional sí: con la Vr de su peso pide
+    // 1.243, y cabe (ADR 0027).
     let a = PYKASU;
     const vistos = new Set<string>();
     for (let i = 0; i < AIRCRAFT.length * 2; i++) {
@@ -43,7 +44,7 @@ describe("la vuelta de la tecla de cambiar de avión", () => {
       vistos.add(a.id);
     }
     expect(vistos.has("jaz-120")).toBe(false);
-    expect(vistos.has("jaz-90")).toBe(false);
+    expect(vistos.has("jaz-90")).toBe(true);
   });
 
   it("y pasa por todos los que sí caben", () => {

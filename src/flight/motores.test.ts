@@ -168,12 +168,15 @@ describe("las velocidades de un despegue con un motor de menos", () => {
 
   it("en una pista corta la V1 baja, y con calor también", () => {
     const larga = velocidadesDeDespegue(ARAI, 3400);
-    const justa = velocidadesDeDespegue(ARAI, pistaQueNecesita(ARAI));
+    // Un diez por ciento menos que la que se le deja: con la Vr de su peso
+    // (ADR 0027), en la que se le deja ya cabe abortar desde la V1 de su ficha.
+    const corta = pistaQueNecesita(ARAI) * 0.9;
+    const justa = velocidadesDeDespegue(ARAI, corta);
     expect(justa.v1!).toBeLessThan(larga.v1!);
     // Con un 8 % menos de aire —una tarde de calor— cabe parar desde menos.
     const caliente = velocidadesDeDespegue(
       ARAI,
-      pistaQueNecesita(ARAI),
+      corta,
       1.225 * 0.92,
     );
     expect(caliente.v1Maxima).toBeLessThan(justa.v1Maxima);

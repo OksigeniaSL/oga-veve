@@ -44,6 +44,7 @@ import { empujeLleno } from "./fdm";
 import { areaDelMotor, llevaBandera, motorCritico } from "./motores";
 import { resistenciaDelTren } from "./tren";
 import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
+import { deceleracionRodando } from "./frenada";
 import { ROZAMIENTO } from "../world/superficie";
 
 /**
@@ -56,15 +57,30 @@ import { ROZAMIENTO } from "../world/superficie";
 export const DECIDIR = 2;
 
 /**
- * **Lo que frenan las ruedas**, además de la rodadura, como fracción del
- * peso: el mismo 0,28 que aplica el modelo de vuelo con el freno a fondo —ver
- * `rolling` en `fdm.ts`—, porque si esta cuenta frenara distinto que el avión,
- * la V1 prometería una parada que el avión no hace.
- *
- * Sin reversa: la norma no la cuenta en pista seca, y lo que se quiere saber
- * es si cabe **sin** ella. Con ella, cabe mejor.
+ * **La palanca de flaps con la que despega este juego**: la primera muesca,
+ * que es la que pone el vuelo de línea en la cabecera (`vuelo-de-linea.ts`).
  */
-const FRENO = 0.28;
+export const FLAPS_DE_DESPEGUE = 1 / 3;
+
+/**
+ * **La Vr de un avión de transporte, sobre su pérdida con los flaps de
+ * despegue**: 1,1.
+ *
+ * Es la regla de la que sale: el avión tiene que irse del suelo, con todos los
+ * motores, a no menos de 1,1 veces su velocidad mínima de despegue (CS
+ * 25.107 e 1 iv y 14 CFR 25.107 e 1 iv), y esa velocidad mínima, la VMU, es la
+ * pérdida con los flaps de despegue y la cola a punto de tocar. En un modelo
+ * sin efecto suelo como éste, las dos son la misma, y se rota a la vez que se
+ * llega a ella.
+ *
+ * Las Vr de la flota estaban escritas a mano, y las de los tres reactores eran
+ * las de su peso máximo al despegar puestas en una ficha más ligera: por encima
+ * de su propia V2. Con esta regla, la del 747-100 sale en 145 nudos a 255.826
+ * kg, que es lo que dicen a la vez su V2 publicada —169 nudos a su peso máximo,
+ * 147 a éste— y la pista que pide Boeing a este peso. Ver `aircraft.ts` y el
+ * ADR 0027. La comprueba `despegue-y-toma-del-manual.test.ts`.
+ */
+export const VR_SOBRE_LA_PERDIDA = 1.1;
 
 /** Todo lo que dice este fichero de un despegue, en m/s indicados. */
 export interface VelocidadesDeDespegue {
@@ -180,7 +196,17 @@ export function hastaLlegarA(
 
 /**
  * **Lo que se recorre parando desde `v`**, verdadera, m: gas al mínimo, freno
- * a fondo y el motor parado frenando en molinete. Sin reversa. Ver `FRENO`.
+ * a fondo y el motor parado frenando en molinete. Sin reversa —la norma no la
+ * cuenta en pista seca, y lo que se quiere saber es si cabe **sin** ella— y
+ * sin frenos de tierra, que solo salen solos si se han armado.
+ *
+ * **Con la frenada del avión que vuela**, `deceleracionRodando`: el freno de
+ * su tipo sobre el peso que cargan las ruedas. Era un 0,28 de todo el peso
+ * para todos, «el mismo que aplica el modelo de vuelo», y el modelo de vuelo
+ * dejó de aplicarlo cuando cada tipo tuvo su freno (ADR 0016): la V1 prometía
+ * una parada que no era la del avión. Con la Vr de su peso, en el JAZ 120 esa
+ * parada vieja no cabía desde su Vmc en la pista que le pide el hangar (ADR
+ * 0027).
  */
 export function hastaPararDesde(
   a: AircraftConfig,
@@ -188,17 +214,17 @@ export function hastaPararDesde(
   densidad: number = SEA_LEVEL_DENSITY,
   flaps = 0,
 ): number {
-  const mu = ROZAMIENTO.asfalto + FRENO;
   const molinete = a.motoresA.length > 1 ? a.motorParado.molinete : 0;
+  const mandos = { freno: 1, frenosDeTierra: 0, reversa: 0, flaps };
+  const suelo = { superficie: "asfalto" as const, mojada: false, densidad };
   const pasos = 300;
   const dv = v / pasos;
   let s = 0;
   for (let i = 0; i < pasos; i++) {
     const u = (i + 0.5) * dv;
     const frena =
-      (frenaElAire(a, densidad, u, flaps) + 0.5 * densidad * u * u * molinete) /
-        masaDe(a) +
-      mu * GRAVITY;
+      deceleracionRodando(a, u, mandos, suelo) +
+      (0.5 * densidad * u * u * molinete) / masaDe(a);
     s += (u / frena) * dv;
   }
   return s;
