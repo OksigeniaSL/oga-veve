@@ -59,16 +59,45 @@ export interface MapaDelPavimento {
 
 const VACIO: MapaDelPavimento = { alzadoEn: () => 0 };
 
+/**
+ * **La rejilla, suelta de quien la consulta.** Es lo que se puede traer hecho
+ * en los datos —ver `pavimento-horneado.ts` y el ADR 0028—: la cuenta cara
+ * está en hacerla, y consultarla es leer cuatro celdas.
+ */
+export interface RejillaDelPavimento {
+  /** Lado de la celda, m. */
+  readonly celda: number;
+  /** La esquina de la rejilla en las coordenadas del terreno, m. */
+  readonly x0: number;
+  readonly z0: number;
+  readonly nx: number;
+  readonly nz: number;
+  /** Centímetros sobre el mapa de alturas, fila a fila; `NADA_EN_LA_REJILLA` en la hierba. */
+  readonly alzado: Int8Array;
+}
+
+/** Lo que vale una celda sin pavimento, para quien lee la rejilla de fuera. */
+export const NADA_EN_LA_REJILLA = NADA;
+
 export function mapaDelPavimento(
   mallas: readonly Mesh[],
   /** La cota del mapa de alturas, que es contra lo que se guarda el alzado. */
   suelo: (x: number, z: number) => number,
   celda = CELDA_DEL_PAVIMENTO,
 ): MapaDelPavimento {
+  return mapaDesdeRejilla(rejillaDelPavimento(mallas, suelo, celda));
+}
+
+/** La rejilla del pavimento dibujado, o `null` si no hay pavimento. Ver `mapaDelPavimento`. */
+export function rejillaDelPavimento(
+  mallas: readonly Mesh[],
+  suelo: (x: number, z: number) => number,
+  celda = CELDA_DEL_PAVIMENTO,
+): RejillaDelPavimento | null {
   // Los triángulos en llano, como tres vértices seguidos de x, y, z.
   const tris: number[] = [];
   for (const malla of mallas) triangulos(malla.geometry, tris);
-  if (!tris.length) return VACIO;
+  if (!tris.length) return null;
 
   let x0 = Infinity;
   let x1 = -Infinity;
@@ -151,6 +180,13 @@ export function mapaDelPavimento(
     }
   }
 
+  return { celda, x0, z0, nx, nz, alzado };
+}
+
+/** Lo que contesta una rejilla, venga de donde venga. Ver `mapaDelPavimento`. */
+export function mapaDesdeRejilla(rejilla: RejillaDelPavimento | null): MapaDelPavimento {
+  if (!rejilla) return VACIO;
+  const { celda, x0, z0, nx, nz, alzado } = rejilla;
   const en = (i: number, j: number): number => {
     if (i < 0 || j < 0 || i >= nx || j >= nz) return 0;
     const v = alzado[j * nx + i]!;
