@@ -125,8 +125,10 @@ try {
             let queResto = "";
             const v = new V();
             const delante = new V(0, 0, -1).applyQuaternion(s.orientation);
-            g.traverse((m) => {
-              if (!m.isMesh || !m.visible || !m.geometry?.attributes?.position) return;
+            // Solo lo que se dibuja: los calzos y las fundas del puesto viajan
+            // con el avión, apagados.
+            g.traverseVisible((m) => {
+              if (!m.isMesh || !m.geometry?.attributes?.position) return;
               const pos = m.geometry.attributes.position;
               const tren = /^(rueda|pata)/.test(m.name) || /^(rueda|pata)/.test(m.parent?.name ?? "");
               for (let i = 0; i < pos.count; i++) {

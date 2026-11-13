@@ -293,7 +293,8 @@ seguir.
 **El modelo de vuelo giraba el avión en el suelo sobre su centro de gravedad.**
 Lo mantenía a `gearHeight` del suelo fuera cual fuera el cabeceo, y como las
 ruedas principales van por detrás de ese centro, al levantar el morro bajaban.
-Medido en el juego, en el tope de cada uno, se metían en el asfalto:
+Medido sobre cada `.glb` colocado como lo coloca el juego —y en el juego, el
+787: 0,385 m—, en el tope de cada uno se metían en el asfalto:
 
 | JAZ 20 | JAZ 25 | JAZ 40 | JAZ 60 | JAZ 90 | JAZ 110 | JAZ 120 |
 |---|---|---|---|---|---|---|
@@ -312,10 +313,10 @@ La distancia de esas ruedas por detrás del centro, `mainWheelsAft`, **es la de
 su dibujo**, que pone el tren donde lo tiene su tipo, y una prueba la compara
 con el `.glb`. No sale de la batalla por la carga de la rueda de morro, que es
 lo que usa `momentoDelTren`: eso da el brazo del peso sobre el centro de las
-principales, y no dónde apoyan. En los seis de una sola rueda por pata cae a
-unos centímetros, pero un bogie apoya en su eje de atrás, medio bogie más
-allá, y el 747 en el bogie de la panza: 4,14 m por detrás del centro, donde la
-cuenta de la batalla da 2,56.
+principales, y no dónde apoyan. En los cinco de un eje por pata las dos
+cifras se separan entre 7 y 36 centímetros; un bogie apoya en su eje de atrás,
+medio bogie más allá, y el 747 en el bogie de la panza: 4,14 m por detrás del
+centro, donde la cuenta de la batalla da 2,56.
 
 **Y la cola del dibujo del 787 no dejaba llegar a los 9,7°.** Su panza empezaba
 a subir a 47 m del morro y pegaba a 6,6°: en el tope, un metro bajo la pista.
@@ -360,6 +361,14 @@ cola.
 - `momentoDelTren` sigue con su brazo de la batalla, que en el 747 y el 787
   no es el de su dibujo. Cambiarlo cambia cuándo levanta el morro cada uno, y
   eso es su propia medida.
+- **Los treinta y cinco pies del banco se cuentan desde el centro**, menos el
+  tren, y no desde las ruedas con el cabeceo. Contados desde las ruedas, el 747
+  pasa del 4,4 al 5,1 % de la cuenta del hangar: un poco fuera de su banda, y
+  por lo que es la norma, no por el avión.
+- El resto de lo que lee `heightAboveGround − gearHeight` en `game.ts` —el
+  aviso de terreno, la recogida, el banco— sigue sin el cabeceo. En el aire ya
+  era así; en el suelo, rotando, ahora marca hasta 0,8 m en el 747. No se ha
+  revisado uno por uno.
 
 ## Consecuencias
 

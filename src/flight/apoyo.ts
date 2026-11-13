@@ -6,9 +6,10 @@
  * fuera cual fuera el cabeceo, y el avión gira sobre ese centro. Con el morro a
  * nivel da igual; al rotar, no: las ruedas principales van por detrás del
  * centro, así que al levantar el morro bajaban, y se metían en el asfalto lo
- * que el morro subía por su distancia. Medido en el juego en el tope de cola de
- * cada uno: el 787 a sus 9,7°, 0,38 m; el 747 a sus 12,5°, 0,77, porque apoya
- * en el bogie de la panza, cuatro metros por detrás.
+ * que el morro subía por su distancia. En el tope de cola de cada uno: el 787 a
+ * sus 9,7°, 0,38 m, medido en el juego; el 747 a sus 12,5°, 0,77 sobre su
+ * dibujo colocado como lo coloca el juego, porque apoya en el bogie de la
+ * panza, cuatro metros por detrás.
  *
  * Un avión de verdad hace lo contrario: las ruedas se quedan en la pista, giran
  * sobre su eje, y es **el centro de gravedad el que sube**. Por eso un avión

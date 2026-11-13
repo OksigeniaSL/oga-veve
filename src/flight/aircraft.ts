@@ -1200,10 +1200,10 @@ export interface AircraftConfig {
    * Un avión que rota gira sobre esas ruedas, que se quedan en el asfalto, y
    * su centro de gravedad **sube**. El modelo de vuelo lo giraba sobre el
    * centro de gravedad a `gearHeight` del suelo, así que al levantar el morro
-   * las ruedas de atrás se hundían en la pista: medido en el juego con el 787 a
-   * sus 9,7°, 0,38 m; el 747 a sus 12,5°, 0,77, porque apoya en el bogie de
-   * la panza, cuatro metros por detrás. Ver `alturaSobreLasRuedas` en
-   * `flight/apoyo.ts`.
+   * las ruedas de atrás se hundían en la pista: el 787 a sus 9,7°, 0,38 m,
+   * medido en el juego; el 747 a sus 12,5°, 0,77 sobre su dibujo colocado
+   * como lo coloca el juego, porque apoya en el bogie de la panza, cuatro
+   * metros por detrás. Ver `alturaSobreLasRuedas` en `flight/apoyo.ts`.
    *
    * **Es la del dibujo**, `modelos/*.py`, que pone el tren donde lo tiene su
    * tipo, y `apoyo.test.ts` la compara con el `.glb`. No sale de `batalla` por
