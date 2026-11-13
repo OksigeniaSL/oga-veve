@@ -71,14 +71,17 @@
  *            hangar  volado  manual       hangar  manual
  *   jaz-20     406     469     449          407     387   sin margen
  *   jaz-40     536     672     352          633     620   sin margen
+ *   jaz-60     983     959  ≤1.025          815     816   con / sin
  *   jaz-90   1.124   1.267  ≤1.151        1.243   1.123   con margen
  *   jaz-110  1.544   1.612  ≤1.800        1.591   1.800   con margen
  *   jaz-120  1.869   1.792   1.710        1.652   1.875   con margen
  * ```
  *
- * «Volado», en los reactores, es la distancia hasta los treinta y cinco pies
- * por 1,15; el hangar pide además la de abortar desde su V1 si es más larga,
- * que en el JAZ 90, el 110 y el 120 lo es (`acelerarYPararDeSuNorma`). La toma
+ * «Volado», en los reactores y en el 1900D, es la distancia hasta los treinta
+ * y cinco pies por 1,15; el hangar pide además la de abortar desde su V1 si es
+ * más larga, que en el JAZ 60, el 90, el 110 y el 120 lo es
+ * (`acelerarYPararDeSuNorma`). El JAZ 60 despega con margen —su longitud de
+ * campo— y aterriza sin él, que es como publica cada cosa. La toma
  * volada frena lo mismo que la cuenta, al uno por ciento, y el aire de la toma
  * es el de su clase en los dos.
  *

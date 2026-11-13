@@ -744,9 +744,10 @@ módulo:
   (FAA-H-8083-3C), capítulos 15 y 16, con su figura 15-5 del PT6 de turbina
   libre y flujo invertido; *Pilot's Handbook of Aeronautical Knowledge*,
   capítulo 7; *Aviation Maintenance Technician Handbook – Powerplant*
-  (FAA-H-8083-32), capítulo 1. El motor de la clase del JAZ 60, el PT6A-67D,
-  del informe de aceptación de tipo del Beech 1900C y 1900D de la autoridad
-  de aviación de Nueva Zelanda, sobre el certificado de tipo A24CE de la FAA.
+  (FAA-H-8083-32), capítulo 1. El motor del JAZ 60, el PT6A-67D del Beech
+  1900D, del informe de aceptación de tipo del Beech 1900C y 1900D de la
+  autoridad de aviación de Nueva Zelanda, sobre el certificado de tipo A24CE de
+  la FAA, que da también las cotas del avión entero en su vista en tres planos.
 - **El motor de pistones**: el Lycoming IO-360-L2A de la clase del JAZ 20,
   del informe de aceptación de tipo de la serie 172 de Nueva Zelanda (TAR
   96/15, sobre la hoja de datos FAA 3A12) y de la hoja de datos de EASA
