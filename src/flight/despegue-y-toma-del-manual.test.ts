@@ -90,7 +90,7 @@
  * - **El JAZ 120 ya despega volando en lo que dice la cuenta**, al 5 %: con la
  *   cola de Boeing sus ruedas dejan la pista a 9,8°, donde el suyo se va a
  *   10,1°.
- * - **El JAZ 110 todavía se va del suelo tarde**, a 1,13 veces su Vr, un 11 %
+ * - **El JAZ 110 todavía se va del suelo tarde**, y despega volando un 11 %
  *   más largo que la cuenta: para sostenerse a su Vr necesita 11,6° y su cola,
  *   la de Boeing, le deja 9,7. El de verdad se va a 6–7,5° (AAIB, *Bulletin*
  *   11/2020). No es la cola: es que la primera muesca de flaps del modelo

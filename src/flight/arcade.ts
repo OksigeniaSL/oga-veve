@@ -1340,9 +1340,11 @@ export class ArcadeFlightModel implements FlightModel {
        * con las ruedas apoyadas ya vale lo que mide el tren —un metro y medio
        * en la avioneta—. Comparando contra ella, medio bote pasaba por vuelo.
        */
+      // Con el cabeceo de ahora: al rotar, el centro sube sobre las ruedas
+      // aunque sigan en el suelo. Ver `apoyo.ts`.
       this.loQueSubio = Math.max(
         this.loQueSubio,
-        this.state.heightAboveGround - this.aircraft.gearHeight,
+        this.state.heightAboveGround - alturaSobreLasRuedas(this.aircraft, this.pitch),
       );
     }
     this.enElAire = !this.state.onGround;

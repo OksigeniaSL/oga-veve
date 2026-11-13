@@ -2557,6 +2557,17 @@ export class Game {
    * medía contra ella, la torre la nombraba y la aguja la señalaba. Ver
    * `world/campo-del-vuelo.ts`.
    */
+  /**
+   * **Lo que separa las ruedas principales del suelo**, m, con el cabeceo de
+   * ahora: la altura del centro menos la de su apoyo. Con `gearHeight` a
+   * secas, rotando en la carrera marcaba hasta 0,8 m en el 747 con las ruedas
+   * en la pista, porque el centro sube al levantar el morro. Ver
+   * `flight/apoyo.ts`.
+   */
+  private ruedasSobreElSuelo(s: Pick<FlightState, "heightAboveGround" | "orientation">): number {
+    return s.heightAboveGround - alturaSobreLasRuedas(this.aircraft, pitchAngleOf(s.orientation));
+  }
+
   private elCampo(id?: string): CampoEnElMundo {
     if (id === undefined) return this.elVecinoDeAhora()?.campo ?? this.laCasa;
     if (id === this.scenario.id) return this.laCasa;
@@ -7953,7 +7964,7 @@ export class Game {
       velocidad: s.airspeed,
       porElSuelo: s.groundSpeed,
       altitud: s.position.y,
-      altura: Math.max(0, s.heightAboveGround - this.aircraft.gearHeight),
+      altura: Math.max(0, this.ruedasSobreElSuelo(s)),
       vertical: s.verticalSpeed,
       motor: c.engineOn,
       flaps: c.flaps,
@@ -8129,7 +8140,7 @@ export class Game {
       intento: i,
       velocidad: s.airspeed,
       vr: this.aircraft.rotationSpeed,
-      altura: Math.max(0, s.heightAboveGround - this.aircraft.gearHeight),
+      altura: Math.max(0, this.ruedasSobreElSuelo(s)),
       enTierra: s.onGround,
       alabeo: bankAngleOf(s.orientation),
       mando: this.input.ultimoMando,
@@ -8172,7 +8183,7 @@ export class Game {
       gas: c.throttle,
       intento: this.input.intento,
       velocidad: s.airspeed,
-      altura: Math.max(0, s.heightAboveGround - this.aircraft.gearHeight),
+      altura: Math.max(0, this.ruedasSobreElSuelo(s)),
       // Y la altitud, que con la altura dice lo que se mueve el suelo. Ver `SueloBajoLasRuedas`.
       altitud: s.position.y,
       enTierra: s.onGround,
@@ -9934,7 +9945,7 @@ export class Game {
       };
     const s = this.flight.state;
     // Lejos por encima de la recogida, o en tierra: una aproximación nueva.
-    if (s.onGround || s.heightAboveGround - this.aircraft.gearHeight > r.nariz * 3)
+    if (s.onGround || this.ruedasSobreElSuelo(s) > r.nariz * 3)
       this.narizPedida = false;
     const paso = this.laRecogida.avisos.paso(l);
     if (!paso) return;
@@ -18288,7 +18299,7 @@ export class Game {
     if (ya.onGround) {
       if (!this.yaTocoTierra) this.alTocarTierra();
       this.yaTocoTierra = true;
-    } else if (ya.heightAboveGround - this.aircraft.gearHeight > 30) {
+    } else if (this.ruedasSobreElSuelo(ya) > 30) {
       this.yaTocoTierra = false;
     }
     this.contarLaCarrera(dt);
@@ -18350,10 +18361,7 @@ export class Game {
       {
         // Las ruedas sobre el suelo, que es lo que separa la recogida del
         // resto de la final. Ver `bandaDeVelocidad`.
-        sobreElSuelo: Math.max(
-          0,
-          this.flight.state.heightAboveGround - this.aircraft.gearHeight,
-        ),
+        sobreElSuelo: Math.max(0, this.ruedasSobreElSuelo(this.flight.state)),
         enElSuelo: this.flight.state.onGround,
         enLaPista: this.flight.state.onRunway,
         vertical: this.flight.state.verticalSpeed,
@@ -29938,7 +29946,7 @@ export class Game {
          * recogida y tapando la cuenta: medido en Los Rodeos con el JAZ 90,
          * «fifty», *sink rate*, y «forty, thirty, twenty» perdidos detrás.
          */
-        altura: Math.max(0, s.heightAboveGround - this.aircraft.gearHeight),
+        altura: Math.max(0, this.ruedasSobreElSuelo(s)),
         vertical: s.velocity.y,
         alabeo: bankAngleOf(s.orientation),
       },
@@ -30325,7 +30333,7 @@ export class Game {
        * pista: levantá suave» empezando a cincuenta pies, terminaba a un palmo
        * del asfalto. Es la misma altura a la que deja de cantar la pérdida.
        */
-      s.heightAboveGround - this.aircraft.gearHeight > Game.ALTO_PARA_LA_PERDIDA;
+      this.ruedasSobreElSuelo(s) > Game.ALTO_PARA_LA_PERDIDA;
     const frenaConFlaps =
       this.aircraft.llevaFlaps &&
       this.input.palancaDeFlaps < 1 &&
@@ -30423,7 +30431,7 @@ export class Game {
     if (s.onGround) return null;
     return bandaDeVelocidad(
       {
-        sobreElSuelo: Math.max(0, s.heightAboveGround - this.aircraft.gearHeight),
+        sobreElSuelo: Math.max(0, this.ruedasSobreElSuelo(s)),
         enElSuelo: false,
         vertical: s.verticalSpeed,
         velocidad: s.airspeed,
@@ -31674,7 +31682,7 @@ export class Game {
     if (this.pilotoPuesto && this.gasesPuestos) return;
     const aire = this.flight.aireDelDia();
     const toca = this.laVelocidadQueToca();
-    const ruedas = s.heightAboveGround - this.aircraft.gearHeight;
+    const ruedas = this.ruedasSobreElSuelo(s);
     /*
      * **El `RETARD`, a la altura de su clase** —ver `flight/recogida.ts`—, o
      * antes si, pedida ya la nariz, el avión ha dejado de bajar: ver
