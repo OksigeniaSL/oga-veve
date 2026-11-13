@@ -2,7 +2,9 @@
 
 Fecha: 2026-11-13
 Estado: aceptado · completa el ADR 0019 · cambia la Vr de los tres reactores, la
-frenada y la proporción de despegue del JAZ 40, y la parada de la V1
+frenada y la proporción de despegue del JAZ 40, y la parada de la V1 · enmendado
+el mismo día (H7b): la cola del 747 y del 787-9, la de su fabricante, y el porqué,
+avión por avión, de lo que sigue abierto
 
 ## Contexto
 
@@ -145,6 +147,10 @@ pide 834 m para despegar y 1.020 para aterrizar en 900.
 
 ## Lo que no
 
+Tal como se dejó el 13-11-2026. La enmienda H7b, más abajo, cierra el despegue
+volado del 747 y corrige el porqué de los otros tres puntos: no es una causa
+de clase, es una de cada avión.
+
 - **La toma de los dos de fuselaje ancho sale un 12 % más corta que su manual**
   (747: 1.652 contra 1.875; 787: 1.591 contra 1.800). No es el freno: bajarlo
   hasta esas cifras dejaría el freno a fondo por debajo del autofreno MED, y el
@@ -166,6 +172,118 @@ pide 834 m para despegar y 1.020 para aterrizar en 900.
   un Twin Otter (459 m contra 244) y pide un 60 % más de pista que él para
   aterrizar. A qué tipo tiene que parecerse es una decisión, no una cuenta.
 
+## Enmienda H7b (13-11-2026): la cola de su fabricante, y lo que sigue abierto
+
+H7 dejó medidos tres desvíos y una sospecha para cada uno. Se han buscado tipo
+por tipo, porque unos aviones iban cortos y otros largos, y una causa común a
+la clase no podía explicar las dos cosas.
+
+### Lo que se cierra: la cola del 747 y del 787-9
+
+`maxGroundPitch` es la actitud a la que toca la cola con las ruedas en el suelo,
+y era un número sin fuente en los dos. Ahora es el de su fabricante:
+
+| Avión | Antes | Ahora | Fuente |
+|---|---|---|---|
+| JAZ 120 (747) | 8,6° | **12,5°** | D. Carbaugh, «Tail Strikes: Prevention», *AERO* QTR_01 2007, figura 1: 12,5° con los flaps a diez y a veinte, y se va del suelo a 10,1° y 10,0°. Es la tabla del 747-400, que tiene el fuselaje de setenta metros y el tren del -100. |
+| JAZ 110 (787-9) | 8,5°, medidos en el dibujo del D6-58333 | **9,7°** | AAIB, *Bulletin* 11/2020, VH-ZND: «The pitch attitude for tail contact is 9.7° with wheels on the runway and landing gear struts extended», citando al fabricante. |
+
+Con 8,6° la cola del 747 tocaba antes de la actitud a la que se va del suelo el
+de verdad. Ahora se separa a 10,7° —Boeing da 10,1; el modelo no tiene efecto
+suelo, que la adelanta un poco— y **despega volando un 4,9 % más largo que la
+cuenta del hangar**, donde era un 7,3 %: dentro del ±5 %, y el banco de mesa lo
+fija ahí.
+
+La cuenta del hangar no mira la cola, así que **no cambia ningún veredicto** de
+qué avión cabe en qué campo.
+
+### Lo que sigue abierto, avión por avión
+
+**El JAZ 90 no tiene la cola de Embraer.** No se ha encontrado la cifra del E170
+y se queda con los 9° de su ficha. Despega volando un 18 % más largo que la
+cuenta.
+
+**El 787-9 se va del suelo tarde por los flaps, no por la cola.** Con la de
+Boeing pasa del 11,3 al 10,7 %: para sostenerse a su Vr necesita 11,6° de
+actitud, y la cola le deja 9,7. El de verdad se va a 6–7,5° (el mismo boletín).
+Las dos cifras del boletín dicen lo mismo:
+
+- el VH-ZND rotó a 172 nudos con 253.400 kg y los flaps a cinco;
+- la regla de este ADR, 1,1 veces la pérdida con los flaps de despegue del
+  modelo, le daría 158 a esa masa.
+
+O sea: la primera muesca del modelo sustenta poco, y la Vr de 1,1 lo tapa
+pidiendo una actitud que el avión de verdad no lleva. En el 747 se ve igual: el
+fichero A de Jenkinson da al 747-100 un CL máximo de 2,03 con los flaps de
+despegue, y el modelo, 1,73.
+
+Arreglarlo **no es tocar un número**. Más sustentación en la primera muesca
+baja la pérdida de despegue y, con la regla de 1,1, baja la Vr y acorta la
+cuenta del hangar por debajo de lo que pide Boeing. Además, la sustentación de
+los flaps es hoy una recta con la palanca para todos los aviones. Es volver
+sobre la regla de la Vr con la V2 de cada tipo, y va en su propio ADR.
+
+**La toma de los dos de fuselaje ancho, un 12 % corta, no es por la Vref ni por
+el freno.** Primero, la magnitud: las dos cifras son longitudes de campo, la
+distancia demostrada entre 0,6, y a la masa de la ficha. La del 747-100 la
+dicen dos fuentes que no se conocen: 1.875 m Boeing (D6-58326, 3.4.2) y 1.890
+Jenkinson (fichero A, tabla 3), a 255.830 kg, la masa de la ficha.
+
+- **La Vref.** La del 787-9 ya es la de la FAA, 144 nudos. La del 747-100 en
+  Jenkinson es de 141, cinco por debajo de la de la ficha: con ella la toma
+  saldría todavía más corta, 1.578 m, un 16 %. No es eso lo que falta.
+- **El freno.** Llegar a su cifra solo con la rodadura pide bajar `enSeco` de
+  0,34 a 0,27 en el 747 y de 0,35 a 0,28 en el 787. Con eso, el pie a fondo
+  frenaría 2,88 y 2,97 m/s² al final de la carrera, por debajo del autofreno
+  MED, que son 3. Y el pie a fondo de un avión de línea frena más que el MED:
+  H7 lo probó y lo devolvió.
+- **El aire.** Con el freno que tienen, sus manuales piden 425 y 416 m desde los
+  cincuenta pies hasta tocar. Son unos 5,6 segundos a su Vref en los dos, donde
+  la senda de tres grados da 291 m. Lo que falta es el tramo en el aire, con su
+  enderezada. No se ha encontrado la cifra que publique ese tramo para ninguno
+  de los dos, y sin ella no se toca.
+
+**El E170 aterriza largo, al revés que los anchos, y la causa es suya.** Pide
+1.243 m donde Embraer da 1.228 a 32.800 kg, que son 2.800 más que la ficha. A la
+masa de la ficha son 1.123 si se escala todo con la masa, y 1.165 si solo la
+rodadura, porque el aire de tres grados no depende de la masa. Pide por tanto
+entre un 7 y un 11 % de más.
+
+- Su Vref, 132 nudos a 30.000 kg, **no tiene fuente**: es 1,3 veces la pérdida
+  de un CL máximo de su clase, 2,43.
+- Su frenada, 0,45 g, se calibró con la toma de Embraer cruzando a unos 127
+  nudos a su máximo al aterrizar, que son 121 a la masa de la ficha.
+- Con 127 pediría 1.185 m, y con 121, 1.125.
+
+La ficha no es coherente consigo misma, pero cuál de las dos cifras es la buena
+lo dice la Vref de Embraer. No se ha encontrado, y sin ella no se toca.
+
+**El Seneca no es la Vr, es el empuje.** Para rodar los 247 m de su manual con
+el empuje que tiene, tendría que rotar a unos 58 nudos, por debajo de su pérdida
+con los flaps de despegue, que son 62.
+
+Le falta empuje en la carrera:
+
+- rodar 247 m hasta 72 nudos pide una aceleración media de 2,8 m/s², y con sus
+  5 kN lleva 1,8;
+- una hélice da en la carrera mucho más de lo que da en crucero, porque su
+  empuje va con la potencia partida por la velocidad;
+- el modelo, en cambio, lleva para todos los de hélice una recta que cae con la
+  velocidad.
+
+Con esa recta están calibradas su subida con uno y con dos motores, su Vmc —que
+sale del empuje de un solo motor— y su crucero. Subir el empuje sin cambiar la
+forma rompe la Vmc. La solución es un modelo de la hélice, y va en su propio
+ADR.
+
+**El JAZ 60** sigue fuera: a qué tipo se parece lo decide Enrique.
+
+### Lo que no se ha hecho
+
+- No se ha tocado ninguna Vref, ningún freno ni ningún empuje: en los tres
+  casos, la única manera de cuadrar era un número sin fuente.
+- La cola del E170 no se ha cambiado, por la misma razón.
+
 ## Consecuencias
 
 - El JAZ 120 rota a 145 nudos y el JAZ 90 a 133, como sus tipos a esa masa. El
@@ -173,3 +291,5 @@ pide 834 m para despegar y 1.020 para aterrizar en 900.
 - El 747 entra en La Palma y el E170 en El Hierro.
 - El Seneca frena en su distancia, y aterrizar en la granja es lo que no le deja
   ir, como al de verdad.
+- El 747 y el 787-9 pueden levantar el morro en el suelo hasta donde les toca la
+  cola de verdad (H7b), y el 747 se va del suelo a la actitud del suyo.
