@@ -103,6 +103,9 @@ export const SUPER_PUMA_EN_EL_JUEGO: AircraftConfig = {
   batalla: 5.3,
   // El centro de gravedad sobre el suelo, que es donde el juego pone el origen.
   gearHeight: SUPER_PUMA.ruedas[0]!.z,
+  // Y las principales, 1,7 m por detrás de él: las de su ficha del rotor, y no
+  // las del avión del que copia lo demás. Ver `mainWheelsAft`.
+  mainWheelsAft: -SUPER_PUMA.ruedas[1]!.x,
   /*
    * **El tren se recoge**: triciclo semirretráctil, hidráulico, con el de morro
    * hacia atrás y los principales hacia arriba, a los carenados de los costados

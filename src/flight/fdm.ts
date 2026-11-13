@@ -28,6 +28,7 @@
  */
 
 import { Quaternion, Vector3 } from "three";
+import { alturaSobreLasRuedas } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
 import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
 import { anguloDeAviso, SE_CALLA_EL_AVISADOR } from "./avisos-de-actitud";
@@ -712,8 +713,8 @@ export class CoefficientFlightModel implements FlightModel {
      * potrero a tres kilómetros de la pista, de morros contra un árbol. El
      * modelo sencillo no lo tenía porque su `reset` ya pasa por el suelo.
      */
-    s.onGround =
-      s.heightAboveGround <= this.aircraft.gearHeight + PEGADO_AL_SUELO;
+    this.updateBodyAxes();
+    s.onGround = s.heightAboveGround <= this.alturaDelApoyo() + PEGADO_AL_SUELO;
   }
 
   /**
@@ -1492,7 +1493,18 @@ export class CoefficientFlightModel implements FlightModel {
     const s = this.state;
     const ac = this.aircraft;
     const terrain = this.ground(s.position.x, s.position.z);
-    const wheelLevel = terrain + ac.gearHeight;
+    /*
+     * **Y el apoyo, en las ruedas principales con el cabeceo de ahora**, no a
+     * `gearHeight` del suelo con el morro donde esté. Al rotar el avión gira
+     * sobre esas ruedas y su centro sube: el 747 a sus 12,5° lleva el centro
+     * de gravedad 0,76 m más alto que parado. Ver `flight/apoyo.ts`.
+     *
+     * De ahí cuelga todo lo de abajo: la holgura del palmo se mide desde las
+     * ruedas de verdad, el trinquete pega el avión a ese nivel, y al tocar en
+     * la recogida tocan primero las principales.
+     */
+    this.updateBodyAxes();
+    const wheelLevel = terrain + this.alturaDelApoyo();
 
     /*
      * **Un palmo de holgura antes de dar el avión por volando.**
@@ -1784,12 +1796,28 @@ export class CoefficientFlightModel implements FlightModel {
     const min = this.aircraft.minGroundPitch;
 
     if (pitch > max) {
-      this.rotateAboutRight(max - pitch);
+      this.rotateAboutMainWheels(max - pitch);
       if (s.pitchRate > 0) s.pitchRate = 0;
     } else if (pitch < min) {
-      this.rotateAboutRight(min - pitch);
+      this.rotateAboutMainWheels(min - pitch);
       if (s.pitchRate < 0) s.pitchRate = 0;
     }
+  }
+
+  /** La altura del centro de gravedad sobre las ruedas principales con el cabeceo de ahora. */
+  private alturaDelApoyo(): number {
+    return alturaSobreLasRuedas(this.aircraft, Math.asin(clamp(this.forward.y, -1, 1)));
+  }
+
+  /**
+   * Gira el avión sobre sus ruedas principales, que se quedan donde están: el
+   * tope de cola y el de la pata de morro son del tren, y un tren que para el
+   * giro no levanta ni hunde las ruedas que lo paran. Ver `flight/apoyo.ts`.
+   */
+  private rotateAboutMainWheels(angle: number): void {
+    const antes = this.alturaDelApoyo();
+    this.rotateAboutRight(angle);
+    this.state.position.y += this.alturaDelApoyo() - antes;
   }
 
   /** Gira el avión alrededor de su eje transversal. Positivo: morro arriba. */

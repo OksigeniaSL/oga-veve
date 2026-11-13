@@ -46,6 +46,7 @@ import type { Estado as EstadoDeAvisos } from "../flight/avisos-de-cabina";
 import { regimen } from "./cuadro";
 import { comoSeDiceAqui, type Habla } from "../i18n/habla";
 import { PYKASU, propulsionDe, esDeChorro, type AircraftConfig } from "../flight/aircraft";
+import { alturaSobreLasRuedas } from "../flight/apoyo";
 import { FRENO_DEL_HELICOPTERO, HELICOPTERO_DE_LA_TARJETA } from "./dibujos-del-helicoptero";
 import { Pictogramas, motorMas, motorMenos } from "./pictogramas";
 import { DIBUJOS, Senal } from "./senal";
@@ -3592,7 +3593,9 @@ export class Hud {
         // marca cero. Desde el centro de gravedad, el helicóptero posado
         // marcaba 6 ft, y la cuenta de la voz —que ya restaba las ruedas— y la
         // cifra no decían lo mismo. Ver `lecturaDeLaTripulacion` en `game.ts`.
-        sobreElTerreno: Math.max(0, state.heightAboveGround - this.ficha.gearHeight) * 3.28084,
+        // Y las ruedas principales con el cabeceo de ahora: ver `flight/apoyo.ts`.
+        sobreElTerreno:
+          Math.max(0, state.heightAboveGround - alturaSobreLasRuedas(this.ficha, pitch)) * 3.28084,
         alabeo: bank,
         cabeceo: pitch,
         sobreElSuelo:
