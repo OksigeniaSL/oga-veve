@@ -593,6 +593,9 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       avisosHablados: juego.aircraft.avisosHablados,
       // Y cuáles: cada clase canta los suyos, y uno de otra es un fallo.
       cuenta: laCuentaDe(juego.aircraft).map((e) => e.dice),
+      // Y si solo la canta sin ILS delante, como el *five hundred* del TAWS de
+      // un turbohélice: con ILS no suena, y no es un fallo.
+      cuentaSoloSinIls: !!juego.aircraft.cuentaSoloSinIls,
       /*
        * **Y sus límites de configuración**, que el piloto del banco necesita
        * para aterrizar un reactor.

@@ -9235,6 +9235,20 @@ const NUMERO_EN_UNA_BOCA =
         : `${vuelo.avion?.id ?? "?"} no lleva radioaltímetro que cante, y no se oyó ningún número`,
       "«el 400-300-200-100 lo dice la instructora de vuelo y me lo tiene que decir una voz de robot»",
     );
+  } else if (vuelo.avion?.cuentaSoloSinIls && sonaron.length === 0) {
+    /*
+     * **El que solo canta sin ILS delante**, como el *five hundred* del TAWS
+     * del JAZ 60 (AC 23-18, «during a non-precision approach»): en una toma con
+     * la senda de un ILS no suena ninguno, y eso es lo que tiene que pasar. No
+     * se da por medido; lo que sí suene se mide igual que en los demás.
+     */
+    resultados.push({
+      nombre: "cada número de la cuenta suena a su altura",
+      ok: true,
+      sinMedir: true,
+      detalle: `${vuelo.avion.id} solo canta su cuenta sin ILS delante, y no sonó ninguno${lista ? `: ${lista}` : ""}`,
+      porque: "«un buen rato después me dice 100 sin que cuadre con lo que realmente estoy haciendo»",
+    });
   } else {
     comprobarSiVolo(
       "cada número de la cuenta suena a su altura",
