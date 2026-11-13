@@ -204,12 +204,19 @@ export const MARGEN_DE_CERTIFICACION = 1.15;
  * **Con el peso de hoy**, si el día lo trae: el que vuela el motor de vuelo,
  * la masa sin combustible más lo que hay en los depósitos. Una cuenta con
  * otro peso que el del avión que vuela diría que cabe y el avión no cabría.
+ *
+ * **Y en el de línea de más de un motor, no menos que la de abortar desde su
+ * V1** con el aire y el peso del día, `acelerarYPararDeSuNorma`: la misma
+ * regla que la de qué avión cabe en qué campo. Sin ella, el JAZ 120 aceptaba
+ * una intersección con 1.800 m por delante en un día de tablas, donde parar
+ * desde su V1 pide 1.869 (ADR 0027).
  */
 export function pistaNecesariaHoy(a: AircraftConfig, dia: DiaDeDespegue = DIA_DE_TABLAS): number {
   const avion = dia.masa === undefined ? a : conMasa(a, dia.masa);
-  return (
+  return Math.max(
     distanciaDeDespegue(avion, dia.superficie, dia.densidad, dia.vientoDeFrente) *
-    margenDeSuClase(a).factor
+      margenDeSuClase(a).factor,
+    acelerarYPararDeSuNorma(avion, dia.densidad),
   );
 }
 
@@ -617,9 +624,9 @@ export function parteDeLaLda(a: AircraftConfig): {
  *
  * - **Despegar**: la distancia de despegue —la rodadura por la proporción de
  *   su clase, `deRodarADespegar`— por el margen de su clase,
- *   `margenDeSuClase`. Es `pistaNecesariaHoy` en un día de tablas. Y en el de
- *   línea de más de un motor, no menos que la de abortar desde su V1:
- *   `acelerarYPararDeSuNorma`.
+ *   `margenDeSuClase`, y en el de línea de más de un motor no menos que la
+ *   de abortar desde su V1, `acelerarYPararDeSuNorma`. Es `pistaNecesariaHoy`
+ *   en un día de tablas.
  * - **Aterrizar**: la distancia de aterrizaje partida por la parte de la LDA
  *   que se puede gastar, `parteDeLaLda`.
  *
@@ -637,10 +644,7 @@ export function pistaQueNecesita(
   superficie: Superficie = "asfalto",
 ): { readonly despegar: number; readonly aterrizar: number } {
   return {
-    despegar: Math.max(
-      pistaNecesariaHoy(a, { ...DIA_DE_TABLAS, superficie }),
-      acelerarYPararDeSuNorma(a),
-    ),
+    despegar: pistaNecesariaHoy(a, { ...DIA_DE_TABLAS, superficie }),
     aterrizar: distanciaDeAterrizaje(a, superficie) / parteDeLaLda(a).parte,
   };
 }
@@ -656,8 +660,15 @@ export function pistaQueNecesita(
  * 1.869 m contra 1.715, porque su Vmc, 139,5 nudos, no deja bajar la V1 de 140
  * (ADR 0027). La avioneta y el bimotor de pistón no la cuentan: su norma de
  * despegue es la distancia hasta los cincuenta pies (CAT.POL.A.305).
+ *
+ * Con el aire del día, `densidad`: la V1 y la Vmc son indicadas, y con aire
+ * fino se corre más en verdadera para llegar a ellas y se para desde más
+ * rápido. **Sin el viento**, como la V1 que se calcula en la cabecera con la
+ * pista que queda (`velocidadesDeDespegue`): las dos cuentas tienen que decir
+ * lo mismo, o la cabecera daría una V1 que la intersección no prometió.
  */
-export function acelerarYPararDeSuNorma(a: AircraftConfig): number {
+export function acelerarYPararDeSuNorma(a: AircraftConfig, densidad: number = RHO): number {
   if (!esDeLinea(a) || a.motoresA.length < 2) return 0;
-  return acelerarYParar(a, Math.max(a.decisionSpeed, vmc(a) ?? 0));
+  const v1 = Math.max(a.decisionSpeed, vmc(a, densidad) ?? 0);
+  return acelerarYParar(a, v1 / Math.sqrt(Math.max(0.05, densidad / RHO)), densidad);
 }

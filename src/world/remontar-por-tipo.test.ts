@@ -270,15 +270,16 @@ describe("remontar la pista según el avión", () => {
     expect(radio).toBeLessThan(9);
   });
 
-  it("en Estigarribia, por la 19, salen desde la calle; el de fuselaje ancho, una tarde de calor del Chaco con viento de cola, pide un tercio más", () => {
+  it("en Estigarribia, por la 19, salen desde la calle; el de fuselaje ancho, una tarde de calor del Chaco con viento de cola, pide casi un cuarto más", () => {
     const pykasu = AIRCRAFT.find((a) => a.id === "jaz-20")!;
     const jaz90 = AIRCRAFT.find((a) => a.id === "jaz-90")!;
     const jaz120 = AIRCRAFT.find((a) => a.id === "jaz-120")!;
     /*
      * Un día de tablas le dan a los tres los 2.948 m que quedan desde la calle:
-     * el de fuselaje ancho necesita unos 1.715 con el 1,15 de su
-     * certificación, porque un reactor despega en 1,39 veces su rodadura y no
-     * en el 1,8 de una avioneta, y rota a la Vr de su peso (ADR 0027).
+     * el de fuselaje ancho necesita unos 1.870, los de abortar desde su V1, que
+     * pasan a los 1.715 de despegar con el 1,15 de su certificación —un reactor
+     * despega en 1,39 veces su rodadura y no en el 1,8 de una avioneta, y rota
+     * a la Vr de su peso— (ADR 0027).
      */
     for (const avion of [pykasu, jaz90, jaz120]) {
       const r = entrada(ESTIGARRIBIA, avion, 180)!;
@@ -287,9 +288,10 @@ describe("remontar la pista según el avión", () => {
       expect(r.sale!.porDelante, avion.id).toBeGreaterThan(2900);
     }
     // Y una tarde de 38 grados con cinco metros por segundo de cola —en el
-    // Chaco no es raro— el grande pide un tercio más de pista: 2.298 m. Con la
-    // Vr de su peso máximo pedía más de los 2.948 de la calle y remontaba; con
-    // la de su peso le siguen dando, como a un 747 de verdad a esta masa, que
+    // Chaco no es raro— el grande pide 2.298 m: casi un cuarto más que los
+    // 1.870 de un día de tablas, y ya manda despegar y no abortar. Con la Vr de
+    // su peso máximo pedía más de los 2.948 de la calle y remontaba; con la de
+    // su peso le siguen dando, como a un 747 de verdad a esta masa, que
     // pediría unos 2.700 (ADR 0027).
     const cota = 155;
     const tarde: DiaDeDespegue = {
@@ -299,7 +301,7 @@ describe("remontar la pista según el avión", () => {
     };
     const grande = entrada(ESTIGARRIBIA, jaz120, 180, tarde)!;
     const tablas = entrada(ESTIGARRIBIA, jaz120, 180)!;
-    expect(grande.sale!.necesitaHoy).toBeGreaterThan(tablas.sale!.necesitaHoy * 1.25);
+    expect(grande.sale!.necesitaHoy).toBeGreaterThan(tablas.sale!.necesitaHoy * 1.2);
     expect(grande.sale!.necesitaHoy).toBeLessThan(grande.sale!.desdeLaEntrada);
     expect(grande.sale!.porQue).not.toBeNull();
   });

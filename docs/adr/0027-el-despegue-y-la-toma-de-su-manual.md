@@ -82,6 +82,12 @@ los de línea de más de un motor (`acelerarYPararDeSuNorma` en `carrera.ts`). L
 avioneta y el bimotor de pistón siguen con la suya, la de los cincuenta pies
 (CAT.POL.A.305).
 
+Y la pide igual **la cuenta del día**, `pistaNecesariaHoy`, con el aire y el peso
+de hoy: es la que decide si se entra por una intersección y la que pone el parte
+de salida, y sin la parada habría aceptado una intersección desde la que la V1
+no tiene dónde parar. Sin el viento, como la V1 que se calcula en la cabecera
+con la pista que queda (`velocidadesDeDespegue`).
+
 Y esa parada frena ya con el freno de cada tipo. Era un 0,28 de todo el peso para
 todos, «el mismo que aplica el modelo de vuelo», y el modelo de vuelo dejó de
 aplicarlo cuando cada tipo tuvo su freno (ADR 0016): `hastaPararDesde` usa ahora
@@ -159,10 +165,6 @@ pide 834 m para despegar y 1.020 para aterrizar en 900.
   Twin Otter y la frenada calibrada con el Beech 1900D, y rueda casi el doble que
   un Twin Otter (459 m contra 244) y pide un 60 % más de pista que él para
   aterrizar. A qué tipo tiene que parecerse es una decisión, no una cuenta.
-- **La cuenta del día** (`pistaNecesariaHoy`) sigue sin la parada de la V1: la
-  lleva solo la regla de qué avión cabe dónde, en un día de tablas. En vuelo, la
-  V1 de cada despegue se calcula con la pista que queda (`velocidadesDeDespegue`)
-  y avisa si no hay parada que quepa.
 
 ## Consecuencias
 

@@ -61,6 +61,22 @@ describe("los márgenes de cada clase, con su norma", () => {
       6,
     );
   });
+
+  it("y la cuenta del día pide lo mismo: la parada desde la V1, también con aire fino", () => {
+    // Es la que decide si se entra por una intersección. Con la parada solo en
+    // el hangar, el JAZ 120 aceptaba 1.800 m por delante en un día de tablas,
+    // donde parar desde su V1 pide unos 1.870 (ADR 0027).
+    const a = aircraftById("jaz-120");
+    expect(acelerarYPararDeSuNorma(a)).toBeGreaterThan(1800);
+    expect(pistaNecesariaHoy(a)).toBeGreaterThan(1800);
+    // Treinta grados a 600 m: aire más fino, se corre más y se para desde más
+    // rápido en verdadera.
+    const fino = { densidad: 1.1, vientoDeFrente: 0, superficie: "asfalto" as const };
+    expect(acelerarYPararDeSuNorma(a, 1.1)).toBeGreaterThan(acelerarYPararDeSuNorma(a));
+    expect(pistaNecesariaHoy(a, fino)).toBeGreaterThanOrEqual(acelerarYPararDeSuNorma(a, 1.1));
+    // La avioneta no la cuenta.
+    expect(acelerarYPararDeSuNorma(aircraftById("jaz-20"))).toBe(0);
+  });
 });
 
 describe("con las distancias declaradas del AIP, no con el asfalto", () => {
