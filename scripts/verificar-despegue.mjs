@@ -248,7 +248,99 @@ comprobar(
   "«salgo por E4 atravesando los jardines»",
 );
 
-// ── El sígame ─────────────────────────────────────────────────────────────
+// ── La tarjeta del tiempo, si sale sola ───────────────────────────────────
+
+/*
+ * **Y la tarjeta del tiempo, si sale sola**, como en el banco del vuelo
+ * entero. Cuando el tiempo de hoy pasa de lo que admite el avión, el juego la
+ * abre a los dos segundos y medio en el puesto —«mirar si hoy se sale no es
+ * opcional»— y, como todo panel que congela, para el mundo hasta que se
+ * decide. El JAZ 25, con el tiempo de casa de Los Rodeos y un cruzado por
+ * encima del de su norma, se quedaba «estacionado» los 350 s del rodaje: siete
+ * de trece. Aquí se sale igual, que es lo que deja medir el despegue, y se
+ * dice con sus motivos; con un viento en el cuarto argumento se despega con
+ * otro.
+ */
+const parteQueSalio = await page.evaluate(() => {
+  const o = globalThis.__oga;
+  const salgo = document.querySelector('[data-parte-accion="salir-igual"]');
+  if (!salgo || salgo.getClientRects().length === 0 || o.antesDeVolar?.()?.salir !== false) return null;
+  const motivos = (o.antesDeVolar().motivos ?? []).map((m) => `${m.motivo} en la ${m.papel}`);
+  salgo.click();
+  return motivos;
+});
+if (parteQueSalio)
+  console.log(
+    `\n  ☁  la tarjeta del tiempo salió sola: hoy no conviene salir (${parteQueSalio.join(", ") || "sin motivo dicho"}).` +
+      " El banco sale igual para medir el despegue.\n",
+  );
+
+// ── El tractor, si se sale empujado, y el sígame ──────────────────────────
+
+/*
+ * **Y del puesto de contacto se sale empujado, como sale quien juega.**
+ *
+ * Desde que los reactores salen de Los Rodeos empujados por un tractor —ver
+ * `prepararElRemolque` en `game.ts`—, este banco se quedaba en el puesto con
+ * el JAZ 90: escribía `engineOn` en los mandos, y así no pasaba por la llave,
+ * que con el tractor enganchado no arranca sino que pide el empuje, ni
+ * encendía la baliza, sin la que el tractor no empuja. Con los motores en
+ * marcha y el tractor enganchado nadie pedía nada, y el avión se quedaba en
+ * «arrancando», a cero, los 350 s del rodaje: seis de trece, y de ellas siete
+ * rojas que no medían nada. El banco del vuelo entero lo aprendió primero;
+ * éste lo hace igual: la baliza, la llave para pedir el empuje y, empujando,
+ * la llave otra vez para arrancar; y no rueda hasta que lo sueltan. Con las
+ * puertas aún abiertas se espera con freno, que es lo que pide el juego.
+ */
+const empuje = await page.evaluate(async () => {
+  const o = globalThis.__oga;
+  if (!o.inicio?.()?.remolque || !o.tocarMando) return null;
+  const c = o.controles();
+  const fases = [];
+  let pedido = false;
+  let conPuertas = 0;
+  let sigameConTractor = false;
+  for (let i = 0; i < 1200; i++) {
+    await new Promise((r) => setTimeout(r, 250));
+    const r = o.inicio()?.remolque ?? null;
+    if (!r || r.fase === "libre") {
+      // Suelto, quieto con freno hasta que se rueda, que es abajo.
+      c.brakes = 1;
+      return { fases: fases.join(" → "), libre: true, segundos: i * 0.25, sigameConTractor };
+    }
+    if (fases[fases.length - 1] !== r.fase) fases.push(r.fase);
+    if (globalThis.__raiz.getObjectByName("sigueme")?.visible) sigameConTractor = true;
+    const puertas = o.fase() === "estacionado" && o.listoParaArrancar?.() === false && conPuertas < 60;
+    if (puertas) conPuertas += 0.25;
+    c.throttle = 0;
+    c.brakes = puertas ? 1 : 0;
+    if (puertas) continue;
+    if (r.fase === "enganchado") {
+      if (!r.baliza) o.tocarMando("baliza");
+      else if (!pedido) {
+        o.tocarMando("motor");
+        pedido = true;
+      }
+    } else if (!c.engineOn) o.tocarMando("motor");
+  }
+  return { fases: fases.join(" → "), libre: false, segundos: 300, sigameConTractor };
+});
+// El coche sale en cuanto el tractor suelta; se le da un segundo y medio para llegar a verse.
+if (empuje?.libre) await page.waitForTimeout(1500);
+if (empuje) {
+  comprobar(
+    "del puesto de contacto se sale empujado, y el tractor suelta el avión",
+    empuje.libre,
+    `${empuje.libre ? "suelto" : "sin soltar"} a los ${empuje.segundos.toFixed(0)} s · ${empuje.fases}`,
+    "con el tractor enganchado el avión no rueda, y nadie pedía el empuje",
+  );
+  comprobar(
+    "y con el tractor enganchado no sale el sígame, que su raya va por detrás",
+    !empuje.sigameConTractor,
+    empuje.sigameConTractor ? "salió con el tractor puesto" : "esperó a que lo soltaran",
+    "el coche saldría por la raya, que va por detrás del avión",
+  );
+}
 
 const sigueme = await mirar(() => {
   const coche = globalThis.__raiz.getObjectByName("sigueme");
@@ -285,7 +377,9 @@ if (!CON_COCHE && (TRAMO === "guyrami" || TRAMO === "tuka")) {
 }
 if (CON_COCHE) {
   comprobar(
-    "el coche del sígame espera delante antes de arrancar",
+    empuje
+      ? "el coche del sígame espera delante cuando el tractor suelta el avión"
+      : "el coche del sígame espera delante antes de arrancar",
     sigueme.visible && sigueme.d < 70,
     sigueme.visible ? `a ${sigueme.d.toFixed(0)} m` : "no se ve",
     "salía cuando ya ibas rodando, y aparecer de la nada no enseña nada",
@@ -393,9 +487,19 @@ const rodando = await page.evaluate(async () => {
    */
   // Cinco minutos: la salida de Tenerife Norte son dos kilómetros de calle a
   // paso de rodaje, y eso son cuatro minutos largos. Rodar lleva lo que lleva.
+  // Lo largo de la calle y lo que tarda a lo que pide el juego, para el tope de abajo.
+  let largo = 0;
+  let comoPide = 0;
   for (let i = 0; i < 1400; i++) {
     await new Promise((r) => setTimeout(r, 250));
     const s = o.estado();
+    {
+      const r = o.ruta();
+      let suma = 0;
+      for (let k = 0; k < r.length - 1; k++) suma += Math.hypot(r[k + 1][0] - r[k][0], r[k + 1][1] - r[k][1]);
+      largo = Math.max(largo, suma);
+      comoPide = Math.max(comoPide, o.segundosDeLaRuta?.() ?? 0);
+    }
     const ruta = o.ruta();
     const fin = ruta[ruta.length - 1];
     const alFinal = fin
@@ -425,6 +529,9 @@ const rodando = await page.evaluate(async () => {
     fase: o.fase(),
     v: s.airspeed,
     segundos: fases.length * 0.25,
+    largo,
+    comoPide,
+    recta: o.avion?.()?.rodaje?.recta ?? 9,
     maxV: Math.max(...desvios),
     // Cuánto queda de ruta: si el avión avanza pero no llega, esto lo dice.
     alFinal: fin
@@ -459,11 +566,25 @@ comprobar(
  * puesto al punto de espera: lo que dura la paciencia de quien tiene cuatro
  * años, y lo que se tarda de verdad en una avioneta que sale por la
  * intersección que le toca.
+ *
+ * **Y en una calle larga, lo que tarda esa calle**, con la misma cuenta que el
+ * banco del vuelo entero: el JAZ 90, empujado desde la terminal de Los Rodeos,
+ * tiene casi un kilómetro hasta la doble raya, y a los veinte nudos de un
+ * avión de línea son cien segundos sin perder uno. El tope es lo que tarda la
+ * ruta a lo que pide el juego —`segundosDeLaRuta`— con un cuarto de holgura,
+ * o a su velocidad en recta con un tercio por las curvas, más veinte de
+ * arrancar y pararse; y nunca menos de noventa. Lo que esto caza sigue siendo
+ * lo que aburre: un plan que pide ir despacio sin motivo, o un rodaje que se
+ * atasca. Ver `topeDeIda` en `verificar-vuelo-entero.mjs`.
  */
+const topeDeRodaje = Math.round(
+  Math.max(90, (rodando.largo / rodando.recta) * (4 / 3) + 20, rodando.comoPide * 1.25 + 20),
+);
 comprobar(
   "y del puesto a la pista se llega antes de aburrirse",
-  rodando.segundos <= 90,
-  `${rodando.segundos.toFixed(0)} s de rodaje`,
+  rodando.segundos <= topeDeRodaje,
+  `${rodando.segundos.toFixed(0)} s de rodaje, con ${topeDeRodaje} de tope para ${rodando.largo.toFixed(0)} m` +
+    ` (el juego pide ${rodando.comoPide.toFixed(0)} s)`,
   "«es aburrido pasarse cuatro minutos en una pista, eso un niño no lo aguanta»",
 );
 comprobar(
