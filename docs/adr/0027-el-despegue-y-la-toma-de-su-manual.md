@@ -912,7 +912,9 @@ aparcado —`actitudEnTierra` a velocidad cero—, se aparta de ella a lo largo
 del suelo y se gira lo contrario que el avión, de modo que apoya su cara
 plana. Vale en cualquier puesto y campo, porque no depende del suelo sino del
 avión; a nivel queda donde estaba. `fundas-y-calzos.test.ts` lo mira en toda
-la flota con su actitud de parado.
+la flota con su actitud de parado. Y `verificar-ruedas` en Tenerife Norte, con
+los seis aviones en el puesto, en la pista y en un campo de llegada: 18 de 18,
+el JAZ 25 a 0,2 cm.
 
 ### Y el reloj parado en Tukã no era del juego
 
