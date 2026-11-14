@@ -1207,11 +1207,10 @@ export interface AircraftConfig {
    * metros por detrás. Ver `alturaSobreLasRuedas` en `flight/apoyo.ts`.
    *
    * **Es la del dibujo**, `modelos/*.py`, que pone el tren donde lo tiene su
-   * tipo, y `apoyo.test.ts` la compara con el `.glb`. No sale de `batalla` por
-   * `CARGA_EN_EL_MORRO`, que da el brazo con el que el peso carga las ruedas
-   * principales —ver `momentoDelTren` en `fdm.ts`— y no dónde apoyan: en un
-   * bogie, el eje de atrás va medio bogie por detrás de su centro, y el 747
-   * apoya en el de la panza, no en el centro de los cuatro.
+   * tipo, y `apoyo.test.ts` la compara con el `.glb`. No es el brazo con el
+   * que el peso carga las ruedas principales, `mainGearAft`: en un bogie, el
+   * eje de atrás va medio bogie por detrás de su centro, y el 747 apoya en el
+   * de la panza, no en el centro de los cuatro.
    *
    * **Negativo en el de rueda de cola**: sus principales van por delante del
    * centro, que es lo que lo sienta en la de cola. Ver `actitudEnTresPuntos`.
