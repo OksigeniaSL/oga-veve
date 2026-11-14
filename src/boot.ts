@@ -27,6 +27,7 @@ import { elegirPiloto } from "./ui/pantalla-pilotos";
 import { arrancarPizarra } from "./ui/pizarra";
 import { espejoDeHas } from "./ui/espejo-de-has";
 import { medirContenedoresSiFalta } from "./ui/medidas-de-contenedor";
+import { vigilarElPanelDeAcceso } from "./ui/panel-de-acceso";
 import { echarElDeDesarrollo, registrarElTrabajador } from "./service-worker";
 
 echarElDeDesarrollo();
@@ -71,6 +72,14 @@ if (!directo) {
   if (pilotos) void elegirPiloto(pilotos);
   await pintada();
 }
+
+/*
+ * **Y el panel de accesibilidad de Oksigenia**, con la primera pantalla ya
+ * pintada: son veinte kilobytes que no deben llegar antes que ella. Vigila y
+ * no abre: sale con la pantalla de pilotos o con el hangar, y en el vuelo no
+ * está. Ver `ui/panel-de-acceso.ts`.
+ */
+vigilarElPanelDeAcceso();
 
 /*
  * **Y si el resto no baja, lo dice el vigilante.** Hasta ahora el juego era

@@ -13121,6 +13121,74 @@ button.motor__tecla::after {
 }
 
 /*
+ * ── El panel de accesibilidad de Oksigenia ──
+ *
+ * Arriba a la derecha en las dos pantallas de antes de volar, que es la
+ * esquina que el hangar deja libre siempre. Ver `ui/panel-de-acceso.ts`.
+ *
+ * - **Del tamaño del tacto del juego** (48 px y no sus 55) y con la paleta de
+ *   la casa, como los botones de idioma: el dibujo de Vitruvio sigue siendo
+ *   el del panel de todas las webs de Oksigenia, que es lo que hace que se
+ *   reconozca.
+ * - **Por debajo de lo que se abre encima de estas pantallas** y por encima
+ *   de ellas: el hangar va en el 20 y los pilotos en el 80. Con su 9 999 999
+ *   de fábrica quedaría encima de cualquier cosa que se abra después.
+ * - **Su `:hover` crece y se pone blanco, y con el dedo se quedaba pegado**
+ *   después de cerrarlo: el botón seguía blanco y grande como si estuviera
+ *   abierto. Con el dedo, sin `:hover`; y al apretar responde, con la misma
+ *   escala que los botones redondos del juego (DESIGN.md §9).
+ */
+oksigenia-access-panel {
+  --oks-btn-size: 48px;
+  --oks-bg: var(--verde-bosque);
+  --oks-icon: var(--beige);
+  --oks-h-bg: var(--beige);
+  --oks-h-icon: var(--verde-bosque);
+  --oks-z: 85;
+}
+
+@media (hover: none) {
+  oksigenia-access-panel::part(trigger):hover {
+    background: var(--oks-bg);
+    color: var(--oks-icon);
+    transform: none;
+  }
+}
+
+oksigenia-access-panel::part(trigger):active {
+  transform: scale(0.93);
+  transition-duration: 90ms;
+}
+
+/*
+ * En un teléfono tumbado el hangar sube las tarjetas a 52 px del borde, y el
+ * botón, a 20 y de 48, se comía la esquina de la tercera: tocar ahí abría el
+ * panel en vez de elegir el aeródromo. Se sube a 4 px del borde, y se queda
+ * en los 44 que pide el dedo: acaba en 48, tres por encima de las tarjetas.
+ */
+@media (max-height: 460px) {
+  oksigenia-access-panel {
+    --oks-btn-size: 44px;
+  }
+
+  oksigenia-access-panel::part(trigger) {
+    margin-top: -16px;
+  }
+}
+
+/*
+ * Y los idiomas de la pantalla de pilotos se apartan para dejarle su esquina:
+ * 20 px del borde, 48 del botón y 10 de aire. Solo cuando ha llegado —sin red
+ * la primera vez no llega— y solo cuando van arriba: en un teléfono de pie van
+ * abajo, en la columna.
+ */
+@media (min-width: 521px) {
+  .con-panel-de-acceso .pilotos__idiomas {
+    right: max(78px, calc(env(safe-area-inset-right) + 62px));
+  }
+}
+
+/*
  * **Y el avión nuevo, en dos columnas en una pantalla baja.** Uno debajo de
  * otro —el título, el avión, su nombre, los bichos, los colores y «A volar»—
  * medían cuatrocientos píxeles, y en un teléfono tumbado el botón para
