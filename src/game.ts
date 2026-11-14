@@ -26481,22 +26481,11 @@ export class Game {
    * suelta igual de suave.
    */
   private inclinarConElSuelo(state: FlightState, dt: number): void {
-    /*
-     * **Y en el de rueda de cola, donde tiene las ruedas**: de las principales,
-     * casi bajo el centro, a la de cola, una batalla por detrás. Medida a
-     * caballo del centro, como en un triciclo, la pendiente no veía el suelo
-     * de debajo de la cola, y en el puesto de Tenerife Norte la rueda de cola
-     * del JAZ 25 quedaba 0,13 m dentro del asfalto (enmienda H10b del ADR 0027).
-     */
-    const atras =
-      this.aircraft.actitudEnTresPuntos !== undefined
-        ? this.aircraft.batalla / 2 + this.aircraft.mainWheelsAft
-        : 0;
     const quiere = state.onGround
       ? pendienteBajoElTren(
           (x, z) => this.terrain.sampleSurface(x, z),
-          state.position.x - Math.sin(state.heading) * atras,
-          state.position.z + Math.cos(state.heading) * atras,
+          state.position.x,
+          state.position.z,
           state.heading,
           this.aircraft.batalla,
           // La vía del tren principal, más o menos la sexta parte del ala en
