@@ -60,6 +60,11 @@
  * debajo. En el cuatrimotor manda la de todos los motores, y se compara de
  * frente.
  *
+ * - **JAZ 50 con el DHC-6 Twin Otter de la Serie 400**, que está en el taller
+ *   (ver `RESERVADOS`): 454 m para despegar con los márgenes de la SFAR 23 y
+ *   460 para aterrizar sin ellos (Viking, 2018). Su despegue se mira contra la
+ *   de todos los motores por 1,15, y su parada aparte.
+ *
  * El JAZ 25, el fumigador, no tiene tipo con el que medirlo. El JAZ 60 era un
  * tipo mezclado —el ala y el peso del Twin Otter con la frenada del 1900D— y
  * no se comparaba; desde el 13-11-2026 es un 1900D (ver el ADR 0027).
@@ -71,6 +76,7 @@
  *            hangar  volado  manual       hangar  manual
  *   jaz-20     406     469     449          407     387   sin margen
  *   jaz-40     536     672     352          633     620   sin margen
+ *   jaz-50     447     469     564          453     427   con / sin
  *   jaz-60     983     959  ≤1.025          815     816   con / sin
  *   jaz-90   1.124   1.264  ≤1.151        1.243   1.123   con margen
  *   jaz-110  1.826   1.783  ≤1.800        1.591   1.800   con margen
@@ -84,6 +90,11 @@
  * campo— y aterriza sin él, que es como publica cada cosa. La toma
  * volada frena lo mismo que la cuenta, al uno por ciento, y el aire de la toma
  * es el de su clase en los dos.
+ *
+ * En el JAZ 50 el hangar pide la de abortar desde su V1, 447 m, por debajo de
+ * los 564 de la suya en su manual; su despegue con todos los motores por 1,15
+ * da 389 contra los 379 del manual, y volado, sin márgenes y hasta los
+ * cincuenta pies, 469 contra 338 de la cuenta (ver abajo).
  *
  * El volado del 110 y del 120 es el de la cola de su fabricante (H7b): eran
  * 1.625 y 1.841 con los 8,5° y 8,6° de antes, sin fuente. Y el de todos, con el
@@ -139,10 +150,11 @@
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { CoefficientFlightModel } from "./fdm";
-import { AIRCRAFT, esDeChorro, type AircraftConfig } from "./aircraft";
+import { AIRCRAFT, MEDIDOS, esDeChorro, type AircraftConfig } from "./aircraft";
 import { neutralControls } from "./model";
 import { alturaSobreLasRuedas, palancaParaRodar } from "./apoyo";
 import {
+  acelerarYPararDeSuNorma,
   carreraHastaVr,
   distanciaDeAterrizaje,
   distanciaDeDespegue,
@@ -162,7 +174,7 @@ const DT = 1 / 120;
 const GRADO = Math.PI / 180;
 
 function avion(id: string): AircraftConfig {
-  return AIRCRAFT.find((a) => a.id === id)!;
+  return MEDIDOS.find((a) => a.id === id)!;
 }
 
 /**
@@ -331,6 +343,22 @@ const MANUALES: Readonly<Record<string, (a: AircraftConfig) => DelManual>> = {
     ),
     aterrizajeConMargen: false,
   }),
+  /*
+   * El Twin Otter publica su despegue con los márgenes de la SFAR 23 y su toma
+   * sin ellos, como el 1900D: 454 m hasta los cincuenta pies con los dos motores
+   * y 460 m desde ellos, con frenos de rueda (Viking, *Twin Otter Series 400
+   * Technical Specifications*, 2018), a su peso máximo al despegar y al
+   * aterrizar. Su despegue se mira aparte: ver abajo.
+   */
+  "jaz-50": (a) => ({
+    ...escalado(
+      a,
+      { metros: 454, kilos: 5670 },
+      { metros: 460, kilos: 5579 },
+      true,
+    ),
+    aterrizajeConMargen: false,
+  }),
   "jaz-90": (a) =>
     escalado(a, { metros: 1151, kilos: a.mass }, { metros: 1228, kilos: 32800 }, true, true),
   "jaz-110": (a) =>
@@ -375,7 +403,7 @@ describe("el despegue y la toma de cada avión, contra su manual", () => {
       expect(r, dicho).toBeLessThan(1.12);
     });
 
-    it.skipIf(id === "jaz-40")(`${id} despega en lo que dice su manual`, () => {
+    it.skipIf(id === "jaz-40" || id === "jaz-50")(`${id} despega en lo que dice su manual`, () => {
       const r = hangar.despegar / manual.despegar;
       const dicho = `${id}: el hangar pide ${Math.round(hangar.despegar)} m y el manual ${Math.round(manual.despegar)}`;
       // Un techo en los bimotores de línea; de frente en los demás. El techo,
@@ -385,6 +413,35 @@ describe("el despegue y la toma de cada avión, contra su manual", () => {
       expect(r, dicho).toBeLessThan(manual.despegueEsTecho ? 1.03 : 1.12);
     });
   }
+
+  /*
+   * **El Twin Otter publica las dos cosas por separado**, y se miran por
+   * separado: su distancia de despegue con los márgenes de la SFAR 23, 454 m, y
+   * la de acelerar y parar, 675 m (Viking, 2018). El hangar pide la mayor de las
+   * dos cuentas suyas, y en él manda la de parar.
+   *
+   * - **La de despegar, de frente**: la de todos los motores por 1,15 da 389 m a
+   *   la masa de la ficha, y su manual 379.
+   * - **La de parar, por debajo de su manual**: 447 m donde el suyo da 564. No
+   *   es su frenada, que es la que para en su toma; es la cuenta de la parada,
+   *   que lleva los dos segundos de la norma de los de transporte (CS 25.109)
+   *   y no el tiempo, más largo, que contaba la SFAR 23 en un avión de los
+   *   años sesenta, que no se ha leído. Se fija que no se aleje más.
+   */
+  it("el jaz-50 despega en lo que dice su manual, con los márgenes de su norma", () => {
+    const a = avion("jaz-50");
+    const r = (distanciaDeDespegue(a) * margenDeSuClase(a).factor) / MANUALES["jaz-50"]!(a).despegar;
+    expect(r).toBeGreaterThan(0.88);
+    expect(r).toBeLessThan(1.12);
+  });
+
+  it("y su parada desde la V1 se queda por debajo de la de su manual, sin alejarse más", () => {
+    const a = avion("jaz-50");
+    const suya = 675 * (a.mass / 5670) ** 2;
+    const r = acelerarYPararDeSuNorma(a) / suya;
+    expect(r).toBeGreaterThan(0.75);
+    expect(r).toBeLessThan(1);
+  });
 
   it("el Seneca no despega peor que hoy, aunque todavía rueda de más", () => {
     // Ver la cabecera: 376 m hasta la Vr donde el suyo rueda unos 247, y no es
@@ -397,7 +454,7 @@ describe("el despegue y la toma de cada avión, contra su manual", () => {
 });
 
 describe("la cuenta del hangar y el avión que se vuela dicen lo mismo", () => {
-  for (const a of AIRCRAFT) {
+  for (const a of MEDIDOS) {
     if (a.helicoptero) continue;
 
     /*
@@ -418,6 +475,16 @@ describe("la cuenta del hangar y el avión que se vuela dicen lo mismo", () => {
      * arriba: se van del suelo más tarde que la cuenta (ver la cabecera), y eso
      * no puede pasar de una quinta parte.
      *
+     * **El JAZ 50, hasta un 45 %**, y es lo que más se aparta de toda la flota:
+     * vuela 469 m hasta los cincuenta pies donde la cuenta dice 338 y su manual,
+     * 395. Rueda hasta la Vr lo que la cuenta —215 m contra 209—; lo que se
+     * alarga es lo de después. Rota a 73 nudos, 1,16 veces su pérdida con los
+     * flaps de despegue, y a esa velocidad necesita casi nueve grados para
+     * volar: con el tirón de tres grados por segundo de este piloto se va del
+     * suelo a 84 nudos y pasa los cincuenta pies a 90, donde el suyo pasa a 76.
+     * La cuenta del hangar sí da lo de su manual (ver arriba); lo que falta es
+     * su actitud en el suelo y el calado de su ala, que no se han leído.
+     *
      * Sin el biplano. Ya rueda como uno de rueda de cola —este piloto le
      * levanta la cola según corre, `palancaParaRodar`— y rueda hasta la Vr lo
      * que la cuenta; pero de la Vr a los cincuenta pies vuela unos 220 m donde
@@ -430,8 +497,9 @@ describe("la cuenta del hangar y el avión que se vuela dicen lo mismo", () => {
       const r = hastaLaAltura / distanciaDeDespegue(a);
       const dicho = `${a.id}: volado ${Math.round(hastaLaAltura)} m, cuenta ${Math.round(distanciaDeDespegue(a))}`;
       const cerrado = a.id === "jaz-120" || a.id === "jaz-110";
+      const ancho = a.id === "jaz-40" ? 1.3 : a.id === "jaz-50" ? 1.45 : 1.2;
       expect(r, dicho).toBeGreaterThan(cerrado ? 0.95 : 0.9);
-      expect(r, dicho).toBeLessThan(cerrado ? 1.05 : a.id === "jaz-40" ? 1.3 : 1.2);
+      expect(r, dicho).toBeLessThan(cerrado ? 1.05 : ancho);
     });
 
     /* Y la frenada: la misma cuenta de `frenada.ts` por dos caminos. */
@@ -527,7 +595,7 @@ describe("la cola de cada reactor toca donde dice su fabricante", () => {
  */
 describe("lo que entra en la cuenta", () => {
   it("el aire de la toma y los márgenes son los de su clase", () => {
-    for (const a of AIRCRAFT) {
+    for (const a of MEDIDOS) {
       if (a.helicoptero) continue;
       expect(enPlaneoDesdeElUmbral(a)).toBeGreaterThan(200);
       expect(parteDeLaLda(a).parte).toBeGreaterThan(0.5);

@@ -17,22 +17,35 @@ flota tenga sentido y no sea una galería de siluetas.
 
 ## El eje del avión
 
-| | JAZ 20 *Pykasu* | JAZ 25 *Mainumby* | JAZ 40 *Panambi* | JAZ 60 *Arasunu* | JAZ 90 *Kuarahy* |
-|---|---|---|---|---|---|
-| | Entrenador | Fumigador | Bimotor ligero | Turbohélice regional | Reactor |
-| **Existe la presurización** | — | — | — | sí | sí |
-| **Fallo asimétrico** | — | — | **sí, es su lección** | sí | sí |
-| **Planeo sin motor** | **sí, es su lección** | sí | sí | sí | sí |
-| **Tripulación y avisos cantados** | — | — | — | sí | **sí, es su lección** |
-| **Señal de cinturones y cabina de pasaje** | — | — | — | sí | **sí, es su lección** |
-| **Hoja de carga y centrado** | básica, y **se nota mucho** | **sí, es su lección** | sí | sí | sí, y apenas se nota |
-| **Límite de viento cruzado** | bajo | bajo | medio | medio | alto |
-| **Vuelo muy bajo y preciso** | — | **sí, es su lección** | — | — | — |
-| **Pistas cortas y de tierra** | sí | sí | sí | **sí, es su lección** | — |
-| **Vuelo por instrumentos** | — | — | inicio | sí | sí |
+| | JAZ 20 *Pykasu* | JAZ 25 *Mainumby* | JAZ 40 *Panambi* | JAZ 50 (en el taller) | JAZ 60 *Arasunu* | JAZ 90 *Arai* |
+|---|---|---|---|---|---|---|
+| | Entrenador | Fumigador | Bimotor ligero | Turbohélice de pista corta | Turbohélice regional | Reactor |
+| **Existe la presurización** | — | — | — | — | sí | sí |
+| **Fallo asimétrico** | — | — | **sí, es su lección** | sí | sí | sí |
+| **Planeo sin motor** | **sí, es su lección** | sí | sí | sí | sí | sí |
+| **Tripulación y avisos cantados** | — | — | — | sí | sí | **sí, es su lección** |
+| **Señal de cinturones y cabina de pasaje** | — | — | — | sí | sí | **sí, es su lección** |
+| **Hoja de carga y centrado** | básica, y **se nota mucho** | **sí, es su lección** | sí | sí | sí | sí, y apenas se nota |
+| **Límite de viento cruzado** | bajo | bajo | medio | medio | medio | alto |
+| **Vuelo muy bajo y preciso** | — | **sí, es su lección** | — | — | — | — |
+| **Pistas cortas y de tierra** | sí | sí | sí | **sí, es su lección** | sí | — |
+| **Vuelo por instrumentos** | — | — | inicio | sí | sí | sí |
 
 **Cómo se lee.** «Es su lección» marca el avión con el que se enseña ese tema
 por primera vez. Los demás pueden tenerlo, pero no es lo suyo.
+
+**Las pistas cortas y de tierra eran la lección del JAZ 60**, cuando volaba con
+el ala y el peso del Twin Otter. Desde el 13-11-2026 es un Beech 1900D
+([ADR 0027](adr/0027-el-despegue-y-la-toma-de-su-manual.md)), que pide más de
+un kilómetro de pista asfaltada para aterrizar, y la lección pasa al avión que
+la tiene de verdad: **el JAZ 50, de la clase del DHC-6 Twin Otter** (#185), el
+turbohélice de ala alta y tren fijo que se hizo para la tierra, la hierba y las
+estancias lejos de todo. **Llega por pasos**: primero su ficha y su modelo de
+vuelo, contra su manual (enmienda H11a del ADR 0027); después su modelo en 3D,
+su cabina, sus voces y su sitio en el hangar. Hasta entonces se mide en el
+banco y no se ofrece, y la columna dice lo que traerá: sin presurizar, con
+diecinueve de pasaje y con el avisador de terreno y el TCAS que lleva de serie
+el de hoy, la Serie 400. Su nombre en guaraní está por decidir.
 
 ### Y una columna aparte: el helicóptero
 

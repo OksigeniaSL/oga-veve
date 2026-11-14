@@ -123,6 +123,8 @@ export const MEDIDAS_DEL_TIPO: Readonly<
    * el doc pone, el Beechcraft Baron 55: 8,8 × 1,1.
    */
   "jaz-40": { largo: 8.8, ancho: 1.1, tipo: "Beechcraft Baron 55 (clase del Seneca II)" },
+  // DHC-6 Twin Otter: 15,8 × 1,6. Es de la 3, por largo.
+  "jaz-50": { largo: 15.8, ancho: 1.6, tipo: "DHC-6 Twin Otter" },
   // Beechcraft 1900D: 17,6 × 1,5. El Twin Otter, 15,8 × 1,6: la misma.
   "jaz-60": { largo: 17.6, ancho: 1.5, tipo: "Beechcraft 1900D" },
   // Embraer 170: 29,9 × 3,0.

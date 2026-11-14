@@ -262,12 +262,13 @@ export function pistaNecesariaHoy(a: AircraftConfig, dia: DiaDeDespegue = DIA_DE
  *
  * - **El Twin Otter**, un turbohélice de diecinueve plazas, sí publica las
  *   dos: 244 m de rodadura y 455 m hasta los cincuenta pies a su peso máximo
- *   (De Havilland, especificaciones del DHC-6 en dehavilland.com/twin-otter).
- *   Son 1,86, pero esos 455 son la longitud de campo de la SFAR 23, que ya
- *   lleva su margen: la proporción sin él queda algo por debajo, y el 1,8 cae
- *   dentro. El JAZ 60 es un 1900D desde el 13-11-2026, y el 1900D publica su
- *   longitud de campo pero no su rodadura: se queda con la de su clase, y el
- *   banco de mesa comprueba que su volado no se aparta de ella (ADR 0027).
+ *   (De Havilland, especificaciones del DHC-6 en dehavilland.com/twin-otter,
+ *   las del Series 400). Son 1,86, pero esos 455 son la longitud de campo de
+ *   la SFAR 23, que ya lleva su margen: sin él son 395, y 1,62. Es la que
+ *   lleva el JAZ 50, que es ese avión (ADR 0027, enmienda H11a). El JAZ 60
+ *   es un 1900D desde el 13-11-2026, y el 1900D publica su longitud de campo
+ *   pero no su rodadura: se queda con la de su clase, y el banco de mesa
+ *   comprueba que su volado no se aparta de ella (ADR 0027).
  * - **El Seneca II**, la del JAZ 40, rueda 870 ft y pasa los cincuenta pies a
  *   los 1.240, a sus 4.570 lb: 1,43 (tabla comparativa de la Grumman Owners
  *   and Pilots Association, aya.org). **Lleva la suya**, en su ficha, desde

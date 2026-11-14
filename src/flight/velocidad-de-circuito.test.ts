@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT } from "./aircraft";
+import { AIRCRAFT, MEDIDOS } from "./aircraft";
 import { vfeDeAterrizaje } from "./limites";
 import {
   MARGEN_DE_CIRCUITO,
@@ -44,7 +44,7 @@ const volando = (velocidad: number, vertical = 0, sobreElSuelo = 300) => ({
 });
 
 describe("cada avión tiene su velocidad de circuito, y es de verdad", () => {
-  it.each(AIRCRAFT.map((a) => [a.id, a] as const))(
+  it.each(MEDIDOS.map((a) => [a.id, a] as const))(
     "%s: por encima de su Vref, dentro de su categoría y con los flaps fuera",
     (_id, a) => {
       const kt = a.velocidadDeCircuito / NUDO;
@@ -61,7 +61,7 @@ describe("cada avión tiene su velocidad de circuito, y es de verdad", () => {
 
   it("y ningún avión vuela su circuito a la velocidad del banco que se estrellaba", () => {
     // 122 m/s: la del viento en cola medido en Los Rodeos con el JAZ 90.
-    for (const a of AIRCRAFT) expect(a.velocidadDeCircuito).toBeLessThan(100);
+    for (const a of MEDIDOS) expect(a.velocidadDeCircuito).toBeLessThan(100);
   });
 });
 

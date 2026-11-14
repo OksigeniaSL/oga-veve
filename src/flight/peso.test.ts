@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
-import { AIRCRAFT, aircraftById, conMasa, masaDe } from "./aircraft";
+import { AIRCRAFT, MEDIDOS, aircraftById, conMasa, masaDe } from "./aircraft";
 import { cargaParaElPlan, masaConCombustible } from "./combustible";
 import { camposDeLaRuta, tramosDelPlan } from "./alterno";
 import { cabeEn, campoDe, destinosParaEsteAvion } from "./cabe";
@@ -38,7 +38,7 @@ function cargasDe(a: (typeof AIRCRAFT)[number]): number[] {
 }
 
 describe("la masa sin combustible de cada ficha", () => {
-  it.each(AIRCRAFT.map((a) => [a.id, a] as const))(
+  it.each(MEDIDOS.map((a) => [a.id, a] as const))(
     "el %s nunca despega por encima del peso máximo de su clase",
     (_id, a) => {
       const mtow = DE_SU_CLASE[a.id]?.mtow;
@@ -52,7 +52,7 @@ describe("la masa sin combustible de cada ficha", () => {
     },
   );
 
-  it.each(AIRCRAFT.map((a) => [a.id, a] as const))(
+  it.each(MEDIDOS.map((a) => [a.id, a] as const))(
     "y su vuelo típico sale cerca de la masa de la ficha, que es con la que se midió todo",
     (_id, a) => {
       const cargas = cargasDe(a);
