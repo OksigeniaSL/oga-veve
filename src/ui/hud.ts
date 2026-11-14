@@ -3858,6 +3858,7 @@ export class Hud {
     const otra = pick(this.root, "fin-otra");
     otra.setAttribute("aria-label", t("fin.otra"));
     pick(this.root, "fin-otra-texto").textContent = frase ? t("fin.otra") : "";
+    this.fin.classList.remove("fin--percance");
     this.fin.hidden = false;
     this.root.classList.add("hud--fin");
   }
@@ -3895,6 +3896,7 @@ export class Hud {
     const otra = pick(this.root, "fin-otra");
     otra.setAttribute("aria-label", t("fin.otra"));
     pick(this.root, "fin-otra-texto").textContent = nombre ? t("fin.otra") : "";
+    this.fin.classList.remove("fin--percance");
     this.fin.hidden = false;
     this.root.classList.add("hud--fin");
   }
@@ -3925,6 +3927,13 @@ export class Hud {
     const otra = pick(this.root, "fin-otra");
     otra.setAttribute("aria-label", t("fin.otra"));
     pick(this.root, "fin-otra-texto").textContent = frase ? t("fin.otra") : "";
+    /*
+     * **Y la flecha de volver a empezar, latiendo**: es el arreglo de un toque
+     * de este lío, y la instructora ya lo dice —«Se rompió. Volvemos a
+     * empezar»—, pero la flecha estaba quieta entre el dibujo y la frase. Se
+     * apaga en los otros finales, que comparten caja. Ver `.fin--percance`.
+     */
+    this.fin.classList.add("fin--percance");
     this.fin.hidden = false;
     this.root.classList.add("hud--fin");
   }
@@ -3949,6 +3958,7 @@ export class Hud {
     const otra = pick(this.root, "fin-otra");
     otra.setAttribute("aria-label", t("fin.otra"));
     pick(this.root, "fin-otra-texto").textContent = frase ? t("fin.otra") : "";
+    this.fin.classList.remove("fin--percance");
     this.fin.hidden = false;
     this.root.classList.add("hud--fin");
   }

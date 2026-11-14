@@ -379,6 +379,7 @@ matriz galáctica de la IAU—, escritas en `src/world/cielo-de-noche.ts`.
 | [Vite](https://vitejs.dev)                     | Bundler y servidor de desarrollo | MIT        |
 | [TypeScript](https://www.typescriptlang.org)   | Lenguaje                         | Apache-2.0 |
 | [Vitest](https://vitest.dev)                   | Tests                            | MIT        |
+| [@oksigenia/access-panel](https://github.com/OksigeniaSL/oksigenia-web-libs/tree/main/packages/access-panel) 0.12.0, de Oksigenia SL | El panel de accesibilidad `<oksigenia-access-panel>` de la pantalla de pilotos y del hangar, que llevan todas las webs de Oksigenia. Vendorizado tal cual en `public/vendor/oksigenia-access-panel.js` (su `dist/web-component.js` sin el mapa de fuentes), con su licencia al lado; sin dependencias y sin ninguna petición a terceros. Ver `src/ui/panel-de-acceso.ts` | MIT        |
 | [Anatomy](https://github.com/wheresryan22/anatomy), de Ryan | La hoja de estilo isométrica (`iso.css`) que va dentro del CSS de la figura del PAPI (`src/ui/figuras/papi.css`, bajo `.fig-papi`), y la fórmula de su proyección isométrica (`isometrica` en `src/ui/figuras/figura.ts`). Con su generador isométrico se dibujaron el PAPI, el velocímetro, el altímetro y los mandos | MIT        |
 
 El aviso de Anatomy, como pide su licencia:

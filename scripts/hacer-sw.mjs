@@ -83,6 +83,22 @@ const RETRATOS = /^assets\/aeronaves\/retratos\/[\w-]+\.webp$/i;
  */
 const SE_BAJA_AL_USARLO = /^assets\/[\w-]+\.aero-[\w-]+\.js$/i;
 
+/**
+ * **Y el panel de accesibilidad, con su versión en la dirección.**
+ *
+ * Se pide como `vendor/oksigenia-access-panel.js?v=<versión>` —la casa lo
+ * sirve así en todas sus webs, ver `src/ui/panel-de-acceso.ts`— y la caché
+ * distingue por la dirección entera: precargado sin la `?v=` era una copia que
+ * nadie pedía, y la que se pide no estaba sin red. La versión se lee de donde
+ * se pide, para que no haya dos.
+ */
+const PANEL = "vendor/oksigenia-access-panel.js";
+const VERSION_DEL_PANEL = /VERSION_DEL_PANEL = "([\w.-]+)"/.exec(
+  readFileSync("src/ui/panel-de-acceso.ts", "utf8"),
+)?.[1];
+const conVersion = (nombre) =>
+  nombre === PANEL && VERSION_DEL_PANEL ? `${nombre}?v=${VERSION_DEL_PANEL}` : nombre;
+
 /** Un tope de seguridad, no una regla: nada de esto debería acercarse. */
 const DEMASIADO_GRANDE = 4 * 1024 * 1024;
 
@@ -105,7 +121,7 @@ for (const camino of todos(RAIZ)) {
   if (nombre === "sw.js") continue;
   const tam = statSync(camino).size;
   if (tam > DEMASIADO_GRANDE) continue;
-  ficheros.push("./" + nombre);
+  ficheros.push("./" + conVersion(nombre));
   bytes += tam;
 }
 ficheros.sort();
@@ -119,7 +135,7 @@ ficheros.sort();
  */
 const version = createHash("sha256")
   .update(
-    ficheros.map((f) => f + readFileSync(join(RAIZ, f.slice(2)))).join(""),
+    ficheros.map((f) => f + readFileSync(join(RAIZ, f.slice(2).replace(/\?.*$/, "")))).join(""),
   )
   .digest("hex")
   .slice(0, 12);

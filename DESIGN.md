@@ -477,6 +477,11 @@ nada.
   rodar y sin pisarse (hasta 560 de alto, los pasos van en baldosa, sin su pregunta).
 - El zoom de la página no se bloquea (sin `user-scalable=no`); el `touch-action: none` de los mandos ya evita el zoom
   por accidente.
+- **Con el dedo, ni `:hover` pegado ni botón mudo, y con «reducir movimiento» nada oculto ni latiendo.** Lo mide
+  `npm run toque` (`scripts/verificar-toque.mjs`) en la pantalla de pilotos, el hangar con sus pasos, el vuelo y la
+  pausa, forzando `:hover` y `:active` por el protocolo de Chrome, también dentro de la sombra del panel de
+  accesibilidad. Lo que se aprieta responde con `scale`, la propiedad suelta, para no pisar el `transform` con el que
+  muchas piezas se colocan.
 - Antes de publicar un cambio de HUD se mira en tablet, en teléfono apaisado y de pie, con dedo.
 
 ## 9. Arte, movimiento y voz
@@ -589,6 +594,11 @@ ponga alguien que lo hable.
 - **Seis ajustes, y los seis porque sin ellos alguien no puede jugar**: movimiento, cabeceo invertido, unidades,
   tamaño (0,82 / 1 / 1,18), sonido (normal, bajo, sin sonido) y contraste. Todos se aplican al momento, sin
   reiniciar el vuelo.
+- **Y el panel de accesibilidad de Oksigenia** (`<oksigenia-access-panel>`, `src/ui/panel-de-acceso.ts`), el de todas
+  las webs de la casa, arriba a la derecha en la pantalla de pilotos y en el hangar, y en ninguna pantalla de vuelo.
+  Ofrece lo que los seis ajustes no tienen —letra legible o para dislexia, interlineado, espaciado, alineado, enlaces,
+  cursor y dianas grandes, foco— y no lo que ya tienen; sus efectos se quedan en esas dos pantallas, porque el HUD está
+  medido al píxel. Vendorizado y sin ninguna petición fuera.
 - Sin registro, sin datos personales y sin analítica de terceros.
 
 ## 11. De dónde sale cada cosa

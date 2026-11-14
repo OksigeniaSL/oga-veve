@@ -132,9 +132,19 @@ describe("la hoja de estilos en un navegador viejo y con el dedo", () => {
   });
 
   it("pone cada :hover dentro de @media (hover: hover)", () => {
+    /*
+     * Salvo el que **deshace** con el dedo el `:hover` de una hoja que no es
+     * nuestra: el del botón del panel de accesibilidad, que vive en su sombra y
+     * solo se alcanza con `::part()`. Ese va en `(hover: none)` a propósito, que
+     * es lo contrario de pegarse. Ver `ui/panel-de-acceso.ts`.
+     */
+    const deshaceElDeOtro = (r: Regla) =>
+      r.selector.includes("::part(") &&
+      r.envoltorio.some((e) => /^@media\b(?!\s+not\b).*\(\s*hover\s*:\s*none\s*\)/.test(e));
     const pegados = TODAS.filter(
       (r) =>
         r.selector.includes(":hover") &&
+        !deshaceElDeOtro(r) &&
         !r.envoltorio.some((e) => /^@media\b(?!\s+not\b).*\(\s*hover\s*:\s*hover\s*\)/.test(e)),
     ).map(donde);
     expect(pegados).toEqual([]);
