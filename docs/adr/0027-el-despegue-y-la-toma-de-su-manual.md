@@ -579,6 +579,11 @@ ningún veredicto cambia.
 | VFE | 188 / 154 / 154 | 188 con 17,5° y 154 con 35° | «Partial flap 17.5° … (188 knots)», «100% position 35° … (154 knots) UE-79 and up» |
 | VLE / VLO | 184 | **180** | «Landing gear extended 207 m.p.h. (180 knots)», y lo mismo para sacarlo y meterlo |
 
+Con la VLE de 180, el descenso de emergencia de `despresurizacion.test.ts` ya
+no puede sacar el tren en el acto: a veinticinco mil pies el 1900D cruza a unos
+183 nudos indicados. La prueba lo saca, como una tripulación, cuando la
+velocidad baja de su VLE, y mira que con él fuera no se pase.
+
 **El ancho del fuselaje del modelo: 1,52 m**, donde eran 1,85, los del Twin
 Otter. La cota exterior del 1900D no está en ninguna fuente que se haya podido
 leer —ni en la hoja de tipo, ni en la vista en tres planos del TAR 98/07, ni en
