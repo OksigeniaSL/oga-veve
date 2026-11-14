@@ -427,8 +427,7 @@ const CABINA = [
   /*
    * **Y la del automático de los E-Jets**, que no dice «disconnect»: «auto-pilot,
    * auto-pilot» en el registrador del ERJ-170 de Shuttle America (NTSB,
-   * AAR-08/01). Ver `VOZ_DEL_AUTOMATICO_DE_EMBRAER` y
-   * `PENDIENTE-VOCES-automatico.md`.
+   * AAR-08/01). Ver `VOZ_DEL_AUTOMATICO_DE_EMBRAER`.
    */
   [
     "cabina.autopilot",

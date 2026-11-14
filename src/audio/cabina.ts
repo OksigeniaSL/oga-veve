@@ -337,9 +337,8 @@ export const TONO_DE_A_BORDO = {
  * el informe final de la SUB austriaca sobre el E195 de Salzburgo, 2017).
  *
  * Va aparte de `CLAVE_DE_CABINA` como las del RA, y por lo mismo: el juego no
- * la pide por su texto sino por el avión que se suelta. **No está grabada**:
- * mientras no esté en el pack, la máquina no puede decirla y lo dice la
- * instructora, en casa. Ver `PENDIENTE-VOCES-automatico.md`.
+ * la pide por su texto sino por el avión que se suelta. Si su toma faltara
+ * en el pack, la máquina no podría decirla y lo diría la instructora, en casa.
  */
 export const VOZ_DEL_AUTOMATICO_DE_EMBRAER = "cabina.autopilot";
 

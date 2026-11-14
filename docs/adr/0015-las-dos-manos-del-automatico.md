@@ -160,9 +160,9 @@ el de siempre.
 
 ## Lo que no
 
-- **Las voces nuevas.** No había saldo para grabar; lo que pide frase nueva
-  está en `PENDIENTE-VOCES-automatico.md` y el juego dice, de momento, lo que
-  ya estaba grabado.
+- **Las voces nuevas.** No había saldo para grabar; lo que pedía frase nueva
+  quedó en `PENDIENTE-VOCES-automatico.md` y se grabó después (el pendiente se
+  borró el 14-11-2026).
 - **La altitud de la frustrada de cada carta**, que pide los datos de las
   cartas de aproximación.
 - **El peso que baja al quemar** (#91) y el viento en altura (#35), como en
