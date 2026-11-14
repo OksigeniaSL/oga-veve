@@ -889,3 +889,94 @@ modelo de la hélice de su propio ADR.
   de cola del dibujo toca a 12,00°, así que no es la actitud; medir la
   pendiente del dibujo entre sus ruedas, y no a caballo del centro, no lo
   cambió. Queda por encontrar.
+
+## Enmienda H10d (14-11-2026): lo que se vio al comprobar la tanda, antes de publicarla
+
+### No eran las ruedas del JAZ 25: eran sus calzos
+
+Los 0,13 m «dentro del asfalto» del fumigador en el puesto de Tenerife Norte
+no eran suyos. Medido pieza a pieza, en el puesto, las ruedas principales
+quedan a 0,7 cm del pavimento y la de cola a 0,2 —el 0,7 es el radio por
+`1 − cos θ` que `apoyo.ts` ya da por bueno—. Lo más bajo del avión eran **los
+calzos de detrás de cada rueda**, 0,13 m dentro, con los de delante 0,07
+flotando: van dentro del grupo del avión, que cabecea con él, y se ponían en
+el plano de las ruedas del dibujo a nivel. En un triciclo parado da igual; el
+de rueda de cola descansa con doce grados de morro arriba y los inclinaba con
+él. Los dos bancos que lo vieron, `verificar-ruedas` y el del vuelo entero,
+miran lo más bajo del avión contra lo que se ve, y lo tomaban por las ruedas.
+Por eso no lo movía nada de lo que se probó en H10b: ni la actitud ni la
+pendiente entre ruedas tocan a los calzos.
+
+Ahora cada calzo sale del punto en el que toca la rueda con la actitud de
+aparcado —`actitudEnTierra` a velocidad cero—, se aparta de ella a lo largo
+del suelo y se gira lo contrario que el avión, de modo que apoya su cara
+plana. Vale en cualquier puesto y campo, porque no depende del suelo sino del
+avión; a nivel queda donde estaba. `fundas-y-calzos.test.ts` lo mira en toda
+la flota con su actitud de parado. Y `verificar-ruedas` en Tenerife Norte, con
+los seis aviones en el puesto, en la pista y en un campo de llegada: 18 de 18,
+el JAZ 25 a 0,2 cm.
+
+### Y el reloj parado en Tukã no era del juego
+
+El juego hacía lo que tiene que hacer. El banco vuela con un tiempo fijo, el
+040/12 de Tenerife Norte, que en la pista 12-30 son casi doce nudos de
+cruzado; el fumigador no tiene cifra demostrada y se queda con la de su norma
+(`cruzadoDemostrado`), que es menos. Así que a los dos segundos y medio en el
+puesto le sale sola la tarjeta del tiempo —«mirar si hoy se sale no es
+opcional»— y, como todo panel que congela, el mundo espera a que se decida.
+En Guyrami igual. El banco no la conocía y se quedaba mirando un reloj quieto.
+
+Ahora el banco la contesta con «salgo igual», que es lo que deja medir el
+vuelo, y lo dice en el parte con sus motivos; con `OGA_METAR` se vuela con
+otro tiempo. Y si el reloj se para con un panel abierto, dice cuál.
+
+Con eso el fumigador vuela por primera vez el vuelo entero en Tukã, 60 de 62.
+Lo que no pasa es su final, en el filo de los dos listones: llega a los
+quinientos pies bajando a 5,3 m/s de media, donde se piden 5,08, y toca a
+2,09, donde se piden 2. Con un cruzado por encima del suyo y un piloto de
+banco que nunca había volado un biplano de rueda de cola, queda como lo que
+es: la primera medida, no un veredicto.
+
+### Lo del JAZ 60 en el vuelo entero ya estaba
+
+Los dos fallos sueltos del 1900D en Los Rodeos —tocar a 2,06 m/s y llegar a
+los quinientos pies bajando a 7,4— no son de los flaps nuevos ni de su Vr.
+El mismo banco en `eb94159f`, antes de H10a, dio 58 de 58 y luego 56 de 58,
+con esos dos mismos fallos: la puerta bajando a 6 m/s y la toma a 2,86. Ya en
+la que pasó, la puerta iba al borde, a 125 nudos y 4,8 m/s. Es la final del
+piloto del banco con este avión en el circuito de Los Rodeos, al filo de los
+dos listones y del lado que caiga; no se ha tocado.
+
+Con lo de esta enmienda dio 55 de 58: la puerta otra vez, bajando a 6,1, y
+dos que no salieron en las dos de `eb94159f` —el avisador de pérdida en el
+viraje a final, a 104 nudos con 1,28 g y los flaps de aterrizar, y el
+consejo `vuelo.consejo.menosGasPapi`, que nombra el PAPI, dicho sin que se
+viera—. Una vez en tres pasadas no dice si es de hoy; queda dicho para la
+siguiente.
+
+### El punto de la palanca, quieto mientras la palanca lo está
+
+El «palanca fija» del banco del dedo no era inestable por el banco: en
+`eb94159f` también se movía el punto, 2 píxeles de los 3 que se perdonan. En
+Guyrami, con un avión de cables, la mano que coge el cabeceo como va se queda
+con su palanca —el modelo sencillo compensado—, pero el punto se pintaba con
+la trayectoria de cada fotograma, que cambia con el gas y con el aire. El
+pulgar del banco inclina el ala en diagonal, `separarEjes` deja el cabeceo
+como iba, y al soltar el punto seguía a la trayectoria: según donde quedara,
+dentro del borde del mando o pegado a él, se veía moverse o no. Por eso salía
+unas veces sí y otras no, en un teléfono o en el otro.
+
+Ahora, con la palanca compensada, el punto se pinta con la trayectoria de
+cuando se compensó, y medio grado más o menos por cada toque que la mueva.
+`mano.test.ts` lo mira con el gas: la trayectoria cambia y el punto no.
+
+### El reactor, con todo
+
+El vuelo entero del JAZ 90 en Tenerife Norte, en Taguató y con todo lo de
+arriba, dio 60 de 63, con la máquina cargada —el juego a ×1,3 de los ×12
+pedidos—: la final llega a los quinientos pies bajando a 6,2 m/s y a 31 m
+del eje, toca a 18 m del eje, y del permiso solo sonó «podés aterrizar», sin
+el *cleared to land* de detrás. Nada de esta enmienda toca su vuelo —los
+calzos se van al arrancar, la tarjeta del tiempo no le sale y el punto de la
+palanca es del modelo sencillo—, y con una sola pasada no se puede decir si
+viene de H10a y H10b o de la carga.

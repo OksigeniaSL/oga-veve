@@ -3776,6 +3776,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let seQuedoSinPared = false;
   /** Por qué se cortó: `reloj`, `atascado` o `pared`. */
   let porQueSeCorto = null;
+  /** La tarjeta del tiempo, si salió sola y se contestó. Ver el bucle. */
+  let parteQueSalio = null;
+  /** El panel que tenía el mundo parado, si fue eso lo que paró el reloj. */
+  let panelQueParo = null;
   /** Dónde se quedó, si se quedó atascado. */
   let atascadoEn = null;
   let relojVivo = { pared: paredEmpezo, juego: o.reloj() };
@@ -3865,11 +3869,41 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       break;
     }
     const ahora = o.reloj();
+    /*
+     * **Y la tarjeta del tiempo, si sale sola.** Cuando el tiempo de hoy pasa
+     * de lo que admite el avión, el juego la abre a los dos segundos y medio
+     * en el puesto —«mirar si hoy se sale no es opcional»— y, como todo panel
+     * que congela, para el mundo hasta que se decide. El banco no la conocía:
+     * el JAZ 25 en Tenerife Norte, con el 040/12 del banco —casi doce nudos
+     * de cruzado contra los diez de su norma—, se quedaba con el reloj parado
+     * en el puesto y el parte decía «el reloj del juego se paró», que es otra
+     * avería. Aquí se sale igual, que es lo que deja medir el vuelo, y el
+     * parte lo dice con sus motivos; con `OGA_METAR` se vuela con otro tiempo.
+     */
+    if (parteQueSalio === null) {
+      const salgo = document.querySelector('[data-parte-accion="salir-igual"]');
+      if (salgo && salgo.getClientRects().length > 0 && o.antesDeVolar().salir === false) {
+        parteQueSalio = {
+          t: +t.toFixed(1),
+          motivos: (o.antesDeVolar().motivos ?? []).map((m) => `${m.motivo} en la ${m.papel}`),
+        };
+        salgo.click();
+        relojVivo = { pared: ahoraDePared, juego: ahora };
+      }
+    }
     // Ver `RELOJ_PARADO`: el reloj del juego, vivo si avanza un segundo.
     if (ahora - relojVivo.juego >= 1) relojVivo = { pared: ahoraDePared, juego: ahora };
     else if (ahoraDePared - relojVivo.pared > RELOJ_PARADO) {
       seQuedoSinPared = true;
       porQueSeCorto = "reloj";
+      // Y qué lo tenía parado, si era un panel: sin eso, «se paró» no dice nada.
+      const j = o.juegoParaTrazas();
+      panelQueParo = j.hayPanelAbierto
+        ? [...document.querySelectorAll(".concha")]
+            .filter((c) => c.getClientRects().length > 0)
+            .map((c) => [...c.classList].filter((k) => k.startsWith("concha--")).join(" "))
+            .join(", ") || "uno sin nombre"
+        : null;
       break;
     }
     /** Lo que ha pasado de verdad desde la muestra anterior. */
@@ -6805,6 +6839,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     seQuedoSinPared,
     porQueSeCorto,
     atascadoEn,
+    parteQueSalio,
+    panelQueParo,
     vueltas: i,
     fases: [...fases].join(" "),
     cambiosDeFase,
@@ -7777,9 +7813,16 @@ if (atascado) {
       ` ${vuelo.paredSegundos.toFixed(0)} s de pared, o sea ×${relojDeVerdad.toFixed(2)}` +
       ` donde el juego dijo ×${vuelo.veces}.\n` +
       `     Se quedó en «${vuelo.etapa}», fase «${vuelo.fases.split(" ").pop()}».` +
+      (vuelo.panelQueParo ? ` Lo tenía parado un panel abierto: ${vuelo.panelQueParo}.` : "") +
       ` Lo que depende de haber volado no se juzga en esta pasada.\n`,
   );
 }
+if (vuelo.parteQueSalio)
+  console.log(
+    `\n  ☁  la tarjeta del tiempo salió sola a los ${vuelo.parteQueSalio.t} s: hoy no conviene salir` +
+      ` (${vuelo.parteQueSalio.motivos.join(", ") || "sin motivo dicho"}). El banco sale igual para medir` +
+      ` el vuelo; con OGA_METAR se vuela con otro tiempo.\n`,
+  );
 
 comprobar(
   "el vuelo avanza al ritmo que dice que avanza",

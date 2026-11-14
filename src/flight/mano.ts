@@ -782,6 +782,12 @@ export class ManoQueSostiene {
    */
   private palancaCompensada: number | null = null;
   private palancaAlApretar: number | null = null;
+  /**
+   * **Y dónde se pinta esa palanca compensada**: la trayectoria que llevaba el
+   * avión cuando la mano se quedó con ella, rad, con la palanca de entonces
+   * para saber si un toque la ha movido. Ver `palanca`.
+   */
+  private sendaCompensada: { readonly palanca: number; readonly senda: number } | null = null;
   /** Lo que gana de energía el avión, medido, para el lazo de la velocidad. */
   private readonly energia: Energia = { verdadera: null, gana: 0 };
 
@@ -870,7 +876,17 @@ export class ManoQueSostiene {
     // Con la velocidad compensada la mano está suelta: la palanca, al centro.
     if (c.activo && this.compensada === null) {
       const { sube, baja } = sendasDelDedo(ve.aircraft);
-      const s = c.metaDelDedo && c.meta !== null ? c.meta : c.consigna.valor;
+      /*
+       * **Y en el modelo sencillo, con la palanca compensada, donde se quedó.**
+       * Ahí la mano no sostiene una trayectoria sino su palanca, y la consigna
+       * copia la trayectoria de cada fotograma: pintada con ella, el punto se
+       * movía con el gas y con el aire mientras la palanca no se movía. Lo cazó
+       * `verificar-dedo.mjs` en «palanca fija», una vez de cada dos.
+       */
+      const s =
+        c.metaDelDedo && c.meta !== null
+          ? c.meta
+          : (this.sendaCompensada?.senda ?? c.consigna.valor);
       y = palancaDeLaCurva(s >= 0 ? s / sube : -s / baja);
     }
     return { x, y };
@@ -895,6 +911,7 @@ export class ManoQueSostiene {
     this.compensadaAlApretar = null;
     this.palancaCompensada = null;
     this.palancaAlApretar = null;
+    this.sendaCompensada = null;
     this.energia.verdadera = null;
     this.energia.gana = 0;
   }
@@ -1331,6 +1348,7 @@ export class ManoQueSostiene {
       } else c.mover(dt, 0, ritmo, SENDA_MAS_BAJA, SENDA_MAS_ALTA);
     }
     eje.teclaAntes = tecla;
+    if (!(compensado && ve.sencillo && ve.mandoParaSubir)) this.sendaCompensada = null;
 
     if (ve.sencillo) {
       const subir = ve.mandoParaSubir;
@@ -1346,6 +1364,18 @@ export class ManoQueSostiene {
          * `gasQueNiSubeNiBaja` en `arcade.ts`.
          */
         if (this.palancaCompensada === null) this.palancaCompensada = acotar(subir(ve.vertical), 1);
+        /*
+         * Y dónde se pinta: la trayectoria de cuando se compensó, y medio
+         * grado más o menos por cada toque que mueva la palanca. Ver `palanca`.
+         */
+        const antes = this.sendaCompensada;
+        if (antes?.palanca !== this.palancaCompensada)
+          this.sendaCompensada = {
+            palanca: this.palancaCompensada,
+            senda: antes
+              ? antes.senda + Math.sign(this.palancaCompensada - antes.palanca) * TOQUE_DE_SENDA
+              : c.valor,
+          };
         this.elevator = this.palancaCompensada;
         return;
       }

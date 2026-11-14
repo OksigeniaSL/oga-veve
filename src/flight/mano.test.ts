@@ -418,6 +418,29 @@ describe("el dedo", () => {
       expect(Math.abs(media), `${id}: nivelado con el aire bajando`).toBeLessThan(0.2);
     }
   });
+
+  /*
+   * **Y el punto, quieto mientras la palanca lo está.** En el modelo sencillo,
+   * con un avión de cables, la mano que coge el cabeceo como va se queda con
+   * su palanca —ver «el avión compensado se queda con su palanca»—, y el punto
+   * se pintaba con la trayectoria de cada fotograma: con el gas o el aire, el
+   * punto se movía con la palanca quieta. Lo cazó `verificar-dedo.mjs`, una
+   * vez de cada dos, en «palanca fija»: el pulgar inclina el ala en diagonal,
+   * el cabeceo se queda como iba —`separarEjes`— y al soltar el punto se iba.
+   */
+  it("en Guyrami, con la palanca compensada, el punto no sigue a la trayectoria", () => {
+    const a = avion("jaz-20");
+    const v = empezar(a, GUYRAMI, maniobra(a));
+    // El dedo inclina el ala y no toca el cabeceo: la mano lo coge como va.
+    volar(v, 4, (t) => (t === 0 ? { palanca: { x: 0.75, y: null } } : {}));
+    const antes = v.mano.palanca().y;
+    const subia = v.modelo.state.verticalSpeed;
+    // Más gas: con la palanca quieta, el modelo sencillo sube más.
+    v.gas = Math.min(1, v.gas + 0.3);
+    volar(v, 4, () => ({}));
+    expect(v.modelo.state.verticalSpeed - subia, "la trayectoria cambia").toBeGreaterThan(0.3);
+    expect(v.mano.palanca().y).toBeCloseTo(antes, 3);
+  });
 });
 
 describe("los toques cortos", () => {
