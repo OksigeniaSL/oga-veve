@@ -7585,14 +7585,21 @@ button.motor__tecla::after {
   }
 }
 
+/*
+ * Y sin animación además de sin pintar: con `display: none` a solas, puesta
+ * la marca cuando el avión ya volaba —al elegir un piloto que pidió menos
+ * movimiento—, Chrome seguía dando la animación por viva (`npm run toque`).
+ */
 @media (prefers-reduced-motion: reduce) {
   .cielo__avion {
     display: none;
+    animation: none;
   }
 }
 
 .sin-movimiento .cielo__avion {
   display: none;
+  animation: none;
 }
 
 /*

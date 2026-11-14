@@ -194,8 +194,10 @@ try {
       // los ajustes del vuelo, y de vuelta a empezar: es lo que hace quien la
       // eligió ayer y abre hoy el juego.
       await page.evaluate(async () => {
-        const { ponerTexto } = await import("/src/datos/guardado.ts");
+        const { escribirYa, ponerTexto } = await import("/src/datos/guardado.ts");
         ponerTexto("ajuste.movimiento", "reducido");
+        // Sin esperar al freno de la escritura: la recarga viene ya.
+        escribirYa();
       });
       await page.reload();
       await page.waitForSelector(".piloto__boton", { timeout: 90000 });
