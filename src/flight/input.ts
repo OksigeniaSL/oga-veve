@@ -41,6 +41,7 @@ import {
   DETENTES,
   TARDAN_LOS_FLAPS,
   muescaMasCercana,
+  muescasDeLaPalanca,
   mueveLosFlaps,
   siguienteDetente,
 } from "./flaps";
@@ -417,7 +418,7 @@ export class InputManager {
     // En el avión que no los lleva no hay palanca que mover. Ver
     // `ponerAeronave`.
     if (!this.flapsQueSeMueven) return;
-    this.flapsPedidos = DETENTES[siguienteDetente(this.flapsPedidos)]!;
+    this.flapsPedidos = this.muescas[siguienteDetente(this.flapsPedidos, this.muescas)]!;
   }
 
   /**
@@ -428,8 +429,11 @@ export class InputManager {
    */
   flapsUnaMuesca(sentido: 1 | -1): void {
     if (!this.flapsQueSeMueven) return;
-    const i = Math.max(0, Math.min(DETENTES.length - 1, muescaMasCercana(this.flapsPedidos) + sentido));
-    this.flapsPedidos = DETENTES[i]!;
+    const i = Math.max(
+      0,
+      Math.min(this.muescas.length - 1, muescaMasCercana(this.flapsPedidos, this.muescas) + sentido),
+    );
+    this.flapsPedidos = this.muescas[i]!;
   }
 
   /**
@@ -442,7 +446,7 @@ export class InputManager {
   }
 
   /**
-   * Dónde está la palanca de flaps: lo pedido, en una de sus cuatro muescas.
+   * Dónde está la palanca de flaps: lo pedido, en una de sus muescas.
    *
    * No es dónde están los flaps —eso es `controls.flaps`, que tarda en
    * llegar—, y por eso lo miran los que hablan de lo que se ha hecho y no de
@@ -462,7 +466,15 @@ export class InputManager {
    */
   ponerPalancaDeFlaps(donde: number): void {
     if (!this.flapsQueSeMueven) return;
-    this.flapsPedidos = DETENTES[muescaMasCercana(donde)]!;
+    this.flapsPedidos = this.muescas[muescaMasCercana(donde, this.muescas)]!;
+  }
+
+  /**
+   * **Las muescas de la palanca de este avión**, en fracción del recorrido.
+   * Ver `muescasDeLaPalanca` en `flight/flaps.ts`.
+   */
+  get muescasDeFlaps(): readonly number[] {
+    return this.muescas;
   }
 
   /** Si este avión tiene palanca de flaps. Ver `ponerAeronave`. */
@@ -552,6 +564,11 @@ export class InputManager {
   private flapsQueSeMueven = true;
   /** Y lo que tardan de arriba abajo en este avión. Ver `ponerAeronave`. */
   private tardanLosFlaps = TARDAN_LOS_FLAPS;
+  /**
+   * Y en qué muescas se para su palanca: cuatro en casi toda la flota y tres
+   * en el 1900D. Ver `ponerAeronave` y `muescasDeLaPalanca`.
+   */
+  private muescas: readonly number[] = DETENTES;
 
   /**
    * Y el tren, que es lo otro que se pide y tarda.
@@ -636,6 +653,11 @@ export class InputManager {
     llevaAerofrenos: boolean | LoQueLleva = false,
     /** Y lo que tarda su tren. Ver `tardaElTren` en `aircraft.ts`. */
     tardaElTren: TardaElTren | null = null,
+    /**
+     * Y los grados de cada muesca de sus flaps, que dicen cuántas tiene su
+     * palanca. Ver `muescasDeFlaps` en la ficha y `muescasDeLaPalanca`.
+     */
+    muescasDeFlaps: readonly number[] | null = null,
   ): void {
     this.palancaDeAerofrenos.ponerAeronave(
       typeof llevaAerofrenos === "boolean"
@@ -649,6 +671,10 @@ export class InputManager {
     this.recogerAerofrenos();
     this.tardanLosFlaps = tardanLosFlaps;
     this.flapsQueSeMueven = llevaFlaps;
+    this.muescas = muescasDeFlaps ? muescasDeLaPalanca({ muescasDeFlaps }) : DETENTES;
+    // La palanca que venía del avión de antes cae en la muesca más cercana del
+    // de ahora: un tercio de la palanca de cuatro no es una muesca del 1900D.
+    this.flapsPedidos = this.muescas[muescaMasCercana(this.flapsPedidos, this.muescas)]!;
     if (!llevaFlaps) {
       this.flapsPedidos = 0;
       this.controls.flaps = 0;

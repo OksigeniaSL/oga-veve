@@ -29,7 +29,7 @@
  * metros por segundo, y la conversión la hace quien llama.
  */
 
-import { DETENTES, muescaMasCercana } from "./flaps";
+import { DETENTES, muescaMasCercana, muescasDeLaPalanca } from "./flaps";
 import { vfeDeLaMuesca, vfeEn } from "./limites";
 
 /** Lo que se recuerda de un fotograma al siguiente. */
@@ -85,17 +85,27 @@ export const ABUSO = 1.15;
  */
 export const AGUANTAN = 4;
 
-/** Hasta dónde bajan unos flaps tocados: la primera muesca. */
+/**
+ * Hasta dónde bajan unos flaps tocados: la primera muesca, en la palanca de
+ * cuatro. La de cada avión la da `hastaDondeBajan`, que mira la suya.
+ */
 export const TOPE_DE_TOCADOS = DETENTES[1];
-
-/** La muesca de aterrizaje: la última. */
-const ATERRIZAJE = DETENTES.length - 1;
 
 /** Lo que hace falta saber del avión. Todo sale de su ficha. */
 export interface FichaDeFlaps {
   readonly llevaFlaps: boolean;
   readonly vfePorMuesca: readonly number[];
   readonly alivioDeFlaps: boolean;
+  /**
+   * Los grados de cada muesca, que dicen cuántas tiene su palanca. Sin ellos,
+   * la de cuatro. Ver `muescasDeLaPalanca`.
+   */
+  readonly muescasDeFlaps?: readonly number[];
+}
+
+/** Las muescas de la palanca de esta ficha, o las de cuatro si no lo dice. */
+function muescasDe(a: Pick<FichaDeFlaps, "muescasDeFlaps"> | undefined): readonly number[] {
+  return a?.muescasDeFlaps ? muescasDeLaPalanca({ muescasDeFlaps: a.muescasDeFlaps }) : DETENTES;
 }
 
 /** Lo que hace falta saber de este instante. */
@@ -135,8 +145,11 @@ export function cuidarLosFlaps(
    * nada que aliviar.
    */
   let aliviados = false;
-  if (a.alivioDeFlaps && muescaMasCercana(ahora.palanca) === ATERRIZAJE) {
-    const tope = vfeDeLaMuesca(placa, ATERRIZAJE);
+  // La de aterrizaje es la última de su palanca.
+  const muescas = muescasDe(a);
+  const aterrizaje = muescas.length - 1;
+  if (a.alivioDeFlaps && muescaMasCercana(ahora.palanca, muescas) === aterrizaje) {
+    const tope = vfeDeLaMuesca(placa, aterrizaje);
     aliviados = antes.aliviados
       ? ahora.kt >= tope - VUELVE_EL_ALIVIO
       : ahora.kt > tope + SALTA_EL_ALIVIO;
@@ -168,10 +181,18 @@ export function cuidarLosFlaps(
  * que es exactamente lo que pasa en la cabina: el alivio y un flap tocado no
  * mueven el mando, mueven el flap. Ver `topeDeFlaps` en `input.ts`.
  */
-export function hastaDondeBajan(c: CargaDeFlaps): number {
+export function hastaDondeBajan(
+  c: CargaDeFlaps,
+  /**
+   * Y de qué avión, que dice dónde caen sus muescas: la primera del 1900D es
+   * la mitad de la palanca, no un tercio. Sin él, la palanca de cuatro.
+   */
+  a?: Pick<FichaDeFlaps, "muescasDeFlaps">,
+): number {
+  const muescas = muescasDe(a);
   let tope = 1;
   // Aliviados, a la muesca de antes de la de aterrizaje.
-  if (c.aliviados) tope = Math.min(tope, DETENTES[2]);
-  if (c.tocados) tope = Math.min(tope, TOPE_DE_TOCADOS);
+  if (c.aliviados) tope = Math.min(tope, muescas[Math.max(1, muescas.length - 2)] ?? 1);
+  if (c.tocados) tope = Math.min(tope, muescas[1] ?? TOPE_DE_TOCADOS);
   return tope;
 }

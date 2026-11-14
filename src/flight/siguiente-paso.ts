@@ -95,8 +95,17 @@ export interface ObjetivoDelPaso {
   readonly kt: number;
   /** La altitud a la que se va, pies, si el paso va a alguna. */
   readonly pies: number | null;
-  /** La muesca de flaps que toca, de 1 a 3, en el paso de los flaps. */
+  /**
+   * La muesca de flaps que toca, de la primera a la última de su palanca, en
+   * el paso de los flaps.
+   */
   readonly muesca: number | null;
+  /**
+   * **Si esa muesca es la de aterrizar**, la última de su palanca: la tercera
+   * en la de cuatro y la segunda en la del 1900D. Es lo que elige la frase,
+   * «los flaps de aterrizar, abajo del todo», y no el número de la muesca.
+   */
+  readonly deAterrizar?: boolean;
 }
 
 /** Un paso: el escalón alcanzado, lo que hay que hacer y hasta dónde. */
@@ -134,7 +143,7 @@ export interface LecturaDelPaso {
   readonly bajando: boolean;
   /** Si se va por la final del plan. */
   readonly enLaFinal: boolean;
-  /** La muesca de flaps pedida, de 0 a 3. */
+  /** La muesca de flaps pedida, de 0 a la última de su palanca. */
   readonly flaps: number;
   /** La que pide el peldaño. Ver `flapsQuePide`. */
   readonly flapsQuePide: number;
@@ -409,10 +418,17 @@ export class CadenaDelVuelo {
     if (l.trenQuePide && l.tren === false) {
       nuevo("tren", "tren", objetivo());
     } else if (l.flaps < l.flapsQuePide) {
-      const muesca = Math.min(3, l.flaps + 1);
+      // La placa lleva una cifra por muesca sacada: tantas como muescas tiene
+      // su palanca después del cero. Ver `vfePorMuesca`.
+      const ultima = Math.max(1, l.vfe.length);
+      const muesca = Math.min(ultima, l.flaps + 1);
       const vfe = l.vfe[muesca - 1] ?? Infinity;
       if (l.kt > vfe - MARGEN_VFE) nuevo(deVelocidad, "frenar", objetivo());
-      else nuevo(`flaps:${muesca}`, "flaps", objetivo(null, muesca));
+      else
+        nuevo(`flaps:${muesca}`, "flaps", {
+          ...objetivo(null, muesca),
+          deAterrizar: muesca === ultima,
+        });
     }
 
     // ── El punto de descenso ───────────────────────────────────────────
@@ -671,7 +687,10 @@ export function comoSeDice(p: Paso, c: ComoVa): FraseDelPaso {
     case "flaps":
       return {
         ...sin,
-        nueva: `vuelo.paso.flaps${p.objetivo.muesca ?? 1}`,
+        // Por su papel: la primera, una de en medio o la de aterrizar.
+        nueva: `vuelo.paso.flaps${
+          p.objetivo.deAterrizar ? 3 : Math.min(2, Math.max(1, p.objetivo.muesca ?? 1))
+        }`,
         grabada: "vuelo.pediFlaps",
         corta: "palabra.flaps",
         dibujo: "flaps",

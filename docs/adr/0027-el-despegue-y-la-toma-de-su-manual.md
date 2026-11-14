@@ -500,3 +500,192 @@ turbohélice de su clase, que despega corto y aterriza a 108 nudos.
 - El JAZ 60 es un Beech 1900D: despega y aterriza en las distancias de su
   manual, va a 274 nudos y deja de caber en el valle de la Cordillera, por la
   toma.
+
+## Enmienda H10a (14-11-2026): el 1900D del todo, y qué avisos dice cada avión con voz
+
+La enmienda del 13-11 dejó el JAZ 60 hecho 1900D con cinco cosas sin su fuente
+(#186), y los avisos de a bordo de los cuatro aviones de transporte colgando de
+una sola bandera (#178). Lo que se ha leído, lo que cambia y lo que sigue sin
+fuente.
+
+### Las fuentes nuevas
+
+- **Hoja de tipo FAA A24CE, revisión 98** (28-10-2008), leída en un espejo
+  completo (csobeech.com, *KingAir-TCDS.pdf*): la sección X, el 1900D, pp.
+  37-40. La vigente no se ha podido descargar del DRS de la FAA, así que alguna
+  cifra puede haber cambiado en revisiones posteriores.
+- **FAA, DOT/FAA/AR-08/50**, *Statistical Loads Analysis of BE-1900D in
+  Commuter Operation* (2017): 8.740 salidas de una aerolínea regular.
+- **NTSB, AAR-04/01**, Air Midwest 5481 (1900D, Charlotte, 2003), con la
+  transcripción del CVR en su apéndice B; y **FSF, *Accident Prevention***,
+  julio de 1998, con la del 1900D de Bangor.
+- **Boeing, FCOM del 747-400** (D6-30151-400, rev. 23, 2009) y **FCOM del 787**
+  (D615Z003-TBC, rev. 4, 2010), las copias de formación que circulan. El del
+  787 es del -8: no se ha encontrado uno del -9.
+- **JTSB, AA2006-1**, el 747-400D del vuelo 356 de JAL, con la transcripción
+  de su registrador y una prueba en tierra del automático.
+- **NTSB, AAR-08/01**, el ERJ-170 de Shuttle America en Cleveland, con la
+  transcripción de su CVR; y **SUB de Austria**, informe final del E195 de
+  Salzburgo (2017), que cita el manual de un operador.
+- **R. D. Patterson, CAA Paper 82017** (1982), el análisis acústico de los
+  avisos de un simulador de 747.
+
+### #186: lo que cambia en el JAZ 60
+
+**Los flaps: tres posiciones, y no cuatro.** La hoja de tipo da «Partial flap
+17.5°» y «100% position 35°», y el estudio de la FAA lo dice con sus nombres:
+«There are three flap positions for this aircraft: retracted, half, and full.
+The three detent positions were recorded as "Up," "Approach," and "Down."» (p.
+39). Eran 0, 10, 20 y 35. Son 17,5 y no 17: el 17 era la cifra que circulaba.
+
+El juego tenía una sola palanca de cuatro muescas para toda la flota
+(`DETENTES`). Ahora cada avión tiene las suyas —`muescasDeLaPalanca` en
+`flaps.ts`, tantas como cifras de `muescasDeFlaps`, repartidas a partes iguales
+por la palanca— y lo que antes iba por número de muesca va por su papel: la
+primera para despegar (`MUESCA_DE_DESPEGUE`), la de antes de la última para la
+aproximación (`muescaDeAproximacion`) y la última para aterrizar
+(`muescaDeAterrizaje`). Lo usan la tecla y los botones de la palanca, la
+escalera de velocidades, la cadena del «¿y ahora qué?» —que pide «los flaps de
+aterrizar» por la última muesca, no por la tercera—, la puerta de la
+aproximación estabilizada, el consejo de frenar con flaps, los flaps tocados
+—que se quedan en la primera muesca de cada uno—, el despegue de los bancos de
+mesa (`flapsDeDespegue`) y el guion de Blender (`en_la_muesca` en
+`exterior.py`). En la palanca de cuatro no cambia nada. El vuelo de línea y el
+piloto del banco piden por fracciones —un tercio, dos tercios— y caen en la
+muesca más cercana, que en el 1900D es la de 17,5°.
+
+**Despega con la de aproximación**: «The departure phase was defined to be the
+initial climb immediately following liftoff, with the flaps in the approach
+position» (AR-08/50, p. 26), y con 17,5° voló el NTSB su simulación del
+accidente de Charlotte (AAR-04/01, p. 53). Su manual admite también despegar
+sin flaps —así salió el de Bangor—; no se ha podido leer cuál llama normal.
+
+**La Vr y la V1, las de su manual.** Con 17,5° el ala sustenta más que con los
+diez de antes, y la regla de los reactores —1,1 veces la pérdida con los flaps
+de despegue— bajaba la Vr a 98,6 nudos. Esa regla es un suelo, y el manual rota
+más arriba: Vr 102 y V1 100 a 16.000 lb (TSB, A97C0229), que a la masa de la
+ficha son **102,3 y 100,3**. Lo que la regla sí cuadra es la V2: 1,2 veces la
+pérdida con 17,5° da 107,6 nudos en el modelo, y su manual, 108. Con eso el
+hangar pide **1.001 m para despegar**, la de abortar desde su V1 —eran 983—,
+dentro de los 1.025 de su longitud de campo; la toma no cambia, 1.164 de LDA, y
+ningún veredicto cambia.
+
+**Las velocidades de su hoja de tipo** (p. 39):
+
+| | Antes | Ahora | Cita |
+|---|---|---|---|
+| Vmo | 248 kt, de su placa | 248 kt hasta 13.200 ft | «Max. operating speed 285 m.p.h. (248 knots) up to 13,200 ft.» |
+| Mmo | 0,48, de su placa | 0,48 | «Max. operating Mach No. 0.48» |
+| VFE | 188 / 154 / 154 | 188 con 17,5° y 154 con 35° | «Partial flap 17.5° … (188 knots)», «100% position 35° … (154 knots) UE-79 and up» |
+| VLE / VLO | 184 | **180** | «Landing gear extended 207 m.p.h. (180 knots)», y lo mismo para sacarlo y meterlo |
+
+**El ancho del fuselaje del modelo: 1,52 m**, donde eran 1,85, los del Twin
+Otter. La cota exterior del 1900D no está en ninguna fuente que se haya podido
+leer —ni en la hoja de tipo, ni en la vista en tres planos del TAR 98/07, ni en
+los dos estudios de la FAA—. Lo publicado es su cabina, 4 ft 6 in de ancho
+(1,37 m, hoja de especificaciones), y se le dan siete centímetros y medio de
+pared a cada lado, que es la única cifra exterior que circula, 1,5 m, de una
+ficha sin fuente. Todas las estaciones se estrechan en la misma proporción. La
+hélice pasa ahora a 46 cm del costado; la enmienda del 13-11 decía 30 y 43 al
+revés: 30 era lo que dejaba el fuselaje ancho. El retrato del hangar se ha
+rehecho con el modelo nuevo.
+
+**El `cmQ`, de −24 a −27.** −27 era su cuenta —el plano de cola del 1900D
+sobre su ala, escalado con `S_t·l_t²/(S·c²)`—, y se había dejado en −24 para
+caber en el listón de `referencia.test.ts`, 2,5 veces el Navion: −24 eran 2,41,
+pegado al borde. Ese listón caza signos cambiados y ceros de más, y el propio
+test dice que no está para decidir el tamaño de un avión; con un ala de 1,63 m
+de cuerda y la cola a nueve metros, el cabeceo amortigua más que el del Navion
+por esa misma cuenta. El listón del cabeceo sube a tres y el JAZ 60 queda en
+2,71. El corto período a crucero pasa de ζ 0,47 a 0,49, más lejos del 0,35 donde
+empieza el nivel 1 de la MIL-F-8785C. La superficie de su plano de cola, que es
+lo que afinaría la cifra, no se ha encontrado publicada.
+
+### #186: lo que sigue sin fuente
+
+- **La Vmc**: no aparece en la hoja de tipo ni en ningún informe que se haya
+  podido leer. Se queda la del modelo, 85 nudos, como supuesto, por debajo de
+  los 97 que permite su Vr (14 CFR 23.51 c 2 ii).
+- **El viento cruzado demostrado**: tampoco. Hay una pista sin verificar —un
+  informe del NTSB, CHI04LA086, que diría «according to the operator, the
+  published maximum demonstrated crosswind component for the 1900D is 22
+  knots»— que no se ha podido abrir, y es palabra del operador, no del manual.
+  Sigue mandando la regla de certificación (`cruzadoDemostrado`).
+- **Lo que tardan los flaps**: sin fuente; se quedan los doce segundos de
+  arriba abajo.
+- **Lo que canta su TAWS**: sigue siendo solo *five hundred*.
+
+### #178: qué dice cada avión con voz
+
+Los avisos de pérdida, de velocidad baja y de desconexión del automático
+colgaban de `avisosHablados`, la bandera del avisador de terreno y del
+radioaltímetro, y los cuatro aviones de transporte los decían con voz. Ahora
+cada ficha dice cómo suena cada uno (`avisosDeABordo`), con la fuente al lado:
+
+| | Pérdida | Velocidad baja | Automático |
+|---|---|---|---|
+| JAZ 60 (1900D) | **bocina**, sin voz | **sin aviso propio** | voz «autopilot disconnect», **sin fuente** |
+| JAZ 90 (E170) | **sacudidor**; la voz «stall, stall», **sin fuente** | voz «airspeed low», **sin fuente** | **voz «autopilot, autopilot»** |
+| JAZ 110 (787) | **sacudidor**, sin voz | **pitido de precaución** | **sirena** |
+| JAZ 120 (747) | **sacudidor**, sin voz | **pitido de precaución** | **sirena** |
+
+- **1900D, la pérdida**: «Pre-stall warning system to include: stall warning
+  lift computer … and stall warning lift transducer» (A24CE, p. 40), y en sus
+  registradores, «[sound similar to stall warning horn begins]» (AAR-04/01) y
+  «[sound of horn similar to stall warning starts]» (FSF, 1998). Ninguna voz.
+- **1900D, la velocidad baja**: en esas dos transcripciones el avión se frena
+  hasta la pérdida y lo único que suena es esa bocina y la del tren.
+- **1900D, el automático**: no se ha encontrado qué suena al soltarse su Collins
+  APS-65, y no todos lo llevan («The accident airplane was not equipped with an
+  autopilot», AAR-04/01, p. 15). Se queda la voz de antes, como supuesto.
+- **E170, el automático**: «auto-pilot, auto-pilot», con la nota «Voice
+  identified as aircraft mechanical voice» (AAR-08/01); y el manual de un
+  operador de E195, «triggers the aural warning "AUTOPILOT"». Es una toma
+  nueva, `cabina.autopilot`, **sin grabar**: hasta que lo esté, lo dice la
+  instructora. Ver `PENDIENTE-VOCES-automatico.md`.
+- **E170, la pérdida**: el sacudidor es el aviso de la familia —«triggered a
+  stall warning (stick shaker) for 2 seconds», el E195 de Salzburgo—, y sonaba
+  la bocina de una avioneta. Si además la dice una voz no se ha podido leer:
+  ese registrador no se guardó, y el «STALL» de su tabla de llamadas es el de
+  quien vuela. Se queda la voz, como supuesto; y la de velocidad baja, igual.
+- **747-400**: el sacudidor —«Warning of an impending stall is provided by left
+  and right stick shakers» (FCOM 15.20.10), «Sound of stick shaker. (3
+  seconds)» en el registrador del JAL 356—; el pitido —«AIRSPEED LOW Caution
+  Beeper» (15.30.3)—, y la sirena —«>AUTOPILOT DISC Warning 570 Siren … 109,
+  405 Wailer» (4.30.1)—. Se pone la sirena, la que oyó la JTSB al probar en
+  tierra ese mismo avión («an aural warning (siren) sounded», p. 32).
+- **787**: lo mismo en su FCOM: el sacudidor (15.20.11), el pitido (15.30.1) y
+  «AUTOPILOT DISC Warning Siren» (4.30.1). Su «AIRSPEED, AIRSPEED» hablado es
+  otro aviso, el de la velocidad mínima con un motor parado (15.20.4), que el
+  juego no da.
+
+**Cómo suena lo que no habla.** Todo sintetizado, como el resto del sonido del
+juego (`audio/tonos-de-aviso.ts`):
+
+- **La sirena**, la única forma medida: «2.5-Hz repetition rate. 260-ms bursts
+  separated by 140-ms gaps. Broad line-spectrum with rising frequency. Siren
+  being started repeatedly» (CAA Paper 82017, tabla B1, un 747). Cinco ráfagas
+  de diente de sierra que suben de tono; las frecuencias no están en el
+  informe.
+- **El pitido de precaución** y **el sacudidor**: su acústica no está
+  publicada. El pitido son cuatro pitidos cortos de una nota; el sacudidor, un
+  golpeteo grave y recortado, que suena mientras dura la pérdida en lugar de
+  la bocina.
+
+**Y la escalera, la de siempre.** La sirena, el pitido y la voz del E-Jet pasan
+por la voz de la máquina como una voz de caja: suenan en los cuatro peldaños,
+con su prioridad, y en los tres de abajo la instructora explica detrás. La
+bocina y el sacudidor suenan mientras dura la pérdida, en los cuatro peldaños,
+y en los de abajo la instructora la explica; en el de cabina, el sonido solo.
+En la avioneta, como estaba: la bocina y la instructora en todos.
+
+### Lo que no se ha hecho
+
+- **La V2 que enseña el juego** sale de la pérdida limpia en toda la flota
+  (`lasVelocidadesDe` en `game.ts` llama a `velocidadesDeDespegue` sin flaps):
+  en el JAZ 60, 118 nudos, donde su manual da 108. Pasarle los flaps de
+  despegue cambia la V2 y la V1 de todos los aviones, y es su propia medida.
+- **La campanada de la pérdida de un motor** (`precaucion`) es una nota larga,
+  y en los Boeing una precaución suena con el mismo pitido que AIRSPEED LOW.
+  No era de este encargo.
+- **La toma «autopilot disconnect»** solo la usa ya el JAZ 60, y sin fuente.

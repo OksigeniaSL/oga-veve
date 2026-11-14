@@ -90,22 +90,31 @@ SALIDA = os.path.join(
 #
 # El morro largo y afilado de un turbohélice de línea —ahí va la bodega de
 # delante y el radar—, el tubo de pasaje y la cola que sube hasta la deriva.
+#
+# **1,52 m de ancho, y no 1,85.** El fuselaje era el del Twin Otter, más
+# ancho que el del 1900D. Su cabina mide 4 ft 6 in de ancho, 1,37 m (hoja de
+# especificaciones del 1900D), y por fuera no hay cota publicada que se haya
+# podido leer: se le dan los 1,37 con siete centímetros y medio de pared a
+# cada lado, que es lo que da la única cifra que circula, 1,5 m, de una ficha
+# sin fuente. Todas las estaciones se estrechan en la misma proporción, así
+# que el morro y la cola conservan su forma. La hélice pasa ahora a 46 cm del
+# costado, y no a 30 (ADR 0027, enmienda H10a).
 PIEL = Piel([
     (MORRO, 0.0, -0.12, -0.12),
-    (-7.50, 0.20, 0.06, -0.30),
-    (-7.20, 0.42, 0.20, -0.52),
-    (-6.70, 0.63, 0.32, -0.71),
-    (-6.25, 0.77, 0.44, -0.83),
-    (-5.70, 0.86, 0.76, -0.91),
-    (-5.10, 0.91, 0.92, -0.95),
-    (-4.40, 0.925, 0.95, -0.95),
-    (2.60, 0.925, 0.95, -0.95),
-    (4.60, 0.86, 0.93, -0.68),
-    (6.60, 0.62, 0.88, -0.22),
-    (8.10, 0.40, 0.83, 0.18),
-    (9.20, 0.20, 0.78, 0.46),
-    (9.65, 0.13, 0.76, 0.53),
-    (COLA, 0.08, 0.74, 0.58),
+    (-7.50, 0.164, 0.06, -0.30),
+    (-7.20, 0.345, 0.20, -0.52),
+    (-6.70, 0.518, 0.32, -0.71),
+    (-6.25, 0.633, 0.44, -0.83),
+    (-5.70, 0.707, 0.76, -0.91),
+    (-5.10, 0.748, 0.92, -0.95),
+    (-4.40, 0.76, 0.95, -0.95),
+    (2.60, 0.76, 0.95, -0.95),
+    (4.60, 0.707, 0.93, -0.68),
+    (6.60, 0.509, 0.88, -0.22),
+    (8.10, 0.329, 0.83, 0.18),
+    (9.20, 0.164, 0.78, 0.46),
+    (9.65, 0.107, 0.76, 0.53),
+    (COLA, 0.066, 0.74, 0.58),
 ])
 
 
@@ -124,9 +133,9 @@ def construir():
     # entra, que es lo que hace que no parezca clavada.
     carenado = Piel([
         (-1.9, 0.0, -0.55, -0.55),
-        (-1.2, 0.80, -0.40, -0.98),
-        (0.6, 0.98, -0.35, -1.06),
-        (1.8, 0.80, -0.40, -1.0),
+        (-1.2, 0.657, -0.40, -0.98),
+        (0.6, 0.805, -0.35, -1.06),
+        (1.8, 0.657, -0.40, -1.0),
         (2.9, 0.0, -0.70, -0.70),
     ], n=2.4)
     piezas.append(carenado.malla("carenado", "casco", lados=28, paso=0.3))
@@ -212,7 +221,9 @@ def construir():
         # Este avión mete las patas, así que lleva su palanca.
         tren=True,
         ojos_z=-5.20,
-        ancho=0.62,
+        # El panel, de lado a lado de un fuselaje de 1,52 m: con los 0,62 del
+        # de 1,85 su visera asomaba por fuera de la chapa.
+        ancho=0.56,
         alto_panel=0.18,
         y_suelo=-0.44,
         y_respaldo=0.26,
@@ -233,8 +244,11 @@ def construir():
         parabrisas=dict(
             hacia_arriba=16.0,
             montantes=[(-0.36, 0.05, 0.0), (0.36, 0.05, 0.0),
-                       (-0.50, 0.045, 0.20), (0.50, 0.045, 0.20)],
-            estrecha=0.88,
+                       (-0.38, 0.045, 0.20), (0.38, 0.045, 0.20)],
+            # Los de las ventanillas, más juntos y cerrándose más hacia el
+            # techo: el morro del 1900D es más estrecho que el del Twin Otter,
+            # y con los de antes asomaban ocho centímetros por fuera.
+            estrecha=0.74,
             limpias=True,
             avisos=True,
             capota=("casco", 11.5, 0.55),
@@ -276,10 +290,11 @@ def construir():
         (j, 8.33, 8.40, 0.755, 1.0),
     ])
     piezas.append(ala)
-    # Ranurados, con los topes de un turbohélice de diecinueve plazas: diez,
-    # veinte y treinta y cinco. Ver `ranurado`.
+    # Ranurados, con los topes del 1900D: arriba, diecisiete —la de
+    # aproximación, con la que despega— y treinta y cinco. Eran cuatro, con
+    # una de veinte que ese avión no tiene. Ver `ranurado` y `muescasDeFlaps`.
     piezas += flaps_moviles(ala, flaps, ranurado(
-        muescas=(0, 10, 20, 35), recorrido=(0, 0.15, 0.21, 0.25)),
+        muescas=(0, 17.5, 35), recorrido=(0, 0.19, 0.25)),
         mandos=alerones)
     piezas += piezas_de_mandos(alerones)
 

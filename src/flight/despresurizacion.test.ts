@@ -119,7 +119,14 @@ describe("lo que pasa, en su orden", () => {
 function descenso(
   a: AircraftConfig,
   aerofrenos: boolean,
-): { segundos: number; iasMax: number; machMax: number; cargaMin: number } {
+): {
+  segundos: number;
+  iasMax: number;
+  /** Lo más deprisa que fue con el tren fuera, en indicada. */
+  iasConTren: number;
+  machMax: number;
+  cargaMin: number;
+} {
   const alto = a.alturaDeCrucero;
   const modelo = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: NO_ASSISTS });
   const s = modelo.state;
@@ -137,8 +144,19 @@ function descenso(
   const piloto = new PilotoDelDescenso(a);
   const rumbo = s.heading;
   let iasMax = 0;
+  let iasConTren = 0;
   let machMax = 0;
   let cargaMin = 9;
+  /*
+   * **El tren, en cuanto se puede sacar.** Sin aerofrenos se baja con el tren
+   * fuera, pero el tren no se saca por encima de su VLE: el 1900D cruza a
+   * veinticinco mil pies a unos 183 nudos indicados y su tren es de 180 (hoja
+   * de tipo A24CE). Se cierra el gas, el morro frena lo que sobra y entonces
+   * sale, que es lo que hace una tripulación. Con la VLE de 184 que tenía
+   * antes, salía en el acto.
+   */
+  const conTren = a.aerofrenos === null && a.trenRetractil;
+  let trenFuera = false;
   for (let t = 0; t < 20 * 60; t += dt) {
     const r = piloto.mandos(
       {
@@ -159,18 +177,21 @@ function descenso(
     modelo.step(dt, {
       ...neutralControls(),
       throttle: 0,
-      tren: a.aerofrenos === null && a.trenRetractil ? 1 : 0,
+      tren: trenFuera ? 1 : 0,
       aerofrenos: aerofrenos ? 1 : 0,
       aileron: r.aileron,
       elevator: r.elevator,
       automatico: true,
     });
-    iasMax = Math.max(iasMax, indicatedAirspeed(s.airspeed, s.position.y));
+    const ias = indicatedAirspeed(s.airspeed, s.position.y);
+    iasMax = Math.max(iasMax, ias);
+    if (conTren && !trenFuera && ias / 0.514444 < a.vleKt) trenFuera = true;
+    if (trenFuera) iasConTren = Math.max(iasConTren, ias);
     machMax = Math.max(machMax, s.airspeed / velocidadDelSonido(s.position.y));
     cargaMin = Math.min(cargaMin, s.loadFactor);
-    if (s.position.y <= 10000 * PIE) return { segundos: t, iasMax, machMax, cargaMin };
+    if (s.position.y <= 10000 * PIE) return { segundos: t, iasMax, iasConTren, machMax, cargaMin };
   }
-  return { segundos: Infinity, iasMax, machMax, cargaMin };
+  return { segundos: Infinity, iasMax, iasConTren, machMax, cargaMin };
 }
 
 describe("el descenso de emergencia, con el JAZ 90 desde su crucero", () => {
@@ -211,7 +232,9 @@ describe("y los otros dos presurizados, cada uno con lo suyo", () => {
   it("y el turbohélice, con el tren fuera, desde sus veinticinco mil", () => {
     const d = descenso(ARASUNU, false);
     expect(d.segundos / 60).toBeLessThan(8);
-    expect(d.iasMax / 0.514444).toBeLessThan(ARASUNU.vleKt);
+    expect(d.iasConTren).toBeGreaterThan(0);
+    expect(d.iasConTren / 0.514444).toBeLessThan(ARASUNU.vleKt);
+    expect(d.iasMax / 0.514444).toBeLessThan(ARASUNU.vmoKt);
   });
 });
 

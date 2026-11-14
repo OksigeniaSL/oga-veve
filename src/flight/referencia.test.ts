@@ -269,15 +269,23 @@ describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
      * cambiado o un cero de más. No está para decidir de qué tamaño puede ser
      * un avión.
      */
-    const dentro = (nuestro: number, suyo: number) => {
+    const dentro = (nuestro: number, suyo: number, hasta = 2.5) => {
       expect(Math.sign(nuestro)).toBe(Math.sign(suyo));
       const veces = Math.abs(nuestro) / Math.abs(suyo);
       expect(veces).toBeGreaterThan(0.4);
-      expect(veces).toBeLessThan(2.5);
+      expect(veces).toBeLessThan(hasta);
     };
 
+    /*
+     * **Y el cabeceo, hasta tres.** Es el que más crece con la cuenta del brazo
+     * de cola —`S_t·l_t²/(S·c²)`, el cuadrado del brazo partido por el de la
+     * cuerda—, y el Beech 1900D lleva la cola a nueve metros de un ala de 1,63
+     * de cuerda: su cuenta da −27, 2,7 veces el Navion, y con dos y medio se le
+     * dejaba en −24 para caber, pegado al borde. Ver `cmQ` en la ficha del JAZ
+     * 60 y el ADR 0027, enmienda H10a.
+     */
     it("amortigua el cabeceo como un avión", () => {
-      dentro(a.aero.cmQ, EN_CONVENCION_DE_FICHA.cmQ);
+      dentro(a.aero.cmQ, EN_CONVENCION_DE_FICHA.cmQ, 3);
     });
     it("amortigua el alabeo como un avión", () => {
       dentro(a.aero.clP, EN_CONVENCION_DE_FICHA.clP);

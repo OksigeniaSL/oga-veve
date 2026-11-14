@@ -48,6 +48,7 @@
  */
 
 import { esDeChorro, type AircraftConfig } from "./aircraft";
+import { MUESCA_DE_DESPEGUE, muescaDeAproximacion, muescaDeAterrizaje } from "./flaps";
 import { AIRE_ESTANDAR, airDensity, SEA_LEVEL_DENSITY, velocidadDelSonido, type Aire } from "./atmosphere";
 
 /** Un nudo, en metros por segundo. */
@@ -166,8 +167,9 @@ export interface VelocidadQueToca {
 }
 
 /**
- * **Los flaps que pide cada peldaño**, en muescas de la palanca —de 0 a 3,
- * ver `DETENTES` en `flaps.ts`—, en el avión que los lleva.
+ * **Los flaps que pide cada peldaño**, en muescas de la palanca —de 0 a la
+ * última de su avión, ver `muescasDeLaPalanca` en `flaps.ts`—, en el avión que
+ * los lleva.
  *
  * Es la otra mitad de la escalera: cada velocidad de la llegada es la de
  * maniobra de unos flaps, y no se puede pedir la una sin los otros. Es el
@@ -176,16 +178,20 @@ export interface VelocidadQueToca {
  * aterrizar al coger la senda) en las tres muescas de este juego, una cada
  * vez y **por su orden**. Los de hélice no tienen el peldaño de en medio:
  * los primeros al empezar la aproximación y los de aterrizar en la final.
+ *
+ * **Y por su papel, no por su número**: la de aterrizar es la última de su
+ * palanca, la tercera en la de cuatro y la segunda en la de tres del 1900D,
+ * cuyos primeros flaps son los de aproximación, 17,5°.
  */
 export function flapsQuePide(a: AircraftConfig, peldano: PeldanoDeVelocidad): number {
   if (!a.llevaFlaps) return 0;
   switch (peldano) {
     case "primeros-flaps":
-      return 1;
+      return MUESCA_DE_DESPEGUE;
     case "segundos-flaps":
-      return 2;
+      return muescaDeAproximacion(a);
     case "final":
-      return 3;
+      return muescaDeAterrizaje(a);
     default:
       return 0;
   }

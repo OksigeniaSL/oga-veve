@@ -9,7 +9,8 @@
  * Por eso aquí hay dos números y no uno:
  *
  * - **La palanca** —`palancaDeFlaps` en `flight/input.ts`— es lo que se ha
- *   pedido, y solo sabe estar en sus cuatro muescas.
+ *   pedido, y solo sabe estar en sus muescas: cuatro en casi toda la flota y
+ *   tres en el 1900D. Ver `muescasDeLaPalanca`.
  * - **Los flaps** —`ControlInputs.flaps`— es dónde están de verdad, y va de
  *   una muesca a otra a su paso.
  *
@@ -33,8 +34,67 @@
  * continuo: tiene topes, y se baja de uno en uno. Cuántos grados es cada tope
  * lo dice cada avión —ver `muescasDeFlaps` en `aircraft.ts`—, porque no son
  * los mismos en una avioneta que en un avión de línea.
+ *
+ * **Y no todos tienen cuatro.** Es la palanca de casi toda la flota, y por eso
+ * es la de quien no dice avión; la de cada uno la da `muescasDeLaPalanca`.
  */
 export const DETENTES = [0, 1 / 3, 2 / 3, 1] as const;
+
+/**
+ * **Las muescas de la palanca de este avión**, en fracción del recorrido.
+ *
+ * Tantas como cifras tiene `muescasDeFlaps`, repartidas a partes iguales, que
+ * es como las reparte ya `enLaMuesca`. Con cuatro, las de siempre.
+ *
+ * Existe por el JAZ 60: el Beech 1900D tiene tres posiciones —arriba, la de
+ * aproximación a 17,5° y abajo a 35° (hoja de tipo FAA A24CE)— y una
+ * aerolínea despega con la de aproximación (FAA, DOT/FAA/AR-08/50); ver el ADR
+ * 0027, enmienda H10a. Con las cuatro de todos,
+ * su palanca tenía una muesca de veinte grados que ese avión no tiene, y
+ * quien la aprendiera aquí la buscaría en la cabina de verdad.
+ */
+export function muescasDeLaPalanca(a: {
+  readonly muescasDeFlaps: readonly number[];
+}): readonly number[] {
+  const n = a.muescasDeFlaps.length;
+  // Sin flaps no hay palanca: se queda la de siempre, que nadie mueve.
+  if (n === DETENTES.length || n < 2) return DETENTES;
+  return a.muescasDeFlaps.map((_, i) => i / (n - 1));
+}
+
+/**
+ * **La muesca con la que se despega**: la primera, en toda la flota.
+ *
+ * Es la de cinco grados en un reactor, la de diez en la avioneta y la de
+ * diecisiete y medio en el 1900D, que es su posición de aproximación y con
+ * la que despega una aerolínea.
+ */
+export const MUESCA_DE_DESPEGUE = 1;
+
+/**
+ * **La muesca de la aproximación**: la de antes de la de aterrizaje.
+ *
+ * En la palanca de cuatro es la segunda —quince grados en un reactor, veinte
+ * en la avioneta—; en la de tres del 1900D, la de 17,5°, que en ese avión se
+ * llama justo así, *approach*, y es también la de despegar.
+ */
+export function muescaDeAproximacion(a: { readonly muescasDeFlaps: readonly number[] }): number {
+  return Math.max(MUESCA_DE_DESPEGUE, muescasDeLaPalanca(a).length - 2);
+}
+
+/** **La muesca de aterrizaje**: la última de su palanca. */
+export function muescaDeAterrizaje(a: { readonly muescasDeFlaps: readonly number[] }): number {
+  return muescasDeLaPalanca(a).length - 1;
+}
+
+/**
+ * **Dónde va la palanca para despegar**, en fracción del recorrido: la de su
+ * primera muesca. Un tercio en la palanca de cuatro y la mitad en la del
+ * 1900D.
+ */
+export function flapsDeDespegue(a: { readonly muescasDeFlaps: readonly number[] }): number {
+  return muescasDeLaPalanca(a)[MUESCA_DE_DESPEGUE] ?? 0;
+}
 
 /**
  * En qué muesca está ahora y cuál viene después, dando la vuelta al llegar
@@ -45,15 +105,28 @@ export const DETENTES = [0, 1 / 3, 2 / 3, 1] as const;
  * guardada con otro reparto de muescas, y un `indexOf` sobre coma flotante
  * devuelve −1 el día menos pensado.
  */
-export function siguienteDetente(flaps: number): number {
-  return (muescaMasCercana(flaps) + 1) % DETENTES.length;
+export function siguienteDetente(
+  flaps: number,
+  muescas: readonly number[] = DETENTES,
+): number {
+  return (muescaMasCercana(flaps, muescas) + 1) % muescas.length;
 }
 
-/** El índice de la muesca más cercana a este valor. */
-export function muescaMasCercana(flaps: number): number {
+/**
+ * El índice de la muesca más cercana a este valor.
+ *
+ * Con las muescas de cada avión: un guion que pide «un tercio» —la primera de
+ * la palanca de cuatro— cae en el 1900D en su primera, la de la mitad, que es
+ * la que está más cerca. Así el vuelo de línea y el banco, que piden por
+ * fracciones, vuelan las muescas de cada tipo sin saber cuántas tiene.
+ */
+export function muescaMasCercana(
+  flaps: number,
+  muescas: readonly number[] = DETENTES,
+): number {
   let cual = 0;
   let cerca = Infinity;
-  DETENTES.forEach((d, i) => {
+  muescas.forEach((d, i) => {
     const lejos = Math.abs(d - flaps);
     if (lejos < cerca) {
       cerca = lejos;

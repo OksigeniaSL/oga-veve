@@ -54,6 +54,7 @@ import {
 import {
   AIRCRAFT,
   PYKASU,
+  avisosDeABordo,
   conMasa,
   propulsionDe,
   esDeChorro,
@@ -1213,7 +1214,14 @@ import {
   anunciaLaFase,
   esDelDescenso,
 } from "./audio/boca";
-import { claveDeCabina, esDeUnaCaja, loDiceElAvion, VOZ_DEL_RA } from "./audio/cabina";
+import {
+  claveDeCabina,
+  esDeUnaCaja,
+  esTonoDeABordo,
+  loDiceElAvion,
+  loQueSuenaEnEsteAvion,
+  VOZ_DEL_RA,
+} from "./audio/cabina";
 import { VozDeLaMaquina } from "./audio/maquina";
 import {
   GUION,
@@ -1459,7 +1467,11 @@ import {
   hastaDondeBajan,
   type CargaDeFlaps,
 } from "./flight/carga-de-flaps";
-import { muescaMasCercana, siguienteDetente } from "./flight/flaps";
+import {
+  muescaDeAproximacion,
+  muescaMasCercana,
+  siguienteDetente,
+} from "./flight/flaps";
 import {
   ListaDeDespuesDeAterrizar,
   NADA_DICHO,
@@ -4685,6 +4697,9 @@ export class Game {
   readonly maquina = new VozDeLaMaquina({
     ahora: () => Date.now(),
     tocar: (clave, alAcabar) => {
+      // Los tonos de a bordo no son grabaciones: se sintetizan. Ver
+      // `TONO_DE_A_BORDO` en `audio/cabina.ts`.
+      if (esTonoDeABordo(clave)) return this.audio.tocarTonoDeABordo(clave, alAcabar);
       const piezas = this.instructor.piezasDe(clave);
       // Por el bus de avisos: una caja no baja del mínimo audible cuando se
       // baja el volumen. Ver `MINIMO_DE_AVISOS`.
@@ -6878,6 +6893,9 @@ export class Game {
     this.audio.setEngine(this.aircraft.sound);
     // Y lo que suena además del motor: el tren, los flaps, la APU…
     this.audio.ponerAvion(avionQueSuena(this.aircraft));
+    // Y con qué avisa la pérdida: la bocina o el sacudidor de palanca. Ver
+    // `AvisosDeABordo`. Cambiar de avión recarga la página, así que basta aquí.
+    this.audio.ponerAvisoDePerdida(avisosDeABordo(this.aircraft).perdida.suena);
     /*
      * **Y lo que se pida antes de tener el pack, que lo espere.**
      *
@@ -9545,7 +9563,29 @@ export class Game {
      * dice la instructora, en casa, que es quien lo diría sentada al lado.
      */
     if (deCabina && esDeUnaCaja(deCabina)) {
-      if (loDiceElAvion(deCabina, this.aircraft)) {
+      /*
+       * **Y suena como en su tipo**, que no en todos es una voz: la pérdida de
+       * un Boeing es el sacudidor de palanca y la del 1900D una bocina, que
+       * suenan mientras dura —las lleva `audio.ts` con el ángulo de ataque—, y
+       * el automático de un Boeing se suelta con una sirena. Ver
+       * `loQueSuenaEnEsteAvion` y el ADR 0027, enmienda H10a.
+       */
+      const suena = loQueSuenaEnEsteAvion(deCabina, this.aircraft);
+      if (suena === "mientras dura") {
+        /*
+         * Lo de la caja ya está sonando, así que aquí solo queda la otra
+         * mitad: en los peldaños de abajo, la instructora cuenta qué es eso
+         * que suena y qué se hace. En el de cabina, el sonido solo, como en
+         * su avión.
+         */
+        // Con la flecha, como los demás cantos: los bancos cuentan los avisos así.
+        if (laInstructoraLoExplica(this.tier.avisos) && encasa) {
+          this.apuntarCanto(`${ingles}→su caja, mientras dura: lo explica ${clave ?? "sin clave"}`);
+          this.instructor.decir(encasa, clave, urgencia === "urgente" ? "urgente" : "mando");
+        } else this.apuntarCanto(`${ingles}→su caja, mientras dura`);
+        return;
+      }
+      if (suena !== null) {
         /*
          * **Y la explicación pesa como una orden**, sin cortar a nadie. Es la
          * otra mitad del aviso, no un comentario: con el peso normal, un
@@ -9562,8 +9602,8 @@ export class Game {
                 this.instructor.decir(encasa, clave, pesa);
               }
             : undefined;
-        const como = this.maquina.decir(deCabina, explica);
-        this.apuntarCanto(`${ingles}→máquina(${deCabina}): ${como}`);
+        const como = this.maquina.decir(suena, explica);
+        this.apuntarCanto(`${ingles}→máquina(${suena}): ${como}`);
         if (como !== "no") return;
         /*
          * **Y si la máquina no puede sonar, un aviso no se queda mudo.** Pasa
@@ -15138,6 +15178,7 @@ export class Game {
         autofreno: this.aircraft.autofreno,
       },
       this.aircraft.tardaElTren,
+      this.aircraft.muescasDeFlaps,
     );
     // Las unidades: manda el peldaño salvo que alguien haya dicho otra cosa.
     this.hud.setUnits(unidadesElegidas(ajustes) ?? this.tier.units);
@@ -18617,7 +18658,10 @@ export class Game {
           (this.input.controls.throttle < 0.25 || this.sinMotor) &&
           // Lo pedido y no dónde están: si ya bajaste la palanca, los flaps
           // están saliendo y pedírtelos otra vez sería avisar de lo hecho.
-          this.input.palancaDeFlaps < 0.5 &&
+          // Por debajo de los de la aproximación: en la palanca de cuatro,
+          // arriba o en la primera; en la de tres del 1900D, arriba.
+          muescaMasCercana(this.input.palancaDeFlaps, this.input.muescasDeFlaps) <
+            muescaDeAproximacion(this.aircraft) &&
           /*
            * **Y por debajo de su tope.** Pedir flaps pasado de su placa es
            * pedir que se rompan, y el juego avisa justo de eso en cuanto
@@ -18633,7 +18677,7 @@ export class Game {
           this.flight.state.airspeed * NUDOS <
             vfeDeLaMuesca(
               this.aircraft.vfePorMuesca,
-              siguienteDetente(this.input.palancaDeFlaps),
+              siguienteDetente(this.input.palancaDeFlaps, this.input.muescasDeFlaps),
             );
         /*
          * **En la bajada y en la final habla la instructora de la bajada**, y
@@ -24383,7 +24427,9 @@ export class Game {
       vertical: this.bajadaSostenida,
       configurado:
         (!this.aircraft.trenRetractil || this.input.trenQueSePide) &&
-        (!this.aircraft.llevaFlaps || muescaMasCercana(this.input.palancaDeFlaps) >= 2),
+        (!this.aircraft.llevaFlaps ||
+          muescaMasCercana(this.input.palancaDeFlaps, this.input.muescasDeFlaps) >=
+            muescaDeAproximacion(this.aircraft)),
     };
   }
 
@@ -29809,7 +29855,7 @@ export class Game {
       dt,
     });
     this.cargaDeFlaps = ahora;
-    this.input.topeDeFlaps = hastaDondeBajan(ahora);
+    this.input.topeDeFlaps = hastaDondeBajan(ahora, this.aircraft);
     const cabina = canalesDe(this.tier.avisos).cabina;
     if (ahora.aliviados && !antes.aliviados) {
       this.hud.senal.mostrar(
@@ -29904,7 +29950,7 @@ export class Game {
         tren: this.input.controls.tren,
         flaps: Math.min(
           this.input.controls.flaps,
-          hastaDondeBajan(this.cargaDeFlaps),
+          hastaDondeBajan(this.cargaDeFlaps, this.aircraft),
         ),
       }) &&
       s.airspeed <= this.flight.limiteDeVelocidad()
@@ -30439,7 +30485,7 @@ export class Game {
       kt <
         vfeDeLaMuesca(
           this.aircraft.vfePorMuesca,
-          siguienteDetente(this.input.palancaDeFlaps),
+          siguienteDetente(this.input.palancaDeFlaps, this.input.muescasDeFlaps),
         );
     const frenaConAerofrenos =
       this.aircraft.aerofrenos !== null && !this.input.aerofrenosAbiertos;
@@ -31323,7 +31369,9 @@ export class Game {
       bajando: this.navegacion.bajando,
       enLaFinal: plan !== null && this.navegacion.enLaFinal(this.lecturaDeRuta()),
       // Lo pedido y no dónde están: lo que sale, ya se hizo.
-      flaps: this.aircraft.llevaFlaps ? muescaMasCercana(this.input.palancaDeFlaps) : 0,
+      flaps: this.aircraft.llevaFlaps
+        ? muescaMasCercana(this.input.palancaDeFlaps, this.input.muescasDeFlaps)
+        : 0,
       flapsQuePide: flapsQuePide(this.aircraft, v.peldano),
       vfe: this.aircraft.vfePorMuesca,
       tren: this.aircraft.trenRetractil ? this.input.trenQueSePide : null,
@@ -31578,7 +31626,9 @@ export class Game {
       );
     if (p.objetivo.muesca !== null) {
       const grados = this.aircraft.muescasDeFlaps[p.objetivo.muesca];
-      if (grados !== undefined) partes.push(`${grados}°`);
+      // Con su coma en castellano: los 17,5° de la primera del 1900D.
+      const idioma = getLocale() === "gug" ? "es-PY" : getLocale();
+      if (grados !== undefined) partes.push(`${grados.toLocaleString(idioma)}°`);
     }
     return partes.join(" · ");
   }

@@ -555,7 +555,9 @@ cuatro peldaños** si el avión lleva esa caja, y nunca si no la lleva: en la av
 por su propia vía, en el instante en que pasa lo que avisan (`src/audio/maquina.ts`), y un número que ya no puede
 sonar a su altura no se dice. En los tres peldaños de abajo, **justo detrás** de la máquina, la instructora cuenta con
 calma qué ha sonado y qué se hace: la primera alarma de avión que alguien oiga tiene que oírla seguida de alguien que
-no se asusta.
+no se asusta. **Y cada tipo suena como el suyo**, también lo que no habla: la pérdida de un Boeing es el sacudidor de
+palanca y la del 1900D una bocina, y el automático de un Boeing se suelta con una sirena; sintetizadas, por la misma vía y
+con la misma explicación detrás (`avisosDeABordo` en la ficha, `src/audio/tonos-de-aviso.ts`).
 
 **Las voces avisan, no asustan.** V1, *rotate* y los cantos van con voz normal, de aviso. Las frases que explican una
 alarma se graban en calma, con la voz estable y sin estilo; lo que se cuenta por la ventanilla, con chispa.

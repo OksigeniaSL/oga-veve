@@ -22,11 +22,17 @@ import {
 } from "./input";
 import {
   enLaMuesca,
+  flapsDeDespegue,
   luzDeFlaps,
+  muescaDeAproximacion,
+  muescaDeAterrizaje,
   muescaMasCercana,
+  muescasDeLaPalanca,
   mueveLosFlaps,
 } from "./flaps";
 import { AIRCRAFT } from "./aircraft";
+import { hastaDondeBajan } from "./carga-de-flaps";
+import { flapsQuePide } from "./escalera-de-velocidades";
 
 describe("las muescas de la palanca", () => {
   it("son cuatro, de cero a todo", () => {
@@ -182,7 +188,10 @@ describe("los grados entre muesca y muesca", () => {
 describe("los flaps de cada avión, en su ficha", () => {
   it("una cifra por muesca, de cero hacia abajo y sin repetirse", () => {
     for (const a of AIRCRAFT.filter((x) => x.llevaFlaps)) {
-      expect(a.muescasDeFlaps).toHaveLength(DETENTES.length);
+      // Cuatro en la palanca de casi todos, tres en la del 1900D.
+      expect([3, DETENTES.length]).toContain(a.muescasDeFlaps.length);
+      // Y una placa por muesca sacada: las dos cosas cuentan la misma palanca.
+      expect(a.vfePorMuesca).toHaveLength(a.muescasDeFlaps.length - 1);
       expect(a.muescasDeFlaps[0]).toBe(0);
       for (let i = 1; i < a.muescasDeFlaps.length; i++)
         expect(a.muescasDeFlaps[i]!).toBeGreaterThan(a.muescasDeFlaps[i - 1]!);
@@ -309,5 +318,70 @@ describe("la palanca y los flaps, en el mando", () => {
     expect(m.palancaDeFlaps).toBe(1);
     m.ponerPalancaDeFlaps(0.2);
     expect(m.palancaDeFlaps).toBe(DETENTES[1]);
+  });
+
+  /*
+   * **La palanca del 1900D tiene tres muescas, no cuatro**: arriba, 17,5° y 35°,
+   * y despega con la de 17,5°. Con la de cuatro de todos tenía una de veinte
+   * grados que ese avión no tiene. Ver el ADR 0027, enmienda H10a.
+   */
+  it("la del JAZ 60 va arriba, a 17,5° y a 35°, y da la vuelta", () => {
+    const a = AIRCRAFT.find((x) => x.id === "jaz-60")!;
+    const m = mando();
+    m.ponerAeronave(true, a.tardanLosFlaps, true, false, null, a.muescasDeFlaps);
+    m.alternarFlaps();
+    expect(enLaMuesca(a.muescasDeFlaps, m.palancaDeFlaps)).toBe(17.5);
+    m.alternarFlaps();
+    expect(enLaMuesca(a.muescasDeFlaps, m.palancaDeFlaps)).toBe(35);
+    m.alternarFlaps();
+    expect(m.palancaDeFlaps).toBe(0);
+    // El botón de un joystick, una abajo y otra arriba, sin pasar por veinte.
+    m.flapsUnaMuesca(1);
+    m.flapsUnaMuesca(1);
+    m.flapsUnaMuesca(1);
+    expect(m.palancaDeFlaps).toBe(1);
+    m.flapsUnaMuesca(-1);
+    expect(enLaMuesca(a.muescasDeFlaps, m.palancaDeFlaps)).toBe(17.5);
+  });
+
+  it("un guion que pide un tercio o dos tercios cae en los 17,5° del 1900D", () => {
+    const a = AIRCRAFT.find((x) => x.id === "jaz-60")!;
+    const m = mando();
+    m.ponerAeronave(true, a.tardanLosFlaps, true, false, null, a.muescasDeFlaps);
+    for (const pide of [1 / 3, 2 / 3]) {
+      m.ponerPalancaDeFlaps(pide);
+      expect(enLaMuesca(a.muescasDeFlaps, m.palancaDeFlaps)).toBe(17.5);
+    }
+    // Y al volver a un avión de cuatro, la palanca cae en una de sus muescas.
+    m.ponerAeronave(true, 18);
+    expect([...DETENTES]).toContain(m.palancaDeFlaps);
+  });
+});
+
+describe("cada muesca por su papel, en la palanca de cada avión", () => {
+  const de = (id: string) => AIRCRAFT.find((x) => x.id === id)!;
+
+  it("la de cuatro: despegue en la primera, aproximación en la segunda, aterrizaje en la tercera", () => {
+    const a = de("jaz-90");
+    expect(muescasDeLaPalanca(a)).toEqual(DETENTES);
+    expect(flapsDeDespegue(a)).toBe(1 / 3);
+    expect(muescaDeAproximacion(a)).toBe(2);
+    expect(muescaDeAterrizaje(a)).toBe(3);
+  });
+
+  it("la del 1900D: despega y se aproxima con 17,5°, aterriza con 35°", () => {
+    const a = de("jaz-60");
+    expect(muescasDeLaPalanca(a)).toEqual([0, 0.5, 1]);
+    expect(enLaMuesca(a.muescasDeFlaps, flapsDeDespegue(a))).toBe(17.5);
+    expect(muescaDeAproximacion(a)).toBe(1);
+    expect(muescaDeAterrizaje(a)).toBe(2);
+    expect(flapsQuePide(a, "primeros-flaps")).toBe(1);
+    expect(flapsQuePide(a, "final")).toBe(2);
+  });
+
+  it("unos flaps tocados se quedan en su primera muesca: los 17,5° del 1900D", () => {
+    const tocados = { aliviados: false, abuso: 0, tocados: true };
+    expect(hastaDondeBajan(tocados, de("jaz-60"))).toBe(0.5);
+    expect(hastaDondeBajan(tocados, de("jaz-40"))).toBe(1 / 3);
   });
 });

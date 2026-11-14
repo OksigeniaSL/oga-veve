@@ -387,11 +387,14 @@ describe("la cadena del «¿y ahora qué?»", () => {
 
   it("en los de hélice, sin el peldaño de en medio, y en la avioneta, sin tren que sacar", () => {
     const sesenta = volar(de("jaz-60"), VUELO).oido.map((o) => o.paso.escalon);
-    // El turbohélice saca el tren en la final y los flaps de muesca en muesca.
+    // El turbohélice saca el tren en la final y los flaps de muesca en muesca:
+    // los del 1900D son dos, los de aproximación y los de aterrizar, y no hay
+    // tercera. Ver `muescasDeFlaps` en su ficha.
     expect(sesenta).toContain("flaps:1");
     expect(sesenta).toContain("tren");
+    expect(sesenta.indexOf("flaps:1")).toBeLessThan(sesenta.indexOf("flaps:2"));
     expect(sesenta.indexOf("tren")).toBeLessThan(sesenta.indexOf("flaps:2"));
-    expect(sesenta.indexOf("flaps:2")).toBeLessThan(sesenta.indexOf("flaps:3"));
+    expect(sesenta).not.toContain("flaps:3");
     expect(sesenta.at(-1)).toBe("final");
     // Los de hélice no pasan de 250: no hay escalón de los diez mil pies.
     expect(sesenta.some((e) => e.includes("bajo-el-100"))).toBe(false);

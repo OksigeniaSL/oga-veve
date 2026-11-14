@@ -23,6 +23,7 @@
  */
 
 import type { Orden } from "../flight/tcas";
+import { avisosDeABordo, type AvisosDeABordo } from "../flight/aircraft";
 
 /** De lo que dice la cabina a la clave con la que está grabado. */
 export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
@@ -281,11 +282,71 @@ export const DE_LOS_AVISADORES: ReadonlySet<string> = new Set([
   "cabina.tooLow",
   "cabina.sinkRate",
   "cabina.bankAngle",
-  // Y los tres avisos de a bordo que son de un avión de línea.
+  /*
+   * Y los tres avisos de a bordo que son de un avión de línea, que no hablan
+   * en todos: los decide `avisosDeABordo`, aviso por aviso. Ver
+   * `DE_A_BORDO`.
+   */
   "cabina.stall",
   "cabina.airspeedLow",
   "cabina.autopilotDisconnect",
 ]);
+
+/**
+ * **Los tres avisos de a bordo que cada tipo dice a su manera**, con lo que
+ * miran de su ficha. Ver `AvisosDeABordo` en `flight/aircraft.ts`.
+ *
+ * Colgaban los tres de `avisosHablados`, la misma bandera que el terreno y la
+ * cuenta de la toma, y así los cuatro aviones de transporte decían «stall,
+ * stall» y «autopilot disconnect» con voz. En el Boeing la pérdida es el
+ * sacudidor de palanca y el automático se suelta con una sirena; en el 1900D
+ * la pérdida es una bocina. Ver el ADR 0027, enmienda H10a.
+ */
+export const DE_A_BORDO: Readonly<Record<string, keyof AvisosDeABordo>> = {
+  "cabina.stall": "perdida",
+  "cabina.airspeedLow": "velocidadBaja",
+  "cabina.autopilotDisconnect": "automatico",
+};
+
+/**
+ * **Los avisos de a bordo que suenan sin voz y de una vez**, con la clave con
+ * la que los pide la voz de la máquina: la sirena de desconexión del
+ * automático de Boeing y el pitido de precaución. Se sintetizan, como todo el sonido del juego que no es una voz
+ * —«ni una muestra grabada», `CREDITOS.md`—; ver `audio/tonos-de-aviso.ts`.
+ *
+ * Pasan por la máquina y no por un motivo suelto porque son lo mismo que una
+ * voz de caja: suenan en los cuatro peldaños, mandan sobre lo de menos
+ * prioridad y la instructora explica detrás, en los de abajo. Ver
+ * `audio/maquina.ts`.
+ *
+ * La bocina y el sacudidor de la pérdida no están: suenan mientras dura, no
+ * de una vez, y los lleva `audio.ts` con el ángulo de ataque.
+ */
+export const TONO_DE_A_BORDO = {
+  sirena: "tono.sirenaDelAutomatico",
+  pitido: "tono.pitidoDePrecaucion",
+} as const;
+
+/**
+ * **La voz con la que se suelta el automático de un E-Jet**: «AUTOPILOT», dos
+ * veces, y no «autopilot disconnect». En el registrador del ERJ-170 de
+ * Shuttle America en Cleveland: «auto-pilot, auto-pilot», con la nota «Voice
+ * identified as aircraft mechanical voice» (NTSB, AAR-08/01, transcripción
+ * del CVR). Y el manual de un operador de E195: pulsar el botón «triggers the
+ * aural warning "AUTOPILOT"», que calla con la segunda pulsación (citado en
+ * el informe final de la SUB austriaca sobre el E195 de Salzburgo, 2017).
+ *
+ * Va aparte de `CLAVE_DE_CABINA` como las del RA, y por lo mismo: el juego no
+ * la pide por su texto sino por el avión que se suelta. **No está grabada**:
+ * mientras no esté en el pack, la máquina no puede decirla y lo dice la
+ * instructora, en casa. Ver `PENDIENTE-VOCES-automatico.md`.
+ */
+export const VOZ_DEL_AUTOMATICO_DE_EMBRAER = "cabina.autopilot";
+
+/** Si esta clave es un tono sintetizado y no una grabación. */
+export function esTonoDeABordo(clave: string): boolean {
+  return (Object.values(TONO_DE_A_BORDO) as string[]).includes(clave);
+}
 
 /**
  * **Las voces del RA del TCAS II**: la maniobra que pide la caja y el «clear
@@ -335,6 +396,8 @@ export const DE_LA_PRESURIZACION: ReadonlySet<string> = new Set(["cabina.cabin"]
 /** Lo que hace falta saber de un avión para saber qué cantos lleva. */
 export interface EquipoDeCabina {
   readonly avisosHablados: boolean;
+  /** Cómo suenan su pérdida, su velocidad baja y su automático. Ver `DE_A_BORDO`. */
+  readonly avisosDeABordo?: AvisosDeABordo;
   /** Si su avisador dice *minimums*. Ver `cantaLosMinimos` en la ficha. */
   readonly cantaLosMinimos?: boolean;
   readonly tcas: string | null;
@@ -351,6 +414,8 @@ export interface EquipoDeCabina {
 export function esDeUnaCaja(clave: string): boolean {
   return (
     DE_LOS_AVISADORES.has(clave) ||
+    esTonoDeABordo(clave) ||
+    clave === VOZ_DEL_AUTOMATICO_DE_EMBRAER ||
     DE_LA_PRESURIZACION.has(clave) ||
     clave === "cabina.traffic" ||
     DEL_RA.has(clave)
@@ -373,8 +438,48 @@ export function loDiceElAvion(clave: string, avion: EquipoDeCabina): boolean {
   if (DE_LA_PRESURIZACION.has(clave)) return avion.presurizacion?.avisoHablado === true;
   // *Minimums*, solo en la caja que lo lleva en su menú: ver `cantaLosMinimos`.
   if (clave === "cabina.minimums") return avion.avisosHablados && avion.cantaLosMinimos === true;
+  // Los de a bordo, solo con voz en el tipo que la tiene. Ver `DE_A_BORDO`.
+  const deABordo = DE_A_BORDO[clave];
+  if (deABordo) return avion.avisosHablados && hablaElAviso(deABordo, avisosDeABordo(avion));
   if (DE_LOS_AVISADORES.has(clave)) return avion.avisosHablados;
   return true;
+}
+
+/**
+ * Si este aviso de a bordo lo dice **esta voz** en este tipo: «stall, stall»,
+ * «airspeed low» o «autopilot disconnect». La del automático de Embraer es
+ * otra voz y otra toma; ver `loQueSuenaEnEsteAvion`.
+ */
+function hablaElAviso(cual: keyof AvisosDeABordo, avisos: AvisosDeABordo): boolean {
+  if (cual === "perdida") return avisos.perdida.voz;
+  if (cual === "velocidadBaja") return avisos.velocidadBaja === "voz";
+  return avisos.automatico === "autopilot disconnect";
+}
+
+/**
+ * **Qué suena en este avión cuando su caja tiene que decir esto**: la clave
+ * que se le pide a la voz de la máquina —la grabación, o el tono sintetizado
+ * de `TONO_DE_A_BORDO`—, `"mientras dura"` si lo que suena es la bocina o el
+ * sacudidor de la pérdida, que ya lleva `audio.ts`, o `null` si este avión
+ * no tiene esa caja y lo dice la instructora, sentada al lado.
+ *
+ * Es `loDiceElAvion` con la otra mitad: el avión que tiene la caja pero no le
+ * pone voz no se queda mudo, suena como el suyo.
+ */
+export function loQueSuenaEnEsteAvion(
+  clave: string,
+  avion: EquipoDeCabina,
+): string | "mientras dura" | null {
+  if (loDiceElAvion(clave, avion)) return clave;
+  const deABordo = DE_A_BORDO[clave];
+  // Sin cajas de transporte, como en la avioneta: lo dice la instructora.
+  if (!deABordo || !avion.avisosHablados) return null;
+  const avisos = avisosDeABordo(avion);
+  if (deABordo === "perdida") return "mientras dura";
+  if (deABordo === "velocidadBaja")
+    return avisos.velocidadBaja === "pitido" ? TONO_DE_A_BORDO.pitido : null;
+  if (avisos.automatico === "autopilot") return VOZ_DEL_AUTOMATICO_DE_EMBRAER;
+  return avisos.automatico === "sirena" ? TONO_DE_A_BORDO.sirena : null;
 }
 
 /**

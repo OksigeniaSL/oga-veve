@@ -1572,10 +1572,11 @@ function dialDeMotor(cx: number, cy: number, r: number, i: number): string {
 }
 
 /**
- * La regla de flaps, con sus cuatro detentes y su puntero.
+ * La regla de flaps, con sus detentes y su puntero.
  *
  * En vertical donde hay una columna libre, en horizontal donde hay ancho. Es
- * la misma regla: cuatro muescas y un puntero que se para en ellas, igual que
+ * la misma regla: las muescas de su palanca —cuatro en casi toda la flota,
+ * tres en el 1900D— y un puntero que se para en ellas, igual que
  * la palanca de verdad — que no es un mando continuo, es una palanca con
  * topes, y eso se aprende viéndolo.
  *

@@ -28,6 +28,7 @@
 import type { LoQueSuenaElRotor } from "./rotor";
 import type { ControlInputs, FlightState } from "../flight/model";
 import { vueltasDelMotor, type AircraftSound } from "../flight/aircraft";
+import { FORMAS, SACUDIDOR, duracionDe, type TonoDeABordo } from "./tonos-de-aviso";
 import { indicatedAirspeed } from "../flight/atmosphere";
 import type { Lluvia } from "../world/meteo";
 import { FIRME_LISO, type Firme } from "../world/firme";
@@ -683,6 +684,13 @@ export class Audio {
    */
   private hornGain: GainNode | null = null;
   private hornPulse: OscillatorNode | null = null;
+  /** El sacudidor de palanca, en el tipo que avisa la pérdida con él. */
+  private shakerGain: GainNode | null = null;
+  /**
+   * **Qué suena con la pérdida en el avión de hoy**: la bocina o el sacudidor
+   * de palanca. Lo pone el juego al cambiar de avión. Ver `AvisosDeABordo`.
+   */
+  private perdidaSuena: "bocina" | "sacudidor" = "bocina";
 
   get available(): boolean {
     return this.context !== null;
@@ -1097,7 +1105,15 @@ export class Audio {
     // Suena a partir del ochenta y cinco por ciento del ángulo crítico, que
     // es donde la pone un fabricante: da unos segundos para bajar el morro.
     const margin = clamp((Math.abs(state.alpha) - stallWarnAt) / 0.06, 0, 1);
-    this.hornGain?.gain.setTargetAtTime(margin * 0.16, now, 0.05);
+    /*
+     * **Y es bocina o sacudidor, según el avión.** La bocina es la de una
+     * avioneta y la del 1900D; un avión de línea de Boeing o de Embraer avisa
+     * con el sacudidor de palanca, que traquetea, y no lleva bocina. Ver
+     * `ponerAvisoDePerdida`.
+     */
+    const conBocina = this.perdidaSuena === "bocina";
+    this.hornGain?.gain.setTargetAtTime(conBocina ? margin * 0.16 : 0, now, 0.05);
+    this.shakerGain?.gain.setTargetAtTime(conBocina ? 0 : margin * SACUDIDOR.fuerza, now, 0.03);
 
     // ── Bataneo de pérdida ──────────────────────────────────────────────
     // Late antes de que el HUD avise: el aire tiembla cuando el flujo empieza
@@ -1212,6 +1228,76 @@ export class Audio {
         porElAltavoz,
       );
     });
+  }
+
+  /**
+   * **Qué suena con la pérdida en este avión**: la bocina o el sacudidor de
+   * palanca. Ver `AvisosDeABordo.perdida` en `flight/aircraft.ts`.
+   */
+  ponerAvisoDePerdida(suena: "bocina" | "sacudidor"): void {
+    this.perdidaSuena = suena;
+  }
+
+  /**
+   * **Un aviso de a bordo que no habla**, sintetizado y de una vez: la sirena
+   * del automático de Boeing o su pitido de precaución. Ver
+   * `audio/tonos-de-aviso.ts`.
+   *
+   * Lo pide la voz de la máquina como pediría una grabación, y por eso cumple
+   * lo mismo que `encadenarVoz`: devuelve con qué cortarlo, o `null` si ahora
+   * no puede sonar, y `alAcabar` llega al terminar, también si se corta. Por
+   * el bus de avisos, como las voces de las cajas.
+   */
+  tocarTonoDeABordo(clave: string, alAcabar: () => void): (() => void) | null {
+    const ctx = this.context;
+    const forma = FORMAS[clave as TonoDeABordo];
+    if (!ctx || ctx.state !== "running" || !this.master || !forma) return null;
+    const empieza = ctx.currentTime + 0.02;
+    const salida = ctx.createGain();
+    salida.gain.value = forma.fuerza;
+    salida.connect(this.bus("avisos"));
+    const fuentes: OscillatorNode[] = [];
+    for (const n of forma.notas) {
+      const o = ctx.createOscillator();
+      o.type = forma.onda;
+      o.frequency.setValueAtTime(n.desde, empieza + n.en);
+      if (n.hasta !== n.desde)
+        o.frequency.linearRampToValueAtTime(n.hasta, empieza + n.en + n.dura);
+      const g = ctx.createGain();
+      // Entra y sale en cinco milisegundos: sin el chasquido de un corte seco.
+      g.gain.setValueAtTime(0, empieza + n.en);
+      g.gain.linearRampToValueAtTime(1, empieza + n.en + 0.005);
+      g.gain.setValueAtTime(1, empieza + n.en + n.dura - 0.005);
+      g.gain.linearRampToValueAtTime(0, empieza + n.en + n.dura);
+      o.connect(g).connect(salida);
+      o.start(empieza + n.en);
+      o.stop(empieza + n.en + n.dura + 0.01);
+      fuentes.push(o);
+    }
+    const dura = duracionDe(forma);
+    this.agacharUnRato(dura);
+    /*
+     * El final lo da la última nota, como en `encadenarVoz`: un reloj de fuera
+     * se adelanta o se retrasa con un fotograma largo.
+     */
+    let avisado = false;
+    const acabo = (): void => {
+      if (avisado) return;
+      avisado = true;
+      alAcabar();
+    };
+    fuentes[fuentes.length - 1]?.addEventListener("ended", acabo);
+    return () => {
+      for (const f of fuentes) {
+        try {
+          f.stop();
+        } catch {
+          // Ya había acabado. Cortar lo que no suena no es un fallo.
+        }
+      }
+      salida.disconnect();
+      acabo();
+    };
   }
 
   // ── Construcción del grafo ────────────────────────────────────────────
@@ -1442,6 +1528,20 @@ export class Audio {
     this.hornPulse.connect(pulseDepth).connect(hornShape.gain);
     hornShape.gain.value = 0.5;
     this.hornPulse.start();
+
+    // ── El sacudidor de palanca: un golpeteo grave, no un tono ─────────
+    // Ver `SACUDIDOR` en `audio/tonos-de-aviso.ts`.
+    const motorDelSacudidor = ctx.createOscillator();
+    motorDelSacudidor.type = "sawtooth";
+    motorDelSacudidor.frequency.value = SACUDIDOR.golpeteo;
+    const chapa = ctx.createBiquadFilter();
+    chapa.type = "bandpass";
+    chapa.frequency.value = SACUDIDOR.banda;
+    chapa.Q.value = 0.8;
+    this.shakerGain = ctx.createGain();
+    this.shakerGain.gain.value = 0;
+    motorDelSacudidor.connect(chapa).connect(this.shakerGain).connect(this.bus("avisos"));
+    motorDelSacudidor.start();
 
     /*
      * ── Lluvia: ruido filtrado, y un trueno que es el mismo ruido ────────

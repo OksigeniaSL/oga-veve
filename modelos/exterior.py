@@ -2703,8 +2703,12 @@ def _mover_flap(d, p, donde):
     """Dónde está el punto `p` del flap con los flaps en `donde` (0 a 1), como
     lo mueve `world/flaps.ts`: por su carril y girando sobre su eje."""
     def en_la_muesca(tabla):
-        k = min(2, int(donde * 3))
-        f = donde * 3 - k
+        # Las muescas, repartidas a partes iguales por la palanca, tengan las
+        # que tengan: cuatro en casi toda la flota y tres en el 1900D. Es lo
+        # que hace `enLaMuesca` en `flight/flaps.ts`.
+        tramos = len(tabla) - 1
+        k = min(tramos - 1, int(donde * tramos))
+        f = donde * tramos - k
         return tabla[k] + (tabla[k + 1] - tabla[k]) * f
     giro = Matrix.Rotation(math.radians(en_la_muesca(d["muescas"])), 3,
                            d["eje"])

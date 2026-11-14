@@ -151,11 +151,8 @@ import {
   velocidadDeToma,
   margenDeSuClase,
 } from "./carrera";
-import {
-  FLAPS_DE_DESPEGUE,
-  VR_SOBRE_LA_PERDIDA,
-  perdidaCon,
-} from "./velocidades-de-despegue";
+import { VR_SOBRE_LA_PERDIDA, perdidaCon } from "./velocidades-de-despegue";
+import { flapsDeDespegue } from "./flaps";
 
 const PIE = 0.3048;
 const LIBRA = 0.45359237;
@@ -186,7 +183,7 @@ function despegar(a: AircraftConfig): {
   const m = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: 0 });
   m.reset({ position: new Vector3(0, a.gearHeight, 0), heading: 0, airspeed: 0 });
   const altura = (esDeChorro(a) ? 35 : 50) * PIE;
-  const subirA = Math.max(perdidaCon(a, FLAPS_DE_DESPEGUE) * 1.2, a.rotationSpeed * 1.05);
+  const subirA = Math.max(perdidaCon(a, flapsDeDespegue(a)) * 1.2, a.rotationSpeed * 1.05);
   let x = 0;
   let hastaVr = 0;
   let hastaIrse = Infinity;
@@ -213,7 +210,7 @@ function despegar(a: AircraftConfig): {
       ...neutralControls(),
       engineOn: true,
       throttle: 1,
-      flaps: FLAPS_DE_DESPEGUE,
+      flaps: flapsDeDespegue(a),
       elevator,
     });
     const paso = Math.hypot(s.position.x - antes.x, s.position.z - antes.z);
@@ -435,7 +432,7 @@ describe("la cuenta del hangar y el avión que se vuela dicen lo mismo", () => {
 describe("la Vr de los reactores es la de su peso", () => {
   for (const a of AIRCRAFT.filter(esDeChorro)) {
     it(`${a.id} rota a 1,1 veces su pérdida con los flaps de despegue`, () => {
-      const r = a.rotationSpeed / perdidaCon(a, FLAPS_DE_DESPEGUE);
+      const r = a.rotationSpeed / perdidaCon(a, flapsDeDespegue(a));
       expect(r).toBeCloseTo(VR_SOBRE_LA_PERDIDA, 1);
       // Y la decisión, antes de rotar.
       expect(a.decisionSpeed).toBeLessThan(a.rotationSpeed);
