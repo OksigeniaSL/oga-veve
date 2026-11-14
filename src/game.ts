@@ -34016,6 +34016,8 @@ export class Game {
       pv.rueda,
       pv.tamano,
       v.calzosPuestos,
+      // Parado: el de rueda de cola, en tres puntos. Ver `FundasYCalzos`.
+      actitudEnTierra(this.aircraft, 0),
     );
     malla.group.add(this.fundasYCalzos.grupo);
     this.fundasDe = malla;

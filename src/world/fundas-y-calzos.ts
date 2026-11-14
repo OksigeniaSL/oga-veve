@@ -23,9 +23,9 @@ import {
   MeshLambertMaterial,
   PlaneGeometry,
   SRGBColorSpace,
+  Vector3,
   type Box3,
   type Material,
-  type Vector3,
 } from "three";
 
 /** El rojo de las cintas de verdad. */
@@ -86,9 +86,17 @@ export class FundasYCalzos {
   /**
    * `fundas`: dónde está cada sonda; `rueda`: la caja de la rueda principal
    * izquierda, que se refleja a la derecha; `tamano`: lo que mide el avión,
-   * para que la funda de un reactor no sea la de una avioneta.
+   * para que la funda de un reactor no sea la de una avioneta; `actitud`: el
+   * cabeceo con el que descansa parado, rad, morro arriba positivo: el de
+   * `actitudEnTierra` a velocidad cero, en `flight/apoyo.ts`.
    */
-  constructor(fundas: readonly Vector3[], rueda: Box3 | null, tamano: number, conCalzos: boolean) {
+  constructor(
+    fundas: readonly Vector3[],
+    rueda: Box3 | null,
+    tamano: number,
+    conCalzos: boolean,
+    actitud: number,
+  ) {
     this.grupo.name = "fundas-y-calzos";
     const escala = Math.max(1, Math.sqrt(tamano / 11));
     cinta ??= cintaPintada();
@@ -132,13 +140,42 @@ export class FundasYCalzos {
       cuna.rotateZ(Math.PI / 2);
       cuna.rotateX(Math.PI / 6);
       this.geometrias.push(cuna);
+      /*
+       * **En el suelo, no en el plano de las ruedas del dibujo.**
+       *
+       * Los calzos van dentro del grupo del avión, que cabecea con él, y se
+       * ponían a la altura de lo más bajo de la rueda con el avión a nivel.
+       * En un triciclo parado da igual, porque descansa a nivel; el de rueda
+       * de cola descansa con el morro arriba —el JAZ 25, doce grados—, y el
+       * calzo de detrás de cada rueda se metía trece centímetros en el
+       * asfalto y el de delante flotaba siete. Lo cazaron los dos bancos que
+       * miran lo más bajo del avión contra lo que se ve: `verificar-ruedas` y
+       * el del vuelo entero, que lo daban por «hundido 0,13 m» con las ruedas
+       * en su sitio.
+       *
+       * Así que cada calzo se pone desde el punto en el que la rueda toca
+       * con esa actitud —bajo su eje, en la vertical del mundo—, a lo largo
+       * del suelo y no del fuselaje, y girado lo contrario que el avión para
+       * que apoye su cara plana. Con actitud cero sale lo de siempre.
+       */
       const cx = (rueda.min.x + rueda.max.x) / 2;
-      const suelo = rueda.min.y + r * 0.45 * 0.5;
+      const eje = new Vector3(cx, (rueda.min.y + rueda.max.y) / 2, (rueda.min.z + rueda.max.z) / 2);
+      // Arriba y atrás del mundo, vistos desde el avión con el morro a `actitud`.
+      const arriba = new Vector3(0, Math.cos(actitud), -Math.sin(actitud));
+      const atras = new Vector3(0, Math.sin(actitud), Math.cos(actitud));
+      const toca = eje.clone().addScaledVector(arriba, -r);
+      // La cuña tiene la cara de abajo a medio radio de su centro.
+      const alzado = r * 0.45 * 0.5;
+      const aparte = (rueda.max.z - rueda.min.z) / 2 + r * 0.32;
       for (const lado of [1, -1])
         for (const delante of [true, false]) {
           const g = new Group();
-          const z = delante ? rueda.min.z - r * 0.32 : rueda.max.z + r * 0.32;
-          g.position.set(cx * lado, suelo, z);
+          const donde = toca
+            .clone()
+            .addScaledVector(atras, delante ? -aparte : aparte)
+            .addScaledVector(arriba, alzado);
+          g.position.set(cx * lado, donde.y, donde.z);
+          g.rotation.x = -actitud;
           g.add(new Mesh(cuna, amarillo));
           g.userData.lado = lado;
           this.calzos.push(g);
