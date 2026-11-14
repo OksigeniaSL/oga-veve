@@ -41,6 +41,7 @@
  */
 
 import { masaDe, tieneReversa, type AircraftConfig } from "./aircraft";
+import { actitudEnTierra } from "./apoyo";
 import { GRAVITY, SEA_LEVEL_DENSITY } from "./atmosphere";
 import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
 import { resistenciaDelTren } from "./tren";
@@ -219,15 +220,22 @@ export interface SueloDeFrenada {
  * frenos de tierra.
  *
  * Rodando, el ala va con el ángulo del avión apoyado en sus tres patas, que
- * en esta flota es cero: lo que sustenta es el ala con su curvatura y lo que
- * añaden los flaps.
+ * en un triciclo es cero: lo que sustenta es el ala con su curvatura y lo que
+ * añaden los flaps. **En el de rueda de cola no**: con la cola en el suelo el
+ * ala va a su actitud en tres puntos, sustenta mucho más y le quita peso a
+ * las ruedas, que es por lo que frena menos. Es `actitudEnTierra` a esa
+ * velocidad, la misma con la que rueda el modelo de vuelo.
  */
 export function sustentacionRodando(
   ac: AircraftConfig,
   flaps: number,
   frenosDeTierra: number,
+  velocidad = 0,
 ): number {
-  const cl = ac.aero.cl0 + ac.flapsLift * Math.max(0, Math.min(1, flaps));
+  const cl =
+    ac.aero.cl0 +
+    ac.aero.clAlpha * actitudEnTierra(ac, velocidad) +
+    ac.flapsLift * Math.max(0, Math.min(1, flaps));
   return cl * (1 - parteQueSeLlevan(ac, frenosDeTierra));
 }
 
@@ -272,7 +280,7 @@ export function deceleracionRodando(
   const masa = masaDe(ac);
   const peso = masa * GRAVITY;
   const q = 0.5 * rho * v * v * ac.wingArea;
-  const cl = sustentacionRodando(ac, m.flaps, m.frenosDeTierra);
+  const cl = sustentacionRodando(ac, m.flaps, m.frenosDeTierra, v);
   const alargamiento = (ac.wingSpan * ac.wingSpan) / ac.wingArea;
   const cd =
     ac.aero.cd0 +

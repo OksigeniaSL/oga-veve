@@ -30,7 +30,7 @@ function aparcado(
   a: AircraftConfig,
   deDonde: number,
   nudos: number,
-): { peor: number; mas: number } {
+): { peor: number; mas: number; menos: number } {
   const m = new CoefficientFlightModel({
     aircraft: a,
     ground: () => 0,
@@ -56,6 +56,7 @@ function aparcado(
   };
   let peor = 0;
   let mas = -Infinity;
+  let menos = Infinity;
   const rafagas = new Rafagas(deDonde + nudos);
   for (let t = 0; t < 60; t += 1 / 60) {
     const r = rafagas.paso(1 / 60, {
@@ -78,24 +79,39 @@ function aparcado(
     });
     peor = Math.max(peor, Math.abs(cabeceo(m)));
     mas = Math.max(mas, cabeceo(m));
+    menos = Math.min(menos, cabeceo(m));
   }
-  return { peor, mas };
+  return { peor, mas, menos };
 }
 
 describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
   "el %s aparcado",
   (_id, a) => {
+    /*
+     * Apoyado en sus tres ruedas es a nivel en un triciclo y en tres puntos en
+     * el de rueda de cola, con el morro arriba (enmienda H10b del ADR 0027).
+     */
+    const reposo = a.actitudEnTresPuntos ?? 0;
+
     it("con veinte nudos de cualquier lado, sigue apoyado en sus tres ruedas", () => {
       for (const de of [0, 45, 90, 135, 180, 225, 270, 315]) {
-        const { mas } = aparcado(a, de, 20);
+        const { mas, menos } = aparcado(a, de, 20);
         // Ni un grado de morro arriba: la rueda de morro no se separa.
-        expect(mas, `viento de ${de}°`).toBeLessThan((0.5 * Math.PI) / 180);
+        expect(mas - reposo, `viento de ${de}°`).toBeLessThan((0.5 * Math.PI) / 180);
+        // Y en el de rueda de cola, la cola no se levanta: su ballesta se
+        // estira algo más de un grado antes de que la rueda deje el suelo.
+        if (a.actitudEnTresPuntos !== undefined)
+          expect(reposo - menos, `viento de ${de}°`).toBeLessThan((1 * Math.PI) / 180);
       }
     });
 
     it("y sin salirse de lo que da la pata de morro por abajo", () => {
-      const { peor } = aparcado(a, 180, 25);
-      expect(peor).toBeLessThanOrEqual(Math.abs(a.minGroundPitch) + 1e-3);
+      const { peor, menos } = aparcado(a, 180, 25);
+      if (a.actitudEnTresPuntos === undefined)
+        expect(peor).toBeLessThanOrEqual(Math.abs(a.minGroundPitch) + 1e-3);
+      // El de rueda de cola no tiene pata de morro: con viento de cola, la cola
+      // sigue en el suelo.
+      else expect(reposo - menos).toBeLessThan((1 * Math.PI) / 180);
     });
   },
 );

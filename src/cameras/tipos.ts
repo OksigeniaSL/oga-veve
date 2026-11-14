@@ -65,6 +65,16 @@ export interface Contexto {
    * Cero, o sin poner, es que no hace falta mirar más lejos que de costumbre.
    */
   readonly aLaVista?: number;
+  /**
+   * **La actitud con la que rueda el avión ahora**, rad: cero en un triciclo y
+   * volando; en el de rueda de cola, sus tres puntos parado y menos según
+   * levanta la cola. Ver `actitudEnTierra` en `flight/apoyo.ts`.
+   *
+   * La cámara de fuera la descuenta: se pone detrás del avión como si rodara a
+   * nivel, y no por debajo de la cola apuntando al cielo cada vez que rueda el
+   * fumigador.
+   */
+  readonly actitudEnTierra?: number;
   /** La cota del terreno, para que la cámara no se meta debajo. */
   readonly suelo: (x: number, z: number) => number;
   /** Si el sistema pide movimiento reducido. Apaga traqueteo y zoom. */

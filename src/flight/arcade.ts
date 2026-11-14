@@ -30,7 +30,7 @@
 
 import { Euler, Quaternion, Vector3 } from "three";
 import { AIRE_ESTANDAR, type Aire, airDensity, GRAVITY, SEA_LEVEL_DENSITY } from "./atmosphere";
-import { alturaSobreLasRuedas } from "./apoyo";
+import { actitudEnTierra, alturaSobreLasRuedas } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
 import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
 import {
@@ -699,6 +699,11 @@ export class ArcadeFlightModel implements FlightModel {
 
   romper(): void {}
 
+  /** La actitud con la que rueda ahora, o cero volando. Ver `actitudEnTierra`. */
+  private enTierra(): number {
+    return this.state.onGround ? actitudEnTierra(this.aircraft, this.speed) : 0;
+  }
+
   reset(initial: InitialConditions): void {
     this.heading = initial.heading;
     // Avión recolocado, avión que no viene girando de antes.
@@ -711,6 +716,10 @@ export class ArcadeFlightModel implements FlightModel {
     this.bank = 0;
     this.pitch = 0;
     this.state.position.copy(initial.position);
+    // El de rueda de cola, puesto en el suelo, en sus tres puntos: ver
+    // `actitudEnTierra`.
+    if (initial.position.y - this.ground(initial.position.x, initial.position.z) <= this.aircraft.gearHeight + PEGADO_AL_SUELO)
+      this.pitch = actitudEnTierra(this.aircraft, initial.airspeed);
     this.state.crashed = false;
     this.state.stalled = false;
     this.state.stallWarning = false;
@@ -1496,7 +1505,7 @@ export class ArcadeFlightModel implements FlightModel {
     const path =
       this.speed > 1 ? Math.asin(clamp(this.climb / this.speed, -1, 1)) : 0;
     this.pitch +=
-      (path + controls.elevator * 0.06 - this.pitch) * Math.min(1, step * 4);
+      (this.enTierra() + path + controls.elevator * 0.06 - this.pitch) * Math.min(1, step * 4);
 
     this.state.position.x += Math.sin(this.heading) * this.speed * step;
     this.state.position.z += -Math.cos(this.heading) * this.speed * step;
@@ -1574,7 +1583,13 @@ export class ArcadeFlightModel implements FlightModel {
       // En tierra el avión se endereza solo: aquí no hay puntas de ala que
       // apoyar ni nada que romper.
       this.bank *= Math.max(0, 1 - dt * 6);
-      this.pitch *= Math.max(0, 1 - dt * 6);
+      // Y el morro, a la actitud con la que rueda: a nivel, o en tres puntos
+      // el de rueda de cola. Ver `actitudEnTierra`.
+      const suelo = this.enTierra();
+      this.pitch = suelo + (this.pitch - suelo) * Math.max(0, 1 - dt * 6);
+      // Y nunca más arriba de lo que deja la cola: el de rueda de cola ya
+      // rueda en ese tope, y tirando de la palanca la metía en el suelo.
+      this.pitch = Math.min(this.pitch, this.aircraft.maxGroundPitch);
     } else {
       s.onGround = false;
     }

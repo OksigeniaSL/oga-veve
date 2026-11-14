@@ -1212,8 +1212,34 @@ export interface AircraftConfig {
    * principales —ver `momentoDelTren` en `fdm.ts`— y no dónde apoyan: en un
    * bogie, el eje de atrás va medio bogie por detrás de su centro, y el 747
    * apoya en el de la panza, no en el centro de los cuatro.
+   *
+   * **Negativo en el de rueda de cola**: sus principales van por delante del
+   * centro, que es lo que lo sienta en la de cola. Ver `actitudEnTresPuntos`.
    */
   mainWheelsAft: number;
+  /**
+   * **Lo que va por detrás del centro de gravedad el centro del tren
+   * principal**, m: el brazo con el que su peso carga esas ruedas, que es el
+   * par que el timón tiene que vencer para levantar el morro. Ver
+   * `brazoDelTren` en `flight/apoyo.ts`.
+   *
+   * Sin decir, `mainWheelsAft`: con un eje por pata, el apoyo y el centro son
+   * el mismo punto. Hace falta en un bogie, que apoya en su eje de atrás y
+   * carga en su centro, y en el 747, cuyas cuatro patas reparten el peso entre
+   * las del ala y las de la panza. Sale del dibujo, como `mainWheelsAft`; y
+   * con ella la carga de la rueda de morro, que es este brazo partido por la
+   * batalla.
+   */
+  mainGearAft?: number;
+  /**
+   * **La actitud en tres puntos**, rad: el cabeceo con las principales y la
+   * rueda de cola en el suelo y el avión parado. Solo la lleva el de rueda de
+   * cola, y con ella el modelo de vuelo lo sienta en la de cola —ver
+   * `momentoDelTren` en `fdm.ts`— y lo coloca así al ponerlo en el suelo.
+   *
+   * Es también su `maxGroundPitch`: más allá, la cola no baja.
+   */
+  actitudEnTresPuntos?: number;
   /**
    * Si el tren se mete.
    *
@@ -1467,7 +1493,14 @@ export const PYKASU: AircraftConfig = {
   // Tren fijo: un entrenador de escuela lleva las patas al aire a propósito.
   meteElTrenA: null,
   tardaElTren: null,
-  maxGroundPitch: 0.21, // 12°
+  /*
+   * **16,1°, medidos en su dibujo y no del fabricante**: Cessna no publica a
+   * qué actitud toca la cola de un 172. Es la actitud a la que, girando sobre
+   * las principales, lo más bajo de la cola de `modelos/jaz-20-pykasu.py` llega
+   * al suelo (`apoyo.test.ts`). Eran 12° sin fuente, cuatro por debajo de su
+   * propia cola. Ver la enmienda H10b del ADR 0027.
+   */
+  maxGroundPitch: 16.1 * (Math.PI / 180),
   // 3,3 m de morro y diez centímetros de pata: 1,7°.
   minGroundPitch: -0.030,
   llevaFlaps: true,
@@ -1595,27 +1628,44 @@ export const MAINUMBY: AircraftConfig = {
   velocidadDeCircuito: 70 * 0.514444,
   decisionSpeed: 24,
   rotationSpeed: 26,
+  /*
+   * **De la carrera a los cincuenta pies, la de su tipo**: el G-164A de 450 hp
+   * a 4.500 lb, a nivel del mar y en día estándar, rueda 615 ft y pasa los
+   * cincuenta pies a 1.170 (*Ag-Cat Pilot's Handbook*, Grumman American, 1977,
+   * «G-164A 450 HP Takeoff Data»). Llevaba la de su clase, 1,8.
+   */
+  deRodarADespegar: 1170 / 615,
   batalla: 5.4,
   gearHeight: 1.8,
-  // Apoyo al rotar: las principales, 0,18 m por detrás del centro de gravedad
-  // del dibujo (`modelos/jaz-25-mainumby.py`). Es de rueda de cola: ver
-  // `maxGroundPitch`.
-  mainWheelsAft: 0.18,
+  /*
+   * **Las principales, 0,20 m por delante del centro de gravedad**, que es lo
+   * que lo sienta en su rueda de cola: el peso queda detrás de ellas. Estaban
+   * 0,18 por detrás, como en un triciclo, y parado descansaba a nivel con la de
+   * cola casi un metro en el aire (#187). Es la cifra de su dibujo
+   * (`modelos/jaz-25-mainumby.py`): el manual del Ag Cat da su margen de
+   * centrado, de 122,0 a 125,4 pulgadas de su datum, pero no dónde van las
+   * ruedas.
+   */
+  mainWheelsAft: -0.2,
+  /*
+   * **12°, sin fuente del fabricante: medidos en su dibujo.** Es la actitud a
+   * la que apoya la rueda de cola girando sobre las principales —4,84 m por
+   * detrás de ellas y 1,03 más alta—. No se ha encontrado la del Ag Cat ni en
+   * su manual de 1977 ni en lo que se cita de su hoja de tipo FAA 1A16.
+   */
+  actitudEnTresPuntos: Math.atan(1.03 / 4.84),
   trenRetractil: false,
   // Tren fijo: un fumigador trabaja bajo y no le compensa el peso ni la avería.
   meteElTrenA: null,
   tardaElTren: null,
   /*
-   * **12°, los de su rueda de cola tocando el suelo**: girando sobre las
-   * principales, es la actitud a la que la rueda de cola de su dibujo llega a
-   * la pista —0,95 m más alta que las principales y 4,46 por detrás—, la de
-   * tres puntos de un avión de rueda atrás. Eran 15° sin fuente, y con el
-   * avión apoyado en las principales la rueda de cola se metía 0,23 m en el
-   * suelo.
+   * **Su actitud en tres puntos**: más allá, la cola no baja. Eran 15° sin
+   * fuente, y con el avión apoyado en las principales la rueda de cola se
+   * metía 0,23 m en el suelo.
    */
-  maxGroundPitch: Math.atan(0.95 / 4.46),
-  // Rueda de cola: se apoya de morro arriba, y bajarlo
-  // clava la hélice. Poco juego a propósito.
+  maxGroundPitch: Math.atan(1.03 / 4.84),
+  // Con la cola levantada rueda a nivel sobre las principales, y bajar el
+  // morro de ahí clava la hélice. Poco juego a propósito.
   minGroundPitch: -0.020,
   /*
    * **No lleva flaps**: las dos alas tienen alerones y nada más, que es lo que
@@ -1856,7 +1906,14 @@ export const PANAMBI: AircraftConfig = {
    * reversible; se toma la de arriba.
    */
   tardaElTren: { sale: 7, entra: 7 },
-  maxGroundPitch: 0.19, // 11°
+  /*
+   * **19,7°, medidos en su dibujo y no del fabricante**: Piper no publica a
+   * qué actitud toca la cola de un Seneca II. Es la actitud a la que, girando
+   * sobre las principales, la cola de `modelos/jaz-40-panambi.py` llega al
+   * suelo (`apoyo.test.ts`). Eran 11° sin fuente. Ver la enmienda H10b del
+   * ADR 0027.
+   */
+  maxGroundPitch: 19.7 * (Math.PI / 180),
   // 3,6 m de morro y diez centímetros: 1,6°.
   minGroundPitch: -0.028,
   llevaFlaps: true,
@@ -2207,7 +2264,15 @@ export const ARASUNU: AircraftConfig = {
    * peso y la bomba es de avión de línea.
    */
   tardaElTren: { sale: 6, entra: 6 },
-  maxGroundPitch: 0.17, // 10°: la cola en T no perdona rotar de más.
+  /*
+   * **15,4°, medidos en su dibujo y no del fabricante**: no se ha encontrado
+   * publicada la actitud a la que toca la cola de un 1900D. Es la actitud a
+   * la que, girando sobre las principales, la panza de
+   * `modelos/jaz-60-arasunu.py` llega al suelo (`apoyo.test.ts`); si el dibujo
+   * cambia, esa prueba lo dice. Eran 10° sin fuente. Ver la enmienda H10b del
+   * ADR 0027.
+   */
+  maxGroundPitch: 15.4 * (Math.PI / 180),
   // 5,5 m de morro y doce centímetros: 1,3°.
   minGroundPitch: -0.022,
   // Flaps grandes: es lo que le permite entrar en pistas cortas, que es para
@@ -2525,7 +2590,16 @@ export const ARAI: AircraftConfig = {
    * público. Si un día se tiene la cifra de su manual, va aquí.
    */
   tardaElTren: { sale: 8, entra: 8 },
-  maxGroundPitch: 0.16, // 9°: con un fuselaje largo, la cola llega antes.
+  /*
+   * **14,2°, medidos en su dibujo y no del fabricante**: la cifra de Embraer
+   * para el E170 no se ha encontrado —su manual de planificación de
+   * aeropuertos no está en línea—. Es la actitud a la que, girando sobre las
+   * principales, la panza de `modelos/jaz-90-arai.py` llega al suelo
+   * (`apoyo.test.ts`). Eran 9° sin fuente, y con ellos despegaba volando un
+   * 18 % más largo que la cuenta del hangar, esperando a una velocidad a la
+   * que su cola le dejara sostenerse. Ver la enmienda H10b del ADR 0027.
+   */
+  maxGroundPitch: 14.2 * (Math.PI / 180),
   // 11,5 m de morro y quince centímetros: 0,75°.
   minGroundPitch: -0.013,
   /*
@@ -2833,6 +2907,11 @@ export const YVAGA: AircraftConfig = {
   // su pata, que va 3,42 por detrás del centro de gravedad (`PATAS_PANZA` en
   // `modelos/jaz-120-yvaga.py`).
   mainWheelsAft: 4.14,
+  // Y el peso, en las cuatro patas: el punto medio de las del ala, 0,32 m por
+  // detrás del centro, y las de la panza, 3,42. Da un 7,3 % del peso en la de
+  // morro sobre los 25,6 m de batalla. Era la décima de la batalla para todos,
+  // 2,56 m.
+  mainGearAft: 1.87,
   trenRetractil: true,
   // Veinte: igual que el de pasillo único. Un avión de línea no vuela con el
   // tren fuera más que los segundos de después del despegue.
@@ -3104,20 +3183,21 @@ export const TIJERETA: AircraftConfig = {
    */
   velocidadDeCircuito: 165 * 0.514444,
   /*
-   * **Ciento treinta y ocho nudos, la Vr de su peso**: 1,1 veces su pérdida con
-   * los flaps de despegue, 125, la misma regla que los otros dos reactores. Ver
-   * `VR_SOBRE_LA_PERDIDA`.
+   * **Ciento cincuenta nudos, la Vr de su tipo a su peso**: la AAIB da al
+   * VH-ZND, un 787-9 con los flaps a cinco y 253.400 kg, «VR was 172 kt»
+   * (*Bulletin* 11/2020); con la raíz de la masa, a los 192.776 kg de la ficha
+   * son 150. La V1 sube en la misma proporción, de 129 a 140.
    *
-   * Eran 157, puestas para que la cuenta de todos los motores por 1,15 diera los
-   * 1.800 m de Boeing (D6-58333, 3.3.9). Pero en un bimotor esa longitud de campo
-   * la manda casi siempre el despegue con un motor parado, que este juego no
-   * cuenta, y la de todos los motores por 1,15 sale por debajo. Con 138 pide
-   * 1.544, la de abortar desde su V1. El manual de vuelo no es público: **por
-   * verificar**. La V1 baja en la
-   * misma proporción, de 148 a 129 (H7, 13-11-2026).
+   * Eran 138, la regla de 1,1 veces su pérdida con los flaps de despegue (ver
+   * `VR_SOBRE_LA_PERDIDA`), y con ella el avión no podía irse del suelo a su
+   * Vr: le pedía 11,6° y su cola le deja 9,7. Despegaba volando un 10,7 % más
+   * largo que la cuenta del hangar; con la de su tipo, un 1,7 %, y se va del
+   * suelo a 7,7°, donde el boletín dice «between 6° and 7.5°». El hangar pide
+   * 1.826 m, la de abortar desde su V1, donde la gráfica de Boeing da 1.800
+   * (D6-58333, 3.3.9). Ver la enmienda H10b del ADR 0027.
    */
-  decisionSpeed: 129 * 0.514444,
-  rotationSpeed: 138 * 0.514444,
+  decisionSpeed: 140 * 0.514444,
+  rotationSpeed: 150 * 0.514444,
   // 84 ft 9 in (D6-58333, 2.2.2).
   batalla: 25.83,
   // Con ella la panza queda a 1,86 m del suelo y el lomo a 7,80, los de 2.3.2. Tiene
@@ -3127,6 +3207,9 @@ export const TIJERETA: AircraftConfig = {
   // que va 1,80 por detrás del centro de gravedad (`PATA_Z` en
   // `modelos/jaz-110-tijereta.py`).
   mainWheelsAft: 2.56,
+  // Y el peso, en el centro del bogie: la pata. Un 7 % en la de morro sobre su
+  // batalla; era la décima de ella para todos, 2,58 m.
+  mainGearAft: 1.8,
   trenRetractil: true,
   meteElTrenA: 20,
   // Tres patas grandes: entre sus dos hermanos. Estimación de su clase, por lo
