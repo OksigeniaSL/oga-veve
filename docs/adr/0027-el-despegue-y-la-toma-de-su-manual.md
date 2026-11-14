@@ -536,6 +536,10 @@ Lo que se ha hecho:
   avión como con cualquier otro, y no por debajo de la cola mirando al cielo.
   La de cabina no: desde el asiento de un avión de rueda de cola, en tres
   puntos, el morro tapa la pista, y por eso se rueda haciendo eses.
+- **La pendiente del dibujo** (`inclinarConElSuelo`) se mide donde tiene las
+  ruedas, de las principales a la de cola, y no a caballo del centro: medida
+  como en un triciclo no veía el suelo de debajo de la cola, y en el puesto de
+  Tenerife Norte la rueda de cola quedaba 0,13 m dentro del asfalto.
 
 **Las fuentes**: el *Ag-Cat Pilot's Handbook* de Grumman American (1 de abril
 de 1977, G-164A/450 y /600, G-164B; hoja de tipo FAA 1A16), del expediente de
@@ -686,3 +690,6 @@ modelo de la hélice de su propio ADR.
   220 m donde la proporción del Ag Cat da 125, y despega volando un 39 % más
   largo que el hangar. Sigue fuera de esa prueba, ahora con este porqué.
 - **El despegue volado del E170**, un 17,6 % largo, que no era la cola.
+- **El banco del vuelo entero no vuela el JAZ 25 en Tukã**: el reloj del juego
+  se para a los dos segundos y medio en el puesto y no arranca. Pasa igual en
+  `main` sin esta enmienda, así que no es de ella; no se ha mirado por qué.
