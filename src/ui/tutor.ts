@@ -38,6 +38,7 @@ import type { FlightState } from "../flight/model";
 import { nombreDeTecla, type Accion } from "../flight/keymap";
 import { t, type TranslationKey } from "../i18n";
 import type { Propulsion } from "../flight/aircraft";
+import { escribir, esconder } from "./si-cambia";
 import { DIBUJOS } from "./senal";
 import { motorMas, motorMenos } from "./pictogramas";
 import { FRENO_DEL_HELICOPTERO, HELICOPTERO_VOLANDO } from "./dibujos-del-helicoptero";
@@ -316,7 +317,7 @@ export class Tutor {
 
   silenciar(callado: boolean): void {
     this.callado = callado;
-    if (callado && this.root) this.root.hidden = true;
+    if (callado) esconder(this.root, true);
   }
 
   update(
@@ -347,20 +348,21 @@ export class Tutor {
     velocidad: "lento" | "bien" | "rapido" | null = null,
   ): void {
     if (!this.root) return;
+    // Esto va en cada imagen: lo que no cambia no se escribe. Ver `ui/si-cambia.ts`.
     if (this.callado) {
-      this.root.hidden = true;
+      esconder(this.root, true);
       return;
     }
 
     this.step = this.nextStep(state, throttle, dt, enFinal, hayRaya, velocidad);
 
     if (this.step === "done" || state.crashed) {
-      this.root.hidden = true;
+      esconder(this.root, true);
       return;
     }
 
     const view = STEPS[this.step];
-    this.root.hidden = false;
+    esconder(this.root, false);
 
     if (this.cue) {
       const cue = renderCue(
@@ -375,17 +377,17 @@ export class Tutor {
         this.cuePintado = cue;
       }
     }
-    if (this.label) this.label.textContent = t(view.key);
+    escribir(this.label, t(view.key));
 
     const progress = view.progress(state, throttle);
-    if (this.bar) this.bar.hidden = progress === null;
+    esconder(this.bar, progress === null);
     if (this.fill && progress !== null) {
       this.fill.style.width = `${Math.round(Math.min(1, Math.max(0, progress)) * 100)}%`;
     }
     // Y el listón, que es lo que convierte «baja el gas» en «baja hasta aquí».
     const meta = view.objetivo?.(state, throttle) ?? null;
     if (this.liston) {
-      this.liston.hidden = meta === null || progress === null;
+      esconder(this.liston, meta === null || progress === null);
       if (meta !== null) {
         this.liston.style.left = `${Math.round(Math.min(1, Math.max(0, meta)) * 100)}%`;
       }

@@ -15,6 +15,11 @@
  *
  * La lista es la única fuente: `navegador-viejo.test.ts` exige que cada
  * `:has()` de la hoja vaya con su clase de aquí, y al revés.
+ *
+ * Y no está todo: lo que el código pone él mismo —el cuadro en grande, la
+ * hoja del final— lleva su clase en todos los navegadores y ya no se
+ * pregunta con `:has()`, que en Chrome cuesta cada vez que algo entra en el
+ * árbol. Ver el comentario de `.volumen` en `style.css`.
  */
 
 export interface Espejo {
@@ -32,11 +37,9 @@ export const ESPEJOS: readonly Espejo[] = [
   { en: ".hud", si: '.hud__abajo > [data-hud="hint"]:not(:empty)', clase: "hay-subtitulo" },
   { en: ".hud", si: ".rincon .senal:not([hidden])", clase: "hay-senal-en-el-rincon" },
   { en: ".hud", si: ".radio:not([hidden])", clase: "hay-radio" },
-  { en: ".hud", si: ".cuadro--grande", clase: "hay-cuadro-grande" },
   { en: "body", si: '[data-hud="fin"]:not([hidden])', clase: "hay-fin" },
   { en: "body", si: ".hud--menu", clase: "hay-menu" },
   { en: ":root", si: ".hud.hud--menu", clase: "hay-menu-abierto" },
-  { en: ".fin__manga", si: ".hoja", clase: "hay-hoja" },
   { en: ".motor__tecla", si: "svg", clase: "hay-dibujo" },
   { en: ".pilotos__panel", si: ".pilotos__muestra", clase: "hay-muestra" },
   { en: ".senal", si: ".senal__texto:not(:empty)", clase: "hay-texto" },

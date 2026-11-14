@@ -71,7 +71,7 @@ import {
 import { matriculaDe } from "../flight/matricula";
 import { reconocer } from "../flight/reconocimiento";
 import { aPxDelHud, escribirRincon } from "./escala";
-import { escribir } from "./si-cambia";
+import { escribir, esconder, poner } from "./si-cambia";
 import {
   TELEFONO_APAISADO,
   ahoraEsTelefonoApaisado,
@@ -1207,6 +1207,14 @@ export class Hud {
     this.grande = cual;
     const cuadro = this.root.querySelector('[data-hud="cuadro"]');
     cuadro?.classList.toggle("cuadro--grande", cual !== null);
+    /*
+     * **Y la raíz lo sabe por una clase, no preguntándolo con `:has()`.**
+     * Con `.hud:has(.cuadro--grande) … [data-hud="hint"]` en la hoja, cada
+     * vez que algo entraba debajo de `.hud` —una cifra nueva, un dibujo— el
+     * navegador volvía a estilar toda pieza con `data-hud`, que son decenas.
+     * Aquí es donde cambia, y aquí se dice. Ver `ui/si-cambia.ts`.
+     */
+    this.root.classList.toggle("hay-cuadro-grande", cual !== null && !!cuadro);
     const dibujo = this.root.querySelector('[data-hud="tablero"]');
     if (!dibujo) return;
     if (!dibujo.hasAttribute("data-entera"))
@@ -2523,6 +2531,7 @@ export class Hud {
     this.cuadroTel.bind(this.root, this.ficha);
     // El marcado es nuevo, con el cuadro entero: nada puesto en grande.
     this.grande = null;
+    this.root.classList.remove("hay-cuadro-grande");
     /*
      * La caja del cuadro, con la forma del dibujo que se acaba de pintar: sin
      * MCP la visera se queda fina y el dibujo sale más apaisado. Escrito en
@@ -2786,11 +2795,11 @@ export class Hud {
         (this.escalera === "cifra" || this.escalera === "cabina")
           ? punto
           : null;
-      this.homeDistance.textContent = conNombre
+      escribir(this.homeDistance, conNombre
         ? `${conNombre} ${(metres / MILLA_HUD).toFixed(metres < 10 * MILLA_HUD ? 1 : 0)} NM`
         : metres >= 1000
           ? `${(metres / 1000).toFixed(1)} km`
-          : `${Math.round(metres)} m`;
+          : `${Math.round(metres)} m`);
     }
     // Cerca y de frente, se apaga: ya la estás viendo por la ventanilla.
     this.home.classList.toggle("casa--cerca", metres < 900);
@@ -2820,12 +2829,12 @@ export class Hud {
        * el borde, lo mide `verificar-carteles`. El destino sigue dicho en su
        * placa, arriba.
        */
-      this.homeGloss.textContent =
+      escribir(this.homeGloss,
         modo === "destino" && this.cuentaDelTrayecto
           ? this.cuentaDelTrayecto
           : modo === "destino" && nombre
             ? (nombre.split(" · ")[0] ?? nombre)
-            : t(toObjective ? "hud.objective" : modo === "helipuerto" ? "hud.helipuerto" : "hud.home");
+            : t(toObjective ? "hud.objective" : modo === "helipuerto" ? "hud.helipuerto" : "hud.home"));
     }
     /*
      * **Y el código del destino se ve siempre, no solo volando.** La flecha
@@ -2857,7 +2866,7 @@ export class Hud {
     const numeros = this.escalera === "cifra" || this.escalera === "cabina";
     this.cuentaDelTrayecto = trayecto && numeros ? cuentaDe(trayecto, this.escalera) : null;
     if (!this.trayecto) return;
-    this.trayecto.hidden = !trayecto;
+    esconder(this.trayecto, !trayecto);
     if (!trayecto) return;
     const hecho =
       trayecto.total > 0
@@ -3307,7 +3316,7 @@ export class Hud {
 
     this.throttleFill.style.width = `${Math.round(throttle * 100)}%`;
     // Y la reversa, si está metida. Ver el marcado de `motor__reversa`.
-    if (this.reversaAviso) this.reversaAviso.hidden = !reversa;
+    esconder(this.reversaAviso, !reversa);
 
     // El freno aparece al tocar suelo y se enciende al pisarlo.
     // Sin cifras, botón; con cifras, tarjeta con su tecla. Nunca los dos.
@@ -3318,7 +3327,7 @@ export class Hud {
     // en una tablet no existe, y salía **además** del botón. En un teléfono
     // apaisado eran ciento veinte píxeles que echaban el destino fuera de la
     // pantalla. Ver `verificar-carteles.mjs`.
-    this.brakes.hidden = !enSuelo || sinLetras || ESTO_ES_TACTIL;
+    esconder(this.brakes, !enSuelo || sinLetras || ESTO_ES_TACTIL);
     // El freno se retira en V1, no al despegar.
     //
     // V1 es la velocidad de decisión: el último instante en que queda pista
@@ -3484,7 +3493,7 @@ export class Hud {
       this.setBraking(false);
     }
     // Mientras dura la despedida sigue en pantalla, aunque ya no frene.
-    this.brakesTouch.hidden = escondeBoton && this.brakeExit <= 0;
+    esconder(this.brakesTouch, escondeBoton && this.brakeExit <= 0);
     const pisado = braking > 0.05;
     this.brakes.classList.toggle("freno--pisado", pisado);
     this.brakesTouch.classList.toggle("freno--pisado", pisado);
@@ -3502,8 +3511,8 @@ export class Hud {
      * `hayPalancaDeTren` en `flight/input.ts`. El de flaps, igual: el
      * fumigador no los lleva.
      */
-    this.trenTouch.hidden = !this.hayTren;
-    this.flapsTouch.hidden = !this.hayFlaps;
+    esconder(this.trenTouch, !this.hayTren);
+    esconder(this.flapsTouch, !this.hayFlaps);
     /*
      * **Y el de los aerofrenos, en tierra y en el aire, donde los hay.**
      *
@@ -3516,7 +3525,7 @@ export class Hud {
      * de siempre: verde fuera del todo, ámbar mientras suben o bajan, y el
      * borde verde a trazos armada, que es «listo, sin sacar nada todavía».
      */
-    this.aerofrenosTouch.hidden = !this.hayAerofrenos;
+    esconder(this.aerofrenosTouch, !this.hayAerofrenos);
     const aerofrenos = mandos?.aerofrenos;
     const palanca = aerofrenos?.palanca ?? (aerofrenos?.pedidos ? "fuera" : "recogida");
     const donde = Math.max(aerofrenos?.donde ?? 0, aerofrenos?.deTierra ?? 0);
@@ -3543,7 +3552,7 @@ export class Hud {
      * Y el autofreno, en su rincón: una raya encendida por punto del selector,
      * y verdes mientras frena.
      */
-    this.autofrenoRayas.hidden = !this.hayAutofreno;
+    esconder(this.autofrenoRayas, !this.hayAutofreno);
     const modo = aerofrenos?.autofreno ?? "off";
     if (modo !== this.autofrenoPintado) {
       this.autofrenoPintado = modo;
@@ -3852,6 +3861,13 @@ export class Hud {
     caja.innerHTML = `<span class="fin__mi-manga">${this.mangaDelGrado(MANGA_ALTO)}</span>${
       final.hoja ? hoja(lista, { donde: "fin", conNombres, yaEstaban: [] }) : ""
     }`;
+    /*
+     * La manga sola sale más grande que con la hoja al lado, y eso lo dice
+     * esta clase y no un `:has(.hoja)`: con él en la hoja de estilos, cada
+     * pieza que entraba debajo de `.hud` volvía a estilar todos los SVG del
+     * juego. Ver `ui/si-cambia.ts`.
+     */
+    caja.classList.toggle("hay-hoja", caja.querySelector(".hoja") !== null);
     const texto = pick(this.root, "fin-frase");
     texto.textContent = frase;
     texto.hidden = !frase;
@@ -3883,6 +3899,7 @@ export class Hud {
     this.ponerPlano("");
     const manga = pick(this.root, "fin-manga");
     manga.hidden = false;
+    manga.classList.remove("hay-hoja");
     manga.innerHTML = `<span class="fin__mi-manga">${dibujarManga(
       barras,
       MANGA_ALTO,
@@ -4414,7 +4431,7 @@ export class Hud {
     const hay =
       this.instruments !== "none" &&
       (Math.abs(valor) > 0.005 || this.trimRecienTocado);
-    caja.hidden = !hay;
+    esconder(caja, !hay);
     if (!hay) return;
     const v = Math.max(-1, Math.min(1, valor));
     /*
@@ -4431,7 +4448,8 @@ export class Hud {
       "--trim",
       String(Math.max(-1, Math.min(1, -v * ESCALA_DEL_TRIM))),
     );
-    caja.setAttribute(
+    poner(
+      caja,
       "aria-label",
       `${t(v > 0 ? "hud.trimArriba" : "hud.trimAbajo")} ${Math.round(Math.abs(v) * 100)}%`,
     );
@@ -4573,7 +4591,7 @@ export class Hud {
   ): void {
     const caja = this.torre;
     if (!caja) return;
-    caja.hidden = luz === null;
+    esconder(caja, luz === null);
     caja.classList.toggle("torre--verde", luz === "verde");
     caja.classList.toggle("torre--roja", luz === "roja");
     /*
@@ -4611,10 +4629,9 @@ export class Hud {
     // Tu número, escrito detrás de la orden: «número dos para la salida».
     const tuNumero =
       enLaFila === 1 ? "torre.numeroDos" : enLaFila >= 2 ? "torre.numeroTres" : null;
-    const texto = caja.querySelector('[data-hud="torre-texto"]');
-    if (texto)
-      texto.textContent =
-        luz === "verde"
+    escribir(
+      caja.querySelector('[data-hud="torre-texto"]'),
+      luz === "verde"
           ? t(
               comoSeDiceAqui(
                 enElAire ? "torre.aterrizar" : "torre.verde",
@@ -4638,23 +4655,32 @@ export class Hud {
                 (tuNumero
                   ? `, ${t(comoSeDiceAqui(tuNumero, this.habla) as TranslationKey)}`
                   : "")
-              : "";
+              : "",
+    );
     // **Y una forma dentro de la luz**, no solo un color: la mano abierta de
     // parar o la flecha de seguir. Quien no distinga el rojo del verde —que es
     // uno de cada doce niños— tiene que enterarse igual, y quien no lea
     // también.
+    /*
+     * Y solo si es otro dibujo: esto se llama en cada imagen, y `innerHTML`
+     * rehace el dibujo aunque sea el mismo, que es meter piezas nuevas debajo
+     * de `.hud` y repreguntar todos sus `:has()`. Ver `ui/si-cambia.ts`.
+     */
     const bombilla = caja.querySelector('[data-hud="torre-luz"]');
-    if (bombilla)
-      bombilla.innerHTML =
-        luz === "verde"
-          ? FLECHA_SEGUIR
-          : luz
-            ? // Y el dibujo va con las palabras: la mano de parar para el punto
-              // de espera, la flecha de subir para la orden de irse al aire.
-              rojaDice === "alAire"
-              ? FLECHA_SEGUIR
-              : MANO_PARAR
-            : "";
+    const dibujo =
+      luz === "verde"
+        ? "seguir"
+        : luz
+          ? // Y el dibujo va con las palabras: la mano de parar para el punto
+            // de espera, la flecha de subir para la orden de irse al aire.
+            rojaDice === "alAire"
+            ? "seguir"
+            : "parar"
+          : "";
+    if (bombilla && bombilla.getAttribute("data-dibujo") !== dibujo) {
+      bombilla.setAttribute("data-dibujo", dibujo);
+      bombilla.innerHTML = dibujo === "seguir" ? FLECHA_SEGUIR : dibujo === "parar" ? MANO_PARAR : "";
+    }
   }
 
   /** De dónde saca el mapa el mundo que pinta. */

@@ -1295,6 +1295,13 @@ body {
  * lista —aquí, la cabina—. Dentro de `:is()` se salta solo lo que no entiende
  * y se queda con la clase, que allí pone `ui/espejo-de-has.ts`. Lo vigila
  * `navegador-viejo.test.ts`.
+ *
+ * **Y lo que el código ya sabe cuándo cambia va solo con su clase**, sin
+ * `:has()`: la manga sola del final (`.hay-hoja`) y el cuadro en grande
+ * (`.hay-cuadro-grande`). En Chrome, todo lo que nombra una regla con
+ * `:has()` se vuelve a estilar cada vez que entra algo debajo de quien lo
+ * lleva, y esas dos nombraban todos los SVG y toda pieza con `data-hud`. Ver
+ * `ui/si-cambia.ts`.
  */
 .hud:is(:has(.cuadro--bajado), .hay-cuadro-bajado) .volumen,
 .hud--cabina .volumen {
@@ -2943,7 +2950,7 @@ body:is(:has([data-hud="fin"]:not([hidden])), .hay-fin) .pad {
     height: 96px;
   }
 
-  .fin .fin__manga:not(:is(:has(.hoja), .hay-hoja)) .fin__mi-manga svg {
+  .fin .fin__manga:not(.hay-hoja) .fin__mi-manga svg {
     height: 128px;
   }
 }
@@ -3165,7 +3172,7 @@ body:is(:has([data-hud="fin"]:not([hidden])), .hay-fin) .pad {
 }
 
 /* Y sola, en el ascenso, del tamaño de antes: ahí es lo único que se mira. */
-.fin__manga:not(:is(:has(.hoja), .hay-hoja)) .fin__mi-manga svg {
+.fin__manga:not(.hay-hoja) .fin__mi-manga svg {
   height: 168px;
 }
 
@@ -14535,7 +14542,7 @@ oksigenia-access-panel::part(trigger):active {
    * 14 % de ese alto —el de `.cuadro--grande > .tablero`, aquí abajo— y queda
    * encima de la franja, en cualquier teléfono. Ver `scripts/ver-hoja.mjs`.
    */
-  .hud:is(:has(.cuadro--grande), .hay-cuadro-grande) .hud__abajo > [data-hud="hint"] {
+  .hud.hay-cuadro-grande .hud__abajo > [data-hud="hint"] {
     top: auto;
     bottom: calc(
       (20px + 56px + 12px) / var(--escala, 1) +
