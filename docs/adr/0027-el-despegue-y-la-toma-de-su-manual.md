@@ -1107,3 +1107,205 @@ sonaba. Es lo que oirá quien vaya un día en la cabina de un Boeing.
 - **El fumigador**, monomotor, lleva en la tarjeta una «V2» que no se enseña
   en ninguna parte: sin un segundo motor no hay ejercicio de uno parado. Era
   51,9 nudos y ahora es su Vr, 50,5.
+
+## Enmienda H11a (14-11-2026): el JAZ 50, un Twin Otter, entra en el taller
+
+La enmienda del 13-11 hizo del JAZ 60 un 1900D y dejó escrito «el Twin Otter
+será otro avión». Lo es desde aquí: el **JAZ 50**, el de las pistas cortas de
+tierra y de hierba, las estancias y, más adelante, los flotadores (#185).
+Enrique lo aprobó, y llega por pasos. Este es el primero: **la ficha con su
+fuente y el modelo de vuelo**, medidos con el mismo método que el 1900D. El
+modelo en 3D, la cabina, las láminas, las voces, el pájaro y su sitio en el
+hangar van después.
+
+### Qué Twin Otter
+
+**El de la Serie 400**, el que fabrica hoy De Havilland Canada: «DHC-6 Classic
+300-G is a marketing designation of the DHC-6 Series 400» (EASA.IM.A.575, nota
+12). Tiene el ala, la cola y el tren del -300, y los mismos PT6A-27 de 620 shp
+o los -34 de la misma potencia. Se toma ese y no el -300 porque **es el que
+tiene manual con cifras que se pueden leer**: del -300 no se ha encontrado
+copia del PSM 1-63-1A, y sus actuaciones solo llegan sueltas, citadas en
+informes de accidentes. Donde el -300 dice otra cosa, la ficha lo dice al
+lado.
+
+### Las fuentes
+
+- **EASA, hoja de tipo EASA.IM.A.575**, número 6 (18-6-2026), solo del -400:
+  dimensiones, motor, hélice, velocidades límite, pesos, neumáticos,
+  tripulación mínima y equipo de la nota 10.
+- **FAA, hoja de tipo A9EA**, revisión 20 (14-7-2016), del -300: para comparar
+  los límites, y los recorridos de mando.
+- **El manual del -400, PSM 1-64-1A**, revisión 3 (8-2-2017), en las tablas
+  que reproduce H. Horlings en su *Limited Review* (AvioConsult, 2026): las
+  velocidades de emergencia (§ 3.2), la Vref por masa (tabla 3-1) y la Vr, la
+  V1 y la V2 (figura 4-1, una gráfica leída a ojo). Es segunda mano: el manual
+  no se ha podido leer entero.
+- **Viking Air, *Twin Otter Series 400 Technical Specifications***, rev. 01-18
+  (2018): distancias de la SFAR 23 y sus condiciones —«All takeoff distances
+  are based on both engines operating … sea level, zero wind and from a dry
+  concrete level surface»; «The CAR 3 and SFAR 23 landing distances and
+  accelerate stop distance assume retardation with wheel brakes only»—, subida,
+  techo, equipo de serie y aviso de pérdida.
+- **De Havilland Canada**, ficha del Classic 300-G (julio de 2023 y octubre de
+  2025) y la página del Series 400 en dehavilland.com: las mismas distancias,
+  las rodaduras, el peso vacío, el combustible y el alcance.
+- **NASA TM-101427** (Ranaudo y otros, 1989), tabla III: las derivadas
+  longitudinales identificadas en vuelo con flaps a 0° y 120 KIAS; y **NASA
+  TM-105977** (Ratvasky y Ranaudo, 1993), tabla 1: masas e inercias. Es el
+  Twin Otter de investigación de engelamiento de NASA Lewis, con los motores
+  del -100; la célula es la misma.
+- **AAIB, *Bulletin* 8/2017** (G-BVVK, un Series 310): el viento cruzado
+  demostrado de su manual. **TSB de Canadá, A13A0033 y A14Q0148**: el de 1973 y
+  la toma del manual del -300. **AAIC de Nepal**, 9N-AET (2022): el TAWS puesto
+  después en un -300 y su «Pull Up» en el registrador.
+
+### La ficha
+
+| | JAZ 50 | De dónde |
+|---|---|---|
+| Peso máximo al despegar / aterrizar | 5.670 / 5.579 kg | EASA, A.III.12 |
+| Vacío equipado | 3.377 kg | Viking, 2018 (el 300-G de 2025, 3.189) |
+| Sin combustible / vuelo típico | 4.502 / 5.182 kg | lo que deja su máximo al vuelo más largo; la mediana de sus rutas (ADR 0019) |
+| Combustible | 1.168 kg | 300-G, 2025 |
+| Envergadura, ala, cuerda | 19,81 m, 39,02 m², 1,98 m | EASA, A.III.4 y 21 |
+| Motores y hélice | 2 PT6A-27 de 620 shp; Hartzell de tres palas y 2,59 m, giran igual | EASA, A.III.5 y 6 |
+| Flaps | 0, 10, 20 y 37°; despega con 10° | PSM 1-64-1A, § 3.2 (el -300, 37,5°) |
+| Pérdida sin flaps / con 10° / con 37° | 73 / 66 / 56 KIAS a 12.500 lb | PSM 1-64-1A, § 3.2 |
+| Vr = V1 | 73 KIAS hasta 12.000 lb, 76 a 12.500 | PSM 1-64-1A, figura 4-1 |
+| V2 («speed at 50 ft») | 73 KIAS hasta 10.800 lb, 80 a 12.500; 75,6 a la masa de la ficha | figura 4-1 |
+| Vref con 37° | 67, 70 y 74 KIAS a 4.760, 5.220 y 5.580 kg; 69,8 a la de la ficha | tabla 3-1 |
+| Vmca | 64 KIAS, 66 KCAS, con flaps a 10° y autobandera | EASA, A.III.9; suplemento 9-19 |
+| Vyse | 80 KIAS | PSM 1-64-1A, § 3.2 |
+| Vmo | 166 KIAS hasta 6.700 ft | EASA, A.III.9 (el -300, 160 KCAS) |
+| VFE | 103 KIAS de 0 a 10°, 93 de 11 a 37° | EASA, A.III.9 |
+| Viento cruzado demostrado | 25 kt a 33 ft | AAIB 8/2017 |
+| Tren | fijo, triciclo; batalla 4,5 m | EASA, A.III.2; NASA TM-101427, figura 1 |
+| CLα, Cmα, Cmq | 5,66; −1,31; −34,2 por radián | NASA TM-101427, tabla III |
+| Cmδe | −1,74 por radián, por los 25° que sube su profundidad: 0,76 | TM-101427; FAA A9EA |
+| Inercias | 26.660, 34.650 y 51.650 kg·m² a 4.970 kg | NASA TM-105977, tabla 1 |
+| TCAS | I | Viking, 2018 |
+
+**La V1 y la Vr son la misma**, como las da su manual. `prestaciones.test.ts`
+pedía la Vr estrictamente por encima de la V1; ahora no por debajo.
+
+### El modelo, contra su manual
+
+| | El modelo | Su manual | Masa |
+|---|---|---|---|
+| Pérdida sin flaps / 10° / 37° | 73,0 / 65,9 / 56,2 kt | 73 / 66 / 56 | 5.670 kg |
+| Vmca | 66,3 kt | 66 KCAS | — |
+| Rodadura hasta la Vr | 253 m | 244 de rodadura (web) | 5.670 kg |
+| Despegue con todos por 1,15 | 470 m | 454 (SFAR 23) | 5.670 kg |
+| Acelerar y parar | 509 m | 675 | 5.670 kg |
+| Aterrizaje desde 50 ft | 476 m, 185 en el suelo | 460, 169 en el suelo | 5.579 kg |
+| Subida al nivel del mar | 1.830 ft/min | 1.600 a potencia de subida | 5.670 kg |
+| Subida con un motor | 530 ft/min a 88 kt | 340 a potencia máxima continua | 5.670 kg |
+| A fondo al nivel del mar / 5.000 / 10.000 ft | 169 / 170 / 170 kt | 170 / 181 / 182 | |
+| Volado hasta 50 ft, piloto del banco | 469 m; la cuenta, 338 | 330 (395 a 5.670 kg, sin el 1,15) | 5.182 kg |
+
+Lo que se ha calibrado y cómo:
+
+- **Las pérdidas**: el `CL` máximo sin flaps de sus 73 nudos, 1,65, y una sola
+  `flapsLift`, 1,13, que con la palanca repartida a partes iguales da las de
+  10° y 37° al medio nudo.
+- **La recta de empuje**, 24 kN que acaban en 130 m/s, con un `cd0` de 0,04
+  sin fuente, por sus 170 nudos al nivel del mar, su rodadura y su subida. No
+  se pueden tener las tres a la vez: sube un 14 % más que a potencia de subida
+  y arriba no gana velocidad, porque la ley de empuje de la casa le quita
+  potencia con la altura (`loQueDaElMotor`, la densidad a la 0,7) y el PT6A-27
+  tiene régimen plano hasta 33 °C al nivel del mar (EASA, A.III.5). A 10.000 ft
+  va a 170 nudos donde el suyo va a 182; el banco de prestaciones lo admite,
+  que pide a fondo el 90 % del crucero.
+- **La proporción de rodar a despegar, 1,62**, la más que deja su manual: su
+  despegue de la SFAR 23, con los dos motores, ya lleva el 1,15 (454 / 1,15 =
+  395), y su rodadura son 244 m.
+- **La frenada, 0,45, el tope de la flota**, con dos décimas de resistencia de
+  flaps sin fuente: su toma sale un 3 % larga. No para más corto porque al
+  tocar con los flaps de aterrizaje el ala le sostiene las cuatro quintas
+  partes del peso.
+- **El timón, 0,05**, por su Vmca.
+
+Lo que queda fuera de su manual, dicho y vigilado:
+
+- **La parada desde la V1, un 25 % más corta**: el modelo cuenta los dos
+  segundos de la norma de transporte (CS 25.109) y la frenada de su toma; la
+  SFAR 23 de los sesenta contaba sus propios tiempos, que no se han leído. El
+  hangar pide esa parada —es la mayor de sus dos cuentas—, así que pide menos
+  pista para despegar que su manual. `despegue-y-toma-del-manual.test.ts` fija
+  que no se aleje más.
+- **El despegue volado, un 39 % más largo que la cuenta**, la mayor
+  diferencia de la flota. Rueda hasta la Vr lo mismo que ella; lo que se
+  alarga es lo de después. Su Vr es 1,16 veces la pérdida con 10°, y a esa
+  velocidad necesita casi nueve grados para volar: con el tirón de tres grados
+  por segundo del piloto del banco se va a 84 nudos y pasa los cincuenta pies
+  a 90, donde el suyo pasa a 76. Lo que lo arreglaría es su actitud en el
+  suelo y el calado de su ala, que no se han leído; con un `cl0` mayor, de
+  0,6, se acorta a 437 y la toma se alarga más allá de su banda.
+- **Sube de más con un motor**: el modelo vuela con el derrape a cero y sin la
+  resistencia del timón cruzado.
+
+### Lo que sigue sin fuente
+
+`cl0`, `cd0`, `flapsDrag`, `oswald` y las derivadas laterales —se quedan las
+del JAZ 60 antiguo, que era este ala—; la distancia de los motores al eje
+(3,1 m), la altura del centro sobre el suelo, el brazo del tren principal y la
+actitud a la que toca la cola, que dirá su dibujo; lo que tardan los flaps; si
+el aviso de pérdida es un tono o una voz; si sus ventanillas llevan persiana;
+la velocidad del circuito, 90 nudos, por debajo de su placa de 93; la potencia
+de subida; y el Mmo, que el Twin Otter no tiene: se le pone 0,35 para que la
+onda no lo frene, y su Vmo de arriba —156 nudos a 10.000 ft, 112 a 25.000— no
+se representa.
+
+### Qué avisa a bordo
+
+El encargo suponía «la bocina de pérdida y nada de TAWS ni de voz». **El -400
+lleva TAWS de clase A de serie**: «Honeywell MK VI Class A TAWS (EGPWS)»
+(Viking, 2018) y «Class A TAWS» en la nota 10.b.1 de su hoja de tipo, la de los
+primeros -400 (en los de G1000 NXi es opcional). El -300 no lo traía, y lo
+lleva el que vuela con pasaje, porque la norma lo pide a todo avión de turbina
+de diez plazas o más (14 CFR 135.154). Así que lleva `avisosHablados`, con lo
+mismo que el JAZ 60 y por lo mismo: solo *five hundred*, sin ILS delante y sin
+*minimums*. El TCAS, el I, el de su equipo de serie. La pérdida, con la bocina:
+su lista mínima deja despachar el -400 con la luz de pérdida tapada si «both
+channels of the aural warning system operate normally» (FAA, MMEL del DHC-6,
+rev. 15). Velocidad baja, automático —opcional en el -400— y motor parado, sin
+aviso propio que se haya encontrado. No hay ninguna frase nueva que grabar.
+
+### Cómo existe sin ofrecerse
+
+Su número va en `EN_EL_TALLER` (`flota.ts`) y no en `FLOTA`: todo lo que
+recorre la tabla da por hecho que el avión se puede dibujar —el tráfico y el
+álbum montan su silueta, «armá tu avión» le da un nivel— y su silueta, el
+bimotor de ala alta, llega con su modelo. Su ficha va en `RESERVADOS`, como
+estuvo el reactor cuando esperaba nombre. `MEDIDOS` junta los que vuelan y los
+reservados, y lo recorren las pruebas de lo que es de la ficha:
+`prestaciones`, `despegue-y-toma-del-manual`, las velocidades de despegue de
+`motores`, `escalera-de-velocidades`, `velocidad-de-circuito`, `peso` y
+`referencia`. El listón del cabeceo de esta última sube a 3,5: su Cmq medido
+en vuelo es 3,4 veces el del Navion.
+
+### Lo que dirá el paso de meterlo en el juego
+
+Con el JAZ 50 metido a mano en `AIRCRAFT` caen, además de las que piden su
+dibujo o su cabina, estas, que no son de su ficha sino del juego:
+
+- **Los bomberos lo dejan fuera de la granja.** Por pista cabe en los 900 m de
+  hierba de Yvytu Rape —pide 447 para despegar y 717 de LDA—, y es el único
+  turbohélice que cabría; pero la regla de los bomberos de los de línea lo saca de
+  allí, de Concepción, de Ayolas, de Pilar y de Estigarribia. La lección del
+  avión es justo esa: hay que decidir si la regla vale para una pista de
+  estancia.
+- **El aviso de terreno salta en la frustrada y el circuito** de todos los
+  campos de `aproximaciones-sobre-el-relieve.test.ts`: una precaución unos dos
+  kilómetros antes del umbral. Es su TAWS volando el circuito de la casa con su
+  velocidad y su subida; no se ha mirado por qué.
+- **`mano.test.ts`**: en un viraje sostenido pierde algo más de altura de la
+  que se admite (2,54 m/s contra 2,42).
+- **`vr-del-modelo-sencillo.test.ts`**: con la V1 igual a la Vr, en el modelo
+  de Guyrami no pasa la V1 con las ruedas en la pista.
+- **`carrera.test.ts`**, «la pista crece con el avión»: el Twin Otter rueda
+  menos que el Seneca, y es verdad.
+- Las listas de quién lleva radioaltímetro, radar, ventanilla ALT y reversa:
+  las dos primeras y la reversa, sí; la ventanilla, con el automático opcional,
+  la decide su cabina.
