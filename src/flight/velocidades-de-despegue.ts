@@ -23,9 +23,11 @@
  * - V1 no puede ser menor que la Vmc en tierra (25.107 a): si fallara un motor
  *   antes, no se podría seguir recto para parar.
  * - Vr no menor que V1, y V2 no menor que Vr.
- * - V2 no menor que 1,2 veces la pérdida con los flaps de despegue ni que 1,1
- *   veces la Vmc (25.107 b y c; la norma nueva dice 1,13 veces la pérdida de
- *   referencia, que en un modelo como éste es lo mismo con otro nombre).
+ * - V2 no menor que 1,13 veces la pérdida con los flaps de despegue ni que 1,1
+ *   veces la Vmc (25.107 b y c). La pérdida de un modelo como éste es la de
+ *   un g, la de referencia de la norma nueva; la vieja decía 1,2 veces la
+ *   mínima de la maniobra, que es un 6 % más lenta, y da lo mismo. Ver
+ *   `V2_SOBRE_LA_PERDIDA`. Y donde el tipo publica su V2, la suya.
  *
  * El bimotor de pistón no se certifica así —es de otra norma, la parte 23, y
  * no tiene V2—. Lo que se vuela en él con un motor es la **línea azul**, la
@@ -43,7 +45,7 @@ import { SEA_LEVEL_DENSITY, GRAVITY } from "./atmosphere";
 import { empujeLleno } from "./fdm";
 import { areaDelMotor, llevaBandera, motorCritico } from "./motores";
 import { resistenciaDelTren } from "./tren";
-import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
+import { flapsDeDespegue, fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
 import { deceleracionRodando } from "./frenada";
 import { ROZAMIENTO } from "../world/superficie";
 
@@ -90,6 +92,32 @@ export const DECIDIR = 2;
  * 0027.
  */
 export const VR_SOBRE_LA_PERDIDA = 1.1;
+
+/**
+ * **La V2 más baja que deja la norma, sobre la pérdida con los flaps de
+ * despegue**: 1,13.
+ *
+ * Es la V2MIN de un reactor sin soplado de flaps, tenga los motores que
+ * tenga, y de un bimotor o trimotor de hélice (CS 25.107 b 1 y 14 CFR 25.107
+ * b 1), sobre la pérdida de referencia, la de un g, que es la que
+ * calcula `perdidaCon`: el ala a su ángulo de pérdida sosteniendo el peso.
+ * La norma de antes de 2002 decía 1,2 veces la pérdida mínima de la maniobra,
+ * y la FAA bajó los factores un 6 % al cambiar de referencia porque «the 1-g
+ * stall speed for these airplanes is approximately 6 percent higher than the
+ * minimum speed obtained in the stalling maneuver» (enmienda 25-108, 67 FR
+ * 70812, 2002). Así que sobre la pérdida de un modelo son 1,13 se certificara
+ * el tipo con una norma o con otra; se usaba 1,2, que sobre la de un g es un
+ * 6 % de más.
+ *
+ * **Es el suelo, y la del manual suele ir por encima**: el fabricante la elige
+ * para subir con un motor parado con la pendiente que pide la norma. Por eso
+ * el que publica la suya la lleva en su ficha (`takeoffSafetySpeed`).
+ * Enmienda H10e del ADR 0027.
+ */
+export const V2_SOBRE_LA_PERDIDA = 1.13;
+
+/** **Y sobre la Vmc**: 1,1 (CS 25.107 b 2). */
+export const V2_SOBRE_LA_VMC = 1.1;
 
 /** Todo lo que dice este fichero de un despegue, en m/s indicados. */
 export interface VelocidadesDeDespegue {
@@ -323,27 +351,47 @@ export function lineaAzul(a: AircraftConfig): number {
  * **Qué velocidad se vuela con un motor parado** y cómo se llama en ese
  * avión: la V2 en los que se certifican como de transporte —el turbohélice y
  * los reactores—, y la línea azul en el bimotor de pistón.
+ *
+ * **La V2 es la de sus flaps de despegue**, `flapsDeDespegue`, se lleve la
+ * palanca donde se lleve: es la de la tarjeta de ese despegue, una cifra, y la
+ * misma en la tarjeta, en el ejercicio del motor parado y en el banco. Salía
+ * de la pérdida sin flaps —118 nudos en el 1900D, donde su manual da 108—.
+ *
+ * La que publica el tipo, si la publica (`takeoffSafetySpeed`), con la raíz de
+ * la masa de hoy; si no, el suelo de la norma, `V2_SOBRE_LA_PERDIDA`. Y en las
+ * dos, nunca por debajo de 1,1 veces la Vmc del avión que vuela ni de su Vr
+ * (CS 25.107 b y c). La norma pide además la Vr con lo que gana hasta los
+ * treinta y cinco pies (25.107 c 2), y eso no se cuenta: el 787 se queda en su
+ * Vr. Enmienda H10e del ADR 0027.
  */
 export function conUnMotor(
   a: AircraftConfig,
-  flaps = 0,
 ): { readonly nombre: "V2" | "VYSE"; readonly velocidad: number } {
   if (a.sound.engine === "piston")
     return { nombre: "VYSE", velocidad: lineaAzul(a) };
-  const m = vmc(a) ?? 0;
-  return {
-    nombre: "V2",
-    velocidad: Math.max(perdidaCon(a, flaps) * 1.2, m * 1.1, a.rotationSpeed),
-  };
+  const suelo = Math.max(
+    perdidaCon(a, flapsDeDespegue(a)) * V2_SOBRE_LA_PERDIDA,
+    (vmc(a) ?? 0) * V2_SOBRE_LA_VMC,
+    a.rotationSpeed,
+  );
+  const publicada =
+    a.takeoffSafetySpeed === undefined
+      ? 0
+      : a.takeoffSafetySpeed * Math.sqrt(masaDe(a) / a.mass);
+  return { nombre: "V2", velocidad: Math.max(publicada, suelo) };
 }
 
 /**
  * **V1, Vr y V2 para esta pista y este aire.** Ver la cabecera.
  *
  * `pista`, los metros que hay por delante al empezar a correr; `densidad`, la
- * del aire del día en la pista; `flaps`, la palanca con la que se sale. Y el
- * peso es el que lleve `a`: con `conMasa`, el de hoy con su combustible, que
- * es la tercera cosa de «pesado, caliente, alto y corto». Ver el ADR 0019.
+ * del aire del día en la pista; `flaps`, la palanca con la que se cuenta la
+ * parada de la V1. Y el peso es el que lleve `a`: con `conMasa`, el de hoy con
+ * su combustible, que es la tercera cosa de «pesado, caliente, alto y corto».
+ * Ver el ADR 0019.
+ *
+ * La V2 no mira `flaps`: es la de los flaps de despegue de ese avión. Ver
+ * `conUnMotor`.
  *
  * La V1 es la de la ficha —la que lleva el tipo en una pista larga— salvo que
  * la pista no dé para parar desde ella: entonces baja hasta la que sí da, y si
@@ -375,7 +423,7 @@ export function velocidadesDeDespegue(
   return {
     v1: m !== null && v1 < m ? null : v1,
     vr,
-    v2: conUnMotor(a, flaps).velocidad,
+    v2: conUnMotor(a).velocidad,
     vmc: m,
     v1Maxima,
   };

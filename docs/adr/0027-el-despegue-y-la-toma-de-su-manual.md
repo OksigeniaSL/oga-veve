@@ -981,3 +981,129 @@ el *cleared to land* de detrás. Nada de esta enmienda toca su vuelo —los
 calzos se van al arrancar, la tarjeta del tiempo no le sale y el punto de la
 palanca es del modelo sencillo—, y con una sola pasada no se puede decir si
 viene de H10a y H10b o de la carga.
+
+## Enmienda H10e (14-11-2026): la V2 de sus flaps, y el motor parado con el sonido de su tipo
+
+H10a dejó dos cosas en «Lo que no se ha hecho»: la V2 que enseñaba el juego
+salía de la pérdida sin flaps en toda la flota, y el motor parado sonaba con
+la misma campanada larga en todos los aviones de pantallas.
+
+### La V2, la de sus flaps de despegue
+
+`conUnMotor` calculaba la V2 con la palanca que le pasaran, y la tarjeta de
+cada despegue (`lasVelocidadesDe` en `game.ts`) no le pasaba ninguna: 1,2
+veces la pérdida limpia. El ejercicio del motor parado la pedía con la palanca
+de ese momento, así que la tarjeta y el ejercicio podían decir dos V2
+distintas. Ahora hay una, la de los flaps de despegue de cada avión
+(`flapsDeDespegue`), y es la misma en la tarjeta (`velocidadesDeHoy`), en el
+rótulo del ejercicio (`pedirLaVelocidadDeUnMotor`, que lee la de la tarjeta)
+y en el banco de emergencias, que vuela con la de la tarjeta. La cinta de
+velocidad no pinta la V2, solo V1 y VR.
+
+**Cómo se saca**, en este orden:
+
+1. **La que publica el tipo**, donde hay cifra con su masa
+   (`takeoffSafetySpeed` en la ficha), con la raíz de la masa de hoy.
+2. **Si no, el suelo de la norma**: 1,13 veces la pérdida con los flaps de
+   despegue (CS 25.107 b 1 y 14 CFR 25.107 b 1; `V2_SOBRE_LA_PERDIDA`).
+3. **Y en las dos, nunca por debajo** de 1,1 veces la Vmc del avión que vuela
+   (25.107 b 2) ni de su Vr (25.107 c).
+
+**Por qué 1,13 y no 1,2, se certificara el tipo con la norma que se
+certificara.** `perdidaCon` es la pérdida de un g: el ala a su ángulo de
+pérdida sosteniendo el peso. Es la de referencia de la norma desde 2002, la
+VSR, y sobre ella el suelo es 1,13. La de antes decía 1,2 veces VS, la mínima
+de la maniobra, y la FAA bajó todos los factores un 6 % al cambiar de
+referencia porque «the 1-g stall speed for these airplanes is approximately 6
+percent higher than the minimum speed obtained in the stalling maneuver»
+(enmienda 25-108, 67 FR 70812, 26-11-2002). Así que el 747, de la norma vieja,
+y el 787, de la nueva, tienen el mismo suelo sobre la pérdida de un modelo. El
+código aplicaba 1,2 a la pérdida de un g y decía que «en un modelo como éste
+es lo mismo con otro nombre»: era un 6 % de más.
+
+| | Antes (sin flaps, 1,2) | Ahora | De dónde |
+|---|---|---|---|
+| JAZ 60 (1900D) | 118,1 kt | **108,3** | La de su manual: 108 a 16.000 lb (TSB, A97C0229), con la raíz de la masa. El suelo da 101,3. |
+| JAZ 90 (E170) | 162,4 | **136,6** | El suelo, 1,13 × 120,8. No se ha encontrado una V2 de E170 con su masa. |
+| JAZ 110 (787-9) | 161,7 | **150,0**, su Vr | El suelo da 141,3, por debajo de su Vr. No se ha encontrado una con sus flaps y su masa. |
+| JAZ 120 (747) | 176,5 | **153,4**, 1,1 Vmc | La de su tipo, 169 a 340.195 kg (Jenkinson, fichero de datos A, 747-100), son 146,6 a su masa; la Vmc del modelo, 139,5, pide 153,4. |
+
+El 1900D es de la parte 23, categoría de cercanías, y no de la 25; lleva la de
+su manual, que está por encima de cualquier suelo, así que no hace falta
+decidir el suyo.
+
+**Lo que se ha buscado y no vale como cifra**:
+
+- **787-9**: el *Bulletin* 11/2020 de la AAIB (VH-ZND) da la Vr —«VR was 172
+  kt», flaps a cinco y 253.400 kg— pero no la V2. Una tarjeta de 787-9 con V2
+  —V1 169, Vr 175, V2 180 a unos 240.857 kg, el VN-A867 de Múnich, agosto de
+  2026— solo ha salido en prensa sobre el informe preliminar de la BFU
+  (BFU26-0757-AX), sin los flaps y en un día de 33 °C; el informe no se ha
+  podido leer.
+- **E170**: ninguna V2 con su masa en lo leído. El E175 G-FBJK (AAIB,
+  *Bulletin* 6/2019), con la misma ala, da para flaps 1 «V1 145 kt, VR 145 kt,
+  V2 147 kt», sin masa: dos nudos de V2 sobre la Vr, donde el modelo da tres y
+  medio.
+
+**El 747 queda por encima de su V2 publicada.** La publicada, 146,6 a su masa,
+dice que la VMCA del 747 de verdad no pasa de 133 nudos (146,6 / 1,1); la del
+modelo es 139,5, y es la que fija también su V1 (enmienda H7). Revisarla es
+tocar el timón o el par de su ficha, y mueve la V1 y la pista del hangar: no
+era de este encargo.
+
+**El 787 queda en su Vr**, porque la norma pide además «VR plus the speed
+increment attained … before reaching a height of 35 feet» (25.107 c 2), y ese
+incremento no se cuenta: habría que volarlo con un motor parado. En el E175
+son dos nudos; en la tarjeta de prensa del 787-9, cinco.
+
+**La V1 no cambia**: no depende de la V2. Sale de la parada que cabe en la
+pista (`velocidadesDeDespegue`), contada sin flaps como la del hangar
+(`acelerarYPararDeSuNorma`), y las dos siguen diciendo lo mismo. Ninguna
+pista del hangar cambia —1.001, 1.124, 1.826 y 1.869 m—, y `cabe.ts`, que
+solo mira esas pistas, no cambia de veredicto en ningún campo.
+
+**Lo que no es la V2 y se queda**: la velocidad de la escalera en tierra, la
+Vr y veinte nudos, es la de subir con todos los motores; con las V2 nuevas cae
+de once a veinte nudos por encima de ellas en los de transporte. Y el piloto
+del banco de mesa (`despegue-y-toma-del-manual.test.ts`) sube a 1,2 veces la
+pérdida con flaps, que tampoco es la V2 de la tarjeta: con todos los motores
+no se sube a la V2. En los dos solo se ha corregido el comentario que lo
+llamaba V2.
+
+### El motor parado, con el sonido de su tipo
+
+| | Nivel | Suena | Fuente |
+|---|---|---|---|
+| JAZ 60 (1900D) | — | campanada larga, **como estaba** | No lleva EICAS sino un panel de avisadores; no se ha encontrado si una parada de motor suena ni cómo. |
+| JAZ 90 (E170) | precaución | campanada larga, **como estaba** | «EICAS amber FAIL on N1» y «QRH EAP "ENG FAIL"» (C. Regli, *Embraer EMB190 – Summary*, 2025, p. 2-29; la familia comparte cabina). Con qué suena una precaución en un E-Jet no se ha encontrado. |
+| JAZ 110 (787) | precaución | **pitido de precaución** | «"ENG FAIL L" and "ENG FAIL R" (Caution message)» (JTSB, AI2020-2, el 787-8 VH-VKJ, p. 5), y una precaución suena con el pitido (FCOM del 787, 15.20; H10a). |
+| JAZ 120 (747) | precaución | **pitido de precaución** | El FCOM del 747-400 citado en un foro de pilotos: «The ENG 1, 2, 3, 4 FAIL EICAS Caution and it's associated beeper…» (PPRuNe, *B744 engine fail EICAS*, 2012), y el pitido de las precauciones (15.20.6; H10a). Es cita de foro: en el FCOM no se ha leído. |
+
+El pitido es el mismo de AIRSPEED LOW (`tono.pitidoDePrecaucion`) y pasa por
+la voz de la máquina como él (`motorParado` en `AvisosDeABordo`, y
+`fallaElMotor` en `game.ts`): suena en los cuatro peldaños, y lo que se dice
+va detrás —el canto de la tripulación en el de cabina, la instructora en los
+de abajo— a los 0,8 s de siempre, porque dura lo mismo que la campanada, 0,7
+s. No hay frase nueva ni cambiada.
+
+`DESIGN.md` dice «No: la pantalla roja, la música de tensión ni el pitido en
+una frustrada o un fallo de motor». Ese es el pitido que pondría el juego para
+dramatizar. Éste es el del avión, y es su precaución, el escalón de debajo de
+la alarma: cuatro pitidos cortos una sola vez, en lugar de la campanada que ya
+sonaba. Es lo que oirá quien vaya un día en la cabina de un Boeing.
+
+### Lo que no
+
+- **Las inhibiciones del despegue.** En el Boeing y en el E-Jet las
+  precauciones callan en la carrera: el ENG FAIL del 747-400, «inhibited on
+  the ground, until lift-off occurs» (la misma cita de PPRuNe), y en el E-Jet
+  «Inhibition 80kts to 400ft» (Regli, p. 1-57, del AOM 14-15-10). En el de
+  verdad, un motor que se para en V1 no pita hasta despegar o hasta los
+  cuatrocientos pies: lo canta quien lo ve. El juego pita en el acto. Ponerlo
+  cambia la escena del ejercicio —la instructora hablaría antes que la
+  máquina—, y las cifras de los Boeing son de foro: pide fuentes de primera
+  mano y una decisión.
+- **La VMCA del 747 del modelo** y **el incremento hasta los 35 ft**, arriba.
+- **El fumigador**, monomotor, lleva en la tarjeta una «V2» que no se enseña
+  en ninguna parte: sin un segundo motor no hay ejercicio de uno parado. Era
+  51,9 nudos y ahora es su Vr, 50,5.

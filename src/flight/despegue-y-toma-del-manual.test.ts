@@ -172,8 +172,10 @@ function avion(id: string): AircraftConfig {
  *
  * El piloto hace lo de un manual: todo el gas, los flaps de despegue, a la Vr un
  * tirón firme hacia una actitud que crece a tres grados por segundo, y en el
- * aire la actitud que sostiene 1,2 veces la pérdida con esos flaps —la V2 o la
- * velocidad de los cincuenta pies—, sin pasar de veinte grados.
+ * aire la actitud que sostiene 1,2 veces la pérdida con esos flaps —una de
+ * subir con todos los motores, cerca de la V2 de los de transporte
+ * (`conUnMotor`) y de la velocidad de los cincuenta pies de las avionetas—,
+ * sin pasar de veinte grados.
  */
 function despegar(a: AircraftConfig): {
   readonly hastaVr: number;
