@@ -1,6 +1,6 @@
 # ADR 0026 — El modelo de vuelo del helicóptero, sobre el Super Puma
 
-**Fecha**: 2026-11-11 · **Estado**: aceptada; hecho el paso 1 (el modelo de vuelo) y la primera mitad del 3 (en el juego, y desde el 12-11 en el hangar de Tenerife Norte, como el JAZ 70 Kirikiri'i) · **Amplía**: [ADR 0002](0002-modelo-de-vuelo-propio.md)
+**Fecha**: 2026-11-11 · **Estado**: aceptada; hechos los cuatro pasos, y desde el 12-11 en el hangar de Tenerife Norte como el JAZ 70 Kirikiri'i · **Amplía**: [ADR 0002](0002-modelo-de-vuelo-propio.md)
 
 ## Contexto
 
@@ -12,14 +12,15 @@ dónde empezar.
 El trabajo va en cuatro pasos, y cada uno se mira antes de lanzar el siguiente:
 
 1. **El modelo de vuelo y este documento.** Hecho.
-2. El helicóptero en Blender: por fuera, con el rotor girando, y la cabina con sus botones.
+2. El helicóptero en Blender: por fuera, con el rotor girando, y la cabina con sus botones. **Hecho**: por fuera con
+   el rotor de Gaudí (08a31e23, 4d4c2ff4) y la cabina por dentro, de pantallas, la familia D (b8cc1ba1, 4c16f8b2).
 3. Los mandos —teclado, dedo y mando— y la pantalla: el par y las vueltas del rotor en vez de lo de un reactor; qué
-   estabilización lleva cada peldaño; arrancar y rodar. **Hecha la primera mitad**: se vuela en el juego, escondido, con
-   una silueta provisional (ver «En el juego, escondido», abajo). Faltan el sonido, arrancar y rodar.
-4. Una misión tranquila, con las frases de la instructora grabadas. **Hecha, salvo grabar**: la de Teno
-   (`?avion=super-puma&mision=teno`), de Los Rodeos a Punta de Teno y al puerto de Garachico, como la evacuación de
-   2016; ver `docs/misiones/super-puma-en-tenerife.md`. Faltan la gente que sube y baja (con su enganche puesto, en
-   `missions/gente.ts`) y grabar las frases.
+   estabilización lleva cada peldaño; arrancar y rodar. **Hecho**: la pantalla de helicóptero en los cuatro peldaños
+   y en el teléfono (6706ff99), el sonido (4616507d), y arrancar, parar y rodar (8c4a2764, 7a8cc0e8).
+4. Una misión tranquila, con las frases de la instructora grabadas. **Hecha**: la de Teno
+   (`?avion=super-puma&mision=teno`, y en el hangar), de Los Rodeos a Punta de Teno y al puerto de Garachico, como la
+   evacuación de 2016 (f0951c83); ver `docs/misiones/super-puma-en-tenerife.md`. La gente que sube y baja
+   (ddf83e12) y las dieciocho frases grabadas (57ea38fd).
 
 ## Qué helicóptero
 

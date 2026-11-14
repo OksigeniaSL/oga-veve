@@ -19,6 +19,10 @@ frase:
 > **El avión del pueblo: aviación de servicio en un Paraguay que se nombra a sí
 > mismo en guaraní, jugado por un adulto y una niña en la misma tablet, dibujado
 > como una tela tejida a mano.**
+>
+> (Así se escribió el 31-08-2026. La última parte, la de la tela, ya no vale: el
+> mundo es el de verdad y la cara del juego es la carta aeronáutica. Ver la
+> cuarta decisión.)
 
 Cuatro decisiones dentro de esa frase, y ninguna la tiene nadie más:
 
@@ -48,12 +52,24 @@ niño de cinco años pueda volar de verdad en vez de mirar volar a otro. Lo
 demás del juego —la física honesta, el catálogo de avisos, la fraseología—
 lo tienen otros. Esto no.
 
-**El mundo es una tela.** El terreno ya se pinta por bandas de color, sin una
-sola fotografía. Eso no es una carencia que disimular: es la dirección de arte.
-Paraguay es el país del ñandutí y del ao po'i, y visto desde el aire es un país
-tejido. Los ríos son cintas, los cultivos parches, la estela una puntada. Todo lo
-radial de la interfaz —brújula, medallas, carga— es ñandutí. Sale gratis en
-triángulos y no lo tiene ningún otro juego.
+**El mundo es el de verdad, y el juego tiene cara de carta.** Esta cuarta
+decisión se escribió de otra manera: «el mundo es una tela», el terreno pintado
+por bandas de color como un ñandutí, sin una sola fotografía. Esa dirección
+(#37) se descartó en cuanto se pudo volar sobre el suelo de verdad, porque lo
+que se enseña tiene que reconocerse el día que se vea desde una ventanilla:
+
+- el suelo es la ortofoto, bajada por teselas según se mira, sobre el relieve
+  real, más fino donde hace falta ([ADR 0006](adr/0006-el-mundo-de-verdad.md),
+  [0018](adr/0018-la-ortofoto-por-teselas.md) y
+  [0022](adr/0022-el-relieve-fino-por-parches.md));
+- la identidad del juego es el papel de aviación: la carta VFR para elegir
+  destino y en vuelo, el cuaderno de vuelo y los sellos de caucho
+  ([ADR 0021](adr/0021-la-carta-horneada.md));
+- las láminas son ilustraciones de cuento, revisadas una a una contra lo que
+  cuentan, y los aviones llevan la librea de la casa.
+
+Lo que sí sigue en pie de aquella idea es que el juego tenga una cara propia
+que no se confunda con la de ningún otro simulador.
 
 ---
 
@@ -268,8 +284,9 @@ viento y térmicas, «sigue el río», copiloto instructor.
 **0.4 — Que sea de Paraguay.** Terreno real desde NASADEM, Coronel Oviedo con la
 granja, toponimia con voz en guaraní, aeródromos desde OurAirports.
 
-**0.5 — Que sea bonito.** Dirección Mundo Tejido: flota modelada, vegetación con
-silueta, kit ñandutí de interfaz, nieve y agua por profundidad.
+**0.5 — Que sea bonito.** Flota modelada, vegetación con silueta, la carta
+aeronáutica como cara del juego, nieve y agua por profundidad. (Se escribió con
+la dirección «Mundo Tejido», descartada: ver la cuarta decisión de la tesis.)
 
 **Después:** física visualizada, planetario integrado, escenarios del mundo,
 multimonitor, joystick, y volar acompañados.

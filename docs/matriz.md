@@ -37,8 +37,10 @@ por primera vez. Los demás pueden tenerlo, pero no es lo suyo.
 ### Y una columna aparte: el helicóptero
 
 No entra en la tabla de arriba porque no es un avión y no comparte casi nada
-con ellos. Va en su propia familia, fuera de la flota JAZ, con lecciones que
-ninguna otra aeronave puede dar:
+con ellos. Se pensó fuera de la flota JAZ, y al final entró en ella: es el
+JAZ 70 Kirikiri'i, un Super Puma, en el hangar de Tenerife Norte
+([ADR 0026](adr/0026-el-modelo-de-vuelo-del-helicoptero.md)). Tiene modelo de
+vuelo propio y lecciones que ninguna otra aeronave puede dar:
 
 | | Qué enseña |
 |---|---|
