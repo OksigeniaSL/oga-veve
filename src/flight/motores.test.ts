@@ -15,6 +15,7 @@ import { Vector3 } from "three";
 import { CoefficientFlightModel } from "./fdm";
 import {
   AIRCRAFT,
+  MEDIDOS,
   ARAI,
   ARASUNU,
   PYKASU,
@@ -77,6 +78,12 @@ const diferencia = (a: number, b: number): number => {
 };
 
 const BIMOTORES = AIRCRAFT.filter((a) => a.motores > 1);
+/**
+ * Y los que mide el banco, vuelen o no: las velocidades de un despegue con un
+ * motor parado son de la ficha, y el JAZ 50, que está en el taller, las tiene
+ * igual. Dónde van los motores en el dibujo, solo en los que tienen dibujo.
+ */
+const BIMOTORES_MEDIDOS = MEDIDOS.filter((a) => a.motores > 1);
 
 /**
  * **Sostener una velocidad con el timón de profundidad**, como lo hace un
@@ -163,7 +170,7 @@ describe("dónde van los motores: lo mismo en la ficha que en el modelo", () => 
 });
 
 describe("las velocidades de un despegue con un motor de menos", () => {
-  for (const a of BIMOTORES) {
+  for (const a of BIMOTORES_MEDIDOS) {
     const pista = pistaQueNecesita(a);
     const v = velocidadesDeDespegue(a, pista);
     it(`${a.id}: la Vmc, por debajo de V1, y V1 ≤ Vr ≤ V2`, () => {
@@ -244,7 +251,7 @@ function pilotoConUnMotor(
 }
 
 describe("con un motor parado, el avión vuela y sube", () => {
-  for (const a of BIMOTORES) {
+  for (const a of BIMOTORES_MEDIDOS) {
     it(`${a.id}: a su ${conUnMotor(a).nombre}, con el timón que haga falta`, () => {
       const m = modelo(a);
       const objetivo = conUnMotor(a).velocidad;
@@ -295,7 +302,7 @@ describe("con un motor parado, el avión vuela y sube", () => {
   }
 
   it("y en la Vmc hace falta el timón entero: la cuenta y el avión dicen lo mismo", () => {
-    for (const a of BIMOTORES) {
+    for (const a of BIMOTORES_MEDIDOS) {
       const v = vmc(a)!;
       const m = modelo(a);
       // A ras del mar, que es donde se calcula: arriba el motor da menos.
@@ -317,7 +324,7 @@ describe("con un motor parado, el avión vuela y sube", () => {
 });
 
 describe("antes de V1 se para, y cabe en la pista", () => {
-  for (const a of BIMOTORES) {
+  for (const a of BIMOTORES_MEDIDOS) {
     it(`${a.id}: en la pista más corta que se le deja`, () => {
       const pista = pistaQueNecesita(a);
       const v1 = velocidadesDeDespegue(a, pista).v1!;
@@ -419,7 +426,7 @@ describe("sin motores se planea a la velocidad de mejor planeo", () => {
  */
 describe("la V2, la de sus flaps de despegue", () => {
   const NUDO = 0.514444;
-  const DE_TRANSPORTE = AIRCRAFT.filter(
+  const DE_TRANSPORTE = MEDIDOS.filter(
     (a) => a.sound.engine !== "piston" && a.motoresA.length > 1,
   );
 

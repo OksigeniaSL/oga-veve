@@ -48,6 +48,20 @@ export const CRUZADO_DEMOSTRADO: Readonly<Record<string, CruzadoDemostrado>> = {
     kt: 17,
     fuente: "Piper PA-34-200T Seneca II, manual de vuelo (1976, rev. 1979), sección 4",
   },
+  "jaz-50": {
+    /*
+     * Los veinticinco nudos que llevaba el JAZ 60 cuando volaba con el ala del
+     * Twin Otter, y ahora con su cita: «Adequate controllability during landing
+     * has been demonstrated using full flap extension (37.5° flap) in crosswind
+     * components up to 25 KIAS measured at a tower height of 33 feet … and is
+     * not considered limiting», el manual de un DHC-6 Series 310 que reproduce
+     * la AAIB (*Bulletin* 8/2017, G-BVVK, p. 18). A treinta y tres pies, que es
+     * donde lo mide el METAR. El de 1973 decía lo mismo medido a seis pies,
+     * veinte nudos (TSB, A13A0033, nota 2).
+     */
+    kt: 25,
+    fuente: "DHC-6 Twin Otter Series 310, manual de vuelo, citado por la AAIB (Bulletin 8/2017, G-BVVK)",
+  },
   "jaz-90": {
     kt: 28,
     fuente: "Embraer 170, manual de vuelo (AFM), «maximum demonstrated crosswind»",

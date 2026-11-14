@@ -27,10 +27,14 @@
  *
  * ## Lo que falta
  *
- * Hoy no falta ninguno: los ocho están construidos y vuelan. Cuando llegue
- * uno nuevo, primero se reserva aquí su número y su nombre, que es el sitio
- * donde tienen que estar para que nadie los bautice dos veces, y se apunta en
- * `ESTA_HECHO` el día que vuele.
+ * Los ocho de la tabla están construidos y vuelan. Cuando llegue uno nuevo,
+ * primero se reserva aquí su número y su nombre, que es el sitio donde tienen
+ * que estar para que nadie los bautice dos veces, y se apunta en `ESTA_HECHO`
+ * el día que vuele.
+ *
+ * Y hay uno a medias: el JAZ 50, el de la clase del Twin Otter, con su número
+ * reservado y su ficha de vuelo medida, pero sin pájaro y sin silueta. Va en
+ * `EN_EL_TALLER` y no en la tabla: ver allí por qué.
  *
  * Y los nombres salen a producción sin esperar a nadie. Si alguno resulta
  * tener un sentido coloquial desafortunado en guaraní, se cambia la palabra y
@@ -310,9 +314,51 @@ export function modeloPorId(id: string): Modelo | null {
   return FLOTA.find((m) => m.id === id) ?? null;
 }
 
-/** El nombre entero del que tiene ese identificador: «JAZ 70 Kirikiri'i». */
+/**
+ * **Un avión en el taller**: su número está reservado y su ficha de vuelo
+ * existe y se mide, pero todavía no es de la flota que se ve.
+ */
+export interface EnElTaller {
+  /** El número, reservado: ya no lo puede coger otro. */
+  readonly numero: number;
+  /**
+   * El pájaro, cuando se decida; hasta entonces, `null`, y el avión se llama
+   * solo por su número. Lo decide Enrique, que es quien bautiza.
+   */
+  readonly nombre: string | null;
+  /** El identificador de su ficha en `aircraft.ts`. */
+  readonly id: string;
+  /** La clase de avión de verdad cuyos números vuela. Para quien lo lea. */
+  readonly clase: string;
+}
+
+/**
+ * **Los que están en el taller.** Hoy, uno: el JAZ 50, que vuela los números
+ * del DHC-6 Twin Otter, el turbohélice de ala alta y tren fijo de las pistas
+ * cortas de tierra y de hierba (#185). Entra por pasos: primero su ficha y su
+ * modelo de vuelo, comprobados contra su manual; después el modelo en 3D, la
+ * cabina, las voces, y el hangar.
+ *
+ * **No está en `FLOTA`, y no por despiste.** Todo lo que recorre esa tabla da
+ * por hecho que el avión ya se puede dibujar: el tráfico y el álbum montan su
+ * silueta, «armá tu avión» le da un nivel y la cabina del pasaje lo busca. Su
+ * silueta —el bimotor de ala alta, que no es la del JAZ 20 ni la de nadie—
+ * llega con su modelo, y con ella pasará a la tabla. Mientras tanto su número
+ * se guarda aquí, donde `flota.test.ts` comprueba que no lo repite nadie, y su
+ * ficha va en `RESERVADOS`, que es lo que mide el banco sin ofrecerlo.
+ */
+export const EN_EL_TALLER: readonly EnElTaller[] = [
+  { numero: 50, nombre: null, id: "jaz-50", clase: "DHC-6 Twin Otter Series 400" },
+];
+
+/**
+ * El nombre entero del que tiene ese identificador: «JAZ 70 Kirikiri'i». Del
+ * que está en el taller sin pájaro, el fabricante y el número: «JAZ 50».
+ */
 export function nombreEnteroDe(id: string): string {
   const m = modeloPorId(id);
-  if (!m) throw new Error(`No es de la flota: ${id}`);
-  return nombreEntero(m);
+  if (m) return nombreEntero(m);
+  const t = EN_EL_TALLER.find((x) => x.id === id);
+  if (!t) throw new Error(`No es de la flota: ${id}`);
+  return t.nombre ? `${FABRICANTE} ${t.numero} ${t.nombre}` : `${FABRICANTE} ${t.numero}`;
 }

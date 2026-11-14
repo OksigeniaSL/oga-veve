@@ -2070,6 +2070,395 @@ export const PANAMBI: AircraftConfig = {
 };
 
 /**
+ * JAZ 50 — turbohélice de ala alta y tren fijo, diecinueve plazas: el de las
+ * pistas cortas de tierra y de hierba, las estancias y, más adelante, los
+ * flotadores (#185). Su pájaro está por decidir.
+ *
+ * **Vuela los números del DHC-6 Twin Otter de la Serie 400**, el que fabrica
+ * hoy De Havilland Canada —«DHC-6 Classic 300-G is a marketing designation of
+ * the DHC-6 Series 400» (hoja de tipo EASA.IM.A.575, nota 12)—, con los PT6A-27
+ * del -300 y el ala, la cola y el tren de siempre. Es del -400 y no del -300
+ * porque es del -400 del que hay manual con cifras que se pueden leer; donde el
+ * -300 dice otra cosa, se dice al lado.
+ *
+ * **Está en el taller**: tiene su ficha y su modelo de vuelo, medidos contra su
+ * manual, pero ni silueta, ni cabina, ni sitio en el hangar. Va en `RESERVADOS`
+ * y no en `AIRCRAFT`, y su número en `EN_EL_TALLER` (`flota.ts`). Lo que solo
+ * puede decir su dibujo —dónde van las ruedas y los motores, a qué actitud toca
+ * la cola— va puesto a mano, dicho, hasta que llegue su modelo.
+ *
+ * Las fuentes, de las que salen los números de abajo:
+ *
+ * - **EASA, hoja de tipo EASA.IM.A.575**, número 6 (18-6-2026), la del -400:
+ *   dimensiones, motor, hélice, velocidades límite, pesos, neumáticos.
+ * - **FAA, hoja de tipo A9EA**, revisión 20 (14-7-2016): la del -300, para
+ *   comparar.
+ * - **El manual del -400**, PSM 1-64-1A, rev. 3 (8-2-2017), en las tablas que
+ *   reproduce H. Horlings en su revisión del manual (AvioConsult, 2026): las
+ *   velocidades de pérdida y de emergencia (§ 3.2), la Vref (tabla 3-1) y la
+ *   Vr, la V1 y la V2 (figura 4-1).
+ * - **Viking Air, *Twin Otter Series 400 Technical Specifications***, rev. 01-18
+ *   (2018): las distancias, la subida, el techo, el equipo de serie.
+ * - **De Havilland Canada, *Twin Otter Classic 300-G Wheels Specifications***
+ *   (octubre de 2025) y la página del Series 400 en dehavilland.com: las mismas
+ *   distancias, las rodaduras, el peso vacío y el combustible.
+ * - **NASA TM-101427** (Ranaudo y otros, 1989) y **TM-105977** (Ratvasky y
+ *   Ranaudo, 1993): las derivadas longitudinales identificadas en vuelo y las
+ *   inercias del Twin Otter de investigación de engelamiento de NASA Lewis.
+ */
+/**
+ * **Las velocidades del manual del -400**, en nudos indicados, que es como las
+ * da (PSM 1-64-1A, tablas reproducidas por Horlings, AvioConsult):
+ *
+ * - **Vr = V1, 73 nudos** hasta unas 12.000 lb, que es donde cae la masa de la
+ *   ficha; a 12.500 lb, unos 76. Es la figura 4-1, «Rotation speeds (VR =
+ *   V1)», leída en la gráfica: **las dos son la misma**, como en muchos
+ *   turbohélices de su clase, y la V1 no va por debajo de la Vr.
+ * - **V2, la «speed at 50 ft»** de esa misma figura: 73 nudos hasta unas 10.800
+ *   lb y unos 80 a 12.500. A la masa de la ficha, interpolada en la recta.
+ * - **Vref, la de los flaps de 37°** de la tabla 3-1 («Landing (VREF) speeds,
+ *   1.3 VS knots IAS»): 67 nudos a 4.760 kg, 70 a 5.220 y 74 a 5.580,
+ *   interpolada.
+ */
+function velocidadesDelJaz50(masa: number) {
+  const libras = masa / 0.45359237;
+  const v2 = 73 + Math.max(0, Math.min(1, (libras - 10800) / (12500 - 10800))) * (80 - 73);
+  // Los kilos de la tabla 3-1: 4.760, 5.220 y 5.580; y sus Vref con 37°.
+  const [m0, v0, m1, v1] = masa < 5220 ? [4760, 67, 5220, 70] : [5220, 70, 5580, 74];
+  const vref = v0 + ((masa - m0) / (m1 - m0)) * (v1 - v0);
+  return { vr: 73 * 0.514444, v1: 73 * 0.514444, v2: v2 * 0.514444, vref: vref * 0.514444 };
+}
+
+/**
+ * **Lo que pesa el JAZ 50 en su vuelo típico**, kg: su masa sin combustible más
+ * la mediana de lo que carga en las rutas donde cabe. Lo comprueba `peso.test.ts`.
+ */
+const MASA_SIN_COMBUSTIBLE_DEL_JAZ_50 = 4502;
+const MASA_DEL_JAZ_50 = MASA_SIN_COMBUSTIBLE_DEL_JAZ_50 + 680;
+const VELOCIDADES_DEL_JAZ_50 = velocidadesDelJaz50(MASA_DEL_JAZ_50);
+
+export const JAZ_50: AircraftConfig = {
+  id: "jaz-50",
+  name: nombreEnteroDe("jaz-50"),
+  /*
+   * La descripción de la tarjeta llega con su sitio en el hangar: es texto de
+   * producto, en los tres idiomas, y hasta entonces no la lee nadie.
+   */
+  descriptionKey: "aircraft.jaz50.description",
+  mass: MASA_DEL_JAZ_50,
+  /*
+   * **Lo que le deja su peso máximo al vuelo más largo que tiene en el juego.**
+   * El -400 vacío y equipado pesa 3.377 kg (7.445 lb, Viking, 2018; el 300-G de
+   * 2025, 3.189), y con dos de cabina y diecinueve de pasaje con su maleta a las
+   * masas estándar europeas de diez a diecinueve plazas, como el JAZ 60, son
+   * unos 5.370 kg sin combustible: con todos sentados, el depósito del vuelo
+   * largo ya no cabe en sus 12.500 lb (5.670 kg, EASA.IM.A.575, A.III.12), y
+   * salen tres o cuatro menos. Como en el de verdad.
+   */
+  masaSinCombustible: MASA_SIN_COMBUSTIBLE_DEL_JAZ_50,
+  /*
+   * **El ala del Twin Otter**, recta y de cuerda constante: 19,81 m de
+   * envergadura, 39,02 m² y 1,98 m de cuerda media (EASA.IM.A.575, A.III.4 y
+   * 21). Alargamiento 10,06, el mismo que da la NASA (TM-105977, tabla 1).
+   */
+  wingArea: 39.02,
+  wingSpan: 19.81,
+  chord: 1.98,
+  /*
+   * **Las del Twin Otter de la NASA**, medidas: 26.660, 34.650 y 51.650 kg·m² a
+   * 4.970 kg (TM-105977, tabla 1, con la APU que se le añadió). La ficha pesa
+   * unos cuatrocientos kilos más, y son pasaje y combustible cerca del centro,
+   * que casi no suman inercia.
+   */
+  inertia: { xx: 26660, yy: 34650, zz: 51650 },
+  /*
+   * **El empuje de dos PT6A-27 de 620 shp** (EASA.IM.A.575, A.III.5; los mismos
+   * del -300, FAA A9EA) con la hélice Hartzell HC-B3TN-3D de tres palas y 2,59
+   * m. La recta sale de dos cifras de su clase, como la del JAZ 60:
+   *
+   * - **Sube 1.600 ft/min** al nivel del mar con los dos a potencia de subida
+   *   (Viking, 2018).
+   * - **Va a 170 nudos verdaderos al nivel del mar** a su crucero máximo, y a 181
+   *   y 182 a 5.000 y 10.000 ft (Viking, 2018; De Havilland, 2025).
+   *
+   * Una recta que sale de 24 kN y acaba en 130 m/s da los 170 nudos de abajo y
+   * rueda hasta su Vr los 244 m de su despegue (dehavilland.com, Series 400)
+   * con un 4 % de más. Lo que no da a la vez: sube 1.830 ft/min a su peso
+   * máximo, un 14 % más que a potencia de subida, y arriba no gana velocidad
+   * —170 nudos a 10.000 ft donde el suyo va a 182—, porque la ley de empuje de
+   * la casa le quita potencia con la altura y el PT6A-27 la sostiene hasta su
+   * temperatura de régimen plano (ADR 0027, enmienda H11a).
+   */
+  maxThrust: 24000,
+  heliceSinEmpujeA: 130,
+  /*
+   * **1.168 kg de queroseno** en los depósitos de serie (De Havilland, 300-G,
+   * 2025: «Standard Fuel Capacity 1,168 kg»), los de debajo del suelo de la
+   * cabina. El -300 lleva 378 galones US utilizables (A9EA), lo mismo.
+   */
+  combustibleUtilizable: 1168,
+  motores: 2,
+  // Cables y poleas: «The flight controls are conventionally operated through
+  // pulley and cable systems» (Viking, 2018). Ver `mandos`.
+  mandos: "convencionales",
+  /*
+   * **Sin fuente: a 3,1 m del eje**, los del ala del Twin Otter con la que
+   * volaba el JAZ 60 antiguo. Ni la hoja de tipo ni la NASA dan la distancia de
+   * los motores al eje; la dirá su dibujo, y `motores.test.ts` comprobará que
+   * los dos dicen lo mismo.
+   */
+  motoresA: [-3.1, 3.1],
+  alturaCritica: null,
+  // Las dos giran igual: «Propellers rotate Clockwise in view of flight
+  // direction» (EASA.IM.A.575, A.III.6.1).
+  helicesContrarrotativas: false,
+  /*
+   * La hélice de 2,59 m, algo menos de disco que la del 1900D. **Con
+   * autobandera**: su manual pide al motor parado subir la Vmca de 64 a 68
+   * nudos «with autofeather inoperative» (suplemento 9-19 del PSM 1-64-1A, que
+   * cita Horlings), así que la de 64 es con la hélice en bandera sola. En
+   * molinete y en bandera, como el JAZ 60 escalado con el disco.
+   */
+  motorParado: { molinete: 0.7, bandera: 0.05, autoBandera: true },
+  /*
+   * **182 nudos verdaderos a 10.000 ft**, su crucero máximo (Viking, 2018; De
+   * Havilland, 2025). Sin presurizar, no sube más que eso a crucero: es la
+   * altura a la que no hace falta oxígeno.
+   */
+  cruiseSpeed: 182 * 0.514444,
+  alturaDeCrucero: 10000 * 0.3048,
+  // «VFR Day and Night, IFR» (EASA.IM.A.575, A.III.11).
+  reglasDeVuelo: "instrumentos",
+  // «unpressurized» (EASA.IM.A.575, A.III.2).
+  presurizacion: null,
+  aerofrenos: null,
+  /*
+   * **La frenada, la que para en su manual.** Su toma con frenos de rueda y
+   * sin reversa son 460 m desde los cincuenta pies a su peso máximo al
+   * aterrizar (Viking, 2018: «The CAR 3 and SFAR 23 landing distances and
+   * accelerate stop distance assume retardation with wheel brakes only»), 169
+   * de ellos en el suelo (dehavilland.com, Series 400). Con el tope de la
+   * flota, 0,45, y la resistencia de sus flaps de 37° (`flapsDrag`), el modelo
+   * para en 476 m desde los cincuenta pies a esa masa, un 3 % más, y rueda 185.
+   * No para más corto porque al tocar con los flaps de aterrizaje el ala le
+   * sostiene todavía las cuatro quintas partes del peso, y una rueda que no
+   * carga no frena.
+   *
+   * Neumáticos de 38 psi (EASA.IM.A.575, A.III.20), por debajo de la tabla de
+   * mojado: va al borde, 50. Sin antideslizante en lo leído: el escalón de en
+   * medio.
+   */
+  frenos: { enSeco: 0.45, psi: 50, antideslizante: 0.5 },
+  frenosDeTierra: null,
+  autofreno: false,
+  cantosDeLaCarrera: null,
+  /*
+   * **TCAS I**: «KTA 910 TCAS I» en el equipo de serie, y «TCAS alerts are voiced
+   * through the aural warning system» (Viking, 2018). Por debajo de la raya del
+   * ACAS II: 5.670 kg y diecinueve plazas. Ver `tcas`.
+   */
+  tcas: "TCAS I",
+  /*
+   * **Con avisador de terreno, el de clase A**: «Honeywell MK VI Class A TAWS
+   * (EGPWS)» en el equipo de serie del -400 (Viking, 2018), y «Class A TAWS» en
+   * la nota 10.b.1 de su hoja de tipo, la de los primeros -400; en los de G1000
+   * NXi es opcional. El -300 no lo traía de fábrica, y lo lleva el que vuela
+   * con pasaje: lo pide la norma a todo avión de turbina de diez plazas o más
+   * (14 CFR 135.154) —el Twin Otter de Tara Air que cayó en Nepal en 2022
+   * llevaba uno puesto después, y su registrador oyó su «Pull Up» (AAIC de
+   * Nepal, 9N-AET, § 1.16)—. Ver `avisosHablados`.
+   */
+  avisosHablados: true,
+  /*
+   * **La pérdida, con su aviso sonoro y sin voz que se haya leído.** «The stall
+   * warning system consists of two lift detecting vanes and switches … located
+   * on the left wing leading edge» (Viking, 2018), y su lista mínima deja
+   * despachar el -400 con la luz de pérdida tapada si «both channels of the
+   * aural warning system operate normally» (FAA, MMEL del DHC-6, rev. 15,
+   * 30-8). Si ese aviso es un tono o una voz no se ha leído: va la bocina.
+   *
+   * **Sin aviso de velocidad baja, de automático ni de motor parado propios**:
+   * no se ha encontrado ninguno. El automático es opcional en el -400
+   * (EASA.IM.A.575, nota 10.b), y el motor parado suena con la campanada de
+   * siempre, la de donde no se sabe.
+   */
+  avisosDeABordo: {
+    perdida: { suena: "bocina", voz: false },
+    velocidadBaja: null,
+    automatico: null,
+    motorParado: "campanada",
+  },
+  /*
+   * **Solo *five hundred*, y solo sin ILS delante**, por lo mismo que el JAZ 60:
+   * es lo que la norma del TAWS de clase A pide cantar (FAA, AC 23-18, § 3.d,
+   * sobre el TSO-C151a), y el menú de su MK VI no se ha leído.
+   */
+  cuentaDeLaToma: [500],
+  cuentaSoloSinIls: true,
+  cantaLosMinimos: false,
+  /*
+   * **Sin fuente**: lleva pasaje, y de sus ventanillas no se ha leído si
+   * llevan persiana. Lo dirá el paso de su cabina.
+   */
+  ventanillas: "persiana",
+  /*
+   * **166 nudos indicados** hasta 6.700 ft —170 calibrados— (EASA.IM.A.575,
+   * A.III.9); el -300 tenía 160 calibrados (A9EA). Arriba baja —156 a 10.000
+   * ft, 112 a 25.000—, y eso la ficha no lo dice: el Twin Otter no tiene Mach
+   * máximo, y el Mmo de aquí es solo para que la onda no lo frene, por encima
+   * de lo que alcanza. Su tren no se mete: no tiene límite propio.
+   */
+  vmoKt: 166,
+  vleKt: 166,
+  /*
+   * La placa de su hoja de tipo, leída por grados: 103 nudos indicados de 0° a
+   * 10° y 93 de 11° a 37° (EASA.IM.A.575, A.III.9; 102 y 95 calibrados en el
+   * -300, A9EA).
+   */
+  vfePorMuesca: [103, 93, 93],
+  alivioDeFlaps: false,
+  mmo: 0.35,
+  approachSpeed: VELOCIDADES_DEL_JAZ_50.vref,
+  /*
+   * **90 nudos, sin fuente**: por debajo de su placa de 93 con más de diez
+   * grados de flaps y de los 100 de su categoría, la A (OACI, Doc 8168), y algo
+   * más de 1,1 veces su Vref. No se ha leído a qué vuela el circuito su manual.
+   */
+  velocidadDeCircuito: 90 * 0.514444,
+  decisionSpeed: VELOCIDADES_DEL_JAZ_50.v1,
+  rotationSpeed: VELOCIDADES_DEL_JAZ_50.vr,
+  takeoffSafetySpeed: VELOCIDADES_DEL_JAZ_50.v2,
+  /*
+   * **De la rodadura a los cincuenta pies, 1,62**, el más que deja su manual. Su
+   * despegue con los dos motores rueda 244 m (dehavilland.com, Series 400) y
+   * pasa los cincuenta pies a los 454 de la SFAR 23 (Viking, 2018: «All takeoff
+   * distances are based on both engines operating»), que ya lleva el 1,15 de su
+   * norma: sin él son 395, y 395 / 244 = 1,62. Ver `deRodarADespegar`.
+   */
+  deRodarADespegar: 1.62,
+  /*
+   * 4,5 m del tren de morro al principal, y 3,81 de vía (NASA TM-101427, figura
+   * 1). La web de De Havilland da 7,22, que no casa con la vista del avión.
+   */
+  batalla: 4.5,
+  // **Sin fuente**: del centro de gravedad al suelo, hasta que lo mida su dibujo.
+  gearHeight: 1.6,
+  /*
+   * **Sin fuente**: las principales, 0,55 m por detrás del centro, el doce por
+   * ciento de la batalla que carga una rueda de morro. Lo medirá su dibujo, como
+   * en los demás (`apoyo.test.ts`).
+   */
+  mainWheelsAft: 0.55,
+  // Fijo: «fixed gear aeroplane» (EASA.IM.A.575, A.III.2).
+  trenRetractil: false,
+  meteElTrenA: null,
+  tardaElTren: null,
+  // **Sin fuente**: once grados y medio, hasta que su dibujo diga dónde toca la cola.
+  maxGroundPitch: 0.2,
+  // Doce centímetros de pata con la rueda de morro 3,95 m por delante del centro.
+  minGroundPitch: -0.03,
+  llevaFlaps: true,
+  /*
+   * **Lo que dan sus flaps, de sus pérdidas**: 73 nudos sin flaps, 66 con 10° y
+   * 56 con 37° a su peso máximo (PSM 1-64-1A, § 3.2). Con la palanca repartida
+   * a partes iguales, 1,13 da las dos al medio nudo.
+   */
+  flapsLift: 1.13,
+  /*
+   * **Sin fuente: dos décimas**, el doble que el JAZ 60: los flaps de un avión
+   * de pista corta, que a 37° frenan mucho, y lo que deja su toma a un 3 % de
+   * su manual con la frenada en el tope de la flota.
+   */
+  flapsDrag: 0.2,
+  /*
+   * **Arriba, 10°, 20° y 37°**, los de su manual: «Flaps 10°», «Flaps 37°» (PSM
+   * 1-64-1A, § 3.2), y 20° en la tabla de su Vref. El -300 los llama 37,5°
+   * (A9EA: «10° to 37-1/2°»). **Despega con 10°**, «take-off configuration
+   * (Flaps 10°)» (§ 3.2); con 20°, solo con un suplemento aparte (Transport
+   * Canada, AC 700-048, 2019, «Supplement 40 … 20 deg flap take-off»).
+   *
+   * Los mueve la hidráulica —«flap and nose wheel steering actuators» en su
+   * sistema hidráulico (Viking, 2018)—; lo que tardan no se ha leído: doce
+   * segundos, como el JAZ 60.
+   */
+  muescasDeFlaps: [0, 10, 20, 37],
+  tardanLosFlaps: 12,
+  appearance: {
+    ...LIBREA,
+    // Tres: «Number of blades 3 (Aluminum)» (EASA.IM.A.575, A.III.6).
+    blades: 3,
+    motivo: "sol",
+  },
+  sound: {
+    engine: "turboprop",
+    cylinders: 0,
+    palasDeFan: 3,
+    /*
+     * Las vueltas de la hélice del JAZ 60, que es la misma familia de motor,
+     * hasta que se grabe o se mida el suyo: el sonido es de su paso.
+     */
+    idleRpm: 900,
+    maxRpm: 2200,
+    growlHz: 420,
+    growlRise: 260,
+    /*
+     * **Sin tren que suene**: es fijo. Flaps hidráulicos (Viking, 2018). Sin APU:
+     * la NASA le tuvo que añadir una a su Twin Otter (TM-105977, tabla 1). Lo
+     * demás, sin fuente hasta el paso de su cabina: limpias como todo avión de
+     * pasaje, y la cabina sin forro gordo de un avión de trabajo.
+     */
+    ruidos: {
+      tren: 0,
+      flaps: "hidraulicos",
+      limpias: true,
+      apu: false,
+      aire: "ventilacion",
+      aislamiento: 0.3,
+    },
+  },
+  aero: {
+    cl0: 0.3,
+    // **5,66 por radián, medido en vuelo** (NASA TM-101427, tabla III: «CZα
+    // −5.66», flaps 0°, 120 KIAS).
+    clAlpha: 5.66,
+    /*
+     * **~13,7°: el que da su pérdida limpia**, 73 nudos a 12.500 lb (PSM
+     * 1-64-1A, § 3.2), un `CL` máximo de 1,65.
+     */
+    alphaStall: 0.2385,
+    /*
+     * **Cuarenta milésimas, sin fuente**, con el tren fijo, las riostras del ala
+     * y las patas dentro: la que, con esa recta de empuje, va a fondo a sus 170
+     * nudos al nivel del mar. No hay cifra publicada.
+     */
+    cd0: 0.04,
+    oswald: 0.8,
+    cyBeta: -0.55,
+    cm0: 0.045,
+    // **−1,31, medido en vuelo** (TM-101427, tabla III): un margen del 23 %.
+    cmAlpha: -1.31,
+    // **−34,2, medido en vuelo** (TM-101427, tabla III), con `q·c/2V`.
+    cmQ: -34.2,
+    /*
+     * **De su Cmδe medido**, −1,74 por radián (TM-101427, tabla III), por los
+     * 25° que sube su profundidad (FAA A9EA, «Elevator up 25°»).
+     */
+    cmElevator: 0.76,
+    clBeta: -0.095,
+    // `clAlpha/10,7`, la proporción de siempre.
+    clP: -0.53,
+    // pb/2V de 0,115, el del JAZ 60 antiguo con este mismo ala: ~50 °/s a 140 nudos.
+    clAileron: 0.061,
+    cnBeta: 0.09,
+    cnR: -0.16,
+    // El timón que da su Vmca: 64 nudos indicados, 66 calibrados, con los flaps
+    // a 10° (EASA.IM.A.575, A.III.9).
+    cnRudder: 0.05,
+    cnAileron: -0.003,
+  },
+};
+
+/**
  * JAZ 60 *Arasunu* — turbohélice regional de cola en T, diecinueve plazas.
  *
  * El primero que no es una avioneta: pesa cinco veces lo que el bimotor y se
@@ -3609,7 +3998,10 @@ export const AIRCRAFT: readonly AircraftConfig[] = [
 ];
 
 /**
- * Y los que están hechos pero todavía no vuelan. Hoy, ninguno.
+ * Y los que están hechos pero todavía no vuelan. Hoy, el JAZ 50, de la clase
+ * del Twin Otter: tiene su ficha y su modelo de vuelo, medidos contra su
+ * manual, y le faltan su pájaro, su silueta, su cabina y su sitio en el hangar
+ * (#185). Ver `EN_EL_TALLER` en `flota.ts`.
  *
  * La lista se queda porque el caso se va a repetir: un avión puede estar
  * terminado y medido y aun así no salir —un nombre por decidir, una silueta
@@ -3617,7 +4009,15 @@ export const AIRCRAFT: readonly AircraftConfig[] = [
  * terminado tiene que estar comprobado aunque le falte el rótulo. Ver
  * `prestaciones.test.ts`.
  */
-export const RESERVADOS: readonly AircraftConfig[] = [];
+export const RESERVADOS: readonly AircraftConfig[] = [JAZ_50];
+
+/**
+ * **Los que mide el banco**: los que vuelan y los que están hechos y todavía
+ * no. Lo recorren las pruebas de lo que es de la ficha —sus prestaciones, sus
+ * velocidades, su despegue y su toma contra su manual, su peso, en qué campo
+ * cabría—, y no las que piden su dibujo, su cabina o su sitio en el juego.
+ */
+export const MEDIDOS: readonly AircraftConfig[] = [...AIRCRAFT, ...RESERVADOS];
 
 export function aircraftById(id: string): AircraftConfig {
   const found = AIRCRAFT.find((a) => a.id === id);

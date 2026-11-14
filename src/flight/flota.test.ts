@@ -9,16 +9,19 @@
  * casualidad. Esto lo mira siempre.
  */
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT, aircraftById } from "./aircraft";
+import { AIRCRAFT, RESERVADOS, aircraftById } from "./aircraft";
 import { AERONAVES } from "./aeronaves";
 import { SUPER_PUMA_EN_EL_JUEGO } from "./helicoptero-en-el-juego";
 import { MEDIDAS_DEL_TIPO } from "./bomberos";
+import { DE_SU_CLASE } from "./ficha-tecnica";
 import {
+  EN_EL_TALLER,
   ESTA_HECHO,
   FABRICANTE,
   FLOTA,
   modeloPorId,
   nombreEntero,
+  nombreEnteroDe,
 } from "./flota";
 import { TIERS } from "./tiers";
 
@@ -141,5 +144,51 @@ describe("lo construido y lo reservado", () => {
     for (const a of AERONAVES) {
       expect(modeloPorId(a.id)?.enDisputa, a.id).toBeUndefined();
     }
+  });
+});
+
+/*
+ * **Lo que está en el taller** tiene su número reservado y su ficha medida,
+ * y no vuela: no está en la tabla ni en el hangar hasta que tenga su silueta
+ * (#185). Que su número no lo repita nadie y que vaya donde lo pone su
+ * tamaño, que es la regla de la tabla.
+ */
+describe("lo que está en el taller", () => {
+  it("su número no lo tiene nadie de la flota, ni su pájaro", () => {
+    const numeros = FLOTA.map((m) => m.numero);
+    const nombres = FLOTA.map((m) => m.nombre.toLowerCase());
+    for (const t of EN_EL_TALLER) {
+      expect(numeros, t.id).not.toContain(t.numero);
+      if (t.nombre) expect(nombres, t.id).not.toContain(t.nombre.toLowerCase());
+    }
+  });
+
+  it("y va donde lo pone su peso máximo, entre el más pequeño y el más grande que él", () => {
+    const mtow = (id: string) => DE_SU_CLASE[id]!.mtow!;
+    for (const t of EN_EL_TALLER) {
+      const antes = FLOTA.filter((m) => m.numero < t.numero && m.silueta !== "helicoptero");
+      const despues = FLOTA.filter((m) => m.numero > t.numero && m.silueta !== "helicoptero");
+      for (const m of antes) expect(mtow(m.id), `${m.id} y ${t.id}`).toBeLessThan(mtow(t.id));
+      for (const m of despues) expect(mtow(m.id), `${t.id} y ${m.id}`).toBeGreaterThan(mtow(t.id));
+    }
+  });
+
+  it("no vuela: ni es de la flota que se ve, ni se dice construido, ni está en el hangar", () => {
+    for (const t of EN_EL_TALLER) {
+      expect(modeloPorId(t.id), t.id).toBeNull();
+      expect(ESTA_HECHO, t.id).not.toContain(t.id);
+      expect(AERONAVES.map((a) => a.id), t.id).not.toContain(t.id);
+    }
+  });
+
+  it("pero su ficha existe y la mide el banco", () => {
+    for (const t of EN_EL_TALLER) {
+      expect(RESERVADOS.map((a) => a.id), t.id).toContain(t.id);
+    }
+  });
+
+  it("y sin pájaro se llama por su número", () => {
+    expect(nombreEnteroDe("jaz-50")).toBe("JAZ 50");
+    expect(RESERVADOS.find((a) => a.id === "jaz-50")!.name).toBe("JAZ 50");
   });
 });

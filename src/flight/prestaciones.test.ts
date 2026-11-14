@@ -395,10 +395,15 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
      * ficha rota a 145 nudos y pierde limpio a 147— y es lo correcto: ver
      * `VR_SOBRE_LA_PERDIDA` y el ADR 0027.
      */
-    it("rota por encima de la pérdida y después de la de decisión", () => {
+    /*
+     * **O en la misma, si su manual las pone juntas.** El Twin Otter del JAZ 50
+     * las da como una sola: «Rotation speeds (VR = V1)» (PSM 1-64-1A, figura
+     * 4-1). La decisión no puede ir después de rotar; a la vez, sí.
+     */
+    it("rota por encima de la pérdida, y no antes de la de decisión", () => {
       const vsDespegue = perdidaCon(a, flapsDeDespegue(a));
       expect(a.rotationSpeed).toBeGreaterThan(vsDespegue * 1.02);
-      expect(a.rotationSpeed).toBeGreaterThan(a.decisionSpeed);
+      expect(a.rotationSpeed).toBeGreaterThanOrEqual(a.decisionSpeed);
       expect(a.decisionSpeed).toBeGreaterThan(vsDespegue);
     });
 
@@ -552,8 +557,10 @@ function mejorPlaneo(a: AircraftConfig): { razon: number; a: number } {
    * alargamiento de once, que planea mejor con más `CL` del que da su actitud
    * a dos grados abajo: su mejor planeo, `CL = √(π·AR·e·CD0)` = 0,90, va con
    * el morro unos tres grados arriba, y el barrido se quedaba en el borde.
+   * Y el ala del Twin Otter del JAZ 50, que es de pista corta y planea mejor con
+   * `CL` 1,0.
    */
-  for (let g = a.id === "jaz-60" ? 4 : -2; g >= -12; g -= 0.5) {
+  for (let g = a.id === "jaz-60" || a.id === "jaz-50" ? 4 : -2; g >= -12; g -= 0.5) {
     const salida = planeoConActitud(a, g);
     if (salida.razon > mejor.razon) mejor = salida;
   }

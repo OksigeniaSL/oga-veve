@@ -16,10 +16,10 @@
  * - **Lo que el juego no necesita para volar** —el largo, el peso máximo al
  *   despegue, el alcance, el techo y las plazas— es de **su avión de
  *   referencia**, el que ya nombra cada ficha: el Cessna 172R para el JAZ 20,
- *   el Ag Cat para el JAZ 25, el Seneca II para el JAZ 40, el Beech 1900D para
- *   el JAZ 60, el Embraer 170 para el JAZ 90, el 787-9 para el
- *   JAZ 110 y el 747-100 para el JAZ 120. Cada número lleva al lado de dónde se
- *   leyó.
+ *   el Ag Cat para el JAZ 25, el Seneca II para el JAZ 40, el Twin Otter para
+ *   el JAZ 50, el Beech 1900D para el JAZ 60, el Embraer 170 para el JAZ 90, el
+ *   787-9 para el JAZ 110 y el 747-100 para el JAZ 120. Cada número lleva al
+ *   lado de dónde se leyó.
  *
  * Lo que no se ha podido leer en una fuente se queda en `null` y **no sale en
  * la tarjeta**. Es preferible una fila menos a una cifra que alguien aprenda y
@@ -107,6 +107,23 @@ export const DE_SU_CLASE: Readonly<Record<string, DeSuClase>> = {
     techo: 25000 * PIE,
     // Seis: la cabina con los asientos enfrentados de la A7SO, la de la ficha.
     plazas: 6,
+  },
+  "jaz-50": {
+    // Hoja de tipo EASA.IM.A.575 (número 6, 2026) y la ficha del Classic 300-G
+    // de De Havilland Canada (julio de 2023), que es la Serie 400.
+    referencia: "DHC-6 Twin Otter Series 400",
+    // 51 ft 9 in, con el morro largo (A.III.4).
+    largo: 15.77,
+    // 12.500 lb (A.III.12).
+    mtow: 5670,
+    // 803 NM con 1.030 kg de carga, los depósitos de serie, a 10.000 ft y con
+    // 45 minutos de reserva (300-G, 2023).
+    alcance: 803 * MILLA,
+    // 25.000 ft, la altitud máxima de operación (A.III.10).
+    techo: 25000 * PIE,
+    // Diecinueve de pasaje (A.III.18) y dos en cabina, aunque se puede volar
+    // con uno (A.III.17).
+    plazas: 21,
   },
   "jaz-60": {
     /*

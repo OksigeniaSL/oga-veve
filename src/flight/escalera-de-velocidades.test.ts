@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT, esDeChorro, type AircraftConfig } from "./aircraft";
+import { MEDIDOS, esDeChorro, type AircraftConfig } from "./aircraft";
 import {
   ALTITUD_DEL_TOPE,
   CONFIGURADO_DESDE,
@@ -23,7 +23,7 @@ import {
 
 const PIE = 0.3048;
 const MILLA = 1852;
-const de = (id: string): AircraftConfig => AIRCRAFT.find((a) => a.id === id)!;
+const de = (id: string): AircraftConfig => MEDIDOS.find((a) => a.id === id)!;
 
 const subiendo = (pies: number): DondeVa => ({
   altitud: pies * PIE,
@@ -42,7 +42,7 @@ const llegando = (millas: number, pies = 3000): DondeVa => ({
 
 describe("la escalera de velocidades", () => {
   it("por debajo de diez mil pies, nadie pasa de 250 nudos", () => {
-    for (const a of AIRCRAFT)
+    for (const a of MEDIDOS)
       for (const pies of [1500, 5000, 9900]) {
         const v = velocidadQueToca(a, subiendo(pies));
         expect(v.kt, `${a.id} a ${pies} ft`).toBeLessThanOrEqual(TOPE_BAJO_EL_100);
@@ -51,7 +51,7 @@ describe("la escalera de velocidades", () => {
 
   it("y los reactores suben a 250 justo hasta allí, no a su Vref", () => {
     // El fallo de la captura: 146 en la ventanilla, subiendo.
-    for (const a of AIRCRAFT.filter(esDeChorro)) {
+    for (const a of MEDIDOS.filter(esDeChorro)) {
       const v = velocidadQueToca(a, subiendo(8000));
       expect(v.kt, a.id).toBe(TOPE_BAJO_EL_100);
       expect(v.kt, a.id).toBeGreaterThan(vrefKt(a) + 60);
@@ -61,7 +61,7 @@ describe("la escalera de velocidades", () => {
 
   it("y bajando, la marca llega a 250 antes de los diez mil pies, para cruzarlos ya frenado", () => {
     // SPD TRANS 250/10000: se cruza a 250, no se empieza a frenar al cruzar.
-    for (const a of AIRCRAFT.filter(esDeChorro)) {
+    for (const a of MEDIDOS.filter(esDeChorro)) {
       const encima = velocidadQueToca(a, llegando(60, 10800));
       expect(encima.tramo, a.id).toBe("descenso");
       expect(encima.kt, a.id).toBe(TOPE_BAJO_EL_100);
@@ -69,7 +69,7 @@ describe("la escalera de velocidades", () => {
       expect(masArriba.kt, a.id).toBeGreaterThan(TOPE_BAJO_EL_100);
     }
     // Subiendo no: ahí el tope vale hasta los diez mil y no antes.
-    for (const a of AIRCRAFT.filter(esDeChorro))
+    for (const a of MEDIDOS.filter(esDeChorro))
       expect(velocidadQueToca(a, subiendo(10500)).kt, a.id).toBeGreaterThan(TOPE_BAJO_EL_100);
     expect(FRENAR_ANTES / PIE).toBeCloseTo(1000, 6);
   });
@@ -77,7 +77,7 @@ describe("la escalera de velocidades", () => {
   it("el Mach de crucero de los reactores es el de su clase", () => {
     expect(machDeCrucero(de("jaz-120"))).toBeCloseTo(0.78, 2);
     expect(machDeCrucero(de("jaz-90"))).toBeCloseTo(0.75, 2);
-    for (const a of AIRCRAFT.filter((x) => !esDeChorro(x)))
+    for (const a of MEDIDOS.filter((x) => !esDeChorro(x)))
       expect(machDeCrucero(a), a.id).toBeNull();
   });
 
@@ -101,7 +101,7 @@ describe("la escalera de velocidades", () => {
   });
 
   it("ninguna pasa nunca de la Vmo", () => {
-    for (const a of AIRCRAFT)
+    for (const a of MEDIDOS)
       for (const pies of [500, 5000, 12000, 20000, 30000, 36000]) {
         const v = velocidadQueToca(a, subiendo(pies));
         expect(v.kt, `${a.id} a ${pies}`).toBeLessThan(a.vmoKt);
@@ -125,7 +125,7 @@ describe("la escalera de velocidades", () => {
   it("y antes de la final, ya con el tren y los segundos flaps: a la final se llega frenado", () => {
     // «Pretende que entre a una velocidad de vértigo»: de la Vref y cincuenta
     // a la Vref y cinco en las cinco millas no lo frena ningún reactor.
-    for (const a of AIRCRAFT.filter(esDeChorro)) {
+    for (const a of MEDIDOS.filter(esDeChorro)) {
       const configurado = velocidadQueToca(a, llegando(6.5));
       expect(configurado.tramo, a.id).toBe("aproximacion");
       expect(configurado.kt, a.id).toBe(Math.round(vrefKt(a) + 20));
@@ -138,7 +138,7 @@ describe("la escalera de velocidades", () => {
   it("llegando, aunque el plan no haya pasado su punto de descenso", () => {
     // Quien empieza a bajar antes no pasa el T/D, y la marca se quedaba en
     // 250 hasta la pista: «pretende que entre a una velocidad de vértigo».
-    for (const a of AIRCRAFT) {
+    for (const a of MEDIDOS) {
       const sinTd = (millas: number) =>
         velocidadQueToca(a, { ...llegando(millas, 1900), bajando: false });
       expect(sinTd(4).tramo, a.id).toBe("final");
@@ -149,7 +149,7 @@ describe("la escalera de velocidades", () => {
   });
 
   it("y en final, todos a su Vref más cinco", () => {
-    for (const a of AIRCRAFT) {
+    for (const a of MEDIDOS) {
       const v = velocidadQueToca(a, { ...llegando(3, 1200), enFinal: true });
       expect(v.tramo).toBe("final");
       expect(v.kt, a.id).toBe(Math.round(vrefKt(a) + 5));
@@ -157,7 +157,7 @@ describe("la escalera de velocidades", () => {
   });
 
   it("la escalera solo baja según se llega", () => {
-    for (const a of AIRCRAFT) {
+    for (const a of MEDIDOS) {
       let antes = Infinity;
       for (const millas of [60, 25, 10, 4]) {
         // Bajando de su crucero, que en una avioneta no son doce mil pies.
@@ -182,7 +182,7 @@ describe("la escalera de velocidades", () => {
     expect(kt("jaz-120")).toBeGreaterThan(kt("jaz-90") - 1);
     expect(kt("jaz-20")).toBeLessThan(100);
     expect(kt("jaz-60")).toBeGreaterThan(kt("jaz-20"));
-    for (const a of AIRCRAFT)
+    for (const a of MEDIDOS)
       expect(kt(a.id) * NUDO, a.id).toBeGreaterThan(a.approachSpeed);
   });
 });

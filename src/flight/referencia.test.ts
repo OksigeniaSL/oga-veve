@@ -22,7 +22,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT, PYKASU } from "./aircraft";
+import { MEDIDOS, PYKASU } from "./aircraft";
 import {
   ALARGAMIENTO,
   A_MANDO_ENTERO,
@@ -253,7 +253,7 @@ describe("la pendiente de sustentación", () => {
  * más, un coeficiente por radián copiado tal cual de un libro— y no lo que un
  * diseñador decide.
  */
-describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
+describe.each(MEDIDOS.map((a) => [a.id, a] as const))(
   "%s contra el Navion",
   (_id, a) => {
     /*
@@ -283,9 +283,14 @@ describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
      * de cuerda: su cuenta da −27, 2,7 veces el Navion, y con dos y medio se le
      * dejaba en −24 para caber, pegado al borde. Ver `cmQ` en la ficha del JAZ
      * 60 y el ADR 0027, enmienda H10a.
+     *
+     * **Y hasta tres y medio, que es lo que da un avión de verdad medido en
+     * vuelo**: el Twin Otter del JAZ 50, −34,2 (NASA TM-101427, tabla III), 3,4
+     * veces el Navion. Un listón que deja fuera una derivada medida no caza un
+     * error: caza el avión.
      */
     it("amortigua el cabeceo como un avión", () => {
-      dentro(a.aero.cmQ, EN_CONVENCION_DE_FICHA.cmQ, 3);
+      dentro(a.aero.cmQ, EN_CONVENCION_DE_FICHA.cmQ, 3.5);
     });
     it("amortigua el alabeo como un avión", () => {
       dentro(a.aero.clP, EN_CONVENCION_DE_FICHA.clP);
