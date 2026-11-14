@@ -646,8 +646,9 @@ cada ficha dice cómo suena cada uno (`avisosDeABordo`), con la fuente al lado:
 - **E170, el automático**: «auto-pilot, auto-pilot», con la nota «Voice
   identified as aircraft mechanical voice» (AAR-08/01); y el manual de un
   operador de E195, «triggers the aural warning "AUTOPILOT"». Es una toma
-  nueva, `cabina.autopilot`, **sin grabar**: hasta que lo esté, lo dice la
-  instructora. Ver `PENDIENTE-VOCES-automatico.md`.
+  nueva, `cabina.autopilot`. Al escribir esto estaba sin grabar y la decía la
+  instructora; se grabó el mismo día (cd72f518) y el pendiente que la
+  apuntaba se borró.
 - **E170, la pérdida**: el sacudidor es el aviso de la familia —«triggered a
   stall warning (stick shaker) for 2 seconds», el E195 de Salzburgo—, y sonaba
   la bocina de una avioneta. Si además la dice una voz no se ha podido leer:
