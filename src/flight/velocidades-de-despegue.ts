@@ -97,8 +97,9 @@ export const VR_SOBRE_LA_PERDIDA = 1.1;
  * **La V2 más baja que deja la norma, sobre la pérdida con los flaps de
  * despegue**: 1,13.
  *
- * Es la V2MIN de un bimotor de reacción o de hélice (CS 25.107 b 1 y 14 CFR
- * 25.107 b 1) sobre la pérdida de referencia, la de un g, que es la que
+ * Es la V2MIN de un reactor sin soplado de flaps, tenga los motores que
+ * tenga, y de un bimotor o trimotor de hélice (CS 25.107 b 1 y 14 CFR 25.107
+ * b 1), sobre la pérdida de referencia, la de un g, que es la que
  * calcula `perdidaCon`: el ala a su ángulo de pérdida sosteniendo el peso.
  * La norma de antes de 2002 decía 1,2 veces la pérdida mínima de la maniobra,
  * y la FAA bajó los factores un 6 % al cambiar de referencia porque «the 1-g
