@@ -106,7 +106,7 @@ En la práctica, tres consecuencias que sí son decisiones concretas:
 5. **Test Ña Emy**: si una abuela paraguaya con WhatsApp como única
    referencia no puede usar una pantalla, la pantalla no está terminada.
 6. **Rendimiento primero**: el objetivo es 60 fps en una tablet Android de
-   gama media y en el portátil de un colegio. Antes de añadir un efecto
+   gama media y en un portátil modesto. Antes de añadir un efecto
    visual, se mide.
 7. **Sin telemetría de menores**: este juego no recoge datos personales, no
    pide registro y no lleva analítica de terceros. No se añade ninguna.
