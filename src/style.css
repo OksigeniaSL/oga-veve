@@ -471,6 +471,36 @@ body {
 }
 
 /*
+ * **Y lo que no respondía al apretar.** Lo midió `npm run toque` el 14-11:
+ * la marca y el sello del pie, los idiomas, el avión del piloto, el mundo, la
+ * pizarra, la lupa de las fichas de avión, la tarjeta del destino, el tirador
+ * del cuadro y las losas del cuadro del teléfono no cambiaban nada al
+ * apretarlos. Los del piloto, el mundo y el idioma sí cambiaban de borde, pero
+ * al ocre que ya lleva el elegido: tocar el que ya estaba elegido no hacía
+ * nada que se viera, y es justo el que un niño vuelve a tocar para ver si va.
+ *
+ * Con `scale`, la propiedad suelta, y no con `transform`: el tirador del
+ * cuadro y la tarjeta del destino ya llevan su `transform` para colocarse, y
+ * un `transform` al apretar los movía de sitio. Es la escala de los botones
+ * redondos (DESIGN.md §9), un poco menos en lo grande.
+ */
+.marca:active,
+.pie__marca:active,
+.idioma:active,
+.pizarra-boton:active,
+.ficha__de-cerca:active,
+.casa:active,
+.cuadro__tirador:active {
+  scale: 0.93;
+}
+
+.piloto__boton:active,
+.mundo:active,
+.tel__losa:active {
+  scale: 0.97;
+}
+
+/*
  * Tocado, la flecha gira hasta que la página se recarga: entre el toque y la
  * recarga pasa un segundo, y un segundo sin respuesta se lee como un botón
  * que no va. Ver `estrenar` en `service-worker.ts`.
@@ -2794,6 +2824,47 @@ body {
   width: 26px;
   height: 26px;
   fill: currentColor;
+}
+
+/*
+ * **Los tres botones del final responden al apretar**, como los demás: es la
+ * pantalla en la que más se toca sin saber leer, y no hacían nada que se viera
+ * hasta que cambiaba la pantalla. Con `scale`, que no pisa ningún `transform`.
+ */
+.fin__otra:active,
+.fin__hangar:active,
+.fin__seguir-boton:active {
+  scale: 0.93;
+}
+
+/*
+ * **Y tras un percance, la flecha de volver a empezar llama.** Es el arreglo
+ * de un toque de ese lío, y la instructora lo dice en voz —«Se rompió.
+ * Volvemos a empezar»—; con la flecha quieta, quien no lee buscaba qué tocar
+ * entre el dibujo del avión roto y la frase. Es el halo ocre de lo pulsable
+ * que llama (DESIGN.md §9), en terracota, que es el color del botón; y si
+ * nadie toca, el juego vuelve solo igual (`VUELVE_SOLO` en `game.ts`).
+ */
+.fin--percance .fin__otra {
+  animation: fin-otra-llama 1.8s ease-in-out 1s infinite;
+}
+
+@keyframes fin-otra-llama {
+  50% {
+    box-shadow: 0 0 0 6px rgba(190, 93, 56, 0.35);
+  }
+}
+
+/* Quieta, sin perder lo que dice: el borde de fuera se queda puesto. */
+@media (prefers-reduced-motion: reduce) {
+  .fin--percance .fin__otra {
+    animation: none;
+    box-shadow: 0 0 0 4px rgba(190, 93, 56, 0.35);
+  }
+}
+.sin-movimiento .fin--percance .fin__otra {
+  animation: none;
+  box-shadow: 0 0 0 4px rgba(190, 93, 56, 0.35);
 }
 
 .fin[hidden] {

@@ -53,7 +53,8 @@
     "mirada": "node scripts/verificar-mirada.mjs",
     "actualizar": "node scripts/verificar-actualizar.mjs",
     "teclas-que-tocan": "node scripts/verificar-teclas-que-tocan.mjs",
-    "firefox-98": "node scripts/verificar-firefox-98.mjs"
+    "firefox-98": "node scripts/verificar-firefox-98.mjs",
+    "toque": "node scripts/verificar-toque.mjs"
   },
   "dependencies": {
     "3d-tiles-renderer": "^0.5.2",

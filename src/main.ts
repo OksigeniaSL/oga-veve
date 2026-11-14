@@ -88,6 +88,7 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
   return pedirMetar(icao, proxy, deCasa);
 }
 import { abrirHangar } from "./ui/hangar";
+import { marcarElMovimiento } from "./ui/ajustes";
 import type { Mission } from "./missions/types";
 import { MISSIONS } from "./content/missions";
 import { rememberTier, rememberedTier } from "./flight/tiers";
@@ -424,6 +425,8 @@ const recordado =
 if (!escenario) {
   const hangarRoot = document.querySelector<HTMLElement>("#hangar");
   if (!hangarRoot) throw new Error("Falta #hangar; revisa index.html");
+  // El movimiento de quien se acaba de elegir, no el del piloto anterior.
+  marcarElMovimiento();
   const elegido = await abrirHangar(hangarRoot, {
     scenario: recordado,
     tier: tramo,

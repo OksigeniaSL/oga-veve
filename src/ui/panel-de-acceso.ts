@@ -73,6 +73,59 @@ export function pantallaALaVista(
 type Panel = HTMLElement & { close?: () => void };
 
 /**
+ * **El panel, con el dedo**: lo que su hoja no trae y aquí hace falta.
+ *
+ * Lo cazó `npm run toque` el 14-11. Sus botones se ponen negros con `:hover`,
+ * fuera de `@media (hover: hover)`, y con el dedo eso se queda puesto al
+ * tocar: se encendía «Letra legible» y el botón seguía negro, que no es ni su
+ * dibujo de apagado ni el de encendido —el de encendido es blanco con borde
+ * negro—. No se sabía si estaba puesto hasta tocar otra cosa. Y ninguno
+ * respondía al apretar.
+ *
+ * El arreglo de verdad es del paquete, que es de la casa y lo llevan todas
+ * las webs (está dicho a quien lo publica); mientras tanto se pone desde aquí,
+ * sin tocar el fichero vendorizado. Con el dedo, cada botón con el `:hover`
+ * igual que en reposo —sus colores, copiados de su hoja de la 0.12.0—, y al
+ * apretar, la escala de los botones del juego.
+ *
+ * Va como `<style>` dentro de su sombra, y no como hoja adoptada, porque
+ * Firefox 98 no las tiene; y se repone cada vez que el panel se repinta, que
+ * lo hace entero al cambiar de pantalla o de idioma.
+ */
+const PARCHE_TACTIL = `
+@media (hover: none) {
+  .oks-access-close:hover { background: #f0f0f0; border-color: #ddd; }
+  .oks-preset:hover { background: #f0f4f8; color: #333; }
+  .oks-preset.is-flashing:hover { background: #000; color: #fff; }
+  .oks-access-opt:hover { background: #f9f9f9; color: #333; border-color: #eee; }
+  .oks-access-opt.is-active:hover { background: #fff; border-color: #000; }
+  .oks-access-opt:hover .oks-levels span { background: #ddd; }
+  .oks-access-reset:hover { background: transparent; color: #000; }
+  .oks-access-fold:hover { background: #f2f2f2; color: #000; }
+}
+.oks-access-close:active,
+.oks-preset:active,
+.oks-access-opt:active,
+.oks-access-reset:active,
+.oks-access-fold:active { scale: 0.96; }
+.oks-access-branding a:active { border-bottom-style: solid; opacity: 0.7; }
+`;
+
+function parchear(panel: Panel): void {
+  const sombra = panel.shadowRoot;
+  if (!sombra) return;
+  const poner = (): void => {
+    if (sombra.querySelector("style[data-oga]")) return;
+    const hoja = document.createElement("style");
+    hoja.dataset.oga = "";
+    hoja.textContent = PARCHE_TACTIL;
+    sombra.append(hoja);
+  };
+  poner();
+  new MutationObserver(poner).observe(sombra, { childList: true });
+}
+
+/**
  * Vigila las dos pantallas y pone el panel cuando se ve alguna.
  *
  * Mira el atributo `hidden` y no se engancha a quien las abre: son tres
@@ -134,7 +187,12 @@ function crear(doc: Document): Panel {
   const guion = doc.createElement("script");
   guion.type = "module";
   guion.src = `./vendor/oksigenia-access-panel.js?v=${VERSION_DEL_PANEL}`;
-  guion.addEventListener("load", () => doc.documentElement.classList.add("con-panel-de-acceso"));
+  guion.addEventListener("load", () => {
+    void customElements.whenDefined("oksigenia-access-panel").then(() => {
+      parchear(panel);
+      doc.documentElement.classList.add("con-panel-de-acceso");
+    });
+  });
   doc.head.append(guion);
   return panel;
 }

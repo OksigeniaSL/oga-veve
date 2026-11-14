@@ -28,6 +28,7 @@ import { arrancarPizarra } from "./ui/pizarra";
 import { espejoDeHas } from "./ui/espejo-de-has";
 import { medirContenedoresSiFalta } from "./ui/medidas-de-contenedor";
 import { vigilarElPanelDeAcceso } from "./ui/panel-de-acceso";
+import { marcarElMovimiento } from "./ui/ajustes";
 import { echarElDeDesarrollo, registrarElTrabajador } from "./service-worker";
 
 echarElDeDesarrollo();
@@ -65,6 +66,8 @@ const directo =
   hayRearranque(sesionDeLaPestana());
 
 if (!directo) {
+  // Con el movimiento que pidió el último piloto: ver `marcarElMovimiento`.
+  marcarElMovimiento();
   // Y en el iPhone, cómo se juega a pantalla completa, con la primera
   // pantalla. Ver `ui/anadir-a-inicio.ts`.
   ensenarAnadirAInicio();

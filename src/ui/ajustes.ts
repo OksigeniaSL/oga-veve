@@ -158,6 +158,21 @@ export function conMovimientoReducido(
   return loPideElSistema;
 }
 
+/**
+ * **La marca de movimiento reducido, también antes de volar.**
+ *
+ * La ponía solo el juego, al arrancar el vuelo (`aplicarAjustes`), así que
+ * quien había pedido «Movimiento: reducido» en los ajustes —porque se marea, o
+ * porque la tablet es de todos y no puede tocar la del sistema— volvía a ver
+ * el avioncito cruzando el cielo de la pantalla de pilotos y del hangar. Lo
+ * cazó `npm run toque`. Se pone con lo guardado del piloto que vuela: al
+ * arrancar, el último, y al abrir el hangar, el que se acaba de elegir.
+ */
+export function marcarElMovimiento(raiz: HTMLElement = document.documentElement): void {
+  const sistema = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+  raiz.classList.toggle("sin-movimiento", conMovimientoReducido(leerAjustes(), sistema));
+}
+
 /** El signo del cabeceo: −1 si está invertido. */
 export const signoDeCabeceo = (a: Ajustes): number =>
   a.cabeceo === "invertido" ? -1 : 1;

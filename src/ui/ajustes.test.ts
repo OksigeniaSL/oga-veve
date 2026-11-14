@@ -16,6 +16,7 @@ import {
   conMovimientoReducido,
   guardarAjuste,
   leerAjustes,
+  marcarElMovimiento,
   signoDeCabeceo,
   unidadesElegidas,
 } from "./ajustes";
@@ -83,6 +84,22 @@ describe("el movimiento reducido", () => {
     // un ajuste: en un aula la tablet es de todos y su preferencia también.
     expect(conMovimientoReducido(con("reducido"), false)).toBe(true);
     expect(conMovimientoReducido(con("normal"), true)).toBe(false);
+  });
+
+  it("y se marca en la raíz antes de volar, con lo guardado del piloto", () => {
+    // Lo ponía solo el vuelo: en la pantalla de pilotos y en el hangar el
+    // avioncito seguía cruzando el cielo a quien había pedido que no.
+    crearPerfil("tero", "rojo");
+    const clases = new Set<string>();
+    const raiz = {
+      classList: { toggle: (c: string, si: boolean) => void (si ? clases.add(c) : clases.delete(c)) },
+    } as unknown as HTMLElement;
+    guardarAjuste("movimiento", "reducido");
+    marcarElMovimiento(raiz);
+    expect(clases.has("sin-movimiento")).toBe(true);
+    guardarAjuste("movimiento", "normal");
+    marcarElMovimiento(raiz);
+    expect(clases.has("sin-movimiento")).toBe(false);
   });
 });
 
