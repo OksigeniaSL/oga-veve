@@ -994,6 +994,12 @@ va detrás —el canto de la tripulación en el de cabina, la instructora en los
 de abajo— a los 0,8 s de siempre, porque dura lo mismo que la campanada, 0,7
 s. No hay frase nueva ni cambiada.
 
+`DESIGN.md` dice «No: la pantalla roja, la música de tensión ni el pitido en
+una frustrada o un fallo de motor». Ese es el pitido que pondría el juego para
+dramatizar. Éste es el del avión, y es su precaución, el escalón de debajo de
+la alarma: cuatro pitidos cortos una sola vez, en lugar de la campanada que ya
+sonaba. Es lo que oirá quien vaya un día en la cabina de un Boeing.
+
 ### Lo que no
 
 - **Las inhibiciones del despegue.** En el Boeing y en el E-Jet las
