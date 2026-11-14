@@ -20,6 +20,8 @@ import { CoefficientFlightModel } from "./fdm";
 import { AIRCRAFT } from "./aircraft";
 import { rodaduraDeFrenada, velocidadDeToma } from "./carrera";
 import { neutralControls } from "./model";
+import { Vector3 } from "three";
+import { palancaParaRodar } from "./apoyo";
 
 const GRAVEDAD = 9.80665;
 
@@ -74,7 +76,10 @@ function frenarDesde(
   let v = desde;
   while (v > 0.5 && segundos < 180) {
     const antes = s.position.clone();
-    modelo.step(dt, mandos);
+    // El de rueda de cola baja la cola según frena, como la cuenta: ver
+    // `palancaParaRodar`. En un triciclo, la palanca suelta.
+    const cabeceo = Math.asin(new Vector3(0, 0, -1).applyQuaternion(s.orientation).y);
+    modelo.step(dt, { ...mandos, elevator: palancaParaRodar(aircraft, s.airspeed, cabeceo, s.pitchRate) });
     metros += Math.hypot(s.position.x - antes.x, s.position.z - antes.z);
     if (!s.onGround) enElAire++;
     pasos++;

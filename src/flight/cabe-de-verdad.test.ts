@@ -171,7 +171,7 @@ describe("y lo que dice, contra lo que vuela en cada campo", () => {
 
   /*
    * **Y el JAZ 110, campo por campo**, con la cuenta y no con la impresión. Pide unos
-   * 1.540 m para despegar y 1.590 para aterrizar a su peso de ficha, 193 toneladas,
+   * 1.830 m para despegar y 1.590 para aterrizar a su peso de ficha, 193 toneladas,
    * donde Boeing da 1.800 y 1.800 (D6-58333, 3.3.9 y 3.4.3); es de la categoría 9 de
    * bomberos y acepta la 8. Así que entra en La Palma, y **no en Guaraní ni en
    * Encarnación, que son de la 7, ni en Estigarribia, Concepción, Ayolas ni Pedro Juan
@@ -189,12 +189,16 @@ describe("y lo que dice, contra lo que vuela en cada campo", () => {
       "la-palma",
     ])
       expect(cabe("jaz-110", campo), campo).toBe(true);
-    for (const campo of ["guarani", "encarnacion", "estigarribia", "concepcion", "ayolas", "pedro-juan"]) {
+    for (const campo of ["guarani", "encarnacion", "estigarribia", "concepcion", "ayolas"]) {
       expect(cabe("jaz-110", campo), campo).toBe(false);
       expect(cabeEn(aircraftById("jaz-110"), campoDe(scenarioById(campo))).porQueNo, campo).toBe(
         "bomberos",
       );
     }
+    // Pedro Juan Caballero, con 1.800 m, ya tampoco por la pista: con la Vr de su
+    // tipo pide 1.826, la de abortar desde su V1 (enmienda H10b del ADR 0027).
+    expect(cabe("jaz-110", "pedro-juan")).toBe(false);
+    expect(cabeEn(aircraftById("jaz-110"), campoDe(scenarioById("pedro-juan"))).porQueNo).toBe("corta");
     for (const campo of [
       "pilar",
       "el-hierro",

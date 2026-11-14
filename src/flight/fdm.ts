@@ -28,7 +28,7 @@
  */
 
 import { Quaternion, Vector3 } from "three";
-import { alturaSobreLasRuedas } from "./apoyo";
+import { actitudEnTierra, alturaSobreLasRuedas, brazoDelTren } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
 import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
 import { anguloDeAviso, SE_CALLA_EL_AVISADOR } from "./avisos-de-actitud";
@@ -193,11 +193,15 @@ const PEGADO_AL_SUELO = 0.2;
 const STATIC_GRIP = 1.2;
 
 /**
- * Qué parte del peso carga la rueda de morro. Ver `momentoDelTren`.
+ * **Lo que se comprime la ballesta de la rueda de cola** con el avión parado,
+ * m. Ver `momentoDelTren`.
  *
- * Una décima: Raymer pide entre el 8 y el 15 % para un tren triciclo.
+ * Un palmo escaso: es una lámina de acero que se dobla, no un amortiguador
+ * de aceite, y lo que se ve en un fumigador parado es la rueda apenas
+ * aplastada contra el suelo. Repartido sobre la distancia de las principales
+ * a la de cola, son poco más de un grado de cabeceo.
  */
-const CARGA_EN_EL_MORRO = 0.1;
+const RECORRIDO_DE_LA_COLA = 0.1;
 
 /**
  * El amortiguamiento de la pata de morro, como fracción del crítico.
@@ -686,6 +690,21 @@ export class CoefficientFlightModel implements FlightModel {
      */
     if (initial.equilibrado && initial.airspeed > MIN_AIRSPEED)
       this.rotateAboutRight(this.alfaDeEquilibrio(initial.airspeed, initial.position.y));
+    /*
+     * **Y el de rueda de cola, puesto en el suelo despacio, en sus tres
+     * puntos**, que es como está parado. Se le coloca como a todos, con las
+     * principales a `gearHeight`; girarlo sobre ellas baja el centro y apoya
+     * la de cola. Sin esto nacía a nivel y se sentaba de golpe en el primer
+     * paso, y en el remolque, que lo recoloca en cada fotograma, no llegaba a
+     * sentarse nunca.
+     */
+    const tresPuntos = this.aircraft.actitudEnTresPuntos;
+    if (
+      tresPuntos !== undefined &&
+      alto <= this.aircraft.gearHeight + PEGADO_AL_SUELO &&
+      initial.airspeed < this.aircraft.rotationSpeed * 0.5
+    )
+      this.rotateAboutMainWheels(tresPuntos);
     s.rollRate = 0;
     s.pitchRate = 0;
     s.yawRate = 0;
@@ -833,17 +852,20 @@ export class CoefficientFlightModel implements FlightModel {
      * tren fuera, que a paso de rodaje casi no cuenta.
      */
     const alargamiento = (ac.wingSpan * ac.wingSpan) / ac.wingArea;
-    const cd =
-      ac.aero.cd0 +
-      (ac.aero.cl0 * ac.aero.cl0) / (Math.PI * alargamiento * ac.aero.oswald) +
-      resistenciaDelTren(ac, 1, 0);
     // La rodadura, sobre el peso que cargan las ruedas: el ala apoyada ya
-    // sostiene algo, como en `resolveGround`.
+    // sostiene algo, como en `resolveGround`. Y con la actitud con la que
+    // rueda: el de rueda de cola, en tres puntos, sustenta y frena más. Ver
+    // `actitudEnTierra`.
     const frenaA = (v: number): number => {
       const q = 0.5 * densidad * v * v * ac.wingArea;
+      const cl = ac.aero.cl0 + ac.aero.clAlpha * actitudEnTierra(ac, v);
+      const cd =
+        ac.aero.cd0 +
+        (cl * cl) / (Math.PI * alargamiento * ac.aero.oswald) +
+        resistenciaDelTren(ac, 1, 0);
       return (
         ROZAMIENTO[this.superficie] *
-          Math.max(0, masaDe(ac) * GRAVITY - q * ac.aero.cl0) +
+          Math.max(0, masaDe(ac) * GRAVITY - q * cl) +
         q * cd
       );
     };
@@ -1726,28 +1748,37 @@ export class CoefficientFlightModel implements FlightModel {
    * vencer ese par, y eso es exactamente lo que se hace al rotar: tirar a la
    * velocidad a la que el timón puede con él.
    *
-   * ## Las dos piezas
+   * ## Las piezas
    *
    * - **El peso** que todavía cargan las ruedas —el del avión menos lo que ya
    *   sostiene el ala— por el brazo que va del centro de gravedad a las
-   *   principales. Morro abajo, siempre que haya ruedas en el suelo.
-   * - **La pata de morro**, que empuja cuando toca y no tira nunca: cargada de
-   *   serie con ese mismo par —de modo que en reposo el avión queda a nivel,
-   *   que es la actitud en la que están dibujadas sus tres ruedas—, con muelle
-   *   para comprimirse y amortiguador para no rebotar. El muelle se elige para
-   *   que el doble de la carga de serie la lleve justo hasta el tope de
-   *   `minGroundPitch`, que es lo que se le admite a la pata.
+   *   principales. En un triciclo van detrás y es morro abajo; en el de rueda
+   *   de cola van delante y es morro arriba, que es por lo que se sienta.
+   * - **La pata de morro** del triciclo, que empuja cuando toca y no tira
+   *   nunca: cargada de serie con ese mismo par —de modo que en reposo el avión
+   *   queda a nivel, que es la actitud en la que están dibujadas sus tres
+   *   ruedas—, con muelle para comprimirse y amortiguador para no rebotar. El
+   *   muelle se elige para que el doble de la carga de serie la lleve justo
+   *   hasta el tope de `minGroundPitch`, que es lo que se le admite a la pata.
+   * - **La rueda de cola**, en el que la lleva: una ballesta que empieza a
+   *   cargar `RECORRIDO_DE_LA_COLA` antes de su actitud en tres puntos y llega
+   *   a ella con todo el peso encima. Parado, el avión descansa en sus tres
+   *   ruedas con el morro arriba; según el ala le quita peso, la ballesta se
+   *   estira, y cuando el aire de la cola puede más que lo que queda de peso,
+   *   la cola se levanta. Ver `actitudEnTresPuntos`.
    *
-   * El brazo sale de cuánto peso carga la rueda de morro: **un diez por
-   * ciento**. Raymer, *Aircraft Design: A Conceptual Approach*, capítulo 11,
-   * pide entre el 8 y el 15 % —menos, y no se gobierna; más, y el timón no
-   * levanta el morro— y el diez es el que lleva un avión de esta clase. Por la
-   * palanca, el brazo es esa fracción de la batalla.
+   * ## El brazo, el de su tren y no el de una regla
    *
-   * El biplano, que es de rueda de cola, se queda con la misma cuenta: su
-   * actitud en reposo también es la de su dibujo, y su batalla va de las
-   * principales a la de cola. No es su física exacta, pero no se levanta con
-   * el viento, que es lo que había que arreglar.
+   * Era una décima de la batalla para todos —la carga en el morro que Raymer
+   * pide a un triciclo, entre el 8 y el 15 %— y el biplano, de rueda de cola,
+   * hacía con ella de triciclo: descansaba a nivel con la rueda de cola casi
+   * un metro en el aire. Ahora es **la distancia del centro de gravedad al
+   * centro del tren principal**, `mainGearAft`, la de su dibujo, y con el
+   * cabeceo: la reacción del suelo sube por el punto en el que tocan las
+   * ruedas, y al levantar el morro ese punto se acerca a la vertical del
+   * centro —un `gearHeight·sen θ`— en el triciclo, y se aleja en el de rueda
+   * de cola. Es lo que hace que un avión largo rote cada vez más ligero, y que
+   * un patín de cola con la cola baja tire de ella hacia el suelo.
    */
   private momentoDelTren(sustentacion: number): number {
     const s = this.state;
@@ -1755,9 +1786,19 @@ export class CoefficientFlightModel implements FlightModel {
     const cabeceo = Math.asin(clamp(this.forward.y, -1, 1));
     const peso = masaDe(ac) * GRAVITY;
     const apoyado = Math.max(0, peso - sustentacion);
-    const brazo = ac.batalla * CARGA_EN_EL_MORRO;
-    let par = -apoyado * brazo;
-    if (cabeceo <= 0) {
+    let par = -apoyado * brazoDelTren(ac, cabeceo);
+    const tresPuntos = ac.actitudEnTresPuntos;
+    if (tresPuntos !== undefined) {
+      const recorrido = RECORRIDO_DE_LA_COLA / Math.max(1, ac.batalla);
+      const desde = tresPuntos - recorrido;
+      if (cabeceo > desde) {
+        const muelle = (peso * -brazoDelTren(ac, tresPuntos)) / recorrido;
+        const amortiguador =
+          2 * AMORTIGUA_LA_PATA * Math.sqrt(muelle * ac.inertia.yy);
+        par -= Math.max(0, muelle * (cabeceo - desde) + amortiguador * s.pitchRate);
+      }
+    } else if (cabeceo <= 0) {
+      const brazo = brazoDelTren(ac, 0);
       const muelle = (peso * brazo) / Math.max(0.002, -ac.minGroundPitch);
       const amortiguador =
         2 * AMORTIGUA_LA_PATA * Math.sqrt(muelle * ac.inertia.yy);

@@ -1651,7 +1651,7 @@ import type { Urgencia } from "./audio/boca";
 import { Agenda } from "./flight/agenda";
 import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
-import { alturaSobreLasRuedas } from "./flight/apoyo";
+import { actitudEnTierra, alturaSobreLasRuedas } from "./flight/apoyo";
 import {
   avisaLaPerdida,
   avisoDeActitud,
@@ -5960,6 +5960,7 @@ export class Game {
     aircraft: { wingSpan: 0, chord: 0, largo: 0, miraAlMorro: false },
     ojo: null as Contexto["ojo"],
     aLaVista: 0,
+    actitudEnTierra: 0,
     suelo: (x: number, z: number): number => this.terrain.sampleSurface(x, z),
     movimientoReducido: false,
     traqueteo: 1,
@@ -26643,6 +26644,9 @@ export class Game {
     ctx.aircraft.miraAlMorro = !!this.aircraft.helicoptero;
     ctx.ojo = this.aircraftMesh.ojo ?? null;
     ctx.aLaVista = this.adelantoDelSigueme;
+    // El de rueda de cola rueda con el morro arriba: la cámara de fuera lo
+    // descuenta. Ver `actitudEnTierra` en `cameras/tipos.ts`.
+    ctx.actitudEnTierra = state.onGround ? actitudEnTierra(this.aircraft, state.airspeed) : 0;
     ctx.movimientoReducido = this.reducedMotion;
     ctx.traqueteo = TRAQUETEO[this.superficie];
     ctx.pasaje = this.aircraftMesh.pasaje ?? null;

@@ -58,8 +58,10 @@ describe("el avión apoya en sus ruedas principales", () => {
   it("parado, a nivel y con las ruedas en el suelo, como siempre", () => {
     for (const a of AIRCRAFT) {
       expect(alturaSobreLasRuedas(a, 0), a.id).toBeCloseTo(a.gearHeight, 9);
-      // Las principales, por detrás del centro: si no, al rotar bajaría.
-      expect(a.mainWheelsAft, a.id).toBeGreaterThan(0);
+      // Las principales, por detrás del centro: si no, al rotar bajaría. Salvo
+      // en el de rueda de cola, que las lleva delante para sentarse en ella.
+      if (a.actitudEnTresPuntos === undefined) expect(a.mainWheelsAft, a.id).toBeGreaterThan(0);
+      else expect(a.mainWheelsAft, a.id).toBeLessThan(0);
     }
   });
 

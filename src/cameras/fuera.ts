@@ -12,6 +12,9 @@ import { Vector3, type PerspectiveCamera } from "three";
 import type { FlightState } from "../flight/model";
 import { fovConVelocidad, type CameraRig, type Contexto } from "./tipos";
 
+/** El eje transversal del avión, sobre el que cabecea. */
+const EJE_X = new Vector3(1, 0, 0);
+
 /** Lo deprisa que la posición alcanza la que se pide, 1/s. */
 const SUAVIZADO = 7;
 
@@ -279,6 +282,8 @@ export class CamaraDeFuera implements CameraRig {
      */
     if (this.sitio !== "morro")
       this.offset.z += ACCELERATION_LAG * Math.max(0, this.surge);
+    // Sin la actitud con la que rueda: ver `actitudEnTierra` en el contexto.
+    if (ctx.actitudEnTierra) this.offset.applyAxisAngle(EJE_X, -ctx.actitudEnTierra);
     this.offset.applyQuaternion(state.orientation);
     this.deseada.copy(state.position).add(this.offset);
     /*

@@ -79,6 +79,15 @@ export const DECIDIR = 2;
  * kg, que es lo que dicen a la vez su V2 publicada —169 nudos a su peso máximo,
  * 147 a éste— y la pista que pide Boeing a este peso. Ver `aircraft.ts` y el
  * ADR 0027. La comprueba `despegue-y-toma-del-manual.test.ts`.
+ *
+ * **Es la regla para el que no publica la suya.** El 787-9 lleva la Vr de su
+ * tipo, 172 nudos a 253.400 kg con los flaps a cinco (AAIB, *Bulletin*
+ * 11/2020), que a su peso son 150 donde esta regla daba 138: con la primera
+ * muesca de flaps de este modelo, que sustenta poco, 1,1 veces esa pérdida le
+ * pedía para irse del suelo más actitud de la que deja su cola. En el 747 la
+ * regla y su tipo dicen lo mismo: 164 nudos con flaps a diez y 708.002 lb
+ * (NTSB, AAR-72-17), 146 a su peso, y la regla, 145. Enmienda H10b del ADR
+ * 0027.
  */
 export const VR_SOBRE_LA_PERDIDA = 1.1;
 

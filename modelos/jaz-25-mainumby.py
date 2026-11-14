@@ -78,7 +78,20 @@ LE_BAJA = -0.95
 TREN = 1.70
 RUEDA = 0.36
 VIA = 1.40
-PRINCIPAL_Z = -0.82
+# **Las principales, por delante del centro de gravedad**, que es lo que
+# sienta en su rueda de cola a un avión de rueda atrás: el peso queda detrás
+# de ellas y baja la cola. Estaban 0,18 m por detrás, como en un triciclo, y
+# el avión parado descansaba a nivel con la rueda de cola casi un metro en el
+# aire. Ahora van 0,20 por delante del centro (`centro_de_gravedad`, abajo),
+# un palmo largo por delante del borde de ataque del plano de abajo. El
+# manual del Ag Cat da su margen de centrado pero no dónde van las ruedas, así
+# que la cifra es del dibujo. Ver `actitudEnTresPuntos` en
+# `src/flight/aircraft.ts`.
+PRINCIPAL_Z = -1.20
+# Y la rueda de cola, a la altura que deja los doce grados de tres puntos que
+# tenía el dibujo: 4,84 m por detrás de las principales y 1,03 más alta.
+COLA_Y = -0.52
+COLA_Z = 3.64
 
 SALIDA = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -327,10 +340,12 @@ def construir():
                           RUEDA, 0.20, simetria=True))
     # La rueda de cola, en su ballesta.
     piezas.append(varillas("pata-de-cola", [
-        ((0, -0.16, 3.40), (0, -0.52, 3.62), 0.03),
-        ((-0.05, -0.52, 3.62), (0.05, -0.52, 3.62), 0.015),
+        ((0, -0.16, 3.40), (0, COLA_Y + 0.08, COLA_Z - 0.02), 0.03),
+        ((-0.05, COLA_Y + 0.08, COLA_Z - 0.02), (0.05, COLA_Y + 0.08,
+                                                 COLA_Z - 0.02), 0.015),
     ], material_="detalle", lados=8))
-    piezas.append(neumaticos("rueda-de-cola", [(0, -0.60, 3.64)], 0.11, 0.07))
+    piezas.append(neumaticos("rueda-de-cola", [(0, COLA_Y, COLA_Z)], 0.11,
+                             0.07))
 
     # ── Hélice ────────────────────────────────────────────────────────────
     #

@@ -694,3 +694,198 @@ En la avioneta, como estaba: la bocina y la instructora en todos.
   y en los Boeing una precaución suena con el mismo pitido que AIRSPEED LOW.
   No era de este encargo.
 - **La toma «autopilot disconnect»** solo la usa ya el JAZ 60, y sin fuente.
+
+## Enmienda H10b (14-11-2026): el fumigador en su rueda de cola, el brazo de cada tren, y lo que tiene fuente del #188
+
+### El JAZ 25 se sienta en su rueda de cola (#187)
+
+H7c dejó el fumigador descansando a nivel, con la rueda de cola casi un metro
+en el aire: `momentoDelTren` lo trataba como a un triciclo, con una pata de
+morro que no tiene. Y no era solo la física: **su dibujo llevaba las ruedas
+principales 0,18 m por detrás del centro de gravedad**, como un triciclo, y un
+avión así no puede sentarse en la cola por mucho que se le cambie el suelo.
+
+Lo que se ha hecho:
+
+- **El dibujo** (`modelos/jaz-25-mainumby.py`) lleva las principales 0,20 m
+  **por delante** del centro, un palmo por delante del borde de ataque del
+  plano de abajo, y la rueda de cola a la altura que conserva los 12,0° de tres
+  puntos que tenía: 4,84 m por detrás de ellas y 1,03 más alta.
+- **La ficha** gana `actitudEnTresPuntos` y su `mainWheelsAft` pasa a −0,20.
+- **El modelo de vuelo**: con las principales delante, el peso que cargan es un
+  par de morro arriba, y la rueda de cola es una ballesta que carga en el
+  último décimo de metro —poco más de un grado— hasta su actitud en tres
+  puntos. Parado descansa ahí; según el ala le quita peso, la ballesta se
+  estira, y cuando el aire de la cola puede más que el peso que queda, la cola
+  se levanta. Al ponerlo en el suelo (`reset`) nace en tres puntos, también en
+  el remolque, que lo recoloca en cada fotograma.
+- **El modelo sencillo**, que no tiene momentos, rueda con `actitudEnTierra`:
+  tres puntos parado y la cola subiendo entre el 70 y el 85 % de su Vr, que es
+  lo que hace el de coeficientes con la palanca adelante.
+- **La cuenta del hangar** rueda con esa misma actitud (`carreraHastaVr` y
+  `sustentacionRodando`): con la cola en el suelo el ala sustenta más, frena
+  más con su inducida y le quita peso a las ruedas, que es por lo que frena
+  menos. Y lo mismo la cuenta del gas de rodaje (`gasParaRodar`).
+- **La cámara de fuera** descuenta esa actitud: rodando se pone detrás del
+  avión como con cualquier otro, y no por debajo de la cola mirando al cielo.
+  La de cabina no: desde el asiento de un avión de rueda de cola, en tres
+  puntos, el morro tapa la pista, y por eso se rueda haciendo eses.
+
+**Las fuentes**: el *Ag-Cat Pilot's Handbook* de Grumman American (1 de abril
+de 1977, G-164A/450 y /600, G-164B; hoja de tipo FAA 1A16), del expediente de
+la NTSB. Da su margen de centrado —de 122,0 a 125,4 pulgadas de un datum 99,1
+por delante del cortafuegos— pero **no dónde van las ruedas ni su actitud en
+tres puntos**, y la hoja de tipo no se ha podido abrir. Así que **los 12,0° y
+los 0,20 m son del dibujo, sin fuente del fabricante**, y lo dice la ficha.
+
+Lo que sí da el manual es cuándo se levanta la cola: «Raise Tail — 40 MPH».
+En el modelo, con la palanca adelante, la rueda de cola deja el suelo a 17,5
+m/s, **39 millas por hora**, y la cola va arriba a 20; con la palanca suelta
+no se levanta hasta 23,7 m/s, el 91 % de la Vr. No se ha ajustado nada para
+que salga: es lo que da su peso con las ruedas donde las pone el dibujo.
+
+Y da su despegue: el G-164A de 450 hp, a 4.500 lb, a nivel del mar y en día
+estándar, rueda 615 ft y pasa los cincuenta pies a 1.170. Es una proporción de
+1,90 que pasa a su `deRodarADespegar`, como la del Seneca; sin ella llevaba la
+de su clase, 1,8.
+
+Con todo, el hangar le pide 347 m para despegar y 529 para aterrizar, donde
+pedía 311 y 511. No cambia ningún veredicto.
+
+### El brazo de cada tren
+
+`momentoDelTren` usaba como brazo **una décima de la batalla** para todos, la
+carga de morro que pide Raymer a un triciclo. Ahora es la distancia del centro
+de gravedad al **centro del tren principal**, de su dibujo, y con el cabeceo
+—la reacción del suelo sube por el punto en el que tocan las ruedas, y al
+levantar el morro ese punto se acerca a la vertical del centro—
+(`brazoDelTren` en `flight/apoyo.ts`). En los de un eje por pata es
+`mainWheelsAft`; en el 787 y el 747, un campo nuevo, `mainGearAft`, porque
+apoyan en el eje de atrás y cargan en el centro de sus patas:
+
+| | Antes (1/10 de la batalla) | Ahora (su dibujo) | Peso en el morro |
+|---|---|---|---|
+| JAZ 20 | 0,17 m | 0,36 | 22 % |
+| JAZ 25 | 0,54, de triciclo | −0,20, delante | — |
+| JAZ 40 | 0,28 | 0,35 | 13 % |
+| JAZ 60 | 0,73 | 0,66 | 9 % |
+| JAZ 90 | 1,15 | 1,38 | 12 % |
+| JAZ 110 | 2,58 | 1,80, el centro del bogie | 7 % |
+| JAZ 120 | 2,56 | 1,87, entre las patas del ala y las de la panza | 7 % |
+
+No mueve la carrera hasta la Vr de ninguno —el par no frena ni empuja—, y en
+el banco de mesa, con el piloto que lleva la actitud, tampoco la distancia
+hasta los treinta y cinco o cincuenta pies. Lo que sí mueve es cuánto tarda en
+levantar el morro quien tira con la palanca fija: el E170 de
+`prestaciones.test.ts`, con 0,55 de palanca, tarda ahora 336 m en irse desde
+la Vr, un 51 % de lo que rueda hasta ella, y la prueba le da el 60 % que ya le
+daba al 1900D.
+
+### Las colas del JAZ 20, 40, 60 y 90
+
+Las cuatro eran números sin fuente, y las cuatro por debajo de donde su propio
+dibujo toca el suelo. No se ha encontrado la cifra de ningún fabricante: Cessna
+y Piper no la publican para sus avionetas, la del 1900D no aparece, y la del
+E170 estaría en su manual de planificación de aeropuertos, que Embraer no
+tiene en línea. Así que son **las de su dibujo, medidas y dichas como tal**: la
+actitud a la que, girando sobre las principales, lo más bajo de la cola llega
+al suelo, que es lo que comprueba `apoyo.test.ts`.
+
+| | Antes | Ahora, medido en su dibujo |
+|---|---|---|
+| JAZ 20 | 12° | 16,1° |
+| JAZ 40 | 11° | 19,7° |
+| JAZ 60 | 10° | 15,4° |
+| JAZ 90 | 9° | 14,2° |
+
+El #187 daba 16,6° para el JAZ 60: era el dibujo de antes. Si el suyo cambia,
+la prueba del dibujo lo dirá.
+
+**No era la cola lo que alargaba el despegue volado del E170**: con 14,2° se
+sigue yendo del suelo a 8,1° y despega volando un 17,6 % más largo que la
+cuenta, como con los 9°. Lo que le falta está en el aire, y no estaba en este
+encargo.
+
+### Lo del #188, cada cosa con su fuente
+
+**El 787-9 despega con la Vr de su tipo.** La AAIB (*Bulletin* 11/2020,
+VH-ZND) da los flaps a cinco y «VR was 172 kt» con 253.400 kg. Con la raíz de
+la masa, a los 192.776 kg de la ficha son **150 nudos**, donde la regla de 1,1
+veces la pérdida daba 138; la V1 sube en la misma proporción, de 129 a 140.
+
+| JAZ 110 | Antes | Ahora |
+|---|---|---|
+| Volado hasta los 35 ft, contra la cuenta | +10,2 % | +1,7 % |
+| Se va del suelo a | 9,0° | 7,7° (AAIB: «between 6° and 7.5°») |
+| El hangar pide | 1.544 m | 1.826 (Boeing, 1.800) |
+
+El hangar pide ahora 1.826 m contra los 1.800 de la gráfica de Boeing, un 1,4 %
+por encima de un techo leído en una gráfica; la prueba lo admite hasta el 3 %.
+**Ningún veredicto cambia**: en Pedro Juan Caballero, que tiene 1.800 m, el 787
+seguía sin caber por los bomberos y ahora tampoco por la pista.
+
+La regla de 1,1 se queda donde no hay cifra del tipo, el E170. En el 747 la
+confirma una fuente nueva: la NTSB (AAR-72-17, Pan Am 845, 1972) da al 747-121
+con flaps a diez y 708.002 lb una Vr de 164 nudos, que a la masa de la ficha
+son 146; la regla da 145. Y el CL máximo de despegue de Jenkinson, 2,03 en el
+747-100 (y 2,06 en el -200), queda confirmado en su fichero de datos A, tabla
+3. **La sustentación de la primera muesca no se ha tocado**: es una recta con
+la palanca para todos los aviones, y es lo que queda entre los 7,7° del 787 del
+modelo y los 6–7,5° del de verdad.
+
+**La toma del 747 y del 787: no hay cifra publicada de su tramo en el aire.**
+Lo que sí hay son las reglas con las que se cuenta:
+
+- FAA AC 25-32, §8.2.4: «7 seconds at a speed of 98 percent of» VAPP. Es para
+  la evaluación a la llegada, no para la distancia certificada, y daría más,
+  no menos: 529 m a 150 nudos.
+- AC 25-32, §8.2.2: la certificada puede contarse con una aproximación de
+  −3,5° y una enderezada que toque a 8 ft/s, o sea **más corta** que los tres
+  grados del modelo. Los 5,6 s que salen de sus manuales no son, por tanto, un
+  aire más largo.
+- FAA AC 91-79A Chg 2, figura 1: la distancia del manual de vuelo cuenta,
+  entre tocar y el primer dispositivo de frenada, «the longer of 1 second or
+  the test time», y otro tanto para cada dispositivo que siga. **Eso es lo que
+  falta**: un segundo a la velocidad de toma son unos 70 m en los dos, la mitad
+  de los ~134 que separan el modelo de su manual.
+
+No se ha puesto: vale para todos los de la norma de transporte, y en el E170,
+que ya aterriza entre un 7 y un 11 % largo, lo alargaría hasta un 20 %. Su
+frenada se calibró sin ese segundo y con una Vref sin fuente; meter el segundo
+pide recalibrarla con la Vref de Embraer, que sigue sin aparecer.
+
+**La Vref del E170: no se ha encontrado.** La NTSB (AAR-08/01, N862RW) da su
+masa al aterrizar, 69.186 lb, pero no la Vref; el BEA (F-HBXI, 2024), la
+velocidad seleccionada con flaps FULL, 125 nudos, pero no la masa. No se toca.
+
+**El Seneca: la cifra de la carrera está, la hélice no.** Los 870 ft (265 m)
+de carrera a 4.570 lb ya eran los de la tabla de la Grumman Owners and Pilots
+Association; el manual de Piper no se ha podido leer. Lo que hay ahora es lo
+que haría falta para su modelo de hélice: 200 hp a 2.575 rpm por motor (hoja
+de Continental, TSIO-360-EB) y una Hartzell de dos palas y 76 pulgadas (la de
+su tipo, según Hartzell). Con ellas, la teoría de cantidad de movimiento con
+una figura de mérito de 0,7 da unos 4,3 kN de empuje estático por motor, 8,6
+los dos, donde la recta del modelo empieza en 5. **No se ha puesto**: con esa
+recta están calibradas su Vmc, su subida y su crucero, y cambiar su forma es el
+modelo de la hélice de su propio ADR.
+
+### Lo que no
+
+- **El chorro de la hélice sobre la cola**, que en el de verdad levanta la cola
+  del fumigador antes —el manual dice 40 millas— y que el modelo no tiene.
+- La toma del 747 y del 787 sigue un 12 % corta y la del E170 un 7–11 % larga,
+  por lo de arriba.
+- **El despegue volado del JAZ 25.** Rueda hasta la Vr lo que la cuenta, al
+  2 %, y frena lo que la cuenta; pero de la Vr a los cincuenta pies vuela unos
+  220 m donde la proporción del Ag Cat da 125, y despega volando un 39 % más
+  largo que el hangar. Sigue fuera de esa prueba, ahora con este porqué.
+- **El despegue volado del E170**, un 17,6 % largo, que no era la cola.
+- **El banco del vuelo entero no vuela el JAZ 25 en Tukã**: el reloj del juego
+  se para a los dos segundos y medio en el puesto de Tenerife Norte y no
+  arranca. Pasa igual en `main` sin esta enmienda, así que no es de ella; no
+  se ha mirado por qué.
+- **Y en ese puesto mide su dibujo 0,13 m dentro del asfalto**, donde en
+  `main`, a nivel, mide 0,01. El modelo de vuelo lo apoya a 12,01° y la rueda
+  de cola del dibujo toca a 12,00°, así que no es la actitud; medir la
+  pendiente del dibujo entre sus ruedas, y no a caballo del centro, no lo
+  cambió. Queda por encontrar.

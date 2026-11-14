@@ -35,12 +35,22 @@ describe("la pista que hace falta", () => {
      * tiene que seguir ese mismo orden. Si algún día no lo sigue, es que una
      * ficha se ha escrito con un empuje o un peso que no pega con los demás —y
      * eso vale más cazarlo aquí que jugando.
+     *
+     * **Menos entre los dos de fuselaje ancho**, que ruedan casi lo mismo: el
+     * 747 de la ficha pesa su máximo al aterrizar, y el 787 rota a la Vr de su
+     * tipo, 150 nudos a su peso (enmienda H10b del ADR 0027). Rueda hasta ella
+     * 1.098 m y el 747 hasta la suya, 1.074. Es lo que dicen también sus
+     * fabricantes a esas masas: 1.800 m de pista el 787 y unos 1.710 el 747.
+     * Entre ellos se pide que no se separen más de un 5 %.
      */
-    const carreras = AIRCRAFT.filter((a) => a.id !== "jaz-25").map((a) =>
-      carreraHastaVr(a),
-    );
-    for (let i = 1; i < carreras.length; i++)
-      expect(carreras[i]!).toBeGreaterThan(carreras[i - 1]!);
+    const flota = AIRCRAFT.filter((a) => a.id !== "jaz-25" && !a.helicoptero);
+    const carreras = flota.map((a) => carreraHastaVr(a));
+    const anchos = new Set(["jaz-110", "jaz-120"]);
+    for (let i = 1; i < carreras.length; i++) {
+      if (anchos.has(flota[i]!.id) && anchos.has(flota[i - 1]!.id))
+        expect(Math.abs(carreras[i]! / carreras[i - 1]! - 1)).toBeLessThan(0.05);
+      else expect(carreras[i]!, flota[i]!.id).toBeGreaterThan(carreras[i - 1]!);
+    }
   });
 
   it("le da al entrenador los mismos metros de siempre", () => {

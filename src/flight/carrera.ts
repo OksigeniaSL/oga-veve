@@ -34,6 +34,7 @@ import {
   velocidadSinEmpuje,
   type AircraftConfig,
 } from "./aircraft";
+import { actitudEnTierra } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
 import { acelerarYParar, vmc } from "./velocidades-de-despegue";
 import { esDeLinea } from "./velocidades-en-tierra";
@@ -91,13 +92,10 @@ export function carreraHastaVr(
   // más y necesita más pista. Ver `masaDe`.
   const masa = masaDe(a);
   const peso = masa * G;
-  const cl = a.aero.cl0;
   // Rodando, el tren va fuera: el `cd0` de la ficha es el del avión limpio.
   // Ver `resistenciaDelTren`.
-  const cd =
-    a.aero.cd0 +
-    resistenciaDelTren(a, 1) +
-    (cl * cl) / (Math.PI * alargamiento * a.aero.oswald);
+  const delTren = a.aero.cd0 + resistenciaDelTren(a, 1);
+  const inducida = Math.PI * alargamiento * a.aero.oswald;
   const mu = ROZAMIENTO[superficie];
   const sigma = Math.max(0.05, densidad / RHO);
   const motor = loQueDaElMotor(a, sigma);
@@ -113,6 +111,13 @@ export function carreraHastaVr(
     // Respecto al aire; con viento de cola, al principio el aire empuja.
     const aire = v + vientoDeFrente;
     const q = 0.5 * densidad * aire * Math.abs(aire) * a.wingArea;
+    /*
+     * El ala, con la actitud con la que rueda: a nivel en un triciclo; en el
+     * de rueda de cola, en tres puntos hasta que la cola se levanta, que
+     * sustenta más y frena más con su inducida. Ver `actitudEnTierra`.
+     */
+    const cl = a.aero.cl0 + a.aero.clAlpha * actitudEnTierra(a, Math.max(0, aire));
+    const cd = delTren + (cl * cl) / inducida;
     const sustenta = Math.max(0, q) * cl;
     const empuje =
       a.maxThrust * motor * Math.max(0.2, 1 - Math.max(0, aire) / velocidadSinEmpuje(a));

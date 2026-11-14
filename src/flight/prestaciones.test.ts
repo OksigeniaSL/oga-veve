@@ -106,6 +106,7 @@ import {
  */
 const TODOS = [...AIRCRAFT, ...RESERVADOS];
 import { neutralControls } from "./model";
+import { actitudEnTierra, palancaParaRodar } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 import { perdidaCon } from "./velocidades-de-despegue";
@@ -695,6 +696,7 @@ function carreraDeDespegue(
   for (let k = 0; k < Math.round(120 / DT); k++) {
     antes.copy(m.state.position);
     const v = m.state.airspeed;
+    const cabeceo = Math.asin(new Vector3(0, 0, -1).applyQuaternion(m.state.orientation).y);
     m.step(DT, {
       ...neutralControls(),
       engineOn: true,
@@ -702,8 +704,9 @@ function carreraDeDespegue(
       // Con los flaps de despegue, que es como se despega: con la Vr de su
       // peso, un reactor sin ellos no se va del suelo hasta mucho después.
       flaps: flapsDeDespegue(a),
-      // Se tira al llegar a Vr, que es lo que hace quien pilota.
-      elevator: v >= a.rotationSpeed ? 0.55 : 0,
+      // Se tira al llegar a Vr, que es lo que hace quien pilota; antes, el de
+      // rueda de cola levanta la cola según corre (`palancaParaRodar`).
+      elevator: v >= a.rotationSpeed ? 0.55 : palancaParaRodar(a, v, cabeceo, m.state.pitchRate),
     });
     if (!m.state.onGround) break;
     const paso = Math.hypot(
@@ -727,12 +730,6 @@ function carreraDeDespegue(
 function carreraTeorica(a: AircraftConfig, superficie: Superficie): number {
   const AR = (a.wingSpan * a.wingSpan) / a.wingArea;
   const peso = a.mass * G;
-  const cl = a.aero.cl0;
-  // Con el tren fuera, que es como se rueda. Ver `resistenciaDelTren`.
-  const cd =
-    a.aero.cd0 +
-    resistenciaDelTren(a, 1) +
-    (cl * cl) / (Math.PI * AR * a.aero.oswald);
   const mu = ROZAMIENTO[superficie];
   const pasos = 4000;
   const dv = a.rotationSpeed / pasos;
@@ -740,6 +737,13 @@ function carreraTeorica(a: AircraftConfig, superficie: Superficie): number {
   for (let i = 0; i < pasos; i++) {
     const v = (i + 0.5) * dv;
     const q = 0.5 * RHO * v * v * a.wingArea;
+    // El ala con la actitud con la que rueda: ver `actitudEnTierra`. Y con el
+    // tren fuera, que es como se rueda. Ver `resistenciaDelTren`.
+    const cl = a.aero.cl0 + a.aero.clAlpha * actitudEnTierra(a, v);
+    const cd =
+      a.aero.cd0 +
+      resistenciaDelTren(a, 1) +
+      (cl * cl) / (Math.PI * AR * a.aero.oswald);
     // La recta de la ficha: con `heliceSinEmpujeA`, la suya, y sin ella, 2,4
     // veces el crucero. Ver `velocidadSinEmpuje`.
     const empuje = a.maxThrust * Math.max(0.2, 1 - v / velocidadSinEmpuje(a));
@@ -797,7 +801,14 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
        * la Vr, como el de verdad —102 nudos de Vr y 108 de V2 a 16.000 lb,
        * TSB A97C0229—, unos cuatro segundos y medio después de rotar.
        */
-      expect(rotacion).toBeLessThan(hastaVr * (a.id === "jaz-60" ? 0.6 : 0.5));
+      /*
+       * Y en el E170, que con esta palanca fija tarda en levantar el morro: desde
+       * la enmienda H10b el peso le carga con el brazo de su tren, 1,38 m —un 12
+       * % del peso en la de morro—, y no con la décima de la batalla de antes,
+       * 1,15. El banco que lleva la actitud, `despegue-y-toma-del-manual.test.ts`,
+       * lo despega en la misma distancia que antes.
+       */
+      expect(rotacion).toBeLessThan(hastaVr * (a.id === "jaz-60" || a.id === "jaz-90" ? 0.6 : 0.5));
       // Y se va por encima de Vr, nunca por debajo.
       expect(seVaA).toBeGreaterThanOrEqual(a.rotationSpeed);
     });
