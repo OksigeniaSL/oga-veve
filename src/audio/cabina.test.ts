@@ -357,6 +357,13 @@ describe("los avisos de a bordo de cada tipo", () => {
     expect(loQueSuenaEnEsteAvion("cabina.airspeedLow", ARASUNU)).toBeNull();
   });
 
+  it("el motor parado: el pitido de precaución en los Boeing, la campanada donde no hay fuente", () => {
+    // ENG FAIL es una precaución de EICAS en el 747-400 y en el 787 (JTSB,
+    // AI2020-2), y una precaución suena con el pitido. ADR 0027, enmienda H10e.
+    for (const a of [YVAGA, TIJERETA]) expect(a.avisosDeABordo?.motorParado).toBe("pitido");
+    for (const a of [ARAI, ARASUNU]) expect(a.avisosDeABordo?.motorParado).toBe("campanada");
+  });
+
   it("en la avioneta no hay caja: lo dice la instructora", () => {
     for (const a of [PYKASU, PANAMBI])
       for (const clave of Object.keys(DE_A_BORDO)) {

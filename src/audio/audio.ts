@@ -194,7 +194,9 @@ export type Cue =
   | "mision"
   /**
    * La campanada de precaución de una cabina de pantallas: un motor parado.
-   * Solo en los aviones que la llevan. Ver `Game.fallaUnMotor`.
+   * Solo en los aviones que la llevan, y no en los Boeing, que lo avisan con
+   * su pitido de precaución. Ver `fallaElMotor` en `game.ts` y `motorParado`
+   * en `AvisosDeABordo`.
    */
   | "precaucion"
   /*

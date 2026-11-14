@@ -1220,6 +1220,7 @@ import {
   esTonoDeABordo,
   loDiceElAvion,
   loQueSuenaEnEsteAvion,
+  TONO_DE_A_BORDO,
   VOZ_DEL_RA,
 } from "./audio/cabina";
 import { VozDeLaMaquina } from "./audio/maquina";
@@ -22355,7 +22356,17 @@ export class Game {
     this.flight.pararMotor?.(motor);
     const conPantallas = familiaDe(this.aircraft) !== "esferas";
     if (conPantallas) {
-      this.avisar("precaucion");
+      /*
+       * Como suena en su tipo, en los cuatro peldaños: el pitido de
+       * precaución en los Boeing, por la voz de la máquina como su AIRSPEED
+       * LOW, y la campanada larga donde no se ha encontrado otra cosa. Dura
+       * lo mismo que la campanada, así que lo que se dice sigue yendo detrás.
+       * Ver `motorParado` en `AvisosDeABordo` y el ADR 0027, enmienda H10e.
+       */
+      if (avisosDeABordo(this.aircraft).motorParado === "pitido") {
+        const como = this.maquina.decir(TONO_DE_A_BORDO.pitido);
+        this.apuntarCanto(`motor parado→máquina(${TONO_DE_A_BORDO.pitido}): ${como}`);
+      } else this.avisar("precaucion");
       this.mensajesDeMotor = listaDelMotor(this.aircraft, motor, false).slice(
         0,
         1,
@@ -22403,14 +22414,19 @@ export class Game {
    * **La velocidad de un motor**: la V2 en los de transporte y la línea azul
    * en el bimotor de pistón, con su número donde se leen números. Ver
    * `conUnMotor`.
+   *
+   * La de la tarjeta de este despegue, `velocidadesDeHoy`, si se contó: la
+   * misma cifra que lleva el banco. Se pedía con la palanca de flaps de ese
+   * momento, y cada palanca daba otra V2 (enmienda H10e del ADR 0027).
    */
   private pedirLaVelocidadDeUnMotor(): void {
-    const u = conUnMotor(this.avionConPeso(), this.input.controls.flaps);
+    const u = conUnMotor(this.avionConPeso());
+    const velocidad = this.velocidadesDeHoy?.v2 ?? u.velocidad;
     const unidades = UNIT_SYSTEMS[this.tier.units];
     const dicho = this.avisoCon("ejercicio.velocidad", "palabra.practica");
     const rotulo =
       canalesDe(this.tier.avisos).cifra && dicho.rotulo
-        ? `${u.nombre} ${Math.round(unidades.speed(u.velocidad))} ${unidades.speedLabel()} · ${dicho.rotulo}`
+        ? `${u.nombre} ${Math.round(unidades.speed(velocidad))} ${unidades.speedLabel()} · ${dicho.rotulo}`
         : dicho.rotulo;
     this.hud.senal.mostrar("velocidad", rotulo, null, {
       segundos: 8,
@@ -29338,8 +29354,10 @@ export class Game {
       v = { kt: Math.round(vrefKt(this.aircraft) + 5), mach: null, tramo: "final", peldano: "final" };
     } else if (s.onGround) {
       /*
-       * En tierra, la de la subida inicial: la Vr y veinte nudos, que es la V2
-       * y el margen con que se sale. Es la que se lleva puesta al despegar.
+       * En tierra, la de la subida inicial: la Vr y veinte nudos, la de subir
+       * con todos los motores. En los de transporte cae de once a veinte nudos
+       * por encima de su V2 (`conUnMotor`), que es la de uno parado. Es la que
+       * se lleva puesta al despegar.
        */
       v = {
         kt: Math.round(this.aircraft.rotationSpeed / NUDO + 20),

@@ -13,12 +13,24 @@
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { CoefficientFlightModel } from "./fdm";
-import { AIRCRAFT, ARAI, PYKASU, type AircraftConfig } from "./aircraft";
+import {
+  AIRCRAFT,
+  ARAI,
+  ARASUNU,
+  PYKASU,
+  YVAGA,
+  conMasa,
+  type AircraftConfig,
+} from "./aircraft";
+import { flapsDeDespegue } from "./flaps";
 import { NO_ASSISTS } from "./assists";
 import { neutralControls, type ControlInputs } from "./model";
 import { motorCritico, parDeLosMotores } from "./motores";
 import {
+  V2_SOBRE_LA_PERDIDA,
+  V2_SOBRE_LA_VMC,
   conUnMotor,
+  perdidaCon,
   velocidadesDeDespegue,
   vmc,
 } from "./velocidades-de-despegue";
@@ -398,4 +410,52 @@ describe("sin motores se planea a la velocidad de mejor planeo", () => {
       expect(fineza(a, planeo.velocidad * 1.35)).toBeLessThan(alli);
     });
   }
+});
+
+/*
+ * **La V2, la de sus flaps de despegue** (ADR 0027, enmienda H10e). Salía de
+ * la pérdida sin flaps en toda la flota: 118 nudos en el 1900D, donde su
+ * manual da 108.
+ */
+describe("la V2, la de sus flaps de despegue", () => {
+  const NUDO = 0.514444;
+  const DE_TRANSPORTE = AIRCRAFT.filter(
+    (a) => a.sound.engine !== "piston" && a.motoresA.length > 1,
+  );
+
+  it("el 1900D lleva la de su manual: 108 nudos a 16.000 lb, con la raíz de la masa", () => {
+    const aSuMasa = 108 * Math.sqrt(ARASUNU.mass / (16000 * 0.45359237));
+    expect(conUnMotor(ARASUNU).velocidad / NUDO).toBeCloseTo(aSuMasa, 1);
+    const pesado = conMasa(ARASUNU, ARASUNU.mass * 1.1);
+    expect(conUnMotor(pesado).velocidad / NUDO).toBeCloseTo(aSuMasa * Math.sqrt(1.1), 1);
+  });
+
+  for (const a of DE_TRANSPORTE)
+    it(`${a.id}: nunca por debajo de 1,13 veces su pérdida con los flaps de despegue, de 1,1 veces su Vmc ni de su Vr`, () => {
+      const v2 = conUnMotor(a).velocidad;
+      expect(v2).toBeGreaterThanOrEqual(perdidaCon(a, flapsDeDespegue(a)) * V2_SOBRE_LA_PERDIDA - 1e-9);
+      expect(v2).toBeGreaterThanOrEqual((vmc(a) ?? 0) * V2_SOBRE_LA_VMC - 1e-9);
+      expect(v2).toBeGreaterThanOrEqual(a.rotationSpeed - 1e-9);
+      // Y por debajo de la que salía de la pérdida sin flaps.
+      expect(v2).toBeLessThan(perdidaCon(a) * 1.2);
+    });
+
+  it("el E170, sin cifra de su tipo, en el suelo de la norma", () => {
+    expect(conUnMotor(ARAI).velocidad).toBeCloseTo(
+      perdidaCon(ARAI, flapsDeDespegue(ARAI)) * V2_SOBRE_LA_PERDIDA,
+      6,
+    );
+  });
+
+  it("el 747 no baja a la de su tipo, 146,6 nudos: la Vmc del modelo pide más", () => {
+    expect(YVAGA.takeoffSafetySpeed! / NUDO).toBeCloseTo(146.6, 1);
+    expect(conUnMotor(YVAGA).velocidad).toBeCloseTo(vmc(YVAGA)! * V2_SOBRE_LA_VMC, 6);
+  });
+
+  it("la de la tarjeta no depende de la palanca con la que se cuenta la V1", () => {
+    for (const a of DE_TRANSPORTE)
+      expect(velocidadesDeDespegue(a, 3000, undefined, 1).v2).toBe(
+        velocidadesDeDespegue(a, 3000).v2,
+      );
+  });
 });

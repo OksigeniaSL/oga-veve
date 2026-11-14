@@ -640,18 +640,28 @@ export interface AvisosDeABordo {
    * Boeing, o sin aviso sonoro (`null`).
    */
   readonly automatico: "autopilot disconnect" | "autopilot" | "sirena" | null;
+  /**
+   * **El motor parado**, en los que tienen pantallas: con el pitido de
+   * precaución de Boeing, que es el de su mensaje ámbar ENG FAIL, o con la
+   * campanada larga del juego donde no se ha encontrado cómo suena. En el
+   * bimotor de pistón no suena nada —no tiene con qué—: ver `fallaElMotor` en
+   * `game.ts` y el ADR 0027, enmienda H10e.
+   */
+  readonly motorParado: "pitido" | "campanada";
 }
 
 /**
  * Lo que suena en el avión que no lleva `avisosDeABordo` en su ficha: la
  * bocina de pérdida de una avioneta y nada más. Es la de los que no tienen
  * cajas que hablen —ver `avisosHablados`—, y en ellos lo demás lo dice la
- * instructora, sentada al lado.
+ * instructora, sentada al lado. La campanada del motor parado solo suena
+ * donde hay pantallas, y de éstos solo las tiene el helicóptero.
  */
 export const AVISOS_DE_UNA_AVIONETA: AvisosDeABordo = {
   perdida: { suena: "bocina", voz: false },
   velocidadBaja: null,
   automatico: null,
+  motorParado: "campanada",
 };
 
 /** Cómo suenan los avisos de a bordo de este avión. Ver `AvisosDeABordo`. */
@@ -1226,6 +1236,15 @@ export interface AircraftConfig {
    * pasa el punto de no retorno y enseguida se rota.
    */
   rotationSpeed: number;
+  /**
+   * **La V2 que publica su tipo**, m/s indicados, a la masa de la ficha
+   * (`mass`), con sus flaps de despegue. Solo en los que tienen una cifra con
+   * su masa y su fuente; con otro peso va con la raíz de la masa, como la Vr.
+   * En los demás sale de su norma, y en todos nunca baja de los suelos de la
+   * norma con el avión del modelo. Ver `conUnMotor` y el ADR 0027, enmienda
+   * H10e.
+   */
+  takeoffSafetySpeed?: number;
   /**
    * **De la rodadura a la distancia de despegue**, la de su manual, si lo
    * publica con las dos cifras al lado. Sin ella, la de su clase: ver
@@ -2109,9 +2128,13 @@ const MASA_DEL_ARASUNU = 6572 + 724;
  * manual. Pero el 1900D despega con 17,5°, que sustentan más: la regla da ahora
  * 98,6 nudos a la masa de la ficha. Esa regla es un suelo —no menos de 1,1
  * veces la VMU, 14 CFR 23.51 c—, y el manual rota más arriba, así que manda
- * el manual. Lo que la regla sí cuadra es su V2: 1,2 veces la pérdida con
- * 17,5° (14 CFR 23.57) da 107,6 nudos en el modelo, y su manual, 108 a 16.000
- * lb. O sea: el ala con sus 17,5° sustenta lo que la del 1900D.
+ * el manual.
+ *
+ * - **V2, también la de su manual**: 108 nudos a 16.000 lb, del mismo informe,
+ *   que a la masa de la ficha son 108,3. El suelo de la norma con la pérdida a
+ *   un g del modelo y sus 17,5°, 1,13 veces, da 101,3: su manual elige más,
+ *   que es lo que hace un bimotor de cercanías para subir con un motor. La
+ *   enseñaba en 118, de la pérdida sin flaps (enmienda H10e del ADR 0027).
  *
  * Eran 101,5 y 99,5, de la regla con los diez grados que no tiene; y antes
  * 80, 74 y 93 nudos, con el ala y el peso del Twin Otter.
@@ -2119,6 +2142,7 @@ const MASA_DEL_ARASUNU = 6572 + 724;
 const VELOCIDADES_DEL_ARASUNU = {
   vr: 102 * Math.sqrt(MASA_DEL_ARASUNU / (16000 * 0.45359237)) * 0.514444,
   v1: 100 * Math.sqrt(MASA_DEL_ARASUNU / (16000 * 0.45359237)) * 0.514444,
+  v2: 108 * Math.sqrt(MASA_DEL_ARASUNU / (16000 * 0.45359237)) * 0.514444,
   vref: 107.7 * 0.514444,
 } as const;
 
@@ -2268,11 +2292,16 @@ export const ARASUNU: AircraftConfig = {
    * y no todos lo llevan («The accident airplane was not equipped with an
    * autopilot», AAR-04/01, p. 15). Se queda la voz que ya tenía, como
    * supuesto: ADR 0027, enmienda H10a.
+   *
+   * **El motor parado, como estaba y sin fuente**: el 1900D no lleva EICAS
+   * sino un panel de avisadores, y no se ha encontrado si una parada de motor
+   * suena ni cómo. Se queda la campanada larga (enmienda H10e).
    */
   avisosDeABordo: {
     perdida: { suena: "bocina", voz: false },
     velocidadBaja: null,
     automatico: "autopilot disconnect",
+    motorParado: "campanada",
   },
   /*
    * **Solo *five hundred*, y solo sin ILS delante**: lo único que se puede
@@ -2336,6 +2365,7 @@ export const ARASUNU: AircraftConfig = {
   velocidadDeCircuito: 130 * 0.514444,
   decisionSpeed: VELOCIDADES_DEL_ARASUNU.v1,
   rotationSpeed: VELOCIDADES_DEL_ARASUNU.vr,
+  takeoffSafetySpeed: VELOCIDADES_DEL_ARASUNU.v2,
   // 23 ft 9,35 in, en la vista en tres planos del TAR 98/07.
   batalla: 7.25,
   // Del eje del fuselaje al suelo, como en su modelo: la punta de la pala a
@@ -2629,11 +2659,18 @@ export const ARAI: AircraftConfig = {
    * llamadas es el de quien vuela—, así que se queda el «stall, stall» que
    * tenía, como supuesto. Lo mismo el *airspeed low*: sin fuente, como
    * estaba. ADR 0027, enmienda H10a.
+   *
+   * **El motor parado, una precaución**: «EICAS amber FAIL on N1» y su lista,
+   * «QRH EAP "ENG FAIL"» (C. Regli, *Embraer EMB190 – Summary*, 2025, p.
+   * 2-29; la familia comparte cabina). Con qué suena una
+   * precaución en un E-Jet no se ha encontrado: se queda la campanada larga
+   * (enmienda H10e).
    */
   avisosDeABordo: {
     perdida: { suena: "sacudidor", voz: true },
     velocidadBaja: "voz",
     automatico: "autopilot",
+    motorParado: "campanada",
   },
   /*
    * **La de los E-Jets, sin cuatrocientos ni trescientos**: «RA calls: 2500,
@@ -2712,6 +2749,11 @@ export const ARAI: AircraftConfig = {
    * ficha (hoja de especificaciones del E170). Con 133 pide 1.124, la de abortar
    * desde su V1 (`acelerarYPararDeSuNorma`). La V1 baja en la misma proporción,
    * de 140 a 123 (H7, 13-11-2026).
+   *
+   * **Sin V2 de su tipo** con su masa: sale de su norma (`conUnMotor`), 1,13
+   * veces su pérdida con los flaps de despegue, 136,6 nudos, tres y medio por
+   * encima de su Vr. Un E175, con la misma ala y flaps 1, sale con la V2 dos
+   * nudos por encima de la Vr (AAIB, G-FBJK, *Bulletin* 6/2019): enmienda H10e.
    */
   decisionSpeed: 123 * 0.514444,
   rotationSpeed: 133 * 0.514444,
@@ -2988,11 +3030,20 @@ export const YVAGA: AircraftConfig = {
    *   747. Ver `audio/tonos-de-aviso.ts`.
    *
    * Decían los tres con voz. ADR 0027, enmienda H10a.
+   *
+   * - **El motor parado, el mismo pitido**: ENG 1, 2, 3, 4 FAIL es una
+   *   precaución de EICAS, y una precaución suena con el pitido (15.20.6).
+   *   Que ese mensaje es una precaución con su pitido lo dice el FCOM citado
+   *   en un foro de pilotos («The ENG 1, 2, 3, 4 FAIL EICAS Caution and it's
+   *   associated beeper…», PPRuNe, *B744 engine fail EICAS*, 2012), y es lo
+   *   que dice de su ENG FAIL el 787, de la misma casa (JTSB, AI2020-2). Era
+   *   la campanada larga de todos (enmienda H10e).
    */
   avisosDeABordo: {
     perdida: { suena: "sacudidor", voz: false },
     velocidadBaja: "pitido",
     automatico: "sirena",
+    motorParado: "pitido",
   },
   /*
    * **La de un 747-400 de verdad**, oída en su cabina: la transcripción del
@@ -3067,6 +3118,15 @@ export const YVAGA: AircraftConfig = {
    */
   decisionSpeed: 140 * 0.514444,
   rotationSpeed: 145 * 0.514444,
+  /*
+   * **La V2 de su tipo**: la de Jenkinson de arriba, 169 nudos a 340.195 kg,
+   * que a la masa de la ficha son 146,6. **No es la que enseña**: la V2 no
+   * puede bajar de 1,1 veces la Vmc (CS 25.107 b), y la del modelo, 139,5,
+   * pide 153,5. Esa V2 publicada dice que la VMCA del 747 de verdad no pasa
+   * de 133 nudos; la del modelo queda por revisar (enmienda H10e del ADR
+   * 0027).
+   */
+  takeoffSafetySpeed: 169 * Math.sqrt(255826 / 340195) * 0.514444,
   batalla: 25.6,
   // 5,9: la panza a dos metros y medio largos y los motores de dentro a casi
   // un metro del suelo, como en un avión de esta clase. Con 5,2 las ruedas
@@ -3323,11 +3383,17 @@ export const TIJERETA: AircraftConfig = {
    * - **El automático, la sirena**: «AUTOPILOT DISC Warning Siren» (4.30.1).
    *
    * Decían los tres con voz. ADR 0027, enmienda H10a.
+   *
+   * - **El motor parado, el pitido de precaución**: «"ENG FAIL L" and "ENG
+   *   FAIL R" (Caution message)», en el informe de la JTSB sobre el 787-8
+   *   VH-VKJ (AI2020-2, p. 5), y una precaución suena con el pitido (15.20).
+   *   Era la campanada larga de todos (enmienda H10e).
    */
   avisosDeABordo: {
     perdida: { suena: "sacudidor", voz: false },
     velocidadBaja: "pitido",
     automatico: "sirena",
+    motorParado: "pitido",
   },
   /*
    * **Por verificar.** La cuenta es un menú que elige cada operador y no se ha
@@ -3385,6 +3451,11 @@ export const TIJERETA: AircraftConfig = {
    * suelo a 7,7°, donde el boletín dice «between 6° and 7.5°». El hangar pide
    * 1.826 m, la de abortar desde su V1, donde la gráfica de Boeing da 1.800
    * (D6-58333, 3.3.9). Ver la enmienda H10b del ADR 0027.
+   *
+   * **Sin V2 de su tipo**: el boletín de la AAIB no la da, y no se ha
+   * encontrado otra con sus flaps y su masa. Sale de su norma (`conUnMotor`):
+   * 1,13 veces su pérdida con los flaps de despegue son 141,3 nudos, por
+   * debajo de su Vr, así que queda en su Vr (enmienda H10e).
    */
   decisionSpeed: 140 * 0.514444,
   rotationSpeed: 150 * 0.514444,
