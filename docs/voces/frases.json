@@ -8943,6 +8943,13 @@
     "para": "el piloto automático se soltó y los mandos son tuyos otra vez"
   },
   {
+    "id": "cabina.autopilot",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "autopilot, autopilot",
+    "para": "el piloto automático de un E-Jet se soltó y los mandos son tuyos otra vez"
+  },
+  {
     "id": "cabina.minimums",
     "voz": "cabina",
     "idioma": "en",

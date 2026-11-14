@@ -31,28 +31,29 @@
 031	cabina.climbClimbNow	climb, climb now; climb, climb now
 032	cabina.descendDescendNow	descend, descend now; descend, descend now
 033	cabina.autopilotDisconnect	autopilot disconnect
-034	cabina.minimums	minimums
-035	cabina.cabin	cabin
-036	cabina.slowDown	slow down
-037	cabina.tooHighComeDown	too high, come down
-038	cabina.tooLowClimb	too low, climb
-039	cabina.obstacleAhead	obstacle ahead
-040	cabina.goAround	going around. good decision
-041	cabina.weHaveAProblem	we have a problem
-042	cabina.goAroundOrder	go around
-043	cabina.engineFailure	engine failure
-044	cabina.stop	stop
-045	cabina.speedbrakesUp	speedbrakes up
-046	cabina.speedbrakesNotUp	speedbrakes not up
-047	cabina.reversersNormal	reversers normal
-048	cabina.sixtyKnots	sixty knots
-049	cabina.airspeedLow	airspeed low
-050	cabina.twentyFiveHundred	twenty five hundred
-051	cabina.oneThousand	one thousand
-052	cabina.fiveHundred	five hundred
-053	cabina.oneHundred	one hundred
-054	cabina.fifty	fifty
-055	cabina.forty	forty
-056	cabina.thirty	thirty
-057	cabina.twenty	twenty
-058	cabina.ten	ten
+034	cabina.autopilot	autopilot, autopilot
+035	cabina.minimums	minimums
+036	cabina.cabin	cabin
+037	cabina.slowDown	slow down
+038	cabina.tooHighComeDown	too high, come down
+039	cabina.tooLowClimb	too low, climb
+040	cabina.obstacleAhead	obstacle ahead
+041	cabina.goAround	going around. good decision
+042	cabina.weHaveAProblem	we have a problem
+043	cabina.goAroundOrder	go around
+044	cabina.engineFailure	engine failure
+045	cabina.stop	stop
+046	cabina.speedbrakesUp	speedbrakes up
+047	cabina.speedbrakesNotUp	speedbrakes not up
+048	cabina.reversersNormal	reversers normal
+049	cabina.sixtyKnots	sixty knots
+050	cabina.airspeedLow	airspeed low
+051	cabina.twentyFiveHundred	twenty five hundred
+052	cabina.oneThousand	one thousand
+053	cabina.fiveHundred	five hundred
+054	cabina.oneHundred	one hundred
+055	cabina.fifty	fifty
+056	cabina.forty	forty
+057	cabina.thirty	thirty
+058	cabina.twenty	twenty
+059	cabina.ten	ten

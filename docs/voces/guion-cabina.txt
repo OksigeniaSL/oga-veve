@@ -31,6 +31,7 @@ increase descent, increase descent
 climb, climb now; climb, climb now
 descend, descend now; descend, descend now
 autopilot disconnect
+autopilot, autopilot
 minimums
 cabin
 slow down

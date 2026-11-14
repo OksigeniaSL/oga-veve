@@ -11,6 +11,10 @@
       "ms": 891,
       "h": "bf60c2cd70"
     },
+    "cabina.autopilot": {
+      "ms": 1481,
+      "h": "6a810cbb6e"
+    },
     "cabina.autopilotDisconnect": {
       "ms": 1091,
       "h": "5de9782cad"
@@ -242,6 +246,9 @@
     ],
     "cabina.airspeedLow": [
       "cabina.airspeedLow"
+    ],
+    "cabina.autopilot": [
+      "cabina.autopilot"
     ],
     "cabina.autopilotDisconnect": [
       "cabina.autopilotDisconnect"
