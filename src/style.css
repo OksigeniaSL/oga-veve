@@ -13246,6 +13246,19 @@ oksigenia-access-panel::part(trigger):active {
 }
 
 /*
+ * **Y el foco, el del juego**: tres píxeles de ocre a dos del borde, como todo
+ * lo que se alcanza con el tabulador (`:focus-visible`, más arriba). Esa regla
+ * no entra en la sombra del panel, y su botón se quedaba con el anillo de
+ * fábrica del navegador, distinto del de todo lo demás. `verificar-acceso.mjs`
+ * no lo veía: miraba el elemento que hospeda la sombra, que no cambia, y no el
+ * botón de dentro, que es el que tiene el foco.
+ */
+oksigenia-access-panel::part(trigger):focus-visible {
+  outline: 3px solid var(--ocre);
+  outline-offset: 2px;
+}
+
+/*
  * En un teléfono tumbado el hangar sube las tarjetas a 52 px del borde, y el
  * botón, a 20 y de 48, se comía la esquina de la tercera: tocar ahí abría el
  * panel en vez de elegir el aeródromo. Se sube a 4 px del borde, y se queda

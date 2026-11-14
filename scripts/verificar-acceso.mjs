@@ -396,7 +396,15 @@ async function auditar(page, donde, encierra = null, pide = AA) {
     const parada = await page.evaluate(
       ([encierra, comoTexto]) => {
         const comoSeLlama = eval(comoTexto);
-        const a = document.activeElement;
+        let a = document.activeElement;
+        /*
+         * **Y si el foco está dentro de una sombra, el que lo tiene es el de
+         * dentro.** El panel de accesibilidad de Oksigenia es un elemento con
+         * su propia sombra: el documento ve el foco en el anfitrión, que no
+         * cambia de aspecto, y el botón que se marca es el de dentro. Mirando
+         * el anfitrión, el banco lo daba por «sin marca» con la marca puesta.
+         */
+        while (a?.shadowRoot?.activeElement) a = a.shadowRoot.activeElement;
         if (!a || a === document.body) return null;
         /*
          * El nombre tiene que ser **único por mando**, no por clase: en la
