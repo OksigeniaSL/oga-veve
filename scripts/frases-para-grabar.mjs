@@ -424,6 +424,17 @@ const CABINA = [
     "autopilot disconnect",
     "el piloto automático se soltó y los mandos son tuyos otra vez",
   ],
+  /*
+   * **Y la del automático de los E-Jets**, que no dice «disconnect»: «auto-pilot,
+   * auto-pilot» en el registrador del ERJ-170 de Shuttle America (NTSB,
+   * AAR-08/01). Ver `VOZ_DEL_AUTOMATICO_DE_EMBRAER` y
+   * `PENDIENTE-VOCES-automatico.md`.
+   */
+  [
+    "cabina.autopilot",
+    "autopilot, autopilot",
+    "el piloto automático de un E-Jet se soltó y los mandos son tuyos otra vez",
+  ],
   ["cabina.minimums", "minimums", "la altura de decisión: o la ves, o te vas"],
   /*
    * **El aviso de altitud de cabina**, con la palabra de la caja de Embraer:

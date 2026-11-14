@@ -223,7 +223,11 @@ export interface ManosDeLinea {
   readonly volante: number | null;
   readonly pedal: number | null;
   readonly freno: number;
-  /** La palanca de flaps: 0, 1/3, 2/3 o 1. */
+  /**
+   * La palanca de flaps: 0, 1/3, 2/3 o 1. En el avión de tres muescas, la
+   * palanca cae en la más cercana: un tercio y dos tercios son los 17,5° del
+   * 1900D. Ver `muescaMasCercana`.
+   */
   readonly flaps: number;
   /** El tren, pedido fuera. */
   readonly tren: boolean;

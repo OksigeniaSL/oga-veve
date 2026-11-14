@@ -11,7 +11,6 @@
 import { describe, expect, it } from "vitest";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { AIRCRAFT } from "../flight/aircraft";
-import { DETENTES } from "../flight/flaps";
 import { crearLucesDePosicion } from "./luces-de-posicion";
 
 interface Nodo {
@@ -86,7 +85,7 @@ describe("los flaps de cada modelo", () => {
     it(`${a.id}: con los grados de su ficha en cada muesca`, () => {
       for (const f of flaps) {
         expect(numeros(f.extras!["muescas"])).toEqual([...a.muescasDeFlaps]);
-        expect(numeros(f.extras!["recorrido"])).toHaveLength(DETENTES.length);
+        expect(numeros(f.extras!["recorrido"])).toHaveLength(a.muescasDeFlaps.length);
       }
     });
 

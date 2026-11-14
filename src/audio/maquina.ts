@@ -64,6 +64,8 @@ export const PRIORIDAD: Readonly<Record<string, number>> = {
   "cabina.minimums": 60,
   "cabina.sinkRate": 50,
   "cabina.airspeedLow": 45,
+  // Y su pitido, en el tipo que la da sin voz: manda lo mismo que su voz.
+  "tono.pitidoDePrecaucion": 45,
   "cabina.bankAngle": 40,
   /*
    * **La maniobra del TCAS**, por detrás de todo lo del avisador de terreno
@@ -91,6 +93,9 @@ export const PRIORIDAD: Readonly<Record<string, number>> = {
   "cabina.levelOff": 35,
   "cabina.monitorVerticalSpeed": 35,
   "cabina.autopilotDisconnect": 30,
+  // La sirena del automático de Boeing, y la voz del de Embraer.
+  "tono.sirenaDelAutomatico": 30,
+  "cabina.autopilot": 30,
   "cabina.clearOfConflict": 22,
   "cabina.traffic": 20,
 };

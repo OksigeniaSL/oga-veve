@@ -16,7 +16,7 @@ import { AIRCRAFT, type AircraftConfig } from "./aircraft";
 import { neutralControls } from "./model";
 import { causasDe, constanciaDe, cuantoSeMueve, type Aire } from "./turbulencia";
 import { Rafagas } from "./rafagas";
-import { FLAPS_DE_DESPEGUE } from "./velocidades-de-despegue";
+import { flapsDeDespegue } from "./flaps";
 
 const KT = 0.514444;
 
@@ -128,7 +128,7 @@ describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
           throttle: 1,
           // Con los flaps de despegue, como se despega: con la Vr de su peso, un
           // reactor sin ellos no se va hasta pasar su pérdida limpia (ADR 0027).
-          flaps: FLAPS_DE_DESPEGUE,
+          flaps: flapsDeDespegue(a),
           elevator: v >= a.rotationSpeed ? 0.8 : 0,
         });
         if (!m.state.onGround && m.state.heightAboveGround > a.gearHeight + 3) {

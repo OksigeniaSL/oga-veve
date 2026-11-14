@@ -108,7 +108,8 @@ const TODOS = [...AIRCRAFT, ...RESERVADOS];
 import { neutralControls } from "./model";
 import { resistenciaDelTren } from "./tren";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
-import { FLAPS_DE_DESPEGUE, perdidaCon } from "./velocidades-de-despegue";
+import { perdidaCon } from "./velocidades-de-despegue";
+import { flapsDeDespegue } from "./flaps";
 import {
   derivadasDeLaFicha,
   modosDe,
@@ -394,7 +395,7 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
      * `VR_SOBRE_LA_PERDIDA` y el ADR 0027.
      */
     it("rota por encima de la pérdida y después de la de decisión", () => {
-      const vsDespegue = perdidaCon(a, FLAPS_DE_DESPEGUE);
+      const vsDespegue = perdidaCon(a, flapsDeDespegue(a));
       expect(a.rotationSpeed).toBeGreaterThan(vsDespegue * 1.02);
       expect(a.rotationSpeed).toBeGreaterThan(a.decisionSpeed);
       expect(a.decisionSpeed).toBeGreaterThan(vsDespegue);
@@ -700,7 +701,7 @@ function carreraDeDespegue(
       throttle: 1,
       // Con los flaps de despegue, que es como se despega: con la Vr de su
       // peso, un reactor sin ellos no se va del suelo hasta mucho después.
-      flaps: FLAPS_DE_DESPEGUE,
+      flaps: flapsDeDespegue(a),
       // Se tira al llegar a Vr, que es lo que hace quien pilota.
       elevator: v >= a.rotationSpeed ? 0.55 : 0,
     });

@@ -17,13 +17,19 @@ import { CANTOS_DEL_CONSEJO } from "../flight/consejo-de-la-bajada";
 import {
   CLAVE_DE_CABINA,
   claveDeCabina,
+  DE_A_BORDO,
   DE_LA_CARRERA,
   DE_LOS_AVISADORES,
   esDeUnaCaja,
+  esTonoDeABordo,
   ESPERAN_SU_TOMA,
   loDiceElAvion,
+  loQueSuenaEnEsteAvion,
+  TONO_DE_A_BORDO,
+  VOZ_DEL_AUTOMATICO_DE_EMBRAER,
   VOZ_DEL_RA,
 } from "./cabina";
+import { FORMAS } from "./tonos-de-aviso";
 
 /**
  * Lo que el juego pide cantar: los textos en inglés que se le pasan a
@@ -74,6 +80,8 @@ describe("los cantos de cabina", () => {
     const apuntadas = new Set([
       ...Object.values(CLAVE_DE_CABINA),
       ...Object.values(VOZ_DEL_RA),
+      // Y la del automático de Embraer, que se pide por el avión. Ver `loQueSuenaEnEsteAvion`.
+      VOZ_DEL_AUTOMATICO_DE_EMBRAER,
     ]);
     expect(grabadas.filter((c) => !apuntadas.has(c))).toEqual([]);
   });
@@ -245,11 +253,14 @@ describe("los cantos de cada avión", () => {
 
   it("el turbohélice de pasaje y los reactores, sí", () => {
     for (const a of [ARASUNU, ARAI])
-      for (const clave of DE_LOS_AVISADORES)
+      for (const clave of DE_LOS_AVISADORES) {
+        // Los de a bordo, cada tipo a su manera: ver el bloque de abajo.
+        if (DE_A_BORDO[clave]) continue;
         expect(loDiceElAvion(clave, a), `${a.id} ${clave}`).toBe(
           // Menos el *minimums* del JAZ 60: ver el siguiente.
           !(a === ARASUNU && clave === "cabina.minimums"),
         );
+      }
   });
 
   /*
@@ -312,3 +323,70 @@ describe("los cantos de cada avión", () => {
     for (const c of DE_LOS_AVISADORES) expect(grabadas.has(c), c).toBe(true);
   });
 });
+
+/*
+ * **La pérdida, la velocidad baja y el automático suenan como en su tipo**
+ * (#178, ADR 0027, enmienda H10a). Colgaban los tres de `avisosHablados` y
+ * los cuatro aviones de transporte los decían con voz.
+ */
+describe("los avisos de a bordo de cada tipo", () => {
+  it("el 747 y el 787 no dicen ninguno: sacudidor, pitido y sirena", () => {
+    for (const a of [YVAGA, TIJERETA]) {
+      for (const clave of Object.keys(DE_A_BORDO))
+        expect(loDiceElAvion(clave, a), `${a.id} ${clave}`).toBe(false);
+      expect(loQueSuenaEnEsteAvion("cabina.stall", a)).toBe("mientras dura");
+      expect(loQueSuenaEnEsteAvion("cabina.airspeedLow", a)).toBe(TONO_DE_A_BORDO.pitido);
+      expect(loQueSuenaEnEsteAvion("cabina.autopilotDisconnect", a)).toBe(TONO_DE_A_BORDO.sirena);
+      expect(a.avisosDeABordo?.perdida.suena).toBe("sacudidor");
+    }
+  });
+
+  it("el E170 se suelta diciendo «autopilot», y su pérdida es el sacudidor", () => {
+    expect(loDiceElAvion("cabina.autopilotDisconnect", ARAI)).toBe(false);
+    expect(loQueSuenaEnEsteAvion("cabina.autopilotDisconnect", ARAI)).toBe(
+      VOZ_DEL_AUTOMATICO_DE_EMBRAER,
+    );
+    expect(ARAI.avisosDeABordo?.perdida.suena).toBe("sacudidor");
+  });
+
+  it("el 1900D avisa la pérdida con bocina, sin voz, y no tiene voz de velocidad baja", () => {
+    expect(loDiceElAvion("cabina.stall", ARASUNU)).toBe(false);
+    expect(loQueSuenaEnEsteAvion("cabina.stall", ARASUNU)).toBe("mientras dura");
+    expect(ARASUNU.avisosDeABordo?.perdida.suena).toBe("bocina");
+    expect(loDiceElAvion("cabina.airspeedLow", ARASUNU)).toBe(false);
+    expect(loQueSuenaEnEsteAvion("cabina.airspeedLow", ARASUNU)).toBeNull();
+  });
+
+  it("en la avioneta no hay caja: lo dice la instructora", () => {
+    for (const a of [PYKASU, PANAMBI])
+      for (const clave of Object.keys(DE_A_BORDO)) {
+        expect(loDiceElAvion(clave, a)).toBe(false);
+        expect(loQueSuenaEnEsteAvion(clave, a)).toBeNull();
+      }
+  });
+
+  it("los tonos son de una caja, cada uno con su forma, y no son grabaciones", () => {
+    for (const tono of Object.values(TONO_DE_A_BORDO)) {
+      expect(esTonoDeABordo(tono)).toBe(true);
+      expect(esDeUnaCaja(tono)).toBe(true);
+      expect(FORMAS[tono].notas.length).toBeGreaterThan(0);
+      expect(Object.values(CLAVE_DE_CABINA)).not.toContain(tono);
+    }
+    expect(esDeUnaCaja(VOZ_DEL_AUTOMATICO_DE_EMBRAER)).toBe(true);
+  });
+
+  /*
+   * **La sirena del automático, como la midió la CAA en un 747**: ráfagas de
+   * 260 ms separadas por 140, dos y media por segundo, que suben de tono (CAA
+   * Paper 82017, tabla B1).
+   */
+  it("la sirena son ráfagas de 260 ms cada 400 que suben de tono", () => {
+    const { notas } = FORMAS["tono.sirenaDelAutomatico"];
+    for (const [i, n] of notas.entries()) {
+      expect(n.dura).toBeCloseTo(0.26, 9);
+      expect(n.hasta).toBeGreaterThan(n.desde);
+      if (i > 0) expect(n.en - notas[i - 1]!.en).toBeCloseTo(0.4, 9);
+    }
+  });
+});
+

@@ -1789,6 +1789,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * ala que se quede sin margen.
      */
     const segunda = suyas.vfePorMuesca?.[1] ?? 0;
+    /*
+     * Solo en la palanca de cuatro: la del 1900D tiene dos muescas sacadas,
+     * 17,5° y 35°, y su segunda ya es la de aterrizar. Ahí el tercio que se pide
+     * abajo cae en su primera, la de 17,5°, que es la muesca más cercana de su
+     * palanca. Ver `muescasDeLaPalanca` en `flight/flaps.ts`.
+     */
     const conLaSegunda =
       !SENCILLO && (suyas.vfePorMuesca?.length ?? 0) >= 3 && kt < segunda;
     o.pedirFlaps?.(
@@ -9337,10 +9343,12 @@ const NUMERO_EN_UNA_BOCA =
    * Y los pasos del «¿y ahora qué?» que piden lo mismo —ver
    * `flight/siguiente-paso.ts`—: más gas es de ir lento; menos gas,
    * aerofrenos, la nariz que frena y los flaps, de ir rápido. Hoy suenan con
-   * las grabadas de arriba; con su grabación, con éstas.
+   * las grabadas de arriba; con su grabación, con éstas. Y el pitido de
+   * precaución de los dos Boeing, que es su *airspeed low* sin voz (ADR 0027,
+   * enmienda H10a).
    */
   const LENTO =
-    /^(?:vuelo\.lentoYBajo|vuelo\.consejo\.masGas|cabina\.airspeedLow|vuelo\.paso\.acelerarGas)\b/;
+    /^(?:vuelo\.lentoYBajo|vuelo\.consejo\.masGas|cabina\.airspeedLow|tono\.pitidoDePrecaucion|vuelo\.paso\.acelerarGas)\b/;
   const RAPIDO =
     /^(?:vuelo\.rapido|vuelo\.pediFlaps|vuelo\.bajasRapido|cabina\.airspeed|tutor\.slow|vuelo\.consejo\.(?:menosGas|aerofrenos|narizArribaRitmo|narizArribaSuave)|vuelo\.paso\.(?:frenarGas|frenarAerofrenos|frenarNariz|flaps[123]))$/;
   const SEGUIDOS = 10;

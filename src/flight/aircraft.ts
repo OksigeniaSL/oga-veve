@@ -609,6 +609,56 @@ export interface MotorParado {
   readonly autoBandera: boolean;
 }
 
+/**
+ * **Cómo suenan en este avión tres avisos de a bordo**: la pérdida, la
+ * velocidad baja y la desconexión del piloto automático.
+ *
+ * No suenan igual en todos los aviones que llevan cajas que hablan, y por eso
+ * no cuelgan de `avisosHablados`: el avisador de terreno y el radioaltímetro
+ * hablan en los cuatro aviones de transporte de la flota, pero la pérdida de
+ * un Boeing es el sacudidor de palanca, sin voz, y la de un Beech 1900D, una
+ * bocina; y el automático de un Boeing se suelta con una sirena. Un aviso
+ * suena como suena en su tipo, o no se pone (regla 4 de `AGENTS.md`). Cada
+ * ficha lleva su fuente al lado. Ver `loDiceElAvion` en `audio/cabina.ts` y
+ * el ADR 0027, enmienda H10a.
+ */
+export interface AvisosDeABordo {
+  /**
+   * **La pérdida**: lo que suena mientras dura —la bocina, o el sacudidor de
+   * palanca con su traqueteo— y si una voz la dice además.
+   */
+  readonly perdida: { readonly suena: "bocina" | "sacudidor"; readonly voz: boolean };
+  /**
+   * **La velocidad baja**: con voz —*airspeed low*—, con el pitido de
+   * precaución de Boeing y su mensaje ámbar, o sin aviso sonoro propio
+   * (`null`): ahí avisa la pérdida, cuando llega.
+   */
+  readonly velocidadBaja: "voz" | "pitido" | null;
+  /**
+   * **La desconexión del automático**: con la voz que dice su tipo —«autopilot
+   * disconnect», o «autopilot» como los E-Jets de Embraer—, con la sirena de
+   * Boeing, o sin aviso sonoro (`null`).
+   */
+  readonly automatico: "autopilot disconnect" | "autopilot" | "sirena" | null;
+}
+
+/**
+ * Lo que suena en el avión que no lleva `avisosDeABordo` en su ficha: la
+ * bocina de pérdida de una avioneta y nada más. Es la de los que no tienen
+ * cajas que hablen —ver `avisosHablados`—, y en ellos lo demás lo dice la
+ * instructora, sentada al lado.
+ */
+export const AVISOS_DE_UNA_AVIONETA: AvisosDeABordo = {
+  perdida: { suena: "bocina", voz: false },
+  velocidadBaja: null,
+  automatico: null,
+};
+
+/** Cómo suenan los avisos de a bordo de este avión. Ver `AvisosDeABordo`. */
+export function avisosDeABordo(a: { readonly avisosDeABordo?: AvisosDeABordo }): AvisosDeABordo {
+  return a.avisosDeABordo ?? AVISOS_DE_UNA_AVIONETA;
+}
+
 export interface AircraftConfig {
   id: string;
   /** Nombre visible. No se traduce: es un nombre propio. */
@@ -909,12 +959,16 @@ export interface AircraftConfig {
   tcas: EquipoTcas | null;
   /**
    * **Si lleva avisos que hablan**: el radioaltímetro que canta la altura en
-   * la toma, el avisador de terreno (GPWS o TAWS) y el de pérdida con voz.
+   * la toma y el avisador de terreno (GPWS o TAWS).
    *
    * Es lo que decide si en el peldaño de cabina se oye «five hundred… fifty…
-   * ten», «terrain, pull up» o «stall, stall», y la regla es la de la casa:
-   * un aviso sonoro solo se pone en un avión que lo llevaría. Ver
-   * `DE_LOS_AVISADORES` en `audio/cabina.ts`.
+   * ten» o «terrain, pull up», y la regla es la de la casa: un aviso sonoro
+   * solo se pone en un avión que lo llevaría. Ver `DE_LOS_AVISADORES` en
+   * `audio/cabina.ts`.
+   *
+   * La pérdida, la velocidad baja y el automático **no cuelgan de aquí**: un
+   * avión con terreno que habla puede avisar la pérdida con una bocina o con
+   * el sacudidor de palanca, sin voz. Van en `avisosDeABordo`.
    *
    * - **Sí**, el turbohélice de diecinueve plazas y los dos reactores. El TAWS
    *   de clase A es obligatorio en todo avión de turbina con seis asientos de
@@ -926,6 +980,12 @@ export interface AircraftConfig {
    *   la persona sentada al lado. En el juego, la instructora.
    */
   avisosHablados: boolean;
+  /**
+   * **Cómo suenan su pérdida, su velocidad baja y su automático**, en el avión
+   * que lleva cajas que hablan. Sin él, los de una avioneta. Ver
+   * `AvisosDeABordo`.
+   */
+  avisosDeABordo?: AvisosDeABordo;
   /**
    * **Los números que canta su radioaltímetro en la toma**, en pies, o `null`
    * en el avión sin caja que los cante.
@@ -1316,8 +1376,11 @@ export interface AircraftConfig {
   flapsDrag: number;
   /**
    * **Los grados de los flaps en cada muesca de la palanca**, empezando por el
-   * cero de recogidos. Una cifra por muesca —ver `DETENTES`—, o ninguna en el
-   * que no los lleva.
+   * cero de recogidos. Una cifra por muesca, o ninguna en el que no los lleva.
+   *
+   * **Y cuántas cifras, cuántas muescas tiene su palanca**: cuatro en casi
+   * toda la flota y tres en el 1900D, que va arriba, a 17,5° y a 35°. Ver
+   * `muescasDeLaPalanca` en `flaps.ts`.
    *
    * No son los mismos en toda la flota, y por eso están aquí: el primer tope
    * de un reactor son cinco grados casi sin ángulo —el flap sale hacia atrás
@@ -1977,22 +2040,29 @@ export const PANAMBI: AircraftConfig = {
 const MASA_DEL_ARASUNU = 6572 + 724;
 
 /**
- * **Las velocidades del 1900D a la masa de su ficha**, m/s indicados, sacadas
- * de su ala con las reglas de su categoría, la de cercanías, que son las de
- * los aviones de transporte:
+ * **Las velocidades del 1900D a la masa de su ficha**, m/s indicados.
  *
- * - **Vr, 1,1 veces la pérdida con los flaps de despegue** (14 CFR 23.51 c 2
- *   iii). Con esa regla y este ala, a 16.000 lb sale 101 nudos, y su manual
- *   da 102 (TSB, A97C0229).
- * - **V1, en la proporción de su manual**: 100 nudos por 102 de Vr a 16.000 lb
- *   (el mismo informe). Y por encima de su Vmc, que la norma no la deja bajar.
+ * - **Vr y V1, las de su manual**: 102 y 100 nudos a 16.000 lb (TSB,
+ *   A97C0229, que las cita de su manual de vuelo), escaladas con la raíz de
+ *   la masa a los 7.296 kg de la ficha, 16.085 lb.
  * - **Vref, 1,3 veces la pérdida con los flaps de aterrizaje** (14 CFR 23.73).
  *
- * Eran 80, 74 y 93 nudos, con el ala y el peso del Twin Otter.
+ * **La Vr salía de la regla de los reactores, y con los flaps de verdad ya no
+ * es la suya.** Con la primera muesca a diez grados, 1,1 veces la pérdida con
+ * los flaps de despegue daba 101 nudos a 16.000 lb, al lado de los 102 del
+ * manual. Pero el 1900D despega con 17,5°, que sustentan más: la regla da ahora
+ * 98,6 nudos a la masa de la ficha. Esa regla es un suelo —no menos de 1,1
+ * veces la VMU, 14 CFR 23.51 c—, y el manual rota más arriba, así que manda
+ * el manual. Lo que la regla sí cuadra es su V2: 1,2 veces la pérdida con
+ * 17,5° (14 CFR 23.57) da 107,6 nudos en el modelo, y su manual, 108 a 16.000
+ * lb. O sea: el ala con sus 17,5° sustenta lo que la del 1900D.
+ *
+ * Eran 101,5 y 99,5, de la regla con los diez grados que no tiene; y antes
+ * 80, 74 y 93 nudos, con el ala y el peso del Twin Otter.
  */
 const VELOCIDADES_DEL_ARASUNU = {
-  vr: 101.5 * 0.514444,
-  v1: 99.5 * 0.514444,
+  vr: 102 * Math.sqrt(MASA_DEL_ARASUNU / (16000 * 0.45359237)) * 0.514444,
+  v1: 100 * Math.sqrt(MASA_DEL_ARASUNU / (16000 * 0.45359237)) * 0.514444,
   vref: 107.7 * 0.514444,
 } as const;
 
@@ -2125,6 +2195,30 @@ export const ARASUNU: AircraftConfig = {
   tcas: "TCAS II",
   avisosHablados: true,
   /*
+   * **La pérdida, con bocina y sin voz.** El 1900D la avisa con un computador
+   * y un transductor de sustentación —«Pre-stall warning system to include:
+   * stall warning lift computer, P/N 114-380051-5 and stall warning lift
+   * transducer», hoja de tipo FAA A24CE, rev. 98, p. 40— que tocan una
+   * bocina. Lo que oyen sus registradores: «[sound similar to stall warning
+   * horn begins]» (NTSB, AAR-04/01, Air Midwest 5481, apéndice B) y «[sound of
+   * horn similar to stall warning starts]» (FSF, *Accident Prevention*, julio
+   * de 1998, el de Bangor). Ninguna voz.
+   *
+   * **Y sin voz de velocidad baja**: en esas dos transcripciones el avión se
+   * frena hasta la pérdida y lo único que suena es esa bocina y la del tren.
+   *
+   * **El automático, sin cambiar y sin fuente**: no se ha encontrado qué
+   * suena al soltarse el Collins APS-65 de un 1900D —ni tono, ni voz, ni luz—,
+   * y no todos lo llevan («The accident airplane was not equipped with an
+   * autopilot», AAR-04/01, p. 15). Se queda la voz que ya tenía, como
+   * supuesto: ADR 0027, enmienda H10a.
+   */
+  avisosDeABordo: {
+    perdida: { suena: "bocina", voz: false },
+    velocidadBaja: null,
+    automatico: "autopilot disconnect",
+  },
+  /*
    * **Solo *five hundred*, y solo sin ILS delante**: lo único que se puede
    * asegurar de su clase. Un turbohélice de diecinueve plazas vuela con un
    * TAWS de clase A (14 CFR 135.154), y la clase A lleva, entre las funciones
@@ -2151,22 +2245,27 @@ export const ARASUNU: AircraftConfig = {
   // Persiana de plástico, como cualquier turbohélice regional.
   ventanillas: "persiana",
   /*
-   * **248 nudos indicados hasta 13.200 ft, y Mach 0,48 por encima.** Las dos
-   * cifras de su placa se sostienen una a otra: 248 indicados a 13.200 ft son
-   * Mach 0,47, que es donde una toma el relevo de la otra. Eran 250 sin
-   * fuente. La hoja de tipo A24CE no se ha podido leer entera: se dejan las
-   * de la placa que circulan con el avión.
+   * **248 nudos indicados hasta 13.200 ft, y Mach 0,48 por encima**, los de
+   * su hoja de tipo: «Max. operating speed 285 m.p.h. (248 knots) up to
+   * 13,200 ft. Max. operating Mach No. 0.48» (FAA A24CE, rev. 98, p. 39). Las
+   * dos se sostienen una a otra: 248 indicados a 13.200 ft son Mach 0,47, que
+   * es donde una toma el relevo de la otra. Eran 250 sin fuente.
+   *
+   * **Y 180 con el tren fuera**, a sacarlo, a meterlo y sacado: «Landing gear
+   * extended 207 m.p.h. (180 knots)», con las mismas cifras para «Extension»
+   * y «Retraction» (la misma página). Eran 184, de una placa que circulaba.
    */
   vmoKt: 248,
-  vleKt: 184,
+  vleKt: 180,
   /*
-   * La placa de un turbohélice de diecinueve plazas y cola en T, el Beech
-   * 1900D: 188 nudos con los de aproximación, diecisiete grados, y 154 con
-   * los de aterrizaje, treinta y cinco. Leída por grados, que es como está
-   * escrita: la de diez cae dentro de la de aproximación, y la de veinte ya
-   * pasó de ella.
+   * La placa del Beech 1900D, una por muesca de su palanca: «Partial flap
+   * 17.5° 216 m.p.h. (188 knots)» y «100% position 35° 177 m.p.h. (154
+   * knots)» desde el UE-79, o antes con el boletín 2512 (FAA A24CE, rev. 98,
+   * p. 39); los primeros setenta y ocho llevaban 143 con los de aterrizaje. Se
+   * leía por grados sobre una palanca de cuatro —10, 20 y 35—, con una de
+   * veinte que el avión no tiene.
    */
-  vfePorMuesca: [188, 154, 154],
+  vfePorMuesca: [188, 154],
   alivioDeFlaps: false,
   mmo: 0.48,
   /*
@@ -2215,9 +2314,26 @@ export const ARASUNU: AircraftConfig = {
   llevaFlaps: true,
   flapsLift: 0.65,
   flapsDrag: 0.09,
-  // Diez, veinte y treinta y cinco: los de un turbohélice de diecinueve
-  // plazas. Hidráulicos y más grandes: cuatro segundos por muesca.
-  muescasDeFlaps: [0, 10, 20, 35],
+  /*
+   * **Arriba, 17,5° y 35°: las tres posiciones del 1900D**, las de su hoja de
+   * tipo —«Partial flap 17.5°», «100% position 35°» (FAA A24CE, rev. 98, p.
+   * 39)— y las de la FAA midiendo una aerolínea: «There are three flap
+   * positions for this aircraft: retracted, half, and full. The three detent
+   * positions were recorded as "Up," "Approach," and "Down."» (DOT/FAA/AR-08/50,
+   * 2017, p. 39). Eran cuatro, 0, 10, 20 y 35, las de la palanca de toda la
+   * flota: enseñaban una muesca de veinte grados que el avión no tiene.
+   *
+   * **Y se despega con la de aproximación**, que es la primera muesca: en las
+   * 8.740 salidas de ese mismo estudio, «the initial climb immediately
+   * following liftoff, with the flaps in the approach position» (p. 26). Su
+   * manual de vuelo admite también despegar sin flaps —así salió el de Bangor
+   * de la FSF, julio de 1998—, pero no se ha podido leer cuál llama normal.
+   * Ver `muescasDeLaPalanca` y el ADR 0027, enmienda H10a.
+   *
+   * Lo que tardan de arriba abajo no está en ninguna fuente que se haya podido
+   * leer: se quedan los doce segundos de antes, seis por muesca.
+   */
+  muescasDeFlaps: [0, 17.5, 35],
   tardanLosFlaps: 12,
   appearance: {
     // La librea de la casa, con la T de la cola del color del casco encima
@@ -2282,10 +2398,20 @@ export const ARASUNU: AircraftConfig = {
      * `cmQ ∝ S_t·l_t²/(S·c²)`. Con el plano de cola del 1900D, 5,63 m de punta
      * a punta donde el modelo llevaba 6,9, sobre un ala de 28,8 m² y 1,63 de
      * cuerda donde eran 39 y 2,0, la cuenta da unos −27: con los −16 de antes
-     * el ala nueva le quitaba la mitad. Se queda en −24, al borde de lo que
-     * amortigua un avión de verdad —el Navion por 2,5, `referencia.test.ts`—.
+     * el ala nueva le quitaba la mitad.
+     *
+     * **Y se queda en esos −27.** Estaba en −24, y no por la cuenta sino por
+     * el listón de `referencia.test.ts`, que no dejaba pasar de 2,5 veces el
+     * Navion: −24 eran 2,41, pegado al borde, y la cuenta lo dejaba fuera. Ese
+     * listón está para cazar un signo cambiado o un cero de más, no para
+     * decidir el tamaño de un avión, y un ala de 1,63 m de cuerda con la cola
+     * a nueve metros amortigua más que la del Navion por esa misma cuenta: el
+     * listón sube a tres para el cabeceo. Con −27 el corto período a crucero
+     * se amortigua con ζ 0,49 en vez de 0,47 —el nivel 1 de la MIL-F-8785C
+     * empieza en 0,35—. La superficie de su plano de cola no se ha encontrado
+     * publicada, que es lo que afinaría la cifra (ADR 0027, enmienda H10a).
      */
-    cmQ: -24,
+    cmQ: -27,
     cmElevator: 0.5,
     clBeta: -0.095,
     // `clAlpha/10,7`, la proporción de siempre.
@@ -2424,6 +2550,27 @@ export const ARAI: AircraftConfig = {
   cantosDeLaCarrera: "embraer",
   tcas: "TCAS II",
   avisosHablados: true,
+  /*
+   * **El automático se suelta diciendo «autopilot», no «autopilot
+   * disconnect».** En el registrador del ERJ-170 de Shuttle America en
+   * Cleveland, con la nota «Voice identified as aircraft mechanical voice»:
+   * «auto-pilot, auto-pilot» (NTSB, AAR-08/01, transcripción del CVR). Ver
+   * `VOZ_DEL_AUTOMATICO_DE_EMBRAER` en `audio/cabina.ts`.
+   *
+   * **La pérdida, con el sacudidor de palanca**, que es el aviso de la
+   * familia: «triggered a stall warning (stick shaker) for 2 seconds» (SUB de
+   * Austria, informe final del E195 de Salzburgo, 2017, p. 9). Era la bocina
+   * de una avioneta. **Si además la dice una voz no se ha podido leer** en
+   * ninguna fuente —ese registrador no se guardó, y el «STALL» de su tabla de
+   * llamadas es el de quien vuela—, así que se queda el «stall, stall» que
+   * tenía, como supuesto. Lo mismo el *airspeed low*: sin fuente, como
+   * estaba. ADR 0027, enmienda H10a.
+   */
+  avisosDeABordo: {
+    perdida: { suena: "sacudidor", voz: true },
+    velocidadBaja: "voz",
+    automatico: "autopilot",
+  },
   /*
    * **La de los E-Jets, sin cuatrocientos ni trescientos**: «RA calls: 2500,
    * 1000, 500, 200, 100, 50, 40, 30, 20, 10, MIN» (C. Regli, *Embraer EMB190 –
@@ -2750,6 +2897,31 @@ export const YVAGA: AircraftConfig = {
   tcas: "TCAS II",
   avisosHablados: true,
   /*
+   * **Ninguno de los tres habla en un 747-400.** En su FCOM (D6-30151-400,
+   * rev. 23, 2009):
+   *
+   * - **La pérdida, el sacudidor**: «Warning of an impending stall is provided
+   *   by left and right stick shakers» (15.20.10), y su tabla de avisos
+   *   sonoros no tiene ninguna voz de pérdida. En el registrador del 747-400D
+   *   del vuelo 356 de JAL: «Sound of stick shaker. (3 seconds)» (JTSB,
+   *   AA2006-1, apéndice 1).
+   * - **La velocidad baja, el pitido de precaución** con su mensaje ámbar:
+   *   «AIRSPEED LOW Caution Beeper Airspeed less than minimum maneuvering
+   *   speed» (15.30.3).
+   * - **El automático, la sirena**: «>AUTOPILOT DISC Warning 570 Siren …
+   *   109, 405 Wailer» (4.30.1), según el avión. Se pone la sirena, que es la
+   *   que oyó la JTSB en ese mismo 747-400 al probarlo en tierra («an aural
+   *   warning (siren) sounded», p. 32) y la que midió la CAA británica en un
+   *   747. Ver `audio/tonos-de-aviso.ts`.
+   *
+   * Decían los tres con voz. ADR 0027, enmienda H10a.
+   */
+  avisosDeABordo: {
+    perdida: { suena: "sacudidor", voz: false },
+    velocidadBaja: "pitido",
+    automatico: "sirena",
+  },
+  /*
    * **La de un 747-400 de verdad**, oída en su cabina: la transcripción del
    * registrador de voz del F-GITA, un 747-428 de Air France, en su toma de
    * Tahití —«(SV): One thousand… Five hundred… Four hundred… Three hundred…
@@ -3060,6 +3232,25 @@ export const TIJERETA: AircraftConfig = {
   cantosDeLaCarrera: "boeing",
   tcas: "TCAS II",
   avisosHablados: true,
+  /*
+   * **Ninguno de los tres habla en un 787**, en su FCOM (D615Z003-TBC, rev. 4,
+   * 2010, el del 787-8: no se ha encontrado uno del -9, que comparte cabina y
+   * sistema de avisos):
+   *
+   * - **La pérdida, el sacudidor**: «Warning of an impending stall is provided
+   *   by left and right stick shakers» (15.20.11), sin voz en su tabla.
+   * - **La velocidad baja, el pitido de precaución**: «AIRSPEED LOW Caution
+   *   Beeper» (15.30.1). Su «AIRSPEED, AIRSPEED» hablado es otro aviso, el de
+   *   la velocidad mínima con un motor parado (15.20.4), que el juego no da.
+   * - **El automático, la sirena**: «AUTOPILOT DISC Warning Siren» (4.30.1).
+   *
+   * Decían los tres con voz. ADR 0027, enmienda H10a.
+   */
+  avisosDeABordo: {
+    perdida: { suena: "sacudidor", voz: false },
+    velocidadBaja: "pitido",
+    automatico: "sirena",
+  },
   /*
    * **Por verificar.** La cuenta es un menú que elige cada operador y no se ha
    * leído la de esta clase; es la de los Boeing de ahora, con su *twenty five

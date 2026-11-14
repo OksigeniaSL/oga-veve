@@ -56,11 +56,11 @@ import { ROZAMIENTO } from "../world/superficie";
  */
 export const DECIDIR = 2;
 
-/**
- * **La palanca de flaps con la que despega este juego**: la primera muesca,
- * que es la que pone el vuelo de línea en la cabecera (`vuelo-de-linea.ts`).
+/*
+ * La palanca de flaps con la que despega cada avión, la de su primera muesca,
+ * es `flapsDeDespegue` en `flaps.ts`: un tercio en la palanca de cuatro y la
+ * mitad en la del 1900D. Era una constante, un tercio para todos.
  */
-export const FLAPS_DE_DESPEGUE = 1 / 3;
 
 /**
  * **La Vr de un avión de transporte, sobre su pérdida con los flaps de
