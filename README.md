@@ -1,19 +1,24 @@
 # Óga Veve
 
-Simulador de vuelo para navegador. Se vuela sobre Paraguay —el relieve es
-real, el paisaje lo pintamos nosotros— y se aterriza donde se pueda.
+Simulador de vuelo para navegador. Se vuela sobre Paraguay y Canarias —el
+relieve es el medido y el suelo, la foto aérea— y se aterriza donde se pueda.
 
-### ▶ Para jugar: `npm install && npm run dev`
+### ▶ Para jugar: [granjaoga.com/oga-veve](https://granjaoga.com/oga-veve/)
+
+En el navegador del ordenador, de la tablet o del teléfono, sin instalar nada.
+Para desarrollar: `npm install && npm run dev`.
 
 > **Estado**: se puede volar de principio a fin. Del puesto de
 > estacionamiento a la pista siguiendo la raya verde, despegue con V1 y Vr,
 > circuito de tráfico, aproximación con PAPI y altura de decisión, aterrizaje
 > o frustrada — y la frustrada puntúa igual que la toma, que es la lección.
-> Seis aeródromos reales, relieve medido, sonido sintetizado y cuatro
+> Una veintena de aeródromos reales de Paraguay, de Canarias y de Madrid, siete
+> aviones y un helicóptero, la torre, la cabina y la tripulación con sus voces
+> grabadas, un vuelo largo de Madrid a Asunción por capítulos y cuatro
 > peldaños de edad. Funciona **sin conexión** a partir de la segunda visita.
 >
-> Falta el arte final, las voces grabadas y el multijugador. Lo que falta está
-> en los [issues](https://github.com/OksigeniaSL/oga-veve/issues).
+> Falta el multijugador, entre otras cosas. Lo que falta está en los
+> [issues](https://github.com/OksigeniaSL/oga-veve/issues).
 
 Producto de **[Oksigenia SL](https://oksigenia.com)**, publicado bajo la
 marca **Granja Óga**. **Gratis, para quien quiera usarlo.** Las rutas son de
