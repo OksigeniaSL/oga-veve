@@ -269,13 +269,15 @@ export function destinoEnLaRaya(
    * **Cuánta raya tiene que quedar por delante**, m. El final de la raya de salida es la
    * doble raya del punto de espera, y un tractor no deja a nadie encima de ella: lo deja en
    * la calle, y los últimos metros hasta la espera, y la luz de la torre, son de quien
-   * rueda. Si la raya entera es más corta, no se pide.
+   * rueda. En una raya corta, como mucho media raya: la de Los Rodeos, del puesto de la
+   * aviación general a la espera, son setenta metros, y sin ese tope el tractor dejaba el
+   * avión encima de la doble raya.
    */
   alFinal = 0,
 ): DestinoEnLaRaya | null {
   if (raya.length < 2) return null;
   const { enLaRaya, total } = recorrer(raya);
-  const hasta = total > 2 * alFinal ? total - alFinal : total;
+  const hasta = total - Math.min(alFinal, total / 2);
   const candidatos: { readonly s: number; readonly p: PuntoXZ; readonly d: number }[] = [];
   for (let s = 0; s <= hasta; s += CADA_CUANTO) {
     const p = enLaRaya(s);

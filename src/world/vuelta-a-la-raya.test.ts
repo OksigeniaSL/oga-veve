@@ -147,6 +147,14 @@ describe("a qué punto de la raya", () => {
     expect(200 - d.punto.x).toBeGreaterThanOrEqual(alFinal - 2);
     const e = remolqueALaRaya({ x: 195, z: 40, rumbo: Math.PI }, RECTA, d, 11.5)!;
     expect(200 - e.poses.at(-1)!.x).toBeGreaterThan(10);
+    // Y en una raya corta, setenta metros como la de Los Rodeos, como mucho media raya.
+    const corta = [
+      { x: 130, z: 0 },
+      { x: 200, z: 0 },
+    ];
+    const c = destinoEnLaRaya({ x: 195, z: 40 }, corta, sitioSencillo(), 6, alFinal)!;
+    expect(c).not.toBeNull();
+    expect(200 - c.punto.x).toBeGreaterThanOrEqual(35 - 2);
   });
 
   it("y si no hay por dónde, no hay tractor", () => {

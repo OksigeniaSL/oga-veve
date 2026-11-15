@@ -21343,9 +21343,14 @@ export class Game {
     const s = this.flight.state;
     const raya = (this.plan?.laRaya ?? []).map(([x, z]) => ({ x, z }));
     const sitio = elSitioDe(aero, this.aircraft.wingSpan);
-    // Y antes de la doble raya del punto de espera, que esos metros los rueda quien juega.
+    /*
+     * Y antes de la doble raya del punto de espera, que esos metros los rueda quien juega. Si
+     * así no hay por dónde —la raya rehecha desde la hierba puede tener poca calle—, hasta la
+     * espera: más vale el tractor hasta la doble raya que ninguno.
+     */
     const alFinal = rayaQueQuedaPorDelante(this.aircraft.batalla);
-    const destino = destinoEnLaRaya({ x: s.position.x, z: s.position.z }, raya, sitio, 6, alFinal);
+    const aqui = { x: s.position.x, z: s.position.z };
+    const destino = destinoEnLaRaya(aqui, raya, sitio, 6, alFinal) ?? destinoEnLaRaya(aqui, raya, sitio);
     if (!destino) return null;
     const empuje = remolqueALaRaya({ x: s.position.x, z: s.position.z, rumbo: s.heading }, raya, destino, this.aircraft.batalla);
     return empuje ? { destino, empuje, raya } : null;
