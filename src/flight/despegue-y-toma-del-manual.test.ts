@@ -76,7 +76,7 @@
  *            hangar  volado  manual       hangar  manual
  *   jaz-20     406     469     449          407     387   sin margen
  *   jaz-40     536     672     352          633     620   sin margen
- *   jaz-50     447     469     564          453     427   con / sin
+ *   jaz-50     447     468     564          453     427   con / sin
  *   jaz-60     983     959  ≤1.025          815     816   con / sin
  *   jaz-90   1.124   1.264  ≤1.151        1.243   1.123   con margen
  *   jaz-110  1.826   1.783  ≤1.800        1.591   1.800   con margen
@@ -94,7 +94,7 @@
  * En el JAZ 50 el hangar pide la de abortar desde su V1, 447 m, por debajo de
  * los 564 de la suya en su manual; su despegue con todos los motores por 1,15
  * da 389 contra los 379 del manual, y volado, sin márgenes y hasta los
- * cincuenta pies, 469 contra 338 de la cuenta (ver abajo).
+ * cincuenta pies, 468 contra 338 de la cuenta (ver abajo).
  *
  * El volado del 110 y del 120 es el de la cola de su fabricante (H7b): eran
  * 1.625 y 1.841 con los 8,5° y 8,6° de antes, sin fuente. Y el de todos, con el
@@ -476,7 +476,7 @@ describe("la cuenta del hangar y el avión que se vuela dicen lo mismo", () => {
      * no puede pasar de una quinta parte.
      *
      * **El JAZ 50, hasta un 45 %**, y es lo que más se aparta de toda la flota:
-     * vuela 469 m hasta los cincuenta pies donde la cuenta dice 338 y su manual,
+     * vuela 468 m hasta los cincuenta pies donde la cuenta dice 338 y su manual,
      * 395. Rueda hasta la Vr lo que la cuenta —215 m contra 209—; lo que se
      * alarga es lo de después. Rota a 73 nudos, 1,16 veces su pérdida con los
      * flaps de despegue, y a esa velocidad necesita casi nueve grados para

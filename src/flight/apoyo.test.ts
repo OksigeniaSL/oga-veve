@@ -18,7 +18,7 @@
 import { describe, expect, it } from "vitest";
 import { Quaternion, Vector3, type Mesh, type Object3D } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { AIRCRAFT, type AircraftConfig } from "./aircraft";
+import { AIRCRAFT, RESERVADOS, type AircraftConfig } from "./aircraft";
 import { alturaSobreLasRuedas } from "./apoyo";
 import { ArcadeFlightModel } from "./arcade";
 import { CoefficientFlightModel } from "./fdm";
@@ -33,8 +33,20 @@ const fs = (
     process: { getBuiltinModule(nombre: string): unknown };
   }
 ).process.getBuiltinModule("node:fs") as {
+  existsSync(ruta: string): boolean;
   readFileSync(ruta: string): Uint8Array;
 };
+
+/*
+ * **Y los del taller que ya tienen dibujo.** El JAZ 50 tiene su modelo antes de
+ * entrar en la flota, y lo que su ficha dice de sus ruedas y de su cola sale de
+ * él: se mira igual que en los que vuelan. Los que vuelan, siempre; si les falta
+ * el `.glb`, la prueba lo dice al leerlo.
+ */
+const CON_DIBUJO: readonly AircraftConfig[] = [
+  ...AIRCRAFT,
+  ...RESERVADOS.filter((a) => fs.existsSync(`public/assets/aeronaves/${a.id}.glb`)),
+];
 
 const DT = 1 / 60;
 /** Lo que se le admite a una rueda dentro o fuera del suelo, m. */
@@ -56,7 +68,7 @@ const cabeceoDe = (m: FlightModel): number =>
 
 describe("el avión apoya en sus ruedas principales", () => {
   it("parado, a nivel y con las ruedas en el suelo, como siempre", () => {
-    for (const a of AIRCRAFT) {
+    for (const a of CON_DIBUJO) {
       expect(alturaSobreLasRuedas(a, 0), a.id).toBeCloseTo(a.gearHeight, 9);
       // Las principales, por detrás del centro: si no, al rotar bajaría. Salvo
       // en el de rueda de cola, que las lleva delante para sentarse en ella.
@@ -66,7 +78,7 @@ describe("el avión apoya en sus ruedas principales", () => {
   });
 
   it("en el tope de cola, las ruedas siguen en el suelo y el centro sube", () => {
-    for (const a of AIRCRAFT) {
+    for (const a of CON_DIBUJO) {
       const m = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: 0 });
       m.reset({ position: new Vector3(0, a.gearHeight, 0), heading: 0, airspeed: 0 });
       // El morro algo más de un grado por encima del tope: lo para el tren,
@@ -96,7 +108,7 @@ describe("el avión apoya en sus ruedas principales", () => {
      * principales en el suelo; y se va porque sube, no porque las ruedas se
      * hayan quedado a medio metro por debajo.
      */
-    for (const a of AIRCRAFT) {
+    for (const a of CON_DIBUJO) {
       const m = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: 0 });
       m.reset({ position: new Vector3(0, a.gearHeight, 0), heading: 0, airspeed: a.rotationSpeed });
       let abajo = 0;
@@ -118,7 +130,7 @@ describe("el avión apoya en sus ruedas principales", () => {
   });
 
   it("y en el modelo sencillo, también", () => {
-    for (const a of AIRCRAFT) {
+    for (const a of CON_DIBUJO) {
       const m = new ArcadeFlightModel({ aircraft: a, ground: () => 0 });
       m.reset({ position: new Vector3(0, a.gearHeight, 0), heading: 0, airspeed: a.rotationSpeed * 0.8 });
       let peor = 0;
@@ -175,7 +187,7 @@ async function dibujoDe(a: AircraftConfig): Promise<Dibujo> {
 }
 
 describe("y el dibujo cuadra con su ficha", () => {
-  for (const a of AIRCRAFT) {
+  for (const a of CON_DIBUJO) {
     it(`${a.id}: las ruedas donde dice su ficha, y la cola fuera del suelo hasta su tope`, async () => {
       const d = await dibujoDe(a);
       // Unos centímetros: lo que va del eje a la huella que pinta la malla.

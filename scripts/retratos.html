@@ -36,6 +36,7 @@
   } from "three";
   import { WebGLRenderer } from "three";
   import { aeronavePorId } from "/src/flight/aeronaves.ts";
+  import { RESERVADOS } from "/src/flight/aircraft.ts";
   import { cargarModelo } from "/src/world/aeronave-modelo.ts";
 
   const q = new URLSearchParams(location.search);
@@ -232,9 +233,18 @@
     return plano;
   }
 
+  /*
+   * **Y los del taller**, que tienen modelo antes de tener sitio en el hangar:
+   * se pueden retratar para mirarlos (`--a carpeta`), pero su retrato no va a
+   * la carpeta del hangar hasta que entren en la flota. Ver `__enElTaller` y
+   * `hacer-retratos.mjs`.
+   */
+  const fichaDe = (id) => aeronavePorId(id) ?? RESERVADOS.find((a) => a.id === id);
+  globalThis.__enElTaller = (id) => !aeronavePorId(id) && !!fichaDe(id);
+
   /** El retrato de un avión, como `data:` en el formato pedido. */
   globalThis.__retrato = async (id, formato = "image/webp", calidad = 0.8) => {
-    const aircraft = aeronavePorId(id);
+    const aircraft = fichaDe(id);
     if (!aircraft) throw new Error(`no hay ficha para ${id}`);
     const malla = await cargarModelo(aircraft, "/");
     if (!malla) throw new Error(`no hay modelo para ${id}`);
