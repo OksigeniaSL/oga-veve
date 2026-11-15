@@ -198,6 +198,8 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
   "fuera-jaz-25": { original: "fuera-jaz25.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
   "fuera-jaz-40": { original: "fuera-jaz40.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
   "fuera-jaz-60": { original: "fuera-jaz60.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
+  // Despegando de la pista de pasto de la granja, con dos tuyuyús abajo, el pájaro de su nombre. Pintado por Oksigenia.
+  "fuera-jaz-50": { original: "fuera-jaz50.jpg", hueco: "tarjeta", recorte: ENTERA_DE_1448 },
   "fuera-jaz-90": { original: "fuera-jaz90.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
   "fuera-jaz-120": { original: "fuera-jaz120.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
   // De perfil y sobre papel, el retrato aprobado del Tijereta, con más papel arriba y abajo para llegar a 4:3.
@@ -213,6 +215,8 @@ export const RECETAS: Readonly<Record<string, RecetaDeLaIlustracion>> = {
   "cabina-jaz-25": { original: "cabina-jaz25.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
   "cabina-jaz-40": { original: "cabina-jaz40.jpg", hueco: "tarjeta", recorte: ENTERA_GRANDE },
   "cabina-jaz-60": { original: "cabina-jaz60.jpg", hueco: "tarjeta", recorte: [2, 0, 1020, 765] },
+  // Sin pedestal: Jazlyn lleva la mano a las palancas que cuelgan del techo, como en el juego. Pintado por Oksigenia.
+  "cabina-jaz-50": { original: "cabina-jaz50.jpg", hueco: "tarjeta", recorte: ENTERA_DE_1448 },
   "cabina-jaz-90": {
     original: "cabina-jaz90.jpg",
     hueco: "tarjeta",

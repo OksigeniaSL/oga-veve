@@ -184,12 +184,11 @@ describe("las ilustraciones", () => {
 
   /*
    * **Los que todavía no tienen sus láminas**, y la tarjeta los enseña sin
-   * ellas, como estuvo el Super Puma. Hoy, el JAZ 50 Tujuju, que acaba de
-   * salir del taller: su lámina de fuera y la de su cabina las pinta el
-   * director de arte, sobre las capturas de su modelo. Cuando lleguen, se
-   * quita de aquí.
+   * ellas, como estuvieron el Super Puma y el JAZ 50 Tujuju al salir del
+   * taller. Hoy, ninguno: las pinta el director de arte sobre las capturas
+   * del modelo, y el que entre sin ellas se apunta aquí hasta que lleguen.
    */
-  const SIN_DIBUJOS: readonly string[] = ["jaz-50"];
+  const SIN_DIBUJOS: readonly string[] = [];
   /** Los que tienen su lámina de fuera y de cabina: todos los construidos, el helicóptero también. */
   const CON_CABINA = ESTA_HECHO.filter((x) => !SIN_DIBUJOS.includes(x));
 

@@ -849,6 +849,15 @@ casi fotográficos que no van con los demás; la cabina de tres y tres
 asientos, que es la de otro avión; y las versiones cuadradas de Ara durmiendo
 y soñando, que no tienen hueco.
 
+**Las dos del JAZ 50 Tujuju** (15-11-2026), como las del Super Puma de abajo,
+las pintó Oksigenia para su tarjeta, en el estilo de las de la flota, y son contenido de
+Oksigenia SL. Ninguna lleva una letra. La de fuera lo pinta despegando de la
+pista de pasto de la granja, con dos tuyuyús abajo, el pájaro de su nombre; la
+de dentro, con Jazlyn llevando la mano a las palancas que cuelgan del techo,
+sin pedestal, como en su cabina del juego. Como referencia de forma se usaron
+las capturas del modelo y de la cabina del juego y la foto del C-GVKI de Bidgee
+(Wikimedia Commons, CC BY-SA 3.0 AU), solo para mirar: no entra nada de ella.
+
 **Las dos del Super Puma** son de otra mano: las pintó Oksigenia para su
 tarjeta, en el estilo de las de la flota y con la pintura de su muestra, y como
 el resto del arte original son contenido de Oksigenia SL. Ninguna lleva una
@@ -877,12 +886,14 @@ cabina mientras no la hubo, ya no entra.
 | `src/assets/ilustraciones/fuera-jaz-25.webp` | `fuera-jaz25.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/fuera-jaz-40.webp` | `fuera-jaz40.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/fuera-jaz-60.webp` | `fuera-jaz60.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/fuera-jaz-50.webp` | `fuera-jaz50.jpg` | La tarjeta del avión, en el hangar: el Tujuju despegando de la pista de la granja | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/fuera-jaz-90.webp` | `fuera-jaz90.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/fuera-jaz-120.webp` | `fuera-jaz120.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/cabina-jaz-20.webp` | `cabina-jaz20.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/cabina-jaz-25.webp` | `cabina-jaz25.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/cabina-jaz-40.webp` | `cabina-jaz40.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/cabina-jaz-60.webp` | `cabina-jaz60.jpg` | La tarjeta del avión, en el hangar | entera, en 4:3, 360 × 270 |
+| `src/assets/ilustraciones/cabina-jaz-50.webp` | `cabina-jaz50.jpg` | La tarjeta del avión, en el hangar: Jazlyn con la mano en las palancas del techo del Tujuju | entera, en 4:3, 360 × 270 |
 | `src/assets/ilustraciones/cabina-jaz-90.webp` | `cabina-jaz90.jpg` | La tarjeta del avión, en el hangar | recortada por la derecha, hasta dejar fuera el hombro del copiloto, que llevaba cuatro barras: el asiento de la derecha lleva tres; 360 × 270 |
 | `src/assets/ilustraciones/cabina-jaz-120.webp` | `cabina-jaz120.jpg` | La tarjeta del avión, en el hangar | recortada por la derecha, hasta dejar fuera el hombro del copiloto, que llevaba cuatro barras: el asiento de la derecha lleva tres; 360 × 270 |
 | `src/assets/ilustraciones/fuera-jaz-110.webp` | `fuera-jaz110.png` | La tarjeta del avión, en el hangar | de perfil y sobre papel, con más papel arriba y abajo hasta 4:3, 360 × 270 |
