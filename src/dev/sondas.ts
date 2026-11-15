@@ -1908,6 +1908,16 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     },
     /** Si la torre ya dio la luz verde para entrar en pista. Para el banco. */
     luzVerde: () => juego.plan?.autorizado ?? null,
+    /**
+     * **La vuelta a la raya**: si la tarjeta del tractor está ofrecida, en qué va el
+     * tractor, tocarla como un dedo y un sitio del campo junto a la raya donde pararse.
+     * Lo usa `scripts/ver-vuelta-a-la-raya.mjs`. Ver `Game.atenderALaHierba`.
+     */
+    vueltaALaRaya: () => juego.vueltaALaRayaParaBanco,
+    tocarElTractor: () => juego.tocarElTractorParaBanco(),
+    hierbaJuntoALaRaya: (metros?: number) => juego.hierbaJuntoALaRayaParaBanco(metros),
+    /** La raya entera de ahora, la que mira el tractor, en coordenadas del mundo. */
+    laRaya: () => juego.plan?.laRaya ?? [],
     ruta: () => juego.plan?.rutaVisible() ?? [],
     /** La puerta asignada a esta llegada. Tiene que ser siempre la misma. */
     puerta: () => juego.plan?.puertaAsignada ?? null,

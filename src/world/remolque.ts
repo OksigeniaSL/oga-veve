@@ -424,6 +424,22 @@ export function poseDelEmpuje(e: Empuje, s: number): Pose {
 export const VA_EMPUJANDO = 1;
 /** Lo que acelera y frena el tractor, m/s²: que no se note el tirón en el asiento. */
 export const ACELERA_EMPUJANDO = 0.12;
+/**
+ * **A qué velocidad se remolca de vuelta a la raya**, m/s: dos, siete kilómetros por
+ * hora. Es un remolque hacia delante por la hierba, más rápido que un empuje por la
+ * plataforma y bastante por debajo de lo que se remolca por una calle: lo que anda
+ * deprisa quien va al lado con el cable.
+ */
+export const VA_REMOLCANDO = 2;
+/** Lo que tarda en engancharse: la cuna abraza la rueda, el pasador y el cable, s. */
+export const SE_ENGANCHA = 6;
+/**
+ * **Lo que anda el tractor marcha atrás** los últimos metros hasta la rueda de morro,
+ * m/s, y cuántos metros son: se para delante del morro, mirando hacia donde va a tirar,
+ * y retrocede despacio hasta abrazar la rueda con la cuna.
+ */
+const RECULA = 1;
+const RECULA_DESDE = 12;
 /** Lo que anda la persona de tierra, m/s, y lo que rueda el tractor ya suelto. */
 const ANDA = 1.4;
 const RUEDA_SUELTO = 4;
@@ -437,6 +453,14 @@ export const SALUDA = 3;
 
 /** Lo que va pasando, en su orden. */
 export type FaseDelRemolque =
+  /**
+   * **El tractor viene a buscar al avión**, solo en la vuelta a la raya: desde la calle
+   * hasta delante del morro, y los últimos metros marcha atrás, con la cuna hacia la
+   * rueda de morro. Ver `ALaRaya`.
+   */
+  | "llegando"
+  /** Y la engancha: la cuna abraza la rueda, el pasador puesto y el cable enchufado. */
+  | "enganchando"
   /** En el puesto, enganchado, esperando a que la cabina diga que se empuje. */
   | "enganchado"
   /** Empujando, hacia atrás. */
@@ -477,7 +501,26 @@ export interface MedidasDelTractor {
  * uno de seis y medio por tres. Ver el ADR 0025.
  */
 export function tractorPara(batalla: number): MedidasDelTractor {
+  if (batalla < BATALLA_DE_AVIONETA) return { largo: 3, ancho: 1.5, alto: 1.3 };
   return batalla >= 20 ? { largo: 9, ancho: 4.3, alto: 1.8 } : { largo: 6.5, ancho: 3.1, alto: 1.6 };
+}
+
+/**
+ * **Hasta qué batalla es una avioneta**, m, y se le acerca el tractor pequeño: los
+ * eléctricos de cuna que abrazan la rueda de morro de una avioneta, de tres metros por uno
+ * y medio. Solo los llama la vuelta a la raya: del puesto de contacto solo salen empujados
+ * los de línea, y el más corto pasa de diez metros de batalla.
+ */
+const BATALLA_DE_AVIONETA = 5;
+
+/**
+ * **La vuelta a la raya**: el tractor viene a buscar a un avión que se ha quedado parado
+ * en la hierba, lo engancha y lo remolca **hacia delante** hasta la raya. `desde` es por
+ * dónde llega el tractor —de la calle, por la hierba— hasta delante del morro; lo último,
+ * marcha atrás hasta la rueda, lo pone el remolque. Ver `world/vuelta-a-la-raya.ts`.
+ */
+export interface ALaRaya {
+  readonly desde: readonly PuntoXZ[];
 }
 
 /**
@@ -508,12 +551,35 @@ export class Remolque {
   constructor(
     readonly empuje: Empuje,
     private readonly avionMide: MedidasDelAvion,
+    /** Si es la vuelta a la raya, y no el empuje del puesto. Ver `ALaRaya`. */
+    readonly aLaRaya: ALaRaya | null = null,
   ) {
     this.tractorMide = tractorPara(avionMide.batalla);
     this.tractorAhora = this.tractorEnganchado();
     this.rumboDelTractor = this.tractorAhora.rumbo;
     this.personaAhora = this.personaAlLado();
+    if (aLaRaya && aLaRaya.desde.length > 0) {
+      /*
+       * **Llega por su camino y los últimos metros, marcha atrás**: se para delante del
+       * morro mirando hacia donde va a tirar y recula hasta la rueda. Sin camino no hay
+       * llegada que esperar, y se engancha ya.
+       */
+      const enganchado = this.tractorAhora;
+      const n = vector(enganchado.rumbo);
+      const delante = { x: enganchado.x + n.x * RECULA_DESDE, z: enganchado.z + n.z * RECULA_DESDE };
+      this.caminoDeLlegada = [...aLaRaya.desde, delante, { x: enganchado.x, z: enganchado.z }];
+      const p0 = this.caminoDeLlegada[0]!;
+      const p1 = this.caminoDeLlegada[1]!;
+      this.rumboDelTractor = rumboEntre(p0, p1);
+      this.tractorAhora = { x: p0.x, z: p0.z, rumbo: this.rumboDelTractor };
+      this.personaAhora = this.tractorAhora;
+      this.faseAhora = "llegando";
+    } else if (aLaRaya) this.faseAhora = "enganchando";
   }
+
+  /** El camino del tractor hasta la rueda de morro, y lo que lleva de él. Ver `ALaRaya`. */
+  private caminoDeLlegada: readonly PuntoXZ[] = [];
+  private delCaminoDeLlegada = 0;
 
   get fase(): FaseDelRemolque {
     return this.faseAhora;
@@ -532,7 +598,12 @@ export class Remolque {
   }
   /** Si el avión ya está donde acaba el empuje. */
   get acabado(): boolean {
-    return this.faseAhora !== "enganchado" && this.faseAhora !== "empujando";
+    return (
+      this.faseAhora !== "llegando" &&
+      this.faseAhora !== "enganchando" &&
+      this.faseAhora !== "enganchado" &&
+      this.faseAhora !== "empujando"
+    );
   }
   /** Si ya es de sus pilotos: tractor fuera y la persona ha saludado. */
   get libre(): boolean {
@@ -540,7 +611,19 @@ export class Remolque {
   }
   /** Si el cable va enchufado al avión. */
   get conCable(): boolean {
-    return this.faseAhora === "enganchado" || this.faseAhora === "empujando" || this.faseAhora === "frenado";
+    return (
+      this.faseAhora === "enganchando" ||
+      this.faseAhora === "enganchado" ||
+      this.faseAhora === "empujando" ||
+      this.faseAhora === "frenado"
+    );
+  }
+  /**
+   * **Si la persona de tierra está a la vista**: mientras el tractor viene, va en él, y se
+   * baja al llegar. Ver `ALaRaya`.
+   */
+  get personaALaVista(): boolean {
+    return this.faseAhora !== "llegando";
   }
   /** Si el tractor tiene la rueda de morro. */
   get enganchado(): boolean {
@@ -592,15 +675,41 @@ export class Remolque {
   /** Y si ya están en marcha: lo pone quien lleva el avión en cada paso. */
   motoresEnMarcha = false;
 
+  /**
+   * **Si el tractor de la vuelta a la raya puede acercarse ya**: con la hélice o los
+   * motores todavía girando, no. Nadie de tierra se acerca a la rueda de morro con una
+   * hélice girando delante, ni a un reactor en marcha; el tractor espera en la calle. Lo
+   * pone quien lleva el avión en cada paso.
+   */
+  puedeLlegar = true;
+
   /** **Que empiece a empujar**: lo pide la cabina. Solo vale enganchado. */
   empezar(): void {
     if (this.faseAhora === "enganchado") this.pasarA("empujando");
+  }
+
+  /** **A qué velocidad se mueve el avión enganchado**: la del empuje, o la del remolque. */
+  private get vaA(): number {
+    return this.aLaRaya ? VA_REMOLCANDO : VA_EMPUJANDO;
   }
 
   /** Un paso de `dt` segundos. */
   paso(dt: number): void {
     this.enFase += dt;
     switch (this.faseAhora) {
+      case "llegando":
+        // Y no se acerca hasta que el motor está parado: ver `puedeLlegar`.
+        if (!this.puedeLlegar) break;
+        if (this.llegar(dt)) {
+          this.tractorAhora = this.tractorEnganchado();
+          this.rumboDelTractor = this.tractorAhora.rumbo;
+          this.pasarA("enganchando");
+        }
+        break;
+      case "enganchando":
+        // En la vuelta a la raya nadie lo pide desde la cabina: el toque ya lo pidió.
+        if (this.enFase >= SE_ENGANCHA) this.pasarA("empujando");
+        break;
       case "enganchado":
         break;
       case "empujando": {
@@ -608,7 +717,7 @@ export class Remolque {
         // Arranca y para suave: lo que frena hasta el final, v² = 2·a·d.
         const paraParar = Math.sqrt(2 * ACELERA_EMPUJANDO * Math.max(0, queda));
         // Y nunca del todo parado antes de llegar, que el último centímetro también se empuja.
-        this.v = Math.max(queda > 0.02 ? 0.03 : 0, Math.min(VA_EMPUJANDO, paraParar, this.v + ACELERA_EMPUJANDO * dt));
+        this.v = Math.max(queda > 0.02 ? 0.03 : 0, Math.min(this.vaA, paraParar, this.v + ACELERA_EMPUJANDO * dt));
         this.recorrido = Math.min(this.empuje.largo, this.recorrido + this.v * dt);
         if (this.recorrido >= this.empuje.largo - 0.01) {
           this.recorrido = this.empuje.largo;
@@ -676,10 +785,12 @@ export class Remolque {
     const izquierda = vector(a.rumbo - Math.PI / 2);
     const aparte = this.tractorMide.ancho / 2 + 2.5;
     const andando = this.faseAhora === "empujando";
+    // Andando hacia donde va el avión: hacia la cola en el empuje, hacia el morro en el remolque.
+    const haciaDondeVa = this.aLaRaya ? a.rumbo : a.rumbo + Math.PI;
     return {
       x: r.x + izquierda.x * aparte,
       z: r.z + izquierda.z * aparte,
-      rumbo: andando ? normalizar(a.rumbo + Math.PI) : normalizar(a.rumbo - Math.PI / 2 + Math.PI),
+      rumbo: andando ? normalizar(haciaDondeVa) : normalizar(a.rumbo - Math.PI / 2 + Math.PI),
     };
   }
 
@@ -721,7 +832,12 @@ export class Remolque {
     const n = vector(a.rumbo);
     const t = this.tractorAhora;
     const puesto = this.empuje.poses[0]!;
-    const lado = cruz(n, { x: puesto.x - a.x, z: puesto.z - a.z }) >= 0 ? 1 : -1;
+    /*
+     * Hacia el lado del puesto, que es la plataforma. **Y de vuelta a la raya, al contrario**:
+     * de donde vino el avión es la hierba de la que se le acaba de sacar.
+     */
+    const delPuesto = cruz(n, { x: puesto.x - a.x, z: puesto.z - a.z }) >= 0 ? 1 : -1;
+    const lado = this.aLaRaya ? -delPuesto : delPuesto;
     const haciaElPuesto = vector(a.rumbo + (lado * Math.PI) / 2);
     const fuera = this.avionMide.envergadura / 2 + 18;
     const p1 = { x: t.x + n.x * 10, z: t.z + n.z * 10 };
@@ -733,6 +849,47 @@ export class Remolque {
   private caminoASuSitio(): PuntoXZ[] {
     const s = this.sitioDelSaludo();
     return [{ x: this.personaAhora.x, z: this.personaAhora.z }, { x: s.x, z: s.z }];
+  }
+
+  /**
+   * **El tractor, por su camino hasta la rueda de morro**: hacia delante a lo que rueda
+   * suelto, y el último tramo marcha atrás y despacio, con la cuna por delante. Gira como
+   * un vehículo, poco a poco. Devuelve si ya llegó.
+   */
+  private llegar(dt: number): boolean {
+    const camino = this.caminoDeLlegada;
+    const ultimo = camino.length - 2;
+    let total = 0;
+    let hastaElUltimo = 0;
+    for (let i = 1; i < camino.length; i++) {
+      if (i - 1 === ultimo) hastaElUltimo = total;
+      total += Math.hypot(camino[i]!.x - camino[i - 1]!.x, camino[i]!.z - camino[i - 1]!.z);
+    }
+    const reculando = this.delCaminoDeLlegada >= hastaElUltimo;
+    const s = Math.min(total, this.delCaminoDeLlegada + (reculando ? RECULA : RUEDA_SUELTO) * dt);
+    this.delCaminoDeLlegada = s;
+    let falta = s;
+    let p = camino[0]!;
+    let va = this.rumboDelTractor;
+    for (let i = 1; i < camino.length; i++) {
+      const a = camino[i - 1]!;
+      const b = camino[i]!;
+      const l = Math.hypot(b.x - a.x, b.z - a.z);
+      if (l < 1e-6) continue;
+      // Marcha atrás, el morro del tractor mira al revés de por donde va.
+      va = rumboEntre(a, b) + (i - 1 === ultimo ? Math.PI : 0);
+      if (falta <= l) {
+        p = { x: a.x + ((b.x - a.x) * falta) / l, z: a.z + ((b.z - a.z) * falta) / l };
+        break;
+      }
+      falta -= l;
+      p = b;
+    }
+    this.rumboDelTractor = normalizar(this.rumboDelTractor + acotar(diferencia(this.rumboDelTractor, va), 35 * GRADO * dt));
+    this.tractorAhora = { x: p.x, z: p.z, rumbo: this.rumboDelTractor };
+    // Y la persona va en él, hasta que se baja a enganchar.
+    this.personaAhora = this.tractorAhora;
+    return s >= total - 1e-6;
   }
 
   /** Avanza al tractor o a la persona por su camino. Devuelve si ya llegó. */

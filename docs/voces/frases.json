@@ -20487,5 +20487,12 @@
     "idioma": "es-PY",
     "texto": "¡Eso! El automático ya gira el avión hacia el campo",
     "para": "al tocar la flecha de casa: el automático ya gira hacia el campo"
+  },
+  {
+    "id": "vuelo.tractorALaRaya",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Nos quedamos en el pasto, fuera de la raya. No pasa nada: tocá el tractor, que viene a buscarnos y nos lleva a la raya verde",
+    "para": "parado en la hierba, fuera de la raya: tocá el tractor, que late, y te lleva a la raya"
   }
 ]

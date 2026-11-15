@@ -3283,21 +3283,6 @@ export class PlanDeVuelo {
     return this.rutaMundo[this.rutaMundo.length - 1] ?? null;
   }
 
-  /**
-   * ¿Toca repetir el aviso de que se ha salido de la raya?
-   *
-   * Con cuentagotas: cada seis segundos. Un aviso que se repite sin parar deja
-   * de leerse y encima tapa los demás, que fue exactamente lo que pasó con la
-   * alarma de pérdida.
-   */
-  private desdeElAviso = 99;
-
-  avisarDeSalida(dt: number): boolean {
-    this.desdeElAviso += dt;
-    if (this.desdeElAviso < 6) return false;
-    this.desdeElAviso = 0;
-    return true;
-  }
 
   /**
    * Cuánto alerón haría falta para volver a la raya, de −1 a 1.

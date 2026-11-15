@@ -1100,8 +1100,22 @@ import {
   edificiosDePasarela,
   trayectoriaDelEmpuje,
   vector,
+  type Empuje,
 } from "./world/remolque";
 import { DibujoDelRemolque } from "./world/tractor-de-remolque";
+import { AvisoDeLaRaya } from "./flight/aviso-de-la-raya";
+import { AvisoDeVelocidad } from "./flight/aviso-de-velocidad";
+import {
+  destinoEnLaRaya,
+  elSitioDe,
+  enElCampo,
+  hayTractor,
+  llegadaDelTractor,
+  rayaQueQuedaPorDelante,
+  remolqueALaRaya,
+  VigiaDeLaHierba,
+  type DestinoEnLaRaya,
+} from "./world/vuelta-a-la-raya";
 import type { Gesto } from "./flight/senalero";
 import {
   Sigueme,
@@ -1483,6 +1497,7 @@ import {
 import {
   enElPavimento,
   esAfis,
+  aLaPolilinea,
   puntoMasCercanoDe,
   sinTorre,
   type Aerodrome,
@@ -2158,6 +2173,34 @@ const SE_PASO_DEL_PUESTO = 10;
  * cerca — que rodando en una plataforma es lo normal.
  */
 const ATROPELLO = 8;
+
+/**
+ * **En qué fases se le ofrece el tractor a quien se queda parado en la hierba**: las de
+ * rodar por una raya, a la ida y a la vuelta, y la carrera de aterrizaje que acaba en el
+ * campo. No las de la pista —alinear, despegar—: ahí la raya es la propia pista, y a una
+ * pista no se remolca a nadie. Ver `atenderALaHierba`.
+ */
+const SE_VUELVE_A_LA_RAYA: ReadonlySet<Fase> = new Set<Fase>([
+  "arrancando",
+  "rodando",
+  "esperando",
+  "aterrizado",
+  "abandonando",
+  "a-plataforma",
+]);
+
+/**
+ * **Lo que el tractor tarda de más como mucho**, sobre lo que debería tardar, antes de
+ * soltarlo todo: una espera sin salida no la puede haber. Ver `llevarALaRaya`.
+ */
+const HOLGURA_DE_LA_VUELTA = 1.5;
+
+/**
+ * **Cuándo está quieta la hélice**, rad/s de la que se dibuja: lo que tarda en pararse del
+ * todo tras cortar el motor, unos cinco segundos. Hasta entonces el tractor de la vuelta a
+ * la raya no se acerca. Ver `Remolque.puedeLlegar`.
+ */
+const HELICE_QUIETA = 0.5;
 
 /**
  * Cuánto se perdona pasado el final de la pista antes de darlo por salida, m.
@@ -5479,6 +5522,7 @@ export class Game {
     this.finalDeLaTorre.reiniciar();
     this.tcas.reiniciar();
     if (this.remolqueDeQuienJuega) this.quitarElRemolque();
+    this.olvidarLaHierba();
   }
   /**
    * Cuántas veces el juego ha decidido decir «ya podés tocar».
@@ -5800,6 +5844,28 @@ export class Game {
   private remolque: Remolque | null = null;
   private dibujoDelRemolque: DibujoDelRemolque | null = null;
   private remolquePorMirar = false;
+  /**
+   * **La vuelta a la raya**: el vigía que ve al avión parado en la hierba, el tractor que
+   * viene a buscarlo, con su dibujo, y si su tarjeta está ofrecida. Aparte del remolque del
+   * puesto, que lleva su tarjeta, su radio y su banco. Ver `atenderALaHierba` y
+   * `world/vuelta-a-la-raya.ts`.
+   */
+  private readonly vigiaDeLaHierba = new VigiaDeLaHierba();
+  /** «Volvé a la raya verde», una vez por salida. Ver `flight/aviso-de-la-raya.ts`. */
+  private readonly avisoDeLaRaya = new AvisoDeLaRaya();
+  /** «Andá más despacio», una vez por cada vez que se pasa. Ver `flight/aviso-de-velocidad.ts`. */
+  private readonly avisoDeVelocidad = new AvisoDeVelocidad();
+  private vueltaALaRaya: Remolque | null = null;
+  private dibujoDeLaVuelta: DibujoDelRemolque | null = null;
+  private tractorOfrecido = false;
+  /** Lo que lleva la vuelta a la raya desde el toque, s. Ver `topeDeLaVuelta`. */
+  private relojDelTractor = 0;
+  /** El destino y el remolque calculados al ofrecer el tractor, para no buscarlos en cada fotograma. */
+  private vueltaPensada: {
+    readonly destino: DestinoEnLaRaya;
+    readonly empuje: Empuje;
+    readonly raya: readonly { x: number; z: number }[];
+  } | null = null;
   /**
    * **El interruptor de la baliza**: lo mueven quien juega —botón, tecla o tarjeta— y el
    * motor al arrancar y al parar; en el pasaje, la tripulación. Sin ella, el tractor no
@@ -7175,6 +7241,7 @@ export class Game {
           { cual: "consola", explicacion: this.explicacionDeLaConsola },
           { cual: "cruz", explicacion: this.explicacionDeLaCruz },
           { cual: "adelantar", explicacion: this.explicacionDelAdelanto },
+          { cual: "tractor", explicacion: this.explicacionDelTractor },
           { cual: "aCasa", explicacion: this.explicacionDeVolverACasa },
         ],
       );
@@ -7288,6 +7355,7 @@ export class Game {
     });
     this.hud.onNoExplicarElAdelanto(() => this.noExplicarElAdelanto());
     this.hud.onNoExplicarVolver(() => this.noExplicarVolverACasa());
+    this.hud.onNoExplicarElTractor(() => this.noExplicarElTractor());
     this.hud.onCamara(() => this.cycleCamera());
     this.hud.onGafas(() => this.alternarGafas());
     // Antes de volar: la vuelta al avión y el tiempo de hoy.
@@ -7744,6 +7812,7 @@ export class Game {
     }
     // Y el remolque, que se mira en el primer paso: con el avión ya en su puesto. Ver `prepararElRemolque`.
     this.quitarElRemolque();
+    this.olvidarLaHierba();
     this.baliza.reiniciar();
     this.remolquePorMirar = true;
     this.tripulacionDeLinea = new VueloDeLinea({
@@ -13138,6 +13207,11 @@ export class Game {
       return;
     }
     if (this.salirEmpujadoDeDondeSeLlego()) return;
+    // Y con el tractor de la vuelta a la raya enganchado, la llave no arranca: hay gente junto a la rueda.
+    if (this.remolcandoALaRaya) {
+      this.avisar("error");
+      return;
+    }
     const s = this.flight.state;
     const c = this.input.controls;
     /*
@@ -13385,6 +13459,8 @@ export class Game {
      * La baliza, también: en el primer paso se pone como esté el motor. Ver `flight/baliza.ts`.
      */
     this.baliza.reiniciar();
+    // Y el tractor de la vuelta a la raya, si estaba: es de este vuelo. Ver `atenderALaHierba`.
+    this.olvidarLaHierba();
     if (this.leccion.arranque === "aire") return this.reiniciarEnFinal();
     // El plan se reinicia **antes** de colocar el avión: es él quien decide si
     // hoy se sale del puesto o de la cabecera, y de eso depende dónde y hacia
@@ -13445,6 +13521,8 @@ export class Game {
     this.explicacionDeLaConsola.releer();
     this.explicacionDeLaCruz.releer();
     this.explicacionDelAdelanto.releer();
+    this.explicacionDelTractor.releer();
+    this.yaLoSeDelTractor = null;
     this.explicacionDeVolverACasa.releer();
     this.perdido.olvidar();
     this.yaLoSeDeVolver = null;
@@ -18551,6 +18629,16 @@ export class Game {
         const reversa = this.reversa.paso(dt, mandos.reversa);
         if (reversa !== mandos.reversa) mandos = { ...mandos, reversa };
       }
+      /*
+       * **Y remolcado de vuelta a la raya, gases a ralentí y sujetos**, del toque al saludo:
+       * un avión no tira con sus motores contra el tractor que lo lleva, ni se le da gas con
+       * alguien de tierra junto a la rueda de morro. La palanca se queda en ralentí, también
+       * en el cuadro, y no hay reversa. Ver `atenderALaHierba`.
+       */
+      if (this.remolcandoALaRaya) {
+        this.input.controls.throttle = 0;
+        mandos = { ...mandos, throttle: 0, reversa: 0 };
+      }
       this.flight.step(dt, mandos);
       // El remolque de quien juega se mira con el avión ya en su puesto, como el del pasaje.
       if (this.remolquePorMirar && !this.dePasaje) this.prepararElRemolque();
@@ -18558,6 +18646,8 @@ export class Game {
       this.empujarElAvion(dt);
       this.atenderAlRemolque();
       this.atenderALaTierra();
+      // Y si se quedó parado en la hierba, el tractor que lo devuelve a la raya. Ver `atenderALaHierba`.
+      this.atenderALaHierba(dt);
       /*
        * Y lo que le ha llegado, para las superficies. **El compensador mueve
        * la profundidad en los de hélice** —es una aleta en su borde de
@@ -21419,6 +21509,351 @@ export class Game {
   }
 
   /**
+   * **La vuelta a la raya, cada fotograma** (H12c): el niño que se sale de la calle o de
+   * la pista y se queda parado en la hierba. Tras un rato, la tarjeta del tractor sale
+   * latiendo —el dedo de la instructora señalando el arreglo— y ella lo dice con calma; un
+   * toque, y viene el tractor y lo devuelve a la raya. Es lo que se hace en un aeródromo de
+   * verdad: un avión que se sale al campo lo remolca el servicio de plataforma.
+   *
+   * - **Solo donde hay tractor**: con torre o AFIS. En la granja o en Ayolas no hay a quién
+   *   llamar, y no se ofrece nada que no hay. Ver `hayTractor`.
+   * - **Solo si hay por dónde**: un punto de la raya al que se llega sin pista ni edificio
+   *   por medio. Si no lo hay, el avión se queda como estaba, con la aguja señalando la raya
+   *   como siempre. Ver `destinoEnLaRaya`.
+   * - **La voz, una vez por suceso**, y no por reloj: ver `VigiaDeLaHierba`. Las dos
+   *   primeras veces se explica; desde la tercera, solo late la tarjeta, y se recupera en
+   *   los ajustes. Ver `decirLoDelTractor`.
+   */
+  private atenderALaHierba(dt: number): void {
+    if (this.vueltaALaRaya) this.llevarALaRaya(dt);
+    // Arrancado otra vez tras el tractor: fuera la llave, y vuelve la tarjeta de la fase, callada.
+    if (this.motorParadoPorElTractor && this.input.controls.engineOn) {
+      this.motorParadoPorElTractor = false;
+      if (this.hud.senal.puesto.dibujo === "llave") {
+        this.hud.senal.caducar("llave");
+        this.faseAnunciada = "";
+        this.soloLaTarjeta = true;
+      }
+    }
+    const s = this.flight.state;
+    const aero = this.plan?.aerodromoActual ?? null;
+    const fase = this.vistaActual?.fase;
+    const conRaya =
+      aero !== null &&
+      hayTractor(aero) &&
+      !this.dePasaje &&
+      !this.aircraft.helicoptero &&
+      !this.vueloTerminado &&
+      fase !== undefined &&
+      SE_VUELVE_A_LA_RAYA.has(fase) &&
+      (this.plan?.laRaya.length ?? 0) > 1 &&
+      !this.remolqueDeQuienJuega &&
+      !this.remolcandoALaRaya;
+    const v = this.vigiaDeLaHierba.paso(dt, {
+      enElSuelo: s.onGround,
+      velocidad: s.groundSpeed,
+      // Solo se mira el suelo cuando hay raya: es una pregunta a todas las calles del campo.
+      enElCampo: conRaya && s.onGround && aero !== null && enElCampo(aero, s.position.x, s.position.z),
+      conRaya,
+      x: s.position.x,
+      z: s.position.z,
+    });
+    // Por dónde iría el tractor, pensado una vez al ofrecerse y olvidado al moverse.
+    if (!v.ofrecido) {
+      this.vueltaPensada = null;
+      this.vueltaMirada = false;
+    } else if (!this.vueltaMirada && aero) {
+      this.vueltaMirada = true;
+      this.vueltaPensada = this.pensarLaVuelta(aero);
+    }
+    const ofrecer = v.ofrecido && this.vueltaPensada !== null;
+    if (ofrecer !== this.tractorOfrecido) {
+      this.tractorOfrecido = ofrecer;
+      if (ofrecer) this.ofrecerElTractor();
+      else this.retirarLaTarjetaDelTractor();
+    }
+    if (v.avisa && ofrecer) this.decirLoDelTractor();
+    // Y su «ya lo sé», mientras la tarjeta late: ver `decirLoDelTractor`.
+    this.hud.ponerYaLoSeDelTractor(this.tractorOfrecido ? this.yaLoSeDelTractor : null);
+  }
+
+  /** Si la vuelta a la raya ya se miró para esta parada. Ver `atenderALaHierba`. */
+  private vueltaMirada = false;
+  /** Si en esta vuelta la instructora lo explicó: entonces también cuenta el pasador al soltar. */
+  private vueltaExplicada = false;
+
+  /** Si el tractor de la vuelta a la raya lleva el avión. */
+  private get remolcandoALaRaya(): boolean {
+    return this.vueltaALaRaya !== null && !this.vueltaALaRaya.libre;
+  }
+
+  /** **Por dónde iría el tractor** desde donde está el avión, o `null` si no hay por dónde. */
+  private pensarLaVuelta(
+    aero: Aerodrome,
+  ): { readonly destino: DestinoEnLaRaya; readonly empuje: Empuje; readonly raya: readonly { x: number; z: number }[] } | null {
+    const s = this.flight.state;
+    const raya = (this.plan?.laRaya ?? []).map(([x, z]) => ({ x, z }));
+    const sitio = elSitioDe(aero, this.aircraft.wingSpan);
+    /*
+     * Y antes de la doble raya del punto de espera, que esos metros los rueda quien juega. Si
+     * así no hay por dónde —la raya rehecha desde la hierba puede tener poca calle—, hasta la
+     * espera: más vale el tractor hasta la doble raya que ninguno.
+     */
+    const alFinal = rayaQueQuedaPorDelante(this.aircraft.batalla);
+    const aqui = { x: s.position.x, z: s.position.z };
+    const destino = destinoEnLaRaya(aqui, raya, sitio, 6, alFinal) ?? destinoEnLaRaya(aqui, raya, sitio);
+    if (!destino) return null;
+    const empuje = remolqueALaRaya({ x: s.position.x, z: s.position.z, rumbo: s.heading }, raya, destino, this.aircraft.batalla);
+    return empuje ? { destino, empuje, raya } : null;
+  }
+
+  /**
+   * **La tarjeta del tractor**, latiendo, y que hace lo que dibuja al tocarla: con el dedo,
+   * con el ratón o con el teclado, que es un botón. El dibujo en los cuatro peldaños; la
+   * palabra «Tractor» en el segundo; la frase desde el tercero. Ver `flight/escalera.ts`.
+   */
+  private ofrecerElTractor(): void {
+    const clave = claveDelAviso(this.tier.avisos, "vuelo.tractorALaRaya.tarjeta", "palabra.tractor");
+    this.hud.senal.mostrar("tractor-a-la-raya", clave ? t(clave as TranslationKey) : "", null, {
+      segundos: Infinity,
+      accion: () => this.pedirLaVueltaALaRaya(),
+      llama: true,
+      prioridad: IMPORTANTE,
+    });
+  }
+
+  /** Y fuera, si es la que está: vuelve la tarjeta de la fase, callada. */
+  private retirarLaTarjetaDelTractor(): void {
+    if (this.hud.senal.puesto.dibujo !== "tractor-a-la-raya") return;
+    this.hud.senal.caducar("tractor-a-la-raya");
+    this.faseAnunciada = "";
+    this.soloLaTarjeta = true;
+  }
+
+  /**
+   * **Lo que dice la instructora**, con calma y una vez: que nos quedamos en el pasto, que
+   * no pasa nada y que el tractor viene si se le toca. En los tres peldaños de abajo, como
+   * toda explicación suya (`laInstructoraLoExplica`); en el de cabina quedan la tarjeta
+   * latiendo y su frase escrita.
+   *
+   * **Explicar y dejar de explicar**, como la flecha de casa: se cuenta en el perfil como
+   * las pantallas que se explican al abrirse; la voz mientras no se haya quitado y, desde
+   * la segunda vez, el «ya lo sé» al lado mientras la tarjeta late. Nunca deja de
+   * explicarse solo. Se recupera en los ajustes. Ver `flight/explicacion-al-abrir.ts`.
+   */
+  private decirLoDelTractor(): void {
+    const vez = this.explicacionDelTractor.alAbrir();
+    // El «volvé a la raya verde» que esperara turno ya no vale: un suceso, una voz.
+    BOCA.retirar((c) => c === "vuelo.fuera");
+    const explica = vez.explicar && laInstructoraLoExplica(this.tier.avisos);
+    // Con la clave escrita entera: así la ve la lista de grabar (`por-grabar.test.ts`).
+    const dicha = explica && this.decirLoGrabado("vuelo.tractorALaRaya");
+    this.vueltaExplicada = dicha;
+    this.yaLoSeDelTractor = dicha && vez.ofrecerQuitarla ? canalesDe(this.tier.avisos).texto : null;
+  }
+
+  /** Cómo va el «ya lo sé» del tractor: `null`, sin él; si no, si lleva la palabra. */
+  private yaLoSeDelTractor: boolean | null = null;
+
+  /** **«Ya lo sé» del tractor**: no se explica más en este perfil. Ver `decirLoDelTractor`. */
+  private noExplicarElTractor(): void {
+    this.explicacionDelTractor.quitar();
+    this.yaLoSeDelTractor = null;
+    BOCA.retirar((c) => c === "vuelo.tractorALaRaya");
+    if (this.instructor.hablando && this.instructor.loUltimo === "vuelo.tractorALaRaya") this.instructor.callar();
+  }
+
+  /**
+   * **El toque**: viene el tractor. Desde la calle, por la raya hasta el punto donde va a
+   * dejar el avión y por la hierba hasta delante del morro; recula hasta la rueda, la
+   * engancha, remolca, suelta y se aparta, y la persona de tierra enseña el pasador y
+   * saluda, como en el puesto. Mientras, el avión es del tractor: el freno puesto y la
+   * rueda en su cuna.
+   */
+  private pedirLaVueltaALaRaya(): void {
+    const p = this.vueltaPensada;
+    if (!this.tractorOfrecido || !p || this.remolcandoALaRaya) return;
+    this.quitarLaVueltaALaRaya();
+    // Desde la calle de verdad, y no de la hierba por la que la raya rehecha sale del avión.
+    const aero = this.plan?.aerodromoActual;
+    const pisable = aero ? elSitioDe(aero, this.aircraft.wingSpan).pisable : undefined;
+    const desde = llegadaDelTractor(p.raya, p.destino, pisable);
+    const r = new Remolque(p.empuje, { batalla: this.aircraft.batalla, envergadura: this.aircraft.wingSpan }, { desde });
+    this.vueltaALaRaya = r;
+    this.dibujoDeLaVuelta = new DibujoDelRemolque(r.medidasDelTractor);
+    this.scene.add(this.dibujoDeLaVuelta.grupo);
+    this.dibujoDeLaVuelta.poner(r, (x, z) => this.terrain.sampleSurface(x, z), 0);
+    // Lo que debería tardar, de la llegada al saludo: lo de más lo suelta `llevarALaRaya`.
+    let llegada = Math.hypot(desde[0]!.x - p.empuje.poses[0]!.x, desde[0]!.z - p.empuje.poses[0]!.z);
+    for (let i = 1; i < desde.length; i++) llegada += Math.hypot(desde[i]!.x - desde[i - 1]!.x, desde[i]!.z - desde[i - 1]!.z);
+    this.topeDeLaVuelta = HOLGURA_DE_LA_VUELTA * (llegada / 3 + 20 + p.empuje.largo / 1.5 + 60) + 30;
+    this.relojDelTractor = 0;
+    this.tractorOfrecido = false;
+    this.vueltaPensada = null;
+    /*
+     * **Y el motor, parado antes de que llegue nadie.** Seguridad, seguridad, seguridad: nadie
+     * de tierra se acerca a la rueda de morro con una hélice girando delante, ni a un reactor
+     * en marcha. Se para como se para en tierra —el gas cerrado y la llave—, pero sin lo que
+     * trae parar en un campo: ni se acaba el vuelo ni viene el camión de combustible, que esto
+     * no es llegar. El tractor espera en la calle hasta que la hélice está quieta (ver
+     * `Remolque.puedeLlegar`), y al soltar se vuelve a arrancar como al empezar un vuelo.
+     */
+    const c = this.input.controls;
+    if (c.engineOn) {
+      this.input.cerrarGas();
+      c.engineOn = false;
+      this.motorParadoPorElTractor = true;
+      this.hud.flash(t("hud.engineOff"));
+    }
+    // La tarjeta se queda con el tractor, sin nada que tocar: ya está pedido.
+    this.hud.senal.mostrar("tractor-a-la-raya", "", null, { segundos: Infinity, prioridad: IMPORTANTE });
+    this.avisar("success");
+  }
+
+  /**
+   * **Si el motor lo paró la vuelta a la raya** y todavía no se ha vuelto a arrancar. Mientras,
+   * el plan lo ve en marcha: parado en tierra, para él sería acabar el vuelo o volver al
+   * puesto, y no es ninguna de las dos cosas. Ver `pedirLaVueltaALaRaya`.
+   */
+  private motorParadoPorElTractor = false;
+
+  /**
+   * **Y al soltar, a arrancar otra vez**, como al empezar un vuelo: la tarjeta de la llave,
+   * latiendo y con su tecla, que arranca al tocarla, y la instructora diciéndolo. Es el
+   * arranque de siempre en los cuatro peldaños: el motor lo arranca quien juega.
+   */
+  private pedirElArranqueTrasElTractor(): void {
+    if (!this.motorParadoPorElTractor || this.input.controls.engineOn) return;
+    const conLetras = this.tier.instruments !== "none";
+    this.hud.senal.mostrar("llave", conLetras ? t("vuelo.estacionado") : "", null, {
+      segundos: Infinity,
+      tecla: nombreDeTecla(this.input.preferredKey("engine")),
+      accion: () => this.toggleEngine(),
+      prioridad: IMPORTANTE,
+    });
+    this.instructor.decir(t("vuelo.estacionado"), "vuelo.estacionado");
+  }
+
+  /** Lo más que puede tardar esta vuelta, s. Ver `pedirLaVueltaALaRaya`. */
+  private topeDeLaVuelta = Infinity;
+
+  /**
+   * **Un paso de la vuelta a la raya**: el avión va donde lo lleva el tractor hasta que es
+   * suyo otra vez, y el tractor y la persona, a su sitio. **Y nunca una espera sin
+   * salida**: si se pasa del tope, se suelta todo y el avión se queda donde esté, que no es
+   * peor que donde estaba. Ya suelto, el tractor se queda aparcado a un lado hasta que el
+   * avión se aleja.
+   */
+  private llevarALaRaya(dt: number): void {
+    const r = this.vueltaALaRaya;
+    if (!r) return;
+    const antes = r.fase;
+    if (!r.libre) {
+      this.relojDelTractor += dt;
+      if (this.relojDelTractor > this.topeDeLaVuelta) {
+        this.quitarLaVueltaALaRaya();
+        this.retirarLaTarjetaDelTractor();
+        this.pedirElArranqueTrasElTractor();
+        return;
+      }
+    }
+    // El tractor no se acerca hasta que la hélice o los motores están quietos.
+    r.puedeLlegar = !this.input.controls.engineOn && this.giroDeHelice < HELICE_QUIETA;
+    r.paso(dt);
+    if (!r.libre) {
+      const p = r.avion;
+      this.posicionDelEmpuje.set(p.x, this.terrain.sampleSurface(p.x, p.z) + this.aircraft.gearHeight, p.z);
+      this.flight.reset({ position: this.posicionDelEmpuje, heading: p.rumbo, airspeed: 0 });
+    }
+    // El pasador y el saludo, contados en los peldaños de abajo si esta vez se explicó.
+    if (r.fase === "saludando" && antes !== "saludando" && this.vueltaExplicada && laInstructoraLoExplica(this.tier.avisos))
+      this.instructor.decir(t("vuelo.remolqueSuelta"), "vuelo.remolqueSuelta");
+    if (r.libre && antes !== "libre") {
+      this.retirarLaTarjetaDelTractor();
+      this.pedirElArranqueTrasElTractor();
+    }
+    const s = this.flight.state;
+    if (r.libre && Math.hypot(s.position.x - r.tractor.x, s.position.z - r.tractor.z) > 250) {
+      this.quitarLaVueltaALaRaya();
+      return;
+    }
+    const d = this.dibujoDeLaVuelta;
+    if (d) {
+      d.grupo.visible = s.onGround;
+      if (d.grupo.visible) d.poner(r, (x, z) => this.terrain.sampleSurface(x, z), dt);
+    }
+  }
+
+  /** **La vuelta a la raya fuera**, con su dibujo: vuelo nuevo, o un tractor que se pasó del tope. */
+  private quitarLaVueltaALaRaya(): void {
+    this.dibujoDeLaVuelta?.quitar();
+    this.dibujoDeLaVuelta = null;
+    this.vueltaALaRaya = null;
+    this.topeDeLaVuelta = Infinity;
+  }
+
+  /** Vuelo nuevo: ni tractor, ni tarjeta, ni lo visto en la hierba. */
+  private olvidarLaHierba(): void {
+    this.quitarLaVueltaALaRaya();
+    this.vigiaDeLaHierba.reiniciar();
+    this.avisoDeLaRaya.reiniciar();
+    this.avisoDeVelocidad.reiniciar();
+    this.tractorOfrecido = false;
+    this.vueltaPensada = null;
+    this.vueltaMirada = false;
+    this.vueltaExplicada = false;
+    this.motorParadoPorElTractor = false;
+    this.yaLoSeDelTractor = null;
+  }
+
+  /** Para el banco: la vuelta a la raya, cómo va. */
+  get vueltaALaRayaParaBanco(): {
+    ofrecido: boolean;
+    fase: string | null;
+    avion: { x: number; z: number } | null;
+    tractor: { x: number; z: number } | null;
+    tarjeta: string;
+  } {
+    const r = this.vueltaALaRaya;
+    return {
+      ofrecido: this.tractorOfrecido,
+      fase: r?.fase ?? null,
+      avion: r ? { x: r.avion.x, z: r.avion.z } : null,
+      tractor: r ? { x: r.tractor.x, z: r.tractor.z } : null,
+      tarjeta: this.hud.senal.puesto.dibujo,
+    };
+  }
+
+  /** Para el banco: toca la tarjeta del tractor, como un dedo. */
+  tocarElTractorParaBanco(): void {
+    this.pedirLaVueltaALaRaya();
+  }
+
+  /**
+   * Para el banco: **un sitio del campo a `metros` de la raya**, libre de edificios y de
+   * pistas, mirando hacia fuera, que es como se queda quien se sale. `null` si no hay.
+   */
+  hierbaJuntoALaRayaParaBanco(metros = 40): { x: number; z: number; rumbo: number } | null {
+    const aero = this.plan?.aerodromoActual;
+    if (!aero) return null;
+    const raya = this.plan?.laRaya ?? [];
+    const sitio = elSitioDe(aero, this.aircraft.wingSpan);
+    for (let i = 0; i < raya.length - 1; i++) {
+      const [ax, az] = raya[i]!;
+      const [bx, bz] = raya[i + 1]!;
+      if (Math.hypot(bx - ax, bz - az) < 10) continue;
+      const va = Math.atan2(bx - ax, -(bz - az));
+      for (const lado of [1, -1]) {
+        const n = vector(va + (lado * Math.PI) / 2);
+        const x = (ax + bx) / 2 + n.x * metros;
+        const z = (az + bz) / 2 + n.z * metros;
+        if (enElCampo(aero, x, z) && sitio.libre(x, z)) return { x, z, rumbo: va + (lado * Math.PI) / 2 };
+      }
+    }
+    return null;
+  }
+
+  /**
    * **Lo que va la ventanilla de Ara por delante del centro del avión**, m: la del lado
    * en que se sienta, medida con el modelo de ahora. `null` si el avión no la tiene.
    */
@@ -24255,6 +24690,8 @@ export class Game {
           s.onGround &&
           // Ni con el tractor enganchado: el coche saldría por la raya, que va por detrás del avión.
           !this.remolqueDeQuienJuega &&
+          // Ni con el de la vuelta a la raya, que lleva el avión por la hierba.
+          !this.remolcandoALaRaya &&
           !((fase === "aterrizado" || enLaPistaAun) && !espera),
         cede,
         // Por el asfalto, como el avión: ver `Terrain.resalteEn`.
@@ -25571,7 +26008,8 @@ export class Game {
     const vista = this.plan.paso(
       this.flight.state,
       suelo,
-      this.input.controls.engineOn,
+      // Con el motor parado por el tractor, en marcha para el plan: ver `motorParadoPorElTractor`.
+      this.input.controls.engineOn || this.motorParadoPorElTractor,
       dt,
     );
     this.vistaActual = vista;
@@ -25750,6 +26188,28 @@ export class Game {
     // manda la luz de la torre y la raya verde del suelo, que se entienden sin
     // saber leer; el instructor de voz vendrá a llenar este hueco.
     const conLetras = this.tier.instruments !== "none";
+
+    /*
+     * **«Volvé a la raya verde», una vez por salida**: se pregunta en cada fotograma, que es
+     * lo que lo rearma al volver a la raya, y se dice más abajo si nada más urgente toca.
+     * Ver `flight/aviso-de-la-raya.ts`.
+     */
+    const pos = this.flight.state.position;
+    const raya = this.plan?.laRaya ?? [];
+    const tocaVolverALaRaya = this.avisoDeLaRaya.toca(
+      vista.fuera,
+      raya.length > 1 ? aLaPolilinea([pos.x, pos.z], raya) : Infinity,
+    );
+    /*
+     * **Y «andá más despacio», igual: una vez por cada vez que se pasa**, y vuelve después
+     * de frenar claramente. Si la velocidad la lleva el juego, ir rápido no es cosa de
+     * nadie a quien decírselo: ver `laVelocidadEsDelJuego` y `flight/aviso-de-velocidad.ts`.
+     */
+    const tocaIrMasDespacio = this.avisoDeVelocidad.toca(
+      vista.rapido && !this.laVelocidadEsDelJuego(),
+      this.flight.state.groundSpeed,
+      vista.velocidadSugerida,
+    );
 
     /*
      * **Y un parpadeo de la fase en plena final no se anuncia.** La fase
@@ -26098,13 +26558,8 @@ export class Game {
         this.retirarLoDelPuesto(caducaAlApagar);
         this.terminarElVuelo();
       }
-    } else if (
-      vista.rapido &&
-      // Si la velocidad la lleva el juego, ir rápido no es cosa de nadie a
-      // quien decírselo. Ver `laVelocidadEsDelJuego`.
-      !this.laVelocidadEsDelJuego() &&
-      this.plan.avisarDeSalida(dt)
-    ) {
+    } else if (tocaIrMasDespacio) {
+      this.avisoDeVelocidad.dicho();
       // **«¿Quién me indica si voy muy rápido o lento en rodadura?»** Nadie, y
       // esa era la respuesta honesta: el indicador de tortuga y pájaro está
       // calibrado para velocidad de vuelo, así que rodando se queda clavado en
@@ -26119,7 +26574,20 @@ export class Game {
         },
       );
       this.instructor.decir(t("vuelo.despacio"), "vuelo.despacio");
-    } else if (vista.fuera && this.plan.avisarDeSalida(dt)) {
+    } else if (
+      /*
+       * **Una vez por salida, no cada seis segundos**: se dice al salirse y vuelve solo
+       * después de haber vuelto a la raya. Ver `flight/aviso-de-la-raya.ts`.
+       *
+       * **Y con el tractor ofrecido o remolcando, callada**: un suceso, una voz. Quien está
+       * parado en la hierba ya tiene su arreglo latiendo, y a quien lleva el tractor no se
+       * le pide que vuelva a ninguna parte. Ver `atenderALaHierba`.
+       */
+      tocaVolverALaRaya &&
+      !this.tractorOfrecido &&
+      !this.remolcandoALaRaya
+    ) {
+      this.avisoDeLaRaya.dicho();
       this.hud.senal.mostrar(
         "amarillo",
         conLetras ? t("vuelo.fuera") : "",
@@ -34646,6 +35114,11 @@ export class Game {
     leer: () => leerProgreso(PANTALLAS_QUE_SE_EXPLICAN.cruz),
     escribir: (v) => ponerProgreso(PANTALLAS_QUE_SE_EXPLICAN.cruz, v),
   });
+  /** La de la vuelta a la raya: dos veces en voz, y luego solo la tarjeta. Ver `decirLoDelTractor`. */
+  private readonly explicacionDelTractor = new ExplicacionAlAbrir({
+    leer: () => leerProgreso(PANTALLAS_QUE_SE_EXPLICAN.tractor),
+    escribir: (v) => ponerProgreso(PANTALLAS_QUE_SE_EXPLICAN.tractor, v),
+  });
   private readonly explicacionDelAdelanto = new ExplicacionAlAbrir({
     leer: () => leerProgreso(PANTALLAS_QUE_SE_EXPLICAN.adelantar),
     escribir: (v) => ponerProgreso(PANTALLAS_QUE_SE_EXPLICAN.adelantar, v),
@@ -34665,6 +35138,7 @@ export class Game {
       consola: de(this.explicacionDeLaConsola),
       cruz: de(this.explicacionDeLaCruz),
       adelantar: de(this.explicacionDelAdelanto),
+      tractor: de(this.explicacionDelTractor),
       aCasa: de(this.explicacionDeVolverACasa),
     };
   }

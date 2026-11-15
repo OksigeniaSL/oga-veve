@@ -336,7 +336,12 @@ Todo se mide contra la propia ficha (es contenedor), y así vale igual en la tab
   peldaños de abajo, con «¡A casa!» en Tukã y la frase entera desde Taguató; lo repite solo si se volvió de verdad
   hacia casa y se vuelve a perder, nunca por reloj, y desde la segunda vez ofrece «ya lo sé», que se recupera en los
   ajustes. En el avión sin automático no se inventa uno: pide virar hasta que la flecha apunte arriba
-  (`src/flight/perdido.ts`).
+  (`src/flight/perdido.ts`). **Parado en la hierba**, fuera de la raya y en un campo con torre o AFIS: a los 8 s sale
+  la tarjeta del tractor, pulsable y latiendo —el dibujo en los cuatro peldaños, «Tractor» en Tukã, la frase desde
+  Taguató—, y ella lo dice con calma en los tres de abajo; un toque, y el tractor llega, engancha la rueda de morro y
+  remolca el avión hasta la raya por donde no hay pista ni edificio, con los gases a ralentí hasta que suelta. La voz
+  sale una vez por parada y vuelve solo si el avión se ha movido; desde la segunda vez, «ya lo sé». En la granja o en
+  Ayolas no hay tractor, y no se ofrece (`src/world/vuelta-a-la-raya.ts`).
 
 ## 5. Maquetación
 

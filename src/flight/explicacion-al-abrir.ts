@@ -56,6 +56,7 @@ export const PANTALLAS_QUE_SE_EXPLICAN = {
   consola: "explicacionDeLaConsola",
   cruz: "explicacionDeLaCruz",
   adelantar: "explicacionDelAdelanto",
+  tractor: "explicacionDelTractor",
   /*
    * **Y la flecha de casa que late cuando alguien se pierde lejos**: no es una
    * pantalla, pero sale igual de golpe, y se explica y se deja de explicar

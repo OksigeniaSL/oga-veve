@@ -90,7 +90,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -2707,14 +2707,16 @@ for (const [id, para] of DE_LA_VMS) {
 }
 /*
  * **Y cada lío, con su arreglo de un toque** (15-11-2026): quien se pierde
- * lejos o mar adentro, al que la instructora señala la flecha de casa. Son del
+ * lejos o mar adentro, al que la instructora señala la flecha de casa, y quien
+ * se queda parado en la hierba, al que le señala el tractor. Son del
  * grupo `vuelo`, pero metidas con él renumerarían las ya grabadas: van detrás
- * de todo. Ver `flight/perdido.ts`.
+ * de todo. Ver `flight/perdido.ts` y `world/vuelta-a-la-raya.ts`.
  */
 const DE_LOS_LIOS = [
   ["vuelo.perdido", "lejos del campo o mar adentro, en el avión con automático: tocá la flecha de casa, que brilla"],
   ["vuelo.perdidoSinAutomatico", "lo mismo en el avión sin automático: se vira a mano hasta que la flecha apunte arriba"],
   ["vuelo.perdido.volvemos", "al tocar la flecha de casa: el automático ya gira hacia el campo"],
+  ["vuelo.tractorALaRaya", "parado en la hierba, fuera de la raya: tocá el tractor, que late, y te lleva a la raya"],
 ];
 for (const [id, para] of DE_LOS_LIOS) {
   const texto = es.get(id);
