@@ -157,6 +157,16 @@ describe("a qué punto de la raya", () => {
     expect(200 - c.punto.x).toBeGreaterThanOrEqual(35 - 2);
   });
 
+  it("el tractor sale de la calle, no de debajo del avión, aunque la raya empiece en él", () => {
+    // La raya rehecha desde la hierba: del avión, en (10, 40), a la calle y por ella.
+    const rehecha = [{ x: 10, z: 40 }, { x: 10, z: 0 }, { x: 200, z: 0 }];
+    const sitio = sitioSencillo();
+    const d = destinoEnLaRaya({ x: 10, z: 40 }, rehecha, sitio)!;
+    const desde = llegadaDelTractor(rehecha, d, sitio.pisable)[0]!;
+    expect(sitio.pisable(desde.x, desde.z)).toBe(true);
+    expect(Math.hypot(desde.x - 10, desde.z - 40)).toBeGreaterThan(30);
+  });
+
   it("y si no hay por dónde, no hay tractor", () => {
     expect(destinoEnLaRaya({ x: 10, z: 40 }, RECTA, sitioSencillo(() => true))).toBeNull();
     expect(destinoEnLaRaya({ x: 10, z: 400 }, RECTA, sitioSencillo())).toBeNull();

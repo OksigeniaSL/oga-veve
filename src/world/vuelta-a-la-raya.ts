@@ -405,10 +405,25 @@ export function remolqueALaRaya(
  * de ahí por la hierba hasta delante del morro. Lo último —recular hasta la rueda— lo
  * pone el remolque. Ver `ALaRaya` en `remolque.ts`.
  */
-export function llegadaDelTractor(raya: readonly PuntoXZ[], destino: DestinoEnLaRaya): PuntoXZ[] {
-  const { enLaRaya } = recorrer(raya);
-  // Viene de la calle, de unos metros más atrás por la raya: el servicio de plataforma.
-  return [enLaRaya(Math.max(0, destino.s - 40)), destino.punto];
+export function llegadaDelTractor(
+  raya: readonly PuntoXZ[],
+  destino: DestinoEnLaRaya,
+  pisable: (x: number, z: number) => boolean = () => true,
+): PuntoXZ[] {
+  const { enLaRaya, total } = recorrer(raya);
+  /*
+   * Viene de la calle, de unos metros más atrás por la raya: el servicio de plataforma. **Y
+   * de la calle de verdad**: cuando el avión se aparta más de veinticinco metros, el plan
+   * rehace la raya desde donde está, por la hierba, y unos metros atrás era el propio avión;
+   * el tractor salía de debajo de él. Si atrás no hay pavimento, de más adelante.
+   */
+  for (const d of [-40, 40, -20, 20]) {
+    const s = destino.s + d;
+    if (s < 0 || s > total) continue;
+    const p = enLaRaya(s);
+    if (pisable(p.x, p.z)) return [p, destino.punto];
+  }
+  return [destino.punto];
 }
 
 // ── Lo que queda ─────────────────────────────────────────────────────────

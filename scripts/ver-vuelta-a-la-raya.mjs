@@ -130,6 +130,8 @@ try {
   await page.waitForTimeout(800);
   const pedido = await page.evaluate(() => globalThis.__oga.vueltaALaRaya());
   comprobar("el toque llama al tractor", pedido.fase === "llegando", JSON.stringify(pedido));
+  const apartado = pedido.tractor && pedido.avion ? Math.hypot(pedido.tractor.x - pedido.avion.x, pedido.tractor.z - pedido.avion.z) : 0;
+  comprobar("y sale de la calle, no de debajo del avión", apartado > 15, `a ${apartado.toFixed(0)} m del avión`);
   // Y el tractor espera en la calle mientras la hélice se para: a los ochocientos ms no se ha movido.
   const quieto = await page.evaluate(() => globalThis.__oga.vueltaALaRaya().tractor);
   await page.waitForTimeout(1500);

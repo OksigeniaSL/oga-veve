@@ -21674,7 +21674,10 @@ export class Game {
     const p = this.vueltaPensada;
     if (!this.tractorOfrecido || !p || this.remolcandoALaRaya) return;
     this.quitarLaVueltaALaRaya();
-    const desde = llegadaDelTractor(p.raya, p.destino);
+    // Desde la calle de verdad, y no de la hierba por la que la raya rehecha sale del avión.
+    const aero = this.plan?.aerodromoActual;
+    const pisable = aero ? elSitioDe(aero, this.aircraft.wingSpan).pisable : undefined;
+    const desde = llegadaDelTractor(p.raya, p.destino, pisable);
     const r = new Remolque(p.empuje, { batalla: this.aircraft.batalla, envergadura: this.aircraft.wingSpan }, { desde });
     this.vueltaALaRaya = r;
     this.dibujoDeLaVuelta = new DibujoDelRemolque(r.medidasDelTractor);
