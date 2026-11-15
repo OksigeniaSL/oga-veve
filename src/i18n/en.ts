@@ -521,7 +521,7 @@ export const EN: Dictionary = {
   "vuelo.enVueloAterrizando": "Head for the runway",
   "vuelo.enVueloDestino": "Follow the arrow to the next airport",
   "vuelo.perdido":
-    "We've flown a long way from the airfield. Tap the home arrow, the one that's pulsing, and the autopilot turns us back towards it",
+    "We've flown a long way from the airfield. Tap the home arrow, the one that's glowing, and the autopilot turns us back towards it",
   "vuelo.perdidoSinAutomatico":
     "We've flown a long way from the airfield. Turn gently until the home arrow points straight up, and that takes us back",
   "vuelo.perdido.volvemos": "That's it! The autopilot is turning us towards the airfield",

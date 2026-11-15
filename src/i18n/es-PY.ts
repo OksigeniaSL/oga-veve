@@ -2027,7 +2027,7 @@ export const ES_PY = {
    * emergencia, es algo que se arregla. Ver `flight/perdido.ts`.
    */
   "vuelo.perdido":
-    "Nos alejamos mucho del campo. Tocá la flecha de casa, la que late, y el automático gira el avión hacia allá",
+    "Nos alejamos mucho del campo. Tocá la flecha de casa, la que brilla, y el automático gira el avión hacia allá",
   "vuelo.perdidoSinAutomatico":
     "Nos alejamos mucho del campo. Girá despacito hasta que la flecha de casa apunte para arriba, y así volvemos",
   "vuelo.perdido.volvemos": "¡Eso! El automático ya gira el avión hacia el campo",

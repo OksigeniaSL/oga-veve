@@ -4342,9 +4342,6 @@ export class Game {
     const s = this.flight.state;
     const p = s.position;
     const aguja = this.agujaParaBanco;
-    const campos = this.camposDelVuelo();
-    let cercano = Infinity;
-    for (const c of campos) cercano = Math.min(cercano, Math.hypot(c.x - p.x, c.z - p.z));
     /*
      * Lo atiende el vuelo libre a los mandos: una misión, un ejercicio, la
      * tormenta, el vuelo largo y las escenas del modo inicio llevan su propio
@@ -4359,14 +4356,19 @@ export class Game {
       this.vueloLargo === null &&
       this.percance === null &&
       !this.vueloTerminado;
+    // Los campos solo se recorren si hay algo que mirar: en tierra o fuera del vuelo libre, no.
+    const mira = atiende && !s.onGround;
+    const campos = mira ? this.camposDelVuelo() : [];
+    let cercano = Infinity;
+    for (const c of campos) cercano = Math.min(cercano, Math.hypot(c.x - p.x, c.z - p.z));
     const e = this.perdido.paso({
       enElAire: !s.onGround,
       atiende,
       alCampoMasCercano: cercano,
       relativo: aguja?.relativo ?? 0,
-      haciaUnCampo: apuntaAUnCampo({ x: p.x, z: p.z, rumbo: s.heading }, campos),
+      haciaUnCampo: mira && apuntaAUnCampo({ x: p.x, z: p.z, rumbo: s.heading }, campos),
       // Solo se mira el mar cuando puede importar: es una muestra del relieve.
-      sobreElMar: cercano > MAR_ADENTRO && this.terrain.sampleSurface(p.x, p.z) < 5,
+      sobreElMar: mira && cercano > MAR_ADENTRO && this.terrain.sampleSurface(p.x, p.z) < 5,
     });
     if (e.decirlo) this.avisarDeQueSePerdio();
     /*
@@ -4417,7 +4419,7 @@ export class Game {
     if (this.instructor.hablando && this.instructor.loUltimo === "vuelo.perdido") this.instructor.callar();
   }
 
-  /** Para el banco: si se ha perdido y qué dice la tarjeta. Ver `scripts/verificar-perdido.mjs`. */
+  /** Para el banco: si se ha perdido y qué dice la tarjeta. Ver `scripts/ver-perdido.mjs`. */
   get perdidoParaBanco(): { perdido: boolean; virando: boolean; modoLateral: string; rumbo: number | null } {
     return {
       perdido: this.perdido.perdido,
