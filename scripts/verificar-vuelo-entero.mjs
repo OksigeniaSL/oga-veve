@@ -1006,7 +1006,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * de holgura, y el resto de altura se va bajando detrás.
      */
     let pedida = senda.altitud + senda.ritmo * (ahora - senda.desde);
-    if (FUSELAJE_ANCHO)
+    if (BAJA_POR_EL_ARCO)
       pedida = Math.max(pedida, s.position.y + (-CAIDA_MAXIMA * 1.25 - senda.ritmo) * 10);
     const r = mandosPara(
       {
@@ -1887,11 +1887,24 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const REACTOR_COMPLETO = NECESITA_TECNICA && peldano !== "guyrami";
   /**
-   * **Y lo que se aprendió volando los de fuselaje ancho, solo en ellos.** La
-   * bajada por el arco y la bajada con tope se midieron con el JAZ 110; el JAZ 90
-   * pasaba sin ellas y con ellas no se ha volado.
+   * **Y la bajada que se aprendió volando los de fuselaje ancho, en todos los
+   * del modelo completo que vuelan como reactores**: por el arco del viraje a
+   * final, sin tirarse a por la senda y sin bajar desde la base a la altura de
+   * la entrada en final.
+   *
+   * Se midió con el JAZ 110 y se dejó solo en los anchos porque el JAZ 90
+   * «pasaba sin ellas». Pasaba al filo, y una de cada dos no (#192). Medido en
+   * Los Rodeos con la traza de la final: el JAZ 90 empezaba el viraje de ciento
+   * ochenta grados a final 44 m por encima de la senda contada por el eje
+   * —que no cuenta el arco— y bajando a 9 m/s; se pasaba hasta 81 m por debajo,
+   * subía a 5 m/s con tres cuartos de gas, se volvía a pasar 53 m por encima y
+   * llegaba a la puerta de los quinientos pies picando a 7,1 m/s, a 35 m del
+   * eje. No era el viraje ni la captura del eje: era la senda, que se movía
+   * debajo del avión mientras viraba, y un columpio de cuarenta segundos que
+   * nacía ahí. El JAZ 60 —el 1900D, con crucero de reactor— vuela con estas
+   * mismas leyes, y llegaba a la puerta bajando a 6 m/s y tocaba a 2,8.
    */
-  const FUSELAJE_ANCHO = REACTOR_COMPLETO && (suyas.envergadura ?? 0) > 30;
+  const BAJA_POR_EL_ARCO = REACTOR_COMPLETO;
   const ganancia = (s) =>
     Math.min(1, (AJUSTADO_HASTA / Math.max(1, s.airspeed)) ** 2);
 
@@ -3445,6 +3458,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let alturaPlaneada = null;
   let ritmoPlaneado = 0;
   const planearLaBajada = (s, cruda, paso, puedeSubir = false) => {
+    /*
+     * **Y sin reloj que haya corrido, nada que planear: el ritmo se queda.**
+     * Esta vuelta del guion espera `PASO / veces` —ocho milisegundos con el
+     * reloj a doce— y un fotograma dura dieciséis o más, así que la mitad de
+     * las vueltas, o más con la máquina cargada, llegan sin que el juego se
+     * haya movido. Con `paso` en cero el ritmo salía cero, y el automático
+     * volaba con el de la última vuelta antes del fotograma: unas veces el de
+     * la senda y otras ninguno. Medido en Los Rodeos con el JAZ 90, veinte
+     * segundos seguidos de final pidiendo solo lo que faltaba de altura entre
+     * diez —de −0,4 a −4,5 m/s con la altura planeada bajando a cuatro—: el
+     * avión dejó de bajar justo pasada la puerta, se quedó 48 m por encima de
+     * la senda y tocó a 1.232 m del umbral. Según cómo cayeran las vueltas
+     * contra los fotogramas, la misma final salía bien o mal, que es por lo
+     * que el banco daba verde o rojo con el mismo código (#192).
+     */
+    if (!(paso > 0) && alturaPlaneada !== null) return alturaPlaneada;
     const antes = alturaPlaneada ?? alto(s);
     const tope = porElSuelo(s) * SENDA * 1.2 * Math.max(0, paso);
     alturaPlaneada = Math.max(cruda, antes - tope);
@@ -3452,6 +3481,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     // la que libra el terreno, y un avión que llega a él todavía subiendo
     // tiene que acabar de subir.
     if (!puedeSubir) alturaPlaneada = Math.min(antes, alturaPlaneada);
+    // Y sin `paso` aquí solo se llega empezando a planear: de cero.
     ritmoPlaneado = paso > 0 ? (alturaPlaneada - antes) / paso : 0;
     return alturaPlaneada;
   };
@@ -5754,9 +5784,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * metros por segundo. De ahí salía a buscarla con todo el gas, se subía a
        * doce, y volvía picando a 190 nudos, por encima de lo que aguantan sus
        * flaps. El que planifica la bajada baja cuando se le acaba el camino,
-       * que es lo que dice `porLaSenda`. En los demás, como estaba.
+       * que es lo que dice `porLaSenda`. Y el JAZ 60 y el JAZ 90 igual: ver
+       * `BAJA_POR_EL_ARCO`.
        */
-      const tope = FUSELAJE_ANCHO && aDonde >= 4 && v?.[3] ? v[3].y : meta?.y;
+      const tope = BAJA_POR_EL_ARCO && aDonde >= 4 && v?.[3] ? v[3].y : meta?.y;
       const altoQueToca = meta
         ? Math.min(tope - cotaDePista, porLaSenda + (suyas.tren ?? 0))
         : CRUCERO;
@@ -5925,6 +5956,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * la saltaba.
        */
       if (aDonde >= 4 && etapa === "subir" && llegaAlEjeVirando(s)) etapa = "final";
+      /*
+       * **Y en la traza de la final, también el viento en cola y la base**: la
+       * final que llega mal suele venir mal desde aquí, y la traza empezaba
+       * con el avión ya virando y bajando a nueve metros por segundo.
+       */
+      if (aproximando && t - ultimoRenglonDeLaFinal >= 1 && trazaDeLaFinal.length < 400) {
+        ultimoRenglonDeLaFinal = t;
+        const a = elArcoHastaElEje(s);
+        trazaDeLaFinal.push(
+          `${t.toFixed(0)}s tramo ${aDonde} umbral ${Math.round(alUmbral(s))} m · ruedas ${(alto(s) - (suyas.tren ?? 0)).toFixed(0)}` +
+            ` · toca ${(altoQueToca - alto(s)).toFixed(1)} plan ${(altoPedido - alto(s)).toFixed(1)} pide ${memoriaDeSenda ? memoriaDeSenda.ritmo.toFixed(1) : "-"}` +
+            ` · eje ${desvio(s).toFixed(0)} por girar ${((a.theta * 180) / Math.PI).toFixed(0)}°` +
+            ` · ${Math.round(o.velocidadDeCabina?.() ?? s.airspeed * 1.94384)} kt sube ${s.verticalSpeed.toFixed(1)}` +
+            ` · gas ${c.throttle.toFixed(2)} flaps ${(o.controles().flaps ?? 0).toFixed(2)}`,
+        );
+      }
 
       /*
        * Y una salida de socorro: si el circuito no se puede leer —un escenario
@@ -5999,7 +6046,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         const ultimoDeLaVista = aLaVista[aLaVista.length - 1];
         const u0 = finalAhora(0);
         if (u0) queda += Math.hypot(u0.x - ultimoDeLaVista.x, u0.z - ultimoDeLaVista.z);
-      } else if (FUSELAJE_ANCHO) {
+      } else if (BAJA_POR_EL_ARCO) {
         /*
          * **Y mientras se vira a la final, lo mismo: lo que queda es el arco.** Lo
          * que falta por el eje no cuenta el camino del viraje, y un reactor entra
@@ -6012,7 +6059,33 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * el eje: lo que da de más es `R·(θ − sen θ)`, que a θ cero es nada.
          */
         const a = elArcoHastaElEje(s);
-        queda += a.radio * (a.theta - Math.sin(a.theta));
+        /*
+         * **Y con el radio que de verdad vira, no con el aprendido.** El de
+         * `elArcoHastaElEje` es el del lado seguro para decidir cuándo empezar a
+         * virar —el mayor de dos medidas, una de ellas de cuando iba más
+         * deprisa— y para la senda es el lado malo: un radio de más pone la senda
+         * alta al empezar el viraje y la deja caer al enderezar. Medido en Los
+         * Rodeos con el JAZ 90: 1.910 m de radio para un viraje que fue de 1.020
+         * —121° en 30 s a 72 m/s—; la senda por el arco salía noventa metros
+         * alta, se desplomaba al salir del viraje, la altura planeada se quedaba
+         * 48 m bajo el avión y llegaba a la puerta de los quinientos pies 29 m
+         * alto, bajando a 4,7 m/s con el automático pidiendo 6,2.
+         *
+         * Así que el menor de tres: el aprendido; el del arco que acaba justo en
+         * el eje desde aquí, `d/(1−cos θ)`, que es la geometría y no una medida;
+         * y el del alabeo que lleva, `v²/(g·tan φ)`, que es el que está volando.
+         * Quedarse corto es bajar un poco antes y salir del viraje por debajo de
+         * la senda, que es como se coge una: desde abajo, nivelado, dejando que
+         * llegue. Pasarse es lo de arriba.
+         */
+        const v = porElSuelo(s);
+        const alabeo = Math.abs(o.actitud?.().alabeo ?? 0);
+        const radio = Math.min(
+          a.radio,
+          a.falta / Math.max(1e-3, 1 - Math.cos(a.theta)),
+          (v * v) / (9.81 * Math.tan(Math.max(alabeo, Math.PI / 180))),
+        );
+        queda += radio * (a.theta - Math.sin(a.theta));
       }
       const sendaDeVerdad = Math.max(0, (queda + puntoDeToma) * SENDA) + tren;
       /*
@@ -6526,6 +6599,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             ` · eje ${desvio(s).toFixed(1)} rumbo ${((error(s.heading, hp) * 180) / Math.PI).toFixed(1)}°` +
             ` · ${Math.round(o.velocidadDeCabina?.() ?? s.airspeed * 1.94384)} kt sube ${s.verticalSpeed.toFixed(1)}` +
             ` · gas ${m.throttle.toFixed(2)} elev ${m.elevator.toFixed(2)} alerón ${m.aileron.toFixed(2)} flaps ${(m.flaps ?? 0).toFixed(2)}` +
+            /*
+             * Y lo que se pedía: la altura planeada contra la del avión —ver
+             * `planearLaBajada`— y el ritmo que manda el automático, con el
+             * ángulo de ataque. Sin esto la traza decía que se bajaba de más y
+             * no si era porque se pedía o porque el avión no obedecía.
+             */
+            ` · plan ${(objetivo - alto(s)).toFixed(1)} pide ${memoriaDeSenda ? memoriaDeSenda.ritmo.toFixed(1) : "-"} α ${((s.alpha * 180) / Math.PI).toFixed(1)}°` +
             (recogida ? " · recogiendo" : ""),
         );
       }
