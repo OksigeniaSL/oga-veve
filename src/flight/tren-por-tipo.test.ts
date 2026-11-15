@@ -118,6 +118,8 @@ describe("el morro, con las ruedas en el suelo", () => {
     "jaz-20": 8.28,
     "jaz-25": 8.2,
     "jaz-40": 9.0,
+    // 15,77 m (EASA.IM.A.575, A.III.4). Faltaba, y sin él la cuenta daba NaN.
+    "jaz-50": 15.77,
     "jaz-60": 15.0,
     "jaz-90": 31.5,
     "jaz-110": 62.0,
@@ -140,11 +142,18 @@ describe("el morro, con las ruedas en el suelo", () => {
      * de él. Meterlo aquí sería hacer que la prueba pase mintiendo sobre qué
      * mide.
      */
+    /*
+     * **Y se ordena por lo adelantada que va la rueda de morro**, la de la
+     * ficha —la batalla menos lo que van las principales por detrás del
+     * centro—, que es lo que dice la cuenta. Iba por el largo, y el largo solo
+     * lo dice mientras la rueda va siempre al mismo tanto por ciento: el JAZ 50
+     * es más largo que el JAZ 60 y lleva la rueda de morro 2,8 m más atrás,
+     * porque delante de ella va la bodega de su morro largo.
+     */
     const triciclo = AIRCRAFT.filter((a) => a.id !== "jaz-25");
-    const porLargo = [...triciclo].sort(
-      (a, b) => LARGO[a.id]! - LARGO[b.id]!,
-    );
-    const angulos = porLargo.map((a) => Math.abs(a.minGroundPitch));
+    const morro = (a: (typeof AIRCRAFT)[number]) => a.batalla - a.mainWheelsAft;
+    const porMorro = [...triciclo].sort((a, b) => morro(a) - morro(b));
+    const angulos = porMorro.map((a) => Math.abs(a.minGroundPitch));
     expect([...angulos].sort((x, y) => y - x)).toEqual(angulos);
   });
 

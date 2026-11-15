@@ -64,6 +64,8 @@ import math
 import os
 import sys
 
+import bpy
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
@@ -190,6 +192,47 @@ PIEL = Piel([
     P(13.30, 0.31, 2.71, 1.51, 2.14, 2.3),
     P(13.82, 0.21, 2.64, 1.56, 2.12, 2.2),
 ])
+
+
+def un_solo_timon(piezas, arriba, abajo):
+    """
+    Junta el trozo `abajo` de una superficie de mando en el de `arriba`: su
+    piel, sus tapas y su cala, en las mallas del de arriba, y fuera su vacío.
+
+    Solo vale si giran por la misma bisagra —el mismo eje y sobre la misma
+    recta—, y eso se comprueba: un timón partido con dos bisagras en codo se
+    rompería al moverse.
+    """
+    va = bpy.data.objects[arriba]
+    vb = bpy.data.objects[abajo]
+    eje = Vector(va["eje"]).normalized()
+    otro = Vector(vb["eje"]).normalized()
+    d = Vector(vb["bisagra"]) - Vector(va["bisagra"])
+    fuera = (d - eje * d.dot(eje)).length
+    if abs(eje.dot(otro)) < 0.9995 or fuera > 0.01:
+        raise SystemExit(
+            f"{abajo} no gira por la bisagra de {arriba}: "
+            f"{math.degrees(math.acos(min(1.0, abs(eje.dot(otro))))):.2f}° y "
+            f"{fuera * 100:.1f} cm fuera")
+    if va["positivo"] != vb["positivo"] or va["negativo"] != vb["negativo"]:
+        raise SystemExit(f"{abajo} y {arriba} con topes distintos")
+    for destino, origen in ((f"{arriba}-piel", f"{abajo}-piel"),
+                            (f"{arriba}-tapas", f"{abajo}-tapas"),
+                            (f"hueco-{arriba}", f"hueco-{abajo}")):
+        a = bpy.data.objects[destino]
+        b = bpy.data.objects[origen]
+        for o in bpy.context.view_layer.objects:
+            o.select_set(False)
+        a.select_set(True)
+        b.select_set(True)
+        bpy.context.view_layer.objects.active = a
+        bpy.ops.object.join()
+    vivos = set(bpy.data.objects)
+    piezas = [o for o in piezas if o in vivos and o is not vb]
+    bpy.data.objects.remove(vb, do_unlink=True)
+    print(f"UN SOLO TIMÓN: {abajo} dentro de {arriba} "
+          f"({fuera * 1000:.1f} mm de la bisagra)")
+    return piezas
 
 
 def y_ala(x):
@@ -345,11 +388,27 @@ def construir():
         relojes=10,
         mide="par",
         suelo_atras=1.40,
-        # **Sin el marco del parabrisas por dentro, todavía.** Con los
-        # montantes del JAZ 60 asomaban 23 cm por fuera de la piel: aquí los
-        # ojos van a un palmo del borde de arriba del parabrisas, que sube
-        # hasta el ala, y `parabrisas_por_dentro` los sube más que eso. Falta
-        # medirlo contra su parabrisas; mientras, el cristal es el de fuera.
+        # **El marco de su parabrisas**, con la geometría del de fuera y no
+        # con la del JAZ 60: el pie a 2,15 m del morro y 2,40 del suelo, y el
+        # borde de arriba a 2,74 y 2,93 (los `paneles("parabrisas", …)` de
+        # arriba). Desde los ojos, el cristal se tumba 48° desde la vertical,
+        # mucho más que el del 1900D: con los números de aquel, los montantes
+        # subían derechos y asomaban 23 cm por el lomo. Aquí se tumban 42°
+        # —la exportación no deja un montante más tumbado que de pie— y llegan
+        # a 30° por encima de los ojos, al pie de la consola del techo y por
+        # dentro de la piel. Tan tumbado, el montante pasa a sesenta
+        # centímetros de la cara a la altura de la vista, y por eso esta
+        # cabina lleva el plano cercano del helicóptero (`game.ts`,
+        # `conConsolaDeTecho`).
+        #
+        # Dos montantes: el del centro, a la derecha del piloto a lo que va su
+        # asiento del eje, y el del borde del parabrisas a su izquierda, donde
+        # empieza la ventanilla de su puerta. Finos: 3,5 cm de cara.
+        parabrisas=dict(
+            hacia_arriba=30.0,
+            inclinacion=42.0,
+            montantes=[(-0.42, 0.035, 0.0), (0.40, 0.035, 0.0)],
+        ),
     )
     piezas += cab
     dentro_de(PIEL, cab)
@@ -499,6 +558,12 @@ def construir():
     ], punta=False)
     piezas.append(deriva_baja)
     piezas += mandos_moviles(deriva_baja, timon_bajo)
+    # **Y los dos trozos, un solo timón.** Se cortan cada uno de su deriva,
+    # porque la de arriba lleva el motivo y nace en el lomo, pero en el avión
+    # de verdad son una pieza con una bisagra: se juntan en las mallas del de
+    # arriba y el juego los mueve juntos. Ver `un_solo_timon`.
+    piezas = un_solo_timon(piezas, "timon-de-direccion",
+                           "timon-de-direccion-abajo")
     # La aleta dorsal, que la une al lomo en curva: del verde de la raya, que
     # es el de la cola, y no en `cola`, que es solo la deriva con el motivo.
     piezas.append(superficie("aleta-dorsal", [
@@ -577,7 +642,8 @@ def construir():
     mandos_libres(alerones, mallas("fuselaje", "gondola", "riostra"))
     mandos_libres(timon, mallas("fuselaje", "estabilizador", "profundidad-",
                                 "aleta-dorsal"))
-    mandos_libres(timon_bajo, mallas("fuselaje"))
+    # El trozo de abajo va ya dentro del timón (`un_solo_timon`): lo mira la
+    # línea de arriba, con el fuselaje.
     mandos_libres(profundidad, mallas("deriva", "timon-"))
 
     piezas.append(centro_de_gravedad(Z(CDG)))

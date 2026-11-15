@@ -118,16 +118,22 @@ function media(puntos: readonly Vector3[], eje: "x" | "y" | "z"): number {
  * ala o en la otra— y no hay un sitio que sea «el suyo». Señalar uno a ojo
  * sería enseñar una cosa que no es; mejor ninguno.
  *
- * **Ni el bimotor de ala alta, de momento.** El Twin Otter de la Serie 400
- * lleva dos, calentados —«Pitot Tube Cover (2)» en su equipo (Viking, 2018) y
- * «Two heated Pitot Tubes» en la lista mínima de la FAA, rev. 15, 30—, pero no
- * se ha leído dónde. Cuando se lea, se pone ahí.
+ * - **El bimotor de ala alta**, la clase del Twin Otter, **debajo de la punta
+ *   del ala izquierda**, colgado de un mástil corto bajo el carenado de la
+ *   punta. Se ve en las fotos grandes del -400 en Wikimedia Commons: «Aurora,
+ *   DHC-6-400, RA-67284 (18233313661)» (Fedor Leukhin, CC BY-SA 2.0), de
+ *   costado por la izquierda, y «Pacific Sky Aviation (C-GVKI) Viking
+ *   DHC-6-400 Twin Otter taxiing at Sydney Airport», de frente, con la punta
+ *   derecha limpia. Su equipo trae dos fundas —«Pitot Tube Cover (2)»
+ *   (Viking, 2018)—; la segunda toma no se distingue en las fotos, y el punto
+ *   va en la que se ve.
  */
-type SitioDelPitot = "bajo-el-ala" | "morro" | null;
+type SitioDelPitot = "bajo-el-ala" | "bajo-la-punta" | "morro" | null;
 
 function sitioDelPitot(a: AircraftConfig): SitioDelPitot {
   const silueta = modeloPorId(a.id)?.silueta;
-  if (silueta === "biplano" || silueta === "bimotor-ala-alta") return null;
+  if (silueta === "biplano") return null;
+  if (silueta === "bimotor-ala-alta") return "bajo-la-punta";
   if (silueta === "ala-alta" || silueta === "bimotor-ala-baja") return "bajo-el-ala";
   return "morro";
 }
@@ -292,14 +298,16 @@ export function puntosDelAvion(
             new Vector3(lado.min.x, lado.min.y + (lado.max.y - lado.min.y) * 0.4, z),
           );
       }
-    } else if (sitio === "bajo-el-ala") {
+    } else if (sitio === "bajo-el-ala" || sitio === "bajo-la-punta") {
       const deDonde = delAla;
       const c = cajaDe(deDonde);
       if (c) {
-        const x = c.min.x * 0.6;
+        // Bajo la punta, en el último metro y pico del ala y con su mástil.
+        const enLaPunta = sitio === "bajo-la-punta";
+        const x = c.min.x * (enLaPunta ? 0.93 : 0.6);
         const tramo = deDonde.filter((v) => Math.abs(v.x - x) < 0.3);
         const t = cajaDe(tramo) ?? c;
-        poner("pitot", new Vector3(x, t.min.y - 0.08, t.min.z + 0.1), false);
+        poner("pitot", new Vector3(x, t.min.y - (enLaPunta ? 0.2 : 0.08), t.min.z + 0.1), false);
       }
     }
   }

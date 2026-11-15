@@ -2369,8 +2369,13 @@ export const JAZ_50: AircraftConfig = {
    * `apoyo.test.ts`. Eran once grados y medio, a mano.
    */
   maxGroundPitch: 10.5 * (Math.PI / 180),
-  // Doce centímetros de pata con la rueda de morro 3,79 m por delante del centro.
-  minGroundPitch: -0.03,
+  /*
+   * Diez centímetros de pata, sin fuente, como los bimotores de la flota, con
+   * la rueda de morro 3,79 m por delante del centro: 1,5°. Eran doce, también
+   * sin fuente, y con ellos bajaba el morro más que el Seneca teniendo la
+   * rueda más adelantada, al revés de lo que dice la cuenta (`tren-por-tipo`).
+   */
+  minGroundPitch: -0.026,
   llevaFlaps: true,
   /*
    * **Lo que dan sus flaps, de sus pérdidas**: 73 nudos sin flaps, 66 con 10° y

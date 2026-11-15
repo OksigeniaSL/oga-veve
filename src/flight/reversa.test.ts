@@ -72,7 +72,8 @@ describe("la reversa acorta la parada", () => {
 
   it("y la lleva quien la lleva, por su motor y no por una lista", () => {
     const conReversa = AIRCRAFT.filter(tieneReversa).map((a) => a.id);
-    expect(conReversa).toEqual(["jaz-60", "jaz-90", "jaz-110", "jaz-120"]);
+    // El JAZ 50, con el paso al revés de sus hélices Hartzell (ADR 0027, H11a).
+    expect(conReversa).toEqual(["jaz-50", "jaz-60", "jaz-90", "jaz-110", "jaz-120"]);
   });
 
   /*

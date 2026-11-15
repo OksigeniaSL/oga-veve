@@ -302,10 +302,12 @@ describe("lo que mide el radioaltímetro", () => {
 describe("qué cuenta lleva cada avión", () => {
   const conRadioaltimetro = AIRCRAFT.filter((a) => a.avisosHablados);
 
-  it("la llevan el turbohélice y los tres reactores", () => {
+  // El JAZ 50, con el TAWS de clase A de serie del -400 (ADR 0027, enmienda H11a).
+  it("la llevan los dos turbohélices y los tres reactores", () => {
     expect(conRadioaltimetro.map((a) => a.id).sort()).toEqual([
       "jaz-110",
       "jaz-120",
+      "jaz-50",
       "jaz-60",
       "jaz-90",
     ]);
@@ -364,10 +366,12 @@ describe("qué cuenta lleva cada avión", () => {
    * non-precision approach» (FAA, AC 23-18). Con la senda de un ILS delante
    * no lo canta; sin ella, sí. Los reactores cantan la suya siempre.
    */
-  it("el JAZ 60 canta su five hundred solo sin ILS delante", () => {
+  // Y el JAZ 50, por lo mismo: su TAWS de clase A canta lo que pide su norma (ADR 0027, H11a).
+  it("los dos turbohélices cantan su five hundred solo sin ILS delante", () => {
     const de = (id: string) => AIRCRAFT.find((a) => a.id === id)!;
-    expect(de("jaz-60").cuentaSoloSinIls).toBe(true);
-    for (const a of AIRCRAFT.filter((x) => x.id !== "jaz-60")) expect(a.cuentaSoloSinIls, a.id).toBe(false);
+    const soloSinIls = ["jaz-50", "jaz-60"];
+    for (const id of soloSinIls) expect(de(id).cuentaSoloSinIls, id).toBe(true);
+    for (const a of AIRCRAFT.filter((x) => !soloSinIls.includes(x.id))) expect(a.cuentaSoloSinIls, a.id).toBe(false);
     const sinIls = dichos(bajar(new AvisosDeAltura(laCuentaDe(de("jaz-60"))), 1500, 0, { conIls: false }));
     expect(sinIls).toEqual(["five hundred"]);
     const conIls = dichos(bajar(new AvisosDeAltura(laCuentaDe(de("jaz-60"))), 1500, 0, { conIls: true }));

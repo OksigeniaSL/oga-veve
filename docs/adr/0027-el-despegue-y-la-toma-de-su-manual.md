@@ -1390,3 +1390,42 @@ H11a, el calado de su ala, que no se ha leído.
   una copia que no es la de la FAA, y el de la profundidad abajo no tiene
   fuente. Van en el guion y todavía no en `RECORRIDO_DE_MANDOS`, que es del
   paso de meterlo en la flota.
+
+## Enmienda H13d1 (15-11-2026): el JAZ 50 sale del taller
+
+El JAZ 50 Tujuju pasa de `RESERVADOS` y `EN_EL_TALLER` a `AIRCRAFT` y `FLOTA`,
+con su silueta —el bimotor de ala alta, con riostra y tren fijo—, su cabina,
+su retrato, su nivel 8 de «Armá tu avión» y la matrícula ZP-TUJ. Las dos
+listas del taller se quedan vacías, para el siguiente.
+
+**Los topes de mando, con la fuente buena**: la hoja de tipo de la FAA A9EA,
+rev. 15 (11-6-2012), sección V, «Model DHC-6-400» —la IV, del -300, da lo
+mismo; la de EASA y la de la CAA británica remiten al manual de mantenimiento,
+PSM 1-64-2—. El alerón, 17,5° arriba y 16° abajo con los flaps recogidos, como
+estaba. **La profundidad baja 16°**, no 15. **El timón, 21° a la derecha y 17°
+a la izquierda**: los 20° de antes son de los -100 y -200. Van en el guion y en
+`RECORRIDO_DE_MANDOS`, que dicen lo mismo.
+
+**Lo que cambia de la ficha**: la pata de morro, diez centímetros de recorrido
+en vez de doce, los dos sin fuente: con doce bajaba el morro más que el Seneca
+llevando la rueda más adelantada, al revés de la cuenta de `minGroundPitch`.
+Y `tren-por-tipo.test.ts` ordena ya por lo adelantada que va la rueda de morro
+en su ficha y no por el largo: el Twin Otter es más largo que el 1900D y lleva
+la rueda 2,8 m más atrás, porque delante va la bodega de su morro largo.
+
+**Lo que se le decide en el juego**:
+
+- **Lleva el automático y la ventanilla ALT.** En el -400 el automático es
+  opcional (EASA.IM.A.575, nota 10.b.1; la lista mínima de la FAA, rev. 15,
+  22-3, lo da «Series 400 only»), y el de la flota lo lleva. No se ha
+  encontrado fuente directa de un preselector de altitud en su panel del
+  director de vuelo; sí el «Altitude Alerting System» de la lista mínima.
+- **Dos pantallas, las de su familia.** El de verdad lleva cuatro en T (Viking,
+  2018, p. 9): se simplifica la presentación.
+- **Sus palancas cuelgan del techo**: «The engine and propeller controls are
+  mounted in the overhead console» (Viking, 2018, p. 7). Por eso su cabina
+  lleva el plano cercano del helicóptero.
+- **El pitot, bajo la punta del ala izquierda**, que es donde se ve en las
+  fotos del -400 en Wikimedia Commons (RA-67284 y C-GVKI).
+- **No vuela en los corredores entre islas**: ahí no va ningún Twin Otter de
+  línea.

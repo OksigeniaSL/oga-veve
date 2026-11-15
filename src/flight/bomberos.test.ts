@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT, aircraftById, RESERVADOS } from "./aircraft";
+import { AIRCRAFT, aircraftById } from "./aircraft";
 import {
   categoriaDelAvion,
   categoriaPorMedidas,
@@ -42,6 +42,8 @@ describe("la categoría de un avión, por la tabla 9-1 del Anexo 14", () => {
       ["jaz-20", 1],
       ["jaz-25", 1],
       ["jaz-40", 1],
+      // 15,8 m de largo y 1,6 de fuselaje: la 3, como el 1900D.
+      ["jaz-50", 3],
       ["jaz-60", 3],
       ["jaz-90", 6],
       ["jaz-110", 9],
@@ -133,7 +135,8 @@ describe("y en qué cambia qué avión cabe dónde", () => {
     expect(granja.bomberos).toBeUndefined();
     expect(seMiranLosBomberos("SGOG")).toBe(false);
     expect(seMiranLosBomberos("SGCO")).toBe(true);
-    expect(cabeEn(RESERVADOS.find((a) => a.id === "jaz-50")!, granja).cabe).toBe(true);
+    expect(cabeEn(aircraftById("jaz-50"), granja).cabe).toBe(true);
+    expect(cabe("jaz-50", "yvytu-rape").cabe).toBe(true);
     expect(cabe("jaz-60", "yvytu-rape").porQueNo).toBe("corta");
     expect(cabe("jaz-90", "yvytu-rape").porQueNo).toBe("corta");
   });
