@@ -30,7 +30,7 @@ import {
   vector,
   type Empuje,
 } from "./remolque";
-import { construirGrafo, rodajeEntre, rodajesDesde, type Tramo } from "./rodaje";
+import { construirGrafo, puestosEnElPavimento, rodajeEntre, rodajesDesde, type Tramo } from "./rodaje";
 import { delante, enEjesDePista } from "./rumbo";
 import { desplazadoDe } from "./umbral-desplazado";
 import { umbralPublicado } from "./umbrales-publicados";
@@ -432,7 +432,8 @@ export function sueloDelTrafico(
     return { puntos, alineado: centro + 2 * r + 10 };
   };
 
-  const puestos = (aero.parkingPositions ?? []).map((p) => p.xy);
+  // Solo los que tienen asfalto debajo, con la misma regla que el avión de quien juega. Ver `puestosEnElPavimento`.
+  const puestos = puestosEnElPavimento(aero.parkingPositions ?? [], aero, grafo).map((p) => p.xy);
   // Los de un campo que embarca por pasarela: en otro no hay puesto de contacto. Ver `edificiosDePasarela`.
   const edificios = edificiosDePasarela(aero);
   /**

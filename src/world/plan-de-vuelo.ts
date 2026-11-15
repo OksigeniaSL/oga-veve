@@ -676,6 +676,44 @@ const SEMIALA_DEL_TRAFICO = 17;
 const MARGEN_ENTRE_ALAS = 7.5;
 
 /**
+ * **El sitio de un ala entre dos puestos.** OACI, Anexo 14, 3.13.6: en un
+ * puesto de clave C —de 24 a 36 m de envergadura, la de un E170 o un 737—, 4,5 m
+ * entre las puntas de las alas de dos aviones aparcados. Con dos aviones como
+ * el que busca puesto, de centro a centro hacen su envergadura y esa holgura.
+ *
+ * Y con la envergadura de un fuselaje ancho no se mide, se para en la clave C:
+ * sus puestos de OpenStreetMap son los mismos que los de dos aviones más
+ * pequeños, solapados —R40 de Tenerife Sur está a seis metros de H38—, y
+ * pidiéndole sesenta y cuatro metros de vecino a vecino no se quedaba con
+ * ninguno.
+ */
+const ENVERGADURA_DE_CLAVE_C = 36;
+const HOLGURA_DE_CLAVE_C = 4.5;
+
+/**
+ * Lo que separa a dos puestos que son el mismo sitio, m: un puesto grande
+ * dibujado encima de dos pequeños, para usarlo cuando están libres.
+ */
+const SOLAPADOS = 8;
+
+/**
+ * **Si un puesto deja sitio a un ala de este tamaño**: el puesto más cercano,
+ * sin contar los que se solapan con él, está al menos a `hueco` metros. Ver
+ * `puestosDeLinea`.
+ */
+function conSitioParaElAla(
+  xy: Punto,
+  todos: readonly { readonly xy: Punto }[],
+  hueco: number,
+): boolean {
+  for (const o of todos) {
+    const d = Math.hypot(o.xy[0] - xy[0], o.xy[1] - xy[1]);
+    if (d >= SOLAPADOS && d < hueco) return false;
+  }
+  return true;
+}
+
+/**
  * **Lo que tienen que separarse los ejes de tu avión y uno del tráfico** en
  * las calles, m: tu semiala, la del más grande del tráfico y el margen de ala.
  *
@@ -2201,12 +2239,9 @@ export class PlanDeVuelo {
    * velocidad, para llegar hasta allá, se muere del aburrimiento.» Y no es lo
    * que pasa: a un avión de pasaje se le da un puesto de los suyos.
    *
-   * Así que el de línea llega a cualquier puesto donde quepa —con sus alas y
-   * su margen lejos de toda pared, que es lo que lo protege del edificio de
-   * al lado— y, de esos, `puestoDeLlegada` coge el más cercano rodando. **Solo
-   * al llegar**: el puesto de salida es el de siempre, que quien juega se
-   * aprende, y cambiarlo cambia la ida entera. Si en un campo no cabe en
-   * ninguno, los de siempre.
+   * Así que el de línea llega a un puesto de línea donde quepa —ver
+   * `puestosDeLinea`— y, de esos, `puestoDeLlegada` coge el más cercano
+   * rodando. Si en un campo no cabe en ninguno, los de siempre.
    */
   private puestosParaLlegar(): { ref: string | null; xy: Punto }[] {
     if (!esDeLinea(this.avion)) return this.puestosCandidatos();
@@ -2215,8 +2250,33 @@ export class PlanDeVuelo {
       const caben = this.puestosDeContacto().filter((p) => this.cabeDeLinea(p.xy));
       if (caben.length) return caben;
     }
+    return this.puestosDeLinea();
+  }
+
+  /**
+   * **Los puestos de la plataforma comercial en los que cabe este avión de
+   * línea**, para llegar y para salir.
+   *
+   * Caber es dos cosas. Sus alas y su margen lejos de toda pared, que es lo que
+   * lo protege del edificio de al lado —`cabeDeLinea`—. Y sitio para sus alas
+   * entre los puestos de al lado: un puesto de aviación general está a trece o
+   * veinte metros del siguiente, porque es para avionetas, y uno de avión de
+   * línea, a cuarenta o cincuenta. Se salía con la regla de la avioneta, y el
+   * JAZ 90 —un E170 de veintiséis metros de ala— salía de Tenerife Sur desde la
+   * punta oeste, de un puesto de avioneta en una franja más estrecha que sus
+   * alas. Ver `conSitioParaElAla`.
+   *
+   * **Y también para salir.** El de salida era siempre el de la avioneta, para
+   * que quien juega se aprenda su sitio; sigue siendo siempre el mismo, pero de
+   * los de su plataforma, que es de donde sale un avión de línea de verdad.
+   */
+  private puestosDeLinea(): { ref: string | null; xy: Punto }[] {
     if (this.deLineaGuardados) return this.deLineaGuardados;
-    const caben = this.puestosEnElAsfalto().filter((p) => this.cabeDeLinea(p.xy));
+    const todos = this.aero.parkingPositions ?? [];
+    const hueco = Math.min(this.avion.wingSpan, ENVERGADURA_DE_CLAVE_C) + HOLGURA_DE_CLAVE_C;
+    const caben = this.puestosEnElAsfalto().filter(
+      (p) => this.cabeDeLinea(p.xy) && conSitioParaElAla(p.xy, todos, hueco),
+    );
     this.deLineaGuardados = caben.length ? caben : this.puestosCandidatos();
     return this.deLineaGuardados;
   }
@@ -2231,7 +2291,7 @@ export class PlanDeVuelo {
     return true;
   }
 
-  /** Ver `puestosParaLlegar`. Se tira al mudarse de campo. */
+  /** Ver `puestosDeLinea`. Se tira al mudarse de campo. */
   private deLineaGuardados: { ref: string | null; xy: Punto }[] | null = null;
 
   /**
@@ -2265,10 +2325,15 @@ export class PlanDeVuelo {
   /** Ver `puestosDeContacto`. Se tira al mudarse de campo. */
   private deContactoGuardados: { ref: string | null; xy: Punto }[] | null = null;
 
-  /** De dónde se puede salir: los de contacto con pasaje, si los hay, y si no los de siempre. */
+  /**
+   * De dónde se puede salir: los de contacto con pasaje, si los hay; si no, los
+   * de línea para un avión de línea —ver `puestosDeLinea`— y los de siempre
+   * para una avioneta.
+   */
   private puestosDeSalidaPosibles(): { ref: string | null; xy: Punto }[] {
     const contacto = this.deContacto ? this.puestosDeContacto() : [];
-    return contacto.length ? contacto : this.puestosCandidatos();
+    if (contacto.length) return contacto;
+    return esDeLinea(this.avion) ? this.puestosDeLinea() : this.puestosCandidatos();
   }
 
   /**

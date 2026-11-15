@@ -147,9 +147,18 @@ export function esPuestoDeContacto(x: number, z: number, edificios: Edificios, l
  * metros sola daba por puestos de pasarela los de cualquier campo con un
  * edificio cerca de la plataforma —La Gomera, Ayolas, Cuatro Vientos—, y allí un
  * reactor salía empujado de una pasarela que no hay. Ver `Aerodrome.pasarelas`.
+ *
+ * **Y de esos, solo la terminal**, que es de donde salen las pasarelas. Con
+ * todos los edificios, un hangar contaba como fachada de embarque: en la punta
+ * oeste de Tenerife Sur, la de aviación general, el JAZ 90 salía empujado por un
+ * tractor de un puesto de avioneta porque tenía una nave a menos de sesenta
+ * metros. Los nueve campos con pasarelas traen su terminal de OpenStreetMap
+ * (`aeroway=terminal`, que el extractor guarda como `kind: "terminal"`).
  */
-export function edificiosDePasarela(aero: Pick<Aerodrome, "pasarelas" | "buildings"> | null | undefined): Edificios {
-  return aero?.pasarelas?.hay === true ? (aero.buildings ?? []) : [];
+export function edificiosDePasarela(
+  aero: Pick<Aerodrome, "pasarelas" | "buildings"> | null | undefined,
+): Edificios {
+  return aero?.pasarelas?.hay === true ? (aero.buildings ?? []).filter((e) => e.kind === "terminal") : [];
 }
 
 /**
