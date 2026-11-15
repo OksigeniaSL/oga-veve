@@ -520,6 +520,13 @@ export const EN: Dictionary = {
   "vuelo.enVuelo": "Go for a fly",
   "vuelo.enVueloAterrizando": "Head for the runway",
   "vuelo.enVueloDestino": "Follow the arrow to the next airport",
+  "vuelo.perdido":
+    "We've flown a long way from the airfield. Tap the home arrow, the one that's pulsing, and the autopilot turns us back towards it",
+  "vuelo.perdidoSinAutomatico":
+    "We've flown a long way from the airfield. Turn gently until the home arrow points straight up, and that takes us back",
+  "vuelo.perdido.volvemos": "That's it! The autopilot is turning us towards the airfield",
+  "palabra.aCasa": "Head home!",
+  "hud.volverAlCampo": "Turn back to the airfield",
   "vuelo.final": "Come down gently",
   "vuelo.terrenoBajo": "You are very low",
   "vuelo.terrenoSube": "Terrain. Pull up",
@@ -992,6 +999,8 @@ export const EN: Dictionary = {
   "ajustes.explicacionDeLaCruz.volver": "Explain it again",
   "ajustes.explicacionDelAdelanto": "The fast-forward button is no longer explained out loud.",
   "ajustes.explicacionDelAdelanto.volver": "Explain it again",
+  "ajustes.explicacionDeVolverACasa": "The home arrow is no longer explained out loud when you fly too far.",
+  "ajustes.explicacionDeVolverACasa.volver": "Explain it again",
   "ajustes.inicio":
     "On iPhone, the game runs full screen when opened from its icon: in Safari tap Share (or “•••”, then Share), choose “Add to Home Screen” and open it from there.",
   "gafas.ganadas": "Your sunglasses!",

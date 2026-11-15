@@ -1556,6 +1556,7 @@ import {
   mandosPara,
   memoriaNueva,
   modoVertical,
+  porElLadoCorto,
   sePuedeConectar,
   TOQUE,
   type Memoria,
@@ -1744,6 +1745,7 @@ import {
   RECETA_DEL_FINAL,
   type PantallaQueSeExplica,
 } from "./flight/explicacion-al-abrir";
+import { apuntaAUnCampo, MAR_ADENTRO, Perdido, rumboDeVuelta } from "./flight/perdido";
 
 /** Un punto por el que se mira un sitio del paisaje, y si es el suelo mismo. Ver `casiTodo`. */
 type PuntoDeUnSitio = PuntoDelMundo & { readonly deSuelo?: boolean };
@@ -4225,6 +4227,204 @@ export class Game {
       this.llenarSiHaceFalta(this.salidaId, this.destinoId);
     }
     this.avisar("success");
+  }
+
+  // ── Perdido lejos, o mar adentro ──────────────────────────────────────
+
+  /**
+   * **El lío de alejarse**: si se ha perdido y cuándo se dice. Ver
+   * `flight/perdido.ts`.
+   */
+  private readonly perdido = new Perdido();
+
+  /**
+   * El «ya lo sé» de esta vez que se ha perdido: `null`, sin él; si no, si
+   * lleva la palabra. Ver `avisarDeQueSePerdio`.
+   */
+  private yaLoSeDeVolver: boolean | null = null;
+
+  /**
+   * **Si tocar la flecha puede hacer virar el avión**: en el aire y en el que
+   * lleva automático. El fumigador no lo lleva, ni el helicóptero del juego,
+   * y no se les inventa uno: ahí se vira a mano siguiendo la flecha, que es
+   * lo que diría la instructora sentada al lado. Ver `llevaPilotoAutomatico`.
+   */
+  private get puedeVolverAlCampo(): boolean {
+    return !this.flight.state.onGround && llevaPilotoAutomatico(this.aircraft);
+  }
+
+  /**
+   * Si el automático está todavía virando hacia el campo por un toque en la
+   * flecha: con su rumbo puesto (`HDG SEL`) y a más de diez grados de él.
+   * Mientras tanto otro toque vuelve a poner el rumbo, y no cambia de destino
+   * por sorpresa a media vuelta.
+   */
+  private get virandoAlCampo(): boolean {
+    const rumbo = this.objetivos.rumbo;
+    return (
+      this.pilotoPuesto &&
+      this.modoLateral === "HDG SEL" &&
+      rumbo !== null &&
+      Math.abs(porElLadoCorto(this.flight.state.heading, rumbo)) > (10 * Math.PI) / 180
+    );
+  }
+
+  /**
+   * **Tocar la tarjeta de casa, o la J.**
+   *
+   * Perdido lejos —la flecha late— o virando ya hacia el campo, en el avión
+   * con automático, el toque es el arreglo de ese lío: el avión vira hacia
+   * donde señala la aguja. Fuera de eso, lo de siempre, cambiar de destino.
+   * No pisa nada: perdido no hay a dónde cambiar que sirva más que volver, y
+   * en cuanto el avión apunta al campo la tarjeta vuelve a ser la del destino.
+   */
+  private alTocarLaCasa(): void {
+    if (this.puedeVolverAlCampo && (this.perdido.perdido || this.virandoAlCampo)) {
+      this.volverAlCampo();
+      return;
+    }
+    this.siguienteDestino();
+  }
+
+  /**
+   * **Un toque y el avión vira hacia el campo**, con el mecanismo que ya
+   * tiene: el piloto automático, con el rumbo hacia la aguja puesto en su
+   * ventanilla HDG (`HDG SEL`).
+   *
+   * Es lo que se hace de verdad: en un avión con automático, quien se ha
+   * alejado gira la rueda del rumbo hacia donde quiere ir y el automático
+   * vira, a su ritmo estándar y sin pasar de veinticinco grados de alabeo
+   * (ADR 0015 y `piloto-automatico.ts`). No es un mando nuevo ni el juego
+   * llevando el avión: es un instrumento de la cabina haciendo lo que hace, y
+   * en la pantalla se lee —el botón del automático encendido, `HDG SEL` en el
+   * FMA, la flecha subiendo—. Si estaba suelto se engancha como siempre, con
+   * la altura de ahora o la de su ventanilla ALT; y se suelta como siempre, al
+   * tocar los mandos.
+   */
+  private volverAlCampo(): void {
+    const punto = this.puntoDeLaAguja;
+    if (!punto) return;
+    const estaba = this.pilotoPuesto;
+    const gasesContados = this.explicadoEnEsteVuelo.has("vuelo.gasesAutomaticos");
+    if (!estaba) this.ponerPilotoAutomatico(true);
+    if (!this.pilotoPuesto) return;
+    const s = this.flight.state;
+    this.objetivos = { ...this.objetivos, rumbo: rumboDeVuelta(s.position, punto) };
+    this.modoLateral = "HDG SEL";
+    // El modo que cambia por la mano se recuadra, sin tono. Ver `mirarLoQueCambia`.
+    this.manoEnElAutomatico = this.relojDelJuego;
+    if (estaba) this.avisar("success");
+    /*
+     * **Y la explicación de cómo se vuelve ya sobra**: se hizo. Lo que quede
+     * de ella, en la cola o sonando, se calla, y en su lugar —una voz por
+     * suceso— la instructora dice que ya vira, para que el alabeo que llega
+     * solo no asuste. Solo mientras esto se explica en este perfil.
+     */
+    BOCA.retirar((c) => c === "vuelo.perdido");
+    if (this.instructor.hablando && this.instructor.loUltimo === "vuelo.perdido") this.instructor.callar();
+    /*
+     * Y si al engancharse ya habló de los gases —la palanca que se mueve sola,
+     * la primera vez en el vuelo—, eso es lo que se oye: dos frases por un
+     * toque serían dos voces para un suceso.
+     */
+    const otraVoz = !gasesContados && this.explicadoEnEsteVuelo.has("vuelo.gasesAutomaticos");
+    if (!otraVoz && !this.explicacionDeVolverACasa.quitada && laInstructoraLoExplica(this.tier.avisos))
+      this.decirLoGrabado("vuelo.perdido.volvemos");
+    this.apuntarCanto("perdido: un toque, el automático vira al campo (HDG SEL)");
+  }
+
+  /**
+   * **Cada paso, si alguien se ha perdido lejos o mar adentro.** Mientras lo
+   * está, la flecha de casa late; al perderse, la instructora lo dice. Ver
+   * `flight/perdido.ts`.
+   */
+  private mirarSiSePerdio(): void {
+    const s = this.flight.state;
+    const p = s.position;
+    const aguja = this.agujaParaBanco;
+    const campos = this.camposDelVuelo();
+    let cercano = Infinity;
+    for (const c of campos) cercano = Math.min(cercano, Math.hypot(c.x - p.x, c.z - p.z));
+    /*
+     * Lo atiende el vuelo libre a los mandos: una misión, un ejercicio, la
+     * tormenta, el vuelo largo y las escenas del modo inicio llevan su propio
+     * guion y su propia aguja.
+     */
+    const atiende =
+      aguja !== null &&
+      !this.conInicio &&
+      this.missions.current === null &&
+      this.practica === null &&
+      this.tormenta === null &&
+      this.vueloLargo === null &&
+      this.percance === null &&
+      !this.vueloTerminado;
+    const e = this.perdido.paso({
+      enElAire: !s.onGround,
+      atiende,
+      alCampoMasCercano: cercano,
+      relativo: aguja?.relativo ?? 0,
+      haciaUnCampo: apuntaAUnCampo({ x: p.x, z: p.z, rumbo: s.heading }, campos),
+      // Solo se mira el mar cuando puede importar: es una muestra del relieve.
+      sobreElMar: cercano > MAR_ADENTRO && this.terrain.sampleSurface(p.x, p.z) < 5,
+    });
+    if (e.decirlo) this.avisarDeQueSePerdio();
+    /*
+     * Late mientras está perdido y nadie lo ha arreglado: tocada, el
+     * automático ya vira y la flecha deja de llamar, que es la respuesta al
+     * toque. Si se suelta el automático a medio viraje, vuelve a llamar.
+     */
+    const virando = this.virandoAlCampo;
+    const late = e.perdido && !virando;
+    this.hud.ponerPerdido(late, this.puedeVolverAlCampo && (e.perdido || virando));
+    this.hud.ponerYaLoSeDeVolver(late ? this.yaLoSeDeVolver : null);
+  }
+
+  /**
+   * **Al perderse, se dice**: con calma, que alejarse no es una emergencia.
+   *
+   * Lo que cambia por peldaño (`flight/escalera.ts`): el dibujo, la flecha
+   * que late, en los cuatro; una palabra en la línea de avisos desde Tukã
+   * —«¡A casa!»—, la frase entera desde Taguató. La voz, en los tres de
+   * abajo, como toda explicación de la instructora (`laInstructoraLoExplica`);
+   * en el de cabina ya no se explica, y quedan la flecha y la frase escrita.
+   *
+   * Y se explica y se deja de explicar como lo que sale de golpe: la voz
+   * mientras no se haya quitado en este perfil, y desde la segunda vez, el
+   * «ya lo sé» al lado mientras la flecha late. Se recupera en los ajustes.
+   * Ver `flight/explicacion-al-abrir.ts`.
+   */
+  private avisarDeQueSePerdio(): void {
+    const vez = this.explicacionDeVolverACasa.alAbrir();
+    const conAutomatico = this.puedeVolverAlCampo;
+    const clave: TranslationKey = conAutomatico ? "vuelo.perdido" : "vuelo.perdidoSinAutomatico";
+    const canales = canalesDe(this.tier.avisos);
+    if (canales.texto) this.hud.flash(t(canales.corto ? "palabra.aCasa" : clave), 6);
+    const explica = vez.explicar && laInstructoraLoExplica(this.tier.avisos);
+    // Con la clave escrita entera en cada llamada: así las ve la lista de grabar (`por-grabar.test.ts`).
+    const dicha =
+      explica &&
+      (conAutomatico ? this.decirLoGrabado("vuelo.perdido") : this.decirLoGrabado("vuelo.perdidoSinAutomatico"));
+    this.yaLoSeDeVolver = dicha && vez.ofrecerQuitarla ? canales.texto : null;
+    this.apuntarCanto(`perdido: ${clave} → ${dicha ? "dicha" : explica ? "sin voz" : "sin explicar"}`);
+  }
+
+  /** **«Ya lo sé» de la flecha de casa**: no se explica más en este perfil. */
+  private noExplicarVolverACasa(): void {
+    this.explicacionDeVolverACasa.quitar();
+    this.yaLoSeDeVolver = null;
+    BOCA.retirar((c) => c === "vuelo.perdido");
+    if (this.instructor.hablando && this.instructor.loUltimo === "vuelo.perdido") this.instructor.callar();
+  }
+
+  /** Para el banco: si se ha perdido y qué dice la tarjeta. Ver `scripts/verificar-perdido.mjs`. */
+  get perdidoParaBanco(): { perdido: boolean; virando: boolean; modoLateral: string; rumbo: number | null } {
+    return {
+      perdido: this.perdido.perdido,
+      virando: this.virandoAlCampo,
+      modoLateral: this.modoLateral,
+      rumbo: this.objetivos.rumbo,
+    };
   }
 
   /**
@@ -6804,7 +7004,8 @@ export class Game {
       toggleCredits: () => this.credits.toggle(),
       cycleAircraft: () => this.cycleAircraft(),
       cycleMission: () => this.cycleMission(),
-      cycleDestino: () => this.siguienteDestino(),
+      // La J es la tarjeta del destino para quien tiene teclado: hace lo mismo que tocarla.
+      cycleDestino: () => this.alTocarLaCasa(),
       girarAltimetro: (pasos: number) => this.girarAltimetro(pasos),
       girarVentanillaAlt: (pasos: number) => this.girarLaVentanillaAlt(pasos),
       trenTrabado: () => this.trenTrabado(),
@@ -6972,6 +7173,7 @@ export class Game {
           { cual: "consola", explicacion: this.explicacionDeLaConsola },
           { cual: "cruz", explicacion: this.explicacionDeLaCruz },
           { cual: "adelantar", explicacion: this.explicacionDelAdelanto },
+          { cual: "aCasa", explicacion: this.explicacionDeVolverACasa },
         ],
       );
     }
@@ -7083,6 +7285,7 @@ export class Game {
       if (this.inicio instanceof MotorDelPasaje) this.inicio.adelantar();
     });
     this.hud.onNoExplicarElAdelanto(() => this.noExplicarElAdelanto());
+    this.hud.onNoExplicarVolver(() => this.noExplicarVolverACasa());
     this.hud.onCamara(() => this.cycleCamera());
     this.hud.onGafas(() => this.alternarGafas());
     // Antes de volar: la vuelta al avión y el tiempo de hoy.
@@ -7201,7 +7404,7 @@ export class Game {
     this.marcaDelMotorPuesta = undefined;
     this.hud.onPilotoAutomatico(() => this.ponerPilotoAutomatico());
     this.hud.onVentanillaAlt((pasos) => this.girarLaVentanillaAlt(pasos));
-    this.hud.onDestino(() => this.siguienteDestino());
+    this.hud.onDestino(() => this.alTocarLaCasa());
     /*
      * Y el cielo. Empieza despejado porque es el que deja ver el mundo, que es
      * de lo que va esto; las nubes se eligen cuando se quieren, y entonces se
@@ -13240,6 +13443,9 @@ export class Game {
     this.explicacionDeLaConsola.releer();
     this.explicacionDeLaCruz.releer();
     this.explicacionDelAdelanto.releer();
+    this.explicacionDeVolverACasa.releer();
+    this.perdido.olvidar();
+    this.yaLoSeDeVolver = null;
     /*
      * **Vuelo nuevo: la instructora se olvida de lo que ya había dicho.**
      *
@@ -20236,6 +20442,7 @@ export class Game {
     // número pediría bajar el motor para aterrizar cada vez que uno se
     // acercara a un punto de paso. Que es lo que hacía.
     this.updateHomeIndicator();
+    this.mirarSiSePerdio();
     this.hud.tutor.update(
       this.flight.state,
       // En el helicóptero, el paso de las palas para despegar: ver `STEPS.colectivo`.
@@ -29047,7 +29254,12 @@ export class Game {
       this.modoLateral = loc === null ? "HDG HOLD" : "LOC";
       if (loc !== null) this.objetivos = { ...this.objetivos, rumbo: loc };
     } else {
-      this.modoLateral = "HDG HOLD";
+      /*
+       * El rumbo que se puso para volver al campo se queda puesto: es otro
+       * modo, `HDG SEL`, y lo que lo quita es soltar el automático. Ver
+       * `volverAlCampo`.
+       */
+      if (this.modoLateral !== "HDG SEL") this.modoLateral = "HDG HOLD";
       /*
        * **Y pasado el punto de descenso, baja por la senda del plan.**
        *
@@ -34436,6 +34648,10 @@ export class Game {
     leer: () => leerProgreso(PANTALLAS_QUE_SE_EXPLICAN.adelantar),
     escribir: (v) => ponerProgreso(PANTALLAS_QUE_SE_EXPLICAN.adelantar, v),
   });
+  private readonly explicacionDeVolverACasa = new ExplicacionAlAbrir({
+    leer: () => leerProgreso(PANTALLAS_QUE_SE_EXPLICAN.aCasa),
+    escribir: (v) => ponerProgreso(PANTALLAS_QUE_SE_EXPLICAN.aCasa, v),
+  });
 
   /** Para el banco: lo guardado de las tres explicaciones. */
   get explicacionesParaBanco(): Record<PantallaQueSeExplica, { veces: number; quitada: boolean }> {
@@ -34447,6 +34663,7 @@ export class Game {
       consola: de(this.explicacionDeLaConsola),
       cruz: de(this.explicacionDeLaCruz),
       adelantar: de(this.explicacionDelAdelanto),
+      aCasa: de(this.explicacionDeVolverACasa),
     };
   }
 
