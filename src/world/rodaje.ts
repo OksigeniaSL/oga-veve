@@ -28,7 +28,7 @@
  * partir por vértices compartidos y soldar por cercanía.
  */
 
-import { ANCHO_RODADURA, type Aerodrome, type Punto } from "./aerodrome";
+import { ANCHO_RODADURA, enElPavimento, type Aerodrome, type Punto } from "./aerodrome";
 
 /** A cuánto se consideran el mismo sitio dos puntas de calle, m. */
 const SOLDADURA = 12;
@@ -487,6 +487,34 @@ export const MARGEN_DEL_PAVIMENTO = ANCHO_RODADURA / 2;
  * Hierro son dos metros y pico, con margen. Ver `buscarEnganches`.
  */
 const AL_BORDE_DE_LA_PISTA = 5;
+
+/**
+ * **Los puestos en los que se puede aparcar un avión: los que tienen
+ * pavimento debajo**, y fuera de los edificios. Si un campo no tuviera
+ * ninguno, se quedan todos, que sin puesto no hay juego. Lo usa
+ * `puestosEnElAsfalto` en `plan-de-vuelo.ts`.
+ *
+ * Se miraba con `rodable`, y `rodable` lleva media calle de holgura
+ * —`MARGEN_DEL_PAVIMENTO`— para que la raya pueda cruzar las rendijas que el
+ * dibujo de OpenStreetMap deja entre una plataforma y su calle. Esa holgura es
+ * para pasar, no para pararse: el avión se apoya en el asfalto **dibujado**,
+ * que no la lleva, y un puesto que solo entra por ella deja el avión en la
+ * tierra. Así aparcaba el JAZ 90 en Tenerife Sur, en un «puesto» que era el
+ * centro de una línea de entrada (#191), y así se podía aparcar en treinta y
+ * un puestos de Barajas y en dos de Silvio Pettirossi que quedan de cinco a
+ * once metros fuera del asfalto, junto a su calle y sin plataforma dibujada
+ * debajo. Lo comprueba `puestos-en-el-pavimento.test.ts` contra la rejilla
+ * horneada, que es lo que pisan las ruedas.
+ */
+export function puestosEnElPavimento<P extends { readonly xy: Punto }>(
+  puestos: readonly P[],
+  aero: Aerodrome,
+  grafo: Pick<Grafo, "rodable">,
+): readonly P[] {
+  const rodable = grafo.rodable;
+  const buenos = puestos.filter((p) => enElPavimento(aero, p.xy) && (!rodable || rodable(p.xy)));
+  return buenos.length ? buenos : puestos;
+}
 
 /** El nudo más cercano a un punto, y a cuánto está. */
 export function nudoCercano(

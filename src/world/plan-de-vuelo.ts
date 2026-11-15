@@ -65,6 +65,7 @@ import { PuertaAsignada } from "./puerta-asignada";
 import { edificiosDePasarela, esPuestoDeContacto, largoPorLaBatalla } from "./remolque";
 import {
   construirGrafo,
+  puestosEnElPavimento,
   rectaPorPavimento,
   rodajeEntre,
   rodajesDesde,
@@ -2147,12 +2148,12 @@ export class PlanDeVuelo {
    * de los edificios, eran justo los que se elegían: la vuelta de Tenerife
    * Sur se quedaba sin puesto al que ir. Si un campo no tuviera ninguno en el
    * asfalto, se quedan todos, que sin puesto no hay juego.
+   *
+   * Y en el asfalto **dibujado**, no en el de la holgura de la raya: ver
+   * `puestosEnElPavimento` en `rodaje.ts`.
    */
   private puestosEnElAsfalto(): readonly { ref: string | null; xy: Punto }[] {
-    const puestos = this.aero.parkingPositions ?? [];
-    const rodable = this.grafo.rodable;
-    const buenos = rodable ? puestos.filter((p) => rodable(p.xy)) : puestos;
-    return buenos.length ? buenos : puestos;
+    return puestosEnElPavimento(this.aero.parkingPositions ?? [], this.aero, this.grafo);
   }
 
   /** Los puestos de los que puede salir una avioneta, sin ordenar. */
