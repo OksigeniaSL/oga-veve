@@ -11,13 +11,13 @@
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { ArcadeFlightModel } from "./arcade";
-import { AIRCRAFT } from "./aircraft";
+import { AIRCRAFT, MEDIDOS } from "./aircraft";
 import { neutralControls } from "./model";
 
-describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
+describe.each(MEDIDOS.map((a) => [a.id, a] as const))(
   "el %s en el modelo sencillo",
   (_id, a) => {
-    it("se va del suelo a su Vr, y pasa V1 con las ruedas en la pista", () => {
+    it("se va del suelo a su Vr, y pasa V1 con las ruedas en la pista o al dejarla", () => {
       const m = new ArcadeFlightModel({ aircraft: a, ground: () => 0 });
       m.reset({
         position: new Vector3(0, a.gearHeight, 0),
@@ -44,7 +44,20 @@ describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
         }
       }
       expect(seVa).toBeGreaterThanOrEqual(a.rotationSpeed * 0.99);
-      expect(v1EnElSuelo).toBe(true);
+      /*
+       * **Y la V1 llega antes de dejar el suelo, o a la vez**: la Vr no puede
+       * ser menor que la V1 (CS 25.107(e)(2)), así que un avión no se va del
+       * suelo sin haber pasado la decisión. Donde la V1 va por debajo de la Vr,
+       * se pasa rodando, con unos segundos de «ya no paro y todavía no vuelo».
+       * Donde las dos son la misma —el Twin Otter, «Rotation speeds (VR = V1)»
+       * en la figura 4-1 de su manual—, la decisión y la rotación son el mismo
+       * instante, el último con las ruedas en la pista, y en este modelo, que
+       * se va del suelo en cuanto llega a la Vr, el mismo paso. El canto no
+       * depende de eso: el HUD dice «V one» al pasar la V1 en la carrera, con
+       * las ruedas en el suelo o recién dejándolo. Ver `Hud`.
+       */
+      expect(seVa).toBeGreaterThanOrEqual(a.decisionSpeed);
+      if (a.decisionSpeed < a.rotationSpeed) expect(v1EnElSuelo).toBe(true);
     });
   },
 );
