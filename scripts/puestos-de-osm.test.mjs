@@ -3,7 +3,7 @@
  * `puestos-de-osm.mjs`. Los casos son los de Tenerife Sur, en pequeño.
  */
 import { describe, expect, it } from "vitest";
-import { puestosDeOsm } from "./puestos-de-osm.mjs";
+import { puestosDeOsm, puestosSinCopias } from "./puestos-de-osm.mjs";
 
 // Metros tal cual: `lat` es la `y` y `lon` la `x`.
 const proj = (lat, lon) => [lon, lat];
@@ -71,16 +71,38 @@ describe("los puestos de OpenStreetMap", () => {
     ).toEqual([{ ref: "C", xy: [5, 10] }]);
   });
 
-  it("un nodo con el mismo nombre que no está en la línea no la anula", () => {
-    // J1 en Tenerife Sur: un nodo y una línea que no pasa por él. La línea
-    // cuenta por su cuenta, en su punta suelta.
+  it("una línea de entrada en dos tramos es un puesto, en su nodo", () => {
+    // El 25 de Tenerife Norte: el tramo de fuera empalma con el que lleva el
+    // nodo, y su punta suelta no es otro 25.
     const salen = puestosDeOsm(
-      [calle([[-200, 0], [200, 0]]), nodo("J1", [50, 50]), puesto("J1", [[0, 0], [0, 70]])],
+      [
+        nodo("25", [41.6, 16.3]),
+        puesto("25", [[0, 0], [41.6, 16.3]]),
+        puesto("25", [[41.6, 16.3], [55.2, 22.8]]),
+      ],
       proj,
     );
-    expect(salen).toEqual([
-      { ref: "J1", xy: [50, 50] },
-      { ref: "J1", xy: [0, 70] },
-    ]);
+    expect(salen).toEqual([{ ref: "25", xy: [41.6, 16.3] }]);
+  });
+
+  it("y sin nodo, de los dos tramos sale el puesto de la punta suelta del de dentro", () => {
+    const salen = puestosDeOsm(
+      [calle([[-200, 0], [200, 0]]), puesto("D", [[0, 0], [0, 40]]), puesto("D", [[0, 40], [0, 90]])],
+      proj,
+    );
+    expect(salen).toEqual([{ ref: "D", xy: [0, 90] }]);
+  });
+});
+
+describe("los puestos sin copias", () => {
+  it("uno por nombre, y todos los que no lo tienen", () => {
+    const lista = [
+      { ref: "R40", xy: [0, 0] },
+      { ref: null, xy: [1, 1] },
+      { ref: "R40", xy: [5, 40] },
+      { ref: null, xy: [2, 2] },
+      { ref: "H38", xy: [9, 9] },
+    ];
+    expect(puestosSinCopias(lista)).toEqual([lista[0], lista[1], lista[3], lista[4]]);
   });
 });

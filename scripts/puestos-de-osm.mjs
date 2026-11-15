@@ -27,7 +27,10 @@
  *
  * 1. Un nodo es un puesto, en el nodo.
  * 2. Una vía con un nodo de su mismo `ref` en uno de sus vértices es la línea
- *    de entrada de ese nodo: el puesto ya está, no se repite.
+ *    de entrada de ese nodo: el puesto ya está, no se repite. Y también la que
+ *    empalma con esa línea y lleva su mismo `ref`, que es otro tramo de ella:
+ *    en Tenerife Norte, la del 25 y la del 17 van en dos trozos, y el de fuera
+ *    salía como otro 25 y otro 17 en su punta suelta.
  * 3. Una vía sin nodo es un puesto en **su punta suelta**: la que no toca ni
  *    una calle ni otra vía de puesto. No se fía de que la última sea la
  *    parada, que es lo que pide la wiki, porque no siempre se dibuja así: en
@@ -45,6 +48,24 @@
 
 /** Lo que se da por tocar la red, m: un vértice compartido o casi. */
 export const TOCA_LA_RED = 1;
+
+/**
+ * **Los puestos quitando las copias**: uno por `ref`, y todos los que no lo
+ * tienen. Es la cuenta con la que `osm-a-aerodromo.mjs` compara lo que trae
+ * con lo que había: la ficha vieja tenía cada puesto dibujado con nodo y línea
+ * dos veces, y sin esto la primera extracción con `puestosDeOsm` se rechazaba
+ * por «traer menos» puestos de los que había, cuando lo que traía eran menos
+ * copias.
+ */
+export function puestosSinCopias(puestos) {
+  const vistos = new Set();
+  return puestos.filter((p) => {
+    if (p.ref === null || p.ref === undefined) return true;
+    if (vistos.has(p.ref)) return false;
+    vistos.add(p.ref);
+    return true;
+  });
+}
 
 /** Distancia de un punto a una polilínea, m. */
 function aLaPolilinea([px, py], linea) {
@@ -83,12 +104,24 @@ export function puestosDeOsm(elementos, proj) {
   const lineas = new Map(vias.map((v) => [v, linea(v)]));
   const aLasCalles = (p) => Math.min(Infinity, ...calles.map((c) => aLaPolilinea(p, c)));
 
+  const conSuNodo = (w) =>
+    nodos.some((n) => ref(n) === ref(w) && w.geometry.some((p) => p.lat === n.lat && p.lon === n.lon));
+
   const puestos = nodos.map((n) => ({ ref: ref(n), xy: proj(n.lat, n.lon) }));
   for (const v of vias) {
     const g = v.geometry;
-    // 2. La línea de entrada de un nodo que ya está.
-    if (nodos.some((n) => ref(n) === ref(v) && g.some((p) => p.lat === n.lat && p.lon === n.lon))) continue;
     const puntos = lineas.get(v);
+    // 2. La línea de entrada de un nodo que ya está, o un tramo de ella.
+    if (conSuNodo(v)) continue;
+    const tramoDeOtra = vias.some(
+      (w) =>
+        w !== v &&
+        ref(w) !== null &&
+        ref(w) === ref(v) &&
+        conSuNodo(w) &&
+        [puntos[0], puntos[puntos.length - 1]].some((p) => aLaPolilinea(p, lineas.get(w)) <= TOCA_LA_RED),
+    );
+    if (tramoDeOtra) continue;
     const primero = puntos[0];
     const ultimo = puntos[puntos.length - 1];
     // 6. Un recinto cerrado: su centro.

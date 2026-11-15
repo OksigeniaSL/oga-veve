@@ -32,7 +32,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { puestosDeOsm } from "./puestos-de-osm.mjs";
+import { puestosDeOsm, puestosSinCopias } from "./puestos-de-osm.mjs";
 
 const OVERPASS =
   process.env.OVERPASS ?? "https://overpass-api.de/api/interpreter";
@@ -1287,7 +1287,8 @@ for (const icao of icaos) {
     pistas: (a?.runways ?? []).filter((r) => largo(r) >= 300).length,
     rodaduras: a?.taxiways?.length ?? 0,
     plataformas: a?.aprons?.length ?? 0,
-    puestos: a?.parkingPositions?.length ?? 0,
+    // Sin copias: ver `puestosSinCopias`.
+    puestos: puestosSinCopias(a?.parkingPositions ?? []).length,
     esperas: a?.holdingPositions?.length ?? 0,
   });
   const habia = previo ? cuentas(previo) : null;
