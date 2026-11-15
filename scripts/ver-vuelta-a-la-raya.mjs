@@ -134,10 +134,19 @@ try {
   // El tractor llega, engancha, remolca y suelta.
   const fases = [];
   let capturas = 0;
+  let gasesRemolcando = null;
   const t0 = Date.now();
   for (;;) {
     const v = await page.evaluate(() => globalThis.__oga.vueltaALaRaya());
     if (v.fase !== fases[fases.length - 1]) {
+      // Remolcando, quien juega da gas a fondo: la palanca tiene que volver a ralentí.
+      if (v.fase === "empujando") {
+        await page.evaluate(() => {
+          globalThis.__oga.controles().throttle = 1;
+        });
+        await page.waitForTimeout(400);
+        gasesRemolcando = await page.evaluate(() => globalThis.__oga.controles().throttle);
+      }
       fases.push(v.fase);
       if (["enganchando", "empujando", "saludando"].includes(v.fase))
         await page.screenshot({ path: `${CARPETA}/${3 + capturas++}-${v.fase}.png` });
@@ -151,6 +160,11 @@ try {
     fases.join(" → ") ===
       "llegando → enganchando → empujando → frenado → soltando → apartandose → andando → saludando → libre",
     `${fases.join(" → ")} en ${((Date.now() - t0) / 1000).toFixed(0)} s`,
+  );
+  comprobar(
+    "remolcando, los gases se quedan a ralentí aunque se pida motor",
+    gasesRemolcando === 0,
+    `palanca a ${gasesRemolcando} tras pedir 1`,
   );
   const fin = await page.evaluate((ruta) => {
     const o = globalThis.__oga;
