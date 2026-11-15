@@ -351,12 +351,12 @@ def construir():
     A = EJE_HELICE
     gondola = Piel([
         (Z(HELICE_D + 0.06), 0.22, Y(A + 0.22), Y(A - 0.22), Y(A)),
-        (Z(3.95), 0.32, Y(3.20), Y(2.32), Y(2.80)),
-        (Z(4.40), 0.36, Y(3.36), Y(2.15), Y(2.80)),
-        (Z(5.05), 0.36, Y(3.52), Y(2.15)),
-        (Z(5.80), 0.33, Y(3.56), Y(2.30)),
-        (Z(6.40), 0.20, Y(3.50), Y(2.68)),
-        (Z(6.75), 0.02, Y(3.45), Y(3.22)),
+        (Z(3.95), 0.32, Y(3.16), Y(2.32), Y(2.80)),
+        (Z(4.40), 0.36, Y(3.30), Y(2.15), Y(2.80)),
+        (Z(5.05), 0.36, Y(3.46), Y(2.15)),
+        (Z(5.80), 0.33, Y(3.50), Y(2.30)),
+        (Z(6.40), 0.20, Y(3.46), Y(2.68)),
+        (Z(6.75), 0.02, Y(3.42), Y(3.22)),
     ], x=MOTOR, n=2.3)
     piezas.append(espejo(gondola.malla("gondola", "casco", lados=28,
                                        paso=0.25)))
@@ -390,10 +390,23 @@ def construir():
     # principales y dos centímetros por encima: ahí toca, y no antes.
     te_abajo = 15.20
     h_abajo = (te_abajo - PRINCIPAL_D) * math.tan(COLA_TOCA) + 0.02
-    de_la_deriva = [
-        de_deriva(0.0, Y(h_abajo), Z(11.79), te_abajo - 11.79, 0.11),
-        de_deriva(0.0, Y(5.94), Z(14.25), LARGO - 14.25, 0.11),
-    ]
+
+    def a_la_altura(h):
+        """La sección de la deriva a esa altura, entre la de abajo y la punta."""
+        t = (h - h_abajo) / (5.94 - h_abajo)
+        ataque = 11.79 + t * (14.25 - 11.79)
+        salida = te_abajo + t * (LARGO - te_abajo)
+        return de_deriva(0.0, Y(h), Z(ataque), salida - ataque, 0.11)
+
+    # **Partida en dos a la altura del lomo**, con el mismo borde de ataque y
+    # el mismo de salida, así que la bisagra del timón es una sola recta. La de
+    # arriba es la que lleva el motivo —el material `cola`—, porque el juego
+    # pone el sol naciendo en su raíz y la mide en la malla: con la deriva
+    # entera, la raíz era la punta de abajo del timón, dentro del cono, y el sol
+    # salía por debajo del lomo. La de abajo, del mismo verde, sin motivo.
+    LOMO = 2.80
+    de_la_deriva = [a_la_altura(LOMO), a_la_altura(5.94)]
+    de_la_deriva_baja = [a_la_altura(h_abajo), a_la_altura(LOMO)]
     alto_deriva = largo_hasta(de_la_deriva, 1)
     # **Y el timón se mueve**, de abajo a un palmo de la punta, con sus topes
     # de la A9EA: 21° a la derecha y 20° a la izquierda (la misma copia que
@@ -409,6 +422,18 @@ def construir():
     ], punta=False)
     piezas.append(deriva)
     piezas += mandos_moviles(deriva, timon)
+    # Y el trozo de abajo del timón, que gira con el de arriba por la misma
+    # bisagra: el juego mueve con los pedales todo lo que se llama `timon-`.
+    bajo = largo_hasta(de_la_deriva_baja, 1)
+    timon_bajo = [mando("timon-de-direccion-abajo", 0.0, bajo, 0.66,
+                        "guinada", 21, 20)]
+    deriva_baja = superficie("deriva-baja", de_la_deriva_baja,
+                             material_="detalle", simetria=False,
+                             mandos=timon_bajo, zonas=[
+        ("oscuro", 0.0, bajo, 0.645, 0.66),
+    ], punta=False)
+    piezas.append(deriva_baja)
+    piezas += mandos_moviles(deriva_baja, timon_bajo)
     # La aleta dorsal, que la une al lomo en curva: del verde de la raya, que
     # es el de la cola, y no en `cola`, que es solo la deriva con el motivo.
     piezas.append(superficie("aleta-dorsal", [
@@ -425,7 +450,8 @@ def construir():
     profundidad = [mando("profundidad", 0.30, 3.00, 0.66, "cabeceo", 25, 15)]
     estabilizador = superficie("estabilizador", [
         de_ala(0.0, Y(3.26), Z(12.95), 1.45, 0.12),
-        de_ala(6.29 / 2 - 0.05, Y(3.26), Z(12.95), 1.45, 0.11),
+        # Menos la punta redonda, que sobresale medio espesor.
+        de_ala(6.29 / 2 - 0.075, Y(3.26), Z(12.95), 1.45, 0.11),
     ], material_="casco", mandos=profundidad, zonas=[
         ("oscuro", 0.30, 3.00, 0.645, 0.66),
     ])
@@ -486,6 +512,7 @@ def construir():
     mandos_libres(alerones, mallas("fuselaje", "gondola", "riostra"))
     mandos_libres(timon, mallas("fuselaje", "estabilizador", "profundidad-",
                                 "aleta-dorsal"))
+    mandos_libres(timon_bajo, mallas("fuselaje"))
     mandos_libres(profundidad, mallas("deriva", "timon-"))
 
     piezas.append(centro_de_gravedad(Z(CDG)))
