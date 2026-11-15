@@ -523,6 +523,26 @@ medidas son hechos publicados, y salen de:
 Lo que no sale de ahí lleva «por verificar» en su ficha, `TIJERETA` en
 `src/flight/aircraft.ts`.
 
+**El JAZ 50 _Tujuju_** (`modelos/jaz-50-tujuju.py`, y su
+`public/assets/aeronaves/jaz-50.glb`), que está en el taller y todavía no se
+ofrece, es un DHC-6 Twin Otter de la Serie 400 con la librea de la flota y sin el
+nombre ni la librea de nadie. Las medidas salen de:
+
+- EASA, *Type Certificate Data Sheet* **EASA.IM.A.575**, número 6, 18-6-2026:
+  envergadura, largo, alto, cuerda, la hélice y sus palas, y los neumáticos.
+  <https://www.easa.europa.eu/en/downloads/7070/en>
+- De Havilland Canada, *Twin Otter Classic 300-G Wheels Specifications* (2025):
+  el alto, el estabilizador, la cabina y las dos puertas de atrás.
+- NASA, **TM-101427** (Ranaudo y otros, 1989), figura 1: la vista en tres planos
+  acotada del Twin Otter de NASA Lewis, con la batalla, la vía, la cuerda del
+  estabilizador y el ángulo al que toca la cola; lo demás —dónde van el ala, las
+  góndolas, la riostra, el tren y la deriva— se ha medido sobre ella. Obra del
+  Gobierno de EE. UU. <https://ntrs.nasa.gov/citations/19890005750>
+- Fotos de Wikimedia Commons, para situar las puertas, las ventanillas, la
+  riostra y la cola: «Aurora, DHC-6-400, RA-67284» de Fedor Leukhin (CC BY-SA
+  2.0) y los -400 C-GVKI y A3-KLT rodando, de Bidgee (CC BY-SA 3.0 AU). Sirvieron
+  para mirar y medir, y no entran en el juego.
+
 **Y uno más que no es de la flota**: el turbohélice regional de ala alta del
 tráfico, el que hace cola contigo en Los Rodeos, se modela igual desde
 `modelos/trafico-turbohelice.py` y escribe

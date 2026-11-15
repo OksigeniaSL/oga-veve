@@ -129,6 +129,17 @@ try {
     page.on("pageerror", (e) => errores.push(e.message));
     await page.goto(`${BASE}/scripts/retratos.html?${process.env.OGA_RETRATO ?? ""}`);
     await page.waitForFunction(() => globalThis.__listo === true, null, { timeout: 60000 });
+    /*
+     * **El del taller, sin retrato en el hangar.** El JAZ 50 tiene su `.glb`
+     * antes de tener sitio en la flota: un retrato suyo en la carpeta del
+     * hangar sería uno que no pide nadie, y `retratos.test.ts` lo cuenta como
+     * sobrante. Con `--a carpeta` sí se hace, para mirarlo.
+     */
+    if (!PRUEBA && (await page.evaluate((id) => globalThis.__enElTaller(id), id))) {
+      console.log(`  · ${id.padEnd(8)} en el taller: sin retrato hasta que entre en la flota`);
+      await page.close();
+      continue;
+    }
     try {
       const { url, ficha } = await page.evaluate((id) => globalThis.__retrato(id), id);
       if (!url.startsWith("data:image/webp")) throw new Error("el navegador no sabe hacer WebP");

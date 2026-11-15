@@ -2082,10 +2082,12 @@ export const PANAMBI: AircraftConfig = {
  * -300 dice otra cosa, se dice al lado.
  *
  * **Está en el taller**: tiene su ficha y su modelo de vuelo, medidos contra su
- * manual, pero ni silueta, ni cabina, ni sitio en el hangar. Va en `RESERVADOS`
- * y no en `AIRCRAFT`, y su número en `EN_EL_TALLER` (`flota.ts`). Lo que solo
- * puede decir su dibujo —dónde van las ruedas y los motores, a qué actitud toca
- * la cola— va puesto a mano, dicho, hasta que llegue su modelo.
+ * manual, y su modelo en 3D (`modelos/jaz-50-tujuju.py`), pero ni cabina ni
+ * sitio en el hangar. Va en `RESERVADOS` y no en `AIRCRAFT`, y su número en
+ * `EN_EL_TALLER` (`flota.ts`). Lo que solo puede decir su dibujo —dónde van las
+ * ruedas y los motores, a qué actitud toca la cola— sale de él, como en los
+ * demás, y lo comprueban `apoyo.test.ts` y `motores.test.ts` contra el `.glb` y
+ * el guion.
  *
  * Las fuentes, de las que salen los números de abajo:
  *
@@ -2202,12 +2204,14 @@ export const JAZ_50: AircraftConfig = {
   // pulley and cable systems» (Viking, 2018). Ver `mandos`.
   mandos: "convencionales",
   /*
-   * **Sin fuente: a 3,1 m del eje**, los del ala del Twin Otter con la que
-   * volaba el JAZ 60 antiguo. Ni la hoja de tipo ni la NASA dan la distancia de
-   * los motores al eje; la dirá su dibujo, y `motores.test.ts` comprobará que
-   * los dos dicen lo mismo.
+   * **A 2,75 m del eje, los de su dibujo** (`MOTOR` en
+   * `modelos/jaz-50-tujuju.py`): medidos en la vista de frente acotada de la
+   * NASA (TM-101427, figura 1), entre los centros de los dos discos de 2,59 m,
+   * con la vía de 3,81 como regla. Ninguna hoja da la cifra. Eran 3,1, a mano,
+   * los del ala del Twin Otter con la que volaba el JAZ 60 antiguo.
+   * `motores.test.ts` comprueba que el guion y la ficha dicen lo mismo.
    */
-  motoresA: [-3.1, 3.1],
+  motoresA: [-2.75, 2.75],
   alturaCritica: null,
   // Las dos giran igual: «Propellers rotate Clockwise in view of flight
   // direction» (EASA.IM.A.575, A.III.6.1).
@@ -2338,24 +2342,37 @@ export const JAZ_50: AircraftConfig = {
   deRodarADespegar: 1.62,
   /*
    * 4,5 m del tren de morro al principal, y 3,81 de vía (NASA TM-101427, figura
-   * 1). La web de De Havilland da 7,22, que no casa con la vista del avión.
+   * 1), las de su dibujo. La web de De Havilland da 7,22, que no casa con la
+   * vista del avión.
    */
   batalla: 4.5,
-  // **Sin fuente**: del centro de gravedad al suelo, hasta que lo mida su dibujo.
-  gearHeight: 1.6,
   /*
-   * **Sin fuente**: las principales, 0,55 m por detrás del centro, el doce por
-   * ciento de la batalla que carga una rueda de morro. Lo medirá su dibujo, como
-   * en los demás (`apoyo.test.ts`).
+   * **1,98 m, el de su dibujo**: el centro de gravedad en el eje del fuselaje,
+   * como en el JAZ 60, que con el fuselaje de 0,90 a 3,07 m sobre el suelo de
+   * la vista de NASA (figura 1) cae ahí. Eran 1,6, a mano. Ver `TREN` en
+   * `modelos/jaz-50-tujuju.py`.
    */
-  mainWheelsAft: 0.55,
+  gearHeight: 1.98,
+  /*
+   * **Las principales, 0,71 m por detrás del centro, las de su dibujo**: van a
+   * 6,31 m del morro en la vista de NASA (figura 1), y el centro, al 28 % de la
+   * cuerda, dentro de los límites de su hoja de tipo (del 20 al 36 %,
+   * EASA.IM.A.575, A.III.13). La rueda de morro carga el 16 % del peso. Eran
+   * 0,55, a mano. Lo comprueba `apoyo.test.ts`.
+   */
+  mainWheelsAft: 0.71,
   // Fijo: «fixed gear aeroplane» (EASA.IM.A.575, A.III.2).
   trenRetractil: false,
   meteElTrenA: null,
   tardaElTren: null,
-  // **Sin fuente**: once grados y medio, hasta que su dibujo diga dónde toca la cola.
-  maxGroundPitch: 0.2,
-  // Doce centímetros de pata con la rueda de morro 3,95 m por delante del centro.
+  /*
+   * **10,5°, la cota de la NASA** (TM-101427, figura 1): de la huella de las
+   * principales a lo más bajo de la cola, que en el Twin Otter es la punta de
+   * abajo del timón. Su dibujo la pone ahí, y toca a 10,6°: lo comprueba
+   * `apoyo.test.ts`. Eran once grados y medio, a mano.
+   */
+  maxGroundPitch: 10.5 * (Math.PI / 180),
+  // Doce centímetros de pata con la rueda de morro 3,79 m por delante del centro.
   minGroundPitch: -0.03,
   llevaFlaps: true,
   /*

@@ -1337,3 +1337,56 @@ por largo de pista, y el JAZ 90, igual. Quien entra es el JAZ 50 cuando salga
 del taller. Concepción, Pilar, Ayolas y Estigarribia siguen con la regla: son
 aeródromos públicos que publican que no tienen bomberos. En un ejercicio en
 Yvytu Rape no sale ningún camión, como antes.
+
+## Enmienda H13c (15-11-2026): el JAZ 50 tiene dibujo, y lo que solo decía él sale de él
+
+El JAZ 50 sigue en el taller, pero ya tiene su modelo en 3D:
+`modelos/jaz-50-tujuju.py`, que escribe `public/assets/aeronaves/jaz-50.glb`. Es
+un Twin Otter de la Serie 400 con las cotas de su hoja de tipo (EASA.IM.A.575,
+A.III.4 y 6), de la ficha del 300-G de De Havilland (2025) y de la vista en tres
+planos acotada de la NASA (TM-101427, figura 1), que es la que da lo que las
+hojas no dan. Las fuentes de cada cota, en el guion.
+
+La enmienda H11a dejó escrito qué diría su dibujo: la distancia de los motores
+al eje, la altura del centro sobre el suelo, el brazo del tren principal y la
+actitud a la que toca la cola. Desde hoy salen de él, como en los demás, y los
+comprueban las mismas pruebas: `apoyo.test.ts` mira las ruedas y la cola contra
+el `.glb`, y `motores.test.ts` los motores contra el guion. Las dos recorren
+ahora, además de los que vuelan, los del taller que ya tienen dibujo.
+
+| | Antes, a mano | Ahora | De dónde |
+|---|---|---|---|
+| Motores, del eje | 3,1 m | 2,75 m | `MOTOR` del guion, medido en la vista de frente de la NASA |
+| Centro sobre el suelo, `gearHeight` | 1,6 m | 1,98 m | el eje del fuselaje, de 0,90 a 3,07 m sobre el suelo |
+| Principales tras el centro, `mainWheelsAft` | 0,55 m | 0,71 m | a 6,31 m del morro (NASA), el centro al 28 % de la cuerda |
+| Toca la cola, `maxGroundPitch` | 11,5° | 10,5° | la cota de la NASA; su dibujo toca a 10,6° |
+| Morro abajo, `minGroundPitch` | −0,03 rad | igual | la rueda de morro, ahora a 3,79 m del centro |
+
+**Lo que vigila este ADR casi no se mueve.** La cuenta del hangar no depende de
+dónde van las ruedas ni de la cola, y sus cifras son las de antes: pide 447 m
+para despegar —la de parar desde la V1—, 389 con todos los motores por 1,15 y
+647 de pista para aterrizar, 453 sin margen. Lo único que cambia es el despegue
+volado del banco de mesa, que rota sobre las ruedas (H7c) y nota el brazo:
+
+| JAZ 50, a 5.182 kg | Antes | Ahora |
+|---|---|---|
+| Rueda hasta la Vr (volado / cuenta) | 215 / 209 m | 215 / 209 m |
+| Se va del suelo, a | 306 m y 5,67° | 306 m y 5,71° |
+| Pasa los cincuenta pies, a | 469 m | 468 m |
+
+Se va del suelo a 5,7°, lejos de los 10,5° de su cola: el despegue volado sigue
+un 39 % más largo que la cuenta, y no era la cola. Sigue siendo lo que dijo la
+H11a, el calado de su ala, que no se ha leído.
+
+### Lo que no
+
+- **Ni cabina, ni retrato en el hangar, ni silueta.** Son del paso de meterlo
+  en la flota. `npm run retratos` se salta a los del taller, porque un retrato
+  suyo en la carpeta del hangar no lo pediría nadie; con `--a carpeta` sí lo
+  hace, para mirarlo.
+- **Los flaps de dos ranuras se dibujan de una**, y el alerón no baja con los
+  flaps como en el de verdad: se simplifica la forma, no la pieza.
+- Los topes del alerón y del timón son los de la hoja A9EA del -300 leída en
+  una copia que no es la de la FAA, y el de la profundidad abajo no tiene
+  fuente. Van en el guion y todavía no en `RECORRIDO_DE_MANDOS`, que es del
+  paso de meterlo en la flota.

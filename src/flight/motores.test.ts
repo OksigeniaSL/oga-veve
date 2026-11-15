@@ -140,7 +140,18 @@ describe("dónde van los motores: lo mismo en la ficha que en el modelo", () => 
       .filter(Number.isFinite);
   };
 
-  for (const a of BIMOTORES) {
+  /*
+   * Y los del taller que ya tienen guion: el JAZ 50 tiene su modelo antes de
+   * entrar en la flota, y sus motores van donde los pone él.
+   */
+  const conGuion = (id: string): boolean =>
+    fs.readdirSync("modelos").some((n) => n.startsWith(`${id}-`));
+  const DIBUJADOS = [
+    ...BIMOTORES,
+    ...BIMOTORES_MEDIDOS.filter((a) => !BIMOTORES.includes(a) && conGuion(a.id)),
+  ];
+
+  for (const a of DIBUJADOS) {
     it(`${a.id}: a la distancia del eje que dibuja su modelo`, () => {
       const texto = guion(a.id);
       const deFuera = a.motoresA.filter((y) => y > 0).sort((x, y) => x - y);
