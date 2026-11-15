@@ -187,9 +187,16 @@ describe("lo que está en el taller", () => {
     }
   });
 
-  it("y se llama por su número y su pájaro, como los de la tabla", () => {
+  /*
+   * **El JAZ 50 ya salió** (#185): con su silueta, el bimotor de ala alta, es
+   * de la tabla y vuela, y el taller se queda vacío hasta el siguiente.
+   */
+  it("el JAZ 50 Tujuju salió del taller: es de la flota, con su silueta, y vuela", () => {
     expect(nombreEnteroDe("jaz-50")).toBe("JAZ 50 Tujuju");
-    expect(RESERVADOS.find((a) => a.id === "jaz-50")!.name).toBe("JAZ 50 Tujuju");
+    expect(aircraftById("jaz-50").name).toBe("JAZ 50 Tujuju");
+    expect(modeloPorId("jaz-50")?.silueta).toBe("bimotor-ala-alta");
+    expect(EN_EL_TALLER.map((t) => t.id)).not.toContain("jaz-50");
+    expect(RESERVADOS.map((a) => a.id)).not.toContain("jaz-50");
   });
 
   it("y su pájaro tampoco se llama como un tramo", () => {

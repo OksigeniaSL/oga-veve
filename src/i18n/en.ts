@@ -114,6 +114,8 @@ export const EN: Dictionary = {
   "aircraft.mainumby.description": "Crop duster biplane. Nimble and strong.",
   "aircraft.panambi.description":
     "Low-wing twin. Two engines, faster, and the legs tuck away.",
+  "aircraft.tujuju.description":
+    "High-wing twin with fixed legs. It uses short dirt and grass strips.",
   "aircraft.arasunu.description":
     "Regional turboprop, T-tail. Big, and it fits short runways.",
   "aircraft.arai.description":
@@ -3064,6 +3066,8 @@ export const EN: Dictionary = {
     "A T-tail! The stabiliser sits right at the top, away from the stirred-up air of the wing and the propellers.",
   "inicio.ara.pasaje.kit.avion.reactor":
     "Just like ours! The engines hang under the wing: their weight stops the wing from bending so much, and they're easy to reach for looking after.",
+  "inicio.ara.pasaje.kit.avion.bimotorAlaAlta":
+    "Wing on top and an engine on each side! Its wheels never tuck away, and it lands on short little dirt and grass strips.",
   "inicio.ara.pasaje.kit.avion.bimotorAncho":
     "So big, and just two engines! They're huge, and with only those two this plane crosses the ocean.",
   "inicio.ara.pasaje.kit.avion.cuatrimotor":

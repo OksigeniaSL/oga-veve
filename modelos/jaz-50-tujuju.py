@@ -65,9 +65,10 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from comun import exportar, limpiar  # noqa: E402
+from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
-    Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, en_punta,
+    Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
+    en_punta,
     espejo, estacion, flap, flaps_libres, flaps_moviles, helice, largo_hasta,
     llantas, mando, mandos_libres, mandos_moviles, marca, neumaticos, paneles,
     paneles_zy, piezas_de_mandos, ranurado, simetricos, superficie, varillas,
@@ -219,13 +220,22 @@ def construir():
          (Z(2.84), Y(2.92))],
     ], fuera=0.010, div=5))
 
-    # Seis ventanillas por costado en la cabina de pasaje, cuadradas de
-    # esquinas redondas: dos delante del disco de la hélice y cuatro detrás.
-    # Las fotos del RA-67284 y del C-GVKI las ponen ahí; su separación exacta no
-    # está acotada, y van a paso regular.
+    # **Ocho ventanillas a la derecha y siete a la izquierda**, las de su ficha:
+    # «Eight acrylic plastic windows are installed on the right side of the
+    # cabin: one in the forward emergency exit, one in the right cabin door,
+    # and six in the side panel. Seven similar windows are installed on the
+    # left side of the cabin: one in the forward emergency exit, one in the
+    # rear cargo door, and five in the side panel» (Viking, *Twin Otter Series
+    # 400 Technical Specifications*, rev. 01-18, p. 5). En la fila, la de la
+    # salida de emergencia y las del costado: seis a la izquierda y siete a la
+    # derecha, que con su puerta estrecha tiene sitio para una más antes de
+    # ella. Las fotos del RA-67284 y del C-GVKI las ponen ahí; su separación
+    # exacta no está acotada, y van a paso regular.
     fila = [3.95, 4.55, 5.25, 5.85, 6.45, 7.05]
     piezas.append(ventanas("ventanillas", PIEL, [Z(d) for d in fila],
                            Y(2.36), 0.32, 0.26, radio=0.07, fuera=0.008))
+    piezas.append(ventanas("ventanilla-de-atras", PIEL, [Z(7.62)], Y(2.36),
+                           0.32, 0.26, radio=0.07, fuera=0.008, lados=(1,)))
 
     # **Las puertas de atrás, distintas a cada lado**, como las da su ficha:
     # a la izquierda la doble de carga, de 1,27 × 1,42 m, con su junta en
@@ -246,10 +256,11 @@ def construir():
                            Y(2.36), 0.32, 0.26, radio=0.07, fuera=0.010,
                            lados=(1,)))
     # La salida de emergencia, la trampilla alrededor de la primera ventanilla
-    # de la izquierda: así va marcada en el RA-67284.
+    # **de cada lado**: así va marcada en el RA-67284 a la izquierda, y su
+    # ficha la da a los dos («one in the forward emergency exit», en cada
+    # costado; Viking, 2018, p. 5).
     piezas.append(contorno("salida-de-emergencia", PIEL, Z(3.95), Y(2.22),
-                           0.68, 0.54, radio=0.08, grueso=0.020, fuera=0.012,
-                           lados=(-1,)))
+                           0.68, 0.54, radio=0.08, grueso=0.020, fuera=0.012))
     # Y la bodega del morro, con su puerta a cada lado: es para lo que se
     # alargó el morro en la serie 300.
     piezas.append(contorno("bodega-de-morro", PIEL, Z(1.15), Y(1.74), 0.56,
@@ -291,6 +302,58 @@ def construir():
     piezas.append(marca(PIEL, Z(9.40), Z(10.70), Y(2.30), Y(2.74),
                         fuera=0.010))
 
+    # ── La cabina por dentro ──────────────────────────────────────────────
+    #
+    # La de la familia de los turbohélices, como la del JAZ 60, con lo que es
+    # suyo y no del 1900D:
+    #
+    # - **Las palancas cuelgan del techo.** «The engine and propeller controls
+    #   are mounted in the overhead console in the flight compartment, and
+    #   consist of power levers, propeller levers, and engine fuel levers»
+    #   (Viking, *Twin Otter Series 400 Technical Specifications*, rev. 01-18,
+    #   p. 7): no hay pedestal, y la consola va entre los dos pilotos, de
+    #   encima del parabrisas hacia atrás. Detrás, la de los flaps, que su
+    #   ficha llama «flap selector lever» sin decir dónde va; en el techo la
+    #   pone el manual de un simulador (Aerosoft), no una fuente oficial.
+    # - **Sin palanca de tren**: es fijo.
+    # - **Dos pantallas**, las del cuadro de su familia. El de verdad lleva
+    #   cuatro en T —los dos PFD a los lados y dos MFD en medio, uno encima de
+    #   otro (Viking, 2018, p. 9)—, con el panel del director de vuelo encima
+    #   del MFD de arriba: se simplifica la presentación, como en el cuadro.
+    # - **Las ventanas de su cabina**: el parabrisas de dos paneles con su
+    #   montante en medio, y la ventanilla corredera de la puerta de cada
+    #   piloto —«Flight Compartment Door Sliding Window (Series 400 only)», FAA,
+    #   lista mínima del DHC-6, rev. 15, 56-1—, que ya va en la puerta.
+    #
+    # Las cotas, del fuselaje de arriba: el suelo de la cabina a 1,50 m, que
+    # deja debajo el combustible y metro y medio de pie dentro (300-G, 2025);
+    # los ojos a 2,65 m y a 3,05 del morro, junto a la ventanilla de la puerta;
+    # y el panel 58 cm por delante, justo detrás del pie del parabrisas.
+    cab = cabina(
+        tren=False,
+        ojos_z=Z(2.905),
+        ancho=0.62,
+        alto_panel=Y(2.50),
+        y_suelo=Y(1.50),
+        y_respaldo=Y(2.55),
+        plazas=(-0.40, 0.40),
+        pantallas_en=0.36,
+        palancas=2,
+        palancas_en="techo",
+        # El techo por dentro, a 2,92 m: el lomo va a 3,07 por fuera.
+        techo_y=Y(2.92),
+        relojes=10,
+        mide="par",
+        suelo_atras=1.40,
+        # **Sin el marco del parabrisas por dentro, todavía.** Con los
+        # montantes del JAZ 60 asomaban 23 cm por fuera de la piel: aquí los
+        # ojos van a un palmo del borde de arriba del parabrisas, que sube
+        # hasta el ala, y `parabrisas_por_dentro` los sube más que eso. Falta
+        # medirlo contra su parabrisas; mientras, el cristal es el de fuera.
+    )
+    piezas += cab
+    dentro_de(PIEL, cab)
+
     # ── Ala ───────────────────────────────────────────────────────────────
     #
     # **Alta, recta y de cuerda constante**, con la punta redonda: el ala de
@@ -309,9 +372,10 @@ def construir():
     j = "oscuro"
     flaps = [flap("dentro", 0.95, 2.30, 0.70), flap("fuera", 3.20, 6.40, 0.70)]
     # **Y el alerón, que se mueve**: 17,5° arriba y 16° abajo con los flaps
-    # recogidos (FAA, hoja de tipo A9EA, del -300, rev. 13, leída en una copia
-    # que no es la de la FAA). En el de verdad baja además con los flaps, para
-    # sustentar más; eso aquí no se dibuja.
+    # recogidos (FAA, hoja de tipo A9EA, rev. 15, 11-6-2012, sección V,
+    # DHC-6-400: «Aileron (flap up) Up 17.5° Down 16°»; con los flaps de
+    # aterrizaje, 25° y 17,5°). En el de verdad baja además con los flaps,
+    # para sustentar más; eso aquí no se dibuja.
     alerones = [mando("aleron", 6.47, 9.55, 0.72, "alabeo", 17.5, 16)]
     ala = superficie("ala", estaciones, curvatura=0.02, flaps=flaps,
                      mandos=alerones, zonas=[
@@ -409,12 +473,13 @@ def construir():
     de_la_deriva_baja = [a_la_altura(h_abajo), a_la_altura(LOMO)]
     alto_deriva = largo_hasta(de_la_deriva, 1)
     # **Y el timón se mueve**, de abajo a un palmo de la punta, con sus topes
-    # de la A9EA: 21° a la derecha y 20° a la izquierda (la misma copia que
-    # el alerón). La bisagra, a dos tercios de la cuerda, como en la vista de
-    # NASA. Ver `mando`.
+    # de la A9EA: 21° a la derecha y 17° a la izquierda (FAA, hoja de tipo
+    # A9EA, rev. 15, sección V, DHC-6-400, «Rudder Left 17° Right 21°»; los 20°
+    # a la izquierda son de los -100 y -200). La bisagra, a dos tercios de la
+    # cuerda, como en la vista de NASA. Ver `mando`.
     techo = alto_deriva - 0.25
     timon = [mando("timon-de-direccion", 0.0, techo, 0.66, "guinada",
-                   21, 20)]
+                   21, 17)]
     deriva = superficie("deriva", de_la_deriva, material_="cola",
                         simetria=False, mandos=timon, zonas=[
         ("oscuro", 0.0, techo, 0.645, 0.66),
@@ -426,7 +491,7 @@ def construir():
     # bisagra: el juego mueve con los pedales todo lo que se llama `timon-`.
     bajo = largo_hasta(de_la_deriva_baja, 1)
     timon_bajo = [mando("timon-de-direccion-abajo", 0.0, bajo, 0.66,
-                        "guinada", 21, 20)]
+                        "guinada", 21, 17)]
     deriva_baja = superficie("deriva-baja", de_la_deriva_baja,
                              material_="detalle", simetria=False,
                              mandos=timon_bajo, zonas=[
@@ -445,9 +510,9 @@ def construir():
     # puntas redondas: 6,29 m de punta a punta (De Havilland, 2025) y 1,45 de
     # cuerda (NASA, figura 1), algo por encima del lomo. Del color del casco.
     # La profundidad, partida en dos por el timón, que baja entre las dos
-    # mitades: 25° arriba (FAA A9EA, la que da su ficha) y 15° abajo, sin
-    # fuente leída.
-    profundidad = [mando("profundidad", 0.30, 3.00, 0.66, "cabeceo", 25, 15)]
+    # mitades: 25° arriba y 16° abajo (FAA, hoja de tipo A9EA, rev. 15,
+    # sección V, DHC-6-400, «Elevator Up 25° Down 16°»).
+    profundidad = [mando("profundidad", 0.30, 3.00, 0.66, "cabeceo", 25, 16)]
     estabilizador = superficie("estabilizador", [
         de_ala(0.0, Y(3.26), Z(12.95), 1.45, 0.12),
         # Menos la punta redonda, que sobresale medio espesor.

@@ -97,12 +97,14 @@ describe("armá tu avión", () => {
    * el botalón y el rotor de cola— que este juego todavía no dibuja. No se
    * pide en falso; cuando tenga las suyas, se quita el filtro.
    */
-  it("un nivel por avión de la flota, de chico a grande y el nuevo el séptimo, y cada uno con sus piezas", () => {
+  it("un nivel por avión de la flota, de chico a grande y los que llegaron después al final, y cada uno con sus piezas", () => {
+    // El JAZ 110 es el séptimo y el JAZ 50 el octavo: los niveles se guardan por su orden.
+    const despues = ["jaz-110", "jaz-50"];
     expect(NIVELES.map((n) => n.tipo)).toEqual([
       ...FLOTA.filter((m) => m.silueta !== "helicoptero")
         .map((m) => m.id)
-        .filter((id) => id !== "jaz-110"),
-      "jaz-110",
+        .filter((id) => !despues.includes(id)),
+      ...despues,
     ]);
     for (const n of NIVELES) {
       expect(n.piezas.length, n.tipo).toBeGreaterThanOrEqual(5);

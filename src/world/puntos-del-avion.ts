@@ -117,12 +117,17 @@ function media(puntos: readonly Vector3[], eje: "x" | "y" | "z"): number {
  * fumigador de su clase va donde lo puso cada taller —en un montante, en un
  * ala o en la otra— y no hay un sitio que sea «el suyo». Señalar uno a ojo
  * sería enseñar una cosa que no es; mejor ninguno.
+ *
+ * **Ni el bimotor de ala alta, de momento.** El Twin Otter de la Serie 400
+ * lleva dos, calentados —«Pitot Tube Cover (2)» en su equipo (Viking, 2018) y
+ * «Two heated Pitot Tubes» en la lista mínima de la FAA, rev. 15, 30—, pero no
+ * se ha leído dónde. Cuando se lea, se pone ahí.
  */
 type SitioDelPitot = "bajo-el-ala" | "morro" | null;
 
 function sitioDelPitot(a: AircraftConfig): SitioDelPitot {
   const silueta = modeloPorId(a.id)?.silueta;
-  if (silueta === "biplano") return null;
+  if (silueta === "biplano" || silueta === "bimotor-ala-alta") return null;
   if (silueta === "ala-alta" || silueta === "bimotor-ala-baja") return "bajo-el-ala";
   return "morro";
 }

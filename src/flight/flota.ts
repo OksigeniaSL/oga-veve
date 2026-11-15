@@ -27,14 +27,12 @@
  *
  * ## Lo que falta
  *
- * Los ocho de la tabla están construidos y vuelan. Cuando llegue uno nuevo,
+ * Los nueve de la tabla están construidos y vuelan. Cuando llegue uno nuevo,
  * primero se reserva aquí su número y su nombre, que es el sitio donde tienen
  * que estar para que nadie los bautice dos veces, y se apunta en `ESTA_HECHO`
- * el día que vuele.
- *
- * Y hay uno a medias: el JAZ 50 Tujuju, el de la clase del Twin Otter, con su
- * número y su pájaro reservados y su ficha de vuelo medida, pero sin silueta.
- * Va en `EN_EL_TALLER` y no en la tabla: ver allí por qué.
+ * el día que vuele. Si vuela antes de poder dibujarse, espera en
+ * `EN_EL_TALLER`: ver allí por qué. El último que pasó por ahí fue el JAZ 50
+ * Tujuju, el de la clase del Twin Otter (#185).
  *
  * Y los nombres salen a producción sin esperar a nadie. Si alguno resulta
  * tener un sentido coloquial desafortunado en guaraní, se cambia la palabra y
@@ -48,11 +46,12 @@ export const FABRICANTE = "JAZ";
 /**
  * Las siluetas, que son lo que de verdad distingue un avión de otro.
  *
- * Ocho siluetas y no ocho pinturas: ala alta, biplano, bimotor de ala baja,
- * cola en T, reactor en flecha, bimotor de fuselaje ancho, cuatrimotor de
- * fuselaje ancho y helicóptero. Es exactamente la destreza que enseña el álbum
- * de postales —reconocer una aeronave por su forma—, así que la flota tiene
- * que darle ocho respuestas distintas o el álbum no tiene nada que enseñar.
+ * Nueve siluetas y no nueve pinturas: ala alta, biplano, bimotor de ala baja,
+ * bimotor de ala alta, cola en T, reactor en flecha, bimotor de fuselaje
+ * ancho, cuatrimotor de fuselaje ancho y helicóptero. Es exactamente la
+ * destreza que enseña el álbum de postales —reconocer una aeronave por su
+ * forma—, así que la flota tiene que darle nueve respuestas distintas o el
+ * álbum no tiene nada que enseñar.
  */
 export type Silueta = SiluetaDeAvion | "helicoptero";
 
@@ -65,6 +64,14 @@ export type SiluetaDeAvion =
   | "ala-alta"
   | "biplano"
   | "bimotor-ala-baja"
+  /**
+   * **El bimotor de ala alta**, la clase del Twin Otter: el ala por encima del
+   * fuselaje con una riostra a cada lado, un motor colgado de cada semiala y
+   * el tren fijo. Del ala alta de la avioneta se distingue contando motores, y
+   * del bimotor de ala baja mirando dónde va el ala: las dos preguntas que el
+   * álbum ya enseña a hacer.
+   */
+  | "bimotor-ala-alta"
   | "cola-en-t"
   | "reactor"
   /**
@@ -120,7 +127,7 @@ export interface Modelo {
 }
 
 /**
- * Los ocho, por número.
+ * Los nueve, por número.
  *
  * El orden es el del número, y el número es el del tamaño: quien recorra la
  * lista en el hangar la recorre de pequeño a grande sin que nadie se lo
@@ -147,6 +154,38 @@ export const FLOTA: readonly Modelo[] = [
     pajaro: "mariposa",
     silueta: "bimotor-ala-baja",
     id: "jaz-40",
+  },
+  {
+    numero: 50,
+    nombre: "Tujuju",
+    pajaro: "tuyuyú",
+    silueta: "bimotor-ala-alta",
+    id: "jaz-50",
+    /*
+     * **La cigüeña de los esteros**, decidido por quien bautiza (15-11-2026).
+     * Ala larga y recta que planea despacio, y vive en los esteros del
+     * Ñeembucú y del Chaco, en el barro y en el agua: donde están las pistas
+     * de estancia a las que va este avión, y donde se posará con flotadores.
+     *
+     * *Tujuju* es la palabra guaraní de la que viene el «tuyuyú» del
+     * castellano del Paraguay (RAE, *Diccionario histórico*, «tuyuyú», 7.ª
+     * entrega, 2019), y Wikispecies da *tujuju kangy* para *Mycteria
+     * americana*, el tuyuyú a secas. Ese pájaro vuela en el mundo —ver
+     * `tuyuyu` en `world/aves.ts`—, así que el avión se llama como lo que se
+     * ve desde su ventanilla, como el Pykasu y las palomas. No choca con
+     * ningún tramo ni con ningún personaje de Granja Óga.
+     *
+     * **Vuela los números del DHC-6 Twin Otter de la Serie 400**, y no lleva
+     * su rótulo. Estuvo en el taller (`EN_EL_TALLER`) mientras le faltaba la
+     * silueta; salió con su modelo en 3D y su cabina (#185, ADR 0027,
+     * enmiendas H11a, H12a y H13c).
+     *
+     * La blanca, **sin confirmar**: no se ha leído en su manual ni en su
+     * lista mínima si va en el cono de cola o en otro sitio. Se queda en la
+     * cola, lo más atrás del avión, y la tarjeta no dice dónde.
+     */
+    blanca: "cola",
+    blancaSinConfirmar: true,
   },
   {
     numero: 60,
@@ -291,6 +330,7 @@ export const ESTA_HECHO: readonly string[] = [
   "jaz-20",
   "jaz-25",
   "jaz-40",
+  "jaz-50",
   "jaz-60",
   "super-puma",
   "jaz-90",
@@ -335,43 +375,19 @@ export interface EnElTaller {
 }
 
 /**
- * **Los que están en el taller.** Hoy, uno: el JAZ 50, que vuela los números
- * del DHC-6 Twin Otter, el turbohélice de ala alta y tren fijo de las pistas
- * cortas de tierra y de hierba (#185). Entra por pasos: primero su ficha y su
- * modelo de vuelo, comprobados contra su manual; después el modelo en 3D, la
- * cabina, las voces, y el hangar.
+ * **Los que están en el taller.** Hoy, ninguno. El último fue el JAZ 50
+ * Tujuju, que entró por pasos —su ficha y su modelo de vuelo, comprobados
+ * contra su manual; su modelo en 3D; su cabina— y salió a la tabla con su
+ * silueta (#185).
  *
- * **No está en `FLOTA`, y no por despiste.** Todo lo que recorre esa tabla da
- * por hecho que el avión ya se puede dibujar: el tráfico y el álbum montan su
- * silueta, «armá tu avión» le da un nivel y la cabina del pasaje lo busca. Su
- * silueta —el bimotor de ala alta, que no es la del JAZ 20 ni la de nadie—
- * llega con su modelo, y con ella pasará a la tabla. Mientras tanto su número
- * se guarda aquí, donde `flota.test.ts` comprueba que no lo repite nadie, y su
- * ficha va en `RESERVADOS`, que es lo que mide el banco sin ofrecerlo.
+ * **Un avión en el taller no está en `FLOTA`, y no por despiste.** Todo lo
+ * que recorre esa tabla da por hecho que el avión ya se puede dibujar: el
+ * tráfico y el álbum montan su silueta, «armá tu avión» le da un nivel y la
+ * cabina del pasaje lo busca. Mientras le falta eso su número se guarda aquí,
+ * donde `flota.test.ts` comprueba que no lo repite nadie, y su ficha va en
+ * `RESERVADOS`, que es lo que mide el banco sin ofrecerlo.
  */
-export const EN_EL_TALLER: readonly EnElTaller[] = [
-  {
-    numero: 50,
-    nombre: "Tujuju",
-    pajaro: "tuyuyú",
-    id: "jaz-50",
-    clase: "DHC-6 Twin Otter Series 400",
-    /*
-     * **La cigüeña de los esteros**, decidido por quien bautiza (15-11-2026).
-     * Ala larga y recta que planea despacio, y vive en los esteros del
-     * Ñeembucú y del Chaco, en el barro y en el agua: donde están las pistas
-     * de estancia a las que va este avión, y donde se posará con flotadores.
-     *
-     * *Tujuju* es la palabra guaraní de la que viene el «tuyuyú» del
-     * castellano del Paraguay (RAE, *Diccionario histórico*, «tuyuyú», 7.ª
-     * entrega, 2019), y Wikispecies da *tujuju kangy* para *Mycteria
-     * americana*, el tuyuyú a secas. Ese pájaro vuela en el mundo —ver
-     * `tuyuyu` en `world/aves.ts`—, así que el avión se llama como lo que se
-     * ve desde su ventanilla, como el Pykasu y las palomas. No choca con
-     * ningún tramo ni con ningún personaje de Granja Óga.
-     */
-  },
-];
+export const EN_EL_TALLER: readonly EnElTaller[] = [];
 
 /**
  * El nombre entero del que tiene ese identificador: «JAZ 70 Kirikiri'i». Del

@@ -30,7 +30,7 @@ export interface Topes {
 export interface RecorridoDeMandos {
   readonly alerones: Topes;
   readonly profundidad: Topes;
-  /** El timón de dirección; a cada lado lo mismo en toda la flota. */
+  /** El timón de dirección: a la derecha en `arriba`, a la izquierda en `abajo`. */
   readonly timon: Topes;
   /** De dónde salen, dicho para quien lo revise. */
   readonly fuente: string;
@@ -86,6 +86,25 @@ export const RECORRIDO_DE_MANDOS: Readonly<Record<string, RecorridoDeMandos>> = 
     profundidad: { arriba: 30, abajo: 15 },
     timon: igual(25),
     fuente: "Beechcraft 58 Baron, ficha de tipo FAA 3A16 (rev. 82), hoja X, «Control Surface Movements»",
+    provisional: false,
+  },
+  "jaz-50": {
+    /*
+     * **Los del -400, en la hoja de tipo de la FAA**: la A9EA, rev. 15
+     * (11-6-2012), sección V, «Model DHC-6-400». La del -300, la sección IV,
+     * da las mismas cifras. La de EASA (EASA.IM.A.575, A.III.15) y la de la CAA
+     * británica no las dan: remiten al manual de mantenimiento, PSM 1-64-2.
+     *
+     * El alerón, con los flaps recogidos; con los de aterrizaje sube a 25° y
+     * baja a 17,5°, y eso no se mueve aquí. **El timón no es igual a los dos
+     * lados**: 21° a la derecha y 17° a la izquierda; los 20° a la izquierda
+     * que llevaba el guion eran de los -100 y -200.
+     */
+    alerones: { arriba: 17.5, abajo: 16 },
+    profundidad: { arriba: 25, abajo: 16 },
+    timon: { arriba: 21, abajo: 17 },
+    fuente:
+      "DHC-6-400, hoja de tipo FAA A9EA (rev. 15), sección V: «Aileron (flap up) Up 17.5° Down 16°», «Elevator Up 25° Down 16°», «Rudder Left 17° Right 21°»",
     provisional: false,
   },
   "jaz-60": {

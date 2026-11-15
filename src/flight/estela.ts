@@ -67,7 +67,7 @@ export function separacionDeTorbellinos(envergadura: number): number {
  *
  * De las fichas públicas de un avión de cada clase, con el peso de ir
  * aterrizando o despegando, que es cuando la estela importa: un 172, un Baron,
- * un ATR 72, un A320, un reactor privado mediano y un 747.
+ * un Twin Otter, un ATR 72, un A320, un reactor privado mediano y un 747.
  */
 export const DE_CLASE: Readonly<
   Record<string, { readonly masa: number; readonly envergadura: number }>
@@ -79,6 +79,8 @@ export const DE_CLASE: Readonly<
   turbohelice: { masa: 21000, envergadura: 27 },
   // En la ruta, la silueta de ala baja y dos motores es el turbohélice regional.
   "bimotor-ala-baja": { masa: 21000, envergadura: 27 },
+  // El Twin Otter a su peso máximo al aterrizar: 5.579 kg y 19,81 m (EASA.IM.A.575).
+  "bimotor-ala-alta": { masa: 5579, envergadura: 19.81 },
   "cola-en-t": { masa: 12000, envergadura: 16 },
   reactor: { masa: 64000, envergadura: 34 },
   "bimotor-ancho": { masa: 192776, envergadura: 60 },

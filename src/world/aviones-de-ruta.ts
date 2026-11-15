@@ -78,6 +78,8 @@ export interface AvionesDeRuta {
  */
 const ENVERGADURA: Partial<Record<SiluetaDeAvion, number>> = {
   "bimotor-ala-baja": 27,
+  // El Twin Otter: 19,81 m (EASA.IM.A.575, A.III.4).
+  "bimotor-ala-alta": 20,
   reactor: 34,
   "cola-en-t": 17,
   "bimotor-ancho": 60,

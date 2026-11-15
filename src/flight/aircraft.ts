@@ -2070,9 +2070,9 @@ export const PANAMBI: AircraftConfig = {
 };
 
 /**
- * JAZ 50 — turbohélice de ala alta y tren fijo, diecinueve plazas: el de las
- * pistas cortas de tierra y de hierba, las estancias y, más adelante, los
- * flotadores (#185). Su pájaro está por decidir.
+ * JAZ 50 *Tujuju* — turbohélice de ala alta y tren fijo, diecinueve plazas: el
+ * de las pistas cortas de tierra y de hierba, las estancias y, más adelante,
+ * los flotadores (#185). *Tujuju* es la cigüeña de los esteros.
  *
  * **Vuela los números del DHC-6 Twin Otter de la Serie 400**, el que fabrica
  * hoy De Havilland Canada —«DHC-6 Classic 300-G is a marketing designation of
@@ -2081,13 +2081,12 @@ export const PANAMBI: AircraftConfig = {
  * porque es del -400 del que hay manual con cifras que se pueden leer; donde el
  * -300 dice otra cosa, se dice al lado.
  *
- * **Está en el taller**: tiene su ficha y su modelo de vuelo, medidos contra su
- * manual, y su modelo en 3D (`modelos/jaz-50-tujuju.py`), pero ni cabina ni
- * sitio en el hangar. Va en `RESERVADOS` y no en `AIRCRAFT`, y su número en
- * `EN_EL_TALLER` (`flota.ts`). Lo que solo puede decir su dibujo —dónde van las
- * ruedas y los motores, a qué actitud toca la cola— sale de él, como en los
- * demás, y lo comprueban `apoyo.test.ts` y `motores.test.ts` contra el `.glb` y
- * el guion.
+ * **Salió del taller por pasos** (#185): su ficha y su modelo de vuelo, medidos
+ * contra su manual; su modelo en 3D (`modelos/jaz-50-tujuju.py`), con su
+ * cabina; y su sitio en la flota y en el hangar. Lo que solo puede decir su
+ * dibujo —dónde van las ruedas y los motores, a qué actitud toca la cola— sale
+ * de él, como en los demás, y lo comprueban `apoyo.test.ts` y
+ * `motores.test.ts` contra el `.glb` y el guion.
  *
  * Las fuentes, de las que salen los números de abajo:
  *
@@ -2142,11 +2141,7 @@ const VELOCIDADES_DEL_JAZ_50 = velocidadesDelJaz50(MASA_DEL_JAZ_50);
 export const JAZ_50: AircraftConfig = {
   id: "jaz-50",
   name: nombreEnteroDe("jaz-50"),
-  /*
-   * La descripción de la tarjeta llega con su sitio en el hangar: es texto de
-   * producto, en los tres idiomas, y hasta entonces no la lee nadie.
-   */
-  descriptionKey: "aircraft.jaz50.description",
+  descriptionKey: "aircraft.tujuju.description",
   mass: MASA_DEL_JAZ_50,
   /*
    * **Lo que le deja su peso máximo al vuelo más largo que tiene en el juego.**
@@ -2302,7 +2297,9 @@ export const JAZ_50: AircraftConfig = {
   cantaLosMinimos: false,
   /*
    * **Sin fuente**: lleva pasaje, y de sus ventanillas no se ha leído si
-   * llevan persiana. Lo dirá el paso de su cabina.
+   * llevan persiana. Ni su ficha de 2018, que las cuenta —ocho a la derecha y
+   * siete a la izquierda, de acrílico (Viking, p. 5)—, ni la lista mínima de la
+   * FAA lo dicen. Se queda la de cualquier avión de pasaje.
    */
   ventanillas: "persiana",
   /*
@@ -4008,6 +4005,7 @@ export const AIRCRAFT: readonly AircraftConfig[] = [
   PYKASU,
   MAINUMBY,
   PANAMBI,
+  JAZ_50,
   ARASUNU,
   ARAI,
   TIJERETA,
@@ -4015,10 +4013,9 @@ export const AIRCRAFT: readonly AircraftConfig[] = [
 ];
 
 /**
- * Y los que están hechos pero todavía no vuelan. Hoy, el JAZ 50, de la clase
- * del Twin Otter: tiene su ficha y su modelo de vuelo, medidos contra su
- * manual, y le faltan su pájaro, su silueta, su cabina y su sitio en el hangar
- * (#185). Ver `EN_EL_TALLER` en `flota.ts`.
+ * Y los que están hechos pero todavía no vuelan. Hoy, ninguno: el último fue
+ * el JAZ 50, de la clase del Twin Otter, que esperó aquí con su ficha medida
+ * hasta tener silueta y cabina (#185). Ver `EN_EL_TALLER` en `flota.ts`.
  *
  * La lista se queda porque el caso se va a repetir: un avión puede estar
  * terminado y medido y aun así no salir —un nombre por decidir, una silueta
@@ -4026,7 +4023,7 @@ export const AIRCRAFT: readonly AircraftConfig[] = [
  * terminado tiene que estar comprobado aunque le falte el rótulo. Ver
  * `prestaciones.test.ts`.
  */
-export const RESERVADOS: readonly AircraftConfig[] = [JAZ_50];
+export const RESERVADOS: readonly AircraftConfig[] = [];
 
 /**
  * **Los que mide el banco**: los que vuelan y los que están hechos y todavía

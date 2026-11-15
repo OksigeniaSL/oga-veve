@@ -28528,10 +28528,16 @@ export class Game {
      * y el cíclico entre las rodillas: con los sesenta centímetros de siempre
      * se cortaban o no salían. Ver `CERCANO_EN_EL_HELICOPTERO`.
      */
+    /*
+     * **Y en la del JAZ 50, igual**: sus palancas cuelgan de una consola en el
+     * techo, encima del parabrisas, a menos de medio metro de los ojos, como
+     * en el Twin Otter de verdad. Ver `_cuadrante_de_techo` en `modelos/comun.py`.
+     */
+    const conConsolaDeTecho = !!this.aircraft.helicoptero || this.aircraft.id === "jaz-50";
     const cercano =
       pasillo && this.elPasillo()?.pantalla
         ? CERCANO_EN_LA_CABINA
-        : modo === "cockpit" && this.aircraft.helicoptero
+        : modo === "cockpit" && conConsolaDeTecho
           ? CERCANO_EN_EL_HELICOPTERO
           : this.cercanoDeSiempre;
     if (this.camera.near !== cercano) {

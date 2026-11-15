@@ -83,6 +83,12 @@ export const CUANTOS_EN_RUTA = 4;
  *
  * Nada de ala alta ni de biplano: a nivel cien no hay avionetas, y poner una
  * ahí sería enseñar algo falso en el sitio donde más se mira.
+ *
+ * **Ni el bimotor de ala alta**, aunque un Twin Otter sí sube a estos niveles:
+ * entre las islas de Canarias no vuela ninguno en línea —los corredores son de
+ * los ATR y de los reactores—, y su sitio son las pistas cortas de tierra a las
+ * que no va una ruta. Si un día una ruta del juego lo lleva de verdad, entra
+ * aquí con sus 170 nudos y `aviones-de-ruta.ts` ya sabe cuánto mide.
  */
 const EN_EL_CORREDOR = [
   /** El turbohélice regional, que es el que más vuela entre islas. */

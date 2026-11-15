@@ -115,6 +115,8 @@ export const ES_PY = {
     "Biplano fumigador. Ágil y con mucha fuerza.",
   "aircraft.panambi.description":
     "Bimotor de ala baja. Dos motores, más rápido y con las patas guardadas.",
+  "aircraft.tujuju.description":
+    "Bimotor de ala alta y patas fijas. Sale y llega en pistas cortas de tierra y de pasto.",
   "aircraft.arasunu.description":
     "Turbohélice regional, cola en T. Grande, y entra en pistas cortas.",
   "aircraft.arai.description":
@@ -4698,6 +4700,8 @@ export const ES_PY = {
     "¡La cola en T! El estabilizador va arriba de todo, lejos del aire revuelto del ala y de las hélices.",
   "inicio.ara.pasaje.kit.avion.reactor":
     "¡Como el nuestro! Los motores cuelgan debajo del ala: su peso ayuda a que el ala no se doble tanto, y se llega fácil para cuidarlos.",
+  "inicio.ara.pasaje.kit.avion.bimotorAlaAlta":
+    "¡Ala arriba y un motor en cada ala! Sus ruedas no se guardan nunca, y baja en pistas cortitas de tierra y de pasto.",
   "inicio.ara.pasaje.kit.avion.bimotorAncho":
     "¡Tan grande y con dos motores nomás! Son enormes, y con dos solos este avión cruza el océano.",
   "inicio.ara.pasaje.kit.avion.cuatrimotor":
