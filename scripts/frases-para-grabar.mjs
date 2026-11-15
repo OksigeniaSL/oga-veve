@@ -90,7 +90,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -2703,6 +2703,23 @@ for (const [id, para] of DE_LA_VMS) {
   // repaso de `SIGLAS` de más arriba ya pasó cuando estas llegan.
   const dicho = conSiglas(texto);
   filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para, ...(dicho !== texto ? { dicho } : {}) });
+  total += texto.length;
+}
+/*
+ * **Y cada lío, con su arreglo de un toque** (15-11-2026): quien se pierde
+ * lejos o mar adentro, al que la instructora señala la flecha de casa. Son del
+ * grupo `vuelo`, pero metidas con él renumerarían las ya grabadas: van detrás
+ * de todo. Ver `flight/perdido.ts`.
+ */
+const DE_LOS_LIOS = [
+  ["vuelo.perdido", "lejos del campo o mar adentro, en el avión con automático: tocá la flecha de casa, que brilla"],
+  ["vuelo.perdidoSinAutomatico", "lo mismo en el avión sin automático: se vira a mano hasta que la flecha apunte arriba"],
+  ["vuelo.perdido.volvemos", "al tocar la flecha de casa: el automático ya gira hacia el campo"],
+];
+for (const [id, para] of DE_LOS_LIOS) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
   total += texto.length;
 }
 const AJUSTES_CON_CHISPA = {

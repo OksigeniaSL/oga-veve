@@ -2375,6 +2375,18 @@
       "ms": 1432,
       "h": "fca62359e9"
     },
+    "vuelo.perdido": {
+      "ms": 5907,
+      "h": "d2dc3b4be6"
+    },
+    "vuelo.perdido.volvemos": {
+      "ms": 3207,
+      "h": "cd9f33adfd"
+    },
+    "vuelo.perdidoSinAutomatico": {
+      "ms": 6007,
+      "h": "8f0e3c236b"
+    },
     "vuelo.permisoAnulado": {
       "ms": 7607,
       "h": "5bf8218678"
@@ -4997,6 +5009,15 @@
     ],
     "explica.rotor.texto": [
       "explica.rotor.texto"
+    ],
+    "vuelo.perdido": [
+      "vuelo.perdido"
+    ],
+    "vuelo.perdidoSinAutomatico": [
+      "vuelo.perdidoSinAutomatico"
+    ],
+    "vuelo.perdido.volvemos": [
+      "vuelo.perdido.volvemos"
     ]
   }
 }
