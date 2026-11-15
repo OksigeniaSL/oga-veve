@@ -206,7 +206,7 @@ import { cargarElMundo, type MundoCargado } from "./world/mundo-del-tramo";
 import { blancasEnLaSenda, crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import {
   crearCircuito,
-  escalaDeCircuito,
+  escalaDelCircuitoDe,
   formaDelCircuito,
   loQueQuedaDeCircuito,
   manoPublicada,
@@ -14661,10 +14661,11 @@ export class Game {
     if (!this.tier.circuito || this.aircraft.helicoptero) return;
     const campo = this.elCampoMontado();
     // El circuito de **este** avión: el del de fuselaje ancho es tres veces
-    // el de la avioneta. Ver `escalaDeCircuito`.
-    const escala = escalaDeCircuito(this.aircraft.approachSpeed);
+    // el de la avioneta. Ver `escalaDelCircuitoDe`.
+    const pista = this.pistaDelCircuito(campo);
+    const escala = escalaDelCircuitoDe(this.aircraft, pista);
     this.circuito = crearCircuito(
-      campo.pista,
+      pista,
       this.cotaDelCampo(campo),
       (x, z) => this.terrain.sampleHeight(x, z),
       escala,
@@ -14730,7 +14731,8 @@ export class Game {
      * Los Rodeos el otro avión volaba su viento en cola por el sur mientras
      * al reactor se le dibujaba por el norte. Ver `formaDelCircuito`.
      */
-    const escala = escalaDeCircuito(this.aircraft.approachSpeed);
+    const pistaConSenda = this.pistaDelCircuito(campo);
+    const escala = escalaDelCircuitoDe(this.aircraft, pistaConSenda);
     const suelo = (x: number, z: number): number => {
       if (campo.esCasa) return this.terrain.sampleHeight(x, z);
       const v = this.vecinos.find((w) => w.campo.id === campo.id);
@@ -14742,7 +14744,7 @@ export class Game {
      */
     const forma = (esc: number, velocidadDeCircuito?: number) =>
       formaDelCircuito(
-        campo.pista,
+        pistaConSenda,
         cota,
         suelo,
         esc,
@@ -14752,7 +14754,7 @@ export class Game {
     const deTu = forma(escala, this.aircraft.velocidadDeCircuito);
     // Y tu circuito para la torre, aunque no se dibuje. Ver `circuitoDeLaTorre`.
     this.circuitoDeLaTorre = {
-      vertices: verticesDelCircuito(campo.pista, cota, deTu.mano, escala, deTu.altura),
+      vertices: verticesDelCircuito(pistaConSenda, cota, deTu.mano, escala, deTu.altura),
       escala,
       mano: deTu.mano,
       altura: deTu.altura,
@@ -14765,7 +14767,8 @@ export class Game {
      * vas. Ver `world/suelo-del-trafico.ts`.
      */
     const aerodromo = campo.aerodromo;
-    const pista = campo.pista;
+    // Con su senda, que el tráfico entra en final por la misma que tú.
+    const pista = pistaConSenda;
     const ancho =
       aerodromo?.runways
         .map((r) => {
@@ -25062,6 +25065,16 @@ export class Game {
    */
   private sendaDe(campo: CampoEnElMundo): number {
     return sendaDeLaCabecera(oaciDe(campo.escenario), cabeceraEnUso(campo.escenario));
+  }
+
+  /**
+   * **La pista de un campo para su circuito**: la misma, con la senda de su
+   * cabecera en uso, que es por la que el circuito entra en final. La piden el
+   * hilo ocre, el circuito de la torre y el del tráfico, para que los tres
+   * digan lo mismo. Ver `sendaDe` en `world/circuito.ts`.
+   */
+  private pistaDelCircuito(campo: CampoEnElMundo): CampoEnElMundo["pista"] & { readonly senda: number } {
+    return { ...campo.pista, senda: (this.sendaDe(campo) * Math.PI) / 180 };
   }
 
   /**

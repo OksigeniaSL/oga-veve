@@ -45,6 +45,8 @@ import { airDensity, indicatedAirspeed } from "../flight/atmosphere";
 import { autoridadDelTimon } from "../flight/piloto-automatico";
 import { t, type TranslationKey } from "../i18n";
 import { cabeceraEnUso } from "../world/terrain";
+import { oaciDe } from "../world/scenarios";
+import { sendaDeLaCabecera } from "../world/sendas-publicadas";
 import { enEjesDePista } from "../world/rumbo";
 import { vistaDesdeLaOtraCabecera } from "../world/umbral-desplazado";
 import {
@@ -68,7 +70,7 @@ import {
 import { laDibujaLaGranja } from "../world/granja";
 import { glbDePrueba } from "../world/glb-de-prueba";
 import {
-  escalaDeCircuito,
+  escalaDelCircuitoDe,
   formaDelCircuito,
   manoPublicada,
   verticesDelCircuito,
@@ -2792,9 +2794,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       if (juego.circuito) return juego.circuito.vertices;
       // Y la altura también, que ahora la pide el terreno: la misma cuenta
       // que `crearCircuito`, o el banco volaría otro circuito.
-      const escala = escalaDeCircuito(juego.aircraft.approachSpeed);
+      // Con la senda de su cabecera, como `pistaDelCircuito` en `Game`.
+      const pista = {
+        ...juego.scenario.runway,
+        senda: (sendaDeLaCabecera(oaciDe(juego.scenario), cabeceraEnUso(juego.scenario)) * Math.PI) / 180,
+      };
+      const escala = escalaDelCircuitoDe(juego.aircraft, pista);
       const forma = formaDelCircuito(
-        juego.scenario.runway,
+        pista,
         juego.terrain.runwayElevation,
         (x, z) => juego.terrain.sampleHeight(x, z),
         escala,
@@ -2802,7 +2809,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         juego.aircraft.velocidadDeCircuito,
       );
       return verticesDelCircuito(
-        juego.scenario.runway,
+        pista,
         juego.terrain.runwayElevation,
         forma.mano,
         escala,

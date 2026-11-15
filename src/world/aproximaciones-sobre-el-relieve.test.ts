@@ -37,7 +37,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT } from "../flight/aircraft";
+import { AIRCRAFT, MEDIDOS } from "../flight/aircraft";
 import {
   MILLA,
   PIE,
@@ -53,11 +53,11 @@ import {
 } from "../flight/ruta";
 import { FINAL_DESDE } from "../flight/escalera-de-velocidades";
 import { sendaDeLaCabecera } from "./sendas-publicadas";
-import { mirarDelante, type PistaConocida } from "../flight/terreno-delante";
+import { mirarDelante, type AvisoDelante, type PistaConocida } from "../flight/terreno-delante";
 import { campoDeCasa, campoVecino } from "./campo-del-vuelo";
 import { desplazarAerodromo } from "./aerodromo-desplazado";
 import {
-  escalaDeCircuito,
+  escalaDelCircuitoDe,
   formaDelCircuito,
   manoPublicada,
   verticesDelCircuito,
@@ -359,28 +359,57 @@ function primerAviso(
   return null;
 }
 
+/** La senda de la cabecera, rad: la que vuela su circuito. Ver `sendaDe` en `circuito.ts`. */
+function sendaDelCircuito(e: Scenario, c: Cabecera): number {
+  return (sendaDeLaCabecera(oaciDe(e), c.nombre) * Math.PI) / 180;
+}
+
+/** Lo que sube el suelo bajo la final, m sobre el umbral, a 1, 2, 3 y 4 km: para decir por qué. */
+function sueloBajoLaFinal(c: Cabecera, cota: (x: number, z: number) => number | null): string {
+  const h = (c.rumbo * Math.PI) / 180;
+  return [1000, 2000, 3000, 4000]
+    .map((d) => Math.round((cota(c.x - Math.sin(h) * d, c.z + Math.cos(h) * d) ?? NaN) - c.cota))
+    .join("/");
+}
+
+/** El primer aviso de terreno de un avión volando su circuito. */
+interface AvisoDelCircuito {
+  readonly aviso: AvisoDelante;
+  /** Lo que faltaba hasta el umbral, m, por el circuito. */
+  readonly falta: number;
+  /** Lo que faltaba al llegar a la esquina de la base, m. */
+  readonly baseDesde: number;
+  readonly dicho: string;
+}
+
 /**
  * **La frustrada y la vuelta por el circuito, voladas**, en cada avión que
  * lleva el avisador de terreno: desde la altura de decisión sobre el umbral,
  * recto hasta el final de la subida, por sus esquinas a la altura del
- * circuito y bajando por la base a la final. El primer aviso que salte, o
- * `null`. Es lo que vuela quien se va al aire en La Gomera.
+ * circuito y bajando por la base a la final. El primer aviso de cada avión
+ * en el que salta alguno. Es lo que vuela quien se va al aire en La Gomera.
+ *
+ * **Con los que vuelan y con los del taller** (`MEDIDOS`): el circuito y el
+ * avisador salen de la ficha, y un avión medido tiene que estar comprobado
+ * aunque todavía no salga en el hangar.
  */
-function avisoEnElCircuito(
+function avisosEnElCircuito(
   e: Scenario,
   c: Cabecera,
   cota: (x: number, z: number) => number | null,
-): string | null {
+): AvisoDelCircuito[] {
   const h = (c.rumbo * Math.PI) / 180;
   const pista = {
     x: c.x + (Math.sin(h) * c.largo) / 2,
     z: c.z - (Math.cos(h) * c.largo) / 2,
     heading: c.rumbo,
     length: c.largo,
+    senda: sendaDelCircuito(e, c),
   };
   const suelo = (x: number, z: number) => cota(x, z) ?? 0;
-  for (const avion of AIRCRAFT.filter((a) => a.avisosHablados)) {
-    const escala = escalaDeCircuito(avion.approachSpeed);
+  const avisos: AvisoDelCircuito[] = [];
+  for (const avion of MEDIDOS.filter((a) => a.avisosHablados)) {
+    const escala = escalaDelCircuitoDe(avion, pista);
     const forma = formaDelCircuito(
       pista,
       c.cota,
@@ -408,11 +437,17 @@ function avisoEnElCircuito(
     };
     for (const p of volar(r, altitud, avion.velocidadDeCircuito)) {
       const d = mirarDelante(p, cota, [pistaConocida(e, c)]);
-      if (d.aviso)
-        return `${avion.id} ${d.aviso}, ${Math.round(p.falta)} m antes del umbral, ${Math.round(p.altitud)} m, ${d.segundos} s`;
+      if (!d.aviso) continue;
+      avisos.push({
+        aviso: d.aviso,
+        falta: p.falta,
+        baseDesde: r.total - r.acumulado[3]!,
+        dicho: `${avion.id} ${d.aviso}, ${Math.round(p.falta)} m antes del umbral, ${Math.round(p.altitud)} m, ${d.segundos} s`,
+      });
+      break;
     }
   }
-  return null;
+  return avisos;
 }
 
 /**
@@ -437,11 +472,12 @@ function frustrada(
     z: c.z + (fz * c.largo) / 2,
     heading: c.rumbo,
     length: c.largo,
+    senda: sendaDelCircuito(e, c),
   };
   const suelo = (x: number, z: number) => cota(x, z) ?? 0;
   let peor: Peor = { margen: Infinity, donde: "" };
   for (const avion of AIRCRAFT) {
-    const escala = escalaDeCircuito(avion.approachSpeed);
+    const escala = escalaDelCircuitoDe(avion, pista);
     const forma = formaDelCircuito(
       pista,
       c.cota,
@@ -496,20 +532,39 @@ const FRUSTRADA_JUNTO_AL_MONTE: Readonly<Record<string, string>> = {
 };
 
 /**
- * **Las finales del circuito en las que el avisador de terreno habla**, con
- * su porqué.
+ * **Los circuitos en los que el avisador de terreno habla**, con su porqué. En
+ * todos, solo la precaución —nunca el «pull up»— y de cada avión que la dé,
+ * no solo del primero.
  *
- * Una: la 21 de Lanzarote, que por tres grados pasa a treinta y cinco metros
- * de la loma que hay a una milla del umbral. Su PAPI de verdad está a 3,7°
- * (AD 2-GCRR, 2.14) por eso mismo, y la aproximación ya baja por él: ver
- * `sendas-publicadas.ts`, y volándola el avisador ya no dice nada. Lo que
- * queda es el circuito dibujado, que entra en final a los tres grados de
- * siempre: ahí se le pide que sea solo la precaución, sin el «pull up», y en
- * la última parte.
+ * - **La 21 de Lanzarote**, en la final: el suelo sube a 78 m sobre el umbral a
+ *   dos kilómetros y a 95 a cuatro, con la loma que hay a una milla. Su PAPI
+ *   de verdad está a 3,7° (AD 2-GCRR, 2.14) por eso mismo, y el circuito ya
+ *   entra en final por él (`sendaDe` en `circuito.ts`): con los tres grados
+ *   de antes pasaba a treinta y cinco metros de la loma y al JAZ 90 le daba
+ *   «terrain, pull up» a 2.500 m. Por su senda, al JAZ 60 y al JAZ 50 les
+ *   queda la precaución al entrar en final, dentro de las dos millas y media.
+ * - **La 15 de SGOG y la 16 de El Hierro**, al virar a final el JAZ 50, a unos
+ *   3.400 m del umbral. Su circuito ya es de pasaje —entra en final a 500 ft,
+ *   ver `escalaDelCircuitoDe`—, y con eso se callan las otras nueve cabeceras
+ *   en las que avisaba. En la 15 de SGOG el umbral está en una hondonada y el
+ *   suelo bajo la final sube a 49 m sobre él a tres kilómetros. En la 16 de El
+ *   Hierro la final va sobre el mar y lo que ve es la isla al lado de su
+ *   viraje, que es más cerrado que el del JAZ 60. Las dos, desde la base o su
+ *   viraje a final, y no antes.
  */
-const AVISA_EN_LA_FINAL: Readonly<Record<string, string>> = {
-  "GCRR 21":
-    "El circuito entra en final a tres grados y pasa a treinta y cinco metros de la loma de antes del umbral; su PAPI está a 3,7°.",
+const AVISA_EN_EL_CIRCUITO: Readonly<Record<string, { readonly porque: string; readonly desde: "final" | "base" }>> = {
+  "GCRR 21": {
+    porque: "El suelo sube a 78 m a dos kilómetros del umbral, con la loma; su PAPI está a 3,7° por eso.",
+    desde: "final",
+  },
+  "SGOG 15": {
+    porque: "El umbral está en una hondonada: el suelo bajo la final sube a 49 m sobre él a tres kilómetros.",
+    desde: "base",
+  },
+  "GCHI 16": {
+    porque: "La final va sobre el mar; lo que ve al virar a final es la isla al lado.",
+    desde: "base",
+  },
 };
 
 describe("las aproximaciones de cada campo, sobre el relieve", () => {
@@ -600,20 +655,38 @@ describe("las aproximaciones de cada campo, sobre el relieve", () => {
       });
 
       it(`${dicho}: volando la frustrada y el circuito, el aviso de terreno no salta`, () => {
-        const aviso = avisoEnElCircuito(e, c, cota);
-        if (dicho in AVISA_EN_LA_FINAL) {
-          // La misma final que la de la aproximación: la precaución, en ella.
-          const antes = Number(/precaucion, (\d+) m antes del umbral/.exec(aviso ?? "")?.[1]);
-          expect(antes, `${dicho}: ${aviso}`).toBeLessThan(2.5 * MILLA);
+        // Todos los que avisan, no solo el primero: un «pull up» de uno no se
+        // tapa con la precaución de otro.
+        const avisos = avisosEnElCircuito(e, c, cota);
+        const suelo = `suelo bajo la final a 1/2/3/4 km: ${sueloBajoLaFinal(c, cota)} m`;
+        const excepcion = AVISA_EN_EL_CIRCUITO[dicho];
+        if (excepcion) {
+          // Que siga haciendo falta, y que sea la precaución y en su sitio.
+          expect(avisos.length, `${dicho}: ya no avisa, la excepción sobra`).toBeGreaterThan(0);
+          for (const a of avisos) {
+            expect(a.aviso, `${dicho}: ${a.dicho}`).toBe("precaucion");
+            if (excepcion.desde === "final") expect(a.falta, `${dicho}: ${a.dicho}`).toBeLessThan(2.5 * MILLA);
+            else expect(a.falta, `${dicho}: ${a.dicho}`).toBeLessThanOrEqual(a.baseDesde);
+          }
           return;
         }
-        expect(aviso, dicho).toBeNull();
+        expect(avisos.map((a) => a.dicho), `${dicho}, ${suelo}`).toEqual([]);
       });
     }
   }
 
+  it("y todo avión de pasaje entra en final a 500 ft o más", () => {
+    // Sobre llano, con la senda de tres grados: solo cuenta el dibujo. Ver
+    // `escalaDelCircuitoDe`.
+    const pista = { x: 0, z: -1000, heading: 0, length: 2000 };
+    for (const a of MEDIDOS.filter((x) => x.ventanillas !== null)) {
+      const v = verticesDelCircuito(pista, 0, "izquierda", escalaDelCircuitoDe(a));
+      expect(v[4]!.y / PIE, a.id).toBeGreaterThanOrEqual(499.9);
+    }
+  });
+
   it("y las excepciones siguen haciendo falta", () => {
-    for (const dicho of [...Object.keys(FRUSTRADA_JUNTO_AL_MONTE), ...Object.keys(AVISA_EN_LA_FINAL)]) {
+    for (const dicho of [...Object.keys(FRUSTRADA_JUNTO_AL_MONTE), ...Object.keys(AVISA_EN_EL_CIRCUITO)]) {
       const [oaci, cab] = dicho.split(" ");
       expect(CAMPOS.some((e) => nombre(e) === oaci && cabeceras(e).some((c) => c.nombre === cab))).toBe(true);
     }

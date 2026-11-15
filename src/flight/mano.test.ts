@@ -23,11 +23,12 @@ import {
   ritmoDeAlabeoDeLaMano,
   ritmoDeSendaDeLaMano,
 } from "./mano";
-import { AIRCRAFT, type AircraftConfig } from "./aircraft";
+import { AIRCRAFT, MEDIDOS, type AircraftConfig } from "./aircraft";
 import { GUYRAMI, TAGUATO, TAGUATO_RUVICHA, TUKA, type Tier } from "./tiers";
 import { EN_GRADOS, empezar, volar, type Medida, type VueloDeBanco } from "./mano-banco";
 import { airDensity, GRAVITY } from "./atmosphere";
 import { empujeLleno } from "./fdm";
+import { gasQueSostiene } from "./gas-que-toca";
 
 const RAD = Math.PI / 180;
 const avion = (id: string): AircraftConfig => AIRCRAFT.find((a) => a.id === id)!;
@@ -209,12 +210,30 @@ describe("sin sacudidas", () => {
   });
 
   it("y en un viraje sostenido no se pierde altura", () => {
-    for (const a of AIRCRAFT) {
+    // Con los del taller también: la mano vuela la ficha. Ver `MEDIDOS`.
+    for (const a of MEDIDOS) {
       const v = empezar(a, TAGUATO_RUVICHA, maniobra(a));
-      // Más gas, que es lo que se pone para virar sin perder velocidad.
-      v.gas = Math.min(1, v.gas + 0.1);
       const alto = v.modelo.state.position.y;
       const ias = v.modelo.state.airspeed;
+      /*
+       * **Desde el gas que lo sostiene nivelado**, y no desde el de `empezar`,
+       * que es la recta a ojo del modelo —`gasPara`, la velocidad entre la de
+       * crucero por 0,8— y no sostiene el nivel de nadie: al Seneca y al JAZ
+       * 60 les falta y bajan; al JAZ 50, un Twin Otter con casi media vez su
+       * peso de empuje, le sobra, y ya subía un metro por segundo antes de la
+       * décima de gas. Con la mano sosteniendo la velocidad, eso se sumaba a
+       * lo que se mide aquí, que es lo que da la décima. El gas que sostiene
+       * sale de las mismas fuerzas que el modelo: ver `gasQueSostiene`.
+       */
+      const nivelado = gasQueSostiene(a, {
+        altura: alto,
+        verdadera: ias,
+        flaps: v.flaps,
+        tren: 1,
+        pendiente: 0,
+      });
+      // Más gas, que es lo que se pone para virar sin perder velocidad.
+      v.gas = Math.min(1, (nivelado ?? v.gas) + 0.1);
       // Lo que sube de más con la décima de gas, `ΔT·V/W`. Ver abajo.
       const sobra =
         (0.1 * empujeLleno(a, airDensity(alto), ias) * ias) / (a.mass * GRAVITY);
