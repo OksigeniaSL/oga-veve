@@ -1251,6 +1251,22 @@ describe("tu autorización no se pierde esperando turno", () => {
     expect(cuantoAguanta("torre.aterrizar@yo", "mando")).toBe(Infinity);
     expect(cuantoAguanta("torre.climbTo@yo", "mando")).toBe(CADUCA_LA_ORDEN);
   });
+
+  it("y el permiso de salir empujado espera detrás de la ruta y se dice", () => {
+    expect(cuantoAguanta("torre.canario.pushback@yo", "mando")).toBe(Infinity);
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("mando", frase("destino"), "torre.canario.destino@yo");
+    b.pedir("mando", frase("cleared to"), "torre.canario.clearedTo@yo");
+    b.pedir("mando", frase("pushback"), "torre.canario.pushback@yo");
+    // La ruta, con sus dos frases y sus silencios, dura más que una orden.
+    reloj += CADUCA_LA_ORDEN / 2;
+    acabar["destino"]!();
+    reloj += CADUCA_LA_ORDEN;
+    acabar["cleared to"]!();
+    expect(dicho).toEqual(["destino", "cleared to", "pushback"]);
+    expect(b.descartadas.some((d) => d.includes("pushback"))).toBe(false);
+  });
 });
 
 /**

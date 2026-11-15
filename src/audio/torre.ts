@@ -568,8 +568,18 @@ export function noSePierde(
  */
 const LA_EMERGENCIA = /^torre\.(?:[a-z]+\.)?(?:mayday|panpan)(?:@|$)/;
 
-/** La autorización de la ruta, antes de rodar. Ver `autorizarLaRuta` en `game.ts`. */
-const LA_RUTA = /^torre\.(?:[a-z]+\.)?(?:destino|clearedTo)(?:@|$)/;
+/**
+ * La autorización de la ruta, antes de rodar, y el permiso de salir empujado,
+ * que va justo detrás. Ver `autorizarLaRuta` y `autorizarElEmpuje` en `game.ts`.
+ *
+ * El «pushback and start-up approved» se quedó fuera al llegar el remolque, y
+ * caducaba siempre: entra en la cola detrás de la ruta, que con sus dos frases
+ * y sus silencios dura unos once segundos y medio, y a los doce se caía sin
+ * sonar —en 6 de 7 vuelos enteros del JAZ 90 en Los Rodeos, siempre a los
+ * 21,3 s—, y con él el «el tractor arranca» de la instructora. Es un permiso de
+ * la torre para ti: espera su turno como los demás.
+ */
+const LA_RUTA = /^torre\.(?:[a-z]+\.)?(?:destino|clearedTo|pushback)(?:@|$)/;
 
 /**
  * **El aviso de aves en la final**: la torre informando de una bandada por
