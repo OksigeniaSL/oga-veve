@@ -101,6 +101,14 @@ function enLaPista(pista: Pista, x: number, z: number): boolean {
 }
 
 /**
+ * **Si el punto cae en alguna pista del aeródromo**: lo que no cruza un tractor
+ * remolcando, ni es sitio donde dejar un avión. Ver `world/vuelta-a-la-raya.ts`.
+ */
+export function enAlgunaPista(aero: Aerodrome, x: number, z: number): boolean {
+  return aero.runways.some((p) => enLaPista(p, x, z));
+}
+
+/**
  * De qué está hecho el suelo en un punto del mundo.
  *
  * `pavimento` es el mapa de calles y plataformas, que es la parte cara y se

@@ -291,12 +291,14 @@ export class DibujoDelRemolque {
     const p = r.persona;
     this.persona.position.set(p.x, cota(p.x, p.z), p.z);
     this.persona.rotation.y = -p.rumbo;
+    // Mientras el tractor viene a buscar al avión, la persona va en él. Ver `Remolque.personaALaVista`.
+    this.persona.visible = r.personaALaVista;
     this.ponerElGesto(r.gesto);
     // El pasador se ve desde que lo ha quitado.
     this.pasador.visible = !r.conCable && r.fase !== "soltando";
     // El cable, de los cascos a la toma de al lado de la rueda de morro, mientras va enchufado.
-    this.cable.visible = r.conCable;
-    if (r.conCable) {
+    this.cable.visible = r.conCable && r.personaALaVista;
+    if (this.cable.visible) {
       const rueda = r.ruedaDeMorro;
       const yRueda = cota(rueda.x, rueda.z) + 1.1;
       const yCabeza = this.persona.position.y + 1.62 * PERSONA_MAS_GRANDE;
