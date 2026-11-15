@@ -1290,12 +1290,12 @@ en vuelo es 3,4 veces el del Navion.
 Con el JAZ 50 metido a mano en `AIRCRAFT` caen, además de las que piden su
 dibujo o su cabina, estas, que no son de su ficha sino del juego:
 
-- **Los bomberos lo dejan fuera de la granja.** Por pista cabe en los 900 m de
+- **Los bomberos lo dejaban fuera de la granja.** Por pista cabe en los 900 m de
   hierba de Yvytu Rape —pide 447 para despegar y 717 de LDA—, y es el único
-  turbohélice que cabría; pero la regla de los bomberos de los de línea lo saca de
-  allí, de Concepción, de Ayolas, de Pilar y de Estigarribia. La lección del
-  avión es justo esa: hay que decidir si la regla vale para una pista de
-  estancia.
+  turbohélice que cabría; pero la regla de los bomberos de los de línea lo sacaba
+  de allí, de Concepción, de Ayolas, de Pilar y de Estigarribia. **Decidido el
+  15-11** (ver la enmienda H12a, abajo): en la pista privada de una estancia la
+  regla no se mira, y en los aeródromos públicos sigue.
 - **El aviso de terreno salta en la frustrada y el circuito** de todos los
   campos de `aproximaciones-sobre-el-relieve.test.ts`: una precaución unos dos
   kilómetros antes del umbral. Es su TAWS volando el circuito de la casa con su
@@ -1309,3 +1309,31 @@ dibujo o su cabina, estas, que no son de su ficha sino del juego:
 - Las listas de quién lleva radioaltímetro, radar, ventanilla ALT y reversa:
   las dos primeras y la reversa, sí; la ventanilla, con el automático opcional,
   la decide su cabina.
+
+## Enmienda H12a (15-11-2026): el JAZ 50 se llama Tujuju, y en la pista de una estancia no se miran los bomberos
+
+Dos decisiones de Enrique sobre el avión del taller, las dos para el paso de
+meterlo en el juego.
+
+**El pájaro es el Tujuju**, la cigüeña de los esteros: ala larga y recta que
+planea despacio, y vive en los esteros del Ñeembucú y del Chaco, donde están
+las pistas de estancia a las que va este avión. Es la palabra guaraní de la
+que viene el «tuyuyú» del castellano del Paraguay, y ese pájaro vuela en el
+mundo (`tuyuyu` en `world/aves.ts`). No choca con ningún tramo ni con ningún
+personaje de Granja Óga: lo comprueba `flota.test.ts`. Desde hoy su ficha se
+llama «JAZ 50 Tujuju». La fuente, en `EN_EL_TALLER` (`flight/flota.ts`).
+
+**La regla de los bomberos no se mira en una pista privada.** Lo de los
+bomberos del Anexo 14 es para los aeródromos abiertos al uso público
+(volumen I, 1.2.1). A una estancia no va una línea regular, sino un vuelo a
+demanda o el avión del dueño, y la FAA solo pide un aeropuerto certificado,
+con sus bomberos, para vuelos regulares de más de nueve plazas o vuelos a
+demanda de más de treinta (14 CFR 139.1). Yvytu Rape, la única pista privada
+del juego, lleva `privada` en `world/bomberos-publicados.ts`, y `campoDe` no le
+pone categoría, así que allí cuenta solo la pista.
+
+Lo que cambia hoy en el hangar es nada. El JAZ 60 sigue fuera de la granja
+por largo de pista, y el JAZ 90, igual. Quien entra es el JAZ 50 cuando salga
+del taller. Concepción, Pilar, Ayolas y Estigarribia siguen con la regla: son
+aeródromos públicos que publican que no tienen bomberos. En un ejercicio en
+Yvytu Rape no sale ningún camión, como antes.

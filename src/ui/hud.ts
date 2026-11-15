@@ -830,6 +830,12 @@ export class Hud {
   private pausaHandler: (() => void) | null = null;
   private adelantarHandler: (() => void) | null = null;
   private noExplicarElAdelantoHandler: (() => void) | null = null;
+  private noExplicarVolverHandler: (() => void) | null = null;
+  /** Cómo está el «ya lo sé» de la flecha de casa. Ver `ponerYaLoSeDeVolver`. */
+  private yaLoSeDeVolver: boolean | null = null;
+  /** Cómo está la flecha de casa, para no tocar el DOM si no cambia. Ver `ponerPerdido`. */
+  private casaLate: boolean | null = null;
+  private casaVuelve: boolean | null = null;
   /** Cómo está ahora el «ya lo sé» del ⏩: `null` sin él; si no, si lleva la palabra. */
   private yaLoSeDelAdelanto: boolean | null = null;
   private botonAdelantar: HTMLButtonElement | null = null;
@@ -1566,6 +1572,12 @@ export class Hud {
         </button>
         <!-- «Ya lo sé», al lado, mientras Ara explica el ⏩: desde la segunda vez. Ver ponerAdelantar. -->
         <span class="adelantar__ya-lo-se" hidden></span>
+        <!--
+          Y el de la flecha de casa, mientras la instructora explica cómo se
+          vuelve desde lejos: en el hueco del ⏩, que solo sale de pasaje,
+          donde nadie se pierde. Ver ponerYaLoSeDeVolver.
+        -->
+        <span class="volver__ya-lo-se" hidden></span>
         </div>
         <!--
           El cartel del cinturón, el de verdad: el de la fila de arriba de un
@@ -2443,6 +2455,13 @@ export class Hud {
       if ((ev.target as Element | null)?.closest('[data-hud="adelantar-ya-lo-se"]')) this.noExplicarElAdelantoHandler?.();
     });
     this.yaLoSeDelAdelanto = null;
+    this.root.querySelector(".volver__ya-lo-se")?.addEventListener("click", (ev) => {
+      if ((ev.target as Element | null)?.closest('[data-hud="volver-ya-lo-se"]')) this.noExplicarVolverHandler?.();
+    });
+    // El marcado es nuevo: lo de la flecha de casa se vuelve a poner en el paso siguiente.
+    this.yaLoSeDeVolver = null;
+    this.casaLate = null;
+    this.casaVuelve = null;
     alPulsar(pick(this.root, "keys"), () => this.keysHandler?.());
     alPulsar(pick(this.root, "ala"), () => this.alaHandler?.());
     alPulsar(pick(this.root, "credits"), () => this.creditsHandler?.());
@@ -4993,6 +5012,52 @@ export class Hud {
       this.soloAqui = null;
     }, 3200);
     if (this.instruments !== "none") this.flash(texto, 6);
+  }
+
+  /**
+   * **La flecha de casa late cuando alguien se ha perdido lejos**, o mar
+   * adentro, y entonces tocarla hace virar el avión hacia el campo.
+   *
+   * Es el arreglo de un toque de ese lío, como la flecha de volver a empezar
+   * lo es del percance: la instructora lo dice y la flecha late a la vez,
+   * para quien no oye y para quien no lee. Late con el halo ocre de lo que se
+   * pulsa y llama, y la aguja crece y vuelve, sin dejar de girar con el rumbo.
+   *
+   * `vuelve` es si tocarla ahora vira hacia el campo —perdido, o virando ya
+   * hacia allá, en un avión con automático—; mientras tanto la tarjeta se
+   * llama así para el lector de pantalla, y fuera de eso vuelve a ser la de
+   * cambiar de destino. Ver `flight/perdido.ts` y `alTocarLaCasa` en
+   * `game.ts`. Se llama cada paso y solo toca el DOM si cambia.
+   */
+  ponerPerdido(late: boolean, vuelve: boolean): void {
+    if (late !== this.casaLate) {
+      this.casaLate = late;
+      this.home.classList.toggle("casa--perdida", late);
+    }
+    if (vuelve !== this.casaVuelve) {
+      this.casaVuelve = vuelve;
+      this.home.setAttribute("aria-label", t(vuelve ? "hud.volverAlCampo" : "tecla.destino"));
+    }
+  }
+
+  /**
+   * **El «ya lo sé» de la flecha de casa**, desde la segunda vez que alguien
+   * se pierde y mientras dura: `null`, sin él; si no, si lleva la palabra. El
+   * mismo botón de toda explicación que se puede quitar. Ver
+   * `ui/no-volver-a-explicar.ts`.
+   */
+  ponerYaLoSeDeVolver(conLetras: boolean | null): void {
+    if (conLetras === this.yaLoSeDeVolver) return;
+    this.yaLoSeDeVolver = conLetras;
+    const hueco = this.root.querySelector<HTMLElement>(".volver__ya-lo-se");
+    if (!hueco) return;
+    hueco.hidden = conLetras === null;
+    hueco.innerHTML = conLetras === null ? "" : botonDeNoExplicar(conLetras, "", 'data-hud="volver-ya-lo-se"');
+  }
+
+  /** Y su «ya lo sé»: que la instructora no lo explique más. Ver `ponerYaLoSeDeVolver`. */
+  onNoExplicarVolver(handler: () => void): void {
+    this.noExplicarVolverHandler = handler;
   }
 
   /** Y si este avión lo lleva, para enseñar el botón. */

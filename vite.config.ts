@@ -200,7 +200,9 @@ export default defineConfig({
     exclude: ["**/node_modules/**", "**/dist/**", ".claude/**"],
     /*
      * **Seis hilos y no uno por núcleo.** De fábrica son diecinueve en este
-     * portátil, y con seis tarda lo mismo —12,8 s frente a 12,9, medido— pero
+     * portátil, y con seis tarda lo mismo —12,8 s frente a 12,9, medido cuando
+     * la tanda entera tardaba eso; hoy, con más de nueve mil pruebas, pasa de
+     * los diez minutos, y una tirada callada tanto rato no está colgada— pero
      * ocupa 1,4 GB en vez de 2,1. Con varias copias del repositorio probando a
      * la vez eso es lo que agotó la memoria: el sistema se quedó sin ella tres
      * veces en una noche y se llevó por delante el editor.

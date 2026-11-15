@@ -2416,6 +2416,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** A cuánto y hacia dónde señala la aguja. Ver `Game.agujaParaBanco`. */
     aguja: () => juego.agujaParaBanco,
     /**
+     * **Si se ha perdido lejos o mar adentro**, si el automático vira hacia el
+     * campo y con qué rumbo. Lo usa `scripts/ver-perdido.mjs`; ver
+     * `flight/perdido.ts`.
+     */
+    perdido: () => juego.perdidoParaBanco,
+    /**
      * **Cómo va la misión**: el objetivo de ahora, la espera, el sitio al que se
      * va, y lo dicho y lo de la gente en orden. Lo usa `scripts/ver-mision-teno.mjs`.
      */

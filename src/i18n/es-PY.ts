@@ -2028,6 +2028,20 @@ export const ES_PY = {
   "vuelo.enVuelo": "Andá a dar una vuelta",
   "vuelo.enVueloAterrizando": "Andá a la pista",
   "vuelo.enVueloDestino": "Seguí la flecha: vamos al otro aeropuerto",
+  /*
+   * **Perdido lejos, o mar adentro, y el arreglo de un toque.** La flecha de
+   * casa late a la vez, y en el avión con automático tocarla lo hace virar
+   * hacia el campo con el rumbo de la ventanilla. En el que no lo lleva se
+   * vira a mano, siguiendo la flecha. Con calma: alejarse no es una
+   * emergencia, es algo que se arregla. Ver `flight/perdido.ts`.
+   */
+  "vuelo.perdido":
+    "Nos alejamos mucho del campo. Tocá la flecha de casa, la que brilla, y el automático gira el avión hacia allá",
+  "vuelo.perdidoSinAutomatico":
+    "Nos alejamos mucho del campo. Girá despacito hasta que la flecha de casa apunte para arriba, y así volvemos",
+  "vuelo.perdido.volvemos": "¡Eso! El automático ya gira el avión hacia el campo",
+  "palabra.aCasa": "¡A casa!",
+  "hud.volverAlCampo": "Volver al campo",
   "vuelo.final": "Bajá suavecito",
   /*
    * **Los avisos de las cajas del avión, explicados.** En el avión que las
@@ -2669,6 +2683,8 @@ export const ES_PY = {
   "ajustes.explicacionDelAdelanto.volver": "Volver a explicarlo",
   "ajustes.explicacionDelTractor": "La vuelta a la raya con el tractor ya no se explica en voz.",
   "ajustes.explicacionDelTractor.volver": "Volver a explicarlo",
+  "ajustes.explicacionDeVolverACasa": "La flecha de casa ya no se explica en voz cuando te alejás.",
+  "ajustes.explicacionDeVolverACasa.volver": "Volver a explicarla",
   "ajustes.inicio":
     "En el iPhone, el juego va a pantalla completa abierto desde su ícono: en Safari tocá Compartir (o «•••» y Compartir), elegí «Agregar a inicio» y abrilo desde ahí.",
   "gafas.ganadas": "¡Tus gafas de sol!",

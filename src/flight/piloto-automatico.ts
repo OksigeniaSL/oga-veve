@@ -325,8 +325,12 @@ export const PARA_LA_VELOCIDAD_CON_EL_MORRO = 10;
 /** Cómo cambia de altura el automático. Ver la cabecera. */
 export type ModoVertical = "ALT" | "V/S" | "FLCH SPD" | "VNAV PTH" | "G/S";
 
-/** Y qué lleva de lado: el rumbo que tenía, o el eje de la pista. */
-export type ModoLateral = "HDG HOLD" | "LOC";
+/**
+ * Y qué lleva de lado: el rumbo que tenía (`HDG HOLD`), el que se le puso en
+ * la ventanilla (`HDG SEL`, el de volver al campo con la flecha de casa: ver
+ * `flight/perdido.ts`) o el eje de la pista (`LOC`).
+ */
+export type ModoLateral = "HDG HOLD" | "HDG SEL" | "LOC";
 
 /**
  * **A cuánto de la altura pedida empieza a nivelar**, m, viniendo a ese

@@ -186,6 +186,7 @@ describe("lo que escribe el FMA de lado y de alto, en cada clase", () => {
   it("el E-Jet: HDG, LOC; ALT, VS, FLCH, VPATH y GS", () => {
     const c = claseDeRecogida(ARAI);
     expect(rotuloDelModo(c, "HDG HOLD")).toBe("HDG");
+    expect(rotuloDelModo(c, "HDG SEL")).toBe("HDG");
     expect(rotuloDelModo(c, "LOC")).toBe("LOC");
     expect(rotuloDelModo(c, "ALT")).toBe("ALT");
     expect(rotuloDelModo(c, "V/S")).toBe("VS");
@@ -196,7 +197,7 @@ describe("lo que escribe el FMA de lado y de alto, en cada clase", () => {
 
   it("el 747: los de Boeing, tal cual", () => {
     const c = claseDeRecogida(YVAGA);
-    for (const m of ["HDG HOLD", "LOC", "ALT", "V/S", "FLCH SPD", "VNAV PTH", "G/S"] as const)
+    for (const m of ["HDG HOLD", "HDG SEL", "LOC", "ALT", "V/S", "FLCH SPD", "VNAV PTH", "G/S"] as const)
       expect(rotuloDelModo(c, m)).toBe(m);
   });
 });

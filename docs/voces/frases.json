@@ -20466,5 +20466,26 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "vuelo.perdido",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Nos alejamos mucho del campo. Tocá la flecha de casa, la que brilla, y el automático gira el avión hacia allá",
+    "para": "lejos del campo o mar adentro, en el avión con automático: tocá la flecha de casa, que brilla"
+  },
+  {
+    "id": "vuelo.perdidoSinAutomatico",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Nos alejamos mucho del campo. Girá despacito hasta que la flecha de casa apunte para arriba, y así volvemos",
+    "para": "lo mismo en el avión sin automático: se vira a mano hasta que la flecha apunte arriba"
+  },
+  {
+    "id": "vuelo.perdido.volvemos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Eso! El automático ya gira el avión hacia el campo",
+    "para": "al tocar la flecha de casa: el automático ya gira hacia el campo"
   }
 ]
