@@ -193,6 +193,53 @@ export function escalaDeCircuito(aproximacion: number): number {
 }
 
 /**
+ * **Lo más bajo que entra en final un avión de pasaje**, m: quinientos pies.
+ *
+ * Es la regla de la aproximación estabilizada: en vuelo visual, a 500 ft
+ * sobre el campo el avión tiene que ir ya en final, con las alas a nivel, en
+ * la senda y sin bajar a más de 1.000 ft/min; si no, se va al aire (Flight
+ * Safety Foundation, *ALAR Briefing Note* 7.1). La vuela todo operador de
+ * transporte, y es la que separa un circuito de línea del de una escuela,
+ * donde se entra en final a trescientos pies y se vira hasta ahí.
+ */
+export const ESTABILIZADO_EN_FINAL = 500 * 0.3048;
+
+/**
+ * **La escala del circuito de este avión**: la de su velocidad de
+ * aproximación, y en el que lleva pasaje, nunca menos de la que le hace
+ * entrar en final estabilizado.
+ *
+ * La entrada en final cae a `BASE_A_FINAL · escala` del umbral y en la senda,
+ * así que pasar de `ESTABILIZADO_EN_FINAL` pide una escala de al menos
+ * `ESTABILIZADO_EN_FINAL / (BASE_A_FINAL · tan senda)`, 1,62 con la de tres
+ * grados, y con la de su cabecera: más en la 09 de Cuatro Vientos, a 2,8°. Por velocidad, el JAZ 60, el 90, el 110 y el 120 ya van por encima
+ * —entran a 518 ft el que menos—, y el suelo no los mueve. El que movió es el
+ * JAZ 50, un Twin Otter de diecinueve plazas: se aproxima a 70 nudos, como el
+ * entrenador, y con su escala de 1,09 volaba el circuito de la avioneta,
+ * entrando en final a 338 ft todavía virando y con la base a 7,9°, que su
+ * propio TAWS avisaba con «caution terrain» (ADR 0027, enmienda H13d2).
+ *
+ * **Qué avión lleva pasaje lo dice la ficha**: sus `ventanillas`, que son las
+ * del pasaje, o `null` sin él. Las avionetas, el fumigador y el bimotor de
+ * pistón no lo llevan, y su circuito sigue siendo el de la escuela.
+ *
+ * Es la que piden el circuito que se dibuja, el del tráfico que vuela con
+ * quien juega y los bancos: todos con esta, para que digan lo mismo. Los
+ * tipos del tráfico, que no son fichas, siguen con `escalaDeCircuito`: sus
+ * dos de pasaje, el turbohélice y el reactor, se aproximan a 57 y 69 m/s, por
+ * encima del suelo.
+ */
+export function escalaDelCircuitoDe(
+  a: { readonly approachSpeed: number; readonly ventanillas: unknown },
+  /** La pista en la que toca, con su senda. Ver `sendaDe`. */
+  runway: Pick<Pista, "senda"> = {},
+): number {
+  const porVelocidad = escalaDeCircuito(a.approachSpeed);
+  if (a.ventanillas === null) return porVelocidad;
+  return Math.max(porVelocidad, ESTABILIZADO_EN_FINAL / (BASE_A_FINAL * Math.tan(sendaDe(runway))));
+}
+
+/**
  * Hasta qué distancia del circuito se considera que se está volando en él, m.
  *
  * Mil doscientos. Más ancho y volar campo a través en dirección contraria
@@ -217,6 +264,12 @@ export interface Pista {
   length: number;
   /** Asfalto antes del umbral de aterrizaje, m. Ver `umbral-desplazado.ts`. */
   desplazado?: number;
+  /**
+   * **La senda de la cabecera en la que se toca**, rad: la de su PAPI, la que
+   * publica su AIP (`sendaDeLaCabecera`). Sin ella, los tres grados de
+   * siempre. Ver `sendaDe`.
+   */
+  senda?: number;
 }
 
 /**
@@ -332,7 +385,7 @@ export function holguraDelCircuito(
   velocidad?: number,
 ): number {
   return (
-    alturaDelCircuito(escala) -
+    alturaDelCircuito(escala, sendaDe(runway)) -
     techoDelPasillo(runway, cotaDePista, suelo, mano, escala, velocidad)
   );
 }
@@ -393,7 +446,7 @@ export function formaDelCircuito(
    */
   velocidad?: number,
 ): FormaDelCircuito {
-  const costumbre = alturaDelCircuito(escala);
+  const costumbre = alturaDelCircuito(escala, sendaDe(runway));
   if (!suelo) return { mano: publicada ?? "izquierda", altura: costumbre };
   const pide = (mano: Mano): number =>
     Math.max(
@@ -465,11 +518,28 @@ const VENTAJA = 100;
  * suelo, así que **el circuito de la avioneta no se mueve ni un metro** donde
  * el terreno no pide más. Con el JAZ 120 da trescientos sesenta y cuatro.
  */
-export function alturaDelCircuito(escala = 1): number {
+export function alturaDelCircuito(escala = 1, senda = SENDA): number {
   return Math.max(
     ALTURA_DE_CIRCUITO,
-    BASE_A_FINAL * escala * Math.tan(SENDA) + 150,
+    BASE_A_FINAL * escala * Math.tan(senda) + 150,
   );
+}
+
+/**
+ * **La senda por la que el circuito entra en final**, rad: la de la cabecera,
+ * la de su PAPI, y si no se sabe, tres grados.
+ *
+ * Era siempre tres, y el circuito era lo único que no miraba la senda de su
+ * pista: las luces, el rombo de la final, el G/S del automático y la
+ * instructora ya iban por la publicada. En la 21 de Lanzarote, cuyo PAPI está
+ * a 3,7° por la loma que hay a una milla del umbral (AIP España, AD 2-GCRR,
+ * 2.14), el circuito entraba en final a tres grados, pasaba a treinta y cinco
+ * metros de la loma, y al JAZ 90 su avisador le daba «terrain, pull up» a
+ * 2.500 m del umbral en el circuito que el propio juego le dibujaba (ADR
+ * 0027, enmienda H13d2). Por su senda entra más alto, y la base baja lo mismo.
+ */
+export function sendaDe(runway: Pick<Pista, "senda">): number {
+  return runway.senda ?? SENDA;
 }
 
 /** Lo que se vuela de más en la base sobre la Vref, m/s: quince nudos. */
@@ -502,7 +572,7 @@ export function verticesDelCircuito(
   mano: Mano = "izquierda",
   escala = 1,
   /** Altura de los tramos a nivel, m. La pide el terreno: ver `formaDelCircuito`. */
-  altura = alturaDelCircuito(escala),
+  altura = alturaDelCircuito(escala, sendaDe(runway)),
 ): PuntoDeCircuito[] {
   const h = (runway.heading * Math.PI) / 180;
   // Hacia dónde se despega, y qué es la izquierda desde ahí. Con el circuito
@@ -543,7 +613,7 @@ export function verticesDelCircuito(
     // La esquina de acá: fin del viento en cola, empieza la base.
     en(toma - entrada, separacion, circuito),
     // Y la entrada en final, sobre el eje y ya en la senda de los aros.
-    en(toma - entrada, 0, entrada * Math.tan(SENDA)),
+    en(toma - entrada, 0, entrada * Math.tan(sendaDe(runway))),
   ];
 }
 

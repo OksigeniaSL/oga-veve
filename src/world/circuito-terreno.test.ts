@@ -16,11 +16,12 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT } from "../flight/aircraft";
+import { AIRCRAFT, MEDIDOS } from "../flight/aircraft";
 import {
   alturaDelCircuito,
   crearCircuito,
   escalaDeCircuito,
+  escalaDelCircuitoDe,
   manoPublicada,
   pasilloDelCircuito,
   SOBRE_EL_TERRENO,
@@ -65,9 +66,9 @@ const CON_RELIEVE = SCENARIOS.filter(
  * con su `velocidadDeCircuito`, que es la que ancha el pasillo. Ver
  * `pasilloDelCircuito`.
  */
-const MEDIDAS = AIRCRAFT.map((a) => ({
+const MEDIDAS = MEDIDOS.map((a) => ({
   id: a.id,
-  escala: escalaDeCircuito(a.approachSpeed),
+  escala: escalaDelCircuitoDe(a),
   velocidad: a.velocidadDeCircuito,
 }));
 
