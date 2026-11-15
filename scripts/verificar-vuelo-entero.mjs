@@ -1933,6 +1933,38 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const ADITIVO_DE_FINAL = 5 * 0.514444;
   /**
+   * **Y el margen se quita en la final corta**, m antes del umbral: para
+   * cruzarlo a la Vref, que es como lo cruza un piloto de verdad.
+   *
+   * El banco volaba la Vref más el margen hasta la recogida, y el margen se
+   * lo tenía que comer la recogida entera. Y en Los Rodeos el margen no son
+   * cinco nudos: la racha que mide el banco en su anemómetro va de 2 a 6
+   * nudos y lo que sopla de cara salta de 1 a 9, así que la final del JAZ 90
+   * pedía de 137 a 142 nudos con la Vref en 132, medido con la traza. Cruzó
+   * el umbral a 140, empezó a recoger y tocó a 609 m, pasada la zona. Mil
+   * quinientos metros son unos veinte segundos de final, medio
+   * nudo por segundo, que el gas quita sin tirones; y empiezan por debajo de
+   * la puerta de los quinientos pies, que se cruza todavía con el margen
+   * entero. Lo que queda encima en el umbral es solo lo del viento.
+   */
+  const SE_QUITA_EL_MARGEN_DESDE = 1500;
+  /**
+   * **Y en los últimos treinta metros, la senda ya no se persigue**, m de
+   * ruedas.
+   *
+   * Hasta aquí el automático lleva la senda corrigiendo lo que se separa, y
+   * eso en los últimos metros es lo que se enseña a no hacer: por debajo de
+   * los cien pies se vuela el punto de toma con el ritmo de bajada quieto, y
+   * no se cazan los últimos metros de senda. Medido con la traza de la final
+   * del JAZ 90 en Los Rodeos: 5,5 m por debajo de la senda en el último
+   * kilómetro, la volvió a coger justo encima del umbral y empezó a recoger
+   * bajando 2,2 m/s en vez de 3,7 —flotó hasta los 609 m—; en otra pasada,
+   * cazándola por arriba, empezó a 5 m/s y tocó a 1,99. Desde aquí se baja al
+   * ritmo de la senda y desde donde se esté: se toca un poco antes o un poco
+   * después, y la recogida empieza siempre igual.
+   */
+  const SIN_PERSEGUIR_LA_SENDA = 30;
+  /**
    * **La recogida**, que este piloto no hacía: el último tramo de la toma, de
    * la senda al suelo.
    *
@@ -3436,6 +3468,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   let errorDeGasAntes = null;
   /** La velocidad de los últimos diez segundos de final, para la racha. */
   const velocidadesDeFinal = [];
+  /** La senda de los últimos metros, ya sin perseguir. Ver `SIN_PERSEGUIR_LA_SENDA`. */
+  let sendaSinPerseguir = null;
   /**
    * **La altura de la aproximación, planeada: sin saltos y sin subir**, m
    * sobre la pista.
@@ -5243,6 +5277,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       gasQueSostiene = 0;
       errorDeGasAntes = null;
       velocidadesDeFinal.length = 0;
+      sendaSinPerseguir = null;
       alturaPlaneada = null;
       empezoLaRecogida = null;
       sendaSencilla = 0;
@@ -6166,7 +6201,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * con la Vref en 64, sin flaps y con el juego diciéndole «lento y
        * bajo». Ahora vuela como le pide la tarjeta.
        */
-      const quiere = enVerdadera(s, deAproximacion + aditivo);
+      /*
+       * **Y el margen se quita en la final corta: al umbral, a la Vref.** Ver
+       * `SE_QUITA_EL_MARGEN_DESDE`. Lo que queda encima en el umbral es solo lo
+       * del viento: la mitad de lo que sopla de cara y la racha **del parte**
+       * —la `G` del METAR menos el viento medio—, no la que mide este banco en
+       * su propio anemómetro, que es sobre todo su propio vaivén de gas y de
+       * senda. En Guyrami no: allí los cinco nudos se los come la recogida con
+       * el gas de la Vref sostenido. Ver `recogida.gas`.
+       */
+      const parte = o.meteo?.();
+      const rachaDelParte =
+        parte?.rachaKt && parte?.vientoKt
+          ? Math.max(0, parte.rachaKt - parte.vientoKt) * 0.514444
+          : 0;
+      const enElUmbral = Math.min(aditivo, deCara / 2 + rachaDelParte);
+      const margenQueQueda = CON_EL_AUTOMATICO
+        ? Math.max(0, Math.min(1, falta / SE_QUITA_EL_MARGEN_DESDE))
+        : 1;
+      const pedidaEnIndicada =
+        deAproximacion + enElUmbral + (aditivo - enElUmbral) * margenQueQueda;
+      const quiere = enVerdadera(s, pedidaEnIndicada);
       /*
        * **Y el gas lleva la velocidad, y también la senda por debajo.**
        *
@@ -6378,8 +6433,24 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * altura que pide, y el ritmo al que baja por el suelo. Ver
          * `volarLaSenda`.
          */
+        /*
+         * **Y en los últimos treinta metros, la senda ya no se persigue**: se
+         * baja a su ritmo desde donde se esté. Ver `SIN_PERSEGUIR_LA_SENDA`.
+         */
+        if (
+          CON_EL_AUTOMATICO &&
+          !sendaSinPerseguir &&
+          ruedas < SIN_PERSEGUIR_LA_SENDA &&
+          falta > 0 &&
+          falta < 1000
+        )
+          sendaSinPerseguir = {
+            altitud: s.position.y,
+            ritmo: -porElSuelo(s) * SENDA,
+            desde: o.reloj(),
+          };
         if (CON_EL_AUTOMATICO)
-          senda = {
+          senda = sendaSinPerseguir ?? {
             altitud: s.position.y + (objetivo - alto(s)),
             // Al ritmo de la altura planeada: ver `planearLaBajada`.
             ritmo: objetivo > tren ? ritmoPlaneado : 0,
@@ -6606,6 +6677,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
              * no si era porque se pedía o porque el avión no obedecía.
              */
             ` · plan ${(objetivo - alto(s)).toFixed(1)} pide ${memoriaDeSenda ? memoriaDeSenda.ritmo.toFixed(1) : "-"} α ${((s.alpha * 180) / Math.PI).toFixed(1)}°` +
+            /*
+             * Y la velocidad que busca el gas, en indicada, con lo que la hace:
+             * el margen de la final —el mayor de cinco nudos y media cara más
+             * la racha que mide el banco— y lo que queda de él en el umbral.
+             */
+            ` · quiere ${Math.round(pedidaEnIndicada * 1.94384)} kt (margen ${(aditivo * 1.94384).toFixed(1)}: cara ${(deCara * 1.94384).toFixed(1)} racha ${(racha * 1.94384).toFixed(1)}; umbral +${(enElUmbral * 1.94384).toFixed(1)})` +
+            (sendaSinPerseguir ? " · sin perseguir" : "") +
             (recogida ? " · recogiendo" : ""),
         );
       }
@@ -7981,6 +8059,25 @@ const conAfis = {
 };
 /** La clave sin el lado de la pista ni el habla del campo. */
 const sinLadoNiHabla = (d) => d.replace(/\.[LCR]$/, "").replace(".canario.", ".");
+/*
+ * **Y el «hold short» con su porqué también es un «hold short».** La torre lo
+ * dice a secas o con lo que se espera —«landing traffic», «departing
+ * traffic», tu número en la fila, la estela—, ver `audio/torre.ts`; y aquí se
+ * pedía solo a secas, aunque en el AFIS se aceptaban sus equivalentes con
+ * porqué. De Los Rodeos con el JAZ 90 la torre dijo «hold short of the
+ * runway, landing traffic» y nada más, y esto lo contaba como una torre que
+ * no manda parar.
+ */
+const LO_DICE_UNA_TORRE = {
+  "torre.holdShort":
+    /^torre\.holdShort(?:Landing|Departing|NumberTwo|NumberThree|Wake)?$/,
+};
+const loDijo = (c, d) =>
+  conAfis[c]
+    ? LO_DICE_UN_AFIS[c].test(sinLadoNiHabla(d))
+    : LO_DICE_UNA_TORRE[c]
+      ? LO_DICE_UNA_TORRE[c].test(sinLadoNiHabla(d))
+      : sinLadoNiHabla(d) === c;
 
 /*
  * **Y la fraseología tiene edad.**
@@ -8056,9 +8153,7 @@ else comprobar(
        */
       DE_UN_VUELO.every(
         (c) =>
-          (vuelo.torreDijo ?? []).some((d) =>
-            conAfis[c] ? LO_DICE_UN_AFIS[c].test(sinLadoNiHabla(d)) : sinLadoNiHabla(d) === c,
-          ) ||
+          (vuelo.torreDijo ?? []).some((d) => loDijo(c, d)) ||
           (c === "torre.holdShort" && holdShortRetirado),
       ) && laPropia
     : /*
