@@ -235,6 +235,10 @@
       "ms": 8207,
       "h": "64897d4474"
     },
+    "inicio.ara.pasaje.kit.avion.bimotorAlaAlta": {
+      "ms": 7907,
+      "h": "9500bdc7f9"
+    },
     "inicio.ara.pasaje.kit.avion.bimotorAncho": {
       "ms": 7107,
       "h": "e94257e117"
@@ -922,6 +926,9 @@
     ],
     "inicio.ara.pasaje.kit.avion.bimotor": [
       "inicio.ara.pasaje.kit.avion.bimotor"
+    ],
+    "inicio.ara.pasaje.kit.avion.bimotorAlaAlta": [
+      "inicio.ara.pasaje.kit.avion.bimotorAlaAlta"
     ],
     "inicio.ara.pasaje.kit.avion.bimotorAncho": [
       "inicio.ara.pasaje.kit.avion.bimotorAncho"

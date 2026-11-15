@@ -1884,6 +1884,15 @@ const DE_ARMA_TU_AVION = [
  * grabado —las frases de Ara de la escena y las charlas de la tripulante—.
  * Al final, que lo grabado no se renumera. Ver `src/flight/lo-que-se-toca.ts`.
  */
+/**
+ * **Y el Tujuju en «Armá tu avión»** (15-11-2026): lo que dice Ara al
+ * despegar el bimotor de ala alta, el JAZ 50. Es de `DE_ARMA_TU_AVION`, pero
+ * metida ahí renumeraría todo lo de Ara que va detrás y ya está grabado: va
+ * al final de todo. Ver `src/flight/kit-de-viaje.ts`.
+ */
+const DEL_TUJUJU = [
+  ["inicio.ara.pasaje.kit.avion.bimotorAlaAlta", "ara", "el modo inicio, de pasaje, armá tu avión: Ara, al despegar el bimotor de ala alta y patas fijas"],
+];
 const DE_LA_VENTANILLA_VIVA = [
   ["inicio.ara.pasaje.toque.invita", "ara", "el modo inicio, de pasaje: Ara invita a tocar lo que se ve por la ventanilla, una vez"],
   ["inicio.ara.pasaje.toque.motor", "ara", "el modo inicio, de pasaje: Ara toca el motor por la ventanilla y cuenta lo que hace"],
@@ -2064,7 +2073,7 @@ const DEL_VUELO_LARGO = [
   ["inicio.tripulacion.pasaje.cerca.largo.vientoBarco", "tripulacion-canarias", "la noche de Madrid: Idaira, como un barco en un río; por eso la vuelta dura unos tres cuartos de hora menos"],
 ];
 const LO_QUE_SE_VE = new Set(
-  [...DEL_VUELO_LARGO, ...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA, ...DE_LOS_INSTRUMENTOS].map(
+  [...DEL_VUELO_LARGO, ...DE_LO_QUE_SE_VE, ...DE_LA_SIESTA, ...DE_LO_QUE_SE_OYE, ...DE_LA_LLEGADA, ...DEL_BANO, ...DE_LA_DEMOSTRACION, ...DE_LA_LUZ_VERDE, ...DE_LO_QUE_SE_RECONOCE, ...DE_ARMA_TU_AVION, ...DE_LA_VENTANILLA_VIVA, ...DE_LA_GRACIA_Y_EL_SILBO, ...DEL_TOQUE, ...DE_LOS_CAMINOS, ...DE_LO_QUE_TOCA, ...DE_LOS_INSTRUMENTOS, ...DEL_TUJUJU].map(
     ([k]) => k,
   ),
 );
@@ -2722,6 +2731,12 @@ for (const [id, para] of DE_LOS_LIOS) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
+}
+for (const [id, voz, para] of DEL_TUJUJU) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz, idioma: "es-PY", texto, para });
   total += texto.length;
 }
 const AJUSTES_CON_CHISPA = {

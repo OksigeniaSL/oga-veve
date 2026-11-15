@@ -20494,5 +20494,19 @@
     "idioma": "es-PY",
     "texto": "Nos quedamos en el pasto, fuera de la raya. No pasa nada: tocá el tractor, que viene a buscarnos y nos lleva a la raya verde",
     "para": "parado en la hierba, fuera de la raya: tocá el tractor, que late, y te lleva a la raya"
+  },
+  {
+    "id": "inicio.ara.pasaje.kit.avion.bimotorAlaAlta",
+    "voz": "ara",
+    "idioma": "es-PY",
+    "texto": "¡Ala arriba y un motor en cada ala! Sus ruedas no se guardan nunca, y baja en pistas cortitas de tierra y de pasto.",
+    "para": "el modo inicio, de pasaje, armá tu avión: Ara, al despegar el bimotor de ala alta y patas fijas",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]
