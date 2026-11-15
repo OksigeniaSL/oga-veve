@@ -3631,6 +3631,26 @@ export function crearTrafico(
     if (marca && encimaDeTi(porElCamino(marca.camino, marca.metros)?.sitio))
       return true;
     /*
+     * **Ni dentro de tu raya, de frente.** Quien sale aparece ya rodando, en
+     * su marca del camino de salida, y si esa marca cae en la calle por la que
+     * vuelves, os encontráis los dos dentro del mismo tramo, de frente: nadie
+     * puede ceder y `repartirLosTramos` lo da por «frente». Pasó en Los Rodeos
+     * por la 30 con el JAZ 110 camino del 26, el único puesto de línea en el
+     * que le caben las alas: el que salía aparecía en la R, en (-314, 249), a
+     * la boca del enlace de los puestos del 11 al 14, con tu raya ya trazada
+     * por ella hacia el oeste, y los dos se quedaban mirándose 24 s hasta que
+     * la red de los atascos lo retiraba. El control de tierra no le da rodaje a quien
+     * entraría de frente en el camino que ya te ha dado: espera a que quepa,
+     * como cuando estás encima. Ver `repartirLosTramos`.
+     */
+    const tuyoEnTierra = opciones.quienJuega?.()?.enTierra;
+    const tuRuta = tuyoEnTierra?.ruta ?? [];
+    if (marca && c?.enTierra && marca.camino === c.salida && tuyoEnTierra && tuRuta.length > 1) {
+      const suyo = porDelanteDe(marca.camino, marca.metros, Math.min(marca.tope ?? Infinity, c.enTierra.eje));
+      const entra = tramoDeFrente(suyo, tuRuta, tuyoEnTierra.separacion);
+      if (entra?.dentro && tramoDeFrente(tuRuta, suyo, tuyoEnTierra.separacion)?.dentro) return true;
+    }
+    /*
      * **Ni encima de otro del tráfico que está en el suelo.** El que sale
      * aparece en el puesto de su tipo, y el que acababa de llegar podía estar
      * aparcado en el de al lado —en Los Rodeos hay puestos a diez metros uno
