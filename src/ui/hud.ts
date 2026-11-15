@@ -1578,6 +1578,12 @@ export class Hud {
           donde nadie se pierde. Ver ponerYaLoSeDeVolver.
         -->
         <span class="volver__ya-lo-se" hidden></span>
+        <!--
+          Y el del tractor que devuelve a la raya, en el mismo hueco: la flecha
+          de casa late en el aire y el tractor en tierra, nunca a la vez. Ver
+          ponerYaLoSeDelTractor.
+        -->
+        <span class="tractor__ya-lo-se" hidden></span>
         </div>
         <!--
           El cartel del cinturón, el de verdad: el de la fila de arriba de un
@@ -2458,6 +2464,10 @@ export class Hud {
     this.root.querySelector(".volver__ya-lo-se")?.addEventListener("click", (ev) => {
       if ((ev.target as Element | null)?.closest('[data-hud="volver-ya-lo-se"]')) this.noExplicarVolverHandler?.();
     });
+    this.root.querySelector(".tractor__ya-lo-se")?.addEventListener("click", (ev) => {
+      if ((ev.target as Element | null)?.closest('[data-hud="tractor-ya-lo-se"]')) this.noExplicarElTractorHandler?.();
+    });
+    this.yaLoSeDelTractor = null;
     // El marcado es nuevo: lo de la flecha de casa se vuelve a poner en el paso siguiente.
     this.yaLoSeDeVolver = null;
     this.casaLate = null;
@@ -5059,6 +5069,29 @@ export class Hud {
   onNoExplicarVolver(handler: () => void): void {
     this.noExplicarVolverHandler = handler;
   }
+
+  /**
+   * **El «ya lo sé» del tractor que devuelve a la raya**, desde la segunda vez que alguien
+   * se queda parado en la hierba y mientras su tarjeta late: `null`, sin él; si no, si
+   * lleva la palabra. Igual que el de la flecha de casa, en el mismo hueco.
+   */
+  ponerYaLoSeDelTractor(conLetras: boolean | null): void {
+    if (conLetras === this.yaLoSeDelTractor) return;
+    this.yaLoSeDelTractor = conLetras;
+    const hueco = this.root.querySelector<HTMLElement>(".tractor__ya-lo-se");
+    if (!hueco) return;
+    hueco.hidden = conLetras === null;
+    hueco.innerHTML = conLetras === null ? "" : botonDeNoExplicar(conLetras, "", 'data-hud="tractor-ya-lo-se"');
+  }
+
+  /** Y su «ya lo sé»: que la instructora no lo explique más. Ver `ponerYaLoSeDelTractor`. */
+  onNoExplicarElTractor(handler: () => void): void {
+    this.noExplicarElTractorHandler = handler;
+  }
+
+  /** Cómo está el «ya lo sé» del tractor, y quién se entera de que lo tocan. */
+  private yaLoSeDelTractor: boolean | null = null;
+  private noExplicarElTractorHandler: (() => void) | null = null;
 
   /** Y si este avión lo lleva, para enseñar el botón. */
   ponerHayPilotoAutomatico(hay: boolean): void {

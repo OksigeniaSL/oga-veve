@@ -1193,8 +1193,11 @@ body {
 /*
  * El «ya lo sé» de la flecha de casa, en el hueco del ⏩, que solo sale de
  * pasaje: volando a los mandos ese sitio está libre. Ver `ponerYaLoSeDeVolver`.
+ * Y el del tractor que devuelve a la raya, en el mismo sitio: uno late en el
+ * aire y el otro en tierra. Ver `ponerYaLoSeDelTractor`.
  */
-.hud .volver__ya-lo-se {
+.hud .volver__ya-lo-se,
+.hud .tractor__ya-lo-se {
   position: absolute;
   top: 0;
   left: calc(100% + 10px);
@@ -1204,11 +1207,13 @@ body {
   pointer-events: auto;
 }
 
-.hud .volver__ya-lo-se[hidden] {
+.hud .volver__ya-lo-se[hidden],
+.hud .tractor__ya-lo-se[hidden] {
   display: none;
 }
 
-.hud .volver__ya-lo-se .no-explicar {
+.hud .volver__ya-lo-se .no-explicar,
+.hud .tractor__ya-lo-se .no-explicar {
   background: var(--barro);
   white-space: nowrap;
 }
