@@ -21579,8 +21579,6 @@ export class Game {
 
   /** Si la vuelta a la raya ya se miró para esta parada. Ver `atenderALaHierba`. */
   private vueltaMirada = false;
-  /** Si en esta vuelta la instructora lo explicó: entonces también cuenta el pasador al soltar. */
-  private vueltaExplicada = false;
 
   /** Si el tractor de la vuelta a la raya lleva el avión. */
   private get remolcandoALaRaya(): boolean {
@@ -21648,7 +21646,6 @@ export class Game {
     const explica = vez.explicar && laInstructoraLoExplica(this.tier.avisos);
     // Con la clave escrita entera: así la ve la lista de grabar (`por-grabar.test.ts`).
     const dicha = explica && this.decirLoGrabado("vuelo.tractorALaRaya");
-    this.vueltaExplicada = dicha;
     this.yaLoSeDelTractor = dicha && vez.ofrecerQuitarla ? canalesDe(this.tier.avisos).texto : null;
   }
 
@@ -21765,9 +21762,11 @@ export class Game {
       this.posicionDelEmpuje.set(p.x, this.terrain.sampleSurface(p.x, p.z) + this.aircraft.gearHeight, p.z);
       this.flight.reset({ position: this.posicionDelEmpuje, heading: p.rumbo, airspeed: 0 });
     }
-    // El pasador y el saludo, contados en los peldaños de abajo si esta vez se explicó.
-    if (r.fase === "saludando" && antes !== "saludando" && this.vueltaExplicada && laInstructoraLoExplica(this.tier.avisos))
-      this.instructor.decir(t("vuelo.remolqueSuelta"), "vuelo.remolqueSuelta");
+    /*
+     * El pasador y el saludo se ven, pero aquí no se cuentan: la frase del empuje
+     * acaba en «ya podés rodar», y con el motor parado lo que toca es arrancarlo,
+     * que es lo que dice la instructora justo al soltar. Un suceso, una voz.
+     */
     if (r.libre && antes !== "libre") {
       this.retirarLaTarjetaDelTractor();
       this.pedirElArranqueTrasElTractor();
@@ -21801,7 +21800,6 @@ export class Game {
     this.tractorOfrecido = false;
     this.vueltaPensada = null;
     this.vueltaMirada = false;
-    this.vueltaExplicada = false;
     this.motorParadoPorElTractor = false;
     this.yaLoSeDelTractor = null;
   }
