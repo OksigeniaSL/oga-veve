@@ -8059,6 +8059,25 @@ const conAfis = {
 };
 /** La clave sin el lado de la pista ni el habla del campo. */
 const sinLadoNiHabla = (d) => d.replace(/\.[LCR]$/, "").replace(".canario.", ".");
+/*
+ * **Y el «hold short» con su porqué también es un «hold short».** La torre lo
+ * dice a secas o con lo que se espera —«landing traffic», «departing
+ * traffic», tu número en la fila, la estela—, ver `audio/torre.ts`; y aquí se
+ * pedía solo a secas, aunque en el AFIS se aceptaban sus equivalentes con
+ * porqué. De Los Rodeos con el JAZ 90 la torre dijo «hold short of the
+ * runway, landing traffic» y nada más, y esto lo contaba como una torre que
+ * no manda parar.
+ */
+const LO_DICE_UNA_TORRE = {
+  "torre.holdShort":
+    /^torre\.holdShort(?:Landing|Departing|NumberTwo|NumberThree|Wake)?$/,
+};
+const loDijo = (c, d) =>
+  conAfis[c]
+    ? LO_DICE_UN_AFIS[c].test(sinLadoNiHabla(d))
+    : LO_DICE_UNA_TORRE[c]
+      ? LO_DICE_UNA_TORRE[c].test(sinLadoNiHabla(d))
+      : sinLadoNiHabla(d) === c;
 
 /*
  * **Y la fraseología tiene edad.**
@@ -8134,9 +8153,7 @@ else comprobar(
        */
       DE_UN_VUELO.every(
         (c) =>
-          (vuelo.torreDijo ?? []).some((d) =>
-            conAfis[c] ? LO_DICE_UN_AFIS[c].test(sinLadoNiHabla(d)) : sinLadoNiHabla(d) === c,
-          ) ||
+          (vuelo.torreDijo ?? []).some((d) => loDijo(c, d)) ||
           (c === "torre.holdShort" && holdShortRetirado),
       ) && laPropia
     : /*
