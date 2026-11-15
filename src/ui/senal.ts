@@ -1127,6 +1127,22 @@ const REMOLQUE = icono(`
 `);
 
 /**
+ * **La vuelta a la raya**: el mismo avión con el tractor pegado a su morro, pero la flecha
+ * va hacia delante y tuerce hasta la raya, que es la línea gruesa de la derecha. El del
+ * puesto lleva al avión para atrás; éste, de la hierba a la raya. Ver
+ * `Game.atenderALaHierba`.
+ */
+const TRACTOR_A_LA_RAYA = icono(`
+  <g transform="translate(7.5 14) scale(0.68) translate(-12 -12)">
+    <path d="M12 4 13.4 11 21 12.6v1.6l-7.6-1.2L12 20l-1.4-6.2L3 14.2v-1.6L10.6 11Z" />
+  </g>
+  <rect x="5.7" y="4.2" width="3.6" height="3.4" rx="0.8" />
+  <path d="M21.6 2.5 V21.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
+  <path d="M10.6 5.6 Q14.6 5.2 16.2 9.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+  <path d="M13.6 9.2 L18.8 8.4 L16.4 13.4 Z" />
+`);
+
+/**
  * **El pasador de la rueda de morro, con su cinta roja**: la anilla, la varilla y la
  * cinta colgando. Es lo que la persona de tierra enseña en alto al acabar el empuje,
  * para que la cabina vea que ya lo quitó: sin él, la rueda de morro vuelve a ser de
@@ -1600,6 +1616,7 @@ export const DIBUJOS = {
   verde: VERDE,
   "media-vuelta": MEDIA_VUELTA,
   remolque: REMOLQUE,
+  "tractor-a-la-raya": TRACTOR_A_LA_RAYA,
   pasador: PASADOR,
   baliza: BALIZA,
   "vuelta-derecha": vueltaEntera(false),

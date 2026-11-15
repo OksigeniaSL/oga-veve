@@ -11,6 +11,7 @@ import {
   hayTractor,
   llegadaDelTractor,
   PARADO,
+  rayaQueQuedaPorDelante,
   remolqueALaRaya,
   SE_MOVIO,
   UN_RATO,
@@ -137,6 +138,15 @@ describe("a qué punto de la raya", () => {
       expect(hangar(10 + (d.punto.x - 10) * t, 40 + (d.punto.z - 40) * t)).toBe(false);
     }
     expect(Math.abs(d.punto.x - 10)).toBeGreaterThan(20);
+  });
+
+  it("y no encima de la doble raya del final: esos metros los rueda quien juega", () => {
+    // Parado en la hierba junto al final de la raya, que es el punto de espera.
+    const alFinal = rayaQueQuedaPorDelante(11.5);
+    const d = destinoEnLaRaya({ x: 195, z: 40 }, RECTA, sitioSencillo(), 6, alFinal)!;
+    expect(200 - d.punto.x).toBeGreaterThanOrEqual(alFinal - 2);
+    const e = remolqueALaRaya({ x: 195, z: 40, rumbo: Math.PI }, RECTA, d, 11.5)!;
+    expect(200 - e.poses.at(-1)!.x).toBeGreaterThan(10);
   });
 
   it("y si no hay por dónde, no hay tractor", () => {

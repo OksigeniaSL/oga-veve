@@ -1109,6 +1109,7 @@ import {
   enElCampo,
   hayTractor,
   llegadaDelTractor,
+  rayaQueQuedaPorDelante,
   remolqueALaRaya,
   VigiaDeLaHierba,
   type DestinoEnLaRaya,
@@ -21342,7 +21343,9 @@ export class Game {
     const s = this.flight.state;
     const raya = (this.plan?.laRaya ?? []).map(([x, z]) => ({ x, z }));
     const sitio = elSitioDe(aero, this.aircraft.wingSpan);
-    const destino = destinoEnLaRaya({ x: s.position.x, z: s.position.z }, raya, sitio);
+    // Y antes de la doble raya del punto de espera, que esos metros los rueda quien juega.
+    const alFinal = rayaQueQuedaPorDelante(this.aircraft.batalla);
+    const destino = destinoEnLaRaya({ x: s.position.x, z: s.position.z }, raya, sitio, 6, alFinal);
     if (!destino) return null;
     const empuje = remolqueALaRaya({ x: s.position.x, z: s.position.z, rumbo: s.heading }, raya, destino, this.aircraft.batalla);
     return empuje ? { destino, empuje, raya } : null;
@@ -21355,7 +21358,7 @@ export class Game {
    */
   private ofrecerElTractor(): void {
     const clave = claveDelAviso(this.tier.avisos, "vuelo.tractorALaRaya.tarjeta", "palabra.tractor");
-    this.hud.senal.mostrar("remolque", clave ? t(clave as TranslationKey) : "", null, {
+    this.hud.senal.mostrar("tractor-a-la-raya", clave ? t(clave as TranslationKey) : "", null, {
       segundos: Infinity,
       accion: () => this.pedirLaVueltaALaRaya(),
       llama: true,
@@ -21365,8 +21368,8 @@ export class Game {
 
   /** Y fuera, si es la que está: vuelve la tarjeta de la fase, callada. */
   private retirarLaTarjetaDelTractor(): void {
-    if (this.hud.senal.puesto.dibujo !== "remolque") return;
-    this.hud.senal.caducar("remolque");
+    if (this.hud.senal.puesto.dibujo !== "tractor-a-la-raya") return;
+    this.hud.senal.caducar("tractor-a-la-raya");
     this.faseAnunciada = "";
     this.soloLaTarjeta = true;
   }
@@ -21413,7 +21416,7 @@ export class Game {
     this.tractorOfrecido = false;
     this.vueltaPensada = null;
     // La tarjeta se queda con el tractor, sin nada que tocar: ya está pedido.
-    this.hud.senal.mostrar("remolque", "", null, { segundos: Infinity, prioridad: IMPORTANTE });
+    this.hud.senal.mostrar("tractor-a-la-raya", "", null, { segundos: Infinity, prioridad: IMPORTANTE });
     this.avisar("success");
   }
 
@@ -21488,6 +21491,30 @@ export class Game {
   /** Para el banco: toca la tarjeta del tractor, como un dedo. */
   tocarElTractorParaBanco(): void {
     this.pedirLaVueltaALaRaya();
+  }
+
+  /**
+   * Para el banco: **un sitio del campo a `metros` de la raya**, libre de edificios y de
+   * pistas, mirando hacia fuera, que es como se queda quien se sale. `null` si no hay.
+   */
+  hierbaJuntoALaRayaParaBanco(metros = 40): { x: number; z: number; rumbo: number } | null {
+    const aero = this.plan?.aerodromoActual;
+    if (!aero) return null;
+    const raya = this.plan?.laRaya ?? [];
+    const sitio = elSitioDe(aero, this.aircraft.wingSpan);
+    for (let i = 0; i < raya.length - 1; i++) {
+      const [ax, az] = raya[i]!;
+      const [bx, bz] = raya[i + 1]!;
+      if (Math.hypot(bx - ax, bz - az) < 10) continue;
+      const va = Math.atan2(bx - ax, -(bz - az));
+      for (const lado of [1, -1]) {
+        const n = vector(va + (lado * Math.PI) / 2);
+        const x = (ax + bx) / 2 + n.x * metros;
+        const z = (az + bz) / 2 + n.z * metros;
+        if (enElCampo(aero, x, z) && sitio.libre(x, z)) return { x, z, rumbo: va + (lado * Math.PI) / 2 };
+      }
+    }
+    return null;
   }
 
   /**

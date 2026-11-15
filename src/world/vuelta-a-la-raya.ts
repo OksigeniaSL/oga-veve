@@ -265,11 +265,19 @@ export function destinoEnLaRaya(
   raya: readonly PuntoXZ[],
   sitio: ElSitio,
   delante = 6,
+  /**
+   * **Cuánta raya tiene que quedar por delante**, m. El final de la raya de salida es la
+   * doble raya del punto de espera, y un tractor no deja a nadie encima de ella: lo deja en
+   * la calle, y los últimos metros hasta la espera, y la luz de la torre, son de quien
+   * rueda. Si la raya entera es más corta, no se pide.
+   */
+  alFinal = 0,
 ): DestinoEnLaRaya | null {
   if (raya.length < 2) return null;
   const { enLaRaya, total } = recorrer(raya);
+  const hasta = total > 2 * alFinal ? total - alFinal : total;
   const candidatos: { readonly s: number; readonly p: PuntoXZ; readonly d: number }[] = [];
-  for (let s = 0; s <= total; s += CADA_CUANTO) {
+  for (let s = 0; s <= hasta; s += CADA_CUANTO) {
     const p = enLaRaya(s);
     const d = Math.hypot(p.x - desde.x, p.z - desde.z);
     if (d <= HASTA_DONDE_VA) candidatos.push({ s, p, d });
@@ -310,6 +318,23 @@ function rectaLibre(a: PuntoXZ, b: PuntoXZ, sitio: ElSitio): boolean {
 const PASO = 0.25;
 
 /**
+ * **Cuántos metros de raya remolca el tractor pasado el punto**, para que el avión acabe
+ * encima de ella y mirando hacia donde sigue: tres batallas, que es lo que tarda en
+ * enderezarse quien sigue un camino mirando a una batalla por delante.
+ */
+export function loQueSeSigue(batalla: number): number {
+  return Math.max(24, 3 * batalla);
+}
+
+/**
+ * **Lo que tiene que quedar de raya por delante del punto** para que el remolque acabe
+ * antes de la doble raya del punto de espera, con holgura: ver `destinoEnLaRaya`.
+ */
+export function rayaQueQuedaPorDelante(batalla: number): number {
+  return loQueSeSigue(batalla) + 15;
+}
+
+/**
  * **El remolque hasta la raya**: las posturas del avión, una cada medio metro, desde donde
  * se quedó parado hasta el punto de la raya y unos metros más por ella, para que acabe
  * sobre la raya y mirando hacia donde sigue.
@@ -331,12 +356,7 @@ export function remolqueALaRaya(
   batalla: number,
 ): Empuje | null {
   const { enLaRaya, total } = recorrer(raya);
-  /*
-   * Unos metros de raya por delante del punto, para que el avión acabe encima de ella y
-   * mirando hacia donde sigue: tres batallas, que es lo que tarda en enderezarse quien
-   * sigue un camino mirando a una batalla por delante.
-   */
-  const sigue = Math.max(24, 3 * batalla);
+  const sigue = loQueSeSigue(batalla);
   const camino: PuntoXZ[] = [{ x: desde.x, z: desde.z }, destino.punto];
   for (let s = destino.s + 2; s <= Math.min(total, destino.s + sigue); s += 2) camino.push(enLaRaya(s));
   const final = camino[camino.length - 1]!;
