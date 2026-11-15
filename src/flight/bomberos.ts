@@ -59,6 +59,31 @@
  * lleva carga pide un nivel de protección 7 (EASA, AMC2 ADR.OPS.B.010(a)(2) c,
  * tabla 2). Por eso a Guaraní, que es de la 7, han ido 747 de carga, y ningún
  * 747 de pasaje.
+ *
+ * ## Y dónde no se mira: la pista de una estancia
+ *
+ * Decidido por Enrique (15-11-2026): «nos saltamos la regla de bomberos» en
+ * la pista privada de una estancia, que en el juego es Yvytu Rape.
+ *
+ * Y es lo que pasa de verdad, por los dos lados de la regla:
+ *
+ * - **El del aeródromo.** Lo del Anexo 14 —sus bomberos incluidos— es para
+ *   los aeródromos abiertos al uso público (volumen I, 1.2.1). Una pista
+ *   privada no publica categoría porque no tiene a quién publicársela: no
+ *   sale en ningún AIP.
+ * - **El del vuelo.** La tabla F-1 es la del vuelo regular. A una estancia no
+ *   va una línea, sino un vuelo a demanda —un taxi aéreo, un chárter— o el
+ *   avión del dueño. La FAA lo escribe con números: la certificación de un
+ *   aeropuerto, con sus bomberos, solo se pide donde operan vuelos regulares
+ *   de más de nueve plazas o vuelos a demanda de más de treinta (14 CFR
+ *   139.1). Un Twin Otter de diecinueve plazas a demanda va a una pista sin
+ *   certificar, y es justo para lo que se construyó.
+ *
+ * Así que en Yvytu Rape cuenta solo la pista: el JAZ 50 cabe en sus
+ * novecientos metros de hierba, y el JAZ 60 sigue sin caber, por largo. En
+ * Concepción, Pilar, Ayolas y Estigarribia la regla sigue: son aeródromos
+ * públicos que publican que no tienen bomberos. Ver `privada` en
+ * `world/bomberos-publicados.ts`.
  */
 
 import type { AircraftConfig } from "./aircraft";

@@ -35,7 +35,8 @@
  *   bomberos para el avión más grande que recibe, y publica su categoría; un
  *   avión de línea va adonde su categoría, o una menos, está cubierta. Lo
  *   pidió Enrique al ver la tabla: «pues aplica la regla de los bomberos».
- *   Ver `flight/bomberos.ts`.
+ *   No se mira en una pista privada, la de una estancia: ver
+ *   `flight/bomberos.ts`.
  *
  * ## Con qué cabecera
  *
@@ -63,7 +64,7 @@ import { pistaQueNecesita } from "./carrera";
 import { GIRO_DE_MORRO } from "./fdm";
 import type { Superficie } from "../world/superficie";
 import { umbralPublicado } from "../world/umbrales-publicados";
-import { bomberosDe } from "../world/bomberos-publicados";
+import { bomberosDe, seMiranLosBomberos } from "../world/bomberos-publicados";
 import { categoriaQueAcepta } from "./bomberos";
 
 /** Lo que hace falta saber de un campo para decidir. */
@@ -214,8 +215,9 @@ export function campoDe(escenario: Scenario): Campo {
     superficie: blanda ? "hierba" : "asfalto",
     tora: publicadas.length ? Math.max(...publicadas.map((u) => u.tora)) : largo,
     lda: publicadas.length ? Math.max(...publicadas.map((u) => u.lda)) : largo,
-    // Los bomberos, de su AIP. Sin aeródromo, no se miran.
-    ...(oaci ? { bomberos: bomberosDe(oaci) ?? 0 } : {}),
+    // Los bomberos, de su AIP. Sin aeródromo, o en una pista privada, no se
+    // miran: ver `seMiranLosBomberos`.
+    ...(seMiranLosBomberos(oaci) ? { bomberos: bomberosDe(oaci) ?? 0 } : {}),
   };
 }
 

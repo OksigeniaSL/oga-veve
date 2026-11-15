@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT, aircraftById } from "./aircraft";
+import { AIRCRAFT, aircraftById, RESERVADOS } from "./aircraft";
 import {
   categoriaDelAvion,
   categoriaPorMedidas,
@@ -15,7 +15,7 @@ import {
   MEDIDAS_DEL_TIPO,
 } from "./bomberos";
 import { cabeEn, campoDe, destinosParaEsteAvion } from "./cabe";
-import { BOMBEROS, bomberosDe } from "../world/bomberos-publicados";
+import { BOMBEROS, bomberosDe, seMiranLosBomberos } from "../world/bomberos-publicados";
 import { camionesDeLaCategoria, juntoAlAvion, juntoALaPista } from "../world/bomberos";
 import { destinosDe, oaciDe, SCENARIOS, scenarioById } from "../world/scenarios";
 import { DE_SERIE, ponerLasDeSerie } from "../ui/explicaciones-de-serie";
@@ -121,6 +121,21 @@ describe("y en qué cambia qué avión cabe dónde", () => {
       expect(v.cabe, campo).toBe(false);
       expect(v.porQueNo, campo).toBe("bomberos");
     }
+  });
+
+  /*
+   * **La pista privada de una estancia no entra en la regla** (Enrique,
+   * 15-11-2026). Allí cuenta solo la pista: el Twin Otter cabe, que es para
+   * lo que está, y el turbohélice de diecinueve plazas sigue fuera por largo.
+   */
+  it("en la pista de la granja no se miran: el Twin Otter cabe, y el JAZ 60 sigue fuera por la pista", () => {
+    const granja = campoDe(scenarioById("yvytu-rape"));
+    expect(granja.bomberos).toBeUndefined();
+    expect(seMiranLosBomberos("SGOG")).toBe(false);
+    expect(seMiranLosBomberos("SGCO")).toBe(true);
+    expect(cabeEn(RESERVADOS.find((a) => a.id === "jaz-50")!, granja).cabe).toBe(true);
+    expect(cabe("jaz-60", "yvytu-rape").porQueNo).toBe("corta");
+    expect(cabe("jaz-90", "yvytu-rape").porQueNo).toBe("corta");
   });
 
   it("y la avioneta, que no lleva pasaje de pago, va igual", () => {

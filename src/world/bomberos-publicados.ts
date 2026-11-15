@@ -28,6 +28,10 @@
  *   cabotaje, sin bomberos y con la pista reservada a los aviones de la
  *   Entidad Binacional Yacyretá; y Yvytu Rape es la pista de Granja Óga, que no
  *   sale en ningún AIP. Los cinco van con categoría 0: ninguna.
+ * - **Y una pista privada no entra en la regla.** Yvytu Rape es la pista de una
+ *   estancia, sin uso público, y ahí la regla de los bomberos no se mira: ver
+ *   `privada` y la cabecera de `flight/bomberos.ts`. Sus bomberos siguen
+ *   siendo ninguno, y en un ejercicio no sale ningún camión.
  *
  * Los escenarios inventados —el valle y el Chaco— no tienen aeródromo ni AIP,
  * y en ellos esta regla no se mira.
@@ -43,6 +47,13 @@ export interface BomberosPublicados {
    * lo que haría una compañía con un vuelo regular de un avión de la 8.
    */
   readonly aPeticion?: number;
+  /**
+   * **Una pista privada, sin uso público**: la de una estancia, que no sale en
+   * ningún AIP. Lo que pide el Anexo 14 de bomberos es para los aeródromos
+   * abiertos al uso público, y la regla de los de línea no se le aplica. Ver
+   * la cabecera de `flight/bomberos.ts`.
+   */
+  readonly privada?: true;
 }
 
 /** Por indicativo OACI. */
@@ -84,8 +95,8 @@ export const BOMBEROS: Readonly<Record<string, BomberosPublicados>> = {
   SGPI: { categoria: 0 },
   // Solo en el AD 3, sin bomberos y reservada a los aviones de Yacyretá.
   SGAY: { categoria: 0 },
-  // La pista de la granja: no sale en ningún AIP.
-  SGOG: { categoria: 0 },
+  // La pista de la granja: no sale en ningún AIP, y es privada.
+  SGOG: { categoria: 0, privada: true },
 };
 
 /**
@@ -98,4 +109,12 @@ export function bomberosDe(oaci: string | null | undefined): number | null {
   const b = BOMBEROS[oaci];
   if (!b) return null;
   return Math.max(b.categoria, b.aPeticion ?? 0);
+}
+
+/**
+ * **Si en ese aeródromo se mira la regla de los bomberos**: en todos los de la
+ * tabla menos en una pista privada. Ver `privada`.
+ */
+export function seMiranLosBomberos(oaci: string | null | undefined): boolean {
+  return !!oaci && !BOMBEROS[oaci]?.privada;
 }

@@ -32,9 +32,9 @@
  * que estar para que nadie los bautice dos veces, y se apunta en `ESTA_HECHO`
  * el día que vuele.
  *
- * Y hay uno a medias: el JAZ 50, el de la clase del Twin Otter, con su número
- * reservado y su ficha de vuelo medida, pero sin pájaro y sin silueta. Va en
- * `EN_EL_TALLER` y no en la tabla: ver allí por qué.
+ * Y hay uno a medias: el JAZ 50 Tujuju, el de la clase del Twin Otter, con su
+ * número y su pájaro reservados y su ficha de vuelo medida, pero sin silueta.
+ * Va en `EN_EL_TALLER` y no en la tabla: ver allí por qué.
  *
  * Y los nombres salen a producción sin esperar a nadie. Si alguno resulta
  * tener un sentido coloquial desafortunado en guaraní, se cambia la palabra y
@@ -326,6 +326,8 @@ export interface EnElTaller {
    * solo por su número. Lo decide Enrique, que es quien bautiza.
    */
   readonly nombre: string | null;
+  /** Qué es ese pájaro, para quien no habla guaraní; `null` sin pájaro. */
+  readonly pajaro: string | null;
   /** El identificador de su ficha en `aircraft.ts`. */
   readonly id: string;
   /** La clase de avión de verdad cuyos números vuela. Para quien lo lea. */
@@ -348,12 +350,33 @@ export interface EnElTaller {
  * ficha va en `RESERVADOS`, que es lo que mide el banco sin ofrecerlo.
  */
 export const EN_EL_TALLER: readonly EnElTaller[] = [
-  { numero: 50, nombre: null, id: "jaz-50", clase: "DHC-6 Twin Otter Series 400" },
+  {
+    numero: 50,
+    nombre: "Tujuju",
+    pajaro: "tuyuyú",
+    id: "jaz-50",
+    clase: "DHC-6 Twin Otter Series 400",
+    /*
+     * **La cigüeña de los esteros**, decidido por quien bautiza (15-11-2026).
+     * Ala larga y recta que planea despacio, y vive en los esteros del
+     * Ñeembucú y del Chaco, en el barro y en el agua: donde están las pistas
+     * de estancia a las que va este avión, y donde se posará con flotadores.
+     *
+     * *Tujuju* es la palabra guaraní de la que viene el «tuyuyú» del
+     * castellano del Paraguay (RAE, *Diccionario histórico*, «tuyuyú», 7.ª
+     * entrega, 2019), y Wikispecies da *tujuju kangy* para *Mycteria
+     * americana*, el tuyuyú a secas. Ese pájaro vuela en el mundo —ver
+     * `tuyuyu` en `world/aves.ts`—, así que el avión se llama como lo que se
+     * ve desde su ventanilla, como el Pykasu y las palomas. No choca con
+     * ningún tramo ni con ningún personaje de Granja Óga.
+     */
+  },
 ];
 
 /**
  * El nombre entero del que tiene ese identificador: «JAZ 70 Kirikiri'i». Del
- * que está en el taller sin pájaro, el fabricante y el número: «JAZ 50».
+ * que está en el taller, igual si ya tiene pájaro —«JAZ 50 Tujuju»—, y si
+ * no, el fabricante y el número.
  */
 export function nombreEnteroDe(id: string): string {
   const m = modeloPorId(id);

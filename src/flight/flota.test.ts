@@ -187,8 +187,15 @@ describe("lo que está en el taller", () => {
     }
   });
 
-  it("y sin pájaro se llama por su número", () => {
-    expect(nombreEnteroDe("jaz-50")).toBe("JAZ 50");
-    expect(RESERVADOS.find((a) => a.id === "jaz-50")!.name).toBe("JAZ 50");
+  it("y se llama por su número y su pájaro, como los de la tabla", () => {
+    expect(nombreEnteroDe("jaz-50")).toBe("JAZ 50 Tujuju");
+    expect(RESERVADOS.find((a) => a.id === "jaz-50")!.name).toBe("JAZ 50 Tujuju");
+  });
+
+  it("y su pájaro tampoco se llama como un tramo", () => {
+    const tramos = TIERS.map((t) => t.name.toLowerCase());
+    for (const t of EN_EL_TALLER) {
+      if (t.nombre) expect(tramos, t.id).not.toContain(t.nombre.toLowerCase());
+    }
   });
 });
