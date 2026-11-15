@@ -130,14 +130,25 @@ try {
   await page.waitForTimeout(800);
   const pedido = await page.evaluate(() => globalThis.__oga.vueltaALaRaya());
   comprobar("el toque llama al tractor", pedido.fase === "llegando", JSON.stringify(pedido));
+  // Y el tractor espera en la calle mientras la hélice se para: a los ochocientos ms no se ha movido.
+  const quieto = await page.evaluate(() => globalThis.__oga.vueltaALaRaya().tractor);
+  await page.waitForTimeout(1500);
+  const tras = await page.evaluate(() => globalThis.__oga.vueltaALaRaya().tractor);
+  comprobar(
+    "el tractor no se acerca hasta que la hélice está quieta",
+    quieto && tras && Math.hypot(tras.x - quieto.x, tras.z - quieto.z) < 0.5,
+    quieto && tras ? `se movió ${Math.hypot(tras.x - quieto.x, tras.z - quieto.z).toFixed(1)} m en 1,5 s` : "",
+  );
 
-  // El tractor llega, engancha, remolca y suelta.
+  // El tractor llega, engancha, remolca y suelta, con el motor parado todo el rato.
   const fases = [];
   let capturas = 0;
   let gasesRemolcando = null;
+  let motorEnMarcha = false;
   const t0 = Date.now();
   for (;;) {
     const v = await page.evaluate(() => globalThis.__oga.vueltaALaRaya());
+    if (v.fase !== "libre" && (await page.evaluate(() => globalThis.__oga.controles().engineOn))) motorEnMarcha = true;
     if (v.fase !== fases[fases.length - 1]) {
       // Remolcando, quien juega da gas a fondo: la palanca tiene que volver a ralentí.
       if (v.fase === "empujando") {
@@ -165,6 +176,28 @@ try {
     "remolcando, los gases se quedan a ralentí aunque se pida motor",
     gasesRemolcando === 0,
     `palanca a ${gasesRemolcando} tras pedir 1`,
+  );
+  comprobar("el motor, parado mientras el tractor se acerca y remolca", !motorEnMarcha, motorEnMarcha ? "en marcha" : "parado");
+  // Al soltar, la llave late; un toque, y el motor arranca como al empezar un vuelo.
+  await page.waitForTimeout(1000);
+  const llave = await page.evaluate(() => {
+    const b = document.querySelector('[data-hud="senal"]');
+    return {
+      dibujo: globalThis.__oga.vueltaALaRaya().tarjeta,
+      pulsable: !!b?.classList.contains("senal--pulsable"),
+      motor: globalThis.__oga.controles().engineOn,
+      fase: globalThis.__oga.fase(),
+    };
+  });
+  const cajaLlave = await page.locator('[data-hud="senal"]').boundingBox();
+  if (cajaLlave) await page.touchscreen.tap(cajaLlave.x + cajaLlave.width / 2, cajaLlave.y + cajaLlave.height / 2);
+  await page.waitForTimeout(1500);
+  const arrancado = await page.evaluate(() => globalThis.__oga.controles().engineOn);
+  await page.screenshot({ path: `${CARPETA}/${4 + capturas}-arrancado.png` });
+  comprobar(
+    "al soltar, la llave late, y tocarla arranca el motor sin acabar el vuelo",
+    !llave.motor && llave.dibujo === "llave" && llave.pulsable && arrancado && llave.fase !== "apagado",
+    `${JSON.stringify(llave)} → motor ${arrancado ? "en marcha" : "parado"}`,
   );
   const fin = await page.evaluate((ruta) => {
     const o = globalThis.__oga;

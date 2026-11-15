@@ -675,6 +675,14 @@ export class Remolque {
   /** Y si ya están en marcha: lo pone quien lleva el avión en cada paso. */
   motoresEnMarcha = false;
 
+  /**
+   * **Si el tractor de la vuelta a la raya puede acercarse ya**: con la hélice o los
+   * motores todavía girando, no. Nadie de tierra se acerca a la rueda de morro con una
+   * hélice girando delante, ni a un reactor en marcha; el tractor espera en la calle. Lo
+   * pone quien lleva el avión en cada paso.
+   */
+  puedeLlegar = true;
+
   /** **Que empiece a empujar**: lo pide la cabina. Solo vale enganchado. */
   empezar(): void {
     if (this.faseAhora === "enganchado") this.pasarA("empujando");
@@ -690,6 +698,8 @@ export class Remolque {
     this.enFase += dt;
     switch (this.faseAhora) {
       case "llegando":
+        // Y no se acerca hasta que el motor está parado: ver `puedeLlegar`.
+        if (!this.puedeLlegar) break;
         if (this.llegar(dt)) {
           this.tractorAhora = this.tractorEnganchado();
           this.rumboDelTractor = this.tractorAhora.rumbo;
