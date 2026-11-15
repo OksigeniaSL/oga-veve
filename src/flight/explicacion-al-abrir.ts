@@ -56,6 +56,12 @@ export const PANTALLAS_QUE_SE_EXPLICAN = {
   consola: "explicacionDeLaConsola",
   cruz: "explicacionDeLaCruz",
   adelantar: "explicacionDelAdelanto",
+  /*
+   * **Y la flecha de casa que late cuando alguien se pierde lejos**: no es una
+   * pantalla, pero sale igual de golpe, y se explica y se deja de explicar
+   * igual. Ver `flight/perdido.ts`.
+   */
+  aCasa: "explicacionDeVolverACasa",
 } as const;
 
 export type PantallaQueSeExplica = keyof typeof PANTALLAS_QUE_SE_EXPLICAN;

@@ -328,6 +328,15 @@ Todo se mide contra la propia ficha (es contenedor), y así vale igual en la tab
 - *Vacío*: lo que no se ha ganado no se enseña. Un hueco vacío es un reproche y un visto que aparece es un premio: sin
   un visto no hay ni manga ni hoja.
 - *Error de quien juega*: no hay mensaje de error. Se ve la consecuencia y se vuelve a intentar.
+- *Cada lío, un arreglo de un toque que la instructora señala sola* (guía de edades, 13-11-2026). **El percance**: la
+  flecha de volver a empezar late mientras ella dice «Se rompió. Volvemos a empezar». **Perdido lejos o mar adentro**
+  —a más de 10 km de todo campo del vuelo, o de 5 sobre el mar, con la aguja detrás y sin ir hacia otro campo—: la
+  flecha de casa late (el halo ocre y la aguja que crece sin dejar de girar) y tocarla, o la J, pone el automático con
+  el rumbo hacia la aguja (`HDG SEL`) y el avión vira; tocada, deja de llamar. Ella lo dice una vez, en voz en los tres
+  peldaños de abajo, con «¡A casa!» en Tukã y la frase entera desde Taguató; lo repite solo si se volvió de verdad
+  hacia casa y se vuelve a perder, nunca por reloj, y desde la segunda vez ofrece «ya lo sé», que se recupera en los
+  ajustes. En el avión sin automático no se inventa uno: pide virar hasta que la flecha apunte arriba
+  (`src/flight/perdido.ts`).
 
 ## 5. Maquetación
 
@@ -518,6 +527,7 @@ Poco, corto y con sentido. Los valores:
 | Latido de la viñeta | 900 ms |
 | Tutor que respira | escala 1,14 cada 1,6 s |
 | Señal pulsable que llama | halo ocre de 5 px cada 1,8 s |
+| Flecha de casa que llama (perdido) | halo ocre de 6 px y la aguja a 1,22, cada 1,8 s |
 | Cuadro que baja y sube | 260 ms |
 | Gafas que se ponen | 0,45 s |
 | Cartel del cinturón al tocar el interruptor | dos destellos de 0,5 s |
@@ -529,12 +539,13 @@ flotante y solo se redondea al dibujar: un instrumento que tiembla en reposo mie
 
 **Con «reducir movimiento»**, que puede venir del sistema o de la fila «Movimiento» de los ajustes (la tablet del aula
 es de todos y quien se marea no puede tocar su ajuste del sistema), la raíz lleva `.sin-movimiento` y la hoja atiende
-a las dos cosas. Se quedan quietos: la entrada de los paneles, los parpadeos y latidos (aviso, viñeta, tutor, señal),
-la bajada del cuadro, las gafas, el ángulo de visión que se abre con la velocidad, el traqueteo en la carrera de
-despegue, la cabeza que se mueve en la cabina y la que se asoma en la ventanilla, y el giro de la cámara de escena. El
-relámpago sube despacio y no pasa de un tercio. **Se queda toda la información**: una luz de aviso del cuadro no
-parpadea, se enciende y se queda; un cambio no parpadea, luce y se apaga. El cartel del cinturón no destella: se
-enciende y el timbre marca el instante; y la flecha del aviso de versión nueva no gira: el borde ámbar dice que va.
+a las dos cosas. Se quedan quietos: la entrada de los paneles, los parpadeos y latidos (aviso, viñeta, tutor, señal,
+flecha de casa), la bajada del cuadro, las gafas, el ángulo de visión que se abre con la velocidad, el traqueteo en la
+carrera de despegue, la cabeza que se mueve en la cabina y la que se asoma en la ventanilla, y el giro de la cámara de
+escena. El relámpago sube despacio y no pasa de un tercio. **Se queda toda la información**: una luz de aviso del
+cuadro no parpadea, se enciende y se queda; un cambio no parpadea, luce y se apaga. El cartel del cinturón no
+destella: se enciende y el timbre marca el instante; y la flecha del aviso de versión nueva no gira: el borde ámbar
+dice que va.
 
 ### La voz
 

@@ -131,9 +131,12 @@ export function rotuloDeLosGases(clase: ClaseDeRecogida, que: QueHacenLosGases):
  *   VNAV, «1°..6°, default 3°». El automático del juego sostiene el rumbo que
  *   llevabas al ponerlo, con el *bug* de rumbo llevado a él —es lo que enseña
  *   la ventanilla HDG—, y en un E-Jet eso es `HDG` con el *bug* sincronizado:
- *   `HDG HOLD` no está entre sus modos.
+ *   `HDG HOLD` no está entre sus modos. Y con el *bug* girado hacia el campo
+ *   al tocar la flecha de casa, también `HDG`: es justo «returns to selected
+ *   HDG».
  * - **En la de Boeing (el JAZ 120, de la clase del 747-400)**, las de Boeing:
- *   `HDG HOLD` y `LOC`; `ALT`, `V/S`, `FLCH SPD`, `VNAV PTH` y `G/S`. De
+ *   `HDG HOLD`, `HDG SEL` —el rumbo de la ventanilla, el de volver al campo con
+ *   la flecha de casa— y `LOC`; `ALT`, `V/S`, `FLCH SPD`, `VNAV PTH` y `G/S`. De
  *   ellas, en documento oficial se ha podido leer `VNAV PTH` en la columna
  *   vertical del FMA de un 747-428 —«THR LNAV VNAV PTH»— (BEA, informe del
  *   accidente del F-GITA, Tahití, 1993, p. 18) y los modos `FLCH`, `V/S` y
@@ -148,6 +151,7 @@ export function rotuloDelModo(clase: ClaseDeRecogida, modo: ModoLateral | ModoVe
   if (clase !== "electricos") return modo;
   switch (modo) {
     case "HDG HOLD":
+    case "HDG SEL":
       return "HDG";
     case "V/S":
       return "VS";

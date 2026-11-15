@@ -1190,6 +1190,29 @@ body {
   white-space: nowrap;
 }
 
+/*
+ * El «ya lo sé» de la flecha de casa, en el hueco del ⏩, que solo sale de
+ * pasaje: volando a los mandos ese sitio está libre. Ver `ponerYaLoSeDeVolver`.
+ */
+.hud .volver__ya-lo-se {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 10px);
+  display: flex;
+  align-items: center;
+  height: 100%;
+  pointer-events: auto;
+}
+
+.hud .volver__ya-lo-se[hidden] {
+  display: none;
+}
+
+.hud .volver__ya-lo-se .no-explicar {
+  background: var(--barro);
+  white-space: nowrap;
+}
+
 @keyframes adelantar-asoma {
   0% {
     transform: scale(0.6);
@@ -3699,6 +3722,71 @@ button.motor__tecla::after {
 
 .sin-movimiento .casa--destello {
   animation: none;
+}
+
+/*
+ * **Perdido lejos, o mar adentro, la flecha de casa llama.** Es el arreglo de
+ * un toque de ese lío —tocarla vira el avión hacia el campo— y la instructora
+ * lo dice; con la tarjeta quieta, quien no lee no sabría qué tocar. El halo
+ * ocre de lo pulsable que llama (DESIGN.md §9) en la tarjeta, y la aguja que
+ * crece y vuelve con `scale`, la propiedad suelta: su `transform` es el giro
+ * del rumbo y no se puede pisar. Va detrás del destello, que no la apaga.
+ * Ver `Hud.ponerPerdido`.
+ */
+.casa--perdida {
+  animation: casa-llama 1.8s ease-in-out infinite;
+  /*
+   * En su capa, como los otros botones que laten (ver `.antes__boton--late`):
+   * el halo es una sombra que se repinta en cada imagen, y sin capa propia
+   * volvería a rasterizar la capa del HUD entero.
+   */
+  will-change: transform;
+}
+
+.casa--perdida .casa__aguja {
+  animation: casa-aguja-llama 1.8s ease-in-out infinite;
+}
+
+@keyframes casa-llama {
+  50% {
+    box-shadow:
+      var(--filo),
+      var(--poso),
+      0 0 0 6px rgba(221, 146, 63, 0.4);
+  }
+}
+
+@keyframes casa-aguja-llama {
+  50% {
+    scale: 1.22;
+  }
+}
+
+/* Quieta, sin perder lo que dice: el borde de fuera se queda puesto. */
+@media (prefers-reduced-motion: reduce) {
+  .casa--perdida,
+  .casa--perdida .casa__aguja {
+    animation: none;
+  }
+
+  .casa--perdida {
+    box-shadow:
+      var(--filo),
+      var(--poso),
+      0 0 0 4px rgba(221, 146, 63, 0.4);
+  }
+}
+
+.sin-movimiento .casa--perdida,
+.sin-movimiento .casa--perdida .casa__aguja {
+  animation: none;
+}
+
+.sin-movimiento .casa--perdida {
+  box-shadow:
+    var(--filo),
+    var(--poso),
+    0 0 0 4px rgba(221, 146, 63, 0.4);
 }
 
 .casa__aguja {
