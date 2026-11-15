@@ -441,6 +441,7 @@ export const EN: Dictionary = {
   "palabra.largo": "Far",
   "palabra.duro": "Hard",
   "palabra.roto": "Broken",
+  "palabra.tractor": "Tug",
   "vuelo.estacionado": "Start the engine",
   "vuelo.arrancando": "Release the brakes and roll slowly",
   "vuelo.remolqueBaliza":
@@ -450,6 +451,9 @@ export const EN: Dictionary = {
     "The tug pushes us back, because you can't see what's behind us from the cockpit. Meanwhile, start the engines",
   "vuelo.remolqueSuelta":
     "Look left: they show you the pin with its red streamer and wave. With it out, the nose wheel is yours again: you can taxi now",
+  "vuelo.tractorALaRaya":
+    "We ended up on the grass, off the line. No problem: tap the tug and it will come and take us back to the green line",
+  "vuelo.tractorALaRaya.tarjeta": "Tap the tug: it takes us back to the line",
   "vuelo.rodando": "Follow the green line",
   "vuelo.esperando": "Stop completely and wait for the light",
   "vuelo.esperaQueAterrice": "We wait: a plane is coming in to land",
@@ -992,6 +996,8 @@ export const EN: Dictionary = {
   "ajustes.explicacionDeLaCruz.volver": "Explain it again",
   "ajustes.explicacionDelAdelanto": "The fast-forward button is no longer explained out loud.",
   "ajustes.explicacionDelAdelanto.volver": "Explain it again",
+  "ajustes.explicacionDelTractor": "Being towed back to the line is no longer explained out loud.",
+  "ajustes.explicacionDelTractor.volver": "Explain it again",
   "ajustes.inicio":
     "On iPhone, the game runs full screen when opened from its icon: in Safari tap Share (or “•••”, then Share), choose “Add to Home Screen” and open it from there.",
   "gafas.ganadas": "Your sunglasses!",

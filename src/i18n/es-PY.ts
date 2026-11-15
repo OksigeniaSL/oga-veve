@@ -1836,6 +1836,7 @@ export const ES_PY = {
   "palabra.largo": "Lejos",
   "palabra.duro": "Fuerte",
   "palabra.roto": "Se rompió",
+  "palabra.tractor": "Tractor",
   "vuelo.estacionado": "Arrancá el motor",
   "vuelo.arrancando": "Soltá el freno y andá despacito",
   /*
@@ -1852,6 +1853,14 @@ export const ES_PY = {
     "El tractor nos lleva para atrás, porque desde la cabina no se ve lo que hay detrás. Mientras tanto, arrancá los motores",
   "vuelo.remolqueSuelta":
     "Mirá a la izquierda: te enseña el pasador con su cinta roja y te saluda. Sin él, la rueda de adelante vuelve a ser tuya: ya podés rodar",
+  /*
+   * **La vuelta a la raya** (H12c): quien se queda parado en el pasto, fuera de la raya,
+   * tiene su arreglo de un toque: el tractor lo viene a buscar. Lo dice la instructora con
+   * calma, una vez por suceso, y la tarjeta late. Ver `Game.atenderALaHierba`.
+   */
+  "vuelo.tractorALaRaya":
+    "Nos quedamos en el pasto, fuera de la raya. No pasa nada: tocá el tractor, que viene a buscarnos y nos lleva a la raya verde",
+  "vuelo.tractorALaRaya.tarjeta": "Tocá el tractor: nos lleva a la raya",
   "vuelo.rodando": "Seguí la raya verde",
   "vuelo.esperando": "Pará del todo y esperá la luz",
   /*
@@ -2658,6 +2667,8 @@ export const ES_PY = {
   "ajustes.explicacionDeLaCruz.volver": "Volver a explicarlo",
   "ajustes.explicacionDelAdelanto": "El botón de adelantar el viaje ya no se explica en voz.",
   "ajustes.explicacionDelAdelanto.volver": "Volver a explicarlo",
+  "ajustes.explicacionDelTractor": "La vuelta a la raya con el tractor ya no se explica en voz.",
+  "ajustes.explicacionDelTractor.volver": "Volver a explicarlo",
   "ajustes.inicio":
     "En el iPhone, el juego va a pantalla completa abierto desde su ícono: en Safari tocá Compartir (o «•••» y Compartir), elegí «Agregar a inicio» y abrilo desde ahí.",
   "gafas.ganadas": "¡Tus gafas de sol!",

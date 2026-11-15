@@ -290,6 +290,16 @@ el tutor se calla: dos carteles a la vez son ruido. El texto sigue la escalera (
 largo) y solo se reescribe cuando cambia, para no interrumpir sesenta veces por segundo a quien usa lector de
 pantalla.
 
+**Cada lío, un arreglo de un toque que la instructora señala sola** (guía de edades de la casa). Lo que late es el
+arreglo, y ella lo dice a la vez; nunca la voz sola. **El percance**: la flecha de volver a empezar del final late
+mientras dice «Se rompió. Volvemos a empezar» (`.fin--percance`). **Parado en la hierba**, fuera de la raya y en un
+campo con torre o AFIS: a los 8 s sale la tarjeta del tractor, pulsable y latiendo —el dibujo en los cuatro peldaños,
+«Tractor» en Tukã, la frase desde Taguato—, y ella dice con calma que el tractor viene si se toca; un toque, y el
+tractor llega, engancha la rueda de morro y remolca el avión hasta la raya, por donde no hay pista ni edificio. La voz
+sale una vez por parada y vuelve solo si el avión se ha movido; las dos primeras veces del perfil, después solo late
+la tarjeta (se recupera en los ajustes). En la granja o en Ayolas no hay tractor, y no se ofrece
+(`world/vuelta-a-la-raya.ts`).
+
 **El tutor** (`.tutor`). La explicación de la tecla que toca, abajo a la izquierda y desde el segundo peldaño, para
 encontrarla en el teclado sin leer: el glifo a 54 px en ocre, la tecla dibujada de 62 × 62 (148 la ancha, Shift) en
 `#f4f2ea`→`#cdcabf` con su sombra de tecla, y una barra de 190 × 9 px que **es el mando** y no el progreso, con un

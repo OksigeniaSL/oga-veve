@@ -99,6 +99,11 @@ const LINEA_DE: Record<PantallaQueSeExplica, { readonly accion: string; readonly
     dice: "ajustes.explicacionDelAdelanto",
     volver: "ajustes.explicacionDelAdelanto.volver",
   },
+  tractor: {
+    accion: "explicacion-del-tractor",
+    dice: "ajustes.explicacionDelTractor",
+    volver: "ajustes.explicacionDelTractor.volver",
+  },
 };
 
 export class PantallaDeAjustes {
