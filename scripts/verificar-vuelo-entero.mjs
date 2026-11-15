@@ -2296,6 +2296,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const ANGULO_DE_CAPTURA = (20 * Math.PI) / 180;
   /**
+   * A cuánto del eje se da gas para despegar, m.
+   *
+   * Tres metros: la rueda de morro sobre la línea central, con lo que se
+   * desvía uno al enderezar. Ver «la raya se sigue hasta el eje».
+   */
+  const EN_EL_EJE = 3;
+  /**
    * **Y en final, treinta**: lo más que se apunta contra el eje al cogerlo
    * saliendo de la base. Más es ir de cara al eje y no tener radio para
    * enderezar; es lo que llevaba a los rápidos al otro lado. Ver `mirada`.
@@ -5090,7 +5097,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      */
     if ((etapa === "despegar" || fase === "comprometido") && i % 40 === 0)
       carrera.push(
-        `${t.toFixed(0)}s ${s.airspeed.toFixed(0)}m/s elev ${c.elevator.toFixed(2)} sube ${s.verticalSpeed.toFixed(1)}m/s suelo ${s.heightAboveGround.toFixed(1)}m ${s.onGround ? "ruedas" : "aire"} ${s.onRunway ? "enPista" : "FUERA"} eje ${desvio(s).toFixed(0)}m`,
+        `${t.toFixed(0)}s ${s.airspeed.toFixed(0)}m/s elev ${c.elevator.toFixed(2)} sube ${s.verticalSpeed.toFixed(1)}m/s suelo ${s.heightAboveGround.toFixed(1)}m ${s.onGround ? "ruedas" : "aire"} ${s.onRunway ? "enPista" : "FUERA"} eje ${desvio(s).toFixed(0)}m` +
+          // Y con qué se lleva por el eje: el timón, la rueda y el morro.
+          ` tim ${(c.rudder ?? 0).toFixed(2)} rueda ${c.aileron.toFixed(2)} morro ${((error(rumboPista, s.heading) * 180) / Math.PI).toFixed(1)}°`,
       );
     if (fase !== faseAnterior) {
       faseAnterior = fase;
@@ -5400,7 +5409,24 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        */
       const torcido =
         ruta.length > 1 && Math.abs(error(rumboPista, s.heading)) > 0.5;
-      if (fase === "back-taxi" || torcido) {
+      /*
+       * **Y la raya se sigue hasta el eje, no hasta el borde.**
+       *
+       * Entrando por una intersección, el morro baja de los veintiocho grados
+       * de `torcido` a media curva, todavía pisando el borde, y desde ahí esto
+       * se ponía al rumbo de la pista donde estuviera y daba gas. Medido en Los
+       * Rodeos: la carrera empezaba a veintiséis o veintiocho metros del eje en
+       * el JAZ 25, el JAZ 60 y el JAZ 50, y el timón la enderezaba despacio o
+       * nunca. El juego no lo da por alineado —doce metros, ver `alineado` en
+       * `flight/vuelo.ts`— y no pasaba a «despegando» hasta estar en el aire, o
+       * no pasaba: ni V1, ni rotar, ni el sello del primer despegue según el
+       * vuelo. Hacía bien. La raya del juego
+       * lleva al eje (`entradaEnPista` en `world/plan-de-vuelo.ts`), y se
+       * sigue hasta estar en él, como cualquiera.
+       */
+      const fueraDelEje =
+        ruta.length > 1 && s.onRunway && Math.abs(desvio(s)) > EN_EL_EJE;
+      if (fase === "back-taxi" || torcido || fueraDelEje) {
         const quiere = o.rodaje() ?? 9;
         c.throttle = porElSuelo(s) < quiere ? 0.6 : 0;
         c.brakes = porElSuelo(s) > quiere + 1 ? 1 : 0;
