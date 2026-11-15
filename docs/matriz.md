@@ -17,7 +17,7 @@ flota tenga sentido y no sea una galería de siluetas.
 
 ## El eje del avión
 
-| | JAZ 20 *Pykasu* | JAZ 25 *Mainumby* | JAZ 40 *Panambi* | JAZ 50 (en el taller) | JAZ 60 *Arasunu* | JAZ 90 *Arai* |
+| | JAZ 20 *Pykasu* | JAZ 25 *Mainumby* | JAZ 40 *Panambi* | JAZ 50 *Tujuju* | JAZ 60 *Arasunu* | JAZ 90 *Arai* |
 |---|---|---|---|---|---|---|
 | | Entrenador | Fumigador | Bimotor ligero | Turbohélice de pista corta | Turbohélice regional | Reactor |
 | **Existe la presurización** | — | — | — | — | sí | sí |
@@ -38,14 +38,13 @@ por primera vez. Los demás pueden tenerlo, pero no es lo suyo.
 el ala y el peso del Twin Otter. Desde el 13-11-2026 es un Beech 1900D
 ([ADR 0027](adr/0027-el-despegue-y-la-toma-de-su-manual.md)), que pide más de
 un kilómetro de pista asfaltada para aterrizar, y la lección pasa al avión que
-la tiene de verdad: **el JAZ 50, de la clase del DHC-6 Twin Otter** (#185), el
-turbohélice de ala alta y tren fijo que se hizo para la tierra, la hierba y las
-estancias lejos de todo. **Llega por pasos**: primero su ficha y su modelo de
-vuelo, contra su manual (enmienda H11a del ADR 0027); después su modelo en 3D,
-su cabina, sus voces y su sitio en el hangar. Hasta entonces se mide en el
-banco y no se ofrece, y la columna dice lo que traerá: sin presurizar, con
-diecinueve de pasaje y con el avisador de terreno y el TCAS que lleva de serie
-el de hoy, la Serie 400. Su nombre en guaraní está por decidir.
+la tiene de verdad: **el JAZ 50 *Tujuju*, de la clase del DHC-6 Twin Otter**
+(#185), el turbohélice de ala alta y tren fijo que se hizo para la tierra, la
+hierba y las estancias lejos de todo. **Llegó por pasos**: su ficha y su modelo
+de vuelo, contra su manual (enmienda H11a del ADR 0027); su nombre, el del
+tuyuyú (H12a); y el 15-11-2026, su modelo en 3D, su cabina y su sitio en el
+hangar (H13c, H13d1 y H13d2). Sin presurizar, con diecinueve de pasaje y con el
+avisador de terreno y el TCAS que lleva de serie el de hoy, la Serie 400.
 
 ### Y una columna aparte: el helicóptero
 
