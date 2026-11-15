@@ -156,9 +156,10 @@ describe("en Los Rodeos, un reactor del tráfico empujado de su puesto", async (
     const tractor = () => trafico.grupo.children.find((o) => o.name === "remolque");
     const inicio = donde();
     const morro0 = vector((inicio.rumbo * Math.PI) / 180);
-    // En el puesto, con el morro al edificio.
-    const pared0 = paredMasCercana(inicio.x, inicio.z, aero.buildings)!.distancia;
-    expect(paredMasCercana(inicio.x + morro0.x * 10, inicio.z + morro0.z * 10, aero.buildings)!.distancia).toBeLessThan(pared0);
+    // En el puesto, con el morro al edificio: al de las pasarelas, la terminal. Ver `edificiosDePasarela`.
+    const terminal = edificiosDePasarela(aero);
+    const pared0 = paredMasCercana(inicio.x, inicio.z, terminal)!.distancia;
+    expect(paredMasCercana(inicio.x + morro0.x * 10, inicio.z + morro0.z * 10, terminal)!.distancia).toBeLessThan(pared0);
     let deCulo = 0;
     let haciaDelante = 0;
     let conTractor = 0;

@@ -32,6 +32,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { puestosDeOsm, puestosSinCopias } from "./puestos-de-osm.mjs";
 
 const OVERPASS =
   process.env.OVERPASS ?? "https://overpass-api.de/api/interpreter";
@@ -960,11 +961,12 @@ async function construir(icao, pistas, aeropuertos) {
      *
      * El `ref` es el número del puesto, que es lo que dice la torre por radio
      * y lo que va pintado en el suelo.
+     *
+     * Y uno por puesto, donde para la rueda de morro: no el centro de cada
+     * elemento, que en una línea de entrada es la mitad del camino desde la
+     * calle. Ver `puestos-de-osm.mjs`.
      */
-    parkingPositions: de("parking_position")
-      .map((n) => ({ ref: n.tags?.ref ?? null, punto: centro(n) }))
-      .filter((p) => p.punto)
-      .map(({ ref, punto }) => ({ ref, xy: proj(punto[0], punto[1]) })),
+    parkingPositions: puestosDeOsm(elementos, proj),
     holdingPositions: puntosDeEspera(de("holding_position"), proj),
     windsocks: de("windsock")
       .map((n) => centro(n))
@@ -1285,7 +1287,8 @@ for (const icao of icaos) {
     pistas: (a?.runways ?? []).filter((r) => largo(r) >= 300).length,
     rodaduras: a?.taxiways?.length ?? 0,
     plataformas: a?.aprons?.length ?? 0,
-    puestos: a?.parkingPositions?.length ?? 0,
+    // Sin copias: ver `puestosSinCopias`.
+    puestos: puestosSinCopias(a?.parkingPositions ?? []).length,
     esperas: a?.holdingPositions?.length ?? 0,
   });
   const habia = previo ? cuentas(previo) : null;
