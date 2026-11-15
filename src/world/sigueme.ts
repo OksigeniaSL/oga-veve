@@ -221,6 +221,15 @@ const A_UN_LADO = 11;
  */
 const A_UN_LADO_EN_BICI = 13;
 
+/**
+ * **Y en el puesto, quince**, desde que cabe el JAZ 50: la punta de su ala va
+ * a 9,9 m del eje (19,81 m de envergadura, EASA.IM.A.575), y con los trece
+ * Jazlyn esperaba a tres metros de ella. Con quince quedan cinco. Solo en el
+ * puesto, donde el avión para a su lado: apartándose de uno que pasa, los
+ * trece de siempre, que es lo que miden las pruebas de ceder el paso.
+ */
+const A_UN_LADO_EN_EL_PUESTO = 15;
+
 /** Y cuánto tarda en apartarse, s. */
 const TARDA_EN_APARTARSE = 2.5;
 
@@ -496,6 +505,11 @@ export class Sigueme {
    * salir nadie a buscarte. Así estuvo desde #157.
    */
   private alLado = 0;
+  /**
+   * Cuánto se ha corrido a su sitio del puesto, de 0 a 1: los dos metros de
+   * más de `A_UN_LADO_EN_EL_PUESTO`. Como `aparte`, no se olvida.
+   */
+  private enElPuesto = 0;
   /** Si está parado en la salida esperando a que llegue el avión. */
   private esperandoEnLaSalida = false;
 
@@ -781,7 +795,9 @@ export class Sigueme {
        * asfalto, con él a treinta metros y rodando hacia el puesto. Donde no
        * se puede ir por delante, se espera a un lado.
        */
-      this.largo - alLlegar < noLlega + adelanto;
+      this.alFinalDeLaRuta(alLlegar, noLlega, adelanto);
+    if (this.enBici && this.alFinalDeLaRuta(alLlegar, noLlega, adelanto))
+      this.enElPuesto = Math.min(1, this.enElPuesto + dt / TARDA_EN_APARTARSE);
     this.aparte = deja
       ? Math.min(1, this.aparte + dt / TARDA_EN_APARTARSE)
       : this.aparte;
@@ -792,13 +808,19 @@ export class Sigueme {
     // viene el avión.
     const lado =
       Math.max(this.aparte, this.alLado) *
-      (this.enBici ? A_UN_LADO_EN_BICI : A_UN_LADO);
+        (this.enBici ? A_UN_LADO_EN_BICI : A_UN_LADO) +
+      this.enElPuesto * (A_UN_LADO_EN_EL_PUESTO - A_UN_LADO_EN_BICI);
     this.grupo.position.x = donde[0] - rumbo[1] * lado;
     this.grupo.position.z = donde[1] + rumbo[0] * lado;
     this.grupo.position.y = cota(this.grupo.position.x, this.grupo.position.z);
     this.grupo.rotation.y = Math.atan2(rumbo[0], rumbo[1]);
 
     this.baliza.visible = (this.t * DESTELLOS) % 1 < 0.55;
+  }
+
+  /** Si ya no puede ir por delante: el final de la ruta, donde para el avión. */
+  private alFinalDeLaRuta(alLlegar: number, noLlega: number, adelanto: number): boolean {
+    return this.largo - alLlegar < noLlega + adelanto;
   }
 
   /** Vuelta a empezar. */
@@ -808,6 +830,7 @@ export class Sigueme {
     this.s = 0;
     this.aparte = 0;
     this.alLado = 0;
+    this.enElPuesto = 0;
     this.esperandoEnLaSalida = false;
     this.antes = null;
     this.seAcerca = 0;

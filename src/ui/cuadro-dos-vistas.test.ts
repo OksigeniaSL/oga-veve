@@ -320,13 +320,21 @@ describe("el mismo avión, los mismos instrumentos", () => {
 });
 
 describe("las pantallas del de cristal, iguales dentro y fuera", () => {
-  it("el cuadro plano lleva la franja de motor con el par, los flaps, el depósito y el tren", () => {
-    const a = AIRCRAFT.find((x) => cuadroDe(x).familia === "cristal")!;
-    const plano = new Tablero().markup(a);
-    expect(plano).toContain('data-motor-barra="0"');
-    expect(plano).toContain('data-cristal="combustible"');
-    expect(plano).toContain('data-cristal="flaps"');
-    expect(plano).toContain('data-cristal="tren"');
+  /*
+   * **Y el tren, solo en el que lo mete**: el JAZ 50 lo lleva fijo, y en su
+   * franja no hay luces de tren que encender, como en la de un Twin Otter.
+   */
+  it("el cuadro plano lleva la franja de motor con el par, los flaps, el depósito y el tren si lo mete", () => {
+    const deCristal = AIRCRAFT.filter((x) => cuadroDe(x).familia === "cristal");
+    expect(deCristal.map((a) => a.id)).toEqual(["jaz-50", "jaz-60"]);
+    for (const a of deCristal) {
+      const plano = new Tablero().markup(a);
+      expect(plano, a.id).toContain('data-motor-barra="0"');
+      expect(plano, a.id).toContain('data-cristal="combustible"');
+      expect(plano, a.id).toContain('data-cristal="flaps"');
+      if (a.trenRetractil) expect(plano, a.id).toContain('data-cristal="tren"');
+      else expect(plano, a.id).not.toContain('data-cristal="tren"');
+    }
   });
 
   it("y el modelo ya no lleva relojes redondos de par: van en la pantalla", () => {

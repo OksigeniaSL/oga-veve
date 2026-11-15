@@ -50,7 +50,12 @@ describe("la vuelta al avión en cada modelo", () => {
         expect(v.puntos.has(c), c).toBe(true);
       }
       expect(v.rueda).not.toBeNull();
-      if (clase === "linea") {
+      if (silueta === "bimotor-ala-alta") {
+        // El Twin Otter: la de la sonda que se ve, bajo la punta del ala
+        // izquierda. Ver `sitioDelPitot`.
+        expect(v.fundas).toHaveLength(1);
+        expect(v.fundas[0]!.x).toBeLessThan(0);
+      } else if (clase === "linea") {
         // Una a cada lado del morro, delante del ala.
         expect(v.fundas).toHaveLength(2);
         expect(v.fundas[0]!.x).toBeCloseTo(-v.fundas[1]!.x, 5);

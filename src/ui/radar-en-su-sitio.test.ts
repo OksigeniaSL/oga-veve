@@ -91,9 +91,10 @@ function cualEs(millas: number): number {
 describe("el tráfico en la carta, en las ocho direcciones", () => {
   const conTcas = AIRCRAFT.filter((a) => a.tcas);
 
-  it("los cuatro aviones que lo llevan: el turbohélice y los tres reactores", () => {
-    // El turbohélice, con el TCAS II desde que es un 1900D de 7.766 kg.
-    expect(conTcas.map((a) => a.tcas)).toEqual(["TCAS II", "TCAS II", "TCAS II", "TCAS II"]);
+  it("los cinco aviones que lo llevan: los dos turbohélices y los tres reactores", () => {
+    // El JAZ 50, con el TCAS I de serie del -400 (Viking, 2018); el JAZ 60, con
+    // el TCAS II desde que es un 1900D de 7.766 kg.
+    expect(conTcas.map((a) => a.tcas)).toEqual(["TCAS I", "TCAS II", "TCAS II", "TCAS II", "TCAS II"]);
   });
 
   for (const avion of conTcas)

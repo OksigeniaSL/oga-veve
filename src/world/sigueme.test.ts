@@ -377,7 +377,8 @@ describe("la bici, que sale a buscarte y te lleva a casa", () => {
     for (let i = 0; i < 80; i++)
       bici.paso(0.05, { x: 0, z: -300 }, true, false, cota, null, 300);
     const d = bici.donde!;
-    expect(Math.hypot(d.x, d.z + 300), "junto al puesto").toBeLessThan(15);
+    // Junto al puesto: los quince metros que se aparta del eje, y poco más.
+    expect(Math.hypot(d.x, d.z + 300), "junto al puesto").toBeLessThan(17);
     expect(bici.yaSeAparto).toBe(true);
     // Y ya parado el avión, sin la cuenta del plan, se queda donde está.
     for (let i = 0; i < 20; i++)
@@ -414,7 +415,7 @@ describe("la bici, que sale a buscarte y te lleva a casa", () => {
     for (let i = 0; i < 1200; i++)
       bici.paso(0.05, { x: 0, z: -300 }, true, false, cota);
     const d = bici.donde!;
-    expect(Math.hypot(d.x, d.z + 300), "junto al puesto").toBeLessThan(15);
+    expect(Math.hypot(d.x, d.z + 300), "junto al puesto").toBeLessThan(17);
   });
 
   it("y guía por delante: no se aparta por ir detrás de ella a su paso", () => {
