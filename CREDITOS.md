@@ -524,9 +524,9 @@ Lo que no sale de ahí lleva «por verificar» en su ficha, `TIJERETA` en
 `src/flight/aircraft.ts`.
 
 **El JAZ 50 _Tujuju_** (`modelos/jaz-50-tujuju.py`, y su
-`public/assets/aeronaves/jaz-50.glb`), que está en el taller y todavía no se
-ofrece, es un DHC-6 Twin Otter de la Serie 400 con la librea de la flota y sin el
-nombre ni la librea de nadie. Las medidas salen de:
+`public/assets/aeronaves/jaz-50.glb`) es un DHC-6 Twin Otter de la Serie 400
+con la librea de la flota y sin el nombre ni la librea de nadie. Las medidas
+salen de:
 
 - EASA, *Type Certificate Data Sheet* **EASA.IM.A.575**, número 6, 18-6-2026:
   envergadura, largo, alto, cuerda, la hélice y sus palas, y los neumáticos.
@@ -541,7 +541,15 @@ nombre ni la librea de nadie. Las medidas salen de:
 - Fotos de Wikimedia Commons, para situar las puertas, las ventanillas, la
   riostra y la cola: «Aurora, DHC-6-400, RA-67284» de Fedor Leukhin (CC BY-SA
   2.0) y los -400 C-GVKI y A3-KLT rodando, de Bidgee (CC BY-SA 3.0 AU). Sirvieron
-  para mirar y medir, y no entran en el juego.
+  para mirar y medir, y no entran en el juego. Y para situar el pitot, bajo la
+  punta del ala izquierda: «Aurora, DHC-6-400, RA-67284 (18233313661)» y «Pacific
+  Sky Aviation (C-GVKI) Viking DHC-6-400 Twin Otter taxiing at Sydney Airport».
+- Viking Air, *Twin Otter Series 400 Technical Specifications & Standard
+  Equipment List*, rev. 01-18 (2018): las palancas colgadas del techo de su
+  cabina, sus pantallas y cuántas ventanillas lleva a cada lado.
+  <https://www.vikingair.com/sites/default/files/Viking-Twin-Otter-Series-400-Technical-Specifications-R-01-2018.pdf>
+- FAA, *Type Certificate Data Sheet* **A9EA**, rev. 15, 11-6-2012, sección V
+  (DHC-6-400): los topes del alerón, de la profundidad y del timón.
 
 **Y uno más que no es de la flota**: el turbohélice regional de ala alta del
 tráfico, el que hace cola contigo en Los Rodeos, se modela igual desde

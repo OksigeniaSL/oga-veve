@@ -228,12 +228,18 @@ export function lucesDe(tipo: NivelDelAvion["tipo"]): readonly Luz[] {
  */
 export interface NivelDelAvion {
   /** El tipo de la flota, como en `flota.ts`: es el modelo que se dibuja. */
-  readonly tipo: "jaz-20" | "jaz-25" | "jaz-40" | "jaz-60" | "jaz-90" | "jaz-110" | "jaz-120";
+  readonly tipo: "jaz-20" | "jaz-25" | "jaz-40" | "jaz-50" | "jaz-60" | "jaz-90" | "jaz-110" | "jaz-120";
   readonly piezas: readonly PiezaDelAvion[];
   readonly lucesConColor: boolean;
 }
 
 const DE_ALA_BAJA: readonly PiezaDelAvion[] = ["ala", "motor", "estabilizador", "deriva", "trenPrincipal", "trenMorro"];
+/**
+ * Y las del bimotor de ala alta, que son las mismas seis: el ala va arriba
+ * —con su riostra, que se lleva con ella— y cada motor, colgado de su semiala.
+ * Dónde cae cada una lo dice su dibujo, no la lista.
+ */
+const DE_ALA_ALTA_CON_DOS: readonly PiezaDelAvion[] = DE_ALA_BAJA;
 
 /**
  * **Los niveles, de chico a grande**, como el hangar: un avión por nivel y
@@ -251,6 +257,9 @@ const DE_ALA_BAJA: readonly PiezaDelAvion[] = ["ala", "motor", "estabilizador", 
  *   Es el nivel siete y va el último, aunque sea más chico que el JAZ 120: los
  *   niveles se guardan por su orden, y metido en medio le cambiaría el avión a
  *   quien ya los jugó. Y se juega mejor después de contar cuatro motores.
+ * - **JAZ 50**, bimotor de ala alta: el ala arriba como en el primero, pero con
+ *   un motor en cada lado, y las ruedas que no se guardan. Es el nivel ocho y
+ *   va detrás de todos por lo mismo que el JAZ 110: salió del taller después.
  */
 export const NIVELES: readonly NivelDelAvion[] = [
   { tipo: "jaz-20", piezas: ["ala", "motor", "cola", "trenPrincipal", "trenMorro"], lucesConColor: true },
@@ -260,6 +269,7 @@ export const NIVELES: readonly NivelDelAvion[] = [
   { tipo: "jaz-90", piezas: DE_ALA_BAJA, lucesConColor: false },
   { tipo: "jaz-120", piezas: DE_ALA_BAJA, lucesConColor: false },
   { tipo: "jaz-110", piezas: DE_ALA_BAJA, lucesConColor: false },
+  { tipo: "jaz-50", piezas: DE_ALA_ALTA_CON_DOS, lucesConColor: false },
 ];
 
 /** Lo que dice Ara de cada clase de pieza la primera vez que la pone: para qué sirve. */
@@ -289,6 +299,7 @@ export const LO_QUE_ENSENA: Readonly<Record<NivelDelAvion["tipo"], Linea>> = {
   "jaz-20": ara("piezas.fin"),
   "jaz-25": ara("avion.biplano"),
   "jaz-40": ara("avion.bimotor"),
+  "jaz-50": ara("avion.bimotorAlaAlta"),
   "jaz-60": ara("avion.colaEnT"),
   "jaz-90": ara("avion.reactor"),
   "jaz-110": ara("avion.bimotorAncho"),

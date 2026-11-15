@@ -231,6 +231,15 @@ export const DE_PASAJE: EquipoDeLuces = {
  *   anticolisión es la baliza, que es lo que pide la norma.
  * - **Bimotor de ala baja** (la clase del Seneca): la baliza en la deriva,
  *   los destellos en las puntas y el faro de rodaje en la pata de morro.
+ * - **Bimotor de ala alta** (la clase del Twin Otter de la Serie 400): lo
+ *   mismo. La baliza de arriba —la lista mínima de la FAA para el DHC-6, rev.
+ *   15, 33, la llama «Beacon Light (Upper)»; la roja de la panza es opcional—,
+ *   los destellos LED en las puntas (EASA.IM.A.575, base de certificación,
+ *   «Wingtip combined LED … Position Lights with LED ACL»), dos focos de
+ *   aterrizaje y un faro de rodaje (la misma lista). Que la baliza vaya en lo
+ *   alto de la deriva, los focos en las alas y el de rodaje en la pata de
+ *   morro no sale de una fuente oficial: lo dice el manual de un simulador
+ *   (Aerosoft, *Twin Otter*), y es lo que tiene su clase.
  * - **Los de pasaje** —el de cola en T, el reactor y el cuatrimotor—:
  *   `DE_PASAJE`.
  */
@@ -251,6 +260,7 @@ export function equipoDe(silueta: Silueta): EquipoDeLuces {
         focos: "dos-alas",
       };
     case "bimotor-ala-baja":
+    case "bimotor-ala-alta":
       return {
         baliza: "deriva",
         estroboscopicas: "puntas",

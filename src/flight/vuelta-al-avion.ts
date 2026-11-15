@@ -54,6 +54,11 @@ export type ClaseDeVuelta = "avioneta" | "linea";
  * De qué clase es la vuelta de un avión, por su silueta: las tres de hélice
  * ligeras hacen la del manual de la avioneta; el turbohélice de pasaje y los
  * reactores, la del manual de línea.
+ *
+ * El bimotor de ala alta, la clase del Twin Otter, hace la de línea: es un
+ * turbohélice de diecinueve plazas, como el JAZ 60, y su combustible no se
+ * mira por una boca del ala, que no tiene —va en depósitos bajo el suelo de la
+ * cabina (De Havilland, 300-G, 2025)— sino en cabina.
  */
 export function claseDeVuelta(silueta: Silueta | null | undefined): ClaseDeVuelta {
   return silueta === "ala-alta" || silueta === "biplano" || silueta === "bimotor-ala-baja"

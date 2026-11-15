@@ -107,11 +107,12 @@ const CON_MODELO = AIRCRAFT.filter((a) => {
 });
 
 describe("el parabrisas visto desde el asiento", () => {
-  it("están los siete", () => {
+  it("están los ocho", () => {
     expect(CON_MODELO.map((a) => a.id)).toEqual([
       "jaz-20",
       "jaz-25",
       "jaz-40",
+      "jaz-50",
       "jaz-60",
       "jaz-90",
       "jaz-110",

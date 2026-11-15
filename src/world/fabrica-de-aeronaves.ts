@@ -431,6 +431,8 @@ export function fabricarAeronave(
       "ala-alta": 0.78,
       biplano: 0.7,
       "bimotor-ala-baja": 0.86,
+      // 15,77 m contra 19,81 de ala (De Havilland, 300-G, 2025): el Twin Otter.
+      "bimotor-ala-alta": 0.8,
       "cola-en-t": 0.96,
       reactor: 1.08,
       // 62,81 m contra 60,12 de ala (D6-58333, 2.2.2): más corto que el reactor.
@@ -462,9 +464,14 @@ export function fabricarAeronave(
    */
   const bimotorAncho = silueta === "bimotor-ancho";
   const reactor = silueta === "reactor" || cuatrimotor || bimotorAncho;
-  const bimotor = silueta === "bimotor-ala-baja" || silueta === "cola-en-t";
+  /**
+   * Y el bimotor de ala alta, la clase del Twin Otter: el ala de la avioneta,
+   * recta y apoyada en una riostra, con un motor en cada semiala.
+   */
+  const alaAltaConDos = silueta === "bimotor-ala-alta";
+  const bimotor = silueta === "bimotor-ala-baja" || silueta === "cola-en-t" || alaAltaConDos;
   const biplano = silueta === "biplano";
-  const alaArriba = silueta === "ala-alta" || silueta === "cola-en-t";
+  const alaArriba = silueta === "ala-alta" || silueta === "cola-en-t" || alaAltaConDos;
 
   // ── El cuerpo ────────────────────────────────────────────────────────
   piezas.push(
@@ -529,7 +536,8 @@ export function fabricarAeronave(
     superficie(
       {
         cuerdaRaiz: c * (reactor ? 1.5 : 1),
-        cuerdaPunta: c * (reactor ? 0.5 : 0.72),
+        // El ala del Twin Otter es de cuerda constante: un rectángulo en planta.
+        cuerdaPunta: c * (reactor ? 0.5 : alaAltaConDos ? 0.95 : 0.72),
         largo: b / 2,
         espesor: c * 0.12,
         flecha: reactor ? c * 1.9 : c * 0.12,
@@ -584,6 +592,33 @@ export function fabricarAeronave(
     }
   }
 
+  if (alaAltaConDos) {
+    /*
+     * **La riostra**, de la panza al ala por fuera de los motores: es lo que
+     * dice que el ala va apoyada y no en voladizo, y lo que se ve de frente
+     * antes que nada. Una superficie fina con diedro, que es lo que es una
+     * riostra perfilada: el mismo trapecio que el ala, de canto estrecho.
+     */
+    const desdeX = anchoCuerpo * 0.5;
+    const desdeY = -altoCuerpo * 0.35;
+    const hastaX = b * 0.3;
+    const dx = hastaX - desdeX;
+    const dy = alaY - desdeY;
+    piezas.push(
+      superficie(
+        {
+          cuerdaRaiz: c * 0.14,
+          cuerdaPunta: c * 0.12,
+          largo: Math.hypot(dx, dy),
+          espesor: c * 0.05,
+          diedro: Math.atan2(dy, dx),
+          en: [desdeX, desdeY, alaZ + c * 0.05],
+        },
+        paleta.trim,
+      ),
+    );
+  }
+
   // ── Los motores ──────────────────────────────────────────────────────
   if (bimotor || reactor) {
     /*
@@ -597,7 +632,14 @@ export function fabricarAeronave(
       ? [0.22, 0.42]
       : bimotorAncho
         ? [0.165]
-        : [reactor ? 0.28 : 0.24];
+        : alaAltaConDos
+          ? /*
+             * Más cerca del fuselaje que en el de ala baja, como en el Twin
+             * Otter, y lo justo para que el disco de esta fábrica —que es
+             * genérico y mayor que su hélice— no corte la cabina.
+             */
+            [0.18]
+          : [reactor ? 0.28 : 0.24];
     const largoG = reactor ? c * 1.7 : c * 1.6;
     const radioG = c * (reactor ? 0.34 : 0.24);
     for (const lado of [-1, 1])
@@ -710,7 +752,19 @@ export function fabricarAeronave(
         [b * 0.09, largo * 0.02],
         [0, -largo * 0.36],
       ]
-    : [
+    : alaAltaConDos
+      ? /*
+         * Las principales, en sus muñones bajo la panza y con la vía del Twin
+         * Otter, 3,81 m (NASA TM-101427, figura 1); la de morro, bien
+         * adelante. Fijas, como todas las de esta fábrica.
+         */
+        [
+          [-b * 0.096, largo * 0.02],
+          [b * 0.096, largo * 0.02],
+          // 4,5 m de batalla (la misma figura): un 28 % del largo.
+          [0, -largo * 0.265],
+        ]
+      : [
         [-b * 0.13, -largo * 0.06],
         [b * 0.13, -largo * 0.06],
         [0, largo * 0.4],

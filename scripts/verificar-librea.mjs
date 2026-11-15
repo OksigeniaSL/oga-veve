@@ -47,7 +47,7 @@ const comprobar = (nombre, ok, detalle, porque) =>
  * inventarle una librea que no es suya—, y dejó de serlo el día que se modeló
  * aquí como los otros cinco. La excepción se va con el modelo que la pedía.
  */
-const NUESTROS = ["jaz-20", "jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
+const NUESTROS = ["jaz-20", "jaz-25", "jaz-40", "jaz-50", "jaz-60", "jaz-90", "jaz-110", "jaz-120"];
 
 /**
  * Los que firman con el logotipo de Granja Óga: todos menos el fumigador, que
@@ -55,7 +55,7 @@ const NUESTROS = ["jaz-20", "jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
  * de la cola no se apunta aquí: lo dice la ficha de cada uno. Ver
  * `src/world/librea.ts`.
  */
-const CON_FIRMA = ["jaz-20", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
+const CON_FIRMA = ["jaz-20", "jaz-40", "jaz-50", "jaz-60", "jaz-90", "jaz-110", "jaz-120"];
 
 for (const id of NUESTROS) {
   const page = await navegador.newPage({

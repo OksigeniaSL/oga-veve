@@ -10,9 +10,14 @@ import {
 } from "./altitud-seleccionada";
 
 describe("quién lleva la ventanilla ALT", () => {
-  it("el turbohélice y los tres reactores; las avionetas no, que no la llevan", () => {
+  /*
+   * Los dos turbohélices: el JAZ 50 la lleva con su automático, que en el
+   * Twin Otter de la Serie 400 es opcional (EASA.IM.A.575, nota 10.b.1), y el
+   * de la flota lo lleva puesto.
+   */
+  it("los dos turbohélices y los tres reactores; las avionetas no, que no la llevan", () => {
     const llevan = AIRCRAFT.filter(llevaVentanillaDeAltitud).map((a) => a.id);
-    expect(llevan.sort()).toEqual(["jaz-110", "jaz-120", "jaz-60", "jaz-90"]);
+    expect(llevan.sort()).toEqual(["jaz-110", "jaz-120", "jaz-50", "jaz-60", "jaz-90"]);
   });
 
   it("y la rueda para donde para el avión", () => {

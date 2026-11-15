@@ -410,6 +410,7 @@ const TIPOS = [
   { id: "jaz-20", corteMorro: 1.7, sol: false },
   { id: "jaz-25", corteMorro: 3.1, sol: false },
   { id: "jaz-40", sol: true },
+  { id: "jaz-50", sol: true },
   { id: "jaz-60", sol: true },
   { id: "jaz-90", sol: true, blancaEnLasPuntas: true },
   { id: "jaz-110", sol: true },
@@ -418,9 +419,9 @@ const TIPOS = [
 
 /** Lo que va pintado sobre el casco: la franja, la raya fina, los cristales y las puertas. */
 /** Lo pintado en los costados, que desde arriba no se ve: de canto, solo serían rayitas en el borde. */
-const DE_COSTADO = /^(cintura|cintura-fina|panza-.*|ventanillas|ventanita-puerta|puerta.*|salida-de-emergencia-.*|gondola-franja)$/;
-const PINTADO = /^(cintura|cintura-fina|panza-.*|ventanillas|ventanita-puerta|parabrisas|parabrisas-lado|carlinga|puerta.*|salida-de-emergencia-.*|gondola-franja)$/;
-const DEL_CASCO = /^(fuselaje|carenado|cintura|cintura-fina|panza-.*|ventanillas|ventanita-puerta|parabrisas|parabrisas-lado|carlinga|carlinga-arco|carlinga-marco|puerta.*|salida-de-emergencia-.*)$/;
+const DE_COSTADO = /^(cintura|cintura-fina|panza-.*|ventanillas|ventanita-puerta|ventanilla-de-.*|puerta.*|salida-de-emergencia(-.*)?|gondola-franja)$/;
+const PINTADO = /^(cintura|cintura-fina|panza-.*|ventanillas|ventanita-puerta|ventanilla-de-.*|parabrisas|parabrisas-lado|carlinga|puerta.*|salida-de-emergencia(-.*)?|gondola-franja)$/;
+const DEL_CASCO = /^(fuselaje|carenado|carenado-del-tren|bodega-de-morro|cintura|cintura-fina|panza-.*|ventanillas|ventanita-puerta|ventanilla-de-.*|parabrisas|parabrisas-lado|carlinga|carlinga-arco|carlinga-marco|puerta.*|salida-de-emergencia(-.*)?)$/;
 
 /**
  * **Las capas de perfil**, de detrás a delante: la deriva y las ruedas detrás
@@ -509,6 +510,8 @@ function tipo(t) {
 
   // La cola: la deriva, y el estabilizador, que en la cola en T va encima de ella.
   parte("deriva", de(["deriva"]), CAPAS_DE_PERFIL.deriva, CAPAS_DE_PLANTA.deriva, { sol: t.sol });
+  // Y lo que la alarga en el JAZ 50 —la aleta del lomo y el trozo de debajo—, aparte: el sol nace en la raíz de la de arriba.
+  parte("deriva", de(["deriva-baja", "aleta-dorsal"]), CAPAS_DE_PERFIL.deriva, CAPAS_DE_PLANTA.deriva);
   parte(
     "estabilizador",
     de(["estabilizador", "bala-de-cola"]),
@@ -521,7 +524,7 @@ function tipo(t) {
   if (hay("ala")) {
     parte("ala", de(["ala", ...delAla]), CAPAS_DE_PERFIL.ala, alaAlta ? CAPAS_DE_PLANTA.alaAlta : CAPAS_DE_PLANTA.ala);
     // La riostra del ala alta, que va de la panza al ala: delante del fuselaje y detrás del ala.
-    parte("ala", de(["puntal-del-ala"]), CAPAS_DE_PERFIL.puntal, null);
+    parte("ala", de(["puntal-del-ala", "riostra"]), CAPAS_DE_PERFIL.puntal, null);
   } else {
     parte("alaArriba", de(["ala-alta"]), CAPAS_DE_PERFIL.alaArriba, CAPAS_DE_PLANTA.alaArriba);
     parte("alaAbajo", de(["ala-baja"]), CAPAS_DE_PERFIL.alaAbajo, CAPAS_DE_PLANTA.alaAbajo);
@@ -656,7 +659,12 @@ function solDeLaDeriva(pts, P) {
   const u0 = Math.min(...U);
   const u1 = Math.max(...U);
   const u = u0 + 0.12 * (u1 - u0);
-  const franja = pts.filter((p) => Math.abs(p[2] - u) < 0.06 * (u1 - u0));
+  const cerca = pts.filter((p) => Math.abs(p[2] - u) < 0.06 * (u1 - u0));
+  /*
+   * Una deriva de pocas estaciones —la del JAZ 50, raíz y punta— no tiene
+   * vértices a esa altura: entonces manda la raíz, que es lo que hay debajo.
+   */
+  const franja = cerca.length ? cerca : pts.filter((p) => p[2] <= u);
   const ataque = Math.max(...franja.map((p) => p[0]));
   const salida = Math.min(...franja.map((p) => p[0]));
   const L = ataque + 0.56 * (salida - ataque);

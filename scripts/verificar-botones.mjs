@@ -25,7 +25,11 @@ const PUERTO = Number(process.env.OGA_PUERTO ?? 5287);
  * botones del fumigador y los del bimotor colgaban fuera del tablero: ninguno
  * de los dos estaba en la lista.
  */
-const AVIONES = ["jaz-20", "jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
+/*
+ * Y el JAZ 50, que no lleva pedestal —sus palancas cuelgan del techo— ni
+ * palanca de tren: su fila de botones es la de un avión de tren fijo.
+ */
+const AVIONES = ["jaz-20", "jaz-25", "jaz-40", "jaz-50", "jaz-60", "jaz-90", "jaz-120"];
 /**
  * Los que lleva cualquier cabina. El del tren **solo donde hay tren**, así que
  * no se exige: lo que se exige es que **todo lo que el modelo dibuja como

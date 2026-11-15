@@ -123,6 +123,10 @@ COLORES = {
     # Los pomos: negros y brillantes, que es como son en un avión de verdad
     # (el gas es negro; el rojo es de la mezcla, que aquí no se toca).
     "pomo": (0.05, 0.05, 0.055, 1.0),
+    # Los pomos de la hélice y del corte de combustible, en el avión que los
+    # lleva a la vista: azul y rojo, como en toda cabina. Ver `_cuadrante_de_techo`.
+    "pomo_helice": (0.10, 0.22, 0.55, 1.0),
+    "pomo_corte": (0.62, 0.08, 0.06, 1.0),
     # El gris de Boeing: el de los paneles de techo, del pedestal y del panel
     # de modos de la visera en un avión de línea. En los reactores de verdad
     # el panel es gris claro, no negro.
@@ -2168,7 +2172,8 @@ def _mcp(arriba, z_labio, puntos):
 def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
            suelo_atras=0.80, y_suelo=0.32, y_respaldo=0.88, pantallas_en=0.155,
            palancas=0, relojes=0, clase="avioneta", mando="cuerno",
-           mide="rpm", tren=False, flaps=True, parabrisas=None, hueco=None):
+           mide="rpm", tren=False, flaps=True, parabrisas=None, hueco=None,
+           palancas_en="pedestal", techo_y=None):
     """
     Lo que se ve desde el asiento: suelo, panel, visera, pantallas y silla.
 
@@ -2230,6 +2235,12 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     - `"helicoptero"`: la del Super Puma, que no es la de un avión sin ala.
       Ver `_cabina_de_helicoptero`. Va aparte y vuelve antes de tocar nada de
       lo de los aviones, así que sus `.glb` no cambian.
+
+    `palancas_en` dice de dónde salen las palancas: del `"pedestal"`, entre
+    los asientos, o del `"techo"`, colgadas de una consola encima del
+    parabrisas, que es como las lleva el DHC-6 Twin Otter. Con `"techo"` no hay
+    pedestal y `techo_y` es la altura del techo por dentro. Ver
+    `_cuadrante_de_techo`.
 
     `hueco(z, y)` es cuánto sitio hay por dentro a esa altura, de medio ancho:
     solo lo usa el helicóptero, cuyo morro se estrecha justo donde va el panel.
@@ -2753,7 +2764,15 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     def techo_en(z):
         return ojo_y - baja * (ojo_z - z)
 
-    if palancas and not grande:
+    if palancas and not grande and palancas_en == "techo":
+        # **Colgadas del techo**, entre los dos asientos y encima del
+        # parabrisas: no hay pedestal, y por debajo del panel solo quedan las
+        # rodillas. Ver `_cuadrante_de_techo`.
+        piezas += _cuadrante_de_techo(
+            palancas, ped_x, techo_y if techo_y is not None else ojo_y + 0.30,
+            ojo_z, flaps,
+        )
+    elif palancas and not grande:
         # **Pegado al panel**, con las palancas saliendo de él hacia el
         # piloto, que es como es el cuadrante de gases de un bimotor. Iba
         # medio metro hacia atrás y las palancas quedaban dentro del plano
@@ -3330,6 +3349,74 @@ def _cabina_de_helicoptero(ojos_z, ancho, alto_panel, y_suelo, y_respaldo,
     if puntos:
         piezas.append(tornillos("tornillos", puntos))
     return juntar_por_material(piezas, "cabina", deja=se_busca_por_nombre)
+
+
+def _cuadrante_de_techo(cuantas, x, y_techo, ojo_z, flaps):
+    """
+    **Las palancas que cuelgan del techo**, las del DHC-6 Twin Otter: una
+    consola a lo largo del techo, entre los dos pilotos, que empieza encima del
+    parabrisas y sigue hacia atrás por encima de las cabezas; y de su punta de
+    delante, en fila, las de potencia, las de las hélices y las de corte de
+    combustible, una de cada por motor, colgando hacia abajo. Detrás, la
+    palanca de los flaps.
+
+    Los pomos, con los colores de la norma de los mandos de motor: negro el de
+    potencia, azul el de la hélice y rojo el del combustible —14 CFR 23.781 y
+    25.781 dan la forma de cada pomo; el color es la costumbre de toda
+    cabina—, y el de flaps con su forma de perfil de ala (14 CFR 23.781,
+    figura 1).
+    """
+    piezas = []
+    ancho = 0.11
+    z0 = ojo_z - 0.24
+    z1 = ojo_z + 0.30
+    alto = 0.06
+    piezas.append(
+        redondear(
+            caja("panel-de-techo", x - ancho, x + ancho, y_techo - alto,
+                 y_techo, z0, z1, "tablero"),
+            radio=0.012,
+        )
+    )
+    grupos = (("gas", "pomo"), ("helice", "pomo_helice"), ("corte", "pomo_corte"))
+    paso = 0.028
+    largo = 0.11
+    k = 0
+    total = len(grupos) * cuantas
+    for nombre, material in grupos:
+        for i in range(cuantas):
+            xi = x - paso * (total - 1) / 2 + paso * k
+            k += 1
+            zi = z0 + 0.04
+            y_base = y_techo - alto
+            piezas.append(
+                cilindro(f"palanca-de-{nombre}-{i}", 0.006, largo,
+                         (xi, y_base - largo / 2, zi), "metal", lados=8)
+            )
+            piezas.append(
+                redondear(
+                    caja(f"pomo-de-{nombre}-{i}", xi - 0.011, xi + 0.011,
+                         y_base - largo - 0.03, y_base - largo + 0.005,
+                         zi - 0.018, zi + 0.018, material),
+                    radio=0.007,
+                )
+            )
+    if flaps:
+        zf = z0 + 0.20
+        y_base = y_techo - alto
+        piezas.append(
+            cilindro("palanca-de-flaps", 0.006, 0.08,
+                     (x + ancho * 0.55, y_base - 0.04, zf), "metal", lados=8)
+        )
+        piezas.append(
+            redondear(
+                caja("pomo-de-flaps", x + ancho * 0.55 - 0.02,
+                     x + ancho * 0.55 + 0.02, y_base - 0.10, y_base - 0.08,
+                     zf - 0.02, zf + 0.02, "casco"),
+                radio=0.006,
+            )
+        )
+    return piezas
 
 
 def _palancas_de_gas(cuantas, x_centro, ancho, y_base, y_pomo, z):

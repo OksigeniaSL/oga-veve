@@ -182,7 +182,14 @@ describe("las ilustraciones", () => {
     ]);
   });
 
-  const SIN_DIBUJOS: readonly string[] = [];
+  /*
+   * **Los que todavía no tienen sus láminas**, y la tarjeta los enseña sin
+   * ellas, como estuvo el Super Puma. Hoy, el JAZ 50 Tujuju, que acaba de
+   * salir del taller: su lámina de fuera y la de su cabina las pinta el
+   * director de arte, sobre las capturas de su modelo. Cuando lleguen, se
+   * quita de aquí.
+   */
+  const SIN_DIBUJOS: readonly string[] = ["jaz-50"];
   /** Los que tienen su lámina de fuera y de cabina: todos los construidos, el helicóptero también. */
   const CON_CABINA = ESTA_HECHO.filter((x) => !SIN_DIBUJOS.includes(x));
 
