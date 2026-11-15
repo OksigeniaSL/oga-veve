@@ -9,7 +9,9 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { AIRCRAFT, aircraftById } from "./aircraft";
+import { AIRCRAFT, MEDIDOS, aircraftById, masaDe } from "./aircraft";
+import { GRAVITY as G } from "./atmosphere";
+import { ROZAMIENTO } from "../world/superficie";
 import {
   carreraHastaVr,
   paraEntrarYDespegar,
@@ -29,27 +31,41 @@ const pequeno = aircraftById("jaz-20")!;
 const grande = aircraftById("jaz-120")!;
 
 describe("la pista que hace falta", () => {
-  it("crece con el avión, sin excepciones", () => {
+  it("crece con lo que piden la Vr, el peso y el empuje de cada ficha", () => {
     /*
-     * El orden de la flota es el del tamaño, y la pista que necesita cada uno
-     * tiene que seguir ese mismo orden. Si algún día no lo sigue, es que una
-     * ficha se ha escrito con un empuje o un peso que no pega con los demás —y
-     * eso vale más cazarlo aquí que jugando.
+     * **Lo que rueda un avión no lo dice su tamaño: lo dicen su Vr, su peso y
+     * su empuje.** Acelerando con lo que le sobra de empuje, `a = (T − μ·W)/m`,
+     * llega a la Vr en `Vr² / 2a`. Esta prueba pedía que la carrera creciera
+     * con el orden de la flota, que es el del tamaño, y eso no es verdad tal
+     * cual: el Twin Otter, el JAZ 50, pesa más que el Seneca y rueda menos
+     * —209 m a la masa de su ficha, donde el Seneca rueda 376—, porque rota a
+     * 73 nudos con un ala de pista corta. Es lo que dicen sus fabricantes: 244
+     * m a su peso máximo el uno (dehavilland.com, Series 400), unos 247 el otro
+     * a la masa de su ficha (ADR 0027). Y entre el 747 y el 787 ya había que
+     * hacer una excepción.
      *
-     * **Menos entre los dos de fuselaje ancho**, que ruedan casi lo mismo: el
-     * 747 de la ficha pesa su máximo al aterrizar, y el 787 rota a la Vr de su
-     * tipo, 150 nudos a su peso (enmienda H10b del ADR 0027). Rueda hasta ella
-     * 1.098 m y el 747 hasta la suya, 1.074. Es lo que dicen también sus
-     * fabricantes a esas masas: 1.800 m de pista el 787 y unos 1.710 el 747.
-     * Entre ellos se pide que no se separen más de un 5 %.
+     * **Lo que vigilaba sigue vigilado**: una ficha con un empuje o un peso que
+     * no pega con los demás. Si la carrera que integra la cuenta se aleja de la
+     * de esas tres cifras, algo de la ficha o de la ley de su motor no casa con
+     * su Vr: es lo que pasó con los dos turbofanes, que con la ley de empuje de
+     * una hélice rodaban cuatro veces lo que pedían —el JAZ 120, 4.404 m—, y que
+     * con esto se ve de un vistazo. Lo que dice cada manual de cada avión lo
+     * mira `despegue-y-toma-del-manual.test.ts`.
+     *
+     * La banda: por encima de uno, porque la cuenta tiene lo que la de tres
+     * cifras no —la resistencia del aire y el empuje que pierde una hélice al
+     * correr—; y por debajo de uno y medio. Las de hélice salen de 1,25 a
+     * 1,33 y los reactores, a 1,15 o 1,16; el turbofán con la ley de la hélice
+     * se iba a cuatro.
      */
-    const flota = AIRCRAFT.filter((a) => a.id !== "jaz-25" && !a.helicoptero);
-    const carreras = flota.map((a) => carreraHastaVr(a));
-    const anchos = new Set(["jaz-110", "jaz-120"]);
-    for (let i = 1; i < carreras.length; i++) {
-      if (anchos.has(flota[i]!.id) && anchos.has(flota[i - 1]!.id))
-        expect(Math.abs(carreras[i]! / carreras[i - 1]! - 1)).toBeLessThan(0.05);
-      else expect(carreras[i]!, flota[i]!.id).toBeGreaterThan(carreras[i - 1]!);
+    for (const a of MEDIDOS.filter((x) => !x.helicoptero)) {
+      const m = masaDe(a);
+      const sobra = (a.maxThrust - ROZAMIENTO.asfalto * m * G) / m;
+      const pide = (a.rotationSpeed * a.rotationSpeed) / (2 * sobra);
+      const r = carreraHastaVr(a) / pide;
+      const dicho = `${a.id}: rueda ${Math.round(carreraHastaVr(a))} m y pide ${Math.round(pide)}`;
+      expect(r, dicho).toBeGreaterThan(1);
+      expect(r, dicho).toBeLessThan(1.5);
     }
   });
 
