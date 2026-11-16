@@ -22222,7 +22222,12 @@ export class Game {
      * volver a arrancar con el depósito a cero y seguir volando para siempre,
      * que es la forma más rápida de enseñar que el combustible no importa.
      */
-    if (this.combustible <= 0) this.input.controls.engineOn = false;
+    if (this.combustible <= 0) {
+      // Sin combustible, un turboeje se apaga de golpe como en cualquier fallo: ver `fallanLosMotores`.
+      if (this.input.controls.engineOn && this.flight instanceof HelicopteroComoModelo)
+        this.flight.modelo.fallanLosMotores();
+      this.input.controls.engineOn = false;
+    }
     if (antes > 0 && this.combustible <= 0) {
       // En el aire es otro vuelo, y se dice de otra manera. Ver `quedarseSinMotor`.
       if (!this.flight.state.onGround) {
@@ -23243,6 +23248,8 @@ export class Game {
     this.input.controls.engineOn = false;
     this.recogidaContada = false;
     const heli = this.flight instanceof HelicopteroComoModelo ? this.flight.modelo : null;
+    // Un fallo, no una parada: la potencia se va de golpe. Ver `fallanLosMotores`.
+    heli?.fallanLosMotores();
     const conAyuda = heli?.estabilizacionAhora() === "estacionario";
     const clave: TranslationKey = conAyuda ? "ejercicio.autorrotacion.ahora" : "ejercicio.autorrotacion.ahoraTuyo";
     const dicho = this.avisoCon(clave, "palabra.autorrotacion");

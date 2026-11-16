@@ -767,6 +767,18 @@ const RECOGIDA_SIN_MOTOR = 20 * GRADO;
 export type FaseDeAutorrotacion = "planeo" | "recogida" | "toma";
 const ORDEN_DE_FASE: Record<FaseDeAutorrotacion, number> = { planeo: 0, recogida: 1, toma: 2 };
 
+/**
+ * **Lo que tarda en apagarse un motor que falla**, s, contra los ocho de pararlo a
+ * mano: con la mitad, ya no da nada. Un turboeje que se queda sin llama no da
+ * potencia a la turbina libre aunque el generador de gas siga girando un rato, y
+ * la norma de certificación trata el fallo como una pérdida de potencia de golpe,
+ * con un segundo como mínimo antes de que nadie toque nada (14 CFR 29.143 (e)).
+ * Fallando como al pararlos a mano, la potencia tardaba unos ocho segundos en
+ * irse, y el rotor perdía vueltas despacio: no era lo que hay que aprender a
+ * contestar, colectivo abajo en cuanto se nota.
+ */
+const SE_APAGA_DE_GOLPE = 1;
+
 /** El paso de integración más largo, s: el disco tarda unas centésimas en seguir al cíclico. */
 const PASO_MAXIMO = 1 / 240;
 /** Lo que el regulador tarda en recuperar las vueltas, s. */
@@ -854,6 +866,8 @@ export class ModeloDeHelicoptero {
   private colectivoDePie = 0.3;
   /** Por dónde va la autorrotación: no se vuelve atrás si un globo sube un palmo. */
   private faseSinMotor: FaseDeAutorrotacion | null = null;
+  /** Si los motores se han parado por un fallo, y no a mano. Ver `fallanLosMotores`. */
+  private fallo = false;
   /** Encima de qué sitio se queda la de estacionario con el cíclico suelto, o ninguno. */
   private sitio: { x: number; z: number } | null = null;
   /** A qué altura se queda la de estacionario con el colectivo a media palanca, m, o a ninguna. */
@@ -957,6 +971,16 @@ export class ModeloDeHelicoptero {
     return { descenso, avance, zona: zonaDelAnillo(descenso, avance) };
   }
 
+  /**
+   * **Fallan los motores**, que no es pararlos: con los mandos de los motores
+   * cortados en el mismo paso, la potencia se va en menos de un segundo en vez de
+   * en los ocho de una parada. Lo piden el ejercicio de la autorrotación y
+   * quedarse sin combustible. Ver `SE_APAGA_DE_GOLPE`.
+   */
+  fallanLosMotores(): void {
+    this.fallo = true;
+  }
+
   /** Los mandos que llegan al rotor: los de quien vuela con lo que añade la estabilización. */
   mandosAhora(): Readonly<MandosDeHelicoptero> {
     return this.ultimosMandos;
@@ -1004,6 +1028,7 @@ export class ModeloDeHelicoptero {
     this.ultimosMandos = mandosNeutros();
     this.anclas.length = 0;
     this.faseSinMotor = null;
+    this.fallo = false;
     this.sostenerLoQueHay();
     /*
      * Y el colectivo de la estabilización de estacionario, el que toca: colocado en
@@ -1182,9 +1207,11 @@ export class ModeloDeHelicoptero {
      * por el aire, minutos, si no se le pone el freno.
      */
     const tardaEnArrancar = f.motores.arranque ?? 30;
+    // Arrancar otra vez es empezar de nuevo, también tras un fallo.
+    if (piloto.motores) this.fallo = false;
     this.arranque = piloto.motores
       ? Math.min(1, this.arranque + dt / tardaEnArrancar)
-      : Math.max(0, this.arranque - dt / 8);
+      : Math.max(0, this.arranque - dt / (this.fallo ? SE_APAGA_DE_GOLPE : 8));
     const encendido = Math.max(0, (this.arranque - 0.5) / 0.5);
     const disponible = potenciaDisponible(f, densidad) * encendido * encendido;
     const freno = f.frenoDelRotor;
@@ -1196,7 +1223,7 @@ export class ModeloDeHelicoptero {
     const objetivo = this.frenoDelRotorPuesto
       ? 0
       : Math.max(0, Math.min(disponible, piden + corrige / f.motores.rendimiento));
-    const respuesta = piloto.motores ? f.motores.respuesta : 2;
+    const respuesta = piloto.motores ? f.motores.respuesta : this.fallo ? 0.2 : 2;
     this.potenciaMotores += (objetivo - this.potenciaMotores) * (1 - Math.exp(-dt / respuesta));
     const alEje = this.potenciaMotores * f.motores.rendimiento;
     let nuevas = vueltas + ((alEje - principal.potencia - deCola.potencia) / (rot.inercia * Math.max(5, vueltas))) * dt;

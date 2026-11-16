@@ -451,6 +451,33 @@ describe("sin motor", () => {
   });
 
   /**
+   * **Un fallo no es una parada**: al pararlos a mano los motores se apagan en
+   * unos ocho segundos; al fallar, la potencia se va de golpe, y lo que se nota es
+   * el rotor perdiendo vueltas (14 CFR 29.143 (e)).
+   */
+  it("al fallar, la potencia se va en menos de un segundo; al pararlos, en unos ocho", () => {
+    const potenciaTras = (fallo: boolean, segundos: number): number => {
+      const { h, m, colectivo, ciclico } = enElAire(600, "actitud", 80);
+      for (let t = 0; t < 10; t += DT) {
+        colectivo();
+        ciclico(80);
+        h.step(DT, m);
+      }
+      const antes = h.rotor().potenciaMotores;
+      m.motores = false;
+      if (fallo) h.fallanLosMotores();
+      for (let t = 0; t < segundos; t += DT) {
+        ciclico(80);
+        h.step(DT, m);
+      }
+      return h.rotor().potenciaMotores / antes;
+    };
+    expect(potenciaTras(true, 1)).toBeLessThan(0.05);
+    expect(potenciaTras(false, 1)).toBeGreaterThan(0.5);
+    expect(potenciaTras(false, 10)).toBeLessThan(0.05);
+  });
+
+  /**
    * **El tope de abajo del colectivo, ajustado como los de verdad**: con poco peso
    * y abajo, que es cuando el rotor da menos vueltas sin motor, el colectivo abajo
    * del todo da el mínimo de la ficha y no menos (FAA-H-8083-21B, 11-4). Con el
