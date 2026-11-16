@@ -1824,3 +1824,161 @@ juntar la rama (16-11-2026).
 - **Recoger por muescas.** Un Boeing de verdad recoge de flaps 5 a flaps 1 y
   de 1 a arriba según su programa; la palanca de este juego no tiene la
   posición 1, y se recoge de una vez.
+
+## Enmienda H20b (16-11-2026): lo del #188 que se ha podido leer, lo que dicen las trazas, y por qué la toma de los anchos sigue esperando
+
+El encargo iba por orden: la Vref del E170, con ella su frenada, y con las dos
+el segundo de la AC 91-79A en la toma del 747 y del 787; luego los despegues
+volados que salen largos, y el 1900D. **La Vref del E170 no ha aparecido**, y
+sin ella la cadena se para donde decía la enmienda H10b. Lo que sí hay: una
+cifra del 1900D con fuente, la causa de los dos despegues largos, y la cuenta
+de lo que harían los segundos de la AC 91-79A, que deja el porqué de la espera
+en números.
+
+### Las fuentes nuevas
+
+- **NTSB, CHI04LA086**, Beech 1900D N155ZV, Manhattan (Kansas), 15-3-2004:
+  el viento cruzado demostrado, en el análisis (p. 1) y en los hechos (p. 4).
+- **FAA, AC 91-79A Chg 2** (20-2-2018), *Mitigating the Risks of a Runway
+  Overrun Upon Landing*: par. 8 h (2), p. 5, y figura 1, p. 6.
+- **NTSB, SEA08LA082**, 1900D N305PC, Kayenta (Arizona), 22-2-2008: su CVR
+  registra «sink rate, sink rate, sink rate, sink rate» del GPWS (pp. 1 y 4).
+
+### El 1900D: veintidós nudos de viento cruzado demostrado
+
+«The published maximum demonstrated crosswind component for the aircraft was
+22 knots» (CHI04LA086, p. 1), y en la p. 4, «according to the operator, the
+published maximum demonstrated crosswind component for the 1900D is 22
+knots». Es la pista que dejó la enmienda H10a, abierta: la cifra la da la
+NTSB en su propio análisis, y en los hechos la atribuye al operador. Pasa a
+`CRUZADO_DEMOSTRADO` en `viento-cruzado.ts`; llevaba la regla de certificación
+—dos décimas de su pérdida con los flaps de aterrizaje, unos diecisiete
+nudos—. Cambia lo que dice el parte de salida del JAZ 60 con viento de costado
+entre esas dos cifras; ninguna pista ni ningún veredicto de `cabe.ts`.
+
+### La Vref del E170: lo que se ha leído, y no está
+
+- **NTSB, AAR-08/01** (N862RW, Cleveland, 2007), el texto y la transcripción
+  del CVR: la masa al aterrizar, 69.186 lb, y los flaps a cinco; ninguna Vref
+  ni velocidad de aproximación.
+- **AAIB, *Bulletin* 10/2022**, G-CIXW (ERJ 170-100 LR): un fallo del
+  compensador en el descenso, sin velocidades ni masa.
+- **JTSB, AA2015-5**, JA211J (ERJ 170-100 STD): 59.400 lb, sin Vref.
+- **CAROL de la NTSB**, la búsqueda de sus informes: ningún ERJ 170 con
+  «VREF», «approach speed» o «landing weight» en el relato.
+- **BEA, F-HBXI** (E170, Toulouse, 2024): con los flaps a FULL, 125 nudos
+  seleccionados; la masa no la da, como ya dijo la enmienda H10b.
+- **EASA, ESF B-21** (ERJ-170/-190, documento de comentarios, número 2): que la
+  Vref sube con el procedimiento de frustrada de los campos altos y calientes,
+  y ninguna cifra.
+- El manual de aeropuertos del E190 (APM 190, rev. 24) no trae velocidades; el
+  del E175, el del E170 y la hoja de especificaciones del E170 ya no se
+  descargan de Embraer. La lista de características de aeronaves de la FAA da
+  su categoría de estela, no su velocidad de aproximación.
+
+No se toca la Vref, ni la frenada, ni la toma de los anchos.
+
+### Los segundos de la AC 91-79A: lo que darían, y por qué no se ponen
+
+La figura 1 cuenta en la distancia del manual de vuelo un tramo desde tocar
+hasta el primer dispositivo de frenada y otro entre cada dispositivo y el
+siguiente: «For AFM data expansion, use the longer of 1 second or the test
+time», «repeated until pilot activation of all deceleration devices has been
+completed and the airplane is in the full braking configuration» (p. 6). La
+p. 5 lo dice en prosa: «typically based on a time increment of 1 second
+between successive actions». Los reactores de la flota frenan con dos: los
+frenos de tierra y el freno. Integrados con la frenada del modelo
+(`deceleracionRodando`), el primer segundo rodando sin nada y el segundo con
+los frenos de tierra fuera:
+
+| | Hoy | Con uno | Con dos | Su manual |
+|---|---|---|---|---|
+| JAZ 120 (747) | 1.652 m, −11,9 % | 1.734, −7,5 % | 1.816, −3,1 % | 1.875 |
+| JAZ 110 (787) | 1.591, −11,6 % | 1.679, −6,7 % | 1.762, −2,1 % | 1.800 |
+| JAZ 90 (E170) | 1.243, +10,7 % | 1.327, +18,2 % | 1.407, +25,2 % | 1.123 |
+
+En los anchos, **los dos segundos explican casi todo lo que faltaba**. En el
+E170 lo alargan, y su frenada no puede recogerlo: se calibró con la toma de
+Embraer a su máximo al aterrizar cruzando a 127 nudos, sin esos segundos, y
+con ellos esa misma cifra pide frenar con 0,56 —eran 0,45, y el 747 y el 787
+frenan con 0,34 y 0,35— o cruzar a 116 con el freno de hoy, que en el modelo
+es 1,09 veces su pérdida con los flaps de aterrizaje. Ninguna de las dos es
+un E-Jet. Cuánto de su toma es aire, cuánto transición y cuánto freno lo dice
+su Vref, y sin ella meter los segundos rompería el E170 o pediría un freno
+inventado.
+
+Queda además una duda de la propia norma: la nota de la figura 1 deja usar,
+para los dispositivos automáticos —autofreno, frenos de tierra que salen
+solos—, el tiempo medido en la certificación, sin el segundo mínimo. Así que
+en el avión que los lleva el tramo puede ser más corto que un segundo, y con
+qué tiempo se certificó cada uno de los tres no se ha leído.
+
+### Los despegues volados que salen largos: la traza
+
+Volados con el piloto del banco de mesa (`despegar` en
+`despegue-y-toma-del-manual.test.ts`) y anotados cada medio segundo desde la
+Vr.
+
+**El E170 vuela el tramo del aire como los otros dos reactores; lo que se le
+queda corto es lo que le da la cuenta.**
+
+| | Hasta la Vr | De la Vr a 35 ft | Tarda | Se va a | La cuenta da a ese tramo |
+|---|---|---|---|---|---|
+| JAZ 90 | 656 m | 443 m | 5,8 s | 151 kt, 8,1° | 262 m |
+| JAZ 110 | 1.073 | 478 | 5,7 | 164 kt, 7,7° | 427 |
+| JAZ 120 | 1.052 | 506 | 6,2 | 160 kt, 9,6° | 418 |
+
+Los tres tardan casi lo mismo en el tramo del aire. La cuenta del hangar lo saca
+como una parte de la carrera —la proporción de su clase, 2.500 / 1.800, que
+es la de un 747 a su peso máximo—, y eso vale para los anchos, que llevan
+0,33 y 0,34 de empuje por peso, pero no para el E170 de la ficha, con 0,43:
+rueda poco para lo deprisa que va, y le quedan 262 m, unos 3,5 s, que no los
+vuela ningún reactor. No es el piloto: en los tres el morro tarda algo más
+de un segundo en moverse después de la Vr.
+
+Y **no se cambia la cuenta**: contado como un tiempo, el hangar pediría al
+E170 1.264 m —el volado por 1,15—, por encima de los 1.151 de Embraer con más
+masa, y dejaría de caber en El Hierro. Y eso no puede ser: la longitud de
+campo publicada es la mayor de la de un motor parado y la de todos por 1,15,
+así que la de todos por 1,15 no puede pasar de ella. Si el tramo del aire es
+el que vuela, lo que sobra está en otra cosa del E170 —su carrera, su empuje
+con la velocidad o su Vr, las tres sin cifra de Embraer—. Hace falta su
+carrera o su distancia de despegue con todos los motores, del fabricante.
+
+**El JAZ 25 no vuela largo en el aire: tarda en irse del suelo.** Rueda hasta
+la Vr 140 m (la cuenta, 137); de irse del suelo a los cincuenta pies vuela
+otros 140, la misma carrera, donde el Ag Cat da 0,90 veces la suya (615 ft de
+carrera y 1.170 hasta los cincuenta pies). Lo que sobra son **84 m y 3 s entre
+la Vr y el despegue**: llega a la Vr con la cola arriba y a nivel
+—`actitudEnTierra` la sube del todo al 85 % de la Vr—, y el piloto del banco
+rota desde ahí a tres grados por segundo, como en un triciclo, hasta los 7,5°
+con los que se va, a 61 nudos, 1,21 veces su Vr. Su manual cuenta la carrera
+hasta irse del suelo. Lo que falta es la actitud con la que corre la cola
+arriba para despegar, o cómo se va del suelo un Ag Cat, y su manual solo da
+«Raise Tail — 40 MPH». Sigue fuera de esa prueba, ahora con la causa medida.
+
+### Lo que sigue sin fuente
+
+- **La Vmc del 1900D**: en la NTSB, ningún informe de 1900D la nombra (en los
+  que salen con «VMC» es la meteorología). El informe del ATSB del VH-NTL
+  (1900D, 2000), que cita su manual de vuelo, no se ha podido descargar. Un
+  manual de King Air C90 da 91 KIAS, y es otro avión. Siguen los 85 nudos
+  supuestos.
+- **Lo que tardan sus flaps**: el FDR del SEA08LA082 dice cuándo acabaron de
+  salir, no cuándo empezaron. Siguen los doce segundos.
+- **Qué suena en el 1900D al soltarse el automático y al pararse un motor**:
+  ninguno de los informes leídos lo recoge —el SEA08LA082 dice cuándo se
+  desconectó el automático y no qué sonó—. Siguen la voz y la campanada.
+- **Si el E170 dice la pérdida y la velocidad baja con voz**, y **con qué suena
+  su motor parado**: nada de primera mano. La MMEL del ERJ 170 de Transport
+  Canada no trae los mensajes sonoros.
+- **Los de transporte**: desde cuándo callan las precauciones en el despegue
+  y la V2 del 787, sin empezar. De la Vmc del 747 solo se ha mirado una cosa:
+  la NASA CR-2144 da su Cnδr —en torno a −0,10 por radián a nivel del mar y
+  Mach bajo (p. 228)—, pero no el recorrido de su timón, así que no dice a
+  cuánto timón a fondo equivale el 0,04 de la ficha.
+
+**Y lo que sí confirma algo que ya estaba**: el «sink rate» del GPWS en el CVR
+del SEA08LA082 es la voz del avisador de terreno del 1900D, que el JAZ 60 ya
+lleva (`avisosHablados`). Su cuenta del radioaltímetro sigue en *five
+hundred* (enmienda H10a): ese informe no la oye.
