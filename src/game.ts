@@ -10647,7 +10647,7 @@ export class Game {
       if (this.percance !== tipo) return;
       if (enEjercicio) {
         this.hud.mostrarCierreDeEjercicio(
-          dibujoDeCierre("otraVez"),
+          dibujoDeCierre("otraVez", !!this.aircraft.helicoptero),
           this.tier.instruments === "none"
             ? ""
             : this.rotulo("ejercicio.otraVez", "palabra.otraVez"),
@@ -19264,7 +19264,9 @@ export class Game {
      * sobre la ladera de Barlovento, no sonó nada: «que me avise, que tengo
      * una montaña bien grande delante». Ver `flight/terreno-delante.ts`.
      */
-    const terreno = juntarAvisos(avisoDeTerreno(cerca), this.mirarElTerrenoDelante(dt));
+    const visto = juntarAvisos(avisoDeTerreno(cerca), this.mirarElTerrenoDelante(dt));
+    // Sin motor y bajando a posarse, «subí» es lo que no se puede: ver `autorrotacionPracticada`.
+    const terreno = this.autorrotacionPracticada() ? null : visto;
     this.terrenoAhora = terreno;
     /*
      * El HUD enseña el mismo aviso que dice la voz, no uno suyo. Ver
@@ -23127,6 +23129,20 @@ export class Game {
     if (laInstructoraLoExplica(this.tier.avisos)) this.decirDelEjercicio(clave, "mando");
   }
 
+  /**
+   * **El ejercicio de la autorrotación en marcha.** Empieza en el aire en la
+   * lección de aterrizar, y lo de una final de avión que esa lección trae se
+   * calla: el consejero de la bajada, el *sink rate*, el «subí» del suelo y el
+   * «metélo» del tren. Bajar deprisa hacia el suelo sin motor es la maniobra, y
+   * subir no se puede: decirlo enseñaría lo contrario. Medido en el banco de
+   * Tukã: «terrain, pull up» con su «Subí» a cuarenta metros, y «gear up» a mil
+   * pies con el tren que hace falta para posarse.
+   */
+  private autorrotacionPracticada(): boolean {
+    const p = this.practica;
+    return !!this.aircraft.helicoptero && p?.ejercicio.id === "autorrotacion" && p.fase !== "cerrada";
+  }
+
   /** Si ya se contó la recogida de esta autorrotación. Ver `acompanarLaAutorrotacion`. */
   private recogidaContada = false;
 
@@ -23397,7 +23413,7 @@ export class Game {
     this.agenda.luego(TARDA_EL_FINAL + 2, () => {
       if (this.practica?.cierre !== como) return;
       this.hud.mostrarCierreDeEjercicio(
-        dibujoDeCierre(como),
+        dibujoDeCierre(como, !!this.aircraft.helicoptero),
         this.tier.instruments === "none"
           ? ""
           : this.rotulo(clave, "palabra.bien"),
@@ -30937,6 +30953,8 @@ export class Game {
    * son el terreno, la pista ocupada y la orden de irse al aire.
    */
   private cantarLaActitud(): void {
+    // Bajar deprisa sin motor es la maniobra, no un aviso: ver `autorrotacionPracticada`.
+    if (this.autorrotacionPracticada()) return;
     const s = this.flight.state;
     const ahora = avisoDeActitud(
       {
@@ -31449,6 +31467,8 @@ export class Game {
    * consejero con la lectura de este fotograma. Ver `mirarLaSenda`.
    */
   private aconsejarLaBajada(): void {
+    // Los consejos de una final de avión, no en la autorrotación: ver `autorrotacionPracticada`.
+    if (this.autorrotacionPracticada()) return;
     const l = this.lecturaDelConsejo;
     // Un suceso, una voz: si la cadena acaba de decir un paso, al siguiente.
     if (!l || this.pasoEnEsteFotograma) return;
@@ -33181,6 +33201,8 @@ export class Game {
       this.cantar("gear down", t("vuelo.sacaElTren"), "vuelo.sacaElTren");
       return;
     }
+    // Y en la autorrotación el tren se queda fuera, que se va a posar: ver `autorrotacionPracticada`.
+    if (this.autorrotacionPracticada()) return;
 
     /*
      * Y metélo, cuando ya no hace falta: en el aire, subiendo y por encima de

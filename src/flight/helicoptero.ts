@@ -337,6 +337,38 @@ export function colectivoDeEstacionario(f: FichaDeHelicoptero, masa: number, den
   return Math.max(0, Math.min(1, (paso - minimo) / (maximo - minimo)));
 }
 
+/**
+ * **El colectivo que sostiene la altura volando a `velocidad`**, m/s, de 0 a 1,
+ * lejos del suelo: el disco echado hacia delante lo justo para tirar contra la
+ * resistencia del fuselaje, y el paso que da ese empuje con el aire entrando de
+ * frente. A setenta nudos es mucho menos que el del estacionario —el disco coge
+ * aire nuevo—, y con el del estacionario el helicóptero subía a diez metros por
+ * segundo. Como el de arriba, sin el rotor de cola ni la estela: vale para
+ * colocar la palanca cerca.
+ */
+export function colectivoNivelado(f: FichaDeHelicoptero, masa: number, densidad: number, velocidad: number): number {
+  if (!(velocidad > 1)) return colectivoDeEstacionario(f, masa, densidad);
+  const peso = masa * GRAVITY;
+  const resistencia = 0.5 * densidad * (f.fuselaje.frente + f.fuselaje.tren) * velocidad * velocidad;
+  const empuje = Math.hypot(peso, resistencia);
+  const echado = Math.atan2(resistencia, peso);
+  // El disco va hacia delante y algo hacia donde empuja: el aire le entra por arriba.
+  const normal = -velocidad * Math.sin(echado);
+  const enElPlano = velocidad * Math.cos(echado);
+  let bajo = -0.2;
+  let alto = 0.6;
+  let vi = 5;
+  for (let k = 0; k < 40; k++) {
+    const medio = (bajo + alto) / 2;
+    const r = resolverDisco(f.rotor, densidad, f.rotor.vueltas, medio, normal, enElPlano, vi);
+    vi = r.inducida;
+    if (r.empuje < empuje) bajo = medio;
+    else alto = medio;
+  }
+  const { minimo, maximo } = f.rotor.paso;
+  return Math.max(0, Math.min(1, ((bajo + alto) / 2 - minimo) / (maximo - minimo)));
+}
+
 /** (R/4z)² para el efecto suelo, con z la altura del buje: acotado a medio radio, donde la fórmula deja de valer. */
 export function terminoDelSuelo(radio: number, alturaDelBuje: number): number {
   const z = Math.max(0.5 * radio, alturaDelBuje);

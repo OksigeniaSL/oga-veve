@@ -328,6 +328,19 @@ gastan en posarse. Se rearma cuando las vueltas pasan de 230, no con el reloj. N
 están publicados: el sonido es una forma, como el pitido de precaución (`ROTOR_BAJO` en `audio/tonos-de-aviso.ts`). Y la
 fuente es del L2, el Mk II de la misma familia: que el C1/L1 lo lleve igual se supone.
 
+**En el juego de verdad**, con el banco del navegador (Tenerife Norte, sin viento, con la tarjeta Intel): en Tukã sin
+tocar nada, la ayuda frena hasta casi pararse a mil pies antes del corte, coge la velocidad sin motor y se posa en la
+pista a 1,57 m/s y 31 kt, con el aviso de vueltas bajas en los últimos cuatro metros; en Taguató, un piloto de banco
+que hace el procedimiento con la palanca de verdad se posa a 1,32 m/s. Los dos cierran el ejercicio como hecho. Y el
+banco encontró lo de avión que la lección de aterrizar traía al helicóptero, y se calla mientras dura el ejercicio
+(`autorrotacionPracticada` en `game.ts`): «positive rate, gear up» y su «metélo» a mil pies, con el tren que hace falta
+para posarse; los consejos de la final («vamos lentos, bajá la nariz»); el *sink rate*; y «terrain, pull up» con su
+«Subí» a cuarenta metros del suelo, que sin motor es lo que no se puede hacer. Fuera del ejercicio esos avisos siguen
+como estaban. También dos cosas del helicóptero en general: el marco rojo de la pérdida alrededor del horizonte —que
+es de un ala, y se encendía bajando sin motor con el aire dando en el fuselaje desde abajo— ya no sale en el
+helicóptero; y la palanca que pone el juego al empezar en el aire es la que sostiene la altura a esa velocidad
+(`colectivoNivelado`), no la del estacionario, con la que subía a diez metros por segundo hasta el corte.
+
 **Lo que queda:**
 
 - **El paso mínimo** se ajustó a 3.000 m. A nivel del mar y con 6.500 kg, con la palanca abajo, las vueltas del planeo

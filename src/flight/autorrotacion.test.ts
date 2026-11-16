@@ -24,8 +24,10 @@
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { HelicopteroComoModelo } from "./fdm-helicoptero";
+import { airDensity } from "./atmosphere";
 import {
   ALTURA_DE_RECOGIDA,
+  colectivoNivelado,
   ALTURA_DE_TOMA,
   ModeloDeHelicoptero,
   VELOCIDAD_DE_AUTORROTACION,
@@ -244,4 +246,27 @@ describe("cortar los motores a 500 ft y llegar entero (#110)", () => {
     expect(cortarA(500, 0, "estacionario").tocaA).toBeGreaterThan(TOMA_DURA);
     llegaEntero(cortarA(1000, 0, "estacionario"));
   });
+
+  /*
+   * **Y antes de cortar, nivelado**: el ejercicio empieza a 70 kt con la palanca
+   * donde la pone el juego, `gasPara`, que en la de actitud es este colectivo.
+   * Con el del estacionario subía a diez metros por segundo hasta el corte:
+   * medido en el banco de Taguató, de 1.000 a 1.550 ft.
+   */
+  it("antes de cortar, a 70 kt, el colectivo que pone el juego lo deja casi nivelado", () => {
+    const h = new ModeloDeHelicoptero(F);
+    h.ponerEstabilizacion("actitud");
+    h.reset({ position: new Vector3(0, 300, 0), heading: 0, airspeed: 70 * NUDO, rotorEnMarcha: true });
+    const m = mandosNeutros();
+    m.tren = 1;
+    m.colectivo = colectivoNivelado(F, F.masaMaxima, airDensity(300), 70 * NUDO);
+    let peor = 0;
+    for (let t = 0; t < 14; t += DT) {
+      // Las alas a nivel y el morro donde está: el cíclico suelto, que en la de actitud se queda.
+      h.step(DT, m);
+      if (t > 3) peor = Math.max(peor, Math.abs(h.state.velocity.y));
+    }
+    expect(peor).toBeLessThan(3);
+  });
 });
+

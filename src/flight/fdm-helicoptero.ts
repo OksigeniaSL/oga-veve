@@ -26,6 +26,7 @@ import type { Vector3 } from "three";
 import { AIRE_ESTANDAR, type Aire, airDensity } from "./atmosphere";
 import {
   colectivoDeEstacionario,
+  colectivoNivelado,
   type Estabilizacion,
   type FichaDeHelicoptero,
   type MandosDeHelicoptero,
@@ -222,8 +223,17 @@ export class HelicopteroComoModelo implements FlightModel {
    * subir o bajar y a media se queda a la altura que tiene. Ver
    * `SUBE_EN_ESTACIONARIO`.
    */
-  gasPara(_velocidad: number): number {
+  gasPara(velocidad: number): number {
     if (this.modelo.estabilizacionAhora() === "estacionario") return 0.5;
+    /*
+     * **Y volando, el de esa velocidad**: el ejercicio de la autorrotación
+     * empieza a setenta nudos, y con el del estacionario subía a diez metros por
+     * segundo hasta que se paraban los motores. Ver `colectivoNivelado`.
+     */
+    if (velocidad > 1) {
+      const densidad = airDensity(this.modelo.state.position.y, this.aire);
+      return colectivoNivelado(this.opciones.ficha, this.modelo.masaAhora(), densidad, velocidad);
+    }
     return this.colectivoQueSostiene();
   }
 
