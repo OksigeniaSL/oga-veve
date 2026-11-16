@@ -18,6 +18,7 @@ import type { Propulsion } from "../flight/aircraft";
 import { escribirRincon } from "./escala";
 import { alPulsar } from "./pulsar";
 import { fan, motorMas, motorMenos } from "./pictogramas";
+import { helicopteroDePerfil } from "./dibujos-del-helicoptero";
 import { surtidorSvg } from "./surtidor";
 import { DIBUJOS_DE_LOS_SELLOS } from "./album";
 
@@ -1022,6 +1023,19 @@ const NARIZ_ABAJO = icono(`
 `);
 
 /**
+ * **Cíclico adelante**, para salir del anillo turbillonario: el helicóptero de
+ * perfil con el morro abajo y una flecha hacia delante. Lo que se pide no es
+ * subir, que es lo instintivo, sino ganar velocidad, y el dibujo dice eso sin
+ * una letra. Ver `zonaDelAnillo` en `flight/helicoptero.ts`.
+ */
+const CICLICO_ADELANTE = icono(`
+  <g transform="rotate(16 10 9.6)">${helicopteroDePerfil(10, 9.6, 8.4)}</g>
+  <path d="M12.6 20.6 H21.4 M18.6 17.8 L21.6 20.6 L18.6 23.4" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round" />
+`);
+
+/**
  * **La maniobra del TCAS, el RA**: el variómetro con su franja, tu avión y el
  * otro.
  *
@@ -1699,6 +1713,7 @@ export const DIBUJOS = {
   tirar: TIRAR,
   "nariz-arriba": NARIZ_ARRIBA,
   "nariz-abajo": NARIZ_ABAJO,
+  "ciclico-adelante": CICLICO_ADELANTE,
   /*
    * **Más gas y menos gas**: el motor de este avión con su flecha, el mismo
    * dibujo que llevan los botones del gas. Un dibujo, un significado: lo que

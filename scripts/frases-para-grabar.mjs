@@ -90,7 +90,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.terrInhibit\.\w+$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.terrInhibit\.\w+$|^vuelo\.anillo$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -2786,6 +2786,22 @@ if (!filas.some((f) => f.id === "cabina.flapsUp")) {
     para: "tras despegar, a su altura y su velocidad: la orden de recoger los flaps",
   });
   total += "flaps up".length;
+}
+/*
+ * **Y el anillo turbillonario del helicóptero** (16-11-2026): la instructora
+ * cuenta, con calma, que el rotor se hunde en su propio viento, que subir el
+ * colectivo no saca y que se sale hacia delante. Del grupo `vuelo`, pero metida
+ * con ellas renumeraría las ya grabadas: va detrás de todo. Ver
+ * `src/flight/helicoptero.ts` (`zonaDelAnillo`) y el ADR 0026, enmienda H16b.
+ */
+const DEL_ANILLO = [
+  ["vuelo.anillo", "en el helicóptero, al entrar en el anillo turbillonario, en los peldaños de abajo: qué pasa y cómo se sale"],
+];
+for (const [id, para] of DEL_ANILLO) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
 }
 const AJUSTES_CON_CHISPA = {
   stability: 0.35,

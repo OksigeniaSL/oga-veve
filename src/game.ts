@@ -4435,6 +4435,45 @@ export class Game {
   }
 
   /**
+   * **El anillo turbillonario del helicóptero** (#111, ADR 0026): bajando casi
+   * en vertical a la velocidad del aire que echa el rotor, el rotor se mete en
+   * su propia estela y se hunde solo. Se avisa al entrar —pasado el borde de la
+   * inestabilidad, que es cuando bajar empieza a hacer bajar más— y no vuelve a
+   * avisar hasta que se sale de la zona entera: lo rearma salir, no el reloj.
+   *
+   * Por la escalera (`flight/escalera.ts`): la tarjeta con el dibujo en los
+   * cuatro peldaños, una palabra en Tukã y la frase desde Taguató; la voz de la
+   * instructora en los tres de abajo, como toda explicación. El Super Puma no
+   * lleva una caja que avise del anillo, así que no suena ninguna máquina. Y en
+   * Guyrami y Tukã no llega a pasar: su estabilización no baja de 4 m/s, por
+   * debajo del borde. Ver `zonaDelAnillo` en `flight/helicoptero.ts`.
+   */
+  private mirarElAnillo(): void {
+    const s = this.flight.state;
+    const zona =
+      this.flight instanceof HelicopteroComoModelo && !s.onGround && !s.crashed
+        ? this.flight.modelo.anillo().zona
+        : "fuera";
+    if (zona === "fuera") this.anilloContado = false;
+    if (zona !== "dentro" || this.anilloContado) return;
+    this.anilloContado = true;
+    this.hud.senal.mostrar("ciclico-adelante", this.rotulo("hud.anillo", "palabra.anillo"), null, {
+      segundos: 8,
+      prioridad: IMPORTANTE,
+    });
+    const dicha = laInstructoraLoExplica(this.tier.avisos) && this.decirLoGrabado("vuelo.anillo");
+    this.apuntarCanto(`anillo: dentro, bajando ${(-s.velocity.y).toFixed(1)} m/s → ${dicha ? "dicho" : "tarjeta"}`);
+  }
+
+  /** Si ya se avisó del anillo en esta entrada: lo rearma salir de la zona. Ver `mirarElAnillo`. */
+  private anilloContado = false;
+
+  /** Para el banco: dónde está el rotor respecto al anillo. Ver `zonaDelAnillo`. */
+  get anilloParaBanco(): { descenso: number; avance: number; zona: string } | null {
+    return this.flight instanceof HelicopteroComoModelo ? { ...this.flight.modelo.anillo() } : null;
+  }
+
+  /**
    * **Al perderse, se dice**: con calma, que alejarse no es una emergencia.
    *
    * Lo que cambia por peldaño (`flight/escalera.ts`): el dibujo, la flecha
@@ -20568,6 +20607,7 @@ export class Game {
     // acercara a un punto de paso. Que es lo que hacía.
     this.updateHomeIndicator();
     this.mirarSiSePerdio();
+    this.mirarElAnillo();
     this.hud.tutor.update(
       this.flight.state,
       // En el helicóptero, el paso de las palas para despegar: ver `STEPS.colectivo`.
