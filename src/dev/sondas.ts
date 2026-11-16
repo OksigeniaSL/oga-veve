@@ -2444,6 +2444,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     perdido: () => juego.perdidoParaBanco,
     /**
+     * **Dónde está el rotor del helicóptero respecto al anillo turbillonario**:
+     * lo que baja y lo que avanza en múltiplos de su inducida en estacionario, y
+     * la zona. `null` en un avión. Ver `zonaDelAnillo` en `flight/helicoptero.ts`.
+     */
+    anillo: () => juego.anilloParaBanco,
+    /**
      * **Cómo va la misión**: el objetivo de ahora, la espera, el sitio al que se
      * va, y lo dicho y lo de la gente en orden. Lo usa `scripts/ver-mision-teno.mjs`.
      */
