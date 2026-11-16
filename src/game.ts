@@ -4706,20 +4706,7 @@ export class Game {
     // Esto también cierra el panel del final.
     this.reiniciarGalones();
     this.yaDespego = false;
-    BOCA.empezarDeCero();
-    this.megafonia.reiniciar();
-    this.reiniciarLoQueSuena();
-    this.huecos.reiniciar();
-    this.ventanilla.reiniciar();
-    this.cabinaDePasaje.reiniciar(this.aircraft.ventanillas ?? "persiana");
-    this.lucesDeNocheContadas = null;
-    // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
-    this.loSenalado = null;
-    this.mirada.reiniciar();
-    this.reiniciarLaVentanillaAlt();
-    // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
-    this.islenos?.reiniciar();
-    this.loMasAltoDelVuelo = 0;
+    this.olvidarLoDichoYLoMirado();
     this.radio.reiniciar(aqui.escenario.aerodrome?.id);
     // Y la raya, de aquí al punto de espera de este campo. Si de aquí no
     // sale —apagado lejos de toda calle—, el vuelo de antes se cierra igual:
@@ -13668,6 +13655,30 @@ export class Game {
      * bien». Aquí sí empieza un vuelo, así que aquí sí se olvida. Ver
      * `audio/boca.ts`.
      */
+    this.olvidarLoDichoYLoMirado();
+    this.instructor.callar();
+    // Y lo que explicaba la pantalla de las teclas, si sigue abierta y no sonó.
+    if (this.keyScreen?.visible) this.decirLasTeclas();
+    this.updateBadge();
+    if (this.aircraft.helicoptero) this.posarEnElHelipuerto();
+    /*
+     * **Y el modo inicio, si estaba a medias, otra vez desde la llave.** Si no
+     * había empezado —saludando o esperando la llave—, sigue donde iba: el
+     * suelo se asienta unos segundos después de abrir y recoloca el avión con
+     * un reinicio, y eso no es volver a empezar. Pero con el motor parado, que
+     * el reinicio de la cabecera lo arranca. Ver `recolocarTrasElMoldeado`.
+     */
+    this.retomarElInicio();
+  }
+
+  /**
+   * **Lo dicho y lo mirado, de cero**: la memoria de las bocas, la megafonía,
+   * los huecos, la ventanilla y la cabeza de quien vuela. Es de cada vuelo, y
+   * se olvida por los tres caminos que empiezan uno: los dos de reinicio y
+   * otro tramo desde donde está el avión. Eran tres copias a mano del mismo
+   * bloque. Ver `audio/boca.ts`.
+   */
+  private olvidarLoDichoYLoMirado(): void {
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
     this.reiniciarLoQueSuena();
@@ -13682,19 +13693,6 @@ export class Game {
     // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
     this.islenos?.reiniciar();
     this.loMasAltoDelVuelo = 0;
-    this.instructor.callar();
-    // Y lo que explicaba la pantalla de las teclas, si sigue abierta y no sonó.
-    if (this.keyScreen?.visible) this.decirLasTeclas();
-    this.updateBadge();
-    if (this.aircraft.helicoptero) this.posarEnElHelipuerto();
-    /*
-     * **Y el modo inicio, si estaba a medias, otra vez desde la llave.** Si no
-     * había empezado —saludando o esperando la llave—, sigue donde iba: el
-     * suelo se asienta unos segundos después de abrir y recoloca el avión con
-     * un reinicio, y eso no es volver a empezar. Pero con el motor parado, que
-     * el reinicio de la cabecera lo arranca. Ver `recolocarTrasElMoldeado`.
-     */
-    this.retomarElInicio();
   }
 
   /**
@@ -17303,21 +17301,8 @@ export class Game {
     this.wasStalled = false;
     this.wasCrashed = false;
     this.hud.tutor.reset();
-    // Vuelo nuevo, memoria nueva. Ver la nota de arriba.
-    BOCA.empezarDeCero();
-    this.megafonia.reiniciar();
-    this.reiniciarLoQueSuena();
-    this.huecos.reiniciar();
-    this.ventanilla.reiniciar();
-    this.cabinaDePasaje.reiniciar(this.aircraft.ventanillas ?? "persiana");
-    this.lucesDeNocheContadas = null;
-    // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
-    this.loSenalado = null;
-    this.mirada.reiniciar();
-    this.reiniciarLaVentanillaAlt();
-    // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
-    this.islenos?.reiniciar();
-    this.loMasAltoDelVuelo = 0;
+    // Vuelo nuevo, memoria nueva. Ver la nota de `resetFlight`.
+    this.olvidarLoDichoYLoMirado();
     this.instructor.callar();
     // Y lo que explicaba la pantalla de las teclas, si sigue abierta y no sonó.
     if (this.keyScreen?.visible) this.decirLasTeclas();
