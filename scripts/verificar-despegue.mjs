@@ -559,8 +559,9 @@ const rodando = await page.evaluate(async () => {
      * antes se paraba cuarenta metros antes y la fase no llegaba nunca.
      */
     const quiere = RODAJE();
-    c.throttle = s.airspeed < quiere ? 0.6 : 0;
-    c.brakes = s.airspeed > quiere + 2 ? 1 : 0;
+    // Por el suelo, como lo pide el plan: con el modelo de coeficientes, la del aire lleva el viento (ver `v` arriba).
+    c.throttle = s.groundSpeed < quiere ? 0.6 : 0;
+    c.brakes = s.groundSpeed > quiere + 2 ? 1 : 0;
     c.aileron = timon(s, ruta);
     const recorrido = o.rodajeAsi?.().recorrido ?? null;
     const avance =
@@ -946,7 +947,7 @@ const despegue = await page.evaluate(async () => {
     let hallado = buscar(avanceEnLaRaya - 5, avanceEnLaRaya + 30);
     if (hallado.mejor > 25) hallado = buscar(0, total);
     avanceEnLaRaya = hallado.avance;
-    const mirada = Math.max(12, s.airspeed * 1.6, hallado.mejor * 1.5);
+    const mirada = Math.max(12, s.groundSpeed * 1.6, hallado.mejor * 1.5);
     const mira = aLos(Math.min(total, avanceEnLaRaya + mirada));
     // Con la ganancia del otro banco: en tierra el alerón es la rueda de morro, y con 2 se pasa.
     let e = Math.atan2(mira[0] - s.position.x, -(mira[1] - s.position.z)) - s.heading;
@@ -962,7 +963,7 @@ const despegue = await page.evaluate(async () => {
   for (let i = 0; i < 600; i++) {
     await new Promise((r) => setTimeout(r, 200));
     const s = o.estado();
-    c.throttle = s.airspeed < 8 ? 0.5 : 0;
+    c.throttle = s.groundSpeed < 8 ? 0.5 : 0;
     c.brakes = 0;
     /*
      * Tres tramos, y en este orden: mientras quede raya por delante se sigue
