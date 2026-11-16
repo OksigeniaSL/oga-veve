@@ -91,6 +91,7 @@ export const ACELERA_RODANDO = 0.6;
  */
 export const EN_LLEGAR_RODANDO = 4;
 import { type AssistLayers, uniformAssists } from "./assists";
+import { pieDeTecla } from "./palanca-de-teclado";
 import type {
   ControlInputs,
   FlightModel,
@@ -314,6 +315,68 @@ export function giroDelPedal(velocidad: number): number {
 
 /** Lo que gira el pedal a fondo, rad/s, de veinticinco metros por segundo arriba. */
 const PEDAL_EN_TIERRA = 0.4;
+
+/**
+ * **Lo que manda la rueda de morro a esta velocidad**, de 0 a 1: entera hasta
+ * ocho metros por segundo y nada a los veintiocho. Ver la rueda en
+ * `resolveGround`, y el timón automático en tierra, que toma el relevo de lo
+ * que ella deja: ver `timonEnTierra`.
+ */
+export function autoridadDeLaRueda(velocidad: number): number {
+  return 1 - clamp((Math.abs(velocidad) - 8) / 20, 0, 1);
+}
+
+/**
+ * **Lo deprisa que el timón automático en tierra devuelve el rumbo**, rad/s
+ * por radián que falte: un grado de error, un grado por segundo. Más es hacer
+ * eses por la pista; menos es dejar que la veleta gane terreno mientras se
+ * corrige. Ver `timonEnTierra`.
+ */
+const VUELVE_AL_RUMBO = 1;
+/**
+ * Y lo más deprisa que lo devuelve, rad/s: cinco grados por segundo, que es
+ * una corrección de eje y no un giro, y lo que hace falta para quitar en un
+ * segundo o dos el cangrejo de doce nudos cruzados al tocar. Con dos, el JAZ 90
+ * se corría de lado diez metros mientras lo quitaba, y con cinco seis. Más
+ * deprisa no lo da el agarre de las ruedas: ver `AGARRE_DEL_PEDAL`.
+ */
+const VUELVE_COMO_MUCHO = (5 * Math.PI) / 180;
+/**
+ * Cuánto pie se queda puesto por segundo, por cada rad/s de giro que falte y
+ * por lo que dé el pedal entero: es lo que acaba sujetando la veleta, que
+ * empuja siempre del mismo lado y crece con la carrera. Ver `timonEnTierra`.
+ */
+const SE_QUEDA_EL_PIE = 3;
+/**
+ * Lo que tiene que mover quien juega el volante o el pedal para que la ayuda
+ * entienda que gira él, de 0 a 1. Por debajo es el mando que vuelve al centro
+ * al soltarlo, no una orden.
+ */
+const GIRA_QUIEN_LLEVA = 0.005;
+/**
+ * **Desde qué velocidad sostiene el rumbo el timón automático en tierra**,
+ * m/s. Más despacio el pedal no gira casi nada —es aire y poco suelo—, la
+ * veleta no tiene de qué agarrarse, y lo que hay es maniobrar en el puesto:
+ * sostener ahí un rumbo sería acumular pie para nada y soltarlo de golpe al
+ * echar a rodar.
+ */
+const SOSTIENE_DESDE = 3;
+/**
+ * **Lo que dura un bote**, s. `onGround` parpadea en la carrera en cuanto el
+ * ala levanta el avión un palmo (`PEGADO_AL_SUELO`), y en la toma el avión
+ * rebota. Si cada parpadeo borrara el rumbo y el pie que sujeta la veleta,
+ * cada vuelta al suelo empezaría de cero —y la de un bote en cangrejo, con el
+ * rumbo del morro torcido y no con el de la pista—. Más de un segundo en el
+ * aire ya es volar.
+ */
+const UN_BOTE = 1;
+/**
+ * **Lo que frena el suelo la guiñada**, por segundo: los dos frenos de
+ * `resolveGround` —el del tren, medio `settle`, y el de la rueda, uno entero,
+ * con `settle` a seis por segundo—. Con él se cuenta lo que gira el timón de
+ * aire una vez asentado. Ver `giroDelTimonEnTierra`.
+ */
+const FRENO_DE_GUINADA_EN_TIERRA = 6 * 0.5 + 6;
 /**
  * Lo que llega a girar la rueda de morro, en radianes.
  *
@@ -391,6 +454,18 @@ export class CoefficientFlightModel implements FlightModel {
    * saber cuánto lo ha movido. Ver `SUBIDA_POR_COMPENSADOR`.
    */
   private trimVisto: number | null = null;
+  /**
+   * El rumbo que sostiene el timón automático en tierra, rad, o `null` si no
+   * sostiene ninguno: en el aire, o a paso de peatón. Ver `timonEnTierra`.
+   */
+  private rumboEnTierra: number | null = null;
+  /** El pie que se ha quedado puesto contra la veleta, de −1 a 1. Ver `timonEnTierra`. */
+  private pieEnTierra = 0;
+  /**
+   * Segundos sin ruedas en el suelo, para no olvidar el rumbo en un bote. Ver
+   * `UN_BOTE`.
+   */
+  private sinRuedas = 0;
 
   // Vectores de trabajo reutilizados: este bucle corre 240 veces por
   // segundo y no queremos darle basura al recolector.
@@ -667,6 +742,9 @@ export class CoefficientFlightModel implements FlightModel {
     const s = this.state;
     this.rapidezEnTierra = null;
     this.frenoDeAhora = 0;
+    this.rumboEnTierra = null;
+    this.pieEnTierra = 0;
+    this.sinRuedas = 0;
     s.position.copy(initial.position);
     s.orientation.setFromAxisAngle(new Vector3(0, 1, 0), -initial.heading);
     this.updateBodyAxes();
@@ -935,10 +1013,10 @@ export class CoefficientFlightModel implements FlightModel {
     }
     s.airspeed = speed;
 
-    const assisted = this.applyAssist(controls, s.alpha, s.beta);
-
     const qDyn = 0.5 * density * speed * speed;
     const qS = qDyn * ac.wingArea;
+
+    const assisted = this.applyAssist(controls, s.alpha, s.beta, dt, qS);
     /*
      * **Y lo que sustenta, frena y cabecea es el aire que pasa por el plano de
      * simetría**, no todo el que llega.
@@ -1713,14 +1791,16 @@ export class CoefficientFlightModel implements FlightModel {
      * abortar un despegue: el avión seguía recto hiciera uno lo que hiciera.
      *
      * Plena hasta ocho metros por segundo y apagándose a los veintiocho, que
-     * es cuando toma el relevo el timón. Decayendo desde parado, a treinta por
+     * es cuando toma el relevo el timón —el de quien vuela, o en los peldaños
+     * con ayuda el automático, que sigue dando lo que pide el volante: ver
+     * `timonEnTierra`—. Decayendo desde parado, a treinta por
      * hora el radio de giro se iba a cincuenta y cinco metros y las curvas de
      * las calles de rodaje no se podían tomar. Medido.
      *
      * **Y lo que manda es la geometría del avión, no un número igual para
      * todos.** Ver `esteGiro`.
      */
-    const nosewheel = 1 - clamp((Math.abs(longitudinal) - 8) / 20, 0, 1);
+    const nosewheel = autoridadDeLaRueda(longitudinal);
     s.yawRate +=
       (esteGiro(ac, controls.aileron * nosewheel, longitudinal) - s.yawRate) *
       settle;
@@ -1956,6 +2036,8 @@ export class CoefficientFlightModel implements FlightModel {
     controls: ControlInputs,
     alpha: number,
     beta: number,
+    dt: number,
+    qS: number,
   ): ControlInputs {
     const { autoRudder, stallProtection } = this.layers;
     if (autoRudder <= 0 && stallProtection <= 0) return controls;
@@ -1970,11 +2052,22 @@ export class CoefficientFlightModel implements FlightModel {
     // empuja la estabilidad direccional del avión. La primera versión
     // restaba, así que peleaba contra la veleta y el derrape crecía hasta
     // dieciséis grados en vez de irse a cero.
-    const rudder = clamp(
-      controls.rudder + autoRudder * clamp(beta * 4.5, -1, 1),
-      -1,
-      1,
-    );
+    //
+    // **Y con las ruedas en el suelo, no**: allí lleva el rumbo. Ver
+    // `timonEnTierra`.
+    let ayuda: number;
+    if (this.state.onGround) {
+      this.sinRuedas = 0;
+      ayuda = this.timonEnTierra(controls, dt, qS, autoRudder);
+    } else {
+      this.sinRuedas += dt;
+      if (this.sinRuedas > UN_BOTE) {
+        this.rumboEnTierra = null;
+        this.pieEnTierra = 0;
+      }
+      ayuda = autoRudder * clamp(beta * 4.5, -1, 1);
+    }
+    const rudder = clamp(controls.rudder + ayuda, -1, 1);
 
     // Limitador de ángulo de ataque: cuanto más cerca de la pérdida, menos
     // autoridad tiene el tirón. No la impide, la hace costar.
@@ -2004,6 +2097,144 @@ export class CoefficientFlightModel implements FlightModel {
     const elevator = enElSuelo ? Math.min(0, limitado) : limitado;
 
     return { ...controls, rudder, elevator };
+  }
+
+  /**
+   * **El timón automático con las ruedas en el suelo** (#196): el pie que
+   * pone, de −1 a 1, ya con la capa del peldaño (`autoRudder`).
+   *
+   * ## Lo que hacía
+   *
+   * Lo mismo que en el aire: centrar la bola. Volando eso es un viraje
+   * coordinado; rodando con viento cruzado es llevar el morro hacia el viento,
+   * que es lo que ya hace la veleta del avión y justo lo que en la carrera se
+   * corrige con el pie contrario. Medido en la mesa en la 12 de Los Rodeos con
+   * el viento de casa —12 kt del 040, once cruzados por la izquierda— y sin
+   * tocar nada hasta la Vr: el JAZ 90 acababa 386 m a la izquierda del eje en
+   * Tukã y 288 en Taguató, y 27 sin ayuda, que es lo que hace la veleta sola.
+   * La ayuda ponía ocho veces la veleta. Ver `timon-en-el-suelo.test.ts`.
+   *
+   * ## Lo que hace
+   *
+   * Lo que hace un piloto en la carrera: llevar el eje con los pies, contra la
+   * veleta. Ningún avión lleva un amortiguador de guiñada que trabaje en el
+   * suelo a favor de ella. Quien juega no tiene pies; dirige con el volante,
+   * que en el suelo es la rueda de morro, y la rueda se queda sin autoridad con
+   * la carrerilla (`autoridadDeLaRueda`). Así que la ayuda es el pie que le
+   * falta:
+   *
+   * - **Lo que pide el volante, lo sigue dando el timón.** Lo que la rueda
+   *   deja de girar al coger velocidad lo toma el pedal, en la misma
+   *   proporción: a los veintiocho metros por segundo, el volante entero es el
+   *   pedal entero de un timón corriente. Sin esto, a partir de ahí no había
+   *   nada con que llevar el eje sin pedales.
+   * - **Con el volante quieto, sostiene hacia donde se va**: el rumbo de la
+   *   trayectoria en el momento de soltar, con un pie que se va quedando
+   *   puesto mientras la veleta empuje. En la carrera y rodando, que la veleta
+   *   empuja en los dos. Y al tocar con el avión en cangrejo, hacia donde se va
+   *   es la pista y no el morro: es quitar el cangrejo, que es lo que se hace
+   *   con el pie al tocar.
+   * - **Y no le discute nada a la rueda**: mientras el volante —o la ayuda de
+   *   rodaje, que mueve el mismo volante— pide algo, no se sostiene ningún
+   *   rumbo, y lo que pide lo da la rueda entera hasta los ocho metros por
+   *   segundo. Las curvas de las calles salen igual que sin ayuda.
+   *
+   * Lo que mueva quien juega —volante o pedal— es suyo: mientras lo mueve no
+   * se sostiene ningún rumbo, y al soltar se sostiene el que lleve.
+   *
+   * La capa es lo más de pie que pone: entero en Tukã, seis décimas en
+   * Taguató, y nada en el peldaño sin ayudas, donde el timón es de quien vuela.
+   * Medido como arriba, sin tocar nada, el JAZ 90 llega a la Vr a 0,6 m del
+   * eje en los dos, y ningún avión pasa de 2,2 m.
+   */
+  private timonEnTierra(
+    controls: ControlInputs,
+    dt: number,
+    qS: number,
+    capa: number,
+  ): number {
+    const s = this.state;
+    const v = s.velocity.dot(this.forward);
+    if (capa <= 0 || Math.abs(v) < SOSTIENE_DESDE) {
+      this.rumboEnTierra = null;
+      this.pieEnTierra = 0;
+      return 0;
+    }
+    const tope = capa;
+    const proa = Math.atan2(this.forward.x, -this.forward.z);
+    /*
+     * **Qué rumbo se sostiene.** Al tocar o al echar a rodar, hacia donde se
+     * va: en el suelo es casi siempre hacia donde se mira —las ruedas no dejan
+     * ir de lado—, salvo al tocar en cangrejo, y ahí es la pista. Mientras
+     * quien juega gira, donde se va a quedar la proa al soltar: la de ahora y
+     * lo que todavía gira hasta que el suelo la frena. Con la de ahora sola,
+     * la ayuda se comía el final de cada toque de pie: un toque de Q en la
+     * carrera del JAZ 120 a 130 kt giraba 0,28° en vez de 0,3 (ver
+     * `carrera-fina.test.ts`); y con la trayectoria, que va un poco por detrás
+     * de la proa al girar, más.
+     */
+    const gira =
+      Math.abs(controls.aileron) > GIRA_QUIEN_LLEVA ||
+      Math.abs(controls.rudder) > GIRA_QUIEN_LLEVA;
+    if (gira) this.rumboEnTierra = proa + s.yawRate / FRENO_DE_GUINADA_EN_TIERRA;
+    else if (this.rumboEnTierra === null)
+      this.rumboEnTierra = Math.atan2(s.velocity.x, -s.velocity.z);
+    /*
+     * Lo que pide el volante, en la parte que la rueda ya no da. Es lo único
+     * que hace la ayuda mientras se gira: el rumbo es de quien gira.
+     *
+     * **Y el volante entero es el pedal de un timón corriente**, no el del
+     * JAZ 90, que es casi el doble porque sujeta un motor parado por encima de
+     * su Vmc: con él entero, un segundo de volante a 127 kt tiraba de lado con
+     * 0,58 g. Es lo mismo que pide la tecla de pie (`pieDeTecla`), y por el
+     * mismo motivo: el mismo giro en toda la flota. Lo que sostiene el rumbo,
+     * más abajo, sí puede con todo el pedal de la capa, que es lo que hace
+     * falta si se para un motor en la carrera.
+     */
+    if (gira)
+      return clamp(
+        tope *
+          (1 - autoridadDeLaRueda(v)) *
+          pieDeTecla(this.aircraft.aero.cnRudder) *
+          controls.aileron +
+          this.pieEnTierra,
+        -tope,
+        tope,
+      );
+
+    /*
+     * El giro que falta para volver al rumbo —poco a poco, ver
+     * `VUELVE_AL_RUMBO`—, pasado a pedal con lo que gira el pedal entero a esta
+     * velocidad; y lo que se va quedando puesto, que es lo que sujeta la veleta.
+     * Lo que se queda no crece con el pie a tope, o al soltar la veleta —al
+     * rotar, o al frenar— sobraría todo de golpe.
+     */
+    const falta = diferenciaDeRumbo(this.rumboEnTierra, proa);
+    const quiere = clamp(falta * VUELVE_AL_RUMBO, -VUELVE_COMO_MUCHO, VUELVE_COMO_MUCHO);
+    const corrige = (quiere - s.yawRate) / this.giroDelTimonEnTierra(v, qS);
+    const pie = corrige + this.pieEnTierra;
+    if (Math.abs(pie) < tope || Math.sign(corrige) !== Math.sign(pie))
+      this.pieEnTierra = clamp(
+        this.pieEnTierra + corrige * SE_QUEDA_EL_PIE * dt,
+        -tope,
+        tope,
+      );
+    return clamp(pie, -tope, tope);
+  }
+
+  /**
+   * **Lo que gira el pedal entero en tierra a esta velocidad, una vez
+   * asentado**, rad/s: el del suelo (`giroDelPedal`) y el del timón de aire,
+   * que con la carrerilla es el que más pone. Es la cuenta con la que el timón
+   * automático en tierra pasa de giro a pedal; por arriba, porque no cuenta lo
+   * que frena el propio aire, y por eso nunca pide de más.
+   */
+  private giroDelTimonEnTierra(v: number, qS: number): number {
+    const ac = this.aircraft;
+    const delAire =
+      (qS * ac.wingSpan * ac.aero.cnRudder) /
+      (ac.inertia.zz * FRENO_DE_GUINADA_EN_TIERRA);
+    return Math.max(1e-3, giroDelPedal(v) + delAire);
   }
 
   /**
@@ -2235,4 +2466,12 @@ function anguloDeAtaque(u: number, w: number): number {
 
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
+}
+
+/** Lo que va del rumbo `b` al `a`, rad, entre −π y π: positivo, a la derecha. */
+function diferenciaDeRumbo(a: number, b: number): number {
+  let d = (a - b) % (2 * Math.PI);
+  if (d > Math.PI) d -= 2 * Math.PI;
+  else if (d < -Math.PI) d += 2 * Math.PI;
+  return d;
 }
