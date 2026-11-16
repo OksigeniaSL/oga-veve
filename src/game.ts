@@ -6222,7 +6222,6 @@ export class Game {
   /** Si ya se despegó en este vuelo. Ver `announce`. */
   private yaDespego = false;
   private wasStalled = false;
-  private wasCrashed = false;
   /**
    * Las cinco vistas, cada una con su estado.
    *
@@ -13627,7 +13626,6 @@ export class Game {
     this.wasOnGround = true;
     this.yaDespego = false;
     this.wasStalled = false;
-    this.wasCrashed = false;
     this.input.releaseAll();
     /*
      * **Y quien empieza alineado, con los flaps de despegue puestos**: estar
@@ -17329,7 +17327,6 @@ export class Game {
     this.reiniciarGalones();
     this.wasOnGround = false;
     this.wasStalled = false;
-    this.wasCrashed = false;
     this.olvidarElVueloAnterior();
     // Y la escena de aterrizar, si estaba en marcha: ver `retomarElInicio`.
     this.retomarElInicio();
@@ -17950,7 +17947,6 @@ export class Game {
     this.antesAlUmbral = Infinity;
     this.wasOnGround = false;
     this.wasStalled = false;
-    this.wasCrashed = false;
     this.dichoDeLaToma = false;
     // Y no olvida lo que ya se dijo en este vuelo: eso es memoria, no la frase que sonaba. Ver `callar` en la boca.
     BOCA.callar();
@@ -35053,11 +35049,14 @@ export class Game {
       this.repartirLaTurbulencia();
     }
     if (avisaLaPerdida(state) && !this.wasStalled) this.avisar("perdida");
-    if (state.crashed && !this.wasCrashed) this.avisar("error");
+    /*
+     * El golpe no suena aquí: todo golpe entra en el percance en este mismo
+     * paso, y el percance ya suena al entrar (`alSufrirPercance`). Sonaba dos
+     * veces, y un suceso es un sonido. Lo vio #30.
+     */
 
     this.wasOnGround = state.onGround;
     this.wasStalled = avisaLaPerdida(state);
-    this.wasCrashed = state.crashed;
   }
 
   /**
