@@ -167,9 +167,22 @@ describe("estacionario", () => {
       const equilibrio = h.actitud();
       const sostenido = h.mandosAhora();
       h.ponerEstabilizacion(modo);
-      // Quien vuela deja el cíclico y los pies donde estaban, salvo con la actitud, que los suelta.
+      /*
+       * Quien vuela deja el cíclico y los pies donde estaban, salvo con la actitud,
+       * que los suelta. Y el colectivo, el que llevaba el rotor: en la de
+       * estacionario la palanca pide subir o bajar, y donde se haya quedado la del
+       * piloto de prueba —en cualquier sitio de su media— no es un colectivo.
+       */
       const quieto: MandosDeHelicoptero =
-        modo === "actitud" ? { ...m } : { ...m, cabeceo: sostenido.cabeceo, alabeo: sostenido.alabeo, pedales: sostenido.pedales };
+        modo === "actitud"
+          ? { ...m, colectivo: sostenido.colectivo }
+          : {
+              ...m,
+              colectivo: sostenido.colectivo,
+              cabeceo: sostenido.cabeceo,
+              alabeo: sostenido.alabeo,
+              pedales: sostenido.pedales,
+            };
       h.state.pitchRate += 3 * GRADO;
       let peor = 0;
       let final = 0;
@@ -436,6 +449,65 @@ describe("sin motor", () => {
     expect(suma / n).toBeLessThan(-8);
     expect(suma / n).toBeGreaterThan(-16);
   });
+
+  /**
+   * **Un fallo no es una parada**: al pararlos a mano los motores se apagan en
+   * unos ocho segundos; al fallar, la potencia se va de golpe, y lo que se nota es
+   * el rotor perdiendo vueltas (14 CFR 29.143 (e)).
+   */
+  it("al fallar, la potencia se va en menos de un segundo; al pararlos, en unos ocho", () => {
+    const potenciaTras = (fallo: boolean, segundos: number): number => {
+      const { h, m, colectivo, ciclico } = enElAire(600, "actitud", 80);
+      for (let t = 0; t < 10; t += DT) {
+        colectivo();
+        ciclico(80);
+        h.step(DT, m);
+      }
+      const antes = h.rotor().potenciaMotores;
+      m.motores = false;
+      if (fallo) h.fallanLosMotores();
+      for (let t = 0; t < segundos; t += DT) {
+        ciclico(80);
+        h.step(DT, m);
+      }
+      return h.rotor().potenciaMotores / antes;
+    };
+    expect(potenciaTras(true, 1)).toBeLessThan(0.05);
+    expect(potenciaTras(false, 1)).toBeGreaterThan(0.5);
+    expect(potenciaTras(false, 10)).toBeLessThan(0.05);
+  });
+
+  /**
+   * **El tope de abajo del colectivo, ajustado como los de verdad**: con poco peso
+   * y abajo, que es cuando el rotor da menos vueltas sin motor, el colectivo abajo
+   * del todo da el mínimo de la ficha y no menos (FAA-H-8083-21B, 11-4). Con el
+   * tope ajustado a 3.000 m, a nivel del mar y con 6.500 kg bajaban a 204.
+   */
+  it("con poco peso y al nivel del mar, la palanca abajo no deja las vueltas por debajo de las de la ficha", () => {
+    // El suelo muy abajo, para planear un minuto con el aire del nivel del mar.
+    const h = new ModeloDeHelicoptero(F, () => -20_000);
+    h.ponerMasa(6500);
+    h.ponerEstabilizacion("actitud");
+    h.reset({ position: new Vector3(0, 550, 0), heading: 0, airspeed: 70 * NUDO, rotorEnMarcha: true });
+    const m = mandosNeutros();
+    m.tren = 0;
+    m.motores = false;
+    m.colectivo = 0;
+    let cabeceoAprendido = 2;
+    for (let t = 0; t < 60; t += DT) {
+      const r = h.actitud().rumbo;
+      const falta = 70 * NUDO - (h.state.velocity.x * Math.sin(r) - h.state.velocity.z * Math.cos(r));
+      cabeceoAprendido = Math.max(-15, Math.min(15, cabeceoAprendido - 0.15 * falta * DT));
+      const quiere = Math.max(-15, Math.min(12, cabeceoAprendido - 0.8 * falta)) * GRADO;
+      const a = h.actitud();
+      m.cabeceo = Math.max(-1, Math.min(1, (quiere - a.cabeceo) * 3));
+      m.alabeo = Math.max(-1, Math.min(1, -a.alabeo * 3));
+      h.step(DT, m);
+    }
+    expect(h.state.position.y).toBeGreaterThan(-300);
+    expect(h.rotor().vueltas / RPM).toBeGreaterThanOrEqual(220);
+    expect(h.rotor().vueltas / RPM).toBeLessThan(240);
+  });
 });
 
 describe("en el suelo", () => {
@@ -625,6 +697,102 @@ describe("arrancar, parar y rodar", () => {
     const ciclico = h.mandosAhora();
     expect(Math.abs(ciclico.cabeceo - F.ciclicoDeEstacionario.cabeceo)).toBeLessThan(0.04);
     expect(Math.abs(ciclico.alabeo - F.ciclicoDeEstacionario.alabeo)).toBeLessThan(0.04);
+  });
+});
+
+describe("la ayuda de estacionario al despegar", () => {
+  /**
+   * La X hasta tres metros y soltarla, como en la lección de quedarse quieto. Se
+   * pasaba hasta los once metros y se quedaba a diez, y al despegar se deslizaba
+   * unos diez metros de lado a casi tres metros por segundo, sin volver encima de
+   * la hache: pedía subida cero y velocidad cero, no una altura ni un sitio.
+   */
+  it("soltada la X a tres metros se queda cerca, y encima de la hache", () => {
+    for (const masa of [7000, 8600]) {
+      const h = new ModeloDeHelicoptero(F);
+      h.ponerMasa(masa);
+      h.ponerEstabilizacion("estacionario");
+      h.reset({ position: new Vector3(0, 0, 0), heading: 0, rotorEnMarcha: true });
+      const m = mandosNeutros();
+      m.frenos = 1;
+      m.colectivo = 0.5;
+      for (let t = 0; t < 5; t += DT) h.step(DT, m);
+      const apoyo = Math.max(...F.ruedas.map((r) => r.z));
+      let soltada = false;
+      let alto = 0;
+      let lado = 0;
+      for (let t = 0; t < 40; t += DT) {
+        const ruedas = h.state.heightAboveGround - apoyo;
+        soltada ||= ruedas > 3;
+        m.colectivo = soltada ? 0.5 : 1;
+        if (!h.state.onGround) m.frenos = 0;
+        h.step(DT, m);
+        alto = Math.max(alto, ruedas);
+        lado = Math.max(lado, Math.hypot(h.state.position.x, h.state.position.z));
+      }
+      const ruedas = h.state.heightAboveGround - apoyo;
+      expect(alto).toBeLessThan(6.5);
+      expect(ruedas).toBeGreaterThan(3);
+      expect(ruedas).toBeLessThan(6);
+      expect(Math.abs(h.state.velocity.y)).toBeLessThan(0.2);
+      // Lo que asoma la rueda de morro, como mucho, y al final encima.
+      expect(lado).toBeLessThan(2);
+      expect(Math.hypot(h.state.position.x, h.state.position.z)).toBeLessThan(0.5);
+    }
+  });
+
+  it("un toque corto de X que apenas despega se queda en el aire, sin volver a tocar", () => {
+    const h = new ModeloDeHelicoptero(F);
+    h.ponerEstabilizacion("estacionario");
+    h.reset({ position: new Vector3(0, 0, 0), heading: 0, rotorEnMarcha: true });
+    const m = mandosNeutros();
+    m.frenos = 1;
+    m.colectivo = 0.5;
+    for (let t = 0; t < 5; t += DT) h.step(DT, m);
+    let enElAire = false;
+    let tocaOtraVez = false;
+    for (let t = 0; t < 30; t += DT) {
+      m.colectivo = t > 1 && t < 3 ? 1 : 0.5;
+      if (!h.state.onGround) {
+        m.frenos = 0;
+        enElAire = true;
+      } else if (enElAire) tocaOtraVez = true;
+      h.step(DT, m);
+    }
+    expect(enElAire).toBe(true);
+    expect(tocaOtraVez).toBe(false);
+  });
+});
+
+describe("el anemómetro", () => {
+  /**
+   * El tubo de pitot mide el aire que le entra de frente: bajando en vertical,
+   * casi nada, y volando hacia delante, lo que se vuela. Marcaba el aire total, y
+   * en la lección del anillo turbillonario, bajando a 20 m/s, la aguja decía 38
+   * nudos justo cuando tenía que estar casi en cero.
+   */
+  it("bajando en vertical marca casi cero; hacia delante, lo que se vuela", () => {
+    const h = new ModeloDeHelicoptero(F);
+    h.ponerEstabilizacion("actitud");
+    h.reset({ position: new Vector3(0, 1500, 0), heading: 0, airspeed: 0, rotorEnMarcha: true });
+    h.state.velocity.set(0, -20, 0);
+    h.step(1e-4, mandosNeutros());
+    expect(h.state.airspeed / NUDO).toBeLessThan(2);
+    // De lado, tampoco entra.
+    h.state.velocity.set(10, 0, 0);
+    h.step(1e-4, mandosNeutros());
+    expect(h.state.airspeed / NUDO).toBeLessThan(2);
+
+    const { h: volando, m, colectivo, ciclico } = enElAire(600, "actitud", 80);
+    for (let t = 0; t < 20; t += DT) {
+      colectivo();
+      ciclico(80);
+      volando.step(DT, m);
+    }
+    const total = volando.state.velocity.length();
+    // Dentro del 3 % que la norma deja de error al sistema (14 CFR 29.1323 (d)).
+    expect(volando.state.airspeed).toBeGreaterThan(0.97 * total);
+    expect(volando.state.airspeed).toBeLessThanOrEqual(total + 1e-9);
   });
 });
 

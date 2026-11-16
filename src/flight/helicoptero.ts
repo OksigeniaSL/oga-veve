@@ -721,6 +721,22 @@ export const RITMO_DEL_COLECTIVO = 0.16;
  */
 export const SUBE_EN_ESTACIONARIO = 4;
 
+/**
+ * **Lo más deprisa que vuelve la de estacionario a su sitio**, m/s, con el cíclico
+ * suelto: andando, que es lo que se ve bien desde la cabina y no tuerce nada.
+ */
+const VUELVE_AL_SITIO = 1.5;
+
+/**
+ * **Cómo cambia la subida pedida en la de estacionario**, m/s cada segundo: para
+ * empezar a subir o a bajar, metro y medio, que no hace bailar el par; para
+ * pararse, cuatro. Con metro y medio también para pararse, soltar la X subiendo
+ * a cuatro metros por segundo eran cinco metros más de subida solo en frenar, y
+ * soltada a tres metros se quedaba a diez; así son dos.
+ */
+const CAMBIA_LA_SUBIDA = 1.5;
+const FRENA_LA_SUBIDA = 4;
+
 /** Por debajo de estas vueltas, en tanto por uno, la estabilización de estacionario quita colectivo. */
 const VUELTAS_QUE_SE_GUARDAN = 0.985;
 
@@ -750,6 +766,18 @@ const RECOGIDA_SIN_MOTOR = 20 * GRADO;
 /** Las tres partes de una autorrotación, en su orden. Ver `faseDeAutorrotacion`. */
 export type FaseDeAutorrotacion = "planeo" | "recogida" | "toma";
 const ORDEN_DE_FASE: Record<FaseDeAutorrotacion, number> = { planeo: 0, recogida: 1, toma: 2 };
+
+/**
+ * **Lo que tarda en apagarse un motor que falla**, s, contra los ocho de pararlo a
+ * mano: con la mitad, ya no da nada. Un turboeje que se queda sin llama no da
+ * potencia a la turbina libre aunque el generador de gas siga girando un rato, y
+ * la norma de certificación trata el fallo como una pérdida de potencia de golpe,
+ * con un segundo como mínimo antes de que nadie toque nada (14 CFR 29.143 (e)).
+ * Fallando como al pararlos a mano, la potencia tardaba unos ocho segundos en
+ * irse, y el rotor perdía vueltas despacio: no era lo que hay que aprender a
+ * contestar, colectivo abajo en cuanto se nota.
+ */
+const SE_APAGA_DE_GOLPE = 1;
 
 /** El paso de integración más largo, s: el disco tarda unas centésimas en seguir al cíclico. */
 const PASO_MAXIMO = 1 / 240;
@@ -838,6 +866,12 @@ export class ModeloDeHelicoptero {
   private colectivoDePie = 0.3;
   /** Por dónde va la autorrotación: no se vuelve atrás si un globo sube un palmo. */
   private faseSinMotor: FaseDeAutorrotacion | null = null;
+  /** Si los motores se han parado por un fallo, y no a mano. Ver `fallanLosMotores`. */
+  private fallo = false;
+  /** Encima de qué sitio se queda la de estacionario con el cíclico suelto, o ninguno. */
+  private sitio: { x: number; z: number } | null = null;
+  /** A qué altura se queda la de estacionario con el colectivo a media palanca, m, o a ninguna. */
+  private alturaSostenida: number | null = null;
 
   /**
    * **Los pedales, para quien vuela**: el eje de la guiñada se queda con la
@@ -937,6 +971,16 @@ export class ModeloDeHelicoptero {
     return { descenso, avance, zona: zonaDelAnillo(descenso, avance) };
   }
 
+  /**
+   * **Fallan los motores**, que no es pararlos: con los mandos de los motores
+   * cortados en el mismo paso, la potencia se va en menos de un segundo en vez de
+   * en los ocho de una parada. Lo piden el ejercicio de la autorrotación y
+   * quedarse sin combustible. Ver `SE_APAGA_DE_GOLPE`.
+   */
+  fallanLosMotores(): void {
+    this.fallo = true;
+  }
+
   /** Los mandos que llegan al rotor: los de quien vuela con lo que añade la estabilización. */
   mandosAhora(): Readonly<MandosDeHelicoptero> {
     return this.ultimosMandos;
@@ -984,6 +1028,7 @@ export class ModeloDeHelicoptero {
     this.ultimosMandos = mandosNeutros();
     this.anclas.length = 0;
     this.faseSinMotor = null;
+    this.fallo = false;
     this.sostenerLoQueHay();
     /*
      * Y el colectivo de la estabilización de estacionario, el que toca: colocado en
@@ -1017,6 +1062,9 @@ export class ModeloDeHelicoptero {
     this.colectivoSuave = this.ultimosMandos.colectivo;
     this.pieDeLaAyuda = this.ultimosMandos.pedales;
     this.piesSueltosAntes = false;
+    // El sitio y la altura se cogen de nuevo, donde se pare y donde esté.
+    this.sitio = null;
+    this.alturaSostenida = null;
   }
 
   // ── El paso ──
@@ -1159,9 +1207,11 @@ export class ModeloDeHelicoptero {
      * por el aire, minutos, si no se le pone el freno.
      */
     const tardaEnArrancar = f.motores.arranque ?? 30;
+    // Arrancar otra vez es empezar de nuevo, también tras un fallo.
+    if (piloto.motores) this.fallo = false;
     this.arranque = piloto.motores
       ? Math.min(1, this.arranque + dt / tardaEnArrancar)
-      : Math.max(0, this.arranque - dt / 8);
+      : Math.max(0, this.arranque - dt / (this.fallo ? SE_APAGA_DE_GOLPE : 8));
     const encendido = Math.max(0, (this.arranque - 0.5) / 0.5);
     const disponible = potenciaDisponible(f, densidad) * encendido * encendido;
     const freno = f.frenoDelRotor;
@@ -1173,7 +1223,7 @@ export class ModeloDeHelicoptero {
     const objetivo = this.frenoDelRotorPuesto
       ? 0
       : Math.max(0, Math.min(disponible, piden + corrige / f.motores.rendimiento));
-    const respuesta = piloto.motores ? f.motores.respuesta : 2;
+    const respuesta = piloto.motores ? f.motores.respuesta : this.fallo ? 0.2 : 2;
     this.potenciaMotores += (objetivo - this.potenciaMotores) * (1 - Math.exp(-dt / respuesta));
     const alEje = this.potenciaMotores * f.motores.rendimiento;
     let nuevas = vueltas + ((alEje - principal.potencia - deCola.potencia) / (rot.inercia * Math.max(5, vueltas))) * dt;
@@ -1441,10 +1491,36 @@ export class ModeloDeHelicoptero {
        * el suelo, no había recogida. A los lados, la palanca sigue virando.
        */
       const fase = this.faseDeAutorrotacion(piloto);
+      /*
+       * **Y quieto es quieto encima de un sitio**, no solo a cero sobre el suelo.
+       * Posado, el sitio es donde está —la hache—; con el cíclico suelto se queda
+       * ese, y se vuelve a él despacio, a no más de `VUELVE_AL_SITIO`. Moviendo el
+       * cíclico no hay sitio, y al soltarlo se coge el de donde se para. Pedía
+       * velocidad cero y nada más, así que lo que se deslizaba al despegar ya no se
+       * recuperaba: diez metros de lado, y no volvía encima de la hache. Sin motor
+       * no hay sitio que guardar: manda la autorrotación.
+       */
+      const suelto = Math.abs(piloto.cabeceo) < 0.05 && Math.abs(piloto.alabeo) < 0.05;
+      if (fase !== null || !suelto) this.sitio = null;
+      else if (posado || (this.sitio === null && s.groundSpeed < 1)) this.sitio = { x: s.position.x, z: s.position.z };
+      let alSitioAdelante = 0;
+      let alSitioDerecha = 0;
+      if (this.sitio && !posado) {
+        const dx = this.sitio.x - s.position.x;
+        const dz = this.sitio.z - s.position.z;
+        const lejos = Math.hypot(dx, dz);
+        const ir = Math.min(VUELVE_AL_SITIO, 0.3 * lejos) / Math.max(lejos, 1e-6);
+        alSitioAdelante = (dx * sen - dz * cos) * ir;
+        alSitioDerecha = (dx * cos + dz * sen) * ir;
+      }
       const sinTocar =
-        fase === "planeo" ? VELOCIDAD_DE_AUTORROTACION : fase !== null ? 0 : -piloto.cabeceo * VA_EN_ESTACIONARIO;
+        fase === "planeo"
+          ? VELOCIDAD_DE_AUTORROTACION
+          : fase !== null
+            ? 0
+            : -piloto.cabeceo * VA_EN_ESTACIONARIO + alSitioAdelante;
       const errAdelante = sinTocar - adelante;
-      const errDerecha = piloto.alabeo * 8 * (1 - deprisa) - derecha * (1 - deprisa);
+      const errDerecha = (piloto.alabeo * 8 + alSitioDerecha) * (1 - deprisa) - derecha * (1 - deprisa);
       /*
        * Lo aprendido, solo cerca de la velocidad pedida: frenando desde veinte metros
        * por segundo se iba acumulando, y al llegar se pasaba y volvía a ir a dos y
@@ -1454,6 +1530,24 @@ export class ModeloDeHelicoptero {
         this.integralCabeceo = acotar(this.integralCabeceo - 0.01 * errAdelante * dt, 10 * GRADO);
       if (!posado && Math.abs(errDerecha) < 3)
         this.integralAlabeo = acotar(this.integralAlabeo + 0.01 * errDerecha * dt, 10 * GRADO);
+      /*
+       * **Y posado, con el cíclico del estacionario ya puesto**, como en la de
+       * actitud (arriba): lo aprendido va despacio a la actitud del estacionario de
+       * la ficha y lo que la sostiene al cíclico que la da. Posada no aprendía nada,
+       * y despegaba con el disco derecho: el rotor de cola empujaba a un lado sin
+       * nada que lo parara, y hasta que lo aprendía en el aire se deslizaba a casi
+       * tres metros por segundo. Es lo que hace un piloto antes de subir el
+       * colectivo: el cíclico donde lo pide el estacionario.
+       */
+      if (posado && fase === null) {
+        const sigue = 1 - Math.exp(-dt / 2);
+        const quieto = this.ficha.actitudDeEstacionario;
+        const ciclico = this.ficha.ciclicoDeEstacionario;
+        this.integralCabeceo += (quieto.cabeceo - 3 * GRADO - this.integralCabeceo) * sigue;
+        this.integralAlabeo += (quieto.alabeo - this.integralAlabeo) * sigue;
+        this.sostieneCabeceo += (ciclico.cabeceo - this.sostieneCabeceo) * sigue;
+        this.sostieneAlabeo += (ciclico.alabeo - this.sostieneAlabeo) * sigue;
+      }
       /*
        * En la recogida sin motor, el morro sube más que para frenar con motor: es lo
        * que convierte la velocidad en vueltas del rotor y en menos bajada. Y para
@@ -1513,19 +1607,34 @@ export class ModeloDeHelicoptero {
      */
     if (modo === "estacionario") {
       const palanca = piloto.colectivo - 0.5;
+      const fase = this.faseDeAutorrotacion(piloto);
       let pide = Math.abs(palanca) < 0.05 ? 0 : acotar(palanca * 2 * SUBE_EN_ESTACIONARIO * 1.1, SUBE_EN_ESTACIONARIO);
+      /*
+       * **A media palanca, a una altura**: donde se para la subida frenando como
+       * frena la ayuda, y lo que se pase de ahí se devuelve, a no más de dos metros
+       * por segundo. Pedía subida cero y nada más, así que todo lo que subía
+       * mientras frenaba se quedaba: soltada la X a tres metros, se quedaba a diez.
+       * Es el modo de mantener la altura de un piloto automático, que coge una y la
+       * sostiene. Y no la de soltar justo: soltada a medio metro del suelo, lo que
+       * se pasaba lo devolvía hasta tocar, y un toque corto de X era un saltito.
+       */
+      if (pide !== 0 || posado || fase !== null) this.alturaSostenida = null;
+      else {
+        this.alturaSostenida ??= s.position.y + (this.subidaPedida * Math.abs(this.subidaPedida)) / (2 * FRENA_LA_SUBIDA);
+        pide = acotar(0.5 * (this.alturaSostenida - s.position.y), 2);
+      }
       // Y cerca del suelo la bajada se frena sola: a medio metro por segundo en los últimos metros.
       const ruedas = s.heightAboveGround - Math.max(...this.ficha.ruedas.map((r) => r.z));
       pide = Math.max(pide, -Math.max(0.5, 0.5 * ruedas));
       /*
-       * **La subida pedida cambia poco a poco**, metro y medio por segundo cada
-       * segundo, y el colectivo se adelanta lo que esa subida pide. Saltando de cero a
-       * cuatro, el colectivo daba un tirón arriba al apretar y otro abajo al soltar, y
-       * el par bailaba entre el 33 y el 87 % (Enrique: «el indicador de potencia me
-       * pasa de 80 a 130 todo el rato»).
+       * **La subida pedida cambia poco a poco**, y el colectivo se adelanta lo que
+       * esa subida pide. Saltando de cero a cuatro, el colectivo daba un tirón
+       * arriba al apretar y otro abajo al soltar, y el par bailaba entre el 33 y el
+       * 87 % (Enrique: «el indicador de potencia me pasa de 80 a 130 todo el rato»).
+       * Para pararse, más deprisa: ver `FRENA_LA_SUBIDA`.
        */
-      this.subidaPedida += acotar(pide - this.subidaPedida, 1.5 * dt);
-      const fase = this.faseDeAutorrotacion(piloto);
+      const frena = Math.abs(pide) < Math.abs(this.subidaPedida) || pide * this.subidaPedida < 0;
+      this.subidaPedida += acotar(pide - this.subidaPedida, (frena ? FRENA_LA_SUBIDA : CAMBIA_LA_SUBIDA) * dt);
       if (fase !== null) {
         /*
          * **Sin motor, el colectivo cuida las vueltas, y abajo las gasta.** Mientras
@@ -1554,18 +1663,33 @@ export class ModeloDeHelicoptero {
         this.subidaPedida = 0;
         salida.colectivo = this.colectivoSuave = Math.max(0, this.colectivoSuave - 0.25 * dt);
       } else {
+        /*
+         * Lo que falta pesa más que lo aprendido, que si no se carga de más mientras
+         * sube: al soltar la X, eso que sobraba seguía subiendo el helicóptero unos
+         * metros más de lo que pedía frenar, y volvía después. Y lo que se adelanta
+         * por la subida pedida es más subiendo que bajando: bajando, parte del aire
+         * que atraviesa el disco lo pone la propia bajada y hace falta quitar menos
+         * paso del que hay que poner para subir lo mismo. Con lo mismo para los dos,
+         * la palanca abajo se pasaba de los 4 m/s a 5,7, que es acercarse al anillo
+         * turbillonario (ver `inducidaEnDescenso`).
+         */
         const falta = this.subidaPedida - s.velocity.y;
-        this.colectivoAprendido = Math.max(0, Math.min(1, this.colectivoAprendido + 0.05 * falta * dt));
-        let colectivo = this.colectivoAprendido + 0.012 * this.subidaPedida + 0.04 * falta;
+        this.colectivoAprendido = Math.max(0, Math.min(1, this.colectivoAprendido + 0.04 * falta * dt));
+        const adelanta = this.subidaPedida > 0 ? 0.02 : 0.012;
+        let colectivo = this.colectivoAprendido + adelanta * this.subidaPedida + 0.1 * falta;
         const vueltas = this.vueltas / this.ficha.rotor.vueltas;
         if (vueltas < VUELTAS_QUE_SE_GUARDAN) {
           const sobra = (VUELTAS_QUE_SE_GUARDAN - vueltas) * 6;
           colectivo -= sobra;
           this.colectivoAprendido = Math.max(0, this.colectivoAprendido - sobra * dt);
         }
-        // Y suave, como lo movería una mano: de golpe, el regulador no llega y las vueltas caen.
+        /*
+         * Y suave, como lo movería una mano: subiéndolo de golpe, el regulador no
+         * llega y las vueltas caen. Bajándolo no hay vueltas que caigan, así que baja
+         * algo más deprisa: es lo que frena una subida a tiempo.
+         */
         const quiere = Math.max(0, Math.min(1, colectivo));
-        this.colectivoSuave += acotar(quiere - this.colectivoSuave, 0.25 * dt);
+        this.colectivoSuave += Math.max(-0.4 * dt, Math.min(0.25 * dt, quiere - this.colectivoSuave));
         salida.colectivo = this.colectivoSuave;
       }
     }
@@ -1643,10 +1767,28 @@ export class ModeloDeHelicoptero {
     const u = this.tmp.dot(this.forward);
     const v = this.tmp.dot(this.right);
     const w = this.tmp.dot(this.down);
-    s.airspeed = Math.sqrt(u * u + v * v + w * w);
+    /*
+     * **La velocidad es la que mide el anemómetro, y el anemómetro mide a lo largo
+     * del morro.** El tubo de pitot apunta hacia delante y lo que le entra es el
+     * aire que viene de frente; el que le llega de lado o de abajo no le entra, y
+     * el que le viene de atrás deja la aguja en el tope. Aquí era el aire total, y
+     * bajando en vertical a 20 m/s marcaba 38 nudos —en la lección del anillo
+     * turbillonario, que es justo donde la aguja tiene que estar casi en cero:
+     * por eso se entra sin darse cuenta—. Ahora es lo que va a lo largo del eje.
+     *
+     * **Y por debajo de unos veinte nudos, el de verdad no es de fiar**: la norma
+     * lo calibra en vuelo nivelado de veinte nudos para arriba (14 CFR 29.1323
+     * (b)(1)), y el manual de helicópteros de la FAA avisa de que
+     * la estela del rotor lo engaña a poca velocidad (FAA-H-8083-21B, capítulo
+     * 12). Ese error no se simula: no se sabe cuánto es en el Super Puma, y
+     * un número inventado sería enseñar mal; la cifra pequeña que queda es la
+     * del aire de frente, sin más.
+     */
+    const total = Math.sqrt(u * u + v * v + w * w);
+    s.airspeed = Math.max(0, u);
     s.groundSpeed = Math.hypot(s.velocity.x, s.velocity.z);
     s.alpha = Math.atan2(w, Math.max(0.1, Math.abs(u)));
-    s.beta = s.airspeed > 0.5 ? Math.asin(Math.max(-1, Math.min(1, v / s.airspeed))) : 0;
+    s.beta = total > 0.5 ? Math.asin(Math.max(-1, Math.min(1, v / total))) : 0;
     s.heightAboveGround = s.position.y - this.suelo(s.position.x, s.position.z);
     s.verticalSpeed = s.velocity.y;
     s.heading = Math.atan2(this.forward.x, -this.forward.z);

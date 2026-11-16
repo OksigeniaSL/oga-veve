@@ -474,11 +474,11 @@ helicóptero; y la palanca que pone el juego al empezar en el aire es la que sos
 
 **Lo que queda:**
 
-- **El paso mínimo** se ajustó a 3.000 m. A nivel del mar y con 6.500 kg, con la palanca abajo, las vueltas del planeo
+- ~~**El paso mínimo** se ajustó a 3.000 m.~~ Hecho: 8,5°, ver la enmienda H19c. A nivel del mar y con 6.500 kg, con la palanca abajo, las vueltas del planeo
   bajan a 203 rpm, por debajo de las 220 de la ficha; la FAA dice que los topes se ajustan para que con poco peso den el
   mínimo (11-4). Reajustarlo sube las vueltas arriba y cambia la prueba «sin motor» de `helicoptero.test.ts`.
 - **El golpe de la cola** no lo lleva el modelo: la prueba lo mira por la actitud al tocar.
-- **Los motores se apagan como al pararlos**, en ocho segundos: un fallo de verdad es más brusco. La ayuda entra en
+- ~~**Los motores se apagan como al pararlos**~~ (hecho: ver la enmienda H19c), en ocho segundos: un fallo de verdad es más brusco. La ayuda entra en
   autorrotación en cuanto se cortan; a mano, la potencia se va en unos cuatro.
 - **La bajada vertical sin motor** cae en la zona del anillo turbillonario de la enmienda H16b. Medido con él dentro:
   desde 80 kt a 500 ft y en el ejercicio, que frena antes del corte, el rotor no entra nunca en ella; parado a 1.000 ft
@@ -603,13 +603,184 @@ Y lo que el banco no dejó probado:
 
 ### Lo que queda
 
-- **Al soltar la X, la ayuda de estacionario sigue subiendo** unos ocho metros: soltada a tres, se queda a diez u once.
+- ~~**Al soltar la X, la ayuda de estacionario sigue subiendo**~~ (hecho: ver la enmienda H19c) unos ocho metros: soltada a tres, se queda a diez u once.
   Es lo que tarda en frenar la subida pedida (metro y medio por segundo cada segundo) con el colectivo que la sigue. Por
   eso quieto vale hasta un diámetro del rotor; pero «subí un poquito» deja a quien empieza más alto de lo que quería.
-- **Al despegar con la ayuda de estacionario, el helicóptero se desliza** unos diez metros de lado a casi 3 m/s antes de
+- ~~**Al despegar con la ayuda de estacionario, el helicóptero se desliza**~~ (hecho: ver la enmienda H19c) unos diez metros de lado a casi 3 m/s antes de
   pararse, y no vuelve encima de la hache: la ayuda pide velocidad cero sobre el suelo, no un sitio. Es del despegue, no
   de estas lecciones, y para la de quedarse quieto no importa —se cuenta desde donde se para—, pero quien despegue en
   Guyrami no se queda encima de la hache. Va en el informe, para mirarlo aparte.
 - **El progreso de los diez segundos** no se dibuja: se sabe que se va bien por la frase del principio y porque el
   helicóptero no se mueve. Un anillo que se llena en la tarjeta sería la medida del juego dicha también con dibujo.
 - **Las trece frases**, por grabar.
+
+## Enmienda H19c (16-11-2026): los flecos que vieron las tandas 7 y 8
+
+Cinco cosas que no eran como en un Super Puma de verdad, cada una con su commit, su prueba y su fuente. Las dos de «Lo
+que queda» de la enmienda H17a y las dos primeras de la H16a se cierran aquí.
+
+### El anemómetro mide a lo largo del morro
+
+**Contaba la velocidad vertical.** La velocidad del estado era el aire total, y bajando en vertical a 20 m/s el
+anemómetro marcaba 38 nudos. Uno de verdad marca casi cero: el tubo de pitot apunta hacia delante, le entra el aire que
+viene de frente, el que llega de lado o de abajo no le entra y el que viene de atrás deja la aguja en el tope. Y engañaba
+justo en la lección del anillo turbillonario, que es donde la aguja tiene que estar abajo: una de las tres condiciones de
+la FAA es ir por debajo de la velocidad de sustentación por traslación, y se entra sin darse cuenta porque no se mira.
+
+Ahora `airspeed`, en el helicóptero, es la componente del aire a lo largo del eje, nunca negativa (`derivados` en
+`flight/helicoptero.ts`), y de ella sale la indicada de todos los relojes, como en los aviones. Volando hacia delante es
+lo mismo que antes a menos de un 3 %, que es el error que la norma deja al sistema (14 CFR 29.1323 (d)); en el planeo
+de la autorrotación, con el aire viniendo unos catorce grados por debajo del morro, marca alrededor de un 3 % menos que el
+aire total, y eso también es lo que marcaría.
+
+**Por debajo de unos veinte nudos, el de verdad no es de fiar.** La norma lo calibra en vuelo nivelado de veinte nudos
+para arriba (14 CFR 29.1323 (b)(1)), y el manual de helicópteros de la FAA lo dice así: «the airspeed indication might
+be unreliable below a certain airspeed due to rotor downwash» (FAA-H-8083-21B, 12-1). **Ese error no se simula**: no se
+sabe cuánto es en el Super Puma, y uno inventado sería enseñar mal. La cifra pequeña que queda es la del aire de frente.
+
+Lo mismo lee el ruido del aire del juego (`audio.ts`), así que bajando en vertical suena menos que antes. No se ha
+medido si se nota.
+
+### La ayuda de estacionario se queda donde se suelta, y encima de la hache
+
+Las dos de «Lo que queda» de la enmienda H17a. Medido sin pantalla con 7.500 kg, la X hasta tres metros y soltarla:
+
+| | Lo más alto | Dónde se queda | Lo más lejos de la hache | Al final |
+| --- | --- | --- | --- | --- |
+| Antes | 11,3 m | 9,5 m | 10,2 m, a 2,8 m/s | a 4,9 m |
+| Ahora | 6,0 m | 5,0 m | 1,0 m | encima, a menos de 0,1 m |
+
+Con 8.600 kg, lo mismo: 5,9 y 5,0 m, y 1,2 m de lado. El par se mueve entre el 29 y el 87 % (antes, del 31 al 86 %).
+
+**Pedía subida cero y velocidad cero; ahora pide una altura y un sitio.** Es la ayuda de los dos peldaños de abajo, que
+ya era dueña del colectivo y del cíclico (ver la tabla de la estabilización), y lo que hace es lo que hacen los modos de
+mantener la altura y el estacionario de un automático:
+
+- **La altura**: a media palanca, la de donde se para la subida frenando como frena la ayuda, y lo que se pase de ahí se
+  devuelve a no más de 2 m/s. No la de soltar justo: soltada a medio metro del suelo, lo que se pasaba lo devolvía hasta
+  tocar, y un toque corto de X era un saltito. Ahora dos segundos de X lo dejan colgado a metro y medio.
+- **Frenar la subida, más deprisa que empezarla**: a 4 m/s cada segundo y no a 1,5, que eran cinco metros solo en frenar
+  (`FRENA_LA_SUBIDA`). El colectivo baja a 0,4 por segundo y sube a 0,25, como estaba: subirlo de golpe deja caer las
+  vueltas, bajarlo no. Y en el lazo del colectivo lo que falta pesa más que lo aprendido (0,1 y 0,04, antes 0,04 y 0,05),
+  que se cargaba de más mientras subía y al soltar lo seguía subiendo; y lo que se adelanta por la subida pedida es 0,02
+  subiendo y 0,012 bajando, como antes, porque bajando parte del aire que atraviesa el disco lo pone la propia bajada.
+  Con 0,02 también bajando, el banco del anillo encontró la palanca abajo pasándose a 5,4 m/s nada más colocar el
+  helicóptero en el aire: con poco peso y al nivel del mar el anillo empieza hacia 5,5. Ahora se pasa a 4,4–4,9 m/s y se
+  queda en 4, menos que antes de esta enmienda (4,6–5,0), y la prueba de `anillo-turbillonario.test.ts` lo mira con 7.000
+  kg y sin dejar pasar de 5.
+- **El sitio**: con el cíclico suelto, posado es donde está —la hache— y en el aire se queda ese; moviendo el cíclico no
+  hay sitio, y al soltarlo se coge donde se para. Se vuelve a él a no más de 1,5 m/s (`VUELVE_AL_SITIO`). Sin motor no
+  hay sitio: manda la autorrotación.
+- **Y posado, el cíclico del estacionario ya puesto**, como en la de actitud: despegaba con el disco derecho y el rotor
+  de cola lo empujaba de lado hasta que la ayuda lo aprendía en el aire, que es lo que se deslizaba.
+
+La lección de quedarse quieto se logra ahora hacia los veintisiete segundos, y no los treinta. La prueba del cambio de
+modo (`sin estabilización se va…`) entrega ahora también el colectivo que llevaba el rotor: la palanca de la de
+estacionario pide subir o bajar, y donde la dejaba el piloto de prueba, en cualquier sitio de su media, no era un
+colectivo.
+
+### Lo de avión, fuera de todo el vuelo del helicóptero
+
+La enmienda H16a lo calló en el ejercicio de la autorrotación; en el vuelo libre seguía. Ahora, en todo el vuelo del
+helicóptero (`game.ts`):
+
+- **El *sink rate* y el *bank angle*** (`cantarLaActitud`) y **el aviso de terreno con su «Subí»** son las envolventes
+  del GPWS de un avión: avisar de lo bajo a ciento veinte metros y pedir subir bajando a sesenta, con la velocidad de
+  aproximación de un ala. Un helicóptero vuela bajo por oficio y se posa en cualquier sitio.
+- **Los consejos de la bajada** son los de una final a una pista por su senda.
+- **El «metélo» del tren se queda, pero volando hacia delante.** El Super Puma sube el tren de verdad, en la lista de
+  después de despegar, a 70 ft del radioaltímetro (boletín 11/99 de la AAIB, ya en su ficha: `meteElTrenA`). Lo que no
+  era suyo es pedirlo en cada subida en vertical: en estacionario y encima del helipuerto el tren va fuera, que es donde
+  se va a posar. Ahora se pide solo por encima de su velocidad de aproximación, la de llegar a un helipuerto; en la
+  autorrotación, nunca. El «sacá el tren» al venir a posarse sin él sigue: posarse de panza rompe el helicóptero.
+
+**Lo que el Super Puma lleva de verdad** y sigue sonando: el aviso de vueltas bajas del rotor (enmienda H16a, boletín
+2/2009 de la AAIB). **Lo que no lleva**: un avisador de terreno. Los helicópteros que lo llevan llevan otra caja, el
+HTAWS, con su propia norma (FAA TSO-C194, sobre RTCA DO-309) y sus propios modos y voces —el Mk XXII de Honeywell
+dice, por ejemplo, *don't sink* si se hunde después de despegar y *tail too low* con la cola baja (*Aviation Today*, «A
+TAWS for Rotorcraft», marzo de 2002)—. Que el AS 332 del juego lo lleve no lo dice su ficha de la EASA ni nada público
+de Airbus que se haya encontrado, así que no suena, y la instructora tampoco lo imita: lo que el avión no lleva no se
+inventa (regla 4). Si se encuentra que lo lleva, entra con sus envolventes y su voz, no con las del avión.
+
+### El paso mínimo, de 9,5° a 8,5°
+
+El primero de «Lo que queda» de la enmienda H16a. El tope de abajo del colectivo se ajusta, en uno de verdad, para que
+**con poco peso y abajo** —que es cuando el rotor da menos vueltas sin motor— la palanca abajo dé el mínimo, y con más
+peso o más arriba se sube el colectivo para no pasarse (FAA-H-8083-21B, 11-4). Estaba ajustado a 3.000 m, al revés.
+Sin motor, a 70 kt y con la palanca abajo, sin pantalla:
+
+| | 9,5° | 8,5° |
+| --- | --- | --- |
+| Nivel del mar, 6.500 kg | 204 rpm | **221 rpm** |
+| Nivel del mar, 8.600 kg | 236 rpm | 255 rpm |
+| 1.500 m, 7.500 kg | 237 rpm | 256 rpm |
+| 3.000 m, 8.600 kg | 274 rpm | 297 rpm: se sube el colectivo |
+
+Las de la ficha sin motor son de 220 a 290 (TCDS, III.9); los 6.500 kg ya están por debajo de los 7.000 sin combustible
+de la ficha del juego. La prueba «sin motor» de `helicoptero.test.ts`, a 3.000 m y al peso máximo durante un minuto,
+sigue dentro de la banda —baja a la vez que planea—; la nueva, «con poco peso y al nivel del mar…», mira los 220.
+
+Dos cosas que arrastra: **la figura del plato** lleva la misma cifra (`CABEZA.pitch` en `ui/figuras/plato-dibujo.ts`,
+que es el fichero generado de la entrega de arte: se ha cambiado ese número a mano, y la entrega tendría que traerlo así la
+próxima vez), y el paso que lee en el 75 % del radio va ahora de 2,5° a 20°. Y **la palanca tarda algo más en despegar**,
+porque el mismo paso es un poco más de palanca: la prueba de la lección del efecto suelo sube ahora hasta despegar, y
+no un segundo y medio. Las cifras de la tabla de la enmienda H16a con la ayuda —que dependen del paso— no se han vuelto a
+medir una a una; sus pruebas, `autorrotacion.test.ts`, pasan.
+
+### Un fallo de motor es de golpe
+
+El último de «Lo que queda» de la enmienda H16a. **Un fallo no es una parada**: un turboeje que se queda sin llama no da
+potencia a la turbina libre aunque el generador de gas siga girando, y la norma trata el fallo como una pérdida de
+potencia de golpe, con al menos un segundo antes de que nadie toque nada (14 CFR 29.143 (e)). Fallando como se paran a
+mano, la potencia tardaba unos ocho segundos en irse y el rotor perdía vueltas despacio, que no es lo que hay que
+aprender a contestar: colectivo abajo en cuanto se nota.
+
+Ahora `fallanLosMotores` en `flight/helicoptero.ts`: lo que pueden dar se va en medio segundo (`SE_APAGA_DE_GOLPE`) y
+lo que dan, detrás, en dos décimas; al segundo no queda ni un 5 %. Pararlos a mano sigue como estaba. Lo llaman **el
+ejercicio de la autorrotación** —y cualquier fallo de todos los motores, que en el helicóptero entra por ahí
+(`entrarEnAutorrotacion`)— y **quedarse sin combustible**. Arrancar otra vez lo olvida. Las pruebas de la autorrotación
+cortan ahora con el fallo, y se siguen posando enteras.
+
+No hay fallo de un solo motor: el Super Puma tiene dos, y que falle uno es otra cosa —sigue volando con el otro—, pero el
+adaptador del helicóptero no lleva `pararMotor` y ese ejercicio no se le ofrece.
+
+### En el juego de verdad
+
+Con los bancos del navegador (Tenerife Norte, sin viento, con la tarjeta Intel), en una primera pasada con los cinco
+cambios:
+
+- **El anillo, en Taguató**: entra a 5,8 m/s, se hunde a 20,2 m/s y **el anemómetro marca 0,0 kt**; con el aire total
+  habrían sido 39. La tarjeta, la frase una vez, y con el cíclico adelante sale con 43 kt, 178 m más abajo.
+- **El banco de siempre del helicóptero** (`ver-helicoptero.mjs`), 19 de 19: despega, se queda a diez metros con 0,2 m de
+  deriva, vuelve al helipuerto y se posa a 0,19 m/s. **El hangar**, 24 de 24. **La misión de Teno**, 42 de 42.
+- **La autorrotación**: en Tukã, sin tocar nada, se posa a 1,52 m/s y 32 kt (antes 1,57 y 31); en Taguató, con el piloto
+  de banco, a 1,04 m/s (antes 1,32). Las dos cierran el ejercicio como hecho, y lo único que suena por el camino es el
+  aviso de vueltas bajas en los últimos metros: ni *sink rate*, ni «Subí», ni «metélo».
+- **Las lecciones**, 44 de 44, y con dos de las que la enmienda H17a dejó sin probar: **el par en Taguató** se logra a los
+  catorce segundos, y **el suelo en Guyrami**, a los treinta y seis, con el 54,8 % del par abajo y el 60,4 % arriba. Que
+  el piloto de banco ya no vaya y venga arriba será porque al soltar la tecla la ayuda ya no se pasa ocho metros, pero
+  no se ha mirado.
+
+Y una que no pasó: **en Tukã, con la palanca abajo nada más colocarlo en el aire, bajó a 5,4 m/s**, y el banco no deja
+pasar de 5. Es lo del colectivo bajando, más arriba. Arreglado, se midió sin pantalla con el mismo arranque —colocado
+en el aire y la palanca abajo de inmediato—, de 4,4 a 4,9 m/s según el peso y la altura, y la prueba lo mira.
+**No se ha vuelto a volar en el navegador**: la segunda pasada del banco del anillo se quedó esperando turno en la cola
+del navegador, que compartían tres tandas a la vez.
+
+### Lo que queda
+
+- **El error del anemómetro por debajo de veinte nudos** no se simula: no se sabe cuánto es en el Super Puma.
+- **El ruido del aire** sale de la misma cifra y baja en vertical suena menos. No se ha escuchado.
+- **Un avisador de terreno de helicóptero**, si apareciera que el AS 332 del juego lo lleva: con sus envolventes y su
+  voz, no con las de un avión.
+- **El «metélo» volando hacia delante** está en el código y en las pruebas de siempre, pero ningún banco ha subido a
+  más de cuarenta nudos con el tren fuera para oírlo.
+- **La figura del plato** lleva el 8,5 a mano en un fichero generado: la entrega de arte tiene que traerlo.
+- **Las cifras de la tabla de la enmienda H16a con la ayuda**, por volver a medir una a una con el paso nuevo y el
+  fallo de golpe.
+- **El fallo de un motor solo** del Super Puma, que no existe todavía.
+- **Lo que se vio y no es de esta enmienda**: en la captura de Tukã justo después del fallo, el FLI de los dos motores
+  marca 13,4 en rojo con el par a cero. Es la cuenta de `lecturaDeLaVms` (`flight/vms.ts`), que divide lo que dan los
+  motores por lo que pueden dar mientras se apagan, y lo que pueden dar cae antes. Con el fallo de golpe dura menos de
+  medio segundo; por la cuenta, con la parada a mano pasa lo mismo durante más rato. Un FLI de verdad, con el motor
+  apagándose, baja.

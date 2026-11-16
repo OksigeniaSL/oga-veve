@@ -117,8 +117,9 @@ function cortarA(pies: number, nudos: number, modo: Estabilizacion, masa = F.mas
   }
   const alCortar = ruedas();
 
-  // ── Se paran los motores ──
+  // ── Fallan los motores, de golpe, como en el ejercicio del juego ──
   m.motores = false;
+  h.fallanLosMotores();
   let colectivo = m.colectivo;
   let t = 0;
   let planeoMin = Infinity;

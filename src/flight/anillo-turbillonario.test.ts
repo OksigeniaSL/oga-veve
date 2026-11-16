@@ -227,17 +227,29 @@ describe("volado: el Super Puma al peso máximo, a 1.500 m", () => {
   });
 
   it("en la de estacionario, la de Guyrami y Tukã, no se entra: con la palanca abajo baja a 4 m/s y se queda ahí", () => {
-    const h = new ModeloDeHelicoptero(F, () => 0);
-    h.ponerEstabilizacion("estacionario");
-    h.reset({ position: new Vector3(0, 1500, 0), heading: 0, rotorEnMarcha: true });
-    const m = mandosNeutros();
-    m.tren = 0;
-    m.colectivo = 0.5;
-    volar(h, m, 5);
-    m.colectivo = 0;
-    const r = volar(h, m, 60);
-    expect(r.dentro).toBe(false);
-    expect(h.state.velocity.y).toBeCloseTo(-4, 1);
-    expect(r.bajaMas).toBeGreaterThan(-6);
+    /*
+     * Quieto un rato antes, y también con la palanca abajo nada más colocarlo en
+     * el aire, que es como lo pone el banco del juego: ahí la ayuda se pasaba de los
+     * 4 m/s a 5,4, cerca de donde empieza el anillo con poco peso.
+     */
+    for (const [masa, quieto] of [
+      [F.masaMaxima, 5],
+      [F.masaMaxima, 0],
+      [7000, 0],
+    ] as const) {
+      const h = new ModeloDeHelicoptero(F, () => 0);
+      h.ponerMasa(masa);
+      h.ponerEstabilizacion("estacionario");
+      h.reset({ position: new Vector3(0, 1500, 0), heading: 0, rotorEnMarcha: true });
+      const m = mandosNeutros();
+      m.tren = 0;
+      m.colectivo = 0.5;
+      volar(h, m, quieto);
+      m.colectivo = 0;
+      const r = volar(h, m, 60);
+      expect(r.dentro).toBe(false);
+      expect(h.state.velocity.y).toBeCloseTo(-4, 1);
+      expect(r.bajaMas).toBeGreaterThan(-5);
+    }
   });
 });
