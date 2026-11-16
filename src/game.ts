@@ -4649,62 +4649,11 @@ export class Game {
      */
     if (this.campoEnCuyoSueloEsta())
       this.llenarSiHaceFalta(this.salidaId, this.destinoId);
-    // Otro tramo es otra vez volando, se viniera del final o de un percance.
-    this.partida.volverAVolar();
-    // Otro tramo, con motor: lo de la otra punta y el planeo eran del de antes.
-    this.sinMotor = false;
-    this.laOtraCabecera.reiniciar();
-    this.laAproximacion.reiniciar();
-    this.avisadoDeLaSenda = false;
-    // Y la instructora de la bajada, de cero: lo dicho era de otra bajada.
-    this.consejero.reiniciar();
-    this.nombrado.olvidar();
-    this.desvioAhora = null;
-    this.sendaJuzgada = null;
-    this.sinkRateExplicado = false;
-    this.velocidadJuzgada = null;
-    this.laTorreMandaEnLaLuz = false;
-    this.permisoDeAterrizar = null;
-    this.olvidarLaFinalDeLaTorre();
-    this.vaca.quitar();
-    this.traza = [];
-    this.sinCatar = 0;
-    this.duracion = 0;
-    this.dichoDeLaToma = false;
-    this.avisadoDeLaPasada = false;
-    this.avisosDeAltura.reiniciar();
-    this.alturaEnGrande.reiniciar();
-    this.laRecogida.avisos.reiniciar();
-    this.narizPedida = false;
-    this.enRetard = false;
-    this.maquina.callar();
-    this.antesAlUmbral = Infinity;
-    this.terrenoDicho = null;
-    this.reiniciarTerrInhibit();
-    this.dichoDelTren = null;
-    this.recordadoDelTren = NADA_RECORDADO;
-    this.trenPorMeter = true;
-    this.tormentasDichas.clear();
-    this.estelas.vaciar();
-    this.tcas.reiniciar();
-    this.bandaDelTcas = "NORM";
-    // Y la maniobra y el relevo, de cero: otro vuelo.
-    this.tarjetaDelRa = null;
-    this.relevoContado = { fuera: false, dentro: false };
-    this.dependenciaDelRelevo = null;
-    this.informacionDeTrafico.reiniciar();
-    // Otro vuelo, otra final: las aves de la de antes se fueron.
-    this.avesEnLaFinal.reiniciar();
-    this.explicarLasAvesDespues = false;
-    this.bandadas.quitar((b) => !!b.enFinal);
-    this.atisDado = "";
+    // Otro tramo es otro vuelo, se viniera del final o de un percance.
+    this.empezarUnVueloNuevo();
     this.faseAnunciada = "";
-    this.runwayGuide.reset();
-    this.landing.reset();
-    this.frustrada.reiniciar();
-    this.tomaLarga.reiniciar();
     // Esto también cierra el panel del final.
-    this.reiniciarGalones();
+    this.otraVezLaLlegada();
     this.yaDespego = false;
     this.olvidarLoDichoYLoMirado();
     this.radio.reiniciar(aqui.escenario.aerodrome?.id);
@@ -13445,16 +13394,8 @@ export class Game {
         ? this.salidaId
         : this.scenario.id;
     const campo = this.elCampo(salida);
-    /*
-     * **Y otra vez volando, lo primero**, se viniera de un percance o del
-     * final. Por los dos caminos de reinicio, este y `reiniciarEnFinal`, que
-     * sale de aquí. El final se bajaba en `reiniciarGalones`, al otro extremo
-     * del método: nadie lo leía en medio, pero «otros galones» no es quien
-     * decide que se vuelve a volar.
-     */
-    this.partida.volverAVolar();
-    // Y con el depósito lleno, otra vez con motor. Ver `quedarseSinMotor`.
-    this.sinMotor = false;
+    // Lo de cualquier vuelo nuevo, lo primero. Ver `empezarUnVueloNuevo`.
+    this.empezarUnVueloNuevo();
     /*
      * **Y el ejercicio, otra vez desde el principio**: se repite, como en el
      * simulador, con los motores en marcha, sin prioridad y sin bomberos. Y
@@ -13477,41 +13418,12 @@ export class Game {
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
     });
-    this.laOtraCabecera.reiniciar();
-    // Todo lo de venir a aterrizar se reinicia de una vez, que es lo que gana
-    // tenerlo junto: antes eran cinco líneas repartidas por este método.
-    this.laAproximacion.reiniciar();
-    this.avisadoDeLaSenda = false;
-    // Y la instructora de la bajada, de cero: lo dicho era de otra bajada.
-    this.consejero.reiniciar();
-    this.nombrado.olvidar();
-    this.desvioAhora = null;
-    this.sendaJuzgada = null;
-    this.sinkRateExplicado = false;
-    this.velocidadJuzgada = null;
-    this.laTorreMandaEnLaLuz = false;
-    this.permisoDeAterrizar = null;
-    this.olvidarLaFinalDeLaTorre();
-    this.vaca.quitar();
-    // Otro vuelo, otra traza: la raya del anterior ya está guardada.
-    this.traza = [];
-    this.sinCatar = 0;
-    this.duracion = 0;
     // Lo que quedaba apuntado era del vuelo anterior: una pantalla de percance
     // de una partida que ya no existe, saliendo encima de la que empieza.
     this.agenda.vaciar();
     // Y lo de antes de volar, de cero: otra vuelta y otro parte. Ver `nuevoVueloAntesDeVolar`.
     this.nuevoVueloAntesDeVolar();
     this.hud.cerrarFinDeVuelo();
-    this.dichoDeLaToma = false;
-    this.avisadoDeLaPasada = false;
-    // Una cuenta atrás a medias de un vuelo que ya no existe.
-    this.avisosDeAltura.reiniciar();
-    this.alturaEnGrande.reiniciar();
-    this.laRecogida.avisos.reiniciar();
-    this.narizPedida = false;
-    this.enRetard = false;
-    this.maquina.callar();
     // Y el otro avión vuelve a empezar su vuelo con nosotros, y **con otro
     // nombre**: es otro avión, no el mismo dando vueltas para siempre. En la
     // frecuencia del campo del que se sale.
@@ -13540,6 +13452,10 @@ export class Game {
      * Y los segundos sin apuntar se vuelcan en vez de tirarse: son tiempo
      * volado de verdad, y tirarlos era regalarle hasta medio minuto al
      * cuaderno en cada reinicio.
+     *
+     * La distancia al umbral y los contadores que valen igual para otro tramo
+     * están en `empezarUnVueloNuevo`; aquí queda lo que lee el primer
+     * fotograma de un avión que se recoloca.
      */
     if (this.sinApuntar > 0) {
       this.apuntar({ segundos: this.cuaderno.segundos + this.sinApuntar });
@@ -13547,30 +13463,10 @@ export class Game {
     }
     this.vistaActual = null;
     this.pidiendoFreno = false;
-    this.antesAlUmbral = Infinity;
     this.gestoEnPantalla = null;
     this.techoDeLaCarrera = Infinity;
     this.fueraDeBanda = 0;
     this.dichoDeBanda = null;
-    this.terrenoDicho = null;
-    this.reiniciarTerrInhibit();
-    this.dichoDelTren = null;
-    this.recordadoDelTren = NADA_RECORDADO;
-    this.trenPorMeter = true;
-    this.tormentasDichas.clear();
-    this.estelas.vaciar();
-    this.tcas.reiniciar();
-    this.bandaDelTcas = "NORM";
-    // Y la maniobra y el relevo, de cero: otro vuelo.
-    this.tarjetaDelRa = null;
-    this.relevoContado = { fuera: false, dentro: false };
-    this.dependenciaDelRelevo = null;
-    this.informacionDeTrafico.reiniciar();
-    // Otro vuelo, otra final: las aves de la de antes se fueron.
-    this.avesEnLaFinal.reiniciar();
-    this.explicarLasAvesDespues = false;
-    this.bandadas.quitar((b) => !!b.enFinal);
-    this.atisDado = "";
     this.avisandoDelBulto = 0;
     /*
      * Y la ruta de este vuelo, **antes** del depósito: lo que se carga sale de
@@ -13596,7 +13492,9 @@ export class Game {
      * para las lecciones que empiezan en el aire— y lo que se reinicia en cada
      * uno se fue copiando a mano hasta divergir. Todo lo que sea «estado de
      * este vuelo» tiene que quedar limpio por los dos: o aquí arriba, o en
-     * `olvidarElVueloAnterior`, que es el final común de los dos.
+     * `olvidarElVueloAnterior`, que es el final común de los dos. Y si vale
+     * también para otro tramo desde donde está el avión, en
+     * `empezarUnVueloNuevo` o en `otraVezLaLlegada`, que son de los tres.
      *
      * La baliza, también: en el primer paso se pone como esté el motor. Ver `flight/baliza.ts`.
      */
@@ -13644,11 +13542,7 @@ export class Game {
       }
       this.ponerALaGente();
     }
-    this.runwayGuide.reset();
-    this.landing.reset();
-    this.frustrada.reiniciar();
-    this.tomaLarga.reiniciar();
-    this.reiniciarGalones();
+    this.otraVezLaLlegada();
     this.wasOnGround = true;
     this.yaDespego = false;
     this.wasStalled = false;
@@ -13677,6 +13571,92 @@ export class Game {
      * el reinicio de la cabecera lo arranca. Ver `recolocarTrasElMoldeado`.
      */
     this.retomarElInicio();
+  }
+
+  /**
+   * **Lo que vuelve a cero en todo vuelo nuevo**, venga de donde venga: de
+   * los dos caminos de reinicio —`resetFlight` y `reiniciarEnFinal`, que sale
+   * de él— y de otro tramo desde donde está el avión, `empezarOtroTramo`.
+   *
+   * Otro tramo llevaba su propia copia de estas cuarenta líneas, hecha a mano
+   * a partir de la del reinicio, y cada arreglo había que acordarse de
+   * ponerlo en las dos. Aquí va solo lo que vale igual para las tres
+   * salidas; lo que depende de que el avión se recoloque —el tren, el
+   * depósito, la vista del plan del primer fotograma— sigue en su camino.
+   */
+  private empezarUnVueloNuevo(): void {
+    /*
+     * **Otra vez volando, lo primero**, se viniera de un percance o del
+     * final. El final se bajaba en `reiniciarGalones`, al otro extremo del
+     * reinicio: nadie lo leía en medio, pero «otros galones» no es quien
+     * decide que se vuelve a volar.
+     */
+    this.partida.volverAVolar();
+    // Y con motor: lo de la otra punta y el planeo eran del de antes. Ver `quedarseSinMotor`.
+    this.sinMotor = false;
+    this.laOtraCabecera.reiniciar();
+    // Todo lo de venir a aterrizar se reinicia de una vez, que es lo que gana
+    // tenerlo junto: antes eran cinco líneas repartidas por el reinicio.
+    this.laAproximacion.reiniciar();
+    this.avisadoDeLaSenda = false;
+    // Y la instructora de la bajada, de cero: lo dicho era de otra bajada.
+    this.consejero.reiniciar();
+    this.nombrado.olvidar();
+    this.desvioAhora = null;
+    this.sendaJuzgada = null;
+    this.sinkRateExplicado = false;
+    this.velocidadJuzgada = null;
+    this.laTorreMandaEnLaLuz = false;
+    this.permisoDeAterrizar = null;
+    this.olvidarLaFinalDeLaTorre();
+    this.vaca.quitar();
+    // Otro vuelo, otra traza: la raya del anterior ya está guardada.
+    this.traza = [];
+    this.sinCatar = 0;
+    this.duracion = 0;
+    this.dichoDeLaToma = false;
+    this.avisadoDeLaPasada = false;
+    // Una cuenta atrás a medias de un vuelo que ya no existe.
+    this.avisosDeAltura.reiniciar();
+    this.alturaEnGrande.reiniciar();
+    this.laRecogida.avisos.reiniciar();
+    this.narizPedida = false;
+    this.enRetard = false;
+    this.maquina.callar();
+    this.antesAlUmbral = Infinity;
+    this.terrenoDicho = null;
+    this.reiniciarTerrInhibit();
+    this.dichoDelTren = null;
+    this.recordadoDelTren = NADA_RECORDADO;
+    this.trenPorMeter = true;
+    this.tormentasDichas.clear();
+    this.estelas.vaciar();
+    this.tcas.reiniciar();
+    this.bandaDelTcas = "NORM";
+    // Y la maniobra y el relevo, de cero: otro vuelo.
+    this.tarjetaDelRa = null;
+    this.relevoContado = { fuera: false, dentro: false };
+    this.dependenciaDelRelevo = null;
+    this.informacionDeTrafico.reiniciar();
+    // Otro vuelo, otra final: las aves de la de antes se fueron.
+    this.avesEnLaFinal.reiniciar();
+    this.explicarLasAvesDespues = false;
+    this.bandadas.quitar((b) => !!b.enFinal);
+    this.atisDado = "";
+  }
+
+  /**
+   * **La senda, la toma y los galones, de cero**, por los tres caminos que
+   * empiezan un vuelo. Va aparte de `empezarUnVueloNuevo` porque la senda se
+   * reinicia con el avión ya colocado —en final, con aros que quedan
+   * detrás— y después de montar el campo, que en casa también la reinicia.
+   */
+  private otraVezLaLlegada(guiaDesde?: Vector3): void {
+    this.runwayGuide.reset(guiaDesde);
+    this.landing.reset();
+    this.frustrada.reiniciar();
+    this.tomaLarga.reiniciar();
+    this.reiniciarGalones();
   }
 
   /**
@@ -17363,12 +17343,8 @@ export class Game {
     }
     this.faseAnunciada = "";
     // Con la posición: se empieza en final y hay aros que ya quedan detrás.
-    this.runwayGuide.reset(this.flight.state.position);
-    this.landing.reset();
-    this.frustrada.reiniciar();
-    this.tomaLarga.reiniciar();
+    this.otraVezLaLlegada(this.flight.state.position);
     this.laAproximacion.reiniciar();
-    this.reiniciarGalones();
     this.wasOnGround = false;
     this.wasStalled = false;
     this.olvidarElVueloAnterior();
