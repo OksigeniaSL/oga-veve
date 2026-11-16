@@ -706,3 +706,4 @@ Los flaps los subí yo: a esta velocidad el ala ya no los necesita.
 Eso que sonó es el avión: avisa que faltan los flaps de despegue. Bajá el motor y poné una muesca.
 Esta pista el avión no la conoce, así que le apagué el aviso de los cerros de adelante. Si bajamos de más, igual nos avisa.
 Ya estamos lejos de esa pista: le volví a prender al avión el aviso de los cerros.
+Estás bajando dentro del viento que echa tu rotor, y así no te sostiene. Subir el colectivo no te saca: cíclico adelante, ganá velocidad, y salís.

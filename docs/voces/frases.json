@@ -20564,5 +20564,12 @@
     "idioma": "en",
     "texto": "flaps up",
     "para": "tras despegar, a su altura y su velocidad: la orden de recoger los flaps"
+  },
+  {
+    "id": "vuelo.anillo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estás bajando dentro del viento que echa tu rotor, y así no te sostiene. Subir el colectivo no te saca: cíclico adelante, ganá velocidad, y salís.",
+    "para": "en el helicóptero, al entrar en el anillo turbillonario, en los peldaños de abajo: qué pasa y cómo se sale"
   }
 ]

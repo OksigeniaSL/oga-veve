@@ -257,11 +257,16 @@ export interface Rotacion {
  *   en el principal. Bajando entra aire por debajo y empuja más.
  * - `enElPlano`: lo que se mueve en el plano del disco, m/s.
  * - `suelo`: (R/4z)², con z la altura del buje sobre el suelo; 0 lejos de él.
+ * - `anillo`: si se mira el anillo turbillonario. Solo el rotor principal: el
+ *   de cola también lo tiene —es parte de la pérdida de eficacia del rotor de
+ *   cola—, pero eso es otra lección y no se ha medido aquí.
  *
- * **Lo que no hace**: el anillo turbillonario, cuando se baja casi en vertical a
- * la velocidad de lo que el rotor echa hacia abajo. Ahí la cantidad de
- * movimiento no vale y la solución puede no converger: se queda la del último
- * paso, acotada.
+ * **El anillo turbillonario**: bajando casi en vertical a la velocidad de lo
+ * que el rotor echa hacia abajo, la cantidad de movimiento no vale —supone una
+ * estela limpia, y ahí el aire da vueltas por el disco—: su solución seguía la
+ * rama de subir, estable, como si nada. En esa zona la inducida sale del modelo
+ * empírico de Johnson; ver `inducidaEnDescenso`. Fuera de ella no se toca nada:
+ * el resultado es el de la cantidad de movimiento, el mismo de siempre.
  */
 export function resolverDisco(
   d: Disco,
@@ -272,6 +277,7 @@ export function resolverDisco(
   enElPlano: number,
   inducidaAntes: number,
   suelo = 0,
+  anillo = false,
 ): Rotacion {
   const R = d.radio;
   const A = Math.PI * R * R;
@@ -303,11 +309,256 @@ export function resolverDisco(
     vi += 0.8 * salto;
     if (Math.abs(salto) < 1e-4) break;
   }
-  const empuje = porLaPala(vi);
-  const enElDisco = vi * (1 - delSuelo(vi));
   const perfil = ((solidez * d.cd0) / 8) * densidad * A * puntas * puntas * puntas * (1 + 4.65 * mu * mu);
-  const potencia = FACTOR_INDUCIDO * empuje * enElDisco - empuje * normal + perfil;
-  return { empuje, inducida: vi, enElDisco, potencia, avance: mu, flujo: (enElDisco - normal) / puntas };
+  const rotacion = (v: number): Rotacion => {
+    const empuje = porLaPala(v);
+    const enElDisco = v * (1 - delSuelo(v));
+    const potencia = FACTOR_INDUCIDO * empuje * enElDisco - empuje * normal + perfil;
+    return { empuje, inducida: v, enElDisco, potencia, avance: mu, flujo: (enElDisco - normal) / puntas };
+  };
+  const conMomento = rotacion(vi);
+  if (!anillo || !(conMomento.empuje > 0)) return conMomento;
+  /*
+   * **¿Cerca del anillo?** Se mira con la inducida en estacionario del empuje que
+   * da la cantidad de movimiento. Fuera de la zona del modelo de Johnson —bajando
+   * menos de una quinta parte de ella, o con velocidad en el plano de casi una
+   * entera— se devuelve tal cual: así lejos del anillo no cambia nada, ni un
+   * decimal. En el borde los dos modelos dan lo mismo, así que no hay salto.
+   */
+  const doble = 2 * densidad * A;
+  const enHover = Math.sqrt(conMomento.empuje / doble);
+  if (-normal / enHover >= ANILLO.vzD || enElPlano / enHover >= ANILLO.vxM) return conMomento;
+  /*
+   * Dentro, la incógnita es esa inducida en estacionario, vh: con ella, Johnson
+   * da la inducida, la pala da el empuje, y el empuje tiene que ser el de esa vh,
+   * 2ρA·vh². Lo que sobra baja siempre al crecer vh —la inducida crece con ella
+   * en toda la zona—, así que hay una sola solución, y se encuentra por falsa
+   * posición con el truco de Illinois, que no se escapa de su horquilla.
+   */
+  const inducidaCon = (vh: number): number => vh * inducidaEnDescenso(-normal / vh, enElPlano / vh);
+  const sobra = (vh: number): number => porLaPala(inducidaCon(vh)) - doble * vh * vh;
+  let a = 0.05;
+  let fa = sobra(a);
+  if (!(fa > 0)) return conMomento;
+  let b = Math.max(1, 2 * enHover);
+  let fb = sobra(b);
+  for (let k = 0; k < 20 && fb > 0; k++) {
+    a = b;
+    fa = fb;
+    b *= 2;
+    fb = sobra(b);
+  }
+  if (fb > 0) return conMomento;
+  let lado = 0;
+  let vh = b;
+  for (let k = 0; k < 60; k++) {
+    vh = (a * fb - b * fa) / (fb - fa);
+    const fc = sobra(vh);
+    if (Math.abs(fc) < 1e-6 * doble * vh * vh || b - a < 1e-7) break;
+    if (fc > 0) {
+      a = vh;
+      fa = fc;
+      if (lado === 1) fb /= 2;
+      lado = 1;
+    } else {
+      b = vh;
+      fb = fc;
+      if (lado === -1) fa /= 2;
+      lado = -1;
+    }
+  }
+  return rotacion(inducidaCon(vh));
+}
+
+// ── El anillo turbillonario ──────────────────────────────────────────────
+
+/**
+ * **Los puntos del modelo del anillo turbillonario de Johnson** (W. Johnson,
+ * *Model for Vortex Ring State Influence on Rotorcraft Flight Dynamics*,
+ * NASA/TP-2005-213477, 2005, tabla 4), en múltiplos de la inducida en
+ * estacionario vh = √(T/2ρA): `vz` es la velocidad vertical del rotor —positiva
+ * subiendo—, `vx` la que lleva en el plano, y `total` el aire que atraviesa el
+ * disco, Vz + v. Salen de los ensayos en túnel y en vuelo que el informe reúne:
+ * un Dauphin en vuelo, un V-22, y los rotores de Drees, Castles y Betzina.
+ *
+ * - **A y B, C**: donde el modelo de base une las dos ramas de la cantidad de
+ *   movimiento, que en vertical no se tocan; hasta `vxC` de velocidad en el plano.
+ * - **D**: donde empieza a apartarse de la cantidad de movimiento, bajando a una
+ *   quinta parte de vh.
+ * - **N y X**: el borde de la inestabilidad. Entre ellos, bajar más deprisa hace
+ *   pasar más aire por el disco, y con el mismo colectivo eso es menos empuje:
+ *   bajar hace bajar más. Es el anillo.
+ * - **E**: donde vuelve al modelo de base, ya con el aire subiendo por el disco.
+ * - **M**: la velocidad en el plano a la que el anillo deja de existir.
+ */
+const ANILLO = {
+  vzA: -1.5,
+  vzB: -2.1,
+  vxC: 0.75,
+  vzD: -0.2,
+  vzN: -0.45,
+  totalN: 0.85,
+  vzX: -1.5,
+  totalX: 1.25,
+  vzE: -2.0,
+  vxM: 0.95,
+} as const;
+
+/**
+ * La cantidad de movimiento sin dimensiones: v·√(vx² + (vz + v)²) = 1. Bajando
+ * en vertical entre 0 y 2 vh tiene una sola rama, la de trabajo; más deprisa
+ * tiene tres, y `molino` pide la de abajo, la del molino frenado, con el aire
+ * subiendo por el disco. Se busca por bisección donde la función solo cruza una
+ * vez: no tiene que ser rápida, que esto solo se hace cerca del anillo.
+ */
+function inducidaDeMomento(vz: number, vx: number, molino: boolean): number {
+  const g = (v: number): number => v * v * ((vz + v) * (vz + v) + vx * vx);
+  let bajo = 0;
+  let alto = Math.max(0, -vz) + 2;
+  if (vz < 0 && molino && g(-vz / 2) >= 1) alto = -vz / 2;
+  else if (vz < 0 && g(-vz / 2) < 1) bajo = -vz / 2;
+  else if (vz < 0 && !molino && g(-vz) < 1) bajo = -vz;
+  for (let k = 0; k < 50; k++) {
+    const medio = (bajo + alto) / 2;
+    if (g(medio) < 1) bajo = medio;
+    else alto = medio;
+  }
+  return (bajo + alto) / 2;
+}
+
+/** Cómo cambia esa inducida con la velocidad vertical, dv/dvz, derivando la ecuación. */
+function pendienteDeMomento(v: number, vz: number, vx: number): number {
+  const total = vz + v;
+  const abajo = total * total + vx * vx + v * total;
+  return Math.abs(abajo) < 1e-9 ? 0 : (-v * total) / abajo;
+}
+
+/** El cúbico sin término constante que pasa por (x1, y1) con pendiente s1 y por (x2, y2): [b, c, d]. */
+function cubicoSinConstante(x1: number, y1: number, s1: number, x2: number, y2: number): [number, number, number] {
+  // b·x + c·x² + d·x³ = y en x1 y en x2, y b + 2c·x1 + 3d·x1² = s1: por Cramer.
+  const m = [
+    [x1, x1 * x1, x1 * x1 * x1],
+    [1, 2 * x1, 3 * x1 * x1],
+    [x2, x2 * x2, x2 * x2 * x2],
+  ] as const;
+  const y = [y1, s1, y2] as const;
+  const det = (k: readonly (readonly number[])[]): number =>
+    k[0]![0]! * (k[1]![1]! * k[2]![2]! - k[1]![2]! * k[2]![1]!) -
+    k[0]![1]! * (k[1]![0]! * k[2]![2]! - k[1]![2]! * k[2]![0]!) +
+    k[0]![2]! * (k[1]![0]! * k[2]![1]! - k[1]![1]! * k[2]![0]!);
+  const D = det(m);
+  const columna = (j: number): number[][] => m.map((fila, i) => fila.map((x, k) => (k === j ? y[i]! : x)));
+  return [det(columna(0)) / D, det(columna(1)) / D, det(columna(2)) / D];
+}
+
+/** El cúbico de Hermite entre (x0, y0, s0) y (x1, y1, s1), en x. */
+function hermite(x: number, x0: number, y0: number, s0: number, x1: number, y1: number, s1: number): number {
+  const h = x1 - x0;
+  const t = (x - x0) / h;
+  const t2 = t * t;
+  const t3 = t2 * t;
+  return (
+    (2 * t3 - 3 * t2 + 1) * y0 + (t3 - 2 * t2 + t) * h * s0 + (-2 * t3 + 3 * t2) * y1 + (t3 - t2) * h * s1
+  );
+}
+
+/**
+ * **El modelo de base de Johnson**: la cantidad de movimiento, con sus dos
+ * ramas unidas por un cúbico donde en vertical no se tocan (pasos 1 y 2 de su
+ * tabla 3). Devuelve la inducida y su pendiente, dv/dvz.
+ */
+function inducidaDeBase(vz: number, vx: number): [number, number] {
+  if (vz >= 0 || vx >= ANILLO.vxC) {
+    const v = inducidaDeMomento(vz, vx, vz < ANILLO.vzA);
+    return [v, pendienteDeMomento(v, vz, vx)];
+  }
+  const r = vx / ANILLO.vxC;
+  const vzA = ANILLO.vzA + 0.2 * r * r;
+  let vzB = ANILLO.vzB + 0.2 * r * r;
+  if (r > 0.5) vzB += 0.7 * (vzA - vzB) * (2 * r - 1) ** 3;
+  if (vz >= vzA || vz <= vzB) {
+    const v = inducidaDeMomento(vz, vx, vz <= vzB);
+    return [v, pendienteDeMomento(v, vz, vx)];
+  }
+  const vA = inducidaDeMomento(vzA, vx, false);
+  const vB = inducidaDeMomento(vzB, vx, true);
+  const [b, c, d] = cubicoSinConstante(vzA, vA, pendienteDeMomento(vA, vzA, vx), vzB, vB);
+  return [b * vz + c * vz * vz + d * vz * vz * vz, b + 2 * c * vz + 3 * d * vz * vz];
+}
+
+/** Lo que el anillo añade en N y en X bajando en vertical: lo medido menos lo de la cantidad de movimiento. */
+const SUBE_EN_N = ANILLO.totalN - (ANILLO.vzN + inducidaDeMomento(ANILLO.vzN, 0, false));
+const SUBE_EN_X = ANILLO.totalX - (ANILLO.vzX + inducidaDeMomento(ANILLO.vzX, 0, false));
+
+/**
+ * **El borde del anillo con velocidad en el plano** (paso 3.1 de la tabla 3 de
+ * Johnson): N y X se acercan con ella y se juntan en M, donde el anillo deja de
+ * existir; D se queda, y E se mueve con X.
+ */
+function bordeDelAnillo(vx: number): { vzN: number; vzX: number; vzE: number } {
+  const r = Math.min(1, vx / ANILLO.vxM);
+  const medio = 0.5 * (ANILLO.vzN + ANILLO.vzX);
+  const mitad = 0.5 * (ANILLO.vzN - ANILLO.vzX);
+  const vzN = medio + mitad * (1 - r * r) ** 0.2;
+  const vzX = medio - mitad * (1 - r * r) ** 1.5;
+  return { vzN, vzX, vzE: ANILLO.vzE + (vzX - ANILLO.vzX) };
+}
+
+/**
+ * **La inducida bajando, en múltiplos de vh**, con el anillo turbillonario: el
+ * modelo de Johnson (NASA/TP-2005-213477, tabla 3) con su κ en 1 —aquí la
+ * pérdida de las puntas va en la potencia, `FACTOR_INDUCIDO`— y la
+ * inestabilidad entera (su f = 1).
+ *
+ * `vz` es la velocidad vertical del rotor entre vh, positiva subiendo; `vx`, la
+ * que lleva en el plano entre vh. Fuera del anillo es la cantidad de movimiento.
+ * Dentro, al modelo de base se le suma lo que el anillo añade al aire que
+ * atraviesa el disco, con tres cúbicos —de D a N, de N a X y de X a E— que en N
+ * y en X dejan el aire total sin pendiente: entre los dos, bajar más deprisa
+ * hace pasar **más** aire por el disco, que es lo que la cantidad de movimiento
+ * no puede dar y lo que hace que el helicóptero se hunda solo.
+ */
+export function inducidaEnDescenso(vz: number, vx: number): number {
+  const [base] = inducidaDeBase(vz, vx);
+  if (vz >= ANILLO.vzD || vx >= ANILLO.vxM) return base;
+  const { vzN, vzX, vzE } = bordeDelAnillo(vx);
+  if (vz <= vzE) return base;
+  const r = vx / ANILLO.vxM;
+  const cuanto = Math.sqrt(Math.max(0, 1 - r ** 6));
+  const enN = SUBE_EN_N * cuanto;
+  const enX = SUBE_EN_X * cuanto;
+  // En N y en X el aire total no tiene pendiente: lo que se añade compensa la de la base.
+  const pendienteN = -(1 + inducidaDeBase(vzN, vx)[1]);
+  const pendienteX = -(1 + inducidaDeBase(vzX, vx)[1]);
+  let sube: number;
+  if (vz >= vzN) sube = hermite(vz, vzN, enN, pendienteN, ANILLO.vzD, 0, 0);
+  else if (vz >= vzX) sube = hermite(vz, vzX, enX, pendienteX, vzN, enN, pendienteN);
+  else {
+    // De X a E: sin término constante y sin casar la pendiente en E, como dice Johnson.
+    const [b, c, d] = cubicoSinConstante(vzX, enX, pendienteX, vzE, 0);
+    sube = b * vz + c * vz * vz + d * vz * vz * vz;
+  }
+  return base + sube;
+}
+
+/**
+ * **Dónde está un rotor respecto al anillo**, con su descenso y su velocidad en
+ * el plano en múltiplos de vh (`descenso` positivo bajando):
+ *
+ * - `"dentro"`: pasado el borde de N, donde bajar hace bajar más, y hasta E;
+ * - `"cerca"`: en la zona del modelo, entre D y N, donde el aire ya no es el de
+ *   la cantidad de movimiento pero todavía no se hunde solo;
+ * - `"fuera"`: lo demás, que incluye bajar más deprisa que E, con el aire ya
+ *   subiendo por el disco, que es el molino frenado.
+ */
+export type ZonaDelAnillo = "fuera" | "cerca" | "dentro";
+
+export function zonaDelAnillo(descenso: number, avance: number): ZonaDelAnillo {
+  const vz = -descenso;
+  if (vz >= ANILLO.vzD || avance >= ANILLO.vxM) return "fuera";
+  const { vzN, vzE } = bordeDelAnillo(avance);
+  if (vz <= vzE) return "fuera";
+  return vz < vzN ? "dentro" : "cerca";
 }
 
 /** **La potencia que dan los motores** a esta densidad, W, en total. */
@@ -502,6 +753,8 @@ export class ModeloDeHelicoptero {
   private b1 = 0;
   private inducida = 10;
   private inducidaCola = 5;
+  private descensoRelativo = 0;
+  private avanceRelativo = 0;
   private ultimo: EstadoDelRotor;
   private ultimosMandos: MandosDeHelicoptero = mandosNeutros();
   /** Dónde se agarra cada rueda al suelo, o `null` si está en el aire. */
@@ -591,6 +844,17 @@ export class ModeloDeHelicoptero {
     return this.ultimo;
   }
 
+  /**
+   * **Dónde está el rotor principal respecto al anillo turbillonario**: lo que
+   * baja y lo que avanza en su plano, en múltiplos de la inducida en
+   * estacionario del empuje que da, y la zona que eso es. Ver `zonaDelAnillo`.
+   */
+  anillo(): { readonly descenso: number; readonly avance: number; readonly zona: ZonaDelAnillo } {
+    const descenso = this.descensoRelativo;
+    const avance = this.avanceRelativo;
+    return { descenso, avance, zona: zonaDelAnillo(descenso, avance) };
+  }
+
   /** Los mandos que llegan al rotor: los de quien vuela con lo que añade la estabilización. */
   mandosAhora(): Readonly<MandosDeHelicoptero> {
     return this.ultimosMandos;
@@ -633,6 +897,8 @@ export class ModeloDeHelicoptero {
     this.b1 = 0;
     this.inducida = 10;
     this.inducidaCola = 5;
+    this.descensoRelativo = 0;
+    this.avanceRelativo = 0;
     this.ultimosMandos = mandosNeutros();
     this.anclas.length = 0;
     this.sostenerLoQueHay();
@@ -747,9 +1013,13 @@ export class ModeloDeHelicoptero {
     const vueltas = Math.max(0, this.vueltas);
     const principal =
       vueltas > 1
-        ? resolverDisco(rot, densidad, vueltas, paso, normal, enElPlano, this.inducida, delSuelo)
+        ? resolverDisco(rot, densidad, vueltas, paso, normal, enElPlano, this.inducida, delSuelo, true)
         : { empuje: 0, inducida: 0, enElDisco: 0, potencia: 0, avance: 0, flujo: 0 };
     this.inducida = principal.inducida;
+    // Lo que se baja y se avanza en múltiplos de la inducida en estacionario: dónde está respecto al anillo.
+    const enHover = Math.sqrt(Math.max(1, principal.empuje) / (2 * densidad * Math.PI * rot.radio * rot.radio));
+    this.descensoRelativo = normal / enHover;
+    this.avanceRelativo = enElPlano / enHover;
     aplicar(principal.empuje * nx, principal.empuje * ny, principal.empuje * nz, hx, 0, hz);
     // El buje empuja el fuselaje hacia donde se inclina el disco respecto al mástil.
     const rigidez = rot.rigidez * (vueltas / rot.vueltas) ** 2;
