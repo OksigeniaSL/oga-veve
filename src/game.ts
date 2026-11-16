@@ -1109,6 +1109,7 @@ import {
   type Empuje,
 } from "./world/remolque";
 import { DibujoDelRemolque } from "./world/tractor-de-remolque";
+import { conLaRuedaEn, morroDe, ruedaDeMorroEn } from "./world/rueda-de-morro";
 import { AvisoDeLaRaya } from "./flight/aviso-de-la-raya";
 import { AvisoDeVelocidad } from "./flight/aviso-de-velocidad";
 import {
@@ -1248,10 +1249,9 @@ import {
   GUION,
   PARADO,
   SE_QUEDAN,
-  guionAfis,
-  guionSinTorre,
   type Fase,
 } from "./flight/vuelo";
+import { MANDA_EL_PLAN, tarjetaDeLaFase } from "./flight/guion-de-fases";
 import { barraDeRodaje, esDeLinea, vaALaPasarela, velocidadesEnTierra } from "./flight/velocidades-en-tierra";
 import {
   DEJA_DE_PEDIR,
@@ -1290,7 +1290,7 @@ import {
   rodaduraDeFrenada,
   type DiaDeDespegue,
 } from "./flight/carrera";
-import { TomaLarga, finDeLaZonaDeToma } from "./flight/toma-larga";
+import { TomaLarga } from "./flight/toma-larga";
 import { POSICIONES as POSICIONES_DE_LA_PALANCA } from "./world/palanca-de-aerofrenos";
 import { GAS_AL_RALENTI, type PosicionDeLaPalanca } from "./flight/palanca-de-aerofrenos";
 import { REVERSA_HASTA } from "./flight/frenada";
@@ -1433,7 +1433,8 @@ import {
   turnoDe,
   type BancoDeVoces,
 } from "./audio/instructor-grabado";
-import { apuntarVuelo, type Paso, type Vuelo } from "./flight/bitacora";
+import { apuntarVuelo, type Vuelo } from "./flight/bitacora";
+import { Libreta } from "./flight/libreta";
 import { plano } from "./ui/hangar";
 import { pavimentoDe, sueloEn, TRAQUETEO, type Superficie } from "./world/superficie";
 import { signoDelGiro } from "./world/giro-de-las-helices";
@@ -1533,7 +1534,16 @@ import {
 } from "./world/aerodrome";
 import { MundoVecino } from "./world/mundo-vecino";
 import { desplazarAerodromo } from "./world/aerodromo-desplazado";
-import { laMasCerca, sobreAlguna, type Pista } from "./world/pistas-del-vuelo";
+import {
+  dondeSeToca,
+  enLaZonaDeLasFlechas,
+  laMasCerca,
+  pistaPorDelante,
+  sobreAlguna,
+  sobreLaPistaConMargen,
+  sobreLaZonaDeToma,
+  type Pista,
+} from "./world/pistas-del-vuelo";
 import {
   campoDeCasa,
   campoVecino,
@@ -1543,12 +1553,9 @@ import {
   type CampoEnElMundo,
 } from "./world/campo-del-vuelo";
 import {
-  antesDelUmbralDeToma,
   hastaElFinDeToma,
   hastaElUmbralDeToma,
   paraAterrizarDe,
-  sobreDondeSeToca,
-  vistaDesdeLaOtraCabecera,
 } from "./world/umbral-desplazado";
 import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
 import { enCanarias } from "./world/canarias";
@@ -2026,19 +2033,6 @@ const RITMO_DEL_RETARD = 0.35;
  */
 const YA_NO_BAJA = -0.3;
 
-/** Cada cuántos segundos de vuelo se apunta la hora en el cuaderno. */
-const CADA_CUANTO_SE_APUNTA = 30;
-
-/**
- * Cada cuántos segundos se cata por dónde va el avión, para la traza.
- *
- * Dos. Un vuelo de diez minutos son trescientas catas, que la bitácora
- * adelgaza a ciento veinte al guardarlas: más resolución de la que se ve en
- * una raya sobre un plano de doce kilómetros, y suficiente para que una curva
- * de circuito siga pareciendo una curva. Ver `flight/bitacora.ts`.
- */
-const CADA_CUANTO_SE_CATA = 2;
-
 /** Un campo del vuelo con su escenario, que es de donde sale su nombre. */
 interface CampoConNombre extends CampoDelVuelo {
   readonly escenario: Scenario;
@@ -2295,16 +2289,6 @@ const MIRA_LOS_PANELES = 1.5;
 const CURVA_DE_LA_AYUDA = 0.25;
 
 /**
- * Cuánto antes de la pista se deja de avisar del terreno, m.
- *
- * Trescientos: el umbral se cruza a quince metros, y un avión que viene bien a
- * esa altura está, visto por el aviso de terreno, bajísimo. Esto es **solo**
- * para callar ese aviso; dónde se dice «ya podés tocar» no lleva margen. Ver
- * `sobreDondeSeToca`.
- */
-const ANTES_DEL_UMBRAL = 300;
-
-/**
  * Cuánto campo hay antes del umbral y después del final, m.
  *
  * Una pista de verdad no acaba donde acaba el asfalto: lleva alrededor una
@@ -2319,14 +2303,6 @@ const ANTES_DEL_UMBRAL = 300;
  * franja se aterrizó en el aeródromo; fuera de ella, en el campo.
  */
 const LA_FRANJA = 60;
-
-/**
- * Cuánto se perdona de desvío lateral para seguir «sobre la pista», m.
- *
- * Cuarenta a cada lado del asfalto: quien cruza el umbral un poco descentrado
- * sigue aterrizando, no sobrevolando el campo.
- */
-const A_UN_LADO_DEL_EJE = 40;
 
 /**
  * Cuánto se mete el coche del «sígame» en la calle de salida al esperar, m.
@@ -4659,63 +4635,11 @@ export class Game {
      */
     if (this.campoEnCuyoSueloEsta())
       this.llenarSiHaceFalta(this.salidaId, this.destinoId);
-    // Otro tramo es otra vez volando, se viniera del final o de un percance.
-    this.partida.volverAVolar();
-    // Otro tramo, con motor: lo de la otra punta y el planeo eran del de antes.
-    this.sinMotor = false;
-    this.laOtraCabecera.reiniciar();
-    this.laAproximacion.reiniciar();
-    this.avisadoDeLaSenda = false;
-    // Y la instructora de la bajada, de cero: lo dicho era de otra bajada.
-    this.consejero.reiniciar();
-    this.nombrado.olvidar();
-    this.desvioAhora = null;
-    this.sendaJuzgada = null;
-    this.sinkRateExplicado = false;
-    this.velocidadJuzgada = null;
-    this.laTorreMandaEnLaLuz = false;
-    this.permisoDeAterrizar = null;
-    this.olvidarLaFinalDeLaTorre();
-    this.vaca.quitar();
-    this.traza = [];
-    this.sinCatar = 0;
-    this.duracion = 0;
-    this.dichoDeLaToma = false;
-    this.avisadoDeLaPasada = false;
-    this.avisosDeAltura.reiniciar();
-    this.alturaEnGrande.reiniciar();
-    this.laRecogida.avisos.reiniciar();
-    this.narizPedida = false;
-    this.enRetard = false;
-    this.maquina.callar();
-    this.antesAlUmbral = Infinity;
-    this.terrenoDicho = null;
-    this.reiniciarTerrInhibit();
-    this.dichoDelTren = null;
-    this.recordadoDelTren = NADA_RECORDADO;
-    this.trenPorMeter = true;
-    this.tormentasDichas.clear();
-    this.estelas.vaciar();
-    this.tcas.reiniciar();
-    this.bandaDelTcas = "NORM";
-    // Y la maniobra y el relevo, de cero: otro vuelo.
-    this.tarjetaDelRa = null;
-    this.relevoContado = { fuera: false, dentro: false };
-    this.dependenciaDelRelevo = null;
-    this.informacionDeTrafico.reiniciar();
-    // Otro vuelo, otra final: las aves de la de antes se fueron.
-    this.avesEnLaFinal.reiniciar();
-    this.explicarLasAvesDespues = false;
-    this.bandadas.quitar((b) => !!b.enFinal);
-    this.atisDado = "";
+    // Otro tramo es otro vuelo, se viniera del final o de un percance.
+    this.empezarUnVueloNuevo();
     this.faseAnunciada = "";
-    this.runwayGuide.reset();
-    this.landing.reset();
-    this.frustrada.reiniciar();
-    this.tomaLarga.reiniciar();
     // Esto también cierra el panel del final.
-    this.reiniciarGalones();
-    this.yaDespego = false;
+    this.otraVezLaLlegada();
     this.olvidarLoDichoYLoMirado();
     this.radio.reiniciar(aqui.escenario.aerodrome?.id);
     // Y la raya, de aquí al punto de espera de este campo. Si de aquí no
@@ -5494,22 +5418,10 @@ export class Game {
    * confirma con la pregunta del principio. Ver `flight/sin-instructora.ts`.
    */
   private sinInstructora = false;
-  /** Segundos volando desde el último apunte, para no escribir cada fotograma. */
-  private sinApuntar = 0;
-  /**
-   * Por dónde ha ido este vuelo, en coordenadas del fichero del aeródromo.
-   *
-   * Se cata cada pocos segundos y se guarda con el vuelo: a los cuatro años
-   * «lo que acabo de hacer» no es una lista de números, es un dibujo. Ver
-   * `flight/bitacora.ts`.
-   */
-  traza: Paso[] = [];
+  /** Cuánto dura este vuelo y por dónde va: lo que acaba en el cuaderno. Ver `flight/libreta.ts`. */
+  readonly libreta = new Libreta();
   /** De qué está hecho el suelo de debajo. Ver `world/superficie.ts`. */
   private superficie: Superficie = "asfalto";
-  /** Lo que se lleva sin catar la traza, s. */
-  private sinCatar = 0;
-  /** Cuánto ha durado este vuelo, s. Cuenta desde que se arrancó. */
-  private duracion = 0;
   /**
    * Lo que hay apuntado para dentro de un rato. Ver `flight/agenda.ts`.
    *
@@ -6830,6 +6742,7 @@ export class Game {
       this.plan.enCola = () => this.paradosEnLasCalles(true);
       this.plan.colaQueHay = () => this.paradosEnLasCalles(true, true);
       this.plan.tramosDeOtros = () => this.trafico?.tramosQueTienen() ?? [];
+      this.plan.puestosDelTrafico = () => this.puestosDelTrafico();
       this.plan.diaDeDespegue = () => this.diaDeDespegue();
       this.plan.puestoPedido = this.puestoDeEsteVuelo;
       // Con un avión de pasarela, de un puesto de contacto a otro. Ver `PlanDeVuelo.deContacto`.
@@ -7903,6 +7816,7 @@ export class Game {
       alturaDelGas: laRecogidaDe(this.aircraft).gas,
       reversa: tieneReversa(this.aircraft),
       trenQueSeMete: this.input.hayPalancaDeTren,
+      ruedaDeMorro: morroDe(this.aircraft).rueda,
     });
     this.inicioCongelado = false;
     this.input.cerrarGas();
@@ -8648,25 +8562,6 @@ export class Game {
       this.pintarLaConsola(inicio);
       // El kit, con la pieza de la que habla Ara brillando mientras lo dice.
       this.pantallaDelKit?.pintar(p.hablando ? (p.linea?.clave ?? null) : null);
-      /*
-       * Y que siga sin tapar lo que se enseña: otro plano es otra toma. Un
-       * fotograma después del corte, que es cuando la cámara ya está en ella.
-       * Al abrir o cerrar el kit, también se recoloca, y en cuanto su panel se
-       * mueve —baja cuando la tarjeta crece con una frase larga—, se mira si
-       * lo pisa. Las dos cosas en el mismo fotograma y después de pintar el
-       * kit, que ya está en la página: con un fotograma o un vistazo de
-       * retraso, la lámina se quedaba ese rato encima del panel.
-       */
-      const plano = this.fundidoDePlano.plano;
-      const kitMovido = this.pantallaDelKit?.movido ?? 0;
-      this.hud.historia.vigilar(
-        this.laminaPorColocar || p.kit.abierto !== this.kitDeLaLamina,
-        kitMovido !== this.kitMovidoDeLaLamina,
-      );
-      this.laminaPorColocar = plano !== this.planoDeLaLamina;
-      this.planoDeLaLamina = plano;
-      this.kitDeLaLamina = p.kit.abierto;
-      this.kitMovidoDeLaLamina = kitMovido;
       this.refrescarLaRuta();
       // El sello del campo al que se llegó, que es donde se está.
       const destino = this.elCampoDeAhora();
@@ -8712,6 +8607,7 @@ export class Game {
               }
             : null,
       });
+      this.mirarQueLaLaminaNoTapa(p, pantalla.cambios);
       this.ponerLosArosDeLaVentanilla(inicio, p);
       return;
     }
@@ -8772,6 +8668,51 @@ export class Game {
   /** Si ya parpadeó el cartel del cinturón en esta escena. */
   private cinturonDeLaEscena = false;
 
+  /**
+   * **Que la lámina siga sin tapar lo que se enseña**: otro plano es otra toma, y
+   * se recoloca un fotograma después del corte, que es cuando la cámara ya está en
+   * ella. Al abrir o cerrar el kit, también.
+   *
+   * Y se mira ya, sin esperar al vistazo de cada poco, en cuanto cambia algo de lo
+   * que no tapa: el panel del kit se mueve —baja cuando la tarjeta de encima crece
+   * con una frase larga—, la tarjeta de quien habla cambia de frase o de dibujo, o
+   * se nombra algo del paisaje, que desde ese momento tampoco se tapa. Con el
+   * vistazo de cada poco la lámina se quedaba ese rato encima: el banco la pilló con
+   * el motor encima de la tarjeta, bajando, cuando una frase de tres renglones siguió
+   * a una de dos. Por eso va **después de pintar la tarjeta y el kit**, que ya están
+   * en la página: con un fotograma de retraso, la lámina se quedaba ese fotograma encima.
+   */
+  private mirarQueLaLaminaNoTapa(p: MotorDelPasaje["estado"], tarjeta: number): void {
+    const plano = this.fundidoDePlano.plano;
+    const kitMovido = this.pantallaDelKit?.movido ?? 0;
+    const tocado = this.loTocado && this.relojDePared < this.loTocado.hasta + 8 ? this.loTocado.hasta : null;
+    const nombrados = `${[...this.sitiosQueNoTapaLaLamina(p)].join("|")}#${tocado ?? ""}`;
+    this.hud.historia.vigilar(
+      this.laminaPorColocar || p.kit.abierto !== this.kitDeLaLamina,
+      kitMovido !== this.kitMovidoDeLaLamina || tarjeta !== this.tarjetaDeLaLamina || nombrados !== this.nombradosDeLaLamina,
+    );
+    this.laminaPorColocar = plano !== this.planoDeLaLamina;
+    this.planoDeLaLamina = plano;
+    this.kitDeLaLamina = p.kit.abierto;
+    this.kitMovidoDeLaLamina = kitMovido;
+    this.tarjetaDeLaLamina = tarjeta;
+    this.nombradosDeLaLamina = nombrados;
+  }
+
+  /** Las veces que había cambiado la tarjeta de quien habla, y lo nombrado que no se tapaba. */
+  private tarjetaDeLaLamina = 0;
+  private nombradosDeLaLamina = "";
+
+  /**
+   * **Lo nombrado del paisaje que la lámina no tapa**: lo de los últimos veinte
+   * segundos y el sitio de la toma. Ver `loQueNoTapaLaLamina`.
+   */
+  private sitiosQueNoTapaLaLamina(escena: MotorDelPasaje["estado"]): Set<SitioDelPaisaje> {
+    const sitios = new Set(escena.nombrados.filter((n) => n.desde >= escena.segundos - 20).map((n) => n.sitio));
+    if (escena.paisaje) sitios.add(escena.paisaje);
+    return sitios;
+  }
+
   /** El plano con el que se miró la lámina por última vez: si cambia, se recoloca. */
   private planoDeLaLamina: Plano | null = null;
   private laminaPorColocar = false;
@@ -8830,9 +8771,7 @@ export class Game {
       if (x < -m || y < -m || x > W + m || y > H + m) return;
       cajas.push({ left: x - m, top: y - m, right: x + m, bottom: y + m });
     };
-    const sitios = new Set(escena.nombrados.filter((n) => n.desde >= escena.segundos - 20).map((n) => n.sitio));
-    if (escena.paisaje) sitios.add(escena.paisaje);
-    for (const sitio of sitios) {
+    for (const sitio of this.sitiosQueNoTapaLaLamina(escena)) {
       const p = this.puntoDeLoNombrado(sitio);
       if (p) alrededor(p, margen);
     }
@@ -10956,9 +10895,9 @@ export class Game {
       ...(llegada !== this.scenario.id ? { llegada } : {}),
       leccion: this.leccion.id,
       tramo: this.tier.id,
-      segundos: Math.round(this.duracion),
+      segundos: Math.round(this.libreta.duracion),
       galones: this.galones.lista,
-      traza: this.traza,
+      traza: this.libreta.traza,
       // Y lo de antes de volar, si hubo: la vuelta al avión. Ver `loDeAntes`.
       ...this.loDeAntes(),
     });
@@ -11017,7 +10956,7 @@ export class Game {
       // en Asunción: el aeródromo salía como un punto y la lección de rodar,
       // que se queda en un kilómetro, como nada. El suelo de escala es para
       // comparar fichas en el hangar; aquí solo hay un vuelo.
-      plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
+      plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
       // Y lo que se lleva volado en total, en avioncitos. Ver `ui/reloj.ts`.
       this.relojDeHoras(),
       // Y el nombre de cada parte de la hoja, desde el peldaño que lee.
@@ -11221,7 +11160,7 @@ export class Game {
    */
   private relojDeHoras(): string {
     return dibujarReloj(
-      relojDe(this.cuaderno.segundos, this.duracion),
+      relojDe(this.cuaderno.segundos, this.libreta.duracion),
       t("fin.horas"),
     );
   }
@@ -13223,12 +13162,28 @@ export class Game {
     // se sale de verdad. Sin él, de la cabecera, como toda la vida.
     const puesto = this.plan?.arranque();
     if (puesto) {
+      /*
+       * **En el sitio del avión que llegó a ese puesto**: el punto es donde para
+       * la rueda de morro entrando (#191), y el avión ocupa desde ahí hacia la
+       * calle. Mirando hacia donde sale la raya, su centro queda donde lo dejó
+       * la llegada, tanto como va la rueda por delante: es el mismo hueco, dado
+       * la vuelta. Con la rueda de morro en el punto y mirando hacia fuera, la
+       * cola se metía donde no hay sitio: en El Hierro, el JAZ 110 y el JAZ 120
+       * en el edificio. Del puesto de contacto, que se sale de espaldas, lo
+       * recoloca `prepararElRemolque` con el morro al edificio y la rueda de
+       * morro en el punto. Ver `world/rueda-de-morro.ts`.
+       */
+      const hacia = this.plan?.primerPaso();
+      const rumbo = hacia ? Math.atan2(hacia[0] - puesto[0], -(hacia[1] - puesto[1])) : 0;
+      const centro = hacia
+        ? conLaRuedaEn({ x: puesto[0], z: puesto[1] }, rumbo + Math.PI, morroDe(this.aircraft))
+        : { x: puesto[0], z: puesto[1] };
       return new Vector3(
-        puesto[0],
+        centro.x,
         // Sobre el asfalto del puesto, no sobre el terreno de debajo.
-        this.terrain.sampleSurface(puesto[0], puesto[1]) +
+        this.terrain.sampleSurface(centro.x, centro.z) +
           this.aircraft.gearHeight,
-        puesto[1],
+        centro.z,
       );
     }
     // El arranque de un aeródromo real sale de su umbral medido, sesenta
@@ -13271,33 +13226,12 @@ export class Game {
   }
 
   /**
-   * Cuántos metros de pista quedan por delante, o infinito si no se está en
-   * ella.
-   *
-   * Se mide **hacia donde apunta el avión**, no en línea recta al final: si
-   * uno rueda hacia atrás por la pista, lo que queda es lo que tiene delante.
-   * Y solo cuenta si está dentro del ancho, porque fuera de la pista no hay
-   * pista que se acabe.
+   * Cuántos metros de pista del campo de ahora quedan por delante, o
+   * infinito si no se está en ella. Ver `pistaPorDelante`.
    */
   private runwayRemaining(): number {
-    const r = this.laPistaDeAhora();
-    const p = this.flight.state.position;
-    const { along, across: lado } = enEjesDePista(
-      p.x,
-      p.z,
-      r.x,
-      r.z,
-      r.heading,
-    );
-    const across = Math.abs(lado);
-    if (across > r.width) return Infinity;
-    if (Math.abs(along) > r.length / 2) return Infinity;
-
-    // Hacia dónde va el avión respecto al eje de la pista.
-    const [fx, fz] = delante((this.flight.state.heading * 180) / Math.PI);
-    const [rx, rz] = delante(r.heading);
-    const hacia = fx * rx + fz * rz;
-    return hacia >= 0 ? r.length / 2 - along : r.length / 2 + along;
+    const s = this.flight.state;
+    return pistaPorDelante(this.laPistaDeAhora(), s.position.x, s.position.z, s.heading);
   }
 
   /**
@@ -13429,31 +13363,14 @@ export class Game {
         ? this.salidaId
         : this.scenario.id;
     const campo = this.elCampo(salida);
-    /*
-     * **Y otra vez volando, lo primero**, se viniera de un percance o del
-     * final. Por los dos caminos de reinicio, este y `reiniciarEnFinal`, que
-     * sale de aquí. El final se bajaba en `reiniciarGalones`, al otro extremo
-     * del método: nadie lo leía en medio, pero «otros galones» no es quien
-     * decide que se vuelve a volar.
-     */
-    this.partida.volverAVolar();
-    // Y con el depósito lleno, otra vez con motor. Ver `quedarseSinMotor`.
-    this.sinMotor = false;
+    // Lo de cualquier vuelo nuevo, lo primero. Ver `empezarUnVueloNuevo`.
+    this.empezarUnVueloNuevo();
     /*
      * **Y el ejercicio, otra vez desde el principio**: se repite, como en el
-     * simulador, con los motores en marcha, sin prioridad y sin bomberos. Y
-     * con las velocidades de esta pista y de este aire. Ver `practicar`.
+     * simulador, con los motores en marcha. La prioridad y los bomberos ya los
+     * quitó `empezarUnVueloNuevo`. Y con las velocidades de esta pista y de
+     * este aire. Ver `practicar`.
      */
-    this.emergenciaDeclarada = false;
-    this.mensajesDeMotor = [];
-    this.bomberos.quitar();
-    this.bomberosPor = null;
-    /*
-     * Las velocidades de hoy se cuentan al empezar la carrera, con la pista que
-     * queda por delante y lo que pesa el avión entonces: aquí el depósito
-     * todavía no se ha llenado para este tramo. Ver `contarLasVelocidades`.
-     */
-    this.velocidadesDeHoy = null;
     this.practica?.reiniciar();
     this.otraVezLaTormenta();
     this.leccionDelRotor?.reiniciar();
@@ -13461,41 +13378,12 @@ export class Game {
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
     });
-    this.laOtraCabecera.reiniciar();
-    // Todo lo de venir a aterrizar se reinicia de una vez, que es lo que gana
-    // tenerlo junto: antes eran cinco líneas repartidas por este método.
-    this.laAproximacion.reiniciar();
-    this.avisadoDeLaSenda = false;
-    // Y la instructora de la bajada, de cero: lo dicho era de otra bajada.
-    this.consejero.reiniciar();
-    this.nombrado.olvidar();
-    this.desvioAhora = null;
-    this.sendaJuzgada = null;
-    this.sinkRateExplicado = false;
-    this.velocidadJuzgada = null;
-    this.laTorreMandaEnLaLuz = false;
-    this.permisoDeAterrizar = null;
-    this.olvidarLaFinalDeLaTorre();
-    this.vaca.quitar();
-    // Otro vuelo, otra traza: la raya del anterior ya está guardada.
-    this.traza = [];
-    this.sinCatar = 0;
-    this.duracion = 0;
     // Lo que quedaba apuntado era del vuelo anterior: una pantalla de percance
     // de una partida que ya no existe, saliendo encima de la que empieza.
     this.agenda.vaciar();
     // Y lo de antes de volar, de cero: otra vuelta y otro parte. Ver `nuevoVueloAntesDeVolar`.
     this.nuevoVueloAntesDeVolar();
     this.hud.cerrarFinDeVuelo();
-    this.dichoDeLaToma = false;
-    this.avisadoDeLaPasada = false;
-    // Una cuenta atrás a medias de un vuelo que ya no existe.
-    this.avisosDeAltura.reiniciar();
-    this.alturaEnGrande.reiniciar();
-    this.laRecogida.avisos.reiniciar();
-    this.narizPedida = false;
-    this.enRetard = false;
-    this.maquina.callar();
     // Y el otro avión vuelve a empezar su vuelo con nosotros, y **con otro
     // nombre**: es otro avión, no el mismo dando vueltas para siempre. En la
     // frecuencia del campo del que se sale.
@@ -13524,37 +13412,19 @@ export class Game {
      * Y los segundos sin apuntar se vuelcan en vez de tirarse: son tiempo
      * volado de verdad, y tirarlos era regalarle hasta medio minuto al
      * cuaderno en cada reinicio.
+     *
+     * La distancia al umbral y los contadores que valen igual para otro tramo
+     * están en `empezarUnVueloNuevo`; aquí queda lo que lee el primer
+     * fotograma de un avión que se recoloca.
      */
-    if (this.sinApuntar > 0) {
-      this.apuntar({ segundos: this.cuaderno.segundos + this.sinApuntar });
-      this.sinApuntar = 0;
-    }
+    const sinApuntar = this.libreta.volcar();
+    if (sinApuntar > 0) this.apuntar({ segundos: this.cuaderno.segundos + sinApuntar });
     this.vistaActual = null;
     this.pidiendoFreno = false;
-    this.antesAlUmbral = Infinity;
     this.gestoEnPantalla = null;
     this.techoDeLaCarrera = Infinity;
     this.fueraDeBanda = 0;
     this.dichoDeBanda = null;
-    this.terrenoDicho = null;
-    this.reiniciarTerrInhibit();
-    this.dichoDelTren = null;
-    this.recordadoDelTren = NADA_RECORDADO;
-    this.trenPorMeter = true;
-    this.tormentasDichas.clear();
-    this.estelas.vaciar();
-    this.tcas.reiniciar();
-    this.bandaDelTcas = "NORM";
-    // Y la maniobra y el relevo, de cero: otro vuelo.
-    this.tarjetaDelRa = null;
-    this.relevoContado = { fuera: false, dentro: false };
-    this.dependenciaDelRelevo = null;
-    this.informacionDeTrafico.reiniciar();
-    // Otro vuelo, otra final: las aves de la de antes se fueron.
-    this.avesEnLaFinal.reiniciar();
-    this.explicarLasAvesDespues = false;
-    this.bandadas.quitar((b) => !!b.enFinal);
-    this.atisDado = "";
     this.avisandoDelBulto = 0;
     /*
      * Y la ruta de este vuelo, **antes** del depósito: lo que se carga sale de
@@ -13580,19 +13450,15 @@ export class Game {
      * para las lecciones que empiezan en el aire— y lo que se reinicia en cada
      * uno se fue copiando a mano hasta divergir. Todo lo que sea «estado de
      * este vuelo» tiene que quedar limpio por los dos: o aquí arriba, o en
-     * `olvidarElVueloAnterior`, que es el final común de los dos.
+     * `olvidarElVueloAnterior`, que es el final común de los dos. Y si vale
+     * también para otro tramo desde donde está el avión, en
+     * `empezarUnVueloNuevo` o en `otraVezLaLlegada`, que son de los tres.
      *
      * La baliza, también: en el primer paso se pone como esté el motor. Ver `flight/baliza.ts`.
      */
     this.baliza.reiniciar();
     // Y el tractor de la vuelta a la raya, si estaba: es de este vuelo. Ver `atenderALaHierba`.
     this.olvidarLaHierba();
-    // Los flaps del despegue, de cero: un vuelo nuevo es una salida nueva.
-    this.antesDeDespegar.reiniciar();
-    this.compensadorAntesDeDespegar.reiniciar();
-    this.avisoDeConfiguracion.reiniciar();
-    this.recogidaDeLosFlaps.reiniciar();
-    this.flapsPorRecoger = false;
     if (this.leccion.arranque === "aire") return this.reiniciarEnFinal();
     // El plan se reinicia **antes** de colocar el avión: es él quien decide si
     // hoy se sale del puesto o de la cabecera, y de eso depende dónde y hacia
@@ -13629,13 +13495,8 @@ export class Game {
       }
       this.ponerALaGente();
     }
-    this.runwayGuide.reset();
-    this.landing.reset();
-    this.frustrada.reiniciar();
-    this.tomaLarga.reiniciar();
-    this.reiniciarGalones();
+    this.otraVezLaLlegada();
     this.wasOnGround = true;
-    this.yaDespego = false;
     this.wasStalled = false;
     this.input.releaseAll();
     /*
@@ -13665,6 +13526,127 @@ export class Game {
      * el reinicio de la cabecera lo arranca. Ver `recolocarTrasElMoldeado`.
      */
     this.retomarElInicio();
+  }
+
+  /**
+   * **Lo que vuelve a cero en todo vuelo nuevo**, venga de donde venga: de
+   * los dos caminos de reinicio —`resetFlight` y `reiniciarEnFinal`, que sale
+   * de él— y de otro tramo desde donde está el avión, `empezarOtroTramo`.
+   *
+   * Otro tramo llevaba su propia copia de estas cuarenta líneas, hecha a mano
+   * a partir de la del reinicio, y cada arreglo había que acordarse de
+   * ponerlo en las dos. Aquí va solo lo que vale igual para las tres
+   * salidas; lo que depende de que el avión se recoloque —el tren, el
+   * depósito, la vista del plan del primer fotograma— sigue en su camino.
+   */
+  private empezarUnVueloNuevo(): void {
+    /*
+     * **Otra vez volando, lo primero**, se viniera de un percance o del
+     * final. El final se bajaba en `reiniciarGalones`, al otro extremo del
+     * reinicio: nadie lo leía en medio, pero «otros galones» no es quien
+     * decide que se vuelve a volar.
+     */
+    this.partida.volverAVolar();
+    // Y con motor: lo de la otra punta y el planeo eran del de antes. Ver `quedarseSinMotor`.
+    this.sinMotor = false;
+    /*
+     * **Sin la emergencia del vuelo de antes.** Un vuelo nuevo no sale con la
+     * prioridad declarada, la luz ámbar del motor ni los bomberos detrás.
+     * Estaba solo en `resetFlight`, y otro tramo los arrastraba: se aterrizaba
+     * de un ejercicio de motor parado, se apagaba, se arrancaba y la vuelta
+     * salía declarada. Lo vio H20d al juntar los tres caminos. Lo del
+     * ejercicio en sí —repetirlo o no— es de cada camino.
+     */
+    this.emergenciaDeclarada = false;
+    this.mensajesDeMotor = [];
+    this.bomberos.quitar();
+    this.bomberosPor = null;
+    this.laOtraCabecera.reiniciar();
+    // Todo lo de venir a aterrizar se reinicia de una vez, que es lo que gana
+    // tenerlo junto: antes eran cinco líneas repartidas por el reinicio.
+    this.laAproximacion.reiniciar();
+    this.avisadoDeLaSenda = false;
+    // Y la instructora de la bajada, de cero: lo dicho era de otra bajada.
+    this.consejero.reiniciar();
+    this.nombrado.olvidar();
+    this.desvioAhora = null;
+    this.sendaJuzgada = null;
+    this.sinkRateExplicado = false;
+    this.velocidadJuzgada = null;
+    this.laTorreMandaEnLaLuz = false;
+    this.permisoDeAterrizar = null;
+    this.olvidarLaFinalDeLaTorre();
+    this.vaca.quitar();
+    // Otro vuelo, otra traza: la raya del anterior ya está guardada.
+    this.libreta.empezarOtro();
+    this.dichoDeLaToma = false;
+    this.avisadoDeLaPasada = false;
+    // Una cuenta atrás a medias de un vuelo que ya no existe.
+    this.avisosDeAltura.reiniciar();
+    this.alturaEnGrande.reiniciar();
+    this.laRecogida.avisos.reiniciar();
+    this.narizPedida = false;
+    this.enRetard = false;
+    this.maquina.callar();
+    this.antesAlUmbral = Infinity;
+    this.terrenoDicho = null;
+    this.reiniciarTerrInhibit();
+    this.dichoDelTren = null;
+    this.recordadoDelTren = NADA_RECORDADO;
+    this.trenPorMeter = true;
+    this.tormentasDichas.clear();
+    this.estelas.vaciar();
+    this.tcas.reiniciar();
+    this.bandaDelTcas = "NORM";
+    // Y la maniobra y el relevo, de cero: otro vuelo.
+    this.tarjetaDelRa = null;
+    this.relevoContado = { fuera: false, dentro: false };
+    this.dependenciaDelRelevo = null;
+    this.informacionDeTrafico.reiniciar();
+    // Otro vuelo, otra final: las aves de la de antes se fueron.
+    this.avesEnLaFinal.reiniciar();
+    this.explicarLasAvesDespues = false;
+    this.bandadas.quitar((b) => !!b.enFinal);
+    this.atisDado = "";
+    /*
+     * **Y lo de la salida, de cero, también en otro tramo**, que es otra
+     * salida. Las velocidades de hoy se cuentan al empezar la carrera, con la
+     * pista que queda por delante y lo que pesa el avión entonces, y solo si
+     * no se han contado ya: otro tramo se las dejaba puestas, así que la
+     * vuelta de Los Rodeos salía con la V1, la VR y la V2 de la pista de Gando
+     * y del depósito de la ida. Ver `contarLasVelocidades`.
+     *
+     * Y los flaps del despegue, igual: un vuelo nuevo es una salida nueva, y
+     * lo hecho con ellos es «lo de esta salida». Ver `flapsDelDespegueParaBanco`.
+     */
+    this.velocidadesDeHoy = null;
+    /*
+     * Y sin haber despegado todavía, también en la final. La lección de
+     * aterrizar no lo olvidaba: tras una toma y otra vez al aire, el intento
+     * siguiente empezaba ya «despegado»: sin el «lo conseguiste» del despegue
+     * y con la turbulencia del intento anterior andando desde la final, que el
+     * primer intento no tiene. Ver `announce` y `repartirLaTurbulencia`.
+     */
+    this.yaDespego = false;
+    this.antesDeDespegar.reiniciar();
+    this.compensadorAntesDeDespegar.reiniciar();
+    this.avisoDeConfiguracion.reiniciar();
+    this.recogidaDeLosFlaps.reiniciar();
+    this.flapsPorRecoger = false;
+  }
+
+  /**
+   * **La senda, la toma y los galones, de cero**, por los tres caminos que
+   * empiezan un vuelo. Va aparte de `empezarUnVueloNuevo` porque la senda se
+   * reinicia con el avión ya colocado —en final, con aros que quedan
+   * detrás— y después de montar el campo, que en casa también la reinicia.
+   */
+  private otraVezLaLlegada(guiaDesde?: Vector3): void {
+    this.runwayGuide.reset(guiaDesde);
+    this.landing.reset();
+    this.frustrada.reiniciar();
+    this.tomaLarga.reiniciar();
+    this.reiniciarGalones();
   }
 
   /**
@@ -15013,6 +14995,15 @@ export class Game {
              */
             porDondeVas: cadaTanto(ruta, 10),
             /*
+             * **Y tu puesto, con tus alas**: ni en él ni en el de al lado si
+             * se tocan. En una plataforma pequeña tu avión de línea ocupa uno
+             * y deja libre el de al lado. Ver `TierraDelTrafico.tuPuesto`.
+             */
+            tuPuesto: (() => {
+              const tuyo = this.plan?.puestoQueTienes();
+              return tuyo ? { x: tuyo[0], z: tuyo[1], semiala: this.aircraft.wingSpan / 2 } : null;
+            })(),
+            /*
              * **Y el que aterriza no sale por donde estás tú**, si tiene
              * otra salida: tu avión y tu raya, con la separación de ala. Ver
              * `OCUPADA_CUESTA` en `world/suelo-del-trafico.ts`.
@@ -15259,6 +15250,14 @@ export class Game {
     if (alUmbral !== null) return { segundos: alUmbral, donde: "final", alto };
     const circuito = this.tuCircuitoParaLaTorre();
     return circuito !== null ? { segundos: circuito, donde: "circuito", alto } : null;
+  }
+
+  /** Los puestos del tráfico, en los ejes del fichero. Ver `PlanDeVuelo.puestosDelTrafico`. */
+  private puestosDelTrafico(): { xy: Punto; semiala: number }[] {
+    return (this.trafico?.puestosQueTienen() ?? []).map((p) => ({
+      xy: [p.x, -p.z] as Punto,
+      semiala: p.semiala,
+    }));
   }
 
   /**
@@ -15585,6 +15584,7 @@ export class Game {
     this.plan.enCola = () => this.paradosEnLasCalles(true);
     this.plan.colaQueHay = () => this.paradosEnLasCalles(true, true);
     this.plan.tramosDeOtros = () => this.trafico?.tramosQueTienen() ?? [];
+    this.plan.puestosDelTrafico = () => this.puestosDelTrafico();
     this.plan.diaDeDespegue = () => this.diaDeDespegue();
     // Y su puesto, si es el de casa: el plan se rehace al asentar el aeródromo, antes de colocar el avión.
     if (aero === this.scenario.aerodrome) this.plan.puestoPedido = this.puestoDeEsteVuelo;
@@ -17333,12 +17333,8 @@ export class Game {
     }
     this.faseAnunciada = "";
     // Con la posición: se empieza en final y hay aros que ya quedan detrás.
-    this.runwayGuide.reset(this.flight.state.position);
-    this.landing.reset();
-    this.frustrada.reiniciar();
-    this.tomaLarga.reiniciar();
+    this.otraVezLaLlegada(this.flight.state.position);
     this.laAproximacion.reiniciar();
-    this.reiniciarGalones();
     this.wasOnGround = false;
     this.wasStalled = false;
     this.olvidarElVueloAnterior();
@@ -17981,10 +17977,8 @@ export class Game {
     this.alturaEnGrande = new AvisosDeAltura(
       this.tier.units === "aeronautical" ? EN_GRANDE_EN_PIES : EN_GRANDE,
     );
-    // Las horas que duró de verdad este vuelo, las que no son del cuaderno. Ver arriba.
-    this.duracion += saltadas;
-    // La raya de por dónde se fue era de otro plano: el dibujo la uniría con una recta de mil kilómetros.
-    if (otroMundo) this.traza = [];
+    // Las horas que duró de verdad este vuelo, y la raya si era de otro plano. Ver `Libreta.saltar`.
+    this.libreta.saltar(saltadas, otroMundo);
   }
 
   /**
@@ -18604,36 +18598,11 @@ export class Game {
       this.sufrirPercance("pasada");
     }
 
-    /*
-     * **Las horas de vuelo, que es de lo que va un cuaderno.**
-     *
-     * Se cuentan con las ruedas en el aire y se guardan cada medio minuto: no
-     * hace falta más precisión —nadie mira los segundos— y escribir en el
-     * almacenamiento sesenta veces por segundo sería absurdo.
-     */
-    if (!this.flight.state.onGround) {
-      this.sinApuntar += dt;
-      if (this.sinApuntar > CADA_CUANTO_SE_APUNTA) {
-        this.apuntar({ segundos: this.cuaderno.segundos + this.sinApuntar });
-        this.sinApuntar = 0;
-      }
-    }
-
-    /*
-     * **Y por dónde se va pasando**, que es lo que después se dibuja.
-     *
-     * Se cata cada pocos segundos, en el suelo y en el aire: la vuelta del
-     * puesto a la pista es parte del vuelo y en el plano se reconoce igual que
-     * el circuito. En coordenadas del fichero —la Y del norte es la Z negativa
-     * del mundo—, que es el sistema en el que ya está dibujado el plano.
-     */
-    this.duracion += dt;
-    this.sinCatar += dt;
-    if (this.sinCatar >= CADA_CUANTO_SE_CATA) {
-      this.sinCatar = 0;
-      const p = this.flight.state.position;
-      this.traza.push([Math.round(p.x), Math.round(-p.z)]);
-    }
+    // Las horas de vuelo y por dónde se va pasando. Ver `flight/libreta.ts`.
+    const volado = this.libreta.contarElAire(dt, !this.flight.state.onGround);
+    if (volado > 0) this.apuntar({ segundos: this.cuaderno.segundos + volado });
+    const pasando = this.flight.state.position;
+    this.libreta.catar(dt, pasando.x, pasando.z);
 
     /*
      * **Con un percance puesto, el avión no se mueve.** La fase de la partida
@@ -19394,8 +19363,16 @@ export class Game {
      * una montaña bien grande delante». Ver `flight/terreno-delante.ts`.
      */
     const visto = juntarAvisos(avisoDeTerreno(cerca), this.mirarElTerrenoDelante(dt));
-    // Sin motor y bajando a posarse, «subí» es lo que no se puede: ver `autorrotacionPracticada`.
-    const terreno = this.autorrotacionPracticada() ? null : visto;
+    /*
+     * **El helicóptero, sin el aviso de terreno de un avión**: son las envolventes
+     * del GPWS de un ala —bajo a ciento veinte metros, «subí» bajando a sesenta—, y
+     * un helicóptero vuela bajo por oficio y se posa en cualquier sitio. Se cantaba
+     * «terrain, pull up» con su «Subí» en el vuelo libre, y sin motor es lo que no
+     * se puede hacer. El de los helicópteros que lo llevan
+     * es otra caja, con otros modos (ADR 0026, enmienda H19c), y el JAZ 70 no la
+     * lleva: no se inventa.
+     */
+    const terreno = this.aircraft.helicoptero ? null : visto;
     this.terrenoAhora = terreno;
     /*
      * El HUD enseña el mismo aviso que dice la voz, no uno suyo. Ver
@@ -21300,19 +21277,36 @@ export class Game {
     const s = this.flight.state;
     const aero = this.plan?.aerodromoActual;
     if (!puesto || !aero || !s.onGround) return;
-    if (Math.hypot(s.position.x - puesto[0], s.position.z - puesto[1]) > 5) return;
+    // El punto del puesto es donde para la rueda de morro (#191): ver `world/rueda-de-morro.ts`.
+    const morro = morroDe(this.aircraft);
+    /*
+     * Con la rueda de morro en él, si se llegó de frente; o en el sitio del que llegó, si se
+     * empieza mirando hacia la calle (`startPosition`).
+     */
+    const rueda = ruedaDeMorroEn(s.position, s.heading, morro);
+    const llegado = conLaRuedaEn({ x: puesto[0], z: puesto[1] }, s.heading + Math.PI, morro);
+    const enElPuesto = Math.min(
+      Math.hypot(rueda.x - puesto[0], rueda.z - puesto[1]),
+      Math.hypot(s.position.x - llegado.x, s.position.z - llegado.z),
+    );
+    if (enElPuesto > 5) return;
     // Solo en un campo con pasarelas: ver `edificiosDePasarela`.
     const edificios = edificiosDePasarela(aero);
-    const largo = largoPorLaBatalla(this.aircraft.batalla);
-    if (!saleConRemolque(vaALaPasarela(this.aircraft), puesto[0], puesto[1], edificios, largo)) return;
+    if (!saleConRemolque(vaALaPasarela(this.aircraft), puesto[0], puesto[1], edificios, morro)) return;
     const raya = this.rayaParaLaTripulacion();
     const rumbo = rumboEnElPuesto(puesto[0], puesto[1], edificios, raya);
     if (rumbo === null) return;
-    const empuje = trayectoriaDelEmpuje({ x: puesto[0], z: puesto[1], rumbo }, raya, this.aircraft.batalla);
+    // Con el morro al edificio y la rueda de morro en el punto del puesto: el centro, por detrás.
+    const centro = conLaRuedaEn({ x: puesto[0], z: puesto[1] }, rumbo, morro);
+    const empuje = trayectoriaDelEmpuje({ x: centro.x, z: centro.z, rumbo }, raya, this.aircraft.batalla);
     if (!empuje) return;
-    this.posicionDelEmpuje.copy(s.position);
+    this.posicionDelEmpuje.set(centro.x, this.terrain.sampleSurface(centro.x, centro.z) + this.aircraft.gearHeight, centro.z);
     this.flight.reset({ position: this.posicionDelEmpuje, heading: rumbo, airspeed: 0 });
-    this.remolque = new Remolque(empuje, { batalla: this.aircraft.batalla, envergadura: this.aircraft.wingSpan });
+    this.remolque = new Remolque(empuje, {
+      batalla: this.aircraft.batalla,
+      envergadura: this.aircraft.wingSpan,
+      rueda: morro.rueda,
+    });
     /*
      * Quien juega arranca cuando quiere, y el tractor no se suelta con los motores parados: la
      * persona de tierra sigue enchufada hasta que están en marcha. Ver `Remolque.esperaLosMotores`.
@@ -21427,9 +21421,11 @@ export class Game {
     if (c.engineOn || this.remolque || !this.quienJuegaSaleEmpujado || !s.onGround || s.groundSpeed > 0.5) return false;
     if (!arrancarAbreOtroTramo(this.leccion, this.faseDeAhora, this.vueloTerminado)) return false;
     const edificios = edificiosDePasarela(this.plan?.aerodromoActual);
-    const largo = largoPorLaBatalla(this.aircraft.batalla);
-    const aqui: [number, number] = [s.position.x, s.position.z];
-    if (!saleConRemolque(true, aqui[0], aqui[1], edificios, largo)) return false;
+    const morro = morroDe(this.aircraft);
+    // Desde la rueda de morro, que es lo que se para en el punto del puesto. Ver `world/rueda-de-morro.ts`.
+    const rueda = ruedaDeMorroEn(s.position, s.heading, morro);
+    const aqui: [number, number] = [rueda.x, rueda.z];
+    if (!saleConRemolque(true, aqui[0], aqui[1], edificios, morro)) return false;
     // Y con el morro al edificio, que si no se sale de frente como siempre.
     const pared = paredMasCercana(aqui[0], aqui[1], edificios);
     if (!pared || Math.abs(diferenciaDeRumbo(s.heading, pared.rumbo)) > Math.PI / 3) return false;
@@ -21846,7 +21842,11 @@ export class Game {
     const aero = this.plan?.aerodromoActual;
     const pisable = aero ? elSitioDe(aero, this.aircraft.wingSpan).pisable : undefined;
     const desde = llegadaDelTractor(p.raya, p.destino, pisable);
-    const r = new Remolque(p.empuje, { batalla: this.aircraft.batalla, envergadura: this.aircraft.wingSpan }, { desde });
+    const r = new Remolque(
+      p.empuje,
+      { batalla: this.aircraft.batalla, envergadura: this.aircraft.wingSpan, rueda: morroDe(this.aircraft).rueda },
+      { desde },
+    );
     this.vueltaALaRaya = r;
     this.dibujoDeLaVuelta = new DibujoDelRemolque(r.medidasDelTractor);
     this.scene.add(this.dibujoDeLaVuelta.grupo);
@@ -22115,7 +22115,8 @@ export class Game {
     if (!pared) return null;
     let desviado = ((pared.rumbo - s.heading) * 180) / Math.PI;
     desviado = ((((desviado + 180) % 360) + 360) % 360) - 180;
-    return { delMorro: pared.distancia - largoPorLaBatalla(this.aircraft.batalla) / 2, desviado };
+    const morro = morroDe(this.aircraft);
+    return { delMorro: pared.distancia - morro.rueda - morro.punta, desviado };
   }
 
   /** **El remolque, para el banco**: la fase, lo medido y dónde está cada uno. */
@@ -22228,7 +22229,12 @@ export class Game {
      * volver a arrancar con el depósito a cero y seguir volando para siempre,
      * que es la forma más rápida de enseñar que el combustible no importa.
      */
-    if (this.combustible <= 0) this.input.controls.engineOn = false;
+    if (this.combustible <= 0) {
+      // Sin combustible, un turboeje se apaga de golpe como en cualquier fallo: ver `fallanLosMotores`.
+      if (this.input.controls.engineOn && this.flight instanceof HelicopteroComoModelo)
+        this.flight.modelo.fallanLosMotores();
+      this.input.controls.engineOn = false;
+    }
     if (antes > 0 && this.combustible <= 0) {
       // En el aire es otro vuelo, y se dice de otra manera. Ver `quedarseSinMotor`.
       if (!this.flight.state.onGround) {
@@ -23249,6 +23255,8 @@ export class Game {
     this.input.controls.engineOn = false;
     this.recogidaContada = false;
     const heli = this.flight instanceof HelicopteroComoModelo ? this.flight.modelo : null;
+    // Un fallo, no una parada: la potencia se va de golpe. Ver `fallanLosMotores`.
+    heli?.fallanLosMotores();
     const conAyuda = heli?.estabilizacionAhora() === "estacionario";
     const clave: TranslationKey = conAyuda ? "ejercicio.autorrotacion.ahora" : "ejercicio.autorrotacion.ahoraTuyo";
     const dicho = this.avisoCon(clave, "palabra.autorrotacion");
@@ -23260,13 +23268,12 @@ export class Game {
   }
 
   /**
-   * **El ejercicio de la autorrotación en marcha.** Empieza en el aire en la
-   * lección de aterrizar, y lo de una final de avión que esa lección trae se
-   * calla: el consejero de la bajada, el *sink rate*, el «subí» del suelo y el
-   * «metélo» del tren. Bajar deprisa hacia el suelo sin motor es la maniobra, y
-   * subir no se puede: decirlo enseñaría lo contrario. Medido en el banco de
-   * Tukã: «terrain, pull up» con su «Subí» a cuarenta metros, y «gear up» a mil
-   * pies con el tren que hace falta para posarse.
+   * **El ejercicio de la autorrotación en marcha.** Empieza en el aire a setenta
+   * nudos y con el tren fuera, que hace falta para posarse, y el «metélo» del tren
+   * se calla: medido en el banco de Tukã, «gear up» a mil pies. Lo demás de una
+   * final de avión que la lección de aterrizar trae —el consejero de la bajada,
+   * el *sink rate*, el «subí» del suelo— ya no suena en ningún vuelo del
+   * helicóptero (ADR 0026, enmienda H19c).
    */
   private autorrotacionPracticada(): boolean {
     const p = this.practica;
@@ -23547,7 +23554,7 @@ export class Game {
         this.tier.instruments === "none"
           ? ""
           : this.rotulo(clave, "palabra.bien"),
-        plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
+        plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
       );
     });
   }
@@ -23690,7 +23697,7 @@ export class Game {
             this.tier.instruments === "none"
               ? ""
               : this.rotulo(`ejercicio.${l.id}.bien` as TranslationKey, "palabra.bien"),
-            plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
           );
         });
         return;
@@ -24386,7 +24393,7 @@ export class Game {
       this.hud.mostrarCierreDeEjercicio(
         dibujoDeCierre("vuelta"),
         this.tier.instruments === "none" ? "" : this.rotulo(clave, "palabra.bien"),
-        plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
+        plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
       );
     });
   }
@@ -24808,12 +24815,19 @@ export class Game {
      * alto. Es la misma corrección que ya se hizo en el tope de rodaje.
      */
     const porElSuelo = Math.hypot(s.velocity.x, s.velocity.z);
+    /*
+     * **Y lo que para en su sitio es la rueda de morro**, que es lo que marca el punto
+     * del puesto (#191) y lo que mira un señalero de verdad: el centro del avión se
+     * quedaba en el punto y la rueda, diez metros más allá en el JAZ 90 y veinticuatro
+     * en los dos grandes. Ver `world/rueda-de-morro.ts`.
+     */
+    const ruedaDeMorro = ruedaDeMorroEn(s.position, s.heading, morroDe(this.aircraft));
     const gesto: Gesto = hayQuienSenale
       ? this.senalero.paso(
           dt,
           {
-            x: s.position.x,
-            z: s.position.z,
+            x: ruedaDeMorro.x,
+            z: ruedaDeMorro.z,
             velocidad: porElSuelo,
             enElSuelo: s.onGround,
             motor: this.input.controls.engineOn,
@@ -25290,45 +25304,21 @@ export class Game {
     );
   }
 
+  /** Sobre la pista de ahora con su margen. Ver `sobreLaPistaConMargen`. */
   private sobreLaPista(): boolean {
-    const r = this.laPistaDeAhora();
-    const { along, across } = enEjesDePista(
-      this.flight.state.position.x,
-      this.flight.state.position.z,
-      r.x,
-      r.z,
-      r.heading,
-    );
-    return (
-      Math.abs(across) < r.width / 2 + A_UN_LADO_DEL_EJE &&
-      Math.abs(along) < r.length / 2 + ANTES_DEL_UMBRAL
-    );
+    const p = this.flight.state.position;
+    return sobreLaPistaConMargen(this.laPistaDeAhora(), p.x, p.z);
   }
 
   /**
    * Lo mismo, pero **donde se puede tocar**: del umbral de aterrizaje en
-   * adelante, sin margen por delante.
-   *
-   * Contaba desde la barra pero con los trescientos metros de margen de
-   * `sobreLaPista`, así que en la 01 de Fuerteventura el «ya podés tocar»
-   * seguía saliendo sobre los últimos trescientos metros de flechas —el único
-   * sitio de la pista donde no se puede—. Ver `sobreDondeSeToca`. El aviso de
-   * terreno sigue mirando la pista entera con su margen, que sobre asfalto no
-   * hay terreno que avisar.
+   * adelante, sin margen por delante. El aviso de terreno sigue mirando la
+   * pista entera con su margen, que sobre asfalto no hay terreno que avisar.
+   * Ver `sobreLaZonaDeToma` en `world/pistas-del-vuelo.ts`.
    */
   private sobreLaZonaDeToma(): boolean {
-    const r = this.laPistaDeAhora();
-    const { along, across } = enEjesDePista(
-      this.flight.state.position.x,
-      this.flight.state.position.z,
-      r.x,
-      r.z,
-      r.heading,
-    );
-    return (
-      Math.abs(across) < r.width / 2 + A_UN_LADO_DEL_EJE &&
-      sobreDondeSeToca(r, along, (this.flight.state.heading * 180) / Math.PI)
-    );
+    const s = this.flight.state;
+    return sobreLaZonaDeToma(this.laPistaDeAhora(), s.position.x, s.position.z, s.heading);
   }
 
   /**
@@ -25364,15 +25354,7 @@ export class Game {
    */
   private dondeSeToca(): { readonly pasado: number; readonly zona: number } | null {
     const s = this.flight.state;
-    const r = this.laPistaDeAhora();
-    const { along, across } = enEjesDePista(s.position.x, s.position.z, r.x, r.z, r.heading);
-    if (Math.abs(across) > r.width) return null;
-    const deFrente = Math.cos(s.heading - (r.heading * Math.PI) / 180) >= 0;
-    const pista = deFrente ? r : vistaDesdeLaOtraCabecera(r);
-    return {
-      pasado: (deFrente ? along : -along) + hastaElUmbralDeToma(pista),
-      zona: finDeLaZonaDeToma(paraAterrizarDe(pista)),
-    };
+    return dondeSeToca(this.laPistaDeAhora(), s.position.x, s.position.z, s.heading);
   }
 
   /**
@@ -25381,22 +25363,8 @@ export class Game {
    * `Aterrizaje`.
    */
   private enLaZonaDeLasFlechas(): boolean {
-    const r = this.laPistaDeAhora();
-    const { along, across } = enEjesDePista(
-      this.flight.state.position.x,
-      this.flight.state.position.z,
-      r.x,
-      r.z,
-      r.heading,
-    );
-    return (
-      Math.abs(across) < r.width &&
-      antesDelUmbralDeToma(
-        r,
-        along,
-        (this.flight.state.heading * 180) / Math.PI,
-      )
-    );
+    const s = this.flight.state;
+    return enLaZonaDeLasFlechas(this.laPistaDeAhora(), s.position.x, s.position.z, s.heading);
   }
 
   /**
@@ -26606,19 +26574,8 @@ export class Game {
       );
     }
 
-    // Mientras manda el plan, el tutor calla. Vuelve al alinearse, que es
-    // cuando toca despegar y el tutor sí sabe de eso.
-    const rodaje =
-      vista.fase === "estacionado" ||
-      vista.fase === "arrancando" ||
-      vista.fase === "rodando" ||
-      vista.fase === "esperando" ||
-      vista.fase === "autorizado" ||
-      vista.fase === "abandonando" ||
-      vista.fase === "a-plataforma" ||
-      vista.fase === "en-puesto" ||
-      vista.fase === "apagado";
-    this.hud.tutor.silenciar(rodaje);
+    // Mientras manda el plan, el tutor calla. Ver `MANDA_EL_PLAN`.
+    this.hud.tutor.silenciar(MANDA_EL_PLAN.has(vista.fase));
 
     // **En el peldaño de los pequeños, ni una palabra.** No leen, así que un
     // cartel de texto es un cartel en blanco que además tapa el mundo. Ahí
@@ -26796,135 +26753,46 @@ export class Game {
         this.avisar("success");
         if (conLetras) this.hud.flash(t("vuelo.pistaLibre"), 3.2);
       }
-      // Al lado del mensaje va **la tecla**, cuando la fase pide una. «Arrancá
-      // el motor» no le sirve de nada a quien no sabe cuál es el motor.
-      const tecla = this.tarjetaDelRemolque(vista)?.baliza
-        ? ` · ${nombreDeTecla(this.input.preferredKey("baliza"))}`
-        : vista.fase === "estacionado" || vista.fase === "en-puesto"
-          ? ` · ${nombreDeTecla(this.input.preferredKey("engine"))}`
-          : vista.fase === "esperando" || vista.fase === "aterrizado"
-            ? ` · ${nombreDeTecla(this.input.preferredKey("brakes"))}`
-            : "";
       /*
-       * **En la lección de aterrizar, volar no es el premio: es el camino.**
-       *
-       * La fase «en vuelo» dice «andá a dar una vuelta», que es lo que toca
-       * cuando se acaba de despegar y el mundo es tuyo. Pero quien eligió
-       * aprender a aterrizar aparece ya volando y a tres kilómetros de la
-       * cabecera: decirle que se dé una vuelta es mandarlo al sitio contrario.
-       */
-      /*
-       * **Y yendo a otro aeropuerto, tampoco se da una vuelta**: se sigue la
-       * flecha hasta allí. Ver `haciaOtroCampo`.
-       */
-      /*
-       * **Y en una pista sin torre, su guion**: sin lámpara que esperar y sin
-       * nadie detrás que meta prisa. Ver `guionSinTorre`. Con la bici, si hoy
-       * sale: es la misma condición que la saca a ella, y solo en la pista
-       * particular, que es donde hay quien pedalee. En Ayolas no es casa.
+       * **La tarjeta de la fase, con el guion del campo donde se está**: qué
+       * dice, cuánto se queda, qué tecla lleva y si lleva la letra de la
+       * calle. Ver `flight/guion-de-fases.ts`.
        */
       const aqui = this.elCampo().escenario.aerodrome;
-      const guion = sinTorre(aqui)
-        ? guionSinTorre(
-            vista.fase,
-            this.tier.sigueme && aqui?.privado === true,
-            aqui?.privado === true,
-          )
-        : esAfis(aqui)
-          ? guionAfis(vista.fase)
-          : vista;
-      /*
-       * Y remontando un trozo, la tarjeta no dice «hasta el fondo», que la
-       * vuelta no está en el fondo: está donde la dibuja la raya. Ver
-       * `remontaHastaLaCabecera` en `flight/carrera.ts`.
-       */
-      const remontaUnTrecho =
-        vista.fase === "back-taxi" && this.plan?.comoSeSale?.hastaElFinal === false;
+      const deLaFase = tarjetaDeLaFase(vista.fase, {
+        contesta: sinTorre(aqui) ? "nadie" : esAfis(aqui) ? "afis" : "torre",
+        conBici: this.tier.sigueme && aqui?.privado === true,
+        enCasa: aqui?.privado === true,
+        aterrizando: this.leccion.id === "aterrizaje",
+        haciaOtroCampo: vista.fase === "en-vuelo" && this.haciaOtroCampo(),
+        remontaUnTrecho:
+          vista.fase === "back-taxi" && this.plan?.comoSeSale?.hastaElFinal === false,
+      });
       // Y con el tractor enganchado, la suya. Ver `tarjetaDelRemolque`.
       const delRemolque = this.tarjetaDelRemolque(vista);
-      const clave = delRemolque
-        ? delRemolque.clave
-        : this.leccion.id === "aterrizaje" && vista.fase === "en-vuelo"
-          ? "vuelo.enVueloAterrizando"
-          : vista.fase === "en-vuelo" && this.haciaOtroCampo()
-            ? "vuelo.enVueloDestino"
-            : remontaUnTrecho
-              ? "vuelo.backTaxiUnTrecho"
-              : guion.clave;
+      const tecla = delRemolque?.baliza
+        ? ` · ${nombreDeTecla(this.input.preferredKey("baliza"))}`
+        : deLaFase.teclaDelRotulo
+          ? ` · ${nombreDeTecla(this.input.preferredKey(deLaFase.teclaDelRotulo))}`
+          : "";
+      const clave = delRemolque ? delRemolque.clave : deLaFase.clave;
       const frase = t(clave as never);
-
-      // **Tres caminos para lo mismo, y el dibujo es el que nunca falta.** La
-      // voz no la oye quien juega en silencio ni quien no oye; el texto no lo
-      // lee quien tiene cuatro años. El dibujo lo entiende todo el mundo.
-      //
-      // Y hay fases que **esperan a que alguien haga algo** —arrancar el
-      // motor, apagarlo, esperar la luz—. Esas no pueden desaparecer solas: la
-      // primera persona que lo jugó se quedó mirando un avión parado en Silvio
-      // Pettirossi porque la llave salió, se apagó a los seis segundos, y ya no
-      // había forma de enterarse de qué hacía falta.
-      /*
-       * **La letra de la calle solo cuando la calle importa.**
-       *
-       * Se pegaba a todos los mensajes: parado en el puesto con el motor
-       * apagado salía «arrancá el motor · R», y en el punto de espera «frená ·
-       * R». La R es un dato de por dónde se rueda, y quien está parado no rueda
-       * por ninguna parte — ahí es una letra suelta que no significa nada, y
-       * ya costó una vez enterarse de qué era.
-       *
-       * Se enseña en las fases en las que uno va por una calle y le sirve
-       * saber cuál: yendo a la pista, saliendo de ella y volviendo a casa.
-       */
-      const rodando =
-        vista.fase === "rodando" ||
-        vista.fase === "abandonando" ||
-        vista.fase === "a-plataforma";
-      const letra = rodando ? vista.letra : null;
-
-      const pendiente =
-        vista.fase === "estacionado" || vista.fase === "en-puesto";
-      const esperando = vista.fase === "esperando";
-      /*
-       * **La carrera de aterrizaje también espera a que alguien haga algo.**
-       *
-       * «Frená» y «Salí de la pista» duraban seis segundos y luego la pantalla
-       * se quedaba vacía hasta que cambiara la fase. Pero esas dos fases duran
-       * lo que tarde quien juega en frenar y en encontrar la salida —que puede
-       * ser un minuto largo—, así que el aviso desaparecía justo cuando hacía
-       * falta: «en pista, ya aterrizado, nadie me indica por dónde abandonar la
-       * pista para ir al hangar».
-       *
-       * Es el mismo fallo que ya tuvo la llave de contacto, y se arregla igual:
-       * lo que está pendiente de que alguien haga algo **no puede apagarse
-       * solo**. La diferencia con `pendiente` es que aquí no hay tecla que
-       * pulsar ni tarjeta que tocar; solo hay que seguir viéndolo.
-       */
-      const seQueda = SE_QUEDAN.has(vista.fase);
+      const letra = deLaFase.conLetra ? vista.letra : null;
       if (!callada) this.hud.senal.mostrar(
-        comoDibujo(delRemolque?.icono ?? guion.icono),
+        comoDibujo(delRemolque?.icono ?? deLaFase.icono),
         conLetras ? frase : "",
         letra,
         {
-          segundos:
-            pendiente || esperando || seQueda
-              ? Infinity
-              : vista.fase === "apagado"
-                ? 9
-                : 6,
-          // La tecla, dibujada. Sin esto, en el peldaño sin palabras no había
-          // ninguna manera de saber que el contacto es la I.
+          segundos: deLaFase.segundos,
           tecla: delRemolque?.baliza
             ? nombreDeTecla(this.input.preferredKey("baliza"))
-            : pendiente
-            ? nombreDeTecla(this.input.preferredKey("engine"))
-            : esperando
-              ? nombreDeTecla(this.input.preferredKey("brakes"))
+            : deLaFase.tecla
+              ? nombreDeTecla(this.input.preferredKey(deLaFase.tecla))
               : null,
-          // Y la tarjeta **hace** lo que dice al tocarla. En una tablet no había
-          // ninguna forma de arrancar el motor: los mandos táctiles son palanca,
-          // timón, gas y freno, y el contacto no estaba por ningún lado.
+          // Y la tarjeta **hace** lo que dice al tocarla. Ver `ESPERAN_LA_LLAVE`.
           accion: delRemolque?.baliza
             ? () => this.moverLaBaliza()
-            : pendiente
+            : deLaFase.tocarEsLaLlave
               ? () => this.toggleEngine()
               : null,
         },
@@ -31227,8 +31095,8 @@ export class Game {
    * son el terreno, la pista ocupada y la orden de irse al aire.
    */
   private cantarLaActitud(): void {
-    // Bajar deprisa sin motor es la maniobra, no un aviso: ver `autorrotacionPracticada`.
-    if (this.autorrotacionPracticada()) return;
+    // Los dos son envolventes del GPWS de un avión: el helicóptero no, como el de terreno (ADR 0026, enmienda H19c).
+    if (this.aircraft.helicoptero) return;
     const s = this.flight.state;
     const ahora = avisoDeActitud(
       {
@@ -31741,8 +31609,8 @@ export class Game {
    * consejero con la lectura de este fotograma. Ver `mirarLaSenda`.
    */
   private aconsejarLaBajada(): void {
-    // Los consejos de una final de avión, no en la autorrotación: ver `autorrotacionPracticada`.
-    if (this.autorrotacionPracticada()) return;
+    // Los consejos de una final de avión, a una pista y por su senda: el helicóptero viene a posarse.
+    if (this.aircraft.helicoptero) return;
     const l = this.lecturaDelConsejo;
     // Un suceso, una voz: si la cadena acaba de decir un paso, al siguiente.
     if (!l || this.pasoEnEsteFotograma) return;
@@ -33595,11 +33463,18 @@ export class Game {
     // Y en la autorrotación el tren se queda fuera, que se va a posar: ver `autorrotacionPracticada`.
     if (this.autorrotacionPracticada()) return;
     /*
-     * Y en las lecciones del helicóptero, tampoco: son estacionario y subir y
-     * bajar encima del helipuerto, donde el tren va fuera, y el «metélo» salía
-     * en cada subida de la del efecto suelo. Ver `practicarElRotor`.
+     * **Y el helicóptero lo mete volando hacia delante**, no al subir en vertical:
+     * el Super Puma lo sube en la lista de después de despegar, ya en la subida
+     * (ver `meteElTrenA` en su ficha), y en estacionario o subiendo encima del
+     * helipuerto el tren va fuera, que es donde se va a posar. Salía en cada
+     * subida del vuelo libre y de las lecciones. Por debajo de su velocidad de
+     * aproximación, la de llegar a un helipuerto, no es la subida de una salida.
      */
-    if (this.aircraft.helicoptero && this.leccionDelRotor) return;
+    if (
+      this.aircraft.helicoptero &&
+      indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) < this.aircraft.approachSpeed
+    )
+      return;
 
     /*
      * Y metélo, cuando ya no hace falta: en el aire, subiendo y por encima de
@@ -36291,9 +36166,9 @@ export class Game {
       escenario: this.scenario.id,
       leccion: this.leccion.id,
       tramo: this.tier.id,
-      segundos: Math.round(this.duracion),
+      segundos: Math.round(this.libreta.duracion),
       galones: [],
-      traza: this.traza,
+      traza: this.libreta.traza,
       ...this.loDeAntes(),
     });
   }

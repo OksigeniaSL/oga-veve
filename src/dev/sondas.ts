@@ -2795,7 +2795,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Termina el vuelo ahora mismo, para poder mirar su pantalla. */
     acabar: () => juego.terminarElVuelo(),
     /** Y la traza de por dónde ha ido, en coordenadas del fichero. */
-    traza: () => juego.traza,
+    traza: () => juego.libreta.traza,
     /** Los cinco vértices del circuito de tráfico, si lo hay. */
     /**
      * Los vértices del circuito de tráfico de la cabecera en uso.

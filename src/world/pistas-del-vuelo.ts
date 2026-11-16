@@ -18,7 +18,15 @@
  * esto aterrizando.
  */
 
-import { enEjesDePista } from "./rumbo";
+import { finDeLaZonaDeToma } from "../flight/toma-larga";
+import { delante, enEjesDePista } from "./rumbo";
+import {
+  antesDelUmbralDeToma,
+  hastaElUmbralDeToma,
+  paraAterrizarDe,
+  sobreDondeSeToca,
+  vistaDesdeLaOtraCabecera,
+} from "./umbral-desplazado";
 
 /** Una pista en coordenadas del mundo en el que se está volando. */
 export interface Pista {
@@ -83,4 +91,117 @@ export function laMasCerca(
     }
   }
   return mejor;
+}
+
+// ── Dónde está el avión en la pista de ahora ────────────────────────────
+//
+// Cinco preguntas que `game.ts` hacía sobre la pista del campo de ahora, cada
+// una con su `enEjesDePista` y su cuenta a mano dentro de un método que solo
+// leía la posición y el rumbo. Son rectángulos y un punto, como lo de arriba,
+// y se prueban igual: sin volar. Repaso del 12-09 de #30, corte 2. En todas,
+// `x` y `z` son del mundo y `rumbo` es el del avión, en radianes, como lo da
+// `FlightState.heading`.
+
+/**
+ * Cuánto antes de la pista se deja de avisar del terreno, m.
+ *
+ * Trescientos: el umbral se cruza a quince metros, y un avión que viene bien a
+ * esa altura está, visto por el aviso de terreno, bajísimo. Esto es **solo**
+ * para callar ese aviso; dónde se dice «ya podés tocar» no lleva margen. Ver
+ * `sobreDondeSeToca`.
+ */
+export const ANTES_DEL_UMBRAL = 300;
+
+/**
+ * Cuánto se perdona de desvío lateral para seguir «sobre la pista», m.
+ *
+ * Cuarenta a cada lado del asfalto: quien cruza el umbral un poco descentrado
+ * sigue aterrizando, no sobrevolando el campo.
+ */
+export const A_UN_LADO_DEL_EJE = 40;
+
+/** El rumbo del avión en grados, que es como lo quieren las cuentas de la pista. */
+function enGrados(rumbo: number): number {
+  return (rumbo * 180) / Math.PI;
+}
+
+/**
+ * Cuántos metros de pista quedan por delante, o infinito si no se está en
+ * ella.
+ *
+ * Se mide **hacia donde apunta el avión**, no en línea recta al final: si
+ * uno rueda hacia atrás por la pista, lo que queda es lo que tiene delante.
+ * Y solo cuenta si está dentro del ancho, porque fuera de la pista no hay
+ * pista que se acabe.
+ */
+export function pistaPorDelante(r: Pista, x: number, z: number, rumbo: number): number {
+  const { along, across } = enEjesDePista(x, z, r.x, r.z, r.heading);
+  if (Math.abs(across) > r.width) return Infinity;
+  if (Math.abs(along) > r.length / 2) return Infinity;
+  // Hacia dónde va el avión respecto al eje de la pista.
+  const [fx, fz] = delante(enGrados(rumbo));
+  const [rx, rz] = delante(r.heading);
+  const hacia = fx * rx + fz * rz;
+  return hacia >= 0 ? r.length / 2 - along : r.length / 2 + along;
+}
+
+/**
+ * Si se está sobre la pista **con su margen**: cuarenta metros a cada lado
+ * del asfalto y trescientos antes de cada punta. Es lo que mira el aviso de
+ * terreno para callarse, que sobre asfalto no hay terreno que avisar.
+ */
+export function sobreLaPistaConMargen(r: Pista, x: number, z: number): boolean {
+  const { along, across } = enEjesDePista(x, z, r.x, r.z, r.heading);
+  return (
+    Math.abs(across) < r.width / 2 + A_UN_LADO_DEL_EJE &&
+    Math.abs(along) < r.length / 2 + ANTES_DEL_UMBRAL
+  );
+}
+
+/**
+ * Lo mismo, pero **donde se puede tocar**: del umbral de aterrizaje en
+ * adelante, sin margen por delante.
+ *
+ * Contaba desde la barra pero con los trescientos metros de margen de
+ * `sobreLaPistaConMargen`, así que en la 01 de Fuerteventura el «ya podés
+ * tocar» seguía saliendo sobre los últimos trescientos metros de flechas —el
+ * único sitio de la pista donde no se puede—. Ver `sobreDondeSeToca`.
+ */
+export function sobreLaZonaDeToma(r: Pista, x: number, z: number, rumbo: number): boolean {
+  const { along, across } = enEjesDePista(x, z, r.x, r.z, r.heading);
+  return (
+    Math.abs(across) < r.width / 2 + A_UN_LADO_DEL_EJE &&
+    sobreDondeSeToca(r, along, enGrados(rumbo))
+  );
+}
+
+/**
+ * **Dónde está el avión en la pista**, por la cabecera por la que se llega:
+ * lo pasado de su umbral de aterrizaje y dónde acaba su zona de toma, m.
+ * `null` fuera de la pista. Es lo que hace larga una toma: ver `Aterrizaje`.
+ */
+export function dondeSeToca(
+  r: Pista,
+  x: number,
+  z: number,
+  rumbo: number,
+): { readonly pasado: number; readonly zona: number } | null {
+  const { along, across } = enEjesDePista(x, z, r.x, r.z, r.heading);
+  if (Math.abs(across) > r.width) return null;
+  const deFrente = Math.cos(rumbo - (r.heading * Math.PI) / 180) >= 0;
+  const pista = deFrente ? r : vistaDesdeLaOtraCabecera(r);
+  return {
+    pasado: (deFrente ? along : -along) + hastaElUmbralDeToma(pista),
+    zona: finDeLaZonaDeToma(paraAterrizarDe(pista)),
+  };
+}
+
+/**
+ * Si las ruedas están en la pista **antes de su umbral de aterrizaje**, en
+ * la zona de las flechas. Es lo que convierte una toma en «corta». Ver
+ * `Aterrizaje`.
+ */
+export function enLaZonaDeLasFlechas(r: Pista, x: number, z: number, rumbo: number): boolean {
+  const { along, across } = enEjesDePista(x, z, r.x, r.z, r.heading);
+  return Math.abs(across) < r.width && antesDelUmbralDeToma(r, along, enGrados(rumbo));
 }

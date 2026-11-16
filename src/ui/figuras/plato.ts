@@ -26,7 +26,7 @@
  *   plato, que se inclina un poco de lado respecto al cíclico.
  *
  * Las cifras son las del modelo de vuelo, `flight/super-puma.ts`: el paso
- * colectivo de 9,5° a 26° en la raíz, el cíclico de ±10° adelante y atrás y de
+ * colectivo de 8,5° a 26° en la raíz, el cíclico de ±10° adelante y atrás y de
  * ±7° a los lados, la torsión de −8° y el giro en el sentido de las agujas del
  * reloj visto desde arriba, que es por qué con potencia el morro se va a la
  * izquierda y se pisa el pedal derecho. **El paso que se lee es el del 75 % del

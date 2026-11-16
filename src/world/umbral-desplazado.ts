@@ -183,7 +183,7 @@ export function antesDelUmbralDeToma(
  *
  * **Sin margen por delante del umbral**, y eso es todo el arreglo. Llevaba
  * trescientos metros, los mismos con los que el aviso de terreno se calla
- * llegando a la pista —ver `ANTES_DEL_UMBRAL` en `game.ts`—, y son dos
+ * llegando a la pista —ver `ANTES_DEL_UMBRAL` en `pistas-del-vuelo.ts`—, y son dos
  * preguntas distintas: callar el aviso antes del umbral es no asustar a quien
  * cruza la valla a quince metros; decir «tocá» antes del umbral es mandar
  * tocar donde no se puede. Con el desplazado se veía: en la 01 de

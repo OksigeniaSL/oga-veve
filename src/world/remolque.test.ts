@@ -9,12 +9,14 @@ import type { Punto } from "./aerodrome";
 import {
   ACELERA_EMPUJANDO,
   DIRECCION_MAXIMA,
+  edificiosDePasarela,
   esPuestoDeContacto,
   largoPorLaBatalla,
   paredMasCercana,
   Remolque,
   rumboAlEdificio,
   rumboEnElPuesto,
+  rumboEntre,
   saleConRemolque,
   trayectoriaDelEmpuje,
   VA_EMPUJANDO,
@@ -28,6 +30,7 @@ import { PlanDeVuelo } from "./plan-de-vuelo";
 import { conSuAerodromo, MADRID_BARAJAS, SALIDA_DE_BARAJAS, TENERIFE_NORTE } from "./scenarios";
 import { AIRCRAFT } from "../flight/aircraft";
 import { esDeLinea } from "../flight/velocidades-en-tierra";
+import { conLaRuedaEn, morroDe } from "./rueda-de-morro";
 
 const GRADO = Math.PI / 180;
 /** Un 787-9 y un E-170: batalla y envergadura de su ficha. */
@@ -56,19 +59,29 @@ describe("qué puesto es de remolque", () => {
     expect(rumboAlEdificio(0, 0, TERMINAL)).toBeCloseTo(0, 6);
   });
 
-  it("de contacto, si el morro queda pegado al edificio sin meterse en él", () => {
-    const largo = largoPorLaBatalla(ANCHO.batalla);
-    // A cuarenta metros de la fachada, el morro de un 787 quedaría a ocho: contacto.
-    expect(esPuestoDeContacto(0, 0, TERMINAL, largo)).toBe(true);
-    // Pegado del todo, el morro se metería: no es para este avión.
-    expect(esPuestoDeContacto(0, -20, TERMINAL, largo)).toBe(false);
+  /*
+   * El punto del puesto es donde para la rueda de morro (#191): la pasarela se cuenta
+   * desde la puerta y el morro, desde su punta. Del 787, la puerta va a 0,8 m por detrás
+   * de la rueda y la punta a 5,5 por delante. Ver `rueda-de-morro.ts`.
+   */
+  it("de contacto, si la puerta queda al alcance de la pasarela y el morro no se mete en el edificio", () => {
+    const morro = morroDe(AIRCRAFT.find((a) => a.id === "jaz-110")!);
+    // A cuarenta metros de la fachada, la puerta de un 787 queda a 40,8: contacto.
+    expect(esPuestoDeContacto(0, 0, TERMINAL, morro)).toBe(true);
+    // Y a veinte, también: con la rueda en el punto, el morro queda a catorce y medio.
+    expect(esPuestoDeContacto(0, -20, TERMINAL, morro)).toBe(true);
+    // A cuatro, el morro se metería: no es para este avión.
+    expect(esPuestoDeContacto(0, -36, TERMINAL, morro)).toBe(false);
+    // A setenta y ocho, la puerta queda a 78,8: todavía la alcanza. A ochenta y dos, ya no.
+    expect(esPuestoDeContacto(0, 38, TERMINAL, morro)).toBe(true);
+    expect(esPuestoDeContacto(0, 42, TERMINAL, morro)).toBe(false);
     // A ciento cincuenta, es un puesto de plataforma.
-    expect(esPuestoDeContacto(0, 110, TERMINAL, largo)).toBe(false);
+    expect(esPuestoDeContacto(0, 110, TERMINAL, morro)).toBe(false);
   });
 
   it("y una avioneta sale de frente aunque aparque al lado de un hangar", () => {
-    expect(saleConRemolque(false, 0, 0, TERMINAL, 8)).toBe(false);
-    expect(saleConRemolque(true, 0, 0, TERMINAL, largoPorLaBatalla(REGIONAL.batalla))).toBe(true);
+    expect(saleConRemolque(false, 0, 0, TERMINAL, morroDe(AIRCRAFT.find((a) => a.id === "jaz-20")!))).toBe(false);
+    expect(saleConRemolque(true, 0, 0, TERMINAL, morroDe(AIRCRAFT.find((a) => a.id === "jaz-90")!))).toBe(true);
   });
 });
 
@@ -131,6 +144,55 @@ describe("el empuje", () => {
     const oeste = trayectoriaDelEmpuje(EN_EL_PUESTO, [{ x: 0, z: 0 }, { x: 0, z: 50 }, { x: -200, z: 50 }], REGIONAL.batalla)!;
     expect(Math.abs(diferencia(oeste.poses.at(-1)!.rumbo, -90 * GRADO))).toBeLessThan(1 * GRADO);
     expect(oeste.poses.at(-1)!.x).toBeGreaterThan(0);
+  });
+
+  /*
+   * **Como el 23 de Los Rodeos** (#191): la raya sale de espaldas y va recta por la
+   * plataforma noventa y seis metros hasta la calle, que tuerce hacia el sureste. Ver
+   * `RECTA_DE_LA_PLATAFORMA` en `remolque.ts`.
+   */
+  const POR_LA_PLATAFORMA: PuntoXZ[] = [
+    { x: 0, z: 0 },
+    { x: 0, z: 24 },
+    { x: 0, z: 48 },
+    { x: 0, z: 72 },
+    { x: 0, z: 96 },
+    { x: 60, z: 150 },
+    { x: 120, z: 204 },
+  ];
+
+  it("si la raya va recta de espaldas por la plataforma, el tractor lleva el avión hasta la calle y lo deja mirando por ella", () => {
+    const e = trayectoriaDelEmpuje(EN_EL_PUESTO, POR_LA_PLATAFORMA, REGIONAL.batalla)!;
+    const fin = e.poses.at(-1)!;
+    // La calle es donde acaba la recta, y no un giro de noventa grados a los treinta metros.
+    expect(e.cruce).toEqual({ x: 0, z: 96 });
+    expect(e.largo).toBeGreaterThan(80);
+    // Hacia donde va la calle, con más de un cuarto de vuelta y sin llegar a media.
+    const calle = rumboEntre({ x: 0, z: 96 }, { x: 60, z: 150 });
+    expect(Math.abs(diferencia(fin.rumbo, calle))).toBeLessThan(1 * GRADO);
+    expect(Math.abs(e.giro)).toBeGreaterThan(120 * GRADO);
+    expect(Math.abs(e.giro)).toBeLessThanOrEqual(150 * GRADO);
+    // Con el cruce por delante del morro: al soltarlo, rueda recto hasta él.
+    expect(Math.abs(diferencia(fin.rumbo, rumboEntre(fin, e.cruce)))).toBeLessThan(1 * GRADO);
+    expect(vaDeCulo(e.poses)).toBeLessThan(-0.99);
+  });
+
+  it("y sin la plataforma, como el tráfico, la de siempre: noventa grados a dejar el puesto libre", () => {
+    const e = trayectoriaDelEmpuje(EN_EL_PUESTO, POR_LA_PLATAFORMA, REGIONAL.batalla, { porLaPlataforma: false })!;
+    expect(Math.abs(e.giro)).toBeCloseTo(90 * GRADO, 3);
+    expect(e.largo).toBeLessThan(50);
+  });
+
+  it("y media vuelta no se empuja nunca: noventa grados, y lo demás lo rueda el avión", () => {
+    // Sale de espaldas y en diagonal, y la calle sigue recta hacia atrás: pediría ciento ochenta.
+    const raya = [
+      { x: 0, z: 0 },
+      { x: -14.14, z: 14.14 },
+      { x: -28.28, z: 28.28 },
+      { x: -28.28, z: 228.28 },
+    ];
+    const e = trayectoriaDelEmpuje(EN_EL_PUESTO, raya, REGIONAL.batalla)!;
+    expect(Math.abs(e.giro)).toBeCloseTo(90 * GRADO, 3);
   });
 });
 
@@ -228,10 +290,12 @@ describe("en los puestos de verdad", () => {
     expect(plan.reiniciar()).toBe(true);
     const [x, z] = plan.arranque()!;
     const largo = largoPorLaBatalla(avion.batalla);
-    expect(saleConRemolque(esDeLinea(avion), x, z, aero.buildings ?? [], largo)).toBe(true);
+    expect(saleConRemolque(esDeLinea(avion), x, z, aero.buildings ?? [], morroDe(avion))).toBe(true);
     const rumbo = rumboAlEdificio(x, z, aero.buildings ?? [])!;
     const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
-    const e = trayectoriaDelEmpuje({ x, z, rumbo }, raya, avion.batalla)!;
+    // Con la rueda de morro en el punto del puesto, como lo pone el juego.
+    const c = conLaRuedaEn({ x, z }, rumbo, morroDe(avion));
+    const e = trayectoriaDelEmpuje({ x: c.x, z: c.z, rumbo }, raya, avion.batalla)!;
     expect(e).not.toBeNull();
     expect(vaDeCulo(e.poses)).toBeLessThan(-0.95);
     // Acaba mirando hacia donde va la raya desde el cruce, y cerca de ella.
@@ -254,20 +318,21 @@ describe("en los puestos de verdad", () => {
     expect(plan.reiniciar()).toBe(true);
     const [x, z] = plan.arranque()!;
     const edificios = aero.buildings ?? [];
-    expect(saleConRemolque(esDeLinea(avion), x, z, edificios, largoPorLaBatalla(avion.batalla))).toBe(true);
+    expect(saleConRemolque(esDeLinea(avion), x, z, edificios, morroDe(avion))).toBe(true);
     const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
     const rumbo = rumboEnElPuesto(x, z, edificios, raya)!;
-    const e = trayectoriaDelEmpuje({ x, z, rumbo }, raya, avion.batalla)!;
+    const c = conLaRuedaEn({ x, z }, rumbo, morroDe(avion));
+    const e = trayectoriaDelEmpuje({ x: c.x, z: c.z, rumbo }, raya, avion.batalla)!;
     expect(vaDeCulo(e.poses)).toBeLessThan(-0.95);
     // La pared a la que miraba, cada vez más lejos: la terminal se aleja hacia delante.
     const pared = paredMasCercana(x, z, edificios)!;
     const h = vector(pared.rumbo);
     const enLaPared = { x: x + h.x * pared.distancia, z: z + h.z * pared.distancia };
     const fin = e.poses.at(-1)!;
-    // En Los Rodeos la calle está a veintiséis metros del puesto: se aleja poco, pero se aleja.
+    // En Los Rodeos la calle está a noventa y seis metros del puesto, por la plataforma: se aleja.
     expect(Math.hypot(fin.x - enLaPared.x, fin.z - enLaPared.z)).toBeGreaterThan(pared.distancia + 5);
     // Y del remolque entero, nadie se mete en el fuselaje: el tractor, suelto, ni la persona.
-    const r = new Remolque(e, { batalla: avion.batalla, envergadura: avion.wingSpan });
+    const r = new Remolque(e, { batalla: avion.batalla, envergadura: avion.wingSpan, rueda: morroDe(avion).rueda });
     r.empezar();
     let tractor = Infinity;
     let persona = Infinity;
@@ -284,6 +349,39 @@ describe("en los puestos de verdad", () => {
     expect(r.libre).toBe(true);
     expect(tractor).toBeGreaterThan(1);
     expect(persona).toBeGreaterThan(2);
+  });
+
+  /*
+   * **Y lo deja con el morro hacia la Z**, que es la calle por la que rueda: al soltarlo
+   * va recto hasta ella. Con los puestos de #191 sale del 23, en la esquina oeste de la
+   * terminal, con noventa y seis metros rectos de plataforma hasta la Z; el empuje giraba
+   * noventa grados a los veintinueve metros y al soltarlo el avión giraba 78° en sus
+   * primeros treinta metros. Lo mide también el banco de `verificar-inicio-3.mjs`.
+   */
+  it("y de Los Rodeos, con pasaje, el JAZ 90 acaba con el morro hacia la calle: al soltarlo rueda casi recto", async () => {
+    const s = await conSuAerodromo(TENERIFE_NORTE);
+    const aero = s.aerodrome!;
+    const avion = AIRCRAFT.find((a) => a.id === "jaz-90")!;
+    const plan = new PlanDeVuelo(aero, s.runway, () => 600, avion);
+    plan.deContacto = true;
+    expect(plan.reiniciar()).toBe(true);
+    const [x, z] = plan.arranque()!;
+    const edificios = edificiosDePasarela(aero);
+    const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
+    const rumbo = rumboEnElPuesto(x, z, edificios, raya)!;
+    const c = conLaRuedaEn({ x, z }, rumbo, morroDe(avion));
+    const e = trayectoriaDelEmpuje({ x: c.x, z: c.z, rumbo }, raya, avion.batalla)!;
+    const fin = e.poses.at(-1)!;
+    // El cruce con la calle, por delante del morro y en su eje.
+    const hastaElCruce = Math.hypot(e.cruce.x - fin.x, e.cruce.z - fin.z);
+    expect(hastaElCruce).toBeGreaterThan(5);
+    expect(Math.abs(diferencia(fin.rumbo, rumboEntre(fin, e.cruce)))).toBeLessThan(5 * GRADO);
+    // Y lo que sigue la raya desde el cruce, poco torcido respecto al morro.
+    const k = raya.findIndex((p) => p.x === e.cruce.x && p.z === e.cruce.z);
+    expect(k).toBeGreaterThan(0);
+    let j = k;
+    while (j < raya.length - 1 && Math.hypot(raya[j]!.x - e.cruce.x, raya[j]!.z - e.cruce.z) < 30) j++;
+    expect(Math.abs(diferencia(fin.rumbo, rumboEntre(e.cruce, raya[j]!)))).toBeLessThan(20 * GRADO);
   });
 });
 

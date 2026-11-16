@@ -198,6 +198,12 @@ export interface FichaDeLinea {
   readonly reversa: boolean;
   /** Si mete el tren. */
   readonly trenQueSeMete: boolean;
+  /**
+   * **Lo que va la rueda de morro por delante del centro del avión**, m: el punto
+   * del puesto es donde para ella (#191), y la raya se sigue con el centro. Sin
+   * ella, el centro para en el punto. Ver `world/rueda-de-morro.ts`.
+   */
+  readonly ruedaDeMorro?: number;
 }
 
 /**
@@ -757,7 +763,7 @@ export class VueloDeLinea {
         return;
       case "al-puesto": {
         const r = this.raya.paso(l.x, l.z, MIRA_RODANDO);
-        const llegado = (r ? r.queda < 3 : false) || l.fase === "en-puesto";
+        const llegado = (r ? r.queda - this.hastaLaRueda < 3 : false) || l.fase === "en-puesto";
         if (llegado && l.porElSuelo < PARADO) this.pasarA("aparcado");
         return;
       }
@@ -838,8 +844,9 @@ export class VueloDeLinea {
     const falta = diferencia(l.rumbo, quiero);
     const enCurva = Math.min(1, r.giro / (60 * GRADO));
     const crucero = RODAJE_EN_RECTA - (RODAJE_EN_RECTA - RODAJE_EN_CURVA) * enCurva;
-    // Y para parar al final de la raya sin frenazo: v² = 2·a·d.
-    const paraParar = Math.sqrt(2 * FRENA_RODANDO * Math.max(0, r.queda - 2));
+    // Y para parar al final de la raya sin frenazo: v² = 2·a·d. En el puesto, con la rueda de morro en él.
+    const queda = r.queda - this.hastaLaRueda;
+    const paraParar = Math.sqrt(2 * FRENA_RODANDO * Math.max(0, queda - 2));
     // Mientras gira mucho, despacio: con el morro lejos de la raya no se acelera.
     const torcido = Math.abs(falta) > 35 * GRADO ? RODAJE_EN_CURVA : Infinity;
     const v = Math.min(crucero, paraParar, torcido);
@@ -852,7 +859,7 @@ export class VueloDeLinea {
       alabeo: null,
       volante: acotar(falta * 2.5, 1),
       pedal: acotar(falta * 1.5, 1),
-      freno: r.queda < 1.5 || v < 0.3 ? 1 : sobra > 1 ? Math.min(1, sobra * 0.4) : 0,
+      freno: queda < 1.5 || v < 0.3 ? 1 : sobra > 1 ? Math.min(1, sobra * 0.4) : 0,
       flaps,
       tren: true,
       armados: false,
@@ -870,6 +877,14 @@ export class VueloDeLinea {
       Math.abs(l.pista.lado) < 4 &&
       this.quedaDeRaya(l) <= RAYA_QUE_SOBRA
     );
+  }
+
+  /**
+   * **Lo que se deja de raya al final**, m: rodando al puesto, lo que va la rueda de
+   * morro por delante del centro, que es la que para en su punto. Ver `FichaDeLinea.ruedaDeMorro`.
+   */
+  private get hastaLaRueda(): number {
+    return this.tramo === "al-puesto" ? (this.ficha.ruedaDeMorro ?? 0) : 0;
   }
 
   /** Lo que queda de la raya de ahora, m: cero si no hay. */

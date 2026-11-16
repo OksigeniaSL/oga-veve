@@ -7,7 +7,17 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { laMasCerca, sobreAlguna, type Pista } from "./pistas-del-vuelo";
+import { finDeLaZonaDeToma } from "../flight/toma-larga";
+import {
+  dondeSeToca,
+  enLaZonaDeLasFlechas,
+  laMasCerca,
+  pistaPorDelante,
+  sobreAlguna,
+  sobreLaPistaConMargen,
+  sobreLaZonaDeToma,
+  type Pista,
+} from "./pistas-del-vuelo";
 
 /** La de casa, en el origen, orientada al norte. */
 const CASA: Pista = { x: 0, z: 0, heading: 0, length: 3000, width: 45 };
@@ -79,5 +89,82 @@ describe("y en cuál estoy aterrizando", () => {
 
   it("y sin pistas, nada", () => {
     expect(laMasCerca([], 0, 0)).toBeNull();
+  });
+});
+
+/**
+ * Una pista de dos kilómetros al norte, con el umbral de la cabecera en uso
+ * trescientos metros pista adentro: el norte es la Z negativa, así que se
+ * llega desde Z positiva con rumbo cero.
+ */
+const AL_NORTE: Pista = { x: 0, z: 0, heading: 0, length: 2000, width: 45, desplazado: 300 };
+const NORTE = 0;
+const SUR = Math.PI;
+
+describe("pistaPorDelante", () => {
+  it("cuenta lo que queda hacia donde apunta el avión", () => {
+    expect(pistaPorDelante(AL_NORTE, 0, 0, NORTE)).toBeCloseTo(1000);
+    expect(pistaPorDelante(AL_NORTE, 0, -500, NORTE)).toBeCloseTo(500);
+    // Rodando hacia atrás, lo que queda es lo de detrás.
+    expect(pistaPorDelante(AL_NORTE, 0, -500, SUR)).toBeCloseTo(1500);
+  });
+
+  it("fuera del asfalto no hay pista que se acabe", () => {
+    expect(pistaPorDelante(AL_NORTE, 50, 0, NORTE)).toBe(Infinity);
+    expect(pistaPorDelante(AL_NORTE, 0, -1100, NORTE)).toBe(Infinity);
+  });
+});
+
+describe("sobreLaPistaConMargen", () => {
+  it("lleva trescientos metros antes de cada punta y cuarenta a cada lado", () => {
+    expect(sobreLaPistaConMargen(AL_NORTE, 0, 1250)).toBe(true);
+    expect(sobreLaPistaConMargen(AL_NORTE, 0, -1250)).toBe(true);
+    expect(sobreLaPistaConMargen(AL_NORTE, 0, 1350)).toBe(false);
+    expect(sobreLaPistaConMargen(AL_NORTE, 60, 0)).toBe(true);
+    expect(sobreLaPistaConMargen(AL_NORTE, 65, 0)).toBe(false);
+  });
+});
+
+describe("sobreLaZonaDeToma", () => {
+  it("empieza en el umbral de aterrizaje, sin margen por delante", () => {
+    // El umbral está a setecientos metros del centro, hacia el sur.
+    expect(sobreLaZonaDeToma(AL_NORTE, 0, 690, NORTE)).toBe(true);
+    expect(sobreLaZonaDeToma(AL_NORTE, 0, 710, NORTE)).toBe(false);
+    expect(sobreLaZonaDeToma(AL_NORTE, 0, -1100, NORTE)).toBe(false);
+    expect(sobreLaZonaDeToma(AL_NORTE, 70, 0, NORTE)).toBe(false);
+  });
+
+  it("por la otra cabecera vale su umbral, que aquí está en la punta", () => {
+    expect(sobreLaZonaDeToma(AL_NORTE, 0, -990, SUR)).toBe(true);
+  });
+});
+
+describe("enLaZonaDeLasFlechas", () => {
+  it("es el trozo de pista antes del umbral de la cabecera por la que se llega", () => {
+    expect(enLaZonaDeLasFlechas(AL_NORTE, 0, 900, NORTE)).toBe(true);
+    expect(enLaZonaDeLasFlechas(AL_NORTE, 0, 600, NORTE)).toBe(false);
+    // Llegando por la otra punta no hay flechas: su umbral no está desplazado.
+    expect(enLaZonaDeLasFlechas(AL_NORTE, 0, -900, SUR)).toBe(false);
+    // Y fuera del ancho, no se está en ninguna zona de la pista.
+    expect(enLaZonaDeLasFlechas(AL_NORTE, 50, 900, NORTE)).toBe(false);
+  });
+});
+
+describe("dondeSeToca", () => {
+  it("mide lo pasado desde el umbral de aterrizaje de la cabecera por la que se llega", () => {
+    const d = dondeSeToca(AL_NORTE, 0, 600, NORTE);
+    expect(d?.pasado).toBeCloseTo(100);
+    // Mil setecientos metros para aterrizar, del umbral a la punta.
+    expect(d?.zona).toBeCloseTo(finDeLaZonaDeToma(1700));
+  });
+
+  it("por la otra cabecera, con la pista vista desde ella", () => {
+    const d = dondeSeToca(AL_NORTE, 0, -600, SUR);
+    expect(d?.pasado).toBeCloseTo(400);
+    expect(d?.zona).toBeCloseTo(finDeLaZonaDeToma(2000));
+  });
+
+  it("fuera del ancho de la pista no hay toma que medir", () => {
+    expect(dondeSeToca(AL_NORTE, 50, 0, NORTE)).toBeNull();
   });
 });

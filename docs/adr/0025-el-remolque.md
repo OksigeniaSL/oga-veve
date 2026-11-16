@@ -25,7 +25,9 @@ piezas comunes ya hechas.
   si, con el avión puesto en él, el morro queda pegado a un edificio sin meterse: entre cinco y cincuenta metros de la
   pared más cercana —lo que alcanza una pasarela desde su rótula, más el trozo de plataforma hasta la fachada—. El avión
   se pone con su centro en el punto del puesto, así que el morro queda a medio largo; el largo sale de la batalla,
-  multiplicada por dos y medio, que es lo que dan los de verdad con un par de metros de error. Una avioneta en la
+  multiplicada por dos y medio, que es lo que dan los de verdad con un par de metros de error. (Desde el 16-11-2026,
+  con la rueda de morro en el punto y desde la puerta, hasta setenta y nueve metros: ver «La rueda de morro en el punto del
+  puesto».) Una avioneta en la
   plataforma de aviación general sigue saliendo de frente: cada aparato hace lo que hace ese aparato.
 - **Y solo en un campo que embarca por pasarela** (`edificiosDePasarela`, `Aerodrome.pasarelas`): ver «Los campos con
   pasarelas», más abajo. La regla de los cincuenta metros sola tomaba por pasarela cualquier edificio junto a una
@@ -44,15 +46,17 @@ piezas comunes ya hechas.
 es lo que hace un avión empujado, que no derrapa.
 
 - **La calle** es donde la raya tuerce más de cuarenta grados respecto a la salida del puesto, buscando hasta un largo
-  de avión y un tercio, y nunca menos de cuarenta metros. El morro acaba mirando hacia donde sigue la raya desde ahí, y
-  el avión se queda en el eje de la calle, por detrás del cruce: luego rueda hacia delante y pasa por él.
+  de avión y un tercio, y nunca menos de cuarenta metros; o, si la raya sale de espaldas y sigue recta por la
+  plataforma, hasta donde acaba esa recta, con un tope de ciento veinte metros (ver «El empuje hasta la calle», más
+  abajo). El morro acaba mirando hacia donde sigue la raya desde ahí, y el avión se queda en el eje de la calle, por
+  detrás del cruce: luego rueda hacia delante y pasa por él.
 - **El giro**, con la rueda de morro a cuarenta y cinco grados: un radio igual a la batalla en el tren principal, 25,8 m
   en el JAZ 110 y 11,5 en el JAZ 90. Si la calle está demasiado cerca, se cierra hasta los setenta grados, que un
   tractor sin barra hace y que queda dentro del tope con el pasador quitado; si ni así cabe, se empieza a girar desde el
   puesto. Ocho metros rectos al final, para dejar la rueda de morro derecha.
 - **Si la raya sigue recta** más allá de ese alcance —un puesto que da a una calle de frente—, se empuja hasta dejar
   libre el puesto y se gira noventa grados, con el morro hacia el lado al que la raya tuerce después. Lo demás lo rueda
-  el avión. Media vuelta no se empuja nunca.
+  el avión. Media vuelta —más de ciento cincuenta grados— no se empuja nunca.
 - **A paso de persona**: un metro por segundo, acelerando y frenando a 0,12 m/s², que es lo que anda quien va al lado con
   el cable y lo que no se nota como tirón en el asiento. En el T5 son 62 metros y algo más de un minuto; en Los Rodeos,
   unos 40.
@@ -255,6 +259,34 @@ raya sale a más de cincuenta grados de lo contrario al morro —los mismos que 
 propia raya y el morro acaba mirando hacia donde va: el cruce, a sesenta y cuatro metros por delante. Se gira desde
 el puesto con el radio más cerrado, que la raya pasa por él.
 
+### El empuje hasta la calle (16-11-2026)
+
+Desde que los puestos están donde para la rueda de morro (#191), el pasaje de «Viajá con Jazlyn» sale de Los Rodeos
+del 23, en la esquina oeste de la terminal, y no del centro de la línea de entrada del 25, que era a veintiséis metros
+de la Z. Del 23 a la Z no hay calle de plataforma en OpenStreetMap: la raya va recta de espaldas noventa y seis metros
+y tuerce hacia el sur por la Z. Con la calle buscada a un largo de avión, eso era una raya que sale de frente: el
+tractor giraba noventa grados a los veintinueve metros, dejaba el avión atravesado a la raya y, al soltarlo, la
+tripulación giraba 78° en sus primeros treinta metros rodando. El banco del vuelo de Ara lo pilló: pide menos de 30.
+
+Lo de verdad es que el tractor lleva el avión hasta la calle por la que va a rodar y lo deja mirando por ella. Así
+que, si la raya sale de espaldas y sigue recta por la plataforma —tramos que no tuercen más de cinco grados—, la calle
+se busca hasta donde acaba esa recta, y como mucho a ciento veinte metros, dos minutos a paso de persona. Desde el 23
+son cien metros con un giro de 140°, y el avión acaba en la plataforma con el cruce de la Z a 39 m por delante del
+morro: suelta y rueda recto hasta ella.
+
+Para ese giro, **el tope de lo que se empuja sube de 120° a 150°**. Media vuelta sigue sin empujarse, pero un puesto
+en esquina o en espiga sale a su calle con más de un cuarto de vuelta, y con el tope en 120 se quedaba a medio girar:
+medido en `remolque-en-cada-campo.test.ts`, el morro acababa 54° torcido respecto a la calle en Gran Canaria con los
+dos grandes y 45° en Barajas con el JAZ 90; ahora, 11 en los tres. En Los Rodeos con el JAZ 90, de 90° a 140°, 101 m
+de empuje y 3° de torcido. Los demás campos y aviones, igual que antes.
+
+**El tráfico sigue con el empuje corto**, el de buscar la calle a un largo de avión (`porLaPlataforma: false` en
+`trayectoriaDelEmpuje`). Con el largo, en Los Rodeos por la 12, llegando quien juega en el JAZ 110 detrás del sígame,
+el reactor del tráfico que salía empujado a los cuarenta segundos se le quedaba de frente 34 s, con el coche del sígame
+metido en él (`de-frente-en-la-calle.test.ts`): lo que reserva el camino del que sale todavía no espera a que quepa un
+empuje que acaba en la calle. Darle al tráfico el mismo empuje pide primero que la torre no autorice ese empuje con alguien
+rodando por esa calle hacia él; queda por hacer.
+
 ### Los campos con pasarelas
 
 Lo que separa de verdad un puesto de contacto es la pasarela, y eso no lo trae ningún fichero de aeródromo:
@@ -377,9 +409,60 @@ quedaba en la calle sin poder pasarle al lado. En un aeropuerto cada puesto es d
   por delante del centro del avión, la calle reservada todo el empuje, nada dentro de un edificio y, suelto, 43,7 m
   rodados hacia delante.
 
+## La rueda de morro en el punto del puesto (16-11-2026)
+
+Desde #191 cada puesto sale de OpenStreetMap en el punto donde para la rueda de morro, que es lo que marca
+`aeroway=parking_position` y lo que pintan en el suelo la línea de entrada y su marca de parada. El juego seguía
+poniendo en ese punto el centro del avión —su centro de gravedad, que es su referencia de posición—, y lo de este ADR
+contaba desde ahí: «el avión se pone con su centro en el punto del puesto, así que el morro queda a medio largo». Lo
+vio H19a: contado desde la rueda de morro, el 23 de Los Rodeos quedaba más lejos de la terminal de lo que alcanzaba la
+pasarela.
+
+**Lo medido.** Lo que va la rueda de morro por delante del centro sale de la ficha —la batalla menos lo que van las
+principales por detrás del centro— y `rueda-de-morro.test.ts` lo compara con cada `.glb`, a menos de quince
+centímetros: 1,3 m el JAZ 20, 2,4 el JAZ 40, 3,8 el JAZ 50, 6,6 el JAZ 60, **10,1 el JAZ 90, 24,0 el JAZ 110 y 23,7
+el JAZ 120**; en el biplano, de rueda de cola, sus principales, a 0,2. En el tráfico, contado desde el centro de la
+caja de su modelo a su envergadura: 13,2 m el reactor —el JAZ 90 a una vez y tres décimas—, 10,4 el turbohélice, 3,0
+el bimotor y 3,2 la avioneta. Hasta hoy la rueda de morro quedaba todo eso **más allá** del punto: al salir, siempre;
+al llegar, lo mismo menos los dos metros y medio a los que el señalero cruza los bastones, y la tripulación paraba el
+centro a tres metros del final de la raya. Con el morro al edificio, eso era la rueda de morro de los grandes
+veinticuatro metros más cerca de la fachada que la marca de parada.
+
+**Lo que cambia** (`world/rueda-de-morro.ts`):
+
+- **En un puesto de contacto, con la rueda de morro en el punto** y el morro al edificio (`prepararElRemolque`); el
+  centro, tanto como va la rueda, por detrás. El empuje empieza ahí: es la misma calle y el mismo final, con menos
+  metros de empuje.
+- **Y el que sale de frente, en el sitio del que llegó** (`Game.startPosition`, `desdeLaRueda` en el tráfico): el
+  punto es donde para la rueda de morro entrando, y el avión ocupa desde ahí hacia la calle. Mirando hacia donde sale,
+  su centro queda donde lo dejó la llegada: el mismo hueco, dado la vuelta, con la rueda de morro sobre la raya. Se
+  probó primero con la rueda de morro en el punto también mirando hacia fuera, y la cola se iba por detrás del puesto,
+  donde no hay sitio: contando puntos del fuselaje y de las alas dentro de un edificio, en El Hierro de ninguno a
+  treinta y tantos con los dos grandes, y en Pilar de cinco a veinticuatro con el JAZ 90.
+- **Lo que para en el punto es la rueda de morro**: el señalero mide desde ella, y la tripulación del pasaje deja de
+  raya lo que va la rueda por delante del centro (`FichaDeLinea.ruedaDeMorro`).
+- **El tráfico, igual**: su camino de llegada acaba con la rueda en el punto (`conLaRuedaAlFinal`), el de salida
+  empieza con ella ahí (`desdeLaRueda`, y en `empujado` con el morro al edificio), y el puesto que tiene cada uno es
+  donde está su rueda de morro (`puestoDe` en `trafico.ts`).
+- **El tractor engancha la rueda de morro de verdad** (`MedidasDelAvion.rueda`): la ponía a una batalla del centro,
+  como si el centro fuera el tren principal, y la cuna quedaba metro y medio por delante de la rueda en el JAZ 90.
+- **La pasarela se cuenta desde la puerta y el morro desde su punta** (`esPuestoDeContacto`, con `MorroDelAvion`):
+  la puerta delantera, medida en el `.glb`, va 0,9 m por delante de la rueda de morro en el JAZ 90, 0,8 por detrás en
+  el JAZ 110 y 2,7 por detrás en el JAZ 120; la punta, 5,6, 5,5 y 7,9 por delante. Y **lo que alcanza la pasarela pasa
+  de cincuenta metros desde el morro a setenta y nueve desde la puerta**. En OpenStreetMap los puestos de pasarela quedan
+  lejos de la fachada dibujada —entre la rótula y la terminal suele ir un pasillo fijo—: en La Palma, que tiene dos
+  pasarelas, los siete puestos más cercanos a la terminal tienen la rueda de morro entre 51 y 58 m de ella, y con
+  cincuenta no quedaba ninguno; el 23 de Los Rodeos, a 57; el T5 de la T1 de Barajas, del que sale el primer
+  capítulo, a 78, con la puerta del JAZ 110 a 78,7. Con ochenta, el JAZ 120 entra en Barajas en un puesto cuyo empuje
+  acaba a sesenta y nueve metros de la raya (`remolque-en-cada-campo.test.ts`): queda en setenta y nueve, y ese puesto,
+  por mirar.
+
 ## Lo que queda
 
-Del remolque, solo una medida que no se puede tomar desde aquí: **lo que cuesta en fotogramas**, con dos tractores en
+El empuje largo por la plataforma para el tráfico, cuando la torre retenga el empuje de quien sale con alguien rodando
+por su calle: ver «El empuje hasta la calle».
+
+Del remolque, una medida que no se puede tomar desde aquí: **lo que cuesta en fotogramas**, con dos tractores en
 pantalla en una tableta de gama media. Está medido en llamadas de dibujo —un 8 % más con uno a la vista, ver «Dos
 tractores a la vez, como mucho»—, y los fotogramas se miran en la tableta con `?fps=1`, saliendo empujado de Los
 Rodeos, y mejor si coincide con uno del tráfico empujando a la vez. Si bajan de sesenta, lo primero es

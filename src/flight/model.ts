@@ -219,7 +219,13 @@ export interface FlightState {
   yawRate: number;
 
   // ── Derivados, recalculados en cada paso ────────────────────────────
-  /** Velocidad respecto al aire, m/s. */
+  /**
+   * Velocidad respecto al aire, m/s: **la que mide el anemómetro**, de la que
+   * sale la indicada de todos los relojes. En un avión es la del aire sin más,
+   * que le viene casi siempre de frente; en el helicóptero, que baja en vertical
+   * y va de lado, es la que va a lo largo del morro, que es lo que le entra al
+   * tubo de pitot. Ver `derivados` en `flight/helicoptero.ts`.
+   */
   airspeed: number;
   /**
    * Velocidad respecto al **suelo**, m/s. Solo la horizontal.

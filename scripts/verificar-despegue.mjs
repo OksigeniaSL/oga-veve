@@ -110,7 +110,18 @@ const arranque = await mirar(() => {
   return {
     fase: o.fase(),
     motor: o.controles().engineOn,
-    v: s.airspeed,
+    /*
+     * **Parado es por el suelo, no por el aire** (#192). Con el modelo de
+     * coeficientes la velocidad del aire de un avión aparcado es la del
+     * viento que llega al suelo: en Los Rodeos, con el alisio de 12 kt del
+     * 040, el JAZ 20 frenado en el puesto marca 4,6 m/s de aire y 0,01 por el
+     * suelo —medido con el modelo del juego y el viento a ras, `perfilDeViento`
+     * —. En Guyrami, con el modelo sencillo, no se notaba; en Taguató esta
+     * comprobación fallaba siempre con el avión quieto, el motor parado y la
+     * fase bien.
+     */
+    v: s.groundSpeed,
+    aire: s.airspeed,
     ruta: o.ruta().length,
     largo: o
       .ruta()
@@ -128,7 +139,7 @@ const arranque = await mirar(() => {
 comprobar(
   "se empieza en el puesto, parado y con el motor apagado",
   arranque.fase === "estacionado" && !arranque.motor && arranque.v < 1,
-  `fase «${arranque.fase}», motor ${arranque.motor ? "en marcha" : "parado"}`,
+  `fase «${arranque.fase}», motor ${arranque.motor ? "en marcha" : "parado"}, ${arranque.v.toFixed(1)} m/s por el suelo y ${arranque.aire.toFixed(1)} de aire`,
   "arrancar el motor es el primer paso del vuelo y no existía como paso",
 );
 comprobar(
@@ -548,8 +559,9 @@ const rodando = await page.evaluate(async () => {
      * antes se paraba cuarenta metros antes y la fase no llegaba nunca.
      */
     const quiere = RODAJE();
-    c.throttle = s.airspeed < quiere ? 0.6 : 0;
-    c.brakes = s.airspeed > quiere + 2 ? 1 : 0;
+    // Por el suelo, como lo pide el plan: con el modelo de coeficientes, la del aire lleva el viento (ver `v` arriba).
+    c.throttle = s.groundSpeed < quiere ? 0.6 : 0;
+    c.brakes = s.groundSpeed > quiere + 2 ? 1 : 0;
     c.aileron = timon(s, ruta);
     const recorrido = o.rodajeAsi?.().recorrido ?? null;
     const avance =
@@ -943,7 +955,7 @@ const despegue = await page.evaluate(async () => {
     let hallado = buscar(avanceEnLaRaya - 5, avanceEnLaRaya + 30);
     if (hallado.mejor > 25) hallado = buscar(0, total);
     avanceEnLaRaya = hallado.avance;
-    const mirada = Math.max(12, s.airspeed * 1.6, hallado.mejor * 1.5);
+    const mirada = Math.max(12, s.groundSpeed * 1.6, hallado.mejor * 1.5);
     const mira = aLos(Math.min(total, avanceEnLaRaya + mirada));
     // Con la ganancia del otro banco: en tierra el alerón es la rueda de morro, y con 2 se pasa.
     let e = Math.atan2(mira[0] - s.position.x, -(mira[1] - s.position.z)) - s.heading;
@@ -959,7 +971,7 @@ const despegue = await page.evaluate(async () => {
   for (let i = 0; i < 600; i++) {
     await new Promise((r) => setTimeout(r, 200));
     const s = o.estado();
-    c.throttle = s.airspeed < 8 ? 0.5 : 0;
+    c.throttle = s.groundSpeed < 8 ? 0.5 : 0;
     c.brakes = 0;
     /*
      * Tres tramos, y en este orden: mientras quede raya por delante se sigue

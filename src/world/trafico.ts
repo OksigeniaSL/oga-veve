@@ -61,6 +61,7 @@ import {
   puestoLibre,
   type EnElPlano,
   type OcupadosEnElMundo,
+  type PasarelaDelTrafico,
   type PuestosDeOtros,
   type SueloDelTrafico,
 } from "./suelo-del-trafico";
@@ -88,6 +89,7 @@ import {
   type Empuje,
 } from "./remolque";
 import { DibujoDelRemolque } from "./tractor-de-remolque";
+import { MORRO_DEL_TRAFICO, ruedaDeMorroEn } from "./rueda-de-morro";
 import {
   PASO_DEL_TRAMO,
   porDelanteDe,
@@ -595,10 +597,10 @@ export function pistaQuePideConSuMargen(t: TipoDeTrafico): number {
  * del modelo con que se dibuja —el JAZ 90, la de un E-170—, que es la que se ve
  * girar empujado. Ver el ADR 0025.
  */
-export function pasarelaDelTrafico(t: Pick<TipoDeTrafico, "id">): { readonly batalla: number } | undefined {
+export function pasarelaDelTrafico(t: Pick<TipoDeTrafico, "id">): PasarelaDelTrafico | undefined {
   if (t.id !== "reactor") return undefined;
   batallaDelReactor ??= aircraftById(MODELO_DEL_TIPO.reactor ?? "jaz-90").batalla;
-  return { batalla: batallaDelReactor };
+  return { batalla: batallaDelReactor, morro: MORRO_DEL_TRAFICO.reactor };
 }
 let batallaDelReactor: number | undefined;
 
@@ -737,6 +739,15 @@ export interface TierraDelTrafico {
    * `puestosDelTrafico`.
    */
   readonly deOtros?: PuestosDeOtros;
+  /**
+   * **Y el puesto de quien juega, con su semiala**, en los ejes del mundo: un
+   * puesto ocupado más. No se aparca en él, ni en uno de al lado en el que las
+   * alas se tocarían. Hace falta en una plataforma pequeña, donde el avión de
+   * línea de quien juega ocupa un puesto y deja libre el de al lado —ver
+   * `ComoAparcaDeLinea` en `plan-de-vuelo.ts`—: ahí todos los puestos caen a
+   * menos de `APARTE_DE_TI` de él, y el tráfico, sin otro, aparcaba pegado.
+   */
+  readonly tuPuesto?: { readonly x: number; readonly z: number; readonly semiala: number } | null;
   readonly tipo: TipoDeTrafico;
 }
 
@@ -894,6 +905,22 @@ export function cabeceoDe(tipo: TipoDeTrafico, desdeElEje: number): number {
   );
 }
 
+/**
+ * **Los puestos de los demás, con el tuyo**: el de quien juega es un puesto
+ * ocupado más, con su semiala. Ver `TierraDelTrafico.tuPuesto`.
+ */
+function conTuPuesto(
+  deOtros: PuestosDeOtros | undefined,
+  tuyo: TierraDelTrafico["tuPuesto"],
+  tipo: TipoDeTrafico,
+): PuestosDeOtros | undefined {
+  if (!tuyo) return deOtros;
+  return {
+    ...(deOtros ?? { semiala: tipo.envergadura / 2 }),
+    ocupados: [...(deOtros?.ocupados ?? []), tuyo],
+  };
+}
+
 /** Los caminos de este aeródromo, con los dos finales de una llegada. */
 export function trazar(
   runway: Pista,
@@ -1043,7 +1070,10 @@ export function trazar(
       z: p.z,
     });
     const pasarela = pasarelaDelTrafico(t);
-    const llega = tierra.suelo.llegada(t.toca + t.frena, tierra.evitar, tierra.ocupados, pasarela, tierra.deOtros);
+    const deOtros = conTuPuesto(tierra.deOtros, tierra.tuPuesto, t);
+    // Con la rueda de morro en el punto del puesto, al llegar y al salir (#191). Ver `world/rueda-de-morro.ts`.
+    const morro = MORRO_DEL_TRAFICO[t.id];
+    const llega = tierra.suelo.llegada(t.toca + t.frena, tierra.evitar, tierra.ocupados, pasarela, deOtros, morro);
     if (llega && llega.camino.length > 1) {
       const tomaDeVerdad = sobre(en(desplazado + t.toca, 0, 0));
       const rodando = llega.camino.map(sobre);
@@ -1077,7 +1107,8 @@ export function trazar(
       tierra.porDondeVas,
       pistaQuePideConSuMargen(t),
       pasarela,
-      tierra.deOtros,
+      deOtros,
+      morro,
     );
     if (sale && sale.camino.length > 1) {
       const rodando = sale.camino.map(sobre);
@@ -1878,6 +1909,14 @@ export interface Trafico {
    * en ella, y detrás de un sitio vacío no se para nadie.
    */
   dondeParan(): { x: number; z: number; sale: boolean; hay: boolean }[];
+  /**
+   * **Los puestos que tiene ahora el tráfico**, con la semiala de cada avión:
+   * el del que sale hasta que lo deja y el del que llega desde que se le
+   * dibuja. Es lo que mira tu plan para no aparcar con el ala encima de uno de
+   * ellos en una plataforma pequeña: ver `puestosDelTrafico` en
+   * `plan-de-vuelo.ts`.
+   */
+  puestosQueTienen(): readonly { readonly x: number; readonly z: number; readonly semiala: number }[];
   /**
    * **Los que van a despegar y están parados esperándote**: detrás de ti en
    * la calle o en la doble raya. Para la torre, el que espera detrás de ti no
@@ -3123,14 +3162,27 @@ export function crearTrafico(
   ): EnElPlano | null => {
     const t = c?.enTierra;
     if (!c || !t) return null;
+    /*
+     * **Y el puesto es donde está su rueda de morro**, que es lo que para en el punto
+     * (#191); el camino lo sigue el centro del avión, que queda por detrás. Ver
+     * `world/rueda-de-morro.ts`.
+     */
+    const morro = MORRO_DEL_TRAFICO[tipo.id];
     if (camino === c.salida) {
       if (!(t.despega > 0) || recorrido > (t.empuje?.hasta ?? 0) + tipo.envergadura) return null;
       const p = c.salida[0];
-      return p ? { x: p.x, z: p.z } : null;
+      if (!p) return null;
+      // Empujado, mira al edificio; de frente, el puesto le queda detrás, donde paró al llegar.
+      const inicio = t.empuje?.trayectoria.poses[0];
+      if (inicio) return ruedaDeMorroEn(p, inicio.rumbo, morro);
+      const hacia = c.salida.find((q) => Math.hypot(q.x - p.x, q.z - p.z) > 1);
+      return hacia ? ruedaDeMorroEn(p, Math.atan2(hacia.x - p.x, -(hacia.z - p.z)) + Math.PI, morro) : { x: p.x, z: p.z };
     }
     if (!(t.boca > 0)) return null;
     const p = c.llegada[c.llegada.length - 1];
-    return p ? { x: p.x, z: p.z } : null;
+    const antes = c.llegada[c.llegada.length - 2];
+    if (!p) return null;
+    return antes ? ruedaDeMorroEn(p, Math.atan2(p.x - antes.x, -(p.z - antes.z)), morro) : { x: p.x, z: p.z };
   };
 
   /**
@@ -3160,12 +3212,17 @@ export function crearTrafico(
   const caminosConSuPuesto = (tipo: TipoDeTrafico, clave: string): Caminos | null => {
     const c = caminosDe(tipo);
     const marca = c?.marcas[clave];
-    if (!c || !marca || !aviones.size) return c;
-    const deOtros = puestosDelTrafico(null, tipo.envergadura / 2);
+    if (!c || !marca) return c;
+    // Y el tuyo, que puede haber cambiado desde que se trazaron los del tipo.
+    const tuyo = opciones.tierra?.()?.tuPuesto;
+    if (!aviones.size && !tuyo) return c;
+    const deLosDemas = puestosDelTrafico(null, tipo.envergadura / 2);
+    const deOtros = conTuPuesto(deLosDemas, tuyo, tipo)!;
     if (!deOtros.ocupados.length) return c;
     const p = puestoDe(c, marca.camino, marca.metros, tipo);
     if (!p || puestoLibre(p.x, p.z, deOtros)) return c;
-    const suyos = trazarAhora(tipo, undefined, deOtros);
+    // `trazar` le añade el tuyo.
+    const suyos = trazarAhora(tipo, undefined, deLosDemas);
     return suyos?.marcas[clave] ? suyos : c;
   };
 
@@ -3190,6 +3247,7 @@ export function crearTrafico(
       quien.remolque = new Remolque(e.trayectoria, {
         batalla: pasarela.batalla,
         envergadura: quien.tipo.envergadura,
+        rueda: MORRO_DEL_TRAFICO[quien.tipo.id].rueda,
       });
       quien.recorrido = 0;
     }
@@ -4243,6 +4301,9 @@ export function crearTrafico(
       if (!quien || !c || !aterrizando(quien)) return null;
       if (quien.recorrido < c.entra) return null;
       return Math.max(0, c.toca - quien.recorrido);
+    },
+    puestosQueTienen() {
+      return puestosDelTrafico(null).ocupados;
     },
     dondeParan() {
       const puntos: { x: number; z: number; sale: boolean; hay: boolean }[] = [];

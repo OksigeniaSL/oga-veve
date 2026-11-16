@@ -67,12 +67,16 @@ export const SUPER_PUMA: FichaDeHelicoptero = {
     inclinacionDelMastil: 5 * GRADO,
     // Supuesto: cuatro palas de unos 120 kg, más el buje.
     inercia: 10_000,
-    // Ajustado: con el colectivo abajo del todo y a 70 kt sin motor, las vueltas
-    // se quedan en 268 rpm al peso máximo y en 232 con 6.500 kg, dentro de lo que
-    // permite la ficha sin motor (220 a 290, TCDS III.9). El máximo da para
-    // sostenerse al peso máximo por encima del techo, donde lo que falta es
-    // potencia y no paso.
-    paso: { minimo: 9.5 * GRADO, maximo: 26 * GRADO },
+    // Ajustado como se ajustan los topes de verdad: que con poco peso y abajo, con
+    // el colectivo abajo del todo y sin motor, den el mínimo de vueltas, y que con
+    // más peso o más arriba, que dan más, se suba el colectivo para no pasarse
+    // (FAA-H-8083-21B, 11-4). A 70 kt al nivel del mar, 221 rpm con 6.500 kg —por
+    // debajo de los 7.000 sin combustible de la ficha del juego— frente a las 220
+    // de la ficha sin motor (TCDS III.9); a 3.000 m y al peso máximo, 297, por
+    // encima de las 290, y ahí se sube. Con 9,5°, ajustado a 3.000 m, a nivel del
+    // mar y con 6.500 kg bajaban a 204. El máximo da para sostenerse al peso
+    // máximo por encima del techo, donde lo que falta es potencia y no paso.
+    paso: { minimo: 8.5 * GRADO, maximo: 26 * GRADO },
     ciclico: { cabeceo: 10 * GRADO, alabeo: 7 * GRADO },
   },
   cola: {

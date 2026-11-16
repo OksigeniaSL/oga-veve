@@ -260,9 +260,9 @@ describe("volando el Super Puma", () => {
     const { vistos, t } = volar(l, h, (t, m) => (m.colectivo = t > 1 && t < 4 ? 1 : 0.5), 60);
     expect(vistos.map((s) => s.que)).toEqual(["presentar", "quieto", "logrado"]);
     /*
-     * Hacia los treinta segundos: al despegar, la ayuda se desliza unos diez
-     * metros de lado y tarda en pararse del todo —es del despegue, no de esta
-     * lección—, y hasta que no se para no se empieza a contar.
+     * Hacia los veintisiete segundos: despegar, frenar la subida y pararse del
+     * todo —hasta que no se para no se empieza a contar— y los diez de quieto.
+     * Eran treinta, cuando al despegar se deslizaba diez metros de lado.
      */
     expect(t).toBeLessThan(40);
   });
@@ -328,7 +328,8 @@ describe("volando el Super Puma", () => {
       h,
       (t, m, vistos) => {
         const ultimo = vistos.at(-1)?.que;
-        if (fase === "subir-poco" && t > 2.5) fase = "quieto";
+        // Subir un poco es hasta despegar: con el paso mínimo de 8,5° la palanca tarda algo más en llegar.
+        if (fase === "subir-poco" && t > 2.5 && !h.state.onGround) fase = "quieto";
         if (fase === "quieto" && ultimo === "abajo") {
           fase = "arriba";
           desde = t;

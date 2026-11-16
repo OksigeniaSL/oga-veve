@@ -24,12 +24,12 @@ import { enElPavimento, type Aerodrome, type Punto } from "./aerodrome";
 import {
   edificiosDePasarela,
   esPuestoDeContacto,
-  largoPorLaBatalla,
   rumboEnElPuesto,
   trayectoriaDelEmpuje,
   vector,
   type Empuje,
 } from "./remolque";
+import { conLaRuedaEn, MORRO_DEL_TRAFICO, type MorroDelAvion } from "./rueda-de-morro";
 import { construirGrafo, puestosEnElPavimento, rodajeEntre, rodajesDesde, type Tramo } from "./rodaje";
 import { delante, enEjesDePista } from "./rumbo";
 import { desplazadoDe } from "./umbral-desplazado";
@@ -88,9 +88,15 @@ export interface SueloDelTrafico {
      * de contacto, si el campo tiene alguno para su largo, y entra en él por su
      * raya, con el morro al edificio. Ver `alPuestoPorSuRaya`.
      */
-    pasarela?: { readonly batalla: number },
+    pasarela?: PasarelaDelTrafico,
     /** Los puestos que ya tienen otros aviones del tráfico. Ver `PuestosDeOtros`. */
     deOtros?: PuestosDeOtros,
+    /**
+     * **Dónde va su rueda de morro**, que es la que para en el punto del puesto
+     * (#191): el camino acaba con ella ahí, y no con el centro. Sin ella, el
+     * centro, como antes. Ver `conLaRuedaAlFinal`.
+     */
+    morro?: Pick<MorroDelAvion, "rueda">,
   ): {
     /** Metros desde el umbral de aterrizar hasta la boca de la salida. */
     readonly boca: number;
@@ -120,9 +126,11 @@ export interface SueloDelTrafico {
      * puesto de contacto, si el campo tiene alguno para su largo, y de ahí sale
      * empujado por un tractor, de espaldas, hasta la calle. Ver `empujado`.
      */
-    pasarela?: { readonly batalla: number },
+    pasarela?: PasarelaDelTrafico,
     /** Los puestos que ya tienen otros aviones del tráfico. Ver `PuestosDeOtros`. */
     deOtros?: PuestosDeOtros,
+    /** Y su rueda de morro: el camino empieza con ella en el punto del puesto. Ver `desdeLaRueda`. */
+    morro?: Pick<MorroDelAvion, "rueda">,
   ): SalidaDelPuesto | null;
   /**
    * **Si entre la plataforma y la pista no hay más que una calle**: todo lo
@@ -166,6 +174,73 @@ export function puestoLibre(x: number, z: number, deOtros: PuestosDeOtros | unde
   return deOtros.ocupados.every(
     (o) => Math.hypot(o.x - x, o.z - z) >= deOtros.semiala + o.semiala + MARGEN_EN_EL_PUESTO,
   );
+}
+
+/**
+ * **El avión del tráfico que embarca por pasarela**: la batalla con que se le
+ * empuja y su morro, que dice si un puesto es de contacto. Ver
+ * `pasarelaDelTrafico` en `trafico.ts`.
+ */
+export interface PasarelaDelTrafico {
+  readonly batalla: number;
+  /** Sin él, el del reactor del tráfico, que es el que embarca por pasarela. */
+  readonly morro?: MorroDelAvion;
+}
+
+/**
+ * **El camino de llegada, con la rueda de morro en el punto del puesto**: el que
+ * lo sigue es el centro del avión, así que acaba `morro.rueda` metros antes, por
+ * su raya. Si el camino no da para tanto, como estaba.
+ */
+export function conLaRuedaAlFinal(camino: EnElPlano[], morro: Pick<MorroDelAvion, "rueda"> | undefined): EnElPlano[] {
+  if (!morro || morro.rueda <= 0 || camino.length < 2) return camino;
+  let falta = morro.rueda;
+  for (let i = camino.length - 1; i > 0; i--) {
+    const a = camino[i - 1]!;
+    const b = camino[i]!;
+    const l = dist(a, b);
+    if (l > falta + 0.5) {
+      const k = (l - falta) / l;
+      return [...camino.slice(0, i), { x: a.x + (b.x - a.x) * k, z: a.z + (b.z - a.z) * k }];
+    }
+    falta -= l;
+    if (falta <= 0) return camino.slice(0, i);
+  }
+  return camino;
+}
+
+/**
+ * **La salida de frente, desde el sitio del que llegó a ese puesto**: el punto es
+ * donde para la rueda de morro entrando (#191), y el avión ocupa desde ahí hacia la
+ * calle. Mirando hacia donde sale, su centro queda `morro.rueda` metros camino
+ * adelante: el mismo hueco, dado la vuelta. Con la rueda en el punto y mirando
+ * hacia fuera, la cola se metía por detrás del puesto, donde no hay sitio. Los
+ * metros de menos se restan de la espera, del eje y del remonte.
+ */
+function desdeLaRueda(s: SalidaDelPuesto, morro: Pick<MorroDelAvion, "rueda"> | undefined): SalidaDelPuesto {
+  if (!morro || morro.rueda <= 0 || s.empuje || s.camino.length < 2) return s;
+  const d = morro.rueda;
+  // Lo que quede de camino tiene que llegar más allá de la doble raya.
+  if (s.espera <= d + 1) return s;
+  let falta = d;
+  for (let i = 1; i < s.camino.length; i++) {
+    const a = s.camino[i - 1]!;
+    const b = s.camino[i]!;
+    const l = dist(a, b);
+    if (l > falta) {
+      const k = falta / l;
+      const desde = { x: a.x + (b.x - a.x) * k, z: a.z + (b.z - a.z) * k };
+      return {
+        ...s,
+        camino: [desde, ...s.camino.slice(i)],
+        espera: s.espera - d,
+        eje: s.eje - d,
+        ...(s.remonte ? { remonte: { entra: s.remonte.entra - d, vira: s.remonte.vira - d } } : {}),
+      };
+    }
+    falta -= l;
+  }
+  return s;
 }
 
 /** **La salida de un puesto**, del puesto a la doble raya, al eje y alineado. */
@@ -312,16 +387,38 @@ const EN_LA_CABECERA = 150;
  */
 const DETRAS_DEL_UMBRAL = 200;
 
-/** Los puestos que no caen encima de quien juega; si no queda ninguno, todos. */
+/**
+ * Lo que separa a dos puestos que no son el mismo, m, como en `candidatosPara`.
+ */
+const OTRO_PUESTO = 5;
+
+/**
+ * Los puestos que no caen encima de quien juega; si no queda ninguno, los que
+ * al menos no son el suyo, y si ni eso, todos. Por escalones, del más apartado
+ * al que menos: `rutaConPuesto` baja al siguiente si en uno no hay camino.
+ *
+ * El segundo escalón es de una plataforma pequeña y llena: en Encarnación los
+ * cuatro puestos caen a menos de `APARTE_DE_TI` del tuyo, y con otro del
+ * tráfico en el único que deja sitio a tus alas, el que llegaba cogía el más
+ * cercano, que era el tuyo: aparcaba dentro de tu avión.
+ *
+ * **Y se baja de escalón también si en el primero no hay por dónde salir.** En El
+ * Hierro los nueve puestos caen en ochenta metros, y contigo en el 2 solo
+ * quedaba fuera de ellos el 3A, del que no sale camino por el asfalto: el
+ * turbohélice que esperaba para salir se quedaba sin puesto y sin camino, con
+ * los otros siete a mano.
+ */
 function lejosDe(
   puestos: readonly Punto[],
   evitar: readonly EnElPlano[] | undefined,
-): readonly Punto[] {
-  if (!evitar?.length) return puestos;
-  const libres = puestos.filter((p) =>
-    evitar.every((e) => Math.hypot(p[0] - e.x, -p[1] - e.z) > APARTE_DE_TI),
-  );
-  return libres.length ? libres : puestos;
+): readonly (readonly Punto[])[] {
+  if (!evitar?.length) return [puestos];
+  const aMas = (d: number) =>
+    puestos.filter((p) => evitar.every((e) => Math.hypot(p[0] - e.x, -p[1] - e.z) > d));
+  const libres = aMas(APARTE_DE_TI);
+  const otros = aMas(OTRO_PUESTO).filter((p) => !libres.includes(p));
+  // El tuyo, solo si no hay otro: con uno libre que no tiene camino, no se aparca encima de ti.
+  return libres.length || otros.length ? [libres, otros].filter((l) => l.length) : [puestos];
 }
 
 /** Del plano del fichero (la y al norte) al del mundo (la z al sur). */
@@ -443,12 +540,12 @@ export function sueloDelTrafico(
    * por batalla.
    */
   const deContacto = new Map<number, readonly Punto[]>();
-  const puestosPara = (pasarela: { readonly batalla: number } | undefined): readonly Punto[] => {
+  const puestosPara = (pasarela: PasarelaDelTrafico | undefined): readonly Punto[] => {
     if (!pasarela) return puestos;
     const hecho = deContacto.get(pasarela.batalla);
     if (hecho) return hecho;
-    const largoDelAvion = largoPorLaBatalla(pasarela.batalla);
-    const suyos = puestos.filter((xy) => esPuestoDeContacto(xy[0], -xy[1], edificios, largoDelAvion));
+    const morro = pasarela.morro ?? MORRO_DEL_TRAFICO.reactor;
+    const suyos = puestos.filter((xy) => esPuestoDeContacto(xy[0], -xy[1], edificios, morro));
     const lista = suyos.length ? suyos : puestos;
     deContacto.set(pasarela.batalla, lista);
     return lista;
@@ -460,7 +557,7 @@ export function sueloDelTrafico(
    * en el mismo puesto se metían el uno dentro del otro.
    */
   const candidatosPara = (
-    pasarela: { readonly batalla: number } | undefined,
+    pasarela: PasarelaDelTrafico | undefined,
     deOtros: PuestosDeOtros | undefined,
   ): { readonly lista: readonly Punto[]; readonly deContacto: boolean } => {
     const suyos = puestosPara(pasarela);
@@ -470,14 +567,14 @@ export function sueloDelTrafico(
     if (libres.length) return { lista: libres, deContacto: deContactoDeVerdad };
     const otros = puestos.filter((xy) => puestoLibre(xy[0], -xy[1], deOtros));
     if (otros.length) return { lista: otros, deContacto: false };
-    const distintos = puestos.filter((xy) => deOtros.ocupados.every((o) => Math.hypot(o.x - xy[0], o.z + xy[1]) > 5));
+    const distintos = puestos.filter((xy) => deOtros.ocupados.every((o) => Math.hypot(o.x - xy[0], o.z + xy[1]) > OTRO_PUESTO));
     return { lista: distintos.length ? distintos : puestos, deContacto: false };
   };
 
   /** Si el camino empieza o acaba en un puesto de contacto para ese avión. */
-  const enUnPuestoDeContacto = (p: EnElPlano, pasarela: { readonly batalla: number }): boolean =>
+  const enUnPuestoDeContacto = (p: EnElPlano, pasarela: PasarelaDelTrafico): boolean =>
     puestos.some((xy) => Math.hypot(xy[0] - p.x, -xy[1] - p.z) < 1) &&
-    esPuestoDeContacto(p.x, p.z, edificios, largoPorLaBatalla(pasarela.batalla));
+    esPuestoDeContacto(p.x, p.z, edificios, pasarela.morro ?? MORRO_DEL_TRAFICO.reactor);
 
   /**
    * **Y entra en él por su raya**, con el morro al edificio: los últimos metros,
@@ -485,7 +582,7 @@ export function sueloDelTrafico(
    * entrada y al señalero. El buscador remataba en recta desde el último nudo, y
    * el avión se quedaba mirando hacia donde viniera. Ver `rumboEnElPuesto`.
    */
-  const alPuestoPorSuRaya = (camino: EnElPlano[], pasarela: { readonly batalla: number }): EnElPlano[] => {
+  const alPuestoPorSuRaya = (camino: EnElPlano[], pasarela: PasarelaDelTrafico): EnElPlano[] => {
     const fin = camino[camino.length - 1];
     if (!fin || camino.length < 3 || !enUnPuestoDeContacto(fin, pasarela)) return camino;
     const rumbo = rumboEnElPuesto(fin.x, fin.z, edificios, [...camino].reverse());
@@ -506,7 +603,7 @@ export function sueloDelTrafico(
    * el camino por delante —los tramos, ceder el paso— ve también por dónde va
    * a pasar empujado. Si no hay por dónde, sale como antes.
    */
-  const empujado = (s: SalidaDelPuesto, pasarela: { readonly batalla: number }): SalidaDelPuesto => {
+  const empujado = (s: SalidaDelPuesto, pasarela: PasarelaDelTrafico): SalidaDelPuesto => {
     const camino = s.camino;
     const p0 = camino[0];
     if (!p0 || !enUnPuestoDeContacto(p0, pasarela)) return s;
@@ -517,7 +614,23 @@ export function sueloDelTrafico(
     const raya = camino.slice(0, k + 1);
     const rumbo = rumboEnElPuesto(p0.x, p0.z, edificios, raya);
     if (rumbo === null) return s;
-    const trayectoria = trayectoriaDelEmpuje({ x: p0.x, z: p0.z, rumbo }, raya, pasarela.batalla);
+    /*
+     * **Sin el empuje largo por la plataforma** —ver `RECTA_DE_LA_PLATAFORMA` en
+     * `remolque.ts`—: lo que reserva el camino todavía no espera a que quepa un
+     * empuje que acaba en la calle. Con él, en Los Rodeos por la 12, llegando tú en
+     * el JAZ 110 detrás del sígame, el reactor que salía empujado a los cuarenta
+     * segundos se te quedaba de frente 34 s, con el coche del sígame metido en él
+     * (`de-frente-en-la-calle.test.ts`). Hasta que la torre no deje empujar hasta
+     * una calle por la que viene alguien, el tráfico sale con el empuje corto.
+     */
+    /*
+     * Con la rueda de morro en el punto del puesto (#191) y el morro al edificio: el
+     * centro, que es lo que se empuja, por detrás. Ver `world/rueda-de-morro.ts`.
+     */
+    const centro = conLaRuedaEn(p0, rumbo, pasarela.morro ?? MORRO_DEL_TRAFICO.reactor);
+    const trayectoria = trayectoriaDelEmpuje({ x: centro.x, z: centro.z, rumbo }, raya, pasarela.batalla, {
+      porLaPlataforma: false,
+    });
     if (!trayectoria) return s;
     const fin = trayectoria.poses[trayectoria.poses.length - 1]!;
     const adelante = vector(fin.rumbo);
@@ -607,6 +720,8 @@ export function sueloDelTrafico(
     ocupados?: OcupadosEnElMundo,
     candidatos: { readonly lista: readonly Punto[]; readonly deContacto: boolean } = { lista: puestos, deContacto: false },
     deOtros?: PuestosDeOtros,
+    /** Si la ruta sirve para lo que se busca: ver `valeParaSalir`. Sin ella, cualquiera. */
+    vale?: (puntos: readonly Punto[]) => boolean,
   ): { puntos: Punto[]; ocupada: boolean } | null => {
     const porDondeNo = ocupados?.puntos.length
       ? {
@@ -614,7 +729,24 @@ export function sueloDelTrafico(
           radio: ocupados.radio,
         }
       : undefined;
-    const cerca = [...lejosDe(candidatos.lista, evitar)]
+    for (const escalon of lejosDe(candidatos.lista, evitar)) {
+      const hecha = rutaEntre(punto, hacia, escalon, porDondeNo, candidatos.deContacto, deOtros, vale);
+      if (hecha) return hecha;
+    }
+    return null;
+  };
+
+  /** La mejor ruta entre `punto` y los ocho puestos de `lista` más cercanos. Ver `rutaConPuesto`. */
+  const rutaEntre = (
+    punto: Punto,
+    hacia: "puesto" | "punto",
+    lista: readonly Punto[],
+    porDondeNo: { puntos: Punto[]; radio: number } | undefined,
+    deContacto: boolean,
+    deOtros: PuestosDeOtros | undefined,
+    vale: ((puntos: readonly Punto[]) => boolean) | undefined,
+  ): { puntos: Punto[]; ocupada: boolean } | null => {
+    const cerca = [...lista]
       .sort(
         (a, b) =>
           Math.hypot(a[0] - punto[0], a[1] - punto[1]) -
@@ -653,7 +785,7 @@ export function sueloDelTrafico(
        */
       const sinRemate = hacia === "puesto" ? r.puntos.slice(0, -1) : r.puntos.slice(1);
       const puntos =
-        candidatos.deContacto && sinRemate.length >= 2 && porElAsfalto(sinRemate)
+        deContacto && sinRemate.length >= 2 && porElAsfalto(sinRemate)
           ? [...r.puntos]
           : recortarAlAsfalto([...r.puntos], hacia, porElAsfalto);
       if (!puntos) continue;
@@ -664,6 +796,7 @@ export function sueloDelTrafico(
        */
       const extremo = hacia === "puesto" ? puntos[puntos.length - 1]! : puntos[0]!;
       if (!puestoLibre(extremo[0], -extremo[1], deOtros)) continue;
+      if (vale && !vale(puntos)) continue;
       mejor = { puntos, largo: r.largo, ocupada };
     }
     return mejor ? { puntos: mejor.puntos, ocupada: mejor.ocupada } : null;
@@ -671,15 +804,15 @@ export function sueloDelTrafico(
 
   let unaSola: boolean | undefined;
   const suelo: SueloDelTrafico = {
-    llegada(desdeElUmbral, evitar, ocupados, pasarela, deOtros) {
+    llegada(desdeElUmbral, evitar, ocupados, pasarela, deOtros, morro) {
       /*
        * Con los puestos de los demás, si queda alguno libre; si no, como antes, que
        * un avión sin camino no puede aterrizar. Ver `PuestosDeOtros`.
        */
       if (deOtros?.ocupados.length && !deOtros.conTodos)
         return (
-          suelo.llegada(desdeElUmbral, evitar, ocupados, pasarela, { ...deOtros, conTodos: true }) ??
-          suelo.llegada(desdeElUmbral, evitar, ocupados, pasarela)
+          suelo.llegada(desdeElUmbral, evitar, ocupados, pasarela, { ...deOtros, conTodos: true }, morro) ??
+          suelo.llegada(desdeElUmbral, evitar, ocupados, pasarela, undefined, morro)
         );
 
       /*
@@ -716,7 +849,8 @@ export function sueloDelTrafico(
         if (!hecha) continue;
         const ruta = hecha.puntos;
         const derecho = [enElEje(boca.along), ...ruta.map(alMundo)];
-        const camino = pasarela ? alPuestoPorSuRaya(derecho, pasarela) : derecho;
+        // Y con la rueda de morro en el punto del puesto, no el centro. Ver `conLaRuedaAlFinal`.
+        const camino = conLaRuedaAlFinal(pasarela ? alPuestoPorSuRaya(derecho, pasarela) : derecho, morro);
         const enLaPista = hastaSalir(camino, ejes, ancho);
         // Y la deja de verdad: un camino que se queda en la pista, o que
         // vuelve a ella para acabar encima, no vale.
@@ -762,12 +896,19 @@ export function sueloDelTrafico(
         : null;
     },
 
-    salida(evitar, porDondeVas, pistaQueNecesita = 0, pasarela, deOtros) {
+    salida(evitar, porDondeVas, pistaQueNecesita = 0, pasarela, deOtros, morro) {
       if (deOtros?.ocupados.length && !deOtros.conTodos)
         return (
-          suelo.salida(evitar, porDondeVas, pistaQueNecesita, pasarela, { ...deOtros, conTodos: true }) ??
-          suelo.salida(evitar, porDondeVas, pistaQueNecesita, pasarela)
+          suelo.salida(evitar, porDondeVas, pistaQueNecesita, pasarela, { ...deOtros, conTodos: true }, morro) ??
+          suelo.salida(evitar, porDondeVas, pistaQueNecesita, pasarela, undefined, morro)
         );
+      /*
+       * **Con la rueda de morro en el punto del puesto** (#191): empujado, el centro va
+       * por detrás con el morro al edificio —ver `empujado`—; de frente, por detrás y
+       * mirando hacia donde sale. Ver `desdeLaRueda`.
+       */
+      const conSuRueda = (h: SalidaDelPuesto): SalidaDelPuesto =>
+        desdeLaRueda(pasarela ? empujado(h, pasarela) : h, morro);
       /*
        * Por la boca más cerca de la cabecera de salida —la que deja más pista
        * por delante—: del puesto a la boca por las calles, y en el camino, la
@@ -813,6 +954,11 @@ export function sueloDelTrafico(
        * el AIP no deja salir por intersección a nadie. Ningún avión despega
        * con menos pista de la que necesita.
        */
+      /** Si de esa ruta se llega a la doble raya por su calle y sin pisar la pista. */
+      const valeParaSalir = (puntos: readonly Punto[]): boolean => {
+        const h = cortarEnLaRaya(puntos.map(alMundo), ejes, ancho, mitad);
+        return !!h && !pisaLaPista(h.hastaLaRaya, 0, Infinity, ejes, ancho, mitad);
+      };
       let deReserva: ReturnType<SueloDelTrafico["salida"]> = null;
       let remonte: ReturnType<SueloDelTrafico["salida"]> = null;
       let remonteEncima: ReturnType<SueloDelTrafico["salida"]> = null;
@@ -820,7 +966,23 @@ export function sueloDelTrafico(
         const daSuPista = pistaDesde(boca) >= pistaQueNecesita;
         if (!daSuPista && remonte) continue;
         const nudo = grafo.nudos[boca.nudo]!;
-        const ruta = rutaConPuesto(nudo, "punto", evitar, undefined, candidatosPara(pasarela, deOtros), deOtros)?.puntos;
+        /*
+         * **Y de un puesto del que se llega a la doble raya por la calle**, sin pisar la
+         * pista: se mira al elegir el puesto, no después. Se elegía el más cercano a la
+         * boca y luego se veía si valía; en El Hierro, contigo en el 2, el único puesto
+         * apartado de ti era el 3A, que sale a la pista por encima de ella, y el
+         * turbohélice que esperaba para salir se quedaba sin camino —`despega: 0`— con
+         * siete puestos más a mano. Ver `lejosDe`.
+         */
+        const ruta = rutaConPuesto(
+          nudo,
+          "punto",
+          evitar,
+          undefined,
+          candidatosPara(pasarela, deOtros),
+          deOtros,
+          valeParaSalir,
+        )?.puntos;
         if (!ruta) continue;
         const hecha = cortarEnLaRaya(ruta.map(alMundo), ejes, ancho, mitad);
         if (!hecha) continue;
@@ -844,7 +1006,7 @@ export function sueloDelTrafico(
             eje: espera + largo(hastaElEje) + dist(entrada, alineado),
             remonta: 0,
           };
-          if (!encimaDeTuCalle) return pasarela ? empujado(salida, pasarela) : salida;
+          if (!encimaDeTuCalle) return conSuRueda(salida);
           deReserva ??= salida;
           continue;
         }
@@ -863,7 +1025,7 @@ export function sueloDelTrafico(
         else remonteEncima ??= salida;
       }
       const hecha = deReserva ?? remonte ?? remonteEncima;
-      return hecha && pasarela ? empujado(hecha, pasarela) : hecha;
+      return hecha ? conSuRueda(hecha) : hecha;
     },
 
     unaSolaCalle() {
