@@ -1429,11 +1429,10 @@ import {
 } from "./audio/instructor-grabado";
 import { apuntarVuelo, type Paso, type Vuelo } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
-import { sueloEn, TRAQUETEO, type Superficie } from "./world/superficie";
+import { pavimentoDe, sueloEn, TRAQUETEO, type Superficie } from "./world/superficie";
 import { signoDelGiro } from "./world/giro-de-las-helices";
 import { firmeDe } from "./world/firme";
 import { avionQueSuena, oidoDe } from "./audio/ruidos";
-import { mapaDePavimento, type Pavimento } from "./world/vegetation";
 import {
   AvisosDeAltura,
   cantaPorDebajoDe,
@@ -2579,10 +2578,6 @@ export class Game {
     readonly base: Scenario;
     /** Su aeródromo corrido a este mundo. No depende del viento. */
     readonly aerodromo: Aerodrome | null;
-    /**
-     * Y su suelo: qué es asfalto allí y qué no. Ver `superficieDeAhora`.
-     */
-    readonly pavimento: Pavimento | null;
     /**
      * **El campo, con el viento de hoy**: su escenario, su pista corrida con
      * la cabecera en uso y el escenario corrido entero, que es la única forma
@@ -5443,14 +5438,6 @@ export class Game {
   traza: Paso[] = [];
   /** De qué está hecho el suelo de debajo. Ver `world/superficie.ts`. */
   private superficie: Superficie = "asfalto";
-  /**
-   * El mapa de calles y plataformas, para saber si debajo hay pavimento.
-   *
-   * Se pinta una vez y se consulta en cada fotograma, así que se guarda: es la
-   * parte cara de la pregunta. El mismo que usa la vegetación para no plantar
-   * árboles en el asfalto.
-   */
-  private pavimento: Pavimento | null;
   /** Lo que se lleva sin catar la traza, s. */
   private sinCatar = 0;
   /** Cuánto ha durado este vuelo, s. Cuenta desde que se arrancó. */
@@ -6297,9 +6284,6 @@ export class Game {
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
     this.parteDelMontaje = this.scenario.meteo ?? null;
     this.sigueme = new Sigueme(this.scenario.aerodrome?.privado === true);
-    this.pavimento = this.scenario.aerodrome
-      ? mapaDePavimento(this.scenario.aerodrome)
-      : null;
     /*
      * La cuenta depende del avión: la del radioaltímetro en el que lo lleva,
      * ninguna en los demás. Y del avión que viene en las opciones, que
@@ -6514,11 +6498,17 @@ export class Game {
             mundo.desplazamiento.z,
           )
         : null;
+      /*
+       * Y su pavimento, hecho ya: lo pregunta cada fotograma el suelo de
+       * debajo al llegar allí, y hacerlo entonces es un tirón en la final
+       * —seis décimas de milisegundo en Los Rodeos y cuatro y media en
+       * Barajas, en un portátil—. Ver `pavimentoDe` en `world/superficie.ts`.
+       */
+      if (aerodromo) pavimentoDe(aerodromo);
       this.vecinos.push({
         mundo,
         base: quien,
         aerodromo,
-        pavimento: aerodromo ? mapaDePavimento(aerodromo) : null,
         // La pista del vecino, ya trasladada: a partir de aquí es una pista
         // de este mundo como cualquier otra.
         campo: campoVecino(quien, mundo.desplazamiento, aerodromo, meteo),
@@ -17897,7 +17887,6 @@ export class Game {
       texturas: [antes.texturas, enLaTarjeta.textures],
     };
     this.scenario = conViento(m.escenario, parte ?? this.scenario.meteo ?? TIEMPO_DE_CASA);
-    this.pavimento = this.scenario.aerodrome ? mapaDePavimento(this.scenario.aerodrome) : null;
     // Con su instante, que es de donde sale la luz cocida en el relieve. Ver `solDelRelieve`.
     this.terrain = new Terrain(this.scenario, instante);
     this.scene.add(this.terrain.group);
@@ -18534,9 +18523,12 @@ export class Game {
      */
     const aqui = this.elVecinoDeAhora();
     const campoDeAqui = aqui?.campo.comoCampo ?? this.scenario;
+    /*
+     * **Y con el pavimento de verdad, no con la franja de los árboles.** Ver
+     * `PavimentoDeVerdad` en `world/superficie.ts` y #193.
+     */
     const suelo = sueloEn(
       campoDeAqui,
-      aqui ? aqui.pavimento : this.pavimento,
       this.flight.state.position.x,
       this.flight.state.position.z,
     );

@@ -7,7 +7,7 @@
 import { describe, expect, it } from "vitest";
 import { estadoDe, firmeEn, FIRMES, materialDe } from "./firme";
 import { SCENARIOS, scenarioById } from "./scenarios";
-import type { Pavimento } from "./vegetation";
+import { sobreLaPista } from "./aerodrome";
 
 describe("de lo que dice el fichero a lo que suena", () => {
   it("el hormigón son losas, como lo escriba quien lo escriba", () => {
@@ -53,30 +53,41 @@ describe("cuidado o gastado, por el servicio del campo", () => {
 describe("el firme debajo de las ruedas", () => {
   it("la pista de Tenerife Norte es asfalto cuidado: sin juntas", () => {
     const e = scenarioById("tenerife-norte");
-    const f = firmeEn(e, null, e.runway.x, e.runway.z);
+    const f = firmeEn(e, e.runway.x, e.runway.z);
     expect(f.material).toBe("asfalto");
     expect(f.juntas).toBe(0);
   });
 
   it("la de Pilar es de hormigón: suena a juntas, y gastadas", () => {
     const e = scenarioById("pilar");
-    const f = firmeEn(e, null, e.runway.x, e.runway.z);
+    const f = firmeEn(e, e.runway.x, e.runway.z);
     expect(f.material).toBe("losas");
     expect(f).toBe(FIRMES.losas.gastado);
   });
 
   it("la plataforma de Tenerife Sur es de losas aunque la pista sea de asfalto", () => {
     const e = scenarioById("tenerife-sur");
-    // Fuera de la pista y sobre pavimento: lo que dice su plataforma.
-    const todoPavimento = { hay: () => true } as unknown as Pavimento;
-    const f = firmeEn(e, todoPavimento, e.runway.x + 3000, e.runway.z + 3000);
+    /*
+     * Fuera de la pista y sobre pavimento —en mitad de una calle, lejos de la
+     * pista—: lo que dice su plataforma. Antes se probaba con un pavimento de
+     * mentira que lo cubría todo; ahora el pavimento sale del aeródromo.
+     */
+    const aero = e.aerodrome!;
+    const medio = aero.taxiways
+      .filter((t) => t.path.length >= 2)
+      .map((t) => {
+        const [a, b] = [t.path[0]!, t.path[1]!];
+        return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] as const;
+      })
+      .find((p) => !sobreLaPista(aero, p, 30))!;
+    const f = firmeEn(e, medio[0], -medio[1]);
     expect(f.material).toBe("losas");
-    expect(firmeEn(e, todoPavimento, e.runway.x, e.runway.z).material).toBe("asfalto");
+    expect(firmeEn(e, e.runway.x, e.runway.z).material).toBe("asfalto");
   });
 
   it("la de Yvytu Rape es hierba, y lejos de todo es campo", () => {
     const e = scenarioById("yvytu-rape");
-    expect(firmeEn(e, null, e.runway.x, e.runway.z).material).toBe("hierba");
-    expect(firmeEn(e, null, e.runway.x + 5000, e.runway.z + 5000).material).toBe("campo");
+    expect(firmeEn(e, e.runway.x, e.runway.z).material).toBe("hierba");
+    expect(firmeEn(e, e.runway.x + 5000, e.runway.z + 5000).material).toBe("campo");
   });
 });

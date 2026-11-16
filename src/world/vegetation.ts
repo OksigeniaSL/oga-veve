@@ -778,11 +778,11 @@ export class Pavimento {
  * rodeados de asfalto, que es todavía más raro que tenerlos fuera.
  */
 /**
- * Y se exporta porque lo pregunta alguien más: **de qué está hecho el suelo**.
- *
- * Este mapa es la parte cara de esa pregunta —se pinta una vez y se consulta
- * miles— y ya estaba aquí, así que el módulo de superficies lo pide prestado
- * en vez de construir otro igual. Ver `world/superficie.ts`.
+ * **Y no es el pavimento: es donde no se planta nada.** Lleva la franja de
+ * cada calle y el margen de cada plataforma, así que no sirve para saber qué
+ * pisan las ruedas. Lo preguntaba el rozamiento, y junto a cada calle la
+ * hierba frenaba y sonaba como el asfalto en treinta metros. Eso lo contesta
+ * `pavimentoDe`, en `world/superficie.ts`, con el borde dibujado. Ver #193.
  *
  * **Y se pinta una vez por aeródromo, no una por quien lo pide.** Lo pedían el
  * juego, el monte, la ciudad y sus luces, cada uno el suyo y todos del mismo

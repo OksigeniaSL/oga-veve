@@ -40,7 +40,6 @@
  */
 
 import type { Aerodrome } from "./aerodrome";
-import type { Pavimento } from "./vegetation";
 import type { Scenario } from "./scenarios";
 import { sueloEn } from "./superficie";
 
@@ -192,13 +191,8 @@ export function estadoDe(
  * Fuera del pavimento es campo, en cualquier aeródromo. Dentro, el material
  * de lo que dice el fichero y el estado del campo.
  */
-export function firmeEn(
-  escenario: Scenario,
-  pavimento: Pavimento | null,
-  x: number,
-  z: number,
-): Firme {
-  return firmeDe(escenario, sueloEn(escenario, pavimento, x, z));
+export function firmeEn(escenario: Scenario, x: number, z: number): Firme {
+  return firmeDe(escenario, sueloEn(escenario, x, z));
 }
 
 /**

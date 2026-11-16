@@ -230,10 +230,11 @@ export function elSitioDe(aero: Aerodrome, envergadura: number): ElSitio {
 
 /**
  * **Si un punto del mundo está en el campo**: fuera de toda pista, calle y plataforma, con
- * su ancho de verdad. No vale la `Superficie` del rozamiento: el mapa de pavimento lleva
- * treinta metros de margen a cada lado del eje de una calle —la franja sin árboles, ver
- * `MARGEN_RODADURA`—, y con él un avión parado en la hierba a veinte metros de la calle
- * contaba como en el asfalto. En un campo de hierba, la pista y las calles cuentan: son
+ * su ancho de verdad. Se hizo así porque la `Superficie` del rozamiento miraba el mapa de
+ * los árboles, con treinta metros de margen a cada lado del eje de una calle, y un avión
+ * parado en la hierba a veinte metros de la calle contaba como en el asfalto. Eso ya no
+ * pasa —el rozamiento mira `pavimentoDe`, con esta misma geometría: ver #193—, y las dos
+ * preguntas contestan lo mismo. En un campo de hierba, la pista y las calles cuentan: son
  * hierba segada, y salirse es pisar el campo de al lado.
  */
 export function enElCampo(aero: Aerodrome, x: number, z: number): boolean {

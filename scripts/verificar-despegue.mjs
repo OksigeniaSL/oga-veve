@@ -606,13 +606,28 @@ comprobar(
  * que se vaya; lo que se sigue exigiendo es que la torre autorice al parar,
  * en doce segundos, cuando no hay nadie.
  */
+/*
+ * **Y donde no hay torre, no hay lámpara que esperar.** En un campo sin nadie
+ * en la radio —la granja, Ayolas— o con un AFIS, que informa y no autoriza,
+ * el juego lleva la luz por dentro, que es la cuenta de cuándo la pista está
+ * libre para vos, pero no la pinta, a propósito: ver `luzDeTorre` y
+ * `esAfisAqui` en `game.ts`. Este banco esperaba la clase `torre--verde` y en
+ * Yvytu Rape daba «nunca dio verde» con el avión ya en «autorizado»: medía una
+ * lámpara que no existe. Ahí se mira lo que sí hay —la fase que da el juego
+ * con la pista libre, «autorizado» o una de las que vienen detrás—, con el
+ * mismo plazo; y que la lámpara no se pinte, que es lo que hay que ver. Donde
+ * hay torre se mide lo mismo que antes, la lámpara verde.
+ */
 const torre = await page.evaluate(async () => {
   const o = globalThis.__oga;
   const c = o.controles();
   c.throttle = 0;
   c.brakes = 1;
+  const conLampara = o.conFrecuencia?.() !== false && !o.conAfis?.();
+  const LIBRE = new Set(["autorizado", "back-taxi", "alineando", "despegando", "comprometido"]);
   let verde = null;
   let vistas = "";
+  let pintada = false;
   const porques = new Set();
   const t0 = o.reloj();
   let corrido = false;
@@ -622,10 +637,13 @@ const torre = await page.evaluate(async () => {
     const caja = document.querySelector('[data-hud="torre"]');
     const clases = caja?.className ?? "";
     vistas = clases;
+    if (caja && !caja.hidden && /torre--(verde|roja)/.test(clases)) pintada = true;
     const por = o.porQueEsperas?.();
     if (por) porques.add(`${por.porque}${por.numero ? ` (número ${por.numero})` : ""} ${por.matricula ?? ""}`);
-    if (clases.includes("torre--verde")) {
+    if (conLampara ? clases.includes("torre--verde") : LIBRE.has(o.fase())) {
       verde = o.reloj() - t0;
+      // Sin lámpara, un poco más mirando que no se pinte: la luz de dentro ya está verde.
+      if (!conLampara) await new Promise((r) => setTimeout(r, 1500));
       break;
     }
     // A los quince segundos con alguien por medio, el reloj corrido.
@@ -633,18 +651,35 @@ const torre = await page.evaluate(async () => {
     if (i >= 60 && !porques.size) break;
   }
   o.acelerar(1);
-  return { verde, fase: o.fase(), luz: vistas, porques: [...porques] };
+  if (!conLampara) {
+    const caja = document.querySelector('[data-hud="torre"]');
+    if (caja && !caja.hidden && /torre--(verde|roja)/.test(caja.className)) pintada = true;
+  }
+  return { verde, fase: o.fase(), luz: vistas, porques: [...porques], conLampara, pintada };
 });
 const porAlguien = torre.porques.length > 0;
 comprobar(
-  "parando en la doble raya, la torre acaba autorizando",
+  torre.conLampara
+    ? "parando en la doble raya, la torre acaba autorizando"
+    : "parando en la doble raya, sin torre, el juego da la pista por libre",
   torre.verde !== null && (torre.verde < 12 || porAlguien),
   (torre.verde === null
-    ? `nunca dio verde (fase «${torre.fase}», lámpara «${torre.luz}»)`
-    : `verde a los ${torre.verde.toFixed(1)} s de juego`) +
+    ? torre.conLampara
+      ? `nunca dio verde (fase «${torre.fase}», lámpara «${torre.luz}»)`
+      : `nunca la dio por libre (fase «${torre.fase}»)`
+    : torre.conLampara
+      ? `verde a los ${torre.verde.toFixed(1)} s de juego`
+      : `«${torre.fase}» a los ${torre.verde.toFixed(1)} s de juego`) +
     (porAlguien ? ` · esperando por ${torre.porques.join(", ")}` : " · sin nadie por medio"),
   "la torre miraba si habías llegado, no si estabas parado: se cruzaba a toda velocidad",
 );
+if (!torre.conLampara)
+  comprobar(
+    "y sin torre no se pinta la lámpara",
+    !torre.pintada,
+    torre.pintada ? `se pintó (${torre.luz})` : "no se pintó, como debe",
+    "una lámpara verde dice «autorizado», y donde nadie autoriza no la hay",
+  );
 
 /*
  * **Y con el verde dado, la raya que mete en la pista también es asfalto.**
@@ -707,6 +742,85 @@ const despegue = await page.evaluate(async () => {
     while (e < -Math.PI) e += 2 * Math.PI;
     return Math.max(-1, Math.min(1, e * 2));
   };
+  const porElSuelo = (s) => Math.hypot(s.velocity.x, s.velocity.z);
+  /*
+   * **Y el back-taxi se rueda como lo rueda el banco del vuelo entero**, que
+   * sale de la granja con el JAZ 20 y éste no salía.
+   *
+   * Aquí se seguía con el timón del rodaje —el punto más cercano de la ruta
+   * de ahí en adelante— y el back-taxi se pisa a sí mismo: se va por la pista
+   * y se vuelve por ella. En la de hierba de Yvytu Rape, de dieciocho metros,
+   * la vuelta pasa a pocos metros de la ida, así que el punto más cercano
+   * saltaba a la vuelta y el avión daba la media vuelta antes de llegar al
+   * sitio de girar: la bandera del back-taxi no bajaba nunca, el plan pedía
+   * cero al final de su raya y el tope de rodaje le cerraba el gas. Quieto a
+   * 0,0 m/s, dos minutos, y «no llegó a despegar» con todos los aviones.
+   *
+   * Así que se hace lo de `timon` en `verificar-vuelo-entero.mjs`: llevar la
+   * cuenta de por dónde se va **a lo largo de la raya** —buscando cerca de
+   * donde se iba, un poco atrás y treinta metros adelante— y mirar un punto
+   * de la raya unos metros más allá, con la mirada más larga cuanto más
+   * deprisa o más lejos de la raya. Y a la velocidad que pide el juego, con
+   * freno si se pasa, que la media vuelta del final se da a paso de persona.
+   */
+  let firmaDeLaRaya = "";
+  let avanceEnLaRaya = 0;
+  let largosDeLaRaya = [0];
+  const porLaRaya = (s, ruta) => {
+    if (ruta.length < 2) return 0;
+    const ultimo = ruta[ruta.length - 1];
+    const firma = `${ruta.length}:${ruta[0][0].toFixed(1)},${ruta[0][1].toFixed(1)}:${ultimo[0].toFixed(1)},${ultimo[1].toFixed(1)}`;
+    if (firma !== firmaDeLaRaya) {
+      firmaDeLaRaya = firma;
+      largosDeLaRaya = [0];
+      for (let i = 1; i < ruta.length; i++)
+        largosDeLaRaya.push(
+          largosDeLaRaya[i - 1] + Math.hypot(ruta[i][0] - ruta[i - 1][0], ruta[i][1] - ruta[i - 1][1]),
+        );
+      avanceEnLaRaya = 0;
+    }
+    const total = largosDeLaRaya[largosDeLaRaya.length - 1];
+    const aLos = (avance) => {
+      for (let i = 0; i < ruta.length - 1; i++) {
+        if (largosDeLaRaya[i + 1] < avance) continue;
+        const l = largosDeLaRaya[i + 1] - largosDeLaRaya[i];
+        const t = l > 0 ? Math.max(0, (avance - largosDeLaRaya[i]) / l) : 0;
+        return [ruta[i][0] + (ruta[i + 1][0] - ruta[i][0]) * t, ruta[i][1] + (ruta[i + 1][1] - ruta[i][1]) * t];
+      }
+      return ultimo;
+    };
+    const buscar = (desde, hasta) => {
+      let mejor = Infinity;
+      let avance = Math.max(0, desde);
+      for (let i = 0; i < ruta.length - 1; i++) {
+        const a0 = largosDeLaRaya[i];
+        const a1 = largosDeLaRaya[i + 1];
+        if (a1 < desde || a0 > hasta) continue;
+        const l = a1 - a0;
+        const [ax, az] = ruta[i];
+        const [bx, bz] = ruta[i + 1];
+        const u = l > 0 ? ((s.position.x - ax) * (bx - ax) + (s.position.z - az) * (bz - az)) / (l * l) : 0;
+        const aqui = Math.max(desde, Math.min(hasta, a0 + Math.max(0, Math.min(1, u)) * l));
+        const t = l > 0 ? (aqui - a0) / l : 0;
+        const d = Math.hypot(ax + (bx - ax) * t - s.position.x, az + (bz - az) * t - s.position.z);
+        if (d < mejor) {
+          mejor = d;
+          avance = aqui;
+        }
+      }
+      return { mejor, avance };
+    };
+    let hallado = buscar(avanceEnLaRaya - 5, avanceEnLaRaya + 30);
+    if (hallado.mejor > 25) hallado = buscar(0, total);
+    avanceEnLaRaya = hallado.avance;
+    const mirada = Math.max(12, s.airspeed * 1.6, hallado.mejor * 1.5);
+    const mira = aLos(Math.min(total, avanceEnLaRaya + mirada));
+    // Con la ganancia del otro banco: en tierra el alerón es la rueda de morro, y con 2 se pasa.
+    let e = Math.atan2(mira[0] - s.position.x, -(mira[1] - s.position.z)) - s.heading;
+    while (e > Math.PI) e -= 2 * Math.PI;
+    while (e < -Math.PI) e += 2 * Math.PI;
+    return Math.max(-1, Math.min(1, e * 1.2));
+  };
   /*
    * Seiscientas vueltas y no doscientas: dos minutos. Lo pide el **back-taxi**,
    * que son seiscientos y pico metros de pista a ocho metros por segundo antes
@@ -716,6 +830,7 @@ const despegue = await page.evaluate(async () => {
     await new Promise((r) => setTimeout(r, 200));
     const s = o.estado();
     c.throttle = s.airspeed < 8 ? 0.5 : 0;
+    c.brakes = 0;
     /*
      * Tres tramos, y en este orden: mientras quede raya por delante se sigue
      * la raya; agotada la raya —en la doble raya la ruta termina, y seguir
@@ -736,9 +851,13 @@ const despegue = await page.evaluate(async () => {
        * el morro en el rumbo de despegue en ese momento es abortar la
        * maniobra, y eso es lo que hacía este banco: daba media vuelta y
        * despegaba desde donde estuviera. Mientras el juego diga que esto es un
-       * back-taxi, se sigue la raya como en cualquier otro rodaje.
+       * back-taxi, se sigue la raya como en cualquier otro rodaje: por la raya
+       * y a lo que pide el juego. Ver `porLaRaya`.
        */
-      c.aileron = globalThis.__timon(s, ruta);
+      const quiere = o.rodaje?.() ?? 9;
+      c.throttle = porElSuelo(s) < quiere ? 0.6 : 0;
+      c.brakes = porElSuelo(s) > quiere + 1 ? 1 : 0;
+      c.aileron = porLaRaya(s, ruta);
     } else if (s.onRunway) {
       /*
        * **Y siempre en el rumbo de la pista, no en el que se parezca al
