@@ -1698,6 +1698,11 @@ export class Hud {
         <div class="trim" data-hud="trim" hidden role="status">
           <span class="trim__rotulo">TRIM</span>
           <span class="trim__via">
+            <!--
+              La franja de despegue, en tierra antes de correr: donde va la
+              aguja para despegar. Ver setTrim y flight/compensador-de-despegue.ts.
+            -->
+            <span class="trim__franja" data-hud="trim-franja" hidden></span>
             <span class="trim__marca" data-hud="trim-marca"></span>
           </span>
           <!--
@@ -4456,14 +4461,34 @@ export class Hud {
    * Y se esconde en el centro, que es lo que hace que se vea cuando no lo
    * está: un indicador siempre encendido es un indicador que no se mira.
    */
-  setTrim(valor: number): void {
+  setTrim(
+    valor: number,
+    /*
+     * **Y la franja de despegue**, en tierra antes de correr: la de la marca de
+     * despegue de su indicador, que en el de un reactor es verde. Con ella el
+     * indicador sale aunque la aguja esté en el centro, que es justo cuando
+     * hace falta verla: la lista pide llevar la aguja ahí. `null` el resto del
+     * vuelo. Ver `flight/compensador-de-despegue.ts`.
+     */
+    franja: { readonly desde: number; readonly hasta: number } | null = null,
+  ): void {
     const caja = this.root.querySelector<HTMLElement>('[data-hud="trim"]');
     const marca = this.root.querySelector<HTMLElement>('[data-hud="trim-marca"]');
     if (!caja || !marca) return;
     const hay =
       this.instruments !== "none" &&
-      (Math.abs(valor) > 0.005 || this.trimRecienTocado);
+      (Math.abs(valor) > 0.005 || this.trimRecienTocado || franja !== null);
     esconder(caja, !hay);
+    const banda = this.root.querySelector<HTMLElement>('[data-hud="trim-franja"]');
+    if (banda) {
+      esconder(banda, !hay || franja === null);
+      if (hay && franja) {
+        // En la escala de la aguja: arriba es morro arriba, y de ahí el signo.
+        const enLaVia = (t: number): number => Math.max(-1, Math.min(1, -t * ESCALA_DEL_TRIM));
+        banda.style.setProperty("--franja-arriba", String(enLaVia(franja.hasta)));
+        banda.style.setProperty("--franja-abajo", String(enLaVia(franja.desde)));
+      }
+    }
     if (!hay) return;
     const v = Math.max(-1, Math.min(1, valor));
     /*

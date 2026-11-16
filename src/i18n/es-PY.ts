@@ -2794,6 +2794,19 @@ export const ES_PY = {
   "vuelo.avisoDeConfiguracion":
     "Eso que sonó es el avión: avisa que faltan los flaps de despegue. Bajá el motor y poné una muesca.",
   /*
+   * **Y el compensador, la línea de detrás**: la franja verde es la de
+   * despegue del indicador TRIM, que en tierra se pinta en él. El porqué va
+   * dicho para quien no sabe qué es un compensador: soltando, el avión sigue
+   * subiendo. Ver `flight/compensador-de-despegue.ts`.
+   */
+  "vuelo.compensadorParaDespegar":
+    "Para despegar, poné el compensador en la franja verde del TRIM: así, al soltar, el avión sigue subiendo solo.",
+  "vuelo.compensadorDeDespeguePuesto":
+    "El compensador lo puse yo en la franja verde: así, cuando soltés, el avión sigue subiendo solo.",
+  "vuelo.avisoDeConfiguracionCompensador":
+    "Eso que sonó es el avión: avisa que el compensador no está en la franja verde. Bajá el motor y ponelo para despegar.",
+  "palabra.compensador": "Compensador",
+  /*
    * **Y la lista de después del aterrizaje, punto por punto**: lo que tiene
    * tecla lo pide la instructora y lo hace quien vuela; las luces y el
    * transpondedor los hace ella y lo dice al hacerlo. Uno detrás de otro, cada

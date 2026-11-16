@@ -2431,6 +2431,30 @@ export function empujeQueSostiene(a: AircraftConfig, p: ParaSostener): number {
 }
 
 /**
+ * **El timón que sostiene este avión a esa indicada, con esos flaps**, de −1 a
+ * 1: el que anula el par de cabeceo de `step` —`cm0 + cmα·α + cmδ·δ`— con el
+ * ángulo de ataque al que el ala, con lo que suman los flaps, sostiene el peso
+ * que lleve `a`.
+ *
+ * Es la cuenta de `timonDeEquilibrio` para quien no tiene el modelo a mano, y
+ * con los flaps, que aquella no mira: la usa la marca de despegue del
+ * compensador (`compensador-de-despegue.ts`). Con la indicada y al nivel del
+ * mar, que es lo mismo que con la verdadera a su altura: la sustentación va
+ * con la presión dinámica. Vive aquí por lo mismo que `empujeQueSostiene`: si
+ * cambia el par de `step`, cambia esto.
+ */
+export function timonQueSostiene(a: AircraftConfig, indicada: number, flaps: number): number {
+  const qS = 0.5 * SEA_LEVEL_DENSITY * indicada * indicada * a.wingArea;
+  const cl = (masaDe(a) * GRAVITY) / Math.max(1, qS);
+  const alfa = clamp(
+    (cl - a.aero.cl0 - a.flapsLift * flaps) / a.aero.clAlpha,
+    -0.05,
+    a.aero.alphaStall * 0.85,
+  );
+  return clamp(-(a.aero.cm0 + a.aero.cmAlpha * alfa) / a.aero.cmElevator, -1, 1);
+}
+
+/**
  * **El ángulo con el que la estabilidad devuelve el morro**, rad.
  *
  * Hasta la pérdida es el ángulo tal cual: `cmα·α`, la recta de los libros, y

@@ -90,7 +90,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.terrInhibit\.\w+$|^vuelo\.anillo$|^vuelo\.rotorBajo(?:\.toma)?$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.(?:compensadorParaDespegar|compensadorDeDespeguePuesto|avisoDeConfiguracionCompensador)$|^vuelo\.terrInhibit\.\w+$|^vuelo\.anillo$|^vuelo\.rotorBajo(?:\.toma)?$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -2870,6 +2870,25 @@ for (const [id, para] of DE_LAS_LECCIONES_DEL_ROTOR) {
     dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
     ajustes: AJUSTES_EN_CALMA,
   });
+  total += texto.length;
+}
+/*
+ * **Y el compensador del despegue** (16-11-2026): la línea de la lista de
+ * antes de despegar que va detrás de los flaps, la instructora que lo pone en
+ * los peldaños de abajo y lo que explica detrás del aviso de configuración si
+ * lo que falta es él. Del grupo `vuelo`, pero metidas con ellas renumerarían
+ * las ya grabadas: van detrás de todo. Ver
+ * `src/flight/compensador-de-despegue.ts` y el ADR 0027, enmienda H21a.
+ */
+const DEL_COMPENSADOR_DEL_DESPEGUE = [
+  ["vuelo.compensadorParaDespegar", "en el punto de espera, detrás de los flaps: la lista de antes de despegar pide el compensador en su franja verde"],
+  ["vuelo.compensadorDeDespeguePuesto", "en los peldaños de abajo, si no se puso: lo pone la instructora y dice por qué"],
+  ["vuelo.avisoDeConfiguracionCompensador", "detrás del aviso de configuración de despegue, si lo que falta es el compensador: qué sonó y qué se hace"],
+];
+for (const [id, para] of DEL_COMPENSADOR_DEL_DESPEGUE) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
   total += texto.length;
 }
 const AJUSTES_CON_CHISPA = {

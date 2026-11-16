@@ -20886,5 +20886,26 @@
       "use_speaker_boost": false,
       "speed": 0.95
     }
+  },
+  {
+    "id": "vuelo.compensadorParaDespegar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Para despegar, poné el compensador en la franja verde del TRIM: así, al soltar, el avión sigue subiendo solo.",
+    "para": "en el punto de espera, detrás de los flaps: la lista de antes de despegar pide el compensador en su franja verde"
+  },
+  {
+    "id": "vuelo.compensadorDeDespeguePuesto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El compensador lo puse yo en la franja verde: así, cuando soltés, el avión sigue subiendo solo.",
+    "para": "en los peldaños de abajo, si no se puso: lo pone la instructora y dice por qué"
+  },
+  {
+    "id": "vuelo.avisoDeConfiguracionCompensador",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Eso que sonó es el avión: avisa que el compensador no está en la franja verde. Bajá el motor y ponelo para despegar.",
+    "para": "detrás del aviso de configuración de despegue, si lo que falta es el compensador: qué sonó y qué se hace"
   }
 ]

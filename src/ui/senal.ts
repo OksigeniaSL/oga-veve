@@ -1315,6 +1315,28 @@ const TORMENTA = icono(`
         stroke-linecap="round" />
 `);
 
+/**
+ * **El compensador para despegar**: el indicador TRIM con su franja de
+ * despegue y la aguja dentro, y al lado la rueda, que es lo que se mueve.
+ *
+ * Es el mismo indicador que sale en el cuadro, con la franja pintada en tierra
+ * —ver `setTrim` en `hud.ts`—, así que la tarjeta y la pieza se reconocen la
+ * una en la otra sin leer. La franja va por encima del centro, que es morro
+ * arriba, como en el indicador. Ver `flight/compensador-de-despegue.ts`.
+ */
+const COMPENSADOR = icono(`
+  <path d="M7.5 3.2 v17.6" fill="none" stroke="currentColor" stroke-width="1.6"
+        stroke-linecap="round" opacity="0.55" />
+  <path d="M5.4 12 h4.2" fill="none" stroke="currentColor" stroke-width="1.2"
+        opacity="0.55" />
+  <rect x="4.4" y="4.8" width="6.2" height="5.6" rx="1.4" opacity="0.5" />
+  <path d="M3.4 7.6 h8.2" fill="none" stroke="currentColor" stroke-width="2.6"
+        stroke-linecap="round" />
+  <rect x="14.4" y="3.4" width="6.2" height="17.2" rx="3.1" />
+  <path class="senal__hueco" d="M15.8 7 h3.4 v1.3 h-3.4 Z M15.8 10.3 h3.4 v1.3 h-3.4 Z
+           M15.8 13.6 h3.4 v1.3 h-3.4 Z M15.8 16.9 h3.4 v1.3 h-3.4 Z" />
+`);
+
 const TREN = icono(`
   <path d="M12 3.4 v6.2" fill="none" stroke="currentColor"
         stroke-width="2.4" stroke-linecap="round" />
@@ -1738,6 +1760,7 @@ export const DIBUJOS = {
   corregido: CORREGIDO,
   gafas: GAFAS,
   flaps: FLAPS,
+  compensador: COMPENSADOR,
   tren: TREN,
   "tren-en-el-suelo": TREN_EN_EL_SUELO,
   tormenta: TORMENTA,

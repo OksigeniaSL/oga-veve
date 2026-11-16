@@ -630,6 +630,21 @@ body {
   opacity: 0.55;
 }
 
+/*
+ * La franja de despegue: en tierra antes de correr, donde va la aguja. Verde,
+ * como la del indicador de un reactor, y debajo de la aguja. Ver `setTrim`.
+ */
+.trim__franja {
+  position: absolute;
+  left: -4px;
+  width: 11px;
+  border-radius: 2px;
+  background: var(--ok, #7ec86a);
+  opacity: 0.85;
+  top: calc(50% + var(--franja-arriba, 0) * 48%);
+  height: max(4px, calc((var(--franja-abajo, 0) - var(--franja-arriba, 0)) * 48%));
+}
+
 .trim__marca {
   position: absolute;
   left: -5px;

@@ -745,6 +745,14 @@ const torre = await page.evaluate(async () => {
   const c = o.controles();
   c.throttle = 0;
   c.brakes = 1;
+  /*
+   * **Y el compensador a su marca de despegue**, como quien juega con la
+   * lista: la aguja a la franja que pinta el indicador TRIM en la espera. En
+   * cero, soltando los mandos recién despegado, el JAZ 20 volvía a la pista
+   * en cuatro segundos (H20a). Ver `flight/compensador-de-despegue.ts`.
+   */
+  const compensa = o.compensadorDeDespegue?.();
+  if (compensa) c.trim = compensa.marca;
   const conLampara = o.conFrecuencia?.() !== false && !o.conAfis?.();
   const LIBRE = new Set(["autorizado", "back-taxi", "alineando", "despegando", "comprometido"]);
   let verde = null;

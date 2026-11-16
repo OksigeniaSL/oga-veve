@@ -30,6 +30,12 @@
  * no se le puede exigir—; en el de cabina, la lista es de quien vuela, y lo
  * que queda detrás es lo que lleve su avión.
  *
+ * **Y el compensador, detrás de los flaps.** La misma lista lleva la línea
+ * del compensador —«Elevator Trim — SET for takeoff»—, con el mismo reparto:
+ * otra `ListaDeAntesDeDespegar` que lee si está en su franja
+ * (`compensador-de-despegue.ts`) y que habla cuando le toca, una línea detrás
+ * de otra. Ver `leTocaAlCompensador`.
+ *
  * Funciones y clases puras: no hablan ni dibujan. `Game` pone la voz, la
  * tarjeta y la palanca.
  */
@@ -112,7 +118,11 @@ export interface LecturaAntesDeDespegar {
   readonly enTierra: boolean;
   /** La velocidad por el suelo, m/s. */
   readonly porElSuelo: number;
-  /** Si la palanca está en su muesca de despegue. Ver `flapsDeDespegue`. */
+  /**
+   * Si esta línea está hecha: la palanca en su muesca de despegue (ver
+   * `flapsDeDespegue`), o el compensador en su franja (ver
+   * `compensador-de-despegue.ts`).
+   */
   readonly puestos: boolean;
   /** Si hay alguien hablando: en la espera, la lista espera su turno. */
   readonly hablando: boolean;
@@ -121,14 +131,15 @@ export interface LecturaAntesDeDespegar {
 }
 
 /**
- * Lo que toca: `pide`, la tarjeta y la voz que piden los flaps de despegue;
- * `losPone`, la instructora los pone ella y lo dice.
+ * Lo que toca: `pide`, la tarjeta y la voz que piden los flaps de despegue
+ * —o el compensador—; `losPone`, la instructora los pone ella y lo dice.
  */
 export type AntesDeDespegar = "pide" | "losPone";
 
 /**
- * **La lista de antes de despegar**, en lo que tiene de flaps. Una vez por
- * despegue: se rearma al volar, no con un reloj.
+ * **Una línea de la lista de antes de despegar**: la de los flaps, o la del
+ * compensador, que es otra igual. Una vez por despegue: se rearma al volar, no
+ * con un reloj.
  */
 export class ListaDeAntesDeDespegar {
   private pedida = false;
@@ -191,6 +202,34 @@ export class ListaDeAntesDeDespegar {
     this.hechos.push("losPone");
     return "losPone";
   }
+
+  /** Si ya se pidió en esta salida. Ver `leTocaAlCompensador`. */
+  get yaPedida(): boolean {
+    return this.pedida;
+  }
+
+  /** Lo que lleva esperando desde que se pidió, s. */
+  get esperandoDesde(): number {
+    return this.desde;
+  }
+}
+
+/**
+ * **Si le toca ya a la línea del compensador**, que va detrás de la de los
+ * flaps: una línea cada vez, como se lee una lista, y así una voz cada vez.
+ *
+ * Le toca cuando la de los flaps no tiene nada que pedir —el avión no despega
+ * con ellos, o ya están— o cuando se pidieron y pasó la paciencia de la espera
+ * sin ponerlos. Eso último es del peldaño de cabina, donde nadie los pone por
+ * quien vuela: la lista no se queda parada en una línea. Abajo, a esa misma
+ * paciencia los pone la instructora, y ya están.
+ */
+export function leTocaAlCompensador(
+  flaps: ListaDeAntesDeDespegar,
+  l: { readonly conFlaps: boolean; readonly flapsPuestos: boolean },
+): boolean {
+  if (!l.conFlaps || l.flapsPuestos) return true;
+  return flaps.yaPedida && flaps.esperandoDesde >= PACIENCIA_EN_LA_ESPERA;
 }
 
 // ── El aviso de configuración de despegue ──────────────────────────────
@@ -209,12 +248,30 @@ export interface LecturaDelAviso {
   readonly gas: number;
   /** Si los flaps —dónde están, no la palanca— están en el rango de despegue. */
   readonly enElRango: boolean;
+  /**
+   * Si el compensador está en su franja de despegue; sin él, como si lo
+   * estuviera: el avión sin compensador que mover no tiene de qué avisar.
+   * La norma lo pide igual que los flaps: «longitudinal trim devices are in a
+   * position that would not allow a safe takeoff» (14 CFR 25.703 a 2).
+   */
+  readonly compensadorEnLaFranja?: boolean;
+}
+
+/**
+ * **Lo que falta para despegar**, si falta algo: los flaps primero, que son
+ * los que se pidieron antes. Es lo que explica la instructora detrás del
+ * aviso.
+ */
+export function loQueFalta(l: LecturaDelAviso): "flaps" | "compensador" | null {
+  if (!l.enElRango) return "flaps";
+  if (l.compensadorEnLaFranja === false) return "compensador";
+  return null;
 }
 
 /**
  * **El aviso de configuración de despegue**: suena si se mete gas para
- * despegar con los flaps fuera del rango de despegue, en la primera parte de
- * la carrera.
+ * despegar con los flaps fuera del rango de despegue, o con el compensador
+ * fuera de su franja, en la primera parte de la carrera.
  *
  * La norma (14 CFR 25.703, y la CS 25.703 europea) le pide al avión de
  * transporte un aviso sonoro que se active solo «during the initial portion
@@ -223,7 +280,8 @@ export interface LecturaDelAviso {
  * fase `despegando`, que se acaba en `comprometido`.
  *
  * **Suena una vez por suceso**, al empezar, y se rearma cuando cambia lo que
- * lo motiva —se quita el gas o se ponen los flaps—, no con un reloj. Uno de
+ * lo motiva —se quita el gas, o se arregla todo lo que falta—, no con un
+ * reloj: arreglar los flaps con el compensador todavía fuera no lo rearma. Uno de
  * verdad suena mientras dure; aquí, como la sirena del automático, es un
  * tono de una vez y la instructora detrás.
  *
@@ -240,7 +298,10 @@ export class AvisoDeConfiguracion {
   /** `true` en el paso en el que empieza a sonar. */
   paso(l: LecturaDelAviso): boolean {
     const mal =
-      l.enTierra && l.fase === "despegando" && l.gas >= GAS_PARA_EL_AVISO && !l.enElRango;
+      l.enTierra &&
+      l.fase === "despegando" &&
+      l.gas >= GAS_PARA_EL_AVISO &&
+      loQueFalta(l) !== null;
     const empieza = mal && !this.sonando;
     this.sonando = mal;
     return empieza;
