@@ -8,7 +8,7 @@
  * principio, un final y alguien que las cuente:
  *
  * 1. **`estacionario`, quedarse quieto.** «Hovering is the most challenging
- *    part of flying a helicopter» (capítulo 9, «Hovering»): el rotor mueve su
+ *    part of flying a helicopter» (capítulo 2, «Hovering Flight»): el rotor mueve su
  *    propio aire, y ese aire empuja el helicóptero a todos lados. Por eso
  *    sostenerlo quieto diez segundos es un logro de verdad, y se celebra.
  * 2. **`par`, el par y el pedal.** Lo que el eje da al rotor lo devuelve el

@@ -494,7 +494,9 @@ Salen del manual de helicópteros de la FAA (*Helicopter Flying Handbook*, FAA-H
 se cita en `CREDITOS.md` sin su logotipo:
 
 1. **Quedarse quieto** (`estacionario`): el estacionario es lo más difícil de volar un helicóptero —el rotor mueve su
-   propio aire, y ese aire lo empuja— (capítulo 9, «Hovering»), así que sostenerlo diez segundos se celebra.
+   propio aire, y ese aire lo empuja—: «Hovering is the most challenging part of flying a helicopter. This is because a
+   helicopter generates its own gusty air while in a hover» (capítulo 2, «Hovering Flight»). Así que sostenerlo diez
+   segundos se celebra.
 2. **El par** (`par`): más colectivo, más par, y el morro se va; el pedal mueve el rotor de cola, y se queda
    (capítulos 2 y 3).
 3. **El efecto suelo** (`efecto-suelo`): cerca del suelo sostenerse cuesta menos (capítulo 2), y se ve en la aguja de la
