@@ -52,6 +52,8 @@ un helicóptero concreto con lo que publica su manual, sin datos internos de nad
   se va a la izquierda y se pisa el pedal derecho. Y cuelga en estacionario con el lado derecho un poco bajo, porque el
   rotor de cola empuja a la izquierda y el disco se inclina para pararlo.
 - **El efecto suelo**, con la fórmula de Cheeseman y Bennett, que se apaga con la velocidad.
+- **El anillo turbillonario**, con el modelo empírico de Johnson (NASA/TP-2005-213477): bajando casi en vertical a
+  la velocidad de su propia estela, el rotor deja de sostener y se hunde solo. Ver la enmienda H16b.
 - **Los motores con su regulador**, y el rotor como un volante: si se pide más potencia de la que hay, las vueltas
   caen y el empuje con ellas; sin motor, el aire que sube por el disco lo hace girar. Eso es la autorrotación, y en
   ella el par cambia de lado: se pisa el otro pedal.
@@ -247,15 +249,144 @@ informe de la NASA. Cada número dice cuál es en `super-puma.ts`.
 
 ## Lo que no hace, todavía
 
-- **El anillo turbillonario**, al bajar casi en vertical a la velocidad de lo que el rotor echa hacia abajo. La cantidad
-  de movimiento no vale ahí; es real y es de las cosas que se enseñan, así que pide su propio modelo cuando haya misión
-  que lo toque.
+- ~~**El anillo turbillonario**~~: hecho, con el modelo de Johnson de la NASA. Ver la enmienda H16b, al final.
 - **El acoplamiento entre cabeceo y alabeo** del rotor, que existe; la estabilización lo esconde y se deja para cuando
   haga falta.
 - **La velocidad máxima** no la pone la potencia: el modelo pasaría de los 167 kt de la ficha (TCDS, III.8). Lo que
   limita de verdad es la pala que se retira; en el juego será un aviso, en el paso 3.
 - **Cuánto tarda de verdad en arrancar** el Super Puma, y desde qué vueltas se pone su freno del rotor: son supuestos
   hasta que aparezca su manual de vuelo.
+
+## Enmienda H16b (16-11-2026) — El anillo turbillonario
+
+**Sale de «Lo que no hace, todavía».** Bajando casi en vertical a la velocidad del aire que echa el rotor, el
+rotor se mete en su propia estela: los torbellinos de las puntas no se van, se juntan en un anillo, y el aire da
+vueltas por el disco en vez de atravesarlo. Es real, es de lo que se enseña —el issue #111 lo pide como otra de la
+familia de «lo instintivo es lo equivocado»— y la cantidad de movimiento no vale ahí: supone una estela limpia, con el
+aire yendo en un solo sentido, y bajando entre 0 y 2 veces la inducida en estacionario no lo hay. La solución que daba
+el modelo seguía la rama de subir, estable, como si no pasara nada.
+
+### Con qué modelo
+
+**El de Johnson** (W. Johnson, *Model for Vortex Ring State Influence on Rotorcraft Flight Dynamics*,
+NASA/TP-2005-213477, 2005, de dominio público), tablas 3 y 4. Es una extensión paramétrica de la cantidad de
+movimiento para la inducida media, hecha a propósito para la dinámica de vuelo y para simuladores en tiempo real
+«including training simulations», y se construye con el **borde de la inestabilidad medido**: el Dauphin de los
+ensayos de Taghizad y el V-22 en vuelo, y los rotores de túnel de Drees, Castles y Betzina. No pide nada del rotor
+—ni solidez ni torsión—, solo vh = √(T/2ρA) del empuje del instante, así que vale para el Super Puma sin ajustar nada.
+El modelo de la NASA (Heffley y Mnich) ya resuelve la inducida junto con el empuje de la pala; aquí solo cambia,
+dentro de esa zona, la relación entre los dos.
+
+Lo que dice, con la velocidad vertical Vz (positiva subiendo) y la del plano Vx en múltiplos de vh, y Vz + v el aire
+que atraviesa el disco:
+
+| Punto | Vz/vh | Qué es |
+| --- | --- | --- |
+| D | −0,2 | Donde empieza a apartarse de la cantidad de movimiento |
+| N | −0,45 | Mínimo del aire total, 0,85: el borde de arriba de la inestabilidad |
+| X | −1,5 | Máximo, 1,25: el borde de abajo |
+| E | −2,0 | Donde vuelve a la base, ya con el aire subiendo por el disco |
+| M | Vx/vh = 0,95 | Con esta velocidad en el plano el anillo ya no existe; N y X se juntan antes |
+
+**Entre N y X, bajar más deprisa hace pasar más aire por el disco**, y con el mismo colectivo eso es menos empuje: bajar
+hace bajar más. Ésa es la inestabilidad, y es lo que la cantidad de movimiento no puede dar. Más abajo de X el
+modelo vuelve a ser estable, y ahí se queda el helicóptero hundiéndose deprisa.
+
+Tres decisiones, todas para no tocar lo que ya estaba:
+
+- **κ = 1 en la inducida y f = 1.** Las pérdidas de las puntas, el 1,15 de siempre, siguen en la potencia
+  (`FACTOR_INDUCIDO`); Johnson las mete en la inducida, y meterlas aquí cambiaría el estacionario y los techos
+  contrastados con Airbus. La f de Johnson, que deja rebajar la inestabilidad, entera.
+- **Fuera de la zona, la cantidad de movimiento tal cual, al decimal.** Bajando menos de 0,2 vh o con más de
+  0,95 vh en el plano, `resolverDisco` devuelve lo de siempre, y en el borde los dos modelos dan lo mismo —en D sin
+  pendiente; en M lo que añade el anillo se anula—, así que no hay salto. Las pruebas de `helicoptero.test.ts` y
+  `fdm-helicoptero.test.ts` pasan sin tocarlas, y `anillo-turbillonario.test.ts` comprueba la igualdad en estacionario,
+  subidas, crucero, autorrotación y efecto suelo.
+- **Sin el retraso de Johnson.** Él pone un retraso de primer orden a la inducida para el tiempo que tarda en formarse
+  el anillo; aquí es casi estática, que con el paso de 1/240 s y la masa del Super Puma ya tarda segundos en notarse.
+  Si hace falta afinar la entrada, es lo primero que se pone.
+
+Solo en el rotor principal. **El de cola también entra en anillo** —es uno de los mecanismos de la pérdida de eficacia
+del rotor de cola— pero no se ha medido aquí y es otra lección.
+
+### Lo que da, al peso máximo y a 1.500 m
+
+Con vh ≈ 14,4 m/s:
+
+- **Quieto, el colectivo una décima por debajo del que sostiene, y suelto.** A los cuatro segundos baja a 5 m/s, a los
+  seis pasa N, a unos 6,5 m/s, y sin tocar nada se va a 17 m/s a los doce y se queda en **26 m/s, unos 5.100 pies por
+  minuto**, a 1,76 vh. El manual de la FAA: «a descent rate that may approach 6,000 feet per minute». Con la cantidad
+  de movimiento de antes, el mismo colectivo se quedaba en 8,5 m/s, estable; con media décima, 4 m/s antes y ahora,
+  que eso no llega a N.
+- **Lo mismo volando a 40 nudos**: baja a 5 m/s y se queda; no entra.
+- **Dentro, subir el colectivo no saca.** Bajando a 24 m/s, una décima y media, tres o la palanca entera: los motores
+  al tope (de 2.350 a 2.470 kW), las vueltas del rotor a 250, 224 y 190 rpm —por debajo de las 245 de la ficha con
+  motor—, y sigue bajando a 24 o 25 m/s.
+- **Con el cíclico adelante sale**, el morro doce grados abajo y el colectivo donde estaba: fuera del anillo a los ocho
+  segundos, a los diez baja a 6 m/s con 44 nudos, y se pierden unos doscientos metros, con el rotor en sus 265 rpm.
+  Por eso se enseña con altura de sobra: la FAA pide practicarlo para salir por encima de mil pies.
+- **En la estabilización de estacionario, la palanca abajo baja a 4 m/s y se queda**: 0,27 vh, entre D y N, nunca
+  dentro.
+
+**Y en el juego**, con un banco de navegador en Taguató, a 600 m sobre el helipuerto de Los Rodeos —unos 1.230 m de
+altitud— y quieto sobre el sitio con el cíclico, como un piloto: el colectivo una décima abajo y suelto, entra a 5,9 m/s
+(0,46 vh), sale la tarjeta y se pide la frase una vez, y en doce segundos baja a 20,6 m/s, 4.060 pies por minuto. Con
+el cíclico adelante sale con 43 nudos, bajando a 5,9 m/s y 174 m más abajo, el rotor al 100 %. En Tukã, con la palanca
+abajo, no pasa de 4,6 m/s ni entra.
+
+En la primera pasada el banco no llevaba el cíclico, y el helicóptero, colocado en el aire con el morro a nivel, se fue
+hacia delante a 9 m/s en doce segundos: con el mismo colectivo no entró, porque esa velocidad ya lo saca de la zona.
+Por eso el banco sostiene el sitio con el cíclico, que es como se coge el anillo de verdad: queriendo quedarse quieto
+fuera del efecto suelo mientras se baja, «attempting to hover OGE without maintaining precise altitude control».
+
+**Lo que no da, y por qué.** El manual de la FAA dice que subir el colectivo, además de no sacar, **hunde más**:
+«this only results in increasing the stalled area of the rotor, thereby increasing the rate of descent». Es la pérdida
+de la parte de dentro de las palas, que con el aire subiendo por ahí trabaja con mucho ángulo. Este modelo no tiene
+pérdida de pala —la sustentación del elemento de pala es lineal—, así que lo que da es lo que dice Johnson: «while the
+response to control is still a positive acceleration increment, the control authority is not sufficient to reverse
+the motion». O sea: no se sale, se gasta toda la potencia y las vueltas se caen del verde, que en el de verdad es
+justo meter las palas en pérdida; pero la bajada no crece. Y al principio, antes de que se desarrolle —a 10 m/s—, un
+colectivo a tiempo sí frena, que es lo que dice Johnson y en lo que se apoya la técnica de Vuichard, la que el manual
+de 2019 recoge: potencia y cíclico **a un lado**, para salir de la columna de aire. Lo que saca siempre, a cualquier
+altura de la entrada, es lo que dicen las dos fuentes y lo que se enseña: **cíclico adelante**.
+
+### Dónde se ve
+
+**El modelo es el mismo en los cuatro peldaños**, como todo el de este ADR: la física no cambia de peldaño. Lo que
+cambia es la estabilización, y con ella sale sola la línea del #111, «con cuatro años esto no existe»:
+
+- **Guyrami y Tukã** llevan la de estacionario, que manda la velocidad vertical y bajando no pide más de 4 m/s
+  (`SUBE_EN_ESTACIONARIO`): de 0,27 a 0,34 vh según el peso y la altura, por debajo de N. No se entra, y no hay
+  nada que esconder ni que falsear.
+- **Taguató y Taguató Ruvicha** llevan la de actitud, con el colectivo de verdad: ahí se entra si se baja así.
+
+**Ninguna caja suena.** No consta que el AS 332 L1 ni el H215 lleven un aviso de anillo turbillonario —no lo trae la
+ficha de la EASA ni nada público de Airbus que se haya encontrado—, y lo que el avión no lleva no se inventa
+(regla 4). Así que lo cuenta quien lo contaría sentada al lado, como en la avioneta (`flight/escalera.ts`):
+
+- **La tarjeta**, al pasar N, con un dibujo nuevo, `ciclico-adelante`: el helicóptero de perfil con el morro abajo y
+  una flecha hacia delante. El dibujo en los cuatro peldaños, «¡Adelante!» en Tukã y la frase desde Taguató: «Te
+  hundís en el viento de tu rotor: cíclico adelante y ganá velocidad».
+- **La instructora, con calma, en los tres de abajo** (`laInstructoraLoExplica`), que en la práctica es Taguató: qué
+  pasa, que el colectivo no saca y cómo se sale (`vuelo.anillo`, al final de la lista de grabar y esperando su toma).
+  En Taguató Ruvicha, la tarjeta sola, como toda explicación en el peldaño de cabina.
+- **Solo con los motores dando potencia**, del 20 al 100 % de la que hay, que es la segunda condición del manual de
+  la FAA. Bajando en vertical sin motor, el rotor cae en la misma zona de la curva —entre X y E—, pero eso es la
+  autorrotación (#110), y lo que se cuenta ahí es otra cosa.
+- **Se rearma al salir de la zona entera**, no con el reloj: un aviso vuelve cuando cambia algo que pasa.
+
+Ver `inducidaEnDescenso` y `zonaDelAnillo` en `flight/helicoptero.ts`, `mirarElAnillo` en `game.ts`, y
+`flight/anillo-turbillonario.test.ts`.
+
+**Fuentes**
+
+- W. Johnson, *Model for Vortex Ring State Influence on Rotorcraft Flight Dynamics*, NASA/TP-2005-213477, NASA Ames,
+  diciembre de 2005: el modelo (tablas 3 y 4), la caída del Dauphin y la recuperación —«a drop in collective and
+  forward cyclic for a helicopter»—.
+- FAA, *Helicopter Flying Handbook*, FAA-H-8083-21B (2019), capítulo 11, «Vortex Ring State»: las tres condiciones
+  —bajar casi en vertical al menos 300 pies por minuto, con del 20 al 100 % de la potencia y por debajo de la
+  velocidad de sustentación por traslación—, los 6.000 pies por minuto, lo que hace el colectivo, la recuperación de
+  siempre —ganar velocidad y bajar algo el colectivo— y la de Vuichard.
 
 ## Enmienda H16a (16-11-2026): la autorrotación hasta el suelo (#110)
 

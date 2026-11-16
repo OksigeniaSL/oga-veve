@@ -90,7 +90,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.terrInhibit\.\w+$|^vuelo\.rotorBajo(?:\.toma)?$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.terrInhibit\.\w+$|^vuelo\.anillo$|^vuelo\.rotorBajo(?:\.toma)?$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -2777,11 +2777,37 @@ for (const [id, para] of DEL_TERR_INHIBIT) {
   filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
   total += texto.length;
 }
+if (!filas.some((f) => f.id === "cabina.flapsUp")) {
+  filas.push({
+    id: "cabina.flapsUp",
+    voz: "cabina",
+    idioma: "en",
+    texto: "flaps up",
+    para: "tras despegar, a su altura y su velocidad: la orden de recoger los flaps",
+  });
+  total += "flaps up".length;
+}
+/*
+ * **Y el anillo turbillonario del helicóptero** (16-11-2026): la instructora
+ * cuenta, con calma, que el rotor se hunde en su propio viento, que subir el
+ * colectivo no saca y que se sale hacia delante. Del grupo `vuelo`, pero metida
+ * con ellas renumeraría las ya grabadas: va detrás de todo. Ver
+ * `src/flight/helicoptero.ts` (`zonaDelAnillo`) y el ADR 0026, enmienda H16b.
+ */
+const DEL_ANILLO = [
+  ["vuelo.anillo", "en el helicóptero, al entrar en el anillo turbillonario, en los peldaños de abajo: qué pasa y cómo se sale"],
+];
+for (const [id, para] of DEL_ANILLO) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
+}
 /*
  * **Y la autorrotación del helicóptero** (16-11-2026, #110): la presentación, lo
  * que pasa al pararse los motores y en la recogida —con la ayuda en Tukã, a
  * mano en Taguató— y el cierre; y lo que cuenta la instructora detrás del aviso
- * de vueltas bajas del rotor. Detrás de todo, por lo mismo que las de arriba, y
+ * de vueltas bajas del rotor. Detrás de todo, también del anillo, por lo mismo que las de arriba, y
  * en calma como todo ejercicio. Ver `src/flight/ejercicios.ts` y el ADR 0026.
  */
 const DE_LA_AUTORROTACION = [
@@ -2807,16 +2833,6 @@ for (const [id, para] of DE_LA_AUTORROTACION) {
     ajustes: AJUSTES_EN_CALMA,
   });
   total += texto.length;
-}
-if (!filas.some((f) => f.id === "cabina.flapsUp")) {
-  filas.push({
-    id: "cabina.flapsUp",
-    voz: "cabina",
-    idioma: "en",
-    texto: "flaps up",
-    para: "tras despegar, a su altura y su velocidad: la orden de recoger los flaps",
-  });
-  total += "flaps up".length;
 }
 const AJUSTES_CON_CHISPA = {
   stability: 0.35,

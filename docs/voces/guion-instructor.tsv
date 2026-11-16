@@ -706,3 +706,12 @@
 706	vuelo.avisoDeConfiguracion	Eso que sonó es el avión: avisa que faltan los flaps de despegue. Bajá el motor y poné una muesca.
 707	vuelo.terrInhibit.apagado	Esta pista el avión no la conoce, así que le apagué el aviso de los cerros de adelante. Si bajamos de más, igual nos avisa.
 708	vuelo.terrInhibit.prendido	Ya estamos lejos de esa pista: le volví a prender al avión el aviso de los cerros.
+709	vuelo.anillo	Estás bajando dentro del viento que echa tu rotor, y así no te sostiene. Subir el colectivo no te saca: cíclico adelante, ganá velocidad, y salís.
+710	ejercicio.autorrotacion.antes	Hoy practicamos la autorrotación. En un ratito se van a parar los motores, a propósito, y no nos vamos a caer: el rotor sigue girando con el aire que sube, bajamos planeando y nos posamos con su giro
+711	ejercicio.autorrotacion.ahora	Ya se pararon los motores. Fijate: no nos caemos. El aire que sube hace girar el rotor, y bajamos planeando, tranquilos
+712	ejercicio.autorrotacion.ahoraTuyo	Ya se pararon los motores. Colectivo abajo enseguida, para que el rotor no pierda vueltas, y la nariz para sostener setenta nudos. El aire que sube lo hace girar
+713	ejercicio.autorrotacion.recogida	Ya cerca del suelo levantamos la nariz: frenamos, y el rotor gira más rápido. Con ese giro nos posamos suave
+714	ejercicio.autorrotacion.recogidaTuya	Cien pies: levantá la nariz para frenar. Cerca del suelo, nivelá y subí el colectivo, para posarte con el giro del rotor
+715	ejercicio.autorrotacion.bien	Ejercicio hecho: sin motor, el helicóptero bajó entero. El rotor siguió girando con el aire que sube, y con su giro te posaste. Así lo practican los pilotos de helicóptero
+716	vuelo.rotorBajo	Ese sonido avisa que el rotor gira despacio. Colectivo abajo, que el aire que sube le devuelve las vueltas
+717	vuelo.rotorBajo.toma	Ese sonido avisa que el rotor gira más despacio. Ahora es lo normal: gastamos su giro para posarnos suave

@@ -2617,6 +2617,8 @@ export const ES_PY = {
   "hud.terrInhibitApagado":
     "TERR INHIBIT: el avión no conoce esta pista, y le apagué el aviso de los cerros de adelante",
   "hud.terrInhibitPrendido": "Ya lejos de esa pista: el avión vuelve a avisar de los cerros de adelante",
+  // El anillo turbillonario, en la tarjeta: lo que pasa y lo que se hace. Ver `vuelo.anillo`.
+  "hud.anillo": "Te hundís en el viento de tu rotor: cíclico adelante y ganá velocidad",
   "hud.pulsaTerrInhibit": "Esta pista no está en la base del TAWS: apretá TERR INHIBIT",
   "hud.sueltaTerrInhibit": "A más de quince millas de la pista: volvé a apretar TERR INHIBIT",
   "hud.pilotoAutomatico": "Piloto automático",
@@ -2823,6 +2825,14 @@ export const ES_PY = {
   "vuelo.terrInhibit.apagado":
     "Esta pista el avión no la conoce, así que le apagué el aviso de los cerros de adelante. Si bajamos de más, igual nos avisa.",
   "vuelo.terrInhibit.prendido": "Ya estamos lejos de esa pista: le volví a prender al avión el aviso de los cerros.",
+  /*
+   * **El anillo turbillonario del helicóptero**, contado con calma en los tres
+   * peldaños de abajo: qué pasa, que lo instintivo no saca, y cómo se sale. El
+   * Super Puma no lleva una caja que lo avise: lo dice ella. Ver
+   * `zonaDelAnillo` en `flight/helicoptero.ts` y el ADR 0026.
+   */
+  "vuelo.anillo":
+    "Estás bajando dentro del viento que echa tu rotor, y así no te sostiene. Subir el colectivo no te saca: cíclico adelante, ganá velocidad, y salís.",
   "vuelo.salenLosFrenosDeTierra":
     "¿Viste? Al tocar se levantaron los paneles del ala: el ala deja de sostener el avión y las ruedas frenan",
   "vuelo.sinFrenosDeTierra":
@@ -2989,6 +2999,7 @@ export const ES_PY = {
   "palabra.aerofrenos": "Aerofrenos",
   "palabra.terrInhibitApagado": "Apagado",
   "palabra.terrInhibitPrendido": "Prendido",
+  "palabra.anillo": "¡Adelante!",
   "vuelo.despacio": "Más despacio",
   // El «alto» del señalero: dice dónde se para, y la tarjeta lleva al lado la
   // tecla del freno. Sin eso, el gesto dice qué pero no cómo.

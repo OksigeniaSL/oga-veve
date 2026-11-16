@@ -973,6 +973,7 @@ export const EN: Dictionary = {
   "hud.terrInhibitApagado":
     "TERR INHIBIT: the airplane doesn't know this runway, so I switched off its warning about hills ahead",
   "hud.terrInhibitPrendido": "Far from that runway now: the airplane warns about hills ahead again",
+  "hud.anillo": "Sinking into your own rotor's downwash: cyclic forward and pick up speed",
   "hud.pulsaTerrInhibit": "This runway isn't in the TAWS database: press TERR INHIBIT",
   "hud.sueltaTerrInhibit": "More than fifteen miles from the runway: press TERR INHIBIT again",
   "hud.pilotoAutomatico": "Autopilot",
@@ -1130,6 +1131,8 @@ export const EN: Dictionary = {
   "vuelo.terrInhibit.apagado":
     "The airplane doesn't know this runway, so I switched off its warning about hills ahead. If we get too low, it will still warn us.",
   "vuelo.terrInhibit.prendido": "We're far from that runway now: I switched the hill warning back on.",
+  "vuelo.anillo":
+    "You're sinking into the air your own rotor pushes down, and it can't hold you there. More collective won't get you out: cyclic forward, pick up speed, and you're clear.",
   "vuelo.salenLosFrenosDeTierra":
     "See that? The panels on the wing came up when we touched down: the wing stops holding the plane up and the wheels can brake",
   "vuelo.sinFrenosDeTierra":
@@ -1210,6 +1213,7 @@ export const EN: Dictionary = {
   "palabra.aerofrenos": "Speed brakes",
   "palabra.terrInhibitApagado": "Off",
   "palabra.terrInhibitPrendido": "On",
+  "palabra.anillo": "Forward!",
   "vuelo.despacio": "Slow down",
   "vuelo.alto": "Stop here",
   "senalero.alto": "Wands crossed overhead: that means stop",
