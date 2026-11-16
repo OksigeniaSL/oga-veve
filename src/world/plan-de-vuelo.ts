@@ -697,21 +697,73 @@ const HOLGURA_DE_CLAVE_C = 4.5;
 const SOLAPADOS = 8;
 
 /**
+ * **El hueco de la plataforma al que pertenece un puesto**, sacado de su
+ * `ref`: el número sin la letra de detrás. «1», «1A» y «1A - 1» son el hueco
+ * «1»; «H43» es el «H43». Sin `ref`, o con una que junta dos números
+ * distintos, ninguno.
+ *
+ * Es como se pintan en España los puestos alternativos de un mismo sitio: el
+ * AIP de El Hierro publica el 1 y el 1A, los dos con «MAX SPAN 28.6 m», y del
+ * uno dice «INCOMP. 1A» y del otro «INCOMP. 1». Son el mismo hueco en dos
+ * versiones —se usa uno o el otro, nunca los dos a la vez—, y contarlos como
+ * vecinos dejaba la plataforma entera sin sitio para un ala de veintiséis
+ * metros. Ver `mismoHueco`.
+ */
+export function huecoDeLaRef(ref: string | null): string | null {
+  if (!ref) return null;
+  const partes = ref.toUpperCase().split(/[^0-9A-Z]+/).filter(Boolean);
+  const bases = new Set(partes.map((p) => p.replace(/(\d)[A-Z]$/, "$1")));
+  return bases.size === 1 ? [...bases][0]! : null;
+}
+
+/**
+ * **Si dos puestos son el mismo hueco**: se solapan —un puesto grande dibujado
+ * encima de dos pequeños—, o son dos versiones del mismo puesto, con el mismo
+ * número en la `ref` y más cerca que un ala de clave C. Con la distancia,
+ * porque un «1A» de una terminal y un «1» de otra en un aeropuerto grande no
+ * tienen nada que ver. Ver `huecoDeLaRef`.
+ */
+function mismoHueco(
+  a: { readonly ref: string | null; readonly xy: Punto },
+  b: { readonly ref: string | null; readonly xy: Punto },
+): boolean {
+  const d = Math.hypot(a.xy[0] - b.xy[0], a.xy[1] - b.xy[1]);
+  if (d < SOLAPADOS) return true;
+  const hueco = huecoDeLaRef(a.ref);
+  return hueco !== null && hueco === huecoDeLaRef(b.ref) && d < ENVERGADURA_DE_CLAVE_C;
+}
+
+/**
  * **Si un puesto deja sitio a un ala de este tamaño**: el puesto más cercano,
- * sin contar los que se solapan con él, está al menos a `hueco` metros. Ver
- * `puestosDeLinea`.
+ * sin contar los de su mismo hueco, está al menos a `hueco` metros. Ver
+ * `puestosDeLinea` y `mismoHueco`.
  */
 function conSitioParaElAla(
-  xy: Punto,
-  todos: readonly { readonly xy: Punto }[],
+  puesto: { readonly ref: string | null; readonly xy: Punto },
+  todos: readonly { readonly ref: string | null; readonly xy: Punto }[],
   hueco: number,
 ): boolean {
   for (const o of todos) {
-    const d = Math.hypot(o.xy[0] - xy[0], o.xy[1] - xy[1]);
-    if (d >= SOLAPADOS && d < hueco) return false;
+    if (mismoHueco(puesto, o)) continue;
+    if (Math.hypot(o.xy[0] - puesto.xy[0], o.xy[1] - puesto.xy[1]) < hueco) return false;
   }
   return true;
 }
+
+/**
+ * **Cómo aparca un avión de línea en un campo**, de mejor a peor:
+ *
+ * - `con-sitio`: hay puestos con sitio para sus alas aunque todos los de al
+ *   lado estén ocupados. Es lo de un aeropuerto con plataforma de línea.
+ * - `deja-libre-el-de-al-lado`: una plataforma pequeña, con los puestos
+ *   pintados más juntos que sus alas. Ocupa uno y deja libre el de al lado,
+ *   como lo aparca el señalero: el ala se mide contra los que están ocupados
+ *   de verdad, y el tráfico no aparca luego a su lado. Ver `puestosDelTrafico`
+ *   y `tuPuesto` en `trafico.ts`.
+ * - `de-avioneta`: ni así; la regla de la avioneta. Con un avión que el campo
+ *   admite —`cabeEn`—, no pasa en ninguno: lo mira `puestos-de-linea.test.ts`.
+ */
+export type ComoAparcaDeLinea = "con-sitio" | "deja-libre-el-de-al-lado" | "de-avioneta";
 
 /**
  * **Lo que tienen que separarse los ejes de tu avión y uno del tráfico** en
@@ -2241,7 +2293,8 @@ export class PlanDeVuelo {
    *
    * Así que el de línea llega a un puesto de línea donde quepa —ver
    * `puestosDeLinea`— y, de esos, `puestoDeLlegada` coge el más cercano
-   * rodando. Si en un campo no cabe en ninguno, los de siempre.
+   * rodando. En una plataforma pequeña, uno que deje sitio a sus alas con el
+   * tráfico que haya: ver `ComoAparcaDeLinea`.
    */
   private puestosParaLlegar(): { ref: string | null; xy: Punto }[] {
     if (!esDeLinea(this.avion)) return this.puestosCandidatos();
@@ -2271,14 +2324,93 @@ export class PlanDeVuelo {
    * los de su plataforma, que es de donde sale un avión de línea de verdad.
    */
   private puestosDeLinea(): { ref: string | null; xy: Punto }[] {
-    if (this.deLineaGuardados) return this.deLineaGuardados;
-    const todos = this.aero.parkingPositions ?? [];
-    const hueco = Math.min(this.avion.wingSpan, ENVERGADURA_DE_CLAVE_C) + HOLGURA_DE_CLAVE_C;
-    const caben = this.puestosEnElAsfalto().filter(
-      (p) => this.cabeDeLinea(p.xy) && conSitioParaElAla(p.xy, todos, hueco),
+    if (!this.deLineaGuardados) {
+      const todos = this.aero.parkingPositions ?? [];
+      const hueco = Math.min(this.avion.wingSpan, ENVERGADURA_DE_CLAVE_C) + HOLGURA_DE_CLAVE_C;
+      const sinPared = this.puestosEnElAsfalto().filter((p) => this.cabeDeLinea(p.xy));
+      const conSitio = sinPared.filter((p) => conSitioParaElAla(p, todos, hueco));
+      /*
+       * **Y en una plataforma pequeña, uno sí y otro no.** En Encarnación los
+       * cuatro puestos están a veinte metros y en Pedro Juan Caballero a
+       * veinticuatro: con todos ocupados no cabe nada más grande que una
+       * avioneta, y el JAZ 90 se iba a la regla de la avioneta. Pero esas
+       * plataformas no se llenan nunca de aviones de línea: el señalero pone
+       * al grande en un puesto y deja vacío el de al lado. Así que ahí el ala
+       * se mide contra los ocupados —ver `libresDelTrafico`— y no contra los
+       * pintados. El AIP de los dos no publica puestos («NIL», AD 2.x-9): los
+       * pintó el juego, y la plataforma es la que es.
+       */
+      if (conSitio.length) {
+        this.deLineaGuardados = conSitio;
+        this.comoAparca = "con-sitio";
+      } else if (sinPared.length) {
+        this.deLineaGuardados = sinPared;
+        this.comoAparca = "deja-libre-el-de-al-lado";
+      } else {
+        this.deLineaGuardados = this.puestosCandidatos();
+        this.comoAparca = "de-avioneta";
+      }
+    }
+    return this.comoAparca === "deja-libre-el-de-al-lado"
+      ? this.libresDelTrafico(this.deLineaGuardados)
+      : this.deLineaGuardados;
+  }
+
+  /**
+   * **De estos puestos, los que dejan sitio a tus alas con el tráfico que hay
+   * aparcado**: su semiala, la tuya y la holgura de la clave C entre las dos
+   * puntas. Si no queda ninguno, todos: mejor un puesto justo que no tener
+   * adónde ir. Ver `puestosDeLinea`.
+   */
+  private libresDelTrafico(
+    puestos: { ref: string | null; xy: Punto }[],
+  ): { ref: string | null; xy: Punto }[] {
+    const otros = this.puestosDelTrafico();
+    if (!otros.length) return puestos;
+    const mia = this.avion.wingSpan / 2;
+    const libres = puestos.filter((p) =>
+      otros.every(
+        (o) =>
+          Math.hypot(o.xy[0] - p.xy[0], o.xy[1] - p.xy[1]) >=
+          mia + o.semiala + HOLGURA_DE_CLAVE_C,
+      ),
     );
-    this.deLineaGuardados = caben.length ? caben : this.puestosCandidatos();
-    return this.deLineaGuardados;
+    return libres.length ? libres : puestos;
+  }
+
+  /**
+   * **Cómo aparca este avión en este campo**, si es de línea; `null` si es una
+   * avioneta, que va siempre a la regla de la avioneta. Ver `ComoAparcaDeLinea`.
+   */
+  comoAparcaDeLinea(): ComoAparcaDeLinea | null {
+    if (!esDeLinea(this.avion)) return null;
+    this.puestosDeLinea();
+    return this.comoAparca;
+  }
+
+  /** Ver `puestosDeLinea`. Se rehace con `deLineaGuardados`. */
+  private comoAparca: ComoAparcaDeLinea = "con-sitio";
+
+  /**
+   * **Los puestos que tiene ahora el tráfico**, con la semiala de cada avión,
+   * en los ejes del fichero —la y al norte—. Lo pone quien sabe del tráfico,
+   * como `ocupados`. Solo se mira en una plataforma pequeña: ver
+   * `libresDelTrafico`.
+   */
+  puestosDelTrafico: () => readonly { readonly xy: Punto; readonly semiala: number }[] = () => [];
+
+  /**
+   * **El puesto que es tuyo ahora**, en los ejes del mundo: al que vas si la
+   * raya va a un puesto, y si no el de salida. Es el que el tráfico no puede
+   * coger, ni el de al lado si las alas se tocan. Ver `tuPuesto` en
+   * `trafico.ts`.
+   */
+  puestoQueTienes(): readonly [number, number] | null {
+    if (this.destino === "puesto") {
+      const fin = this.rutaVisible().at(-1);
+      if (fin) return [fin[0], fin[1]];
+    }
+    return this.arranque();
   }
 
   /** Si un avión de línea cabe en este puesto: con sus alas y su margen lejos de toda pared. */

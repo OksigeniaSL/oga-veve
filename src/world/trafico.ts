@@ -737,6 +737,15 @@ export interface TierraDelTrafico {
    * `puestosDelTrafico`.
    */
   readonly deOtros?: PuestosDeOtros;
+  /**
+   * **Y el puesto de quien juega, con su semiala**, en los ejes del mundo: un
+   * puesto ocupado más. No se aparca en él, ni en uno de al lado en el que las
+   * alas se tocarían. Hace falta en una plataforma pequeña, donde el avión de
+   * línea de quien juega ocupa un puesto y deja libre el de al lado —ver
+   * `ComoAparcaDeLinea` en `plan-de-vuelo.ts`—: ahí todos los puestos caen a
+   * menos de `APARTE_DE_TI` de él, y el tráfico, sin otro, aparcaba pegado.
+   */
+  readonly tuPuesto?: { readonly x: number; readonly z: number; readonly semiala: number } | null;
   readonly tipo: TipoDeTrafico;
 }
 
@@ -894,6 +903,22 @@ export function cabeceoDe(tipo: TipoDeTrafico, desdeElEje: number): number {
   );
 }
 
+/**
+ * **Los puestos de los demás, con el tuyo**: el de quien juega es un puesto
+ * ocupado más, con su semiala. Ver `TierraDelTrafico.tuPuesto`.
+ */
+function conTuPuesto(
+  deOtros: PuestosDeOtros | undefined,
+  tuyo: TierraDelTrafico["tuPuesto"],
+  tipo: TipoDeTrafico,
+): PuestosDeOtros | undefined {
+  if (!tuyo) return deOtros;
+  return {
+    ...(deOtros ?? { semiala: tipo.envergadura / 2 }),
+    ocupados: [...(deOtros?.ocupados ?? []), tuyo],
+  };
+}
+
 /** Los caminos de este aeródromo, con los dos finales de una llegada. */
 export function trazar(
   runway: Pista,
@@ -1043,7 +1068,8 @@ export function trazar(
       z: p.z,
     });
     const pasarela = pasarelaDelTrafico(t);
-    const llega = tierra.suelo.llegada(t.toca + t.frena, tierra.evitar, tierra.ocupados, pasarela, tierra.deOtros);
+    const deOtros = conTuPuesto(tierra.deOtros, tierra.tuPuesto, t);
+    const llega = tierra.suelo.llegada(t.toca + t.frena, tierra.evitar, tierra.ocupados, pasarela, deOtros);
     if (llega && llega.camino.length > 1) {
       const tomaDeVerdad = sobre(en(desplazado + t.toca, 0, 0));
       const rodando = llega.camino.map(sobre);
@@ -1077,7 +1103,7 @@ export function trazar(
       tierra.porDondeVas,
       pistaQuePideConSuMargen(t),
       pasarela,
-      tierra.deOtros,
+      deOtros,
     );
     if (sale && sale.camino.length > 1) {
       const rodando = sale.camino.map(sobre);
@@ -1878,6 +1904,14 @@ export interface Trafico {
    * en ella, y detrás de un sitio vacío no se para nadie.
    */
   dondeParan(): { x: number; z: number; sale: boolean; hay: boolean }[];
+  /**
+   * **Los puestos que tiene ahora el tráfico**, con la semiala de cada avión:
+   * el del que sale hasta que lo deja y el del que llega desde que se le
+   * dibuja. Es lo que mira tu plan para no aparcar con el ala encima de uno de
+   * ellos en una plataforma pequeña: ver `puestosDelTrafico` en
+   * `plan-de-vuelo.ts`.
+   */
+  puestosQueTienen(): readonly { readonly x: number; readonly z: number; readonly semiala: number }[];
   /**
    * **Los que van a despegar y están parados esperándote**: detrás de ti en
    * la calle o en la doble raya. Para la torre, el que espera detrás de ti no
@@ -3160,12 +3194,17 @@ export function crearTrafico(
   const caminosConSuPuesto = (tipo: TipoDeTrafico, clave: string): Caminos | null => {
     const c = caminosDe(tipo);
     const marca = c?.marcas[clave];
-    if (!c || !marca || !aviones.size) return c;
-    const deOtros = puestosDelTrafico(null, tipo.envergadura / 2);
+    if (!c || !marca) return c;
+    // Y el tuyo, que puede haber cambiado desde que se trazaron los del tipo.
+    const tuyo = opciones.tierra?.()?.tuPuesto;
+    if (!aviones.size && !tuyo) return c;
+    const deLosDemas = puestosDelTrafico(null, tipo.envergadura / 2);
+    const deOtros = conTuPuesto(deLosDemas, tuyo, tipo)!;
     if (!deOtros.ocupados.length) return c;
     const p = puestoDe(c, marca.camino, marca.metros, tipo);
     if (!p || puestoLibre(p.x, p.z, deOtros)) return c;
-    const suyos = trazarAhora(tipo, undefined, deOtros);
+    // `trazar` le añade el tuyo.
+    const suyos = trazarAhora(tipo, undefined, deLosDemas);
     return suyos?.marcas[clave] ? suyos : c;
   };
 
@@ -4243,6 +4282,9 @@ export function crearTrafico(
       if (!quien || !c || !aterrizando(quien)) return null;
       if (quien.recorrido < c.entra) return null;
       return Math.max(0, c.toca - quien.recorrido);
+    },
+    puestosQueTienen() {
+      return puestosDelTrafico(null).ocupados;
     },
     dondeParan() {
       const puntos: { x: number; z: number; sale: boolean; hay: boolean }[] = [];
