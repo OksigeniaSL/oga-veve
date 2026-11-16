@@ -252,6 +252,34 @@ const MIRA_LA_CALLE = 30;
  * puesto: es una calle que sale de frente. Ver `trayectoriaDelEmpuje`.
  */
 const BUSCA_LA_CALLE = 1.3;
+/**
+ * **Salvo si la raya sale de espaldas por la plataforma**, recta: entonces la calle
+ * está donde acaba esa recta, aunque quede más lejos, y como mucho a estos metros.
+ *
+ * La calle de servicio de detrás de un puesto no siempre está en OpenStreetMap, y
+ * sin ella la raya va del puesto a la primera calle que haya, en línea recta por la
+ * plataforma. En Los Rodeos, desde el 23 —en la esquina oeste de la terminal, desde
+ * que los puestos están donde para la rueda de morro (#191)—, son noventa y seis
+ * metros hasta la Z, y la Z es por donde se rueda. Medida en largos del JAZ 90, la Z
+ * no era la calle: el empuje giraba noventa grados a los veintinueve metros, dejaba
+ * el avión atravesado a la raya y al soltarlo giraba 78° en sus primeros treinta
+ * metros. El tractor lleva el avión hasta la calle, que es lo que hace de verdad:
+ * ciento veinte metros son dos minutos a paso de persona, un empuje largo de los que
+ * se ven en las plataformas grandes. Más allá, una raya recta es una calle que sale
+ * de frente. Ver `trayectoriaDelEmpuje`.
+ */
+const RECTA_DE_LA_PLATAFORMA = 120;
+/** Lo que puede torcer cada tramo de la raya y seguir siendo esa recta. */
+const SIGUE_RECTA = 5 * GRADO;
+/**
+ * **Lo más que gira un empuje**: ciento cincuenta grados. Más es media vuelta, que no
+ * se empuja: se gira noventa y lo demás lo rueda el avión. Hasta ahí, sí: un puesto
+ * en esquina o en espiga sale a su calle con más de un cuarto de vuelta. Con el tope
+ * en ciento veinte, el avión se quedaba a medio girar y torcido respecto a la calle:
+ * 54° en Gran Canaria con los dos grandes y 45° en Barajas con el JAZ 90; y el 23 de
+ * Los Rodeos, que pide 140°, no llegaba a la Z. Medido en `remolque-en-cada-campo.test.ts`.
+ */
+const MEDIA_VUELTA = 150 * GRADO;
 /** Cada cuánto se apunta una postura del empuje, m. */
 const PASO = 0.5;
 
@@ -277,20 +305,31 @@ export interface Empuje {
  *
  * - **La calle** es donde la raya tuerce: el primer punto en el que lo que
  *   viene por delante se aparta más de cuarenta grados de la salida del
- *   puesto. El morro acaba mirando hacia allí.
+ *   puesto. El morro acaba mirando hacia allí. Se busca a un largo de avión y
+ *   poco más, o, si la raya sale de espaldas por la plataforma, hasta donde
+ *   acaba esa recta: ver `RECTA_DE_LA_PLATAFORMA`.
  * - **El giro**, el del tren principal con la rueda de morro a cuarenta y cinco
  *   grados: un radio igual a la batalla. Si la calle está demasiado cerca para
  *   ese giro, se cierra hasta los setenta; y si ni así cabe, se empieza a girar
  *   desde el puesto.
  * - **Y si la raya da media vuelta** —una calle que sigue de frente, por donde
- *   se vino—, el empuje gira noventa grados y lo demás lo rueda el avión.
+ *   se vino—, el empuje gira noventa grados y lo demás lo rueda el avión. Ver
+ *   `MEDIA_VUELTA`.
  * - **Y si sale del puesto de lado**, a lo largo de la fachada y sin torcer
  *   cerca, el morro acaba mirando hacia donde va la raya.
  *
  * `desde` es el avión en el puesto, mirando al edificio; `raya`, la del plan,
- * que empieza en el puesto. `null` si no hay raya que seguir.
+ * que empieza en el puesto. `null` si no hay raya que seguir. Con
+ * `porLaPlataforma` en falso, la calle se busca solo a un largo de avión y poco
+ * más, como antes de `RECTA_DE_LA_PLATAFORMA`: es lo que usa el tráfico, ver
+ * `empujado` en `suelo-del-trafico.ts`.
  */
-export function trayectoriaDelEmpuje(desde: Pose, raya: readonly PuntoXZ[], batalla: number): Empuje | null {
+export function trayectoriaDelEmpuje(
+  desde: Pose,
+  raya: readonly PuntoXZ[],
+  batalla: number,
+  { porLaPlataforma = true }: { readonly porLaPlataforma?: boolean } = {},
+): Empuje | null {
   if (raya.length < 2) return null;
   const acum: number[] = [0];
   for (let i = 1; i < raya.length; i++)
@@ -310,7 +349,16 @@ export function trayectoriaDelEmpuje(desde: Pose, raya: readonly PuntoXZ[], bata
   const salida = rumboEntre(enLaRaya(0), enLaRaya(Math.min(20, total)));
   // ── La calle: donde la raya tuerce ──
   const largoDelAvion = largoPorLaBatalla(batalla);
-  const alcance = Math.max(40, BUSCA_LA_CALLE * largoDelAvion);
+  /*
+   * Lo que la raya sigue recta desde el puesto, si sale de espaldas: la calle puede
+   * estar al final de esa recta. Ver `RECTA_DE_LA_PLATAFORMA`.
+   */
+  let recta = 0;
+  if (porLaPlataforma && Math.abs(diferencia(desde.rumbo + Math.PI, salida)) <= SALE_DE_LADO)
+    for (let i = 1; i < raya.length && Math.abs(diferencia(salida, rumboEntre(raya[i - 1]!, raya[i]!))) <= SIGUE_RECTA; i++)
+      recta = acum[i]!;
+  // El metro de más es el del punto donde acaba la recta, que es donde tuerce.
+  const alcance = Math.max(40, BUSCA_LA_CALLE * largoDelAvion, Math.min(recta, RECTA_DE_LA_PLATAFORMA) + 1);
   let cruce: PuntoXZ | null = null;
   let calle = salida;
   /** El primer sitio donde tuerce la raya, a cualquier distancia, y hacia dónde va desde ahí. */
@@ -349,8 +397,8 @@ export function trayectoriaDelEmpuje(desde: Pose, raya: readonly PuntoXZ[], bata
   const atras = desde.rumbo + Math.PI;
   const b = vector(atras);
   let giro = diferencia(atras, calle + Math.PI);
-  // Media vuelta no se empuja: noventa grados, hacia el lado que tuerce la calle.
-  const mediaVuelta = Math.abs(giro) > 120 * GRADO;
+  // Media vuelta no se empuja: noventa grados, hacia el lado que tuerce la calle. Ver `MEDIA_VUELTA`.
+  const mediaVuelta = Math.abs(giro) > MEDIA_VUELTA;
   if (mediaVuelta) giro = Math.sign(giro || 1) * 90 * GRADO;
   const w = vector(atras + giro);
   const sx = cruce.x - desde.x;

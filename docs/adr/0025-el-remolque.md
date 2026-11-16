@@ -44,15 +44,17 @@ piezas comunes ya hechas.
 es lo que hace un avión empujado, que no derrapa.
 
 - **La calle** es donde la raya tuerce más de cuarenta grados respecto a la salida del puesto, buscando hasta un largo
-  de avión y un tercio, y nunca menos de cuarenta metros. El morro acaba mirando hacia donde sigue la raya desde ahí, y
-  el avión se queda en el eje de la calle, por detrás del cruce: luego rueda hacia delante y pasa por él.
+  de avión y un tercio, y nunca menos de cuarenta metros; o, si la raya sale de espaldas y sigue recta por la
+  plataforma, hasta donde acaba esa recta, con un tope de ciento veinte metros (ver «El empuje hasta la calle», más
+  abajo). El morro acaba mirando hacia donde sigue la raya desde ahí, y el avión se queda en el eje de la calle, por
+  detrás del cruce: luego rueda hacia delante y pasa por él.
 - **El giro**, con la rueda de morro a cuarenta y cinco grados: un radio igual a la batalla en el tren principal, 25,8 m
   en el JAZ 110 y 11,5 en el JAZ 90. Si la calle está demasiado cerca, se cierra hasta los setenta grados, que un
   tractor sin barra hace y que queda dentro del tope con el pasador quitado; si ni así cabe, se empieza a girar desde el
   puesto. Ocho metros rectos al final, para dejar la rueda de morro derecha.
 - **Si la raya sigue recta** más allá de ese alcance —un puesto que da a una calle de frente—, se empuja hasta dejar
   libre el puesto y se gira noventa grados, con el morro hacia el lado al que la raya tuerce después. Lo demás lo rueda
-  el avión. Media vuelta no se empuja nunca.
+  el avión. Media vuelta —más de ciento cincuenta grados— no se empuja nunca.
 - **A paso de persona**: un metro por segundo, acelerando y frenando a 0,12 m/s², que es lo que anda quien va al lado con
   el cable y lo que no se nota como tirón en el asiento. En el T5 son 62 metros y algo más de un minuto; en Los Rodeos,
   unos 40.
@@ -255,6 +257,34 @@ raya sale a más de cincuenta grados de lo contrario al morro —los mismos que 
 propia raya y el morro acaba mirando hacia donde va: el cruce, a sesenta y cuatro metros por delante. Se gira desde
 el puesto con el radio más cerrado, que la raya pasa por él.
 
+### El empuje hasta la calle (16-11-2026)
+
+Desde que los puestos están donde para la rueda de morro (#191), el pasaje de «Viajá con Jazlyn» sale de Los Rodeos
+del 23, en la esquina oeste de la terminal, y no del centro de la línea de entrada del 25, que era a veintiséis metros
+de la Z. Del 23 a la Z no hay calle de plataforma en OpenStreetMap: la raya va recta de espaldas noventa y seis metros
+y tuerce hacia el sur por la Z. Con la calle buscada a un largo de avión, eso era una raya que sale de frente: el
+tractor giraba noventa grados a los veintinueve metros, dejaba el avión atravesado a la raya y, al soltarlo, la
+tripulación giraba 78° en sus primeros treinta metros rodando. El banco del vuelo de Ara lo pilló: pide menos de 30.
+
+Lo de verdad es que el tractor lleva el avión hasta la calle por la que va a rodar y lo deja mirando por ella. Así
+que, si la raya sale de espaldas y sigue recta por la plataforma —tramos que no tuercen más de cinco grados—, la calle
+se busca hasta donde acaba esa recta, y como mucho a ciento veinte metros, dos minutos a paso de persona. Desde el 23
+son cien metros con un giro de 140°, y el avión acaba en la plataforma con el cruce de la Z a 39 m por delante del
+morro: suelta y rueda recto hasta ella.
+
+Para ese giro, **el tope de lo que se empuja sube de 120° a 150°**. Media vuelta sigue sin empujarse, pero un puesto
+en esquina o en espiga sale a su calle con más de un cuarto de vuelta, y con el tope en 120 se quedaba a medio girar:
+medido en `remolque-en-cada-campo.test.ts`, el morro acababa 54° torcido respecto a la calle en Gran Canaria con los
+dos grandes y 45° en Barajas con el JAZ 90; ahora, 11 en los tres. En Los Rodeos con el JAZ 90, de 90° a 140°, 101 m
+de empuje y 3° de torcido. Los demás campos y aviones, igual que antes.
+
+**El tráfico sigue con el empuje corto**, el de buscar la calle a un largo de avión (`porLaPlataforma: false` en
+`trayectoriaDelEmpuje`). Con el largo, en Los Rodeos por la 12, llegando quien juega en el JAZ 110 detrás del sígame,
+el reactor del tráfico que salía empujado a los cuarenta segundos se le quedaba de frente 34 s, con el coche del sígame
+metido en él (`de-frente-en-la-calle.test.ts`): lo que reserva el camino del que sale todavía no espera a que quepa un
+empuje que acaba en la calle. Darle al tráfico el mismo empuje pide primero que la torre no autorice ese empuje con alguien
+rodando por esa calle hacia él; queda por hacer.
+
 ### Los campos con pasarelas
 
 Lo que separa de verdad un puesto de contacto es la pasarela, y eso no lo trae ningún fichero de aeródromo:
@@ -379,7 +409,10 @@ quedaba en la calle sin poder pasarle al lado. En un aeropuerto cada puesto es d
 
 ## Lo que queda
 
-Del remolque, solo una medida que no se puede tomar desde aquí: **lo que cuesta en fotogramas**, con dos tractores en
+El empuje largo por la plataforma para el tráfico, cuando la torre retenga el empuje de quien sale con alguien rodando
+por su calle: ver «El empuje hasta la calle».
+
+Del remolque, una medida que no se puede tomar desde aquí: **lo que cuesta en fotogramas**, con dos tractores en
 pantalla en una tableta de gama media. Está medido en llamadas de dibujo —un 8 % más con uno a la vista, ver «Dos
 tractores a la vez, como mucho»—, y los fotogramas se miran en la tableta con `?fps=1`, saliendo empujado de Los
 Rodeos, y mejor si coincide con uno del tráfico empujando a la vez. Si bajan de sesenta, lo primero es
