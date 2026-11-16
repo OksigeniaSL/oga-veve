@@ -1289,7 +1289,7 @@ import {
   rodaduraDeFrenada,
   type DiaDeDespegue,
 } from "./flight/carrera";
-import { TomaLarga, finDeLaZonaDeToma } from "./flight/toma-larga";
+import { TomaLarga } from "./flight/toma-larga";
 import { POSICIONES as POSICIONES_DE_LA_PALANCA } from "./world/palanca-de-aerofrenos";
 import { GAS_AL_RALENTI, type PosicionDeLaPalanca } from "./flight/palanca-de-aerofrenos";
 import { REVERSA_HASTA } from "./flight/frenada";
@@ -1523,7 +1523,16 @@ import {
 } from "./world/aerodrome";
 import { MundoVecino } from "./world/mundo-vecino";
 import { desplazarAerodromo } from "./world/aerodromo-desplazado";
-import { laMasCerca, sobreAlguna, type Pista } from "./world/pistas-del-vuelo";
+import {
+  dondeSeToca,
+  enLaZonaDeLasFlechas,
+  laMasCerca,
+  pistaPorDelante,
+  sobreAlguna,
+  sobreLaPistaConMargen,
+  sobreLaZonaDeToma,
+  type Pista,
+} from "./world/pistas-del-vuelo";
 import {
   campoDeCasa,
   campoVecino,
@@ -1533,12 +1542,9 @@ import {
   type CampoEnElMundo,
 } from "./world/campo-del-vuelo";
 import {
-  antesDelUmbralDeToma,
   hastaElFinDeToma,
   hastaElUmbralDeToma,
   paraAterrizarDe,
-  sobreDondeSeToca,
-  vistaDesdeLaOtraCabecera,
 } from "./world/umbral-desplazado";
 import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
 import { enCanarias } from "./world/canarias";
@@ -2272,16 +2278,6 @@ const MIRA_LOS_PANELES = 1.5;
 const CURVA_DE_LA_AYUDA = 0.25;
 
 /**
- * Cuánto antes de la pista se deja de avisar del terreno, m.
- *
- * Trescientos: el umbral se cruza a quince metros, y un avión que viene bien a
- * esa altura está, visto por el aviso de terreno, bajísimo. Esto es **solo**
- * para callar ese aviso; dónde se dice «ya podés tocar» no lleva margen. Ver
- * `sobreDondeSeToca`.
- */
-const ANTES_DEL_UMBRAL = 300;
-
-/**
  * Cuánto campo hay antes del umbral y después del final, m.
  *
  * Una pista de verdad no acaba donde acaba el asfalto: lleva alrededor una
@@ -2296,14 +2292,6 @@ const ANTES_DEL_UMBRAL = 300;
  * franja se aterrizó en el aeródromo; fuera de ella, en el campo.
  */
 const LA_FRANJA = 60;
-
-/**
- * Cuánto se perdona de desvío lateral para seguir «sobre la pista», m.
- *
- * Cuarenta a cada lado del asfalto: quien cruza el umbral un poco descentrado
- * sigue aterrizando, no sobrevolando el campo.
- */
-const A_UN_LADO_DEL_EJE = 40;
 
 /**
  * Cuánto se mete el coche del «sígame» en la calle de salida al esperar, m.
@@ -13210,33 +13198,12 @@ export class Game {
   }
 
   /**
-   * Cuántos metros de pista quedan por delante, o infinito si no se está en
-   * ella.
-   *
-   * Se mide **hacia donde apunta el avión**, no en línea recta al final: si
-   * uno rueda hacia atrás por la pista, lo que queda es lo que tiene delante.
-   * Y solo cuenta si está dentro del ancho, porque fuera de la pista no hay
-   * pista que se acabe.
+   * Cuántos metros de pista del campo de ahora quedan por delante, o
+   * infinito si no se está en ella. Ver `pistaPorDelante`.
    */
   private runwayRemaining(): number {
-    const r = this.laPistaDeAhora();
-    const p = this.flight.state.position;
-    const { along, across: lado } = enEjesDePista(
-      p.x,
-      p.z,
-      r.x,
-      r.z,
-      r.heading,
-    );
-    const across = Math.abs(lado);
-    if (across > r.width) return Infinity;
-    if (Math.abs(along) > r.length / 2) return Infinity;
-
-    // Hacia dónde va el avión respecto al eje de la pista.
-    const [fx, fz] = delante((this.flight.state.heading * 180) / Math.PI);
-    const [rx, rz] = delante(r.heading);
-    const hacia = fx * rx + fz * rz;
-    return hacia >= 0 ? r.length / 2 - along : r.length / 2 + along;
+    const s = this.flight.state;
+    return pistaPorDelante(this.laPistaDeAhora(), s.position.x, s.position.z, s.heading);
   }
 
   /**
@@ -25265,45 +25232,21 @@ export class Game {
     );
   }
 
+  /** Sobre la pista de ahora con su margen. Ver `sobreLaPistaConMargen`. */
   private sobreLaPista(): boolean {
-    const r = this.laPistaDeAhora();
-    const { along, across } = enEjesDePista(
-      this.flight.state.position.x,
-      this.flight.state.position.z,
-      r.x,
-      r.z,
-      r.heading,
-    );
-    return (
-      Math.abs(across) < r.width / 2 + A_UN_LADO_DEL_EJE &&
-      Math.abs(along) < r.length / 2 + ANTES_DEL_UMBRAL
-    );
+    const p = this.flight.state.position;
+    return sobreLaPistaConMargen(this.laPistaDeAhora(), p.x, p.z);
   }
 
   /**
    * Lo mismo, pero **donde se puede tocar**: del umbral de aterrizaje en
-   * adelante, sin margen por delante.
-   *
-   * Contaba desde la barra pero con los trescientos metros de margen de
-   * `sobreLaPista`, así que en la 01 de Fuerteventura el «ya podés tocar»
-   * seguía saliendo sobre los últimos trescientos metros de flechas —el único
-   * sitio de la pista donde no se puede—. Ver `sobreDondeSeToca`. El aviso de
-   * terreno sigue mirando la pista entera con su margen, que sobre asfalto no
-   * hay terreno que avisar.
+   * adelante, sin margen por delante. El aviso de terreno sigue mirando la
+   * pista entera con su margen, que sobre asfalto no hay terreno que avisar.
+   * Ver `sobreLaZonaDeToma` en `world/pistas-del-vuelo.ts`.
    */
   private sobreLaZonaDeToma(): boolean {
-    const r = this.laPistaDeAhora();
-    const { along, across } = enEjesDePista(
-      this.flight.state.position.x,
-      this.flight.state.position.z,
-      r.x,
-      r.z,
-      r.heading,
-    );
-    return (
-      Math.abs(across) < r.width / 2 + A_UN_LADO_DEL_EJE &&
-      sobreDondeSeToca(r, along, (this.flight.state.heading * 180) / Math.PI)
-    );
+    const s = this.flight.state;
+    return sobreLaZonaDeToma(this.laPistaDeAhora(), s.position.x, s.position.z, s.heading);
   }
 
   /**
@@ -25339,15 +25282,7 @@ export class Game {
    */
   private dondeSeToca(): { readonly pasado: number; readonly zona: number } | null {
     const s = this.flight.state;
-    const r = this.laPistaDeAhora();
-    const { along, across } = enEjesDePista(s.position.x, s.position.z, r.x, r.z, r.heading);
-    if (Math.abs(across) > r.width) return null;
-    const deFrente = Math.cos(s.heading - (r.heading * Math.PI) / 180) >= 0;
-    const pista = deFrente ? r : vistaDesdeLaOtraCabecera(r);
-    return {
-      pasado: (deFrente ? along : -along) + hastaElUmbralDeToma(pista),
-      zona: finDeLaZonaDeToma(paraAterrizarDe(pista)),
-    };
+    return dondeSeToca(this.laPistaDeAhora(), s.position.x, s.position.z, s.heading);
   }
 
   /**
@@ -25356,22 +25291,8 @@ export class Game {
    * `Aterrizaje`.
    */
   private enLaZonaDeLasFlechas(): boolean {
-    const r = this.laPistaDeAhora();
-    const { along, across } = enEjesDePista(
-      this.flight.state.position.x,
-      this.flight.state.position.z,
-      r.x,
-      r.z,
-      r.heading,
-    );
-    return (
-      Math.abs(across) < r.width &&
-      antesDelUmbralDeToma(
-        r,
-        along,
-        (this.flight.state.heading * 180) / Math.PI,
-      )
-    );
+    const s = this.flight.state;
+    return enLaZonaDeLasFlechas(this.laPistaDeAhora(), s.position.x, s.position.z, s.heading);
   }
 
   /**
