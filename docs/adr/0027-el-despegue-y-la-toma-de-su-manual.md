@@ -1982,3 +1982,274 @@ arriba para despegar, o cómo se va del suelo un Ag Cat, y su manual solo da
 del SEA08LA082 es la voz del avisador de terreno del 1900D, que el JAZ 60 ya
 lleva (`avisosHablados`). Su cuenta del radioaltímetro sigue en *five
 hundred* (enmienda H10a): ese informe no la oye.
+
+## Enmienda H20e (16-11-2026): la Vref del E170 era de la FAA, y con ella la toma de los tres reactores; la Vmc del 1900D, leída en su manual
+
+El encargo seguía donde lo dejó la enmienda H20b: la Vref del E170 por caminos
+que no se habían probado, y con ella su frenada y los segundos de la AC 91-79A
+en la toma. **La Vref estaba**, y en un fichero que la H20b ya había bajado: la
+base de datos de características de aeronaves de la FAA, guardada como
+`data.html` y que es la hoja de cálculo, lleva una columna de velocidad de
+aproximación que no se leyó (la enmienda H20b dice que «da su categoría de
+estela, no su velocidad de aproximación»: da las dos). Con ella la cadena
+llega al final: el E170
+aterriza a un 3 % de Embraer a su máximo al aterrizar, y el 747 y el 787 a un 3
+y un 2 % de su manual, donde salían un 12 % cortos.
+
+### Las fuentes nuevas
+
+- **FAA, *Aircraft Characteristics Data*, octubre de 2024** (la base de datos
+  de características de aeronaves de la Airports Planning and Environmental
+  Division; hoja `ACD_Data`, y su diccionario en la hoja `Data_Dictionary`).
+  Columnas `Approach_Speed_knot` —«Approach Speed to the runway at Maximum
+  Allowable Landing Weight (MALW)», «the highest speed in the approach phase
+  determined by considering landing flap configurations and MALW in Flight
+  Standardization Board (FSB) or aircraft manufacturer's documentation»— y
+  `MALW_lb`. Filas:
+  - E170, «Embraer ERJ 170-100 IGW»: **124 nudos a 73.413 lb**, categoría C,
+    «AAC validated by Flight Standardization Board (FSB) report».
+  - B789: 144 nudos a 425.000 lb (entre 140 y 144 según configuración), la
+    misma de la que ya salía la Vref del JAZ 110.
+  - B744: 157 nudos a 630.000 lb (es el -400; la ficha es un -100).
+  - B190: 109 nudos (categoría B) y 121 (C) a 16.000 lb; la C, según la
+    observación de la fila, para el que aterriza con los flaps de
+    aproximación por un STC.
+- **Transport Canada, *Operational Evaluation Report*, Embraer E-Jets**, rev.
+  1, 3-11-2023 (RDIMS #19141131): § 13.4, p. 40, «Approach category for all
+  E-Jets aircraft series is Category C»; § 13.5, los flaps normales de
+  aterrizaje, 5 y FULL; y el apéndice 3, p. 69, las diferencias del E190 al
+  E190-E2: «AURAL ALERTS — "Low Speed, Low Speed" implemented».
+- **Raytheon, *1900D Airliner*, manual de vuelo, sección II, *Limitations***
+  (FAA Approved, de agosto de 2001 a marzo de 2002), en la copia escaneada que
+  publica Fly UK (`Raytheon_Beechcraft_1900D_Limitations.pdf`): p. 2-3, la
+  tabla de velocidades límite.
+- **NTSB, AAR-72-17** (Pan Am 845, 747-121, San Francisco, 1971), p. 3: con
+  flaps a diez y 708.002 lb, «V1 speed 156 knots, VR speed 164 knots, V2
+  speed 171 knots». La Vr ya era la del JAZ 120 (enmienda H10b); la V1 y la
+  V2 no se habían leído.
+
+### La Vref del E170: 124 nudos a su máximo al aterrizar
+
+A la masa de la ficha, con la raíz de la masa, son **117,7 nudos**, donde
+llevaba 132 sin fuente. Es categoría C, la que da Transport Canada a todos los
+E-Jets: la categoría se cuenta con la Vref a la masa máxima al aterrizar, y
+ahí son 124 (la C va de 121 a 140). Lo comprueba
+`despegue-y-toma-del-manual.test.ts`, con la del 787 de la misma base.
+
+**Y con ella tiene que bajar su pérdida con los flaps de aterrizaje.** La
+norma no deja la Vref por debajo de 1,23 veces la pérdida de un g en
+configuración de aterrizaje (CS 25.125 b 2 i, y 14 CFR 25.125 desde la
+enmienda 25-108), y la del modelo era 101,9 nudos: con la Vref de la FAA habría
+aproximado a 1,16 veces su pérdida, por debajo de lo que la norma deja. Se sube la
+sustentación de sus flaps, `flapsLift`, de 1,05 a 1,38: el CL máximo con los
+de aterrizaje pasa de 2,43 a 2,76 y la pérdida a 95,6 nudos, a 1,231 de la
+Vref. Es el borde de la norma, lo menos que hay que mover; a cuántas veces su
+pérdida pone Embraer la Vref no se ha leído. La prueba de `prestaciones.test.ts`
+que pedía 1,25 pide en los reactores ese 1,23: el 1,3 de antes era sobre la
+pérdida mínima de la maniobra, un 6 % más baja que la de un g, lo mismo que
+con la V2 (enmienda H10e).
+
+**La sustentación de los flaps es una recta con la palanca**, así que con los
+de despegue también sube: su pérdida baja de 120,8 a 117,2 nudos, y la Vr de
+la regla de 1,1 veces esa pérdida —la que lleva el E170 sin cifra de Embraer—
+**baja de 133 a 129**. La V1, en la misma proporción, de 123 a 119; la V2 del
+suelo de la norma, de 136,6 a 132,4. La Vmc, 110,2, sigue por debajo de la V1.
+
+### La frenada del E170, con su Vref
+
+Embraer da 1.228 m de pista de aterrizaje a 32.800 kg (hoja de
+especificaciones del E170), su distancia del manual partida por 0,6: 737 m
+desde los cincuenta pies. Con la Vref de la FAA a esa masa, 123,1 nudos, el
+aire de su clase y los dos segundos de abajo, **cerrarla pediría un freno de
+0,53**, y con él el avión frena de media 0,53 g: más del medio g que
+`frenada.test.ts` deja a un avión, porque por encima se planta como un coche y
+enseña a no planificar la carrera. Así que el freno se queda en **0,49**, lo más
+que deja esa regla —frena 0,49 g de media—, y pide 1.266 m, un 3 % más que
+Embraer. Eran 0,45, calibrados sin esos segundos y cruzando a unos 127 nudos
+sin fuente.
+
+| E170 a 32.800 kg, cruzando a 123,1 kt | Freno | Pista | Frena de media |
+|---|---|---|---|
+| Sin los segundos | 0,45 | 1.157 | |
+| Con los dos segundos | 0,45 | 1.311 | |
+| Con los dos segundos | 0,53 | 1.227 | 0,53 g |
+| **Con los dos segundos** | **0,49** | **1.266** | **0,49 g** |
+
+Ese 3 % que queda, y que haga falta frenar más que el 747 y el 787 —0,34 y
+0,35—, tienen dos sospechosos que no se han podido cerrar. **La de la FAA es la
+Vref más alta de sus flaps de aterrizaje** («the highest speed … considering
+landing flap configurations»), y el E-Jet aterriza con 5 o con FULL: si los
+1.228 m de Embraer son con FULL y una Vref más baja, el freno sería menor. Y
+**el aire de su clase** —tres grados desde los cincuenta pies, 291 m— puede ser
+más largo que el de su certificación, que la AC 25-32 deja contar con −3,5° y
+una toma a 8 ft/s (enmienda H10b). La prueba de la ficha que dejaba los frenos
+entre 0,30 y 0,45 deja al E170 hasta 0,5, con este porqué.
+
+### Los segundos de la AC 91-79A, puestos
+
+`distanciaDeAterrizaje`, en `carrera.ts`, cuenta ahora en los reactores los
+segundos entre tocar y frenar del todo: uno hasta el primer dispositivo de
+frenada y otro hasta el siguiente (AC 91-79A Chg 2, figura 1, p. 6); dos,
+porque frenan con dos, los frenos de tierra y el freno; el primero rodando sin
+nada, el segundo con los frenos de tierra fuera. Ver `segundosHastaFrenar`. El
+1900D y el Twin Otter no: publican su toma con el aire de su manual, que ya la
+cierra, y no son de la norma de transporte. Es el mínimo de la norma; la nota
+de esa figura deja usar en los dispositivos automáticos el tiempo medido en la
+certificación, y con qué tiempo se certificó cada uno sigue sin leerse.
+
+La rodadura volada no cambia: el piloto frena cuando frena, y la prueba que la
+compara con la cuenta sigue al 3 %.
+
+| Pista para aterrizar | Antes | Ahora | Su manual |
+|---|---|---|---|
+| JAZ 120 (747) | 1.652 m, −11,9 % | **1.816, −3,1 %** | 1.875 |
+| JAZ 110 (787) | 1.591, −11,6 % | **1.762, −2,1 %** | 1.800 |
+| JAZ 90 (E170) | 1.243, +10,7 % | **1.206, +7,4 %** | 1.123 |
+
+Los 1.123 del E170 son los 1.228 de Embraer escalados con la masa; lo que le
+queda por encima es el 3 % de su máximo al aterrizar, y el aire y los dos
+segundos, que no bajan con la masa como la rodadura. La prueba de la toma contra su manual deja de tener un listón
+aparte para los dos anchos —les dejaba hasta un 14 % por debajo— y los mide con
+el de todos, del −10 al +12 %.
+
+### El despegue del E170, con la Vr nueva
+
+| JAZ 90 | Antes | Ahora | Embraer |
+|---|---|---|---|
+| El hangar pide | 1.124 m, la de abortar | **1.022**, la de abortar | ≤ 1.151 |
+| Volado hasta los 35 ft, por 1,15 | 1.264 | 1.192 | |
+| Volado contra la cuenta | +17,6 % | +18,6 % | |
+| Se va del suelo a | 8,1° | 7,8° | |
+
+El tramo del aire que la cuenta no le da (enmienda H20b) sigue ahí.
+
+**Ningún veredicto de `cabe.ts` cambia** con nada de esta enmienda. Cambian los
+metros que dice el porqué: el E170 en el Valle de la Cordillera pide 1.206
+donde hay 1.100 (pedía 1.243); el 787 y el 747 en Pilar se quedan fuera por la
+toma, 1.762 y 1.816 donde hay 1.440, y ya no por el despegue.
+
+### Lo que arrastra la Vref del E170
+
+La Vref está en la ficha y de ella cuelgan otras cosas, que se mueven con ella:
+
+- **Su categoría, que no**: se cuenta con la Vref a la masa máxima al aterrizar,
+  y a la de la ficha el E170 cruzaría el umbral como uno de la B. La ficha
+  lleva ahora esa masa, `masaMaximaAlAterrizar` —las 73.413 lb de la misma fila
+  de la FAA—, y `vrefDeSuCategoria` da la de 124 nudos. Con ella sale la escala
+  de su circuito (`escalaDelCircuitoDe`), y con ella el circuito publicado que
+  vuela: en Lanzarote, el de los regulares por el este, y no el de los ligeros.
+- **La escalera de la llegada**, la Vref y ochenta en el área terminal y la
+  Vref y cincuenta con los primeros flaps: 198 y 168 nudos donde eran 212 y
+  182. Es la regla de los manuales de Boeing (`escalera-de-velocidades.ts`);
+  cuál da Embraer no se ha leído.
+- **Su marca de velocidad dicha en km/h**: pide ahora 370 (los 198 del área
+  terminal) y 230 (su final), y deja de pedir 250 y 390. Los 230 ya estaban
+  grabados; **los 370 no**, y esperan su toma en `KMH_QUE_ESPERAN_SU_TOMA`:
+  «Son trescientos setenta kilómetros por hora.», en la voz de la instructora.
+  Sin ella la frase sale sin el número.
+- **Lo que dura el vuelo**: unos cuarenta y cinco segundos más de ruedas arriba
+  a ruedas abajo en los saltos cortos de Canarias, y lo que la prueba deja para
+  rodar dentro del bloque de Binter baja de cuatro minutos y medio a tres y
+  medio (`rutas-de-canarias.test.ts`). Ese margen no tiene fuente.
+- **Su pérdida en el percance al tocar** (`velocidadDePerdida`, la Vref entre
+  1,3) baja a 90,5 nudos, un 5 % por debajo de la de su ficha, 95,6, porque su
+  Vref está a 1,23 y no a 1,3.
+- **La prueba que vuela su V2 con un motor parado** (`motores.test.ts`) la
+  volaba limpia, y la V2 es con los flaps de despegue (CS 25.107): limpio, el
+  E170 pierde a 135 nudos, por encima de su V2 nueva, 132,4. Ahora la vuela
+  con ellos, en todos los de V2.
+- **La final con el gas quieto** (`final-fina.test.ts`): a 1,23 veces su
+  pérdida cruza con un CL de 1,82, por encima del de menos resistencia con los
+  flaps y el tren fuera, en la región de mando invertido: ir más despacio pide
+  más empuje, y con el gas fijo su velocidad no vuelve sola: con los flaps y el
+  tren fuera, la de menos resistencia del modelo está por los 135 nudos, y
+  cruza a 117,7 (el 747 cruza a 146 con la suya en 155, y el 787 en ella). Al
+  final de minuto y medio le queda una oscilación de V/S de 0,14 m/s en Tuka,
+  0,52 en Taguato y 0,64 en Taguato Ruvicha —unos ciento veinticinco pies por
+  minuto— donde la prueba pedía 0,1. Se le deja hasta 0,15 en los dos
+  peldaños de abajo y 0,7 en los de arriba, con este porqué; con el gas del
+  automático sigue por debajo de 0,1. **Es lo que más
+  puede notarse al volarlo** con la mano en el gas, y lo primero que hay que
+  mirar en los bancos junto con la toma.
+
+### El 1900D: su Vmc, 92 nudos indicados, leída y sin poner
+
+«Air Minimum Control Speed VMCA — Flaps 0°: 95 KCAS, 92 KIAS; Flaps 17°: 93
+KCAS, 92 KIAS» (manual de vuelo, sección II, p. 2-3). La da un timón de 0,042
+en su ficha (`cnRudder`, hoy 0,05, que la deja en 85,1), por debajo de su V1,
+100,3, así que no movería la de abortar ni la pista del hangar.
+
+**No se ha puesto**, porque con ese timón falla otra cosa que no es de la Vmc:
+el pie de tecla en la carrera. En este avión la tecla pide una parte del pedal,
+`pieDeTecla` —la que da lo que da un timón de 0,04 entero—, y con 0,042 esa
+parte pasa de 0,8 a 0,95; con ella el piloto a toques de `carrera-fina.test.ts`,
+desviado cinco metros a 103 nudos en el peldaño de arriba, tarda 16,8 s en
+volver al eje donde se piden 8. El timón de aire que da cada toque es el
+mismo; qué más mueve esa parte del pedal en la carrera —la rueda de morro, lo
+que sostiene el rumbo— no se ha medido. Poner la Vmc del manual es afinar antes
+ese pie, que no era de este encargo.
+
+La misma página confirma lo que ya llevaba: la VFE con flaps a 17°, 188 KIAS, y
+a 35°, 154 (desde el UE-79, o con el SB 2512); la VLE y la VLO, 180; la VMO,
+248.
+
+Y la Vref de su ficha, 107,7 nudos (1,3 veces la pérdida con los flaps de
+aterrizaje), queda a un 1,5 % de los 109 de la FAA a 16.000 lb, la de la
+categoría B. No se toca: el diccionario de la base dice de esa columna, la de
+la mínima, que lleva la pérdida ajustada cuando la velocidad de aproximación no
+se conoce, así que no es seguro que sea una Vref publicada.
+
+### El E170 no dice la velocidad baja
+
+En las diferencias del E190 al E190-E2, Transport Canada pone como nuevo del E2
+«"Low Speed, Low Speed" implemented» (apéndice 3, p. 69). El E1 no tenía esa
+voz, y el E170 es E1, del mismo tipo de licencia que el E190. Que tampoco la
+tenga el E170 es por familia: el informe lo dice del E190. El JAZ 90 llevaba un
+*airspeed low* sin fuente; ahora `velocidadBaja` es `null`, como en el avión sin
+aviso propio: la avisa la pérdida cuando llega.
+
+### El 747: su Vmc no estaba alta; lo alto era la cuenta
+
+La enmienda H10e dijo que la V2 publicada del 747 —la de Jenkinson, 169 nudos
+a 340.195 kg, 146,6 escalada a la masa de la ficha— ponía su VMCA en 133 como
+mucho, y la del modelo es 139,5. **Esa cota era una cuenta, no una cifra**: la
+V2 se escaló a una masa a la que puede no mandarla ya la pérdida, y la Vmc no
+baja con la masa. Lo que dice cada V2 publicada es la VMCA a esa masa: no más
+de 169 / 1,1 = 153,6 nudos con la de Jenkinson, y no más de 171 / 1,1 = 155,5
+con la de la NTSB; y la V1 de la NTSB, 156, deja la Vmc en tierra por debajo.
+
+Y la de la NTSB es **con los flaps a diez, los mismos de la Vr que ya lleva la
+ficha**: a la masa de la ficha son 152,6 nudos, y la V2 del modelo, 1,1 veces
+su Vmc, 153,4. Su V1, 156, son 139,2 a esa masa, y la ficha lleva 140. Así que
+la V2 de su tipo pasa a ser la de la NTSB (`takeoffSafetySpeed`), con los
+mismos flaps que su Vr; la de Jenkinson no dice con cuáles. No cambia lo que
+enseña: la V2 sigue en 153,4, a un 0,5 % de la del tipo.
+
+### Lo que cambia en lo que vuelan los bancos
+
+El E170 aproxima ahora a 118 nudos donde iba a 132, rota a 129 y no a 133,
+frena más y llega más despacio desde treinta millas. El piloto del banco que lo aterriza en Tenerife Norte y Gran
+Canaria (los bancos de navegador) no se ha volado con esto: es lo primero que
+hay que mirar antes de publicar.
+
+### Lo que sigue sin fuente
+
+- **Qué Vref es la de la FAA en el E170**, la de flaps 5 o la de FULL, y con
+  qué flaps son los 1.228 m de Embraer. Con el manual de aeropuertos del E170
+  se cerraría, y sigue sin descargarse de Embraer.
+- **La Vmc del 1900D**, leída —92 KIAS— y sin poner: ver arriba.
+- **Lo que tardan los flaps del 1900D**: la sección de limitaciones no lo
+  trae. Siguen los doce segundos.
+- **Qué suena en el 1900D al soltarse el automático y al pararse un motor**:
+  tampoco en esa sección. El informe del ATSB del VH-NTL (BO/200000492) sigue
+  sin descargarse: el servidor no contesta.
+- **Si el E170 dice la pérdida con voz**: el informe de Transport Canada no lo
+  dice, y sigue el «stall, stall» supuesto. **Con qué suena su motor parado**,
+  tampoco.
+- **Desde cuándo callan las precauciones en el despegue**: no se ha encontrado
+  nada de primera mano, ni del E-Jet ni del 747.
+- **La V2 del 787**: el *Bulletin* 11/2020 de la AAIB (VH-ZND) da la Vr y la
+  masa, no la V2. Sigue en su Vr.
+- **La base de prestaciones de Eurocontrol** no se ha podido leer: tanto
+  `contentzone.eurocontrol.int` como `learningzone.eurocontrol.int` piden
+  JavaScript y cookies a un cliente sin navegador.
