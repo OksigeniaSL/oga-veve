@@ -205,6 +205,21 @@ export function laInstructoraLoExplica(peldano: Peldano): boolean {
 }
 
 /**
+ * **Si un mando de la tripulación lo pulsa quien va sentado al lado**, y no
+ * quien vuela.
+ *
+ * En los tres peldaños de abajo, sí: es lo que hace el piloto que no vuela en
+ * un avión de dos, y quien tiene cuatro años no tiene por qué saber que en la
+ * granja hay que apagar una caja. Lo ve encenderse y lo oye contar. En el de
+ * cabina, el mando es de quien vuela, como el resto de la lista. Es la misma
+ * raya que la de la explicación: lo que crece con el peldaño es lo que se le
+ * confía. Ver el TERR INHIBIT en `flight/inhibir-terreno.ts`.
+ */
+export function loHaceQuienVaAlLado(peldano: Peldano): boolean {
+  return !CANALES[peldano].cabina;
+}
+
+/**
  * Qué clave de texto va en la tarjeta de un aviso, o `null` si ninguna.
  *
  * Las dos claves llegan del sitio donde se da el aviso —la larga y la corta—

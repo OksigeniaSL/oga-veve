@@ -970,6 +970,11 @@ export const EN: Dictionary = {
   "hud.bajarCuadro": "Lower the panel",
   "hud.armaAerofrenos": "Arm the speed brakes and autobrake",
   "hud.aerofrenosArmados": "Speed brakes and autobrake armed: I did it",
+  "hud.terrInhibitApagado":
+    "TERR INHIBIT: this runway isn't in the airplane's map, so I switched off its warning about hills ahead",
+  "hud.terrInhibitPrendido": "Far from that runway now: the airplane warns about hills ahead again",
+  "hud.pulsaTerrInhibit": "This runway isn't in the TAWS database: press TERR INHIBIT",
+  "hud.sueltaTerrInhibit": "More than fifteen miles from the runway: press TERR INHIBIT again",
   "hud.pilotoAutomatico": "Autopilot",
   "hud.trimArriba": "Trim, nose up",
   "hud.trimAbajo": "Trim, nose down",
@@ -1116,6 +1121,9 @@ export const EN: Dictionary = {
   "vuelo.armaLosAerofrenos":
     "Before landing, arm the speed brakes and autobrake: they come out by themselves when we touch down",
   "vuelo.losArmeYo": "I armed the speed brakes and autobrake, so we brake well when we touch down",
+  "vuelo.terrInhibit.apagado":
+    "This runway isn't in the airplane's map, so I switched off its warning about hills ahead. If we get too low, it will still warn us.",
+  "vuelo.terrInhibit.prendido": "We're far from that runway now: I switched the hill warning back on.",
   "vuelo.salenLosFrenosDeTierra":
     "See that? The panels on the wing came up when we touched down: the wing stops holding the plane up and the wheels can brake",
   "vuelo.sinFrenosDeTierra":
@@ -1190,6 +1198,8 @@ export const EN: Dictionary = {
   "vuelo.trenEnElSuelo": "On the ground, the gear stays down",
   "palabra.tren": "Gear",
   "palabra.aerofrenos": "Speed brakes",
+  "palabra.terrInhibitApagado": "Off",
+  "palabra.terrInhibitPrendido": "On",
   "vuelo.despacio": "Slow down",
   "vuelo.alto": "Stop here",
   "senalero.alto": "Wands crossed overhead: that means stop",

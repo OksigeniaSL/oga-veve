@@ -718,6 +718,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     sellos: () => juego.sellosParaBanco,
     /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
     tarjeta: () => juego.hud.senal.puesto,
+    /** Cómo está el TERR INHIBIT. Ver `atenderAlTerrInhibit` en `game.ts`. */
+    terrInhibit: () => juego.terrInhibitParaBanco,
     /**
      * El modo inicio: el paso, la fase, si el mundo espera, la última frase y
      * con qué mando se dibuja. Ver `scripts/verificar-inicio.mjs`.
