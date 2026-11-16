@@ -1019,8 +1019,34 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * de holgura, y el resto de altura se va bajando detrás.
      */
     let pedida = senda.altitud + senda.ritmo * (ahora - senda.desde);
-    if (BAJA_POR_EL_ARCO)
-      pedida = Math.max(pedida, s.position.y + (-CAIDA_MAXIMA * 1.25 - senda.ritmo) * 10);
+    /*
+     * **Y en la final recta, alto se corrige con un punto, no con un picado.**
+     *
+     * El tope de arriba es para el arco del viraje, donde la senda se mueve
+     * bajo el avión y hay que alcanzarla. Ya alineado, un piloto corrige la
+     * senda con unos doscientos pies por minuto de más y nunca pasa de los
+     * mil, que es justo lo que mide la puerta. Con el tope del arco, el JAZ 90
+     * de Los Rodeos llegó a la puerta bajando a 6,3 m/s (#192), medido con la
+     * traza del ala: a 190 m de ruedas, ya en la senda, una racha lo sostuvo
+     * cinco segundos —de bajar a 3,8 a no bajar— y se quedó quince metros
+     * alto; el automático pidió 6 m/s, el morro bajó a −6° y al acabarse la
+     * racha cayó a 11. Quince metros a mil metros de la puerta están dentro de
+     * su tolerancia: se recogen en quince segundos a un metro por segundo de
+     * más. Y nunca menos de nueve décimas de los mil pies por minuto, para que
+     * un avión lento no pierda lo que ya podía corregir. Ver `PUERTA_BAJA`.
+     */
+    const enLaFinalRecta =
+      etapa === "final" &&
+      !aLaVista?.length &&
+      elArcoHastaElEje(s).theta < (20 * Math.PI) / 180;
+    const caidaQueSePide = enLaFinalRecta
+      ? Math.min(
+          CAIDA_MAXIMA * 1.25,
+          Math.max(porElSuelo(s) * SENDA + CORRECCION_EN_FINAL, 0.9 * MIL_PIES_POR_MINUTO),
+        )
+      : CAIDA_MAXIMA * 1.25;
+    if (BAJA_POR_EL_ARCO || enLaFinalRecta)
+      pedida = Math.max(pedida, s.position.y + (-caidaQueSePide - senda.ritmo) * 10);
     /*
      * **Subiendo, el morro a la velocidad y el gas quieto** —ver `velocidad`
      * en `sostenerLaAltura`— hasta que la altura queda a tiro: a dos segundos
@@ -1330,7 +1356,30 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         ? recogida.ultimoMando
         : calculado;
     recogida.ultimoMando = mandos.elevator;
-    if (!SENCILLO) mandos.throttle = 0;
+    /*
+     * **Y un bimotor de hélice no corta el gas al empezar a recoger: lo va
+     * quitando.**
+     *
+     * El ralentí de golpe es lo de un reactor —el *retard* a treinta pies— y
+     * lo de una avioneta, que cierra el gas sobre el umbral. En un bimotor de
+     * hélice es lo que se enseña a no hacer: las dos hélices al ralentí son
+     * dos discos de freno delante del ala, y con los flaps de aterrizaje fuera
+     * el avión se queda sin velocidad en mitad de la recogida y se sienta. Se
+     * quita despacio, con la altura que queda, y llega al ralentí al tocar.
+     * Medido con la traza del ala del JAZ 50 —un Twin Otter con los flaps a
+     * 37°— en Los Rodeos (#192): cortando a 9,7 m, de 71 a 61 nudos en cuatro
+     * segundos, la carga sin pasar de 0,99 g aun tirando, y tocó a 2,63 m/s.
+     * Quitándolo con la altura, de 69 a 64 nudos.
+     *
+     * **Y si una racha lo hunde de más, un pelo de gas**, como en Guyrami —ver
+     * arriba—: quitándolo con la altura, una racha a seis metros lo llevó de
+     * bajar a 1,5 m/s a bajar a 2,6 con la carga en 0,91 g, y tocó a 2,02.
+     */
+    if (!SENCILLO)
+      mandos.throttle =
+        suyas.propulsion === "helice" && (suyas.motores ?? 1) >= 2
+          ? Math.min(1, (recogida.gas ?? 0) * queda + 0.5 * Math.max(0, falta))
+          : 0;
   };
   /**
    * La palanca media de los últimos segundos de la final, que es la que
@@ -2349,6 +2398,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     5,
     (suyas.aproximacion ?? 33) * Math.sin((4 * Math.PI) / 180),
   );
+  /** Lo más que se baja en una final estabilizada, m/s: mil pies por minuto. */
+  const MIL_PIES_POR_MINUTO = (1000 * 0.3048) / 60;
+  /**
+   * **Lo que se baja de más para recoger la senda yendo alto en la final
+   * recta**, m/s: unos doscientos pies por minuto, la corrección de un punto
+   * de senda. Ver `volarLaSenda`.
+   */
+  const CORRECCION_EN_FINAL = 1;
 
   /*
    * **Y aquí no hay término integral, y se probó.**
