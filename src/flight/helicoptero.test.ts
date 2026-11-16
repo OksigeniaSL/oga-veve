@@ -628,3 +628,35 @@ describe("arrancar, parar y rodar", () => {
   });
 });
 
+describe("el anemómetro", () => {
+  /**
+   * El tubo de pitot mide el aire que le entra de frente: bajando en vertical,
+   * casi nada, y volando hacia delante, lo que se vuela. Marcaba el aire total, y
+   * en la lección del anillo turbillonario, bajando a 20 m/s, la aguja decía 38
+   * nudos justo cuando tenía que estar casi en cero.
+   */
+  it("bajando en vertical marca casi cero; hacia delante, lo que se vuela", () => {
+    const h = new ModeloDeHelicoptero(F);
+    h.ponerEstabilizacion("actitud");
+    h.reset({ position: new Vector3(0, 1500, 0), heading: 0, airspeed: 0, rotorEnMarcha: true });
+    h.state.velocity.set(0, -20, 0);
+    h.step(1e-4, mandosNeutros());
+    expect(h.state.airspeed / NUDO).toBeLessThan(2);
+    // De lado, tampoco entra.
+    h.state.velocity.set(10, 0, 0);
+    h.step(1e-4, mandosNeutros());
+    expect(h.state.airspeed / NUDO).toBeLessThan(2);
+
+    const { h: volando, m, colectivo, ciclico } = enElAire(600, "actitud", 80);
+    for (let t = 0; t < 20; t += DT) {
+      colectivo();
+      ciclico(80);
+      volando.step(DT, m);
+    }
+    const total = volando.state.velocity.length();
+    // Dentro del 3 % que la norma deja de error al sistema (CS 29.1323 (d)).
+    expect(volando.state.airspeed).toBeGreaterThan(0.97 * total);
+    expect(volando.state.airspeed).toBeLessThanOrEqual(total + 1e-9);
+  });
+});
+

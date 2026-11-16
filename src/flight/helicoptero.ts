@@ -1643,10 +1643,28 @@ export class ModeloDeHelicoptero {
     const u = this.tmp.dot(this.forward);
     const v = this.tmp.dot(this.right);
     const w = this.tmp.dot(this.down);
-    s.airspeed = Math.sqrt(u * u + v * v + w * w);
+    /*
+     * **La velocidad es la que mide el anemómetro, y el anemómetro mide a lo largo
+     * del morro.** El tubo de pitot apunta hacia delante y lo que le entra es el
+     * aire que viene de frente; el que le llega de lado o de abajo no le entra, y
+     * el que le viene de atrás deja la aguja en el tope. Aquí era el aire total, y
+     * bajando en vertical a 20 m/s marcaba 38 nudos —en la lección del anillo
+     * turbillonario, que es justo donde la aguja tiene que estar casi en cero:
+     * por eso se entra sin darse cuenta—. Ahora es lo que va a lo largo del eje.
+     *
+     * **Y por debajo de unos veinte nudos, el de verdad no es de fiar**: la norma
+     * lo calibra en vuelo nivelado de veinte nudos para arriba (CS 29.1323 y
+     * 14 CFR 29.1323 (b)(1)), y el manual de helicópteros de la FAA avisa de que
+     * la estela del rotor lo engaña a poca velocidad (FAA-H-8083-21B, capítulo
+     * 12). Ese error no se simula: no se sabe cuánto es en el Super Puma, y
+     * un número inventado sería enseñar mal; la cifra pequeña que queda es la
+     * del aire de frente, sin más.
+     */
+    const total = Math.sqrt(u * u + v * v + w * w);
+    s.airspeed = Math.max(0, u);
     s.groundSpeed = Math.hypot(s.velocity.x, s.velocity.z);
     s.alpha = Math.atan2(w, Math.max(0.1, Math.abs(u)));
-    s.beta = s.airspeed > 0.5 ? Math.asin(Math.max(-1, Math.min(1, v / s.airspeed))) : 0;
+    s.beta = total > 0.5 ? Math.asin(Math.max(-1, Math.min(1, v / total))) : 0;
     s.heightAboveGround = s.position.y - this.suelo(s.position.x, s.position.z);
     s.verticalSpeed = s.velocity.y;
     s.heading = Math.atan2(this.forward.x, -this.forward.z);
