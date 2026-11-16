@@ -1991,3 +1991,9 @@ instructor	instructor/vuelo.perdidoSinAutomatico.ogg	es-PY	Nos alejamos mucho de
 instructor	instructor/vuelo.perdido.volvemos.ogg	es-PY	¡Eso! El automático ya gira el avión hacia el campo	al tocar la flecha de casa: el automático ya gira hacia el campo
 instructor	instructor/vuelo.tractorALaRaya.ogg	es-PY	Nos quedamos en el pasto, fuera de la raya. No pasa nada: tocá el tractor, que viene a buscarnos y nos lleva a la raya verde	parado en la hierba, fuera de la raya: tocá el tractor, que late, y te lleva a la raya
 ara	ara/inicio.ara.pasaje.kit.avion.bimotorAlaAlta.ogg	es-PY	¡Ala arriba y un motor en cada ala! Sus ruedas no se guardan nunca, y baja en pistas cortitas de tierra y de pasto.	el modo inicio, de pasaje, armá tu avión: Ara, al despegar el bimotor de ala alta y patas fijas
+instructor	instructor/vuelo.flapsParaDespegar.ogg	es-PY	Para despegar, bajá los flaps una muesca: con ellos el ala sostiene antes.	en el punto de espera: la lista de antes de despegar pide los flaps de despegue, una muesca
+instructor	instructor/vuelo.flapsDeDespeguePuestos.ogg	es-PY	Los flaps de despegue los puse yo: una muesca, para que el ala sostenga antes.	en los peldaños de abajo, si no se pusieron: los pone la instructora y lo dice
+instructor	instructor/vuelo.recogeLosFlaps.ogg	es-PY	Ya vamos altos y rápidos: subí los flaps.	tras despegar, a su altura y su velocidad: subí los flaps
+instructor	instructor/vuelo.losFlapsLosSubiYo.ogg	es-PY	Los flaps los subí yo: a esta velocidad el ala ya no los necesita.	en los peldaños de abajo, si no se subieron: los sube la instructora y lo dice
+instructor	instructor/vuelo.avisoDeConfiguracion.ogg	es-PY	Eso que sonó es el avión: avisa que faltan los flaps de despegue. Bajá el motor y poné una muesca.	detrás del aviso de configuración de despegue, en los peldaños de abajo: qué sonó y qué se hace
+cabina	cabina/cabina.flapsUp.ogg	en	flaps up	tras despegar, a su altura y su velocidad: la orden de recoger los flaps

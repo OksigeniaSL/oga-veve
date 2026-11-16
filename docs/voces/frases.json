@@ -20508,5 +20508,47 @@
       "use_speaker_boost": true,
       "speed": 1
     }
+  },
+  {
+    "id": "vuelo.flapsParaDespegar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Para despegar, bajá los flaps una muesca: con ellos el ala sostiene antes.",
+    "para": "en el punto de espera: la lista de antes de despegar pide los flaps de despegue, una muesca"
+  },
+  {
+    "id": "vuelo.flapsDeDespeguePuestos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Los flaps de despegue los puse yo: una muesca, para que el ala sostenga antes.",
+    "para": "en los peldaños de abajo, si no se pusieron: los pone la instructora y lo dice"
+  },
+  {
+    "id": "vuelo.recogeLosFlaps",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya vamos altos y rápidos: subí los flaps.",
+    "para": "tras despegar, a su altura y su velocidad: subí los flaps"
+  },
+  {
+    "id": "vuelo.losFlapsLosSubiYo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Los flaps los subí yo: a esta velocidad el ala ya no los necesita.",
+    "para": "en los peldaños de abajo, si no se subieron: los sube la instructora y lo dice"
+  },
+  {
+    "id": "vuelo.avisoDeConfiguracion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Eso que sonó es el avión: avisa que faltan los flaps de despegue. Bajá el motor y poné una muesca.",
+    "para": "detrás del aviso de configuración de despegue, en los peldaños de abajo: qué sonó y qué se hace"
+  },
+  {
+    "id": "cabina.flapsUp",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "flaps up",
+    "para": "tras despegar, a su altura y su velocidad: la orden de recoger los flaps"
   }
 ]

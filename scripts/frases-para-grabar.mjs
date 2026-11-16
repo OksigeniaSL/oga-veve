@@ -90,7 +90,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -2738,6 +2738,37 @@ for (const [id, voz, para] of DEL_TUJUJU) {
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz, idioma: "es-PY", texto, para });
   total += texto.length;
+}
+/*
+ * **Y los flaps del despegue** (16-11-2026): la lista de antes de despegar,
+ * la instructora que los pone o los sube en los peldaños de abajo, lo que
+ * explica detrás del aviso de configuración y la orden «flaps up» del peldaño
+ * de cabina. Son del grupo `vuelo` y de la cabina, pero metidas con ellos
+ * renumerarían las ya grabadas: van detrás de todo. Ver
+ * `src/flight/flaps-de-despegue.ts` y el ADR 0027, enmienda H14a.
+ */
+const DE_LOS_FLAPS_DEL_DESPEGUE = [
+  ["vuelo.flapsParaDespegar", "en el punto de espera: la lista de antes de despegar pide los flaps de despegue, una muesca"],
+  ["vuelo.flapsDeDespeguePuestos", "en los peldaños de abajo, si no se pusieron: los pone la instructora y lo dice"],
+  ["vuelo.recogeLosFlaps", "tras despegar, a su altura y su velocidad: subí los flaps"],
+  ["vuelo.losFlapsLosSubiYo", "en los peldaños de abajo, si no se subieron: los sube la instructora y lo dice"],
+  ["vuelo.avisoDeConfiguracion", "detrás del aviso de configuración de despegue, en los peldaños de abajo: qué sonó y qué se hace"],
+];
+for (const [id, para] of DE_LOS_FLAPS_DEL_DESPEGUE) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
+}
+if (!filas.some((f) => f.id === "cabina.flapsUp")) {
+  filas.push({
+    id: "cabina.flapsUp",
+    voz: "cabina",
+    idioma: "en",
+    texto: "flaps up",
+    para: "tras despegar, a su altura y su velocidad: la orden de recoger los flaps",
+  });
+  total += "flaps up".length;
 }
 const AJUSTES_CON_CHISPA = {
   stability: 0.35,

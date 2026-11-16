@@ -2778,6 +2778,20 @@ export const ES_PY = {
   "vuelo.alPuestoConFlaps":
     "Llegamos al puesto con los flaps fuera. No pasa nada: la próxima, subílos al dejar la pista.",
   /*
+   * **Y los flaps del despegue**: la lista de antes de despegar los pide en el
+   * punto de espera; en los peldaños de abajo, si no se ponen, los pone la
+   * instructora y lo dice. Arriba, a su altura y su velocidad, se recogen; y si
+   * se mete gas sin ellos en un avión que lo avisa, ella explica detrás qué
+   * sonó. Ver `flight/flaps-de-despegue.ts`.
+   */
+  "vuelo.flapsParaDespegar": "Para despegar, bajá los flaps una muesca: con ellos el ala sostiene antes.",
+  "vuelo.flapsDeDespeguePuestos":
+    "Los flaps de despegue los puse yo: una muesca, para que el ala sostenga antes.",
+  "vuelo.recogeLosFlaps": "Ya vamos altos y rápidos: subí los flaps.",
+  "vuelo.losFlapsLosSubiYo": "Los flaps los subí yo: a esta velocidad el ala ya no los necesita.",
+  "vuelo.avisoDeConfiguracion":
+    "Eso que sonó es el avión: avisa que faltan los flaps de despegue. Bajá el motor y poné una muesca.",
+  /*
    * **Y la lista de después del aterrizaje, punto por punto**: lo que tiene
    * tecla lo pide la instructora y lo hace quien vuela; las luces y el
    * transpondedor los hace ella y lo dice al hacerlo. Uno detrás de otro, cada

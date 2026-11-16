@@ -699,3 +699,8 @@
 699	vuelo.perdidoSinAutomatico	Nos alejamos mucho del campo. Girá despacito hasta que la flecha de casa apunte para arriba, y así volvemos
 700	vuelo.perdido.volvemos	¡Eso! El automático ya gira el avión hacia el campo
 701	vuelo.tractorALaRaya	Nos quedamos en el pasto, fuera de la raya. No pasa nada: tocá el tractor, que viene a buscarnos y nos lleva a la raya verde
+702	vuelo.flapsParaDespegar	Para despegar, bajá los flaps una muesca: con ellos el ala sostiene antes.
+703	vuelo.flapsDeDespeguePuestos	Los flaps de despegue los puse yo: una muesca, para que el ala sostenga antes.
+704	vuelo.recogeLosFlaps	Ya vamos altos y rápidos: subí los flaps.
+705	vuelo.losFlapsLosSubiYo	Los flaps los subí yo: a esta velocidad el ala ya no los necesita.
+706	vuelo.avisoDeConfiguracion	Eso que sonó es el avión: avisa que faltan los flaps de despegue. Bajá el motor y poné una muesca.

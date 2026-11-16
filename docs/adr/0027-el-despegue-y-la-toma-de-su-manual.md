@@ -1662,3 +1662,159 @@ procedimiento pide apagarla antes del sitio donde avisa.
   vuelo, y junto a ella acorta su mirada; uno de verdad no la conocería y
   avisaría más. Lo que se enseña —en esta pista se apaga, y por qué— es el
   mismo.
+
+## Enmienda H14a (16-11-2026): despegar con los flaps de despegue (#194)
+
+Quien juega salía del puesto con la palanca de flaps arriba y nada le pedía los
+de despegue, mientras el juego cantaba las velocidades de la primera muesca: la
+Vr de la ficha y la V2 de `conUnMotor` (enmienda H10e) son de los flaps de
+despegue. Con el ala limpia, la pérdida a la masa de la ficha y la Vr que se
+canta eran:
+
+| | Pérdida limpia | Vr | Pérdida con los flaps de despegue |
+|---|---|---|---|
+| JAZ 50 | 70 kt | 73 | 63 |
+| JAZ 60 | 98 | 102 | 90 |
+| JAZ 90 | 135 | **133** | 121 |
+| JAZ 110 | 135 | 150 | 125 |
+| JAZ 120 | 147 | **145** | 132 |
+
+En el JAZ 90 y en el JAZ 120 «rotate» llegaba antes de que el ala limpia pudiera
+con el avión, y el banco del vuelo entero oía «stall, stall» al poco de despegar
+(#192). Con sus flaps de despegue, la Vr queda por encima de la pérdida en los
+siete que los llevan; lo comprueba `flaps-de-despegue.test.ts`.
+
+### Lo real, y quién lo hace en cada peldaño
+
+Los flaps de despegue van en la lista de antes de despegar —«Wing Flaps — SET
+for takeoff» en una avioneta, «Flaps … set» en un avión de línea—, y se recogen
+después de despegar a la altura de aceleración y por velocidad. El vuelo de
+línea de la escena de Ara ya lo hacía (`RECOGE_LOS_FLAPS`). Ahora lo hace quien
+juega, con el reparto de la lista de antes de aterrizar
+(`atenderALaListaDeAterrizaje`): la tarjeta lo pide en los cuatro peldaños, con
+su dibujo y su tecla, y se puede tocar; en los tres de abajo, si no se hace, lo
+hace la instructora y lo dice; en el de cabina, la lista es de quien vuela. La
+regla vive en `flight/flaps-de-despegue.ts`; la voz, la tarjeta y la palanca,
+en `Game.atenderALosFlapsDelDespegue`.
+
+| | Guyrami, Tukã y Taguato | Taguato Ruvicha |
+|---|---|---|
+| En el punto de espera | la tarjeta y «Para despegar, bajá los flaps una muesca»; a los 8 s, o al entrar en la pista sin ellos, los pone la instructora: «Los flaps de despegue los puse yo» | la tarjeta con la línea de la lista, «FLAPS — 5» con los grados de su muesca, y la misma voz; una vez |
+| Entrando en la pista sin pasar por la espera | los pone ella, sin pedirlos antes: dos voces para un suceso sobran | la tarjeta y la voz |
+| Empezando alineado (la lección de despegar) | con los flaps de despegue puestos, como la final empieza configurada | igual |
+| A su altura y su velocidad | la tarjeta y «Ya vamos altos y rápidos: subí los flaps»; a los 20 s, o cerca de la placa, los sube ella | la tarjeta «FLAPS UP» y el canto «flaps up», la orden de la tripulación; otra vez cerca de la placa |
+
+La lista pide **su muesca**, la de las velocidades que se cantan, y no cualquiera
+del rango: en la avioneta, «Flap deflections greater than 10° are not approved
+for takeoff». Lo que ya está hecho no se pide; se rearma al volar, no con un
+reloj. La recogida se pide en la salida de un despegue (`flapsPorRecoger`, el
+`trenPorMeter` de los flaps): los de la aproximación son para aterrizar. Y la
+placa manda sobre la altura: cerca de la VFE de su muesca se pide aunque no se
+haya llegado.
+
+En el vuelo de pasaje y con la mano de Jazlyn no se pide nada: los flaps los
+lleva la tripulación.
+
+### El Seneca, con su primera muesca aunque su manual diga cero
+
+«The flap setting for normal takeoff is 0°», y 25° para el de máximo esfuerzo
+(POH del Seneca III, PA-34-220T, VB-1110, 1981, p. 4-27; el del Seneca II no se
+ha podido leer). Se probó a dejar al JAZ 40 despegar sin flaps y **no se ha
+puesto**: su despegue está medido con los diez grados de su primera muesca, y
+con cero vuela 705 m hasta los cincuenta pies donde su cuenta da 536, un 31 %
+más, por encima del 30 % que admite `despegue-y-toma-del-manual.test.ts`. Es lo
+mismo que ya queda abierto de él —su hélice, enmienda H10b—, y cambiarlo pide
+medir su despegue sin flaps. Mientras tanto la lista le pide «FLAPS — 10», que
+es la configuración con la que el juego le canta sus velocidades; su ficha lo
+dice.
+
+### Cuándo se recogen
+
+| | Altura | Velocidad | De dónde |
+|---|---|---|---|
+| JAZ 20 | 200 ft | 60 kt | «left down until all obstacles are cleared and a safe flap retraction speed of 60 KIAS is reached» (Cessna 172S *Information Manual*, rev. 5, 2004, pp. 4-24 y 4-25). **La altura no la da**: doscientos pies, sin fuente, para que no caiga encima de la rotación. |
+| JAZ 50 | 400 ft | 80 kt | Su lista dice «Flaps — Set 10 degrees» y «Flaps — Up» sin cifras (BLM, N49SJ); las cifras son de un piloto de Twin Otter en un **foro** (PPRuNe, 2008), y los 80 son su VYSE (AvioConsult, revisión del PSM 1-64-1A). Su manual no se ha leído. |
+| JAZ 40 | 1.000 ft | 100 kt, la de circuito | La regla de su clase: el manual del Seneca II no se ha leído. |
+| JAZ 60 | 1.000 ft | 130 kt, la de circuito | La regla de su clase: no se ha encontrado la de su manual. |
+| JAZ 90, 110 y 120 | 1.000 ft | Vref + 50: 182, 194 y 196 kt | La regla de su clase. |
+
+**La regla de la clase**: a la altura de aceleración y a la velocidad de
+maniobra de la primera muesca de la escalera de velocidades
+(`PRIMEROS_FLAPS_SOBRE_VREF`, la Vref y cincuenta en un reactor; la de circuito
+en uno de hélice), que es la que el juego ya pide con esos flaps fuera en la
+aproximación. Los mil pies son los del vuelo de línea; las cifras de la OACI
+(PANS-OPS, Doc 8168, NADP 1 y 2) y el programa de recogida del FCTM de Boeing no
+se han releído para esta enmienda. En los siete, la marca de subir con los flaps
+fuera —diez nudos por debajo de su placa— llega a la de recoger, y limpia el ala
+aguanta al menos 1,1 veces su pérdida: lo comprueba la prueba.
+
+### El aviso de configuración: la norma, sí; el sonido, no encontrado
+
+La norma de transporte pide un aviso sonoro «automatically activated during the
+initial portion of the takeoff roll» si «the wing flaps or leading edge devices
+are not within the approved range of takeoff positions», y que siga hasta que se
+arregle, se pare o se rote (14 CFR 25.703). Está hecho: `AvisoDeConfiguracion`
+suena al meter gas para despegar —la mitad, `GAS_DE_DESPEGUE` del resto del
+juego— en la fase `despegando` con los flaps de verdad, no la palanca, fuera del
+rango de despegue: de su muesca a la de en medio. Suena una vez por suceso y se
+rearma al quitar el gas o poner los flaps. Lo diría la máquina, en los cuatro
+peldaños, con la instructora detrás en los tres de abajo: «Eso que sonó es el
+avión: avisa que faltan los flaps de despegue».
+
+**Pero hoy no suena en ninguno**, porque el sonido de ningún tipo tiene fuente
+de primera mano, y cada ficha lo dice (`configuracionDeDespegue: null` en
+`AvisosDeABordo`):
+
+- **JAZ 120 (747-400)**: el índice de mensajes de su QRH (D6-30151-400, 2009)
+  traería «>CONFIG FLAPS», pero solo se ha visto en el extracto de un buscador y
+  el documento ya no se abre; el FCOM 15.20, que diría si suena la sirena de los
+  avisos, no se ha leído, y en foros hay quien dice bocina intermitente.
+- **JAZ 110 (787-9)**: lo lleva por la 25.703; que solo avisa sin un ajuste de
+  despegue válido lo dice un foro (PPRuNe, hilo del AI171). FCOM sin leer.
+- **JAZ 90 (E170)**: lo lleva por la 25.703; su voz no está en nada de primera
+  mano. Los mensajes «NO TAKEOFF…» de su familia salen en foros, en fichas de
+  estudio y en una directiva del ERJ-145, que es otro tipo (Federal Register,
+  E6-14288, 30-8-2006).
+- **JAZ 50 (DHC-6-400)**: lo lleva —«Takeoff Configuration Warning System», que
+  mira los flaps y salta al adelantar las palancas (FAA, MMEL del DHC-6, rev. 15
+  en borrador, ítem 27-9)—, y con qué sonido no se ha encontrado.
+- **JAZ 60 (1900D)**: es de la parte 23 y no se ha encontrado si lo lleva.
+- **JAZ 20 y JAZ 40**: no lo llevan; el manual de la avioneta solo describe la
+  bocina de pérdida (sección 7).
+
+El día que aparezca el de un tipo, basta su ficha: hoy el campo solo admite
+`"sirena"`, que es el tono que ya existe para los avisos de Boeing; una voz
+pediría su toma.
+
+### Lo que cambia en lo que vuelan los bancos
+
+- `verificar-despegue.mjs` vuela la lección de despegar, que empieza alineada:
+  ahora empieza con los flaps de despegue puestos, en los cuatro peldaños.
+- `verificar-vuelo-entero.mjs`: en los tres peldaños de abajo, la instructora
+  pone los flaps en la espera o al entrar en la pista, y el piloto del banco
+  los recoge al dejar el suelo (su `configurar` pide cero subiendo), así que no
+  llega a oír la recogida. En el de cabina, la tarjeta los pide y el banco, que
+  no los pone, despega limpio como antes. En el registro de cantos aparecen las
+  líneas «flaps de despegue: …» y «flaps del despegue: …».
+- Volado una vez en Los Rodeos con el JAZ 90, en Guyrami y en Taguato: V1 y
+  «rotate» con la palanca en su primera muesca, y el avisador de pérdida
+  callado («ni una vez»). Las dos tiradas fallan en la toma —larga en Guyrami,
+  a 12 m del eje en Taguato—, dos comprobaciones que el propio banco marca
+  como fallos que ya volvieron antes; la configuración de la toma la pone el
+  piloto del banco y esto no la toca. En Taguato la lista pedía a nueve nudos,
+  rodando con la verde, y la instructora los ponía al pisar la pista: dos
+  voces para un suceso. Con la verde y rodando ya es entrar
+  (`PARADO_EN_LA_ESPERA`), y abajo los pone ella sin pedirlos.
+
+### Lo que no
+
+- **El sonido del aviso de configuración**, en ningún tipo: arriba.
+- **Las voces**: las cinco frases de la instructora y el canto «flaps up»
+  (`cabina.flapsUp`) están sin grabar, al final de la lista de grabar para no
+  renumerar nada, y en las dos `ESPERAN_SU_TOMA` (`audio/cabina.ts` y
+  `por-grabar.test.ts`); hasta entonces se ve la tarjeta y la voz calla.
+- **El Seneca sin flaps**, arriba; y el manual del Seneca II, el del Twin
+  Otter y el del 1900D, y la altura de recogida de la avioneta.
+- **Recoger por muescas.** Un Boeing de verdad recoge de flaps 5 a flaps 1 y
+  de 1 a arriba según su programa; la palanca de este juego no tiene la
+  posición 1, y se recoge de una vez.
