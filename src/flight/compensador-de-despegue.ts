@@ -45,10 +45,9 @@ import { perdidaCon } from "./velocidades-de-despegue";
  * subir. En los tres reactores cae entre la V2 más trece y la V2 más veinte
  * nudos, por encima de la V2 que se vuela con uno parado; en la avioneta,
  * sesenta y un nudos, junto a su Vx de 62 (172S *Information Manual*, p. 4-5).
- * Medido con el banco de mesa (ADR 0027, enmienda H21a): de 1,2 a 1,3 todos
- * suben soltando los mandos después de rotar, en los tres peldaños; por
- * encima de 1,35 el reactor pesado vuelve a asentarse en la pista antes de
- * subir.
+ * Medido con el banco de mesa (ADR 0027, enmienda H21a): de 1,2 a 1,3 ninguno
+ * baja soltando los mandos después de rotar, en los tres peldaños; con 1,35 el
+ * Seneca, en el peldaño sin ayudas, ya baja antes de subir.
  */
 export const SUBE_SOBRE_LA_PERDIDA = 1.3;
 
