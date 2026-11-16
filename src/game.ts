@@ -19380,8 +19380,16 @@ export class Game {
      * una montaña bien grande delante». Ver `flight/terreno-delante.ts`.
      */
     const visto = juntarAvisos(avisoDeTerreno(cerca), this.mirarElTerrenoDelante(dt));
-    // Sin motor y bajando a posarse, «subí» es lo que no se puede: ver `autorrotacionPracticada`.
-    const terreno = this.autorrotacionPracticada() ? null : visto;
+    /*
+     * **El helicóptero, sin el aviso de terreno de un avión**: son las envolventes
+     * del GPWS de un ala —bajo a ciento veinte metros, «subí» bajando a sesenta—, y
+     * un helicóptero vuela bajo por oficio y se posa en cualquier sitio. Se cantaba
+     * «terrain, pull up» con su «Subí» en el vuelo libre al volver al helipuerto, y
+     * sin motor es lo que no se puede hacer. El de los helicópteros que lo llevan
+     * es otra caja, con otros modos (ADR 0026, enmienda H19c), y el JAZ 70 no la
+     * lleva: no se inventa.
+     */
+    const terreno = this.aircraft.helicoptero ? null : visto;
     this.terrenoAhora = terreno;
     /*
      * El HUD enseña el mismo aviso que dice la voz, no uno suyo. Ver
@@ -23246,13 +23254,12 @@ export class Game {
   }
 
   /**
-   * **El ejercicio de la autorrotación en marcha.** Empieza en el aire en la
-   * lección de aterrizar, y lo de una final de avión que esa lección trae se
-   * calla: el consejero de la bajada, el *sink rate*, el «subí» del suelo y el
-   * «metélo» del tren. Bajar deprisa hacia el suelo sin motor es la maniobra, y
-   * subir no se puede: decirlo enseñaría lo contrario. Medido en el banco de
-   * Tukã: «terrain, pull up» con su «Subí» a cuarenta metros, y «gear up» a mil
-   * pies con el tren que hace falta para posarse.
+   * **El ejercicio de la autorrotación en marcha.** Empieza en el aire a setenta
+   * nudos y con el tren fuera, que hace falta para posarse, y el «metélo» del tren
+   * se calla: medido en el banco de Tukã, «gear up» a mil pies. Lo demás de una
+   * final de avión que la lección de aterrizar trae —el consejero de la bajada,
+   * el *sink rate*, el «subí» del suelo— ya no suena en ningún vuelo del
+   * helicóptero (ADR 0026, enmienda H19c).
    */
   private autorrotacionPracticada(): boolean {
     const p = this.practica;
@@ -31213,8 +31220,8 @@ export class Game {
    * son el terreno, la pista ocupada y la orden de irse al aire.
    */
   private cantarLaActitud(): void {
-    // Bajar deprisa sin motor es la maniobra, no un aviso: ver `autorrotacionPracticada`.
-    if (this.autorrotacionPracticada()) return;
+    // Los dos son envolventes del GPWS de un avión: el helicóptero no, como el de terreno (ADR 0026, enmienda H19c).
+    if (this.aircraft.helicoptero) return;
     const s = this.flight.state;
     const ahora = avisoDeActitud(
       {
@@ -31727,8 +31734,8 @@ export class Game {
    * consejero con la lectura de este fotograma. Ver `mirarLaSenda`.
    */
   private aconsejarLaBajada(): void {
-    // Los consejos de una final de avión, no en la autorrotación: ver `autorrotacionPracticada`.
-    if (this.autorrotacionPracticada()) return;
+    // Los consejos de una final de avión, a una pista y por su senda: el helicóptero viene a posarse.
+    if (this.aircraft.helicoptero) return;
     const l = this.lecturaDelConsejo;
     // Un suceso, una voz: si la cadena acaba de decir un paso, al siguiente.
     if (!l || this.pasoEnEsteFotograma) return;
@@ -33464,11 +33471,18 @@ export class Game {
     // Y en la autorrotación el tren se queda fuera, que se va a posar: ver `autorrotacionPracticada`.
     if (this.autorrotacionPracticada()) return;
     /*
-     * Y en las lecciones del helicóptero, tampoco: son estacionario y subir y
-     * bajar encima del helipuerto, donde el tren va fuera, y el «metélo» salía
-     * en cada subida de la del efecto suelo. Ver `practicarElRotor`.
+     * **Y el helicóptero lo mete volando hacia delante**, no al subir en vertical:
+     * el Super Puma lo sube en la lista de después de despegar, ya en la subida
+     * (ver `meteElTrenA` en su ficha), y en estacionario o subiendo encima del
+     * helipuerto el tren va fuera, que es donde se va a posar. Salía en cada
+     * subida del vuelo libre y de las lecciones. Por debajo de su velocidad de
+     * aproximación, la de llegar a un helipuerto, no es la subida de una salida.
      */
-    if (this.aircraft.helicoptero && this.leccionDelRotor) return;
+    if (
+      this.aircraft.helicoptero &&
+      indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) < this.aircraft.approachSpeed
+    )
+      return;
 
     /*
      * Y metélo, cuando ya no hace falta: en el aire, subiendo y por encima de
