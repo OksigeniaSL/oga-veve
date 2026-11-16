@@ -1590,7 +1590,14 @@ export class ModeloDeHelicoptero {
       // Más lo que va a frenar el giro de ahora la ayuda, que ya lo frenaba la amortiguación.
       this.integralPedales = acotar(this.ultimosMandos.pedales - piloto.pedales + 1.2 * r * (1 - volando), 0.6);
     }
-    this.integralPedales = acotar(this.integralPedales + 0.4 * (sostener * (1 - volando) + coordinar * volando) * dt, 0.6);
+    /*
+     * **Y posado no aprende**, como el cíclico de arriba: en el suelo el rumbo lo
+     * sujetan las ruedas, y lo que se iba sumando contra un rumbo pedido que no
+     * se alcanzaba salía de golpe al despegar, con el morro girando. Lo vio la
+     * lección del par (enmienda H17a del ADR 0026).
+     */
+    if (!posado)
+      this.integralPedales = acotar(this.integralPedales + 0.4 * (sostener * (1 - volando) + coordinar * volando) * dt, 0.6);
     /*
      * **Y el pie se adelanta al par**: al subir el colectivo sube el par y el morro
      * se va, así que la estabilización mete pie con el colectivo, sin esperar a que

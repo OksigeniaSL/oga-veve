@@ -33414,6 +33414,12 @@ export class Game {
     }
     // Y en la autorrotación el tren se queda fuera, que se va a posar: ver `autorrotacionPracticada`.
     if (this.autorrotacionPracticada()) return;
+    /*
+     * Y en las lecciones del helicóptero, tampoco: son estacionario y subir y
+     * bajar encima del helipuerto, donde el tren va fuera, y el «metélo» salía
+     * en cada subida de la del efecto suelo. Ver `practicarElRotor`.
+     */
+    if (this.aircraft.helicoptero && this.leccionDelRotor) return;
 
     /*
      * Y metélo, cuando ya no hace falta: en el aire, subiendo y por encima de
