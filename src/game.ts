@@ -1432,7 +1432,8 @@ import {
   turnoDe,
   type BancoDeVoces,
 } from "./audio/instructor-grabado";
-import { apuntarVuelo, type Paso, type Vuelo } from "./flight/bitacora";
+import { apuntarVuelo, type Vuelo } from "./flight/bitacora";
+import { Libreta } from "./flight/libreta";
 import { plano } from "./ui/hangar";
 import { pavimentoDe, sueloEn, TRAQUETEO, type Superficie } from "./world/superficie";
 import { signoDelGiro } from "./world/giro-de-las-helices";
@@ -2014,19 +2015,6 @@ const RITMO_DEL_RETARD = 0.35;
  * la final puesto. Ver `flight/recogida.ts`.
  */
 const YA_NO_BAJA = -0.3;
-
-/** Cada cuántos segundos de vuelo se apunta la hora en el cuaderno. */
-const CADA_CUANTO_SE_APUNTA = 30;
-
-/**
- * Cada cuántos segundos se cata por dónde va el avión, para la traza.
- *
- * Dos. Un vuelo de diez minutos son trescientas catas, que la bitácora
- * adelgaza a ciento veinte al guardarlas: más resolución de la que se ve en
- * una raya sobre un plano de doce kilómetros, y suficiente para que una curva
- * de circuito siga pareciendo una curva. Ver `flight/bitacora.ts`.
- */
-const CADA_CUANTO_SE_CATA = 2;
 
 /** Un campo del vuelo con su escenario, que es de donde sale su nombre. */
 interface CampoConNombre extends CampoDelVuelo {
@@ -5431,22 +5419,10 @@ export class Game {
    * confirma con la pregunta del principio. Ver `flight/sin-instructora.ts`.
    */
   private sinInstructora = false;
-  /** Segundos volando desde el último apunte, para no escribir cada fotograma. */
-  private sinApuntar = 0;
-  /**
-   * Por dónde ha ido este vuelo, en coordenadas del fichero del aeródromo.
-   *
-   * Se cata cada pocos segundos y se guarda con el vuelo: a los cuatro años
-   * «lo que acabo de hacer» no es una lista de números, es un dibujo. Ver
-   * `flight/bitacora.ts`.
-   */
-  traza: Paso[] = [];
+  /** Cuánto dura este vuelo y por dónde va: lo que acaba en el cuaderno. Ver `flight/libreta.ts`. */
+  readonly libreta = new Libreta();
   /** De qué está hecho el suelo de debajo. Ver `world/superficie.ts`. */
   private superficie: Superficie = "asfalto";
-  /** Lo que se lleva sin catar la traza, s. */
-  private sinCatar = 0;
-  /** Cuánto ha durado este vuelo, s. Cuenta desde que se arrancó. */
-  private duracion = 0;
   /**
    * Lo que hay apuntado para dentro de un rato. Ver `flight/agenda.ts`.
    *
@@ -10919,9 +10895,9 @@ export class Game {
       ...(llegada !== this.scenario.id ? { llegada } : {}),
       leccion: this.leccion.id,
       tramo: this.tier.id,
-      segundos: Math.round(this.duracion),
+      segundos: Math.round(this.libreta.duracion),
       galones: this.galones.lista,
-      traza: this.traza,
+      traza: this.libreta.traza,
       // Y lo de antes de volar, si hubo: la vuelta al avión. Ver `loDeAntes`.
       ...this.loDeAntes(),
     });
@@ -10980,7 +10956,7 @@ export class Game {
       // en Asunción: el aeródromo salía como un punto y la lección de rodar,
       // que se queda en un kilómetro, como nada. El suelo de escala es para
       // comparar fichas en el hangar; aquí solo hay un vuelo.
-      plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
+      plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
       // Y lo que se lleva volado en total, en avioncitos. Ver `ui/reloj.ts`.
       this.relojDeHoras(),
       // Y el nombre de cada parte de la hoja, desde el peldaño que lee.
@@ -11184,7 +11160,7 @@ export class Game {
    */
   private relojDeHoras(): string {
     return dibujarReloj(
-      relojDe(this.cuaderno.segundos, this.duracion),
+      relojDe(this.cuaderno.segundos, this.libreta.duracion),
       t("fin.horas"),
     );
   }
@@ -13449,10 +13425,8 @@ export class Game {
      * están en `empezarUnVueloNuevo`; aquí queda lo que lee el primer
      * fotograma de un avión que se recoloca.
      */
-    if (this.sinApuntar > 0) {
-      this.apuntar({ segundos: this.cuaderno.segundos + this.sinApuntar });
-      this.sinApuntar = 0;
-    }
+    const sinApuntar = this.libreta.volcar();
+    if (sinApuntar > 0) this.apuntar({ segundos: this.cuaderno.segundos + sinApuntar });
     this.vistaActual = null;
     this.pidiendoFreno = false;
     this.gestoEnPantalla = null;
@@ -13597,9 +13571,7 @@ export class Game {
     this.olvidarLaFinalDeLaTorre();
     this.vaca.quitar();
     // Otro vuelo, otra traza: la raya del anterior ya está guardada.
-    this.traza = [];
-    this.sinCatar = 0;
-    this.duracion = 0;
+    this.libreta.empezarOtro();
     this.dichoDeLaToma = false;
     this.avisadoDeLaPasada = false;
     // Una cuenta atrás a medias de un vuelo que ya no existe.
@@ -17997,10 +17969,8 @@ export class Game {
     this.alturaEnGrande = new AvisosDeAltura(
       this.tier.units === "aeronautical" ? EN_GRANDE_EN_PIES : EN_GRANDE,
     );
-    // Las horas que duró de verdad este vuelo, las que no son del cuaderno. Ver arriba.
-    this.duracion += saltadas;
-    // La raya de por dónde se fue era de otro plano: el dibujo la uniría con una recta de mil kilómetros.
-    if (otroMundo) this.traza = [];
+    // Las horas que duró de verdad este vuelo, y la raya si era de otro plano. Ver `Libreta.saltar`.
+    this.libreta.saltar(saltadas, otroMundo);
   }
 
   /**
@@ -18620,36 +18590,11 @@ export class Game {
       this.sufrirPercance("pasada");
     }
 
-    /*
-     * **Las horas de vuelo, que es de lo que va un cuaderno.**
-     *
-     * Se cuentan con las ruedas en el aire y se guardan cada medio minuto: no
-     * hace falta más precisión —nadie mira los segundos— y escribir en el
-     * almacenamiento sesenta veces por segundo sería absurdo.
-     */
-    if (!this.flight.state.onGround) {
-      this.sinApuntar += dt;
-      if (this.sinApuntar > CADA_CUANTO_SE_APUNTA) {
-        this.apuntar({ segundos: this.cuaderno.segundos + this.sinApuntar });
-        this.sinApuntar = 0;
-      }
-    }
-
-    /*
-     * **Y por dónde se va pasando**, que es lo que después se dibuja.
-     *
-     * Se cata cada pocos segundos, en el suelo y en el aire: la vuelta del
-     * puesto a la pista es parte del vuelo y en el plano se reconoce igual que
-     * el circuito. En coordenadas del fichero —la Y del norte es la Z negativa
-     * del mundo—, que es el sistema en el que ya está dibujado el plano.
-     */
-    this.duracion += dt;
-    this.sinCatar += dt;
-    if (this.sinCatar >= CADA_CUANTO_SE_CATA) {
-      this.sinCatar = 0;
-      const p = this.flight.state.position;
-      this.traza.push([Math.round(p.x), Math.round(-p.z)]);
-    }
+    // Las horas de vuelo y por dónde se va pasando. Ver `flight/libreta.ts`.
+    const volado = this.libreta.contarElAire(dt, !this.flight.state.onGround);
+    if (volado > 0) this.apuntar({ segundos: this.cuaderno.segundos + volado });
+    const pasando = this.flight.state.position;
+    this.libreta.catar(dt, pasando.x, pasando.z);
 
     /*
      * **Con un percance puesto, el avión no se mueve.** La fase de la partida
@@ -23577,7 +23522,7 @@ export class Game {
         this.tier.instruments === "none"
           ? ""
           : this.rotulo(clave, "palabra.bien"),
-        plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
+        plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
       );
     });
   }
@@ -23720,7 +23665,7 @@ export class Game {
             this.tier.instruments === "none"
               ? ""
               : this.rotulo(`ejercicio.${l.id}.bien` as TranslationKey, "palabra.bien"),
-            plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
           );
         });
         return;
@@ -24416,7 +24361,7 @@ export class Game {
       this.hud.mostrarCierreDeEjercicio(
         dibujoDeCierre("vuelta"),
         this.tier.instruments === "none" ? "" : this.rotulo(clave, "palabra.bien"),
-        plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
+        plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
       );
     });
   }
@@ -36111,9 +36056,9 @@ export class Game {
       escenario: this.scenario.id,
       leccion: this.leccion.id,
       tramo: this.tier.id,
-      segundos: Math.round(this.duracion),
+      segundos: Math.round(this.libreta.duracion),
       galones: [],
-      traza: this.traza,
+      traza: this.libreta.traza,
       ...this.loDeAntes(),
     });
   }
