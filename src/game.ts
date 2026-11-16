@@ -13357,13 +13357,10 @@ export class Game {
     this.empezarUnVueloNuevo();
     /*
      * **Y el ejercicio, otra vez desde el principio**: se repite, como en el
-     * simulador, con los motores en marcha, sin prioridad y sin bomberos. Y
-     * con las velocidades de esta pista y de este aire. Ver `practicar`.
+     * simulador, con los motores en marcha. La prioridad y los bomberos ya los
+     * quitó `empezarUnVueloNuevo`. Y con las velocidades de esta pista y de
+     * este aire. Ver `practicar`.
      */
-    this.emergenciaDeclarada = false;
-    this.mensajesDeMotor = [];
-    this.bomberos.quitar();
-    this.bomberosPor = null;
     this.practica?.reiniciar();
     this.otraVezLaTormenta();
     this.leccionDelRotor?.reiniciar();
@@ -13539,6 +13536,18 @@ export class Game {
     this.partida.volverAVolar();
     // Y con motor: lo de la otra punta y el planeo eran del de antes. Ver `quedarseSinMotor`.
     this.sinMotor = false;
+    /*
+     * **Sin la emergencia del vuelo de antes.** Un vuelo nuevo no sale con la
+     * prioridad declarada, la luz ámbar del motor ni los bomberos detrás.
+     * Estaba solo en `resetFlight`, y otro tramo los arrastraba: se aterrizaba
+     * de un ejercicio de motor parado, se apagaba, se arrancaba y la vuelta
+     * salía declarada. Lo vio H20d al juntar los tres caminos. Lo del
+     * ejercicio en sí —repetirlo o no— es de cada camino.
+     */
+    this.emergenciaDeclarada = false;
+    this.mensajesDeMotor = [];
+    this.bomberos.quitar();
+    this.bomberosPor = null;
     this.laOtraCabecera.reiniciar();
     // Todo lo de venir a aterrizar se reinicia de una vez, que es lo que gana
     // tenerlo junto: antes eran cinco líneas repartidas por el reinicio.
