@@ -24,6 +24,13 @@ describe("el viento cruzado demostrado de cada ficha (#92)", () => {
     expect(CRUZADO_DEMOSTRADO["jaz-20"]!.kt).toBe(15);
   });
 
+  it("el 1900D lleva los veintidós nudos publicados, y no la regla de certificación", () => {
+    // NTSB, CHI04LA086 (N155ZV, 2004), p. 1. Enmienda H20b del ADR 0027.
+    const c = cruzadoDemostrado(avion("jaz-60"));
+    expect(c.kt).toBe(22);
+    expect(c.fuente).toMatch(/CHI04LA086/);
+  });
+
   it("el biplano sin cifra de manual cae a la regla de certificación: dos décimas de su pérdida", () => {
     const c = cruzadoDemostrado(avion("jaz-25"));
     expect(c.fuente).toMatch(/23\.233/);

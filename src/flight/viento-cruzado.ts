@@ -33,10 +33,7 @@ export interface CruzadoDemostrado {
  * Por avión. Ver la cabecera.
  *
  * Del biplano no se ha encontrado la cifra del manual del Ag Cat, y no está:
- * para él manda la regla de certificación de `cruzadoDemostrado`. Tampoco la
- * del Beech 1900D, desde que el JAZ 60 es ese avión (ADR 0027): llevaba los
- * veinticinco nudos del manual del Twin Otter, y el 1900D se certificó con la
- * misma regla de los aviones pequeños que manda aquí.
+ * para él manda la regla de certificación de `cruzadoDemostrado`.
  */
 export const CRUZADO_DEMOSTRADO: Readonly<Record<string, CruzadoDemostrado>> = {
   "jaz-20": {
@@ -61,6 +58,19 @@ export const CRUZADO_DEMOSTRADO: Readonly<Record<string, CruzadoDemostrado>> = {
      */
     kt: 25,
     fuente: "DHC-6 Twin Otter Series 310, manual de vuelo, citado por la AAIB (Bulletin 8/2017, G-BVVK)",
+  },
+  "jaz-60": {
+    /*
+     * **Veintidós nudos, del informe de la NTSB** de un 1900D que se salió de
+     * la pista con viento cruzado: «The published maximum demonstrated
+     * crosswind component for the aircraft was 22 knots» (NTSB, CHI04LA086,
+     * N155ZV, Manhattan, Kansas, 15-3-2004, p. 1; y en la p. 4, «according to
+     * the operator … for the 1900D is 22 knots»). Desde que el JAZ 60 es un
+     * 1900D (ADR 0027) llevaba la regla de certificación, unos diecisiete; y
+     * antes, los veinticinco del Twin Otter. Enmienda H20b del ADR 0027.
+     */
+    kt: 22,
+    fuente: "Beech 1900D, viento cruzado demostrado publicado, citado por la NTSB (CHI04LA086, N155ZV, 2004)",
   },
   "jaz-90": {
     kt: 28,

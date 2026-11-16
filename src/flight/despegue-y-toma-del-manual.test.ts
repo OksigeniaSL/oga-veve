@@ -127,8 +127,17 @@
  *   sustenta poco (Jenkinson da al 747-100 un CL máximo de despegue de 2,03, y
  *   el modelo, 1,73). Enmienda H10b.
  * - **El JAZ 90**, un 18 % más largo volando, y no por la cola: con la de su
- *   dibujo, 14,2° donde eran 9°, se sigue yendo del suelo a 8,1°. Lo que le
- *   falta está en el aire (enmienda H10b).
+ *   dibujo, 14,2° donde eran 9°, se sigue yendo del suelo a 8,1°. **Ni por el
+ *   avión volado** (traza de la enmienda H20b): de la Vr a los treinta y cinco
+ *   pies tarda 5,8 s, como el 787 —5,7— y el 747 —6,2—. Lo que se queda corta
+ *   es la cuenta: la proporción de su clase, 2.500 / 1.800, es la del 747 a su
+ *   peso máximo, y cuenta ese tramo como una parte de la carrera. El E170 de la
+ *   ficha lleva 0,43 de empuje por peso, donde los dos anchos llevan 0,33 y
+ *   0,34, así que rueda poco para lo deprisa que va, y esa parte le da 262 m:
+ *   unos 3,5 s a su velocidad, que no los vuela ningún reactor. Contar ese tramo
+ *   como un tiempo le pediría 1.264 m, por encima de los 1.151 de Embraer con
+ *   más masa: falta además una cifra de Embraer de su carrera o de su
+ *   despegue con todos los motores, y sin ella no se toca.
  * - **Los dos de fuselaje ancho aterrizan un 12 % más corto que su manual**, y
  *   no por lo mismo que el E170, que aterriza largo. En los dos la Vref no es:
  *   la del 787-9 es la de la FAA, y la del 747-100, la de Jenkinson —141
@@ -137,14 +146,24 @@
  *   2,88 y 2,97 m/s² al acabar, por debajo del autofreno MED, y el pie a fondo
  *   de un avión de línea frena más que el MED. Lo que falta es el aire: con su
  *   freno, el manual pide 425 y 416 m desde los cincuenta pies, unos 5,6
- *   segundos a su Vref, donde la senda de tres grados da 291. Sin la cifra del
- *   tramo en el aire de su manual, no se toca.
+ *   segundos a su Vref, donde la senda de tres grados da 291. **Lo que falta
+ *   son los segundos entre tocar y frenar del todo** que cuenta la distancia
+ *   certificada: uno hasta el primer dispositivo de frenada y otro por cada
+ *   uno que siga (FAA, AC 91-79A Chg 2, figura 1, p. 6). Con dos —tocar,
+ *   frenos de tierra, freno— el 747 pediría 1.816 m y el 787 1.762, un 3 y un
+ *   2 % por debajo de su manual. No se han puesto porque valen igual para el
+ *   E170, y en él, ver abajo, no cierran sin su Vref (enmienda H20b).
  * - **El JAZ 90 aterriza un 7–11 % largo**, según se escalen los 2.800 kg que
  *   pesa menos que la cifra de Embraer: todo con la masa o solo la rodadura. La
  *   causa es suya: su Vref de 132 nudos no tiene fuente —sale de un CL máximo
  *   de su clase— y su frenada se calibró con la toma de Embraer cruzando a
  *   unos 127 a su máximo, 121 a esta masa. Con 121 pediría 1.125. Sin la Vref
- *   de Embraer, no se toca.
+ *   de Embraer, no se toca. Y con los dos segundos de la AC 91-79A pediría 1.407
+ *   m, un 25 % largo; para dar la cifra de Embraer a su máximo al aterrizar
+ *   tendría que frenar con 0,56 cruzando a 127 nudos, o cruzar a 116 con el
+ *   0,45 que tiene, que en este modelo es 1,09 veces su pérdida con los flaps
+ *   de aterrizaje. Cuánto de esa toma es aire y cuánto freno solo lo dice su
+ *   Vref (enmienda H20b).
  */
 
 import { describe, expect, it } from "vitest";
@@ -488,8 +507,16 @@ describe("la cuenta del hangar y el avión que se vuela dicen lo mismo", () => {
      * Sin el biplano. Ya rueda como uno de rueda de cola —este piloto le
      * levanta la cola según corre, `palancaParaRodar`— y rueda hasta la Vr lo
      * que la cuenta; pero de la Vr a los cincuenta pies vuela unos 220 m donde
-     * la proporción de su tipo, la del Ag Cat, da 125. No se ha mirado por qué:
-     * no estaba en la enmienda H10b, que es la que lo sentó en su rueda.
+     * la proporción de su tipo, la del Ag Cat, da 125. **No es el aire**: de
+     * irse del suelo a los cincuenta pies vuela 140 m, lo que rueda hasta la
+     * Vr, donde su manual da 0,9 veces la carrera. Son los 84 m y 3 s **entre
+     * la Vr y el despegue**: llega a la Vr con la cola arriba y a nivel
+     * —`actitudEnTierra` la sube del todo al 85 % de la Vr— y este piloto rota
+     * desde ahí a tres grados por segundo, como en un triciclo, hasta los 7,5°
+     * con los que se va, a 1,21 veces la Vr. Su manual cuenta la carrera hasta
+     * irse del suelo, sin ese tramo. Lo que falta es su actitud de despegue con
+     * la cola arriba, o cómo se va del suelo, que su manual no da (enmienda
+     * H20b).
      */
     it.skipIf(a.id === "jaz-25")(`${a.id} despega volando en lo que dice la cuenta`, () => {
       const { hastaIrse, hastaLaAltura } = despegar(a);
