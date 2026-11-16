@@ -2890,6 +2890,18 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     detrasDeQuien: () => juego.plan?.detrasDeQuien ?? null,
     /**
+     * **Dónde se corta tu raya por uno que viene de frente**, m de ruta, o
+     * `null` si nada la corta. Es lo que lleva a cero la velocidad que pide el
+     * juego antes de la calle de otro, y el banco de despegue descuenta del
+     * tope de rodaje el rato parado ahí, que es tráfico y no rodaje lento. Se
+     * compara con `rodajeAsi().recorrido`. Ver `paradaDeTuRaya` en
+     * `world/plan-de-vuelo.ts`.
+     */
+    paradaDeTuRaya: () => {
+      const donde = juego.plan?.paradaDeTuRaya ?? Infinity;
+      return Number.isFinite(donde) ? donde : null;
+    },
+    /**
      * Cómo va el rodaje por dentro: cuánta ruta queda y cuánto se va de ella.
      *
      * `restante` es lo que decide que la fase pase a «esperando» al llegar

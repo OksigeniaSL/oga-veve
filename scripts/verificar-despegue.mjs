@@ -490,6 +490,39 @@ const rodando = await page.evaluate(async () => {
   // Lo largo de la calle y lo que tarda a lo que pide el juego, para el tope de abajo.
   let largo = 0;
   let comoPide = 0;
+  /*
+   * **Y el rato perdido por tráfico, aparte**, s, y por quién.
+   *
+   * El rodaje del JAZ 90 por Los Rodeos salía de 110 s o de 156 s con el mismo
+   * código del juego, contra un tope de 153 (#192): el tope mide lo que tarda la
+   * ruta, y no descontaba los ratos en que el juego te frena porque la pista o
+   * la calle son de otro. Eso es tráfico, dicho con voz —«give way», «hold
+   * short»—, y es justo lo que se enseña: no es rodar despacio. En la de 156 s
+   * no se pasó de 9,9 m/s en toda la calle, donde la otra iba a 15,4, y la torre
+   * esperó después por el que despegaba delante. Se cuenta solo lo que el
+   * propio juego da por motivo:
+   *
+   * - **Parado**, con la velocidad que pide en cero, y con alguien delante en
+   *   tu raya —`detrasDeQuien`— o tu raya cortada antes de la calle de uno que
+   *   viene de frente —`paradaDeTuRaya`—: el rato entero. El porqué de la
+   *   torre —`porQueEsperas`— no entra: la velocidad que pide el plan no lo
+   *   mira, así que en la calle no para a nadie, y en la doble raya lo que
+   *   espera se mide abajo, en «la torre acaba autorizando». Rodando por Los
+   *   Rodeos, la torre ya decía «aterriza EC-RYH» con el avión arrancando a
+   *   paso de calle.
+   * - **Rodando detrás de uno** de tu raya: lo que se tarda de más frente al
+   *   paso medio de la ruta que pide el juego —`segundosDeLaRuta` entre su
+   *   largo—. Detrás de uno que rueda a paso de calle, la mitad de cada
+   *   segundo; a la velocidad del plan, nada.
+   *
+   * Sin nadie delante no se descuenta nada: lo que aburre por un plan lento o
+   * un rodaje atascado sigue contando entero, que es lo que se quiere cazar.
+   */
+  let perdidoPorTrafico = 0;
+  const porQuienSePerdio = new Map();
+  const paradas = [];
+  const trazaDelRodaje = [];
+  let recorridoAntes = null;
   for (let i = 0; i < 1400; i++) {
     await new Promise((r) => setTimeout(r, 250));
     const s = o.estado();
@@ -518,6 +551,73 @@ const rodando = await page.evaluate(async () => {
     c.throttle = s.airspeed < quiere ? 0.6 : 0;
     c.brakes = s.airspeed > quiere + 2 ? 1 : 0;
     c.aileron = timon(s, ruta);
+    const recorrido = o.rodajeAsi?.().recorrido ?? null;
+    const avance =
+      recorrido !== null && recorridoAntes !== null ? Math.max(0, recorrido - recorridoAntes) : null;
+    recorridoAntes = recorrido;
+    const delanteEnLaRaya = o.detrasDeQuien?.() ?? null;
+    const anotar = (motivo, segundos) => {
+      perdidoPorTrafico += segundos;
+      porQuienSePerdio.set(motivo, (porQuienSePerdio.get(motivo) ?? 0) + segundos);
+    };
+    if (Math.hypot(s.velocity.x, s.velocity.z) < 0.5) {
+      let motivo = null;
+      if (quiere < 0.5) {
+        /*
+         * La raya cortada cuenta solo si el corte está aquí delante: lejos,
+         * la velocidad que pide no es por él. Treinta metros, lo que se para
+         * un avión antes de la calle del otro con la frenada de rodaje.
+         */
+        const corte = o.paradaDeTuRaya?.() ?? null;
+        const cortada = corte !== null && recorrido !== null && corte - recorrido < 30;
+        motivo = delanteEnLaRaya
+          ? `detrás de uno ${delanteEnLaRaya === "cola" ? "de tu cola" : "parado"}`
+          : cortada
+            ? "dando paso a uno que viene de frente"
+            : null;
+      }
+      if (motivo) anotar(motivo, 0.25);
+      // Y cada rato parado, con motivo o sin él, para el parte: dónde y cuánto.
+      const que =
+        motivo ?? (quiere < 0.5 ? "el juego pide cero, sin tráfico que lo diga" : `parado pidiendo ${quiere.toFixed(1)} m/s`);
+      const ultima = paradas[paradas.length - 1];
+      if (ultima && ultima.que === que && i * 0.25 - ultima.hasta <= 0.5) ultima.hasta = i * 0.25;
+      else paradas.push({ desde: i * 0.25, hasta: i * 0.25, que, en: recorrido });
+    } else if (delanteEnLaRaya && avance !== null && largo > 0 && comoPide > 0) {
+      const perdido = Math.max(0, 0.25 - avance * (comoPide / largo));
+      if (perdido > 0)
+        anotar(`rodando detrás de uno ${delanteEnLaRaya === "cola" ? "de tu cola" : "parado"}`, perdido);
+    }
+    /*
+     * Y un renglón por segundo de lo que pide el juego y de quién hay cerca,
+     * para el parte si el rodaje se pasa del tope: el mismo código del juego
+     * daba 110 s o 156 s, y sin esto no se sabía por qué.
+     */
+    if (i % 4 === 0) {
+      const delante = (o.trafico?.() ?? [])
+        .map((a) => {
+          const dx = a.x - s.position.x;
+          const dz = a.z - s.position.z;
+          // Por delante del morro: el rumbo del juego va con x al seno y z al menos coseno.
+          const alFrente = dx * Math.sin(s.heading) - dz * Math.cos(s.heading);
+          return { m: a.matricula, d: Math.hypot(dx, dz), alFrente };
+        })
+        .filter((a) => a.alFrente > 0 && a.d < 250)
+        .sort((a, b) => a.d - b.d)[0];
+      const corte = o.paradaDeTuRaya?.() ?? null;
+      const recorrido = o.rodajeAsi?.().recorrido ?? null;
+      const torre = o.porQueEsperas?.() ?? null;
+      trazaDelRodaje.push(
+        `${(i * 0.25).toFixed(0)}s ${Math.hypot(s.velocity.x, s.velocity.z).toFixed(1)} m/s pide ${quiere.toFixed(1)}` +
+          ` · ${recorrido ?? "?"} m` +
+          (corte !== null && recorrido !== null ? ` · raya cortada a ${(corte - recorrido).toFixed(0)} m` : "") +
+          (o.detrasDeQuien?.() ? ` · detrás de uno (${o.detrasDeQuien()})` : "") +
+          (delante ? ` · delante ${delante.m} a ${delante.d.toFixed(0)} m` : "") +
+          ((o.salenAntes?.() ?? []).length ? ` · salen antes ${o.salenAntes().join(",")}` : "") +
+          (torre ? ` · torre: ${torre.porque} ${torre.matricula ?? ""}` : "") +
+          ` · coche a ${Math.round(o.adelantoDelCoche?.() ?? -1)} m`,
+      );
+    }
     desvios.push(s.airspeed);
     fases.push(o.fase());
     if (o.fase() === "esperando" || o.fase() === "autorizado") break;
@@ -550,6 +650,13 @@ const rodando = await page.evaluate(async () => {
     creeQueQuedan: o.rodajeAsi?.().restante ?? -1,
     puntos: ruta.length,
     fases: [...new Set(fases)].join(" "),
+    perdidoPorTrafico,
+    porQuienSePerdio: [...porQuienSePerdio].map(([que, cuanto]) => `${cuanto.toFixed(0)} s ${que}`),
+    // Los ratos parados de más de dos segundos: arrancar y llegar a la raya no son paradas.
+    paradas: paradas
+      .filter((p) => p.hasta - p.desde >= 2)
+      .map((p) => `${p.desde.toFixed(0)}–${p.hasta.toFixed(0)} s a ${p.en ?? "?"} m: ${p.que}`),
+    trazaDelRodaje,
   };
 });
 comprobar(
@@ -580,13 +687,28 @@ comprobar(
 const topeDeRodaje = Math.round(
   Math.max(90, (rodando.largo / rodando.recta) * (4 / 3) + 20, rodando.comoPide * 1.25 + 20),
 );
+/*
+ * **Y el rato perdido por tráfico no es rodaje: se descuenta**, como en el
+ * banco del vuelo entero —ver «el rodaje de ida no aburre»—, y se dice cuánto
+ * y por quién, para que un descuento enorme se vea. El tope no se mueve: lo
+ * que queda tiene que caber en él igual que antes cuando no hay nadie.
+ */
+const rodandoDeVerdad = rodando.segundos - rodando.perdidoPorTrafico;
 comprobar(
   "y del puesto a la pista se llega antes de aburrirse",
-  rodando.segundos <= topeDeRodaje,
-  `${rodando.segundos.toFixed(0)} s de rodaje, con ${topeDeRodaje} de tope para ${rodando.largo.toFixed(0)} m` +
+  rodandoDeVerdad <= topeDeRodaje,
+  `${rodando.segundos.toFixed(0)} s de rodaje` +
+    (rodando.perdidoPorTrafico > 0
+      ? `, ${rodando.perdidoPorTrafico.toFixed(0)} s de ellos perdidos por tráfico (${rodando.porQuienSePerdio.join(", ")}): ${rodandoDeVerdad.toFixed(0)} s rodando`
+      : "") +
+    `, con ${topeDeRodaje} de tope para ${rodando.largo.toFixed(0)} m` +
     ` (el juego pide ${rodando.comoPide.toFixed(0)} s)`,
   "«es aburrido pasarse cuatro minutos en una pista, eso un niño no lo aguanta»",
 );
+if (rodando.paradas.length)
+  console.log(`\n  ⏸  parado rodando: ${rodando.paradas.join(" · ")}\n`);
+if (process.env.OGA_TRAZA_RODAJE || rodandoDeVerdad > topeDeRodaje)
+  console.log(`\n  el rodaje, segundo a segundo:\n    ${rodando.trazaDelRodaje.join("\n    ")}\n`);
 comprobar(
   "y no se rueda como un cohete",
   rodando.maxV < 22,
