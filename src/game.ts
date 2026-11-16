@@ -6158,7 +6158,14 @@ export class Game {
    * que se refiere a algo que quien juega no tiene delante no enseña, confunde.
    */
   private seVenLosAros = false;
-  /** La última fase anunciada, para no repetir el aviso cada fotograma. */
+  /**
+   * La última fase **anunciada**, para no repetir el aviso cada fotograma.
+   *
+   * **No es la fase de ahora**, que es `faseDeAhora`: la vacían una docena de
+   * sitios para que algo se vuelva a anunciar, y durante esos fotogramas vale
+   * cadena vacía. Solo la mira `avanzarPlan`, para saber si hay algo nuevo
+   * que decir. Y la sonda `fase` de los bancos, que la lee así desde siempre.
+   */
   faseAnunciada = "";
   /**
    * Y **el tuyo**, que no se sortea: es el que lleva pintado tu avión.
@@ -9431,17 +9438,23 @@ export class Game {
    * En qué fase está el vuelo **ahora**.
    *
    * No es lo mismo que `faseAnunciada`, que es *lo último que se dijo*: hay
-   * tres sitios que la vacían para que una tarjeta vuelva a salir, y durante
+   * sitios que la vacían para que algo se vuelva a anunciar, y durante
    * esos fotogramas vale cadena vacía. Cinco cosas la leían como si fuera la
    * fase actual —la radio, el circuito, la banda de velocidad, el aviso de
    * terreno en final y el «ya podés tocar»— y en esos fotogramas veían una
    * fase que no existe.
    *
    * La de ahora la tiene el plan. Cuando no hay plan —los escenarios sin
-   * aeródromo— no hay fase, y entonces lo último dicho es lo mejor que hay.
+   * aeródromo— no hay fase.
+   *
+   * Y sin caer en lo último dicho, que es lo que hacía cuando no había vista:
+   * esa era la última puerta por la que `faseAnunciada` se leía como la fase
+   * de ahora. No cambiaba nada —sin vista también vale cadena vacía: solo la
+   * escribe con algo `avanzarPlan`, que sin plan no corre, y el reinicio que
+   * borra la vista la vacía con ella—, y por eso mismo sobraba.
    */
   private get faseDeAhora(): string {
-    return this.vistaActual?.fase ?? this.faseAnunciada;
+    return this.vistaActual?.fase ?? "";
   }
 
   /**
