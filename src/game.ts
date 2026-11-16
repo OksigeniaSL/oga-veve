@@ -8638,25 +8638,6 @@ export class Game {
       this.pintarLaConsola(inicio);
       // El kit, con la pieza de la que habla Ara brillando mientras lo dice.
       this.pantallaDelKit?.pintar(p.hablando ? (p.linea?.clave ?? null) : null);
-      /*
-       * Y que siga sin tapar lo que se enseña: otro plano es otra toma. Un
-       * fotograma después del corte, que es cuando la cámara ya está en ella.
-       * Al abrir o cerrar el kit, también se recoloca, y en cuanto su panel se
-       * mueve —baja cuando la tarjeta crece con una frase larga—, se mira si
-       * lo pisa. Las dos cosas en el mismo fotograma y después de pintar el
-       * kit, que ya está en la página: con un fotograma o un vistazo de
-       * retraso, la lámina se quedaba ese rato encima del panel.
-       */
-      const plano = this.fundidoDePlano.plano;
-      const kitMovido = this.pantallaDelKit?.movido ?? 0;
-      this.hud.historia.vigilar(
-        this.laminaPorColocar || p.kit.abierto !== this.kitDeLaLamina,
-        kitMovido !== this.kitMovidoDeLaLamina,
-      );
-      this.laminaPorColocar = plano !== this.planoDeLaLamina;
-      this.planoDeLaLamina = plano;
-      this.kitDeLaLamina = p.kit.abierto;
-      this.kitMovidoDeLaLamina = kitMovido;
       this.refrescarLaRuta();
       // El sello del campo al que se llegó, que es donde se está.
       const destino = this.elCampoDeAhora();
@@ -8702,6 +8683,7 @@ export class Game {
               }
             : null,
       });
+      this.mirarQueLaLaminaNoTapa(p, pantalla.cambios);
       this.ponerLosArosDeLaVentanilla(inicio, p);
       return;
     }
@@ -8762,6 +8744,51 @@ export class Game {
   /** Si ya parpadeó el cartel del cinturón en esta escena. */
   private cinturonDeLaEscena = false;
 
+  /**
+   * **Que la lámina siga sin tapar lo que se enseña**: otro plano es otra toma, y
+   * se recoloca un fotograma después del corte, que es cuando la cámara ya está en
+   * ella. Al abrir o cerrar el kit, también.
+   *
+   * Y se mira ya, sin esperar al vistazo de cada poco, en cuanto cambia algo de lo
+   * que no tapa: el panel del kit se mueve —baja cuando la tarjeta de encima crece
+   * con una frase larga—, la tarjeta de quien habla cambia de frase o de dibujo, o
+   * se nombra algo del paisaje, que desde ese momento tampoco se tapa. Con el
+   * vistazo de cada poco la lámina se quedaba ese rato encima: el banco la pilló con
+   * el motor encima de la tarjeta, bajando, cuando una frase de tres renglones siguió
+   * a una de dos. Por eso va **después de pintar la tarjeta y el kit**, que ya están
+   * en la página: con un fotograma de retraso, la lámina se quedaba ese fotograma encima.
+   */
+  private mirarQueLaLaminaNoTapa(p: MotorDelPasaje["estado"], tarjeta: number): void {
+    const plano = this.fundidoDePlano.plano;
+    const kitMovido = this.pantallaDelKit?.movido ?? 0;
+    const tocado = this.loTocado && this.relojDePared < this.loTocado.hasta + 8 ? this.loTocado.hasta : null;
+    const nombrados = `${[...this.sitiosQueNoTapaLaLamina(p)].join("|")}#${tocado ?? ""}`;
+    this.hud.historia.vigilar(
+      this.laminaPorColocar || p.kit.abierto !== this.kitDeLaLamina,
+      kitMovido !== this.kitMovidoDeLaLamina || tarjeta !== this.tarjetaDeLaLamina || nombrados !== this.nombradosDeLaLamina,
+    );
+    this.laminaPorColocar = plano !== this.planoDeLaLamina;
+    this.planoDeLaLamina = plano;
+    this.kitDeLaLamina = p.kit.abierto;
+    this.kitMovidoDeLaLamina = kitMovido;
+    this.tarjetaDeLaLamina = tarjeta;
+    this.nombradosDeLaLamina = nombrados;
+  }
+
+  /** Las veces que había cambiado la tarjeta de quien habla, y lo nombrado que no se tapaba. */
+  private tarjetaDeLaLamina = 0;
+  private nombradosDeLaLamina = "";
+
+  /**
+   * **Lo nombrado del paisaje que la lámina no tapa**: lo de los últimos veinte
+   * segundos y el sitio de la toma. Ver `loQueNoTapaLaLamina`.
+   */
+  private sitiosQueNoTapaLaLamina(escena: MotorDelPasaje["estado"]): Set<SitioDelPaisaje> {
+    const sitios = new Set(escena.nombrados.filter((n) => n.desde >= escena.segundos - 20).map((n) => n.sitio));
+    if (escena.paisaje) sitios.add(escena.paisaje);
+    return sitios;
+  }
+
   /** El plano con el que se miró la lámina por última vez: si cambia, se recoloca. */
   private planoDeLaLamina: Plano | null = null;
   private laminaPorColocar = false;
@@ -8820,9 +8847,7 @@ export class Game {
       if (x < -m || y < -m || x > W + m || y > H + m) return;
       cajas.push({ left: x - m, top: y - m, right: x + m, bottom: y + m });
     };
-    const sitios = new Set(escena.nombrados.filter((n) => n.desde >= escena.segundos - 20).map((n) => n.sitio));
-    if (escena.paisaje) sitios.add(escena.paisaje);
-    for (const sitio of sitios) {
+    for (const sitio of this.sitiosQueNoTapaLaLamina(escena)) {
       const p = this.puntoDeLoNombrado(sitio);
       if (p) alrededor(p, margen);
     }

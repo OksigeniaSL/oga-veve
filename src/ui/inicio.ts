@@ -691,6 +691,22 @@ export class PantallaDelInicio {
   private buscandoElMando = 0;
   private quieto: boolean | null = null;
   private abajoDeLaTarjeta = 0;
+  /** Lo que da forma a la tarjeta la última vez, y cuántas veces ha cambiado. Ver `cambios`. */
+  private forma = "";
+  private cambiosDeLaTarjeta = 0;
+
+  /**
+   * **Cuántas veces ha cambiado la tarjeta** de algo que la hace crecer, encoger o
+   * moverse: otra frase, otro dibujo, el final, callarse o bajar de sitio. Para la
+   * lámina de la escena de pasaje, que no la tapa y la mira en cuanto cambia: una
+   * frase de tres renglones detrás de una de dos bajaba la tarjeta treinta y cinco
+   * píxeles encima de la lámina, y la lámina no se enteraba hasta su vistazo de cada
+   * poco (`vigilar` en `ventana-de-historia.ts`). Es un número y no una medida: medir
+   * la tarjeta en cada fotograma obliga al navegador a rehacer la página.
+   */
+  get cambios(): number {
+    return this.cambiosDeLaTarjeta;
+  }
 
   /**
    * **Hasta dónde baja la tarjeta**, px de pantalla, lo más que ha bajado: la
@@ -801,7 +817,8 @@ export class PantallaDelInicio {
 
     const o = this.teclas();
     const mira = v.gesto ? null : (v.mira ?? null);
-    this.tarjeta.classList.toggle("inicio__tarjeta--callada", !!v.sinTarjetaSiCalla && !v.linea && !v.gesto && !mira && !v.fin);
+    const callada = !!v.sinTarjetaSiCalla && !v.linea && !v.gesto && !mira && !v.fin;
+    this.tarjeta.classList.toggle("inicio__tarjeta--callada", callada);
     const dibujo = v.gesto
       ? `${v.gesto}|${v.mando}|${v.lado}|${o.motor}|${o.teclaDe("pitchUp")}`
       : mira
@@ -871,6 +888,12 @@ export class PantallaDelInicio {
       const seguir = this.fin.querySelector<HTMLButtonElement>("[data-inicio='seguir']");
       if (seguir) seguir.hidden = !v.fin?.puedeSeguir;
       if (v.fin?.puedeSeguir) seguir?.focus({ preventScroll: true });
+    }
+
+    const forma = `${this.dicho}#${this.dibujado}#${callada}#${this.finPuesto}#${this.raiz.style.getPropertyValue("--inicio-arriba")}`;
+    if (forma !== this.forma) {
+      this.forma = forma;
+      this.cambiosDeLaTarjeta++;
     }
   }
 
