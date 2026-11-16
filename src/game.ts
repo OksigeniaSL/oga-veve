@@ -10683,21 +10683,6 @@ export class Game {
   }
 
   /**
-   * Se acabó el vuelo: se enseña lo que se llevó puesto.
-   *
-   * «Se echa en falta un reconocimiento en función de los galones logrados.»
-   * Los galones se ganaban uno a uno con su sonido y su barra, y al apagar el
-   * motor no pasaba nada: el vuelo terminaba como termina una pestaña que se
-   * cierra.
-   *
-   * Va con medio segundo de retraso a propósito. Apagar el motor tiene su
-   * propio sonido y su propia hélice parándose, y encimarle una pantalla le
-   * quita el momento a las dos cosas.
-   *
-   * La regla de qué se dice —y que ningún final sea un reproche— vive en
-   * `flight/reconocimiento.ts`, que es donde se puede probar.
-   */
-  /**
    * Algo salió mal: se para el vuelo y se cuenta con un dibujo.
    *
    * **Y se para de verdad.** Hasta hoy se podía atropellar al coche, meter el
@@ -10911,6 +10896,21 @@ export class Game {
     this.apuntar({ aerodromos: [...this.cuaderno.aerodromos, id] });
   }
 
+  /**
+   * Se acabó el vuelo: se enseña lo que se llevó puesto.
+   *
+   * «Se echa en falta un reconocimiento en función de los galones logrados.»
+   * Los galones se ganaban uno a uno con su sonido y su barra, y al apagar el
+   * motor no pasaba nada: el vuelo terminaba como termina una pestaña que se
+   * cierra.
+   *
+   * Va con medio segundo de retraso a propósito. Apagar el motor tiene su
+   * propio sonido y su propia hélice parándose, y encimarle una pantalla le
+   * quita el momento a las dos cosas.
+   *
+   * La regla de qué se dice —y que ningún final sea un reproche— vive en
+   * `flight/reconocimiento.ts`, que es donde se puede probar.
+   */
   terminarElVuelo(): void {
     /*
      * De pasaje no hay final de vuelo de quien pilota —ni su hoja, ni su
@@ -18482,7 +18482,6 @@ export class Game {
     };
   }
 
-  /** Un paso del mundo. Lo de siempre, sin pintar. Ver `frame`. */
   /**
    * **Un paso con un percance puesto**: el avión no se mueve.
    *
@@ -18516,6 +18515,7 @@ export class Game {
      */
   }
 
+  /** Un paso del mundo. Lo de siempre, sin pintar. Ver `frame`. */
   private unPaso = (dt: number): void => {
     /*
      * **El tope está en un segundo**, y cada vez que se ha subido ha sido por
