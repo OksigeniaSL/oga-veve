@@ -1115,15 +1115,6 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     const ruedas = alto(s) - (suyas.tren ?? 0);
     const queda = Math.max(0, Math.min(1, ruedas / recogida.altura));
     /*
-     * Lo que se frena, m/s², alisado en medio segundo: ver el gas al final.
-     * Por el suelo y no por el anemómetro, que en el aire de Los Rodeos sube
-     * y baja un metro por segundo con cada racha y daría frenazos que no son.
-     */
-    const frenaAhora =
-      recogida.vAntes === undefined ? 0 : (recogida.vAntes - porElSuelo(s)) / dt;
-    recogida.vAntes = porElSuelo(s);
-    recogida.frena = (recogida.frena ?? 0) + (frenaAhora - (recogida.frena ?? 0)) * Math.min(1, dt / 0.5);
-    /*
      * **Y lo que baja, contra la pista y no contra el mar.** La de Los Rodeos
      * cae medio metro largo en los cien de la recogida: volando nivelado, las
      * ruedas se alejan de ella. La recogida, que miraba el variómetro, se
@@ -1339,33 +1330,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         ? recogida.ultimoMando
         : calculado;
     recogida.ultimoMando = mandos.elevator;
-    /*
-     * **Y el gas fuera, salvo que el avión se pare antes de posarse.** Al
-     * ralentí con todo fuera, el JAZ 50 —un Twin Otter: flaps de 37° y dos
-     * hélices que frenan como paracaídas al quitarles el motor— perdía un
-     * cuatro por ciento de velocidad por segundo en la recogida, el doble que
-     * el JAZ 60, y lo que el ala ganaba subiendo el morro se lo comía lo que
-     * perdía frenando: medido con la traza del ala en Los Rodeos, de 8,4 m a 3
-     * sin bajar de 2,8 m/s, con la carga en una g y la palanca subiendo, y
-     * tomas a 2,45–3,94 m/s (#192). Es lo que dicen los manuales de ese
-     * avión: el gas se quita a lo largo de la recogida, no al empezarla, que
-     * con las hélices a ralentí se hunde.
-     *
-     * Así que se deja el gas que haga falta para no frenar más de un dos y
-     * medio por ciento por segundo —lo que se lleva el JAZ 60, cuya recogida
-     * toca a metro por segundo—, nunca más del que llevaba en la final y cada
-     * vez menos según se acerca el suelo, hasta el ralentí al tocar. Un
-     * reactor no frena tanto con el ralentí, y con él esto vale cero: sigue
-     * con el gas fuera al empezar, como el `RETARD`.
-     */
-    if (!SENCILLO) {
-      const tope = (recogida.gas ?? 0) * queda;
-      const sobra = recogida.frena / Math.max(1, s.airspeed) - FRENA_EN_LA_RECOGIDA;
-      mandos.throttle = Math.max(0, Math.min(tope, sobra * 20));
-    }
+    if (!SENCILLO) mandos.throttle = 0;
   };
-  /** Lo más que se deja frenar en la recogida, por unidad de velocidad y segundo. */
-  const FRENA_EN_LA_RECOGIDA = 0.025;
   /**
    * La palanca media de los últimos segundos de la final, que es la que
    * sostiene la senda: al empezar la recogida el morro puede ir en mitad de
@@ -2293,6 +2259,22 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   const SUBE_CON_EL_MORRO = REACTOR_COMPLETO;
   /** El gas de la subida, quieto desde la altura de aceleración. Ver `volarLaSenda`. */
   let gasDeLaSubida = null;
+  /*
+   * **Y al irse al aire, lo mismo: la primera muesca hasta la altura de
+   * aceleración**, no los flaps arriba de golpe. La frustrada subía por
+   * `configurar` con el tramo uno, que los quitaba todos en cuanto se dejaba
+   * la final: el JAZ 50 se fue al aire dos veces en Los Rodeos con la pista
+   * ocupada, y las dos sonó el «stall, stall» a 80 y 89 m, a 78–83 nudos con
+   * los flaps ya en 0,25 y en 0 —pierde limpio a 70—. Es lo que manda
+   * cualquier procedimiento de frustrada: potencia, una muesca menos, subir,
+   * y los flaps a su velocidad.
+   */
+  const irseConFlaps = () => {
+    if (SUBE_CON_EL_MORRO && suyas.llevaFlaps) {
+      o.pedirFlaps?.(1 / 3);
+      flapsDeDespegueFuera = true;
+    }
+  };
 
   const subirDeVerdad = (s) => {
     /*
@@ -5401,6 +5383,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       rumboDeSalida = porDelante()?.h ?? rumboDeSalida;
       aDonde = 1;
       etapa = "subir";
+      irseConFlaps();
     }
     /*
      * **Y si el juego ya te ha mandado al aire, o la pista se acabó, también.**
@@ -5426,6 +5409,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         rumboDeSalida = porDelante()?.h ?? rumboDeSalida;
         aDonde = 1;
         etapa = "subir";
+        irseConFlaps();
       }
     }
     /*
