@@ -53,6 +53,8 @@ import { DE_LA_CUENTA } from "./cabina";
  */
 export const PRIORIDAD: Readonly<Record<string, number>> = {
   "cabina.stall": 90,
+  // Las vueltas bajas del rotor son la pérdida del helicóptero: tampoco esperan a nadie.
+  "tono.rotorBajo": 90,
   "cabina.terrainPullUp": 80,
   // Y el aviso de lo que ve por delante, que es el mismo «sube».
   "cabina.terrainAheadPullUp": 80,

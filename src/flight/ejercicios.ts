@@ -24,7 +24,9 @@
  *
  * - **Guyrami**: ninguna avería. A los cuatro años no se practica nada de
  *   esto; la tormenta sí, que no es una avería: ver abajo.
- * - **Tukã**: solo el planeo, avisado, y como juego: llegar a la pista.
+ * - **Tukã**: solo el planeo, avisado, y como juego: llegar a la pista. Y en
+ *   el helicóptero, el suyo: la autorrotación, con la ayuda llevando el
+ *   colectivo y la recogida (#110).
  * - **Taguato**: V1 —parar antes, seguir después— y un motor parado en vuelo.
  * - **Taguato Ruvicha**: todo lo anterior, y la sesión de simulador: se sabe
  *   que es un ejercicio y no se sabe qué va a fallar ni cuándo.
@@ -68,7 +70,8 @@ export type EjercicioId =
   | "un-motor"
   | "simulador"
   | "despresurizacion"
-  | "tormenta";
+  | "tormenta"
+  | "autorrotacion";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -98,7 +101,7 @@ export interface Averia {
 }
 
 /** Lo que hace falta saber de un avión para ofrecerle un ejercicio. */
-export type AvionDelEjercicio = Pick<AircraftConfig, "motores" | "presurizacion" | "sound">;
+export type AvionDelEjercicio = Pick<AircraftConfig, "motores" | "presurizacion" | "sound" | "helicoptero">;
 
 export interface Ejercicio {
   readonly id: EjercicioId;
@@ -119,7 +122,7 @@ export interface Ejercicio {
    * allí arriba se practica donde pasa, y abajo queda pista de sobra para
    * bajar después a aterrizar.
    */
-  readonly colocacion?: "planeo" | "un-motor" | "crucero" | "tormenta";
+  readonly colocacion?: "planeo" | "un-motor" | "crucero" | "tormenta" | "autorrotacion";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
    * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
@@ -133,6 +136,12 @@ export interface Ejercicio {
   readonly escena?: "tormenta";
   /** Lo que enseña, en una línea: para quien lea esto, no para el juego. */
   readonly ensena: string;
+  /**
+   * **Si es de helicóptero.** Los de avión no se le ofrecen a un helicóptero
+   * —no tiene V1, ni pista que correr, ni ala que planee— y este no se le ofrece
+   * a un avión. Ver `seOfrece`.
+   */
+  readonly deHelicoptero?: boolean;
 }
 
 /** Todos menos Guyrami: los peldaños que ya practican algo. */
@@ -251,6 +260,24 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     ensena:
       "a una tormenta no se entra: se rodea con margen, por el lado del viento; y si un rayo toca el avión, no pasa nada",
   },
+  {
+    id: "autorrotacion",
+    /*
+     * El planeo del helicóptero, y por eso desde Tukã como el del avión: el
+     * mismo mensaje tranquilizador (#110). En Tukã la ayuda de estacionario lo
+     * vuela casi entero —la velocidad, las vueltas, la recogida y la toma—, y se
+     * ve; en Taguató, el colectivo y el cíclico son de quien vuela.
+     */
+    peldanos: DESDE_TUKA,
+    valePara: (a) => a.helicoptero !== undefined,
+    deHelicoptero: true,
+    leccion: "aterrizaje",
+    colocacion: "autorrotacion",
+    // Como el planeo: primero se cuenta, y después pasa.
+    averias: [{ que: "motores", cuando: { en: "aire", segundos: 14 } }],
+    ensena:
+      "sin motor el helicóptero no se cae: el rotor sigue girando con el aire que sube, y con su giro se posa",
+  },
 ];
 
 export function ejercicioPorId(id: string | null | undefined): Ejercicio | null {
@@ -263,7 +290,8 @@ export function seOfrece(
   peldano: TierId,
   avion: AvionDelEjercicio,
 ): boolean {
-  return e.peldanos.includes(peldano) && e.valePara(avion);
+  const helicoptero = avion.helicoptero !== undefined;
+  return e.peldanos.includes(peldano) && (e.deHelicoptero ?? false) === helicoptero && e.valePara(avion);
 }
 
 /** Los que se ofrecen con este peldaño y este avión, en su orden. */

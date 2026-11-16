@@ -1690,7 +1690,22 @@ const EJ_TORMENTA = escena(`
   ${AVION("translate(104 58) rotate(-26) scale(0.95)")}
 `);
 
+/**
+ * La autorrotación: el helicóptero bajando en diagonal hacia la hache, con el
+ * motor dormido y la estela de puntos del planeo. Es el planeo del avión con
+ * su aparato: sin motor no se cae, baja. Ver `flight/ejercicios.ts`.
+ */
+const EJ_AUTORROTACION = escena(`
+  <path class="leccion__loma" d="M0 66 q22-10 40-2 q18 8 34-3 q16-10 46 2 v21 H0 Z" />
+  <ellipse class="leccion__asfalto" cx="88" cy="74" rx="22" ry="6.5" />
+  <path class="leccion__amarilla" d="M84 71.8 v4.4 M92 71.8 v4.4 M84 74 h8" />
+  <path class="leccion__estela" d="M14 16 q30 14 62 44" stroke-dasharray="4 4" />
+  <g class="leccion__avion">${helicopteroDePerfil(40, 30, 19)}</g>
+  ${ZETAS(60, 10)}
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
+  autorrotacion: EJ_AUTORROTACION,
   planeo: EJ_PLANEO,
   "antes-de-v1": EJ_ANTES_DE_V1,
   "despues-de-v1": EJ_DESPUES_DE_V1,
@@ -2224,9 +2239,12 @@ export function abrirHangar(
           <h2 class="hangar__pregunta" id="hangar-leccion">${t("hangar.aque")}</h2>
           <div class="hangar__rejilla hangar__rejilla--suelta" role="radiogroup"
                aria-labelledby="hangar-leccion">
-            ${fichaDeVueloLibreDelHelicoptero(!mision)}
+            ${fichaDeVueloLibreDelHelicoptero(!mision && !ejercicio)}
             ${misionesDe(sitio, avion)
               .map((m, i) => fichaDeMision(sitio, m, i + 1, mision?.id === m.id))
+              .join("")}
+            ${ejerciciosPara(tramo.id, avion)
+              .map((e) => fichaDeEjercicio(e, ejercicio?.id === e.id))
               .join("")}
           </div>
         </section>`
