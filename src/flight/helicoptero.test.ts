@@ -790,7 +790,7 @@ describe("el anemómetro", () => {
       volando.step(DT, m);
     }
     const total = volando.state.velocity.length();
-    // Dentro del 3 % que la norma deja de error al sistema (CS 29.1323 (d)).
+    // Dentro del 3 % que la norma deja de error al sistema (14 CFR 29.1323 (d)).
     expect(volando.state.airspeed).toBeGreaterThan(0.97 * total);
     expect(volando.state.airspeed).toBeLessThanOrEqual(total + 1e-9);
   });

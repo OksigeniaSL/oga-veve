@@ -1666,11 +1666,17 @@ export class ModeloDeHelicoptero {
         /*
          * Lo que falta pesa más que lo aprendido, que si no se carga de más mientras
          * sube: al soltar la X, eso que sobraba seguía subiendo el helicóptero unos
-         * metros más de lo que pedía frenar, y volvía después.
+         * metros más de lo que pedía frenar, y volvía después. Y lo que se adelanta
+         * por la subida pedida es más subiendo que bajando: bajando, parte del aire
+         * que atraviesa el disco lo pone la propia bajada y hace falta quitar menos
+         * paso del que hay que poner para subir lo mismo. Con lo mismo para los dos,
+         * la palanca abajo se pasaba de los 4 m/s a 5,7, que es acercarse al anillo
+         * turbillonario (ver `inducidaEnDescenso`).
          */
         const falta = this.subidaPedida - s.velocity.y;
-        this.colectivoAprendido = Math.max(0, Math.min(1, this.colectivoAprendido + 0.02 * falta * dt));
-        let colectivo = this.colectivoAprendido + 0.02 * this.subidaPedida + 0.08 * falta;
+        this.colectivoAprendido = Math.max(0, Math.min(1, this.colectivoAprendido + 0.04 * falta * dt));
+        const adelanta = this.subidaPedida > 0 ? 0.02 : 0.012;
+        let colectivo = this.colectivoAprendido + adelanta * this.subidaPedida + 0.1 * falta;
         const vueltas = this.vueltas / this.ficha.rotor.vueltas;
         if (vueltas < VUELTAS_QUE_SE_GUARDAN) {
           const sobra = (VUELTAS_QUE_SE_GUARDAN - vueltas) * 6;
@@ -1771,8 +1777,8 @@ export class ModeloDeHelicoptero {
      * por eso se entra sin darse cuenta—. Ahora es lo que va a lo largo del eje.
      *
      * **Y por debajo de unos veinte nudos, el de verdad no es de fiar**: la norma
-     * lo calibra en vuelo nivelado de veinte nudos para arriba (CS 29.1323 y
-     * 14 CFR 29.1323 (b)(1)), y el manual de helicópteros de la FAA avisa de que
+     * lo calibra en vuelo nivelado de veinte nudos para arriba (14 CFR 29.1323
+     * (b)(1)), y el manual de helicópteros de la FAA avisa de que
      * la estela del rotor lo engaña a poca velocidad (FAA-H-8083-21B, capítulo
      * 12). Ese error no se simula: no se sabe cuánto es en el Super Puma, y
      * un número inventado sería enseñar mal; la cifra pequeña que queda es la
