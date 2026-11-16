@@ -517,7 +517,18 @@ export function sueloDelTrafico(
     const raya = camino.slice(0, k + 1);
     const rumbo = rumboEnElPuesto(p0.x, p0.z, edificios, raya);
     if (rumbo === null) return s;
-    const trayectoria = trayectoriaDelEmpuje({ x: p0.x, z: p0.z, rumbo }, raya, pasarela.batalla);
+    /*
+     * **Sin el empuje largo por la plataforma** —ver `RECTA_DE_LA_PLATAFORMA` en
+     * `remolque.ts`—: lo que reserva el camino todavía no espera a que quepa un
+     * empuje que acaba en la calle. Con él, en Los Rodeos por la 12, llegando tú en
+     * el JAZ 110 detrás del sígame, el reactor que salía empujado a los cuarenta
+     * segundos se te quedaba de frente 34 s, con el coche del sígame metido en él
+     * (`de-frente-en-la-calle.test.ts`). Hasta que la torre no deje empujar hasta
+     * una calle por la que viene alguien, el tráfico sale con el empuje corto.
+     */
+    const trayectoria = trayectoriaDelEmpuje({ x: p0.x, z: p0.z, rumbo }, raya, pasarela.batalla, {
+      porLaPlataforma: false,
+    });
     if (!trayectoria) return s;
     const fin = trayectoria.poses[trayectoria.poses.length - 1]!;
     const adelante = vector(fin.rumbo);
