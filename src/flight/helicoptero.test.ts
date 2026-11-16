@@ -167,9 +167,22 @@ describe("estacionario", () => {
       const equilibrio = h.actitud();
       const sostenido = h.mandosAhora();
       h.ponerEstabilizacion(modo);
-      // Quien vuela deja el cíclico y los pies donde estaban, salvo con la actitud, que los suelta.
+      /*
+       * Quien vuela deja el cíclico y los pies donde estaban, salvo con la actitud,
+       * que los suelta. Y el colectivo, el que llevaba el rotor: en la de
+       * estacionario la palanca pide subir o bajar, y donde se haya quedado la del
+       * piloto de prueba —en cualquier sitio de su media— no es un colectivo.
+       */
       const quieto: MandosDeHelicoptero =
-        modo === "actitud" ? { ...m } : { ...m, cabeceo: sostenido.cabeceo, alabeo: sostenido.alabeo, pedales: sostenido.pedales };
+        modo === "actitud"
+          ? { ...m, colectivo: sostenido.colectivo }
+          : {
+              ...m,
+              colectivo: sostenido.colectivo,
+              cabeceo: sostenido.cabeceo,
+              alabeo: sostenido.alabeo,
+              pedales: sostenido.pedales,
+            };
       h.state.pitchRate += 3 * GRADO;
       let peor = 0;
       let final = 0;
@@ -625,6 +638,70 @@ describe("arrancar, parar y rodar", () => {
     const ciclico = h.mandosAhora();
     expect(Math.abs(ciclico.cabeceo - F.ciclicoDeEstacionario.cabeceo)).toBeLessThan(0.04);
     expect(Math.abs(ciclico.alabeo - F.ciclicoDeEstacionario.alabeo)).toBeLessThan(0.04);
+  });
+});
+
+describe("la ayuda de estacionario al despegar", () => {
+  /**
+   * La X hasta tres metros y soltarla, como en la lección de quedarse quieto. Se
+   * pasaba hasta los once metros y se quedaba a diez, y al despegar se deslizaba
+   * unos diez metros de lado a casi tres metros por segundo, sin volver encima de
+   * la hache: pedía subida cero y velocidad cero, no una altura ni un sitio.
+   */
+  it("soltada la X a tres metros se queda cerca, y encima de la hache", () => {
+    for (const masa of [7000, 8600]) {
+      const h = new ModeloDeHelicoptero(F);
+      h.ponerMasa(masa);
+      h.ponerEstabilizacion("estacionario");
+      h.reset({ position: new Vector3(0, 0, 0), heading: 0, rotorEnMarcha: true });
+      const m = mandosNeutros();
+      m.frenos = 1;
+      m.colectivo = 0.5;
+      for (let t = 0; t < 5; t += DT) h.step(DT, m);
+      const apoyo = Math.max(...F.ruedas.map((r) => r.z));
+      let soltada = false;
+      let alto = 0;
+      let lado = 0;
+      for (let t = 0; t < 40; t += DT) {
+        const ruedas = h.state.heightAboveGround - apoyo;
+        soltada ||= ruedas > 3;
+        m.colectivo = soltada ? 0.5 : 1;
+        if (!h.state.onGround) m.frenos = 0;
+        h.step(DT, m);
+        alto = Math.max(alto, ruedas);
+        lado = Math.max(lado, Math.hypot(h.state.position.x, h.state.position.z));
+      }
+      const ruedas = h.state.heightAboveGround - apoyo;
+      expect(alto).toBeLessThan(6.5);
+      expect(ruedas).toBeGreaterThan(3);
+      expect(ruedas).toBeLessThan(6);
+      expect(Math.abs(h.state.velocity.y)).toBeLessThan(0.2);
+      // Lo que asoma la rueda de morro, como mucho, y al final encima.
+      expect(lado).toBeLessThan(2);
+      expect(Math.hypot(h.state.position.x, h.state.position.z)).toBeLessThan(0.5);
+    }
+  });
+
+  it("un toque corto de X que apenas despega se queda en el aire, sin volver a tocar", () => {
+    const h = new ModeloDeHelicoptero(F);
+    h.ponerEstabilizacion("estacionario");
+    h.reset({ position: new Vector3(0, 0, 0), heading: 0, rotorEnMarcha: true });
+    const m = mandosNeutros();
+    m.frenos = 1;
+    m.colectivo = 0.5;
+    for (let t = 0; t < 5; t += DT) h.step(DT, m);
+    let enElAire = false;
+    let tocaOtraVez = false;
+    for (let t = 0; t < 30; t += DT) {
+      m.colectivo = t > 1 && t < 3 ? 1 : 0.5;
+      if (!h.state.onGround) {
+        m.frenos = 0;
+        enElAire = true;
+      } else if (enElAire) tocaOtraVez = true;
+      h.step(DT, m);
+    }
+    expect(enElAire).toBe(true);
+    expect(tocaOtraVez).toBe(false);
   });
 });
 
