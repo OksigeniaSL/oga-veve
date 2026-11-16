@@ -704,3 +704,5 @@ Los flaps de despegue los puse yo: una muesca, para que el ala sostenga antes.
 Ya vamos altos y rápidos: subí los flaps.
 Los flaps los subí yo: a esta velocidad el ala ya no los necesita.
 Eso que sonó es el avión: avisa que faltan los flaps de despegue. Bajá el motor y poné una muesca.
+Esta pista el avión no la conoce, así que le apagué el aviso de los cerros de adelante. Si bajamos de más, igual nos avisa.
+Ya estamos lejos de esa pista: le volví a prender al avión el aviso de los cerros.

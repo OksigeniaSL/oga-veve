@@ -1996,4 +1996,6 @@ instructor	instructor/vuelo.flapsDeDespeguePuestos.ogg	es-PY	Los flaps de despeg
 instructor	instructor/vuelo.recogeLosFlaps.ogg	es-PY	Ya vamos altos y rápidos: subí los flaps.	tras despegar, a su altura y su velocidad: subí los flaps
 instructor	instructor/vuelo.losFlapsLosSubiYo.ogg	es-PY	Los flaps los subí yo: a esta velocidad el ala ya no los necesita.	en los peldaños de abajo, si no se subieron: los sube la instructora y lo dice
 instructor	instructor/vuelo.avisoDeConfiguracion.ogg	es-PY	Eso que sonó es el avión: avisa que faltan los flaps de despegue. Bajá el motor y poné una muesca.	detrás del aviso de configuración de despegue, en los peldaños de abajo: qué sonó y qué se hace
+instructor	instructor/vuelo.terrInhibit.apagado.ogg	es-PY	Esta pista el avión no la conoce, así que le apagué el aviso de los cerros de adelante. Si bajamos de más, igual nos avisa.	llegando a una pista que no está en la base del avisador de terreno: quien va al lado lo inhibe
+instructor	instructor/vuelo.terrInhibit.prendido.ogg	es-PY	Ya estamos lejos de esa pista: le volví a prender al avión el aviso de los cerros.	lejos ya de esa pista: quien va al lado lo vuelve a encender
 cabina	cabina/cabina.flapsUp.ogg	en	flaps up	tras despegar, a su altura y su velocidad: la orden de recoger los flaps

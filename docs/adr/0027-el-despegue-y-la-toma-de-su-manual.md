@@ -1806,13 +1806,15 @@ pediría su toma.
   voces para un suceso. Con la verde y rodando ya es entrar
   (`PARADO_EN_LA_ESPERA`), y abajo los pone ella sin pedirlos.
 
+### Las voces
+
+Las cinco frases de la instructora y el canto «flaps up» (`cabina.flapsUp`)
+van al final de la lista de grabar, para no renumerar nada, y se grabaron al
+juntar la rama (16-11-2026).
+
 ### Lo que no
 
 - **El sonido del aviso de configuración**, en ningún tipo: arriba.
-- **Las voces**: las cinco frases de la instructora y el canto «flaps up»
-  (`cabina.flapsUp`) están sin grabar, al final de la lista de grabar para no
-  renumerar nada, y en las dos `ESPERAN_SU_TOMA` (`audio/cabina.ts` y
-  `por-grabar.test.ts`); hasta entonces se ve la tarjeta y la voz calla.
 - **El Seneca sin flaps**, arriba; y el manual del Seneca II, el del Twin
   Otter y el del 1900D, y la altura de recogida de la avioneta.
 - **Recoger por muescas.** Un Boeing de verdad recoge de flaps 5 a flaps 1 y

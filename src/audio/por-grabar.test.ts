@@ -44,14 +44,7 @@ function pedidasConPuerta(): string[] {
  * torre —ver `ESPERAN_SU_TOMA` en `audio/torre.ts`—; en cuanto tienen receta
  * salen de aquí, y la prueba lo recuerda.
  */
-const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([
-  // Los flaps del despegue (ADR 0027, enmienda H14a), en la lista de grabar.
-  "vuelo.flapsParaDespegar",
-  "vuelo.flapsDeDespeguePuestos",
-  "vuelo.recogeLosFlaps",
-  "vuelo.losFlapsLosSubiYo",
-  "vuelo.avisoDeConfiguracion",
-]);
+const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
 
 describe("lo que se pide con su grabación, en la lista de grabar", () => {
   const recetas = leer<Record<string, string[]>>("crudo/instructor/recetas.json");

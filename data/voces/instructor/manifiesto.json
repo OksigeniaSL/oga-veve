@@ -1587,6 +1587,10 @@
       "ms": 7007,
       "h": "0f85c0e96b"
     },
+    "vuelo.avisoDeConfiguracion": {
+      "ms": 5607,
+      "h": "98eec3b59c"
+    },
     "vuelo.baches": {
       "ms": 6507,
       "h": "b9b40716c2"
@@ -1891,9 +1895,17 @@
       "ms": 2954,
       "h": "47d729eeca"
     },
+    "vuelo.flapsDeDespeguePuestos": {
+      "ms": 4107,
+      "h": "c374bae6d6"
+    },
     "vuelo.flapsEnLaCarrera": {
       "ms": 4807,
       "h": "89bfaa59a4"
+    },
+    "vuelo.flapsParaDespegar": {
+      "ms": 3907,
+      "h": "7c4e3d7be1"
     },
     "vuelo.flapsPasados": {
       "ms": 2001,
@@ -1938,6 +1950,10 @@
     "vuelo.losArmeYo": {
       "ms": 3807,
       "h": "1149244351"
+    },
+    "vuelo.losFlapsLosSubiYo": {
+      "ms": 4307,
+      "h": "939147e92a"
     },
     "vuelo.lucesDeNoche.cruzaDerecha": {
       "ms": 5207,
@@ -2535,6 +2551,10 @@
       "ms": 1068,
       "h": "236cd05800"
     },
+    "vuelo.recogeLosFlaps": {
+      "ms": 2060,
+      "h": "02448c0697"
+    },
     "vuelo.remolque": {
       "ms": 2830,
       "h": "42056afa3f"
@@ -2654,6 +2674,14 @@
     "vuelo.teLoPasaste": {
       "ms": 1464,
       "h": "b4f3ec2aae"
+    },
+    "vuelo.terrInhibit.apagado": {
+      "ms": 6707,
+      "h": "3b2ab72456"
+    },
+    "vuelo.terrInhibit.prendido": {
+      "ms": 4307,
+      "h": "20c4fecb81"
     },
     "vuelo.terrenoBajo": {
       "ms": 1398,
@@ -5025,6 +5053,27 @@
     ],
     "vuelo.tractorALaRaya": [
       "vuelo.tractorALaRaya"
+    ],
+    "vuelo.flapsParaDespegar": [
+      "vuelo.flapsParaDespegar"
+    ],
+    "vuelo.flapsDeDespeguePuestos": [
+      "vuelo.flapsDeDespeguePuestos"
+    ],
+    "vuelo.recogeLosFlaps": [
+      "vuelo.recogeLosFlaps"
+    ],
+    "vuelo.losFlapsLosSubiYo": [
+      "vuelo.losFlapsLosSubiYo"
+    ],
+    "vuelo.avisoDeConfiguracion": [
+      "vuelo.avisoDeConfiguracion"
+    ],
+    "vuelo.terrInhibit.apagado": [
+      "vuelo.terrInhibit.apagado"
+    ],
+    "vuelo.terrInhibit.prendido": [
+      "vuelo.terrInhibit.prendido"
     ]
   }
 }

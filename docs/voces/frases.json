@@ -20545,6 +20545,20 @@
     "para": "detrás del aviso de configuración de despegue, en los peldaños de abajo: qué sonó y qué se hace"
   },
   {
+    "id": "vuelo.terrInhibit.apagado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esta pista el avión no la conoce, así que le apagué el aviso de los cerros de adelante. Si bajamos de más, igual nos avisa.",
+    "para": "llegando a una pista que no está en la base del avisador de terreno: quien va al lado lo inhibe"
+  },
+  {
+    "id": "vuelo.terrInhibit.prendido",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya estamos lejos de esa pista: le volví a prender al avión el aviso de los cerros.",
+    "para": "lejos ya de esa pista: quien va al lado lo vuelve a encender"
+  },
+  {
     "id": "cabina.flapsUp",
     "voz": "cabina",
     "idioma": "en",

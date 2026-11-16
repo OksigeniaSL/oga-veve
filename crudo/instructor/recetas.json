@@ -2207,5 +2207,26 @@
   ],
   "vuelo.tractorALaRaya": [
     "vuelo.tractorALaRaya"
+  ],
+  "vuelo.flapsParaDespegar": [
+    "vuelo.flapsParaDespegar"
+  ],
+  "vuelo.flapsDeDespeguePuestos": [
+    "vuelo.flapsDeDespeguePuestos"
+  ],
+  "vuelo.recogeLosFlaps": [
+    "vuelo.recogeLosFlaps"
+  ],
+  "vuelo.losFlapsLosSubiYo": [
+    "vuelo.losFlapsLosSubiYo"
+  ],
+  "vuelo.avisoDeConfiguracion": [
+    "vuelo.avisoDeConfiguracion"
+  ],
+  "vuelo.terrInhibit.apagado": [
+    "vuelo.terrInhibit.apagado"
+  ],
+  "vuelo.terrInhibit.prendido": [
+    "vuelo.terrInhibit.prendido"
   ]
 }

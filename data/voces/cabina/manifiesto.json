@@ -71,6 +71,10 @@
       "ms": 721,
       "h": "1364a648db"
     },
+    "cabina.flapsUp": {
+      "ms": 653,
+      "h": "bef2f02bdd"
+    },
     "cabina.forty": {
       "ms": 462,
       "h": "3db5bceb34"
@@ -291,6 +295,9 @@
     ],
     "cabina.fiveHundred": [
       "cabina.fiveHundred"
+    ],
+    "cabina.flapsUp": [
+      "cabina.flapsUp"
     ],
     "cabina.forty": [
       "cabina.forty"

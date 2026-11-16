@@ -172,8 +172,8 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   /*
    * **Y la recogida de los flaps del despegue**: la orden de quien vuela al
    * llegar a la altura de aceleración y a su velocidad, la pareja de «gear up».
-   * Es de la tripulación y sube por la escalera. Espera su toma: ver
-   * `ESPERAN_SU_TOMA` y `flight/flaps-de-despegue.ts`.
+   * Es de la tripulación y sube por la escalera. Ver
+   * `flight/flaps-de-despegue.ts`.
    */
   "flaps up": "cabina.flapsUp",
 };
@@ -184,10 +184,11 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
  * La tabla y el manifiesto cuadran en las dos direcciones —lo exigen dos
  * pruebas de `cabina.test.ts`—, y estos son la excepción escrita: el juego ya
  * sabe cuándo decirlos y los pide solo si están en el pack. Cuando se graben,
- * salen de aquí; la prueba lo recuerda. Hoy espera uno, «flaps up», la
- * orden de recoger los flaps del despegue (ADR 0027, enmienda H14a).
+ * salen de aquí; la prueba lo recuerda. Hoy no espera ninguno: el último fue
+ * «flaps up», la orden de recoger los flaps del despegue (ADR 0027, enmienda
+ * H14a), grabado el 16-11-2026.
  */
-export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>(["cabina.flapsUp"]);
+export const ESPERAN_SU_TOMA: ReadonlySet<string> = new Set<string>([]);
 
 /**
  * **Los cantos de la carrera de aterrizaje de cada familia**: no los dice

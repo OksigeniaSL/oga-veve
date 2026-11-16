@@ -90,7 +90,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.terrInhibit\.\w+$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -2755,6 +2755,23 @@ const DE_LOS_FLAPS_DEL_DESPEGUE = [
   ["vuelo.avisoDeConfiguracion", "detrás del aviso de configuración de despegue, en los peldaños de abajo: qué sonó y qué se hace"],
 ];
 for (const [id, para] of DE_LOS_FLAPS_DEL_DESPEGUE) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
+}
+/*
+ * **Y el TERR INHIBIT del Tujuju** (16-11-2026): la instructora cuenta por qué
+ * quien va al lado apaga la mirada de delante del avisador de terreno al llegar
+ * a la granja, y que la vuelve a encender lejos de ella. Detrás de todo, por lo
+ * mismo que las de arriba. Ver `src/flight/inhibir-terreno.ts` y el ADR 0027,
+ * enmienda H14d.
+ */
+const DEL_TERR_INHIBIT = [
+  ["vuelo.terrInhibit.apagado", "llegando a una pista que no está en la base del avisador de terreno: quien va al lado lo inhibe"],
+  ["vuelo.terrInhibit.prendido", "lejos ya de esa pista: quien va al lado lo vuelve a encender"],
+];
+for (const [id, para] of DEL_TERR_INHIBIT) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
