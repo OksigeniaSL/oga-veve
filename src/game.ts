@@ -33311,9 +33311,10 @@ export class Game {
   /**
    * **El TERR INHIBIT del avisador de terreno**, en el avión que lo lleva.
    *
-   * Llegando a un campo que no está en la base de su equipo —la granja—, la
-   * tripulación apaga la mirada de delante del TAWS dentro de las quince
-   * millas, y la vuelve a encender al salir de ellas. En los tres peldaños de
+   * Operando en un campo que no está en la base de su equipo —la granja—,
+   * llegando, saliendo o dando sus vueltas, la tripulación apaga la mirada de
+   * delante del TAWS dentro de las quince millas, y la vuelve a encender al
+   * salir de ellas. En los tres peldaños de
    * abajo lo hace quien va al lado y la instructora lo cuenta con calma; en el
    * de cabina lo pide la tarjeta, que se toca para hacerlo, y el botón está en
    * la cabina. Si no se apaga, avisa como siempre: no se castiga, se ve. Ver
@@ -33326,11 +33327,24 @@ export class Game {
     const llegada = this.campoDeLlegada();
     const lejos = (c: { x: number; z: number }) =>
       Math.hypot(s.position.x - c.x, s.position.z - c.z);
+    /*
+     * **Y el campo que se tiene debajo, no solo el destino del plan.** Desde
+     * la granja, el destino que trae el hangar es Pettirossi, y quien da
+     * vueltas al campo en casa no lo cambia: con el destino a secas, el
+     * Tujuju volvía a oír «caution terrain» al virar a final en la 15 sin que
+     * nadie apagara nada, medido en el vuelo entero de la granja. La guía lo
+     * pide «when operating at airports not in the terrain database» (p. 55),
+     * y operar en la granja es también despegar de ella y dar sus vueltas.
+     */
+    const aqui = this.elCampo();
+    const fuera = [llegada, { x: aqui.pista.x, z: aqui.pista.z, aero: aqui.aerodromo }]
+      .filter((c) => fueraDeLaBase(c.aero, equipo))
+      .map(lejos);
     const toca = queToca({
       inhibido: this.terrInhibido,
       enVuelo: !s.onGround && !s.crashed,
       sobreElSuelo: s.heightAboveGround,
-      llegadaFueraDeLaBase: fueraDeLaBase(llegada.aero, equipo) ? lejos(llegada) : null,
+      llegadaFueraDeLaBase: fuera.length ? Math.min(...fuera) : null,
       delCampoApagado: this.terrInhibidoPara ? lejos(this.terrInhibidoPara) : null,
     });
     if (!toca) {
@@ -33379,7 +33393,8 @@ export class Game {
 
   /**
    * **El campo donde se va a aterrizar**: el destino del plan, o en una
-   * vuelta al campo el que se tiene debajo. Es el que mira el TERR INHIBIT.
+   * vuelta al campo el que se tiene debajo. El TERR INHIBIT mira este y el
+   * que se tiene debajo: ver `atenderAlTerrInhibit`.
    */
   private campoDeLlegada(): { x: number; z: number; aero: Aerodrome | null } {
     const d = this.elDestino();

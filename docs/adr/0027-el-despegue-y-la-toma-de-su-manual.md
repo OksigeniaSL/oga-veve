@@ -1608,9 +1608,13 @@ plano que lo diga.
   campo de llegada si está a menos de quince millas, y si no, para el que se
   tiene más cerca, y se vuelve a encender al alejarse quince millas de él.
 - **Cuándo**: volando, por encima de quinientos pies sobre el suelo y a menos
-  de quince millas del campo donde se va a aterrizar —el destino del plan, o
-  el que se tiene debajo en una vuelta al campo—, si ese campo no está en la
-  base. Lo de los quinientos pies es nuestro: en una vuelta al campo se está
+  de quince millas de un campo que no está en la base: el destino del plan o
+  el que se tiene debajo. Al juntar se añadió el segundo: desde la granja el
+  destino que trae el hangar es Pettirossi, y en el vuelo entero de la granja
+  con el destino a secas nadie lo apagó y sonó «caution terrain» al virar a
+  final. Operar en el campo es también despegar de él y dar sus vueltas, que
+  es lo que dice la guía, «when operating at airports not in the terrain
+  database». Lo de los quinientos pies es nuestro: en una vuelta al campo se está
   dentro de las quince millas desde que se suelta el freno, y no se mete una
   cosa más en la carrera de despegue. Se vuelve a encender pasadas las quince
   millas del campo por el que se apagó —«requires manual deactivation»: lo
