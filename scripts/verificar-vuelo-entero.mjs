@@ -944,6 +944,57 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       cb: +(((o.actitud?.().cabeceo ?? 0) * 180) / Math.PI).toFixed(2),
       q: +(((s.pitchRate ?? 0) * 180) / Math.PI).toFixed(2),
       mt: memoriaDeSenda ? +memoriaDeSenda.timon.toFixed(3) : null,
+      /*
+       * **Y lo lateral**, para el serpenteo de la final corta con el cruzado
+       * racheado de Los Rodeos (#192): ±10 m de un lado al otro cada quince o
+       * veinte segundos. Con el desvío y el alabeo solos no se sabe de quién
+       * es: si lo pide el banco —la inclinación que pide `alRumbo`, el
+       * alerón—, si lo pone el juego —el timón que suma la ayuda del peldaño,
+       * que se ve en el derrape— o si es el aire —el cruzado del parte y el
+       * de la racha, por separado—. El rumbo y la trayectoria van respecto a
+       * la pista y con décimas: la deriva de un cruzado de once nudos a
+       * setenta son nueve grados, y redondeada a grados enteros no se ve
+       * cómo se mueve.
+       */
+      ...(() => {
+        // Y en un try entero: el gancho puede llamar antes de que el resto
+        // del piloto —`error`, `alabeoPedido`— esté declarado.
+        try {
+          const g = (rad) => +((rad * 180) / Math.PI).toFixed(1);
+          let hp = null;
+          try {
+            hp = (pistaAhora().heading * Math.PI) / 180;
+          } catch {
+            // Aún sin pista: sin lo que va respecto a ella.
+          }
+          const tray = Math.atan2(s.velocity.x, -s.velocity.z);
+          const fdm = o.juegoParaTrazas?.()?.flight;
+          // El viento va a donde va el aire; de lado respecto a la pista,
+          // positivo empujando a la derecha del rumbo de pista.
+          const deLado = (v) =>
+            v && hp !== null ? +(v.x * Math.cos(hp) + v.z * Math.sin(hp)).toFixed(2) : null;
+          const deCara = (v) =>
+            v && hp !== null ? +(-(v.x * Math.sin(hp) - v.z * Math.cos(hp))).toFixed(2) : null;
+          return {
+            hr: hp !== null ? g(error(s.heading, hp)) : null,
+            trr: hp !== null ? g(error(tray, hp)) : null,
+            dr: g(error(tray, s.heading)),
+            bq: alabeoPedido !== null ? g(alabeoPedido) : null,
+            alf: g(o.actitud?.().alabeo ?? 0),
+            ai: +mandos.aileron.toFixed(3),
+            ru: +(mandos.rudder ?? 0).toFixed(3),
+            be: g(s.beta ?? 0),
+            pr: g(s.rollRate ?? 0),
+            yr: g(s.yawRate ?? 0),
+            wl: deLado(fdm?.vientoDelParte),
+            wh: deCara(fdm?.vientoDelParte),
+            rl: deLado(fdm?.racha),
+            rh: deCara(fdm?.racha),
+          };
+        } catch {
+          return {};
+        }
+      })(),
       // Y dónde: cuánto falta para el umbral, del eje, y si se recoge.
       ...(() => {
         try {
@@ -2562,6 +2613,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const TOPE_DE_INCLINACION_EN_LA_BASE = (30 * Math.PI) / 180;
   let topeDeInclinacion = TOPE_DE_INCLINACION;
+  /**
+   * La última inclinación que pidió `alRumbo` en el aire, rad. Solo para la
+   * traza del ala: sin ella no se distingue un serpenteo que pide el banco de
+   * uno que el avión hace por su cuenta.
+   */
+  let alabeoPedido = null;
   const alRumbo = (s, rumbo) => {
     const e = error(rumbo, s.heading);
     /*
@@ -2574,6 +2631,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       -topeDeInclinacion,
       Math.min(topeDeInclinacion, e * 1.5),
     );
+    alabeoPedido = quiere;
     /*
      * **En Guyrami el alerón ya es la inclinación**: el modelo sencillo pide
      * con él un ángulo, `alerón · VISUAL_BANK`, y vira lo que ese ángulo da
