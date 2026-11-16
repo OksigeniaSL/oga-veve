@@ -383,9 +383,9 @@ def construir():
         pantallas_en=0.36,
         palancas=2,
         palancas_en="techo",
-        # **Y el TERR INHIBIT de su MK VI**, al final de la fila de mandos: el
-        # botón con luz que apaga la mirada de delante del avisador al llegar a
-        # una pista que no está en su base. Ver `flight/inhibir-terreno.ts`.
+        # **Y el TERR INHIBIT de su MK VI**, junto a la pantalla de navegación:
+        # el botón con luz que apaga la mirada de delante del avisador al llegar
+        # a una pista que no está en su base. Ver `flight/inhibir-terreno.ts`.
         terr_inhibit=True,
         # El techo por dentro, a 2,92 m: el lomo va a 3,07 por fuera.
         techo_y=Y(2.92),

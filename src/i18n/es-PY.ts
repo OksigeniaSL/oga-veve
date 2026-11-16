@@ -2615,7 +2615,7 @@ export const ES_PY = {
    * no se traduce. Ver `atenderAlTerrInhibit` en `game.ts`.
    */
   "hud.terrInhibitApagado":
-    "TERR INHIBIT: esta pista no está en el mapa del avión, y le apagué el aviso de los cerros de adelante",
+    "TERR INHIBIT: el avión no conoce esta pista, y le apagué el aviso de los cerros de adelante",
   "hud.terrInhibitPrendido": "Ya lejos de esa pista: el avión vuelve a avisar de los cerros de adelante",
   "hud.pulsaTerrInhibit": "Esta pista no está en la base del TAWS: apretá TERR INHIBIT",
   "hud.sueltaTerrInhibit": "A más de quince millas de la pista: volvé a apretar TERR INHIBIT",
@@ -2807,7 +2807,7 @@ export const ES_PY = {
    * avisando. Ver `flight/inhibir-terreno.ts`.
    */
   "vuelo.terrInhibit.apagado":
-    "Esta pista no está en el mapa del avión, así que le apagué el aviso de los cerros de adelante. Si bajamos de más, igual nos avisa.",
+    "Esta pista el avión no la conoce, así que le apagué el aviso de los cerros de adelante. Si bajamos de más, igual nos avisa.",
   "vuelo.terrInhibit.prendido": "Ya estamos lejos de esa pista: le volví a prender al avión el aviso de los cerros.",
   "vuelo.salenLosFrenosDeTierra":
     "¿Viste? Al tocar se levantaron los paneles del ala: el ala deja de sostener el avión y las ruedas frenan",

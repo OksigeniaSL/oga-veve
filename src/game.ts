@@ -1461,7 +1461,7 @@ import {
   PELDANOS,
   type Peldano,
 } from "./flight/escalera";
-import { fueraDeLaBase, queToca } from "./flight/inhibir-terreno";
+import { fueraDeLaBase, queToca, RADIO_DEL_PROCEDIMIENTO } from "./flight/inhibir-terreno";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import {
   gravedadDelSuelo,
@@ -33194,8 +33194,21 @@ export class Game {
    */
   private ponerTerrInhibit(apagado: boolean): void {
     this.terrInhibido = apagado;
+    /*
+     * **Por qué campo se apaga**: el de llegada si está a menos de quince
+     * millas, que es cuando lo pide el procedimiento; si no, el que se tiene
+     * más cerca. Con el de llegada a secas, pulsarlo a mano en ruta lo daba
+     * por apagado para un campo a ochenta millas, y al instante pedía
+     * volverlo a encender.
+     */
+    const p = this.flight.state.position;
     const llegada = this.campoDeLlegada();
-    this.terrInhibidoPara = apagado ? { x: llegada.x, z: llegada.z } : null;
+    const cerca = this.elCampo().pista;
+    const para =
+      Math.hypot(p.x - llegada.x, p.z - llegada.z) <= RADIO_DEL_PROCEDIMIENTO
+        ? { x: llegada.x, z: llegada.z }
+        : { x: cerca.x, z: cerca.z };
+    this.terrInhibidoPara = apagado ? para : null;
     this.delante = null;
     this.terrPedido = null;
     this.aircraftMesh.botones?.encenderLuz("terr", apagado);

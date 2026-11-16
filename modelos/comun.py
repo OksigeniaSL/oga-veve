@@ -2242,8 +2242,8 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     pedestal y `techo_y` es la altura del techo por dentro. Ver
     `_cuadrante_de_techo`.
 
-    `terr_inhibit` pone al final de la fila de mandos el interruptor TERR
-    INHIBIT del avisador de terreno, en el avión cuyo equipo lo lleva: «within
+    `terr_inhibit` pone el interruptor TERR INHIBIT del avisador de terreno,
+    en el avión cuyo equipo lo lleva, junto a la pantalla de navegación: «within
     reach of both crew members» y a la vista, como pide su guía de instalación
     (Honeywell, 060-4314-150, hoja 42). Ver `flight/inhibir-terreno.ts`.
 
@@ -2316,8 +2316,7 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     # simplifica dónde está, no lo que hace, como su botón en la pantalla.
     # Ver «El interruptor de la baliza» en el ADR 0025.
     mandos = (("baliza", "motor") + (("flaps",) if flaps else ())
-              + ("freno",) + (("tren",) if tren else ())
-              + (("terr",) if terr_inhibit else ()))
+              + ("freno",) + (("tren",) if tren else ()))
     #
     # **La visera cae un palmo por debajo de los ojos. En todos.**
     #
@@ -2594,6 +2593,18 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
             piezas.append(
                 marco(f"pantalla-{nombre}-marco", centro, ancho_p, alto_p,
                       hueco_p * 0.45, 0.005, "bisel")
+            )
+        # **Y el TERR INHIBIT, al lado de la pantalla de navegación**, que es
+        # la que pinta el relieve que apaga: arriba, junto a la visera, entre
+        # los dos pilotos, a la vista y al alcance de los dos, que es lo que
+        # pide su guía de instalación. En la fila de mandos de abajo, el quinto
+        # caía detrás del cuerno derecho. Ver `flight/inhibir-terreno.ts`.
+        if terr_inhibit:
+            lado_t = 0.055
+            piezas += boton(
+                "terr", lado_t, lado_t,
+                (borde + grupo + 0.025 + lado_t / 2,
+                 y_p + alto_p / 2 - lado_t / 2, panel_z + 0.008),
             )
 
     # Los relojes del panel: discos finos pegados al tablero, en fila.

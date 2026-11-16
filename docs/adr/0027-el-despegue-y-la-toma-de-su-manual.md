@@ -1596,11 +1596,17 @@ plano que lo diga.
   diciendo «too low» y «terrain, pull up»; y la cuenta del radioaltímetro
   sigue cantando. Quien se mete bajo en la final de la granja lo oye igual.
 - **La luz**: el botón es negro, con «TERR» e «INHIBIT» en inglés, como en el
-  equipo, y su «ON» se enciende en ámbar mientras está pulsado. Va al final
-  de la fila de mandos de la cabina del JAZ 50, en el centro del panel, que
-  es donde lo alcanzan los dos pilotos y lo ven, que es lo que pide su guía de
-  instalación (`terr_inhibit` en `modelos/comun.py`, `boton-terr`). Dónde lo
-  lleva el -400 no se ha leído: se simplifica el sitio, no lo que hace.
+  equipo, y su «ON» se enciende en ámbar mientras está pulsado. Va en el
+  panel del JAZ 50 al lado de la pantalla de navegación —la que pinta el
+  relieve que apaga—, arriba, junto a la visera y entre los dos pilotos, que
+  es donde lo alcanzan los dos y lo ven, como pide su guía de instalación
+  (`terr_inhibit` en `modelos/comun.py`, `boton-terr`). Como quinto botón de
+  la fila de mandos de abajo quedaba medio tapado por el cuerno derecho.
+  Dónde lo lleva el -400 no se ha leído: se simplifica el sitio, no lo que
+  hace.
+- **Pulsado a mano**, hace lo que hace donde sea; se da por pulsado para el
+  campo de llegada si está a menos de quince millas, y si no, para el que se
+  tiene más cerca, y se vuelve a encender al alejarse quince millas de él.
 - **Cuándo**: volando, por encima de quinientos pies sobre el suelo y a menos
   de quince millas del campo donde se va a aterrizar —el destino del plan, o
   el que se tiene debajo en una vuelta al campo—, si ese campo no está en la
@@ -1623,8 +1629,10 @@ Por la escalera, como los aerofrenos de la lista de aterrizaje
 
 - **En los tres peldaños de abajo, quien va al lado.** Se enciende la luz,
   sale la tarjeta con el cerro tachado y la instructora lo cuenta con calma,
-  una vez por vuelo: que esta pista no está en el mapa del avión, que le apagó
-  el aviso de los cerros de adelante y que, si se baja de más, igual avisa.
+  una vez por vuelo: que el avión no conoce esta pista, que le apagó el aviso
+  de los cerros de adelante y que, si se baja de más, igual avisa. No dice
+  «el mapa del avión», que es como se pensó al principio: en la pantalla hay
+  un mapa, y en él la granja sí está.
   Quien tiene cuatro años no tiene por qué saber que hay que apagar una caja;
   lo ve y lo oye.
 - **En el de cabina, quien vuela**, como parte de prepararse para llegar: la
