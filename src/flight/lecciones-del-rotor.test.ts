@@ -328,7 +328,8 @@ describe("volando el Super Puma", () => {
       h,
       (t, m, vistos) => {
         const ultimo = vistos.at(-1)?.que;
-        if (fase === "subir-poco" && t > 2.5) fase = "quieto";
+        // Subir un poco es hasta despegar: con el paso mínimo de 8,5° la palanca tarda algo más en llegar.
+        if (fase === "subir-poco" && t > 2.5 && !h.state.onGround) fase = "quieto";
         if (fase === "quieto" && ultimo === "abajo") {
           fase = "arriba";
           desde = t;

@@ -449,6 +449,38 @@ describe("sin motor", () => {
     expect(suma / n).toBeLessThan(-8);
     expect(suma / n).toBeGreaterThan(-16);
   });
+
+  /**
+   * **El tope de abajo del colectivo, ajustado como los de verdad**: con poco peso
+   * y abajo, que es cuando el rotor da menos vueltas sin motor, el colectivo abajo
+   * del todo da el mínimo de la ficha y no menos (FAA-H-8083-21B, 11-4). Con el
+   * tope ajustado a 3.000 m, a nivel del mar y con 6.500 kg bajaban a 204.
+   */
+  it("con poco peso y al nivel del mar, la palanca abajo no deja las vueltas por debajo de las de la ficha", () => {
+    // El suelo muy abajo, para planear un minuto con el aire del nivel del mar.
+    const h = new ModeloDeHelicoptero(F, () => -20_000);
+    h.ponerMasa(6500);
+    h.ponerEstabilizacion("actitud");
+    h.reset({ position: new Vector3(0, 550, 0), heading: 0, airspeed: 70 * NUDO, rotorEnMarcha: true });
+    const m = mandosNeutros();
+    m.tren = 0;
+    m.motores = false;
+    m.colectivo = 0;
+    let cabeceoAprendido = 2;
+    for (let t = 0; t < 60; t += DT) {
+      const r = h.actitud().rumbo;
+      const falta = 70 * NUDO - (h.state.velocity.x * Math.sin(r) - h.state.velocity.z * Math.cos(r));
+      cabeceoAprendido = Math.max(-15, Math.min(15, cabeceoAprendido - 0.15 * falta * DT));
+      const quiere = Math.max(-15, Math.min(12, cabeceoAprendido - 0.8 * falta)) * GRADO;
+      const a = h.actitud();
+      m.cabeceo = Math.max(-1, Math.min(1, (quiere - a.cabeceo) * 3));
+      m.alabeo = Math.max(-1, Math.min(1, -a.alabeo * 3));
+      h.step(DT, m);
+    }
+    expect(h.state.position.y).toBeGreaterThan(-300);
+    expect(h.rotor().vueltas / RPM).toBeGreaterThanOrEqual(220);
+    expect(h.rotor().vueltas / RPM).toBeLessThan(240);
+  });
 });
 
 describe("en el suelo", () => {

@@ -28,8 +28,8 @@ describe("el plato oscilante", () => {
     expect(CABEZA.twist).toBeCloseTo(r.torsion / GRADO, 6);
     expect(CABEZA.R).toBe(r.radio);
     expect(CABEZA.chord).toBe(r.cuerda);
-    // El paso que se lee, el del 75 % del radio: de 3,5° a 20°.
-    expect(pasoAl75(0)).toBeCloseTo(3.5, 6);
+    // El paso que se lee, el del 75 % del radio: de 2,5° a 20°.
+    expect(pasoAl75(0)).toBeCloseTo(2.5, 6);
     expect(pasoAl75(1)).toBeCloseTo(20, 6);
   });
 
