@@ -480,5 +480,8 @@ helicóptero; y la palanca que pone el juego al empezar en el aire es la que sos
 - **El golpe de la cola** no lo lleva el modelo: la prueba lo mira por la actitud al tocar.
 - **Los motores se apagan como al pararlos**, en ocho segundos: un fallo de verdad es más brusco. La ayuda entra en
   autorrotación en cuanto se cortan; a mano, la potencia se va en unos cuatro.
-- **La bajada vertical sin motor**, en el anillo turbillonario y el molinete, es del #111: la cantidad de movimiento no
-  vale ahí, y no se mide.
+- **La bajada vertical sin motor** cae en la zona del anillo turbillonario de la enmienda H16b. Medido con él dentro:
+  desde 80 kt a 500 ft y en el ejercicio, que frena antes del corte, el rotor no entra nunca en ella; parado a 1.000 ft
+  pasa 0,9 s «cerca» mientras coge velocidad y se posa a 1,54 m/s, como sin él; parado a 500 ft pasa 1,2 s, 0,3 de ellos
+  dentro, y no llega, como no llegaba. Por eso la ayuda pide la velocidad de planeo hacia delante y no se baja en
+  vertical.
