@@ -1334,6 +1334,9 @@ export const EN: Dictionary = {
   "hangar.ejercicio.un-motor": "Fly on one engine",
   "hangar.ejercicio.simulador": "Simulator session",
   "hangar.ejercicio.tormenta": "Go around a storm",
+  "hangar.ejercicio.estacionario": "Staying still in the air",
+  "hangar.ejercicio.par": "Torque and the pedal",
+  "hangar.ejercicio.efecto-suelo": "Near the ground it takes less",
   "hangar.ejercicio.autorrotacion": "Coming down without engines in a helicopter",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
@@ -1389,6 +1392,31 @@ export const EN: Dictionary = {
   "ejercicio.autorrotacion.bien":
     "Exercise done: without engines, the helicopter came down in one piece. The rotor kept turning with the air coming up, and you settled with its spin. That's how helicopter pilots practise it",
   "palabra.autorrotacion": "Autorotation",
+  "ejercicio.estacionario.antes":
+    "The hardest thing in a helicopter is staying still in the air. Go up a little with the collective, let go, and stay still over the H",
+  "ejercicio.estacionario.antesTuyo":
+    "The hardest thing in a helicopter is staying still in the air: the rotor moves its own air, and that air pushes you around. Go up a little, and with tiny touches of cyclic stay still over the spot",
+  "ejercicio.estacionario.asi": "That's it! Nice and still, over the spot",
+  "ejercicio.estacionario.bien":
+    "You stayed still in the air! It's the hardest part of flying a helicopter, and you did it",
+  "ejercicio.par.antes":
+    "Now you're going to feel torque. Go up a little and stay still, and then I'll give you the pedals",
+  "ejercicio.par.pedales": "The pedals are yours. Go up with the collective and watch the nose",
+  "ejercicio.par.seVa":
+    "See? More collective, more torque, and the nose swings left. Press the right pedal, gently, and it stays",
+  "ejercicio.par.bien":
+    "That's it! More collective, more pedal, and the tail rotor holds the nose. The pedals go back to the autopilot",
+  "ejercicio.efecto-suelo.antes":
+    "Near the ground it takes less to hold yourself up, and you'll see it on the power needle, the one on the left. Go up a little and stay still near the ground",
+  "ejercicio.efecto-suelo.sube":
+    "Look where the needle is. Now go up high, higher than the helicopter is long, and stay still",
+  "ejercicio.efecto-suelo.baja":
+    "See? Up high the needle went up: away from the ground it takes more. Now come down close to the ground and stay still",
+  "ejercicio.efecto-suelo.bajaPrimero":
+    "Look where the needle is, up here. Now come down close to the ground and stay still",
+  "ejercicio.efecto-suelo.bien":
+    "The needle went down! Near the ground, the air the rotor pushes bounces off the ground and helps hold you up. That's ground effect",
+  "palabra.quieto": "Still",
   "ejercicio.bienDespresurizacion":
     "Exercise done: mask first, down quickly to where we can breathe, and on to the nearest airport. That's how airline pilots practise it in the simulator",
   "ejercicio.bienParado":

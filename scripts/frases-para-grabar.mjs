@@ -127,8 +127,9 @@ const HABLADOS = [
     "ejercicio",
     "instructor",
     "los ejercicios de emergencia: antes, durante y después",
-    // La tormenta y la autorrotación van al final de la lista: ver `DE_LA_TORMENTA` y `DE_LA_AUTORROTACION`.
-    /^ejercicio\.(?:tormenta|autorrotacion)\./,
+    // La tormenta, la autorrotación y las lecciones del helicóptero van al final de la lista: ver
+    // `DE_LA_TORMENTA`, `DE_LA_AUTORROTACION` y `DE_LAS_LECCIONES_DEL_ROTOR`.
+    /^ejercicio\.(?:tormenta|autorrotacion|estacionario|par|efecto-suelo)\./,
   ],
   // Menos la de Teno, que es nueva y va al final: ver `DE_LA_MISION_DE_TENO`.
   ["mission", "instructor", "las misiones", /^mission\.teno\./],
@@ -2821,6 +2822,43 @@ const DE_LA_AUTORROTACION = [
   ["vuelo.rotorBajo.toma", "detrás del aviso de vueltas bajas del rotor, en la toma sin motor: es lo normal"],
 ];
 for (const [id, para] of DE_LA_AUTORROTACION) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+/*
+ * **Y las lecciones del ala rotatoria** (16-11-2026, #113): quedarse quieto, el
+ * par y el efecto suelo, cada una con su presentación, lo que se dice por el
+ * camino en los peldaños de abajo y su celebración. La cuarta, la autorrotación,
+ * es la de arriba. Detrás de todo, por lo mismo que las de arriba, y en calma
+ * como todo ejercicio. Ver `src/flight/lecciones-del-rotor.ts` y el ADR 0026,
+ * enmienda H17a.
+ */
+const DE_LAS_LECCIONES_DEL_ROTOR = [
+  ["ejercicio.estacionario.antes", "quedarse quieto, antes de empezar, con la ayuda del colectivo (Guyrami y Tukã)"],
+  ["ejercicio.estacionario.antesTuyo", "quedarse quieto, antes de empezar, con la palanca de verdad (Taguató)"],
+  ["ejercicio.estacionario.asi", "quedarse quieto: al pararse en estacionario, la primera vez"],
+  ["ejercicio.estacionario.bien", "quedarse quieto: diez segundos sin moverse del sitio, y se celebra"],
+  ["ejercicio.par.antes", "el par, antes de empezar"],
+  ["ejercicio.par.pedales", "el par: quieto en estacionario, los pedales pasan a quien vuela"],
+  ["ejercicio.par.seVa", "el par: el morro se fue a la izquierda al subir el colectivo; pie derecho"],
+  ["ejercicio.par.bien", "el par: subiendo con el pie que sostiene el morro, y se celebra"],
+  ["ejercicio.efecto-suelo.antes", "el efecto suelo, antes de empezar: la aguja de la fuerza"],
+  ["ejercicio.efecto-suelo.sube", "el efecto suelo: quieto cerca del suelo, ahora arriba"],
+  ["ejercicio.efecto-suelo.baja", "el efecto suelo: quieto arriba después de abajo, ahora otra vez abajo"],
+  ["ejercicio.efecto-suelo.bajaPrimero", "el efecto suelo: quieto arriba sin haber parado abajo, ahora abajo"],
+  ["ejercicio.efecto-suelo.bien", "el efecto suelo: otra vez abajo, la aguja bajó, y se celebra"],
+];
+for (const [id, para] of DE_LAS_LECCIONES_DEL_ROTOR) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({

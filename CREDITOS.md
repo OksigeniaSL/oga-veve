@@ -809,6 +809,16 @@ módulo:
   foto no entra en el juego, y las medidas del buje, los platos y las
   varillas se sacaron de ella a ojo. Lo supuesto —el aleteo, la conicidad y
   el estacionario— está en la cabecera del módulo.
+- **Las lecciones del ala rotatoria** (`src/flight/lecciones-del-rotor.ts`,
+  16-11-2026, #113): quedarse quieto, el par y el efecto suelo salen del mismo
+  *Helicopter Flying Handbook* (FAA-H-8083-21B), de dominio público:
+  capítulo 9, «Hovering» (por qué quedarse quieto es lo más difícil), y
+  capítulos 2 y 3 (el par, los pedales antipar y el efecto suelo). Se cita
+  **sin el logotipo de la FAA**, que sugeriría un aval que no tenemos. Los
+  dibujos de las fichas y de la tarjeta son de Oksigenia SL, hechos por código
+  sobre la silueta del helicóptero de `src/ui/dibujos-del-helicoptero.ts`; las
+  cifras —cuánto cuesta abajo y arriba, cuánto se va el morro— las da el
+  modelo, con la fórmula de Cheeseman y Bennett para el suelo.
 
 ### Las ilustraciones
 

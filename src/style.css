@@ -10290,6 +10290,20 @@ button.motor__tecla::after {
   fill: var(--ocre-tinta);
 }
 
+/* Las flechas de lo que se pide en las lecciones del helicóptero, y su pedal. */
+.ejercicio__flecha {
+  stroke: var(--ocre-tinta);
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ejercicio__pedal {
+  color: var(--ocre-tinta);
+  fill: var(--ocre-tinta);
+}
+
 /* Y la máscara de la cabina sin aire, en el mismo ocre, con su tubo. */
 .ejercicio__mascara {
   fill: var(--ocre-tinta);

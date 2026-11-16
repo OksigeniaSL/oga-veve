@@ -485,3 +485,97 @@ helicóptero; y la palanca que pone el juego al empezar en el aire es la que sos
   pasa 0,9 s «cerca» mientras coge velocidad y se posa a 1,54 m/s, como sin él; parado a 500 ft pasa 1,2 s, 0,3 de ellos
   dentro, y no llega, como no llegaba. Por eso la ayuda pide la velocidad de planeo hacia delante y no se baja en
   vertical.
+
+## Enmienda H17a (16-11-2026): las cuatro lecciones del ala rotatoria (#113)
+
+**Lo que faltaba no era física, eran lecciones.** El estacionario con su ayuda, el par y el pedal, el efecto suelo y la
+autorrotación ya estaban en el modelo; faltaba darles un principio, un final y alguien que las cuente a quien no lee.
+Salen del manual de helicópteros de la FAA (*Helicopter Flying Handbook*, FAA-H-8083-21B, 2019, de dominio público), que
+se cita en `CREDITOS.md` sin su logotipo:
+
+1. **Quedarse quieto** (`estacionario`): el estacionario es lo más difícil de volar un helicóptero —el rotor mueve su
+   propio aire, y ese aire lo empuja— (capítulo 9, «Hovering»), así que sostenerlo diez segundos se celebra.
+2. **El par** (`par`): más colectivo, más par, y el morro se va; el pedal mueve el rotor de cola, y se queda
+   (capítulos 2 y 3).
+3. **El efecto suelo** (`efecto-suelo`): cerca del suelo sostenerse cuesta menos (capítulo 2), y se ve en la aguja de la
+   fuerza, el FLI.
+4. **La autorrotación**: es el ejercicio de la enmienda H16a, y se enlaza tal cual. No se rehace.
+
+### Cómo entran
+
+**Por la puerta de los ejercicios, como la tormenta.** Son tres entradas más de `EJERCICIOS`, con `escena: "rotor"` y
+`deHelicoptero`, delante de la autorrotación: el hangar del JAZ 70 las ofrece en ese orden detrás del vuelo libre y de
+Teno, cada una con su dibujo; `?ejercicio=estacionario` las pone sin hangar, y el juego las presenta antes y las celebra
+al acabar. No falla nada, así que no las lleva `practica.ts` sino su propia práctica, `flight/lecciones-del-rotor.ts`,
+que como las otras dos lee el vuelo y devuelve sucesos; quién dice qué en cada peldaño lo decide `game.ts`
+(`practicarElRotor`). Empiezan donde empieza el helicóptero: posado en su helipuerto con el rotor en marcha.
+
+**Para quien no lee**: cada una tiene su dibujo en la ficha del hangar y en la tarjeta —el helicóptero quieto entre dos
+flechas; visto desde arriba, con el morro que se va a la izquierda; el aire de su rotor que rebota en el suelo—, y la
+tarjeta va diciendo qué toca con un dibujo nuevo para subir, para bajar y el pedal de siempre. La instructora presenta y
+celebra en los cuatro peldaños, y lo de por el camino lo cuenta en los tres de abajo; en Taguató Ruvicha, la tarjeta
+sola. Donde la ayuda lleva el colectivo se dice «soltalo»; con la palanca de verdad, soltar no para nada y se dice otra
+frase. Trece frases nuevas, al final de `scripts/frases-para-grabar.mjs`, en calma; hasta que se graben, la lección se
+cuenta con el dibujo y el texto, como todo ejercicio (`decirDelEjercicio`).
+
+**El logro se celebra en el aire**, que es donde pasa: el sonido del logro, la tarjeta y la instructora. El panel del
+final espera a que se pose, como el de la tormenta: taparle la pantalla a quien está colgado a tres metros del suelo
+sería dejarlo sin ver.
+
+### La medida, que es la del juego
+
+Lo que se celebra se juzga con números, y los números no se enseñan: se ve el helicóptero que no se mueve, el morro que
+gira, la aguja que sube y baja.
+
+| Lección | Se logra con | Por qué |
+| --- | --- | --- |
+| Quieto | 10 s sin apartarse 2 m de donde se paró, ni 1 m de alto, ni 10° de morro, con las ruedas entre 0,3 y 10 m | Los 10 s, del #113; 2 m es menos de lo que asoma la rueda de morro, y se ve contra el suelo. Supuestos: la norma ADS-33E-PRF tiene los suyos para su maniobra «Hover», y no se han copiado sin comprobarlos |
+| El par | Subiendo, con el pie del lado que para el par y el morro girando a menos de 3 °/s, 2 s | El pie del otro lado: el derecho en el Super Puma, que gira en horario visto desde arriba |
+| El suelo | Quieto abajo (ruedas por debajo de 3 m) y quieto arriba (por encima de 20 m), en cualquier orden, acabando abajo | Abajo, el buje queda a menos de un radio del suelo; arriba, a más de un diámetro, donde con Cheeseman y Bennett falta menos de un 1 % para lo de lejos |
+
+«Quieto» se cuenta desde donde se para, y no desde la hache: el logro es quedarse, no llegar.
+
+### Por peldaño, y lo que enseña en cada uno
+
+El modelo es el mismo en los cuatro; lo que cambia es la estabilización, y con ella lo que cada lección enseña:
+
+- **Quieto, en los cuatro.** Con la ayuda de estacionario (Guyrami y Tukã) soltar el cíclico es quedarse, y lo que se
+  aprende es que un helicóptero se queda quieto en el aire —lo que no hace ningún avión— y que el colectivo dice a qué
+  altura: subir un poco, soltar y no tocar. Con la de actitud (Taguató y Taguató Ruvicha) la deriva es de quien vuela, y
+  quedarse es todo el oficio.
+- **El par, desde Tukã.** Con el pie puesto por la estabilización —que sostiene el rumbo parado y se adelanta al par
+  cuando cambia el colectivo— el morro no se movía en ningún peldaño, y la lección no tenía nada que enseñar. Así que
+  **en esta lección los pedales pasan a quien vuela** (`piesDeQuienVuela` en `helicoptero.ts`): el eje de la guiñada se
+  queda con la amortiguación de la tabla de arriba, `amortiguada`, y con el pie que ya sostenía el estacionario, quieto;
+  el cíclico y el colectivo siguen como estaban. Es como se enseña el estacionario, un mando cada vez: el instructor da
+  los pedales, y se los vuelve a quedar al acabar. Se dan **ya en estacionario**, a los dos segundos quieto, y no
+  posado: con el pie aprendido en el suelo, el colectivo de despegar giraba el morro a sesenta grados por segundo. En
+  Guyrami no se ofrece: pide dos manos a la vez —subir y pisar— y allí todo es un gesto cada vez, y los pies los lleva
+  siempre la ayuda.
+- **El efecto suelo, en los cuatro.** Se ve en la aguja del FLI, que tiene su dial y su cifra desde el primero
+  (`ui/vms.ts`), con la ayuda o con la palanca de verdad.
+- **La autorrotación, desde Tukã**, como estaba.
+
+### Lo que da el modelo, al Super Puma con 7.500 kg y al nivel del mar
+
+Sin pantalla, en `flight/lecciones-del-rotor.test.ts`:
+
+- **El suelo.** Quieto con la ayuda, los motores dan 1.547 kW con las ruedas a 2,1 m, 1.595 a 3,7, 1.650 a 9, 1.674 a 21
+  y 1.679 a 29: abajo, un 8 % menos. En el FLI, de 5,7 a 6,2, unos diez grados de aguja en el dial de la VMS.
+- **El par.** En estacionario con la ayuda y los pedales suyos, la X —subir a 4 m/s— lleva el morro a la izquierda a
+  hasta 11 °/s, veinte grados en tres segundos; ocho centésimas de pedal derecho lo paran. Con la palanca de verdad,
+  cinco centésimas de colectivo lo llevan a unos 4 °/s. Sin tocar nada, quieto, se va despacio, menos de 1 °/s: los
+  pies de un estacionario nunca están quietos.
+- **Quieto.** Con la ayuda, la X tres segundos y soltarla lo logra hacia los treinta segundos: al despegar, la ayuda se
+  desliza unos diez metros de lado y tarda en pararse del todo, y no se cuenta hasta que se para (ver abajo). Con la
+  palanca de verdad, un piloto de prueba que sostiene el sitio con el cíclico también lo logra.
+
+### Lo que queda
+
+- **Al despegar con la ayuda de estacionario, el helicóptero se desliza** unos diez metros de lado a casi 3 m/s antes de
+  pararse, y no vuelve encima de la hache: la ayuda pide velocidad cero sobre el suelo, no un sitio. Es del despegue, no
+  de estas lecciones, y para la de quedarse quieto no importa —se cuenta desde donde se para—, pero quien despegue en
+  Guyrami no se queda encima de la hache. Va en el informe, para mirarlo aparte.
+- **El progreso de los diez segundos** no se dibuja: se sabe que se va bien por la frase del principio y porque el
+  helicóptero no se mueve. Un anillo que se llena en la tarjeta sería la medida del juego dicha también con dibujo.
+- **Las trece frases**, por grabar.

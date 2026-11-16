@@ -839,6 +839,17 @@ export class ModeloDeHelicoptero {
   /** Por dónde va la autorrotación: no se vuelve atrás si un globo sube un palmo. */
   private faseSinMotor: FaseDeAutorrotacion | null = null;
 
+  /**
+   * **Los pedales, para quien vuela**: el eje de la guiñada se queda con la
+   * amortiguación y nada más, sin sostener el rumbo ni adelantar el pie al par.
+   * Es lo que hace el instructor que enseña el estacionario de un mando en un
+   * mando —«tuyos los pedales»—, y lo pide la lección del par (#113,
+   * `flight/lecciones-del-rotor.ts`): con el pie puesto por la estabilización,
+   * subir el colectivo no movía el morro en ningún peldaño, y la lección no
+   * tenía nada que enseñar. El cíclico y el colectivo siguen como estaban.
+   */
+  piesDeQuienVuela = false;
+
   constructor(
     readonly ficha: FichaDeHelicoptero,
     private readonly suelo: GroundSampler = () => 0,
@@ -1545,6 +1556,17 @@ export class ModeloDeHelicoptero {
         this.colectivoSuave += acotar(quiere - this.colectivoSuave, 0.25 * dt);
         salida.colectivo = this.colectivoSuave;
       }
+    }
+    /*
+     * **Con los pedales de quien vuela**, la amortiguación de la guiñada y el pie
+     * que ya sostenía el estacionario, quieto: así no gira solo al soltarlos, y lo
+     * que cambie el par lo tiene que poner el pie. Ver `piesDeQuienVuela`.
+     */
+    if (this.piesDeQuienVuela && !posado) {
+      this.rumboPedido = a.rumbo;
+      this.colectivoDePie = salida.colectivo;
+      salida.pedales = acotar(piloto.pedales + this.integralPedales + acotar(-1.0 * r, 0.3), 1);
+      return salida;
     }
     this.integralPedales = acotar(this.integralPedales + 0.4 * (sostener * (1 - volando) + coordinar * volando) * dt, 0.6);
     /*
