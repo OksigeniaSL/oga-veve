@@ -715,3 +715,16 @@
 715	ejercicio.autorrotacion.bien	Ejercicio hecho: sin motor, el helicóptero bajó entero. El rotor siguió girando con el aire que sube, y con su giro te posaste. Así lo practican los pilotos de helicóptero
 716	vuelo.rotorBajo	Ese sonido avisa que el rotor gira despacio. Colectivo abajo, que el aire que sube le devuelve las vueltas
 717	vuelo.rotorBajo.toma	Ese sonido avisa que el rotor gira más despacio. Ahora es lo normal: gastamos su giro para posarnos suave
+718	ejercicio.estacionario.antes	Lo más difícil de un helicóptero es quedarse quieto en el aire. Subí un poquito con el colectivo, soltalo, y quedate quieto encima de la hache
+719	ejercicio.estacionario.antesTuyo	Lo más difícil de un helicóptero es quedarse quieto en el aire: el rotor mueve su propio aire, y ese aire te empuja. Subí un poquito, y con toquecitos chiquitos de cíclico quedate quieto encima del sitio
+720	ejercicio.estacionario.asi	¡Así! Quietito, encima del sitio
+721	ejercicio.estacionario.bien	¡Te quedaste quieto en el aire! Es lo más difícil de volar un helicóptero, y lo lograste
+722	ejercicio.par.antes	Ahora vas a sentir el par. Subí un poquito y quedate quieto, que después te doy los pedales
+723	ejercicio.par.pedales	Los pedales son tuyos. Subí con el colectivo y mirá el morro
+724	ejercicio.par.seVa	¿Viste? Más colectivo, más par, y el morro se va a la izquierda. Pisá el pedal derecho, despacito, y se queda
+725	ejercicio.par.bien	¡Eso! Más colectivo, más pie, y el rotor de cola sostiene el morro. Los pedales vuelven a la ayuda
+726	ejercicio.efecto-suelo.antes	Cerca del suelo, sostenerse cuesta menos, y lo vas a ver en la aguja de la fuerza, la de la izquierda. Subí un poquito y quedate quieto cerca del suelo
+727	ejercicio.efecto-suelo.sube	Mirá dónde está la aguja. Ahora subí bien alto, más que el largo del helicóptero, y quedate quieto
+728	ejercicio.efecto-suelo.baja	¿Viste? Arriba la aguja subió: lejos del suelo cuesta más. Ahora bajá cerquita del suelo y quedate quieto
+729	ejercicio.efecto-suelo.bajaPrimero	Mirá dónde está la aguja, acá arriba. Ahora bajá cerquita del suelo y quedate quieto
+730	ejercicio.efecto-suelo.bien	¡La aguja bajó! Cerca del suelo, el aire que empuja el rotor rebota en el suelo y te ayuda a sostenerte. Es el efecto suelo

@@ -119,13 +119,65 @@
       "ms": 7707,
       "h": "a473bfe443"
     },
+    "ejercicio.efecto-suelo.antes": {
+      "ms": 8307,
+      "h": "d6384443c0"
+    },
+    "ejercicio.efecto-suelo.baja": {
+      "ms": 5907,
+      "h": "22b9752c0b"
+    },
+    "ejercicio.efecto-suelo.bajaPrimero": {
+      "ms": 4607,
+      "h": "226399453e"
+    },
+    "ejercicio.efecto-suelo.bien": {
+      "ms": 7707,
+      "h": "cef190a36e"
+    },
+    "ejercicio.efecto-suelo.sube": {
+      "ms": 5107,
+      "h": "6595fd68b0"
+    },
     "ejercicio.enVuelo": {
       "ms": 2902,
       "h": "90d4602450"
     },
+    "ejercicio.estacionario.antes": {
+      "ms": 7407,
+      "h": "4e6ef04d06"
+    },
+    "ejercicio.estacionario.antesTuyo": {
+      "ms": 11007,
+      "h": "2ce49a4b0e"
+    },
+    "ejercicio.estacionario.asi": {
+      "ms": 2068,
+      "h": "d4726cda52"
+    },
+    "ejercicio.estacionario.bien": {
+      "ms": 4607,
+      "h": "0c067aeffc"
+    },
     "ejercicio.otraVez": {
       "ms": 5507,
       "h": "4faebff6b1"
+    },
+    "ejercicio.par.antes": {
+      "ms": 4607,
+      "h": "be26e7ab3f"
+    },
+    "ejercicio.par.bien": {
+      "ms": 5707,
+      "h": "260ccfa56a"
+    },
+    "ejercicio.par.pedales": {
+      "ms": 3107,
+      "h": "8aa4d4c844"
+    },
+    "ejercicio.par.seVa": {
+      "ms": 6207,
+      "h": "7fb2d4ec53"
     },
     "ejercicio.paradoTrasV1": {
       "ms": 7007,
@@ -5137,6 +5189,45 @@
     ],
     "vuelo.rotorBajo.toma": [
       "vuelo.rotorBajo.toma"
+    ],
+    "ejercicio.estacionario.antes": [
+      "ejercicio.estacionario.antes"
+    ],
+    "ejercicio.estacionario.antesTuyo": [
+      "ejercicio.estacionario.antesTuyo"
+    ],
+    "ejercicio.estacionario.asi": [
+      "ejercicio.estacionario.asi"
+    ],
+    "ejercicio.estacionario.bien": [
+      "ejercicio.estacionario.bien"
+    ],
+    "ejercicio.par.antes": [
+      "ejercicio.par.antes"
+    ],
+    "ejercicio.par.pedales": [
+      "ejercicio.par.pedales"
+    ],
+    "ejercicio.par.seVa": [
+      "ejercicio.par.seVa"
+    ],
+    "ejercicio.par.bien": [
+      "ejercicio.par.bien"
+    ],
+    "ejercicio.efecto-suelo.antes": [
+      "ejercicio.efecto-suelo.antes"
+    ],
+    "ejercicio.efecto-suelo.sube": [
+      "ejercicio.efecto-suelo.sube"
+    ],
+    "ejercicio.efecto-suelo.baja": [
+      "ejercicio.efecto-suelo.baja"
+    ],
+    "ejercicio.efecto-suelo.bajaPrimero": [
+      "ejercicio.efecto-suelo.bajaPrimero"
+    ],
+    "ejercicio.efecto-suelo.bien": [
+      "ejercicio.efecto-suelo.bien"
     ]
   }
 }

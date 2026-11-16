@@ -2255,5 +2255,44 @@
   ],
   "vuelo.rotorBajo.toma": [
     "vuelo.rotorBajo.toma"
+  ],
+  "ejercicio.estacionario.antes": [
+    "ejercicio.estacionario.antes"
+  ],
+  "ejercicio.estacionario.antesTuyo": [
+    "ejercicio.estacionario.antesTuyo"
+  ],
+  "ejercicio.estacionario.asi": [
+    "ejercicio.estacionario.asi"
+  ],
+  "ejercicio.estacionario.bien": [
+    "ejercicio.estacionario.bien"
+  ],
+  "ejercicio.par.antes": [
+    "ejercicio.par.antes"
+  ],
+  "ejercicio.par.pedales": [
+    "ejercicio.par.pedales"
+  ],
+  "ejercicio.par.seVa": [
+    "ejercicio.par.seVa"
+  ],
+  "ejercicio.par.bien": [
+    "ejercicio.par.bien"
+  ],
+  "ejercicio.efecto-suelo.antes": [
+    "ejercicio.efecto-suelo.antes"
+  ],
+  "ejercicio.efecto-suelo.sube": [
+    "ejercicio.efecto-suelo.sube"
+  ],
+  "ejercicio.efecto-suelo.baja": [
+    "ejercicio.efecto-suelo.baja"
+  ],
+  "ejercicio.efecto-suelo.bajaPrimero": [
+    "ejercicio.efecto-suelo.bajaPrimero"
+  ],
+  "ejercicio.efecto-suelo.bien": [
+    "ejercicio.efecto-suelo.bien"
   ]
 }
