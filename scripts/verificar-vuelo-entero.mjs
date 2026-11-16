@@ -1356,7 +1356,30 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         ? recogida.ultimoMando
         : calculado;
     recogida.ultimoMando = mandos.elevator;
-    if (!SENCILLO) mandos.throttle = 0;
+    /*
+     * **Y un bimotor de hélice no corta el gas al empezar a recoger: lo va
+     * quitando.**
+     *
+     * El ralentí de golpe es lo de un reactor —el *retard* a treinta pies— y
+     * lo de una avioneta, que cierra el gas sobre el umbral. En un bimotor de
+     * hélice es lo que se enseña a no hacer: las dos hélices al ralentí son
+     * dos discos de freno delante del ala, y con los flaps de aterrizaje fuera
+     * el avión se queda sin velocidad en mitad de la recogida y se sienta. Se
+     * quita despacio, con la altura que queda, y llega al ralentí al tocar.
+     * Medido con la traza del ala del JAZ 50 —un Twin Otter con los flaps a
+     * 37°— en Los Rodeos (#192): cortando a 9,7 m, de 71 a 61 nudos en cuatro
+     * segundos, la carga sin pasar de 0,99 g aun tirando, y tocó a 2,63 m/s.
+     * Quitándolo con la altura, de 69 a 64 nudos.
+     *
+     * **Y si una racha lo hunde de más, un pelo de gas**, como en Guyrami —ver
+     * arriba—: quitándolo con la altura, una racha a seis metros lo llevó de
+     * bajar a 1,5 m/s a bajar a 2,6 con la carga en 0,91 g, y tocó a 2,02.
+     */
+    if (!SENCILLO)
+      mandos.throttle =
+        suyas.propulsion === "helice" && (suyas.motores ?? 1) >= 2
+          ? Math.min(1, (recogida.gas ?? 0) * queda + 0.5 * Math.max(0, falta))
+          : 0;
   };
   /**
    * La palanca media de los últimos segundos de la final, que es la que

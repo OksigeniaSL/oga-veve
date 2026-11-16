@@ -26,6 +26,7 @@
  */
 import { HelicopteroComoModelo } from "../flight/fdm-helicoptero";
 import { velocidadesEnTierra } from "../flight/velocidades-en-tierra";
+import { propulsionDe } from "../flight/aircraft";
 import { codificarRejilla, ficheroDelPavimento } from "../world/pavimento-horneado";
 import {
   Box3,
@@ -582,6 +583,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       envergadura: juego.aircraft.wingSpan,
       /** Cuántos motores lleva, que es cuántos relojes tiene que haber. */
       motores: juego.aircraft.motores,
+      /**
+       * Y qué los mueve: hélice, chorro o rotor. El piloto del banco recoge un
+       * turbohélice quitando el gas poco a poco y un reactor cortándolo de
+       * golpe, como se hace de verdad. Ver `recoger` en
+       * `verificar-vuelo-entero.mjs`.
+       */
+      propulsion: propulsionDe(juego.aircraft),
       /*
        * Y **lo que mide su tren**, que es la diferencia entre las ruedas y el
        * origen del avión. Sin esto no se puede comprobar desde fuera si un
