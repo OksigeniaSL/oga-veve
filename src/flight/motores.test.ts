@@ -198,9 +198,12 @@ describe("las velocidades de un despegue con un motor de menos", () => {
 
   it("en una pista corta la V1 baja, y con calor también", () => {
     const larga = velocidadesDeDespegue(ARAI, 3400);
-    // Un diez por ciento menos que la que se le deja: con la Vr de su peso
-    // (ADR 0027), en la que se le deja ya cabe abortar desde la V1 de su ficha.
-    const corta = pistaQueNecesita(ARAI) * 0.9;
+    // Un diez por ciento menos que la que se le deja para despegar: con la Vr
+    // de su peso (ADR 0027), en la que se le deja ya cabe abortar desde la V1
+    // de su ficha. La de despegar y no la mayor de las dos: desde que su toma
+    // cuenta los segundos de la AC 91-79A le pide más pista aterrizar, y un
+    // diez por ciento menos de ésa todavía deja abortar (enmienda H20e).
+    const corta = lasDosPistas(ARAI).despegar * 0.9;
     const justa = velocidadesDeDespegue(ARAI, corta);
     expect(justa.v1!).toBeLessThan(larga.v1!);
     // Con un 8 % menos de aire —una tarde de calor— cabe parar desde menos.
@@ -274,6 +277,13 @@ describe("con un motor parado, el avión vuela y sube", () => {
       const k = motorCritico(a);
       m.pararMotor(k);
       const piloto = pilotoConUnMotor(m, a, objetivo, 0);
+      /*
+       * **La V2 se vuela con los flaps de despegue**, que es como se define
+       * (CS 25.107): limpio, el E170 de la Vref de la FAA pierde a 135 nudos,
+       * por encima de su V2, 132,4 (enmienda H20e). La VYSE del de pistón, sin
+       * ellos.
+       */
+      if (conUnMotor(a).nombre === "V2") piloto.mandos.flaps = flapsDeDespegue(a);
       const pasos = (s: number) => Math.round(s / DT);
       let asegurado = false;
       let subida = 0;
@@ -465,8 +475,9 @@ describe("la V2, la de sus flaps de despegue", () => {
     );
   });
 
-  it("el 747 no baja a la de su tipo, 146,6 nudos: la Vmc del modelo pide más", () => {
-    expect(YVAGA.takeoffSafetySpeed! / NUDO).toBeCloseTo(146.6, 1);
+  it("el 747 no baja a la de su tipo, 152,6 nudos: la Vmc del modelo pide un 0,5 % más", () => {
+    // La de la NTSB con los flaps de su Vr (AAR-72-17), enmienda H20e.
+    expect(YVAGA.takeoffSafetySpeed! / NUDO).toBeCloseTo(152.6, 1);
     expect(conUnMotor(YVAGA).velocidad).toBeCloseTo(vmc(YVAGA)! * V2_SOBRE_LA_VMC, 6);
   });
 

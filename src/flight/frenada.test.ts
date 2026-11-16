@@ -108,7 +108,8 @@ describe("la frenada en tierra", () => {
      * planta como un coche enseña a no planificar la carrera de frenada.
      *
      * Medido: de 0,28 a 0,30 g las avionetas y el turbohélice, 0,37 el
-     * cuatrimotor y 0,47 el regional, que es lo que para un reactor con frenos
+     * cuatrimotor y 0,49 el regional (0,47 antes de la Vref de la FAA, enmienda
+     * H20e del ADR 0027), que es lo que para un reactor con frenos
      * de carbono y los de tierra fuera. Ver `distancia-de-aterrizaje.test.ts`,
      * que lo compara con los manuales.
      */

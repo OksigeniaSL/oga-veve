@@ -219,8 +219,9 @@ describe("la cadena del «¿y ahora qué?»", () => {
     expect(que["velocidad:subida:salida"]!.que).toBe("acelerar");
     expect(que["velocidad:bajo-el-100:llegada"]!.que).toBe("frenar");
     expect(que["velocidad:bajo-el-100:llegada"]!.objetivo.kt).toBe(250);
-    expect(que["velocidad:terminal:llegada"]!.objetivo.kt).toBeGreaterThanOrEqual(210);
-    expect(que["velocidad:terminal:llegada"]!.objetivo.kt).toBeLessThanOrEqual(220);
+    // La de maniobra sin flaps, la Vref y ochenta: 198 con la Vref de la FAA
+    // (enmienda H20e del ADR 0027); eran 212 con la de antes.
+    expect(que["velocidad:terminal:llegada"]!.objetivo.kt).toBe(Math.round(vrefKt(a) + 80));
     expect(que.final!.que).toBe("senda");
     expect(que.final!.objetivo.kt).toBe(Math.round(vrefKt(a) + 5));
   });

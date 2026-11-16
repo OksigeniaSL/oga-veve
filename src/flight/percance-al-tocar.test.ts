@@ -92,8 +92,8 @@ describe("la regla: dónde, a qué velocidad y con qué caída", () => {
   });
 
   it("la de pérdida sale de la Vref de la ficha, que es 1,3 veces ella", () => {
-    // El comentario del JAZ 90 lo dice con su número: 52,4 m/s.
-    expect(velocidadDePerdida(jaz90)).toBeCloseTo(52.3, 1);
+    // La Vref de la FAA del JAZ 90 partida por 1,3: 46,6 m/s (enmienda H20e).
+    expect(velocidadDePerdida(jaz90)).toBeCloseTo(46.6, 1);
     for (const a of AIRCRAFT)
       expect(velocidadDePerdida(a)).toBeLessThan(a.approachSpeed);
   });

@@ -219,8 +219,11 @@ describe("ningún circuito se mete en el monte", () => {
     const esc = CON_RELIEVE.find((e) => e.id === "lanzarote")!;
     // Por la 03: el regular por el este, a la derecha; el ligero por el oeste.
     expect(manoPublicada(esc, "03", 1)).toBe("izquierda");
+    // El E170 por el suyo aunque a la masa de la ficha cruce a 117,7 nudos: su
+    // categoría es la C, la de su Vref a su máximo al aterrizar (enmienda H20e
+    // del ADR 0027).
     const jaz90 = AIRCRAFT.find((a) => a.id === "jaz-90")!;
-    expect(manoPublicada(esc, "03", escalaDeCircuito(jaz90.approachSpeed))).toBe("derecha");
+    expect(manoPublicada(esc, "03", escalaDelCircuitoDe(jaz90))).toBe("derecha");
   });
 
   /*

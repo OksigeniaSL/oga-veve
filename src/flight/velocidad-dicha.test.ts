@@ -84,9 +84,14 @@ describe("la velocidad dicha con su número", () => {
   });
 
   it("la tarjeta y la voz dicen la misma cifra, a la decena", () => {
-    // La de 212 nudos: 392,6 km/h, que se escribe y se dice 390.
-    expect(velocidadDicha(212, "metric")).toBe(390);
-    expect(piezaDeVelocidad(212, "metric")).toBe("vuelo.paso.velocidad.390");
+    // La de 123 nudos, la final del E170: 227,8 km/h, que se escribe y se dice
+    // 230. Era la de 212, 390 km/h, su área terminal antes de la Vref de la
+    // FAA (enmienda H20e del ADR 0027), que ya no la pide nadie.
+    expect(velocidadDicha(123, "metric")).toBe(230);
+    expect(piezaDeVelocidad(123, "metric")).toBe("vuelo.paso.velocidad.230");
+    // Y la de su área terminal, 198 nudos, 370 km/h, espera su toma: sin pieza.
+    expect(velocidadDicha(198, "metric")).toBe(370);
+    expect(piezaDeVelocidad(198, "metric")).toBe(null);
     // Y 320 no la pide ningún avión: sin pieza, la frase va sin el número.
     expect(piezaDeVelocidad(173, "metric")).toBe(null);
     // La de 250 nudos, el tope de los diez mil pies: 463 km/h, 460.

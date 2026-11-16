@@ -25,8 +25,9 @@
  * - **En el área terminal, la de maniobra sin flaps.** A unas treinta millas
  *   de la pista se frena a lo más lento que el avión vira limpio: en un
  *   reactor, la Vref de aterrizaje más ochenta, que es como dan los manuales
- *   de Boeing la de maniobra con los flaps arriba, y que en los dos de la
- *   flota son los 210–220 de una llegada.
+ *   de Boeing la de maniobra con los flaps arriba: los 210–230 de una
+ *   llegada en los dos anchos, y 198 en el E170, que con la Vref de la FAA
+ *   cruza el umbral a 117,7 nudos (ADR 0027, enmienda H20e).
  * - **Al empezar la aproximación, con los primeros flaps**: la Vref más
  *   cincuenta, entre la de maniobra de los primeros flaps (más sesenta) y la
  *   de los segundos (más cuarenta) del mismo manual. Son los 180–200 que se

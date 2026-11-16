@@ -77,16 +77,16 @@
  *   jaz-20     406     469     449          407     387   sin margen
  *   jaz-40     536     672     352          633     620   sin margen
  *   jaz-50     447     468     564          453     427   con / sin
- *   jaz-60     983     959  ≤1.025          815     816   con / sin
- *   jaz-90   1.124   1.264  ≤1.151        1.243   1.123   con margen
- *   jaz-110  1.826   1.783  ≤1.800        1.591   1.800   con margen
- *   jaz-120  1.869   1.792   1.710        1.652   1.875   con margen
+ *   jaz-60   1.001     996  ≤1.025          815     816   con / sin
+ *   jaz-90   1.022   1.192  ≤1.151        1.206   1.123   con margen
+ *   jaz-110  1.826   1.783  ≤1.800        1.762   1.800   con margen
+ *   jaz-120  1.869   1.792   1.710        1.816   1.875   con margen
  * ```
  *
  * «Volado», en los reactores y en el 1900D, es la distancia hasta los treinta
  * y cinco pies por 1,15; el hangar pide además la de abortar desde su V1 si es
- * más larga, que en el JAZ 60, el 90, el 110 y el 120 lo es
- * (`acelerarYPararDeSuNorma`). El JAZ 60 despega con margen —su longitud de
+ * más larga, que en el JAZ 90, el 110 y el 120 lo es
+ * (`acelerarYPararDeSuNorma`); en el JAZ 60 las dos salen a tres metros. El JAZ 60 despega con margen —su longitud de
  * campo— y aterriza sin él, que es como publica cada cosa. La toma
  * volada frena lo mismo que la cuenta, al uno por ciento, y el aire de la toma
  * es el de su clase en los dos.
@@ -126,8 +126,10 @@
  *   6–7,5°; lo que queda es la primera muesca de flaps del modelo, que
  *   sustenta poco (Jenkinson da al 747-100 un CL máximo de despegue de 2,03, y
  *   el modelo, 1,73). Enmienda H10b.
- * - **El JAZ 90**, un 18 % más largo volando, y no por la cola: con la de su
- *   dibujo, 14,2° donde eran 9°, se sigue yendo del suelo a 8,1°. **Ni por el
+ * - **El JAZ 90**, un 19 % más largo volando, y no por la cola: con la de su
+ *   dibujo, 14,2° donde eran 9°, se sigue yendo del suelo a 8,1° (a 7,8° con
+ *   la Vr de 129 nudos de la enmienda H20e, y con ella el hangar le pide
+ *   1.022 m y vuela 1.192, donde eran 1.124 y 1.264). **Ni por el
  *   avión volado** (traza de la enmienda H20b): de la Vr a los treinta y cinco
  *   pies tarda 5,8 s, como el 787 —5,7— y el 747 —6,2—. Lo que se queda corta
  *   es la cuenta: la proporción de su clase, 2.500 / 1.800, es la del 747 a su
@@ -135,35 +137,27 @@
  *   ficha lleva 0,43 de empuje por peso, donde los dos anchos llevan 0,33 y
  *   0,34, así que rueda poco para lo deprisa que va, y esa parte le da 262 m:
  *   unos 3,5 s a su velocidad, que no los vuela ningún reactor. Contar ese tramo
- *   como un tiempo le pediría 1.264 m, por encima de los 1.151 de Embraer con
- *   más masa: falta además una cifra de Embraer de su carrera o de su
- *   despegue con todos los motores, y sin ella no se toca.
- * - **Los dos de fuselaje ancho aterrizan un 12 % más corto que su manual**, y
- *   no por lo mismo que el E170, que aterriza largo. En los dos la Vref no es:
- *   la del 787-9 es la de la FAA, y la del 747-100, la de Jenkinson —141
- *   nudos—, es más baja que la de la ficha y acortaría la toma hasta un 16 %.
- *   Tampoco el freno: llegar a su cifra con la rodadura pide un pie a fondo de
- *   2,88 y 2,97 m/s² al acabar, por debajo del autofreno MED, y el pie a fondo
- *   de un avión de línea frena más que el MED. Lo que falta es el aire: con su
- *   freno, el manual pide 425 y 416 m desde los cincuenta pies, unos 5,6
- *   segundos a su Vref, donde la senda de tres grados da 291. **Lo que falta
- *   son los segundos entre tocar y frenar del todo** que cuenta la distancia
- *   certificada: uno hasta el primer dispositivo de frenada y otro por cada
- *   uno que siga (FAA, AC 91-79A Chg 2, figura 1, p. 6). Con dos —tocar,
- *   frenos de tierra, freno— el 747 pediría 1.816 m y el 787 1.762, un 3 y un
- *   2 % por debajo de su manual. No se han puesto porque valen igual para el
- *   E170, y en él, ver abajo, no cierran sin su Vref (enmienda H20b).
- * - **El JAZ 90 aterriza un 7–11 % largo**, según se escalen los 2.800 kg que
- *   pesa menos que la cifra de Embraer: todo con la masa o solo la rodadura. La
- *   causa es suya: su Vref de 132 nudos no tiene fuente —sale de un CL máximo
- *   de su clase— y su frenada se calibró con la toma de Embraer cruzando a
- *   unos 127 a su máximo, 121 a esta masa. Con 121 pediría 1.125. Sin la Vref
- *   de Embraer, no se toca. Y con los dos segundos de la AC 91-79A pediría 1.407
- *   m, un 25 % largo; para dar la cifra de Embraer a su máximo al aterrizar
- *   tendría que frenar con 0,56 cruzando a 127 nudos, o cruzar a 116 con el
- *   0,45 que tiene, que en este modelo es 1,09 veces su pérdida con los flaps
- *   de aterrizaje. Cuánto de esa toma es aire y cuánto freno solo lo dice su
- *   Vref (enmienda H20b).
+ *   como un tiempo le pedía 1.264 m con la Vr de antes, por encima de los 1.151
+ *   de Embraer con más masa: falta además una cifra de Embraer de su carrera o
+ *   de su despegue con todos los motores, y sin ella no se toca.
+ * - **Los dos de fuselaje ancho aterrizan un 3 y un 2 % más corto que su
+ *   manual**, con los segundos entre tocar y frenar del todo que cuenta la
+ *   distancia certificada: uno hasta el primer dispositivo de frenada y otro
+ *   por cada uno que siga (FAA, AC 91-79A Chg 2, figura 1, p. 6), dos en un
+ *   reactor —los frenos de tierra y el freno—. Ver `segundosHastaFrenar`. Sin
+ *   ellos salían un 12 % cortos: el 747 pedía 1.652 m y ahora 1.816, el 787
+ *   1.591 y ahora 1.762 (enmienda H20e). No era la Vref —la del 787-9 es la de
+ *   la FAA, y la del 747-100, la de Jenkinson, 141 nudos, la acortaría— ni el
+ *   freno: llegar a su cifra con la rodadura pedía un pie a fondo por debajo
+ *   del autofreno MED.
+ * - **El JAZ 90 aterriza un 7 % largo**, con la Vref de la FAA —124 nudos a
+ *   73.413 lb, 117,7 a la masa de la ficha— y esos dos segundos. A su máximo al
+ *   aterrizar pide 1.266 m donde Embraer da 1.228: cerrarlo pediría frenar con
+ *   0,53, más del medio g de `frenada.test.ts`, y frena con 0,49, lo más que
+ *   deja esa regla. A la masa de la ficha pide 1.206, y la cifra de Embraer
+ *   escalada con la masa da 1.123: lo demás es el aire y los dos segundos, que
+ *   no bajan con la masa como la rodadura. Antes llevaba 132 nudos sin fuente y
+ *   aterrizaba un 11 % largo (enmienda H20e).
  */
 
 import { describe, expect, it } from "vitest";
@@ -181,6 +175,7 @@ import {
   parteDeLaLda,
   pistaQueNecesita,
   rodaduraDeFrenada,
+  segundosHastaFrenar,
   velocidadDeToma,
   margenDeSuClase,
 } from "./carrera";
@@ -409,16 +404,15 @@ describe("el despegue y la toma de cada avión, contra su manual", () => {
     /*
      * La toma, con un diez por ciento a cada lado en la cuenta del hangar: las
      * cifras de los reactores son lecturas de una gráfica y las de las
-     * avionetas, de un manual que mide a su manera. Sale entre el −12 y el
-     * +11 %; los dos de fuselaje ancho, por debajo, y el E170, por arriba, cada
-     * uno con su porqué en la cabecera, y con un listón que no les deja
-     * alejarse más.
+     * avionetas, de un manual que mide a su manera. Los dos de fuselaje ancho
+     * tenían un listón aparte, hasta un 14 % por debajo, mientras les faltaban
+     * los segundos de la AC 91-79A; con ellos ya caben en el de todos
+     * (enmienda H20e).
      */
     it(`${id} aterriza en lo que dice su manual`, () => {
       const r = hangar.aterrizar / manual.aterrizar;
       const dicho = `${id}: el hangar pide ${Math.round(hangar.aterrizar)} m y el manual ${Math.round(manual.aterrizar)}`;
-      const anchos = id === "jaz-110" || id === "jaz-120";
-      expect(r, dicho).toBeGreaterThan(anchos ? 0.86 : 0.9);
+      expect(r, dicho).toBeGreaterThan(0.9);
       expect(r, dicho).toBeLessThan(1.12);
     });
 
@@ -613,6 +607,66 @@ describe("la cola de cada reactor toca donde dice su fabricante", () => {
     expect(actitudAlIrse / GRADO).toBeGreaterThan(9.1);
     expect(actitudAlIrse / GRADO).toBeLessThan(11.1);
     expect(actitudAlIrse).toBeLessThan(a.maxGroundPitch);
+  });
+});
+
+/*
+ * **La Vref de la FAA**, escalada con la raíz de la masa: la de la base de
+ * datos de características de aeronaves (*Aircraft Characteristics Data*,
+ * octubre de 2024), la velocidad de aproximación de cada tipo a su masa
+ * máxima al aterrizar (enmienda H20e).
+ *
+ * - **JAZ 90**: 124 nudos a 73.413 lb, fila E170.
+ * - **JAZ 110**: 144 nudos a 425.000 lb, fila B789.
+ *
+ * El 747 no está: la fila de la FAA es la del -400, B744 —157 nudos a 630.000
+ * lb—, con otra ala que el -100 de la ficha.
+ */
+const VREF_DE_LA_FAA: Readonly<Record<string, { nudos: number; libras: number }>> = {
+  "jaz-90": { nudos: 124, libras: 73413 },
+  "jaz-110": { nudos: 144, libras: 425000 },
+};
+
+describe("la Vref de los reactores es la de la FAA", () => {
+  for (const [id, faa] of Object.entries(VREF_DE_LA_FAA)) {
+    it(`${id} cruza el umbral a la Vref de su tipo, a la masa de su ficha`, () => {
+      const a = avion(id);
+      const suya = faa.nudos * 0.514444 * Math.sqrt(a.mass / (faa.libras * LIBRA));
+      expect(a.approachSpeed / suya).toBeCloseTo(1, 2);
+    });
+  }
+
+  it("y el E170 sigue siendo de categoría C, que se cuenta a su máximo al aterrizar", () => {
+    // De 121 a 140 nudos (OACI, PANS-OPS); la de la ficha, 117,7, sería B.
+    const a = avion("jaz-90");
+    const aSuMaximo = (a.approachSpeed / 0.514444) * Math.sqrt((73413 * LIBRA) / a.mass);
+    expect(aSuMaximo).toBeGreaterThanOrEqual(121);
+    expect(aSuMaximo).toBeLessThan(141);
+  });
+});
+
+/*
+ * **Los segundos entre tocar y frenar del todo** de la AC 91-79A, figura 1:
+ * dos en el reactor, que frena con los frenos de tierra y el freno; ninguno
+ * en los demás, que publican su toma con el aire de su manual (enmienda H20e).
+ */
+describe("la toma de un reactor cuenta los segundos hasta frenar del todo", () => {
+  it("dos en los reactores y ninguno en los demás", () => {
+    for (const a of MEDIDOS) {
+      if (a.helicoptero) continue;
+      expect(segundosHastaFrenar(a), a.id).toBe(esDeChorro(a) ? 2 : 0);
+    }
+  });
+
+  it("y alargan la toma lo que se rueda en ellos, sin frenar", () => {
+    for (const a of MEDIDOS.filter(esDeChorro)) {
+      const sinEllos = enPlaneoDesdeElUmbral(a) + rodaduraDeFrenada(a);
+      const extra = distanciaDeAterrizaje(a) - sinEllos;
+      // Dos segundos a la velocidad de toma, menos lo que se frena en ellos,
+      // y menos lo que la rodadura ya no tiene que frenar desde ahí.
+      expect(extra, a.id).toBeGreaterThan(velocidadDeToma(a) * 1.0);
+      expect(extra, a.id).toBeLessThan(velocidadDeToma(a) * 2);
+    }
   });
 });
 

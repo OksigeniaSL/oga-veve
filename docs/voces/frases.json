@@ -13523,17 +13523,17 @@
     "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
   },
   {
+    "id": "vuelo.paso.velocidad.230",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son doscientos treinta kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
     "id": "vuelo.paso.velocidad.240",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Son doscientos cuarenta kilómetros por hora.",
-    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
-  },
-  {
-    "id": "vuelo.paso.velocidad.250",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Son doscientos cincuenta kilómetros por hora.",
     "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
   },
   {
@@ -13600,13 +13600,6 @@
     "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
   },
   {
-    "id": "vuelo.paso.velocidad.390",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Son trescientos noventa kilómetros por hora.",
-    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
-  },
-  {
     "id": "vuelo.paso.velocidad.410",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -13660,6 +13653,13 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Son quinientos noventa kilómetros por hora.",
+    "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
+  },
+  {
+    "id": "vuelo.paso.velocidad.370",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Son trescientos setenta kilómetros por hora.",
     "para": "el número de la marca rosa, detrás del paso de velocidad, en Taguató"
   },
   {

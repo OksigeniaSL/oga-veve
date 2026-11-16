@@ -409,7 +409,9 @@ export function remontaHastaLaCabecera(a: AircraftConfig): boolean {
  *   senda de su clase: ver `enPlaneoDesdeElUmbral`.
  * - **El suelo**, integrando la frenada desde la velocidad de toma —un pelo
  *   por debajo de la de umbral— con el rozamiento de frenar y la resistencia
- *   aerodinámica, que a esa velocidad todavía cuenta.
+ *   aerodinámica, que a esa velocidad todavía cuenta. En el reactor, con los
+ *   segundos que su manual cuenta entre tocar y frenar del todo: ver
+ *   `segundosHastaFrenar`.
  *
  * La frenada es **la misma que hace el motor de vuelo** —ver
  * `deceleracionRodando` en `frenada.ts`—, porque si aquí se frenara distinto
@@ -421,7 +423,63 @@ export function distanciaDeAterrizaje(
   a: AircraftConfig,
   superficie: Superficie = "asfalto",
 ): number {
-  return enPlaneoDesdeElUmbral(a) + rodaduraDeFrenada(a, superficie);
+  const hastaFrenar = hastaFrenarDelTodo(a, superficie);
+  return (
+    enPlaneoDesdeElUmbral(a) +
+    hastaFrenar.metros +
+    rodaduraDeFrenada(a, superficie, { desde: hastaFrenar.velocidad })
+  );
+}
+
+/**
+ * **Los segundos que cuenta el manual de un avión de transporte entre tocar y
+ * frenar del todo**: uno hasta el primer dispositivo de frenada y otro por
+ * cada uno que siga. «For AFM data expansion, use the longer of 1 second or
+ * the test time», «repeated until pilot activation of all deceleration
+ * devices has been completed and the airplane is in the full braking
+ * configuration» (FAA, AC 91-79A Chg 2, 2018, figura 1, p. 6); y en prosa,
+ * «typically based on a time increment of 1 second between successive
+ * actions» (par. 8 h 2, p. 5).
+ *
+ * **Solo en los reactores**, los de la norma de transporte que publican así
+ * su distancia: dos, porque frenan con dos —los frenos de tierra y el freno—.
+ * Sin ellos la toma del 747 y la del 787 salían un 12 % más cortas que su
+ * manual, y casi todo lo que faltaba era esto (enmienda H20b). El 1900D y el
+ * Twin Otter publican la suya con el aire de su manual, que ya la cierra.
+ *
+ * Es el mínimo de la norma: la nota de esa figura deja usar, para los
+ * dispositivos automáticos, el tiempo medido en la certificación, y con qué
+ * tiempo se certificó cada uno no se ha leído. Enmienda H20e del ADR 0027.
+ */
+export function segundosHastaFrenar(a: AircraftConfig): number {
+  if (!esDeChorro(a)) return 0;
+  return a.frenosDeTierra ? 2 : 1;
+}
+
+/**
+ * Lo que rueda el avión en esos segundos y a qué velocidad acaba, m y m/s:
+ * el primero sin nada y el segundo con los frenos de tierra fuera. Primero
+ * ellos y después el freno porque son los que hacen que el freno agarre:
+ * «Spoilers greatly decrease lift, dump the weight on the wheels, and thereby
+ * make the brakes effective» (AC 91-79A Chg 2, par. 8 h 2, p. 5).
+ */
+function hastaFrenarDelTodo(
+  a: AircraftConfig,
+  superficie: Superficie,
+): { readonly metros: number; readonly velocidad: number } {
+  const segundos = segundosHastaFrenar(a);
+  let v = velocidadDeToma(a);
+  let metros = 0;
+  const dt = 0.01;
+  const suelo = { superficie, mojada: false };
+  for (let k = 0; k < Math.round(segundos / dt); k++) {
+    const tierra = k * dt >= 1 && a.frenosDeTierra ? 1 : 0;
+    const frena = deceleracionRodando(a, v, { freno: 0, frenosDeTierra: tierra, reversa: 0, flaps: 1 }, suelo);
+    const siguiente = Math.max(0, v - frena * dt);
+    metros += ((v + siguiente) / 2) * dt;
+    v = siguiente;
+  }
+  return { metros, velocidad: v };
 }
 
 /** Los cincuenta pies sobre el umbral desde los que cuenta todo manual, m. */

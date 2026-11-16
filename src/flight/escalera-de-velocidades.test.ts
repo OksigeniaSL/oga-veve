@@ -108,17 +108,26 @@ describe("la escalera de velocidades", () => {
       }
   });
 
-  it("llegando, los reactores van a 210–230 en el área terminal y a 180–200 con los primeros flaps", () => {
-    for (const id of ["jaz-90", "jaz-120"]) {
+  /*
+   * El 747 a 226 y 196, y el E170 más despacio: con la Vref de la FAA, 117,7
+   * nudos a la masa de la ficha, la regla le da 198 y 168, donde con los 132
+   * de antes eran 212 y 182 (enmienda H20e del ADR 0027).
+   */
+  it("llegando, los reactores van a la Vref y ochenta en el área terminal y a la Vref y cincuenta con los primeros flaps", () => {
+    const bandas: Record<string, { terminal: [number, number]; aproximacion: [number, number] }> = {
+      "jaz-90": { terminal: [195, 200], aproximacion: [165, 170] },
+      "jaz-120": { terminal: [210, 230], aproximacion: [180, 200] },
+    };
+    for (const [id, b] of Object.entries(bandas)) {
       const a = de(id);
       const terminal = velocidadQueToca(a, llegando(20));
       const aproximacion = velocidadQueToca(a, llegando(10));
       expect(terminal.tramo).toBe("terminal");
-      expect(terminal.kt, id).toBeGreaterThanOrEqual(210);
-      expect(terminal.kt, id).toBeLessThanOrEqual(230);
+      expect(terminal.kt, id).toBeGreaterThanOrEqual(b.terminal[0]);
+      expect(terminal.kt, id).toBeLessThanOrEqual(b.terminal[1]);
       expect(aproximacion.tramo).toBe("aproximacion");
-      expect(aproximacion.kt, id).toBeGreaterThanOrEqual(180);
-      expect(aproximacion.kt, id).toBeLessThanOrEqual(200);
+      expect(aproximacion.kt, id).toBeGreaterThanOrEqual(b.aproximacion[0]);
+      expect(aproximacion.kt, id).toBeLessThanOrEqual(b.aproximacion[1]);
     }
   });
 
