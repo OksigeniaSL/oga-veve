@@ -394,24 +394,31 @@ const OTRO_PUESTO = 5;
 
 /**
  * Los puestos que no caen encima de quien juega; si no queda ninguno, los que
- * al menos no son el suyo, y si ni eso, todos.
+ * al menos no son el suyo, y si ni eso, todos. Por escalones, del más apartado
+ * al que menos: `rutaConPuesto` baja al siguiente si en uno no hay camino.
  *
  * El segundo escalón es de una plataforma pequeña y llena: en Encarnación los
  * cuatro puestos caen a menos de `APARTE_DE_TI` del tuyo, y con otro del
  * tráfico en el único que deja sitio a tus alas, el que llegaba cogía el más
  * cercano, que era el tuyo: aparcaba dentro de tu avión.
+ *
+ * **Y se baja de escalón también si en el primero no hay por dónde salir.** En El
+ * Hierro los nueve puestos caen en ochenta metros, y contigo en el 2 solo
+ * quedaba fuera de ellos el 3A, del que no sale camino por el asfalto: el
+ * turbohélice que esperaba para salir se quedaba sin puesto y sin camino, con
+ * los otros siete a mano.
  */
 function lejosDe(
   puestos: readonly Punto[],
   evitar: readonly EnElPlano[] | undefined,
-): readonly Punto[] {
-  if (!evitar?.length) return puestos;
+): readonly (readonly Punto[])[] {
+  if (!evitar?.length) return [puestos];
   const aMas = (d: number) =>
     puestos.filter((p) => evitar.every((e) => Math.hypot(p[0] - e.x, -p[1] - e.z) > d));
   const libres = aMas(APARTE_DE_TI);
-  if (libres.length) return libres;
-  const otros = aMas(OTRO_PUESTO);
-  return otros.length ? otros : puestos;
+  const otros = aMas(OTRO_PUESTO).filter((p) => !libres.includes(p));
+  // El tuyo, solo si no hay otro: con uno libre que no tiene camino, no se aparca encima de ti.
+  return libres.length || otros.length ? [libres, otros].filter((l) => l.length) : [puestos];
 }
 
 /** Del plano del fichero (la y al norte) al del mundo (la z al sur). */
@@ -713,6 +720,8 @@ export function sueloDelTrafico(
     ocupados?: OcupadosEnElMundo,
     candidatos: { readonly lista: readonly Punto[]; readonly deContacto: boolean } = { lista: puestos, deContacto: false },
     deOtros?: PuestosDeOtros,
+    /** Si la ruta sirve para lo que se busca: ver `valeParaSalir`. Sin ella, cualquiera. */
+    vale?: (puntos: readonly Punto[]) => boolean,
   ): { puntos: Punto[]; ocupada: boolean } | null => {
     const porDondeNo = ocupados?.puntos.length
       ? {
@@ -720,7 +729,24 @@ export function sueloDelTrafico(
           radio: ocupados.radio,
         }
       : undefined;
-    const cerca = [...lejosDe(candidatos.lista, evitar)]
+    for (const escalon of lejosDe(candidatos.lista, evitar)) {
+      const hecha = rutaEntre(punto, hacia, escalon, porDondeNo, candidatos.deContacto, deOtros, vale);
+      if (hecha) return hecha;
+    }
+    return null;
+  };
+
+  /** La mejor ruta entre `punto` y los ocho puestos de `lista` más cercanos. Ver `rutaConPuesto`. */
+  const rutaEntre = (
+    punto: Punto,
+    hacia: "puesto" | "punto",
+    lista: readonly Punto[],
+    porDondeNo: { puntos: Punto[]; radio: number } | undefined,
+    deContacto: boolean,
+    deOtros: PuestosDeOtros | undefined,
+    vale: ((puntos: readonly Punto[]) => boolean) | undefined,
+  ): { puntos: Punto[]; ocupada: boolean } | null => {
+    const cerca = [...lista]
       .sort(
         (a, b) =>
           Math.hypot(a[0] - punto[0], a[1] - punto[1]) -
@@ -759,7 +785,7 @@ export function sueloDelTrafico(
        */
       const sinRemate = hacia === "puesto" ? r.puntos.slice(0, -1) : r.puntos.slice(1);
       const puntos =
-        candidatos.deContacto && sinRemate.length >= 2 && porElAsfalto(sinRemate)
+        deContacto && sinRemate.length >= 2 && porElAsfalto(sinRemate)
           ? [...r.puntos]
           : recortarAlAsfalto([...r.puntos], hacia, porElAsfalto);
       if (!puntos) continue;
@@ -770,6 +796,7 @@ export function sueloDelTrafico(
        */
       const extremo = hacia === "puesto" ? puntos[puntos.length - 1]! : puntos[0]!;
       if (!puestoLibre(extremo[0], -extremo[1], deOtros)) continue;
+      if (vale && !vale(puntos)) continue;
       mejor = { puntos, largo: r.largo, ocupada };
     }
     return mejor ? { puntos: mejor.puntos, ocupada: mejor.ocupada } : null;
@@ -927,6 +954,11 @@ export function sueloDelTrafico(
        * el AIP no deja salir por intersección a nadie. Ningún avión despega
        * con menos pista de la que necesita.
        */
+      /** Si de esa ruta se llega a la doble raya por su calle y sin pisar la pista. */
+      const valeParaSalir = (puntos: readonly Punto[]): boolean => {
+        const h = cortarEnLaRaya(puntos.map(alMundo), ejes, ancho, mitad);
+        return !!h && !pisaLaPista(h.hastaLaRaya, 0, Infinity, ejes, ancho, mitad);
+      };
       let deReserva: ReturnType<SueloDelTrafico["salida"]> = null;
       let remonte: ReturnType<SueloDelTrafico["salida"]> = null;
       let remonteEncima: ReturnType<SueloDelTrafico["salida"]> = null;
@@ -934,7 +966,23 @@ export function sueloDelTrafico(
         const daSuPista = pistaDesde(boca) >= pistaQueNecesita;
         if (!daSuPista && remonte) continue;
         const nudo = grafo.nudos[boca.nudo]!;
-        const ruta = rutaConPuesto(nudo, "punto", evitar, undefined, candidatosPara(pasarela, deOtros), deOtros)?.puntos;
+        /*
+         * **Y de un puesto del que se llega a la doble raya por la calle**, sin pisar la
+         * pista: se mira al elegir el puesto, no después. Se elegía el más cercano a la
+         * boca y luego se veía si valía; en El Hierro, contigo en el 2, el único puesto
+         * apartado de ti era el 3A, que sale a la pista por encima de ella, y el
+         * turbohélice que esperaba para salir se quedaba sin camino —`despega: 0`— con
+         * siete puestos más a mano. Ver `lejosDe`.
+         */
+        const ruta = rutaConPuesto(
+          nudo,
+          "punto",
+          evitar,
+          undefined,
+          candidatosPara(pasarela, deOtros),
+          deOtros,
+          valeParaSalir,
+        )?.puntos;
         if (!ruta) continue;
         const hecha = cortarEnLaRaya(ruta.map(alMundo), ejes, ancho, mitad);
         if (!hecha) continue;
