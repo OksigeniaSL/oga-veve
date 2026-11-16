@@ -8,7 +8,12 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { tarjetaDeLaFase, type DondeSeAnuncia, type TarjetaDeLaFase } from "./guion-de-fases";
+import {
+  MANDA_EL_PLAN,
+  tarjetaDeLaFase,
+  type DondeSeAnuncia,
+  type TarjetaDeLaFase,
+} from "./guion-de-fases";
 import { GUION, guionAfis, guionSinTorre, type Fase } from "./vuelo";
 
 const CON_TORRE: DondeSeAnuncia = {
@@ -107,5 +112,31 @@ describe("tarjetaDeLaFase", () => {
     expect(tarjetaDeLaFase("rodando", { ...CON_TORRE, remontaUnTrecho: true }).clave).toBe(
       GUION.rodando.clave,
     );
+  });
+});
+
+/** En qué fases calla el tutor porque manda el plan: hasta alinearse, y al volver. */
+const CALLA_EL_TUTOR: Record<Fase, boolean> = {
+  estacionado: true,
+  arrancando: true,
+  rodando: true,
+  esperando: true,
+  autorizado: true,
+  "back-taxi": true,
+  alineando: false,
+  despegando: false,
+  comprometido: false,
+  "en-vuelo": false,
+  final: false,
+  aterrizado: false,
+  abandonando: true,
+  "a-plataforma": true,
+  "en-puesto": true,
+  apagado: true,
+};
+
+describe("MANDA_EL_PLAN", () => {
+  it.each(FASES)("%s", (fase) => {
+    expect(MANDA_EL_PLAN.has(fase)).toBe(CALLA_EL_TUTOR[fase]);
   });
 });

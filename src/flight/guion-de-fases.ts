@@ -73,6 +73,33 @@ const ESPERAN_LA_LLAVE: ReadonlySet<Fase> = new Set<Fase>(["estacionado", "en-pu
  */
 const POR_UNA_CALLE: ReadonlySet<Fase> = new Set<Fase>(["rodando", "abandonando", "a-plataforma"]);
 
+/**
+ * **Las fases en que manda el plan, y el tutor calla.** El tutor se escribió
+ * para enseñar a despegar desde la cabecera, y con el vuelo completo hay otro
+ * narrador, el plan, que dice «seguí la raya verde» y «pará en la doble
+ * raya»: dos voces dando instrucciones a la vez a alguien de cuatro años es
+ * peor que ninguna. Vuelve al alinearse, que es cuando toca despegar y el
+ * tutor sí sabe de eso. Ver `Tutor.silenciar` en `ui/tutor.ts`.
+ *
+ * **Y el back-taxi es rodar**, aunque sea por la pista: se va hasta el fondo
+ * y se da la vuelta antes de alinearse. Faltaba en esta lista, una de las
+ * que se escribían a mano fase por fase en `game.ts`, y el tutor pedía gas
+ * para despegar a mitad del trecho mientras el plan decía «andá hasta el
+ * fondo y date la vuelta».
+ */
+export const MANDA_EL_PLAN: ReadonlySet<Fase> = new Set<Fase>([
+  "estacionado",
+  "arrancando",
+  "rodando",
+  "esperando",
+  "autorizado",
+  "back-taxi",
+  "abandonando",
+  "a-plataforma",
+  "en-puesto",
+  "apagado",
+]);
+
 /** Lo que dura la tarjeta de una fase de paso, s. */
 const DE_PASO = 6;
 /** Y la de apagar, que es el final y se lee con calma. */

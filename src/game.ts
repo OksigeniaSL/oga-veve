@@ -1250,7 +1250,7 @@ import {
   SE_QUEDAN,
   type Fase,
 } from "./flight/vuelo";
-import { tarjetaDeLaFase } from "./flight/guion-de-fases";
+import { MANDA_EL_PLAN, tarjetaDeLaFase } from "./flight/guion-de-fases";
 import { barraDeRodaje, esDeLinea, vaALaPasarela, velocidadesEnTierra } from "./flight/velocidades-en-tierra";
 import {
   DEJA_DE_PEDIR,
@@ -26636,19 +26636,8 @@ export class Game {
       );
     }
 
-    // Mientras manda el plan, el tutor calla. Vuelve al alinearse, que es
-    // cuando toca despegar y el tutor sí sabe de eso.
-    const rodaje =
-      vista.fase === "estacionado" ||
-      vista.fase === "arrancando" ||
-      vista.fase === "rodando" ||
-      vista.fase === "esperando" ||
-      vista.fase === "autorizado" ||
-      vista.fase === "abandonando" ||
-      vista.fase === "a-plataforma" ||
-      vista.fase === "en-puesto" ||
-      vista.fase === "apagado";
-    this.hud.tutor.silenciar(rodaje);
+    // Mientras manda el plan, el tutor calla. Ver `MANDA_EL_PLAN`.
+    this.hud.tutor.silenciar(MANDA_EL_PLAN.has(vista.fase));
 
     // **En el peldaño de los pequeños, ni una palabra.** No leen, así que un
     // cartel de texto es un cartel en blanco que además tapa el mundo. Ahí
