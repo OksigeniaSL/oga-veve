@@ -370,6 +370,9 @@ ficha de la EASA ni nada público de Airbus que se haya encontrado—, y lo que 
 - **La instructora, con calma, en los tres de abajo** (`laInstructoraLoExplica`), que en la práctica es Taguató: qué
   pasa, que el colectivo no saca y cómo se sale (`vuelo.anillo`, al final de la lista de grabar y esperando su toma).
   En Taguató Ruvicha, la tarjeta sola, como toda explicación en el peldaño de cabina.
+- **Solo con los motores dando potencia**, del 20 al 100 % de la que hay, que es la segunda condición del manual de
+  la FAA. Bajando en vertical sin motor, el rotor cae en la misma zona de la curva —entre X y E—, pero eso es la
+  autorrotación (#110), y lo que se cuenta ahí es otra cosa.
 - **Se rearma al salir de la zona entera**, no con el reloj: un aviso vuelve cuando cambia algo que pasa.
 
 Ver `inducidaEnDescenso` y `zonaDelAnillo` en `flight/helicoptero.ts`, `mirarElAnillo` en `game.ts`, y

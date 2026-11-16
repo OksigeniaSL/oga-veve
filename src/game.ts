@@ -4450,8 +4450,17 @@ export class Game {
    */
   private mirarElAnillo(): void {
     const s = this.flight.state;
+    /*
+     * **Y con los motores dando potencia**, del 20 al 100 % de la que hay: es la
+     * segunda de las tres condiciones del manual de la FAA. Bajando en vertical
+     * sin motor el rotor cae en la misma zona de la curva, pero eso es la
+     * autorrotación, y «cíclico adelante, el colectivo no te saca» no es lo que
+     * se cuenta ahí.
+     */
+    const rotor = this.flight instanceof HelicopteroComoModelo ? this.flight.modelo.rotor() : null;
+    const conMotor = !!rotor && rotor.potenciaDisponible > 0 && rotor.potenciaMotores >= 0.2 * rotor.potenciaDisponible;
     const zona =
-      this.flight instanceof HelicopteroComoModelo && !s.onGround && !s.crashed
+      this.flight instanceof HelicopteroComoModelo && conMotor && !s.onGround && !s.crashed
         ? this.flight.modelo.anillo().zona
         : "fuera";
     if (zona === "fuera") this.anilloContado = false;

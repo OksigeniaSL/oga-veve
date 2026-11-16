@@ -262,10 +262,11 @@ export interface Rotacion {
  *   cola—, pero eso es otra lección y no se ha medido aquí.
  *
  * **El anillo turbillonario**: bajando casi en vertical a la velocidad de lo
- * que el rotor echa hacia abajo, la cantidad de movimiento no vale —ni siquiera
- * converge—, y en esa zona la inducida sale del modelo empírico de Johnson. Ver
- * `inducidaEnDescenso`. Fuera de ella no se toca nada: el resultado es el de la
- * cantidad de movimiento, el mismo de siempre.
+ * que el rotor echa hacia abajo, la cantidad de movimiento no vale —supone una
+ * estela limpia, y ahí el aire da vueltas por el disco—: su solución seguía la
+ * rama de subir, estable, como si nada. En esa zona la inducida sale del modelo
+ * empírico de Johnson; ver `inducidaEnDescenso`. Fuera de ella no se toca nada:
+ * el resultado es el de la cantidad de movimiento, el mismo de siempre.
  */
 export function resolverDisco(
   d: Disco,
