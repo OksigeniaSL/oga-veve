@@ -5272,15 +5272,6 @@ export class Game {
   /** Las gafas de sol: si se han ganado y si se llevan. Ver `flight/gafas.ts`. */
   private gafas: Gafas = SIN_GAFAS;
   /**
-   * Si lo paró quien juega, y no el navegador.
-   *
-   * Son dos cosas distintas y hasta hoy solo existía la segunda: el juego se
-   * detiene solo al perder el foco —eso es «nadie mira»— y volver a mirar lo
-   * arranca otra vez. Una pausa pedida **no la levanta volver a la pestaña**,
-   * solo levantarla. Ver `main.ts`.
-   */
-  private pausadoAdrede = false;
-  /**
    * La tarjeta se cayó y hay que volver a ponerla, **sin volver a decir nada**.
    *
    * Una tarjeta de las que se quedan puestas —«esperá la luz», «luz verde,
@@ -5306,8 +5297,6 @@ export class Game {
    * Con esto, un banco puede contar campanas. Ver `avisar`.
    */
   readonly loQueSono: { que: string; cuando: number }[] = [];
-  /** Si hay alguno de los que congelan el vuelo. Lo dice `ui/panel.ts`. */
-  private hayPanelAbierto = false;
   /**
    * Si hay un **instrumento** abierto: el plano o el tiempo.
    *
@@ -5316,8 +5305,6 @@ export class Game {
    * mientras se miran. Ver `mantenerElVueloRecto` y `PanelDelVuelo.congela`.
    */
   private hayInstrumentoAbierto = false;
-  /** Si el mundo está parado ahora mismo, por lo que sea. Ver `quedarQuieto`. */
-  private quieto = false;
   /**
    * La pantalla del teléfono, encendida mientras se vuela y libre en cuanto
    * no: en la pausa, en un panel y al irse. Ver `ui/pantalla-despierta.ts`.
@@ -5459,18 +5446,22 @@ export class Game {
   private techoDeLaCarrera = Infinity;
   /**
    * **En qué está la partida**: volando, con un percance o con el vuelo
-   * terminado. Lo que hace cada fase al entrar y en cada paso está aquí; qué
-   * fase sigue a cuál, en `partida.ts`.
+   * terminado; y si el reloj está parado, por la pausa o por un panel. Lo que
+   * se hace al entrar en cada fase, en cada paso y al congelar está aquí; qué
+   * sigue a qué, en `partida.ts`.
    */
-  readonly partida = new Partida({
-    percance: {
-      enter: () => {
-        if (this.percance) this.alSufrirPercance(this.percance);
+  readonly partida = new Partida(
+    {
+      percance: {
+        enter: () => {
+          if (this.percance) this.alSufrirPercance(this.percance);
+        },
+        update: (dt) => this.pasoConPercance(dt),
       },
-      update: (dt) => this.pasoConPercance(dt),
+      terminado: { enter: () => this.alTerminarElVuelo() },
     },
-    terminado: { enter: () => this.alTerminarElVuelo() },
-  });
+    { enter: () => this.congelarElMundo(), exit: () => this.soltarElMundo() },
+  );
   /** Si este vuelo ya terminó, para no enseñar el final dos veces. */
   private get vueloTerminado(): boolean {
     return this.partida.fase === "terminado";
@@ -7409,13 +7400,12 @@ export class Game {
     };
     /*
      * Y con los paneles ya montados, el vuelo se entera de cuándo hay alguno
-     * abierto. Ver `quedarQuieto` y #70.
+     * abierto. Ver `congelarElMundo` y #70.
      */
     laConchaLaLleva({
       alAbrirseOCerrarse: (que) => {
-        this.hayPanelAbierto = que.congela;
         this.hayInstrumentoAbierto = que.alguno && !que.congela;
-        this.quedarQuieto();
+        this.partida.congelarPor("panel", que.congela);
       },
       suena: (que) => {
         if (import.meta.env.DEV) this.loQueSonoLaConcha.push(que);
@@ -9269,9 +9259,9 @@ export class Game {
      * puesto, y `start` no lo miraba: la puerta de desarrollo `__ogaEmpezar`
      * —que existe porque una pestaña abierta por un guion nunca tiene el foco—
      * soltaba el avión con el plano abierto delante. Quien decide que se puede
-     * volver a volar es `quedarQuieto`, y sólo él.
+     * volver a volar es `Partida.congelarPor`, y sólo él.
      */
-    if (this.quieto) return;
+    if (this.partida.congelada) return;
     this.running = true;
     this.despierta.ponerse(true);
     this.clock.start();
@@ -9417,46 +9407,39 @@ export class Game {
 
   /** Si el vuelo está parado, lo haya parado quien lo haya parado. */
   get pausado(): boolean {
-    return this.quieto;
+    return this.partida.congelada;
   }
 
   alternarPausa(): void {
-    if (this.pausadoAdrede) this.reanudar();
+    if (this.partida.congeladaPor("pausa")) this.reanudar();
     else this.pausar();
   }
 
+  /**
+   * **La pausa que pide quien juega**, y no el navegador.
+   *
+   * Son dos cosas distintas y hasta hoy solo existía la segunda: el juego se
+   * detiene solo al perder el foco —eso es «nadie mira»— y volver a mirar lo
+   * arranca otra vez. Una pausa pedida **no la levanta volver a la pestaña**,
+   * solo levantarla. Ver `main.ts`.
+   *
+   * El menú se abre antes de apuntarla, como se abría: es un panel que
+   * congela, así que es él quien para el reloj, y lo que suena al abrirse
+   * suena antes de que se calle todo. La pausa apuntada es la que queda si no
+   * hay menú, y la que no deja que volver a la pestaña lo suelte.
+   */
   pausar(): void {
-    if (this.pausadoAdrede) return;
-    this.pausadoAdrede = true;
+    if (this.partida.congeladaPor("pausa")) return;
     this.pausa?.abrir();
-    this.quedarQuieto();
+    this.partida.congelarPor("pausa", true);
   }
 
   reanudar(): void {
-    if (!this.pausadoAdrede) return;
-    this.pausadoAdrede = false;
+    if (!this.partida.congeladaPor("pausa")) return;
+    this.partida.congelarPor("pausa", false);
     this.pausa?.cerrar();
-    this.quedarQuieto();
   }
 
-  /**
-   * Deja el mundo donde estaba, o lo suelta otra vez.
-   *
-   * El reloj se detiene entero, así que el avión no se mueve ni un metro
-   * mientras hay algo abierto encima. Y el último fotograma **sigue pintado
-   * detrás**: quien vuelva ve el avión donde lo dejó, que es lo que hace que
-   * parar no dé miedo. Un fundido a negro haría creer que se perdió el vuelo.
-   *
-   * También se calla todo. Un instructor que sigue explicando la aproximación
-   * con el juego parado es lo contrario de una pausa.
-   *
-   * Lo piden **dos** cosas y por eso está aquí y no dentro de `pausar`: el
-   * menú de pausa, que es lo de siempre, y cualquier panel que se abra encima
-   * del vuelo, que es lo que exige #70 —«nunca se cae el avión mientras
-   * alguien está eligiendo gorra»—. Hasta ahora abrir el plano en vuelo
-   * dejaba el avión volando solo detrás del velo, y volver era volver a un
-   * avión que ya no estaba donde se dejó.
-   */
   /**
    * En qué fase está el vuelo **ahora**.
    *
@@ -9525,15 +9508,25 @@ export class Game {
   /** La copia que lleva la mano invisible, para no escribir en la persona. */
   private readonly mandosConVueloRecto: ControlInputs = neutralControls();
 
-  private quedarQuieto(): void {
-    const debe = this.pausadoAdrede || this.hayPanelAbierto;
-    if (debe === this.quieto) return;
-    this.quieto = debe;
-    if (!debe) {
-      this.audio.callarElMundo(false);
-      this.start();
-      return;
-    }
+  /**
+   * Deja el mundo donde estaba: el `enter` de la congelación de `Partida`.
+   *
+   * El reloj se detiene entero, así que el avión no se mueve ni un metro
+   * mientras hay algo abierto encima. Y el último fotograma **sigue pintado
+   * detrás**: quien vuelva ve el avión donde lo dejó, que es lo que hace que
+   * parar no dé miedo. Un fundido a negro haría creer que se perdió el vuelo.
+   *
+   * También se calla todo. Un instructor que sigue explicando la aproximación
+   * con el juego parado es lo contrario de una pausa.
+   *
+   * Lo piden **dos** cosas y por eso está aquí y no dentro de `pausar`: el
+   * menú de pausa, que es lo de siempre, y cualquier panel que se abra encima
+   * del vuelo, que es lo que exige #70 —«nunca se cae el avión mientras
+   * alguien está eligiendo gorra»—. Hasta ahora abrir el plano en vuelo
+   * dejaba el avión volando solo detrás del velo, y volver era volver a un
+   * avión que ya no estaba donde se dejó.
+   */
+  private congelarElMundo(): void {
     this.running = false;
     this.despierta.ponerse(false);
     this.renderer.setAnimationLoop(null);
@@ -9550,6 +9543,12 @@ export class Game {
     this.instructor.callar();
     this.otroAvion.callar();
     callar();
+  }
+
+  /** Y lo suelta otra vez: el `exit` de la congelación. */
+  private soltarElMundo(): void {
+    this.audio.callarElMundo(false);
+    this.start();
   }
 
   dispose(): void {
@@ -35469,7 +35468,7 @@ export class Game {
         !this.parteDeHoy.decision.salir &&
         this.enElPuestoDesde > 2.5 &&
         !this.enLaVuelta &&
-        !this.hayPanelAbierto &&
+        !this.partida.congeladaPor("panel") &&
         !this.hayInstrumentoAbierto
       ) {
         this.parteYaAbierto = true;
@@ -36115,7 +36114,7 @@ export class Game {
       );
     }
     // Si mientras tanto se arrancó o se abrió otra cosa, ya no se enseña.
-    if (!this.enElPuesto() || this.input.controls.engineOn || this.hayPanelAbierto) return;
+    if (!this.enElPuesto() || this.input.controls.engineOn || this.partida.congeladaPor("panel")) return;
     const parte = this.leerElParte();
     this.parteDeHoy = parte;
     this.abrirElParte(alReleer(antes, parte.decision) ?? undefined);

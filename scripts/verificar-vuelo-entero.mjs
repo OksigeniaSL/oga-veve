@@ -4182,7 +4182,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       porQueSeCorto = "reloj";
       // Y qué lo tenía parado, si era un panel: sin eso, «se paró» no dice nada.
       const j = o.juegoParaTrazas();
-      panelQueParo = j.hayPanelAbierto
+      panelQueParo = j.partida.congeladaPor("panel")
         ? [...document.querySelectorAll(".concha")]
             .filter((c) => c.getClientRects().length > 0)
             .map((c) => [...c.classList].filter((k) => k.startsWith("concha--")).join(" "))

@@ -584,7 +584,7 @@ export class Audio {
    *
    * No es lo mismo que suspender el contexto, que es lo que se hace cuando
    * nadie mira la pestaña. Con un panel abierto el vuelo está congelado —ver
-   * `Game.quedarQuieto`— y el motor no puede seguir rugiendo, pero **la concha
+   * `Game.congelarElMundo`— y el motor no puede seguir rugiendo, pero **la concha
    * sí tiene que sonar**: es justo entonces cuando alguien está recorriendo
    * opciones. Callar el contexto entero dejaba el menú mudo.
    */
