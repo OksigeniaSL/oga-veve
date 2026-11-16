@@ -110,7 +110,18 @@ const arranque = await mirar(() => {
   return {
     fase: o.fase(),
     motor: o.controles().engineOn,
-    v: s.airspeed,
+    /*
+     * **Parado es por el suelo, no por el aire** (#192). Con el modelo de
+     * coeficientes la velocidad del aire de un avión aparcado es la del
+     * viento que llega al suelo: en Los Rodeos, con el alisio de 12 kt del
+     * 040, el JAZ 20 frenado en el puesto marca 4,6 m/s de aire y 0,01 por el
+     * suelo —medido con el modelo del juego y el viento a ras, `perfilDeViento`
+     * —. En Guyrami, con el modelo sencillo, no se notaba; en Taguató esta
+     * comprobación fallaba siempre con el avión quieto, el motor parado y la
+     * fase bien.
+     */
+    v: s.groundSpeed,
+    aire: s.airspeed,
     ruta: o.ruta().length,
     largo: o
       .ruta()
@@ -128,7 +139,7 @@ const arranque = await mirar(() => {
 comprobar(
   "se empieza en el puesto, parado y con el motor apagado",
   arranque.fase === "estacionado" && !arranque.motor && arranque.v < 1,
-  `fase «${arranque.fase}», motor ${arranque.motor ? "en marcha" : "parado"}`,
+  `fase «${arranque.fase}», motor ${arranque.motor ? "en marcha" : "parado"}, ${arranque.v.toFixed(1)} m/s por el suelo y ${arranque.aire.toFixed(1)} de aire`,
   "arrancar el motor es el primer paso del vuelo y no existía como paso",
 );
 comprobar(

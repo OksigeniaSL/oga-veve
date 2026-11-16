@@ -944,6 +944,61 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       cb: +(((o.actitud?.().cabeceo ?? 0) * 180) / Math.PI).toFixed(2),
       q: +(((s.pitchRate ?? 0) * 180) / Math.PI).toFixed(2),
       mt: memoriaDeSenda ? +memoriaDeSenda.timon.toFixed(3) : null,
+      /*
+       * **Y lo lateral**, para el serpenteo de la final corta con el cruzado
+       * racheado de Los Rodeos (#192): ±10 m de un lado al otro cada quince o
+       * veinte segundos. Con el desvío y el alabeo solos no se sabe de quién
+       * es: si lo pide el banco —la inclinación que pide `alRumbo`, el
+       * alerón—, si lo pone el juego —el timón que suma la ayuda del peldaño,
+       * que se ve en el derrape— o si es el aire —el cruzado del parte y el
+       * de la racha, por separado—. El rumbo y la trayectoria van respecto a
+       * la pista y con décimas: la deriva de un cruzado de once nudos a
+       * setenta son nueve grados, y redondeada a grados enteros no se ve
+       * cómo se mueve.
+       */
+      ...(() => {
+        // Y en un try entero: el gancho puede llamar antes de que el resto
+        // del piloto —`error`, `alabeoPedido`— esté declarado.
+        try {
+          const g = (rad) => +((rad * 180) / Math.PI).toFixed(1);
+          let hp = null;
+          try {
+            hp = (pistaAhora().heading * Math.PI) / 180;
+          } catch {
+            // Aún sin pista: sin lo que va respecto a ella.
+          }
+          const tray = Math.atan2(s.velocity.x, -s.velocity.z);
+          const fdm = o.juegoParaTrazas?.()?.flight;
+          // El viento va a donde va el aire; de lado respecto a la pista,
+          // positivo empujando a la derecha del rumbo de pista.
+          const deLado = (v) =>
+            v && hp !== null ? +(v.x * Math.cos(hp) + v.z * Math.sin(hp)).toFixed(2) : null;
+          const deCara = (v) =>
+            v && hp !== null ? +(-(v.x * Math.sin(hp) - v.z * Math.cos(hp))).toFixed(2) : null;
+          return {
+            hr: hp !== null ? g(error(s.heading, hp)) : null,
+            trr: hp !== null ? g(error(tray, hp)) : null,
+            dr: g(error(tray, s.heading)),
+            bq: alabeoPedido !== null ? g(alabeoPedido) : null,
+            alf: g(o.actitud?.().alabeo ?? 0),
+            ai: +mandos.aileron.toFixed(3),
+            ru: +(mandos.rudder ?? 0).toFixed(3),
+            be: g(s.beta ?? 0),
+            pr: g(s.rollRate ?? 0),
+            yr: g(s.yawRate ?? 0),
+            wl: deLado(fdm?.vientoDelParte),
+            wh: deCara(fdm?.vientoDelParte),
+            rl: deLado(fdm?.racha),
+            rh: deCara(fdm?.racha),
+            // Y la racha de alabeo, °/s: el aire que sube por un ala y baja
+            // por la otra, que el ala nota como si el avión rodara al revés.
+            // Ver `ponerRacha` en `fdm.ts`.
+            pg: typeof fdm?.rachaDeAlabeo === "number" ? g(fdm.rachaDeAlabeo) : null,
+          };
+        } catch {
+          return {};
+        }
+      })(),
       // Y dónde: cuánto falta para el umbral, del eje, y si se recoge.
       ...(() => {
         try {
@@ -2562,6 +2617,65 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   const TOPE_DE_INCLINACION_EN_LA_BASE = (30 * Math.PI) / 180;
   let topeDeInclinacion = TOPE_DE_INCLINACION;
+  /**
+   * **Cuánto alerón pone cada radián de inclinación que falta.**
+   *
+   * Uno coma seis es una mano floja: diez grados de error son 0,28 de alerón,
+   * y el ala con derrape pide algo para no enderezarse, así que con treinta
+   * pedidos el avión se asienta en veinticuatro o veinticinco —ver
+   * `deLadoAFondo`—. En el circuito da igual, y con ella se aprendió el radio
+   * de los virajes.
+   */
+  const GANANCIA_DE_ALABEO = 1.6;
+  /**
+   * **Y en la final, cuatro: la mano firme** (#192).
+   *
+   * Con el cruzado racheado de Los Rodeos el JAZ 50 y el JAZ 90 serpenteaban
+   * ±10 m por la final, con un periodo de quince a veinte segundos, y tocaban
+   * donde les pillara: el JAZ 90, a 10,3 m del eje. La traza del ala, con lo
+   * lateral, dice de quién era. Una racha de lado ladea el avión —el efecto
+   * diedro: el ala que recibe el aire sube— y con 1,6 el alerón que la
+   * contesta es tan poco que el avión **sigue alabeando hacia el lado
+   * contrario al pedido**. En Los Rodeos, con el JAZ 90 a 120 m del umbral y
+   * en el eje: una racha de 2,6 m/s lo llevó de 1,8° a 3,6° a la derecha con
+   * el banco pidiendo de −0,5° a −1,6° y el alerón en −0,06 a −0,15; y ya en
+   * la recogida, sin racha, la inclinación iba tres o cuatro grados detrás de
+   * la pedida durante tres segundos. Tocó a 7,7 m del eje. En un banco de
+   * mesa con el modelo del juego y sus ráfagas, lo mismo y peor: el JAZ 90
+   * pasaba de 1,4° a 3,9° a la derecha pidiendo de −0,3° a −2,8°, y se iba
+   * ocho metros de lado en los últimos 300 m. Lo demás era el lazo de fuera
+   * corrigiendo eso despacio. Ni el pie del juego —la ayuda del peldaño, 0,6
+   * por el derrape— ni el avión: sin rachas, en el eje al centímetro, y sin
+   * pie, lo mismo.
+   *
+   * Un piloto en final con racha lleva las manos activas y sostiene las alas
+   * contra cada racha en un segundo; es lo que hace también el automático
+   * del juego, con 2,2 y el mando entero. Con cuatro, en el mismo banco de
+   * mesa y doce semillas de racha por avión: el JAZ 90 cruza el umbral a 1,9
+   * m del eje de media y 5,3 como mucho —antes, 4,5 y 10,9, uno de cada doce
+   * por encima de nueve— y el JAZ 50 a 0,6 y 2,0 —antes, 2,1 y 4,7—. Con
+   * ocho cambios de signo del alerón en la final del reactor, no un temblor,
+   * y aguanta igual mirando cada décima de segundo, que es lo que mira este
+   * piloto. Ni la mirada, que es lo que se tocó en #147 y salió peor, ni el
+   * tope del alerón, que es lo que impide el viraje de cuchillo.
+   *
+   * En Los Rodeos, una tirada del JAZ 90 con cuatro: en el último kilómetro
+   * el error de alabeo baja de 2,4° a 0,9° de media cuadrática y de 5,3° a
+   * 3,3° como mucho. El toque no mejoró en esa tirada —9,0 m, flotando hasta
+   * 990 m tras una racha de cara—, y la traza dice lo que queda: el JAZ 90
+   * rueda poco a su Vref —`clAileron` 0,022, unos 12 °/s a fondo con la
+   * amortiguación de Taguató—, y 0,24 de alerón tardó dos segundos en
+   * ganarle a una racha en la recogida. Una tirada no es una cifra: con el
+   * aire de Los Rodeos, cada vuelo es distinto.
+   */
+  const GANANCIA_DE_ALABEO_EN_FINAL = 4;
+  let gananciaDeAlabeo = GANANCIA_DE_ALABEO;
+  /**
+   * La última inclinación que pidió `alRumbo` en el aire, rad. Solo para la
+   * traza del ala: sin ella no se distingue un serpenteo que pide el banco de
+   * uno que el avión hace por su cuenta.
+   */
+  let alabeoPedido = null;
   const alRumbo = (s, rumbo) => {
     const e = error(rumbo, s.heading);
     /*
@@ -2574,6 +2688,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       -topeDeInclinacion,
       Math.min(topeDeInclinacion, e * 1.5),
     );
+    alabeoPedido = quiere;
     /*
      * **En Guyrami el alerón ya es la inclinación**: el modelo sencillo pide
      * con él un ángulo, `alerón · VISUAL_BANK`, y vira lo que ese ángulo da
@@ -2590,7 +2705,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     const alabeo = o.actitud?.().alabeo ?? 0;
     return Math.max(
       -TOPE_DE_ALERON_EN_VUELO,
-      Math.min(TOPE_DE_ALERON_EN_VUELO, (quiere - alabeo) * 1.6),
+      Math.min(TOPE_DE_ALERON_EN_VUELO, (quiere - alabeo) * gananciaDeAlabeo),
     );
   };
   /** La inclinación del alerón a fondo en el modelo sencillo, rad: `VISUAL_BANK`. */
@@ -5493,6 +5608,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       etapa === "final" || (etapa === "subir" && aDonde >= 3)
         ? TOPE_DE_INCLINACION_EN_LA_BASE
         : TOPE_DE_INCLINACION;
+    gananciaDeAlabeo =
+      etapa === "final" ? GANANCIA_DE_ALABEO_EN_FINAL : GANANCIA_DE_ALABEO;
     if (etapa === "subir" && (enLaPuerta || masAltoEnFinal > 0)) {
       enLaPuerta = null;
       masAltoEnFinal = 0;
