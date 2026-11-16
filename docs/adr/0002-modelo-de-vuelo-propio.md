@@ -157,7 +157,22 @@ que antes en los siete aviones y los tres peldaños.
   la centésima de segundo, que con la capa a cero.
 - **Un toque de Q o E en la carrera** gira lo que giraba (`carrera-fina.test.ts`).
 
-[BANCOS]
+Y en el navegador:
+
+- **`verificar-despegue.mjs tenerife-norte taguato`** (el JAZ 20 con el viento
+  de casa): 16 de 18 antes y después, con las mismas dos en rojo, que no son de
+  esto —la del puesto al empezar y la de seguir subiendo con los mandos
+  sueltos, ya en el aire—. Rota a 27 m/s, justo donde la rueda se apaga, así
+  que en su carrera casi todo lo lleva todavía la rueda.
+- **`npm run rodaje`** (la ayuda de rodaje en Pettirossi con 6 kt del 020, el
+  avión ocho metros al lado de la raya): 6 de 6 antes y después. Lo que se
+  queda del eje al cabo de cien metros, de 8 m: Tukã 1,2 → 1,0 y Taguató
+  6,4 → 1,6 —el timón viejo empujaba el morro al viento contra la ayuda de
+  rodaje, y ahora no—; de 18 m, Tukã 3,8 → 4,3 y Taguató 7,9 → 8,8; Taguato
+  Ruvicha, 10,1 las dos veces. La escalera se sostiene: más ayuda, más tirón.
+- **Guyrami** vuela con el modelo sencillo (`arcade.ts`), que no tiene timón
+  automático ni usa nada de lo que se ha cambiado: sus bancos no pueden moverse
+  por esto.
 
 ### Lo que cambia para quien juega
 
