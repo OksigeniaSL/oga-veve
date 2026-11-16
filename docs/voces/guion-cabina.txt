@@ -57,3 +57,4 @@ forty
 thirty
 twenty
 ten
+flaps up

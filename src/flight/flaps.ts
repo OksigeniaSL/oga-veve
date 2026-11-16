@@ -91,16 +91,9 @@ export function muescaDeAterrizaje(a: { readonly muescasDeFlaps: readonly number
  * **Dónde va la palanca para despegar**, en fracción del recorrido: la de su
  * primera muesca. Un tercio en la palanca de cuatro y la mitad en la del
  * 1900D.
- *
- * **Salvo en el avión cuyo manual despega sin flaps**, que lo dice su ficha
- * con `muescaDeDespegue`: el Seneca del JAZ 40, cuyo despegue normal es con
- * cero grados. Ver la enmienda H14a del ADR 0027.
  */
-export function flapsDeDespegue(a: {
-  readonly muescasDeFlaps: readonly number[];
-  readonly muescaDeDespegue?: number;
-}): number {
-  return muescasDeLaPalanca(a)[a.muescaDeDespegue ?? MUESCA_DE_DESPEGUE] ?? 0;
+export function flapsDeDespegue(a: { readonly muescasDeFlaps: readonly number[] }): number {
+  return muescasDeLaPalanca(a)[MUESCA_DE_DESPEGUE] ?? 0;
 }
 
 /**

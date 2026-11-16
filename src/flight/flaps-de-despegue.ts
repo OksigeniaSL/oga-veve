@@ -70,14 +70,11 @@ export const ENTRANDO = 10;
 export const PACIENCIA_EN_LA_ESPERA = 8;
 
 /**
- * **Si este avión despega con flaps**: los que los llevan y los usan para
- * despegar. El JAZ 40 los lleva y despega sin ellos —ver `muescaDeDespegue` en
- * su ficha—; el fumigador no los lleva.
+ * **Si este avión despega con flaps**: los que los llevan. El fumigador, no.
  */
 export function despegaConFlaps(a: {
   readonly llevaFlaps: boolean;
   readonly muescasDeFlaps: readonly number[];
-  readonly muescaDeDespegue?: number;
 }): boolean {
   return a.llevaFlaps && flapsDeDespegue(a) > 0;
 }
@@ -93,7 +90,7 @@ export function despegaConFlaps(a: {
  * La lista no mira esto sino su muesca, la de las velocidades que se cantan.
  */
 export function enElRangoDeDespegue(
-  a: { readonly muescasDeFlaps: readonly number[]; readonly muescaDeDespegue?: number },
+  a: { readonly muescasDeFlaps: readonly number[] },
   flaps: number,
 ): boolean {
   const muescas = muescasDeLaPalanca(a);
@@ -268,7 +265,6 @@ export const RECOGE_SOBRE_LA_VREF = 50;
 export interface FichaDeLaRecogida {
   readonly llevaFlaps: boolean;
   readonly muescasDeFlaps: readonly number[];
-  readonly muescaDeDespegue?: number;
   readonly recogeLosFlaps?: ComoSeRecogen;
   /** La Vref, m/s. */
   readonly approachSpeed: number;
@@ -407,11 +403,7 @@ export class RecogidaDeLosFlaps {
  * grados de su muesca de despegue, que es como lo lee una lista de verdad
  * («Flaps … 5, green light») y lo que marca su indicador.
  */
-export function rotuloDeCabina(a: {
-  readonly muescasDeFlaps: readonly number[];
-  readonly muescaDeDespegue?: number;
-}): string {
-  const muesca = a.muescaDeDespegue ?? MUESCA_DE_DESPEGUE;
-  const grados = a.muescasDeFlaps[muesca] ?? 0;
+export function rotuloDeCabina(a: { readonly muescasDeFlaps: readonly number[] }): string {
+  const grados = a.muescasDeFlaps[MUESCA_DE_DESPEGUE] ?? 0;
   return `FLAPS — ${grados}`;
 }

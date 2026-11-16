@@ -1548,7 +1548,7 @@ canta eran:
 En el JAZ 90 y en el JAZ 120 «rotate» llegaba antes de que el ala limpia pudiera
 con el avión, y el banco del vuelo entero oía «stall, stall» al poco de despegar
 (#192). Con sus flaps de despegue, la Vr queda por encima de la pérdida en los
-seis que los usan; lo comprueba `flaps-de-despegue.test.ts`.
+siete que los llevan; lo comprueba `flaps-de-despegue.test.ts`.
 
 ### Lo real, y quién lo hace en cada peldaño
 
@@ -1581,14 +1581,18 @@ haya llegado.
 En el vuelo de pasaje y con la mano de Jazlyn no se pide nada: los flaps los
 lleva la tripulación.
 
-### El Seneca despega sin flaps
+### El Seneca, con su primera muesca aunque su manual diga cero
 
 «The flap setting for normal takeoff is 0°», y 25° para el de máximo esfuerzo
-(POH del Seneca III, PA-34-220T, VB-1110, 1981, p. 4-27). Es el de la misma
-familia; el del Seneca II no se ha podido leer. Su ficha lleva
-`muescaDeDespegue: 0` y `flapsDeDespegue` lo respeta: al JAZ 40 no se le piden
-flaps para despegar. Su velocidad de un motor es la línea azul, que no mira los
-flaps, así que su tarjeta no cambia.
+(POH del Seneca III, PA-34-220T, VB-1110, 1981, p. 4-27; el del Seneca II no se
+ha podido leer). Se probó a dejar al JAZ 40 despegar sin flaps y **no se ha
+puesto**: su despegue está medido con los diez grados de su primera muesca, y
+con cero vuela 705 m hasta los cincuenta pies donde su cuenta da 536, un 31 %
+más, por encima del 30 % que admite `despegue-y-toma-del-manual.test.ts`. Es lo
+mismo que ya queda abierto de él —su hélice, enmienda H10b—, y cambiarlo pide
+medir su despegue sin flaps. Mientras tanto la lista le pide «FLAPS — 10», que
+es la configuración con la que el juego le canta sus velocidades; su ficha lo
+dice.
 
 ### Cuándo se recogen
 
@@ -1596,6 +1600,7 @@ flaps, así que su tarjeta no cambia.
 |---|---|---|---|
 | JAZ 20 | 200 ft | 60 kt | «left down until all obstacles are cleared and a safe flap retraction speed of 60 KIAS is reached» (Cessna 172S *Information Manual*, rev. 5, 2004, pp. 4-24 y 4-25). **La altura no la da**: doscientos pies, sin fuente, para que no caiga encima de la rotación. |
 | JAZ 50 | 400 ft | 80 kt | Su lista dice «Flaps — Set 10 degrees» y «Flaps — Up» sin cifras (BLM, N49SJ); las cifras son de un piloto de Twin Otter en un **foro** (PPRuNe, 2008), y los 80 son su VYSE (AvioConsult, revisión del PSM 1-64-1A). Su manual no se ha leído. |
+| JAZ 40 | 1.000 ft | 100 kt, la de circuito | La regla de su clase: el manual del Seneca II no se ha leído. |
 | JAZ 60 | 1.000 ft | 130 kt, la de circuito | La regla de su clase: no se ha encontrado la de su manual. |
 | JAZ 90, 110 y 120 | 1.000 ft | Vref + 50: 182, 194 y 196 kt | La regla de su clase. |
 
@@ -1605,7 +1610,7 @@ maniobra de la primera muesca de la escalera de velocidades
 en uno de hélice), que es la que el juego ya pide con esos flaps fuera en la
 aproximación. Los mil pies son los del vuelo de línea; las cifras de la OACI
 (PANS-OPS, Doc 8168, NADP 1 y 2) y el programa de recogida del FCTM de Boeing no
-se han releído para esta enmienda. En los seis, la marca de subir con los flaps
+se han releído para esta enmienda. En los siete, la marca de subir con los flaps
 fuera —diez nudos por debajo de su placa— llega a la de recoger, y limpia el ala
 aguanta al menos 1,1 veces su pérdida: lo comprueba la prueba.
 
@@ -1662,10 +1667,11 @@ pediría su toma.
 
 - **El sonido del aviso de configuración**, en ningún tipo: arriba.
 - **Las voces**: las cinco frases de la instructora y el canto «flaps up»
-  (`cabina.flapsUp`, en `ESPERAN_SU_TOMA`) están sin grabar; hasta entonces se
-  ve la tarjeta y la voz calla.
-- **El manual del Seneca II, el del Twin Otter y el del 1900D**, y la altura de
-  recogida de la avioneta.
+  (`cabina.flapsUp`) están sin grabar, al final de la lista de grabar para no
+  renumerar nada, y en las dos `ESPERAN_SU_TOMA` (`audio/cabina.ts` y
+  `por-grabar.test.ts`); hasta entonces se ve la tarjeta y la voz calla.
+- **El Seneca sin flaps**, arriba; y el manual del Seneca II, el del Twin
+  Otter y el del 1900D, y la altura de recogida de la avioneta.
 - **Recoger por muescas.** Un Boeing de verdad recoge de flaps 5 a flaps 1 y
   de 1 a arriba según su programa; la palanca de este juego no tiene la
   posición 1, y se recoge de una vez.

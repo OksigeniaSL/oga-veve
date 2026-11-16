@@ -1462,12 +1462,6 @@ export interface AircraftConfig {
    */
   tardanLosFlaps: number;
   /**
-   * **La muesca con la que despega**, si no es la primera: cero en el avión
-   * cuyo manual despega sin flaps. Sin ella, `MUESCA_DE_DESPEGUE`. Ver
-   * `flapsDeDespegue` en `flaps.ts`.
-   */
-  muescaDeDespegue?: number;
-  /**
    * **Cuándo recoge los flaps de despegue**, si su manual lo dice: por encima
    * de qué altura sobre el suelo, en pies, y de qué indicada, en nudos. Sin
    * ella, la regla de su clase. Ver `comoSeRecogen` en
@@ -2041,12 +2035,13 @@ export const PANAMBI: AircraftConfig = {
   muescasDeFlaps: [0, 10, 25, 40],
   tardanLosFlaps: 9,
   /*
-   * **Despega sin flaps.** «The flap setting for normal takeoff is 0°», y 25°
-   * solo para el de máximo esfuerzo (POH del Seneca III, PA-34-220T, VB-1110,
-   * 1981, p. 4-27). Es el de la misma familia: el del Seneca II no se ha
-   * podido leer. Su V de un motor es la línea azul, que no mira los flaps.
+   * **Despega con la primera muesca, y su manual diría que sin flaps.** «The
+   * flap setting for normal takeoff is 0°», y 25° para el de máximo esfuerzo
+   * (POH del Seneca III, PA-34-220T, VB-1110, 1981, p. 4-27; el del II no se
+   * ha podido leer). No se cambia aquí: su despegue está medido con los diez
+   * grados, y con cero vuela un 31 % más que su cuenta, por encima del 30 % que
+   * admite `despegue-y-toma-del-manual.test.ts`. ADR 0027, enmienda H14a.
    */
-  muescaDeDespegue: 0,
   appearance: {
     // La librea de la casa con el sol en la cola: es un avión de trabajo que
     // lleva gente, y se pinta como se pintan ésos.

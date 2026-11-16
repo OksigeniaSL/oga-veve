@@ -50,13 +50,20 @@ const DE_ALA = MEDIDOS.filter((a) => !a.helicoptero);
 const CON_FLAPS_DE_DESPEGUE = DE_ALA.filter(despegaConFlaps);
 
 describe("quién despega con flaps", () => {
-  it("todos los que los llevan, menos el Seneca, que despega con cero", () => {
+  it("todos los que los llevan; el fumigador, no", () => {
     expect(CON_FLAPS_DE_DESPEGUE.map((a) => a.id).sort()).toEqual(
-      ["jaz-110", "jaz-120", "jaz-20", "jaz-50", "jaz-60", "jaz-90"].sort(),
+      ["jaz-110", "jaz-120", "jaz-20", "jaz-40", "jaz-50", "jaz-60", "jaz-90"].sort(),
     );
-    expect(despegaConFlaps(PANAMBI)).toBe(false);
-    expect(flapsDeDespegue(PANAMBI)).toBe(0);
     expect(despegaConFlaps(MAINUMBY)).toBe(false);
+  });
+
+  /*
+   * **El Seneca, con su primera muesca aunque su manual despegue con cero**:
+   * su despegue está medido con ella, y con cero vuela más del 30 % de su
+   * cuenta. Si un día se mide sin flaps, esta prueba cambia con él.
+   */
+  it("el Seneca despega con su primera muesca, la de su cuenta", () => {
+    expect(flapsDeDespegue(PANAMBI)).toBeCloseTo(1 / 3);
   });
 
   /*
@@ -79,6 +86,7 @@ describe("quién despega con flaps", () => {
     expect(rotuloDeCabina(ARASUNU)).toBe("FLAPS — 17.5");
     expect(rotuloDeCabina(PYKASU)).toBe("FLAPS — 10");
     expect(rotuloDeCabina(JAZ_50)).toBe("FLAPS — 10");
+    expect(rotuloDeCabina(PANAMBI)).toBe("FLAPS — 10");
   });
 });
 
