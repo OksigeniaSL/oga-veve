@@ -29,6 +29,7 @@ import {
   ALTO_PARA_IRSE,
   ALTO_PARA_LA_VUELTA,
   giradoEntre,
+  leDaTiempo,
   remedioParaTuSalida,
   seVaAntes,
   VUELTA_DESDE_EN_FINAL,
@@ -81,6 +82,14 @@ describe("la regla, con números", () => {
   it("y contando lo que espera a que la pista quede libre", () => {
     expect(seVaAntes(final(150), { leHace: 120, espera: 0 })).toBe(true);
     expect(seVaAntes(final(150), tapa)).toBe(false);
+  });
+
+  it("una sola cuenta: lo que tarda en irse más lo que espera, y sin nadie que llegue, sí", () => {
+    expect(leDaTiempo(null, tapa)).toBe(true);
+    expect(leDaTiempo(181, tapa)).toBe(true);
+    expect(leDaTiempo(180, tapa)).toBe(false);
+    // Lo mismo que mira la torre al retrasarte: es la misma función.
+    expect(seVaAntes(final(180), tapa)).toBe(leDaTiempo(180, tapa));
   });
 
   it("con torre, en el circuito, una vuelta", () => {
@@ -184,6 +193,13 @@ interface Medida {
   propuestas: number;
   /** Si en algún momento hubo dos encima de la pista. */
   dosEnLaPista: string;
+  /**
+   * **Las salidas dadas a uno que no se iba a tiempo**: «cleared for
+   * take-off» a uno de tu salida, todavía fuera de la pista, al que la torre
+   * en ese mismo paso veía sin tiempo de irse antes de que llegaras. Ver
+   * `leDaTiempo`.
+   */
+  contradicciones: string[];
   /** Las veces que te fuiste al aire, por lo que fuera, y cuándo tocaste. */
   frustradas: number;
   toco: number | null;
@@ -359,6 +375,7 @@ function llegarConDosQueSalen(
     avisos: 0,
     propuestas: 0,
     dosEnLaPista: "",
+    contradicciones: [],
     frustradas: 0,
     toco: null,
     oido: [],
@@ -385,6 +402,19 @@ function llegarConDosQueSalen(
     enTierra: () => enTierra,
     decirAOtro: (d) => {
       apunta(`torre → ${d.de.matricula}: ${d.clave}`);
+      const q = trafico.tapanTuSalida().find((x) => x.matricula === d.de.matricula);
+      // Dando la vuelta que te pidieron no llegas: para eso es, para que salga él.
+      const llegada = viene() && !dandoVuelta ? restante : null;
+      if (
+        d.clave === "torre.clearedTakeoff" &&
+        q &&
+        !trafico.ocupanLaPista().includes(d.de.matricula) &&
+        llegada !== null &&
+        !seVaAntes({ segundos: llegada, donde: "final", alto }, q)
+      )
+        medida.contradicciones.push(
+          `t=${t.toFixed(1)} ${d.de.matricula}: llegas en ${llegada.toFixed(0)} s, le hace ${q.leHace.toFixed(0)} + espera ${q.espera.toFixed(0)}`,
+        );
       return null;
     },
     autorizarte: () => {},
@@ -627,6 +657,7 @@ describe("con torre: te retrasa o te manda al aire, y el que sale sale", () => {
               const donde = `${id} ${Math.round(esc.runway.heading)}° ${avion.id}, salen ${salen.join("/")} s antes, semilla ${semilla}`;
               for (const f of loQueFalla(m)) mal.push(`${donde}: ${f}`);
               if (m.avisos || m.propuestas) mal.push(`${donde}: una torre no avisa como un AFIS`);
+              if (m.contradicciones.length) mal.push(`${donde}: ${m.contradicciones.join("; ")}`);
               if (m.vueltas > 2 * 2) mal.push(`${donde}: ${m.vueltas} vueltas`);
               pedido += m.vueltas + m.alAire;
             }

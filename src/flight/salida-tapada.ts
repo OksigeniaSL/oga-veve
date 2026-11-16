@@ -150,12 +150,32 @@ export interface LoQueTardaEnIrse {
 export type RemedioDeTuSalida = "vuelta" | "alAire" | "aviso";
 
 /**
- * **Si al que tapa tu salida le da tiempo a irse antes de que llegues**,
- * contando lo que tiene que esperar a que la pista quede libre. El margen ya
- * va en `leHace`.
+ * **Si al que sale le da tiempo a irse antes de que llegue quien viene**, con
+ * `segundos` lo que le falta a ése para el umbral, o `null` si no viene
+ * nadie: lo que tarda en irse y lo que espera antes a que la pista quede libre
+ * de los demás. El margen ya va en `leHace`.
+ *
+ * **Es la única cuenta**, y la usan todos los que deciden si a uno que sale
+ * se le da la pista contigo en final: la torre al darte la pista
+ * (`enTuSalida` en `world/trafico.ts`), al dársela en cuanto queda libre
+ * (`despejarTuSalida`), en la calle única (`seVaAntesQueTu`) y al mirar si te
+ * retrasa (`seVaAntes`). Eran tres, y una no contaba la espera: en Los Rodeos
+ * sonó «cleared for take-off» para uno en el mismo instante en que a ti te
+ * mandaban al aire porque ése no se iba a tiempo. Una salida se autoriza
+ * cuando hay seguridad razonable de que, al cruzar tú el umbral, habrá
+ * pasado el final de la pista (OACI, Doc 4444, 7.9.3.1 y 7.10.1); si no la
+ * hay, no se le da, y punto.
+ */
+export function leDaTiempo(segundos: number | null, tapa: LoQueTardaEnIrse): boolean {
+  return segundos === null || segundos > tapa.leHace + tapa.espera;
+}
+
+/**
+ * **Si al que tapa tu salida le da tiempo a irse antes de que llegues**: la
+ * cuenta de `leDaTiempo` con tu llegada como la ve la torre.
  */
 export function seVaAntes(llegada: TuLlegadaALaPista, tapa: LoQueTardaEnIrse): boolean {
-  return llegada.segundos > tapa.leHace + tapa.espera;
+  return leDaTiempo(llegada.segundos, tapa);
 }
 
 /**
