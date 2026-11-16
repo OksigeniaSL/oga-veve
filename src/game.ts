@@ -6820,6 +6820,7 @@ export class Game {
       this.plan.enCola = () => this.paradosEnLasCalles(true);
       this.plan.colaQueHay = () => this.paradosEnLasCalles(true, true);
       this.plan.tramosDeOtros = () => this.trafico?.tramosQueTienen() ?? [];
+      this.plan.puestosDelTrafico = () => this.puestosDelTrafico();
       this.plan.diaDeDespegue = () => this.diaDeDespegue();
       this.plan.puestoPedido = this.puestoDeEsteVuelo;
       // Con un avión de pasarela, de un puesto de contacto a otro. Ver `PlanDeVuelo.deContacto`.
@@ -14999,6 +15000,15 @@ export class Game {
              */
             porDondeVas: cadaTanto(ruta, 10),
             /*
+             * **Y tu puesto, con tus alas**: ni en él ni en el de al lado si
+             * se tocan. En una plataforma pequeña tu avión de línea ocupa uno
+             * y deja libre el de al lado. Ver `TierraDelTrafico.tuPuesto`.
+             */
+            tuPuesto: (() => {
+              const tuyo = this.plan?.puestoQueTienes();
+              return tuyo ? { x: tuyo[0], z: tuyo[1], semiala: this.aircraft.wingSpan / 2 } : null;
+            })(),
+            /*
              * **Y el que aterriza no sale por donde estás tú**, si tiene
              * otra salida: tu avión y tu raya, con la separación de ala. Ver
              * `OCUPADA_CUESTA` en `world/suelo-del-trafico.ts`.
@@ -15245,6 +15255,14 @@ export class Game {
     if (alUmbral !== null) return { segundos: alUmbral, donde: "final", alto };
     const circuito = this.tuCircuitoParaLaTorre();
     return circuito !== null ? { segundos: circuito, donde: "circuito", alto } : null;
+  }
+
+  /** Los puestos del tráfico, en los ejes del fichero. Ver `PlanDeVuelo.puestosDelTrafico`. */
+  private puestosDelTrafico(): { xy: Punto; semiala: number }[] {
+    return (this.trafico?.puestosQueTienen() ?? []).map((p) => ({
+      xy: [p.x, -p.z] as Punto,
+      semiala: p.semiala,
+    }));
   }
 
   /**
@@ -15571,6 +15589,7 @@ export class Game {
     this.plan.enCola = () => this.paradosEnLasCalles(true);
     this.plan.colaQueHay = () => this.paradosEnLasCalles(true, true);
     this.plan.tramosDeOtros = () => this.trafico?.tramosQueTienen() ?? [];
+    this.plan.puestosDelTrafico = () => this.puestosDelTrafico();
     this.plan.diaDeDespegue = () => this.diaDeDespegue();
     // Y su puesto, si es el de casa: el plan se rehace al asentar el aeródromo, antes de colocar el avión.
     if (aero === this.scenario.aerodrome) this.plan.puestoPedido = this.puestoDeEsteVuelo;

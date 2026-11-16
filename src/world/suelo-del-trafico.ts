@@ -312,16 +312,31 @@ const EN_LA_CABECERA = 150;
  */
 const DETRAS_DEL_UMBRAL = 200;
 
-/** Los puestos que no caen encima de quien juega; si no queda ninguno, todos. */
+/**
+ * Lo que separa a dos puestos que no son el mismo, m, como en `candidatosPara`.
+ */
+const OTRO_PUESTO = 5;
+
+/**
+ * Los puestos que no caen encima de quien juega; si no queda ninguno, los que
+ * al menos no son el suyo, y si ni eso, todos.
+ *
+ * El segundo escalón es de una plataforma pequeña y llena: en Encarnación los
+ * cuatro puestos caen a menos de `APARTE_DE_TI` del tuyo, y con otro del
+ * tráfico en el único que deja sitio a tus alas, el que llegaba cogía el más
+ * cercano, que era el tuyo: aparcaba dentro de tu avión.
+ */
 function lejosDe(
   puestos: readonly Punto[],
   evitar: readonly EnElPlano[] | undefined,
 ): readonly Punto[] {
   if (!evitar?.length) return puestos;
-  const libres = puestos.filter((p) =>
-    evitar.every((e) => Math.hypot(p[0] - e.x, -p[1] - e.z) > APARTE_DE_TI),
-  );
-  return libres.length ? libres : puestos;
+  const aMas = (d: number) =>
+    puestos.filter((p) => evitar.every((e) => Math.hypot(p[0] - e.x, -p[1] - e.z) > d));
+  const libres = aMas(APARTE_DE_TI);
+  if (libres.length) return libres;
+  const otros = aMas(OTRO_PUESTO);
+  return otros.length ? otros : puestos;
 }
 
 /** Del plano del fichero (la y al norte) al del mundo (la z al sur). */
@@ -470,7 +485,7 @@ export function sueloDelTrafico(
     if (libres.length) return { lista: libres, deContacto: deContactoDeVerdad };
     const otros = puestos.filter((xy) => puestoLibre(xy[0], -xy[1], deOtros));
     if (otros.length) return { lista: otros, deContacto: false };
-    const distintos = puestos.filter((xy) => deOtros.ocupados.every((o) => Math.hypot(o.x - xy[0], o.z + xy[1]) > 5));
+    const distintos = puestos.filter((xy) => deOtros.ocupados.every((o) => Math.hypot(o.x - xy[0], o.z + xy[1]) > OTRO_PUESTO));
     return { lista: distintos.length ? distintos : puestos, deContacto: false };
   };
 
