@@ -13405,12 +13405,6 @@ export class Game {
     this.mensajesDeMotor = [];
     this.bomberos.quitar();
     this.bomberosPor = null;
-    /*
-     * Las velocidades de hoy se cuentan al empezar la carrera, con la pista que
-     * queda por delante y lo que pesa el avión entonces: aquí el depósito
-     * todavía no se ha llenado para este tramo. Ver `contarLasVelocidades`.
-     */
-    this.velocidadesDeHoy = null;
     this.practica?.reiniciar();
     this.otraVezLaTormenta();
     this.leccionDelRotor?.reiniciar();
@@ -13501,11 +13495,6 @@ export class Game {
     this.baliza.reiniciar();
     // Y el tractor de la vuelta a la raya, si estaba: es de este vuelo. Ver `atenderALaHierba`.
     this.olvidarLaHierba();
-    // Los flaps del despegue, de cero: un vuelo nuevo es una salida nueva.
-    this.antesDeDespegar.reiniciar();
-    this.avisoDeConfiguracion.reiniciar();
-    this.recogidaDeLosFlaps.reiniciar();
-    this.flapsPorRecoger = false;
     if (this.leccion.arranque === "aire") return this.reiniciarEnFinal();
     // El plan se reinicia **antes** de colocar el avión: es él quien decide si
     // hoy se sale del puesto o de la cabecera, y de eso depende dónde y hacia
@@ -13643,6 +13632,22 @@ export class Game {
     this.explicarLasAvesDespues = false;
     this.bandadas.quitar((b) => !!b.enFinal);
     this.atisDado = "";
+    /*
+     * **Y lo de la salida, de cero, también en otro tramo**, que es otra
+     * salida. Las velocidades de hoy se cuentan al empezar la carrera, con la
+     * pista que queda por delante y lo que pesa el avión entonces, y solo si
+     * no se han contado ya: otro tramo se las dejaba puestas, así que la
+     * vuelta de Los Rodeos salía con la V1, la VR y la V2 de la pista de Gando
+     * y del depósito de la ida. Ver `contarLasVelocidades`.
+     *
+     * Y los flaps del despegue, igual: un vuelo nuevo es una salida nueva, y
+     * lo hecho con ellos es «lo de esta salida». Ver `flapsDelDespegueParaBanco`.
+     */
+    this.velocidadesDeHoy = null;
+    this.antesDeDespegar.reiniciar();
+    this.avisoDeConfiguracion.reiniciar();
+    this.recogidaDeLosFlaps.reiniciar();
+    this.flapsPorRecoger = false;
   }
 
   /**
