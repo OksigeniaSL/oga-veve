@@ -92,6 +92,7 @@ import { planeoDe } from "../flight/sin-motor";
 import { PilotoDelDescenso } from "../flight/despresurizacion";
 import { laCuentaDe } from "../flight/avisos-de-altura";
 import { vfeDeAterrizaje } from "../flight/limites";
+import { perdidaCon } from "../flight/velocidades-de-despegue";
 import { esSelloDelViaje } from "../flight/lo-que-se-toca";
 
 /**
@@ -657,6 +658,15 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        */
       frenadaEn: rodaduraDeFrenada(juego.avionConPeso()),
       tomaA: velocidadDeToma(juego.aircraft),
+      /*
+       * **Y su pérdida limpia**, indicada, m/s, con el peso de ahora: la vara
+       * con la que el piloto del banco decide a qué sube con el ala limpia y
+       * cuándo recoge los flaps de despegue. Subía a la Vr más un quince por
+       * ciento, que es una velocidad de flaps de despegue, con el ala ya
+       * limpia: 1,13 a 1,2 veces esta pérdida, y el «stall, stall» al poco de
+       * despegar en el JAZ 50, el 60 y el 90 (#192).
+       */
+      perdidaLimpia: perdidaCon(juego.avionConPeso(), 0),
       /*
        * Y los colores de su ficha, que es quien manda sobre el modelo.
        *
