@@ -648,6 +648,16 @@ export interface AvisosDeABordo {
    * `game.ts` y el ADR 0027, enmienda H10e.
    */
   readonly motorParado: "pitido" | "campanada";
+  /**
+   * **El aviso de configuración de despegue**: lo que suena si se mete gas
+   * para despegar con los flaps fuera de su rango de despegue. `null` si no
+   * lo lleva **o si no se ha encontrado cómo suena**: un aviso suena como en
+   * su tipo, o no se pone. La norma se lo pide a todo avión de transporte
+   * (14 CFR 25.703), así que en esos el `null` es de sonido sin fuente, y su
+   * ficha lo dice. Ver `AvisoDeConfiguracion` en `flight/flaps-de-despegue.ts`
+   * y el ADR 0027, enmienda H14a.
+   */
+  readonly configuracionDeDespegue: "sirena" | null;
 }
 
 /**
@@ -662,6 +672,10 @@ export const AVISOS_DE_UNA_AVIONETA: AvisosDeABordo = {
   velocidadBaja: null,
   automatico: null,
   motorParado: "campanada",
+  // Ni la avioneta, ni el fumigador, ni el bimotor de pistón: la norma que
+  // lo pide es la de transporte, y el manual de la avioneta solo describe la
+  // bocina de pérdida (Cessna 172S *Information Manual*, sección 7).
+  configuracionDeDespegue: null,
 };
 
 /** Cómo suenan los avisos de a bordo de este avión. Ver `AvisosDeABordo`. */
@@ -1447,6 +1461,19 @@ export interface AircraftConfig {
    * necesitarlos**. Ver `flight/flaps.ts`.
    */
   tardanLosFlaps: number;
+  /**
+   * **La muesca con la que despega**, si no es la primera: cero en el avión
+   * cuyo manual despega sin flaps. Sin ella, `MUESCA_DE_DESPEGUE`. Ver
+   * `flapsDeDespegue` en `flaps.ts`.
+   */
+  muescaDeDespegue?: number;
+  /**
+   * **Cuándo recoge los flaps de despegue**, si su manual lo dice: por encima
+   * de qué altura sobre el suelo, en pies, y de qué indicada, en nudos. Sin
+   * ella, la regla de su clase. Ver `comoSeRecogen` en
+   * `flight/flaps-de-despegue.ts`.
+   */
+  recogeLosFlaps?: { readonly pies: number; readonly kt: number };
 
   appearance: AircraftAppearance;
   sound: AircraftSound;
@@ -1592,6 +1619,15 @@ export const PYKASU: AircraftConfig = {
   // muesca.
   muescasDeFlaps: [0, 10, 20, 30],
   tardanLosFlaps: 9,
+  /*
+   * **Despega con 10° y los recoge a 60 nudos**: «Normal takeoffs are
+   * accomplished with wing flaps 0°-10°… If 10° wing flaps are used… left down
+   * until all obstacles are cleared and a safe flap retraction speed of 60 KIAS
+   * is reached» (Cessna 172S *Information Manual*, rev. 5, 2004, pp. 4-24 y
+   * 4-25). La altura no la da: «hasta librar los obstáculos». **Doscientos
+   * pies, sin fuente**, para que el paso no caiga encima de la rotación.
+   */
+  recogeLosFlaps: { pies: 200, kt: 60 },
   appearance: {
     // La librea de la casa sin el sol en la cola: una avioneta de escuela
     // lleva el logotipo, como la de un aeroclub, pero no se viste de
@@ -2004,6 +2040,13 @@ export const PANAMBI: AircraftConfig = {
   // con su flap ranurado. Eléctricos, como los de la avioneta.
   muescasDeFlaps: [0, 10, 25, 40],
   tardanLosFlaps: 9,
+  /*
+   * **Despega sin flaps.** «The flap setting for normal takeoff is 0°», y 25°
+   * solo para el de máximo esfuerzo (POH del Seneca III, PA-34-220T, VB-1110,
+   * 1981, p. 4-27). Es el de la misma familia: el del Seneca II no se ha
+   * podido leer. Su V de un motor es la línea azul, que no mira los flaps.
+   */
+  muescaDeDespegue: 0,
   appearance: {
     // La librea de la casa con el sol en la cola: es un avión de trabajo que
     // lleva gente, y se pinta como se pintan ésos.
@@ -2286,6 +2329,15 @@ export const JAZ_50: AircraftConfig = {
     velocidadBaja: null,
     automatico: null,
     motorParado: "campanada",
+    /*
+     * **Lo lleva, y no se sabe cómo suena.** El -400 tiene «Takeoff
+     * Configuration Warning System», que mira los flaps y salta al adelantar
+     * las palancas de potencia (FAA, MMEL del DHC-6, rev. 15 en borrador,
+     * ítem 27-9); con qué sonido o qué voz no se ha encontrado, y su
+     * especificación solo nombra un «Aural Warning System» (Viking, 2018).
+     * No suena hasta que se sepa: ADR 0027, enmienda H14a.
+     */
+    configuracionDeDespegue: null,
   },
   /*
    * **Solo *five hundred*, y solo sin ILS delante**, por lo mismo que el JAZ 60:
@@ -2402,6 +2454,15 @@ export const JAZ_50: AircraftConfig = {
    */
   muescasDeFlaps: [0, 10, 20, 37],
   tardanLosFlaps: 12,
+  /*
+   * **A 400 ft y 80 nudos.** Su lista de antes de despegar pone «Flaps — Set
+   * 10 degrees» y la de subida «Flaps — Up», sin cifras (BLM, lista normal del
+   * N49SJ); las cifras son de un piloto de Twin Otter en un foro, «10° of flap
+   * and a target of 80 KIAS for the initial climb to 400 feet… prior to flap
+   * retraction» (PPRuNe, 2008), y los 80 son su VYSE, «VYSE = 80 KIAS (§ 5.1.1)»
+   * (AvioConsult, revisión del PSM 1-64-1A). Su manual no se ha leído.
+   */
+  recogeLosFlaps: { pies: 400, kt: 80 },
   appearance: {
     ...LIBREA,
     // Tres: «Number of blades 3 (Aluminum)» (EASA.IM.A.575, A.III.6).
@@ -2710,6 +2771,12 @@ export const ARASUNU: AircraftConfig = {
     velocidadBaja: null,
     automatico: "autopilot disconnect",
     motorParado: "campanada",
+    /*
+     * **Sin fuente.** Es de la parte 23, categoría de cercanías, y la norma
+     * del aviso, la 25.703, no es la suya; ni su hoja de tipo (A24CE) ni lo
+     * leído de la NTSB y la TSB dicen si lo lleva. ADR 0027, enmienda H14a.
+     */
+    configuracionDeDespegue: null,
   },
   /*
    * **Solo *five hundred*, y solo sin ILS delante**: lo único que se puede
@@ -3079,6 +3146,15 @@ export const ARAI: AircraftConfig = {
     velocidadBaja: "voz",
     automatico: "autopilot",
     motorParado: "campanada",
+    /*
+     * **Lo lleva, y no se ha encontrado cómo suena.** Es de la parte 25 y la
+     * 25.703 le pide un aviso sonoro de configuración de despegue. Qué dice
+     * su voz —en la familia se habla de mensajes «NO TAKEOFF…», pero solo en
+     * foros, en fichas de estudio y en el ERJ-145, que es otro tipo (Federal
+     * Register, E6-14288, 2006)— no está en nada de primera mano. ADR 0027,
+     * enmienda H14a.
+     */
+    configuracionDeDespegue: null,
   },
   /*
    * **La de los E-Jets, sin cuatrocientos ni trescientos**: «RA calls: 2500,
@@ -3452,6 +3528,15 @@ export const YVAGA: AircraftConfig = {
     velocidadBaja: "pitido",
     automatico: "sirena",
     motorParado: "pitido",
+    /*
+     * **Lo lleva, y su sonido no se ha leído.** El índice de mensajes de su
+     * QRH (D6-30151-400, 2009) traería «>CONFIG FLAPS», pero solo se ha visto
+     * en el extracto de un buscador y el documento ya no se abre; el capítulo
+     * 15.20 de su FCOM, el que diría si suena la sirena de los avisos u otra
+     * cosa, no se ha podido leer, y en los foros hay quien dice bocina
+     * intermitente. No suena hasta que se lea: ADR 0027, enmienda H14a.
+     */
+    configuracionDeDespegue: null,
   },
   /*
    * **La de un 747-400 de verdad**, oída en su cabina: la transcripción del
@@ -3802,6 +3887,13 @@ export const TIJERETA: AircraftConfig = {
     velocidadBaja: "pitido",
     automatico: "sirena",
     motorParado: "pitido",
+    /*
+     * **Lo lleva, y su sonido no se ha leído.** La 25.703 se lo pide, y en un
+     * foro de pilotos se cuenta que solo avisa si los flaps no están en un
+     * ajuste de despegue válido (PPRuNe, hilo del AI171, 2025); su FCOM no se
+     * ha podido leer. No suena hasta que se lea: ADR 0027, enmienda H14a.
+     */
+    configuracionDeDespegue: null,
   },
   /*
    * **Por verificar.** La cuenta es un menú que elige cada operador y no se ha

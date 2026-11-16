@@ -1106,6 +1106,12 @@ export const EN: Dictionary = {
     "After landing checklist: flaps up is yours; lights and transponder, I've got them.",
   "vuelo.alPuestoConFlaps":
     "We reached the stand with the flaps out. No problem: next time, raise them after leaving the runway.",
+  "vuelo.flapsParaDespegar": "For takeoff, flaps down one notch: with them the wing lifts sooner.",
+  "vuelo.flapsDeDespeguePuestos": "I set the takeoff flaps: one notch, so the wing lifts sooner.",
+  "vuelo.recogeLosFlaps": "We're high and fast enough now: flaps up.",
+  "vuelo.losFlapsLosSubiYo": "I raised the flaps: at this speed the wing doesn't need them any more.",
+  "vuelo.avisoDeConfiguracion":
+    "That sound is the airplane: it's telling us the takeoff flaps are missing. Throttle back and set one notch.",
   "vuelo.despues.aerofrenos": "Speed brakes in: lever down.",
   "vuelo.despues.luces": "I'll do the lights: landing lights off, taxi light on.",
   "vuelo.despues.transpondedor": "And the transponder: TCAS to standby.",

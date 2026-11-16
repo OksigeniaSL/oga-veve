@@ -1483,10 +1483,22 @@ import {
   type CargaDeFlaps,
 } from "./flight/carga-de-flaps";
 import {
+  flapsDeDespegue,
   muescaDeAproximacion,
   muescaMasCercana,
   siguienteDetente,
 } from "./flight/flaps";
+import {
+  AvisoDeConfiguracion,
+  ListaDeAntesDeDespegar,
+  RecogidaDeLosFlaps,
+  comoSeRecogen,
+  despegaConFlaps,
+  enElRangoDeDespegue,
+  rotuloDeCabina,
+  type AntesDeDespegar,
+  type TrasDespegar,
+} from "./flight/flaps-de-despegue";
 import {
   ListaDeDespuesDeAterrizar,
   NADA_DICHO,
@@ -13461,6 +13473,11 @@ export class Game {
     this.baliza.reiniciar();
     // Y el tractor de la vuelta a la raya, si estaba: es de este vuelo. Ver `atenderALaHierba`.
     this.olvidarLaHierba();
+    // Los flaps del despegue, de cero: un vuelo nuevo es una salida nueva.
+    this.antesDeDespegar.reiniciar();
+    this.avisoDeConfiguracion.reiniciar();
+    this.recogidaDeLosFlaps.reiniciar();
+    this.flapsPorRecoger = false;
     if (this.leccion.arranque === "aire") return this.reiniciarEnFinal();
     // El plan se reinicia **antes** de colocar el avión: es él quien decide si
     // hoy se sale del puesto o de la cabecera, y de eso depende dónde y hacia
@@ -13507,6 +13524,17 @@ export class Game {
     this.wasStalled = false;
     this.wasCrashed = false;
     this.input.releaseAll();
+    /*
+     * **Y quien empieza alineado, con los flaps de despegue puestos**: estar
+     * en la pista listo para correr es tener hecha la lista de antes de
+     * despegar, igual que la final empieza configurada y no configurándose.
+     * Ver `flight/flaps-de-despegue.ts`.
+     */
+    if (!rodando && despegaConFlaps(this.aircraft)) {
+      const deDespegue = flapsDeDespegue(this.aircraft);
+      this.input.ponerPalancaDeFlaps(deDespegue);
+      this.input.controls.flaps = deDespegue;
+    }
     // Un vuelo nuevo es un avión en su puesto: flaps sanos y sin alivio.
     this.cargaDeFlaps = FLAPS_SANOS;
     this.input.topeDeFlaps = 1;
@@ -26028,6 +26056,8 @@ export class Game {
     this.flapsTrasLaToma(faseDeAntes, vista.fase);
     // Y la lista de después del aterrizaje, punto por punto. Ver `leerLaLista`.
     this.leerLaLista(vista.fase, dt);
+    // Y los flaps del despegue: ponerlos, el aviso y recogerlos. Ver `atenderALosFlapsDelDespegue`.
+    this.atenderALosFlapsDelDespegue(vista.fase, dt);
     /*
      * **Y si te pasaste la salida, se dice.** El plan cuenta las veces que
      * rehace la raya por la siguiente; aquí se dice una vez por cada una.
@@ -32047,6 +32077,196 @@ export class Game {
       : q.clave;
     this.apuntarCanto(`lista ${p.punto}: ${p.como} → ${clave ?? "cabina"}`);
     if (clave && this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave);
+  }
+
+  // ── Los flaps del despegue ───────────────────────────────────────────
+
+  /** La lista de antes de despegar, en lo que tiene de flaps. */
+  private readonly antesDeDespegar = new ListaDeAntesDeDespegar();
+  /** El aviso de configuración de despegue, en el avión que lo lleva. */
+  private readonly avisoDeConfiguracion = new AvisoDeConfiguracion();
+  /** Y la recogida, después de despegar. */
+  private readonly recogidaDeLosFlaps = new RecogidaDeLosFlaps();
+  /**
+   * Si los flaps no se han recogido desde que se dejó el suelo: mientras
+   * tanto, y solo entonces, se pide recogerlos. Los de la aproximación son
+   * para aterrizar. Es el `trenPorMeter` de los flaps.
+   */
+  private flapsPorRecoger = false;
+
+  /** Lo hecho con los flaps del despegue en esta salida. Para el banco. */
+  get flapsDelDespegueParaBanco(): {
+    readonly antes: readonly AntesDeDespegar[];
+    readonly despues: readonly TrasDespegar[];
+  } {
+    return { antes: this.antesDeDespegar.hechos, despues: this.recogidaDeLosFlaps.hechos };
+  }
+
+  /**
+   * **Los flaps del despegue**: la lista de antes de despegar los pide en la
+   * espera, y en los peldaños de abajo los pone la instructora si no se
+   * ponen; el aviso de configuración suena en el avión que lo lleva si se mete
+   * gas sin ellos; y arriba, a su altura y su velocidad, se recogen. Qué y
+   * por qué, en `flight/flaps-de-despegue.ts`; aquí, la voz, la tarjeta y la
+   * palanca.
+   *
+   * En el vuelo de pasaje y con la mano de Jazlyn los flaps los lleva la
+   * tripulación (`vuelo-de-linea.ts`), y aquí no se pide nada.
+   */
+  private atenderALosFlapsDelDespegue(fase: Fase, dt: number): void {
+    const a = this.aircraft;
+    if (!despegaConFlaps(a) || this.dePasaje || this.manoDeJazlyn) return;
+    const s = this.flight.state;
+    const palanca = this.input.palancaDeFlaps;
+    const antes = this.antesDeDespegar.paso({
+      fase,
+      enTierra: s.onGround,
+      porElSuelo: s.groundSpeed,
+      /*
+       * La lista pide su muesca, la de las velocidades que se cantan: «más de
+       * 10° no está aprobado para despegar» en la avioneta, y la de en medio
+       * de un reactor, que su aviso acepta, no es la de su Vr.
+       */
+      puestos: Math.abs(palanca - flapsDeDespegue(a)) < 0.01,
+      hablando:
+        this.instructor.hablando ||
+        this.torre.hablando ||
+        this.comandante.hablando ||
+        this.tripulacion.hablando,
+      peldano: this.tier.avisos,
+      dt,
+    });
+    if (antes) this.decirLosFlapsDeDespegue(antes);
+
+    const suena = avisosDeABordo(a).configuracionDeDespegue;
+    if (
+      this.avisoDeConfiguracion.paso({
+        fase,
+        enTierra: s.onGround,
+        gas: this.input.controls.throttle,
+        // El aviso mira el ala, no la palanca.
+        enElRango: enElRangoDeDespegue(a, this.input.controls.flaps),
+      }) &&
+      suena
+    )
+      this.sonarLaConfiguracion(suena);
+
+    if (s.onGround) this.flapsPorRecoger = true;
+    else if (palanca < 0.01) this.flapsPorRecoger = false;
+    const muesca = muescaMasCercana(palanca, this.input.muescasDeFlaps);
+    const tras = this.recogidaDeLosFlaps.paso({
+      enElAire: !s.onGround,
+      trasDespegar: this.flapsPorRecoger,
+      fuera: palanca > 0.01,
+      alto: s.heightAboveGround,
+      kt: indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) * NUDOS,
+      // La placa lleva una cifra por muesca sacada. Ver `vfePorMuesca`.
+      vfe: muesca > 0 ? (a.vfePorMuesca[muesca - 1] ?? 0) : 0,
+      cuando: comoSeRecogen(a, esDeChorro(a)),
+      peldano: this.tier.avisos,
+      dt,
+    });
+    if (tras) this.decirLaRecogida(tras);
+  }
+
+  /** La lista de antes de despegar: pedirlos, o ponerlos ella. */
+  private decirLosFlapsDeDespegue(que: AntesDeDespegar): void {
+    const a = this.aircraft;
+    const deDespegue = flapsDeDespegue(a);
+    if (que === "losPone") {
+      this.input.ponerPalancaDeFlaps(deDespegue);
+      this.hud.senal.mostrar(
+        "flaps",
+        this.rotulo("vuelo.flapsDeDespeguePuestos", "palabra.flaps"),
+        null,
+        { segundos: 4 },
+      );
+      this.apuntarCanto("flaps de despegue: los pone la instructora");
+      this.decirLoGrabado("vuelo.flapsDeDespeguePuestos");
+      return;
+    }
+    const canales = canalesDe(this.tier.avisos);
+    // En el de cabina, la línea de la lista con sus grados: «FLAPS — 5».
+    const rotulo = !canales.texto
+      ? ""
+      : canales.cabina
+        ? rotuloDeCabina(a)
+        : this.rotulo("vuelo.flapsParaDespegar", "palabra.flaps");
+    this.hud.senal.mostrar("flaps", rotulo, null, {
+      // Los de una línea de la lista: tiempo de encontrar el botón o la tecla.
+      segundos: SE_QUEDA_EL_ARO * 2,
+      prioridad: IMPORTANTE,
+      tecla: nombreDeTecla(this.input.preferredKey("flaps")),
+      // Y se puede tocar, que es como los pone quien no sabe dónde está la tecla.
+      accion: () => this.input.ponerPalancaDeFlaps(deDespegue),
+    });
+    this.apuntarCanto("flaps de despegue: los pide la lista");
+    this.decirLoGrabado("vuelo.flapsParaDespegar");
+  }
+
+  /**
+   * **El aviso de configuración de despegue**: lo dice la máquina, en los
+   * cuatro peldaños, y en los de abajo la instructora explica detrás. Hoy
+   * ninguna ficha lo lleva con su sonido: ver `configuracionDeDespegue`.
+   */
+  private sonarLaConfiguracion(suena: "sirena"): void {
+    const clave = TONO_DE_A_BORDO[suena];
+    const explica = laInstructoraLoExplica(this.tier.avisos)
+      ? () => {
+          this.apuntarCanto("configuración de despegue: lo explica vuelo.avisoDeConfiguracion");
+          this.decirLoGrabado("vuelo.avisoDeConfiguracion", "mando");
+        }
+      : undefined;
+    this.hud.senal.mostrar(
+      "flaps",
+      this.rotulo("vuelo.avisoDeConfiguracion", "palabra.flaps"),
+      null,
+      {
+        segundos: SE_QUEDA_EL_ARO * 2,
+        prioridad: IMPORTANTE,
+        tecla: nombreDeTecla(this.input.preferredKey("flaps")),
+        accion: () => this.input.ponerPalancaDeFlaps(flapsDeDespegue(this.aircraft)),
+      },
+    );
+    const como = this.maquina.decir(clave, explica);
+    this.apuntarCanto(`configuración de despegue→máquina(${clave}): ${como}`);
+    // Si la máquina no puede sonar, el aviso no se queda mudo: lo explica ella.
+    if (como === "no") explica?.();
+  }
+
+  /** La recogida después de despegar: pedirla, recordarla o hacerla ella. */
+  private decirLaRecogida(que: TrasDespegar): void {
+    if (que === "losSube") {
+      this.input.ponerPalancaDeFlaps(0);
+      this.hud.senal.mostrar(
+        "flaps",
+        this.rotulo("vuelo.losFlapsLosSubiYo", "palabra.flaps"),
+        null,
+        { segundos: 4 },
+      );
+      this.apuntarCanto("flaps del despegue: los sube la instructora");
+      this.decirLoGrabado("vuelo.losFlapsLosSubiYo");
+      return;
+    }
+    const canales = canalesDe(this.tier.avisos);
+    const rotulo = !canales.texto
+      ? ""
+      : canales.cabina
+        ? "FLAPS UP"
+        : this.rotulo("vuelo.recogeLosFlaps", "palabra.flaps");
+    this.hud.senal.mostrar("flaps", rotulo, null, {
+      segundos: SE_QUEDA_EL_ARO * 2,
+      prioridad: IMPORTANTE,
+      tecla: nombreDeTecla(this.input.preferredKey("flaps")),
+      accion: () => this.input.ponerPalancaDeFlaps(0),
+    });
+    this.apuntarCanto(`flaps del despegue: ${que === "pide" ? "pide recogerlos" : "otra vez"}`);
+    /*
+     * **La orden de la tripulación**, la pareja de «gear up»: sube por la
+     * escalera —la instructora en casa abajo, «flaps up» arriba— y solo se
+     * pide con su toma. Ver `ESPERAN_SU_TOMA` en `audio/cabina.ts`.
+     */
+    this.cantarLoGrabado("flaps up", "vuelo.recogeLosFlaps", "mando");
   }
 
   // ── El «¿y ahora qué?»: el paso siguiente en cada escalón ───────────
