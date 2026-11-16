@@ -256,3 +256,85 @@ informe de la NASA. Cada número dice cuál es en `super-puma.ts`.
   limita de verdad es la pala que se retira; en el juego será un aviso, en el paso 3.
 - **Cuánto tarda de verdad en arrancar** el Super Puma, y desde qué vueltas se pone su freno del rotor: son supuestos
   hasta que aparezca su manual de vuelo.
+
+## Enmienda H16a (16-11-2026): la autorrotación hasta el suelo (#110)
+
+**El criterio de cierre del #110 —cortar los motores a 500 ft y llegar entero— se cumple, y se prueba volándolo**
+(`flight/autorrotacion.test.ts`). Se vuela como lo pide el manual de helicópteros de la FAA, de dominio público
+(FAA-H-8083-21B, capítulo 11, «Straight-In Autorotation», págs. 11-1 a 11-5): colectivo abajo en cuanto se paran los
+motores, las vueltas en su banda con él, la velocidad de planeo con el cíclico, la recogida a la altura del manual,
+nivelar a la actitud de posarse y amortiguar con el colectivo, que gasta lo que guarda el rotor girando. El manual deja
+las alturas y la velocidad al de cada tipo, y el del Super Puma no es público, así que:
+
+| Qué | Cuánto | De dónde |
+| --- | --- | --- |
+| Velocidad del planeo | 70 kt | La que el modelo ya probaba contra las vueltas sin motor de la ficha (TCDS R.002, III.9); cerca de la de menos potencia, hacia 80 kt, que es la de menos bajada |
+| Altura de la recogida | 100 ft de las ruedas | El alto de la horquilla de la FAA, de 40 a 100 ft según el helicóptero (FAA-P-8740-71, *Planning Autorotations*), porque este es de los pesados |
+| Nivelar y amortiguar | 15 ft | El alto de los 3 a 15 ft de la FAA para el tren al nivelar (11-5) |
+| Cuánto sube el morro | Hasta 20°, según lo que baja | Lo que dio la toma más suave; y no más, que una recogida que hace subir el helicóptero gasta las vueltas (11-4) |
+| Entero | Toma por debajo de 2,0 m/s, morro entre 0 y 10°, alas a menos de 5°, y rueda y para | La toma, la de CS 29.725 que juzga el juego; el morro, por el rotor de cola, a 9,4 m del mástil y a 1,9 m del suelo, que toca pasados unos 14° |
+
+**Lo que da**, al peso máximo y cortando a 500 ft desde 80 kt, salvo donde se dice:
+
+| | Bajada en el planeo | Vueltas en el planeo | Toma | Morro al tocar | Velocidad al tocar | Vueltas al tocar |
+| --- | --- | --- | --- | --- | --- | --- |
+| Con la palanca de verdad (actitud, Taguató) | 8,9 m/s | 232–243 rpm | 1,37 m/s | 3,5° | 42 kt | 173 rpm |
+| Con la ayuda (estacionario, Tukã), sin tocar nada | 9,9 m/s | 236–238 rpm | 1,51 m/s | 5,1° | 35 kt | 142 rpm |
+| Con la ayuda, desde 40 kt | 12,0 m/s | 247–256 rpm | 1,68 m/s | 5,7° | 32 kt | 134 rpm |
+| Con la ayuda, con 6.500 kg | 8,2 m/s | 203–225 rpm | 1,33 m/s | 4,8° | 32 kt | 130 rpm |
+| Con la ayuda, parado a 1.000 ft | 15,3 m/s | 246–254 rpm | 1,54 m/s | 5,0° | 33 kt | 143 rpm |
+| Con la ayuda, parado a 500 ft | — | — | 11,4 m/s: se rompe | | | |
+
+Y en el suelo, con los frenos y el colectivo abajo, para en cinco a siete segundos sin ladearse más de un grado.
+
+**Lo que hubo que arreglar, medido.** Con la palanca de verdad, el modelo ya llegaba. Con la ayuda de estacionario
+—la de Guyrami y Tukã—, no:
+
+- **Soltar el cíclico era pararse**, y parado en el aire sin motor se baja casi en vertical, a 41 m/s desde 500 ft; y
+  **el colectivo guardaba el 98,5 % de las vueltas hasta el suelo**, de modo que desde 68 kt, con la palanca empujada
+  hasta los cien pies, tocaba a 5 m/s con el rotor lleno. Ahora, sin motor (`faseDeAutorrotacion` en
+  `flight/helicoptero.ts`: sin el mando de los motores o mientras no dan ni un cuarto de su potencia), la ayuda pide la
+  velocidad de autorrotación con el cíclico como esté —empujado picaba a cien nudos y a 19 m/s—, sube el paso solo si
+  las vueltas pasan de las nominales, recoge a cien pies, nivela a quince y gasta las vueltas en amortiguar. Es lo que
+  hace un piloto; en estos peldaños la ayuda ya era dueña del colectivo, y ahora lo es también de la recogida.
+- **El pie se adelantaba al par también sin motor**: al subir el colectivo para amortiguar metía todo el pedal, el morro
+  giraba treinta grados por segundo y tocaba ladeado siete. Sin motor no hay par que adelantar.
+
+La inercia del rotor y el embrague no se tocan: con los 10.000 kg·m² supuestos y la rueda libre de siempre —los motores
+nunca frenan el rotor—, lo que guarda el rotor alcanza para pasar de unos 4 m/s a 1,4 en los últimos cuatro metros.
+
+**Lo que dice el diagrama de altura y velocidad**, que cada helicóptero lleva en su manual (FAA-H-8083-21B, capítulo 7):
+parado en el aire a 500 ft no da tiempo a coger la velocidad del planeo, y no se llega; a 1.000 ft, sí. Es real, y no se
+le pone remedio: por eso el ejercicio empieza a mil pies.
+
+**El ejercicio** (`autorrotacion` en `flight/ejercicios.ts`) se ofrece desde Tukã, como el planeo del avión: es el
+mismo mensaje. Empieza a 1.000 ft sobre la cabecera de la pista en uso, a 70 kt y con el tren fuera —recogido, posarse
+es de panza, y el juego lo rompe—; la instructora lo presenta, a los catorce segundos se paran los dos motores y se posa
+en la pista, que es llano y sin casas. El hangar se lo ofrece al JAZ 70 junto a su vuelo libre y su misión, y deja de
+ofrecerle los de avión: V1, el planeo de ala, un motor, el simulador y la tormenta se le colaban por `valePara` (ahora
+`deHelicoptero` en `seOfrece`). Sin MAYDAY ni bomberos: a esa altura se vuela y nada más, y la frase de los bomberos es la
+de un avión que vuelve a su pista.
+
+**La explicación.** La presentación, en los peldaños donde se ofrece; al pararse los motores y al llegar a la recogida, la
+instructora en los de abajo —en Tukã cuenta lo que hace la ayuda; en Taguató dice qué hacer—; y el cierre, con su
+felicitación. El dibujo es el helicóptero de perfil con las dos zetas del motor dormido. El mensaje es el del #110: sin
+motor no se cae, el aire que sube hace girar el rotor, y con su giro se posa.
+
+**Lo que dice la máquina.** El Super Puma lleva aviso sonoro de vueltas bajas del rotor: en el AS332L2 G-CHCF, al caer las
+vueltas en una toma de entrenamiento, «the low rotor speed aural warning activated» (AAIB Bulletin 2/2009,
+EW/C2007/11/03). Suena en los cuatro peldaños por debajo de 220 rpm, el mínimo sin motor de la ficha, y la instructora lo
+explica detrás en los de abajo: en el aire, colectivo abajo; en la toma sin motor, que es lo normal, porque las vueltas se
+gastan en posarse. Se rearma cuando las vueltas pasan de 230, no con el reloj. Ni el umbral del de verdad ni cómo suena
+están publicados: el sonido es una forma, como el pitido de precaución (`ROTOR_BAJO` en `audio/tonos-de-aviso.ts`). Y la
+fuente es del L2, el Mk II de la misma familia: que el C1/L1 lo lleve igual se supone.
+
+**Lo que queda:**
+
+- **El paso mínimo** se ajustó a 3.000 m. A nivel del mar y con 6.500 kg, con la palanca abajo, las vueltas del planeo
+  bajan a 203 rpm, por debajo de las 220 de la ficha; la FAA dice que los topes se ajustan para que con poco peso den el
+  mínimo (11-4). Reajustarlo sube las vueltas arriba y cambia la prueba «sin motor» de `helicoptero.test.ts`.
+- **El golpe de la cola** no lo lleva el modelo: la prueba lo mira por la actitud al tocar.
+- **Los motores se apagan como al pararlos**, en ocho segundos: un fallo de verdad es más brusco. La ayuda entra en
+  autorrotación en cuanto se cortan; a mano, la potencia se va en unos cuatro.
+- **La bajada vertical sin motor**, en el anillo turbillonario y el molinete, es del #111: la cantidad de movimiento no
+  vale ahí, y no se mide.
