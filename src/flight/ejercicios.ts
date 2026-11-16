@@ -56,6 +56,14 @@
  * La calma es la forma que tiene la seguridad de funcionar, y se aprende
  * pronto. Quien la hace pasar no es `practica.ts` sino
  * `practica-de-tormenta.ts`, que cuenta lo suyo.
+ *
+ * ## Y las lecciones del ala rotatoria, que tampoco
+ *
+ * Quedarse quieto, el par y el efecto suelo (#113) entraron igual, con
+ * `escena: "rotor"`: no falla nada, y lo que se practica es lo que un
+ * helicóptero hace y un avión no. La cuarta es la autorrotación, que sí es
+ * una avería y es el ejercicio de siempre. Las hace pasar
+ * `lecciones-del-rotor.ts`.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -71,6 +79,9 @@ export type EjercicioId =
   | "simulador"
   | "despresurizacion"
   | "tormenta"
+  | "estacionario"
+  | "par"
+  | "efecto-suelo"
   | "autorrotacion";
 
 /**
@@ -130,10 +141,12 @@ export interface Ejercicio {
    */
   readonly averias: readonly Averia[];
   /**
-   * **Lo que se practica cuando no falla nada**: una escena del cielo. Hoy,
-   * la tormenta que se rodea. Ver `practica-de-tormenta.ts`.
+   * **Lo que se practica cuando no falla nada**: una escena del cielo, la
+   * tormenta que se rodea (ver `practica-de-tormenta.ts`); o una de las
+   * lecciones del ala rotatoria, `rotor`, que enseñan lo que hace un
+   * helicóptero y no un avión (ver `lecciones-del-rotor.ts`).
    */
-  readonly escena?: "tormenta";
+  readonly escena?: "tormenta" | "rotor";
   /** Lo que enseña, en una línea: para quien lea esto, no para el juego. */
   readonly ensena: string;
   /**
@@ -259,6 +272,56 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     escena: "tormenta",
     ensena:
       "a una tormenta no se entra: se rodea con margen, por el lado del viento; y si un rayo toca el avión, no pasa nada",
+  },
+  /*
+   * **Las lecciones del ala rotatoria** (#113), del *Helicopter Flying
+   * Handbook* de la FAA: quedarse quieto, el par y el efecto suelo, y la
+   * cuarta es la autorrotación de abajo. No falla nada, como en la tormenta:
+   * lo que se practica lo lleva `lecciones-del-rotor.ts`. Empiezan donde
+   * empieza el helicóptero, posado en su helipuerto con el rotor girando: la
+   * lección de dar una vuelta, sin colocación. Ver el ADR 0026, enmienda H17a.
+   */
+  {
+    id: "estacionario",
+    /*
+     * En los cuatro peldaños, y en cada uno es otra cosa: abajo, la ayuda
+     * sostiene el sitio y lo que se aprende es que un helicóptero se queda
+     * quieto en el aire —soltar es quedarse— y a qué altura; con la palanca de
+     * verdad, quedarse es todo el oficio, y lo más difícil de volar uno.
+     */
+    peldanos: ["guyrami", ...DESDE_TUKA],
+    valePara: (a) => a.helicoptero !== undefined,
+    deHelicoptero: true,
+    leccion: "vuelta",
+    averias: [],
+    escena: "rotor",
+    ensena: "un helicóptero se queda quieto en el aire, y sostenerlo diez segundos es lo más difícil de volarlo",
+  },
+  {
+    id: "par",
+    /*
+     * Desde Tukã: pide las dos manos a la vez —el colectivo para subir y el
+     * pie para que el morro no se vaya—, y en Guyrami todo es un gesto cada
+     * vez. Allí los pies los lleva siempre la ayuda.
+     */
+    peldanos: DESDE_TUKA,
+    valePara: (a) => a.helicoptero !== undefined,
+    deHelicoptero: true,
+    leccion: "vuelta",
+    averias: [],
+    escena: "rotor",
+    ensena: "más colectivo es más par y el morro se va; el pedal mueve el rotor de cola, y se queda",
+  },
+  {
+    id: "efecto-suelo",
+    // En los cuatro: se ve en la aguja de la fuerza, que tiene su dibujo desde el primero.
+    peldanos: ["guyrami", ...DESDE_TUKA],
+    valePara: (a) => a.helicoptero !== undefined,
+    deHelicoptero: true,
+    leccion: "vuelta",
+    averias: [],
+    escena: "rotor",
+    ensena: "cerca del suelo, el aire del rotor rebota y sostenerse cuesta menos: la aguja de la fuerza baja",
   },
   {
     id: "autorrotacion",

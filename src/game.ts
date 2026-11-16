@@ -780,6 +780,10 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   // La nube con su rayo: la misma del aviso de tormenta del radar.
   tormenta: "tormenta",
   autorrotacion: "helicoptero-sin-motor",
+  // Las lecciones del ala rotatoria, con lo que se pide en cada una: ver `lecciones-del-rotor.ts`.
+  estacionario: "helicoptero-quieto",
+  par: "helicoptero-par",
+  "efecto-suelo": "efecto-suelo",
 };
 
 /**
@@ -1089,6 +1093,7 @@ import {
 } from "./world/plan-de-vuelo";
 import { comoDibujo, type DibujoDeSenal } from "./ui/senal";
 import { dibujoDeCierre } from "./ui/cierre-de-ejercicio";
+import { LeccionDelRotor, type SucesoDelRotor } from "./flight/lecciones-del-rotor";
 import { Senalero } from "./world/senalero";
 import { GenteDeLaMisionDibujada } from "./world/gente-de-la-mision";
 import {
@@ -3796,6 +3801,12 @@ export class Game {
    * `flight/practica-de-tormenta.ts` y `practicarLaTormenta`.
    */
   private tormenta: PracticaDeTormenta | null = null;
+  /**
+   * **Una lección del ala rotatoria**, si se eligió: quedarse quieto, el par o
+   * el efecto suelo. No falla nada; la lleva su propia práctica. Ver
+   * `flight/lecciones-del-rotor.ts` y `practicarElRotor`.
+   */
+  private leccionDelRotor: LeccionDelRotor | null = null;
   /** La nube de la tormenta del ejercicio. Ver `world/cumulonimbo.ts`. */
   private cumulonimbo: CumulonimboEnElMundo | null = null;
   /**
@@ -3816,7 +3827,7 @@ export class Game {
    * torre que contesta, el «otra vez»—.
    */
   private get ejercicioDeHoy(): Ejercicio | null {
-    return this.practica?.ejercicio ?? this.tormenta?.ejercicio ?? null;
+    return this.practica?.ejercicio ?? this.tormenta?.ejercicio ?? this.leccionDelRotor?.ejercicio ?? null;
   }
   /**
    * **Si el ejercicio ya declaró la emergencia**: MAYDAY o PAN PAN con un
@@ -6374,6 +6385,9 @@ export class Game {
           ejercicio,
           escenaDeLaTormenta({ x, z }, MathUtils.degToRad(runway.heading)),
         );
+      } else if (ejercicio.escena === "rotor") {
+        // Las del helicóptero tampoco: ver `practicarElRotor`.
+        this.leccionDelRotor = new LeccionDelRotor(ejercicio, this.aircraft.helicoptero?.rotor.sentido ?? 1);
       } else
         this.practica = new Practica(ejercicio, this.aircraft, {
           v1: this.aircraft.decisionSpeed,
@@ -13394,6 +13408,7 @@ export class Game {
     this.velocidadesDeHoy = null;
     this.practica?.reiniciar();
     this.otraVezLaTormenta();
+    this.leccionDelRotor?.reiniciar();
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
@@ -18759,6 +18774,8 @@ export class Game {
     this.practicar(dt);
     // Y el de la tormenta. Ver `practicarLaTormenta`.
     this.practicarLaTormenta(dt);
+    // Y las lecciones del helicóptero. Ver `practicarElRotor`.
+    this.practicarElRotor(dt);
     this.mirarSiCambiaDeCampo();
     this.avisarDeLosBultos(dt);
 
@@ -23469,6 +23486,151 @@ export class Game {
         plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
       );
     });
+  }
+
+  // ── Las lecciones del ala rotatoria ─────────────────────────────────
+  //
+  // Ver `flight/lecciones-del-rotor.ts` y el ADR 0026, enmienda H17a (#113).
+  // Como en los ejercicios, aquí solo se decide quién dice y enseña cada cosa:
+  // el dibujo en los cuatro peldaños, la palabra en Tukã y la frase desde
+  // Taguató; la instructora presenta y celebra en los cuatro, y lo de por el
+  // camino lo cuenta en los de abajo. Y en la del par, los pedales pasan a quien
+  // vuela mientras dura.
+
+  /** El modelo del helicóptero, si se vuela uno. */
+  private get modeloDeHelicoptero() {
+    return this.flight instanceof HelicopteroComoModelo ? this.flight.modelo : null;
+  }
+
+  /** Si la ayuda de estacionario lleva el colectivo: Guyrami y Tukã. */
+  private conLaAyudaDeEstacionario(): boolean {
+    return this.modeloDeHelicoptero?.estabilizacionAhora() === "estacionario";
+  }
+
+  /** La lección del helicóptero, para el banco. */
+  get leccionDelRotorParaBanco(): {
+    readonly id: string;
+    readonly fase: string;
+    readonly cierre: string | null;
+    readonly quietoLleva: number;
+    readonly potencias: { readonly abajo: number | null; readonly arriba: number | null };
+    readonly piesDeQuienVuela: boolean;
+  } | null {
+    const l = this.leccionDelRotor;
+    if (!l) return null;
+    return {
+      id: l.id,
+      fase: l.fase,
+      cierre: l.cierre,
+      quietoLleva: l.quietoLleva,
+      potencias: l.potencias,
+      piesDeQuienVuela: this.modeloDeHelicoptero?.piesDeQuienVuela ?? false,
+    };
+  }
+
+  /**
+   * **Un paso de la lección del helicóptero**: se le cuenta cómo va el vuelo y
+   * se hace lo que pida. Y los pedales, a quien toque: se le dice al modelo en
+   * cada paso, que así sobrevive a un cambio de peldaño.
+   */
+  private practicarElRotor(dt: number): void {
+    const l = this.leccionDelRotor;
+    const heli = this.modeloDeHelicoptero;
+    if (heli) heli.piesDeQuienVuela = l?.piesDeQuienVuela ?? false;
+    if (!l || !heli) return;
+    // Como los ejercicios: no se cuenta nada encima del parte.
+    if (this.tarjetaDelTiempo?.abierta) return;
+    const s = this.flight.state;
+    const apoyo = Math.max(...heli.ficha.ruedas.map((r) => r.z));
+    const sucesos = l.paso(
+      {
+        enElSuelo: s.onGround,
+        ruedas: heli.state.heightAboveGround - apoyo,
+        x: s.position.x,
+        z: s.position.z,
+        vertical: s.verticalSpeed,
+        sobreElSuelo: s.groundSpeed,
+        rumbo: heli.state.heading,
+        giro: heli.state.yawRate,
+        pedales: this.input.controls.rudder,
+        potencia: heli.rotor().par,
+        percance: this.percance !== null,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderAlRotor(l, suceso);
+  }
+
+  private atenderAlRotor(l: LeccionDelRotor, suceso: SucesoDelRotor): void {
+    const abajo = laInstructoraLoExplica(this.tier.avisos);
+    /** La tarjeta con su dibujo y lo que se lee en el peldaño, y la voz si toca. */
+    const contar = (
+      dibujo: DibujoDeSenal,
+      clave: TranslationKey,
+      palabra: TranslationKey,
+      siempre = false,
+    ): void => {
+      this.hud.senal.mostrar(dibujo, this.rotulo(clave, palabra), null, {
+        segundos: 10,
+        prioridad: IMPORTANTE,
+      });
+      if (siempre || abajo) this.decirDelEjercicio(clave, "mando");
+    };
+    switch (suceso.que) {
+      case "presentar": {
+        /*
+         * Donde la ayuda lleva el colectivo se dice «soltá»; con la palanca de
+         * verdad, soltar no para nada, y quedarse es cosa del cíclico.
+         */
+        const clave: TranslationKey =
+          l.id === "estacionario" && !this.conLaAyudaDeEstacionario()
+            ? "ejercicio.estacionario.antesTuyo"
+            : (`ejercicio.${l.id}.antes` as TranslationKey);
+        return contar(DIBUJO_DEL_EJERCICIO[l.id], clave, "palabra.practica", true);
+      }
+      case "quieto":
+        return contar("helicoptero-quieto", "ejercicio.estacionario.asi", "palabra.quieto");
+      case "pedales":
+        return contar("helicoptero-par", "ejercicio.par.pedales", "palabra.subi");
+      case "seVa": {
+        // El pie del otro lado, en los cuatro peldaños; la frase es la del Super Puma, que se va a la izquierda.
+        const derecho = suceso.lado === "izquierda";
+        const clave: TranslationKey = derecho ? "ejercicio.par.seVa" : "ejercicio.pieIzquierdo";
+        return contar(
+          derecho ? "pie-derecho" : "pie-izquierdo",
+          clave,
+          derecho ? "palabra.pieDerecho" : "palabra.pieIzquierdo",
+        );
+      }
+      case "abajo":
+        return contar("helicoptero-sube", "ejercicio.efecto-suelo.sube", "palabra.subi");
+      case "arriba":
+        return contar(
+          "helicoptero-baja",
+          l.potencias.abajo !== null ? "ejercicio.efecto-suelo.baja" : "ejercicio.efecto-suelo.bajaPrimero",
+          "palabra.baja",
+        );
+      case "logrado": {
+        // Se celebra donde pasa, en el aire, en los cuatro peldaños: el dibujo, el sonido del logro y ella.
+        const clave = `ejercicio.${l.id}.bien` as TranslationKey;
+        this.avisar("achieved");
+        return contar("helicoptero-bien", clave, "palabra.bien", true);
+      }
+      case "cerrar":
+        // Posado después de lograrlo, el panel del final; el percance ya lo cuenta `sufrirPercance`.
+        if (suceso.como === "otraVez") return;
+        this.agenda.luego(TARDA_EL_FINAL, () => {
+          if (this.leccionDelRotor?.cierre !== "bien") return;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre("vuelta", true),
+            this.tier.instruments === "none"
+              ? ""
+              : this.rotulo(`ejercicio.${l.id}.bien` as TranslationKey, "palabra.bien"),
+            plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+    }
   }
 
   // ── El ejercicio de la tormenta ──────────────────────────────────────

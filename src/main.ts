@@ -522,8 +522,9 @@ const conHelicoptero = helicopteroPedido || esHelicoptero(avion);
  * Y el helicóptero vuela suelto: la vuelta al campo, sin ejercicio y sin
  * destino que cargar. **Y sin misión, salvo la suya**: `?mision=teno` o la
  * ficha de Teno del hangar lo llevan a Punta de Teno; sin ella, vuelo libre.
- * Ver `TENO` en `content/missions.ts`. **Ni ejercicio, salvo el suyo**: la
- * autorrotación, que empieza en el aire, con la lección de la que parte.
+ * Ver `TENO` en `content/missions.ts`. **Ni ejercicio, salvo los suyos**: la
+ * autorrotación, que empieza en el aire, y las lecciones del ala rotatoria,
+ * posado; cada uno con la lección de la que parte.
  */
 if (conHelicoptero && escenario) {
   avion = SUPER_PUMA_EN_EL_JUEGO;

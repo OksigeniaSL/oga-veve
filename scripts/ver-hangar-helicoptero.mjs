@@ -2,9 +2,9 @@
  * **El helicóptero en el hangar**, tocado como lo toca quien juega: el JAZ 70
  * Kirikiri'i sale en «¿Con qué volás?» de Tenerife Norte, entre el JAZ 60 y
  * el JAZ 90, con su retrato; elegido, el paso de a dónde se va desaparece —vuela
- * por casa—, «¿A qué jugás?» ofrece su vuelo libre y la misión de Teno y nada
- * más, su tarjeta se abre con sus láminas, y al despegar con la misión se vuela
- * ella, desde su helipuerto, con su nombre en la insignia. Y en otro campo no
+ * por casa—, «¿A qué jugás?» ofrece su vuelo libre, la misión de Teno y sus
+ * lecciones del peldaño, y nada de avión, su tarjeta se abre con sus láminas,
+ * y al despegar con la misión se vuela ella, desde su helipuerto, con su nombre en la insignia. Y en otro campo no
  * sale, y quien lo tenía puesto vuelve al avión de antes.
  *
  * Mira también lo que un prelector necesita: que todo lo que se toca sea
@@ -203,9 +203,14 @@ try {
       ),
       km: document.querySelector('[data-mision="teno"] .ficha__dato')?.textContent?.trim() ?? "",
     }));
+    /*
+     * Y sus lecciones de Guyrami, que es el peldaño de este banco: quedarse
+     * quieto y el efecto suelo (#113). El par y la autorrotación son desde Tukã.
+     * Ver `flight/ejercicios.ts`.
+     */
     comprobar(
-      "ofrece su vuelo libre y la misión de Teno, cada una con su dibujo, y nada más",
-      JSON.stringify(que.fichas) === JSON.stringify(["vuelta", "teno"]) && que.conDibujo,
+      "ofrece su vuelo libre, la misión de Teno y sus lecciones, cada una con su dibujo, y nada más",
+      JSON.stringify(que.fichas) === JSON.stringify(["vuelta", "teno", "estacionario", "efecto-suelo"]) && que.conDibujo,
       `${que.fichas.join(" · ")} · Teno ${que.km}`,
     );
     const km = Number(que.km.replace(",", ".").replace(/[^\d.]/g, ""));

@@ -3178,6 +3178,9 @@ export const ES_PY = {
   "hangar.ejercicio.un-motor": "Volar con un motor",
   "hangar.ejercicio.simulador": "Sesión de simulador",
   "hangar.ejercicio.tormenta": "Rodear una tormenta",
+  "hangar.ejercicio.estacionario": "Quedarse quieto en el aire",
+  "hangar.ejercicio.par": "El par y el pedal",
+  "hangar.ejercicio.efecto-suelo": "Cerca del suelo cuesta menos",
   "hangar.ejercicio.autorrotacion": "Bajar sin motor en helicóptero",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
@@ -3263,6 +3266,39 @@ export const ES_PY = {
   "ejercicio.autorrotacion.bien":
     "Ejercicio hecho: sin motor, el helicóptero bajó entero. El rotor siguió girando con el aire que sube, y con su giro te posaste. Así lo practican los pilotos de helicóptero",
   "palabra.autorrotacion": "Autorrotación",
+  /*
+   * **Las lecciones del ala rotatoria** (#113), del manual de helicópteros de
+   * la FAA: quedarse quieto, el par y el efecto suelo; la cuarta es la
+   * autorrotación de arriba. Cada una con su presentación, lo que se dice por
+   * el camino en los peldaños de abajo y su cierre, que celebra. Donde la
+   * ayuda lleva el colectivo se dice «soltá»; con la palanca de verdad, no.
+   * Ver `flight/lecciones-del-rotor.ts` y el ADR 0026, enmienda H17a.
+   */
+  "ejercicio.estacionario.antes":
+    "Lo más difícil de un helicóptero es quedarse quieto en el aire. Subí un poquito con el colectivo, soltalo, y quedate quieto encima de la hache",
+  "ejercicio.estacionario.antesTuyo":
+    "Lo más difícil de un helicóptero es quedarse quieto en el aire: el rotor mueve su propio aire, y ese aire te empuja. Subí un poquito, y con toquecitos chiquitos de cíclico quedate quieto encima del sitio",
+  "ejercicio.estacionario.asi": "¡Así! Quietito, encima del sitio",
+  "ejercicio.estacionario.bien":
+    "¡Te quedaste quieto en el aire! Es lo más difícil de volar un helicóptero, y lo lograste",
+  "ejercicio.par.antes":
+    "Ahora vas a sentir el par. Subí un poquito y quedate quieto, que después te doy los pedales",
+  "ejercicio.par.pedales": "Los pedales son tuyos. Subí con el colectivo y mirá el morro",
+  "ejercicio.par.seVa":
+    "¿Viste? Más colectivo, más par, y el morro se va a la izquierda. Pisá el pedal derecho, despacito, y se queda",
+  "ejercicio.par.bien":
+    "¡Eso! Más colectivo, más pie, y el rotor de cola sostiene el morro. Los pedales vuelven a la ayuda",
+  "ejercicio.efecto-suelo.antes":
+    "Cerca del suelo, sostenerse cuesta menos, y lo vas a ver en la aguja de la fuerza, la de la izquierda. Subí un poquito y quedate quieto cerca del suelo",
+  "ejercicio.efecto-suelo.sube":
+    "Mirá dónde está la aguja. Ahora subí bien alto, más que el largo del helicóptero, y quedate quieto",
+  "ejercicio.efecto-suelo.baja":
+    "¿Viste? Arriba la aguja subió: lejos del suelo cuesta más. Ahora bajá cerquita del suelo y quedate quieto",
+  "ejercicio.efecto-suelo.bajaPrimero":
+    "Mirá dónde está la aguja, acá arriba. Ahora bajá cerquita del suelo y quedate quieto",
+  "ejercicio.efecto-suelo.bien":
+    "¡La aguja bajó! Cerca del suelo, el aire que empuja el rotor rebota en el suelo y te ayuda a sostenerte. Es el efecto suelo",
+  "palabra.quieto": "Quieto",
   "ejercicio.bienDespresurizacion":
     "Ejercicio hecho: máscara primero, abajo rápido hasta donde se respira y al aeropuerto más cercano. Así lo practican los pilotos de línea en el simulador",
   "ejercicio.bienParado":

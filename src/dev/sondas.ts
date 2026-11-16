@@ -2515,6 +2515,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `flight/practica-de-tormenta.ts`.
      */
     tormenta: () => juego.tormentaParaBanco,
+    /**
+     * La lección del helicóptero en marcha: cuál, por dónde va, lo que lleva
+     * quieto, lo que pedía abajo y arriba y de quién son los pedales. Ver
+     * `flight/lecciones-del-rotor.ts`.
+     */
+    leccionDelRotor: () => juego.leccionDelRotorParaBanco,
     /** Enseña o esconde la nube de la tormenta, para medir lo que cuesta. */
     verLaTormenta: (si: boolean) => juego.verLaTormentaParaBanco(si),
     /** Un rayo de la tormenta ya: de lejos, o en el avión. */

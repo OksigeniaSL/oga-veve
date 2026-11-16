@@ -18,7 +18,7 @@ import type { Propulsion } from "../flight/aircraft";
 import { escribirRincon } from "./escala";
 import { alPulsar } from "./pulsar";
 import { dibujoDelMotor, fan, motorMas, motorMenos } from "./pictogramas";
-import { helicopteroDePerfil } from "./dibujos-del-helicoptero";
+import { HELICOPTERO_DESDE_ARRIBA, helicopteroDePerfil } from "./dibujos-del-helicoptero";
 import { surtidorSvg } from "./surtidor";
 import { DIBUJOS_DE_LOS_SELLOS } from "./album";
 
@@ -1046,6 +1046,64 @@ const CICLICO_ADELANTE = icono(`
         stroke-linejoin="round" />
 `);
 
+/*
+ * ## Las lecciones del ala rotatoria (#113)
+ *
+ * Lo que se pide en cada una, para quien no lee: quieto entre dos flechas,
+ * subir o bajar, el morro que se va visto desde arriba y el aire del rotor que
+ * rebota en el suelo. Ver `flight/lecciones-del-rotor.ts`.
+ */
+const FLECHA_TRAZO = `fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"`;
+
+/** Quieto: el helicóptero entre dos flechas que lo sujetan, sobre el suelo. */
+const HELICOPTERO_QUIETO = icono(`
+  ${helicopteroDePerfil(12, 10, 6.6)}
+  <path d="M1.2 10 h3 m-1.6 -1.6 l1.6 1.6 l-1.6 1.6 M22.8 10 h-3 m1.6 -1.6 l-1.6 1.6 l1.6 1.6" ${FLECHA_TRAZO} />
+  <path d="M5 21.4 h14" ${FLECHA_TRAZO} />
+`);
+
+/** Subí: el helicóptero con la flecha hacia arriba. */
+const HELICOPTERO_SUBE = icono(`
+  ${helicopteroDePerfil(9, 15, 7.4)}
+  <path d="M20.4 22 V4 m-3 3 l3 -3 l3 3" ${FLECHA_TRAZO} />
+`);
+
+/** Bajá cerca del suelo: el helicóptero, la flecha hacia abajo y el suelo. */
+const HELICOPTERO_BAJA = icono(`
+  ${helicopteroDePerfil(9, 8, 7.4)}
+  <path d="M20.4 2.6 V17 m-3 -3 l3 3 l3 -3" ${FLECHA_TRAZO} />
+  <path d="M1.6 21.6 h20.8" ${FLECHA_TRAZO} />
+`);
+
+/**
+ * El par: el helicóptero desde arriba, el morro arriba, y la flecha que lo
+ * lleva hacia la izquierda, que es hacia donde se va en el Super Puma al subir
+ * el colectivo.
+ */
+const HELICOPTERO_PAR = icono(`
+  <g transform="translate(5.4 5.6) scale(0.72)">${HELICOPTERO_DESDE_ARRIBA}</g>
+  <path d="M15.6 3.6 q-3.4 -3 -7.6 -0.6 m1 -2.2 l-1 2.2 l2.4 0.4" ${FLECHA_TRAZO} />
+`);
+
+/**
+ * **Lo lograste**: el helicóptero y la marca de hecho, la de `corregido`. Lo
+ * que se celebra no puede llevar el mismo dibujo que lo que se pedía: en
+ * Guyrami, sin palabras, era la misma tarjeta otra vez.
+ */
+const HELICOPTERO_BIEN = icono(`
+  ${helicopteroDePerfil(8.6, 13, 7.4)}
+  <path d="M14.6 9.4 L17.6 12.4 L23 5.4" stroke="currentColor" stroke-width="2.8"
+        fill="none" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M1.6 21.6 h20.8" ${FLECHA_TRAZO} />
+`);
+
+/** Cerca del suelo: el helicóptero bajito y el aire de su rotor que rebota a los lados. */
+const EFECTO_SUELO = icono(`
+  ${helicopteroDePerfil(12, 9, 6.6)}
+  <path d="M4 6 v11 q0 3 -3 3 M20 6 v11 q0 3 3 3" ${FLECHA_TRAZO} />
+  <path d="M5 21.6 h14" ${FLECHA_TRAZO} />
+`);
+
 /**
  * **La maniobra del TCAS, el RA**: el variómetro con su franja, tu avión y el
  * otro.
@@ -1726,6 +1784,12 @@ export const DIBUJOS = {
   "nariz-arriba": NARIZ_ARRIBA,
   "nariz-abajo": NARIZ_ABAJO,
   "ciclico-adelante": CICLICO_ADELANTE,
+  "helicoptero-quieto": HELICOPTERO_QUIETO,
+  "helicoptero-sube": HELICOPTERO_SUBE,
+  "helicoptero-baja": HELICOPTERO_BAJA,
+  "helicoptero-par": HELICOPTERO_PAR,
+  "efecto-suelo": EFECTO_SUELO,
+  "helicoptero-bien": HELICOPTERO_BIEN,
   /*
    * **Más gas y menos gas**: el motor de este avión con su flecha, el mismo
    * dibujo que llevan los botones del gas. Un dibujo, un significado: lo que

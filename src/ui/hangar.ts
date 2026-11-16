@@ -51,12 +51,12 @@ import { cargaParaElPlan, loQueCabe } from "../flight/combustible";
 import { FABRICANTE, modeloPorId } from "../flight/flota";
 import { AERONAVES, aeronavePorId, laQueSeVuelaEn, seVuelaEn } from "../flight/aeronaves";
 import { esHelicoptero } from "../flight/helicoptero-en-el-juego";
-import { helicopteroDePerfil } from "./dibujos-del-helicoptero";
+import { HELICOPTERO_DESDE_ARRIBA, helicopteroDePerfil } from "./dibujos-del-helicoptero";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
 import { AVES, LADO_DEL_AVE } from "./aves";
 import { TarjetaDelAvion } from "./tarjeta-del-avion";
 import { caraDentro } from "./inicio";
-import { DIBUJOS } from "./senal";
+import { DIBUJOS, dibujoEn } from "./senal";
 import type { EscenaDelInicio } from "../flight/inicio";
 import { capitulosHechos } from "../flight/capitulos-hechos";
 import { LECCIONES, VUELTA, type Leccion } from "../flight/lecciones";
@@ -1704,8 +1704,55 @@ const EJ_AUTORROTACION = escena(`
   ${ZETAS(60, 10)}
 `);
 
+/*
+ * ## Las lecciones del ala rotatoria, dibujadas
+ *
+ * Las tres que no son una avería (#113), cada una con lo que se va a ver: el
+ * helicóptero quieto encima de la hache, el morro que se va y el pedal que lo
+ * para, y el aire del rotor que rebota en el suelo. Las flechas, en el ocre de
+ * lo que se pide. La cuarta es la autorrotación, de arriba. Ver
+ * `flight/lecciones-del-rotor.ts`.
+ */
+
+/** Quedarse quieto: encima de la hache, a plomo, con las dos flechas que lo sujetan. */
+const EJ_ESTACIONARIO = escena(`
+  <path class="leccion__loma" d="M0 62 q22-12 40-2 q18 10 34-4 q16-13 46 2 v26 H0 Z" />
+  <ellipse class="leccion__asfalto" cx="60" cy="73" rx="25" ry="7.5" />
+  <ellipse class="leccion__amarilla" cx="60" cy="73" rx="17" ry="5" />
+  <path class="leccion__amarilla" d="M55.5 70.4 v5.2 M64.5 70.4 v5.2 M55.5 73 h9" />
+  <path class="leccion__estela" d="M60 52 V67" />
+  <g class="leccion__avion">${helicopteroDePerfil(60, 38, 20)}</g>
+  <path class="ejercicio__flecha" d="M18 38 h14 m-4 -4 l4 4 l-4 4 M102 38 h-14 m4 -4 l-4 4 l4 4" />
+`);
+
+/**
+ * El par: el helicóptero desde arriba, con el morro arriba; la flecha que lo
+ * lleva a la izquierda al subir el colectivo y, abajo, el pedal derecho que lo
+ * para. El mismo pedal que la tarjeta pide en vuelo.
+ */
+const EJ_PAR = escena(`
+  <g class="leccion__avion" transform="translate(32 8) scale(2.6)">${HELICOPTERO_DESDE_ARRIBA}</g>
+  <path class="ejercicio__flecha" d="M70 12 q-9 -9 -20 -3 m3 -5 l-3 5 l6 1" />
+  <path class="ejercicio__flecha" d="M14 62 v-22 m-5 5 l5 -5 l5 5" />
+  <g class="ejercicio__pedal">${dibujoEn("pie-derecho", 84, 48, 32)}</g>
+`);
+
+/**
+ * Cerca del suelo cuesta menos: el helicóptero bajito, y el aire de su rotor
+ * que baja, da en el suelo y se abre a los lados.
+ */
+const EJ_EFECTO_SUELO = escena(`
+  <ellipse class="leccion__asfalto" cx="60" cy="74" rx="44" ry="7" />
+  <g class="leccion__avion">${helicopteroDePerfil(60, 50, 19)}</g>
+  <path class="ejercicio__flecha"
+        d="M34 40 v24 q0 6 -8 6 h-12 m4 -4 l-4 4 l4 4 M86 40 v24 q0 6 8 6 h12 m-4 -4 l4 4 l-4 4" />
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   autorrotacion: EJ_AUTORROTACION,
+  estacionario: EJ_ESTACIONARIO,
+  par: EJ_PAR,
+  "efecto-suelo": EJ_EFECTO_SUELO,
   planeo: EJ_PLANEO,
   "antes-de-v1": EJ_ANTES_DE_V1,
   "despues-de-v1": EJ_DESPUES_DE_V1,
