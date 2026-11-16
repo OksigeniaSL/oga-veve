@@ -4654,7 +4654,6 @@ export class Game {
     this.faseAnunciada = "";
     // Esto también cierra el panel del final.
     this.otraVezLaLlegada();
-    this.yaDespego = false;
     this.olvidarLoDichoYLoMirado();
     this.radio.reiniciar(aqui.escenario.aerodrome?.id);
     // Y la raya, de aquí al punto de espera de este campo. Si de aquí no
@@ -13533,7 +13532,6 @@ export class Game {
     }
     this.otraVezLaLlegada();
     this.wasOnGround = true;
-    this.yaDespego = false;
     this.wasStalled = false;
     this.input.releaseAll();
     /*
@@ -13644,6 +13642,14 @@ export class Game {
      * lo hecho con ellos es «lo de esta salida». Ver `flapsDelDespegueParaBanco`.
      */
     this.velocidadesDeHoy = null;
+    /*
+     * Y sin haber despegado todavía, también en la final. La lección de
+     * aterrizar no lo olvidaba: tras una toma y otra vez al aire, el intento
+     * siguiente empezaba ya «despegado»: sin el «lo conseguiste» del despegue
+     * y con la turbulencia del intento anterior andando desde la final, que el
+     * primer intento no tiene. Ver `announce` y `repartirLaTurbulencia`.
+     */
+    this.yaDespego = false;
     this.antesDeDespegar.reiniciar();
     this.avisoDeConfiguracion.reiniciar();
     this.recogidaDeLosFlaps.reiniciar();
