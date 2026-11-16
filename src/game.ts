@@ -13557,7 +13557,8 @@ export class Game {
      * mismo problema: hay dos caminos de reinicio —éste y `reiniciarEnFinal`,
      * para las lecciones que empiezan en el aire— y lo que se reinicia en cada
      * uno se fue copiando a mano hasta divergir. Todo lo que sea «estado de
-     * este vuelo» tiene que quedar limpio por los dos.
+     * este vuelo» tiene que quedar limpio por los dos: o aquí arriba, o en
+     * `olvidarElVueloAnterior`, que es el final común de los dos.
      *
      * La baliza, también: en el primer paso se pone como esté el motor. Ver `flight/baliza.ts`.
      */
@@ -13629,6 +13630,31 @@ export class Game {
     // Un vuelo nuevo es un avión en su puesto: flaps sanos y sin alivio.
     this.cargaDeFlaps = FLAPS_SANOS;
     this.input.topeDeFlaps = 1;
+    this.olvidarElVueloAnterior();
+    if (this.aircraft.helicoptero) this.posarEnElHelipuerto();
+    /*
+     * **Y el modo inicio, si estaba a medias, otra vez desde la llave.** Si no
+     * había empezado —saludando o esperando la llave—, sigue donde iba: el
+     * suelo se asienta unos segundos después de abrir y recoloca el avión con
+     * un reinicio, y eso no es volver a empezar. Pero con el motor parado, que
+     * el reinicio de la cabecera lo arranca. Ver `recolocarTrasElMoldeado`.
+     */
+    this.retomarElInicio();
+  }
+
+  /**
+   * **El final de los dos caminos de reinicio**, `resetFlight` y
+   * `reiniciarEnFinal`: lo que se dijo, se pidió y se explicó en el vuelo de
+   * antes, fuera.
+   *
+   * Estaba copiado a mano en los dos y ya no decía lo mismo: el de la final
+   * no volvía a leer las teclas ni las explicaciones, no olvidaba que el
+   * avión se había perdido ni lo dicho de los flaps tras la toma, así que la
+   * lección de aterrizar, al repetirse, empezaba con restos del intento
+   * anterior. Lo de cada camino —dónde aparece el avión, con qué motor y qué
+   * flaps— sigue en el suyo.
+   */
+  private olvidarElVueloAnterior(): void {
     this.dichoTrasLaToma = NADA_DICHO;
     this.hud.tutor.reset();
     // Lo que se pedía en el vuelo de antes ya no toca; lo aprendido, del perfil de ahora.
@@ -13660,15 +13686,6 @@ export class Game {
     // Y lo que explicaba la pantalla de las teclas, si sigue abierta y no sonó.
     if (this.keyScreen?.visible) this.decirLasTeclas();
     this.updateBadge();
-    if (this.aircraft.helicoptero) this.posarEnElHelipuerto();
-    /*
-     * **Y el modo inicio, si estaba a medias, otra vez desde la llave.** Si no
-     * había empezado —saludando o esperando la llave—, sigue donde iba: el
-     * suelo se asienta unos segundos después de abrir y recoloca el avión con
-     * un reinicio, y eso no es volver a empezar. Pero con el motor parado, que
-     * el reinicio de la cabecera lo arranca. Ver `recolocarTrasElMoldeado`.
-     */
-    this.retomarElInicio();
   }
 
   /**
@@ -17300,13 +17317,7 @@ export class Game {
     this.wasOnGround = false;
     this.wasStalled = false;
     this.wasCrashed = false;
-    this.hud.tutor.reset();
-    // Vuelo nuevo, memoria nueva. Ver la nota de `resetFlight`.
-    this.olvidarLoDichoYLoMirado();
-    this.instructor.callar();
-    // Y lo que explicaba la pantalla de las teclas, si sigue abierta y no sonó.
-    if (this.keyScreen?.visible) this.decirLasTeclas();
-    this.updateBadge();
+    this.olvidarElVueloAnterior();
     // Y la escena de aterrizar, si estaba en marcha: ver `retomarElInicio`.
     this.retomarElInicio();
   }
