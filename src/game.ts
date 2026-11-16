@@ -1695,6 +1695,7 @@ import {
 } from "./flight/avisos-de-actitud";
 import { abrirLaVentanaDePruebas } from "./dev/sondas";
 import { Reparto } from "./hechos";
+import { Partida } from "./partida";
 import { laForma, unaForma } from "./audio/variantes";
 import {
   ALTO_PARA_EL_CIRCUITO,
@@ -4648,7 +4649,8 @@ export class Game {
      */
     if (this.campoEnCuyoSueloEsta())
       this.llenarSiHaceFalta(this.salidaId, this.destinoId);
-    this.percance = null;
+    // Otro tramo es otra vez volando, se viniera del final o de un percance.
+    this.partida.volverAVolar();
     // Otro tramo, con motor: lo de la otra punta y el planeo eran del de antes.
     this.sinMotor = false;
     this.laOtraCabecera.reiniciar();
@@ -4701,7 +4703,7 @@ export class Game {
     this.landing.reset();
     this.frustrada.reiniciar();
     this.tomaLarga.reiniciar();
-    // Esto también baja `vueloTerminado` y cierra el panel del final.
+    // Esto también cierra el panel del final.
     this.reiniciarGalones();
     this.yaDespego = false;
     BOCA.empezarDeCero();
@@ -5455,15 +5457,33 @@ export class Game {
    * Un trinquete: baja con el avión y nunca sube. Ver `limitarElRodaje`.
    */
   private techoDeLaCarrera = Infinity;
+  /**
+   * **En qué está la partida**: volando, con un percance o con el vuelo
+   * terminado. Lo que hace cada fase al entrar y en cada paso está aquí; qué
+   * fase sigue a cuál, en `partida.ts`.
+   */
+  readonly partida = new Partida({
+    percance: {
+      enter: () => {
+        if (this.percance) this.alSufrirPercance(this.percance);
+      },
+      update: (dt) => this.pasoConPercance(dt),
+    },
+    terminado: { enter: () => this.alTerminarElVuelo() },
+  });
   /** Si este vuelo ya terminó, para no enseñar el final dos veces. */
-  private vueloTerminado = false;
+  private get vueloTerminado(): boolean {
+    return this.partida.fase === "terminado";
+  }
   /**
    * El percance que ha parado este vuelo, si lo hay.
    *
    * Mientras esté puesto, el avión no se mueve: el intento se acabó y lo único
    * que queda por hacer es volver a empezar. Ver `flight/percance.ts`.
    */
-  percance: Percance | null = null;
+  get percance(): Percance | null {
+    return this.partida.percance;
+  }
   /**
    * El cuaderno de vuelo: lo que se lleva hecho, entre partidas.
    *
@@ -10684,10 +10704,16 @@ export class Game {
    * **Y se para de verdad.** Hasta hoy se podía atropellar al coche, meter el
    * avión en un hangar o tomar tierra en un descampado y seguir volando como
    * si tal cosa, que es lo que enseña que da igual. Ver `flight/percance.ts`.
+   *
+   * Solo se entra volando: con un percance ya puesto o el vuelo terminado no
+   * pasa nada. Lo decide `Partida`, y lo de abajo es lo que pasa al entrar.
    */
   private sufrirPercance(tipo: Percance): void {
-    if (this.percance || this.vueloTerminado) return;
-    this.percance = tipo;
+    this.partida.sufrir(tipo);
+  }
+
+  /** Al entrar en el percance: ver `sufrirPercance`. */
+  private alSufrirPercance(tipo: Percance): void {
     this.apuntar({ percances: this.cuaderno.percances + 1 });
     // Y la tarjeta que hubiera, fuera: lo que pedía ya no se puede hacer.
     this.hud.senal.limpiar();
@@ -10891,9 +10917,16 @@ export class Game {
      * De pasaje no hay final de vuelo de quien pilota —ni su hoja, ni su
      * bitácora, ni su panel—: el final es el de la escena. Ver
      * `atenderALaEscenaDePasaje`.
+     *
+     * Y solo se termina volando: ni dos veces, ni con un percance puesto, que
+     * lo decide `Partida`. Lo que pasa al entrar es `alTerminarElVuelo`.
      */
-    if (this.vueloTerminado || this.dePasaje) return;
-    this.vueloTerminado = true;
+    if (this.dePasaje) return;
+    this.partida.terminar();
+  }
+
+  /** Al entrar en el vuelo terminado: ver `terminarElVuelo`. */
+  private alTerminarElVuelo(): void {
     this.apuntar({ completos: this.cuaderno.completos + 1 });
     /*
      * **Y el vuelo entero a la bitácora**, con su traza.
@@ -13388,7 +13421,14 @@ export class Game {
         ? this.salidaId
         : this.scenario.id;
     const campo = this.elCampo(salida);
-    this.percance = null;
+    /*
+     * **Y otra vez volando, lo primero**, se viniera de un percance o del
+     * final. Por los dos caminos de reinicio, este y `reiniciarEnFinal`, que
+     * sale de aquí. El final se bajaba en `reiniciarGalones`, al otro extremo
+     * del método: nadie lo leía en medio, pero «otros galones» no es quien
+     * decide que se vuelve a volar.
+     */
+    this.partida.volverAVolar();
     // Y con el depósito lleno, otra vez con motor. Ver `quedarseSinMotor`.
     this.sinMotor = false;
     /*
@@ -18435,6 +18475,39 @@ export class Game {
   }
 
   /** Un paso del mundo. Lo de siempre, sin pintar. Ver `frame`. */
+  /**
+   * **Un paso con un percance puesto**: el avión no se mueve.
+   *
+   * El intento se acabó: lo único que queda es mirar el dibujo y volver a
+   * empezar. Se para aquí y no en el modelo de vuelo porque no es física —el
+   * avión no está roto en ningún sentido que el modelo entienda— sino la
+   * regla del juego, igual que no dejar despegar fuera de la pista. Lo de
+   * después de esto en `unPaso` no corre: ver `Partida.update`.
+   */
+  private pasoConPercance(dt: number): void {
+    this.syncAircraftMesh(dt);
+    this.updateCamera(dt);
+    updateSky(this.sky, this.camera.position);
+    this.terrain.llevarElAguaA(this.camera.position.x, this.camera.position.z);
+    this.hud.senal.update(dt);
+    /*
+     * **Y el motor se calla.**
+     *
+     * La mezcla sigue al avión una vez por paso, más abajo en `unPaso`, y
+     * desde aquí no se llega nunca. Así que un percance dejaba el motor
+     * rugiendo al gas que tuviera en el último fotograma **para siempre**,
+     * detrás de la pantalla del golpe. `alSufrirPercance` pone el gas a cero
+     * pero nadie volvía a leerlo.
+     */
+    this.audio.update(this.flight.state, this.input.controls);
+    /*
+     * Y aquí **no se pinta**: lo hace el fotograma, una sola vez. Pintar
+     * también aquí era pintar dos veces por cuadro —y con el reloj a
+     * dieciséis, diecisiete veces—, con el medidor de rendimiento contando
+     * todas como si fueran fotogramas.
+     */
+  }
+
   private unPaso = (dt: number): void => {
     /*
      * **El tope está en un segundo**, y cada vez que se ha subido ha sido por
@@ -18514,14 +18587,6 @@ export class Game {
     }
 
     /*
-     * **Con un percance puesto, el avión no se mueve.**
-     *
-     * El intento se acabó: lo único que queda es mirar el dibujo y volver a
-     * empezar. Se para aquí y no en el modelo de vuelo porque no es física —el
-     * avión no está roto en ningún sentido que el modelo entienda— sino la
-     * regla del juego, igual que no dejar despegar fuera de la pista.
-     */
-    /*
      * **Las horas de vuelo, que es de lo que va un cuaderno.**
      *
      * Se cuentan con las ruedas en el aire y se guardan cada medio minuto: no
@@ -18552,30 +18617,11 @@ export class Game {
       this.traza.push([Math.round(p.x), Math.round(-p.z)]);
     }
 
-    if (this.percance) {
-      this.syncAircraftMesh(dt);
-      this.updateCamera(dt);
-      updateSky(this.sky, this.camera.position);
-      this.terrain.llevarElAguaA(this.camera.position.x, this.camera.position.z);
-      this.hud.senal.update(dt);
-      /*
-       * **Y el motor se calla.**
-       *
-       * La mezcla sigue al avión una vez por paso, unas líneas más abajo, y
-       * desde aquí no se llega nunca. Así que un percance dejaba el motor
-       * rugiendo al gas que tuviera en el último fotograma **para siempre**,
-       * detrás de la pantalla del golpe. `sufrirPercance` pone el gas a cero
-       * pero nadie volvía a leerlo.
-       */
-      this.audio.update(this.flight.state, this.input.controls);
-      /*
-       * Y aquí **no se pinta**: lo hace el fotograma, una sola vez. Pintar
-       * también aquí era pintar dos veces por cuadro —y con el reloj a
-       * dieciséis, diecisiete veces—, con el medidor de rendimiento contando
-       * todas como si fueran fotogramas.
-       */
-      return;
-    }
+    /*
+     * **Con un percance puesto, el avión no se mueve.** La fase de la partida
+     * da su paso —ver `pasoConPercance`— y dice si este sigue.
+     */
+    if (!this.partida.update(dt)) return;
 
     /*
      * **De qué está hecho el suelo de debajo**, que el modelo de vuelo no
@@ -25109,7 +25155,6 @@ export class Game {
     this.hud.setGalones([]);
     this.ponerElGradoEnLaManga();
     // Y se quita el final del vuelo anterior, que ya no habla de este.
-    this.vueloTerminado = false;
     this.hud.cerrarFinDeVuelo();
   }
 

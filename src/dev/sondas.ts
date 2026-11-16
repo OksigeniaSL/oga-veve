@@ -383,9 +383,10 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
          * sitio es empezar otra situación, y una partida congelada no puede
          * sobrevivir a un teletransporte. Sin esto, una prueba del banco que
          * termina en percance dejaba **todas las de después** midiendo un
-         * avión que no se mueve.
+         * avión que no se mueve. Solo el percance: un vuelo terminado sigue
+         * terminado, como siempre.
          */
-        juego.percance = null;
+        if (juego.percance) juego.partida.volverAVolar();
         juego.hud.cerrarFinDeVuelo();
         /*
          * **Y lo que se seguía del avión de antes se olvida.** Ver
