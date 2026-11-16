@@ -1019,8 +1019,34 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * de holgura, y el resto de altura se va bajando detrás.
      */
     let pedida = senda.altitud + senda.ritmo * (ahora - senda.desde);
-    if (BAJA_POR_EL_ARCO)
-      pedida = Math.max(pedida, s.position.y + (-CAIDA_MAXIMA * 1.25 - senda.ritmo) * 10);
+    /*
+     * **Y en la final recta, alto se corrige con un punto, no con un picado.**
+     *
+     * El tope de arriba es para el arco del viraje, donde la senda se mueve
+     * bajo el avión y hay que alcanzarla. Ya alineado, un piloto corrige la
+     * senda con unos doscientos pies por minuto de más y nunca pasa de los
+     * mil, que es justo lo que mide la puerta. Con el tope del arco, el JAZ 90
+     * de Los Rodeos llegó a la puerta bajando a 6,3 m/s (#192), medido con la
+     * traza del ala: a 190 m de ruedas, ya en la senda, una racha lo sostuvo
+     * cinco segundos —de bajar a 3,8 a no bajar— y se quedó quince metros
+     * alto; el automático pidió 6 m/s, el morro bajó a −6° y al acabarse la
+     * racha cayó a 11. Quince metros a mil metros de la puerta están dentro de
+     * su tolerancia: se recogen en quince segundos a un metro por segundo de
+     * más. Y nunca menos de nueve décimas de los mil pies por minuto, para que
+     * un avión lento no pierda lo que ya podía corregir. Ver `PUERTA_BAJA`.
+     */
+    const enLaFinalRecta =
+      etapa === "final" &&
+      !aLaVista?.length &&
+      elArcoHastaElEje(s).theta < (20 * Math.PI) / 180;
+    const caidaQueSePide = enLaFinalRecta
+      ? Math.min(
+          CAIDA_MAXIMA * 1.25,
+          Math.max(porElSuelo(s) * SENDA + CORRECCION_EN_FINAL, 0.9 * MIL_PIES_POR_MINUTO),
+        )
+      : CAIDA_MAXIMA * 1.25;
+    if (BAJA_POR_EL_ARCO || enLaFinalRecta)
+      pedida = Math.max(pedida, s.position.y + (-caidaQueSePide - senda.ritmo) * 10);
     /*
      * **Subiendo, el morro a la velocidad y el gas quieto** —ver `velocidad`
      * en `sostenerLaAltura`— hasta que la altura queda a tiro: a dos segundos
@@ -2349,6 +2375,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     5,
     (suyas.aproximacion ?? 33) * Math.sin((4 * Math.PI) / 180),
   );
+  /** Lo más que se baja en una final estabilizada, m/s: mil pies por minuto. */
+  const MIL_PIES_POR_MINUTO = (1000 * 0.3048) / 60;
+  /**
+   * **Lo que se baja de más para recoger la senda yendo alto en la final
+   * recta**, m/s: unos doscientos pies por minuto, la corrección de un punto
+   * de senda. Ver `volarLaSenda`.
+   */
+  const CORRECCION_EN_FINAL = 1;
 
   /*
    * **Y aquí no hay término integral, y se probó.**
