@@ -802,6 +802,12 @@ export interface EstadoDelRotor {
   readonly potenciaMotores: number;
   readonly par: number;
   readonly potenciaDisponible: number;
+  /**
+   * Lo que darían los motores encendidos del todo con este aire, W: lo que
+   * `potenciaDisponible` es en vuelo. Al arrancar y al parar no son lo mismo,
+   * y las agujas de los motores se miden contra esta. Ver `lecturaDeLaVms`.
+   */
+  readonly potenciaDelAire: number;
   /** Lo que piden los dos rotores en el eje, W. */
   readonly potenciaRotores: number;
   readonly empuje: number;
@@ -923,7 +929,7 @@ export class ModeloDeHelicoptero {
       secondsToImpact: Infinity,
       touchdownSinkRate: 0,
     };
-    this.ultimo = this.estadoDelRotor(0, 0, 0, 0);
+    this.ultimo = this.estadoDelRotor(0, 0, 0, 0, 0);
   }
 
   // ── Lo que se le pone ──
@@ -1213,7 +1219,8 @@ export class ModeloDeHelicoptero {
       ? Math.min(1, this.arranque + dt / tardaEnArrancar)
       : Math.max(0, this.arranque - dt / (this.fallo ? SE_APAGA_DE_GOLPE : 8));
     const encendido = Math.max(0, (this.arranque - 0.5) / 0.5);
-    const disponible = potenciaDisponible(f, densidad) * encendido * encendido;
+    const delAire = potenciaDisponible(f, densidad);
+    const disponible = delAire * encendido * encendido;
     const freno = f.frenoDelRotor;
     // El freno solo se pone por debajo de sus vueltas; y puesto, los motores se quedan al ralentí.
     if (!piloto.frenoDelRotor) this.frenoDelRotorPuesto = false;
@@ -1377,10 +1384,16 @@ export class ModeloDeHelicoptero {
     this.spin.set(this.tmp.x * dt * 0.5, this.tmp.y * dt * 0.5, this.tmp.z * dt * 0.5, 1);
     s.orientation.premultiply(this.spin).normalize();
 
-    this.ultimo = this.estadoDelRotor(disponible, principal.empuje, deCola.empuje, principal.potencia + deCola.potencia);
+    this.ultimo = this.estadoDelRotor(disponible, delAire, principal.empuje, deCola.empuje, principal.potencia + deCola.potencia);
   }
 
-  private estadoDelRotor(disponible: number, empuje: number, empujeCola: number, rotores: number): EstadoDelRotor {
+  private estadoDelRotor(
+    disponible: number,
+    delAire: number,
+    empuje: number,
+    empujeCola: number,
+    rotores: number,
+  ): EstadoDelRotor {
     const f = this.ficha;
     const despegue = f.motores.cuantos * f.motores.potencia;
     return {
@@ -1389,6 +1402,7 @@ export class ModeloDeHelicoptero {
       potenciaMotores: this.potenciaMotores,
       par: this.vueltas > 1 ? (this.potenciaMotores / this.vueltas) / (despegue / f.rotor.vueltas) : 0,
       potenciaDisponible: disponible,
+      potenciaDelAire: delAire,
       potenciaRotores: rotores,
       empuje,
       empujeCola,

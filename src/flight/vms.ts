@@ -120,7 +120,15 @@ export function lecturaDeLaVms(
    * `ModeloDeHelicoptero`); en la primera el arrancador los lleva al ralentí.
    */
   const encendido = entre((r.arranque - 0.5) / 0.5, 0, 1);
-  const delAire = r.potenciaDisponible > 1 ? r.potenciaMotores / r.potenciaDisponible : 0;
+  /*
+   * **Contra lo que darían encendidos del todo con este aire**, y no contra lo
+   * que pueden dar ahora. Al pararlos, lo que pueden dar cae antes que lo que
+   * dan, y el cociente pasaba de uno: tras un fallo, el FLI marcaba 13 en rojo
+   * con el par a cero, y el NG y la T4 subían a su límite mientras la turbina
+   * se apagaba. Al arrancar, igual al revés: el NG y la T4 suben con lo que
+   * dan, y no van al límite mientras el rotor coge vueltas.
+   */
+  const delAire = r.potenciaDelAire > 1 ? r.potenciaMotores / r.potenciaDelAire : 0;
   const fli = encendido > 0 ? FLI.despegue * Math.max(r.par, delAire) : 0;
   /*
    * **Las turbinas libres, casadas al rotor** mientras lo mueven: van a él por

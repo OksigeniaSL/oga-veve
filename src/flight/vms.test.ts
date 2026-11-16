@@ -22,6 +22,7 @@ function rotor(cambia: Partial<EstadoDelRotor>): EstadoDelRotor {
     potenciaMotores: 0,
     par: 0,
     potenciaDisponible: DESPEGUE,
+    potenciaDelAire: DESPEGUE,
     potenciaRotores: 0,
     empuje: 0,
     empujeCola: 0,
@@ -47,7 +48,12 @@ describe("el FLI", () => {
     const abajo = lecturaDeLaVms(F, rotor({ potenciaMotores: 0.6 * DESPEGUE, par: 0.6 }), 15);
     const arriba = lecturaDeLaVms(
       F,
-      rotor({ potenciaMotores: 0.6 * DESPEGUE, par: 0.6, potenciaDisponible: 0.8 * DESPEGUE }),
+      rotor({
+        potenciaMotores: 0.6 * DESPEGUE,
+        par: 0.6,
+        potenciaDisponible: 0.8 * DESPEGUE,
+        potenciaDelAire: 0.8 * DESPEGUE,
+      }),
       15,
     );
     expect(arriba.motores[0]!.fli).toBeCloseTo(7.5, 6);
@@ -134,4 +140,37 @@ describe("con el modelo de verdad", () => {
     expect(l.motores[0]!.fli).toBeGreaterThan(3);
     expect(l.motores[0]!.fli).toBeLessThan(FLI.despegue);
   });
+
+  /*
+   * Al pararse, lo que pueden dar cae antes que lo que dan: medido contra lo
+   * primero, tras un fallo el FLI marcaba 13 en rojo con el par a cero.
+   */
+  for (const como of ["con un fallo", "a mano"] as const) {
+    it(`al pararse ${como}, el FLI, el NG y la T4 bajan y no pasan de lo que llevaban`, () => {
+      const h = new ModeloDeHelicoptero(F);
+      h.reset({ position: new Vector3(0, 300, 0), heading: 0, airspeed: 0, rotorEnMarcha: true });
+      const m = mandosNeutros();
+      m.colectivo = 0.55;
+      m.tren = 0;
+      for (let i = 0; i < 200; i++) h.step(0.01, m);
+      const antes = lecturaDeLaVms(F, h.rotor(), 15).motores[0]!;
+      if (como === "con un fallo") h.fallanLosMotores();
+      m.motores = false;
+      let fli = 0;
+      let ng = 0;
+      let t4 = 0;
+      for (let i = 0; i < 1000; i++) {
+        h.step(0.01, m);
+        const l = lecturaDeLaVms(F, h.rotor(), 15).motores[0]!;
+        fli = Math.max(fli, l.fli);
+        ng = Math.max(ng, l.ng);
+        t4 = Math.max(t4, l.t4);
+      }
+      // Con el margen de lo que el regulador se mueve en un paso (el NG, 0,1 %).
+      expect(fli).toBeLessThanOrEqual(antes.fli + 0.05);
+      expect(ng).toBeLessThanOrEqual(antes.ng + 0.5);
+      expect(t4).toBeLessThanOrEqual(antes.t4 + 5);
+      expect(lecturaDeLaVms(F, h.rotor(), 15).motores[0]!.fli).toBe(0);
+    });
+  }
 });

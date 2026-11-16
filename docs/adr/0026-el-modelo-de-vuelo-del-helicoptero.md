@@ -784,3 +784,11 @@ del navegador, que compartían tres tandas a la vez.
   motores por lo que pueden dar mientras se apagan, y lo que pueden dar cae antes. Con el fallo de golpe dura menos de
   medio segundo; por la cuenta, con la parada a mano pasa lo mismo durante más rato. Un FLI de verdad, con el motor
   apagándose, baja.
+
+### Las agujas de los motores al pararse (16-11-2026)
+
+H19c vio en la captura de justo tras el fallo de motor que el FLI marcaba 13,4 en rojo con el par a cero. `lecturaDeLaVms` medía lo que dan los motores contra lo que pueden dar en ese momento. Al pararlos, eso cae antes (con el cuadrado de lo encendido) que lo que dan, que tarda en bajar, y el cociente pasaba de uno.
+
+En la prueba, a los 0,25 s de un fallo los motores daban 1.621 kW y podían dar 606: el FLI marcaba 26,7. El NG y la T4 se iban a su límite mientras la turbina se apagaba. Al pararlos a mano pasaba lo mismo, durante más rato.
+
+Ahora el estado del rotor lleva también `potenciaDelAire`: lo que darían los motores encendidos del todo con este aire. Las agujas se miden contra ella. En vuelo es lo mismo que antes. Al pararse, el FLI, el NG y la T4 bajan desde donde estaban; lo prueban `vms.test.ts`, con un fallo y a mano. Al arrancar, el NG y la T4 suben con lo que dan los motores y no se van al límite mientras el rotor coge vueltas.
