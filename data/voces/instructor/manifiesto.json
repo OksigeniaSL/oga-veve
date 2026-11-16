@@ -47,6 +47,30 @@
       "ms": 8907,
       "h": "861ce1c808"
     },
+    "ejercicio.autorrotacion.ahora": {
+      "ms": 7007,
+      "h": "ca518c278d"
+    },
+    "ejercicio.autorrotacion.ahoraTuyo": {
+      "ms": 8607,
+      "h": "d96ee9fcb0"
+    },
+    "ejercicio.autorrotacion.antes": {
+      "ms": 11407,
+      "h": "080c003f5a"
+    },
+    "ejercicio.autorrotacion.bien": {
+      "ms": 9707,
+      "h": "1fd65ea50d"
+    },
+    "ejercicio.autorrotacion.recogida": {
+      "ms": 6507,
+      "h": "dbe515a17a"
+    },
+    "ejercicio.autorrotacion.recogidaTuya": {
+      "ms": 6407,
+      "h": "b90bf6fa21"
+    },
     "ejercicio.bandera": {
       "ms": 4207,
       "h": "33f87b0168"
@@ -1503,6 +1527,10 @@
       "ms": 7707,
       "h": "4d6e7e3c54"
     },
+    "vuelo.anillo": {
+      "ms": 8407,
+      "h": "ed1c055c75"
+    },
     "vuelo.apagado": {
       "ms": 971,
       "h": "0a765f34bf"
@@ -2618,6 +2646,14 @@
     "vuelo.roto": {
       "ms": 1425,
       "h": "f8c637dcfa"
+    },
+    "vuelo.rotorBajo": {
+      "ms": 5807,
+      "h": "7f57b43be0"
+    },
+    "vuelo.rotorBajo.toma": {
+      "ms": 5907,
+      "h": "c1519bb219"
     },
     "vuelo.sacaElTren": {
       "ms": 855,
@@ -5074,6 +5110,33 @@
     ],
     "vuelo.terrInhibit.prendido": [
       "vuelo.terrInhibit.prendido"
+    ],
+    "vuelo.anillo": [
+      "vuelo.anillo"
+    ],
+    "ejercicio.autorrotacion.antes": [
+      "ejercicio.autorrotacion.antes"
+    ],
+    "ejercicio.autorrotacion.ahora": [
+      "ejercicio.autorrotacion.ahora"
+    ],
+    "ejercicio.autorrotacion.ahoraTuyo": [
+      "ejercicio.autorrotacion.ahoraTuyo"
+    ],
+    "ejercicio.autorrotacion.recogida": [
+      "ejercicio.autorrotacion.recogida"
+    ],
+    "ejercicio.autorrotacion.recogidaTuya": [
+      "ejercicio.autorrotacion.recogidaTuya"
+    ],
+    "ejercicio.autorrotacion.bien": [
+      "ejercicio.autorrotacion.bien"
+    ],
+    "vuelo.rotorBajo": [
+      "vuelo.rotorBajo"
+    ],
+    "vuelo.rotorBajo.toma": [
+      "vuelo.rotorBajo.toma"
     ]
   }
 }

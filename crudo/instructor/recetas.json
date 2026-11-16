@@ -2228,5 +2228,32 @@
   ],
   "vuelo.terrInhibit.prendido": [
     "vuelo.terrInhibit.prendido"
+  ],
+  "vuelo.anillo": [
+    "vuelo.anillo"
+  ],
+  "ejercicio.autorrotacion.antes": [
+    "ejercicio.autorrotacion.antes"
+  ],
+  "ejercicio.autorrotacion.ahora": [
+    "ejercicio.autorrotacion.ahora"
+  ],
+  "ejercicio.autorrotacion.ahoraTuyo": [
+    "ejercicio.autorrotacion.ahoraTuyo"
+  ],
+  "ejercicio.autorrotacion.recogida": [
+    "ejercicio.autorrotacion.recogida"
+  ],
+  "ejercicio.autorrotacion.recogidaTuya": [
+    "ejercicio.autorrotacion.recogidaTuya"
+  ],
+  "ejercicio.autorrotacion.bien": [
+    "ejercicio.autorrotacion.bien"
+  ],
+  "vuelo.rotorBajo": [
+    "vuelo.rotorBajo"
+  ],
+  "vuelo.rotorBajo.toma": [
+    "vuelo.rotorBajo.toma"
   ]
 }
