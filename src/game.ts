@@ -4631,7 +4631,15 @@ export class Game {
     // Esto también cierra el panel del final.
     this.otraVezLaLlegada();
     this.olvidarLoDichoYLoMirado();
-    this.radio.reiniciar(aqui.escenario.aerodrome?.id);
+    /*
+     * **Y la torre, limpia como en `resetFlight`**: no solo la frecuencia. Se
+     * reiniciaba solo `radio`, y del tramo de antes se quedaban en el turno el
+     * número dos, el permiso de aterrizar pedido y sin dar, si estabas en
+     * final, los retenidos en su puesto con su reloj, la orden de tu salida y
+     * sus cuentas, y en la boca las frases de una frecuencia que ya no
+     * existe. Ver `TurnoDePista.reiniciar`.
+     */
+    this.turno.reiniciar(aqui.escenario.aerodrome?.id);
     // Y la raya, de aquí al punto de espera de este campo. Si de aquí no
     // sale —apagado lejos de toda calle—, el vuelo de antes se cierra igual:
     // ver `otroTramoDesde`.
