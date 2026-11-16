@@ -1695,6 +1695,7 @@ import {
 } from "./flight/avisos-de-actitud";
 import { abrirLaVentanaDePruebas } from "./dev/sondas";
 import { Reparto } from "./hechos";
+import { Partida } from "./partida";
 import { laForma, unaForma } from "./audio/variantes";
 import {
   ALTO_PARA_EL_CIRCUITO,
@@ -4648,7 +4649,8 @@ export class Game {
      */
     if (this.campoEnCuyoSueloEsta())
       this.llenarSiHaceFalta(this.salidaId, this.destinoId);
-    this.percance = null;
+    // Otro tramo es otra vez volando, se viniera del final o de un percance.
+    this.partida.volverAVolar();
     // Otro tramo, con motor: lo de la otra punta y el planeo eran del de antes.
     this.sinMotor = false;
     this.laOtraCabecera.reiniciar();
@@ -4701,23 +4703,10 @@ export class Game {
     this.landing.reset();
     this.frustrada.reiniciar();
     this.tomaLarga.reiniciar();
-    // Esto también baja `vueloTerminado` y cierra el panel del final.
+    // Esto también cierra el panel del final.
     this.reiniciarGalones();
     this.yaDespego = false;
-    BOCA.empezarDeCero();
-    this.megafonia.reiniciar();
-    this.reiniciarLoQueSuena();
-    this.huecos.reiniciar();
-    this.ventanilla.reiniciar();
-    this.cabinaDePasaje.reiniciar(this.aircraft.ventanillas ?? "persiana");
-    this.lucesDeNocheContadas = null;
-    // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
-    this.loSenalado = null;
-    this.mirada.reiniciar();
-    this.reiniciarLaVentanillaAlt();
-    // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
-    this.islenos?.reiniciar();
-    this.loMasAltoDelVuelo = 0;
+    this.olvidarLoDichoYLoMirado();
     this.radio.reiniciar(aqui.escenario.aerodrome?.id);
     // Y la raya, de aquí al punto de espera de este campo. Si de aquí no
     // sale —apagado lejos de toda calle—, el vuelo de antes se cierra igual:
@@ -5270,15 +5259,6 @@ export class Game {
   /** Las gafas de sol: si se han ganado y si se llevan. Ver `flight/gafas.ts`. */
   private gafas: Gafas = SIN_GAFAS;
   /**
-   * Si lo paró quien juega, y no el navegador.
-   *
-   * Son dos cosas distintas y hasta hoy solo existía la segunda: el juego se
-   * detiene solo al perder el foco —eso es «nadie mira»— y volver a mirar lo
-   * arranca otra vez. Una pausa pedida **no la levanta volver a la pestaña**,
-   * solo levantarla. Ver `main.ts`.
-   */
-  private pausadoAdrede = false;
-  /**
    * La tarjeta se cayó y hay que volver a ponerla, **sin volver a decir nada**.
    *
    * Una tarjeta de las que se quedan puestas —«esperá la luz», «luz verde,
@@ -5304,8 +5284,6 @@ export class Game {
    * Con esto, un banco puede contar campanas. Ver `avisar`.
    */
   readonly loQueSono: { que: string; cuando: number }[] = [];
-  /** Si hay alguno de los que congelan el vuelo. Lo dice `ui/panel.ts`. */
-  private hayPanelAbierto = false;
   /**
    * Si hay un **instrumento** abierto: el plano o el tiempo.
    *
@@ -5314,8 +5292,6 @@ export class Game {
    * mientras se miran. Ver `mantenerElVueloRecto` y `PanelDelVuelo.congela`.
    */
   private hayInstrumentoAbierto = false;
-  /** Si el mundo está parado ahora mismo, por lo que sea. Ver `quedarQuieto`. */
-  private quieto = false;
   /**
    * La pantalla del teléfono, encendida mientras se vuela y libre en cuanto
    * no: en la pausa, en un panel y al irse. Ver `ui/pantalla-despierta.ts`.
@@ -5455,15 +5431,37 @@ export class Game {
    * Un trinquete: baja con el avión y nunca sube. Ver `limitarElRodaje`.
    */
   private techoDeLaCarrera = Infinity;
+  /**
+   * **En qué está la partida**: volando, con un percance o con el vuelo
+   * terminado; y si el reloj está parado, por la pausa o por un panel. Lo que
+   * se hace al entrar en cada fase, en cada paso y al congelar está aquí; qué
+   * sigue a qué, en `partida.ts`.
+   */
+  readonly partida = new Partida(
+    {
+      percance: {
+        enter: () => {
+          if (this.percance) this.alSufrirPercance(this.percance);
+        },
+        update: (dt) => this.pasoConPercance(dt),
+      },
+      terminado: { enter: () => this.alTerminarElVuelo() },
+    },
+    { enter: () => this.congelarElMundo(), exit: () => this.soltarElMundo() },
+  );
   /** Si este vuelo ya terminó, para no enseñar el final dos veces. */
-  private vueloTerminado = false;
+  private get vueloTerminado(): boolean {
+    return this.partida.fase === "terminado";
+  }
   /**
    * El percance que ha parado este vuelo, si lo hay.
    *
    * Mientras esté puesto, el avión no se mueve: el intento se acabó y lo único
    * que queda por hacer es volver a empezar. Ver `flight/percance.ts`.
    */
-  percance: Percance | null = null;
+  get percance(): Percance | null {
+    return this.partida.percance;
+  }
   /**
    * El cuaderno de vuelo: lo que se lleva hecho, entre partidas.
    *
@@ -6160,7 +6158,14 @@ export class Game {
    * que se refiere a algo que quien juega no tiene delante no enseña, confunde.
    */
   private seVenLosAros = false;
-  /** La última fase anunciada, para no repetir el aviso cada fotograma. */
+  /**
+   * La última fase **anunciada**, para no repetir el aviso cada fotograma.
+   *
+   * **No es la fase de ahora**, que es `faseDeAhora`: la vacían una docena de
+   * sitios para que algo se vuelva a anunciar, y durante esos fotogramas vale
+   * cadena vacía. Solo la mira `avanzarPlan`, para saber si hay algo nuevo
+   * que decir. Y la sonda `fase` de los bancos, que la lee así desde siempre.
+   */
   faseAnunciada = "";
   /**
    * Y **el tuyo**, que no se sortea: es el que lleva pintado tu avión.
@@ -7389,13 +7394,12 @@ export class Game {
     };
     /*
      * Y con los paneles ya montados, el vuelo se entera de cuándo hay alguno
-     * abierto. Ver `quedarQuieto` y #70.
+     * abierto. Ver `congelarElMundo` y #70.
      */
     laConchaLaLleva({
       alAbrirseOCerrarse: (que) => {
-        this.hayPanelAbierto = que.congela;
         this.hayInstrumentoAbierto = que.alguno && !que.congela;
-        this.quedarQuieto();
+        this.partida.congelarPor("panel", que.congela);
       },
       suena: (que) => {
         if (import.meta.env.DEV) this.loQueSonoLaConcha.push(que);
@@ -9249,9 +9253,9 @@ export class Game {
      * puesto, y `start` no lo miraba: la puerta de desarrollo `__ogaEmpezar`
      * —que existe porque una pestaña abierta por un guion nunca tiene el foco—
      * soltaba el avión con el plano abierto delante. Quien decide que se puede
-     * volver a volar es `quedarQuieto`, y sólo él.
+     * volver a volar es `Partida.congelarPor`, y sólo él.
      */
-    if (this.quieto) return;
+    if (this.partida.congelada) return;
     this.running = true;
     this.despierta.ponerse(true);
     this.clock.start();
@@ -9397,61 +9401,60 @@ export class Game {
 
   /** Si el vuelo está parado, lo haya parado quien lo haya parado. */
   get pausado(): boolean {
-    return this.quieto;
+    return this.partida.congelada;
   }
 
   alternarPausa(): void {
-    if (this.pausadoAdrede) this.reanudar();
+    if (this.partida.congeladaPor("pausa")) this.reanudar();
     else this.pausar();
   }
 
+  /**
+   * **La pausa que pide quien juega**, y no el navegador.
+   *
+   * Son dos cosas distintas y hasta hoy solo existía la segunda: el juego se
+   * detiene solo al perder el foco —eso es «nadie mira»— y volver a mirar lo
+   * arranca otra vez. Una pausa pedida **no la levanta volver a la pestaña**,
+   * solo levantarla. Ver `main.ts`.
+   *
+   * El menú se abre antes de apuntarla, como se abría: es un panel que
+   * congela, así que es él quien para el reloj, y lo que suena al abrirse
+   * suena antes de que se calle todo. La pausa apuntada es la que queda si no
+   * hay menú, y la que no deja que volver a la pestaña lo suelte.
+   */
   pausar(): void {
-    if (this.pausadoAdrede) return;
-    this.pausadoAdrede = true;
+    if (this.partida.congeladaPor("pausa")) return;
     this.pausa?.abrir();
-    this.quedarQuieto();
+    this.partida.congelarPor("pausa", true);
   }
 
   reanudar(): void {
-    if (!this.pausadoAdrede) return;
-    this.pausadoAdrede = false;
+    if (!this.partida.congeladaPor("pausa")) return;
+    this.partida.congelarPor("pausa", false);
     this.pausa?.cerrar();
-    this.quedarQuieto();
   }
 
-  /**
-   * Deja el mundo donde estaba, o lo suelta otra vez.
-   *
-   * El reloj se detiene entero, así que el avión no se mueve ni un metro
-   * mientras hay algo abierto encima. Y el último fotograma **sigue pintado
-   * detrás**: quien vuelva ve el avión donde lo dejó, que es lo que hace que
-   * parar no dé miedo. Un fundido a negro haría creer que se perdió el vuelo.
-   *
-   * También se calla todo. Un instructor que sigue explicando la aproximación
-   * con el juego parado es lo contrario de una pausa.
-   *
-   * Lo piden **dos** cosas y por eso está aquí y no dentro de `pausar`: el
-   * menú de pausa, que es lo de siempre, y cualquier panel que se abra encima
-   * del vuelo, que es lo que exige #70 —«nunca se cae el avión mientras
-   * alguien está eligiendo gorra»—. Hasta ahora abrir el plano en vuelo
-   * dejaba el avión volando solo detrás del velo, y volver era volver a un
-   * avión que ya no estaba donde se dejó.
-   */
   /**
    * En qué fase está el vuelo **ahora**.
    *
    * No es lo mismo que `faseAnunciada`, que es *lo último que se dijo*: hay
-   * tres sitios que la vacían para que una tarjeta vuelva a salir, y durante
+   * sitios que la vacían para que algo se vuelva a anunciar, y durante
    * esos fotogramas vale cadena vacía. Cinco cosas la leían como si fuera la
    * fase actual —la radio, el circuito, la banda de velocidad, el aviso de
    * terreno en final y el «ya podés tocar»— y en esos fotogramas veían una
    * fase que no existe.
    *
    * La de ahora la tiene el plan. Cuando no hay plan —los escenarios sin
-   * aeródromo— no hay fase, y entonces lo último dicho es lo mejor que hay.
+   * aeródromo— no hay fase.
+   *
+   * Y sin caer en lo último dicho, que es lo que hacía cuando no había vista:
+   * esa era la última puerta por la que `faseAnunciada` se leía como la fase
+   * de ahora. No cambiaba nada —sin vista también vale cadena vacía: solo la
+   * escribe con algo `avanzarPlan`, que sin plan no corre, y el reinicio que
+   * borra la vista la vacía con ella—, y por eso mismo sobraba.
    */
   private get faseDeAhora(): string {
-    return this.vistaActual?.fase ?? this.faseAnunciada;
+    return this.vistaActual?.fase ?? "";
   }
 
   /**
@@ -9505,15 +9508,25 @@ export class Game {
   /** La copia que lleva la mano invisible, para no escribir en la persona. */
   private readonly mandosConVueloRecto: ControlInputs = neutralControls();
 
-  private quedarQuieto(): void {
-    const debe = this.pausadoAdrede || this.hayPanelAbierto;
-    if (debe === this.quieto) return;
-    this.quieto = debe;
-    if (!debe) {
-      this.audio.callarElMundo(false);
-      this.start();
-      return;
-    }
+  /**
+   * Deja el mundo donde estaba: el `enter` de la congelación de `Partida`.
+   *
+   * El reloj se detiene entero, así que el avión no se mueve ni un metro
+   * mientras hay algo abierto encima. Y el último fotograma **sigue pintado
+   * detrás**: quien vuelva ve el avión donde lo dejó, que es lo que hace que
+   * parar no dé miedo. Un fundido a negro haría creer que se perdió el vuelo.
+   *
+   * También se calla todo. Un instructor que sigue explicando la aproximación
+   * con el juego parado es lo contrario de una pausa.
+   *
+   * Lo piden **dos** cosas y por eso está aquí y no dentro de `pausar`: el
+   * menú de pausa, que es lo de siempre, y cualquier panel que se abra encima
+   * del vuelo, que es lo que exige #70 —«nunca se cae el avión mientras
+   * alguien está eligiendo gorra»—. Hasta ahora abrir el plano en vuelo
+   * dejaba el avión volando solo detrás del velo, y volver era volver a un
+   * avión que ya no estaba donde se dejó.
+   */
+  private congelarElMundo(): void {
     this.running = false;
     this.despierta.ponerse(false);
     this.renderer.setAnimationLoop(null);
@@ -9530,6 +9543,12 @@ export class Game {
     this.instructor.callar();
     this.otroAvion.callar();
     callar();
+  }
+
+  /** Y lo suelta otra vez: el `exit` de la congelación. */
+  private soltarElMundo(): void {
+    this.audio.callarElMundo(false);
+    this.start();
   }
 
   dispose(): void {
@@ -10664,30 +10683,21 @@ export class Game {
   }
 
   /**
-   * Se acabó el vuelo: se enseña lo que se llevó puesto.
-   *
-   * «Se echa en falta un reconocimiento en función de los galones logrados.»
-   * Los galones se ganaban uno a uno con su sonido y su barra, y al apagar el
-   * motor no pasaba nada: el vuelo terminaba como termina una pestaña que se
-   * cierra.
-   *
-   * Va con medio segundo de retraso a propósito. Apagar el motor tiene su
-   * propio sonido y su propia hélice parándose, y encimarle una pantalla le
-   * quita el momento a las dos cosas.
-   *
-   * La regla de qué se dice —y que ningún final sea un reproche— vive en
-   * `flight/reconocimiento.ts`, que es donde se puede probar.
-   */
-  /**
    * Algo salió mal: se para el vuelo y se cuenta con un dibujo.
    *
    * **Y se para de verdad.** Hasta hoy se podía atropellar al coche, meter el
    * avión en un hangar o tomar tierra en un descampado y seguir volando como
    * si tal cosa, que es lo que enseña que da igual. Ver `flight/percance.ts`.
+   *
+   * Solo se entra volando: con un percance ya puesto o el vuelo terminado no
+   * pasa nada. Lo decide `Partida`, y lo de abajo es lo que pasa al entrar.
    */
   private sufrirPercance(tipo: Percance): void {
-    if (this.percance || this.vueloTerminado) return;
-    this.percance = tipo;
+    this.partida.sufrir(tipo);
+  }
+
+  /** Al entrar en el percance: ver `sufrirPercance`. */
+  private alSufrirPercance(tipo: Percance): void {
     this.apuntar({ percances: this.cuaderno.percances + 1 });
     // Y la tarjeta que hubiera, fuera: lo que pedía ya no se puede hacer.
     this.hud.senal.limpiar();
@@ -10886,14 +10896,36 @@ export class Game {
     this.apuntar({ aerodromos: [...this.cuaderno.aerodromos, id] });
   }
 
+  /**
+   * Se acabó el vuelo: se enseña lo que se llevó puesto.
+   *
+   * «Se echa en falta un reconocimiento en función de los galones logrados.»
+   * Los galones se ganaban uno a uno con su sonido y su barra, y al apagar el
+   * motor no pasaba nada: el vuelo terminaba como termina una pestaña que se
+   * cierra.
+   *
+   * Va con medio segundo de retraso a propósito. Apagar el motor tiene su
+   * propio sonido y su propia hélice parándose, y encimarle una pantalla le
+   * quita el momento a las dos cosas.
+   *
+   * La regla de qué se dice —y que ningún final sea un reproche— vive en
+   * `flight/reconocimiento.ts`, que es donde se puede probar.
+   */
   terminarElVuelo(): void {
     /*
      * De pasaje no hay final de vuelo de quien pilota —ni su hoja, ni su
      * bitácora, ni su panel—: el final es el de la escena. Ver
      * `atenderALaEscenaDePasaje`.
+     *
+     * Y solo se termina volando: ni dos veces, ni con un percance puesto, que
+     * lo decide `Partida`. Lo que pasa al entrar es `alTerminarElVuelo`.
      */
-    if (this.vueloTerminado || this.dePasaje) return;
-    this.vueloTerminado = true;
+    if (this.dePasaje) return;
+    this.partida.terminar();
+  }
+
+  /** Al entrar en el vuelo terminado: ver `terminarElVuelo`. */
+  private alTerminarElVuelo(): void {
     this.apuntar({ completos: this.cuaderno.completos + 1 });
     /*
      * **Y el vuelo entero a la bitácora**, con su traza.
@@ -13388,7 +13420,14 @@ export class Game {
         ? this.salidaId
         : this.scenario.id;
     const campo = this.elCampo(salida);
-    this.percance = null;
+    /*
+     * **Y otra vez volando, lo primero**, se viniera de un percance o del
+     * final. Por los dos caminos de reinicio, este y `reiniciarEnFinal`, que
+     * sale de aquí. El final se bajaba en `reiniciarGalones`, al otro extremo
+     * del método: nadie lo leía en medio, pero «otros galones» no es quien
+     * decide que se vuelve a volar.
+     */
+    this.partida.volverAVolar();
     // Y con el depósito lleno, otra vez con motor. Ver `quedarseSinMotor`.
     this.sinMotor = false;
     /*
@@ -13531,7 +13570,8 @@ export class Game {
      * mismo problema: hay dos caminos de reinicio —éste y `reiniciarEnFinal`,
      * para las lecciones que empiezan en el aire— y lo que se reinicia en cada
      * uno se fue copiando a mano hasta divergir. Todo lo que sea «estado de
-     * este vuelo» tiene que quedar limpio por los dos.
+     * este vuelo» tiene que quedar limpio por los dos: o aquí arriba, o en
+     * `olvidarElVueloAnterior`, que es el final común de los dos.
      *
      * La baliza, también: en el primer paso se pone como esté el motor. Ver `flight/baliza.ts`.
      */
@@ -13603,6 +13643,31 @@ export class Game {
     // Un vuelo nuevo es un avión en su puesto: flaps sanos y sin alivio.
     this.cargaDeFlaps = FLAPS_SANOS;
     this.input.topeDeFlaps = 1;
+    this.olvidarElVueloAnterior();
+    if (this.aircraft.helicoptero) this.posarEnElHelipuerto();
+    /*
+     * **Y el modo inicio, si estaba a medias, otra vez desde la llave.** Si no
+     * había empezado —saludando o esperando la llave—, sigue donde iba: el
+     * suelo se asienta unos segundos después de abrir y recoloca el avión con
+     * un reinicio, y eso no es volver a empezar. Pero con el motor parado, que
+     * el reinicio de la cabecera lo arranca. Ver `recolocarTrasElMoldeado`.
+     */
+    this.retomarElInicio();
+  }
+
+  /**
+   * **El final de los dos caminos de reinicio**, `resetFlight` y
+   * `reiniciarEnFinal`: lo que se dijo, se pidió y se explicó en el vuelo de
+   * antes, fuera.
+   *
+   * Estaba copiado a mano en los dos y ya no decía lo mismo: el de la final
+   * no volvía a leer las teclas ni las explicaciones, no olvidaba que el
+   * avión se había perdido ni lo dicho de los flaps tras la toma, así que la
+   * lección de aterrizar, al repetirse, empezaba con restos del intento
+   * anterior. Lo de cada camino —dónde aparece el avión, con qué motor y qué
+   * flaps— sigue en el suyo.
+   */
+  private olvidarElVueloAnterior(): void {
     this.dichoTrasLaToma = NADA_DICHO;
     this.hud.tutor.reset();
     // Lo que se pedía en el vuelo de antes ya no toca; lo aprendido, del perfil de ahora.
@@ -13629,6 +13694,21 @@ export class Game {
      * bien». Aquí sí empieza un vuelo, así que aquí sí se olvida. Ver
      * `audio/boca.ts`.
      */
+    this.olvidarLoDichoYLoMirado();
+    this.instructor.callar();
+    // Y lo que explicaba la pantalla de las teclas, si sigue abierta y no sonó.
+    if (this.keyScreen?.visible) this.decirLasTeclas();
+    this.updateBadge();
+  }
+
+  /**
+   * **Lo dicho y lo mirado, de cero**: la memoria de las bocas, la megafonía,
+   * los huecos, la ventanilla y la cabeza de quien vuela. Es de cada vuelo, y
+   * se olvida por los tres caminos que empiezan uno: los dos de reinicio y
+   * otro tramo desde donde está el avión. Eran tres copias a mano del mismo
+   * bloque. Ver `audio/boca.ts`.
+   */
+  private olvidarLoDichoYLoMirado(): void {
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
     this.reiniciarLoQueSuena();
@@ -13643,19 +13723,6 @@ export class Game {
     // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
     this.islenos?.reiniciar();
     this.loMasAltoDelVuelo = 0;
-    this.instructor.callar();
-    // Y lo que explicaba la pantalla de las teclas, si sigue abierta y no sonó.
-    if (this.keyScreen?.visible) this.decirLasTeclas();
-    this.updateBadge();
-    if (this.aircraft.helicoptero) this.posarEnElHelipuerto();
-    /*
-     * **Y el modo inicio, si estaba a medias, otra vez desde la llave.** Si no
-     * había empezado —saludando o esperando la llave—, sigue donde iba: el
-     * suelo se asienta unos segundos después de abrir y recoloca el avión con
-     * un reinicio, y eso no es volver a empezar. Pero con el motor parado, que
-     * el reinicio de la cabecera lo arranca. Ver `recolocarTrasElMoldeado`.
-     */
-    this.retomarElInicio();
   }
 
   /**
@@ -17263,26 +17330,7 @@ export class Game {
     this.wasOnGround = false;
     this.wasStalled = false;
     this.wasCrashed = false;
-    this.hud.tutor.reset();
-    // Vuelo nuevo, memoria nueva. Ver la nota de arriba.
-    BOCA.empezarDeCero();
-    this.megafonia.reiniciar();
-    this.reiniciarLoQueSuena();
-    this.huecos.reiniciar();
-    this.ventanilla.reiniciar();
-    this.cabinaDePasaje.reiniciar(this.aircraft.ventanillas ?? "persiana");
-    this.lucesDeNocheContadas = null;
-    // Y lo que se estaba mirando, con ella: vuelo nuevo, cabeza al frente.
-    this.loSenalado = null;
-    this.mirada.reiniciar();
-    this.reiniciarLaVentanillaAlt();
-    // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
-    this.islenos?.reiniciar();
-    this.loMasAltoDelVuelo = 0;
-    this.instructor.callar();
-    // Y lo que explicaba la pantalla de las teclas, si sigue abierta y no sonó.
-    if (this.keyScreen?.visible) this.decirLasTeclas();
-    this.updateBadge();
+    this.olvidarElVueloAnterior();
     // Y la escena de aterrizar, si estaba en marcha: ver `retomarElInicio`.
     this.retomarElInicio();
   }
@@ -18434,6 +18482,39 @@ export class Game {
     };
   }
 
+  /**
+   * **Un paso con un percance puesto**: el avión no se mueve.
+   *
+   * El intento se acabó: lo único que queda es mirar el dibujo y volver a
+   * empezar. Se para aquí y no en el modelo de vuelo porque no es física —el
+   * avión no está roto en ningún sentido que el modelo entienda— sino la
+   * regla del juego, igual que no dejar despegar fuera de la pista. Lo de
+   * después de esto en `unPaso` no corre: ver `Partida.update`.
+   */
+  private pasoConPercance(dt: number): void {
+    this.syncAircraftMesh(dt);
+    this.updateCamera(dt);
+    updateSky(this.sky, this.camera.position);
+    this.terrain.llevarElAguaA(this.camera.position.x, this.camera.position.z);
+    this.hud.senal.update(dt);
+    /*
+     * **Y el motor se calla.**
+     *
+     * La mezcla sigue al avión una vez por paso, más abajo en `unPaso`, y
+     * desde aquí no se llega nunca. Así que un percance dejaba el motor
+     * rugiendo al gas que tuviera en el último fotograma **para siempre**,
+     * detrás de la pantalla del golpe. `alSufrirPercance` pone el gas a cero
+     * pero nadie volvía a leerlo.
+     */
+    this.audio.update(this.flight.state, this.input.controls);
+    /*
+     * Y aquí **no se pinta**: lo hace el fotograma, una sola vez. Pintar
+     * también aquí era pintar dos veces por cuadro —y con el reloj a
+     * dieciséis, diecisiete veces—, con el medidor de rendimiento contando
+     * todas como si fueran fotogramas.
+     */
+  }
+
   /** Un paso del mundo. Lo de siempre, sin pintar. Ver `frame`. */
   private unPaso = (dt: number): void => {
     /*
@@ -18514,14 +18595,6 @@ export class Game {
     }
 
     /*
-     * **Con un percance puesto, el avión no se mueve.**
-     *
-     * El intento se acabó: lo único que queda es mirar el dibujo y volver a
-     * empezar. Se para aquí y no en el modelo de vuelo porque no es física —el
-     * avión no está roto en ningún sentido que el modelo entienda— sino la
-     * regla del juego, igual que no dejar despegar fuera de la pista.
-     */
-    /*
      * **Las horas de vuelo, que es de lo que va un cuaderno.**
      *
      * Se cuentan con las ruedas en el aire y se guardan cada medio minuto: no
@@ -18552,30 +18625,11 @@ export class Game {
       this.traza.push([Math.round(p.x), Math.round(-p.z)]);
     }
 
-    if (this.percance) {
-      this.syncAircraftMesh(dt);
-      this.updateCamera(dt);
-      updateSky(this.sky, this.camera.position);
-      this.terrain.llevarElAguaA(this.camera.position.x, this.camera.position.z);
-      this.hud.senal.update(dt);
-      /*
-       * **Y el motor se calla.**
-       *
-       * La mezcla sigue al avión una vez por paso, unas líneas más abajo, y
-       * desde aquí no se llega nunca. Así que un percance dejaba el motor
-       * rugiendo al gas que tuviera en el último fotograma **para siempre**,
-       * detrás de la pantalla del golpe. `sufrirPercance` pone el gas a cero
-       * pero nadie volvía a leerlo.
-       */
-      this.audio.update(this.flight.state, this.input.controls);
-      /*
-       * Y aquí **no se pinta**: lo hace el fotograma, una sola vez. Pintar
-       * también aquí era pintar dos veces por cuadro —y con el reloj a
-       * dieciséis, diecisiete veces—, con el medidor de rendimiento contando
-       * todas como si fueran fotogramas.
-       */
-      return;
-    }
+    /*
+     * **Con un percance puesto, el avión no se mueve.** La fase de la partida
+     * da su paso —ver `pasoConPercance`— y dice si este sigue.
+     */
+    if (!this.partida.update(dt)) return;
 
     /*
      * **De qué está hecho el suelo de debajo**, que el modelo de vuelo no
@@ -25109,7 +25163,6 @@ export class Game {
     this.hud.setGalones([]);
     this.ponerElGradoEnLaManga();
     // Y se quita el final del vuelo anterior, que ya no habla de este.
-    this.vueloTerminado = false;
     this.hud.cerrarFinDeVuelo();
   }
 
@@ -35424,7 +35477,7 @@ export class Game {
         !this.parteDeHoy.decision.salir &&
         this.enElPuestoDesde > 2.5 &&
         !this.enLaVuelta &&
-        !this.hayPanelAbierto &&
+        !this.partida.congeladaPor("panel") &&
         !this.hayInstrumentoAbierto
       ) {
         this.parteYaAbierto = true;
@@ -36070,7 +36123,7 @@ export class Game {
       );
     }
     // Si mientras tanto se arrancó o se abrió otra cosa, ya no se enseña.
-    if (!this.enElPuesto() || this.input.controls.engineOn || this.hayPanelAbierto) return;
+    if (!this.enElPuesto() || this.input.controls.engineOn || this.partida.congeladaPor("panel")) return;
     const parte = this.leerElParte();
     this.parteDeHoy = parte;
     this.abrirElParte(alReleer(antes, parte.decision) ?? undefined);

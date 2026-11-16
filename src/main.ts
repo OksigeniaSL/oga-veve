@@ -972,7 +972,7 @@ const atender = (): void => {
   /*
    * Y si está quieto porque hay algo abierto encima, el bucle sigue parado
    * pero el sonido despierta: quien vuelve a la ventana con un panel abierto
-   * está eligiendo algo. Ver `Game.quedarQuieto`.
+   * está eligiendo algo. Ver `Game.congelarElMundo`.
    */
   game.despertarElSonido();
 };
