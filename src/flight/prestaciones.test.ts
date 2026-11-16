@@ -377,10 +377,16 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
      * mínimo de certificación y las velocidades publicadas de las avionetas
      * llevan encima el margen que el propio manual les añade. El Pykasu entra
      * a 64 nudos, que es lo que dice el POH de un 172 con flaps 30.
+     *
+     * **En el reactor el suelo es 1,23**, porque la pérdida de esta cuenta es
+     * la de un g, y sobre ella la norma de transporte pide 1,23 (CS 25.125 b 2
+     * i y 14 CFR 25.125 desde la enmienda 25-108): es el mismo 1,3 de antes
+     * sobre la pérdida mínima de la maniobra, un 6 % más baja. El E170 queda
+     * ahí con la Vref de la FAA (enmienda H20e del ADR 0027).
      */
     it("cruza el umbral a 1,3 veces la pérdida con flaps, como manda", () => {
       const vs0 = perdidaDeLaFicha(a, true);
-      expect(a.approachSpeed / vs0).toBeGreaterThan(1.25);
+      expect(a.approachSpeed / vs0).toBeGreaterThan(esDeChorro(a) ? 1.229 : 1.25);
       expect(a.approachSpeed / vs0).toBeLessThan(1.55);
     });
 

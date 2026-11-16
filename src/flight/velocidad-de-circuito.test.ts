@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { AIRCRAFT, MEDIDOS } from "./aircraft";
+import { AIRCRAFT, MEDIDOS, vrefDeSuCategoria } from "./aircraft";
 import { vfeDeAterrizaje } from "./limites";
 import {
   MARGEN_DE_CIRCUITO,
@@ -50,8 +50,10 @@ describe("cada avión tiene su velocidad de circuito, y es de verdad", () => {
       const kt = a.velocidadDeCircuito / NUDO;
       // Un circuito no se vuela a la de cruzar el umbral: se vuela con margen.
       expect(a.velocidadDeCircuito).toBeGreaterThan(a.approachSpeed * 1.1);
-      // Ni por encima de lo que permite su categoría.
-      expect(kt).toBeLessThanOrEqual(topeDeSuCategoria(a.approachSpeed / NUDO));
+      // Ni por encima de lo que permite su categoría, que se cuenta con la
+      // Vref a su masa máxima al aterrizar: el E170 de la ficha cruza a 117,7
+      // nudos y es de la C (enmienda H20e del ADR 0027).
+      expect(kt).toBeLessThanOrEqual(topeDeSuCategoria(vrefDeSuCategoria(a) / NUDO));
       // Y configurado: si lleva flaps, a esa velocidad se pueden sacar.
       // Con los de aterrizaje, que es la placa más baja.
       if (a.llevaFlaps)

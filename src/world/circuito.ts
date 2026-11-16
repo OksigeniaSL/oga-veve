@@ -74,6 +74,7 @@ import {
   Points,
   PointsMaterial,
 } from "three";
+import { vrefDeSuCategoria } from "../flight/aircraft";
 import { GLIDE_SLOPE } from "./runway-guide";
 import type { Scenario } from "./scenarios";
 import { hastaElUmbralDeToma } from "./umbral-desplazado";
@@ -230,11 +231,18 @@ export const ESTABILIZADO_EN_FINAL = 500 * 0.3048;
  * encima del suelo.
  */
 export function escalaDelCircuitoDe(
-  a: { readonly approachSpeed: number; readonly ventanillas: unknown },
+  a: {
+    readonly approachSpeed: number;
+    readonly mass: number;
+    readonly masaMaximaAlAterrizar?: number;
+    readonly ventanillas: unknown;
+  },
   /** La pista en la que toca, con su senda. Ver `sendaDe`. */
   runway: Pick<Pista, "senda"> = {},
 ): number {
-  const porVelocidad = escalaDeCircuito(a.approachSpeed);
+  // Con la Vref de su categoría, que es la del circuito publicado que le toca:
+  // el E170 de la ficha cruza a 117,7 nudos y es de la C. Ver `manoPublicada`.
+  const porVelocidad = escalaDeCircuito(vrefDeSuCategoria(a));
   if (a.ventanillas === null) return porVelocidad;
   return Math.max(porVelocidad, ESTABILIZADO_EN_FINAL / (BASE_A_FINAL * Math.tan(sendaDe(runway))));
 }

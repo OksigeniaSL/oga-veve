@@ -336,11 +336,16 @@ describe("y en la ficha", () => {
   /*
    * Y el Seneca, por debajo: 0,23, que es lo que hace rodar lo que dice su
    * manual. Frena como su tipo, no como su clase (ADR 0027).
+   *
+   * **Y el E170, por encima: 0,49**, lo más que deja frenar `frenada.test.ts`
+   * —medio g de media—, hacia la pista de Embraer a su máximo al aterrizar
+   * con la Vref de la FAA, el aire de su clase y los dos segundos de la AC
+   * 91-79A: cerrarla del todo pediría 0,53 (enmienda H20e del ADR 0027).
    */
   it("frenan entre tres décimas y media g, según su clase", () => {
     for (const a of AIRCRAFT) {
       expect(a.frenos.enSeco, a.id).toBeGreaterThanOrEqual(a.id === "jaz-40" ? 0.2 : 0.3);
-      expect(a.frenos.enSeco, a.id).toBeLessThanOrEqual(0.45);
+      expect(a.frenos.enSeco, a.id).toBeLessThanOrEqual(a.id === "jaz-90" ? 0.5 : 0.45);
     }
   });
 });

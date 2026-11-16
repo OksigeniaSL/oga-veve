@@ -488,10 +488,34 @@ export function velocidadSinEmpuje(
  * el avión; por debajo, lo llevan las ruedas.
  *
  * No hace falta otro número en la ficha: la Vref **es** 1,3 veces esta —es
- * la definición, y es como están puestas las de la flota—, así que sale de
- * ella. Sirve para saber si un avión que toca el suelo estaba rodando o
- * volando: ver `percanceAlTocar` en `percance.ts`.
+ * la definición, y es como están puestas casi todas las de la flota—, así que
+ * sale de ella. Sirve para saber si un avión que toca el suelo estaba rodando
+ * o volando: ver `percanceAlTocar` en `percance.ts`.
+ *
+ * **El E170 no**: con la Vref de la FAA la tiene a 1,23 veces su pérdida de un
+ * g, el suelo de la norma de transporte de hoy (ADR 0027, enmienda H20e), y
+ * esta cuenta le da una pérdida un 5 % por debajo de la de su ficha.
  */
+/**
+ * **La Vref con la que se cuenta su categoría de aproximación**, m/s: la de
+ * su masa máxima al aterrizar, con la raíz de la masa. La categoría —A, B, C,
+ * D— no cambia con lo que se cargue ese día, y es la que dice qué circuito
+ * publicado vuela y hasta dónde puede ir en él.
+ *
+ * El E170 es el que lo necesita: a la masa de la ficha cruza el umbral a
+ * 117,7 nudos, que serían de la B, y es de la C, con 124 a su máximo al
+ * aterrizar (FAA, *Aircraft Characteristics Data*, y Transport Canada, OER de
+ * los E-Jets, § 13.4). ADR 0027, enmienda H20e.
+ */
+export function vrefDeSuCategoria(a: {
+  readonly approachSpeed: number;
+  readonly mass: number;
+  readonly masaMaximaAlAterrizar?: number;
+}): number {
+  const maxima = a.masaMaximaAlAterrizar ?? a.mass;
+  return a.approachSpeed * Math.sqrt(Math.max(a.mass, maxima) / a.mass);
+}
+
 export function velocidadDePerdida(a: {
   readonly approachSpeed: number;
 }): number {
@@ -1208,6 +1232,13 @@ export interface AircraftConfig {
    * honestamente — el de verdad depende además del peso de ese día.
    */
   approachSpeed: number;
+  /**
+   * **Su masa máxima al aterrizar**, kg, en el avión cuya ficha pesa menos:
+   * la que dice su categoría de aproximación, que se cuenta con la Vref a esa
+   * masa y no a la del día (PANS-OPS; FAA, InFO 23001). Sin ella, la de la
+   * ficha. Ver `vrefDeSuCategoria`.
+   */
+  masaMaximaAlAterrizar?: number;
   /**
    * **A qué se vuela el circuito de tráfico**, m/s.
    *
@@ -3016,13 +3047,20 @@ export const ARASUNU: AircraftConfig = {
     cnBeta: 0.09,
     cnR: -0.16,
     /*
-     * **El timón que da su Vmc por debajo de lo que su manual permite.** La
-     * Vmc del 1900D no se ha encontrado publicada, pero sus velocidades de
-     * despegue la acotan: la Vr no puede bajar de 1,05 veces la Vmc (14 CFR
-     * 23.51 c 2 ii), y su manual rota a 102 nudos a 16.000 lb (TSB,
-     * A97C0229). La Vmc del 1900D va así por debajo de 97 nudos; con este
-     * timón, la del modelo sale en 85. Era 0,035, que con el empuje y el ala
-     * del 1900D la subía por encima de su V1.
+     * **El timón que da su Vmc por debajo de lo que su manual permite.** Sus
+     * velocidades de despegue la acotan: la Vr no puede bajar de 1,05 veces
+     * la Vmc (14 CFR 23.51 c 2 ii), y su manual rota a 102 nudos a 16.000 lb
+     * (TSB, A97C0229). Con este timón, la del modelo sale en 85. Era 0,035,
+     * que con el empuje y el ala del 1900D la subía por encima de su V1.
+     *
+     * **La de su manual son 92 nudos indicados**, y no se ha puesto todavía:
+     * «Air Minimum Control Speed VMCA, Flaps 0°: 95 KCAS, 92 KIAS; Flaps 17°:
+     * 93 KCAS, 92 KIAS» (Raytheon, *1900D Airliner* AFM, sección II,
+     * *Limitations*, p. 2-3). La da un timón de 0,042, y con él el pie de
+     * tecla en la carrera —que en este avión pide `pieDeTecla` del pedal—
+     * deja de volver al eje a tiempo en el peldaño de arriba
+     * (`carrera-fina.test.ts`, 16,8 s donde se piden 8). Ponerla es afinar
+     * antes ese pie. ADR 0027, enmienda H20e.
      */
     cnRudder: 0.05,
     cnAileron: -0.003,
@@ -3130,13 +3168,23 @@ export const ARAI: AircraftConfig = {
   aerofrenos: 0.025,
   /*
    * **Frenos de carbono con antideslizante modulado, frenos de tierra y
-   * autofreno**, como cualquier reactor de su clase. Cuatro décimas y media
-   * en seco: con los frenos de tierra arriba, la rodadura del E-170 a su peso
-   * máximo de aterrizaje (1.228 m de pista de aterrizaje en su manual de
-   * aeropuertos, de los que unos 300 son el aire) sale a cuatro décimas y
-   * media de g de media. Neumáticos a unas 170 psi.
+   * autofreno**, como cualquier reactor de su clase. Neumáticos a unas 170
+   * psi.
+   *
+   * **Cuarenta y nueve centésimas en seco: lo más que deja frenar la casa,
+   * hacia la pista de Embraer con la Vref de la FAA.** A su máximo al
+   * aterrizar de 32.800 kg Embraer publica 1.228 m de pista (hoja de
+   * especificaciones del E170), la distancia del manual partida por 0,6: 737
+   * m desde los cincuenta pies. Con los 123 nudos de Vref de la FAA a esa
+   * masa, la senda de su clase y los dos segundos entre tocar y frenar del
+   * todo (`segundosHastaFrenar`), cerrarla pediría 0,53, y con 0,53 el avión
+   * frena de media más de medio g, que es frenar como un coche
+   * (`frenada.test.ts`). Con 0,49 frena 0,49 g y pide 1.266 m, un 3 % más que
+   * Embraer: lo que falta es, casi seguro, el aire de su clase o la Vref de
+   * otros flaps (ADR 0027, enmienda H20e). Eran 0,45, calibrados sin esos
+   * segundos y cruzando a unos 127 nudos que no tenían fuente.
    */
-  frenos: { enSeco: 0.45, psi: 170, antideslizante: 0.8 },
+  frenos: { enSeco: 0.49, psi: 170, antideslizante: 0.8 },
   frenosDeTierra: { resistencia: 0.07, sustentacion: 0.7 },
   autofreno: true,
   // Los de los E-Jets, que en la carrera no cantan nada. Ver `cantosDeLaCarrera`.
@@ -3156,8 +3204,16 @@ export const ARAI: AircraftConfig = {
    * de una avioneta. **Si además la dice una voz no se ha podido leer** en
    * ninguna fuente —ese registrador no se guardó, y el «STALL» de su tabla de
    * llamadas es el de quien vuela—, así que se queda el «stall, stall» que
-   * tenía, como supuesto. Lo mismo el *airspeed low*: sin fuente, como
-   * estaba. ADR 0027, enmienda H10a.
+   * tenía, como supuesto. ADR 0027, enmienda H10a.
+   *
+   * **La velocidad baja no la dice: esa voz llegó con el E2.** En el informe
+   * de evaluación operacional de Transport Canada de los E-Jets (rev. 1,
+   * 3-11-2023, apéndice 3, p. 69), entre lo que cambia del E190 al E190-E2:
+   * «AURAL ALERTS — "Low Speed, Low Speed" implemented». El E1 no la tenía, y
+   * el E170 es E1, con el mismo tipo de licencia que el E190 (la tabla de la
+   * portada). Que falte también en el E170 es por familia: el informe lo dice
+   * del E190. Llevaba un *airspeed low* sin fuente; ahora no tiene aviso
+   * sonoro propio, y avisa la pérdida cuando llega. Enmienda H20e.
    *
    * **El motor parado, una precaución**: «EICAS amber FAIL on N1» y su lista,
    * «QRH EAP "ENG FAIL"» (C. Regli, *Embraer EMB190 – Summary*, 2025, p.
@@ -3167,7 +3223,7 @@ export const ARAI: AircraftConfig = {
    */
   avisosDeABordo: {
     perdida: { suena: "sacudidor", voz: true },
-    velocidadBaja: "voz",
+    velocidadBaja: null,
     automatico: "autopilot",
     motorParado: "campanada",
     /*
@@ -3222,7 +3278,7 @@ export const ARAI: AircraftConfig = {
    * 230 con la primera a 165 con la de aterrizaje.
    *
    * La de aterrizaje queda con el margen que pide la prueba de siempre: se
-   * cruza el umbral a 132, y un límite que se pasa volando la aproximación de
+   * cruza el umbral a 118, y un límite que se pasa volando la aproximación de
    * manual no es un límite, es una trampa.
    */
   vfePorMuesca: [250, 200, 175],
@@ -3230,41 +3286,53 @@ export const ARAI: AircraftConfig = {
   alivioDeFlaps: true,
   mmo: 0.82,
   /*
-   * **Ciento treinta y dos nudos, que es como entra un regional.**
+   * **La Vref del E170, la de la FAA: 124 nudos a su máximo al aterrizar**,
+   * 73.413 lb, que a la masa de la ficha, con la raíz de la masa, son 117,7.
+   * Es la base de datos de características de aeronaves de la FAA
+   * (*Aircraft Characteristics Data*, octubre de 2024, fila E170, «Embraer ERJ
+   * 170-100 IGW»: `Approach_Speed_knot` 124, `MALW_lb` 73.413, categoría C,
+   * «AAC validated by Flight Standardization Board (FSB) report»), la misma de
+   * la que sale la del 787-9. Y la categoría C es la que da a todos los E-Jets
+   * el informe de evaluación operacional de Transport Canada (rev. 1, 2023,
+   * § 13.4). La categoría se cuenta con la Vref a la masa máxima al aterrizar,
+   * no con la de la ficha.
    *
-   * Estaba en 90 m/s —175 nudos—, y eso no era una velocidad de aproximación:
-   * era 1,3 veces la pérdida **limpia**. La regla de verdad son 1,3 veces la
-   * pérdida con los flaps de aterrizaje puestos, que en este avión son 52,4
-   * m/s. Un E-170 entra a 125-130 nudos.
+   * Eran 132, sin fuente: 1,3 veces la pérdida con los flaps de aterrizaje de
+   * un CL máximo de su clase. Enmienda H20e del ADR 0027.
    */
-  approachSpeed: 68,
+  approachSpeed: 124 * 0.514444 * Math.sqrt(30000 / (73413 * 0.45359237)),
+  // Las 73.413 lb de esa misma fila de la FAA: la que cuenta su categoría.
+  masaMaximaAlAterrizar: 73413 * 0.45359237,
   /*
-   * **Ciento setenta nudos**: Vref más treinta y ocho, la de maniobra con los
-   * flaps del viento en cola, y por debajo de su tope de flaps. Cruza el
-   * umbral a 132, así que es categoría C, que deja hasta 180.
+   * **Ciento setenta nudos**: la de maniobra con los flaps del viento en cola,
+   * y por debajo de su tope de flaps. Es categoría C —124 nudos de Vref a su
+   * máximo al aterrizar, arriba—, que deja hasta 180.
    *
    * Vira con kilómetro y medio de radio, que es lo que mide el pasillo de su
    * circuito contra el terreno. Ver `pasilloDelCircuito`.
    */
   velocidadDeCircuito: 170 * 0.514444,
   /*
-   * **Ciento treinta y tres nudos, la Vr de su peso**: 1,1 veces su pérdida con
-   * los flaps de despegue, 121. Ver `VR_SOBRE_LA_PERDIDA`.
+   * **Ciento veintinueve nudos, la Vr de su peso**: 1,1 veces su pérdida con
+   * los flaps de despegue, 117. Ver `VR_SOBRE_LA_PERDIDA`.
    *
    * Eran 152, sin fuente, y por encima de su propia V2: con ellos rodaba 901 m
    * hasta rotar y el hangar le pedía 1.439 de pista, donde Embraer da 1.151 con
    * el pasaje lleno en un vuelo de quinientas millas, más pesado que el de la
-   * ficha (hoja de especificaciones del E170). Con 133 pide 1.124, la de abortar
-   * desde su V1 (`acelerarYPararDeSuNorma`). La V1 baja en la misma proporción,
-   * de 140 a 123 (H7, 13-11-2026).
+   * ficha (hoja de especificaciones del E170). Con 133 pedía 1.124, la de
+   * abortar desde su V1 (`acelerarYPararDeSuNorma`), y la V1 bajó en la misma
+   * proporción, de 140 a 123 (H7, 13-11-2026). Y de 133 a 129, y la V1 de 123
+   * a 119, cuando la Vref de la FAA subió la sustentación de sus flaps
+   * (`flapsLift`, abajo): la regla es la misma y la pérdida con los de
+   * despegue bajó de 121 a 117 (enmienda H20e).
    *
    * **Sin V2 de su tipo** con su masa: sale de su norma (`conUnMotor`), 1,13
-   * veces su pérdida con los flaps de despegue, 136,6 nudos, tres y medio por
+   * veces su pérdida con los flaps de despegue, 132,4 nudos, tres y medio por
    * encima de su Vr. Un E175, con la misma ala y flaps 1, sale con la V2 dos
    * nudos por encima de la Vr (AAIB, G-FBJK, *Bulletin* 6/2019): enmienda H10e.
    */
-  decisionSpeed: 123 * 0.514444,
-  rotationSpeed: 133 * 0.514444,
+  decisionSpeed: 119 * 0.514444,
+  rotationSpeed: 129 * 0.514444,
   batalla: 11.5,
   // 3,35: la panza a metro setenta del asfalto y las góndolas a medio metro,
   // que es como va un reactor de esta clase. Con 2,8 la panza quedaba a metro
@@ -3309,11 +3377,23 @@ export const ARAI: AircraftConfig = {
    * despegando no se iba del suelo ni en doce kilómetros de pista.
    *
    * Un reactor de línea con los flaps de aterrizaje añade del orden de seis
-   * centésimas de resistencia y llega a un CL máximo cerca de 2,5. Esos son
-   * los números.
+   * centésimas de resistencia. Esos son los números.
+   *
+   * **Y el CL máximo con los de aterrizaje, 2,76, lo pide su Vref.** La
+   * norma no deja la Vref por debajo de 1,23 veces la pérdida de un g en
+   * configuración de aterrizaje (CS 25.125 b 2 i y 14 CFR 25.125), así que
+   * con los 117,7 nudos de la FAA a la masa de la ficha esa pérdida no puede
+   * pasar de 95,7. Con 1,05 de los flaps —un CL máximo de 2,43, el de «su
+   * clase»— eran 101,9, y la Vref de la FAA habría quedado a 1,16 veces la
+   * pérdida, por debajo de lo que deja la norma. Con 1,38 queda a 1,23, en el
+   * borde: es lo menos que hay que mover, y a cuántas veces su pérdida pone
+   * Embraer la Vref no se ha leído. La sustentación de los flaps es una recta
+   * con la palanca, así que la de los de despegue sube con ella y baja su
+   * pérdida, de 121 a 117 nudos; la Vr, arriba, la sigue. Enmienda H20e del
+   * ADR 0027.
    */
   llevaFlaps: true,
-  flapsLift: 1.05,
+  flapsLift: 1.38,
   flapsDrag: 0.055,
   /*
    * Cinco, quince y treinta: los topes de un bimotor de pasillo único. El
@@ -3636,14 +3716,21 @@ export const YVAGA: AircraftConfig = {
   decisionSpeed: 140 * 0.514444,
   rotationSpeed: 145 * 0.514444,
   /*
-   * **La V2 de su tipo**: la de Jenkinson de arriba, 169 nudos a 340.195 kg,
-   * que a la masa de la ficha son 146,6. **No es la que enseña**: la V2 no
-   * puede bajar de 1,1 veces la Vmc (CS 25.107 b), y la del modelo, 139,5,
-   * pide 153,5. Esa V2 publicada dice que la VMCA del 747 de verdad no pasa
-   * de 133 nudos; la del modelo queda por revisar (enmienda H10e del ADR
-   * 0027).
+   * **La V2 de su tipo, la de los flaps de su Vr**: 171 nudos a 708.002 lb
+   * con flaps a diez (NTSB, AAR-72-17, Pan Am 845, p. 3), el mismo documento
+   * y los mismos flaps que la Vr de 164 de la que sale la de arriba; a la
+   * masa de la ficha, 152,6. **No es la que enseña**, por poco: la V2 no puede
+   * bajar de 1,1 veces la Vmc (CS 25.107 b), y la del modelo, 139,5, pide
+   * 153,4, un 0,5 % más.
+   *
+   * Era la de Jenkinson de arriba, 169 nudos a 340.195 kg sin decir con qué
+   * flaps, que escalada daba 146,6 y hacía parecer alta la Vmc: «no pasa de
+   * 133» (enmienda H10e). Esa cota era una cuenta: la Vmc no baja con la
+   * masa, y lo que dice cada V2 publicada es la VMCA a su masa, no más de 153,6
+   * con la de Jenkinson y de 155,5 con la de la NTSB. Enmienda H20e del ADR
+   * 0027.
    */
-  takeoffSafetySpeed: 169 * Math.sqrt(255826 / 340195) * 0.514444,
+  takeoffSafetySpeed: 171 * Math.sqrt(255826 / (708002 * 0.45359237)) * 0.514444,
   batalla: 25.6,
   // 5,9: la panza a dos metros y medio largos y los motores de dentro a casi
   // un metro del suelo, como en un avión de esta clase. Con 5,2 las ruedas

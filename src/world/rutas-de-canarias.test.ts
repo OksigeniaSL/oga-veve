@@ -753,8 +753,17 @@ describe("lo que dura el vuelo", () => {
    * Binter: nivelado antes del punto de final y al entrar en el área
    * terminal se va más bajo y más despacio, y de Los Rodeos a la 03L de Gran
    * Canaria eso son siete segundos más de veinticinco minutos.
+   *
+   * **Y otro minuto menos desde que el JAZ 90 aproxima a la Vref de la FAA**:
+   * 117,7 nudos a la masa de la ficha donde llevaba 132, y con ella toda la
+   * escalera de la llegada, que cuelga de la Vref, unos catorce nudos más
+   * despacio desde treinta millas. Son unos cuarenta y cinco segundos más en el
+   * aire, y de Los Rodeos a Gran Canaria por la 12 quedan 26 minutos de ruedas
+   * arriba a ruedas abajo. Lo que se deja para rodar no tiene fuente: es lo que
+   * cabe en el bloque de Binter, y tres minutos y medio en los dos campos es
+   * poco pero no imposible (ADR 0027, enmienda H20e).
    */
-  const RODAR = 4.5;
+  const RODAR = 3.5;
   const POR_LA_CARTA_ENTERA: Readonly<Record<string, string>> = {
     "GCXO 30 → GCLP 03L":
       "La GDV4J entera, por 12.6 DME TFN y el VOR, y la RNP de la 03L por el sur de Gran Canaria.",

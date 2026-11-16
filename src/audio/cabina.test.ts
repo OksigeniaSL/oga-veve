@@ -349,6 +349,14 @@ describe("los avisos de a bordo de cada tipo", () => {
     expect(ARAI.avisosDeABordo?.perdida.suena).toBe("sacudidor");
   });
 
+  it("y no dice la velocidad baja: esa voz es del E2", () => {
+    // «"Low Speed, Low Speed" implemented», de las diferencias del E190 al
+    // E190-E2 (Transport Canada, OER de los E-Jets, rev. 1, 2023, p. 69).
+    // Enmienda H20e del ADR 0027.
+    expect(loDiceElAvion("cabina.airspeedLow", ARAI)).toBe(false);
+    expect(loQueSuenaEnEsteAvion("cabina.airspeedLow", ARAI)).toBeNull();
+  });
+
   it("el 1900D avisa la pérdida con bocina, sin voz, y no tiene voz de velocidad baja", () => {
     expect(loDiceElAvion("cabina.stall", ARASUNU)).toBe(false);
     expect(loQueSuenaEnEsteAvion("cabina.stall", ARASUNU)).toBe("mientras dura");
