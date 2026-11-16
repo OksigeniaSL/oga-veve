@@ -287,6 +287,16 @@ describe("el pedal en la carrera", () => {
     }
   });
 
+  it("en Tukã la flecha, que allí lleva el timón en la carrera, tampoco tira de lado más de medio g", () => {
+    // El timón automático en tierra da con el volante lo que la rueda ya no
+    // da: ver `timonEnTierra` en `fdm.ts`.
+    for (const c of casos.filter((x) => x.tier === TUKA)) {
+      const r = delToque(c.a, c.tier, c.kt, "flecha");
+      expect(r.unSegundo, donde(c)).toBeLessThan(6);
+      expect(r.g, donde(c)).toBeLessThan(0.5);
+    }
+  });
+
   it("desviado 5 m, un piloto a toques de pie vuelve al eje sin bandazos", () => {
     for (const c of casos) {
       const r = alEje(c.a, c.tier, c.kt);
