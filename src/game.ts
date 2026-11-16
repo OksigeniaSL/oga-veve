@@ -19384,8 +19384,8 @@ export class Game {
      * **El helicóptero, sin el aviso de terreno de un avión**: son las envolventes
      * del GPWS de un ala —bajo a ciento veinte metros, «subí» bajando a sesenta—, y
      * un helicóptero vuela bajo por oficio y se posa en cualquier sitio. Se cantaba
-     * «terrain, pull up» con su «Subí» en el vuelo libre al volver al helipuerto, y
-     * sin motor es lo que no se puede hacer. El de los helicópteros que lo llevan
+     * «terrain, pull up» con su «Subí» en el vuelo libre, y sin motor es lo que no
+     * se puede hacer. El de los helicópteros que lo llevan
      * es otra caja, con otros modos (ADR 0026, enmienda H19c), y el JAZ 70 no la
      * lleva: no se inventa.
      */
