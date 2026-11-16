@@ -30,7 +30,7 @@
  */
 
 import type { Aerodrome, Pista } from "./aerodrome";
-import type { Pavimento } from "./vegetation";
+import { ANCHO_RODADURA } from "./ancho-de-rodadura";
 import { enEjesDePista } from "./rumbo";
 import type { Scenario } from "./scenarios";
 
@@ -111,17 +111,16 @@ export function enAlgunaPista(aero: Aerodrome, x: number, z: number): boolean {
 /**
  * De qué está hecho el suelo en un punto del mundo.
  *
- * `pavimento` es el mapa de calles y plataformas, que es la parte cara y se
- * construye una vez; puede no haberlo —un escenario sin aeródromo real—, y
- * entonces solo cuentan la pista y el campo.
+ * Las calles y las plataformas salen del aeródromo del escenario, con su borde
+ * de verdad: ver `pavimentoDe`. Sin aeródromo —una pista inventada— solo
+ * cuentan la pista y el campo.
  */
 export function superficieEn(
   escenario: Scenario,
-  pavimento: Pavimento | null,
   x: number,
   z: number,
 ): Superficie {
-  return sueloEn(escenario, pavimento, x, z).superficie;
+  return sueloEn(escenario, x, z).superficie;
 }
 
 /**
@@ -137,7 +136,6 @@ export function superficieEn(
  */
 export function sueloEn(
   escenario: Scenario,
-  pavimento: Pavimento | null,
   x: number,
   z: number,
 ): { superficie: Superficie; dicho: string | null } {
@@ -159,11 +157,11 @@ export function sueloEn(
     };
   }
 
-  if (pavimento?.hay(x, z)) {
+  if (pavimentoDe(aero).cubre(x, z)) {
     /*
-     * Las calles y las plataformas van todas juntas: el mapa dice que hay
-     * pavimento pero no de cuál, porque se pinta como un solo dibujo. Así que
-     * manda lo que diga la primera plataforma del fichero y, si no lo dice
+     * Las calles y las plataformas van todas juntas: el fichero no dice de
+     * qué son las calles, y se pintan con las plataformas como un solo
+     * dibujo. Así que manda lo que diga la primera plataforma del fichero y, si no lo dice
      * —OpenStreetMap muchas veces no lo dice—, lo que diga la pista: un campo
      * de hierba lo es entero, y uno de asfalto también.
      */
@@ -173,3 +171,188 @@ export function sueloEn(
 
   return { superficie: "campo", dicho: null };
 }
+
+/**
+ * **Las calles y las plataformas, con su borde de verdad**, para saber qué
+ * pisan las ruedas.
+ *
+ * Esto le preguntaba al mapa de la vegetación —`mapaDePavimento`—, y ese mapa
+ * no es el pavimento: es **donde no se plantan árboles**, con treinta metros a
+ * cada lado del eje de cada calle y quince alrededor de cada plataforma,
+ * porque las alas sobresalen mucho del tren. Para los árboles está bien; para
+ * las ruedas, no. Rodando por la hierba junto a una calle, el avión frenaba y
+ * sonaba como en el asfalto en toda esa franja, y lo que enseña la hierba
+ * —que cuesta más, que traquetea y que ahí no se rueda— no se notaba justo
+ * donde uno se sale. Se vio con la vuelta a la raya con el tractor, que para
+ * saber si el avión estaba en la hierba tuvo que medir con `enElPavimento`
+ * mientras el rozamiento lo daba por asfalto. Ver #193.
+ *
+ * La geometría es la de `enElPavimento` sin margen —el eje de cada calle con
+ * su media anchura y el polígono de cada plataforma—, que es también la que
+ * se dibuja: lo que se ve como asfalto es lo que se rueda como asfalto.
+ *
+ * **Y con una rejilla delante, porque se pregunta en cada fotograma.** Mirar
+ * todas las calles cada vez son, en Barajas, tres mil cuatrocientos tramos por
+ * fotograma. La rejilla apunta en cada celda los tramos y las plataformas que
+ * la tocan, y la pregunta mide solo esos: el mismo número que
+ * `enElPavimento`, con un puñado de cuentas. Ver `superficie.test.ts`.
+ */
+export class PavimentoDeVerdad {
+  /**
+   * Lado de la celda, m. Grande, para que apuntar una calle cueste poco; y no
+   * tanto que una celda de una plataforma llena de calles lleve docenas.
+   */
+  static readonly CELDA = 32;
+
+  private constructor(
+    /** Los tramos de calle, de cinco en cinco: ax, az, bx, bz y su media anchura al cuadrado. */
+    private readonly tramos: Float64Array,
+    /** Las plataformas, en coordenadas del mundo. */
+    private readonly plataformas: readonly (readonly (readonly [number, number])[])[],
+    private readonly minX: number,
+    private readonly minZ: number,
+    private readonly columnas: number,
+    private readonly filas: number,
+    /**
+     * Lo que toca cada celda: índices de tramo y, a partir del número de
+     * tramos, de plataforma.
+     */
+    private readonly celdas: readonly (Int32Array | undefined)[],
+  ) {}
+
+  static de(aero: Aerodrome): PavimentoDeVerdad {
+    const tramos: number[] = [];
+    // Del fichero al mundo: la Y del norte es la Z negativa.
+    for (const calle of aero.taxiways) {
+      const media = (calle.widthM ?? ANCHO_RODADURA) / 2;
+      for (let i = 0; i < calle.path.length - 1; i++) {
+        const a = calle.path[i]!;
+        const b = calle.path[i + 1]!;
+        tramos.push(a[0], -a[1], b[0], -b[1], media * media);
+      }
+    }
+    const plataformas = aero.aprons
+      .map((p) => p.polygon.map((q) => [q[0], -q[1]] as const))
+      .filter((p) => p.length >= 3);
+
+    // La caja de cada cosa, con su media anchura: es lo que se apunta en las celdas.
+    const n = tramos.length / 5;
+    const cajas: [number, number, number, number][] = [];
+    for (let i = 0; i < n; i++) {
+      const k = i * 5;
+      const media = Math.sqrt(tramos[k + 4]!);
+      cajas.push([
+        Math.min(tramos[k]!, tramos[k + 2]!) - media,
+        Math.min(tramos[k + 1]!, tramos[k + 3]!) - media,
+        Math.max(tramos[k]!, tramos[k + 2]!) + media,
+        Math.max(tramos[k + 1]!, tramos[k + 3]!) + media,
+      ]);
+    }
+    for (const poli of plataformas) {
+      const xs = poli.map((q) => q[0]);
+      const zs = poli.map((q) => q[1]);
+      cajas.push([Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs)]);
+    }
+    if (!cajas.length) return new PavimentoDeVerdad(new Float64Array(0), [], 0, 0, 0, 0, []);
+
+    let minX = Infinity;
+    let minZ = Infinity;
+    let maxX = -Infinity;
+    let maxZ = -Infinity;
+    for (const [x0, z0, x1, z1] of cajas) {
+      minX = Math.min(minX, x0);
+      minZ = Math.min(minZ, z0);
+      maxX = Math.max(maxX, x1);
+      maxZ = Math.max(maxZ, z1);
+    }
+    const C = PavimentoDeVerdad.CELDA;
+    const columnas = Math.max(1, Math.ceil((maxX - minX) / C));
+    const filas = Math.max(1, Math.ceil((maxZ - minZ) / C));
+    const listas: number[][] = [];
+    cajas.forEach(([x0, z0, x1, z1], id) => {
+      const c0 = Math.max(0, Math.floor((x0 - minX) / C));
+      const c1 = Math.min(columnas - 1, Math.floor((x1 - minX) / C));
+      const f0 = Math.max(0, Math.floor((z0 - minZ) / C));
+      const f1 = Math.min(filas - 1, Math.floor((z1 - minZ) / C));
+      for (let f = f0; f <= f1; f++)
+        for (let c = c0; c <= c1; c++) (listas[f * columnas + c] ??= []).push(id);
+    });
+    const celdas: (Int32Array | undefined)[] = [];
+    for (let i = 0; i < columnas * filas; i++) {
+      const l = listas[i];
+      celdas.push(l ? Int32Array.from(l) : undefined);
+    }
+    return new PavimentoDeVerdad(
+      new Float64Array(tramos),
+      plataformas,
+      minX,
+      minZ,
+      columnas,
+      filas,
+      celdas,
+    );
+  }
+
+  /** ¿Hay calle o plataforma bajo este punto del mundo? Sin margen: el borde dibujado. */
+  cubre(x: number, z: number): boolean {
+    const C = PavimentoDeVerdad.CELDA;
+    const c = Math.floor((x - this.minX) / C);
+    const f = Math.floor((z - this.minZ) / C);
+    if (c < 0 || f < 0 || c >= this.columnas || f >= this.filas) return false;
+    const ids = this.celdas[f * this.columnas + c];
+    if (!ids) return false;
+    const t5 = this.tramos;
+    const n = t5.length / 5;
+    for (const id of ids) {
+      if (id >= n) {
+        if (dentroDelPoligono(this.plataformas[id - n]!, x, z)) return true;
+        continue;
+      }
+      const k = id * 5;
+      const ax = t5[k]!;
+      const az = t5[k + 1]!;
+      const dx = t5[k + 2]! - ax;
+      const dz = t5[k + 3]! - az;
+      // La cuenta de `aLaPolilinea`: lo más cerca del tramo, sin salirse de él.
+      const l = dx * dx + dz * dz || 1;
+      const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l));
+      const ex = x - (ax + t * dx);
+      const ez = z - (az + t * dz);
+      if (ex * ex + ez * ez < t5[k + 4]!) return true;
+    }
+    return false;
+  }
+}
+
+/** Punto dentro de un polígono, por el número de cruces: la cuenta de `dentroDelRecinto`. */
+function dentroDelPoligono(
+  poli: readonly (readonly [number, number])[],
+  x: number,
+  z: number,
+): boolean {
+  let dentro = false;
+  for (let i = 0, j = poli.length - 1; i < poli.length; j = i++) {
+    const [xi, zi] = poli[i]!;
+    const [xj, zj] = poli[j]!;
+    if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) dentro = !dentro;
+  }
+  return dentro;
+}
+
+/**
+ * El pavimento de un aeródromo, hecho la primera vez que se pregunta y
+ * guardado contra ese objeto: el aeródromo no cambia una vez cargado, y el de
+ * un vecino corrido a este mundo es otro objeto con el suyo. Débil, para que
+ * un aeródromo que se deja se vaya con su índice, como `mapaDePavimento` con
+ * el de los árboles.
+ */
+export function pavimentoDe(aero: Aerodrome): PavimentoDeVerdad {
+  let hecho = HECHOS.get(aero);
+  if (!hecho) {
+    hecho = PavimentoDeVerdad.de(aero);
+    HECHOS.set(aero, hecho);
+  }
+  return hecho;
+}
+
+const HECHOS = new WeakMap<Aerodrome, PavimentoDeVerdad>();
