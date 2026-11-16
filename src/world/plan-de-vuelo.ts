@@ -62,7 +62,8 @@ import { radioDeGiro } from "../flight/cabe";
 import { DE_LADO_RODANDO } from "../flight/fdm";
 import { ESPERA_MAXIMA } from "../flight/radio";
 import { PuertaAsignada } from "./puerta-asignada";
-import { edificiosDePasarela, esPuestoDeContacto, largoPorLaBatalla } from "./remolque";
+import { edificiosDePasarela, esPuestoDeContacto } from "./remolque";
+import { morroDe } from "./rueda-de-morro";
 import {
   construirGrafo,
   puestosEnElPavimento,
@@ -2446,10 +2447,10 @@ export class PlanDeVuelo {
    */
   private puestosDeContacto(): { ref: string | null; xy: Punto }[] {
     if (this.deContactoGuardados) return this.deContactoGuardados;
-    const largo = largoPorLaBatalla(this.avion.batalla);
+    const morro = morroDe(this.avion);
     const edificios = edificiosDePasarela(this.aero);
     this.deContactoGuardados = vaALaPasarela(this.avion)
-      ? this.puestosEnElAsfalto().filter((p) => esPuestoDeContacto(p.xy[0], -p.xy[1], edificios, largo))
+      ? this.puestosEnElAsfalto().filter((p) => esPuestoDeContacto(p.xy[0], -p.xy[1], edificios, morro))
       : [];
     return this.deContactoGuardados;
   }

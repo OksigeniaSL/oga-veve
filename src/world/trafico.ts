@@ -61,6 +61,7 @@ import {
   puestoLibre,
   type EnElPlano,
   type OcupadosEnElMundo,
+  type PasarelaDelTrafico,
   type PuestosDeOtros,
   type SueloDelTrafico,
 } from "./suelo-del-trafico";
@@ -88,6 +89,7 @@ import {
   type Empuje,
 } from "./remolque";
 import { DibujoDelRemolque } from "./tractor-de-remolque";
+import { MORRO_DEL_TRAFICO, ruedaDeMorroEn } from "./rueda-de-morro";
 import {
   PASO_DEL_TRAMO,
   porDelanteDe,
@@ -595,10 +597,10 @@ export function pistaQuePideConSuMargen(t: TipoDeTrafico): number {
  * del modelo con que se dibuja —el JAZ 90, la de un E-170—, que es la que se ve
  * girar empujado. Ver el ADR 0025.
  */
-export function pasarelaDelTrafico(t: Pick<TipoDeTrafico, "id">): { readonly batalla: number } | undefined {
+export function pasarelaDelTrafico(t: Pick<TipoDeTrafico, "id">): PasarelaDelTrafico | undefined {
   if (t.id !== "reactor") return undefined;
   batallaDelReactor ??= aircraftById(MODELO_DEL_TIPO.reactor ?? "jaz-90").batalla;
-  return { batalla: batallaDelReactor };
+  return { batalla: batallaDelReactor, morro: MORRO_DEL_TRAFICO.reactor };
 }
 let batallaDelReactor: number | undefined;
 
@@ -1069,7 +1071,9 @@ export function trazar(
     });
     const pasarela = pasarelaDelTrafico(t);
     const deOtros = conTuPuesto(tierra.deOtros, tierra.tuPuesto, t);
-    const llega = tierra.suelo.llegada(t.toca + t.frena, tierra.evitar, tierra.ocupados, pasarela, deOtros);
+    // Con la rueda de morro en el punto del puesto, al llegar y al salir (#191). Ver `world/rueda-de-morro.ts`.
+    const morro = MORRO_DEL_TRAFICO[t.id];
+    const llega = tierra.suelo.llegada(t.toca + t.frena, tierra.evitar, tierra.ocupados, pasarela, deOtros, morro);
     if (llega && llega.camino.length > 1) {
       const tomaDeVerdad = sobre(en(desplazado + t.toca, 0, 0));
       const rodando = llega.camino.map(sobre);
@@ -1104,6 +1108,7 @@ export function trazar(
       pistaQuePideConSuMargen(t),
       pasarela,
       deOtros,
+      morro,
     );
     if (sale && sale.camino.length > 1) {
       const rodando = sale.camino.map(sobre);
@@ -3157,14 +3162,27 @@ export function crearTrafico(
   ): EnElPlano | null => {
     const t = c?.enTierra;
     if (!c || !t) return null;
+    /*
+     * **Y el puesto es donde está su rueda de morro**, que es lo que para en el punto
+     * (#191); el camino lo sigue el centro del avión, que queda por detrás. Ver
+     * `world/rueda-de-morro.ts`.
+     */
+    const morro = MORRO_DEL_TRAFICO[tipo.id];
     if (camino === c.salida) {
       if (!(t.despega > 0) || recorrido > (t.empuje?.hasta ?? 0) + tipo.envergadura) return null;
       const p = c.salida[0];
-      return p ? { x: p.x, z: p.z } : null;
+      if (!p) return null;
+      // Empujado, mira al edificio; de frente, el puesto le queda detrás, donde paró al llegar.
+      const inicio = t.empuje?.trayectoria.poses[0];
+      if (inicio) return ruedaDeMorroEn(p, inicio.rumbo, morro);
+      const hacia = c.salida.find((q) => Math.hypot(q.x - p.x, q.z - p.z) > 1);
+      return hacia ? ruedaDeMorroEn(p, Math.atan2(hacia.x - p.x, -(hacia.z - p.z)) + Math.PI, morro) : { x: p.x, z: p.z };
     }
     if (!(t.boca > 0)) return null;
     const p = c.llegada[c.llegada.length - 1];
-    return p ? { x: p.x, z: p.z } : null;
+    const antes = c.llegada[c.llegada.length - 2];
+    if (!p) return null;
+    return antes ? ruedaDeMorroEn(p, Math.atan2(p.x - antes.x, -(p.z - antes.z)), morro) : { x: p.x, z: p.z };
   };
 
   /**
@@ -3229,6 +3247,7 @@ export function crearTrafico(
       quien.remolque = new Remolque(e.trayectoria, {
         batalla: pasarela.batalla,
         envergadura: quien.tipo.envergadura,
+        rueda: MORRO_DEL_TRAFICO[quien.tipo.id].rueda,
       });
       quien.recorrido = 0;
     }

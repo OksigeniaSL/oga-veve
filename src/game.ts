@@ -1109,6 +1109,7 @@ import {
   type Empuje,
 } from "./world/remolque";
 import { DibujoDelRemolque } from "./world/tractor-de-remolque";
+import { conLaRuedaEn, morroDe, ruedaDeMorroEn } from "./world/rueda-de-morro";
 import { AvisoDeLaRaya } from "./flight/aviso-de-la-raya";
 import { AvisoDeVelocidad } from "./flight/aviso-de-velocidad";
 import {
@@ -7894,6 +7895,7 @@ export class Game {
       alturaDelGas: laRecogidaDe(this.aircraft).gas,
       reversa: tieneReversa(this.aircraft),
       trenQueSeMete: this.input.hayPalancaDeTren,
+      ruedaDeMorro: morroDe(this.aircraft).rueda,
     });
     this.inicioCongelado = false;
     this.input.cerrarGas();
@@ -13239,12 +13241,28 @@ export class Game {
     // se sale de verdad. Sin él, de la cabecera, como toda la vida.
     const puesto = this.plan?.arranque();
     if (puesto) {
+      /*
+       * **En el sitio del avión que llegó a ese puesto**: el punto es donde para
+       * la rueda de morro entrando (#191), y el avión ocupa desde ahí hacia la
+       * calle. Mirando hacia donde sale la raya, su centro queda donde lo dejó
+       * la llegada, tanto como va la rueda por delante: es el mismo hueco, dado
+       * la vuelta. Con la rueda de morro en el punto y mirando hacia fuera, la
+       * cola se metía donde no hay sitio: en El Hierro, el JAZ 110 y el JAZ 120
+       * en el edificio. Del puesto de contacto, que se sale de espaldas, lo
+       * recoloca `prepararElRemolque` con el morro al edificio y la rueda de
+       * morro en el punto. Ver `world/rueda-de-morro.ts`.
+       */
+      const hacia = this.plan?.primerPaso();
+      const rumbo = hacia ? Math.atan2(hacia[0] - puesto[0], -(hacia[1] - puesto[1])) : 0;
+      const centro = hacia
+        ? conLaRuedaEn({ x: puesto[0], z: puesto[1] }, rumbo + Math.PI, morroDe(this.aircraft))
+        : { x: puesto[0], z: puesto[1] };
       return new Vector3(
-        puesto[0],
+        centro.x,
         // Sobre el asfalto del puesto, no sobre el terreno de debajo.
-        this.terrain.sampleSurface(puesto[0], puesto[1]) +
+        this.terrain.sampleSurface(centro.x, centro.z) +
           this.aircraft.gearHeight,
-        puesto[1],
+        centro.z,
       );
     }
     // El arranque de un aeródromo real sale de su umbral medido, sesenta
@@ -21338,19 +21356,36 @@ export class Game {
     const s = this.flight.state;
     const aero = this.plan?.aerodromoActual;
     if (!puesto || !aero || !s.onGround) return;
-    if (Math.hypot(s.position.x - puesto[0], s.position.z - puesto[1]) > 5) return;
+    // El punto del puesto es donde para la rueda de morro (#191): ver `world/rueda-de-morro.ts`.
+    const morro = morroDe(this.aircraft);
+    /*
+     * Con la rueda de morro en él, si se llegó de frente; o en el sitio del que llegó, si se
+     * empieza mirando hacia la calle (`startPosition`).
+     */
+    const rueda = ruedaDeMorroEn(s.position, s.heading, morro);
+    const llegado = conLaRuedaEn({ x: puesto[0], z: puesto[1] }, s.heading + Math.PI, morro);
+    const enElPuesto = Math.min(
+      Math.hypot(rueda.x - puesto[0], rueda.z - puesto[1]),
+      Math.hypot(s.position.x - llegado.x, s.position.z - llegado.z),
+    );
+    if (enElPuesto > 5) return;
     // Solo en un campo con pasarelas: ver `edificiosDePasarela`.
     const edificios = edificiosDePasarela(aero);
-    const largo = largoPorLaBatalla(this.aircraft.batalla);
-    if (!saleConRemolque(vaALaPasarela(this.aircraft), puesto[0], puesto[1], edificios, largo)) return;
+    if (!saleConRemolque(vaALaPasarela(this.aircraft), puesto[0], puesto[1], edificios, morro)) return;
     const raya = this.rayaParaLaTripulacion();
     const rumbo = rumboEnElPuesto(puesto[0], puesto[1], edificios, raya);
     if (rumbo === null) return;
-    const empuje = trayectoriaDelEmpuje({ x: puesto[0], z: puesto[1], rumbo }, raya, this.aircraft.batalla);
+    // Con el morro al edificio y la rueda de morro en el punto del puesto: el centro, por detrás.
+    const centro = conLaRuedaEn({ x: puesto[0], z: puesto[1] }, rumbo, morro);
+    const empuje = trayectoriaDelEmpuje({ x: centro.x, z: centro.z, rumbo }, raya, this.aircraft.batalla);
     if (!empuje) return;
-    this.posicionDelEmpuje.copy(s.position);
+    this.posicionDelEmpuje.set(centro.x, this.terrain.sampleSurface(centro.x, centro.z) + this.aircraft.gearHeight, centro.z);
     this.flight.reset({ position: this.posicionDelEmpuje, heading: rumbo, airspeed: 0 });
-    this.remolque = new Remolque(empuje, { batalla: this.aircraft.batalla, envergadura: this.aircraft.wingSpan });
+    this.remolque = new Remolque(empuje, {
+      batalla: this.aircraft.batalla,
+      envergadura: this.aircraft.wingSpan,
+      rueda: morro.rueda,
+    });
     /*
      * Quien juega arranca cuando quiere, y el tractor no se suelta con los motores parados: la
      * persona de tierra sigue enchufada hasta que están en marcha. Ver `Remolque.esperaLosMotores`.
@@ -21465,9 +21500,11 @@ export class Game {
     if (c.engineOn || this.remolque || !this.quienJuegaSaleEmpujado || !s.onGround || s.groundSpeed > 0.5) return false;
     if (!arrancarAbreOtroTramo(this.leccion, this.faseDeAhora, this.vueloTerminado)) return false;
     const edificios = edificiosDePasarela(this.plan?.aerodromoActual);
-    const largo = largoPorLaBatalla(this.aircraft.batalla);
-    const aqui: [number, number] = [s.position.x, s.position.z];
-    if (!saleConRemolque(true, aqui[0], aqui[1], edificios, largo)) return false;
+    const morro = morroDe(this.aircraft);
+    // Desde la rueda de morro, que es lo que se para en el punto del puesto. Ver `world/rueda-de-morro.ts`.
+    const rueda = ruedaDeMorroEn(s.position, s.heading, morro);
+    const aqui: [number, number] = [rueda.x, rueda.z];
+    if (!saleConRemolque(true, aqui[0], aqui[1], edificios, morro)) return false;
     // Y con el morro al edificio, que si no se sale de frente como siempre.
     const pared = paredMasCercana(aqui[0], aqui[1], edificios);
     if (!pared || Math.abs(diferenciaDeRumbo(s.heading, pared.rumbo)) > Math.PI / 3) return false;
@@ -21884,7 +21921,11 @@ export class Game {
     const aero = this.plan?.aerodromoActual;
     const pisable = aero ? elSitioDe(aero, this.aircraft.wingSpan).pisable : undefined;
     const desde = llegadaDelTractor(p.raya, p.destino, pisable);
-    const r = new Remolque(p.empuje, { batalla: this.aircraft.batalla, envergadura: this.aircraft.wingSpan }, { desde });
+    const r = new Remolque(
+      p.empuje,
+      { batalla: this.aircraft.batalla, envergadura: this.aircraft.wingSpan, rueda: morroDe(this.aircraft).rueda },
+      { desde },
+    );
     this.vueltaALaRaya = r;
     this.dibujoDeLaVuelta = new DibujoDelRemolque(r.medidasDelTractor);
     this.scene.add(this.dibujoDeLaVuelta.grupo);
@@ -22153,7 +22194,8 @@ export class Game {
     if (!pared) return null;
     let desviado = ((pared.rumbo - s.heading) * 180) / Math.PI;
     desviado = ((((desviado + 180) % 360) + 360) % 360) - 180;
-    return { delMorro: pared.distancia - largoPorLaBatalla(this.aircraft.batalla) / 2, desviado };
+    const morro = morroDe(this.aircraft);
+    return { delMorro: pared.distancia - morro.rueda - morro.punta, desviado };
   }
 
   /** **El remolque, para el banco**: la fase, lo medido y dónde está cada uno. */
@@ -24852,12 +24894,19 @@ export class Game {
      * alto. Es la misma corrección que ya se hizo en el tope de rodaje.
      */
     const porElSuelo = Math.hypot(s.velocity.x, s.velocity.z);
+    /*
+     * **Y lo que para en su sitio es la rueda de morro**, que es lo que marca el punto
+     * del puesto (#191) y lo que mira un señalero de verdad: el centro del avión se
+     * quedaba en el punto y la rueda, diez metros más allá en el JAZ 90 y veinticuatro
+     * en los dos grandes. Ver `world/rueda-de-morro.ts`.
+     */
+    const ruedaDeMorro = ruedaDeMorroEn(s.position, s.heading, morroDe(this.aircraft));
     const gesto: Gesto = hayQuienSenale
       ? this.senalero.paso(
           dt,
           {
-            x: s.position.x,
-            z: s.position.z,
+            x: ruedaDeMorro.x,
+            z: ruedaDeMorro.z,
             velocidad: porElSuelo,
             enElSuelo: s.onGround,
             motor: this.input.controls.engineOn,

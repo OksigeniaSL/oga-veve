@@ -227,3 +227,32 @@ describe("el margen es el de su clase, como en el hangar", () => {
     expect(pide).toBeLessThan(2546);
   });
 });
+
+/*
+ * **Y en El Hierro, contigo en cualquier puesto, el que sale tiene camino.** Lo vio
+ * H19b: un turbohélice retenido para salir sin camino por tierra (`despega: 0`, sin
+ * puesto). Los nueve puestos caen en ochenta metros: contigo en el 2, el único
+ * apartado de ti era el 3A, que sale a la pista por encima de ella, y el puesto se
+ * elegía antes de mirar si de él se llega a la doble raya por su calle. Ver
+ * `valeParaSalir` y `lejosDe` en `suelo-del-trafico.ts`.
+ */
+describe("en El Hierro, el que sale tiene camino esté donde estés", () => {
+  for (const esc of cabeceras(porId("el-hierro"))) {
+    it(`por la ${Math.round(esc.runway.heading)}`, () => {
+      const aero = esc.aerodrome as Aerodrome;
+      const suelo = sueloDelTrafico(aero, esc.runway, aero.runways[0]?.widthM ?? 45);
+      expect(suelo).not.toBeNull();
+      const sinCamino: string[] = [];
+      for (const t of Object.values(TIPOS)) {
+        const pide = pistaQuePideConSuMargen(t);
+        for (const p of aero.parkingPositions ?? []) {
+          const aqui = { x: p.xy[0], z: -p.xy[1] };
+          // Tú en ese puesto, con las alas de un JAZ 90.
+          const deOtros = { semiala: t.envergadura / 2, ocupados: [{ ...aqui, semiala: 13 }] };
+          if (!suelo!.salida([aqui], undefined, pide, undefined, deOtros)) sinCamino.push(`${t.id} contigo en ${p.ref}`);
+        }
+      }
+      expect(sinCamino).toEqual([]);
+    });
+  }
+});

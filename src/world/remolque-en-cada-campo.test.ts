@@ -26,6 +26,7 @@ import { PlanDeVuelo } from "./plan-de-vuelo";
 import { conSuAerodromo, SCENARIOS } from "./scenarios";
 import { AIRCRAFT } from "../flight/aircraft";
 import { esDeLinea, vaALaPasarela } from "../flight/velocidades-en-tierra";
+import { conLaRuedaEn, morroDe } from "./rueda-de-morro";
 
 const GRADO = Math.PI / 180;
 
@@ -68,9 +69,8 @@ describe("solo hay puestos de contacto donde hay pasarelas", async () => {
       expect(edificios.length, s.id).toBe(0);
       for (const id of DE_PASARELA) {
         const avion = AIRCRAFT.find((a) => a.id === id)!;
-        const largo = largoPorLaBatalla(avion.batalla);
         for (const p of aero.parkingPositions ?? [])
-          expect(saleConRemolque(true, p.xy[0], -p.xy[1], edificios, largo), `${s.id} · ${id}`).toBe(false);
+          expect(saleConRemolque(true, p.xy[0], -p.xy[1], edificios, morroDe(avion)), `${s.id} · ${id}`).toBe(false);
       }
     }
   });
@@ -183,20 +183,24 @@ describe("el empuje cabe y acaba en la raya en cada campo con aeródromo", async
         const puesto = plan.arranque();
         const edificios = edificiosDePasarela(aero);
         const largo = largoPorLaBatalla(avion.batalla);
-        if (!sale || !puesto || !saleConRemolque(vaALaPasarela(avion), puesto[0], puesto[1], edificios, largo)) {
+        const morro = morroDe(avion);
+        if (!sale || !puesto || !saleConRemolque(vaALaPasarela(avion), puesto[0], puesto[1], edificios, morro)) {
           medidas.push({ campo: s.id, avion: id, empujado: false });
           return;
         }
         const [x, z] = puesto;
-        expect(esPuestoDeContacto(x, z, edificios, largo)).toBe(true);
+        expect(esPuestoDeContacto(x, z, edificios, morro)).toBe(true);
         const raya = plan.rutaVisible().map(([px, pz]) => ({ x: px, z: pz }));
         const rumbo = rumboEnElPuesto(x, z, edificios, raya)!;
         expect(rumbo).not.toBeNull();
-        const e = trayectoriaDelEmpuje({ x, z, rumbo }, raya, avion.batalla)!;
+        // Con la rueda de morro en el punto del puesto (#191), como lo pone el juego.
+        const c = conLaRuedaEn({ x, z }, rumbo, morro);
+        const e = trayectoriaDelEmpuje({ x: c.x, z: c.z, rumbo }, raya, avion.batalla)!;
         expect(e, "hay empuje").not.toBeNull();
         const fin = e.poses.at(-1)!;
+        // Del centro a la punta del morro: lo que va la rueda por delante y lo que le saca el morro.
         let pared = Infinity;
-        for (const p of e.poses) pared = Math.min(pared, paredMasCercana(p.x, p.z, edificios)!.distancia - largo / 2);
+        for (const p of e.poses) pared = Math.min(pared, paredMasCercana(p.x, p.z, edificios)!.distancia - morro.rueda - morro.punta);
         /*
          * **Hacia dónde va la calle**: si la raya tuerce cerca, el cruce es uno de sus puntos y la
          * calle sigue por ella; si sale de frente, el empuje gira noventa grados y lo demás lo
@@ -235,7 +239,7 @@ describe("el empuje cabe y acaba en la raya en cada campo con aeródromo", async
         medidas.push(m);
         // Hacia atrás, de verdad: la terminal se aleja por delante.
         expect(m.deCulo!, "va de culo").toBeLessThan(-0.95);
-        // Y nunca con el morro dentro de un edificio: el centro, a medio largo de toda pared.
+        // Y nunca con el morro dentro de un edificio: el centro, a lo que va la punta de toda pared.
         expect(m.pared!, "el morro fuera de toda pared").toBeGreaterThan(0);
         // Y cabe: acaba a menos de un largo de avión de la raya, que es por donde se rueda.
         expect(m.deLaRaya!, "acaba junto a la raya").toBeLessThan(largo);

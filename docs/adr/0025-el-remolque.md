@@ -25,7 +25,9 @@ piezas comunes ya hechas.
   si, con el avión puesto en él, el morro queda pegado a un edificio sin meterse: entre cinco y cincuenta metros de la
   pared más cercana —lo que alcanza una pasarela desde su rótula, más el trozo de plataforma hasta la fachada—. El avión
   se pone con su centro en el punto del puesto, así que el morro queda a medio largo; el largo sale de la batalla,
-  multiplicada por dos y medio, que es lo que dan los de verdad con un par de metros de error. Una avioneta en la
+  multiplicada por dos y medio, que es lo que dan los de verdad con un par de metros de error. (Desde el 16-11-2026,
+  con la rueda de morro en el punto y desde la puerta, hasta setenta y nueve metros: ver «La rueda de morro en el punto del
+  puesto».) Una avioneta en la
   plataforma de aviación general sigue saliendo de frente: cada aparato hace lo que hace ese aparato.
 - **Y solo en un campo que embarca por pasarela** (`edificiosDePasarela`, `Aerodrome.pasarelas`): ver «Los campos con
   pasarelas», más abajo. La regla de los cincuenta metros sola tomaba por pasarela cualquier edificio junto a una
@@ -406,6 +408,54 @@ quedaba en la calle sin poder pasarle al lado. En un aeropuerto cada puesto es d
   unos veintiséis segundos de reloj con el juego a cuatro veces, nada hacia delante con el tractor, el tractor 13,7 m
   por delante del centro del avión, la calle reservada todo el empuje, nada dentro de un edificio y, suelto, 43,7 m
   rodados hacia delante.
+
+## La rueda de morro en el punto del puesto (16-11-2026)
+
+Desde #191 cada puesto sale de OpenStreetMap en el punto donde para la rueda de morro, que es lo que marca
+`aeroway=parking_position` y lo que pintan en el suelo la línea de entrada y su marca de parada. El juego seguía
+poniendo en ese punto el centro del avión —su centro de gravedad, que es su referencia de posición—, y lo de este ADR
+contaba desde ahí: «el avión se pone con su centro en el punto del puesto, así que el morro queda a medio largo». Lo
+vio H19a: contado desde la rueda de morro, el 23 de Los Rodeos quedaba más lejos de la terminal de lo que alcanzaba la
+pasarela.
+
+**Lo medido.** Lo que va la rueda de morro por delante del centro sale de la ficha —la batalla menos lo que van las
+principales por detrás del centro— y `rueda-de-morro.test.ts` lo compara con cada `.glb`, a menos de quince
+centímetros: 1,3 m el JAZ 20, 2,4 el JAZ 40, 3,8 el JAZ 50, 6,6 el JAZ 60, **10,1 el JAZ 90, 24,0 el JAZ 110 y 23,7
+el JAZ 120**; en el biplano, de rueda de cola, sus principales, a 0,2. En el tráfico, contado desde el centro de la
+caja de su modelo a su envergadura: 13,2 m el reactor —el JAZ 90 a una vez y tres décimas—, 10,4 el turbohélice, 3,0
+el bimotor y 3,2 la avioneta. Hasta hoy la rueda de morro quedaba todo eso **más allá** del punto: al salir, siempre;
+al llegar, lo mismo menos los dos metros y medio a los que el señalero cruza los bastones, y la tripulación paraba el
+centro a tres metros del final de la raya. Con el morro al edificio, eso era la rueda de morro de los grandes
+veinticuatro metros más cerca de la fachada que la marca de parada.
+
+**Lo que cambia** (`world/rueda-de-morro.ts`):
+
+- **En un puesto de contacto, con la rueda de morro en el punto** y el morro al edificio (`prepararElRemolque`); el
+  centro, tanto como va la rueda, por detrás. El empuje empieza ahí: es la misma calle y el mismo final, con menos
+  metros de empuje.
+- **Y el que sale de frente, en el sitio del que llegó** (`Game.startPosition`, `desdeLaRueda` en el tráfico): el
+  punto es donde para la rueda de morro entrando, y el avión ocupa desde ahí hacia la calle. Mirando hacia donde sale,
+  su centro queda donde lo dejó la llegada: el mismo hueco, dado la vuelta, con la rueda de morro sobre la raya. Se
+  probó primero con la rueda de morro en el punto también mirando hacia fuera, y la cola se iba por detrás del puesto,
+  donde no hay sitio: contando puntos del fuselaje y de las alas dentro de un edificio, en El Hierro de ninguno a
+  treinta y tantos con los dos grandes, y en Pilar de cinco a veinticuatro con el JAZ 90.
+- **Lo que para en el punto es la rueda de morro**: el señalero mide desde ella, y la tripulación del pasaje deja de
+  raya lo que va la rueda por delante del centro (`FichaDeLinea.ruedaDeMorro`).
+- **El tráfico, igual**: su camino de llegada acaba con la rueda en el punto (`conLaRuedaAlFinal`), el de salida
+  empieza con ella ahí (`desdeLaRueda`, y en `empujado` con el morro al edificio), y el puesto que tiene cada uno es
+  donde está su rueda de morro (`puestoDe` en `trafico.ts`).
+- **El tractor engancha la rueda de morro de verdad** (`MedidasDelAvion.rueda`): la ponía a una batalla del centro,
+  como si el centro fuera el tren principal, y la cuna quedaba metro y medio por delante de la rueda en el JAZ 90.
+- **La pasarela se cuenta desde la puerta y el morro desde su punta** (`esPuestoDeContacto`, con `MorroDelAvion`):
+  la puerta delantera, medida en el `.glb`, va 0,9 m por delante de la rueda de morro en el JAZ 90, 0,8 por detrás en
+  el JAZ 110 y 2,7 por detrás en el JAZ 120; la punta, 5,6, 5,5 y 7,9 por delante. Y **lo que alcanza la pasarela pasa
+  de cincuenta metros desde el morro a setenta y nueve desde la puerta**. En OpenStreetMap los puestos de pasarela quedan
+  lejos de la fachada dibujada —entre la rótula y la terminal suele ir un pasillo fijo—: en La Palma, que tiene dos
+  pasarelas, los siete puestos más cercanos a la terminal tienen la rueda de morro entre 51 y 58 m de ella, y con
+  cincuenta no quedaba ninguno; el 23 de Los Rodeos, a 57; el T5 de la T1 de Barajas, del que sale el primer
+  capítulo, a 78, con la puerta del JAZ 110 a 78,7. Con ochenta, el JAZ 120 entra en Barajas en un puesto cuyo empuje
+  acaba a sesenta y nueve metros de la raya (`remolque-en-cada-campo.test.ts`): queda en setenta y nueve, y ese puesto,
+  por mirar.
 
 ## Lo que queda
 
