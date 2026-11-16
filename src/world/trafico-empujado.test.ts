@@ -19,13 +19,15 @@ import {
   type EnTierra,
   type QuienJuega,
 } from "./trafico";
-import { edificiosDePasarela, esPuestoDeContacto, largoPorLaBatalla, paredMasCercana, vector } from "./remolque";
+import { edificiosDePasarela, esPuestoDeContacto, paredMasCercana, vector } from "./remolque";
+import { MORRO_DEL_TRAFICO, ruedaDeMorroEn } from "./rueda-de-morro";
 import { dondeSeAcerca } from "./tramo-de-frente";
 import { RETENIDO } from "../flight/radio";
 
 const REACTOR = TIPOS.reactor;
 const PASARELA = pasarelaDelTrafico(REACTOR)!;
-const LARGO = largoPorLaBatalla(PASARELA.batalla);
+/** Su morro, contado desde su referencia: la rueda de morro es la que para en el punto del puesto (#191). */
+const MORRO = MORRO_DEL_TRAFICO.reactor;
 
 describe("quién del tráfico embarca por pasarela", () => {
   it("el reactor sí, con la batalla del modelo que se dibuja; los demás, no", () => {
@@ -57,17 +59,19 @@ describe("el reactor del tráfico sale empujado de un puesto de contacto, en cad
       if (!suelo) return;
       // Los de un campo con pasarelas, que en otro no hay puesto de contacto: ver `edificiosDePasarela`.
       const edificios = edificiosDePasarela(aero);
-      const sale = suelo.salida(undefined, undefined, pistaQuePideConSuMargen(REACTOR), PASARELA);
-      const llega = suelo.llegada(REACTOR.toca + REACTOR.frena, undefined, undefined, PASARELA);
+      const sale = suelo.salida(undefined, undefined, pistaQuePideConSuMargen(REACTOR), PASARELA, undefined, MORRO);
+      const llega = suelo.llegada(REACTOR.toca + REACTOR.frena, undefined, undefined, PASARELA, undefined, MORRO);
       // Y donde no las hay, ni tractor: sale de frente, como de cualquier plataforma.
       if (!aero.pasarelas?.hay) expect(sale?.empuje, "sin pasarelas, sin tractor").toBeFalsy();
       // Al llegar, si el puesto es de contacto, con el morro al edificio: el último tramo va hacia la pared.
       let llegaDeContacto = false;
       let morroAlEdificio = false;
       if (llega && llega.camino.length > 2) {
-        const fin = llega.camino.at(-1)!;
+        const centro = llega.camino.at(-1)!;
         const antes = llega.camino.at(-2)!;
-        llegaDeContacto = esPuestoDeContacto(fin.x, fin.z, edificios, LARGO);
+        // Donde para su rueda de morro, que es el punto del puesto.
+        const fin = ruedaDeMorroEn(centro, Math.atan2(centro.x - antes.x, -(centro.z - antes.z)), MORRO);
+        llegaDeContacto = esPuestoDeContacto(fin.x, fin.z, edificios, MORRO);
         if (llegaDeContacto) {
           const d = Math.hypot(fin.x - antes.x, fin.z - antes.z);
           const morro = { x: fin.x + ((fin.x - antes.x) / d) * 10, z: fin.z + ((fin.z - antes.z) / d) * 10 };
@@ -80,8 +84,9 @@ describe("el reactor del tráfico sale empujado de un puesto de contacto, en cad
         return;
       }
       const { trayectoria, hasta } = sale.empuje;
-      const p0 = sale.camino[0]!;
-      expect(esPuestoDeContacto(p0.x, p0.z, edificios, LARGO), "sale de un puesto de contacto").toBe(true);
+      // La rueda de morro, en el punto del puesto; el centro, por detrás, con el morro al edificio.
+      const p0 = ruedaDeMorroEn(sale.camino[0]!, trayectoria.poses[0]!.rumbo, MORRO);
+      expect(esPuestoDeContacto(p0.x, p0.z, edificios, MORRO), "sale de un puesto de contacto").toBe(true);
       // De culo: el avión se mueve contra su morro.
       let suma = 0;
       let n = 0;
@@ -90,7 +95,7 @@ describe("el reactor del tráfico sale empujado de un puesto de contacto, en cad
         const a = trayectoria.poses[i - 1]!;
         const b = trayectoria.poses[i]!;
         const d = Math.hypot(b.x - a.x, b.z - a.z);
-        pared = Math.min(pared, paredMasCercana(b.x, b.z, edificios)!.distancia - LARGO / 2);
+        pared = Math.min(pared, paredMasCercana(b.x, b.z, edificios)!.distancia - MORRO.rueda - MORRO.punta);
         if (d < 1e-6) continue;
         const m = vector(a.rumbo);
         suma += ((b.x - a.x) * m.x + (b.z - a.z) * m.z) / d;

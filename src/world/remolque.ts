@@ -40,6 +40,7 @@
  */
 
 import type { Aerodrome, Punto } from "./aerodrome";
+import type { MorroDelAvion } from "./rueda-de-morro";
 
 const GRADO = Math.PI / 180;
 
@@ -76,13 +77,25 @@ export function largoPorLaBatalla(batalla: number): number {
 }
 
 /**
- * **Lo que puede quedar del morro a la pared en un puesto de contacto**, m: lo
- * que alcanza una pasarela telescópica desde su rótula, más el trozo de
- * plataforma entre la rótula y la fachada. Las de verdad estiran de veinte a
- * cuarenta metros. Más allá, el puesto es de plataforma: se sale de frente, o
- * en autobús.
+ * **Lo que puede quedar de la puerta a la pared en un puesto de contacto**, m: lo
+ * que alcanza una pasarela telescópica desde su rótula, más lo que hay entre la
+ * rótula y la fachada, que en los aeropuertos grandes es un pasillo fijo. Los
+ * túneles de verdad estiran de veinte a cuarenta y pico metros, y el pasillo
+ * puede llevar otros tantos. Más allá, el puesto es de plataforma: se sale de
+ * frente, o en autobús.
+ *
+ * **Setenta y nueve, contados desde la puerta.** Eran cincuenta desde el morro con el
+ * centro del avión en el punto del puesto. Desde que el punto es donde para la
+ * rueda de morro (#191), lo que cuenta es la puerta, y en OpenStreetMap los
+ * puestos de pasarela quedan lejos de la fachada dibujada: en La Palma, que
+ * tiene dos pasarelas, los siete puestos más cercanos a la terminal tienen la
+ * rueda de morro entre 51 y 58 m de ella; en Los Rodeos el 23, a 57; y el T5 de
+ * la T1 de Barajas, del que sale el primer capítulo, a 78, con la puerta del
+ * JAZ 110 a 78,7. Con cincuenta, La Palma se quedaba sin ninguno. Y no ochenta: con
+ * ochenta, el JAZ 120 entra en Barajas en un puesto cuyo empuje acaba a sesenta y nueve
+ * metros de la raya (`remolque-en-cada-campo.test.ts`), y eso está sin mirar.
  */
-export const ALCANCE_DE_LA_PASARELA = 50;
+export const ALCANCE_DE_LA_PASARELA = 79;
 
 /**
  * **Lo que se deja como poco entre el morro y la pared**, m. Un puesto que no
@@ -129,16 +142,25 @@ export function paredMasCercana(
 }
 
 /**
- * **Si un puesto es de contacto para un avión de este largo**: pegado a un
- * edificio, con el morro a menos de lo que alcanza una pasarela y sin meterse
- * en él. El avión se pone con su centro en el punto del puesto, así que el
- * morro queda a medio largo por delante.
+ * **Si un puesto es de contacto para este avión**: pegado a un edificio, con la
+ * puerta de delante a menos de lo que alcanza una pasarela y el morro sin
+ * meterse en él. El punto del puesto es donde para la rueda de morro (#191), y
+ * el avión mira a la pared: la puerta y la punta del morro quedan a lo que les
+ * saca su `MorroDelAvion` por delante de ese punto. Contaba medio largo desde el
+ * centro del avión, que era lo que se ponía en el punto, y la pasarela no llega
+ * al morro: llega a la puerta.
  */
-export function esPuestoDeContacto(x: number, z: number, edificios: Edificios, largo: number): boolean {
+export function esPuestoDeContacto(
+  x: number,
+  z: number,
+  edificios: Edificios,
+  morro: Pick<MorroDelAvion, "puerta" | "punta">,
+): boolean {
   const pared = paredMasCercana(x, z, edificios);
   if (!pared) return false;
-  const delMorro = pared.distancia - largo / 2;
-  return delMorro >= HOLGURA_DEL_MORRO && delMorro <= ALCANCE_DE_LA_PASARELA;
+  return (
+    pared.distancia - morro.punta >= HOLGURA_DEL_MORRO && pared.distancia - morro.puerta <= ALCANCE_DE_LA_PASARELA
+  );
 }
 
 /**
@@ -171,9 +193,9 @@ export function saleConRemolque(
   x: number,
   z: number,
   edificios: Edificios,
-  largo: number,
+  morro: Pick<MorroDelAvion, "puerta" | "punta">,
 ): boolean {
-  return deLinea && esPuestoDeContacto(x, z, edificios, largo);
+  return deLinea && esPuestoDeContacto(x, z, edificios, morro);
 }
 
 /**
@@ -542,6 +564,14 @@ export type GestoDeTierra = "anda" | "quieto" | "pasador" | "saludo";
 export interface MedidasDelAvion {
   readonly batalla: number;
   readonly envergadura: number;
+  /**
+   * **De la referencia del avión a su rueda de morro**, que es donde se engancha el
+   * tractor (`MorroDelAvion.rueda`). Sin ella, la batalla, que es contar la
+   * referencia como si fuera el tren principal: en el JAZ 90 la cuna quedaba metro y
+   * medio por delante de la rueda, y en el del tráfico, que se dibuja una vez y tres
+   * décimas más grande, casi dos por detrás.
+   */
+  readonly rueda?: number;
 }
 
 /** **El tractor de este avión**: largo y ancho, m. Ver `tractorPara`. */
@@ -716,7 +746,8 @@ export class Remolque {
   get ruedaDeMorro(): PuntoXZ {
     const a = this.avion;
     const n = vector(a.rumbo);
-    return { x: a.x + n.x * this.avionMide.batalla, z: a.z + n.z * this.avionMide.batalla };
+    const delante = this.avionMide.rueda ?? this.avionMide.batalla;
+    return { x: a.x + n.x * delante, z: a.z + n.z * delante };
   }
 
   /**
