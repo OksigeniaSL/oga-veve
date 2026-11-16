@@ -23614,7 +23614,7 @@ export class Game {
         // Se celebra donde pasa, en el aire, en los cuatro peldaños: el dibujo, el sonido del logro y ella.
         const clave = `ejercicio.${l.id}.bien` as TranslationKey;
         this.avisar("achieved");
-        return contar(DIBUJO_DEL_EJERCICIO[l.id], clave, "palabra.bien", true);
+        return contar("helicoptero-bien", clave, "palabra.bien", true);
       }
       case "cerrar":
         // Posado después de lograrlo, el panel del final; el percance ya lo cuenta `sufrirPercance`.

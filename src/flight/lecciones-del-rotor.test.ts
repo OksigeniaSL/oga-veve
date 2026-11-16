@@ -101,10 +101,10 @@ describe("quedarse quieto", () => {
     expect(correr(l, quieto(3, { x: 3 }), 2.5).map((s) => s.que)).toEqual(["logrado"]);
   });
 
-  it("posado no cuenta, ni colgado a más de diez metros", () => {
+  it("posado no cuenta, ni colgado a más de un diámetro del rotor", () => {
     const l = new LeccionDelRotor(ejercicio("estacionario"));
     expect(correr(l, quieto(0, { enElSuelo: true }), 20).map((s) => s.que)).toEqual(["presentar"]);
-    expect(correr(l, quieto(12), 20)).toEqual([]);
+    expect(correr(l, quieto(18), 20)).toEqual([]);
   });
 
   it("si se rompe, se cierra para repetir, sin logro", () => {
@@ -215,6 +215,42 @@ function volar(
   }
   return { vistos, t };
 }
+
+describe("los pedales, de mano en mano", () => {
+  /*
+   * Dar los pedales y devolverlos no puede pegar un tirón al rotor de cola: lo
+   * que llega es el pie que ponía la ayuda, entero, y solo cambia la
+   * amortiguación. Con solo lo aprendido, en
+   * Taguató el morro se seguía yendo con el pie puesto.
+   */
+  it("al darlos y al devolverlos, el pedal del rotor de cola no salta", () => {
+    for (const modo of ["estacionario", "actitud"] as const) {
+      const h = posado("estacionario");
+      const m = mandosNeutros();
+      m.colectivo = 0.5;
+      for (let t = 0; t < 1; t += DT) h.step(DT, m);
+      m.colectivo = 1;
+      for (let t = 0; t < 2; t += DT) h.step(DT, m);
+      m.colectivo = 0.5;
+      // Un empujón de morro, para que la ayuda tenga algo que sostener al darlos.
+      h.state.yawRate = 6 * GRADO;
+      for (let t = 0; t < 1.5; t += DT) h.step(DT, m);
+      h.ponerEstabilizacion(modo);
+      if (modo === "actitud") m.colectivo = h.mandosAhora().colectivo;
+      for (let t = 0; t < 0.5; t += DT) h.step(DT, m);
+      const antes = h.mandosAhora().pedales;
+      h.piesDeQuienVuela = true;
+      h.step(DT, m);
+      // Lo que cambia es la amortiguación, que pasa a ser la de `amortiguada`: menos de tres centésimas.
+      expect(Math.abs(h.mandosAhora().pedales - antes), `${modo}, al darlos`).toBeLessThan(0.03);
+      for (let t = 0; t < 2; t += DT) h.step(DT, m);
+      const dados = h.mandosAhora().pedales;
+      h.piesDeQuienVuela = false;
+      h.step(DT, m);
+      expect(Math.abs(h.mandosAhora().pedales - dados), `${modo}, al devolverlos`).toBeLessThan(0.03);
+    }
+  });
+});
 
 describe("volando el Super Puma", () => {
   it("con la ayuda (Guyrami y Tukã): subir un poco y soltar es quedarse quieto, y se logra", () => {

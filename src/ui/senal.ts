@@ -1085,6 +1085,18 @@ const HELICOPTERO_PAR = icono(`
   <path d="M15.6 3.6 q-3.4 -3 -7.6 -0.6 m1 -2.2 l-1 2.2 l2.4 0.4" ${FLECHA_TRAZO} />
 `);
 
+/**
+ * **Lo lograste**: el helicóptero y la marca de hecho, la de `corregido`. Lo
+ * que se celebra no puede llevar el mismo dibujo que lo que se pedía: en
+ * Guyrami, sin palabras, era la misma tarjeta otra vez.
+ */
+const HELICOPTERO_BIEN = icono(`
+  ${helicopteroDePerfil(8.6, 13, 7.4)}
+  <path d="M14.6 9.4 L17.6 12.4 L23 5.4" stroke="currentColor" stroke-width="2.8"
+        fill="none" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M1.6 21.6 h20.8" ${FLECHA_TRAZO} />
+`);
+
 /** Cerca del suelo: el helicóptero bajito y el aire de su rotor que rebota a los lados. */
 const EFECTO_SUELO = icono(`
   ${helicopteroDePerfil(12, 9, 6.6)}
@@ -1777,6 +1789,7 @@ export const DIBUJOS = {
   "helicoptero-baja": HELICOPTERO_BAJA,
   "helicoptero-par": HELICOPTERO_PAR,
   "efecto-suelo": EFECTO_SUELO,
+  "helicoptero-bien": HELICOPTERO_BIEN,
   /*
    * **Más gas y menos gas**: el motor de este avión con su flecha, el mismo
    * dibujo que llevan los botones del gas. Un dibujo, un significado: lo que

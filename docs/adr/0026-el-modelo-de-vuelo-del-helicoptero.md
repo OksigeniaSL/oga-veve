@@ -518,7 +518,9 @@ sola. Donde la ayuda lleva el colectivo se dice «soltalo»; con la palanca de v
 frase. Trece frases nuevas, al final de `scripts/frases-para-grabar.mjs`, en calma; hasta que se graben, la lección se
 cuenta con el dibujo y el texto, como todo ejercicio (`decirDelEjercicio`).
 
-**El logro se celebra en el aire**, que es donde pasa: el sonido del logro, la tarjeta y la instructora. El panel del
+**El logro se celebra en el aire**, que es donde pasa: el sonido del logro, la tarjeta con el helicóptero y la marca
+de hecho —no el dibujo de lo que se pedía, que en Guyrami, sin palabras, era la misma tarjeta otra vez— y la
+instructora. El panel del
 final espera a que se pose, como el de la tormenta: taparle la pantalla a quien está colgado a tres metros del suelo
 sería dejarlo sin ver.
 
@@ -529,7 +531,7 @@ gira, la aguja que sube y baja.
 
 | Lección | Se logra con | Por qué |
 | --- | --- | --- |
-| Quieto | 10 s sin apartarse 2 m de donde se paró, ni 1 m de alto, ni 10° de morro, con las ruedas entre 0,3 y 10 m | Los 10 s, del #113; 2 m es menos de lo que asoma la rueda de morro, y se ve contra el suelo. Supuestos: la norma ADS-33E-PRF tiene los suyos para su maniobra «Hover», y no se han copiado sin comprobarlos |
+| Quieto | 10 s sin apartarse 2 m de donde se paró, ni 1 m de alto, ni 10° de morro, con las ruedas entre 0,3 y 15 m, un diámetro del rotor | Los 10 s, del #113; 2 m es menos de lo que asoma la rueda de morro, y se ve contra el suelo. Supuestos: la norma ADS-33E-PRF tiene los suyos para su maniobra «Hover», y no se han copiado sin comprobarlos |
 | El par | Subiendo, con el pie del lado que para el par y el morro girando a menos de 3 °/s, 2 s | El pie del otro lado: el derecho en el Super Puma, que gira en horario visto desde arriba |
 | El suelo | Quieto abajo (ruedas por debajo de 3 m) y quieto arriba (por encima de 20 m), en cualquier orden, acabando abajo | Abajo, el buje queda a menos de un radio del suelo; arriba, a más de un diámetro, donde con Cheeseman y Bennett falta menos de un 1 % para lo de lejos |
 
@@ -546,8 +548,9 @@ El modelo es el mismo en los cuatro; lo que cambia es la estabilización, y con 
 - **El par, desde Tukã.** Con el pie puesto por la estabilización —que sostiene el rumbo parado y se adelanta al par
   cuando cambia el colectivo— el morro no se movía en ningún peldaño, y la lección no tenía nada que enseñar. Así que
   **en esta lección los pedales pasan a quien vuela** (`piesDeQuienVuela` en `helicoptero.ts`): el eje de la guiñada se
-  queda con la amortiguación de la tabla de arriba, `amortiguada`, y con el pie que ya sostenía el estacionario, quieto;
-  el cíclico y el colectivo siguen como estaban. Es como se enseña el estacionario, un mando cada vez: el instructor da
+  queda con la amortiguación de la tabla de arriba, `amortiguada`, y con el pie que ya ponía la ayuda, entero y quieto
+  —lo aprendido, lo que sostenía el rumbo y lo que se adelantaba al par—; el cíclico y el colectivo siguen como
+  estaban. Al devolverlos, la ayuda sigue desde ese pie, sin tirón. Es como se enseña el estacionario, un mando cada vez: el instructor da
   los pedales, y se los vuelve a quedar al acabar. Se dan **ya en estacionario**, a los dos segundos quieto, y no
   posado: con el pie aprendido en el suelo, el colectivo de despegar giraba el morro a sesenta grados por segundo. En
   Guyrami no se ofrece: pide dos manos a la vez —subir y pisar— y allí todo es un gesto cada vez, y los pies los lleva
@@ -570,8 +573,37 @@ Sin pantalla, en `flight/lecciones-del-rotor.test.ts`:
   desliza unos diez metros de lado y tarda en pararse del todo, y no se cuenta hasta que se para (ver abajo). Con la
   palanca de verdad, un piloto de prueba que sostiene el sitio con el cíclico también lo logra.
 
+### En el juego de verdad
+
+Con un banco de navegador (Tenerife Norte, sin viento, con la tarjeta Intel) y un piloto de banco en cada lección,
+en el peldaño de fábrica y en Taguató:
+
+- **El hangar**: en Tukã, «¿A qué jugás?» con el JAZ 70 ofrece el vuelo libre, Teno y las cuatro lecciones en su
+  orden, cada una con su dibujo; en Guyrami, el vuelo libre, Teno, quieto y el suelo.
+- **Quieto, en Guyrami**: la X hasta tres metros y soltarla; la ayuda sigue subiendo hasta once y se queda a diez,
+  se para del todo a los veinte segundos y a los veintisiete lo ha logrado. En **Taguató**, colgado a tres metros con
+  el colectivo de verdad, a los quince. Las dos, posadas después, con el panel del final.
+- **El par, en Tukã**: quieto, los pedales pasan a quien vuela; la X lleva el morro a la izquierda, sale el pie
+  derecho en la tarjeta, y con él subiendo se logra a los veinticinco segundos; los pedales vuelven a la ayuda.
+- **El suelo, en Taguató**: quieto a dos metros pide el 56,0 % del par; a veinticinco, el 62,5 %; y de vuelta abajo se
+  logra, a los cuarenta y ocho segundos.
+
+Y lo que el banco no dejó probado:
+
+- **El par, en Taguató**, con el pie congelado de la primera versión —lo aprendido solo—: el morro se siguió yendo a la
+  izquierda a unos cuatro grados por segundo durante ochenta segundos, con el pie derecho del banco puesto. Sin
+  pantalla, el mismo piloto de banco sí lo paraba, así que la diferencia estaba en lo que le faltaba a lo aprendido
+  en el juego; ahora se congela el pie entero de la ayuda (arriba), con su prueba de que no salta, pero **no se ha
+  vuelto a volar en el navegador**: el banco ya llevaba sus tres pasadas.
+- **El suelo, en Guyrami**: quieto abajo sí (el 58,6 %), pero el piloto de banco no supo quedarse quieto arriba: con la
+  ayuda cada toque de tecla se pasa unos ocho metros, y su corrección iba y venía entre 16 y 33 m. Es del piloto de
+  banco, no de la lección —sin pantalla, la misma secuencia se logra—, y queda por volar en el navegador.
+
 ### Lo que queda
 
+- **Al soltar la X, la ayuda de estacionario sigue subiendo** unos ocho metros: soltada a tres, se queda a diez u once.
+  Es lo que tarda en frenar la subida pedida (metro y medio por segundo cada segundo) con el colectivo que la sigue. Por
+  eso quieto vale hasta un diámetro del rotor; pero «subí un poquito» deja a quien empieza más alto de lo que quería.
 - **Al despegar con la ayuda de estacionario, el helicóptero se desliza** unos diez metros de lado a casi 3 m/s antes de
   pararse, y no vuelve encima de la hache: la ayuda pide velocidad cero sobre el suelo, no un sitio. Es del despegue, no
   de estas lecciones, y para la de quedarse quieto no importa —se cuenta desde donde se para—, pero quien despegue en

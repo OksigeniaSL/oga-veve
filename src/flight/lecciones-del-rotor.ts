@@ -123,13 +123,15 @@ export const QUIETO_DE_MORRO = (10 * Math.PI) / 180;
 
 /**
  * **A qué altura es estacionario**, m de ruedas: en el aire y por debajo de
- * diez metros, unos treinta pies, que es donde se aprende —cerca del suelo,
- * para ver el sitio contra algo—. Más arriba ya es subir. Con seis metros, la
- * X apretada tres segundos en Guyrami dejaba el helicóptero a nueve, quieto y
- * sin contar: medio segundo de más con el dedo no puede ser no haberlo hecho.
+ * quince metros, un diámetro del rotor (15,60 m): el estacionario dentro del
+ * efecto suelo, que es el que se aprende, cerca del suelo para ver el sitio
+ * contra algo. Más arriba ya es subir. Con seis metros, y después con diez, la
+ * ayuda de Guyrami se pasaba: al soltar la X sigue subiendo lo que tarda en
+ * frenar, y un toque de dos segundos lo dejaba quieto a diez metros y sin
+ * contar. Medio segundo de más con el dedo no puede ser no haberlo hecho.
  */
 export const ESTACIONARIO_MIN = 0.3;
-export const ESTACIONARIO_MAX = 10;
+export const ESTACIONARIO_MAX = 15;
 
 /**
  * **Parado**: subiendo o bajando menos que esto, m/s, y moviéndose sobre el
