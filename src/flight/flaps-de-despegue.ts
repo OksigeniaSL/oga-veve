@@ -61,6 +61,12 @@ export const EN_LA_PISTA: ReadonlySet<Fase> = new Set<Fase>([
 export const ENTRANDO = 10;
 
 /**
+ * **Por debajo de esta velocidad por el suelo se está parado en la espera**,
+ * m/s: metro y medio, el `PARADO` del resto del juego (`anemometro-tapado.ts`).
+ */
+export const PARADO_EN_LA_ESPERA = 1.5;
+
+/**
  * **Lo que se espera en el punto de espera a que se pongan, antes de ponerlos
  * la instructora**, s: ocho, lo que se tarda en encontrar el botón o la tecla
  * con la tarjeta delante. Es la paciencia de la lista de después del
@@ -144,8 +150,17 @@ export class ListaDeAntesDeDespegar {
       if (this.pedida || this.puestos) this.reiniciar();
       return null;
     }
-    const enLaEspera = EN_LA_ESPERA.has(l.fase);
-    const entrando = EN_LA_PISTA.has(l.fase) && l.porElSuelo < ENTRANDO;
+    /*
+     * **En la espera es parado en ella.** Con la luz verde la fase sigue siendo
+     * `autorizado` mientras se rueda hacia la pista, y eso ya es entrar: visto
+     * en el banco del vuelo entero en Taguato, la lista pedía a nueve nudos y
+     * la instructora los ponía al pisar la pista un instante después, dos voces
+     * para un suceso.
+     */
+    const parado = l.porElSuelo < PARADO_EN_LA_ESPERA;
+    const enLaEspera = EN_LA_ESPERA.has(l.fase) && parado;
+    const entrando =
+      (EN_LA_PISTA.has(l.fase) || (EN_LA_ESPERA.has(l.fase) && !parado)) && l.porElSuelo < ENTRANDO;
     if (!enLaEspera && !entrando) return null;
     // Lo que ya está hecho no se pide, y lo pedido y hecho no se repite.
     if (l.puestos) return null;

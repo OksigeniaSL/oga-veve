@@ -162,6 +162,18 @@ describe("la lista de antes de despegar", () => {
     ]);
   });
 
+  it("con la verde y rodando hacia la pista ya se está entrando: abajo los pone ella, sin pedir antes", () => {
+    const lista = new ListaDeAntesDeDespegar();
+    expect(durante(lista, 3, { ...ESPERA, peldano: "cifra", fase: "autorizado", porElSuelo: 4.5 })).toEqual([
+      "losPone",
+    ]);
+    // Y en el de cabina, la lista se pide igual.
+    const arriba = new ListaDeAntesDeDespegar();
+    expect(durante(arriba, 3, { ...ESPERA, peldano: "cabina", fase: "autorizado", porElSuelo: 4.5 })).toEqual([
+      "pide",
+    ]);
+  });
+
   it("si se pidió en la espera y se entra en la pista sin ellos, abajo los pone en el acto", () => {
     const lista = new ListaDeAntesDeDespegar();
     expect(durante(lista, 2, { ...ESPERA, peldano: "cifra" })).toEqual(["pide"]);

@@ -1662,6 +1662,15 @@ pediría su toma.
   llega a oír la recogida. En el de cabina, la tarjeta los pide y el banco, que
   no los pone, despega limpio como antes. En el registro de cantos aparecen las
   líneas «flaps de despegue: …» y «flaps del despegue: …».
+- Volado una vez en Los Rodeos con el JAZ 90, en Guyrami y en Taguato: V1 y
+  «rotate» con la palanca en su primera muesca, y el avisador de pérdida
+  callado («ni una vez»). Las dos tiradas fallan en la toma —larga en Guyrami,
+  a 12 m del eje en Taguato—, dos comprobaciones que el propio banco marca
+  como fallos que ya volvieron antes; la configuración de la toma la pone el
+  piloto del banco y esto no la toca. En Taguato la lista pedía a nueve nudos,
+  rodando con la verde, y la instructora los ponía al pisar la pista: dos
+  voces para un suceso. Con la verde y rodando ya es entrar
+  (`PARADO_EN_LA_ESPERA`), y abajo los pone ella sin pedirlos.
 
 ### Lo que no
 
