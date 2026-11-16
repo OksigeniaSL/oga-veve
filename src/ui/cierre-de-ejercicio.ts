@@ -10,6 +10,7 @@
  */
 
 import type { Cierre } from "../flight/practica";
+import { helicopteroDePerfil } from "./dibujos-del-helicoptero";
 
 const lienzo = (contenido: string): string =>
   `<svg class="cierre" viewBox="0 0 64 64" role="img" aria-hidden="true">${contenido}</svg>`;
@@ -23,21 +24,25 @@ const AVION = `
   <circle cx="44" cy="39.5" r="3" />
 `;
 
+/**
+ * **Y el helicóptero de perfil**, en el de la autorrotación: el mismo dibujo
+ * que su tarjeta y sus botones. Ver `ui/dibujos-del-helicoptero.ts`.
+ */
+const HELICOPTERO = helicopteroDePerfil(32, 45, 18);
+
 /** La marca de hecho, arriba. */
-const HECHO = lienzo(`
-  ${AVION}
+const MARCA = `
   <path d="M20 16 l8 8 l16 -16" fill="none" stroke="currentColor"
         stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
-`);
+`;
 
 /** La flecha que vuelve a empezar, arriba. */
-const OTRA_VEZ = lienzo(`
-  ${AVION}
+const FLECHA = `
   <path d="M44 15 a12 12 0 1 0 -3.5 8.5" fill="none" stroke="currentColor"
         stroke-width="4.5" stroke-linecap="round" />
   <path d="M40 6 l6 9 l-10 1 Z" />
-`);
+`;
 
-export function dibujoDeCierre(como: Cierre): string {
-  return como === "otraVez" ? OTRA_VEZ : HECHO;
+export function dibujoDeCierre(como: Cierre, helicoptero = false): string {
+  return lienzo(`${helicoptero ? HELICOPTERO : AVION}${como === "otraVez" ? FLECHA : MARCA}`);
 }

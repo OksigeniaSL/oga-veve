@@ -17,7 +17,7 @@
  */
 
 /** Los tonos de una vez. Ver `TONO_DE_A_BORDO` en `audio/cabina.ts`. */
-export type TonoDeABordo = "tono.sirenaDelAutomatico" | "tono.pitidoDePrecaucion";
+export type TonoDeABordo = "tono.sirenaDelAutomatico" | "tono.pitidoDePrecaucion" | "tono.rotorBajo";
 
 /**
  * Un tono de una vez: notas que se suceden, cada una con su principio, su
@@ -83,9 +83,25 @@ const PITIDO: FormaDeTono = {
   notas: [0, 0.2, 0.4, 0.6].map((en) => ({ en, dura: 0.1, desde: 1100, hasta: 1100 })),
 };
 
+/**
+ * **El aviso de vueltas bajas del rotor del Super Puma.** Que lo lleva lo dice
+ * la AAIB: en el AS332L2 G-CHCF, al caer las vueltas del rotor en una toma de
+ * entrenamiento, «the low rotor speed aural warning activated» (AAIB Bulletin
+ * 2/2009, EW/C2007/11/03). Cómo suena no está publicado; aquí es un tono grave
+ * que se repite deprisa, que no se confunde con el pitido agudo de una
+ * precaución ni con la sirena del automático. Ver `vigilarLasVueltas` en
+ * `game.ts`.
+ */
+const ROTOR_BAJO: FormaDeTono = {
+  onda: "square",
+  fuerza: 0.12,
+  notas: [0, 0.3, 0.6, 0.9].map((en) => ({ en, dura: 0.2, desde: 620, hasta: 620 })),
+};
+
 export const FORMAS: Readonly<Record<TonoDeABordo, FormaDeTono>> = {
   "tono.sirenaDelAutomatico": SIRENA,
   "tono.pitidoDePrecaucion": PITIDO,
+  "tono.rotorBajo": ROTOR_BAJO,
 };
 
 /**

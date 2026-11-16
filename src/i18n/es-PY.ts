@@ -2893,6 +2893,16 @@ export const ES_PY = {
   "vuelo.sinMotor":
     "No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista",
   "palabra.planea": "Planeá",
+  /*
+   * **Y el aviso de las vueltas bajas del rotor**, detrás de su sonido y en los
+   * peldaños de abajo: qué sonó y qué se hace. Cerca del suelo, en la toma sin
+   * motor, es lo normal: se gastan las vueltas para posarse. Ver
+   * `vigilarLasVueltas` en `game.ts`.
+   */
+  "vuelo.rotorBajo":
+    "Ese sonido avisa que el rotor gira despacio. Colectivo abajo, que el aire que sube le devuelve las vueltas",
+  "vuelo.rotorBajo.toma":
+    "Ese sonido avisa que el rotor gira más despacio. Ahora es lo normal: gastamos su giro para posarnos suave",
   // Y la velocidad sin motor sale de la nariz, nunca del gas: no hay gas.
   "vuelo.planeoLento": "Vamos lentos: bajá un poco la nariz",
   "vuelo.planeoRapido":
@@ -3168,6 +3178,7 @@ export const ES_PY = {
   "hangar.ejercicio.un-motor": "Volar con un motor",
   "hangar.ejercicio.simulador": "Sesión de simulador",
   "hangar.ejercicio.tormenta": "Rodear una tormenta",
+  "hangar.ejercicio.autorrotacion": "Bajar sin motor en helicóptero",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3231,6 +3242,27 @@ export const ES_PY = {
   // Y el cierre, que nunca es un reproche.
   "ejercicio.bien":
     "Ejercicio hecho: volaste el procedimiento como en un simulador de verdad",
+  /*
+   * **La autorrotación del helicóptero** (#110): el planeo del helicóptero, con
+   * el mismo mensaje tranquilizador. Sin motor no se cae: el aire que sube hace
+   * girar el rotor, se baja planeando y abajo se posa con su giro. En Tukã la
+   * ayuda lleva el colectivo y la recogida, y la instructora cuenta lo que se
+   * ve; en Taguató los lleva quien vuela, y le dice qué hacer. Ver
+   * `flight/ejercicios.ts` y el ADR 0026.
+   */
+  "ejercicio.autorrotacion.antes":
+    "Hoy practicamos la autorrotación. En un ratito se van a parar los motores, a propósito, y no nos vamos a caer: el rotor sigue girando con el aire que sube, bajamos planeando y nos posamos con su giro",
+  "ejercicio.autorrotacion.ahora":
+    "Ya se pararon los motores. Fijate: no nos caemos. El aire que sube hace girar el rotor, y bajamos planeando, tranquilos",
+  "ejercicio.autorrotacion.ahoraTuyo":
+    "Ya se pararon los motores. Colectivo abajo enseguida, para que el rotor no pierda vueltas, y la nariz para sostener setenta nudos. El aire que sube lo hace girar",
+  "ejercicio.autorrotacion.recogida":
+    "Ya cerca del suelo levantamos la nariz: frenamos, y el rotor gira más rápido. Con ese giro nos posamos suave",
+  "ejercicio.autorrotacion.recogidaTuya":
+    "Cien pies: levantá la nariz para frenar. Cerca del suelo, nivelá y subí el colectivo, para posarte con el giro del rotor",
+  "ejercicio.autorrotacion.bien":
+    "Ejercicio hecho: sin motor, el helicóptero bajó entero. El rotor siguió girando con el aire que sube, y con su giro te posaste. Así lo practican los pilotos de helicóptero",
+  "palabra.autorrotacion": "Autorrotación",
   "ejercicio.bienDespresurizacion":
     "Ejercicio hecho: máscara primero, abajo rápido hasta donde se respira y al aeropuerto más cercano. Así lo practican los pilotos de línea en el simulador",
   "ejercicio.bienParado":

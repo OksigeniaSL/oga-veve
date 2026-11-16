@@ -90,7 +90,7 @@ const HABLADOS = [
      * en el diccionario y no la pide nadie, así que grabarla sería pagar por
      * una frase muda.
      */
-    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.terrInhibit\.\w+$|^vuelo\.anillo$/,
+    /^vuelo\.sinPermisoEnLosMinimos$|^vuelo\.tocaste(?:Largo|Duro)(?:Facil)?$|^vuelo\.(?:alturaDeLaTorre(?:Raya)?YMarca|paso\.cruceroSolo(?:\.sinVer|ConAutomatico)?|comoSeAterriza\.\w+)$|^vuelo\.(?:apapiBien|consejo\.\w+Apapi)$|^vuelo\.perdido(?:SinAutomatico|\.volvemos)?$|^vuelo\.tractorALaRaya(?:\.tarjeta)?$|^vuelo\.(?:flapsParaDespegar|flapsDeDespeguePuestos|recogeLosFlaps|losFlapsLosSubiYo|avisoDeConfiguracion)$|^vuelo\.terrInhibit\.\w+$|^vuelo\.anillo$|^vuelo\.rotorBajo(?:\.toma)?$/,
   ],
   ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
   /*
@@ -127,8 +127,8 @@ const HABLADOS = [
     "ejercicio",
     "instructor",
     "los ejercicios de emergencia: antes, durante y después",
-    // La tormenta va al final de la lista: ver `DE_LA_TORMENTA`.
-    /^ejercicio\.tormenta\./,
+    // La tormenta y la autorrotación van al final de la lista: ver `DE_LA_TORMENTA` y `DE_LA_AUTORROTACION`.
+    /^ejercicio\.(?:tormenta|autorrotacion)\./,
   ],
   // Menos la de Teno, que es nueva y va al final: ver `DE_LA_MISION_DE_TENO`.
   ["mission", "instructor", "las misiones", /^mission\.teno\./],
@@ -2801,6 +2801,37 @@ for (const [id, para] of DEL_ANILLO) {
   const texto = es.get(id);
   if (!texto || filas.some((f) => f.id === id)) continue;
   filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
+}
+/*
+ * **Y la autorrotación del helicóptero** (16-11-2026, #110): la presentación, lo
+ * que pasa al pararse los motores y en la recogida —con la ayuda en Tukã, a
+ * mano en Taguató— y el cierre; y lo que cuenta la instructora detrás del aviso
+ * de vueltas bajas del rotor. Detrás de todo, también del anillo, por lo mismo que las de arriba, y
+ * en calma como todo ejercicio. Ver `src/flight/ejercicios.ts` y el ADR 0026.
+ */
+const DE_LA_AUTORROTACION = [
+  ["ejercicio.autorrotacion.antes", "el ejercicio de la autorrotación, antes de empezar"],
+  ["ejercicio.autorrotacion.ahora", "al pararse los motores, en Tukã: la ayuda lleva el colectivo"],
+  ["ejercicio.autorrotacion.ahoraTuyo", "al pararse los motores, en Taguató: colectivo abajo y la nariz"],
+  ["ejercicio.autorrotacion.recogida", "a cien pies, en Tukã: la ayuda levanta la nariz"],
+  ["ejercicio.autorrotacion.recogidaTuya", "a cien pies, en Taguató: levantá la nariz, nivelá y colectivo arriba"],
+  ["ejercicio.autorrotacion.bien", "el cierre de la autorrotación"],
+  ["vuelo.rotorBajo", "detrás del aviso de vueltas bajas del rotor, en el aire: colectivo abajo"],
+  ["vuelo.rotorBajo.toma", "detrás del aviso de vueltas bajas del rotor, en la toma sin motor: es lo normal"],
+];
+for (const [id, para] of DE_LA_AUTORROTACION) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
   total += texto.length;
 }
 const AJUSTES_CON_CHISPA = {

@@ -333,6 +333,8 @@ export const DE_A_BORDO: Readonly<Record<string, keyof AvisosDeABordo>> = {
 export const TONO_DE_A_BORDO = {
   sirena: "tono.sirenaDelAutomatico",
   pitido: "tono.pitidoDePrecaucion",
+  // El de vueltas bajas del rotor: ver `ROTOR_BAJO` en `tonos-de-aviso.ts`.
+  rotorBajo: "tono.rotorBajo",
 } as const;
 
 /**

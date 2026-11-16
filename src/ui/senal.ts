@@ -17,7 +17,7 @@
 import type { Propulsion } from "../flight/aircraft";
 import { escribirRincon } from "./escala";
 import { alPulsar } from "./pulsar";
-import { fan, motorMas, motorMenos } from "./pictogramas";
+import { dibujoDelMotor, fan, motorMas, motorMenos } from "./pictogramas";
 import { helicopteroDePerfil } from "./dibujos-del-helicoptero";
 import { surtidorSvg } from "./surtidor";
 import { DIBUJOS_DE_LOS_SELLOS } from "./album";
@@ -364,6 +364,17 @@ const MOTOR_PARADO = icono(`
   <circle cx="12" cy="12" r="2.6" />
   <circle class="senal__hueco" cx="12" cy="12" r="1" />
   <path d="M15.6 3.2 h4 l-4 4 h4 M18.4 9.4 h2.6 l-2.6 2.6 h2.6"
+        fill="none" stroke="currentColor" stroke-width="1.3"
+        stroke-linecap="round" stroke-linejoin="round" />
+`);
+
+/**
+ * **El helicóptero sin motor**: el helicóptero de perfil con las dos zetas del
+ * motor dormido. Es la autorrotación: el motor duerme y el helicóptero sigue
+ * entero, con su rotor. Ver `EJERCICIOS` en `flight/ejercicios.ts`.
+ */
+const HELICOPTERO_SIN_MOTOR = icono(`${dibujoDelMotor("rotor", 9, 14, 8.6)}
+  <path d="M15.6 2.6 h3.6 l-3.6 3.6 h3.6 M18.8 7.6 h2.4 l-2.4 2.4 h2.4"
         fill="none" stroke="currentColor" stroke-width="1.3"
         stroke-linecap="round" stroke-linejoin="round" />
 `);
@@ -1652,6 +1663,7 @@ export const DIBUJOS = {
   eje: EJE,
   motor: MOTOR,
   "motor-parado": MOTOR_PARADO,
+  "helicoptero-sin-motor": HELICOPTERO_SIN_MOTOR,
   "reactor-parado": REACTOR_PARADO,
   "pie-izquierdo": pedal("izquierdo"),
   "pie-derecho": pedal("derecho"),

@@ -1156,6 +1156,10 @@ export const EN: Dictionary = {
   "vuelo.sinMotor":
     "We have no engine: nose down, hold this speed and head for that runway",
   "palabra.planea": "Glide",
+  "vuelo.rotorBajo":
+    "That sound means the rotor is turning slowly. Collective down: the air coming up gives it its revs back",
+  "vuelo.rotorBajo.toma":
+    "That sound means the rotor is turning more slowly. Right now that's normal: we use its spin to settle gently",
   "vuelo.planeoLento": "We are slow: lower the nose a little",
   "vuelo.planeoRapido": "We are fast: raise the nose a little, it takes us further",
   "vuelo.aire.frio":
@@ -1330,6 +1334,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.un-motor": "Fly on one engine",
   "hangar.ejercicio.simulador": "Simulator session",
   "hangar.ejercicio.tormenta": "Go around a storm",
+  "hangar.ejercicio.autorrotacion": "Coming down without engines in a helicopter",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1371,6 +1376,19 @@ export const EN: Dictionary = {
     "The fire service is coming to check the brakes: braking that hard makes them very hot. It's normal",
   "ejercicio.bien":
     "Exercise done: you flew the procedure like in a real simulator",
+  "ejercicio.autorrotacion.antes":
+    "Today we practise autorotation. In a little while the engines will stop, on purpose, and we won't fall: the rotor keeps turning with the air coming up through it, we glide down and we settle with its spin",
+  "ejercicio.autorrotacion.ahora":
+    "The engines have stopped. Look: we're not falling. The air coming up turns the rotor, and we glide down, calmly",
+  "ejercicio.autorrotacion.ahoraTuyo":
+    "The engines have stopped. Collective down straight away, so the rotor keeps its revs, and the nose to hold seventy knots. The air coming up keeps it turning",
+  "ejercicio.autorrotacion.recogida":
+    "Close to the ground we lift the nose: we slow down, and the rotor spins faster. With that spin we settle gently",
+  "ejercicio.autorrotacion.recogidaTuya":
+    "A hundred feet: lift the nose to slow down. Close to the ground, level off and raise the collective, to settle with the rotor's spin",
+  "ejercicio.autorrotacion.bien":
+    "Exercise done: without engines, the helicopter came down in one piece. The rotor kept turning with the air coming up, and you settled with its spin. That's how helicopter pilots practise it",
+  "palabra.autorrotacion": "Autorotation",
   "ejercicio.bienDespresurizacion":
     "Exercise done: mask first, down quickly to where we can breathe, and on to the nearest airport. That's how airline pilots practise it in the simulator",
   "ejercicio.bienParado":

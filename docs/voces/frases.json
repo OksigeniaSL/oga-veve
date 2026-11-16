@@ -20571,5 +20571,125 @@
     "idioma": "es-PY",
     "texto": "Estás bajando dentro del viento que echa tu rotor, y así no te sostiene. Subir el colectivo no te saca: cíclico adelante, ganá velocidad, y salís.",
     "para": "en el helicóptero, al entrar en el anillo turbillonario, en los peldaños de abajo: qué pasa y cómo se sale"
+  },
+  {
+    "id": "ejercicio.autorrotacion.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy practicamos la autorrotación. En un ratito se van a parar los motores, a propósito, y no nos vamos a caer: el rotor sigue girando con el aire que sube, bajamos planeando y nos posamos con su giro",
+    "para": "el ejercicio de la autorrotación, antes de empezar",
+    "dicho": "Hoy practicamos la autorrotación. En un ratito se van a parar los motores, a propósito, y no nos vamos a caer: el rotor sigue girando con el aire que sube, bajamos planeando y nos posamos con su giro.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.autorrotacion.ahora",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya se pararon los motores. Fijate: no nos caemos. El aire que sube hace girar el rotor, y bajamos planeando, tranquilos",
+    "para": "al pararse los motores, en Tukã: la ayuda lleva el colectivo",
+    "dicho": "Ya se pararon los motores. Fijate: no nos caemos. El aire que sube hace girar el rotor, y bajamos planeando, tranquilos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.autorrotacion.ahoraTuyo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya se pararon los motores. Colectivo abajo enseguida, para que el rotor no pierda vueltas, y la nariz para sostener setenta nudos. El aire que sube lo hace girar",
+    "para": "al pararse los motores, en Taguató: colectivo abajo y la nariz",
+    "dicho": "Ya se pararon los motores. Colectivo abajo enseguida, para que el rotor no pierda vueltas, y la nariz para sostener setenta nudos. El aire que sube lo hace girar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.autorrotacion.recogida",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya cerca del suelo levantamos la nariz: frenamos, y el rotor gira más rápido. Con ese giro nos posamos suave",
+    "para": "a cien pies, en Tukã: la ayuda levanta la nariz",
+    "dicho": "Ya cerca del suelo levantamos la nariz: frenamos, y el rotor gira más rápido. Con ese giro nos posamos suave.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.autorrotacion.recogidaTuya",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cien pies: levantá la nariz para frenar. Cerca del suelo, nivelá y subí el colectivo, para posarte con el giro del rotor",
+    "para": "a cien pies, en Taguató: levantá la nariz, nivelá y colectivo arriba",
+    "dicho": "Cien pies: levantá la nariz para frenar. Cerca del suelo, nivelá y subí el colectivo, para posarte con el giro del rotor.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.autorrotacion.bien",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ejercicio hecho: sin motor, el helicóptero bajó entero. El rotor siguió girando con el aire que sube, y con su giro te posaste. Así lo practican los pilotos de helicóptero",
+    "para": "el cierre de la autorrotación",
+    "dicho": "Ejercicio hecho: sin motor, el helicóptero bajó entero. El rotor siguió girando con el aire que sube, y con su giro te posaste. Así lo practican los pilotos de helicóptero.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.rotorBajo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ese sonido avisa que el rotor gira despacio. Colectivo abajo, que el aire que sube le devuelve las vueltas",
+    "para": "detrás del aviso de vueltas bajas del rotor, en el aire: colectivo abajo",
+    "dicho": "Ese sonido avisa que el rotor gira despacio. Colectivo abajo, que el aire que sube le devuelve las vueltas.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "vuelo.rotorBajo.toma",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ese sonido avisa que el rotor gira más despacio. Ahora es lo normal: gastamos su giro para posarnos suave",
+    "para": "detrás del aviso de vueltas bajas del rotor, en la toma sin motor: es lo normal",
+    "dicho": "Ese sonido avisa que el rotor gira más despacio. Ahora es lo normal: gastamos su giro para posarnos suave.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   }
 ]

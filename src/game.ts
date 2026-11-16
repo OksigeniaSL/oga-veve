@@ -279,7 +279,7 @@ import { HelicopteroComoModelo, estabilizacionDelPeldano } from "./flight/fdm-he
 import { lecturaDeLaVms, type LecturaDeLaVms } from "./flight/vms";
 import { escalaDelRotor, type EscalaDeDial } from "./ui/vms";
 import { sonidoDelRotor } from "./audio/rotor";
-import { RITMO_DEL_COLECTIVO } from "./flight/helicoptero";
+import { RITMO_DEL_COLECTIVO, VELOCIDAD_DE_AUTORROTACION } from "./flight/helicoptero";
 import { RITMO_DEL_GAS_DE_AVION } from "./flight/input";
 import { cargarModelo } from "./world/aeronave-modelo";
 import {
@@ -779,6 +779,7 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   despresurizacion: EJERCICIO_DE_DESPRESURIZACION.dibujo,
   // La nube con su rayo: la misma del aviso de tormenta del radar.
   tormenta: "tormenta",
+  autorrotacion: "helicoptero-sin-motor",
 };
 
 /**
@@ -9567,6 +9568,8 @@ export class Game {
      */
     if (this.aircraft.helicoptero) {
       this.posarseSinTren();
+      this.vigilarLasVueltas();
+      this.acompanarLaAutorrotacion();
       return null;
     }
     const s = this.flight.state;
@@ -10692,7 +10695,7 @@ export class Game {
       if (this.percance !== tipo) return;
       if (enEjercicio) {
         this.hud.mostrarCierreDeEjercicio(
-          dibujoDeCierre("otraVez"),
+          dibujoDeCierre("otraVez", !!this.aircraft.helicoptero),
           this.tier.instruments === "none"
             ? ""
             : this.rotulo("ejercicio.otraVez", "palabra.otraVez"),
@@ -17150,7 +17153,9 @@ export class Game {
     const colocacion = this.ejercicioDeHoy?.colocacion;
     const configurado = !colocacion && this.aircraft.trenRetractil;
     const entrada =
-      colocacion === "planeo"
+      colocacion === "autorrotacion"
+        ? VELOCIDAD_DE_AUTORROTACION
+        : colocacion === "planeo"
         ? planeoDe(this.avionConPeso()).velocidad
         : colocacion === "un-motor"
           ? this.aircraft.velocidadDeCircuito
@@ -17184,7 +17189,8 @@ export class Game {
     this.cargaDeFlaps = FLAPS_SANOS;
     this.input.topeDeFlaps = 1;
     this.input.controls.engineOn = true;
-    if (colocacion) {
+    // El helicóptero, con el tren fuera: se va a posar sin motor, y sin ruedas sería de panza.
+    if (colocacion && !this.aircraft.helicoptero) {
       this.input.ponerElTrenDentro();
       this.input.ponerPalancaDeFlaps(0);
       this.input.controls.flaps = 0;
@@ -17220,7 +17226,7 @@ export class Game {
      * segundos, cuando se para el motor, iba a 93, con todo ese sobrante para
      * gastar antes de la pista. Ver `gasQueSostiene`.
      */
-    if (colocacion && this.tier.model !== "simple") {
+    if (colocacion && this.tier.model !== "simple" && !this.aircraft.helicoptero) {
       const sostiene = gasQueSostiene(this.avionConPeso(), {
         altura: this.flight.state.position.y,
         verdadera: entrada,
@@ -19306,7 +19312,9 @@ export class Game {
      * sobre la ladera de Barlovento, no sonó nada: «que me avise, que tengo
      * una montaña bien grande delante». Ver `flight/terreno-delante.ts`.
      */
-    const terreno = juntarAvisos(avisoDeTerreno(cerca), this.mirarElTerrenoDelante(dt));
+    const visto = juntarAvisos(avisoDeTerreno(cerca), this.mirarElTerrenoDelante(dt));
+    // Sin motor y bajando a posarse, «subí» es lo que no se puede: ver `autorrotacionPracticada`.
+    const terreno = this.autorrotacionPracticada() ? null : visto;
     this.terrenoAhora = terreno;
     /*
      * El HUD enseña el mismo aviso que dice la voz, no uno suyo. Ver
@@ -22803,8 +22811,17 @@ export class Game {
    *   cercano es el de casa y queda por delante.
    */
   private dondeEmpiezaElEjercicio(
-    colocacion: "planeo" | "un-motor" | "crucero" | "tormenta",
+    colocacion: "planeo" | "un-motor" | "crucero" | "tormenta" | "autorrotacion",
   ): { lejos: number; alto: number } {
+    /*
+     * `autorrotacion`: sobre la cabecera, a mil pies y en el sentido de la
+     * pista, que es el del viento. A mil y no a los quinientos de la prueba del
+     * #110: en los peldaños de abajo, soltar el cíclico es pararse, y parado en
+     * el aire a quinientos pies sin motor no se llega entero —es el diagrama de
+     * altura y velocidad—; a mil, sí. Y la pista larga por delante, que es donde
+     * se posa: llano y sin casas. Ver `autorrotacion.test.ts`.
+     */
+    if (colocacion === "autorrotacion") return { lejos: 200, alto: 1000 * 0.3048 };
     /*
      * `tormenta`: lejos, a la altura de la llegada, con la tormenta en medio
      * del camino a casa. Ver `colocacionDeLaTormenta`.
@@ -22986,6 +23003,8 @@ export class Game {
       case "declarar":
         return this.declararLaEmergencia(suceso.socorro);
       case "bomberos":
+        // Los de la autorrotación no: la frase y la espera son de un avión que vuelve a su pista.
+        if (this.aircraft.helicoptero) return;
         return this.ponerLosBomberos(suceso.donde);
       case "cerrar":
         return this.cerrarElEjercicio(suceso.como);
@@ -23073,6 +23092,7 @@ export class Game {
     enElSuelo: boolean,
   ): void {
     if (motor === null) {
+      if (this.aircraft.helicoptero) return this.entrarEnAutorrotacion();
       this.input.controls.engineOn = false;
       this.quedarseSinMotor("engine failure");
       return;
@@ -23132,6 +23152,104 @@ export class Game {
         { segundos: 8, prioridad: IMPORTANTE },
       ),
     );
+  }
+
+  /**
+   * **Se paran los motores del helicóptero**: el ejercicio de la autorrotación
+   * (#110). No es el vuelo sin motor del avión —ni planeo de ala, ni pista que
+   * buscar, ni MAYDAY a quinientos pies, donde se vuela y nada más—: colectivo
+   * abajo, la velocidad con la nariz y posarse con el giro del rotor. El dibujo,
+   * en los cuatro peldaños; la instructora, en los de abajo, qué pasa y qué se
+   * hace: en Tukã lo hace la ayuda y se cuenta lo que se ve, en Taguató lo hace
+   * quien vuela. Lo que dice la máquina, las vueltas bajas, va por su lado:
+   * ver `vigilarLasVueltas`.
+   */
+  private entrarEnAutorrotacion(): void {
+    this.input.controls.engineOn = false;
+    this.recogidaContada = false;
+    const heli = this.flight instanceof HelicopteroComoModelo ? this.flight.modelo : null;
+    const conAyuda = heli?.estabilizacionAhora() === "estacionario";
+    const clave: TranslationKey = conAyuda ? "ejercicio.autorrotacion.ahora" : "ejercicio.autorrotacion.ahoraTuyo";
+    const dicho = this.avisoCon(clave, "palabra.autorrotacion");
+    this.hud.senal.mostrar("helicoptero-sin-motor", dicho.rotulo, null, {
+      segundos: 8,
+      prioridad: IMPORTANTE,
+    });
+    if (laInstructoraLoExplica(this.tier.avisos)) this.decirDelEjercicio(clave, "mando");
+  }
+
+  /**
+   * **El ejercicio de la autorrotación en marcha.** Empieza en el aire en la
+   * lección de aterrizar, y lo de una final de avión que esa lección trae se
+   * calla: el consejero de la bajada, el *sink rate*, el «subí» del suelo y el
+   * «metélo» del tren. Bajar deprisa hacia el suelo sin motor es la maniobra, y
+   * subir no se puede: decirlo enseñaría lo contrario. Medido en el banco de
+   * Tukã: «terrain, pull up» con su «Subí» a cuarenta metros, y «gear up» a mil
+   * pies con el tren que hace falta para posarse.
+   */
+  private autorrotacionPracticada(): boolean {
+    const p = this.practica;
+    return !!this.aircraft.helicoptero && p?.ejercicio.id === "autorrotacion" && p.fase !== "cerrada";
+  }
+
+  /** Si ya se contó la recogida de esta autorrotación. Ver `acompanarLaAutorrotacion`. */
+  private recogidaContada = false;
+
+  /**
+   * **La recogida, contada cuando llega**, en los peldaños de abajo: a los cien
+   * pies del manual la nariz sube, y se dice por qué —frena, y el rotor coge
+   * vueltas para posarse con ellas—. En Tukã la hace la ayuda, en Taguató quien
+   * vuela. Ver `ALTURA_DE_RECOGIDA` en `flight/helicoptero.ts`.
+   */
+  private acompanarLaAutorrotacion(): void {
+    const p = this.practica;
+    if (!p || p.ejercicio.id !== "autorrotacion" || p.fase !== "fallo" || this.recogidaContada) return;
+    if (!(this.flight instanceof HelicopteroComoModelo)) return;
+    const heli = this.flight.modelo;
+    const fase = heli.faseDeAutorrotacion();
+    if (fase !== "recogida" && fase !== "toma") return;
+    this.recogidaContada = true;
+    if (!laInstructoraLoExplica(this.tier.avisos)) return;
+    const conAyuda = heli.estabilizacionAhora() === "estacionario";
+    this.decirDelEjercicio(
+      conAyuda ? "ejercicio.autorrotacion.recogida" : "ejercicio.autorrotacion.recogidaTuya",
+      "mando",
+    );
+  }
+
+  /** Si ya sonó el aviso de vueltas bajas y las vueltas no han vuelto a subir. */
+  private rotorBajoAvisado = false;
+
+  /**
+   * **El aviso de vueltas bajas del rotor**, que el Super Puma lleva de verdad:
+   * «the low rotor speed aural warning activated» (AAIB Bulletin 2/2009, el
+   * AS332L2 G-CHCF). Suena por debajo de las vueltas más bajas que permite su
+   * ficha, las de sin motor (220 rpm, TCDS R.002, III.9), y en los cuatro
+   * peldaños, que es lo que suena en ese helicóptero; detrás, en los de abajo,
+   * la instructora cuenta qué sonó y qué se hace. En la toma sin motor es lo
+   * normal —las vueltas se gastan en posarse, y para eso estaban— y se dice
+   * así. Vuelve a sonar cuando las vueltas han subido y caen otra vez, no con
+   * el reloj; y en el suelo no, donde caen porque el rotor se para.
+   */
+  private vigilarLasVueltas(): void {
+    if (!(this.flight instanceof HelicopteroComoModelo)) return;
+    const heli = this.flight.modelo;
+    const minimo = heli.ficha.vueltasPermitidas?.sinMotor[0];
+    if (minimo === undefined) return;
+    const rpm = (heli.rotor().vueltas * 60) / (2 * Math.PI);
+    if (rpm > minimo + 10) this.rotorBajoAvisado = false;
+    if (this.rotorBajoAvisado || rpm >= minimo || this.flight.state.onGround) return;
+    this.rotorBajoAvisado = true;
+    const clave: TranslationKey =
+      heli.faseDeAutorrotacion() === "toma" ? "vuelo.rotorBajo.toma" : "vuelo.rotorBajo";
+    // Solo con su frase grabada, como lo del ejercicio: ver `decirDelEjercicio`.
+    const explica = laInstructoraLoExplica(this.tier.avisos)
+      ? () => void this.decirLoGrabado(clave, "mando")
+      : undefined;
+    const como = this.maquina.decir(TONO_DE_A_BORDO.rotorBajo, explica);
+    this.apuntarCanto(`vueltas bajas→máquina(${TONO_DE_A_BORDO.rotorBajo}): ${como}`);
+    // Y si la máquina no puede sonar, el aviso no se queda mudo: lo dice la instructora.
+    if (como === "no") this.decirLoGrabado(clave, "mando");
   }
 
   /**
@@ -23324,7 +23442,9 @@ export class Game {
     const clave =
       this.practica?.ejercicio.id === "despresurizacion" && como === "vuelta"
         ? CIERRE_DE_LA_DESPRESURIZACION
-        : CIERRE_DEL_EJERCICIO[como];
+        : this.practica?.ejercicio.id === "autorrotacion" && como === "vuelta"
+          ? "ejercicio.autorrotacion.bien"
+          : CIERRE_DEL_EJERCICIO[como];
     if (laInstructoraLoExplica(this.tier.avisos) && this.bomberosPor) {
       // Uno o varios: se cuentan los que se ven. Ver `ponerLosBomberos`.
       const b: TranslationKey =
@@ -23342,7 +23462,7 @@ export class Game {
     this.agenda.luego(TARDA_EL_FINAL + 2, () => {
       if (this.practica?.cierre !== como) return;
       this.hud.mostrarCierreDeEjercicio(
-        dibujoDeCierre(como),
+        dibujoDeCierre(como, !!this.aircraft.helicoptero),
         this.tier.instruments === "none"
           ? ""
           : this.rotulo(clave, "palabra.bien"),
@@ -30882,6 +31002,8 @@ export class Game {
    * son el terreno, la pista ocupada y la orden de irse al aire.
    */
   private cantarLaActitud(): void {
+    // Bajar deprisa sin motor es la maniobra, no un aviso: ver `autorrotacionPracticada`.
+    if (this.autorrotacionPracticada()) return;
     const s = this.flight.state;
     const ahora = avisoDeActitud(
       {
@@ -31394,6 +31516,8 @@ export class Game {
    * consejero con la lectura de este fotograma. Ver `mirarLaSenda`.
    */
   private aconsejarLaBajada(): void {
+    // Los consejos de una final de avión, no en la autorrotación: ver `autorrotacionPracticada`.
+    if (this.autorrotacionPracticada()) return;
     const l = this.lecturaDelConsejo;
     // Un suceso, una voz: si la cadena acaba de decir un paso, al siguiente.
     if (!l || this.pasoEnEsteFotograma) return;
@@ -33126,6 +33250,8 @@ export class Game {
       this.cantar("gear down", t("vuelo.sacaElTren"), "vuelo.sacaElTren");
       return;
     }
+    // Y en la autorrotación el tren se queda fuera, que se va a posar: ver `autorrotacionPracticada`.
+    if (this.autorrotacionPracticada()) return;
 
     /*
      * Y metélo, cuando ya no hace falta: en el aire, subiendo y por encima de

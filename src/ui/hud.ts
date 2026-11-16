@@ -3677,8 +3677,11 @@ export class Hud {
         declinacion: this.magneticVariation,
         viento: mandos?.viento ?? null,
         // La pérdida: marco rojo alrededor del horizonte, que es donde mira
-        // quien ya está en apuros. Ver `cinta.ts` para el parpadeo.
-        perdida: !state.onGround && state.alpha > this.ficha.aero.alphaStall,
+        // quien ya está en apuros. Ver `cinta.ts` para el parpadeo. Y el
+        // helicóptero no tiene ala que entre en pérdida: bajando sin motor, el
+        // aire le da al fuselaje desde abajo y el marco se encendía en plena
+        // autorrotación (ADR 0026, enmienda H16a).
+        perdida: !state.onGround && !this.ficha.helicoptero && state.alpha > this.ficha.aero.alphaStall,
         /*
          * Y el mundo, para la carta. Llegaba solo a las pantallas de la
          * cabina y por eso el cuadro plano seguía con la brújula sobre el
