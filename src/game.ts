@@ -1248,10 +1248,9 @@ import {
   GUION,
   PARADO,
   SE_QUEDAN,
-  guionAfis,
-  guionSinTorre,
   type Fase,
 } from "./flight/vuelo";
+import { tarjetaDeLaFase } from "./flight/guion-de-fases";
 import { barraDeRodaje, esDeLinea, vaALaPasarela, velocidadesEnTierra } from "./flight/velocidades-en-tierra";
 import {
   DEJA_DE_PEDIR,
@@ -26827,135 +26826,46 @@ export class Game {
         this.avisar("success");
         if (conLetras) this.hud.flash(t("vuelo.pistaLibre"), 3.2);
       }
-      // Al lado del mensaje va **la tecla**, cuando la fase pide una. «Arrancá
-      // el motor» no le sirve de nada a quien no sabe cuál es el motor.
-      const tecla = this.tarjetaDelRemolque(vista)?.baliza
-        ? ` · ${nombreDeTecla(this.input.preferredKey("baliza"))}`
-        : vista.fase === "estacionado" || vista.fase === "en-puesto"
-          ? ` · ${nombreDeTecla(this.input.preferredKey("engine"))}`
-          : vista.fase === "esperando" || vista.fase === "aterrizado"
-            ? ` · ${nombreDeTecla(this.input.preferredKey("brakes"))}`
-            : "";
       /*
-       * **En la lección de aterrizar, volar no es el premio: es el camino.**
-       *
-       * La fase «en vuelo» dice «andá a dar una vuelta», que es lo que toca
-       * cuando se acaba de despegar y el mundo es tuyo. Pero quien eligió
-       * aprender a aterrizar aparece ya volando y a tres kilómetros de la
-       * cabecera: decirle que se dé una vuelta es mandarlo al sitio contrario.
-       */
-      /*
-       * **Y yendo a otro aeropuerto, tampoco se da una vuelta**: se sigue la
-       * flecha hasta allí. Ver `haciaOtroCampo`.
-       */
-      /*
-       * **Y en una pista sin torre, su guion**: sin lámpara que esperar y sin
-       * nadie detrás que meta prisa. Ver `guionSinTorre`. Con la bici, si hoy
-       * sale: es la misma condición que la saca a ella, y solo en la pista
-       * particular, que es donde hay quien pedalee. En Ayolas no es casa.
+       * **La tarjeta de la fase, con el guion del campo donde se está**: qué
+       * dice, cuánto se queda, qué tecla lleva y si lleva la letra de la
+       * calle. Ver `flight/guion-de-fases.ts`.
        */
       const aqui = this.elCampo().escenario.aerodrome;
-      const guion = sinTorre(aqui)
-        ? guionSinTorre(
-            vista.fase,
-            this.tier.sigueme && aqui?.privado === true,
-            aqui?.privado === true,
-          )
-        : esAfis(aqui)
-          ? guionAfis(vista.fase)
-          : vista;
-      /*
-       * Y remontando un trozo, la tarjeta no dice «hasta el fondo», que la
-       * vuelta no está en el fondo: está donde la dibuja la raya. Ver
-       * `remontaHastaLaCabecera` en `flight/carrera.ts`.
-       */
-      const remontaUnTrecho =
-        vista.fase === "back-taxi" && this.plan?.comoSeSale?.hastaElFinal === false;
+      const deLaFase = tarjetaDeLaFase(vista.fase, {
+        contesta: sinTorre(aqui) ? "nadie" : esAfis(aqui) ? "afis" : "torre",
+        conBici: this.tier.sigueme && aqui?.privado === true,
+        enCasa: aqui?.privado === true,
+        aterrizando: this.leccion.id === "aterrizaje",
+        haciaOtroCampo: vista.fase === "en-vuelo" && this.haciaOtroCampo(),
+        remontaUnTrecho:
+          vista.fase === "back-taxi" && this.plan?.comoSeSale?.hastaElFinal === false,
+      });
       // Y con el tractor enganchado, la suya. Ver `tarjetaDelRemolque`.
       const delRemolque = this.tarjetaDelRemolque(vista);
-      const clave = delRemolque
-        ? delRemolque.clave
-        : this.leccion.id === "aterrizaje" && vista.fase === "en-vuelo"
-          ? "vuelo.enVueloAterrizando"
-          : vista.fase === "en-vuelo" && this.haciaOtroCampo()
-            ? "vuelo.enVueloDestino"
-            : remontaUnTrecho
-              ? "vuelo.backTaxiUnTrecho"
-              : guion.clave;
+      const tecla = delRemolque?.baliza
+        ? ` · ${nombreDeTecla(this.input.preferredKey("baliza"))}`
+        : deLaFase.teclaDelRotulo
+          ? ` · ${nombreDeTecla(this.input.preferredKey(deLaFase.teclaDelRotulo))}`
+          : "";
+      const clave = delRemolque ? delRemolque.clave : deLaFase.clave;
       const frase = t(clave as never);
-
-      // **Tres caminos para lo mismo, y el dibujo es el que nunca falta.** La
-      // voz no la oye quien juega en silencio ni quien no oye; el texto no lo
-      // lee quien tiene cuatro años. El dibujo lo entiende todo el mundo.
-      //
-      // Y hay fases que **esperan a que alguien haga algo** —arrancar el
-      // motor, apagarlo, esperar la luz—. Esas no pueden desaparecer solas: la
-      // primera persona que lo jugó se quedó mirando un avión parado en Silvio
-      // Pettirossi porque la llave salió, se apagó a los seis segundos, y ya no
-      // había forma de enterarse de qué hacía falta.
-      /*
-       * **La letra de la calle solo cuando la calle importa.**
-       *
-       * Se pegaba a todos los mensajes: parado en el puesto con el motor
-       * apagado salía «arrancá el motor · R», y en el punto de espera «frená ·
-       * R». La R es un dato de por dónde se rueda, y quien está parado no rueda
-       * por ninguna parte — ahí es una letra suelta que no significa nada, y
-       * ya costó una vez enterarse de qué era.
-       *
-       * Se enseña en las fases en las que uno va por una calle y le sirve
-       * saber cuál: yendo a la pista, saliendo de ella y volviendo a casa.
-       */
-      const rodando =
-        vista.fase === "rodando" ||
-        vista.fase === "abandonando" ||
-        vista.fase === "a-plataforma";
-      const letra = rodando ? vista.letra : null;
-
-      const pendiente =
-        vista.fase === "estacionado" || vista.fase === "en-puesto";
-      const esperando = vista.fase === "esperando";
-      /*
-       * **La carrera de aterrizaje también espera a que alguien haga algo.**
-       *
-       * «Frená» y «Salí de la pista» duraban seis segundos y luego la pantalla
-       * se quedaba vacía hasta que cambiara la fase. Pero esas dos fases duran
-       * lo que tarde quien juega en frenar y en encontrar la salida —que puede
-       * ser un minuto largo—, así que el aviso desaparecía justo cuando hacía
-       * falta: «en pista, ya aterrizado, nadie me indica por dónde abandonar la
-       * pista para ir al hangar».
-       *
-       * Es el mismo fallo que ya tuvo la llave de contacto, y se arregla igual:
-       * lo que está pendiente de que alguien haga algo **no puede apagarse
-       * solo**. La diferencia con `pendiente` es que aquí no hay tecla que
-       * pulsar ni tarjeta que tocar; solo hay que seguir viéndolo.
-       */
-      const seQueda = SE_QUEDAN.has(vista.fase);
+      const letra = deLaFase.conLetra ? vista.letra : null;
       if (!callada) this.hud.senal.mostrar(
-        comoDibujo(delRemolque?.icono ?? guion.icono),
+        comoDibujo(delRemolque?.icono ?? deLaFase.icono),
         conLetras ? frase : "",
         letra,
         {
-          segundos:
-            pendiente || esperando || seQueda
-              ? Infinity
-              : vista.fase === "apagado"
-                ? 9
-                : 6,
-          // La tecla, dibujada. Sin esto, en el peldaño sin palabras no había
-          // ninguna manera de saber que el contacto es la I.
+          segundos: deLaFase.segundos,
           tecla: delRemolque?.baliza
             ? nombreDeTecla(this.input.preferredKey("baliza"))
-            : pendiente
-            ? nombreDeTecla(this.input.preferredKey("engine"))
-            : esperando
-              ? nombreDeTecla(this.input.preferredKey("brakes"))
+            : deLaFase.tecla
+              ? nombreDeTecla(this.input.preferredKey(deLaFase.tecla))
               : null,
-          // Y la tarjeta **hace** lo que dice al tocarla. En una tablet no había
-          // ninguna forma de arrancar el motor: los mandos táctiles son palanca,
-          // timón, gas y freno, y el contacto no estaba por ningún lado.
+          // Y la tarjeta **hace** lo que dice al tocarla. Ver `ESPERAN_LA_LLAVE`.
           accion: delRemolque?.baliza
             ? () => this.moverLaBaliza()
-            : pendiente
+            : deLaFase.tocarEsLaLlave
               ? () => this.toggleEngine()
               : null,
         },
