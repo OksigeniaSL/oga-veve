@@ -54,6 +54,7 @@ import {
 import { FINAL_DESDE } from "../flight/escalera-de-velocidades";
 import { sendaDeLaCabecera } from "./sendas-publicadas";
 import { mirarDelante, type AvisoDelante, type PistaConocida } from "../flight/terreno-delante";
+import { fueraDeLaBase, queToca } from "../flight/inhibir-terreno";
 import { campoDeCasa, campoVecino } from "./campo-del-vuelo";
 import { desplazarAerodromo } from "./aerodromo-desplazado";
 import {
@@ -393,11 +394,16 @@ interface AvisoDelCircuito {
  * avisador salen de la ficha, y un avión medido tiene que estar comprobado
  * aunque todavía no salga en el hangar.
  */
-function avisosEnElCircuito(
+/**
+ * **El circuito de un avión, volado**: de la subida tras despegar al umbral,
+ * con la altitud del dibujo, y desde cuánto antes del umbral empieza su base.
+ */
+function vueloDelCircuito(
   e: Scenario,
   c: Cabecera,
   cota: (x: number, z: number) => number | null,
-): AvisoDelCircuito[] {
+  avion: (typeof MEDIDOS)[number],
+): { readonly vuelo: Instante[]; readonly baseDesde: number } {
   const h = (c.rumbo * Math.PI) / 180;
   const pista = {
     x: c.x + (Math.sin(h) * c.largo) / 2,
@@ -407,41 +413,53 @@ function avisosEnElCircuito(
     senda: sendaDelCircuito(e, c),
   };
   const suelo = (x: number, z: number) => cota(x, z) ?? 0;
+  const escala = escalaDelCircuitoDe(avion, pista);
+  const forma = formaDelCircuito(
+    pista,
+    c.cota,
+    suelo,
+    escala,
+    manoPublicada(e, c.nombre, escala),
+    avion.velocidadDeCircuito,
+  );
+  const v = verticesDelCircuito(pista, c.cota, forma.mano, escala, forma.altura);
+  const puntos = [{ ...v[0]!, y: c.cota + 60 }, ...v.slice(1), { x: c.x, y: c.cota, z: c.z }];
+  const fijos = puntos.map(
+    (p, i): Fijo => ({ x: p.x, z: p.z, nombre: `C${i}`, papel: "ruta", minima: null }),
+  );
+  const r = rutaDe(fijos, c.cota);
+  // La altitud, la del dibujo del circuito: recta entre sus vértices.
+  const altitud = (falta: number) => {
+    const hecho = r.total - falta;
+    for (let i = 1; i < puntos.length; i++) {
+      if (r.acumulado[i]! < hecho) continue;
+      const l = r.acumulado[i]! - r.acumulado[i - 1]! || 1;
+      const t = Math.max(0, Math.min(1, (hecho - r.acumulado[i - 1]!) / l));
+      return puntos[i - 1]!.y + (puntos[i]!.y - puntos[i - 1]!.y) * t;
+    }
+    return c.cota;
+  };
+  return {
+    vuelo: volar(r, altitud, avion.velocidadDeCircuito),
+    baseDesde: r.total - r.acumulado[3]!,
+  };
+}
+
+function avisosEnElCircuito(
+  e: Scenario,
+  c: Cabecera,
+  cota: (x: number, z: number) => number | null,
+): AvisoDelCircuito[] {
   const avisos: AvisoDelCircuito[] = [];
   for (const avion of MEDIDOS.filter((a) => a.avisosHablados)) {
-    const escala = escalaDelCircuitoDe(avion, pista);
-    const forma = formaDelCircuito(
-      pista,
-      c.cota,
-      suelo,
-      escala,
-      manoPublicada(e, c.nombre, escala),
-      avion.velocidadDeCircuito,
-    );
-    const v = verticesDelCircuito(pista, c.cota, forma.mano, escala, forma.altura);
-    const puntos = [{ ...v[0]!, y: c.cota + 60 }, ...v.slice(1), { x: c.x, y: c.cota, z: c.z }];
-    const fijos = puntos.map(
-      (p, i): Fijo => ({ x: p.x, z: p.z, nombre: `C${i}`, papel: "ruta", minima: null }),
-    );
-    const r = rutaDe(fijos, c.cota);
-    // La altitud, la del dibujo del circuito: recta entre sus vértices.
-    const altitud = (falta: number) => {
-      const hecho = r.total - falta;
-      for (let i = 1; i < puntos.length; i++) {
-        if (r.acumulado[i]! < hecho) continue;
-        const l = r.acumulado[i]! - r.acumulado[i - 1]! || 1;
-        const t = Math.max(0, Math.min(1, (hecho - r.acumulado[i - 1]!) / l));
-        return puntos[i - 1]!.y + (puntos[i]!.y - puntos[i - 1]!.y) * t;
-      }
-      return c.cota;
-    };
-    for (const p of volar(r, altitud, avion.velocidadDeCircuito)) {
+    const { vuelo, baseDesde } = vueloDelCircuito(e, c, cota, avion);
+    for (const p of vuelo) {
       const d = mirarDelante(p, cota, [pistaConocida(e, c)]);
       if (!d.aviso) continue;
       avisos.push({
         aviso: d.aviso,
         falta: p.falta,
-        baseDesde: r.total - r.acumulado[3]!,
+        baseDesde,
         dicho: `${avion.id} ${d.aviso}, ${Math.round(p.falta)} m antes del umbral, ${Math.round(p.altitud)} m, ${d.segundos} s`,
       });
       break;
@@ -689,6 +707,46 @@ describe("las aproximaciones de cada campo, sobre el relieve", () => {
     for (const dicho of [...Object.keys(FRUSTRADA_JUNTO_AL_MONTE), ...Object.keys(AVISA_EN_EL_CIRCUITO)]) {
       const [oaci, cab] = dicho.split(" ");
       expect(CAMPOS.some((e) => nombre(e) === oaci && cabeceras(e).some((c) => c.nombre === cab))).toBe(true);
+    }
+  });
+
+  /*
+   * **Y en la granja, el TERR INHIBIT llega antes que el aviso.** La
+   * precaución de la 15 de SGOG se queda, como las otras dos: es lo que daría
+   * un TAWS de verdad. Pero de las tres, es la única en un campo que no está en
+   * la base del equipo, y una tripulación de verdad apaga ahí su mirada de
+   * delante dentro de las quince millas (ADR 0027, enmienda H14d). Lo que se
+   * comprueba es que, volando el mismo circuito, el procedimiento pide
+   * apagarla **antes** del sitio donde avisa; y que en las otras dos no lo pide
+   * nunca, porque esos campos sí están en la base.
+   */
+  it("y de las excepciones del circuito, solo la granja se apaga con TERR INHIBIT, y a tiempo", () => {
+    const tujuju = MEDIDOS.find((a) => a.id === "jaz-50")!;
+    const equipo = tujuju.terrInhibit!;
+    expect(equipo).toBeDefined();
+    for (const dicho of Object.keys(AVISA_EN_EL_CIRCUITO)) {
+      const [oaci, cab] = dicho.split(" ");
+      const e = CAMPOS.find((x) => nombre(x) === oaci)!;
+      expect(fueraDeLaBase(e.aerodrome, equipo), dicho).toBe(oaci === "SGOG");
+      if (oaci !== "SGOG") continue;
+      const c = cabeceras(e).find((x) => x.nombre === cab)!;
+      const cota = relieve(e);
+      const avisa = avisosEnElCircuito(e, c, cota).filter((a) => a.dicho.startsWith("jaz-50 "));
+      // Sin apagarlo, sigue avisando: es la excepción de arriba.
+      expect(avisa.length, `${dicho}: el Tujuju ya no avisa`).toBeGreaterThan(0);
+      const p = pistaConocida(e, c);
+      const seApaga = vueloDelCircuito(e, c, cota, tujuju).vuelo.find(
+        (i) =>
+          queToca({
+            inhibido: false,
+            enVuelo: true,
+            sobreElSuelo: i.altitud - (cota(i.x, i.z) ?? c.cota),
+            llegadaFueraDeLaBase: Math.hypot(i.x - p.x, i.z - p.z),
+            delCampoApagado: null,
+          }) === "inhibir",
+      );
+      expect(seApaga, `${dicho}: no se pide apagarlo en todo el circuito`).toBeDefined();
+      expect(seApaga!.falta, `${dicho}: ${avisa[0]!.dicho}`).toBeGreaterThan(avisa[0]!.falta);
     }
   });
 });

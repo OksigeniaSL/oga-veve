@@ -1457,9 +1457,11 @@ import {
   EN_GRANDE,
   EN_GRANDE_EN_PIES,
   laInstructoraLoExplica,
+  loHaceQuienVaAlLado,
   PELDANOS,
   type Peldano,
 } from "./flight/escalera";
+import { fueraDeLaBase, queToca, RADIO_DEL_PROCEDIMIENTO } from "./flight/inhibir-terreno";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import {
   gravedadDelSuelo,
@@ -4609,6 +4611,7 @@ export class Game {
     this.maquina.callar();
     this.antesAlUmbral = Infinity;
     this.terrenoDicho = null;
+    this.reiniciarTerrInhibit();
     this.dichoDelTren = null;
     this.recordadoDelTren = NADA_RECORDADO;
     this.trenPorMeter = true;
@@ -11159,7 +11162,12 @@ export class Game {
    */
   private mirarElTerrenoDelante(dt: number): AvisoDelante {
     const s = this.flight.state;
-    if (!this.aircraft.avisosHablados || s.onGround || s.crashed) {
+    /*
+     * **Y con el TERR INHIBIT pulsado, no se mira**: es lo que apaga ese botón,
+     * la mirada de delante y nada más. Lo de debajo sigue en `avisoDeTerreno`.
+     * Ver `atenderAlTerrInhibit`.
+     */
+    if (!this.aircraft.avisosHablados || this.terrInhibido || s.onGround || s.crashed) {
       this.delante = null;
       this.rumboDeDelante = null;
       this.desdeDelante = 0;
@@ -13413,6 +13421,7 @@ export class Game {
     this.fueraDeBanda = 0;
     this.dichoDeBanda = null;
     this.terrenoDicho = null;
+    this.reiniciarTerrInhibit();
     this.dichoDelTren = null;
     this.recordadoDelTren = NADA_RECORDADO;
     this.trenPorMeter = true;
@@ -19111,6 +19120,7 @@ export class Game {
 
     this.atenderAlTren();
     this.atenderALaListaDeAterrizaje();
+    this.atenderAlTerrInhibit();
     // Con la mano de Jazlyn no hay toma larga: la toma la asegura ella.
     if (!this.manoDeJazlyn) this.mirarLaTomaLarga(dt);
 
@@ -28727,6 +28737,7 @@ export class Game {
     else if (cual === "flaps") this.input.alternarFlaps();
     else if (cual === "tren") this.input.alternarTren();
     else if (cual === "freno-rotor") this.input.alternarFrenoDelRotor();
+    else if (cual === "terr") this.pulsarTerrInhibit();
     else this.input.pisarElFreno();
   }
 
@@ -33086,6 +33097,150 @@ export class Game {
   private listaDeAterrizaje = { pedida: false, hecha: false };
 
   /**
+   * **El TERR INHIBIT del avisador de terreno**, en el avión que lo lleva.
+   *
+   * Llegando a un campo que no está en la base de su equipo —la granja—, la
+   * tripulación apaga la mirada de delante del TAWS dentro de las quince
+   * millas, y la vuelve a encender al salir de ellas. En los tres peldaños de
+   * abajo lo hace quien va al lado y la instructora lo cuenta con calma; en el
+   * de cabina lo pide la tarjeta, que se toca para hacerlo, y el botón está en
+   * la cabina. Si no se apaga, avisa como siempre: no se castiga, se ve. Ver
+   * `flight/inhibir-terreno.ts` y el ADR 0027, enmienda H14d.
+   */
+  private atenderAlTerrInhibit(): void {
+    const equipo = this.aircraft.terrInhibit;
+    if (!equipo) return;
+    const s = this.flight.state;
+    const llegada = this.campoDeLlegada();
+    const lejos = (c: { x: number; z: number }) =>
+      Math.hypot(s.position.x - c.x, s.position.z - c.z);
+    const toca = queToca({
+      inhibido: this.terrInhibido,
+      enVuelo: !s.onGround && !s.crashed,
+      sobreElSuelo: s.heightAboveGround,
+      llegadaFueraDeLaBase: fueraDeLaBase(llegada.aero, equipo) ? lejos(llegada) : null,
+      delCampoApagado: this.terrInhibidoPara ? lejos(this.terrInhibidoPara) : null,
+    });
+    if (!toca) {
+      this.terrPedido = null;
+      return;
+    }
+    const apagar = toca === "inhibir";
+    if (loHaceQuienVaAlLado(this.tier.avisos)) {
+      this.ponerTerrInhibit(apagar);
+      this.hud.senal.mostrar(
+        "terr-inhibit",
+        this.rotulo(
+          apagar ? "hud.terrInhibitApagado" : "hud.terrInhibitPrendido",
+          apagar ? "palabra.terrInhibitApagado" : "palabra.terrInhibitPrendido",
+        ),
+        null,
+        { segundos: 5 },
+      );
+      /*
+       * **Contado con calma, y una vez por vuelo**: en la granja se apaga en
+       * cada circuito que empieza, y la segunda vez ya se sabe. Ver
+       * `explicarUnaVez`.
+       */
+      this.explicarUnaVez(apagar ? "vuelo.terrInhibit.apagado" : "vuelo.terrInhibit.prendido");
+      return;
+    }
+    // En el de cabina, la lista es de quien vuela: la tarjeta lo pide una vez.
+    if (this.terrPedido === toca) return;
+    this.hud.senal.mostrar(
+      "terr-inhibit",
+      this.rotulo(
+        apagar ? "hud.pulsaTerrInhibit" : "hud.sueltaTerrInhibit",
+        apagar ? "palabra.terrInhibitApagado" : "palabra.terrInhibitPrendido",
+      ),
+      null,
+      {
+        // Los seis segundos de una línea de la lista, como los aerofrenos.
+        segundos: 6,
+        prioridad: IMPORTANTE,
+        accion: () => this.pulsarTerrInhibit(),
+      },
+    );
+    // Pedida es cuando se ve, como la lista de aterrizaje: no con otra delante.
+    if (this.hud.senal.puesto.dibujo === "terr-inhibit") this.terrPedido = toca;
+  }
+
+  /**
+   * **El campo donde se va a aterrizar**: el destino del plan, o en una
+   * vuelta al campo el que se tiene debajo. Es el que mira el TERR INHIBIT.
+   */
+  private campoDeLlegada(): { x: number; z: number; aero: Aerodrome | null } {
+    const d = this.elDestino();
+    if (d) return { x: d.x, z: d.z, aero: d.escenario.aerodrome ?? null };
+    const c = this.elCampo();
+    return { x: c.pista.x, z: c.pista.z, aero: c.aerodromo };
+  }
+
+  /**
+   * **Pulsar el TERR INHIBIT**: el botón de la cabina o la tarjeta que lo
+   * pide. Es un interruptor de los de verdad, así que hace lo que hace donde
+   * se pulse, también en un campo de la base: quien lo apaga allí se queda sin
+   * la mirada de delante, con la luz ámbar encendida para recordárselo.
+   */
+  pulsarTerrInhibit(): void {
+    if (!this.aircraft.terrInhibit) return;
+    this.ponerTerrInhibit(!this.terrInhibido);
+  }
+
+  /**
+   * Apagado o encendido, por el campo al que se va. Y lo que se estaba viendo
+   * por delante se olvida: con la mirada apagada, la última precaución no
+   * puede quedarse puesta.
+   */
+  private ponerTerrInhibit(apagado: boolean): void {
+    this.terrInhibido = apagado;
+    /*
+     * **Por qué campo se apaga**: el de llegada si está a menos de quince
+     * millas, que es cuando lo pide el procedimiento; si no, el que se tiene
+     * más cerca. Con el de llegada a secas, pulsarlo a mano en ruta lo daba
+     * por apagado para un campo a ochenta millas, y al instante pedía
+     * volverlo a encender.
+     */
+    const p = this.flight.state.position;
+    const llegada = this.campoDeLlegada();
+    const cerca = this.elCampo().pista;
+    const para =
+      Math.hypot(p.x - llegada.x, p.z - llegada.z) <= RADIO_DEL_PROCEDIMIENTO
+        ? { x: llegada.x, z: llegada.z }
+        : { x: cerca.x, z: cerca.z };
+    this.terrInhibidoPara = apagado ? para : null;
+    this.delante = null;
+    this.terrPedido = null;
+    this.aircraftMesh.botones?.encenderLuz("terr", apagado);
+    // Una luz del cuadro que cambia, con su nota: «mirá, eso es nuevo».
+    this.audio.cue("cambio");
+  }
+
+  /** Si el TERR INHIBIT está pulsado. Ver `atenderAlTerrInhibit`. */
+  private terrInhibido = false;
+  /** El campo por el que se pulsó, para volver a encenderlo al salir de sus quince millas. */
+  private terrInhibidoPara: { x: number; z: number } | null = null;
+  /** Lo que la tarjeta ya pidió en el peldaño de cabina, para no repetirlo. */
+  private terrPedido: "inhibir" | "restablecer" | null = null;
+
+  /** Cómo está el TERR INHIBIT. Para el banco. */
+  get terrInhibitParaBanco(): { lleva: boolean; inhibido: boolean; para: { x: number; z: number } | null } {
+    return {
+      lleva: !!this.aircraft.terrInhibit,
+      inhibido: this.terrInhibido,
+      para: this.terrInhibidoPara,
+    };
+  }
+
+  /** De vuelta al principio: otro vuelo empieza con el avisador entero. */
+  private reiniciarTerrInhibit(): void {
+    this.terrInhibido = false;
+    this.terrInhibidoPara = null;
+    this.terrPedido = null;
+    this.aircraftMesh.botones?.encenderLuz("terr", false);
+  }
+
+  /**
    * **La toma larga**: si no se toca en la zona de toma, al aire; y si con
    * la pista que queda no se para, también, mientras se pueda. En los
    * peldaños de abajo lo propone la instructora a tiempo y en calma, una vez
@@ -35596,7 +35751,9 @@ export class Game {
        * ámbar y rojo por lo que queda por debajo o por encima. Ver
        * `relieveEnLaCarta` en `ui/carta.ts`.
        */
-      relieve: this.aircraft.avisosHablados
+      // Y con el TERR INHIBIT pulsado, tampoco: «inhibits TAD and TCF
+      // alerting and display». Ver `atenderAlTerrInhibit`.
+      relieve: this.aircraft.avisosHablados && !this.terrInhibido
         ? {
             cota: this.cotaParaLaCarta,
             altitud: this.flight.state.position.y,

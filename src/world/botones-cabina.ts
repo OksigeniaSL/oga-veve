@@ -56,9 +56,10 @@ import {
   type Object3D,
 } from "three";
 import { DIBUJOS } from "../ui/senal";
+import { PALETA } from "../ui/paleta";
 
 /** Lo que se puede pulsar en la cabina. */
-export type MandoDeCabina = "baliza" | "motor" | "flaps" | "freno" | "tren" | "freno-rotor";
+export type MandoDeCabina = "baliza" | "motor" | "flaps" | "freno" | "tren" | "freno-rotor" | "terr";
 
 /*
  * El del tren solo existe en el avión que lo mete: en un entrenador de escuela
@@ -66,7 +67,11 @@ export type MandoDeCabina = "baliza" | "motor" | "flaps" | "freno" | "tren" | "f
  * mandos son decoración. El modelo solo lo dibuja donde toca, así que aquí
  * basta con buscarlo: si no está, no está.
  */
-const CUALES: readonly MandoDeCabina[] = ["baliza", "motor", "flaps", "freno", "tren"];
+/*
+ * Y el TERR INHIBIT, igual: solo en el avión cuyo avisador lo lleva —hoy, el
+ * JAZ 50—, y solo lo dibuja su modelo. Ver `flight/inhibir-terreno.ts`.
+ */
+const CUALES: readonly MandoDeCabina[] = ["baliza", "motor", "flaps", "freno", "tren", "terr"];
 
 /** Cuánto se ilumina el mando cuando el dedo está encima. */
 const ENCENDIDO = 0.55;
@@ -87,6 +92,59 @@ const DIBUJO: Partial<Record<MandoDeCabina, keyof typeof DIBUJOS>> = {
   freno: "freno",
   tren: "tren",
 };
+
+/**
+ * **La tecla del TERR INHIBIT**, como la de su equipo: un interruptor con luz,
+ * negro, con su rótulo en inglés arriba y el «ON» que se enciende en ámbar
+ * mientras está pulsado —«TERR INHIBIT ON», en ámbar (Honeywell, *MK VI MK
+ * VIII EGPWS Installation Design Guide*, 060-4314-150, hojas 23 y 42)—. El
+ * rótulo no se traduce, como IAS o HDG; lo que se ve sin leer es la luz.
+ */
+function pintarTerr(g: CanvasRenderingContext2D, lado: number, encendida: boolean): void {
+  g.clearRect(0, 0, lado, lado);
+  g.fillStyle = PALETA.fascia;
+  g.fillRect(0, 0, lado, lado);
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.fillStyle = "#f2f1ec";
+  g.font = `700 ${Math.round(lado * 0.22)}px system-ui, sans-serif`;
+  g.fillText("TERR", lado / 2, lado * 0.2);
+  g.font = `700 ${Math.round(lado * 0.16)}px system-ui, sans-serif`;
+  g.fillText("INHIBIT", lado / 2, lado * 0.42);
+  const x = lado * 0.16;
+  const y = lado * 0.58;
+  const ancho = lado * 0.68;
+  const alto = lado * 0.32;
+  // Apagada, la lente se ve igual —ámbar oscuro—: una luz que no está no se
+  // puede mirar para saber que está apagada.
+  g.fillStyle = encendida ? PALETA.precaucion : "#3b2d12";
+  g.fillRect(x, y, ancho, alto);
+  g.fillStyle = encendida ? PALETA.fascia : "#6e5524";
+  g.font = `800 ${Math.round(lado * 0.22)}px system-ui, sans-serif`;
+  g.fillText("ON", lado / 2, y + alto / 2);
+}
+
+/** La tecla del TERR INHIBIT, con la función que le enciende la luz. */
+function lienzoDelTerr(): { textura: CanvasTexture; luz: (encendida: boolean) => void } | null {
+  if (typeof document === "undefined") return null;
+  const lado = 128;
+  const lienzo = document.createElement("canvas");
+  lienzo.width = lado;
+  lienzo.height = lado;
+  const g = lienzo.getContext("2d");
+  if (!g) return null;
+  const textura = new CanvasTexture(lienzo);
+  textura.colorSpace = SRGBColorSpace;
+  let ahora: boolean | null = null;
+  const luz = (encendida: boolean) => {
+    if (encendida === ahora) return;
+    ahora = encendida;
+    pintarTerr(g, lado, encendida);
+    textura.needsUpdate = true;
+  };
+  luz(false);
+  return { textura, luz };
+}
 
 /** El dibujo, en crema sobre el naranja del mando, y sus huecos en naranja. */
 function lienzoDelDibujo(cual: MandoDeCabina): CanvasTexture | null {
@@ -127,8 +185,8 @@ function ponerDibujo(
   malla: Mesh,
   cual: MandoDeCabina,
   ojo: Vector3 | null,
+  textura: CanvasTexture | null = lienzoDelDibujo(cual),
 ): Mesh | null {
-  const textura = lienzoDelDibujo(cual);
   if (!textura || !ojo) return null;
   malla.geometry.computeBoundingBox();
   const caja = malla.geometry.boundingBox ?? new Box3();
@@ -166,6 +224,8 @@ interface Boton {
   readonly cual: MandoDeCabina;
   readonly material: MeshStandardMaterial;
   readonly color: Color;
+  /** La luz de la tecla, en el mando que la lleva. */
+  readonly luz?: (encendida: boolean) => void;
 }
 
 export interface BotonesDeCabina {
@@ -179,6 +239,11 @@ export interface BotonesDeCabina {
   cualEsta(x: number, y: number, camara: Camera): MandoDeCabina | null;
   /** Enciende el que esté bajo el dedo y apaga los demás. */
   alumbrar(cual: MandoDeCabina | null): void;
+  /**
+   * **La luz de la tecla**, en el mando que la lleva: el «ON» ámbar del TERR
+   * INHIBIT. En los demás no hace nada.
+   */
+  encenderLuz(cual: MandoDeCabina, encendida: boolean): void;
   dispose(): void;
 }
 
@@ -214,6 +279,18 @@ export function encenderBotones(
     const suyo = Array.isArray(m.material) ? m.material[0] : m.material;
     const material = (suyo as MeshStandardMaterial).clone();
     m.material = material;
+    /*
+     * **Y el TERR INHIBIT, negro y con su luz**, que no es un mando del juego
+     * sino un interruptor del avisador: el naranja de los demás diría que es
+     * uno de ellos.
+     */
+    if (cual === "terr") {
+      material.color.set(PALETA.fascia);
+      const tecla = lienzoDelTerr();
+      botones.push({ malla: m, cual, material, color: material.color.clone(), luz: tecla?.luz });
+      ponerDibujo(m, cual, ojo, tecla?.textura ?? null);
+      return;
+    }
     botones.push({ malla: m, cual, material, color: material.color.clone() });
     ponerDibujo(m, cual, ojo);
   });
@@ -244,6 +321,9 @@ export function encenderBotones(
         b.material.emissiveIntensity = suyo ? ENCENDIDO : 0;
         b.material.needsUpdate = true;
       }
+    },
+    encenderLuz(cual, encendida) {
+      for (const b of botones) if (b.cual === cual) b.luz?.(encendida);
     },
     dispose() {
       for (const b of botones) b.material.dispose();

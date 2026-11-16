@@ -1528,3 +1528,137 @@ falta:
 El circuito del JAZ 50, que desde la enmienda H13d1 está en la flota, y el de
 todos en la 21 de Lanzarote, en la 19 de Fuerteventura y en la 09 de Cuatro
 Vientos, más el del JAZ 60 en esta última. Lo demás, igual.
+
+## Enmienda H14d (16-11-2026): el TERR INHIBIT del Tujuju, para la pista de la granja
+
+La enmienda H13d2 dejó la precaución de terreno del JAZ 50 al virar a final en
+la 15 de SGOG: el umbral está en una hondonada, el suelo bajo la final sube 49
+m por encima de él a tres kilómetros, y un TAWS de verdad avisaría. Se queda.
+Lo que faltaba es lo que hace una tripulación de verdad en esa pista, que no
+está en la base de datos de su equipo: **apagar la mirada de delante antes de
+llegar**, con el botón TERR INHIBIT. Enrique lo aprobó el 15-11: «metemos
+TERR INHIBIT».
+
+### Las fuentes
+
+- **Qué equipo lleva el -400**: «Honeywell MK VI Class A TAWS (EGPWS)», en su
+  equipo de serie (Viking, 2018; ver la enmienda H11a). La lista mínima de
+  Transport Canada lo confirma con sus nombres: «EGPWS and TAWS (Class A) are
+  used synonymously in the DHC-6 Series 400 manuals» (*MMEL DHC-6 Series
+  400*, rev. 5, 3-6-2026, 34-44-1).
+- **Qué modos hay, y cuáles mira la base de datos**: la misma lista separa los
+  «Basic GPWS Modes 1 to 6» de los «Enhanced GPWS / TAWS Modes (TCF, RFCF,
+  TAD) [Also known as TAWS Forward Looking Terrain Avoidance (FLTA) and
+  Premature Descent Alert (PDA)]» (34-44-1-1 y 34-44-1-2).
+- **El botón y su luz**, en la guía de instalación del MK VI: «The "TERR
+  INHIBIT" annunciator provides visual indication that the EGPWS Terrain
+  functions have been inhibited. The TERR INHIBIT annunciator also has a
+  alternate action switch that is used to manually inhibit the Terrain
+  functions», con la pieza «TERR INHIBIT ON»; y la luz «is illuminated with
+  amber background and activated after the flight crew has initiated the
+  manual inhibit of the EGPWS Terrain Awareness & display and Terrain
+  Clearance Floor functions during an approach to an airport not in the EGPWS
+  Terrain/Runway database», puesta «in the flight crew's "field of view" and
+  within reach of both crew members» (Honeywell, *MK VI MK VIII EGPWS
+  Installation Design Guide*, 060-4314-150, hojas 23 y 42; la revisión no
+  sale en la copia leída).
+- **Qué pistas lleva su base**: «Terrain map with runways >= 2000 feet in
+  length (optionally >= 3500 feet in length on the MK VIII EGPWS)» (la misma
+  guía, hoja 15).
+- **Qué apaga y qué no, y cuándo se usa**, en la guía del piloto de la familia
+  de al lado: «Pressing the Terrain Inhibit switch inhibits TAD and TCF
+  alerting and display, including Obstacles and Peaks when enabled. This is
+  used when position accuracy is inadequate or when operating at airports not
+  in the terrain database … Terrain Inhibit requires manual deactivation»
+  (p. 55); «Neither loss nor inhibiting TAD/TCF effects the basic GPWS
+  functions» (p. 37); y «TAD/TCF functions should be manually inhibited within
+  15 nm on approach to an airport that is not in the airport database to
+  avoid unwanted alerts», con el aviso de que entonces el equipo vuelve a los
+  modos 1 a 6 y puede dar poco o ningún aviso de un terreno escarpado (p. 46)
+  (Honeywell, *MK V & MK VII EGPWS Pilot Guide*, 060-4241-000, rev. D, marzo
+  de 2000).
+
+**Lo que no se ha leído**: la guía del piloto del propio MK VI (060-4314-000)
+—la copia de SKYbrary no se pudo bajar—, así que el procedimiento de las
+quince millas es el de la guía del MK V y VII, del mismo fabricante y la
+misma función; la guía de instalación del MK VI dice lo mismo sin la cifra.
+Tampoco el suplemento del TAWS en el manual del -400, ni dónde va el botón en
+su cabina de verdad, la Primus Apex: no se ha encontrado una foto ni un
+plano que lo diga.
+
+### Qué hace en el juego
+
+- **Apaga lo que mira por delante con la base**: la precaución y el aviso de
+  delante (`terreno-delante.ts`, la FLTA) y el relieve de la pantalla de
+  navegación. No hay TCF aparte en el juego.
+- **No apaga lo de debajo**: el aviso de `aviso-de-terreno.ts`, que mira la
+  altura sobre el suelo y lo que se baja, como los modos básicos, sigue
+  diciendo «too low» y «terrain, pull up»; y la cuenta del radioaltímetro
+  sigue cantando. Quien se mete bajo en la final de la granja lo oye igual.
+- **La luz**: el botón es negro, con «TERR» e «INHIBIT» en inglés, como en el
+  equipo, y su «ON» se enciende en ámbar mientras está pulsado. Va en el
+  panel del JAZ 50 al lado de la pantalla de navegación —la que pinta el
+  relieve que apaga—, arriba, junto a la visera y entre los dos pilotos, que
+  es donde lo alcanzan los dos y lo ven, como pide su guía de instalación
+  (`terr_inhibit` en `modelos/comun.py`, `boton-terr`). Como quinto botón de
+  la fila de mandos de abajo quedaba medio tapado por el cuerno derecho.
+  Dónde lo lleva el -400 no se ha leído: se simplifica el sitio, no lo que
+  hace.
+- **Pulsado a mano**, hace lo que hace donde sea; se da por pulsado para el
+  campo de llegada si está a menos de quince millas, y si no, para el que se
+  tiene más cerca, y se vuelve a encender al alejarse quince millas de él.
+- **Cuándo**: volando, por encima de quinientos pies sobre el suelo y a menos
+  de quince millas del campo donde se va a aterrizar —el destino del plan, o
+  el que se tiene debajo en una vuelta al campo—, si ese campo no está en la
+  base. Lo de los quinientos pies es nuestro: en una vuelta al campo se está
+  dentro de las quince millas desde que se suelta el freno, y no se mete una
+  cosa más en la carrera de despegue. Se vuelve a encender pasadas las quince
+  millas del campo por el que se apagó —«requires manual deactivation»: lo
+  hace alguien— y al empezar otro vuelo. Ver `flight/inhibir-terreno.ts`.
+- **Qué campo está en la base**: uno privado no, que no está publicado en
+  ninguna parte y una base de pistas se hace con lo publicado; uno publicado,
+  si alguna pista llega a los dos mil pies. En el juego eso deja fuera solo a
+  Yvytu Rape: ninguno de los publicados se queda sin una pista de dos mil
+  pies, y el más justo tiene 867 m, por encima de los 610 de la base. Un campo
+  sin fichero de aeródromo no se sabe, y no se enseña.
+
+### Quién lo pulsa
+
+Por la escalera, como los aerofrenos de la lista de aterrizaje
+(`loHaceQuienVaAlLado` en `flight/escalera.ts`):
+
+- **En los tres peldaños de abajo, quien va al lado.** Se enciende la luz,
+  sale la tarjeta con el cerro tachado y la instructora lo cuenta con calma,
+  una vez por vuelo: que el avión no conoce esta pista, que le apagó el aviso
+  de los cerros de adelante y que, si se baja de más, igual avisa. No dice
+  «el mapa del avión», que es como se pensó al principio: en la pantalla hay
+  un mapa, y en él la granja sí está.
+  Quien tiene cuatro años no tiene por qué saber que hay que apagar una caja;
+  lo ve y lo oye.
+- **En el de cabina, quien vuela**, como parte de prepararse para llegar: la
+  tarjeta lo pide una vez —«apretá TERR INHIBIT»—, se toca para pulsarlo, y el
+  botón está en la cabina. Si no se pulsa, la precaución suena igual que
+  antes de esta enmienda: no se castiga, se ve.
+- **En un campo que está en la base no se enseña**: ni lo pide nadie ni lo
+  pulsa nadie. El botón sigue en la cabina y hace lo que hace donde se pulse,
+  con su luz ámbar para recordarlo.
+
+La comprobación: `aproximaciones-sobre-el-relieve.test.ts` sigue fijando la
+precaución de la 15 de SGOG **sin apagarla**, como las otras dos de
+`AVISA_EN_EL_CIRCUITO`; y una prueba nueva mira que, de las tres, solo la
+granja está fuera de la base del MK VI, y que volando el mismo circuito el
+procedimiento pide apagarla antes del sitio donde avisa.
+
+### Lo que no
+
+- **Los demás aviones con TAWS**: el JAZ 60, el 90, el 110 y el 120 también lo
+  llevan, pero no hay aquí fuente leída de su equipo ni de cómo se llama su
+  botón, y ninguno cabe en la pista de la granja. El campo de la ficha,
+  `terrInhibit`, sirve para todos el día que la haya.
+- **Ni tecla ni botón en la pantalla**: la tarjeta que lo pide se toca, y el
+  botón de la cabina se pulsa. El teclado ya no tiene letras libres que
+  digan algo.
+- **El avisador del juego conoce la pista de la granja**, como todas las del
+  vuelo, y junto a ella acorta su mirada; uno de verdad no la conocería y
+  avisaría más. Lo que se enseña —en esta pista se apaga, y por qué— es el
+  mismo.

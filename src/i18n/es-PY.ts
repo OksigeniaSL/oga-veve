@@ -2609,6 +2609,16 @@ export const ES_PY = {
    */
   "hud.armaAerofrenos": "Armá los aerofrenos y el autofreno",
   "hud.aerofrenosArmados": "Aerofrenos y autofreno armados: los armé yo",
+  /*
+   * **El TERR INHIBIT**, en la tarjeta: lo hizo quien va al lado, en los
+   * peldaños de abajo, o lo pide la lista, en el de cabina. El rótulo del botón
+   * no se traduce. Ver `atenderAlTerrInhibit` en `game.ts`.
+   */
+  "hud.terrInhibitApagado":
+    "TERR INHIBIT: el avión no conoce esta pista, y le apagué el aviso de los cerros de adelante",
+  "hud.terrInhibitPrendido": "Ya lejos de esa pista: el avión vuelve a avisar de los cerros de adelante",
+  "hud.pulsaTerrInhibit": "Esta pista no está en la base del TAWS: apretá TERR INHIBIT",
+  "hud.sueltaTerrInhibit": "A más de quince millas de la pista: volvé a apretar TERR INHIBIT",
   "hud.pilotoAutomatico": "Piloto automático",
   /*
    * El compensador. Solo lo lee un lector de pantalla: en la pantalla hay una
@@ -2791,6 +2801,14 @@ export const ES_PY = {
   "vuelo.armaLosAerofrenos":
     "Antes de aterrizar, armá los aerofrenos y el autofreno: al tocar salen solos y frenamos bien",
   "vuelo.losArmeYo": "Los aerofrenos y el autofreno los armé yo, para frenar bien al tocar",
+  /*
+   * **Y el TERR INHIBIT, contado con calma** por quien lo pulsó, en los tres
+   * peldaños de abajo: qué se apagó, por qué, y que lo de debajo sigue
+   * avisando. Ver `flight/inhibir-terreno.ts`.
+   */
+  "vuelo.terrInhibit.apagado":
+    "Esta pista el avión no la conoce, así que le apagué el aviso de los cerros de adelante. Si bajamos de más, igual nos avisa.",
+  "vuelo.terrInhibit.prendido": "Ya estamos lejos de esa pista: le volví a prender al avión el aviso de los cerros.",
   "vuelo.salenLosFrenosDeTierra":
     "¿Viste? Al tocar se levantaron los paneles del ala: el ala deja de sostener el avión y las ruedas frenan",
   "vuelo.sinFrenosDeTierra":
@@ -2945,6 +2963,8 @@ export const ES_PY = {
   "vuelo.trenEnElSuelo": "Con el avión en el suelo, el tren no se mete",
   "palabra.tren": "Tren",
   "palabra.aerofrenos": "Aerofrenos",
+  "palabra.terrInhibitApagado": "Apagado",
+  "palabra.terrInhibitPrendido": "Prendido",
   "vuelo.despacio": "Más despacio",
   // El «alto» del señalero: dice dónde se para, y la tarjeta lleva al lado la
   // tecla del freno. Sin eso, el gesto dice qué pero no cómo.

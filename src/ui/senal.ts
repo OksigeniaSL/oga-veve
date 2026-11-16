@@ -128,6 +128,20 @@ const TERRENO = icono(`
 `);
 
 /**
+ * *TERR INHIBIT*: **el cerro del aviso, con la raya de apagado**.
+ *
+ * Es el cerro del aviso de terreno sin su flecha —no pide subir— y con la
+ * raya que en este juego quiere decir «apagado», la misma del instructor
+ * callado. Lo que cuenta sin leer es justo lo que pasa: el aviso del cerro de
+ * adelante, apagado a propósito. Ver `flight/inhibir-terreno.ts`.
+ */
+const TERR_INHIBIT = icono(`
+  <path d="M1 21 L7 12 L11 17 L16 8 L23 21 Z" opacity="0.55" />
+  <path d="M3.4 3.4 L20.6 20.6" stroke="currentColor" stroke-width="2.6"
+        fill="none" stroke-linecap="round" />
+`);
+
+/**
  * La frustrada: **la senda que baja y se vuelve a ir arriba**.
  *
  * Es hermano del dibujo de la senda a propósito, y con el mismo vocabulario:
@@ -1661,6 +1675,7 @@ export const DIBUJOS = {
   toma: TOMA,
   acasa: A_CASA,
   terreno: TERRENO,
+  "terr-inhibit": TERR_INHIBIT,
   frustrada: FRUSTRADA,
   edificio: EDIFICIO,
   fuera: FUERA_DE_PISTA,

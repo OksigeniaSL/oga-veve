@@ -5,6 +5,7 @@ import type { FrenosDelTipo } from "./frenada";
 import type { TardaElTren } from "./tren";
 import type { PiesDeLaCuenta } from "./avisos-de-altura";
 import type { FichaDeHelicoptero } from "./helicoptero";
+import { MK_VI, type TerrInhibit } from "./inhibir-terreno";
 
 /**
  * Fichas técnicas de las aeronaves.
@@ -990,6 +991,22 @@ export interface AircraftConfig {
    *   la persona sentada al lado. En el juego, la instructora.
    */
   avisosHablados: boolean;
+  /**
+   * **Si su avisador de terreno lleva el botón TERR INHIBIT**, y con qué base
+   * de pistas. Sin él, ninguno.
+   *
+   * Es el que apaga la mirada de delante del TAWS —la precaución y el aviso de
+   * delante y el relieve de la pantalla— al llegar a un campo que no está en
+   * su base de datos, y deja encendidos los modos básicos. Ver
+   * `flight/inhibir-terreno.ts`.
+   *
+   * Va solo en el avión cuyo equipo tiene fuente: el JAZ 50, con el MK VI de
+   * su equipo de serie. Los reactores y el 1900D también llevan TAWS, pero de
+   * cuál y de cómo se llama su botón no hay aquí fuente leída, y ninguno de
+   * ellos cabe en la única pista del juego que no está en la base, la de la
+   * granja (ADR 0027, enmienda H14d).
+   */
+  terrInhibit?: TerrInhibit;
   /**
    * **Cómo suenan su pérdida, su velocidad baja y su automático**, en el avión
    * que lleva cajas que hablan. Sin él, los de una avioneta. Ver
@@ -2268,6 +2285,18 @@ export const JAZ_50: AircraftConfig = {
    * Nepal, 9N-AET, § 1.16)—. Ver `avisosHablados`.
    */
   avisosHablados: true,
+  /*
+   * **Con el botón TERR INHIBIT de su MK VI**: el avisador es el de su equipo
+   * de serie («Honeywell MK VI Class A TAWS (EGPWS)», Viking, 2018), y en ese
+   * equipo el botón es un interruptor con luz, «TERR INHIBIT ON» en ámbar, que
+   * se enciende «after the flight crew has initiated the manual inhibit of the
+   * EGPWS Terrain Awareness & display and Terrain Clearance Floor functions
+   * during an approach to an airport not in the EGPWS Terrain/Runway
+   * database», a la vista y al alcance de los dos pilotos (Honeywell, *MK VI MK
+   * VIII EGPWS Installation Design Guide*, 060-4314-150, hojas 23 y 42). Ver
+   * `flight/inhibir-terreno.ts`.
+   */
+  terrInhibit: MK_VI,
   /*
    * **La pérdida, con su aviso sonoro y sin voz que se haya leído.** «The stall
    * warning system consists of two lift detecting vanes and switches … located
