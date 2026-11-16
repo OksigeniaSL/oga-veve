@@ -8787,7 +8787,7 @@ if (vuelo.filaAlLlegar)
        * `src/flight/salida-tapada.ts`.
        */
       vuelo.porTuSalida
-        ? `por tu salida: ${vuelo.porTuSalida.vueltas} vuelta(s), ${vuelo.porTuSalida.alAire} al aire, ${vuelo.porTuSalida.avisos} aviso(s), ${vuelo.porTuSalida.propuestas} propuesta(s); ${vuelo.frustradasPorTuSalida ?? 0} frustrada(s) obedecida(s)`
+        ? `por tu salida: ${vuelo.porTuSalida.vueltas} vuelta(s), ${vuelo.porTuSalida.alAire} al aire, ${vuelo.porTuSalida.retenidos ?? 0} retenido(s) en su doble raya, ${vuelo.porTuSalida.avisos} aviso(s), ${vuelo.porTuSalida.propuestas} propuesta(s); ${vuelo.frustradasPorTuSalida ?? 0} frustrada(s) obedecida(s)`
         : null,
     ]
       .filter(Boolean)

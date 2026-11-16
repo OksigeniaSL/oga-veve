@@ -465,6 +465,8 @@ export class TurnoDePista {
    */
   private vueltasEnEstaLlegada = 0;
   private retrasoEnEstaLlegada = 0;
+  /** Los que la torre ha dejado en su doble raya en esta llegada. Ver `retener`. */
+  private readonly retenidosEnEstaLlegada = new Set<string>();
 
   /** A quién ya te contó un AFIS, y por quién propuso irse la instructora. */
   private readonly contadoDe = new Set<string>();
@@ -474,12 +476,23 @@ export class TurnoDePista {
   private reloj = 0;
   private relojDeTuSalida = 0;
 
-  /** Lo que se te ha pedido por tu salida en este vuelo, para el banco. */
-  readonly porTuSalida: { vueltas: number; alAire: number; avisos: number; propuestas: number } = {
+  /**
+   * Lo que se te ha pedido por tu salida en este vuelo, para el banco. Y
+   * `retenidos`: los que la torre dejó en su doble raya para que aterrizaras
+   * tú, uno por avión y llegada.
+   */
+  readonly porTuSalida: {
+    vueltas: number;
+    alAire: number;
+    avisos: number;
+    propuestas: number;
+    retenidos: number;
+  } = {
     vueltas: 0,
     alAire: 0,
     avisos: 0,
     propuestas: 0,
+    retenidos: 0,
   };
 
   /** Si ahora mismo te tienen dando una vuelta por tu salida. */
@@ -1063,6 +1076,7 @@ export class TurnoDePista {
     if (this.enTierra) {
       this.vueltasEnEstaLlegada = 0;
       this.retrasoEnEstaLlegada = 0;
+      this.retenidosEnEstaLlegada.clear();
     }
     if (!llegada) return;
     const quien = this.de.afis?.() ? "afis" : "torre";
@@ -1074,6 +1088,27 @@ export class TurnoDePista {
       // Pasada la red, ya no se te retrasa más: se aterriza.
       if (this.retrasoEnEstaLlegada > RED_DE_LA_SALIDA) continue;
       const remedio = remedioParaTuSalida(llegada, q, quien, this.vueltasEnEstaLlegada);
+      /*
+       * **Retenido en su doble raya**: no se le da la pista —ni aquí, ni en
+       * `despejarTuSalida`, que cuenta lo mismo— y a ti no se te pide nada.
+       * Se cuenta una vez por avión y llegada, para el banco.
+       */
+      /*
+       * **Ya en la pista**: ya no tapa tu salida, la ocupa, y lo que toca es
+       * que se vaya. Se le da la salida si no la tiene, y tú sigues; si al
+       * llegar a la decisión todavía está, te manda al aire la pista ocupada.
+       */
+      if (remedio === "despegar") {
+        this.darleLaPista(q);
+        continue;
+      }
+      if (remedio === "retener") {
+        if (!this.retenidosEnEstaLlegada.has(q.matricula)) {
+          this.retenidosEnEstaLlegada.add(q.matricula);
+          this.porTuSalida.retenidos++;
+        }
+        continue;
+      }
       if (remedio === "aviso") {
         this.avisarDeTuSalida(q.matricula, llegada);
         continue;
@@ -1526,11 +1561,13 @@ export class TurnoDePista {
     this.tapada = null;
     this.vueltasEnEstaLlegada = 0;
     this.retrasoEnEstaLlegada = 0;
+    this.retenidosEnEstaLlegada.clear();
     this.contadoDe.clear();
     this.propuestoPor.clear();
     this.porTuSalida.vueltas = 0;
     this.porTuSalida.alAire = 0;
     this.porTuSalida.avisos = 0;
     this.porTuSalida.propuestas = 0;
+    this.porTuSalida.retenidos = 0;
   }
 }

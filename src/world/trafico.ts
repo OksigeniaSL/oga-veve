@@ -1646,6 +1646,17 @@ export interface QuienTapaTuSalida {
    * pista libre. Ver `pistaLibreEn`.
    */
   readonly espera: number;
+  /**
+   * **Si ya está en la pista**, pasada su doble raya: entonces la ocupa de
+   * verdad, y no solo si se le da. Ver `remedioParaTuSalida` en
+   * `flight/salida-tapada.ts`.
+   */
+  readonly enLaPista: boolean;
+  /**
+   * **Y si puedes dejar la pista sin pasar por su doble raya**, por otra
+   * salida. Ver `otraSalidaSin`.
+   */
+  readonly teDejaOtra: boolean;
 }
 
 /** Quien juega, rodando o parado en el suelo, visto desde el tráfico. */
@@ -2984,20 +2995,54 @@ export function crearTrafico(
   /**
    * **Lo que tarda en irse uno que sale**, si se le da la pista ahora: hasta
    * su doble raya, lo que remonte, entrar, alinearse, correr y pasar el final
-   * de la pista, con su margen; y lo que espera antes a que la dejen libre los
-   * demás. Es lo que comparan con tu llegada `tapanTuSalida`, `enTuSalida` y
-   * `seVaAntesQueTu`, con `leDaTiempo`: una cuenta sola, para que la torre no
-   * le dé la pista a uno por la que deja fuera a otro. Ver
-   * `flight/salida-tapada.ts`.
+   * de la pista, con su margen; lo que espera antes a que la dejen libre los
+   * demás; y si ya está en ella. Es lo que comparan con tu llegada
+   * `tapanTuSalida`, `enTuSalida` y `seVaAntesQueTu`, con `leDaTiempo`: una
+   * cuenta sola, para que la torre no le dé la salida a uno y en el mismo paso
+   * te mande al aire porque no se va a tiempo. Ver `flight/salida-tapada.ts`.
    */
-  const loQueTardaEnIrse = (matricula: string, b: Volando, c: Caminos): LoQueTardaEnIrse => {
+  const loQueTardaEnIrse = (
+    matricula: string,
+    b: Volando,
+    c: Caminos,
+  ): LoQueTardaEnIrse & { readonly enLaPista: boolean } => {
     const hastaLaRaya = Math.max(0, c.espera - b.recorrido) / RUEDA_A;
     const remontado = Math.max(0, b.recorrido - c.espera);
     return {
       leHace: hastaLaRaya + hastaIrseDesdeLaRaya(b.tipo, c, remontado),
       espera: pistaLibreEn(matricula),
+      enLaPista: encimaDeLaPista(b),
     };
   };
+
+  /**
+   * **Si puedes dejar la pista sin pasar por esa doble raya**: otra salida, o
+   * por otro lado, hasta tu puesto. Volando todavía, con la salida que
+   * cogería cualquiera que frena donde vas a frenar, rodeando la raya si hay
+   * por dónde —como rodea tu raya verde a un parado—; en el suelo, tu raya ya
+   * está trazada y es la que es. Con calles para eso la torre retiene al que
+   * sale en su doble raya y tú dejas la pista por otra (Doc 4444, 7.10.3.1
+   * c); sin ellas, retenerle es cerrarte la salida. Se guarda por frenada y
+   * raya: el buscador de calles no corre en cada paso.
+   */
+  const otraSalidaSin = (raya: Sitio): boolean => {
+    const tu = opciones.quienJuega?.()?.saleDeLaPista;
+    const suelo = opciones.tierra?.()?.suelo;
+    if (!tu || !suelo || tu.porDonde.length > 1) return false;
+    const metros = Math.round(tu.frenaEn / 50) * 50;
+    const clave = `${metros}:${Math.round(raya.x)}:${Math.round(raya.z)}`;
+    let hay = otraSalidaPrevista.get(clave);
+    if (hay === undefined) {
+      const camino =
+        suelo.llegada(metros, undefined, { puntos: [raya], radio: PASA_A_TU_LADO })?.camino ?? [];
+      const otra = camino.length > 1 ? porDelanteDe(camino, 0, Infinity, CADA_EN_LA_SALIDA) : [];
+      hay = otra.length > 1 && !enElCamino(raya, otra);
+      otraSalidaPrevista.set(clave, hay);
+    }
+    return hay;
+  };
+  /** Ver `otraSalidaSin`. */
+  const otraSalidaPrevista = new Map<string, boolean>();
 
   /** Ver `Trafico.tapanTuSalida`. */
   const tapanTuSalida = (): QuienTapaTuSalida[] => {
@@ -3009,7 +3054,13 @@ export function crearTrafico(
       if (!c || !haciaSuRaya(b)) continue;
       const raya = rayaDe(c);
       if (!raya || !enElCamino(raya, tuya)) continue;
-      quienes.push({ matricula: m, ...loQueTardaEnIrse(m, b, c) });
+      const tarda = loQueTardaEnIrse(m, b, c);
+      quienes.push({
+        matricula: m,
+        ...tarda,
+        // Solo hace falta para retenerle, que es con él fuera de la pista.
+        teDejaOtra: !tarda.enLaPista && otraSalidaSin(raya),
+      });
     }
     return quienes;
   };

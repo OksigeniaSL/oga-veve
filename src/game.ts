@@ -12291,6 +12291,7 @@ export class Game {
     alAire: number;
     avisos: number;
     propuestas: number;
+    retenidos: number;
     dandoLaVuelta: boolean;
   } {
     return { ...this.turno.porTuSalida, dandoLaVuelta: this.turno.dandoLaVuelta };

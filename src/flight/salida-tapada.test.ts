@@ -92,6 +92,22 @@ describe("la regla, con números", () => {
     expect(seVaAntes(final(180), tapa)).toBe(leDaTiempo(180, tapa));
   });
 
+  it("en la final corta, quien está en final va primero: al de la doble raya se le retiene", () => {
+    const corta = final(VUELTA_DESDE_EN_FINAL - 30);
+    // Fuera de la pista y con otra salida para ti: retenido, y tú aterrizas.
+    expect(remedioParaTuSalida(corta, { ...tapa, teDejaOtra: true }, "torre", 0)).toBe("retener");
+    // Ya en la pista ya no tapa tu salida, la ocupa: que se vaya, y lo mira la decisión.
+    expect(
+      remedioParaTuSalida(corta, { ...tapa, enLaPista: true, teDejaOtra: true }, "torre", 0),
+    ).toBe("despegar");
+    // Y retenido en tu única salida te cerraría el paso: al aire también.
+    expect(remedioParaTuSalida(corta, { ...tapa, teDejaOtra: false }, "torre", 0)).toBe("alAire");
+    // En el circuito no cambia: una vuelta, y sale él antes.
+    expect(remedioParaTuSalida(circuito(100), { ...tapa, teDejaOtra: true }, "torre", 0)).toBe(
+      "vuelta",
+    );
+  });
+
   it("con torre, en el circuito, una vuelta", () => {
     expect(remedioParaTuSalida(circuito(100), tapa, "torre", 0)).toBe("vuelta");
   });
@@ -194,12 +210,22 @@ interface Medida {
   /** Si en algún momento hubo dos encima de la pista. */
   dosEnLaPista: string;
   /**
+   * **Las órdenes de irte al aire por tu salida que no lo eran**: con el que
+   * sale ya en la pista —que ocupa la pista y no tu salida: se le da la salida
+   * y lo mira la decisión— o en una doble raya que te deja otra salida, donde
+   * se le retiene. Quien está en final va primero (Doc 4444, 7.8); ver
+   * `remedioParaTuSalida`.
+   */
+  alAireSinPistaOcupada: number;
+  /**
    * **Las salidas dadas a uno que no se iba a tiempo**: «cleared for
    * take-off» a uno de tu salida, todavía fuera de la pista, al que la torre
    * en ese mismo paso veía sin tiempo de irse antes de que llegaras. Ver
    * `leDaTiempo`.
    */
   contradicciones: string[];
+  /** Los que la torre retuvo en su doble raya para que aterrizaras. */
+  retenidos: number;
   /** Las veces que te fuiste al aire, por lo que fuera, y cuándo tocaste. */
   frustradas: number;
   toco: number | null;
@@ -234,6 +260,13 @@ function llegarConDosQueSalen(
    * `enLaFinalDelPlan` en `game.ts`.
    */
   deRuta: number | null = null,
+  /**
+   * **Y desde cuántos segundos antes del umbral eres «final»** volviendo por
+   * el circuito, si no a los noventa: la fase de final empieza a trescientos
+   * metros y alineado, y un reactor rápido la empieza más cerca. Antes de eso
+   * la torre te ve por el circuito. Ver `tuLlegadaParaLaTorre` en `game.ts`.
+   */
+  finalEn: number | null = null,
 ): Medida {
   const aero = esc.aerodrome as Aerodrome;
   const pista = esc.runway;
@@ -267,7 +300,9 @@ function llegarConDosQueSalen(
   let fuera = false;
 
   const alUmbral = (): number | null =>
-    !enTierra && alAireHasta === null && restante <= (deRuta ?? FINAL_DEL_PLAN) ? restante : null;
+    !enTierra && alAireHasta === null && restante <= (deRuta ?? finalEn ?? FINAL_DEL_PLAN)
+      ? restante
+      : null;
   const viene = (): boolean =>
     !enTierra && alAireHasta === null && restante <= (deRuta ?? EN_EL_CIRCUITO);
   /** Bajando por la ruta, antes de su final: lo que te falta, s. */
@@ -375,7 +410,9 @@ function llegarConDosQueSalen(
     avisos: 0,
     propuestas: 0,
     dosEnLaPista: "",
+    alAireSinPistaOcupada: 0,
     contradicciones: [],
+    retenidos: 0,
     frustradas: 0,
     toco: null,
     oido: [],
@@ -403,8 +440,12 @@ function llegarConDosQueSalen(
     decirAOtro: (d) => {
       apunta(`torre → ${d.de.matricula}: ${d.clave}`);
       const q = trafico.tapanTuSalida().find((x) => x.matricula === d.de.matricula);
-      // Dando la vuelta que te pidieron no llegas: para eso es, para que salga él.
-      const llegada = viene() && !dandoVuelta ? restante : null;
+      /*
+       * Con la vuelta pedida, la torre le da la pista contando con que la das:
+       * para eso es, para que salga él. Si no la das, lo que mira es la
+       * decisión.
+       */
+      const llegada = viene() && !turno.dandoLaVuelta ? restante : null;
       if (
         d.clave === "torre.clearedTakeoff" &&
         q &&
@@ -428,7 +469,8 @@ function llegarConDosQueSalen(
       viene()
         ? {
             segundos: restante,
-            donde: deRuta === null && restante > FINAL_DEL_PLAN ? "circuito" : "final",
+            donde:
+              deRuta === null && restante > (finalEn ?? FINAL_DEL_PLAN) ? "circuito" : "final",
             alto,
           }
         : null,
@@ -443,7 +485,13 @@ function llegarConDosQueSalen(
       dandoVuelta = false;
     },
     mandarteAlAirePorTuSalida: (_a, por, sigue) => {
-      apunta(`al aire por ${por}`);
+      const d = trafico.porDentro().find((q) => q.matricula === por);
+      const q = trafico.tapanTuSalida().find((x) => x.matricula === por);
+      // Con él ya en la pista, o con otra salida para ti, no es por tu salida.
+      if (q?.enLaPista || q?.teDejaOtra) medida.alAireSinPistaOcupada++;
+      apunta(
+        `al aire por ${por} [llegas en ${restante.toFixed(0)} s, le hace ${q?.leHace.toFixed(0)} + espera ${q?.espera.toFixed(0)}; ${d?.camino} ${d?.recorrido}/${d?.espera}/${d?.despega}, encima ${trafico.ocupanLaPista().join(",") || "nadie"}]`,
+      );
       irseAlAire(sigue);
     },
     contarteTuSalida: (por) => apunta(`afis cuenta ${por}`),
@@ -551,7 +599,7 @@ function llegarConDosQueSalen(
     const vista = plan.paso(estado(), alto, true, PASO);
     const au = alUmbral();
     fase = !enTierra
-      ? au !== null && au <= (deRuta ?? FINAL_DE_LA_TORRE)
+      ? au !== null && au <= (deRuta ?? finalEn ?? FINAL_DE_LA_TORRE)
         ? "final"
         : "en-vuelo"
       : vista.fase;
@@ -657,6 +705,7 @@ describe("con torre: te retrasa o te manda al aire, y el que sale sale", () => {
               const donde = `${id} ${Math.round(esc.runway.heading)}° ${avion.id}, salen ${salen.join("/")} s antes, semilla ${semilla}`;
               for (const f of loQueFalla(m)) mal.push(`${donde}: ${f}`);
               if (m.avisos || m.propuestas) mal.push(`${donde}: una torre no avisa como un AFIS`);
+              if (m.alAireSinPistaOcupada) mal.push(`${donde}: al aire por tu salida sin que la tapara`);
               if (m.contradicciones.length) mal.push(`${donde}: ${m.contradicciones.join("; ")}`);
               if (m.vueltas > 2 * 2) mal.push(`${donde}: ${m.vueltas} vueltas`);
               pedido += m.vueltas + m.alAire;
@@ -680,8 +729,16 @@ describe("y si no das la vuelta", () => {
           for (const f of loQueFalla(m)) mal.push(`${donde}: ${f}`);
           frustradas += m.frustradas;
           vueltas += m.vueltas;
-          // Quien no da la vuelta y sigue, no aterriza con el de su salida delante.
-          if (m.vueltas && !m.frustradas) mal.push(`${donde}: sin vuelta y sin irse al aire`);
+          /*
+           * Quien no da la vuelta y sigue, o se va al aire o aterriza con el
+           * de su salida retenido en su doble raya —quien está en final va
+           * primero, Doc 4444, 7.8— y deja la pista por otra salida, sin
+           * pasar a su lado: eso ya lo mira `loQueFalla`.
+           */
+          if (m.vueltas && !m.frustradas && !m.retenidos)
+            mal.push(`${donde}: sin vuelta, sin irse al aire y sin retener a nadie`);
+          if (m.alAireSinPistaOcupada) mal.push(`${donde}: al aire por tu salida sin que la tapara`);
+          if (m.contradicciones.length) mal.push(`${donde}: ${m.contradicciones.join("; ")}`);
         }
     expect(mal).toEqual([]);
     // Se pidió la vuelta, no se dio, y la torre te mandó al aire.
@@ -918,4 +975,53 @@ describe.skipIf(!COMPARAR)("antes y después", () => {
       }
       console.log(filas.join("\n"));
     }, 900_000);
+});
+
+/*
+ * **Los Rodeos con el JAZ 90**, para medir: `RODEOS=1`. La final empieza a
+ * sesenta segundos del umbral, como la del reactor, y antes la torre te ve
+ * por el circuito.
+ */
+const RODEOS = (globalThis as { process?: { env: Record<string, string | undefined> } }).process
+  ?.env.RODEOS;
+describe.skipIf(!RODEOS)("Los Rodeos, medido", () => {
+  it("cuenta", async () => {
+    const rodeos = cabeceras(SCENARIOS.find((e) => e.id === "tenerife-norte")!);
+    const jaz90 = AIRCRAFT.find((a) => a.id === "jaz-90")!;
+    const salenAqui: readonly (readonly number[])[] = [
+      ...SALEN,
+      [300, 270],
+      [240, 200],
+      [200, 160],
+      [160, 120],
+    ];
+    const n = { casos: 0, alAire: 0, alAireSinPista: 0, contradicciones: 0, retenidos: 0, vueltas: 0, frustradas: 0, dos: 0, alLado: 0, sinSalir: 0, sinLlegar: 0 };
+    const logs: string[] = [];
+    for (const esc of rodeos)
+      for (const salen of salenAqui)
+        for (const semilla of [1, 2, 3]) {
+          const m = llegarConDosQueSalen(esc, jaz90, salen, semilla, true, false, undefined, true, null, Number(RODEOS) > 1 ? Number(RODEOS) : 60);
+          n.casos++;
+          n.alAire += m.alAire;
+          n.alAireSinPista += m.alAireSinPistaOcupada;
+          n.contradicciones += m.contradicciones.length;
+          n.retenidos += m.retenidos;
+          n.vueltas += m.vueltas;
+          n.frustradas += m.frustradas;
+          if (m.dosEnLaPista) n.dos++;
+          if (m.alLado) n.alLado++;
+          if (m.salieron.some((x) => !m.despegaron.includes(x))) n.sinSalir++;
+          if (!m.llego) n.sinLlegar++;
+          const donde = `${Math.round(esc.runway.heading)}° salen ${salen.join("/")} s${semilla}`;
+          if (m.alAire || m.frustradas || loQueFalla(m).length || m.contradicciones.length)
+            logs.push(`== ${donde}: ${loQueFalla(m).join(" | ")} alAire ${m.alAire} vueltas ${m.vueltas} frustradas ${m.frustradas} contradicciones ${m.contradicciones.join("; ")}\n` + m.oido.filter((l) => /al aire|vuelta|tocas|despega|sale a rodar|clearedT|lineUp|holdShort|ocupada/.test(l)).join("\n"));
+        }
+    // Sin los tipos de node en el proyecto: solo hace falta escribir un fichero.
+    const fs = (await import(/* @vite-ignore */ ["node", "fs"].join(":"))) as {
+      writeFileSync(ruta: string, texto: string): void;
+    };
+    const sale = (globalThis as { process?: { env: Record<string, string | undefined> } }).process
+      ?.env.RODEOS_OUT;
+    if (sale) fs.writeFileSync(sale, logs.join("\n") + "\n" + JSON.stringify(n) + "\n");
+  }, 900_000);
 });
