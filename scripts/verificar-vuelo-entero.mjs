@@ -907,6 +907,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       t: +ahora.toFixed(2),
       h: Math.round(s.heightAboveGround),
       v: +s.airspeed.toFixed(1),
+      // Y la indicada, nudos: la que se compara con la pérdida y la de subida.
+      vi: Math.round(o.velocidadDeCabina?.() ?? 0),
       a: +s.alpha.toFixed(4),
       aw: +s.stallWarningAlpha.toFixed(4),
       w: s.stallWarning,
@@ -932,6 +934,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       // lleva pedido. Ver `volarLaSenda`.
       sr: senda ? +senda.ritmo.toFixed(2) : null,
       mr: memoriaDeSenda ? +memoriaDeSenda.ritmo.toFixed(2) : null,
+      /*
+       * **Y el lazo de dentro del automático**, para la puerta del JAZ 90
+       * (#192): el morro que pide, el que lleva, lo que gira y el timón que va
+       * acumulando. Sin esto, «baja a 5,4 m/s en la puerta» no dice si el
+       * automático pedía bajar así o pedía otra cosa y el morro no llegaba.
+       */
+      mo: memoriaDeSenda ? +((memoriaDeSenda.morro * 180) / Math.PI).toFixed(2) : null,
+      cb: +(((o.actitud?.().cabeceo ?? 0) * 180) / Math.PI).toFixed(2),
+      q: +(((s.pitchRate ?? 0) * 180) / Math.PI).toFixed(2),
+      mt: memoriaDeSenda ? +memoriaDeSenda.timon.toFixed(3) : null,
       // Y dónde: cuánto falta para el umbral, del eje, y si se recoge.
       ...(() => {
         try {
@@ -985,6 +997,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     if (!senda || s.onGround) {
       memoriaDeSenda = null;
       relojDeSenda = null;
+      gasDeLaSubida = null;
       return;
     }
     const ahora = o.reloj();
@@ -1008,6 +1021,32 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     let pedida = senda.altitud + senda.ritmo * (ahora - senda.desde);
     if (BAJA_POR_EL_ARCO)
       pedida = Math.max(pedida, s.position.y + (-CAIDA_MAXIMA * 1.25 - senda.ritmo) * 10);
+    /*
+     * **Subiendo, el morro a la velocidad y el gas quieto** —ver `velocidad`
+     * en `sostenerLaAltura`— hasta que la altura queda a tiro: a dos segundos
+     * y medio de lo que se sube, o quince metros, se captura como siempre,
+     * con el ritmo hacia la altura, y la velocidad vuelve al gas. Con el gas
+     * quieto también en la captura, el JAZ 90 se iba de 182 a 200 nudos
+     * nivelando, y viraba al viento en cola a esa velocidad.
+     *
+     * **Y el gas, el que se lleva al llegar a la altura de aceleración**, que
+     * ya es un despegue reducido —ver `gasSubiendo`: el empuje con el que se
+     * sube a doce grados de morro a la de circuito—, y desde ahí no se mueve.
+     * El empuje de subida entero de un reactor ligero no cabe en el tope de
+     * morro del automático (`CABECEO_MAXIMO`, doce grados) y se va en
+     * velocidad —la cuenta de `ASENTAR_LA_SUBIDA`: de 102 a 123 m/s en
+     * noventa metros—. Y se probó el modo `THR` de los gases del juego, que
+     * pone el empuje de una subida cómoda: el JAZ 90 llegaba a la altura de
+     * aceleración subiendo a 9 m/s, más que los 5 que pide ese modo para un
+     * circuito, así que cortaba el gas al ralentí mientras el morro intentaba
+     * acelerar; de 165 a 146 nudos, con los flaps todavía fuera.
+     */
+    const conLaVelocidad =
+      senda.velocidad !== null &&
+      senda.velocidad !== undefined &&
+      pedida - s.position.y > Math.max(15, 2.5 * s.velocity.y);
+    if (!conLaVelocidad) gasDeLaSubida = null;
+    else if (gasDeLaSubida === null) gasDeLaSubida = mandos.throttle;
     const r = mandosPara(
       {
         heading: s.heading,
@@ -1016,7 +1055,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         altitud: s.position.y,
         vertical: s.velocity.y,
         velocidad: (o.velocidadDeCabina?.() ?? 0) / 1.94384,
-        gas: mandos.throttle,
+        gas: conLaVelocidad ? gasDeLaSubida : mandos.throttle,
         verdadera: s.airspeed,
         ritmoDeCabeceo: s.pitchRate,
         // Lo que lleva la palanca al engancharlo, para no dar un tirón.
@@ -1024,16 +1063,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         // Lo mismo que le da el juego. Ver `AUTORIDAD_SUFICIENTE`.
         autoridadDelTimon: o.autoridadDelTimon?.(),
       },
-      {
-        rumbo: null,
-        altitud: pedida,
-        ritmo: senda.ritmo,
-        velocidad: null,
-      },
+      conLaVelocidad
+        ? {
+            rumbo: null,
+            altitud: pedida,
+            ritmo: 0,
+            velocidad: senda.velocidad,
+            modo: "FLCH SPD",
+            gases: null,
+          }
+        : {
+            rumbo: null,
+            altitud: pedida,
+            ritmo: senda.ritmo,
+            velocidad: null,
+          },
       dt,
       memoriaDeSenda,
     );
     mandos.elevator = r.elevator;
+    if (conLaVelocidad) mandos.throttle = gasDeLaSubida;
   };
   /*
    * **La recogida, fotograma a fotograma**, en el mismo gancho que el
@@ -1797,6 +1846,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      */
     const conLaSegunda =
       !SENCILLO && (suyas.vfePorMuesca?.length ?? 0) >= 3 && kt < segunda;
+    /*
+     * **Y subiendo, los de despegue hasta la altura y la velocidad de
+     * recogerlos**, no fuera en cuanto se deja el suelo. Ver `SUBIDA_LIMPIA`.
+     * Del viento en cola en adelante manda lo de abajo, como antes.
+     */
+    if (flapsDeDespegueFuera && tramo < 2 && !enFinal) {
+      const indicada = (o.velocidadDeCabina?.() ?? kt) / 1.94384;
+      if (s.heightAboveGround >= ASENTAR_LA_SUBIDA && indicada >= RECOGE_LOS_FLAPS_A)
+        flapsDeDespegueFuera = false;
+      else {
+        o.pedirFlaps?.(1 / 3);
+        return;
+      }
+    }
+    flapsDeDespegueFuera = false;
     o.pedirFlaps?.(
       (enFinal || tramo >= 4) && kt < (suyas.vfeKt ?? 999)
         ? 1
@@ -2138,6 +2202,80 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   /** Hasta cuándo se vuela por actitud y no por velocidad, m sobre el suelo. */
   const ASENTAR_LA_SUBIDA = 120;
 
+  /*
+   * **Subir como se sube: con la primera muesca, y limpio a su velocidad.**
+   *
+   * Este banco despegaba limpio —`configurar` pedía los flaps arriba en cuanto
+   * se estaba en el aire, y antes ni los tocaba— y subía con la palanca a la
+   * Vr más un quince por ciento, que es una velocidad de flaps de despegue,
+   * mientras el gas perseguía la de circuito. Con el ala limpia eso queda a
+   * 1,13–1,2 veces la pérdida, y los dos mandos se peleaban: medido con la
+   * traza del ala en Los Rodeos, el JAZ 50 subía a 87 nudos —pierde limpio a
+   * 70— con un cuarto de gas, a tres metros por segundo y la carga de 0,8 a
+   * 1,32 g; y el «stall, stall» salió en 4 de 15 vuelos con el JAZ 50, el 60
+   * y el 90, entre 127 y 247 m (#192).
+   *
+   * Ahora se vuela como el vuelo de línea de la escena de Ara
+   * (`flight/vuelo-de-linea.ts`): la primera muesca para despegar
+   * —`pedirFlaps(1/3)` cae en la primera de cada palanca, también en la de tres
+   * del 1900D—, la subida inicial como estaba, y a la altura de aceleración
+   * —la de `ASENTAR_LA_SUBIDA`, los cuatrocientos pies que son el mínimo de
+   * cualquier procedimiento— se baja el morro, se acelera y se recogen los
+   * flaps al pasar por `RECOGE_LOS_FLAPS_A`. Desde ahí, limpio y a
+   * `SUBIDA_LIMPIA` con el morro.
+   *
+   * En el modelo sencillo no: allí el gas es la velocidad y el ala no pierde, y
+   * su piloto vuela como volaba. Ver `SENCILLO`.
+   */
+  /** La pérdida limpia de este avión con su peso, indicada, m/s. Ver `perdidaLimpia` en `sondas.ts`. */
+  const PERDIDA_LIMPIA = suyas.perdidaLimpia ?? 0;
+  /**
+   * **A qué se sube limpio**, indicada, m/s: 1,35 veces la pérdida limpia, y
+   * nunca menos que la de subida de antes. El mínimo de cualquier manual es
+   * 1,3 —es la vara de la Vref y de la velocidad de maniobra con los flaps
+   * arriba—, y un poco más porque el morro del automático la lleva con un
+   * nudo o dos de holgura y Los Rodeos tiene racha. Con la ficha: 94 nudos el
+   * JAZ 50, 132 el JAZ 60 y 182 el JAZ 90.
+   */
+  const SUBIDA_LIMPIA = Math.max(VELOCIDAD_DE_SUBIDA, PERDIDA_LIMPIA * 1.35);
+  /**
+   * **A qué se recogen los flaps de despegue**, indicada, m/s: 1,3 veces la
+   * pérdida limpia, para que el ala no vuele limpia ni un momento por debajo
+   * de eso, y desde ahí se sigue acelerando a la de subida. Si la subida se
+   * acaba antes —el circuito está a doscientos cincuenta metros—, se recogen
+   * en el viento en cola, con lo de siempre de `configurar`.
+   */
+  const RECOGE_LOS_FLAPS_A = PERDIDA_LIMPIA * 1.3;
+  /**
+   * Si los flaps de despegue siguen fuera: se ponen en tierra antes de la
+   * carrera y se quitan una vez, a la altura y la velocidad de recogerlos.
+   */
+  let flapsDeDespegueFuera = false;
+  /**
+   * **Si esta subida se vuela con la técnica de la línea**: morro a la
+   * velocidad y el gas quieto. En el modelo completo, en los que vuela el
+   * automático —ver `REACTOR_COMPLETO`—, que son los del «stall, stall».
+   */
+  const SUBE_CON_EL_MORRO = REACTOR_COMPLETO;
+  /** El gas de la subida, quieto desde la altura de aceleración. Ver `volarLaSenda`. */
+  let gasDeLaSubida = null;
+  /*
+   * **Y al irse al aire, lo mismo: la primera muesca hasta la altura de
+   * aceleración**, no los flaps arriba de golpe. La frustrada subía por
+   * `configurar` con el tramo uno, que los quitaba todos en cuanto se dejaba
+   * la final: el JAZ 50 se fue al aire dos veces en Los Rodeos con la pista
+   * ocupada, y las dos sonó el «stall, stall» a 80 y 89 m, a 78–83 nudos con
+   * los flaps ya en 0,25 y en 0 —pierde limpio a 70—. Es lo que manda
+   * cualquier procedimiento de frustrada: potencia, una muesca menos, subir,
+   * y los flaps a su velocidad.
+   */
+  const irseConFlaps = () => {
+    if (SUBE_CON_EL_MORRO && suyas.llevaFlaps) {
+      o.pedirFlaps?.(1 / 3);
+      flapsDeDespegueFuera = true;
+    }
+  };
+
   const subirDeVerdad = (s) => {
     /*
      * **Los primeros metros, por actitud.**
@@ -2153,7 +2291,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * mantiene**. La velocidad sale sola de ahí. Volar por velocidad es de
      * después, cuando ya se está arriba.
      */
-    if (s.heightAboveGround < ASENTAR_LA_SUBIDA) {
+    /*
+     * Y por encima, en los que sube el automático —ver `SUBE_CON_EL_MORRO`—,
+     * lo mismo: esta palanca es solo la que él coge al engancharse, y la ley
+     * de velocidad de abajo, a la de subida de antes, pedía 0,3 de golpe con
+     * el JAZ 90 a 164 nudos. El automático arrancaba de ahí y el morro se iba
+     * a 16°, subiendo a 14 m/s: el salto de palanca de 0,005 a 0,23 de #192.
+     */
+    if (s.heightAboveGround < ASENTAR_LA_SUBIDA || SUBE_CON_EL_MORRO) {
       const falta = CABECEO_DE_SUBIDA - cabeceoDe(s);
       return ganancia(s) * Math.max(-0.35, Math.min(0.6, falta * 4));
     }
@@ -2701,6 +2846,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       // Bajando por la senda que queda, al ritmo de la senda. Ver `porLaSenda`.
       ritmo,
       desde: o.reloj(),
+      /*
+       * **Y subiendo, la velocidad con el morro y el gas quieto**, que es como
+       * sube un avión de línea: el automático en `FLCH SPD` lleva
+       * `SUBIDA_LIMPIA` con el cabeceo, y el gas no se toca. Era el automático
+       * llevando un ritmo hacia la altura y el gas de este banco persiguiendo
+       * la de circuito: dos mandos y ninguno a cargo de la velocidad de
+       * verdad. Ver `volarLaSenda`.
+       */
+      velocidad: subiendo && SUBE_CON_EL_MORRO ? SUBIDA_LIMPIA : null,
     };
   };
 
@@ -3471,6 +3625,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   };
   /** El gas que sostiene la velocidad del circuito. Ver la etapa «subir». */
   let gasQueSostiene = 0;
+  /** El pie que sostiene el viento cruzado en la carrera. Ver el timón de la etapa «despegar». */
+  let timonDeLaCarrera = 0;
   /** El error de velocidad de la vuelta anterior, en final. Ver el gas de la final. */
   let errorDeGasAntes = null;
   /** La velocidad de los últimos diez segundos de final, para la racha. */
@@ -5099,7 +5255,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       carrera.push(
         `${t.toFixed(0)}s ${s.airspeed.toFixed(0)}m/s elev ${c.elevator.toFixed(2)} sube ${s.verticalSpeed.toFixed(1)}m/s suelo ${s.heightAboveGround.toFixed(1)}m ${s.onGround ? "ruedas" : "aire"} ${s.onRunway ? "enPista" : "FUERA"} eje ${desvio(s).toFixed(0)}m` +
           // Y con qué se lleva por el eje: el timón, la rueda y el morro.
-          ` tim ${(c.rudder ?? 0).toFixed(2)} rueda ${c.aileron.toFixed(2)} morro ${((error(rumboPista, s.heading) * 180) / Math.PI).toFixed(1)}°`,
+          ` tim ${(c.rudder ?? 0).toFixed(2)} rueda ${c.aileron.toFixed(2)} morro ${((error(rumboPista, s.heading) * 180) / Math.PI).toFixed(1)}°` +
+          // Y lo que gira y por dónde le entra el aire: si el pie puede con él.
+          ` gira ${(((s.yawRate ?? 0) * 180) / Math.PI).toFixed(1)}°/s derrape ${(((s.beta ?? 0) * 180) / Math.PI).toFixed(0)}° flaps ${(o.controles?.().flaps ?? 0).toFixed(2)}`,
       );
     if (fase !== faseAnterior) {
       faseAnterior = fase;
@@ -5225,6 +5383,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       rumboDeSalida = porDelante()?.h ?? rumboDeSalida;
       aDonde = 1;
       etapa = "subir";
+      irseConFlaps();
     }
     /*
      * **Y si el juego ya te ha mandado al aire, o la pista se acabó, también.**
@@ -5250,6 +5409,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         rumboDeSalida = porDelante()?.h ?? rumboDeSalida;
         aDonde = 1;
         etapa = "subir";
+        irseConFlaps();
       }
     }
     /*
@@ -5436,10 +5596,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         c.aileron = s.onRunway ? alRumbo(s, rumboPista) : timon(s, ruta);
         if (s.onRunway && Math.abs(error(rumboPista, s.heading)) < 0.15) {
           etapa = "despegar";
+          timonDeLaCarrera = 0;
         }
+      }
+      // Los flaps de despegue, ya en la pista: ver `SUBIDA_LIMPIA`.
+      if (s.onRunway && SUBE_CON_EL_MORRO && suyas.llevaFlaps) {
+        o.pedirFlaps?.(1 / 3);
+        flapsDeDespegueFuera = true;
       }
     } else if (etapa === "despegar") {
       c.throttle = 1;
+      if (s.onGround && SUBE_CON_EL_MORRO && suyas.llevaFlaps) {
+        o.pedirFlaps?.(1 / 3);
+        flapsDeDespegueFuera = true;
+      }
       /*
        * **En el eje, apuntando por delante del avión y no del umbral.**
        *
@@ -5456,6 +5626,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        */
       const p = porDelante();
       c.aileron = p ? alPunto(s, p.x, p.z) : alRumbo(s, rumboPista);
+      /*
+       * **Y en el suelo, la rueda al mismo eje que el timón.** Ver el timón,
+       * más abajo: la rueda apuntaba al punto de `porDelante`, que sale de las
+       * cabeceras del aeródromo, y el timón al rumbo y al desvío de la pista
+       * del escenario, con los que se mide el eje. No son la misma raya: en la
+       * 12 de Los Rodeos, al empezar la carrera del JAZ 90 la rueda pedía 1,6°
+       * a la izquierda con el morro ya en el rumbo. A paso de rueda manda ella,
+       * y se llevaba el morro a la izquierda mientras el timón tiraba a la
+       * derecha.
+       */
+      /*
+       * **Y el alerón al viento, donde la rueda ya no manda.** En el suelo el
+       * mando de alabeo es la rueda de morro mientras ella tiene autoridad
+       * —entera hasta ocho metros por segundo, nada a los veintiocho—, y
+       * metido al viento ahí sería girar hacia el viento. Por encima es lo que
+       * hace un piloto con viento cruzado: el alerón del lado del viento abajo,
+       * para que el ala de barlovento no se levante al rotar, y menos según
+       * corre el avión. El derrape dice de qué lado entra y cuánto: con signo,
+       * positivo es viento por la derecha. Mezclado con la rueda no: lo que
+       * fuera al viento por ella giraría el morro hacia él.
+       */
       /*
        * **Y el timón, que es lo único que dirige a partir de los veintiocho.**
        *
@@ -5474,12 +5665,54 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * propósito —dos centésimas por metro— porque corregir el desvío con
        * prisa es hacer eses.
        */
-      c.rudder = s.onGround
-        ? Math.max(
-            -1,
-            Math.min(1, error(rumboPista, s.heading) * 1.5 - desvio(s) * 0.02),
-          )
-        : 0;
+      /*
+       * **Y el timón, para el eje: con el pie que sostiene el viento y sin
+       * esperar a irse.** Eran esos dos términos solos, proporcionales, y un
+       * mando proporcional contra algo que empuja siempre del mismo lado se
+       * planta donde el error da justo el pie que hace falta. En la 12 de Los
+       * Rodeos, con el viento de casa —12 kt del 040, once de cruzado por la
+       * izquierda—, lo que empuja el morro hacia el viento crece con la
+       * carrera, y el JAZ 50 iba con el timón en 0,46 y el morro seis grados a
+       * la izquierda: de 2 a 25 m del eje, y el JAZ 90 de 0 a 28 (#192).
+       *
+       * Un piloto mira por dónde va a pasar, no solo adónde apunta: el rumbo
+       * que lleva de vuelta al eje en unos segundos de carrera —más lejos
+       * cuanto más deprisa, para no hacer eses—, el pie que sostiene ese rumbo
+       * y que se va quedando puesto mientras el viento siga —lo que acumula—,
+       * y el giro que ya lleva, para no pasarse. Afinado en una simulación de
+       * mesa con la guiñada del suelo de `fdm.ts`: de 35 m a 2.
+       */
+      /*
+       * Y lo que acumula, solo mientras el pie no está a fondo: acumulando con
+       * el timón topado, el JAZ 90 llegó a los veintiocho con todo el pie
+       * derecho puesto y se pasó el eje doce grados al otro lado.
+       *
+       * **En Guyrami, como estaba**: allí la asistencia de rodaje empuja hacia
+       * la raya y el modelo sencillo no tiene veleta que aguantar, y su banco
+       * pasa entero con los dos términos de antes.
+       */
+      if (s.onGround && SENCILLO) {
+        c.rudder = Math.max(
+          -1,
+          Math.min(1, error(rumboPista, s.heading) * 1.5 - desvio(s) * 0.02),
+        );
+      } else if (s.onGround) {
+        const mira = Math.max(60, 3 * porElSuelo(s));
+        const quiere = rumboPista - Math.atan2(desvio(s), mira);
+        const falta = error(quiere, s.heading);
+        const gira = Number.isFinite(s.yawRate) ? s.yawRate : 0;
+        const pide = falta * 3 + timonDeLaCarrera - gira;
+        if (Math.abs(pide) < 1 || Math.sign(falta) !== Math.sign(pide))
+          timonDeLaCarrera = Math.max(
+            -0.8,
+            Math.min(0.8, timonDeLaCarrera + falta * 2.5 * paso),
+          );
+        c.rudder = Math.max(-1, Math.min(1, pide));
+        c.aileron =
+          porElSuelo(s) > 28
+            ? Math.max(-0.5, Math.min(0.5, (s.beta ?? 0) * 3))
+            : Math.max(-1, Math.min(1, falta * 1.2));
+      } else c.rudder = 0;
       /*
        * **Se tira para rotar, y en cuanto se vuela se suelta.**
        *
@@ -5516,9 +5749,23 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * sobra: medio elevador no levanta cinco toneladas y media, y lo que
        * limita el morro en tierra es la geometría del tren y no la palanca.
        */
+      /*
+       * **Y con los flaps de despegue, se rota a una actitud y no a fondo.**
+       * Con ocho décimas sostenidas hasta soltar el suelo, el JAZ 90 con la
+       * primera muesca se iba del suelo con 14° de morro y el ala a 13,6°,
+       * por encima de los 12,2° a los que suena su avisador con esos flaps:
+       * medio segundo de aviso en cada despegue, medido con la traza del ala.
+       * Limpio no se veía porque rotaba por debajo de su pérdida limpia y el
+       * avión no se iba hasta coger velocidad. Se rota hasta dos grados por
+       * debajo del avisador, que en el suelo es el ángulo que lleva el ala, y
+       * el resto lo pone la subida.
+       */
+      const rotarHasta = Math.min(CABECEO_DE_SUBIDA, (s.stallWarningAlpha ?? 1) - 0.035);
       c.elevator = s.onGround
         ? s.airspeed > (suyas.rotacion ?? 28) * 0.96
-          ? 0.8
+          ? SUBE_CON_EL_MORRO
+            ? Math.max(0, Math.min(0.8, (rotarHasta - cabeceoDe(s)) * 4))
+            : 0.8
           : 0
         : subirDeVerdad(s);
       if (!s.onGround && alto(s) > 30) {
