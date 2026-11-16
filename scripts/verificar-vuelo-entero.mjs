@@ -5765,9 +5765,23 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             Math.min(0.8, timonDeLaCarrera + falta * 2.5 * paso),
           );
         c.rudder = Math.max(-1, Math.min(1, pide));
+        /*
+         * **Y donde el juego ayuda con el timón en tierra, sin alerón al
+         * viento.** Desde #196, en Tukã y Taguató el mando de alabeo en el
+         * suelo sigue girando el avión con el timón donde la rueda ya no
+         * llega: es el volante de quien juega. Metido al viento por encima de
+         * los veintiocho, giraba el morro hacia él. Medido en la mesa con el
+         * viento de casa de Los Rodeos: el JAZ 120 en Tukã se iba 13 m a la
+         * derecha, y sin ese alerón ningún avión pasa de un metro del eje (H15a,
+         * ADR 0002). En Taguato Ruvicha el alerón sigue siendo alerón.
+         */
+        const conAyudaEnTierra =
+          (o.juegoParaTrazas?.()?.flight?.layers?.autoRudder ?? 0) > 0;
         c.aileron =
           porElSuelo(s) > 28
-            ? Math.max(-0.5, Math.min(0.5, (s.beta ?? 0) * 3))
+            ? conAyudaEnTierra
+              ? 0
+              : Math.max(-0.5, Math.min(0.5, (s.beta ?? 0) * 3))
             : Math.max(-1, Math.min(1, falta * 1.2));
       } else c.rudder = 0;
       /*
