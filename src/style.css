@@ -17485,11 +17485,31 @@ body.con-vuelta #tactil {
   display: none;
 }
 
+/*
+ * **La decisión, siempre a la vista.** La concha es la de todos los paneles:
+ * cabecera, el cuerpo que rueda si no cabe y la fila de los botones al pie,
+ * que no se mueve (`.parte__pie`, ver `pie` en `ui/tarjeta-del-tiempo.ts`).
+ * Antes rodaba la tarjeta entera, y en un teléfono tumbado los tres botones
+ * quedaban debajo del borde. El cuerpo de un instrumento no recorta
+ * (`.concha--instrumento .concha__cuerpo`); éste sí, que es el que rueda.
+ */
 .tarjeta-tiempo .concha {
   width: min(760px, 100%);
   max-height: 100%;
   min-height: 0;
-  overflow: auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.tarjeta-tiempo .concha .concha__cuerpo {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* El pie, separado del cuerpo con la misma raya que la fila de acciones. */
+.parte__pie {
+  padding-top: 10px;
+  border-top: 1px solid var(--linea);
 }
 
 .parte {
@@ -17524,8 +17544,9 @@ body.con-vuelta #tactil {
  * teléfono de pie cada campo se quedaba en 149 px, y el grupo más largo del
  * parte, `VAPP 151KT (VREF 146+5)`, no cabía en un renglón: medido con
  * `verificar-tarjeta-del-tiempo.mjs`. Uno debajo del otro, cada campo tiene el
- * ancho de la tarjeta. Con el dedo y de pie lo tapa el cartel de girar la
- * pantalla (`.gira`): esto es para la ventana estrecha.
+ * ancho de la tarjeta. Vale para la ventana estrecha y para el teléfono de
+ * pie: la tarjeta va fuera del HUD y por encima del cartel de girar la
+ * pantalla (`.gira`), porque se decide antes de volar.
  */
 @media (max-width: 560px) {
   .parte__campos {
@@ -17875,10 +17896,10 @@ body.con-vuelta #tactil {
 }
 
 /*
- * **En el teléfono apaisado, la decisión tiene que caber sin desplazar**:
- * medido en un Pixel de 360 de alto, la tarjeta entera dejaba los botones
- * debajo del borde. Los dibujos van más pequeños y la fila de porqués se
- * quita, que ya están en ámbar arriba.
+ * **En el teléfono apaisado, todo más justo**: medido en un Pixel de 360 de
+ * alto, la tarjeta entera dejaba los botones debajo del borde. Los dibujos
+ * van más pequeños, y lo que aun así no cabe rueda en el cuerpo, con los
+ * botones quietos al pie (`.parte__pie`).
  */
 @media (max-height: 500px) {
   .tarjeta-tiempo {
