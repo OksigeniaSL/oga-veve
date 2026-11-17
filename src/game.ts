@@ -10423,11 +10423,20 @@ export class Game {
      * se encontró. Un canto apuntado sin las cifras que lo provocaron no sirve
      * para eso: dice qué se dijo y no por qué.
      *
-     * Van la indicada, la de aproximación de este avión y la altura sobre el
+     * Van la velocidad, la de aproximación de este avión y la altura sobre el
      * suelo, que son las tres de las que dependen todas las bandas.
+     *
+     * **Y la velocidad, en las dos.** Aquí ponía «la indicada» y se apuntaba
+     * `airspeed`, que es la verdadera: en Los Rodeos, seis nudos más que lo
+     * que marca el anemómetro en un «stall, stall» (ADR 0027, enmienda H25a).
+     * La Vref y la pérdida son indicadas, y las bandas comparan con la
+     * verdadera: con las dos delante, cada canto se lee contra lo suyo.
      */
     const s = this.flight.state;
     const kt = Math.round(s.airspeed * NUDOS);
+    const indicada = Math.round(
+      indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) * NUDOS,
+    );
     const vref = Math.round(this.aircraft.approachSpeed * NUDOS);
     const alto = Math.round(s.heightAboveGround);
     /*
@@ -10443,7 +10452,7 @@ export class Game {
     const n = s.loadFactor.toFixed(2);
     const flaps = this.input.controls.flaps.toFixed(2);
     this.cantados.push(
-      `${que} [${kt} kt · vref ${vref} · ${alto} m · α ${alfa}° · n ${n} · flaps ${flaps}]`,
+      `${que} [${indicada} kt IAS · ${kt} kt TAS · vref ${vref} · ${alto} m · α ${alfa}° · n ${n} · flaps ${flaps}]`,
     );
     if (this.cantados.length > 4000) this.cantados.shift();
   }
