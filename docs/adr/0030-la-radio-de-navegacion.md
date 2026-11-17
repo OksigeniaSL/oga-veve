@@ -1523,6 +1523,13 @@ En el juego, con la Intel por ANGLE, de una tirada:
 En el panel de Tenerife Norte salió otra cosa, y se arregló: la traza iba por
 la raya de TFN —se vuela hacia ella— y la raya, pintada encima, la tapaba. Las
 rayas van ahora debajo de la traza, y la cruz, el avión y los números encima.
+Eso está probado en la mesa (`fijo-en-el-plano.test.ts` mira el orden de las
+capas) y **no se ha volado**: la segunda tirada se quedó en la cola del
+navegador. Tampoco el banco con la cruz «encima» juzgada con lo que da el VOR
+en píxeles; con esa regla, las tres tiradas de arriba habrían pasado. En
+Fuerteventura, con el lado de cada encuadre, el VOR da unos veinte píxeles en
+el plano y veinticinco en el panel, contra los quince y veinte medidos; en el
+reactor el banco ya lo midió: nueve con veintidós, y siete con veinticinco.
 
 ### Lo que queda
 
