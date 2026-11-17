@@ -323,6 +323,34 @@
       "ms": 8107,
       "h": "be30a83078"
     },
+    "ejercicio.radial.antes": {
+      "ms": 11707,
+      "h": "68b79916ff"
+    },
+    "ejercicio.radial.centrada": {
+      "ms": 11907,
+      "h": "5c6a59fac1"
+    },
+    "ejercicio.radial.giro": {
+      "ms": 11207,
+      "h": "2c069ae7db"
+    },
+    "ejercicio.radial.haciaLaRadio": {
+      "ms": 10907,
+      "h": "fb41c32b19"
+    },
+    "ejercicio.radial.identificada": {
+      "ms": 11207,
+      "h": "8fba03481e"
+    },
+    "ejercicio.radial.pasada": {
+      "ms": 9607,
+      "h": "704cf185df"
+    },
+    "ejercicio.radial.sintonizar": {
+      "ms": 4007,
+      "h": "1772ef1701"
+    },
     "ejercicio.seguidoAntesDeV1": {
       "ms": 5307,
       "h": "da317964cf"
@@ -5473,6 +5501,27 @@
     ],
     "ejercicio.aguja.sintonizar": [
       "ejercicio.aguja.sintonizar"
+    ],
+    "ejercicio.radial.antes": [
+      "ejercicio.radial.antes"
+    ],
+    "ejercicio.radial.centrada": [
+      "ejercicio.radial.centrada"
+    ],
+    "ejercicio.radial.giro": [
+      "ejercicio.radial.giro"
+    ],
+    "ejercicio.radial.haciaLaRadio": [
+      "ejercicio.radial.haciaLaRadio"
+    ],
+    "ejercicio.radial.identificada": [
+      "ejercicio.radial.identificada"
+    ],
+    "ejercicio.radial.pasada": [
+      "ejercicio.radial.pasada"
+    ],
+    "ejercicio.radial.sintonizar": [
+      "ejercicio.radial.sintonizar"
     ]
   }
 }
