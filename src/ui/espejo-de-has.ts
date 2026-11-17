@@ -36,6 +36,7 @@ export const ESPEJOS: readonly Espejo[] = [
   { en: ".hud", si: '.tablero[data-visera="mcp"]', clase: "hay-mcp-en-la-visera" },
   { en: ".hud", si: '.hud__abajo > [data-hud="hint"]:not(:empty)', clase: "hay-subtitulo" },
   { en: ".hud", si: ".rincon .senal:not([hidden])", clase: "hay-senal-en-el-rincon" },
+  { en: ".hud", si: ".torre:not([hidden])", clase: "hay-torre" },
   { en: ".hud", si: ".radio:not([hidden])", clase: "hay-radio" },
   { en: "body", si: '[data-hud="fin"]:not([hidden])', clase: "hay-fin" },
   { en: "body", si: ".hud--menu", clase: "hay-menu" },

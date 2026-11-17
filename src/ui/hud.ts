@@ -571,8 +571,8 @@ export class Hud {
   private barraObservada: ResizeObserver | null = null;
   /** Quién vigila el alto del subtítulo. Ver `medirElSubtitulo`. */
   private subtituloObservado: ResizeObserver | null = null;
-  /** Lo vuelve a escribir al cambiar de vista. Ver `medirElSubtitulo`. */
-  private escribirSubtitulo: (() => void) | null = null;
+  /** Quién vigila el alto de la lámpara de la torre. Ver `medirLaLampara`. */
+  private torreObservada: ResizeObserver | null = null;
   /** Lo que mide el cuadro en la pantalla, para sus rótulos. Ver `medirLaUnidad`. */
   private cuadroObservado: ResizeObserver | null = null;
   /**
@@ -2620,6 +2620,7 @@ export class Hud {
     this.medirLaUnidad();
     this.medirLaBarra();
     this.medirElSubtitulo();
+    this.medirLaLampara();
     this.senal.bind(this.root);
     this.tutor.bind(this.root);
     this.reserveForPanel();
@@ -3095,8 +3096,6 @@ export class Hud {
      * salpicadero.
      */
     this.reserveForPanel();
-    // Y lo que baja la lámpara por el subtítulo, que en cabina va en otro sitio.
-    this.escribirSubtitulo?.();
   }
 
   update(
@@ -4267,10 +4266,22 @@ export class Hud {
     const columna = this.root.querySelector<HTMLElement>(".hud__derecha");
     const escribirColumna = (): void => {
       if (!columna) return;
-      const ancho = Math.round(
-        aPxDelHud(this.root, columna.getBoundingClientRect().width),
-      );
+      const caja = columna.getBoundingClientRect();
+      const ancho = Math.round(aPxDelHud(this.root, caja.width));
       this.root.style.setProperty("--columna-ancho", `${ancho}px`);
+      /*
+       * **Y dónde empieza por la izquierda**, para que en cabina la lámpara
+       * y el subtítulo acaben antes de la tarjeta del gas y del freno: iban
+       * de lado a lado y les pasaban por encima. El ancho no basta, que en el
+       * teléfono la columna no llega al borde —le queda a la derecha la
+       * palanca del gas—.
+       */
+      if (caja.width > 2)
+        this.root.style.setProperty(
+          "--columna-izquierda",
+          `${Math.round(aPxDelHud(this.root, caja.left))}px`,
+        );
+      else this.root.style.removeProperty("--columna-izquierda");
     };
     /*
      * **Y dónde acaba la columna de la pausa**, para la tarjeta de quien habla
@@ -4348,6 +4359,13 @@ export class Hud {
     if (vistas) this.barraObservada.observe(vistas);
     // Se va al arrancar, y con ella el sitio que le dejaba el subtítulo.
     if (antes) this.barraObservada.observe(antes);
+    /*
+     * Y el tutor, que en cabina va debajo del rincón: el subtítulo empieza a
+     * la derecha de los dos (`--rincon-derecha`, en `escribirRincon`), y el
+     * tutor sale y se va con cada tecla que toca.
+     */
+    const tutor = this.root.querySelector('[data-hud="tutor"]');
+    if (tutor) this.barraObservada.observe(tutor);
   }
 
   /**
@@ -4367,28 +4385,56 @@ export class Hud {
    * estilo de todo lo que cuelga de ella. `offsetHeight` ya viene en los
    * píxeles del HUD (ver `aPxDelHud`), y vacío no ocupa nada.
    *
-   * **En cabina, cero**, salvo la altura en grande: ahí el subtítulo va al
-   * 32 % y no debajo de la barra, y bajar la lámpara por él la echaba encima
-   * del aviso, que va justo encima del subtítulo. La altura en grande sí va
-   * arriba, y por ella sí baja. Como cambiar de vista no cambia el alto del
-   * subtítulo, `ponerVistaDeCabina` lo vuelve a escribir.
+   * En cabina no lo lee nadie: allí la lámpara va encima del subtítulo y no
+   * debajo. Ver `medirLaLampara`.
    */
   private medirElSubtitulo(): void {
     const hint = this.hint;
     let escrito = "";
     const escribir = (): void => {
-      const arriba = !this.enCabina() || hint.classList.contains("insignia--cifra");
-      const alto = `${arriba ? hint.offsetHeight : 0}px`;
+      const alto = `${hint.offsetHeight}px`;
       if (alto === escrito) return;
       escrito = alto;
       this.root.style.setProperty("--subtitulo-alto", alto);
     };
-    this.escribirSubtitulo = escribir;
     escribir();
     this.subtituloObservado?.disconnect();
     if (typeof ResizeObserver === "undefined") return;
     this.subtituloObservado = new ResizeObserver(escribir);
     this.subtituloObservado.observe(hint);
+  }
+
+  /**
+   * **Lo que ocupa la lámpara de la torre de alto**, con su respiro, para que
+   * en cabina lo que va debajo de ella —la tarjeta de la orden y el
+   * subtítulo— se aparte lo que de verdad mide.
+   *
+   * En cabina la franja de encima de la visera no da para la lámpara al lado
+   * de la tarjeta de la orden: la lámpara va arriba, de lado a lado hasta la
+   * columna de mandos, y la tarjeta y el subtítulo empiezan donde ella acaba.
+   * Están en cajas distintas, así que no los puede apilar el navegador. La
+   * orden ocupa una línea en el portátil y tres en una tablet de 900, así que
+   * no vale un número escrito a mano: se mide, y apagada no ocupa nada.
+   *
+   * Sustituye a `--torre-ancho`, que se escribía en cada luz que se ponía y no
+   * lo leía nadie desde que la tarjeta se fue al rincón. Solo cuando cambia,
+   * como el subtítulo.
+   */
+  private medirLaLampara(): void {
+    const torre = this.torre;
+    if (!torre) return;
+    let escrito = "";
+    const escribir = (): void => {
+      const alto = torre.hidden ? "0px" : `${torre.offsetHeight + 8}px`;
+      if (alto === escrito) return;
+      escrito = alto;
+      this.root.style.setProperty("--torre-alto", alto);
+    };
+    escribir();
+    this.torreObservada?.disconnect();
+    if (typeof ResizeObserver === "undefined") return;
+    this.torreObservada = new ResizeObserver(escribir);
+    this.torreObservada.observe(torre);
   }
 
   /**
@@ -4774,16 +4820,6 @@ export class Hud {
     esconder(caja, luz === null);
     caja.classList.toggle("torre--verde", luz === "verde");
     caja.classList.toggle("torre--roja", luz === "roja");
-    /*
-     * Y lo ancha que es, para que la tarjeta se aparte de ella. Es la otra
-     * mitad de lo que hace `medirse` en `ui/senal.ts`: cada una se corre media
-     * anchura de la otra, así que juntas quedan centradas y separadas, y sola,
-     * cada una se queda en el medio.
-     */
-    this.root.style.setProperty(
-      "--torre-ancho",
-      caja.hidden ? "0px" : `${caja.offsetWidth + 14}px`,
-    );
     const enLaRoja = luz === "roja" && rojaDice !== "alAire";
     const enLaFila = enLaRoja ? delante : 0;
     const porLaEstela = enLaRoja && enLaFila === 0 && estela;

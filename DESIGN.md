@@ -77,8 +77,8 @@ Tres reglas que la tabla no dice sola:
 La altura sobre la pista **en grande** (`Hud.alturaEnGrande`): al cruzar 150, 100 y 50 m en Taguato (500, 100 y 50 ft
 en Taguato Ruvicha), el número a `--voz-cifra` (32 px × escala, 700, cifras tabulares) con su unidad a la letra de la
 glosa y, delante, el dibujo del avión de perfil sobre la pista con la flecha que los une. Sale 1,6 s en el sitio de los
-subtítulos —arriba, en el hueco de la barra; en cabina, debajo de la barra y no al 32 %—, que no tapa la pista de la
-final ni el aviso, y sin animación. Nunca es el único canal: el dibujo, el lector de pantalla (es el mismo elemento
+subtítulos —arriba, en el hueco de la barra; en cabina, debajo de la lámpara de la torre, si está—, que no tapa la
+pista de la final ni el aviso, y sin animación. Nunca es el único canal: el dibujo, el lector de pantalla (es el mismo elemento
 `aria-live` de los subtítulos), la ALT del cuadro y, en el avión que lleva radioaltímetro, la voz de máquina.
 
 ## 2. Colores y su papel
@@ -282,15 +282,22 @@ dato, no una palabra. Estados: **en reposo** no se toca; **pulsable** (es la ún
 dedo) lleva borde ocre de 2 px que late cada 1,8 s, encima brilla a 1,08, pulsada baja a 0,97 y con foco lleva el
 contorno ocre; **que explica** se toca sin filo ni latido, porque no está pidiendo nada.
 
-**El aviso** (`.aviso-hud`, `role="alert"`). Lo que no puede esperar, con su flecha de 44 px: la pérdida (↓), el
-suelo (↑), el final de pista (↤) y el avión roto (↺). 21 px a 600, relleno 10 × 18, radio 16, fondo `#8f3f22`.
-Aparece en 160 ms; los tres primeros parpadean a 620 ms en dos pasos, y la viñeta de los bordes late a 900 ms. Va
-**encima del cuadro, nunca detrás**: un panel bonito no puede esconder un *terrain, pull up*. Con un aviso en pantalla
-el tutor se calla: dos carteles a la vez son ruido. El texto sigue la escalera (`data-escalera`: sin texto, corto o
-largo) y solo se reescribe cuando cambia, para no interrumpir sesenta veces por segundo a quien usa lector de
-pantalla. Centrado sobre el avión con el ancho de lo que dice, y **por delante de todo lo que se enciende solo**,
-también de la lámpara de la torre. En cabina, apoyado encima del subtítulo; y en cabina y con la pantalla grande del
-teléfono, con la flecha al lado del texto, que ahí falta alto y sobra ancho (ADR 0030, enmienda H28c).
+**El aviso** (`.aviso-hud`, `role="alert"`). Lo que no puede esperar, con su flecha de 44 px al lado del texto: la
+pérdida (↓), el suelo (↑), el final de pista (↤) y el avión roto (↺). 21 px a 600, relleno 10 × 18, radio 16, fondo
+`#8f3f22`. Aparece en 160 ms; los tres primeros parpadean a 620 ms en dos pasos, y la viñeta de los bordes late a 900
+ms. Va **encima del cuadro, nunca detrás**, apoyado en él: un panel bonito no puede esconder un *terrain, pull up*. Mide
+una fila en todas las pantallas (`--fila-del-aviso`), y así lo que va debajo se aparta en el mismo fotograma en que
+sale. El texto sigue la escalera (`data-escalera`: sin texto, corto o largo) y solo se reescribe cuando cambia, para no
+interrumpir sesenta veces por segundo a quien usa lector de pantalla. Centrado sobre el avión con el ancho de lo que
+dice, y **por delante de todo lo que se enciende solo**, también de la lámpara de la torre.
+
+**Con un aviso, el aviso manda.** Lo que se lee se ordena como en un avión cuando no hay sitio para todo: **el aviso,
+la lámpara de la torre y el subtítulo**, en ese orden. Mientras dura el aviso, el tutor se calla y la tarjeta de la
+orden espera (se esconde sin dejar su sitio): las dos dicen qué hacer y el aviso lo está diciendo. Si coinciden los
+tres donde no caben —en cabina y en pantallas de 640 o menos de alto—, el subtítulo espera también y la lámpara sube a
+su sitio; la voz de la instructora sigue sonando. En cabina, todo lo que se lee va en una columna debajo de la barra:
+el aviso, la lámpara, y debajo la tarjeta de la orden con el subtítulo a su lado, hasta la columna de mandos, que no se
+mueve nunca (ADR 0030, enmiendas H28c y H28d).
 
 **El tutor** (`.tutor`). La explicación de la tecla que toca, abajo a la izquierda y desde el segundo peldaño, para
 encontrarla en el teclado sin leer: el glifo a 54 px en ocre, la tecla dibujada de 62 × 62 (148 la ancha, Shift) en
@@ -366,7 +373,14 @@ clic, bajos y cortos; con un aviso sonando, la carta se calla.
   encima; y el tutor abajo a la izquierda, a la altura del borde de arriba del cuadro y nunca por debajo de la palanca
   de pulgar. Delante del avión no va nada: la cámara lo encuadra en la franja que dejan la barra y el cuadro.
 - **Lo que va apilado se mete en la misma caja** y lo apila el navegador. Una posición contada a mano («dos botones y
-  pico por encima») vale hasta que alguien añade un botón: así se escondió el cinturón.
+  pico por encima») vale hasta que alguien añade un botón: así se escondió el cinturón. Cuando no pueden ir en la misma
+  caja (el aviso, la lámpara de la torre y el subtítulo viven en tres sitios del marcado), lo de debajo se coloca con
+  lo que mide lo de encima: una constante si lo de encima mide siempre lo mismo (`--fila-del-aviso`) y, si no, lo que
+  el HUD mide de ello (`--subtitulo-alto`, `--torre-alto`), nunca un número a mano.
+- **Lo que se toca no se mueve para dejar sitio a lo que se lee.** La columna de mandos, el freno y los botones
+  redondos se quedan donde están cuando sale un aviso o se enciende la lámpara: un botón que salta es un botón que no
+  se acierta. Lo que se aparta es lo que se lee, que en cabina acaba donde empieza la columna de mandos
+  (`--columna-izquierda`).
 - Separaciones de uso: 2, 4, 6, 8, 10, 12, 14 y 16 px. Radios: `--r-s` 10, `--r-m` 16 y `--r-l` 22; 999 px para las
   pastillas y 50 % para lo redondo.
 - **El texto ocupa su caja**: nunca `max-width` en `ch` ni en px para un párrafo. Si una frase no puede crecer, se
