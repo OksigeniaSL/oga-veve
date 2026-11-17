@@ -431,8 +431,8 @@ export function limitarElRodaje(
    * arrastra, y lo que hace quien espera en la doble raya es sujetarlo con el
    * freno. Sin esto, con el modelo de Tukã, el ralentí lo llevaba a tres
    * centímetros por segundo, por debajo de donde empieza a frenar la mano, y
-   * en cuatro minutos esperando la verde se ponía seis metros más allá de la
-   * doble raya. Lo de la mano y no más: no es un ancla.
+   * en algo más de tres minutos esperando la verde se ponía casi seis metros
+   * más allá de la doble raya. Lo de la mano y no más: no es un ancla.
    */
   if (tope.velocidad <= 0)
     controles.brakes = Math.max(controles.brakes, FRENO_QUE_AYUDA);

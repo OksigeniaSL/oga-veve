@@ -37,14 +37,22 @@ import { SCENARIOS } from "../world/scenarios";
 
 const PASO = 1 / 20;
 
-/** `MEDIR=1` escribe lo medido de cada caso, para el ADR. */
-const MEDIR = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.MEDIR;
+/**
+ * `MEDIR=<fichero>` apunta en él lo medido de cada caso, para el ADR: la consola de
+ * las pruebas que pasan no se ve.
+ */
+const proceso = (globalThis as unknown as {
+  process?: { env: Record<string, string | undefined>; getBuiltinModule(nombre: string): unknown };
+}).process;
+const MEDIR = proceso?.env.MEDIR;
 const apuntar = (caso: string, r: Rodado) => {
-  if (MEDIR)
-    console.log(
-      `MEDIDO ${caso}: lo más pasado del final ${r.loMasPasado.toFixed(1)} m, rueda a ${r.rueda.toFixed(1)} m, ` +
-        `al acabar a ${r.final.toFixed(2)} m/s, lo más ${r.maxima.toFixed(1)} m/s · ${r.fases.join(" → ")}`,
-    );
+  if (!MEDIR || !proceso) return;
+  const fs = proceso.getBuiltinModule("node:fs") as { appendFileSync(ruta: string, texto: string): void };
+  fs.appendFileSync(
+    MEDIR,
+    `${caso}: lo más pasado del final ${r.loMasPasado.toFixed(1)} m, rueda a ${r.rueda.toFixed(1)} m, ` +
+      `al acabar a ${r.final.toFixed(2)} m/s, lo más ${r.maxima.toFixed(1)} m/s · ${r.fases.slice(0, 8).join(" → ")}\n`,
+  );
 };
 
 /** El modelo de vuelo de cada peldaño, parado en el suelo y mirando al norte. */
