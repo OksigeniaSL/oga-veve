@@ -465,6 +465,23 @@ export class Mapa {
    */
   private peldano: Peldano = "dibujo";
 
+  /**
+   * **La estela**, si hay que pintarla: la traza del vuelo en coordenadas del
+   * fichero (x al este, y al norte), la de `flight/libreta.ts`. Se pide cada
+   * vez que se pinta, sin copiarla. Ver `ponerEstela`.
+   */
+  private estela: (() => readonly (readonly [number, number])[]) | null = null;
+
+  /**
+   * **La raya que va dejando el avión**, encima del papel como el lápiz con
+   * que se lleva la traza en una carta. La pide «Seguí la aguja»: con viento
+   * de costado, es donde se ve la curva del perro que la aguja sola no
+   * enseña. Con `null`, no se pinta.
+   */
+  ponerEstela(estela: (() => readonly (readonly [number, number])[]) | null): void {
+    this.estela = estela;
+  }
+
   ponerPeldano(peldano: Peldano): void {
     if (peldano === this.peldano) return;
     const antes = this.peldano === "dibujo";
@@ -919,6 +936,30 @@ export class Mapa {
     const escala = puesto.escala;
     const px = LADO / 2 + (x - puesto.cx) * escala;
     const py = LADO / 2 + (z - puesto.cz) * escala;
+
+    /*
+     * **La estela**, en la tinta de los nombres y continua, como el lápiz:
+     * por encima de la ruta, que es el plan, y por debajo de la flecha, que es
+     * dónde se está. Acaba en el avión, no en la última cata.
+     */
+    const estela = this.estela?.();
+    if (estela && estela.length > 1) {
+      g.save();
+      g.lineCap = "round";
+      g.lineJoin = "round";
+      g.strokeStyle = TINTAS.tinta;
+      g.lineWidth = 2.4 * u;
+      g.beginPath();
+      estela.forEach(([ex, ey], i) => {
+        const qx = LADO / 2 + (ex - puesto.cx) * escala;
+        const qy = LADO / 2 + (-ey - puesto.cz) * escala;
+        if (i === 0) g.moveTo(qx, qy);
+        else g.lineTo(qx, qy);
+      });
+      g.lineTo(px, py);
+      g.stroke();
+      g.restore();
+    }
 
     /*
      * **Y si estás fuera del recuadro, la flecha se queda en el borde.**

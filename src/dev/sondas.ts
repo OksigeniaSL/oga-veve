@@ -2544,6 +2544,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `flight/lecciones-del-rotor.ts`.
      */
     leccionDelRotor: () => juego.leccionDelRotorParaBanco,
+    /**
+     * «Seguí la aguja»: la fase, lo que se apartó la estela, la estación y
+     * dónde se empezó. Ver `flight/seguir-la-aguja.ts`.
+     */
+    seguirLaAguja: () => juego.seguirLaAgujaParaBanco,
+    /** El morse de la radio: si suena, de quién, y lo último identificado. Ver `audio/morse.ts`. */
+    morse: () => juego.morseParaBanco,
     /** Enseña o esconde la nube de la tormenta, para medir lo que cuesta. */
     verLaTormenta: (si: boolean) => juego.verLaTormentaParaBanco(si),
     /** Un rayo de la tormenta ya: de lejos, o en el avión. */

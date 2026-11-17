@@ -1421,6 +1421,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.par": "Torque and the pedal",
   "hangar.ejercicio.efecto-suelo": "Near the ground it takes less",
   "hangar.ejercicio.autorrotacion": "Coming down without engines in a helicopter",
+  "hangar.ejercicio.aguja": "Follow the needle",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1543,6 +1544,24 @@ export const EN: Dictionary = {
   "palabra.masLejos": "Further",
   "palabra.rayo": "Lightning",
   "palabra.derecho": "Straight on",
+
+  // ── Follow the needle: the airfield's NDB on the ADF, its Morse, and home in on it ──
+  "ejercicio.aguja.antes":
+    "Today we follow the needle. Up ahead there's a radio beacon, an antenna that transmits on its own, and the ADF has a needle that always points at it. We'll get to the antenna without looking outside, just with the needle",
+  "ejercicio.aguja.sintonizar":
+    "First, put the airfield's beacon in the ADF: tap it on the map, or press eight",
+  "ejercicio.aguja.identificada":
+    "Did you hear the beeps? That's its name in Morse code, the same one printed on the chart: that's how you know it's the beacon you want. Now turn until the needle points up, to the nose, and follow it",
+  "ejercicio.aguja.curva":
+    "Look at the line you're leaving on the map: it isn't straight, it curves. The wind pushes you sideways, and the needle makes you turn a little more each time. It's the dog curve, like a dog that always runs straight at its owner",
+  "ejercicio.aguja.alVientoDerecha":
+    "To fly straight, point a little into the wind: turn a few degrees to the right, where it comes from, and keep the needle still a little to the left",
+  "ejercicio.aguja.alVientoIzquierda":
+    "To fly straight, point a little into the wind: turn a few degrees to the left, where it comes from, and keep the needle still a little to the right",
+  "ejercicio.aguja.asiVa":
+    "That's it! The needle steady to one side and the line straight: you're correcting for the wind, like real pilots do",
+  "ejercicio.aguja.bien":
+    "We've passed over the beacon! See? The needle swung round and now points behind us. You got here with the needle alone",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
   "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
   "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",

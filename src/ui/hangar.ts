@@ -1749,7 +1749,22 @@ const EJ_EFECTO_SUELO = escena(`
         d="M34 40 v24 q0 6 -8 6 h-12 m4 -4 l-4 4 l4 4 M86 40 v24 q0 6 8 6 h12 m-4 -4 l4 4 l-4 4" />
 `);
 
+/**
+ * **Seguí la aguja**: la antena de la radio en el suelo con sus ondas, la
+ * estela de la avioneta curvándose hacia donde la empuja el viento —las dos
+ * flechas de arriba— y la avioneta que llega a la antena de cara al viento.
+ * Es la curva del perro, dibujada. Ver `flight/seguir-la-aguja.ts`.
+ */
+const EJ_AGUJA = escena(`
+  <path class="ejercicio__ondas" d="M93 39 a9 9 0 0 1 14 0 M89 34 a15 15 0 0 1 22 0" />
+  <path class="ejercicio__mastil" d="M96 68 L100 43 L104 68 M97.4 60 h5.2 M98.6 52 h2.8" />
+  <path class="leccion__estela" d="M8 50 q44 34 86 14" stroke-dasharray="4 4" />
+  <path class="ejercicio__flecha" d="M30 6 v13 m-4 -4 l4 4 l4 -4 M48 6 v13 m-4 -4 l4 4 l4 -4" />
+  ${AVION("translate(66 40) rotate(70) scale(0.8)")}
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
+  aguja: EJ_AGUJA,
   autorrotacion: EJ_AUTORROTACION,
   estacionario: EJ_ESTACIONARIO,
   par: EJ_PAR,
@@ -2071,7 +2086,7 @@ export function abrirHangar(
    */
   let ejercicio: Ejercicio | null = null;
   const sigueValiendo = (): void => {
-    if (ejercicio && !seOfrece(ejercicio, tramo.id, avion)) ejercicio = null;
+    if (ejercicio && !seOfrece(ejercicio, tramo.id, avion, oaciDe(sitio))) ejercicio = null;
   };
   /*
    * **El destino, recordado por sitio.** Cada aeropuerto tiene los suyos, así
@@ -2291,7 +2306,7 @@ export function abrirHangar(
             ${misionesDe(sitio, avion)
               .map((m, i) => fichaDeMision(sitio, m, i + 1, mision?.id === m.id))
               .join("")}
-            ${ejerciciosPara(tramo.id, avion)
+            ${ejerciciosPara(tramo.id, avion, oaciDe(sitio))
               .map((e) => fichaDeEjercicio(e, ejercicio?.id === e.id))
               .join("")}
           </div>
@@ -2322,7 +2337,7 @@ export function abrirHangar(
             ${grupo(
               MARCA_EMERGENCIAS,
               t("hangar.emergencias"),
-              ejerciciosPara(tramo.id, avion)
+              ejerciciosPara(tramo.id, avion, oaciDe(sitio))
                 .map((e) => fichaDeEjercicio(e, ejercicio?.id === e.id))
                 .join(""),
             )}
@@ -2852,7 +2867,7 @@ export function abrirHangar(
       const idEjercicio = boton.getAttribute("data-ejercicio");
       if (idEjercicio) {
         ejercicio =
-          ejerciciosPara(tramo.id, avion).find((e) => e.id === idEjercicio) ??
+          ejerciciosPara(tramo.id, avion, oaciDe(sitio)).find((e) => e.id === idEjercicio) ??
           null;
         if (ejercicio) {
           leccion = LECCIONES.find((l) => l.id === ejercicio!.leccion) ?? leccion;

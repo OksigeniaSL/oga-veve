@@ -3284,6 +3284,7 @@ export const ES_PY = {
   "hangar.ejercicio.par": "El par y el pedal",
   "hangar.ejercicio.efecto-suelo": "Cerca del suelo cuesta menos",
   "hangar.ejercicio.autorrotacion": "Bajar sin motor en helicóptero",
+  "hangar.ejercicio.aguja": "Seguí la aguja",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3457,6 +3458,28 @@ export const ES_PY = {
   "palabra.masLejos": "Más lejos",
   "palabra.rayo": "Un rayo",
   "palabra.derecho": "Derecho",
+  /*
+   * **«Seguí la aguja»** (#51, ADR 0030, enmienda H26b): el NDB del campo en
+   * el ADF, su morse y volar hacia él. Genéricas, sin el nombre de la radio,
+   * porque valen en todos los campos con NDB; el nombre lo dice su morse y lo
+   * escribe la carta. Grabadas en calma, como las demás del ejercicio.
+   */
+  "ejercicio.aguja.antes":
+    "Hoy seguimos la aguja. Allá adelante hay una radio, una antena que transmite sola, y el ADF tiene una aguja que apunta siempre hacia ella. Vamos a llegar hasta la antena sin mirar afuera, solo con la aguja",
+  "ejercicio.aguja.sintonizar":
+    "Primero, poné la radio del campo en el ADF: tocala en el plano, o apretá el ocho",
+  "ejercicio.aguja.identificada":
+    "¿Oíste los pitidos? Es su nombre en morse, el mismo que trae la carta: así sabés que es la radio que querés. Ahora girá hasta que la aguja apunte arriba, al morro, y seguila",
+  "ejercicio.aguja.curva":
+    "Mirá en el plano la raya que vas dejando: no es recta, se curva. El viento te empuja de costado, y la aguja te hace girar cada vez un poco más. Es la curva del perro, el que corre siempre derecho hacia su dueño",
+  "ejercicio.aguja.alVientoDerecha":
+    "Para ir derecho, apuntá un poco al viento: girá unos grados a la derecha, de donde viene, y dejá la aguja quieta un poco a la izquierda",
+  "ejercicio.aguja.alVientoIzquierda":
+    "Para ir derecho, apuntá un poco al viento: girá unos grados a la izquierda, de donde viene, y dejá la aguja quieta un poco a la derecha",
+  "ejercicio.aguja.asiVa":
+    "¡Así! La aguja quieta a un lado y la raya derecha: estás corrigiendo el viento, como los pilotos de verdad",
+  "ejercicio.aguja.bien":
+    "¡Pasamos por encima de la radio! ¿Viste? La aguja dio la vuelta y ahora apunta atrás. Llegaste guiándote solo con la aguja",
   // Y la frase corta, con sus números, de Taguató para arriba.
   "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
   "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",

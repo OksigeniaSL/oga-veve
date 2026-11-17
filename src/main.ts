@@ -77,6 +77,14 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
    * que se practica es verla venir. Ver `flight/practica-de-tormenta.ts`.
    */
   if (ejercicio?.escena === "tormenta") return { ...deCasa, fuente: "mano" };
+  /*
+   * **Y el de la aguja, su viento de siempre**: el que sopla casi todos los
+   * días en ese campo —en Fuerteventura, el alisio del treinta a veinte
+   * nudos—, que es el que dibuja la curva. Con el parte de hoy podría tocar un
+   * día en calma, y la lección es lo que hace el viento. Ver
+   * `flight/seguir-la-aguja.ts`.
+   */
+  if (ejercicio?.escena === "radio") return { ...deCasa, fuente: "mano" };
 
   // El identificador OACI es el `id` del aeródromo: así se llama el fichero y
   // así lo llama el METAR.
