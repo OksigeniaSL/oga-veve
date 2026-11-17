@@ -3605,3 +3605,173 @@ puerta a 3,9 m/s, toma a 1,53 m/s a 294 m.
   automático con su propio estado y no le pasa el aire: baja como bajaba.
 - **El modelo sencillo** lleva el ritmo con su propia palanca (`subirCon`) y
   no mira el aire.
+
+## Enmienda H29g (17-11-2026): el arco a final, la recogida con el colchón, el despegue de Guyrami y el aire del descenso
+
+Lo que dejaron abierto H29a, H29b, H29c y H29e en el #192. Las mesas de esta
+tanda están en `h29g/` del scratchpad, fuera del repositorio: `arco.ts`, el
+arco del viraje a final; `run.ts` con `mesa.ts`, la final y la recogida de
+H29a y H29b apuntadas a este árbol, ya con efecto suelo; `despegue-sencillo.ts`,
+la carrera del modelo sencillo; y `descenso.ts`, el descenso de emergencia con
+ráfagas.
+
+### 1. La puerta del JAZ 90 en Los Rodeos: el arco, del banco
+
+**Lo que pasaba.** La primera tirada de H29b suspendió la puerta de los 500 ft
+bajando a 5,3 m/s de media. En su traza del ala: el banco empieza a bajar por
+la senda nueve segundos después de empezar el viraje de 180° a final, con el
+avión a 322 m de ruedas y más de 27 m por encima de lo planeado, así que pide
+el tope del arco, `CAIDA_MAXIMA` y un cuarto, **6,25 m/s** —1.230 pies por
+minuto— durante diez segundos; el avión llega a bajar 7,3 inclinado 28°, a
+unos 850 ft. Al cogerla, lo pedido vuelve a 2,6–3,2, el ala endereza de 25° a
+12° y una ascendente de unos 2,8 m/s lo levanta: sube a 0,5 m/s. Alto otra
+vez, se le pide el tope de la final recta, 4,57, y baja a 5,75 con la carga
+entre 0,84 y 1,05.
+
+**Lo real.** Ningún piloto de reactor vira a final pidiendo 1.230 pies por
+minuto por debajo de los mil pies. La aproximación visual se estabiliza a los
+quinientos pies —en la senda y sin pasar de mil pies por minuto—, el viraje a
+final se hace con treinta grados como mucho, y «alto y rápido, bajando de más»
+es la primera de las aproximaciones visuales sin estabilizar (FSF ALAR,
+*Briefing Notes* 7.1, tabla 1, y 7.4, «Visual Approaches»). El banco estaba
+mal.
+
+**Y el automático, ¿se pasa así uno de verdad?** Se midió aparte, en la mesa
+del arco: el JAZ 90 con el modelo completo y el peldaño Taguató, todo fuera a
+la Vref más cinco nudos, el automático del juego por una senda de tres grados
+que empieza 45 m por debajo, y el ala que entra a 25° en cinco segundos y
+endereza a 1,5°/s desde los veinte. Aire quieto:
+
+| Lo que se pide estando alto | Pico virando | Peor media de 5 s tras enderezar | Carga |
+|---|---|---|---|
+| 6,25 m/s (el arco de antes) | 7,08 m/s | 6,39 m/s | 0,92–1,13 |
+| 5,08 m/s | 6,38 | 5,23 | 0,92–1,14 |
+| 4,57 m/s (la final recta) | **6,05** | **4,70** | 0,92–1,14 |
+| 4,57 m/s, con las alas niveladas | 4,55 | — | 0,92–1,03 |
+
+Con las alas niveladas el automático no se pasa: pide 4,57 y baja a 4,54.
+**Virando sí**, metro y medio por segundo, y eso no lo hace uno de verdad: al
+inclinar el ala, lo que sostiene en vertical es el coseno de lo que sostenía
+—la carga baja a 0,92 mientras entra el alabeo—, y el lazo del medio solo lo
+ve cuando el variómetro ya lo cuenta. Los automáticos de verdad llevan la
+compensación del viraje en el canal de cabeceo. Aquí no se ha puesto: para
+saber cuánto morro pide el ala inclinada hace falta el ángulo de ataque de
+sustentación nula con esos flaps, que el automático no recibe, y cambia cómo
+vira en calma todo el juego con el automático puesto. Queda para el #192.
+
+**Lo que se cambió**, en `volarLaSenda` del banco (`caidaQueSePide`): en toda
+la final, con su arco dentro, se pide lo que en la final recta —la senda y un
+metro por segundo, nunca menos de nueve décimas de mil pies por minuto y nunca
+más que `CAIDA_MAXIMA` y un cuarto—. En el JAZ 90, 4,57 m/s. El tope de antes
+queda para los tramos de antes de la final.
+
+Lo fija `arco-a-la-final.test.ts`: con lo que pide ahora, la peor media de cinco
+segundos tras enderezar queda por debajo de mil pies por minuto, y con los 6,25
+de antes, por encima.
+
+### 2. La recogida con el colchón del efecto suelo: no se mueve
+
+El banco empieza a recoger a los 3,2 segundos de senda (`SEGUNDOS_DE_RECOGIDA`),
+de 35 a 49 ft en el JAZ 90, y el E190 recoge a los veinte pies con el gas al
+ralentí a los treinta (C. Regli, *Embraer EMB190 – Summary*, p. 2-26). Con el
+efecto suelo (nota H29c del ADR 0002) el avión flota, y la idea era que ya
+pudiera recoger donde su manual. Se midió en la mesa de H29a y H29b, con la
+recogida del banco tal cual (gas hasta los 30 ft, a 2 ft/s, mirando la carga),
+el automático sabiendo el aire, la final desde 9.000 m y dos metros por
+segundo de cara:
+
+| Empieza a recoger | Aire quieto | Ráfagas σ_w 1 m/s, 40 finales: duras / cortas / largas | Toma, mediana y p90 | Dónde, mediana | Fuera |
+|---|---|---|---|---|---|
+| 3,2 s de senda (unos 39 ft, hoy) | 0,61 m/s a 306 m | 3 / 1 / 0 | 1,17 / 1,92 m/s | 323 m | 4 |
+| 2,6 s de senda (unos 32 ft) | 0,85 a 262 | 6 / 2 / 1 | 1,18 / 2,51 | 264 | 9 |
+| 30 ft | 0,74 a 273 | 9 / 4 / 1 | 1,39 / 3,61 | 250 | 12 |
+| 25 ft | 1,06 a 249 | 13 / 8 / 2 | 1,55 / 3,96 | 236 | 19 |
+| 20 ft (el E190) | 1,51 a 233 | 22 / 8 / 1 | 2,06 / 4,55 | 228 | 26 |
+
+(Duras, por encima de 2 m/s; cortas, antes de 150 m; largas, pasados 600.)
+
+**Cuanto más abajo, peor**, y no por poco: en aire quieto cualquiera vale,
+pero con las ráfagas de Los Rodeos a veinte pies toca duro una de cada dos. A
+este JAZ 90 le siguen haciendo falta unos cinco grados de morro y tres segundos
+para quitarse la senda (H29a), y el colchón no lo compensa. Y lo que flota de
+más cae donde tiene que caer: la mediana a 323 m, en la zona de toma (de 150 a
+600 m en los 3.168 de Los Rodeos) y junto a las marcas de visada de los 300 m;
+en el navegador, de 241 a 336 m (H29b, H29c). Así que la recogida del banco no
+se ha tocado: es la del avión del modelo, no la del manual del E190, y lo que
+la separa de la de su manual es del modelo, como dijeron H29a y H29c.
+
+### 3. El despegue de Guyrami: el modelo sencillo aceleraba de más en el aire
+
+**Lo que pasaba.** «Rota a 84 m/s con la Vr en 66» no era la rotación: el banco
+del despegue mide la velocidad cuando el avión tiene quince metros debajo. El
+JAZ 90 del modelo sencillo se suelta a su Vr, 66,4 m/s, y en el segundo y medio
+siguiente pasaba de 66,4 a 84,1: **doce metros por segundo al cuadrado**, más
+de un g en la espalda, donde rodando le daba 2,8. Rodando, este modelo acelera
+lo que dice la física de la carrera (`ritmoDeCarrera`, de `carreraHastaVr`);
+volando iba hacia la punta del gas con la constante de cinco segundos y medio
+que llevan los seis aviones desde siempre, y al irse del suelo con el gas a
+fondo la punta queda lejos.
+
+**Lo real.** Lo que acelera un avión es lo que le sobra de empuje, y al irse
+del suelo solo se quitan las ruedas. Un reactor pasa los 35 ft a la V2 o algo
+más, la Vr y unos pocos nudos (CS 25.107 y 25.111).
+
+**Lo que se cambió** (`arcade.ts`, `ritmoEnElAire`): en el aire, la constante
+de siempre sigue llevando a la velocidad del gas —lo que se nota al mover la
+palanca no cambia—, acotada por lo que daría el gas a fondo con la recta de la
+carrera sobre asfalto: `k·(punta − v)`. Solo cuenta con la punta lejos: al
+irse del suelo, en una frustrada, metiendo todo el gas de golpe. Frenar en el
+aire no cambia.
+
+En la mesa, en Los Rodeos y como el banco (gas a fondo, media palanca a la Vr,
+sin flaps):
+
+| | A 35 ft de ruedas, antes → ahora | A 15 m del centro, antes → ahora |
+|---|---|---|
+| JAZ 20 | 1,27 → 1,18 Vr | 1,31 → 1,21 |
+| JAZ 25 | 1,23 → 1,22 | 1,26 → 1,25 |
+| JAZ 40 | 1,30 → 1,11 | 1,35 → 1,13 |
+| JAZ 50 | 1,19 → 1,12 | 1,22 → 1,14 |
+| JAZ 60 | 1,16 → 1,06 | 1,18 → 1,06 |
+| JAZ 90 | 1,25 → 1,06 | 1,27 → **1,07** |
+| JAZ 110 | — | 1,23 → 1,04 |
+| JAZ 120 | — | 1,19 → 1,04 |
+
+A nivel del mar, el primer segundo de aire acelera de 0,88 a 0,98 veces lo que
+aceleraba rodando el último medio segundo; en Los Rodeos, de 1,04 a 1,45,
+porque la punta del aire es verdadera y allí el aire es más fino. Lo fija
+`arcade-despegue.test.ts` en toda la flota, y que los reactores pasen los 35 ft
+por debajo de 1,15 veces su Vr.
+
+### 4. El aire del descenso de emergencia
+
+`PilotoDelDescenso` (`despresurizacion.ts`) le pasa al automático el estado que
+le dan, y quien se lo daba sin el aire era la sonda del banco,
+`volarElDescenso` en `dev/sondas.ts`. La tripulación del ejercicio vuela con el
+automático del juego, y el juego se lo da en cualquier modo, también cambiando
+de nivel con la velocidad en el morro: tiene sentido, y ahora se lo pasa.
+Medido en la mesa con el JAZ 90 desde su crucero: en calma, lo mismo bit a bit;
+con una ascendente de 3 m/s durante seis segundos, los mismos 203 s hasta diez
+mil pies, 295 kt de pico, Mach 0,711 y la carga entre 0,83 y 1,10, con o sin
+el aire; con ráfagas de σ_w 0,75 y 1,5 m/s en ocho bajadas, la indicada de
+pico a menos de un nudo y la carga en lo mismo. No cambia lo que se ve: cambia
+que la tripulación del banco vuela el mismo automático que el juego. Lo fija
+`despresurizacion.test.ts`, con la ascendente.
+
+### Volado en el navegador
+
+(Se completa con lo volado.)
+
+### Lo que no
+
+- **La compensación del viraje en el automático**, arriba: virando, con 4,57
+  pedidos, el JAZ 90 baja a 6,05.
+- **El JAZ 60, el JAZ 110 y el JAZ 120**, que vuelan la final con las mismas
+  leyes (`BAJA_POR_EL_ARCO`), también piden menos en el arco —de 6,25, 6,46 y
+  6,54 m/s a 4,57, unos 5,0 y unos 5,1 en calma— y no se han volado.
+- **La recogida a los veinte pies**, arriba: es del modelo.
+- **El banco del despegue** sigue llamando «rota a» a la velocidad con quince
+  metros debajo; ahora es la de la Vr y medio segundo.
+- En `verificar-vuelo-entero.mjs` esta tanda solo tocó `volarLaSenda`
+  (`caidaQueSePide`); H29f trabaja a la vez en la torre y el reloj del mismo
+  fichero.
