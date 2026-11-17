@@ -3396,6 +3396,81 @@
     }
   },
   {
+    "id": "ejercicio.cruce.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy vamos a saber dónde estamos solo con la radio, con dos VOR. Las dos radios están en la tarjeta. Primero, con esta: girá el OBS hasta que la barra quede en el centro con FROM",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy vamos a saber dónde estamos solo con la radio, con dos VOR. Las dos radios están en la tarjeta. Primero, con esta: girá el OBS hasta que la barra quede en el centro con FROM.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.cruce.primera",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ese número es tu radial: una raya que sale de la radio, y vos estás en algún lugar de ella. Mirala en el plano. Con una sola raya, no se sabe en qué punto",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Ese número es tu radial: una raya que sale de la radio, y vos estás en algún lugar de ella. Mirala en el plano. Con una sola raya, no se sabe en qué punto.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.cruce.otra",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Para saber en qué punto, hace falta otra raya. Poné la otra radio en la NAV: tocala en el plano, o apretá el siete hasta oír su nombre",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Para saber en qué punto, hace falta otra raya. Poné la otra radio en la NAV: tocala en el plano, o apretá el siete hasta oír su nombre.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.cruce.aqui",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Ahí estás! Mirá el plano: las dos rayas se cortan justo donde está el avión. Así se sabe dónde estás sin ver nada, solo con dos radios",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Ahí estás! Mirá el plano: las dos rayas se cortan justo donde está el avión. Así se sabe dónde estás sin ver nada, solo con dos radios.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.cruce.tarde",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá el plano: la cruz quedó lejos del avión. Mientras ponías y leías la segunda, el avión siguió volando, y la primera raya ya no pasaba por él. La próxima, leelas rápido, o volá hacia una de las dos radios, que así su raya no cambia",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Mirá el plano: la cruz quedó lejos del avión. Mientras ponías y leías la segunda, el avión siguió volando, y la primera raya ya no pasaba por él. La próxima, leelas rápido, o volá hacia una de las dos radios, que así su raya no cambia.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "mission.rio.name",
     "voz": "instructor",
     "idioma": "es-PY",

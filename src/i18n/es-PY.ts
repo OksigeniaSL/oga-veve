@@ -3287,6 +3287,7 @@ export const ES_PY = {
   "hangar.ejercicio.aguja": "Seguí la aguja",
   "hangar.ejercicio.radial": "¿En qué radial estoy?",
   "hangar.ejercicio.interceptar": "Salí por un radial",
+  "hangar.ejercicio.cruce": "Dos radiales que se cortan",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3522,6 +3523,23 @@ export const ES_PY = {
     "¡Estás en el radial! La barra quieta en el centro: así se sale por un radial, como los pilotos de verdad",
   "ejercicio.interceptar.establecidoAlViento":
     "¡Estás en el radial, con la barra quieta en el centro! Fijate en el morro: no apunta justo al número del OBS, apunta un poco contra el viento. Es lo que hace falta para que no te saque del radial",
+  /*
+   * **«Dos radiales que se cortan»** (#51, ADR 0030, enmienda H26g): con una
+   * sola NAV, el radial del VOR del campo, el de la otra radio, y la cruz de
+   * las dos rayas en el plano. Genéricas: las dos radios y los radiales
+   * leídos se escriben en la tarjeta («FTV · LTE», «R-102 FTV»), no se dicen.
+   * Grabadas en calma.
+   */
+  "ejercicio.cruce.antes":
+    "Hoy vamos a saber dónde estamos solo con la radio, con dos VOR. Las dos radios están en la tarjeta. Primero, con esta: girá el OBS hasta que la barra quede en el centro con FROM",
+  "ejercicio.cruce.primera":
+    "Ese número es tu radial: una raya que sale de la radio, y vos estás en algún lugar de ella. Mirala en el plano. Con una sola raya, no se sabe en qué punto",
+  "ejercicio.cruce.otra":
+    "Para saber en qué punto, hace falta otra raya. Poné la otra radio en la NAV: tocala en el plano, o apretá el siete hasta oír su nombre",
+  "ejercicio.cruce.aqui":
+    "¡Ahí estás! Mirá el plano: las dos rayas se cortan justo donde está el avión. Así se sabe dónde estás sin ver nada, solo con dos radios",
+  "ejercicio.cruce.tarde":
+    "Mirá el plano: la cruz quedó lejos del avión. Mientras ponías y leías la segunda, el avión siguió volando, y la primera raya ya no pasaba por él. La próxima, leelas rápido, o volá hacia una de las dos radios, que así su raya no cambia",
   // Y la frase corta, con sus números, de Taguató para arriba.
   "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
   "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",

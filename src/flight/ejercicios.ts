@@ -73,7 +73,10 @@
  * `seguir-la-aguja.ts`. Y «¿En qué radial estoy?», la segunda, la del VOR:
  * pide un campo con VOR y la lleva `en-que-radial-estoy.ts`. La tercera,
  * «Interceptar un radial», también con VOR: salir por un radial que no es el
- * de debajo, anticipando el viraje; la lleva `interceptar-un-radial.ts`.
+ * de debajo, anticipando el viraje; la lleva `interceptar-un-radial.ts`. Y
+ * la cuarta, «Dos radiales que se cortan», con dos VOR: saber dónde se está
+ * sin ver nada; pide un campo con pareja (`parejaDelCampo`) y la lleva
+ * `dos-radiales.ts`.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -81,6 +84,7 @@ import type { LeccionId } from "./lecciones";
 import type { TierId } from "./tiers";
 import { EJERCICIO_DE_DESPRESURIZACION } from "./despresurizacion";
 import { radioDeSalida, radiosDe } from "./radio-de-navegacion";
+import { parejaDelCampo } from "./dos-radiales";
 
 export type EjercicioId =
   | "planeo"
@@ -96,7 +100,8 @@ export type EjercicioId =
   | "autorrotacion"
   | "aguja"
   | "radial"
-  | "interceptar";
+  | "interceptar"
+  | "cruce";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -155,7 +160,8 @@ export interface Ejercicio {
     | "autorrotacion"
     | "aguja"
     | "radial"
-    | "interceptar";
+    | "interceptar"
+    | "cruce";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
    * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
@@ -442,6 +448,31 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     dondeVale: (oaci) => radioDeSalida(oaci).nav !== null,
     ensena:
       "a un radial se llega cortándolo a cuarenta y cinco grados y virando antes de que la barra llegue al centro, porque el avión gira en arco; y con viento, el morro se queda apuntando contra él",
+  },
+  /*
+   * **Dos radiales que se cortan** (#51, el cierre del peldaño 5): con una
+   * sola NAV, leer el radial del VOR del campo, poner otro VOR y leer el
+   * suyo; cada uno es una raya en el plano, y donde se cortan está el avión.
+   * Lo lleva `dos-radiales.ts`. Ver el ADR 0030, enmienda H26g.
+   */
+  {
+    id: "cruce",
+    // El mismo peldaño que los otros del VOR.
+    peldanos: ["taguato-ruvicha"],
+    valePara: (a) => radiosDe(a).nav,
+    leccion: "aterrizaje",
+    colocacion: "cruce",
+    averias: [],
+    escena: "radio",
+    acabaEnElAire: true,
+    /*
+     * Un VOR en casa **y otro con el que se corte bien**: dos radios casi en
+     * línea —TFN y LRO, a cinco millas y media— dan una cruz que no dice
+     * nada, y donde no hay pareja no se ofrece.
+     */
+    dondeVale: (oaci) => parejaDelCampo(oaci) !== null,
+    ensena:
+      "un radial es una raya en el plano y el avión está en algún punto de ella: con dos VOR, dos rayas, y donde se cortan, ahí está; y entre leer una y otra el avión vuela",
   },
 ];
 

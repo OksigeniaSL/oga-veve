@@ -46,7 +46,7 @@ import type { Hito } from "../world/hitos";
 import { Panel } from "./panel";
 import { cotaEscrita } from "./carta";
 import { calcosDe, type Peldano } from "../flight/escalera";
-import { MAR, PAPEL, RAMPA, REGIONES, SIMBOLOS, SOMBRA, TINTAS, CUBIERTA, LINEAS } from "./carta/estilo";
+import { MAR, PAPEL, RAMPA, REGIONES, SIMBOLOS, SOMBRA, TINTAS, CUBIERTA, LINEAS, LETRAS } from "./carta/estilo";
 import { dibujarAerodromo, dibujarAvion, dibujarRosa, FondoHorneado } from "./carta/carta-en-vuelo";
 import type { Caja, Raya } from "./carta/rotulos";
 import {
@@ -92,6 +92,21 @@ import {
 
 /** Lado del lienzo, en píxeles. */
 export const LADO = 460;
+
+/**
+ * **Las rayas de un fijo con dos VOR**, como las pinta el plano: cada radial
+ * leído de su radio a un poco más allá del avión, con su rótulo de carta, y
+ * la cruz donde se cortan. En el mundo, como la flecha. Ver `ponerRayas`.
+ */
+export interface RayasEnElPlano {
+  readonly rayas: readonly {
+    readonly desde: { readonly x: number; readonly z: number };
+    readonly hasta: { readonly x: number; readonly z: number };
+    /** Lo que se escribe al lado, como en una carta: «R-102 FTV». */
+    readonly rotulo: string;
+  }[];
+  readonly cruz: { readonly x: number; readonly z: number } | null;
+}
 
 /** Un tráfico del TCAS, como lo pinta el plano. Ver `pintarElTrafico`. */
 export interface TraficoEnElMapa {
@@ -481,6 +496,23 @@ export class Mapa {
    */
   ponerEstela(estela: (() => readonly (readonly [number, number])[]) | null): void {
     this.estela = estela;
+  }
+
+  /**
+   * **Las rayas de los radiales leídos**, si hay que pintarlas, y la cruz
+   * donde se cortan. Se piden cada vez que se pinta. Ver `ponerRayas`.
+   */
+  private rayas: (() => RayasEnElPlano) | null = null;
+
+  /**
+   * **Las rayas de lápiz de un fijo con dos VOR**: cada radial leído, desde
+   * su radio, con su número escrito al lado, y la cruz donde se cortan. Las
+   * pide «Dos radiales que se cortan» (`flight/dos-radiales.ts`): es lo que
+   * hace un piloto con la carta en las rodillas, y lo que enseña que el avión
+   * está donde se cortan. Con `null`, no se pintan.
+   */
+  ponerRayas(rayas: (() => RayasEnElPlano) | null): void {
+    this.rayas = rayas;
   }
 
   ponerPeldano(peldano: Peldano): void {
@@ -962,6 +994,10 @@ export class Mapa {
       g.restore();
     }
 
+    // Las rayas de los radiales leídos y su cruz, encima de la estela. Ver `ponerRayas`.
+    const rayas = this.rayas?.();
+    if (rayas && rayas.rayas.length > 0) this.pintarLasRayas(g, rayas, puesto, u);
+
     /*
      * **Y si estás fuera del recuadro, la flecha se queda en el borde.**
      *
@@ -1079,6 +1115,88 @@ export class Mapa {
   }
 
   /**
+   * **Las rayas de los radiales**, en la tinta de los datos aeronáuticos —la
+   * de los radiales de la carta— y finas, como el lápiz con que se trazan en
+   * la carta de verdad; cada una con su número junto a la radio, «R-102 FTV»,
+   * que es como se escribe en una carta; y la cruz donde se cortan, un aro de
+   * lápiz con su punto: el fijo. Por debajo de la flecha, que es dónde se está:
+   * si el fijo está bien, la flecha cae dentro del aro.
+   */
+  private pintarLasRayas(
+    g: CanvasRenderingContext2D,
+    r: RayasEnElPlano,
+    puesto: { readonly cx: number; readonly cz: number; readonly escala: number },
+    u: number,
+  ): void {
+    const enElPapel = (p: { readonly x: number; readonly z: number }): [number, number] => [
+      LADO / 2 + (p.x - puesto.cx) * puesto.escala,
+      LADO / 2 + (p.z - puesto.cz) * puesto.escala,
+    ];
+    g.save();
+    g.lineCap = "round";
+    for (const raya of r.rayas) {
+      const [ax, ay] = enElPapel(raya.desde);
+      const [bx, by] = enElPapel(raya.hasta);
+      g.beginPath();
+      g.moveTo(ax, ay);
+      g.lineTo(bx, by);
+      g.strokeStyle = PAPEL.fondo;
+      g.lineWidth = 4.4 * u;
+      g.stroke();
+      g.strokeStyle = TINTAS.aero;
+      g.lineWidth = 2 * u;
+      g.stroke();
+    }
+    /*
+     * **Los números, a lo largo de su raya y a un lado**, como se rotula un
+     * radial en la carta: girados con ella, sin quedar nunca cabeza abajo, a
+     * medio camino entre la radio y la cruz —que es el 74 % de la raya: llega
+     * a 1,35 veces la cruz— y apartados de la raya lo que mide la letra.
+     * Puestos horizontales encima de la raya, en el plano ancho el de la raya
+     * corta quedaba debajo del avión y encima de los rótulos de su radio.
+     */
+    g.font = `600 ${15 * u}px ${LETRAS.cifras}`;
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.lineJoin = "round";
+    for (const raya of r.rayas) {
+      const [ax, ay] = enElPapel(raya.desde);
+      const [bx, by] = enElPapel(raya.hasta);
+      let angulo = Math.atan2(by - ay, bx - ax);
+      if (angulo > Math.PI / 2) angulo -= Math.PI;
+      else if (angulo < -Math.PI / 2) angulo += Math.PI;
+      const aparte = 11 * u;
+      const tx = ax + (bx - ax) * 0.37 + Math.sin(angulo) * aparte;
+      const ty = ay + (by - ay) * 0.37 - Math.cos(angulo) * aparte;
+      g.save();
+      g.translate(tx, ty);
+      g.rotate(angulo);
+      g.strokeStyle = PAPEL.fondo;
+      g.lineWidth = 4 * u;
+      g.strokeText(raya.rotulo, 0, 0);
+      g.fillStyle = TINTAS.aero;
+      g.fillText(raya.rotulo, 0, 0);
+      g.restore();
+    }
+    if (r.cruz) {
+      const [cx, cy] = enElPapel(r.cruz);
+      g.beginPath();
+      g.arc(cx, cy, 9 * u, 0, Math.PI * 2);
+      g.strokeStyle = PAPEL.fondo;
+      g.lineWidth = 4.6 * u;
+      g.stroke();
+      g.strokeStyle = TINTAS.tinta;
+      g.lineWidth = 2.2 * u;
+      g.stroke();
+      g.beginPath();
+      g.arc(cx, cy, 1.8 * u, 0, Math.PI * 2);
+      g.fillStyle = TINTAS.tinta;
+      g.fill();
+    }
+    g.restore();
+  }
+
+  /**
    * Los campos del vuelo: el de casa y los destinos, que son lo que tiene que
    * caber en el plano ancho.
    *
@@ -1093,7 +1211,12 @@ export class Mapa {
     const casa = this.escenario?.runway ?? { x: 0, z: 0 };
     // Con estela, lo que cabe es ella y la casa. Ver `camposConEstela`.
     const estela = this.estela?.();
-    if (estela && estela.length > 1) return camposConEstela({ x: casa.x, z: casa.z }, estela);
+    /*
+     * Y con rayas, también las radios de donde salen y hasta donde llegan: el
+     * fijo se entiende viendo las dos radios y las dos rayas enteras.
+     */
+    const rayas = (this.rayas?.().rayas ?? []).flatMap((r) => [r.desde, r.hasta]);
+    if (estela && estela.length > 1) return [...camposConEstela({ x: casa.x, z: casa.z }, estela), ...rayas];
     /*
      * **Y los puntos del plan**: el inicio de una aproximación puede caer a
      * veinticinco millas del aeropuerto, por el otro lado, y un plano que lo
