@@ -1101,13 +1101,18 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       continue;
     }
     const av = m.aviso;
+    /*
+     * Centrado en su hueco y no en la pantalla: en cabina el hueco acaba donde
+     * empieza la columna de mandos, que el aviso tapaba por el borde (H28e).
+     * Fuera, el hueco es la pantalla menos lo mismo por los dos lados.
+     */
     comprobar(
-      `${aqui}: el aviso más largo cabe en una línea, centrado, y uno que no cabe pasa de media pantalla`,
+      `${aqui}: el aviso más largo cabe en una línea, centrado en su hueco, y uno que no cabe pasa de medio hueco`,
       av.lineas === 1 &&
-        Math.abs(av.centro - m.pantalla / 2) <= 2 &&
+        Math.abs(av.centro - av.centroHueco) <= 2 &&
         (m.sinLetras ||
-          (av.anchoLargo > m.pantalla / 2 && Math.abs(av.centroLargo - m.pantalla / 2) <= 2)),
-      `${av.lineas} línea${av.lineas === 1 ? "" : "s"}, ${av.ancho} px, centro en ${av.centro} de ${m.pantalla}` +
+          (av.anchoLargo > av.hueco / 2 && Math.abs(av.centroLargo - av.centroHueco) <= 2)),
+      `${av.lineas} línea${av.lineas === 1 ? "" : "s"}, ${av.ancho} px, centro en ${av.centro} de un hueco de ${av.hueco} centrado en ${av.centroHueco}` +
         (m.sinLetras ? " (sin letras)" : ` · el que no cabe, ${av.anchoLargo} px`),
       "con left: 50% maquetaba en media pantalla y se partía en dos líneas que subían hacia el avión",
     );
@@ -1155,6 +1160,18 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
      * mandos. Fuera, el subtítulo y la lámpara del teléfono pasan por delante
      * de las losas de mando, que dejan pasar el toque (ADR 0030, H28b).
      */
+    comprobar(
+      `${aqui}: con lo más largo que llevan, el aviso, la lámpara, la tarjeta de la orden y el subtítulo no tapan ningún mando`,
+      m.mandos.length === 0,
+      m.mandos.join(" · ") || "libres el gas, el destino, el tren, el freno, las palancas y el volumen",
+      "un mando tapado, aunque sea a medias y deje pasar el toque, es un mando que no se encuentra",
+    );
+    comprobar(
+      `${aqui}: con el aviso y el subtítulo, y con el subtítulo solo, los que se leen no se pisan`,
+      m.entreSi.length === 0,
+      m.entreSi.join(" · ") || "ninguno",
+      "con el aviso solo el subtítulo no espera: la instructora explica justo detrás de la máquina",
+    );
     if (vista === "cockpit") {
       const sa = m.sinAviso;
       const pisan = [
@@ -1174,6 +1191,69 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
   }
   await page.evaluate(() => globalThis.__oga?.ponerVista?.("chase"));
   await page.waitForTimeout(300);
+
+  /*
+   * **Y quien juega sin sonido lee a la instructora aunque coincidan el aviso
+   * y la lámpara.** Con los dos encendidos el subtítulo espera escondido, y su
+   * reloj seguía corriendo: una frase de pocos segundos se acababa detrás de un
+   * aviso de suelo y no se leía nunca. Se encienden de verdad —el HUD ve un
+   * avión roto y la torre en rojo en cada fotograma—, la instructora dice una
+   * frase de un segundo y medio, se espera el doble y se apaga el aviso: la
+   * frase tiene que salir entonces, entera, y acabarse a su tiempo. Una vez
+   * por juego con letras: el reloj no depende de la pantalla.
+   */
+  if (juego.tramo === "taguato" && ancho === 1280 && !dedo) {
+    const espera = await page.evaluate(async () => {
+      const hud = globalThis.__oga?.juegoParaTrazas?.()?.hud;
+      const hint = document.querySelector('[data-hud="hint"]');
+      if (!hud || !hint || typeof hud.setWarning !== "function") return null;
+      const FRASE = "Primero se vuela el avión; después, lo demás.";
+      const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
+      const avisar = hud.setWarning;
+      const luz = hud.setLuzDeTorre;
+      hud.setWarning = function (s, r) {
+        return avisar.call(this, { ...s, crashed: true }, r);
+      };
+      hud.setLuzDeTorre = function (_l, ...resto) {
+        return luz.call(this, "roja", ...resto);
+      };
+      luz.call(hud, "roja");
+      await dormir(200);
+      hud.flash(FRASE, 1.5);
+      await dormir(3000);
+      const durante = {
+        texto: hint.textContent,
+        escondido: getComputedStyle(hint).visibility === "hidden",
+      };
+      delete hud.setWarning;
+      await dormir(300);
+      const despues = {
+        texto: hint.textContent,
+        seVe: getComputedStyle(hint).visibility !== "hidden" && hint.getBoundingClientRect().height > 2,
+      };
+      await dormir(2200);
+      const alFinal = hint.textContent;
+      delete hud.setLuzDeTorre;
+      luz.call(hud, null);
+      return { FRASE, durante, despues, alFinal };
+    });
+    comprobar(
+      `${donde0}: sin sonido, la frase dicha con el aviso y la lámpara encendidos sale entera al apagarse el aviso`,
+      !!espera &&
+        espera.durante.texto === espera.FRASE &&
+        espera.durante.escondido &&
+        espera.despues.texto === espera.FRASE &&
+        espera.despues.seVe &&
+        espera.alFinal !== espera.FRASE,
+      !espera
+        ? "no se pudo encender el aviso"
+        : `a los 3 s: ${espera.durante.texto === espera.FRASE ? "esperando" : "ya no estaba"}` +
+            `${espera.durante.escondido ? ", escondida" : ", a la vista"}` +
+            ` · al apagarse el aviso: ${espera.despues.texto === espera.FRASE && espera.despues.seVe ? "se lee" : "no se lee"}` +
+            ` · después: ${espera.alFinal === espera.FRASE ? "no se acaba" : "se acaba a su tiempo"}`,
+      "ningún canal es el único: quien juega sin sonido tiene que leer lo que ella explica",
+    );
+  }
 
   /*
    * **Y la tecla que toca**, en el lado izquierdo: la tarjeta con la tecla y
@@ -1600,10 +1680,15 @@ async function medirAvisoYLampara() {
   const hueco =
     innerWidth -
     ((Number.parseFloat(bordes.left) || 0) + (Number.parseFloat(bordes.right) || 0)) * escala;
+  const bordesAviso = getComputedStyle(aviso);
+  const avisoIzq = (Number.parseFloat(bordesAviso.left) || 0) * escala;
+  const avisoDer = innerWidth - (Number.parseFloat(bordesAviso.right) || 0) * escala;
   const salida = {
     sinLetras,
     pantalla: innerWidth,
     aviso: {
+      hueco: Math.round(avisoDer - avisoIzq),
+      centroHueco: Math.round((avisoIzq + avisoDer) / 2),
       ancho: Math.round(a.width),
       centro: Math.round(a.left + a.width / 2),
       lineas: sinLetras ? 1 : lineas(avisoTexto),
@@ -1626,6 +1711,48 @@ async function medirAvisoYLampara() {
     },
     subtitulo: conSub ? `${Math.round(h.top)}–${Math.round(h.bottom)}` : "sin subtítulo",
   };
+  /*
+   * **Y lo que se toca, en las cuatro pasadas.** Los que se leen pasaban por
+   * delante del borde de la columna de mandos —el aviso de cabina sobre la
+   * tarjeta del gas, el subtítulo y la lámpara del teléfono sobre el tren, los
+   * aerofrenos y el destino— porque dejaban pasar el toque. Un mando tapado,
+   * aunque sea a medias, es un mando que no se encuentra. Los mandos son la
+   * columna de la derecha entera —el gas, el destino, el tren, el freno y sus
+   * botones—, las palancas de pulgar y el volumen.
+   */
+  const tocables = () =>
+    [
+      ...document.querySelectorAll(
+        ".hud__derecha > *, #tactil .pad, [data-hud='volumen-caja']",
+      ),
+    ].filter((el) => visible(el) && getComputedStyle(el).visibility !== "hidden");
+  const leidos = (piezas) =>
+    piezas
+      .filter(([, el]) => visible(el) && getComputedStyle(el).visibility !== "hidden")
+      .map(([que, el]) => [que, el.getBoundingClientRect()]);
+  const sobreMandos = (pasada, piezas) => {
+    const mandosAhora = tocables();
+    const malos = [];
+    for (const [que, r] of leidos(piezas))
+      for (const m of mandosAhora)
+        if (pisa(r, m.getBoundingClientRect())) malos.push(`${pasada}: ${que} sobre ${nombre(m)}`);
+    return malos;
+  };
+  const entreSi = (pasada, piezas) => {
+    const cajas = leidos(piezas);
+    const malos = [];
+    for (let i = 0; i < cajas.length; i++)
+      for (let j = i + 1; j < cajas.length; j++)
+        if (pisa(cajas[i][1], cajas[j][1])) malos.push(`${pasada}: ${cajas[i][0]} y ${cajas[j][0]}`);
+    return malos;
+  };
+  const senalEl = document.querySelector('[data-hud="senal"]');
+  salida.mandos = sobreMandos("los tres", [
+    ["el aviso", aviso],
+    ["la lámpara", torre],
+    ["el subtítulo", hint],
+  ]);
+  salida.entreSi = [];
   // Y con una frase que no cabe en una línea, que pase de media pantalla.
   if (!sinLetras) {
     avisoTexto.textContent = `${AVISO} ${AVISO} ${AVISO}`;
@@ -1633,6 +1760,34 @@ async function medirAvisoYLampara() {
     salida.aviso.anchoLargo = Math.round(b.width);
     salida.aviso.centroLargo = Math.round(b.left + b.width / 2);
   }
+  hud.classList.remove("hud--avisando");
+  aviso.classList.remove("aviso-hud--visible");
+  avisoTexto.textContent = "";
+  flecha.textContent = "";
+  /*
+   * **Y el aviso con el subtítulo, sin la lámpara**, que es como coinciden en
+   * una final: la máquina canta y la instructora explica justo detrás. Ahí el
+   * subtítulo no espera, y se tiene que leer sin pisar el aviso ni un mando.
+   */
+  hud.classList.add("hud--avisando");
+  aviso.classList.add("aviso-hud--visible");
+  flecha.textContent = "↺";
+  avisoTexto.textContent = sinLetras ? "" : AVISO;
+  torre.hidden = true;
+  for (let i = 0; i < 2; i++) {
+    poner();
+    await raf();
+  }
+  poner();
+  hud.classList.add("hud--avisando");
+  aviso.classList.add("aviso-hud--visible");
+  torre.hidden = true;
+  const conElSub = [
+    ["el aviso", aviso],
+    ["el subtítulo", hint],
+  ];
+  salida.mandos.push(...sobreMandos("el aviso y el subtítulo", conElSub));
+  salida.entreSi.push(...entreSi("el aviso y el subtítulo", conElSub));
   hud.classList.remove("hud--avisando");
   aviso.classList.remove("aviso-hud--visible");
   avisoTexto.textContent = "";
@@ -1682,10 +1837,34 @@ async function medirAvisoYLampara() {
     delante: [...alFrente(torre), ...(conSub2 ? alFrente(hint) : [])],
     subtituloEn: conSub2 ? `${Math.round(h2.top)}–${Math.round(h2.bottom)}` : "sin subtítulo",
   };
+  const sinElAviso = [
+    ["la lámpara", torre],
+    ["el subtítulo", hint],
+    ["la tarjeta de la orden", senalEl],
+  ];
+  salida.mandos.push(...sobreMandos("la lámpara y el subtítulo", sinElAviso));
+  salida.entreSi.push(...entreSi("la lámpara y el subtítulo", sinElAviso));
+  /*
+   * **Y el subtítulo solo, con la tarjeta de la orden**, que es lo de casi
+   * siempre: la instructora hablando y la orden puesta.
+   */
   torre.classList.remove("torre--roja");
   if (fila && filaAntes) [fila.hidden, fila.innerHTML] = filaAntes;
   orden.textContent = ordenAntes;
   torre.hidden = true;
+  for (let i = 0; i < 3; i++) {
+    poner();
+    torre.hidden = true;
+    await raf();
+  }
+  poner();
+  torre.hidden = true;
+  const elSubSolo = [
+    ["el subtítulo", hint],
+    ["la tarjeta de la orden", senalEl],
+  ];
+  salida.mandos.push(...sobreMandos("el subtítulo solo", elSubSolo));
+  salida.entreSi.push(...entreSi("el subtítulo solo", elSubSolo));
   hint.textContent = "";
   return salida;
 }
