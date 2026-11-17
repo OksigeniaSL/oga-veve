@@ -1498,6 +1498,7 @@ import {
 import { apuntarVuelo, type Vuelo } from "./flight/bitacora";
 import { Libreta } from "./flight/libreta";
 import { plano } from "./ui/hangar";
+import type { FijoEnElPlano } from "./ui/fijo-en-el-plano";
 import { pavimentoDe, sueloEn, TRAQUETEO, type Superficie } from "./world/superficie";
 import { signoDelGiro } from "./world/giro-de-las-helices";
 import { firmeDe } from "./world/firme";
@@ -24812,7 +24813,30 @@ export class Game {
 
   /** «R-102 FTV»: un radial leído, escrito como en una carta. */
   private static radialEscrito(radial: number, id: string): string {
-    return `R-${String(radial).padStart(3, "0")} ${id}`;
+    return `R-${String(radial).padStart(3, "0")} ${id}`.trim();
+  }
+
+  /**
+   * **El fijo para el panel del final**, en coordenadas del fichero como la
+   * traza: lo que se vio en el plano al cerrarse, en su resumen. Ver
+   * `fijo-en-el-plano.ts`.
+   */
+  private fijoDelCruce(): FijoEnElPlano | undefined {
+    const g = this.cruce;
+    const c = g?.cruce;
+    if (!g || !c) return undefined;
+    const enElFichero = (p: { readonly x: number; readonly z: number }): readonly [number, number] => [p.x, -p.z];
+    return {
+      rayas: g.rayasEnElMundo().map((r) => ({
+        desde: enElFichero(r.desde),
+        hasta: enElFichero(r.hasta),
+        rotulo: Game.radialEscrito(r.radial, r.id),
+        corto: Game.radialEscrito(r.radial, ""),
+      })),
+      cruz: c.cruz ? enElFichero(c.cruz) : null,
+      avion: enElFichero(c.avion),
+      tolerancia: c.tolerancia,
+    };
   }
 
   /**
@@ -24826,8 +24850,14 @@ export class Game {
     if (!g) return;
     this.hud.mapa.ponerEstela(() => this.libreta.traza);
     this.hud.mapa.ponerRayas(() => ({
-      rayas: g.rayasEnElMundo().map((r) => ({ desde: r.desde, hasta: r.hasta, rotulo: Game.radialEscrito(r.radial, r.id) })),
+      rayas: g.rayasEnElMundo().map((r) => ({
+        desde: r.desde,
+        hasta: r.hasta,
+        rotulo: Game.radialEscrito(r.radial, r.id),
+        corto: Game.radialEscrito(r.radial, ""),
+      })),
       cruz: g.cruce?.cruz ?? null,
+      tolerancia: g.cruce?.tolerancia ?? null,
     }));
     if (this.tarjetaDelTiempo?.abierta) return;
     const s = this.flight.state;
@@ -24920,7 +24950,8 @@ export class Game {
           this.hud.mostrarCierreDeEjercicio(
             dibujoDeCierre("vuelta"),
             this.rotulo(this.cruce.cruce && this.cruce.cruce.lejos > this.cruce.cruce.tolerancia ? "ejercicio.cruce.tarde" : "ejercicio.cruce.aqui", "palabra.bien"),
-            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+            // Con las rayas, la cruz y el avión: lo que se vio en el plano al cerrarse.
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo(), this.fijoDelCruce()),
           );
         });
         return;

@@ -46,7 +46,7 @@ import type { Hito } from "../world/hitos";
 import { Panel } from "./panel";
 import { cotaEscrita } from "./carta";
 import { calcosDe, type Peldano } from "../flight/escalera";
-import { MAR, PAPEL, RAMPA, REGIONES, SIMBOLOS, SOMBRA, TINTAS, CUBIERTA, LINEAS, LETRAS } from "./carta/estilo";
+import { MAR, PAPEL, RAMPA, REGIONES, SIMBOLOS, SOMBRA, TINTAS, CUBIERTA, LINEAS } from "./carta/estilo";
 import { dibujarAerodromo, dibujarAvion, dibujarRosa, FondoHorneado } from "./carta/carta-en-vuelo";
 import type { Caja, Raya } from "./carta/rotulos";
 import {
@@ -86,6 +86,7 @@ import {
   escalones,
   hayQueRepintar,
   ladoDelVuelo,
+  lupaDelFijo,
   type Encuadre,
   type Punto,
 } from "./encuadre-del-mapa";
@@ -104,8 +105,16 @@ export interface RayasEnElPlano {
     readonly hasta: { readonly x: number; readonly z: number };
     /** Lo que se escribe al lado, como en una carta: «R-102 FTV». */
     readonly rotulo: string;
+    /** Y si no cabe entero, «R-102»: de qué radio sale ya lo dice la raya. */
+    readonly corto: string;
   }[];
   readonly cruz: { readonly x: number; readonly z: number } | null;
+  /**
+   * Lo que se puede apartar la cruz por el VOR, m (`loQueDaElVor`): con la
+   * cruz puesta, el plano se acerca a ella y al avión con eso por medida.
+   * Ver `lupaDelFijo`.
+   */
+  readonly tolerancia: number | null;
 }
 
 /** Un tráfico del TCAS, como lo pinta el plano. Ver `pintarElTrafico`. */
@@ -503,6 +512,8 @@ export class Mapa {
    * donde se cortan. Se piden cada vez que se pinta. Ver `ponerRayas`.
    */
   private rayas: (() => RayasEnElPlano) | null = null;
+  /** Si ya había cruz: el plano se acerca a ella al llegar, y no cada fotograma. */
+  private cruzVista = false;
 
   /**
    * **Las rayas de lápiz de un fijo con dos VOR**: cada radial leído, desde
@@ -890,6 +901,17 @@ export class Mapa {
     this.alterno = alterno;
     this.avionX = x;
     this.avionZ = z;
+    /*
+     * **Con la cruz de dos radiales, el plano se acerca a ella y al avión**,
+     * una vez, en cuanto llega: ver `lupaDelFijo`. Esté abierto o no, que
+     * quien lo abra después vea lo mismo; y las lupas siguen mandando.
+     */
+    const fijo = this.rayas?.();
+    if (fijo?.cruz && !this.cruzVista) {
+      const lados = escalones(ladoDelVuelo(this.losCampos(), this.minimo()));
+      this.lupa = lupaDelFijo(lados, Math.hypot(fijo.cruz.x - x, fijo.cruz.z - z), fijo.tolerancia ?? 0);
+    }
+    this.cruzVista = !!fijo?.cruz;
     if (!this.abierto || !this.encima || !this.escenario) return;
     /*
      * **El fondo se repinta cuando el encuadre se ha ido, y solo entonces.**
@@ -1148,36 +1170,10 @@ export class Mapa {
       g.stroke();
     }
     /*
-     * **Los números, a lo largo de su raya y a un lado**, como se rotula un
-     * radial en la carta: girados con ella, sin quedar nunca cabeza abajo, a
-     * medio camino entre la radio y la cruz —que es el 74 % de la raya: llega
-     * a 1,35 veces la cruz— y apartados de la raya lo que mide la letra.
-     * Puestos horizontales encima de la raya, en el plano ancho el de la raya
-     * corta quedaba debajo del avión y encima de los rótulos de su radio.
+     * Los números van con los demás rótulos, en su lienzo y en su hueco: ver
+     * `radiales` en `colocarRotulos`. Pintados aquí encima, sin mirar lo que
+     * había, el de la primera raya pisaba el «TWR 118.475» de Fuerteventura.
      */
-    g.font = `600 ${15 * u}px ${LETRAS.cifras}`;
-    g.textAlign = "center";
-    g.textBaseline = "middle";
-    g.lineJoin = "round";
-    for (const raya of r.rayas) {
-      const [ax, ay] = enElPapel(raya.desde);
-      const [bx, by] = enElPapel(raya.hasta);
-      let angulo = Math.atan2(by - ay, bx - ax);
-      if (angulo > Math.PI / 2) angulo -= Math.PI;
-      else if (angulo < -Math.PI / 2) angulo += Math.PI;
-      const aparte = 11 * u;
-      const tx = ax + (bx - ax) * 0.37 + Math.sin(angulo) * aparte;
-      const ty = ay + (by - ay) * 0.37 - Math.cos(angulo) * aparte;
-      g.save();
-      g.translate(tx, ty);
-      g.rotate(angulo);
-      g.strokeStyle = PAPEL.fondo;
-      g.lineWidth = 4 * u;
-      g.strokeText(raya.rotulo, 0, 0);
-      g.fillStyle = TINTAS.aero;
-      g.fillText(raya.rotulo, 0, 0);
-      g.restore();
-    }
     if (r.cruz) {
       const [cx, cy] = enElPapel(r.cruz);
       g.beginPath();
@@ -1846,6 +1842,22 @@ export class Mapa {
       const r = 9 * this.trazo * k + 1;
       fijos.push({ cx: x, cy: y, w: 2 * r, h: 2 * r });
     }
+    /*
+     * **Los radiales leídos, con su número**, y el aro de su cruz, que no se
+     * pisa: ver `pintarLasRayas`. El número va de la radio hacia la cruz.
+     */
+    const lasRayas = this.rayas?.();
+    const radiales = (lasRayas?.rayas ?? []).map((r) => ({
+      a: enPantalla(r.desde),
+      b: enPantalla(r.hasta),
+      texto: r.rotulo,
+      corto: r.corto,
+    }));
+    if (lasRayas?.cruz) {
+      const [x, y] = enPantalla(lasRayas.cruz);
+      const r = (9 + 2.3) * this.trazo * k;
+      fijos.push({ cx: x, cy: y, w: 2 * r, h: 2 * r });
+    }
 
     const { puestos } = rotularElPlano(
       {
@@ -1861,6 +1873,7 @@ export class Mapa {
         rayas,
         radioayudas: this.ayudasPintadas,
         descargo: t("carta.descargo"),
+        radiales,
       },
       medir,
     );
@@ -1874,7 +1887,10 @@ export class Mapa {
 
   /** Lo que, si cambia sin moverse el encuadre, pide rotular otra vez. */
   private claveDeLosRotulos(): string {
-    return `${this.ruta?.activo ?? -1}|${this.ruta?.conNombres ?? ""}|${this.dichos().size}`;
+    // Y los radiales leídos: cada raya nueva, o la cruz, se rotula con los demás.
+    const r = this.rayas?.();
+    const rayas = r ? `${r.rayas.map((x) => x.rotulo).join(",")}|${r.cruz ? 1 : 0}` : "";
+    return `${this.ruta?.activo ?? -1}|${this.ruta?.conNombres ?? ""}|${this.dichos().size}|${rayas}`;
   }
 
   /**

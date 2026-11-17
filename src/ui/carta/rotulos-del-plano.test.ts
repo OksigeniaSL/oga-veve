@@ -37,7 +37,7 @@ const medir: Medir = (texto, letra) => anchoDe(texto, Number(letra.match(/(\d+)p
 const LADOS = [190, 236, 288, 444];
 
 /** Un plano de verdad: los campos de la región del sitio, de lejos o de cerca, con una ruta al primero de los demás. */
-function planoDe(id: string, lado: number, peldano: Peldano, cerca: boolean): PlanoPorRotular {
+function planoDe(id: string, lado: number, peldano: Peldano, cerca: boolean, deCerca = 12_000): PlanoPorRotular {
   const sitio = scenarioById(id);
   const origen = sitio.aerodrome!.origin;
   const region = SCENARIOS.filter(
@@ -52,7 +52,7 @@ function planoDe(id: string, lado: number, peldano: Peldano, cerca: boolean): Pl
   const xs = mundo.map((m) => m.x);
   const zs = mundo.map((m) => m.z);
   const ancho = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...zs) - Math.min(...zs)) * 1.2 + 20_000;
-  const metros = cerca ? 12_000 : ancho;
+  const metros = cerca ? deCerca : ancho;
   const cx = cerca ? 0 : (Math.max(...xs) + Math.min(...xs)) / 2;
   const cz = cerca ? 0 : (Math.max(...zs) + Math.min(...zs)) / 2;
   const k = lado / metros;
@@ -188,4 +188,58 @@ describe("el T/D, que se corre con la altura", () => {
     // Todo el plano ocupado: no cabe.
     expect(unoMas(300, [{ cx: 150, cy: 150, w: 300, h: 300 }], td, 100, 100, 8, medir)).toBeNull();
   });
+});
+
+describe("los números de los radiales leídos (H26h)", () => {
+  /*
+   * «Dos radiales que se cortan» en Fuerteventura, como salió en las capturas
+   * de H26g: la primera raya, el R-102 de FTV, con el plano encuadrando la
+   * raya y el avión a diez millas al este. Su número pisaba el «TWR 118.475»
+   * de GCFV. Ahora va con los demás rótulos y en su hueco: ninguno pisa a
+   * otro, ni a un símbolo, y queda a un lado de su raya, girado con ella.
+   */
+  const MILLA = 1852;
+  for (const metros of [12_000, 36_000, 60_000])
+    it(`con el plano de ${metros / 1000} km, en todos los tamaños`, () => {
+      for (const lado of LADOS) {
+        const plano = planoDe("fuerteventura", lado, "cabina", true, metros);
+        const ftv = plano.radioayudas!.find((r) => r.id === "FTV")!;
+        const k = lado / metros;
+        // El R-102 magnético, con los tres grados al oeste: al 099 verdadero, trece millas y media.
+        const rumbo = (99 * Math.PI) / 180;
+        const largo = 13.5 * MILLA * k;
+        const a: [number, number] = [ftv.x, ftv.y];
+        const b: [number, number] = [ftv.x + Math.sin(rumbo) * largo, ftv.y - Math.cos(rumbo) * largo];
+        // Y la otra, la de LTE, bajando del norte hasta pasar por el avión.
+        const avion: [number, number] = [ftv.x + Math.sin(rumbo) * 10 * MILLA * k, ftv.y - Math.cos(rumbo) * 10 * MILLA * k];
+        const c: [number, number] = [avion[0] + 8 * MILLA * k * 0.2, avion[1] - 8 * MILLA * k];
+        const d: [number, number] = [avion[0] - 2 * MILLA * k * 0.2, avion[1] + 2 * MILLA * k];
+        const conRayas: PlanoPorRotular = {
+          ...plano,
+          fijos: [...plano.fijos, { cx: avion[0], cy: avion[1], w: 28, h: 28 }],
+          radiales: [
+            { a, b, texto: "R-102 FTV", corto: "R-102" },
+            { a: c, b: d, texto: "R-192 LTE", corto: "R-192" },
+          ],
+        };
+        const { puestos } = rotularElPlano(conRayas, medir);
+        const donde = `${lado} px, ${metros / 1000} km`;
+        for (const [i, p] of puestos.entries()) {
+          for (const q of puestos.slice(i + 1)) expect(sePisan(p.caja, q.caja), `${donde}: «${p.que}» pisa «${q.que}»`).toBe(false);
+          for (const f of conRayas.fijos) expect(sePisan(p.caja, f), `${donde}: «${p.que}» pisa un símbolo`).toBe(false);
+          const e = envolvente(p.caja);
+          expect(e.x0 >= 0 && e.y0 >= 0 && e.x1 <= lado && e.y1 <= lado, `${donde}: «${p.que}» se sale`).toBe(true);
+        }
+        const numero = puestos.find((p) => p.que === "R-102 FTV");
+        expect(numero, `${donde}: el R-102 sin escribir`).toBeDefined();
+        // A un lado de su raya, pegado a ella, y girado con ella: nunca boca abajo.
+        const [dx, dy] = [b[0] - a[0], b[1] - a[1]];
+        const aparte = Math.abs((numero!.caja.cx - a[0]) * dy - (numero!.caja.cy - a[1]) * dx) / Math.hypot(dx, dy);
+        expect(aparte, donde).toBeGreaterThan(numero!.caja.h / 2);
+        // Pegado, o algo más lejos para saltar por encima del avión en el plano chico.
+        expect(aparte, donde).toBeLessThan(numero!.caja.h / 2 + 24);
+        expect(Math.abs(numero!.caja.giro ?? 0), donde).toBeLessThanOrEqual(Math.PI / 2);
+        expect(Math.abs((numero!.caja.giro ?? 0) - Math.atan2(dy, dx)), donde).toBeLessThan(1e-9);
+      }
+    });
 });

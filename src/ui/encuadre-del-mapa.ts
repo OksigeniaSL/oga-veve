@@ -187,6 +187,34 @@ export function encuadreCon(
 }
 
 /**
+ * **La lupa que enseña un fijo de dos radiales**: la más cerca en la que la
+ * cruz y el avión se ven a la vez y apartados lo que están.
+ *
+ * En el plano ancho de «Dos radiales que se cortan» caben las dos radios
+ * —treinta y cinco millas o más— y la cruz que llega tarde, a milla y media
+ * del avión, quedaba a unos pocos píxeles de la flecha: en el borde de su
+ * aro, sin que se viera si estaba encima o no (H26g). Al cerrarse el
+ * ejercicio el plano se acerca solo, como si se hubiera tocado la lupa, a la
+ * primera en la que:
+ *
+ * - **la cruz cae en la mitad de en medio** del papel, con el avión en el
+ *   centro —el lado, cuatro veces lo que están apartados—, y le queda sitio
+ *   para seguir dentro mientras el avión vuela hasta el panel del final;
+ * - y **lo que da el VOR se ve**: el lado, seis veces la tolerancia. Así una
+ *   cruz buena cae con la flecha dentro o al borde del aro, y una tarde se
+ *   ve apartada de ella a simple vista, sin leer nada.
+ *
+ * `lados` son los de `escalones`; devuelve el índice. Si ninguna lupa llega,
+ * el vuelo entero.
+ */
+export function lupaDelFijo(lados: readonly number[], lejos: number, tolerancia: number): number {
+  const hace = Math.max(4 * lejos, 6 * tolerancia);
+  let lupa = 0;
+  for (let i = 1; i < lados.length; i++) if (lados[i]! >= hace) lupa = i;
+  return lupa;
+}
+
+/**
  * Si el fondo que hay pintado ya no sirve para el encuadre de ahora.
  *
  * Pintarlo cuesta —cincuenta mil preguntas al terreno y la ciudad entera—, así
