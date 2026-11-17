@@ -1382,21 +1382,89 @@ const enVuelo = await page.evaluate(async () => {
   o.pilotar(null);
   const c = o.controles();
   c.elevator = 0;
-  await new Promise((r) => setTimeout(r, 4000));
+  /*
+   * **Y se mira un rato, con el reloj del juego** (H25b): la altitud cada
+   * décima de segundo hasta `MIRA` segundos de vuelo, no la velocidad
+   * vertical de un instante. Ver la comprobación, abajo.
+   *
+   * Con el reloj del juego y no con el de pared, que es el número de verdad
+   * (`reloj` en `src/dev/sondas.ts`): contando las vueltas del banco, lo que
+   * se mide depende de cómo vaya la máquina.
+   */
+  const MIRA = 18;
+  const t0 = o.reloj();
+  // `estado()` es el estado vivo, no una copia: lo de ahora se lee ahora.
+  const s0 = o.estado();
+  const sueltoA = s0.heightAboveGround;
+  const muestras = [{ t: 0, y: s0.position.y }];
+  const tope = performance.now() + 90_000;
+  while (performance.now() < tope) {
+    await new Promise((r) => setTimeout(r, 100));
+    const t = o.reloj() - t0;
+    muestras.push({ t, y: o.estado().position.y });
+    if (t >= MIRA) break;
+  }
   const s = o.estado();
   return {
     fase: o.fase(),
-    subiendo: s.verticalSpeed,
+    muestras,
     alto: s.heightAboveGround,
+    sueltoA,
     ruta: o.ruta().length,
   };
 });
-comprobar(
-  "en el aire sigue subiendo con el motor a tope",
-  enVuelo.subiendo > 0.5,
-  `${enVuelo.subiendo.toFixed(1)} m/s a ${enVuelo.alto.toFixed(0)} m`,
-  "soltando los mandos el avión se quedaba nivelado con el gas a tope",
-);
+/*
+ * **Que siga subiendo es una media, no un instante** (H25b).
+ *
+ * Esto pedía más de medio metro por segundo **cuatro segundos después** de
+ * soltar, y cuatro segundos después de soltar es el peor momento para
+ * mirar. El banco suelta a los quince metros con el morro alto —el JAZ 20,
+ * a 27 m/s y subiendo a casi 8 m/s—, así que el avión compensado hace lo que
+ * hace uno de verdad: baja el morro para recuperar su velocidad, se hunde un
+ * poco en la oscilación larga (la fugoide) y luego sube estable. En la mesa,
+ * sin ráfagas, con el viento de casa de Los Rodeos y como lo vuela este
+ * banco, sube a 26 m, baja a 24 m, pasa por −0,7 m/s **justo a los cuatro
+ * segundos**, y desde los diez sube a 2,4–2,9 m/s. Con las ráfagas
+ * (`rafagas.ts`, sesenta semillas) ese instante pasaba el listón 5 veces de
+ * 60; y salía igual en 0244a3f3 y en ccd58455, porque para este avión el
+ * modelo de vuelo de los dos da la misma traza al bit. No era la tanda: era
+ * dónde se miraba.
+ *
+ * Así que se mira lo que dice el nombre, con dos cosas:
+ *
+ * - **Sube**: la media entre los 8 y los 18 s de soltar —lo ganado en altitud
+ *   partido por el tiempo, con el reloj del juego— pasa de medio metro por
+ *   segundo, el listón de siempre (cien pies por minuto). Ahí la oscilación ya
+ *   ha pasado: en la mesa, con ráfagas, de 1,6 a 3,2 m/s, mediana 2,5. El
+ *   fallo que originó esto —el avión nivelado con el gas a tope— da cero.
+ * - **Y no vuelve hacia la pista**: en los dieciocho segundos no baja más de
+ *   tres metros de donde se soltó. Es el fallo de H21a, la ayuda bajando el
+ *   morro cerca del suelo (−2,3 a −3,7 m/s entre 14 y 26 m), que la media de
+ *   después no ve porque luego remonta. En la mesa, con ráfagas, lo más que
+ *   baja hoy de donde se soltó es 1,1 m; con el modelo de antes de H21d, 42
+ *   de 60 vuelos bajan más de tres metros, hasta 14,7. Lo que se le escapa
+ *   de ese fallo lo caza sin ráfagas `subida-recien-despegado.test.ts`.
+ *
+ * Con la altitud y no con la altura sobre el suelo: lo que sube es el avión,
+ * no el terreno de debajo.
+ */
+{
+  const m = enVuelo.muestras;
+  const fin = m[m.length - 1];
+  const desde = m.reduce((a, b) => (Math.abs(b.t - 8) < Math.abs(a.t - 8) ? b : a));
+  const sube = fin.t > desde.t + 5 ? (fin.y - desde.y) / (fin.t - desde.t) : NaN;
+  const baja = m[0].y - Math.min(...m.map((x) => x.y));
+  comprobar(
+    "en el aire sigue subiendo con el motor a tope",
+    sube > 0.5 && baja < 3,
+    Number.isNaN(sube)
+      ? `el reloj del juego solo llegó a ${fin.t.toFixed(1)} s de los 18`
+      : `${sube.toFixed(1)} m/s de media de ${desde.t.toFixed(0)} a ${fin.t.toFixed(0)} s, ` +
+          `${baja > 0.05 ? `bajó ${baja.toFixed(1)} m de donde se soltó` : "sin bajar de donde se soltó"} ` +
+          `(a ${enVuelo.sueltoA.toFixed(0)} m), y a ${enVuelo.alto.toFixed(0)} m al final`,
+    "soltando los mandos el avión se quedaba nivelado con el gas a tope, o volvía hacia la pista",
+  );
+}
 comprobar(
   "y la raya de rodaje desaparece, que volando no hay nada que rodar",
   enVuelo.ruta === 0,
