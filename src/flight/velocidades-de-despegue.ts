@@ -298,6 +298,38 @@ export function perdidaCon(a: AircraftConfig, flaps = 0): number {
 }
 
 /**
+ * **La de maniobra sobre la pérdida**: 1,3.
+ *
+ * Es lo más despacio que se vuela con unos flaps **virando**, y no es la V2
+ * —1,13, `V2_SOBRE_LA_PERDIDA`—, que se vuela recto y con quince grados de
+ * alabeo como mucho. En el E-Jet es el punto verde de la cinta: «ideal
+ * slat/flap extension SPD for current mass. Full bank protected […] ≥ 1.3vSS»,
+ * y la tripulación «lower flaps before going below green dot SPD»; lo de
+ * debajo es la franja ámbar, cuyo techo, 1,13 veces la pérdida, es donde
+ * «stick shaker may activate» (C. Regli, *Embraer EMB190 – Summary*, 2025, pp.
+ * 1-37 y 2-18: <http://www.flite.ch/Emb/Summary_E190.pdf>). Los manuales de
+ * Boeing dan lo mismo en otra forma, la velocidad de maniobra de cada muesca
+ * sobre la Vref: la escalera de la llegada (`escalera-de-velocidades.ts`) pide
+ * la Vref y veinte con los segundos flaps, y en el E170 eso son 1,31 veces su
+ * pérdida con ellos.
+ *
+ * Con el avisador al 1,07 (`MARGEN_DEL_AVISADOR`), a 1,3 veces la pérdida se
+ * vira a cuarenta y siete grados antes de que suene: los cuarenta de un viraje
+ * de veinticinco con quince de propina, que es lo que se le pide a esa
+ * velocidad, y sobra.
+ */
+export const MANIOBRA_SOBRE_LA_PERDIDA = 1.3;
+
+/**
+ * **La de maniobra con estos flaps**, indicada, m/s: `MANIOBRA_SOBRE_LA_PERDIDA`
+ * veces su pérdida. Es la que se lleva con unos flaps hasta poner los
+ * siguientes, y la que lleva el banco del vuelo entero en el viento en cola.
+ */
+export function maniobraCon(a: AircraftConfig, flaps = 0): number {
+  return MANIOBRA_SOBRE_LA_PERDIDA * perdidaCon(a, flaps);
+}
+
+/**
  * **Lo que sube con un motor menos** a `v` indicada, m/s: el tren dentro, los
  * flaps que se digan, los demás a tope y el parado como quede asegurado —en
  * bandera si se puede, en molinete si no—. Al nivel del mar y con el derrape

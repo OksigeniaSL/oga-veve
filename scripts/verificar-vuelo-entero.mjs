@@ -1940,6 +1940,13 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * treinta grados, con la segunda el ala volvía a quedarse en el tope y el
      * JAZ 90 bajaba a ocho metros por segundo en el viraje. En Guyrami no hay
      * ala que se quede sin margen.
+     *
+     * **Y la de su muesca ya no es la Vref más quince**: lo era con la Vref de
+     * 132 del JAZ 90. Con la de la FAA, 118, y los flaps que la dan, la Vref y
+     * quince le quedan a 1,27 veces su pérdida con la segunda —1,19 en Los
+     * Rodeos, que este banco la volaba en verdadera—, y virando al viento en
+     * cola cantaba «stall, stall». Con la segunda puesta se vuela a la de
+     * maniobra de la segunda: ver `deManiobra`, en `velocidadDelTramo`.
      */
     const segunda = suyas.vfePorMuesca?.[1] ?? 0;
     /*
@@ -2015,9 +2022,36 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     DE_CIRCUITO,
     (suyas.aproximacion ?? 33) + 15 * 0.514444,
   );
-  const velocidadDelTramo = (tramo = 1) =>
+  /**
+   * **La de maniobra de los flaps que se han pedido**, verdadera, m/s: 1,3
+   * veces la pérdida con ellos, de `maniobraPorMuesca` en `sondas.ts`, y la
+   * muesca la de la palanca, que es la que se ha elegido. Cero sin flaps, en
+   * Guyrami o sin sonda.
+   *
+   * **La Vref y quince es de los flaps de aterrizar**, y el viento en cola se
+   * vuela con la segunda muesca. Con la Vref de la FAA el JAZ 90 la llevaba a
+   * 1,19 veces su pérdida con quince grados en Los Rodeos —en verdadera, que es
+   * un 6 % menos de indicada allí—, y virando a treinta grados el avisador
+   * suena a 1,15: medido en el vuelo entero, dos «stall, stall» a 126 nudos verdaderos
+   * con 1,14 g, α 11,3° con el avisador a 11,28° (enmienda H25a del ADR 0027).
+   * Lo que se hace de verdad es lo del E-Jet: el viento en cola con F3 a 160 y
+   * la Vref y poco solo con los de aterrizar puestos, a mitad de la base
+   * (Regli, *Embraer EMB190 – Summary*, p. 2-24), y nunca por debajo del punto
+   * verde de lo que se lleva (p. 2-18). Así que con la segunda se vuela a la de
+   * maniobra de la segunda, y al pedir las de aterrizar, en la base, a la Vref
+   * y quince, como estaba: la de maniobra de las de aterrizar queda debajo.
+   */
+  const deManiobra = (s) => {
+    const tabla = suyas.maniobraPorMuesca;
+    if (SENCILLO || !suyas.llevaFlaps || !tabla?.length) return 0;
+    const palanca = o.palancaDeFlaps?.() ?? 0;
+    // Las muescas van repartidas a partes iguales: ver `muescasDeLaPalanca`.
+    const indicada = tabla[Math.round(palanca * (tabla.length - 1))] ?? 0;
+    return enVerdadera(s, indicada);
+  };
+  const velocidadDelTramo = (tramo = 1, s = null) =>
     tramo >= 3
-      ? Math.min(VELOCIDAD_DE_CRUCERO, DE_BASE)
+      ? Math.min(VELOCIDAD_DE_CRUCERO, Math.max(DE_BASE, s ? deManiobra(s) : 0))
       : NECESITA_TECNICA
         ? Math.min(VELOCIDAD_DE_CRUCERO, DE_CIRCUITO)
         : VELOCIDAD_DE_CRUCERO;
@@ -6313,7 +6347,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         : CRUCERO;
       ultimoAltoQueToca = altoQueToca;
       const subiendo = alto(s) < altoQueToca - 15;
-      const quiereIr = velocidadDelTramo(aDonde);
+      const quiereIr = velocidadDelTramo(aDonde, s);
       /*
        * **Y subiendo, el gas a tope solo mientras haga falta.**
        *
