@@ -7,9 +7,16 @@
  * la radio, también la ficha de un aeródromo abierta. Cada captura dice con
  * qué tarjeta se dibujó: si sale SwiftShader, no vale para juzgar la imagen.
  *
- *   node scripts/ver-carta.mjs <carpeta> [sitio…]
+ *   node scripts/ver-carta.mjs <carpeta> [sitio[:ficha]…]
  *
  * Por defecto, Tenerife Norte y Silvio Pettirossi. El puerto, `OGA_PUERTO`.
+ * Con `sitio:ficha` se abre la ficha de ese campo y no la de siempre:
+ * `tenerife-norte:tenerife-norte` es la de Los Rodeos. En el peldaño de la
+ * radio, si la ficha lleva carta de aproximación, también se fotografía
+ * abierta (`-iac`), por abajo (`-iac-abajo`) y con la otra cabecera
+ * (`-iac-otra`); y la ficha con sus datos rodados hasta abajo
+ * (`-ficha-abajo`). Solo los dos peldaños de los extremos con
+ * `OGA_EXTREMOS=1`.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -17,9 +24,9 @@ import { mkdirSync } from "node:fs";
 import { baseDe } from "./servidor.mjs";
 
 const SALIDA = process.argv[2] ?? "capturas-carta";
-const SITIOS = process.argv.slice(3).length ? process.argv.slice(3) : ["tenerife-norte", "pettirossi"];
+const PEDIDOS = process.argv.slice(3).length ? process.argv.slice(3) : ["tenerife-norte", "pettirossi"];
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5604);
-const TRAMOS = ["guyrami", "tuka", "taguato", "taguato-ruvicha"];
+const TRAMOS = process.env.OGA_EXTREMOS ? ["guyrami", "taguato-ruvicha"] : ["guyrami", "tuka", "taguato", "taguato-ruvicha"];
 const PANTALLAS = [
   { nombre: "tablet", viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1.5, isMobile: false, hasTouch: true },
   { nombre: "telefono", viewport: { width: 844, height: 390 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
@@ -70,7 +77,8 @@ try {
       return i ? g.getParameter(i.UNMASKED_RENDERER_WEBGL) : "sin WebGL";
     });
     console.log(`${pantalla.nombre}: ${tarjeta}`);
-    for (const sitio of SITIOS) {
+    for (const pedido of PEDIDOS) {
+      const [sitio, suFicha] = pedido.split(":");
       for (const tramo of TRAMOS) {
         await page.click('[data-pantalla="donde"]');
         await page.click(`[data-sitio="${sitio}"]`);
@@ -85,15 +93,39 @@ try {
         await page.evaluate(() => document.fonts.ready);
         const carta = await page.$(".pais");
         await carta.scrollIntoViewIfNeeded();
-        const nombre = `${SALIDA}/${sitio}-${tramo}-${pantalla.nombre}`;
+        const nombre = `${SALIDA}/${sitio}${suFicha ? `-${suFicha}` : ""}-${tramo}-${pantalla.nombre}`;
         await carta.screenshot({ path: `${nombre}.png` });
         await page.screenshot({ path: `${nombre}-pantalla.png` });
         if (tramo === "taguato-ruvicha" || tramo === "guyrami") {
-          const campo = await page.$(`.pais__campo[data-ficha="${FICHA[sitio] ?? sitio}"]`);
+          const campo = await page.$(`.pais__campo[data-ficha="${suFicha ?? FICHA[sitio] ?? sitio}"]`);
           if (campo) {
             await campo.click();
             await carta.screenshot({ path: `${nombre}-ficha.png` });
-            await page.click('.ficha-carta:not([hidden]) .ficha-carta__cerrar');
+            const ficha = ".ficha-carta:not([hidden])";
+            if (await page.$(`${ficha} .ficha-carta__iac`)) {
+              await page.$eval(`${ficha} .ficha-carta__datos`, (d) => (d.scrollTop = d.scrollHeight));
+              await carta.screenshot({ path: `${nombre}-ficha-abajo.png` });
+              await page.click(`${ficha} .ficha-carta__iac`);
+              await carta.screenshot({ path: `${nombre}-iac.png` });
+              await page.$eval(`${ficha} .iac--0 .iac__cuerpo`, (d) => (d.scrollTop = d.scrollHeight));
+              await carta.screenshot({ path: `${nombre}-iac-abajo.png` });
+              await page.$eval(`${ficha} .iac--0 .iac__cuerpo`, (d) => (d.scrollTop = 0));
+              const otra = await page.$(`${ficha} .iac--0 .iac__pestana:not(.iac__pestana--esta)`);
+              if (otra) {
+                await otra.click();
+                await carta.screenshot({ path: `${nombre}-iac-otra.png` });
+              }
+              // Cuánto mide la hoja abierta y cuánto queda por rodar: lo que no se ve al abrirla.
+              const medida = await page.$eval(ficha, (f) => {
+                const abierta = [...f.querySelectorAll(".iac")].find((el) => getComputedStyle(el).display !== "none");
+                const cuerpo = abierta?.querySelector(".iac__cuerpo");
+                return abierta && cuerpo
+                  ? `iac ${abierta.clientWidth}×${abierta.clientHeight}, rueda ${cuerpo.scrollHeight - cuerpo.clientHeight} px`
+                  : "iac cerrada";
+              });
+              console.log(`    ${medida}`);
+            }
+            await page.click(`${ficha} .ficha-carta__cerrar`);
           }
         }
         console.log(`  ${nombre}.png`);

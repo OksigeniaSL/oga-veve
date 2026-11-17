@@ -205,6 +205,13 @@ export interface CartaDeAproximacion {
   readonly msa: Msa;
   readonly perfil: Perfil;
   readonly minimos: readonly Minimo[];
+  /**
+   * **Las columnas de la tabla de mínimos**, si no son las cuatro. Hace falta
+   * para dibujarla como la imprime: a la D de Pedro Juan Caballero le falta
+   * la cifra, y en su casilla pone «N.A»; la de Encarnación no tiene casilla,
+   * porque su tabla solo trae A, B y C. Sin él, las cuatro.
+   */
+  readonly categorias?: readonly Categoria[];
   readonly frustrada: Frustrada;
   /** La altitud de transición, ft: el «TA» del recuadro; `null` si la carta no lo imprime. */
   readonly altitudDeTransicion: number | null;
@@ -973,6 +980,7 @@ export const APROXIMACIONES: Readonly<Record<string, Readonly<Record<string, Car
           visibilidad: { ...vis(["A", "B"], "N.A / 1600 M / N.A"), C: "N.A / 2200 M / N.A" },
         },
       ],
+      categorias: ["A", "B", "C"],
       frustrada: {
         texto: "MISSED APPROACH: CLIMB HEADING (CA) 209º TO 2000' THEN TURN LEFT CLIMBING TO 3000' HEADING (DF) \"EN008\" FOR HOLDING",
         pies: 3000,

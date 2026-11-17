@@ -516,6 +516,28 @@ export function vrefDeSuCategoria(a: {
   return a.approachSpeed * Math.sqrt(Math.max(a.mass, maxima) / a.mass);
 }
 
+/** Las categorías de aproximación de la OACI; la H es la de los helicópteros. */
+export type CategoriaDeAproximacion = "A" | "B" | "C" | "D" | "E" | "H";
+
+/**
+ * **La categoría de aproximación de un tipo**: la columna de la tabla de
+ * mínimos de una carta que es la suya. Por su velocidad en el umbral a la masa
+ * máxima al aterrizar (`vrefDeSuCategoria`): menos de 91 nudos, la A; hasta
+ * 120, la B; hasta 140, la C; hasta 165, la D; y hasta 210, la E (PANS-OPS,
+ * Doc 8168, vol. I, parte I, sección 4, cap. 1, tabla I-4-1-2). Un helicóptero
+ * es la H, que no va por velocidad.
+ */
+export function categoriaDeAproximacion(a: {
+  readonly approachSpeed: number;
+  readonly mass: number;
+  readonly masaMaximaAlAterrizar?: number;
+  readonly helicoptero?: unknown;
+}): CategoriaDeAproximacion {
+  if (a.helicoptero) return "H";
+  const nudos = vrefDeSuCategoria(a) / 0.514444;
+  return nudos < 91 ? "A" : nudos < 121 ? "B" : nudos < 141 ? "C" : nudos < 166 ? "D" : "E";
+}
+
 export function velocidadDePerdida(a: {
   readonly approachSpeed: number;
 }): number {

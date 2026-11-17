@@ -3151,6 +3151,10 @@ export const ES_PY = {
   "carta.sinRadioayudas": "El AIP no publica radioayudas",
   // El descargo de toda carta que no es la oficial, donde lo lleva una de verdad: al pie.
   "carta.descargo": "No apto para navegación real",
+  // La glosa del botón que abre la carta de aproximación (IAC), en el calco de la radio.
+  "carta.iac": "Carta de aproximación",
+  // Debajo de la tabla de mínimos: de qué columna es el avión que va.
+  "carta.iac.categoria": "Tu aeronave: CAT {cat}",
   "tiempo.title": "El tiempo",
   "tiempo.hora": "La hora del día",
   "tiempo.viento": "De dónde viene el viento y cuánto sopla",

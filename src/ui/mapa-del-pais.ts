@@ -64,6 +64,8 @@ import { frecuenciasDeLaCarta, RADIO } from "../world/frecuencias-publicadas";
 import { estacionesDe, RADIOAYUDAS, type Estacion } from "../world/radioayudas-publicadas";
 import { dondeCae } from "../world/entre-aerodromos";
 import { cajaDeRadioayuda, plumaEnSvg, simboloDeRadioayuda, simboloEnSvg } from "./carta/radioayudas";
+import { cartaDeAproximacionDeLaFicha } from "./carta/carta-de-aproximacion";
+import { AIRCRAFT, categoriaDeAproximacion } from "../flight/aircraft";
 import { DESTACADOS } from "../world/lo-destacado";
 import {
   colocar,
@@ -878,10 +880,29 @@ function fichaDelCampo(e: Scenario, p: readonly [number, number], d: DeLaCarta):
    * Los datos, solo para quien lee: en Guyrami no hay ni una letra que haga
    * falta leer. El indicativo va estampado en el sello, como tinta.
    */
+  /*
+   * **La carta de aproximación**, en el calco de la radio y solo ahí: la de la
+   * pista en servicio, con la de la otra cabecera a un toque. La categoría que
+   * se resalta en sus mínimos es la del avión que va a ir. Ver
+   * `carta/carta-de-aproximacion.ts`.
+   */
+  const conCategoria = AIRCRAFT.find((a) => a.id === (quienVa ?? d.avion));
+  const iac = calcos.radio
+    ? cartaDeAproximacionDeLaFicha(e, conCategoria ? categoriaDeAproximacion(conCategoria) : null)
+    : null;
+  /*
+   * Los datos van en una caja que rueda de arriba abajo con otra dentro en
+   * columnas de periódico, y no en una sola con columnas y alto fijo: con alto
+   * fijo, lo que no cabía se iba a una columna de más por la derecha, fuera
+   * de la ficha, y en Gran Canaria las radioayudas no se veían. Así las
+   * columnas se reparten lo que haya y lo que sobra se baja rodando, con la
+   * línea de abajo desvaneciéndose para decir que hay más.
+   */
   const datos = calcos.nombres
-    ? `<div class="ficha-carta__datos">
+    ? `<div class="ficha-carta__datos"><div class="ficha-carta__columnas">
           <b class="ficha-carta__oaci">${oaci}</b>
           <span class="ficha-carta__nombre">${nombre}</span>
+          ${iac?.boton ?? ""}
           ${
             calcos.cifras
               ? `<ul class="ficha-carta__lista ficha-carta__cifras">${pistas}${elevFt !== null ? `<li>ELEV ${elevFt} ft</li>` : ""}${rumbo}</ul>`
@@ -891,10 +912,11 @@ function fichaDelCampo(e: Scenario, p: readonly [number, number], d: DeLaCarta):
           ${calcos.radio ? listaDeRadioayudas(oaci) : ""}
           ${calcos.radio ? `<small class="ficha-carta__pie ficha-carta__var">${varEscrita(declinacion(p[1], p[0], d.hoy))}</small>` : ""}
           ${calcos.radio ? `<small class="ficha-carta__pie ficha-carta__descargo">${t("carta.descargo")}</small>` : ""}
-        </div>`
+        </div></div>`
     : "";
   return `
       <div class="ficha-carta ficha-carta--${d.peldano}${quienVa ? "" : " ficha-carta--sin-avion"}" data-ficha-de="${e.id}" hidden>
+        ${iac?.llaves ?? ""}
         <button class="ficha-carta__cerrar" type="button" tabindex="-1" data-ficha="">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6 L18 18 M18 6 L6 18" /></svg>
         </button>
@@ -905,6 +927,7 @@ function fichaDelCampo(e: Scenario, p: readonly [number, number], d: DeLaCarta):
           ${retrato}
           ${boton}
         </div>
+        ${iac?.paginas ?? ""}
       </div>`;
 }
 
@@ -1174,6 +1197,9 @@ export function abrirFichaDeLaCarta(raiz: ParentNode, id: string): void {
   for (const f of raiz.querySelectorAll<HTMLElement>(".ficha-carta")) {
     f.hidden = f.getAttribute("data-ficha-de") !== id || id === "";
     if (!f.hidden) f.dataset.lado = derecha ? "izquierda" : "derecha";
+    // Y se abre por la ficha, no por la carta de aproximación que se dejó abierta.
+    const sinCarta = f.querySelector<HTMLInputElement>(".iac__llave--no");
+    if (sinCarta) sinCarta.checked = true;
     // Abierta o cerrada a propósito: ya no es la que se abrió sola.
     delete f.dataset.sola;
   }

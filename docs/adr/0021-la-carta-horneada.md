@@ -342,3 +342,142 @@ OCA es la OCH más la cota sobre la que se mide.
   Fuerteventura rotula TUVIL como punto intermedio, y
   `procedimientos-canarias.ts` lo tiene como un punto más de la ruta, sin
   ningún intermedio en la rama. La prueba lo deja anotado y avisa si cambia.
+
+## Enmienda H24b (17-11-2026): el dibujo de la carta de aproximación
+
+Con los datos de H24a, la carta de aproximación ya se dibuja (#72). Es la
+hoja que le faltaba al peldaño de arriba, Taguató Ruvichá: la misma ficha del
+campo, con un calco más.
+
+### Dónde va y cómo se abre
+
+En la ficha de cada campo con carta transcrita, en el calco de la radio, un
+botón debajo del nombre —«IAC RWY 12», con su glosa «Carta de aproximación»—
+abre una hoja que tapa la ficha entera menos su cruz. Es la del procedimiento
+de **la pista en servicio** (`cabeceraEnUso`, la misma con la que el juego
+traza la llegada), y arriba lleva una pestaña por cabecera con carta: la otra
+se ve con un toque. La flecha de la izquierda vuelve a la ficha, y abrir otra
+ficha la abre siempre por la ficha y no por la carta que se dejó abierta.
+
+Se abre sin código: unos botones de radio escondidos al principio de la ficha
+y sus etiquetas, y la hoja de estilos enseña la página del marcado. El hangar
+no se repinta, y su manejador de toques no se ha tocado. `cabeceraEnUso` se
+ha sacado de `world/terrain.ts` a `world/cabecera-en-uso.ts` —y se sigue
+exportando desde terrain— para que la carta del hangar la use sin traerse el
+relieve, que va en el trozo del juego y no en el del arranque.
+
+**En los peldaños de abajo no sale**: ni el botón, ni la hoja escondida. Lo
+mira la prueba de los calcos (`mapa-del-pais.test.ts`), como con las
+radioayudas.
+
+### Qué lleva, y de dónde
+
+`ui/carta/carta-de-aproximacion.ts`, todo de `aproximaciones-publicadas.ts`, y
+todo en el inglés aeronáutico de la carta (regla 3):
+
+- **La planta**, el norte arriba y a escala, con su barra de cinco millas: la
+  pista de la cabecera, la derrota de la final del punto intermedio al umbral
+  —o al punto de frustrada— y cada punto con nombre donde dicen sus
+  coordenadas, con la estrella del punto de recorrido del Anexo 4 y su rótulo
+  entre paréntesis, «BUNIX (IF)». Los que la carta no da en la lista —la
+  comprobación de altitud de ENAIRE, el escalón de la 20 de Asunción— van sobre
+  la derrota, a sus millas.
+- **El perfil**, debajo, como en la carta: cada punto con su rótulo (IF, FAP o
+  FAF, ACL, SDF, MAPt, THR) en la franja de arriba, y su nombre si es un
+  punto de la lista —el de la comprobación de altitud, «4.0 RW12», repetiría
+  sus millas—; su raya al suelo, su altitud con la altura entre paréntesis
+  —debajo y a la izquierda si la del punto de antes no le deja sitio— y sus
+  millas debajo; el RDH bajo la pista; en la franja de abajo, el ángulo y la
+  pendiente de la senda bajo su tramo, «3.0° (5.2%)», y la cota de
+  referencia, «THR ELEV 2062»; y la frustrada como una flecha a trazos que
+  sube hasta su altitud. Debajo, la tabla de la senda (NM, ALT, HGT). No va a
+  escala de alto, como el de la carta.
+- **Los mínimos**, rotulados «OCA (OCH)», una línea por tipo —LPV, LNAV/VNAV,
+  LNAV, CIRCLING— y una columna por categoría, con la OCA encima y la OCH
+  debajo entre paréntesis. **La columna del avión que va, marcada como con
+  rotulador**, y debajo «Tu aeronave: CAT C». La categoría sale de
+  `categoriaDeAproximacion` (`flight/aircraft.ts`), por la Vref a la masa
+  máxima al aterrizar (`vrefDeSuCategoria`) y los cortes de PANS-OPS: las
+  cuatro avionetas y el JAZ 50 son de la A; el JAZ 60, de la B; el JAZ 90, de la
+  C; el 110 y el 120, de la D. Un helicóptero es la H, que no tiene columna en
+  estas cartas: no se marca nada.
+- **La MSA**: el círculo con su altitud dentro, «MSA» encima y «25 NM ARP»
+  debajo. Las TAA de la DINAC, igual con «TAA» y su punto, «25 NM VURDO», y su
+  nota al lado. Sin rayas de sector: la carta no da los límites de sus zonas
+  en grados, y dibujarlos sería inventarlos.
+- **La frustrada**, en su caja: la altitud con la flecha de frustrada, y su
+  techo si lo tiene —«3500 · MAX 6000»—, y el texto de la carta tal cual.
+- **Al pie**, el TA, la carta y su fuente, y el descargo.
+
+### Lo que no se dibuja, porque la carta no lo trae
+
+- **Ni DA ni DH**: la tabla es de OCA/OCH, con ese nombre.
+- **«N.A» solo donde la carta tiene la casilla**: la D de Pedro Juan
+  Caballero. La tabla de Encarnación no tiene columna D, y aquí tampoco. Para
+  distinguir los dos casos, `CartaDeAproximacion` lleva ahora `categorias`, las
+  columnas de su tabla si no son las cuatro: solo Encarnación lo necesita.
+- **Una altitud que la carta no imprime no lleva cifra**, y la línea del
+  perfil no pasa por ella: el intermedio de la 12 de Los Rodeos, XO11W, sale
+  con su raya y su nombre, y la línea empieza en el FAP. En la 18 de La Palma,
+  sin altitud en el punto de frustrada, la flecha de la frustrada sube sola
+  por el borde: no se inventa de dónde sale.
+- **Las de circuito**, sin senda, sin RDH y sin tabla: el perfil acaba en el
+  MAPt, mide a la cota del aeródromo («AD ELEV 48») y no lleva pista.
+- **Las LPV de Canarias** se dibujan, con su línea tachada y su suplemento,
+  «U/S SUP 159/26», que sale de su nota. Las demás notas de la carta —los
+  sectores sin circuito, la restricción de las de circuito— están en
+  castellano en el fichero de datos y no se escriben: esta hoja va en el
+  inglés de la carta. Tampoco la visibilidad que imprime la DINAC, ni la
+  pendiente de frustrada de cada línea.
+
+La prueba (`carta-de-aproximacion.test.ts`) mira, en las veintiuna, que **no
+se escribe ni una cifra que no traiga su carta**: cada número del perfil, de
+los mínimos y de la MSA está en los datos de esa cabecera.
+
+### En tablet y en teléfono tumbado
+
+Medido con `scripts/ver-carta.mjs` (que ahora abre la ficha que se le pida,
+`sitio:ficha`, y fotografía la carta de aproximación abierta, por abajo y con
+la otra cabecera):
+
+- **En la tablet** (1280 × 800), en Canarias cabe entera a la vista en una
+  hoja de 618 × 446: la planta y el perfil a la izquierda; los mínimos, la MSA
+  y la frustrada a la derecha. En Gran Canaria rueda solo el pie, 23 px. En
+  Paraguay la carta va de pie y la ficha es estrecha (387 × 622): una sola
+  columna —perfil, mínimos, planta, MSA, frustrada— con 160 px por rodar.
+- **En el teléfono tumbado** (844 × 390) la hoja mide 618 × 222 y no cabe:
+  se ha elegido qué se ve primero, **el perfil y los mínimos**, que es lo que
+  no está en ninguna otra parte del juego; la MSA asoma debajo de los
+  mínimos, y la tabla de la senda, la planta, la frustrada y el pie van
+  rodando (unos 200 px). La cabeza —volver, la carta y las pestañas de
+  cabecera— se queda quieta: rueda el cuerpo, que si rodaba la hoja entera lo
+  de la derecha pasaba por debajo de la cruz.
+
+### Los dos flecos que quedaban
+
+- **La radio de Gran Canaria**: los datos de la ficha iban en columnas de
+  periódico con el alto fijo, y lo que no cabía se iba a otra columna por la
+  derecha, fuera de la ficha; en la tablet, las radioayudas no se veían. Ahora
+  las columnas van en una caja de dentro de alto libre, la de fuera rueda de
+  arriba abajo, y su borde de abajo se desvanece: la línea cortada a medio
+  borrar es lo que dice que hay más. Con sombras de fondo la tapa lisa se veía
+  sobre el grano del papel como una caja más clara, y se quitaron. En la
+  tablet, las radioayudas de Gran Canaria salen rodando la columna; en el
+  teléfono tumbado la columna es corta —la ficha mide 222 px de alto— y casi
+  todo va rodando, con el botón de la carta de aproximación arriba, debajo
+  del nombre.
+- **TUVIL es el intermedio de la 19 de Fuerteventura**: la carta lo rotula
+  «(IF)» en la planta y en el perfil (AD 2-GCFV IAC 16.1, mirada en la página
+  bajada por H24a); su «TF» de la tabla codificada es el tipo de tramo, no el
+  papel del punto. En `procedimientos-canarias.ts` pasa de `ruta` a `if`, y la
+  prueba que lo dejaba anotado ahora pide que toda aproximación tenga su
+  intermedio. **En el vuelo**, la rama se puede tomar desde TUVIL, como las
+  demás desde su intermedio. Viniendo de Lanzarote, la ruta ya no pasa de
+  largo por encima del campo para bajar a BAMKU, al sur de la isla, y volver
+  por la costa: de la 21 de Lanzarote a la 19 son 34 millas en vez de 71, y de
+  la 03, 42 en vez de 79 (medido con `rutaDelTramo` y el relieve del juego,
+  como `rutas-de-canarias.test.ts`, que ahora lo comprueba). De Gran Canaria,
+  que viene del sur, sigue entrando por BAMKU. Y su tramo inicial y su
+  intermedio se miden contra el relieve con el margen de cada uno
+  (`aproximaciones-sobre-el-relieve.test.ts`), que antes no se medían porque la
+  rama no tenía intermedio; libran.
