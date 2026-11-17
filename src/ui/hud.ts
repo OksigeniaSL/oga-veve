@@ -569,6 +569,10 @@ export class Hud {
   private velocidadesHandler: ((cual: "V1" | "Vr") => void) | null = null;
   /** Quién vigila el alto de la barra. Ver `medirLaBarra`. */
   private barraObservada: ResizeObserver | null = null;
+  /** Quién vigila el alto del subtítulo. Ver `medirElSubtitulo`. */
+  private subtituloObservado: ResizeObserver | null = null;
+  /** Lo vuelve a escribir al cambiar de vista. Ver `medirElSubtitulo`. */
+  private escribirSubtitulo: (() => void) | null = null;
   /** Lo que mide el cuadro en la pantalla, para sus rótulos. Ver `medirLaUnidad`. */
   private cuadroObservado: ResizeObserver | null = null;
   /**
@@ -2615,6 +2619,7 @@ export class Hud {
     this.pictos.bind(this.root);
     this.medirLaUnidad();
     this.medirLaBarra();
+    this.medirElSubtitulo();
     this.senal.bind(this.root);
     this.tutor.bind(this.root);
     this.reserveForPanel();
@@ -3090,6 +3095,8 @@ export class Hud {
      * salpicadero.
      */
     this.reserveForPanel();
+    // Y lo que baja la lámpara por el subtítulo, que en cabina va en otro sitio.
+    this.escribirSubtitulo?.();
   }
 
   update(
@@ -4289,13 +4296,31 @@ export class Hud {
           "--vistas-abajo",
           `${Math.round(caja.bottom)}px`,
         );
-      const derecha = [vistas, antes]
+      const cajas = [vistas, antes]
         .map((e) => e?.getBoundingClientRect())
-        .filter((c): c is DOMRect => !!c && c.width > 0 && c.height > 0)
-        .reduce((max, c) => Math.max(max, c.right), 0);
+        .filter((c): c is DOMRect => !!c && c.width > 0 && c.height > 0);
+      const derecha = cajas.reduce((max, c) => Math.max(max, c.right), 0);
       this.root.style.setProperty(
         "--vistas-derecha",
         `${Math.round(aPxDelHud(this.root, derecha))}px`,
+      );
+      /*
+       * **Y hasta dónde bajan**, para apartarse de ellos solo donde llegan.
+       * En una tablet de 900 × 600 la barra se parte en dos filas y los
+       * botones de la columna de la pausa acaban por encima del subtítulo:
+       * apartado de ella igual, el hueco a la izquierda del rincón se quedaba
+       * en 320 píxeles y la orden de la torre, en ocho líneas. Se miden los
+       * botones y no sus cajas, que se estiran con su fila de la rejilla y
+       * bajan más que ellos. Ver `--aparte-arriba`.
+       */
+      const abajo = [vistas, antes]
+        .flatMap((e) => (e ? [...e.querySelectorAll("button")] : []))
+        .map((b) => b.getBoundingClientRect())
+        .filter((c) => c.width > 0 && c.height > 0)
+        .reduce((max, c) => Math.max(max, c.bottom), 0);
+      this.root.style.setProperty(
+        "--vistas-bajan",
+        `${Math.round(aPxDelHud(this.root, abajo))}px`,
       );
     };
     escribir();
@@ -4323,6 +4348,47 @@ export class Hud {
     if (vistas) this.barraObservada.observe(vistas);
     // Se va al arrancar, y con ella el sitio que le dejaba el subtítulo.
     if (antes) this.barraObservada.observe(antes);
+  }
+
+  /**
+   * **Lo que ocupa el subtítulo de alto**, para que la lámpara de la torre
+   * baje lo que de verdad ocupa y no una línea contada a mano.
+   *
+   * Los dos viven debajo de la barra, el subtítulo primero, y la lámpara
+   * bajaba 36 píxeles cuando había subtítulo: lo que mide una línea. Desde que
+   * el subtítulo usa el ancho que tiene es más difícil que se parta, pero una
+   * frase larga de la instructora sigue ocupando dos, y la lámpara se
+   * encendía encima de la segunda. Están en cajas distintas —el subtítulo
+   * vive con el aviso, abajo en el marcado—, así que no los puede apilar el
+   * navegador: se mide y se escribe en `--subtitulo-alto`.
+   *
+   * Solo cuando cambia, que es cuando la instructora empieza o acaba una
+   * frase: una variable que cambia en la raíz del HUD hace mirar otra vez el
+   * estilo de todo lo que cuelga de ella. `offsetHeight` ya viene en los
+   * píxeles del HUD (ver `aPxDelHud`), y vacío no ocupa nada.
+   *
+   * **En cabina, cero**, salvo la altura en grande: ahí el subtítulo va al
+   * 32 % y no debajo de la barra, y bajar la lámpara por él la echaba encima
+   * del aviso, que va justo encima del subtítulo. La altura en grande sí va
+   * arriba, y por ella sí baja. Como cambiar de vista no cambia el alto del
+   * subtítulo, `ponerVistaDeCabina` lo vuelve a escribir.
+   */
+  private medirElSubtitulo(): void {
+    const hint = this.hint;
+    let escrito = "";
+    const escribir = (): void => {
+      const arriba = !this.enCabina() || hint.classList.contains("insignia--cifra");
+      const alto = `${arriba ? hint.offsetHeight : 0}px`;
+      if (alto === escrito) return;
+      escrito = alto;
+      this.root.style.setProperty("--subtitulo-alto", alto);
+    };
+    this.escribirSubtitulo = escribir;
+    escribir();
+    this.subtituloObservado?.disconnect();
+    if (typeof ResizeObserver === "undefined") return;
+    this.subtituloObservado = new ResizeObserver(escribir);
+    this.subtituloObservado.observe(hint);
   }
 
   /**
