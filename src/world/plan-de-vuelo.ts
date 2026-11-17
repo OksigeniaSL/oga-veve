@@ -65,7 +65,10 @@ import { PuertaAsignada } from "./puerta-asignada";
 import { edificiosDePasarela, esPuestoDeContacto } from "./remolque";
 import { morroDe } from "./rueda-de-morro";
 import {
+  aLaCaja,
+  cajasDeLosTramos,
   construirGrafo,
+  HOLGURA_DE_LA_CAJA,
   puestosEnElPavimento,
   rectaPorPavimento,
   rodajeEntre,
@@ -2244,8 +2247,27 @@ export class PlanDeVuelo {
    * `puestosEnElPavimento` en `rodaje.ts`.
    */
   private puestosEnElAsfalto(): readonly { ref: string | null; xy: Punto }[] {
-    return puestosEnElPavimento(this.aero.parkingPositions ?? [], this.aero, this.grafo);
+    /*
+     * **Y una vez por campo.** Mirar cada puesto contra cada pista, calle y
+     * plataforma del fichero son 425 puestos por 756 calles en Barajas, y
+     * elegir la salida lo preguntaba tres o cuatro veces: un cuarto de lo que
+     * costaba elegir, medido en la mesa (ADR 0028, enmienda H23a).
+     * Sale de los puestos del fichero y del grafo, y el grafo se rehace al
+     * mudarse de campo: guardado contra él, se tira solo.
+     */
+    if (this.asfaltoGuardado?.grafo !== this.grafo)
+      this.asfaltoGuardado = {
+        grafo: this.grafo,
+        puestos: puestosEnElPavimento(this.aero.parkingPositions ?? [], this.aero, this.grafo),
+      };
+    return this.asfaltoGuardado.puestos;
   }
+
+  /** Ver `puestosEnElAsfalto`. */
+  private asfaltoGuardado: {
+    readonly grafo: Grafo;
+    readonly puestos: readonly { ref: string | null; xy: Punto }[];
+  } | null = null;
 
   /** Los puestos de los que puede salir una avioneta, sin ordenar. */
   private puestosCandidatos(): { ref: string | null; xy: Punto }[] {
@@ -2530,9 +2552,21 @@ export class PlanDeVuelo {
     );
     const traeDeVuelta: Punto = [dondeSePara[0], -dondeSePara[1]];
 
+    /*
+     * Y las vueltas, de una sola búsqueda: salen todas del mismo sitio, y
+     * `rodajesDesde` corre el buscador una vez por origen. Es lo mismo que
+     * pedirlas de una en una —`rodajeEntre` es esto con un destino—, con un
+     * Dijkstra en vez de uno por puesto.
+     */
+    const vueltas = rodajesDesde(
+      this.grafo,
+      traeDeVuelta,
+      puestos.map((p) => p.xy),
+      600,
+    );
     const pares: ParDeSalida[] = [];
-    for (const puesto of puestos) {
-      const vuelta = rodajeEntre(this.grafo, traeDeVuelta, puesto.xy, 600);
+    for (const [i, puesto] of puestos.entries()) {
+      const vuelta = vueltas[i] ?? null;
       const casa = vuelta ? vuelta.largo : 0;
       const rutas = rodajesDesde(this.grafo, puesto.xy, esperas, 220, undefined, {
         desdeFuera,
@@ -3132,7 +3166,11 @@ export class PlanDeVuelo {
   /** Lo lejos que queda un punto del asfalto que el juego conoce, m. */
   private alGrafo(p: Punto): number {
     let mejor = Infinity;
-    for (const t of this.grafo.tramos) {
+    // Sin medir los tramos cuya caja queda más lejos que lo mejor hasta ahora:
+    // no pueden mejorarlo. Ver `cajasDeLosTramos`.
+    const cajas = cajasDeLosTramos(this.grafo.tramos);
+    for (const [k, t] of this.grafo.tramos.entries()) {
+      if (aLaCaja(cajas, k, p) > mejor + HOLGURA_DE_LA_CAJA) continue;
       for (let i = 0; i < t.puntos.length - 1; i++) {
         const a = t.puntos[i]!;
         const b = t.puntos[i + 1]!;
