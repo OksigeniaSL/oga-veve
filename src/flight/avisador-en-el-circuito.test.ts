@@ -8,9 +8,10 @@
  * pérdida con esos flaps y su siete por ciento, `anguloDeAviso`— ni la
  * velocidad que pide el juego, que con la segunda muesca es la Vref y veinte
  * (`escalera-de-velocidades.ts`): era la que volaba el banco, la Vref y quince
- * con cualquier muesca, y en verdadera. Con la Vref de 132 eso le dejaba 1,24
- * veces la pérdida con la segunda; con la de la FAA, 118, 1,18 en Los Rodeos, y
- * un viraje de treinta grados la pide a 1,15 (enmienda H25a del ADR 0027).
+ * con cualquier muesca, y en verdadera. En Los Rodeos, con la Vref de 132 y
+ * los flaps de antes, eso le dejaba 1,26 veces la pérdida con la segunda; con
+ * la de la FAA, 118, 1,19, y un viraje de treinta grados pide el avisador a
+ * 1,15 (enmienda H25a del ADR 0027).
  *
  * Lo que se vuela de verdad con unos flaps es la de maniobra de esos flaps,
  * 1,3 veces su pérdida (`maniobraCon`): es lo que aquí se prueba, en cada
@@ -122,7 +123,7 @@ describe("el viento en cola del JAZ 90 en Los Rodeos", () => {
   it("con el fallo: a la Vref y quince en verdadera, como volaba el banco, no aguanta un viraje", () => {
     /*
      * La de antes del banco: la Vref más quince nudos, comparada con la
-     * verdadera. En indicada, en el circuito de Los Rodeos, un 7 % menos.
+     * verdadera. En indicada, en el circuito de Los Rodeos, un 6 % menos.
      */
     const delBanco = (ARAI.approachSpeed + 15 * NUDO) * raiz();
     expect(delBanco / perdidaCon(ARAI, segunda)).toBeLessThan(1.2);

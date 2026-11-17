@@ -1943,7 +1943,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      *
      * **Y la de su muesca ya no es la Vref más quince**: lo era con la Vref de
      * 132 del JAZ 90. Con la de la FAA, 118, y los flaps que la dan, la Vref y
-     * quince le quedan a 1,27 veces su pérdida con la segunda —1,18 en Los
+     * quince le quedan a 1,27 veces su pérdida con la segunda —1,19 en Los
      * Rodeos, que este banco la volaba en verdadera—, y virando al viento en
      * cola cantaba «stall, stall». Con la segunda puesta se vuela a la de
      * maniobra de la segunda: ver `deManiobra`, en `velocidadDelTramo`.
@@ -2030,9 +2030,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    *
    * **La Vref y quince es de los flaps de aterrizar**, y el viento en cola se
    * vuela con la segunda muesca. Con la Vref de la FAA el JAZ 90 la llevaba a
-   * 1,18 veces su pérdida con quince grados en Los Rodeos —en verdadera, que es
-   * un 7 % menos de indicada allí—, y un viraje de treinta grados la pide a
-   * 1,15: medido en el vuelo entero, dos «stall, stall» a 126 nudos verdaderos
+   * 1,19 veces su pérdida con quince grados en Los Rodeos —en verdadera, que es
+   * un 6 % menos de indicada allí—, y virando a treinta grados el avisador
+   * suena a 1,15: medido en el vuelo entero, dos «stall, stall» a 126 nudos verdaderos
    * con 1,14 g, α 11,3° con el avisador a 11,28° (enmienda H25a del ADR 0027).
    * Lo que se hace de verdad es lo del E-Jet: el viento en cola con F3 a 160 y
    * la Vref y poco solo con los de aterrizar puestos, a mitad de la base

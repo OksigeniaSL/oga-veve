@@ -691,7 +691,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        * **Y la de maniobra de cada muesca de su palanca**, indicada, m/s, con
        * el peso de ahora: a lo que vuela el banco con esos flaps puestos. El
        * viento en cola lo volaba a la Vref más quince nudos, la misma con
-       * cualquier muesca, y con la Vref de la FAA el JAZ 90 quedaba ahí a 1,18
+       * cualquier muesca, y con la Vref de la FAA el JAZ 90 quedaba ahí a 1,19
        * veces su pérdida con quince grados de flaps: «stall, stall» virando en
        * Los Rodeos (enmienda H25a del ADR 0027). Ver `maniobraCon`.
        */
