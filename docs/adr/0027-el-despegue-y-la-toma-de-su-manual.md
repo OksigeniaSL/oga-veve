@@ -3227,3 +3227,8 @@ final (`OGA_TRAZA_FINAL`) y el viento de casa, 040/12:
   forma de recoger: el juego no pide nada en el umbral.
 - **El crucero del trayecto** en el avión sin gases automáticos, a
   `VELOCIDAD_DE_CRUCERO` en verdadera: no se ha mirado.
+- **`npm run carteles`**, sin correr: el candado del navegador lo tenían otros
+  bancos y se acabó el tiempo de la tanda. Lo que toca la hoja de estilos es
+  solo la tarjeta del tiempo (`.parte__grupo` y los campos en columna por
+  debajo de 560 px de ancho), que ese banco no mide; la tarjeta sí se midió,
+  arriba.
