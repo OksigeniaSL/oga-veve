@@ -7823,6 +7823,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   resultado.deVuelta = await (async () => {
     if (!destino || o.fase() !== "apagado") return null;
     const kilosAlApagar = o.combustible?.()?.kilos ?? null;
+    // El tráfico dibujado al apagar, para ver que no se queda en el tramo nuevo. Ver `laTorreYSuTraficoDeCero`.
+    const traficoAlApagar = (o.trafico?.() ?? []).map((q) => q.matricula);
     c.throttle = 0;
     c.brakes = 1;
     o.tocarMando?.("motor");
@@ -7831,6 +7833,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     const ruta = o.rutaDelVuelo?.() ?? null;
     const lectura = {
       kilosAlApagar,
+      traficoAlApagar,
+      trafico: (o.trafico?.() ?? []).map((q) => q.matricula),
       kilos: o.combustible?.()?.kilos ?? null,
       carga: o.cargaDelTramo?.() ?? null,
       ruta,
@@ -10461,6 +10465,24 @@ if (DESTINO) {
       ? `${v.kilos?.toFixed(1)} kg · el tramo pide ${v.carga?.toFixed(1)} kg · al apagar había ${v.kilosAlApagar?.toFixed(1)} kg`
       : "no se leyó el depósito",
     "de vuelta en casa se arrancaba hacia Los Rodeos con el depósito de un circuito",
+  );
+  /*
+   * **Y con el tráfico de allí, empezando**: el que se vio al llegar no se queda dibujado
+   * con una frecuencia que ya no lo nombra (H23b). Sin tráfico al apagar no hay nada que
+   * mirar, y se dice.
+   */
+  const seQuedan = (v.traficoAlApagar ?? []).filter((m) => (v.trafico ?? []).includes(m));
+  comprobar(
+    "y el tráfico de la llegada no se queda en el tramo nuevo",
+    Array.isArray(v.trafico) && seQuedan.length === 0,
+    !Array.isArray(v.trafico)
+      ? "no se leyó el tráfico"
+      : (v.traficoAlApagar ?? []).length === 0
+        ? "al apagar no había nadie dibujado: nada que mirar"
+        : seQuedan.length
+          ? `siguen dibujados ${seQuedan.join(", ")}`
+          : `al apagar ${v.traficoAlApagar.join(", ")}; al arrancar, ${v.trafico.join(", ") || "nadie todavía"}`,
+    "otro tramo reiniciaba la torre y dejaba dibujado el tráfico que se vio al llegar",
   );
   comprobar(
     "y el coche del sígame vuelve a guiar",

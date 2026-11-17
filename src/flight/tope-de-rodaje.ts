@@ -328,8 +328,22 @@ export function limitarElRodaje(
     /*
      * La velocidad de rodaje de **este sitio**, que el plan ya calcula: en
      * una curva cerrada es menor que en una recta larga.
+     *
+     * **Y cero es cero.** Ponía `velocidadSugerida || RODAJE`, como si cero
+     * fuera «el plan no dice nada», y el plan siempre dice algo: sin raya
+     * sugiere la de crucero —ver `velocidadAqui` en `plan-de-vuelo.ts`—. Cero
+     * es la raya pidiendo parar: con la rueda de morro en el punto del puesto,
+     * en la doble raya sin la verde, detrás del de delante y antes de la calle
+     * de otro que viene de frente. Justo ahí el `||` abría el tope a nueve
+     * metros por segundo y su holgura, y con el gas a fondo el avión se iba
+     * del puesto o cruzaba la doble raya en los peldaños donde el juego lleva
+     * la velocidad. Lo que mueve al avión desde un cero lo mueve otro —el
+     * tractor lo pone donde lo lleva, y la verde y la vuelta ya alineada
+     * sueltan el tope antes de llegar aquí— o la raya deja de pedir parar: el
+     * de delante avanza, el otro deja su calle o la verde rehace la raya.
+     * Medido en `tope-donde-para-la-raya.test.ts`.
      */
-    rodaje: vista.velocidadSugerida || RODAJE,
+    rodaje: vista.velocidadSugerida,
   });
   /*
    * **Y la holgura nunca pasa de lo que rueda este avión**: en una recta larga
@@ -411,6 +425,17 @@ export function limitarElRodaje(
       Math.min(FRENO_QUE_AYUDA, exceso * APRIETA),
     );
   }
+  /*
+   * **Y donde la raya pide parar, el pie en el freno**, aunque ya no se mueva.
+   * Con el gas cerrado un avión de verdad no se queda quieto: al ralentí se
+   * arrastra, y lo que hace quien espera en la doble raya es sujetarlo con el
+   * freno. Sin esto, con el modelo de Tukã, el ralentí lo llevaba a tres
+   * centímetros por segundo, por debajo de donde empieza a frenar la mano, y
+   * en algo más de tres minutos esperando la verde se ponía casi seis metros
+   * más allá de la doble raya. Lo de la mano y no más: no es un ancla.
+   */
+  if (tope.velocidad <= 0)
+    controles.brakes = Math.max(controles.brakes, FRENO_QUE_AYUDA);
   return techo;
 }
 

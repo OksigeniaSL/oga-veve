@@ -1110,7 +1110,7 @@ import {
   type Empuje,
 } from "./world/remolque";
 import { DibujoDelRemolque } from "./world/tractor-de-remolque";
-import { conLaRuedaEn, morroDe, ruedaDeMorroEn } from "./world/rueda-de-morro";
+import { barraAlTrenDe, conLaRuedaEn, morroDe, ruedaDeMorroEn } from "./world/rueda-de-morro";
 import { AvisoDeLaRaya } from "./flight/aviso-de-la-raya";
 import { AvisoDeVelocidad } from "./flight/aviso-de-velocidad";
 import {
@@ -4648,9 +4648,10 @@ export class Game {
      * número dos, el permiso de aterrizar pedido y sin dar, si estabas en
      * final, los retenidos en su puesto con su reloj, la orden de tu salida y
      * sus cuentas, y en la boca las frases de una frecuencia que ya no
-     * existe. Ver `TurnoDePista.reiniciar`.
+     * existe. Ver `TurnoDePista.reiniciar`. Y con ella, su tráfico dibujado:
+     * ver `laTorreYSuTraficoDeCero`.
      */
-    this.turno.reiniciar(aqui.escenario.aerodrome?.id);
+    this.laTorreYSuTraficoDeCero(aqui.escenario.aerodrome?.id);
     // Y la raya, de aquí al punto de espera de este campo. Si de aquí no
     // sale —apagado lejos de toda calle—, el vuelo de antes se cierra igual:
     // ver `otroTramoDesde`.
@@ -4668,6 +4669,26 @@ export class Game {
     this.colocarSenalero();
     if (aqui.id !== this.campoMontado) this.montarElCampo(aqui);
     this.updateBadge();
+  }
+
+  /**
+   * **La torre y su tráfico dibujado, de cero**: lo de cualquier vuelo nuevo,
+   * venga del reinicio o de otro tramo desde donde está el avión.
+   *
+   * Reiniciar solo la frecuencia dejaba los aviones dibujados de la partida
+   * anterior donde estuvieran, con matrículas que ya nadie nombraba: el que
+   * aterrizaba seguía en la pista sin que nadie lo olvidara, y la avioneta
+   * aparecía otra vez parada junto al punto de espera con la roja encendida.
+   * `resetFlight` ya vaciaba el dibujo; otro tramo reiniciaba la torre y lo
+   * dejaba, así que el tráfico que se vio al llegar seguía en el campo con la
+   * frecuencia nueva sin nombrarlo. Un vuelo nuevo es otra frecuencia y otra
+   * gente: la del campo de ahora, empezando. Por eso van juntos aquí y no
+   * copiados en cada camino, que es como uno de los dos se quedó sin la mitad.
+   * Ver `Trafico.vaciar` y `torre-de-cada-vuelo.test.ts`.
+   */
+  private laTorreYSuTraficoDeCero(aerodromo: string | null | undefined): void {
+    this.turno.reiniciar(aerodromo);
+    this.trafico?.vaciar();
   }
 
   /**
@@ -13397,15 +13418,7 @@ export class Game {
     // Y el otro avión vuelve a empezar su vuelo con nosotros, y **con otro
     // nombre**: es otro avión, no el mismo dando vueltas para siempre. En la
     // frecuencia del campo del que se sale.
-    /*
-     * **Y el dibujo con ella, que se quedaba.** Reiniciar solo la frecuencia
-     * dejaba los aviones dibujados de la partida anterior donde estuvieran,
-     * con matrículas que ya nadie nombraba: el que aterrizaba seguía en la
-     * pista sin que nadie lo olvidara, y la avioneta aparecía otra vez parada
-     * junto al punto de espera con la roja encendida. Ver `Trafico.vaciar`.
-     */
-    this.turno.reiniciar(campo.escenario.aerodrome?.id);
-    this.trafico?.vaciar();
+    this.laTorreYSuTraficoDeCero(campo.escenario.aerodrome?.id);
     callar();
     /*
      * **Y todo lo que el paso siguiente va a leer.**
@@ -21837,6 +21850,8 @@ export class Game {
     const aero = this.plan?.aerodromoActual;
     const pisable = aero ? elSitioDe(aero, this.aircraft.wingSpan).pisable : undefined;
     const desde = llegadaDelTractor(p.raya, p.destino, pisable);
+    // El de rueda de cola, con barra a sus principales y no con la cuna: ver `barraAlTrenDe`.
+    const barra = barraAlTrenDe(this.aircraft);
     const r = new Remolque(
       p.empuje,
       {
@@ -21844,11 +21859,12 @@ export class Game {
         envergadura: this.aircraft.wingSpan,
         rueda: morroDe(this.aircraft).rueda,
         sinVilo: this.aircraft.actitudEnTresPuntos !== undefined,
+        ...(barra ? { barra: barra.largo } : {}),
       },
       { desde },
     );
     this.vueltaALaRaya = r;
-    this.dibujoDeLaVuelta = new DibujoDelRemolque(r.medidasDelTractor);
+    this.dibujoDeLaVuelta = new DibujoDelRemolque(r.medidasDelTractor, barra);
     this.scene.add(this.dibujoDeLaVuelta.grupo);
     this.dibujoDeLaVuelta.poner(r, (x, z) => this.terrain.sampleSurface(x, z), 0);
     // Lo que debería tardar, de la llegada al saludo: lo de más lo suelta `llevarALaRaya`.
