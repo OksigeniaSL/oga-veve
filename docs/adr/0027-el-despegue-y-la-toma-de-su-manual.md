@@ -3013,6 +3013,34 @@ Lo que haría falta, con sus números:
 No se ha hecho: no es pequeño, y en esta tanda no quedaba tiempo para volar
 otra vez los bancos que toca.
 
+### Volado en el navegador
+
+`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-90`, el 17-11-2026,
+puerto 5688, reloj ×1, con la traza del ala y el viento de casa, 040/12, con
+`80251c95` y `d2b9bb92` (antes del arreglo del campo de `547cd4a8`):
+
+| | Resultado | La puerta | La toma | Lo menos que le quedó al ala | Lo que falló |
+|---|---|---|---|---|---|
+| 1.ª | 62 de 64 | 127 kt | a 108 m, 1,99 m/s | −0,5°, en la frustrada | la toma, corta; «stall, stall» en la frustrada |
+| 2.ª | 61 de 62 | 122 kt | a 214 m, 1,87 m/s | 2,9°, rotando | un tráfico del circuito sin nombrar |
+
+- **El «stall, stall» de la primera** sonó en una frustrada que mandó la torre
+  con la pista ocupada a 52 m: el banco se fue al aire con su subida del
+  despegue (`subirDeVerdad`), tiró 1,74 g a 136 nudos con los flaps
+  recogiéndose y pasó medio grado el avisador. Es la maniobra del banco, no la
+  mínima del automático, que el banco no usa ahí; no se ha tocado.
+- **La toma a 108 m** es la toma corta de la enmienda H25a, con la recogida a
+  10,6 m de ruedas. Y el tráfico sin nombrar de la segunda es de la radio.
+- En las dos, **«senda (125 kt)»**: el margen con el viento de Tenerife Sur,
+  035/18, porque el plan del banco va allí; con el arreglo, en Los Rodeos son
+  123. El banco vuela su final con su propio margen, así que el vuelo no
+  cambia; lo que cambian son la marca, la banda y la puerta en dos nudos. No
+  se ha vuelto a volar.
+- **Sin volar**: el JAZ 20 en Guyrami (`… guyrami 3 jaz-20`), la tarjeta del
+  tiempo en un peldaño con cifras (`verificar-tarjeta-del-tiempo.mjs`) y
+  `npm run carteles`. El candado del navegador lo tenían otros bancos y se
+  acabó el tiempo de la tanda.
+
 ### Lo que no
 
 - **El margen de los turbohélices con su manual**: el 1900D y el Twin Otter
