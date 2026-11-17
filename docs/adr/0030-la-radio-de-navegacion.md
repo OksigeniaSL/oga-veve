@@ -440,3 +440,64 @@ peldaño de cabina, los campos con VOR, el viento del sitio.
   despegarse la barra queda establecido sin pasarse más de un punto; que
   quien vira tarde cruza y vuelve, y también acaba; y que con el viento de
   costado el morro establecido no es el curso.
+
+## Enmienda H26d (17-11-2026): tres flecos de H26a y H26b
+
+### El viento de la pantalla de navegación en 3D, arriba
+
+En la cabina en 3D la cifra del viento iba abajo a la izquierda, en la misma
+raya que las millas al destino, y «039/12» se pintaba encima de «GCTS 79.1
+NM». Con la cifra a la izquierda y las millas creciendo hacia la derecha no
+había anchura que no se pisara, así que se cambió el sitio y no el tamaño:
+**arriba a la izquierda, debajo de la GS, la cifra y debajo la flecha**, que
+es donde los pone la pantalla de navegación de un Boeing y donde ya iba la
+cifra en el cuadro plano. Las dos superficies dicen lo mismo en el mismo
+sitio. Y en el de cristal, el modo del TCAS y las millas se cuentan desde
+donde acaba la franja de motor: desde el borde caían encima de las luces del
+tren. Mirado con los textos más largos que pueden salir —cuatro letras con
+tres cifras de millas y un viento de tres cifras— en el JAZ 90 y el JAZ 60,
+en tierra y en el aire.
+
+### El subtítulo, encima de la pantalla grande del teléfono
+
+Con una pantalla del cuadro en grande en el teléfono tumbado, el subtítulo
+tapaba parte de ella: arriba el rumbo, y bajado al sitio de las losas, la
+rosa y la radio. La pantalla grande deja ahora una fila para él
+(`--fila-del-subtitulo` en `style.css`): mide una línea de subtítulo menos y
+el subtítulo se apoya en su borde de arriba; si no cabe en una línea, crece
+hacia arriba, sobre la fila de los botones, que deja pasar el toque; con dos
+líneas roza el borde de abajo de los botones redondos de la barra, como ya
+pasaba sin pantalla grande con los de la derecha. **Lo que cuesta**: la
+pantalla grande mide una línea menos, de 234 a 200 px de alto en 844 × 390 y
+de 174 a 140 en 864 × 330, que es el teléfono con la barra del navegador.
+`npm run carteles` mira ya que el subtítulo no pise la pantalla grande entera,
+no solo el «TCAS STBY».
+
+### Cada ejercicio en el aire, con el combustible de su vuelo
+
+El arreglo de la aguja (sumar tres veces su tramo al depósito) se ha llevado a
+la raíz: **un ejercicio que empieza en el aire carga lo de su vuelo**, de donde
+empieza hasta casa, con el alternativo de casa, la maniobra y la reserva, que
+son las cuatro partidas de `cargaParaElPlan` con la salida donde de verdad
+empieza el vuelo (`cargaDelEjercicio` en `flight/combustible.ts`). Se cargaba
+el tramo desde casa, que sin destino es un vuelo local: en la avioneta, unos
+minutos por encima de lo que dispara «minimum fuel».
+
+- **La tormenta** no llegaba a pedirlo: solo se ofrece a los de turbina, y en
+  ellos el vuelo local ya lleva de sobra para ochenta millas (el JAZ 60 sale
+  con 583 kg, y «minimum fuel» es por debajo de 178 más lo que queda hasta
+  tocar). Ahora lleva sus ochenta millas y el alternativo.
+- **La aguja** sí, en los de pistón: la avioneta salía con 32 kg y la llamada
+  salta por debajo de 30 más lo que falta, que a seis minutos de la radio ya
+  no llegaba.
+- **El planeo, el de un motor, la despresurización y la autorrotación** cargan
+  igual; los de la pista (V1 y el simulador) salen de casa con su tramo, como
+  cualquier vuelo.
+
+Lo prueba `flight/combustible-del-ejercicio.test.ts`, que vuela en papel la
+aguja y la tormenta en cada avión al que se le ofrecen, en un campo sin
+alternativo, con un tercio más de camino por lo que el ejercicio vuela de más
+y quemando lo más de la cuenta, sin que se llame nunca a la torre. Y los dos
+bancos, `ver-seguir-la-aguja.mjs` y `verificar-tormenta.mjs`, miran ya que no
+se haya dicho «minimum fuel»: rodeando la tormenta en Pettirossi con el JAZ 50,
+el turbohélice más lento al que se le ofrece, acaba con 769 kg y sin llamada.

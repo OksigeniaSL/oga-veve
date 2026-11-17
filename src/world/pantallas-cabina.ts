@@ -2237,7 +2237,7 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
    * diferencia entre los dos es la declinación — que es lo correcto: una pista
    * rotulada 07 cae bajo el 07 de la rosa.
    */
-  pintarLaCarta(g, d, cx, cy, r);
+  pintarLaCarta(g, d, cx, cy, r, izquierda);
 
   pintarRosa(g, cx, cy, r, grados, false);
 
@@ -2385,10 +2385,19 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
      * hacia donde te empuja— y gira con la carta, así que se ve de un vistazo
      * si viene de frente o de cola. La cifra sigue ahí desde el tercer
      * peldaño, para quien ya lee.
+     *
+     * **Arriba a la izquierda, debajo de la GS**: la cifra y, debajo, la
+     * flecha, que es donde los pone la pantalla de navegación de un Boeing y
+     * donde va la cifra en el cuadro plano. Iban abajo a la izquierda, en la
+     * misma raya que las millas al destino, y «039/12» se pintaba encima de
+     * «GCTS 79.1 NM»; con la cifra a la izquierda y las millas creciendo
+     * hacia la derecha, no había anchura que no se pisara. Arriba la fila es
+     * suya: la GS o la barra de rodar llega a los cuarenta, y la rosa no
+     * empieza hasta los cincuenta y siete.
      */
     const haciaDonde = ((d.viento.desde + 180 - grados) * Math.PI) / 180;
-    const fx = cx - r - 4;
-    const fy = ALTO - 40;
+    const fx = izquierda + 34;
+    const fy = 86;
     const largo = 20;
     const px = Math.sin(haciaDonde) * largo;
     const py = -Math.cos(haciaDonde) * largo;
@@ -2413,7 +2422,7 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
       g,
       `${String(Math.round(d.viento.desde)).padStart(3, "0")}/${Math.round(d.viento.nudos)}`,
       izquierda + 12,
-      ALTO - 14,
+      50,
       "500 14px " + FUENTE,
       PALETA.auxiliar,
       "left",
@@ -3206,6 +3215,12 @@ function pintarLaCarta(
   cx: number,
   cy: number,
   r: number,
+  /**
+   * Dónde empieza la carta: en el de cristal, pasada la franja de motor. Las
+   * esquinas de abajo se cuentan desde aquí; desde el borde, el TCAS y las
+   * millas caían encima de las luces del tren de la franja.
+   */
+  izquierda = 0,
 ): void {
   const m = d.mapa;
   /*
@@ -3552,7 +3567,7 @@ function pintarLaCarta(
    * plano; ver `modoEnPantalla` en `flight/tcas.ts`.
    */
   if (dibujo.modoTcas)
-    escribir(g, dibujo.modoTcas, 14, ALTO - 32, "500 12px " + FUENTE, AUXILIAR, "left");
+    escribir(g, dibujo.modoTcas, izquierda + 14, ALTO - 32, "500 12px " + FUENTE, AUXILIAR, "left");
 
   /*
    * **Lo que falta del tramo**, la barra magenta que se vacía al llegar al
@@ -3595,7 +3610,7 @@ function pintarLaCarta(
       // Con el indicativo delante, que es como lo dice una pantalla de
       // navegación: a qué sitio son esas millas.
       `${dibujo.destino.oaci ? `${dibujo.destino.oaci} ` : ""}${dibujo.destino.millas.toFixed(1)} NM`,
-      14,
+      izquierda + 14,
       ALTO - 14,
       "500 12px " + FUENTE,
       PALETA.objetivo,

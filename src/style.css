@@ -15511,31 +15511,47 @@ oksigenia-access-panel::part(trigger):focus-visible {
   }
 
   /*
-   * Y el subtítulo, que va debajo de la barra de arriba, baja con ella abierta
-   * al sitio de las losas: arriba tapaba el rumbo de la pantalla grande.
+   * **Y el subtítulo, encima de la pantalla grande y no encima de lo que se
+   * lee en ella.**
    *
-   * **Pero no hasta abajo del todo**: ahí, en la última franja de la pantalla
-   * de navegación, va el modo del TCAS —«TCAS STBY» en tierra— con la
-   * distancia al destino y la escala, como en la de un avión de verdad. El
-   * subtítulo se apoyaba encima y lo tapaba los segundos que duraba, que en
-   * tierra es justo cuando se pregunta por qué la pantalla no enseña a nadie.
-   * Medido en un teléfono de 844 × 390: el rótulo empieza un 12 % del alto de
-   * la pantalla por encima de su borde de abajo, así que el subtítulo sube un
-   * 14 % de ese alto —el de `.cuadro--grande > .tablero`, aquí abajo— y queda
-   * encima de la franja, en cualquier teléfono. Ver `scripts/ver-hoja.mjs`.
+   * Arriba, debajo de la barra, tapaba el rumbo de la pantalla grande; luego
+   * bajó al sitio de las losas, apoyado encima de la franja del TCAS, y ahí
+   * seguía tapando la pantalla que se había puesto en grande para leerla: la
+   * rosa y la radio en la de navegación, las cintas en la de vuelo. «Follow
+   * the arrow…» encima del instrumento. No hay sitio del instrumento que se
+   * pueda tapar, así que la pantalla grande deja una fila para él: mide una
+   * línea de subtítulo menos (`--fila-del-subtitulo`, la letra con su
+   * interlínea, el relleno y el filo de `.insignia` y un respiro), y el
+   * subtítulo se apoya en su borde de arriba. Si un día no cabe en una línea,
+   * crece hacia arriba, sobre la fila de los botones —deja pasar el toque,
+   * ver más arriba—, y no hacia la pantalla. Lo mide `verificar-carteles.mjs`.
+   *
+   * La altura en grande de cabina (`.insignia--cifra`) va arriba por su
+   * regla; con la pantalla grande, aquí, como el subtítulo.
    */
-  .hud.hay-cuadro-grande .hud__abajo > [data-hud="hint"] {
+  .hud {
+    --fila-del-subtitulo: calc(
+      var(--voz-glosa) / var(--escala, 1) * 1.3 + 14px + 8px
+    );
+    --alto-del-grande: calc(
+      (var(--alto-visible) - 64px - 92px) / var(--escala, 1) -
+        var(--fila-del-subtitulo)
+    );
+  }
+
+  .hud.hay-cuadro-grande .hud__abajo > [data-hud="hint"],
+  .hud.hay-cuadro-grande.hud--cabina .hud__abajo > [data-hud="hint"].insignia--cifra {
     top: auto;
     bottom: calc(
-      (20px + 56px + 12px) / var(--escala, 1) +
-        (var(--alto-visible) - 64px - 92px) / var(--escala, 1) * 0.14
+      (20px + 56px + 12px) / var(--escala, 1) + var(--alto-del-grande) + 8px
     );
+    line-height: 1.3;
   }
 
   .hud .cuadro.cuadro--grande > .tablero {
     display: block;
     width: auto;
-    height: calc((var(--alto-visible) - 64px - 92px) / var(--escala, 1));
+    height: var(--alto-del-grande);
     pointer-events: auto;
     cursor: zoom-out;
   }

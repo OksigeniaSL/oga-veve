@@ -980,7 +980,6 @@ import { pintarLaRadio, type RadioEnElCuadro } from "./ui/radio-en-la-rosa";
 import { TurnoDelMorse } from "./audio/morse";
 import {
   colocacionDeLaAguja,
-  MINUTOS_HASTA_LA_ESTACION,
   ndbDelCampo,
   SeguirLaAguja,
   TOPE_POR_DEBAJO_DE_DIEZ_MIL,
@@ -990,7 +989,6 @@ import {
 import {
   colocacionDelRadial,
   EnQueRadialEstoy,
-  MINUTOS_HASTA_LA_RADIO,
   vorDelCampo,
   type ColocacionDelRadial,
   type SucesoDelRadial,
@@ -1341,13 +1339,13 @@ import {
   type LoRecordado,
 } from "./flight/tren";
 import {
+  cargaDelEjercicio,
   cargaParaElPlan,
   comoVaElDeposito,
   hayQueLlenar,
   llamadaDeCombustible,
   loQueCabe,
   masaConCombustible,
-  quemaEsperando,
   quemaPorSegundo,
   reservaEnKilos,
   seCargaAlCambiarDeDestino,
@@ -17626,6 +17624,14 @@ export class Game {
      * circuito para volar con un motor. Ver `dondeEmpiezaElEjercicio`.
      */
     const colocacion = this.ejercicioDeHoy?.colocacion;
+    /*
+     * **Y el depósito, con el vuelo del ejercicio**: de donde empieza hasta
+     * casa, con el alternativo de casa, la maniobra y la reserva. `repostar`
+     * cargó el tramo desde casa, que sin destino es un vuelo local, y la
+     * tormenta empieza a ochenta millas. Antes de la velocidad de entrada y
+     * del gas, que salen de lo que pesa. Ver `cargaDelEjercicio`.
+     */
+    if (colocacion) this.cargarParaElEjercicio(this.startPosition());
     const configurado = !colocacion && this.aircraft.trenRetractil;
     const entrada =
       colocacion === "autorrotacion"
@@ -24231,17 +24237,7 @@ export class Game {
          */
         this.radioAlDia().quitar("adf");
         if (this.identificadaYa?.startsWith("adf ")) this.identificadaYa = null;
-        /*
-         * **Y el depósito, con lo del ejercicio**: se carga para el vuelo de
-         * casa a casa, y la radio queda a seis minutos de ida y otros tantos
-         * de vuelta. Sin esto, a mitad de la curva se declaraba «minimum
-         * fuel», que es justo lo que una salida bien preparada no hace. Tres
-         * veces el tramo, a lo que se quema esperando: ida, vuelta y margen.
-         */
-        this.combustible = Math.min(
-          loQueCabe(this.aircraft),
-          this.combustible + quemaEsperando(this.aircraft) * 3 * MINUTOS_HASTA_LA_ESTACION,
-        );
+        // El depósito ya lleva el vuelo del ejercicio: ver `cargarParaElEjercicio`.
         return contar("aguja-adf", "ejercicio.aguja.antes", "palabra.practica");
       case "sintonizar":
         return contar("aguja-adf", "ejercicio.aguja.sintonizar", "palabra.practica");
@@ -24385,11 +24381,8 @@ export class Game {
         const c = this.dondeEmpiezaElRadial();
         if (c) radio.curso = c.curso;
         if (this.identificadaYa?.startsWith("nav ")) this.identificadaYa = null;
-        // El depósito, con lo del ejercicio, por lo mismo que en la aguja: ver `atenderALaAguja`.
-        this.combustible = Math.min(
-          loQueCabe(this.aircraft),
-          this.combustible + quemaEsperando(this.aircraft) * 3 * MINUTOS_HASTA_LA_RADIO,
-        );
+        // El depósito ya va con el vuelo del ejercicio, de donde empieza a casa:
+        // ver `cargarParaElEjercicio` (H26d), que quitó el parche de la aguja.
         return contar("cdi-a-un-lado", "ejercicio.radial.antes", "palabra.practica");
       }
       case "sintonizar":
@@ -25238,6 +25231,21 @@ export class Game {
    */
   private repostar(): void {
     this.repostarPara(this.salidaId, this.destinoId);
+  }
+
+  /**
+   * **Llenar para un ejercicio que empieza en el aire**, desde `desde`: lo
+   * que queda hasta casa, su alternativo, la maniobra y la reserva. El tramo
+   * del repostaje se queda como lo dejó `repostar`: al apagar en casa, el
+   * camión llena para el tramo que sigue. Ver `cargaDelEjercicio`.
+   */
+  private cargarParaElEjercicio(desde: { x: number; z: number }): void {
+    const campos = this.camposDelVuelo();
+    const casa = campos.find((c) => c.id === this.scenario.id) ?? campos[0]!;
+    this.combustible = cargaDelEjercicio(this.aircraft, desde, casa, campos);
+    this.quemaDeAhora = 0;
+    this.avisadoDeLaReserva = false;
+    this.llamadaDicha = "nada";
   }
 
   /** Llenar para el tramo de `salidaId` a `destinoId`. Ver `repostar`. */

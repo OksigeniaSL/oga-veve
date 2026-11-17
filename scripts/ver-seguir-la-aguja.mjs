@@ -79,6 +79,9 @@ const leer = (page) =>
       relativa: adf?.lectura.relativa ?? null,
       piloto: o.pilotoAutomatico(),
       tarjeta: o.tarjeta?.()?.dibujo ?? null,
+      // Lo que se le ha dicho a la torre del combustible, y lo que queda.
+      llamada: j.llamadaDicha,
+      kilos: j.combustible,
     };
   });
 
@@ -171,6 +174,13 @@ try {
       await pausa(150);
     }
     comprobar("se acaba al pasar por encima de FV", pasada?.aguja.cierre === "hecho", pasada ? `relativa ${Math.round(pasada.relativa ?? -1)}°` : "no llegó");
+    /*
+     * **Y sin «minimum fuel»**: el depósito lleva el vuelo del ejercicio, de
+     * donde empieza hasta casa. Con lo del tramo desde casa, en la avioneta
+     * se declaraba a mitad de la curva. Ver `cargaDelEjercicio`.
+     */
+    const alPasar = pasada ?? r;
+    comprobar("sin «minimum fuel»: el depósito lleva el vuelo del ejercicio", alPasar.llamada === "nada", `${alPasar.llamada} · ${Math.round(alPasar.kilos)} kg al pasar`);
     const a = (pasada ?? r).aguja;
     const parte = a.lejosAlEmpezar ? a.desvio / a.lejosAlEmpezar : 0;
     if (vuelo.viento === null)

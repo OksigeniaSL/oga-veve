@@ -350,6 +350,9 @@ try {
           salioYVolvio,
           rodeada: rodeadaEn !== null,
           percance: o.percance(),
+          // Lo que se le ha dicho a la torre del combustible, y lo que queda.
+          llamada: o.juegoParaTrazas().llamadaDicha,
+          kilos: o.juegoParaTrazas().combustible,
           reloj: o.reloj() - t0,
           instructor: todo.instructor.slice(antes.instructor),
           torre: todo.torre ?? [],
@@ -388,6 +391,16 @@ try {
         r.radio.filter((k) => /deviation/.test(k)).slice(0, 1).join("") || `no · ${r.radio.slice(-3).join(" | ")}`,
       );
     comprobar("sin percance: nadie se hace daño", !r.percance, r.percance ?? "ninguno");
+    /*
+     * **Y sin «minimum fuel»**: el ejercicio empieza a ochenta millas y el
+     * depósito lleva ese vuelo, con el alternativo de casa y la reserva. Ver
+     * `cargaDelEjercicio`.
+     */
+    comprobar(
+      "sin «minimum fuel»: el depósito lleva el vuelo del ejercicio",
+      r.llamada === "nada",
+      `${r.llamada} · ${Math.round(r.kilos)} kg al acabar`,
+    );
     if (MODO === "rodear") {
       const t = r.tormenta;
       comprobar("no entra nunca en el rojo", !r.entro, `entró ${r.entro}`);
