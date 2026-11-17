@@ -726,6 +726,12 @@ pies, el morro de −2,1° a 3,5°, y **tocó a 1,02 m/s, a 241 m del umbral** y
 ley del banco ya devolvía la palanca hacia delante (de −0,02 a −0,05): el
 colchón hacía su parte. Una tirada no es una cifra: es la que hay.
 
+`verificar-despegue.mjs tenerife-norte taguato`, el JAZ 20: **18 de 18**; rota
+a 27 m/s a los 297 m y sube a 3,8 m/s de media de los 8 a los 18 s sin bajar
+de donde se soltó (en la nota H25b, 2,3 a 2,7). El de Guyrami con el JAZ 90 y
+el vuelo entero del JAZ 20 no se pudieron correr: el candado del navegador no
+llegó a tiempo. Guyrami vuela el modelo sencillo, que en el aire no cambia.
+
 ### Lo que no
 
 - **El cabeceo del efecto suelo.** El suelo también quita bajada en la cola,
