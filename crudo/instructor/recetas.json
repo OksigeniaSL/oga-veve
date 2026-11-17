@@ -2297,5 +2297,14 @@
   ],
   "vuelo.paso.velocidad.370": [
     "vuelo.paso.velocidad.370"
+  ],
+  "vuelo.compensadorParaDespegar": [
+    "vuelo.compensadorParaDespegar"
+  ],
+  "vuelo.compensadorDeDespeguePuesto": [
+    "vuelo.compensadorDeDespeguePuesto"
+  ],
+  "vuelo.avisoDeConfiguracionCompensador": [
+    "vuelo.avisoDeConfiguracionCompensador"
   ]
 }

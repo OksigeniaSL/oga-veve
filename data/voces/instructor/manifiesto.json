@@ -1671,6 +1671,10 @@
       "ms": 5607,
       "h": "98eec3b59c"
     },
+    "vuelo.avisoDeConfiguracionCompensador": {
+      "ms": 6307,
+      "h": "e14a3e9ceb"
+    },
     "vuelo.baches": {
       "ms": 6507,
       "h": "b9b40716c2"
@@ -1718,6 +1722,14 @@
     "vuelo.comoSeAterriza.helice": {
       "ms": 12907,
       "h": "f27e4b7946"
+    },
+    "vuelo.compensadorDeDespeguePuesto": {
+      "ms": 5007,
+      "h": "3e5e6906ae"
+    },
+    "vuelo.compensadorParaDespegar": {
+      "ms": 5707,
+      "h": "79f437fe8b"
     },
     "vuelo.comprometido": {
       "ms": 2567,
@@ -5235,6 +5247,15 @@
     ],
     "vuelo.paso.velocidad.370": [
       "vuelo.paso.velocidad.370"
+    ],
+    "vuelo.compensadorParaDespegar": [
+      "vuelo.compensadorParaDespegar"
+    ],
+    "vuelo.compensadorDeDespeguePuesto": [
+      "vuelo.compensadorDeDespeguePuesto"
+    ],
+    "vuelo.avisoDeConfiguracionCompensador": [
+      "vuelo.avisoDeConfiguracionCompensador"
     ]
   }
 }
