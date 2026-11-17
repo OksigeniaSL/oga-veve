@@ -412,20 +412,19 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
         g.left >= 0 &&
         g.right <= innerWidth;
       /*
-       * **Y con la pantalla en grande, el subtítulo no tapa el modo del
-       * TCAS.** En tierra la pantalla de navegación escribe «TCAS STBY» en su
-       * franja de abajo, y el subtítulo, que baja ahí con ella puesta, se le
-       * apoyaba encima los segundos que duraba. Se pone uno largo y se mide
-       * en el mismo instante, que el HUD lo borra en el fotograma siguiente.
+       * **Y con la pantalla en grande, el subtítulo no tapa nada de ella.**
+       * Se le apoyaba encima los segundos que duraba: primero sobre el rumbo,
+       * luego sobre el «TCAS STBY» de la franja de abajo, y después sobre la
+       * rosa y la radio, que es lo que se ha puesto en grande para leerlo. Se
+       * pone uno largo y se mide en el mismo instante, que el HUD lo borra en
+       * el fotograma siguiente. Ver la fila del subtítulo en `style.css`.
        */
       const hint = document.querySelector('[data-hud="hint"]');
       hint.textContent =
         "Rodá despacio hasta el punto de espera de la pista y esperá ahí la autorización de la torre";
       const sub = hint.getBoundingClientRect();
-      const rotulo = [...document.querySelectorAll('[data-carta="solo-ta"]')]
-        .map((e) => e.getBoundingClientRect())
-        .find((r) => r.width > 0 && r.height > 0);
-      const tapaElTcas = !!rotulo && sub.width > 0 && pisa(sub, rotulo);
+      const tapaLaPantalla = sub.width > 0 && pisa(sub, g);
+      const subFuera = sub.top < 0;
       hint.textContent = "";
       dibujo.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       await new Promise((r) => setTimeout(r, 300));
@@ -441,8 +440,10 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
         grande: Math.round(g.height),
         sale: grande,
         vuelve,
-        conTcas: !!rotulo,
-        tapaElTcas,
+        tapaLaPantalla,
+        subFuera,
+        subtitulo: `${Math.round(sub.top)}–${Math.round(sub.bottom)}`,
+        pantalla: `${Math.round(g.top)}–${Math.round(g.bottom)}`,
       };
     });
     comprobar(
@@ -484,13 +485,12 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
         `${losas.grande} px de alto en grande · ${losas.vuelve ? "vuelven las losas" : "no vuelven"}`,
         "«o que tocar una pantalla la ponga grande»",
       );
-      if (losas.conTcas)
-        comprobar(
-          `${donde0}: en grande, el subtítulo no tapa «TCAS STBY»`,
-          !losas.tapaElTcas,
-          losas.tapaElTcas ? "se pisan" : "cada uno en su sitio",
-          "el subtítulo tapaba unos segundos el rótulo del TCAS en tierra",
-        );
+      comprobar(
+        `${donde0}: en grande, el subtítulo no tapa la pantalla ni se sale por arriba`,
+        !losas.tapaLaPantalla && !losas.subFuera,
+        `subtítulo de ${losas.subtitulo} px · pantalla de ${losas.pantalla} px`,
+        "el subtítulo tapaba la pantalla puesta en grande: el rumbo, el TCAS y luego la rosa",
+      );
     }
   }
 
