@@ -43,11 +43,11 @@ describe("la marca de despegue", () => {
     }
   });
 
-  it("es el timón que sostiene el avión a 1,2 veces su pérdida con los flaps de despegue", () => {
+  it("es el timón que sostiene el avión a 1,3 veces su pérdida con los flaps de despegue", () => {
     const flaps = flapsDeDespegue(PANAMBI);
     const v = Math.max(PANAMBI.rotationSpeed, perdidaCon(PANAMBI, flaps) * SUBE_SOBRE_LA_PERDIDA);
     expect(compensadorDeDespegue(PANAMBI).marca).toBeCloseTo(timonQueSostiene(PANAMBI, v, flaps), 6);
-    // Y la franja, entre las de 1,15 y 1,3.
+    // Y la franja, entre las de 1,2 y 1,4.
     const lenta = timonQueSostiene(
       PANAMBI,
       Math.max(PANAMBI.rotationSpeed, perdidaCon(PANAMBI, flaps) * FRANJA_SOBRE_LA_PERDIDA.lenta),
@@ -60,8 +60,8 @@ describe("la marca de despegue", () => {
    * **Con la velocidad atada a la pérdida, el peso se va de la cuenta**: el
    * ala vuela al mismo ángulo pese lo que pese. Lo que mueve la marca en un
    * avión de verdad es el centro de gravedad, que este modelo no tiene. Salvo
-   * donde manda la Vr: más ligero, 1,2 veces la pérdida cae por debajo de
-   * ella, y a la misma velocidad un avión más ligero pide menos morro arriba.
+   * donde manda la Vr: más ligero, su velocidad cae por debajo de ella, y a la
+   * misma velocidad un avión más ligero pide menos morro arriba.
    */
   it("sale igual con el peso de la ficha y más cargado", () => {
     for (const a of DE_ALA) {

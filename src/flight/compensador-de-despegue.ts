@@ -19,8 +19,8 @@
  * despegue y el indicador lleva una franja, no una raya. Este modelo no tiene
  * centro de gravedad —el par de cabeceo es `cm0 + cmα·α + cmδ·δ`, igual con
  * cualquier carga—, así que la marca es el timón que sostiene el avión, con
- * sus flaps de despegue y el peso de hoy, a la velocidad de recién
- * despegado (`timonQueSostiene` en `fdm.ts`). Con esa velocidad atada a la
+ * sus flaps de despegue y el peso de hoy, a la velocidad de la subida
+ * inicial (`timonQueSostiene` en `fdm.ts`). Con esa velocidad atada a la
  * pérdida el peso se va de la cuenta: el ala vuela al mismo ángulo pese lo que
  * pese. Si el modelo gana un día su centro de gravedad, la marca lo seguirá
  * sola.
@@ -36,46 +36,43 @@ import { perdidaCon } from "./velocidades-de-despegue";
 
 /**
  * **La velocidad para la que se compensa, en veces la pérdida con los flaps de
- * despegue**: 1,2, y nunca menos que la Vr.
+ * despegue**: 1,3, y nunca menos que la Vr.
  *
- * Es la de recién despegado: el margen clásico de la velocidad de seguridad
- * al despegue, la V2 de un avión de transporte, que la norma pone entre 1,13 y
- * 1,2 veces su pérdida; en los tres reactores cae a menos de diez nudos de la
- * suya. En la avioneta son 56 nudos, la de pasar los obstáculos del despegue
- * corto del 172S («an obstacle clearance speed of 56 KIAS», *Information
- * Manual*, sección 4).
+ * Es la de la subida inicial, que es lo que dice el manual de la FAA: bien
+ * compensado para despegar, «some back-elevator pressure may be required to
+ * hold this attitude until the proper climb speed is established»
+ * (FAA-H-8083-3C, 2021, p. 6-5). En los tres reactores cae entre la V2 más
+ * trece y la V2 más veinte nudos; en la avioneta, 61 nudos, junto a su Vx de 62
+ * (172S *Information Manual*, p. 4-5).
  *
- * Se probó con 1,3, la de la subida inicial, que es lo que dice el manual de la
- * FAA: bien compensado para despegar, «some back-elevator pressure may be
- * required to hold this attitude until the proper climb speed is established»
- * (FAA-H-8083-3C, 2021, p. 6-5). En el navegador, el JAZ 20 en Taguato soltado
- * a quince metros bajaba a 3,7 m/s a los cuatro segundos: buscando su
- * velocidad, el morro caía, y la ayuda de Taguato, que por debajo de su
- * velocidad segura también pide morro abajo, empujaba igual. Un piloto lo
- * sostiene con la mano mientras acelera; quien tiene diez años y suelta, no.
- * Con 1,2, soltado recién despegado, todos siguen subiendo en los tres
- * peldaños del modelo de coeficientes (ADR 0027, enmienda H21a).
+ * Medido con el banco de mesa (ADR 0027, enmienda H21a): de 1,2 a 1,3 ninguno
+ * baja soltando los mandos después de rotar, en los tres peldaños; con 1,35 el
+ * Seneca, en el peldaño sin ayudas, ya baja antes de subir. **Y se probó 1,2 en
+ * el navegador**: el JAZ 20 se iba del suelo solo en Taguato, a 26 m/s con su
+ * Vr en 28, sin que saliera la Vr ni la flecha de tirar. Una marca que levanta
+ * el avión antes de la Vr no es la de despegue.
  */
-export const SUBE_SOBRE_LA_PERDIDA = 1.2;
+export const SUBE_SOBRE_LA_PERDIDA = 1.3;
 
 /**
- * **La franja de despegue**, en las mismas veces: lo que sostiene entre 1,15 y
- * 1,3 veces la pérdida. Es la franja verde del indicador de un reactor, que
+ * **La franja de despegue**, en las mismas veces: lo que sostiene entre 1,2 y
+ * 1,4 veces la pérdida. Es la franja verde del indicador de un reactor, que
  * cubre los centros de gravedad con los que se puede despegar; aquí, el margen
  * alrededor de la marca que se acierta a mano con las teclas, y lo que da por
- * puesto la lista. Por debajo de 1,15 el ala soltada se acerca a su avisador
- * de pérdida, que salta a 1,07 (`MARGEN_DEL_AVISADOR`); por encima de 1,3 es lo
- * que se probó y no se quedó, arriba.
+ * puesto la lista. Ancha a propósito, para que se vea en el indicador; y por
+ * eso la tarjeta y la instructora la ponen en la marca y no en el borde: en el
+ * de morro abajo, soltando los mandos recién despegado, el 747 vuelve a tocar
+ * en el peldaño sin ayudas y el Seneca baja a metro y medio de la pista.
  */
-export const FRANJA_SOBRE_LA_PERDIDA = { lenta: 1.15, rapida: 1.3 } as const;
+export const FRANJA_SOBRE_LA_PERDIDA = { lenta: 1.2, rapida: 1.4 } as const;
 
 /** **Dónde va el compensador para despegar**: la marca y su franja, de −1 a 1. */
 export interface CompensadorDeDespegue {
   /** Donde lo pone la tarjeta al tocarla, o la instructora. */
   readonly marca: number;
-  /** El lado de morro abajo de la franja: la de 1,3 veces la pérdida. */
+  /** El lado de morro abajo de la franja: la de 1,4 veces la pérdida. */
   readonly desde: number;
-  /** El de morro arriba: la de 1,15. */
+  /** El de morro arriba: la de 1,2. */
   readonly hasta: number;
 }
 
