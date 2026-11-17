@@ -2420,5 +2420,23 @@
   ],
   "ejercicio.radial.sintonizar": [
     "ejercicio.radial.sintonizar"
+  ],
+  "ejercicio.interceptar.aTope": [
+    "ejercicio.interceptar.aTope"
+  ],
+  "ejercicio.interceptar.antes": [
+    "ejercicio.interceptar.antes"
+  ],
+  "ejercicio.interceptar.establecido": [
+    "ejercicio.interceptar.establecido"
+  ],
+  "ejercicio.interceptar.establecidoAlViento": [
+    "ejercicio.interceptar.establecidoAlViento"
+  ],
+  "ejercicio.interceptar.pasado": [
+    "ejercicio.interceptar.pasado"
+  ],
+  "ejercicio.interceptar.seMueve": [
+    "ejercicio.interceptar.seMueve"
   ]
 }

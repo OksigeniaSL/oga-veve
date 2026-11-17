@@ -283,6 +283,30 @@
       "ms": 4607,
       "h": "0c067aeffc"
     },
+    "ejercicio.interceptar.aTope": {
+      "ms": 6607,
+      "h": "73e0108d76"
+    },
+    "ejercicio.interceptar.antes": {
+      "ms": 9207,
+      "h": "192148c505"
+    },
+    "ejercicio.interceptar.establecido": {
+      "ms": 5807,
+      "h": "00bf85db2a"
+    },
+    "ejercicio.interceptar.establecidoAlViento": {
+      "ms": 10207,
+      "h": "e9cbdb650a"
+    },
+    "ejercicio.interceptar.pasado": {
+      "ms": 7307,
+      "h": "d483bbc6d1"
+    },
+    "ejercicio.interceptar.seMueve": {
+      "ms": 8607,
+      "h": "d999bc4b34"
+    },
     "ejercicio.otraVez": {
       "ms": 5507,
       "h": "4faebff6b1"
@@ -5522,6 +5546,24 @@
     ],
     "ejercicio.radial.sintonizar": [
       "ejercicio.radial.sintonizar"
+    ],
+    "ejercicio.interceptar.aTope": [
+      "ejercicio.interceptar.aTope"
+    ],
+    "ejercicio.interceptar.antes": [
+      "ejercicio.interceptar.antes"
+    ],
+    "ejercicio.interceptar.establecido": [
+      "ejercicio.interceptar.establecido"
+    ],
+    "ejercicio.interceptar.establecidoAlViento": [
+      "ejercicio.interceptar.establecidoAlViento"
+    ],
+    "ejercicio.interceptar.pasado": [
+      "ejercicio.interceptar.pasado"
+    ],
+    "ejercicio.interceptar.seMueve": [
+      "ejercicio.interceptar.seMueve"
     ]
   }
 }
