@@ -1025,7 +1025,19 @@ export function sueloDelTrafico(
       let deReserva: ReturnType<SueloDelTrafico["salida"]> = null;
       let remonte: ReturnType<SueloDelTrafico["salida"]> = null;
       let remonteEncima: ReturnType<SueloDelTrafico["salida"]> = null;
-      for (const boca of deCabecera.slice(0, BOCAS_DE_SALIDA)) {
+      for (let i = 0; i < deCabecera.length; i++) {
+        /*
+         * **De las primeras bocas desde la cabecera; y si ninguna sirve, de las demás**,
+         * remontando más pista. En El Hierro, por la 34, del grupo del 3 no se llega
+         * a ninguna de las seis primeras sin pisar la pista —la ruta más corta va por
+         * las rayas de rodaje pintadas sobre ella—, y sí a la C y a la D, más arriba,
+         * por la línea de entrada de su grupo: se entra por ahí y se remonta, que es
+         * lo que se hace en un campo sin calle paralela, y lo que publica su AIP, con
+         * salida autónoma de todos sus puestos (AD 2-GCHI PDC 1-2). Sin esto, de esos
+         * puestos no salía nadie, ni del 2A por la 34 ni del 1 por la 16.
+         */
+        if (i >= BOCAS_DE_SALIDA && (deReserva || remonte || remonteEncima)) break;
+        const boca = deCabecera[i]!;
         const daSuPista = pistaDesde(boca) >= pistaQueNecesita;
         if (!daSuPista && remonte) continue;
         const nudo = grafo.nudos[boca.nudo]!;
