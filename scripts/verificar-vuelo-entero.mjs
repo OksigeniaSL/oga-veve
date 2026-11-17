@@ -7350,6 +7350,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       );
       if (vaA > quiere + 0.5) c.throttle = Math.min(c.throttle, 0.02);
       c.brakes = vaA > quiere + 1.5 ? Math.min(1, (vaA - quiere - 1.5) * 0.5) : 0;
+      /*
+       * **Y cuando la raya pide parar, se para.** Con el freno solo por encima de
+       * lo que pide más metro y medio, el avión seguía arrastrándose al ralentí
+       * por debajo de eso: en el puesto de Los Rodeos, con el JAZ 50, siete metros
+       * más allá de donde la raya llegaba a cero, con la rueda de morro tres
+       * pasada del punto. Quien juega frena ahí, que es lo que le pide el alto del
+       * señalero con el freno dibujado; y así lo que se mide es dónde para la raya.
+       */
+      if (quiere < 0.3 && vaA < 3) {
+        c.throttle = 0;
+        c.brakes = 1;
+      }
       // Rodando por las calles: la salida rápida se toma a lo suyo y no cuenta.
       if (!s.onRunway && fase === "a-plataforma")
         rodajeMasRapido = Math.max(rodajeMasRapido, vaA);
