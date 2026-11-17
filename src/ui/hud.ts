@@ -53,7 +53,7 @@ import { DIBUJOS, Senal } from "./senal";
 import { VentanaDeHistoria } from "./ventana-de-historia";
 import { OJO } from "./teclas";
 import { luzDeTren } from "../flight/tren";
-import { luzDeFlaps } from "../flight/flaps";
+import { anguloDePerdida, luzDeFlaps } from "../flight/flaps";
 import { Mapa } from "./mapa";
 import type { Scenario } from "../world/scenarios";
 import { botonesDeLosPaneles } from "./paneles";
@@ -3731,7 +3731,10 @@ export class Hud {
         // helicóptero no tiene ala que entre en pérdida: bajando sin motor, el
         // aire le da al fuselaje desde abajo y el marco se encendía en plena
         // autorrotación (ADR 0026, enmienda H16a).
-        perdida: !state.onGround && !this.ficha.helicoptero && state.alpha > this.ficha.aero.alphaStall,
+        perdida:
+          !state.onGround &&
+          !this.ficha.helicoptero &&
+          state.alpha > anguloDePerdida(this.ficha, mandos?.flaps ?? 0),
         /*
          * Y el mundo, para la carta. Llegaba solo a las pantallas de la
          * cabina y por eso el cuadro plano seguía con la brújula sobre el

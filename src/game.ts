@@ -1545,6 +1545,7 @@ import {
   type CargaDeFlaps,
 } from "./flight/carga-de-flaps";
 import {
+  anguloDePerdida,
   flapsDeDespegue,
   muescaDeAproximacion,
   muescaMasCercana,
@@ -20678,12 +20679,13 @@ export class Game {
      */
     this.audio.ponerOido(oidoDe(this.vistaQueHay()));
     // La bocina avisa al 85 % del ángulo crítico de esta aeronave concreta,
-    // que es donde la ponen los fabricantes.
+    // que es donde la ponen los fabricantes: el de los flaps que lleva, que
+    // con slats o Krueger fuera es más. Ver `anguloDePerdida`.
     const estados = this.flight.motoresAhora?.();
     this.audio.update(
       this.flight.state,
       this.mandosQueSeOyen,
-      this.aircraft.aero.alphaStall * 0.85,
+      anguloDePerdida(this.aircraft, this.input.controls.flaps) * 0.85,
       TRAQUETEO[this.superficie],
       // Con uno parado, se oye la parte que va. Ver `enMarcha` en `audio.ts`.
       estados ? enMarcha(estados) / Math.max(1, estados.length) : 1,
@@ -20823,7 +20825,7 @@ export class Game {
         ),
         perdida:
           !this.flight.state.onGround &&
-          this.flight.state.alpha > this.aircraft.aero.alphaStall,
+          this.flight.state.alpha > anguloDePerdida(this.aircraft, this.input.controls.flaps),
         // Y adónde vas, que es de lo que va una pantalla de navegación:
         // «¿por qué no tengo datos como distancia al aeropuerto?».
         objetivo: this.aDondeVoy,

@@ -1520,6 +1520,26 @@ export interface AircraftConfig {
   flapsLift: number;
   flapsDrag: number;
   /**
+   * **Lo que suman los flaps a la sustentación en cada muesca**, con el mismo
+   * ángulo de ataque, si no es la recta de `flapsLift` con la palanca. Una
+   * cifra por muesca sacada, en el orden de `muescasDeFlaps` sin su cero; la
+   * última, la de aterrizar, es `flapsLift`. Ver `sustentacionDeLosFlaps` en
+   * `flaps.ts`.
+   */
+  sustentacionPorMuesca?: readonly number[];
+  /**
+   * **Lo que lleva en el borde de ataque**, si lleva algo: slats o Krueger, y
+   * el ángulo de pérdida que le dan en cada muesca, rad, una cifra por muesca
+   * sacada como `vfePorMuesca`. Salen con la palanca de flaps, que es como
+   * salen en los reactores de la flota. Sin él, la pérdida es la de `aero` con
+   * cualquier muesca: un ala sin nada en el borde de ataque no gana ángulo.
+   * Ver `anguloDePerdida` en `flaps.ts`.
+   */
+  bordeDeAtaque?: {
+    readonly dispositivo: "slats" | "krueger";
+    readonly perdidaPorMuesca: readonly number[];
+  };
+  /**
    * **Los grados de los flaps en cada muesca de la palanca**, empezando por el
    * cero de recogidos. Una cifra por muesca, o ninguna en el que no los lleva.
    *
@@ -3833,6 +3853,34 @@ export const YVAGA: AircraftConfig = {
   llevaFlaps: true,
   flapsLift: 1.0,
   flapsDrag: 0.065,
+  /*
+   * **La muesca de despegue sube poco la recta: 0,14**, y no un tercio de lo
+   * de aterrizar. Es lo que hace que se vaya del suelo a 10,1°, la actitud que
+   * da Boeing para el 747 con los flaps de despegue (D. Carbaugh, «Tail
+   * Strikes: Prevention», *AERO* QTR_01 2007, figura 1), con el efecto suelo;
+   * con 0,333 se iba a 8,4° (notas H29c (2) y H29e del ADR 0002). Las otras
+   * dos, como estaban: la de aterrizar la fija la Vref, 1,3 veces su pérdida.
+   */
+  sustentacionPorMuesca: [0.14, 2 / 3, 1.0],
+  /*
+   * **Y los Krueger del borde de ataque**: los de dentro, y los de curvatura
+   * variable de fuera, que salen con los flaps. Con ellos fuera la pérdida
+   * llega más tarde, y por eso un 747 lleva con los de despegue un CL máximo
+   * de 2,03 (J. Jenkinson, P. Simpkin y D. Rhodes, *Civil Jet Aircraft
+   * Design*, 1999, fichero de datos A, tabla 3, el 747-100), cuando con un
+   * solo ángulo de pérdida el modelo le daba 1,73. Con 0,14 de sustentación,
+   * 2,03 es el ala a (2,03 − 0,2 − 0,14) / 4,8 = 0,352 rad, 20,2°. La V2 queda
+   * a 1,25 veces esa pérdida, sobre el 1,13 de la norma, y la Vr a 1,19.
+   *
+   * Las otras dos muescas, con el ángulo de la ficha, el de antes. Con los de
+   * aterrizar la pérdida la fija la Vref, 1,3 veces ella, y el flap de salida
+   * muy bajado adelanta la pérdida, así que los Krueger no se suman enteros; la
+   * de veinte no tiene aquí cifra propia, y no se ha movido.
+   */
+  bordeDeAtaque: {
+    dispositivo: "krueger",
+    perdidaPorMuesca: [(2.03 - 0.2 - 0.14) / 4.8, 0.25, 0.25],
+  },
   // Cinco, veinte y treinta: los de un cuatrirreactor de fuselaje ancho, con
   // el recorrido más largo de la flota. Ocho segundos por muesca.
   muescasDeFlaps: [0, 5, 20, 30],

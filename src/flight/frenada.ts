@@ -44,7 +44,11 @@ import { masaDe, tieneReversa, type AircraftConfig } from "./aircraft";
 import { actitudEnTierra } from "./apoyo";
 import { GRAVITY, SEA_LEVEL_DENSITY } from "./atmosphere";
 import { efectoSueloRodando } from "./efecto-suelo";
-import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
+import {
+  fraccionDeLosFlaps,
+  resistenciaDeLosFlaps,
+  sustentacionDeLosFlaps,
+} from "./flaps";
 import { resistenciaDelTren } from "./tren";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 
@@ -241,7 +245,7 @@ export function sustentacionRodando(
   const cl =
     (ac.aero.cl0 +
       ac.aero.clAlpha * actitudEnTierra(ac, velocidad) +
-      ac.flapsLift * Math.max(0, Math.min(1, flaps))) *
+      sustentacionDeLosFlaps(ac, flaps)) *
     efectoSueloRodando(ac).sustentacion;
   return cl * (1 - parteQueSeLlevan(ac, frenosDeTierra));
 }

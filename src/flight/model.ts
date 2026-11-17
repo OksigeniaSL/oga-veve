@@ -313,6 +313,14 @@ export interface InitialConditions {
    * `timonDeEquilibrio`.
    */
   equilibrado?: boolean;
+  /**
+   * **Con qué flaps está equilibrado**, si los lleva fuera, de 0 a 1 como
+   * `ControlInputs.flaps`. Sin él, limpio. Con los de despegue el ala sostiene
+   * el peso con menos ángulo —o con más, si la muesca sube poco la recta—, y
+   * el avión puesto «recién despegado» con el ángulo del ala limpia no nacía
+   * a un g (nota H29e del ADR 0002).
+   */
+  flapsDelEquilibrio?: number;
 }
 
 /** Devuelve la cota del terreno, en metros, para unas coordenadas de mundo. */

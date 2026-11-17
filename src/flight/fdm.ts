@@ -31,7 +31,12 @@ import { Quaternion, Vector3 } from "three";
 import { actitudEnTierra, alturaSobreLasRuedas, brazoDelTren } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
 import { efectoSuelo, efectoSueloRodando } from "./efecto-suelo";
-import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
+import {
+  anguloDePerdida,
+  fraccionDeLosFlaps,
+  resistenciaDeLosFlaps,
+  sustentacionDeLosFlaps,
+} from "./flaps";
 import { anguloDeAviso, SE_CALLA_EL_AVISADOR } from "./avisos-de-actitud";
 import {
   AIRE_ESTANDAR,
@@ -795,14 +800,18 @@ export class CoefficientFlightModel implements FlightModel {
 
   /**
    * **El ángulo de ataque que sostiene el peso** volando nivelado a esa
-   * velocidad y a esa altura, sin flaps, rad: la sustentación igual al peso,
-   * despejada de la recta de la ficha.
+   * velocidad y a esa altura, sin flaps o con los que se digan, rad: la
+   * sustentación igual al peso, despejada de la recta de la ficha.
    */
-  private alfaDeEquilibrio(velocidad: number, altura: number): number {
+  private alfaDeEquilibrio(velocidad: number, altura: number, flaps = 0): number {
     const ac = this.aircraft;
     const qS = 0.5 * airDensity(altura, this.aire) * velocidad * velocidad * ac.wingArea;
     const cl = (masaDe(ac) * GRAVITY) / Math.max(1, qS);
-    return clamp((cl - ac.aero.cl0) / ac.aero.clAlpha, -0.05, ac.aero.alphaStall * 0.85);
+    return clamp(
+      (cl - ac.aero.cl0 - sustentacionDeLosFlaps(ac, flaps)) / ac.aero.clAlpha,
+      -0.05,
+      anguloDePerdida(ac, flaps) * 0.85,
+    );
   }
 
   /**
@@ -810,9 +819,9 @@ export class CoefficientFlightModel implements FlightModel {
    * anula el par de cabeceo con el ángulo de ataque de equilibrio. Ver
    * `timonDeEquilibrio` en `model.ts`.
    */
-  timonDeEquilibrio(): number {
+  timonDeEquilibrio(flaps = 0): number {
     const a = this.aircraft.aero;
-    const alfa = this.alfaDeEquilibrio(this.state.airspeed, this.state.position.y);
+    const alfa = this.alfaDeEquilibrio(this.state.airspeed, this.state.position.y, flaps);
     return clamp(-(a.cm0 + a.cmAlpha * alfa) / a.cmElevator, -1, 1);
   }
 
@@ -845,7 +854,13 @@ export class CoefficientFlightModel implements FlightModel {
      * la velocidad, horizontal. Ver `InitialConditions.equilibrado`.
      */
     if (initial.equilibrado && initial.airspeed > MIN_AIRSPEED)
-      this.rotateAboutRight(this.alfaDeEquilibrio(initial.airspeed, initial.position.y));
+      this.rotateAboutRight(
+        this.alfaDeEquilibrio(
+          initial.airspeed,
+          initial.position.y,
+          initial.flapsDelEquilibrio ?? 0,
+        ),
+      );
     /*
      * **Y el de rueda de cola, puesto en el suelo despacio, en sus tres
      * puntos**, que es como está parado. Se le coloca como a todos, con las
@@ -876,7 +891,8 @@ export class CoefficientFlightModel implements FlightModel {
     this.reponerLosMotores();
     this.updateDerived();
     // Y el timón que lo sostiene, para quien lo coja volando. Ver `timonAhora`.
-    if (initial.equilibrado) this.timonQueSostiene = this.timonDeEquilibrio();
+    if (initial.equilibrado)
+      this.timonQueSostiene = this.timonDeEquilibrio(initial.flapsDelEquilibrio ?? 0);
     /*
      * **Y en el suelo solo si las ruedas tocan.**
      *
@@ -1119,8 +1135,12 @@ export class CoefficientFlightModel implements FlightModel {
     const aspectRatio = (ac.wingSpan * ac.wingSpan) / ac.wingArea;
 
     // Alarga la pérdida en modo arcade en vez de eliminarla: el avión sigue
-    // cayendo si insistís, pero perdona el tirón nervioso de un crío.
-    const stallAngle = a.alphaStall * (1 + 0.45 * this.layers.stallProtection);
+    // cayendo si insistís, pero perdona el tirón nervioso de un crío. La de
+    // los flaps que lleva: con slats o Krueger fuera, más ángulo. Ver
+    // `anguloDePerdida`.
+    const perdidaDelAla = anguloDePerdida(ac, assisted.flaps);
+    const stallAngle = perdidaDelAla * (1 + 0.45 * this.layers.stallProtection);
+    const conLosFlaps = sustentacionDeLosFlaps(ac, assisted.flaps);
     /*
      * **Y el suelo debajo del ala**, que a menos de una envergadura le quita
      * inducida y le da sustentación: el colchón de la recogida y lo que deja
@@ -1136,7 +1156,7 @@ export class CoefficientFlightModel implements FlightModel {
         this.ground(s.position.x, s.position.z),
     );
     const clDelAla =
-      (liftCoefficient(s.alpha, a, stallAngle) + ac.flapsLift * assisted.flaps) *
+      (liftCoefficient(s.alpha, a, stallAngle) + conLosFlaps) *
       suelo.sustentacion;
     /*
      * **Y lo que se llevan los frenos de tierra.** Con todos los paneles
@@ -1237,11 +1257,7 @@ export class CoefficientFlightModel implements FlightModel {
      * es lo que la anuncia, y en cualquier cabina son dos cosas distintas. Ver
      * `anguloDeAviso`. No toca la física: es un instrumento.
      */
-    const umbral = anguloDeAviso(
-      stallAngle,
-      a,
-      ac.flapsLift * assisted.flaps,
-    );
+    const umbral = anguloDeAviso(stallAngle, a, conLosFlaps);
     s.stallWarningAlpha = umbral;
     if (speed <= MIN_AIRSPEED) s.stallWarning = false;
     else if (!s.stallWarning && s.alpha > umbral) s.stallWarning = true;
@@ -1344,7 +1360,7 @@ export class CoefficientFlightModel implements FlightModel {
     let timonDeAhora = timon;
     const cmMoment =
       a.cm0 +
-      a.cmAlpha * anguloQueEstabiliza(s.alpha, a.alphaStall) +
+      a.cmAlpha * anguloQueEstabiliza(s.alpha, perdidaDelAla) +
       a.cmQ * qHat +
       a.cmElevator * timon;
     const cnMoment =
@@ -2264,7 +2280,7 @@ export class CoefficientFlightModel implements FlightModel {
 
     // Limitador de ángulo de ataque: cuanto más cerca de la pérdida, menos
     // autoridad tiene el tirón. No la impide, la hace costar.
-    const margin = this.aircraft.aero.alphaStall;
+    const margin = anguloDePerdida(this.aircraft, controls.flaps);
     const excess = clamp((alpha - margin * 0.82) / (margin * 0.35), 0, 1);
     const limitado =
       controls.elevator > 0
@@ -2640,9 +2656,9 @@ export function timonQueSostiene(a: AircraftConfig, indicada: number, flaps: num
   const qS = 0.5 * SEA_LEVEL_DENSITY * indicada * indicada * a.wingArea;
   const cl = (masaDe(a) * GRAVITY) / Math.max(1, qS);
   const alfa = clamp(
-    (cl - a.aero.cl0 - a.flapsLift * flaps) / a.aero.clAlpha,
+    (cl - a.aero.cl0 - sustentacionDeLosFlaps(a, flaps)) / a.aero.clAlpha,
     -0.05,
-    a.aero.alphaStall * 0.85,
+    anguloDePerdida(a, flaps) * 0.85,
   );
   return clamp(-(a.aero.cm0 + a.aero.cmAlpha * alfa) / a.aero.cmElevator, -1, 1);
 }

@@ -49,6 +49,7 @@ import { loQueCabe, reservaEnKilos } from "../flight/combustible";
 import { familiaDe, patasDe, type Familia } from "./familia";
 import { PALETA } from "./paleta";
 import { vfeDeAterrizaje } from "../flight/limites";
+import { anguloDePerdida, sustentacionDeLosFlaps } from "../flight/flaps";
 
 /**
  * Las tres conversiones del cuadro de mandos, en un solo sitio.
@@ -368,9 +369,12 @@ export function instrumentosDe(a: AircraftConfig): readonly Instrumento[] {
   ];
 }
 
-/** La velocidad de pérdida con este coeficiente de sustentación, m/s. */
-function perdidaCon(a: AircraftConfig, extra: number): number {
-  const clMax = a.aero.cl0 + a.aero.clAlpha * a.aero.alphaStall + extra;
+/** La velocidad de pérdida con los flaps así, m/s. */
+function perdidaCon(a: AircraftConfig, flaps: number): number {
+  const clMax =
+    a.aero.cl0 +
+    a.aero.clAlpha * anguloDePerdida(a, flaps) +
+    sustentacionDeLosFlaps(a, flaps);
   return Math.sqrt((2 * a.mass * 9.81) / (1.225 * a.wingArea * clMax));
 }
 
@@ -393,9 +397,10 @@ function velocidadesDe(a: AircraftConfig): Velocidades {
    */
   const vno = Math.round(vne * 0.8);
   const vs1 = perdidaCon(a, 0) * NUDOS;
-  // Con flaps, del mismo modelo que los hace sustentar: lo que suma el flap
-  // entero al coeficiente de sustentación. Ver `flapsLift`.
-  const vso = a.llevaFlaps ? perdidaCon(a, a.flapsLift) * NUDOS : null;
+  // Con flaps, del mismo modelo que los hace sustentar: los de aterrizar, con
+  // lo que suman y el ángulo de pérdida que dejan. Ver `perdidaCon` en
+  // `velocidades-de-despegue.ts`.
+  const vso = a.llevaFlaps ? perdidaCon(a, 1) * NUDOS : null;
   return {
     vso: vso === null ? null : Math.round(vso),
     // La cabeza del blanco es la VFE de los flaps de aterrizaje, la última de

@@ -46,11 +46,13 @@ import { empujeLleno } from "./fdm";
 import { areaDelMotor, llevaBandera, motorCritico } from "./motores";
 import { resistenciaDelTren } from "./tren";
 import {
+  anguloDePerdida,
   flapsDeDespegue,
   fraccionDeLosFlaps,
   muescaDeAterrizaje,
   muescasDeLaPalanca,
   resistenciaDeLosFlaps,
+  sustentacionDeLosFlaps,
 } from "./flaps";
 import { deceleracionRodando } from "./frenada";
 import { ROZAMIENTO } from "../world/superficie";
@@ -199,7 +201,7 @@ function frenaElAire(
   v: number,
   flaps: number,
 ): number {
-  const cl = a.aero.cl0 + a.flapsLift * flaps;
+  const cl = a.aero.cl0 + sustentacionDeLosFlaps(a, flaps);
   const cd =
     a.aero.cd0 +
     (cl * cl) / (Math.PI * alargamiento(a) * a.aero.oswald) +
@@ -292,12 +294,15 @@ export function acelerarYParar(
 }
 
 /**
- * La pérdida con estos flaps, indicada, m/s: el ala al ángulo de pérdida de
- * la ficha, con lo que añaden los flaps, sosteniendo el peso.
+ * La pérdida con estos flaps, indicada, m/s: el ala a su ángulo de pérdida con
+ * esos flaps —el de la ficha, o más con slats o Krueger; ver `anguloDePerdida`—
+ * y lo que añaden los flaps, sosteniendo el peso.
  */
 export function perdidaCon(a: AircraftConfig, flaps = 0): number {
   const clMax =
-    a.aero.cl0 + a.aero.clAlpha * a.aero.alphaStall + a.flapsLift * flaps;
+    a.aero.cl0 +
+    a.aero.clAlpha * anguloDePerdida(a, flaps) +
+    sustentacionDeLosFlaps(a, flaps);
   return Math.sqrt(
     (2 * masaDe(a) * GRAVITY) / (SEA_LEVEL_DENSITY * a.wingArea * clMax),
   );

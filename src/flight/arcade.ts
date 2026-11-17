@@ -32,7 +32,11 @@ import { Euler, Quaternion, Vector3 } from "three";
 import { AIRE_ESTANDAR, type Aire, airDensity, GRAVITY, SEA_LEVEL_DENSITY } from "./atmosphere";
 import { actitudEnTierra, alturaSobreLasRuedas } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
-import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
+import {
+  fraccionDeLosFlaps,
+  resistenciaDeLosFlaps,
+  sustentacionDeLosFlaps,
+} from "./flaps";
 import {
   ACELERA_RODANDO,
   AGARRE_DEL_PEDAL,
@@ -474,7 +478,7 @@ export class ArcadeFlightModel implements FlightModel {
     return (
       this.aircraft.approachSpeed *
       MINIMA_DE_VUELO *
-      (1 - this.aircraft.flapsLift * clamp01(flaps) * MANDAN_LOS_FLAPS)
+      (1 - sustentacionDeLosFlaps(this.aircraft, flaps) * MANDAN_LOS_FLAPS)
     );
   }
 

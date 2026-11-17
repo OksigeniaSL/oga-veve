@@ -50,6 +50,14 @@ function recienDespegado(
     heading: 0,
     airspeed: velocidad,
     equilibrado: true,
+    /*
+     * A un g con los flaps con los que se ha ido, que es como sale de la
+     * rotación. Con el ángulo del ala limpia nacía subiendo o cayendo según su
+     * muesca: el 747, con la de despegue que sube poco la recta, a ocho
+     * décimas de g (con la de antes, a 1,06), y soltado a 1,07 veces su
+     * pérdida bajaba a 2,4 m/s a los diez segundos (nota H29e del ADR 0002).
+     */
+    flapsDelEquilibrio: flaps,
   });
   m.state.velocity.y = 2;
   const c = {
