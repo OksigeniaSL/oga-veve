@@ -370,6 +370,57 @@ export function minimaConFlaps(a: AircraftConfig, flaps: number): number {
 }
 
 /**
+ * **Lo más despacio que deja ir el automático, sobre la pérdida con los flaps
+ * que lleva**: 1,2.
+ *
+ * Es la protección de velocidad baja de los gases automáticos del E-Jet, que
+ * ajustan el empuje «to remain above MIN SPD»: 1,2 veces la pérdida por debajo
+ * de veinte mil pies con cualquier configuración, limpio o con flaps (C.
+ * Regli, *Embraer EMB190 – Summary*, 2025, p. 1-15:
+ * <http://www.flite.ch/Emb/Summary_E190.pdf>). Queda por encima de la franja
+ * ámbar de la cinta, cuyo techo es 1,13 —«stick shaker may activate», p.
+ * 1-38—, y por debajo del punto verde, 1,3 (`MANIOBRA_SOBRE_LA_PERDIDA`), que
+ * es la velocidad a la que se vuela con unos flaps y no la red del automático.
+ *
+ * Y con el avisador al 1,07 (`MARGEN_DEL_AVISADOR`), a 1,2 veces la pérdida
+ * se vira a treinta y siete grados antes de que suene: el automático, que no
+ * pasa de veinticinco (`ALABEO_MAXIMO`), no mete el ala en el avisador
+ * virando a su mínima.
+ */
+export const MINIMA_DEL_AUTOMATICO_SOBRE_LA_PERDIDA = 1.2;
+
+/**
+ * **La velocidad mínima del automático** con estos flaps, indicada, m/s: por
+ * debajo baja el morro, y los gases no piden menos. Ver `Objetivos.minima` en
+ * `piloto-automatico.ts`.
+ *
+ * La de siempre era la Vref por `1,1 − 0,15 · flaps`: un diez por ciento sobre
+ * la Vref limpio y un cinco por debajo con los de aterrizar, para que la final
+ * a su velocidad no la toque. Con la Vref del E170 de la FAA (ADR 0027,
+ * enmienda H20e), que es de los flaps de aterrizar y está a 1,23 veces su
+ * pérdida con ellos, en el JAZ 90 limpio eso eran 129 nudos con la pérdida
+ * limpia en 135: el automático lo dejaba entrar en pérdida antes de bajar el
+ * morro. La Vref no dice nada de la pérdida con otros flaps; la mínima de un
+ * automático de verdad se cuenta con la pérdida de la configuración que lleva
+ * y con la masa de ahora, como la cinta. Así que es la mayor de las dos: la de
+ * siempre, que no se mueve donde ya protegía —con los de aterrizar, la final—,
+ * y 1,2 veces la pérdida con los flaps que lleva.
+ *
+ * `a`, con lo que pesa ahora (`conMasa`): la pérdida es la de esa masa, y la
+ * Vref de la ficha no se mueve con ella.
+ */
+export function minimaDelAutomatico(a: AircraftConfig, flaps: number): number {
+  const f = Math.max(0, Math.min(1, flaps));
+  /*
+   * En el avión sin flaps, la limpia es la de aterrizar: con la cuenta de
+   * siempre le tocaba la Vref y un diez, por encima de su final a la Vref y
+   * cinco, y el automático le habría bajado el morro en ella.
+   */
+  const deSiempre = a.approachSpeed * (1.1 - 0.15 * (a.llevaFlaps ? f : 1));
+  return Math.max(deSiempre, MINIMA_DEL_AUTOMATICO_SOBRE_LA_PERDIDA * perdidaCon(a, f));
+}
+
+/**
  * **Lo que sube con un motor menos** a `v` indicada, m/s: el tren dentro, los
  * flaps que se digan, los demás a tope y el parado como quede asegurado —en
  * bandera si se puede, en molinete si no—. Al nivel del mar y con el derrape

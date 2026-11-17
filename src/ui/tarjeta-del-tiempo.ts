@@ -34,6 +34,7 @@ import {
   type Motivo,
   type ParteDeUnCampo,
 } from "../flight/parte-de-salida";
+import type { VientoDeLaFinal } from "../flight/escalera-de-velocidades";
 import { getLocale, t, type TranslationKey } from "../i18n";
 import { atisEnTexto } from "../world/meteo";
 import { armarPanel } from "./concha";
@@ -68,6 +69,25 @@ export interface AccionesDelTiempo {
   readonly alSenalar?: (que: BotonQueSeSenala) => void;
 }
 
+/**
+ * **La de aproximación de un campo con el viento de su parte**, en cifras de
+ * cabina: `VAPP 128KT (VREF 118+10)`. Ver `ParteParaVer.aproximacion`.
+ */
+export function cifraDeAproximacion(
+  p: ParteDeUnCampo,
+  a: NonNullable<ParteParaVer["aproximacion"]>,
+): string {
+  const m = p.campo.meteo;
+  const margen = a.margenKt({
+    deCaraKt: p.deFrenteKt,
+    vientoKt: m.vientoKt,
+    rachaKt: m.rachaKt ?? 0,
+  });
+  const vref = Math.round(a.vrefKt);
+  const vapp = Math.round(a.vrefKt + margen);
+  return `VAPP ${vapp}KT (VREF ${vref}+${vapp - vref})`;
+}
+
 /** Los tres botones de la decisión que dicen qué hacen al señalarlos. */
 export type BotonQueSeSenala = "quedarse" | "esperar" | "salir-igual";
 
@@ -81,6 +101,16 @@ export interface ParteParaVer {
   readonly declinacion?: (oaci: string) => number;
   /** Lo que aguanta este avión, para dibujar lo de hoy contra su límite. */
   readonly limites: Limites;
+  /**
+   * **La Vref de este avión y lo que el viento le suma a la final**, para
+   * decir con las cifras a qué velocidad se viene a la pista donde se
+   * aterriza: con rachas, más deprisa. Sin ella, no se dice. Ver
+   * `margenDeLaFinal` en `flight/escalera-de-velocidades.ts`.
+   */
+  readonly aproximacion?: {
+    readonly vrefKt: number;
+    readonly margenKt: (viento: VientoDeLaFinal) => number;
+  };
   /**
    * Si se abre **después de esperar**: `igual` si el parte no cambió lo que
    * decide, `mejor` si ahora ya se puede. Ver `AccionesDelTiempo.alEsperar`.
@@ -500,7 +530,7 @@ export class TarjetaDelTiempo {
           // Son las cifras del parte, no un ATIS: un campo sin torre no lo tiene.
         ).replace(`${p.campo.oaci} ATIS`, p.campo.oaci)}${m.rachaKt ? ` · G${Math.round(m.rachaKt)}KT` : ""}${
           p.cruzadoKt >= 1 ? ` · XWIND ${Math.round(p.cruzadoKt)}KT` : ""
-        }</p>`
+        }${this.deAproximacion(p, v)}</p>`
       : "";
     return `
       <section class="parte__campo" data-papel="${p.papel}"
@@ -519,6 +549,19 @@ export class TarjetaDelTiempo {
         </div>
         ${texto}
       </section>`;
+  }
+
+  /**
+   * **A qué velocidad se viene a la pista donde se aterriza**, con su suma:
+   * `VAPP 128KT (VREF 118+10)`. Solo en ese campo —la llegada, o el de
+   * salida si se vuelve a él—, que es donde el viento del parte decide el
+   * margen. Es la cuenta de un briefing de aproximación, con sus siglas de
+   * cabina, que no se traducen (regla tercera). Ver `margenDeLaFinal`.
+   */
+  private deAproximacion(p: ParteDeUnCampo, v: ParteParaVer): string {
+    const a = v.aproximacion;
+    if (!a || p !== v.partes[v.partes.length - 1]) return "";
+    return ` · ${cifraDeAproximacion(p, a)}`;
   }
 
   /** El mínimo de techo que se pinta: lo deja el juego en la tarjeta al abrir. */

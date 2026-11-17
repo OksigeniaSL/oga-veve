@@ -2812,3 +2812,246 @@ banco (enmienda H25a), no de la rotación, y no se ha tocado.
   lleve, sería la misma regla.
 - **La rotación del JAZ 90 con quien juega**: no hay ayuda que rote, y no se ha
   medido cuánto gira el morro con la tecla.
+
+## Enmienda H25d (17-11-2026): la mínima del automático, la banda de la final en verdadera y el margen de las rachas
+
+Tres de las cosas que la enmienda H25c dejó vistas y sin arreglar, y lo que
+faltaba del #92: «el incremento de velocidad con rachas en la aproximación».
+La cuarta, el tope de alabeo de la ayuda de subida, se queda en propuesta.
+
+### La mínima del automático, con la pérdida de los flaps que lleva
+
+`velocidadMinimaDelAutomatico` era la Vref por `1,1 − 0,15 · flaps`: por debajo
+de ella el automático baja el morro antes que perder más. La Vref es de los
+flaps de aterrizar y no dice nada de la pérdida con otros: con la del E170 de
+la FAA (enmienda H20e), en el JAZ 90 limpio la mínima eran 129 nudos con la
+pérdida limpia en 135, **0,96 veces la pérdida**. El automático lo dejaba
+entrar en pérdida sosteniendo la altura. No era solo él: limpio, el JAZ 120
+iba a 1,09 y el JAZ 50 a 1,10, y el JAZ 90 con la primera muesca, a 1,06.
+
+**La fuente.** Los gases automáticos del E-Jet llevan una protección de
+velocidad baja que ajusta el empuje «to remain above MIN SPD»: por debajo de
+veinte mil pies, «F0: 1.2vS», y con flaps, «> F0: 1.2vS» (C. Regli, *Embraer
+EMB190 – Summary*, 2025, p. 1-15: <http://www.flite.ch/Emb/Summary_E190.pdf>).
+Es la pérdida de la configuración que se lleva, como la cinta, que pinta su
+franja ámbar hasta 1,13 y su punto verde en 1,3 con la masa de ahora (p.
+1-38).
+
+**Por qué 1,2 y no el punto verde.** El encargo y la enmienda H25c proponían
+atarla a `minimaConFlaps`, la de maniobra, 1,3 veces la pérdida. Pero el punto
+verde es la velocidad a la que se vuela con unos flaps y a la que se sacan los
+siguientes, y la red del automático de este avión está más abajo, en 1,2: por
+encima de la franja ámbar, que es lo que se pedía que protegiera, y por debajo
+del punto verde, donde quien vuela todavía puede ir sin que el automático le
+discuta. Con el avisador al 1,07 (`MARGEN_DEL_AVISADOR`), a 1,2 veces la
+pérdida se vira a 37° antes de que suene, y el automático no pasa de 25°
+(`ALABEO_MAXIMO`): virando a su mínima no mete el ala en el avisador. A 1,13 sí
+lo haría, a 26°.
+
+Lo que se hizo:
+
+- `minimaDelAutomatico` en `velocidades-de-despegue.ts`: la mayor entre la de
+  siempre y 1,2 veces la pérdida con los flaps que ya han salido
+  (`MINIMA_DEL_AUTOMATICO_SOBRE_LA_PERDIDA`), con la masa de ahora. La de
+  siempre se queda donde ya protegía: con los flaps de aterrizar, que la final
+  a su velocidad no la toque.
+- `mandosPara` en `piloto-automatico.ts`: **los gases no piden menos que la
+  mínima**, aunque la marca lo pida. Es lo que dice la fuente —el empuje, para
+  quedarse encima— y hacía falta: con la mínima contada con los flaps que han
+  salido, la marca de la muesca siguiente puede quedar debajo mientras salen
+  (en el JAZ 90, los 138 nudos de la segunda contra 141 con la primera todavía
+  fuera), y los gases frenaban hacia la marca mientras el morro bajaba para no
+  perder más. Así el avión no se va hacia abajo: frena según salen los flaps.
+- `minima-del-automatico.test.ts`: en todos los aviones, con cada muesca y a
+  la masa de la ficha y a dos tercios de ella, la mínima queda a 1,2 veces la
+  pérdida o más, nunca por debajo de la de siempre, y a ella el automático
+  vira a su tope sin que suene el avisador; con los de aterrizar, por debajo
+  de la Vref; la escalera de la llegada no pide nada por debajo de ella; y los
+  gases, con la marca más abajo, son los de ir a la mínima.
+  `gases-automaticos.test.ts` vuela con la mínima del juego, que es esta.
+
+Al nivel del mar y con la masa de la ficha, nudos indicados, antes → ahora
+(limpio / primera / segunda / aterrizar):
+
+| | Antes | Ahora |
+|---|---|---|
+| JAZ 50 | 77 / 73 / 70 / 66 | **84 / 76** / 70 / 66 |
+| JAZ 90 | 129 / 124 / 118 / 112 | **162 / 141 / 126 / 115** |
+| JAZ 110 | 158 / 151 / 144 / 137 | **162** / 151 / 144 / 137 |
+| JAZ 120 | 160 / 153 / 146 / 138 | **176 / 159** / 146 / 138 |
+
+En el JAZ 20, el 40 y el 60 no cambia nada: su Vref ya está a 1,3 veces su
+pérdida o más y la de siempre queda por encima. Con los de aterrizar solo se
+mueve el JAZ 90, de 112 a 115, con la final a la Vref y cinco, 123.
+
+**Y el avión sin flaps**, el JAZ 25: su limpia es la de aterrizar, y con la
+cuenta de siempre le tocaba la Vref y un diez, 62 nudos, por encima de su
+final a la Vref y cinco, 61: el automático le habría bajado el morro en ella.
+Ahora cuenta como los demás con los de aterrizar, 54.
+
+**Lo que vuelan los bancos.** El vuelo entero de circuito no engancha el
+automático del juego: su final la vuela con `mandosPara` sin mínima. Lo
+enganchan los vuelos de ruta (`OGA_RUTA`), y ahí sí puede cambiar algo: bajan
+limpios a 1,2 veces la de circuito **en verdadera** con el gas del banco, que
+en el JAZ 90 son 204 nudos, y por encima de unos 4.800 m eso son menos de 162
+indicados —a 6.000 m, unos 150—, por debajo de la mínima nueva y de su punto
+verde, 176. Ahí el automático bajará el morro para no perder más, más deprisa
+que la senda del plan. Es lo que haría el de verdad con esa velocidad; lo que
+no es de verdad es bajar un E170 limpio a 150 nudos a veinte mil pies. No se
+ha volado ni se ha tocado.
+
+### La banda de la aproximación, en verdadera
+
+`bandaDeVelocidad` comparaba la verdadera con la Vref de la ficha, que es
+indicada: en Los Rodeos, con 21 °C, la misma indicada son un cuatro y medio
+por ciento más de verdadera en la pista y un seis a la altura del circuito, y
+la banda decía «lento» hasta seis puntos por debajo de donde tocaba. Es lo que H25c arregló en la del circuito, hecho igual: el juego
+pasa la Vref a verdadera con el aire de ahora (`referenciaEnVerdadera` en
+`velocidad-de-aproximacion.ts`) en los dos sitios que la llaman, el color de
+la tortuga y la voz (`bandaDeAhora`) y el consejo de la bajada
+(`bandaDeLaAproximacion`). A siete puntos por debajo de la Vref indicada, en
+Los Rodeos a trescientos metros de la pista, la banda decía «bien»; ahora dice
+«lento». Al nivel del mar no
+cambia nada. La puerta de los quinientos pies ya comparaba indicada con
+indicada.
+
+### El margen de la final con viento y rachas (#92)
+
+**Lo real.** Con rachas se aproxima más deprisa, para que la racha que se va
+no deje el ala por debajo de la Vref: «if the pilot applies a gust factor,
+indicated airspeed should not decay below the recommended landing speed»
+(FAA, *Airplane Flying Handbook*, FAA-H-8083-3C, 2021, p. 9-6). Y cada clase
+de avión lo cuenta a su manera:
+
+- **El reactor de línea**: la mitad del viento de cara medio y la racha entera
+  sobre el viento medio, de cinco a veinte nudos. En el E-Jet, «vAP = vREF +
+  ½HWND + gusts (gust − WND)» con «Increment 5..20kts» (Regli, p. 2-39), y en
+  la ficha del aterrizaje automático «vAP,min = vREF + 5kts», «vAP,max = vREF
+  + 20kts» (pp. 2-21 y 2-22). Boeing lo dice igual: «½ steady headwind + full
+  gust increment, max 20 kt».
+- **La avioneta**: la de aproximación más la mitad de lo que racha: «Pilots
+  often use the normal approach speed plus one-half of the wind gust factors
+  in turbulent conditions. If the normal speed is 70 knots, and the wind gusts
+  are 15 knots, an increase of airspeed to 77 knots is appropriate»
+  (FAA-H-8083-3C, p. 9-20), y «no more than one-half the gust factor is added»
+  (p. 9-21).
+
+**Lo que había.** El juego no lo hacía en ninguna parte: la escalera pedía en
+la final la Vref y cinco con cualquier viento (`FINAL_SOBRE_VREF`, «el margen
+sin viento»), y la voz del paso de la senda dice «la velocidad en la marca
+rosa», sin cifra, así que decía esa. Quien sí lo hacía era **el banco del
+vuelo entero**, para volar él: la mitad de lo que sopla de cara y lo que va y
+viene su propio anemómetro, de cinco a veinte, en todos los aviones
+(`ADITIVO_DE_FINAL`). No se ha tocado.
+
+**Lo que se hizo:**
+
+- `margenDeLaFinal` en `escalera-de-velocidades.ts`: en los reactores, la
+  mitad del viento de cara del parte y la racha entera, de 5 a 20
+  (`FINAL_SOBRE_VREF_MAXIMO`); en los demás, los cinco de la calma y la mitad
+  de lo que racha, sin tope, que la FAA da como «no more than». El viento de
+  cola no suma ni resta. Es **el viento del parte** en la pista donde se va a
+  aterrizar, el de la torre, no el de cada instante: el margen se cuenta en el
+  briefing y se vuela con él (`Game.vientoDeLaFinal`). Y el del campo que se
+  tiene debajo, no el del destino del plan: la primera versión tomaba el del
+  destino, y el banco del vuelo entero de Los Rodeos, que vuelve a su pista
+  con el plan puesto a Tenerife Sur, oyó «senda (125 kt)» con el viento de
+  allí; con el de Los Rodeos son 123.
+- **Lo pide**: la escalera lo pone en el peldaño de la final, y con él la
+  marca rosa, la ventanilla SPD y los gases automáticos.
+- **La banda lo cuenta**: lo que el viento suma por encima de los cinco de la
+  calma corre el borde de «rápido» de la banda de la aproximación y el de la
+  puerta de los quinientos pies (`AproximacionEnLaPuerta.porElVientoKt`).
+  Sin eso la puerta mandaba al aire, por rápido, a quien venía a la Vref y
+  veinte con rachas, que es lo que se pide. El borde de «lento» no se mueve:
+  lo que se protege con el margen es justo no bajar de la Vref.
+- **La tarjeta del tiempo lo dice** en los peldaños con cifras, en el campo
+  donde se aterriza: `VAPP 135KT (VREF 118+17)`, con las siglas de cabina,
+  que no se traducen (regla tercera). Sin frase nueva ni voz: es una cifra más
+  del parte.
+- `margen-de-la-final.test.ts`: la regla con sus ejemplos, la escalera, la
+  banda, la puerta y la cifra de la tarjeta.
+
+Con la Vref de la ficha, nudos indicados, la final que pide la escalera:
+
+| Viento en la pista | JAZ 90 (118) | JAZ 20 (64) |
+|---|---|---|
+| Calma | 123 | 69 |
+| 040/12 en la 12 de Los Rodeos, el del banco | 123 | 69 |
+| 15 de cara, rachas de 25 | 135 | 74 |
+| 30 de cara, rachas de 45 | 138 (el tope) | 77 |
+
+**Lo que no tiene fuente propia.** Los dos turbohélices, el 1900D y el Twin
+Otter, van con la regla de la FAA de la avioneta: su manual no se ha leído en
+esto.
+
+### El tope de alabeo de la ayuda de subida: propuesta, no hecho
+
+H25c proponía un tope de alabeo de la ayuda que creciera con el margen, «como
+el límite de su vuelo normal, 33° (Regli, p. 1-35)». Leído otra vez, **ese
+límite es del E2**: la página es la de sus mandos por cable, «3 FCC instead of
+P-ACE/FCM», con su «Normal flight env: Max bank 33°». El E170 es un E1 y no lo
+lleva; lo que tiene es el punto verde, «full bank protected», que es un margen
+de velocidad y no un tope de alabeo. Así que en el JAZ 90 un tope de alabeo no
+sería lo que hace su avión, sino una ayuda del juego, como ya lo son la de
+subida y la de pérdida (`stallProtection`), y como ellas solo en los peldaños
+que las llevan.
+
+Lo que haría falta, con sus números:
+
+- **El tope**: la inclinación a la que suena el avisador a esa velocidad,
+  `acos((1,07 · Vs / V)²)`, menos un margen. A la segura de la ayuda (1,13),
+  26°; a 1,2, 37°; al punto verde, 47°. La norma pide 30° a la V2 sin aviso
+  (14 CFR 25.143 h), así que con unos cinco grados de margen la segura se
+  quedaría en unos veinte, por debajo de lo que la norma le pide a la V2: el
+  tope enseñaría a acelerar antes de virar, que es la lección.
+- **Dónde**: una capa en `fdm.ts` que reste alerón al pasar del tope, con la
+  palanca cogida o suelta, junto al nivelador. Toca lo que vuelan los bancos
+  con la ayuda (Tukã y Taguató), que viran con sus propios topes, y habría que
+  volverlos a volar todos.
+
+No se ha hecho: no es pequeño, y en esta tanda no quedaba tiempo para volar
+otra vez los bancos que toca.
+
+### Volado en el navegador
+
+`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-90`, el 17-11-2026,
+puerto 5688, reloj ×1, con la traza del ala y el viento de casa, 040/12, con
+`80251c95` y `d2b9bb92` (antes del arreglo del campo de `547cd4a8`):
+
+| | Resultado | La puerta | La toma | Lo menos que le quedó al ala | Lo que falló |
+|---|---|---|---|---|---|
+| 1.ª | 62 de 64 | 127 kt | a 108 m, 1,99 m/s | −0,5°, en la frustrada | la toma, corta; «stall, stall» en la frustrada |
+| 2.ª | 61 de 62 | 122 kt | a 214 m, 1,87 m/s | 2,9°, rotando | un tráfico del circuito sin nombrar |
+
+- **El «stall, stall» de la primera** sonó en una frustrada que mandó la torre
+  con la pista ocupada a 52 m: el banco se fue al aire con su subida del
+  despegue (`subirDeVerdad`), tiró 1,74 g a 136 nudos con los flaps
+  recogiéndose y pasó medio grado el avisador. Es la maniobra del banco, no la
+  mínima del automático, que el banco no usa ahí; no se ha tocado.
+- **La toma a 108 m** es la toma corta de la enmienda H25a, con la recogida a
+  10,6 m de ruedas. Y el tráfico sin nombrar de la segunda es de la radio.
+- En las dos, **«senda (125 kt)»**: el margen con el viento de Tenerife Sur,
+  035/18, porque el plan del banco va allí; con el arreglo, en Los Rodeos son
+  123. El banco vuela su final con su propio margen, así que el vuelo no
+  cambia; lo que cambian son la marca, la banda y la puerta en dos nudos. No
+  se ha vuelto a volar.
+- **Sin volar**: el JAZ 20 en Guyrami (`… guyrami 3 jaz-20`), la tarjeta del
+  tiempo en un peldaño con cifras (`verificar-tarjeta-del-tiempo.mjs`) y
+  `npm run carteles`. El candado del navegador lo tenían otros bancos y se
+  acabó el tiempo de la tanda.
+
+### Lo que no
+
+- **El margen de los turbohélices con su manual**: el 1900D y el Twin Otter
+  van con la regla de la FAA de la avioneta.
+- **El banco del vuelo entero** sigue con su propio margen de la final
+  (`ADITIVO_DE_FINAL`): la regla del reactor en todos los aviones, con lo que
+  mide su anemómetro y no con el parte. No se ha tocado: es el banco, y vuela.
+- **Los vuelos de ruta del banco con el JAZ 90**, que bajan limpios por debajo
+  de la mínima nueva por encima de unos 4.800 m (arriba): no se han volado.
+- **Otras dos cuentas con la verdadera contra la Vref**: `puestoParaAterrizar`,
+  en el helicóptero y en el avión sin flaps, mira si la verdadera está por
+  debajo de 1,2 veces la Vref. Es la misma mezcla que se arregla aquí en la
+  banda, en un aviso que no es de esta enmienda; no se ha tocado.
+- **El tope de alabeo de la ayuda**: arriba, en propuesta.
