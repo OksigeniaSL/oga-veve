@@ -436,12 +436,22 @@ los mínimos y de la MSA está en los datos de esa cabecera.
 
 ### En tablet y en teléfono tumbado
 
-En la tablet cabe entera a la vista: la planta y el perfil a la izquierda; los
-mínimos, la MSA y la frustrada a la derecha. **En el teléfono tumbado no
-cabe**, y se ha elegido qué se ve primero: el perfil y los mínimos, que es lo
-que no está en ninguna otra parte del juego, con la MSA debajo de los mínimos;
-la planta, la frustrada y el pie, rodando. De pie, una sola columna: perfil,
-mínimos y lo demás.
+Medido con `scripts/ver-carta.mjs` (que ahora abre la ficha que se le pida,
+`sitio:ficha`, y fotografía la carta de aproximación abierta, por abajo y con
+la otra cabecera):
+
+- **En la tablet** (1280 × 800), en Canarias cabe entera a la vista en una
+  hoja de 618 × 446: la planta y el perfil a la izquierda; los mínimos, la MSA
+  y la frustrada a la derecha. En Gran Canaria rueda solo el pie, 23 px. En
+  Paraguay la carta va de pie y la ficha es estrecha (387 × 622): una sola
+  columna —perfil, mínimos, planta, MSA, frustrada— con 160 px por rodar.
+- **En el teléfono tumbado** (844 × 390) la hoja mide 618 × 222 y no cabe:
+  se ha elegido qué se ve primero, **el perfil y los mínimos**, que es lo que
+  no está en ninguna otra parte del juego; la MSA asoma debajo de los
+  mínimos, y la tabla de la senda, la planta, la frustrada y el pie van
+  rodando (unos 200 px). La cabeza —volver, la carta y las pestañas de
+  cabecera— se queda quieta: rueda el cuerpo, que si rodaba la hoja entera lo
+  de la derecha pasaba por debajo de la cruz.
 
 ### Los dos flecos que quedaban
 
