@@ -93,7 +93,8 @@ import { planeoDe } from "../flight/sin-motor";
 import { PilotoDelDescenso } from "../flight/despresurizacion";
 import { laCuentaDe } from "../flight/avisos-de-altura";
 import { vfeDeAterrizaje } from "../flight/limites";
-import { perdidaCon } from "../flight/velocidades-de-despegue";
+import { maniobraCon, perdidaCon } from "../flight/velocidades-de-despegue";
+import { muescasDeLaPalanca } from "../flight/flaps";
 import { esSelloDelViaje } from "../flight/lo-que-se-toca";
 
 /**
@@ -686,6 +687,17 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        * despegar en el JAZ 50, el 60 y el 90 (#192).
        */
       perdidaLimpia: perdidaCon(juego.avionConPeso(), 0),
+      /*
+       * **Y la de maniobra de cada muesca de su palanca**, indicada, m/s, con
+       * el peso de ahora: a lo que vuela el banco con esos flaps puestos. El
+       * viento en cola lo volaba a la Vref más quince nudos, la misma con
+       * cualquier muesca, y con la Vref de la FAA el JAZ 90 quedaba ahí a 1,18
+       * veces su pérdida con quince grados de flaps: «stall, stall» virando en
+       * Los Rodeos (enmienda H25a del ADR 0027). Ver `maniobraCon`.
+       */
+      maniobraPorMuesca: muescasDeLaPalanca(juego.aircraft).map((f) =>
+        maniobraCon(juego.avionConPeso(), f),
+      ),
       /*
        * Y los colores de su ficha, que es quien manda sobre el modelo.
        *
