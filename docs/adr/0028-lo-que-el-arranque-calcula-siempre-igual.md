@@ -442,3 +442,219 @@ No se ha hecho: el encargo era medir.
 - **El arranque de Barajas, otra vez en el navegador** con el quinto atajo y
   con la máquina sin vitest al lado.
 - **El montaje del aeródromo**, con las dos de arriba.
+
+## Enmienda H23c (17-11-2026): la pintura de las calles y el programa del suelo de la isla vecina (#190)
+
+Dos de las cosas que quedaban: abaratar la pintura del aeródromo sin cambiar
+lo que se dibuja —lo que H23a dejó medido y sin tocar— y, al saltar de sitio,
+el programa del suelo de la isla vecina. Y, solo medido, dónde se va el
+tiempo del salto a crucero y de `ponerElAroDelPapi`.
+
+### La pintura, escrita de seguido
+
+Las dos cosas que H23a vio, hechas tal cual (`Pintura`, en `aerodrome.ts`):
+
+- **Una pregunta de cota por esquina.** La rejilla de una pieza tiene
+  `(n + 1)(m + 1)` esquinas y se preguntaban `6nm`; ahora se pregunta cada
+  esquina una vez, y la esquina que ya era de la pieza anterior —el amarillo
+  va en trozos seguidos de dos metros— se toma de ella sin preguntar.
+- **Un arreglo por malla**, no una geometría por trozo. Los cincuenta y seis
+  mil trozos de amarillo de Barajas eran cada uno su `BufferGeometry`, su
+  atributo y sus normales, y se juntaban al final con `mergeGeometries`.
+  Ahora cada `Pintura` escribe sus vértices en un `Float32Array` que crece, y
+  las normales las calcula three de una vez al final.
+
+**Que es el mismo dibujo, al bit.** Por construcción: `suelo` no guarda nada,
+así que el mismo punto da la misma cota; los vértices salen en el mismo orden
+y con los mismos números de coma flotante —la vuelta de los triángulos que
+miraban al suelo se decide con la misma cuenta sobre los mismos `double`—, y
+pasan a `Float32` igual; y sin índice, `computeVertexNormals` le da a cada
+vértice la normal de su cara sin mirar a las demás, así que hacerla de una
+vez o trozo a trozo da lo mismo. Las piezas que no son de cuatro esquinas —las
+flechas de los umbrales desplazados— traen sus normales suavizadas con
+índice, como antes, y se ponen encima.
+
+Y comprobado, de dos maneras:
+
+- `pintura-de-seguido.test.ts`, que se queda: monta el aeródromo de los
+  diecinueve campos, apunta cada trozo que se le da a cada `Pintura` y con qué
+  suelo, lo rehace con la cuenta de antes —trozo a trozo, con
+  `mergeGeometries`— y compara cada malla **byte a byte**: los mismos
+  atributos en el mismo orden, el mismo tipo y los mismos bytes de posiciones
+  y normales. No compara con un fichero: si se cambia a propósito dónde va una
+  raya, las dos cuentas la ponen en el mismo sitio; lo que no puede es
+  cambiarla el atajo. Mira también que han pasado por las dos clases de
+  pieza.
+- Fuera del repositorio, antes y después del cambio, la huella de **todas las
+  mallas** de los diecinueve aeródromos montados enteros —236 mallas, con sus
+  atributos, índices y grupos—: iguales.
+
+**Lo que ahorra**, en la mesa y sin estrangular, `createAerodrome` de Barajas
+con el mismo instrumento que H23a, seis montajes seguidos en el mismo
+proceso: **de 572–665 ms a 359–391**. Es más de lo que el perfil de H23a
+daba a las dos cosas —67 ms la cota repetida, 56 los objetos y 14 juntarlos—;
+lo de más es, muy probablemente, la basura de cincuenta y seis mil
+geometrías, que aquel perfil cargaba al recolector y no a la pintura.
+
+Lo que queda del montaje, del perfil de V8 en la mesa, cinco montajes:
+unos 320 ms por montaje, de los que la pintura de las calles (`rodadura`)
+son 146 —eran 304 en el de H23a—: poner los trozos, 81, con la cota de cada
+esquina dentro; `direccionCercana`, 35; las normales de una vez, 16; y mirar
+si cada trozo cae en la pista, 9. Fuera de la pintura, las plataformas y
+calles en polígono (`desdePoligono`) 69, partir lo largo 41 y la basura 43.
+
+**En el navegador**, el arranque de `?escenario=barajas&leccion=despegue`
+con la CPU ×4 y la Intel, el instrumento de H23a dentro de la misma sonda:
+el paquete de `d94094e2` y el de esta rama, un navegador nuevo por carga y
+alternando antes y después, en dos tomas el 17-11-2026. La primera, con la
+tanda entera de vitest al lado y una primera carga en frío que no vale —la
+de antes, que abrió la tanda, 10,2 s—; la segunda, con la máquina algo más
+tranquila al empezar y la carga subiendo al final.
+
+| Barajas ×4, por parejas | Juego creado, antes → después | Segundo cuadro |
+|---|---|---|
+| Toma 1, vuelta 2 | 6,79 → 6,56 s | 8,20 → 8,22 s |
+| Toma 1, vuelta 3 | 6,46 → 5,84 s | 7,87 → 7,27 s |
+| Toma 2, vuelta 1 | 6,52 → 6,00 s | 8,38 → 7,44 s |
+| Toma 2, vuelta 2 | 6,93 → 5,78 s | 9,03 → 7,24 s |
+| Toma 2, vuelta 3 | 7,84 → 7,48 s | 9,89 → 9,16 s |
+| Toma 2, vuelta 4 | 7,60 → 8,08 s | 9,60 → 10,15 s |
+
+En cinco de las seis parejas, después llega antes. La mediana de la
+diferencia es **casi medio segundo menos hasta el juego creado** (0,44 s) y
+**dos tercios hasta el segundo cuadro** (0,67 s). Es algo más de la mitad de
+lo que daría la mesa multiplicada por cuatro —unos 230 ms, casi un segundo a
+×4—, y con esta máquina compartida, dos cargas seguidas de lo mismo se llevan
+medio segundo: el sentido es claro, la cifra exacta no.
+
+### El programa del suelo de la isla vecina, compilado antes de hacer falta
+
+H9c lo dejó medido: tras un salto en El Hierro, con la CPU ×4 y la Intel, un
+programa nuevo de `MeshLambertMaterial` —el suelo con foto— que se compilaba
+en el primer cuadro y esperaba en `getProgramInfoLog` de 64 a 256 ms. Le pasa
+al suelo de cada isla vecina cada vez que le llega algo que le cambia el
+sombreado —su foto (`ponerFoto`), el fundido con la foto del horizonte
+(`fundirConElHorizonte`) y las teselas (`vestirConTeselas`)—, y three no lo
+compila hasta que la isla entra en el cuadro: al saltar, al virar hacia ella
+o al despegar en su dirección.
+
+Lo hecho: `prepararElSuelo`, en `game.ts`, le pide a three el programa
+**en cuanto cambia**, con `renderer.compile` de la malla del suelo y las luces
+y la niebla de la escena, que es con lo que se va a dibujar. La tarjeta lo
+enlaza por su cuenta y nadie le pregunta si ha terminado hasta que la isla
+entra en el cuadro. Lo llaman las tres cosas: al llegar la foto, al fundirla
+con el horizonte y, desde las teselas, al vestirla (`alVestir`, en
+`SueloConTeselas`). Si la van a vestir de teselas en el siguiente cuarto de
+segundo, se espera a eso, para no compilar uno que no se usaría.
+
+Es `compile` y no `compileAsync`: hacen lo mismo, pero el segundo además
+pregunta cada diez milésimas si el programa está, y esa pregunta revienta si
+entretanto se tira el material, que pasa al cambiar de mundo. Aquí no hay nada
+que esperar.
+
+**Que sale con la llave del dibujo de verdad**, que era lo que H9c no pudo
+comprobar: three busca el programa por una llave hecha con el material, la
+malla, las luces, la niebla y el estado del pintor; si la de `compile` no
+fuera la del dibujo, el primer cuadro compilaría otro. Mirado en el
+navegador, abajo: con `prepararElSuelo`, el programa del suelo de la isla
+vecina ya está en la lista de programas de three antes del salto, y al saltar
+encima de ella no aparece ninguno nuevo para el suelo. Si la llave no casara,
+saldría otra vez. Y solo hay **uno** de más antes del salto, el bueno: no se
+compila ninguno de paso —con foto y sin teselas, o sin fundido— que luego no
+se use.
+
+**Medido en el navegador**, el 17-11-2026, con la Intel y la CPU ×4. Una
+sonda nueva sobre la de H9c (`medir-h23c.mjs`, en el directorio de trabajo de
+H23c): el paquete de `d94094e2` y el de esta rama, compilados con
+`NODE_ENV=development vite build` y servidos como ficheros quietos, un
+navegador nuevo por carga y alternando antes y después. El Hierro, catorce
+segundos quieto para que lleguen las fotos de las vecinas, el horizonte y las
+teselas, y entonces la CPU ×4 y el avión puesto a 3.500 m **encima de La
+Gomera**, la primera vecina, con su suelo en el cuadro desde el primero. Se
+apunta el cuadro más largo del primer segundo, los programas que aparecen y
+lo que tardan las llamadas de WebGL de programas (`linkProgram`,
+`getProgramInfoLog` y sus primas, cronometradas). Tres vueltas; con la tanda
+entera de vitest de esta rama corriendo al lado:
+
+| Salto encima de La Gomera, ×4 | Antes | Después |
+|---|---:|---:|
+| Programas nuevos al saltar | 2 · 2 · 2 | **1 · 1 · 1** |
+| De ellos, el del suelo (`…grano-del-suelo+fundido+teselas`) | sí, las tres | **ninguna** |
+| Llamadas de programa, en los 5,2 s | 24 · 12 · 30 ms | **5 · 6 · 5 ms** |
+| Cuadro más largo del primer segundo | 274 · 236 · 294 ms | **226 · 257 · 238 ms** |
+
+El programa del suelo ya no se compila al saltar, y el tiempo parado en las
+llamadas de programa baja de 12–30 ms a 5. El cuadro largo baja menos de lo
+que H9c le daba al programa —de 274 a 238 ms en mediana—, porque **el resto
+de ese cuadro no es el programa**: H9c midió de 64 a 256 ms de espera en
+`getProgramInfoLog` con la traza de Chrome puesta, que pesa, y aquí, sin
+ella, esa espera ha sido de 5 a 22. Lo que queda en ese cuadro de 230 ms está sin repartir; ver «Lo que
+queda». El otro programa nuevo es un `MeshBasicMaterial` de algo de la isla
+que no es el suelo, y ese sigue compilándose al verla.
+
+### Lo medido sin cambiarlo: el salto a crucero y `ponerElAroDelPapi`
+
+Con la misma sonda, en el paquete de esta rama: El Hierro, catorce segundos
+quieto, la CPU ×4 y el perfil de CPU de V8 (una muestra cada 0,2 ms) durante
+el segundo y medio que sigue a cada salto: a crucero —tres mil metros sobre
+la pista, a 120 m/s y con el automático—, y a mirar la bandada, que es el de
+H9c. Una vez sin peldaño y otra con `tramo=guyrami`, el de H9c. El perfil se
+parte por cuadros —cada tramo seguido con el `frame` del juego en la pila—, y
+de cada uno, lo que hay dentro. Todo a ×4.
+
+**El salto en sí no cuesta**: lo que hace `colocar` con el piloto automático
+y la ventanilla son 4 ms. Lo que cuesta es **el primer cuadro después**:
+
+| Primer cuadro tras el salto, ×4 | Sin peldaño | `tramo=guyrami` |
+|---|---:|---:|
+| A crucero | 111 ms | 131 ms |
+| A la bandada | 93 ms | 73 ms |
+
+Y en el de crucero, que es el largo, una cuarta parte sin peldaño y más de un
+tercio con él es **maquetación forzada**: dos lecturas del tamaño de algo del HUD justo después de
+cambiarlo, que obligan al navegador a recolocar la página entera en ese
+momento.
+
+- **La tarjeta de las teclas** (`colocarLaTarjeta`, en
+  `ui/teclas-que-tocan.ts`): al cambiar la tecla que toca, se le quita la
+  posición y se lee su caja con `getBoundingClientRect`, y después la de cada
+  cosa que podría tapar. 37 ms sin peldaño y 43 con él, de ellos 29 y 36 en
+  esa primera lectura.
+- **La señal** (`medirse`, en `ui/senal.ts`): al cambiar lo que dice la
+  señal, lee su alto para que el tutor se le suba encima. 14 ms con el
+  peldaño, dentro de `decirElPaso`.
+
+El resto del cuadro se reparte por el paso del juego sin nada que destaque:
+el plan, la radio, el dibujo —11 ms de un programa nuevo que se estrena en ese
+cuadro, sin peldaño—.
+
+**`ponerElAroDelPapi` no está.** Sin peldaño no tiene ni una muestra; con
+`tramo=guyrami`, 63 ms en el cuadro de la bandada… pero **colgando debajo de
+él va `unPaso`**, que no se llama desde ahí: es una línea que le pasa al aro
+dónde está el PAPI. Es el perfilador de V8 que, con el código minimizado y
+metido en línea, le pone a un trozo del paso del juego el nombre de la
+función de al lado. Lo que hay debajo es el paso: la radio, la marca del
+motor, el plan, sin nada mayor de 7 ms. Los 98 ms que H9c le dio con la traza
+son, muy probablemente, eso mismo; con lo que se ve aquí no hay nada que
+arreglar en el aro.
+
+### Lo que queda
+
+- **El resto del cuadro largo al saltar encima de una isla vecina**, unos
+  230 ms a ×4 sin el programa del suelo. Sin repartir: puede ser la primera
+  subida de su malla a la tarjeta —la isla de cerca, con todos sus nudos—, lo
+  que el juego recoloca o las teselas. Pide un perfil de ese salto como el de
+  arriba.
+- **El otro programa de la isla vecina**, un `MeshBasicMaterial` que se
+  compila al verla. Compilar el grupo entero del vecino y no solo su suelo lo
+  quitaría, a cambio de recorrer su aeródromo; no se ha probado.
+- **Los dos `getBoundingClientRect` del primer cuadro tras el salto** —la
+  tarjeta de las teclas y la señal—, cada uno con su maquetación forzada. Ver
+  arriba.
+- **La pintura**: lo que queda del montaje de Barajas está sin perfilar de
+  nuevo. Del perfil de H23a, sin tocar: hacia dónde va la calle más cercana a
+  cada punto de espera (`direccionCercana`, 38 ms de mesa, mira todos los
+  tramos de todas las calles por cada punto), las plataformas en polígono y
+  partir lo largo.
+- De la lista de #190, sin tocar: decodificar las fotos de una pieza fuera
+  del hilo principal y los reescalados de las teselas en un `Worker`.
