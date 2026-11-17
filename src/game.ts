@@ -15401,14 +15401,17 @@ export class Game {
      */
     const enLaFinal = alUmbral !== null && alUmbral > 0 ? alUmbral : null;
     const deRuta = enLaFinal === null && !this.sinMotor ? porLaRuta : null;
-    const llegada =
-      enLaFinal ?? (this.sinMotor ? null : (this.tuCircuitoParaLaTorre() ?? deRuta));
+    // Y por el circuito, que además te pone en la fila: ver `QuienJuega.porElCircuito`.
+    const porElCircuito =
+      enLaFinal === null && !this.sinMotor ? this.tuCircuitoParaLaTorre() : null;
+    const llegada = enLaFinal ?? porElCircuito ?? deRuta;
     const aterrizandoAqui = s.onGround
       ? VUELVES_POR_TU_SALIDA.has(fase)
       : llegada !== null;
     return {
       alUmbral: enLaFinal,
       llegada,
+      porElCircuito,
       deRuta,
       enLaPista: s.onGround && ENCIMA_DE_LA_PISTA.has(fase),
       velocidad,

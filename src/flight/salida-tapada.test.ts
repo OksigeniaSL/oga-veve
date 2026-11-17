@@ -267,6 +267,12 @@ function llegarConDosQueSalen(
    * la torre te ve por el circuito. Ver `tuLlegadaParaLaTorre` en `game.ts`.
    */
   finalEn: number | null = null,
+  /**
+   * **Y si entras en la fila de llegadas del tráfico ya en el circuito**, como
+   * el juego: con eso, el que llega detrás de ti espera su turno en vez de
+   * entrar delante. Ver `QuienJuega.porElCircuito`.
+   */
+  filaDesdeElCircuito = true,
 ): Medida {
   const aero = esc.aerodrome as Aerodrome;
   const pista = esc.runway;
@@ -340,6 +346,18 @@ function llegarConDosQueSalen(
                 : alAireHasta !== null
                   ? VUELVE_A
                   : porLaRuta(),
+            /*
+             * Y por el circuito, que te pone en la fila de llegadas antes de
+             * la final, como el juego: ver `QuienJuega.porElCircuito`.
+             */
+            porElCircuito:
+              !regla || !filaDesdeElCircuito || alUmbral() !== null || porLaRuta() !== null
+                ? null
+                : viene()
+                  ? restante
+                  : alAireHasta !== null
+                    ? VUELVE_A
+                    : null,
             // Y por la ruta, la hora prevista que sabe quien contesta.
             deRuta: porLaRuta(),
             enLaPista: enTierra && ["aterrizado", "abandonando"].includes(fase),
@@ -724,6 +742,16 @@ describe("con torre: te retrasa o te manda al aire, y el que sale sale", () => {
     expect(m.alLado, m.oido.join("\n")).not.toBe("");
   }, 120_000);
 
+  /*
+   * **El tercero que ocupa la pista**, en estas tres y en la de un AFIS: una
+   * llegada del tráfico que aterriza delante de ti mientras el que sale espera
+   * en tu salida. Desde que entras en la fila en el circuito, en El Hierro ese
+   * tercero ya no se te mete delante —ver `permiso-a-tiempo.test.ts`—, y con
+   * él se iba el caso que se mira aquí: sin vueltas, sin idas al aire y sin
+   * avisos que contar. Sigue pasando con uno que ya había girado a su base
+   * cuando llegaste al circuito, y eso es lo que se vuela aquí: sin entrar en
+   * la fila desde el circuito (`filaDesdeElCircuito`).
+   */
   for (const id of ["el-hierro", "encarnacion"])
     it(`${id}: nadie parado en tu calle, llegas, salen, y lo que se pide es real`, () => {
       const mal: string[] = [];
@@ -732,7 +760,7 @@ describe("con torre: te retrasa o te manda al aire, y el que sale sale", () => {
         for (const avion of [AIRCRAFT[0]!, elMasGrande(esc)])
           for (const salen of SALEN)
             for (const semilla of [1, 2, 3]) {
-              const m = llegarConDosQueSalen(esc, avion, salen, semilla);
+              const m = llegarConDosQueSalen(esc, avion, salen, semilla, true, false, undefined, true, null, null, false);
               const donde = `${id} ${Math.round(esc.runway.heading)}° ${avion.id}, salen ${salen.join("/")} s antes, semilla ${semilla}`;
               for (const f of loQueFalla(m)) mal.push(`${donde}: ${f}`);
               if (m.avisos || m.propuestas) mal.push(`${donde}: una torre no avisa como un AFIS`);
@@ -755,7 +783,7 @@ describe("y si no das la vuelta", () => {
     for (const esc of cabeceras(SCENARIOS.find((e) => e.id === "el-hierro")!))
       for (const salen of SALEN)
         for (const semilla of [1, 2, 3]) {
-          const m = llegarConDosQueSalen(esc, AIRCRAFT[0]!, salen, semilla, true, false, undefined, false);
+          const m = llegarConDosQueSalen(esc, AIRCRAFT[0]!, salen, semilla, true, false, undefined, false, null, null, false);
           const donde = `El Hierro ${Math.round(esc.runway.heading)}°, salen ${salen.join("/")} s antes, semilla ${semilla}`;
           for (const f of loQueFalla(m)) mal.push(`${donde}: ${f}`);
           frustradas += m.frustradas;
@@ -796,7 +824,7 @@ describe("con AFIS: te lo cuenta, y decide quien vuela", () => {
       for (const avion of [AIRCRAFT[0]!, elMasGrande(esc)])
         for (const salen of SALEN)
           for (const semilla of [1, 2, 3]) {
-            const m = llegarConDosQueSalen(esc, avion, salen, semilla, true, true, "afis");
+            const m = llegarConDosQueSalen(esc, avion, salen, semilla, true, true, "afis", true, null, null, false);
             const donde = `El Hierro ${Math.round(esc.runway.heading)}° ${avion.id}, salen ${salen.join("/")} s antes, semilla ${semilla}`;
             if (m.vueltas || m.alAire) mal.push(`${donde}: un AFIS no manda`);
             // Y quien se fue cuando se lo propusieron no pasa al lado de nadie.

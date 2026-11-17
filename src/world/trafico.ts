@@ -1520,6 +1520,32 @@ export const SEPARACION_ENTRE_LLEGADAS = 120;
 export const TRES_MILLAS = 3 * 1852;
 
 /**
+ * **Hasta dónde puede llegar tu permiso para aterrizar**, m del umbral: dos
+ * millas. «Clearance to land … should normally be passed to the aircraft
+ * before it reaches a distance of 4 km (2 NM) from touchdown» (OACI, Doc
+ * 4444, 16.ª ed., 8.9.6.1.7). Ver `antesDeTuPermiso`.
+ */
+export const PERMISO_ANTES_DE = 2 * 1852;
+
+/**
+ * **Lo que puede tardar en empezar a sonar tu permiso** desde que la torre lo
+ * da, s: la frase que esté sonando, que puede ser la fraseología de otro con
+ * su viento, y el silencio de después. Ver `audio/boca.ts`.
+ */
+const LO_QUE_TARDA_TU_PERMISO = 10;
+
+/**
+ * **Cuántos segundos antes del umbral tiene que estar libre la pista para
+ * que tu permiso suene a tiempo**, viniendo a `velocidad`: las dos millas y
+ * lo que tarda en empezar a sonar. La torre no autoriza con otro encima —ver
+ * `paso` en `flight/turno-de-pista.ts`—, así que el que sale tiene que haberse
+ * ido antes de eso, no solo antes de que cruces el umbral.
+ */
+export function antesDeTuPermiso(velocidad = VUELA_A): number {
+  return PERMISO_ANTES_DE / Math.max(15, velocidad) + LO_QUE_TARDA_TU_PERMISO;
+}
+
+/**
  * **La separación que le toca a quien viene detrás**, s: los dos minutos, y
  * nunca menos que lo que tarda en volar tres millas.
  *
@@ -1608,6 +1634,14 @@ export interface QuienJuega {
    * `quienDejaLaPistaPorSuRaya` y `flight/salida-tapada.ts`.
    */
   readonly llegada?: number | null;
+  /**
+   * **Y cuánto le falta volando lo que le queda de su circuito**, s, si lo
+   * vuela y todavía no está en la final: el viento en cola o la base. Con
+   * esto entra en la fila de llegadas desde el circuito y no al coger la
+   * final, que en un reactor es a dos millas largas del umbral. Ver
+   * `laFila`.
+   */
+  readonly porElCircuito?: number | null;
   /**
    * **Y cuánto le falta si viene por la ruta del plan**, s, bajando hacia
    * este campo y sin volar todavía su final: lo que sabe quien contesta desde
@@ -3624,6 +3658,23 @@ export function crearTrafico(
     const prioridad = tu?.prioridad === true;
     if (tu?.alUmbral != null)
       fila.push({ hora: reloj + tu.alUmbral, velocidad, sale: false, prioridad });
+    /*
+     * **Y volando el circuito, también.** Solo se entraba en la fila al coger
+     * la final, y el JAZ 90 la coge en Los Rodeos a cuatro kilómetros y medio
+     * del umbral, un minuto antes de tocar: el del tráfico que giraba a su
+     * base mientras tú volabas la tuya no te veía, entraba delante sin su
+     * hueco y seguía en la pista rodando hasta que tú llegabas a la decisión.
+     * La torre esperaba a que la dejara para darte el permiso, y llegaba ahí:
+     * a la vista y sin voz, «se aterrizó y no sonó ninguna» en el banco del
+     * vuelo entero. La separación entre llegadas se hace en el circuito, no
+     * en la final: «sufficient separation shall be effected between aircraft
+     * in flight in the traffic circuit to allow the spacing of arriving and
+     * departing aircraft» (OACI, Doc 4444, 16.ª ed., 7.7.1.2). Así, a quien
+     * todavía no ha girado a la base y no cabe delante de ti, le toca su
+     * vuelta de espera. Ver `retrasoPara`.
+     */
+    else if (tu?.porElCircuito != null)
+      fila.push({ hora: reloj + tu.porElCircuito, velocidad, sale: false, prioridad });
     else if (tu?.enLaPista)
       fila.push(
         tuHora !== null
@@ -3745,6 +3796,19 @@ export function crearTrafico(
     const tu = contigo ? opciones.quienJuega?.() : null;
     const vienes = tu && tu.alUmbral == null ? (tu.deRuta ?? tu.llegada ?? null) : null;
     if (vienes !== null && vienes < hueco) return true;
+    /*
+     * **Y contigo, que se haya ido a tiempo para tu permiso**, no solo antes
+     * de que cruces el umbral. Con otro encima de la pista la torre no te
+     * autoriza, y tu «cleared to land» tiene que sonar antes de las dos
+     * millas: «clearance to land … should normally be passed to the aircraft
+     * before it reaches a distance of 4 km (2 NM) from touchdown» (OACI, Doc
+     * 4444, 16.ª ed., 8.9.6.1.7). Mirando solo el umbral, en Los Rodeos se le
+     * daba la salida a uno con el JAZ 90 a dos minutos, corría su despegue
+     * mientras el JAZ 90 cogía la final y tu permiso se pedía a 2.176 m del
+     * umbral. Ver `permiso-a-tiempo.test.ts`.
+     */
+    const tuyo = tu ? (tu.alUmbral ?? vienes) : null;
+    if (tuyo !== null && tuyo - antesDeTuPermiso(tu?.velocidad) < hueco) return true;
     return laFila(null, contigo).some(
       (b) => !b.sale && b.hora >= reloj && b.hora - reloj < hueco,
     );

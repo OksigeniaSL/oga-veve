@@ -308,3 +308,130 @@ cerca a la vez. El caso queda probado en la mesa, no en esta tirada. Lo que
 falló en ella es de la toma, no de la radio: el piloto del banco tocó a
 3,1 m/s, recogiendo a 10,7 m de ruedas, y sin toma buena no hay gafas de sol
 (62 de 64, dos sin medir).
+
+## Enmienda (17-11-2026, H29d): tu permiso, antes de las dos millas
+
+### El caso
+
+En el banco del vuelo entero del JAZ 90 en Los Rodeos con el reloj ×12
+(H29a, `tenerife-norte taguato 12 jaz-90`), dos rojos de la torre: «la torre
+dice la fraseología del vuelo» y «tu cleared to land suena, y en final: se
+aterrizó y no sonó ninguna». En la cola de la boca, «torre.canario.aterrizar»
+y su «clearedLand» se retiraron a los 493,2 s «porque ya no era verdad»,
+entre los doscientos y los cien pies de la cuenta: es `darElPermisoYa`, que a
+la decisión da el permiso a la vista y retira la voz que queda.
+
+**No esperaron turno en una boca llena: se pidieron tarde.** Lo tuyo va en
+`mando`, por delante de la instructora, y con la boca ocupada espera una
+frase, no una final. Lo que tenía el permiso guardado era la pista: «al
+costado: 722 s a 49 m: EC-ZFP a 1541 m del umbral y -73 m del eje (llegada
+15209/1031/13783/15187)». EC-ZFP era una llegada del tráfico —tocó en el metro
+13.783 de su camino y deja la pista en el 15.187— que justo entonces pasaba
+su punto de salida: 1.400 m de pista ocupada por delante del JAZ 90 mientras
+éste volaba su final corta. Con alguien encima la torre no autoriza (`paso`
+en `flight/turno-de-pista.ts`, la regla de La Gomera), y cuando la dejó el
+JAZ 90 estaba en la decisión.
+
+**La causa**: el tráfico solo te ponía en su fila de llegadas al coger la
+final (`laFila` en `world/trafico.ts`, con `alUmbral`), y en Los Rodeos el
+circuito del JAZ 90 tiene la final de 4.163 m y la base a 2.459 m del eje, un
+pelo fuera del cono de treinta grados: la final de la torre empieza al acabar
+el viraje, a unos 4,5 km. El que giraba a su base mientras tú volabas la tuya
+no te veía y entraba delante sin su hueco. Es lo mismo que daba las nueve
+frustradas del banco de mesa de 48 llegadas («Lo medido», arriba): «al aire:
+pista ocupada» a 19 s del umbral, cada una con el «pista libre» de una llegada
+del tráfico detrás.
+
+Y una segunda, más rara, por el mismo lado: al que sale se le daba la pista
+si se iba antes de que cruzaras el umbral (`llegaAntesDeQueSalga`), no antes
+de cuando tiene que sonar tu permiso. En la mesa, un despegue autorizado con
+el JAZ 90 a dos minutos corría todavía al coger éste la final, y su permiso se
+pedía a 2.176 m.
+
+### La fuente
+
+OACI, Doc 4444, 16.ª edición, 2016:
+
+- **8.9.6.1.7**: «Clearance to land or any alternative clearance received from
+  the aerodrome controller … should normally be passed to the aircraft before
+  it reaches a distance of 4 km (2 NM) from touchdown.» Y 8.9.6.1.8 a) iii):
+  sin permiso a esa distancia, al aire. Es el listón: tu permiso empieza a
+  sonar antes de las dos millas.
+- **7.7.1.2**: «Sufficient separation shall be effected between aircraft in
+  flight in the traffic circuit to allow the spacing of arriving and departing
+  aircraft as outlined in 7.9.2, 7.10.1 and 7.11.» El hueco entre llegadas se
+  hace en el circuito, no en la final.
+- **7.6.2**, posición 4: «Clearance to land is issued here as practicable», y
+  las posiciones se vigilan «so that proper clearances may be issued without
+  delay».
+
+### Decisión
+
+- **Volando el circuito entras en la fila de llegadas** (`QuienJuega.porElCircuito`,
+  puesto por `tuLlegada` en `game.ts` con lo que te queda de circuito). A quien
+  todavía no ha girado a su base y no cabe delante de ti le toca su vuelta de
+  espera, como ya le tocaba contigo en la final. Lo que ya había girado
+  aterriza delante, como con un control de verdad.
+- **Y al que sale, la pista solo si se ha ido antes de las dos millas de tu
+  final y de lo que tarda en sonar tu permiso** (`antesDeTuPermiso`: las dos
+  millas a tu velocidad y diez segundos de boca), no solo antes del umbral.
+- **No cambia**: la torre sigue sin autorizar con otro encima de la pista, la
+  red de la decisión —a la vista y sin la frase a destiempo— sigue ahí, y la
+  boca y sus pesos, igual. El banco del vuelo entero, también: no fue cosa del
+  ×12.
+
+### Lo medido
+
+Sin navegador:
+
+- **`permiso-a-tiempo.test.ts`**, nueva: la frecuencia de Los Rodeos con su
+  tráfico y sus calles, el turno, una boca de verdad con lo que dura cada
+  frase y el JAZ 90 que entra en el circuito a cinco minutos del umbral y coge
+  la final de la torre a 4,5 km; dos cabeceras, seis momentos y tres
+  semillas. Pide que tu permiso empiece a sonar antes de las dos millas, sin
+  irse al aire ni darse a la vista.
+
+  | | Tarde | Al aire | Sonó, de … a … m del umbral |
+  |---|---|---|---|
+  | Antes | 6 de 36 | 1 | 1.521 a 4.497 |
+  | Solo la regla de la salida | 5 de 36 | 1 | 1.521 a 4.497 |
+  | Ahora | 0 de 36 | 0 | 4.064 a 4.497 |
+
+- **El banco de mesa de 48 llegadas** (`RODEOS=1` en `salida-tapada.test.ts`,
+  que ahora también te pone en la fila desde el circuito, como el juego):
+  frustradas de 9 a 0, «parado a tu lado» de 1 a 0, y siguen sin salidas que no
+  despegan, sin llegadas que no llegan y nunca dos en la pista.
+
+- **Las pruebas de El Hierro de `salida-tapada.test.ts`** que miran qué hace
+  la torre cuando uno que sale tapa tu salida —la vuelta, la ida al aire, el
+  aviso de un AFIS— se quedaron sin caso: el tercero que ocupaba la pista
+  mientras el que sale esperaba en tu salida era justo una llegada del
+  tráfico que se te metía delante. Vuelan ahora sin entrar en la fila desde
+  el circuito (`filaDesdeElCircuito`), que es el caso de uno que ya había
+  girado a su base cuando tú llegaste al circuito, y sigue pasando.
+
+En el navegador, `tenerife-norte taguato 12 jaz-90`, una tirada de cada en una
+copia del código, con el volcado de voces (`OGA_VOCES`):
+
+| | Comprobaciones | Tu permiso |
+|---|---|---|
+| Antes | 62 de 63 | sonó: «616 s aterrizar a 245 m, pista de otro hasta hace 6 s», con un «go around» a uno del tráfico que se te había metido en la final |
+| Ahora | 64 de 64 | «682 s aterrizar a 269 m (883 ft), pista de otro hasta hace 325 s» y «clearedLand» a 748 ft |
+
+La tirada de antes no repitió el fallo de H29a —su rojo fue otro, «antes de
+tocar, el juego dice que ya se puede tocar», que no es de la torre—: depende de
+dónde caiga el tráfico, y por eso lo que mide el arreglo es la mesa.
+
+### Las aves de los 414 s
+
+No es la misma causa. «torre.canario.aves» se pidió a los 504,5 s del reloj de
+la ruta, en el viento en cola, y se retiró a los 605,8 s, cuando las aves
+quedaron detrás: 101 s de juego. Ahí el banco vuela a ×12 —no hay permiso
+pendiente ni es una fase a tiempo real—, así que fueron unos ocho segundos de
+pared, con la boca hablando. Es la trampa de siempre del banco: el reloj
+acelerado comprime el juego y no el habla. Jugando, ese aviso tiene minuto y
+medio para sonar.
+
+Se arreglaría en el banco como el permiso —a uno mientras el aviso de aves
+espera turno, con una sonda como `permisoPorOir`—; no se ha hecho en esta
+tanda.
