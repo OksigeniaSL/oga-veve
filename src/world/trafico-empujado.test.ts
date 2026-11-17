@@ -30,8 +30,9 @@ const PASARELA = pasarelaDelTrafico(REACTOR)!;
 const MORRO = MORRO_DEL_TRAFICO.reactor;
 
 describe("quién del tráfico embarca por pasarela", () => {
-  it("el reactor sí, con la batalla del modelo que se dibuja; los demás, no", () => {
-    expect(PASARELA.batalla).toBeCloseTo(11.5, 1);
+  it("el reactor sí, con la batalla del modelo que se dibuja, a la medida con que se dibuja; los demás, no", () => {
+    // El JAZ 90 a la envergadura del reactor: sus 11,5 m de batalla por 34/26. Ver `CUERPO_DEL_TRAFICO`.
+    expect(PASARELA.batalla).toBeCloseTo(14.9, 1);
     for (const t of [TIPOS.turbohelice, TIPOS.bimotor, TIPOS.avioneta]) expect(pasarelaDelTrafico(t)).toBeUndefined();
   });
 });
@@ -195,7 +196,7 @@ describe("en Los Rodeos, un reactor del tráfico empujado de su puesto", async (
     }
     expect(deCulo, "empujado de culo").toBeGreaterThan(20);
     expect(haciaDelante, "con el tractor no va hacia delante").toBeLessThan(0.5);
-    expect(tractorDelante, "el tractor delante de la rueda de morro").toBeGreaterThan(PASARELA.batalla);
+    expect(tractorDelante, "el tractor delante de la rueda de morro").toBeGreaterThan(PASARELA.morro!.rueda);
     expect(reservada, "la calle reservada mientras empuja").toBeGreaterThan(20);
     expect(fin, "el tractor se va").toBeGreaterThan(0);
     // Y suelto, rueda hacia delante.

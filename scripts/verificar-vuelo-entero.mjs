@@ -4101,9 +4101,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * mide aquí es el asfalto. Y el agua de casa, que
      * sobre el campo de llegada no se dibuja —su orilla lo tapa— y el rayo
      * sí la encuentra.
+     *
+     * **Y el tractor del remolque** (`remolque`), que tampoco es suelo: en un
+     * puesto de contacto el avión empieza enganchado, y desde que el tractor
+     * coge la rueda de morro de verdad (H20c, ADR 0025) su cuna está justo
+     * debajo de ella. El rayo daba en la pala, 24 cm sobre el asfalto, y el
+     * banco contaba «hundido 0,23 m» un avión que tenía las ruedas en su
+     * sitio. Por eso se dice además contra qué se midió.
      */
     const NO_ES_SUELO =
-      /plan-de-vuelo|ruta|sombra|luces|balizas|aros|senda|cielo|nubes|lluvia|sigueme|senalero|trafico|amarillo|pintura|designador|letreros|marcas|puntos-de-mira|cabeceras|helipuertos|agua/;
+      /plan-de-vuelo|ruta|sombra|luces|balizas|aros|senda|cielo|nubes|lluvia|sigueme|senalero|trafico|remolque|amarillo|pintura|designador|letreros|marcas|puntos-de-mira|cabeceras|helipuertos|agua/;
     for (const h of rayo.intersectObjects(o.escena().children, true)) {
       if (!h.object.isMesh || h.object.isInstancedMesh || !visible(h.object))
         continue;
@@ -4114,7 +4121,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         nombres += `${p.name}<`;
       }
       if (deAvion || NO_ES_SUELO.test(nombres)) continue;
-      return +(bajo.y - h.point.y).toFixed(2);
+      return {
+        d: +(bajo.y - h.point.y).toFixed(2),
+        sobre: nombres.split("<").filter(Boolean).slice(0, 2).join("<") || "sin nombre",
+      };
     }
     return null;
   })();
@@ -7732,7 +7742,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * subido. No se veía porque la sombra se dibuja aparte, contra el suelo, y
      * tapaba el hueco desde la cámara de persecución.
      */
-    flota: alPrincipioFlotaba,
+    flota: alPrincipioFlotaba?.d ?? null,
+    flotaSobre: alPrincipioFlotaba?.sobre ?? null,
   };
   /*
    * **Y el tramo de vuelta, que no lo arrancaba nadie.**
@@ -8390,7 +8401,7 @@ comprobar(
   vuelo.flota !== null && Math.abs(vuelo.flota) < 0.05,
   vuelo.flota === null
     ? "no se pudo medir"
-    : `${vuelo.flota > 0 ? "flota" : "hundido"} ${Math.abs(vuelo.flota).toFixed(2)} m`,
+    : `${vuelo.flota > 0 ? "flota" : "hundido"} ${Math.abs(vuelo.flota).toFixed(2)} m sobre ${vuelo.flotaSobre}`,
   "el modelo se bajaba lo que mide él y no lo que el juego lo había subido",
 );
 

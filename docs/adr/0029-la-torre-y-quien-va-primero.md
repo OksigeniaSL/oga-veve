@@ -179,3 +179,35 @@ solo que en esta no hubo.
 - En el banco de Los Rodeos, por la 30, siete de veinticuatro llegadas acaban
   con una salida que no llega a despegar —recibe «hold short» y se le adelantan
   las de detrás—; pasa igual antes y después, y no es de esta tanda.
+
+  **De dónde sale (17-11-2026), sin arreglar todavía.** No se queda olvidada en
+  la frecuencia: se le retira el dibujo. La torre la tiene en su puesto mientras
+  tu salida de la pista pasa por su doble raya (`quienDejaLaPistaPorSuRaya`),
+  y la doble raya de la 30 está a dos kilómetros de los puestos. En cuanto la
+  pasas la suelta, y sale de su puesto hacia ella por la misma calle por la que
+  tú vuelves al tuyo: frente a frente, los dos dentro, sin sitio para recular
+  —su puesto está en tu camino—, y a los treinta segundos parada por ti se le
+  retira (`PACIENCIA_CON_QUIEN_JUEGA`), con su «hold short» ya dicho. Medido en
+  las siete: en todas, tu raya pasa a menos de seis metros del centro del
+  turbohélice que espera, en la entrada de la plataforma por la que se llega a
+  todos los puestos de ese lado. **Y no está en un puesto**: el más cercano, el
+  15, queda a 63 m. Su camino se recortó al asfalto (`recortarAlAsfalto` en
+  `world/suelo-del-trafico.ts`: el remate al puesto cruza fuera del pavimento
+  dibujado) y espera en el último nudo, que es una calle.
+
+  Se probaron dos cosas y no se quedaron. Retenerle en su puesto hasta que
+  hayas pasado por toda su calle, como ya se hace con los del tráfico que
+  aterrizan: despegan las siete, pero tú te quedas parado detrás de él —está en
+  tu camino— hasta que tu paciencia te hace pasar por encima, y el rodaje de la
+  toma al puesto pasa de 203 a 233 s de media en las cuarenta y ocho llegadas
+  (+96 s en doce por la 12). Y darte otro puesto al que se llegue sin pasar
+  junto a un avión parado: en esas llegadas no lo hay entre los seis más
+  cercanos. Lo que va a la raíz es que el tráfico no espere en una calle:
+  **que entre los puestos cercanos prefiera uno al que su camino llega entero
+  antes que uno recortado**. Probado en una copia, sin juntar, con el mismo
+  banco de mesa de cuarenta y ocho llegadas: las salidas que no despegan pasan
+  de siete a una, el rodaje de la toma al puesto de 203 a 192 s de media, y
+  las pruebas de `src/world/` y de la torre pasan; pero sale una nueva de
+  «parado a tu lado» —un reactor a 42,8 m, con el límite en 43,25— y una
+  llegada tarda 98 s más. Falta mirar esas dos y el navegador antes de
+  juntarlo.

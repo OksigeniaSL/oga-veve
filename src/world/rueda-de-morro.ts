@@ -94,6 +94,27 @@ export const MORRO_DEL_TRAFICO: Readonly<Record<"avioneta" | "bimotor" | "turboh
 };
 
 /**
+ * **El cuerpo de cada tipo del tráfico a la medida con que se dibuja**, m: la
+ * batalla —de la rueda de morro al centro de las principales— y lo que va la
+ * punta de la cola por detrás de su origen. Es lo que se empuja, lo que gira
+ * en el empuje y lo que barre por detrás (`zonaDelEmpuje` en `trafico.ts`).
+ *
+ * El reactor se dibuja con el JAZ 90 a la envergadura de su tipo, una vez y tres
+ * décimas, y se empujaba con la batalla de la ficha del JAZ 90, 11,5 m: el
+ * dibujo giraba con un radio que no era el suyo y la zona del empuje le ponía la
+ * cola a 14,4 m del centro, con la del dibujo a 20,6. Medido en los `.glb` por
+ * `rueda-de-morro.test.ts`, como `MORRO_DEL_TRAFICO`.
+ */
+export const CUERPO_DEL_TRAFICO: Readonly<
+  Record<"avioneta" | "bimotor" | "turbohelice" | "reactor", { readonly batalla: number; readonly cola: number }>
+> = {
+  avioneta: { batalla: 1.65, cola: 4.26 },
+  bimotor: { batalla: 2.67, cola: 4.42 },
+  turbohelice: { batalla: 10.68, cola: 13.55 },
+  reactor: { batalla: 14.92, cola: 20.57 },
+};
+
+/**
  * **Dónde va la referencia del avión para que su rueda de morro quede en `p`**,
  * mirando a `rumbo`: tanto como va la rueda por delante, hacia atrás.
  */

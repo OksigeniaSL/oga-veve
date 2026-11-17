@@ -80,16 +80,14 @@ import {
   type Pista,
 } from "./circuito";
 import { desplazadoDe } from "./umbral-desplazado";
-import { aircraftById } from "../flight/aircraft";
 import {
-  largoPorLaBatalla,
   poseDelEmpuje,
   Remolque,
   vector,
   type Empuje,
 } from "./remolque";
 import { DibujoDelRemolque } from "./tractor-de-remolque";
-import { MORRO_DEL_TRAFICO, ruedaDeMorroEn } from "./rueda-de-morro";
+import { CUERPO_DEL_TRAFICO, MORRO_DEL_TRAFICO, ruedaDeMorroEn } from "./rueda-de-morro";
 import {
   PASO_DEL_TRAMO,
   porDelanteDe,
@@ -595,15 +593,15 @@ export function pistaQuePideConSuMargen(t: TipoDeTrafico): number {
  * como los reactores de quien juega (`vaALaPasarela`). El turbohélice regional
  * embarca a pie en la plataforma, con su escalerilla, y sale por sus medios; la
  * avioneta y el bimotor, de la plataforma de aviación general. La batalla es la
- * del modelo con que se dibuja —el JAZ 90, la de un E-170—, que es la que se ve
- * girar empujado. Ver el ADR 0025.
+ * del modelo con que se dibuja **a la medida con que se dibuja** —el JAZ 90 a
+ * la envergadura del reactor, una vez y tres décimas—, que es la que se ve
+ * girar empujado. Era la de la ficha del JAZ 90, la de su tamaño. Ver
+ * `CUERPO_DEL_TRAFICO` y el ADR 0025.
  */
 export function pasarelaDelTrafico(t: Pick<TipoDeTrafico, "id">): PasarelaDelTrafico | undefined {
   if (t.id !== "reactor") return undefined;
-  batallaDelReactor ??= aircraftById(MODELO_DEL_TIPO.reactor ?? "jaz-90").batalla;
-  return { batalla: batallaDelReactor, morro: MORRO_DEL_TRAFICO.reactor };
+  return { batalla: CUERPO_DEL_TRAFICO.reactor.batalla, morro: MORRO_DEL_TRAFICO.reactor };
 }
-let batallaDelReactor: number | undefined;
 
 /**
  * **Cuántos tractores empujan a la vez en el tráfico**: dos. Cada uno es un
@@ -3338,7 +3336,8 @@ export function crearTrafico(
     }
     const fin = poseDelEmpuje(r.empuje, largo);
     const atras = vector(fin.rumbo + Math.PI);
-    const cola = largoPorLaBatalla(pasarelaDelTrafico(q.tipo)?.batalla ?? 12) / 2;
+    // La cola del dibujo, no la de un largo sacado de la batalla. Ver `CUERPO_DEL_TRAFICO`.
+    const cola = CUERPO_DEL_TRAFICO[q.tipo.id].cola;
     puntos.push({ x: fin.x, z: fin.z }, { x: fin.x + atras.x * cola, z: fin.z + atras.z * cola });
     return puntos;
   };

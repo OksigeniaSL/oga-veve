@@ -320,7 +320,8 @@ puesto a puesto pediría saber dónde está cada pasarela, y solo tres campos lo
 
 - **El reactor del tráfico, y solo él** (`pasarelaDelTrafico` en `world/trafico.ts`): es el que embarca por pasarela,
   con el mismo criterio que `vaALaPasarela` para quien juega. Se empuja con la batalla del modelo con que se dibuja, el
-  JAZ 90 (11,5 m), que es la que se ve girar. El turbohélice regional embarca a pie con su escalerilla y sale por sus
+  JAZ 90 (11,5 m), que es la que se ve girar. (Desde el 17-11-2026, a la medida con que se dibuja, 14,9 m: ver «El
+  reactor del tráfico, a su tamaño».) El turbohélice regional embarca a pie con su escalerilla y sale por sus
   medios; la avioneta y el bimotor, de la plataforma de aviación general. No cambian.
 - **Sale de un puesto de contacto y llega a uno**, si el campo tiene alguno para su largo, igual que el plan de quien
   juega. Llega por la raya del puesto, los últimos veinticinco metros en su eje, con el morro al edificio
@@ -456,6 +457,31 @@ veinticuatro metros más cerca de la fachada que la marca de parada.
   capítulo, a 78, con la puerta del JAZ 110 a 78,7. Con ochenta, el JAZ 120 entra en Barajas en un puesto cuyo empuje
   acaba a sesenta y nueve metros de la raya (`remolque-en-cada-campo.test.ts`): queda en setenta y nueve, y ese puesto,
   por mirar.
+
+## El reactor del tráfico, a su tamaño, y el puesto del que se sale (17-11-2026)
+
+**El reactor del tráfico se empuja con el tamaño con que se dibuja.** Es el JAZ 90 a la envergadura de su tipo,
+34 m, una vez y tres décimas su tamaño, y lo de «El tráfico» de arriba le daba la batalla de la ficha del JAZ 90,
+11,5 m: el dibujo giraba con un radio que no era el suyo, y `zonaDelEmpuje` le ponía la cola a medio largo sacado de
+esa batalla, 14,4 m del centro, con la del dibujo a 20,6. La rueda de morro ya iba a su tamaño (13,2 m, ver «La rueda
+de morro en el punto del puesto»); ahora también la batalla y la cola (`CUERPO_DEL_TRAFICO` en
+`world/rueda-de-morro.ts`): **14,9 m de batalla y 20,6 m de cola**, medidas en el `.glb` a su envergadura por
+`rueda-de-morro.test.ts`, como la rueda. Con eso se empuja (`pasarelaDelTrafico`), gira, se elige el tractor —el
+pequeño, igual que antes— y se reserva la calle. Lo que se usa para aparcarlo y apartarse de él ya era a su tamaño:
+la envergadura del tipo y su morro. Los metros de empuje medidos en «Lo medido» de «El tráfico» —46 m en Los
+Rodeos, 52,6 m y el tractor a 13,7 m del centro en el navegador— son de antes, con la batalla de la ficha, y no se
+han vuelto a medir.
+
+**El que llega a un puesto del que no se puede salir, sin decidir todavía.** En El Hierro, por la 34, el que llegaba
+aparcaba en el 3A, del que `salida` ya no saca a nadie (`valeParaSalir`: de él se va a la pista por encima de ella);
+con el banco de mesa, contigo en cuatro de los nueve puestos. Mirado puesto a puesto con lo mismo que pide la salida,
+por la 34 no tiene salida por la calle **ningún puesto del grupo del 3** —3, 3A y el de en medio— ni el 2A; por la 16
+la tienen todos menos el 1. Se probó que el que llega eligiera, si lo hay, uno del que se pueda volver a salir: deja
+de aparcar en el 3A, pero en El Hierro caben tres turbohélices, uno por grupo, y por la 34 solo dos grupos tienen
+salida. Con dos que salen y uno que llega, el que llega cogía el sitio del segundo que sale, y ése acababa en el
+mismo puesto que el primero, con las alas metidas (`trafico-empujado.test.ts`, «cada puesto es de un avión»). Antes
+de cambiarlo hay que decidir qué pasa con el tercero: que no salga, que espere, o que el grupo del 3 tenga salida
+por la calle si de verdad la tiene, que es lo primero que habría que mirar en el AIP.
 
 ## Lo que queda
 
