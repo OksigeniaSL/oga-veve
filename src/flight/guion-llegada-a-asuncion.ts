@@ -453,6 +453,7 @@ export const GUION_LLEGADA_A_ASUNCION: GuionDelPasaje<MomentoDeLaLlegada, Charla
   sellosAlDecirlo: () => [],
   seQuedanHastaLaSiguiente: new Set(),
   elPlop: [],
+  paraEnLaBajada: new Set(),
   elOficio: [],
   bano: null,
   kit: null,

@@ -830,8 +830,15 @@ export interface GuionDelPasaje<M extends string = string, C extends string = st
   sellosAlDecirlo(id: string, lineas: readonly Linea[], seVe: boolean): readonly SelloDelViaje[];
   /** Los dibujos de la ventanita que se quedan hasta la frase siguiente, no solo un poco. */
   readonly seQuedanHastaLaSiguiente: ReadonlySet<string>;
-  /** **El plop de los oídos, explicado**: lo que queda de él se aparta para el anuncio de la bajada. */
+  /** **El plop de los oídos, explicado**: se cuenta una vez. Ver `plopExplicado`. */
   readonly elPlop: readonly Linea[];
+  /**
+   * **Dónde puede quedarse a medias lo que se está contando para el anuncio
+   * de la bajada**: las claves de las frases delante de las que se para, que
+   * son las que empiezan algo —nunca la respuesta a una pregunta—. Ver
+   * `apartarParaLaBajada`.
+   */
+  readonly paraEnLaBajada: ReadonlySet<string>;
   /** **Lo que sabe hacer la tripulante**: se cuenta una vez. Ver `oficioContado`. */
   readonly elOficio: readonly Linea[];
   /** **El baño**: el momento en que se pide y la frase con la que se va. Sin él, no se va. */
@@ -1250,8 +1257,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
   private bostezando = false;
   /** Si Ara se acaba de despertar con el *ding*: lo dice detrás del «ya estamos arriba». */
   private despiertaConElDing = false;
-  /** Si lo que quedaba del plop explicado se apartó para el anuncio de la bajada. */
-  private plopAplazado = false;
+  /** Lo que quedaba por contar, apartado para el anuncio de la bajada: va detrás de él. Ver `apartarParaLaBajada`. */
+  private apartadoPorLaBajada: Linea[] | null = null;
   /**
    * **El modo rápido**: si está puesto, si corre ahora, lo que falta y cuándo
    * se miró, si el botón se puede ver, cuándo empezó la llegada y los ratos
@@ -2224,24 +2231,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       this.atenderALaSiesta(l);
       if (this.siestaDeAhora || !this.despiertaConElDing) return;
     }
-    /*
-     * **Y empezar a bajar no espera al plop** (19-10-2026). La tripulante
-     * explica el plop de la subida al final de lo suyo con las nubes, y en un
-     * crucero de un minuto eso puede llegar al punto de descenso: el ralentí
-     * sonaba y Ara ya no lo podía notar a tiempo, ni la luz del cinturón se
-     * encendía. Lo que le queda por empezar de esa explicación se aparta, se
-     * dice el anuncio de la bajada —con el ralentí que nota Ara— y la
-     * tripulante lo acaba detrás, antes de los oídos, que es donde se engancha.
-     */
-    if (this.def.id === "bajada" && !this.plopAplazado && acabaDePonerse(l, "ralenti") && this.def.cuando(l, this)) {
-      let quitado = false;
-      this.charla.quitar((x) => {
-        const es = this.guion.elPlop.includes(x);
-        quitado ||= es;
-        return es;
-      });
-      this.plopAplazado = quitado;
-    }
+    this.apartarParaLaBajada(l);
     // El toque que no encontró silencio a tiempo se queda en su aro, sin voz.
     if (this.toquePendiente && this.reloj - this.toquePendiente.desde > ESPERA_EL_TOQUE) {
       this.toquePendiente.toque.calla = "ocupado";
@@ -2318,16 +2308,55 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
     this.dichos.push(def.id);
     this.cuandoSeDijo.set(def.id, this.reloj);
     this.indice++;
-    // Y lo que quedó de la explicación del plop, detrás del anuncio de la bajada.
-    if (def.id === "bajada" && this.plopAplazado) {
-      this.plopAplazado = false;
-      this.charla.decir(this.guion.elPlop);
+    // Y lo que quedó por contar, detrás del anuncio de la bajada, como estaba.
+    if (def.id === "bajada" && this.apartadoPorLaBajada) {
+      this.charla.decir(this.apartadoPorLaBajada);
+      this.apartadoPorLaBajada = null;
     }
     // Y Ara, a quien acaba de despertar el *ding*, detrás: con el mapa de lo que se voló mientras dormía.
     if (this.despiertaConElDing) {
       this.despiertaConElDing = false;
       this.charla.decir([this.guion.siesta.seDespierta]);
     }
+    /*
+     * Y si lo que se acaba de pedir llega con el ralentí ya sonando, se mira
+     * ahora, antes de que empiece: la tripulante que llega al asiento justo
+     * cuando empieza a bajar saluda después del anuncio, no antes.
+     */
+    this.apartarParaLaBajada(l);
+  }
+
+  /**
+   * **Y empezar a bajar no espera a lo que se está contando** (19-10-2026, y
+   * 17-11-2026). En el punto de descenso los motores se quedan al ralentí, el
+   * ruido baja de golpe y Ara lo nota —«¡suenan todavía más bajito! ¿Será que
+   * ya empezamos a bajar?»—, y la comandante se lo contesta con el anuncio de
+   * la bajada. Pero el momento `bajada` espera a que nadie hable, y Ara solo
+   * puede notarlo mientras se oye el cambio —ver `SE_OYE_EL_CAMBIO`—: si en
+   * ese rato no hay silencio, no lo dice.
+   *
+   * Y en un salto entre islas el crucero dura medio minuto o uno, y es justo
+   * cuando la tripulante llega al asiento de Ara con el servicio y le cuenta
+   * las nubes de cerca, seis frases y más de cuarenta segundos, con el plop
+   * detrás. Primero se apartó solo el plop, y no bastaba: con el ralentí
+   * llegando en el saludo, lo de las nubes ya pasaba de los cuarenta
+   * segundos. En el banco de Ara, un vuelo lo dijo a los 38 s (c62dc29a) y el
+   * siguiente, con el ralentí siete segundos después de que Ara volviera del
+   * baño, no lo dijo, y el porqué del ralentí se quedó detrás de otra charla.
+   * En la mesa, con un crucero de 31 s o menos no se decía nunca.
+   *
+   * Así que lo que queda por contar se para en la primera frase en que se
+   * puede parar —la que empieza algo, nunca la respuesta a una pregunta; ver
+   * `paraEnLaBajada`—, que es lo que hace cualquiera en un avión cuando
+   * suena la megafonía: se dice el anuncio de la bajada, con Ara
+   * delante, y lo apartado sigue detrás, en su orden y antes de los oídos.
+   * Ninguna frase se pierde ni se corta a medias.
+   */
+  private apartarParaLaBajada(l: LecturaDelPasaje): void {
+    if (this.apartadoPorLaBajada || this.def.id !== "bajada" || !acabaDePonerse(l, "ralenti") || !this.def.cuando(l, this)) return;
+    const para = this.guion.paraEnLaBajada;
+    const apartado = this.charla.apartarDesde((x) => para.has(x.clave));
+    if (apartado.length) this.apartadoPorLaBajada = apartado;
   }
 
   /**
