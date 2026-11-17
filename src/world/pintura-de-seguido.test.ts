@@ -11,7 +11,7 @@
  *
  * Aquí se monta el aeródromo de cada campo, se apunta cada trozo de pintura
  * que se le da a cada `Pintura` y con qué suelo, y se rehace con la cuenta de
- * antes —la de abajo, que es la de `1438bc99`— para comparar. No compara con
+ * antes —la de abajo, que es la de `d94094e2`— para comparar. No compara con
  * un fichero: si alguien cambia a propósito dónde va una raya, las dos
  * cuentas la ponen en el mismo sitio y la prueba sigue en pie; lo que no puede
  * es cambiarla el atajo.
