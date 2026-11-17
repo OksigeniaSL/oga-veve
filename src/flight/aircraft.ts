@@ -3769,8 +3769,11 @@ export const YVAGA: AircraftConfig = {
    */
   velocidadDeCircuito: 180 * 0.514444,
   /*
-   * **Ciento cuarenta y cinco nudos, la Vr de su peso**: 1,1 veces su pérdida
-   * con los flaps de despegue, 132. Ver `VR_SOBRE_LA_PERDIDA`.
+   * **Ciento cuarenta y cinco nudos, la Vr de su peso**: la de la NTSB, abajo.
+   * Era también 1,1 veces su pérdida con los flaps de despegue, 132, mientras
+   * el modelo le daba un CL máximo de despegue de 1,73; con los Krueger, 2,03,
+   * esa pérdida es de 122 y la Vr queda a 1,19 veces ella (nota H29e del ADR
+   * 0002). Ver `VR_SOBRE_LA_PERDIDA`.
    *
    * Eran 167, la Vr de un 747-100 **a su peso máximo al despegar** puesta en una
    * ficha que pesa su máximo al aterrizar: por encima de la V2 que tiene a este
