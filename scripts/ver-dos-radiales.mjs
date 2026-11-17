@@ -266,6 +266,14 @@ try {
   // ── La segunda raya, y la cruz ─────────────────────────────────────
   const otra = await centrar(page, 2);
   r = otra.r;
+  /*
+   * **Nada que no sea del ejercicio** (H26f), mirado en cuanto se cierra: al
+   * cerrarse vuelve todo —la frecuencia del campo, la torre—, que lo que se
+   * vuele después ya es un vuelo, y el banco se queda unos segundos más
+   * haciendo fotos. Lo dicho después se apunta aparte, sin juzgarlo.
+   */
+  await ajeno.comprobar(page, comprobar, /^(cdi-|cruce-de-radiales)/);
+  const dichoAlCerrar = await page.evaluate(() => globalThis.__oga.dichoTodo());
   const leida2 = r.ejercicio.leidas[1];
   const cruce = r.ejercicio.cruce;
   comprobar(
@@ -301,8 +309,11 @@ try {
   await foto("04b-la-cruz-de-cerca", true);
   await verElPlano(false);
 
-  // Nada que no sea del ejercicio (H26f): ni la fase del plan, ni la torre, ni la frecuencia, ni la ventanilla.
-  await ajeno.comprobar(page, comprobar, /^(cdi-|cruce-de-radiales)/);
+  const dichoDespues = await page.evaluate(() => globalThis.__oga.dichoTodo());
+  const despues = Object.entries(dichoDespues).flatMap(([quien, claves]) =>
+    claves.slice((dichoAlCerrar[quien] ?? []).length).map((c) => `${quien}: ${c}`),
+  );
+  console.log(`    dicho después de cerrar, ya en vuelo: ${despues.join(", ") || "nada"}`);
   /*
    * Lo que la instructora dijo o tenía que decir: lo grabado, en lo que oyó
    * su boca; lo que no, en lo apuntado como «sin grabar, se calla», que
