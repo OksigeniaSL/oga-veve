@@ -274,6 +274,54 @@ export interface FdmOptions {
 
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 import { DURO_DE_TRANSPORTE } from "./aterrizaje";
+import { perdidaCon, V2_SOBRE_LA_PERDIDA } from "./velocidades-de-despegue";
+
+/**
+ * **Lo lenta que es la lenta, sobre la segura**, cuando salen de la pérdida: la
+ * misma proporción que tienen las dos atadas a la aproximación, 0,8 sobre 1,05,
+ * que es la mezcla que se afinó para la toma. Ver `velocidadesDeLaAyuda`.
+ */
+const LENTA_SOBRE_SEGURA = 0.8 / 1.05;
+
+/**
+ * **Las dos velocidades de la mezcla de `climbHold`**, m/s verdaderos: la
+ * **segura**, por debajo de la cual la ley de la velocidad empieza a bajar el
+ * morro, y la **lenta**, desde la que lo baja entera. Ver `step`.
+ *
+ * Salían solo de la ficha, `min(0,58·crucero, 1,05·aproximación)` y
+ * `min(0,42·crucero, 0,8·aproximación)`, y la de aproximación es la Vref, con
+ * los flaps de aterrizar. Con los flaps recogidos la pérdida sube, y en los
+ * reactores la segura quedaba por debajo de ella: 124 nudos en el JAZ 90, con la
+ * pérdida limpia en 135, así que con el avión limpio y lento la ayuda no hacía
+ * nada por la velocidad y solo lo protegía el tope de ángulo de ataque. Medido
+ * en la mesa en Tukã, soltado limpio a 1,3 veces la pérdida y con el gas
+ * quitado: el JAZ 90 se iba a 0,95 veces su pérdida limpia y el JAZ 120 a 0,94.
+ *
+ * Así que cada una es **la mayor** entre la de la ficha y una que sale de la
+ * pérdida con los flaps que lleva el avión (`perdidaCon`, en verdadera a esta
+ * densidad, que es como se le compara): la segura, a la V2 más baja que deja la
+ * norma, 1,13 veces esa pérdida (`V2_SOBRE_LA_PERDIDA`), que es lo mínimo con
+ * lo que se vuela con esos flaps; la lenta, a la proporción de siempre. Con los
+ * flaps de aterrizar las de la pérdida quedan por debajo de las de la ficha en
+ * todos —en el JAZ 90, el más justo, 112 nudos verdaderos frente a 124 a los
+ * setecientos metros de Cuatro Vientos—, así que **la toma no cambia**: es lo que se afinó con ellas
+ * (el JAZ 90 bajaba a 42 m/s cuando iban atadas al crucero).
+ */
+export function velocidadesDeLaAyuda(
+  ac: AircraftConfig,
+  flaps: number,
+  densidad: number,
+): { readonly lenta: number; readonly segura: number } {
+  const perdida = perdidaCon(ac, flaps) * Math.sqrt(SEA_LEVEL_DENSITY / Math.max(0.01, densidad));
+  const seguraPorLaPerdida = V2_SOBRE_LA_PERDIDA * perdida;
+  return {
+    lenta: Math.max(
+      Math.min(ac.cruiseSpeed * 0.42, ac.approachSpeed * 0.8),
+      seguraPorLaPerdida * LENTA_SOBRE_SEGURA,
+    ),
+    segura: Math.max(Math.min(ac.cruiseSpeed * 0.58, ac.approachSpeed * 1.05), seguraPorLaPerdida),
+  };
+}
 
 /**
  * A qué ritmo gira este avión en el suelo, en radianes por segundo.
@@ -1462,9 +1510,12 @@ export class CoefficientFlightModel implements FlightModel {
          * Cada umbral es el menor entre el de siempre y uno atado a la
          * aproximación. En los cuatro de hélice sale casi el mismo número —lo
          * afinado no se mueve—; en los reactores baja a donde tiene que estar.
+         *
+         * **Y con los flaps que lleva, no con los de aterrizar.** La de
+         * aproximación es la de los flaps puestos, y limpio la segura del JAZ 90
+         * quedaba por debajo de su pérdida. Ver `velocidadesDeLaAyuda`.
          */
-        const floor = Math.min(ac.cruiseSpeed * 0.42, ac.approachSpeed * 0.8);
-        const safe = Math.min(ac.cruiseSpeed * 0.58, ac.approachSpeed * 1.05);
+        const { lenta: floor, segura: safe } = velocidadesDeLaAyuda(ac, assisted.flaps, density);
         const shortfall = safe - speed;
         const blend = clamp(shortfall / (safe - floor), 0, 1);
 

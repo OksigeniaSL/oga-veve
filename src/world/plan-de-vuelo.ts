@@ -6661,7 +6661,28 @@ export class PlanDeVuelo {
       this.velocidades[i - 1]! + (this.velocidades[i]! - this.velocidades[i - 1]!) * t,
       this.hastaElDeDelante(),
       this.antesDelTramo(),
+      this.antesDelPuesto(),
     );
+  }
+
+  /**
+   * **Y en un puesto, parado con la rueda de morro en su punto**, que es lo que
+   * marca el punto (#191) y lo que mira el señalero (ver `world/rueda-de-morro.ts`).
+   * El avance es el del centro del avión, así que el perfil, que llega a cero al
+   * final de la raya, lo paraba con el centro en el punto y la rueda de morro más
+   * allá: 3,8 m en el JAZ 50, diez en el JAZ 90 y veinticuatro en los dos grandes.
+   * Con el JAZ 50 en Los Rodeos el banco del vuelo entero, que rueda a lo que pide
+   * esto, se pasaba del punto, giraba buscando el final de la raya y se paraba
+   * con la rueda de morro donde el señalero seguía pidiendo «adelante». Aquí se
+   * frena con la misma frenada que el perfil para que el centro se quede antes
+   * del final tanto como va la rueda por delante.
+   */
+  private antesDelPuesto(): number {
+    if (this.destino !== "puesto") return Infinity;
+    const total = this.recorridos[this.recorridos.length - 1];
+    if (total === undefined) return Infinity;
+    const queda = total - Math.max(0, morroDe(this.avion).rueda) - this.avance;
+    return Math.sqrt(2 * FRENADA * Math.max(0, queda));
   }
 
   /**

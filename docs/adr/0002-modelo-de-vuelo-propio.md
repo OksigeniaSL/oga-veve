@@ -377,3 +377,95 @@ H20a, cuatro tramos rectos. Una tirada no es una cifra: es la que hay.
   segura.
 - **El banco del despegue** sigue soltando a los quince metros, por debajo de
   la Vr del JAZ 20, con el morro alto; no se ha tocado.
+
+## Nota H22b (17-11-2026): la segura y la lenta, con los flaps que lleva
+
+Lo primero que la nota H21d dejaba en «Lo que no».
+
+### Lo que pasaba
+
+Las dos velocidades de la mezcla de `climbHold` salían solo de la ficha,
+`min(0,58 · crucero, 1,05 · aproximación)` la segura y
+`min(0,42 · crucero, 0,8 · aproximación)` la lenta, y la de aproximación es la
+Vref, que es de los flaps de aterrizar. Con los flaps recogidos la pérdida
+sube, y en los reactores la segura quedaba por debajo de ella: 124 nudos en el
+JAZ 90, con la pérdida limpia en 135. Ahí la ley de la velocidad no empujaba
+nada y lo único que protegía el ala era el tope de ángulo de ataque.
+
+En la mesa, en Tukã, que lleva la ayuda entera: soltado a 1,3 veces la pérdida
+a 1.500 m, con el gas quitado y el compensador puesto para esa velocidad, la
+ayuda sostiene la altura mientras puede y la velocidad cae. Lo más lento que
+llegó cada uno, sobre su pérdida con esos flaps:
+
+| Tukã, sin gas | Limpio, antes | Limpio, ahora | Flaps de despegue, antes | Ahora |
+|---|---|---|---|---|
+| JAZ 50 | 0,96 | 1,04 | 0,99 | 1,02 |
+| JAZ 60 | 1,00 | 1,04 | 1,06 | 1,06 |
+| JAZ 90 | **0,95** | 1,05 | **0,93** | 1,02 |
+| JAZ 110 | 0,99 | 1,06 | 1,04 | 1,04 |
+| JAZ 120 | **0,94** | 1,04 | 0,98 | 1,01 |
+
+Los de hélice ligeros —JAZ 20, 25 y 40— y todos en Taguató salen igual antes y
+después: en Taguató la ayuda va a 0,45 y lo que sostiene la velocidad es el
+compensador, de 1,09 a 1,21 veces la pérdida. El avisador no sonó en ninguno:
+Tukã alarga la pérdida (`stallProtection`), así que por debajo de 1,0 ahí no se
+cae, pero vuela más despacio de lo que podría volar ese avión de verdad.
+
+### Lo que se decidió (`velocidadesDeLaAyuda` en `fdm.ts`)
+
+Cada una es **la mayor** entre la de la ficha y una que sale de la pérdida con
+los flaps que lleva el avión (`perdidaCon`, pasada a verdadera con la densidad
+de donde vuela, que es con lo que se compara):
+
+- **la segura, a 1,13 veces esa pérdida**, que es la V2 más baja que deja la
+  norma sobre la pérdida de un g (`V2_SOBRE_LA_PERDIDA`, con sus fuentes en
+  `velocidades-de-despegue.ts`): lo mínimo con lo que se vuela con esos flaps;
+- **la lenta, a la proporción de siempre de la segura**, 0,8 sobre 1,05, que es
+  la forma de la mezcla que se afinó para la toma.
+
+Con los flaps de aterrizar las dos de la pérdida quedan por debajo de las de la
+ficha en todos, así que **la toma no cambia**; el más justo es el JAZ 90, con
+112 nudos verdaderos frente a 124 a setecientos metros de altitud, la de Cuatro
+Vientos. La prueba lo mira del nivel del mar a mil metros. En nudos y al nivel
+del mar, lenta / segura:
+
+| | Pérdida limpia | Limpio | Pérdida, flaps de despegue | Flaps de despegue | Flaps de aterrizar |
+|---|---|---|---|---|---|
+| JAZ 20 | 49 | 49 / 67 | 47 | 49 / 67 | 49 / 67 |
+| JAZ 25 | 43 | 45 / 59 | — | — | 45 / 59 |
+| JAZ 40 | 66 | 68 / 90 | 62 | 68 / 90 | 68 / 90 |
+| JAZ 50 | 70 | **60 / 79** (56 / 73) | 63 | 56 / 73 | 56 / 73 |
+| JAZ 60 | 98 | 86 / 113 | 90 | 86 / 113 | 86 / 113 |
+| JAZ 90 | 135 | **117 / 153** (94 / 124) | 117 | **101 / 132** (94 / 124) | 94 / 124 |
+| JAZ 110 | 135 | **116 / 152** (115 / 151) | 125 | 115 / 151 | 115 / 151 |
+| JAZ 120 | 147 | **127 / 166** (117 / 153) | 132 | 117 / 153 | 117 / 153 |
+
+(En negrita, las que cambian; entre paréntesis, las de antes.) Al nivel del
+mar, en los de hélice ligeros y en el JAZ 60 la ficha ya iba por encima y no se
+mueve nada; cambia en los reactores y en el JAZ 50 limpios, y en el JAZ 90 con
+los flaps de despegue, que es el único cuya segura quedaba por debajo de su Vr.
+Y como la pérdida va en verdadera, en altitud sube con ella, igual que sube la
+de verdad: a 1.500 m, limpio, la segura del JAZ 60 pasa de 113 a 120 nudos
+verdaderos y la del JAZ 90, a 165; las de la ficha son las mismas a cualquier
+altura. En los de hélice ligeros, ni así.
+
+Con eso, en la tabla de arriba ninguno baja de su pérdida, y se cambia altura
+por velocidad un poco antes: el JAZ 90 limpio baja 154 m en el minuto en vez de
+103, y a −5,3 m/s en vez de −7,0. Lo comprueba
+`velocidades-de-la-ayuda.test.ts`, con lo de la toma, lo de cada muesca y el
+vuelo en Tukã; `subida-recien-despegado.test.ts` sigue pasando entero.
+
+En el navegador (17-11-2026, puerto 5688, con el arreglo del puesto del ADR
+0025 en la misma tanda): `npm run toque`, 91 de 91. Los vuelos enteros del
+JAZ 50 y del JAZ 90 en Taguató llegan a la puerta de los quinientos pies con
+los flaps de aterrizar, donde nada ha cambiado, y fallan los dos en la toma, a
+2,6 y 2,26 m/s, como ya fallaban o no según la tirada (las ráfagas de Los
+Rodeos son al azar, `rafagas.ts`): ver «La raya para la rueda de morro» en el
+ADR 0025. `verificar-despegue.mjs tenerife-norte taguato`, con el JAZ 20, cuyas
+dos velocidades no cambian en ninguna configuración ni a ninguna altura de los
+campos, de modo que la ayuda le hace lo mismo que antes: 17 de 18, «en el aire
+sigue subiendo», a −0,5 m/s a 31 m, contra 18 de 18 (+1,6 m/s a 30 m) en H21d;
+como en Guyrami en la nota H21d, la misma ley da una tirada debajo del listón y
+otra encima. No se pudo repetir: el candado del navegador estaba cogido. Y el
+vuelo entero del JAZ 50 corrido otra vez, con el banco frenando donde para la
+raya, 57 de 57, con la toma a 1,38 m/s.

@@ -557,6 +557,80 @@ estuvo ocupado por otros bancos hasta pasado el tope de esa tanda, y quedan por 
 entero de Los Rodeos con el JAZ 90, las llegadas de El Hierro, `npm run rodaje` y una foto del tractor enganchado, de
 lado y de cerca.
 
+## La raya para la rueda de morro, y el señalero mirando a la llegada (17-11-2026)
+
+Desde «La rueda de morro en el punto del puesto» el señalero mide desde la rueda de morro, y el vuelo entero del
+JAZ 50 en Los Rodeos (`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-50`) se quedó en 56 de 57: «seña al
+apagar: adelante · gestos: despacio, alto, derecha, adelante · a 7 m de su sitio, a 0,00 m/s, tras 20 s
+esperando». El avión paraba donde paraba antes —el centro en (−635, −513), y el 15-11 en (−636, −513)— y lo que había
+cambiado era desde dónde se medía. Pero lo que lo dejaba ahí era el juego, por dos sitios, y no el banco:
+
+- **La velocidad que sugiere la raya llegaba a cero con el centro en el punto.** El avance por la raya es el del
+  centro del avión, así que quien rueda a lo que pide la raya —el banco rueda a eso, `o.rodaje()`— se quedaba con la
+  rueda de morro más allá. Rodando la vuelta entera a lo que pide (`parar-en-el-puesto.test.ts`): **2,5 m pasada con
+  el JAZ 50** en Los Rodeos, 8,8 con el JAZ 90, 8,9 con el JAZ 90 en Pettirossi y 22,4 con el JAZ 120 en Gando. El
+  banco, con el freno suelto por debajo de lo que pide más metro y medio, se pasaba del final de la raya, buscaba el
+  final, que ya le quedaba detrás, y paraba girado con el morro hacia el oeste.
+- **Y el señalero no miraba a la llegada.** Del puesto de Los Rodeos (−632, −510) se sale hacia el oeste, y la raya
+  de vuelta entra por el sur, por su último tramo recto de ciento diecisiete metros. Al empezar se le coloca para una
+  llegada contraria a la salida —entrando hacia el este— y al volver solo se le daba la vuelta si la llegada venía
+  por detrás; una de costado lo dejaba así. Lo que le faltaba al avión lo medía de oeste a este y lo desviado, de
+  norte a sur: a un avión que entra por el sur derecho al punto le da el alto a veinticinco metros, todavía en la
+  calle (la prueba); en el banco el avión venía un poco al oeste y se le juntaba al punto, y el alto salió en su
+  sitio. Lo que no salió fue lo de después: parado y girado hacia el oeste —es lo que da «7 m» con la rueda 3,8 m por
+  delante del centro, y en la traza el centro se mueve hacia el oeste los últimos dos segundos—, la rueda de morro
+  quedaba al oeste del punto, que para él era antes de llegar. Antes, contando desde el centro, eran 3 m, y daba
+  «frenos» por casualidad.
+
+**Lo que cambia:**
+
+- **Yendo a un puesto, la raya frena para dejar el centro antes del final tanto como va la rueda por delante**
+  (`antesDelPuesto` en `plan-de-vuelo.ts`), con la frenada del perfil. Rodando a lo que pide, la rueda de morro queda
+  a menos de diez centímetros del punto en los cinco casos de la prueba. Lo dibujado no cambia: la raya sigue acabando
+  en el punto, que es donde acaba la línea de entrada y la rueda la sigue hasta su marca de parada.
+- **El señalero se recoloca si la llegada viene a más de treinta grados de donde mira** (`Senalero.miraA`, desde
+  `senaleroAlPuestoDeLlegada`), y no solo si viene por detrás. Treinta grados es más que lo que se tuerce el último
+  tramo de una raya rehecha desde otro sitio de la misma calle, que es lo que el listón generoso quería evitar
+  —recolocarlo le reinicia la postura—, y menos que una llegada de costado. Lo comprueba `senalero.test.ts`.
+
+**Los demás caminos que paran en un puesto:**
+
+- **El JAZ 90 con señalero**, igual que el JAZ 50: rueda a la misma raya. Con el centro en el punto, la rueda de morro
+  le quedaba 8,8 m pasada, a un metro del «te lo pasaste» (`SE_PASO_DEL_PUESTO`, diez).
+- **El pasaje de Ara con la tripulación**, ya bien desde «La rueda de morro en el punto del puesto»: la tripulación
+  no rueda a lo que sugiere la raya, sino a lo suyo, y ya descontaba lo que va la rueda (`hastaLaRueda` en
+  `VueloDeLinea`).
+- **El helicóptero** no aparca en un puesto: vuela sin plan y se posa en su helipuerto (ADR 0026, paso 3), así que ni
+  raya ni señalero.
+- **El tráfico**, desde «La rueda de morro en el punto del puesto».
+
+**Lo que no se ha tocado:** el tope de rodaje de los peldaños donde el juego lleva la velocidad toma la de rodaje,
+nueve metros por segundo, cuando la sugerida es cero (`vista.velocidadSugerida || RODAJE` en `tope-de-rodaje.ts`). Con
+la raya pidiendo cero desde que la rueda llega al punto, eso pasa ahora en el punto y no tantos metros después, que
+es donde la rueda ya estaba pasada; el avión no lo para el tope, lo para quien juega con el freno, y el alto del
+señalero lo pide.
+
+**Y el banco, que se arrastraba.** Con las dos cosas arregladas, el vuelo entero del JAZ 50 pasó la seña («cortar ·
+gestos: adelante, despacio, alto, frenos, calzos, cortar · a −3 m de su sitio») y el del JAZ 90 también («a −8 m»), pero
+el centro del JAZ 50 paró otra vez en (−634, −513): el banco solo frena por encima de lo que pide la raya más metro y
+medio, y por debajo de eso el avión seguía al ralentí siete metros más allá de donde la raya llegaba a cero. El
+señalero lo da por llegado igual —pasarse también es haber llegado, ver `gestoDeSenalero`—, así que la seña pasaba
+por lo segundo sin medir lo primero. Ahora el banco frena cuando la raya pide parar, que es lo que hace quien ve el
+alto con el freno dibujado.
+
+**Lo medido** (navegador, 17-11-2026, puerto 5688), `verificar-vuelo-entero.mjs tenerife-norte taguato 1 …`:
+
+| | Antes (H21d) | Con la raya y el señalero | Y el banco frenando donde para la raya |
+|---|---|---|---|
+| `jaz-50` | 56 de 57: la seña al apagar, «adelante», a 7 m | 56 de 57: la seña pasa, «cortar» a −3 m; falla la toma, a 2,6 m/s | 57 de 57: «cortar» a −1 m, y la toma a 1,38 m/s |
+| `jaz-90` | — | 62 de 63: «cortar» a −8 m; falla la toma, a 2,26 m/s | — |
+
+La toma que falla no es de esto: llega a la puerta de los quinientos pies con los flaps de aterrizar, y con ellos la
+ayuda que sostiene la subida es la misma de antes (nota H22b del ADR 0002); las ráfagas de Los Rodeos son al azar
+(`rafagas.ts`), y la misma comprobación daba 1,72 m/s con el JAZ 50 en H21d y 3,94 el 15-11, y 2,24 con el JAZ 90 en
+H21c. El vuelo de Ara (`OGA_GPU=1 verificar-inicio-3.mjs`), que mira al señalero desde el suelo hasta parar el
+avión: 126 de 126. El JAZ 90 no se ha vuelto a correr con el banco frenando: con él se arrastraba ocho metros.
+
 ## Lo que queda
 
 El empuje largo por la plataforma para el tráfico, cuando la torre retenga el empuje de quien sale con alguien rodando

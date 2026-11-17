@@ -50,6 +50,14 @@ const A_UN_LADO = 7;
 const POR_DELANTE = 14;
 
 /**
+ * **Lo más torcido que puede quedar de la llegada sin recolocarlo**, en coseno:
+ * treinta grados. Más que lo que se tuerce una raya al rehacerse desde otro
+ * sitio de la misma calle —recolocarlo por dos grados le reiniciaría la postura—,
+ * y menos que una llegada de costado. Ver `Senalero.miraA`.
+ */
+const TORCIDO = Math.cos((30 * Math.PI) / 180);
+
+/**
  * A qué distancia se quita de en medio, m.
  *
  * «Lo atropello sin problemas.» Y era verdad: se quedaba clavado en su sitio
@@ -310,6 +318,29 @@ export class Senalero {
    */
   get mirando(): { readonly x: number; readonly z: number } {
     return this.hacia;
+  }
+
+  /**
+   * **Si está puesto para la llegada que viene de `porDonde`** al `puesto`: mirando
+   * a ella con menos de `TORCIDO` de diferencia. Lo pregunta el juego para saber si
+   * hay que recolocarlo. Ver `senaleroAlPuestoDeLlegada` en `game.ts`.
+   *
+   * Solo se le daba la vuelta cuando la llegada venía por detrás, y una de costado
+   * se quedaba con lo de la salida. En Los Rodeos, con el JAZ 50, se sale hacia el
+   * oeste y la raya de vuelta entra por el sur: el señalero seguía puesto para un
+   * avión que entrara hacia el este, así que lo que le quedaba al avión lo medía
+   * de través y lo desviado, a lo largo. A uno que entrara por el sur derecho al
+   * punto le daría el alto a veinticinco metros, todavía en la calle; y al del
+   * banco, parado en su sitio y girado hacia el oeste, le pedía «adelante». Desde que mide desde la
+   * rueda de morro (H20c) eso era lo que salía al apagar en el banco del vuelo
+   * entero.
+   */
+  miraA(puesto: readonly [number, number], porDonde: readonly [number, number]): boolean {
+    const vx = puesto[0] - porDonde[0];
+    const vz = puesto[1] - porDonde[1];
+    const largo = Math.hypot(vx, vz);
+    if (largo < 1) return true;
+    return (vx / largo) * this.hacia.x + (vz / largo) * this.hacia.z >= TORCIDO;
   }
 
   /**
