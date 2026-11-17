@@ -1733,6 +1733,10 @@ bien; después, las del ILS, la radio y lo que calla un ejercicio.
   de la geometría de la pista (`desvioAhora`), no de la radio. Con un ILS
   puesto deberían decir casi lo mismo —la antena de la senda está donde la
   senda toca la pista—, pero no se ha medido cuánto se separan.
+- **El panel del final repite la frase de los mínimos**: con la pista,
+  «ahí está la pista: ahora mirá afuera y aterrizá», que se lee ya
+  aterrizado. Le falta una frase de cierre propia, y una frase nueva es una
+  grabación más; queda para la tanda de la nube.
 - **La cobertura lateral de la senda se mide desde su antena**: a un punto y
   medio largo del localizador, cerca de la pista, ya se sale de sus ocho
   grados y sale la bandera. Es lo que garantiza el Anexo; una antena de verdad
