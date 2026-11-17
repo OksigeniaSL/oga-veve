@@ -46,6 +46,7 @@ import { calcosDe, PELDANOS } from "../flight/escalera";
 import {
   ESCALA_LOC,
   ESCALA_VOR,
+  PUNTOS_DE_LA_ESCALA,
   vuelta,
   type LecturaDeLaRadio,
 } from "../flight/radio-de-navegacion";
@@ -66,6 +67,17 @@ export interface LaRadioPintada {
   readonly barra: number;
   readonly toFrom: "TO" | "FROM" | null;
   readonly bandera: boolean;
+  /**
+   * **La senda de planeo**, con un ILS puesto que la tiene: cuánto se va el
+   * rombo del centro, de -1 a 1 (a fondo, dos puntos), **positivo hacia
+   * abajo**, que es donde queda la senda cuando se va alto. `null` sin senda
+   * que marcar: con un VOR, sin NAV o con la bandera.
+   */
+  readonly senda: number | null;
+  /** Si se pinta la escala de la senda: con un localizador que la tiene. */
+  readonly conSenda: boolean;
+  /** La bandera GS: la escala está, y su señal no llega. */
+  readonly banderaSenda: boolean;
   readonly textos: {
     readonly navId: string;
     readonly navMhz: string;
@@ -102,6 +114,7 @@ export function pintarLaRadio(r: RadioEnElCuadro | null, declinacion: number): L
     barra,
     toFrom: l?.toFrom ?? null,
     bandera: nav ? (l?.bandera ?? true) : false,
+    ...laSenda(l?.senda ?? null),
     textos: {
       navId: nav ? (navE ? `${navE.estacion.clase === "ILS" ? "LOC" : "VOR"} ${navE.estacion.id}` : "NAV") : "",
       navMhz: nav && nav.mhz !== null ? nav.mhz.toFixed(2) : "",
@@ -114,6 +127,34 @@ export function pintarLaRadio(r: RadioEnElCuadro | null, declinacion: number): L
       adfIdent: adfE ? adfE.estacion.id : "",
     },
   };
+}
+
+/** La senda, si la hay, ya recortada a su escala. */
+function laSenda(g: NonNullable<RadioEnElCuadro["nav"]>["lectura"]["senda"] | null): Pick<LaRadioPintada, "senda" | "conSenda" | "banderaSenda"> {
+  if (!g) return { senda: null, conSenda: false, banderaSenda: false };
+  if (g.bandera || g.puntos === null) return { senda: null, conSenda: true, banderaSenda: true };
+  return { senda: Math.max(-1, Math.min(1, g.puntos / PUNTOS_DE_LA_ESCALA)), conSenda: true, banderaSenda: false };
+}
+
+/**
+ * **La escala de la senda**, a la derecha de la rosa y sin girar con ella:
+ * cuatro puntos de arriba abajo, la raya del centro y el rombo magenta, que
+ * es el puntero de la senda en la pantalla de navegación de un Boeing en modo
+ * de aproximación y en el HSI de una avioneta. Con la bandera GS, el rombo se
+ * esconde. `punto`, lo que mide un punto; `rombo`, medio rombo.
+ */
+function escalaDeLaSenda(x: number, y: number, punto: number, rombo: number, r: number, bandera: { ancho: number; alto: number; letra: number }): string {
+  const puntos = [-2, -1, 1, 2].map((i) => `<circle cx="0" cy="${i * punto}" r="${r}" class="cr__radio-punto" />`).join("");
+  return `
+    <g data-radio="senda" visibility="hidden" transform="translate(${x} ${y})" data-punto-senda="${punto}">
+      ${puntos}
+      <path class="cr__radio-punto" d="M${-rombo * 1.4} 0 H${rombo * 1.4}" />
+      <path data-radio="senda-rombo" class="cr__radio-curso" d="M0 ${-rombo} L${rombo * 0.7} 0 L0 ${rombo} L${-rombo * 0.7} 0 Z" />
+      <g data-radio="senda-bandera" visibility="hidden" transform="translate(${-bandera.ancho / 2} ${-bandera.alto / 2})">
+        <rect width="${bandera.ancho}" height="${bandera.alto}" rx="1" class="cr__radio-bandera" />
+        <text x="${bandera.ancho / 2}" y="${bandera.alto * 0.78}" text-anchor="middle" class="cr__radio-bandera-letra" style="font-size: ${bandera.letra}px">GS</text>
+      </g>
+    </g>`;
 }
 
 /**
@@ -156,6 +197,7 @@ export function radioEnLaRosaSvg(cx: number, cy: number, r: number, ancho: numbe
           <rect width="30" height="16" rx="2" class="cr__radio-bandera" />
           <text x="15" y="12.5" text-anchor="middle" class="cr__radio-bandera-letra">NAV</text>
         </g>
+        ${escalaDeLaSenda(Math.min(ancho - cx - 14, r + 16), 0, punto, 8, 3.2, { ancho: 26, alto: 16, letra: 12 })}
       </g>
       <g data-radio="esquina-nav" transform="translate(6 ${y0})">
         <text data-radio="nav-id" y="0" class="cr__radio-estacion"></text>
@@ -240,6 +282,7 @@ export function radioEnElDireccionalSvg(): string {
           <rect width="15" height="8" rx="1" class="cr__radio-bandera" />
           <text x="7.5" y="6.3" text-anchor="middle" class="cr__radio-bandera-letra">NAV</text>
         </g>
+        ${escalaDeLaSenda(r + 3.4, 0, punto, 3.6, 1.5, { ancho: 7, alto: 6, letra: 5 })}
       </g>
       <text data-radio="nav-crs-cifra" x="1" y="9" class="cr__radio-crs"></text>
       <text data-radio="nav-ident" x="1" y="99" class="cr__radio-estacion"></text>

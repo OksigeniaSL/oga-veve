@@ -3288,6 +3288,7 @@ export const ES_PY = {
   "hangar.ejercicio.radial": "¿En qué radial estoy?",
   "hangar.ejercicio.interceptar": "Salí por un radial",
   "hangar.ejercicio.cruce": "Dos radiales que se cortan",
+  "hangar.ejercicio.ils": "Aterrizar con las agujas",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3540,6 +3541,30 @@ export const ES_PY = {
     "¡Ahí estás! Mirá el plano: las dos rayas se cortan justo donde está el avión. Así se sabe dónde estás sin ver nada, solo con dos radios",
   "ejercicio.cruce.tarde":
     "Mirá el plano: la cruz quedó lejos del avión. Mientras ponías y leías la segunda, el avión siguió volando, y la primera raya ya no pasaba por él. La próxima, leelas rápido, o volá hacia una de las dos radios, que así su raya no cambia",
+  /*
+   * **«Aterrizar con las agujas»** (#51, ADR 0030, enmienda H26i): el ILS de
+   * la pista, el localizador cortado de costado, la senda capturada desde
+   * abajo y las dos agujas en cruz hasta los mínimos; ahí, la pista o la
+   * frustrada, que se felicita igual. Genéricas: el ILS, su frecuencia y su
+   * curso se escriben en la tarjeta («ILS 01 · IFV 109.50 · 005»), no se
+   * dicen. Grabadas en calma.
+   */
+  "ejercicio.ils.antes":
+    "Hoy bajamos hasta la pista solo con las agujas, como dentro de una nube. El ILS ya está en la NAV: una aguja dice de qué lado queda la pista, y la otra si vamos altos o bajos",
+  "ejercicio.ils.sintonizar":
+    "Poné el ILS de la pista en la NAV: tocalo en el plano, o apretá el siete hasta oír su nombre",
+  "ejercicio.ils.aTope":
+    "La aguja del localizador está a tope: la pista queda de ese lado. Seguí cortándolo así, de costado, y mirá la aguja",
+  "ejercicio.ils.seMueve":
+    "¡Ya se mueve! Virá ahora hacia ella, sin esperar: el localizador es cuatro veces más fino que un VOR, y se cruza enseguida",
+  "ejercicio.ils.enElLocalizador":
+    "Estamos en el localizador. Ahora la senda: su aguja está arriba, porque vamos por debajo. Seguí nivelado, y cuando baje al centro, empezamos a bajar",
+  "ejercicio.ils.capturada":
+    "¡La senda! Las dos agujas en cruz. Ahora bajamos así: si la de la senda sube, bajá menos; si baja, bajá más. Y la otra, siempre en el centro",
+  "ejercicio.ils.pista":
+    "¡Mínimos, y ahí está la pista! Ahora mirá afuera y aterrizá, como siempre",
+  "ejercicio.ils.frustrada":
+    "Mínimos, y una aguja se salió del centro: frustrada. Gas, morro arriba y a subir. Irse a tiempo también es ganar",
   // Y la frase corta, con sus números, de Taguató para arriba.
   "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
   "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",

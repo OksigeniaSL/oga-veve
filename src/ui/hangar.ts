@@ -1821,7 +1821,26 @@ const EJ_CRUCE = escena(`
   ${AVION("translate(60 27.2) rotate(-133) scale(0.7)")}
 `);
 
+/**
+ * **Aterrizar con las agujas**: de perfil, la capa de nubes arriba, la pista
+ * abajo a la derecha y la senda bajando hasta ella, a rayas como la estela;
+ * el avión en la senda, saliendo por la base de la nube con la pista ya
+ * delante. Encima, en la nube, las dos agujas en cruz: dentro no se ve nada y
+ * se baja con ellas. Ver `flight/ils-con-agujas.ts`.
+ */
+const EJ_ILS = escena(`
+  <path class="ejercicio__nube" d="M0 10 h120 v22 q-10 5 -20 0 q-10 5 -20 0 q-10 5 -20 0 q-10 5 -20 0 q-10 5 -20 0 q-10 5 -20 0 Z" />
+  <path class="leccion__asfalto" d="M70 84 L86 70 h26 L104 84 Z" />
+  <path class="leccion__estela" d="M6 22 L92 74" stroke-dasharray="4 4" />
+  <g transform="translate(16 2)">
+    <circle cx="10" cy="10" r="8.4" style="fill: none; stroke: #6c7480; stroke-width: 1.6" />
+    <path class="ejercicio__base" d="M9.1 3.6 h1.8 v12.8 h-1.8 Z M3.6 9.1 h12.8 v1.8 h-12.8 Z" />
+  </g>
+  ${AVION("translate(56 52) rotate(31) scale(0.85)")}
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
+  ils: EJ_ILS,
   aguja: EJ_AGUJA,
   radial: EJ_RADIAL,
   interceptar: EJ_INTERCEPTAR,

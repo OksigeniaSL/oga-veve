@@ -427,6 +427,14 @@ export interface Estacion {
   /** El ILS: su pista, la senda y el rumbo del localizador. */
   readonly pista: string | null;
   readonly senda: { readonly lat: number; readonly lon: number } | null;
+  /**
+   * La frecuencia de la senda, en MHz y en número, como la publica su fila
+   * del AD 2.19 («330.500 MHz»): la de UHF que va emparejada con la del
+   * localizador (Anexo 10, vol. I, 3.1.6.1.1). Al sintonizar el localizador,
+   * el receptor pone esta sola. Ver `SENDA_EMPAREJADA` en
+   * `flight/radio-de-navegacion.ts`.
+   */
+  readonly mhzSenda: number | null;
   readonly curso: string | null;
   /**
    * El rumbo **verdadero** de la final del ILS, en grados: el magnético que
@@ -503,6 +511,7 @@ export function estacionesDe(oaci: string | null | undefined): Estacion[] {
     lon,
     pista: null,
     senda: null,
+    mhzSenda: null,
     curso: null,
     rumboVerdadero: null,
     morse: morseDe(id),
@@ -512,12 +521,17 @@ export function estacionesDe(oaci: string | null | undefined): Estacion[] {
     if (f.a.instalacion !== "LOC" || !f.a.id || !f.a.pista) return;
     usadas.add(i);
     let senda: Estacion["senda"] = null;
+    let mhzSenda: number | null = null;
     let canal: string | null = null;
     filas.forEach((g, j) => {
       if (j === i || g.a.pista !== f.a.pista) return;
       if (g.a.instalacion === "GP" || g.a.instalacion === "GP/DME" || g.a.instalacion === "ILS/DME") {
         usadas.add(j);
-        if (g.a.instalacion !== "ILS/DME") senda = { lat: g.lat, lon: g.lon };
+        if (g.a.instalacion !== "ILS/DME") {
+          senda = { lat: g.lat, lon: g.lon };
+          const f = cifraDe(g.a.frecuencia).cifra;
+          if (f) mhzSenda = Number(f);
+        }
         canal ??= canalDe(g.a.canal);
       }
     });
@@ -528,6 +542,7 @@ export function estacionesDe(oaci: string | null | undefined): Estacion[] {
       canal,
       pista: f.a.pista,
       senda,
+      mhzSenda,
       curso,
       rumboVerdadero: rumboDeLaFinal(f.a, senda, curso),
     });

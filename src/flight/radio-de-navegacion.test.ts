@@ -39,6 +39,7 @@ function emisora(clase: Estacion["clase"], lat: number, lon: number, mhz: number
     lon,
     pista: null,
     senda: null,
+    mhzSenda: null,
     curso: null,
     rumboVerdadero: null,
     morse: ["–··", "–··"],

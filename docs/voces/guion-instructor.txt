@@ -389,6 +389,14 @@ Ese número es tu radial: una raya que sale de la radio, y vos estás en algún 
 Para saber en qué punto, hace falta otra raya. Poné la otra radio en la NAV: tocala en el plano, o apretá el siete hasta oír su nombre
 ¡Ahí estás! Mirá el plano: las dos rayas se cortan justo donde está el avión. Así se sabe dónde estás sin ver nada, solo con dos radios
 Mirá el plano: la cruz quedó lejos del avión. Mientras ponías y leías la segunda, el avión siguió volando, y la primera raya ya no pasaba por él. La próxima, leelas rápido, o volá hacia una de las dos radios, que así su raya no cambia
+Hoy bajamos hasta la pista solo con las agujas, como dentro de una nube. El ILS ya está en la NAV: una aguja dice de qué lado queda la pista, y la otra si vamos altos o bajos
+Poné el ILS de la pista en la NAV: tocalo en el plano, o apretá el siete hasta oír su nombre
+La aguja del localizador está a tope: la pista queda de ese lado. Seguí cortándolo así, de costado, y mirá la aguja
+¡Ya se mueve! Virá ahora hacia ella, sin esperar: el localizador es cuatro veces más fino que un VOR, y se cruza enseguida
+Estamos en el localizador. Ahora la senda: su aguja está arriba, porque vamos por debajo. Seguí nivelado, y cuando baje al centro, empezamos a bajar
+¡La senda! Las dos agujas en cruz. Ahora bajamos así: si la de la senda sube, bajá menos; si baja, bajá más. Y la otra, siempre en el centro
+¡Mínimos, y ahí está la pista! Ahora mirá afuera y aterrizá, como siempre
+Mínimos, y una aguja se salió del centro: frustrada. Gas, morro arriba y a subir. Irse a tiempo también es ganar
 Ver el río
 Seguir el río
 Salir al mar

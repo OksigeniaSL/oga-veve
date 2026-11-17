@@ -16,8 +16,12 @@ import { NO_CALLA_NADA, loQueCallaElEjercicio } from "./lo-que-calla-el-ejercici
 
 const TODO = { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true };
 const DE_RADIO: readonly EjercicioId[] = ["aguja", "radial", "interceptar", "cruce"];
-/** Los otros que empiezan en el aire: acaban aterrizando, y la pista es suya. */
-const ACABAN_EN_LA_PISTA: readonly EjercicioId[] = ["planeo", "un-motor", "despresurizacion", "tormenta", "autorrotacion"];
+/**
+ * Los otros que empiezan en el aire: acaban aterrizando, y la pista es suya.
+ * También el ILS, que es de radio y acaba en la pista o en la frustrada encima
+ * de ella (H26i): la torre y la final son parte de la aproximación.
+ */
+const ACABAN_EN_LA_PISTA: readonly EjercicioId[] = ["planeo", "un-motor", "despresurizacion", "tormenta", "autorrotacion", "ils"];
 
 describe("lo que calla un ejercicio que no acaba en la pista", () => {
   for (const id of DE_RADIO)
@@ -36,8 +40,10 @@ describe("lo que calla un ejercicio que no acaba en la pista", () => {
       expect(loQueCallaElEjercicio(e, false)).toEqual(NO_CALLA_NADA);
     });
 
-  it("todo ejercicio de radio acaba en el aire, y ninguno más", () => {
-    for (const e of EJERCICIOS) expect(e.acabaEnElAire ?? false, e.id).toBe(e.escena === "radio");
+  it("los de radio que se cierran lejos de la pista acaban en el aire, y ninguno más", () => {
+    for (const e of EJERCICIOS) expect(e.acabaEnElAire ?? false, e.id).toBe(DE_RADIO.includes(e.id));
+    // Todos los de radio menos el ILS, que baja hasta la pista.
+    expect(EJERCICIOS.filter((e) => e.escena === "radio" && !DE_RADIO.includes(e.id)).map((e) => e.id)).toEqual(["ils"]);
   });
 
   it("sin ejercicio, nada", () => {

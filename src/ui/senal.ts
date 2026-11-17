@@ -935,6 +935,32 @@ const cdiDelVor = (barra: number, toFrom: "TO" | "FROM", hacia: -1 | 0 | 1 = 0):
 `);
 
 /**
+ * **El indicador del ILS**, el de «Aterrizar con las agujas» (#51): la esfera
+ * con las dos escalas de puntos, la de lado a lado del localizador y la de
+ * arriba abajo de la senda, y sus dos agujas; con las dos en el centro, en
+ * cruz, se va por la línea que acaba en la pista. `loc`, lo que se aparta la
+ * del localizador, en unidades del dibujo —siete es a tope, positiva a la
+ * derecha, como la desviación de `leerNav`—; `senda`, la de la senda, con el
+ * mismo tope y **positiva hacia arriba**: la senda por encima, que es venir
+ * bajo. Sin flecha de curso ni TO/FROM, que un localizador no tiene: es el
+ * indicador de una avioneta, y en el HSI de la cabina son las mismas dos
+ * agujas (`ui/radio-en-la-rosa.ts`). `hacia`, hacia dónde se mueve la del
+ * localizador, como en `cdiDelVor`. Ver `flight/ils-con-agujas.ts`.
+ */
+const cdiDelIls = (loc: number, senda: number, hacia: -1 | 0 | 1 = 0): string =>
+  icono(`
+  <circle cx="12" cy="12" r="10.4" fill="none" stroke="currentColor" stroke-width="1.4" />
+  <circle cx="5" cy="12" r="1" /><circle cx="8.5" cy="12" r="1" />
+  <circle cx="15.5" cy="12" r="1" /><circle cx="19" cy="12" r="1" />
+  <circle cx="12" cy="5" r="1" /><circle cx="12" cy="8.5" r="1" />
+  <circle cx="12" cy="15.5" r="1" /><circle cx="12" cy="19" r="1" />
+  <circle cx="12" cy="12" r="1.9" fill="none" stroke="currentColor" stroke-width="1" />
+  <path d="M${11.1 + loc} 4 H${12.9 + loc} V20 H${11.1 + loc} Z" />
+  <path d="M4 ${11.1 - senda} H20 V${12.9 - senda} H4 Z" />
+  ${hacia ? `<path d="M${12 + loc + hacia * 1.6} 21.6 L${12 + loc - hacia} 20 V23.2 Z" />` : ""}
+`);
+
+/**
  * **Dos radiales que se cortan**, el de «Dos radiales que se cortan» (#51):
  * las dos radios abajo, un hexágono cada una como el VOR de la carta, una
  * raya saliendo de cada una y, donde se cortan, el aro del fijo con el
@@ -1838,6 +1864,18 @@ export const DIBUJOS = {
   "cdi-pasada-a-la-derecha": cdiDelVor(3.5, "FROM", 1),
   // «Dos radiales que se cortan»: las dos rayas y el fijo. Ver `dos-radiales.ts`.
   "cruce-de-radiales": CRUCE_DE_RADIALES,
+  /*
+   * «Aterrizar con las agujas»: el localizador a tope de cada lado con la
+   * senda todavía arriba, viniendo hacia el centro, la senda arriba con el
+   * localizador ya cogido, y las dos en cruz. Ver `ils-con-agujas.ts` y
+   * `dibujoDelIls`.
+   */
+  "ils-a-la-izquierda": cdiDelIls(-7, 7),
+  "ils-a-la-derecha": cdiDelIls(7, 7),
+  "ils-viniendo-de-la-izquierda": cdiDelIls(-3.5, 7, 1),
+  "ils-viniendo-de-la-derecha": cdiDelIls(3.5, 7, -1),
+  "ils-senda-arriba": cdiDelIls(0, 5),
+  "ils-en-cruz": cdiDelIls(0, 0),
   sobrevelocidad: SOBREVELOCIDAD,
   calor: CALOR,
   frio: FRIO,
@@ -1982,6 +2020,15 @@ export const DIBUJOS = {
 
 /** Los nombres de dibujo que existen. Ver `mostrar`. */
 export type DibujoDeSenal = keyof typeof DIBUJOS;
+
+/**
+ * **El indicador del ILS del lado de la aguja del localizador**: a tope o
+ * viniendo, por el signo de lo que marca (`leerNav`), como `dibujoDelCdi`.
+ */
+export function dibujoDelIls(como: "a-tope" | "viniendo", desviacion: number): DibujoDeSenal {
+  const lado = desviacion >= 0 ? "derecha" : "izquierda";
+  return como === "a-tope" ? `ils-a-la-${lado}` : `ils-viniendo-de-la-${lado}`;
+}
 
 /** Cómo va la barra del CDI: a tope, viniendo hacia el centro o pasada al otro lado. */
 export type ComoVaLaBarra = "a-tope" | "viniendo" | "pasada";

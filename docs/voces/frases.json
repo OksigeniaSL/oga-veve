@@ -3471,6 +3471,126 @@
     }
   },
   {
+    "id": "ejercicio.ils.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy bajamos hasta la pista solo con las agujas, como dentro de una nube. El ILS ya está en la NAV: una aguja dice de qué lado queda la pista, y la otra si vamos altos o bajos",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy bajamos hasta la pista solo con las agujas, como dentro de una nube. El ILS ya está en la NAV: una aguja dice de qué lado queda la pista, y la otra si vamos altos o bajos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ils.sintonizar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Poné el ILS de la pista en la NAV: tocalo en el plano, o apretá el siete hasta oír su nombre",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Poné el ILS de la pista en la NAV: tocalo en el plano, o apretá el siete hasta oír su nombre.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ils.aTope",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La aguja del localizador está a tope: la pista queda de ese lado. Seguí cortándolo así, de costado, y mirá la aguja",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "La aguja del localizador está a tope: la pista queda de ese lado. Seguí cortándolo así, de costado, y mirá la aguja.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ils.seMueve",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Ya se mueve! Virá ahora hacia ella, sin esperar: el localizador es cuatro veces más fino que un VOR, y se cruza enseguida",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Ya se mueve! Virá ahora hacia ella, sin esperar: el localizador es cuatro veces más fino que un VOR, y se cruza enseguida.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ils.enElLocalizador",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estamos en el localizador. Ahora la senda: su aguja está arriba, porque vamos por debajo. Seguí nivelado, y cuando baje al centro, empezamos a bajar",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Estamos en el localizador. Ahora la senda: su aguja está arriba, porque vamos por debajo. Seguí nivelado, y cuando baje al centro, empezamos a bajar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ils.capturada",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡La senda! Las dos agujas en cruz. Ahora bajamos así: si la de la senda sube, bajá menos; si baja, bajá más. Y la otra, siempre en el centro",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡La senda! Las dos agujas en cruz. Ahora bajamos así: si la de la senda sube, bajá menos; si baja, bajá más. Y la otra, siempre en el centro.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ils.pista",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Mínimos, y ahí está la pista! Ahora mirá afuera y aterrizá, como siempre",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Mínimos, y ahí está la pista! Ahora mirá afuera y aterrizá, como siempre.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ils.frustrada",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mínimos, y una aguja se salió del centro: frustrada. Gas, morro arriba y a subir. Irse a tiempo también es ganar",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Mínimos, y una aguja se salió del centro: frustrada. Gas, morro arriba y a subir. Irse a tiempo también es ganar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "mission.rio.name",
     "voz": "instructor",
     "idioma": "es-PY",

@@ -76,7 +76,9 @@
  * de debajo, anticipando el viraje; la lleva `interceptar-un-radial.ts`. Y
  * la cuarta, «Dos radiales que se cortan», con dos VOR: saber dónde se está
  * sin ver nada; pide un campo con pareja (`parejaDelCampo`) y la lleva
- * `dos-radiales.ts`.
+ * `dos-radiales.ts`. Y la quinta, «Aterrizar con las agujas», con el ILS: el
+ * localizador y la senda hasta los mínimos; pide un campo con un ILS cuya
+ * senda se sepa (`ilsDelCampo`) y la lleva `ils-con-agujas.ts`.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -85,6 +87,7 @@ import type { TierId } from "./tiers";
 import { EJERCICIO_DE_DESPRESURIZACION } from "./despresurizacion";
 import { radioDeSalida, radiosDe } from "./radio-de-navegacion";
 import { parejaDelCampo } from "./dos-radiales";
+import { ilsDelCampo } from "./ils-con-agujas";
 
 export type EjercicioId =
   | "planeo"
@@ -101,7 +104,8 @@ export type EjercicioId =
   | "aguja"
   | "radial"
   | "interceptar"
-  | "cruce";
+  | "cruce"
+  | "ils";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -161,7 +165,8 @@ export interface Ejercicio {
     | "aguja"
     | "radial"
     | "interceptar"
-    | "cruce";
+    | "cruce"
+    | "ils";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
    * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
@@ -473,6 +478,31 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     dondeVale: (oaci) => parejaDelCampo(oaci) !== null,
     ensena:
       "un radial es una raya en el plano y el avión está en algún punto de ella: con dos VOR, dos rayas, y donde se cortan, ahí está; y entre leer una y otra el avión vuela",
+  },
+  /*
+   * **Aterrizar con las agujas** (#51, peldaño 6): el ILS de la cabecera, el
+   * localizador cortado a treinta grados, la senda capturada desde abajo y
+   * las dos agujas en cruz hasta los mínimos; ahí, la pista o la frustrada,
+   * que se felicita igual. Lo lleva `ils-con-agujas.ts`. Ver el ADR 0030,
+   * enmienda H26i.
+   */
+  {
+    id: "ils",
+    // El mismo peldaño que los del VOR: el CDI y su senda salen en el cuadro el mismo día que la radio en la carta.
+    peldanos: ["taguato-ruvicha"],
+    valePara: (a) => radiosDe(a).nav,
+    leccion: "aterrizaje",
+    colocacion: "ils",
+    averias: [],
+    escena: "radio",
+    /*
+     * **Acaba en la pista**, o en la frustrada encima de ella: la torre, su
+     * frecuencia y la fase de la final son parte de lo que se practica, como
+     * en el planeo. No se calla nada.
+     */
+    dondeVale: (oaci) => ilsDelCampo(oaci).length > 0,
+    ensena:
+      "un ILS son dos agujas: la del localizador dice a qué lado queda la pista y la de la senda si se va alto o bajo; con las dos en el centro se llega a los mínimos, y ahí se ve la pista o se va uno al aire, que también es ganar",
   },
 ];
 
