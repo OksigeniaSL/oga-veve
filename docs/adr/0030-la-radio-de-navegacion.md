@@ -601,3 +601,117 @@ en papel la media hora de cada avión sin llamada, el vuelo que se alarga con
 «minimum fuel» un cuarto de hora antes del MAYDAY, la carga de antes con su
 llamada a los pocos minutos, y los de turbina con la carga de siempre en cada
 ruta del juego.
+
+## Enmienda H28c (17-11-2026): el aviso y la lámpara, con el ancho que tienen
+
+H28b vio dos cosas más con el mismo mal que el subtítulo y las dejó: el aviso
+(`.aviso-hud`, la pérdida y el suelo) y la lámpara de la torre (`.torre`)
+seguían centrados con `left: 50%` y el `translate`. Y en el portátil el
+subtítulo de la vista de fuera tapaba la pausa y los botones de antes de
+arrancar, que ya pasaba antes de H28b.
+
+### Lo que se cambió
+
+- **El aviso**, como el subtítulo: los dos bordes puestos, `fit-content` y
+  márgenes automáticos. De borde a borde en la tablet y el portátil, donde ahí
+  abajo no llega nada por los lados; en el teléfono y en cabina, apartado de
+  los dos lados lo que ocupan los botones redondos de la izquierda
+  (`--vistas-derecha`), para seguir en el medio. Y por delante de la lámpara
+  (z 9 contra 8): si se tocan, el aviso no se queda detrás.
+- **En cabina, el aviso se apoya encima del subtítulo**, que va al 32 %, con la
+  flecha al lado del texto: colgado del 22 % y con la flecha encima, bajaba
+  hasta la fila del subtítulo y se montaban.
+- **Con la pantalla en grande del teléfono, una fila para el aviso** entre la
+  pantalla y el subtítulo: se apoyaba en lo que miden las losas y caía en
+  mitad de la pantalla de vuelo, encima de la cinta que lo explica. Mientras
+  dura el aviso la pantalla mide esa fila menos.
+- **La lámpara**, con los dos bordes en su hueco: de la columna de la pausa al
+  rincón y, sin rincón —en el teléfono y en cabina—, de los dos lados lo mismo.
+- **El subtítulo de fuera en el portátil**, a la derecha de la columna de la
+  pausa. Esa columna y la lámpara se apartan **solo donde la columna baja
+  hasta su fila**: el HUD escribe hasta dónde bajan sus botones
+  (`--vistas-bajan`) y la hoja lo compara con `--arriba-alto` en
+  `--aparte-arriba`. Apartarse siempre dejaba, en la tablet de 900 × 600, donde
+  la barra va en dos filas y la columna acaba más arriba, la orden de la torre
+  en ocho líneas.
+- **La lámpara baja lo que el subtítulo ocupa**, no una línea contada a mano
+  (36 px): el HUD lo mide en `--subtitulo-alto` (`medirElSubtitulo`). En
+  cabina, cero salvo la altura en grande, que ahí es la única que va arriba.
+- **El botón de la versión nueva**, con el dedo, centrado igual.
+
+La regla general va a DESIGN.md, §5: lo que lleva texto no se centra con
+`left: 50%` y `translate`.
+
+### Lo medido
+
+Con lo más largo que llevan, encendidos a la vez: el aviso «Se rompió algo.
+Volvemos al helipuerto…», la lámpara roja con dos aviones en la fila y
+«JAZ 9021, mantenga fuera de pista 12, número tres para la salida», y el
+subtítulo largo de la instructora. Antes → después:
+
+- **La lámpara en el teléfono**: en 844 × 390, de 422 px y tres líneas a 527 y
+  dos; en 780 × 360, de 390 y tres a 463 y dos; en 864 × 330, de 432 a 547.
+- **El portátil de 1280 × 800**, de fuera: el subtítulo iba de 16 a 828 y tapaba
+  la pausa, la vuelta al avión y el parte; ahora de 188 a 828, sin tocar
+  ninguno. La lámpara, igual, y debajo del subtítulo: antes se montaba en su
+  segunda línea.
+- **La tablet de 900 × 600**, de fuera: la columna de la pausa acaba por
+  encima del subtítulo y no se aparta de ella. La lámpara ya llenaba su hueco
+  —468 px, tres líneas— y sigue así, pero debajo del subtítulo y no encima de
+  su segunda línea. Igual en la de 1024 × 600.
+- **El aviso** cabía ya en una línea en toda pantalla tumbada (de 351 a
+  443 px). Se partía a media pantalla en una ventana de pie: en 600 × 900, dos
+  líneas de 300 px; ahora una de 443.
+- **En cabina**, el aviso ya no pisa el subtítulo en ninguna de las siete
+  pantallas medidas; antes lo pisaba en las siete.
+- **Con la pantalla en grande** (844, 780 y 864 de ancho), el aviso queda
+  encima de la pantalla y no dentro.
+- **El botón de la versión nueva**, de pie en 360 × 740: de 180 px y dos líneas
+  a 197 y una, en las tres lenguas.
+
+`npm run carteles` lo mira en cada pantalla, de fuera y en cabina
+(`medirAvisoYLampara`): el aviso más largo en una línea, centrado, y uno que no
+cabe pasando de media pantalla; la orden de la torre usando más de medio
+hueco; y ninguno de los tres pisando a otro, a un botón redondo, al rincón ni
+al instrumento que explica el aviso, ni quedando detrás de nada.
+
+### Lo que no era del caso
+
+En la hoja quedan otros `left: 50%` con `translate`, y no se parten: o tienen
+el ancho puesto (`.cuadro`, `.a-inicio`, `.inicio__tarjeta`, `.kit__panel`,
+`.ficha__nocabe`), o no llevan texto que se parta (la fila de pasos de
+`.vuelta__lista` y la `.consola__barra`, botones de ancho fijo; las piezas de
+los mandos, el asa, la pinza, la cruz del horizonte; la «N» de la rosa del
+mapa), o van en una línea a la fuerza (`.cruz__no-explicar`, con `nowrap`). La
+regla base de `.tutor` sigue con `left: 50%`, pero no la usa nadie: la pisa
+`.hud .tutor` en todas las pantallas.
+
+### Lo que queda
+
+Medido, y sin arreglar en esta tanda:
+
+- **En cabina no caben los tres encima de la visera** en una pantalla baja.
+  Con lámpara, aviso y subtítulo a la vez, la lámpara y el aviso se tocan en
+  seis de las siete pantallas (el aviso queda delante); la lámpara pisa la
+  tarjeta de la orden del rincón y la del gas de la columna de mandos, como ya
+  pisaba la primera; y en la tablet de 1024 × 600, donde la barra va en varias
+  filas y la franja de arriba empieza por debajo del 32 %, la lámpara cae
+  encima del subtítulo, que antes bajaba 36 píxeles y quedaba debajo. En las
+  de 900 × 600 y 1024 × 600 el aviso de cabina sigue encima de los botones de
+  la barra, como estaba. Resolverlo es decidir dónde va cada uno en cabina, no
+  un ancho.
+- **El subtítulo de cabina** (de H28b) pasa por encima del freno, de la
+  tarjeta del gas y de la tarjeta de la orden: va de lado a lado apartado solo
+  de la columna de la pausa.
+- **En el teléfono más bajo** (780 × 360 y 864 × 330), de fuera, el aviso,
+  que va encima de las losas, toca la última línea del subtítulo cuando éste
+  ocupa dos o tres, y la lámpara, que baja con él, llega a la tarjeta del
+  destino y a la palanca de pulgar. Antes también se tocaban.
+- **Con la pantalla en grande**, la lámpara sigue encima de la pantalla, como
+  antes, y el aviso pasa por delante de las losas del tren y los aerofrenos,
+  que dejan pasar el toque.
+- **De pie, en una ventana de 600 × 900 con ratón**, el rincón deja a la
+  izquierda 204 px: el subtítulo va en siete líneas y la lámpara en las que
+  pida lo más ancho que lleva, como antes. El aviso, ahora en una línea, pasa
+  por delante del freno. Con el dedo, de pie, lo tapa todo el cartel de girar
+  la pantalla, y ahí no se mira.
