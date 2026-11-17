@@ -3089,7 +3089,9 @@ JAZ 120 (Los Rodeos → Tenerife Sur): la de llegada, `GCTS · RWY 07 · WIND
 cabía**: los dos campos lado a lado se quedaban en 149 px, y `VAPP 151KT (VREF
 146+5)` no entra en un renglón de ese ancho. Ahí, por debajo de 560 px de
 ancho, la tarjeta pone un campo debajo del otro (`.parte__campos` en
-columna), y cada campo tiene el ancho de la tarjeta.
+columna), y cada campo tiene el ancho de la tarjeta: medido otra vez, 324 px,
+y la VAPP entera en su renglón. El banco queda en 60 de 64: los cuatro
+fallos son los de abajo, dos por cada teléfono tumbado.
 
 **Y lo que se vio y no es de la línea.** En el peldaño de los números y en los
 dos teléfonos tumbados, con la niebla, la decisión queda debajo del borde de
