@@ -1852,6 +1852,11 @@ que se pisan):
   de la cinta de velocidad, y el aviso cayendo sobre el asa o quedándose sin
   sitio en la pantalla grande por lo mismo. De ahí el recorte por los `<svg>`
   y las filas hacia donde crece cada pieza.
+- **Con todo**: `npm run carteles` da **1074 de 1074**: las 990 de antes y 84
+  nuevas (42 vistas de pantalla y juego, dos cada una; de pie con el dedo no
+  se llega a medir el vuelo, que lo tapa el cartel de girar). `npm run acceso`
+  y `npm run toque` dan 90 de 90 y 91 de 91, como antes. Y vitest, 10368 de
+  10368 (28 saltadas, como siempre).
 
 ### Lo que cuesta, y lo que queda
 
