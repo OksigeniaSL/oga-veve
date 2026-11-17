@@ -212,3 +212,133 @@ le faltan tres cosas, y ninguna tiene aún sus datos:
 
 Y la interactividad que pedía #72 —tocar una radioayuda y oír su morse,
 tocar una frecuencia y sintonizarla— no está: la caja se lee, no suena.
+
+## Enmienda H24a (17-11-2026): los datos de la carta de aproximación
+
+Las tres cosas que la enmienda anterior daba por faltantes —el perfil
+vertical, los mínimos y la altitud mínima de sector— ya tienen sus datos, y
+la frustrada con ellos. **Solo los datos**: el dibujo es de otra tanda, y lo
+que se transcribe aquí es para que no tenga que inventar nada.
+
+### De qué carta
+
+De **la del procedimiento que ya vuela el juego**: la que nombra `carta` en
+`procedimientos-canarias.ts` y `procedimientos-paraguay.ts`, una por
+cabecera. Son las RNP: en Canarias, las «RNP Z (LPV ONLY)», las RNP de
+Fuerteventura, la RNP de la 21 de Lanzarote y la RNP A de La Palma; en
+Paraguay, las RNP Z. Las veintiuna aproximaciones publicadas del juego,
+todas. Así los puntos del perfil son los mismos que ya pinta la ruta, con el
+mismo nombre, y la carta que se dibuje es la que se vuela.
+
+`world/aproximaciones-publicadas.ts`, con el criterio de los demás ficheros
+transcritos: las coordenadas como cadena, tal cual —«283119.1N» en ENAIRE y
+«S 25:20:10.57» en la tabla de codificación de la DINAC—, las altitudes en
+pies con la altura que la carta pone entre paréntesis, y la frustrada en
+inglés, como la imprime la carta. Por cabecera: la MSA (o TAA) con su centro,
+su radio y sus sectores; el perfil del punto intermedio al umbral, con las
+millas de cada punto, el ángulo, la pendiente, el RDH, la cota y las
+coordenadas del umbral y la tabla de la senda («ALT/HGT FNA»); la OCA/H de
+cada categoría para cada línea de mínimos, con la pendiente de frustrada y,
+en Paraguay, la visibilidad; la frustrada; la altitud de transición; y las
+notas de la carta.
+
+### Las fuentes
+
+- **España**: las cartas IAC del AIP de ENAIRE en inglés —la carta, la lista
+  de puntos y la tabla codificada de cada una—, bajadas el 17-NOV-2026 de
+  aip.enaire.es con el índice en «29-OCT-26 (AIRAC 10/26 and AMDT 412/26)».
+  GCXO IAC 1 y 6, GCTS IAC 1 y 7, GCLP IAC 8 y 17 (WEF 11-JUN-26, AIRAC AMDT
+  05/26; la 1.3 de Los Rodeos, AIRAC 08/26), GCFV IAC 8 y 16 (09-JUL-26,
+  AMDT 408/26), GCRR IAC 1 y 7 (WEF 03-SEP-26, AIRAC AMDT 08/26) y GCLA IAC
+  1 y 4 (WEF 02-OCT-25, AIRAC AMDT 10/25).
+- **Paraguay**: las cartas del AD 2 de la DINAC del paquete AMDT AIRAC
+  02/2026, con su tabla de codificación (la página .1): AD 2.1-17 y 2.1-18
+  (Asunción, 01 OCT 2026), 2.2-13 y 2.2-14 (Guaraní, 28 NOV 2024), 2.3-12 y
+  2.3-13 (Mariscal Estigarribia, 07 AUG 2025), 2.4-11 y 2.4-12 (Pedro Juan
+  Caballero, 07 AUG 2025) y 2.5-10 (Encarnación, 01 OCT 2026). La carta de
+  la DINAC es un dibujo sin texto que extraer: sus cifras se copiaron
+  mirando la página, y las coordenadas, de la tabla.
+
+| Campo | Cabecera | MSA / TAA | IF → FAF/FAP | Mínimos (OCA/H, CAT A) | Frustrada |
+| ----- | -------- | --------- | ------------ | ---------------------- | --------- |
+| GCXO | 12 | MSA 14500, 25 NM ARP | XO11W → XO06W 4000, 5,8 NM | LPV 2699 (637) | 5500 |
+| GCXO | 30 | MSA 14500 | BUNIX 5000 → XO69E 4300, 6,9 NM | LPV 2599 (592) | 3500, como mucho 6000 |
+| GCTS | 07 | MSA 14300 | TS710 2500 → TS705 1900, 5,1 NM | LPV 512 (324) | 3000 |
+| GCTS | 25 | MSA 14300 | TS511 2500 → TS506 2200, 6,0 NM | LPV 467 (259) | 3000 |
+| GCLP | 03L | MSA 8500 | FALPU 2500 → LP6SW 2000, 5,8 NM | LPV 395 (318) | 3000 |
+| GCLP | 21R | MSA 8500 | TIPUX 2500 → LP6NW 1900, 5,6 NM | LPV 442 (410) | 3000 |
+| GCFV | 01 | MSA 3500 | LIRBU 2700 → FV07S 2500, 7,4 NM | LNAV/VNAV 640 (610); LNAV 840 (810) | 4000 |
+| GCFV | 19 | MSA 3500 | TUVIL 3000 → FV04N 1500, 4,3 NM | LNAV/VNAV 530 (450); LNAV 600 (520) | 4000 |
+| GCRR | 03 | MSA 3500 | GOLFY 2300 → RR05S 1700, 5,1 NM | LPV 469 (451) | 5000 |
+| GCRR | 21 | MSA 3500 | SONUS 3000 → RR03E 2700 → MAPt RR551 1700 | solo en circuito (VPT): 1700 (1660) | 4000 |
+| GCLA | 18 | MSA 10000 | VENZA 4000 → LA505 3000 → MAPt LA510 | solo en circuito: 1370 (1270) | 4500 |
+| GCLA | 36 | MSA 10000 | RECKA 2400 → LA07S 2400, 6,9 NM | LPV 1310 (1206) | 4500 |
+| SGAS | 02 | TAA 3000, 25 NM VURDO | VURDO 1930 → OSUNU 1930, 5 NM | LNAV/VNAV 780 (490); LNAV 880 (590) | 3000 |
+| SGAS | 20 | TAA 3000, 25 NM LONEL | LONEL 1890 → BURVA 1890, 5 NM | LNAV/VNAV 620 (371); LNAV 690 (441) | 3000 |
+| SGES | 05 | MSA 3000, 25 NM ARP | NINDA 2500 → GILMO 2490, 5 NM | LNAV/VNAV 1283 (437); LNAV 1290 (444) | 3000 |
+| SGES | 23 | MSA 3000 | ROGER 2500 → MOLMA 2420, 5 NM | LNAV/VNAV 1024 (250); LNAV 1160 (386) | 3000 |
+| SGME | 01 | TAA 3000, 25 NM VASIK | VASIK 2200 → BUPNI 2200, 5 NM | LNAV/VNAV 801 (247); LNAV 840 (286) | 3000 |
+| SGME | 19 | TAA 3000, 25 NM SUGVO | SUGVO 2200 → POPNA 2200, 5 NM | LNAV/VNAV 897 (349); LNAV 980 (432) | 3000 |
+| SGPJ | 03 | TAA 4000, 25 NM PJ336 | PJ336 3600 → PJ335 3490, 5 NM | LNAV/VNAV 2100 (255), D N.A | 4000 |
+| SGPJ | 21 | TAA 4000, 25 NM PJ226 | PJ226 3600 → PJ225 3490, 5 NM | LNAV/VNAV 2220 (375), D N.A | 4000 |
+| SGEN | 20 | TAA 3000, 25 NM EN010 | EN010 2300 → EN011 2300, 5 NM | LNAV/VNAV 980 (327), sin columna D | 3000 |
+
+### Lo que las cartas dicen y hay que dibujar tal cual
+
+- **Ninguna publica la altitud de decisión.** ENAIRE y la DINAC publican la
+  OCA/H; la DA/H la fija cada operador a partir de ella. La tabla se rotula
+  «OCA/H», no «DA».
+- **Las LPV de Canarias están fuera de servicio** por suplemento: SUP 155/26
+  (La Palma), 156/26 (Gran Canaria), 157/26 (Lanzarote), 158/26 (Tenerife
+  Sur) y 159/26 (Los Rodeos), del 03-SEP-26 al 03-SEP-27 estimado. Las cartas
+  siguen publicadas y van con su nota. El índice del AIP cuelga el de
+  Lanzarote de la IAC 2 (RNP Y) y no de la IAC 1, que es la transcrita; la
+  nota lo dice.
+- **En las RNP de la DINAC la altitud mínima es de llegada (TAA)**, de dos o
+  tres zonas a la misma altitud: va como un círculo, con `tipo: "TAA"` y su
+  nota. Guaraní lleva MSA de verdad.
+- **Hay categorías sin mínimos**: la D de Pedro Juan Caballero («N.A») y la
+  de Encarnación (sin columna).
+- **Dos no tienen final directa**: la RNP de la 21 de Lanzarote y la RNP A de
+  La Palma, que su carta restringe a los mínimos en circuito «por ángulo
+  excesivo entre la derrota de aproximación final y el eje de la pista». Su
+  perfil no tiene senda, ni RDH, ni tabla, y acaba en el punto de frustrada:
+  llevan `final: "circuito"`, sus millas se miden al MAPt y sus alturas a la
+  cota del aeródromo, como en la carta.
+
+### Lo que comprueba la prueba
+
+`aproximaciones-publicadas.test.ts`: que toda aproximación del juego está
+transcrita o en la lista de pendientes —hoy vacía—; que cada carta lleva
+AIP, página, enmienda y fecha; que los puntos con nombre del perfil son los
+del procedimiento —mismo nombre, a menos de cincuenta metros y a la misma
+altitud— y están a las millas que dice la carta de su umbral; que ese umbral
+es el de la pista del juego a menos de cien metros, contando el
+desplazamiento; que las altitudes bajan hacia el umbral; y lo que se puede
+sacar de dos cifras de la carta y casar con la tercera: la altura es la
+altitud menos la cota, la tabla de la senda es la de su ángulo y su RDH, y la
+OCA es la OCH más la cota sobre la que se mide.
+
+### Los tres flecos de H22c
+
+- **Encarnación 20 y Mariscal Estigarribia 01 tienen ILS** —localizador y
+  senda con DME en su AD 2.19— y la tabla de las sendas no lo decía: ahora
+  `ils: true`. Lo que cambia es `tieneIls`, y con él el *five hundred* del
+  JAZ 60, que solo se canta en las de no precisión. Una prueba nueva mira
+  que cada ILS del 2.19 esté en esa tabla.
+- **Barajas tiene sus frecuencias**, del AD 2.18 (AD 2-LEMD-15 y -16, AIRAC
+  AMDT 10/26), menos las militares y la de UHF, con sus canales de 8,33 kHz.
+
+### Lo que queda
+
+- **La VPT 1 de Lanzarote**, la carta de la maniobra visual que termina la
+  21, no se ha transcrito: sus puntos ya están en `procedimientos-canarias.ts`.
+- **Las cartas ILS, LOC y VOR** de las mismas pistas no se han transcrito:
+  la carta del juego es la de la RNP que vuela. Las ILS Z de Los Rodeos,
+  Tenerife Sur y Gran Canaria están bajadas, sin leer.
+- **El dibujo** del perfil, la tabla de mínimos y el círculo de la MSA en la
+  ficha del campo con el calco de la radio.
+- **Un desajuste que no es de esta tanda**: la carta de la 19 de
+  Fuerteventura rotula TUVIL como punto intermedio, y
+  `procedimientos-canarias.ts` lo tiene como un punto más de la ruta, sin
+  ningún intermedio en la rama. La prueba lo deja anotado y avisa si cambia.
