@@ -176,6 +176,67 @@ export function sobreLaZonaDeToma(r: Pista, x: number, z: number, rumbo: number)
 }
 
 /**
+ * Cuánto se adelanta, como mucho, «ya podés tocar» al umbral de aterrizaje, s.
+ * Ver `llegandoALaZonaDeToma`.
+ *
+ * Segundo y medio: lo que necesita una tarjeta para verse antes de que la tape
+ * la de la recogida, que en un reactor sale a treinta pies.
+ */
+export const LA_TOMA_SE_ADELANTA = 1.5;
+
+/** Lo que sale de la cuenta de la llegada, para `llegandoALaZonaDeToma`. */
+export interface Llegada {
+  /** Velocidad sobre el suelo, m/s. */
+  readonly suelo: number;
+  /** Altura de las ruedas sobre la cota de la pista, m. */
+  readonly ruedas: number;
+  /** Lo que se baja, m/s, positivo bajando. */
+  readonly bajando: number;
+}
+
+/**
+ * **Donde se puede tocar, o a punto de llegar a ella sin poder tocar antes.**
+ * Es lo que mira «ya podés tocar»; ver `puedeTocar` en `game.ts`.
+ *
+ * Sobre la zona de toma, sí, que es lo de siempre. Y también **justo antes del
+ * umbral**, a menos de `LA_TOMA_SE_ADELANTA` de cruzarlo, si bajando como se
+ * baja —y aun bajando el doble— las ruedas llegan al suelo pasado el umbral:
+ * dicho ahí sigue siendo verdad, porque desde ahí ya no se puede tocar antes.
+ *
+ * Hacía falta porque **cruzar el umbral bajo junta las dos tarjetas**. Sin
+ * margen, «ya podés tocar» salía al cruzarlo, y quien lo cruza a la altura de
+ * la recogida tiene la tarjeta de la nariz encima en el mismo instante: medido
+ * en el vuelo entero del JAZ 90 en Los Rodeos (H29d, antes del arreglo de la
+ * torre), la de tocar se decidió a los 12 m sobre el umbral, que son los
+ * treinta pies de ruedas a los que ese avión pide la recogida, y la de la
+ * nariz la tapó en el paso siguiente. El banco no llegó a verla, y jugando
+ * habría durado lo que se tarda en bajar de una altura a la otra: décimas.
+ * Cruzándolo a los quince metros de la senda sale como siempre, en el umbral.
+ *
+ * Lo que **no** vuelve es el margen de trescientos metros: con él, en la 01
+ * de Fuerteventura salía sobre las flechas, donde se podía tocar antes del
+ * umbral. Aquí se adelanta por tiempo y solo si no da para tocar antes. Ver
+ * `sobreLaZonaDeToma`.
+ */
+export function llegandoALaZonaDeToma(
+  r: Pista,
+  x: number,
+  z: number,
+  rumbo: number,
+  llegada: Llegada,
+): boolean {
+  if (sobreLaZonaDeToma(r, x, z, rumbo)) return true;
+  const { across } = enEjesDePista(x, z, r.x, r.z, r.heading);
+  if (Math.abs(across) >= r.width / 2 + A_UN_LADO_DEL_EJE) return false;
+  const d = dondeSeToca(r, x, z, rumbo);
+  if (!d || d.pasado >= 0) return false;
+  const hastaElUmbral = -d.pasado / Math.max(llegada.suelo, 1);
+  if (hastaElUmbral > LA_TOMA_SE_ADELANTA) return false;
+  const hastaElSuelo = llegada.ruedas / Math.max(2 * llegada.bajando, 0.01);
+  return hastaElSuelo > hastaElUmbral;
+}
+
+/**
  * **Dónde está el avión en la pista**, por la cabecera por la que se llega:
  * lo pasado de su umbral de aterrizaje y dónde acaba su zona de toma, m.
  * `null` fuera de la pista. Es lo que hace larga una toma: ver `Aterrizaje`.

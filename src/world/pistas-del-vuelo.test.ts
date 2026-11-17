@@ -11,6 +11,8 @@ import { finDeLaZonaDeToma } from "../flight/toma-larga";
 import {
   dondeSeToca,
   enLaZonaDeLasFlechas,
+  LA_TOMA_SE_ADELANTA,
+  llegandoALaZonaDeToma,
   laMasCerca,
   pistaPorDelante,
   sobreAlguna,
@@ -136,6 +138,35 @@ describe("sobreLaZonaDeToma", () => {
 
   it("por la otra cabecera vale su umbral, que aquí está en la punta", () => {
     expect(sobreLaZonaDeToma(AL_NORTE, 0, -990, SUR)).toBe(true);
+  });
+});
+
+describe("llegandoALaZonaDeToma", () => {
+  // El umbral de la cabecera sur está en z = 700 y se llega hacia el norte.
+  const EN_FINAL = { suelo: 62, ruedas: 14, bajando: 3.5 };
+
+  it("sobre la zona de toma, como siempre", () => {
+    expect(llegandoALaZonaDeToma(AL_NORTE, 0, 690, NORTE, EN_FINAL)).toBe(true);
+  });
+
+  it("y segundo y medio antes del umbral, si desde ahí ya no se toca antes", () => {
+    // A ochenta metros y sesenta y dos por segundo: 1,3 s del umbral, y 2 s
+    // hasta el suelo aun bajando el doble.
+    expect(llegandoALaZonaDeToma(AL_NORTE, 0, 780, NORTE, EN_FINAL)).toBe(true);
+    // Más lejos, no: se dice en el umbral.
+    const lejos = 700 + 62 * LA_TOMA_SE_ADELANTA + 10;
+    expect(llegandoALaZonaDeToma(AL_NORTE, 0, lejos, NORTE, EN_FINAL)).toBe(false);
+  });
+
+  it("pero no si bajando así se llegaría al suelo antes del umbral, sobre las flechas", () => {
+    const bajo = { suelo: 62, ruedas: 3, bajando: 3.5 };
+    expect(llegandoALaZonaDeToma(AL_NORTE, 0, 780, NORTE, bajo)).toBe(false);
+  });
+
+  it("ni fuera del eje, ni pasada la pista de vuelta", () => {
+    expect(llegandoALaZonaDeToma(AL_NORTE, 70, 780, NORTE, EN_FINAL)).toBe(false);
+    // Llegando por la otra cabecera, z = 780 queda detrás: no hay umbral delante.
+    expect(llegandoALaZonaDeToma(AL_NORTE, 0, 1080, SUR, EN_FINAL)).toBe(false);
   });
 });
 

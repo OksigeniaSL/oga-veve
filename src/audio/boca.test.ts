@@ -16,6 +16,7 @@ import {
   CADUCA_LA_ORDEN,
   cuantoAguanta,
   cuentaElPirep,
+  cuentaPorDondeSeSale,
   explicaLaOtraPunta,
   MEGAFONIA,
   NO_REPETIR,
@@ -637,6 +638,28 @@ describe("y la megafonía va por el mismo turno", () => {
     expect(cuantoAguanta("ventanilla@saludo-teide")).toBe(CADUCA_LA_MEGAFONIA);
     // La de la instructora en avioneta es suya, no de la megafonía.
     expect(cuantoAguanta("ventanilla.vos@teide")).toBe(CADUCA);
+  });
+
+  /*
+   * La oferta de la intersección se pedía con la autorización de despegar y
+   * caducaba detrás de ella, dieciocho segundos de boca: en Los Rodeos con el
+   * JAZ 90, «torre.canario.ofreceInterseccion: caducó esperando» en las tres
+   * tiradas de H29d. Ahora espera sin reloj, y la retira el juego al empezar
+   * la carrera. Ver `contarPorDondeSeSale` en `game.ts`.
+   */
+  it("por dónde se sale espera su turno sin reloj, y solo lo tuyo", () => {
+    const oferta =
+      "torre.canario.ofreceInterseccion@fonetico.zulu-fonetico.papa-cifra.1-cifra.2-fonetico.echo cifra.2";
+    expect(cuantoAguanta(oferta, "mando")).toBe(Infinity);
+    expect(cuantoAguanta("torre.tora.L@fonetico.zulu", "mando")).toBe(Infinity);
+    expect(cuantoAguanta("vuelo.desdeLaInterseccion")).toBe(Infinity);
+    expect(cuantoAguanta("vuelo.remontarUnTrecho.calor")).toBe(Infinity);
+    // El «backtrack» a otro avión de la frecuencia es charla, y caduca como ella.
+    expect(cuentaPorDondeSeSale("torre.backtrack@fonetico.echo", "baja")).toBe(false);
+    expect(cuantoAguanta("torre.backtrack@fonetico.echo", "baja")).toBe(CADUCA_LA_ORDEN);
+    // Y lo que se le parece y no es, no.
+    expect(cuentaPorDondeSeSale("torre.toraDeOtro")).toBe(false);
+    expect(cuentaPorDondeSeSale("vuelo.remontando")).toBe(false);
   });
 });
 

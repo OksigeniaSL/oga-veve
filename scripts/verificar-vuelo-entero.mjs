@@ -4145,8 +4145,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * que la fraseología empieza, a uno; después, a lo de siempre. Ver
      * `permisoPorOir` en `src/dev/sondas.ts`.
      */
+    /*
+     * **Y mientras espere turno algo que solo retira el juego**: las aves, el
+     * tráfico, la fase. No caducan con el reloj de la boca, que es el de
+     * pared: se caen cuando dejan de ser verdad, y eso va con el del juego.
+     * A doce, «torre.canario.aves» esperó ciento un segundos de juego en el
+     * viento en cola de Los Rodeos —ocho de pared, con la boca hablando— y se
+     * retiró al quedar las aves detrás: el banco lo contaba como mudo y
+     * jugando tenía minuto y medio para sonar. Ver `algoPorOir` en
+     * `src/dev/sondas.ts`.
+     */
     const quiere =
-      aTiempoReal.includes(fase) || o.permisoPorOir?.() ? 1 : veces;
+      aTiempoReal.includes(fase) || o.permisoPorOir?.() || o.algoPorOir?.()
+        ? 1
+        : veces;
     if (quiere !== relojAhora) {
       relojAhora = quiere;
       o.acelerar?.(quiere);
