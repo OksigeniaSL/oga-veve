@@ -6464,6 +6464,127 @@ button.motor__tecla::after {
   stroke-linecap: round;
 }
 
+/*
+ * **La radio en la rosa** (ui/radio-en-la-rosa.ts): el curso del OBS y su
+ * barra en magenta, que es lo que se quiere; la aguja del ADF en cian, el
+ * dato auxiliar, como en una pantalla de navegación de Boeing; los puntos y
+ * el TO/FROM en blanco; y la bandera NAV roja con la palabra en tinta
+ * oscura, como las luces de aviso.
+ */
+.cr__radio-curso {
+  fill: none;
+  stroke: var(--cabina-objetivo);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cr__radio-barra {
+  stroke: var(--cabina-objetivo);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.cr__radio-punto {
+  fill: none;
+  stroke: var(--cabina-valor);
+  stroke-width: 1.5;
+}
+
+.cr__radio-tofrom {
+  fill: var(--cabina-valor);
+}
+
+.cr__radio-adf {
+  fill: none;
+  stroke: var(--cabina-auxiliar);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cr__radio-bandera {
+  fill: var(--cabina-limite);
+}
+
+.cr__radio-bandera-letra {
+  fill: #14161a;
+  font-family: var(--cabina-fuente);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.cr__radio-estacion {
+  fill: var(--cabina-valor);
+  font-family: var(--cabina-fuente);
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr__radio-adf-letra {
+  fill: var(--cabina-auxiliar);
+  font-family: var(--cabina-fuente);
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr__radio-crs {
+  fill: var(--cabina-objetivo);
+  font-family: var(--cabina-fuente);
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr__radio-rueda {
+  fill: var(--cabina-objetivo);
+}
+
+/*
+ * **En el direccional de las de pistón**, el mismo dibujo en las unidades de
+ * su esfera, que se escala al doble: trazos y letras a la mitad para que en
+ * pantalla salgan como en la pantalla de navegación.
+ */
+.cr__radio--esfera .cr__radio-curso {
+  stroke-width: 1.6;
+}
+
+.cr__radio--esfera .cr__radio-barra {
+  stroke-width: 2.2;
+}
+
+.cr__radio--esfera .cr__radio-punto {
+  stroke-width: 0.8;
+}
+
+.cr__radio--esfera .cr__radio-adf {
+  stroke-width: 1.4;
+}
+
+.cr__radio--esfera .cr__radio-bandera-letra {
+  font-size: 6px;
+}
+
+.cr__radio--esfera .cr__radio-estacion,
+.cr__radio--esfera .cr__radio-adf-letra,
+.cr__radio--esfera .cr__radio-crs {
+  font-size: 8.5px;
+}
+
+/*
+ * `visible` y no `all`: la caja entera se esconde con `visibility` en el avión
+ * que no lleva radio, y con `all` sus dianas seguirían robando el dedo.
+ */
+.cr__radio-dedo {
+  fill: transparent;
+  pointer-events: visible;
+  cursor: pointer;
+  touch-action: none;
+}
+
 .cr__aguja-vsi {
   stroke: var(--cabina-valor);
   stroke-width: 2.4;

@@ -30,6 +30,7 @@
  */
 
 import { CIFRAS_DE_AVISO_DESDE } from "../flight/escalera";
+import type { LaRadioPintada } from "../ui/radio-en-la-rosa";
 import {
   Box3,
   CanvasTexture,
@@ -233,6 +234,13 @@ export interface DatosDeCabina {
    * instrumentos: son uno roto y otro sospechoso.
    */
   readonly declinacion: number;
+  /**
+   * **La radio de navegación, ya decidida**: la aguja del ADF, el curso, la
+   * barra, el TO/FROM, la bandera y las letras, las mismas que pinta el
+   * cuadro plano (`pintarLaRadio` en `ui/radio-en-la-rosa.ts`). `null` sin
+   * caja o fuera del peldaño de la radio. Ver `pintarLaRadioEnLaRosa`.
+   */
+  readonly radio?: LaRadioPintada | null;
   /** Cabeceo, radianes. Positivo, morro arriba. */
   readonly cabeceo: number;
   /** Alabeo, radianes. Positivo, ala derecha abajo. */
@@ -990,6 +998,109 @@ function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
       PALETA.auxiliar,
     );
   g.restore();
+}
+
+/**
+ * **La radio sobre la rosa**, en la pantalla de navegación de la cabina: lo
+ * mismo que el cuadro plano —`radioEnLaRosaSvg` en `ui/radio-en-la-rosa.ts`—,
+ * con sus mismos colores, dicho en lienzo. El curso y la aguja van en
+ * magnéticos sobre la rosa, que gira con `grados`. Las letras, a los lados de
+ * la rosa por encima de las esquinas de abajo.
+ */
+function pintarLaRadioEnLaRosa(
+  g: CanvasRenderingContext2D,
+  p: LaRadioPintada,
+  cx: number,
+  cy: number,
+  r: number,
+  grados: number,
+  izquierda: number,
+  ancho: number,
+): void {
+  const punto = r * 0.17;
+  const largo = r * 0.42;
+  g.save();
+  g.translate(cx, cy);
+  g.lineCap = "round";
+  g.lineJoin = "round";
+  if (p.curso !== null) {
+    g.save();
+    g.rotate(((p.curso - grados) * Math.PI) / 180);
+    g.strokeStyle = PALETA.objetivo;
+    g.lineWidth = 3;
+    g.beginPath();
+    g.moveTo(0, -r + 12);
+    g.lineTo(0, -largo - 6);
+    g.moveTo(-7, -r + 26);
+    g.lineTo(0, -r + 12);
+    g.lineTo(7, -r + 26);
+    g.moveTo(0, largo + 6);
+    g.lineTo(0, r - 12);
+    g.stroke();
+    g.strokeStyle = TINTA;
+    g.lineWidth = 1.5;
+    for (const i of [-2, -1, 1, 2]) {
+      g.beginPath();
+      g.arc(i * punto, 0, 3.2, 0, Math.PI * 2);
+      g.stroke();
+    }
+    if (!p.bandera) {
+      g.strokeStyle = PALETA.objetivo;
+      g.lineWidth = 4;
+      g.beginPath();
+      g.moveTo(p.barra * punto * 2, -largo);
+      g.lineTo(p.barra * punto * 2, largo);
+      g.stroke();
+    }
+    if (p.toFrom) {
+      g.fillStyle = TINTA;
+      // Más largo que ancho, como en el cuadro plano: casi equilátero parecía apuntar de lado.
+      const y = p.toFrom === "TO" ? -largo * 0.7 : largo * 0.7;
+      const s = p.toFrom === "TO" ? 1 : -1;
+      g.beginPath();
+      g.moveTo(0, y);
+      g.lineTo(-6, y + 17 * s);
+      g.lineTo(6, y + 17 * s);
+      g.closePath();
+      g.fill();
+    }
+    g.restore();
+  }
+  if (p.adf !== null) {
+    g.save();
+    g.rotate(((p.adf - grados) * Math.PI) / 180);
+    g.strokeStyle = PALETA.auxiliar;
+    g.lineWidth = 2.6;
+    g.beginPath();
+    g.moveTo(0, -r + 4);
+    g.lineTo(0, r - 4);
+    g.moveTo(-8, -r + 20);
+    g.lineTo(0, -r + 4);
+    g.lineTo(8, -r + 20);
+    g.moveTo(-6, r - 4);
+    g.lineTo(0, r - 14);
+    g.lineTo(6, r - 4);
+    g.stroke();
+    g.restore();
+  }
+  if (p.bandera) {
+    const x = -punto * 2 - 34;
+    const y = -largo * 0.3;
+    g.fillStyle = PALETA.limite;
+    g.fillRect(x, y, 30, 16);
+    escribir(g, "NAV", x + 15, y + 8, "700 12px " + FUENTE, "#14161a");
+  }
+  g.restore();
+  const y0 = cy + r * 0.56;
+  const linea = (texto: string, x: number, y: number, color: string, alineado: CanvasTextAlign) => {
+    if (texto) escribir(g, texto, x, y, "500 15px " + FUENTE, color, alineado);
+  };
+  linea(p.textos.navId, izquierda + 6, y0, TINTA, "left");
+  linea(p.textos.navMhz, izquierda + 6, y0 + 16, TINTA, "left");
+  linea(p.textos.dme, izquierda + 6, y0 + 32, TINTA, "left");
+  linea(p.textos.crs, izquierda + 6, y0 - 22, PALETA.objetivo, "left");
+  linea(p.textos.adfId, izquierda + ancho - 6, y0 + 16, PALETA.auxiliar, "right");
+  linea(p.textos.adfKhz, izquierda + ancho - 6, y0 + 32, PALETA.auxiliar, "right");
 }
 
 /**
@@ -2157,6 +2268,7 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
     g.stroke();
   }
   g.lineCap = "butt";
+  if (d.radio) pintarLaRadioEnLaRosa(g, d.radio, cx, cy, r, grados, izquierda, anchoNav);
 
   // Y el rumbo en cifras, arriba, con su rótulo debajo.
   caja(g, cx - 36, 24, 72, 30);

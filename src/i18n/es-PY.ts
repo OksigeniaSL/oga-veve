@@ -344,6 +344,11 @@ export const ES_PY = {
    */
   "tecla.altUp": "Subir la altura de la ventanilla ALT",
   "tecla.altDown": "Bajar la altura de la ventanilla ALT",
+  // La radio de navegación: el OBS y la estación siguiente. Ver `flight/radio-de-navegacion.ts`.
+  "tecla.obsUp": "Girar el curso del VOR (OBS) a la derecha",
+  "tecla.obsDown": "Girar el curso del VOR (OBS) a la izquierda",
+  "tecla.navSiguiente": "Otra estación en la NAV",
+  "tecla.adfSiguiente": "Otra estación en el ADF",
   "tecla.sound": "Sonido",
   "tecla.language": "Idioma",
   "tecla.credits": "Créditos",

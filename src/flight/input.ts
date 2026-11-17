@@ -161,6 +161,13 @@ export interface InputActions {
    * `flight/altitud-seleccionada.ts`. Opcional: sin ella la tecla no hace nada.
    */
   girarVentanillaAlt?: (pasos: number) => void;
+  /**
+   * La radio de navegación: girar el OBS de grado en grado y pasar a la
+   * estación siguiente de la NAV o del ADF. Ver `flight/radio-de-navegacion.ts`.
+   * Opcionales: sin ellas las teclas no hacen nada.
+   */
+  girarObs?: (pasos: number) => void;
+  siguienteEstacion?: (caja: "nav" | "adf") => void;
   cycleLanguage: () => void;
   toggleSound: () => void;
   /** Se llama en el primer gesto: los navegadores no dejan sonar antes. */
@@ -1396,6 +1403,18 @@ export class InputManager {
         break;
       case "altDown":
         this.actions.girarVentanillaAlt?.(-1);
+        break;
+      case "obsUp":
+        this.actions.girarObs?.(1);
+        break;
+      case "obsDown":
+        this.actions.girarObs?.(-1);
+        break;
+      case "navSiguiente":
+        this.actions.siguienteEstacion?.("nav");
+        break;
+      case "adfSiguiente":
+        this.actions.siguienteEstacion?.("adf");
         break;
       case "credits":
         event.preventDefault();

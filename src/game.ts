@@ -963,6 +963,9 @@ import {
 } from "./flight/lo-que-se-nombra";
 import { AroEnElMundo } from "./ui/aro-en-el-mundo";
 import type { ComoSeDice } from "./ui/carta/tocar-la-carta";
+import { ponerRadioDeLaCarta } from "./ui/carta/tocar-la-carta";
+import { RadioDeCabina, radiosDe, vuelta, type Avion as AvionDeLaRadio, type Emisora } from "./flight/radio-de-navegacion";
+import { pintarLaRadio, type RadioEnElCuadro } from "./ui/radio-en-la-rosa";
 import { PantallaDespierta } from "./ui/pantalla-despierta";
 import { ahoraEsTelefonoApaisado } from "./ui/telefono";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
@@ -1462,6 +1465,7 @@ import {
 } from "./flight/recogida";
 import { comoSeAterriza, loQueSeJuzga } from "./flight/como-se-aterriza";
 import {
+  calcosDe,
   canalesDe,
   cantaLaCabina,
   claveDelAviso,
@@ -7135,6 +7139,8 @@ export class Game {
       cycleDestino: () => this.alTocarLaCasa(),
       girarAltimetro: (pasos: number) => this.girarAltimetro(pasos),
       girarVentanillaAlt: (pasos: number) => this.girarLaVentanillaAlt(pasos),
+      girarObs: (pasos: number) => this.girarElObs(pasos),
+      siguienteEstacion: (caja: "nav" | "adf") => this.siguienteEstacion(caja),
       trenTrabado: () => this.trenTrabado(),
       /*
        * **Un paso del compensador se oye y se ve.** El clic de la rueda y la
@@ -7542,6 +7548,18 @@ export class Game {
     this.marcaDelMotorPuesta = undefined;
     this.hud.onPilotoAutomatico(() => this.ponerPilotoAutomatico());
     this.hud.onVentanillaAlt((pasos) => this.girarLaVentanillaAlt(pasos));
+    // El mando de la radio en las esquinas de la pantalla de navegación.
+    this.hud.onMandoDeRadio((mando, paso) => (mando === "obs" ? this.girarElObs(paso) : this.siguienteEstacion(mando)));
+    /*
+     * **Y la carta enchufada a la radio** (el gancho de H24c): tocar una
+     * radioayuda o su frecuencia la pone en la caja que toca, si el avión la
+     * lleva. La de hablar (COM) no: la torre que se oye es la del campo, y la
+     * dependencia cambia sola (ver `flight/dependencia.ts`).
+     */
+    ponerRadioDeLaCarta({
+      lleva: (f) => f.radio !== "com" && radiosDe(this.aircraft)[f.radio],
+      poner: (f) => f.radio !== "com" && this.radioAlDia().poner(f.radio, f.mhz),
+    });
     this.hud.onDestino(() => this.alTocarLaCasa());
     /*
      * Y el cielo. Empieza despejado porque es el que deja ver el mundo, que es
@@ -13428,6 +13446,8 @@ export class Game {
   }
 
   resetFlight(): void {
+    // La radio vuelve a la estación del campo de salida, salvo lo puesto a mano.
+    this.radioPuestaPara = "";
     /*
      * **Dónde empieza el vuelo nuevo, lo primero.**
      *
@@ -16036,6 +16056,86 @@ export class Game {
   girarAltimetro(pasos: number): void {
     this.qnhPuesta = girarRueda(this.qnhPuesta, pasos);
     this.avisar("attention");
+  }
+
+  // ── La radio de navegación ───────────────────────────────────────────
+
+  /**
+   * **La NAV y el ADF del avión** (#51). Una sola, que se queda con lo
+   * sintonizado mientras no se cambie de avión. Ver
+   * `flight/radio-de-navegacion.ts`.
+   */
+  private readonly radioDeNavegacion = new RadioDeCabina({ nav: false, adf: false });
+  /** De qué avión son las cajas puestas. */
+  private radioDelAvion = "";
+  /** Y para qué salida se puso la estación del campo: avión y campo. Lo vacía `resetFlight`. */
+  private radioPuestaPara = "";
+
+  /** La radio, con las cajas del avión de ahora. */
+  private radioAlDia(): RadioDeCabina {
+    if (this.radioDelAvion !== this.aircraft.id) {
+      this.radioDeNavegacion.cambiarDeAvion(radiosDe(this.aircraft));
+      this.radioDelAvion = this.aircraft.id;
+      this.radioPuestaPara = "";
+    }
+    return this.radioDeNavegacion;
+  }
+
+  /** Dónde está el avión, para la radio: en grados, con su altitud y su rumbo verdadero. */
+  private avionParaLaRadio(): AvionDeLaRadio | null {
+    const origen = this.scenario.aerodrome?.origin;
+    if (!origen) return null;
+    const s = this.flight.state;
+    const sitio = sitioDelMundo(origen, s.position.x, s.position.z);
+    return { lat: sitio.lat, lon: sitio.lon, altitud: s.position.y, rumbo: vuelta((s.heading * 180) / Math.PI) };
+  }
+
+  /**
+   * **A qué altura está la antena**, para la línea de vista: la del campo
+   * montado si es suya; las de los demás, al nivel del mar, que es donde
+   * están casi todas las de la tabla y lo que más alcance da. TFN y LRO, a
+   * seiscientos metros en Los Rodeos, son las que más cambian.
+   */
+  private readonly elevacionDeLaEstacion = (e: Emisora): number => {
+    const campo = this.elCampoMontado().escenario;
+    return e.estacion.oaci === oaciDe(campo) ? (campo.aerodrome?.elevationM ?? 0) : 0;
+  };
+
+  /** Si en este peldaño hay radio: el calco de la radio de la carta. */
+  private conRadio(): boolean {
+    return calcosDe(this.tier.avisos).radio;
+  }
+
+  /**
+   * **Lo que el cuadro enseña de la radio**, o `null` si el avión no lleva
+   * ninguna caja o el peldaño no tiene radio. La primera vez de cada salida
+   * pone la estación del campo. Ver `RadioDeCabina.alSalir`.
+   */
+  private laRadioParaElCuadro(): RadioEnElCuadro | null {
+    const radio = this.radioAlDia();
+    if ((!radio.lleva.nav && !radio.lleva.adf) || !this.conRadio()) return null;
+    const a = this.avionParaLaRadio();
+    if (!a) return null;
+    const campo = this.elCampoMontado().escenario;
+    const clave = `${this.aircraft.id}|${campo.id}`;
+    if (clave !== this.radioPuestaPara) {
+      radio.alSalir(oaciDe(campo), a);
+      this.radioPuestaPara = clave;
+    }
+    return radio.leer(a, this.elevacionDeLaEstacion);
+  }
+
+  /** **Girar el OBS** con la tecla o con el dedo: un grado por paso. */
+  girarElObs(pasos: number): void {
+    if (!this.conRadio()) return;
+    if (this.radioAlDia().girarCurso(pasos)) this.avisar("attention");
+  }
+
+  /** **La estación siguiente** de la NAV o del ADF, por cercanía. */
+  siguienteEstacion(caja: "nav" | "adf"): void {
+    const a = this.avionParaLaRadio();
+    if (!a || !this.conRadio()) return;
+    if (this.radioAlDia().siguiente(caja, a)) this.avisar("attention");
   }
 
   /**
@@ -20371,6 +20471,12 @@ export class Game {
     // que las llevan pasan por aquí: los JAZ 60, 90, 110 y 120 y el Super
     // Puma, por sus mallas `g1000_display`; y los relojes de los JAZ 20, 25 y
     // 40, más abajo. Ver `encenderPantallas` y `encenderRelojes`.
+    /*
+     * La radio, una vez por imagen y para las dos superficies: la pantalla de
+     * la cabina y el cuadro plano. Ver `laRadioParaElCuadro`.
+     */
+    const radio = this.laRadioParaElCuadro();
+    const declinacionDelCampo = this.elCampoMontado().escenario.magneticVariation ?? 0;
     this.aircraftMesh.pantallas?.actualizar(
       {
         /*
@@ -20401,7 +20507,8 @@ export class Game {
         rumbo: this.flight.state.heading,
         // La del campo en el que se está: sus pistas van numeradas con la
         // suya, y el rumbo tiene que casar con el número pintado.
-        declinacion: this.elCampoMontado().escenario.magneticVariation ?? 0,
+        declinacion: declinacionDelCampo,
+        radio: radio ? pintarLaRadio(radio, declinacionDelCampo) : null,
         cabeceo: pitchAngleOf(this.flight.state.orientation),
         alabeo: bankAngleOf(this.flight.state.orientation),
         /*
@@ -20788,6 +20895,8 @@ export class Game {
         rodaje: this.rodajeParaElCuadro(),
         // Y lo que acaba de cambiar, resaltado en su sitio. Ver `mirarLoQueCambia`.
         resaltes: this.loQueCambia.resaltes,
+        // La radio de navegación, en el peldaño que la tiene. Ver `laRadioParaElCuadro`.
+        radio,
         // Y la funda del pitot, si se quedó puesta. Ver `vigilarLaFunda`.
         pitotTapado: this.pitotTapado,
         /*

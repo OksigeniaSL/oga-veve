@@ -40,6 +40,7 @@
  */
 
 import type { FlightState } from "../flight/model";
+import { radioEnElDireccionalSvg } from "./radio-en-la-rosa";
 import {
   CABECEO_POR_GRADO,
   RAYAS_DE_CABECEO,
@@ -146,7 +147,9 @@ export class SixPack {
         '<g data-needle="dg-card">' +
           `<circle cx="50" cy="50" r="${CARA}" class="dg__rosa" />` +
           escalaSvg(c.rosa, { radial: true }) +
-          "</g>",
+          "</g>" +
+          // Y desde el peldaño de cabina, el curso y la aguja encima: un HSI. Ver `ui/radio-en-la-rosa.ts`.
+          radioEnElDireccionalSvg(),
         dgAircraft(),
         yDelRotulo(c.rosa),
       ],
