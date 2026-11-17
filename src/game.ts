@@ -24825,9 +24825,18 @@ export class Game {
     readonly colocacion: ColocacionDelIls | null;
     readonly agujas: { readonly loc: number | null; readonly senda: number | null; readonly bandera: boolean } | null;
     readonly altura: number;
+    /** Dónde están en el mundo la antena de la senda y la del localizador, el ángulo y el rumbo de la final. */
+    readonly antenas: {
+      readonly senda: { readonly x: number; readonly z: number };
+      readonly localizador: { readonly x: number; readonly z: number };
+      readonly angulo: number;
+      readonly rumboFinal: number;
+    } | null;
   } | null {
     const g = this.ils;
     if (!g) return null;
+    const origen = this.scenario.aerodrome?.origin;
+    const e = g.ils.estacion;
     const a = this.avionParaLaRadio();
     const l = a ? leerNav(g.ils.mhz, this.radioAlDia().curso, a, this.elevacionDeLaEstacion, [g.ils]) : null;
     return {
@@ -24845,6 +24854,15 @@ export class Game {
           }
         : null,
       altura: this.flight.state.position.y - this.terrain.runwayElevation,
+      antenas:
+        origen && e.senda && e.rumboVerdadero !== null
+          ? {
+              senda: dondeCae(origen, e.senda),
+              localizador: dondeCae(origen, e),
+              angulo: anguloDeLaSenda(e) ?? 3,
+              rumboFinal: e.rumboVerdadero,
+            }
+          : null,
     };
   }
 
