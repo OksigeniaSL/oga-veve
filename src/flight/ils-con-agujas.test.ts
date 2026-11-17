@@ -165,7 +165,7 @@ describe("dónde se ofrece y dónde empieza", () => {
     expect(ejerciciosPara("taguato-ruvicha", PYKASU, "GCFV").map((e) => e.id)).toContain("ils");
     expect(ejerciciosPara("taguato-ruvicha", ARAI, "GCFV").map((e) => e.id)).toContain("ils");
     expect(ejerciciosPara("taguato", PYKASU, "GCFV").map((e) => e.id)).not.toContain("ils");
-    // Lanzarote no tiene ILS; La Gomera, tampoco.
+    // Lanzarote tiene el de la 03; La Palma no tiene ILS, y La Gomera tampoco.
     expect(ejerciciosPara("taguato-ruvicha", PYKASU, "GCRR").map((e) => e.id)).toContain("ils");
     expect(ejerciciosPara("taguato-ruvicha", PYKASU, "GCLA").map((e) => e.id)).not.toContain("ils");
     expect(ejerciciosPara("taguato-ruvicha", PYKASU, "GCGM").map((e) => e.id)).not.toContain("ils");
