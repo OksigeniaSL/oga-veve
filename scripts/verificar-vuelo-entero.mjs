@@ -2126,14 +2126,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     return nudos > 20 ? (indicada * s.airspeed) / (nudos / 1.94384) : indicada;
   };
   /**
-   * **Lo que se suma a la Vref para volar la final**, m/s: cinco nudos.
+   * **Lo que se suma a la Vref para volar la final**, m/s indicados: lo que
+   * pide el juego, `margenDeLaFinal` por la sonda.
    *
-   * La velocidad de aproximación de un reactor es la Vref más un margen —el
-   * mínimo de cinco nudos, más con viento racheado— y se cruza el umbral a
-   * la Vref. Es el colchón que hace que una racha no deje al avión debajo de
-   * su Vref, que ya está a un treinta por ciento de la pérdida.
+   * La velocidad de aproximación es la Vref más un margen —cinco nudos en
+   * calma, más con viento de cara y con rachas— y se cruza el umbral a la
+   * Vref. Es el colchón que hace que una racha no deje al avión debajo de su
+   * Vref. El banco llevaba su propia cuenta: la regla del reactor —media cara
+   * y la racha entera, de cinco a veinte— en todos los aviones, y con lo que
+   * medía su propio anemómetro, que es sobre todo su propio vaivén de gas y de
+   * senda. El juego lo cuenta con el viento del parte y con la regla de cada
+   * clase de avión (enmienda H25d del ADR 0027), y es lo que pide su marca, su
+   * banda y su puerta: el banco vuela eso, no una copia (enmienda H25e). Sin
+   * la sonda, los cinco nudos de la calma.
    */
-  const ADITIVO_DE_FINAL = 5 * 0.514444;
+  const margenDeLaFinal = () => (o.margenDeLaFinal?.() ?? 5) * 0.514444;
   /**
    * **Y el margen se quita en la final corta**, m antes del umbral: para
    * cruzarlo a la Vref, que es como lo cruza un piloto de verdad.
@@ -6104,7 +6111,23 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         NECESITA_TECNICA && peldano !== "guyrami"
           ? Math.max(0, Math.min(1, 0.55 + (topeSubiendo - s.airspeed) * 0.04))
           : 1;
-      const quiere = bajandoYa ? DE_CIRCUITO * 1.2 : VELOCIDAD_DE_CRUCERO;
+      /*
+       * **Bajando, a la marca que pide el juego**, pasada a verdadera: la de
+       * descenso de la escalera, que va frenando al acercarse —el área
+       * terminal, la aproximación—. Bajaba a 1,2 veces la de circuito en
+       * verdadera, y eso arriba es poquísima indicada: el JAZ 60 a 114 nudos a
+       * seis mil metros con su mínima del automático en 118 y la escalera
+       * pidiendo 200, el JAZ 40 a 88 con la mínima en 94 (enmienda H25e del
+       * ADR 0027). En los que llevan gases automáticos —los reactores— esto no
+       * manda: con el automático puesto los gases vuelan la marca y pisan el
+       * gas del banco. Sin la sonda, como estaba.
+       */
+      const marca = o.marcaDeVelocidad?.();
+      const quiere = bajandoYa
+        ? marca
+          ? enVerdadera(s, marca * 0.514444)
+          : DE_CIRCUITO * 1.2
+        : VELOCIDAD_DE_CRUCERO;
       const aSuVelocidad = Math.min(1, (bajandoYa ? 0.35 : 0.55) + (quiere - s.airspeed) * 0.04);
       c.throttle = subiendo ? gasSubiendo : Math.max(bajandoYa ? 0.1 : 0.3, aSuVelocidad);
       configurar(s, c, 1);
@@ -6281,14 +6304,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        */
       /*
        * **Y los demás también**, que ahora vuelan la final como los reactores:
-       * configurados y a la Vref más cinco nudos. Ver `configurar`.
+       * configurados y a la Vref más el margen que pide el juego. Ver
+       * `configurar` y `margenDeLaFinal`.
        */
       {
         o.colocar(
           f.x,
           enLaSenda,
           f.z,
-          enVerdadera(o.estado(), aproximacion + ADITIVO_DE_FINAL),
+          enVerdadera(o.estado(), aproximacion + margenDeLaFinal()),
           f.h,
         );
         o.pedirTren?.(true);
@@ -6721,20 +6745,25 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const deAproximacion = suyas.aproximacion ?? 33;
       const vref = enVerdadera(s, deAproximacion);
       /*
-       * **Y con viento de cara, la mitad de él encima**, hasta veinte nudos:
-       * es la regla de los manuales de línea, y existe por lo que pasa en la
-       * recogida. El viento se frena cerca del suelo, así que al bajar los
-       * últimos metros el avión pierde de golpe parte de lo que lleva de cara:
-       * en el banco de mesa, con diez metros por segundo de cara, el JAZ 90
-       * tocaba a 1,9 m/s en vez de a 0,9. Lo que sopla de cara se le ve al
-       * avión: lo que va por el aire menos lo que va por el suelo.
+       * **El margen, el que pide el juego**: en los reactores, la mitad del
+       * viento de cara y la racha entera del parte, de cinco a veinte nudos; en
+       * los demás, los cinco de la calma y la mitad de la racha. Ver
+       * `margenDeLaFinal`, arriba. La regla del reactor existe por lo que pasa
+       * en la recogida: el viento se frena cerca del suelo, y al bajar los
+       * últimos metros el avión pierde de golpe parte de lo que lleva de cara
+       * —en el banco de mesa, con diez metros por segundo de cara, el JAZ 90
+       * tocaba a 1,9 m/s en vez de a 0,9—.
+       */
+      const aditivo = margenDeLaFinal();
+      /*
+       * Lo que sopla de cara, para lo que queda del margen en el umbral (abajo):
+       * se le ve al avión, lo que va por el aire menos lo que va por el suelo.
        */
       const deCara = Math.max(0, s.airspeed - porElSuelo(s));
       /*
-       * Y la racha entera encima, que es la otra mitad de la regla: lo que va y
-       * viene la velocidad en los últimos diez segundos. En Los Rodeos, con
-       * el aire que pasa el relieve, una racha se lleva en un segundo lo que
-       * sobraba para recoger.
+       * Y lo que va y viene la velocidad en los últimos diez segundos, solo
+       * para la traza: es lo que el banco sumaba antes al margen con su propio
+       * anemómetro (enmienda H25e del ADR 0027).
        */
       velocidadesDeFinal.push({ t, v: s.airspeed });
       while (velocidadesDeFinal.length && t - velocidadesDeFinal[0].t > 10)
@@ -6745,10 +6774,6 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
               Math.min(...velocidadesDeFinal.map((m) => m.v))) /
             2
           : 0;
-      const aditivo = Math.min(
-        20 * 0.514444,
-        Math.max(ADITIVO_DE_FINAL, deCara / 2 + racha),
-      );
       /*
        * **Y en Guyrami igual, configurado y a la Vref más el margen.** Las
        * hélices volaban ahí la final limpias y a nueve décimas de la Vref,
@@ -7277,8 +7302,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             ` · plan ${(objetivo - alto(s)).toFixed(1)} pide ${memoriaDeSenda ? memoriaDeSenda.ritmo.toFixed(1) : "-"} α ${((s.alpha * 180) / Math.PI).toFixed(1)}°` +
             /*
              * Y la velocidad que busca el gas, en indicada, con lo que la hace:
-             * el margen de la final —el mayor de cinco nudos y media cara más
-             * la racha que mide el banco— y lo que queda de él en el umbral.
+             * el margen de la final que pide el juego, lo que sopla de cara, lo
+             * que va y viene el anemómetro —que ya no suma— y lo que queda del
+             * margen en el umbral.
              */
             ` · quiere ${Math.round(pedidaEnIndicada * 1.94384)} kt (margen ${(aditivo * 1.94384).toFixed(1)}: cara ${(deCara * 1.94384).toFixed(1)} racha ${(racha * 1.94384).toFixed(1)}; umbral +${(enElUmbral * 1.94384).toFixed(1)})` +
             (sendaSinPerseguir ? " · sin perseguir" : "") +

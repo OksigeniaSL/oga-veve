@@ -27699,6 +27699,24 @@ export class Game {
     return indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) / NUDO;
   }
 
+  /**
+   * **Lo que el juego le suma a la Vref en la final**, nudos, con el viento del
+   * parte del campo que se tiene debajo: para que el banco vuele la final que
+   * pide el juego y no una copia de la regla. Ver `margenDeLaFinal`.
+   */
+  get margenDeLaFinalParaBanco(): number {
+    return margenDeLaFinal(this.aircraft, this.vientoDeLaFinal());
+  }
+
+  /**
+   * **La marca de velocidad de ahora**, nudos indicados: la que pide la
+   * escalera y llevan los gases automáticos, para que el banco la vuele en el
+   * avión que no los lleva. Ver `laVelocidadQueToca`.
+   */
+  get marcaDeVelocidadParaBanco(): number {
+    return this.laVelocidadQueToca().kt;
+  }
+
   /** El plan de vuelo y su progreso, para los bancos. */
   get planParaBanco(): {
     fijos: readonly { nombre: string; x: number; z: number; papel: string }[];

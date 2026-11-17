@@ -112,6 +112,32 @@ describe("la mínima del automático cuenta la pérdida de los flaps que lleva",
       }
     },
   );
+
+  /*
+   * Y bajando por el plan desde arriba, lejos todavía: es lo que vuela el
+   * banco del trayecto (`OGA_RUTA`) en el avión sin gases automáticos, y lo
+   * que vuelan los gases en el que los lleva. El banco bajaba a 1,2 veces la
+   * de circuito en verdadera, y a seis mil metros eso quedaba por debajo de
+   * esta mínima en el JAZ 20, el 40, el 50 y el 60 (enmienda H25e del ADR
+   * 0027); la marca de la escalera, no.
+   */
+  it.each(AVIONES.map((a) => [a.id, a] as const))(
+    "%s: bajando por el plan, a cualquier altura, la marca queda por encima de la mínima",
+    (_id, a) => {
+      for (const altitud of [1500, 3000, 4800, 6000, 9000]) {
+        const v = velocidadQueToca(a, {
+          altitud,
+          restante: 150_000,
+          bajando: true,
+          enFinal: false,
+          subiendo: false,
+        });
+        const f = muescasDeLaPalanca(a)[flapsQuePide(a, v.peldano)] ?? 0;
+        expect(f).toBe(0);
+        expect(v.kt).toBeGreaterThan(minimaDelAutomatico(a, f) / NUDO);
+      }
+    },
+  );
 });
 
 describe("los gases no piden menos que la mínima", () => {

@@ -2428,6 +2428,19 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
           juego.flight.aireDelDia(),
         ) * 1.94384,
       ),
+    /**
+     * **Lo que el juego le suma a la Vref en la final**, nudos: la regla del
+     * reactor o la de la FAA según el avión, con el viento del parte. El banco
+     * del vuelo entero llevaba su propia cuenta —la del reactor en todos, con
+     * lo que medía su anemómetro—. Ver `margenDeLaFinal`.
+     */
+    margenDeLaFinal: () => juego.margenDeLaFinalParaBanco,
+    /**
+     * **La marca de velocidad que pide la escalera ahora**, nudos indicados.
+     * El banco del trayecto la vuela bajando en el avión sin gases
+     * automáticos; en el que los lleva, ya la vuelan ellos.
+     */
+    marcaDeVelocidad: () => juego.marcaDeVelocidadParaBanco,
     /** En qué campo está el avión ahora: el de salida o el de destino. */
     campoDeAhora: () => juego.campoDeAhoraParaBanco,
     /** El OACI del aeródromo que se tiene debajo. */
