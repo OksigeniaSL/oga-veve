@@ -377,6 +377,12 @@ const HORA_BUENA = 16;
  * teñir de azul y aplanar la isla entera.
  */
 const HORA_DEL_PASAJE = 15;
+/**
+ * Lo menos que separa dos clics de la rueda del OBS, en segundos: con la tecla
+ * o el dedo apretados gira a veinte grados por segundo, y un clic por grado
+ * sería un zumbido. Ver `girarElObs`.
+ */
+const CLIC_DE_LA_RUEDA = 0.08;
 
 /** A qué distancia de la cabecera empieza la lección de aterrizar, m. */
 /** A cuántos metros del umbral empieza la lección de aterrizar. */
@@ -16220,18 +16226,35 @@ export class Game {
     return radio.leer(a, this.elevacionDeLaEstacion);
   }
 
-  /** **Girar el OBS** con la tecla o con el dedo: un grado por paso. */
+  /**
+   * **Girar el OBS** con la tecla o con el dedo: un grado por paso.
+   *
+   * Suena el clic de la carta, no `attention`: ése es un motivo de los que
+   * mandan —dos notas, un tercio de segundo, y mientras suena cuenta como
+   * aviso, así que callaba el morse—, y con la rueda apretada, a veinte grados
+   * por segundo, eran veinte avisos por segundo. Una rueda de verdad hace un
+   * clic por muesca, y aquí como mucho uno cada `CLIC_DE_LA_RUEDA` segundos.
+   */
   girarElObs(pasos: number): void {
     if (!this.conRadio()) return;
-    if (this.radioAlDia().girarCurso(pasos)) this.avisar("attention");
+    if (!this.radioAlDia().girarCurso(pasos)) return;
+    const ahora = this.clock.elapsedTime;
+    if (ahora - this.ultimoClicDeLaRueda < CLIC_DE_LA_RUEDA) return;
+    this.ultimoClicDeLaRueda = ahora;
+    if (!this.dePasaje) this.audio.ruidoDeLaCarta("clic");
   }
+  private ultimoClicDeLaRueda = -Infinity;
 
-  /** **La estación siguiente** de la NAV o del ADF, por cercanía, con su morse. */
+  /**
+   * **La estación siguiente** de la NAV o del ADF, por cercanía, con su morse.
+   * Con el clic y no con `attention`, por lo mismo que la rueda del OBS: el
+   * motivo contaba como aviso y retrasaba el morse que viene detrás.
+   */
   siguienteEstacion(caja: "nav" | "adf"): void {
     const a = this.avionParaLaRadio();
     if (!a || !this.conRadio()) return;
     if (!this.radioAlDia().siguiente(caja, a)) return;
-    this.avisar("attention");
+    if (!this.dePasaje) this.audio.ruidoDeLaCarta("clic");
     this.identificar(caja);
   }
 
