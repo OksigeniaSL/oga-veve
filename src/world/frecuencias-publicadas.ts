@@ -33,7 +33,7 @@
  * frecuencia de torre viene marcada «Secundaria // Secondary»; en La Palma las
  * observaciones de la torre no casan línea a línea con sus frecuencias y no
  * se asigna ninguna; en Cuatro Vientos las cifras con «C» son canales de
- * 8,33 kHz (GEN 2.2) y no se convierten; la casilla de frecuencia del servicio
+ * 8,33 kHz (GEN 2.2), van con `canal833` y no se convierten; la casilla de frecuencia del servicio
  * «Asunción Radio» está en blanco y no sale.
  *
  * `tal` es la cadena entera del documento; `cifra`, su número sin la unidad,
@@ -239,11 +239,26 @@ export const RADIO: Readonly<Record<string, RadioPublicada>> = {
   LECU: {
     fuente: "AIP España, ENAIRE · AD 2-LECU/LEVS-8 · WEF 06-AUG-26",
     servicios: [
+      /*
+       * Los canales con «C» van como en Barajas, con su `canal833`: la primera
+       * transcripción solo dejó la de emergencia, y la carta rotulaba «TWR
+       * 121.500» en un campo cuya torre está en el 118.705. Fuera, como en
+       * los demás, las MIL (137.525, 139.300 y la de UHF 257.800), también
+       * la 137.525 que repite el goniómetro, y el D-ATIS, que es «NIL».
+       */
       { servicio: "TWR", indicativo: "Cuatro Vientos TWR", frecuencias: [
+        { tal: "118.705 C", cifra: "118.705", mhz: 118.705, canal833: true, horario: "HR AD" },
         { tal: "121.500 MHz", cifra: "121.500", mhz: 121.5, nota: "EMERG", horario: "H24" },
+        { tal: "121.805 C", cifra: "121.805", mhz: 121.805, canal833: true, nota: "GMC", horario: "HR AD" },
+        { tal: "122.505 C", cifra: "122.505", mhz: 122.505, canal833: true, nota: "BACK UP", horario: "HR AD" },
+      ] },
+      { servicio: "ATIS", indicativo: "Cuatro Vientos Information", frecuencias: [
+        { tal: "118.230 C", cifra: "118.230", mhz: 118.23, canal833: true, horario: "HR AD" },
       ] },
       { servicio: "VDF", indicativo: "Cuatro Vientos Gonio", frecuencias: [
+        { tal: "118.705 C", cifra: "118.705", mhz: 118.705, canal833: true, horario: "HR AD" },
         { tal: "121.500 MHz", cifra: "121.500", mhz: 121.5, horario: "HR AD" },
+        { tal: "121.805 C", cifra: "121.805", mhz: 121.805, canal833: true, horario: "HR AD" },
       ] },
     ],
   },
