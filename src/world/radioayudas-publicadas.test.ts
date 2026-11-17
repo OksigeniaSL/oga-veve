@@ -128,6 +128,15 @@ describe("el ILS de cada pista", () => {
       for (const [cabecera, s] of Object.entries(cabeceras))
         if (s.ils) expect(estacionesDe(oaci).some((e) => e.clase === "ILS" && e.pista === cabecera), `${oaci} ${cabecera}`).toBe(true);
   });
+
+  /*
+   * Y al revés: cada ILS del AD 2.19 tiene su `ils` en la tabla de las sendas.
+   * Faltaba en la 20 de Encarnación y en la 01 de Mariscal Estigarribia, y ahí
+   * el *five hundred* de las de no precisión se cantaba con un ILS delante.
+   */
+  it("y cada ILS del AD 2.19 está como ILS en la tabla de las sendas", () => {
+    for (const { oaci, e } of conIls) expect(SENDAS[oaci]?.[e.pista!]?.ils, `${oaci} ${e.pista}`).toBe(true);
+  });
 });
 
 describe("los VOR y NDB de los procedimientos", () => {
