@@ -3100,8 +3100,8 @@ body:is(:has([data-hud="fin"]:not([hidden])), .hay-fin) .pad {
 }
 
 /*
- * **El fijo de dos radiales**, encima de la traza: las rayas de lápiz, la
- * cruz con su aro y el avión donde estaba al leer la segunda. En la tinta
+ * **El fijo de dos radiales**: las rayas de lápiz debajo de la traza, y
+ * encima la cruz con su aro y el avión donde estaba al leer la segunda. En la tinta
  * suave las rayas y la cruz, como el lápiz; el avión en la tinta, con su
  * halo oscuro para que se vea encima de la traza. Ver `fijo-en-el-plano.ts`.
  */

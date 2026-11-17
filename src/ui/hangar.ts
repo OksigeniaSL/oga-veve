@@ -351,7 +351,7 @@ export function plano(
   const ancho = (v * 5) / 3;
   const vb = `${cx - ancho / 2} ${-cy - v / 2} ${ancho} ${v}`;
   const aero = escenario.aerodrome;
-  const elFijo = fijo ? dibujarElFijo(fijo, traza, { x: cx - ancho / 2, y: -cy - v / 2, ancho, alto: v }) : "";
+  const elFijo = fijo ? dibujarElFijo(fijo, traza, { x: cx - ancho / 2, y: -cy - v / 2, ancho, alto: v }) : null;
 
   /** Las dos cabeceras, marcadas. Sin esto una pista corta es una raya y ya. */
   const umbrales = (
@@ -389,8 +389,9 @@ export function plano(
            aria-hidden="true">
         <line class="plano__pista" x1="${a[0]}" y1="${-a[1]}" x2="${b[0]}" y2="${-b[1]}" />
         ${umbrales(a, b, width * 2.6)}
+        ${elFijo?.debajo ?? ""}
         ${dibujarTraza(traza)}
-        ${elFijo}
+        ${elFijo?.encima ?? ""}
       </svg>`;
   }
 
@@ -435,8 +436,9 @@ export function plano(
     <svg class="ficha__plano" viewBox="${vb}" preserveAspectRatio="xMidYMid meet"
          aria-hidden="true">
       ${plataformas}${rodaduras}${pistas}
+      ${elFijo?.debajo ?? ""}
       ${dibujarTraza(traza)}
-      ${elFijo}
+      ${elFijo?.encima ?? ""}
     </svg>`;
 }
 

@@ -167,6 +167,8 @@ function medirElPlano() {
     cruz,
     avion,
     cruzAlAvion: cruz && avion ? Math.hypot(cruz[0] - avion[0], cruz[1] - avion[1]) : null,
+    // Lo que da el VOR, en píxeles: con eso se juzga si la cruz está «encima».
+    tolerancia: e && r?.tolerancia ? (r.tolerancia / e.lado) * p.lado : null,
   };
 }
 
@@ -175,9 +177,10 @@ function medirElPlano() {
  * el avión y los números, con las esquinas de cada número giradas como van;
  * y si un número pisa a otro, a la cruz o al avión.
  */
-function medirElFinal() {
+function medirElFinal(tolerancia) {
   const svg = document.querySelector('[data-hud="fin-plano"] svg');
-  const g = svg?.querySelector(".plano__fijo");
+  // Las rayas van en su capa, debajo de la traza, y lo demás en la del fijo, encima.
+  const g = svg?.querySelector(".plano__fijo") ? svg : null;
   if (!g) return null;
   const esquinas = (el) => {
     const b = el.getBBox();
@@ -238,6 +241,8 @@ function medirElFinal() {
     numeros: numeros.map((n) => n.que),
     mal,
     cruzAlAvion: ca && av ? Math.hypot(ca[0] - av[0], ca[1] - av[1]) : null,
+    // Lo que da el VOR, en píxeles: el dibujo va en metros.
+    tolerancia: tolerancia * Math.hypot(svg.getScreenCTM().a, svg.getScreenCTM().b),
     cuerpo,
   };
 }
@@ -471,7 +476,9 @@ try {
   /*
    * **Al cerrarse, el plano se acerca solo a la cruz y al avión** (H26h): en
    * el ancho, una milla son unos pocos píxeles. La cruz, dentro del papel; y
-   * tarde, apartada de la flecha más que lo que mide el avión.
+   * tarde, apartada de la flecha más que lo que mide el avión y que lo que da
+   * el VOR; encima, a menos de lo que da el VOR, que es como lo juzga el
+   * ejercicio.
    */
   const deCerca = await rotulosSinPisarse("la cruz", 2);
   comprobar(
@@ -480,10 +487,11 @@ try {
       deCerca.lupa > 0 &&
       deCerca.cruz &&
       deCerca.cruz.every((v) => v > 10 && v < deCerca.lado - 10) &&
-      (TARDE ? deCerca.cruzAlAvion > 30 : deCerca.cruzAlAvion < 25),
+      // Encima es a menos de lo que da el VOR, que es como lo juzga el ejercicio; tarde, más, y que se vea.
+      (TARDE ? deCerca.cruzAlAvion > Math.max(30, deCerca.tolerancia) : deCerca.cruzAlAvion <= deCerca.tolerancia),
     deCerca
       ? `lupa ${deCerca.lupa}, encuadre de ${(deCerca.encuadre / MILLA).toFixed(1)} NM en ${deCerca.lado} px; ` +
-          `la cruz a ${deCerca.cruzAlAvion?.toFixed(0)} px de la flecha`
+          `la cruz a ${deCerca.cruzAlAvion?.toFixed(0)} px de la flecha, el VOR da ${deCerca.tolerancia?.toFixed(0)} px`
       : "sin plano",
   );
   // Y las lupas siguen mandando: alejando, el ancho de siempre, con las dos radios.
@@ -542,7 +550,7 @@ try {
    * número, la cruz y el avión, sin pisarse; y tarde, la cruz apartada del
    * avión lo que se ve.
    */
-  const fin = await page.evaluate(medirElFinal);
+  const fin = await page.evaluate(medirElFinal, cruce?.tolerancia ?? 0);
   comprobar(
     "el panel del final dibuja las dos rayas con su número, la cruz y el avión",
     fin && fin.rayas === 2 && fin.cruz && fin.avion && fin.numeros.length === 2,
@@ -555,8 +563,8 @@ try {
   );
   comprobar(
     TARDE ? "en el panel, la cruz apartada del avión" : "en el panel, el avión en la cruz",
-    fin && (TARDE ? fin.cruzAlAvion > 30 : fin.cruzAlAvion < 20),
-    fin ? `a ${fin.cruzAlAvion?.toFixed(0)} px` : "",
+    fin && (TARDE ? fin.cruzAlAvion > Math.max(30, fin.tolerancia) : fin.cruzAlAvion <= fin.tolerancia),
+    fin ? `a ${fin.cruzAlAvion?.toFixed(0)} px, el VOR da ${fin.tolerancia?.toFixed(0)} px` : "",
   );
   comprobar("sin errores en la página", errores.length === 0, errores.join(" | "));
   await contexto.close();

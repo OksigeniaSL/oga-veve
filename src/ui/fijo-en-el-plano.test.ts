@@ -66,7 +66,8 @@ describe("el fijo en el plano del final", () => {
     const v = e.lado * 1.15;
     const ancho = (v * 5) / 3;
     const vb = { x: e.cx - ancho / 2, y: -e.cy - v / 2, ancho, alto: v };
-    const svg = dibujarElFijo(fijo, traza, vb);
+    const { debajo, encima } = dibujarElFijo(fijo, traza, vb);
+    const svg = debajo + encima;
     expect(svg.match(/class="plano__radial"/g)).toHaveLength(2);
     expect(svg).toContain('class="plano__cruz"');
     expect(svg).toContain('class="plano__avion"');
@@ -102,7 +103,9 @@ describe("el fijo en el plano del final", () => {
     const sitio = scenarioById("fuerteventura");
     const svg = plano(sitio, 0, traza, [], fijo);
     expect(svg).toContain("plano__fijo");
-    expect(svg).toContain("plano__traza");
+    // Las rayas debajo de la traza, y la cruz y el avión encima.
+    expect(svg.indexOf("plano__rayas")).toBeLessThan(svg.indexOf("plano__traza"));
+    expect(svg.indexOf("plano__traza")).toBeLessThan(svg.indexOf("plano__fijo"));
     const [x, y, w, h] = svg.match(/viewBox="([^"]+)"/)![1]!.split(" ").map(Number) as [number, number, number, number];
     for (const [px, py] of [cruz, avion]) {
       expect(px).toBeGreaterThan(x);

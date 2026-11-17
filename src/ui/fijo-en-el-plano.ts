@@ -111,12 +111,16 @@ function rumboJunto(traza: readonly Punto[] | undefined, p: Punto): number {
  * leer la segunda y los números de las rayas, colocados como en el plano en
  * vuelo (`sitiosEnElRadial`): a un lado de su raya, sin pisarse entre ellos,
  * ni la cruz, ni el avión, y sin cruzar la otra raya ni la traza si hay sitio.
+ *
+ * En dos capas: las rayas **debajo de la traza** y lo demás encima. Volando
+ * hacia una radio —que es como se empieza— la traza va por su raya, y con la
+ * raya encima el resumen se quedaba sin la traza, que es lo que se mira.
  */
 export function dibujarElFijo(
   fijo: FijoEnElPlano,
   traza: readonly Punto[] | undefined,
   vb: { readonly x: number; readonly y: number; readonly ancho: number; readonly alto: number },
-): string {
+): { readonly debajo: string; readonly encima: string } {
   // Metros por píxel del plano del final, y de vuelta.
   const k = vb.ancho / ANCHO_DEL_PLANO;
   const altoPx = vb.alto / k;
@@ -190,5 +194,5 @@ export function dibujarElFijo(
     })
     .join("");
 
-  return `<g class="plano__fijo">${rayas}${cruz}${avion}${numeros}</g>`;
+  return { debajo: `<g class="plano__rayas">${rayas}</g>`, encima: `<g class="plano__fijo">${cruz}${avion}${numeros}</g>` };
 }
