@@ -877,7 +877,8 @@ export class ArcadeFlightModel implements FlightModel {
   private ritmoEnElAire(): number {
     if (this.ritmoEnElAireDe !== this.aircraft) {
       this.ritmoEnElAireDe = this.aircraft;
-      this.ritmoEnElAireGuardado = Math.min(0.18, this.ritmoDeCarrera("asfalto"));
+      const k = this.ritmoDeCarrera("asfalto");
+      this.ritmoEnElAireGuardado = Number.isFinite(k) && k > 0 ? Math.min(0.18, k) : 0.18;
     }
     return this.ritmoEnElAireGuardado;
   }

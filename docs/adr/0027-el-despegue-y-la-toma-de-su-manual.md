@@ -3659,6 +3659,26 @@ saber cuánto morro pide el ala inclinada hace falta el ángulo de ataque de
 sustentación nula con esos flaps, que el automático no recibe, y cambia cómo
 vira en calma todo el juego con el automático puesto. Queda para el #192.
 
+Se probó en la mesa, sin entrar en el juego (`h29g/piloto-viraje.ts`, una copia
+del automático): el ala inclinada `φ` pide `α₁·(1/cos φ − 1)` más de ángulo
+para sostener lo mismo en vertical, con `α₁ = m·g/(q·S·C_Lα)` el ángulo de
+sustentación de un g, y eso es `cos φ` de morro; se le suma a lo que el aire
+pide aparte (`porElAire`), al mismo ritmo y dentro del mismo tope de carga.
+Con las alas a nivel suma cero, y con medio grado de alabeo, cuatro
+cienmilésimas de `α₁`: lo que vuela recto no cambia. Con 4,57
+pedidos, aire quieto, el pico virando:
+
+| | Sin compensar | Compensando |
+|---|---|---|
+| JAZ 20 | 4,62 m/s | 4,50 |
+| JAZ 60 | 5,21 | 4,52 |
+| JAZ 90 | 6,05 | 4,92 |
+| JAZ 120 | 6,05 | 5,14 |
+
+y la peor media de cinco segundos tras enderezar, en lo mismo (el JAZ 90, de
+4,70 a 4,66). Para el juego hace falta que el automático reciba `α₁`, que lo
+sabe el modelo, y volarlo en el navegador; no cabía en esta tanda.
+
 **Lo que se cambió**, en `volarLaSenda` del banco (`caidaQueSePide`): en toda
 la final, con su arco dentro, se pide lo que en la final recta —la senda y un
 metro por segundo, nunca menos de nueve décimas de mil pies por minuto y nunca
