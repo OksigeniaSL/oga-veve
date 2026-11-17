@@ -2394,6 +2394,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
             verdadera: s.airspeed,
             ritmoDeCabeceo: s.pitchRate,
             timon: juego.flight.timonAhora(),
+            /*
+             * Y el aire que sube o baja, como se lo da el juego a su
+             * automático en cualquier modo, también cambiando de nivel con la
+             * velocidad en el morro: la tripulación del ejercicio vuela con
+             * ese mismo automático. Ver `porElAire`.
+             */
+            subeElAire: juego.subeElAireParaBanco,
           },
           rumbo,
           dt,
