@@ -954,6 +954,31 @@ el 1,2 es de un avión que frena más que un 747. Medido: LO 1.493 m, MED 846, e
 pie a fondo 712 (MED / pie, 1,19; antes del efecto suelo, 1,21). El JAZ 90, 1,59,
 y el JAZ 110, 1,23.
 
+### Las pruebas
+
+El vitest entero, después del último cambio de código: 10.365 en verde, 28
+saltadas y **una en rojo**, la del autofreno de arriba («LO para más largo que
+MED, y MED más largo que el pie a fondo», el 747 a 1,19 donde pide 1,2). La
+rama no puede entrar en main así sin que alguien ponga la tabla del QRH o
+decida sobre el listón.
+
+### Volado en el navegador
+
+Lo que la nota H29c no pudo correr, de una tirada (17-11-2026, puerto 5689,
+sobre 5d1b500d). Los dos son aviones que esta nota no toca, así que lo que
+miden es el efecto suelo de H29c:
+
+- `OGA_GPU=1 verificar-despegue.mjs tenerife-norte guyrami "" jaz-90`: **21 de
+  21**. Rota a 84 m/s a los 738 m de 3.168 y sube a 3,8 m/s de media de los 8 a
+  los 18 s, sin bajar de donde se soltó (16 m).
+- `verificar-vuelo-entero.mjs tenerife-norte guyrami 3 jaz-20`: **62 de 62**,
+  con 2 sin medir (no se contó ninguna historia, y no había nadie en la pista
+  al llegar a la raya). La puerta de los 500 ft a 69 kt (Vref 64), en la senda
+  a 1,1 m; tocó a **0,98 m/s**, a 420 m del umbral y en el eje.
+
+El de Taguató con el JAZ 90 y el reloj ×1 no se ha vuelto a correr: lo corrió
+H29c (63 de 63) y no cabía en el tiempo de esta tanda.
+
 ### Lo que no
 
 - **Las otras muescas del 747 y los otros dos con slats**, sin cifras de su CL
