@@ -2684,10 +2684,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * avión se iba del asfalto rodando. Con 1,2 llega y se queda.
      */
     if (s.onGround) return Math.max(-1, Math.min(1, e * 1.2));
-    const quiere = Math.max(
-      -topeDeInclinacion,
-      Math.min(topeDeInclinacion, e * 1.5),
+    return aInclinacion(
+      Math.max(-topeDeInclinacion, Math.min(topeDeInclinacion, e * 1.5)),
     );
+  };
+  /**
+   * **Mando de alerón para sostener una inclinación**, rad, en el aire: la
+   * mitad de `alRumbo` que no mira el rumbo. La usa también el viraje a final,
+   * que pide la inclinación que deja su arco en el eje (ver `elArcoHastaElEje`).
+   */
+  const aInclinacion = (quiere) => {
     alabeoPedido = quiere;
     /*
      * **En Guyrami el alerón ya es la inclinación**: el modelo sencillo pide
@@ -7114,12 +7120,52 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * el radio de este avión medido en sus virajes. Por debajo de los
        * veinticinco grados, la captura de siempre.
        */
+      /*
+       * **Y dentro del viraje, la inclinación que deja el arco en el eje**, no
+       * a fondo o nada.
+       *
+       * Era un interruptor: alerón a fondo mientras el arco no cupiera, alas
+       * planas en cuanto cupiera. Y el radio con el que se mira, el aprendido
+       * en los virajes del circuito (`deLadoAFondo`), sale más ancho que el de
+       * la final: se mide con el alerón en su tope, o sea entrando y saliendo
+       * del alabeo, y en la final la mano es más firme. Con el JAZ 50 en Los
+       * Rodeos el viraje empezaba desde el viento en cola con un radio de unos
+       * 850 m, a fondo giraba más cerrado que eso, el arco «sobraba» y
+       * enderezaba a mitad de giro; luego volvía a virar, y hasta pedía
+       * inclinación al otro lado por la deriva: cuatro tramos rectos en un
+       * viraje de 150°, y la captura acabando a unos 3 km del umbral, con la
+       * puerta de los quinientos pies a unos 2,2; alguna vez llegaba a ella
+       * cruzado 12,6° y a 41 m del eje (H20a, #192).
+       *
+       * Un piloto ajusta la inclinación en el viraje para salir en el eje:
+       * si le sobra, inclina menos, y si le falta, más. Es la misma cuenta del
+       * arco vuelta del revés: lo que falta de eje, menos el segundo de
+       * alabeo, partido por `1 − cos θ` es el radio que lo deja en el eje, y
+       * su inclinación es `atan(v² / (g·R))`, con el tope de la base. Mirada
+       * en cada fotograma, se corrige sola: si el avión gira más cerrado de lo
+       * que dice la cuenta, el radio que falta crece y la inclinación baja,
+       * sin enderezar del todo. Copiado en la mesa con el modelo del juego, las
+       * ayudas de Taguato, el cruzado de casa y sus rachas, desde donde
+       * empezaba el viraje en la traza de H20a: de cuatro tramos rectos a un
+       * solo arco de 12° a 15°, y la captura acabando a 3,1 km en vez de 2,8.
+       * Empezando desde la base a 600 m del eje, a 2,8 km en vez de 2,35, que
+       * es llegar a la puerta todavía capturando.
+       */
       {
         const a = elArcoHastaElEje(s);
         if (!aLaVista?.length && a.theta > (25 * Math.PI) / 180 && falta > 0) {
-          const tray = Math.atan2(s.velocity.x, -s.velocity.z);
-          c.aileron =
-            !a.hacia || a.falta <= a.arco ? alRumbo(s, a.rumbo) : alRumbo(s, tray);
+          if (!a.hacia) c.aileron = alRumbo(s, a.rumbo);
+          else {
+            const tray = Math.atan2(s.velocity.x, -s.velocity.z);
+            const v = Math.hypot(s.velocity.x, s.velocity.z);
+            const loDejaEnElEje =
+              Math.max(1, a.falta - v * Math.sin(a.theta)) / (1 - Math.cos(a.theta));
+            const inclinacion = Math.min(
+              TOPE_DE_INCLINACION_EN_LA_BASE,
+              Math.atan((v * v) / (9.81 * loDejaEnElEje)),
+            );
+            c.aileron = aInclinacion(Math.sign(error(a.rumbo, tray)) * inclinacion);
+          }
         }
       }
       /*

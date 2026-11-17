@@ -198,3 +198,182 @@ Y en el navegador:
   5,6 m a la derecha (antes 5,3) y el JAZ 120, 13 (antes 4,8 a la izquierda).
   Sin ese alerón en los peldaños con ayuda, ningún avión pasa de 1 m. Es banco
   de otro encargo y no se ha tocado aquí.
+
+## Nota H21d (17-11-2026): recién despegado, la ayuda que sostiene la subida acelera subiendo
+
+Otra ayuda que cambia según dónde esté el avión, y por eso va aquí, como la
+H15a.
+
+### Lo que pasaba
+
+`climbHold` —el compensador automático de manos fuera: entero en Tukã, 0,45 en
+Taguató, nada en Taguato Ruvicha— mezcla dos leyes. Con velocidad, sostiene el
+ritmo de ascenso que se dejó al soltar. Por debajo de su **velocidad segura**,
+pasa poco a poco a la de la velocidad, que **baja el morro en proporción a lo
+que falta** (`speedLaw = −0,1 · falta`), y esa no miraba dónde estaba el suelo.
+Recién despegado se va por debajo de la segura, así que soltando la palanca la
+ayuda llevaba el avión a la pista. Lo midió H21a en el navegador: con el
+compensador ya en su marca, `verificar-despegue.mjs tenerife-norte taguato`
+seguía fallando en «en el aire sigue subiendo», a −2,3 y −3,7 m/s entre 14 y
+26 m, y en Tukã a −2,0 m/s a 7 m. Sin ayudas, en Taguato Ruvicha, seguía
+subiendo (ADR 0027, enmienda H21a).
+
+### Qué velocidad defiende, y de dónde sale
+
+Ni la Vx, ni la Vy, ni 1,3 veces la pérdida. Las dos de la mezcla salen de la
+ficha (`fdm.ts`, «lento es lento para este avión»):
+
+- **la segura**, `min(0,58 · crucero, 1,05 · aproximación)`, donde la ley de la
+  velocidad deja de empujar;
+- **la lenta**, `min(0,42 · crucero, 0,8 · aproximación)`, donde empuja entera.
+
+La de aproximación es la Vref de cada ficha, con la fuente que lleva en
+`aircraft.ts`. En nudos indicados, con el peso de la ficha y frente a lo que
+pasa en un despegue (la pérdida con los flaps de despegue de `perdidaCon`, la Vr
+y la V2 de la ficha, la marca del compensador de la enmienda H21a y la de subida
+de la escalera, `indicadaDeSubida`):
+
+| | Lenta | Segura (de) | Pérdida, flaps de despegue | Vr | V2 | 1,3 × pérdida | Subida |
+|---|---|---|---|---|---|---|---|
+| JAZ 20 | 49 | 67 (aprox.) | 47 | 54 | — | 61 | 85 |
+| JAZ 25 | 45 | 59 (aprox.) | 43 | 51 | — | 56 | 75 |
+| JAZ 40 | 68 | 90 (aprox.) | 62 | 72 | — | 81 | 110 |
+| JAZ 50 | 56 | 73 (aprox.) | 63 | 73 | 76 | 82 | 90 |
+| JAZ 60 | 86 | 113 (aprox.) | 90 | 102 | 108 | 117 | 140 |
+| JAZ 90 | 94 | 124 (aprox.) | 117 | 129 | — | 152 | 280 |
+| JAZ 110 | 115 | 151 (aprox.) | 125 | 150 | — | 163 | 320 |
+| JAZ 120 | 117 | 153 (aprox.) | 132 | 145 | 153 | 172 | 290 |
+
+En los de hélice ligeros la segura cae entre 1,37 y 1,45 veces la pérdida de
+despegue —la del JAZ 20, 67 nudos, entre su Vx de 62 (*Information Manual* del
+172S, p. 4-5, citado en la enmienda H21a del ADR 0027) y la de subida—, y es
+la que más empuja recién despegado: se sale a unos cincuenta nudos. En los dos
+turbohélices, 1,16 y 1,26 veces. En los reactores, de 1,06 a 1,21 veces, más o
+menos en su Vr —por debajo en el JAZ 90, unos nudos por encima en el 787 y el
+747—, así que empuja poco, y lo que los protege ahí es sobre todo el tope de
+ángulo de ataque de la misma ayuda; aun así el 787 recién despegado bajaba.
+
+**Las dos se quedan como estaban.** Son las que se afinaron para la toma (el
+JAZ 90 bajaba a 42 m/s cuando iban atadas al crucero) y lo que pide arreglar
+este caso no es otra velocidad: es cómo se defiende cerca del suelo.
+
+### Lo real
+
+El manual de vuelo de la FAA, en el despegue (FAA-H-8083-3C, 2021, cap. 6,
+leído en la copia del capítulo que publica faasafety.gov):
+
+- «Upon liftoff, the airplane should be flying at approximately the pitch
+  attitude that allows it to accelerate to VY» (p. 6-5).
+- «If the airplane has been properly trimmed for takeoff, some back-elevator
+  pressure may be required to hold this attitude until the proper climb speed
+  is established» (p. 6-5).
+- Y lo contrario: «if sufficient back-elevator pressure is not held to maintain
+  the correct takeoff attitude after becoming airborne, or the nose is allowed
+  to lower excessively, the airplane may also settle back to the runway»
+  (p. 6-4).
+- Con el gas de despegar, «the airspeed should be controlled by making slight
+  pitch adjustments», y ese gas se sostiene «until reaching an altitude of at
+  least 500 feet above the surrounding terrain or obstacles» (p. 6-5).
+
+O sea: con empuje, la velocidad se coge subiendo, con ajustes pequeños de
+morro, y no bajando hacia el suelo.
+
+### Lo que se decidió (`leyDelSuelo` en `fdm.ts`)
+
+Por debajo de la segura, **cerca del suelo y con empuje que sobra**, lo que pide
+la ayuda para coger velocidad ya no es bajar el morro en proporción, sino una
+**subida con la mitad de lo que sobra**; la otra mitad acelera:
+
+- **Lo que sobra** es el empuje de ahora menos lo que frena el avión a un g a
+  esta velocidad, con sus flaps y su tren, partido por el peso
+  (`sobraParaSubir`): el seno del ángulo con el que podría subir sin perder
+  velocidad. Con el gas quitado no sobra nada y la ley es la de siempre: la
+  toma, la bajada y la recogida con poco gas no cambian.
+- **Con el tirón que le falta al compensador**: el timón que sostiene el avión
+  a la velocidad de ahora (`timonQueSostiene`) menos el que lleva. Es la
+  «back-elevator pressure» del manual; sin él, la ley lo conseguía a base de
+  error, y con la ayuda a medias de Taguató el JAZ 20 se quedaba bajando medio
+  metro por segundo antes de subir.
+- **Hasta quinientos pies sobre el terreno entera, y se apaga hasta los mil**,
+  sin interruptor. Por encima vuelve la ley de siempre, que con altura de sobra
+  es la que protege de la pérdida.
+- Y entra en proporción a lo que sobra, entera desde dos centésimas, para que
+  quitar gas no sea un salto en la ley.
+- **El tope de ángulo de ataque manda sobre todo esto**, como antes: acelerar
+  subiendo no es tirar hasta el avisador. Soltado justo en la pérdida, es el
+  tope el que baja el morro, y se baja un poco.
+
+Se probó primero como un suelo puesto encima de la ley vieja —el mayor de los
+dos— y el 747 cabeceaba entre cinco y diecisiete grados cada ocho segundos: con
+la ley vieja pidiendo morro abajo al otro lado del suelo, la ayuda saltaba de
+una a otra. Como ley de velocidad vertical mezclada igual que la otra, va
+suave. Y una ganancia más firme que la de la subida (0,2 y 0,3 en vez de
+0,12) no arreglaba Taguató y hacía cabecear al 787 en Tukã.
+
+### Las cifras
+
+En la mesa (soltado a quince metros con el gas a tope, los flaps y el
+compensador de despegue, subiendo a 2 m/s; `subida-recien-despegado.test.ts`):
+
+| Soltado a 1,07 × pérdida | Antes, Tukã | Antes, Taguató | Ahora, Tukã | Ahora, Taguató |
+|---|---|---|---|---|
+| JAZ 20 | −7,4 m/s, a 2 m | −5,5, a 3 m | +1,3 | +0,2 |
+| JAZ 25 | −2,7, a 12 m | −1,8, a 14 m | +1,6 | +1,2 |
+| JAZ 40 | −15,1, **toca** | −10,8, **toca** | +1,7 | +0,7 |
+| JAZ 50 | +1,7 | +1,5 | +2,0 | +1,6 |
+| JAZ 60 | −4,5, a 11 m | −3,1, a 12 m | +2,2 | +1,8 |
+| JAZ 90 | +1,9 | +1,1 | +1,9 | +1,1 |
+| JAZ 110 | −2,2 | −1,7 | +1,0 | +1,3 |
+| JAZ 120 | +0,4 | +0,2 | +1,1 | +0,7 |
+
+(Lo menos que sube después de soltar, y lo más bajo que llega si baja.) Desde
+1,07 veces la pérdida ninguno baja ni un momento, en ninguno de los dos
+peldaños, y todos ganan velocidad: el JAZ 20 pasa de 50 a 70 nudos en medio
+minuto, hacia la de subida, subiendo a 3 m/s. Soltado a 1,2 veces, todos suben
+desde el primer segundo. Soltado **justo en la pérdida**, el tope de ángulo de
+ataque baja el morro y alguno baja un poco —el JAZ 120 en Tukã, 1,8 m/s; el JAZ
+40 en Taguató, de 15 a 11 m—; antes, a esa velocidad, la mitad volvía a la
+pista.
+
+Lo que no cambia, también en la prueba: lejos del suelo, a la misma altitud y
+con el mismo aire, la ayuda baja el morro para coger velocidad como antes (el
+JAZ 20, a más de 1 m/s), y con el gas quitado el vuelo sale idéntico con el
+suelo a sesenta metros o a un kilómetro.
+
+Y en el navegador (17-11-2026, puerto 5688), con el viento de casa de Los
+Rodeos, el JAZ 20 soltado a los quince metros recién rotado:
+
+| `verificar-despegue.mjs tenerife-norte …` | Antes (H21a) | Ahora |
+|---|---|---|
+| `taguato` | 17 de 18: «en el aire sigue subiendo», −2,3 a −3,7 m/s a 14–26 m | 18 de 18: +1,6 m/s a 30 m |
+| `tuka` | 18 de 19: la misma, −2,0 m/s a 7 m | 19 de 19: +1,1 m/s a 28 m |
+| `guyrami` | 19 de 19 | 18 de 19 (la misma, −0,3 m/s a 18 m) y, otra vez, 19 de 19 (+0,9 m/s a 22 m) |
+
+Guyrami vuela con el modelo sencillo (`arcade.ts`), que no tiene esta ayuda ni
+usa nada de lo que se ha cambiado aquí: lo suyo no puede moverse por esto. Va
+justo por encima del listón de medio metro por segundo, y con el alisio de Los
+Rodeos una tirada cae debajo y la siguiente no. `npm run toque`, sin fallos.
+
+Y el vuelo entero del JAZ 50 en Taguató (`verificar-vuelo-entero.mjs
+tenerife-norte taguato 1 jaz-50`), con el viraje a final del banco cambiado en
+la misma tanda (una inclinación que deja el arco en el eje en vez de a fondo o
+nada; ver el comentario en el banco): 56 de 57 con 4 sin medir. La que falla es
+la seña del señalero al apagar, en el puesto, que no es de esto. La puerta de
+los quinientos pies, a 78 nudos con la Vref en 70, 6,9 m sobre la senda, 4,2 m
+del eje y 0,7° cruzado; se toca a 0,3 m del eje. El viraje a final, un solo
+arco de 14° a 15° de inclinación, sin enderezar a medias; antes, en la traza de
+H20a, cuatro tramos rectos. Una tirada no es una cifra: es la que hay.
+
+### Lo que no
+
+- **Las dos velocidades de la mezcla**, que siguen atadas a la Vref y al
+  crucero y no a la pérdida con los flaps de ahora: en los reactores, con los
+  flaps arriba, la segura queda por debajo de su pérdida limpia (124 nudos en
+  el JAZ 90, con la pérdida limpia en 135), y ahí lo que protege es el tope de
+  ángulo de ataque. Atarlas a la pérdida movería la toma, que se afinó con
+  ellas.
+- **La Vy de cada tipo**: la ayuda no la conoce; acelera hacia donde le deja lo
+  que sobra, y la mezcla devuelve el mando a la ley de la subida al pasar la
+  segura.
+- **El banco del despegue** sigue soltando a los quince metros, por debajo de
+  la Vr del JAZ 20, con el morro alto; no se ha tocado.
