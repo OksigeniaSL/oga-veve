@@ -239,6 +239,13 @@ export type SucesoDelIls =
 
 export type FaseDelIls = "localizador" | "senda" | "bajando" | "pista" | "frustrando" | "cerrada";
 
+/**
+ * **Lo que dura la presentación**, s de juego: lo que tarda la instructora en
+ * contarla. Antes no se dice «a tope», que empieza a tope: dicho en el mismo
+ * paso, su tarjeta tapaba la de la presentación —con el ILS escrito— en el
+ * mismo fotograma (lo vio el banco). Si la aguja se despega antes, no se dice.
+ */
+export const PRESENTACION = 14;
 /** **Establecido en el localizador**: la aguja a menos de medio punto este rato, s. */
 export const LOC_ESTABLECIDO = 10;
 /** Medio punto, la mitad del primero: lo que en la cabina ya es «en el centro». */
@@ -259,6 +266,8 @@ export const EN_EL_SUELO = 8;
 export class IlsConAgujas {
   private faseActual: FaseDelIls = "localizador";
   private presentada = false;
+  /** Lo que lleva presentado, s. */
+  private desdeLaPresentacion = 0;
   private estabaSintonizada = false;
   private dijoATope = false;
   private dijoSeMueve = false;
@@ -304,6 +313,7 @@ export class IlsConAgujas {
   reiniciar(): void {
     this.faseActual = "localizador";
     this.presentada = false;
+    this.desdeLaPresentacion = 0;
     this.estabaSintonizada = false;
     this.dijoATope = false;
     this.dijoSeMueve = false;
@@ -322,7 +332,7 @@ export class IlsConAgujas {
     if (!this.presentada) {
       this.presentada = true;
       sucesos.push({ que: "presentar" });
-    }
+    } else this.desdeLaPresentacion += dt;
     if (l.percance) {
       this.cerrar("otraVez", sucesos);
       return sucesos;
@@ -376,11 +386,13 @@ export class IlsConAgujas {
 
     if (this.faseActual === "localizador") {
       if (Math.abs(l.localizador) >= ESCALA_LOC) {
-        if (!this.dijoATope) {
+        if (!this.dijoATope && this.desdeLaPresentacion >= PRESENTACION) {
           this.dijoATope = true;
           sucesos.push({ que: "aTope", lado });
         }
       } else if (!this.dijoSeMueve) {
+        // Despegada antes de acabar la presentación: «a tope» ya no es verdad.
+        this.dijoATope = true;
         this.dijoSeMueve = true;
         sucesos.push({ que: "seMueve", lado });
       }

@@ -42,6 +42,7 @@ import {
   CORTADA_LOC,
   IlsConAgujas,
   ilsDeLaCabecera,
+  PRESENTACION,
   ilsDelCampo,
   rotuloDelIls,
   type SucesoDelIls,
@@ -203,6 +204,8 @@ type Vuelo = {
   enLosMinimos: { loc: number; senda: number } | null;
   /** El localizador cuando empezó a virar, grados. */
   empezoAVirarCon: number | null;
+  /** Cuándo pasó cada suceso, s. */
+  cuando: number[];
 };
 
 /**
@@ -236,6 +239,7 @@ function volar(viento: PuntoDelMundo, o: { velocidad?: number; apartado?: number
   let empezoAVirarCon: number | null = null;
   let enElSuelo = false;
   const dt = 0.5;
+  const cuando: number[] = [];
   for (let t = 0; t < 1200 && ej.fase !== "cerrada"; t += dt) {
     const l = agujas(x, z, altitud);
     const loc = l.desviacion;
@@ -253,6 +257,7 @@ function volar(viento: PuntoDelMundo, o: { velocidad?: number; apartado?: number
       dt,
     )) {
       sucesos.push(s);
+      cuando.push(t);
       if (s.que === "minimos") {
         enLosMinimos = { loc: s.loc, senda: s.senda };
         frustra = !s.dentro;
@@ -285,7 +290,7 @@ function volar(viento: PuntoDelMundo, o: { velocidad?: number; apartado?: number
       enElSuelo = true;
     }
   }
-  return { sucesos, ej, enLosMinimos, empezoAVirarCon };
+  return { sucesos, ej, enLosMinimos, empezoAVirarCon, cuando };
 }
 
 const ques = (v: Vuelo) => v.sucesos.map((s) => s.que);
@@ -305,6 +310,14 @@ describe("el ILS volado con las dos agujas", () => {
     // Y desde mil pies, las dos dentro de un punto todo el rato.
     expect(v.ej.peorDesdeMilPies.loc).toBeLessThan(1);
     expect(v.ej.peorDesdeMilPies.senda).toBeLessThan(1);
+  });
+
+  it("«a tope» no tapa la presentación: llega cuando ella acaba, con la aguja todavía a tope", () => {
+    for (const v of [volar(ALISIO), volar(ALISIO, { velocidad: ARAI.velocidadDeCircuito })]) {
+      const i = v.sucesos.findIndex((s) => s.que === "aTope");
+      expect(i).toBeGreaterThan(0);
+      expect(v.cuando[i]! - v.cuando[0]!).toBeGreaterThanOrEqual(PRESENTACION);
+    }
   });
 
   it("en calma, lo mismo", () => {

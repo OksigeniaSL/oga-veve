@@ -1666,10 +1666,52 @@ presentación y el panel del final con la traza.
 - `scripts/ver-ils-con-agujas.mjs`: el mismo vuelo en el juego, con un piloto
   de banco que mira solo las dos agujas, como en una nube, y sus capturas.
 
-**Sin volar todavía en el navegador**: la tirada —el ILS con el alisio, el
-mismo apartado del localizador con la frustrada, y `npm run carteles`— se
-quedó en la cola del navegador al cerrar la tanda. El vitest entero, después
-del último cambio de código: 506 ficheros, 10.382 pruebas bien.
+### Volado
+
+En el juego, con la avioneta en Fuerteventura, el alisio y la Intel por
+ANGLE, de una tirada:
+
+- **Con el alisio**, trece de catorce: empieza a 12,0 millas de la senda y a
+  675 m sobre la pista (2.213 ft), cortando a treinta grados, con IFV en la
+  NAV y el OBS en el 005; el localizador a tope (−3,9 puntos) y la bandera GS
+  en el HSI, sin rombo. La aguja se despega con −2,0 puntos y la tarjeta la
+  dibuja viniendo de su lado; establecido en el localizador a 9,8 millas, con
+  la senda arriba (−2,5 puntos) y el rombo del HSI arriba; **la senda,
+  capturada desde abajo a 7,3 millas**; en la final, las dos en cruz (0,00 y
+  −0,01 puntos) y el rombo en el centro; desde mil pies lo peor, 0,03 de
+  localizador y 0,12 de senda; **en los mínimos, 0,00 y −0,03**, «ahí está la
+  pista», y aterrizado se cierra con la pista. La instructora dijo los seis
+  pasos en su orden.
+- **Apartado del localizador** (`OGA_FUERA=1`, un punto y siete desde
+  ochocientos pies), trece de catorce: en los mínimos, −1,81 de localizador y
+  −0,10 de senda, **la frustrada**, se va al aire y el ejercicio cierra con la
+  frustrada. La puerta de los quinientos pies no mandó irse con ese
+  apartamiento: lo decidió la regla de los mínimos del ejercicio.
+- **La que falló en las dos, y se arregló**: «a tope» se decía en el mismo
+  paso que la presentación —se empieza a tope—, y su tarjeta tapaba en el
+  mismo fotograma la de la presentación, con el ILS escrito. Ahora «a tope»
+  espera a que acabe la presentación (`PRESENTACION`, catorce segundos), y si
+  la aguja se despega antes no se dice; la prueba de mesa lo mira.
+- **Y una de «un suceso, una voz»**, vista en lo que se dijo con el alisio:
+  en los mínimos, la instructora decía el «mirá la pista: ¿la ves?» de
+  cualquier final (`vuelo.minimos`) y justo detrás el «mínimos, y ahí está la
+  pista» del ejercicio. Mientras dura el ejercicio, los mínimos los cuenta él:
+  la caja del avión que la lleva canta *minimums* igual, sin explicación
+  detrás, y en el que no la lleva lo dice la frase del ejercicio. El banco lo
+  mira ya.
+
+**Los dos arreglos no han volado**: la tirada siguiente no cabía en la tanda.
+Están en la prueba de mesa (el primero) y en el banco (los dos), sin volar.
+
+Y dos cosas vistas que no son de este ejercicio, apuntadas y sin tocar: con
+el alisio, entre lo que se dijo está `torre.canario.goAround` —el banco no
+apunta a quién ni cuándo, y el avión aterrizó—, y al irse al aire la fase de
+la final se volvió a anunciar dos veces (`vuelo.enVueloAterrizando` y
+`vuelo.final`).
+
+`npm run carteles`, 925 de 925, con la escala de la senda ya en el cuadro.
+El vitest entero, antes de estos dos arreglos: 506 ficheros, 10.382 pruebas
+bien; después, las del ILS, la radio y lo que calla un ejercicio.
 
 ### Lo que queda
 

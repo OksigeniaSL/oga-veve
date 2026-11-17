@@ -11703,6 +11703,19 @@ export class Game {
      * no es la maniobra, es que hay un momento en el que se decide.
      */
     this.hechos.on("minimos", () => {
+      /*
+       * **En «Aterrizar con las agujas» los mínimos los cuenta el ejercicio**,
+       * con lo que se decide en ellos: la pista o la frustrada. Con los dos,
+       * la instructora decía «mirá la pista: ¿la ves?» y justo detrás «mínimos,
+       * y ahí está la pista» (lo vio el banco): un suceso, una voz. La caja del
+       * avión que la lleva canta *minimums* igual, sin explicación detrás; en
+       * el que no la lleva, la frase del ejercicio es la que lo dice. Ver
+       * `atenderAlIls`.
+       */
+      if (this.ils && this.ils.fase !== "cerrada") {
+        this.cantar("minimums");
+        return;
+      }
       this.hud.senal.mostrar(
         "senda",
         this.rotulo("vuelo.minimos", "palabra.laPista"),

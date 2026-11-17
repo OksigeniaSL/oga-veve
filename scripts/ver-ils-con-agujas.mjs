@@ -199,7 +199,8 @@ try {
   await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
   await page.goto(`${BASE}/?escenario=${ESCENARIO}&hora=12&tramo=taguato-ruvicha&avion=${AVION}&ejercicio=ils`);
   await page.waitForFunction(() => globalThis.__oga?.ilsConAgujas?.()?.colocacion != null, null, { timeout: 120000 });
-  await pausa(3000);
+  // A la salida, antes de que la presentación acabe: con el reloj normal, son sus catorce segundos.
+  await pausa(2000);
   const foto = async (n) => {
     const ruta = `${SALIDA}/${NOMBRE}-${n}.png`;
     await page.screenshot({ path: ruta });
@@ -366,6 +367,12 @@ try {
     FUERA ? "ejercicio.ils.frustrada" : "ejercicio.ils.pista",
   ];
   comprobar("la instructora lo cuenta por pasos, en su orden", delIls.join(",") === esperado.join(","), delIls.join(", "));
+  // Un suceso, una voz: los mínimos del ejercicio, y no además los de siempre.
+  comprobar(
+    "en los mínimos habla el ejercicio y no además el «mirá la pista» de siempre",
+    !(pedido.dicho.instructor ?? []).includes("vuelo.minimos"),
+    (pedido.dicho.instructor ?? []).filter((c) => /minimos/.test(c)).join(", ") || "nada más",
+  );
   const otros = Object.entries(pedido.dicho).flatMap(([quien, claves]) =>
     claves.filter((c) => !/^ejercicio\.ils\./.test(c)).map((c) => `${quien}: ${c}`),
   );
