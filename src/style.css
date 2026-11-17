@@ -14488,10 +14488,12 @@ oksigenia-access-panel::part(trigger):focus-visible {
  *   el tutor: las dos dicen qué hacer y el aviso lo está diciendo ahora («¡El
  *   suelo! Subí»). Dos carteles a la vez son ruido. Se esconde sin dejar de
  *   ocupar su sitio, como en el modo inicio, para que nada se mueva al volver.
- * - **El subtítulo espera solo si coinciden los tres**, y solo donde no caben:
- *   en cabina y en las pantallas de 640 o menos de alto. Con el aviso solo, se
- *   queda: la instructora explica lo que ha sonado justo detrás. La voz sigue
- *   hablando; lo que espera es el cartel. Y la lámpara sube a su sitio.
+ * - **El subtítulo espera solo si coinciden los tres**, y la lámpara sube a su
+ *   sitio. Con el aviso solo, se queda: la instructora explica lo que ha
+ *   sonado justo detrás. La voz sigue hablando; lo que espera es el cartel. Se
+ *   probó a dejarlo esperar solo en las pantallas bajas y en cabina, y no
+ *   bastaba: en el portátil de 1280 × 800 con el dedo el cuadro vive encima de
+ *   los pedales, el aviso sube con él y tocaba la lámpara por cuatro píxeles.
  *
  * Lo mira `npm run carteles` encendiendo los tres con lo más largo que llevan.
  */
@@ -14499,17 +14501,12 @@ oksigenia-access-panel::part(trigger):focus-visible {
   visibility: hidden;
 }
 
-@media (max-height: 640px) {
-  .hud.hud--avisando:is(:has(.torre:not([hidden])), .hay-torre)
-    .hud__abajo
-    > [data-hud="hint"] {
-    visibility: hidden;
-  }
+.hud.hud--avisando:is(:has(.torre:not([hidden])), .hay-torre) .hud__abajo > [data-hud="hint"] {
+  visibility: hidden;
+}
 
-  .hud.hud--avisando:is(:has(.hud__abajo > [data-hud="hint"]:not(:empty)), .hay-subtitulo)
-    .torre {
-    top: calc(var(--arriba-alto, 14%) + 14px);
-  }
+.hud.hud--avisando:is(:has(.hud__abajo > [data-hud="hint"]:not(:empty)), .hay-subtitulo) .torre {
+  top: calc(var(--arriba-alto, 14%) + 14px);
 }
 
 /*
@@ -14543,6 +14540,12 @@ oksigenia-access-panel::part(trigger):focus-visible {
   .hud:not(.hud--cabina):is(:has(.hud__abajo > [data-hud="hint"]:not(:empty)), .hay-subtitulo)
     .torre {
     top: calc(var(--debajo-del-rincon) + 8px + var(--subtitulo-alto, 28px) + 6px);
+  }
+
+  /* Con los tres a la vez, el subtítulo espera y la lámpara sube a su sitio. */
+  .hud:not(.hud--cabina).hud--avisando:is(:has(.hud__abajo > [data-hud="hint"]:not(:empty)), .hay-subtitulo)
+    .torre {
+    top: calc(var(--debajo-del-rincon) + 6px);
   }
 }
 
@@ -14701,13 +14704,6 @@ oksigenia-access-panel::part(trigger):focus-visible {
   top: calc(var(--franja) + var(--fila-del-aviso) + var(--torre-alto, 0px));
 }
 
-/* Con los tres a la vez, el subtítulo espera: en cabina nunca caben. */
-.hud.hud--cabina.hud--avisando:is(:has(.torre:not([hidden])), .hay-torre)
-  .hud__abajo
-  > [data-hud="hint"] {
-  visibility: hidden;
-}
-
 /*
  * Fuera del teléfono, la tarjeta de la orden baja con la lámpara y el
  * subtítulo va a su lado, no encima: `--rincon-derecha`, que mide el HUD. Y
@@ -14725,6 +14721,32 @@ oksigenia-access-panel::part(trigger):focus-visible {
   .hud.hud--cabina .tutor {
     top: calc(
       var(--franja) + var(--torre-alto, 0px) + var(--rincon-alto, 0px) + 10px
+    );
+  }
+}
+
+/*
+ * Y de pie y con ratón, el subtítulo debajo de la tarjeta de la orden y no a
+ * su lado: a su lado quedaban 120 píxeles y la frase larga iba en trece
+ * líneas. El tutor, debajo de los dos.
+ */
+@media (orientation: portrait) and (pointer: fine) {
+  .hud.hud--cabina .hud__abajo > [data-hud="hint"] {
+    top: calc(var(--franja) + var(--torre-alto, 0px) + var(--rincon-alto, 0px) + 8px);
+    left: max(16px, var(--vistas-derecha, 0px) + 8px);
+  }
+
+  .hud.hud--cabina.hud--avisando .hud__abajo > [data-hud="hint"] {
+    top: calc(
+      var(--franja) + var(--fila-del-aviso) + var(--torre-alto, 0px) +
+        var(--rincon-alto, 0px) + 8px
+    );
+  }
+
+  .hud.hud--cabina .tutor {
+    top: calc(
+      var(--franja) + var(--torre-alto, 0px) + var(--rincon-alto, 0px) + 8px +
+        var(--subtitulo-alto, 0px) + 18px
     );
   }
 }

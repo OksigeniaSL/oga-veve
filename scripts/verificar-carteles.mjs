@@ -1643,14 +1643,29 @@ async function medirAvisoYLampara() {
    * se montaban los tres y pasaban por encima de la tarjeta del gas y del
    * freno. Aquí lo de debajo de la lámpara se coloca con lo que el HUD mide de
    * ella (`--torre-alto`), así que se le dejan dos fotogramas, volviendo a
-   * poner el subtítulo, que el juego borra. Los mandos son la columna de la
-   * derecha entera: el gas, el destino, el freno y sus botones.
+   * poner el subtítulo y la lámpara, que el juego borra y apaga. Los mandos
+   * son la columna de la derecha entera: el gas, el destino, el freno y sus
+   * botones.
    */
+  const dosAviones = avion ? avion.outerHTML + avion.outerHTML : "";
+  const ponerTorre = () => {
+    torre.hidden = false;
+    torre.classList.remove("torre--verde");
+    torre.classList.add("torre--roja");
+    if (fila && avion && fila.innerHTML !== dosAviones) {
+      fila.hidden = false;
+      fila.innerHTML = dosAviones;
+    }
+    const dice = sinLetras ? "" : ORDEN;
+    if (orden.textContent !== dice) orden.textContent = dice;
+  };
   for (let i = 0; i < 3; i++) {
     poner();
+    ponerTorre();
     await raf();
   }
   poner();
+  ponerTorre();
   const mandos = [...document.querySelectorAll(".hud__derecha > *")].filter(visible);
   const senal = document.querySelector('[data-hud="senal"]');
   const t2 = torre.getBoundingClientRect();

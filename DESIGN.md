@@ -294,8 +294,8 @@ dice, y **por delante de todo lo que se enciende solo**, también de la lámpara
 **Con un aviso, el aviso manda.** Lo que se lee se ordena como en un avión cuando no hay sitio para todo: **el aviso,
 la lámpara de la torre y el subtítulo**, en ese orden. Mientras dura el aviso, el tutor se calla y la tarjeta de la
 orden espera (se esconde sin dejar su sitio): las dos dicen qué hacer y el aviso lo está diciendo. Si coinciden los
-tres donde no caben —en cabina y en pantallas de 640 o menos de alto—, el subtítulo espera también y la lámpara sube a
-su sitio; la voz de la instructora sigue sonando. En cabina, todo lo que se lee va en una columna debajo de la barra:
+tres, el subtítulo espera también y la lámpara sube a su sitio; con el aviso solo, el subtítulo se queda, y la voz de
+la instructora sigue sonando siempre. En cabina, todo lo que se lee va en una columna debajo de la barra:
 el aviso, la lámpara, y debajo la tarjeta de la orden con el subtítulo a su lado, hasta la columna de mandos, que no se
 mueve nunca (ADR 0030, enmiendas H28c y H28d).
 
