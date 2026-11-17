@@ -167,3 +167,11 @@ el de siempre.
   cartas de aproximación.
 - **El peso que baja al quemar** (#91) y el viento en altura (#35), como en
   los ADR anteriores.
+
+## Nota H29b (17-11-2026): el aire que sube, aparte
+
+El automático mira también lo que sube o baja el aire (`Estado.subeElAire`)
+y mueve el morro por él aparte del que persigue el lazo del medio, que solo
+lo veía por el variómetro y tarde: tras una ascendente, la puerta de los 500
+ft del JAZ 90 llegaba bajando a más de mil pies por minuto. En calma vuela
+igual, bit a bit. El porqué y las cifras, en la enmienda H29b del ADR 0027.
