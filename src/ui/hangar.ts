@@ -31,6 +31,7 @@
 import { TIERS, type Tier } from "../flight/tiers";
 import { canalesDe, type Peldano } from "../flight/escalera";
 import { abrirExplicacion, ponerVozDeLasExplicaciones } from "./explicaciones";
+import { quitarRotulo, tocarEnLaHoja } from "./carta/tocar-la-carta";
 import { VozDelHangar } from "../audio/voz-del-hangar";
 import { ponerLasDeSerie } from "./explicaciones-de-serie";
 // La ventana de las explicaciones, que se apunta sola al cargarse: el hangar
@@ -2648,6 +2649,18 @@ export function abrirHangar(
     root.addEventListener("pointerdown", aplazarReposo);
     root.addEventListener("keydown", aplazarReposo);
 
+    /*
+     * **El papel, también al abrir la carta de aproximación**: se abre con
+     * una etiqueta que marca un botón de radio escondido, sin código, así que
+     * se oye en el cambio. Volver a la ficha no suena, como cerrar una hoja.
+     */
+    root.addEventListener("change", (event) => {
+      const llave = event.target as HTMLInputElement | null;
+      if (!llave?.matches(".iac__llave")) return;
+      const ficha = llave.closest<HTMLElement>(".ficha-carta");
+      if (ficha) quitarRotulo(ficha);
+      if (llave.checked && !llave.matches(".iac__llave--no")) voz.ruido("papel");
+    });
     root.addEventListener("click", (event) => {
       /*
        * **Lo que se explica, antes que nada**: el camión de los bomberos de un
@@ -2659,7 +2672,23 @@ export function abrirHangar(
         return;
       }
       const boton = (event.target as HTMLElement | null)?.closest("button");
-      if (!boton) return;
+      /*
+       * **Y la carta se toca** (#72): en la ficha de un campo y en su carta de
+       * aproximación, lo que no es un botón ni una etiqueta dice qué es, por
+       * rótulo y por voz. Ver `ui/carta/tocar-la-carta.ts`.
+       */
+      if (!boton) {
+        const objetivo = event.target as HTMLElement | null;
+        const ficha = objetivo?.closest<HTMLElement>(".ficha-carta");
+        if (ficha && !objetivo?.closest("label, input, a")) {
+          const tocado = tocarEnLaHoja(ficha, event.clientX, event.clientY, tramo.avisos);
+          if (tocado) {
+            voz.ruido("clic");
+            voz.decir(tocado.como.voz.clave, tocado.como.voz.texto);
+          }
+        }
+        return;
+      }
 
       const aDonde = boton.getAttribute("data-pantalla");
       if (aDonde) {
@@ -2707,7 +2736,10 @@ export function abrirHangar(
       const ficha = boton.getAttribute("data-ficha");
       if (ficha !== null) {
         // El más cercano al dedo, que en una carta pequeña los círculos de tocar se solapan.
-        abrirFichaDeLaCarta(root, ficha && campoTocado(boton, event));
+        const cual = ficha && campoTocado(boton, event);
+        abrirFichaDeLaCarta(root, cual);
+        // Y suena el papel al abrirla; al cerrarla, no: lo que se oye es lo que se abre.
+        if (cual) voz.ruido("papel");
         return;
       }
 

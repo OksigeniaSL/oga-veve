@@ -3155,6 +3155,82 @@ export const ES_PY = {
   "carta.iac": "Carta de aproximación",
   // Debajo de la tabla de mínimos: de qué columna es el avión que va.
   "carta.iac.categoria": "Tu aeronave: CAT {cat}",
+  /*
+   * **Tocar un elemento de la carta y que diga qué es** (#72): la glosa corta
+   * que va debajo del rótulo aeronáutico —que no se traduce— y la frase con
+   * que lo explica la instructora, como a quien lo ve por primera vez. Una
+   * por tipo de elemento, no por cada radioayuda. Ver `ui/carta/tocar-la-carta.ts`.
+   */
+  "carta.toca.pista.corta": "Pista",
+  "carta.toca.pista":
+    "Esta es la pista: el camino largo y derecho donde el avión corre para despegar, y donde vuelve a posarse cuando aterriza.",
+  "carta.toca.calle.corta": "Calle de rodaje",
+  "carta.toca.calle":
+    "Esta es una calle de rodaje: por acá el avión anda despacito, como un auto, para ir hasta la pista y volver.",
+  "carta.toca.plataforma.corta": "Plataforma",
+  "carta.toca.plataforma":
+    "Esta es la plataforma: donde los aviones esperan quietos mientras sube la gente y se les pone combustible.",
+  "carta.toca.aerodromo.corta": "Aeródromo",
+  "carta.toca.aerodromo":
+    "Esto es un aeródromo: un lugar con pista, donde los aviones pueden despegar y aterrizar.",
+  "carta.toca.avion.corta": "Tu avión",
+  "carta.toca.avion": "Este es tu avión, y lo llevás vos.",
+  "carta.toca.norte.corta": "Norte",
+  "carta.toca.norte":
+    "Esto marca el norte. En una carta el norte va siempre arriba: a la derecha queda el este y a la izquierda, el oeste.",
+  "carta.toca.vor.corta": "Radiofaro",
+  "carta.toca.vor":
+    "Esto es un VOR: una antena en el suelo que manda su señal de radio para todos lados. Con ella el avión sabe de qué lado del VOR está. Si tiene un cuadrado alrededor, lleva también un DME.",
+  "carta.toca.dme.corta": "Distancia",
+  "carta.toca.dme":
+    "Esto es un DME: una radio en el suelo que le contesta al avión y le dice a cuántas millas está de ella.",
+  "carta.toca.ndb.corta": "Radiobaliza",
+  "carta.toca.ndb":
+    "Esto es un NDB: una radio en el suelo que suena igual para todos lados. En el avión, una aguja apunta hacia ella, y así se sabe dónde queda.",
+  "carta.toca.ils.corta": "Aterrizaje por instrumentos",
+  "carta.toca.ils":
+    "Esto es un ILS: dos señales de radio que salen de la pista. Una dice si vas a la izquierda o a la derecha, y la otra si vas alto o bajo. Así se puede bajar hasta la pista aunque haya nubes.",
+  "carta.toca.twr.corta": "Torre",
+  "carta.toca.twr":
+    "Esta es la frecuencia de la torre: el número que se pone en la radio para hablar con quien da permiso para despegar y para aterrizar.",
+  "carta.toca.atis.corta": "Información del aeródromo",
+  "carta.toca.atis":
+    "Esta es la frecuencia del ATIS: una grabación que repite el viento, la pista en uso y la presión del día. Se escucha antes de llamar a la torre.",
+  "carta.toca.app.corta": "Aproximación",
+  "carta.toca.app":
+    "Esta es la frecuencia de aproximación: el control que ordena a los aviones que llegan y que se van, cuando todavía están lejos de la pista.",
+  "carta.toca.gnd.corta": "Rodadura",
+  "carta.toca.gnd":
+    "Esta es la frecuencia de rodadura: con ella se habla para moverse por el suelo, de la plataforma a la pista y de vuelta.",
+  "carta.toca.afis.corta": "Información de vuelo",
+  "carta.toca.afis":
+    "Esta es la frecuencia del AFIS: alguien en el aeródromo que no da permisos, pero te cuenta el viento, la pista y quién más anda volando.",
+  "carta.toca.frecuencia.corta": "Frecuencia",
+  "carta.toca.frecuencia":
+    "Esta es una frecuencia de radio: el número que se pone en la radio para hablar con un servicio de tierra.",
+  "carta.toca.msa.corta": "Altitud mínima de sector",
+  "carta.toca.msa":
+    "Este círculo es la MSA: la altitud más baja a la que se puede volar cerca del aeródromo pasando por encima de todos los cerros, con margen de sobra.",
+  "carta.toca.taa.corta": "Altitud de llegada",
+  "carta.toca.taa":
+    "Este círculo es la TAA: la altitud más baja para llegar al punto donde empieza la aproximación pasando por encima de todo, con margen de sobra.",
+  "carta.toca.if.corta": "Punto intermedio",
+  "carta.toca.if":
+    "Este es el punto intermedio: acá el avión ya se pone en línea con la pista y se prepara para bajar.",
+  "carta.toca.faf.corta": "Aproximación final",
+  "carta.toca.faf":
+    "Desde este punto empieza la aproximación final: el avión va derecho a la pista, bajando con suavidad.",
+  "carta.toca.mapt.corta": "Punto de frustrada",
+  "carta.toca.mapt":
+    "Este es el punto de frustrada: si al llegar acá no ves la pista, no se baja más. Se sube y se vuelve a intentar, y eso es volar bien.",
+  "carta.toca.minimos.corta": "Mínimos",
+  "carta.toca.minimos":
+    "Estos son los mínimos: lo más bajo que se puede llegar sin ver la pista. Cada columna es un tipo de avión, según lo rápido que llega, y la tuya va marcada.",
+  "carta.toca.frustrada.corta": "Frustrada",
+  "carta.toca.frustrada":
+    "Esta es la frustrada: el camino para subir otra vez si la llegada no sale bien. Está siempre preparada, y usarla es de buenos pilotos.",
+  // Lo que se lee al tocar una frecuencia que el avión pone en su radio, cuando haya una que la reciba.
+  "carta.toca.puesta": "Puesta en la radio",
   "tiempo.title": "El tiempo",
   "tiempo.hora": "La hora del día",
   "tiempo.viento": "De dónde viene el viento y cuánto sopla",

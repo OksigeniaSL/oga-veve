@@ -64,6 +64,7 @@ import {
 import { elegirFormato } from "./banco-de-voz";
 import { bucleDe, ficheroDe, type Musica } from "./hilo-musical";
 import { ficheroDeLaCancion, type Cancion, type PedidoDeCancion } from "./cancion";
+import { suenaLaCarta, tocarRuidoDeLaCarta, type RuidoDeLaCarta } from "./ruidos-de-la-carta";
 import {
   Agachado,
   BUSES,
@@ -686,6 +687,10 @@ export class Audio {
    */
   private hornGain: GainNode | null = null;
   private hornPulse: OscillatorNode | null = null;
+  /** Lo metido que va el aviso de pérdida, de 0 a 1: con más de cero, suena. Ver `suenaUnAviso`. */
+  private margenDePerdida = 0;
+  /** Hasta cuándo suena el último aviso de los que se tocan de una vez, en el reloj del audio. */
+  private avisoHasta = 0;
   /** El sacudidor de palanca, en el tipo que avisa la pérdida con él. */
   private shakerGain: GainNode | null = null;
   /**
@@ -1114,6 +1119,7 @@ export class Audio {
      * `ponerAvisoDePerdida`.
      */
     const conBocina = this.perdidaSuena === "bocina";
+    this.margenDePerdida = margin;
     this.hornGain?.gain.setTargetAtTime(conBocina ? margin * 0.16 : 0, now, 0.05);
     this.shakerGain?.gain.setTargetAtTime(conBocina ? 0 : margin * SACUDIDOR.fuerza, now, 0.03);
 
@@ -1851,6 +1857,30 @@ export class Audio {
     if (que === "calzo") this.pluck(98, t, 0.18, "interfaz", FUERZA * 0.9);
   }
 
+  /**
+   * **Si suena ahora un aviso que no habla**: un motivo de los que mandan, un
+   * tono de a bordo o la bocina —o el sacudidor— de pérdida. Las voces de las
+   * cajas las sabe la máquina (`VozDeLaMaquina.ocupada`), y el juego junta las
+   * dos cosas. Lo pregunta la carta, que con un aviso sonando se calla.
+   */
+  get suenaUnAviso(): boolean {
+    const ctx = this.context;
+    if (!ctx) return false;
+    return this.margenDePerdida > 0 || ctx.currentTime < this.avisoHasta;
+  }
+
+  /**
+   * **El papel y el clic de la carta**, por el bus de interfaz: son
+   * respuestas a la mano, y se agachan como todo lo demás cuando alguien
+   * habla. Y si suena un aviso, ni eso: no suenan. Ver
+   * `audio/ruidos-de-la-carta.ts`.
+   */
+  ruidoDeLaCarta(que: RuidoDeLaCarta): void {
+    const ctx = this.context;
+    if (!ctx || ctx.state !== "running" || !suenaLaCarta(this.suenaUnAviso)) return;
+    tocarRuidoDeLaCarta(ctx, this.bus("interfaz"), que);
+  }
+
   chasquido(cual: "abre" | "cierra"): void {
     const ctx = this.context;
     if (!ctx || ctx.state !== "running") return;
@@ -2250,6 +2280,7 @@ export class Audio {
    * de «he terminado»: se sabe cuánto duran porque los toca el propio juego.
    */
   private agacharUnRato(segundos: number): void {
+    if (this.context) this.avisoHasta = Math.max(this.avisoHasta, this.context.currentTime + segundos);
     this.empiezaLaVoz();
     window.setTimeout(() => this.acabaLaVoz(), segundos * 1000);
   }

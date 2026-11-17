@@ -42,6 +42,7 @@ import {
   type PuntoDelPerfil,
 } from "../../world/aproximaciones-publicadas";
 import { t } from "../../i18n";
+import { atributosDe, tocableDePunto } from "./tocar-la-carta";
 
 const MILLA = 1852;
 const CATEGORIAS: readonly Categoria[] = ["A", "B", "C", "D"];
@@ -126,6 +127,12 @@ export function perfilEnSvg(c: CartaDeAproximacion): string {
     const px = x(p.millas);
     const enLaLinea = p.pies ?? (p.millas === 0 && directa && rdhPies !== null ? cotaPies + rdhPies : null);
     const arriba = enLaLinea !== null ? y(enLaLinea) : PERFIL.arriba;
+    /*
+     * El IF, el FAF o FAP y el MAPt se tocan: su raya, su rótulo, su nombre y
+     * su altitud van en un grupo que dice qué es. Ver `ui/carta/tocar-la-carta.ts`.
+     */
+    const tocable = tocableDePunto(p.rotulo);
+    const desde = partes.length;
     partes.push(`<line class="iac-perfil__raya" x1="${r1(px)}" y1="${r1(arriba)}" x2="${r1(px)}" y2="${PERFIL.suelo}" />`);
     const rotulo = rotuloEscrito(p);
     /*
@@ -152,6 +159,11 @@ export function perfilEnSvg(c: CartaDeAproximacion): string {
     // Las millas al umbral; en el umbral, no: ahí va el RDH.
     if (!(p.millas === 0 && directa))
       partes.push(`<text class="iac-perfil__millas" x="${r1(px)}" y="${PERFIL.suelo + 13}">${r1(p.millas)}</text>`);
+    if (tocable) {
+      const suyas = partes.splice(desde);
+      const nombreDelPunto = p.lat !== undefined ? `${p.nombre} ` : "";
+      partes.push(`<g ${atributosDe(tocable, `${nombreDelPunto}(${rotuloEscrito(p)})`)}>${suyas.join("")}</g>`);
+    }
   }
 
   /*
@@ -184,9 +196,11 @@ export function perfilEnSvg(c: CartaDeAproximacion): string {
       ? `M${r1(x(0))} ${r1(y(alFinal))} Q${r1(topeX)} ${r1(y(alFinal))} ${r1(topeX)} ${r1(topeY + 6)}`
       : `M${r1(topeX)} ${r1(Math.max(topeY + 30, PERFIL.suelo - 24))} L${r1(topeX)} ${r1(topeY + 6)}`;
   partes.push(
+    `<g ${atributosDe("frustrada", `MISSED APCH ${c.frustrada.pies}`)}>`,
     `<path class="iac-perfil__frustrada" d="${desde}" />`,
     `<path class="iac-perfil__punta" d="M${r1(topeX - 4)} ${r1(topeY + 8)} L${r1(topeX)} ${r1(topeY)} L${r1(topeX + 4)} ${r1(topeY + 8)}" />`,
     `<text class="iac-perfil__alt iac-perfil__alt--frustrada" x="${r1(topeX)}" y="${r1(topeY - 4)}">${c.frustrada.pies}</text>`,
+    `</g>`,
   );
 
   // La cota de referencia de las alturas, como al pie del perfil de la carta.
@@ -269,7 +283,7 @@ export function plantaEnSvg(e: Scenario, cabecera: string, c: CartaDeAproximacio
   const partes: string[] = [];
   const [a, b] = umbrales.map(enDibujo) as [[number, number], [number, number]];
   if (a && b)
-    partes.push(`<line class="iac-planta__pista" x1="${r1(a[0])}" y1="${r1(a[1])}" x2="${r1(b[0])}" y2="${r1(b[1])}" />`);
+    partes.push(`<line class="iac-planta__pista" x1="${r1(a[0])}" y1="${r1(a[1])}" x2="${r1(b[0])}" y2="${r1(b[1])}" ${atributosDe("pista", `RWY ${cabecera}`)} />`);
   const derrota = [...conSitio.flatMap((q) => (q.xy ? [enDibujo(q.xy)] : [])), ...(conSitio.some((q) => q.p.millas === 0) ? [] : [enDibujo(hasta)])];
   partes.push(`<polyline class="iac-planta__derrota" points="${derrota.map(([x, y]) => `${r1(x)},${r1(y)}`).join(" ")}" />`);
   // Los rótulos van al lado contrario de la pista, para no pisarla.
@@ -278,12 +292,17 @@ export function plantaEnSvg(e: Scenario, cabecera: string, c: CartaDeAproximacio
     if (!q.xy || (q.p.millas === 0 && c.final !== "circuito")) continue;
     const [x, y] = enDibujo(q.xy);
     const conNombre = q.p.lat !== undefined;
-    partes.push(conNombre ? estrella(x, y) : `<circle class="iac-planta__marca" cx="${r1(x)}" cy="${r1(y)}" r="2" />`);
-    if (!conNombre) continue;
+    if (!conNombre) {
+      partes.push(`<circle class="iac-planta__marca" cx="${r1(x)}" cy="${r1(y)}" r="2" />`);
+      continue;
+    }
     const derecha = x >= hx - 1;
     const rotulo = rotuloEscrito(q.p);
+    // La estrella y su nombre, que se tocan si es el IF, el FAF o el MAPt.
+    const tocable = tocableDePunto(q.p.rotulo);
     partes.push(
-      `<text class="iac-planta__nombre" x="${r1(x + (derecha ? 8 : -8))}" y="${r1(y + 4)}" text-anchor="${derecha ? "start" : "end"}">${q.p.nombre}${rotulo ? ` <tspan class="iac-planta__rotulo">(${rotulo})</tspan>` : ""}</text>`,
+      `${tocable ? `<g ${atributosDe(tocable, `${q.p.nombre}${rotulo ? ` (${rotulo})` : ""}`)}>` : ""}${estrella(x, y)}`,
+      `<text class="iac-planta__nombre" x="${r1(x + (derecha ? 8 : -8))}" y="${r1(y + 4)}" text-anchor="${derecha ? "start" : "end"}">${q.p.nombre}${rotulo ? ` <tspan class="iac-planta__rotulo">(${rotulo})</tspan>` : ""}</text>${tocable ? "</g>" : ""}`,
     );
   }
   // El norte y la escala de cinco millas, como en la esquina de la planta.
@@ -372,8 +391,8 @@ function pagina(e: Scenario, cabecera: string, c: CartaDeAproximacion, i: number
         `<label class="iac__pestana${j === i ? " iac__pestana--esta" : ""}" for="${llave}-${j}">RWY ${cab}</label>`,
     )
     .join("");
-  const frustrada = `<div class="iac__frustrada"><b><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 15 Q2 5 13 5 M9 1.5 L13 5 L9 8.5" /></svg>${c.frustrada.pies}${c.frustrada.maximaPies ? ` · MAX ${c.frustrada.maximaPies}` : ""}</b><p>${c.frustrada.texto}</p></div>`;
-  const msa = `<div class="iac__msa">${msaEnSvg(c.msa)}${c.msa.nota ? `<p>${c.msa.nota}</p>` : ""}</div>`;
+  const frustrada = `<div class="iac__frustrada" ${atributosDe("frustrada", `MISSED APCH ${c.frustrada.pies}`)}><b><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 15 Q2 5 13 5 M9 1.5 L13 5 L9 8.5" /></svg>${c.frustrada.pies}${c.frustrada.maximaPies ? ` · MAX ${c.frustrada.maximaPies}` : ""}</b><p>${c.frustrada.texto}</p></div>`;
+  const msa = `<div class="iac__msa" ${atributosDe(c.msa.tipo === "TAA" ? "taa" : "msa", `${c.msa.tipo} ${c.msa.radioMillas} NM ${c.msa.centro}`)}>${msaEnSvg(c.msa)}${c.msa.nota ? `<p>${c.msa.nota}</p>` : ""}</div>`;
   return `
     <div class="iac iac--${i}" data-cabecera="${cabecera}">
       <div class="iac__cabeza">
@@ -389,7 +408,7 @@ function pagina(e: Scenario, cabecera: string, c: CartaDeAproximacion, i: number
           <div class="iac__perfil">${perfilEnSvg(c)}${tablaDeLaSenda(c)}</div>
         </div>
         <div class="iac__cajas">
-          <div class="iac__mins">${tablaDeMinimos(c, suya)}</div>
+          <div class="iac__mins" ${atributosDe("minimos")}>${tablaDeMinimos(c, suya)}</div>
           ${msa}
           ${frustrada}
         </div>

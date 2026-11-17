@@ -2960,6 +2960,53 @@ for (const f of filas) {
   if (f.voz === "comandante" && !f.ajustes) f.ajustes = AJUSTES_CON_CHISPA;
 }
 
+/*
+ * **Y la carta que se toca** (17-11-2026, #72): lo que dice la instructora al
+ * tocar un elemento de la carta —la ficha del campo, el plano en vuelo y la
+ * carta de aproximación—, una frase por tipo de elemento y no una por cada
+ * radioayuda. Se cuentan como las explicaciones de la ventana, con ganas. Van
+ * detrás de todo, por lo de siempre: lo ya grabado no se renumera. Ver
+ * `TOCABLES` en `src/ui/carta/tocar-la-carta.ts`.
+ *
+ * Las siglas, como se dicen en cabina y no deletreadas en castellano. Van
+ * aquí y no en `SIGLAS` de más arriba, que cambiaría lo que se le da a leer a
+ * frases que ya están grabadas.
+ */
+const DE_LA_CARTA_QUE_SE_TOCA = [
+  "pista", "calle", "plataforma", "aerodromo", "avion", "norte",
+  "vor", "dme", "ndb", "ils",
+  "twr", "atis", "app", "gnd", "afis", "frecuencia",
+  "msa", "taa", "if", "faf", "mapt", "minimos", "frustrada",
+];
+const SIGLAS_DE_LA_CARTA = [
+  ["VOR", "vor"],
+  ["DME", "di-em-i"],
+  ["NDB", "en-di-bi"],
+  ["ILS", "ai-el-es"],
+  ["MSA", "em-es-ei"],
+  ["TAA", "ti-ei-ei"],
+  ["ATIS", "atis"],
+  ["AFIS", "afis"],
+];
+for (const tipo of DE_LA_CARTA_QUE_SE_TOCA) {
+  const id = `carta.toca.${tipo}`;
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  let dicho = texto;
+  for (const [sigla, asi] of SIGLAS_DE_LA_CARTA)
+    dicho = dicho.replace(new RegExp(`(?<![\\w/])${sigla}(?![\\w/])`, "g"), asi);
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para: "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    ...(dicho !== texto ? { dicho } : {}),
+    ajustes: AJUSTES_CON_CHISPA,
+  });
+  total += texto.length;
+}
+
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
   ...filas.map((f) =>

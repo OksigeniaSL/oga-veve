@@ -481,3 +481,160 @@ la otra cabecera):
   intermedio se miden contra el relieve con el margen de cada uno
   (`aproximaciones-sobre-el-relieve.test.ts`), que antes no se medían porque la
   rama no tenía intermedio; libran.
+
+## Enmienda H24c (17-11-2026): la carta se toca
+
+Lo que #72 pedía de lo interactivo, primera parte: **tocar un elemento y que
+diga qué es**, por rótulo y por voz; tocar una frecuencia y que la sintonice;
+y el papel al abrirla y un clic al tocar, con el ducking para que la carta no
+tape un aviso. Dibujar la ruta con el dedo queda para otra tanda: abajo va la
+propuesta.
+
+### Qué se toca, y dónde
+
+En las tres hojas: la ficha del campo, la carta de aproximación y el plano en
+vuelo. Una sola tabla, `TOCABLES` en `ui/carta/tocar-la-carta.ts`, dice qué
+tipos hay, de qué calco es cada uno y con qué rótulo aeronáutico sale si el
+elemento no trae el suyo:
+
+| Calco | Tipos |
+| ----- | ----- |
+| El territorio, en los cuatro peldaños | la pista (RWY), la calle de rodaje (TWY), la plataforma (APRON), el aeródromo (AD, en el plano), el norte —la flecha de la ficha y la rosa del plano— y tu avión |
+| La radio, en Taguató Ruvichá | VOR (también el VOR/DME), DME, NDB, ILS; las frecuencias TWR, ATIS, APP, GND (y la SMC de ENAIRE), AFIS y las demás como «frecuencia»; MSA, TAA, IF, FAF (también el FAP), MAPt, los mínimos «OCA (OCH)» y la frustrada |
+
+**Solo existe lo que dibuja el calco del peldaño.** En la ficha, el marcado
+lleva `data-toca` solo en lo que se dibuja, y la prueba recorre todos los
+campos en los cuatro peldaños y mira que no se marque nada que su calco no
+dibuje. En Guyrami salen la pista, las calles, la plataforma, el norte y tu
+avión. El sello no se toca: no es la carta, es el cuaderno.
+
+En la carta de aproximación se tocan la pista de la planta, la estrella y el
+nombre de cada IF, FAF y MAPt —en la planta y en el perfil, con su raya, su
+rótulo y su altitud—, la flecha de la frustrada del perfil y su caja, el
+círculo de la MSA o de la TAA y la tabla de mínimos. La comprobación de
+altitud, el escalón y el umbral no: no hay frase para ellos, y el umbral es
+la pista.
+
+### Lo que sale al tocar, por peldaños
+
+La escalera de comunicación, como en la ventana de las explicaciones
+(`comoSeEnsena`): **el brillo y la voz en los cuatro**; desde Tukã, el rótulo
+—el de la carta tal cual, «VOR/DME TFN 117.700», «XO06W (FAP)», «OCA (OCH)»,
+sin traducir (regla 3)— con su glosa corta en el idioma del juego, «Radiofaro»,
+«Aproximación final», «Mínimos»; y desde Taguató, además la frase entera
+escrita, que es el gemelo de la voz para quien juega sin sonido. En Guyrami
+no sale franja: lo tocado se ilumina en ocre y la instructora lo dice.
+
+El rótulo va en una franja de papel del ancho de su hoja —el texto ocupa su
+caja—, encima de lo tocado si cabe y si no debajo, para no taparlo; no recibe
+toques y se va a los siete segundos o con el siguiente toque. Lo tocado se
+ilumina con el ocre del foco: un brillo en el SVG y, en las cajas de HTML —la
+tabla de mínimos, la frustrada, una frecuencia—, el contorno del foco con un
+halo por fuera; el brillo sobre cada letra dejaba la tabla borrosa.
+En el plano, que es un lienzo, un aro de 44 px en su sitio.
+
+### Con el dedo y con el ratón, sin robar el gesto
+
+Se atiende al `click`, que el navegador no da si el dedo arrastró: la ficha
+y la carta de aproximación siguen rodando, y el zoom de la página sigue
+siendo del navegador. Nada llama a `preventDefault` ni captura el puntero.
+
+**La diana mide 44 px aunque el símbolo mida 14.** En la ficha y en la carta
+de aproximación se le pregunta al navegador qué hay debajo del dedo
+(`elementsFromPoint`, que sabe la forma de cada trazo: una pista en diagonal
+no es su caja) y, si no hay nada que se toque, a 11 y a 22 px alrededor, ocho
+rumbos cada vez; gana lo primero que se encuentre desde el centro. Solo en
+la hoja de encima: con la carta de aproximación abierta la ficha sigue
+debajo, y no se toca a través de ella. En un mismo punto manda lo de encima,
+salvo que debajo asome algo cuatro veces más chico: el VOR LRO está en la
+punta oeste de Los Rodeos, medio tapado por la pista, y la primera foto
+salía «RWY 12/30» al tocarlo. Un botón o una etiqueta mandan: cerrar,
+volver, ir, las pestañas. En el plano se mira lo pintado: cada cosa con su caja en
+píxeles de pantalla, y gana la más cercana a menos de 22 px y, entre dos que
+lo contienen, la más chica, que es la que se quería tocar —el VOR encima del
+aeródromo—.
+
+### La frecuencia, y la radio que el juego no tiene
+
+**El juego no tiene una radio que se sintonice.** La torre que se oye es la
+del campo donde se está, la dependencia cambia sola con la distancia y la
+altura (`flight/dependencia.ts`), y el relevo se dice sin la frecuencia en
+cifras, a propósito. No hay COM, ni NAV, ni ADF que se pongan, y no se
+inventa uno para esto.
+
+Así que tocar una frecuencia la **explica** —qué es la torre, el ATIS, la
+aproximación, la rodadura, el AFIS— y queda el gancho:
+`ponerRadioDeLaCarta(radio)` con `lleva(frecuencia)` y `poner(frecuencia)`.
+Cada frecuencia de la ficha y del plano lleva sus megahercios y en qué radio
+iría —COM, NAV para el VOR y el ILS, ADF para el NDB, con sus kilohercios
+pasados a megahercios—, y `sintonizar` la pone solo en el calco de la radio y
+si el avión la lleva. Con radio enchufada, la franja dice «Puesta en la
+radio»; lo que se vea y se oiga en la cabina al ponerla es cosa de esa radio.
+Hoy no la enchufa nadie, y la prueba lo mira con una de mentira.
+
+### El papel, el clic y el ducking
+
+`audio/ruidos-de-la-carta.ts`, sintetizados con Web Audio como los demás
+efectos: **el papel**, siete crujidos de ruido agudo en un tercio de segundo,
+al abrir la ficha de un campo, la carta de aproximación y el plano en vuelo
+—cerrar no suena: lo que se oye es lo que se abre—; y **el clic**, cuatro
+centésimas, al tocar algo que se toca. Por debajo de un toque del cuadro: 0,09
+y 0,07 de ganancia frente a 0,22.
+
+En el vuelo van por el bus de interfaz, que ya se agacha diez decibelios
+cuando habla alguien. Y **si suena un aviso, la carta se calla**: con una caja
+del avión hablando (`VozDeLaMaquina.ocupada`), un tono de a bordo, un motivo
+de los que mandan o la bocina o el sacudidor de pérdida (`Audio.suenaUnAviso`),
+no suenan ni el papel ni el clic, la instructora no dice lo tocado —el rótulo
+ya salió, y es su canal— y, si lo estaba diciendo, se corta. Lo tocado en el
+plano se dice en `normal`, lo que enseña: no corta a la torre ni a nadie, y si
+tarda en tocarle, se cae. En el hangar no hay avisos; la voz es la del hangar
+y lo pedido con el dedo va en `urgente`, como sus explicaciones.
+
+### Las frases, por grabar
+
+Veintitrés, una por tipo y no una por radioayuda, al final de
+`scripts/frases-para-grabar.mjs` con la voz de la instructora y los ajustes
+de las explicaciones; con las siglas como se dicen en cabina —«vor»,
+«di-em-i», «en-di-bi», «ai-el-es», «em-es-ei»— en su `dicho`, que no se
+añaden a `SIGLAS` porque cambiarían lo que se le da a leer a frases ya
+grabadas. 2882 caracteres. Hasta que se graben, la carta se toca igual y
+calla: la voz es la grabada o ninguna.
+
+### Lo que queda
+
+- **El morse de la radioayuda.** Tocar un VOR podría sonar su identificador,
+  que es lo que se oye al sintonizarlo de verdad; se deja para cuando haya
+  radio NAV, porque sonando a la vez que la frase serían dos voces contando
+  lo mismo.
+- **Dibujar la ruta con el dedo**, la propuesta que sigue.
+
+### Propuesta para la tanda siguiente: dibujar la ruta con el dedo
+
+- **Dónde**: en el plano en vuelo y en la carta del hangar, que es donde se
+  prepara un vuelo. **Con un lápiz que se coge**: un botón de 44 px con su
+  dibujo en las acciones de la concha del plano y en la esquina de la carta.
+  Sin él, un toque sigue explicando y un arrastre sigue rodando la página;
+  con él, la carta lleva `touch-action: none` y captura el puntero, y nada
+  más cambia. Sin modos escondidos: el lápiz cogido se ve.
+- **Cómo**: cada toque pone un punto y la raya va del anterior al dedo
+  mientras se arrastra; al soltar cerca de un aeródromo, una radioayuda o un
+  punto de la ruta —a menos de 22 px— se pega a él, como en una carta se
+  traza de punto a punto. Un toque en el primero cierra; el lápiz suelto
+  borra.
+- **Lo que sale, por la escalera**: en Guyrami la raya a lápiz y la
+  instructora diciendo que ese es tu camino; desde Taguató, en cada tramo el
+  rumbo magnético —el verdadero con la declinación del WMM2025 que ya está en
+  `carta/declinacion.ts`— y las millas, «CRS 254 · 52 NM», y el total abajo;
+  en Ruvichá, además el tiempo con la velocidad de crucero del avión. La
+  cuenta ya existe: `rumboYMillas` en `ui/mapa-del-pais.ts` hace lo mismo de
+  un campo a otro.
+- **Puro y probado**: un módulo sin DOM, `flight/derrota-dibujada.ts`, de
+  puntos en grados a tramos con rumbo y millas, comprobado contra una ruta
+  conocida (Los Rodeos a Gando por TFN y LPC).
+- **Sonido y voz**: el lápiz rasca el papel —otra variante de
+  `ruidos-de-la-carta.ts`—, y las frases, pocas: coger el lápiz, cerrar la
+  ruta. Las cifras se escriben y no se dicen: grabar cada rumbo y cada
+  distancia serían cientos de tomas.
+- **Nada se guarda**: la ruta dibujada se borra al cerrar la hoja. Es un
+  ejercicio, no el plan de vuelo, que sigue siendo el publicado.

@@ -20907,5 +20907,335 @@
     "idioma": "es-PY",
     "texto": "Eso que sonó es el avión: avisa que el compensador no está en la franja verde. Bajá el motor y ponelo para despegar.",
     "para": "detrás del aviso de configuración de despegue, si lo que falta es el compensador: qué sonó y qué se hace"
+  },
+  {
+    "id": "carta.toca.pista",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esta es la pista: el camino largo y derecho donde el avión corre para despegar, y donde vuelve a posarse cuando aterriza.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.calle",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esta es una calle de rodaje: por acá el avión anda despacito, como un auto, para ir hasta la pista y volver.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.plataforma",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esta es la plataforma: donde los aviones esperan quietos mientras sube la gente y se les pone combustible.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.aerodromo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esto es un aeródromo: un lugar con pista, donde los aviones pueden despegar y aterrizar.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.avion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este es tu avión, y lo llevás vos.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.norte",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esto marca el norte. En una carta el norte va siempre arriba: a la derecha queda el este y a la izquierda, el oeste.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.vor",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esto es un VOR: una antena en el suelo que manda su señal de radio para todos lados. Con ella el avión sabe de qué lado del VOR está. Si tiene un cuadrado alrededor, lleva también un DME.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "dicho": "Esto es un vor: una antena en el suelo que manda su señal de radio para todos lados. Con ella el avión sabe de qué lado del vor está. Si tiene un cuadrado alrededor, lleva también un di-em-i.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.dme",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esto es un DME: una radio en el suelo que le contesta al avión y le dice a cuántas millas está de ella.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "dicho": "Esto es un di-em-i: una radio en el suelo que le contesta al avión y le dice a cuántas millas está de ella.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.ndb",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esto es un NDB: una radio en el suelo que suena igual para todos lados. En el avión, una aguja apunta hacia ella, y así se sabe dónde queda.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "dicho": "Esto es un en-di-bi: una radio en el suelo que suena igual para todos lados. En el avión, una aguja apunta hacia ella, y así se sabe dónde queda.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.ils",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esto es un ILS: dos señales de radio que salen de la pista. Una dice si vas a la izquierda o a la derecha, y la otra si vas alto o bajo. Así se puede bajar hasta la pista aunque haya nubes.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "dicho": "Esto es un ai-el-es: dos señales de radio que salen de la pista. Una dice si vas a la izquierda o a la derecha, y la otra si vas alto o bajo. Así se puede bajar hasta la pista aunque haya nubes.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.twr",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esta es la frecuencia de la torre: el número que se pone en la radio para hablar con quien da permiso para despegar y para aterrizar.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.atis",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esta es la frecuencia del ATIS: una grabación que repite el viento, la pista en uso y la presión del día. Se escucha antes de llamar a la torre.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "dicho": "Esta es la frecuencia del atis: una grabación que repite el viento, la pista en uso y la presión del día. Se escucha antes de llamar a la torre.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.app",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esta es la frecuencia de aproximación: el control que ordena a los aviones que llegan y que se van, cuando todavía están lejos de la pista.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.gnd",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esta es la frecuencia de rodadura: con ella se habla para moverse por el suelo, de la plataforma a la pista y de vuelta.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.afis",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esta es la frecuencia del AFIS: alguien en el aeródromo que no da permisos, pero te cuenta el viento, la pista y quién más anda volando.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "dicho": "Esta es la frecuencia del afis: alguien en el aeródromo que no da permisos, pero te cuenta el viento, la pista y quién más anda volando.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.frecuencia",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esta es una frecuencia de radio: el número que se pone en la radio para hablar con un servicio de tierra.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.msa",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este círculo es la MSA: la altitud más baja a la que se puede volar cerca del aeródromo pasando por encima de todos los cerros, con margen de sobra.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "dicho": "Este círculo es la em-es-ei: la altitud más baja a la que se puede volar cerca del aeródromo pasando por encima de todos los cerros, con margen de sobra.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.taa",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este círculo es la TAA: la altitud más baja para llegar al punto donde empieza la aproximación pasando por encima de todo, con margen de sobra.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "dicho": "Este círculo es la ti-ei-ei: la altitud más baja para llegar al punto donde empieza la aproximación pasando por encima de todo, con margen de sobra.",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.if",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este es el punto intermedio: acá el avión ya se pone en línea con la pista y se prepara para bajar.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.faf",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Desde este punto empieza la aproximación final: el avión va derecho a la pista, bajando con suavidad.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.mapt",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Este es el punto de frustrada: si al llegar acá no ves la pista, no se baja más. Se sube y se vuelve a intentar, y eso es volar bien.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.minimos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estos son los mínimos: lo más bajo que se puede llegar sin ver la pista. Cada columna es un tipo de avión, según lo rápido que llega, y la tuya va marcada.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
+  },
+  {
+    "id": "carta.toca.frustrada",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esta es la frustrada: el camino para subir otra vez si la llegada no sale bien. Está siempre preparada, y usarla es de buenos pilotos.",
+    "para": "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    "ajustes": {
+      "stability": 0.35,
+      "similarity_boost": 0.8,
+      "style": 0.45,
+      "use_speaker_boost": true,
+      "speed": 1
+    }
   }
 ]

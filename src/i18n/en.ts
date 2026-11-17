@@ -1313,6 +1313,74 @@ export const EN: Dictionary = {
   "carta.descargo": "Not for real navigation",
   "carta.iac": "Approach chart",
   "carta.iac.categoria": "Your aircraft: CAT {cat}",
+  "carta.toca.pista.corta": "Runway",
+  "carta.toca.pista":
+    "This is the runway: the long, straight strip where the plane runs to take off, and where it touches down again when it lands.",
+  "carta.toca.calle.corta": "Taxiway",
+  "carta.toca.calle":
+    "This is a taxiway: here the plane drives slowly, like a car, to get to the runway and back.",
+  "carta.toca.plataforma.corta": "Apron",
+  "carta.toca.plataforma":
+    "This is the apron: where planes wait while people get on board and the fuel goes in.",
+  "carta.toca.aerodromo.corta": "Aerodrome",
+  "carta.toca.aerodromo": "This is an aerodrome: a place with a runway, where planes can take off and land.",
+  "carta.toca.avion.corta": "Your plane",
+  "carta.toca.avion": "This is your plane, and you are the one flying it.",
+  "carta.toca.norte.corta": "North",
+  "carta.toca.norte":
+    "This marks north. On a chart north is always at the top: east is to the right and west to the left.",
+  "carta.toca.vor.corta": "Radio beacon",
+  "carta.toca.vor":
+    "This is a VOR: an antenna on the ground that sends its radio signal in every direction. With it the plane knows which side of the VOR it is on. If it has a square around it, it also has a DME.",
+  "carta.toca.dme.corta": "Distance",
+  "carta.toca.dme":
+    "This is a DME: a radio station on the ground that answers the plane and tells it how many miles away it is.",
+  "carta.toca.ndb.corta": "Radio beacon",
+  "carta.toca.ndb":
+    "This is an NDB: a radio station on the ground that sounds the same in every direction. In the plane, a needle points at it, so you know where it is.",
+  "carta.toca.ils.corta": "Instrument landing",
+  "carta.toca.ils":
+    "This is an ILS: two radio signals coming from the runway. One tells you if you are left or right, the other if you are high or low. With them you can come down to the runway even through cloud.",
+  "carta.toca.twr.corta": "Tower",
+  "carta.toca.twr":
+    "This is the tower frequency: the number you set on the radio to talk to the people who clear you to take off and to land.",
+  "carta.toca.atis.corta": "Airport information",
+  "carta.toca.atis":
+    "This is the ATIS frequency: a recording that repeats the wind, the runway in use and today's pressure. You listen to it before you call the tower.",
+  "carta.toca.app.corta": "Approach",
+  "carta.toca.app":
+    "This is the approach frequency: the controllers who keep order among the planes arriving and leaving, while they are still far from the runway.",
+  "carta.toca.gnd.corta": "Ground",
+  "carta.toca.gnd":
+    "This is the ground frequency: you use it to move around on the ground, from the apron to the runway and back.",
+  "carta.toca.afis.corta": "Flight information",
+  "carta.toca.afis":
+    "This is the AFIS frequency: someone at the aerodrome who does not give clearances, but tells you the wind, the runway and who else is flying.",
+  "carta.toca.frecuencia.corta": "Frequency",
+  "carta.toca.frecuencia":
+    "This is a radio frequency: the number you set on the radio to talk to a service on the ground.",
+  "carta.toca.msa.corta": "Minimum sector altitude",
+  "carta.toca.msa":
+    "This circle is the MSA: the lowest altitude you can fly near the aerodrome and still pass over every hill, with plenty to spare.",
+  "carta.toca.taa.corta": "Arrival altitude",
+  "carta.toca.taa":
+    "This circle is the TAA: the lowest altitude to arrive at the point where the approach begins and still pass over everything, with plenty to spare.",
+  "carta.toca.if.corta": "Intermediate fix",
+  "carta.toca.if":
+    "This is the intermediate fix: here the plane lines up with the runway and gets ready to come down.",
+  "carta.toca.faf.corta": "Final approach",
+  "carta.toca.faf":
+    "The final approach starts at this point: the plane flies straight to the runway, coming down gently.",
+  "carta.toca.mapt.corta": "Missed approach point",
+  "carta.toca.mapt":
+    "This is the missed approach point: if you cannot see the runway when you get here, you go no lower. You climb away and try again, and that is good flying.",
+  "carta.toca.minimos.corta": "Minimums",
+  "carta.toca.minimos":
+    "These are the minimums: the lowest you may go without seeing the runway. Each column is a kind of plane, by how fast it comes in, and yours is marked.",
+  "carta.toca.frustrada.corta": "Missed approach",
+  "carta.toca.frustrada":
+    "This is the missed approach: the way to climb back up if the landing is not working out. It is always ready, and using it is what good pilots do.",
+  "carta.toca.puesta": "Set on the radio",
   "tiempo.title": "Weather",
   "tiempo.hora": "Time of day",
   "tiempo.viento": "Where the wind comes from and how hard",

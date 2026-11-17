@@ -64,6 +64,21 @@ import { TODAS_LAS_ESTACIONES } from "../world/radioayudas-publicadas";
 import { cajaDeRadioayuda, pintarPluma, pintarRadioayuda } from "./carta/radioayudas";
 import { anoDecimal, declinacion, varEscrita } from "./carta/declinacion";
 import { frecuenciasDeLaCarta } from "../world/frecuencias-publicadas";
+import { variablesDeLaCarta } from "./carta/estilo";
+import {
+  comoSeDice,
+  DIANA,
+  ensenarRotulo,
+  frecuenciaDe,
+  quitarRotulo,
+  seTocaEn,
+  sintonizar,
+  tocableDeEstacion,
+  tocableDeServicio,
+  type ComoSeDice,
+  type FrecuenciaTocada,
+  type Tocable,
+} from "./carta/tocar-la-carta";
 import {
   encuadreCon,
   escalones,
@@ -228,6 +243,144 @@ export class Mapa {
   private rotuladoCon = "";
   /** El «T/D» de la ruta, que va aparte: se corre con la altura. Ver `update`. */
   private td: { donde: string; puesto: RotuloPuesto | null } = { donde: "", puesto: null };
+  /** Los aeródromos rotulados, en píxeles de pantalla: lo que se toca de ellos. */
+  private camposDelPlano: readonly CampoDelPlano[] = [];
+
+  /**
+   * **Quién oye la carta**: el papel al abrir el plano y lo tocado en él. Lo
+   * pone el juego, que tiene la voz y el sonido y sabe si suena un aviso.
+   */
+  private oidos: {
+    readonly papel: () => void;
+    readonly tocado: (como: ComoSeDice, frecuencia: FrecuenciaTocada | null, puesta: boolean) => void;
+  } | null = null;
+
+  ponerOidos(oidos: Mapa["oidos"]): void {
+    this.oidos = oidos;
+  }
+
+  /**
+   * **Lo que se puede tocar en el plano ahora**, en píxeles de pantalla del
+   * plano, cada uno con su caja: los aeródromos, la frecuencia de su rótulo,
+   * las radioayudas, la rosa y tu avión. Solo lo que su calco dibuja: las
+   * radioayudas y las frecuencias se pintan solo en el de la radio.
+   */
+  tocablesDelPlano(): { tipo: Tocable; cx: number; cy: number; w: number; h: number; rotulo: string | null; mhz: number | null }[] {
+    const salen: { tipo: Tocable; cx: number; cy: number; w: number; h: number; rotulo: string | null; mhz: number | null }[] = [];
+    const radio = calcosDe(this.peldano).radio;
+    for (const c of this.camposDelPlano) {
+      const r = Math.max(c.simbolo, 4);
+      salen.push({ tipo: "aerodromo", cx: c.x, cy: c.y, w: 2 * r, h: 2 * r, rotulo: c.oaci, mhz: null });
+      if (!radio || !c.radio) continue;
+      // La frecuencia va en su rótulo: se toca donde se lee.
+      const puesto = this.puestos.find((p) => p.que === (c.oaci ?? c.nombre) && p.renglones.some((x) => x.texto === c.radio));
+      if (!puesto) continue;
+      const [servicio = "", cifra = ""] = c.radio.split(" ");
+      const torre = frecuenciasDeLaCarta(c.oaci)?.torre;
+      salen.push({
+        tipo: tocableDeServicio(servicio),
+        cx: puesto.caja.cx,
+        cy: puesto.caja.cy,
+        w: puesto.caja.w,
+        h: puesto.caja.h,
+        rotulo: `${servicio} ${cifra}`,
+        mhz: torre?.f.mhz ?? null,
+      });
+    }
+    if (radio)
+      for (const a of this.ayudasPintadas) {
+        const e = TODAS_LAS_ESTACIONES.find((x) => x.id === a.id && cajaDeRadioayuda(x).titulo === a.titulo);
+        if (!e) continue;
+        const cifra = e.cifra ? Number(e.cifra) : NaN;
+        salen.push({
+          tipo: tocableDeEstacion(e.clase),
+          cx: a.x,
+          cy: a.y,
+          w: 2 * a.simbolo,
+          h: 2 * a.simbolo,
+          rotulo: e.clase === "ILS" ? a.titulo : `${e.clase} ${a.titulo}`,
+          mhz: Number.isFinite(cifra) ? (e.unidad === "kHz" ? cifra / 1000 : cifra) : null,
+        });
+      }
+    const rosa = this.rosaPuesta;
+    if (rosa) salen.push({ tipo: "norte", cx: rosa.x, cy: rosa.y, w: 2 * rosa.radio, h: 2 * rosa.radio, rotulo: null, mhz: null });
+    // Y tu avión, donde está ahora: se mueve cada fotograma.
+    const hecho = this.encuadrePintado;
+    if (hecho) {
+      const k = 1 / this.u;
+      const escala = LADO / hecho.lado;
+      const lado = SIMBOLOS.avion * this.trazo * k;
+      salen.push({
+        tipo: "avion",
+        cx: (LADO / 2 + (this.avionX - hecho.cx) * escala) * k,
+        cy: (LADO / 2 + (this.avionZ - hecho.cz) * escala) * k,
+        w: lado,
+        h: lado,
+        rotulo: null,
+        mhz: null,
+      });
+    }
+    return salen.filter((x) => seTocaEn(x.tipo, this.peldano));
+  }
+
+  /**
+   * **Lo que hay debajo del dedo en el plano**, o `null`: lo más cercano a
+   * menos de media diana —22 px— de su caja; dentro de dos, el más chico, que
+   * es el que se quería tocar (el VOR encima del aeródromo).
+   */
+  tocadoEnElPlano(x: number, y: number): ReturnType<Mapa["tocablesDelPlano"]>[number] | null {
+    let mejor: ReturnType<Mapa["tocablesDelPlano"]>[number] | null = null;
+    let lejos = Infinity;
+    let area = Infinity;
+    for (const t of this.tocablesDelPlano()) {
+      const dx = Math.max(0, Math.abs(x - t.cx) - t.w / 2);
+      const dy = Math.max(0, Math.abs(y - t.cy) - t.h / 2);
+      const d = Math.hypot(dx, dy);
+      if (d > DIANA) continue;
+      const a = t.w * t.h;
+      if (d < lejos - 0.5 || (Math.abs(d - lejos) <= 0.5 && a < area)) {
+        mejor = t;
+        lejos = d;
+        area = a;
+      }
+    }
+    return mejor;
+  }
+
+  /**
+   * **Un toque en el plano**: lo tocado se marca con su aro, sale su rótulo
+   * —con la letra que diga el peldaño— y se avisa a quien oye la carta para
+   * que la instructora lo diga. Un toque en el agua no hace nada.
+   */
+  private tocarElPlano(evento: MouseEvent): void {
+    const lienzo = this.encima;
+    const lienzos = lienzo?.parentElement;
+    if (!lienzo || !lienzos) return;
+    const r = lienzo.getBoundingClientRect();
+    if (r.width < 1) return;
+    const aPlano = this.enPantalla / r.width;
+    const t = this.tocadoEnElPlano((evento.clientX - r.left) * aPlano, (evento.clientY - r.top) * aPlano);
+    quitarRotulo(lienzos);
+    if (!t) return;
+    const como = comoSeDice(t.tipo, this.peldano, t.rotulo);
+    const frecuencia = frecuenciaDe(t);
+    const puesta = frecuencia ? sintonizar(frecuencia, this.peldano) : false;
+    // El aro, en las medidas de la maqueta: el plano puede ir con `zoom`.
+    const aCss = lienzo.offsetWidth / this.enPantalla;
+    const aro = lienzos.ownerDocument.createElement("div");
+    aro.className = "toque-aro";
+    aro.style.left = `${lienzo.offsetLeft + t.cx * aCss}px`;
+    aro.style.top = `${lienzo.offsetTop + t.cy * aCss}px`;
+    lienzos.appendChild(aro);
+    const enPagina = new DOMRect(
+      r.left + (t.cx / aPlano) - DIANA,
+      r.top + (t.cy / aPlano) - DIANA,
+      2 * DIANA,
+      2 * DIANA,
+    );
+    ensenarRotulo(lienzos, como, enPagina, puesta);
+    this.oidos?.tocado(como, frecuencia, puesta);
+  }
 
   /**
    * **Lo que hay escrito en el plano**, en píxeles de pantalla: cada rótulo
@@ -508,6 +661,16 @@ export class Mapa {
     this.rotulos = raiz.querySelector('[data-hud="mapa-rotulos"]');
     this.encima = raiz.querySelector('[data-hud="mapa-encima"]');
     /*
+     * **Y la carta se toca** (#72): un toque —un `click`, que un arrastre no
+     * da— dice qué es lo de debajo. Las tintas de la carta, en su caja, para
+     * el rótulo que sale encima. Ver `tocarElPlano`.
+     */
+    const lienzos = this.encima?.parentElement;
+    if (lienzos) {
+      lienzos.setAttribute("style", variablesDeLaCarta());
+      lienzos.addEventListener("click", (e) => this.tocarElPlano(e));
+    }
+    /*
      * **Y si el plano cambia de tamaño, se vuelve a medir y a rotular**:
      * girar la tablet, o la barra del navegador que entra y sale. La letra
      * mide lo que mide en la pantalla, así que en otro tamaño caben otras
@@ -602,6 +765,7 @@ export class Mapa {
 
   cerrar(): void {
     if (!this.panel?.abierto) return;
+    if (this.encima?.parentElement) quitarRotulo(this.encima.parentElement);
     this.panel.cerrar();
     this.avisarAlHud();
   }
@@ -610,8 +774,13 @@ export class Mapa {
     if (!this.panel) return;
     this.panel.alternar();
     this.avisarAlHud();
-    if (!this.panel.abierto) return;
+    if (!this.panel.abierto) {
+      if (this.encima?.parentElement) quitarRotulo(this.encima.parentElement);
+      return;
+    }
     this.alAbrir?.();
+    // El papel de la carta que se despliega.
+    this.oidos?.papel();
     // Ya en la página: lo que mide de verdad, que la letra va en esa medida.
     this.medirse();
     // Con lo que se haya movido mientras estaba cerrado, el fondo de antes ya
@@ -1526,6 +1695,7 @@ export class Mapa {
     );
     for (const r of puestos) pintarRotulo(g, r, PAPEL.fondo);
     this.puestos = puestos;
+    this.camposDelPlano = campos;
     this.fijosPuestos = fijos;
     this.rotuladoCon = this.claveDeLosRotulos();
     this.td = { donde: "", puesto: null };

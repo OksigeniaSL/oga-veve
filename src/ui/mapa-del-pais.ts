@@ -65,6 +65,7 @@ import { estacionesDe, RADIOAYUDAS, type Estacion } from "../world/radioayudas-p
 import { dondeCae } from "../world/entre-aerodromos";
 import { cajaDeRadioayuda, plumaEnSvg, simboloDeRadioayuda, simboloEnSvg } from "./carta/radioayudas";
 import { cartaDeAproximacionDeLaFicha } from "./carta/carta-de-aproximacion";
+import { atributosDe, marcaDeEstacion, quitarRotulo, tocableDeServicio } from "./carta/tocar-la-carta";
 import { AIRCRAFT, categoriaDeAproximacion } from "../flight/aircraft";
 import { DESTACADOS } from "../world/lo-destacado";
 import {
@@ -308,13 +309,13 @@ function dibujoDePistas(e: Scenario, conNumeros: boolean, conRadio = false): str
   const punto = (q: readonly [number, number]): string => en(q).map(r3).join(",");
   const plataformas = (e.aerodrome?.aprons ?? [])
     .filter((a) => a.polygon.length > 2)
-    .map((a) => `<polygon class="pistas__plataforma" points="${a.polygon.map(punto).join(" ")}" />`)
+    .map((a) => `<polygon class="pistas__plataforma" points="${a.polygon.map(punto).join(" ")}" ${atributosDe("plataforma")} />`)
     .join("");
   const calles = (e.aerodrome?.taxiways ?? [])
     .filter((c) => c.path.length > 1)
     .map(
       (c) =>
-        `<polyline class="pistas__calle" stroke-width="${r3(Math.max(1.2, ((c.widthM ?? 18) / lado) * 100))}" points="${c.path.map(punto).join(" ")}" />`,
+        `<polyline class="pistas__calle" stroke-width="${r3(Math.max(1.2, ((c.widthM ?? 18) / lado) * 100))}" points="${c.path.map(punto).join(" ")}" ${atributosDe("calle", c.ref ? `TWY ${c.ref}` : null)} />`,
     )
     .join("");
   /*
@@ -349,8 +350,9 @@ function dibujoDePistas(e: Scenario, conNumeros: boolean, conRadio = false): str
       const [bx, by] = en(b);
       // A su anchura, y como poco cinco; pero entre dos paralelas, con hueco.
       const grueso = Math.min(Math.max(5, ((p.widthM ?? 45) / lado) * 100), separacion * 0.6);
-      return `<line x1="${r3(ax)}" y1="${r3(ay)}" x2="${r3(bx)}" y2="${r3(by)}" class="pistas__barra" stroke-width="${r3(grueso)}" />
-        <line x1="${r3(ax)}" y1="${r3(ay)}" x2="${r3(bx)}" y2="${r3(by)}" class="pistas__eje" />`;
+      // La barra y su eje, una pista que se toca: con su número desde el calco de las cifras.
+      return `<g ${atributosDe("pista", conNumeros && Object.keys(p.thresholds).length >= 2 ? `RWY ${numerosDe(p)}` : null)}><line x1="${r3(ax)}" y1="${r3(ay)}" x2="${r3(bx)}" y2="${r3(by)}" class="pistas__barra" stroke-width="${r3(grueso)}" />
+        <line x1="${r3(ax)}" y1="${r3(ay)}" x2="${r3(bx)}" y2="${r3(by)}" class="pistas__eje" /></g>`;
     })
     .join("");
   const numeros = conNumeros
@@ -360,7 +362,7 @@ function dibujoDePistas(e: Scenario, conNumeros: boolean, conRadio = false): str
     : "";
   const ayudas = conAyudas ? radioayudasDelDibujo(e, en) : "";
   return `<svg class="pistas" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
-      <path d="${FLECHA_DEL_NORTE}" class="pistas__norte" />
+      <path d="${FLECHA_DEL_NORTE}" class="pistas__norte" ${atributosDe("norte")} />
       ${plataformas}${calles}${ayudas}${barras}${numeros}
     </svg>`;
 }
@@ -408,13 +410,13 @@ function radioayudasDelDibujo(e: Scenario, en: ReturnType<typeof encuadreDePista
       );
       const largo = Math.min(20, hastaElBorde - PLUMA_DESDE - 1);
       if (largo < 6) continue;
-      salen.push(plumaEnSvg(ux + dx * PLUMA_DESDE, uy + dy * PLUMA_DESDE, rumbo, largo));
+      salen.push(`<g ${marcaDeEstacion(s)}>${plumaEnSvg(ux + dx * PLUMA_DESDE, uy + dy * PLUMA_DESDE, rumbo, largo)}</g>`);
       continue;
     }
     const [x, y] = en(aXy(s));
     const m = LADO_DE_RADIOAYUDA / 2 + 1;
     if (x < m || y < m || x > 100 - m || y > 100 - m) continue;
-    salen.push(simboloEnSvg(s.clase, x, y, LADO_DE_RADIOAYUDA));
+    salen.push(`<g ${marcaDeEstacion(s)}>${simboloEnSvg(s.clase, x, y, LADO_DE_RADIOAYUDA)}</g>`);
   }
   return salen.join("");
 }
@@ -432,7 +434,7 @@ function listaDeRadioayudas(oaci: string): string {
     return `<p class="ficha-carta__pie ficha-carta__sin-radio">${t("carta.sinRadioayudas")}</p><small class="ficha-carta__pie ficha-carta__fuente">${publicadas.fuente}${publicadas.sinNinguna ? ` · ${publicadas.sinNinguna}` : ""}</small>`;
   const una = (s: Estacion): string => {
     const c = cajaDeRadioayuda(s);
-    return `<li><span class="ficha-carta__simbolo${s.clase === "ILS" ? " ficha-carta__simbolo--ils" : ""}">${simboloDeRadioayuda(s.clase)}</span><span class="ficha-carta__caja"><b>${c.titulo}</b>${
+    return `<li ${marcaDeEstacion(s)}><span class="ficha-carta__simbolo${s.clase === "ILS" ? " ficha-carta__simbolo--ils" : ""}">${simboloDeRadioayuda(s.clase)}</span><span class="ficha-carta__caja"><b>${c.titulo}</b>${
       c.canal ? ` <span>${c.canal}</span>` : ""
     }<i class="ficha-carta__morse">${c.morse}</i></span></li>`;
   };
@@ -852,12 +854,12 @@ function fichaDelCampo(e: Scenario, p: readonly [number, number], d: DeLaCarta):
     : "";
   const quienVa = !ir ? null : esSalida || ruta?.cabe ? d.avion : (ruta?.con ?? null);
   const retrato = quienVa
-    ? `<span class="ficha-carta__avion"><img src="${retratoDe(quienVa)}" alt="" width="${TAMANO_DE_RETRATO.ancho}" height="${TAMANO_DE_RETRATO.alto}" decoding="async" draggable="false" /></span>`
+    ? `<span class="ficha-carta__avion" ${atributosDe("avion")}><img src="${retratoDe(quienVa)}" alt="" width="${TAMANO_DE_RETRATO.ancho}" height="${TAMANO_DE_RETRATO.alto}" decoding="async" draggable="false" /></span>`
     : "";
   const sello = selloDe(e, nombre);
   const pistas = (e.aerodrome?.runways ?? [])
     .filter((pista) => Object.keys(pista.thresholds).length >= 2)
-    .map((pista) => `<li>RWY ${numerosDe(pista)} · ${Math.round(largoDe(pista)).toLocaleString("en-US").replace(/,/g, " ")} m</li>`)
+    .map((pista) => `<li ${atributosDe("pista", `RWY ${numerosDe(pista)}`)}>RWY ${numerosDe(pista)} · ${Math.round(largoDe(pista)).toLocaleString("en-US").replace(/,/g, " ")} m</li>`)
     .join("");
   const rumbo = esSalida ? "" : (() => {
     const { rumbo: r, millas } = rumboYMillas(d.aqui, p, d.decAqui);
@@ -869,10 +871,20 @@ function fichaDelCampo(e: Scenario, p: readonly [number, number], d: DeLaCarta):
     : publicada && publicada.servicios.length
       ? `<ul class="ficha-carta__lista ficha-carta__radio">${publicada.servicios
           .map(
-            (s) =>
-              `<li><b>${s.servicio}</b>${s.indicativo ? ` <span>${s.indicativo}</span>` : ""} ${s.frecuencias
-                .map((f) => `<i>${f.tal}${f.nota && /EMERG|GMC|CLR|BACK/i.test(f.nota) ? ` ${f.nota}` : ""}</i>`)
-                .join(" ")}</li>`,
+            (s) => {
+              /*
+               * Cada frecuencia se toca, y la fila entera es la primera: quien
+               * toca «TWR» toca la torre.
+               */
+              const tipo = tocableDeServicio(s.servicio);
+              const primera = s.frecuencias[0];
+              return `<li${primera ? ` ${atributosDe(tipo, `${s.servicio} ${primera.cifra}`, { mhz: primera.mhz })}` : ""}><b>${s.servicio}</b>${s.indicativo ? ` <span>${s.indicativo}</span>` : ""} ${s.frecuencias
+                .map(
+                  (f) =>
+                    `<i ${atributosDe(tipo, `${s.servicio} ${f.cifra}`, { mhz: f.mhz })}>${f.tal}${f.nota && /EMERG|GMC|CLR|BACK/i.test(f.nota) ? ` ${f.nota}` : ""}</i>`,
+                )
+                .join(" ")}</li>`;
+            },
           )
           .join("")}</ul><small class="ficha-carta__pie ficha-carta__fuente">${publicada.fuente}</small>`
       : `<p class="ficha-carta__pie ficha-carta__sin-radio">${t(publicada ? "carta.sinFrecuencia" : "carta.sinAip")}</p>`;
@@ -1196,6 +1208,8 @@ export function abrirFichaDeLaCarta(raiz: ParentNode, id: string): void {
   const derecha = campo ? parseFloat(campo.style.left) > 50 : false;
   for (const f of raiz.querySelectorAll<HTMLElement>(".ficha-carta")) {
     f.hidden = f.getAttribute("data-ficha-de") !== id || id === "";
+    // Lo que se tocó en la ficha de antes no sigue rotulado al volver a abrirla.
+    quitarRotulo(f);
     if (!f.hidden) f.dataset.lado = derecha ? "izquierda" : "derecha";
     // Y se abre por la ficha, no por la carta de aproximación que se dejó abierta.
     const sinCarta = f.querySelector<HTMLInputElement>(".iac__llave--no");
