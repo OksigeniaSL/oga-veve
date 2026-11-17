@@ -1054,12 +1054,13 @@ function pintarLaRadioEnLaRosa(
     }
     if (p.toFrom) {
       g.fillStyle = TINTA;
-      const y = p.toFrom === "TO" ? -largo * 0.62 : largo * 0.62;
+      // Más largo que ancho, como en el cuadro plano: casi equilátero parecía apuntar de lado.
+      const y = p.toFrom === "TO" ? -largo * 0.7 : largo * 0.7;
       const s = p.toFrom === "TO" ? 1 : -1;
       g.beginPath();
       g.moveTo(0, y);
-      g.lineTo(-8, y + 12 * s);
-      g.lineTo(8, y + 12 * s);
+      g.lineTo(-6, y + 17 * s);
+      g.lineTo(6, y + 17 * s);
       g.closePath();
       g.fill();
     }

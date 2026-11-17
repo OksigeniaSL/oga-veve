@@ -128,9 +128,13 @@ No es una cabina nueva:
 - El cuadro gana dos piezas en el peldaño de arriba, que se pintan una vez y
   mueven cuatro atributos por imagen. La cuenta de la radio son unas decenas
   de senos por imagen, y solo en ese peldaño.
-- Las pantallas de la cabina en 3D (`world/pantallas-cabina.ts`) **no llevan
-  todavía la radio**: es el mismo instrumento dicho en lienzo, y es la
-  superficie que se queda atrás si no se hace. Queda apuntado.
+- **La pantalla de navegación de la cabina en 3D** (`world/pantallas-cabina.ts`)
+  lleva la misma radio, de la misma cuenta: `Game` decide una vez por imagen
+  lo que se pinta (`pintarLaRadio`) y se lo da a las dos superficies, que es
+  lo que impide que digan cosas distintas. Allí el curso va escrito al lado
+  de la rosa, encima de la estación: la ventanilla CRS es del cuadro plano. **Los
+  relojes en 3D de las de pistón no la llevan todavía**: su direccional sigue
+  siendo un direccional desde dentro. Queda apuntado.
 - Sin ejercicios: seguir la aguja e interceptar un radial van en la tanda
   siguiente, con la propuesta de abajo.
 

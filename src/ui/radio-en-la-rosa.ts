@@ -142,7 +142,11 @@ export function radioEnLaRosaSvg(cx: number, cy: number, r: number, ancho: numbe
             <path class="cr__radio-curso" d="M0 ${largo + 6} L0 ${r - 12}" />
             ${puntos}
             <line data-radio="barra" class="cr__radio-barra" x1="0" y1="${-largo}" x2="0" y2="${largo}" />
-            <path data-radio="tofrom" class="cr__radio-tofrom" d="M0 ${-largo * 0.62} l-8 12 l16 0 Z" visibility="hidden" />
+            <!--
+              El TO/FROM, más largo que ancho: casi equilátero, en cuanto el
+              curso giraba unos grados parecía apuntar de lado.
+            -->
+            <path data-radio="tofrom" class="cr__radio-tofrom" d="M0 ${-largo * 0.7} l-6 17 l12 0 Z" visibility="hidden" />
           </g>
           <g data-radio="adf" visibility="hidden">
             <path class="cr__radio-adf" d="M0 ${-r + 4} L0 ${r - 4} M-8 ${-r + 20} L0 ${-r + 4} L8 ${-r + 20} M-6 ${r - 4} L0 ${r - 14} L6 ${r - 4}" />
@@ -226,7 +230,7 @@ export function radioEnElDireccionalSvg(): string {
             <path class="cr__radio-curso" d="M0 ${largo + 3} L0 ${r - 4}" />
             ${puntos}
             <line data-radio="barra" class="cr__radio-barra" x1="0" y1="${-largo}" x2="0" y2="${largo}" />
-            <path data-radio="tofrom" class="cr__radio-tofrom" d="M0 ${-largo * 0.62} l-4 6 l8 0 Z" visibility="hidden" />
+            <path data-radio="tofrom" class="cr__radio-tofrom" d="M0 ${-largo * 0.7} l-3 8.5 l6 0 Z" visibility="hidden" />
           </g>
           <g data-radio="adf" visibility="hidden">
             <path class="cr__radio-adf" d="M0 ${-r + 2} L0 ${r - 2} M-4 ${-r + 10} L0 ${-r + 2} L4 ${-r + 10} M-3 ${r - 2} L0 ${r - 7} L3 ${r - 2}" />

@@ -101,6 +101,18 @@ try {
       await page.waitForTimeout(1500);
       await page.screenshot({ path: `${nombre}-aire.png` });
       console.log(`${nombre}-aire.png\n    ${await leer(page)}`);
+      // Y desde dentro, la pantalla de navegación de la cabina en 3D, en la tablet.
+      if (pantalla.nombre === "tablet" && j.avion !== "jaz-20") {
+        // Con la tecla de la cámara, como quien juega, hasta llegar a la cabina.
+        for (let i = 0; i < 10; i++) {
+          if ((await page.evaluate(() => globalThis.__oga.vista())) === "cockpit") break;
+          await page.keyboard.press("KeyC");
+          await page.waitForTimeout(300);
+        }
+        await page.waitForTimeout(2500);
+        await page.screenshot({ path: `${nombre}-cabina.png` });
+        console.log(`${nombre}-cabina.png`);
+      }
     }
     await contexto.close();
   }
