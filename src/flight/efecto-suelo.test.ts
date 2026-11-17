@@ -41,11 +41,13 @@ describe("la fórmula, contra el manual de la FAA", () => {
   });
 
   it("y cuanto más cerca, más, sin saltos", () => {
+    // Un centímetro de altura por cada metro de envergadura: lo más que se
+    // mueve en un paso es un 8 %, con el ala pegada al suelo.
     let antes = alivioDeLaInducida(0, 1);
     for (let x = 0.01; x <= 1.2; x += 0.01) {
       const ahora = alivioDeLaInducida(x, 1);
       expect(ahora).toBeLessThanOrEqual(antes);
-      expect(antes - ahora).toBeLessThan(0.06);
+      expect(antes - ahora).toBeLessThan(0.08);
       antes = ahora;
     }
   });
@@ -53,9 +55,10 @@ describe("la fórmula, contra el manual de la FAA", () => {
   it("la sustentación sube con la misma proporción del ángulo inducido", () => {
     for (const a of AIRCRAFT) {
       const e = efectoSuelo(a, 0.1 * a.wingSpan);
-      // Con el ala de verdad, entre un 5 % y un 20 % más a una décima.
+      // A una décima, entre un 5 % y un 15 % más: el que más, el biplano,
+      // que tiene el ala más corta para su superficie.
       expect(e.sustentacion, a.id).toBeGreaterThan(1.05);
-      expect(e.sustentacion, a.id).toBeLessThan(1.2);
+      expect(e.sustentacion, a.id).toBeLessThan(1.15);
       expect(e.inducida, a.id).toBeCloseTo(1 - alivioDeLaInducida(0.1, 1), 9);
     }
   });

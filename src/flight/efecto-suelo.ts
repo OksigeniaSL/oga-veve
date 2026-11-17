@@ -37,13 +37,17 @@
  * ## Y la sustentación
  *
  * El mismo aire que baja menos es el que le quitaba ángulo al ala: el ángulo
- * inducido, `α_i = C_L / (π·e·A)`, baja en la misma proporción `1 − σ` —la
- * inducida no es otra cosa que `C_L · α_i`—. Con el mismo ángulo de ataque el
- * ala sustenta más, que es lo que dice el manual: «If a constant angle of
- * attack is maintained, an increase in lift coefficient results»
- * (FAA-H-8083-25C, cap. 5). Con la pendiente de la ficha, `a = a₀ / (1 +
- * a₀/(π·e·A))`, sale `C_L(suelo) / C_L = 1 / (1 − σ·a/(π·e·A))`: en el JAZ 90
- * con las ruedas en la pista, un 10 % más; en el 787, un 14 %.
+ * inducido baja en la misma proporción `1 − σ` —la inducida no es otra cosa
+ * que `C_L · α_i`—. Con el mismo ángulo de ataque el ala sustenta más, que es
+ * lo que dice el manual: «If a constant angle of attack is maintained, an
+ * increase in lift coefficient results» (FAA-H-8083-25C, cap. 5).
+ *
+ * El ángulo inducido es el de la línea sustentadora de Prandtl con la carga
+ * elíptica, `α_i = C_L / (π·A)`, y no lleva el `e` de Oswald de la ficha: ése
+ * mete además la parásita que crece con la sustentación, que frena pero no
+ * tuerce el aire. Con la pendiente de la ficha, `a = a₀ / (1 + a₀/(π·A))`, sale
+ * `C_L(suelo) / C_L = 1 / (1 − σ·a/(π·A))`: en el JAZ 90 con las ruedas en la
+ * pista, un 8 % más; en el 787, un 11 %.
  *
  * Todo en SI: metros, y lo demás sin unidades.
  */
@@ -75,22 +79,22 @@ export const SIN_EFECTO_SUELO: EfectoSuelo = { inducida: 1, sustentacion: 1 };
 
 /**
  * **El efecto suelo de un ala a esa altura**: la inducida, por `1 − σ`; la
- * sustentación con el mismo ángulo, por `1 / (1 − σ·a/(π·e·A))`. Ver la
+ * sustentación con el mismo ángulo, por `1 / (1 − σ·a/(π·A))`. Ver la
  * cabecera.
  */
 export function efectoSuelo(
   ala: {
     readonly wingSpan: number;
     readonly wingArea: number;
-    readonly aero: { readonly clAlpha: number; readonly oswald: number };
+    readonly aero: { readonly clAlpha: number };
   },
   altura: number,
 ): EfectoSuelo {
   const sigma = alivioDeLaInducida(altura, ala.wingSpan);
   if (sigma === 0) return SIN_EFECTO_SUELO;
   const alargamiento = (ala.wingSpan * ala.wingSpan) / ala.wingArea;
-  // Lo que la pendiente de la ficha se deja en el ángulo inducido: a/(π·e·A).
-  const r = ala.aero.clAlpha / (Math.PI * ala.aero.oswald * alargamiento);
+  // Lo que la pendiente de la ficha se deja en el ángulo inducido: a/(π·A).
+  const r = ala.aero.clAlpha / (Math.PI * alargamiento);
   return { inducida: 1 - sigma, sustentacion: 1 / (1 - sigma * r) };
 }
 
@@ -106,7 +110,7 @@ export function efectoSueloRodando(ala: {
   readonly alturaDelAla: number;
   readonly wingSpan: number;
   readonly wingArea: number;
-  readonly aero: { readonly clAlpha: number; readonly oswald: number };
+  readonly aero: { readonly clAlpha: number };
 }): EfectoSuelo {
   return efectoSuelo(ala, ala.gearHeight + ala.alturaDelAla);
 }
