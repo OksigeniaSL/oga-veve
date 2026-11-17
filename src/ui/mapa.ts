@@ -70,6 +70,7 @@ import {
   DIANA,
   ensenarRotulo,
   frecuenciaDe,
+  PUNTUALES,
   quitarRotulo,
   seTocaEn,
   sintonizar,
@@ -324,24 +325,26 @@ export class Mapa {
   }
 
   /**
-   * **Lo que hay debajo del dedo en el plano**, o `null`: lo más cercano a
-   * menos de media diana —22 px— de su caja; dentro de dos, el más chico, que
-   * es el que se quería tocar (el VOR encima del aeródromo).
+   * **Lo que hay debajo del dedo en el plano**, o `null`: lo que contenga el
+   * punto y, si nada, lo más cercano a menos de media diana —22 px— de su
+   * caja. Entre dos que lo contienen, como se pintan: tu avión, que va
+   * encima de todo; después un punto —una radioayuda, la rosa—; después el
+   * rótulo de la frecuencia; y el aeródromo, debajo. Ver `PUNTUALES`.
    */
   tocadoEnElPlano(x: number, y: number): ReturnType<Mapa["tocablesDelPlano"]>[number] | null {
+    const capa = (t: { tipo: Tocable }): number =>
+      t.tipo === "avion" ? 3 : PUNTUALES.has(t.tipo) ? 2 : t.tipo === "aerodromo" ? 0 : 1;
     let mejor: ReturnType<Mapa["tocablesDelPlano"]>[number] | null = null;
     let lejos = Infinity;
-    let area = Infinity;
     for (const t of this.tocablesDelPlano()) {
       const dx = Math.max(0, Math.abs(x - t.cx) - t.w / 2);
       const dy = Math.max(0, Math.abs(y - t.cy) - t.h / 2);
       const d = Math.hypot(dx, dy);
       if (d > DIANA) continue;
-      const a = t.w * t.h;
-      if (d < lejos - 0.5 || (Math.abs(d - lejos) <= 0.5 && a < area)) {
+      const gana = !mejor || d < lejos || (d === 0 && lejos === 0 && capa(t) > capa(mejor));
+      if (gana) {
         mejor = t;
         lejos = d;
-        area = a;
       }
     }
     return mejor;

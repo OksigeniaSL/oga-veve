@@ -20,6 +20,7 @@ import {
   fraseDe,
   glosaDe,
   ponerRadioDeLaCarta,
+  PUNTUALES,
   seTocaEn,
   sintonizar,
   tocableDeEstacion,
@@ -143,6 +144,15 @@ describe("lo que la ficha del campo deja tocar", () => {
     expect(html).toMatch(/data-toca="vor" data-rotulo="VOR\/DME TFN 117\.700" data-mhz="117\.7"/);
     // El NDB de Hierro, en kilohercios en la carta y en megahercios en la marca.
     expect(fichaDe("el-hierro", "cabina")).toMatch(/data-toca="ndb" data-rotulo="NDB HIE 376\.000 kHz" data-mhz="0\.376"/);
+  });
+});
+
+describe("debajo del dedo, un punto gana a una raya", () => {
+  it("las radioayudas, los puntos del perfil, el norte y tu avión son puntos; la pista, las calles y las cajas no", () => {
+    for (const tipo of ["vor", "dme", "ndb", "ils", "if", "faf", "mapt", "norte", "avion"] as const) expect(PUNTUALES.has(tipo), tipo).toBe(true);
+    // Si la calle ganara a la pista, tocar la pista en su cruce diría «calle de rodaje».
+    for (const tipo of ["pista", "calle", "plataforma", "aerodromo", "minimos", "frustrada", "msa", "twr"] as const)
+      expect(PUNTUALES.has(tipo), tipo).toBe(false);
   });
 });
 

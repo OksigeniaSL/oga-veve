@@ -267,8 +267,14 @@ export function sintonizar(f: FrecuenciaTocada, peldano: Peldano): boolean {
 
 // ── En la página: qué hay debajo del dedo ──────────────────────────────
 
-/** Lo que tiene que encoger lo de debajo para ganarle a lo de encima: a la cuarta parte. */
-const MUCHO_MAS_CHICO = 0.25;
+/**
+ * **Lo que es un punto en la carta**: un símbolo —una radioayuda, un punto
+ * del perfil, el norte, tu avión— y no una raya o una mancha. Un punto gana a
+ * la raya o la mancha que tenga debajo o encima: el VOR LRO está en la punta
+ * de la pista de Los Rodeos, medio tapado por ella, y quien lo toca quiere el
+ * VOR; la pista no gana nunca al VOR por estar pintada después.
+ */
+export const PUNTUALES: ReadonlySet<Tocable> = new Set<Tocable>(["vor", "dme", "ndb", "ils", "if", "faf", "mapt", "norte", "avion"]);
 
 /** Hasta dónde se mira alrededor del dedo, px: la mitad de una diana de 44. */
 export const DIANA = 22;
@@ -292,9 +298,10 @@ export function tocadoEn(dentro: Element, x: number, y: number): HTMLElement | S
   /*
    * Lo de la hoja de encima, que es lo que se ve: con la carta de
    * aproximación abierta la ficha sigue debajo, y no se toca a través de
-   * ella. Y de lo que hay en ese punto, lo de encima salvo que debajo asome
-   * algo mucho más chico: el VOR de Los Rodeos está en la punta de la pista,
-   * medio tapado por ella, y quien lo toca quiere el VOR.
+   * ella. Y de lo que hay en ese punto, lo de encima, salvo que debajo asome
+   * un punto (`PUNTUALES`). Por tamaño no: una calle de rodaje que cruza
+   * bajo la pista tiene la caja más chica que la pista en diagonal, y tocar
+   * la pista decía «calle de rodaje».
    */
   const mirar = (px: number, py: number): HTMLElement | SVGElement | null => {
     const arriba = doc.elementFromPoint(px, py);
@@ -303,17 +310,14 @@ export function tocadoEn(dentro: Element, x: number, y: number): HTMLElement | S
     if (arriba.closest("button, label, a, input")) return null;
     const hoja = arriba.closest(".iac, .ficha-carta__hoja") ?? dentro;
     let mejor: HTMLElement | SVGElement | null = null;
-    let area = Infinity;
     for (const el of doc.elementsFromPoint(px, py)) {
       if (!hoja.contains(el)) continue;
       const marcado = el.closest<HTMLElement | SVGElement>("[data-toca]");
       if (!marcado || !hoja.contains(marcado) || marcado === mejor) continue;
-      const r = marcado.getBoundingClientRect();
-      const a = r.width * r.height;
-      if (!mejor || a < area * MUCHO_MAS_CHICO) {
-        mejor = marcado;
-        area = a;
-      }
+      const tipo = marcado.getAttribute("data-toca");
+      const puntual = esTocable(tipo) && PUNTUALES.has(tipo);
+      if (puntual) return marcado;
+      mejor ??= marcado;
     }
     return mejor;
   };
@@ -378,15 +382,19 @@ export function ensenarRotulo(hoja: HTMLElement, como: ComoSeDice, donde: DOMRec
   else franja.removeAttribute("aria-label");
   /*
    * Encima de lo tocado si cabe, y si no, debajo: la franja no tapa lo que
-   * se está explicando.
+   * se está explicando. Si no cabe ni encima ni debajo —la carta de
+   * aproximación en un teléfono tumbado mide 222 px—, va sin la frase
+   * escrita, solo el rótulo y su glosa: la frase la dice la voz.
    */
   const caja = hoja.getBoundingClientRect();
   franja.style.top = "";
   franja.style.bottom = "6px";
   if (donde && conLetra) {
-    const alto = franja.offsetHeight + 12;
     const arriba = donde.top - caja.top;
     const abajo = caja.bottom - donde.bottom;
+    const texto = franja.querySelector<HTMLElement>(".toque-rotulo__texto");
+    if (texto && Math.max(arriba, abajo) < franja.offsetHeight + 12) texto.remove();
+    const alto = franja.offsetHeight + 12;
     /*
      * Donde quepa entera sin tapar lo tocado; si no cabe ni encima ni
      * debajo, pegada al borde del lado con más sitio, que tapa lo menos.

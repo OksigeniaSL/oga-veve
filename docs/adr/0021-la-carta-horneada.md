@@ -526,8 +526,11 @@ escrita, que es el gemelo de la voz para quien juega sin sonido. En Guyrami
 no sale franja: lo tocado se ilumina en ocre y la instructora lo dice.
 
 El rótulo va en una franja de papel del ancho de su hoja —el texto ocupa su
-caja—, encima de lo tocado si cabe y si no debajo, para no taparlo; no recibe
-toques y se va a los siete segundos o con el siguiente toque. Lo tocado se
+caja—, encima de lo tocado si cabe y si no debajo, para no taparlo; si no
+cabe en ninguno de los dos lados —la carta de aproximación en el teléfono
+tumbado mide 222 px de alto—, va sin la frase escrita, el rótulo y su glosa,
+que la frase la dice la voz. No recibe toques y se va a los siete segundos o
+con el siguiente toque. Lo tocado se
 ilumina con el ocre del foco: un brillo en el SVG y, en las cajas de HTML —la
 tabla de mínimos, la frustrada, una frecuencia—, el contorno del foco con un
 halo por fuera; el brillo sobre cada letra dejaba la tabla borrosa.
@@ -546,13 +549,16 @@ no es su caja) y, si no hay nada que se toque, a 11 y a 22 px alrededor, ocho
 rumbos cada vez; gana lo primero que se encuentre desde el centro. Solo en
 la hoja de encima: con la carta de aproximación abierta la ficha sigue
 debajo, y no se toca a través de ella. En un mismo punto manda lo de encima,
-salvo que debajo asome algo cuatro veces más chico: el VOR LRO está en la
-punta oeste de Los Rodeos, medio tapado por la pista, y la primera foto
-salía «RWY 12/30» al tocarlo. Un botón o una etiqueta mandan: cerrar,
-volver, ir, las pestañas. En el plano se mira lo pintado: cada cosa con su caja en
-píxeles de pantalla, y gana la más cercana a menos de 22 px y, entre dos que
-lo contienen, la más chica, que es la que se quería tocar —el VOR encima del
-aeródromo—.
+salvo que debajo asome **un punto** —una radioayuda, un punto del perfil, el
+norte, tu avión (`PUNTUALES`)—: el VOR LRO está en la punta oeste de Los
+Rodeos, medio tapado por la pista, y la primera foto salía «RWY 12/30» al
+tocarlo. Por tamaño no: con «el más chico gana», tocar la pista en el centro
+decía «TWY E3», la calle que la cruza por debajo. Un botón o una etiqueta
+mandan: cerrar, volver, ir, las pestañas. En el plano se mira lo pintado:
+cada cosa con su caja en píxeles de pantalla; gana la que contenga el punto
+o, si ninguna, la más cercana a menos de 22 px; y entre dos que lo
+contienen, por capas, como se pintan: tu avión, un punto, el rótulo de la
+frecuencia y el aeródromo.
 
 ### La frecuencia, y la radio que el juego no tiene
 
