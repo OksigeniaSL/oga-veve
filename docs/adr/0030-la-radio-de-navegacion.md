@@ -1706,3 +1706,97 @@ que no es de aquí. Con las dos comprobaciones corregidas, **990 de 990**.
   de pie, no un ancho.
 - **En la tablet de 900 × 600, de fuera, la tarjeta de la orden pasa por delante
   del asa del cuadro**, como antes de esta tanda.
+
+## Enmienda H28f (17-11-2026): lo que se lee, en un solo sitio
+
+H28b, H28c, H28d y H28e arreglaron, uno detrás de otro, dónde va lo que se lee
+cuando no cabe todo, y cada uno dejó al lado otro solape que su comprobación no
+medía. H28e dejó escritos seis: el asa del cuadro fuera de la cuenta, la
+pantalla en grande del teléfono sin mirar, la cabina de pie con ratón, la
+tarjeta de la orden sobre el asa en la tablet de 900 × 600, la radio de la
+barra sobre los botones de la columna de la pausa en cabina y la tarjeta de la
+orden medida con la que hubiera al arrancar. Cuando una queja vuelve, el arreglo
+anterior fue en el sitio equivocado, y el sitio equivocado era este: **cada
+arreglo era una variable más de la hoja** (`--columna-izquierda`,
+`--lee-izquierda`, `--lee-derecha`, `--rincon-derecha`, `--torre-alto`,
+`--subtitulo-alto`…) **que apartaba una pieza de otra pieza concreta**, y el
+día que salía un botón nuevo, o una vista nueva, nadie se apartaba de él. Y la
+comprobación miraba esas mismas piezas, con una lista a mano.
+
+### Lo que se cambió
+
+- **La cuenta, entera y de una vez.** `npm run carteles` mira ahora
+  (`mirarLoQueSeLee`) **todo lo que se lee contra todo lo que se toca**, en
+  **las tres vistas** —fuera, cabina y, en el teléfono, la pantalla en
+  grande—, en **las diez pantallas y los dos juegos**, más **la ventana de pie
+  de 600 × 900 con ratón**, y en **las cuatro maneras** en que coinciden (los
+  tres a la vez, el aviso con el subtítulo, la lámpara con el subtítulo y el
+  subtítulo solo).
+  - **Lo que se toca sale de la página**, no de una lista: todo `button` que no
+    esté desactivado, `[role=button]`, campo, enlace, y las marcas que el juego
+    ya usaba para lo que se toca —las losas del teléfono (`data-tel-grande`),
+    la rueda y la ventanilla del MCP, los mandos de la radio, las piezas del
+    cuadro que se explican al tocarlas (`data-explica`), las palancas de
+    pulgar (`data-touch`)— y una nueva, `data-tocable`, para lo que se toca y
+    no es nada de eso: las tarjetas del gas y del freno y la cápsula del
+    volumen. El asa, la pausa, la radio, la tarjeta de la orden cuando se
+    pulsa, la pantalla en grande: entran solas, y lo que se añada mañana con
+    una de esas formas, también.
+  - **Lo que se lee** es el aviso, la lámpara de la torre, la tarjeta de la
+    orden, el subtítulo (y la altura en grande, que va en su caja), el tutor y
+    la radio, cada uno **con lo más largo que lleva**: la orden, la más larga
+    de todos los rótulos que `game.ts` le pasa, sacada del código al arrancar
+    el banco (hoy, «Mirá el plano: la cruz quedó lejos del avión…», 234
+    letras, cuatro veces la de arrancar el motor).
+  - Que nada de lo que se lee pise nada de eso, ni se pisen entre sí. Lo que
+    espera no cuenta, porque esperar es la respuesta cuando no cabe; pero **el
+    aviso no espera nunca**, y el subtítulo solo y la lámpara con el subtítulo
+    se tienen que ver, para que esconderlo todo no pase la cuenta.
+- **El reparto, en un solo sitio** (`src/ui/reparto.ts`). La hoja sigue
+  diciendo dónde *quiere* ir cada cosa —la columna de cabina, debajo de la
+  barra, apoyado en el cuadro—, y `repartirLoQueSeLee` comprueba que ahí no pisa
+  nada, con la misma regla de lo que se toca. Si pisa, la coloca **por
+  prioridad: el aviso, la lámpara, la tarjeta de la orden, el subtítulo, el
+  tutor y la radio**. Primero la estrecha en el tramo libre de su fila, nunca
+  por debajo de la mitad de su hueco ni de lo que mide entera; luego la prueba
+  en el sitio de una que va detrás (la lámpara sube al del subtítulo) o debajo
+  de lo ya puesto; y si no cabe en ninguno, **espera** (`.lee-espera`:
+  escondida sin dejar su sitio), como en un avión cuando no hay sitio para
+  todo, uno a la vez y por orden. El subtítulo que espera no corre su reloj
+  (`Hud.subtituloEsperando`), como ya pasaba con el aviso y la lámpara. La
+  tarjeta de la orden, antes de esperar, **se recoge a su dibujo**
+  (`.lee-recogida`): el dibujo es lo esencial (regla 2) y la frase la dice la
+  instructora. **El aviso no espera nunca**: si no tiene sitio libre se queda
+  en el suyo y lo demás se aparta de él.
+- **Por qué midiendo y no con más CSS.** Lo que hay que esquivar depende de lo
+  que esté encendido —el freno sale al tocar suelo, la barra se parte en
+  filas, la pantalla se pone en grande, antes de arrancar hay dos botones más—
+  y en la hoja cada combinación era una regla nueva. Medido, cualquier
+  combinación sale de la misma cuenta. Y no se paga en cada fotograma
+  (regla 6): el reparto corre solo cuando cambia algo de lo que se lee —se
+  enciende, se apaga, cambia de texto o de clase—, cuando la raíz del HUD
+  cambia de clase o cuando quien mide el HUD avisa de que algo de lo que se
+  toca ha cambiado de tamaño; una vez por fotograma como mucho, y nada si la
+  firma de lo que se mira no ha cambiado, que el juego vuelve a poner las
+  mismas clases en cada fotograma. Cuando corre son unas decenas de cajas y
+  una o dos maquetaciones.
+- **Las variables de la hoja se quedan, con otro papel.** Dicen dónde prefiere
+  ir cada pieza, que es diseño (la lámpara al lado de la tarjeta en cabina, el
+  aviso apoyado en el cuadro), y así en el caso de siempre el reparto no mueve
+  nada. Lo que ya no hacen es apartar una pieza de un mando: eso es del
+  reparto. **Un solape nuevo se arregla ahí, no con otra variable.**
+- **De pie y con ratón, en cabina, lo que se lee va debajo de la columna de
+  mandos, de lado a lado.** Al lado no cabía nada: 600 de ancho, la columna en
+  dos de fondo 284 y la tarjeta de la orden 350. Debajo de la columna
+  (`--columna-abajo`, que mide el HUD con lo de dentro, que en dos de fondo se
+  sale de su caja) empieza la franja de cabina con el mismo orden: el aviso,
+  la lámpara, la tarjeta y el subtítulo. Esto sí es de la hoja, porque es
+  dónde quiere ir; lo que aún choque, lo coloca el reparto.
+- **Los bancos reparten con el estado que ponen** (`Hud.repartirAhora`). El
+  juego apaga en cada fotograma el aviso y la lámpara que el banco enciende a
+  mano, y el reparto del fotograma siguiente veía un estado a medias; antes de
+  medir, el banco le pide que reparta ya.
+
+La regla va a DESIGN.md, §5 («Dónde va lo que se lee lo decide un solo
+sitio»), y §4 y §8 la nombran.
+

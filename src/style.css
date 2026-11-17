@@ -14853,12 +14853,30 @@ oksigenia-access-panel::part(trigger):focus-visible {
  */
 @media (orientation: portrait) and (pointer: fine) {
   /*
-   * De pie no hay sitio al lado de la tarjeta de la orden: la pantalla mide
-   * 600 y la tarjeta 350. La lámpara sigue yendo de la columna de la pausa a
-   * la de mandos, y la tarjeta, debajo de ella, como estaba antes de H28e.
+   * **De pie, lo que se lee va debajo de la columna de mandos, de lado a
+   * lado** (ADR 0030, enmienda H28f). Al lado no cabía nada: la pantalla mide
+   * 600, la columna de mandos en dos de fondo 284 y la tarjeta de la orden
+   * 350, y se cruzaban aun sin lámpara; la lámpara se quedaba en 114 píxeles
+   * y el aviso, en cuatro líneas encima de la tarjeta del gas. De pie lo que
+   * sobra es alto: la columna acaba (`--columna-abajo`, que mide el HUD) y
+   * debajo empieza la franja de lo que se lee, con el mismo orden que arriba
+   * —el aviso, la lámpara, la tarjeta y el subtítulo—. Ahí ya no baja la
+   * columna de la pausa, así que de borde a borde; si algo pisa, lo coloca el
+   * reparto (`ui/reparto.ts`).
    */
   .hud.hud--cabina {
-    --lee-izquierda: max(16px, var(--vistas-derecha, 0px) + 8px);
+    --franja: calc(
+      max(
+        max(var(--arriba-alto, 58px), var(--alto-de-la-barra, 58px) + 16px) + 8px,
+        var(--columna-abajo, 0px) + 12px
+      )
+    );
+    --lee-izquierda: 16px;
+    --lee-derecha: 16px;
+  }
+
+  .hud.hud--cabina .hud__abajo > .aviso-hud {
+    left: 16px;
   }
 
   .hud.hud--cabina .rincon {
@@ -14867,7 +14885,7 @@ oksigenia-access-panel::part(trigger):focus-visible {
 
   .hud.hud--cabina .hud__abajo > [data-hud="hint"] {
     top: calc(var(--franja) + var(--torre-alto, 0px) + var(--rincon-alto, 0px) + 8px);
-    left: max(16px, var(--vistas-derecha, 0px) + 8px);
+    left: 16px;
     right: 16px;
   }
 
@@ -21715,4 +21733,24 @@ path.kit-hueco__forma {
  */
 :root.pizarra .pausa {
   place-items: end center;
+}
+
+/*
+ * **Lo que se lee y no cabe, espera** (ADR 0030, enmienda H28f). Lo decide
+ * `repartirLoQueSeLee` (`src/ui/reparto.ts`): si una cosa que se lee no tiene
+ * sitio sin pisar un mando o algo que manda más, se esconde sin dejar su
+ * sitio hasta que lo haya. Con `!important` porque cada pieza tiene su
+ * visibilidad en una regla distinta de cada pantalla, y esperar gana a todas.
+ */
+.lee-espera {
+  visibility: hidden !important;
+}
+
+/*
+ * Y la tarjeta de la orden que no cabe con su frase se queda con el dibujo,
+ * que es lo que se entiende sin leer; la frase la dice la instructora. Lo
+ * decide el mismo reparto (`lee-recogida`).
+ */
+.senal.lee-recogida .senal__texto {
+  display: none;
 }
