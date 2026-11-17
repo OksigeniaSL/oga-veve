@@ -293,6 +293,12 @@ try {
   await verElPlano(true);
   await pausa(800);
   await foto("04-la-cruz", true);
+  // Y con la lupa, dos pasos: en el plano ancho, una milla son unos pocos píxeles.
+  for (let i = 0; i < 2; i++) {
+    await page.locator('.mapa [data-accion="cerca"]').first().click();
+    await pausa(500);
+  }
+  await foto("04b-la-cruz-de-cerca", true);
   await verElPlano(false);
 
   // Nada que no sea del ejercicio (H26f): ni la fase del plan, ni la torre, ni la frecuencia, ni la ventanilla.
