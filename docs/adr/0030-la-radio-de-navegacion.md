@@ -988,7 +988,9 @@ subtítulo en todas las pantallas; las dieciséis de la cabina sin aviso fallaba
 por la comprobación, que dejaba que el juego apagase la lámpara entre
 fotograma y fotograma y la buscaba en la esquina de la pantalla; y una era un
 módulo que no llegó a bajar al arrancar la página (`Failed to fetch
-dynamically imported module`), que no es de aquí.
+dynamically imported module`), que no es de aquí. Con el subtítulo esperando
+en todas las pantallas y la lámpara vuelta a encender en cada fotograma de la
+pasada sin aviso, **925 de 925**.
 
 ### Lo que cuesta, y lo que queda
 
