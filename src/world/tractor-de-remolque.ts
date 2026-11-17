@@ -37,7 +37,13 @@ import {
   type Material,
 } from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import type { GestoDeTierra, MedidasDelTractor, Remolque } from "./remolque";
+import {
+  CUNA_DEL_TRACTOR,
+  LEVANTA_LA_RUEDA,
+  type GestoDeTierra,
+  type MedidasDelTractor,
+  type Remolque,
+} from "./remolque";
 
 /** El amarillo del material de plataforma, el mismo de los calzos. */
 const AMARILLO = 0xf2c230;
@@ -51,6 +57,8 @@ const REFLECTANTE = 0xe8eef0;
 /** La cinta roja del pasador, la de *REMOVE BEFORE FLIGHT*. */
 const ROJO = 0xd8232a;
 const NEGRO = 0x1a1c20;
+/** Lo gruesa que es la pala de la cuna, m. */
+const GROSOR_DE_LA_PALA = 0.08;
 
 /**
  * **Cuánto más grande que una persona de verdad**: lo que se lee desde una ventanilla a
@@ -138,6 +146,8 @@ export class DibujoDelRemolque {
   private readonly piernaDer: Group;
   /** El pasador con su cinta, en la mano derecha. */
   private readonly pasador = new Group();
+  /** La pala de la cuna, que sube con la rueda de morro encima: ver `Remolque.ruedaEnVilo`. */
+  private pala!: Mesh;
   private readonly cable: Mesh;
   private readonly baliza: MeshBasicMaterial;
   private readonly materiales: Material[] = [];
@@ -228,7 +238,7 @@ export class DibujoDelRemolque {
     const piloto = new MeshBasicMaterial({ color: 0xc81e1e });
     m.push(pintura, negro, cristal, faro, piloto);
     const alto = t.alto * 0.55;
-    const cuna = t.largo * 0.32;
+    const cuna = t.largo * CUNA_DEL_TRACTOR;
     // El chasis, de la cuna para delante.
     const chasis = new Mesh(new BoxGeometry(t.ancho, alto, t.largo - cuna), pintura);
     chasis.position.set(0, 0.25 + alto / 2, -cuna / 2);
@@ -238,8 +248,15 @@ export class DibujoDelRemolque {
       brazoDeCuna.position.set(lado * t.ancho * 0.36, 0.25 + alto * 0.45, t.largo / 2 - cuna / 2);
       this.tractor.add(brazoDeCuna);
     }
-    const pala = new Mesh(new BoxGeometry(t.ancho * 0.44, 0.12, cuna * 0.8), negro);
-    pala.position.set(0, 0.18, t.largo / 2 - cuna / 2);
+    /*
+     * **La pala, debajo de la rueda y con ella encima**: la rueda va en medio de la cuna
+     * (`tractorEnganchado` en `remolque.ts`), y la pala la lleva en vilo, con su cara de
+     * arriba a lo que la levanta. Iba a doce centímetros del suelo con la rueda en el
+     * asfalto, y la atravesaba. Va aparte de lo demás, que se mueve: una llamada de
+     * dibujo más. Ver `poner`.
+     */
+    const pala = new Mesh(new BoxGeometry(t.ancho * 0.44, GROSOR_DE_LA_PALA, cuna * 0.8), negro);
+    pala.position.set(0, LEVANTA_LA_RUEDA - GROSOR_DE_LA_PALA / 2, t.largo / 2 - cuna / 2);
     // La cabina, en la esquina delantera izquierda, con su cristal.
     const cabina = new Mesh(new BoxGeometry(t.ancho * 0.32, t.alto - alto, t.largo * 0.2), pintura);
     const yCabina = 0.25 + alto + (t.alto - alto) / 2;
@@ -272,8 +289,11 @@ export class DibujoDelRemolque {
         rueda.position.set(lado * (t.ancho / 2 - 0.15), 0.42, z);
         this.tractor.add(rueda);
       }
-    this.tractor.add(chasis, pala, cabina, vidrio);
+    this.tractor.add(chasis, cabina, vidrio);
     juntarPorMaterial(this.tractor);
+    // Después de juntar lo quieto: la pala sube y baja.
+    this.pala = pala;
+    this.tractor.add(pala);
   }
 
   /**
@@ -286,6 +306,10 @@ export class DibujoDelRemolque {
     const t = r.tractor;
     this.tractor.position.set(t.x, cota(t.x, t.z), t.z);
     this.tractor.rotation.y = -t.rumbo;
+    // La pala, con la rueda de morro encima: sin rueda que llevar, abajo y sin dibujar.
+    const enVilo = r.ruedaEnVilo;
+    this.pala.visible = enVilo > 0.005;
+    this.pala.position.y = enVilo - GROSOR_DE_LA_PALA / 2;
     // La baliza destella una vez por segundo: encendida algo más de la mitad.
     this.baliza.color.setHex(this.reloj % 1 < 0.55 ? AMBAR : 0x3a2a14);
     const p = r.persona;

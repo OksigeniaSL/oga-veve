@@ -8,7 +8,10 @@ import { describe, expect, it } from "vitest";
 import type { Punto } from "./aerodrome";
 import {
   ACELERA_EMPUJANDO,
+  CUNA_DEL_TRACTOR,
   DIRECCION_MAXIMA,
+  LEVANTA_LA_RUEDA,
+  morroEnVilo,
   edificiosDePasarela,
   esPuestoDeContacto,
   largoPorLaBatalla,
@@ -271,12 +274,53 @@ describe("el remolque, paso a paso", () => {
       r.paso(0.1);
       if (r.fase !== "empujando") break;
       const rueda = r.ruedaDeMorro;
-      // La cuna, en la rueda: el centro del tractor, a medio largo menos un metro por delante.
-      expect(Math.hypot(r.tractor.x - rueda.x, r.tractor.z - rueda.z)).toBeCloseTo(r.medidasDelTractor.largo / 2 - 1, 3);
+      // La rueda, en medio de la cuna: el centro del tractor, por delante lo que le queda de largo.
+      const largo = r.medidasDelTractor.largo;
+      expect(Math.hypot(r.tractor.x - rueda.x, r.tractor.z - rueda.z)).toBeCloseTo((largo * (1 - CUNA_DEL_TRACTOR)) / 2, 3);
+      // Y en vilo, todo el empuje.
+      expect(r.ruedaEnVilo).toBe(LEVANTA_LA_RUEDA);
       const d = Math.hypot(r.persona.x - rueda.x, r.persona.z - rueda.z);
       expect(d).toBeGreaterThan(r.medidasDelTractor.ancho / 2 + 1);
       expect(d).toBeLessThan(8);
     }
+  });
+
+  /*
+   * **La rueda de morro, en vilo mientras el tractor la tiene.** Un tractor sin barra la
+   * sube sobre su pala; la pala la atravesaba con la rueda en el suelo. Y el avión gira
+   * sobre las principales: medido contra el suelo, ni flota ni se hunde.
+   */
+  it("la rueda de morro va en vilo mientras el tractor la tiene, y baja al soltarse", () => {
+    const r = new Remolque(e, ANCHO);
+    expect(r.fase).toBe("enganchado");
+    expect(r.ruedaEnVilo).toBe(LEVANTA_LA_RUEDA);
+    r.empezar();
+    let antes = r.ruedaEnVilo;
+    let bajando = 0;
+    for (let i = 0; i < 4000 && !r.libre; i++) {
+      r.paso(0.1);
+      const ahora = r.ruedaEnVilo;
+      // Mientras la tiene, en vilo o bajando; suelta, en el suelo.
+      if (r.enganchado) expect(ahora).toBeGreaterThanOrEqual(0);
+      else expect(ahora).toBe(0);
+      expect(ahora).toBeLessThanOrEqual(antes + 1e-9);
+      if (ahora < antes) bajando++;
+      antes = ahora;
+    }
+    expect(r.libre).toBe(true);
+    // Baja poco a poco, no de golpe.
+    expect(bajando).toBeGreaterThan(10);
+  });
+
+  it("con la rueda de morro en vilo, el avión gira sobre las principales", () => {
+    // El JAZ 90: 11,5 m de batalla, y las principales 1,4 m por detrás de su referencia.
+    const batalla = 11.5;
+    const principales = 1.4;
+    const { cabeceo, sube } = morroEnVilo(LEVANTA_LA_RUEDA, batalla, principales);
+    expect(cabeceo).toBeGreaterThan(0);
+    expect(sube + Math.sin(cabeceo) * (batalla - principales)).toBeCloseTo(LEVANTA_LA_RUEDA, 4);
+    expect(sube - Math.sin(cabeceo) * principales).toBeCloseTo(0, 6);
+    expect(morroEnVilo(0, batalla, principales)).toEqual({ cabeceo: 0, sube: 0 });
   });
 });
 

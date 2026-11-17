@@ -20,10 +20,11 @@ describe("el dibujo del remolque", () => {
   const medidas = tractorPara(11.5);
   const d = new DibujoDelRemolque(medidas);
 
-  it("cuesta dieciocho llamadas de dibujo, no treinta y una", () => {
-    // Tractor: pintura, negro, cristal, faros, pilotos y baliza. Persona: chaleco, bandas,
-    // piel, casco y cascos de oír; los cuatro miembros, el pasador con su cinta y el cable.
-    expect(mallas(d).length).toBeLessThanOrEqual(18);
+  it("cuesta diecinueve llamadas de dibujo, no treinta y una", () => {
+    // Tractor: pintura, negro, cristal, faros, pilotos, baliza y la pala, que sube con la
+    // rueda. Persona: chaleco, bandas, piel, casco y cascos de oír; los cuatro miembros, el
+    // pasador con su cinta y el cable.
+    expect(mallas(d).length).toBeLessThanOrEqual(19);
   });
 
   it("y el tractor sigue midiendo lo que mide, con las ruedas en el suelo", () => {

@@ -82,6 +82,7 @@ import {
 import { desplazadoDe } from "./umbral-desplazado";
 import {
   poseDelEmpuje,
+  morroEnVilo,
   Remolque,
   vector,
   type Empuje,
@@ -4591,7 +4592,19 @@ function colocar(quien: Volando): void {
     const y = porElCamino(quien.marca.camino, quien.recorrido)?.sitio.y ?? quien.grupo.position.y;
     quien.grupo.position.set(a.x, y, a.z);
     quien.grupo.rotation.y = giroDelModelo(a.rumbo);
-    quien.grupo.rotation.x = 0;
+    /*
+     * **Con el tractor debajo, la rueda de morro en vilo** y el morro unos centímetros
+     * arriba, sobre las principales, como el de quien juega. Esperando su turno en el
+     * puesto todavía no hay tractor dibujado, y está en el suelo. Ver
+     * `Remolque.ruedaEnVilo`.
+     */
+    const cuerpo = CUERPO_DEL_TRAFICO[quien.tipo.id];
+    const principales = cuerpo.batalla - MORRO_DEL_TRAFICO[quien.tipo.id].rueda;
+    const vilo = quien.dibujoDelRemolque
+      ? morroEnVilo(r.ruedaEnVilo, cuerpo.batalla, principales)
+      : { cabeceo: 0, sube: 0 };
+    quien.grupo.rotation.x = vilo.cabeceo;
+    quien.grupo.position.y += vilo.sube;
     return;
   }
   const donde = quien.tresSesenta
