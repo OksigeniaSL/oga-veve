@@ -187,36 +187,46 @@ describe("la raya verde rodea los aviones parados", () => {
     });
   }
 
-  it("en Los Rodeos, que es donde se vio, la rodea casi siempre", () => {
+  /*
+   * **En Los Rodeos, que es donde se vio.** El que aterrizaba se quedaba aparcado donde
+   * acababa su camino, y su camino se recortaba al asfalto: acababa al final del ramal de
+   * la entrada de la plataforma, (-312, 255), por donde se llega a todos los puestos de
+   * ese lado. Desde que prefiere un puesto al que se llega entero (`rutaEntre` en
+   * `suelo-del-trafico.ts`), aparca en un puesto y ninguna ruta de la pista a otro pasa
+   * por encima de él; y si uno se queda parado en ese ramal, tu raya lo rodea casi
+   * siempre.
+   */
+  it("en Los Rodeos, que es donde se vio, ya no aparca en la calle, y si uno se para ahí la raya lo rodea", () => {
     const esc0 = SCENARIOS.find((e) => e.id === "tenerife-norte")!;
     const aero = esc0.aerodrome as Aerodrome;
     const ancho = aero.runways[0]?.widthM ?? 45;
     const grafo = construirGrafo(aero, SEMIALA);
-    let pasaban = 0;
-    let rodean = 0;
+    const salida = aero.runways[0]!.centerline[1] ?? aero.runways[0]!.centerline[0]!;
+    /** Las rutas de la pista a los puestos que pasan junto a `parado`, y cuántas lo rodean. */
+    const medir = (parado: Punto) => {
+      let pasaban = 0;
+      let rodean = 0;
+      for (const puesto of aero.parkingPositions ?? []) {
+        if (Math.hypot(puesto.xy[0] - parado[0], puesto.xy[1] - parado[1]) < RADIO) continue;
+        const antes = rodajeEntre(grafo, salida, puesto.xy, 600);
+        if (!antes || !cerca(densa(antes.puntos), parado, RADIO / 2)) continue;
+        pasaban++;
+        const ahora = rodajeEntre(grafo, salida, puesto.xy, 600, { puntos: [parado], radio: RADIO });
+        if (ahora && !ahora.ocupada) rodean++;
+      }
+      return { pasaban, rodean };
+    };
     for (const esc of porLasDos(esc0)) {
       const suelo = sueloDelTrafico(aero, esc.runway, ancho)!;
       for (const tipo of tiposDelCampo(aero.id, esc.runway.length)) {
         const fin = suelo.llegada(tipo.toca + tipo.frena)?.camino.at(-1);
         if (!fin) continue;
-        const parado: Punto = [fin.x, -fin.z];
-        for (const puesto of aero.parkingPositions ?? []) {
-          if (Math.hypot(puesto.xy[0] - parado[0], puesto.xy[1] - parado[1]) < RADIO)
-            continue;
-          const salida = aero.runways[0]!.centerline[1] ?? aero.runways[0]!.centerline[0]!;
-          const antes = rodajeEntre(grafo, salida, puesto.xy, 600);
-          if (!antes || !cerca(densa(antes.puntos), parado, RADIO / 2)) continue;
-          pasaban++;
-          const ahora = rodajeEntre(grafo, salida, puesto.xy, 600, {
-            puntos: [parado],
-            radio: RADIO,
-          });
-          if (ahora && !ahora.ocupada) rodean++;
-        }
+        expect(medir([fin.x, -fin.z]).pasaban, `${tipo.id} por la ${Math.round(esc.runway.heading)}`).toBe(0);
       }
     }
-    expect(pasaban).toBeGreaterThan(0);
-    expect(rodean / pasaban).toBeGreaterThan(0.5);
+    const enElRamal = medir([-312.3, 255]);
+    expect(enElRamal.pasaban).toBeGreaterThan(0);
+    expect(enElRamal.rodean / enElRamal.pasaban).toBeGreaterThan(0.5);
   });
 });
 
