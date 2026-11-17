@@ -453,6 +453,13 @@ export const GUION_LLEGADA_A_ASUNCION: GuionDelPasaje<MomentoDeLaLlegada, Charla
   sellosAlDecirlo: () => [],
   seQuedanHastaLaSiguiente: new Set(),
   elPlop: [],
+  /*
+   * Nada que parar para el ralentí: lo largo de este capítulo va en la apertura, que
+   * acaba con el anuncio de la comandante unos seis minutos antes del punto de
+   * descenso, y lo que queda en la cola después es de una frase. Con el punto de
+   * descenso en cualquier sitio desde el anuncio, Ara lo nota a los 13 s como mucho:
+   * ver «el ralentí al empezar a bajar, con cualquier crucero» en su prueba.
+   */
   paraEnLaBajada: new Set(),
   elOficio: [],
   bano: null,

@@ -375,3 +375,127 @@ describe("el anuncio de la bajada", () => {
     expect(ES_PY["comandante.largo.bajada"]).not.toMatch(/Empezamos a bajar/);
   });
 });
+
+/*
+ * **El ralentí, con cualquier crucero** (17-11-2026, H27b). En el vuelo corto,
+ * con un crucero de medio minuto, el ralentí llegaba con la tripulante contando
+ * las nubes en el asiento de Ara, y el anuncio de la bajada esperaba a que
+ * acabara: Ara ya no lo podía notar. Aquí se mira lo mismo barriendo cuándo
+ * llega el punto de descenso, con las frases durando lo que duran sus tomas.
+ *
+ * Y aquí no pasa, así que no se para nada (`paraEnLaBajada` vacío): lo largo de
+ * este capítulo —la mañana bajo sus láminas, dos minutos de frases— va en la
+ * apertura, que acaba con la ventanilla y el anuncio de la comandante unos seis
+ * minutos antes del punto de descenso del perfil, y después solo queda lo que
+ * se dice en una frase. Con el punto de descenso en cualquier sitio desde que
+ * empieza el anuncio, Ara lo nota entre 0 y 13 s después del cambio. Antes de
+ * eso no se mira: con la entrada a 400 km de Pettirossi, el punto de descenso
+ * no puede caer en la apertura.
+ */
+describe("el ralentí al empezar a bajar, con cualquier crucero", () => {
+  /** Lo que tarda como mucho Ara en notarlo, s: ver `SE_OYE_EL_CAMBIO` en `motor-del-pasaje.ts`. */
+  const A_TIEMPO = 40;
+  const DT_DEL_VUELO = 0.1;
+  const PIEZAS = [ARA, COMANDANTE, TRIPULACION, TRIPULANTE].map((m) => (m as unknown as { piezas: Record<string, { ms: number }> }).piezas);
+  /** Lo que dura una frase: su toma, o la suma de sus trozos si es un anuncio montado; sin toma, sus letras a catorce por segundo. */
+  const dura = (l: Linea): number =>
+    (l.relleno ? Object.values(l.relleno) : [l.clave]).reduce((s, clave) => {
+      const toma = PIEZAS.find((p) => clave in p)?.[clave];
+      const texto = (ES_PY[clave as keyof typeof ES_PY] as string | undefined) ?? l.texto ?? "";
+      return s + (toma ? toma.ms / 1000 : texto.length / 14);
+    }, 0);
+  const ANUNCIO = anuncioDeLaBajadaDelVueloLargo(6 * 3600 + 44 * 60, 35 * 60, { temp: 24, visibilidadM: 10_000, techoM: null } as Meteo);
+
+  /**
+   * El capítulo desde su despertar, en crucero, y a los `crucero` segundos el punto de
+   * descenso con los motores al ralentí. Con `conLaConsola`, la pantalla del asiento y
+   * lo que se explica de ella, que es una frase más en la cola al abrirse la ventanilla.
+   */
+  function volar(
+    crucero: number,
+    conLaConsola = false,
+  ): { dichas: { clave: string; desde: number; hasta: number }[]; e: MotorDelPasaje<string, string> } {
+    let t = 0;
+    const dichas: { clave: string; desde: number; hasta: number }[] = [];
+    // Con `as`, y no anotado: lo cambia la voz desde fuera del bucle, y anotado se estrecharía a `null`.
+    let sonando = null as { fin: number; alAcabar: (n: number) => void; d: { hasta: number } } | null;
+    const e = new MotorDelPasaje<string, string>(
+      {
+        decir: (x, alAcabar) => {
+          const d = { clave: x.clave, desde: t, hasta: NaN };
+          dichas.push(d);
+          sonando = { fin: t + dura(x), alAcabar, d };
+        },
+        callar: () => {
+          if (sonando) sonando.d.hasta = t;
+          sonando = null;
+        },
+      },
+      GUION_LLEGADA_A_ASUNCION as unknown as GuionDelPasaje<string, string>,
+      { conPantalla: conLaConsola, pared: () => t },
+    );
+    if (conLaConsola) e.explicarLaConsola();
+    for (; t < crucero + 240; t += DT_DEL_VUELO) {
+      if (sonando && t >= sonando.fin) {
+        const s = sonando;
+        sonando = null;
+        s.d.hasta = t;
+        s.alAcabar(0);
+      }
+      const bajando = t >= crucero;
+      const enBajada = t - crucero;
+      const altitud = bajando ? 12192 - 12 * enBajada : 12192;
+      e.paso(DT_DEL_VUELO, {
+        ...EN_CRUCERO,
+        tramo: bajando ? "bajada" : "crucero",
+        enTramo: bajando ? enBajada : t,
+        altitud,
+        altura: altitud - 101,
+        vertical: bajando ? -12 : 0,
+        cabina: bajando ? -1.5 : 0,
+        faltaParaTocar: bajando ? 210_000 - 220 * enBajada : 210_000 + 240 * (crucero - t),
+        hastaLaBajada: bajando ? undefined : crucero - t,
+        potencia: bajando ? "ralenti" : "subida",
+        conEstaPotencia: bajando ? enBajada : 600 + t,
+        largo: { ...HOY_DE_DIA, anuncioDeLaBajada: () => ANUNCIO },
+      });
+    }
+    return { dichas, e };
+  }
+
+  /** Cuándo empieza y cuándo acaba el anuncio de la comandante, s del capítulo, con un crucero que no se acaba. */
+  const EL_ANUNCIO = (() => {
+    const d = volar(3000).dichas.find((x) => x.clave === "comandante.largo.anuncio")!;
+    return { desde: d.desde, hasta: d.hasta };
+  })();
+
+  it("con el crucero de verdad, el punto de descenso llega con la apertura y el anuncio ya dichos, y de sobra", () => {
+    expect(EL_ANUNCIO.hasta).toBeGreaterThan(EL_ANUNCIO.desde);
+    for (const mes of ["01", "04", "07", "10", "12"]) {
+      const p = perfilDelVuelo(horarioDelDia(new Date(`2026-${mes}-15T12:00:00Z`)));
+      const crucero = p.tramos.find((x) => x.fase === "bajada")!.desde - entradaDeLaLlegada(p);
+      // Ocho minutos de crucero desde que se entra, y la apertura con el anuncio son dos y cuarto.
+      expect(crucero, mes).toBeGreaterThan(3 * EL_ANUNCIO.hasta);
+    }
+  });
+
+  it("y con el punto de descenso en cualquier sitio desde el anuncio, Ara lo nota a tiempo y nada se pierde ni se repite: aquí no hay nada que parar", () => {
+    const cruceros = [...Array.from({ length: 41 }, (_, i) => EL_ANUNCIO.desde + 0.5 + 1.5 * i), 200, 300, 490, 700];
+    for (const conLaConsola of [false, true])
+      for (const crucero of cruceros) {
+        const { dichas, e } = volar(crucero, conLaConsola);
+        const claves = dichas.map((d) => d.clave);
+        const que = `crucero de ${crucero.toFixed(1)} s${conLaConsola ? ", con la consola" : ""}`;
+        const nota = dichas.find((d) => d.clave === "inicio.ara.pasaje.ralenti")?.desde ?? NaN;
+        expect(nota - crucero, que).toBeGreaterThanOrEqual(0);
+        expect(nota - crucero, que).toBeLessThan(A_TIEMPO);
+        expect(claves.indexOf("inicio.ara.pasaje.ralenti"), que).toBeLessThan(claves.indexOf("tripulacion.cinturones"));
+        if (conLaConsola) expect(claves, que).toContain("inicio.tripulacion.pasaje.cerca.largo.consolaBoton");
+        expect(claves, que).toContain("inicio.ara.pasaje.bostezo");
+        // Cada frase una vez, nada cortado y ningún momento saltado.
+        expect(claves.filter((c, i) => claves.indexOf(c) !== i), que).toEqual([]);
+        expect(dichas.filter((d) => d.hasta < d.desde + dura({ quien: "ara", clave: d.clave }) - 0.2 && d.clave !== "comandante.largo.anuncio").map((d) => d.clave), que).toEqual([]);
+        expect(e.estado.saltados, que).toEqual([]);
+      }
+  });
+});
