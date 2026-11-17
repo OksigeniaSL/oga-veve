@@ -403,8 +403,13 @@ export const CANARIAS: Readonly<Record<string, Procedimientos>> = {
       "01": aproximacion("AD 2-GCFV IAC 8 · RNP RWY 01", [
         "SOTAD:iaf:5000 DEMEX:ruta:2700 LIRBU:if:2700 FV07S:faf:2500",
       ]),
+      /*
+       * TUVIL es el intermedio: la carta lo rotula «(IF)» en la planta y en el
+       * perfil (IAC 16.1). En la tabla codificada su tramo es un «TF» como los
+       * demás, que es el tipo de tramo y no el papel del punto.
+       */
       "19": aproximacion("AD 2-GCFV IAC 16 · RNP RWY 19", [
-        "BAMKU:iaf:6000 ROXES:ruta:3000 NOBLI:ruta:3000 RATAT:ruta:3000 TUVIL:ruta:3000 FV737:ruta:2300 FV04N:faf:1500",
+        "BAMKU:iaf:6000 ROXES:ruta:3000 NOBLI:ruta:3000 RATAT:ruta:3000 TUVIL:if:3000 FV737:ruta:2300 FV04N:faf:1500",
       ]),
     },
     salidas: {

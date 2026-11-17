@@ -43,9 +43,6 @@ const todas: { oaci: string; cabecera: string; c: CartaDeAproximacion }[] = Obje
   ([oaci, porCabecera]) => Object.entries(porCabecera).map(([cabecera, c]) => ({ oaci, cabecera, c })),
 );
 
-/** Las que la carta rotula con intermedio y el procedimiento no. Ver su prueba. */
-const SIN_INTERMEDIO = new Set(["GCFV 19"]);
-
 const conNombre = (p: PuntoDelPerfil): p is PuntoDelPerfil & { lat: string; lon: string } =>
   p.lat !== undefined && p.lon !== undefined;
 
@@ -120,8 +117,7 @@ describe("el perfil vertical", () => {
         expect(metros(enGrados(p), q!), `${oaci} ${cabecera} ${p.nombre}`).toBeLessThan(50);
         if (p.pies !== null && q!.minimaPies !== null) expect(p.pies, `${oaci} ${cabecera} ${p.nombre}`).toBe(q!.minimaPies);
         // Y el mismo papel: el intermedio es el intermedio, y el de final, el de final.
-        if (p.rotulo === "IF" && !SIN_INTERMEDIO.has(`${oaci} ${cabecera}`))
-          expect(q!.papel, `${oaci} ${cabecera} ${p.nombre}`).toBe("if");
+        if (p.rotulo === "IF") expect(q!.papel, `${oaci} ${cabecera} ${p.nombre}`).toBe("if");
         if (p.rotulo === "FAP" || p.rotulo === "FAF") expect(q!.papel, `${oaci} ${cabecera} ${p.nombre}`).toBe("faf");
       }
       /*
@@ -143,16 +139,15 @@ describe("el perfil vertical", () => {
   });
 
   /*
-   * **La 19 de Fuerteventura**: su carta rotula TUVIL como punto intermedio,
-   * y `procedimientos-canarias.ts` lo tiene como un punto más de la ruta, sin
-   * ningún «if» en la rama. No es de esta transcripción; queda dicho aquí y
-   * en la enmienda H24a del ADR 0021, y esta prueba avisa si cambia.
+   * **La 19 de Fuerteventura** tenía TUVIL como un punto más de la ruta, sin
+   * ningún «if» en la rama, y su carta lo rotula «(IF)» en la planta y en el
+   * perfil (IAC 16.1). Ya es el intermedio; que no vuelva a faltar en ninguna.
    */
-  it("solo la 19 de Fuerteventura tiene un intermedio en la carta que el procedimiento no marca", () => {
+  it("toda aproximación del juego tiene su intermedio, el que rotula la carta", () => {
     const sinIf = todas
       .filter(({ oaci, cabecera }) => !procedimientosDe(oaci)!.aproximaciones[cabecera]!.ramas.flat().some((p) => p.papel === "if"))
       .map(({ oaci, cabecera }) => `${oaci} ${cabecera}`);
-    expect(sinIf).toEqual([...SIN_INTERMEDIO]);
+    expect(sinIf).toEqual([]);
   });
 
   it("cada punto con nombre está a las millas que dice la carta de su umbral, o de su MAPt en circuito", () => {

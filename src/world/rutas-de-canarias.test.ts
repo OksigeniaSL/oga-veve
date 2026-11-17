@@ -872,3 +872,25 @@ describe("las avionetas, con reglas visuales", () => {
    * quepa.
    */
 });
+
+/*
+ * **De Lanzarote a la 19 de Fuerteventura, por TUVIL.** La carta (AD 2-GCFV
+ * IAC 16.1) rotula TUVIL como el intermedio, y el procedimiento lo tenía como
+ * un punto de ruta más: la única entrada era la rama entera desde BAMKU, al
+ * sur de la isla, y viniendo del norte la ruta pasaba de largo por encima del
+ * campo para bajar hasta BAMKU y volver por la costa: 71 millas desde la 21 de
+ * Lanzarote y 79 desde la 03. Con TUVIL de intermedio se entra por él, como
+ * por el de cualquier otra rama, en 34 y 42. De Gran Canaria, que viene del
+ * sur, sigue por BAMKU.
+ */
+describe("la 19 de Fuerteventura, por su intermedio", () => {
+  it("de Lanzarote se entra por TUVIL, sin bajar a BAMKU; de Gran Canaria, por BAMKU", () => {
+    for (const t of TRAMOS.filter((t) => t.nombre.endsWith("→ GCFV 19"))) {
+      const n = nombres(t.ruta);
+      if (t.nombre.startsWith("GCRR")) {
+        expect(n, t.nombre).not.toContain("BAMKU");
+        expect(n, t.nombre).toMatch(/ TUVIL FV737 FV04N RW19$/);
+      } else expect(n, t.nombre).toContain("BAMKU ROXES NOBLI RATAT TUVIL");
+    }
+  });
+});
