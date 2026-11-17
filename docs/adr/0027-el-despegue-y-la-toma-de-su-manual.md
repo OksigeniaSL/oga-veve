@@ -2450,4 +2450,5 @@ Tres frases de la instructora al final de la lista de grabar
 - **«En el aire sigue subiendo» en Taguato**, que sigue fallando por la ayuda
   de ese peldaño (arriba, «Cómo se eligió el 1,3»): lo que pide es mirar el
   `climbHold` de `fdm.ts` recién despegado, o que el banco suelte con la
-  velocidad de subida y no con la de rotar.
+  velocidad de subida y no con la de rotar. *Resuelto en la ayuda: nota H21d
+  del ADR 0002.*
