@@ -2037,7 +2037,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * Lo que se hace de verdad es lo del E-Jet: el viento en cola con F3 a 160 y
    * la Vref y poco solo con los de aterrizar puestos, a mitad de la base
    * (Regli, *Embraer EMB190 – Summary*, p. 2-24), y nunca por debajo del punto
-   * verde de lo que se lleva (p. 2-18). Así que con la segunda se vuela a la de
+   * verde de lo que se lleva (p. 2-19). Así que con la segunda se vuela a la de
    * maniobra de la segunda, y al pedir las de aterrizar, en la base, a la Vref
    * y quince, como estaba: la de maniobra de las de aterrizar queda debajo.
    */
@@ -2336,6 +2336,37 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * toca, se deja ahí, y la velocidad sale sola.
    */
   const CABECEO_DE_SUBIDA = (12 * Math.PI) / 180;
+
+  /**
+   * **Lo que gira el morro al rotar**, rad/s: tres grados por segundo.
+   *
+   * Es lo del E-Jet: «Rotate 3°/sec to 18° ANU, then FD» con los dos motores,
+   * y la protección de la cola solo vale con ese ritmo: «Tail strike protected
+   * only if normal rotation (3°/sec)» (C. Regli, *Embraer EMB190 – Summary*,
+   * 2025, pp. 2-38 y 1-33: <http://www.flite.ch/Emb/Summary_E190.pdf>). Los
+   * manuales de Boeing dicen lo mismo, de dos a tres grados por segundo.
+   *
+   * El banco no tenía ritmo: pedía la actitud con una ganancia, y como el morro
+   * no se levanta hasta que hay velocidad para levantarlo, cuando se soltaba lo
+   * hacía de golpe. La traza del ala de H25a vio al JAZ 90 irse del suelo a
+   * 5,3–6,9 grados por segundo en las tres tiradas, pasarse a 12–12,7 grados
+   * de morro con la trayectoria todavía en uno, y quedarse a menos de un grado
+   * del avisador —en una, por encima, 0,36 s a cinco metros— (ADR 0027,
+   * enmiendas H25a y H25c). La actitud no era el problema: doce grados es menos
+   * que los dieciocho del E-Jet. Era el ritmo.
+   */
+  const RITMO_DE_ROTACION = (3 * Math.PI) / 180;
+  /**
+   * **Y la mano que rota no deja que el morro gire más deprisa**: lo que pase
+   * del ritmo se quita de lo que tira —medio mando por cada tres grados por
+   * segundo de más—, y nunca más allá de soltar. Lo hace quien rota de verdad:
+   * tira hasta que el morro sube a su ritmo, y afloja en cuanto se le va.
+   * Empujar no lo toca.
+   */
+  const aSuRitmo = (palanca, s) =>
+    palanca <= 0
+      ? palanca
+      : Math.max(0, palanca - 10 * Math.max(0, (s.pitchRate ?? 0) - RITMO_DE_ROTACION));
 
   /** Hasta cuándo se vuela por actitud y no por velocidad, m sobre el suelo. */
   const ASENTAR_LA_SUBIDA = 120;
@@ -6007,13 +6038,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * el resto lo pone la subida.
        */
       const rotarHasta = Math.min(CABECEO_DE_SUBIDA, (s.stallWarningAlpha ?? 1) - 0.035);
+      /*
+       * **Y a la Vr indicada, no a la verdadera.** Comparaba la verdadera con
+       * la Vr de la ficha, que es indicada: en Los Rodeos, a 21 °C, el JAZ 90
+       * empezaba a tirar a 117 nudos indicados con la Vr en 129. Ver
+       * `enVerdadera`.
+       */
       c.elevator = s.onGround
-        ? s.airspeed > (suyas.rotacion ?? 28) * 0.96
+        ? s.airspeed > enVerdadera(s, (suyas.rotacion ?? 28) * 0.96)
           ? SUBE_CON_EL_MORRO
-            ? Math.max(0, Math.min(0.8, (rotarHasta - cabeceoDe(s)) * 4))
+            ? aSuRitmo(Math.max(0, Math.min(0.8, (rotarHasta - cabeceoDe(s)) * 4)), s)
             : 0.8
           : 0
-        : subirDeVerdad(s);
+        : SUBE_CON_EL_MORRO
+          ? aSuRitmo(subirDeVerdad(s), s)
+          : subirDeVerdad(s);
       if (!s.onGround && alto(s) > 30) {
         despego = t;
         etapa = "subir";
