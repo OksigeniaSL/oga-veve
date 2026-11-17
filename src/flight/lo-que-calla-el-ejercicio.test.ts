@@ -15,7 +15,7 @@ import { EJERCICIOS, ejercicioPorId, type EjercicioId } from "./ejercicios";
 import { NO_CALLA_NADA, loQueCallaElEjercicio } from "./lo-que-calla-el-ejercicio";
 
 const TODO = { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true };
-const DE_RADIO: readonly EjercicioId[] = ["aguja", "radial", "interceptar"];
+const DE_RADIO: readonly EjercicioId[] = ["aguja", "radial", "interceptar", "cruce"];
 /** Los otros que empiezan en el aire: acaban aterrizando, y la pista es suya. */
 const ACABAN_EN_LA_PISTA: readonly EjercicioId[] = ["planeo", "un-motor", "despresurizacion", "tormenta", "autorrotacion"];
 

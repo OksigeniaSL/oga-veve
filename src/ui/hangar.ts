@@ -1795,10 +1795,26 @@ const EJ_INTERCEPTAR = escena(`
   ${AVION("translate(98 64) rotate(90) scale(0.8)")}
 `);
 
+/**
+ * **Dos radiales que se cortan**: dos VOR en el suelo, a los lados, con una
+ * raya saliendo de cada uno, y donde se cortan, en el cielo, el avión dentro
+ * del aro del fijo. Dos rayas y el avión en el cruce: es la lección entera.
+ * Ver `flight/dos-radiales.ts`.
+ */
+const EJ_CRUCE = escena(`
+  <path class="ejercicio__ondas" d="M18 66 L70 18 M102 66 L50 18" />
+  <path class="ejercicio__mastil" d="M18 59 l6 3.5 v7 l-6 3.5 l-6 -3.5 v-7 Z M102 59 l6 3.5 v7 l-6 3.5 l-6 -3.5 v-7 Z" />
+  <circle cx="18" cy="66" r="1.3" class="ejercicio__mastil" />
+  <circle cx="102" cy="66" r="1.3" class="ejercicio__mastil" />
+  <circle cx="60" cy="27.2" r="10" class="leccion__estela" fill="none" stroke-dasharray="4 3" />
+  ${AVION("translate(60 27.2) rotate(-133) scale(0.7)")}
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   aguja: EJ_AGUJA,
   radial: EJ_RADIAL,
   interceptar: EJ_INTERCEPTAR,
+  cruce: EJ_CRUCE,
   autorrotacion: EJ_AUTORROTACION,
   estacionario: EJ_ESTACIONARIO,
   par: EJ_PAR,

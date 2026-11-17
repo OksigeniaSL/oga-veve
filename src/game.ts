@@ -795,6 +795,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   radial: "cdi-from",
   // El CDI con la barra viniendo hacia el centro: el radial que se acerca. Ver `interceptar-un-radial.ts`.
   interceptar: "cdi-viniendo-de-la-izquierda",
+  // Las dos rayas desde sus radios, cortándose encima del avión. Ver `dos-radiales.ts`.
+  cruce: "cruce-de-radiales",
   autorrotacion: "helicoptero-sin-motor",
   // Las lecciones del ala rotatoria, con lo que se pide en cada una: ver `lecciones-del-rotor.ts`.
   estacionario: "helicoptero-quieto",
@@ -1010,6 +1012,13 @@ import {
   type ColocacionDelCorte,
   type SucesoDelCorte,
 } from "./flight/interceptar-un-radial";
+import {
+  colocacionDelCruce,
+  DosRadiales,
+  parejaDelCampo,
+  type ColocacionDelCruce,
+  type SucesoDelCruce,
+} from "./flight/dos-radiales";
 import { PantallaDespierta } from "./ui/pantalla-despierta";
 import { ahoraEsTelefonoApaisado } from "./ui/telefono";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
@@ -3881,6 +3890,15 @@ export class Game {
   private corte: InterceptarUnRadial | null = null;
   /** Dónde empieza, contado una vez por montaje: ver `dondeEmpiezaElCorte`. */
   private colocacionDelCorte: ColocacionDelCorte | null = null;
+  /**
+   * **«Dos radiales que se cortan»**, si se eligió: leer el radial del VOR del
+   * campo, poner el otro de la pareja y leer el suyo; las dos rayas en el
+   * plano y, donde se cortan, el avión. Ver `flight/dos-radiales.ts` y
+   * `practicarElCruce`.
+   */
+  private cruce: DosRadiales | null = null;
+  /** Dónde empieza, contado una vez por montaje: ver `dondeEmpiezaElCruce`. */
+  private colocacionDelCruce: ColocacionDelCruce | null = null;
   /** La nube de la tormenta del ejercicio. Ver `world/cumulonimbo.ts`. */
   private cumulonimbo: CumulonimboEnElMundo | null = null;
   /**
@@ -3908,6 +3926,7 @@ export class Game {
       this.aguja?.ejercicio ??
       this.radial?.ejercicio ??
       this.corte?.ejercicio ??
+      this.cruce?.ejercicio ??
       null
     );
   }
@@ -3917,7 +3936,7 @@ export class Game {
    * ventanilla. Ver `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
-    const deRadio = this.aguja ?? this.radial ?? this.corte;
+    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce;
     return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada");
   }
   /**
@@ -6484,6 +6503,21 @@ export class Game {
       } else if (ejercicio.escena === "rotor") {
         // Las del helicóptero tampoco: ver `practicarElRotor`.
         this.leccionDelRotor = new LeccionDelRotor(ejercicio, this.aircraft.helicoptero?.rotor.sentido ?? 1);
+      } else if (ejercicio.escena === "radio" && ejercicio.colocacion === "cruce") {
+        /*
+         * Ni el cruce: el VOR del campo y su pareja, cada uno donde está, y el
+         * origen del mundo para poner en él la cruz, que se corta en la
+         * esfera. Ver `practicarElCruce`.
+         */
+        const pareja = parejaDelCampo(oaciDe(this.scenario));
+        const origen = this.scenario.aerodrome?.origin;
+        if (pareja && origen)
+          this.cruce = new DosRadiales(
+            ejercicio,
+            { emisora: pareja.primera, ...dondeCae(origen, pareja.primera.estacion) },
+            { emisora: pareja.segunda, ...dondeCae(origen, pareja.segunda.estacion) },
+            origen,
+          );
       } else if (ejercicio.escena === "radio" && ejercicio.colocacion === "interceptar") {
         /*
          * Ni el corte: el VOR del campo, puesto donde está. El radial pedido
@@ -13371,7 +13405,9 @@ export class Game {
        * minutos de la radio, con el viento de costado. Ver `dondeEmpiezaLaAguja`.
        * **Ni el radial**, que empieza a ocho del VOR, en un radial de costado al
        * viento. Ver `dondeEmpiezaElRadial`. **Ni el corte**, a cinco millas,
-       * cortando el radial pedido. Ver `dondeEmpiezaElCorte`.
+       * cortando el radial pedido. Ver `dondeEmpiezaElCorte`. **Ni el cruce**,
+       * a diez millas del VOR del campo, volando hacia él. Ver
+       * `dondeEmpiezaElCruce`.
        */
       const enLaAguja = this.dondeEmpiezaConRadio(colocacion);
       if (enLaAguja) {
@@ -13381,7 +13417,13 @@ export class Game {
         );
         return new Vector3(enLaAguja.x, y, enLaAguja.z);
       }
-      if (colocacion && colocacion !== "aguja" && colocacion !== "radial" && colocacion !== "interceptar") {
+      if (
+        colocacion &&
+        colocacion !== "aguja" &&
+        colocacion !== "radial" &&
+        colocacion !== "interceptar" &&
+        colocacion !== "cruce"
+      ) {
         const { lejos, alto } = this.dondeEmpiezaElEjercicio(colocacion);
         const [x, z] = puntoDePista(runway, hastaElUmbralDeToma(runway) + lejos);
         const y = Math.max(
@@ -13637,6 +13679,7 @@ export class Game {
     this.aguja?.reiniciar();
     this.radial?.reiniciar();
     this.corte?.reiniciar();
+    this.cruce?.reiniciar();
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
@@ -17711,7 +17754,7 @@ export class Game {
           ? this.aircraft.velocidadDeCircuito
           : colocacion === "crucero" || colocacion === "tormenta"
             ? this.aircraft.cruiseSpeed
-            : colocacion === "aguja" || colocacion === "radial" || colocacion === "interceptar"
+            : colocacion === "aguja" || colocacion === "radial" || colocacion === "interceptar" || colocacion === "cruce"
               ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
               : configurado
               ? this.aircraft.approachSpeed * 1.1
@@ -17730,7 +17773,8 @@ export class Game {
       colocacion === "tormenta" ||
       colocacion === "aguja" ||
       colocacion === "radial" ||
-      colocacion === "interceptar"
+      colocacion === "interceptar" ||
+      colocacion === "cruce"
         ? { equilibrado: true }
         : {}),
     });
@@ -19280,6 +19324,8 @@ export class Game {
     this.practicarElRadial(dt);
     // Y el corte del radial. Ver `practicarElCorte`.
     this.practicarElCorte(dt);
+    // Y los dos radiales que se cortan. Ver `practicarElCruce`.
+    this.practicarElCruce(dt);
     // El morse de la radio, con su turno. Ver `atenderAlMorse`.
     this.atenderAlMorse();
     this.mirarSiCambiaDeCampo();
@@ -24528,6 +24574,7 @@ export class Game {
     if (colocacion === "aguja") return this.dondeEmpiezaLaAguja();
     if (colocacion === "radial") return this.dondeEmpiezaElRadial();
     if (colocacion === "interceptar") return this.dondeEmpiezaElCorte();
+    if (colocacion === "cruce") return this.dondeEmpiezaElCruce();
     return null;
   }
 
@@ -24687,6 +24734,191 @@ export class Game {
           this.hud.mostrarCierreDeEjercicio(
             dibujoDeCierre("vuelta"),
             this.rotulo("ejercicio.interceptar.establecido", "palabra.bien"),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+    }
+  }
+
+  // ── «Dos radiales que se cortan» ─────────────────────────────────────
+  //
+  // Ver `flight/dos-radiales.ts`. Como los otros de radio: aquí solo se
+  // decide quién dice y enseña cada cosa —el CDI o la cruz dibujados en la
+  // tarjeta, las dos radios y los radiales leídos escritos en ella, las rayas
+  // en el plano— y la instructora lo cuenta por pasos.
+
+  /**
+   * **Dónde empieza el cruce**: a diez millas del VOR del campo —o cuatro
+   * minutos, hasta quince—, donde su raya y la de la pareja se cortan bien,
+   * volando hacia él con el morro corrigiendo el viento. Se guarda, como las
+   * otras: el sitio, el morro y el OBS salen de la misma cuenta.
+   */
+  private dondeEmpiezaElCruce(): ColocacionDelCruce | null {
+    const r = this.cruce;
+    if (!r) return null;
+    if (this.colocacionDelCruce) return this.colocacionDelCruce;
+    const agua = this.scenario.waterLevel ?? 0;
+    const velocidad = Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL);
+    this.colocacionDelCruce = colocacionDelCruce({
+      primera: r.primera,
+      segunda: r.segunda,
+      declinacion: r.primera.emisora.declinacion,
+      viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+      velocidad,
+      suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+      cotaDeLaPista: this.terrain.runwayElevation,
+    });
+    return this.colocacionDelCruce;
+  }
+
+  /** «Dos radiales que se cortan», para el banco. */
+  get dosRadialesParaBanco(): {
+    readonly fase: string;
+    readonly cierre: string | null;
+    readonly primera: { readonly id: string; readonly mhz: number; readonly x: number; readonly z: number; readonly declinacion: number };
+    readonly segunda: { readonly id: string; readonly mhz: number; readonly x: number; readonly z: number; readonly declinacion: number };
+    readonly leidas: readonly { readonly id: string; readonly radial: number; readonly x: number; readonly z: number; readonly t: number }[];
+    readonly cruce: {
+      readonly cruz: { readonly x: number; readonly z: number } | null;
+      readonly avion: { readonly x: number; readonly z: number };
+      readonly lejos: number;
+      readonly tolerancia: number;
+      readonly corte: number;
+      readonly entreMedias: number;
+    } | null;
+    readonly colocacion: ColocacionDelCruce | null;
+  } | null {
+    const r = this.cruce;
+    if (!r) return null;
+    const estacion = (e: typeof r.primera) => ({
+      id: e.emisora.estacion.id,
+      mhz: e.emisora.mhz,
+      x: e.x,
+      z: e.z,
+      declinacion: e.emisora.declinacion,
+    });
+    return {
+      fase: r.fase,
+      cierre: r.cierre,
+      primera: estacion(r.primera),
+      segunda: estacion(r.segunda),
+      leidas: r.leidas.map((l) => ({ id: l.estacion.emisora.estacion.id, radial: l.radial, x: l.avion.x, z: l.avion.z, t: l.t })),
+      cruce: r.cruce,
+      colocacion: this.colocacionDelCruce,
+    };
+  }
+
+  /** «R-102 FTV»: un radial leído, escrito como en una carta. */
+  private static radialEscrito(radial: number, id: string): string {
+    return `R-${String(radial).padStart(3, "0")} ${id}`;
+  }
+
+  /**
+   * **Un paso del cruce**: qué estación oye la NAV, si ya sonó su morse y lo
+   * que marca con el curso del OBS. Y en el plano, la estela y las rayas
+   * leídas con su cruz, que se quedan después de cerrar: la cruz llega justo
+   * al cerrarse, y es lo que hay que mirar.
+   */
+  private practicarElCruce(dt: number): void {
+    const g = this.cruce;
+    if (!g) return;
+    this.hud.mapa.ponerEstela(() => this.libreta.traza);
+    this.hud.mapa.ponerRayas(() => ({
+      rayas: g.rayasEnElMundo().map((r) => ({ desde: r.desde, hasta: r.hasta, rotulo: Game.radialEscrito(r.radial, r.id) })),
+      cruz: g.cruce?.cruz ?? null,
+    }));
+    if (this.tarjetaDelTiempo?.abierta) return;
+    const s = this.flight.state;
+    const a = this.avionParaLaRadio();
+    const radio = this.radioAlDia();
+    const nav = a ? radio.leer(a, this.elevacionDeLaEstacion).nav : null;
+    const oida = nav?.lectura.emisora?.estacion.id ?? null;
+    const delEjercicio = g.cualEs(radio.navMhz) !== null && (oida === g.primera.emisora.estacion.id || oida === g.segunda.emisora.estacion.id);
+    const l = delEjercicio ? nav?.lectura : null;
+    const sucesos = g.paso(
+      {
+        x: s.position.x,
+        z: s.position.z,
+        enElSuelo: s.onGround,
+        parado: s.onGround && s.groundSpeed < 0.6,
+        percance: this.percance !== null,
+        oida: delEjercicio ? oida : null,
+        identificada: delEjercicio && this.identificadaYa === `nav ${oida}`,
+        curso: radio.curso,
+        desviacion: l?.desviacion ?? null,
+        toFrom: l?.toFrom ?? null,
+        bandera: l?.bandera ?? true,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderAlCruce(suceso);
+  }
+
+  private atenderAlCruce(suceso: SucesoDelCruce): void {
+    const g = this.cruce;
+    /** El CDI a tope con esta radio y el curso del OBS, del lado de la barra. Ver `elCdiDelEjercicio`. */
+    const aTope = (cual: "primera" | "segunda"): DibujoDeSenal =>
+      this.elCdiDelEjercicio("a-tope", g?.[cual].emisora, this.radioAlDia().curso);
+    /** La tarjeta con su dibujo, lo escrito delante de la frase y la voz de la instructora si está grabada. */
+    const contar = (dibujo: DibujoDeSenal, clave: TranslationKey, palabra: TranslationKey, delante = ""): void => {
+      const frase = this.rotulo(clave, palabra);
+      const rotulo = delante && frase ? `${delante}. ${frase}` : delante || frase;
+      this.hud.senal.mostrar(dibujo, rotulo, null, { segundos: 14, prioridad: IMPORTANTE });
+      this.decirDelEjercicio(clave, "mando");
+    };
+    const leidas = (): string =>
+      (g?.leidas ?? []).map((r) => Game.radialEscrito(r.radial, r.estacion.emisora.estacion.id)).join(" · ");
+    switch (suceso.que) {
+      case "presentar": {
+        /*
+         * La NAV con el VOR del campo, como la deja la salida, y el OBS
+         * apartado del radial: lo primero es centrar la barra. **Las dos
+         * radios, escritas y no dichas**: «FTV · LTE» en la tarjeta, como en
+         * una carta; la voz es genérica y vale en todo campo.
+         */
+        const radio = this.radioAlDia();
+        const c = this.dondeEmpiezaElCruce();
+        if (g) radio.poner("nav", g.primera.emisora.mhz);
+        if (c) radio.curso = c.curso;
+        const dos = g ? `${g.primera.emisora.estacion.id} · ${g.segunda.emisora.estacion.id}` : "";
+        const frase = this.rotulo("ejercicio.cruce.antes", "palabra.practica");
+        const rotulo = dos && frase ? `${dos}. ${frase}` : dos || frase;
+        this.hud.senal.mostrar(aTope("primera"), rotulo, null, { segundos: 30, prioridad: IMPORTANTE });
+        this.decirDelEjercicio("ejercicio.cruce.antes", "mando");
+        return;
+      }
+      case "sintonizar":
+        // La frase del radial vale tal cual: «poné el VOR del campo en la NAV».
+        return contar(aTope("primera"), "ejercicio.radial.sintonizar", "palabra.practica");
+      case "primera":
+        this.avisar("achieved");
+        return contar("cdi-from", "ejercicio.cruce.primera", "palabra.bien", leidas());
+      case "otra": {
+        // La otra, escrita con su frecuencia, que es lo que se busca en el plano.
+        const e = g?.segunda.emisora;
+        return contar(aTope("segunda"), "ejercicio.cruce.otra", "palabra.practica", e ? `${e.estacion.id} ${e.mhz.toFixed(2)}` : "");
+      }
+      case "identificada":
+        // La del radial vale tal cual: «es el VOR que querés; girá el OBS hasta centrar con FROM».
+        return contar(aTope("segunda"), "ejercicio.radial.identificada", "palabra.practica");
+      case "cruce":
+        this.avisar("achieved");
+        /*
+         * **La cruz encima del avión**, o donde estaba: si cae más lejos de lo
+         * que da el VOR, la instructora dice por qué, y nadie suspende.
+         */
+        return suceso.tarde
+          ? contar("cruce-de-radiales", "ejercicio.cruce.tarde", "palabra.practica", leidas())
+          : contar("cruce-de-radiales", "ejercicio.cruce.aqui", "palabra.bien", leidas());
+      case "cerrar":
+        // Lo malo ya lo cuenta el percance; posado antes, el suelo lo dice.
+        if (suceso.como === "otraVez") return;
+        this.agenda.luego(TARDA_EL_FINAL + 12, () => {
+          if (this.cruce?.cierre !== "hecho") return;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre("vuelta"),
+            this.rotulo(this.cruce.cruce && this.cruce.cruce.lejos > this.cruce.cruce.tolerancia ? "ejercicio.cruce.tarde" : "ejercicio.cruce.aqui", "palabra.bien"),
             plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
           );
         });

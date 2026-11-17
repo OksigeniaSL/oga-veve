@@ -934,6 +934,21 @@ const cdiDelVor = (barra: number, toFrom: "TO" | "FROM", hacia: -1 | 0 | 1 = 0):
   ${hacia ? `<path d="M${12 + barra + hacia * 1.6} 18.6 L${12 + barra - hacia} 17 V20.2 Z" />` : ""}
 `);
 
+/**
+ * **Dos radiales que se cortan**, el de «Dos radiales que se cortan» (#51):
+ * las dos radios abajo, un hexágono cada una como el VOR de la carta, una
+ * raya saliendo de cada una y, donde se cortan, el aro del fijo con el
+ * avión dentro. Es lo que queda en el plano al leer las dos. Ver
+ * `flight/dos-radiales.ts`.
+ */
+const CRUCE_DE_RADIALES = icono(`
+  <path d="M4.6 19.2 L16.2 3.6 M19.4 19.2 L7.8 3.6" fill="none" stroke="currentColor" stroke-width="1.5"
+        stroke-linecap="round" />
+  <path d="M4.6 16.6 l2.2 1.3 v2.6 l-2.2 1.3 l-2.2 -1.3 v-2.6 Z M19.4 16.6 l2.2 1.3 v2.6 l-2.2 1.3 l-2.2 -1.3 v-2.6 Z" />
+  <circle cx="12" cy="9.3" r="3.6" fill="none" stroke="currentColor" stroke-width="1.5" />
+  <circle cx="12" cy="9.3" r="1.3" />
+`);
+
 /** La flecha del lado, pegada al borde: es lo primero que se mira. */
 const HACIA: Record<string, string> = {
   izquierda: `<path d="M5.4 4.2 L1.4 7.2 L5.4 10.2 Z" />
@@ -1821,6 +1836,8 @@ export const DIBUJOS = {
   "cdi-viniendo-de-la-derecha": cdiDelVor(3.5, "FROM", -1),
   "cdi-pasada-a-la-izquierda": cdiDelVor(-3.5, "FROM", -1),
   "cdi-pasada-a-la-derecha": cdiDelVor(3.5, "FROM", 1),
+  // «Dos radiales que se cortan»: las dos rayas y el fijo. Ver `dos-radiales.ts`.
+  "cruce-de-radiales": CRUCE_DE_RADIALES,
   sobrevelocidad: SOBREVELOCIDAD,
   calor: CALOR,
   frio: FRIO,

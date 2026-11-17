@@ -3111,6 +3111,38 @@ for (const [id, para] of DEL_CORTE) {
   total += texto.length;
 }
 
+/*
+ * **«Dos radiales que se cortan»** (#51, el cierre del peldaño del VOR): con
+ * una sola NAV, el radial del VOR del campo, la otra radio, y la cruz de las
+ * dos rayas en el plano, encima del avión o lejos de él si se tardó. Genéricas,
+ * sin el nombre de las radios ni los números, que van escritos en la tarjeta
+ * y en el plano. Si se quita la primera, vale la de «¿En qué radial estoy?»
+ * («poné el VOR del campo en la NAV»), y al oír el morse de la otra, la suya
+ * de identificada. En calma, como todo ejercicio. Ver
+ * `src/flight/dos-radiales.ts` y el ADR 0030, enmienda H26g.
+ */
+const DEL_CRUCE = [
+  ["ejercicio.cruce.antes", "dos radiales que se cortan, antes de empezar: las dos radios en la tarjeta y centrar la primera"],
+  ["ejercicio.cruce.primera", "dos radiales que se cortan: la barra centrada con FROM en la primera, y su raya en el plano"],
+  ["ejercicio.cruce.otra", "dos radiales que se cortan: poner la otra radio en la NAV, detrás de la primera o si se quita"],
+  ["ejercicio.cruce.aqui", "dos radiales que se cortan: la segunda raya, y la cruz cae encima del avión"],
+  ["ejercicio.cruce.tarde", "dos radiales que se cortan: la segunda raya, y la cruz cae lejos porque el avión voló entre una y otra"],
+];
+for (const [id, para] of DEL_CRUCE) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
   ...filas.map((f) =>

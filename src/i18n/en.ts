@@ -1424,6 +1424,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.aguja": "Follow the needle",
   "hangar.ejercicio.radial": "Which radial am I on?",
   "hangar.ejercicio.interceptar": "Fly out on a radial",
+  "hangar.ejercicio.cruce": "Where two radials cross",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1594,6 +1595,18 @@ export const EN: Dictionary = {
     "You're on the radial! The bar steady in the middle: that's how you fly out on a radial, like real pilots do",
   "ejercicio.interceptar.establecidoAlViento":
     "You're on the radial, with the bar steady in the middle! Look at the nose: it doesn't point exactly at the OBS number, it points a little into the wind. That's what it takes for the wind not to push you off the radial",
+
+  // ── Where two radials cross: one NAV, the field's VOR, then the other, and the fix where the lines cross ──
+  "ejercicio.cruce.antes":
+    "Today we'll find out where we are with the radio alone, using two VORs. Both stations are on the card. First, this one: turn the OBS until the bar sits in the middle with FROM",
+  "ejercicio.cruce.primera":
+    "That number is your radial: a line coming out of the station, and you're somewhere on it. Look at it on the map. With just one line, you can't tell which point",
+  "ejercicio.cruce.otra":
+    "To know which point, you need another line. Put the other station in the NAV: tap it on the map, or press seven until you hear its name",
+  "ejercicio.cruce.aqui":
+    "There you are! Look at the map: the two lines cross right where the plane is. That's how you know where you are without seeing anything, with just two stations",
+  "ejercicio.cruce.tarde":
+    "Look at the map: the fix ended up away from the plane. While you tuned and read the second one, the plane kept flying, and the first line no longer went through it. Next time, read them quickly, or fly towards one of the two stations, so its line doesn't change",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
   "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
   "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",

@@ -384,6 +384,11 @@ La barra se fue a tope: el radial queda de ese lado. Seguí cortándolo de costa
 Te pasaste un poquito: la barra cruzó al otro lado. No pasa nada, volvé hacia ella de a poco. La próxima, empezá a virar un poco antes
 ¡Estás en el radial! La barra quieta en el centro: así se sale por un radial, como los pilotos de verdad
 ¡Estás en el radial, con la barra quieta en el centro! Fijate en el morro: no apunta justo al número del OBS, apunta un poco contra el viento. Es lo que hace falta para que no te saque del radial
+Hoy vamos a saber dónde estamos solo con la radio, con dos VOR. Las dos radios están en la tarjeta. Primero, con esta: girá el OBS hasta que la barra quede en el centro con FROM
+Ese número es tu radial: una raya que sale de la radio, y vos estás en algún lugar de ella. Mirala en el plano. Con una sola raya, no se sabe en qué punto
+Para saber en qué punto, hace falta otra raya. Poné la otra radio en la NAV: tocala en el plano, o apretá el siete hasta oír su nombre
+¡Ahí estás! Mirá el plano: las dos rayas se cortan justo donde está el avión. Así se sabe dónde estás sin ver nada, solo con dos radios
+Mirá el plano: la cruz quedó lejos del avión. Mientras ponías y leías la segunda, el avión siguió volando, y la primera raya ya no pasaba por él. La próxima, leelas rápido, o volá hacia una de las dos radios, que así su raya no cambia
 Ver el río
 Seguir el río
 Salir al mar

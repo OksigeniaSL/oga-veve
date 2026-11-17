@@ -2572,6 +2572,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * fue al otro lado y dónde se empezó. Ver `flight/interceptar-un-radial.ts`.
      */
     interceptarUnRadial: () => juego.interceptarUnRadialParaBanco,
+    /**
+     * «Dos radiales que se cortan»: la fase, las dos radios, los radiales
+     * leídos, la cruz y lo lejos que cayó del avión. Ver `flight/dos-radiales.ts`.
+     */
+    dosRadiales: () => juego.dosRadialesParaBanco,
     /** El morse de la radio: si suena, de quién, y lo último identificado. Ver `audio/morse.ts`. */
     morse: () => juego.morseParaBanco,
     /** Enseña o esconde la nube de la tormenta, para medir lo que cuesta. */
