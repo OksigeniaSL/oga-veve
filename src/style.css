@@ -6543,10 +6543,46 @@ button.motor__tecla::after {
   fill: var(--cabina-objetivo);
 }
 
+/*
+ * **En el direccional de las de pistón**, el mismo dibujo en las unidades de
+ * su esfera, que se escala al doble: trazos y letras a la mitad para que en
+ * pantalla salgan como en la pantalla de navegación.
+ */
+.cr__radio--esfera .cr__radio-curso {
+  stroke-width: 1.6;
+}
+
+.cr__radio--esfera .cr__radio-barra {
+  stroke-width: 2.2;
+}
+
+.cr__radio--esfera .cr__radio-punto {
+  stroke-width: 0.8;
+}
+
+.cr__radio--esfera .cr__radio-adf {
+  stroke-width: 1.4;
+}
+
+.cr__radio--esfera .cr__radio-bandera-letra {
+  font-size: 6px;
+}
+
+.cr__radio--esfera .cr__radio-estacion,
+.cr__radio--esfera .cr__radio-adf-letra,
+.cr__radio--esfera .cr__radio-crs {
+  font-size: 8.5px;
+}
+
+/*
+ * `visible` y no `all`: la caja entera se esconde con `visibility` en el avión
+ * que no lleva radio, y con `all` sus dianas seguirían robando el dedo.
+ */
 .cr__radio-dedo {
   fill: transparent;
-  pointer-events: all;
+  pointer-events: visible;
   cursor: pointer;
+  touch-action: none;
 }
 
 .cr__aguja-vsi {

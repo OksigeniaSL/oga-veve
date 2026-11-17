@@ -45,6 +45,7 @@ import {
   ALTO_DEL_CUADRO,
   ANCHO_DEL_CUADRO,
   BANDA,
+  MARGEN,
   VISERA,
   VISERA_FINA,
   cajaDe,
@@ -107,7 +108,7 @@ import {
   type Estado as EstadoDeAvisos,
 } from "../flight/avisos-de-cabina";
 import { dibujoEn, type DibujoDeSenal } from "./senal";
-import { pintarLaRadio, puntoDelCdi, type RadioEnElCuadro } from "./radio-en-la-rosa";
+import { ANCHO_DEL_CRS, crsEnLaViseraSvg, pintarLaRadio, type RadioEnElCuadro } from "./radio-en-la-rosa";
 import type { Alerta } from "../flight/altitud-seleccionada";
 import {
   QUIETA_LA_ALTITUD,
@@ -628,6 +629,14 @@ export class Tablero {
       -->
       <g data-caja="visera">
       ${familia === "linea" ? this.mcp(["SPD", "HDG", "ALT"]) : familia === "cristal" ? this.mcp(["ALT"]) : ""}
+      ${
+        /*
+         * Y en la punta derecha, la ventanilla CRS del VOR con su rueda,
+         * desde el peldaño de la radio: donde va la COURSE en el MCP de un
+         * Boeing. Las de pistón no llevan MCP: su curso va en el direccional.
+         */
+        familia !== "esferas" ? crsEnLaViseraSvg(ANCHO_DEL_CUADRO - MARGEN - ANCHO_DEL_CRS, BANDA.y) : ""
+      }
       ${
         /*
          * **El helicóptero, solo la de altitud**, y solo si la lleva. Las
@@ -2038,21 +2047,31 @@ export class Tablero {
     const r = d.radio ?? null;
     const lleva = !!r && (r.nav !== null || r.adf !== null);
     poner(caja, "visibility", lleva ? "visible" : "hidden");
+    poner(this.pieza("[data-radio-mcp]"), "visibility", r?.nav ? "visible" : "hidden");
     if (!lleva) return;
     const p = pintarLaRadio(r, d.declinacion ?? 0);
-    const cartaDeg = ((this.carta.desviacion % 360) + 360) % 360;
-    poner(this.pieza("[data-radio-rosa]"), "transform", `rotate(${n1(-cartaDeg)})`);
+    /*
+     * Con la rosa de su instrumento: la de la pantalla de navegación lleva
+     * la masa de la carta de rumbo (`cintas`); la del direccional, el rumbo
+     * tal cual, como la gira `SixPack`.
+     */
+    const rosa = this.pieza("[data-radio-rosa]");
+    const giro =
+      this.familia === "esferas"
+        ? -(d.estado.heading * GRADOS + (d.declinacion ?? 0))
+        : -(((this.carta.desviacion % 360) + 360) % 360);
+    poner(rosa, "transform", `rotate(${n1(giro)})`);
     const adf = this.pieza('[data-radio="adf"]');
     poner(adf, "visibility", p.adf === null ? "hidden" : "visible");
     if (p.adf !== null) poner(adf, "transform", `rotate(${n1(p.adf)})`);
     const curso = this.pieza('[data-radio="curso"]');
     poner(curso, "visibility", p.curso === null ? "hidden" : "visible");
     if (p.curso !== null) poner(curso, "transform", `rotate(${n1(p.curso)})`);
-    // El radio de la rosa, del grupo de la carta, que es el que la dibujó.
-    const radio = Number(this.pieza('[data-carta="grupo"]')?.getAttribute("data-radio")) || 120;
+    // Lo que mide un punto del CDI lo dice quien lo dibujó: la pantalla o la esfera.
+    const punto = Number(rosa?.getAttribute("data-punto")) || 20;
     const barra = this.pieza('[data-radio="barra"]');
     poner(barra, "visibility", p.bandera ? "hidden" : "visible");
-    poner(barra, "transform", `translate(${n1(p.barra * puntoDelCdi(radio) * 2)} 0)`);
+    poner(barra, "transform", `translate(${n1(p.barra * punto * 2)} 0)`);
     const tf = this.pieza('[data-radio="tofrom"]');
     poner(tf, "visibility", p.toFrom ? "visible" : "hidden");
     poner(tf, "transform", p.toFrom === "FROM" ? "rotate(180)" : "");
@@ -2064,6 +2083,10 @@ export class Tablero {
     escribir(this.pieza('[data-radio="nav-dme"]'), p.textos.dme);
     escribir(this.pieza('[data-radio="adf-id"]'), p.textos.adfId);
     escribir(this.pieza('[data-radio="adf-khz"]'), p.textos.adfKhz);
+    escribir(this.pieza('[data-radio="nav-crs-cifra"]'), p.textos.crsCifra);
+    escribir(this.pieza('[data-radio="mcp-crs"]'), p.textos.crsCifra);
+    escribir(this.pieza('[data-radio="nav-ident"]'), p.textos.navIdent);
+    escribir(this.pieza('[data-radio="adf-ident"]'), p.textos.adfIdent);
   }
 
   private laCarta(d: DatosDelTablero, cifras: boolean): void {

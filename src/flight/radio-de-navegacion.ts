@@ -209,6 +209,14 @@ export function lineaDeVistaNm(alturaAvionFt: number, alturaAntenaFt = 15): numb
   return 1.23 * (Math.sqrt(Math.max(0, alturaAvionFt)) + Math.sqrt(Math.max(0, alturaAntenaFt)));
 }
 
+/**
+ * A cuánto del suelo va la antena del avión, ft: en el lomo o en la deriva.
+ * Sin ella, en la plataforma de Los Rodeos —que queda un poco por debajo de
+ * la cota del campo— el avión «estaba bajo tierra» y no oía TFN a cinco
+ * millas, que en la cabina de verdad se oye.
+ */
+export const ANTENA_DEL_AVION_FT = 10;
+
 // ── Lo que marca cada instrumento ────────────────────────────────────────
 
 /** Dónde está el avión y hacia dónde apunta. */
@@ -281,7 +289,7 @@ function geometria(e: Emisora, a: Avion, elevacionDeLaEstacion: number): Geometr
 /** Si esta emisora se oye desde aquí. */
 function seOye(e: Emisora, g: Geometria): boolean {
   if (e.caja === "adf") return g.horizontalNm <= ALCANCE_NDB_NM;
-  const vista = lineaDeVistaNm(g.alturaSobreLaEstacionFt);
+  const vista = lineaDeVistaNm(Math.max(0, g.alturaSobreLaEstacionFt) + ANTENA_DEL_AVION_FT);
   if (e.estacion.clase !== "ILS") return g.horizontalNm <= Math.min(ALCANCE_VOR_NM, vista);
   const rv = e.estacion.rumboVerdadero;
   if (rv === null) return false;
@@ -540,14 +548,17 @@ export class RadioDeCabina {
    * centro. Así lo primero que se ve al despegar es la aguja que se aparta,
    * que es la lección.
    */
-  alSalir(oaci: string | null, a: Avion, elevacion?: (e: Emisora) => number): void {
+  alSalir(oaci: string | null, a: Punto): void {
     const s = radioDeSalida(oaci, this.todas);
     if (!this.aMano.adf) this.adfMhz = this.lleva.adf ? (s.adf?.mhz ?? null) : null;
     if (!this.lleva.nav || this.aMano.nav) return;
     this.navMhz = s.nav?.mhz ?? null;
-    this.curso = 360;
-    const l = leerNav(this.navMhz, this.curso, a, elevacion, this.todas);
-    if (l.radial !== null) this.curso = Math.round(l.radial) % 360 || 360;
+    /*
+     * El radial de la cuenta, se oiga o no: en tierra la estación puede
+     * quedar tras un cerro, y el OBS se deja igual en el radial donde se
+     * está, que es lo que se ve en cuanto llega la señal.
+     */
+    this.curso = s.nav ? Math.round(vuelta(rumboOrtodromico(s.nav.estacion, a) + s.nav.declinacion)) % 360 || 360 : 360;
   }
 
   /**

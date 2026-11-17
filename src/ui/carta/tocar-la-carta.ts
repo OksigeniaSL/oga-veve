@@ -36,13 +36,14 @@
  * alrededor, a 11 y a 22 px, y gana lo más cercano. Nada de esto toca el
  * DOM de la carta: el rótulo y el brillo van encima, sin pisar los toques.
  *
- * ## La frecuencia, y la radio que no hay
+ * ## La frecuencia, y la radio
  *
- * Tocar una frecuencia la explica, y **la pondría en la radio** si el avión
- * tuviera una que se sintoniza. El juego no la tiene: la torre que se oye es
- * la del campo en el que se está, y la dependencia cambia sola (ver
- * `flight/dependencia.ts`). No se inventa una: queda el gancho,
- * `ponerRadioDeLaCarta`, para el día que exista.
+ * Tocar una frecuencia la explica, y **la pone en la radio** si el avión
+ * lleva la caja: un VOR o un ILS en la NAV y un NDB en el ADF, que enchufa
+ * `Game` por `ponerRadioDeLaCarta` (ver `flight/radio-de-navegacion.ts` y el
+ * ADR 0030). La de hablar no se sintoniza: la torre que se oye es la del
+ * campo en el que se está, y la dependencia cambia sola (ver
+ * `flight/dependencia.ts`).
  */
 
 import { calcosDe, canalesDe, type Peldano } from "../../flight/escalera";
@@ -239,7 +240,7 @@ export interface FrecuenciaTocada {
 
 /**
  * **El gancho de la radio**: quien tenga una radio que se sintoniza la
- * enchufa aquí. Hoy no la enchufa nadie, porque el juego no tiene ninguna.
+ * enchufa aquí. La enchufa `Game` con la NAV y el ADF del avión.
  */
 export interface RadioDeLaCarta {
   /** Si el avión de ahora lleva una radio donde va esta frecuencia. */

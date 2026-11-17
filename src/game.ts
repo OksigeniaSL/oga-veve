@@ -964,7 +964,7 @@ import { AroEnElMundo } from "./ui/aro-en-el-mundo";
 import type { ComoSeDice } from "./ui/carta/tocar-la-carta";
 import { ponerRadioDeLaCarta } from "./ui/carta/tocar-la-carta";
 import { RadioDeCabina, radiosDe, vuelta, type Avion as AvionDeLaRadio, type Emisora } from "./flight/radio-de-navegacion";
-import type { RadioEnElCuadro } from "./ui/radio-en-la-rosa";
+import { pintarLaRadio, type RadioEnElCuadro } from "./ui/radio-en-la-rosa";
 import { PantallaDespierta } from "./ui/pantalla-despierta";
 import { ahoraEsTelefonoApaisado } from "./ui/telefono";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
@@ -16109,7 +16109,7 @@ export class Game {
     const campo = this.elCampoMontado().escenario;
     const clave = `${this.aircraft.id}|${campo.id}`;
     if (clave !== this.radioPuestaPara) {
-      radio.alSalir(oaciDe(campo), a, this.elevacionDeLaEstacion);
+      radio.alSalir(oaciDe(campo), a);
       this.radioPuestaPara = clave;
     }
     return radio.leer(a, this.elevacionDeLaEstacion);
@@ -20449,6 +20449,12 @@ export class Game {
     // que las llevan pasan por aquí: los JAZ 60, 90, 110 y 120 y el Super
     // Puma, por sus mallas `g1000_display`; y los relojes de los JAZ 20, 25 y
     // 40, más abajo. Ver `encenderPantallas` y `encenderRelojes`.
+    /*
+     * La radio, una vez por imagen y para las dos superficies: la pantalla de
+     * la cabina y el cuadro plano. Ver `laRadioParaElCuadro`.
+     */
+    const radio = this.laRadioParaElCuadro();
+    const declinacionDelCampo = this.elCampoMontado().escenario.magneticVariation ?? 0;
     this.aircraftMesh.pantallas?.actualizar(
       {
         /*
@@ -20479,7 +20485,8 @@ export class Game {
         rumbo: this.flight.state.heading,
         // La del campo en el que se está: sus pistas van numeradas con la
         // suya, y el rumbo tiene que casar con el número pintado.
-        declinacion: this.elCampoMontado().escenario.magneticVariation ?? 0,
+        declinacion: declinacionDelCampo,
+        radio: radio ? pintarLaRadio(radio, declinacionDelCampo) : null,
         cabeceo: pitchAngleOf(this.flight.state.orientation),
         alabeo: bankAngleOf(this.flight.state.orientation),
         /*
@@ -20867,7 +20874,7 @@ export class Game {
         // Y lo que acaba de cambiar, resaltado en su sitio. Ver `mirarLoQueCambia`.
         resaltes: this.loQueCambia.resaltes,
         // La radio de navegación, en el peldaño que la tiene. Ver `laRadioParaElCuadro`.
-        radio: this.laRadioParaElCuadro(),
+        radio,
         // Y la funda del pitot, si se quedó puesta. Ver `vigilarLaFunda`.
         pitotTapado: this.pitotTapado,
         /*

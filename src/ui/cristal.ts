@@ -1301,7 +1301,7 @@ export function pantallaDeNavegacion(ancho: number, alto: number, helicoptero = 
       sobre la rosa, como en la pantalla de navegación de verdad, y la NAV y
       el ADF en las esquinas de abajo. Ver ui/radio-en-la-rosa.ts.
     -->
-    ${radioEnLaRosaSvg(cx, cy, r, ancho, alto)}
+    ${radioEnLaRosaSvg(cx, cy, r, ancho)}
     <text data-cristal="nd-rumbo" x="${cx}" y="22" ${MARCA_CIFRA} class="cr__valor" text-anchor="middle"></text>
     <text x="${cx}" y="36" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">HDG</text>
     <text data-cristal="viento" x="12" y="22" ${MARCA_CIFRA} class="cr__aux"></text>

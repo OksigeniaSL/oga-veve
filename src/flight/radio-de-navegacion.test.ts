@@ -276,7 +276,7 @@ describe("la radio de la cabina", () => {
 
   it("al salir de Los Rodeos, TFN en la NAV y el OBS en el radial donde se está, con la aguja en el centro", () => {
     const r = new RadioDeCabina({ nav: true, adf: true });
-    r.alSalir("GCXO", { ...enLaPlataforma, altitud: 1500 });
+    r.alSalir("GCXO", enLaPlataforma);
     expect(r.navMhz).toBeCloseTo(tfn.mhz, 6);
     expect(r.adfMhz).toBeNull();
     const l = r.leer({ ...enLaPlataforma, altitud: 1500 }).nav!.lectura;
@@ -318,5 +318,16 @@ describe("la radio de la cabina", () => {
     expect(r.curso).toBe(1);
     r.girarCurso(-1);
     expect(r.curso).toBe(360);
+  });
+});
+
+describe("en tierra", () => {
+  it("en la plataforma de Los Rodeos, un poco por debajo de la cota del campo, TFN se oye a cinco millas", () => {
+    const tfn = EMISORAS.find((e) => e.estacion.id === "TFN")!;
+    const a: Avion = { lat: 28.4826, lon: -16.3415, altitud: 625, rumbo: 120 };
+    const l = leerNav(117.7, 90, a, (e) => (e.estacion.oaci === "GCXO" ? 632 : 0));
+    expect(l.emisora).toBe(tfn);
+    expect(l.distanciaNm!).toBeGreaterThan(4);
+    expect(l.distanciaNm!).toBeLessThan(6);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EMISORAS, type LecturaAdf, type LecturaNav } from "../flight/radio-de-navegacion";
-import { RADIO_DESDE, pintarLaRadio, radioEnLaRosaSvg } from "./radio-en-la-rosa";
+import { RADIO_DESDE, crsEnLaViseraSvg, pintarLaRadio, radioEnElDireccionalSvg, radioEnLaRosaSvg } from "./radio-en-la-rosa";
 
 const tfn = EMISORAS.find((e) => e.estacion.id === "TFN")!;
 const inor = EMISORAS.find((e) => e.estacion.id === "INOR")!;
@@ -21,10 +21,17 @@ const adf = (l: Partial<LecturaAdf>): LecturaAdf => ({ emisora: fv, relativa: 10
 describe("la radio en la rosa", () => {
   it("sale con el calco de la radio: en el peldaño de cabina", () => {
     expect(RADIO_DESDE).toBe(4);
-    const svg = radioEnLaRosaSvg(200, 225, 160, 400, 416);
+    const svg = radioEnLaRosaSvg(200, 225, 160, 400);
     expect(svg).toContain(`data-desde="4"`);
-    for (const m of ["nav", "adf", "obs"]) expect(svg).toContain(`data-radio-mando="${m}"`);
+    for (const m of ["nav", "adf"]) expect(svg).toContain(`data-radio-mando="${m}"`);
     expect(svg).toContain(">NAV<");
+    // El curso, en la visera: con su rueda de dos mitades que llenan la visera.
+    const crs = crsEnLaViseraSvg(1036, 88);
+    expect(crs).toContain(`data-desde="4"`);
+    expect(crs.match(/data-radio-mando="obs"/g)).toHaveLength(2);
+    expect(crs).toContain(">CRS<");
+    // Y el direccional de las de pistón, con la rueda en la mitad de abajo.
+    expect(radioEnElDireccionalSvg().match(/data-radio-mando="obs"/g)).toHaveLength(2);
   });
 
   it("la aguja del ADF va en el verdadero más la declinación del campo, que es la rosa", () => {
