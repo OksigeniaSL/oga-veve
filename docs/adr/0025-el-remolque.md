@@ -631,6 +631,140 @@ ayuda que sostiene la subida es la misma de antes (nota H22b del ADR 0002); las 
 H21c. El vuelo de Ara (`OGA_GPU=1 verificar-inicio-3.mjs`), que mira al señalero desde el suelo hasta parar el
 avión: 126 de 126. El JAZ 90 no se ha vuelto a correr con el banco frenando: con él se arrastraba ocho metros.
 
+## Donde la raya pide parar, otro tramo, la barra del biplano y el banco de la salida tapada (17-11-2026, H23b)
+
+Cuatro flecos que quedaron vistos en las tandas de H21 y H22, y sin arreglar.
+
+### El tope de rodaje con la sugerida en cero
+
+Lo que dejó escrito «La raya para la rueda de morro…» en «Lo que no se ha tocado»: el tope de rodaje de los peldaños
+donde el juego lleva la velocidad —Guyrami y Tukã— tomaba la de rodaje, nueve metros por segundo y su holgura, cuando
+la sugerida era cero (`vista.velocidadSugerida || RODAJE` en `flight/tope-de-rodaje.ts`). Como si cero fuera «el plan
+no dice nada», y el plan siempre dice algo: sin raya, la de crucero (`velocidadAqui` en `plan-de-vuelo.ts`). **Cero es
+la raya pidiendo parar**, y sale de cuatro sitios:
+
+- **la doble raya del punto de espera**, que es el final de la raya de salida: con la roja, la raya acaba ahí;
+- **el puesto**, que desde H22b para el centro antes del final tanto como va la rueda de morro (`antesDelPuesto`);
+- **detrás del de delante**, en la cola o con uno parado en tu raya (`hastaElDeDelante`);
+- **antes de la calle de otro que viene de frente** y la tiene (`antesDelTramo`), que es lo que hace el control de
+  tierra con un cruce.
+
+La torre no para la raya de otra manera: su roja es la doble raya.
+
+**Quién tiene que moverse desde un cero, y lo mueve otro.** Se miraron uno a uno:
+
+- **del puesto se sale** desde el principio de la raya, que no vale cero: el perfil frena hacia atrás desde el final y
+  hacia delante desde el primer punto, pero el primero se queda con lo de su curva;
+- **empujado**, el avión va donde lo pone el tractor (`empujarElAvion` en `game.ts`), y la raya empieza en el puesto,
+  así que al soltarle está en mitad de ella;
+- **el tractor de la vuelta a la raya**, lo mismo;
+- **el sígame** rueda delante por su cuenta, y el avión, a la raya;
+- **con la verde**, el tope se suelta antes de mirar la sugerida, salvo en Guyrami hasta alinearse
+  (`entraConElJuego`), y ahí la verde rehace la raya hacia la pista: un fotograma con la de antes, el del cambio;
+- **el back-taxi** no acaba en su media vuelta: la raya sigue seiscientos metros pista abajo, y la bandera se baja
+  al acabar la vuelta, así que lo que el tope ve en la vuelta no es el final;
+- **la cola y la calle de otro** se sueltan solas: el de delante avanza, el otro deja su calle, y la red de la cola
+  que no avanza (`paciencia`) rehace la raya.
+
+**Lo que cambia:**
+
+- **El tope toma la sugerida tal cual**: cero es cero, el gas se cierra y la mano frena.
+- **Y donde la raya pide parar, el pie en el freno** (`FRENO_QUE_AYUDA`), aunque ya no se mueva. La mano que
+  conduce frenaba solo pasado un cinco por ciento del tope, y con tope cero eso es a cinco centímetros por segundo; al
+  ralentí, con el modelo de Tukã, el avión se arrastraba a tres, y en algo más de tres minutos esperando la verde se
+  ponía casi seis metros más allá de la doble raya. Quien espera en un punto de espera de verdad tiene el pie en el freno.
+
+**Lo medido** (`tope-donde-para-la-raya.test.ts`): la raya rodada con el gas a fondo, como lo deja un crío que no lo
+suelta, con el modelo de vuelo de cada peldaño y el tope del juego, en Los Rodeos.
+
+| | Antes | Ahora |
+|---|---|---|
+| Tukã, JAZ 20, cuatro minutos en la doble raya sin la verde | la cruza 35,1 m, y el plan le rehace la raya una y otra vez | se para en ella, a 0,0 m, y ahí se queda |
+| Tukã, JAZ 50, al puesto | se pasa 29,1 m del final de la raya, y en quince minutos no se da por llegado | la rueda de morro, a 1,0 m del punto |
+| Tukã, JAZ 90, al puesto | se pasa 25,3 m del final de la raya | la rueda de morro, en el punto |
+| Guyrami, los mismos tres | lo mismo que ahora | la doble raya a 0,0 m; la rueda de morro, a 0,2 m del punto con los dos |
+
+En Guyrami no cambia nada en estos tres: el modelo sencillo llega al final frenando con el perfil y se queda a
+centímetros de él, sin pisar el cero de la sugerida. Donde sí lo pisaría es en un cero de golpe —uno que se mete en tu
+raya justo delante, que pone `hastaElDeDelante` en cero de un fotograma a otro—, y eso no se ha medido.
+
+Del puesto se sale en los dos peldaños —pasa de un metro por segundo antes de diez segundos— y con la verde se sigue a
+la pista. **El aviso de «más despacio»** (`AvisoDeVelocidad.toca`, en `game.ts`) no tenía el mismo cero: con la sugerida
+en cero no se rearma por ir por debajo del setenta por ciento —nunca se va por debajo de cero—, sino parado, que es lo
+que es bajar claramente donde la raya pide parar.
+
+**Lo que no se ha tocado:** en «en el puesto», ya llegado, el plan quita la raya y la sugerida vuelve a ser la de
+crucero, así que en Guyrami y en Tukã el gas a fondo saca al avión del puesto hasta que la fase vuelve a «a la
+plataforma» y la raya se rehace hacia el mismo puesto. No es un cero, y lo que va ahí es apagar: se deja apuntado.
+
+### Otro tramo, con el tráfico de su campo
+
+`empezarOtroTramo` en `game.ts` reiniciaba la torre (`turno.reiniciar`, ver el ADR 0029) y dejaba el tráfico dibujado:
+el que se vio al llegar seguía en el campo, con matrículas que la frecuencia nueva ya no nombraba —lo que `resetFlight`
+ya había arreglado para sí con `Trafico.vaciar`—. Un vuelo nuevo es otra frecuencia y otra gente, la del campo de ahora,
+empezando. Ahora los dos caminos pasan por una sola cosa, `laTorreYSuTraficoDeCero`, que reinicia el turno y vacía el
+dibujo, y no por dos copias de la que una se quedó sin la mitad. `torre-de-cada-vuelo.test.ts` mira el texto de
+`game.ts`, que no se monta sin el navegador, y `roja-de-verdad.test.ts` ya probaba que turno y dibujo vaciados no dejan
+a nadie del vuelo de antes.
+
+### El de rueda de cola, con barra a sus principales
+
+`morroDe` le da al biplano sus principales, que son sus ruedas de delante, y la vuelta a la raya le enganchaba el tractor
+de cuna ahí: bajo el motor, entre las dos ruedas, abrazando nada. **Un avión de rueda de cola se remolca hacia delante
+con una barra al tren principal**, y hacia atrás por la rueda de cola: «Aircraft equipped with tail wheels are generally
+towed forward by attaching the tow bar to the main landing gear. In most cases, it is permissible to tow the aircraft in
+reverse by attaching the tow bar to the tail wheel axle» (FAA-H-8083-30, *Aviation Maintenance Technician Handbook —
+General*, «Ground Operations and Servicing», «Towing of Aircraft»). Se leyó en una reproducción del capítulo
+(aircraftsystemstech.com, «Aircraft Towing»), porque el PDF de la FAA no se dejó bajar desde aquí; no se ha cotejado con
+el manual del Ag Cat. La vuelta a la raya lleva al avión hacia delante, así que lo que toca es la barra:
+
+- **El tractor, delante de la hélice**: con un metro entre la punta del morro —el cono— y su trasera, y una barra en uve
+  de ella a las dos principales, a su media vía, 1,4 m, la del dibujo (`barraAlTrenDe` en `world/rueda-de-morro.ts`,
+  `MedidasDelAvion.barra` en `remolque.ts`). La barra va quieta respecto al tractor, que el remolque lleva alineado con el
+  avión como a la cuna, y se junta con lo negro: ninguna llamada de dibujo más.
+- **Nada en vilo**, como ya hacía `sinVilo`, y **sin cable de interfono**: un fumigador no lleva toma en el tren. La
+  persona de tierra va al lado del tractor, no de las principales, que en el biplano quedan debajo del ala.
+
+Lo comprueba `vuelta-a-la-raya.test.ts` con el biplano en la mesa, mirando a tres lados: mientras lo tiene enganchado,
+la trasera del tractor a la largura de la barra por delante de las principales y sobre su eje, más allá de la punta del
+morro; nada en vilo en ningún momento; y el avión, al soltarlo, sobre la raya y mirando hacia donde sigue. Y en los cinco
+campos de verdad de esa misma prueba, el biplano llega a la raya igual que el JAZ 20 y el JAZ 90.
+`rueda-de-morro.test.ts` mira que la media vía de la barra cae dentro de las ruedas del `.glb`.
+
+**Lo que no se ha hecho:** el giro del remolque sigue saliendo de la batalla (`remolqueALaRaya`), como si las
+principales se dirigieran y la de cola fuera el eje fijo. En el de rueda de cola es al revés —las principales no
+derrapan y la de cola va loca—, y con barra el radio sale de la largura de la barra: 1,7 m con la de 4,6 a setenta
+grados, contra los 2,0 de ahora. Lo dibujado gira un palmo más abierto de lo que giraría; no se ha cambiado.
+
+### El banco de la salida tapada
+
+En `salida-tapada.test.ts`, que es también el banco de mesa de la torre (`RODEOS=1`, `COMPARAR=1`; ver el ADR 0029):
+
+- **«Parado a tu lado» es con las alas a menos del margen**: tu semiala, la suya y los 7,5 m de la clave C
+  (`MARGEN_ENTRE_ALAS`, ahora exportado de `plan-de-vuelo.ts`). Era media separación de tierra —que ya lleva tu
+  semiala, la del reactor y el margen— más su semiala y otro margen, o el sesenta por ciento de la separación del
+  reactor con el JAZ 120 si era más: un listón que no era de nadie, y que contaba como tapón al reactor que esperaba su
+  turno en Los Rodeos con trece metros entre puntas de ala.
+- **Y el tráfico del banco ve lo que le da el juego** (`ponerTrafico` en `game.ts`): tu puesto —el de tu plan y el que
+  tienes, con tus alas—, tu avión y tu raya por donde no salir de la pista, y todo eso también después de llegar a tu
+  puesto, cuando el banco dejaba de darle nada, como si te hubieras ido.
+
+**Lo medido** con el banco de mesa de Los Rodeos con el JAZ 90 (`RODEOS=1`, las mismas cuarenta y ocho llegadas que en
+el ADR 0029): «parado a tu lado», de uno —el reactor a 43,2 m, con trece metros entre puntas de ala— a ninguno; lo
+demás, igual que en la última columna de H22a: ninguna salida sin despegar, nueve frustradas —por la pista ocupada a la
+decisión, por uno del tráfico que aterrizaba delante—, nunca dos en la pista y siempre se llega al puesto. Y la prueba
+de El Hierro sin la regla sigue viendo el fallo con el listón nuevo: sigue habiendo uno parado con las alas a menos del
+margen. Las demás de `salida-tapada.test.ts`, las de El Hierro, Encarnación y los AFIS, pasan.
+
+### Sin pasar por el navegador
+
+Todo lo de H23b se midió con vitest y con bancos de mesa: el candado del navegador lo tenía una ronda de cierre de
+varias horas. Quedan por correr, con la tarjeta de verdad: el vuelo entero en Los Rodeos en Guyrami con el JAZ 50 y en
+Tukã con el JAZ 90, que es donde el tope cambia; `verificar-verde-sin-volante`, que suelta el freno con la verde y el
+gas a fondo en Guyrami; un vuelo entero de La Gomera a Los Rodeos, cuyo tramo de vuelta mira ahora también que el
+tráfico de la llegada no se queda dibujado; y la vuelta a la raya con el biplano y con el JAZ 20, con sus fotos, para
+ver la barra y que la cuna sigue en su sitio.
+
 ## Lo que queda
 
 El empuje largo por la plataforma para el tráfico, cuando la torre retenga el empuje de quien sale con alguien rodando
