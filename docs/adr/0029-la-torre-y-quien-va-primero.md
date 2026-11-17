@@ -57,9 +57,8 @@ POSITION», 12.3.4.11 c) y 12.3.4.8 b). Los dos primeros ya se citaban en
 `salida-tapada.ts` con el párrafo «por verificar»; quedan verificados.
 
 El Reglamento de Circulación Aérea español y el SERA (Reglamento de
-Ejecución (UE) 923/2012) dicen lo mismo para la prioridad del que aterriza; la
-fuente que se sigue es la de la OACI, que es la que vale en Paraguay y en las
-islas.
+Ejecución (UE) 923/2012) no se consultaron: la fuente que se sigue es la de la
+OACI, que es la que vale en Paraguay y en las islas.
 
 ## Decisión
 
@@ -144,8 +143,28 @@ con un piloto que hace lo que le dicen—:
   frustradas que sí salen allí son por la pista ocupada a la decisión, por un
   avión del tráfico que aterrizaba delante, y son las mismas antes y después.
 
-En el navegador, el vuelo entero del JAZ 90 en Los Rodeos y el despegue: ver
-el informe de la tanda en #192.
+- **El Hierro y Encarnación, antes y después**, las dos cabeceras, los dos
+  aviones, cuatro repartos, tres semillas, dando la vuelta y sin darla: 192
+  llegadas, y lo mismo antes que después —dos órdenes de irse al aire por tu
+  salida, las dos en la calle única de Encarnación, donde no hay otra salida y
+  es lo que toca; nunca dos en la pista; ninguna salida dada a destiempo—. Con
+  esos repartos la final corta con uno en tu salida casi no se da, así que lo
+  nuevo se prueba también con el caso puesto a mano (`quien-va-primero.test.ts`):
+  fuera de la pista y con otra salida, se le retiene y no se te pide nada; ya
+  en la pista, tampoco; y en tu única salida, al aire.
+
+En el navegador, con la tarjeta de verdad (`OGA_GPU=1`), una tirada de cada:
+
+| Banco | H15b, tanda 6 | Ahora |
+|---|---|---|
+| Vuelo entero, Los Rodeos, JAZ 90 | 4 órdenes de irse al aire (3 por la salida, a 1.000 ft); no llegó a terminar | ninguna; aterriza a la primera y acaba apagado en su puesto, 62 de 63 |
+| Despegue, Los Rodeos, JAZ 90 | 21 de 21 | 21 de 21 |
+
+La que falla del vuelo entero es «el avión parado tiene las ruedas en el
+suelo», hundido 0,23 m, y no es de la torre. Es una tirada con otro reloj
+(×1, la de H15b iba más deprisa), y con el aire de Los Rodeos cada vuelo es
+distinto: no basta para decir que las frustradas por la salida no vuelven,
+solo que en esta no hubo.
 
 ## Lo que queda
 
