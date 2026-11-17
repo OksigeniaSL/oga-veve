@@ -722,8 +722,6 @@ export function sueloDelTrafico(
     deOtros?: PuestosDeOtros,
     /** Si la ruta sirve para lo que se busca: ver `valeParaSalir`. Sin ella, cualquiera. */
     vale?: (puntos: readonly Punto[]) => boolean,
-    /** Y si el puesto sirve: ver `seSaleDe`. Sin ella, cualquiera. */
-    puestoVale?: (xy: Punto) => boolean,
   ): { puntos: Punto[]; ocupada: boolean } | null => {
     const porDondeNo = ocupados?.puntos.length
       ? {
@@ -732,7 +730,7 @@ export function sueloDelTrafico(
         }
       : undefined;
     for (const escalon of lejosDe(candidatos.lista, evitar)) {
-      const hecha = rutaEntre(punto, hacia, escalon, porDondeNo, candidatos.deContacto, deOtros, vale, puestoVale);
+      const hecha = rutaEntre(punto, hacia, escalon, porDondeNo, candidatos.deContacto, deOtros, vale);
       if (hecha) return hecha;
     }
     return null;
@@ -747,18 +745,14 @@ export function sueloDelTrafico(
     deContacto: boolean,
     deOtros: PuestosDeOtros | undefined,
     vale: ((puntos: readonly Punto[]) => boolean) | undefined,
-    puestoVale?: (xy: Punto) => boolean,
   ): { puntos: Punto[]; ocupada: boolean } | null => {
-    // Los ocho más cercanos que sirven, mirando cada uno solo si hace falta: ver `seSaleDe`.
-    const cerca: Punto[] = [];
-    for (const xy of [...lista].sort(
-      (a, b) =>
-        Math.hypot(a[0] - punto[0], a[1] - punto[1]) -
-        Math.hypot(b[0] - punto[0], b[1] - punto[1]),
-    )) {
-      if (cerca.length >= 8) break;
-      if (!puestoVale || puestoVale(xy)) cerca.push(xy);
-    }
+    const cerca = [...lista]
+      .sort(
+        (a, b) =>
+          Math.hypot(a[0] - punto[0], a[1] - punto[1]) -
+          Math.hypot(b[0] - punto[0], b[1] - punto[1]),
+      )
+      .slice(0, 8);
     let mejor: { puntos: Punto[]; largo: number; ocupada: boolean } | null = null;
     /*
      * Hacia los puestos, de una vez: el buscador corre una vez por origen y
@@ -808,122 +802,6 @@ export function sueloDelTrafico(
     return mejor ? { puntos: mejor.puntos, ocupada: mejor.ocupada } : null;
   };
 
-  /** Las bocas de salida, de la que deja más pista por delante a la que menos. */
-  const deCabecera = [...bocasDeSalida].sort((a, b) => a.along - b.along);
-  /** Si de esa ruta se llega a la doble raya por su calle y sin pisar la pista. */
-  const valeParaSalir = (puntos: readonly Punto[]): boolean => {
-    const h = cortarEnLaRaya(puntos.map(alMundo), ejes, ancho, mitad);
-    return !!h && !pisaLaPista(h.hastaLaRaya, 0, Infinity, ejes, ancho, mitad);
-  };
-  /**
-   * **Si de un puesto se puede salir** a alguna de las bocas de salida por la
-   * calle, sin pisar la pista hasta la doble raya: lo que pide `salida` a un
-   * puesto para sacar a uno de él. Se mira una vez por puesto.
-   */
-  const seSale = new Map<string, boolean>();
-  const seSaleDe = (xy: Punto): boolean => {
-    const clave = `${xy[0]},${xy[1]}`;
-    let hay = seSale.get(clave);
-    if (hay === undefined) {
-      hay = deCabecera
-        .slice(0, BOCAS_DE_SALIDA)
-        .some((boca) => !!rutaEntre(grafo.nudos[boca.nudo]!, "punto", [xy], undefined, false, undefined, valeParaSalir));
-      seSale.set(clave, hay);
-    }
-    return hay;
-  };
-
-  /** La llegada de `SueloDelTrafico.llegada`, con los puestos que valgan. */
-  const llegadaPor = (
-    desdeElUmbral: number,
-    evitar: readonly EnElPlano[] | undefined,
-    ocupados: OcupadosEnElMundo | undefined,
-    pasarela: PasarelaDelTrafico | undefined,
-    deOtros: PuestosDeOtros | undefined,
-    morro: Pick<MorroDelAvion, "rueda"> | undefined,
-    puestoVale?: (xy: Punto) => boolean,
-  ): ReturnType<SueloDelTrafico["llegada"]> => {
-    /*
-     * **La salida que antes deja la pista libre**, no la primera que hay.
-     *
-     * Se cogía la primera boca por delante de donde ya rueda despacio, y hay
-     * bocas que no llevan a ninguna parte útil: en Guaraní la primera sale
-     * a una calle que vuelve a la pista, y el avión rodaba setecientos
-     * metros más por el asfalto antes de dejarlo —minuto y medio de roja
-     * para quien esperaba—. Se mira cuánto le queda de pista a cada una,
-     * contando lo que rueda hasta la boca y lo que sigue pisándola después,
-     * y gana la que menos. Hacia delante mejor que hacia atrás, que dar la
-     * vuelta en la pista es lo último que se hace; pero se hace —en El
-     * Hierro la única calle está en medio—.
-     */
-    const puede = umbral + desdeElUmbral;
-    let mejor: { coste: number; boca: number; camino: EnElPlano[]; pista: number } | null =
-      null;
-    const hastaLa = (along: number): number =>
-      along >= puede ? along - puede : (puede - along) * VOLVER_CUESTA;
-    /*
-     * De la que menos cuesta llegar a la que más: lo que cuesta llegar a una
-     * boca es lo menos que puede costar salir por ella, así que en cuanto
-     * una sale bien las de detrás ya no se miran. Es lo que deja volver a
-     * elegir al tomar tierra sin que se note: ver `rehacerLaLlegada` en
-     * `trafico.ts`.
-     */
-    const enOrden = [...bocas].sort((a, b) => hastaLa(a.along) - hastaLa(b.along));
-    for (const boca of enOrden) {
-      const hastaLaBoca = hastaLa(boca.along);
-      if (mejor && hastaLaBoca >= mejor.coste) continue;
-      const desde = grafo.nudos[boca.nudo]!;
-      const hecha = rutaConPuesto(desde, "puesto", evitar, ocupados, candidatosPara(pasarela, deOtros), deOtros, undefined, puestoVale);
-      if (!hecha) continue;
-      const ruta = hecha.puntos;
-      const derecho = [enElEje(boca.along), ...ruta.map(alMundo)];
-      // Y con la rueda de morro en el punto del puesto, no el centro. Ver `conLaRuedaAlFinal`.
-      const camino = conLaRuedaAlFinal(pasarela ? alPuestoPorSuRaya(derecho, pasarela) : derecho, morro);
-      const enLaPista = hastaSalir(camino, ejes, ancho);
-      // Y la deja de verdad: un camino que se queda en la pista, o que
-      // vuelve a ella para acabar encima, no vale.
-      const fin = ejes(camino[camino.length - 1]!);
-      const acabaFuera =
-        Math.abs(fin.across) > ancho / 2 + FUERA_DEL_EJE ||
-        Math.abs(fin.along) > mitad;
-      if (enLaPista >= largo(camino) - 1 || !acabaFuera) continue;
-      /*
-       * Ni la cruza después de haberla dejado: ya ha dicho «pista libre», y
-       * volver a pisarla camino del puesto es meterse en una pista que la
-       * torre le está dando a otro —quizá a ti—.
-       */
-      if (pisaLaPista(camino, enLaPista + 1, Infinity, ejes, ancho, mitad))
-        continue;
-      const haciaDelante = boca.calles.some((t) =>
-        saleHacia(t, grafo.nudos[boca.nudo]!, pista.heading),
-      );
-      const coste =
-        hastaLaBoca +
-        enLaPista * VOLVER_CUESTA +
-        (haciaDelante ? 0 : TORCER_CUESTA) +
-        (hecha.ocupada ? OCUPADA_CUESTA : 0);
-      /*
-       * **Y la pista queda libre al pasar la doble raya de la salida**, no
-       * al asomar las ruedas fuera del asfalto. Se daba por libre a ocho
-       * metros del borde, y a esa distancia un turbohélice de veintisiete
-       * metros de envergadura todavía tiene media ala sobre la pista: en La
-       * Gomera se oía «pista libre» con el otro rodando a mil noventa metros
-       * del umbral, a veintitantos del eje. «Pista libre» es haber pasado el
-       * punto de espera de la calle, el mismo que respeta quien va a entrar;
-       * si el camino no llega tan lejos, cuando acaba. Ver `DOBLE_RAYA`.
-       */
-      const libre = Math.max(
-        enLaPista,
-        hastaSalir(camino, ejes, ancho, DOBLE_RAYA),
-      );
-      if (!mejor || coste < mejor.coste)
-        mejor = { coste, boca: boca.along - umbral, camino, pista: libre };
-    }
-    return mejor
-      ? { boca: mejor.boca, camino: mejor.camino, pista: mejor.pista }
-      : null;
-  };
-
   let unaSola: boolean | undefined;
   const suelo: SueloDelTrafico = {
     llegada(desdeElUmbral, evitar, ocupados, pasarela, deOtros, morro) {
@@ -936,17 +814,86 @@ export function sueloDelTrafico(
           suelo.llegada(desdeElUmbral, evitar, ocupados, pasarela, { ...deOtros, conTodos: true }, morro) ??
           suelo.llegada(desdeElUmbral, evitar, ocupados, pasarela, undefined, morro)
         );
+
       /*
-       * **Y a un puesto del que se pueda volver a salir**, si hay alguno. En El
-       * Hierro el que llegaba aparcaba en el 3A, que no tiene salida por la
-       * calle: de él se va a la pista por encima de ella, y `salida` ya no saca
-       * a nadie de ahí. Llegar se llega; el que luego tuviera que salir, no. Si
-       * no queda ninguno así, como antes. Ver `seSaleDe`.
+       * **La salida que antes deja la pista libre**, no la primera que hay.
+       *
+       * Se cogía la primera boca por delante de donde ya rueda despacio, y hay
+       * bocas que no llevan a ninguna parte útil: en Guaraní la primera sale
+       * a una calle que vuelve a la pista, y el avión rodaba setecientos
+       * metros más por el asfalto antes de dejarlo —minuto y medio de roja
+       * para quien esperaba—. Se mira cuánto le queda de pista a cada una,
+       * contando lo que rueda hasta la boca y lo que sigue pisándola después,
+       * y gana la que menos. Hacia delante mejor que hacia atrás, que dar la
+       * vuelta en la pista es lo último que se hace; pero se hace —en El
+       * Hierro la única calle está en medio—.
        */
-      return (
-        llegadaPor(desdeElUmbral, evitar, ocupados, pasarela, deOtros, morro, seSaleDe) ??
-        llegadaPor(desdeElUmbral, evitar, ocupados, pasarela, deOtros, morro)
-      );
+      const puede = umbral + desdeElUmbral;
+      let mejor: { coste: number; boca: number; camino: EnElPlano[]; pista: number } | null =
+        null;
+      const hastaLa = (along: number): number =>
+        along >= puede ? along - puede : (puede - along) * VOLVER_CUESTA;
+      /*
+       * De la que menos cuesta llegar a la que más: lo que cuesta llegar a una
+       * boca es lo menos que puede costar salir por ella, así que en cuanto
+       * una sale bien las de detrás ya no se miran. Es lo que deja volver a
+       * elegir al tomar tierra sin que se note: ver `rehacerLaLlegada` en
+       * `trafico.ts`.
+       */
+      const enOrden = [...bocas].sort((a, b) => hastaLa(a.along) - hastaLa(b.along));
+      for (const boca of enOrden) {
+        const hastaLaBoca = hastaLa(boca.along);
+        if (mejor && hastaLaBoca >= mejor.coste) continue;
+        const desde = grafo.nudos[boca.nudo]!;
+        const hecha = rutaConPuesto(desde, "puesto", evitar, ocupados, candidatosPara(pasarela, deOtros), deOtros);
+        if (!hecha) continue;
+        const ruta = hecha.puntos;
+        const derecho = [enElEje(boca.along), ...ruta.map(alMundo)];
+        // Y con la rueda de morro en el punto del puesto, no el centro. Ver `conLaRuedaAlFinal`.
+        const camino = conLaRuedaAlFinal(pasarela ? alPuestoPorSuRaya(derecho, pasarela) : derecho, morro);
+        const enLaPista = hastaSalir(camino, ejes, ancho);
+        // Y la deja de verdad: un camino que se queda en la pista, o que
+        // vuelve a ella para acabar encima, no vale.
+        const fin = ejes(camino[camino.length - 1]!);
+        const acabaFuera =
+          Math.abs(fin.across) > ancho / 2 + FUERA_DEL_EJE ||
+          Math.abs(fin.along) > mitad;
+        if (enLaPista >= largo(camino) - 1 || !acabaFuera) continue;
+        /*
+         * Ni la cruza después de haberla dejado: ya ha dicho «pista libre», y
+         * volver a pisarla camino del puesto es meterse en una pista que la
+         * torre le está dando a otro —quizá a ti—.
+         */
+        if (pisaLaPista(camino, enLaPista + 1, Infinity, ejes, ancho, mitad))
+          continue;
+        const haciaDelante = boca.calles.some((t) =>
+          saleHacia(t, grafo.nudos[boca.nudo]!, pista.heading),
+        );
+        const coste =
+          hastaLaBoca +
+          enLaPista * VOLVER_CUESTA +
+          (haciaDelante ? 0 : TORCER_CUESTA) +
+          (hecha.ocupada ? OCUPADA_CUESTA : 0);
+        /*
+         * **Y la pista queda libre al pasar la doble raya de la salida**, no
+         * al asomar las ruedas fuera del asfalto. Se daba por libre a ocho
+         * metros del borde, y a esa distancia un turbohélice de veintisiete
+         * metros de envergadura todavía tiene media ala sobre la pista: en La
+         * Gomera se oía «pista libre» con el otro rodando a mil noventa metros
+         * del umbral, a veintitantos del eje. «Pista libre» es haber pasado el
+         * punto de espera de la calle, el mismo que respeta quien va a entrar;
+         * si el camino no llega tan lejos, cuando acaba. Ver `DOBLE_RAYA`.
+         */
+        const libre = Math.max(
+          enLaPista,
+          hastaSalir(camino, ejes, ancho, DOBLE_RAYA),
+        );
+        if (!mejor || coste < mejor.coste)
+          mejor = { coste, boca: boca.along - umbral, camino, pista: libre };
+      }
+      return mejor
+        ? { boca: mejor.boca, camino: mejor.camino, pista: mejor.pista }
+        : null;
     },
 
     salida(evitar, porDondeVas, pistaQueNecesita = 0, pasarela, deOtros, morro) {
@@ -991,6 +938,7 @@ export function sueloDelTrafico(
        * es la fila, y ahí sí se espera.
        */
       void evitar;
+      const deCabecera = [...bocasDeSalida].sort((a, b) => a.along - b.along);
       const fin = porDondeVas?.[porDondeVas.length - 1];
       const deTuCalle = (porDondeVas ?? []).filter(
         (e) => !fin || dist(e, fin) > PASA_A_TU_LADO + FILA_DE_SALIDA,
@@ -1006,6 +954,11 @@ export function sueloDelTrafico(
        * el AIP no deja salir por intersección a nadie. Ningún avión despega
        * con menos pista de la que necesita.
        */
+      /** Si de esa ruta se llega a la doble raya por su calle y sin pisar la pista. */
+      const valeParaSalir = (puntos: readonly Punto[]): boolean => {
+        const h = cortarEnLaRaya(puntos.map(alMundo), ejes, ancho, mitad);
+        return !!h && !pisaLaPista(h.hastaLaRaya, 0, Infinity, ejes, ancho, mitad);
+      };
       let deReserva: ReturnType<SueloDelTrafico["salida"]> = null;
       let remonte: ReturnType<SueloDelTrafico["salida"]> = null;
       let remonteEncima: ReturnType<SueloDelTrafico["salida"]> = null;

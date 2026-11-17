@@ -472,12 +472,16 @@ la envergadura del tipo y su morro. Los metros de empuje medidos en «Lo medido�
 Rodeos, 52,6 m y el tractor a 13,7 m del centro en el navegador— son de antes, con la batalla de la ficha, y no se
 han vuelto a medir.
 
-**Y el que llega aparca en un puesto del que se puede volver a salir**, si hay otro (`seSaleDe` en
-`world/suelo-del-trafico.ts`). En El Hierro, por la 34, el 3A no tiene salida por la calle —de él se va a la pista
-por encima de ella— y `salida` ya no sacaba a nadie de ahí (`valeParaSalir`), pero el que llegaba, contigo en el 2,
-aparcaba allí: con el banco de mesa, en cuatro de los nueve puestos en que puedes estar tú. La llegada mira ahora
-lo mismo que pide la salida, por la pista en uso, de los ocho puestos más cercanos y una vez por puesto; si no
-queda ninguno así, como antes. Por la 16 el 3A sí llega por su calle a la doble raya, y ahí puede aparcar.
+**El que llega a un puesto del que no se puede salir, sin decidir todavía.** En El Hierro, por la 34, el que llegaba
+aparcaba en el 3A, del que `salida` ya no saca a nadie (`valeParaSalir`: de él se va a la pista por encima de ella);
+con el banco de mesa, contigo en cuatro de los nueve puestos. Mirado puesto a puesto con lo mismo que pide la salida,
+por la 34 no tiene salida por la calle **ningún puesto del grupo del 3** —3, 3A y el de en medio— ni el 2A; por la 16
+la tienen todos menos el 1. Se probó que el que llega eligiera, si lo hay, uno del que se pueda volver a salir: deja
+de aparcar en el 3A, pero en El Hierro caben tres turbohélices, uno por grupo, y por la 34 solo dos grupos tienen
+salida. Con dos que salen y uno que llega, el que llega cogía el sitio del segundo que sale, y ése acababa en el
+mismo puesto que el primero, con las alas metidas (`trafico-empujado.test.ts`, «cada puesto es de un avión»). Antes
+de cambiarlo hay que decidir qué pasa con el tercero: que no salga, que espere, o que el grupo del 3 tenga salida
+por la calle si de verdad la tiene, que es lo primero que habría que mirar en el AIP.
 
 ## Lo que queda
 

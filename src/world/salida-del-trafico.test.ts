@@ -23,7 +23,6 @@ import { enElPavimento, sinTorre, type Aerodrome } from "./aerodrome";
 import { SCENARIOS, conViento, type Scenario } from "./scenarios";
 import { TIEMPO_DE_CASA } from "./meteo";
 import { sueloDelTrafico, type EnElPlano } from "./suelo-del-trafico";
-import { MORRO_DEL_TRAFICO, ruedaDeMorroEn } from "./rueda-de-morro";
 import { pistaQuePideConSuMargen, tiposDelCampo, TIPOS } from "./trafico";
 import { enEjesDePista } from "./rumbo";
 import { construirGrafo } from "./rodaje";
@@ -254,45 +253,6 @@ describe("en El Hierro, el que sale tiene camino esté donde estés", () => {
         }
       }
       expect(sinCamino).toEqual([]);
-    });
-  }
-});
-
-/*
- * **Y el que llega no aparca en un puesto del que no se puede salir**, si hay otro.
- * En El Hierro, por la 34, el 3A no tiene salida por la calle —de él se va a la
- * pista por encima de ella—, y el que llegaba, contigo en el 2, aparcaba allí:
- * llegar se llega, pero el que tuviera que salir de ahí no podría. Se mira con lo
- * que pide `salida` a un puesto, por la pista en uso: por la 16 el 3A sí llega por
- * su calle a la doble raya, y ahí puede aparcar. Ver `seSaleDe` en
- * `suelo-del-trafico.ts`.
- */
-describe("en El Hierro, el que llega aparca donde se puede volver a salir", () => {
-  for (const esc of cabeceras(porId("el-hierro")).filter((e) => Math.round(e.runway.heading) === 332)) {
-    it(`por la ${Math.round(esc.runway.heading)}, no en el 3A`, () => {
-      const aero = esc.aerodrome as Aerodrome;
-      const suelo = sueloDelTrafico(aero, esc.runway, aero.runways[0]?.widthM ?? 45)!;
-      const puestos = aero.parkingPositions ?? [];
-      expect(puestos.some((p) => p.ref === "3A")).toBe(true);
-      const t = TIPOS.turbohelice;
-      const morro = MORRO_DEL_TRAFICO.turbohelice;
-      const enEl3A: string[] = [];
-      for (const p of puestos) {
-        // Tú en ese puesto, con las alas de un JAZ 90, como lo pone el juego.
-        const aqui = { x: p.xy[0], z: -p.xy[1] };
-        const deOtros = { semiala: t.envergadura / 2, ocupados: [{ ...aqui, semiala: 13 }] };
-        const llega = suelo.llegada(t.toca + t.frena, [aqui], undefined, undefined, deOtros, morro);
-        expect(llega, `contigo en ${p.ref}`).not.toBeNull();
-        // El puesto en el que acaba: donde queda su rueda de morro.
-        const [antes, fin] = llega!.camino.slice(-2) as [EnElPlano, EnElPlano];
-        const rueda = ruedaDeMorroEn(fin, Math.atan2(fin.x - antes.x, -(fin.z - antes.z)), morro);
-        const suyo = [...puestos].sort(
-          (a, b) =>
-            Math.hypot(a.xy[0] - rueda.x, -a.xy[1] - rueda.z) - Math.hypot(b.xy[0] - rueda.x, -b.xy[1] - rueda.z),
-        )[0]!;
-        if (suyo.ref === "3A") enEl3A.push(`contigo en ${p.ref}`);
-      }
-      expect(enEl3A).toEqual([]);
     });
   }
 });
