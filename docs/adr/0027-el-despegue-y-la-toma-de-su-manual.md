@@ -3232,3 +3232,52 @@ final (`OGA_TRAZA_FINAL`) y el viento de casa, 040/12:
   solo la tarjeta del tiempo (`.parte__grupo` y los campos en columna por
   debajo de 560 px de ancho), que ese banco no mide; la tarjeta sí se midió,
   arriba.
+
+## Enmienda H28a (17-11-2026): la decisión de la tarjeta del tiempo, a la vista en el teléfono tumbado y de pie
+
+Lo que la enmienda H25e dejó visto y sin tocar en la tarjeta del tiempo.
+
+### Los botones, al pie
+
+En el peldaño de los números y en los dos teléfonos tumbados (800 × 360 y
+864 × 330), con la niebla del banco, los tres botones de la decisión
+quedaban debajo del borde: la tarjeta entera rodaba, y el porqué con sus
+cifras y la frase de la propuesta los empujaban. Quien juega tenía que
+desplazar dentro de la tarjeta para encontrar con qué se decide.
+
+Ahora la tarjeta tiene la anatomía de todos los paneles (`ui/concha.ts`):
+cabecera, el cuerpo que rueda si no cabe y la fila de los botones al pie,
+que no se mueve —`pie` en `ui/tarjeta-del-tiempo.ts`, `.parte__pie` en la
+hoja—. Lo que rueda, cuando rueda, es el parte y el porqué, que la voz ya
+cuenta al abrirse; el dibujo en ámbar de lo que pasa del límite queda arriba,
+a la vista. No se estrecha ni se corta ningún texto. «Hoy ganaste» pone en
+ese mismo pie la vuelta al hangar.
+
+### De pie
+
+H25e dejó escrito que de pie y con el dedo el cartel de girar la pantalla
+(`.gira`) tapaba la tarjeta, y el banco solo medía la línea de cifras. Lo
+que miraba el banco era si el cartel estaba puesto (`display`), no si estaba
+encima: el cartel va dentro del HUD, que es una capa fija, y su `z-index`
+de 40 lo pone encima del vuelo pero no de lo que va fuera del HUD; la tarjeta
+del tiempo va fuera, con 31.
+
+Medido con `elementFromPoint`, la tarjeta va encima del cartel: de pie se
+lee y se decide igual que tumbada, y es lo que se quiere, porque se decide
+antes de volar. Cerrada —con la ✕, saliendo o esperando—, el cartel vuelve
+a pedir que se gire, que de pie no se vuela. No hacía falta cambiar nada del
+juego: lo que estaba mal era la medida. El banco mide ahora el teléfono de
+pie como los tumbados en lo que depende de cómo se sujeta —cabe, todo de
+yema y alcanzable sin el cartel encima— y que al cerrarla el cartel vuelve
+(`medirElCartel`). El tabulador, el ratón y la segunda vez no dependen de
+eso y se siguen midiendo tumbado.
+
+### Medido
+
+`verificar-tarjeta-del-tiempo.mjs` con `OGA_TRAMO=taguato`, el 17-11-2026,
+puerto 5688: **67 de 67** —los 64 de antes y los tres nuevos del teléfono de
+pie—. El cuerpo rueda 72 px en 800 × 360 y 102 px en 864 × 330, con los tres
+botones quietos al pie y de yema; en la tablet y en el portátil cabe todo y
+no rueda nada. De pie, 380 × 760, los tres botones uno debajo del otro al
+pie, el cartel «puesto, debajo», y cerrada la tarjeta, «encima del vuelo».
+Las capturas, en el scratchpad de la tanda (`h28a/tarjeta/`).

@@ -21,7 +21,8 @@
  * Y desde el peldaño de los números (`OGA_TRAMO=taguato`), que **la línea de
  * cifras quepa**, VAPP incluida, con cada grupo entero en su renglón: en la
  * tablet, en el teléfono tumbado —también con la barra del navegador— y de
- * pie. Ver `medirLaLinea`.
+ * pie. Ver `medirLaLinea`. Y de pie, que la tarjeta se decide sin que el
+ * cartel de girar la pantalla la tape. Ver `medirElCartel`.
  *
  * Las capturas van a `OGA_CAPTURAS` si se da; el peldaño, en `OGA_TRAMO`.
  *
@@ -69,12 +70,13 @@ const PANTALLAS = [
   { ancho: 864, alto: 330, dedo: true, nombre: "teléfono apaisado con barra" },
   { ancho: 1280, alto: 800, dedo: false, nombre: "portátil" },
   /*
-   * **Y de pie.** Con el dedo y de pie el juego tapa todo con el cartel de
-   * girar la pantalla (`.gira`), así que aquí solo se mide que la línea de
-   * cifras quepa en su caja, por si el cartel se quita o alguien lo mira en
-   * una ventana estrecha.
+   * **Y de pie.** Con el dedo y de pie el juego pide girar la pantalla con su
+   * cartel (`.gira`), que tapa el vuelo; la tarjeta del tiempo va por encima,
+   * porque se decide antes de volar. Aquí se mide la línea de cifras, que la
+   * tarjeta cabe y se alcanza con el dedo sin que el cartel la tape, y que al
+   * cerrarla el cartel vuelve. Ver `medirElCartel`.
    */
-  { ancho: 400, alto: 780, dedo: true, nombre: "teléfono de pie", soloLaLinea: true },
+  { ancho: 400, alto: 780, dedo: true, nombre: "teléfono de pie", dePie: true },
 ];
 
 /**
@@ -147,6 +149,20 @@ function medirLaTarjeta() {
   };
 }
 
+/**
+ * **El cartel de girar la pantalla, y lo que tapa**: si está puesto y si lo
+ * que hay en el centro de la pantalla es él. Antes se miraba solo si estaba
+ * puesto (`display`), y de ahí se daba por hecho que tapaba la tarjeta; pero
+ * el cartel va dentro del HUD, y el HUD es una capa fija por debajo de la
+ * tarjeta, así que puesto no quiere decir encima. Corre en la página.
+ */
+function medirElCartel() {
+  const el = document.querySelector('[data-hud="gira"]');
+  const puesto = !!el && getComputedStyle(el).display !== "none";
+  const enMedio = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+  return { puesto, encima: puesto && !!enMedio && el.contains(enMedio) };
+}
+
 /** Lo que se le pidió decir a la instructora en lo que va de página. */
 const pedidas = (page) =>
   page.evaluate(() => [
@@ -211,18 +227,50 @@ try {
         "un grupo partido —«VAPP» al final de una línea y la cifra en la otra— no se lee como se lee en cabina",
       );
     }
-    if (p.soloLaLinea) {
-      const gira = await page.evaluate(() => {
-        const el = document.querySelector('[data-hud="gira"]');
-        return !!el && getComputedStyle(el).display !== "none";
-      });
-      console.log(`  (${donde}: ${gira ? "el cartel de girar la pantalla tapa la tarjeta" : "sin el cartel de girar"})`);
+    if (p.dePie) {
+      /*
+       * **De pie se decide igual**: la tarjeta entera, de yema y sin el
+       * cartel de girar encima; cerrada, el cartel vuelve, que de pie no se
+       * vuela. El resto —el tabulador, el ratón, la segunda vez— no depende
+       * de cómo se sujete el teléfono y ya se mide tumbado.
+       */
+      const m = await page.evaluate(medirLaTarjeta);
+      const conTarjeta = await page.evaluate(medirElCartel);
+      comprobar(`${donde}: cabe entera`, m.cabe, m.caja, "la decisión se ve sin desplazar");
+      comprobar(
+        `${donde}: todo lo que se toca mide al menos 44 × 44 y se alcanza, sin el cartel de girar encima`,
+        m.malos.length === 0 && !conTarjeta.encima,
+        `${m.malos.join(" · ") || "todo de yema"} · el cartel: ${
+          conTarjeta.encima ? "encima de la tarjeta" : conTarjeta.puesto ? "puesto, debajo" : "quitado"
+        }`,
+        "la tarjeta se decide antes de volar, y de pie se lee igual",
+      );
+      await page.click(".parte__cerrar");
+      await page.waitForTimeout(500);
+      const sinTarjeta = await page.evaluate(medirElCartel);
+      comprobar(
+        `${donde}: cerrada la tarjeta, el cartel de girar vuelve a pedir que se gire`,
+        sinTarjeta.encima,
+        sinTarjeta.encima ? "encima del vuelo" : sinTarjeta.puesto ? "puesto, pero tapado" : "quitado",
+        "de pie y con el dedo no se vuela: la palanca y el motor no caben",
+      );
+      if (CAPTURAS) await page.screenshot({ path: `${CAPTURAS}/despues-${TRAMO}-${p.ancho}x${p.alto}-cerrada.png` });
       comprobar(`${donde}: sin errores en la página`, errores.length === 0, errores.slice(0, 3).join(" | ") || "ninguno", "");
       await contexto.close();
       continue;
     }
     const m1 = await page.evaluate(medirLaTarjeta);
     comprobar(`${donde}: cabe entera`, m1.cabe, m1.caja, "en el teléfono apaisado la decisión tiene que verse sin desplazar");
+    /*
+     * **Y la decisión, a la vista**: los botones al pie y el cuerpo que rueda
+     * si no cabe. Ya lo mide «se alcanza» con `elementFromPoint`; esto dice
+     * cuánto rueda, para saber de qué se habla.
+     */
+    const rueda = await page.evaluate(() => {
+      const c = document.querySelector("#tarjeta-del-tiempo .concha__cuerpo");
+      return c ? Math.max(0, Math.round(c.scrollHeight - c.clientHeight)) : 0;
+    });
+    if (rueda) console.log(`  (${donde}: el cuerpo rueda ${rueda} px con los botones quietos al pie)`);
     comprobar(
       `${donde}: todo lo que se toca mide al menos 44 × 44 y se alcanza`,
       m1.malos.length === 0,
