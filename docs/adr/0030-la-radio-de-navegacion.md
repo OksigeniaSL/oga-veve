@@ -1022,3 +1022,190 @@ de una tirada:
   seguridad con una expresión; ahora usa la lista `SEGURIDAD`.
 - **Seguí la aguja**, veinte de veinte, con el alisio y en calma: la curva del
   perro 1.453 m (un 7,0 %), recta en calma (93 m, 0,4 %), y sin nada ajeno.
+
+## Enmienda H26g (17-11-2026): «Dos radiales que se cortan»
+
+La propuesta de H26e, hecha, y lo que cambió al hacerla. Es el cuarto
+ejercicio de radio y el cierre del peldaño del VOR de #51: **saber dónde se
+está sin ver nada**.
+
+`flight/dos-radiales.ts`, otra entrada de `EJERCICIOS` —`cruce`, con
+`escena: "radio"`, `acabaEnElAire` y su `colocacion` propia—, con su ficha en
+el hangar («Dos radiales que se cortan»: dos VOR en el suelo, una raya de
+cada uno y el avión dentro del aro del fijo, donde se cortan) y la misma
+puerta que los otros tres: el hangar, `?ejercicio=cruce`, la presentación
+antes y el panel del final con la traza.
+
+### La pareja, y dónde se ofrece
+
+`parejaDelCampo`: el VOR del campo, el que la radio pone al salir, y **otro
+con el que se corte bien**: que en algún sitio a diez millas del primero las
+dos rayas se corten entre sesenta y ciento veinte grados (`CORTE`, la regla de
+manual de un fijo con dos marcaciones: fuera de eso el seno baja de 0,87), que
+se oiga desde tres mil pies y que no se esté encima de él. De los que valen,
+el que más sitios da para empezar, y a igualdad, el más cercano. Sale:
+
+| Campo | Pareja |
+| --- | --- |
+| Fuerteventura | FTV y LTE, a 34 millas |
+| Los Rodeos | TFN y TFS, a 39. **LRO no**: a cinco millas y media, se corta mal en todas partes |
+| Tenerife Sur | TFS y LGM, a 28 (la propuesta decía TFN; LGM da más sitios donde empezar) |
+| Gran Canaria | GDV y LPC, a 15, de norte a sur |
+| Lanzarote | LTE y LZR, a 14 |
+| La Gomera | LGM y TFS |
+| Madrid | BRA y CNR |
+| Asunción, Ciudad del Este, Encarnación | ninguna: VAS, VES y VEN están a más de lo que se oye. No se ofrece |
+
+La propuesta pedía que el corte fuera «sobre lo bajo» ya en `dondeVale`, y
+`dondeVale` solo tiene el indicativo: sin terreno. El suelo lo mira quien
+coloca, que sí lo tiene, y entre los sitios que la geometría deja elige el
+del camino más bajo.
+
+### Dónde empieza: volando hacia la primera radio
+
+`colocacionDelCruce`: a cuatro minutos del VOR del campo, entre diez y quince
+millas (`LEJOS`) —cerca, porque cada raya se tuerce con la distancia a su
+radio, y no tanto que se llegue a ella antes de leer las dos—, en un sitio
+donde las dos rayas se cortan bien, el del camino más bajo y, a igualdad, el
+del corte más cerca de noventa grados. A tres mil pies sobre la pista o mil
+por encima de lo más alto del camino. La NAV con el VOR del campo, como la
+deja la salida, y el OBS veinte grados apartado, con FROM y la barra a tope,
+como en «¿En qué radial estoy?».
+
+**Y volando hacia esa radio, con el morro corrigiendo el viento**, que la
+propuesta no decía. Es lo que hace que el momento clave sea el que se ve casi
+siempre: mientras se pone la otra radio y se gira el OBS pasa medio minuto o
+uno, y en ese rato la primera raya no cambia, porque el avión va por ella. La
+cruz cae encima del avión. Quien vira, o se aparta y tarda, ve la cruz lejos,
+y entonces es cuando la instructora cuenta la lección de la propuesta: «leelas
+rápido, o volá hacia una de las dos radios». En Fuerteventura con el alisio,
+la avioneta empieza a diez millas en el 103 de FTV, con el morro en el 289 y
+las rayas cortándose a 87°.
+
+### Una sola NAV, como una avioneta
+
+- **La primera**: centrar la barra con FROM. La raya sale **del número del
+  OBS**, que es lo que el piloto lee y lleva a la carta, no del radial de la
+  cuenta. Centrada es lo de «¿En qué radial estoy?», la barra a menos de un
+  grado (`CENTRADA`).
+- **La otra**: nueve segundos después, si no se ha puesto ya, la tarjeta la
+  escribe con su frecuencia («LTE 114.40») y la instructora la pide; se pone
+  tocándola en el plano o con el 7, y su morse la identifica.
+- **La segunda raya**: centrar otra vez con FROM; la barra suele salir con TO
+  —el OBS sigue en el primer radial— y la rueda apretada la trae.
+- **La cruz**: el corte de los dos radiales **en la esfera**
+  (`corteDeDosRadiales`, el de dos caminos de círculo máximo), puesto en el
+  mundo con `dondeCae`. Con los radiales de verdad, sin redondear, cae a menos
+  de cincuenta metros del avión; en el plano local la raya recta se desvía
+  décimas de grado.
+
+### Lo que da el VOR, y cuándo la cruz llega tarde
+
+La propuesta pedía la cruz a menos de media milla del avión leyendo los dos a
+la vez. **Media milla no la da el VOR**: con la barra centrada a menos de un
+grado, cada raya puede ir un grado torcida, que a `d` de su radio la aparta
+`d · sen 1°`, y dos rayas que se cortan con un ángulo `θ` mueven la cruz como
+mucho la suma de las dos partida por `sen θ` (`loQueDaElVor`). A diez millas
+de FTV y treinta de LTE, cortándose a noventa grados, son 0,73 millas. El
+ejercicio juzga con eso: más lejos que lo que da el VOR es lo que voló el
+avión entre una lectura y otra, y la frase es la de leerlas rápido; dentro,
+«ahí estás». Y por eso un VOR casi en línea con el otro no sirve: con `θ`
+pequeño el seno se va a cero y la cruz no dice nada.
+
+### Lo que se ve y lo que se oye
+
+- **En el plano en vuelo** (`Mapa.ponerRayas`): cada radial leído, de su radio
+  a un poco más allá del avión, en la tinta de los datos aeronáuticos —la de
+  los radiales de la carta—, fino como el lápiz y con su orla de papel; su
+  número junto a la radio, «R-102 FTV», como se escribe en una carta; y donde
+  se cortan, el fijo: un aro de lápiz con su punto. Por encima de la estela y
+  por debajo de la flecha: si el fijo está bien, la flecha cae dentro del aro.
+  Con rayas, el plano ancho encuadra también las dos radios y las rayas
+  enteras. **Las rayas y la estela se quedan al cerrar**, al contrario que la
+  estela de los otros tres: la cruz llega justo al cerrarse, y es lo que hay
+  que mirar.
+- **En la tarjeta**: el CDI a tope del lado de la barra mientras se busca, el
+  CDI centrado con la primera raya escrita, y **un dibujo nuevo para la cruz**
+  (`cruce-de-radiales`: las dos radios, las dos rayas y el aro del fijo). Lo
+  escrito va delante de la frase: «FTV · LTE» al presentar, «LTE 114.40» al
+  pedir la otra, y los dos radiales leídos al final.
+- **La instructora**, cinco frases nuevas, genéricas, sin nombres ni números:
+  presentar, la primera raya («con una sola raya, no se sabe en qué punto»),
+  la otra, «¡ahí estás!» y la de leerlas rápido. Y dos de «¿En qué radial
+  estoy?» tal cual: «poné el VOR del campo en la NAV» si se quita el primero,
+  y la de identificada al oír el morse del segundo. Sin grabar: al final de
+  `scripts/frases-para-grabar.mjs` (`DEL_CRUCE`); hasta entonces, la tarjeta
+  y su texto. Un aviso vuelve cuando cambia algo que pasa: la otra se pide
+  otra vez solo si se quita.
+- **Nadie suspende**: con la cruz lejos se acaba igual, con el sonido del
+  logro y el panel del final. Ver dónde cayó y por qué es la mitad de la
+  lección.
+
+### Lo que se prueba
+
+- `flight/dos-radiales.test.ts`: dónde se ofrece y la pareja de cada campo;
+  que TFN y LRO solos no se ofrecen y que en su prolongación el corte es cero;
+  dónde empieza, con el camino de verdad derecho a la radio y el morro contra
+  el alisio; que la cruz en la esfera, con los radiales de verdad, cae a
+  menos de cincuenta metros del avión en cuatro sitios; y que leídos a la vez,
+  con el número entero del OBS más apartado que todavía centra la barra —un
+  grado de cada lado—, la cruz cae a menos de lo que da el VOR en cada sitio
+  de entre diez y quince millas al este de FTV donde las rayas cortan bien, y
+  en sus cuatro combinaciones. Y el vuelo, con **un piloto de prueba
+  con la radio de verdad** (`leerNav` en las dos, una después de otra) y un
+  avión de cinemática: con el alisio, en calma y con el reactor a doscientos
+  cincuenta nudos desde quince millas, los dos radiales leídos son los de
+  verdad a menos de un grado y la cruz cae encima del avión (con el alisio, a
+  0,49 millas con el VOR dando 0,73, y 34,5 segundos entre una y otra);
+  **quien vira hacia la otra radio** entre una y otra deja la cruz donde
+  estaba al leer la primera, a lo que voló del avión (1,39 millas, un minuto
+  largo), y oye la de leerlas rápido. Y que las rayas del plano salen de su
+  radio y pasan por la cruz.
+- `scripts/ver-dos-radiales.mjs`: el mismo vuelo en el juego, con las teclas
+  de quien juega —el automático en el rumbo de la salida, el 9 y el 0 de
+  toque en toque, el 7 hasta que la NAV tiene la otra y la rueda apretada con
+  TO— y sus capturas, con el plano de cerca. Con `OGA_TARDE=1`, vira hacia la
+  otra radio y tarda cuarenta segundos; con `OGA_VIENTO=000/0`, en calma.
+
+El banco, al escribir esto, espera en la cola del navegador: lo que vuele se
+apunta aquí.
+
+### Lo que queda
+
+- **El panel del final** lleva la traza, como los otros, pero no las rayas ni
+  la cruz: `plano()` del hangar no las sabe dibujar. Se ven en el plano en
+  vuelo.
+- **La cobertura de cada VOR** sigue sin transcribir (ver arriba): la pareja
+  se elige con la línea de vista y el techo de ciento treinta millas.
+
+### Propuesta para la tanda siguiente: el ILS con agujas
+
+El peldaño 6 de #51: «los aros de senda que ya existen, hechos invisibles y
+convertidos en dos agujas». Lo que ya hay: el rombo de la senda en la cabina
+con la senda de cada pista de su AIP (`world/sendas-publicadas.ts`), la NAV
+con el localizador y su barra (`leerNav`, `ESCALA_LOC`), los aros de la final
+(`world/runway-guide.ts`), la capa de nubes (`world/capa-de-nubes.ts`) y la
+altura de decisión con su regla (`flight/minimos.ts`).
+
+- **Qué**: «Aterrizar con las agujas», en el peldaño de cabina, en todo avión
+  con NAV y en todo campo con un ILS transcrito. Se ofrece por pista y no por
+  campo: el ILS es de una cabecera.
+- **Tres pasadas, la misma final**, como pide el issue: aros y agujas; las
+  agujas solas, con los aros apagándose a medida que las dos barras se quedan
+  dentro de un punto; y las agujas en nube, con la base a doscientos cincuenta
+  pies, **rompiendo justo antes de los doscientos de la decisión y viendo
+  aparecer la pista**: el momento que
+  el issue llama el más emocionante que puede tener el simulador. La primera
+  pasada se puede saltar si ya se hizo.
+- **Se juzga** con `leerNav` (el localizador) y la senda de la pista: dentro
+  de un punto en las dos agujas desde mil pies hasta los mínimos es
+  estabilizada; fuera, a los mínimos, **la frustrada se felicita** y puntúa
+  igual o más, que es la regla de AGENTS.md. *Minimums* lo canta la máquina en
+  el avión que lo lleva, en los cuatro peldaños, y la instructora detrás.
+- **Lo que no se dice**: las cifras. La tarjeta escribe el identificador, la
+  frecuencia y el curso del localizador, como una carta de aproximación.
+- **Prueba de mesa** con un piloto de cinemática que vuela las dos barras:
+  que a los mínimos queda dentro de un punto con viento cruzado, que con la
+  base a doscientos cincuenta pies la pista se ve antes de la altura de
+  decisión, y que quien llega fuera de un punto oye la frustrada como un
+  acierto.
