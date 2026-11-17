@@ -886,6 +886,19 @@ destinosDeHoy.forEach((d, i) => {
   );
 });
 /*
+ * **Y la rejilla del pavimento de cada vecino**, horneada como la del campo
+ * de salida (ADR 0028). La de un vecino no la pide el arranque: se hace la
+ * primera vez que algo pisa su asfalto —el avión al llegar, o el tráfico al
+ * pasarse a su campo—, y hacerla entonces era un tirón a mitad de vuelo, con
+ * millón y medio de celdas en Gran Canaria. Va después de arrancar, como su
+ * ciudad, así que con una conexión lenta no le quita nada al arranque, y son
+ * de unos cientos de bytes a trece kilobytes por campo. Montado como vecino,
+ * el campo tiene la misma huella que montado como salida —lo mira
+ * `pavimento-de-los-vecinos.test.ts`—; si no llega o no casa, se hace como
+ * siempre.
+ */
+for (const d of destinosDeHoy) void cargarPavimentoHorneado(d.aerodrome?.id);
+/*
  * **Y el parte se le da al juego, no solo al escenario.**
  *
  * `conViento` mete el viento en el escenario, y con eso el motor de vuelo se
