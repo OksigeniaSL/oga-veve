@@ -16,6 +16,7 @@ import {
   hayQueRepintar,
   LADO_MINIMO,
   ladoDelVuelo,
+  lupaDelFijo,
   type Encuadre,
 } from "./encuadre-del-mapa";
 
@@ -143,5 +144,40 @@ describe("con la estela de «Seguí la aguja»", () => {
 
   it("sin estela, solo la casa", () => {
     expect(camposConEstela(CASA, [])).toEqual([CASA]);
+  });
+});
+
+describe("la lupa del fijo de dos radiales (H26h)", () => {
+  /*
+   * FTV y LTE, a treinta y cuatro millas: el plano ancho mide noventa
+   * kilómetros. La cruz tarde de H26g, a 1,32 millas del avión con el VOR
+   * dando 0,74, quedaba a ocho píxeles de la flecha en un plano de 288.
+   */
+  const MILLA = 1852;
+  const lados = escalones(90_000);
+  const ancho = 288;
+  for (const [caso, lejos, tolerancia] of [
+    ["tarde", 1.32 * MILLA, 0.74 * MILLA],
+    ["encima", 0.19 * MILLA, 0.73 * MILLA],
+    ["el reactor, más lejos de las radios", 0.3 * MILLA, 1.1 * MILLA],
+  ] as const)
+    it(`${caso}: la más cerca donde la cruz y el avión se ven, y apartados lo que están`, () => {
+      const i = lupaDelFijo(lados, lejos, tolerancia);
+      expect(i).toBeGreaterThan(0);
+      const lado = lados[i]!;
+      // La cruz, en la mitad de en medio del papel con el avión en el centro.
+      expect(lejos / lado).toBeLessThanOrEqual(0.25);
+      // Lo que da el VOR, como mucho la sexta parte del papel.
+      expect(tolerancia / lado).toBeLessThanOrEqual(1 / 6);
+      // Y la siguiente ya no cumple: es la más cerca que vale.
+      const siguiente = lados[i + 1];
+      if (siguiente !== undefined) expect(lejos / siguiente > 0.25 || tolerancia / siguiente > 1 / 6).toBe(true);
+      // La tarde, a una distancia que se ve sin buscarla: más que el avión entero.
+      if (caso === "tarde") expect((lejos / lado) * ancho).toBeGreaterThan(40);
+    });
+
+  it("si ninguna lupa llega, el vuelo entero", () => {
+    expect(lupaDelFijo(lados, 30_000, 1000)).toBe(0);
+    expect(lupaDelFijo([90_000], 100, 100)).toBe(0);
   });
 });

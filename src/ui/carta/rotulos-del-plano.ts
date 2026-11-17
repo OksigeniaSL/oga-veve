@@ -29,7 +29,7 @@
 
 import { calcosDe, type Peldano } from "../../flight/escalera";
 import { LETRAS, TINTAS } from "./estilo";
-import { colocar, sitiosAlrededor, type Caja, type Raya, type Sitio } from "./rotulos";
+import { colocar, sitiosAlrededor, sitiosEnElRadial, type Caja, type Raya, type Sitio } from "./rotulos";
 
 /** Un renglón de un rótulo: su texto, su tinta y su letra. */
 export interface Renglon {
@@ -56,6 +56,11 @@ export const CUERPOS = {
   td: 12,
   var: 11,
   grado: 11,
+  /**
+   * El número de un radial leído, «R-102 FTV»: más grande que la radio de la
+   * carta porque es lo que se acaba de leer y lo que el ejercicio enseña.
+   */
+  radial: 15,
 } as const;
 
 /** La letra de un renglón, como la pide el lienzo. */
@@ -142,6 +147,18 @@ export interface PlanoPorRotular {
   readonly radioayudas?: readonly RadioayudaDelPlano[];
   /** El descargo del pie, desde el calco de los nombres: «No apto para navegación real». */
   readonly descargo?: string | null;
+  /**
+   * **Los radiales leídos** de «Dos radiales que se cortan», de su radio
+   * (`a`) a su punta (`b`), con su número entero y corto: «R-102 FTV» y
+   * «R-102». Van con los demás rótulos y no encima de ellos: el número de la
+   * primera raya pisaba el «TWR 118.475» de Fuerteventura (H26h).
+   */
+  readonly radiales?: readonly {
+    readonly a: readonly [number, number];
+    readonly b: readonly [number, number];
+    readonly texto: string;
+    readonly corto: string;
+  }[];
 }
 
 /** Un rótulo ya colocado, para pintarlo. */
@@ -159,6 +176,8 @@ interface PorRotular {
   readonly que: string;
   readonly formas: readonly (readonly Renglon[])[];
   readonly sitios: (medida: readonly [number, number]) => Sitio[];
+  /** Su propia raya, en `rayas`, que puede tocar sin coste: la del radial que numera. */
+  readonly propia?: number;
 }
 
 /** Las formas sin repetir: si quitar la radio no quita nada, no es otra forma. */
@@ -253,6 +272,24 @@ export function rotularElPlano(p: PlanoPorRotular, medir: Medir): { puestos: Rot
     ...campos.filter((c) => c.papel === "destino").map(campo),
     ...puntos.filter((q) => q.activo).map(punto),
   );
+  /*
+   * **Los números de los radiales leídos**, detrás de casa y antes que las
+   * cajas de las radios: es lo que se acaba de leer, y una caja de radio sabe
+   * quedarse sin el canal. Sus rayas, con las de la ruta: cruzarlas cuesta, y
+   * así tampoco el nombre de un campo se queda debajo de una raya de lápiz.
+   */
+  const rayas: Raya[] = [...p.rayas];
+  for (const r of p.radiales ?? []) {
+    const propia = rayas.length;
+    rayas.push({ a: r.a, b: r.b });
+    const renglon = (texto: string): Renglon => ({ texto, color: TINTAS.aero, cifras: true, cuerpo: CUERPOS.radial });
+    lista.push({
+      que: r.texto,
+      formas: sinRepetir([[renglon(r.texto)], [renglon(r.corto)]]),
+      sitios: (m) => sitiosEnElRadial(r.a, r.b, m, 3, p.lado, p.lado),
+      propia,
+    });
+  }
   if (umbral && dentro(umbral.x, umbral.y)) {
     const u = umbral;
     const renglon = (texto: string): Renglon => ({ texto, color: TINTAS.cota, cifras: true, cuerpo: CUERPOS.cota });
@@ -322,8 +359,8 @@ export function rotularElPlano(p: PlanoPorRotular, medir: Medir): { puestos: Rot
     p.lado,
     p.lado,
     p.fijos,
-    p.rayas,
-    lista.map((r, i) => ({ formas: medidas[i]!.map((m) => r.sitios(m)) })),
+    rayas,
+    lista.map((r, i) => ({ formas: medidas[i]!.map((m) => r.sitios(m)), propia: r.propia })),
     2,
     /*
      * Una forma más corta cuesta lo que alejarse un anillo y medio: mejor
@@ -382,12 +419,18 @@ export function unoMas(
  * lienzo que cuenta en píxeles de pantalla. `papel` es el color del halo.
  */
 export function pintarRotulo(g: CanvasRenderingContext2D, r: RotuloPuesto, papel: string): void {
-  const c = r.caja;
+  const giro = r.caja.giro ?? 0;
+  // Girado —el número de un radial, a lo largo de su raya—: se pinta en sus ejes.
+  const c = giro ? { ...r.caja, cx: 0, cy: 0 } : r.caja;
   const alto = r.renglones.reduce((s, x) => s + altoDe(x), 0);
   let y = c.cy - alto / 2;
   const medio = LETRAS.halo / 2;
   const x = r.lado === "izquierda" ? c.cx + c.w / 2 - medio : r.lado === "centro" ? c.cx : c.cx - c.w / 2 + medio;
   g.save();
+  if (giro) {
+    g.translate(r.caja.cx, r.caja.cy);
+    g.rotate(giro);
+  }
   g.textBaseline = "middle";
   g.textAlign = r.lado === "izquierda" ? "right" : r.lado === "centro" ? "center" : "left";
   g.lineJoin = "round";

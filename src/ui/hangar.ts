@@ -38,6 +38,7 @@ import { ponerLasDeSerie } from "./explicaciones-de-serie";
 // abre la de los bomberos antes de que haya vuelo. Ver `abrirBomberos`.
 import "./ventana-de-explicacion";
 import type { Aerodrome } from "../world/aerodrome";
+import { dibujarElFijo, encajeDelFijo, type FijoEnElPlano } from "./fijo-en-el-plano";
 import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
 import {
   cabeEn,
@@ -312,12 +313,17 @@ export function caja(escenario: Scenario): Caja {
  * esas mismas coordenadas. Sin ellos, el plano de un vuelo de Gran Canaria a
  * Los Rodeos enseñaba Gando como un punto y una raya que se acababa en
  * blanco, donde tenía que estar el aeropuerto al que se llegó.
+ *
+ * `fijo`, si viene, es el de «Dos radiales que se cortan»: sus dos rayas, la
+ * cruz y el avión, encima de la traza y con el encuadre de ellos y no el del
+ * aeródromo. Ver `fijo-en-el-plano.ts`.
  */
 export function plano(
   escenario: Scenario,
   escala: number,
   traza?: readonly (readonly [number, number])[],
   otros: readonly Aerodrome[] = [],
+  fijo?: FijoEnElPlano,
 ): string {
   const encaje = caja(escenario);
   /*
@@ -328,7 +334,7 @@ export function plano(
    * al pueblo, veinte—, así que sin esto la raya se saldría por el borde y lo
    * que se vería sería un trozo de vuelo, que es peor que no verlo.
    */
-  const { cx, cy, lado } = traza?.length ? conLaTraza(encaje, traza) : encaje;
+  const { cx, cy, lado } = fijo ? encajeDelFijo(fijo, traza) : traza?.length ? conLaTraza(encaje, traza) : encaje;
   // **Con suelo de escala.** Todas comparten escala para que se vea de un
   // vistazo cuál es la pista larga, pero sin suelo el valle salía como un
   // palito perdido en medio de la ficha. Con el suelo al 55 % la diferencia se
@@ -345,6 +351,7 @@ export function plano(
   const ancho = (v * 5) / 3;
   const vb = `${cx - ancho / 2} ${-cy - v / 2} ${ancho} ${v}`;
   const aero = escenario.aerodrome;
+  const elFijo = fijo ? dibujarElFijo(fijo, traza, { x: cx - ancho / 2, y: -cy - v / 2, ancho, alto: v }) : null;
 
   /** Las dos cabeceras, marcadas. Sin esto una pista corta es una raya y ya. */
   const umbrales = (
@@ -382,7 +389,9 @@ export function plano(
            aria-hidden="true">
         <line class="plano__pista" x1="${a[0]}" y1="${-a[1]}" x2="${b[0]}" y2="${-b[1]}" />
         ${umbrales(a, b, width * 2.6)}
+        ${elFijo?.debajo ?? ""}
         ${dibujarTraza(traza)}
+        ${elFijo?.encima ?? ""}
       </svg>`;
   }
 
@@ -427,7 +436,9 @@ export function plano(
     <svg class="ficha__plano" viewBox="${vb}" preserveAspectRatio="xMidYMid meet"
          aria-hidden="true">
       ${plataformas}${rodaduras}${pistas}
+      ${elFijo?.debajo ?? ""}
       ${dibujarTraza(traza)}
+      ${elFijo?.encima ?? ""}
     </svg>`;
 }
 

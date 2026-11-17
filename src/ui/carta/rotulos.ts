@@ -292,6 +292,100 @@ export function sitiosEnLaRaya(
   return sitios;
 }
 
+/**
+ * **El tramo de una raya que cae dentro de un rectángulo**, en fracciones de
+ * la raya —`[t0, t1]`, de 0 en `a` a 1 en `b`—, o `null` si no entra. Liang y
+ * Barsky, como `cruza`.
+ */
+export function tramoDentro(
+  a: readonly [number, number],
+  b: readonly [number, number],
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+): [number, number] | null {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  let t0 = 0;
+  let t1 = 1;
+  for (const [p, q] of [
+    [-dx, a[0] - x0],
+    [dx, x1 - a[0]],
+    [-dy, a[1] - y0],
+    [dy, y1 - a[1]],
+  ] as const) {
+    if (p === 0) {
+      if (q < 0) return null;
+    } else {
+      const t = q / p;
+      if (p < 0) t0 = Math.max(t0, t);
+      else t1 = Math.min(t1, t);
+      if (t0 > t1) return null;
+    }
+  }
+  return [t0, t1];
+}
+
+/**
+ * **A lo largo de un radial leído**: el «R-102 FTV» de una raya de lápiz que
+ * sale de su radio, girado con ella y a un lado, nunca boca abajo.
+ *
+ * El sitio preferido es `preferido` de la raya —en el plano en vuelo, a medio
+ * camino entre la radio y la cruz—, y de ahí se aparta a un lado y a otro por
+ * el tramo que se ve; primero pegado a la raya y luego algo más lejos, para
+ * saltar por encima del avión cuando el plano es chico y la raya corta. Lo
+ * que se ve es lo que cae dentro de `[0, ancho] × [0, alto]`: con la lupa, la
+ * radio se queda fuera del papel y la raya entra por un borde, y un sitio
+ * fuera del papel no sirve de nada.
+ */
+export function sitiosEnElRadial(
+  a: readonly [number, number],
+  b: readonly [number, number],
+  [w, h]: readonly [number, number],
+  aparte: number,
+  ancho: number,
+  alto: number,
+  preferido = 0.37,
+): Sitio[] {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const largo = Math.hypot(dx, dy) || 1;
+  // Medio rótulo de margen: el centro de un sitio pegado al borde deja la letra fuera.
+  const m = Math.min(w, h) / 2;
+  const visto = tramoDentro(a, b, m, m, ancho - m, alto - m);
+  if (!visto) return [];
+  const [t0, t1] = visto;
+  let giro = Math.atan2(dy, dx);
+  if (giro > Math.PI / 2) giro -= Math.PI;
+  if (giro <= -Math.PI / 2) giro += Math.PI;
+  const nx = -dy / largo;
+  const ny = dx / largo;
+  const centro = Math.max(t0, Math.min(t1, preferido));
+  // Pasos de medio rótulo a lo largo de la raya, hasta los dos cabos del tramo que se ve.
+  const paso = Math.max(w / 2, 1) / largo;
+  const sitios: Sitio[] = [];
+  for (const [lejos, extra] of [
+    [0, 0],
+    [9, 2],
+    [20, 4],
+  ] as const)
+    for (let k = 0; k <= 40; k++)
+      for (const signo of k === 0 ? [1] : [1, -1]) {
+        const t = centro + signo * k * paso;
+        if (t < t0 || t > t1) continue;
+        for (const lado of [1, -1]) {
+          const d = h / 2 + aparte + lejos;
+          sitios.push({
+            caja: { cx: a[0] + dx * t + nx * d * lado, cy: a[1] + dy * t + ny * d * lado, w, h, giro },
+            coste: extra + k * 0.25 + (lado < 0 ? 0.1 : 0),
+            lado: "centro",
+          });
+        }
+      }
+  return sitios;
+}
+
 /** **En uno de varios sitios a elegir**: el nombre de un río o de un país, el primero que quepa. */
 export function sitiosEntre(puntos: readonly (readonly [number, number])[], [w, h]: readonly [number, number]): Sitio[] {
   return puntos.map(([cx, cy], i) => ({ caja: { cx, cy, w, h }, coste: i }));

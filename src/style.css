@@ -3099,6 +3099,48 @@ body:is(:has([data-hud="fin"]:not([hidden])), .hay-fin) .pad {
   stroke-dashoffset: 0;
 }
 
+/*
+ * **El fijo de dos radiales**: las rayas de lápiz debajo de la traza, y
+ * encima la cruz con su aro y el avión donde estaba al leer la segunda. En la tinta
+ * suave las rayas y la cruz, como el lápiz; el avión en la tinta, con su
+ * halo oscuro para que se vea encima de la traza. Ver `fijo-en-el-plano.ts`.
+ */
+.plano__radial {
+  stroke: var(--tinta-suave);
+  stroke-width: 2;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.plano__cruz {
+  fill: none;
+  stroke: var(--tinta-suave);
+  stroke-width: 2.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.plano__cruz-punto {
+  fill: var(--tinta-suave);
+}
+
+.plano__avion {
+  fill: var(--tinta);
+  stroke: rgba(10, 16, 13, 0.9);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  paint-order: stroke;
+  vector-effect: non-scaling-stroke;
+}
+
+/* El halo de la letra va en su atributo, en metros como la letra: ver `dibujarElFijo`. */
+.plano__radial-rotulo {
+  fill: var(--tinta-suave);
+  font-weight: 600;
+  stroke: rgba(10, 16, 13, 0.9);
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
 /* Los dos botones del final: volver a volar, y volver al hangar. */
 .fin__botones {
   display: flex;

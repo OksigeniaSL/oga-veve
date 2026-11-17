@@ -1393,3 +1393,152 @@ altura de decisión con su regla (`flight/minimos.ts`).
   base a doscientos cincuenta pies la pista se ve antes de la altura de
   decisión, y que quien llega fuera de un punto oye la frustrada como un
   acierto.
+
+## Enmienda H26h (17-11-2026): lo que quedó de «Dos radiales que se cortan»
+
+Los tres flecos que H26g vio en sus capturas, arreglados, y el ejercicio
+volado también con un reactor y en otro campo.
+
+### El número de la raya, con los demás rótulos
+
+El número de cada raya se pintaba encima del plano, en el lienzo de la flecha,
+sin saber lo que había escrito debajo; con el plano de cerca, el «R-102 FTV»
+rozaba el «TWR 118.475» de GCFV. **Ningún rótulo del plano pisa a otro**, así
+que el número va ahora con los demás, en su lienzo y colocado por
+`rotularElPlano` (`radiales`):
+
+- **Dónde**: `sitiosEnElRadial` (`carta/rotulos.ts`), girado con su raya, a un
+  lado y nunca boca abajo, como `sitiosEnLaRaya` con el rumbo de una ruta. El
+  sitio preferido sigue siendo a medio camino entre la radio y la cruz, y de
+  ahí se aparta por el tramo de la raya **que cae en el papel**: con la lupa,
+  la radio se queda fuera y la raya entra por un borde. Pegado a la raya, a
+  nueve píxeles y a veinte; lo último es para saltar por encima del avión en
+  el plano del teléfono, donde la raya hasta él mide ochenta píxeles.
+- **Con qué forma**: «R-102 FTV» y, si no cabe, «R-102»: de qué radio sale ya
+  lo dice la raya. Si tampoco, no se escribe, como cualquier rótulo; acercando
+  la lupa sale.
+- **En qué orden**: detrás de casa y del destino y antes que las cajas de las
+  radios, que saben quedarse sin el canal: el número es lo que se acaba de
+  leer. Y las rayas se suman a las de la ruta, que los demás rótulos pagan
+  por cruzar: así tampoco el nombre de un campo se queda debajo de una raya
+  de lápiz. El aro de la cruz es un símbolo, y no se pisa.
+- `pintarRotulo` sabe ya de cajas giradas, y `rotulosPuestos` las da al
+  banco con las demás. Se rotula otra vez cuando llega una raya o la cruz
+  (`claveDeLosRotulos`).
+
+### Al cerrarse, el plano se acerca a la cruz y al avión
+
+El plano ancho encuadra las dos radios, y la milla y pico de una cruz tarde
+eran ocho píxeles: la flecha, en el borde del aro. **Al llegar la cruz, el
+plano se acerca solo**, como si se hubiera tocado la lupa (`lupaDelFijo`, en
+`encuadre-del-mapa.ts`): la más cerca de las lupas de siempre en la que
+
+- la cruz cae en la mitad de en medio del papel, con el avión en el centro
+  —el lado, cuatro veces lo que están apartados—, con sitio para seguir dentro
+  mientras el avión vuela los doce segundos hasta el panel del final;
+- y lo que da el VOR es como mucho la sexta parte del lado. Así una cruz buena
+  cae con la flecha dentro o al borde de su aro, y una tarde, apartada de ella
+  a simple vista: se entiende sin leer.
+
+Una lupa y no un encuadre hecho a medida, porque las lupas son escalones a
+propósito (ver `escalones`) y desde ahí quien juega sigue con las suyas: con la
+de alejar vuelve al plano ancho de las dos radios. Se hace una vez, en cuanto
+llega la cruz, esté el plano abierto o no.
+
+En Fuerteventura, con FTV y LTE, es la segunda lupa, de 9,8 millas de lado: la
+cruz tarde, a 1,22 millas, queda a treinta y cinco píxeles de la flecha en un
+plano de 272, y la buena, a 0,59, a quince, en el borde de su aro.
+
+### El panel del final, con el fijo
+
+`plano()` del hangar lleva un argumento más, `fijo`, y lo dibuja
+`fijo-en-el-plano.ts`: las dos rayas, debajo de la traza (ver abajo), y encima
+la cruz con su aro, **el avión donde estaba al leer la segunda** —el mismo dibujo que la flecha
+del plano, con el morro por donde iba la traza— y los números de las rayas,
+colocados con `sitiosEnElRadial` sin pisarse ni pisar la cruz ni el avión.
+Con su propio encuadre, el del fijo: la traza, la cruz y el avión, y como poco
+dos millas y seis veces lo que da el VOR, como la lupa. Con el del aeródromo,
+que está a diez millas, o con las dos radios, el resumen tenía el mismo
+problema que el plano ancho. Las rayas entran por el borde, cada una desde su
+radio, y su número dice de cuál.
+
+En el panel, que es barro y no papel, las rayas y la cruz van en la tinta
+suave, como el lápiz; el avión en la tinta, con un halo oscuro para que se vea
+encima de la traza ocre. La letra de los números es parte del dibujo (DESIGN,
+«Letra que es parte de un dibujo»): dieciséis píxeles en la tablet, y encoge
+con el plano en el teléfono.
+
+### Lo que se prueba
+
+- `carta/rotulos-del-plano.test.ts`: en Fuerteventura, con las dos rayas y el
+  plano de 12, 36 y 60 kilómetros en los cuatro tamaños de plano, ningún
+  rótulo pisa a otro ni a un símbolo ni se sale, el R-102 se escribe, y va a
+  un lado de su raya y girado con ella.
+- `encuadre-del-mapa.test.ts`: `lupaDelFijo` con la cruz tarde, la buena y la
+  del reactor: la más cerca que cumple las dos cosas, y la tarde a más de
+  cuarenta píxeles de la flecha.
+- `fijo-en-el-plano.test.ts`: el encuadre del fijo deja fuera las radios; el
+  fijo dibuja las dos rayas, la cruz, el avión y los dos números, sin pisarse;
+  y `plano()` lo lleva solo si se le da.
+- `scripts/ver-dos-radiales.mjs`, además de lo de H26g: en cada foto del plano
+  —la primera raya de lejos y con dos lupas, la cruz al cerrarse y la cruz con
+  la lupa de alejar— **las cajas de lo escrito, medidas en la pantalla**, con
+  el eje separador porque los números van girados; que al cerrarse la lupa se
+  acerca, con la cruz dentro del papel y, tarde, apartada de la flecha más de
+  treinta píxeles y más de lo que da el VOR en ese plano; encima, a menos de
+  lo que da el VOR, que es como lo juzga el ejercicio; que alejando se vuelve
+  al ancho; y en el panel del final, las dos rayas con su número, la cruz y
+  el avión, ningún número pisando a otro ni a la cruz ni al avión, y la cruz
+  apartada o encima con la misma regla. Con `OGA_ESCENARIO` y `OGA_AVION`, otro campo y otro
+  avión.
+
+### Volado
+
+En el juego, con la Intel por ANGLE, de una tirada:
+
+- **Fuerteventura, la avioneta, con el alisio**: la cruz a 0,59 millas del
+  avión con el VOR dando 0,72, treinta segundos entre una y otra. Ningún
+  rótulo pisa a otro en ninguna foto del plano (siete con la primera raya,
+  tres con dos lupas, cuatro con la cruz y doce en el ancho), y el R-102 FTV
+  va junto a su raya, apartado de la caja de GCFV. Al cerrarse, la segunda
+  lupa, con la cruz a quince píxeles de la flecha; alejando, el ancho. En el
+  panel del final, las dos rayas, el R-102 FTV y el R-193 corto, la cruz y el
+  avión, sin pisarse, con la letra a dieciséis píxeles. Veintisiete de
+  veintiocho: el avión quedaba a veinte píxeles de la cruz en el panel, y el
+  banco pedía menos de veinte, un número puesto a ojo. Ahora el banco lo juzga
+  como el ejercicio, con lo que da el VOR pasado a píxeles.
+- **Tarde**, veintiocho de veintiocho: la cruz a 1,22 millas, más de las 0,73
+  que da el VOR; al cerrarse, a treinta y cinco píxeles de la flecha, y en el
+  panel, a cuarenta y tres, con la traza virando hacia LTE desde la raya de
+  FTV.
+- **Tenerife Norte con el JAZ 90**, veintiocho de veintiocho: TFN y TFS,
+  empezando a 14,8 millas de TFN y a 1533 m, con las rayas cortándose a 92°.
+  Lee el R-284 TFN y el R-020 TFS con treinta y dos segundos y 2,28 millas
+  entre una y otra, y la cruz cae a 0,23 millas, con el VOR dando 0,84: volando
+  hacia TFN, su raya no cambió, también a doscientos cincuenta nudos. Al
+  cerrarse, la segunda lupa, de 10,4 millas, con la cruz a nueve píxeles de la
+  flecha y el VOR dando veintidós; en el panel, a siete, con el VOR dando
+  veinticinco. Nada que arreglar en el reactor ni en el otro campo.
+
+En el panel de Tenerife Norte salió otra cosa, y se arregló: la traza iba por
+la raya de TFN —se vuela hacia ella— y la raya, pintada encima, la tapaba. Las
+rayas van ahora debajo de la traza, y la cruz, el avión y los números encima.
+Eso está probado en la mesa (`fijo-en-el-plano.test.ts` mira el orden de las
+capas) y **no se ha volado**: la segunda tirada se quedó en la cola del
+navegador. Tampoco el banco con la cruz «encima» juzgada con lo que da el VOR
+en píxeles; con esa regla, las tres tiradas de arriba habrían pasado. En
+Fuerteventura, con el lado de cada encuadre, el VOR da unos veinte píxeles en
+el plano y veinticinco en el panel, contra los quince y veinte medidos; en el
+reactor el banco ya lo midió: nueve con veintidós, y siete con veinticinco.
+
+### Lo que queda
+
+- **Una raya puede cruzar la caja de una radio** en el plano ancho cuando no
+  hay otro sitio para ella: con la cruz tarde, la de LTE pasa por «FTV
+  114.100 / CH 88X». Cruzar una raya cuesta y no está prohibido; pisar otro
+  rótulo, sí.
+- **La estela del plano en vuelo va debajo de las rayas**, como la dejó H26g:
+  volando hacia una radio queda tapada por su raya. En el panel del final ya
+  no; en el plano en vuelo no se ha tocado.
+- **La letra del panel del final en el teléfono** encoge con el dibujo y no se
+  ha medido allí; en la tablet son dieciséis píxeles.
