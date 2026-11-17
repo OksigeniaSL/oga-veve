@@ -585,6 +585,12 @@ export interface MedidasDelAvion {
    * morro que llevar en vilo. Ver `Remolque.ruedaEnVilo`.
    */
   readonly sinVilo?: boolean;
+  /**
+   * **Con barra a las principales**, lo que va de ellas a la trasera del tractor, m: el de
+   * rueda de cola, que se remolca hacia delante por su tren principal y no con la cuna.
+   * Entonces `rueda` es la de las principales. Ver `barraAlTrenDe` en `rueda-de-morro.ts`.
+   */
+  readonly barra?: number;
 }
 
 /**
@@ -793,6 +799,22 @@ export class Remolque {
   }
 
   /**
+   * **Lo que tiene el tractor del avión**: la rueda de morro en su cuna o, con barra, la
+   * trasera del tractor, al final de ella. Es donde va la persona de tierra.
+   */
+  private get enganche(): PuntoXZ {
+    const r = this.ruedaDeMorro;
+    const barra = this.avionMide.barra ?? 0;
+    const n = vector(this.avion.rumbo);
+    return { x: r.x + n.x * barra, z: r.z + n.z * barra };
+  }
+
+  /** Lo que va la barra de las principales al tractor, m; cero con la cuna. */
+  get barra(): number {
+    return this.avionMide.barra ?? 0;
+  }
+
+  /**
    * **Si al acabar de empujar se espera a los motores para soltarse.** La persona
    * de tierra sigue enchufada al avión mientras se arrancan —mira los motores desde
    * fuera, que es lo que ve si algo va mal— y no suelta el tractor hasta que la
@@ -903,7 +925,11 @@ export class Remolque {
     const a = this.avion;
     const n = vector(a.rumbo);
     const r = this.ruedaDeMorro;
-    const delante = (this.tractorMide.largo * (1 - CUNA_DEL_TRACTOR)) / 2;
+    // Con barra, la trasera del tractor al final de ella, delante de la hélice.
+    const delante =
+      this.avionMide.barra !== undefined
+        ? this.avionMide.barra + this.tractorMide.largo / 2
+        : (this.tractorMide.largo * (1 - CUNA_DEL_TRACTOR)) / 2;
     return { x: r.x + n.x * delante, z: r.z + n.z * delante, rumbo: a.rumbo };
   }
 
@@ -915,7 +941,8 @@ export class Remolque {
    */
   private personaAlLado(): Pose {
     const a = this.avion;
-    const r = this.ruedaDeMorro;
+    // Al lado de lo que tiene el tractor: la rueda de morro, o la barra junto al tractor.
+    const r = this.enganche;
     const izquierda = vector(a.rumbo - Math.PI / 2);
     const aparte = this.tractorMide.ancho / 2 + 2.5;
     const andando = this.faseAhora === "empujando";

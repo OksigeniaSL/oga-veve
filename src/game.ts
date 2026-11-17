@@ -1110,7 +1110,7 @@ import {
   type Empuje,
 } from "./world/remolque";
 import { DibujoDelRemolque } from "./world/tractor-de-remolque";
-import { conLaRuedaEn, morroDe, ruedaDeMorroEn } from "./world/rueda-de-morro";
+import { barraAlTrenDe, conLaRuedaEn, morroDe, ruedaDeMorroEn } from "./world/rueda-de-morro";
 import { AvisoDeLaRaya } from "./flight/aviso-de-la-raya";
 import { AvisoDeVelocidad } from "./flight/aviso-de-velocidad";
 import {
@@ -21850,6 +21850,8 @@ export class Game {
     const aero = this.plan?.aerodromoActual;
     const pisable = aero ? elSitioDe(aero, this.aircraft.wingSpan).pisable : undefined;
     const desde = llegadaDelTractor(p.raya, p.destino, pisable);
+    // El de rueda de cola, con barra a sus principales y no con la cuna: ver `barraAlTrenDe`.
+    const barra = barraAlTrenDe(this.aircraft);
     const r = new Remolque(
       p.empuje,
       {
@@ -21857,11 +21859,12 @@ export class Game {
         envergadura: this.aircraft.wingSpan,
         rueda: morroDe(this.aircraft).rueda,
         sinVilo: this.aircraft.actitudEnTresPuntos !== undefined,
+        ...(barra ? { barra: barra.largo } : {}),
       },
       { desde },
     );
     this.vueltaALaRaya = r;
-    this.dibujoDeLaVuelta = new DibujoDelRemolque(r.medidasDelTractor);
+    this.dibujoDeLaVuelta = new DibujoDelRemolque(r.medidasDelTractor, barra);
     this.scene.add(this.dibujoDeLaVuelta.grupo);
     this.dibujoDeLaVuelta.poner(r, (x, z) => this.terrain.sampleSurface(x, z), 0);
     // Lo que debería tardar, de la llegada al saludo: lo de más lo suelta `llevarALaRaya`.

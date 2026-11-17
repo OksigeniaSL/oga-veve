@@ -11,9 +11,15 @@
  *   Goldhofer AST, el TLD TPX—: no necesita una barra para cada avión, se
  *   engancha solo y lleva la rueda bien sujeta. Con la cabina en una esquina
  *   delantera, la baliza ámbar encima y los faros. Ver el ADR 0025.
+ *   **Y al de rueda de cola, con barra**: no tiene rueda de morro que abrazar,
+ *   y se remolca hacia delante por el tren principal. Lleva una barra en uve de
+ *   la trasera del tractor a sus dos principales, y el tractor va delante de la
+ *   hélice. Ver `barraAlTrenDe` en `rueda-de-morro.ts`.
  * - **La persona**, con su chaleco, su casco blanco con cascos de oír y el
  *   cable enchufado al avión al lado de la rueda de morro. Al final quita el
- *   pasador y lo enseña en alto, con su cinta roja, y saluda con la mano.
+ *   pasador y lo enseña en alto, con su cinta roja, y saluda con la mano. Con
+ *   barra, sin cable: un avión de rueda de cola no lleva toma de interfono en
+ *   el tren, y la persona va junto al tractor.
  *
  * Lo que se conserva es el significado, no la escala, como en el señalero: se
  * tiene que leer desde la ventanilla de Ara, y de noche en Barajas. Por eso lo
@@ -44,6 +50,7 @@ import {
   type MedidasDelTractor,
   type Remolque,
 } from "./remolque";
+import type { BarraAlTren } from "./rueda-de-morro";
 
 /** El amarillo del material de plataforma, el mismo de los calzos. */
 const AMARILLO = 0xf2c230;
@@ -59,6 +66,9 @@ const ROJO = 0xd8232a;
 const NEGRO = 0x1a1c20;
 /** Lo gruesa que es la pala de la cuna, m. */
 const GROSOR_DE_LA_PALA = 0.08;
+/** Lo gruesa que es la barra de remolque, y a qué altura va, m: la del eje de las principales. */
+const GROSOR_DE_LA_BARRA = 0.07;
+const ALTO_DE_LA_BARRA = 0.4;
 
 /**
  * **Cuánto más grande que una persona de verdad**: lo que se lee desde una ventanilla a
@@ -154,12 +164,16 @@ export class DibujoDelRemolque {
   private readonly geometrias: { dispose(): void }[] = [];
   private reloj = 0;
 
-  constructor(medidas: MedidasDelTractor) {
+  /** Si lleva barra a las principales, que entonces no hay cable: ver `barraAlTrenDe`. */
+  private readonly conBarra: boolean;
+
+  constructor(medidas: MedidasDelTractor, barra: BarraAlTren | null = null) {
     this.grupo.name = "remolque";
+    this.conBarra = barra !== null;
     // Antes que el tractor, que sus balizas se hacen ya con ella.
     this.baliza = new MeshBasicMaterial({ color: AMBAR });
     this.materiales.push(this.baliza);
-    this.construirElTractor(medidas);
+    this.construirElTractor(medidas, barra);
     const m = this.materiales;
     // ── La persona, mirando hacia −Z ──
     const p = this.persona;
@@ -229,7 +243,7 @@ export class DibujoDelRemolque {
    * delantera izquierda y las ruedas. La cuna es la parte de atrás, la que da
    * al avión.
    */
-  private construirElTractor(t: MedidasDelTractor): void {
+  private construirElTractor(t: MedidasDelTractor, barra: BarraAlTren | null): void {
     const m = this.materiales;
     const pintura = new MeshLambertMaterial({ color: AMARILLO, emissive: BRILLO_DEL_TRACTOR });
     const negro = new MeshLambertMaterial({ color: NEGRO });
@@ -289,6 +303,25 @@ export class DibujoDelRemolque {
         rueda.position.set(lado * (t.ancho / 2 - 0.15), 0.42, z);
         this.tractor.add(rueda);
       }
+    /*
+     * **La barra en uve, de la trasera a las dos principales**, si es un avión de rueda
+     * de cola. Va quieta respecto al tractor —el remolque lo lleva alineado con el
+     * avión, como a la cuna—, así que se junta con lo demás negro y no cuesta una
+     * llamada de dibujo.
+     */
+    if (barra) {
+      for (const lado of [-1, 1]) {
+        const dx = lado * barra.via;
+        const dz = barra.largo;
+        const brazoDeBarra = new Mesh(
+          new BoxGeometry(GROSOR_DE_LA_BARRA, GROSOR_DE_LA_BARRA, Math.hypot(dx, dz)),
+          negro,
+        );
+        brazoDeBarra.position.set(dx / 2, ALTO_DE_LA_BARRA, t.largo / 2 + dz / 2);
+        brazoDeBarra.rotation.y = Math.atan2(dx, dz);
+        this.tractor.add(brazoDeBarra);
+      }
+    }
     this.tractor.add(chasis, cabina, vidrio);
     juntarPorMaterial(this.tractor);
     // Después de juntar lo quieto: la pala sube y baja.
@@ -321,7 +354,7 @@ export class DibujoDelRemolque {
     // El pasador se ve desde que lo ha quitado.
     this.pasador.visible = !r.conCable && r.fase !== "soltando";
     // El cable, de los cascos a la toma de al lado de la rueda de morro, mientras va enchufado.
-    this.cable.visible = r.conCable && r.personaALaVista;
+    this.cable.visible = r.conCable && r.personaALaVista && !this.conBarra;
     if (this.cable.visible) {
       const rueda = r.ruedaDeMorro;
       const yRueda = cota(rueda.x, rueda.z) + 1.1;
