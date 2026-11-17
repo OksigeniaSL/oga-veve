@@ -135,6 +135,38 @@
       "ms": 1269,
       "h": "b5f75ca278"
     },
+    "ejercicio.aguja.alVientoDerecha": {
+      "ms": 7407,
+      "h": "62ead13101"
+    },
+    "ejercicio.aguja.alVientoIzquierda": {
+      "ms": 7207,
+      "h": "66143bb71d"
+    },
+    "ejercicio.aguja.antes": {
+      "ms": 11307,
+      "h": "8fa4b9cbc1"
+    },
+    "ejercicio.aguja.asiVa": {
+      "ms": 5907,
+      "h": "af1b88c42d"
+    },
+    "ejercicio.aguja.bien": {
+      "ms": 6707,
+      "h": "fc0b94b7a6"
+    },
+    "ejercicio.aguja.curva": {
+      "ms": 12207,
+      "h": "6a3eaf57e6"
+    },
+    "ejercicio.aguja.identificada": {
+      "ms": 10707,
+      "h": "9250af85dc"
+    },
+    "ejercicio.aguja.sintonizar": {
+      "ms": 4507,
+      "h": "a531e3b98c"
+    },
     "ejercicio.antes-de-v1.antes": {
       "ms": 8907,
       "h": "861ce1c808"
@@ -5417,6 +5449,30 @@
     ],
     "carta.toca.vor": [
       "carta.toca.vor"
+    ],
+    "ejercicio.aguja.alVientoDerecha": [
+      "ejercicio.aguja.alVientoDerecha"
+    ],
+    "ejercicio.aguja.alVientoIzquierda": [
+      "ejercicio.aguja.alVientoIzquierda"
+    ],
+    "ejercicio.aguja.antes": [
+      "ejercicio.aguja.antes"
+    ],
+    "ejercicio.aguja.asiVa": [
+      "ejercicio.aguja.asiVa"
+    ],
+    "ejercicio.aguja.bien": [
+      "ejercicio.aguja.bien"
+    ],
+    "ejercicio.aguja.curva": [
+      "ejercicio.aguja.curva"
+    ],
+    "ejercicio.aguja.identificada": [
+      "ejercicio.aguja.identificada"
+    ],
+    "ejercicio.aguja.sintonizar": [
+      "ejercicio.aguja.sintonizar"
     ]
   }
 }

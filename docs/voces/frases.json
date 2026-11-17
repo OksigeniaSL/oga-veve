@@ -3081,6 +3081,126 @@
     }
   },
   {
+    "id": "ejercicio.aguja.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy seguimos la aguja. Allá adelante hay una radio, una antena que transmite sola, y el ADF tiene una aguja que apunta siempre hacia ella. Vamos a llegar hasta la antena sin mirar afuera, solo con la aguja",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy seguimos la aguja. Allá adelante hay una radio, una antena que transmite sola, y el ADF tiene una aguja que apunta siempre hacia ella. Vamos a llegar hasta la antena sin mirar afuera, solo con la aguja.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.aguja.sintonizar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Primero, poné la radio del campo en el ADF: tocala en el plano, o apretá el ocho",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Primero, poné la radio del campo en el ADF: tocala en el plano, o apretá el ocho.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.aguja.identificada",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Oíste los pitidos? Es su nombre en morse, el mismo que trae la carta: así sabés que es la radio que querés. Ahora girá hasta que la aguja apunte arriba, al morro, y seguila",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¿Oíste los pitidos? Es su nombre en morse, el mismo que trae la carta: así sabés que es la radio que querés. Ahora girá hasta que la aguja apunte arriba, al morro, y seguila.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.aguja.curva",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá en el plano la raya que vas dejando: no es recta, se curva. El viento te empuja de costado, y la aguja te hace girar cada vez un poco más. Es la curva del perro, el que corre siempre derecho hacia su dueño",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Mirá en el plano la raya que vas dejando: no es recta, se curva. El viento te empuja de costado, y la aguja te hace girar cada vez un poco más. Es la curva del perro, el que corre siempre derecho hacia su dueño.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.aguja.alVientoDerecha",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Para ir derecho, apuntá un poco al viento: girá unos grados a la derecha, de donde viene, y dejá la aguja quieta un poco a la izquierda",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Para ir derecho, apuntá un poco al viento: girá unos grados a la derecha, de donde viene, y dejá la aguja quieta un poco a la izquierda.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.aguja.alVientoIzquierda",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Para ir derecho, apuntá un poco al viento: girá unos grados a la izquierda, de donde viene, y dejá la aguja quieta un poco a la derecha",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Para ir derecho, apuntá un poco al viento: girá unos grados a la izquierda, de donde viene, y dejá la aguja quieta un poco a la derecha.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.aguja.asiVa",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Así! La aguja quieta a un lado y la raya derecha: estás corrigiendo el viento, como los pilotos de verdad",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Así! La aguja quieta a un lado y la raya derecha: estás corrigiendo el viento, como los pilotos de verdad.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.aguja.bien",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Pasamos por encima de la radio! ¿Viste? La aguja dio la vuelta y ahora apunta atrás. Llegaste guiándote solo con la aguja",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Pasamos por encima de la radio! ¿Viste? La aguja dio la vuelta y ahora apunta atrás. Llegaste guiándote solo con la aguja.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "mission.rio.name",
     "voz": "instructor",
     "idioma": "es-PY",

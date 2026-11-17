@@ -363,6 +363,14 @@ Paraste a tiempo y en la pista: eso es hacerlo bien. Renunciar a tiempo también
 Paraste, y te alcanzó la pista. Pasada V1 lo seguro es seguir volando, que el avión vuela con un motor. La próxima, seguimos
 Volviste bien. Antes de V1 todavía queda pista, y lo seguro es parar. La próxima, paramos
 El ejercicio no salió esta vez. En el simulador se repite las veces que haga falta: vamos otra vez
+Hoy seguimos la aguja. Allá adelante hay una radio, una antena que transmite sola, y el ADF tiene una aguja que apunta siempre hacia ella. Vamos a llegar hasta la antena sin mirar afuera, solo con la aguja
+Primero, poné la radio del campo en el ADF: tocala en el plano, o apretá el ocho
+¿Oíste los pitidos? Es su nombre en morse, el mismo que trae la carta: así sabés que es la radio que querés. Ahora girá hasta que la aguja apunte arriba, al morro, y seguila
+Mirá en el plano la raya que vas dejando: no es recta, se curva. El viento te empuja de costado, y la aguja te hace girar cada vez un poco más. Es la curva del perro, el que corre siempre derecho hacia su dueño
+Para ir derecho, apuntá un poco al viento: girá unos grados a la derecha, de donde viene, y dejá la aguja quieta un poco a la izquierda
+Para ir derecho, apuntá un poco al viento: girá unos grados a la izquierda, de donde viene, y dejá la aguja quieta un poco a la derecha
+¡Así! La aguja quieta a un lado y la raya derecha: estás corrigiendo el viento, como los pilotos de verdad
+¡Pasamos por encima de la radio! ¿Viste? La aguja dio la vuelta y ahora apunta atrás. Llegaste guiándote solo con la aguja
 Ver el río
 Seguir el río
 Salir al mar
