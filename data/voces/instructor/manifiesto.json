@@ -231,6 +231,26 @@
       "ms": 4207,
       "h": "3d31b756e9"
     },
+    "ejercicio.cruce.antes": {
+      "ms": 9507,
+      "h": "906ec4aaa2"
+    },
+    "ejercicio.cruce.aqui": {
+      "ms": 8307,
+      "h": "0cc4982830"
+    },
+    "ejercicio.cruce.otra": {
+      "ms": 7007,
+      "h": "074c9584fa"
+    },
+    "ejercicio.cruce.primera": {
+      "ms": 8307,
+      "h": "f79eb9f743"
+    },
+    "ejercicio.cruce.tarde": {
+      "ms": 13307,
+      "h": "0a6fdfdf9d"
+    },
     "ejercicio.declarar": {
       "ms": 8507,
       "h": "6d1a2f8639"
@@ -5564,6 +5584,21 @@
     ],
     "ejercicio.interceptar.seMueve": [
       "ejercicio.interceptar.seMueve"
+    ],
+    "ejercicio.cruce.antes": [
+      "ejercicio.cruce.antes"
+    ],
+    "ejercicio.cruce.primera": [
+      "ejercicio.cruce.primera"
+    ],
+    "ejercicio.cruce.otra": [
+      "ejercicio.cruce.otra"
+    ],
+    "ejercicio.cruce.aqui": [
+      "ejercicio.cruce.aqui"
+    ],
+    "ejercicio.cruce.tarde": [
+      "ejercicio.cruce.tarde"
     ]
   }
 }
