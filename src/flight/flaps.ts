@@ -254,11 +254,14 @@ export function sustentacionDeLosFlaps(
  * nada en el borde de ataque: el flap de salida sube la recta y, si acaso,
  * adelanta un poco la pérdida, y eso no se cuenta. **Los slats y los Krueger
  * sí lo mueven**: abren el borde de ataque, la corriente sigue pegada unos
- * grados más, y la curva de sustentación se alarga hacia ángulos más altos
- * más de lo que sube; el flap de salida, al revés, sube la sustentación a
- * igual ángulo (D. P. Raymer, *Aircraft Design: A Conceptual Approach*, AIAA,
- * cap. 12, los dispositivos hipersustentadores). Por eso va en `bordeDeAtaque`
- * y solo el que los lleva puede darse un ángulo de más.
+ * grados más, y la curva de sustentación se alarga hacia ángulos más altos.
+ * «The lift curve of plain and slotted flaps is elevated […] but without
+ * increasing the stall angle. On the contrary, the stall angle tends to be
+ * smaller. In order to increase the lift through higher angles of attack […],
+ * high lift systems are inserted on the leading edge» (D. Scholz, *Aircraft
+ * Design*, apuntes de la HAW Hamburg, cap. 8, «High Lift Systems and Maximum
+ * Lift Coefficients», p. 8-4). Por eso va en `bordeDeAtaque` y solo el que
+ * los lleva puede darse un ángulo de más.
  *
  * Entre dos muescas, en recta, como los flaps al moverse.
  */
