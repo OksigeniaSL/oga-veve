@@ -12361,9 +12361,12 @@ button.motor__tecla::after {
   font-size: 11px;
 }
 
-/* El descargo, al pie y a la derecha si el colocador no lo mueve. */
+/*
+ * El descargo, al pie: lo pone el colocador, por `left` y `top` como la
+ * leyenda —un `right` aquí lo estiraría—, abajo a la derecha si cabe.
+ */
 .pais__descargo {
-  right: 6px;
+  left: 6px;
   bottom: 6px;
   z-index: 1;
   font-size: 11px;
