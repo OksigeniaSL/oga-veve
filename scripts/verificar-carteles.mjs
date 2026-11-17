@@ -1632,6 +1632,26 @@ const CALCOS = ["guyrami", "tuka", "taguato", "taguato-ruvicha"];
  * que ver: si no, esconderlo todo pasaría la cuenta.
  */
 async function mirarLoQueSeLee(page, donde) {
+  /*
+   * De pie y con el dedo no se vuela: el cartel de girar la pantalla tapa el
+   * vuelo entero, y debajo no hay nada que leer ni que tocar. Se mira que esté.
+   */
+  const gira = await page.evaluate(() => {
+    const g = document.querySelector('[data-hud="gira"]');
+    if (!g || g.closest("[hidden]")) return false;
+    const cs = getComputedStyle(g);
+    const r = g.getBoundingClientRect();
+    return cs.display !== "none" && cs.visibility !== "hidden" && r.width >= innerWidth - 2;
+  });
+  if (gira) {
+    comprobar(
+      `${donde}: de pie con el dedo, el cartel de girar la pantalla tapa el vuelo`,
+      true,
+      "lo que se lee y lo que se toca quedan debajo, y no se miran",
+      "",
+    );
+    return;
+  }
   const vistas = ["chase", "cockpit"];
   const telefono = await page.evaluate(
     () => matchMedia("(pointer: coarse) and (orientation: landscape) and (max-height: 500px)").matches,
@@ -1664,7 +1684,7 @@ async function mirarLoQueSeLee(page, donde) {
       "la lámpara y el subtítulo",
       "el subtítulo solo",
     ]) {
-      const m = await page.evaluate(medirLoQueSeLee, [estado, LA_ORDEN_MAS_LARGA]);
+      const m = await page.evaluate(medirLoQueSeLee, [estado, LA_ORDEN_MAS_LARGA, vista]);
       malos.push(...m.malos.map((x) => `${estado}: ${x}`));
       perdidos.push(...m.perdidos.map((x) => `${estado}: ${x}`));
     }
@@ -1700,7 +1720,7 @@ async function mirarLoQueSeLee(page, donde) {
  * lleva cada cosa, durante unos fotogramas —el juego apaga y borra lo suyo en
  * cada uno, y el reparto coloca en el siguiente—, y mide.
  */
-async function medirLoQueSeLee([estado, ORDEN_LARGA]) {
+async function medirLoQueSeLee([estado, ORDEN_LARGA, vista]) {
   const AVISO = "Se rompió algo. Volvemos al helipuerto…";
   const SUB =
     "Nos queda justo, así que avisamos a la torre: combustible mínimo. No es una emergencia: es avisarle que no podemos esperar.";
@@ -1805,15 +1825,33 @@ async function medirLoQueSeLee([estado, ORDEN_LARGA]) {
     ["la radio", radio, true],
   ];
   const leidos = SE_LEE.filter(([, el, encendido]) => encendido && seVe(el));
+  // Lo que no se ve —transparente o escondido por quien lo contiene— no es un
+  // mando que se tape.
   const tocables = [...document.querySelectorAll(SE_TOCA)].filter(
-    (el) => seVe(el) && !leidos.some(([, l]) => l.contains(el) || el.contains(l)),
+    (el) =>
+      seVe(el) &&
+      el.checkVisibility({ opacityProperty: true, visibilityProperty: true }) &&
+      !leidos.some(([, l]) => l.contains(el) || el.contains(l)),
   );
+  /*
+   * Lo que se ve de cada cosa que se toca: recortada por los `<svg>` que la
+   * contienen. La caja de un grupo de SVG es la de todo su dibujo, también lo
+   * recortado, y la cinta de velocidad lleva escritas todas las velocidades:
+   * su caja sube por encima del cuadro.
+   */
+  const queSeVe = (t) => {
+    const c = t.getBoundingClientRect();
+    let [l, a, d, b] = [c.left, c.top, c.right, c.bottom];
+    for (let s = t.parentElement?.closest("svg"); s; s = s.parentElement?.closest("svg")) {
+      const x = s.getBoundingClientRect();
+      [l, a, d, b] = [Math.max(l, x.left), Math.max(a, x.top), Math.min(d, x.right), Math.min(b, x.bottom)];
+    }
+    return { left: l, top: a, right: d, bottom: b };
+  };
   const malos = [];
   for (const [que, el] of leidos) {
     const r = el.getBoundingClientRect();
-    const sobre = [
-      ...new Set(tocables.filter((t) => pisa(r, t.getBoundingClientRect())).map(nombre)),
-    ];
+    const sobre = [...new Set(tocables.filter((t) => pisa(r, queSeVe(t))).map(nombre))];
     if (sobre.length) malos.push(`${que} sobre ${sobre.join(", ")}`);
   }
   for (let i = 0; i < leidos.length; i++)
@@ -1822,8 +1860,18 @@ async function medirLoQueSeLee([estado, ORDEN_LARGA]) {
         malos.push(`${leidos[i][0]} y ${leidos[j][0]}`);
   const perdidos = [];
   if (conAviso && !seVe(aviso)) perdidos.push("el aviso no se ve");
-  if (!sinLetras && estado === "el subtítulo solo" && !seVe(hint)) perdidos.push("el subtítulo espera");
-  if (estado === "la lámpara y el subtítulo" && !seVe(torre)) perdidos.push("la lámpara espera");
+  /*
+   * Con la pantalla en grande, el subtítulo más largo puede esperar: encima de
+   * la pantalla queda una fila (`--fila-del-subtitulo`), la de la barra la
+   * lleva la tarjeta de la orden y a los lados hay mandos. Espera entero y
+   * sale al quitar la pantalla grande.
+   */
+  if (!sinLetras && estado === "el subtítulo solo" && vista !== "grande" && !seVe(hint))
+    perdidos.push("el subtítulo espera");
+  // Con la pantalla en grande tampoco la lámpara, por lo mismo: ver arriba y
+  // la enmienda H28f del ADR 0030, «Lo que queda».
+  if (estado === "la lámpara y el subtítulo" && vista !== "grande" && !seVe(torre))
+    perdidos.push("la lámpara espera");
   // Y todo como estaba, para la vista siguiente.
   hud.classList.remove("hud--avisando");
   aviso.classList.remove("aviso-hud--visible");
@@ -2044,7 +2092,6 @@ async function medirAvisoYLampara() {
   // Y con una frase que no cabe en una línea, que pase de media pantalla.
   if (!sinLetras) {
     avisoTexto.textContent = `${AVISO} ${AVISO} ${AVISO}`;
-    repartir();
     const b = aviso.getBoundingClientRect();
     salida.aviso.anchoLargo = Math.round(b.width);
     salida.aviso.centroLargo = Math.round(b.left + b.width / 2);

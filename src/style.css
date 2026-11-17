@@ -904,7 +904,12 @@ body {
    * Lo mide el HUD y ya lo usaban el tutor y la cámara. Ver `reserveForPanel`.
    */
   align-self: start;
-  margin-top: calc(var(--rincon-alto, 0px) + 12px);
+  /*
+   * Debajo del rincón, con la tarjeta en su dibujo (`--rincon-alto-mandos`):
+   * con su frase más larga la columna bajaba hasta detrás del cuadro, y lo que
+   * se toca no se mueve por lo que se lee. Ver `escribirRincon`.
+   */
+  margin-top: calc(var(--rincon-alto-mandos, var(--rincon-alto, 0px)) + 12px);
   display: grid;
   gap: 10px;
   justify-items: end;
@@ -21595,6 +21600,7 @@ path.kit-hueco__forma {
    * HUD en la raíz.
    */
   --rincon-alto: 0px !important;
+  --rincon-alto-mandos: 0px !important;
   --rincon-izquierda: 100% !important;
 }
 
@@ -21752,5 +21758,5 @@ path.kit-hueco__forma {
  * decide el mismo reparto (`lee-recogida`).
  */
 .senal.lee-recogida .senal__texto {
-  display: none;
+  display: none !important;
 }

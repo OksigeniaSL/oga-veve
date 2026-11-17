@@ -187,12 +187,14 @@ export function colocar(
     fs
       .filter((f) => (arriba ? f >= limites.arr && f < limites.aba : f <= limites.aba && f > limites.arr))
       .sort((a, b) => (arriba ? a - b : b - a));
+  // Debajo de lo ya puesto solo hacia donde crece —hacia abajo desde la
+  // barra, hacia arriba desde el cuadro—: al otro lado está aquello en lo que
+  // se apoya, y el aviso del cuadro se metía en él.
+  const haciaDondeCrece = ocupado
+    .map((o) => (arriba ? o.aba + RESPIRO : o.arr - RESPIRO))
+    .filter((f) => (arriba ? f > filaNatural : f < filaNatural));
   const filas: number[] = [];
-  for (const f of [
-    filaNatural,
-    ...orden(p.sitios),
-    ...orden(ocupado.map((o) => (arriba ? o.aba + RESPIRO : o.arr - RESPIRO))),
-  ])
+  for (const f of [filaNatural, ...orden(p.sitios), ...orden(haciaDondeCrece)])
     if (!filas.some((g) => Math.abs(g - f) <= 1)) filas.push(f);
   for (const fila of filas) {
     let alto = p.natural.aba - p.natural.arr;
@@ -224,6 +226,33 @@ const PROPIEDADES = ["left", "right", "top", "bottom"] as const;
 
 function cajaDe(r: DOMRect): Caja {
   return { izq: r.left, arr: r.top, der: r.right, aba: r.bottom };
+}
+
+/**
+ * **Lo que se ve de algo que se toca**: su caja recortada por los `<svg>` que
+ * lo contienen y por la pantalla. La caja de un grupo de SVG es la de todo su
+ * dibujo, también lo recortado: la cinta de velocidad lleva escritas todas las
+ * velocidades, y su caja subía por encima del cuadro hasta la fila del aviso,
+ * que se quedaba sin sitio donde no había nada. `null` si no se ve nada.
+ */
+export function cajaQueSeVe(el: Element): Caja | null {
+  const r = el.getBoundingClientRect();
+  let c: Caja = {
+    izq: Math.max(0, r.left),
+    arr: Math.max(0, r.top),
+    der: Math.min(innerWidth, r.right),
+    aba: Math.min(innerHeight, r.bottom),
+  };
+  for (let svg = el.parentElement?.closest("svg"); svg; svg = svg.parentElement?.closest("svg")) {
+    const s = svg.getBoundingClientRect();
+    c = {
+      izq: Math.max(c.izq, s.left),
+      arr: Math.max(c.arr, s.top),
+      der: Math.min(c.der, s.right),
+      aba: Math.min(c.aba, s.bottom),
+    };
+  }
+  return c.der - c.izq > 2 && c.aba - c.arr > 2 ? c : null;
 }
 
 /** Si se ve, sin contar la opacidad: el aviso que sale aún está en cero. */
@@ -269,8 +298,16 @@ export function repartirLoQueSeLee(raiz: HTMLElement): Record<string, string> {
   const vivas = piezas.filter(({ d, el }) => seVe(el) && (d.encendida?.(el) ?? true));
   const leidas = vivas.map(({ el }) => el);
   const tocables = [...document.querySelectorAll<HTMLElement>(LO_QUE_SE_TOCA)]
-    .filter((el) => !leidas.some((l) => l.contains(el) || el.contains(l)) && seVe(el))
-    .map((el) => cajaDe(el.getBoundingClientRect()));
+    .filter(
+      (el) =>
+        !leidas.some((l) => l.contains(el) || el.contains(l)) &&
+        seVe(el) &&
+        // Lo que no se ve —transparente o escondido por quien lo contiene—
+        // no es un mando que se tape.
+        (el.checkVisibility?.({ opacityProperty: true, visibilityProperty: true }) ?? true),
+    )
+    .map(cajaQueSeVe)
+    .filter((c): c is Caja => !!c);
   const naturales = new Map(vivas.map(({ el }) => [el, cajaDe(el.getBoundingClientRect())]));
   const limites: Caja = { izq: 0, arr: 0, der: innerWidth, aba: innerHeight };
   const ocupado: Caja[] = [...tocables];
