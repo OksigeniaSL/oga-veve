@@ -910,6 +910,25 @@ const agujaDelAdf = (grados: number): string =>
   <path transform="rotate(${grados} 12 12)" d="M12 4.4 L15 9.2 H12.9 V19 H11.1 V9.2 H9 Z" />
 `);
 
+/**
+ * **El CDI del VOR**, el de «¿En qué radial estoy?» (#51): la rosa, la flecha
+ * del curso con su cola, la barra entre los dos puntos de cada lado y el
+ * triángulo del TO/FROM, hacia la punta si el curso lleva a la radio y hacia
+ * la cola si se aleja. Es lo que pinta el HSI de la cabina (`ui/radio-en-la-rosa.ts`):
+ * quien lo ve en la tarjeta lo reconoce en el cuadro. `barra`, lo que se
+ * aparta del centro, en unidades del dibujo: siete es a tope.
+ * Ver `flight/en-que-radial-estoy.ts`.
+ */
+const cdiDelVor = (barra: number, toFrom: "TO" | "FROM"): string =>
+  icono(`
+  <circle cx="12" cy="12" r="10.4" fill="none" stroke="currentColor" stroke-width="1.4" />
+  <path d="M12 2.6 L14.6 6.6 H13 V8 H11 V6.6 H9.4 Z M11 16 H13 V21.2 H11 Z" />
+  <path d="M${11 + barra} 8.8 H${13 + barra} V15.2 H${11 + barra} Z" />
+  <circle cx="5" cy="12" r="1" /><circle cx="8.5" cy="12" r="1" />
+  <circle cx="15.5" cy="12" r="1" /><circle cx="19" cy="12" r="1" />
+  <path d="${toFrom === "TO" ? "M17.2 7.6 L19.6 10.4 H14.8 Z" : "M17.2 16.4 L19.6 13.6 H14.8 Z"}" />
+`);
+
 /** La flecha del lado, pegada al borde: es lo primero que se mira. */
 const HACIA: Record<string, string> = {
   izquierda: `<path d="M5.4 4.2 L1.4 7.2 L5.4 10.2 Z" />
@@ -1782,6 +1801,9 @@ export const DIBUJOS = {
   "aguja-adf": agujaDelAdf(0),
   "aguja-a-la-izquierda": agujaDelAdf(-25),
   "aguja-a-la-derecha": agujaDelAdf(25),
+  "cdi-a-un-lado": cdiDelVor(-7, "FROM"),
+  "cdi-from": cdiDelVor(0, "FROM"),
+  "cdi-to": cdiDelVor(0, "TO"),
   sobrevelocidad: SOBREVELOCIDAD,
   calor: CALOR,
   frio: FRIO,

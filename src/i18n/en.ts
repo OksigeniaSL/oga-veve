@@ -1422,6 +1422,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.efecto-suelo": "Near the ground it takes less",
   "hangar.ejercicio.autorrotacion": "Coming down without engines in a helicopter",
   "hangar.ejercicio.aguja": "Follow the needle",
+  "hangar.ejercicio.radial": "Which radial am I on?",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1562,6 +1563,21 @@ export const EN: Dictionary = {
     "That's it! The needle steady to one side and the line straight: you're correcting for the wind, like real pilots do",
   "ejercicio.aguja.bien":
     "We've passed over the beacon! See? The needle swung round and now points behind us. You got here with the needle alone",
+
+  // ── Which radial am I on?: the airfield's VOR on the NAV, centre the bar with FROM, turn, and fly to it ──
+  "ejercicio.radial.antes":
+    "Today we'll find out where we are with the radio. Out there is a VOR, a radio that sends out a radial in every direction, like the spokes of a wheel. The NAV tells you which spoke you're on, wherever the nose is pointing",
+  "ejercicio.radial.sintonizar": "First, put the airfield's VOR in the NAV: tap it on the map, or press seven",
+  "ejercicio.radial.identificada":
+    "Did you hear the beeps? That's its name in Morse code, the same one printed on the map: it's the VOR you want. Now turn the OBS with nine and zero until the bar sits in the middle, with FROM",
+  "ejercicio.radial.centrada":
+    "There it is! With the bar in the middle and FROM, the OBS number is your radial: you're on that spoke of the wheel. Now turn the plane a quarter turn, either way, and watch the bar",
+  "ejercicio.radial.giro":
+    "See? The nose turned a quarter turn and the bar barely moved: the little it moves is how far you flew, not how much you turned. The radial says where you are, not where you're looking",
+  "ejercicio.radial.haciaLaRadio":
+    "Now let's go to the radio along your radial. Turn the OBS half a turn, holding it down, until it says TO, and fly with the bar in the middle: if it slides to one side, turn a little that way",
+  "ejercicio.radial.pasada":
+    "We passed over the radio! See? Right on top the flag comes up, because there it can't tell, and on the other side TO and FROM swap. You got here with the bar alone",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
   "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
   "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",

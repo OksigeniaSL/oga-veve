@@ -3285,6 +3285,7 @@ export const ES_PY = {
   "hangar.ejercicio.efecto-suelo": "Cerca del suelo cuesta menos",
   "hangar.ejercicio.autorrotacion": "Bajar sin motor en helicóptero",
   "hangar.ejercicio.aguja": "Seguí la aguja",
+  "hangar.ejercicio.radial": "¿En qué radial estoy?",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3480,6 +3481,26 @@ export const ES_PY = {
     "¡Así! La aguja quieta a un lado y la raya derecha: estás corrigiendo el viento, como los pilotos de verdad",
   "ejercicio.aguja.bien":
     "¡Pasamos por encima de la radio! ¿Viste? La aguja dio la vuelta y ahora apunta atrás. Llegaste guiándote solo con la aguja",
+  /*
+   * **«¿En qué radial estoy?»** (#51, ADR 0030, enmienda H26c): el VOR del
+   * campo en la NAV, su morse, centrar la barra con FROM, girar el avión y
+   * ver que la barra no se mueve, y volver a la radio con TO hasta pasarla.
+   * Genéricas, sin el nombre del VOR ni el número del radial: el nombre lo
+   * dice su morse, y el número se lee en el OBS. Grabadas en calma.
+   */
+  "ejercicio.radial.antes":
+    "Hoy vamos a saber dónde estamos con la radio. Allá hay un VOR, una radio que manda un radial para cada lado, como los rayos de una rueda. La NAV te dice en cuál de esos rayos estás, apunte adonde apunte el morro",
+  "ejercicio.radial.sintonizar": "Primero, poné el VOR del campo en la NAV: tocalo en el plano, o apretá el siete",
+  "ejercicio.radial.identificada":
+    "¿Oíste los pitidos? Es su nombre en morse, el mismo que trae el plano: es el VOR que querés. Ahora girá el OBS, con el nueve y el cero, hasta que la barra quede en el centro con FROM",
+  "ejercicio.radial.centrada":
+    "¡Ahí está! Con la barra en el centro y FROM, el número del OBS es tu radial: estás en ese rayo de la rueda. Ahora girá el avión un cuarto de vuelta, para cualquier lado, y mirá la barra",
+  "ejercicio.radial.giro":
+    "¿Viste? El morro dio un cuarto de vuelta y la barra casi no se movió: lo poquito que se mueve es lo que avanzaste, no lo que giraste. El radial dice dónde estás, no adónde mirás",
+  "ejercicio.radial.haciaLaRadio":
+    "Ahora vamos a la radio por tu radial. Girá el OBS media vuelta, dejándolo apretado, hasta que diga TO, y volá con la barra en el centro: si se va a un lado, girá un poco hacia ese lado",
+  "ejercicio.radial.pasada":
+    "¡Pasamos por encima de la radio! ¿Viste? Justo encima sale la bandera, porque ahí no sabe qué decir, y del otro lado TO y FROM se dan vuelta. Llegaste con la barra sola",
   // Y la frase corta, con sus números, de Taguató para arriba.
   "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
   "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",

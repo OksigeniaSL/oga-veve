@@ -70,7 +70,8 @@
  * «Seguí la aguja» (#51) es la primera de la navegación con radio, con
  * `escena: "radio"`: no falla nada, y lo que se practica es seguir una aguja
  * con viento de costado. Pide un campo con NDB (`dondeVale`) y lo hace pasar
- * `seguir-la-aguja.ts`.
+ * `seguir-la-aguja.ts`. Y «¿En qué radial estoy?», la segunda, la del VOR:
+ * pide un campo con VOR y la lleva `en-que-radial-estoy.ts`.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -91,7 +92,8 @@ export type EjercicioId =
   | "par"
   | "efecto-suelo"
   | "autorrotacion"
-  | "aguja";
+  | "aguja"
+  | "radial";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -142,7 +144,7 @@ export interface Ejercicio {
    * allí arriba se practica donde pasa, y abajo queda pista de sobra para
    * bajar después a aterrizar.
    */
-  readonly colocacion?: "planeo" | "un-motor" | "crucero" | "tormenta" | "autorrotacion" | "aguja";
+  readonly colocacion?: "planeo" | "un-motor" | "crucero" | "tormenta" | "autorrotacion" | "aguja" | "radial";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
    * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
@@ -378,6 +380,26 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     dondeVale: (oaci) => radioDeSalida(oaci).adf !== null,
     ensena:
       "la aguja del ADF apunta a la radio y no sabe de viento: seguida con viento de costado, la estela se curva; apuntando un poco al viento, sale recta",
+  },
+  /*
+   * **¿En qué radial estoy?** (#51, peldaño 5): el VOR del campo en la NAV,
+   * su morse, girar el OBS hasta centrar la barra con FROM —ese número es el
+   * radial en que se está—, girar el avión y ver que la barra no se mueve, y
+   * volver a la radio con TO hasta pasarla. Lo lleva `en-que-radial-estoy.ts`.
+   * Ver el ADR 0030, enmienda H26c.
+   */
+  {
+    id: "radial",
+    // El mismo peldaño que la aguja: el CDI sale en el cuadro y el VOR en la carta el mismo día.
+    peldanos: ["taguato-ruvicha"],
+    valePara: (a) => radiosDe(a).nav,
+    leccion: "aterrizaje",
+    colocacion: "radial",
+    averias: [],
+    escena: "radio",
+    dondeVale: (oaci) => radioDeSalida(oaci).nav !== null,
+    ensena:
+      "el VOR no dice hacia dónde ir sino en qué radial estás: el curso que centra la barra con FROM es tu radial, y girar el avión no lo cambia",
   },
 ];
 
