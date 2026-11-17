@@ -9,6 +9,7 @@ import { AIRCRAFT } from "./aircraft";
 import {
   EMISORAS,
   MILLA,
+  RadioDeCabina,
   centrado,
   declinacionDeLaEstacion,
   emisorasEn,
@@ -265,5 +266,57 @@ describe("qué lleva cada avión", () => {
     expect(radiosDe({ id: "jaz-25" })).toEqual({ nav: false, adf: false });
     expect(radiosDe({ id: "jaz-20" })).toEqual({ nav: true, adf: true });
     for (const a of AIRCRAFT.filter((x) => x.id !== "jaz-25")) expect(radiosDe(a).nav, a.id).toBe(true);
+  });
+});
+
+describe("la radio de la cabina", () => {
+  const tfn = EMISORAS.find((e) => e.estacion.id === "TFN")!;
+  // En la plataforma de Los Rodeos, más o menos: al oeste de TFN.
+  const enLaPlataforma: Avion = { lat: 28.4826, lon: -16.3415, altitud: 640, rumbo: 120 };
+
+  it("al salir de Los Rodeos, TFN en la NAV y el OBS en el radial donde se está, con la aguja en el centro", () => {
+    const r = new RadioDeCabina({ nav: true, adf: true });
+    r.alSalir("GCXO", { ...enLaPlataforma, altitud: 1500 });
+    expect(r.navMhz).toBeCloseTo(tfn.mhz, 6);
+    expect(r.adfMhz).toBeNull();
+    const l = r.leer({ ...enLaPlataforma, altitud: 1500 }).nav!.lectura;
+    expect(l.toFrom).toBe("FROM");
+    expect(Math.abs(l.desviacion!)).toBeLessThan(1);
+  });
+
+  it("el biplano no pone nada, ni desde la carta", () => {
+    const r = new RadioDeCabina(radiosDe({ id: "jaz-25" }));
+    r.alSalir("GCXO", enLaPlataforma);
+    expect(r.poner("nav", 117.7)).toBe(false);
+    expect(r.leer(enLaPlataforma)).toEqual({ nav: null, adf: null });
+  });
+
+  it("un localizador tocado en la carta pone el OBS en su curso: INOR, 114", () => {
+    const r = new RadioDeCabina({ nav: true, adf: false });
+    expect(r.poner("nav", 108.7)).toBe(true);
+    expect(r.curso).toBe(114);
+    expect(r.poner("adf", 0.397)).toBe(false);
+  });
+
+  it("lo puesto a mano no lo pisa la salida, y cambiar de avión lo borra", () => {
+    const r = new RadioDeCabina({ nav: true, adf: true });
+    r.poner("nav", 116.2);
+    r.girarCurso(-3);
+    const curso = r.curso;
+    r.alSalir("GCXO", enLaPlataforma);
+    expect(r.navMhz).toBeCloseTo(116.2, 6);
+    expect(r.curso).toBe(curso);
+    r.cambiarDeAvion({ nav: true, adf: true });
+    r.alSalir("GCXO", enLaPlataforma);
+    expect(r.navMhz).toBeCloseTo(117.7, 6);
+  });
+
+  it("el OBS da la vuelta: de 360 a 001 y de 001 a 360", () => {
+    const r = new RadioDeCabina({ nav: true, adf: false });
+    r.curso = 360;
+    r.girarCurso(1);
+    expect(r.curso).toBe(1);
+    r.girarCurso(-1);
+    expect(r.curso).toBe(360);
   });
 });

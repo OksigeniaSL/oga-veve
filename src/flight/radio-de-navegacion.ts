@@ -486,3 +486,111 @@ export function siguienteEmisora(
   const i = puesta === null ? -1 : cerca.findIndex((e) => mismaFrecuencia(e.mhz, puesta));
   return cerca[(i + 1) % cerca.length] ?? null;
 }
+
+// ── La radio de la cabina, con su estado ─────────────────────────────────
+
+/** Lo que dice la radio entera en un instante: cada caja, si el avión la lleva. */
+export interface LecturaDeLaRadio {
+  readonly nav: { readonly lectura: LecturaNav; readonly mhz: number | null; readonly curso: number } | null;
+  readonly adf: { readonly lectura: LecturaAdf; readonly mhz: number | null } | null;
+}
+
+/** Cuánto gira el OBS por paso, grados: uno, como el botón de un CDI. */
+export const PASO_DEL_OBS = 1;
+
+/**
+ * **La radio de un avión**: las frecuencias puestas y el curso del OBS. Lo
+ * único que guarda estado; lo demás son las cuentas de arriba.
+ *
+ * Se sintoniza de tres maneras, y las tres acaban aquí: tocando una
+ * radioayuda en la carta (`poner`), con el mando de la cabina (`siguiente`) y,
+ * al salir, sola (`alSalir`). Un avión sin la caja no pone nada.
+ */
+export class RadioDeCabina {
+  navMhz: number | null = null;
+  adfMhz: number | null = null;
+  /** El curso del OBS, magnético, de 1 a 360. */
+  curso = 360;
+
+  /**
+   * **Lo puesto a mano**, caja por caja: lo que se sintonizó en la carta o
+   * con el mando. Al salir no se pisa —quien preparó la radio en la ficha del
+   * campo antes de volar la quiere así—; solo al cambiar de avión.
+   */
+  private readonly aMano = { nav: false, adf: false };
+
+  constructor(
+    public lleva: RadiosDeNavegacion,
+    private readonly todas: readonly Emisora[] = EMISORAS,
+  ) {}
+
+  /** Otro avión: sus cajas, y todo apagado hasta que se salga. */
+  cambiarDeAvion(lleva: RadiosDeNavegacion): void {
+    this.lleva = lleva;
+    this.navMhz = null;
+    this.adfMhz = null;
+    this.curso = 360;
+    this.aMano.nav = false;
+    this.aMano.adf = false;
+  }
+
+  /**
+   * Al salir: la estación del campo en cada caja que se lleve y no se haya
+   * puesto a mano, y el OBS en el radial en que se está, con la aguja en el
+   * centro. Así lo primero que se ve al despegar es la aguja que se aparta,
+   * que es la lección.
+   */
+  alSalir(oaci: string | null, a: Avion, elevacion?: (e: Emisora) => number): void {
+    const s = radioDeSalida(oaci, this.todas);
+    if (!this.aMano.adf) this.adfMhz = this.lleva.adf ? (s.adf?.mhz ?? null) : null;
+    if (!this.lleva.nav || this.aMano.nav) return;
+    this.navMhz = s.nav?.mhz ?? null;
+    this.curso = 360;
+    const l = leerNav(this.navMhz, this.curso, a, elevacion, this.todas);
+    if (l.radial !== null) this.curso = Math.round(l.radial) % 360 || 360;
+  }
+
+  /**
+   * **Pone una frecuencia** en su caja, si el avión la lleva, y dice si quedó
+   * puesta. Con un localizador, el OBS se pone en el curso de la final, que
+   * es lo primero que se hace al sintonizar un ILS: con el curso en otra
+   * parte, la flecha sobre la rosa apunta a ninguna pista.
+   */
+  poner(caja: Caja, mhz: number): boolean {
+    if (!this.lleva[caja]) return false;
+    this.aMano[caja] = true;
+    if (caja === "adf") {
+      this.adfMhz = mhz;
+      return true;
+    }
+    this.navMhz = mhz;
+    const loc = emisorasEn("nav", mhz, this.todas).find((e) => e.estacion.clase === "ILS" && e.estacion.rumboVerdadero !== null);
+    if (loc) this.curso = Math.round(vuelta(loc.estacion.rumboVerdadero! + loc.declinacion)) % 360 || 360;
+    return true;
+  }
+
+  /** **El mando de la cabina**: la estación siguiente de esta caja, por cercanía. */
+  siguiente(caja: Caja, a: Punto): boolean {
+    if (!this.lleva[caja]) return false;
+    const e = siguienteEmisora(caja, caja === "nav" ? this.navMhz : this.adfMhz, a, this.todas);
+    return e ? this.poner(caja, e.mhz) : false;
+  }
+
+  /** **Girar el OBS**, `pasos` de un grado: positivo, a la derecha. */
+  girarCurso(pasos: number): boolean {
+    if (!this.lleva.nav || pasos === 0) return false;
+    this.aMano.nav = true;
+    this.curso =Math.round(vuelta(this.curso + pasos * PASO_DEL_OBS)) % 360 || 360;
+    return true;
+  }
+
+  /** Lo que marcan las dos cajas ahora. */
+  leer(a: Avion, elevacion?: (e: Emisora) => number): LecturaDeLaRadio {
+    return {
+      nav: this.lleva.nav
+        ? { lectura: leerNav(this.navMhz, this.curso, a, elevacion, this.todas), mhz: this.navMhz, curso: this.curso }
+        : null,
+      adf: this.lleva.adf ? { lectura: leerAdf(this.adfMhz, a, elevacion, this.todas), mhz: this.adfMhz } : null,
+    };
+  }
+}

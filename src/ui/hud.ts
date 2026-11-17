@@ -932,6 +932,21 @@ export class Hud {
      * ratón encima de la ventanilla, que es lo que se espera de una rueda.
      * Ver `flight/altitud-seleccionada.ts`.
      */
+    /*
+     * **El mando de la radio** en las esquinas de la pantalla de navegación,
+     * por delegación y con `pointerdown`, por lo mismo que la rueda ALT: el
+     * cuadro se repinta y un dedo que resbala no da `click`. Un toque, un paso:
+     * un grado del OBS o la estación siguiente.
+     */
+    this.root.addEventListener("pointerdown", (e) => {
+      const mando = (e.target as Element | null)?.closest?.("[data-radio-mando]");
+      if (!(mando instanceof SVGElement || mando instanceof HTMLElement)) return;
+      const que = mando.dataset.radioMando;
+      if (que !== "nav" && que !== "adf" && que !== "obs") return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.radioHandler?.(que, Number(mando.dataset.paso) || 0);
+    });
     this.root.addEventListener("pointerdown", (e) => {
       const zona = (e.target as Element | null)?.closest?.("[data-mcp-rueda], [data-mcp-alt]");
       if (!(zona instanceof SVGElement || zona instanceof HTMLElement)) return;
@@ -1001,7 +1016,7 @@ export class Hud {
      * `ui/tocar-para-explicar.ts`.
      */
     const laRueda =
-      "[data-mcp-rueda], [data-mcp-alt], [data-explica]:not([data-explica-fondo])";
+      "[data-mcp-rueda], [data-mcp-alt], [data-radio-mando], [data-explica]:not([data-explica-fondo])";
     alPulsarDentro(
       this.root,
       "[data-tel-grande]",
@@ -3152,6 +3167,8 @@ export class Hud {
       readonly rodaje?: DatosDelTablero["rodaje"];
       /** Lo que acaba de cambiar, resaltado. Ver `DatosDelTablero.resaltes`. */
       readonly resaltes?: DatosDelTablero["resaltes"];
+      /** La radio de navegación. Ver `DatosDelTablero.radio`. */
+      readonly radio?: DatosDelTablero["radio"];
       /**
        * **Si el pitot lleva la funda puesta.** Entonces el anemómetro marca
        * cero corra lo que corra, en todos los relojes que lo enseñan, y sin
@@ -3706,6 +3723,7 @@ export class Hud {
         rotor: mandos?.rotor ?? null,
         rodaje: mandos?.rodaje ?? null,
         resaltes: mandos?.resaltes ?? null,
+        radio: mandos?.radio ?? null,
       };
       /*
        * En el teléfono el cuadro plano solo se ve puesto en grande: lo de
@@ -5149,6 +5167,16 @@ export class Hud {
 
   onVentanillaAlt(fn: (pasos: number) => void): void {
     this.ventanillaHandler = fn;
+  }
+
+  /**
+   * Quién atiende **el mando de la radio** en la pantalla de navegación:
+   * `obs` con su paso, o la caja cuya estación se cambia. Ver
+   * `ui/radio-en-la-rosa.ts`.
+   */
+  private radioHandler: ((mando: "nav" | "adf" | "obs", paso: number) => void) | null = null;
+  onMandoDeRadio(fn: (mando: "nav" | "adf" | "obs", paso: number) => void): void {
+    this.radioHandler = fn;
   }
 
   /** Quién abre la tarjeta del avión. Ver `ui/tarjeta-del-avion.ts`. */
