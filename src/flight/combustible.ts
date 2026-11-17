@@ -52,6 +52,7 @@
  */
 
 import type { AircraftConfig } from "./aircraft";
+import { tramosDelPlan, type CampoDelVuelo } from "./alterno";
 import { PARADO } from "./cambio-de-avion";
 import {
   airDensity,
@@ -308,6 +309,38 @@ export function cargaParaElPlan(
     avion,
     Math.max(0, tramos.alDestino) + Math.max(0, tramos.alAlterno),
   );
+}
+
+/**
+ * **Lo que se carga para un ejercicio que empieza en el aire**, en kilos: el
+ * vuelo que queda desde donde empieza hasta casa, el de casa a su
+ * alternativo, la maniobra y la reserva. Las cuatro partidas de
+ * `cargaParaElPlan`, con la salida donde de verdad empieza el vuelo.
+ *
+ * Existe porque un ejercicio en el aire salía con lo del tramo desde casa, y
+ * sin destino eso es un vuelo local: unos minutos por encima de la reserva
+ * final. La aguja empieza a seis minutos de la radio y la tormenta a ochenta
+ * millas, y ese vuelo no estaba en el depósito: en la avioneta, a mitad de la
+ * curva de la aguja se declaraba «minimum fuel», justo lo que una salida bien
+ * preparada no hace. Lo arregló a mano la propia aguja sumando tres veces el
+ * tramo; esto es lo mismo para todos, contado como se despacha un vuelo de
+ * verdad: el avión que vuelve a casa desde ochenta millas salió con lo de
+ * esas ochenta millas, con nombre para el plan B y con su reserva.
+ *
+ * Lo que el ejercicio vuela de más —rodear la tormenta, la curva del perro—
+ * es lo que cubre la maniobra, que para eso está.
+ */
+export function cargaDelEjercicio(
+  avion: AircraftConfig,
+  /** Dónde empieza, en metros del mundo. */
+  desde: { readonly x: number; readonly z: number },
+  /** El campo de casa, donde se aterriza al acabar. */
+  casa: CampoDelVuelo,
+  /** Los campos del vuelo, de donde sale el alternativo de casa. */
+  campos: readonly CampoDelVuelo[],
+): number {
+  // Una salida que no es ningún campo: así el tramo no sale local.
+  return cargaParaElPlan(avion, tramosDelPlan({ id: "", x: desde.x, z: desde.z }, casa, campos));
 }
 
 /**
