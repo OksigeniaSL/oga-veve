@@ -179,3 +179,27 @@ solo que en esta no hubo.
 - En el banco de Los Rodeos, por la 30, siete de veinticuatro llegadas acaban
   con una salida que no llega a despegar —recibe «hold short» y se le adelantan
   las de detrás—; pasa igual antes y después, y no es de esta tanda.
+
+  **De dónde sale (17-11-2026), sin arreglar todavía.** No se queda olvidada en
+  la frecuencia: se le retira el dibujo. La torre la tiene en su puesto mientras
+  tu salida de la pista pasa por su doble raya (`quienDejaLaPistaPorSuRaya`),
+  y la doble raya de la 30 está a dos kilómetros de los puestos. En cuanto la
+  pasas la suelta, y sale de su puesto hacia ella por la misma calle por la que
+  tú vuelves al tuyo: frente a frente, los dos dentro, sin sitio para recular
+  —su puesto está en tu camino—, y a los treinta segundos parada por ti se le
+  retira (`PACIENCIA_CON_QUIEN_JUEGA`), con su «hold short» ya dicho. Medido en
+  las siete: en todas, tu raya pasa a menos de seis metros del centro del
+  turbohélice aparcado en su puesto, en la entrada de la plataforma por la que
+  se llega a todos los puestos de ese lado.
+
+  Se probaron dos cosas y no se quedaron. Retenerle en su puesto hasta que
+  hayas pasado por toda su calle, como ya se hace con los del tráfico que
+  aterrizan: despegan las siete, pero tú te quedas parado detrás de él —está en
+  tu camino— hasta que tu paciencia te hace pasar por encima, y el rodaje de la
+  toma al puesto pasa de 203 a 233 s de media en las cuarenta y ocho llegadas
+  (+96 s en doce por la 12). Y darte otro puesto al que se llegue sin pasar
+  junto a un avión parado: en esas llegadas no lo hay entre los seis más
+  cercanos. Lo que queda por decidir es lo de debajo: **un puesto en el que el
+  avión aparcado tapa la entrada de la plataforma** —el turbohélice con su
+  centro a dos metros de tu raya— no debería ser un puesto para ese avión, o
+  la raya debería ir por otro sitio.
