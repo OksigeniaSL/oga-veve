@@ -1214,6 +1214,11 @@ La tercera tirada lo confirma: quince de quince con el alisio y tarde, y
   pocos píxeles; la flecha queda en el borde del aro. Con la lupa se ve
   claro. Acercar el plano solo al cerrar, o pintar de la cruz al avión lo que
   se voló, es una decisión de cómo se mira el plano y no se ha tocado.
+- **El número de la primera raya roza los rótulos de su radio** con una sola
+  raya en el plano, que encuadra de cerca: en Fuerteventura, «R-102 FTV»
+  toca el «TWR 118.475» de GCFV. Los rótulos de las radios van en su capa y
+  no saben de las rayas; correr el número más hacia el avión lo aparta aquí,
+  pero no se ha volado.
 - **La cobertura de cada VOR** sigue sin transcribir (ver arriba): la pareja
   se elige con la línea de vista y el techo de ciento treinta millas.
 
