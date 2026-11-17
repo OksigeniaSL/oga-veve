@@ -731,3 +731,26 @@
 731	vuelo.compensadorParaDespegar	Para despegar, poné el compensador en la franja verde del TRIM: así, al soltar, el avión sigue subiendo solo.
 732	vuelo.compensadorDeDespeguePuesto	El compensador lo puse yo en la franja verde: así, cuando soltés, el avión sigue subiendo solo.
 733	vuelo.avisoDeConfiguracionCompensador	Eso que sonó es el avión: avisa que el compensador no está en la franja verde. Bajá el motor y ponelo para despegar.
+734	carta.toca.pista	Esta es la pista: el camino largo y derecho donde el avión corre para despegar, y donde vuelve a posarse cuando aterriza.
+735	carta.toca.calle	Esta es una calle de rodaje: por acá el avión anda despacito, como un auto, para ir hasta la pista y volver.
+736	carta.toca.plataforma	Esta es la plataforma: donde los aviones esperan quietos mientras sube la gente y se les pone combustible.
+737	carta.toca.aerodromo	Esto es un aeródromo: un lugar con pista, donde los aviones pueden despegar y aterrizar.
+738	carta.toca.avion	Este es tu avión, y lo llevás vos.
+739	carta.toca.norte	Esto marca el norte. En una carta el norte va siempre arriba: a la derecha queda el este y a la izquierda, el oeste.
+740	carta.toca.vor	Esto es un VOR: una antena en el suelo que manda su señal de radio para todos lados. Con ella el avión sabe de qué lado del VOR está. Si tiene un cuadrado alrededor, lleva también un DME.
+741	carta.toca.dme	Esto es un DME: una radio en el suelo que le contesta al avión y le dice a cuántas millas está de ella.
+742	carta.toca.ndb	Esto es un NDB: una radio en el suelo que suena igual para todos lados. En el avión, una aguja apunta hacia ella, y así se sabe dónde queda.
+743	carta.toca.ils	Esto es un ILS: dos señales de radio que salen de la pista. Una dice si vas a la izquierda o a la derecha, y la otra si vas alto o bajo. Así se puede bajar hasta la pista aunque haya nubes.
+744	carta.toca.twr	Esta es la frecuencia de la torre: el número que se pone en la radio para hablar con quien da permiso para despegar y para aterrizar.
+745	carta.toca.atis	Esta es la frecuencia del ATIS: una grabación que repite el viento, la pista en uso y la presión del día. Se escucha antes de llamar a la torre.
+746	carta.toca.app	Esta es la frecuencia de aproximación: el control que ordena a los aviones que llegan y que se van, cuando todavía están lejos de la pista.
+747	carta.toca.gnd	Esta es la frecuencia de rodadura: con ella se habla para moverse por el suelo, de la plataforma a la pista y de vuelta.
+748	carta.toca.afis	Esta es la frecuencia del AFIS: alguien en el aeródromo que no da permisos, pero te cuenta el viento, la pista y quién más anda volando.
+749	carta.toca.frecuencia	Esta es una frecuencia de radio: el número que se pone en la radio para hablar con un servicio de tierra.
+750	carta.toca.msa	Este círculo es la MSA: la altitud más baja a la que se puede volar cerca del aeródromo pasando por encima de todos los cerros, con margen de sobra.
+751	carta.toca.taa	Este círculo es la TAA: la altitud más baja para llegar al punto donde empieza la aproximación pasando por encima de todo, con margen de sobra.
+752	carta.toca.if	Este es el punto intermedio: acá el avión ya se pone en línea con la pista y se prepara para bajar.
+753	carta.toca.faf	Desde este punto empieza la aproximación final: el avión va derecho a la pista, bajando con suavidad.
+754	carta.toca.mapt	Este es el punto de frustrada: si al llegar acá no ves la pista, no se baja más. Se sube y se vuelve a intentar, y eso es volar bien.
+755	carta.toca.minimos	Estos son los mínimos: lo más bajo que se puede llegar sin ver la pista. Cada columna es un tipo de avión, según lo rápido que llega, y la tuya va marcada.
+756	carta.toca.frustrada	Esta es la frustrada: el camino para subir otra vez si la llegada no sale bien. Está siempre preparada, y usarla es de buenos pilotos.

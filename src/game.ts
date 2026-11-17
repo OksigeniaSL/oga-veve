@@ -961,6 +961,7 @@ import {
   type Pieza,
 } from "./flight/lo-que-se-nombra";
 import { AroEnElMundo } from "./ui/aro-en-el-mundo";
+import type { ComoSeDice } from "./ui/carta/tocar-la-carta";
 import { PantallaDespierta } from "./ui/pantalla-despierta";
 import { ahoraEsTelefonoApaisado } from "./ui/telefono";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
@@ -5066,6 +5067,36 @@ export class Game {
   /** La posición del selector de banda del TCAS. Ver `bandaPara`. */
   private bandaDelTcas: Banda = "NORM";
   /**
+   * **Si suena un aviso**, para la carta: una caja del avión que habla —la
+   * máquina— o un aviso que no habla —un tono de a bordo, la bocina o el
+   * sacudidor de pérdida—. Con uno sonando la carta no suena ni habla. Ver
+   * `audio/ruidos-de-la-carta.ts`.
+   */
+  private get suenaUnAvisoParaLaCarta(): boolean {
+    return this.maquina.ocupada || this.audio.suenaUnAviso;
+  }
+
+  /** Si la instructora está diciendo lo que se tocó en la carta. Ver `contarLoTocado`. */
+  private cartaHablando = false;
+
+  /**
+   * **Lo tocado en el plano, dicho**: el clic y la frase de la instructora,
+   * solo con su grabación —la voz del navegador lee un párrafo y en Brave
+   * para Linux no existe—. En `normal`, lo que enseña: no corta a la torre
+   * ni a nada que esté hablando, y si tarda en tocarle, se cae. Y si suena un
+   * aviso, nada: el rótulo, que ya salió en el plano, es su canal.
+   */
+  private contarLoTocado(como: ComoSeDice): void {
+    if (this.suenaUnAvisoParaLaCarta) return;
+    this.audio.ruidoDeLaCarta("clic");
+    if (!this.instructor.vozDe(como.voz.clave)) return;
+    this.cartaHablando = true;
+    this.instructor.decirLoPedido(como.voz.texto, como.voz.clave, "normal", undefined, (que) => {
+      if (que !== "empieza") this.cartaHablando = false;
+    });
+  }
+
+  /**
    * La dependencia en cuya frecuencia se está: tierra, torre, salida,
    * control o aproximación. Ver `flight/dependencia.ts`.
    */
@@ -7374,6 +7405,16 @@ export class Game {
       this.hud.tiempo.cerrar();
     });
     this.hud.alAbrirUnaLamina(() => this.misionUI?.cerrar());
+    /*
+     * **La carta se toca** (#72): el papel al abrir el plano y, al tocar algo
+     * en él, el clic y la frase de la instructora. Ver `contarLoTocado`.
+     */
+    this.hud.mapa.ponerOidos({
+      papel: () => {
+        if (!this.suenaUnAvisoParaLaCarta) this.audio.ruidoDeLaCarta("papel");
+      },
+      tocado: (como) => this.contarLoTocado(como),
+    });
     this.hud.onPausa(() => this.alternarPausa());
     // El ⏩ de la escena de pasaje: pone o quita el modo rápido. Ver `adelanto`.
     this.hud.onAdelantar(() => {
@@ -20629,6 +20670,14 @@ export class Game {
      * las misiones, y el plano no decía a cuál de las cinco pistas pintadas
      * se iba.
      */
+    /*
+     * **Y si suena un aviso, la carta se calla**: lo que contaba de lo tocado
+     * se corta en cuanto canta una caja del avión. Ver `contarLoTocado`.
+     */
+    if (this.cartaHablando && this.suenaUnAvisoParaLaCarta) {
+      this.cartaHablando = false;
+      this.instructor.callar();
+    }
     const objetivo = this.missions.current;
     this.hud.mapa.update(
       this.flight.state.position.x,
