@@ -122,6 +122,7 @@ import {
 import {
   conUnMotor,
   minimaConFlaps,
+  minimaDelAutomatico,
   velocidadesDeDespegue,
   type VelocidadesDeDespegue,
 } from "./flight/velocidades-de-despegue";
@@ -30545,10 +30546,9 @@ export class Game {
 
   /**
    * **La velocidad mínima del automático**, indicada, m/s, o ninguna: por
-   * debajo baja el morro. La Vref y un diez por ciento con el ala limpia —un
-   * margen de una vez y cuarto sobre la pérdida sin flaps— y algo menos que la
-   * Vref con los de aterrizaje fuera, para que la final a su velocidad no la
-   * toque. Ver `Objetivos.minima`.
+   * debajo baja el morro, y los gases no piden menos. Con la pérdida de los
+   * flaps que ya han salido —no con la palanca: la sustentación es la de los
+   * que están fuera— y con la masa de ahora. Ver `minimaDelAutomatico`.
    *
    * **En el modelo sencillo, ninguna**: allí no hay pérdida, y bajar el morro
    * no da velocidad —la velocidad es el gas—, así que lo único que haría es
@@ -30556,8 +30556,7 @@ export class Game {
    */
   private velocidadMinimaDelAutomatico(): number | undefined {
     if (this.tier.model === "simple") return undefined;
-    const flaps = Math.max(0, Math.min(1, this.input.controls.flaps));
-    return this.aircraft.approachSpeed * (1.1 - 0.15 * flaps);
+    return minimaDelAutomatico(this.avionConPeso(), this.input.controls.flaps);
   }
 
   /**
