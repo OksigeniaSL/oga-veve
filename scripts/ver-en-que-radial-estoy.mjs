@@ -28,6 +28,7 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { mkdirSync } from "node:fs";
 import { baseDe } from "./servidor.mjs";
+import { vigilarLoAjeno } from "./lo-ajeno-al-ejercicio.mjs";
 
 const SALIDA = process.argv[2] ?? "capturas-radial";
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5687);
@@ -58,7 +59,7 @@ const comprobar = (nombre, ok, detalle = "") => {
 };
 
 /** Lo que dice el ejercicio, la NAV y el morse, y dónde está el avión. */
-const leer = (page) =>
+const leerSolo = (page) =>
   page.evaluate(() => {
     const o = globalThis.__oga;
     const j = o.juegoParaTrazas();
@@ -85,6 +86,14 @@ const leer = (page) =>
       tarjeta: o.tarjeta?.()?.dibujo ?? null,
     };
   });
+
+/** Lo que no es del ejercicio, mirado en cada lectura mientras dura (H26f). Ver `lo-ajeno-al-ejercicio.mjs`. */
+const ajeno = vigilarLoAjeno();
+const leer = async (page) => {
+  const r = await leerSolo(page);
+  await ajeno.mirar(page, r.ejercicio && r.ejercicio.fase !== "cerrada");
+  return r;
+};
 
 /** El rumbo del automático, rad verdaderos, como lo lleva el juego. */
 const rumboAlAutomatico = (page, rumbo) =>
@@ -148,6 +157,12 @@ try {
   }
   comprobar("el morse la identifica", r.morse.identificada === `nav ${est.id}`, JSON.stringify(r.morse));
   comprobar("con el OBS apartado, FROM y la barra a tope", r.toFrom === "FROM" && Math.abs(r.desviacion ?? 0) >= 10, `${r.toFrom}, ${r.desviacion?.toFixed(1)}°`);
+  // Y la tarjeta, con la barra del lado en que está la de verdad (H26f).
+  comprobar(
+    "la tarjeta dibuja la barra a tope del lado en que está",
+    r.tarjeta === `cdi-a-la-${(r.desviacion ?? 0) >= 0 ? "derecha" : "izquierda"}`,
+    `barra ${r.desviacion?.toFixed(1)}°, tarjeta ${r.tarjeta}`,
+  );
   await foto("02-sintonizada");
 
   // El OBS, de grado en grado, hacia donde se centra la barra.
@@ -230,6 +245,8 @@ try {
   }
   comprobar("sale la bandera encima de la radio", bandera && cerrada?.ejercicio.vioLaBandera, `queda la bandera: ${cerrada?.ejercicio.vioLaBandera}`);
   comprobar("se acaba al pasar, con FROM", cerrada?.ejercicio.cierre === "hecho" && cerrada.toFrom === "FROM", cerrada ? `${cerrada.toFrom}, radial ${cerrada.radial?.toFixed(1)}` : "no llegó");
+  // Nada que no sea del ejercicio (H26f): ni la fase del plan, ni la torre, ni la frecuencia, ni la ventanilla.
+  await ajeno.comprobar(page, comprobar, /^cdi-/);
   // El panel del final, con la traza en el plano: ocho segundos y medio de juego después.
   await pausa(4000);
   await foto("07-final");
