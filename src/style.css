@@ -12833,6 +12833,13 @@ button.motor__tecla::after {
  * Los datos, en columnas de periódico cuando no caben de alto: en el teléfono
  * tumbado la radio de Gran Canaria se quedaba debajo, fuera de la vista, en
  * una ficha con media hoja libre a la derecha.
+ *
+ * Las columnas van en una caja de dentro, de alto libre, y la de fuera es la
+ * que rueda: con el alto fijo en la de las columnas, lo que no cabía se iba a
+ * otra columna por la derecha, fuera de la ficha (las radioayudas de Gran
+ * Canaria en la tablet). Y la de fuera lleva la sombra de lo que queda por
+ * debajo y por encima, que es lo que dice que hay más: un papel sin sombra
+ * parece acabado.
  */
 .ficha-carta__datos {
   grid-area: datos;
@@ -12840,14 +12847,25 @@ button.motor__tecla::after {
   min-width: 0;
   min-height: 0;
   margin-right: 40px;
-  column-width: 210px;
-  column-gap: 18px;
-  column-fill: auto;
   overflow: auto;
+  overscroll-behavior: contain;
   scrollbar-width: thin;
+  background:
+    linear-gradient(var(--carta-papel) 30%, rgb(255 255 255 / 0)) center top,
+    linear-gradient(rgb(255 255 255 / 0), var(--carta-papel) 70%) center bottom,
+    radial-gradient(farthest-side at 50% 0, rgb(40 30 20 / 0.28), rgb(40 30 20 / 0)) center top,
+    radial-gradient(farthest-side at 50% 100%, rgb(40 30 20 / 0.28), rgb(40 30 20 / 0)) center bottom;
+  background-repeat: no-repeat;
+  background-size: 100% 36px, 100% 36px, 100% 14px, 100% 14px;
+  background-attachment: local, local, scroll, scroll;
 }
 
-.ficha-carta__datos > * {
+.ficha-carta__columnas {
+  column-width: 210px;
+  column-gap: 18px;
+}
+
+.ficha-carta__columnas > * {
   display: block;
   margin-bottom: 3px;
   break-inside: avoid;
@@ -12966,6 +12984,513 @@ button.motor__tecla::after {
   font-family: var(--carta-letra-cifras);
   font-weight: 600;
   color: var(--carta-tinta-aero);
+}
+
+/*
+ * ── La carta de aproximación (IAC) ───────────────────────────────────
+ *
+ * Solo en el calco de la radio. El botón va en los datos, debajo del nombre,
+ * y abre una hoja que tapa la ficha entera menos su cruz: la planta y el
+ * perfil a la izquierda, los mínimos, la MSA y la frustrada a la derecha, y
+ * al pie la carta, su fuente y el descargo. Se abre y se cambia de cabecera
+ * con unos botones de radio escondidos al principio de la ficha y sus
+ * etiquetas: sin código y sin repintar el hangar. Ver
+ * `carta/carta-de-aproximacion.ts`.
+ */
+.ficha-carta__iac {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-height: 44px;
+  margin: 4px 0 6px;
+  padding: 4px 14px 4px 8px;
+  border: 1.5px solid var(--carta-tinta-aero);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.4);
+  color: var(--carta-tinta-aero);
+  cursor: pointer;
+}
+
+.ficha-carta__iac svg {
+  flex: none;
+  width: 34px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ficha-carta__iac b {
+  display: block;
+  font: 600 15px var(--carta-letra-cifras);
+  letter-spacing: 0.04em;
+}
+
+.ficha-carta__iac small {
+  display: block;
+  font-size: 12px;
+  color: var(--carta-tinta);
+}
+
+/* La cruz de la ficha, por encima de la hoja de la carta: cierra las dos. */
+.ficha-carta > .ficha-carta__cerrar {
+  z-index: 3;
+}
+
+.iac {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 8px 8px 4px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  background-color: var(--carta-papel);
+  background-image: var(--papel-grano, none);
+  background-size: 256px 256px;
+  color: var(--carta-tinta);
+}
+
+.iac__llave--0:checked ~ .iac--0,
+.iac__llave--1:checked ~ .iac--1 {
+  display: flex;
+}
+
+.iac__cabeza {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-height: 44px;
+  padding-right: 44px;
+}
+
+.iac__volver {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--carta-tinta);
+  cursor: pointer;
+}
+
+.iac__volver svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.iac__titulo {
+  min-width: 0;
+  font: 600 16px var(--carta-letra-cifras);
+  letter-spacing: 0.03em;
+  color: var(--carta-tinta-aero);
+}
+
+.iac__pestanas {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.iac__pestana {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--carta-tinta-aero);
+  border-radius: 999px;
+  font: 600 14px var(--carta-letra-cifras);
+  letter-spacing: 0.04em;
+  color: var(--carta-tinta-aero);
+  cursor: pointer;
+}
+
+.iac__pestana--esta {
+  background: var(--carta-tinta-aero);
+  color: var(--carta-papel);
+}
+
+.iac__cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 8px 14px;
+  padding-left: 4px;
+}
+
+.iac__dibujos,
+.iac__cajas {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.iac__planta,
+.iac__perfil {
+  border: 1px solid var(--carta-tinta-aero);
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.3);
+}
+
+.iac-planta,
+.iac-perfil {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* La letra de los dibujos: la de las cifras de la carta, con su halo de papel. */
+:where(.iac-planta, .iac-perfil, .iac-msa) text {
+  font-family: var(--carta-letra-cifras);
+  font-weight: 600;
+  fill: var(--carta-tinta);
+  paint-order: stroke;
+  stroke: var(--carta-papel);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.iac-perfil__rotulo {
+  font-size: 12.5px;
+  fill: var(--carta-tinta-aero);
+  text-anchor: middle;
+}
+
+.iac-perfil__nombre {
+  font-size: 12px;
+  text-anchor: middle;
+}
+
+.iac-perfil__alt {
+  font-size: 12.5px;
+}
+
+.iac-perfil__alt--frustrada {
+  text-anchor: middle;
+}
+
+.iac-perfil__hgt {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.iac-perfil__millas {
+  font-size: 12px;
+  fill: var(--carta-tinta-aero);
+  text-anchor: middle;
+}
+
+.iac-perfil__angulo {
+  font-size: 12px;
+  fill: var(--carta-tinta-aero);
+  text-anchor: middle;
+}
+
+.iac-perfil__rdh,
+.iac-perfil__nm {
+  font-size: 11.5px;
+}
+
+.iac-perfil__rdh {
+  text-anchor: middle;
+}
+
+.iac-perfil__cota {
+  font-size: 12px;
+  text-anchor: end;
+}
+
+.iac-perfil__suelo {
+  stroke: var(--carta-tinta);
+  stroke-width: 1.5;
+}
+
+.iac-perfil__pista {
+  fill: var(--carta-tinta);
+}
+
+.iac-perfil__senda {
+  fill: none;
+  stroke: var(--carta-tinta);
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+}
+
+.iac-perfil__raya {
+  stroke: var(--carta-tinta-aero);
+  stroke-width: 0.9;
+  stroke-dasharray: 3 2;
+}
+
+.iac-perfil__frustrada,
+.iac-perfil__punta {
+  fill: none;
+  stroke: var(--carta-tinta);
+  stroke-width: 1.5;
+}
+
+.iac-perfil__frustrada {
+  stroke-dasharray: 5 3;
+}
+
+.iac-planta__pista {
+  stroke: var(--carta-tinta);
+  stroke-width: 5;
+}
+
+.iac-planta__derrota {
+  fill: none;
+  stroke: var(--carta-tinta);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.iac-planta__fijo {
+  fill: var(--carta-papel);
+  stroke: var(--carta-tinta);
+  stroke-width: 1.3;
+  stroke-linejoin: round;
+}
+
+.iac-planta__marca {
+  fill: var(--carta-tinta);
+}
+
+.iac-planta__nombre {
+  font-size: 12.5px;
+}
+
+.iac-planta__rotulo {
+  font-size: 11.5px;
+  fill: var(--carta-tinta-aero);
+}
+
+.iac-planta__norte {
+  fill: var(--carta-tinta-aero);
+}
+
+.iac-planta__escala {
+  stroke: var(--carta-tinta);
+  stroke-width: 2;
+}
+
+.iac-planta__nm {
+  font-size: 11.5px;
+}
+
+/* La tabla de la senda, debajo del perfil, como en la carta. */
+.iac__senda {
+  width: 100%;
+  border-collapse: collapse;
+  border-top: 1px solid var(--carta-tinta-aero);
+  font: 600 12px var(--carta-letra-cifras);
+  font-variant-numeric: tabular-nums;
+}
+
+.iac__senda th,
+.iac__senda td {
+  padding: 1px 3px;
+  border-left: 1px solid var(--carta-tinta-aero);
+  text-align: center;
+}
+
+.iac__senda th {
+  border-left: 0;
+  color: var(--carta-tinta-aero);
+  text-align: left;
+}
+
+/* Los mínimos: la OCA encima y la OCH debajo, entre paréntesis, como en la carta. */
+.iac__minimos {
+  width: 100%;
+  border-collapse: collapse;
+  font: 600 13.5px var(--carta-letra-cifras);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.iac__minimos th,
+.iac__minimos td {
+  padding: 2px 3px;
+  border: 1px solid var(--carta-tinta-aero);
+  text-align: center;
+}
+
+.iac__minimos tr > th:first-child {
+  font-size: 12.5px;
+  text-align: left;
+  color: var(--carta-tinta-aero);
+}
+
+.iac__minimos small {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* La línea LPV que un suplemento deja fuera de servicio: se lee, pero se ve que no vale. */
+.iac__fuera td {
+  color: var(--carta-tinta-cota);
+  text-decoration: line-through;
+}
+
+.iac__fuera th small {
+  font-style: italic;
+}
+
+/* La columna del avión que va, marcada como con un rotulador. */
+.iac__minimos .iac__suya {
+  background: rgb(255 214 64 / 0.55);
+}
+
+.iac__tuya {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+}
+
+.iac__msa {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iac-msa {
+  flex: none;
+  width: 92px;
+  height: 92px;
+}
+
+.iac-msa__circulo {
+  fill: none;
+  stroke: var(--carta-tinta-aero);
+  stroke-width: 1.5;
+}
+
+.iac-msa__raya {
+  stroke: var(--carta-tinta-aero);
+}
+
+.iac-msa__pies {
+  font-size: 14px;
+  text-anchor: middle;
+}
+
+.iac-msa__pies--una {
+  font-size: 17px;
+}
+
+.iac-msa__tipo,
+.iac-msa__radio {
+  font-size: 12.5px;
+  fill: var(--carta-tinta-aero);
+  text-anchor: middle;
+}
+
+.iac__msa p {
+  min-width: 0;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.25;
+}
+
+.iac__frustrada {
+  padding: 4px 6px;
+  border: 1px solid var(--carta-tinta-aero);
+  border-radius: 4px;
+}
+
+.iac__frustrada b {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: 600 15px var(--carta-letra-cifras);
+  color: var(--carta-tinta-aero);
+}
+
+.iac__frustrada b svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-dasharray: 3 2;
+}
+
+.iac__frustrada p {
+  margin: 2px 0 0;
+  font: 500 12.5px var(--carta-letra-cifras);
+  letter-spacing: 0.02em;
+  line-height: 1.25;
+}
+
+.iac__pie {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 12px;
+  margin-top: auto;
+  padding: 4px 4px 0;
+  font-size: 12px;
+}
+
+.iac__descargo {
+  font-style: italic;
+}
+
+/*
+ * En una ficha baja —el teléfono tumbado— no cabe todo a la vista: arriba,
+ * lo que no está en ninguna otra parte del juego, el perfil y los mínimos;
+ * rodando, la planta, la MSA, la frustrada y el pie.
+ */
+@container ficha (max-height: 300px) {
+  .iac__titulo {
+    font-size: 14px;
+  }
+
+  .iac__cuerpo {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  }
+
+  .iac__perfil {
+    order: -1;
+  }
+}
+
+/* En una ficha estrecha —un teléfono de pie—, una columna: el perfil, los mínimos y lo demás debajo. */
+@container ficha (max-width: 440px) {
+  .iac__cuerpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .iac__dibujos,
+  .iac__cajas {
+    display: contents;
+  }
+
+  .iac__perfil {
+    order: -2;
+  }
+
+  .iac__mins {
+    order: -1;
+  }
 }
 
 /* El botón de ir: grande, abajo a la derecha, con el avión mirando hacia donde se va. */

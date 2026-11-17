@@ -1311,6 +1311,8 @@ export const EN: Dictionary = {
   "carta.sinAip": "Not in any AIP",
   "carta.sinRadioayudas": "No published radio aids",
   "carta.descargo": "Not for real navigation",
+  "carta.iac": "Approach chart",
+  "carta.iac.categoria": "Your aircraft: CAT {cat}",
   "tiempo.title": "Weather",
   "tiempo.hora": "Time of day",
   "tiempo.viento": "Where the wind comes from and how hard",

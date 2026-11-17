@@ -181,6 +181,28 @@ describe("los calcos de la carta", () => {
     }
   });
 
+  /*
+   * La carta de aproximación (#72): el perfil, los mínimos, la MSA y la
+   * frustrada, solo en el calco de la radio. En los de abajo ni el botón que
+   * la abre, ni la hoja escondida.
+   */
+  it("la carta de aproximación, solo en el calco de la radio", () => {
+    const cabina = carta("cabina");
+    expect(cabina).toContain("ficha-carta__iac");
+    expect(cabina).toContain("iac-perfil");
+    expect(cabina).toContain("iac__minimos");
+    expect(cabina).toContain("iac-msa");
+    expect(cabina).toContain("MISSED APCH: CLIMB ON MAGNETIC COURSE 114º");
+    for (const peldano of ["dibujo", "palabra", "cifra"] as const) {
+      const html = carta(peldano);
+      expect(html, peldano).not.toContain("ficha-carta__iac");
+      expect(html, peldano).not.toContain("iac__llave");
+      expect(html, peldano).not.toContain('class="iac ');
+      expect(html, peldano).not.toContain("OCA (OCH)");
+      expect(html, peldano).not.toContain("MISSED APCH");
+    }
+  });
+
   it("el descargo va al pie desde que la carta lleva letra, y en Guyrami no", () => {
     const descargo = 'pais__descargo';
     expect(carta("dibujo")).not.toContain(descargo);
