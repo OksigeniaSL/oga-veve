@@ -2148,6 +2148,10 @@ y nada más.
 - Volado en el navegador (16-11-2026, puerto 5688): `verificar-despegue.mjs
   tenerife-norte guyrami`, 19 de 19 —en Guyrami no hay compensador que poner—;
   `tenerife-norte taguato`, 17 de 18, la de «en el aire sigue subiendo», arriba;
+  `tenerife-norte tuka`, 18 de 19, la misma, −2,0 m/s a 7 m, con la misma
+  ayuda a tope; `tenerife-norte taguato-ruvicha`, sin ayudas, 18 de 18, y
+  soltado sigue subiendo, 0,8 m/s a 41 m. Lo que falla en los dos de abajo es
+  la ayuda, no la marca;
   `verificar-vuelo-entero.mjs tenerife-norte guyrami 3 jaz-20`, 62 de 62 con 2
   sin medir; `npm run toque`, sin fallos. Y un banco suelto, empezando alineado
   con el JAZ 20 en Tukã y en Taguato Ruvicha: el compensador sale en su marca,
