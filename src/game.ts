@@ -21776,7 +21776,14 @@ export class Game {
     const aqui = { x: s.position.x, z: s.position.z };
     const destino = destinoEnLaRaya(aqui, raya, sitio, 6, alFinal) ?? destinoEnLaRaya(aqui, raya, sitio);
     if (!destino) return null;
-    const empuje = remolqueALaRaya({ x: s.position.x, z: s.position.z, rumbo: s.heading }, raya, destino, this.aircraft.batalla);
+    // Y el de rueda de cola gira con su barra, no con su batalla: ver `remolqueALaRaya`.
+    const empuje = remolqueALaRaya(
+      { x: s.position.x, z: s.position.z, rumbo: s.heading },
+      raya,
+      destino,
+      this.aircraft.batalla,
+      barraAlTrenDe(this.aircraft)?.largo,
+    );
     return empuje ? { destino, empuje, raya } : null;
   }
 
