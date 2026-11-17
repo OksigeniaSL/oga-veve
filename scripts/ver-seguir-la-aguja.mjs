@@ -19,7 +19,8 @@
  *
  * Capturas: la salida, la aguja sintonizada, el plano con la estela a media
  * curva, la aguja dando la vuelta encima de la radio y el panel del final con
- * la traza. El puerto, `OGA_PUERTO`; el reloj, acelerado por cuatro.
+ * la traza. El puerto, `OGA_PUERTO`; el reloj, acelerado por ocho
+ * (`OGA_VECES`).
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -29,6 +30,8 @@ import { baseDe } from "./servidor.mjs";
 const SALIDA = process.argv[2] ?? "capturas-aguja";
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5687);
 const AVION = process.env.OGA_AVION ?? "jaz-20";
+/** Cuánto se acelera el reloj del juego mientras se sigue la aguja. */
+const VECES = Number(process.env.OGA_VECES ?? 8);
 const VUELOS = [
   { nombre: "alisio", viento: null },
   { nombre: "calma", viento: "000/0" },
@@ -139,7 +142,8 @@ try {
 
     // El automático, y el reloj por cuatro.
     await page.evaluate(() => globalThis.__oga.pilotoAutomatico(true));
-    await page.evaluate(() => globalThis.__oga.acelerar(4));
+    const puestas = await page.evaluate((v) => globalThis.__oga.acelerar(v), VECES);
+    console.log(`    reloj por ${puestas}`);
     let plano = false;
     let pasada = null;
     const fin = Date.now() + 8 * 60000;
