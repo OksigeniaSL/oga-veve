@@ -989,3 +989,116 @@ H29c (63 de 63) y no cabía en el tiempo de esta tanda.
 - **La primera muesca del 747 es de cinco grados** en el dibujo y en la placa,
   y las cifras con las que se ha afinado —la Vr y la V2 de la NTSB, la actitud
   de Carbaugh— son de un 747 con los flaps a diez.
+
+## Nota H27c (17-11-2026): rodando, los flaps bajan la punta y no cada posición del gas
+
+### Lo que pasaba
+
+La ronda de cierre de la tanda 12 (94d5dffa) voló por primera vez el JAZ 50 en
+Guyrami en Los Rodeos —`verificar-vuelo-entero.mjs tenerife-norte guyrami 1
+jaz-50`— y la vuelta salió de 538 s, por encima de los 500 que quieren decir
+«esto se rompió». La ruta la siguió bien: 3.172 m rodados sobre 3.404 trazados
+(×0,93). Lo que se fue fue «abandonando»: 349 s para los 1.631 m de pista que
+hay de donde frenó, a 563 m del umbral de la 12, a su salida, a 2.194 m; a
+4,7 m/s de media, y entró en «a la plataforma» a 1 m/s. En esa misma ronda el
+JAZ 20 hizo esos metros en 147 s, a 11,1.
+
+### Por qué
+
+No era la ruta, ni el sígame, ni una espera: era el modelo sencillo
+(`arcade.ts`). Rodando, el gas pedía `gas · punta · (1 − 4 · resistencia de
+los flaps)`, la regla de tres de los flaps de despegue —con la que está medida
+la carrera, ver `prestaciones-guyrami.test.ts`— puesta en cada posición de la
+palanca. Se aterriza con los flaps de aterrizar, se sale de la pista con ellos
+y se recogen fuera, que es cuando los pide la lista de después de aterrizar. Y
+con los del JAZ 50 —37°, resistencia 0,2, la más alta de la flota— la regla de
+tres deja un quinto:
+
+| Flaps del JAZ 50 | 0° | 10° | 20° | 37° |
+|---|---|---|---|---|
+| Lo que dejaba de cada posición del gas | 1,00 | 0,93 | 0,74 | **0,20** |
+| Lo más con el gas del banco, 0,4, m/s | 23,2 | 21,7 | 17,2 | **4,6** |
+| Con el gas a fondo, m/s | 58,0 | 54,2 | 43,1 | 11,6 |
+
+El banco rueda la vuelta buscando lo que pide la raya sin pasar de cuatro
+décimas de gas; por la pista la raya pide 18 m/s, la de la salida rápida de
+cercanías, y con 37° no pasaba de 4,6, que son los 4,7 de media. Fuera del asfalto, hasta los 75 m del
+eje (`PISTA_LIBRE`), todavía es «abandonando», y ahí Guyrami lleva el tope de
+rodaje, que cierra el gas al que `gasParaRodar` dice que sostiene lo que pide la
+raya: esa cuenta no contaba los flaps, así que el avión no llegaba ni a un
+cuarto de lo pedido. De ahí el metro por segundo al entrar en la plataforma, donde la lista
+pide los flaps y el banco los recoge. La marca de rodaje de la palanca sale de
+la misma cuenta, así que con los flaps fuera también se quedaba corta.
+
+Los otros aviones con flaps perdían de un cuarto a un tercio con los de
+aterrizar —0,76 el JAZ 20, 0,72 el JAZ 40, 0,64 el JAZ 60, 0,78 el JAZ 90 y
+0,74 el JAZ 110 y el 120— y al gas del banco les sobraba para la pista. Al JAZ
+50 no.
+
+### No es la tanda 12
+
+`arcade.ts`, `flaps.ts`, la ficha del JAZ 50 y la vuelta del piloto del banco
+son los mismos en c62dc29a y en 94d5dffa. Lo único de la tanda 12 que toca ese
+tramo es «cero es cero» en el tope de rodaje (H23b), y en este vuelo la raya no
+pide cero en ningún sitio de la vuelta antes del puesto. Volado en el
+navegador con c62dc29a, el mismo vuelo falla igual: la vuelta en 528 s, 343 en
+«abandonando», por la pista a 4,6 m/s clavados con el gas a 0,4 y los flaps de
+aterrizar, y fuera del asfalto a 1,3 m/s con la raya pidiendo 5,1. Nadie lo
+había visto porque el JAZ 50 no se había volado nunca en Guyrami.
+
+### Lo real
+
+La resistencia de los flaps va con el cuadrado de la velocidad: a diez metros
+por segundo es un 5 % de la que hacen en la rotación del JAZ 50, a 43. Por eso
+se rueda fuera de la pista con los de aterrizar sin más gas que el de rodar, y
+se recogen ya fuera, con la lista de después de aterrizar, que es lo que hace
+el juego. Lo que sí bajan los flaps es lo más que se coge con el gas a fondo, y
+es lo que mide la carrera de despegue.
+
+### Lo que se decidió (`step` y `puntaRodandoCon` en `arcade.ts`)
+
+Rodando, el gas pide su velocidad y los flaps bajan la punta:
+`min(gas · punta, punta · (1 − 4 · resistencia))`. Con el gas a fondo es la
+cuenta de antes, así que la carrera de despegue con los flaps de despegue no
+cambia y `prestaciones-guyrami.test.ts` sigue igual; y con el gas de rodar el
+avión rueda lo que rueda sin flaps. `gasParaRodar` ya era la recta del gas sin
+flaps, así que ahora dice la verdad también con ellos, y con ella la marca de
+rodaje de la palanca y el tope de Guyrami. Volando no cambia nada.
+
+`arcade-rodaje.test.ts` lo mira en toda la flota con flaps: con el gas de
+llegar del tope, desde parado y durante un minuto, cada avión llega a su
+velocidad de rodar en recta con los flaps arriba y con los de aterrizar. Con
+el modelo de antes falla ya el primero, el JAZ 20, que con los de aterrizar se
+quedaba en 6,8 m/s de 7,7. Y el JAZ 50 con el gas a fondo y los de aterrizar se
+queda en el suelo a la punta de antes, 11,6 m/s.
+
+### Las cifras, después
+
+En el navegador (17-11-2026, puerto 5688), `verificar-vuelo-entero.mjs
+tenerife-norte guyrami 3 jaz-50`, con la traza del coche apuntando el gas, los
+flaps y lo que pide la raya (un parche del banco que no se ha comiteado):
+
+| | Tanda 11, c62dc29a (×3) | Ronda de la tanda 12 (×1) | Con esto (×3) |
+|---|---|---|---|
+| «abandonando» | 343 s | 349 s | 141 s |
+| Por la pista hasta la salida, con el gas a 0,4 y los de aterrizar | 4,6 m/s | 4,7 m/s de media | 11,6 m/s |
+| Fuera del asfalto, con el tope y la raya pidiendo 5,1 | 1,3 m/s | entra en la plataforma a 1 m/s | 5,1 m/s con 0,12 de gas; entra a 5 |
+| La vuelta | 528 s ✗ | 538 s ✗ | 316 s ✓ (×0,93 de su ruta) |
+
+Por la pista la raya pide 18 m/s —la de la salida rápida de cercanías— y el
+banco no pasa de 11,6, que es lo que dejan los 37° con el gas a 0,4: más de lo
+que pide una recta, que son 10,3, y ya no aburre. Los flaps se recogen al
+entrar en la plataforma, cuando los pide la lista, como antes.
+
+### Lo que no
+
+- **La punta con los flaps de aterrizar sigue baja en este modelo**: con el gas
+  a fondo y 37° el JAZ 50 no pasa de 11,6 m/s en el suelo, así que en Guyrami
+  no despegaría con ellos. Es la regla de tres de la carrera, que no se ha
+  tocado, y un despegue con los de aterrizar no lo pide nada del juego.
+- **El listón de 500 s no se ha movido**, ni el gas de cuatro décimas del
+  banco, que con esto ya basta.
+- La ronda voló con el reloj ×1 y esto con ×3. Por la pista el número es el
+  mismo con los dos relojes —4,6 m/s en la traza a ×3 de c62dc29a, 4,7 de media
+  a ×1 en la ronda—, porque sale de la cuenta del modelo y no del reloj; el
+  vuelo de después no se ha repetido a ×1.

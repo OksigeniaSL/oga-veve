@@ -18,8 +18,10 @@
 
 import { describe, expect, it } from "vitest";
 import { ArcadeFlightModel } from "./arcade";
-import { PYKASU } from "./aircraft";
+import { AIRCRAFT, PYKASU } from "./aircraft";
+import { resistenciaDeLosFlaps } from "./flaps";
 import { neutralControls } from "./model";
+import { velocidadesEnTierra } from "./velocidades-en-tierra";
 import { Vector3 } from "three";
 
 /**
@@ -138,6 +140,46 @@ describe("el gas de rodar", () => {
     const m = new ArcadeFlightModel({ aircraft: PYKASU, ground: () => 0 });
     expect(m.gasPara(9)).toBe(0);
     expect(m.gasParaRodar(9)).toBeGreaterThan(0.1);
+  });
+
+  /*
+   * **Y con los flaps de aterrizar fuera, igual.** Se sale de la pista con
+   * ellos y se recogen fuera, y la cuenta de este modelo los aplicaba a cada
+   * posición del gas: el JAZ 50, con sus 37°, rodaba a un quinto de lo pedido,
+   * y el banco del vuelo entero tardó 349 s en llevarlo hasta la salida de Los
+   * Rodeos (H27c, ADR 0002). Lo mira con el gas de llegar, como lo pide el
+   * tope de rodaje, a la de recta de cada uno.
+   */
+  it("y con los flaps de aterrizar fuera, en toda la flota", () => {
+    for (const a of AIRCRAFT.filter((x) => x.llevaFlaps)) {
+      const quiero = velocidadesEnTierra(a).recta;
+      for (const flaps of [0, 1]) {
+        const m = new ArcadeFlightModel({ aircraft: a, ground: () => 0 });
+        m.reset({ position: new Vector3(0, a.gearHeight, 0), heading: 0, airspeed: 0 });
+        const mandos = { ...neutralControls(), engineOn: true, flaps };
+        for (let t = 0; t < 60; t += 0.02) {
+          mandos.throttle = m.gasParaRodar(quiero, m.state.groundSpeed);
+          m.step(0.02, mandos);
+        }
+        expect(m.state.groundSpeed, `${a.id} con flaps ${flaps}`).toBeCloseTo(quiero, 0);
+      }
+    }
+  });
+
+  /*
+   * Y lo que sí bajan es la punta: con el gas a fondo, la regla de tres de
+   * siempre, que es la de la carrera de despegue. Con los del JAZ 50 eso no
+   * llega a volar, así que se mide en el suelo.
+   */
+  it("y con el gas a fondo, la punta que dejan es la de antes", () => {
+    const a = AIRCRAFT.find((x) => x.id === "jaz-50")!;
+    const m = new ArcadeFlightModel({ aircraft: a, ground: () => 0 });
+    m.reset({ position: new Vector3(0, a.gearHeight, 0), heading: 0, airspeed: 0 });
+    const mandos = { ...neutralControls(), engineOn: true, throttle: 1, flaps: 1 };
+    for (let t = 0; t < 120; t += 0.02) m.step(0.02, mandos);
+    const antes = a.cruiseSpeed * 0.62 * (1 - resistenciaDeLosFlaps(a, 1) * 4);
+    expect(m.state.onGround).toBe(true);
+    expect(m.state.groundSpeed).toBeCloseTo(antes, 1);
   });
 });
 
