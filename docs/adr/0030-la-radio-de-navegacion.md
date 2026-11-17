@@ -688,7 +688,11 @@ regla base de `.tutor` sigue con `left: 50%`, pero no la usa nadie: la pisa
 
 ### Lo que queda
 
-Medido, y sin arreglar en esta tanda:
+Medido, y sin arreglar en esta tanda. `npm run carteles` da 878 de 909: las
+31 que fallan son todas de esta comprobación nueva, y todas de que se tocan
+cuando coinciden los tres —ninguna de ancho, ninguna del instrumento, y el
+aviso no queda detrás de nada en ninguna—. Se dejan fallando a propósito:
+dicen lo que hay.
 
 - **En cabina no caben los tres encima de la visera** en una pantalla baja.
   Con lámpara, aviso y subtítulo a la vez, la lámpara y el aviso se tocan en
