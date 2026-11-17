@@ -1193,6 +1193,16 @@ Y una cosa que salió en las capturas y se arregló: el número de la raya,
 horizontal y encima de ella, en el plano ancho quedaba debajo del avión en la
 raya corta —FTV, a diez millas— y encima de los rótulos de su radio. Va ahora
 girado con la raya, a medio camino entre la radio y la cruz y a un lado.
+Volado otra vez con eso, con el alisio y tarde, y con dos pasos de lupa: de
+cerca, la cruz queda centrada en la flecha con el alisio (a 0,21 millas), y
+tarde se ve el aro donde la estela viró y la flecha encima, por la raya de
+LTE (a 1,28). En esa segunda tirada, con el alisio, el banco dio catorce de
+quince: otro avión dijo `otro.enCola` en la frecuencia, y el banco miraba lo
+dicho al acabar las fotos, segundos después de cerrarse el ejercicio, cuando
+la frecuencia del campo ya ha vuelto (H26f: lo que se vuele después ya es un
+vuelo). Ahora lo mira en cuanto se cierra, y apunta aparte lo dicho después.
+La tercera tirada lo confirma: quince de quince con el alisio y tarde, y
+`otro.enCola` sale en lo dicho después de cerrar, no antes.
 
 ### Lo que queda
 
