@@ -31,13 +31,16 @@
  *   vuelta, y le da la pista al que sale en cuanto queda libre. La vuelta es
  *   un tres sesenta a régimen estándar, dos minutos, hacia fuera del
  *   circuito: «ORBIT RIGHT (o LEFT)», la fraseología de demorar aeronaves del
- *   control de aeródromo (OACI, Doc 4444, capítulo 12, 12.3.4; el párrafo
- *   exacto, por verificar), con el porqué detrás, «departing traffic». Con
- *   una no basta si el de la pista tarda: se mira otra vez al acabarla, y
- *   como mucho van dos.
- * - **Y si ya no hay tiempo**, porque estás en una final corta, te manda al
- *   aire con su porqué: «GO AROUND» (Doc 4444, 12.3.4, aproximación
- *   frustrada; por verificar), «departing traffic». Sale él y vuelves por el
+ *   control de aeródromo (OACI, Doc 4444, 16.ª ed., 12.3.4.17 b), con el
+ *   porqué detrás, «departing traffic». Con una no basta si el de la pista
+ *   tarda: se mira otra vez al acabarla, y como mucho van dos.
+ * - **Y si ya no hay tiempo**, porque estás en una final corta, quien está en
+ *   final va primero (Doc 4444, 7.8): al que todavía no ha entrado en la
+ *   pista se le retiene en su doble raya, y aterrizas y la dejas por otra
+ *   salida. Al que ya está dentro se le da la salida, y si al llegar a la
+ *   decisión sigue en la pista, te manda al aire la pista ocupada. Y solo si
+ *   su doble raya está en tu única salida te manda al aire por él: «GO
+ *   AROUND» (12.3.4.18 a), «departing traffic». Sale él y vuelves por el
  *   circuito. Renunciar es ganar, y la frustrada se felicita igual.
  *
  * Alargar el viento en cola —«MAKE LONG APPROACH (o EXTEND DOWNWIND)», de la
@@ -139,6 +142,19 @@ export interface LoQueTardaEnIrse {
   readonly leHace: number;
   /** Y lo que espera antes a que la pista quede libre, s. */
   readonly espera: number;
+  /**
+   * **Si ya está en la pista**: pasada su doble raya, entrando, remontando o
+   * alineándose. Sin esto, no: rueda hacia su doble raya o espera en ella.
+   * Es lo que separa la pista ocupada de verdad de la que solo lo estará si
+   * se le da. Ver `remedioParaTuSalida`.
+   */
+  readonly enLaPista?: boolean;
+  /**
+   * **Y si puedes dejar la pista sin pasar por su doble raya**: por otra
+   * salida, o por el otro lado. Sin esto, no. Retenerle donde está solo vale
+   * si no te cierra el paso. Ver `otraSalidaSin` en `world/trafico.ts`.
+   */
+  readonly teDejaOtra?: boolean;
 }
 
 /**
@@ -146,16 +162,40 @@ export interface LoQueTardaEnIrse {
  * - `alAire`: la torre te manda al aire.
  * - `aviso`: un AFIS te cuenta lo que hay, y en la final la instructora
  *   propone irse.
+ * - `retener`: la torre deja al que sale en su doble raya, sin darle la
+ *   pista, y a ti no te pide nada: estás en final y vas primero.
+ * - `despegar`: el que sale ya está en la pista; la torre le da la salida si
+ *   no la tiene, y a ti no te pide nada todavía.
  */
-export type RemedioDeTuSalida = "vuelta" | "alAire" | "aviso";
+export type RemedioDeTuSalida = "vuelta" | "alAire" | "aviso" | "retener" | "despegar";
 
 /**
- * **Si al que tapa tu salida le da tiempo a irse antes de que llegues**,
- * contando lo que tiene que esperar a que la pista quede libre. El margen ya
- * va en `leHace`.
+ * **Si al que sale le da tiempo a irse antes de que llegue quien viene**, con
+ * `segundos` lo que le falta a ése para el umbral, o `null` si no viene
+ * nadie: lo que tarda en irse y lo que espera antes a que la pista quede libre
+ * de los demás. El margen ya va en `leHace`.
+ *
+ * **Es la única cuenta**, y la usan todos los que deciden si a uno que sale
+ * se le da la pista contigo en final: la torre al darte la pista
+ * (`enTuSalida` en `world/trafico.ts`), al dársela en cuanto queda libre
+ * (`despejarTuSalida`), en la calle única (`seVaAntesQueTu`) y al mirar si te
+ * retrasa (`seVaAntes`). Eran tres, y una no contaba la espera: en Los Rodeos
+ * sonó «cleared for take-off» para uno en el mismo instante en que a ti te
+ * mandaban al aire porque ése no se iba a tiempo. Una salida se autoriza
+ * cuando hay seguridad razonable de que, al cruzar tú el umbral, habrá
+ * pasado el final de la pista (OACI, Doc 4444, 7.9.3.1 y 7.10.1); si no la
+ * hay, no se le da, y punto.
+ */
+export function leDaTiempo(segundos: number | null, tapa: LoQueTardaEnIrse): boolean {
+  return segundos === null || segundos > tapa.leHace + tapa.espera;
+}
+
+/**
+ * **Si al que tapa tu salida le da tiempo a irse antes de que llegues**: la
+ * cuenta de `leDaTiempo` con tu llegada como la ve la torre.
  */
 export function seVaAntes(llegada: TuLlegadaALaPista, tapa: LoQueTardaEnIrse): boolean {
-  return llegada.segundos > tapa.leHace + tapa.espera;
+  return leDaTiempo(llegada.segundos, tapa);
 }
 
 /**
@@ -181,7 +221,29 @@ export function remedioParaTuSalida(
    * Al aire, solo desde la final: es interrumpir una aproximación, y en el
    * viento en cola no hay aproximación que interrumpir.
    */
-  return llegada.donde === "final" && llegada.alto >= ALTO_PARA_IRSE ? "alAire" : null;
+  if (llegada.donde !== "final" || llegada.alto < ALTO_PARA_IRSE) return null;
+  /*
+   * **En la final corta, quien está en final va primero** sobre quien va a
+   * salir por la misma pista (Doc 4444, 7.8). Se te mandaba al aire igual
+   * —«go around, departing traffic»— por cualquiera de tu salida: en Los
+   * Rodeos, tres frustradas en un vuelo del JAZ 90, las tres al pasar a
+   * final, que con un reactor empieza a menos de los noventa segundos de la
+   * vuelta. Ahora depende de dónde está él:
+   *
+   * - **Ya en la pista** —entrando, remontando o alineándose—, ya no tapa tu
+   *   salida: ocupa la pista, y lo que toca es que se vaya. La torre le da la
+   *   salida si no la tiene, y tú sigues. Si al llegar a la decisión todavía
+   *   está en ella, no se cruza el umbral (7.10.1) y te manda al aire la
+   *   pista ocupada, que es la frustrada de verdad. Ver `pistaOcupada`.
+   * - **Todavía fuera**, rodando o en su doble raya: se le retiene ahí, no se
+   *   le da la pista, y tú aterrizas y la dejas por otra salida (7.10.3.1 c).
+   * - **Y si su doble raya está en tu única salida**, retenido ahí te cierra
+   *   el paso: aterrizas, no puedes dejar la pista, y él no puede entrar en
+   *   ella hasta que la dejes. Ahí no hay más remedio que irse al aire, y que
+   *   salga él.
+   */
+  if (tapa.enLaPista) return "despegar";
+  return tapa.teDejaOtra === true ? "retener" : "alAire";
 }
 
 /**
