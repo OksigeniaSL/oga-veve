@@ -2452,3 +2452,154 @@ Tres frases de la instructora al final de la lista de grabar
   `climbHold` de `fdm.ts` recién despegado, o que el banco suelte con la
   velocidad de subida y no con la de rotar. *Resuelto en la ayuda: nota H21d
   del ADR 0002.*
+
+## Enmienda H25a (17-11-2026): el viento en cola del banco, a la de maniobra de sus flaps
+
+En la ronda de cierre de la tanda 11, `verificar-vuelo-entero.mjs
+tenerife-norte taguato 1 jaz-90` dio 61 de 63: dos «stall, stall» y la toma a
+111 m del umbral. El cuarto argumento es el reloj, no el viento: esa tirada iba
+a ×1 y la que pasó, a ×12, y las dos con el viento del día, 040/12. Gran
+Canaria, también a ×12, pasó.
+
+### Lo que pasaba
+
+Lo apuntó `cantar()` las dos veces: 126 nudos, quince grados de flaps, 1,14 g,
+α 11,3°, con el avisador del JAZ 90 con esos flaps a 11,28° (`anguloDeAviso`:
+la pérdida con esos flaps y su siete por ciento). Los nudos de ese registro son
+verdaderos, aunque su comentario diga indicada: a la altura del circuito de Los
+Rodeos y con 21 °C son unos 119 indicados. Pasó **virando al viento en cola**,
+con la palanca en la segunda muesca, antes de la base: la radio cuenta los
+«one thousand» después, ya con las de aterrizar.
+
+No era el avisador, y no era lo que pide el juego: la escalera de la llegada
+pide con la segunda muesca la Vref y veinte (`escalera-de-velocidades.ts`), 138
+nudos, y el «paso final: senda (123 kt)» se dijo con las de aterrizar puestas.
+Era **el piloto del banco**, que volaba el viento en cola y la base a la misma
+velocidad, `DE_BASE`, la Vref y quince, con cualquier muesca, y la comparaba
+con la verdadera. Con la Vref de 132 y los flaps de antes eso le dejaba 1,26
+veces la pérdida con la segunda en Los Rodeos, y a 1,26 el avisador pide
+cuarenta y tres grados. Con la de la FAA (enmienda H20e), 118, son 1,27 en
+indicada y **1,19** en Los Rodeos, a 125
+indicados donde la pérdida con esos flaps está en 105; virando a treinta grados
+el avisador suena a 1,15, y el banco se quedaba unos seis nudos por debajo de lo
+que pedía —125 a 127 verdaderos, en las dos tiradas—. La Vref bajó catorce
+nudos y la pérdida con la segunda muesca, cinco: la Vref es de los flaps de
+aterrizar, y la de la FAA está a 1,23 veces su pérdida, en el borde de la norma.
+
+**Es de H20e, no de H22b.** La segura de la ayuda con la segunda muesca (nota
+H22b del ADR 0002) son 1,13 veces su pérdida, 126,6 nudos verdaderos allí,
+casi lo mismo que volaba el banco; antes de H22b estaba más abajo, en 123,6. Y
+esa ayuda solo baja el morro por debajo de la segura: no empuja hacia el
+avisador.
+
+### La fuente
+
+Lo más despacio que se vuela con unos flaps virando es su velocidad de
+maniobra, y no es la Vref. En el E-Jet, el punto verde de la cinta: «ideal
+slat/flap extension SPD for current mass. Full bank protected […] ≥ 1.3vSS», y
+debajo la franja ámbar, cuyo techo, 1,13 veces la pérdida, es donde «stick
+shaker may activate» (C. Regli, *Embraer EMB190 – Summary*, 16-9-2025, p. 1-37:
+<http://www.flite.ch/Emb/Summary_E190.pdf>). La regla de configurar es «lower
+flaps before going below green dot SPD» (p. 2-18), y el circuito, con su orden:
+viento en cola con el tren y F3 a 160 nudos, F5 o FULL a 140 o 130, y la de
+aproximación «mid base» (p. 2-24). El resumen es del E190, que tiene el mismo
+tipo de licencia que el E170 (ADR 0027, enmienda H20e); los números de cada
+muesca son del más pesado y no se ponen: lo que se toma es la regla del 1,3.
+Los manuales de Boeing dan lo mismo en otra forma —la Vref y veinte con flaps
+15—, y en el JAZ 90 son 1,31 veces su pérdida con la segunda.
+
+### Lo que se hizo
+
+- `maniobraCon` en `velocidades-de-despegue.ts`: 1,3 veces `perdidaCon`, con
+  su porqué y su fuente.
+- La sonda `avion()` da `maniobraPorMuesca`, la de cada muesca de la palanca
+  con el peso de ahora.
+- El banco (`velocidadDelTramo`) vuela del viento en cola en adelante a la
+  mayor entre `DE_BASE` y la de maniobra de la muesca que tiene pedida, pasada
+  a verdadera. Con la segunda, el viento en cola; al pedir las de aterrizar, en
+  la base, la de maniobra de esas queda por debajo y manda `DE_BASE`, como
+  estaba. En Guyrami, nada: el modelo sencillo no tiene pérdida.
+- `avisador-en-el-circuito.test.ts`: en cada muesca de cada avión con flaps y
+  en los tres peldaños del modelo completo, a la de maniobra se vira a cuarenta
+  grados sin llegar al avisador; y el JAZ 90 del banco, con el fallo —a la Vref
+  y quince en verdadera, cuarenta grados lo hacen sonar, y lo medido, 126
+  verdaderos con 1,14 g, también— y sin él —a la de maniobra con los mismos seis
+  nudos de menos, treinta grados no llegan—.
+
+En el circuito de Los Rodeos, en indicada, lo que vuela el banco en el viento
+en cola con la muesca que pide:
+
+| | Pérdida con ella | Antes | Ahora |
+|---|---|---|---|
+| JAZ 60 (17,5°) | 89,6 | 115,5 (1,29) | 116,5 (1,30) |
+| JAZ 90 (15°) | 104,8 | 124,9 (1,19) | 136,2 (1,30) |
+| JAZ 110 (20°) | 117,2 | 149,7 (1,28) | 152,4 (1,30) |
+| JAZ 120 (20°) | 121,1 | 151,4 (1,25) | 157,4 (1,30) |
+
+Los de hélice ligeros no cambian: su Vref y quince queda por encima. Al nivel
+del mar el JAZ 90 pasa de 132,7 a 136,2. Los anchos y el 1900D no se han volado
+en el navegador con esto.
+
+### Volado en el navegador
+
+`verificar-vuelo-entero.mjs tenerife-norte taguato … jaz-90`, el 17-11-2026,
+puerto 5688, con la traza del ala (`OGA_TRAZA_ALA`), y el viento del día,
+040/12, en las tres:
+
+| Reloj | Resultado | Viento en cola, 2.ª muesca: indicada | Lo menos que le quedó al ala hasta el avisador | Lo que falló |
+|---|---|---|---|---|
+| ×1 | 61 de 63 | 127–160 | 3,9° | la puerta: bajando a 6,3 m/s; la toma, a 2,12 m/s |
+| ×1 | 60 de 62 | 124–158 | 3,1° | la toma, a 4,57 m/s, y con ella las gafas |
+| ×12 | 62 de 62 | 130–144 | 5,0° | — |
+
+En ninguna sonó «stall, stall». Lo que falló en las dos de ×1 es la final y la
+recogida, no el circuito: las dos entraron en la final por donde entraba la
+de antes —a 4.059 y 3.962 m del umbral y a 293 y 290 m, frente a 4.100 y 287—;
+en la primera, a la salida del viraje y a 250 m, una racha lo subió quince
+metros con la palanca adelante (α −3°, 0,82 g), y el banco bajó a 6,9 m/s a
+recuperar la senda: es lo que el banco ya cuenta de la final del #192, en
+`volarLaSenda`. En la segunda
+la recogida empezó a 10,7 m de ruedas con 113 a 117 indicados y no paró la
+bajada: de 3,4 a 4,9 m/s. Con el circuito no tiene que ver, y no se ha tocado.
+
+**Y en la rotación, lo que no es de esta enmienda.** La traza del ala ve al
+JAZ 90 rotando con los flaps de despegue a menos de un grado del avisador en
+las tres tiradas —0,9° a ×12, 1,1° en la primera de ×1— y, en la segunda,
+pasándolo 0,36 s a cinco metros: α 12,5° con el avisador a 12,0°, 1,42 g. No
+cantó, y no se ha mirado por qué. Es de la rotación del banco
+(«se rota a una actitud y no a fondo»), y queda para quien la mire.
+
+### La toma corta, que es otra cosa
+
+La toma a 111 m —la zona empieza a 150— no viene de aquí. Las tres tiradas de
+la ronda de cierre llegaron a la puerta de los quinientos pies estabilizadas, y
+a la recogida en indicada a la Vref o un poco menos, que es lo que pide el banco
+(`SE_QUITA_EL_MARGEN_DESDE`); lo que cambia es la altura sobre la senda en la
+final corta: 2,5 m por debajo en la puerta y una bajada con 0,89 g a los
+doscientos pies («sink rate» y el consejo de subir el morro) en la que tocó
+corto; 8,3 m por encima en la de ×12, que tocó a 368 m; 4 m por debajo en Gran
+Canaria, a 226 m. La recogida empezó a 12,9 m de ruedas, 174 m antes del
+umbral, unos nueve metros por debajo de la senda que apunta a los 250 m. Y en
+esa tirada, a la salida del viraje a final, el avión dejó de bajar con la
+palanca adelante —de 2,9 a 0,7 m/s—: lo mismo que en la primera de arriba. No
+se ha tocado.
+
+### Lo que no
+
+- **Los números de cada muesca del E170**: el resumen es del E190. Se usa la
+  regla del 1,3, y los manuales de Boeing dan lo mismo.
+- **El avisador**, que sigue al 1,07 (`MARGEN_DEL_AVISADOR`). La franja ámbar
+  del E-Jet llega a 1,13 y dice «may activate», no a qué ángulo lo hace: no se
+  mueve sin una cifra.
+- **El tramo de través, limpio**: el banco lo vuela a la de circuito,
+  170 nudos verdaderos, unos 158 indicados en Los Rodeos, por debajo de la de
+  maniobra limpia del JAZ 90, 176. No ha sonado, pero es la misma regla.
+- **La segura de la ayuda** (nota H22b del ADR 0002), 1,13 veces la pérdida con
+  los flaps que se lleven: a esa velocidad, virando a más de veinticinco grados
+  suena el avisador. Es la red de quien suelta la palanca, no una velocidad que
+  se pida, y no se ha movido.
+- **La banda del circuito** (`bandaDeCircuito`) pinta «bien» desde la Vref con
+  cualquier muesca; con la segunda del JAZ 90, la Vref es 1,13 veces su
+  pérdida. No se ha movido.
+- **Los nudos que apunta `cantar()`** son verdaderos, y su comentario dice
+  indicada: en Los Rodeos, seis nudos de diferencia en un canto de pérdida.
