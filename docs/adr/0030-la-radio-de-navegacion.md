@@ -758,3 +758,147 @@ El cuarto de la lista de arriba y el cierre del peldaño 5 que pide #51:
   el mismo instante; que leerlos con un minuto de vuelo entre medias la
   aparta lo que se voló; y que con dos estaciones a cinco millas y el avión
   en su prolongación el corte no se ofrece.
+
+## Enmienda H26f (17-11-2026): lo que estorba en los ejercicios de radio
+
+Volando «Interceptar un radial» se vieron cosas que no eran del ejercicio y
+una tarjeta que decía lo contrario de lo que pasaba; y quedaba por mirar la
+corrección de viento que H26e había medido de dos maneras.
+
+### Lo que no es del ejercicio, callado
+
+Durante todo el ejercicio salía «Andá a la pista» —la tarjeta de la fase «en
+vuelo» de la lección de aterrizar, con su voz y su rótulo— y la torre contaba
+el tráfico de otros: «hold short», «go around, runway occupied». Los demás
+ejercicios en el aire no lo callan, y hacen bien: el planeo, el de un motor,
+la despresurización, la tormenta y la autorrotación **acaban en la pista**, y
+«andá a la pista», la torre y su frecuencia son parte de lo que se practica.
+Los de radio se cierran en el aire, lejos de ella.
+
+Así que `Ejercicio` lleva ahora `acabaEnElAire` —los tres de radio, y la
+prueba mira que sean ellos y ninguno más— y `flight/lo-que-calla-el-ejercicio.ts`
+dice qué se calla mientras dura uno de esos:
+
+- **La fase del plan**: su tarjeta, su voz y su rótulo (`callada` en
+  `avanzarPlan`). La fase se apunta igual, y al cerrarse el ejercicio no se
+  vuelve a anunciar hasta que cambie. El tutor de la tecla también, aunque en
+  el aire ya estaba apagado.
+- **La torre hablándote a vos** (`hayTorreQueHable`). En un ejercicio
+  contestaba porque una emergencia se declara a ella, y en estos no se declara
+  nada. Con eso caen el relevo de frecuencia —«Seguí la aguja» empieza fuera
+  de las diez millas de su zona y entra en ella siguiendo la aguja—, los
+  permisos y la pista ocupada.
+- **La frecuencia del campo** (`oirElCampo`), como en el modo inicio, que
+  partía la conversación. Aquí además cortaba el morse, que se corta si empieza
+  a hablar alguien, y oír el identificador es la mitad del ejercicio. El turno
+  se sigue oyendo, que es lo que mueve el tráfico: sigue volando su circuito,
+  en el mundo y en el TCAS, callado para quien hace el ejercicio.
+- **Lo que se ve por la ventanilla**, abajo.
+
+**La seguridad no pasa por aquí**: la máquina del avión, los avisos del
+cuadro y la información de tráfico, que sin torre la da la instructora
+(`comoSeDiceElTrafico`). Y al cerrarse el ejercicio vuelve todo: lo que se
+vuele después ya es un vuelo.
+
+Y una cosa más que salió al mirarlo: **la flecha de casa latía** saliendo por
+el R-120 de FTV, que es alejarse mar adentro con la casa detrás, lo que
+`flight/perdido.ts` llama perderse. `mirarSiSePerdio` dejaba fuera los
+ejercicios de avería y la tormenta, escritos uno a uno antes de que hubiera
+ejercicios de radio; ahora deja fuera cualquier ejercicio (`ejercicioDeHoy`),
+que es lo que ya decía su comentario.
+
+### La ventanilla, no durante el ejercicio
+
+«A la izquierda, la Isla de Lobos» tapó la tarjeta del ejercicio a quien
+viraba para coger el radial: la del paisaje lleva prioridad cero y entra en
+cuanto la del ejercicio caduca. Esperar a que el ejercicio no hable no basta,
+porque el ejercicio sigue mirando la barra aunque calle y su tarjeta es lo que
+hay que tener delante. Es lo mismo que con la tormenta del ejercicio por
+delante (`tormentaPorDelante`): **mientras dura, por la ventanilla no se
+señala nada**. Un suceso, una voz, y el suceso es el ejercicio.
+
+### El CDI de la tarjeta, del lado de la barra
+
+Había un dibujo a tope con la barra a la izquierda, uno viniendo desde la
+izquierda y uno pasado a la derecha. En Fuerteventura con el alisio la barra
+de verdad sale a la derecha (+28,5°): la tarjeta decía «el radial queda de
+ese lado» señalando el otro, y la de «te pasaste» llevaba la barra del lado
+del que venía. En calma acertaba por casualidad.
+
+Ahora cada uno va de los dos lados (`cdi-a-la-izquierda`, `cdi-a-la-derecha`,
+`cdi-viniendo-de-la-…`, `cdi-pasada-a-la-…`) y `dibujoDelCdi` elige por el
+signo de la desviación: la que marcaría la NAV con el VOR del ejercicio y el
+curso de ahora (`elCdiDelEjercicio`, con `leerNav`), también con la NAV vacía
+—en la presentación de «¿En qué radial estoy?», adonde se irá la barra al
+ponerla— y, en la de «Interceptar», con el radial pedido aunque el OBS siga
+en el de debajo. Se descartó un dibujo sin lado: la tarjeta dice «de ese
+lado», y quien no lee solo tiene el dibujo para saber cuál. La barra a medio
+camino es la misma viniendo que pasada, así que lleva debajo una flecha
+pequeña hacia donde se mueve: hacia el centro, viene; hacia fuera, se pasó.
+
+### La corrección de viento en el juego: nada que arreglar
+
+H26e midió el morro corrigiendo el alisio 5,9° en el juego, contra unos nueve
+de la cinemática, y 13,4° en la tirada del que se pasa. Las dos cifras eran
+**el morro contra el curso en el instante de cerrar**, y en ese instante el
+avión todavía no va por el curso: llega con la barra a medio grado, cerrando
+de un lado —o volviendo del otro, el que se pasó—, y lo que el morro se
+aparta del curso es la corrección más o menos lo que todavía corta.
+
+Medido ahora como lo mide el ejercicio —la media del morro contra el camino
+en los veinte segundos de establecido— y muestra a muestra contra lo que pide
+el viento que de verdad sopla en el modelo de vuelo, sumado a la verdadera
+por el morro: **el ejercicio −9,8°, el banco −9,8° y el viento −9,8°**, con
+20,0 kt de costado a 117 kt de verdadera (el arcoseno de 20/117 son 9,8°), y
+de −9,9 a −9,8 muestra a muestra. En el mismo cierre, el morro iba −9,8° del
+camino y −5,9° del curso: es la cifra de H26e, y es la vara, no el viento. La
+prueba de mesa, con la verdadera de su cinemática, da 9,9°. El viento del
+juego, la medida del ejercicio y la frase que elige están bien; lo que estaba
+mal era mirar contra el curso, y el banco ya no lo hace desde H26e.
+
+### Lo que se prueba
+
+- `flight/lo-que-calla-el-ejercicio.test.ts`: que los tres de radio acaban en
+  el aire, y ninguno más; que mientras duran se calla la fase, la torre, la
+  frecuencia y la ventanilla, y cerrados nada; que el planeo, el de un motor,
+  la despresurización, la tormenta y la autorrotación, que acaban en la pista,
+  no callan nada. Y, mirando el texto de `game.ts` como
+  `torre-de-cada-vuelo.test.ts`, que la tarjeta de la fase, la torre, la
+  frecuencia —sin dejar de oír el turno, que mueve el tráfico— y la ventanilla
+  pasan por `loQueCalla`. Esa mitad, roja antes del arreglo: cuatro de cuatro.
+- `ui/dibujos.test.ts`: que `dibujoDelCdi` pinta la barra del lado de la
+  desviación —a tope, viniendo y pasada, con 28,5° y −28,7°, con seis y con
+  cuatro décimas—, y la flecha hacia el centro viniendo, hacia fuera pasada y
+  ninguna a tope.
+- Los tres bancos de radio miran ya lo que no es del ejercicio
+  (`scripts/lo-ajeno-al-ejercicio.mjs`): lo que se le pidió a cada boca
+  (`dichoTodo`), que no sea de nadie más que de la instructora y, de ella, del
+  ejercicio o de la lista `SEGURIDAD` de `flight/sin-instructora.ts`; y lo que
+  se vio mientras duraba: solo sus tarjetas o la del tráfico, ni rótulo, ni
+  tira de la radio, ni la flecha de casa latiendo. El rótulo del destino al
+  empezar —«Fuerteventura · GCFV», cuatro segundos— se deja: es la tarjeta de
+  casa diciendo cuál es, como en todo vuelo, y no pide nada.
+
+Volado en el juego, con la avioneta en Fuerteventura y la Intel por ANGLE,
+de una tirada:
+
+- **Interceptar, con el alisio**, catorce de catorce: la barra a tope con el
+  OBS en el 120 sale a la derecha (+28,6°) y la tarjeta la dibuja a la derecha;
+  se despega a 5,6 millas con `cdi-viniendo-de-la-derecha`; establecido en el
+  119,6 sin pasarse, con la corrección de arriba (−9,8° los tres). La
+  instructora dijo «a tope», «se mueve» y el final con el viento, y nadie más
+  dijo nada: ni la torre, ni otro avión, ni «andá a la pista».
+- **Interceptar, en calma** —la versión del banco que H26e dejó sin volar—,
+  catorce de catorce: pide el 090 desde el 120, la barra a tope a la izquierda
+  (−28,7°) y dibujada a la izquierda, se despega a 5,9 millas, establecido en
+  el 90,5 sin pasarse, el morro 0,0° del camino (y −4,2° del curso al cerrar,
+  la cifra que H26e daba por fallo) y la frase sin viento.
+- **¿En qué radial estoy?**, quince de quince: la barra a tope a la izquierda
+  (−18,9°) y dibujada a la izquierda; lo demás como en H26c (centrada en el 118
+  con la radio en el 118,7, el cuarto de vuelta la mueve 1,75°, TO, la bandera
+  encima y FROM). En la primera tirada, al pasar sobre FTV la instructora dijo
+  «adelante y más abajo va otro avión»: es la información de tráfico, que sin
+  torre da ella, y el banco la tomaba por ajena porque adivinaba qué era de
+  seguridad con una expresión; ahora usa la lista `SEGURIDAD`.
+- **Seguí la aguja**, veinte de veinte, con el alisio y en calma: la curva del
+  perro 1.453 m (un 7,0 %), recta en calma (93 m, 0,4 %), y sin nada ajeno.
