@@ -64,12 +64,27 @@
  * helicóptero hace y un avión no. La cuarta es la autorrotación, que sí es
  * una avería y es el ejercicio de siempre. Las hace pasar
  * `lecciones-del-rotor.ts`.
+ *
+ * ## Y la aguja del ADF, que tampoco
+ *
+ * «Seguí la aguja» (#51) es la primera de la navegación con radio, con
+ * `escena: "radio"`: no falla nada, y lo que se practica es seguir una aguja
+ * con viento de costado. Pide un campo con NDB (`dondeVale`) y lo hace pasar
+ * `seguir-la-aguja.ts`. Y «¿En qué radial estoy?», la segunda, la del VOR:
+ * pide un campo con VOR y la lleva `en-que-radial-estoy.ts`. La tercera,
+ * «Interceptar un radial», también con VOR: salir por un radial que no es el
+ * de debajo, anticipando el viraje; la lleva `interceptar-un-radial.ts`. Y
+ * la cuarta, «Dos radiales que se cortan», con dos VOR: saber dónde se está
+ * sin ver nada; pide un campo con pareja (`parejaDelCampo`) y la lleva
+ * `dos-radiales.ts`.
  */
 
 import type { AircraftConfig } from "./aircraft";
 import type { LeccionId } from "./lecciones";
 import type { TierId } from "./tiers";
 import { EJERCICIO_DE_DESPRESURIZACION } from "./despresurizacion";
+import { radioDeSalida, radiosDe } from "./radio-de-navegacion";
+import { parejaDelCampo } from "./dos-radiales";
 
 export type EjercicioId =
   | "planeo"
@@ -82,7 +97,11 @@ export type EjercicioId =
   | "estacionario"
   | "par"
   | "efecto-suelo"
-  | "autorrotacion";
+  | "autorrotacion"
+  | "aguja"
+  | "radial"
+  | "interceptar"
+  | "cruce";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -112,7 +131,7 @@ export interface Averia {
 }
 
 /** Lo que hace falta saber de un avión para ofrecerle un ejercicio. */
-export type AvionDelEjercicio = Pick<AircraftConfig, "motores" | "presurizacion" | "sound" | "helicoptero">;
+export type AvionDelEjercicio = Pick<AircraftConfig, "id" | "motores" | "presurizacion" | "sound" | "helicoptero">;
 
 export interface Ejercicio {
   readonly id: EjercicioId;
@@ -133,7 +152,16 @@ export interface Ejercicio {
    * allí arriba se practica donde pasa, y abajo queda pista de sobra para
    * bajar después a aterrizar.
    */
-  readonly colocacion?: "planeo" | "un-motor" | "crucero" | "tormenta" | "autorrotacion";
+  readonly colocacion?:
+    | "planeo"
+    | "un-motor"
+    | "crucero"
+    | "tormenta"
+    | "autorrotacion"
+    | "aguja"
+    | "radial"
+    | "interceptar"
+    | "cruce";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
    * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
@@ -146,7 +174,7 @@ export interface Ejercicio {
    * lecciones del ala rotatoria, `rotor`, que enseñan lo que hace un
    * helicóptero y no un avión (ver `lecciones-del-rotor.ts`).
    */
-  readonly escena?: "tormenta" | "rotor";
+  readonly escena?: "tormenta" | "rotor" | "radio";
   /** Lo que enseña, en una línea: para quien lea esto, no para el juego. */
   readonly ensena: string;
   /**
@@ -155,6 +183,19 @@ export interface Ejercicio {
    * a un avión. Ver `seOfrece`.
    */
   readonly deHelicoptero?: boolean;
+  /**
+   * **Si se practica en este campo**, por su indicativo OACI: el de la aguja
+   * necesita un NDB en casa. Sin esto, vale en todos.
+   */
+  readonly dondeVale?: (oaci: string | null) => boolean;
+  /**
+   * **Si se cierra en el aire, lejos de la pista**: los de radio, que acaban
+   * con la aguja que da la vuelta o la barra quieta en el centro. Mientras
+   * duran, la pista y su gente no son de la lección —ni «andá a la pista», ni
+   * la torre, ni su frecuencia—, y se callan. Los demás en el aire acaban
+   * aterrizando, y eso sí es suyo. Ver `lo-que-calla-el-ejercicio.ts`.
+   */
+  readonly acabaEnElAire?: boolean;
 }
 
 /** Todos menos Guyrami: los peldaños que ya practican algo. */
@@ -341,6 +382,98 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     ensena:
       "sin motor el helicóptero no se cae: el rotor sigue girando con el aire que sube, y con su giro se posa",
   },
+  /*
+   * **Seguí la aguja** (#51, peldaño 4 de la navegación instrumental): el
+   * NDB del campo en el ADF, su morse para identificarlo y volar hacia él con
+   * la aguja arriba; con el viento de costado, la estela hace la curva del
+   * perro, y se corrige apuntando al viento. No falla nada, como la tormenta:
+   * lo lleva `seguir-la-aguja.ts`. Ver el ADR 0030, enmienda H26b.
+   */
+  {
+    id: "aguja",
+    /*
+     * En el peldaño de la radio, que es el de cabina: el ADF sale en el cuadro
+     * y su frecuencia en la carta el mismo día (`calcosDe`). En los de abajo
+     * no hay aguja que seguir, y el ejercicio no se ofrece.
+     */
+    peldanos: ["taguato-ruvicha"],
+    valePara: (a) => radiosDe(a).adf,
+    leccion: "aterrizaje",
+    colocacion: "aguja",
+    averias: [],
+    escena: "radio",
+    acabaEnElAire: true,
+    dondeVale: (oaci) => radioDeSalida(oaci).adf !== null,
+    ensena:
+      "la aguja del ADF apunta a la radio y no sabe de viento: seguida con viento de costado, la estela se curva; apuntando un poco al viento, sale recta",
+  },
+  /*
+   * **¿En qué radial estoy?** (#51, peldaño 5): el VOR del campo en la NAV,
+   * su morse, girar el OBS hasta centrar la barra con FROM —ese número es el
+   * radial en que se está—, girar el avión y ver que la barra no se mueve, y
+   * volver a la radio con TO hasta pasarla. Lo lleva `en-que-radial-estoy.ts`.
+   * Ver el ADR 0030, enmienda H26c.
+   */
+  {
+    id: "radial",
+    // El mismo peldaño que la aguja: el CDI sale en el cuadro y el VOR en la carta el mismo día.
+    peldanos: ["taguato-ruvicha"],
+    valePara: (a) => radiosDe(a).nav,
+    leccion: "aterrizaje",
+    colocacion: "radial",
+    averias: [],
+    escena: "radio",
+    acabaEnElAire: true,
+    dondeVale: (oaci) => radioDeSalida(oaci).nav !== null,
+    ensena:
+      "el VOR no dice hacia dónde ir sino en qué radial estás: el curso que centra la barra con FROM es tu radial, y girar el avión no lo cambia",
+  },
+  /*
+   * **Interceptar un radial** (#51, peldaño 5): salir por un radial que no es
+   * el de debajo, como pide una salida publicada. El curso en el OBS, la
+   * barra a tope, cortarlo a cuarenta y cinco grados, virar antes de que la
+   * barra llegue al centro y quedarse en él corrigiendo el viento. Lo lleva
+   * `interceptar-un-radial.ts`. Ver el ADR 0030, enmienda H26e.
+   */
+  {
+    id: "interceptar",
+    // El mismo peldaño y los mismos campos que «¿En qué radial estoy?»: el VOR.
+    peldanos: ["taguato-ruvicha"],
+    valePara: (a) => radiosDe(a).nav,
+    leccion: "aterrizaje",
+    colocacion: "interceptar",
+    averias: [],
+    escena: "radio",
+    acabaEnElAire: true,
+    dondeVale: (oaci) => radioDeSalida(oaci).nav !== null,
+    ensena:
+      "a un radial se llega cortándolo a cuarenta y cinco grados y virando antes de que la barra llegue al centro, porque el avión gira en arco; y con viento, el morro se queda apuntando contra él",
+  },
+  /*
+   * **Dos radiales que se cortan** (#51, el cierre del peldaño 5): con una
+   * sola NAV, leer el radial del VOR del campo, poner otro VOR y leer el
+   * suyo; cada uno es una raya en el plano, y donde se cortan está el avión.
+   * Lo lleva `dos-radiales.ts`. Ver el ADR 0030, enmienda H26g.
+   */
+  {
+    id: "cruce",
+    // El mismo peldaño que los otros del VOR.
+    peldanos: ["taguato-ruvicha"],
+    valePara: (a) => radiosDe(a).nav,
+    leccion: "aterrizaje",
+    colocacion: "cruce",
+    averias: [],
+    escena: "radio",
+    acabaEnElAire: true,
+    /*
+     * Un VOR en casa **y otro con el que se corte bien**: dos radios casi en
+     * línea —TFN y LRO, a cinco millas y media— dan una cruz que no dice
+     * nada, y donde no hay pareja no se ofrece.
+     */
+    dondeVale: (oaci) => parejaDelCampo(oaci) !== null,
+    ensena:
+      "un radial es una raya en el plano y el avión está en algún punto de ella: con dos VOR, dos rayas, y donde se cortan, ahí está; y entre leer una y otra el avión vuela",
+  },
 ];
 
 export function ejercicioPorId(id: string | null | undefined): Ejercicio | null {
@@ -352,17 +485,21 @@ export function seOfrece(
   e: Ejercicio,
   peldano: TierId,
   avion: AvionDelEjercicio,
+  /** El campo de casa, si se sabe. Un ejercicio que pide campo no se ofrece sin él. */
+  oaci?: string | null,
 ): boolean {
   const helicoptero = avion.helicoptero !== undefined;
-  return e.peldanos.includes(peldano) && (e.deHelicoptero ?? false) === helicoptero && e.valePara(avion);
+  const enEsteCampo = !e.dondeVale || (oaci !== undefined && e.dondeVale(oaci));
+  return e.peldanos.includes(peldano) && (e.deHelicoptero ?? false) === helicoptero && e.valePara(avion) && enEsteCampo;
 }
 
 /** Los que se ofrecen con este peldaño y este avión, en su orden. */
 export function ejerciciosPara(
   peldano: TierId,
   avion: AvionDelEjercicio,
+  oaci?: string | null,
 ): readonly Ejercicio[] {
-  return EJERCICIOS.filter((e) => seOfrece(e, peldano, avion));
+  return EJERCICIOS.filter((e) => seOfrece(e, peldano, avion, oaci));
 }
 
 /**

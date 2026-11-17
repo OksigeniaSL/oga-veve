@@ -27,7 +27,6 @@ import { queSeVeaDeLejos, segarLaPista } from "./pista-de-hierba";
 import {
   BufferAttribute,
   BufferGeometry,
-  Float32BufferAttribute,
   Color,
   BoxGeometry,
   CylinderGeometry,
@@ -64,6 +63,7 @@ import { ANCHO_RODADURA } from "./ancho-de-rodadura";
 import { umbralPublicado } from "./umbrales-publicados";
 import { lucesDePistaPublicadas, separacionDelBorde } from "./sendas-publicadas";
 import { puntoDeVisada } from "../flight/toma-larga";
+import { TramosCercanos } from "./calle-mas-cercana";
 
 /**
  * Lo más corto que puede medir algo para que cuente como pista, m.
@@ -410,6 +410,59 @@ export function enElPavimento(aero: Aerodrome, p: Punto, margen = 0): boolean {
 }
 
 /**
+ * **`enElPavimento` sin margen, para preguntar muchas veces en el mismo
+ * campo.** Contesta lo mismo, pregunta a pregunta: mira las mismas pistas,
+ * calles y plataformas con las mismas cuentas, pero solo las que tienen el
+ * punto dentro de su caja —la del eje ensanchada medio ancho, o la del
+ * polígono—, que fuera de ella no puede caer dentro de ninguna. Es un «o»,
+ * así que el orden no cambia nada.
+ *
+ * Existe por `puestosEnElPavimento`: los 425 puestos de Barajas contra sus
+ * 756 calles eran una décima de segundo en la mesa al elegir la salida (ADR
+ * 0028, enmienda H23a). Las cajas se hacen una vez por aeródromo.
+ */
+export function enElPavimentoDe(aero: Aerodrome): (p: Punto) => boolean {
+  const ya = PAVIMENTO_CON_CAJAS.get(aero);
+  if (ya) return ya;
+  // Un milímetro de más: lo que se deja fuera tiene que estar fuera de verdad.
+  const holgura = 1e-3;
+  const piezas: { x0: number; y0: number; x1: number; y1: number; mira: (p: Punto) => boolean }[] = [];
+  const caja = (puntos: readonly Punto[], ancho: number, mira: (p: Punto) => boolean): void => {
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    for (const [x, y] of puntos) {
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    }
+    const m = ancho + holgura;
+    piezas.push({ x0: x0 - m, y0: y0 - m, x1: x1 + m, y1: y1 + m, mira });
+  };
+  for (const pista of aero.runways) {
+    const medio = (pista.widthM ?? 45) / 2;
+    caja(pista.centerline, medio, (p) => aLaPolilinea(p, pista.centerline) < medio + 0);
+  }
+  for (const calle of aero.taxiways) {
+    const medio = (calle.widthM ?? ANCHO_RODADURA) / 2;
+    caja(calle.path, medio, (p) => aLaPolilinea(p, calle.path) < medio + 0);
+  }
+  for (const plataforma of aero.aprons)
+    caja(plataforma.polygon, 0, (p) => dentroDelRecinto(p, plataforma.polygon));
+  const dentro = (p: Punto): boolean => {
+    for (const c of piezas)
+      if (p[0] >= c.x0 && p[0] <= c.x1 && p[1] >= c.y0 && p[1] <= c.y1 && c.mira(p)) return true;
+    return false;
+  };
+  PAVIMENTO_CON_CAJAS.set(aero, dentro);
+  return dentro;
+}
+
+const PAVIMENTO_CON_CAJAS = new WeakMap<Aerodrome, (p: Punto) => boolean>();
+
+/**
  * ¿Hay pavimento a menos de `margen` metros? **Plataformas incluidas.**
  *
  * `enElPavimento` ensancha con su margen las pistas y las calles, pero no las
@@ -580,7 +633,7 @@ export const ENCIMA_LETRAS = {
  * de lejos no se pelea con él por el desplazamiento de polígono, que es lo
  * que ya lo resolvía (ver `ENCIMA_PINTURA`).
  */
-const PINTURA_ALTURA = 0.02;
+export const PINTURA_ALTURA = 0.02;
 
 /**
  * Y las letras y los números, otro poco por encima: van sobre la pintura, y
@@ -590,7 +643,7 @@ const PINTURA_ALTURA = 0.02;
 const ENCIMA_DE_LA_PINTURA = PINTURA_ALTURA + 0.03;
 
 /** Lo más largo que puede ser un trozo de pintura sin apoyarse, m. */
-const LADO_DE_PINTURA = 6;
+export const LADO_DE_PINTURA = 6;
 
 /**
  * Una pieza de pintura **sobre el asfalto que hay debajo**, con cada vértice a
@@ -609,58 +662,147 @@ const LADO_DE_PINTURA = 6;
  * cuesta `2·L/6` triángulos por tira.
  *
  * Las figuras —flechas, puntas— son pequeñas y van con sus vértices.
+ *
+ * **Y todas las piezas de una malla, escritas de seguido** (ADR 0028, enmienda
+ * H23c). Cada trozo era su propia geometría de three —su arreglo, sus
+ * atributos, sus normales—, y al final se juntaban con `mergeGeometries`: en
+ * Barajas, cincuenta y seis mil trozos de dos metros de amarillo, cada uno con
+ * sus objetos, para tirarlos al juntar. Y la cota se preguntaba por cada
+ * vértice de cada triángulo, seis por celda, cuando una celda solo tiene
+ * cuatro esquinas y las comparte con las de al lado.
+ *
+ * Ahora la cota se pregunta una vez por esquina —la rejilla de una pieza tiene
+ * `(n + 1)(m + 1)`—, la esquina que ya era de la pieza anterior se toma de
+ * ella, y los vértices van al arreglo de la malla. **Da lo mismo al bit** que
+ * pieza a pieza: el mismo punto da la misma cota, porque `suelo` no guarda
+ * nada; los vértices salen en el mismo orden y se pasan a `Float32` igual; y
+ * las normales las calcula three sobre esos mismos triángulos, que sin índice
+ * no se miran entre sí —cada vértice lleva la de su cara—. Las piezas que no
+ * son de cuatro esquinas traen las suyas, suavizadas con índice, y se ponen
+ * encima. Lo comprueba `pintura-de-seguido.test.ts` en todos los campos,
+ * contra la pieza a pieza.
  */
-function pinturaEn(
-  contorno: readonly Punto[],
-  suelo: (p: Punto) => number,
-): BufferGeometry | null {
-  if (contorno.length !== 4) {
-    const geo = desdePoligono(contorno, (q) => suelo(q) + PINTURA_ALTURA);
-    if (!geo) return null;
-    // Como las de la rejilla, para que se puedan fundir con ellas en una sola
-    // malla: sin índice y sin coordenadas de textura, que la pintura no lleva.
-    const suelta = geo.toNonIndexed();
-    suelta.deleteAttribute("uv");
-    return suelta;
+export class Pintura {
+  /** Cuántas piezas se han puesto, aunque no tengan triángulos: con una, hay malla. */
+  private piezas = 0;
+  private pos = new Float32Array(3 * 6 * 256);
+  private usado = 0;
+  /** Las normales que no son las de la cara, y desde qué número van. */
+  private readonly suyas: { desde: number; normales: ArrayLike<number> }[] = [];
+  /** Las cuatro esquinas de la pieza anterior: x e y del contorno y su altura. */
+  private antes: number[] = [];
+
+  constructor(readonly suelo: (p: Punto) => number) {}
+
+  private sitio(cuantos: number): void {
+    if (this.usado + cuantos <= this.pos.length) return;
+    let largo = this.pos.length * 2;
+    while (largo < this.usado + cuantos) largo *= 2;
+    const mayor = new Float32Array(largo);
+    mayor.set(this.pos.subarray(0, this.usado));
+    this.pos = mayor;
   }
-  const [a, b, c, d] = contorno as [Punto, Punto, Punto, Punto];
-  // Los lados «largos» son a→b y d→c; los cortos, a→d y b→c.
-  const largo = Math.max(Math.hypot(b[0] - a[0], b[1] - a[1]), Math.hypot(c[0] - d[0], c[1] - d[1]));
-  const corto = Math.max(Math.hypot(d[0] - a[0], d[1] - a[1]), Math.hypot(c[0] - b[0], c[1] - b[1]));
-  const n = Math.max(1, Math.ceil(largo / LADO_DE_PINTURA));
-  const m = Math.max(1, Math.ceil(corto / LADO_DE_PINTURA));
-  const en = (i: number, j: number): Punto => {
-    const s = i / n;
-    const t = j / m;
-    const ab: Punto = [a[0] + (b[0] - a[0]) * s, a[1] + (b[1] - a[1]) * s];
-    const dc: Punto = [d[0] + (c[0] - d[0]) * s, d[1] + (c[1] - d[1]) * s];
-    return [ab[0] + (dc[0] - ab[0]) * t, ab[1] + (dc[1] - ab[1]) * t];
-  };
-  const pos: number[] = [];
-  const vertice = (q: Punto) => pos.push(q[0], suelo(q) + PINTURA_ALTURA, -q[1]);
-  for (let i = 0; i < n; i++)
-    for (let j = 0; j < m; j++) {
-      const p00 = en(i, j);
-      const p10 = en(i + 1, j);
-      const p11 = en(i + 1, j + 1);
-      const p01 = en(i, j + 1);
-      for (const q of [p00, p10, p11, p00, p11, p01]) vertice(q);
+
+  /** La altura de la pintura en una esquina, o la de la pieza anterior si era la misma. */
+  private altura(q: Punto, previas: readonly number[]): number {
+    for (let k = 0; k < previas.length; k += 3)
+      if (previas[k] === q[0] && previas[k + 1] === q[1]) return previas[k + 2]!;
+    return this.suelo(q) + PINTURA_ALTURA;
+  }
+
+  poner(contorno: readonly Punto[]): void {
+    if (contorno.length !== 4) {
+      const geo = desdePoligono(contorno, (q) => this.suelo(q) + PINTURA_ALTURA);
+      if (!geo) return;
+      // Como las de la rejilla, para que se puedan fundir con ellas en una sola
+      // malla: sin índice y sin coordenadas de textura, que la pintura no lleva.
+      const suelta = geo.toNonIndexed();
+      const pos = suelta.getAttribute("position")!.array;
+      this.sitio(pos.length);
+      this.pos.set(pos, this.usado);
+      this.suyas.push({ desde: this.usado, normales: suelta.getAttribute("normal")!.array });
+      this.usado += pos.length;
+      this.piezas++;
+      this.antes = [];
+      return;
     }
-  // Mirando al cielo, se haya dado el contorno en el sentido que se haya dado.
-  const arriba =
-    (pos[5]! - pos[2]!) * (pos[6]! - pos[0]!) -
-    (pos[3]! - pos[0]!) * (pos[8]! - pos[2]!);
-  if (arriba < 0)
-    for (let t = 0; t < pos.length; t += 9)
-      for (let k = 0; k < 3; k++) {
-        const x = pos[t + 3 + k]!;
-        pos[t + 3 + k] = pos[t + 6 + k]!;
-        pos[t + 6 + k] = x;
+    const [a, b, c, d] = contorno as [Punto, Punto, Punto, Punto];
+    // Los lados «largos» son a→b y d→c; los cortos, a→d y b→c.
+    const largo = Math.max(Math.hypot(b[0] - a[0], b[1] - a[1]), Math.hypot(c[0] - d[0], c[1] - d[1]));
+    const corto = Math.max(Math.hypot(d[0] - a[0], d[1] - a[1]), Math.hypot(c[0] - b[0], c[1] - b[1]));
+    const n = Math.max(1, Math.ceil(largo / LADO_DE_PINTURA));
+    const m = Math.max(1, Math.ceil(corto / LADO_DE_PINTURA));
+    const en = (i: number, j: number): Punto => {
+      const s = i / n;
+      const t = j / m;
+      const ab: Punto = [a[0] + (b[0] - a[0]) * s, a[1] + (b[1] - a[1]) * s];
+      const dc: Punto = [d[0] + (c[0] - d[0]) * s, d[1] + (c[1] - d[1]) * s];
+      return [ab[0] + (dc[0] - ab[0]) * t, ab[1] + (dc[1] - ab[1]) * t];
+    };
+    // Las esquinas de la rejilla, con su altura: x, altura y z de cada una.
+    const fila = m + 1;
+    const esquinas = new Float64Array((n + 1) * fila * 3);
+    const previas = this.antes;
+    const deAhora: number[] = [];
+    for (let i = 0; i <= n; i++)
+      for (let j = 0; j <= m; j++) {
+        const q = en(i, j);
+        const borde = (i === 0 || i === n) && (j === 0 || j === m);
+        const y = borde ? this.altura(q, previas) : this.suelo(q) + PINTURA_ALTURA;
+        if (borde) deAhora.push(q[0], q[1], y);
+        const k = (i * fila + j) * 3;
+        esquinas[k] = q[0];
+        esquinas[k + 1] = y;
+        esquinas[k + 2] = -q[1];
       }
-  const geo = new BufferGeometry();
-  geo.setAttribute("position", new Float32BufferAttribute(pos, 3));
-  geo.computeVertexNormals();
-  return geo;
+    this.antes = deAhora;
+    // Mirando al cielo, se haya dado el contorno en el sentido que se haya
+    // dado: la cuenta de siempre sobre el primer triángulo —esquinas 00, 10 y
+    // 11—, con los mismos números.
+    const e00 = 0;
+    const e10 = fila * 3;
+    const e11 = (fila + 1) * 3;
+    const arriba =
+      (esquinas[e10 + 2]! - esquinas[e00 + 2]!) * (esquinas[e11]! - esquinas[e00]!) -
+      (esquinas[e10]! - esquinas[e00]!) * (esquinas[e11 + 2]! - esquinas[e00 + 2]!);
+    const vuelta = arriba < 0;
+    this.sitio(n * m * 18);
+    const pos = this.pos;
+    let w = this.usado;
+    const vertice = (k: number) => {
+      pos[w++] = esquinas[k]!;
+      pos[w++] = esquinas[k + 1]!;
+      pos[w++] = esquinas[k + 2]!;
+    };
+    for (let i = 0; i < n; i++)
+      for (let j = 0; j < m; j++) {
+        const p00 = (i * fila + j) * 3;
+        const p10 = ((i + 1) * fila + j) * 3;
+        const p11 = p10 + 3;
+        const p01 = p00 + 3;
+        // Los dos triángulos de la celda, 00-10-11 y 00-11-01, con el segundo
+        // y el tercer vértice cambiados si miraban al suelo.
+        vertice(p00);
+        vertice(vuelta ? p11 : p10);
+        vertice(vuelta ? p10 : p11);
+        vertice(p00);
+        vertice(vuelta ? p01 : p11);
+        vertice(vuelta ? p11 : p01);
+      }
+    this.usado = w;
+    this.piezas++;
+  }
+
+  /** La malla de todas las piezas, o nada si no se puso ninguna. */
+  geometria(): BufferGeometry | null {
+    if (!this.piezas) return null;
+    const geo = new BufferGeometry();
+    geo.setAttribute("position", new BufferAttribute(this.pos.slice(0, this.usado), 3));
+    geo.computeVertexNormals();
+    const normal = geo.getAttribute("normal")!.array as Float32Array;
+    for (const { desde, normales } of this.suyas) normal.set(normales, desde);
+    return geo;
+  }
 }
 
 /**
@@ -766,7 +908,7 @@ function cinta(
  * La triangulación la hace three con `ShapeGeometry`, que ya lleva un
  * *earcut* dentro. No hacía falta escribir uno.
  */
-function desdePoligono(
+export function desdePoligono(
   contorno: readonly Punto[],
   altura: (p: Punto) => number,
   /**
@@ -1572,7 +1714,7 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
    * campo.
    */
   if (!esDura(aero.runways[0]?.surface)) return grupo;
-  const piezas: BufferGeometry[] = [];
+  const amarillo = new Pintura(altura);
 
   // El amarillo **se corta al llegar a la pista**. Una calle de rodaje cruza
   // una pista en el mapa, pero su línea no se pinta encima del asfalto de la
@@ -1640,15 +1782,17 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
         [bx - px, by - py],
         [ax - px, ay - py],
       ];
-      const geo = pinturaEn(contorno, altura);
-      if (geo) piezas.push(geo);
+      amarillo.poner(contorno);
     }
   }
 
   // Puntos de espera: dos barras gruesas cruzando la calle. Se orientan según
   // la rodadura más cercana, porque OSM da el punto pero no su dirección.
+  // Los tramos de las calles, repartidos una vez para todos. Ver `world/calle-mas-cercana.ts`.
+  let cercanas: TramosCercanos | null = null;
   for (const { xy: punto } of aero.holdingPositions) {
-    const dir = direccionCercana(aero, punto);
+    cercanas ??= new TramosCercanos(aero.taxiways);
+    const dir = cercanas.direccion(punto);
     if (!dir) continue;
     const [ux, uy] = dir;
     for (const desfase of [-1.5, 1.5]) {
@@ -1660,13 +1804,12 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
         [cx - ux * 0.3 + uy * 11, cy - uy * 0.3 - ux * 11],
         [cx - ux * 0.3 - uy * 11, cy - uy * 0.3 + ux * 11],
       ];
-      const geo = pinturaEn(contorno, altura);
-      if (geo) piezas.push(geo);
+      amarillo.poner(contorno);
     }
   }
 
-  if (piezas.length) {
-    const juntas = mergeGeometries(piezas, false);
+  {
+    const juntas = amarillo.geometria();
     if (juntas) {
       // Partida como el pavimento que tiene debajo. Ver `partirLoLargo`.
       const fusionadas = partirLoLargo(juntas);
@@ -2040,27 +2183,6 @@ function sobreElEje(
     recorrido += l;
   }
   return null;
-}
-
-/** Hacia dónde va la calle de rodaje más cercana a un punto. */
-function direccionCercana(
-  aero: Aerodrome,
-  punto: Punto,
-): readonly [number, number] | null {
-  let mejor = Infinity;
-  let dir: readonly [number, number] | null = null;
-  for (const calle of aero.taxiways) {
-    for (let i = 0; i < calle.path.length - 1; i++) {
-      const [ax, ay] = calle.path[i]!;
-      const [bx, by] = calle.path[i + 1]!;
-      const d = Math.hypot((ax + bx) / 2 - punto[0], (ay + by) / 2 - punto[1]);
-      if (d >= mejor) continue;
-      const largo = Math.hypot(bx - ax, by - ay) || 1;
-      mejor = d;
-      dir = [(bx - ax) / largo, (by - ay) / largo];
-    }
-  }
-  return dir;
 }
 
 /**
@@ -2854,7 +2976,7 @@ function marcas(
   const ay = a.xy![1];
   const largo = Math.hypot(b.xy![0] - ax, b.xy![1] - ay);
 
-  const piezas: BufferGeometry[] = [];
+  const pintura = new Pintura(altura);
 
   // **Todo se sitúa sobre el eje del pavimento**, no sobre la recta que une
   // los umbrales. Son dos rectas parecidas y no la misma —una viene de
@@ -2924,8 +3046,7 @@ function marcas(
         cy - (uy * largoM - py * anchoM) / 2,
       ],
     ];
-    const geo = pinturaEn(contorno, altura);
-    if (geo) piezas.push(geo);
+    pintura.poner(contorno);
   };
 
   /**
@@ -2957,8 +3078,7 @@ function marcas(
       cx + ux * s * signo + px * t,
       cy + uy * s * signo + py * t,
     ]);
-    const geo = pinturaEn(contorno, altura);
-    if (geo) piezas.push(geo);
+    pintura.poner(contorno);
   };
 
   /*
@@ -3013,8 +3133,7 @@ function marcas(
           cay + ex * off - ey * 0.45 - ex * 0.9,
         ],
       ];
-      const geo = pinturaEn(contorno, altura);
-      if (geo) piezas.push(geo);
+      pintura.poner(contorno);
     }
   }
 
@@ -3132,8 +3251,8 @@ function marcas(
     }
   }
 
-  if (piezas.length) {
-    const juntas = mergeGeometries(piezas, false);
+  {
+    const juntas = pintura.geometria();
     if (juntas) {
       // Las rayas de borde miden la pista entera: partidas como el asfalto
       // que tienen debajo. Ver `partirLoLargo`.

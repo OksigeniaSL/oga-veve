@@ -46,6 +46,7 @@ import { resistenciaNivelado } from "./nivel-que-ahorra";
 import { quemaPorSegundo } from "./combustible";
 import { machDe } from "./limites";
 import { temperaturaExterior } from "./atmosphere";
+import { minimaDelAutomatico } from "./velocidades-de-despegue";
 
 const PIE = 0.3048;
 const DT = 1 / 60;
@@ -168,7 +169,7 @@ function volar(
             : "SPD"
           : null,
         // La del juego: ninguna en el sencillo. Ver `velocidadMinimaDelAutomatico`.
-        ...(modelo instanceof ArcadeFlightModel ? {} : { minima: a.approachSpeed * 1.1 }),
+        ...(modelo instanceof ArcadeFlightModel ? {} : { minima: minimaDelAutomatico(a, 0) }),
       },
       DT,
       memoria,

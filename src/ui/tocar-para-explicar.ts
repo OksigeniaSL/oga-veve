@@ -60,7 +60,7 @@ const PUNTERO = 18;
 /** Lo que es un mando: el toque es suyo. */
 const MANDO =
   "button:not([data-explica]), a, input, select, textarea, summary, " +
-  "[data-mcp-rueda], [data-mcp-alt], [role='button'], [role='slider']";
+  "[data-mcp-rueda], [data-mcp-alt], [data-radio-mando], [role='button'], [role='slider']";
 
 interface Bajada {
   readonly x: number;

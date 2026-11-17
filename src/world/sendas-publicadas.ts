@@ -255,9 +255,17 @@ export const SENDAS: Readonly<Record<string, Readonly<Record<string, SendaPublic
     "05": { papi: 3, senda: null, luces: null, ambarAlFinal: false },
     "23": { papi: 3, senda: 3, ils: true, luces: precision1(900), ambarAlFinal: false },
   },
-  SGEN: { "02": { papi: 3, senda: null, luces: null }, "20": { papi: 3, senda: null, luces: null } },
+  /*
+   * Encarnación y Mariscal Estigarribia, con el ILS de su AD 2.19 —el
+   * localizador y la senda con su DME—: IENC a la 20 (AD 2.5-7, y su carta
+   * «ILS OR LOC Z RWY 20», AD 2.5-9) e IMCL a la 01 (AD 2.3-8, sin carta ILS:
+   * la pista es la de sus dos antenas, ver `radioayudas-publicadas.ts`). El
+   * ángulo de las dos sendas no se ha leído: va el del PAPI en la 20 y nada
+   * en la 01, que no tiene PAPI.
+   */
+  SGEN: { "02": { papi: 3, senda: null, luces: null }, "20": { papi: 3, senda: null, ils: true, luces: null } },
   SGCO: { "03": SIN_LUCES_DE_CABECERA, "21": SIN_LUCES_DE_CABECERA },
-  SGME: { "01": NADA, "19": NADA },
+  SGME: { "01": { ...NADA, ils: true }, "19": NADA },
   /*
    * Pedro Juan Caballero: un **APAPI** a la izquierda de la 21, y nada en la
    * 03 (AD 2.4-14). El 2.14 no imprime su ángulo, y va al de la senda que

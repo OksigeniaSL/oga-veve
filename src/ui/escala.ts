@@ -45,4 +45,21 @@ export function escribirRincon(raiz: HTMLElement): void {
       `${Math.round(aPxDelHud(raiz, c.left))}px`,
     );
   else raiz.style.removeProperty("--rincon-izquierda");
+  /*
+   * **Y dónde acaba por la derecha la columna de la izquierda**, para la
+   * cabina, donde el rincón vive a ese lado con el tutor debajo: el subtítulo
+   * empieza a su lado y no encima de la tarjeta de la orden ni de la tecla
+   * que toca. Lo más a la derecha de los dos que se vea.
+   */
+  const tutor = raiz.querySelector('[data-hud="tutor"]')?.getBoundingClientRect();
+  const derecha = Math.max(
+    c.width > 2 ? c.right : 0,
+    tutor && tutor.width > 2 ? tutor.right : 0,
+  );
+  if (derecha > 0)
+    raiz.style.setProperty(
+      "--rincon-derecha",
+      `${Math.round(aPxDelHud(raiz, derecha))}px`,
+    );
+  else raiz.style.removeProperty("--rincon-derecha");
 }

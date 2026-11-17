@@ -9,6 +9,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  camposConEstela,
   encuadreCon,
   encuadreDeTodo,
   escalones,
@@ -121,5 +122,26 @@ describe("y el fondo solo se repinta cuando hace falta", () => {
     expect(peor).toBeLessThan(0.5);
     // Y no se repinta a cada paso: ciento veinte kilómetros son 2.400 pasos.
     expect(repintados).toBeLessThan(80);
+  });
+});
+
+describe("con la estela de «Seguí la aguja»", () => {
+  it("lo que cabe es la casa y las dos esquinas de la estela, no las otras islas", () => {
+    // La traza en coordenadas del fichero: la y es la z negativa del mundo.
+    const estela: [number, number][] = [
+      [9000, -14000],
+      [6000, -9000],
+      [1500, -2000],
+    ];
+    const campos = camposConEstela(CASA, estela);
+    expect(campos).toEqual([CASA, { x: 1500, z: 2000 }, { x: 9000, z: 14000 }]);
+    // Y el plano ancho la enseña entera: catorce kilómetros con aire, y no los trescientos del archipiélago.
+    const e = encuadreDeTodo(campos, { x: 1500, z: 2000 }, 16000);
+    expect(e.lado).toBeCloseTo(14000 * 1.4);
+    expect(e.cz).toBeCloseTo(7000);
+  });
+
+  it("sin estela, solo la casa", () => {
+    expect(camposConEstela(CASA, [])).toEqual([CASA]);
   });
 });

@@ -34,6 +34,7 @@ import {
   type Motivo,
   type ParteDeUnCampo,
 } from "../flight/parte-de-salida";
+import type { VientoDeLaFinal } from "../flight/escalera-de-velocidades";
 import { getLocale, t, type TranslationKey } from "../i18n";
 import { atisEnTexto } from "../world/meteo";
 import { armarPanel } from "./concha";
@@ -68,6 +69,39 @@ export interface AccionesDelTiempo {
   readonly alSenalar?: (que: BotonQueSeSenala) => void;
 }
 
+/**
+ * **La de aproximación de un campo con el viento de su parte**, en cifras de
+ * cabina: `VAPP 128KT (VREF 118+10)`. Ver `ParteParaVer.aproximacion`.
+ */
+export function cifraDeAproximacion(
+  p: ParteDeUnCampo,
+  a: NonNullable<ParteParaVer["aproximacion"]>,
+): string {
+  const m = p.campo.meteo;
+  const margen = a.margenKt({
+    deCaraKt: p.deFrenteKt,
+    vientoKt: m.vientoKt,
+    rachaKt: m.rachaKt ?? 0,
+  });
+  const vref = Math.round(a.vrefKt);
+  const vapp = Math.round(a.vrefKt + margen);
+  return `VAPP ${vapp}KT (VREF ${vref}+${vapp - vref})`;
+}
+
+/**
+ * **Los grupos del parte, cada uno de una pieza**: `WIND 310/06KT`, `VAPP
+ * 135KT (VREF 118+17)`. La línea se parte entre grupo y grupo, como un METAR
+ * impreso, y no dentro de uno: con la VAPP la línea creció, y partida por
+ * cualquier espacio, en una caja estrecha «VAPP» podía quedarse al final de
+ * un renglón y su cifra en el siguiente, o «(VREF» lejos de su suma. Cada
+ * grupo va en su caja en
+ * línea, que no se rompe por dentro salvo que no quepa entero en el renglón
+ * —y entonces se parte antes que salirse—. Ver `.parte__grupo` en la hoja.
+ */
+function grupos(lista: readonly string[]): string {
+  return lista.map((g) => `<span class="parte__grupo">${g}</span>`).join(" · ");
+}
+
 /** Los tres botones de la decisión que dicen qué hacen al señalarlos. */
 export type BotonQueSeSenala = "quedarse" | "esperar" | "salir-igual";
 
@@ -81,6 +115,16 @@ export interface ParteParaVer {
   readonly declinacion?: (oaci: string) => number;
   /** Lo que aguanta este avión, para dibujar lo de hoy contra su límite. */
   readonly limites: Limites;
+  /**
+   * **La Vref de este avión y lo que el viento le suma a la final**, para
+   * decir con las cifras a qué velocidad se viene a la pista donde se
+   * aterriza: con rachas, más deprisa. Sin ella, no se dice. Ver
+   * `margenDeLaFinal` en `flight/escalera-de-velocidades.ts`.
+   */
+  readonly aproximacion?: {
+    readonly vrefKt: number;
+    readonly margenKt: (viento: VientoDeLaFinal) => number;
+  };
   /**
    * Si se abre **después de esperar**: `igual` si el parte no cambió lo que
    * decide, `mejor` si ahora ya se puede. Ver `AccionesDelTiempo.alEsperar`.
@@ -316,6 +360,20 @@ const QUIETO = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10 L12 4
   stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9 v8 M6 14 h12 M9.5 19 h5" stroke="currentColor"
   stroke-width="2" stroke-linecap="round"/></svg>`;
 
+/** Un botón del pie: su dibujo siempre, y su palabra desde el peldaño que lee. */
+function botonDelPie(
+  accion: string,
+  dibujo: string,
+  clave: TranslationKey,
+  conLetras: boolean,
+  principal = false,
+): string {
+  return `<button type="button" class="parte__boton${principal ? " parte__boton--principal" : ""}"
+            data-parte-accion="${accion}" aria-label="${t(clave)}">${dibujo}${
+              conLetras ? `<span>${t(clave)}</span>` : ""
+            }</button>`;
+}
+
 export class TarjetaDelTiempo {
   private readonly root: HTMLElement;
   private readonly panel: Panel;
@@ -398,6 +456,7 @@ export class TarjetaDelTiempo {
     this.root
       .querySelector(".concha__cabecera")
       ?.insertAdjacentHTML("beforeend", this.arriba(v.ofrecerNoExplicar === true, v.peldano !== "dibujo"));
+    this.root.querySelector(".concha")?.insertAdjacentHTML("beforeend", this.pie(v, v.peldano !== "dibujo"));
     this.enfocandoYo = true;
     try {
       this.panel.abrir();
@@ -492,15 +551,20 @@ export class TarjetaDelTiempo {
     const m = p.campo.meteo;
     const boca = p.relativo === null ? null : ((p.relativo % 360) + 360) % 360;
     const texto = cifras
-      ? `<p class="parte__cifras">${atisEnTexto(
-          p.campo.oaci,
-          p.campo.pista,
-          m,
-          v.declinacion?.(p.campo.oaci) ?? 0,
-          // Son las cifras del parte, no un ATIS: un campo sin torre no lo tiene.
-        ).replace(`${p.campo.oaci} ATIS`, p.campo.oaci)}${m.rachaKt ? ` · G${Math.round(m.rachaKt)}KT` : ""}${
-          p.cruzadoKt >= 1 ? ` · XWIND ${Math.round(p.cruzadoKt)}KT` : ""
-        }</p>`
+      ? `<p class="parte__cifras">${grupos([
+          ...atisEnTexto(
+            p.campo.oaci,
+            p.campo.pista,
+            m,
+            v.declinacion?.(p.campo.oaci) ?? 0,
+            // Son las cifras del parte, no un ATIS: un campo sin torre no lo tiene.
+          )
+            .replace(`${p.campo.oaci} ATIS`, p.campo.oaci)
+            .split(" · "),
+          ...(m.rachaKt ? [`G${Math.round(m.rachaKt)}KT`] : []),
+          ...(p.cruzadoKt >= 1 ? [`XWIND ${Math.round(p.cruzadoKt)}KT`] : []),
+          ...this.deAproximacion(p, v),
+        ])}</p>`
       : "";
     return `
       <section class="parte__campo" data-papel="${p.papel}"
@@ -521,6 +585,19 @@ export class TarjetaDelTiempo {
       </section>`;
   }
 
+  /**
+   * **A qué velocidad se viene a la pista donde se aterriza**, con su suma:
+   * `VAPP 128KT (VREF 118+10)`. Solo en ese campo —la llegada, o el de
+   * salida si se vuelve a él—, que es donde el viento del parte decide el
+   * margen. Es la cuenta de un briefing de aproximación, con sus siglas de
+   * cabina, que no se traducen (regla tercera). Ver `margenDeLaFinal`.
+   */
+  private deAproximacion(p: ParteDeUnCampo, v: ParteParaVer): readonly string[] {
+    const a = v.aproximacion;
+    if (!a || p !== v.partes[v.partes.length - 1]) return [];
+    return [cifraDeAproximacion(p, a)];
+  }
+
   /** El mínimo de techo que se pinta: lo deja el juego en la tarjeta al abrir. */
   minimoDeTechoM = 450;
   private minimoDeTecho(): number {
@@ -528,21 +605,18 @@ export class TarjetaDelTiempo {
   }
 
   /**
-   * `conLetras`: los botones llevan su palabra desde el peldaño que lee;
+   * Lo que se lee de la decisión: los porqués y la propuesta. Los botones van
+   * al pie, ver `pie`. `conLetras`: la palabra desde el peldaño que lee;
    * `conFrases`: la propuesta entera, desde el de las frases.
    */
   private decision(v: ParteParaVer, conLetras: boolean, conFrases: boolean): string {
+    // Con todo bien no hay nada que leer, salvo que se esperó y ya se puede.
     if (v.decision.salir)
-      return `
-        <div class="parte__decision parte__decision--bien">
-          ${
-            v.releido === "mejor"
-              ? `<p class="parte__releido">${RATO}${conLetras ? `<span>${t("parte.yaSePuede")}</span>` : ""}</p>`
-              : ""
-          }
-          <button type="button" class="parte__boton parte__boton--principal" data-parte-accion="salir"
-                  aria-label="${t("parte.aVolar")}">${SALE}${conLetras ? `<span>${t("parte.aVolar")}</span>` : ""}</button>
-        </div>`;
+      return v.releido === "mejor"
+        ? `<div class="parte__decision parte__decision--bien">
+             <p class="parte__releido">${RATO}${conLetras ? `<span>${t("parte.yaSePuede")}</span>` : ""}</p>
+           </div>`
+        : "";
     /*
      * **Los porqués, con sus datos**: cada motivo una vez, con lo de hoy
      * contra lo que aguanta el avión y de dónde sale el límite. Es la
@@ -571,15 +645,26 @@ export class TarjetaDelTiempo {
         ${igual}
         <div class="parte__porques">${porques}</div>
         ${frase}
-        <div class="parte__botones">
-          <button type="button" class="parte__boton parte__boton--principal" data-parte-accion="quedarse"
-                  aria-label="${t("parte.meQuedo")}">${QUIETO}${conLetras ? `<span>${t("parte.meQuedo")}</span>` : ""}</button>
-          <button type="button" class="parte__boton" data-parte-accion="esperar"
-                  aria-label="${t("parte.esperar")}">${RATO}${conLetras ? `<span>${t("parte.esperar")}</span>` : ""}</button>
-          <button type="button" class="parte__boton" data-parte-accion="salir-igual"
-                  aria-label="${t("parte.salgoIgual")}">${SALE}${conLetras ? `<span>${t("parte.salgoIgual")}</span>` : ""}</button>
-        </div>
       </div>`;
+  }
+
+  /**
+   * **Los botones de la decisión, al pie de la tarjeta y fuera de lo que
+   * rueda.** Es la anatomía de todos los paneles —cabecera, cuerpo y la fila
+   * de acciones abajo, ver `ui/concha.ts`—: el cuerpo se desplaza si no cabe
+   * y la fila no se mueve. Iban dentro del cuerpo, debajo de la frase de la
+   * propuesta, y en los teléfonos tumbados (800 × 360 y 864 × 330, el
+   * peldaño de los números con niebla) el porqué con sus cifras y la frase los
+   * empujaban debajo del borde: había que desplazar para encontrar con qué se
+   * decide. Ahora lo que se desplaza es el porqué, y la voz ya lo cuenta.
+   */
+  private pie(v: ParteParaVer, conLetras: boolean): string {
+    const botones = v.decision.salir
+      ? botonDelPie("salir", SALE, "parte.aVolar", conLetras, true)
+      : botonDelPie("quedarse", QUIETO, "parte.meQuedo", conLetras, true) +
+        botonDelPie("esperar", RATO, "parte.esperar", conLetras) +
+        botonDelPie("salir-igual", SALE, "parte.salgoIgual", conLetras);
+    return `<div class="parte__botones parte__pie">${botones}</div>`;
   }
 
   /**
@@ -594,11 +679,10 @@ export class TarjetaDelTiempo {
       <div class="parte__ganaste">
         ${ESTRELLA}
         ${conFrases ? `<p class="parte__ganaste-frase">${t("parte.ganaste")}</p>` : ""}
-        <div class="parte__botones">
-          <button type="button" class="parte__boton parte__boton--principal" data-parte-accion="hangar"
-                  aria-label="${t("hangar.volver")}">${QUIETO}${conLetras ? `<span>${t("hangar.volver")}</span>` : ""}</button>
-        </div>
       </div>`;
+    // Y al pie, en el sitio de la decisión, la vuelta al hangar. Ver `pie`.
+    const pie = this.root.querySelector(".parte__pie");
+    if (pie) pie.innerHTML = botonDelPie("hangar", QUIETO, "hangar.volver", conLetras, true);
     // Y quedarse ya decidió: «no volver a explicar» no pinta nada aquí. La ✕
     // de arriba sigue, y es la de cerrar y quedarse mirando el aeropuerto.
     this.root.querySelector(".parte__no-explicar")?.remove();

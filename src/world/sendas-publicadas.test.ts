@@ -66,12 +66,13 @@ describe("la senda de cada cabecera, la de su AIP", () => {
   it("el ILS, donde lo publica su AIP, y la RNP no cuenta como ILS", () => {
     for (const [oaci, cab] of [
       ["GCXO", "12"], ["GCXO", "30"], ["GCTS", "07"], ["GCTS", "25"], ["GCLP", "03L"], ["GCLP", "21R"],
-      ["GCFV", "01"], ["GCFV", "19"], ["GCRR", "03"], ["SGAS", "20"], ["SGES", "23"],
+      ["GCFV", "01"], ["GCFV", "19"], ["GCRR", "03"], ["SGAS", "20"], ["SGES", "23"], ["SGEN", "20"],
+      ["SGME", "01"],
     ] as const)
       expect(tieneIls(oaci, cab), `${oaci} ${cab}`).toBe(true);
     for (const [oaci, cab] of [
       ["GCLP", "03R"], ["GCLP", "21L"], ["GCLA", "36"], ["GCRR", "21"], ["GCHI", "34"], ["GCGM", "09"],
-      ["LECU", "09"], ["SGAS", "02"], ["SGEN", "20"], ["SGME", "01"], ["SGPI", "20"],
+      ["LECU", "09"], ["SGAS", "02"], ["SGEN", "02"], ["SGME", "19"], ["SGPI", "20"],
     ] as const)
       expect(tieneIls(oaci, cab), `${oaci} ${cab}`).toBe(false);
     expect(tieneIls(null, null)).toBe(false);

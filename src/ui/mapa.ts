@@ -46,7 +46,7 @@ import type { Hito } from "../world/hitos";
 import { Panel } from "./panel";
 import { cotaEscrita } from "./carta";
 import { calcosDe, type Peldano } from "../flight/escalera";
-import { MAR, PAPEL, RAMPA, REGIONES, SIMBOLOS, SOMBRA, TINTAS, CUBIERTA, LINEAS } from "./carta/estilo";
+import { MAR, PAPEL, RAMPA, REGIONES, SIMBOLOS, SOMBRA, TINTAS, CUBIERTA, LINEAS, LETRAS } from "./carta/estilo";
 import { dibujarAerodromo, dibujarAvion, dibujarRosa, FondoHorneado } from "./carta/carta-en-vuelo";
 import type { Caja, Raya } from "./carta/rotulos";
 import {
@@ -57,11 +57,31 @@ import {
   type CampoDelPlano,
   type Medir,
   type PuntoDelPlano,
+  type RadioayudaDelPlano,
   type RotuloPuesto,
 } from "./carta/rotulos-del-plano";
+import { TODAS_LAS_ESTACIONES } from "../world/radioayudas-publicadas";
+import { cajaDeRadioayuda, pintarPluma, pintarRadioayuda } from "./carta/radioayudas";
 import { anoDecimal, declinacion, varEscrita } from "./carta/declinacion";
 import { frecuenciasDeLaCarta } from "../world/frecuencias-publicadas";
+import { variablesDeLaCarta } from "./carta/estilo";
 import {
+  comoSeDice,
+  DIANA,
+  ensenarRotulo,
+  frecuenciaDe,
+  PUNTUALES,
+  quitarRotulo,
+  seTocaEn,
+  sintonizar,
+  tocableDeEstacion,
+  tocableDeServicio,
+  type ComoSeDice,
+  type FrecuenciaTocada,
+  type Tocable,
+} from "./carta/tocar-la-carta";
+import {
+  camposConEstela,
   encuadreCon,
   escalones,
   hayQueRepintar,
@@ -72,6 +92,21 @@ import {
 
 /** Lado del lienzo, en píxeles. */
 export const LADO = 460;
+
+/**
+ * **Las rayas de un fijo con dos VOR**, como las pinta el plano: cada radial
+ * leído de su radio a un poco más allá del avión, con su rótulo de carta, y
+ * la cruz donde se cortan. En el mundo, como la flecha. Ver `ponerRayas`.
+ */
+export interface RayasEnElPlano {
+  readonly rayas: readonly {
+    readonly desde: { readonly x: number; readonly z: number };
+    readonly hasta: { readonly x: number; readonly z: number };
+    /** Lo que se escribe al lado, como en una carta: «R-102 FTV». */
+    readonly rotulo: string;
+  }[];
+  readonly cruz: { readonly x: number; readonly z: number } | null;
+}
 
 /** Un tráfico del TCAS, como lo pinta el plano. Ver `pintarElTrafico`. */
 export interface TraficoEnElMapa {
@@ -213,6 +248,8 @@ export class Mapa {
   private pistasPintadas: { x: number; z: number; radio: number }[] = [];
   /** Los grados de la retícula que se pueden escribir. Ver `pintarLaReticula`. */
   private gradosDelFondo: { texto: string; eje: "lat" | "lon"; en: number }[] = [];
+  /** Las radioayudas pintadas, en píxeles de pantalla, con su caja por rotular. */
+  private ayudasPintadas: RadioayudaDelPlano[] = [];
   /** La rosa, en píxeles de pantalla, y su declinación escrita. */
   private rosaPuesta: { x: number; y: number; radio: number; texto: string } | null = null;
   /** Los rótulos puestos, en píxeles de pantalla. */
@@ -223,6 +260,146 @@ export class Mapa {
   private rotuladoCon = "";
   /** El «T/D» de la ruta, que va aparte: se corre con la altura. Ver `update`. */
   private td: { donde: string; puesto: RotuloPuesto | null } = { donde: "", puesto: null };
+  /** Los aeródromos rotulados, en píxeles de pantalla: lo que se toca de ellos. */
+  private camposDelPlano: readonly CampoDelPlano[] = [];
+
+  /**
+   * **Quién oye la carta**: el papel al abrir el plano y lo tocado en él. Lo
+   * pone el juego, que tiene la voz y el sonido y sabe si suena un aviso.
+   */
+  private oidos: {
+    readonly papel: () => void;
+    readonly tocado: (como: ComoSeDice, frecuencia: FrecuenciaTocada | null, puesta: boolean) => void;
+  } | null = null;
+
+  ponerOidos(oidos: Mapa["oidos"]): void {
+    this.oidos = oidos;
+  }
+
+  /**
+   * **Lo que se puede tocar en el plano ahora**, en píxeles de pantalla del
+   * plano, cada uno con su caja: los aeródromos, la frecuencia de su rótulo,
+   * las radioayudas, la rosa y tu avión. Solo lo que su calco dibuja: las
+   * radioayudas y las frecuencias se pintan solo en el de la radio.
+   */
+  tocablesDelPlano(): { tipo: Tocable; cx: number; cy: number; w: number; h: number; rotulo: string | null; mhz: number | null }[] {
+    const salen: { tipo: Tocable; cx: number; cy: number; w: number; h: number; rotulo: string | null; mhz: number | null }[] = [];
+    const radio = calcosDe(this.peldano).radio;
+    for (const c of this.camposDelPlano) {
+      const r = Math.max(c.simbolo, 4);
+      salen.push({ tipo: "aerodromo", cx: c.x, cy: c.y, w: 2 * r, h: 2 * r, rotulo: c.oaci, mhz: null });
+      if (!radio || !c.radio) continue;
+      // La frecuencia va en su rótulo: se toca donde se lee.
+      const puesto = this.puestos.find((p) => p.que === (c.oaci ?? c.nombre) && p.renglones.some((x) => x.texto === c.radio));
+      if (!puesto) continue;
+      const [servicio = "", cifra = ""] = c.radio.split(" ");
+      const torre = frecuenciasDeLaCarta(c.oaci)?.torre;
+      salen.push({
+        tipo: tocableDeServicio(servicio),
+        cx: puesto.caja.cx,
+        cy: puesto.caja.cy,
+        w: puesto.caja.w,
+        h: puesto.caja.h,
+        rotulo: `${servicio} ${cifra}`,
+        mhz: torre?.f.mhz ?? null,
+      });
+    }
+    if (radio)
+      for (const a of this.ayudasPintadas) {
+        const e = TODAS_LAS_ESTACIONES.find((x) => x.id === a.id && cajaDeRadioayuda(x).titulo === a.titulo);
+        if (!e) continue;
+        const cifra = e.cifra ? Number(e.cifra) : NaN;
+        salen.push({
+          tipo: tocableDeEstacion(e.clase),
+          cx: a.x,
+          cy: a.y,
+          w: 2 * a.simbolo,
+          h: 2 * a.simbolo,
+          rotulo: e.clase === "ILS" ? a.titulo : `${e.clase} ${a.titulo}`,
+          mhz: Number.isFinite(cifra) ? (e.unidad === "kHz" ? cifra / 1000 : cifra) : null,
+        });
+      }
+    const rosa = this.rosaPuesta;
+    if (rosa) salen.push({ tipo: "norte", cx: rosa.x, cy: rosa.y, w: 2 * rosa.radio, h: 2 * rosa.radio, rotulo: null, mhz: null });
+    // Y tu avión, donde está ahora: se mueve cada fotograma.
+    const hecho = this.encuadrePintado;
+    if (hecho) {
+      const k = 1 / this.u;
+      const escala = LADO / hecho.lado;
+      const lado = SIMBOLOS.avion * this.trazo * k;
+      salen.push({
+        tipo: "avion",
+        cx: (LADO / 2 + (this.avionX - hecho.cx) * escala) * k,
+        cy: (LADO / 2 + (this.avionZ - hecho.cz) * escala) * k,
+        w: lado,
+        h: lado,
+        rotulo: null,
+        mhz: null,
+      });
+    }
+    return salen.filter((x) => seTocaEn(x.tipo, this.peldano));
+  }
+
+  /**
+   * **Lo que hay debajo del dedo en el plano**, o `null`: lo que contenga el
+   * punto y, si nada, lo más cercano a menos de media diana —22 px— de su
+   * caja. Entre dos que lo contienen, como se pintan: tu avión, que va
+   * encima de todo; después un punto —una radioayuda, la rosa—; después el
+   * rótulo de la frecuencia; y el aeródromo, debajo. Ver `PUNTUALES`.
+   */
+  tocadoEnElPlano(x: number, y: number): ReturnType<Mapa["tocablesDelPlano"]>[number] | null {
+    const capa = (t: { tipo: Tocable }): number =>
+      t.tipo === "avion" ? 3 : PUNTUALES.has(t.tipo) ? 2 : t.tipo === "aerodromo" ? 0 : 1;
+    let mejor: ReturnType<Mapa["tocablesDelPlano"]>[number] | null = null;
+    let lejos = Infinity;
+    for (const t of this.tocablesDelPlano()) {
+      const dx = Math.max(0, Math.abs(x - t.cx) - t.w / 2);
+      const dy = Math.max(0, Math.abs(y - t.cy) - t.h / 2);
+      const d = Math.hypot(dx, dy);
+      if (d > DIANA) continue;
+      const gana = !mejor || d < lejos || (d === 0 && lejos === 0 && capa(t) > capa(mejor));
+      if (gana) {
+        mejor = t;
+        lejos = d;
+      }
+    }
+    return mejor;
+  }
+
+  /**
+   * **Un toque en el plano**: lo tocado se marca con su aro, sale su rótulo
+   * —con la letra que diga el peldaño— y se avisa a quien oye la carta para
+   * que la instructora lo diga. Un toque en el agua no hace nada.
+   */
+  private tocarElPlano(evento: MouseEvent): void {
+    const lienzo = this.encima;
+    const lienzos = lienzo?.parentElement;
+    if (!lienzo || !lienzos) return;
+    const r = lienzo.getBoundingClientRect();
+    if (r.width < 1) return;
+    const aPlano = this.enPantalla / r.width;
+    const t = this.tocadoEnElPlano((evento.clientX - r.left) * aPlano, (evento.clientY - r.top) * aPlano);
+    quitarRotulo(lienzos);
+    if (!t) return;
+    const como = comoSeDice(t.tipo, this.peldano, t.rotulo);
+    const frecuencia = frecuenciaDe(t);
+    const puesta = frecuencia ? sintonizar(frecuencia, this.peldano) : false;
+    // El aro, en las medidas de la maqueta: el plano puede ir con `zoom`.
+    const aCss = lienzo.offsetWidth / this.enPantalla;
+    const aro = lienzos.ownerDocument.createElement("div");
+    aro.className = "toque-aro";
+    aro.style.left = `${lienzo.offsetLeft + t.cx * aCss}px`;
+    aro.style.top = `${lienzo.offsetTop + t.cy * aCss}px`;
+    lienzos.appendChild(aro);
+    const enPagina = new DOMRect(
+      r.left + (t.cx / aPlano) - DIANA,
+      r.top + (t.cy / aPlano) - DIANA,
+      2 * DIANA,
+      2 * DIANA,
+    );
+    ensenarRotulo(lienzos, como, enPagina, puesta);
+    this.oidos?.tocado(como, frecuencia, puesta);
+  }
 
   /**
    * **Lo que hay escrito en el plano**, en píxeles de pantalla: cada rótulo
@@ -303,6 +480,40 @@ export class Mapa {
    * `calcosDe` en `flight/escalera.ts`.
    */
   private peldano: Peldano = "dibujo";
+
+  /**
+   * **La estela**, si hay que pintarla: la traza del vuelo en coordenadas del
+   * fichero (x al este, y al norte), la de `flight/libreta.ts`. Se pide cada
+   * vez que se pinta, sin copiarla. Ver `ponerEstela`.
+   */
+  private estela: (() => readonly (readonly [number, number])[]) | null = null;
+
+  /**
+   * **La raya que va dejando el avión**, encima del papel como el lápiz con
+   * que se lleva la traza en una carta. La pide «Seguí la aguja»: con viento
+   * de costado, es donde se ve la curva del perro que la aguja sola no
+   * enseña. Con `null`, no se pinta.
+   */
+  ponerEstela(estela: (() => readonly (readonly [number, number])[]) | null): void {
+    this.estela = estela;
+  }
+
+  /**
+   * **Las rayas de los radiales leídos**, si hay que pintarlas, y la cruz
+   * donde se cortan. Se piden cada vez que se pinta. Ver `ponerRayas`.
+   */
+  private rayas: (() => RayasEnElPlano) | null = null;
+
+  /**
+   * **Las rayas de lápiz de un fijo con dos VOR**: cada radial leído, desde
+   * su radio, con su número escrito al lado, y la cruz donde se cortan. Las
+   * pide «Dos radiales que se cortan» (`flight/dos-radiales.ts`): es lo que
+   * hace un piloto con la carta en las rodillas, y lo que enseña que el avión
+   * está donde se cortan. Con `null`, no se pintan.
+   */
+  ponerRayas(rayas: (() => RayasEnElPlano) | null): void {
+    this.rayas = rayas;
+  }
 
   ponerPeldano(peldano: Peldano): void {
     if (peldano === this.peldano) return;
@@ -503,6 +714,16 @@ export class Mapa {
     this.rotulos = raiz.querySelector('[data-hud="mapa-rotulos"]');
     this.encima = raiz.querySelector('[data-hud="mapa-encima"]');
     /*
+     * **Y la carta se toca** (#72): un toque —un `click`, que un arrastre no
+     * da— dice qué es lo de debajo. Las tintas de la carta, en su caja, para
+     * el rótulo que sale encima. Ver `tocarElPlano`.
+     */
+    const lienzos = this.encima?.parentElement;
+    if (lienzos) {
+      lienzos.setAttribute("style", variablesDeLaCarta());
+      lienzos.addEventListener("click", (e) => this.tocarElPlano(e));
+    }
+    /*
      * **Y si el plano cambia de tamaño, se vuelve a medir y a rotular**:
      * girar la tablet, o la barra del navegador que entra y sale. La letra
      * mide lo que mide en la pantalla, así que en otro tamaño caben otras
@@ -597,6 +818,7 @@ export class Mapa {
 
   cerrar(): void {
     if (!this.panel?.abierto) return;
+    if (this.encima?.parentElement) quitarRotulo(this.encima.parentElement);
     this.panel.cerrar();
     this.avisarAlHud();
   }
@@ -605,8 +827,13 @@ export class Mapa {
     if (!this.panel) return;
     this.panel.alternar();
     this.avisarAlHud();
-    if (!this.panel.abierto) return;
+    if (!this.panel.abierto) {
+      if (this.encima?.parentElement) quitarRotulo(this.encima.parentElement);
+      return;
+    }
     this.alAbrir?.();
+    // El papel de la carta que se despliega.
+    this.oidos?.papel();
     // Ya en la página: lo que mide de verdad, que la letra va en esa medida.
     this.medirse();
     // Con lo que se haya movido mientras estaba cerrado, el fondo de antes ya
@@ -744,6 +971,34 @@ export class Mapa {
     const py = LADO / 2 + (z - puesto.cz) * escala;
 
     /*
+     * **La estela**, en la tinta de los nombres y continua, como el lápiz:
+     * por encima de la ruta, que es el plan, y por debajo de la flecha, que es
+     * dónde se está. Acaba en el avión, no en la última cata.
+     */
+    const estela = this.estela?.();
+    if (estela && estela.length > 1) {
+      g.save();
+      g.lineCap = "round";
+      g.lineJoin = "round";
+      g.strokeStyle = TINTAS.tinta;
+      g.lineWidth = 2.4 * u;
+      g.beginPath();
+      estela.forEach(([ex, ey], i) => {
+        const qx = LADO / 2 + (ex - puesto.cx) * escala;
+        const qy = LADO / 2 + (-ey - puesto.cz) * escala;
+        if (i === 0) g.moveTo(qx, qy);
+        else g.lineTo(qx, qy);
+      });
+      g.lineTo(px, py);
+      g.stroke();
+      g.restore();
+    }
+
+    // Las rayas de los radiales leídos y su cruz, encima de la estela. Ver `ponerRayas`.
+    const rayas = this.rayas?.();
+    if (rayas && rayas.rayas.length > 0) this.pintarLasRayas(g, rayas, puesto, u);
+
+    /*
      * **Y si estás fuera del recuadro, la flecha se queda en el borde.**
      *
      * Volando sobre el mar camino de Gran Canaria, la flecha se salía del
@@ -860,6 +1115,88 @@ export class Mapa {
   }
 
   /**
+   * **Las rayas de los radiales**, en la tinta de los datos aeronáuticos —la
+   * de los radiales de la carta— y finas, como el lápiz con que se trazan en
+   * la carta de verdad; cada una con su número junto a la radio, «R-102 FTV»,
+   * que es como se escribe en una carta; y la cruz donde se cortan, un aro de
+   * lápiz con su punto: el fijo. Por debajo de la flecha, que es dónde se está:
+   * si el fijo está bien, la flecha cae dentro del aro.
+   */
+  private pintarLasRayas(
+    g: CanvasRenderingContext2D,
+    r: RayasEnElPlano,
+    puesto: { readonly cx: number; readonly cz: number; readonly escala: number },
+    u: number,
+  ): void {
+    const enElPapel = (p: { readonly x: number; readonly z: number }): [number, number] => [
+      LADO / 2 + (p.x - puesto.cx) * puesto.escala,
+      LADO / 2 + (p.z - puesto.cz) * puesto.escala,
+    ];
+    g.save();
+    g.lineCap = "round";
+    for (const raya of r.rayas) {
+      const [ax, ay] = enElPapel(raya.desde);
+      const [bx, by] = enElPapel(raya.hasta);
+      g.beginPath();
+      g.moveTo(ax, ay);
+      g.lineTo(bx, by);
+      g.strokeStyle = PAPEL.fondo;
+      g.lineWidth = 4.4 * u;
+      g.stroke();
+      g.strokeStyle = TINTAS.aero;
+      g.lineWidth = 2 * u;
+      g.stroke();
+    }
+    /*
+     * **Los números, a lo largo de su raya y a un lado**, como se rotula un
+     * radial en la carta: girados con ella, sin quedar nunca cabeza abajo, a
+     * medio camino entre la radio y la cruz —que es el 74 % de la raya: llega
+     * a 1,35 veces la cruz— y apartados de la raya lo que mide la letra.
+     * Puestos horizontales encima de la raya, en el plano ancho el de la raya
+     * corta quedaba debajo del avión y encima de los rótulos de su radio.
+     */
+    g.font = `600 ${15 * u}px ${LETRAS.cifras}`;
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.lineJoin = "round";
+    for (const raya of r.rayas) {
+      const [ax, ay] = enElPapel(raya.desde);
+      const [bx, by] = enElPapel(raya.hasta);
+      let angulo = Math.atan2(by - ay, bx - ax);
+      if (angulo > Math.PI / 2) angulo -= Math.PI;
+      else if (angulo < -Math.PI / 2) angulo += Math.PI;
+      const aparte = 11 * u;
+      const tx = ax + (bx - ax) * 0.37 + Math.sin(angulo) * aparte;
+      const ty = ay + (by - ay) * 0.37 - Math.cos(angulo) * aparte;
+      g.save();
+      g.translate(tx, ty);
+      g.rotate(angulo);
+      g.strokeStyle = PAPEL.fondo;
+      g.lineWidth = 4 * u;
+      g.strokeText(raya.rotulo, 0, 0);
+      g.fillStyle = TINTAS.aero;
+      g.fillText(raya.rotulo, 0, 0);
+      g.restore();
+    }
+    if (r.cruz) {
+      const [cx, cy] = enElPapel(r.cruz);
+      g.beginPath();
+      g.arc(cx, cy, 9 * u, 0, Math.PI * 2);
+      g.strokeStyle = PAPEL.fondo;
+      g.lineWidth = 4.6 * u;
+      g.stroke();
+      g.strokeStyle = TINTAS.tinta;
+      g.lineWidth = 2.2 * u;
+      g.stroke();
+      g.beginPath();
+      g.arc(cx, cy, 1.8 * u, 0, Math.PI * 2);
+      g.fillStyle = TINTAS.tinta;
+      g.fill();
+    }
+    g.restore();
+  }
+
+  /**
    * Los campos del vuelo: el de casa y los destinos, que son lo que tiene que
    * caber en el plano ancho.
    *
@@ -872,6 +1209,14 @@ export class Mapa {
    */
   private losCampos(): Punto[] {
     const casa = this.escenario?.runway ?? { x: 0, z: 0 };
+    // Con estela, lo que cabe es ella y la casa. Ver `camposConEstela`.
+    const estela = this.estela?.();
+    /*
+     * Y con rayas, también las radios de donde salen y hasta donde llegan: el
+     * fijo se entiende viendo las dos radios y las dos rayas enteras.
+     */
+    const rayas = (this.rayas?.().rayas ?? []).flatMap((r) => [r.desde, r.hasta]);
+    if (estela && estela.length > 1) return [...camposConEstela({ x: casa.x, z: casa.z }, estela), ...rayas];
     /*
      * **Y los puntos del plan**: el inicio de una aproximación puede caer a
      * veinticinco millas del aeropuerto, por el otro lado, y un plano que lo
@@ -1004,6 +1349,7 @@ export class Mapa {
     this.fijosDelFondo = [];
     this.pistasPintadas = [];
     this.gradosDelFondo = [];
+    this.ayudasPintadas = [];
     this.rosaPuesta = null;
 
     /*
@@ -1247,6 +1593,12 @@ export class Mapa {
     // Antes que la pista y después del aeropuerto: son referencia del
     // terreno, y lo que se busca al abrir el plano sigue siendo la pista.
     this.pintarHitos(g, cx, cz, escala);
+
+    // ── Las radioayudas, en el calco de la radio ────────────────────────
+    //
+    // Antes que la pista, que es lo que se busca; y encima del relieve y los
+    // hitos, que son lo de fuera. Ver `pintarRadioayudas`.
+    if (calcosDe(this.peldano).radio) this.pintarRadioayudas(g, esc, cx, cz, escala);
 
     // ── La pista, que es lo que hay que encontrar ───────────────────────
     //
@@ -1507,11 +1859,14 @@ export class Mapa {
         grados: this.gradosDelFondo,
         fijos,
         rayas,
+        radioayudas: this.ayudasPintadas,
+        descargo: t("carta.descargo"),
       },
       medir,
     );
     for (const r of puestos) pintarRotulo(g, r, PAPEL.fondo);
     this.puestos = puestos;
+    this.camposDelPlano = campos;
     this.fijosPuestos = fijos;
     this.rotuladoCon = this.claveDeLosRotulos();
     this.td = { donde: "", puesto: null };
@@ -1788,6 +2143,73 @@ export class Mapa {
       g.stroke();
     }
     g.restore();
+  }
+
+  /**
+   * **Las radioayudas que caen en el plano**, del AD 2.19 de cada campo
+   * (`world/radioayudas-publicadas.ts`): el símbolo del VOR, el VOR/DME, el
+   * DME y el NDB en su sitio, y la pluma de cada ILS desde su umbral hacia
+   * fuera, por la final. La caja de cada una la rotula `colocarRotulos` con
+   * los demás, y si no cabe, el símbolo se queda solo.
+   *
+   * La pluma solo de cerca: en el plano del archipiélago entero, nueve
+   * plumas de diez millas son nueve rayas encima de nueve aeropuertos que ya
+   * no se ven. Desde que una milla ocupa tres píxeles, que es cuando la pista
+   * empieza a tener largo.
+   */
+  private pintarRadioayudas(
+    g: CanvasRenderingContext2D,
+    esc: Scenario,
+    cx: number,
+    cz: number,
+    escala: number,
+  ): void {
+    const o = esc.aerodrome?.origin;
+    if (!o) return;
+    const u = this.trazo;
+    const k = 1 / this.u;
+    const millaEnPantalla = 1852 * escala * k;
+    const lado = SIMBOLOS.radioayuda * u;
+    const enLienzo = (p: { lat: number; lon: number }): [number, number] => {
+      const w = dondeCae(o, p);
+      return [LADO / 2 + (w.x - cx) * escala, LADO / 2 + (w.z - cz) * escala];
+    };
+    const fuera = (x: number, y: number): boolean => x < -10 || y < -10 || x > LADO + 10 || y > LADO + 10;
+    for (const e of TODAS_LAS_ESTACIONES) {
+      const caja = cajaDeRadioayuda(e);
+      if (e.clase === "ILS") {
+        if (millaEnPantalla < 3 || !e.senda || e.rumboVerdadero === null) continue;
+        /*
+         * La punta, en el umbral: donde la senda se asoma a la recta de la
+         * final que pasa por el localizador. La cola, diez millas fuera, o lo
+         * que quepa a la escala del plano.
+         */
+        const [lx, ly] = enLienzo(e);
+        const [sx, sy] = enLienzo(e.senda);
+        const r = (e.rumboVerdadero * Math.PI) / 180;
+        const [fx, fy] = [Math.sin(r), -Math.cos(r)];
+        const t = (sx - lx) * fx + (sy - ly) * fy;
+        const [px, py] = [lx + fx * t, ly + fy * t];
+        if (fuera(px, py)) continue;
+        const largo = Math.min(Math.max(10 * 1852 * escala, 28 * u), 70 * u);
+        pintarPluma(g, px, py, r + Math.PI, largo, PAPEL.fondo);
+        const [cxp, cyp] = [px - fx * largo, py - fy * largo];
+        this.ayudasPintadas.push({ x: cxp * k, y: cyp * k, simbolo: 4 * u * k, id: e.id, ...caja });
+        this.fijosDelFondo.push({
+          cx: (px - (fx * largo) / 2) * k,
+          cy: (py - (fy * largo) / 2) * k,
+          w: largo * k,
+          h: 8 * u * k,
+          giro: Math.atan2(-fy, -fx),
+        });
+        continue;
+      }
+      const [x, y] = enLienzo(e);
+      if (fuera(x, y)) continue;
+      pintarRadioayuda(g, e.clase, x, y, lado, PAPEL.fondo);
+      this.ayudasPintadas.push({ x: x * k, y: y * k, simbolo: (lado / 2) * k, id: e.id, ...caja });
+      this.fijosDelFondo.push({ cx: x * k, cy: y * k, w: lado * k + 2, h: lado * k + 2 });
+    }
   }
 
   /**

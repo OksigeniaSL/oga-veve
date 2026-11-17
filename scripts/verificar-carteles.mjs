@@ -315,6 +315,57 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
         : tel.malos.join(" · ") || (tel.cerrado ? "todo dentro" : "no se cierra"),
       "lo que no es volar vive ahí dentro; si no se alcanza, no existe",
     );
+    /*
+     * **Y un subtítulo largo, con el ancho que de verdad tiene.** Con
+     * `left: 50%` y el `translate` de centrar, el navegador le daba media
+     * pantalla para maquetar: en 844 se partía a 422 y una frase de las
+     * largas subía en tres líneas. Se pone una de las más largas que dice la
+     * instructora y se mide en el mismo instante —el HUD lo borra en el
+     * fotograma siguiente—: que pase de medio ancho, que siga centrado y que
+     * no se ponga encima de ningún botón redondo, ni de la barra ni de la
+     * columna de la cámara y la pausa.
+     */
+    const sub = await page.evaluate(() => {
+      const pisa = (a, b) =>
+        Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+        Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+      const hint = document.querySelector('[data-hud="hint"]');
+      hint.textContent =
+        "Nos queda justo, así que avisamos a la torre: combustible mínimo. No es una emergencia: es avisarle que no podemos esperar.";
+      const r = hint.getBoundingClientRect();
+      const redondos = [
+        ...document.querySelectorAll(
+          ".hud__arriba button, .hud__vistas button, .antes button, [data-hud='menu']",
+        ),
+      ]
+        .filter(
+          (b) =>
+            !b.closest("[hidden]") &&
+            getComputedStyle(b).visibility !== "hidden" &&
+            b.getBoundingClientRect().width > 2 &&
+            pisa(r, b.getBoundingClientRect()),
+        )
+        .map((b) => b.dataset.hud ?? String(b.className).slice(0, 20));
+      hint.textContent = "";
+      return {
+        // El peldaño de los pequeños no lleva subtítulos: ver `.hud--sin-letras`.
+        sinLetras: !!document.querySelector(".hud--sin-letras"),
+        ancho: Math.round(r.width),
+        centro: Math.round(r.left + r.width / 2),
+        pantalla: innerWidth,
+        redondos,
+      };
+    });
+    if (!sub.sinLetras)
+      comprobar(
+        `${donde0}: un subtítulo largo pasa de medio ancho, centrado y sin tapar botones redondos`,
+        sub.ancho > sub.pantalla / 2 &&
+          Math.abs(sub.centro - sub.pantalla / 2) <= 2 &&
+          sub.redondos.length === 0,
+        `${sub.ancho} px de ${sub.pantalla}, centro en ${sub.centro}` +
+          (sub.redondos.length ? ` · encima de ${sub.redondos.join(", ")}` : ""),
+        "con left: 50% se partía a media pantalla y subía en tres líneas hasta la barra",
+      );
   }
   /*
    * **Y todo lo que se toca, de yema.** Con la escala del HUD, los botones
@@ -412,20 +463,19 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
         g.left >= 0 &&
         g.right <= innerWidth;
       /*
-       * **Y con la pantalla en grande, el subtítulo no tapa el modo del
-       * TCAS.** En tierra la pantalla de navegación escribe «TCAS STBY» en su
-       * franja de abajo, y el subtítulo, que baja ahí con ella puesta, se le
-       * apoyaba encima los segundos que duraba. Se pone uno largo y se mide
-       * en el mismo instante, que el HUD lo borra en el fotograma siguiente.
+       * **Y con la pantalla en grande, el subtítulo no tapa nada de ella.**
+       * Se le apoyaba encima los segundos que duraba: primero sobre el rumbo,
+       * luego sobre el «TCAS STBY» de la franja de abajo, y después sobre la
+       * rosa y la radio, que es lo que se ha puesto en grande para leerlo. Se
+       * pone uno largo y se mide en el mismo instante, que el HUD lo borra en
+       * el fotograma siguiente. Ver la fila del subtítulo en `style.css`.
        */
       const hint = document.querySelector('[data-hud="hint"]');
       hint.textContent =
         "Rodá despacio hasta el punto de espera de la pista y esperá ahí la autorización de la torre";
       const sub = hint.getBoundingClientRect();
-      const rotulo = [...document.querySelectorAll('[data-carta="solo-ta"]')]
-        .map((e) => e.getBoundingClientRect())
-        .find((r) => r.width > 0 && r.height > 0);
-      const tapaElTcas = !!rotulo && sub.width > 0 && pisa(sub, rotulo);
+      const tapaLaPantalla = sub.width > 0 && pisa(sub, g);
+      const subFuera = sub.top < 0;
       hint.textContent = "";
       dibujo.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       await new Promise((r) => setTimeout(r, 300));
@@ -441,8 +491,10 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
         grande: Math.round(g.height),
         sale: grande,
         vuelve,
-        conTcas: !!rotulo,
-        tapaElTcas,
+        tapaLaPantalla,
+        subFuera,
+        subtitulo: `${Math.round(sub.top)}–${Math.round(sub.bottom)}`,
+        pantalla: `${Math.round(g.top)}–${Math.round(g.bottom)}`,
       };
     });
     comprobar(
@@ -484,13 +536,12 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
         `${losas.grande} px de alto en grande · ${losas.vuelve ? "vuelven las losas" : "no vuelven"}`,
         "«o que tocar una pantalla la ponga grande»",
       );
-      if (losas.conTcas)
-        comprobar(
-          `${donde0}: en grande, el subtítulo no tapa «TCAS STBY»`,
-          !losas.tapaElTcas,
-          losas.tapaElTcas ? "se pisan" : "cada uno en su sitio",
-          "el subtítulo tapaba unos segundos el rótulo del TCAS en tierra",
-        );
+      comprobar(
+        `${donde0}: en grande, el subtítulo no tapa la pantalla ni se sale por arriba`,
+        !losas.tapaLaPantalla && !losas.subFuera,
+        `subtítulo de ${losas.subtitulo} px · pantalla de ${losas.pantalla} px`,
+        "el subtítulo tapaba la pantalla puesta en grande: el rumbo, el TCAS y luego la rosa",
+      );
     }
   }
 
@@ -1036,6 +1087,95 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
   }
 
   /*
+   * **Y el aviso y la lámpara, con el ancho que tienen**, en la vista de
+   * fuera y en la de cabina, que los coloca en otro sitio. Ver
+   * `medirAvisoYLampara`, más abajo.
+   */
+  for (const vista of ["chase", "cockpit"]) {
+    await page.evaluate((v) => globalThis.__oga?.ponerVista?.(v), vista);
+    await page.waitForTimeout(500);
+    const m = await page.evaluate(medirAvisoYLampara);
+    const aqui = `${donde} ${vista === "chase" ? "de fuera" : "en cabina"}`;
+    if (!m) {
+      comprobar(`${aqui}: el aviso y la lámpara están`, false, "no se encontraron", "");
+      continue;
+    }
+    const av = m.aviso;
+    comprobar(
+      `${aqui}: el aviso más largo cabe en una línea, centrado, y uno que no cabe pasa de media pantalla`,
+      av.lineas === 1 &&
+        Math.abs(av.centro - m.pantalla / 2) <= 2 &&
+        (m.sinLetras ||
+          (av.anchoLargo > m.pantalla / 2 && Math.abs(av.centroLargo - m.pantalla / 2) <= 2)),
+      `${av.lineas} línea${av.lineas === 1 ? "" : "s"}, ${av.ancho} px, centro en ${av.centro} de ${m.pantalla}` +
+        (m.sinLetras ? " (sin letras)" : ` · el que no cabe, ${av.anchoLargo} px`),
+      "con left: 50% maquetaba en media pantalla y se partía en dos líneas que subían hacia el avión",
+    );
+    const avPisa = [
+      ...av.redondos,
+      ...av.instrumento,
+      ...(av.subtitulo ? ["el subtítulo"] : []),
+      ...(av.torre ? ["la lámpara"] : []),
+    ];
+    comprobar(
+      `${aqui}: el aviso no pisa botones redondos, subtítulo, lámpara ni el instrumento, y nada lo tapa`,
+      avPisa.length === 0 && av.delante.length === 0 && av.dentro,
+      [
+        avPisa.length ? `pisa ${avPisa.join(", ")}` : "",
+        av.delante.length ? `tapado por ${av.delante.join(", ")}` : "",
+        av.dentro ? "" : "se sale de la pantalla",
+      ]
+        .filter(Boolean)
+        .join(" · ") || `libre · subtítulo en ${m.subtitulo}`,
+      "un aviso es lo más importante de la pantalla: que no lo tape nada y que no tape lo que lo explica",
+    );
+    const to = m.torre;
+    comprobar(
+      `${aqui}: la orden de la torre usa más de medio hueco`,
+      m.sinLetras || to.lineas === 1 || to.ancho > to.hueco / 2,
+      `${to.lineas} línea${to.lineas === 1 ? "" : "s"}, ${to.ancho} px de un hueco de ${to.hueco}`,
+      "con left y translate maquetaba en medio hueco y la orden se partía en tres líneas",
+    );
+    const toPisa = [...to.redondos, ...to.rincon, ...(to.subtitulo ? ["el subtítulo"] : [])];
+    comprobar(
+      `${aqui}: la lámpara no pisa botones redondos, el rincón ni el subtítulo, y nada la tapa`,
+      toPisa.length === 0 && to.delante.length === 0 && to.dentro,
+      [
+        toPisa.length ? `pisa ${toPisa.join(", ")}` : "",
+        to.delante.length ? `tapada por ${to.delante.join(", ")}` : "",
+        to.dentro ? "" : "se sale de la pantalla",
+      ]
+        .filter(Boolean)
+        .join(" · ") || "libre",
+      "la lámpara es la instrucción: «esperá a la luz» y la luz, sin nada encima",
+    );
+    /*
+     * En cabina, también sin aviso: la lámpara, la tarjeta de la orden y el
+     * subtítulo, cada uno en su sitio, sin pisarse ni pisar la columna de
+     * mandos. Fuera, el subtítulo y la lámpara del teléfono pasan por delante
+     * de las losas de mando, que dejan pasar el toque (ADR 0030, H28b).
+     */
+    if (vista === "cockpit") {
+      const sa = m.sinAviso;
+      const pisan = [
+        ...sa.torre.map((n) => `la lámpara sobre ${n}`),
+        ...sa.subtitulo.map((n) => `el subtítulo sobre ${n}`),
+        ...sa.senal.map((n) => `la tarjeta sobre ${n}`),
+      ];
+      comprobar(
+        `${aqui}, sin aviso: la lámpara, la tarjeta de la orden y el subtítulo no se pisan ni pisan los mandos`,
+        pisan.length === 0 && sa.delante.length === 0,
+        [pisan.join(", "), sa.delante.length ? `tapados por ${sa.delante.join(", ")}` : ""]
+          .filter(Boolean)
+          .join(" · ") || `libre · subtítulo en ${sa.subtituloEn}`,
+        "en el punto de espera están los tres a la vez, y el gas y el freno se tienen que leer",
+      );
+    }
+  }
+  await page.evaluate(() => globalThis.__oga?.ponerVista?.("chase"));
+  await page.waitForTimeout(300);
+
+  /*
    * **Y la tecla que toca**, en el lado izquierdo: la tarjeta con la tecla y
    * sus vecinas que sale cuando un paso pide un mando. Se fuerza la más alta
    * —las cuatro flechas— con el teclado, y con el dedo la de la palanca, y se
@@ -1332,6 +1472,224 @@ const CARTAS = [
 const CALCOS = ["guyrami", "tuka", "taguato", "taguato-ruvicha"];
 
 /** Corre en la página: las cajas de lo que se ve en la carta, con su giro, y lo que se pisa. */
+/**
+ * **El aviso y la lámpara de la torre, con el ancho que de verdad tienen.**
+ *
+ * Los dos se centraban con `left: 50%` y el `translate` de centrar, y así el
+ * navegador les daba para maquetar media pantalla —la lámpara, medio hueco a
+ * la izquierda del rincón—: un aviso largo se partía en dos líneas que subían
+ * hacia el avión, y la orden de la torre en tres. Se encienden los dos a la
+ * vez, con el subtítulo largo de la instructora, que es como coinciden en una
+ * final: el aviso con lo más largo que dice («Se rompió algo. Volvemos al
+ * helipuerto…») y la lámpara roja con la fila de dos delante y la orden más
+ * larga. Y se mira que el aviso quepa en una línea, que con una frase que no
+ * cabe pase de media pantalla y siga centrado, y que ninguno de los tres pise
+ * a otro, a un botón redondo ni al instrumento que explica el aviso —el
+ * cuadro, las losas o la pantalla puesta en grande—, ni se quede detrás de
+ * nada. Corre en la página; el subtítulo se vuelve a poner en cada fotograma,
+ * que el juego lo borra, y se mide cuando el HUD ya ha medido su alto.
+ */
+async function medirAvisoYLampara() {
+  const AVISO = "Se rompió algo. Volvemos al helipuerto…";
+  const SUBTITULO =
+    "Nos queda justo, así que avisamos a la torre: combustible mínimo. No es una emergencia: es avisarle que no podemos esperar.";
+  const ORDEN = "JAZ 9021, mantenga fuera de pista 12, número tres para la salida";
+  const pisa = (a, b) =>
+    Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+    Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+  const visible = (el) => {
+    if (!el || el.closest("[hidden]")) return false;
+    const cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden") return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 2 && r.height > 2;
+  };
+  const nombre = (el) =>
+    el.dataset?.hud ?? String(el.className?.baseVal ?? el.className).slice(0, 24);
+  const raf = () => new Promise((r) => requestAnimationFrame(() => r()));
+  const lineas = (el) => {
+    const rango = document.createRange();
+    rango.selectNodeContents(el);
+    return new Set([...rango.getClientRects()].map((c) => Math.round(c.top))).size;
+  };
+  // Quién está pintado delante, en tres puntos de su línea del medio.
+  const alFrente = (el) => {
+    const c = el.getBoundingClientRect();
+    const antes = el.style.pointerEvents;
+    el.style.pointerEvents = "auto";
+    const quien = [0.2, 0.5, 0.8]
+      .map((fx) =>
+        document.elementFromPoint(
+          Math.min(innerWidth - 1, c.left + c.width * fx),
+          Math.min(innerHeight - 1, c.top + c.height / 2),
+        ),
+      )
+      .filter((p) => p && !el.contains(p))
+      .map(nombre);
+    el.style.pointerEvents = antes;
+    return [...new Set(quien)];
+  };
+  const hud = document.querySelector(".hud");
+  const aviso = document.querySelector('[data-hud="warning"]');
+  const avisoTexto = document.querySelector('[data-hud="warning-text"]');
+  const flecha = document.querySelector('[data-hud="warning-arrow"]');
+  const torre = document.querySelector('[data-hud="torre"]');
+  const orden = document.querySelector('[data-hud="torre-texto"]');
+  const hint = document.querySelector('[data-hud="hint"]');
+  if (!hud || !aviso || !avisoTexto || !flecha || !torre || !orden || !hint) return null;
+  // El peldaño de los pequeños no lleva subtítulos ni letras: ver `.hud--sin-letras`.
+  const sinLetras = hud.classList.contains("hud--sin-letras");
+  const poner = () => {
+    if (!sinLetras && hint.textContent !== SUBTITULO) hint.textContent = SUBTITULO;
+  };
+  poner();
+  await raf();
+  poner();
+  await raf();
+  poner();
+  hud.classList.add("hud--avisando");
+  aviso.classList.add("aviso-hud--visible");
+  flecha.textContent = "↺";
+  avisoTexto.textContent = sinLetras ? "" : AVISO;
+  torre.hidden = false;
+  torre.classList.add("torre--roja");
+  const fila = torre.querySelector('[data-hud="torre-fila"]');
+  const avion = torre.querySelector(".torre__quien svg");
+  const filaAntes = fila ? [fila.hidden, fila.innerHTML] : null;
+  if (fila && avion) {
+    fila.hidden = false;
+    fila.innerHTML = avion.outerHTML + avion.outerHTML;
+  }
+  const ordenAntes = orden.textContent;
+  orden.textContent = sinLetras ? "" : ORDEN;
+  const cabina = hud.classList.contains("hud--cabina");
+  const redondos = [
+    ...document.querySelectorAll(
+      ".hud__arriba button, .hud__vistas button, .antes button, [data-hud='menu']",
+    ),
+  ].filter(visible);
+  /*
+   * El instrumento que explica el aviso: la velocidad de la pérdida y la
+   * altura del suelo están en el cuadro, en las losas del teléfono y en la
+   * pantalla de vuelo puesta en grande. En cabina el cuadro es el del avión,
+   * debajo de la visera, y el del HUD no se dibuja.
+   */
+  const instrumento = cabina
+    ? []
+    : [
+        document.querySelector('[data-hud="cuadro-tel"]'),
+        document.querySelector('[data-hud="tablero"]'),
+      ].filter(visible);
+  const rincon = [
+    document.querySelector('[data-hud="senal"]'),
+    document.querySelector('[data-hud="pictos"]'),
+  ].filter(visible);
+  const a = aviso.getBoundingClientRect();
+  const t = torre.getBoundingClientRect();
+  const h = hint.getBoundingClientRect();
+  const conSub = !sinLetras && visible(hint);
+  const pisados = (r, contra) =>
+    contra.filter((o) => pisa(r, o.getBoundingClientRect())).map(nombre);
+  /*
+   * El hueco de la lámpara, en píxeles de pantalla: lo que dejan sus dos
+   * bordes, que la hoja aparta de la columna de la pausa y del rincón donde
+   * toca. Con `left` y `translate` maquetaba en la mitad de eso o menos.
+   */
+  const escala = Number.parseFloat(getComputedStyle(hud).zoom) || 1;
+  const bordes = getComputedStyle(torre);
+  const hueco =
+    innerWidth -
+    ((Number.parseFloat(bordes.left) || 0) + (Number.parseFloat(bordes.right) || 0)) * escala;
+  const salida = {
+    sinLetras,
+    pantalla: innerWidth,
+    aviso: {
+      ancho: Math.round(a.width),
+      centro: Math.round(a.left + a.width / 2),
+      lineas: sinLetras ? 1 : lineas(avisoTexto),
+      redondos: pisados(a, redondos),
+      instrumento: pisados(a, instrumento),
+      subtitulo: conSub && pisa(a, h),
+      torre: pisa(a, t),
+      delante: alFrente(aviso),
+      dentro: a.left >= 0 && a.top >= 0 && a.right <= innerWidth && a.bottom <= innerHeight,
+    },
+    torre: {
+      ancho: Math.round(t.width),
+      hueco: Math.round(hueco),
+      lineas: sinLetras ? 1 : lineas(orden),
+      redondos: pisados(t, redondos),
+      rincon: pisados(t, rincon),
+      subtitulo: conSub && pisa(t, h),
+      delante: alFrente(torre),
+      dentro: t.left >= 0 && t.top >= 0 && t.right <= innerWidth && t.bottom <= innerHeight,
+    },
+    subtitulo: conSub ? `${Math.round(h.top)}–${Math.round(h.bottom)}` : "sin subtítulo",
+  };
+  // Y con una frase que no cabe en una línea, que pase de media pantalla.
+  if (!sinLetras) {
+    avisoTexto.textContent = `${AVISO} ${AVISO} ${AVISO}`;
+    const b = aviso.getBoundingClientRect();
+    salida.aviso.anchoLargo = Math.round(b.width);
+    salida.aviso.centroLargo = Math.round(b.left + b.width / 2);
+  }
+  hud.classList.remove("hud--avisando");
+  aviso.classList.remove("aviso-hud--visible");
+  avisoTexto.textContent = "";
+  flecha.textContent = "";
+  /*
+   * **Y sin el aviso, que es como se quedan en el punto de espera**: la
+   * lámpara roja, la tarjeta de la orden y la instructora hablando. En cabina
+   * se montaban los tres y pasaban por encima de la tarjeta del gas y del
+   * freno. Aquí lo de debajo de la lámpara se coloca con lo que el HUD mide de
+   * ella (`--torre-alto`), así que se le dejan dos fotogramas, volviendo a
+   * poner el subtítulo y la lámpara, que el juego borra y apaga. Los mandos
+   * son la columna de la derecha entera: el gas, el destino, el freno y sus
+   * botones.
+   */
+  const dosAviones = avion ? avion.outerHTML + avion.outerHTML : "";
+  const ponerTorre = () => {
+    torre.hidden = false;
+    torre.classList.remove("torre--verde");
+    torre.classList.add("torre--roja");
+    if (fila && avion && fila.innerHTML !== dosAviones) {
+      fila.hidden = false;
+      fila.innerHTML = dosAviones;
+    }
+    const dice = sinLetras ? "" : ORDEN;
+    if (orden.textContent !== dice) orden.textContent = dice;
+  };
+  for (let i = 0; i < 3; i++) {
+    poner();
+    ponerTorre();
+    await raf();
+  }
+  poner();
+  ponerTorre();
+  const mandos = [...document.querySelectorAll(".hud__derecha > *")].filter(visible);
+  const senal = document.querySelector('[data-hud="senal"]');
+  const t2 = torre.getBoundingClientRect();
+  const h2 = hint.getBoundingClientRect();
+  const s2 = visible(senal) ? senal.getBoundingClientRect() : null;
+  const conSub2 = !sinLetras && visible(hint);
+  salida.sinAviso = {
+    torre: [
+      ...pisados(t2, [...redondos, ...rincon, ...mandos]),
+      ...(conSub2 && pisa(t2, h2) ? ["el subtítulo"] : []),
+    ],
+    subtitulo: conSub2 ? pisados(h2, [...redondos, ...rincon, ...mandos]) : [],
+    senal: s2 ? pisados(s2, mandos) : [],
+    delante: [...alFrente(torre), ...(conSub2 ? alFrente(hint) : [])],
+    subtituloEn: conSub2 ? `${Math.round(h2.top)}–${Math.round(h2.bottom)}` : "sin subtítulo",
+  };
+  torre.classList.remove("torre--roja");
+  if (fila && filaAntes) [fila.hidden, fila.innerHTML] = filaAntes;
+  orden.textContent = ordenAntes;
+  torre.hidden = true;
+  hint.textContent = "";
+  return salida;
+}
+
 function medirLaCarta() {
   const pais = document.querySelector(".pais");
   if (!pais) return null;

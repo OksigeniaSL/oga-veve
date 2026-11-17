@@ -9,7 +9,14 @@ import { Box3, Vector3, type Object3D } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { AIRCRAFT } from "../flight/aircraft";
 import { MODELO_DEL_TIPO } from "./cuerpos-del-trafico";
-import { conLaRuedaEn, CUERPO_DEL_TRAFICO, MORRO_DEL_TRAFICO, morroDe, ruedaDeMorroEn } from "./rueda-de-morro";
+import {
+  barraAlTrenDe,
+  conLaRuedaEn,
+  CUERPO_DEL_TRAFICO,
+  MORRO_DEL_TRAFICO,
+  morroDe,
+  ruedaDeMorroEn,
+} from "./rueda-de-morro";
 import { TIPOS } from "./trafico";
 
 /* El `fs` de Node pedido en marcha, como en `apoyo.test.ts`. */
@@ -31,6 +38,8 @@ interface Medido {
   readonly cola: number;
   /** La puerta de más adelante, si tiene. */
   readonly puerta: number | null;
+  /** Lo que va del eje a la cara de fuera de una de las principales, en X. */
+  readonly porFueraDeLasPrincipales: number;
 }
 
 async function medir(id: string): Promise<Medido> {
@@ -45,9 +54,14 @@ async function medir(id: string): Promise<Medido> {
     raiz.getObjectByName("rueda-morro") ?? raiz.getObjectByName("rueda-de-morro") ?? raiz.getObjectByName("rueda-principal");
   let puerta: number | null = null;
   const patas: number[] = [];
+  let porFuera = 0;
   raiz.traverse((o) => {
     if (/^puerta-\d/.test(o.name)) puerta = Math.min(puerta ?? Infinity, centro(o).z);
-    if (/^rueda-principal(-derecha|-izquierda)?$/.test(o.name)) patas.push(centro(o).z);
+    if (/^rueda-principal(-derecha|-izquierda)?$/.test(o.name)) {
+      patas.push(centro(o).z);
+      const c = new Box3().setFromObject(o);
+      porFuera = Math.max(porFuera, Math.abs(c.max.x), Math.abs(c.min.x));
+    }
   });
   return {
     cdg: raiz.getObjectByName("centro-de-gravedad")?.getWorldPosition(new Vector3()).z ?? null,
@@ -58,6 +72,7 @@ async function medir(id: string): Promise<Medido> {
     punta: caja.min.z,
     cola: caja.max.z,
     puerta,
+    porFueraDeLasPrincipales: porFuera,
   };
 }
 
@@ -88,6 +103,18 @@ describe("la rueda de morro, donde la tiene su dibujo", () => {
       expect(Math.abs((m.cola - m.centroDeLaCaja) * k - cuerpo.cola), t.id).toBeLessThan(0.2);
     });
   }
+
+  /*
+   * **Y la barra del de rueda de cola, a sus principales**: su media vía cae dentro de
+   * la rueda dibujada, de su cara de fuera a un palmo hacia dentro. Ver `barraAlTrenDe`.
+   */
+  for (const a of AIRCRAFT.filter((x) => x.actitudEnTresPuntos !== undefined))
+    it(`${a.id}: la barra va a sus dos principales`, async () => {
+      const m = await medir(a.id);
+      const barra = barraAlTrenDe(a)!;
+      expect(barra.via, a.id).toBeLessThan(m.porFueraDeLasPrincipales);
+      expect(barra.via, a.id).toBeGreaterThan(m.porFueraDeLasPrincipales - 0.25);
+    });
 
   it("poner la rueda en un punto y volver a leerla da el mismo punto", () => {
     const morro = { rueda: 10 };

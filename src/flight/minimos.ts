@@ -228,6 +228,14 @@ export interface AproximacionEnLaPuerta {
   readonly kt: number;
   /** La de referencia de este avión, nudos. */
   readonly referenciaKt: number;
+  /**
+   * **Lo que el viento de hoy suma a la final** por encima del margen de la
+   * calma, nudos. Corre el borde de «rápido»: quien viene con el margen de
+   * las rachas va como se pide, y la puerta no lo puede mandar al aire por
+   * eso. El de «lento» no se mueve. Ver `margenDeLaFinal` en
+   * `escalera-de-velocidades.ts`.
+   */
+  readonly porElVientoKt?: number;
   /** Velocidad vertical, m/s, negativa bajando. */
   readonly vertical: number;
   /** Cuánto se aparta del eje, m. */
@@ -262,7 +270,8 @@ export function porQueNoEstaEstabilizada(
   if (a.kt < a.referenciaKt - PUERTA.lentoKt) return "lento";
   if (a.vertical < PUERTA.cayendo) return "cayendo";
   if (!a.configurado) return "sinConfigurar";
-  if (a.kt > a.referenciaKt + PUERTA.rapidoKt) return "rapido";
+  if (a.kt > a.referenciaKt + PUERTA.rapidoKt + Math.max(0, a.porElVientoKt ?? 0))
+    return "rapido";
   if (Math.abs(a.torcido) > MARGENES.torcido) return "torcido";
   if (Math.abs(a.delEje) > MARGENES.delEje) return "descolocado";
   if (a.puntos !== null && a.puntos < -PUERTA.puntos) return "bajo";

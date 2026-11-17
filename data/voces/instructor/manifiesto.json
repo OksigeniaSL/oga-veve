@@ -19,6 +19,98 @@
       "ms": 8107,
       "h": "9f860f52b5"
     },
+    "carta.toca.aerodromo": {
+      "ms": 5707,
+      "h": "d7fdd1e83e"
+    },
+    "carta.toca.afis": {
+      "ms": 7407,
+      "h": "2056d3a115"
+    },
+    "carta.toca.app": {
+      "ms": 7407,
+      "h": "2d305c7991"
+    },
+    "carta.toca.atis": {
+      "ms": 7707,
+      "h": "2c58bd6972"
+    },
+    "carta.toca.avion": {
+      "ms": 1848,
+      "h": "da81693807"
+    },
+    "carta.toca.calle": {
+      "ms": 6507,
+      "h": "f0fe67f5ae"
+    },
+    "carta.toca.dme": {
+      "ms": 6707,
+      "h": "dbf2343bb0"
+    },
+    "carta.toca.faf": {
+      "ms": 5507,
+      "h": "a3d21fa19f"
+    },
+    "carta.toca.frecuencia": {
+      "ms": 5407,
+      "h": "a2fdc8085a"
+    },
+    "carta.toca.frustrada": {
+      "ms": 7807,
+      "h": "643e2a086a"
+    },
+    "carta.toca.gnd": {
+      "ms": 6907,
+      "h": "19c1bd5ad7"
+    },
+    "carta.toca.if": {
+      "ms": 5707,
+      "h": "3bd456a586"
+    },
+    "carta.toca.ils": {
+      "ms": 10507,
+      "h": "6218b66c59"
+    },
+    "carta.toca.mapt": {
+      "ms": 7107,
+      "h": "2bcfb8bf96"
+    },
+    "carta.toca.minimos": {
+      "ms": 8407,
+      "h": "5338bd0c42"
+    },
+    "carta.toca.msa": {
+      "ms": 8707,
+      "h": "fcf91f7aea"
+    },
+    "carta.toca.ndb": {
+      "ms": 8807,
+      "h": "cba1d96dab"
+    },
+    "carta.toca.norte": {
+      "ms": 6307,
+      "h": "fa3fc35129"
+    },
+    "carta.toca.pista": {
+      "ms": 6607,
+      "h": "974feb6552"
+    },
+    "carta.toca.plataforma": {
+      "ms": 5807,
+      "h": "6bb423ec2b"
+    },
+    "carta.toca.taa": {
+      "ms": 9607,
+      "h": "812382edf2"
+    },
+    "carta.toca.twr": {
+      "ms": 7207,
+      "h": "cdd678a649"
+    },
+    "carta.toca.vor": {
+      "ms": 10607,
+      "h": "9c9e5ee6f0"
+    },
     "circuito.base": {
       "ms": 2873,
       "h": "013c255422"
@@ -42,6 +134,38 @@
     "circuito.subida": {
       "ms": 1269,
       "h": "b5f75ca278"
+    },
+    "ejercicio.aguja.alVientoDerecha": {
+      "ms": 7407,
+      "h": "62ead13101"
+    },
+    "ejercicio.aguja.alVientoIzquierda": {
+      "ms": 7207,
+      "h": "66143bb71d"
+    },
+    "ejercicio.aguja.antes": {
+      "ms": 11307,
+      "h": "8fa4b9cbc1"
+    },
+    "ejercicio.aguja.asiVa": {
+      "ms": 5907,
+      "h": "af1b88c42d"
+    },
+    "ejercicio.aguja.bien": {
+      "ms": 6707,
+      "h": "fc0b94b7a6"
+    },
+    "ejercicio.aguja.curva": {
+      "ms": 12207,
+      "h": "6a3eaf57e6"
+    },
+    "ejercicio.aguja.identificada": {
+      "ms": 10707,
+      "h": "9250af85dc"
+    },
+    "ejercicio.aguja.sintonizar": {
+      "ms": 4507,
+      "h": "a531e3b98c"
     },
     "ejercicio.antes-de-v1.antes": {
       "ms": 8907,
@@ -107,6 +231,26 @@
       "ms": 4207,
       "h": "3d31b756e9"
     },
+    "ejercicio.cruce.antes": {
+      "ms": 9507,
+      "h": "906ec4aaa2"
+    },
+    "ejercicio.cruce.aqui": {
+      "ms": 8307,
+      "h": "0cc4982830"
+    },
+    "ejercicio.cruce.otra": {
+      "ms": 7007,
+      "h": "074c9584fa"
+    },
+    "ejercicio.cruce.primera": {
+      "ms": 8307,
+      "h": "f79eb9f743"
+    },
+    "ejercicio.cruce.tarde": {
+      "ms": 13307,
+      "h": "0a6fdfdf9d"
+    },
     "ejercicio.declarar": {
       "ms": 8507,
       "h": "6d1a2f8639"
@@ -159,6 +303,30 @@
       "ms": 4607,
       "h": "0c067aeffc"
     },
+    "ejercicio.interceptar.aTope": {
+      "ms": 6607,
+      "h": "73e0108d76"
+    },
+    "ejercicio.interceptar.antes": {
+      "ms": 9207,
+      "h": "192148c505"
+    },
+    "ejercicio.interceptar.establecido": {
+      "ms": 5807,
+      "h": "00bf85db2a"
+    },
+    "ejercicio.interceptar.establecidoAlViento": {
+      "ms": 10207,
+      "h": "e9cbdb650a"
+    },
+    "ejercicio.interceptar.pasado": {
+      "ms": 7307,
+      "h": "d483bbc6d1"
+    },
+    "ejercicio.interceptar.seMueve": {
+      "ms": 8607,
+      "h": "d999bc4b34"
+    },
     "ejercicio.otraVez": {
       "ms": 5507,
       "h": "4faebff6b1"
@@ -198,6 +366,34 @@
     "ejercicio.planeo.antes": {
       "ms": 8107,
       "h": "be30a83078"
+    },
+    "ejercicio.radial.antes": {
+      "ms": 11707,
+      "h": "68b79916ff"
+    },
+    "ejercicio.radial.centrada": {
+      "ms": 11907,
+      "h": "5c6a59fac1"
+    },
+    "ejercicio.radial.giro": {
+      "ms": 11207,
+      "h": "2c069ae7db"
+    },
+    "ejercicio.radial.haciaLaRadio": {
+      "ms": 10907,
+      "h": "fb41c32b19"
+    },
+    "ejercicio.radial.identificada": {
+      "ms": 11207,
+      "h": "8fba03481e"
+    },
+    "ejercicio.radial.pasada": {
+      "ms": 9607,
+      "h": "704cf185df"
+    },
+    "ejercicio.radial.sintonizar": {
+      "ms": 4007,
+      "h": "1772ef1701"
     },
     "ejercicio.seguidoAntesDeV1": {
       "ms": 5307,
@@ -5256,6 +5452,153 @@
     ],
     "vuelo.avisoDeConfiguracionCompensador": [
       "vuelo.avisoDeConfiguracionCompensador"
+    ],
+    "carta.toca.aerodromo": [
+      "carta.toca.aerodromo"
+    ],
+    "carta.toca.afis": [
+      "carta.toca.afis"
+    ],
+    "carta.toca.app": [
+      "carta.toca.app"
+    ],
+    "carta.toca.atis": [
+      "carta.toca.atis"
+    ],
+    "carta.toca.avion": [
+      "carta.toca.avion"
+    ],
+    "carta.toca.calle": [
+      "carta.toca.calle"
+    ],
+    "carta.toca.dme": [
+      "carta.toca.dme"
+    ],
+    "carta.toca.faf": [
+      "carta.toca.faf"
+    ],
+    "carta.toca.frecuencia": [
+      "carta.toca.frecuencia"
+    ],
+    "carta.toca.frustrada": [
+      "carta.toca.frustrada"
+    ],
+    "carta.toca.gnd": [
+      "carta.toca.gnd"
+    ],
+    "carta.toca.if": [
+      "carta.toca.if"
+    ],
+    "carta.toca.ils": [
+      "carta.toca.ils"
+    ],
+    "carta.toca.mapt": [
+      "carta.toca.mapt"
+    ],
+    "carta.toca.minimos": [
+      "carta.toca.minimos"
+    ],
+    "carta.toca.msa": [
+      "carta.toca.msa"
+    ],
+    "carta.toca.ndb": [
+      "carta.toca.ndb"
+    ],
+    "carta.toca.norte": [
+      "carta.toca.norte"
+    ],
+    "carta.toca.pista": [
+      "carta.toca.pista"
+    ],
+    "carta.toca.plataforma": [
+      "carta.toca.plataforma"
+    ],
+    "carta.toca.taa": [
+      "carta.toca.taa"
+    ],
+    "carta.toca.twr": [
+      "carta.toca.twr"
+    ],
+    "carta.toca.vor": [
+      "carta.toca.vor"
+    ],
+    "ejercicio.aguja.alVientoDerecha": [
+      "ejercicio.aguja.alVientoDerecha"
+    ],
+    "ejercicio.aguja.alVientoIzquierda": [
+      "ejercicio.aguja.alVientoIzquierda"
+    ],
+    "ejercicio.aguja.antes": [
+      "ejercicio.aguja.antes"
+    ],
+    "ejercicio.aguja.asiVa": [
+      "ejercicio.aguja.asiVa"
+    ],
+    "ejercicio.aguja.bien": [
+      "ejercicio.aguja.bien"
+    ],
+    "ejercicio.aguja.curva": [
+      "ejercicio.aguja.curva"
+    ],
+    "ejercicio.aguja.identificada": [
+      "ejercicio.aguja.identificada"
+    ],
+    "ejercicio.aguja.sintonizar": [
+      "ejercicio.aguja.sintonizar"
+    ],
+    "ejercicio.radial.antes": [
+      "ejercicio.radial.antes"
+    ],
+    "ejercicio.radial.centrada": [
+      "ejercicio.radial.centrada"
+    ],
+    "ejercicio.radial.giro": [
+      "ejercicio.radial.giro"
+    ],
+    "ejercicio.radial.haciaLaRadio": [
+      "ejercicio.radial.haciaLaRadio"
+    ],
+    "ejercicio.radial.identificada": [
+      "ejercicio.radial.identificada"
+    ],
+    "ejercicio.radial.pasada": [
+      "ejercicio.radial.pasada"
+    ],
+    "ejercicio.radial.sintonizar": [
+      "ejercicio.radial.sintonizar"
+    ],
+    "ejercicio.interceptar.aTope": [
+      "ejercicio.interceptar.aTope"
+    ],
+    "ejercicio.interceptar.antes": [
+      "ejercicio.interceptar.antes"
+    ],
+    "ejercicio.interceptar.establecido": [
+      "ejercicio.interceptar.establecido"
+    ],
+    "ejercicio.interceptar.establecidoAlViento": [
+      "ejercicio.interceptar.establecidoAlViento"
+    ],
+    "ejercicio.interceptar.pasado": [
+      "ejercicio.interceptar.pasado"
+    ],
+    "ejercicio.interceptar.seMueve": [
+      "ejercicio.interceptar.seMueve"
+    ],
+    "ejercicio.cruce.antes": [
+      "ejercicio.cruce.antes"
+    ],
+    "ejercicio.cruce.primera": [
+      "ejercicio.cruce.primera"
+    ],
+    "ejercicio.cruce.otra": [
+      "ejercicio.cruce.otra"
+    ],
+    "ejercicio.cruce.aqui": [
+      "ejercicio.cruce.aqui"
+    ],
+    "ejercicio.cruce.tarde": [
+      "ejercicio.cruce.tarde"
     ]
   }
 }

@@ -344,6 +344,11 @@ export const ES_PY = {
    */
   "tecla.altUp": "Subir la altura de la ventanilla ALT",
   "tecla.altDown": "Bajar la altura de la ventanilla ALT",
+  // La radio de navegación: el OBS y la estación siguiente. Ver `flight/radio-de-navegacion.ts`.
+  "tecla.obsUp": "Girar el curso del VOR (OBS) a la derecha",
+  "tecla.obsDown": "Girar el curso del VOR (OBS) a la izquierda",
+  "tecla.navSiguiente": "Otra estación en la NAV",
+  "tecla.adfSiguiente": "Otra estación en el ADF",
   "tecla.sound": "Sonido",
   "tecla.language": "Idioma",
   "tecla.credits": "Créditos",
@@ -3147,6 +3152,90 @@ export const ES_PY = {
   "carta.ir": "Volar",
   "carta.sinFrecuencia": "El AIP no publica frecuencia",
   "carta.sinAip": "No sale en ningún AIP",
+  // Las radioayudas de la ficha en el calco de la radio: el AD 2.19 que dice NIL.
+  "carta.sinRadioayudas": "El AIP no publica radioayudas",
+  // El descargo de toda carta que no es la oficial, donde lo lleva una de verdad: al pie.
+  "carta.descargo": "No apto para navegación real",
+  // La glosa del botón que abre la carta de aproximación (IAC), en el calco de la radio.
+  "carta.iac": "Carta de aproximación",
+  // Debajo de la tabla de mínimos: de qué columna es el avión que va.
+  "carta.iac.categoria": "Tu aeronave: CAT {cat}",
+  /*
+   * **Tocar un elemento de la carta y que diga qué es** (#72): la glosa corta
+   * que va debajo del rótulo aeronáutico —que no se traduce— y la frase con
+   * que lo explica la instructora, como a quien lo ve por primera vez. Una
+   * por tipo de elemento, no por cada radioayuda. Ver `ui/carta/tocar-la-carta.ts`.
+   */
+  "carta.toca.pista.corta": "Pista",
+  "carta.toca.pista":
+    "Esta es la pista: el camino largo y derecho donde el avión corre para despegar, y donde vuelve a posarse cuando aterriza.",
+  "carta.toca.calle.corta": "Calle de rodaje",
+  "carta.toca.calle":
+    "Esta es una calle de rodaje: por acá el avión anda despacito, como un auto, para ir hasta la pista y volver.",
+  "carta.toca.plataforma.corta": "Plataforma",
+  "carta.toca.plataforma":
+    "Esta es la plataforma: donde los aviones esperan quietos mientras sube la gente y se les pone combustible.",
+  "carta.toca.aerodromo.corta": "Aeródromo",
+  "carta.toca.aerodromo":
+    "Esto es un aeródromo: un lugar con pista, donde los aviones pueden despegar y aterrizar.",
+  "carta.toca.avion.corta": "Tu avión",
+  "carta.toca.avion": "Este es tu avión, y lo llevás vos.",
+  "carta.toca.norte.corta": "Norte",
+  "carta.toca.norte":
+    "Esto marca el norte. En una carta el norte va siempre arriba: a la derecha queda el este y a la izquierda, el oeste.",
+  "carta.toca.vor.corta": "Radiofaro",
+  "carta.toca.vor":
+    "Esto es un VOR: una antena en el suelo que manda su señal de radio para todos lados. Con ella el avión sabe de qué lado del VOR está. Si tiene un cuadrado alrededor, lleva también un DME.",
+  "carta.toca.dme.corta": "Distancia",
+  "carta.toca.dme":
+    "Esto es un DME: una radio en el suelo que le contesta al avión y le dice a cuántas millas está de ella.",
+  "carta.toca.ndb.corta": "Radiobaliza",
+  "carta.toca.ndb":
+    "Esto es un NDB: una radio en el suelo que suena igual para todos lados. En el avión, una aguja apunta hacia ella, y así se sabe dónde queda.",
+  "carta.toca.ils.corta": "Aterrizaje por instrumentos",
+  "carta.toca.ils":
+    "Esto es un ILS: dos señales de radio que salen de la pista. Una dice si vas a la izquierda o a la derecha, y la otra si vas alto o bajo. Así se puede bajar hasta la pista aunque haya nubes.",
+  "carta.toca.twr.corta": "Torre",
+  "carta.toca.twr":
+    "Esta es la frecuencia de la torre: el número que se pone en la radio para hablar con quien da permiso para despegar y para aterrizar.",
+  "carta.toca.atis.corta": "Información del aeródromo",
+  "carta.toca.atis":
+    "Esta es la frecuencia del ATIS: una grabación que repite el viento, la pista en uso y la presión del día. Se escucha antes de llamar a la torre.",
+  "carta.toca.app.corta": "Aproximación",
+  "carta.toca.app":
+    "Esta es la frecuencia de aproximación: el control que ordena a los aviones que llegan y que se van, cuando todavía están lejos de la pista.",
+  "carta.toca.gnd.corta": "Rodadura",
+  "carta.toca.gnd":
+    "Esta es la frecuencia de rodadura: con ella se habla para moverse por el suelo, de la plataforma a la pista y de vuelta.",
+  "carta.toca.afis.corta": "Información de vuelo",
+  "carta.toca.afis":
+    "Esta es la frecuencia del AFIS: alguien en el aeródromo que no da permisos, pero te cuenta el viento, la pista y quién más anda volando.",
+  "carta.toca.frecuencia.corta": "Frecuencia",
+  "carta.toca.frecuencia":
+    "Esta es una frecuencia de radio: el número que se pone en la radio para hablar con un servicio de tierra.",
+  "carta.toca.msa.corta": "Altitud mínima de sector",
+  "carta.toca.msa":
+    "Este círculo es la MSA: la altitud más baja a la que se puede volar cerca del aeródromo pasando por encima de todos los cerros, con margen de sobra.",
+  "carta.toca.taa.corta": "Altitud de llegada",
+  "carta.toca.taa":
+    "Este círculo es la TAA: la altitud más baja para llegar al punto donde empieza la aproximación pasando por encima de todo, con margen de sobra.",
+  "carta.toca.if.corta": "Punto intermedio",
+  "carta.toca.if":
+    "Este es el punto intermedio: acá el avión ya se pone en línea con la pista y se prepara para bajar.",
+  "carta.toca.faf.corta": "Aproximación final",
+  "carta.toca.faf":
+    "Desde este punto empieza la aproximación final: el avión va derecho a la pista, bajando con suavidad.",
+  "carta.toca.mapt.corta": "Punto de frustrada",
+  "carta.toca.mapt":
+    "Este es el punto de frustrada: si al llegar acá no ves la pista, no se baja más. Se sube y se vuelve a intentar, y eso es volar bien.",
+  "carta.toca.minimos.corta": "Mínimos",
+  "carta.toca.minimos":
+    "Estos son los mínimos: lo más bajo que se puede llegar sin ver la pista. Cada columna es un tipo de avión, según lo rápido que llega, y la tuya va marcada.",
+  "carta.toca.frustrada.corta": "Frustrada",
+  "carta.toca.frustrada":
+    "Esta es la frustrada: el camino para subir otra vez si la llegada no sale bien. Está siempre preparada, y usarla es de buenos pilotos.",
+  // Lo que se lee al tocar una frecuencia que el avión pone en su radio, cuando haya una que la reciba.
+  "carta.toca.puesta": "Puesta en la radio",
   "tiempo.title": "El tiempo",
   "tiempo.hora": "La hora del día",
   "tiempo.viento": "De dónde viene el viento y cuánto sopla",
@@ -3195,6 +3284,10 @@ export const ES_PY = {
   "hangar.ejercicio.par": "El par y el pedal",
   "hangar.ejercicio.efecto-suelo": "Cerca del suelo cuesta menos",
   "hangar.ejercicio.autorrotacion": "Bajar sin motor en helicóptero",
+  "hangar.ejercicio.aguja": "Seguí la aguja",
+  "hangar.ejercicio.radial": "¿En qué radial estoy?",
+  "hangar.ejercicio.interceptar": "Salí por un radial",
+  "hangar.ejercicio.cruce": "Dos radiales que se cortan",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3368,6 +3461,85 @@ export const ES_PY = {
   "palabra.masLejos": "Más lejos",
   "palabra.rayo": "Un rayo",
   "palabra.derecho": "Derecho",
+  /*
+   * **«Seguí la aguja»** (#51, ADR 0030, enmienda H26b): el NDB del campo en
+   * el ADF, su morse y volar hacia él. Genéricas, sin el nombre de la radio,
+   * porque valen en todos los campos con NDB; el nombre lo dice su morse y lo
+   * escribe la carta. Grabadas en calma, como las demás del ejercicio.
+   */
+  "ejercicio.aguja.antes":
+    "Hoy seguimos la aguja. Allá adelante hay una radio, una antena que transmite sola, y el ADF tiene una aguja que apunta siempre hacia ella. Vamos a llegar hasta la antena sin mirar afuera, solo con la aguja",
+  "ejercicio.aguja.sintonizar":
+    "Primero, poné la radio del campo en el ADF: tocala en el plano, o apretá el ocho",
+  "ejercicio.aguja.identificada":
+    "¿Oíste los pitidos? Es su nombre en morse, el mismo que trae la carta: así sabés que es la radio que querés. Ahora girá hasta que la aguja apunte arriba, al morro, y seguila",
+  "ejercicio.aguja.curva":
+    "Mirá en el plano la raya que vas dejando: no es recta, se curva. El viento te empuja de costado, y la aguja te hace girar cada vez un poco más. Es la curva del perro, el que corre siempre derecho hacia su dueño",
+  "ejercicio.aguja.alVientoDerecha":
+    "Para ir derecho, apuntá un poco al viento: girá unos grados a la derecha, de donde viene, y dejá la aguja quieta un poco a la izquierda",
+  "ejercicio.aguja.alVientoIzquierda":
+    "Para ir derecho, apuntá un poco al viento: girá unos grados a la izquierda, de donde viene, y dejá la aguja quieta un poco a la derecha",
+  "ejercicio.aguja.asiVa":
+    "¡Así! La aguja quieta a un lado y la raya derecha: estás corrigiendo el viento, como los pilotos de verdad",
+  "ejercicio.aguja.bien":
+    "¡Pasamos por encima de la radio! ¿Viste? La aguja dio la vuelta y ahora apunta atrás. Llegaste guiándote solo con la aguja",
+  /*
+   * **«¿En qué radial estoy?»** (#51, ADR 0030, enmienda H26c): el VOR del
+   * campo en la NAV, su morse, centrar la barra con FROM, girar el avión y
+   * ver que la barra no se mueve, y volver a la radio con TO hasta pasarla.
+   * Genéricas, sin el nombre del VOR ni el número del radial: el nombre lo
+   * dice su morse, y el número se lee en el OBS. Grabadas en calma.
+   */
+  "ejercicio.radial.antes":
+    "Hoy vamos a saber dónde estamos con la radio. Allá hay un VOR, una radio que manda un radial para cada lado, como los rayos de una rueda. La NAV te dice en cuál de esos rayos estás, apunte adonde apunte el morro",
+  "ejercicio.radial.sintonizar": "Primero, poné el VOR del campo en la NAV: tocalo en el plano, o apretá el siete",
+  "ejercicio.radial.identificada":
+    "¿Oíste los pitidos? Es su nombre en morse, el mismo que trae el plano: es el VOR que querés. Ahora girá el OBS, con el nueve y el cero, hasta que la barra quede en el centro con FROM",
+  "ejercicio.radial.centrada":
+    "¡Ahí está! Con la barra en el centro y FROM, el número del OBS es tu radial: estás en ese rayo de la rueda. Ahora girá el avión un cuarto de vuelta, para cualquier lado, y mirá la barra",
+  "ejercicio.radial.giro":
+    "¿Viste? El morro dio un cuarto de vuelta y la barra casi no se movió: lo poquito que se mueve es lo que avanzaste, no lo que giraste. El radial dice dónde estás, no adónde mirás",
+  "ejercicio.radial.haciaLaRadio":
+    "Ahora vamos a la radio por tu radial. Girá el OBS media vuelta, dejándolo apretado, hasta que diga TO, y volá con la barra en el centro: si se va a un lado, girá un poco hacia ese lado",
+  "ejercicio.radial.pasada":
+    "¡Pasamos por encima de la radio! ¿Viste? Justo encima sale la bandera, porque ahí no sabe qué decir, y del otro lado TO y FROM se dan vuelta. Llegaste con la barra sola",
+  /*
+   * **«Interceptar un radial»** (#51, ADR 0030, enmienda H26e): el radial
+   * pedido en el OBS, la barra a tope, cortarlo de costado, virar antes de
+   * que la barra llegue al centro y quedarse en él corrigiendo el viento.
+   * Genéricas: el número del radial se escribe en la tarjeta
+   * (`ejercicio.interceptar.pedido`), no se dice. Grabadas en calma.
+   */
+  "ejercicio.interceptar.pedido": "Salí por el R-{radial} {id}",
+  "ejercicio.interceptar.antes":
+    "Hoy vamos a salir por un radial, como en una salida de verdad. El número está en la tarjeta: ponelo en el OBS con el nueve y el cero; si lo dejás apretado, gira solo",
+  "ejercicio.interceptar.aTope":
+    "La barra se fue a tope: el radial queda de ese lado. Seguí cortándolo de costado, sin apuntarle derecho, y mirá la barra",
+  "ejercicio.interceptar.seMueve":
+    "¡Ya se mueve! El radial está cerca. Empezá a virar ahora, de a poquito, antes de que la barra llegue al centro: el avión gira en curva, y si esperás, te pasás",
+  "ejercicio.interceptar.pasado":
+    "Te pasaste un poquito: la barra cruzó al otro lado. No pasa nada, volvé hacia ella de a poco. La próxima, empezá a virar un poco antes",
+  "ejercicio.interceptar.establecido":
+    "¡Estás en el radial! La barra quieta en el centro: así se sale por un radial, como los pilotos de verdad",
+  "ejercicio.interceptar.establecidoAlViento":
+    "¡Estás en el radial, con la barra quieta en el centro! Fijate en el morro: no apunta justo al número del OBS, apunta un poco contra el viento. Es lo que hace falta para que no te saque del radial",
+  /*
+   * **«Dos radiales que se cortan»** (#51, ADR 0030, enmienda H26g): con una
+   * sola NAV, el radial del VOR del campo, el de la otra radio, y la cruz de
+   * las dos rayas en el plano. Genéricas: las dos radios y los radiales
+   * leídos se escriben en la tarjeta («FTV · LTE», «R-102 FTV»), no se dicen.
+   * Grabadas en calma.
+   */
+  "ejercicio.cruce.antes":
+    "Hoy vamos a saber dónde estamos solo con la radio, con dos VOR. Las dos radios están en la tarjeta. Primero, con esta: girá el OBS hasta que la barra quede en el centro con FROM",
+  "ejercicio.cruce.primera":
+    "Ese número es tu radial: una raya que sale de la radio, y vos estás en algún lugar de ella. Mirala en el plano. Con una sola raya, no se sabe en qué punto",
+  "ejercicio.cruce.otra":
+    "Para saber en qué punto, hace falta otra raya. Poné la otra radio en la NAV: tocala en el plano, o apretá el siete hasta oír su nombre",
+  "ejercicio.cruce.aqui":
+    "¡Ahí estás! Mirá el plano: las dos rayas se cortan justo donde está el avión. Así se sabe dónde estás sin ver nada, solo con dos radios",
+  "ejercicio.cruce.tarde":
+    "Mirá el plano: la cruz quedó lejos del avión. Mientras ponías y leías la segunda, el avión siguió volando, y la primera raya ya no pasaba por él. La próxima, leelas rápido, o volá hacia una de las dos radios, que así su raya no cambia",
   // Y la frase corta, con sus números, de Taguató para arriba.
   "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
   "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",

@@ -941,6 +941,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * automático pedía bajar así o pedía otra cosa y el morro no llegaba.
        */
       mo: memoriaDeSenda ? +((memoriaDeSenda.morro * 180) / Math.PI).toFixed(2) : null,
+      // Y lo que le quita o le pone el aire que sube o baja, °. Ver `porElAire`.
+      ma: memoriaDeSenda ? +(((memoriaDeSenda.aire ?? 0) * 180) / Math.PI).toFixed(2) : null,
       cb: +(((o.actitud?.().cabeceo ?? 0) * 180) / Math.PI).toFixed(2),
       q: +(((s.pitchRate ?? 0) * 180) / Math.PI).toFixed(2),
       mt: memoriaDeSenda ? +memoriaDeSenda.timon.toFixed(3) : null,
@@ -1143,6 +1145,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         timon: engancha ? mandos.elevator : undefined,
         // Lo mismo que le da el juego. Ver `AUTORIDAD_SUFICIENTE`.
         autoridadDelTimon: o.autoridadDelTimon?.(),
+        // Y el aire que sube o baja, también como en el juego: ver `porElAire`.
+        subeElAire: o.subeElAire?.() ?? 0,
       },
       conLaVelocidad
         ? {
@@ -1219,7 +1223,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * metro por segundo bajo el JAZ 90, y con el final del perfil a 1,2
      * contra la pista se tocaba a 1,9 de variómetro.
      */
-    const alSuelo = Math.max(0.3, RITMO_AL_TOCAR + pistaBaja);
+    const alSuelo = Math.max(0.3, ritmoAlTocar + pistaBaja);
     const pide = -(alSuelo + (recogida.caida - alSuelo) * queda);
     /*
      * Y en el último metro y medio no se empuja: si baja menos de lo pedido,
@@ -1333,12 +1337,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       envergadura > 30
         ? Math.min(1, (enVerdadera(s, suyas.aproximacion ?? s.airspeed) / Math.max(1, s.airspeed)) ** 2)
         : 1;
+    // Ver `POR_LO_QUE_ACELERA`.
+    const porLoQueAcelera =
+      RECOGIDA_DE_REACTOR && recogida.porAngulo
+        ? recogida.porAngulo *
+          POR_LO_QUE_ACELERA *
+          (acelera - ((s.loadFactor ?? 1) - 1) * 9.81)
+        : 0;
     const calculado = Math.max(
       -0.6,
       Math.min(
         0.8,
         recogida.palanca +
-          porLaPresion * (porLoQueFrena + porDelante + kp * falta + ki * recogida.acumulado) -
+          porLaPresion *
+            (porLoQueFrena + porDelante + kp * falta + ki * recogida.acumulado + porLoQueAcelera) -
           kq * (s.pitchRate ?? 0),
       ),
     );
@@ -1430,11 +1442,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * arriba—: quitándolo con la altura, una racha a seis metros lo llevó de
      * bajar a 1,5 m/s a bajar a 2,6 con la carga en 0,91 g, y tocó a 2,02.
      */
+    /*
+     * **Y un reactor, al ralentí a los treinta pies**, no al empezar a recoger:
+     * ver `RECOGIDA_DE_REACTOR`.
+     */
     if (!SENCILLO)
       mandos.throttle =
         suyas.propulsion === "helice" && (suyas.motores ?? 1) >= 2
           ? Math.min(1, (recogida.gas ?? 0) * queda + 0.5 * Math.max(0, falta))
-          : 0;
+          : RECOGIDA_DE_REACTOR && ruedas > RETARD_DEL_REACTOR
+            ? (recogida.gas ?? 0)
+            : 0;
   };
   /**
    * La palanca media de los últimos segundos de la final, que es la que
@@ -2037,7 +2055,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * Lo que se hace de verdad es lo del E-Jet: el viento en cola con F3 a 160 y
    * la Vref y poco solo con los de aterrizar puestos, a mitad de la base
    * (Regli, *Embraer EMB190 – Summary*, p. 2-24), y nunca por debajo del punto
-   * verde de lo que se lleva (p. 2-18). Así que con la segunda se vuela a la de
+   * verde de lo que se lleva (p. 2-19). Así que con la segunda se vuela a la de
    * maniobra de la segunda, y al pedir las de aterrizar, en la base, a la Vref
    * y quince, como estaba: la de maniobra de las de aterrizar queda debajo.
    */
@@ -2126,14 +2144,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     return nudos > 20 ? (indicada * s.airspeed) / (nudos / 1.94384) : indicada;
   };
   /**
-   * **Lo que se suma a la Vref para volar la final**, m/s: cinco nudos.
+   * **Lo que se suma a la Vref para volar la final**, m/s indicados: lo que
+   * pide el juego, `margenDeLaFinal` por la sonda.
    *
-   * La velocidad de aproximación de un reactor es la Vref más un margen —el
-   * mínimo de cinco nudos, más con viento racheado— y se cruza el umbral a
-   * la Vref. Es el colchón que hace que una racha no deje al avión debajo de
-   * su Vref, que ya está a un treinta por ciento de la pérdida.
+   * La velocidad de aproximación es la Vref más un margen —cinco nudos en
+   * calma, más con viento de cara y con rachas— y se cruza el umbral a la
+   * Vref. Es el colchón que hace que una racha no deje al avión debajo de su
+   * Vref. El banco llevaba su propia cuenta: la regla del reactor —media cara
+   * y la racha entera, de cinco a veinte— en todos los aviones, y con lo que
+   * medía su propio anemómetro, que es sobre todo su propio vaivén de gas y de
+   * senda. El juego lo cuenta con el viento del parte y con la regla de cada
+   * clase de avión (enmienda H25d del ADR 0027), y es lo que pide su marca, su
+   * banda y su puerta: el banco vuela eso, no una copia (enmienda H25e). Sin
+   * la sonda, los cinco nudos de la calma.
    */
-  const ADITIVO_DE_FINAL = 5 * 0.514444;
+  const margenDeLaFinal = () => (o.margenDeLaFinal?.() ?? 5) * 0.514444;
   /**
    * **Y el margen se quita en la final corta**, m antes del umbral: para
    * cruzarlo a la Vref, que es como lo cruza un piloto de verdad.
@@ -2200,6 +2225,48 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * llevando la velocidad como toda la final.
    */
   const SENCILLO = peldano === "guyrami";
+  /**
+   * **Y en un reactor del modelo completo, la recogida de su manual** (#192):
+   * el gas al ralentí a los treinta pies y no al empezar a recoger, y se
+   * busca tocar a dos pies por segundo.
+   *
+   * Lo del E190: «30ft Idle · 20ft Flare» (C. Regli, *Embraer EMB190 –
+   * Summary*, p. 2-26, de la técnica de aterrizaje del OM-A 8.3.2.42.1), y el
+   * *retard* de sus gases, «Idle during flare (30ft until T/D)» (p. 1-15).
+   * Este banco cortaba el gas donde empezaba a recoger, a los tres segundos y
+   * pico de senda —en el JAZ 90, de once a quince metros, 35–49 ft—, y con el
+   * ala de este avión el ralentí se nota enseguida: en el banco de mesa (el
+   * modelo, el automático y las ráfagas del juego, cuarenta finales) pierde
+   * seis nudos en tres segundos recogiendo. Con el gas hasta los treinta pies
+   * y la cuenta acabando en dos pies por segundo, las tomas de más de 2 m/s
+   * bajan de 26 de 40 a 7 (σ_w de 1 m/s), y en aire quieto toca a 1,27 m/s y
+   * no a 1,74.
+   *
+   * **La recogida no empieza a los veinte pies, y se midió**: en ese banco de
+   * mesa, en aire quieto, el JAZ 90 recogiendo a veinte pies toca a 3,7 m/s
+   * aun subiendo el morro siete grados a cuatro por segundo, y a treinta a 2,5:
+   * a este avión le hacen falta cinco grados de morro y tres segundos para
+   * quitarse la senda, y al E190 de verdad dos o tres grados. Es del modelo, no
+   * de este piloto —ver el informe del #192—, así que aquí se empieza donde
+   * empezaba, a los segundos de senda de `SEGUNDOS_DE_RECOGIDA`.
+   */
+  const RECOGIDA_DE_REACTOR = !SENCILLO && suyas.propulsion === "chorro";
+  /** El ritmo al que se busca tocar, m/s: el del perfil de `recoger`. */
+  const ritmoAlTocar = RECOGIDA_DE_REACTOR ? 2 * 0.3048 : RITMO_AL_TOCAR;
+  /** Las ruedas a las que un reactor pone el gas al ralentí, m. */
+  const RETARD_DEL_REACTOR = 30 * 0.3048;
+  /**
+   * **Y lo que el avión ya está acelerando, en la recogida de un reactor**:
+   * cuatro centésimas de radián de ángulo por cada m/s² que falte para la
+   * aceleración hacia arriba que pide el perfil, medida con la carga —`n − 1`
+   * g—, pasadas a palanca con el cabeceo del avión como lo demás. Es lo que
+   * nota en el asiento un piloto al que una racha le quita el ala: que se hunde
+   * antes de que lo diga el variómetro. Sin esto el lazo solo veía el error de
+   * ritmo, que llega un segundo tarde; medido con la traza del ala del JAZ 90
+   * en Los Rodeos, una racha de cola de cinco metros por segundo al empezar a
+   * recoger lo dejó a 0,87 g durante segundo y medio, y tocó a 4,57 m/s.
+   */
+  const POR_LO_QUE_ACELERA = 0.04;
   /**
    * **Y la senda, con el morro del automático en todo el modelo completo**,
    * no solo en los reactores.
@@ -2336,6 +2403,37 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * toca, se deja ahí, y la velocidad sale sola.
    */
   const CABECEO_DE_SUBIDA = (12 * Math.PI) / 180;
+
+  /**
+   * **Lo que gira el morro al rotar**, rad/s: tres grados por segundo.
+   *
+   * Es lo del E-Jet: «Rotate 3°/sec to 18° ANU, then FD» con los dos motores,
+   * y la protección de la cola solo vale con ese ritmo: «Tail strike protected
+   * only if normal rotation (3°/sec)» (C. Regli, *Embraer EMB190 – Summary*,
+   * 2025, pp. 2-38 y 1-33: <http://www.flite.ch/Emb/Summary_E190.pdf>). Los
+   * manuales de Boeing dicen lo mismo, de dos a tres grados por segundo.
+   *
+   * El banco no tenía ritmo: pedía la actitud con una ganancia, y como el morro
+   * no se levanta hasta que hay velocidad para levantarlo, cuando se soltaba lo
+   * hacía de golpe. La traza del ala de H25a vio al JAZ 90 irse del suelo a
+   * 5,3–6,9 grados por segundo en las tres tiradas, pasarse a 12–12,7 grados
+   * de morro con la trayectoria todavía en uno, y quedarse a menos de un grado
+   * del avisador —en una, por encima, 0,36 s a cinco metros— (ADR 0027,
+   * enmiendas H25a y H25c). La actitud no era el problema: doce grados es menos
+   * que los dieciocho del E-Jet. Era el ritmo.
+   */
+  const RITMO_DE_ROTACION = (3 * Math.PI) / 180;
+  /**
+   * **Y la mano que rota no deja que el morro gire más deprisa**: lo que pase
+   * del ritmo se quita de lo que tira —medio mando por cada tres grados por
+   * segundo de más—, y nunca más allá de soltar. Lo hace quien rota de verdad:
+   * tira hasta que el morro sube a su ritmo, y afloja en cuanto se le va.
+   * Empujar no lo toca.
+   */
+  const aSuRitmo = (palanca, s) =>
+    palanca <= 0
+      ? palanca
+      : Math.max(0, palanca - 10 * Math.max(0, (s.pitchRate ?? 0) - RITMO_DE_ROTACION));
 
   /** Hasta cuándo se vuela por actitud y no por velocidad, m sobre el suelo. */
   const ASENTAR_LA_SUBIDA = 120;
@@ -6007,13 +6105,21 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * el resto lo pone la subida.
        */
       const rotarHasta = Math.min(CABECEO_DE_SUBIDA, (s.stallWarningAlpha ?? 1) - 0.035);
+      /*
+       * **Y a la Vr indicada, no a la verdadera.** Comparaba la verdadera con
+       * la Vr de la ficha, que es indicada: en Los Rodeos, a 21 °C, el JAZ 90
+       * empezaba a tirar a 117 nudos indicados con la Vr en 129. Ver
+       * `enVerdadera`.
+       */
       c.elevator = s.onGround
-        ? s.airspeed > (suyas.rotacion ?? 28) * 0.96
+        ? s.airspeed > enVerdadera(s, (suyas.rotacion ?? 28) * 0.96)
           ? SUBE_CON_EL_MORRO
-            ? Math.max(0, Math.min(0.8, (rotarHasta - cabeceoDe(s)) * 4))
+            ? aSuRitmo(Math.max(0, Math.min(0.8, (rotarHasta - cabeceoDe(s)) * 4)), s)
             : 0.8
           : 0
-        : subirDeVerdad(s);
+        : SUBE_CON_EL_MORRO
+          ? aSuRitmo(subirDeVerdad(s), s)
+          : subirDeVerdad(s);
       if (!s.onGround && alto(s) > 30) {
         despego = t;
         etapa = "subir";
@@ -6065,7 +6171,23 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         NECESITA_TECNICA && peldano !== "guyrami"
           ? Math.max(0, Math.min(1, 0.55 + (topeSubiendo - s.airspeed) * 0.04))
           : 1;
-      const quiere = bajandoYa ? DE_CIRCUITO * 1.2 : VELOCIDAD_DE_CRUCERO;
+      /*
+       * **Bajando, a la marca que pide el juego**, pasada a verdadera: la de
+       * descenso de la escalera, que va frenando al acercarse —el área
+       * terminal, la aproximación—. Bajaba a 1,2 veces la de circuito en
+       * verdadera, y eso arriba es poquísima indicada: el JAZ 60 a 114 nudos a
+       * seis mil metros con su mínima del automático en 118 y la escalera
+       * pidiendo 200, el JAZ 40 a 88 con la mínima en 94 (enmienda H25e del
+       * ADR 0027). En los que llevan gases automáticos —los reactores— esto no
+       * manda: con el automático puesto los gases vuelan la marca y pisan el
+       * gas del banco. Sin la sonda, como estaba.
+       */
+      const marca = o.marcaDeVelocidad?.();
+      const quiere = bajandoYa
+        ? marca
+          ? enVerdadera(s, marca * 0.514444)
+          : DE_CIRCUITO * 1.2
+        : VELOCIDAD_DE_CRUCERO;
       const aSuVelocidad = Math.min(1, (bajandoYa ? 0.35 : 0.55) + (quiere - s.airspeed) * 0.04);
       c.throttle = subiendo ? gasSubiendo : Math.max(bajandoYa ? 0.1 : 0.3, aSuVelocidad);
       configurar(s, c, 1);
@@ -6242,14 +6364,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        */
       /*
        * **Y los demás también**, que ahora vuelan la final como los reactores:
-       * configurados y a la Vref más cinco nudos. Ver `configurar`.
+       * configurados y a la Vref más el margen que pide el juego. Ver
+       * `configurar` y `margenDeLaFinal`.
        */
       {
         o.colocar(
           f.x,
           enLaSenda,
           f.z,
-          enVerdadera(o.estado(), aproximacion + ADITIVO_DE_FINAL),
+          enVerdadera(o.estado(), aproximacion + margenDeLaFinal()),
           f.h,
         );
         o.pedirTren?.(true);
@@ -6682,20 +6805,25 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       const deAproximacion = suyas.aproximacion ?? 33;
       const vref = enVerdadera(s, deAproximacion);
       /*
-       * **Y con viento de cara, la mitad de él encima**, hasta veinte nudos:
-       * es la regla de los manuales de línea, y existe por lo que pasa en la
-       * recogida. El viento se frena cerca del suelo, así que al bajar los
-       * últimos metros el avión pierde de golpe parte de lo que lleva de cara:
-       * en el banco de mesa, con diez metros por segundo de cara, el JAZ 90
-       * tocaba a 1,9 m/s en vez de a 0,9. Lo que sopla de cara se le ve al
-       * avión: lo que va por el aire menos lo que va por el suelo.
+       * **El margen, el que pide el juego**: en los reactores, la mitad del
+       * viento de cara y la racha entera del parte, de cinco a veinte nudos; en
+       * los demás, los cinco de la calma y la mitad de la racha. Ver
+       * `margenDeLaFinal`, arriba. La regla del reactor existe por lo que pasa
+       * en la recogida: el viento se frena cerca del suelo, y al bajar los
+       * últimos metros el avión pierde de golpe parte de lo que lleva de cara
+       * —en el banco de mesa, con diez metros por segundo de cara, el JAZ 90
+       * tocaba a 1,9 m/s en vez de a 0,9—.
+       */
+      const aditivo = margenDeLaFinal();
+      /*
+       * Lo que sopla de cara, para lo que queda del margen en el umbral (abajo):
+       * se le ve al avión, lo que va por el aire menos lo que va por el suelo.
        */
       const deCara = Math.max(0, s.airspeed - porElSuelo(s));
       /*
-       * Y la racha entera encima, que es la otra mitad de la regla: lo que va y
-       * viene la velocidad en los últimos diez segundos. En Los Rodeos, con
-       * el aire que pasa el relieve, una racha se lleva en un segundo lo que
-       * sobraba para recoger.
+       * Y lo que va y viene la velocidad en los últimos diez segundos, solo
+       * para la traza: es lo que el banco sumaba antes al margen con su propio
+       * anemómetro (enmienda H25e del ADR 0027).
        */
       velocidadesDeFinal.push({ t, v: s.airspeed });
       while (velocidadesDeFinal.length && t - velocidadesDeFinal[0].t > 10)
@@ -6706,10 +6834,6 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
               Math.min(...velocidadesDeFinal.map((m) => m.v))) /
             2
           : 0;
-      const aditivo = Math.min(
-        20 * 0.514444,
-        Math.max(ADITIVO_DE_FINAL, deCara / 2 + racha),
-      );
       /*
        * **Y en Guyrami igual, configurado y a la Vref más el margen.** Las
        * hélices volaban ahí la final limpias y a nueve décimas de la Vref,
@@ -6933,9 +7057,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * baja, y si la ley de la final lo sigue moviendo sobre la pista —la
          * senda ya no pide nada y lo va quitando— la palanca pierde mano a la
          * vez que el avión se hunde. La palanca la lleva `recoger`, que en
-         * Guyrami le suma un pelo de gas si una racha lo hunde de más.
+         * Guyrami le suma un pelo de gas si una racha lo hunde de más. Y en un
+         * reactor, el gas que llevaba hasta los treinta pies: ver
+         * `RECOGIDA_DE_REACTOR`.
          */
-        c.throttle = SENCILLO ? recogida.gas : 0;
+        c.throttle =
+          SENCILLO || (RECOGIDA_DE_REACTOR && ruedas > RETARD_DEL_REACTOR)
+            ? recogida.gas
+            : 0;
       } else {
         /*
          * Con la misma ley de altura que arriba: bajada limitada y
@@ -7238,8 +7367,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
             ` · plan ${(objetivo - alto(s)).toFixed(1)} pide ${memoriaDeSenda ? memoriaDeSenda.ritmo.toFixed(1) : "-"} α ${((s.alpha * 180) / Math.PI).toFixed(1)}°` +
             /*
              * Y la velocidad que busca el gas, en indicada, con lo que la hace:
-             * el margen de la final —el mayor de cinco nudos y media cara más
-             * la racha que mide el banco— y lo que queda de él en el umbral.
+             * el margen de la final que pide el juego, lo que sopla de cara, lo
+             * que va y viene el anemómetro —que ya no suma— y lo que queda del
+             * margen en el umbral.
              */
             ` · quiere ${Math.round(pedidaEnIndicada * 1.94384)} kt (margen ${(aditivo * 1.94384).toFixed(1)}: cara ${(deCara * 1.94384).toFixed(1)} racha ${(racha * 1.94384).toFixed(1)}; umbral +${(enElUmbral * 1.94384).toFixed(1)})` +
             (sendaSinPerseguir ? " · sin perseguir" : "") +
@@ -7857,6 +7987,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
   resultado.deVuelta = await (async () => {
     if (!destino || o.fase() !== "apagado") return null;
     const kilosAlApagar = o.combustible?.()?.kilos ?? null;
+    // El tráfico dibujado al apagar, para ver que no se queda en el tramo nuevo. Ver `laTorreYSuTraficoDeCero`.
+    const traficoAlApagar = (o.trafico?.() ?? []).map((q) => q.matricula);
     c.throttle = 0;
     c.brakes = 1;
     o.tocarMando?.("motor");
@@ -7865,6 +7997,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     const ruta = o.rutaDelVuelo?.() ?? null;
     const lectura = {
       kilosAlApagar,
+      traficoAlApagar,
+      trafico: (o.trafico?.() ?? []).map((q) => q.matricula),
       kilos: o.combustible?.()?.kilos ?? null,
       carga: o.cargaDelTramo?.() ?? null,
       ruta,
@@ -10495,6 +10629,24 @@ if (DESTINO) {
       ? `${v.kilos?.toFixed(1)} kg · el tramo pide ${v.carga?.toFixed(1)} kg · al apagar había ${v.kilosAlApagar?.toFixed(1)} kg`
       : "no se leyó el depósito",
     "de vuelta en casa se arrancaba hacia Los Rodeos con el depósito de un circuito",
+  );
+  /*
+   * **Y con el tráfico de allí, empezando**: el que se vio al llegar no se queda dibujado
+   * con una frecuencia que ya no lo nombra (H23b). Sin tráfico al apagar no hay nada que
+   * mirar, y se dice.
+   */
+  const seQuedan = (v.traficoAlApagar ?? []).filter((m) => (v.trafico ?? []).includes(m));
+  comprobar(
+    "y el tráfico de la llegada no se queda en el tramo nuevo",
+    Array.isArray(v.trafico) && seQuedan.length === 0,
+    !Array.isArray(v.trafico)
+      ? "no se leyó el tráfico"
+      : (v.traficoAlApagar ?? []).length === 0
+        ? "al apagar no había nadie dibujado: nada que mirar"
+        : seQuedan.length
+          ? `siguen dibujados ${seQuedan.join(", ")}`
+          : `al apagar ${v.traficoAlApagar.join(", ")}; al arrancar, ${v.trafico.join(", ") || "nadie todavía"}`,
+    "otro tramo reiniciaba la torre y dejaba dibujado el tráfico que se vio al llegar",
   );
   comprobar(
     "y el coche del sígame vuelve a guiar",

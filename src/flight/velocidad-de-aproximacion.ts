@@ -1,6 +1,7 @@
 import { MARGENES } from "./minimos";
 import { DE_TRANSPORTE } from "./velocidades-en-tierra";
 import { RECOGIDA } from "./avisos-de-actitud";
+import { trueFromIndicated, type Aire } from "./atmosphere";
 
 /**
  * La velocidad de la aproximación: rápido, bien o lento.
@@ -122,13 +123,30 @@ export interface Aproximando {
  *
  * `vref` es la velocidad de aproximación de **esa** aeronave: sale de su ficha
  * y no de una constante, porque una avioneta y un avión grande no se parecen
- * en nada aquí.
+ * en nada aquí. **Y en las mismas unidades que `s.velocidad`**: la Vref de la
+ * ficha es indicada, y si se compara con la verdadera hay que pasarla a
+ * verdadera con el aire de ahora. En Los Rodeos, con el calor de la tarde,
+ * son de un cuatro y medio a un seis por ciento: la banda decía «lento» hasta
+ * seis puntos más abajo de donde tocaba.
  */
 export function bandaDeVelocidad(
   s: Aproximando,
   vref: number,
   /** La banda de antes, para salir por el otro umbral. Ver `SALE_DE_LENTO`. */
   antes: BandaDeVelocidad = null,
+  /**
+   * **Lo que el viento de hoy suma a la final** por encima del margen de la
+   * calma, en las unidades de `s.velocidad`. Ver `margenDeLaFinal` en
+   * `escalera-de-velocidades.ts`.
+   *
+   * Corre el borde de «rápido» y no el de «lento». Con rachas se aproxima más
+   * deprisa, y quien lo hace va bien: si la banda siguiera contando desde la
+   * Vref de la calma, regañaría por ir a la velocidad que el propio juego
+   * pide. Y el de abajo se queda donde está, porque lo que se protege con el
+   * margen es justo eso: que la racha que se va no deje el ala por debajo de
+   * la Vref.
+   */
+  porElViento = 0,
 ): BandaDeVelocidad {
   if (s.enElSuelo) return null;
   if (s.sobreElSuelo > TECHO || s.sobreElSuelo < RECOGIDA) return null;
@@ -136,8 +154,30 @@ export function bandaDeVelocidad(
   const lento = antes === "lento" ? SALE_DE_LENTO : MARGEN_LENTO;
   if (s.velocidad < vref * (1 - lento)) return "lento";
   const rapido = antes === "rapido" ? SALE_DE_RAPIDO : MARGEN_RAPIDO;
-  if (s.velocidad > vref * (1 + rapido)) return "rapido";
+  if (s.velocidad > vref * (1 + rapido) + Math.max(0, porElViento)) return "rapido";
   return "bien";
+}
+
+/**
+ * **La Vref y lo que el viento le suma a la final, pasadas a verdadera**, m/s:
+ * lo que necesita `bandaDeVelocidad` cuando lo que mide es la verdadera.
+ *
+ * `vref` y `sobra`, indicadas, m/s: la Vref de la ficha y lo que el viento de
+ * hoy suma a la final por encima del margen de la calma. La banda comparaba
+ * la verdadera con la Vref indicada, y en Los Rodeos —seiscientos treinta
+ * metros y el calor de la tarde— la misma indicada son un cuatro y medio por
+ * ciento más de verdadera en la pista y un seis a la altura del circuito:
+ * decía «lento» hasta seis puntos más abajo de donde tocaba. Es lo que hizo
+ * la enmienda H25c del ADR 0027 con la mínima del circuito.
+ */
+export function referenciaEnVerdadera(
+  vref: number,
+  sobra: number,
+  altura: number,
+  aire?: Aire,
+): { readonly vref: number; readonly porElViento: number } {
+  const verdadera = trueFromIndicated(1, altura, aire);
+  return { vref: vref * verdadera, porElViento: Math.max(0, sobra) * verdadera };
 }
 
 /*
@@ -175,22 +215,43 @@ export const MARGEN_DE_CIRCUITO =
   1;
 
 /**
+ * Lo que hace falta para juzgar el circuito: su velocidad y la más lenta que
+ * está bien con lo que se lleva sacado, las dos en las mismas unidades que
+ * `Aproximando.velocidad`.
+ */
+export interface Circuito {
+  /** La de circuito de este avión. Ver `velocidadDeCircuito` en `aircraft.ts`. */
+  readonly velocidad: number;
+  /**
+   * **La más lenta que se pinta de verde**: la de maniobra de los flaps que
+   * lleva, y la Vref solo con los de aterrizar. Ver `minimaConFlaps` en
+   * `velocidades-de-despegue.ts`.
+   */
+  readonly minima: number;
+}
+
+/**
  * En qué banda va la velocidad **volando el circuito**, o `null` si no hay
  * nada que juzgar.
  *
  * Solo el lado rápido. Por abajo manda lo de siempre: la banda de
  * aproximación en cuanto se baja hacia la pista, y el avisador de pérdida en
- * cualquier sitio. Ir a Vref en el viento en cola no es ir mal; ir por debajo
- * sí, y por eso ahí esta banda se calla y no pinta nada de verde.
+ * cualquier sitio. Ir por debajo de la mínima no se elogia, y por eso ahí esta
+ * banda se calla y no pinta nada de verde.
+ *
+ * **Y la mínima cuenta la muesca.** Era la Vref con cualquier muesca, y la Vref
+ * es de los flaps de aterrizar: con la segunda del JAZ 90 son 1,13 veces su
+ * pérdida, y la banda pintaba de verde una velocidad a la que, virando a
+ * veinticinco grados, suena el avisador. Lo que se aprende de un verde es que
+ * ahí se puede ir; con unos flaps, eso es su velocidad de maniobra.
  */
 export function bandaDeCircuito(
   s: Aproximando,
-  vref: number,
-  circuito: number,
+  circuito: Circuito,
 ): BandaDeVelocidad {
   if (s.enElSuelo) return null;
-  if (s.velocidad > circuito * (1 + MARGEN_DE_CIRCUITO)) return "rapido";
-  return s.velocidad >= vref ? "bien" : null;
+  if (s.velocidad > circuito.velocidad * (1 + MARGEN_DE_CIRCUITO)) return "rapido";
+  return s.velocidad >= circuito.minima ? "bien" : null;
 }
 
 /*
@@ -315,21 +376,23 @@ export function bandaDeAhora(
   vref: number,
   corriendo: boolean,
   /**
-   * La de circuito de este avión si se está volando el circuito, o `null`.
-   * Va la última: bajando hacia la pista manda la de aproximación, que es
-   * más estrecha y es la que decide la toma. Ver `bandaDeCircuito`.
+   * La de circuito de este avión y su mínima si se está volando el circuito,
+   * o `null`. Va la última: bajando hacia la pista manda la de aproximación,
+   * que es más estrecha y es la que decide la toma. Ver `bandaDeCircuito`.
    */
-  circuito: number | null = null,
+  circuito: Circuito | null = null,
   /** La banda del fotograma anterior. Ver `bandaDeVelocidad`. */
   antes: BandaDeVelocidad = null,
   /** Lo más que rueda este avión, m/s. Ver `bandaDeRodaje`. */
   rodaje: number = RODAJE,
+  /** Lo que suma el viento de hoy a la final. Ver `bandaDeVelocidad`. */
+  porElViento = 0,
 ): BandaDeVelocidad {
   if (s.enElSuelo && s.enLaPista) return null;
   return (
     bandaDeRodaje(s.velocidad, s.enElSuelo, corriendo, rodaje) ??
-    bandaDeVelocidad(s, vref, antes) ??
-    (circuito === null ? null : bandaDeCircuito(s, vref, circuito))
+    bandaDeVelocidad(s, vref, antes, porElViento) ??
+    (circuito === null ? null : bandaDeCircuito(s, circuito))
   );
 }
 

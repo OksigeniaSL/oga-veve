@@ -219,6 +219,36 @@ const HOLGURA_DEL_MORRO = (4 * Math.PI) / 180;
 const POR_MORRO = 0.8;
 
 /**
+ * **El morro que pide el aire que sube o baja**, rad: el que deja el ala con
+ * el mismo ángulo de ataque, y con él el avión en la misma trayectoria
+ * respecto al suelo.
+ *
+ * Una ascendente de `w` metros por segundo le levanta el ala `w/V` radianes de
+ * ángulo de ataque en el instante en que entra, y el avión sube con ella;
+ * para seguir por la senda hay que bajar el morro eso mismo mientras dure, y
+ * devolverlo en cuanto se acabe. El lazo del medio lo acababa haciendo, pero
+ * por el variómetro, que llega tarde: el avión ya iba subiendo cuando
+ * empezaba a bajar el morro, seguía bajándolo cuando la ascendente ya se
+ * había ido, y lo pagaba bajando de más. Medido con el JAZ 90 en la final de
+ * Los Rodeos (#192, H29a): una ascendente de tres metros por segundo durante
+ * cuatro segundos dejaba el morro que persigue dos grados más abajo, y al
+ * salir bajaba 1,8 m/s más de lo pedido durante seis segundos; la puerta de
+ * los 500 ft llegaba bajando a 6,1–6,9 m/s con 4,57 pedidos. Con esto, la
+ * misma ascendente deja el morro de aire quieto 0,6° más abajo y la peor media
+ * de cinco segundos en 5,03 m/s, por debajo de los mil pies por minuto de una
+ * aproximación estabilizada: ver `ascendente-en-la-final.test.ts`.
+ *
+ * El avión de verdad lo sabe en ese mismo instante: es la cuenta de la
+ * detección de cizalladura —el término `w/V` del factor F—, que compara lo que
+ * sube el avión según los inerciales con lo que sube respecto al aire según
+ * la veleta de ataque y el anemómetro. Aquí lo da quien sabe qué aire sopla:
+ * ver `Estado.subeElAire`. Sin él, cero, y el automático vuela como volaba.
+ */
+function porElAire(e: Estado, v: number): number {
+  return -Math.asin(acotar((e.subeElAire ?? 0) / v, 0.5));
+}
+
+/**
  * El timón que mueve cada radián por segundo de giro que falta, **por
  * segundo**: el servo.
  *
@@ -418,6 +448,12 @@ export interface Estado {
    * `autoridadDelTimon`. Sin él, las ganancias de siempre.
    */
   readonly autoridadDelTimon?: number;
+  /**
+   * **Lo que sube el aire aquí**, m/s, positivo hacia arriba: una ascendente,
+   * una térmica, la racha de la turbulencia, la estela del de delante. Sin él,
+   * cero: el aire quieto. Ver `porElAire`.
+   */
+  readonly subeElAire?: number;
 }
 
 /** A dónde se le manda ir. `null` en uno de los dos es no mandarle nada. */
@@ -468,7 +504,8 @@ export interface Objetivos {
   readonly gases?: ModoDeGases | null;
   /**
    * **La velocidad mínima**, indicada, m/s: por debajo, el morro baja antes
-   * que perder más. Ver la cabecera.
+   * que perder más, y los gases no piden menos aunque la marca lo pida. Ver
+   * la cabecera y `minimaDelAutomatico` en `velocidades-de-despegue.ts`.
    */
   readonly minima?: number;
 }
@@ -501,8 +538,17 @@ export interface Memoria {
   cogido: boolean;
   /** El ritmo de subida que va pidiendo, m/s. Ver `CARGA_QUE_PIDE`. */
   ritmo: number;
-  /** El morro que persigue, rad. */
+  /**
+   * El morro que persigue **en el aire quieto**, rad: el que lleva el avión
+   * por la trayectoria pedida si el aire no se mueve. Lo que el aire pide
+   * aparte va en `aire`.
+   */
   morro: number;
+  /**
+   * El morro que se quita o se pone por el aire que sube o baja, rad. Ver
+   * `porElAire`.
+   */
+  aire: number;
   /** El timón que lleva el servo, en unidades de mando. Ver `SERVO`. */
   timon: number;
   /** El alabeo que va pidiendo, rad. Ver `ALABEO_POR_SEGUNDO`. */
@@ -520,6 +566,7 @@ export function memoriaNueva(): Memoria {
     cogido: false,
     ritmo: 0,
     morro: 0,
+    aire: 0,
     timon: 0,
     alabeo: 0,
     gases: memoriaDeGasesNueva(),
@@ -569,14 +616,28 @@ export function mandosPara(
   dt = 1 / 60,
   m: Memoria = memoriaNueva(),
 ): Mandos {
+  const v = Math.max(e.verdadera, 1);
   if (!m.cogido) {
     m.cogido = true;
     m.ritmo = e.vertical;
-    m.morro = e.cabeceo;
+    // El morro de ahora, con lo que ya lleva quitado o puesto por el aire.
+    m.aire = porElAire(e, v);
+    m.morro = e.cabeceo - m.aire;
     m.timon = acotar(e.timon ?? 0, 1);
     m.alabeo = e.alabeo;
   }
-  const v = Math.max(e.verdadera, 1);
+  /*
+   * **Y la velocidad que se pide, nunca por debajo de la mínima.** Los gases
+   * del E-Jet ajustan el empuje «to remain above MIN SPD» aunque la marca
+   * esté más abajo (`MINIMA_DEL_AUTOMATICO_SOBRE_LA_PERDIDA`). Sin esto, con
+   * la marca de unos flaps que todavía están saliendo por debajo de la mínima
+   * de los que ya han salido, los gases frenaban hacia la marca y el morro
+   * bajaba para no perder más: el avión se iba hacia abajo hasta que salían.
+   */
+  const velocidadPedida =
+    o.velocidad !== null && o.minima !== undefined
+      ? Math.max(o.velocidad, o.minima)
+      : o.velocidad;
   let aileron = 0;
   let elevator = 0;
   let throttle: number | null = null;
@@ -609,7 +670,7 @@ export function mandosPara(
     const error = o.altitud - e.altitud;
     const seMueve = o.ritmo ?? 0;
     let quiere = seMueve + acotar(error / PARA_LA_ALTURA, RITMO_MAXIMO);
-    if (o.modo === "FLCH SPD" && o.velocidad !== null) {
+    if (o.modo === "FLCH SPD" && velocidadPedida !== null) {
       /*
        * **Cambiando de nivel, la velocidad la lleva el morro.** La energía
        * que entra por segundo la ponen los gases —ver el modo `THR`—, y el
@@ -619,7 +680,7 @@ export function mandosPara(
        * cuánto frena el avión: se mide.
        */
       const pide = acotar(
-        (o.velocidad - e.velocidad) / PARA_LA_VELOCIDAD_CON_EL_MORRO,
+        (velocidadPedida - e.velocidad) / PARA_LA_VELOCIDAD_CON_EL_MORRO,
         ACELERACION_MAXIMA,
       );
       const sube = e.vertical + (v * (m.gases.aceleracion - pide)) / GRAVITY;
@@ -645,6 +706,7 @@ export function mandosPara(
        * ritmo que se quiere y se pone esa. Ver `Estado.subirCon`.
        */
       m.morro = e.cabeceo;
+      m.aire = 0;
       elevator = acotar(e.subirCon(m.ritmo), 1);
     } else {
       /*
@@ -656,10 +718,18 @@ export function mandosPara(
       const trayectoria = Math.asin(acotar(e.vertical / v, 1));
       const tope = Math.min(GIRO_MAXIMO, (CARGA_TOPE * GRAVITY) / v);
       const giro = acotar(POR_TRAYECTORIA * (trayectoriaPedida - trayectoria), tope);
+      /*
+       * **Y lo que pide el aire, aparte y sin esperar al variómetro.** Ver
+       * `porElAire`. Va al mismo ritmo que el resto del morro y dentro del
+       * mismo tope de carga, que se reparte: primero el de la trayectoria,
+       * y lo del aire con lo que quede.
+       */
+      const juntos = acotar(giro + acotar((porElAire(e, v) - m.aire) / dt, tope), tope);
+      m.aire += (juntos - giro) * dt;
       m.morro = Math.max(
-        e.cabeceo - HOLGURA_DEL_MORRO,
+        e.cabeceo - m.aire - HOLGURA_DEL_MORRO,
         Math.min(
-          e.cabeceo + HOLGURA_DEL_MORRO,
+          e.cabeceo - m.aire + HOLGURA_DEL_MORRO,
           acotar(m.morro + giro * dt, CABECEO_MAXIMO),
         ),
       );
@@ -677,7 +747,7 @@ export function mandosPara(
       const delViraje =
         (GRAVITY / v) * Math.tan(phi) * Math.sin(phi) * Math.cos(e.cabeceo);
       const pedido =
-        giro / Math.cos(phi) + delViraje + POR_MORRO * (m.morro - e.cabeceo);
+        juntos / Math.cos(phi) + delViraje + POR_MORRO * (m.morro + m.aire - e.cabeceo);
       const falta = pedido - e.ritmoDeCabeceo;
       const refuerzo = e.autoridadDelTimon
         ? Math.min(REFUERZO_MAXIMO, Math.max(1, AUTORIDAD_SUFICIENTE / e.autoridadDelTimon))
@@ -687,7 +757,8 @@ export function mandosPara(
     }
   } else {
     m.ritmo = e.vertical;
-    m.morro = e.cabeceo;
+    m.aire = porElAire(e, v);
+    m.morro = e.cabeceo - m.aire;
   }
 
   /*
@@ -708,7 +779,7 @@ export function mandosPara(
         subidaPedida: o.altitud !== null ? subidaPara(o.altitud - e.altitud) : 0,
       },
       gases,
-      o.velocidad ?? e.velocidad,
+      velocidadPedida ?? e.velocidad,
       dt,
       m.gases,
       true,

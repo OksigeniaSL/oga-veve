@@ -2419,6 +2419,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         airDensity(juego.flight.state.position.y, juego.flight.aireDelDia()),
         juego.flight.state.airspeed,
       ),
+    /**
+     * Lo que sube el aire donde está el avión, m/s: lo que el juego le da a su
+     * automático, para que el banco se lo dé igual. Ver `porElAire`.
+     */
+    subeElAire: () => juego.subeElAireParaBanco,
     /** La velocidad que recibe la pantalla de la cabina, en nudos. */
     velocidadDeCabina: () =>
       Math.round(
@@ -2428,6 +2433,19 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
           juego.flight.aireDelDia(),
         ) * 1.94384,
       ),
+    /**
+     * **Lo que el juego le suma a la Vref en la final**, nudos: la regla del
+     * reactor o la de la FAA según el avión, con el viento del parte. El banco
+     * del vuelo entero llevaba su propia cuenta —la del reactor en todos, con
+     * lo que medía su anemómetro—. Ver `margenDeLaFinal`.
+     */
+    margenDeLaFinal: () => juego.margenDeLaFinalParaBanco,
+    /**
+     * **La marca de velocidad que pide la escalera ahora**, nudos indicados.
+     * El banco del trayecto la vuela bajando en el avión sin gases
+     * automáticos; en el que los lleva, ya la vuelan ellos.
+     */
+    marcaDeVelocidad: () => juego.marcaDeVelocidadParaBanco,
     /** En qué campo está el avión ahora: el de salida o el de destino. */
     campoDeAhora: () => juego.campoDeAhoraParaBanco,
     /** El OACI del aeródromo que se tiene debajo. */
@@ -2544,6 +2562,28 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `flight/lecciones-del-rotor.ts`.
      */
     leccionDelRotor: () => juego.leccionDelRotorParaBanco,
+    /**
+     * «Seguí la aguja»: la fase, lo que se apartó la estela, la estación y
+     * dónde se empezó. Ver `flight/seguir-la-aguja.ts`.
+     */
+    seguirLaAguja: () => juego.seguirLaAgujaParaBanco,
+    /**
+     * «¿En qué radial estoy?»: la fase, el radial encontrado, si salió la
+     * bandera al pasar y dónde se empezó. Ver `flight/en-que-radial-estoy.ts`.
+     */
+    enQueRadialEstoy: () => juego.enQueRadialEstoyParaBanco,
+    /**
+     * «Interceptar un radial»: la fase, el radial pedido, lo que la barra se
+     * fue al otro lado y dónde se empezó. Ver `flight/interceptar-un-radial.ts`.
+     */
+    interceptarUnRadial: () => juego.interceptarUnRadialParaBanco,
+    /**
+     * «Dos radiales que se cortan»: la fase, las dos radios, los radiales
+     * leídos, la cruz y lo lejos que cayó del avión. Ver `flight/dos-radiales.ts`.
+     */
+    dosRadiales: () => juego.dosRadialesParaBanco,
+    /** El morse de la radio: si suena, de quién, y lo último identificado. Ver `audio/morse.ts`. */
+    morse: () => juego.morseParaBanco,
     /** Enseña o esconde la nube de la tormenta, para medir lo que cuesta. */
     verLaTormenta: (si: boolean) => juego.verLaTormentaParaBanco(si),
     /** Un rayo de la tormenta ya: de lejos, o en el avión. */

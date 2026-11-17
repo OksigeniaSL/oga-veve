@@ -48,9 +48,10 @@ export interface MorroDelAvion {
  * adelantado de la malla, la punta). Los que no embarcan por pasarela no llevan
  * puerta que contar.
  */
-const DEL_DIBUJO: Readonly<Record<string, { readonly puerta: number; readonly punta: number }>> = {
+const DEL_DIBUJO: Readonly<Record<string, { readonly puerta: number; readonly punta: number; readonly via?: number }>> = {
   "jaz-20": { puerta: 0, punta: 1.05 },
-  "jaz-25": { puerta: 0, punta: 3.6 },
+  // Y la media vía de sus principales, que es donde se engancha la barra: ver `barraAlTrenDe`.
+  "jaz-25": { puerta: 0, punta: 3.6, via: 1.4 },
   "jaz-40": { puerta: 0, punta: 1.4 },
   "jaz-50": { puerta: 0, punta: 1.8 },
   "jaz-60": { puerta: 0, punta: 0.7 },
@@ -75,7 +76,51 @@ export function morroDe(
 ): MorroDelAvion {
   const rueda =
     a.actitudEnTresPuntos !== undefined ? -a.mainWheelsAft : a.batalla - (a.mainGearAft ?? a.mainWheelsAft);
-  return { rueda, ...(DEL_DIBUJO[a.id] ?? SIN_MEDIR) };
+  const { puerta, punta } = DEL_DIBUJO[a.id] ?? SIN_MEDIR;
+  return { rueda, puerta, punta };
+}
+
+/**
+ * **La barra con que se remolca un avión de rueda de cola**, m: lo que va de sus
+ * principales a la trasera del tractor, y la media vía de las principales, que es
+ * donde se engancha.
+ *
+ * Un tractor de cuna abraza la rueda de morro y la sube a su pala; un avión de rueda
+ * de cola no tiene rueda de morro, y la de cola, loca y pequeña, no es de donde se le
+ * lleva hacia delante. Lo que dice el manual de mantenimiento de la FAA: «Aircraft
+ * equipped with tail wheels are generally towed forward by attaching the tow bar to
+ * the main landing gear. In most cases, it is permissible to tow the aircraft in
+ * reverse by attaching the tow bar to the tail wheel axle. Any time an aircraft
+ * equipped with a tail wheel is towed, the tail wheel must be unlocked» (FAA-H-8083-30,
+ * *Aviation Maintenance Technician Handbook — General*, «Ground Operations and
+ * Servicing», «Towing of Aircraft»; leído en una copia del capítulo, sin el PDF de la
+ * FAA, que no se dejó bajar: ver el ADR 0025, H23b). La vuelta a la raya lleva al avión hacia delante,
+ * así que el de rueda de cola va con una barra a sus principales, y el tractor delante
+ * de la hélice: con un metro de holgura por delante de la punta del morro, que en el
+ * biplano es el cono de la hélice. La cuna, que en él se ponía bajo el motor entre las
+ * dos ruedas, no abrazaba nada.
+ *
+ * `null` en los de rueda de morro, que van con la cuna.
+ */
+export interface BarraAlTren {
+  readonly largo: number;
+  readonly via: number;
+}
+
+/** Lo que queda entre la punta del morro y la trasera del tractor que tira de la barra, m. */
+const DELANTE_DE_LA_HELICE = 1;
+
+/** La media vía de unas principales sin medir, m: la del biplano. */
+const VIA_SIN_MEDIR = 1.4;
+
+export function barraAlTrenDe(
+  a: Pick<AircraftConfig, "id" | "batalla" | "mainWheelsAft" | "mainGearAft" | "actitudEnTresPuntos">,
+): BarraAlTren | null {
+  if (a.actitudEnTresPuntos === undefined) return null;
+  return {
+    largo: morroDe(a).punta + DELANTE_DE_LA_HELICE,
+    via: DEL_DIBUJO[a.id]?.via ?? VIA_SIN_MEDIR,
+  };
 }
 
 /**

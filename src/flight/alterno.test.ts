@@ -20,6 +20,7 @@ import {
   cargaParaElPlan,
   cargaParaLaRuta,
   loQueCabe,
+  loQueDejaElPeso,
   quemaPorSegundo,
   RESERVA_SEGUNDOS,
 } from "./combustible";
@@ -107,9 +108,11 @@ describe("la carga para un destino", () => {
     expect(cargaParaElPlan(PYKASU, local)).toBe(cargaParaLaRuta(PYKASU, 0));
   });
 
-  it("con el tope de lo que cabe", () => {
+  it("con el tope de lo que cabe, en el depósito y en el peso", () => {
     const lejisimos = { alDestino: 5e6, alAlterno: 1e6 };
-    expect(cargaParaElPlan(PYKASU, lejisimos)).toBe(loQueCabe(PYKASU));
+    expect(cargaParaElPlan(PYKASU, lejisimos)).toBe(
+      Math.min(loQueCabe(PYKASU), loQueDejaElPeso(PYKASU)),
+    );
   });
 
   it("y cargar para el destino es menos que el ida y vuelta al más lejano", () => {

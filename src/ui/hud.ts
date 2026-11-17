@@ -569,6 +569,10 @@ export class Hud {
   private velocidadesHandler: ((cual: "V1" | "Vr") => void) | null = null;
   /** Quién vigila el alto de la barra. Ver `medirLaBarra`. */
   private barraObservada: ResizeObserver | null = null;
+  /** Quién vigila el alto del subtítulo. Ver `medirElSubtitulo`. */
+  private subtituloObservado: ResizeObserver | null = null;
+  /** Quién vigila el alto de la lámpara de la torre. Ver `medirLaLampara`. */
+  private torreObservada: ResizeObserver | null = null;
   /** Lo que mide el cuadro en la pantalla, para sus rótulos. Ver `medirLaUnidad`. */
   private cuadroObservado: ResizeObserver | null = null;
   /**
@@ -932,6 +936,42 @@ export class Hud {
      * ratón encima de la ventanilla, que es lo que se espera de una rueda.
      * Ver `flight/altitud-seleccionada.ts`.
      */
+    /*
+     * **El mando de la radio** en las esquinas de la pantalla de navegación,
+     * por delegación y con `pointerdown`, por lo mismo que la rueda ALT: el
+     * cuadro se repinta y un dedo que resbala no da `click`. Un toque, un paso:
+     * un grado del OBS o la estación siguiente.
+     */
+    this.root.addEventListener("pointerdown", (e) => {
+      const mando = (e.target as Element | null)?.closest?.("[data-radio-mando]");
+      if (!(mando instanceof SVGElement || mando instanceof HTMLElement)) return;
+      const que = mando.dataset.radioMando;
+      if (que !== "nav" && que !== "adf" && que !== "obs") return;
+      e.preventDefault();
+      e.stopPropagation();
+      const paso = Number(mando.dataset.paso) || 0;
+      this.radioHandler?.(que, paso);
+      /*
+       * **Y el OBS, con el dedo puesto, sigue girando**, como la tecla
+       * apretada: medio segundo quieto, que un toque siga siendo un grado, y
+       * luego veinte grados por segundo hasta que se suelta. Volver a la radio
+       * por el radial en que se está pide media vuelta, y ciento ochenta
+       * toques no son una rueda. Ver `flight/en-que-radial-estoy.ts`.
+       */
+      if (que !== "obs" || !paso) return;
+      let cada: number | undefined;
+      const empieza = window.setTimeout(() => {
+        cada = window.setInterval(() => this.radioHandler?.("obs", paso), 50);
+      }, 500);
+      const suelta = (): void => {
+        window.clearTimeout(empieza);
+        if (cada !== undefined) window.clearInterval(cada);
+        window.removeEventListener("pointerup", suelta);
+        window.removeEventListener("pointercancel", suelta);
+      };
+      window.addEventListener("pointerup", suelta);
+      window.addEventListener("pointercancel", suelta);
+    });
     this.root.addEventListener("pointerdown", (e) => {
       const zona = (e.target as Element | null)?.closest?.("[data-mcp-rueda], [data-mcp-alt]");
       if (!(zona instanceof SVGElement || zona instanceof HTMLElement)) return;
@@ -1001,7 +1041,7 @@ export class Hud {
      * `ui/tocar-para-explicar.ts`.
      */
     const laRueda =
-      "[data-mcp-rueda], [data-mcp-alt], [data-explica]:not([data-explica-fondo])";
+      "[data-mcp-rueda], [data-mcp-alt], [data-radio-mando], [data-explica]:not([data-explica-fondo])";
     alPulsarDentro(
       this.root,
       "[data-tel-grande]",
@@ -2579,6 +2619,8 @@ export class Hud {
     this.pictos.bind(this.root);
     this.medirLaUnidad();
     this.medirLaBarra();
+    this.medirElSubtitulo();
+    this.medirLaLampara();
     this.senal.bind(this.root);
     this.tutor.bind(this.root);
     this.reserveForPanel();
@@ -3152,6 +3194,8 @@ export class Hud {
       readonly rodaje?: DatosDelTablero["rodaje"];
       /** Lo que acaba de cambiar, resaltado. Ver `DatosDelTablero.resaltes`. */
       readonly resaltes?: DatosDelTablero["resaltes"];
+      /** La radio de navegación. Ver `DatosDelTablero.radio`. */
+      readonly radio?: DatosDelTablero["radio"];
       /**
        * **Si el pitot lleva la funda puesta.** Entonces el anemómetro marca
        * cero corra lo que corra, en todos los relojes que lo enseñan, y sin
@@ -3706,6 +3750,7 @@ export class Hud {
         rotor: mandos?.rotor ?? null,
         rodaje: mandos?.rodaje ?? null,
         resaltes: mandos?.resaltes ?? null,
+        radio: mandos?.radio ?? null,
       };
       /*
        * En el teléfono el cuadro plano solo se ve puesto en grande: lo de
@@ -4221,10 +4266,22 @@ export class Hud {
     const columna = this.root.querySelector<HTMLElement>(".hud__derecha");
     const escribirColumna = (): void => {
       if (!columna) return;
-      const ancho = Math.round(
-        aPxDelHud(this.root, columna.getBoundingClientRect().width),
-      );
+      const caja = columna.getBoundingClientRect();
+      const ancho = Math.round(aPxDelHud(this.root, caja.width));
       this.root.style.setProperty("--columna-ancho", `${ancho}px`);
+      /*
+       * **Y dónde empieza por la izquierda**, para que en cabina la lámpara
+       * y el subtítulo acaben antes de la tarjeta del gas y del freno: iban
+       * de lado a lado y les pasaban por encima. El ancho no basta, que en el
+       * teléfono la columna no llega al borde —le queda a la derecha la
+       * palanca del gas—.
+       */
+      if (caja.width > 2)
+        this.root.style.setProperty(
+          "--columna-izquierda",
+          `${Math.round(aPxDelHud(this.root, caja.left))}px`,
+        );
+      else this.root.style.removeProperty("--columna-izquierda");
     };
     /*
      * **Y dónde acaba la columna de la pausa**, para la tarjeta de quien habla
@@ -4235,6 +4292,14 @@ export class Hud {
      * que se observa con lo demás.
      */
     const vistas = this.root.querySelector<HTMLElement>(".hud__vistas");
+    /*
+     * **Y dónde acaban por la derecha los botones redondos de la izquierda**
+     * —la cámara, la pausa y, antes de arrancar, la vuelta al avión y el
+     * parte—, en píxeles del HUD, para que el subtítulo se aparte lo mismo de
+     * los dos bordes y no se les ponga encima: con todo el ancho de la
+     * pantalla se comía la pausa. Ver `--vistas-derecha` en la hoja.
+     */
+    const antes = this.root.querySelector<HTMLElement>(".antes");
     const escribirVistas = (): void => {
       const caja = vistas?.getBoundingClientRect();
       if (caja && caja.height > 0)
@@ -4242,6 +4307,32 @@ export class Hud {
           "--vistas-abajo",
           `${Math.round(caja.bottom)}px`,
         );
+      const cajas = [vistas, antes]
+        .map((e) => e?.getBoundingClientRect())
+        .filter((c): c is DOMRect => !!c && c.width > 0 && c.height > 0);
+      const derecha = cajas.reduce((max, c) => Math.max(max, c.right), 0);
+      this.root.style.setProperty(
+        "--vistas-derecha",
+        `${Math.round(aPxDelHud(this.root, derecha))}px`,
+      );
+      /*
+       * **Y hasta dónde bajan**, para apartarse de ellos solo donde llegan.
+       * En una tablet de 900 × 600 la barra se parte en dos filas y los
+       * botones de la columna de la pausa acaban por encima del subtítulo:
+       * apartado de ella igual, el hueco a la izquierda del rincón se quedaba
+       * en 320 píxeles y la orden de la torre, en ocho líneas. Se miden los
+       * botones y no sus cajas: medidas las cajas, en esa tablet bajaban
+       * hasta el subtítulo y los botones no. Ver `--aparte-arriba`.
+       */
+      const abajo = [vistas, antes]
+        .flatMap((e) => (e ? [...e.querySelectorAll("button")] : []))
+        .map((b) => b.getBoundingClientRect())
+        .filter((c) => c.width > 0 && c.height > 0)
+        .reduce((max, c) => Math.max(max, c.bottom), 0);
+      this.root.style.setProperty(
+        "--vistas-bajan",
+        `${Math.round(aPxDelHud(this.root, abajo))}px`,
+      );
     };
     escribir();
     escribirColumna();
@@ -4266,6 +4357,84 @@ export class Hud {
     if (columna) this.barraObservada.observe(columna);
     if (rincon) this.barraObservada.observe(rincon);
     if (vistas) this.barraObservada.observe(vistas);
+    // Se va al arrancar, y con ella el sitio que le dejaba el subtítulo.
+    if (antes) this.barraObservada.observe(antes);
+    /*
+     * Y el tutor, que en cabina va debajo del rincón: el subtítulo empieza a
+     * la derecha de los dos (`--rincon-derecha`, en `escribirRincon`), y el
+     * tutor sale y se va con cada tecla que toca.
+     */
+    const tutor = this.root.querySelector('[data-hud="tutor"]');
+    if (tutor) this.barraObservada.observe(tutor);
+  }
+
+  /**
+   * **Lo que ocupa el subtítulo de alto**, para que la lámpara de la torre
+   * baje lo que de verdad ocupa y no una línea contada a mano.
+   *
+   * Los dos viven debajo de la barra, el subtítulo primero, y la lámpara
+   * bajaba 36 píxeles cuando había subtítulo: lo que mide una línea. Desde que
+   * el subtítulo usa el ancho que tiene es más difícil que se parta, pero una
+   * frase larga de la instructora sigue ocupando dos, y la lámpara se
+   * encendía encima de la segunda. Están en cajas distintas —el subtítulo
+   * vive con el aviso, abajo en el marcado—, así que no los puede apilar el
+   * navegador: se mide y se escribe en `--subtitulo-alto`.
+   *
+   * Solo cuando cambia, que es cuando la instructora empieza o acaba una
+   * frase: una variable que cambia en la raíz del HUD hace mirar otra vez el
+   * estilo de todo lo que cuelga de ella. `offsetHeight` ya viene en los
+   * píxeles del HUD (ver `aPxDelHud`), y vacío no ocupa nada.
+   *
+   * En cabina no lo lee nadie: allí la lámpara va encima del subtítulo y no
+   * debajo. Ver `medirLaLampara`.
+   */
+  private medirElSubtitulo(): void {
+    const hint = this.hint;
+    let escrito = "";
+    const escribir = (): void => {
+      const alto = `${hint.offsetHeight}px`;
+      if (alto === escrito) return;
+      escrito = alto;
+      this.root.style.setProperty("--subtitulo-alto", alto);
+    };
+    escribir();
+    this.subtituloObservado?.disconnect();
+    if (typeof ResizeObserver === "undefined") return;
+    this.subtituloObservado = new ResizeObserver(escribir);
+    this.subtituloObservado.observe(hint);
+  }
+
+  /**
+   * **Lo que ocupa la lámpara de la torre de alto**, con su respiro, para que
+   * en cabina lo que va debajo de ella —la tarjeta de la orden y el
+   * subtítulo— se aparte lo que de verdad mide.
+   *
+   * En cabina la franja de encima de la visera no da para la lámpara al lado
+   * de la tarjeta de la orden: la lámpara va arriba, de lado a lado hasta la
+   * columna de mandos, y la tarjeta y el subtítulo empiezan donde ella acaba.
+   * Están en cajas distintas, así que no los puede apilar el navegador. La
+   * orden ocupa una línea en el portátil y tres en una tablet de 900, así que
+   * no vale un número escrito a mano: se mide, y apagada no ocupa nada.
+   *
+   * Sustituye a `--torre-ancho`, que se escribía en cada luz que se ponía y no
+   * lo leía nadie desde que la tarjeta se fue al rincón. Solo cuando cambia,
+   * como el subtítulo.
+   */
+  private medirLaLampara(): void {
+    const torre = this.torre;
+    if (!torre) return;
+    let escrito = "";
+    const escribir = (): void => {
+      const alto = torre.hidden ? "0px" : `${torre.offsetHeight + 8}px`;
+      if (alto === escrito) return;
+      escrito = alto;
+      this.root.style.setProperty("--torre-alto", alto);
+    };
+    escribir();
+    this.torreObservada?.disconnect();
+    if (typeof ResizeObserver === "undefined") return;
+    this.torreObservada = new ResizeObserver(escribir);
+    this.torreObservada.observe(torre);
   }
 
   /**
@@ -4651,16 +4820,6 @@ export class Hud {
     esconder(caja, luz === null);
     caja.classList.toggle("torre--verde", luz === "verde");
     caja.classList.toggle("torre--roja", luz === "roja");
-    /*
-     * Y lo ancha que es, para que la tarjeta se aparte de ella. Es la otra
-     * mitad de lo que hace `medirse` en `ui/senal.ts`: cada una se corre media
-     * anchura de la otra, así que juntas quedan centradas y separadas, y sola,
-     * cada una se queda en el medio.
-     */
-    this.root.style.setProperty(
-      "--torre-ancho",
-      caja.hidden ? "0px" : `${caja.offsetWidth + 14}px`,
-    );
     const enLaRoja = luz === "roja" && rojaDice !== "alAire";
     const enLaFila = enLaRoja ? delante : 0;
     const porLaEstela = enLaRoja && enLaFila === 0 && estela;
@@ -5149,6 +5308,16 @@ export class Hud {
 
   onVentanillaAlt(fn: (pasos: number) => void): void {
     this.ventanillaHandler = fn;
+  }
+
+  /**
+   * Quién atiende **el mando de la radio** en la pantalla de navegación:
+   * `obs` con su paso, o la caja cuya estación se cambia. Ver
+   * `ui/radio-en-la-rosa.ts`.
+   */
+  private radioHandler: ((mando: "nav" | "adf" | "obs", paso: number) => void) | null = null;
+  onMandoDeRadio(fn: (mando: "nav" | "adf" | "obs", paso: number) => void): void {
+    this.radioHandler = fn;
   }
 
   /** Quién abre la tarjeta del avión. Ver `ui/tarjeta-del-avion.ts`. */

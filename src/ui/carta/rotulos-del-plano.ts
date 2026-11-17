@@ -103,6 +103,21 @@ export interface PuntoDelPlano {
   readonly simbolo: number;
 }
 
+/**
+ * Una radioayuda del plano, donde cae su símbolo —o la cola de la pluma, si
+ * es un ILS—, con los renglones de su caja ya escritos. Ver
+ * `cajaDeRadioayuda` en `radioayudas.ts`.
+ */
+export interface RadioayudaDelPlano {
+  readonly x: number;
+  readonly y: number;
+  readonly simbolo: number;
+  readonly id: string;
+  readonly titulo: string;
+  readonly canal: string | null;
+  readonly morse: string;
+}
+
 /** Todo lo que hay en el plano y se rotula, en píxeles de pantalla. */
 export interface PlanoPorRotular {
   /** El lado del plano tal como se ve. */
@@ -123,6 +138,10 @@ export interface PlanoPorRotular {
   readonly fijos: readonly Caja[];
   /** Las rayas de la ruta: cruzarlas cuesta. */
   readonly rayas: readonly Raya[];
+  /** Las radioayudas que se ven, en el calco de la radio. */
+  readonly radioayudas?: readonly RadioayudaDelPlano[];
+  /** El descargo del pie, desde el calco de los nombres: «No apto para navegación real». */
+  readonly descargo?: string | null;
 }
 
 /** Un rótulo ya colocado, para pintarlo. */
@@ -194,12 +213,46 @@ export function rotularElPlano(p: PlanoPorRotular, medir: Medir): { puestos: Rot
   // Los nombres de la ruta y la cota del umbral, desde el calco de las cifras.
   const puntos = calcos.cifras ? p.puntos.filter((q) => dentro(q.x, q.y)) : [];
   const umbral = calcos.cifras ? p.umbral : null;
-  const lista: PorRotular[] = [
+  const lista: PorRotular[] = [];
+  /*
+   * **El descargo va el primero**, en su esquina de abajo a la derecha —la
+   * rosa está en la de la izquierda—: es el pie de la hoja, y una carta no se
+   * queda sin él porque haya mucho que rotular.
+   */
+  const descargo = calcos.nombres ? p.descargo : null;
+  if (descargo) {
+    const renglon = (texto: string): Renglon => ({ texto, color: TINTAS.tinta, cuerpo: CUERPOS.var });
+    // En el plano del teléfono no cabe en una línea al lado de la rosa: en dos, partido por el medio.
+    const palabras = descargo.split(" ");
+    const mitad = Math.ceil(palabras.length / 2);
+    lista.push({
+      que: descargo,
+      formas: [
+        [renglon(descargo)],
+        [renglon(palabras.slice(0, mitad).join(" ")), renglon(palabras.slice(mitad).join(" "))],
+      ],
+      /*
+       * Por el borde, que es donde va el pie de una hoja: abajo a la derecha;
+       * y si ahí cae un aeródromo —en el plano del país entero los hay en
+       * todas las esquinas, porque el encuadre se ajusta a ellos—, corrido a
+       * lo largo del borde de abajo, y luego del de arriba.
+       */
+      sitios: ([w, h]) =>
+        [p.lado - 2 - h / 2, 2 + h / 2].flatMap((cy, borde) =>
+          [1, 0.75, 0.5, 0.25, 0].map((f, i) => ({
+            caja: { cx: 3 + w / 2 + f * (p.lado - 6 - w), cy, w, h },
+            coste: borde * 5 + i,
+            lado: "centro" as const,
+          })),
+        ),
+    });
+  }
+  lista.push(
     // Primero casa y el destino: son a donde se vuelve y a donde se va.
     ...campos.filter((c) => c.papel === "casa").map(campo),
     ...campos.filter((c) => c.papel === "destino").map(campo),
     ...puntos.filter((q) => q.activo).map(punto),
-  ];
+  );
   if (umbral && dentro(umbral.x, umbral.y)) {
     const u = umbral;
     const renglon = (texto: string): Renglon => ({ texto, color: TINTAS.cota, cifras: true, cuerpo: CUERPOS.cota });
@@ -211,6 +264,23 @@ export function rotularElPlano(p: PlanoPorRotular, medir: Medir): { puestos: Rot
     });
   }
   lista.push(...campos.filter((c) => c.papel === "otro").map(campo), ...puntos.filter((q) => !q.activo).map(punto));
+  /*
+   * **Las cajas de las radioayudas**, en el calco de la radio: identificador
+   * y frecuencia, canal y morse; si no caben enteras, sin el canal; luego
+   * sin el morse; y si ni así, el símbolo se queda sin caja.
+   */
+  if (calcos.radio)
+    for (const a of p.radioayudas ?? []) {
+      if (!dentro(a.x, a.y)) continue;
+      const renglon = (texto: string): Renglon => ({ texto, color: TINTAS.aero, cifras: true, cuerpo: CUERPOS.radio });
+      const titulo = renglon(a.titulo);
+      const morse = renglon(a.morse);
+      lista.push({
+        que: a.id,
+        formas: sinRepetir([[titulo, ...(a.canal ? [renglon(a.canal)] : []), morse], [titulo, morse], [titulo]]),
+        sitios: alrededor(a.x, a.y, a.simbolo),
+      });
+    }
   // Lo que solo acompaña: si no cabe, no va.
   if (calcos.nombres)
     for (const h of p.hitos)

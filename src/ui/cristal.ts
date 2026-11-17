@@ -46,6 +46,7 @@ import {
   type Escala,
 } from "./cuadro";
 import { relojSvg } from "./esfera-svg";
+import { radioEnLaRosaSvg } from "./radio-en-la-rosa";
 import { ANCLA_DE_ACTITUD, patasDe } from "./familia";
 
 /** Píxeles por nudo en la cinta de velocidad. */
@@ -1295,6 +1296,12 @@ export function pantallaDeNavegacion(ancho: number, alto: number, helicoptero = 
     </g>
     <path class="cr__simbolo" transform="translate(${cx} ${cy}) scale(1.15)"
           d="${helicoptero ? SIMBOLO.helicoptero : SIMBOLO.avion}" />
+    <!--
+      **La radio, encima de la carta**: la aguja del ADF y el CDI del VOR
+      sobre la rosa, como en la pantalla de navegación de verdad, y la NAV y
+      el ADF en las esquinas de abajo. Ver ui/radio-en-la-rosa.ts.
+    -->
+    ${radioEnLaRosaSvg(cx, cy, r, ancho)}
     <text data-cristal="nd-rumbo" x="${cx}" y="22" ${MARCA_CIFRA} class="cr__valor" text-anchor="middle"></text>
     <text x="${cx}" y="36" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">HDG</text>
     <text data-cristal="viento" x="12" y="22" ${MARCA_CIFRA} class="cr__aux"></text>
