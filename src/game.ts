@@ -30563,14 +30563,16 @@ export class Game {
 
   /**
    * **El viento del parte en la pista a la que se va a aterrizar**: la del
-   * destino si se va a otro campo, y si no la de aquí. Es el que da la torre,
-   * no el de este instante: con él se cuenta el margen de la final antes de
-   * llegar a ella, como en el briefing. `null` sin parte. Ver
-   * `margenDeLaFinal`.
+   * campo que se tiene debajo (`elCampo`), que es el de la final —el de
+   * llegada al llegar, y el de salida si se vuelve a él—. Iba la del destino
+   * del plan, y volviendo al campo de salida, como vuelve el banco del vuelo
+   * entero en Los Rodeos con el plan puesto a Tenerife Sur, la final se
+   * contaba con el viento de otra isla. Es el que da la torre, no el de este
+   * instante: con él se cuenta el margen antes de llegar a la final, como en
+   * el briefing. `null` sin parte. Ver `margenDeLaFinal`.
    */
   private vientoDeLaFinal(): VientoDeLaFinal | null {
-    const destino = this.elDestino();
-    const campo = destino ? this.elCampo(destino.id) : this.elCampo();
+    const campo = this.elCampo();
     const meteo = campo.escenario.meteo;
     if (!meteo) return null;
     return {

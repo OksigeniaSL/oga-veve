@@ -2952,7 +2952,11 @@ viene su propio anemómetro, de cinco a veinte, en todos los aviones
   de lo que racha, sin tope, que la FAA da como «no more than». El viento de
   cola no suma ni resta. Es **el viento del parte** en la pista donde se va a
   aterrizar, el de la torre, no el de cada instante: el margen se cuenta en el
-  briefing y se vuela con él (`Game.vientoDeLaFinal`).
+  briefing y se vuela con él (`Game.vientoDeLaFinal`). Y el del campo que se
+  tiene debajo, no el del destino del plan: la primera versión tomaba el del
+  destino, y el banco del vuelo entero de Los Rodeos, que vuelve a su pista
+  con el plan puesto a Tenerife Sur, oyó «senda (125 kt)» con el viento de
+  allí; con el de Los Rodeos son 123.
 - **Lo pide**: la escalera lo pone en el peldaño de la final, y con él la
   marca rosa, la ventanilla SPD y los gases automáticos.
 - **La banda lo cuenta**: lo que el viento suma por encima de los cinco de la
