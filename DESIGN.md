@@ -299,7 +299,9 @@ tres, el subtítulo espera también y la lámpara sube a su sitio; con el aviso 
 la instructora sigue sonando siempre. **El subtítulo que espera, espera entero**: su reloj no corre mientras está
 escondido, y sale en cuanto se apaga el aviso o la lámpara, para quien juega sin sonido. En cabina, la tarjeta de la
 orden se queda arriba a la izquierda, donde estaba, y lo que se lee va en una columna entre ella y la columna de
-mandos: el aviso, la lámpara y el subtítulo, por ese orden (ADR 0030, enmiendas H28c, H28d y H28e).
+mandos: el aviso, la lámpara y el subtítulo, por ese orden (ADR 0030, enmiendas H28c, H28d y H28e). Y donde ni así
+caben sin pisar un mando, el mismo orden decide quién se mueve y quién espera, en un solo sitio para todas las pantallas
+y las tres vistas: ver «Dónde va lo que se lee» en §5 (H28f).
 
 **El tutor** (`.tutor`). La explicación de la tecla que toca, abajo a la izquierda y desde el segundo peldaño, para
 encontrarla en el teclado sin leer: el glifo a 54 px en ocre, la tecla dibujada de 62 × 62 (148 la ancha, Shift) en
@@ -384,8 +386,20 @@ clic, bajos y cortos; con un aviso sonando, la carta se calla.
   botón que salta es un botón que no se acierta. Y nada que se lea pasa por delante de un mando, aunque deje pasar el
   toque: un mando tapado, aunque sea a medias, es un mando que no se encuentra. Lo que se aparta es lo que se lee, que
   acaba donde empieza la columna de mandos (`--columna-izquierda`) y, si baja hasta ella, a la derecha de la palanca de
-  pulgar. Lo mira `npm run carteles` con lo más largo que llevan el aviso, la lámpara, la tarjeta de la orden y el
-  subtítulo, en las cuatro maneras en que coinciden.
+  pulgar.
+- **Dónde va lo que se lee lo decide un solo sitio** (`src/ui/reparto.ts`, ADR 0030, enmienda H28f). La hoja dice dónde
+  *quiere* ir cada cosa —la columna de cabina, debajo de la barra, apoyado en el cuadro—; `repartirLoQueSeLee` mide lo
+  que se toca **sacándolo de la página** (todo `button`, `[role=button]`, campo, losa, palanca de pulgar, pieza del
+  cuadro que se explica y lo que lleva `data-tocable`) y comprueba que ahí no pisa nada. Si pisa, coloca **por
+  prioridad —el aviso, la lámpara, la tarjeta de la orden, el subtítulo, el tutor y la radio—**: primero la estrecha en
+  el tramo libre de su fila, sin bajar de la mitad de su hueco; luego la prueba en el sitio de una que va detrás o
+  debajo de lo ya puesto; y si no cabe en ninguno, **espera** (`.lee-espera`, escondida sin dejar su sitio), como en un
+  avión: uno a la vez y por orden, y lo que espera no se pierde. El aviso no espera nunca. Corre solo cuando cambia algo
+  de lo que se lee o de lo que se toca, no en cada fotograma. **Un solape nuevo se arregla ahí, no con otra variable**:
+  una variable de la hoja dice dónde prefiere ir una pieza, nunca de qué se aparta. Y lo que se añada que se toque y no
+  sea un botón lleva `data-tocable`, y entra solo en la cuenta. Lo mira `npm run carteles` con lo más largo que lleva
+  cada cosa —la orden, la más larga del código—, en las cuatro maneras en que coinciden y en las tres vistas: fuera,
+  cabina y la pantalla en grande del teléfono.
 - Separaciones de uso: 2, 4, 6, 8, 10, 12, 14 y 16 px. Radios: `--r-s` 10, `--r-m` 16 y `--r-l` 22; 999 px para las
   pastillas y 50 % para lo redondo.
 - **El texto ocupa su caja**: nunca `max-width` en `ch` ni en px para un párrafo. Si una frase no puede crecer, se
@@ -497,7 +511,8 @@ nada.
   de 44 × 44 px de pantalla**: en pantallas bajas el HUD se dibuja reducido, y ahí el tacto se divide por la escala
   (`--yema: calc(44px / var(--escala))`), porque el dedo no encoge con la pantalla. Lo mide `npm run carteles`
   (`scripts/verificar-carteles.mjs`) en diez pantallas —565 × 641, 900 × 600, 400 × 780, 1280 × 800 (con y sin
-  dedo), 1024 × 600, 915 × 412, 800 × 360, 780 × 360 y 864 × 330— y dos juegos: un reactor en Tenerife Norte en
+  dedo), 1024 × 600, 915 × 412, 800 × 360, 780 × 360 y 864 × 330, más la ventana de pie de 600 × 900 con ratón para lo
+  que se lee contra lo que se toca— y dos juegos: un reactor en Tenerife Norte en
   Taguato, que lleva la columna de mandos más larga, y la avioneta en Pettirossi en Guyrami, que lleva el rincón más
   alto. El peor caso real es el teléfono pequeño que llega a Paraguay: 780 × 360 con la pantalla completa, 330 de alto
   con la barra del navegador.

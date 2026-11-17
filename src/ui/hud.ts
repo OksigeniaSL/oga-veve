@@ -83,6 +83,7 @@ import { alPulsar, alPulsarDentro } from "./pulsar";
 import { botonDeNoExplicar } from "./no-volver-a-explicar";
 import { ponerLasDeSerie } from "./explicaciones-de-serie";
 import { escucharLosToquesQueExplican } from "./tocar-para-explicar";
+import { ESPERA, Repartidor } from "./reparto";
 // La ventana de las explicaciones se ofrece al registro al cargarse.
 import "./ventana-de-explicacion";
 import {
@@ -573,6 +574,11 @@ export class Hud {
   private subtituloObservado: ResizeObserver | null = null;
   /** Quién vigila el alto de la lámpara de la torre. Ver `medirLaLampara`. */
   private torreObservada: ResizeObserver | null = null;
+  /**
+   * Quien coloca lo que se lee donde no pise lo que se toca, por prioridad, y
+   * deja esperando lo que no cabe. Ver `ui/reparto.ts`.
+   */
+  private repartidor: Repartidor | null = null;
   /** Lo que mide el cuadro en la pantalla, para sus rótulos. Ver `medirLaUnidad`. */
   private cuadroObservado: ResizeObserver | null = null;
   /**
@@ -1836,7 +1842,7 @@ export class Hud {
           .volumen en la hoja.
         -->
         <div class="volumen">
-          <div class="volumen__capsula" data-hud="volumen-caja">
+          <div class="volumen__capsula" data-hud="volumen-caja" data-tocable>
             <button class="sonido" type="button" data-hud="sound" aria-pressed="false"></button>
             <span class="volumen__carril">
               <input class="volumen__mando" type="range" min="0" max="1" step="0.01"
@@ -1930,7 +1936,7 @@ export class Hud {
           pareja no se puede deducir: se veía «baja el motor» y no había
           manera de saber con qué se sube.
         -->
-        <div class="tarjeta medidor motor">
+        <div class="tarjeta medidor motor" data-tocable>
           ${gauges ? `<span class="medidor__etiqueta">${helicoptero ? "COLL" : INSTRUMENTS.throttle}</span>` : ""}
           <!--
             Y son botones de verdad, no dibujos. Estaban ahí para enseñar qué
@@ -2041,7 +2047,7 @@ export class Hud {
           `
           }</svg>
         </button>
-        <div class="tarjeta medidor freno" data-hud="brakes" hidden>
+        <div class="tarjeta medidor freno" data-hud="brakes" data-tocable hidden>
           ${gauges ? `<span class="medidor__etiqueta">${INSTRUMENTS.brakes}</span>` : ""}
           <!--
             La tecla se rellena desde el mapa al actualizar, no aquí. Escrita
@@ -2622,6 +2628,9 @@ export class Hud {
     this.medirElSubtitulo();
     this.medirLaLampara();
     this.senal.bind(this.root);
+    this.repartidor?.soltar();
+    this.repartidor = new Repartidor(this.root);
+    this.repartidor.vigilar();
     this.tutor.bind(this.root);
     this.reserveForPanel();
     this.reservarArriba();
@@ -4294,6 +4303,20 @@ export class Hud {
           `${Math.round(aPxDelHud(this.root, caja.left))}px`,
         );
       else this.root.style.removeProperty("--columna-izquierda");
+      /*
+       * **Y dónde acaba por abajo**, para que de pie, en cabina, lo que se lee
+       * empiece debajo de ella (ver «De pie, lo que se lee va debajo de la
+       * columna de mandos» en la hoja). Lo de dentro y no la caja, que en dos
+       * de fondo las tarjetas se salen de ella.
+       */
+      const abajo = [...columna.children]
+        .map((c) => c.getBoundingClientRect())
+        .filter((c) => c.width > 0 && c.height > 0)
+        .reduce((max, c) => Math.max(max, c.bottom), caja.height > 2 ? caja.bottom : 0);
+      this.root.style.setProperty(
+        "--columna-abajo",
+        `${Math.round(aPxDelHud(this.root, abajo))}px`,
+      );
     };
     /*
      * **Y dónde acaba la columna de la pausa**, para la tarjeta de quien habla
@@ -4364,6 +4387,8 @@ export class Hud {
        * caían encima de la segunda. Mide también el rincón.
        */
       this.reservarArriba();
+      // Y lo que se toca ha cambiado de sitio o de tamaño: otro reparto.
+      this.repartidor?.pedir(true);
     });
     this.barraObservada.observe(barra);
     if (columna) this.barraObservada.observe(columna);
@@ -4408,6 +4433,7 @@ export class Hud {
       if (alto === escrito) return;
       escrito = alto;
       this.root.style.setProperty("--subtitulo-alto", alto);
+      this.repartidor?.pedir(true);
     };
     escribir();
     this.subtituloObservado?.disconnect();
@@ -4441,12 +4467,24 @@ export class Hud {
       if (alto === escrito) return;
       escrito = alto;
       this.root.style.setProperty("--torre-alto", alto);
+      this.repartidor?.pedir(true);
     };
     escribir();
     this.torreObservada?.disconnect();
     if (typeof ResizeObserver === "undefined") return;
     this.torreObservada = new ResizeObserver(escribir);
     this.torreObservada.observe(torre);
+  }
+
+  /**
+   * **Reparte ya lo que se lee**, sin esperar al fotograma que viene. Para los
+   * bancos, que encienden el aviso y la lámpara a mano mientras el juego los
+   * apaga en cada fotograma: así miden el reparto del estado que han puesto y
+   * no el de un fotograma a medias. El juego no lo necesita: lo suyo no cambia
+   * entre fotograma y fotograma.
+   */
+  repartirAhora(): void {
+    this.repartidor?.ahora();
   }
 
   /**
@@ -5584,11 +5622,16 @@ export class Hud {
    * `.hay-torre`). La altura en grande no cuenta: esa no espera.
    */
   private subtituloEsperando(): boolean {
+    if (this.hint.classList.contains("insignia--cifra")) return false;
+    /*
+     * Y si espera porque no cabe sin pisar un mando o lo que manda más: el
+     * reparto lo deja esperando (ver `ui/reparto.ts`), y espera entero igual.
+     */
+    if (this.hint.classList.contains(ESPERA)) return true;
     return (
       this.root.classList.contains("hud--avisando") &&
       !!this.torre &&
-      !this.torre.hidden &&
-      !this.hint.classList.contains("insignia--cifra")
+      !this.torre.hidden
     );
   }
 

@@ -31,6 +31,7 @@
  *
  * Uso: `node scripts/verificar-carteles.mjs`
  */
+import { readFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { createServer } from "vite";
 import { baseDe } from "./servidor.mjs";
@@ -86,6 +87,26 @@ function pequenos() {
 
 const comprobar = (nombre, ok, detalle, porque) =>
   resultados.push({ nombre, ok: !!ok, detalle, porque });
+
+/*
+ * **Lo más largo que lleva la tarjeta de la orden**, sacado del código y no
+ * escrito aquí: todo rótulo que el juego le pasa (`rotulo` y `claveDelAviso`
+ * en `game.ts`), buscado en el castellano del juego. H28e la medía con la que
+ * hubiera al arrancar el banco, y la más larga mide cuatro veces eso.
+ */
+const LA_ORDEN_MAS_LARGA = (() => {
+  const juego = readFileSync("src/game.ts", "utf8");
+  const dic = readFileSync("src/i18n/es-PY.ts", "utf8");
+  let larga = "";
+  for (const m of juego.matchAll(/(?:rotulo|claveDelAviso)\(([^)]*)\)/g))
+    for (const k of m[1].matchAll(/"([a-zA-Z0-9_.]+)"/g)) {
+      const clave = k[1].replace(/\./g, "\\.");
+      const re = new RegExp(`^\\s*"${clave}":\\s*\\n?\\s*"((?:[^"\\\\]|\\\\.)*)"`, "m");
+      const texto = re.exec(dic)?.[1] ?? "";
+      if (texto.length > larga.length) larga = texto;
+    }
+  return larga;
+})();
 
 /**
  * Los tamaños donde esto puede romperse.
@@ -1203,6 +1224,12 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
   await page.waitForTimeout(300);
 
   /*
+   * **Y todo lo que se lee contra todo lo que se toca**, en las tres vistas.
+   * Ver `mirarLoQueSeLee`, más abajo.
+   */
+  await mirarLoQueSeLee(page, donde);
+
+  /*
    * **Y quien juega sin sonido lee a la instructora aunque coincidan el aviso
    * y la lámpara.** Con los dos encendidos el subtítulo espera escondido, y su
    * reloj seguía corriendo: una frase de pocos segundos se acababa detrás de un
@@ -1579,6 +1606,285 @@ const CALCOS = ["guyrami", "tuka", "taguato", "taguato-ruvicha"];
  * nada. Corre en la página; el subtítulo se vuelve a poner en cada fotograma,
  * que el juego lo borra, y se mide cuando el HUD ya ha medido su alto.
  */
+/**
+ * **Nada de lo que se lee pisa nada de lo que se toca, ni se pisan entre sí**
+ * (ADR 0030, enmienda H28f).
+ *
+ * Cinco tandas seguidas (H28b a H28e) miraron unos carteles contra unos
+ * mandos, y cada una dejó al lado otro solape que no medía: el asa del cuadro,
+ * la pantalla en grande, la radio de la barra, la cabina de pie. Aquí se mira
+ * todo a la vez y sin lista a mano:
+ *
+ * - **lo que se toca sale de la página**: lo que es un botón, un campo o lleva
+ *   una marca de lo que se toca (la misma regla que `LO_QUE_SE_TOCA` en
+ *   `ui/reparto.ts`, escrita aquí aparte para no medir con la vara de quien se
+ *   mide), visible y dentro de la pantalla;
+ * - **lo que se lee** es el aviso, la lámpara de la torre, la tarjeta de la
+ *   orden, el subtítulo (y la altura en grande, que va en su caja), el tutor
+ *   y la radio, **con lo más largo que lleva cada uno**: la orden, la más
+ *   larga del código; la radio, una frase de tráfico larga;
+ * - en **las tres vistas** —fuera, cabina y, en el teléfono, la pantalla en
+ *   grande— y en **las cuatro maneras** en que coinciden.
+ *
+ * Lo que espera (`lee-espera`, escondido sin dejar su sitio) no cuenta como
+ * pisado: esperar es la respuesta cuando no hay sitio. Pero **el aviso no
+ * espera nunca**, y el subtítulo solo y la lámpara con el subtítulo se tienen
+ * que ver: si no, esconderlo todo pasaría la cuenta.
+ */
+async function mirarLoQueSeLee(page, donde) {
+  /*
+   * De pie y con el dedo no se vuela: el cartel de girar la pantalla tapa el
+   * vuelo entero, y debajo no hay nada que leer ni que tocar. Se mira que esté.
+   */
+  const gira = await page.evaluate(() => {
+    const g = document.querySelector('[data-hud="gira"]');
+    if (!g || g.closest("[hidden]")) return false;
+    const cs = getComputedStyle(g);
+    const r = g.getBoundingClientRect();
+    return cs.display !== "none" && cs.visibility !== "hidden" && r.width >= innerWidth - 2;
+  });
+  if (gira) {
+    comprobar(
+      `${donde}: de pie con el dedo, el cartel de girar la pantalla tapa el vuelo`,
+      true,
+      "lo que se lee y lo que se toca quedan debajo, y no se miran",
+      "",
+    );
+    return;
+  }
+  const vistas = ["chase", "cockpit"];
+  const telefono = await page.evaluate(
+    () => matchMedia("(pointer: coarse) and (orientation: landscape) and (max-height: 500px)").matches,
+  );
+  if (telefono) vistas.push("grande");
+  for (const vista of vistas) {
+    await page.evaluate((v) => globalThis.__oga?.ponerVista?.(v === "grande" ? "chase" : v), vista);
+    // En el teléfono el cuadro nace recogido: se sube para poner grande su
+    // pantalla, y al acabar se deja como estaba, que lo de después lo mide así.
+    let bajado = false;
+    if (vista === "grande")
+      bajado = await page.evaluate(async () => {
+        const cuadro = document.querySelector('[data-hud="cuadro"]');
+        const estaba = !!cuadro?.classList.contains("cuadro--bajado");
+        if (estaba)
+          document
+            .querySelector('[data-hud="cuadro-tirador"]')
+            ?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
+        await new Promise((r) => setTimeout(r, 400));
+        document.querySelector(".tel__losa--ias")?.click();
+        return estaba;
+      });
+    await page.waitForTimeout(500);
+    const aqui = `${donde} ${{ chase: "de fuera", cockpit: "en cabina", grande: "con la pantalla en grande" }[vista]}`;
+    const malos = [];
+    const perdidos = [];
+    for (const estado of [
+      "los tres",
+      "el aviso y el subtítulo",
+      "la lámpara y el subtítulo",
+      "el subtítulo solo",
+    ]) {
+      const m = await page.evaluate(medirLoQueSeLee, [estado, LA_ORDEN_MAS_LARGA, vista]);
+      malos.push(...m.malos.map((x) => `${estado}: ${x}`));
+      perdidos.push(...m.perdidos.map((x) => `${estado}: ${x}`));
+    }
+    comprobar(
+      `${aqui}: con lo más largo que llevan, nada de lo que se lee pisa lo que se toca ni se pisan entre sí`,
+      malos.length === 0,
+      malos.join(" · ") || "ni un solape en las cuatro maneras",
+      "un mando tapado, aunque sea a medias y deje pasar el toque, es un mando que no se encuentra",
+    );
+    comprobar(
+      `${aqui}: el aviso no espera nunca, y el subtítulo solo y la lámpara se ven`,
+      perdidos.length === 0,
+      perdidos.join(" · ") || "se ven",
+      "esperar es para cuando no cabe todo, no para no tener que colocar nada",
+    );
+    if (vista === "grande")
+      await page.evaluate(async (estaba) => {
+        globalThis.__oga?.juegoParaTrazas?.()?.hud?.ponerGrande?.(null);
+        await new Promise((r) => setTimeout(r, 200));
+        if (estaba)
+          document
+            .querySelector('[data-hud="cuadro-tirador"]')
+            ?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
+        await new Promise((r) => setTimeout(r, 400));
+      }, bajado);
+  }
+  await page.evaluate(() => globalThis.__oga?.ponerVista?.("chase"));
+  await page.waitForTimeout(300);
+}
+
+/**
+ * Corre en la página: enciende lo que pide `estado` con lo más largo que
+ * lleva cada cosa, durante unos fotogramas —el juego apaga y borra lo suyo en
+ * cada uno, y el reparto coloca en el siguiente—, y mide.
+ */
+async function medirLoQueSeLee([estado, ORDEN_LARGA, vista]) {
+  const AVISO = "Se rompió algo. Volvemos al helipuerto…";
+  const SUB =
+    "Nos queda justo, así que avisamos a la torre: combustible mínimo. No es una emergencia: es avisarle que no podemos esperar.";
+  const TORRE = "JAZ 9021, mantenga fuera de pista 12, número tres para la salida";
+  const RADIO =
+    "Iberia tres uno dos dos, autorizado a aterrizar pista dos tres, viento dos cuatro cero grados doce nudos";
+  const SE_TOCA =
+    'button:not(:disabled), [role="button"], a[href], input, select, textarea, ' +
+    "[data-tocable], [data-touch], [data-tel-grande], [data-mcp-rueda], [data-mcp-alt], " +
+    "[data-radio-mando], [data-explica]:not([data-explica-fondo])";
+  const conAviso = estado === "los tres" || estado === "el aviso y el subtítulo";
+  const conTorre = estado === "los tres" || estado === "la lámpara y el subtítulo";
+  const hud = document.querySelector(".hud");
+  const aviso = document.querySelector('[data-hud="warning"]');
+  const torre = document.querySelector('[data-hud="torre"]');
+  const hint = document.querySelector('[data-hud="hint"]');
+  const senal = document.querySelector('[data-hud="senal"]');
+  const senalTexto = document.querySelector('[data-hud="senal-texto"]');
+  const radio = document.querySelector('[data-hud="radio"]');
+  if (!hud || !aviso || !torre || !hint)
+    return { malos: ["no se encontraron las piezas"], perdidos: [] };
+  const sinLetras = hud.classList.contains("hud--sin-letras");
+  const fila = torre.querySelector('[data-hud="torre-fila"]');
+  const avion = torre.querySelector(".torre__quien svg");
+  const dos = avion ? avion.outerHTML + avion.outerHTML : "";
+  const antes = {
+    fila: fila ? [fila.hidden, fila.innerHTML] : null,
+    orden: senalTexto?.textContent ?? "",
+    senal: senal?.hidden,
+    radio: radio ? [radio.hidden, radio.innerHTML] : null,
+  };
+  const poner = () => {
+    hud.classList.toggle("hud--avisando", conAviso);
+    aviso.classList.toggle("aviso-hud--visible", conAviso);
+    aviso.classList.remove("aviso-hud--parpadeo");
+    const flecha = aviso.querySelector('[data-hud="warning-arrow"]');
+    const avTexto = aviso.querySelector('[data-hud="warning-text"]');
+    const conFlecha = conAviso ? "↺" : "";
+    if (flecha && flecha.textContent !== conFlecha) flecha.textContent = conFlecha;
+    const dice = conAviso && !sinLetras ? AVISO : "";
+    if (avTexto && avTexto.textContent !== dice) avTexto.textContent = dice;
+    torre.hidden = !conTorre;
+    if (conTorre) {
+      torre.classList.remove("torre--verde");
+      torre.classList.add("torre--roja");
+      if (fila && avion && fila.innerHTML !== dos) {
+        fila.hidden = false;
+        fila.innerHTML = dos;
+      }
+      const o = torre.querySelector('[data-hud="torre-texto"]');
+      const orden = sinLetras ? "" : TORRE;
+      if (o && o.textContent !== orden) o.textContent = orden;
+    }
+    if (!sinLetras && hint.textContent !== SUB) hint.textContent = SUB;
+    if (senal) {
+      senal.hidden = false;
+      const orden = sinLetras ? "" : ORDEN_LARGA;
+      if (senalTexto && senalTexto.textContent !== orden) {
+        senalTexto.textContent = orden;
+        senalTexto.hidden = !orden;
+      }
+    }
+    if (radio && !sinLetras) {
+      radio.hidden = false;
+      if (radio.textContent !== RADIO) radio.textContent = RADIO;
+    }
+  };
+  for (let i = 0; i < 5; i++) {
+    poner();
+    await new Promise((r) => requestAnimationFrame(() => r()));
+  }
+  poner();
+  /*
+   * El reparto corre en el fotograma que viene, y entre fotograma y fotograma
+   * el juego apaga lo que aquí se enciende a mano: se le pide que reparta ya,
+   * con este estado. Ver `Hud.repartirAhora`.
+   */
+  globalThis.__oga?.juegoParaTrazas?.()?.hud?.repartirAhora?.();
+  const seVe = (el) => {
+    if (!el || el.closest("[hidden]")) return false;
+    const cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden") return false;
+    const r = el.getBoundingClientRect();
+    if (r.right <= 0 || r.bottom <= 0 || r.left >= innerWidth || r.top >= innerHeight) return false;
+    return r.width > 2 && r.height > 2;
+  };
+  const pisa = (a, b) =>
+    Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+    Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+  const nombre = (el) =>
+    el.dataset?.hud ??
+    el.dataset?.telGrande ??
+    el.dataset?.explica ??
+    el.dataset?.touch ??
+    (String(el.className?.baseVal ?? el.className).slice(0, 24) || el.tagName.toLowerCase());
+  const SE_LEE = [
+    ["el aviso", aviso, conAviso],
+    ["la lámpara", torre, conTorre],
+    ["la tarjeta de la orden", senal, true],
+    ["el subtítulo", hint, true],
+    ["el tutor", document.querySelector('[data-hud="tutor"]'), true],
+    ["la radio", radio, true],
+  ];
+  const leidos = SE_LEE.filter(([, el, encendido]) => encendido && seVe(el));
+  // Lo que no se ve —transparente o escondido por quien lo contiene— no es un
+  // mando que se tape.
+  const tocables = [...document.querySelectorAll(SE_TOCA)].filter(
+    (el) =>
+      seVe(el) &&
+      el.checkVisibility({ opacityProperty: true, visibilityProperty: true }) &&
+      !leidos.some(([, l]) => l.contains(el) || el.contains(l)),
+  );
+  /*
+   * Lo que se ve de cada cosa que se toca: recortada por los `<svg>` que la
+   * contienen. La caja de un grupo de SVG es la de todo su dibujo, también lo
+   * recortado, y la cinta de velocidad lleva escritas todas las velocidades:
+   * su caja sube por encima del cuadro.
+   */
+  const queSeVe = (t) => {
+    const c = t.getBoundingClientRect();
+    let [l, a, d, b] = [c.left, c.top, c.right, c.bottom];
+    for (let s = t.parentElement?.closest("svg"); s; s = s.parentElement?.closest("svg")) {
+      const x = s.getBoundingClientRect();
+      [l, a, d, b] = [Math.max(l, x.left), Math.max(a, x.top), Math.min(d, x.right), Math.min(b, x.bottom)];
+    }
+    return { left: l, top: a, right: d, bottom: b };
+  };
+  const malos = [];
+  for (const [que, el] of leidos) {
+    const r = el.getBoundingClientRect();
+    const sobre = [...new Set(tocables.filter((t) => pisa(r, queSeVe(t))).map(nombre))];
+    if (sobre.length) malos.push(`${que} sobre ${sobre.join(", ")}`);
+  }
+  for (let i = 0; i < leidos.length; i++)
+    for (let j = i + 1; j < leidos.length; j++)
+      if (pisa(leidos[i][1].getBoundingClientRect(), leidos[j][1].getBoundingClientRect()))
+        malos.push(`${leidos[i][0]} y ${leidos[j][0]}`);
+  const perdidos = [];
+  if (conAviso && !seVe(aviso)) perdidos.push("el aviso no se ve");
+  /*
+   * Con la pantalla en grande, el subtítulo más largo puede esperar: encima de
+   * la pantalla queda una fila (`--fila-del-subtitulo`), la de la barra la
+   * lleva la tarjeta de la orden y a los lados hay mandos. Espera entero y
+   * sale al quitar la pantalla grande.
+   */
+  if (!sinLetras && estado === "el subtítulo solo" && vista !== "grande" && !seVe(hint))
+    perdidos.push("el subtítulo espera");
+  // Con la pantalla en grande tampoco la lámpara, por lo mismo: ver arriba y
+  // la enmienda H28f del ADR 0030, «Lo que queda».
+  if (estado === "la lámpara y el subtítulo" && vista !== "grande" && !seVe(torre))
+    perdidos.push("la lámpara espera");
+  // Y todo como estaba, para la vista siguiente.
+  hud.classList.remove("hud--avisando");
+  aviso.classList.remove("aviso-hud--visible");
+  torre.hidden = true;
+  torre.classList.remove("torre--roja");
+  if (fila && antes.fila) [fila.hidden, fila.innerHTML] = antes.fila;
+  hint.textContent = "";
+  if (senalTexto) senalTexto.textContent = antes.orden;
+  if (senal) senal.hidden = antes.senal;
+  if (radio && antes.radio) [radio.hidden, radio.innerHTML] = antes.radio;
+  return { malos, perdidos };
+}
+
 async function medirAvisoYLampara() {
   const AVISO = "Se rompió algo. Volvemos al helipuerto…";
   const SUBTITULO =
@@ -1669,6 +1975,9 @@ async function medirAvisoYLampara() {
   }
   poner();
   encenderLosTres();
+  // Con el reparto de este estado, no el de un fotograma a medias (H28f).
+  const repartir = () => globalThis.__oga?.juegoParaTrazas?.()?.hud?.repartirAhora?.();
+  repartir();
   const cabina = hud.classList.contains("hud--cabina");
   const redondos = [
     ...document.querySelectorAll(
@@ -1809,6 +2118,7 @@ async function medirAvisoYLampara() {
   hud.classList.add("hud--avisando");
   aviso.classList.add("aviso-hud--visible");
   torre.hidden = true;
+  repartir();
   const conElSub = [
     ["el aviso", aviso],
     ["el subtítulo", hint],
@@ -1848,6 +2158,7 @@ async function medirAvisoYLampara() {
   }
   poner();
   ponerTorre();
+  repartir();
   const mandos = [...document.querySelectorAll(".hud__derecha > *")].filter(visible);
   const senal = document.querySelector('[data-hud="senal"]');
   const t2 = torre.getBoundingClientRect();
@@ -1886,6 +2197,7 @@ async function medirAvisoYLampara() {
   }
   poner();
   torre.hidden = true;
+  repartir();
   const elSubSolo = [
     ["el subtítulo", hint],
     ["la tarjeta de la orden", senalEl],
@@ -1894,6 +2206,31 @@ async function medirAvisoYLampara() {
   salida.entreSi.push(...entreSi("el subtítulo solo", elSubSolo));
   hint.textContent = "";
   return salida;
+}
+
+/*
+ * **Y de pie con ratón**, una ventana de 600 × 900: no es de las pantallas de
+ * arriba —ahí faltan cosas que no se pidieron para ella—, pero en cabina la
+ * tarjeta de la orden y la columna de mandos se cruzaban aun sin lámpara
+ * (ADR 0030, H28e). Solo lo que se lee contra lo que se toca, con el reactor
+ * de Tenerife Norte.
+ */
+{
+  const page = await navegador.newPage({ viewport: { width: 600, height: 900 } });
+  await page.goto(
+    `${BASE}/?escenario=tenerife-norte&hora=16&leccion=despegue&tramo=taguato&avion=jaz-90&meteo=`,
+  );
+  const arranco = await page
+    .waitForFunction(() => globalThis.__oga?.estado?.(), null, { timeout: 60000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!arranco)
+    comprobar("taguato 600×900 de pie: el juego arrancó", false, "no arrancó en 60 s", "");
+  else {
+    await page.waitForTimeout(1200);
+    await mirarLoQueSeLee(page, "taguato 600×900 de pie");
+  }
+  await page.close();
 }
 
 function medirLaCarta() {

@@ -39,6 +39,35 @@ export function escribirRincon(raiz: HTMLElement): void {
     "--rincon-alto",
     `${Math.round(aPxDelHud(raiz, c.height))}px`,
   );
+  /*
+   * **Y lo que ocupa sin la frase de la tarjeta**, para la columna de mandos,
+   * que va debajo del rincón donde hay alto. La columna se toca y no se mueve
+   * por lo que se lee (ADR 0030, H28f): con la frase más larga de la tarjeta,
+   * 234 letras, la columna bajaba hasta detrás del cuadro. Ahora se coloca
+   * con la tarjeta en su dibujo; si la frase no cabe, el reparto la recoge
+   * (`ui/reparto.ts`).
+   */
+  const senal = rincon.querySelector<HTMLElement>(".senal");
+  let sobra = 0;
+  if (senal && !senal.hidden && senal.offsetHeight > 0) {
+    const cs = getComputedStyle(senal);
+    const px = (v: string): number => Number.parseFloat(v) || 0;
+    const sinFrase =
+      Math.max(
+        ...[".senal__dibujo", ".senal__tecla", ".senal__letra"].map(
+          (s) => senal.querySelector<HTMLElement>(s)?.offsetHeight ?? 0,
+        ),
+      ) +
+      px(cs.paddingTop) +
+      px(cs.paddingBottom) +
+      px(cs.borderTopWidth) +
+      px(cs.borderBottomWidth);
+    sobra = Math.max(0, senal.offsetHeight - sinFrase);
+  }
+  raiz.style.setProperty(
+    "--rincon-alto-mandos",
+    `${Math.round(aPxDelHud(raiz, c.height) - sobra)}px`,
+  );
   if (c.width > 2)
     raiz.style.setProperty(
       "--rincon-izquierda",
