@@ -513,6 +513,14 @@ export const VA_REMOLCANDO = 2;
 /** Lo que tarda en engancharse: la cuna abraza la rueda, el pasador y el cable, s. */
 export const SE_ENGANCHA = 6;
 /**
+ * **Lo que levanta la cuna la rueda de morro**, m. Un tractor sin barra no empuja la
+ * rueda por el suelo: la abraza entre sus dos compuertas y la sube sobre la pala, y el
+ * avión va con la rueda de morro en vilo y apoyado en las principales. Lo justo para
+ * que no toque el asfalto: quince centímetros. Antes la rueda se quedaba en el suelo y
+ * la pala la atravesaba (H20c puso la cuna justo debajo de ella).
+ */
+export const LEVANTA_LA_RUEDA = 0.15;
+/**
  * **Lo que anda el tractor marcha atrás** los últimos metros hasta la rueda de morro,
  * m/s, y cuántos metros son: se para delante del morro, mirando hacia donde va a tirar,
  * y retrocede despacio hasta abrazar la rueda con la cuna.
@@ -572,7 +580,19 @@ export interface MedidasDelAvion {
    * décimas más grande, casi dos por detrás.
    */
   readonly rueda?: number;
+  /**
+   * **Si el tractor no le levanta la rueda**: el de rueda de cola, que no tiene rueda de
+   * morro que llevar en vilo. Ver `Remolque.ruedaEnVilo`.
+   */
+  readonly sinVilo?: boolean;
 }
+
+/**
+ * **La cuna del tractor**, la parte de atrás que abraza la rueda de morro, en largos
+ * del tractor. La rueda va en medio de ella, encima de la pala: ver `tractorEnganchado`
+ * y el dibujo en `tractor-de-remolque.ts`.
+ */
+export const CUNA_DEL_TRACTOR = 0.32;
 
 /** **El tractor de este avión**: largo y ancho, m. Ver `tractorPara`. */
 export interface MedidasDelTractor {
@@ -716,6 +736,28 @@ export class Remolque {
   get enganchado(): boolean {
     return this.conCable || (this.faseAhora === "soltando" && this.enFase < SE_SUELTA / 2);
   }
+  /**
+   * **Lo que lleva levantada la rueda de morro**, m: la sube la cuna en la segunda mitad
+   * del enganche, ya abrazada; la lleva en vilo enganchado, empujando y frenado; y la
+   * baja en la primera mitad de la suelta, que es lo que el tractor la sigue teniendo
+   * (`enganchado`). Ver `LEVANTA_LA_RUEDA`.
+   */
+  get ruedaEnVilo(): number {
+    if (this.avionMide.sinVilo) return 0;
+    const deCeroAUno = (s: number) => Math.min(1, Math.max(0, s));
+    switch (this.faseAhora) {
+      case "enganchando":
+        return LEVANTA_LA_RUEDA * deCeroAUno((this.enFase - SE_ENGANCHA / 2) / (SE_ENGANCHA / 2));
+      case "enganchado":
+      case "empujando":
+      case "frenado":
+        return LEVANTA_LA_RUEDA;
+      case "soltando":
+        return LEVANTA_LA_RUEDA * deCeroAUno(1 - this.enFase / (SE_SUELTA / 2));
+      default:
+        return 0;
+    }
+  }
   get medidasDelTractor(): MedidasDelTractor {
     return this.tractorMide;
   }
@@ -852,12 +894,16 @@ export class Remolque {
     this.enFase = 0;
   }
 
-  /** **El tractor pegado a la rueda de morro**: la cuna en la rueda, el cuerpo por delante. */
+  /**
+   * **El tractor pegado a la rueda de morro**: la rueda en medio de la cuna, encima de
+   * la pala, y el cuerpo por delante. Iba a un metro de la trasera en todos, y en el
+   * pequeño, de tres metros, eso era dentro del chasis, por delante de la cuna.
+   */
   private tractorEnganchado(): Pose {
     const a = this.avion;
     const n = vector(a.rumbo);
     const r = this.ruedaDeMorro;
-    const delante = this.tractorMide.largo / 2 - 1;
+    const delante = (this.tractorMide.largo * (1 - CUNA_DEL_TRACTOR)) / 2;
     return { x: r.x + n.x * delante, z: r.z + n.z * delante, rumbo: a.rumbo };
   }
 
@@ -1021,6 +1067,22 @@ export class Remolque {
 // ── Lo que queda ─────────────────────────────────────────────────────────
 
 /** El rumbo de `a` a `b`, rad, cero al norte. */
+/**
+ * **El avión con la rueda de morro en vilo**, apoyado en las principales: lo que
+ * cabecea, rad, morro arriba, y lo que sube su referencia, m, para que las
+ * principales no se hundan al girar sobre ella. `principales` es lo que van por
+ * detrás de la referencia, y `batalla` de ellas a la rueda de morro.
+ */
+export function morroEnVilo(
+  levanta: number,
+  batalla: number,
+  principales: number,
+): { cabeceo: number; sube: number } {
+  if (levanta <= 0 || batalla <= 0) return { cabeceo: 0, sube: 0 };
+  const cabeceo = Math.asin(Math.min(1, levanta / batalla));
+  return { cabeceo, sube: Math.sin(cabeceo) * principales };
+}
+
 export function rumboEntre(a: PuntoXZ, b: PuntoXZ): number {
   return Math.atan2(b.x - a.x, -(b.z - a.z));
 }

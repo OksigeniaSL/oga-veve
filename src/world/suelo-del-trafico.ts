@@ -310,6 +310,20 @@ const PRIMER_TRAMO = 40;
 const MUESTRA = 5;
 
 /**
+ * **A cuánto del puesto puede acabar el camino y seguir siendo en el puesto**, m:
+ * más es que se recortó al asfalto y se queda en la calle. Ver `rutaEntre`.
+ */
+const HASTA_EL_PUESTO = 2;
+
+/**
+ * **De cuántos en cuántos puestos se busca**, de los más cercanos a los más
+ * lejanos, y **cuántas tandas** como mucho mientras solo salgan recortados.
+ * Ver `rutaEntre`.
+ */
+const POR_TANDA = 8;
+const TANDAS = 3;
+
+/**
  * Lo que se le perdona al camino fuera del asfalto dibujado, m: los ejes de
  * OpenStreetMap se unen en los cruces con un par de metros de juego.
  */
@@ -736,7 +750,20 @@ export function sueloDelTrafico(
     return null;
   };
 
-  /** La mejor ruta entre `punto` y los ocho puestos de `lista` más cercanos. Ver `rutaConPuesto`. */
+  /**
+   * **La mejor ruta entre `punto` y los puestos de `lista`**, de ocho en ocho y
+   * de los más cercanos a los más lejanos. Ver `rutaConPuesto`.
+   *
+   * Si los ocho más cercanos solo dan un camino recortado —que acaba en el
+   * último nudo de asfalto, en una calle, y no en el puesto: ver `mejorEntre`—,
+   * se miran los ocho siguientes, y los otros ocho, por si alguno se alcanza
+   * entero. Mirando solo los ocho, en Los Rodeos el turbohélice que aterrizaba
+   * aparcaba al final del ramal de la entrada de la plataforma, a 137 m del
+   * 13, que es por donde se llega a todos los puestos de ese lado y por donde
+   * pasaba tu raya, a cuatro metros de su centro: te quedabas detrás de él
+   * hasta que lo retiraban. Si ninguno de los veinticuatro se alcanza entero,
+   * el recortado de los ocho primeros, como antes.
+   */
   const rutaEntre = (
     punto: Punto,
     hacia: "puesto" | "punto",
@@ -746,14 +773,35 @@ export function sueloDelTrafico(
     deOtros: PuestosDeOtros | undefined,
     vale: ((puntos: readonly Punto[]) => boolean) | undefined,
   ): { puntos: Punto[]; ocupada: boolean } | null => {
-    const cerca = [...lista]
-      .sort(
-        (a, b) =>
-          Math.hypot(a[0] - punto[0], a[1] - punto[1]) -
-          Math.hypot(b[0] - punto[0], b[1] - punto[1]),
-      )
-      .slice(0, 8);
-    let mejor: { puntos: Punto[]; largo: number; ocupada: boolean } | null = null;
+    const porCercania = [...lista].sort(
+      (a, b) =>
+        Math.hypot(a[0] - punto[0], a[1] - punto[1]) -
+        Math.hypot(b[0] - punto[0], b[1] - punto[1]),
+    );
+    const primera = mejorEntre(punto, hacia, porCercania.slice(0, POR_TANDA), porDondeNo, deContacto, deOtros, vale);
+    if (!primera || !primera.recortado) return primera;
+    for (let desde = POR_TANDA; desde < Math.min(porCercania.length, POR_TANDA * TANDAS); desde += POR_TANDA) {
+      const otra = mejorEntre(punto, hacia, porCercania.slice(desde, desde + POR_TANDA), porDondeNo, deContacto, deOtros, vale);
+      if (otra && !otra.recortado && (!otra.ocupada || primera.ocupada)) return otra;
+    }
+    return primera;
+  };
+
+  /**
+   * La mejor ruta entre `punto` y los puestos de `cerca`: la que no pasa por
+   * encima de nadie, de ésas la que llega entera al puesto, y de ésas la más
+   * corta.
+   */
+  const mejorEntre = (
+    punto: Punto,
+    hacia: "puesto" | "punto",
+    cerca: readonly Punto[],
+    porDondeNo: { puntos: Punto[]; radio: number } | undefined,
+    deContacto: boolean,
+    deOtros: PuestosDeOtros | undefined,
+    vale: ((puntos: readonly Punto[]) => boolean) | undefined,
+  ): { puntos: Punto[]; ocupada: boolean; recortado: boolean } | null => {
+    let mejor: { puntos: Punto[]; largo: number; ocupada: boolean; recortado: boolean } | null = null;
     /*
      * Hacia los puestos, de una vez: el buscador corre una vez por origen y
      * cada destino es solo su último trozo. Uno por puesto eran ocho búsquedas
@@ -768,9 +816,9 @@ export function sueloDelTrafico(
       const r = rutas[k];
       if (!r) continue;
       const ocupada = !!r.ocupada;
-      // La que no pasa por encima de nadie, y de ésas la más corta.
+      // La que no pasa por encima de nadie; y una entera, más larga, gana a una recortada.
       if (mejor && (ocupada && !mejor.ocupada)) continue;
-      if (mejor && ocupada === mejor.ocupada && r.largo >= mejor.largo) continue;
+      if (mejor && ocupada === mejor.ocupada && !mejor.recortado && r.largo >= mejor.largo) continue;
       /*
        * Y si el remate hasta el puesto cruza campo —hay aeródromos con los
        * puestos dibujados lejos de toda calle y fuera de la plataforma
@@ -797,9 +845,24 @@ export function sueloDelTrafico(
       const extremo = hacia === "puesto" ? puntos[puntos.length - 1]! : puntos[0]!;
       if (!puestoLibre(extremo[0], -extremo[1], deOtros)) continue;
       if (vale && !vale(puntos)) continue;
-      mejor = { puntos, largo: r.largo, ocupada };
+      /*
+       * **Y mejor uno al que se llega entero que uno recortado.** Recortado, el
+       * avión se queda en el último nudo de asfalto, que es una calle: en Los
+       * Rodeos, el turbohélice que salía esperaba su turno a sesenta metros del
+       * puesto, en la entrada de la plataforma por la que se llega a todos los
+       * de ese lado, con tu raya a dos metros de su centro. Tú no podías pasar,
+       * él salía hacia ti por la misma calle, y a los treinta segundos frente a
+       * frente se le retiraba (`PACIENCIA_CON_QUIEN_JUEGA` en `trafico.ts`).
+       */
+      const xy = cerca[k]!;
+      const recortado = Math.hypot(extremo[0] - xy[0], extremo[1] - xy[1]) > HASTA_EL_PUESTO;
+      if (mejor && ocupada === mejor.ocupada) {
+        if (recortado && !mejor.recortado) continue;
+        if (recortado === mejor.recortado && r.largo >= mejor.largo) continue;
+      }
+      mejor = { puntos, largo: r.largo, ocupada, recortado };
     }
-    return mejor ? { puntos: mejor.puntos, ocupada: mejor.ocupada } : null;
+    return mejor ? { puntos: mejor.puntos, ocupada: mejor.ocupada, recortado: mejor.recortado } : null;
   };
 
   let unaSola: boolean | undefined;
@@ -962,7 +1025,19 @@ export function sueloDelTrafico(
       let deReserva: ReturnType<SueloDelTrafico["salida"]> = null;
       let remonte: ReturnType<SueloDelTrafico["salida"]> = null;
       let remonteEncima: ReturnType<SueloDelTrafico["salida"]> = null;
-      for (const boca of deCabecera.slice(0, BOCAS_DE_SALIDA)) {
+      for (let i = 0; i < deCabecera.length; i++) {
+        /*
+         * **De las primeras bocas desde la cabecera; y si ninguna sirve, de las demás**,
+         * remontando más pista. En El Hierro, por la 34, del grupo del 3 no se llega
+         * a ninguna de las seis primeras sin pisar la pista —la ruta más corta va por
+         * las rayas de rodaje pintadas sobre ella—, y sí a la C y a la D, más arriba,
+         * por la línea de entrada de su grupo: se entra por ahí y se remonta, que es
+         * lo que se hace en un campo sin calle paralela, y lo que publica su AIP, con
+         * salida autónoma de todos sus puestos (AD 2-GCHI PDC 1-2). Sin esto, de esos
+         * puestos no salía nadie, ni del 2A por la 34 ni del 1 por la 16.
+         */
+        if (i >= BOCAS_DE_SALIDA && (deReserva || remonte || remonteEncima)) break;
+        const boca = deCabecera[i]!;
         const daSuPista = pistaDesde(boca) >= pistaQueNecesita;
         if (!daSuPista && remonte) continue;
         const nudo = grafo.nudos[boca.nudo]!;

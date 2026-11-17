@@ -82,6 +82,7 @@ import {
 import { desplazadoDe } from "./umbral-desplazado";
 import {
   poseDelEmpuje,
+  morroEnVilo,
   Remolque,
   vector,
   type Empuje,
@@ -1411,6 +1412,23 @@ const MIRA_LOS_TRAMOS = 0.25;
  * `tramoDeFrente` en `tramo-de-frente.ts`.
  */
 const ANTES_DEL_TRAMO = PASO_DEL_TRAMO + 2;
+
+/**
+ * **Lo que el morro va más allá del ala**, m: de la punta del morro al centro,
+ * menos la semiala. La separación con la que se espera fuera de tu tramo es
+ * de ala —tu semiala, la del tráfico más grande y el margen: `separacionEnTierra`
+ * en `plan-de-vuelo.ts`—, y vale de costado; pero quien espera mira hacia tu
+ * calle, y lo primero que entra en ella es su morro. En el reactor, el JAZ 90
+ * a una vez y tres décimas, la punta va 20,6 m por delante del centro con una
+ * semiala de 17: en Los Rodeos, el que salía del 13 esperaba a que pasaras con
+ * el centro a 40 m de tu raya y el morro hacia ella, a unos seis metros de tu
+ * punta de ala, menos que el margen. En los demás tipos el morro no pasa del
+ * ala, y no cambia nada.
+ */
+function asomaElMorro(tipo: TipoDeTrafico): number {
+  const m = MORRO_DEL_TRAFICO[tipo.id];
+  return Math.max(0, m.rueda + m.punta - tipo.envergadura / 2);
+}
 
 /**
  * Lo que se dejan entre puntas de ala dos del tráfico que se cruzan, m: el
@@ -2783,7 +2801,7 @@ export function crearTrafico(
       if (q.frenteATi === "espera")
         q.hastaElTramo = Math.min(
           q.hastaElTramo,
-          q.recorrido + suyo.entra - ANTES_DEL_TRAMO,
+          q.recorrido + suyo.entra - ANTES_DEL_TRAMO - asomaElMorro(q.tipo),
         );
       else if (q.frenteATi === "pasa")
         tienen.push({
@@ -4574,7 +4592,19 @@ function colocar(quien: Volando): void {
     const y = porElCamino(quien.marca.camino, quien.recorrido)?.sitio.y ?? quien.grupo.position.y;
     quien.grupo.position.set(a.x, y, a.z);
     quien.grupo.rotation.y = giroDelModelo(a.rumbo);
-    quien.grupo.rotation.x = 0;
+    /*
+     * **Con el tractor debajo, la rueda de morro en vilo** y el morro unos centímetros
+     * arriba, sobre las principales, como el de quien juega. Esperando su turno en el
+     * puesto todavía no hay tractor dibujado, y está en el suelo. Ver
+     * `Remolque.ruedaEnVilo`.
+     */
+    const cuerpo = CUERPO_DEL_TRAFICO[quien.tipo.id];
+    const principales = cuerpo.batalla - MORRO_DEL_TRAFICO[quien.tipo.id].rueda;
+    const vilo = quien.dibujoDelRemolque
+      ? morroEnVilo(r.ruedaEnVilo, cuerpo.batalla, principales)
+      : { cabeceo: 0, sube: 0 };
+    quien.grupo.rotation.x = vilo.cabeceo;
+    quien.grupo.position.y += vilo.sube;
     return;
   }
   const donde = quien.tresSesenta

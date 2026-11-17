@@ -1106,6 +1106,7 @@ import {
   edificiosDePasarela,
   trayectoriaDelEmpuje,
   vector,
+  morroEnVilo,
   type Empuje,
 } from "./world/remolque";
 import { DibujoDelRemolque } from "./world/tractor-de-remolque";
@@ -21853,7 +21854,12 @@ export class Game {
     const desde = llegadaDelTractor(p.raya, p.destino, pisable);
     const r = new Remolque(
       p.empuje,
-      { batalla: this.aircraft.batalla, envergadura: this.aircraft.wingSpan, rueda: morroDe(this.aircraft).rueda },
+      {
+        batalla: this.aircraft.batalla,
+        envergadura: this.aircraft.wingSpan,
+        rueda: morroDe(this.aircraft).rueda,
+        sinVilo: this.aircraft.actitudEnTresPuntos !== undefined,
+      },
       { desde },
     );
     this.vueltaALaRaya = r;
@@ -27473,6 +27479,7 @@ export class Game {
     this.aircraftMesh.group.position.copy(state.position);
     this.aircraftMesh.group.quaternion.copy(state.orientation);
     this.inclinarConElSuelo(state, dt);
+    this.conLaRuedaEnVilo(state);
 
     // La hélice gira con el motor. No se intenta reproducir las rpm reales:
     // se busca que se vea girar y que el ritmo suba al acelerar.
@@ -27555,6 +27562,30 @@ export class Game {
     this.eulerConElSuelo.set(this.conElSuelo.cabeceo, 0, this.conElSuelo.alabeo);
     this.giroConElSuelo.setFromEuler(this.eulerConElSuelo);
     this.aircraftMesh.group.quaternion.multiply(this.giroConElSuelo);
+  }
+
+  private readonly giroEnVilo = new Quaternion();
+  private readonly ejeDelCabeceo = new Vector3(1, 0, 0);
+
+  /**
+   * **Enganchado al tractor, la rueda de morro va en vilo**: la cuna la sube sobre su
+   * pala y el avión se apoya en las principales, con el morro unos centímetros arriba.
+   * Como la inclinación con el suelo, es la presentación: el modelo de vuelo sigue con
+   * el avión en su punto. Gira sobre las principales, que no se mueven, y por eso sube
+   * también su referencia: medido contra el suelo, el tren no flota ni se hunde. Ver
+   * `Remolque.ruedaEnVilo`.
+   */
+  private conLaRuedaEnVilo(state: FlightState): void {
+    // El del puesto o el que lo devuelve a la raya: el mismo tractor.
+    const levanta = state.onGround
+      ? Math.max(this.remolque?.ruedaEnVilo ?? 0, this.vueltaALaRaya?.ruedaEnVilo ?? 0)
+      : 0;
+    if (!levanta) return;
+    const a = this.aircraft;
+    const { cabeceo, sube } = morroEnVilo(levanta, a.batalla, a.mainGearAft ?? a.mainWheelsAft);
+    this.giroEnVilo.setFromAxisAngle(this.ejeDelCabeceo, cabeceo);
+    this.aircraftMesh.group.quaternion.multiply(this.giroEnVilo);
+    this.aircraftMesh.group.position.y += sube;
   }
 
   /**

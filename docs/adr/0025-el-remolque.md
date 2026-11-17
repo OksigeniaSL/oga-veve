@@ -483,6 +483,80 @@ mismo puesto que el primero, con las alas metidas (`trafico-empujado.test.ts`, �
 de cambiarlo hay que decidir qué pasa con el tercero: que no salga, que espere, o que el grupo del 3 tenga salida
 por la calle si de verdad la tiene, que es lo primero que habría que mirar en el AIP.
 
+## La rueda de morro en vilo (17-11-2026)
+
+Desde «La rueda de morro en el punto del puesto» la cuna del tractor está justo debajo de la rueda de morro, y el juego
+no la levantaba: la pala, a doce centímetros del suelo, atravesaba el neumático. Un tractor sin barra no empuja la rueda
+por el asfalto: la abraza y la sube sobre su pala, y el avión va con la rueda de morro en vilo, apoyado en las
+principales.
+
+**Lo que cambia** (`world/remolque.ts`, `world/tractor-de-remolque.ts`):
+
+- **La rueda va en vilo mientras el tractor la tiene**: quince centímetros (`LEVANTA_LA_RUEDA`) enganchado, empujando y
+  frenado; la cuna la sube en la segunda mitad del enganche, ya abrazada, y la baja en la primera mitad de la suelta, que
+  es lo que el tractor la sigue teniendo (`Remolque.ruedaEnVilo`, `enganchado`). El de rueda de cola no lleva nada en
+  vilo (`MedidasDelAvion.sinVilo`).
+- **El avión dibujado cabecea sobre las principales**: el de quien juega (`Game.conLaRuedaEnVilo`) y el del tráfico
+  mientras tiene el tractor dibujado (`colocar` en `trafico.ts`), con `morroEnVilo`: el cabeceo que sube la rueda de
+  morro lo que levanta la pala, y lo que sube la referencia para que las principales no bajen al girar. Es la
+  presentación, como la inclinación con el suelo de `pendiente-bajo-el-tren.ts`: el modelo de vuelo no se toca. Las
+  principales no se mueven (`remolque.test.ts` lo mide en la cuenta), y `verificar-ruedas` y el vuelo entero miden el
+  punto más bajo del avión, que siguen siendo ellas. En el JAZ 90 son 0,75° de morro arriba.
+- **La pala sube y baja con la rueda**, con su cara de arriba a lo que la levanta, y sin rueda que llevar no se dibuja.
+  Va aparte de lo que se junta por material: el dibujo del remolque pasa de dieciocho llamadas de dibujo a diecinueve.
+- **La rueda, en medio de la cuna** (`CUNA_DEL_TRACTOR`): el tractor se ponía con la rueda a un metro de su trasera,
+  que en el de seis metros y medio caía en medio de la pala, en el de nueve, medio metro fuera de él, y en el pequeño de
+  tres, el de la vuelta a la raya, dentro del chasis.
+
+## El Hierro: de cada puesto se sale (17-11-2026)
+
+Lo que quedó sin decidir en «El reactor del tráfico, a su tamaño, y el puesto del que se sale»: por la 34, del grupo
+del 3 —3, 3A y el de en medio— y del 2A no salía nadie, y por la 16, del 1. Mirado en el AIP (AD 2-GCHI, AIRAC AMDT
+05/26, WEF 11-JUN-26):
+
+- **PDC 1-2, la tabla de los puestos**: los seis puestos publicados, 1, 1A, 2, 2A, 3 y 3A, con salida «A». En la
+  misma tabla de Tenerife Norte (AD 2-GCXO PDC 1.2, AIRAC AMDT 07/26), «R» es retroceso —su nota (1): *Salida
+  retroceso (Power-back previa autorización)*— y «A», salida autónoma. En El Hierro **se sale por sus medios**, sin
+  tractor: lo que ya hacía el juego, porque en El Hierro no hay pasarelas.
+- **PDC 1-1, el plano de estacionamiento**: en cada grupo, la línea de entrada es una sola y va de una calle a la
+  otra —de la D a la C por el 3A y el 3, de la C a la B por el 2 y el 2A, de la B a la A por el 1A y el 1—, con los
+  dos puestos del grupo sobre ella, que son incompatibles entre sí. OpenStreetMap la corta en cada puesto: dibuja la
+  entrada desde cada calle hasta el primer puesto que encuentra y deja sin dibujar el trozo entre los dos.
+
+**Lo que se hizo: el que sale prueba más bocas si las primeras no le sirven** (`salida` en
+`world/suelo-del-trafico.ts`). Por la 34 se probaban solo las seis bocas más cercanas a la cabecera, y a ninguna de
+ellas se llega del grupo del 3 ni del 2A sin pisar la pista: la ruta más corta va por las rayas de rodaje pintadas
+sobre ella, que en OpenStreetMap son calles. A la C y a la D sí se llega, por la línea de entrada de su grupo, que es la
+salida autónoma que publica el AIP. Ahora, si ninguna de las seis sirve, las demás: entra por la de su grupo y remonta,
+que es lo que se hace en un campo sin calle paralela. Por la 16, lo mismo con el 1, que sale por la A.
+
+Puesto a puesto, con un turbohélice y los demás puestos ocupados, salen ahora los nueve por las dos cabeceras. Con eso
+**ya no hay puesto del que no se pueda salir**, y lo que H21c probó y deshizo —que el que llega no aparque donde no
+podrá salir— no hace falta: el que llega puede aparcar en cualquiera.
+
+**Lo que se probó y no se quedó: los tres trozos que faltan.** Se pusieron a mano en `gchi.aero.json`, con su fuente,
+del 3A al 3, del 2A al 2 y del 1A al 1. Son de verdad, pero las líneas de los tres grupos se tocan en los cruces de la
+C y la B, y enteras hacen una sola calle por la plataforma, de la D a la A, que pasa por encima de todos los puestos:
+
+- el que salía del grupo del 2 por la 34 iba a la A por encima del 1A y del 1, estuvieras o no aparcado en uno de
+  ellos —el buscador del que sale no mira quién está aparcado; se probó a que no pasara a menos de seis metros del
+  punto de un puesto ocupado, y con eso salía bien—;
+- y el plan de quien juega también la usaba: en `rodar-por-el-asfalto.test.ts`, el JAZ 90 por la 34 entraba desde la B
+  rodando 1.069 m de pista, más de lo que deja la prueba; y en `remontar-por-tipo.test.ts` el JAZ 40 de una tarde de
+  calor, que remonta, salía por la intersección.
+
+Con alguien aparcado no se pasa por encima de él, y con los puestos libres quizá sí: es una decisión sobre por dónde
+se rueda en El Hierro, no un dato que falte, y se deja para tomarla con calma. Los tres trozos, en el plano del
+fichero, son de un puesto al otro por el de en medio: del 3A (107,9, −25,8) al 3 (118,2, −44,9) por (112,9, −35); del
+2A (136,7, −80,6) al 2 (147,6, −101,5) por (142,2, −91,1); y del 1A (169,6, −144,2) al 1 (180,4, −165,3) por
+(175, −154,8).
+
+**Sin pasar por el navegador** (17-11-2026, H22a): la rueda en vilo, el tráfico de Los Rodeos y la salida de El
+Hierro se midieron con vitest y con el banco de mesa, pero no con la tarjeta de verdad. El candado del navegador
+estuvo ocupado por otros bancos hasta pasado el tope de esa tanda, y quedan por correr `verificar-ruedas`, el vuelo
+entero de Los Rodeos con el JAZ 90, las llegadas de El Hierro, `npm run rodaje` y una foto del tractor enganchado, de
+lado y de cerca.
+
 ## Lo que queda
 
 El empuje largo por la plataforma para el tráfico, cuando la torre retenga el empuje de quien sale con alguien rodando
