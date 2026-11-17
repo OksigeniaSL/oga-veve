@@ -1118,6 +1118,13 @@ export const EN: Dictionary = {
   "vuelo.losFlapsLosSubiYo": "I raised the flaps: at this speed the wing doesn't need them any more.",
   "vuelo.avisoDeConfiguracion":
     "That sound is the airplane: it's telling us the takeoff flaps are missing. Throttle back and set one notch.",
+  "vuelo.compensadorParaDespegar":
+    "For takeoff, set the trim in the green band on the TRIM: then, when you let go, the plane keeps climbing.",
+  "vuelo.compensadorDeDespeguePuesto":
+    "I set the trim in the green band: so when you let go, the plane keeps climbing on its own.",
+  "vuelo.avisoDeConfiguracionCompensador":
+    "That sound is the airplane: it's telling us the trim isn't in the green band. Throttle back and set it for takeoff.",
+  "palabra.compensador": "Trim",
   "vuelo.despues.aerofrenos": "Speed brakes in: lever down.",
   "vuelo.despues.luces": "I'll do the lights: landing lights off, taxi light on.",
   "vuelo.despues.transpondedor": "And the transponder: TCAS to standby.",

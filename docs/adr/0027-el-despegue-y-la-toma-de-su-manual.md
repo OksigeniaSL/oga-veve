@@ -2253,3 +2253,201 @@ hay que mirar antes de publicar.
 - **La base de prestaciones de Eurocontrol** no se ha podido leer: tanto
   `contentzone.eurocontrol.int` como `learningzone.eurocontrol.int` piden
   JavaScript y cookies a un cliente sin navegador.
+
+## Enmienda H21a (16-11-2026): el compensador en la lista de antes de despegar
+
+Lo midió H20a con el banco de mesa: el compensador salía en cero. En el modelo
+de coeficientes, cero es el timón de equilibrio de una velocidad muy por encima
+de la de despegar, y soltando los mandos recién despegado el JAZ 20 bajaba el
+morro a buscarla: volvía a la pista en cuatro segundos, en Taguato y en Tukã.
+Con el compensador en dos décimas y la primera muesca de flaps subía a 2,9 m/s.
+Por eso `verificar-despegue.mjs tenerife-norte taguato` fallaba en «en el aire
+sigue subiendo con el motor a tope» (−9,2 m/s a 12 m, tirada de H20a de las
+22:33). No era el avión: era la lista.
+
+### Lo real, con su fuente
+
+**La regla general**, la del manual de la FAA: en la comprobación de antes de
+despegar, «Trim—set for takeoff position, which includes the elevator and may
+also include rudder and aileron trim» (FAA-H-8083-3C, *Airplane Flying
+Handbook*, 2021, p. 2-21; y en la inspección de cabina, p. 2-5). Y lo que se
+nota después: «If the airplane has been properly trimmed for takeoff, some
+back-elevator pressure may be required to hold this attitude until the proper
+climb speed is established» (p. 6-5): se compensa para la velocidad de subir,
+por encima de la de despegar.
+
+| | Lo que dice su lista | Fuente |
+|---|---|---|
+| JAZ 20 (172S) | «Elevator Trim -- SET for takeoff», en la de antes de despegar y en la de la inspección de cabina | *Information Manual* rev. 5 (2004), pp. 4-15 y 4-8. El indicador sale en la figura 7-2 («Elevator Trim Control and Position Indicator», p. 7-11); que su marca de despegue sea una raya del pedestal solo se ha visto en el extracto de buscador de otro manual (el del NAV III), y no se cita. |
+| JAZ 25 (Ag Cat) | «BEFORE TAKEOFF 1. Trim-SET» | Grumman American, manual del G-164A/B, 1977, p. 33. Sin cifra. |
+| JAZ 40 (Seneca) | «Trim … set»; y para el corto, «set the stabilator trim indicator slightly nose up from the takeoff range» | POH del Seneca III (VB-1110), pp. 4-9 y 4-27: el indicador tiene un rango de despegue. En la figura 7-9 no se lee. El del Seneca II no se ha leído. |
+| JAZ 50 (DHC-6-400) | El compensador de profundidad «confirmed to be in take-off position prior to flight», y su aviso de configuración lo mira | MMEL de la FAA, rev. 15 en borrador, ítem 27-6. La lista de un operador, de un Series 300, dice «Trim tabs — Set for take-off» (BLM, N49SJ, 2014). El PSM 1-64-1A no se ha leído. |
+| JAZ 60 (1900D) | — | No encontrada: la regla general. |
+| JAZ 90 (E170) | — | No encontrada de primera mano: la regla general. |
+| JAZ 110 (787-9) | — | El FCOM no se ha leído; lo de la franja verde que calcula el FMC con el peso y el centro de gravedad, solo en foros. La regla general. |
+| JAZ 120 (747-400) | El *stab trim* de la hoja de carga de ese día, por el centro de gravedad | TAIC 03-003 (747-412 9V-SMT, 2003), pp. 1-4: «the stabiliser trim (STAB TRIM) setting necessary for take-off», 6,6 con flaps 20; TSB A96O0030 (747-433 C-GAGL), p. 6: el ordenador de a bordo «computed the aircraft take-off speeds and stabilizer trim setting position for take-off», 5,9 unidades. |
+
+### La marca, del modelo
+
+En un avión de verdad la marca depende sobre todo del centro de gravedad —el
+del 747 sale de la hoja de carga, con cifras como las de arriba—. **Este
+modelo no tiene centro de gravedad**: el par de cabeceo es `cm0 + cmα·α + cmδ·δ`
+con cualquier carga. Así que la marca no se escribe a mano: es el timón que
+sostiene el avión, con sus flaps de despegue y el peso de hoy, a la velocidad de
+la subida inicial (`timonQueSostiene` en `fdm.ts`, al lado del par de `step`,
+y `compensadorDeDespegue` en `flight/compensador-de-despegue.ts`).
+
+**Esa velocidad es 1,3 veces la pérdida con los flaps de despegue**, nunca menos
+que la Vr. En los tres reactores cae entre la V2 más trece y la V2 más veinte
+nudos; en la avioneta, 61 nudos, junto a su Vx de 62 (*Information Manual*,
+p. 4-5). Atada a la pérdida, **el peso se va de la cuenta**: el ala vuela al
+mismo ángulo pese lo que pese, y la marca sale igual con el peso de la ficha y
+más cargado. Donde la pone la Vr —más ligero, si su velocidad cae por debajo de
+ella— pide algo menos de morro arriba, que es lo que pide un avión más ligero a
+la misma velocidad. Si el modelo gana un día su centro de gravedad, la marca lo
+seguirá sola.
+
+La franja, entre 1,2 y 1,4 veces la pérdida: es lo que la lista da por puesto y
+lo que se pinta en el indicador.
+
+| | Marca | Franja |
+|---|---|---|
+| JAZ 20 | 0,180 | 0,116 a 0,262 |
+| JAZ 25 | 0,221 | 0,159 a 0,299 |
+| JAZ 40 | 0,104 | 0,058 a 0,163 |
+| JAZ 50 | 0,100 | 0,050 a 0,163 |
+| JAZ 60 | 0,081 | 0,028 a 0,148 |
+| JAZ 90 | 0,075 | 0,028 a 0,134 |
+| JAZ 110 | 0,143 | 0,071 a 0,234 |
+| JAZ 120 | 0,088 | 0,035 a 0,154 |
+
+**Cómo se eligió el 1,3.** En el banco de mesa —rodando a todo gas, rotando en
+la Vr y soltando con siete grados de morro, en Tukã, Taguato y Taguato Ruvicha,
+con 1,2, 1,25, 1,3 y 1,35— hasta 1,3 ninguno bajaba después de soltar, y con
+1,35 el Seneca, en el peldaño sin ayudas, ya bajaba a −1,5 m/s antes de subir.
+Soltado ya en el aire a 1,2 veces su pérdida, con la marca ninguno vuelve a
+tocar y a los diez segundos todos suben; el 747 y el Seneca, los de menos empuje
+para su peso, bajan antes un trecho buscando su velocidad, que es lo que dice
+el manual de la FAA. En el borde de morro abajo de la franja no: ahí el 747
+vuelve a tocar en el peldaño sin ayudas, y por eso la tarjeta y la instructora
+lo ponen en la marca. Lo comprueba `compensador-de-despegue.test.ts`.
+
+**Y en el navegador se probaron las dos**, con `verificar-despegue.mjs
+tenerife-norte taguato`, que suelta el JAZ 20 a quince metros recién rotado y
+mira a los cuatro segundos:
+
+| | Rotación | A los 4 s de soltar |
+|---|---|---|
+| Compensador en cero (H20a, antes de esto) | a 28 m/s, su Vr | −9,2 m/s a 12 m |
+| Marca a 1,3 | a 28 m/s, su Vr | −3,7 m/s a 26 m |
+| Marca a 1,2 | **se va solo a 26 m/s**, sin Vr ni flecha de tirar | −2,2 m/s a 14 m |
+| Marca a 1,3, y el banco tirando lo de siempre (mano y compensador, medio recorrido) | a su Vr; a los 15 m va a 26 m/s | −2,3 m/s a 14 m |
+
+En la primera tirada a 1,3 el banco tiraba medio recorrido de mano encima del
+compensador, y el morro subía de más; ahora tira lo que falta hasta el medio
+recorrido de siempre (`verificar-despegue.mjs`). Las tiradas varían con el
+alisio de Los Rodeos: con la misma marca, a los quince metros iba a 27,5 m/s en
+una y a 26 en otra.
+
+Con 1,2 el avión se levantaba solo antes de su Vr, y una marca que despega el
+avión antes de la Vr no es la de despegue. Se queda 1,3. **Y la comprobación
+sigue sin pasar**: lo que queda no es el compensador, es la ayuda de Taguato.
+Su `climbHold`, por debajo de su velocidad segura —la de aproximación y un
+cinco por ciento, 67 nudos en el JAZ 20—, deja de sostener la subida y pide
+morro abajo para ganar velocidad, y el banco suelta a unos 50 nudos, por debajo
+de la Vr. El avión
+compensado hace lo que dice el manual de la FAA —pide algo de tirón hasta
+coger la velocidad de subida— y la ayuda empuja hacia el mismo lado. Tocar
+esa ayuda no es de esta enmienda: queda apuntado.
+
+### En el juego
+
+- **La lista lleva una segunda línea**, detrás de la de los flaps: otra
+  `ListaDeAntesDeDespegar`, que lee si el compensador está en su franja y habla
+  cuando le toca (`leTocaAlCompensador`): con los flaps puestos, en un avión sin
+  ellos —el fumigador—, o pasada la paciencia de la espera con los flaps
+  pedidos y sin poner, que es el peldaño de cabina, donde nadie los pone por
+  quien vuela. Una línea y una voz cada vez.
+- **La tarjeta lo pide con su dibujo**: el indicador TRIM con su franja y la
+  aguja dentro, y la rueda al lado (`COMPENSADOR` en `ui/senal.ts`), con la
+  tecla que lleva hacia la marca. Se puede tocar: la aguja va a la marca.
+- **El indicador TRIM pinta la franja**, verde, en tierra, en la espera y en la
+  pista (`setTrim` en `ui/hud.ts`), y sale aunque la aguja esté en el centro,
+  que es justo cuando hace falta verlo. Es la franja verde de un reactor puesta
+  en todos: el Seneca tiene un rango de despegue en su indicador y el 172S una
+  marca; simplificar la presentación en una sola franja no cambia lo que se
+  hace, que es llevar la aguja a la marca de despegue.
+- **En los tres peldaños de abajo lo pone la instructora** si no se pone, a la
+  paciencia de la espera o al entrar en la pista, y dice qué hace y por qué:
+  «El compensador lo puse yo en la franja verde: así, cuando soltés, el avión
+  sigue subiendo solo».
+- **En el de cabina**, la línea de la lista: «TRIM — SET», tal cual la dicen las
+  listas del Seneca III y del Ag Cat, sin cifra: la de un reactor es la de su
+  hoja de carga, y este juego no la tiene.
+- **En Guyrami no**: el modelo sencillo no tiene compensador que compense
+  (`compensadorVivo`). Ni en el vuelo de pasaje ni con la mano de Jazlyn, como
+  los flaps.
+- **La lección de despegar, que empieza alineada**, empieza con él puesto, como
+  empieza con los flaps.
+
+### El aviso de configuración, también con el compensador
+
+La norma lo pide igual que los flaps: el aviso salta si «longitudinal trim
+devices are in a position that would not allow a safe takeoff» (14 CFR
+25.703 a 2, eCFR vigente, enmienda 25-42), y la circular dice que es la red de
+la lista, «back-up for the checklist» (AC 25.703-1, 1993, 5.a.1). El Twin Otter
+400 lo mira (MMEL, ítem 27-6). `AvisoDeConfiguracion` lee ahora el compensador
+(`compensadorEnLaFranja`), `loQueFalta` dice qué falta —los flaps primero— y la
+instructora explica lo que sea detrás: «Eso que sonó es el avión: avisa que el
+compensador no está en la franja verde».
+
+**Y sigue mudo en todos**, como con los flaps: ningún tipo tiene fuente de
+primera mano de cómo suena. La única voz oficial encontrada, «No Takeoff Trim»,
+es la de otro Embraer, el EMB-545 (FAA AD 2022-21-08, 87 FR 68889, 2022), no la
+del E170; el «CONFIG STABILIZER» del 787 y el «>CONFIG STAB» del 747-400 solo
+salen en foros y fichas de estudio. El día que aparezca el de un tipo, su ficha
+y nada más.
+
+### Lo que cambia en lo que vuelan los bancos
+
+- `verificar-despegue.mjs` y `verificar-vuelo-entero.mjs` ponen el compensador
+  en la marca en la espera, como quien juega: la aguja a la franja que pinta el
+  indicador (la sonda `compensadorDeDespegue`). Así el banco no oye la línea del
+  compensador; la oye quien juega sin ponerlo.
+- El piloto de la carrera de `verificar-despegue.mjs` tira, pasada la Vr, lo que
+  falta hasta el medio recorrido de timón, contando el compensador.
+- Volado en el navegador (16-11-2026, puerto 5688): `verificar-despegue.mjs
+  tenerife-norte guyrami`, 19 de 19 —en Guyrami no hay compensador que poner—;
+  `tenerife-norte taguato`, 17 de 18, la de «en el aire sigue subiendo», arriba;
+  `tenerife-norte tuka`, 18 de 19, la misma, −2,0 m/s a 7 m, con la misma
+  ayuda a tope; `tenerife-norte taguato-ruvicha`, sin ayudas, 18 de 18, y
+  soltado sigue subiendo, 0,8 m/s a 41 m. Lo que falla en los dos de abajo es
+  la ayuda, no la marca;
+  `verificar-vuelo-entero.mjs tenerife-norte guyrami 3 jaz-20`, 62 de 62 con 2
+  sin medir; `npm run toque`, sin fallos. Y un banco suelto, empezando alineado
+  con el JAZ 20 en Tukã y en Taguato Ruvicha: el compensador sale en su marca,
+  el indicador pinta la franja, y llevado a cero sale la tarjeta —«Compensador»
+  en Tukã, donde lo vuelve a poner la instructora; «TRIM — SET» en Ruvicha,
+  donde nadie lo pone por quien vuela—, 11 de 11.
+
+### Las voces
+
+Tres frases de la instructora al final de la lista de grabar
+(`DEL_COMPENSADOR_DEL_DESPEGUE`), sin renumerar lo grabado, esperando su toma en
+`por-grabar.test.ts`.
+
+### Lo que no
+
+- **El centro de gravedad**, que es lo que mueve la marca de verdad: el modelo
+  no lo tiene.
+- **Las unidades de un reactor** («STAB TRIM 6.6»): la escala del compensador de
+  este juego va de −1 a 1 y no es la de ningún avión.
+- **Las listas del 1900D, del E170, del 787 y del Twin Otter 400**, y la del
+  Seneca II: la regla general.
+- **El sonido del aviso de configuración**, en ningún tipo.
+- **Recoger el compensador**: después de despegar se compensa volando, como
+  siempre; la lista de antes de despegar no tiene más que hacer arriba.
+- **«En el aire sigue subiendo» en Taguato**, que sigue fallando por la ayuda
+  de ese peldaño (arriba, «Cómo se eligió el 1,3»): lo que pide es mirar el
+  `climbHold` de `fdm.ts` recién despegado, o que el banco suelte con la
+  velocidad de subida y no con la de rotar.

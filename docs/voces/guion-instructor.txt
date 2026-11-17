@@ -569,6 +569,7 @@ Son trescientos diez kilómetros por hora.
 Son trescientos cuarenta kilómetros por hora.
 Son trescientos cincuenta kilómetros por hora.
 Son trescientos sesenta kilómetros por hora.
+Son trescientos setenta kilómetros por hora.
 Son cuatrocientos diez kilómetros por hora.
 Son cuatrocientos veinte kilómetros por hora.
 Son cuatrocientos cuarenta kilómetros por hora.
@@ -577,7 +578,6 @@ Son cuatrocientos ochenta kilómetros por hora.
 Son quinientos veinte kilómetros por hora.
 Son quinientos cuarenta kilómetros por hora.
 Son quinientos noventa kilómetros por hora.
-Son trescientos setenta kilómetros por hora.
 Bajaste antes de la barra blanca: las flechas son para rodar y despegar
 ¡Tus gafas de sol!
 El anemómetro no marca: gas atrás y frená, con calma.
@@ -728,3 +728,6 @@ Mirá dónde está la aguja. Ahora subí bien alto, más que el largo del helic�
 ¿Viste? Arriba la aguja subió: lejos del suelo cuesta más. Ahora bajá cerquita del suelo y quedate quieto
 Mirá dónde está la aguja, acá arriba. Ahora bajá cerquita del suelo y quedate quieto
 ¡La aguja bajó! Cerca del suelo, el aire que empuja el rotor rebota en el suelo y te ayuda a sostenerte. Es el efecto suelo
+Para despegar, poné el compensador en la franja verde del TRIM: así, al soltar, el avión sigue subiendo solo.
+El compensador lo puse yo en la franja verde: así, cuando soltés, el avión sigue subiendo solo.
+Eso que sonó es el avión: avisa que el compensador no está en la franja verde. Bajá el motor y ponelo para despegar.

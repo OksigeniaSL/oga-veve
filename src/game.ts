@@ -1498,15 +1498,25 @@ import {
 } from "./flight/flaps";
 import {
   AvisoDeConfiguracion,
+  EN_LA_ESPERA,
+  EN_LA_PISTA,
   ListaDeAntesDeDespegar,
   RecogidaDeLosFlaps,
   comoSeRecogen,
   despegaConFlaps,
   enElRangoDeDespegue,
+  leTocaAlCompensador,
+  loQueFalta,
   rotuloDeCabina,
   type AntesDeDespegar,
   type TrasDespegar,
 } from "./flight/flaps-de-despegue";
+import {
+  ROTULO_DE_CABINA as COMPENSADOR_EN_CABINA,
+  compensadorDeDespegue,
+  enLaFranja,
+  type CompensadorDeDespegue,
+} from "./flight/compensador-de-despegue";
 import {
   ListaDeDespuesDeAterrizar,
   NADA_DICHO,
@@ -13509,6 +13519,9 @@ export class Game {
       this.input.ponerPalancaDeFlaps(deDespegue);
       this.input.controls.flaps = deDespegue;
     }
+    // Y el compensador en su marca, que es la otra línea de esa lista. Ver `flight/compensador-de-despegue.ts`.
+    if (!rodando && this.input.compensadorVivo)
+      this.input.controls.trim = compensadorDeDespegue(this.avionConPeso()).marca;
     // Un vuelo nuevo es un avión en su puesto: flaps sanos y sin alivio.
     this.cargaDeFlaps = FLAPS_SANOS;
     this.input.topeDeFlaps = 1;
@@ -13625,6 +13638,7 @@ export class Game {
      */
     this.yaDespego = false;
     this.antesDeDespegar.reiniciar();
+    this.compensadorAntesDeDespegar.reiniciar();
     this.avisoDeConfiguracion.reiniciar();
     this.recogidaDeLosFlaps.reiniciar();
     this.flapsPorRecoger = false;
@@ -20581,7 +20595,7 @@ export class Game {
      * Y dónde está el compensador, que es un mando que **se queda puesto** y
      * por tanto hay que poder verlo sin tocarlo. Ver `ControlInputs.trim`.
      */
-    this.hud.setTrim(this.input.controls.trim);
+    this.hud.setTrim(this.input.controls.trim, this.franjaQueSePinta());
     if (this.flight instanceof HelicopteroComoModelo) {
       const rotor = this.flight.modelo.rotor();
       this.hud.ponerRotor(rotor.vueltasPorUno, rotor.par);
@@ -32345,8 +32359,19 @@ export class Game {
 
   // ── Los flaps del despegue ───────────────────────────────────────────
 
-  /** La lista de antes de despegar, en lo que tiene de flaps. */
+  /** La lista de antes de despegar, en su línea de los flaps. */
   private readonly antesDeDespegar = new ListaDeAntesDeDespegar();
+  /**
+   * Y en la del compensador, que va detrás. Ver `leTocaAlCompensador` y
+   * `flight/compensador-de-despegue.ts`.
+   */
+  private readonly compensadorAntesDeDespegar = new ListaDeAntesDeDespegar();
+  /**
+   * **La franja de despegue del compensador, mientras se pinta**: en tierra,
+   * en la espera y en la pista, en el avión con compensador que poner. `null`
+   * el resto del vuelo. La lee el cuadro: ver `setTrim` en `ui/hud.ts`.
+   */
+  private franjaDeDespegue: CompensadorDeDespegue | null = null;
   /** El aviso de configuración de despegue, en el avión que lo lleva. */
   private readonly avisoDeConfiguracion = new AvisoDeConfiguracion();
   /** Y la recogida, después de despegar. */
@@ -32362,8 +32387,27 @@ export class Game {
   get flapsDelDespegueParaBanco(): {
     readonly antes: readonly AntesDeDespegar[];
     readonly despues: readonly TrasDespegar[];
+    readonly compensador: readonly AntesDeDespegar[];
   } {
-    return { antes: this.antesDeDespegar.hechos, despues: this.recogidaDeLosFlaps.hechos };
+    return {
+      antes: this.antesDeDespegar.hechos,
+      despues: this.recogidaDeLosFlaps.hechos,
+      compensador: this.compensadorAntesDeDespegar.hechos,
+    };
+  }
+
+  /**
+   * **Dónde va el compensador para despegar en este avión**, o `null` si no
+   * tiene compensador que poner. Para el banco, que lo pone en la espera como
+   * quien juega: llevando la aguja a la franja que pinta el cuadro.
+   */
+  compensadorDeDespegueParaBanco(): CompensadorDeDespegue | null {
+    return this.input.compensadorVivo ? compensadorDeDespegue(this.avionConPeso()) : null;
+  }
+
+  /** La franja que pinta el indicador TRIM ahora. Ver `franjaDeDespegue`. */
+  private franjaQueSePinta(): CompensadorDeDespegue | null {
+    return this.franjaDeDespegue;
   }
 
   /**
@@ -32374,24 +32418,27 @@ export class Game {
    * por qué, en `flight/flaps-de-despegue.ts`; aquí, la voz, la tarjeta y la
    * palanca.
    *
+   * **Y el compensador, en la misma lista**: la línea de detrás de los flaps,
+   * con el mismo reparto, y su franja pintada en el indicador TRIM mientras
+   * se está en la espera o en la pista. Ver `flight/compensador-de-despegue.ts`.
+   *
    * En el vuelo de pasaje y con la mano de Jazlyn los flaps los lleva la
    * tripulación (`vuelo-de-linea.ts`), y aquí no se pide nada.
    */
   private atenderALosFlapsDelDespegue(fase: Fase, dt: number): void {
     const a = this.aircraft;
-    if (!despegaConFlaps(a) || this.dePasaje || this.manoDeJazlyn) return;
+    this.franjaDeDespegue = null;
+    if (this.dePasaje || this.manoDeJazlyn) return;
+    const conFlaps = despegaConFlaps(a);
+    // Donde hay compensador que compense: ni en el modelo sencillo ni en el helicóptero.
+    const conCompensador = this.input.compensadorVivo;
+    if (!conFlaps && !conCompensador) return;
     const s = this.flight.state;
     const palanca = this.input.palancaDeFlaps;
-    const antes = this.antesDeDespegar.paso({
+    const lectura = {
       fase,
       enTierra: s.onGround,
       porElSuelo: s.groundSpeed,
-      /*
-       * La lista pide su muesca, la de las velocidades que se cantan: «más de
-       * 10° no está aprobado para despegar» en la avioneta, y la de en medio
-       * de un reactor, que su aviso acepta, no es la de su Vr.
-       */
-      puestos: Math.abs(palanca - flapsDeDespegue(a)) < 0.01,
       hablando:
         this.instructor.hablando ||
         this.torre.hablando ||
@@ -32399,22 +32446,46 @@ export class Game {
         this.tripulacion.hablando,
       peldano: this.tier.avisos,
       dt,
-    });
-    if (antes) this.decirLosFlapsDeDespegue(antes);
+    };
+    /*
+     * La lista pide su muesca, la de las velocidades que se cantan: «más de
+     * 10° no está aprobado para despegar» en la avioneta, y la de en medio de
+     * un reactor, que su aviso acepta, no es la de su Vr.
+     */
+    const flapsPuestos = conFlaps && Math.abs(palanca - flapsDeDespegue(a)) < 0.01;
+    if (conFlaps) {
+      const antes = this.antesDeDespegar.paso({ ...lectura, puestos: flapsPuestos });
+      if (antes) this.decirLosFlapsDeDespegue(antes);
+    }
+
+    const franja = conCompensador ? compensadorDeDespegue(this.avionConPeso()) : null;
+    const trim = this.input.controls.trim;
+    if (franja && s.onGround && (EN_LA_ESPERA.has(fase) || EN_LA_PISTA.has(fase)))
+      this.franjaDeDespegue = franja;
+    // En el aire también se le da el paso: es como se rearma para la salida siguiente.
+    if (franja && (!s.onGround || leTocaAlCompensador(this.antesDeDespegar, { conFlaps, flapsPuestos }))) {
+      const antes = this.compensadorAntesDeDespegar.paso({
+        ...lectura,
+        // Lo que acaba de decir la línea de los flaps, también: una voz cada vez.
+        hablando: lectura.hablando || this.instructor.hablando,
+        puestos: enLaFranja(franja, trim),
+      });
+      if (antes) this.decirElCompensadorDeDespegue(antes, franja);
+    }
 
     const suena = avisosDeABordo(a).configuracionDeDespegue;
-    if (
-      this.avisoDeConfiguracion.paso({
-        fase,
-        enTierra: s.onGround,
-        gas: this.input.controls.throttle,
-        // El aviso mira el ala, no la palanca.
-        enElRango: enElRangoDeDespegue(a, this.input.controls.flaps),
-      }) &&
-      suena
-    )
-      this.sonarLaConfiguracion(suena);
+    const delAviso = {
+      fase,
+      enTierra: s.onGround,
+      gas: this.input.controls.throttle,
+      // El aviso mira el ala, no la palanca.
+      enElRango: !conFlaps || enElRangoDeDespegue(a, this.input.controls.flaps),
+      compensadorEnLaFranja: franja === null || enLaFranja(franja, trim),
+    };
+    if (this.avisoDeConfiguracion.paso(delAviso) && suena)
+      this.sonarLaConfiguracion(suena, loQueFalta(delAviso) ?? "flaps", franja);
 
+    if (!conFlaps) return;
     if (s.onGround) this.flapsPorRecoger = true;
     else if (palanca < 0.01) this.flapsPorRecoger = false;
     const muesca = muescaMasCercana(palanca, this.input.muescasDeFlaps);
@@ -32469,27 +32540,87 @@ export class Game {
   }
 
   /**
-   * **El aviso de configuración de despegue**: lo dice la máquina, en los
-   * cuatro peldaños, y en los de abajo la instructora explica detrás. Hoy
-   * ninguna ficha lo lleva con su sonido: ver `configuracionDeDespegue`.
+   * **La línea del compensador**: pedirlo, o ponerlo ella. Como la de los
+   * flaps, con su dibujo —el indicador con su franja— y su tecla, y la tarjeta
+   * se puede tocar. En el de cabina, la línea de la lista: «TRIM — SET».
    */
-  private sonarLaConfiguracion(suena: "sirena"): void {
+  private decirElCompensadorDeDespegue(que: AntesDeDespegar, franja: CompensadorDeDespegue): void {
+    const ponerlo = (): void => {
+      this.input.controls.trim = franja.marca;
+    };
+    if (que === "losPone") {
+      ponerlo();
+      this.hud.senal.mostrar(
+        "compensador",
+        this.rotulo("vuelo.compensadorDeDespeguePuesto", "palabra.compensador"),
+        null,
+        { segundos: 4 },
+      );
+      this.apuntarCanto("compensador de despegue: lo pone la instructora");
+      this.decirLoGrabado("vuelo.compensadorDeDespeguePuesto");
+      return;
+    }
+    const canales = canalesDe(this.tier.avisos);
+    const rotulo = !canales.texto
+      ? ""
+      : canales.cabina
+        ? COMPENSADOR_EN_CABINA
+        : this.rotulo("vuelo.compensadorParaDespegar", "palabra.compensador");
+    this.hud.senal.mostrar("compensador", rotulo, null, {
+      segundos: SE_QUEDA_EL_ARO * 2,
+      prioridad: IMPORTANTE,
+      tecla: nombreDeTecla(this.input.preferredKey(this.haciaLaFranja(franja))),
+      // Y se puede tocar, como la de los flaps: la aguja va a su marca.
+      accion: ponerlo,
+    });
+    this.apuntarCanto("compensador de despegue: lo pide la lista");
+    this.decirLoGrabado("vuelo.compensadorParaDespegar");
+  }
+
+  /** La tecla del compensador que lleva la aguja hacia su marca de despegue. */
+  private haciaLaFranja(franja: CompensadorDeDespegue): "trimUp" | "trimDown" {
+    return this.input.controls.trim < franja.marca ? "trimUp" : "trimDown";
+  }
+
+  /**
+   * **El aviso de configuración de despegue**: lo dice la máquina, en los
+   * cuatro peldaños, y en los de abajo la instructora explica detrás qué
+   * falta: los flaps o el compensador. Hoy ninguna ficha lo lleva con su
+   * sonido: ver `configuracionDeDespegue`.
+   */
+  private sonarLaConfiguracion(
+    suena: "sirena",
+    falta: "flaps" | "compensador",
+    franja: CompensadorDeDespegue | null,
+  ): void {
     const clave = TONO_DE_A_BORDO[suena];
+    const delCompensador = falta === "compensador" ? franja : null;
+    const queExplica: TranslationKey = delCompensador
+      ? "vuelo.avisoDeConfiguracionCompensador"
+      : "vuelo.avisoDeConfiguracion";
     const explica = laInstructoraLoExplica(this.tier.avisos)
       ? () => {
-          this.apuntarCanto("configuración de despegue: lo explica vuelo.avisoDeConfiguracion");
-          this.decirLoGrabado("vuelo.avisoDeConfiguracion", "mando");
+          this.apuntarCanto(`configuración de despegue: lo explica ${queExplica}`);
+          // Con la clave escrita, que la lista de grabar la encuentra así: ver `por-grabar.test.ts`.
+          if (delCompensador) this.decirLoGrabado("vuelo.avisoDeConfiguracionCompensador", "mando");
+          else this.decirLoGrabado("vuelo.avisoDeConfiguracion", "mando");
         }
       : undefined;
     this.hud.senal.mostrar(
-      "flaps",
-      this.rotulo("vuelo.avisoDeConfiguracion", "palabra.flaps"),
+      delCompensador ? "compensador" : "flaps",
+      this.rotulo(queExplica, delCompensador ? "palabra.compensador" : "palabra.flaps"),
       null,
       {
         segundos: SE_QUEDA_EL_ARO * 2,
         prioridad: IMPORTANTE,
-        tecla: nombreDeTecla(this.input.preferredKey("flaps")),
-        accion: () => this.input.ponerPalancaDeFlaps(flapsDeDespegue(this.aircraft)),
+        tecla: nombreDeTecla(
+          this.input.preferredKey(delCompensador ? this.haciaLaFranja(delCompensador) : "flaps"),
+        ),
+        accion: delCompensador
+          ? () => {
+              this.input.controls.trim = delCompensador.marca;
+            }
+          : () => this.input.ponerPalancaDeFlaps(flapsDeDespegue(this.aircraft)),
       },
     );
     const como = this.maquina.decir(clave, explica);

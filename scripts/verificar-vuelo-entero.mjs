@@ -5709,6 +5709,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     } else if (etapa === "esperar") {
       c.throttle = 0;
       c.brakes = 1;
+      /*
+       * **Y el compensador a su marca de despegue**, como quien juega con la
+       * lista: la aguja a la franja que pinta el indicador TRIM. Se pone una
+       * vez, y si ya está en la franja no se toca. Ver
+       * `flight/compensador-de-despegue.ts`.
+       */
+      const compensa = o.compensadorDeDespegue?.();
+      if (compensa && (c.trim < compensa.desde || c.trim > compensa.hasta)) c.trim = compensa.marca;
       if (fase === "autorizado" || fase === "alineando") etapa = "entrar";
     } else if (etapa === "entrar") {
       c.brakes = 0;

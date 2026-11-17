@@ -1407,6 +1407,7 @@ instructor	instructor/vuelo.paso.velocidad.310.ogg	es-PY	Son trescientos diez ki
 instructor	instructor/vuelo.paso.velocidad.340.ogg	es-PY	Son trescientos cuarenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
 instructor	instructor/vuelo.paso.velocidad.350.ogg	es-PY	Son trescientos cincuenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
 instructor	instructor/vuelo.paso.velocidad.360.ogg	es-PY	Son trescientos sesenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
+instructor	instructor/vuelo.paso.velocidad.370.ogg	es-PY	Son trescientos setenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
 instructor	instructor/vuelo.paso.velocidad.410.ogg	es-PY	Son cuatrocientos diez kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
 instructor	instructor/vuelo.paso.velocidad.420.ogg	es-PY	Son cuatrocientos veinte kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
 instructor	instructor/vuelo.paso.velocidad.440.ogg	es-PY	Son cuatrocientos cuarenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
@@ -1415,7 +1416,6 @@ instructor	instructor/vuelo.paso.velocidad.480.ogg	es-PY	Son cuatrocientos ochen
 instructor	instructor/vuelo.paso.velocidad.520.ogg	es-PY	Son quinientos veinte kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
 instructor	instructor/vuelo.paso.velocidad.540.ogg	es-PY	Son quinientos cuarenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
 instructor	instructor/vuelo.paso.velocidad.590.ogg	es-PY	Son quinientos noventa kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
-instructor	instructor/vuelo.paso.velocidad.370.ogg	es-PY	Son trescientos setenta kilómetros por hora.	el número de la marca rosa, detrás del paso de velocidad, en Taguató
 torre	torre/torre.solo.subir.2.ogg	es	ascienda a dos mil pies	la altura que autoriza el control, en pies por debajo de la transición
 torre	torre/torre.solo.subir.3.ogg	es	ascienda a tres mil pies	la altura que autoriza el control, en pies por debajo de la transición
 torre-canarias	torre-canarias/torre.canario.solo.subir.2.ogg	es	suba a dos mil pies	la altura que autoriza el control, en pies por debajo de la transición
@@ -2021,3 +2021,6 @@ instructor	instructor/ejercicio.efecto-suelo.sube.ogg	es-PY	Mirá dónde está l
 instructor	instructor/ejercicio.efecto-suelo.baja.ogg	es-PY	¿Viste? Arriba la aguja subió: lejos del suelo cuesta más. Ahora bajá cerquita del suelo y quedate quieto	el efecto suelo: quieto arriba después de abajo, ahora otra vez abajo
 instructor	instructor/ejercicio.efecto-suelo.bajaPrimero.ogg	es-PY	Mirá dónde está la aguja, acá arriba. Ahora bajá cerquita del suelo y quedate quieto	el efecto suelo: quieto arriba sin haber parado abajo, ahora abajo
 instructor	instructor/ejercicio.efecto-suelo.bien.ogg	es-PY	¡La aguja bajó! Cerca del suelo, el aire que empuja el rotor rebota en el suelo y te ayuda a sostenerte. Es el efecto suelo	el efecto suelo: otra vez abajo, la aguja bajó, y se celebra
+instructor	instructor/vuelo.compensadorParaDespegar.ogg	es-PY	Para despegar, poné el compensador en la franja verde del TRIM: así, al soltar, el avión sigue subiendo solo.	en el punto de espera, detrás de los flaps: la lista de antes de despegar pide el compensador en su franja verde
+instructor	instructor/vuelo.compensadorDeDespeguePuesto.ogg	es-PY	El compensador lo puse yo en la franja verde: así, cuando soltés, el avión sigue subiendo solo.	en los peldaños de abajo, si no se puso: lo pone la instructora y dice por qué
+instructor	instructor/vuelo.avisoDeConfiguracionCompensador.ogg	es-PY	Eso que sonó es el avión: avisa que el compensador no está en la franja verde. Bajá el motor y ponelo para despegar.	detrás del aviso de configuración de despegue, si lo que falta es el compensador: qué sonó y qué se hace

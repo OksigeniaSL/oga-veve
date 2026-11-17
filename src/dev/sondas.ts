@@ -253,6 +253,16 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     pedirFlaps: (donde: number) => juego.input.ponerPalancaDeFlaps(donde),
     palancaDeFlaps: () => juego.input.palancaDeFlaps,
+    /**
+     * **Dónde va el compensador para despegar**: la marca y su franja, o
+     * `null` si este avión, en este peldaño, no tiene compensador que poner.
+     * Es la franja que pinta el indicador TRIM en la espera, y el banco la
+     * usa como quien juega: llevando la aguja ahí. Ver
+     * `flight/compensador-de-despegue.ts`.
+     */
+    compensadorDeDespegue: () => juego.compensadorDeDespegueParaBanco(),
+    /** Lo hecho con la lista de antes de despegar y la recogida. */
+    listaDelDespegue: () => juego.flapsDelDespegueParaBanco,
     /** Lo que se le ha pedido al tren: la orden, no la posición. */
     trenQueSePide: () => juego.input.trenQueSePide,
     /**
