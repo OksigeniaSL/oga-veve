@@ -40,10 +40,10 @@ import { AIRCRAFT, type AircraftConfig } from "./aircraft";
 import { cabeEn, campoDe } from "./cabe";
 import { distanciaDeAterrizaje } from "./carrera";
 import { esAfis, sinTorre, type Aerodrome } from "../world/aerodrome";
-import { PlanDeVuelo, separacionEnTierra } from "../world/plan-de-vuelo";
+import { MARGEN_ENTRE_ALAS, PlanDeVuelo, separacionEnTierra } from "../world/plan-de-vuelo";
 import { SCENARIOS, conViento, type Scenario } from "../world/scenarios";
 import { TIEMPO_DE_CASA } from "../world/meteo";
-import { sueloDelTrafico, PASA_A_TU_LADO } from "../world/suelo-del-trafico";
+import { sueloDelTrafico } from "../world/suelo-del-trafico";
 import {
   alRemontar,
   crearTrafico,
@@ -355,21 +355,43 @@ function llegarConDosQueSalen(
                   }
                 : null,
           },
+    /*
+     * **Lo que le da el juego, todo**: ver `ponerTrafico` en `game.ts`. Le
+     * faltaban tu puesto —el de tu plan, aunque ya no estés en él, y el que
+     * tienes con tus alas— y tu avión y tu raya por donde no salir de la
+     * pista; y llegado a tu puesto no le daba nada, como si te hubieras ido:
+     * el tráfico podía aparcar encima de ti o salir por tu raya, y el banco no
+     * medía lo que pasa en el juego.
+     */
     tierra: () => {
       if (!suelo) return null;
-      if (fuera) return { suelo, alto: () => cota };
       const ruta = plan.rutaVisible();
       const raya = ruta.at(-1);
-      return {
-        suelo,
-        alto: () => cota,
-        evitar: [{ x, z }, ...(raya ? [{ x: raya[0], z: raya[1] }] : [])],
-        porDondeVas: porDelanteDe(
+      const arranque = plan.arranque();
+      const tuyo = plan.puestoQueTienes();
+      const cada = (paso: number) =>
+        porDelanteDe(
           ruta.map(([a, b]) => ({ x: a, z: b })),
           0,
           Infinity,
-          10,
-        ),
+          paso,
+        );
+      return {
+        suelo,
+        alto: () => cota,
+        evitar: [
+          { x, z },
+          ...(raya ? [{ x: raya[0], z: raya[1] }] : []),
+          ...(arranque ? [{ x: arranque[0], z: arranque[1] }] : []),
+        ],
+        porDondeVas: cada(10),
+        tuPuesto: tuyo ? { x: tuyo[0], z: tuyo[1], semiala: avion.wingSpan / 2 } : null,
+        ocupados: enTierra
+          ? {
+              puntos: [{ x, z }, ...(raya ? [{ x: raya[0], z: raya[1] }] : []), ...cada(30)],
+              radio: separacion,
+            }
+          : undefined,
       };
     },
   });
@@ -626,13 +648,22 @@ function llegarConDosQueSalen(
         quietoDesde.set(q.matricula, { x: q.x, z: q.z, t });
       const quieto = t - (quietoDesde.get(q.matricula)?.t ?? t);
       const d = Math.hypot(q.x - x, q.z - z);
-      const junto = separacionEnTierra(avion.wingSpan) / 2 + TIPOS[q.tipo].envergadura / 2;
+      /*
+       * **A tu lado es con las alas a menos del margen**: tu semiala, la suya
+       * y lo que se dejan entre puntas dos que se cruzan en una calle. Era
+       * media separación de tierra —que ya lleva tu semiala, la del reactor y
+       * el margen— más su semiala y otro margen, o el sesenta por ciento de la
+       * separación del reactor con el JAZ 120, lo que fuera más: un listón que
+       * no era de nadie y contaba como tapón a un reactor que esperaba su turno
+       * con trece metros entre puntas de ala (ADR 0029, «Arreglado»).
+       */
+      const junto = avion.wingSpan / 2 + TIPOS[q.tipo].envergadura / 2 + MARGEN_ENTRE_ALAS;
       if (
         enTierra &&
         volviendo() &&
         v > 0.5 &&
         quieto > PARADO &&
-        d < Math.max(junto + 7.5, PASA_A_TU_LADO * 0.6) &&
+        d < junto &&
         !medida.alLado
       )
         medida.alLado = `${q.matricula} (${q.tipo}) parado ${quieto.toFixed(0)} s a ${d.toFixed(1)} m de ti en «${fase}», t=${t.toFixed(0)} s`;

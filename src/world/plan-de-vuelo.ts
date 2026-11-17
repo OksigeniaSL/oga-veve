@@ -672,9 +672,11 @@ const SEMIALA_DEL_TRAFICO = 17;
 
 /**
  * Lo que se dejan entre puntas de ala dos aviones que se cruzan en una calle,
- * m. El de la clave C de la OACI, como `MARGEN_DE_ALA` en `rodaje.ts`.
+ * m. El de la clave C de la OACI, como `MARGEN_DE_ALA` en `rodaje.ts`. Lo
+ * mira también el banco de `salida-tapada.test.ts` para saber si uno parado
+ * está a tu lado.
  */
-const MARGEN_ENTRE_ALAS = 7.5;
+export const MARGEN_ENTRE_ALAS = 7.5;
 
 /**
  * **El sitio de un ala entre dos puestos.** OACI, Anexo 14, 3.13.6: en un
