@@ -3426,3 +3426,140 @@ más que antes (2,07).
   bajando de más: llega menos baja (2,5 m de mediana bajo la senda en vez de
   4,3, y tres tomas cortas de cuarenta en vez de seis), pero toca más fuerte
   (quince de cuarenta por encima de 2 m/s en vez de siete), así que no entra.
+
+## Enmienda H29b (17-11-2026): el automático, con el aire que sube aparte
+
+Lo que H29a dejó como del juego: la puerta de los 500 ft del JAZ 90 en Los
+Rodeos llegaba bajando a 6,1–6,9 m/s con 4,57 pedidos después de una
+ascendente, y era del automático (`flight/piloto-automatico.ts`).
+
+### Lo que pasaba
+
+El lazo del medio del automático persigue la trayectoria por el variómetro:
+gira el morro un cuarto de lo que falta de trayectoria cada segundo
+(`POR_TRAYECTORIA`) y lo acumula en el morro que persigue (`Memoria.morro`).
+Una ascendente de `w` m/s le levanta al ala `w/V` de ángulo de ataque en el
+instante en que entra, y el avión sube con ella; el variómetro lo cuenta
+cuando el avión ya va subiendo, y cuando la ascendente se va lo sigue
+contando un rato, porque el camino tarda en volver. En la bolsa de H29a (el
+automático solo, 3 m/s durante 4 s, con el tope del banco) el morro que
+persigue bajó de −2,8° a −4,0° mientras duraba y siguió hasta −4,7° tres
+segundos y medio después de acabarse, porque el avión todavía bajaba menos
+de lo pedido; luego bajó a 6,35 m/s, 6,13 de media de cinco segundos.
+
+No era un integrador saturado: el morro no tocó su holgura de cuatro grados
+ni su tope de doce. Era el lazo haciendo lo que tenía que hacer —bajar el
+morro en una ascendente es lo que pide la senda— con un dato que llega tarde.
+
+### Lo que se decidió
+
+El automático recibe **lo que sube el aire** (`Estado.subeElAire`) y quita o
+pone el morro que deja el ala con el mismo ángulo de ataque, `w/V`, aparte
+del morro de aire quieto que integra el lazo (`Memoria.aire`, ver
+`porElAire`). Va al ritmo del resto del morro y dentro del mismo tope de
+carga, 0,2 g, que se reparte: primero la trayectoria y lo del aire con lo
+que quede. Así el lazo del medio no tiene que absorber la ascendente, y
+cuando se va el morro vuelve con ella.
+
+Es lo que el avión de verdad sabe en el momento: el término `w/V` del factor
+F de la detección de cizalladura compara lo que sube el avión según los
+inerciales con lo que sube respecto al aire según la veleta de ataque y el
+anemómetro. Aquí lo da el juego, que sabe qué aire le pone al modelo de
+vuelo: la racha vertical y la estela del de delante. El banco del vuelo
+entero se lo pasa igual (la sonda `subeElAire`) y lo traza (`ma`).
+
+**En calma no cambia nada, bit a bit**: sin aire que suba, lo del aire es
+cero y las cuentas son las mismas. Comprobado con el automático de antes y
+el de ahora volando a la vez los ocho aviones de ala fija cuatro minutos cada
+uno —sostener con viraje, bajar por una senda, cambiar de nivel en `FLCH SPD`
+y en `V/S` con la mínima—: 115.200 pasos, ningún mando distinto. Y la mesa de
+H29a en calma da la misma traza.
+
+### El tope, de la aproximación estabilizada
+
+Por debajo de los mil pies una aproximación estabilizada no baja a más de mil
+pies por minuto, 5,08 m/s (FSF ALAR, *Briefing Note 7.1*; en el E190, C.
+Regli, *Embraer EMB190 – Summary*, p. 2-25). El banco pide estando alto 0,9
+veces eso, 4,57 m/s; lo que se puede pasar de lo pedido es lo que queda hasta
+mil, medio metro por segundo. Lo comprueba `ascendente-en-la-final.test.ts`,
+que vuela la bolsa de H29a con el automático del juego y falla sin el aire.
+
+| Bolsa (JAZ 90, Taguató, tope del banco 4,57) | media de 5 s | pico | morro de aire quieto |
+|---|---|---|---|
+| 3 m/s, 4 s, antes | 6,13 | 6,35 | 1,9° más abajo |
+| 3 m/s, 4 s, ahora | 5,03 | 5,13 | 0,6° |
+| 2 m/s, 4 s, antes | 5,63 | 5,78 | |
+| 2 m/s, 4 s, ahora | 4,87 | 4,93 | |
+| 2 m/s, 6 s, ahora | 4,93 | 5,05 | |
+
+Sin el tope del banco, bajando solo por la senda (unos 3,5 m/s): de 5,06 a
+4,00 con 3 m/s y de 4,56 a 3,86 con 2.
+
+### Con turbulencia
+
+La mesa de H29a con dos cambios para que mida la senda: la final empieza a
+9.000 m del umbral y no a 4.500, porque arrancaba con el ángulo de la
+configuración limpia, subía cuarenta metros y la puerta de la mesa medía ese
+arranque (las cuarenta finales por encima de 5,08); y el automático lleva
+también el rumbo, porque sin él alguna final daba la vuelta. Ochenta finales
+por lado con las ráfagas del juego; la puerta, la peor media de cinco
+segundos entre 3.300 y 1.500 m del umbral, donde están los 500 ft.
+
+| σ_w | puerta > 5,08 | exceso sobre lo pedido, mediana / p90 | fuera de la senda, rms mediana / p90 | toma > 2 m/s |
+|---|---|---|---|---|
+| 1 m/s, antes | 28 de 80 | 1,81 / 2,83 m/s | 4,4 / 6,5 m | 21 |
+| 1 m/s, ahora | 17 de 80 | 1,40 / 2,44 m/s | 3,4 / 5,2 m | 19 |
+| 1,5 m/s, antes | 59 de 80 | 2,90 / 4,85 m/s | 6,6 / 9,5 m | 40 |
+| 1,5 m/s, ahora | 43 de 80 | 2,26 / 3,94 m/s | 5,2 / 8,6 m | 40 |
+
+Lo que queda es de la racha de cara y de cola, que cambia la velocidad y con
+ella lo que sostiene el ala, y no se toca aquí. La toma la hace la recogida
+del banco y no el automático; con σ_w 1 su p90 pasa de 2,48 a 2,84 m/s y con
+1,5 su peor toma de 14,3 a 9,5, que con ochenta finales es ruido.
+
+### Probado y descartado
+
+- **Suavizar lo que sube el aire** antes de usarlo, para no perseguir los
+  baches cortos: con un segundo la bolsa queda en 5,15, por encima de mil
+  pies por minuto, y con turbulencia no mejora nada claro; con medio segundo,
+  lo mismo que sin suavizar.
+- **Parar el lazo del medio mientras lo del aire se mueve**, el antiwindup de
+  manual: la bolsa baja a 4,80, pero con turbulencia lo del aire se mueve
+  siempre y el lazo no corrige nunca: la final se va a cientos de metros de
+  la senda (283 m de rms de mediana) y de ochenta solo tocan treinta y
+  cuatro, casi todas kilómetros pasada la pista. Pararlo solo mientras lo del
+  aire no llega a lo que pide, peor: toca una.
+- **Restar a la trayectoria lo que la ascendente sin compensar todavía
+  mueve**, con un camino de primer orden de 1 a 2,5 s: peor, de 5,10 a 5,19.
+
+### La final que llega baja (H29a, «Lo que no»): es otra cosa
+
+No es lo mismo y esto no la arregla: en calma la traza es la misma y la final
+sigue llegando baja. En la mesa en calma, de 1.000 a 400 m del umbral el
+banco quita el margen de la final (de 121 a 119 nudos) y el ángulo de ataque
+sube de 1,7° a 2,7° en diez segundos, una décima de grado por segundo. El lazo
+del medio solo mira la trayectoria, y un integrador que sigue una rampa va
+por detrás lo que la rampa dividida por su ganancia: 0,1°/s entre 0,25 son
+0,4° de trayectoria, 0,45 m/s de más. Medido: baja a 3,40–3,48 m/s con 2,9–3,15
+pedidos, y llega a la recogida 4,5 m bajo la senda (1,2 m a los mil metros).
+En la traza de H25d, con el gas casi al ralentí y la velocidad cayendo más
+deprisa, la rampa es más empinada y el retraso, 1,2 m/s.
+
+Se probó en la mesa, sin entrar en el juego, que el morro acompañe lo que
+cambia el ángulo de ataque (filtrado a dos segundos): en calma llega a la
+recogida en la senda (0,0 m) y toca a 333 m; pero con turbulencia el ángulo de
+ataque lleva las ráfagas y la puerta empeora, de 17 a 51 de ochenta por
+encima de 5,08. Y cambia cómo vuela el automático en calma, que esta tanda
+tenía que dejar igual. Queda para el #192.
+
+### Volado en el navegador
+
+(pendiente)
+
+### Lo que no
+
+- **La final que llega baja**, arriba: es otra cosa.
+- **El descenso de emergencia** (`flight/despresurizacion.ts`) llama al
+  automático con su propio estado y no le pasa el aire: baja como bajaba.
+- **El modelo sencillo** lleva el ritmo con su propia palanca (`subirCon`) y
+  no mira el aire.
