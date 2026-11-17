@@ -31167,10 +31167,11 @@ export class Game {
   }
 
   /**
-   * Por encima de cuánto sobre el suelo una pérdida es una pérdida, m.
+   * Por encima de cuánto sobre el suelo la instructora explica la pérdida, m.
    *
-   * Por debajo es la recogida del aterrizaje, que es una pérdida hecha a
-   * propósito. Ver `cantarLaPerdida`.
+   * Por debajo puede ser la recogida del aterrizaje, y ahí «bajá el morro» es
+   * el consejo contrario. La caja del avión no mira esto: ver
+   * `cantarLaPerdida`.
    */
   private static readonly ALTO_PARA_LA_PERDIDA = 30;
 
@@ -33395,11 +33396,33 @@ export class Game {
    *
    * Treinta metros: por encima de eso una pérdida es una pérdida; por debajo,
    * es la recogida.
+   *
+   * **Lo de «un avión de verdad hace lo mismo» era cierto solo a medias.** El
+   * avisador de verdad se inhibe con el peso en las ruedas, no con la altura:
+   * es lo que ya dice `avisaLaPerdida`, y en el E-Jet el sacudidor lo pone el
+   * automático en cuanto el ángulo de ataque llega a su umbral, sin cota
+   * ninguna (C. Regli, *Embraer EMB190 – Summary*, 2025, p. 1-57, «Stall
+   * Protection System»; la única inhibición por altura que da es la de los
+   * mensajes del EICAS, de 80 nudos a 400 pies). En el juego, el sacudidor y
+   * la bocina ya sonaban así —los lleva `audio.ts` con el ángulo, a cualquier
+   * altura—, y la luz igual; lo que se callaba por debajo de treinta metros era
+   * la **voz** de la caja, en el avión que la tiene. Lo vio la traza del ala
+   * de H25a: el JAZ 90 rotando, 0,36 s por encima del avisador a cinco metros
+   * del suelo, con el sacudidor y sin el «stall, stall» (ADR 0027, enmienda
+   * H25c).
+   *
+   * Así que ahora se reparte: **la caja del avión canta en el aire a cualquier
+   * altura**, como el sacudidor de su mismo avión, que es lo que sonaría; y lo
+   * que sí se calla abajo es lo del juego —el tono de atención y la
+   * explicación de la instructora—, porque en la recogida su «bajá el morro»
+   * sería el consejo contrario. En la avioneta, cuya pérdida es la bocina, no
+   * cambia nada: la bocina ya sonaba en la recogida, que es donde suena en una
+   * de verdad.
    */
   private cantarLaPerdida(): void {
     const s = this.flight.state;
-    const hay =
-      avisaLaPerdida(s) && s.heightAboveGround > Game.ALTO_PARA_LA_PERDIDA;
+    const hay = avisaLaPerdida(s);
+    const explica = s.heightAboveGround > Game.ALTO_PARA_LA_PERDIDA;
     /*
      * **Y el rearme es el del modelo, no uno mío encima.**
      *
@@ -33431,8 +33454,19 @@ export class Game {
      * porque ese vuelo está roto. Ver el JAZ 90 en Taguató, que acaba fuera de
      * pista. Tapar el canto habría escondido eso.
      */
-    if (hay && !this.perdidaDicha) {
+    if (!hay) {
+      this.perdidaDicha = false;
+      this.perdidaDeLaCaja = false;
+      return;
+    }
+    if (this.perdidaDicha) return;
+    if (explica) {
       this.perdidaDicha = true;
+      /*
+       * Si la caja ya cantó abajo y el avisador sigue puesto al pasar los
+       * treinta metros, es el mismo suceso: no se canta otra vez.
+       */
+      if (this.perdidaDeLaCaja) return;
       this.avisar("attention");
       /*
        * **Y en `mando`, no en `urgente`.**
@@ -33444,10 +33478,24 @@ export class Game {
        * conseguía tirar autorizaciones de la torre. Ver `Urgencia`.
        */
       this.cantar("stall, stall", t("vuelo.perdida"), "vuelo.perdida", "mando");
-    } else if (!hay) {
-      this.perdidaDicha = false;
+      return;
+    }
+    /*
+     * Abajo, solo la caja, y solo en el avión cuya caja tiene voz: el que
+     * avisa con la bocina o el sacudidor ya está sonando (`audio.ts`), y el que
+     * no lleva caja no tiene nada que decir aquí sin la instructora. Sin
+     * llamar a `cantar` en esos dos, para que el registro de cantos no apunte
+     * una pérdida que no ha dicho nadie.
+     */
+    const suena = loQueSuenaEnEsteAvion("cabina.stall", this.aircraft);
+    if (!this.perdidaDeLaCaja && suena !== null && suena !== "mientras dura") {
+      this.perdidaDeLaCaja = true;
+      this.cantar("stall, stall", undefined, undefined, "mando");
     }
   }
+
+  /** Si la caja ya cantó la pérdida por debajo de la altura de explicarla. */
+  private perdidaDeLaCaja = false;
 
   /** Lo último que avisó del tren, para no repetírselo. Ver `seVuelveADecir`. */
   private dichoDelTren: LoDichoDelTren | null = null;
