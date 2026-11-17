@@ -319,6 +319,18 @@ export class Conversacion {
   }
 
   /**
+   * **Se aparta lo que queda de la cola desde la primera que cumpla**, sin
+   * tocar la que suena ni lo de delante: lo que se deja a medias para algo
+   * que no puede esperar, y que quien lo apartó vuelve a pedir después, en
+   * su orden. Callar lo perdería; quitar, sin la primera, partiría una
+   * pregunta de su respuesta. Devuelve lo apartado.
+   */
+  apartarDesde(primera: (l: Linea) => boolean): Linea[] {
+    const i = this.cola.findIndex(primera);
+    return i < 0 ? [] : this.cola.splice(i);
+  }
+
+  /**
    * **Lo que se ha dicho, en orden y con su hora de escena**: cuándo empezó
    * cada frase, cuándo acabó y si se cortó. Es con lo que se comprueba desde
    * fuera que una frase no pisa a la anterior y que nadie le corta una frase a

@@ -545,6 +545,7 @@ export const GUION_NOCHE_DE_MADRID: GuionDelPasaje<MomentoDeMadrid, CharlaDeMadr
   sellosAlDecirlo: () => [],
   seQuedanHastaLaSiguiente: new Set(),
   elPlop: [],
+  paraEnLaBajada: new Set(),
   elOficio: [],
   bano: null,
   kit: null,
