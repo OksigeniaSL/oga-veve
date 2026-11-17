@@ -3554,10 +3554,50 @@ tenía que dejar igual. Queda para el #192.
 
 ### Volado en el navegador
 
-(pendiente)
+`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-90`, dos tiradas el
+17-11-2026, puerto 5688, con la traza del ala, que ahora lleva también lo
+del aire (`ma`). Antes, las de H29a con el mismo banco y el automático sin
+el aire.
+
+| JAZ 90, Los Rodeos ×1 | Puerta (media de 5 s) | Toma | Comprobaciones |
+|---|---|---|---|
+| Antes (H25a–H29a, 10) | 2,5–6,3 m/s; una > 5,08 | 1,16–4,57 m/s; cuatro > 2 | |
+| Ahora, 1.ª | **5,3 m/s** | 1,35 m/s a 308 m | 61 de 62 |
+| Ahora, 2.ª | 4,2 m/s | **2,08 m/s** a 336 m | 62 de 63 |
+
+**La primera no pasa la puerta, y no es la ascendente.** El banco baja por
+el arco del viraje a la final al tope del arco, 6,25 m/s, y el avión llegó a
+bajar a 7,3 inclinado 28°. Al acercarse a la senda lo pedido volvió a 2,6
+m/s y el lazo del medio subió el morro de aire quieto de −3,9° a +1,7°; el
+avión pasó de bajar 7,3 a subir 0,5 m/s, con una ascendente de hasta 2,9 m/s
+saliendo del viraje que el automático ya compensaba (`ma` hasta −2,7°). Alto
+otra vez, el banco pidió de 3,3 m/s al tope de la final recta, 4,57, y
+durante seis segundos el avión fue de subir 0,5 a bajar 1,6: el lazo acumuló
+−5,9° de morro de aire quieto, el avión llegó a bajar 5,7 y en los cinco
+segundos antes de la puerta bajó 5,2 de media (5,3 según el banco) con 3,5
+pedidos. Es el lazo del medio, lento, sobrepasándose con un
+error de trayectoria grande y que dura —lo pedido saltando de 6,25 a 2,6 y a
+4,57 en veinte segundos—, no una ráfaga: el aire en esos cinco segundos bajaba
+de media 0,4 m/s, y el automático le subía el morro por ello. Esto no lo
+quita mirar el aire; lo quitaría un lazo del medio más amortiguado (mirar
+también la carga, como la recogida de H29a) o que el banco no baje a 6,25 en
+el arco, y las dos cosas cambian cómo vuela en calma. Queda para el #192.
+
+**La segunda pasa la puerta y toca a 2,08 m/s.** En los últimos 260 m la
+racha de cara cayó 2,5 m/s (de 124 a 117 nudos) y el avión pasó de bajar 3,4
+a 4,5 m/s con 3,1–3,6 pedidos; empezó a recoger a 14 m bajando 4,5. Es la
+racha horizontal, que esto no toca, y la toma está dentro de lo de antes.
+
+La tirada del JAZ 20 (`tenerife-norte guyrami 3 jaz-20`) no se voló: esperó
+el candado del navegador veintiséis minutos detrás de otras y se cortó al
+acabarse el tiempo de la tanda. La última, de H25e, antes de esto: 62 de 62,
+puerta a 3,9 m/s, toma a 1,53 m/s a 294 m.
 
 ### Lo que no
 
+- **La tirada del JAZ 20**, arriba.
+- **La puerta de la primera tirada**, arriba: el lazo del medio después de
+  un error de trayectoria grande.
 - **La final que llega baja**, arriba: es otra cosa.
 - **El descenso de emergencia** (`flight/despresurizacion.ts`) llama al
   automático con su propio estado y no le pasa el aire: baja como bajaba.
