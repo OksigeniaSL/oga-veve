@@ -2002,8 +2002,8 @@ also include rudder and aileron trim» (FAA-H-8083-3C, *Airplane Flying
 Handbook*, 2021, p. 2-21; y en la inspección de cabina, p. 2-5). Y lo que se
 nota después: «If the airplane has been properly trimmed for takeoff, some
 back-elevator pressure may be required to hold this attitude until the proper
-climb speed is established» (p. 6-5). Es decir, **la marca de despegue es la de
-subir, no la de rotar**.
+climb speed is established» (p. 6-5): se compensa para la velocidad de subir,
+por encima de la de despegar.
 
 | | Lo que dice su lista | Fuente |
 |---|---|---|
@@ -2030,8 +2030,11 @@ y `compensadorDeDespegue` en `flight/compensador-de-despegue.ts`).
 que la Vr. En los tres reactores cae entre la V2 más trece y la V2 más veinte
 nudos; en la avioneta, 61 nudos, junto a su Vx de 62 (*Information Manual*,
 p. 4-5). Atada a la pérdida, **el peso se va de la cuenta**: el ala vuela al
-mismo ángulo pese lo que pese, y la marca sale igual lleno y vacío. Si el
-modelo gana un día su centro de gravedad, la marca lo seguirá sola.
+mismo ángulo pese lo que pese, y la marca sale igual con el peso de la ficha y
+más cargado. Donde la pone la Vr —más ligero, si su velocidad cae por debajo de
+ella— pide algo menos de morro arriba, que es lo que pide un avión más ligero a
+la misma velocidad. Si el modelo gana un día su centro de gravedad, la marca lo
+seguirá sola.
 
 La franja, entre 1,2 y 1,4 veces la pérdida: es lo que la lista da por puesto y
 lo que se pinta en el indicador.
@@ -2047,16 +2050,36 @@ lo que se pinta en el indicador.
 | JAZ 110 | 0,143 | 0,071 a 0,234 |
 | JAZ 120 | 0,088 | 0,035 a 0,154 |
 
-El 1,3 se eligió con el banco de mesa, rodando a todo gas, rotando en la Vr y
-soltando con siete grados de morro, en Tukã, Taguato y Taguato Ruvicha, con
-1,2, 1,25, 1,3 y 1,35. Hasta 1,3 ninguno baja después de soltar; con 1,35 el
-Seneca, en el peldaño sin ayudas, ya baja a −1,5 m/s antes de subir. Y soltado ya en el aire a 1,2 veces su
-pérdida, con la marca ninguno vuelve a tocar y a los diez segundos todos suben;
-el 747 y el Seneca, los de menos empuje para su peso, bajan antes un trecho
-buscando su velocidad, que es justo lo que dice el manual de la FAA. **En el
-borde de morro abajo de la franja no**: ahí el 747 vuelve a tocar en el peldaño
-sin ayudas. Por eso la tarjeta y la instructora lo ponen en la marca, no en el
-borde. Lo comprueba `compensador-de-despegue.test.ts`.
+**Cómo se eligió el 1,3.** En el banco de mesa —rodando a todo gas, rotando en
+la Vr y soltando con siete grados de morro, en Tukã, Taguato y Taguato Ruvicha,
+con 1,2, 1,25, 1,3 y 1,35— hasta 1,3 ninguno bajaba después de soltar, y con
+1,35 el Seneca, en el peldaño sin ayudas, ya bajaba a −1,5 m/s antes de subir.
+Soltado ya en el aire a 1,2 veces su pérdida, con la marca ninguno vuelve a
+tocar y a los diez segundos todos suben; el 747 y el Seneca, los de menos empuje
+para su peso, bajan antes un trecho buscando su velocidad, que es lo que dice
+el manual de la FAA. En el borde de morro abajo de la franja no: ahí el 747
+vuelve a tocar en el peldaño sin ayudas, y por eso la tarjeta y la instructora
+lo ponen en la marca. Lo comprueba `compensador-de-despegue.test.ts`.
+
+**Y en el navegador se probaron las dos**, con `verificar-despegue.mjs
+tenerife-norte taguato`, que suelta el JAZ 20 a quince metros recién rotado y
+mira a los cuatro segundos:
+
+| | Rotación | A los 4 s de soltar |
+|---|---|---|
+| Compensador en cero (H20a, antes de esto) | a 28 m/s, su Vr | −9,2 m/s a 12 m |
+| Marca a 1,3 | a 28 m/s, su Vr | −3,7 m/s a 26 m |
+| Marca a 1,2 | **se va solo a 26 m/s**, sin Vr ni flecha de tirar | −2,2 m/s a 14 m |
+
+Con 1,2 el avión se levantaba solo antes de su Vr, y una marca que despega el
+avión antes de la Vr no es la de despegue. Se queda 1,3. **Y la comprobación
+sigue sin pasar**: lo que queda no es el compensador, es la ayuda de Taguato.
+Su `climbHold`, por debajo de su velocidad segura —la de aproximación y un
+cinco por ciento, 67 nudos en el JAZ 20—, deja de sostener la subida y pide
+morro abajo para ganar velocidad, y el banco suelta a 53 nudos. El avión
+compensado hace lo que dice el manual de la FAA —pide algo de tirón hasta
+coger la velocidad de subida— y la ayuda empuja hacia el mismo lado. Tocar
+esa ayuda no es de esta enmienda: queda apuntado.
 
 ### En el juego
 
@@ -2130,3 +2153,7 @@ Tres frases de la instructora al final de la lista de grabar
 - **El sonido del aviso de configuración**, en ningún tipo.
 - **Recoger el compensador**: después de despegar se compensa volando, como
   siempre; la lista de antes de despegar no tiene más que hacer arriba.
+- **«En el aire sigue subiendo» en Taguato**, que sigue fallando por la ayuda
+  de ese peldaño (arriba, «Cómo se eligió el 1,3»): lo que pide es mirar el
+  `climbHold` de `fdm.ts` recién despegado, o que el banco suelte con la
+  velocidad de subida y no con la de rotar.
