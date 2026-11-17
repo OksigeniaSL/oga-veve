@@ -156,6 +156,32 @@ describe("y por dónde llega el avión", () => {
     expect(seLeVe(s, -60, 0)).toBe(true);
   });
 
+  /*
+   * **Y de costado, lo mismo.** En Los Rodeos, con el JAZ 50, se sale del puesto
+   * hacia el oeste y la raya de vuelta entra por el sur. Puesto para la salida, el
+   * señalero medía de través lo que le quedaba al avión: le daba el alto en la
+   * calle, treinta metros antes, y parado en su sitio le pedía «adelante». Ver
+   * `Senalero.miraA`.
+   */
+  it("y llegando de costado también se le recoloca, y el alto se da en el puesto", () => {
+    const gesto = (s: Senalero, x: number, z: number) =>
+      s.paso(0.05, { x, z, velocidad: 3, enElSuelo: true }, true);
+    // Puesto para una llegada por el este, que es por donde se salió.
+    const s = puesto();
+    const porElSur: [number, number] = [0, 100];
+    expect(s.miraA([0, 0], [100, 0])).toBe(true);
+    // Diez grados torcido no es otra llegada: recolocarlo le reiniciaría la postura.
+    expect(s.miraA([0, 0], [100, 17])).toBe(true);
+    expect(s.miraA([0, 0], porElSur)).toBe(false);
+    expect(s.miraA([0, 0], [-100, 0])).toBe(false);
+    // Sin recolocar, el alto a veinticinco metros del puesto, viniendo por el sur.
+    expect(gesto(s, 0, 25)).toBe("alto");
+    s.colocar([0, 0], porElSur, () => 0);
+    expect(s.miraA([0, 0], porElSur)).toBe(true);
+    expect(gesto(s, 0, 25)).toBe("adelante");
+    expect(gesto(s, 0, 1)).toBe("alto");
+  });
+
   it("y entonces se planta al otro lado, que es donde le ve el comandante", () => {
     const porElEste = puesto();
     const porElOeste = new Senalero();

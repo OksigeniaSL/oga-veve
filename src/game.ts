@@ -21070,7 +21070,12 @@ export class Game {
     const enSuSitio =
       donde !== null &&
       Math.hypot(donde.x - puesto[0], donde.z - puesto[1]) < 1;
-    if (enSuSitio && !this.deEspaldas(puesto, porDonde)) return;
+    /*
+     * **Y mirando a la llegada, no solo sin darle la espalda.** Se recolocaba solo si
+     * la llegada venía por detrás, y una de costado lo dejaba puesto para la salida:
+     * ver `Senalero.miraA`.
+     */
+    if (enSuSitio && (!porDonde || this.senalero.miraA(puesto, porDonde))) return;
     this.senalero.colocar(puesto, porDonde, (x, z) =>
       this.terrain.sampleSurface(x, z),
     );
@@ -21099,26 +21104,6 @@ export class Game {
     return puestos.some(
       (p) => Math.hypot(p.xy[0] - donde[0], -p.xy[1] - donde[1]) < 10,
     );
-  }
-
-  /**
-   * Si el señalero está mirando al revés de por donde llega el avión.
-   *
-   * El listón es generoso —se da la vuelta solo cuando el avión viene de más
-   * atrás que de costado— porque recolocarlo por dos grados le reiniciaría la
-   * postura cada fotograma, y eso se ve peor que mirar un poco torcido.
-   */
-  private deEspaldas(
-    puesto: readonly [number, number],
-    porDonde: readonly [number, number] | null,
-  ): boolean {
-    if (!porDonde) return false;
-    const vx = puesto[0] - porDonde[0];
-    const vz = puesto[1] - porDonde[1];
-    const largo = Math.hypot(vx, vz);
-    if (largo < 1) return false;
-    const mira = this.senalero.mirando;
-    return (vx / largo) * mira.x + (vz / largo) * mira.z < 0;
   }
 
   /**
