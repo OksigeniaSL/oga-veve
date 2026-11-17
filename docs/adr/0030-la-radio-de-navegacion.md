@@ -440,3 +440,158 @@ peldaño de cabina, los campos con VOR, el viento del sitio.
   despegarse la barra queda establecido sin pasarse más de un punto; que
   quien vira tarde cruza y vuelve, y también acaba; y que con el viento de
   costado el morro establecido no es el curso.
+
+## Enmienda H26e (17-11-2026): «Interceptar un radial»
+
+La propuesta de arriba, hecha, y lo que cambió al hacerla.
+
+`flight/interceptar-un-radial.ts`, otra entrada de `EJERCICIOS` —`interceptar`,
+con `escena: "radio"` y su `colocacion` propia—, con su ficha en el hangar
+(«Salí por un radial»: el VOR con un solo radial saliendo, la estela que baja
+cortándolo y se curva antes de llegar, y el avión ya encima) y la misma
+puerta que los otros dos: el hangar, `?ejercicio=interceptar`, la
+presentación antes y el panel del final con la traza.
+
+- **Dónde se ofrece**: donde «¿En qué radial estoy?» —el peldaño de cabina,
+  todo avión con NAV y todo campo con VOR—. Fuerteventura es donde lo vuela
+  el banco; Los Rodeos, Tenerife Sur, Gran Canaria, Lanzarote o Asunción
+  valen igual.
+- **Qué radial se pide**: uno redondo **de costado al viento**, del lado más
+  bajo, con la misma cuenta que el radial de antes, que ahora es una pieza
+  suelta (`radialDeCostadoAlViento`): en Fuerteventura, el 120 de FTV. La
+  propuesta pedía el de una salida transcrita si la había, y no sirven: las
+  dos que cortan un radial, las de Los Rodeos, **siguen el R-303 y el R-097
+  de TFN hacia la radio** y los cortan a noventa grados largos (rumbo 028
+  para el 303, rumbo 007 para el 097), y las que salen por un radial —el
+  R-118 de LRO, el R-037 de LTE— lo hacen desde la pista, sin cortarlo. Ni
+  una es «salir por un radial cortándolo a cuarenta y cinco», y la mayoría
+  de los campos con VOR no tienen ninguna. **El número se escribe y no se
+  dice**: «Salí por el R-120 FTV» en la tarjeta, delante de la frase, como
+  en una carta de salida; la voz es genérica y vale en todo campo.
+- **Dónde empieza** (`colocacionDelCorte`): a cinco millas de la radio —o a
+  dos minutos y medio de vuelo si eso es más, que a doscientos cincuenta
+  nudos cinco millas son un suspiro: el reactor, a diez y media—,
+  alejándose, **treinta grados apartado del radial pedido y del lado del
+  que viene el viento**, con el morro a cuarenta y cinco grados del curso,
+  cortándolo. En Fuerteventura, en el 090 de FTV, al norte del 120. Del lado
+  del viento a propósito: el aire empuja hacia el radial, el viraje para
+  quedarse es la cortada más la corrección —cincuenta y cinco grados con la
+  avioneta— y quien no anticipa se pasa de verdad. Treinta grados porque con
+  el OBS en el pedido la barra sale a tope y queda casi un minuto, cortando,
+  hasta que se despega: lo que hace falta para oír qué se pide y girar la
+  rueda. A tres mil pies sobre la pista, o mil por encima de lo más alto del
+  camino.
+- **La NAV empieza con el VOR puesto** y el OBS en el radial de debajo, con la
+  barra en el centro, como lo deja la radio al salir. Identificar ya lo
+  enseñaron los dos de antes; si se quita el VOR, la instructora lo pide con
+  la frase de «¿En qué radial estoy?», una vez por cada vez que se quita.
+- **Lo que pasa**, en sucesos y con la tarjeta (el CDI dibujado: a tope,
+  viniendo, cruzado al otro lado o centrado) y la instructora: presentar y
+  pedir el número en el OBS; **a tope**, con el OBS en el pedido: «el radial
+  queda de ese lado, seguí cortándolo de costado»; **se despega** (la barra
+  por debajo de diez grados, `A_TOPE`): «empezá a virar ahora, de a poquito,
+  antes de que llegue al centro»; **pasado**, si la barra cruza al otro lado
+  más de un grado: «te pasaste un poquito, volvé de a poco», una vez y nunca
+  más, que repetirlo sería reñir; y **establecido**: la barra a menos de un
+  grado veinte segundos seguidos con el morro a menos de quince del curso,
+  con el sonido del logro y el panel del final. Si el OBS se pone tarde, con
+  la barra ya despegada, no dice «a tope» y sigue por «se despega». Nadie
+  suspende: quien se pasa vuelve, y acaba igual.
+- **Pasarse es un grado**, no el punto que pedía la propuesta. Con la
+  avioneta a régimen estándar, el viraje de cuarenta y cinco se come el radio
+  de viraje por uno menos el coseno: 336 m (`anticipacion`, la prueba lo
+  fija); con el alisio y la corrección, cincuenta y cinco grados y la deriva
+  mientras gira. Pero a seis millas eso son dos grados de barra, y quien vira
+  con la barra ya en el centro se pasa dos grados la avioneta y uno y medio
+  largo el reactor, que empieza más lejos: con un punto —cinco grados— nadie
+  se pasaría nunca. Un grado es salir del centro (`EN_EL_CENTRO`) por el otro
+  lado, y es lo que se ve.
+- **La corrección de viento es el morro contra el camino**, no contra el
+  curso. Medido como lo pedía la propuesta —el morro apartado del curso—, en
+  calma salía casi cuatro grados: quien aún se está acercando a la barra lleva
+  el morro hacia ella, y eso no es viento. El ejercicio promedia el morro en
+  los veinte segundos y le resta hacia dónde fue el avión de verdad, que es la
+  definición de la deriva. Con tres grados o más
+  (`CORRIGE`), la frase del final señala el morro: «no apunta justo al número
+  del OBS, apunta un poco contra el viento»; con menos, otra sin viento. **Un
+  suceso, una voz**: son dos frases y se dice una.
+- **Las frases**, seis, genéricas, sin el nombre del VOR ni el número del
+  radial: al final de `scripts/frases-para-grabar.mjs` (`DEL_CORTE`), y
+  hasta grabarlas, la tarjeta y su texto. La rueda del OBS suena con el clic
+  de la carta, como desde 99fb22b2.
+
+### Lo que se prueba
+
+- `flight/interceptar-un-radial.test.ts`: **un piloto de prueba con la radio
+  de verdad** (`leerNav`) y un avión de cinemática —la verdadera, el viento
+  sumado y tres grados por segundo como mucho—, en Fuerteventura con FTV.
+  Dónde se ofrece; que se pide el 120, que se empieza en el 090 a cinco
+  millas, cortándolo a cuarenta y cinco y alejándose; que con el OBS en el
+  090 la barra está en el centro y en el 120 a tope con FROM; que en calma se
+  empieza del lado de más grados y el reactor más lejos; y lo que se come el
+  viraje, 336 m. Y el vuelo: **quien vira en cuanto la barra se despega**
+  —el rumbo del curso más cuatro veces y media la barra, que a tope son los
+  cuarenta y cinco de la cortada— y apunta contra el viento lo que sabe que
+  pide, **no la cruza** (cero grados), queda a menos de un grado del 120 de
+  verdad y con el morro 9,9° contra el alisio (4,6° el reactor); **quien
+  espera a ver la barra en el centro** se pasa 2,1° la avioneta y 1,7° el
+  reactor, oye «te pasaste», vuelve y acaba igual; en calma, la corrección
+  sale en cero; y el OBS puesto tarde no dice «a tope».
+- `scripts/ver-interceptar-un-radial.mjs`: el mismo vuelo en el juego, con
+  las teclas de quien juega —el 0 apretado para llevar el OBS al pedido, el
+  automático para la cortada y el viraje, que quita lo que ve que el viento
+  lo deriva— y sus capturas, con el reloj por cuatro desde que el OBS está
+  puesto. Con el modelo de vuelo de verdad y la avioneta, con el alisio:
+  empieza a 5,0 millas de FTV y a 948 m, en el 090 con el OBS en el 090 y la
+  barra casi en el centro (−1,2°), la tarjeta escribe «R-120 FTV» y el
+  morro va a cuarenta y cinco grados del curso; el 0 apretado lleva el OBS
+  al 120 y la barra sale a tope con FROM (28,5°); se despega a 5,6 millas;
+  **quien vira desde ahí no la cruza** (0,00°) y queda establecido en el
+  119,6; **quien espera a verla en el centro se pasa 2,8°**, oye «te
+  pasaste», vuelve y queda en el 120,3, con la frase del morro contra el
+  viento. En calma (`OGA_VIENTO=000/0`) pide el 090 desde el 120, se despega
+  a 5,9 millas, no la cruza, queda en el 90,5 y la frase del final no habla
+  de viento. Diez de diez, once de once y diez de once, con la Intel por
+  ANGLE: la que faltaba era del banco y no del juego, y dice lo mismo que la
+  corrección de arriba. En calma, el morro iba 4,2° apartado del curso al
+  cerrar, con la barra aún a medio grado: era el piloto acercándose, y el
+  ejercicio, que mide contra el camino, ya había elegido la frase sin
+  viento. El banco ahora mira lo mismo que el ejercicio. Lo que no ha volado
+  el banco: un reactor, que solo está en la prueba de mesa.
+
+### Propuesta para la tanda siguiente: «Dos radiales que se cortan»
+
+El cuarto de la lista de arriba y el cierre del peldaño 5 que pide #51:
+**saber dónde se está sin ver nada**, con dos VOR. En el mismo marco:
+`escena: "radio"`, el peldaño de cabina, el viento del sitio.
+
+- **Dónde se ofrece**: en un campo con VOR que tenga **otro al alcance** y
+  bien abierto, porque el corte de dos rectas casi paralelas no dice nada:
+  `dondeVale` busca, entre las emisoras, otro VOR a menos de la línea de
+  vista desde la altura del ejercicio y con los dos radiales cortándose
+  entre sesenta y ciento veinte grados en algún sitio sobre lo bajo. En
+  Fuerteventura, FTV y LTE, en Lanzarote, a treinta y cuatro millas; en
+  Tenerife Sur, TFS y TFN, a treinta y nueve; en Gran Canaria, GDV y LPC, a
+  quince de norte a sur, que se cortan bien al este y al oeste de la isla.
+  TFN y LRO, a cinco millas y media una de otra, se cortan mal casi en todas
+  partes: es justo lo que hay que enseñar a no hacer. Donde no haya pareja,
+  no se ofrece.
+- **Una sola NAV**, la que lleva el juego: centrar la barra con FROM en el
+  primero y leer su radial —lo que enseñó «¿En qué radial estoy?»—, poner el
+  segundo, oír su morse, centrar otra vez y leer el otro. **La carta lo
+  dibuja**: cada radial leído, una raya de lápiz en el plano en vuelo desde su
+  estación (`Mapa.ponerEstela` ya pinta a lápiz encima del papel), y donde se
+  cortan, la cruz. La instructora: «ahí estás».
+- **La lección de verdad**: entre leer uno y leer otro el avión vuela, y la
+  cruz llega tarde. A cien nudos, un minuto entre los dos son casi dos
+  millas. Se juzga la cruz contra dónde estaba el avión al leer el segundo,
+  y se cuenta: «la próxima, leelos rápido, o volá hacia uno de los dos, que
+  así ese radial no cambia».
+- **Frases**: presentar, el primero centrado, poner el segundo, el segundo
+  centrado, la cruz, y la de leerlos rápido si la cruz sale lejos. Las cifras,
+  en la carta.
+- **Prueba de mesa** con el mismo piloto de cinemática y `leerNav` en los
+  dos: que la cruz cae a menos de media milla del avión si los dos se leen en
+  el mismo instante; que leerlos con un minuto de vuelo entre medias la
+  aparta lo que se voló; y que con dos estaciones a cinco millas y el avión
+  en su prolongación el corte no se ofrece.
