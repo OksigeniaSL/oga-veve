@@ -552,8 +552,10 @@ debajo, y no se toca a través de ella. En un mismo punto manda lo de encima,
 salvo que debajo asome **un punto** —una radioayuda, un punto del perfil, el
 norte, tu avión (`PUNTUALES`)—: el VOR LRO está en la punta oeste de Los
 Rodeos, medio tapado por la pista, y la primera foto salía «RWY 12/30» al
-tocarlo. Por tamaño no: con «el más chico gana», tocar la pista en el centro
-decía «TWY E3», la calle que la cruza por debajo. Un botón o una etiqueta
+tocarlo —y el símbolo y la pluma del ILS, que H22c dejó sin recibir el dedo
+porque no había nada que hacer con él, ahora lo reciben—. Por tamaño no: con
+«el más chico gana», tocar la pista en el centro decía «TWY E3», la calle
+que la cruza por debajo. Un botón o una etiqueta
 mandan: cerrar, volver, ir, las pestañas. En el plano se mira lo pintado:
 cada cosa con su caja en píxeles de pantalla; gana la que contenga el punto
 o, si ninguna, la más cercana a menos de 22 px; y entre dos que lo

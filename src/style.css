@@ -13512,6 +13512,15 @@ button.motor__tecla::after {
   cursor: pointer;
 }
 
+/*
+ * El símbolo de una radioayuda y la pluma del ILS no recibían el dedo: no
+ * había nada que hacer con él. Ahora se tocan, y tienen que recibirlo para
+ * que el navegador sepa que están debajo. Ver `tocadoEn`.
+ */
+.ficha-carta [data-toca] > :is(.pistas__radioayuda, .pistas__pluma) {
+  pointer-events: visiblePainted;
+}
+
 /* En el SVG, un brillo alrededor del trazo, que es lo que se tocó. */
 :where(svg) .toque-tocado {
   filter: drop-shadow(0 0 1.5px var(--ocre)) drop-shadow(0 0 4px var(--ocre));
