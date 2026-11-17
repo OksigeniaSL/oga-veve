@@ -4310,8 +4310,8 @@ export class Hud {
        * botones de la columna de la pausa acaban por encima del subtítulo:
        * apartado de ella igual, el hueco a la izquierda del rincón se quedaba
        * en 320 píxeles y la orden de la torre, en ocho líneas. Se miden los
-       * botones y no sus cajas, que se estiran con su fila de la rejilla y
-       * bajan más que ellos. Ver `--aparte-arriba`.
+       * botones y no sus cajas: medidas las cajas, en esa tablet bajaban
+       * hasta el subtítulo y los botones no. Ver `--aparte-arriba`.
        */
       const abajo = [vistas, antes]
         .flatMap((e) => (e ? [...e.querySelectorAll("button")] : []))

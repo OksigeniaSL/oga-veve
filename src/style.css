@@ -15684,10 +15684,11 @@ oksigenia-access-panel::part(trigger):focus-visible {
    * **Y con un aviso, otra fila para él**, entre la pantalla y el subtítulo.
    * El aviso se apoya en lo que miden las losas, que el HUD toma al pintarse
    * —ver `reserveForPanel`—, y con la pantalla en grande caía en mitad de
-   * ella: «¡Pérdida!» encima de la cinta de la velocidad, que es justo lo que
-   * lo explica. La pantalla se queda una fila más baja mientras dura el
-   * aviso, el aviso va en esa fila con la flecha al lado y no encima —una
-   * fila de flecha, 44 píxeles y su relleno—, y el subtítulo sube con ella.
+   * ella: encima de la pantalla de vuelo, con la velocidad y la altura, que
+   * es justo lo que lo explica. La pantalla se queda una fila más baja
+   * mientras dura el aviso, el aviso va en esa fila con la flecha al lado y
+   * no encima —una fila de flecha, 44 píxeles y su relleno—, y el subtítulo
+   * sube con ella.
    */
   .hud.hay-cuadro-grande.hud--avisando {
     --fila-del-aviso: calc(44px + 20px + 8px);
