@@ -56,6 +56,21 @@ describe("el guion del primer capítulo", () => {
     expect(ES_PY["comandante.largo.cinturon"]).toMatch(/subiendo/);
   });
 
+  /*
+   * **Y no para nada para la bajada** (17-11-2026, H27b). Lo que se para en el
+   * punto de descenso —ver `paraEnLaBajada` en `motor-del-pasaje.ts`— es para que
+   * Ara note el ralentí mientras se oye, y en el vuelo corto, con un crucero de
+   * medio minuto, hizo falta. Aquí no hay crucero que barrer: el capítulo acaba
+   * subiendo, sin bajada ni frase de Ara para el ralentí. Si un día la tiene, que
+   * lleve su barrido del crucero, como el vuelo corto y la llegada a Asunción.
+   */
+  it("no para nada para la bajada: acaba subiendo, sin bajada y sin ralentí que notar", () => {
+    expect(GUION_NOCHE_DE_MADRID.momentos.map((m) => m.id)).not.toContain("bajada");
+    const deLasCharlas = GUION_NOCHE_DE_MADRID.charlas.flatMap((c) => [...c.lineas]);
+    expect([...lasFrases(), ...deLasCharlas].map((l) => l.clave)).not.toContain("inicio.ara.pasaje.ralenti");
+    expect(GUION_NOCHE_DE_MADRID.paraEnLaBajada.size).toBe(0);
+  });
+
   it("la bienvenida de la comandante va con las puertas cerradas, antes de arrancar, y dice la llegada de hoy", () => {
     const ids = GUION_NOCHE_DE_MADRID.momentos.map((m) => m.id);
     const trozos = ["bienvenida", "vientoDeCara", "pilotos", "esMama", "puertas"].map((id) => ids.indexOf(id as never));

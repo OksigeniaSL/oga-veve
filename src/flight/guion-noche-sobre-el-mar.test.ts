@@ -442,4 +442,25 @@ describe("el guion", () => {
     expect(escena.estado.linea?.clave).not.toBe(GUION_NOCHE_SOBRE_EL_MAR.siesta.seDespierta.clave);
     expect(escena.registro.length).toBe(antes);
   });
+
+  /*
+   * **Y no para nada para la bajada** (17-11-2026, H27b). Lo que se para en el
+   * punto de descenso —ver `paraEnLaBajada` en `motor-del-pasaje.ts`— es para que
+   * Ara note el ralentí mientras se oye, y en el vuelo corto, con un crucero de
+   * medio minuto, hizo falta. Aquí el crucero son horas y no se llega a bajar: del
+   * salto se cae en el despertar del tercer capítulo, que tiene su barrido. La
+   * bajada de este guion no dice nada y no tiene frase de Ara para el ralentí.
+   */
+  it("no para nada para la bajada: no se llega a ella, y no dice nada ni tiene ralentí que notar", () => {
+    const bajada = GUION_NOCHE_SOBRE_EL_MAR.momentos.find((m) => m.id === "bajada")!;
+    expect(bajada.lineas).toEqual([]);
+    expect(bajada.segun).toBeUndefined();
+    expect(GUION_NOCHE_SOBRE_EL_MAR.charlas).toEqual([]);
+    expect(GUION_NOCHE_SOBRE_EL_MAR.momentos.flatMap((m) => m.lineas).map((l) => l.clave)).not.toContain("inicio.ara.pasaje.ralenti");
+    expect(GUION_NOCHE_SOBRE_EL_MAR.paraEnLaBajada.size).toBe(0);
+    // Dormida antes de bajar, y del salto al otro capítulo: la bajada de aquí no se dice nunca.
+    const { escena } = hastaDormirse();
+    expect(escena.saltoPedido).toBe(entradaDeLaLlegada(INVIERNO));
+    expect(escena.estado.dichos).not.toContain("bajada");
+  });
 });

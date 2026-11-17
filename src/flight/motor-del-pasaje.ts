@@ -845,10 +845,18 @@ export interface GuionDelPasaje<M extends string = string, C extends string = st
   readonly bano: { readonly pedido: M; readonly vuelta: Linea } | null;
   /**
    * **El kit de viaje**: el momento en que llega, a cuántos metros de tocar,
-   * y las claves de la tripulante que lo da y que lo pide guardar. Sin él, no
+   * las claves de la tripulante que lo da y que lo pide guardar, y las charlas
+   * que deja pasar delante —las que contestan a lo que Ara acaba de notar,
+   * que no esperan a que se acabe el juego: ver `kitDejaPasar`—. Sin él, no
    * hay kit.
    */
-  readonly kit: { readonly momento: M; readonly llegaA: number; readonly dado: string; readonly guardado: string } | null;
+  readonly kit: {
+    readonly momento: M;
+    readonly llegaA: number;
+    readonly dado: string;
+    readonly guardado: string;
+    readonly dejaPasar: ReadonlySet<C>;
+  } | null;
   /**
    * **Lo que se cuenta antes de ver el mundo**, bajo láminas: hasta qué momento dura,
    * y las láminas que va a pedir, para tenerlas bajadas antes de que hagan falta. El
@@ -2259,7 +2267,7 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       }
     }
     const vista = def.cuando(l, this) ? this.vistaDe(def, l) : undefined;
-    if (!def.cuando(l, this) || this.esperaSuFase(def, l) || vista === null) {
+    if (!def.cuando(l, this) || this.esperaSuFase(def, l) || vista === null || this.kitDejaPasar(def, l)) {
       /*
        * Lo señalado por la ventanilla, en los huecos de lo que no ha llegado;
        * y si no hay, lo que venga a cuento. Menos en lo que va pegado a lo de
@@ -2290,7 +2298,9 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
        * se pasen de su momento se saltan, que para eso son de cuando vienen a cuento.
        */
       const charla =
-        this.kit.ocupaAAra || this.miraLaConsola || this.kitAPuntoDeLlegar(def, l) ? undefined : this.charlaQueToca(l, esperan);
+        this.kit.ocupaAAra || this.miraLaConsola
+          ? undefined
+          : this.charlaQueToca(l, esperan, this.kitAPuntoDeLlegar(def, l) ? (this.guion.kit?.dejaPasar ?? new Set()) : undefined);
       if (charla) {
         this.charlasDichas.push(charla.def.id);
         this.decirDe(charla.def, l, charla.vista);
@@ -2676,14 +2686,16 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
 
   /**
    * La primera charla que viene a cuento ahora, si hay alguna. **Y lo que
-   * nombra del paisaje, solo si se ve**: ver `SitioDelPaisaje`.
+   * nombra del paisaje, solo si se ve**: ver `SitioDelPaisaje`. Sin las de
+   * `sin`, y con `solo`, de esas nada más.
    */
   private charlaQueToca(
     l: LecturaDelPasaje,
     sin?: ReadonlySet<C>,
+    solo?: ReadonlySet<C>,
   ): { def: DefCharla<M, C>; vista?: VistaDelSitio } | undefined {
     for (const c of this.guion.charlas) {
-      if (sin?.has(c.id)) continue;
+      if (sin?.has(c.id) || (solo && !solo.has(c.id))) continue;
       if (this.charlasDichas.includes(c.id) || this.callada < this.trasDe(c) || !c.cuando(l, this) || c.caduca?.(l, this))
         continue;
       const vista = this.vistaDe(c, l);
@@ -2784,7 +2796,8 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
    * se nombra el paisaje, pero la carrera estaba: en el vuelo medido del
    * banco, el kit y el ala se podían decir en el mismo instante. Así que lo
    * que viene a cuento espera al kit; lo que tiene su momento —el guion, la
-   * ventanilla— no.
+   * ventanilla— no. Y lo que contesta a lo que Ara acaba de notar, tampoco:
+   * ver `kitDejaPasar`.
    */
   private kitAPuntoDeLlegar(def: DefMomento<M, M, C>, l: LecturaDelPasaje): boolean {
     const kit = this.guion.kit;
@@ -2796,6 +2809,32 @@ export class MotorDelPasaje<M extends string = string, C extends string = string
       l.faltaParaTocar < kit.llegaA + ANTES_DEL_KIT &&
       !cabinaPreparada(l, this) &&
       l.altitud >= DIEZ_MIL_PIES + KIT_POR_ENCIMA
+    );
+  }
+
+  /**
+   * **Y el kit deja pasar delante lo que contesta a lo que Ara acaba de
+   * notar** (17-11-2026): el porqué del ralentí, que la comandante cuenta en
+   * el primer rato tranquilo después de los oídos. Con un crucero corto ese
+   * rato caía ya dentro de los `ANTES_DEL_KIT` metros en que lo que viene a
+   * cuento espera al kit, y la explicación salía detrás de él, con el juego
+   * ya en las manos: en la mesa, con 35 s de crucero o menos y con 40 a 42,
+   * entre 67 y 71 s más tarde que con los demás, a 99,5 km de la pista en
+   * vez de a 110 o más. Era un filo —que los doce segundos de silencio que
+   * pide se cumplieran antes o después de los 110 km—, y una respuesta no
+   * puede depender de dónde caiga un filo.
+   *
+   * Así que esas charlas —solo esas— no esperan al kit, y mientras una viene
+   * a cuento y está por decir, el kit la espera a ella: si el rato tranquilo
+   * cae ya pasado su sitio, el kit, que pide menos silencio, la pisaba. Con
+   * la consola delante no se puede decir, y el kit no la espera: esperando a
+   * algo que no puede llegar, se perdería el juego entero.
+   */
+  private kitDejaPasar(def: DefMomento<M, M, C>, l: LecturaDelPasaje): boolean {
+    const kit = this.guion.kit;
+    if (kit === null || def.id !== kit.momento || this.miraLaConsola) return false;
+    return this.guion.charlas.some(
+      (c) => kit.dejaPasar.has(c.id) && !this.charlasDichas.includes(c.id) && c.cuando(l, this) && !c.caduca?.(l, this),
     );
   }
 
