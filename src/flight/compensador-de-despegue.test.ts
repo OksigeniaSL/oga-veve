@@ -47,7 +47,7 @@ describe("la marca de despegue", () => {
     const flaps = flapsDeDespegue(PANAMBI);
     const v = Math.max(PANAMBI.rotationSpeed, perdidaCon(PANAMBI, flaps) * SUBE_SOBRE_LA_PERDIDA);
     expect(compensadorDeDespegue(PANAMBI).marca).toBeCloseTo(timonQueSostiene(PANAMBI, v, flaps), 6);
-    // Y la franja, entre las de 1,2 y 1,4.
+    // Y la franja, entre las de 1,15 y 1,3.
     const lenta = timonQueSostiene(PANAMBI, perdidaCon(PANAMBI, flaps) * FRANJA_SOBRE_LA_PERDIDA.lenta, flaps);
     expect(compensadorDeDespegue(PANAMBI).hasta).toBeCloseTo(lenta, 6);
   });
@@ -86,12 +86,7 @@ describe("la marca de despegue", () => {
  * recién despegado, con el compensador en cero el JAZ 20 volvía a la pista en
  * cuatro segundos. Con la marca, todos los de ala, soltados a 1,2 veces su
  * pérdida —la de recién despegado—, no vuelven a tocar y a los diez segundos
- * suben, en los tres peldaños del modelo de coeficientes. Antes de subir
- * pueden bajar el morro y perder algo de altura buscando la velocidad de su
- * marca: es lo que dice el manual de la FAA, que bien compensado para
- * despegar «some back-elevator pressure may be required to hold this attitude
- * until the proper climb speed is established» (FAA-H-8083-3C, p. 6-5). El
- * 747 y el Seneca, los que menos empuje tienen para su peso, son los que más.
+ * suben, en los tres peldaños del modelo de coeficientes.
  */
 describe("puesto, soltando los mandos recién despegado se sigue subiendo", () => {
   for (const [nombre, tier] of [
