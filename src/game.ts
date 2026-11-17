@@ -31604,7 +31604,8 @@ export class Game {
        * mira la pista y se posa, y en la recogida solo cabe «quitá el gas» —ver
        * `acompanarLaRecogida`—. Medido en el banco: «un poco bajo para la
        * pista: levantá suave» empezando a cincuenta pies, terminaba a un palmo
-       * del asfalto. Es la misma altura a la que deja de cantar la pérdida.
+       * del asfalto. Es la misma altura a la que la instructora deja de explicar
+       * la pérdida.
        */
       this.ruedasSobreElSuelo(s) > Game.ALTO_PARA_LA_PERDIDA;
     const frenaConFlaps =
