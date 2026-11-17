@@ -1167,14 +1167,43 @@ pequeño el seno se va a cero y la cruz no dice nada.
   TO— y sus capturas, con el plano de cerca. Con `OGA_TARDE=1`, vira hacia la
   otra radio y tarda cuarenta segundos; con `OGA_VIENTO=000/0`, en calma.
 
-El banco, al escribir esto, espera en la cola del navegador: lo que vuele se
-apunta aquí.
+Volado en el juego, con la avioneta en Fuerteventura y la Intel por ANGLE, de
+una tirada:
+
+- **Con el alisio**, quince de quince: empieza a 9,9 millas de FTV y a 947 m,
+  con las rayas cortándose a 87°, la NAV con FTV, el OBS en el 083 y la barra
+  a tope con FROM (−20,0°, en el radial 103,0). Se centra en el 102 con la NAV
+  marcando 102,97; el 7 pone LTE y su morse la identifica; se centra en el 192
+  con la NAV en 191,86. **La cruz cae a 0,19 millas del avión**, con el VOR
+  dando 0,73, cortándose a 89°, con 29 segundos y 0,85 millas voladas entre
+  una y otra: volando hacia FTV, su raya no cambió.
+- **Tarde** (`OGA_TARDE=1`), quince de quince: vira hacia LTE al leer la
+  primera y tarda; 69 segundos y 1,68 millas entre una y otra, y **la cruz a
+  1,32 millas del avión**, más que las 0,74 que da el VOR. La frase es la de
+  leerlas rápido.
+- **En calma**, quince de quince: la cruz a 0,22 millas, con 28 segundos entre
+  una y otra.
+
+En las tres, la instructora dijo lo del ejercicio y nada más —lo grabado y lo
+apuntado como «sin grabar»—, y nadie más dijo nada; las tarjetas, solo las
+suyas. `npm run carteles`, 878 de 909: las 31 que fallan son las de H28c, el
+aviso y la lámpara; el plano es un lienzo y no mueve nada del HUD.
+
+Y una cosa que salió en las capturas y se arregló: el número de la raya,
+horizontal y encima de ella, en el plano ancho quedaba debajo del avión en la
+raya corta —FTV, a diez millas— y encima de los rótulos de su radio. Va ahora
+girado con la raya, a medio camino entre la radio y la cruz y a un lado.
 
 ### Lo que queda
 
 - **El panel del final** lleva la traza, como los otros, pero no las rayas ni
   la cruz: `plano()` del hangar no las sabe dibujar. Se ven en el plano en
   vuelo.
+- **La cruz tarde, en el plano ancho, se ve poco apartada**: el plano ancho
+  encuadra las dos radios —treinta y cinco millas o más— y 1,3 millas son unos
+  pocos píxeles; la flecha queda en el borde del aro. Con la lupa se ve
+  claro. Acercar el plano solo al cerrar, o pintar de la cruz al avión lo que
+  se voló, es una decisión de cómo se mira el plano y no se ha tocado.
 - **La cobertura de cada VOR** sigue sin transcribir (ver arriba): la pareja
   se elige con la línea de vista y el techo de ciento treinta millas.
 
