@@ -839,8 +839,8 @@ export class ArcadeFlightModel implements FlightModel {
     return punta * Math.max(0, 1 - frenan);
   }
 
-  private puntaEnElSuelo(): number {
-    const cuesta = ROZAMIENTO[this.superficie] / ROZAMIENTO.asfalto;
+  private puntaEnElSuelo(superficie: Superficie = this.superficie): number {
+    const cuesta = ROZAMIENTO[superficie] / ROZAMIENTO.asfalto;
     return (
       this.aircraft.cruiseSpeed * CRUISE_FRACTION * (1 - (cuesta - 1) * 0.05)
     );
@@ -858,13 +858,31 @@ export class ArcadeFlightModel implements FlightModel {
    * ningún avión de la flota, pero pasaría con uno mal fichado— se deja el
    * ritmo de antes en vez de dividir por cero.
    */
-  private ritmoDeCarrera(): number {
-    const punta = this.puntaEnElSuelo();
+  private ritmoDeCarrera(superficie: Superficie = this.superficie): number {
+    const punta = this.puntaEnElSuelo(superficie);
     const r = this.aircraft.rotationSpeed / punta;
-    const metros = carreraHastaVr(this.aircraft, this.superficie);
+    const metros = carreraHastaVr(this.aircraft, superficie);
     if (r >= 0.98 || !Number.isFinite(metros) || metros <= 0) return 0.18;
     return (punta * (-Math.log(1 - r) - r)) / metros;
   }
+
+  /**
+   * **Lo que acelera volando con el gas a fondo**, en 1/s: el de la carrera
+   * sobre asfalto, que es la carrera sin más rozamiento que el de rodar, y nunca
+   * más que la constante del aire. Ver `step`.
+   *
+   * Se guarda por avión: `carreraHastaVr` integra la carrera entera y esto se
+   * pregunta en cada paso de vuelo.
+   */
+  private ritmoEnElAire(): number {
+    if (this.ritmoEnElAireDe !== this.aircraft) {
+      this.ritmoEnElAireDe = this.aircraft;
+      this.ritmoEnElAireGuardado = Math.min(0.18, this.ritmoDeCarrera("asfalto"));
+    }
+    return this.ritmoEnElAireGuardado;
+  }
+  private ritmoEnElAireDe: AircraftConfig | null = null;
+  private ritmoEnElAireGuardado = 0.18;
 
   /**
    * Ocho metros por segundo, y aquí sí hay un número escrito a mano.
@@ -1035,6 +1053,8 @@ export class ArcadeFlightModel implements FlightModel {
     const gas = controls.engineOn ? controls.throttle : 0;
     this.ultimoGas = gas;
     let wanted: number;
+    /** La velocidad del gas a fondo en el aire, m/s: ver `ritmoEnElAire`. */
+    let aFondoEnElAire = 0;
     if (this.state.onGround) {
       /*
        * **Rodando, del cero a la punta del suelo, y los flaps bajan la punta**,
@@ -1069,6 +1089,7 @@ export class ArcadeFlightModel implements FlightModel {
       const suelo = this.sueloDeVuelo(flaps);
       const punta = Math.max(suelo, this.puntaConLoSacado(this.sacado));
       wanted = suelo + gas * (punta - suelo);
+      aFondoEnElAire = punta;
     }
     // Constante de tiempo de unos cinco segundos y medio. Con la primera,
     // mucho más rápida, el avión llegaba a velocidad de vuelo en menos de dos
@@ -1218,7 +1239,34 @@ export class ArcadeFlightModel implements FlightModel {
       this.speed = Math.max(target * blando, this.speed - decel * step);
     } else {
       this.frenoDeAhora = this.state.onGround ? clamp01(controls.brakes) : 0;
-      this.speed += (target * blando - this.speed) * Math.min(1, step * rate);
+      let gana = (target * blando - this.speed) * Math.min(1, step * rate);
+      /*
+       * **Y volando, nunca más deprisa de lo que acelera con el gas a fondo.**
+       *
+       * Lo que acelera un avión es lo que le sobra de empuje, y eso no cambia
+       * de golpe al irse del suelo: lo que se va son las ruedas. En la carrera
+       * este modelo ya acelera lo que dice la física —`ritmoDeCarrera`, de los
+       * metros de `carreraHastaVr`—, y en el aire iba hacia la punta con la
+       * constante de cinco segundos y medio de los seis aviones, que con la
+       * punta lejos es otro avión. Medido con el banco del despegue en Los
+       * Rodeos (H29g, #192): el JAZ 90 se soltaba a su Vr, 66,4 m/s, y a los
+       * quince metros iba a 84,1, el 1,27 de la Vr, un segundo y medio después:
+       * doce metros por segundo al cuadrado, más de un g en la espalda, donde
+       * la carrera le daba 2,8 al rotar. Un avión de línea pasa los 35 ft a la
+       * V2, que es la Vr y unos pocos nudos (CS 25.107 y 25.111).
+       *
+       * Así que el aire sigue con su constante para ir a la velocidad del gas
+       * —lo que se nota al mover la palanca no cambia—, pero acotada por lo
+       * que daría el gas a fondo con la recta de la carrera sin las ruedas:
+       * `k·(punta − v)`. Solo cuenta cuando la punta queda lejos: al irse del
+       * suelo, en una frustrada, metiendo todo el gas despacio.
+       */
+      if (!this.state.onGround && gana > 0)
+        gana = Math.min(
+          gana,
+          Math.max(0, this.ritmoEnElAire() * (aFondoEnElAire - this.speed) * step),
+        );
+      this.speed += gana;
     }
     // Lo que va por encima de lo que sostiene el gas: ver `loQuePresta`.
     this.sobra = this.state.onGround ? 0 : Math.max(0, this.speed - target * blando);
