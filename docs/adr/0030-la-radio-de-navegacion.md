@@ -878,3 +878,141 @@ ninguna. Se dejan fallando a propósito: dicen lo que hay.
   pida lo más ancho que lleva, como antes. El aviso, ahora en una línea, pasa
   por delante del freno. Con el dedo, de pie, lo tapa todo el cartel de girar
   la pantalla, y ahí no se mira.
+
+## Enmienda H28d (17-11-2026): dónde va cada cosa cuando no cabe todo
+
+H28c dejó medido lo que faltaba y lo dejó fallando a propósito: 31 de 909 en
+`npm run carteles`, todas de piezas que se tocan. No eran de ancho: eran de
+sitio. En cabina y en las pantallas bajas no caben a la vez el aviso, la
+lámpara de la torre y el subtítulo, y además la tarjeta de la orden, la del
+gas y el freno; y ningún ancho lo arregla. Lo que se decidió es **qué va
+primero cuando no hay sitio para todo**, que es lo que resuelve un avión de
+verdad: el aviso, que es seguridad; la lámpara, que es una orden; y el
+subtítulo, que es la explicación y además se oye. Lo que se toca no se mueve.
+
+### Lo que se cambió
+
+- **El aviso, en una fila en todas las pantallas**: la flecha al lado del
+  texto y no encima, como ya iba en cabina y con la pantalla grande. Mide lo
+  mismo en todas partes (`--fila-del-aviso`, la flecha de 44, su relleno y un
+  respiro), así que lo que va debajo de él se coloca sin medirlo y en el mismo
+  fotograma en que sale. Con la flecha encima medía dos filas, y en una
+  pantalla baja la de arriba era la que tocaba la lámpara.
+- **Fuera, apoyado en el cuadro**, a 6 píxeles de su asa como el subtítulo de
+  antes, y no a 46: esos 40 eran la fila del subtítulo, que vivía debajo del
+  aviso hasta que se fue debajo de la barra («Fuera, el centro es del avión»).
+  La fila se había quedado vacía y era justo lo que le faltaba al aviso en la
+  tablet de 600 de alto.
+- **Con un aviso, la tarjeta de la orden espera**, como ya esperaba el tutor:
+  las dos dicen qué hacer y el aviso lo está diciendo («¡El suelo! Subí»). Se
+  esconde sin dejar su sitio, como en el modo inicio, para que nada se mueva al
+  volver.
+- **Si coinciden los tres, el subtítulo espera** y la lámpara sube a su
+  sitio. Con el aviso solo, el subtítulo se queda: la instructora explica lo
+  que ha sonado justo detrás, que es como se enseña la calma, y así lo pide ya
+  la comprobación de que el mensaje se ve por delante del cuadro con un aviso
+  puesto. La voz sigue hablando; lo que espera es el cartel. Para saber si la
+  lámpara está encendida sin `:has()`, el espejo pone `hay-torre`.
+- **En cabina, lo que se lee va en una columna debajo de la barra**, por orden:
+  el aviso, centrado; la lámpara, de la columna de la pausa a la de mandos
+  (`--columna-izquierda`, que mide el HUD); y donde acaba la lámpara
+  (`--torre-alto`, que también se mide), la tarjeta de la orden a la izquierda,
+  como estaba, y el subtítulo a su lado, desde donde acaban la tarjeta y el
+  tutor (`--rincon-derecha`) hasta los mandos. Antes la lámpara iba centrada
+  de lado a lado encima de la tarjeta y de la del gas, el aviso encima de la
+  lámpara y el subtítulo al 32 %, encima del freno. La lámpara va encima de la
+  tarjeta y no al revés porque las dos dicen lo mismo —«esperá a la luz» y la
+  luz— y así se leen juntas, de arriba abajo.
+- **La columna de mandos no se mueve nunca**: ni cuando sale un aviso ni
+  cuando se enciende la lámpara. Es lo que se toca, y un botón que salta en el
+  momento en que hay que dar gas es un botón que no se acierta. Lo que baja es
+  lo que se lee: la tarjeta de la orden, una vez, cuando se enciende la luz.
+- **En el teléfono**, la tarjeta de la orden va en la fila de la barra, así que
+  en cabina la columna es el aviso, la lámpara y el subtítulo, de lado a lado
+  hasta los mandos.
+- **De pie y con ratón**, el subtítulo y la lámpara van debajo del rincón y no
+  a su lado, de la izquierda a la columna de mandos: a su lado quedaban 204
+  píxeles.
+- **`--torre-ancho` se ha quitado**: se escribía en cada luz que se ponía y no
+  lo leía nadie desde que la tarjeta se fue al rincón. En su lugar,
+  `--torre-alto`, que sí se lee, medido con un `ResizeObserver` como el
+  subtítulo y escrito solo cuando cambia. `--subtitulo-alto` ya no es cero en
+  cabina: allí no lo lee nadie, y la excepción sobraba.
+
+### Lo que se prueba
+
+`npm run carteles` mira, además de lo de H28c, **la cabina sin aviso**, que es
+el punto de espera: la lámpara roja, la tarjeta de la orden y la instructora
+hablando. Que ninguno pise a otro, a un botón redondo ni a la columna de
+mandos entera —el gas, el destino, el freno y sus botones—, y que nada los
+tape. Se miden dos fotogramas después de encenderlos, que es lo que tarda el
+HUD en medir la lámpara; con el aviso se mide en el acto, como en H28c, porque
+el aviso mide una constante.
+
+### Lo medido
+
+Con lo más largo que llevan, los tres encendidos a la vez, como H28c. Antes →
+después, en píxeles de pantalla:
+
+- **La tablet de 900 × 600, de fuera**: el aviso iba de 212 a 290, encima de la
+  tercera línea de la lámpara y de la tarjeta de la orden; ahora de 270 a 325,
+  apoyado en el cuadro. La lámpara sube al sitio del subtítulo, de 117 a 204.
+  En la de 1024 × 600 con el dedo, el aviso de 245 a 300 y la lámpara de 122 a
+  209: antes se montaban de 187 a 262.
+- **El portátil de 1280 × 800 con el dedo, de fuera**: el aviso acababa a 4
+  píxeles dentro de la lámpara aun con 800 de alto; con el subtítulo esperando
+  a que pasen los tres, la lámpara sube a su sitio, debajo de la barra, y le
+  deja al aviso la fila que le faltaba.
+- **El teléfono de 780 × 360, de fuera**: el aviso iba de 107 a 168, encima de
+  la tercera línea del subtítulo y la primera de la lámpara; ahora la lámpara
+  de 65 a 119 y el aviso de 154 a 192. En el de 864 × 330, la lámpara de 65 a
+  119 y el aviso de 128 a 167.
+- **La cabina del portátil de 1280 × 800**: el aviso de 137 a 201, la lámpara
+  de 209 a 293 y de 188 a 974, que es donde empieza la columna de mandos (en
+  982). Sin aviso, la lámpara de 137 a 221, la tarjeta de la orden debajo y el
+  subtítulo a su lado, de 515 a 974. Antes la lámpara iba de 188 a 1092,
+  encima de la tarjeta de la orden y de la del gas, y el subtítulo encima del
+  freno.
+- **La cabina de la tablet de 900 × 600**, sin aviso: la lámpara de 164 a 251,
+  la tarjeta de la orden de 255 a 460 y el subtítulo a su lado, de 340 a 636,
+  en cuatro líneas. Con el aviso, el aviso de 164 a 219 y la lámpara de 226 a
+  313.
+- **De pie, 600 × 900 con ratón, de fuera**: el subtítulo en tres líneas y no
+  en siete, la lámpara en cuatro y no en ocho, los dos de 16 a 436, debajo del
+  rincón y antes de la columna de mandos.
+
+`npm run carteles` daba 878 de 909. La primera tirada de esta tanda dio 907 de
+925, con las dieciséis comprobaciones nuevas: no quedaba ninguna de las 31 de
+H28c salvo la del portátil con el dedo, que es la que llevó a dejar esperar el
+subtítulo en todas las pantallas; las dieciséis de la cabina sin aviso fallaban
+por la comprobación, que dejaba que el juego apagase la lámpara entre
+fotograma y fotograma y la buscaba en la esquina de la pantalla; y una era un
+módulo que no llegó a bajar al arrancar la página (`Failed to fetch
+dynamically imported module`), que no es de aquí.
+
+### Lo que cuesta, y lo que queda
+
+- **El subtítulo espera cuando coinciden los tres**, también donde caben, que es
+  el portátil sin dedo: se probó a dejarlo solo para las pantallas bajas y la
+  de 1280 × 800 con el dedo, con 800 de alto, tampoco cabía. Quien juega sin
+  sonido no lee a la instructora mientras duren el aviso y la lámpara a la
+  vez; el aviso dice ya qué hacer, y la lámpara, qué manda la torre.
+- **En cabina la tarjeta de la orden baja** lo que mide la lámpara cuando se
+  enciende, y en la tablet de 900 × 600 tapa más de la pantalla de vuelo que
+  antes (de 255 a 460, antes de 158 a 358). Es lo que se lee lo que baja, y
+  baja una vez, al encenderse la luz.
+- **En cabina el aviso pasa por delante del borde de la columna de mandos**,
+  que no se mueve: en la tablet de 900 × 600 tapa los 15 píxeles de la
+  izquierda de la tarjeta del gas; en la de 1024 × 600 con el dedo, unos 50; y
+  en el teléfono, el borde de la tarjeta del destino. El aviso tiene que ir en
+  una línea y en el medio, y ahí la columna de mandos llega más allá de la
+  mitad de su ancho. Bajar la columna de mandos una fila para siempre se
+  descartó: tapaba para siempre los relojes de motor por un aviso que dura
+  segundos. El aviso deja pasar el toque, así que el gas se sigue tocando.
+- **En el teléfono, en cabina, el subtítulo de tres líneas llega a la caja de
+  la palanca de pulgar** por la esquina de arriba a la derecha, donde la caja
+  es cuadrada y la palanca redonda: no toca el dibujo.
+- **De pie con ratón, el aviso de fuera pasa por delante del botón del tren**,
+  que vive en la columna de mandos, como antes pasaba por delante del freno.
+- **Con la pantalla en grande del teléfono** no se ha tocado nada: el aviso
+  tiene su fila y la lámpara sigue encima de la pantalla, como estaba (H28c).
