@@ -14728,12 +14728,14 @@ oksigenia-access-panel::part(trigger):focus-visible {
 /*
  * Y de pie y con ratón, el subtítulo debajo de la tarjeta de la orden y no a
  * su lado: a su lado quedaban 120 píxeles y la frase larga iba en trece
- * líneas. El tutor, debajo de los dos.
+ * líneas. Ahí abajo ya no llega la columna de mandos, así que va hasta el
+ * borde. El tutor, debajo de los dos.
  */
 @media (orientation: portrait) and (pointer: fine) {
   .hud.hud--cabina .hud__abajo > [data-hud="hint"] {
     top: calc(var(--franja) + var(--torre-alto, 0px) + var(--rincon-alto, 0px) + 8px);
     left: max(16px, var(--vistas-derecha, 0px) + 8px);
+    right: 16px;
   }
 
   .hud.hud--cabina.hud--avisando .hud__abajo > [data-hud="hint"] {
