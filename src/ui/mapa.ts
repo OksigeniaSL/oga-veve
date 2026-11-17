@@ -57,8 +57,11 @@ import {
   type CampoDelPlano,
   type Medir,
   type PuntoDelPlano,
+  type RadioayudaDelPlano,
   type RotuloPuesto,
 } from "./carta/rotulos-del-plano";
+import { TODAS_LAS_ESTACIONES } from "../world/radioayudas-publicadas";
+import { cajaDeRadioayuda, pintarPluma, pintarRadioayuda } from "./carta/radioayudas";
 import { anoDecimal, declinacion, varEscrita } from "./carta/declinacion";
 import { frecuenciasDeLaCarta } from "../world/frecuencias-publicadas";
 import {
@@ -213,6 +216,8 @@ export class Mapa {
   private pistasPintadas: { x: number; z: number; radio: number }[] = [];
   /** Los grados de la retícula que se pueden escribir. Ver `pintarLaReticula`. */
   private gradosDelFondo: { texto: string; eje: "lat" | "lon"; en: number }[] = [];
+  /** Las radioayudas pintadas, en píxeles de pantalla, con su caja por rotular. */
+  private ayudasPintadas: RadioayudaDelPlano[] = [];
   /** La rosa, en píxeles de pantalla, y su declinación escrita. */
   private rosaPuesta: { x: number; y: number; radio: number; texto: string } | null = null;
   /** Los rótulos puestos, en píxeles de pantalla. */
@@ -1004,6 +1009,7 @@ export class Mapa {
     this.fijosDelFondo = [];
     this.pistasPintadas = [];
     this.gradosDelFondo = [];
+    this.ayudasPintadas = [];
     this.rosaPuesta = null;
 
     /*
@@ -1247,6 +1253,12 @@ export class Mapa {
     // Antes que la pista y después del aeropuerto: son referencia del
     // terreno, y lo que se busca al abrir el plano sigue siendo la pista.
     this.pintarHitos(g, cx, cz, escala);
+
+    // ── Las radioayudas, en el calco de la radio ────────────────────────
+    //
+    // Antes que la pista, que es lo que se busca; y encima del relieve y los
+    // hitos, que son lo de fuera. Ver `pintarRadioayudas`.
+    if (calcosDe(this.peldano).radio) this.pintarRadioayudas(g, esc, cx, cz, escala);
 
     // ── La pista, que es lo que hay que encontrar ───────────────────────
     //
@@ -1507,6 +1519,8 @@ export class Mapa {
         grados: this.gradosDelFondo,
         fijos,
         rayas,
+        radioayudas: this.ayudasPintadas,
+        descargo: t("carta.descargo"),
       },
       medir,
     );
@@ -1788,6 +1802,73 @@ export class Mapa {
       g.stroke();
     }
     g.restore();
+  }
+
+  /**
+   * **Las radioayudas que caen en el plano**, del AD 2.19 de cada campo
+   * (`world/radioayudas-publicadas.ts`): el símbolo del VOR, el VOR/DME, el
+   * DME y el NDB en su sitio, y la pluma de cada ILS desde su umbral hacia
+   * fuera, por la final. La caja de cada una la rotula `colocarRotulos` con
+   * los demás, y si no cabe, el símbolo se queda solo.
+   *
+   * La pluma solo de cerca: en el plano del archipiélago entero, nueve
+   * plumas de diez millas son nueve rayas encima de nueve aeropuertos que ya
+   * no se ven. Desde que una milla ocupa tres píxeles, que es cuando la pista
+   * empieza a tener largo.
+   */
+  private pintarRadioayudas(
+    g: CanvasRenderingContext2D,
+    esc: Scenario,
+    cx: number,
+    cz: number,
+    escala: number,
+  ): void {
+    const o = esc.aerodrome?.origin;
+    if (!o) return;
+    const u = this.trazo;
+    const k = 1 / this.u;
+    const millaEnPantalla = 1852 * escala * k;
+    const lado = SIMBOLOS.radioayuda * u;
+    const enLienzo = (p: { lat: number; lon: number }): [number, number] => {
+      const w = dondeCae(o, p);
+      return [LADO / 2 + (w.x - cx) * escala, LADO / 2 + (w.z - cz) * escala];
+    };
+    const fuera = (x: number, y: number): boolean => x < -10 || y < -10 || x > LADO + 10 || y > LADO + 10;
+    for (const e of TODAS_LAS_ESTACIONES) {
+      const caja = cajaDeRadioayuda(e);
+      if (e.clase === "ILS") {
+        if (millaEnPantalla < 3 || !e.senda || e.rumboVerdadero === null) continue;
+        /*
+         * La punta, en el umbral: donde la senda se asoma a la recta de la
+         * final que pasa por el localizador. La cola, diez millas fuera, o lo
+         * que quepa a la escala del plano.
+         */
+        const [lx, ly] = enLienzo(e);
+        const [sx, sy] = enLienzo(e.senda);
+        const r = (e.rumboVerdadero * Math.PI) / 180;
+        const [fx, fy] = [Math.sin(r), -Math.cos(r)];
+        const t = (sx - lx) * fx + (sy - ly) * fy;
+        const [px, py] = [lx + fx * t, ly + fy * t];
+        if (fuera(px, py)) continue;
+        const largo = Math.min(Math.max(10 * 1852 * escala, 28 * u), 70 * u);
+        pintarPluma(g, px, py, r + Math.PI, largo, PAPEL.fondo);
+        const [cxp, cyp] = [px - fx * largo, py - fy * largo];
+        this.ayudasPintadas.push({ x: cxp * k, y: cyp * k, simbolo: 4 * u * k, id: e.id, ...caja });
+        this.fijosDelFondo.push({
+          cx: (px - (fx * largo) / 2) * k,
+          cy: (py - (fy * largo) / 2) * k,
+          w: largo * k,
+          h: 8 * u * k,
+          giro: Math.atan2(-fy, -fx),
+        });
+        continue;
+      }
+      const [x, y] = enLienzo(e);
+      if (fuera(x, y)) continue;
+      pintarRadioayuda(g, e.clase, x, y, lado, PAPEL.fondo);
+      this.ayudasPintadas.push({ x: x * k, y: y * k, simbolo: (lado / 2) * k, id: e.id, ...caja });
+      this.fijosDelFondo.push({ cx: x * k, cy: y * k, w: lado * k + 2, h: lado * k + 2 });
+    }
   }
 
   /**

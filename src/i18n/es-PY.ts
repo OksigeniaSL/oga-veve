@@ -3147,6 +3147,10 @@ export const ES_PY = {
   "carta.ir": "Volar",
   "carta.sinFrecuencia": "El AIP no publica frecuencia",
   "carta.sinAip": "No sale en ningún AIP",
+  // Las radioayudas de la ficha en el calco de la radio: el AD 2.19 que dice NIL.
+  "carta.sinRadioayudas": "El AIP no publica radioayudas",
+  // El descargo de toda carta que no es la oficial, donde lo lleva una de verdad: al pie.
+  "carta.descargo": "No apto para navegación real",
   "tiempo.title": "El tiempo",
   "tiempo.hora": "La hora del día",
   "tiempo.viento": "De dónde viene el viento y cuánto sopla",

@@ -13,6 +13,8 @@ import { PELDANOS, type Peldano } from "../../flight/escalera";
 import { t, type TranslationKey } from "../../i18n";
 import { dondeCae } from "../../world/entre-aerodromos";
 import { frecuenciasDeLaCarta } from "../../world/frecuencias-publicadas";
+import { TODAS_LAS_ESTACIONES } from "../../world/radioayudas-publicadas";
+import { cajaDeRadioayuda } from "./radioayudas";
 import { oaciDe, scenarioById, SCENARIOS } from "../../world/scenarios";
 import { anchoDe } from "../mapa-del-pais";
 import { envolvente, sePisan, type Caja, type Raya } from "./rotulos";
@@ -25,6 +27,7 @@ import {
   type CampoDelPlano,
   type Medir,
   type PlanoPorRotular,
+  type RadioayudaDelPlano,
 } from "./rotulos-del-plano";
 
 /** La letra a ojo, con su cuerpo sacado de la letra que pide el lienzo. */
@@ -85,6 +88,14 @@ function planoDe(id: string, lado: number, peldano: Peldano, cerca: boolean): Pl
     { cx: 23, cy: lado - 39, w: 34, h: 40 },
     { cx: hx, cy: hy, w: 28, h: 28 },
   ];
+  // Las radioayudas de verdad de la región, con su símbolo de quince píxeles.
+  const radioayudas: RadioayudaDelPlano[] = TODAS_LAS_ESTACIONES.filter((e) => e.clase !== "ILS").flatMap((e) => {
+    const w = dondeCae(origen, e);
+    const [x, y] = en(w.x, w.z);
+    if (x < 0 || y < 0 || x > lado || y > lado) return [];
+    fijos.push({ cx: x, cy: y, w: 17, h: 17 });
+    return [{ x, y, simbolo: 7.5, id: e.id, ...cajaDeRadioayuda(e) }];
+  });
   return {
     lado,
     peldano,
@@ -104,6 +115,8 @@ function planoDe(id: string, lado: number, peldano: Peldano, cerca: boolean): Pl
     ],
     fijos,
     rayas,
+    radioayudas,
+    descargo: t("carta.descargo"),
   };
 }
 
@@ -148,6 +161,16 @@ describe("el plano, en sus regiones, calcos, lupas y tamaños", () => {
             // Casa lleva su rótulo siempre: es a donde se vuelve.
             const casa = plano.campos.find((c) => c.papel === "casa")!;
             expect(puestos.map((p) => p.que), `${donde}: casa sin rótulo`).toContain(casa.oaci);
+            /*
+             * El descargo, al pie desde Tukã: es el pie de la hoja. Solo en el
+             * plano más chico con el país entero, que tiene un aeródromo en
+             * cada borde porque el encuadre se ajusta a ellos, puede no caber.
+             */
+            if (peldano !== "dibujo" && (cerca || lado > LADOS[0]!))
+              expect(puestos.map((p) => p.que), `${donde}: sin descargo`).toContain(t("carta.descargo"));
+            // Las cajas de las radioayudas, solo en el calco de la radio.
+            if (peldano !== "cabina")
+              for (const p of puestos) expect(plano.radioayudas!.some((r) => r.id === p.que), `${donde}: «${p.que}»`).toBe(false);
             // En Guyrami no se escribe nada que haya que leer: solo indicativos.
             if (peldano === "dibujo")
               for (const p of puestos) expect(p.renglones.map((r) => r.texto).join(" "), donde).toMatch(/^[A-Z]{4}$/);
