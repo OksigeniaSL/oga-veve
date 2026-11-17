@@ -541,14 +541,20 @@ body {
  * el gas a fondo con prisa podía recargar la página en mitad del rodaje.
  * Arriba en el centro, a la altura de la fila de botones, no hay ningún mando
  * de pulgar.
+ *
+ * Centrado con los dos bordes y no con `left: 50%` y `translate`, que le
+ * daban media pantalla para maquetar: en un teléfono de pie de 360 la frase,
+ * en cualquiera de las tres lenguas, no cabía en 180 y el botón se partía en
+ * dos líneas. Ahora mide 197 y va en una.
  */
 @media (pointer: coarse) {
   .version-nueva {
     top: max(8px, env(safe-area-inset-top));
     bottom: auto;
-    right: auto;
-    left: 50%;
-    transform: translateX(-50%);
+    left: max(16px, env(safe-area-inset-left));
+    right: max(16px, env(safe-area-inset-right));
+    width: fit-content;
+    margin-inline: auto;
     min-height: 44px;
   }
 }
@@ -4092,7 +4098,29 @@ button.motor__tecla::after {
     var(--apoyo) + var(--tirador-asoma, 34px) + 46px +
       env(safe-area-inset-bottom)
   );
-  z-index: 6;
+  /*
+   * Por delante de la lámpara de la torre, que va a 8 para ganar a los
+   * botones: en cabina los dos viven en la franja de
+   * encima de la visera, y en una pantalla baja no caben uno encima del otro
+   * con el subtítulo. Si se tocan, el aviso no se queda detrás.
+   */
+  z-index: 9;
+  /*
+   * **Centrado sin perder ancho, como el subtítulo.** Con `left: 50%` y el
+   * `translate` el aviso maquetaba en media pantalla: en una ventana de pie
+   * de 600, «Se rompió algo. Volvemos al helipuerto…» se partía en dos
+   * líneas de 300 píxeles que subían hacia el avión. Con los dos bordes
+   * puestos y el ancho de lo que lleva escrito, los márgenes automáticos lo
+   * centran sobre el avión sin quitarle ancho. Aquí abajo no llega la
+   * columna de la pausa; en el teléfono y en cabina, que sí, se aparta de
+   * ella por su regla.
+   */
+  left: 16px;
+  right: 16px;
+  transform: none;
+  width: fit-content;
+  max-width: none;
+  margin-inline: auto;
 }
 
 .hud__abajo > [data-hud="hint"]:empty {
@@ -9664,16 +9692,30 @@ button.motor__tecla::after {
    * lámpara se queda donde se mira, que es lo que es — la instrucción de la
    * torre. Ver `.senal`.
    */
-  transform: translateX(-50%);
   /*
    * **Y centrada en el hueco que deja el rincón**, no en la pantalla entera.
    * En una tablet de 1024 o en un teléfono el rincón de avisos llega hasta el
    * centro, y la lámpara tapaba la tarjeta de la orden: «hold here» encima de
    * «esperá a la luz». Sin rincón, `--rincon-izquierda` no existe y queda en
    * el centro de siempre. Lo mide el HUD; ver `escribirRincon`.
+   *
+   * **Con los dos bordes puestos y no con `left` y `translate`**, que le
+   * daban para maquetar lo que quedaba a la derecha de `left` —en el
+   * teléfono, media pantalla—: «mantenga fuera de pista 12, número tres para
+   * la salida», con los dos aviones de la fila, se partía en tres líneas en
+   * el de 844. Los márgenes automáticos la centran entre los bordes sin
+   * quitarle ancho. Y por la izquierda, apartada de la columna de la cámara
+   * y la pausa donde baja hasta aquí —en el portátil le pasaba por encima—;
+   * sin rincón, lo mismo por la derecha, para seguir en el medio. Ver
+   * `--aparte-arriba`.
    */
-  left: calc(var(--rincon-izquierda, 100%) / 2);
-  max-width: calc(var(--rincon-izquierda, 100%) - 32px);
+  left: max(16px, var(--aparte-arriba, 0px));
+  right: max(
+    calc(100% - var(--rincon-izquierda, 100%) + 16px),
+    var(--aparte-arriba, 0px)
+  );
+  width: fit-content;
+  margin-inline: auto;
   z-index: 8;
   display: flex;
   align-items: center;
@@ -14347,19 +14389,56 @@ oksigenia-access-panel::part(trigger):focus-visible {
   );
 }
 
+/*
+ * **Lo que se aparta de la columna de la cámara y la pausa** lo que va
+ * debajo de la barra —el subtítulo y la lámpara—, y solo donde esa columna
+ * baja hasta ellos: lo que ocupa por la derecha (`--vistas-derecha`) si
+ * acaba por debajo de donde empieza el subtítulo (`--vistas-bajan`, contra
+ * `--arriba-alto` y sus 16), y cero si no. En el portátil de 1280 × 800 la
+ * columna baja hasta la fila del subtítulo y la frase larga se ponía encima
+ * de la pausa; en la tablet de 900 × 600 la barra se parte en dos filas, la
+ * columna acaba más arriba, y apartarse igual dejaba la lámpara en ocho
+ * líneas. El `clamp` es el «si»: la diferencia por mil es cero o negativa
+ * —cero— o pasa del tope, y se queda en el tope. Las mide `ui/hud.ts`.
+ */
+.hud {
+  --aparte-arriba: clamp(
+    0px,
+    (var(--vistas-bajan, 0px) - var(--arriba-alto, 0px) - 16px) * 1000,
+    var(--vistas-derecha, 0px) + 8px
+  );
+}
+
 .hud .hud__abajo > [data-hud="hint"] {
   top: calc(var(--arriba-alto, 80px) + 8px);
   bottom: auto;
-  /* En el hueco que deja el rincón a su izquierda, como la lámpara de la
-     torre: centrados en la pantalla, se metían debajo de su tarjeta. Sin
-     rincón, de borde a borde. */
-  left: 16px;
-  right: calc(100% - var(--rincon-izquierda, 100%) + 16px);
+  /*
+   * En el hueco que deja el rincón a su izquierda, como la lámpara de la
+   * torre: centrados en la pantalla, se metían debajo de su tarjeta.
+   *
+   * **Y a la derecha de la columna de la cámara y la pausa**, donde baja
+   * hasta esta fila: en el portátil la frase larga empezaba a 16 píxeles del
+   * borde y se ponía encima de la pausa y, antes de arrancar, de la vuelta
+   * al avión y del parte. Sin rincón, apartado lo mismo por la derecha, para
+   * seguir centrado en la pantalla. Ver `--aparte-arriba`, aquí encima.
+   */
+  left: max(16px, var(--aparte-arriba, 0px));
+  right: max(
+    calc(100% - var(--rincon-izquierda, 100%) + 16px),
+    var(--aparte-arriba, 0px)
+  );
 }
 
-/* Y si hay subtítulo, la lámpara baja una línea en vez de montarse. */
+/*
+ * Y si hay subtítulo, la lámpara baja lo que él ocupe en vez de montarse:
+ * empieza en `--arriba-alto` más 8 y su `margin-top` de 8, y la lámpara, 6
+ * más abajo. Bajaba una línea, 36 píxeles, y una frase de dos líneas quedaba
+ * con la segunda debajo de la lámpara. Lo mide el HUD: `medirElSubtitulo`.
+ */
 .hud:is(:has(.hud__abajo > [data-hud="hint"]:not(:empty)), .hay-subtitulo) .torre {
-  top: calc(var(--arriba-alto, 14%) + 14px + 36px);
+  top: calc(
+    var(--arriba-alto, 14%) + 8px + 8px + var(--subtitulo-alto, 28px) + 6px
+  );
 }
 
 /*
@@ -14431,9 +14510,28 @@ oksigenia-access-panel::part(trigger):focus-visible {
   top: calc(var(--alto-de-la-barra, 58px) + 16px);
 }
 
+/*
+ * El aviso, apoyado encima del subtítulo, que va al 32 %: colgado del 22 %,
+ * con su flecha encima del texto, bajaba hasta la fila del subtítulo y se
+ * montaban. Ahora crece hacia arriba desde ahí, y la instructora que explica
+ * lo que ha sonado se lee debajo del aviso, no detrás. Con la flecha al lado
+ * del texto y no encima, que encima de la visera falta alto y sobra ancho:
+ * en un teléfono de 330, apilado, subía hasta los botones de la barra. Y
+ * apartado de los dos lados lo que ocupa la columna de la pausa, que en
+ * cabina baja hasta aquí.
+ */
 .hud.hud--cabina .hud__abajo > .aviso-hud {
-  top: 22%;
-  bottom: auto;
+  top: auto;
+  bottom: 68%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  left: max(var(--borde-izq, 16px), var(--vistas-derecha, 0px) + 8px);
+  right: max(var(--borde-der, 16px), var(--vistas-derecha, 0px) + 8px);
+}
+
+.hud.hud--cabina .aviso-hud__flecha {
+  margin-bottom: 0;
 }
 
 /*
@@ -14465,10 +14563,11 @@ oksigenia-access-panel::part(trigger):focus-visible {
 
 /* La lámpara de la torre se centraba en el hueco a la izquierda del rincón;
    con el rincón a la izquierda, ese hueco es la esquina de la cámara. En
-   cabina va centrada, en la franja de arriba. */
+   cabina va centrada, en la franja de arriba, y apartada de los dos lados lo
+   que ocupan los botones redondos de la izquierda, como el subtítulo. */
 .hud.hud--cabina .torre {
-  left: 50%;
-  max-width: calc(100% - 32px);
+  left: max(var(--borde-izq, 16px), var(--vistas-derecha, 0px) + 8px);
+  right: max(var(--borde-der, 16px), var(--vistas-derecha, 0px) + 8px);
 }
 
 /* Y los pictogramas, arrimados a su borde: en cabina el rincón vive a la
@@ -15012,11 +15111,12 @@ oksigenia-access-panel::part(trigger):focus-visible {
   /*
    * Y lo que se centraba en el hueco que dejaba el rincón a su izquierda —la
    * lámpara de la torre y los subtítulos— vuelve al centro: en el teléfono el
-   * rincón está a la izquierda, y ese hueco es la esquina de la cámara.
+   * rincón está a la izquierda, y ese hueco es la esquina de la cámara. De
+   * borde a borde, como el subtítulo de aquí abajo, y apartada lo mismo.
    */
   .hud .torre {
-    left: 50%;
-    max-width: calc(100% - 32px);
+    left: max(var(--borde-izq), var(--vistas-derecha, 0px) + 8px);
+    right: max(var(--borde-der), var(--vistas-derecha, 0px) + 8px);
   }
 
   /*
@@ -15025,9 +15125,10 @@ oksigenia-access-panel::part(trigger):focus-visible {
    * que ocupan los botones redondos de la izquierda, la cámara y la pausa:
    * así sigue centrado sobre el avión y la pantalla grande, y no se les pone
    * encima. A la derecha pasa por delante de las losas de mando, que dejan
-   * pasar el toque como antes.
+   * pasar el toque como antes. El aviso, igual y con la muesca contada.
    */
-  .hud .hud__abajo > [data-hud="hint"] {
+  .hud .hud__abajo > [data-hud="hint"],
+  .hud .hud__abajo > .aviso-hud {
     left: max(var(--borde-izq), var(--vistas-derecha, 0px) + 8px);
     right: max(var(--borde-der), var(--vistas-derecha, 0px) + 8px);
   }
@@ -15577,6 +15678,44 @@ oksigenia-access-panel::part(trigger):focus-visible {
       (20px + 56px + 12px) / var(--escala, 1) + var(--alto-del-grande) + 8px
     );
     line-height: 1.3;
+  }
+
+  /*
+   * **Y con un aviso, otra fila para él**, entre la pantalla y el subtítulo.
+   * El aviso se apoya en lo que miden las losas, que el HUD toma al pintarse
+   * —ver `reserveForPanel`—, y con la pantalla en grande caía en mitad de
+   * ella: encima de la pantalla de vuelo, con la velocidad y la altura, que
+   * es justo lo que lo explica. La pantalla se queda una fila más baja
+   * mientras dura el aviso, el aviso va en esa fila con la flecha al lado y
+   * no encima —una fila de flecha, 44 píxeles y su relleno—, y el subtítulo
+   * sube con ella.
+   */
+  .hud.hay-cuadro-grande.hud--avisando {
+    --fila-del-aviso: calc(44px + 20px + 8px);
+    --alto-del-grande: calc(
+      (var(--alto-visible) - 64px - 92px) / var(--escala, 1) -
+        var(--fila-del-subtitulo) - var(--fila-del-aviso)
+    );
+  }
+
+  .hud.hay-cuadro-grande .hud__abajo > .aviso-hud {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    bottom: calc(
+      (20px + 56px + 12px) / var(--escala, 1) + var(--alto-del-grande) + 8px
+    );
+  }
+
+  .hud.hay-cuadro-grande .aviso-hud__flecha {
+    margin-bottom: 0;
+  }
+
+  .hud.hay-cuadro-grande.hud--avisando .hud__abajo > [data-hud="hint"] {
+    bottom: calc(
+      (20px + 56px + 12px) / var(--escala, 1) + var(--alto-del-grande) + 8px +
+        var(--fila-del-aviso)
+    );
   }
 
   .hud .cuadro.cuadro--grande > .tablero {

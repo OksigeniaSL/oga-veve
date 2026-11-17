@@ -288,7 +288,9 @@ Aparece en 160 ms; los tres primeros parpadean a 620 ms en dos pasos, y la viñe
 **encima del cuadro, nunca detrás**: un panel bonito no puede esconder un *terrain, pull up*. Con un aviso en pantalla
 el tutor se calla: dos carteles a la vez son ruido. El texto sigue la escalera (`data-escalera`: sin texto, corto o
 largo) y solo se reescribe cuando cambia, para no interrumpir sesenta veces por segundo a quien usa lector de
-pantalla.
+pantalla. Centrado sobre el avión con el ancho de lo que dice, y **por delante de todo lo que se enciende solo**,
+también de la lámpara de la torre. En cabina, apoyado encima del subtítulo; y en cabina y con la pantalla grande del
+teléfono, con la flecha al lado del texto, que ahí falta alto y sobra ancho (ADR 0030, enmienda H28c).
 
 **El tutor** (`.tutor`). La explicación de la tecla que toca, abajo a la izquierda y desde el segundo peldaño, para
 encontrarla en el teclado sin leer: el glifo a 54 px en ocre, la tecla dibujada de 62 × 62 (148 la ancha, Shift) en
@@ -371,6 +373,13 @@ clic, bajos y cortos; con un aviso sonando, la carta se calla.
   acota la caja y la frase ocupa lo que ella deje: el tutor en pantalla baja no pasa de un tercio de la pantalla
   (`34vw`); la radio parte de 18 em en la fila de la barra, crece hasta llenar el hueco y se para donde acaba la frase
   (`max-width: max-content`); y los porqués del parte van al ancho de la tarjeta, como los partes de arriba.
+- **Lo que lleva texto no se centra con `left: 50%` y `translate`**: así el navegador le da para maquetar el ancho
+  que queda a la derecha de `left`, media pantalla, y la frase se parte a medio ancho aunque sobre sitio. Se ponen los
+  dos bordes, `width: fit-content` y `margin-inline: auto`, que lo centran entre ellos sin quitarle ancho; y los
+  bordes se apartan de lo que no se puede pisar, de los dos lados lo mismo si tiene que quedar en el medio. Así van el
+  subtítulo, el aviso y la lámpara de la torre, apartados de los botones redondos de la izquierda
+  (`--vistas-derecha`). Lo que tiene un ancho puesto (la tarjeta de inicio, el kit) o no se parte (`nowrap`, un dibujo)
+  no tiene ese problema.
 - Las medidas que el HUD toma de sí mismo y escribe como variables pasan por `aPxDelHud` (`src/ui/escala.ts`): en
   pantallas bajas el HUD va con `zoom`, y sin esa conversión cada hueco medido se reduce dos veces.
 
