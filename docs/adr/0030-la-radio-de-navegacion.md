@@ -1289,8 +1289,8 @@ lámpara—; dos, el aviso del teléfono encima de la lámpara, medido en el mis
 instante en que se encendía, antes de que el HUD midiera la lámpara —se miden
 dos fotogramas después, como la pasada sin aviso de H28d—; y una, un módulo que
 no llegó a bajar al arrancar (`Failed to fetch dynamically imported module`),
-que no es de aquí. `npm run acceso` da 90 de 90 y `npm run toque` 91 de 91,
-antes y después.
+que no es de aquí. Con las dos comprobaciones corregidas, **990 de 990**.
+`npm run acceso` da 90 de 90 y `npm run toque` 91 de 91, antes y después.
 
 ### Lo que cuesta, y lo que queda
 
