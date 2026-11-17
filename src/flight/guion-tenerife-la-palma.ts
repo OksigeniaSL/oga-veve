@@ -426,6 +426,13 @@ const tripulante = (clave: string): Linea => ({
 /** La frase de la tripulante con la que llega el kit, y la de guardarlo para aterrizar. */
 const KIT_DADO = "kitAqui";
 const KIT_GUARDADO = "kitGuardar";
+/**
+ * **Lo que el kit deja pasar delante**: el porqué del ralentí, que contesta a
+ * lo que Ara notó al empezar a bajar y va en el primer rato tranquilo después
+ * de los oídos, con cualquier crucero. El kit llega igual, detrás: la bajada
+ * le da de sobra. Ver `kitDejaPasar` en `motor-del-pasaje.ts`.
+ */
+const EL_KIT_DEJA_PASAR: ReadonlySet<CharlaDelPasaje> = new Set(["bajando"]);
 /** Una frase con el dibujo de la ventanita. */
 const con = (l: Linea, dibujo: DibujoDelPasaje): Linea => ({ ...l, dibujo });
 /**
@@ -1926,7 +1933,13 @@ export const GUION_TENERIFE_LA_PALMA: GuionDelPasaje<MomentoDelPasaje, CharlaDel
   paraEnLaBajada: PARA_EN_LA_BAJADA,
   elOficio: EL_OFICIO,
   bano: { pedido: "revision", vuelta: AL_BANO[0]! },
-  kit: { momento: "kit", llegaA: BAJANDO.kit, dado: tripulante(KIT_DADO).clave, guardado: tripulante(KIT_GUARDADO).clave },
+  kit: {
+    momento: "kit",
+    llegaA: BAJANDO.kit,
+    dado: tripulante(KIT_DADO).clave,
+    guardado: tripulante(KIT_GUARDADO).clave,
+    dejaPasar: EL_KIT_DEJA_PASAR,
+  },
 };
 
 /** Lo que mira el guion de este vuelo: el motor, con sus momentos y sus charlas. */
