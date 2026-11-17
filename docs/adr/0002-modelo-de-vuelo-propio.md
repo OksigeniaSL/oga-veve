@@ -469,3 +469,89 @@ como en Guyrami en la nota H21d, la misma ley da una tirada debajo del listón y
 otra encima. No se pudo repetir: el candado del navegador estaba cogido. Y el
 vuelo entero del JAZ 50 corrido otra vez, con el banco frenando donde para la
 raya, 57 de 57, con la toma a 1,38 m/s.
+
+## Nota H25b (17-11-2026): «sigue subiendo» es una media, no un instante
+
+### Lo que pasaba
+
+`verificar-despegue.mjs tenerife-norte taguato`, con el JAZ 20, fallaba a ratos
+en «en el aire sigue subiendo con el motor a tope», que pedía más de 0,5 m/s
+cuatro segundos después de soltar los mandos. Antes de la tanda 11 (0244a3f3)
+pasó 3 veces de 4 (+1,6, +0,7, +0,8 y −1,1 m/s); con ella (ccd58455), 1 de 5
+(−0,5, +0,2, 0,0, 0,0 y +0,6). La nota H22b lo dejaba como azar sin poder
+repetirlo.
+
+### No es la tanda
+
+En la mesa, el JAZ 20 en Taguató despegando como lo despega el banco —por la
+12 de Los Rodeos, a 632 m y 20 °C, con el alisio de casa (040/12), los flaps y
+el compensador de despegue y, al pasar la Vr, el timón a medio recorrido— y
+soltado en la primera mirada del banco pasados los quince metros: a 16,4 m, a
+27,1 m/s y subiendo a 7,8 m/s con el morro a 27°. Sin ráfagas, la altura y la
+velocidad vertical después de soltar:
+
+| Tras soltar | 1 s | 2 s | 3 s | 4 s | 5 s | 6 s | 7 s | 8 s | 9 s | 10 s | 14 s | 18 s |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| m/s | +4,5 | +1,6 | +0,2 | **−0,7** | −1,0 | −0,8 | −0,1 | +0,9 | +2,0 | +2,7 | +2,7 | +2,5 |
+| m | 22,8 | 25,7 | 26,4 | 26,2 | 25,3 | 24,3 | 23,8 | 24,2 | 25,7 | 28,1 | 39,3 | 49,6 |
+
+Con el modelo de vuelo de 0244a3f3 y con el de ccd58455 la traza sale
+**idéntica al bit**: sin viento, con el de casa, con sesenta semillas de
+ráfagas (`rafagas.ts`) y también en Tukã. Lo único que cambió en el modelo
+entre los dos, `velocidadesDeLaAyuda` (H22b), no mueve nada en el JAZ 20, como
+ya decía esa nota. En el navegador, 3 de 4 contra 1 de 5 con tan pocas tiradas
+no distingue nada (la prueba exacta de Fisher da p = 0,17).
+
+Lo que sí hay es **dónde se miraba**. El banco suelta con el morro alto, y el
+avión compensado hace lo que hace uno de verdad: baja el morro para recuperar
+su velocidad, se hunde un poco en la oscilación larga (la fugoide) y luego sube
+estable, a 2,4–2,9 m/s —unos quinientos pies por minuto— desde los diez
+segundos. El cuarto segundo cae en el fondo de esa oscilación: con ráfagas, el
+instante pasaba el listón 5 veces de 60.
+
+### Lo que se decidió
+
+El avión ya hace lo real —compensado para subir, con el gas a tope y los mandos
+sueltos, sigue subiendo— y no se ha tocado. Lo que se cambió es la comprobación,
+que ahora mira dieciocho segundos con el reloj del juego (`reloj` en
+`src/dev/sondas.ts`) y pide dos cosas:
+
+- **Que suba**: la media de los 8 a los 18 s de soltar —lo ganado en altitud
+  partido por el tiempo— por encima de medio metro por segundo, el listón de
+  siempre. Ahí la fugoide ya ha pasado, y el fallo que originó la comprobación
+  —el avión nivelado con el gas a tope— da cero.
+- **Y que no vuelva hacia la pista**: en esos dieciocho segundos no baja más de
+  tres metros de donde se soltó. Es el fallo de H21a, la ayuda bajando el morro
+  cerca del suelo, que la media de después no ve porque luego remonta.
+
+En la mesa, con las mismas sesenta semillas de ráfagas:
+
+| | El instante de antes (> 0,5 m/s a los 4 s) | Media de 8 a 18 s | Lo más que baja de donde se soltó |
+|---|---|---|---|
+| Hoy, igual en 0244a3f3 | pasa 5 de 60 (de −2,3 a +1,0) | de 1,6 a 3,2 m/s, mediana 2,5 | 1,1 m |
+| El `fdm.ts` de antes de H21d | pasa 0 de 60 (de −9,6 a +0,4) | de 2,0 a 4,8 | más de 3 m en 42 de 60, hasta 14,7 |
+
+El de antes de H21d es ese fichero con todo lo demás de hoy. Los 18 vuelos de
+60 que con él no bajan tres metros no se escapan: esa ley la caza sin ráfagas
+`subida-recien-despegado.test.ts`, donde el JAZ 20 en Taguató bajaba a
+−5,5 m/s (la tabla de la nota H21d), y es ahí donde vive ese fallo.
+
+En el navegador (17-11-2026, puerto 5686), con la comprobación nueva y el
+viento de casa de Los Rodeos, `verificar-despegue.mjs tenerife-norte taguato`
+tres veces: 18 de 18 las tres, a 2,5, 2,7 y 2,3 m/s de media de los 8 a los
+18 s, y ninguna baja de donde se soltó. Y una vez cada uno de los otros dos
+que usan la misma comprobación: `tuka`, 19 de 19, a 2,9 m/s; `guyrami`, 19 de
+19, a 1,3 m/s —el modelo sencillo sube menos, y es el que menos margen deja
+sobre el medio metro—, sin bajar de donde se soltó tampoco.
+
+### Lo que no
+
+- **El piloto del banco** sigue soltando a los quince metros con el morro a
+  27°, como ya dejaba la nota H21d; con la comprobación nueva no cambia lo que
+  se mide.
+- **La mesa no es el navegador entero**: no lleva la mano de `mano.ts` —que
+  no coge el avión sin tecla—, ni la estela del tráfico, ni el calor del suelo
+  de la hora del vuelo; las ráfagas, con σ = 0,67 m/s, son las de la parte
+  mecánica de un viento de doce nudos.
+- **Guyrami** vuela el modelo sencillo (`arcade.ts`), que la mesa no mira: de
+  ese, solo el navegador.
