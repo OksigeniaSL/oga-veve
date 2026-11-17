@@ -1780,9 +1780,25 @@ const EJ_RADIAL = escena(`
   <path class="ejercicio__flecha" d="M60.8 38.2 A14 14 0 0 1 69.2 56.2 M69.2 56.2 l3.3 -2.3 M69.2 56.2 l-1 -3.9" />
 `);
 
+/**
+ * **Interceptar un radial**: el VOR a la izquierda con un solo radial, el
+ * pedido, saliendo hacia la derecha; la estela del avión que baja cortándolo
+ * a cuarenta y cinco grados y **se curva antes de llegar**, para entrar en él
+ * sin pasarse; y el avión ya encima, siguiéndolo. La curva es la
+ * anticipación, dibujada. Ver `flight/interceptar-un-radial.ts`.
+ */
+const EJ_INTERCEPTAR = escena(`
+  <path class="ejercicio__ondas" d="M23 64 H118" />
+  <path class="leccion__estela" d="M30 30 L50 50 Q60 60 74 63 L86 64" stroke-dasharray="4 4" />
+  <path class="ejercicio__mastil" d="M16 57 l6 3.5 v7 l-6 3.5 l-6 -3.5 v-7 Z" />
+  <circle cx="16" cy="64" r="1.3" class="ejercicio__mastil" />
+  ${AVION("translate(98 64) rotate(90) scale(0.8)")}
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   aguja: EJ_AGUJA,
   radial: EJ_RADIAL,
+  interceptar: EJ_INTERCEPTAR,
   autorrotacion: EJ_AUTORROTACION,
   estacionario: EJ_ESTACIONARIO,
   par: EJ_PAR,

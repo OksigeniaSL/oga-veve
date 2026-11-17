@@ -378,6 +378,12 @@ Primero, poné el VOR del campo en la NAV: tocalo en el plano, o apretá el siet
 ¿Viste? El morro dio un cuarto de vuelta y la barra casi no se movió: lo poquito que se mueve es lo que avanzaste, no lo que giraste. El radial dice dónde estás, no adónde mirás
 Ahora vamos a la radio por tu radial. Girá el OBS media vuelta, dejándolo apretado, hasta que diga TO, y volá con la barra en el centro: si se va a un lado, girá un poco hacia ese lado
 ¡Pasamos por encima de la radio! ¿Viste? Justo encima sale la bandera, porque ahí no sabe qué decir, y del otro lado TO y FROM se dan vuelta. Llegaste con la barra sola
+Hoy vamos a salir por un radial, como en una salida de verdad. El número está en la tarjeta: ponelo en el OBS con el nueve y el cero; si lo dejás apretado, gira solo
+La barra se fue a tope: el radial queda de ese lado. Seguí cortándolo de costado, sin apuntarle derecho, y mirá la barra
+¡Ya se mueve! El radial está cerca. Empezá a virar ahora, de a poquito, antes de que la barra llegue al centro: el avión gira en curva, y si esperás, te pasás
+Te pasaste un poquito: la barra cruzó al otro lado. No pasa nada, volvé hacia ella de a poco. La próxima, empezá a virar un poco antes
+¡Estás en el radial! La barra quieta en el centro: así se sale por un radial, como los pilotos de verdad
+¡Estás en el radial, con la barra quieta en el centro! Fijate en el morro: no apunta justo al número del OBS, apunta un poco contra el viento. Es lo que hace falta para que no te saque del radial
 Ver el río
 Seguir el río
 Salir al mar

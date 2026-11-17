@@ -2567,6 +2567,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * bandera al pasar y dónde se empezó. Ver `flight/en-que-radial-estoy.ts`.
      */
     enQueRadialEstoy: () => juego.enQueRadialEstoyParaBanco,
+    /**
+     * «Interceptar un radial»: la fase, el radial pedido, lo que la barra se
+     * fue al otro lado y dónde se empezó. Ver `flight/interceptar-un-radial.ts`.
+     */
+    interceptarUnRadial: () => juego.interceptarUnRadialParaBanco,
     /** El morse de la radio: si suena, de quién, y lo último identificado. Ver `audio/morse.ts`. */
     morse: () => juego.morseParaBanco,
     /** Enseña o esconde la nube de la tormenta, para medir lo que cuesta. */
