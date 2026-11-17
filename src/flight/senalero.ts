@@ -102,6 +102,15 @@ export const DE_LADO = 30;
 /** A partir de aquí ya se está parando: el gesto es de parar, m. */
 const PARADA = 2.5;
 
+/**
+ * **Hasta cuánto antes de su sitio está llegado quien se para**, m de raya de
+ * entrada desde la rueda de morro: ahí el señalero ya no llama hacia delante,
+ * pide frenos, calzos y cortar motores. Lo mira también el plan, que con el
+ * avión en el puesto no sugiere moverse donde él no lo llama. Ver
+ * `velocidadEnElPuesto` en `world/plan-de-vuelo.ts`.
+ */
+export const YA_EN_SU_SITIO = PARADA * 2;
+
 /** Cuánto se puede ir desviado de la raya antes de corregir, m. */
 const DESVIADO = 2.2;
 
@@ -186,7 +195,7 @@ export function gestoDeSenalero(s: Llegada, antes: Gesto = null): Gesto {
    */
   const liston =
     antes !== null && YA_PARADO.includes(antes) ? SE_MUEVE_OTRA_VEZ : QUIETO;
-  if (s.velocidad < liston && s.restante < PARADA * 2) {
+  if (s.velocidad < liston && s.restante < YA_EN_SU_SITIO) {
     if (s.motor === false) return null;
     const parado = s.parado ?? 0;
     return YA_PARADO[Math.min(YA_PARADO.length - 1, Math.floor(parado / DURA_LA_SENA))]!;

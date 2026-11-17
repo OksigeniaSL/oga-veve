@@ -64,6 +64,7 @@ import { ESPERA_MAXIMA } from "../flight/radio";
 import { PuertaAsignada } from "./puerta-asignada";
 import { edificiosDePasarela, esPuestoDeContacto } from "./remolque";
 import { morroDe } from "./rueda-de-morro";
+import { YA_EN_SU_SITIO } from "../flight/senalero";
 import {
   aLaCaja,
   cajasDeLosTramos,
@@ -4333,9 +4334,21 @@ export class PlanDeVuelo {
     }
 
     if (quiere === this.destino) return;
+    /*
+     * **Y al llegar al puesto, la raya se va pero el puesto se queda**: su
+     * punto y por dónde se entra en él, que es lo que mide el señalero. Sin
+     * raya la sugerida volvía a la de crucero, y en los peldaños donde el juego
+     * lleva la velocidad el gas a fondo sacaba al avión del puesto hasta que la
+     * raya se rehacía hacia ese mismo puesto. Ver `velocidadEnElPuesto`.
+     */
+    const llegada =
+      quiere === null && fase === "en-puesto" && this.destino === "puesto"
+        ? this.entradaDelPuesto()
+        : null;
     this.destino = quiere;
     if (quiere === null) {
       this.ponerRuta(null);
+      this.llegadaAlPuesto = llegada;
       return;
     }
 
@@ -6745,7 +6758,8 @@ export class PlanDeVuelo {
    */
   private velocidadAqui(): number {
     const n = this.velocidades.length;
-    if (n < 2 || this.recorridos.length !== n) return CRUCERO;
+    if (n < 2 || this.recorridos.length !== n)
+      return this.llegadaAlPuesto ? this.velocidadEnElPuesto(this.llegadaAlPuesto) : CRUCERO;
     const donde = this.avance;
     let i = 1;
     while (i < n - 1 && this.recorridos[i]! < donde) i++;
@@ -6778,6 +6792,59 @@ export class PlanDeVuelo {
     if (total === undefined) return Infinity;
     const queda = total - Math.max(0, morroDe(this.avion).rueda) - this.avance;
     return Math.sqrt(2 * FRENADA * Math.max(0, queda));
+  }
+
+  /**
+   * **El puesto al que se ha llegado**, en mundo: el final de la raya y hacia
+   * dónde se entraba en él, unitario. Lo pone la llegada y lo quita la raya
+   * siguiente, sea la de volver a él o la del tramo que empieza. Ver
+   * `velocidadEnElPuesto`.
+   */
+  private llegadaAlPuesto: { readonly fin: Punto; readonly hacia: Punto } | null = null;
+
+  /**
+   * Por dónde se entra en el puesto en que acaba la raya de ahora: del punto de
+   * `ultimoPaso` al final, que es lo mismo que mira el señalero para plantarse
+   * (`senaleroAlPuestoDeLlegada` en `game.ts`).
+   */
+  private entradaDelPuesto(): { readonly fin: Punto; readonly hacia: Punto } | null {
+    const fin = this.rutaMundo[this.rutaMundo.length - 1];
+    const antes = this.ultimoPaso();
+    if (!fin || !antes) return null;
+    const largo = Math.hypot(fin[0] - antes[0], fin[1] - antes[1]);
+    if (largo < 1) return null;
+    return { fin, hacia: [(fin[0] - antes[0]) / largo, (fin[1] - antes[1]) / largo] };
+  }
+
+  /**
+   * **Ya en el puesto, lo que queda hasta su punto, y en él, cero.**
+   *
+   * Lo de verdad: llegado al puesto, el avión se para, se pone el freno de
+   * aparcamiento y se apaga, y no se vuelve a mover hasta la salida siguiente
+   * —que empieza con otro tramo, el empuje o el tractor—. Al llegar el plan
+   * quita la raya, y sin raya sugería la de crucero (`CRUCERO`), como si el
+   * avión estuviera rodando por ahí sin plan: en Guyrami y en Tukã, donde el
+   * tope de rodaje cierra el gas a lo que sugiere el plan, el gas a fondo de un
+   * crío que no lo suelta sacaba al avión del puesto, la fase volvía a «a la
+   * plataforma» y la raya se rehacía hacia ese mismo puesto.
+   *
+   * **Y lo que queda se mide como lo mide el señalero**: desde la rueda de morro
+   * y a lo largo de la raya de entrada. A menos de `YA_EN_SU_SITIO` del punto, o
+   * pasado, él pide frenos, calzos y cortar motores, y aquí es cero. Más lejos
+   * —quien se paró antes, a hasta cuarenta y cinco metros, que también es «en el
+   * puesto» para la máquina de fases— él sigue llamando «adelante», y aquí se
+   * deja llegar, con la frenada del perfil y a paso de giro como mucho: un cero
+   * ahí dejaría al avión clavado con el señalero llamándole. Al moverse, la fase
+   * vuelve a «a la plataforma» y la raya lo lleva al punto, como antes.
+   */
+  private velocidadEnElPuesto(llegada: { readonly fin: Punto; readonly hacia: Punto }): number {
+    const centro: Punto = [this.ultimaPos[0], -this.ultimaPos[1]];
+    const queda =
+      (llegada.fin[0] - centro[0]) * llegada.hacia[0] +
+      (llegada.fin[1] - centro[1]) * llegada.hacia[1] -
+      Math.max(0, morroDe(this.avion).rueda);
+    if (queda < YA_EN_SU_SITIO) return 0;
+    return Math.min(this.enTierra.viraje, Math.sqrt(2 * FRENADA * queda));
   }
 
   /**
@@ -6978,6 +7045,9 @@ export class PlanDeVuelo {
   private ponerRuta(ruta: Ruta | null, salida: SalidaDeLaRuta | null = null): void {
     this.vecesQueSePusoLaRuta++;
     this.ruta = ruta;
+    // Raya nueva, o ninguna: el puesto al que se llegó ya no es lo que toca. Lo
+    // vuelve a poner la llegada, después de esto. Ver `velocidadEnElPuesto`.
+    this.llegadaAlPuesto = null;
     // La pone `ponerLaVuelta` después, si esta ruta deja la pista por una.
     this.salidaDeLaRuta = null;
     // Y por dónde y a qué la deja, que lo necesita ya el perfil de velocidad.

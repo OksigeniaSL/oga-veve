@@ -19,7 +19,7 @@ import {
   type ElSitio,
   type FotogramaDeLaHierba,
 } from "./vuelta-a-la-raya";
-import { diferencia, Remolque, rumboEntre, vector, type Pose, type PuntoXZ } from "./remolque";
+import { DIRECCION_MAXIMA, diferencia, Remolque, rumboEntre, vector, type Pose, type PuntoXZ } from "./remolque";
 import { barraAlTrenDe, morroDe } from "./rueda-de-morro";
 import { conSuAerodromo, scenarioById } from "./scenarios";
 import { AIRCRAFT } from "../flight/aircraft";
@@ -288,7 +288,7 @@ describe("el de rueda de cola, con barra a sus principales", () => {
     for (const rumbo of [200 * GRADO, 0, 90 * GRADO]) {
       const desde = { x: 10, z: 40, rumbo };
       const d = destinoEnLaRaya(desde, RECTA, sitioSencillo())!;
-      const e = remolqueALaRaya(desde, RECTA, d, biplano.batalla)!;
+      const e = remolqueALaRaya(desde, RECTA, d, biplano.batalla, barra.largo)!;
       expect(e, `rumbo ${rumbo / GRADO}`).not.toBeNull();
       const r = new Remolque(
         e,
@@ -326,6 +326,50 @@ describe("el de rueda de cola, con barra a sus principales", () => {
       expect(aLaRaya(r.avion, RECTA)).toBeLessThan(1.5);
       expect(Math.abs(diferencia(r.avion.rumbo, 90 * GRADO)) / GRADO).toBeLessThan(30);
     }
+  });
+
+  /*
+   * **Y gira con la barra, no con la batalla** (H23d). Remolcado hacia delante por las
+   * principales, con la de cola desbloqueada y loca (FAA-H-8083-30, «Towing of
+   * Aircraft»), lo que no derrapa son las principales y lo que tira de lado, el tractor
+   * en la punta de la barra: el radio en las principales es la barra entre la tangente
+   * de lo más que se le tuerce, los setenta grados de siempre. Con la batalla, de las
+   * principales a la de cola, era como si la de cola fuera el eje fijo.
+   */
+  it("gira con el radio de su barra, 1,7 m, y no con el de su batalla, 2,0", () => {
+    const barra = barraAlTrenDe(biplano)!;
+    const conBarra = barra.largo / Math.tan(DIRECCION_MAXIMA);
+    const conBatalla = biplano.batalla / Math.tan(DIRECCION_MAXIMA);
+    expect(conBarra).toBeCloseTo(1.67, 2);
+    expect(conBatalla).toBeCloseTo(1.97, 2);
+    for (const rumbo of [200 * GRADO, 0, 90 * GRADO, -120 * GRADO]) {
+      const desde = { x: 10, z: 40, rumbo };
+      const d = destinoEnLaRaya(desde, RECTA, sitioSencillo())!;
+      const e = remolqueALaRaya(desde, RECTA, d, biplano.batalla, barra.largo)!;
+      expect(e, `rumbo ${rumbo / GRADO}`).not.toBeNull();
+      expect(e.radio).toBeCloseTo(conBarra, 6);
+      // Ningún giro más cerrado que el de la barra a setenta grados.
+      let masCerrado = 0;
+      for (let i = 2; i < e.poses.length; i++) {
+        const a = e.poses[i - 1]!;
+        const b = e.poses[i]!;
+        const ds = Math.hypot(b.x - a.x, b.z - a.z);
+        if (ds > 0.1) masCerrado = Math.max(masCerrado, Math.abs(diferencia(a.rumbo, b.rumbo)) / ds);
+      }
+      expect(masCerrado).toBeLessThanOrEqual(1.01 / conBarra);
+      // Y el que da la vuelta lo hace en el de la barra, más cerrado que el de la batalla.
+      if (Math.abs(diferencia(rumbo, 90 * GRADO)) > 90 * GRADO)
+        expect(masCerrado, `rumbo ${rumbo / GRADO}`).toBeGreaterThan(1.01 / conBatalla);
+    }
+    // Los de rueda de morro, con la cuna, siguen con su batalla.
+    const jaz20 = AIRCRAFT.find((a) => a.id === "jaz-20")!;
+    const desde = { x: 10, z: 40, rumbo: 200 * GRADO };
+    const d = destinoEnLaRaya(desde, RECTA, sitioSencillo())!;
+    expect(barraAlTrenDe(jaz20)).toBeNull();
+    expect(remolqueALaRaya(desde, RECTA, d, jaz20.batalla, barraAlTrenDe(jaz20)?.largo)!.radio).toBeCloseTo(
+      Math.max(0.5, jaz20.batalla / Math.tan(DIRECCION_MAXIMA)),
+      6,
+    );
   });
 });
 
@@ -381,7 +425,7 @@ describe("en cada campo con tractor", async () => {
         expect(d, "hay a dónde llevarlo").not.toBeNull();
         expect(sitio.pisable(d!.punto.x, d!.punto.z)).toBe(true);
         expect(enElCampo(aero, d!.punto.x, d!.punto.z)).toBe(false);
-        const e = remolqueALaRaya(desde!, raya, d!, avion.batalla);
+        const e = remolqueALaRaya(desde!, raya, d!, avion.batalla, barraAlTrenDe(avion)?.largo);
         expect(e, "llega a la raya").not.toBeNull();
         expect(deFrente(e!.poses)).toBeGreaterThan(0.99);
         const fin = e!.poses.at(-1)!;
