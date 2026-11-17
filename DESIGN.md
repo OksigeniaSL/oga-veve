@@ -486,6 +486,9 @@ nada.
   («El pasaje, de pie» en `src/style.css`). Arriba la columna de la pausa a la izquierda y los cuatro puntos con el
   volumen a la derecha; debajo, la tarjeta de quien habla de lado a lado; la lámina, en el tercio de abajo, de todo
   el ancho que quepa; y la mochila abajo a la derecha. Lo comprueba `OGA_SOLO=de-pie` de `verificar-consola.mjs`.
+  **Y la tarjeta del tiempo sale encima del cartel**, que se decide antes de volar: el cartel va dentro del HUD y la
+  tarjeta fuera, así que de pie se lee y se decide como tumbada, y al cerrarla vuelve el cartel. Lo mide
+  `verificar-tarjeta-del-tiempo.mjs` a 400 × 780 con el dedo.
 - **La pizarra del aula se elige, no se adivina** (`src/ui/pizarra.ts`): una pizarra cuelga con el borde de abajo a
   unos 90 cm del suelo y un niño de Infantil llega con la mano al tercio de abajo, pero a la hoja de estilos le parece
   una tablet apaisada. Con `?pizarra=1` o con su botón en los ajustes del hangar (la pizarra con el niño de pie y su
