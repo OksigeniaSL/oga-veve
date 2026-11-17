@@ -289,15 +289,17 @@ ms. Va **encima del cuadro, nunca detrás**, apoyado en él: un panel bonito no 
 una fila en todas las pantallas (`--fila-del-aviso`), y así lo que va debajo se aparta en el mismo fotograma en que
 sale. El texto sigue la escalera (`data-escalera`: sin texto, corto o largo) y solo se reescribe cuando cambia, para no
 interrumpir sesenta veces por segundo a quien usa lector de pantalla. Centrado sobre el avión con el ancho de lo que
-dice, y **por delante de todo lo que se enciende solo**, también de la lámpara de la torre.
+dice —en cabina, en el hueco que acaba en la columna de mandos—, **por delante de todo lo que se enciende solo**,
+también de la lámpara de la torre, y **nunca por delante de un mando**.
 
 **Con un aviso, el aviso manda.** Lo que se lee se ordena como en un avión cuando no hay sitio para todo: **el aviso,
 la lámpara de la torre y el subtítulo**, en ese orden. Mientras dura el aviso, el tutor se calla y la tarjeta de la
 orden espera (se esconde sin dejar su sitio): las dos dicen qué hacer y el aviso lo está diciendo. Si coinciden los
 tres, el subtítulo espera también y la lámpara sube a su sitio; con el aviso solo, el subtítulo se queda, y la voz de
-la instructora sigue sonando siempre. En cabina, todo lo que se lee va en una columna debajo de la barra:
-el aviso, la lámpara, y debajo la tarjeta de la orden con el subtítulo a su lado, hasta la columna de mandos, que no se
-mueve nunca (ADR 0030, enmiendas H28c y H28d).
+la instructora sigue sonando siempre. **El subtítulo que espera, espera entero**: su reloj no corre mientras está
+escondido, y sale en cuanto se apaga el aviso o la lámpara, para quien juega sin sonido. En cabina, la tarjeta de la
+orden se queda arriba a la izquierda, donde estaba, y lo que se lee va en una columna entre ella y la columna de
+mandos: el aviso, la lámpara y el subtítulo, por ese orden (ADR 0030, enmiendas H28c, H28d y H28e).
 
 **El tutor** (`.tutor`). La explicación de la tecla que toca, abajo a la izquierda y desde el segundo peldaño, para
 encontrarla en el teclado sin leer: el glifo a 54 px en ocre, la tecla dibujada de 62 × 62 (148 la ancha, Shift) en
@@ -377,10 +379,13 @@ clic, bajos y cortos; con un aviso sonando, la carta se calla.
   caja (el aviso, la lámpara de la torre y el subtítulo viven en tres sitios del marcado), lo de debajo se coloca con
   lo que mide lo de encima: una constante si lo de encima mide siempre lo mismo (`--fila-del-aviso`) y, si no, lo que
   el HUD mide de ello (`--subtitulo-alto`, `--torre-alto`), nunca un número a mano.
-- **Lo que se toca no se mueve para dejar sitio a lo que se lee.** La columna de mandos, el freno y los botones
-  redondos se quedan donde están cuando sale un aviso o se enciende la lámpara: un botón que salta es un botón que no
-  se acierta. Lo que se aparta es lo que se lee, que en cabina acaba donde empieza la columna de mandos
-  (`--columna-izquierda`).
+- **Lo que se toca no se mueve para dejar sitio a lo que se lee, ni se tapa.** La columna de mandos, el freno, la
+  tarjeta de la orden y los botones redondos se quedan donde están cuando sale un aviso o se enciende la lámpara: un
+  botón que salta es un botón que no se acierta. Y nada que se lea pasa por delante de un mando, aunque deje pasar el
+  toque: un mando tapado, aunque sea a medias, es un mando que no se encuentra. Lo que se aparta es lo que se lee, que
+  acaba donde empieza la columna de mandos (`--columna-izquierda`) y, si baja hasta ella, a la derecha de la palanca de
+  pulgar. Lo mira `npm run carteles` con lo más largo que llevan el aviso, la lámpara, la tarjeta de la orden y el
+  subtítulo, en las cuatro maneras en que coinciden.
 - Separaciones de uso: 2, 4, 6, 8, 10, 12, 14 y 16 px. Radios: `--r-s` 10, `--r-m` 16 y `--r-l` 22; 999 px para las
   pastillas y 50 % para lo redondo.
 - **El texto ocupa su caja**: nunca `max-width` en `ch` ni en px para un párrafo. Si una frase no puede crecer, se

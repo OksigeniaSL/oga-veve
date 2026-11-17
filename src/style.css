@@ -14532,7 +14532,10 @@ oksigenia-access-panel::part(trigger):focus-visible {
  *   ocupar su sitio, como en el modo inicio, para que nada se mueva al volver.
  * - **El subtítulo espera solo si coinciden los tres**, y la lámpara sube a su
  *   sitio. Con el aviso solo, se queda: la instructora explica lo que ha
- *   sonado justo detrás. La voz sigue hablando; lo que espera es el cartel. Se
+ *   sonado justo detrás. La voz sigue hablando; lo que espera es el cartel,
+ *   y espera entero: su reloj no corre mientras está escondido, así que quien
+ *   juega sin sonido lo lee en cuanto se apaga el aviso o la lámpara (ver
+ *   `Hud.subtituloEsperando`). Se
  *   probó a dejarlo esperar solo en las pantallas bajas y en cabina, y no
  *   bastaba: en el portátil de 1280 × 800 con el dedo el cuadro vive encima de
  *   los pedales, el aviso sube con él y tocaba la lámpara por cuatro píxeles.
@@ -14588,6 +14591,17 @@ oksigenia-access-panel::part(trigger):focus-visible {
   .hud:not(.hud--cabina).hud--avisando:is(:has(.hud__abajo > [data-hud="hint"]:not(:empty)), .hay-subtitulo)
     .torre {
     top: calc(var(--debajo-del-rincon) + 6px);
+  }
+
+  /*
+   * Y el aviso, apoyado en el cuadro, hasta la columna de mandos y no por
+   * delante de ella: de pie, la columna baja hasta el cuadro y el aviso más
+   * largo, centrado en la pantalla, tapaba el botón del tren. Ahí no cabe en
+   * una línea y va en dos, que crecen hacia arriba desde el cuadro: nada se
+   * coloca debajo de él de fuera.
+   */
+  .hud:not(.hud--cabina) .hud__abajo > .aviso-hud {
+    right: max(16px, 100% - var(--columna-izquierda, 100%) + 8px);
   }
 }
 
@@ -14673,7 +14687,7 @@ oksigenia-access-panel::part(trigger):focus-visible {
 }
 
 /*
- * ── **En cabina, lo que se lee, en una columna debajo de la barra** ──
+ * ── **En cabina, lo que se lee, en una columna entre la tarjeta y los mandos** ──
  *
  * Encima de la visera no caben el aviso, la lámpara de la torre y el
  * subtítulo uno al lado del otro, ni al lado de la tarjeta de la orden y la
@@ -14681,23 +14695,33 @@ oksigenia-access-panel::part(trigger):focus-visible {
  * quedan cien píxeles de parabrisas. Se montaban todos: la lámpara encima de
  * la tarjeta de la orden y de la del gas, el aviso encima de la lámpara, el
  * subtítulo encima del freno. Así que van **apilados, por orden de
- * importancia, y desde la barra hacia abajo**:
+ * importancia, y desde la barra hacia abajo**, en el hueco que queda entre la
+ * columna de la izquierda —la pausa, y debajo la tarjeta de la orden con el
+ * tutor— y la columna de mandos (`--columna-izquierda`, que mide el HUD):
  *
- * 1. **El aviso**, el primero y centrado, justo debajo de la barra. Mide una
- *    fila (`--fila-del-aviso`), así que lo de debajo se aparta en el mismo
- *    fotograma en que sale.
- * 2. **La lámpara**, debajo del aviso o, sin aviso, en su sitio; de la columna
- *    de la pausa a la de mandos, sin pasarle por encima al gas ni al freno.
- * 3. **La tarjeta de la orden y el subtítulo**, uno al lado del otro, donde
- *    acaba la lámpara (`--torre-alto`, que mide el HUD): la tarjeta a la
- *    izquierda, como estaba, y el subtítulo en el hueco hasta los mandos. Con
- *    el aviso, la tarjeta espera —ver «Con un aviso, el aviso manda»— y, si
- *    además está la lámpara, el subtítulo también.
+ * 1. **El aviso**, el primero, justo debajo de la barra y centrado en ese
+ *    hueco, que con el aviso empieza en la columna de la pausa porque la
+ *    tarjeta y el tutor esperan. Mide una fila (`--fila-del-aviso`), así que
+ *    lo de debajo se aparta en el mismo fotograma en que sale. Iba centrado en
+ *    la pantalla entera y pasaba por delante del borde de la tarjeta del gas:
+ *    un mando tapado, aunque sea a medias, es un mando que no se encuentra.
+ * 2. **La lámpara**, debajo del aviso o, sin aviso, en su sitio, **al lado de
+ *    la tarjeta de la orden** y no encima: las dos dicen lo mismo —«esperá a
+ *    la luz» y la luz— y se leen juntas, de izquierda a derecha. Encima, la
+ *    tarjeta bajaba lo que mide la lámpara al encenderse: tapaba más pantalla
+ *    de vuelo y, en la tablet de 1024 × 600 con el dedo, llegaba a la caja de
+ *    la palanca de pulgar. Y la tarjeta también se toca —para arrancar, para
+ *    que explique—, así que tampoco se mueve. En ese hueco la orden va debajo
+ *    de la luz y de los aviones, no a su lado: ver la regla de la lámpara en
+ *    cabina.
+ * 3. **El subtítulo**, debajo de la lámpara (`--torre-alto`, que mide el HUD),
+ *    en el mismo hueco. Con el aviso, si además está la lámpara, espera —ver
+ *    «Con un aviso, el aviso manda»—.
  *
- * La columna de mandos no se mueve nunca: es lo que se toca, y un botón que
- * salta cuando sale un aviso es un botón que no se acierta. Lo que baja es lo
- * que se lee. En el teléfono la tarjeta va en la fila de la barra y el
- * subtítulo, de lado a lado debajo de la lámpara: ver su regla.
+ * Lo que se toca no se mueve nunca: la columna de mandos y la tarjeta de la
+ * orden se quedan donde están cuando sale un aviso o se enciende la lámpara.
+ * Lo que baja es lo que se lee. En el teléfono la tarjeta va en la fila de la
+ * barra, y el hueco va de la columna de la pausa a la de mandos: ver su regla.
  */
 .hud.hud--cabina {
   /* Donde acaba la barra: `--arriba-alto` no cuenta una barra que se ha
@@ -14705,24 +14729,28 @@ oksigenia-access-panel::part(trigger):focus-visible {
   --franja: calc(
     max(var(--arriba-alto, 58px), var(--alto-de-la-barra, 58px) + 16px) + 8px
   );
+  /* Los dos bordes del hueco de lo que se lee. A la izquierda, la columna de
+     la pausa; la tarjeta de la orden se suma fuera del teléfono, abajo. */
+  --lee-izquierda: max(var(--borde-izq, 16px), var(--vistas-derecha, 0px) + 8px);
+  --lee-derecha: max(
+    var(--borde-der, 16px),
+    var(--vistas-derecha, 0px) + 8px,
+    100% - var(--columna-izquierda, 100%) + 8px
+  );
 }
 
 .hud.hud--cabina .hud__abajo > .aviso-hud {
   top: var(--franja);
   bottom: auto;
   left: max(var(--borde-izq, 16px), var(--vistas-derecha, 0px) + 8px);
-  right: max(var(--borde-der, 16px), var(--vistas-derecha, 0px) + 8px);
+  right: var(--lee-derecha);
 }
 
 .hud.hud--cabina .torre,
 .hud.hud--cabina:is(:has(.hud__abajo > [data-hud="hint"]:not(:empty)), .hay-subtitulo) .torre {
   top: var(--franja);
-  left: max(var(--borde-izq, 16px), var(--vistas-derecha, 0px) + 8px);
-  right: max(
-    var(--borde-der, 16px),
-    var(--vistas-derecha, 0px) + 8px,
-    100% - var(--columna-izquierda, 100%) + 8px
-  );
+  left: var(--lee-izquierda);
+  right: var(--lee-derecha);
 }
 
 .hud.hud--cabina.hud--avisando .torre,
@@ -14734,12 +14762,8 @@ oksigenia-access-panel::part(trigger):focus-visible {
 .hud.hud--cabina .hud__abajo > [data-hud="hint"] {
   top: calc(var(--franja) + var(--torre-alto, 0px));
   bottom: auto;
-  left: max(var(--borde-izq, 16px), var(--vistas-derecha, 0px) + 8px);
-  right: max(
-    var(--borde-der, 16px),
-    var(--vistas-derecha, 0px) + 8px,
-    100% - var(--columna-izquierda, 100%) + 8px
-  );
+  left: var(--lee-izquierda);
+  right: var(--lee-derecha);
 }
 
 .hud.hud--cabina.hud--avisando .hud__abajo > [data-hud="hint"] {
@@ -14747,22 +14771,76 @@ oksigenia-access-panel::part(trigger):focus-visible {
 }
 
 /*
- * Fuera del teléfono, la tarjeta de la orden baja con la lámpara y el
- * subtítulo va a su lado, no encima: `--rincon-derecha`, que mide el HUD. Y
- * el tutor, debajo de la tarjeta, como estaba.
+ * **La lámpara en el hueco de cabina**: la luz, los aviones de la fila y el
+ * tuyo en una línea, y la orden debajo, de lado a lado. Al lado de la tarjeta
+ * de la orden el hueco se queda en 300 píxeles en una tablet, y con la orden
+ * a la derecha de los aviones le quedaban cincuenta. Con ancho de sobra —el
+ * portátil, o sin tarjeta— la orden sigue a su lado. Y con dos filas, el
+ * redondeo de una tarjeta y no el de una píldora, que se comía las esquinas
+ * de la orden.
+ */
+.hud.hud--cabina .torre {
+  flex-wrap: wrap;
+  row-gap: 6px;
+  border-radius: var(--r-l);
+}
+
+.hud.hud--cabina .torre__texto {
+  flex: 1 1 12em;
+  min-width: 0;
+}
+
+/*
+ * Fuera del teléfono, la tarjeta de la orden y el tutor se quedan arriba a la
+ * izquierda, donde estaban, y lo que se lee empieza a su derecha
+ * (`--rincon-derecha`, que mide el HUD). Con un aviso, la tarjeta y el tutor
+ * esperan sin dejar su sitio, y el aviso, que va en una línea, empieza en la
+ * columna de la pausa.
  */
 @media not all and (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
-  .hud.hud--cabina .rincon {
-    top: calc(var(--franja) + var(--torre-alto, 0px));
+  .hud.hud--cabina {
+    --lee-izquierda: max(16px, var(--vistas-derecha, 0px) + 8px, var(--rincon-derecha, 0px) + 12px);
   }
 
-  .hud.hud--cabina .hud__abajo > [data-hud="hint"] {
-    left: max(16px, var(--vistas-derecha, 0px) + 8px, var(--rincon-derecha, 0px) + 12px);
+  .hud.hud--cabina .rincon {
+    top: var(--franja);
   }
 
   .hud.hud--cabina .tutor {
-    top: calc(
-      var(--franja) + var(--torre-alto, 0px) + var(--rincon-alto, 0px) + 10px
+    top: calc(var(--franja) + var(--rincon-alto, 0px) + 10px);
+  }
+}
+
+/*
+ * En una pantalla baja, el dibujo de la tarjeta de la orden al más pequeño de
+ * los suyos (72): en la tablet de 1024 × 600 con el dedo la barra va en
+ * cuatro filas, la tarjeta empieza a 226 y con el dibujo de 96 la frase iba en
+ * seis líneas y su borde de abajo tocaba el volumen, que vive encima de la
+ * palanca de pulgar. Con el dibujo más pequeño la frase tiene más ancho y va
+ * en menos líneas.
+ */
+@media not all and (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  @media (max-height: 640px) {
+    .hud.hud--cabina .senal__dibujo {
+      width: 72px;
+      height: 72px;
+    }
+  }
+}
+
+/*
+ * En el teléfono, el hueco empieza también a la derecha de la palanca de
+ * pulgar, que no escala con el HUD: 150 píxeles de pantalla a 20 del borde.
+ * El subtítulo de tres líneas, y la lámpara debajo del aviso, bajaban hasta
+ * su caja, que es cuadrada aunque la palanca sea redonda: el dedo que va a
+ * por ella va a por la caja.
+ */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  .hud.hud--cabina {
+    --lee-izquierda: max(
+      var(--borde-izq, 16px),
+      var(--vistas-derecha, 0px) + 8px,
+      (max(20px, env(safe-area-inset-left)) + 150px + 8px) / var(--escala, 1)
     );
   }
 }
@@ -14774,6 +14852,19 @@ oksigenia-access-panel::part(trigger):focus-visible {
  * borde. El tutor, debajo de los dos.
  */
 @media (orientation: portrait) and (pointer: fine) {
+  /*
+   * De pie no hay sitio al lado de la tarjeta de la orden: la pantalla mide
+   * 600 y la tarjeta 350. La lámpara sigue yendo de la columna de la pausa a
+   * la de mandos, y la tarjeta, debajo de ella, como estaba antes de H28e.
+   */
+  .hud.hud--cabina {
+    --lee-izquierda: max(16px, var(--vistas-derecha, 0px) + 8px);
+  }
+
+  .hud.hud--cabina .rincon {
+    top: calc(var(--franja) + var(--torre-alto, 0px));
+  }
+
   .hud.hud--cabina .hud__abajo > [data-hud="hint"] {
     top: calc(var(--franja) + var(--torre-alto, 0px) + var(--rincon-alto, 0px) + 8px);
     left: max(16px, var(--vistas-derecha, 0px) + 8px);
@@ -15359,6 +15450,66 @@ oksigenia-access-panel::part(trigger):focus-visible {
   }
 
   /*
+   * **Y sin pasar por delante de los mandos.** A la derecha, de fuera, el
+   * subtítulo y la lámpara tapaban el tren, los aerofrenos y la tarjeta del
+   * destino: dejaban pasar el toque, pero un mando tapado, aunque sea a
+   * medias, es un mando que no se encuentra. Acaban donde empieza la columna
+   * de mandos (`--columna-izquierda`), aunque así no queden centrados sobre el
+   * avión. Y la lámpara, que baja debajo del subtítulo hasta la altura de la
+   * palanca de pulgar, empieza a su derecha: la palanca no escala con el HUD,
+   * 150 píxeles de pantalla a 20 del borde. El aviso no lo necesita: va más
+   * abajo, en el medio, donde no llega ninguna de las dos columnas. Con la
+   * pantalla en grande, como estaba: allí el subtítulo va encima de ella. En
+   * cabina, por su regla (`--lee-izquierda`, `--lee-derecha`).
+   */
+  .hud:not(.hay-cuadro-grande, .hud--cabina) .hud__abajo > [data-hud="hint"],
+  .hud:not(.hay-cuadro-grande, .hud--cabina) .torre {
+    right: max(
+      var(--borde-der),
+      var(--vistas-derecha, 0px) + 8px,
+      100% - var(--columna-izquierda, 100%) + 8px
+    );
+  }
+
+  /*
+   * **Y el aviso, nunca encima de lo que hay arriba.** Más estrechos, el
+   * subtítulo y la lámpara van en una línea más, y en el teléfono más bajo
+   * (864 × 330) su última llegaba a la fila del aviso, que va apoyado en el
+   * cuadro. El aviso baja hasta donde acaban ellos y un respiro, nunca sube:
+   * con el subtítulo, `--subtitulo-alto`, como la lámpara (ver arriba); con la
+   * lámpara, que entonces va en el sitio del subtítulo, `--torre-alto`, que
+   * ya lleva su respiro. Los dos los mide el HUD. Abajo le queda sitio hasta
+   * el asa del cuadro.
+   */
+  .hud:not(.hay-cuadro-grande, .hud--cabina):is(:has(.hud__abajo > [data-hud="hint"]:not(:empty)), .hay-subtitulo)
+    .hud__abajo
+    > .aviso-hud {
+    bottom: min(
+      var(--apoyo) + var(--tirador-asoma, 34px) + 6px + env(safe-area-inset-bottom),
+      100% - var(--arriba-alto, 80px) - 8px - 8px - var(--subtitulo-alto, 28px) - 6px -
+        (var(--fila-del-aviso) - 8px)
+    );
+  }
+
+  .hud.hud--avisando:not(.hay-cuadro-grande, .hud--cabina):is(:has(.torre:not([hidden])), .hay-torre)
+    .hud__abajo
+    > .aviso-hud {
+    bottom: min(
+      var(--apoyo) + var(--tirador-asoma, 34px) + 6px + env(safe-area-inset-bottom),
+      100% - var(--arriba-alto, 80px) - 14px - var(--torre-alto, 0px) -
+        (var(--fila-del-aviso) - 8px)
+    );
+  }
+
+  .hud:not(.hay-cuadro-grande, .hud--cabina) .torre {
+    left: max(
+      var(--borde-izq),
+      var(--vistas-derecha, 0px) + 8px,
+      (max(20px, env(safe-area-inset-left)) + 150px + 8px) / var(--escala, 1)
+    );
+  }
+
+  /*
    * **El tutor, encima de la palanca**, que es donde hay hueco y no tapa el
    * avión ni el cuadro abierto: estrecho, para no llegar a él. Y en letra de
    * teléfono, por lo mismo que la orden.
@@ -15449,8 +15600,14 @@ oksigenia-access-panel::part(trigger):focus-visible {
     text-overflow: ellipsis;
   }
 
+  /*
+   * El aviso, a la glosa, como todo lo que se lee en el teléfono. Iba a 17, y
+   * en cabina del teléfono de 780 × 360, entre la columna de la pausa —con la
+   * vuelta al avión y el parte, antes de arrancar— y la de mandos, «Se rompió
+   * algo. Volvemos al helipuerto…» se pasaba ocho píxeles y se partía en dos.
+   */
   .hud .aviso-hud {
-    font-size: calc(17px / var(--escala, 1));
+    font-size: calc(16px / var(--escala, 1));
   }
 }
 

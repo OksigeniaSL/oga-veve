@@ -3793,7 +3793,16 @@ export class Hud {
 
     this.setWarning(state, runwayLeft);
 
-    if (this.hintTimer > 0) {
+    /*
+     * **Mientras el subtítulo espera, su reloj no corre.** Si coinciden el
+     * aviso y la lámpara, la hoja esconde el subtítulo —ver «Con un aviso, el
+     * aviso manda»—, pero la frase seguía gastando sus segundos detrás: el
+     * aviso de suelo dura más que una frase de la instructora, y quien juega
+     * sin sonido no llegaba a leer nunca lo que ella había explicado. Así sale
+     * entera en cuanto se apaga uno de los dos. La altura en grande no espera:
+     * una altura de hace diez segundos ya no es la del avión.
+     */
+    if (this.hintTimer > 0 && !this.subtituloEsperando()) {
       this.hintTimer -= dt;
       if (this.hintTimer <= 0) {
         this.hint.textContent = "";
@@ -5564,6 +5573,20 @@ export class Hud {
     this.radioReloj = window.setTimeout(() => {
       caja.hidden = true;
     }, segundos * 1000);
+  }
+
+  /**
+   * Si el subtítulo está esperando detrás del aviso y de la lámpara de la
+   * torre, que es cuando la hoja lo esconde (ver `.hud--avisando` con
+   * `.hay-torre`). La altura en grande no cuenta: esa no espera.
+   */
+  private subtituloEsperando(): boolean {
+    return (
+      this.root.classList.contains("hud--avisando") &&
+      !!this.torre &&
+      !this.torre.hidden &&
+      !this.hint.classList.contains("insignia--cifra")
+    );
   }
 
   flash(text: string, seconds = 2.4): void {
