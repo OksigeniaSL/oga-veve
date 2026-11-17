@@ -48,7 +48,7 @@ export const KMH_CADA = 10;
  */
 export const KMH_QUE_SE_DICEN = [
   110, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 260, 270, 280, 290,
-  300, 310, 340, 350, 360, 410, 420, 440, 460, 480, 520, 540, 590,
+  300, 310, 340, 350, 360, 370, 410, 420, 440, 460, 480, 520, 540, 590,
 ] as const;
 
 /**
@@ -57,14 +57,14 @@ export const KMH_QUE_SE_DICEN = [
  * una lista en la que hubiera una cifra sin grabar rompería el horneado. Al grabarlas
  * pasan a `KMH_QUE_SE_DICEN`.
  *
- * Hoy, los 370 del JAZ 90 desde que lleva la Vref de la FAA: su marca del área
- * terminal, la Vref y ochenta, son 198 nudos donde eran 212 (ADR 0027, enmienda
- * H20e). Con ella vuelven los 230, ya grabados —eran del JAZ 60 con el ala del
+ * Hoy, ninguna. Los últimos, los 370 del JAZ 90 desde que lleva la Vref de la
+ * FAA: su marca del área terminal, la Vref y ochenta, son 198 nudos donde eran
+ * 212 (ADR 0027, enmienda H20e), grabados el mismo día (16-11-2026). Con ella vuelven los 230, ya grabados —eran del JAZ 60 con el ala del
  * Twin Otter—, que son su marca de final, y dejan de pedirse los 250 y los 390,
  * que se quedan con su toma guardada. Antes, los 290 del JAZ 60 desde que es un
  * Beech 1900D, grabados el mismo día (13-11-2026).
  */
-export const KMH_QUE_ESPERAN_SU_TOMA = [370] as readonly number[];
+export const KMH_QUE_ESPERAN_SU_TOMA = [] as readonly number[];
 
 /** Las unidades de un peldaño. Ver `Tier.units`. */
 export type Unidades = "metric" | "aeronautical";

@@ -2427,6 +2427,10 @@
       "ms": 2238,
       "h": "224b2845c0"
     },
+    "vuelo.paso.velocidad.370": {
+      "ms": 2124,
+      "h": "468c599e6f"
+    },
     "vuelo.paso.velocidad.390": {
       "ms": 2140,
       "h": "7a989014c2"
@@ -5228,6 +5232,9 @@
     ],
     "ejercicio.efecto-suelo.bien": [
       "ejercicio.efecto-suelo.bien"
+    ],
+    "vuelo.paso.velocidad.370": [
+      "vuelo.paso.velocidad.370"
     ]
   }
 }
