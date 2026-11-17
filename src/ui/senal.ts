@@ -916,10 +916,14 @@ const agujaDelAdf = (grados: number): string =>
  * triángulo del TO/FROM, hacia la punta si el curso lleva a la radio y hacia
  * la cola si se aleja. Es lo que pinta el HSI de la cabina (`ui/radio-en-la-rosa.ts`):
  * quien lo ve en la tarjeta lo reconoce en el cuadro. `barra`, lo que se
- * aparta del centro, en unidades del dibujo: siete es a tope.
- * Ver `flight/en-que-radial-estoy.ts`.
+ * aparta del centro, en unidades del dibujo: siete es a tope, y positiva a
+ * la derecha, como la desviación de `leerNav`. Ver `flight/en-que-radial-estoy.ts`.
+ *
+ * `hacia`, hacia dónde se mueve la barra, con una flecha pequeña debajo de
+ * ella: la misma barra a medio camino es «viene hacia el centro» o «se pasó y
+ * se va», y sin leer eso solo lo dice hacia dónde apunta. Ver `dibujoDelCdi`.
  */
-const cdiDelVor = (barra: number, toFrom: "TO" | "FROM"): string =>
+const cdiDelVor = (barra: number, toFrom: "TO" | "FROM", hacia: -1 | 0 | 1 = 0): string =>
   icono(`
   <circle cx="12" cy="12" r="10.4" fill="none" stroke="currentColor" stroke-width="1.4" />
   <path d="M12 2.6 L14.6 6.6 H13 V8 H11 V6.6 H9.4 Z M11 16 H13 V21.2 H11 Z" />
@@ -927,6 +931,7 @@ const cdiDelVor = (barra: number, toFrom: "TO" | "FROM"): string =>
   <circle cx="5" cy="12" r="1" /><circle cx="8.5" cy="12" r="1" />
   <circle cx="15.5" cy="12" r="1" /><circle cx="19" cy="12" r="1" />
   <path d="${toFrom === "TO" ? "M17.2 7.6 L19.6 10.4 H14.8 Z" : "M17.2 16.4 L19.6 13.6 H14.8 Z"}" />
+  ${hacia ? `<path d="M${12 + barra + hacia * 1.6} 18.6 L${12 + barra - hacia} 17 V20.2 Z" />` : ""}
 `);
 
 /** La flecha del lado, pegada al borde: es lo primero que se mira. */
@@ -1801,12 +1806,21 @@ export const DIBUJOS = {
   "aguja-adf": agujaDelAdf(0),
   "aguja-a-la-izquierda": agujaDelAdf(-25),
   "aguja-a-la-derecha": agujaDelAdf(25),
-  "cdi-a-un-lado": cdiDelVor(-7, "FROM"),
+  /*
+   * **Cada uno, del lado en que está la barra de verdad** (H26f): con uno solo
+   * a la izquierda, en Fuerteventura con el alisio la tarjeta decía «el radial
+   * queda de ese lado» con la barra dibujada al otro. Se elige con
+   * `dibujoDelCdi`, por el signo de la desviación.
+   */
+  "cdi-a-la-izquierda": cdiDelVor(-7, "FROM"),
+  "cdi-a-la-derecha": cdiDelVor(7, "FROM"),
   "cdi-from": cdiDelVor(0, "FROM"),
   "cdi-to": cdiDelVor(0, "TO"),
-  // «Interceptar un radial»: la barra viniendo hacia el centro, y la que lo cruzó. Ver `interceptar-un-radial.ts`.
-  "cdi-viniendo": cdiDelVor(-3.5, "FROM"),
-  "cdi-pasada": cdiDelVor(3.5, "FROM"),
+  // «Interceptar un radial»: la barra viniendo hacia el centro, y la que lo cruzó y se va. Ver `interceptar-un-radial.ts`.
+  "cdi-viniendo-de-la-izquierda": cdiDelVor(-3.5, "FROM", 1),
+  "cdi-viniendo-de-la-derecha": cdiDelVor(3.5, "FROM", -1),
+  "cdi-pasada-a-la-izquierda": cdiDelVor(-3.5, "FROM", -1),
+  "cdi-pasada-a-la-derecha": cdiDelVor(3.5, "FROM", 1),
   sobrevelocidad: SOBREVELOCIDAD,
   calor: CALOR,
   frio: FRIO,
@@ -1951,6 +1965,24 @@ export const DIBUJOS = {
 
 /** Los nombres de dibujo que existen. Ver `mostrar`. */
 export type DibujoDeSenal = keyof typeof DIBUJOS;
+
+/** Cómo va la barra del CDI: a tope, viniendo hacia el centro o pasada al otro lado. */
+export type ComoVaLaBarra = "a-tope" | "viniendo" | "pasada";
+
+/**
+ * **El CDI de la tarjeta, con la barra del lado en que está**: `desviacion`,
+ * la de `leerNav`, positiva a la derecha. Lo que dice la tarjeta —«el radial
+ * queda de ese lado»— lo dice señalando: si el dibujo lleva la barra al otro
+ * lado, enseña lo contrario de lo que pasa, y quien no lee solo tiene el
+ * dibujo. Viniendo, la barra está del lado de donde viene; pasada, del lado
+ * al que se fue.
+ */
+export function dibujoDelCdi(como: ComoVaLaBarra, desviacion: number): DibujoDeSenal {
+  const derecha = desviacion >= 0;
+  if (como === "a-tope") return derecha ? "cdi-a-la-derecha" : "cdi-a-la-izquierda";
+  if (como === "viniendo") return derecha ? "cdi-viniendo-de-la-derecha" : "cdi-viniendo-de-la-izquierda";
+  return derecha ? "cdi-pasada-a-la-derecha" : "cdi-pasada-a-la-izquierda";
+}
 
 /**
  * El mismo dibujo, colocado dentro de otro SVG.

@@ -95,6 +95,7 @@ import {
   type PosicionDeLosMandos,
 } from "./world/superficies-de-mando";
 import { seOfrece, type Ejercicio } from "./flight/ejercicios";
+import { loQueCallaElEjercicio, type LoQueCalla } from "./flight/lo-que-calla-el-ejercicio";
 import {
   colocacionDeLaTormenta,
   escenaDeLaTormenta,
@@ -793,7 +794,7 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   // El CDI del VOR con la barra centrada y FROM: el radial en que se está. Ver `en-que-radial-estoy.ts`.
   radial: "cdi-from",
   // El CDI con la barra viniendo hacia el centro: el radial que se acerca. Ver `interceptar-un-radial.ts`.
-  interceptar: "cdi-viniendo",
+  interceptar: "cdi-viniendo-de-la-izquierda",
   autorrotacion: "helicoptero-sin-motor",
   // Las lecciones del ala rotatoria, con lo que se pide en cada una: ver `lecciones-del-rotor.ts`.
   estacionario: "helicoptero-quieto",
@@ -977,7 +978,14 @@ import {
 import { AroEnElMundo } from "./ui/aro-en-el-mundo";
 import type { ComoSeDice } from "./ui/carta/tocar-la-carta";
 import { ponerRadioDeLaCarta } from "./ui/carta/tocar-la-carta";
-import { RadioDeCabina, radiosDe, vuelta, type Avion as AvionDeLaRadio, type Emisora } from "./flight/radio-de-navegacion";
+import {
+  RadioDeCabina,
+  leerNav,
+  radiosDe,
+  vuelta,
+  type Avion as AvionDeLaRadio,
+  type Emisora,
+} from "./flight/radio-de-navegacion";
 import { pintarLaRadio, type RadioEnElCuadro } from "./ui/radio-en-la-rosa";
 import { TurnoDelMorse } from "./audio/morse";
 import {
@@ -1134,7 +1142,7 @@ import {
   separacionEnTierra,
   type Vista,
 } from "./world/plan-de-vuelo";
-import { comoDibujo, type DibujoDeSenal } from "./ui/senal";
+import { comoDibujo, dibujoDelCdi, type ComoVaLaBarra, type DibujoDeSenal } from "./ui/senal";
 import { dibujoDeCierre } from "./ui/cierre-de-ejercicio";
 import { LeccionDelRotor, type SucesoDelRotor } from "./flight/lecciones-del-rotor";
 import { Senalero } from "./world/senalero";
@@ -3904,6 +3912,15 @@ export class Game {
     );
   }
   /**
+   * **Lo que el ejercicio de hoy calla mientras dura**: en los de radio, que se
+   * cierran en el aire, la fase del plan, la torre, su frecuencia y la
+   * ventanilla. Ver `flight/lo-que-calla-el-ejercicio.ts`.
+   */
+  private get loQueCalla(): LoQueCalla {
+    const deRadio = this.aguja ?? this.radial ?? this.corte;
+    return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada");
+  }
+  /**
    * **Si el ejercicio ya declaró la emergencia**: MAYDAY o PAN PAN con un
    * motor parado. Desde ahí la torre da prioridad —ver `conPrioridad`, que la
    * suma a las del combustible y a la de sin motor— y la cabecera que se
@@ -4489,8 +4506,12 @@ export class Game {
       aguja !== null &&
       !this.conInicio &&
       this.missions.current === null &&
-      this.practica === null &&
-      this.tormenta === null &&
+      /*
+       * Ningún ejercicio: los de radio también, que alejarse de casa siguiendo
+       * un radial mar adentro es el ejercicio, y la flecha latiendo y «¡a
+       * casa!» salían saliendo por el R-120 de FTV.
+       */
+      this.ejercicioDeHoy === null &&
       this.vueloLargo === null &&
       this.percance === null &&
       !this.vueloTerminado;
@@ -5209,6 +5230,9 @@ export class Game {
   get dependenciaParaBanco(): Dependencia | null {
     return this.dependencia;
   }
+
+  /** Si en el paso anterior se oía la frecuencia del campo. Ver `oirElCampo`. */
+  private seOiaElCampo = false;
 
   /** Lo que la instructora ya contó del relevo en este vuelo: salir y volver. */
   private relevoContado = { fuera: false, dentro: false };
@@ -14939,8 +14963,17 @@ export class Game {
      */
     const antes = this.dependencia;
     this.dependencia = this.laDependenciaDeAhora();
-    const seOye = seOyeElCampo(this.dependencia);
-    if (!seOye && antes !== null && seOyeElCampo(antes)) {
+    /*
+     * **Ni con un ejercicio de radio en marcha**: la torre hablándole a otros
+     * y los otros no son del ejercicio, y cortaban el morse, que es la mitad
+     * de él. El turno se sigue oyendo, que es lo que mueve el tráfico del
+     * circuito: sigue volando, callado para vos. Ver
+     * `flight/lo-que-calla-el-ejercicio.ts`.
+     */
+    const seOye = seOyeElCampo(this.dependencia) && !this.loQueCalla.laFrecuencia;
+    const seOia = this.seOiaElCampo;
+    this.seOiaElCampo = seOye;
+    if (!seOye && seOia) {
       this.turno.dejarDeOir();
       // Y fuera de su zona, el permiso de esa torre ya no es de nadie.
       if (this.permisoDeAterrizar === "oido") this.permisoDeAterrizar = null;
@@ -20402,9 +20435,10 @@ export class Game {
       viento.x,
       viento.z,
     );
+    this.subeElAireAhora = racha.y + estela.vertical;
     this.flight.ponerRacha?.(
       racha.x,
-      racha.y + estela.vertical,
+      this.subeElAireAhora,
       racha.z,
       racha.alabeo + estela.alabeo,
     );
@@ -23341,8 +23375,14 @@ export class Game {
      * se declara a la torre y la torre contesta. Sin esto, el MAYDAY de un
      * ejercicio se quedaba sin respuesta en un campo con torre.
      */
+    /*
+     * **Salvo en uno de radio**, que no declara nada y se cierra en el aire:
+     * ahí la torre no tiene nada que decirte, ni el relevo ni la pista. La
+     * información de tráfico la sigue dando la instructora, que sin torre es
+     * quien la da (`comoSeDiceElTrafico`). Ver `flight/lo-que-calla-el-ejercicio.ts`.
+     */
     return (
-      (this.leccion.torre || this.ejercicioDeHoy !== null) &&
+      (this.leccion.torre || (this.ejercicioDeHoy !== null && !this.loQueCalla.laTorre)) &&
       !sinTorre(this.elCampo().escenario.aerodrome)
     );
   }
@@ -24402,6 +24442,8 @@ export class Game {
   }
 
   private atenderAlRadial(suceso: SucesoDelRadial): void {
+    /** El CDI a tope, del lado en que está la barra con el curso del OBS. Ver `elCdiDelEjercicio`. */
+    const aTope = (): DibujoDeSenal => this.elCdiDelEjercicio("a-tope", this.radial?.estacion.emisora, this.radioAlDia().curso);
     /** La tarjeta con su dibujo y su frase, y la voz de la instructora si está grabada. */
     const contar = (dibujo: DibujoDeSenal, clave: TranslationKey, palabra: TranslationKey): void => {
       this.hud.senal.mostrar(dibujo, this.rotulo(clave, palabra), null, {
@@ -24424,12 +24466,12 @@ export class Game {
         if (this.identificadaYa?.startsWith("nav ")) this.identificadaYa = null;
         // El depósito ya va con el vuelo del ejercicio, de donde empieza a casa:
         // ver `cargarParaElEjercicio` (H26d), que quitó el parche de la aguja.
-        return contar("cdi-a-un-lado", "ejercicio.radial.antes", "palabra.practica");
+        return contar(aTope(), "ejercicio.radial.antes", "palabra.practica");
       }
       case "sintonizar":
-        return contar("cdi-a-un-lado", "ejercicio.radial.sintonizar", "palabra.practica");
+        return contar(aTope(), "ejercicio.radial.sintonizar", "palabra.practica");
       case "identificada":
-        return contar("cdi-a-un-lado", "ejercicio.radial.identificada", "palabra.practica");
+        return contar(aTope(), "ejercicio.radial.identificada", "palabra.practica");
       case "centrada":
         this.avisar("achieved");
         return contar("cdi-from", "ejercicio.radial.centrada", "palabra.bien");
@@ -24460,6 +24502,21 @@ export class Game {
   // Ver `flight/interceptar-un-radial.ts`. Como el radial: aquí solo se
   // decide quién dice y enseña cada cosa, con el CDI dibujado en la tarjeta,
   // el radial pedido escrito en ella y la instructora contándolo por pasos.
+
+  /**
+   * **El CDI de la tarjeta, con la barra donde la tiene el de verdad** (H26f):
+   * lo que marcaría la NAV con el VOR del ejercicio y este curso, aquí y
+   * ahora. Se lee con la estación del ejercicio y no con lo que haya en la
+   * caja, así que vale también con la NAV vacía —la presentación de «¿En qué
+   * radial estoy?»—, enseñando adónde se irá la barra al ponerla. Sin señal,
+   * a la izquierda, como era. Ver `dibujoDelCdi`.
+   */
+  private elCdiDelEjercicio(como: ComoVaLaBarra, emisora: Emisora | undefined, curso: number): DibujoDeSenal {
+    const a = this.avionParaLaRadio();
+    const desviacion =
+      a && emisora ? leerNav(emisora.mhz, curso, a, this.elevacionDeLaEstacion, [emisora]).desviacion : null;
+    return dibujoDelCdi(como, desviacion ?? -1);
+  }
 
   /**
    * **Dónde empieza un ejercicio de radio**, si lo es: cada uno con su
@@ -24505,6 +24562,7 @@ export class Game {
     readonly cierre: string | null;
     readonly pedido: number | null;
     readonly loQueSePaso: number;
+    readonly correccion: number | null;
     readonly estacion: { readonly id: string; readonly x: number; readonly z: number; readonly declinacion: number };
     readonly colocacion: ColocacionDelCorte | null;
   } | null {
@@ -24515,6 +24573,7 @@ export class Game {
       cierre: r.cierre,
       pedido: r.pedido,
       loQueSePaso: r.loQueSePaso,
+      correccion: r.correccion,
       estacion: {
         id: r.estacion.emisora.estacion.id,
         x: r.estacion.x,
@@ -24562,6 +24621,13 @@ export class Game {
   }
 
   private atenderAlCorte(suceso: SucesoDelCorte): void {
+    /**
+     * El CDI con el radial pedido en el OBS, del lado en que está la barra; en
+     * la presentación, del lado en que se va a ir cuando se ponga. Ver
+     * `elCdiDelEjercicio`.
+     */
+    const cdi = (como: ComoVaLaBarra): DibujoDeSenal =>
+      this.elCdiDelEjercicio(como, this.corte?.estacion.emisora, this.corte?.pedido ?? this.radioAlDia().curso);
     /** La tarjeta con su dibujo y su frase, y la voz de la instructora si está grabada. */
     const contar = (dibujo: DibujoDeSenal, clave: TranslationKey, palabra: TranslationKey): void => {
       this.hud.senal.mostrar(dibujo, this.rotulo(clave, palabra), null, { segundos: 12, prioridad: IMPORTANTE });
@@ -24592,19 +24658,19 @@ export class Game {
             ? t("ejercicio.interceptar.pedido", { radial: String(pedido).padStart(3, "0"), id: vor.estacion.id })
             : "";
         const rotulo = numero && frase ? `${numero}. ${frase}` : numero || frase;
-        this.hud.senal.mostrar("cdi-a-un-lado", rotulo, null, { segundos: 40, prioridad: IMPORTANTE });
+        this.hud.senal.mostrar(cdi("a-tope"), rotulo, null, { segundos: 40, prioridad: IMPORTANTE });
         this.decirDelEjercicio("ejercicio.interceptar.antes", "mando");
         return;
       }
       case "sintonizar":
         // La frase del radial vale tal cual: «poné el VOR del campo en la NAV».
-        return contar("cdi-a-un-lado", "ejercicio.radial.sintonizar", "palabra.practica");
+        return contar(cdi("a-tope"), "ejercicio.radial.sintonizar", "palabra.practica");
       case "aTope":
-        return contar("cdi-a-un-lado", "ejercicio.interceptar.aTope", "palabra.practica");
+        return contar(cdi("a-tope"), "ejercicio.interceptar.aTope", "palabra.practica");
       case "seMueve":
-        return contar("cdi-viniendo", "ejercicio.interceptar.seMueve", "palabra.practica");
+        return contar(cdi("viniendo"), "ejercicio.interceptar.seMueve", "palabra.practica");
       case "pasado":
-        return contar("cdi-pasada", "ejercicio.interceptar.pasado", "palabra.practica");
+        return contar(cdi("pasada"), "ejercicio.interceptar.pasado", "palabra.practica");
       case "establecido":
         this.avisar("achieved");
         /*
@@ -26809,6 +26875,12 @@ export class Game {
          * la comandante señalaba el Ypoá entre el desvío y el rayo.
          */
         this.tormentaPorDelante ||
+        /*
+         * Ni con un ejercicio de radio en marcha: la Isla de Lobos le tapó la
+         * tarjeta del ejercicio a quien viraba para coger el radial. Ver
+         * `flight/lo-que-calla-el-ejercicio.ts`.
+         */
+        this.loQueCalla.laVentanilla ||
         !this.huecos.hayHueco,
     };
   }
@@ -27514,8 +27586,8 @@ export class Game {
       );
     }
 
-    // Mientras manda el plan, el tutor calla. Ver `MANDA_EL_PLAN`.
-    this.hud.tutor.silenciar(MANDA_EL_PLAN.has(vista.fase));
+    // Mientras manda el plan, el tutor calla; y mientras manda un ejercicio de radio. Ver `MANDA_EL_PLAN`.
+    this.hud.tutor.silenciar(MANDA_EL_PLAN.has(vista.fase) || this.loQueCalla.laFase);
 
     // **En el peldaño de los pequeños, ni una palabra.** No leen, así que un
     // cartel de texto es un cartel en blanco que además tapa el mundo. Ahí
@@ -27572,7 +27644,14 @@ export class Game {
        * anuncia**: ni su tarjeta ni su voz. La llave sale con su seña de
        * cortar motores. Ver `elSenaleroLlevaLaLlegada`.
        */
-      const callada = this.elSenaleroLlevaLaLlegada(vista) || this.elRemolqueLlevaLaSalida(vista);
+      /*
+       * **Ni con un ejercicio de radio en marcha**: «andá a la pista» manda al
+       * sitio contrario al que pide el ejercicio, que se cierra en el aire. La
+       * fase se apunta igual, y al cerrarse no se vuelve a anunciar hasta que
+       * cambie. Ver `flight/lo-que-calla-el-ejercicio.ts`.
+       */
+      const callada =
+        this.elSenaleroLlevaLaLlegada(vista) || this.elRemolqueLlevaLaSalida(vista) || this.loQueCalla.laFase;
       /*
        * **Y alineado en la pista, su número.**
        *
@@ -28391,6 +28470,11 @@ export class Game {
     return margenDeLaFinal(this.aircraft, this.vientoDeLaFinal());
   }
 
+  /** Lo que sube el aire, m/s: lo mismo que le da a su automático. */
+  get subeElAireParaBanco(): number {
+    return this.subeElAireAhora;
+  }
+
   /**
    * **La marca de velocidad de ahora**, nudos indicados: la que pide la
    * escalera y llevan los gases automáticos, para que el banco la vuele en el
@@ -28777,6 +28861,13 @@ export class Game {
 
   /** Cuánto se mueve el aire ahora, σ en m/s: el meneo. Ver `cuantoSeMueve`. */
   private movimientoDelAire = 0;
+  /**
+   * Lo que sube el aire donde está el avión, m/s: la racha vertical y la
+   * estela del de delante, lo que se le da al modelo de vuelo. Lo lee el
+   * automático para seguir la senda sin esperar al variómetro: ver
+   * `porElAire` en `flight/piloto-automatico.ts`.
+   */
+  private subeElAireAhora = 0;
   /** El gesto del señalero en la llegada al puesto, o `null`. */
   private gestoDelSenalero: Gesto = null;
   /**
@@ -31159,6 +31250,9 @@ export class Game {
           airDensity(s.position.y, aire),
           s.airspeed,
         ),
+        // Y el aire que sube o baja, que pide morro sin esperar a que el
+        // avión se aparte de la senda: ver `porElAire`.
+        subeElAire: this.subeElAireAhora,
         /*
          * **Y en el modelo sencillo, con sus propias cuentas**: ahí la palanca
          * es cuánto se sube y el gas es la velocidad, y las dos cosas se le

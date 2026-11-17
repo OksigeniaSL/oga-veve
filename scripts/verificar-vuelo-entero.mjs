@@ -941,6 +941,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
        * automático pedía bajar así o pedía otra cosa y el morro no llegaba.
        */
       mo: memoriaDeSenda ? +((memoriaDeSenda.morro * 180) / Math.PI).toFixed(2) : null,
+      // Y lo que le quita o le pone el aire que sube o baja, °. Ver `porElAire`.
+      ma: memoriaDeSenda ? +(((memoriaDeSenda.aire ?? 0) * 180) / Math.PI).toFixed(2) : null,
       cb: +(((o.actitud?.().cabeceo ?? 0) * 180) / Math.PI).toFixed(2),
       q: +(((s.pitchRate ?? 0) * 180) / Math.PI).toFixed(2),
       mt: memoriaDeSenda ? +memoriaDeSenda.timon.toFixed(3) : null,
@@ -1143,6 +1145,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         timon: engancha ? mandos.elevator : undefined,
         // Lo mismo que le da el juego. Ver `AUTORIDAD_SUFICIENTE`.
         autoridadDelTimon: o.autoridadDelTimon?.(),
+        // Y el aire que sube o baja, también como en el juego: ver `porElAire`.
+        subeElAire: o.subeElAire?.() ?? 0,
       },
       conLaVelocidad
         ? {

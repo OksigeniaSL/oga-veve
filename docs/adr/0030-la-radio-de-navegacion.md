@@ -758,3 +758,267 @@ El cuarto de la lista de arriba y el cierre del peldaño 5 que pide #51:
   el mismo instante; que leerlos con un minuto de vuelo entre medias la
   aparta lo que se voló; y que con dos estaciones a cinco millas y el avión
   en su prolongación el corte no se ofrece.
+
+## Enmienda H28c (17-11-2026): el aviso y la lámpara, con el ancho que tienen
+
+H28b vio dos cosas más con el mismo mal que el subtítulo y las dejó: el aviso
+(`.aviso-hud`, la pérdida y el suelo) y la lámpara de la torre (`.torre`)
+seguían centrados con `left: 50%` y el `translate`. Y en el portátil el
+subtítulo de la vista de fuera tapaba la pausa y los botones de antes de
+arrancar, que ya pasaba antes de H28b.
+
+### Lo que se cambió
+
+- **El aviso**, como el subtítulo: los dos bordes puestos, `fit-content` y
+  márgenes automáticos. De borde a borde en la tablet y el portátil, donde ahí
+  abajo no llega nada por los lados; en el teléfono y en cabina, apartado de
+  los dos lados lo que ocupan los botones redondos de la izquierda
+  (`--vistas-derecha`), para seguir en el medio. Y por delante de la lámpara
+  (z 9 contra 8): si se tocan, el aviso no se queda detrás.
+- **En cabina, el aviso se apoya encima del subtítulo**, que va al 32 %, con la
+  flecha al lado del texto: colgado del 22 % y con la flecha encima, bajaba
+  hasta la fila del subtítulo y se montaban.
+- **Con la pantalla en grande del teléfono, una fila para el aviso** entre la
+  pantalla y el subtítulo: se apoyaba en lo que miden las losas y caía en
+  mitad de la pantalla de vuelo, encima de la cinta que lo explica. Mientras
+  dura el aviso la pantalla mide esa fila menos.
+- **La lámpara**, con los dos bordes en su hueco: de la columna de la pausa al
+  rincón y, sin rincón —en el teléfono y en cabina—, de los dos lados lo mismo.
+- **El subtítulo de fuera en el portátil**, a la derecha de la columna de la
+  pausa. Esa columna y la lámpara se apartan **solo donde la columna baja
+  hasta su fila**: el HUD escribe hasta dónde bajan sus botones
+  (`--vistas-bajan`) y la hoja lo compara con `--arriba-alto` en
+  `--aparte-arriba`. Apartarse siempre dejaba, en la tablet de 900 × 600, donde
+  la barra va en dos filas y la columna acaba más arriba, la orden de la torre
+  en ocho líneas.
+- **La lámpara baja lo que el subtítulo ocupa**, no una línea contada a mano
+  (36 px): el HUD lo mide en `--subtitulo-alto` (`medirElSubtitulo`). En
+  cabina, cero salvo la altura en grande, que ahí es la única que va arriba.
+- **El botón de la versión nueva**, con el dedo, centrado igual.
+
+La regla general va a DESIGN.md, §5: lo que lleva texto no se centra con
+`left: 50%` y `translate`.
+
+### Lo medido
+
+Con lo más largo que llevan, encendidos a la vez: el aviso «Se rompió algo.
+Volvemos al helipuerto…», la lámpara roja con dos aviones en la fila y
+«JAZ 9021, mantenga fuera de pista 12, número tres para la salida», y el
+subtítulo largo de la instructora. Antes → después:
+
+- **La lámpara en el teléfono**: en 844 × 390, de 422 px y tres líneas a 527 y
+  dos; en 780 × 360, de 390 y tres a 463 y dos; en 864 × 330, de 432 a 547.
+- **El portátil de 1280 × 800**, de fuera: el subtítulo iba de 16 a 828 y tapaba
+  la pausa, la vuelta al avión y el parte; ahora de 188 a 828, sin tocar
+  ninguno. La lámpara, igual, y debajo del subtítulo: antes se montaba en su
+  segunda línea.
+- **La tablet de 900 × 600**, de fuera: la columna de la pausa acaba por
+  encima del subtítulo y no se aparta de ella. La lámpara ya llenaba su hueco
+  —468 px, tres líneas— y sigue así, pero debajo del subtítulo y no encima de
+  su segunda línea. Igual en la de 1024 × 600.
+- **El aviso** cabía ya en una línea en toda pantalla tumbada (de 351 a
+  443 px). Se partía a media pantalla en una ventana de pie: en 600 × 900, dos
+  líneas de 300 px; ahora una de 443.
+- **En cabina**, el aviso ya no pisa el subtítulo en ninguna de las siete
+  pantallas medidas; antes lo pisaba en las siete.
+- **Con la pantalla en grande** (844, 780 y 864 de ancho), el aviso queda
+  encima de la pantalla y no dentro.
+- **El botón de la versión nueva**, de pie en 360 × 740: de 180 px y dos líneas
+  a 197 y una, en las tres lenguas.
+
+`npm run carteles` lo mira en cada pantalla, de fuera y en cabina
+(`medirAvisoYLampara`): el aviso más largo en una línea, centrado, y uno que no
+cabe pasando de media pantalla; la orden de la torre usando más de medio
+hueco; y ninguno de los tres pisando a otro, a un botón redondo, al rincón ni
+al instrumento que explica el aviso, ni quedando detrás de nada.
+
+### Lo que no era del caso
+
+En la hoja quedan otros `left: 50%` con `translate`, y no se parten: o tienen
+el ancho puesto (`.cuadro`, `.a-inicio`, `.inicio__tarjeta`, `.kit__panel`,
+`.ficha__nocabe`), o no llevan texto que se parta (la fila de pasos de
+`.vuelta__lista` y la `.consola__barra`, botones de ancho fijo; las piezas de
+los mandos, el asa, la pinza, la cruz del horizonte; la «N» de la rosa del
+mapa), o van en una línea a la fuerza (`.cruz__no-explicar`, con `nowrap`). La
+regla base de `.tutor` sigue con `left: 50%`, pero no la usa nadie: la pisa
+`.hud .tutor` en todas las pantallas.
+
+### Lo que queda
+
+Medido, y sin arreglar en esta tanda. `npm run carteles` da 878 de 909: las
+31 que fallan son todas de esta comprobación nueva y todas de piezas que se
+tocan: la lámpara, el aviso y el subtítulo cuando coinciden los tres, la
+lámpara con la tarjeta del rincón en cabina, y en cabina de la tablet de
+1024 × 600 el aviso con los botones de la barra, como ya estaba. Ninguna de
+ancho, ninguna del instrumento, y el aviso no queda detrás de nada en
+ninguna. Se dejan fallando a propósito: dicen lo que hay.
+
+- **En cabina no caben los tres encima de la visera** en una pantalla baja.
+  Con lámpara, aviso y subtítulo a la vez, la lámpara y el aviso se tocan en
+  seis de las siete pantallas (el aviso queda delante); la lámpara pisa la
+  tarjeta de la orden del rincón y la del gas de la columna de mandos, como ya
+  pisaba la primera; y en la tablet de 1024 × 600, donde la barra va en varias
+  filas y la franja de arriba empieza por debajo del 32 %, la lámpara cae
+  encima del subtítulo, que antes bajaba 36 píxeles y quedaba debajo. En las
+  de 900 × 600 y 1024 × 600 el aviso de cabina sigue encima de los botones de
+  la barra, como estaba. Resolverlo es decidir dónde va cada uno en cabina, no
+  un ancho.
+- **El subtítulo de cabina** (de H28b) pasa por encima del freno, de la
+  tarjeta del gas y de la tarjeta de la orden: va de lado a lado apartado solo
+  de la columna de la pausa.
+- **En el teléfono más bajo** (780 × 360 y 864 × 330), de fuera, el aviso,
+  que va encima de las losas, toca la última línea del subtítulo cuando éste
+  ocupa dos o tres, y la lámpara, que baja con él, llega a la tarjeta del
+  destino y a la palanca de pulgar. Antes también se tocaban.
+- **Con la pantalla en grande**, la lámpara sigue encima de la pantalla, como
+  antes, y el aviso pasa por delante de las losas del tren y los aerofrenos,
+  que dejan pasar el toque.
+- **De pie, en una ventana de 600 × 900 con ratón**, el rincón deja a la
+  izquierda 204 px: el subtítulo va en siete líneas y la lámpara en las que
+  pida lo más ancho que lleva, como antes. El aviso, ahora en una línea, pasa
+  por delante del freno. Con el dedo, de pie, lo tapa todo el cartel de girar
+  la pantalla, y ahí no se mira.
+
+## Enmienda H26f (17-11-2026): lo que estorba en los ejercicios de radio
+
+Volando «Interceptar un radial» se vieron cosas que no eran del ejercicio y
+una tarjeta que decía lo contrario de lo que pasaba; y quedaba por mirar la
+corrección de viento que H26e había medido de dos maneras.
+
+### Lo que no es del ejercicio, callado
+
+Durante todo el ejercicio salía «Andá a la pista» —la tarjeta de la fase «en
+vuelo» de la lección de aterrizar, con su voz y su rótulo— y la torre contaba
+el tráfico de otros: «hold short», «go around, runway occupied». Los demás
+ejercicios en el aire no lo callan, y hacen bien: el planeo, el de un motor,
+la despresurización, la tormenta y la autorrotación **acaban en la pista**, y
+«andá a la pista», la torre y su frecuencia son parte de lo que se practica.
+Los de radio se cierran en el aire, lejos de ella.
+
+Así que `Ejercicio` lleva ahora `acabaEnElAire` —los tres de radio, y la
+prueba mira que sean ellos y ninguno más— y `flight/lo-que-calla-el-ejercicio.ts`
+dice qué se calla mientras dura uno de esos:
+
+- **La fase del plan**: su tarjeta, su voz y su rótulo (`callada` en
+  `avanzarPlan`). La fase se apunta igual, y al cerrarse el ejercicio no se
+  vuelve a anunciar hasta que cambie. El tutor de la tecla también, aunque en
+  el aire ya estaba apagado.
+- **La torre hablándote a vos** (`hayTorreQueHable`). En un ejercicio
+  contestaba porque una emergencia se declara a ella, y en estos no se declara
+  nada. Con eso caen el relevo de frecuencia —«Seguí la aguja» empieza fuera
+  de las diez millas de su zona y entra en ella siguiendo la aguja—, los
+  permisos y la pista ocupada.
+- **La frecuencia del campo** (`oirElCampo`), como en el modo inicio, que
+  partía la conversación. Aquí además cortaba el morse, que se corta si empieza
+  a hablar alguien, y oír el identificador es la mitad del ejercicio. El turno
+  se sigue oyendo, que es lo que mueve el tráfico: sigue volando su circuito,
+  en el mundo y en el TCAS, callado para quien hace el ejercicio.
+- **Lo que se ve por la ventanilla**, abajo.
+
+**La seguridad no pasa por aquí**: la máquina del avión, los avisos del
+cuadro y la información de tráfico, que sin torre la da la instructora
+(`comoSeDiceElTrafico`). Y al cerrarse el ejercicio vuelve todo: lo que se
+vuele después ya es un vuelo.
+
+Y una cosa más que salió al mirarlo: **la flecha de casa latía** saliendo por
+el R-120 de FTV, que es alejarse mar adentro con la casa detrás, lo que
+`flight/perdido.ts` llama perderse. `mirarSiSePerdio` dejaba fuera los
+ejercicios de avería y la tormenta, escritos uno a uno antes de que hubiera
+ejercicios de radio; ahora deja fuera cualquier ejercicio (`ejercicioDeHoy`),
+que es lo que ya decía su comentario.
+
+### La ventanilla, no durante el ejercicio
+
+«A la izquierda, la Isla de Lobos» tapó la tarjeta del ejercicio a quien
+viraba para coger el radial: la del paisaje lleva prioridad cero y entra en
+cuanto la del ejercicio caduca. Esperar a que el ejercicio no hable no basta,
+porque el ejercicio sigue mirando la barra aunque calle y su tarjeta es lo que
+hay que tener delante. Es lo mismo que con la tormenta del ejercicio por
+delante (`tormentaPorDelante`): **mientras dura, por la ventanilla no se
+señala nada**. Un suceso, una voz, y el suceso es el ejercicio.
+
+### El CDI de la tarjeta, del lado de la barra
+
+Había un dibujo a tope con la barra a la izquierda, uno viniendo desde la
+izquierda y uno pasado a la derecha. En Fuerteventura con el alisio la barra
+de verdad sale a la derecha (+28,5°): la tarjeta decía «el radial queda de
+ese lado» señalando el otro, y la de «te pasaste» llevaba la barra del lado
+del que venía. En calma acertaba por casualidad.
+
+Ahora cada uno va de los dos lados (`cdi-a-la-izquierda`, `cdi-a-la-derecha`,
+`cdi-viniendo-de-la-…`, `cdi-pasada-a-la-…`) y `dibujoDelCdi` elige por el
+signo de la desviación: la que marcaría la NAV con el VOR del ejercicio y el
+curso de ahora (`elCdiDelEjercicio`, con `leerNav`), también con la NAV vacía
+—en la presentación de «¿En qué radial estoy?», adonde se irá la barra al
+ponerla— y, en la de «Interceptar», con el radial pedido aunque el OBS siga
+en el de debajo. Se descartó un dibujo sin lado: la tarjeta dice «de ese
+lado», y quien no lee solo tiene el dibujo para saber cuál. La barra a medio
+camino es la misma viniendo que pasada, así que lleva debajo una flecha
+pequeña hacia donde se mueve: hacia el centro, viene; hacia fuera, se pasó.
+
+### La corrección de viento en el juego: nada que arreglar
+
+H26e midió el morro corrigiendo el alisio 5,9° en el juego, contra unos nueve
+de la cinemática, y 13,4° en la tirada del que se pasa. Las dos cifras eran
+**el morro contra el curso en el instante de cerrar**, y en ese instante el
+avión todavía no va por el curso: llega con la barra a medio grado, cerrando
+de un lado —o volviendo del otro, el que se pasó—, y lo que el morro se
+aparta del curso es la corrección más o menos lo que todavía corta.
+
+Medido ahora como lo mide el ejercicio —la media del morro contra el camino
+en los veinte segundos de establecido— y muestra a muestra contra lo que pide
+el viento que de verdad sopla en el modelo de vuelo, sumado a la verdadera
+por el morro: **el ejercicio −9,8°, el banco −9,8° y el viento −9,8°**, con
+20,0 kt de costado a 117 kt de verdadera (el arcoseno de 20/117 son 9,8°), y
+de −9,9 a −9,8 muestra a muestra. En el mismo cierre, el morro iba −9,8° del
+camino y −5,9° del curso: es la cifra de H26e, y es la vara, no el viento. La
+prueba de mesa, con la verdadera de su cinemática, da 9,9°. El viento del
+juego, la medida del ejercicio y la frase que elige están bien; lo que estaba
+mal era mirar contra el curso, y el banco ya no lo hace desde H26e.
+
+### Lo que se prueba
+
+- `flight/lo-que-calla-el-ejercicio.test.ts`: que los tres de radio acaban en
+  el aire, y ninguno más; que mientras duran se calla la fase, la torre, la
+  frecuencia y la ventanilla, y cerrados nada; que el planeo, el de un motor,
+  la despresurización, la tormenta y la autorrotación, que acaban en la pista,
+  no callan nada. Y, mirando el texto de `game.ts` como
+  `torre-de-cada-vuelo.test.ts`, que la tarjeta de la fase, la torre, la
+  frecuencia —sin dejar de oír el turno, que mueve el tráfico— y la ventanilla
+  pasan por `loQueCalla`. Esa mitad, roja antes del arreglo: cuatro de cuatro.
+- `ui/dibujos.test.ts`: que `dibujoDelCdi` pinta la barra del lado de la
+  desviación —a tope, viniendo y pasada, con 28,5° y −28,7°, con seis y con
+  cuatro décimas—, y la flecha hacia el centro viniendo, hacia fuera pasada y
+  ninguna a tope.
+- Los tres bancos de radio miran ya lo que no es del ejercicio
+  (`scripts/lo-ajeno-al-ejercicio.mjs`): lo que se le pidió a cada boca
+  (`dichoTodo`), que no sea de nadie más que de la instructora y, de ella, del
+  ejercicio o de la lista `SEGURIDAD` de `flight/sin-instructora.ts`; y lo que
+  se vio mientras duraba: solo sus tarjetas o la del tráfico, ni rótulo, ni
+  tira de la radio, ni la flecha de casa latiendo. El rótulo del destino al
+  empezar —«Fuerteventura · GCFV», cuatro segundos— se deja: es la tarjeta de
+  casa diciendo cuál es, como en todo vuelo, y no pide nada.
+
+Volado en el juego, con la avioneta en Fuerteventura y la Intel por ANGLE,
+de una tirada:
+
+- **Interceptar, con el alisio**, catorce de catorce: la barra a tope con el
+  OBS en el 120 sale a la derecha (+28,6°) y la tarjeta la dibuja a la derecha;
+  se despega a 5,6 millas con `cdi-viniendo-de-la-derecha`; establecido en el
+  119,6 sin pasarse, con la corrección de arriba (−9,8° los tres). La
+  instructora dijo «a tope», «se mueve» y el final con el viento, y nadie más
+  dijo nada: ni la torre, ni otro avión, ni «andá a la pista».
+- **Interceptar, en calma** —la versión del banco que H26e dejó sin volar—,
+  catorce de catorce: pide el 090 desde el 120, la barra a tope a la izquierda
+  (−28,7°) y dibujada a la izquierda, se despega a 5,9 millas, establecido en
+  el 90,5 sin pasarse, el morro 0,0° del camino (y −4,2° del curso al cerrar,
+  la cifra que H26e daba por fallo) y la frase sin viento.
+- **¿En qué radial estoy?**, quince de quince: la barra a tope a la izquierda
+  (−18,9°) y dibujada a la izquierda; lo demás como en H26c (centrada en el 118
+  con la radio en el 118,7, el cuarto de vuelta la mueve 1,75°, TO, la bandera
+  encima y FROM). En la primera tirada, al pasar sobre FTV la instructora dijo
+  «adelante y más abajo va otro avión»: es la información de tráfico, que sin
+  torre da ella, y el banco la tomaba por ajena porque adivinaba qué era de
+  seguridad con una expresión; ahora usa la lista `SEGURIDAD`.
+- **Seguí la aguja**, veinte de veinte, con el alisio y en calma: la curva del
+  perro 1.453 m (un 7,0 %), recta en calma (93 m, 0,4 %), y sin nada ajeno.

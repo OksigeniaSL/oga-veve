@@ -2419,6 +2419,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         airDensity(juego.flight.state.position.y, juego.flight.aireDelDia()),
         juego.flight.state.airspeed,
       ),
+    /**
+     * Lo que sube el aire donde está el avión, m/s: lo que el juego le da a su
+     * automático, para que el banco se lo dé igual. Ver `porElAire`.
+     */
+    subeElAire: () => juego.subeElAireParaBanco,
     /** La velocidad que recibe la pantalla de la cabina, en nudos. */
     velocidadDeCabina: () =>
       Math.round(
