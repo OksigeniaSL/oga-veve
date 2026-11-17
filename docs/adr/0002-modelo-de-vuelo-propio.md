@@ -555,3 +555,179 @@ sobre el medio metro—, sin bajar de donde se soltó tampoco.
   mecánica de un viento de doce nudos.
 - **Guyrami** vuela el modelo sencillo (`arcade.ts`), que la mesa no mira: de
   ese, solo el navegador.
+
+## Nota H29c (17-11-2026): el efecto suelo
+
+### Lo que faltaba
+
+El modelo completo no tenía efecto suelo: la resistencia inducida de
+`integrate` no miraba la altura. Lo vio H29a (#192, ADR 0027, enmienda H29a):
+el JAZ 90, recogiendo a veinte pies como el E190 de su manual (C. Regli,
+*Embraer EMB190 – Summary*, p. 2-26), tocaba a 3,7 m/s aun subiendo el morro
+siete grados a cuatro grados por segundo, y el banco tenía que empezar a
+recoger de 35 a 49 ft.
+
+### Lo real
+
+El manual del piloto de la FAA (FAA-H-8083-25C, cap. 5, «Ground Effect»):
+con el ala a una envergadura del suelo la inducida baja un 1,4 %; a un cuarto,
+un 23,5 %; a una décima, un 47,6 %. Y con el mismo ángulo de ataque el ala
+sustenta más: «If a constant angle of attack is maintained, an increase in
+lift coefficient results». Es el colchón de la recogida —el avión «flota»— y
+lo que deja un avión en el aire antes de tener velocidad para subir fuera de
+él.
+
+### La fórmula (`flight/efecto-suelo.ts`)
+
+- **La inducida, por `1 − σ`**, con la σ de Wieselsberger (C. Wieselsberger,
+  «Wing resistance near the ground», NACA TM-77, 1922; la que sigue citando
+  la literatura, p. ej. P. J. Mantle, «Induced drag of wings in ground
+  effect», *The Aeronautical Journal* 120, 2016):
+  `σ = (1 − 1,32·h/b) / (1,05 + 7,4·h/b)`, con `h` la altura del ala sobre el
+  suelo y `b` la envergadura, y cero donde sale negativa.
+- **La sustentación con el mismo ángulo, por `1 / (1 − σ·a/(π·A))`**: el
+  ángulo inducido de la línea sustentadora de Prandtl con la carga elíptica,
+  `C_L/(π·A)`, baja en la misma proporción que la inducida, que no es otra
+  cosa que `C_L · α_i`; con la pendiente de la ficha `a` sale ese factor. Sin
+  el `e` de Oswald: ése lleva la parásita que crece con la sustentación, que
+  frena pero no tuerce el aire. Con él, la primera versión de esta nota, el
+  Seneca frenando en su toma se levantaba sobre las principales hasta 3,2° y
+  paraba en 469 m donde la cuenta da 441; sin él, 437 contra 435.
+
+| h/b | Manual de la FAA | Wieselsberger | McCormick |
+|---|---|---|---|
+| 1 | 1,4 % | 0 | 0,4 % |
+| 0,25 | 23,5 % | 23,1 % | 5,9 % |
+| 0,1 | 47,6 % | 48,5 % | 28,1 % |
+
+**No es la de McCormick**, `φ = (16h/b)² / (1 + (16h/b)²)`, aunque sea la que
+más se repite en los simuladores, porque no da lo del manual: a una décima de
+la envergadura, un 28 %, y a un cuarto, un 6 %. Con ella el
+avión del juego flotaría la mitad de lo que flota uno de verdad.
+
+### La altura del ala
+
+**Del ala y no del centro de gravedad**, que en el ala alta va casi metro y
+medio más abajo: `alturaDelAla` en cada ficha, la altura media de la
+superficie del ala sobre el centro de gravedad **pesada por su planta**, sacada
+del `.glb` de cada uno (`modelos/*.py`), como el tren. Así el diedro cuenta lo
+que cuenta y un winglet, de canto, no pesa; en el biplano, los dos planos,
+cada uno por su planta. Lo comprueba `efecto-suelo.test.ts` contra el dibujo,
+a tres centímetros. En `integrate` va girada con el avión y sobre lo que da
+el muestreador del suelo justo debajo, que en el juego es `sampleSurface`: la
+pista, el campo o **el agua** donde la hay, así que la amarizada lo tiene igual
+que la toma, y lo tendrá el JAZ 50 cuando lleve flotadores (#185).
+
+Con las ruedas en la pista, a nivel:
+
+| | Ala sobre el suelo | h/b | Inducida | Sustentación | Se apaga con las ruedas a |
+|---|---|---|---|---|---|
+| JAZ 20 | 2,62 m | 0,24 | −24 % | +6 % | 6 m |
+| JAZ 25 | 2,33 m | 0,19 | −31 % | +9 % | 7 m |
+| JAZ 40 | 1,46 m | 0,12 | −43 % | +9 % | 8 m |
+| JAZ 50 | 3,36 m | 0,17 | −34 % | +6 % | 12 m |
+| JAZ 60 | 1,98 m | 0,11 | −45 % | +7 % | 11 m |
+| JAZ 90 | 2,74 m | 0,11 | −47 % | +8 % | 17 m |
+| JAZ 110 | 4,25 m | 0,07 | −58 % | +11 % | 41 m |
+| JAZ 120 | 5,25 m | 0,09 | −52 % | +13 % | 40 m |
+
+Y donde rueda sin el modelo, la misma cuenta con el ala a esa altura
+(`efectoSueloRodando`): la carrera hasta la Vr y la frenada del hangar
+(`carreraHastaVr`, `sustentacionRodando` y `deceleracionRodando`) y el gas de
+rodar, para que digan lo mismo que el avión que se vuela. La frenada del
+modelo sencillo, que pregunta a `deceleracionRodando`, también.
+
+### Las carreras
+
+En la mesa de `despegue-y-toma-del-manual.test.ts` —todo el gas, los flaps de
+despegue, a la Vr un tirón a tres grados por segundo; y la toma a su velocidad,
+frenando a fondo—, antes → ahora:
+
+| | Hasta la Vr (m) | Se va del suelo (m) | A su altura (m) | Actitud al irse | Frenada (m) |
+|---|---|---|---|---|---|
+| JAZ 20 | 232 → 230 | 323 → 315 | 469 → 462 | 7,8° → 7,2° | 177 → 186 |
+| JAZ 25 | 140 → 137 | 224 → 213 | 363 → 355 | 7,5° → 6,8° | 143 → 150 |
+| JAZ 40 | 382 → 379 | 501 → 484 | 672 → 658 | 8,0° → 7,1° | 404 → 437 |
+| JAZ 50 | 215 → 213 | 306 → 297 | 468 → 460 | 5,7° → 5,2° | 162 → 172 |
+| JAZ 60 | 500 → 496 | 650 → 632 | 866 → 849 | 7,2° → 6,7° | 524 → 551 |
+| JAZ 90 | 616 → 612 | 819 → 797 | 1.037 → 1.012 | 7,8° → 7,2° | 343 → 347 |
+| JAZ 110 | 1.073 → 1.061 | 1.307 → 1.271 | 1.550 → 1.504 | 7,7° → 6,8° | 664 → 672 |
+| JAZ 120 | 1.052 → 1.041 | 1.336 → 1.299 | 1.558 → 1.507 | 9,6° → 8,4° | 700 → 712 |
+
+Se va del suelo antes, de medio grado a 1,2° más bajo; la velocidad a la que
+se va casi no cambia —de dos a nueve décimas de nudo menos—, porque este
+piloto rota por actitud. La frenada se alarga entre un 1 % y un 8 %: rodando con los
+flaps fuera el ala sostiene más y las ruedas cargan menos. En los reactores,
+poco, porque los frenos de tierra se llevan esa sustentación. La pista que
+pide el hangar para aterrizar sube de 9 a 44 m (el JAZ 40, de 905 a 949 m con
+su margen); la de despegar, diez como mucho.
+
+Todo lo que se mira contra su manual sigue en su banda —la toma del Seneca, a
+1,22 veces la de su manual (antes, a 1,13) con el listón en 1,3; la del hangar,
+de 0,98 a 1,08—, y el avión que se vuela y la cuenta del hangar siguen diciendo
+lo mismo, al 1 % en la frenada. **Dos pruebas se salen, las dos del 747**, y no
+se han tocado ni el avión ni el listón:
+
+- **Se va del suelo a 8,4°** y la prueba pide más de 9,1° (Boeing da 10,1°).
+  La propia prueba lo decía: «este modelo no tiene efecto suelo, que adelanta
+  un poco la separación». Los 10,1° de Boeing son de un avión con efecto
+  suelo, así que lo que sobra ahora es sustentación en el aire libre del 747
+  con los flaps de despegue: ponérsela en su sitio es reafinar su ficha
+  contra su despegue y su V2, y es otro encargo. La otra salida es bajar el
+  listón a 8°, sabiendo por qué.
+- **El autofreno MED del 747 para en 846 m y el pie a fondo en 712**, 1,19
+  veces, y la prueba pide 1,2. MED sigue sosteniendo sus 3 m/s²; lo que se
+  alarga es el pie a fondo (700 → 712), que con las ruedas más ligeras agarra
+  menos. El 1,2 no lleva fuente.
+
+### La recogida del JAZ 90
+
+En la mesa de H29a (`h29a/mesa.ts`, copiada en `h29c/` del scratchpad de la
+tanda), con el JAZ 90 en Taguató por la senda con el automático del juego, dos
+metros por segundo de cara y el gas al ralentí a los treinta pies; la
+recogida, subiendo el morro a ritmo fijo desde la altura de recoger. Aire
+quieto, la toma en m/s y a cuántos metros del umbral:
+
+| Recoger a | Morro | Sin efecto suelo | Con él |
+|---|---|---|---|
+| 20 ft | 3° a 2°/s | 4,12 a 199 m | 3,39 a 211 m |
+| 20 ft | 7° a 4°/s | 3,97 a 199 m | 3,15 a 212 m |
+| 25 ft | 7° a 4°/s | 3,60 a 201 m | 2,54 a 218 m |
+| 30 ft | 5° a 3°/s | 3,33 a 205 m | 2,18 a 225 m |
+| 30 ft | 7° a 4°/s | 2,94 a 208 m | 1,36 a 236 m |
+
+Y con la recogida del banco de hoy (H29a: gas hasta los 30 ft, a 2 ft/s y
+mirando la carga): en aire quieto, de 1,28 m/s a 295 m a 0,62 m/s a 384 m; con
+cuarenta finales con ráfagas (σ_w 1 m/s), de 8 tomas por encima de 2 m/s a 1,
+mediana de 1,49 a 0,99, p90 de 2,33 a 1,48, la peor de 3,17 a 2,37, y las que
+se salen —duras, cortas o largas— de 13 a 4 (cortas, de 6 a 3; largas,
+ninguna). La mediana de dónde toca, de 233 a 297 m.
+
+Solo con la inducida, sin la sustentación, apenas cambia nada: a veinte pies
+con siete grados, 3,89 m/s; a treinta, 2,79. El colchón es la sustentación.
+
+**El JAZ 90 sigue sin poder recoger a veinte pies** como su manual: con el
+morro de su técnica, dos o tres grados, toca a 3,4 m/s. Pero la final de esta
+mesa llega baja —tres metros bajo la senda y bajando a 3,9 m/s, donde un E190
+en su senda baja a unos 3,3— y eso es la mitad de lo que le falta. Lo que el
+efecto suelo cambia en el banco del vuelo entero, que empieza a recoger de 35
+a 49 ft (`SEGUNDOS_DE_RECOGIDA`), es que ahora flota: la toma se va de
+sesenta a noventa metros más allá.
+
+### Lo que no
+
+- **El cabeceo del efecto suelo.** El suelo también quita bajada en la cola,
+  que entonces empuja hacia abajo con menos fuerza y deja un par de morro abajo
+  que pide más timón para sostener la actitud. No está: el modelo de cabeceo no
+  tiene bajada en la cola que quitar.
+- **El ala inclinada.** Se mira la altura del centro del ala; con un ala
+  baja, la punta va más cerca del suelo, y eso no cuenta.
+- **El modelo sencillo** (`arcade.ts`), el de Guyrami, no lo lleva ni le hace
+  falta: no tiene sustentación ni resistencia en el aire, sube y baja lo que se
+  le pide. Solo su frenada, que es la de `frenada.ts`, lo cuenta.
+- **El empuje que sostiene** (`empujeQueSostiene`), que usan la marca del gas
+  y el modelo sencillo, sigue con la inducida de aire libre: es la de volar,
+  no la de rodar.
+- **La recogida del banco** sigue empezando a los segundos de senda: con el
+  colchón, ya podría empezar más abajo, como el E190. Es del banco y no se ha
+  tocado.
