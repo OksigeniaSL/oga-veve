@@ -1149,6 +1149,28 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
         .join(" · ") || "libre",
       "la lámpara es la instrucción: «esperá a la luz» y la luz, sin nada encima",
     );
+    /*
+     * En cabina, también sin aviso: la lámpara, la tarjeta de la orden y el
+     * subtítulo, cada uno en su sitio, sin pisarse ni pisar la columna de
+     * mandos. Fuera, el subtítulo y la lámpara del teléfono pasan por delante
+     * de las losas de mando, que dejan pasar el toque (ADR 0030, H28b).
+     */
+    if (vista === "cockpit") {
+      const sa = m.sinAviso;
+      const pisan = [
+        ...sa.torre.map((n) => `la lámpara sobre ${n}`),
+        ...sa.subtitulo.map((n) => `el subtítulo sobre ${n}`),
+        ...sa.senal.map((n) => `la tarjeta sobre ${n}`),
+      ];
+      comprobar(
+        `${aqui}, sin aviso: la lámpara, la tarjeta de la orden y el subtítulo no se pisan ni pisan los mandos`,
+        pisan.length === 0 && sa.delante.length === 0,
+        [pisan.join(", "), sa.delante.length ? `tapados por ${sa.delante.join(", ")}` : ""]
+          .filter(Boolean)
+          .join(" · ") || `libre · subtítulo en ${sa.subtituloEn}`,
+        "en el punto de espera están los tres a la vez, y el gas y el freno se tienen que leer",
+      );
+    }
   }
   await page.evaluate(() => globalThis.__oga?.ponerVista?.("chase"));
   await page.waitForTimeout(300);
@@ -1615,6 +1637,51 @@ async function medirAvisoYLampara() {
   aviso.classList.remove("aviso-hud--visible");
   avisoTexto.textContent = "";
   flecha.textContent = "";
+  /*
+   * **Y sin el aviso, que es como se quedan en el punto de espera**: la
+   * lámpara roja, la tarjeta de la orden y la instructora hablando. En cabina
+   * se montaban los tres y pasaban por encima de la tarjeta del gas y del
+   * freno. Aquí lo de debajo de la lámpara se coloca con lo que el HUD mide de
+   * ella (`--torre-alto`), así que se le dejan dos fotogramas, volviendo a
+   * poner el subtítulo y la lámpara, que el juego borra y apaga. Los mandos
+   * son la columna de la derecha entera: el gas, el destino, el freno y sus
+   * botones.
+   */
+  const dosAviones = avion ? avion.outerHTML + avion.outerHTML : "";
+  const ponerTorre = () => {
+    torre.hidden = false;
+    torre.classList.remove("torre--verde");
+    torre.classList.add("torre--roja");
+    if (fila && avion && fila.innerHTML !== dosAviones) {
+      fila.hidden = false;
+      fila.innerHTML = dosAviones;
+    }
+    const dice = sinLetras ? "" : ORDEN;
+    if (orden.textContent !== dice) orden.textContent = dice;
+  };
+  for (let i = 0; i < 3; i++) {
+    poner();
+    ponerTorre();
+    await raf();
+  }
+  poner();
+  ponerTorre();
+  const mandos = [...document.querySelectorAll(".hud__derecha > *")].filter(visible);
+  const senal = document.querySelector('[data-hud="senal"]');
+  const t2 = torre.getBoundingClientRect();
+  const h2 = hint.getBoundingClientRect();
+  const s2 = visible(senal) ? senal.getBoundingClientRect() : null;
+  const conSub2 = !sinLetras && visible(hint);
+  salida.sinAviso = {
+    torre: [
+      ...pisados(t2, [...redondos, ...rincon, ...mandos]),
+      ...(conSub2 && pisa(t2, h2) ? ["el subtítulo"] : []),
+    ],
+    subtitulo: conSub2 ? pisados(h2, [...redondos, ...rincon, ...mandos]) : [],
+    senal: s2 ? pisados(s2, mandos) : [],
+    delante: [...alFrente(torre), ...(conSub2 ? alFrente(hint) : [])],
+    subtituloEn: conSub2 ? `${Math.round(h2.top)}–${Math.round(h2.bottom)}` : "sin subtítulo",
+  };
   torre.classList.remove("torre--roja");
   if (fila && filaAntes) [fila.hidden, fila.innerHTML] = filaAntes;
   orden.textContent = ordenAntes;
