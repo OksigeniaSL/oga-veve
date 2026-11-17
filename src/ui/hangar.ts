@@ -1758,9 +1758,9 @@ const EJ_EFECTO_SUELO = escena(`
 const EJ_AGUJA = escena(`
   <path class="ejercicio__ondas" d="M93 39 a9 9 0 0 1 14 0 M89 34 a15 15 0 0 1 22 0" />
   <path class="ejercicio__mastil" d="M96 68 L100 43 L104 68 M97.4 60 h5.2 M98.6 52 h2.8" />
-  <path class="leccion__estela" d="M8 50 q44 34 86 14" stroke-dasharray="4 4" />
+  <path class="leccion__estela" d="M6 48 q34 30 58 22" stroke-dasharray="4 4" />
   <path class="ejercicio__flecha" d="M30 6 v13 m-4 -4 l4 4 l4 -4 M48 6 v13 m-4 -4 l4 4 l4 -4" />
-  ${AVION("translate(66 40) rotate(70) scale(0.8)")}
+  ${AVION("translate(76 67) rotate(80) scale(0.8)")}
 `);
 
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
