@@ -16,6 +16,8 @@
  *   apartado 2.18, leído el 26 de octubre de 2026 con el índice en «01-OCT-26
  *   (Incorporados AIRAC 09/26 and AMDT 411/26)». La página y su fecha van en
  *   `fuente` de cada uno. Cuatro Vientos está en la ficha conjunta LECU/LEVS.
+ *   Barajas, que faltaba, se leyó el 17 de noviembre de 2026 con el índice en
+ *   «29-OCT-26 (Incorporados AIRAC 10/26 and AMDT 412/26)».
  * - **Paraguay**, del AIP de la DINAC, enmienda **AMDT AIRAC 02/2026** (en
  *   vigor desde el 1 de octubre de 2026), el paquete `AMDT_AIRAC_02_2026.rar`
  *   que enlaza dinac.gov.py en «AIP PARAGUAY», leído el mismo día.
@@ -242,6 +244,60 @@ export const RADIO: Readonly<Record<string, RadioPublicada>> = {
       ] },
       { servicio: "VDF", indicativo: "Cuatro Vientos Gonio", frecuencias: [
         { tal: "121.500 MHz", cifra: "121.500", mhz: 121.5, horario: "HR AD" },
+      ] },
+    ],
+  },
+  /*
+   * Barajas: el 2.18 entero menos lo militar —119.500 y 362.100, «MIL»— y la
+   * de emergencia en UHF, 243.000, como en los demás. Casi todo son canales de
+   * 8,33 kHz, con su «C». El D-ATIS no tiene frecuencia —«NIL», es por enlace
+   * de datos— y no sale.
+   */
+  LEMD: {
+    fuente: "AIP España, ENAIRE · AD 2-LEMD-15 y AD 2-LEMD-16 (la tabla sigue en la -16 desde 127.505 C) · AIRAC AMDT 10/26 · WEF 29-OCT-26",
+    servicios: [
+      { servicio: "APP", indicativo: "Madrid APP", frecuencias: [
+        { tal: "118.400 MHz", cifra: "118.400", mhz: 118.4, nota: "APP/I", horario: "H24" },
+        { tal: "118.755 C", cifra: "118.755", mhz: 118.755, canal833: true, nota: "APP/L", horario: "H24" },
+        { tal: "124.030 C", cifra: "124.030", mhz: 124.03, canal833: true, nota: "APP/L", horario: "H24" },
+        { tal: "128.700 MHz", cifra: "128.700", mhz: 128.7, nota: "APP/H", horario: "H24" },
+        { tal: "134.955 C", cifra: "134.955", mhz: 134.955, canal833: true, nota: "APP/L", horario: "H24" },
+        { tal: "136.105 C", cifra: "136.105", mhz: 136.105, canal833: true, nota: "APP", horario: "H24" },
+        { tal: "127.100 MHz", cifra: "127.100", mhz: 127.1, nota: "INITIAL", horario: "H24" },
+        { tal: "127.505 C", cifra: "127.505", mhz: 127.505, canal833: true, nota: "FINAL", horario: "H24" },
+        { tal: "124.230 C", cifra: "124.230", mhz: 124.23, canal833: true, nota: "DEP W", horario: "H24" },
+        { tal: "131.175 MHz", cifra: "131.175", mhz: 131.175, nota: "DEP E", horario: "H24" },
+        { tal: "130.805 C", cifra: "130.805", mhz: 130.805, canal833: true, nota: "BACKUP APP/l", horario: "H24" },
+        { tal: "134.030 C", cifra: "134.030", mhz: 134.03, canal833: true, nota: "BACKUP APP/H", horario: "H24" },
+      ] },
+      { servicio: "TWR", indicativo: "Barajas TWR", frecuencias: [
+        { tal: "118.080 C", cifra: "118.080", mhz: 118.08, canal833: true, nota: "ARR 18R / DEP 36L", horario: "H24" },
+        { tal: "118.155 C", cifra: "118.155", mhz: 118.155, canal833: true, nota: "ARR 32L / DEP 14R", horario: "H24" },
+        { tal: "118.680 C", cifra: "118.680", mhz: 118.68, canal833: true, nota: "ARR 18L / DEP 36R", horario: "H24" },
+        { tal: "118.980 C", cifra: "118.980", mhz: 118.98, canal833: true, nota: "ARR 32R / DEP 14L", horario: "H24" },
+        { tal: "120.155 C", cifra: "120.155", mhz: 120.155, canal833: true, nota: "BACKUP 1", horario: "H24" },
+        { tal: "120.655 C", cifra: "120.655", mhz: 120.655, canal833: true, nota: "BACKUP 2", horario: "H24" },
+        { tal: "121.500 MHz", cifra: "121.500", mhz: 121.5, nota: "EMERG", horario: "H24" },
+        { tal: "121.630 C", cifra: "121.630", mhz: 121.63, canal833: true, nota: "GMC E-SOUTH", horario: "H24" },
+        { tal: "121.755 C", cifra: "121.755", mhz: 121.755, canal833: true, nota: "GMC E-NORTH", horario: "H24" },
+        { tal: "121.980 C", cifra: "121.980", mhz: 121.98, canal833: true, nota: "GMC CENTRAL-SOUTH", horario: "H24" },
+        { tal: "123.155 C", cifra: "123.155", mhz: 123.155, canal833: true, nota: "GMC CENTRAL-NORTH", horario: "H24" },
+        { tal: "130.080 C", cifra: "130.080", mhz: 130.08, canal833: true, nota: "CLR EAST", horario: "H24" },
+        { tal: "130.355 C", cifra: "130.355", mhz: 130.355, canal833: true, nota: "CLR WEST", horario: "H24" },
+        { tal: "123.330 C", cifra: "123.330", mhz: 123.33, canal833: true, nota: "DEICING RWY 36L", horario: "H24" },
+        { tal: "130.255 C", cifra: "130.255", mhz: 130.255, canal833: true, nota: "DEICING RWY 36R", horario: "H24" },
+        { tal: "122.980 C", cifra: "122.980", mhz: 122.98, canal833: true, nota: "FIRE FIGHTING SERVICE", horario: "H24" },
+      ] },
+      { servicio: "SDP", indicativo: "Barajas Apron", frecuencias: [
+        { tal: "121.705 C", cifra: "121.705", mhz: 121.705, canal833: true, nota: "APRON S-SOUTH", horario: "H24" },
+        { tal: "121.855 C", cifra: "121.855", mhz: 121.855, canal833: true, nota: "APRON S-NORTH", horario: "H24" },
+        { tal: "123.005 C", cifra: "123.005", mhz: 123.005, canal833: true, nota: "APRON W-SOUTH", horario: "H24" },
+        { tal: "123.255 C", cifra: "123.255", mhz: 123.255, canal833: true, nota: "APRON W-NORTH", horario: "H24" },
+        { tal: "123.480 C", cifra: "123.480", mhz: 123.48, canal833: true, nota: "BACKUP", horario: "H24" },
+      ] },
+      { servicio: "ATIS", indicativo: "Madrid/Barajas Information", frecuencias: [
+        { tal: "118.255 C", cifra: "118.255", mhz: 118.255, canal833: true, nota: "ARR", horario: "H24" },
+        { tal: "130.855 C", cifra: "130.855", mhz: 130.855, canal833: true, nota: "DEP", horario: "H24" },
       ] },
     ],
   },
