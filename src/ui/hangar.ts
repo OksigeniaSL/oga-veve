@@ -1763,8 +1763,26 @@ const EJ_AGUJA = escena(`
   ${AVION("translate(76 67) rotate(80) scale(0.8)")}
 `);
 
+/**
+ * **¿En qué radial estoy?**: el VOR en el suelo, visto desde arriba, con sus
+ * radiales como los rayos de una rueda; uno, el del avión, marcado; y el
+ * avión de través sobre él, con la flecha del cuarto de vuelta hacia la
+ * radio. Girar no lo saca del rayo: es la lección. Ver
+ * `flight/en-que-radial-estoy.ts`.
+ */
+const EJ_RADIAL = escena(`
+  <path class="ejercicio__ondas"
+        d="M96 63 h22 M93.7 68.7 l14 14 M88 71 v12 M82.3 68.7 l-12 12 M82.3 57.3 l-14 -14 M88 55 v-20 M93.7 57.3 l15 -15" />
+  <path class="leccion__estela" d="M80.5 60.3 L40 46" stroke-dasharray="4 4" />
+  <path class="ejercicio__mastil" d="M88 56 l6 3.5 v7 l-6 3.5 l-6 -3.5 v-7 Z" />
+  <circle cx="88" cy="63" r="1.3" class="ejercicio__mastil" />
+  ${AVION("translate(56 51.4) rotate(20) scale(0.8)")}
+  <path class="ejercicio__flecha" d="M60.8 38.2 A14 14 0 0 1 69.2 56.2 M69.2 56.2 l3.3 -2.3 M69.2 56.2 l-1 -3.9" />
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   aguja: EJ_AGUJA,
+  radial: EJ_RADIAL,
   autorrotacion: EJ_AUTORROTACION,
   estacionario: EJ_ESTACIONARIO,
   par: EJ_PAR,

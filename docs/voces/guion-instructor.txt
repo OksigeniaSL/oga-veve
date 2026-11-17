@@ -371,6 +371,13 @@ Para ir derecho, apuntá un poco al viento: girá unos grados a la derecha, de d
 Para ir derecho, apuntá un poco al viento: girá unos grados a la izquierda, de donde viene, y dejá la aguja quieta un poco a la derecha
 ¡Así! La aguja quieta a un lado y la raya derecha: estás corrigiendo el viento, como los pilotos de verdad
 ¡Pasamos por encima de la radio! ¿Viste? La aguja dio la vuelta y ahora apunta atrás. Llegaste guiándote solo con la aguja
+Hoy vamos a saber dónde estamos con la radio. Allá hay un VOR, una radio que manda un radial para cada lado, como los rayos de una rueda. La NAV te dice en cuál de esos rayos estás, apunte adonde apunte el morro
+Primero, poné el VOR del campo en la NAV: tocalo en el plano, o apretá el siete
+¿Oíste los pitidos? Es su nombre en morse, el mismo que trae el plano: es el VOR que querés. Ahora girá el OBS, con el nueve y el cero, hasta que la barra quede en el centro con FROM
+¡Ahí está! Con la barra en el centro y FROM, el número del OBS es tu radial: estás en ese rayo de la rueda. Ahora girá el avión un cuarto de vuelta, para cualquier lado, y mirá la barra
+¿Viste? El morro dio un cuarto de vuelta y la barra casi no se movió: lo poquito que se mueve es lo que avanzaste, no lo que giraste. El radial dice dónde estás, no adónde mirás
+Ahora vamos a la radio por tu radial. Girá el OBS media vuelta, dejándolo apretado, hasta que diga TO, y volá con la barra en el centro: si se va a un lado, girá un poco hacia ese lado
+¡Pasamos por encima de la radio! ¿Viste? Justo encima sale la bandera, porque ahí no sabe qué decir, y del otro lado TO y FROM se dan vuelta. Llegaste con la barra sola
 Ver el río
 Seguir el río
 Salir al mar

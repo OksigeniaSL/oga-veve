@@ -3201,6 +3201,111 @@
     }
   },
   {
+    "id": "ejercicio.radial.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy vamos a saber dónde estamos con la radio. Allá hay un VOR, una radio que manda un radial para cada lado, como los rayos de una rueda. La NAV te dice en cuál de esos rayos estás, apunte adonde apunte el morro",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy vamos a saber dónde estamos con la radio. Allá hay un VOR, una radio que manda un radial para cada lado, como los rayos de una rueda. La NAV te dice en cuál de esos rayos estás, apunte adonde apunte el morro.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radial.sintonizar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Primero, poné el VOR del campo en la NAV: tocalo en el plano, o apretá el siete",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Primero, poné el VOR del campo en la NAV: tocalo en el plano, o apretá el siete.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radial.identificada",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Oíste los pitidos? Es su nombre en morse, el mismo que trae el plano: es el VOR que querés. Ahora girá el OBS, con el nueve y el cero, hasta que la barra quede en el centro con FROM",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¿Oíste los pitidos? Es su nombre en morse, el mismo que trae el plano: es el VOR que querés. Ahora girá el OBS, con el nueve y el cero, hasta que la barra quede en el centro con FROM.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radial.centrada",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Ahí está! Con la barra en el centro y FROM, el número del OBS es tu radial: estás en ese rayo de la rueda. Ahora girá el avión un cuarto de vuelta, para cualquier lado, y mirá la barra",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Ahí está! Con la barra en el centro y FROM, el número del OBS es tu radial: estás en ese rayo de la rueda. Ahora girá el avión un cuarto de vuelta, para cualquier lado, y mirá la barra.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radial.giro",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Viste? El morro dio un cuarto de vuelta y la barra casi no se movió: lo poquito que se mueve es lo que avanzaste, no lo que giraste. El radial dice dónde estás, no adónde mirás",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¿Viste? El morro dio un cuarto de vuelta y la barra casi no se movió: lo poquito que se mueve es lo que avanzaste, no lo que giraste. El radial dice dónde estás, no adónde mirás.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radial.haciaLaRadio",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ahora vamos a la radio por tu radial. Girá el OBS media vuelta, dejándolo apretado, hasta que diga TO, y volá con la barra en el centro: si se va a un lado, girá un poco hacia ese lado",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Ahora vamos a la radio por tu radial. Girá el OBS media vuelta, dejándolo apretado, hasta que diga TO, y volá con la barra en el centro: si se va a un lado, girá un poco hacia ese lado.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.radial.pasada",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Pasamos por encima de la radio! ¿Viste? Justo encima sale la bandera, porque ahí no sabe qué decir, y del otro lado TO y FROM se dan vuelta. Llegaste con la barra sola",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Pasamos por encima de la radio! ¿Viste? Justo encima sale la bandera, porque ahí no sabe qué decir, y del otro lado TO y FROM se dan vuelta. Llegaste con la barra sola.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "mission.rio.name",
     "voz": "instructor",
     "idioma": "es-PY",

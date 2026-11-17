@@ -3041,6 +3041,39 @@ for (const [id, para] of DE_LA_AGUJA) {
   total += texto.length;
 }
 
+/*
+ * **Y «¿En qué radial estoy?»** (17-11-2026, #51): el segundo ejercicio de la
+ * radio de navegación, el del VOR. La presentación, sintonizar, el morse y
+ * girar el OBS, la barra centrada con FROM, el giro del avión sin que la barra
+ * se mueva, la vuelta a la radio con TO y el paso por encima con la bandera.
+ * Genéricas, sin el nombre del VOR ni el número del radial, porque valen en
+ * todo campo con VOR. En calma, como todo ejercicio. Ver
+ * `src/flight/en-que-radial-estoy.ts` y el ADR 0030, enmienda H26c.
+ */
+const DEL_RADIAL = [
+  ["ejercicio.radial.antes", "¿en qué radial estoy?, antes de empezar: qué es un VOR y qué dice la NAV"],
+  ["ejercicio.radial.sintonizar", "¿en qué radial estoy?: a los catorce segundos, si la NAV sigue sin el VOR del campo"],
+  ["ejercicio.radial.identificada", "¿en qué radial estoy?: detrás del morse del VOR, y se pide girar el OBS"],
+  ["ejercicio.radial.centrada", "¿en qué radial estoy?: la barra centrada con FROM, y se pide girar el avión"],
+  ["ejercicio.radial.giro", "¿en qué radial estoy?: el avión giró un cuarto de vuelta y la barra casi no se movió"],
+  ["ejercicio.radial.haciaLaRadio", "¿en qué radial estoy?: nueve segundos después del giro, volver a la radio con TO"],
+  ["ejercicio.radial.pasada", "¿en qué radial estoy?: encima del VOR, la bandera y TO y FROM al revés, y se acaba"],
+];
+for (const [id, para] of DEL_RADIAL) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
   ...filas.map((f) =>

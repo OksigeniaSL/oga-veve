@@ -307,3 +307,136 @@ cabina, los campos con VOR (`radioDeSalida(oaci).nav`).
 - **Prueba de mesa** con el mismo piloto de cinemática y `leerNav`: que el
   OBS que centra la aguja es el radial de la cuenta (±1°), que girar el avión
   no la mueve, y que al pasar sale la bandera y luego el FROM.
+
+## Enmienda H26c (17-11-2026): «¿En qué radial estoy?»
+
+La propuesta de arriba, hecha, y lo que cambió al hacerla.
+
+`flight/en-que-radial-estoy.ts`, otra entrada de `EJERCICIOS` —`radial`, con
+`escena: "radio"` y su `colocacion` propia—, con su ficha en el hangar (el
+VOR visto desde arriba con sus radiales como los rayos de una rueda, uno
+marcado, y el avión de través encima con la flecha del cuarto de vuelta) y la
+misma puerta que la aguja: el hangar, `?ejercicio=radial`, la presentación
+antes y el panel del final con la traza.
+
+- **Dónde se ofrece**: en el peldaño de cabina, en todo avión con NAV —no el
+  biplano— y en todo campo con VOR (`dondeVale` con `radioDeSalida(oaci).nav`):
+  FTV en Fuerteventura, que es donde se pensó y donde lo vuela el banco, y
+  también TFN en Los Rodeos, TFS, GDV, LTE, LGM, VAS, VES, VEN… Se vende al
+  mundo: el campo es el ejemplo.
+- **El viento, el del sitio**, como la aguja (`main.ts` ya lo hacía para toda
+  `escena: "radio"`).
+- **Dónde empieza** (`colocacionDelRadial`): en un radial redondo, de diez en
+  diez y en magnético con el norte de la estación, **de costado al viento**,
+  del lado más bajo de los dos —en Fuerteventura, el 120 de FTV, sobre el
+  mar; el 300 es la isla—. Así la vuelta a la radio pide otra vez corregir el
+  viento, ahora con una barra que dice si se acierta. Con el morro de través al
+  radial, del lado que va contra el viento, a tres mil pies sobre la pista o
+  mil por encima de lo más alto del camino. **A ocho minutos**, entre doce y
+  treinta millas, y no a seis como la aguja ni a las quince de la propuesta a
+  ojo: al girar noventa grados el avión no gira en el sitio, describe un
+  cuarto de círculo, y visto desde la radio eso es un cambio de radial de su
+  radio de viraje partido por la distancia. Con la avioneta a régimen estándar
+  son 1.146 m: a seis minutos, tres grados; a ocho, 2,3. La barra tiene que
+  quedarse casi quieta para que se vea que el rumbo no la mueve.
+- **La NAV empieza vacía** (`RadioDeCabina.quitar`) y **el OBS veinte grados
+  apartado** del radial, con FROM y la barra a tope: veinte toques la traen al
+  centro. El ADF se deja como lo pone la salida.
+- **La barra, no la aguja**: la propuesta pedía «la desviación por debajo de
+  un punto (dos grados)», y el punto del VOR en este juego son cinco grados
+  (`ESCALA_VOR`, a tope a diez, dos puntos). **Centrada es menos de un grado**,
+  con FROM y sin bandera (`CENTRADA`): una décima de la escala, que en la
+  pantalla ya es el centro, y con el OBS de grado en grado siempre hay un
+  número que cae dentro. Con dos, el piloto de prueba se paraba en el borde,
+  grado y medio antes del radial de verdad, porque el avión va cruzando
+  radiales —de través, a ocho minutos, uno cada diez segundos—.
+- **Lo que pasa**, en sucesos y con la tarjeta (el CDI dibujado: la barra a un
+  lado, centrada con FROM o centrada con TO, el mismo de la pantalla) y la
+  instructora: presentar; a los catorce segundos, si la NAV sigue sin el VOR,
+  «poné el VOR en la NAV», una vez y otra solo si se quita; al acabar su morse,
+  «¿oíste los pitidos?» y girar el OBS; **centrada**, con el sonido del logro:
+  «el número del OBS es tu radial», y girar el avión un cuarto de vuelta;
+  **el giro**, cuando el morro ha girado ochenta grados desde que se centró:
+  «la barra casi no se movió: lo poquito que se mueve es lo que avanzaste, no
+  lo que giraste», que es verdad en los dos casos; nueve segundos después,
+  **a la radio**: el OBS media vuelta hasta TO y la barra en el centro; y **la
+  pasada**: TO y FROM se dan la vuelta a menos de tres millas de la radio,
+  con la bandera antes —la del cono de encima, o la de través si se pasa a un
+  lado—. Ahí se acaba, con el sonido del logro y el panel del final. Las
+  cifras no se dicen: el radial se lee en el OBS.
+- **Nadie suspende**: quien va a la radio con FROM, siguiendo la barra del HSI
+  con la flecha a la cola, también pasa, y la frase del paso vale igual («TO y
+  FROM se dan vuelta»).
+- **Las frases**, siete, genéricas: sin el nombre del VOR ni el número del
+  radial. Sin grabar: al final de `scripts/frases-para-grabar.mjs`
+  (`DEL_RADIAL`); hasta entonces, la tarjeta y su texto.
+
+### La rueda del OBS sigue girando
+
+Volver a la radio por el radial en que se está es media vuelta del OBS, y de
+grado en grado eran ciento ochenta toques: en la tablet, imposible. Una rueda
+de verdad se hace girar seguido. Ahora **la tecla apretada repite** el 9 y el
+0 al ritmo del teclado —lo demás sigue siendo un toque, una acción— y **el
+dedo puesto en una mitad de la ventanilla CRS** o del direccional, quieto
+medio segundo, sigue girando a veinte grados por segundo hasta que se suelta
+(`Hud`, el mando de la radio). Un toque sigue siendo un grado.
+
+### Lo que se prueba
+
+- `flight/en-que-radial-estoy.test.ts`: **un piloto de prueba con la radio de
+  verdad** (`leerNav`) y un avión de cinemática, en Fuerteventura con FTV:
+  dónde se ofrece; que la salida es el 120 y que el radial que marca la radio
+  allí es ese, a menos de medio grado, con el OBS en el 100, FROM y la barra a
+  tope, el morro de través y contra el viento; que **girar en el sitio no
+  cambia nada** —veinticuatro rumbos en un punto, el mismo radial, la misma
+  barra y el mismo TO/FROM—; y el vuelo entero: el OBS que centra la barra
+  está a menos de un grado del radial de la cuenta, hecha sin `leerNav`; girar
+  un cuarto de vuelta mueve la barra 1,8° con la avioneta y 2,4° con el
+  reactor a doscientos cincuenta nudos desde treinta millas; y al pasar sale
+  la bandera y TO pasa a FROM. En calma, igual; con FROM, FROM pasa a TO y
+  también se acaba.
+- `scripts/ver-en-que-radial-estoy.mjs`: el mismo vuelo en el juego, con las
+  teclas de quien juega —el 7, el morse, el 9 y el 0 de toque en toque, el
+  automático para el cuarto de vuelta y la tecla apretada para la media
+  vuelta— y sus capturas. Con el modelo de vuelo de verdad y la avioneta,
+  con el alisio: empieza a 15,6 millas de FTV y a 948 m, en el 120, con la
+  NAV vacía y el OBS en el 100; el 7 pone FTV a la primera y su morse la
+  identifica; la barra sale a tope con FROM (−18,9°) y se centra con el OBS
+  en el 118, con la radio marcando el 118,75 —el avión ha cruzado radiales
+  mientras se giraba la rueda, que es lo que se quería—; el cuarto de vuelta
+  la mueve 1,76° con el morro girado ochenta grados (del 118,8 al 117,0); la
+  tecla apretada lleva el OBS al 298 y dice TO; y con el reloj por ocho llega
+  a FTV, sale la bandera encima y se cierra con FROM. Doce de doce, con la
+  Intel por ANGLE. Lo que no ha volado el banco: la calma
+  (`OGA_VIENTO=000/0`) y un reactor, que solo están en la prueba de mesa.
+
+### Propuesta para la tanda siguiente: «Interceptar un radial»
+
+El tercero de la lista de arriba, en el mismo marco: `escena: "radio"`, el
+peldaño de cabina, los campos con VOR, el viento del sitio.
+
+- **Qué se pide**: salir por un radial que no es el que se tiene debajo —el
+  número escrito en la tarjeta, «R-094 TFN», que la voz no dice—, como pide
+  una salida publicada. Sirve el de una SID transcrita del campo si la hay
+  (TFN, LTE…), y si no, uno redondo de costado al viento, como aquí.
+- **Dónde empieza**: a cinco millas de la radio, alejándose, con el morro a
+  cuarenta y cinco grados del radial pedido, que es el ángulo de cortada de
+  manual, y el OBS ya en otro curso: lo primero es ponerlo en el pedido, con
+  la rueda que ahora gira seguida.
+- **Lo que pasa**: «la barra está a tope: el radial queda de ese lado»; **se
+  despega del tope** (la desviación baja de diez grados): «ya se mueve:
+  empezá a virar antes de que llegue al centro»; y **establecido**, la barra a
+  menos de un grado veinte segundos con el morro a menos de quince del curso.
+  Con el viento de costado, el morro queda apartado del curso lo que pide el
+  viento, y la instructora lo señala como en la aguja. Si se pasa al otro
+  lado, se ve la barra cruzar, y se vuelve: nadie suspende.
+- **Se juzga** con `leerNav` —la desviación y su ritmo— y el rumbo, sin más
+  estado, como los dos de antes. La anticipación es lo que hay que medir: con
+  la avioneta a régimen estándar, el viraje de cuarenta y cinco grados se
+  acerca al radial unos trescientos cuarenta metros —el radio de viraje por
+  uno menos el coseno de cuarenta y cinco—, y a cinco millas eso son dos
+  grados de barra.
+- **Prueba de mesa** con el mismo piloto de cinemática: que quien vira al
+  despegarse la barra queda establecido sin pasarse más de un punto; que
+  quien vira tarde cruza y vuelve, y también acaba; y que con el viento de
+  costado el morro establecido no es el curso.

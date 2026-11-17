@@ -945,7 +945,28 @@ export class Hud {
       if (que !== "nav" && que !== "adf" && que !== "obs") return;
       e.preventDefault();
       e.stopPropagation();
-      this.radioHandler?.(que, Number(mando.dataset.paso) || 0);
+      const paso = Number(mando.dataset.paso) || 0;
+      this.radioHandler?.(que, paso);
+      /*
+       * **Y el OBS, con el dedo puesto, sigue girando**, como la tecla
+       * apretada: medio segundo quieto, que un toque siga siendo un grado, y
+       * luego veinte grados por segundo hasta que se suelta. Volver a la radio
+       * por el radial en que se está pide media vuelta, y ciento ochenta
+       * toques no son una rueda. Ver `flight/en-que-radial-estoy.ts`.
+       */
+      if (que !== "obs" || !paso) return;
+      let cada: number | undefined;
+      const empieza = window.setTimeout(() => {
+        cada = window.setInterval(() => this.radioHandler?.("obs", paso), 50);
+      }, 500);
+      const suelta = (): void => {
+        window.clearTimeout(empieza);
+        if (cada !== undefined) window.clearInterval(cada);
+        window.removeEventListener("pointerup", suelta);
+        window.removeEventListener("pointercancel", suelta);
+      };
+      window.addEventListener("pointerup", suelta);
+      window.addEventListener("pointercancel", suelta);
     });
     this.root.addEventListener("pointerdown", (e) => {
       const zona = (e.target as Element | null)?.closest?.("[data-mcp-rueda], [data-mcp-alt]");
