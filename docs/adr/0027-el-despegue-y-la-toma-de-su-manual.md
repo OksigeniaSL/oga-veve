@@ -2070,13 +2070,21 @@ mira a los cuatro segundos:
 | Compensador en cero (H20a, antes de esto) | a 28 m/s, su Vr | −9,2 m/s a 12 m |
 | Marca a 1,3 | a 28 m/s, su Vr | −3,7 m/s a 26 m |
 | Marca a 1,2 | **se va solo a 26 m/s**, sin Vr ni flecha de tirar | −2,2 m/s a 14 m |
+| Marca a 1,3, y el banco tirando lo de siempre (mano y compensador, medio recorrido) | a su Vr; a los 15 m va a 26 m/s | −2,3 m/s a 14 m |
+
+En la primera tirada a 1,3 el banco tiraba medio recorrido de mano encima del
+compensador, y el morro subía de más; ahora tira lo que falta hasta el medio
+recorrido de siempre (`verificar-despegue.mjs`). Las tiradas varían con el
+alisio de Los Rodeos: con la misma marca, a los quince metros iba a 27,5 m/s en
+una y a 26 en otra.
 
 Con 1,2 el avión se levantaba solo antes de su Vr, y una marca que despega el
 avión antes de la Vr no es la de despegue. Se queda 1,3. **Y la comprobación
 sigue sin pasar**: lo que queda no es el compensador, es la ayuda de Taguato.
 Su `climbHold`, por debajo de su velocidad segura —la de aproximación y un
 cinco por ciento, 67 nudos en el JAZ 20—, deja de sostener la subida y pide
-morro abajo para ganar velocidad, y el banco suelta a 53 nudos. El avión
+morro abajo para ganar velocidad, y el banco suelta a unos 50 nudos, por debajo
+de la Vr. El avión
 compensado hace lo que dice el manual de la FAA —pide algo de tirón hasta
 coger la velocidad de subida— y la ayuda empuja hacia el mismo lado. Tocar
 esa ayuda no es de esta enmienda: queda apuntado.
@@ -2135,6 +2143,17 @@ y nada más.
   en la marca en la espera, como quien juega: la aguja a la franja que pinta el
   indicador (la sonda `compensadorDeDespegue`). Así el banco no oye la línea del
   compensador; la oye quien juega sin ponerlo.
+- El piloto de la carrera de `verificar-despegue.mjs` tira, pasada la Vr, lo que
+  falta hasta el medio recorrido de timón, contando el compensador.
+- Volado en el navegador (16-11-2026, puerto 5688): `verificar-despegue.mjs
+  tenerife-norte guyrami`, 19 de 19 —en Guyrami no hay compensador que poner—;
+  `tenerife-norte taguato`, 17 de 18, la de «en el aire sigue subiendo», arriba;
+  `verificar-vuelo-entero.mjs tenerife-norte guyrami 3 jaz-20`, 62 de 62 con 2
+  sin medir; `npm run toque`, sin fallos. Y un banco suelto, empezando alineado
+  con el JAZ 20 en Tukã y en Taguato Ruvicha: el compensador sale en su marca,
+  el indicador pinta la franja, y llevado a cero sale la tarjeta —«Compensador»
+  en Tukã, donde lo vuelve a poner la instructora; «TRIM — SET» en Ruvicha,
+  donde nadie lo pone por quien vuela—, 11 de 11.
 
 ### Las voces
 
