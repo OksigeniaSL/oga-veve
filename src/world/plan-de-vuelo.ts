@@ -65,7 +65,10 @@ import { PuertaAsignada } from "./puerta-asignada";
 import { edificiosDePasarela, esPuestoDeContacto } from "./remolque";
 import { morroDe } from "./rueda-de-morro";
 import {
+  aLaCaja,
+  cajasDeLosTramos,
   construirGrafo,
+  HOLGURA_DE_LA_CAJA,
   puestosEnElPavimento,
   rectaPorPavimento,
   rodajeEntre,
@@ -745,10 +748,62 @@ function conSitioParaElAla(
   hueco: number,
 ): boolean {
   for (const o of todos) {
+    /*
+     * Primero lo lejos, que es una resta: el que está a más de `hueco` no
+     * quita sitio sea o no del mismo hueco, y mirar el hueco es partir las
+     * dos `ref`. En Barajas son 425 por 425.
+     */
+    if (!(Math.hypot(o.xy[0] - puesto.xy[0], o.xy[1] - puesto.xy[1]) < hueco)) continue;
     if (mismoHueco(puesto, o)) continue;
-    if (Math.hypot(o.xy[0] - puesto.xy[0], o.xy[1] - puesto.xy[1]) < hueco) return false;
+    return false;
   }
   return true;
+}
+
+/**
+ * **Las paredes de cada edificio del fichero, cerradas y con su caja**, para
+ * medir los puestos contra ellas. Elegir la salida mide cada puesto contra
+ * todos los edificios —lo lejos que queda de ellos la avioneta, si caben las
+ * alas del de línea—, y en Barajas son 425 puestos por 295 edificios. Con
+ * la caja se salta el que no puede contestar otra cosa, y contesta lo mismo:
+ * ver la enmienda H23a del ADR 0028.
+ */
+interface Pared {
+  readonly anillo: readonly Punto[];
+  readonly x0: number;
+  readonly y0: number;
+  readonly x1: number;
+  readonly y1: number;
+}
+
+function paredesDe(aero: Aerodrome): readonly Pared[] {
+  const ya = PAREDES.get(aero);
+  if (ya) return ya;
+  const paredes: Pared[] = [];
+  for (const e of aero.buildings ?? []) {
+    if (e.polygon.length < 2) continue;
+    const anillo = [...e.polygon, e.polygon[0]!];
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    for (const [x, y] of anillo) {
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    }
+    paredes.push({ anillo, x0, y0, x1, y1 });
+  }
+  PAREDES.set(aero, paredes);
+  return paredes;
+}
+
+const PAREDES = new WeakMap<Aerodrome, readonly Pared[]>();
+
+/** Lo que dista un punto de la caja de una pared, m; cero dentro. */
+function aLaCajaDe(c: Pared, p: Punto): number {
+  return Math.hypot(Math.max(c.x0 - p[0], 0, p[0] - c.x1), Math.max(c.y0 - p[1], 0, p[1] - c.y1));
 }
 
 /**
@@ -2244,8 +2299,27 @@ export class PlanDeVuelo {
    * `puestosEnElPavimento` en `rodaje.ts`.
    */
   private puestosEnElAsfalto(): readonly { ref: string | null; xy: Punto }[] {
-    return puestosEnElPavimento(this.aero.parkingPositions ?? [], this.aero, this.grafo);
+    /*
+     * **Y una vez por campo.** Mirar cada puesto contra cada pista, calle y
+     * plataforma del fichero son 425 puestos por 756 calles en Barajas, y
+     * elegir la salida lo preguntaba tres o cuatro veces: un cuarto de lo que
+     * costaba elegir, medido en la mesa (ADR 0028, enmienda H23a).
+     * Sale de los puestos del fichero y del grafo, y el grafo se rehace al
+     * mudarse de campo: guardado contra él, se tira solo.
+     */
+    if (this.asfaltoGuardado?.grafo !== this.grafo)
+      this.asfaltoGuardado = {
+        grafo: this.grafo,
+        puestos: puestosEnElPavimento(this.aero.parkingPositions ?? [], this.aero, this.grafo),
+      };
+    return this.asfaltoGuardado.puestos;
   }
+
+  /** Ver `puestosEnElAsfalto`. */
+  private asfaltoGuardado: {
+    readonly grafo: Grafo;
+    readonly puestos: readonly { ref: string | null; xy: Punto }[];
+  } | null = null;
 
   /** Los puestos de los que puede salir una avioneta, sin ordenar. */
   private puestosCandidatos(): { ref: string | null; xy: Punto }[] {
@@ -2261,11 +2335,13 @@ export class PlanDeVuelo {
      * doce de la pared y a cincuenta de la esquina más cercana, o sea «lejos
      * de todo edificio». Y el JAZ 90 salía de ahí, pegado al hangar.
      */
+    const paredes = paredesDe(this.aero);
     const cerca = (p: Punto): number => {
       let d = Infinity;
-      for (const e of this.aero.buildings ?? []) {
-        if (e.polygon.length < 2) continue;
-        d = Math.min(d, aLaPolilinea(p, [...e.polygon, e.polygon[0]!]));
+      for (const e of paredes) {
+        // La que tiene la caja más lejos que la mejor no puede mejorarla.
+        if (aLaCajaDe(e, p) > d + HOLGURA_DE_LA_CAJA) continue;
+        d = Math.min(d, aLaPolilinea(p, e.anillo));
       }
       return d;
     };
@@ -2417,9 +2493,10 @@ export class PlanDeVuelo {
   /** Si un avión de línea cabe en este puesto: con sus alas y su margen lejos de toda pared. */
   private cabeDeLinea(xy: Punto): boolean {
     const holgura = this.avion.wingSpan / 2 + MARGEN_ENTRE_ALAS;
-    for (const e of this.aero.buildings ?? []) {
-      if (e.polygon.length < 2) continue;
-      if (aLaPolilinea(xy, [...e.polygon, e.polygon[0]!]) < holgura) return false;
+    for (const e of paredesDe(this.aero)) {
+      // Con la caja más lejos que la holgura, la pared también lo está.
+      if (aLaCajaDe(e, xy) > holgura + HOLGURA_DE_LA_CAJA) continue;
+      if (aLaPolilinea(xy, e.anillo) < holgura) return false;
     }
     return true;
   }
@@ -2530,9 +2607,21 @@ export class PlanDeVuelo {
     );
     const traeDeVuelta: Punto = [dondeSePara[0], -dondeSePara[1]];
 
+    /*
+     * Y las vueltas, de una sola búsqueda: salen todas del mismo sitio, y
+     * `rodajesDesde` corre el buscador una vez por origen. Es lo mismo que
+     * pedirlas de una en una —`rodajeEntre` es esto con un destino—, con un
+     * Dijkstra en vez de uno por puesto.
+     */
+    const vueltas = rodajesDesde(
+      this.grafo,
+      traeDeVuelta,
+      puestos.map((p) => p.xy),
+      600,
+    );
     const pares: ParDeSalida[] = [];
-    for (const puesto of puestos) {
-      const vuelta = rodajeEntre(this.grafo, traeDeVuelta, puesto.xy, 600);
+    for (const [i, puesto] of puestos.entries()) {
+      const vuelta = vueltas[i] ?? null;
       const casa = vuelta ? vuelta.largo : 0;
       const rutas = rodajesDesde(this.grafo, puesto.xy, esperas, 220, undefined, {
         desdeFuera,
@@ -3132,7 +3221,11 @@ export class PlanDeVuelo {
   /** Lo lejos que queda un punto del asfalto que el juego conoce, m. */
   private alGrafo(p: Punto): number {
     let mejor = Infinity;
-    for (const t of this.grafo.tramos) {
+    // Sin medir los tramos cuya caja queda más lejos que lo mejor hasta ahora:
+    // no pueden mejorarlo. Ver `cajasDeLosTramos`.
+    const cajas = cajasDeLosTramos(this.grafo.tramos);
+    for (const [k, t] of this.grafo.tramos.entries()) {
+      if (aLaCaja(cajas, k, p) > mejor + HOLGURA_DE_LA_CAJA) continue;
       for (let i = 0; i < t.puntos.length - 1; i++) {
         const a = t.puntos[i]!;
         const b = t.puntos[i + 1]!;

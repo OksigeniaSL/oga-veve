@@ -410,6 +410,59 @@ export function enElPavimento(aero: Aerodrome, p: Punto, margen = 0): boolean {
 }
 
 /**
+ * **`enElPavimento` sin margen, para preguntar muchas veces en el mismo
+ * campo.** Contesta lo mismo, pregunta a pregunta: mira las mismas pistas,
+ * calles y plataformas con las mismas cuentas, pero solo las que tienen el
+ * punto dentro de su caja —la del eje ensanchada medio ancho, o la del
+ * polígono—, que fuera de ella no puede caer dentro de ninguna. Es un «o»,
+ * así que el orden no cambia nada.
+ *
+ * Existe por `puestosEnElPavimento`: los 425 puestos de Barajas contra sus
+ * 756 calles eran una décima de segundo en la mesa al elegir la salida (ADR
+ * 0028, enmienda H23a). Las cajas se hacen una vez por aeródromo.
+ */
+export function enElPavimentoDe(aero: Aerodrome): (p: Punto) => boolean {
+  const ya = PAVIMENTO_CON_CAJAS.get(aero);
+  if (ya) return ya;
+  // Un milímetro de más: lo que se deja fuera tiene que estar fuera de verdad.
+  const holgura = 1e-3;
+  const piezas: { x0: number; y0: number; x1: number; y1: number; mira: (p: Punto) => boolean }[] = [];
+  const caja = (puntos: readonly Punto[], ancho: number, mira: (p: Punto) => boolean): void => {
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    for (const [x, y] of puntos) {
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    }
+    const m = ancho + holgura;
+    piezas.push({ x0: x0 - m, y0: y0 - m, x1: x1 + m, y1: y1 + m, mira });
+  };
+  for (const pista of aero.runways) {
+    const medio = (pista.widthM ?? 45) / 2;
+    caja(pista.centerline, medio, (p) => aLaPolilinea(p, pista.centerline) < medio + 0);
+  }
+  for (const calle of aero.taxiways) {
+    const medio = (calle.widthM ?? ANCHO_RODADURA) / 2;
+    caja(calle.path, medio, (p) => aLaPolilinea(p, calle.path) < medio + 0);
+  }
+  for (const plataforma of aero.aprons)
+    caja(plataforma.polygon, 0, (p) => dentroDelRecinto(p, plataforma.polygon));
+  const dentro = (p: Punto): boolean => {
+    for (const c of piezas)
+      if (p[0] >= c.x0 && p[0] <= c.x1 && p[1] >= c.y0 && p[1] <= c.y1 && c.mira(p)) return true;
+    return false;
+  };
+  PAVIMENTO_CON_CAJAS.set(aero, dentro);
+  return dentro;
+}
+
+const PAVIMENTO_CON_CAJAS = new WeakMap<Aerodrome, (p: Punto) => boolean>();
+
+/**
  * ¿Hay pavimento a menos de `margen` metros? **Plataformas incluidas.**
  *
  * `enElPavimento` ensancha con su margen las pistas y las calles, pero no las

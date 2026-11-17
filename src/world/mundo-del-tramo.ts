@@ -12,6 +12,7 @@ import type { Ciudad } from "./ciudad";
 import { cargarCiudad } from "./ciudades";
 import { cargarOrtofoto, type Ortofoto } from "./ortofoto";
 import { conRelieve } from "./relieve";
+import { cargarPavimentoHorneado } from "./pavimento-horneado";
 import type { Scenario } from "./scenarios";
 
 /**
@@ -58,6 +59,13 @@ export async function cargarElMundo(base: Scenario, conFotos: boolean): Promise<
     conFotos ? cargarOrtofoto(base.id, "cerca") : nada,
     conFotos ? cargarOrtofoto(base.id, "medio") : nada,
     conFotos ? cargarOrtofoto(base.id, "horizonte") : nada,
+    /*
+     * Y la rejilla de su pavimento, horneada (ADR 0028): es el mismo campo que
+     * si se arrancara en él, con la misma huella. Se queda guardada aparte
+     * —ver `pavimentoHorneado`—, y el terreno nuevo la usa al pisarlo. Sin
+     * ella, o si no casa, la hace él.
+     */
+    cargarPavimentoHorneado(base.aerodrome?.id),
   ]);
   if (!conMapa.relieve) return null;
   return {
