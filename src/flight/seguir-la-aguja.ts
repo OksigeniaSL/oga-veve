@@ -226,6 +226,14 @@ export const SE_CURVA = 0.02;
 const SE_CURVA_COMO_POCO = 400;
 /** Cuánto tiempo siguiendo la aguja antes de mirar la estela, s: que haya estela que mirar. */
 const SIGUIENDO_ANTES = 20;
+/**
+ * **Y lo que tiene que haberse recorrido**, en fracción del camino: un
+ * tercio largo. Con solo el umbral, la curva se decía a los dos kilómetros,
+ * con cuatrocientos metros de desvío que en el plano todavía parecían una
+ * recta, y «mirá: no es recta» no se veía. A esta altura del camino la estela
+ * ya se ha apartado casi lo que se va a apartar, y se ve.
+ */
+export const YA_RECORRIDO = 0.35;
 /** Lo que se deja desde «mirá la estela» hasta «apuntá al viento», s: lo que se tarda en decir lo primero. */
 export const CORRIGE_TRAS = 14;
 /** La aguja quieta: lo que puede moverse, grados, en `QUIETA_DURANTE` segundos. */
@@ -387,6 +395,7 @@ export class SeguirLaAguja {
     if (
       !this.curvaDicha &&
       this.siguiendo >= SIGUIENDO_ANTES &&
+      distancia <= largo * (1 - YA_RECORRIDO) &&
       Math.abs(aLaDerecha) >= Math.max(SE_CURVA_COMO_POCO, SE_CURVA * largo)
     ) {
       this.curvaDicha = aLaDerecha > 0 ? "derecha" : "izquierda";

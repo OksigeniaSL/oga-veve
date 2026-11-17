@@ -235,7 +235,8 @@ viento y la avioneta que llega de cara a él) y la misma puerta: el hangar,
   «¿oíste los pitidos?» y la aguja arriba; **la curva**, cuando la estela se
   aparta de la recta —desde donde la aguja quedó arriba hasta la estación— un
   dos por ciento de lo que había, y como poco cuatrocientos metros, tras
-  veinte segundos siguiéndola (medido: con el alisio, la curva se aparta unos
+  veinte segundos siguiéndola y con un tercio largo del camino hecho, que
+  antes de eso la curva todavía parece una recta en el plano (medido: con el alisio, la curva se aparta unos
   mil trescientos metros a cualquier velocidad, que son seis minutos de viento
   empujando, un 7,5 % del camino a cien nudos y un 3 % a doscientos cincuenta;
   en calma, de veinte a cincuenta metros); catorce segundos después, **apuntar al viento**
