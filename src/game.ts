@@ -121,6 +121,7 @@ import {
 } from "./flight/practica";
 import {
   conUnMotor,
+  minimaConFlaps,
   velocidadesDeDespegue,
   type VelocidadesDeDespegue,
 } from "./flight/velocidades-de-despegue";
@@ -19019,9 +19020,21 @@ export class Game {
        * el mismo camino que la de aproximación —el color de la tortuga, la
        * instructora y, sin gas que quitar, los flaps—, y solo donde el
        * circuito va dibujado. Ver `bandaDeCircuito`.
+       *
+       * **Y el verde, desde la de maniobra de los flaps que lleva**, no desde
+       * la Vref: ver `minimaConFlaps`. Es indicada, y aquí se compara con la
+       * verdadera, así que se pasa a verdadera con el aire de ahora: en Los
+       * Rodeos, la misma indicada son un seis por ciento más de verdadera.
        */
       this.laAproximacion.enElCircuito
-        ? this.aircraft.velocidadDeCircuito
+        ? {
+            velocidad: this.aircraft.velocidadDeCircuito,
+            minima: trueFromIndicated(
+              minimaConFlaps(this.avionConPeso(), this.input.controls.flaps),
+              this.flight.state.position.y,
+              this.flight.aireDelDia(),
+            ),
+          }
         : null,
       // Y la de antes, para que salir de la banda no sea rozar su borde.
       this.bandaDeAhora,

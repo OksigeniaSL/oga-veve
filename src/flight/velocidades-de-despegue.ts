@@ -45,7 +45,13 @@ import { SEA_LEVEL_DENSITY, GRAVITY } from "./atmosphere";
 import { empujeLleno } from "./fdm";
 import { areaDelMotor, llevaBandera, motorCritico } from "./motores";
 import { resistenciaDelTren } from "./tren";
-import { flapsDeDespegue, fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
+import {
+  flapsDeDespegue,
+  fraccionDeLosFlaps,
+  muescaDeAterrizaje,
+  muescasDeLaPalanca,
+  resistenciaDeLosFlaps,
+} from "./flaps";
 import { deceleracionRodando } from "./frenada";
 import { ROZAMIENTO } from "../world/superficie";
 
@@ -307,7 +313,7 @@ export function perdidaCon(a: AircraftConfig, flaps = 0): number {
  * y la tripulación «lower flaps before going below green dot SPD»; lo de
  * debajo es la franja ámbar, cuyo techo, 1,13 veces la pérdida, es donde
  * «stick shaker may activate» (C. Regli, *Embraer EMB190 – Summary*, 2025, pp.
- * 1-37 y 2-18: <http://www.flite.ch/Emb/Summary_E190.pdf>). Los manuales de
+ * 1-38 y 2-19: <http://www.flite.ch/Emb/Summary_E190.pdf>). Los manuales de
  * Boeing dan lo mismo en otra forma, la velocidad de maniobra de cada muesca
  * sobre la Vref: la escalera de la llegada (`escalera-de-velocidades.ts`) pide
  * la Vref y veinte con los segundos flaps, y en el E170 eso son 1,31 veces su
@@ -327,6 +333,40 @@ export const MANIOBRA_SOBRE_LA_PERDIDA = 1.3;
  */
 export function maniobraCon(a: AircraftConfig, flaps = 0): number {
   return MANIOBRA_SOBRE_LA_PERDIDA * perdidaCon(a, flaps);
+}
+
+/**
+ * **Lo más despacio que está bien volar con estos flaps fuera de la final**,
+ * indicada, m/s: la de maniobra de lo que lleva sacado (`maniobraCon`), y la
+ * Vref solo con los de aterrizar.
+ *
+ * Es lo que la banda del circuito pinta de verde. La pintaba desde la Vref con
+ * cualquier muesca, y la Vref es de los flaps de aterrizar: con la segunda
+ * muesca del JAZ 90 eso es 1,13 veces su pérdida, el techo de la franja ámbar
+ * del E-Jet, donde «stick shaker may activate», y virando a veinticinco grados
+ * ahí suena el avisador. El juego le decía a quien volaba que esa velocidad
+ * estaba bien. Lo real es la regla del punto verde: «lower flaps before going
+ * below green dot SPD» (C. Regli, *Embraer EMB190 – Summary*, 2025, p. 2-19:
+ * <http://www.flite.ch/Emb/Summary_E190.pdf>), o sea que con unos flaps se va
+ * a su de maniobra o más, y para ir más despacio se sacan los siguientes. Con
+ * los de aterrizar, la que se vuela es la Vref (y su margen de viento), que es
+ * la que esa configuración tiene para eso: la final.
+ *
+ * En el avión sin flaps no hay muesca que contar: la de aterrizar es la
+ * limpia, y manda su Vref. Y nunca por debajo de la Vref, con los flaps que
+ * sea: con el avión más ligero que la ficha la de maniobra baja, y la Vref de
+ * la ficha no.
+ */
+export function minimaConFlaps(a: AircraftConfig, flaps: number): number {
+  if (!a.llevaFlaps) return a.approachSpeed;
+  const deAterrizar = muescasDeLaPalanca(a)[muescaDeAterrizaje(a)] ?? 1;
+  /*
+   * Con la palanca ya en la de aterrizar y los flaps llegando: a una centésima
+   * del recorrido, que es lo que tiembla una posición que viene de sumar pasos
+   * de tiempo.
+   */
+  if (flaps >= deAterrizar - 0.01) return a.approachSpeed;
+  return Math.max(a.approachSpeed, maniobraCon(a, flaps));
 }
 
 /**
