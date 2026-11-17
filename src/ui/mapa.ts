@@ -81,6 +81,7 @@ import {
   type Tocable,
 } from "./carta/tocar-la-carta";
 import {
+  camposConEstela,
   encuadreCon,
   escalones,
   hayQueRepintar,
@@ -1090,6 +1091,9 @@ export class Mapa {
    */
   private losCampos(): Punto[] {
     const casa = this.escenario?.runway ?? { x: 0, z: 0 };
+    // Con estela, lo que cabe es ella y la casa. Ver `camposConEstela`.
+    const estela = this.estela?.();
+    if (estela && estela.length > 1) return camposConEstela({ x: casa.x, z: casa.z }, estela);
     /*
      * **Y los puntos del plan**: el inicio de una aproximación puede caer a
      * veinticinco millas del aeropuerto, por el otro lado, y un plano que lo

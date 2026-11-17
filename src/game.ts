@@ -971,6 +971,7 @@ import { pintarLaRadio, type RadioEnElCuadro } from "./ui/radio-en-la-rosa";
 import { TurnoDelMorse } from "./audio/morse";
 import {
   colocacionDeLaAguja,
+  MINUTOS_HASTA_LA_ESTACION,
   ndbDelCampo,
   SeguirLaAguja,
   TOPE_POR_DEBAJO_DE_DIEZ_MIL,
@@ -1329,6 +1330,7 @@ import {
   llamadaDeCombustible,
   loQueCabe,
   masaConCombustible,
+  quemaEsperando,
   quemaPorSegundo,
   reservaEnKilos,
   seCargaAlCambiarDeDestino,
@@ -24155,6 +24157,17 @@ export class Game {
          */
         this.radioAlDia().quitar("adf");
         if (this.identificadaYa?.startsWith("adf ")) this.identificadaYa = null;
+        /*
+         * **Y el depósito, con lo del ejercicio**: se carga para el vuelo de
+         * casa a casa, y la radio queda a seis minutos de ida y otros tantos
+         * de vuelta. Sin esto, a mitad de la curva se declaraba «minimum
+         * fuel», que es justo lo que una salida bien preparada no hace. Tres
+         * veces el tramo, a lo que se quema esperando: ida, vuelta y margen.
+         */
+        this.combustible = Math.min(
+          loQueCabe(this.aircraft),
+          this.combustible + quemaEsperando(this.aircraft) * 3 * MINUTOS_HASTA_LA_ESTACION,
+        );
         return contar("aguja-adf", "ejercicio.aguja.antes", "palabra.practica");
       case "sintonizar":
         return contar("aguja-adf", "ejercicio.aguja.sintonizar", "palabra.practica");
