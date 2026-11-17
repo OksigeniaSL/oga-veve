@@ -714,6 +714,18 @@ efecto suelo cambia en el banco del vuelo entero, que empieza a recoger de 35
 a 49 ft (`SEGUNDOS_DE_RECOGIDA`), es que ahora flota: la toma se va de
 sesenta a noventa metros más allá.
 
+### Volado en el navegador
+
+`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-90` (17-11-2026,
+puerto 5689, con la traza del ala y el viento de casa): **63 de 63**, con 2 sin
+medir. La puerta de los 500 ft a 124 nudos (Vref 118) bajando 3,8 m/s; empezó
+a recoger a 11,3 m de ruedas bajando 4,0 m/s, el gas al ralentí a los treinta
+pies, el morro de −2,1° a 3,5°, y **tocó a 1,02 m/s, a 241 m del umbral** y a
+0,2 m del eje. La de H29a con el mismo reloj, sin efecto suelo: 1,61 m/s a
+244 m, empezando a recoger a 11,9 m bajando 3,7. En los últimos tres metros la
+ley del banco ya devolvía la palanca hacia delante (de −0,02 a −0,05): el
+colchón hacía su parte. Una tirada no es una cifra: es la que hay.
+
 ### Lo que no
 
 - **El cabeceo del efecto suelo.** El suelo también quita bajada en la cola,
