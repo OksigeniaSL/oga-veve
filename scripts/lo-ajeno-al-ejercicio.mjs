@@ -12,11 +12,11 @@
  *   tarjetas `propias` y las de seguridad.
  *
  * **La seguridad no se calla**: la información de tráfico (su tarjeta `cerca-…`
- * y su frase, que sin torre la dice la instructora) vale siempre.
+ * y su frase, que sin torre la dice la instructora) vale siempre. Qué frase es
+ * de seguridad no lo adivina el banco: es la lista `SEGURIDAD` de
+ * `flight/sin-instructora.ts`, la misma que sigue sonando con la instructora
+ * quitada, pedida al servidor de desarrollo desde la página.
  */
-
-/** Lo de seguridad, que sale aunque no sea del ejercicio: el tráfico cerca. */
-const DE_SEGURIDAD = /trafico|traffic/i;
 
 export function vigilarLoAjeno() {
   const visto = { tarjetas: new Set(), rotulos: new Set(), radio: new Set(), perdido: false };
@@ -41,20 +41,33 @@ export function vigilarLoAjeno() {
       visto.perdido ||= v.perdido;
     },
     async comprobar(page, comprobar, propias) {
-      const dicho = await page.evaluate(() => globalThis.__oga.dichoTodo());
-      const ajeno = Object.entries(dicho).flatMap(([quien, claves]) =>
+      const dicho = await page.evaluate(async () => {
+        const { SEGURIDAD, claveBase } = await import("/src/flight/sin-instructora.ts");
+        return Object.entries(globalThis.__oga.dichoTodo()).map(([quien, claves]) => ({
+          quien,
+          claves: claves.map((c) => ({ c, seguridad: SEGURIDAD.has(claveBase(c)) })),
+        }));
+      });
+      const ajeno = dicho.flatMap(({ quien, claves }) =>
         claves
-          .filter((c) => !(quien === "instructor" && (/^ejercicio\./.test(c) || DE_SEGURIDAD.test(c))))
-          .map((c) => `${quien}: ${c}`),
+          .filter(({ c, seguridad }) => !(quien === "instructor" && (/^ejercicio\./.test(c) || seguridad)))
+          .map(({ c }) => `${quien}: ${c}`),
       );
+      const delInstructor = dicho.find((d) => d.quien === "instructor")?.claves ?? [];
       comprobar(
         "no se oye nada que no sea del ejercicio o de seguridad",
         ajeno.length === 0,
-        ajeno.slice(0, 6).join(" | ") || `la instructora, ${dicho.instructor?.length ?? 0} frases del ejercicio`,
+        ajeno.slice(0, 6).join(" | ") ||
+          `la instructora: ${delInstructor.map(({ c, seguridad }) => (seguridad ? `${c} (seguridad)` : c)).join(", ") || "nada"}`,
       );
       const tarjetas = [...visto.tarjetas];
       const ajenas = tarjetas.filter((t) => !propias.test(t) && !/^cerca-/.test(t));
-      const rotulos = [...visto.rotulos];
+      /*
+       * El rótulo del destino al empezar —«Fuerteventura · GCFV», cuatro
+       * segundos— es la tarjeta de casa diciendo cuál es, como en todo vuelo:
+       * no pide nada ni es de la pista. Lo demás que se escriba ahí, sí cuenta.
+       */
+      const rotulos = [...visto.rotulos].filter((r) => !/^[^·]+ · [A-Z]{4}$/.test(r));
       comprobar(
         "ni se ve: solo sus tarjetas, sin rótulo, sin tira de la radio y sin la flecha de casa latiendo",
         ajenas.length === 0 && rotulos.length === 0 && visto.radio.size === 0 && !visto.perdido,
