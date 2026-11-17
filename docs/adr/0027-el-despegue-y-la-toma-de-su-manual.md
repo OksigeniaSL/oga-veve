@@ -3055,3 +3055,180 @@ puerto 5688, reloj ×1, con la traza del ala y el viento de casa, 040/12, con
   debajo de 1,2 veces la Vref. Es la misma mezcla que se arregla aquí en la
   banda, en un aviso que no es de esta enmienda; no se ha tocado.
 - **El tope de alabeo de la ayuda**: arriba, en propuesta.
+
+## Enmienda H25e (17-11-2026): la línea de la VAPP, la bajada del trayecto del banco, puesto para aterrizar en indicada y el margen de la final del banco
+
+Lo que la enmienda H25d dejó visto y sin arreglar, y los tres bancos que no
+pudo volar.
+
+### La línea de cifras de la tarjeta del tiempo
+
+La VAPP alargó la línea de cifras del parte —`… · QNH 1018 · VAPP 156KT
+(VREF 146+10)`—, y la línea se partía por cualquier espacio
+(`overflow-wrap: anywhere` y nada más): en una caja estrecha «VAPP» podía
+quedarse al final de un renglón y su cifra en el siguiente, o «(VREF» lejos
+de su suma. Un parte impreso no se lee así: se parte entre grupo y grupo.
+
+- Cada grupo va en su caja en línea (`.parte__grupo`, `grupos` en
+  `ui/tarjeta-del-tiempo.ts`): la línea se parte entre grupos, y uno solo se
+  rompe por dentro si no cabe entero en un renglón, antes que salirse. Sin
+  estrechar nada ni cortar texto.
+- `verificar-tarjeta-del-tiempo.mjs` lo mide grupo a grupo con `Range` desde
+  el peldaño de los números (`OGA_TRAMO=taguato`): ningún grupo en dos
+  renglones, nada fuera de su caja y la VAPP puesta. Y suma dos pantallas: el
+  teléfono tumbado con la barra del navegador, 864 × 330 —el peor caso de
+  `verificar-carteles.mjs`—, y el teléfono de pie, 400 × 780. De pie y con el
+  dedo el juego tapa todo con el cartel de girar la pantalla (`.gira`), así que
+  ahí solo se mide la línea.
+
+Medido el 17-11-2026, puerto 5688, con la niebla de Los Rodeos del banco y el
+JAZ 120 (Los Rodeos → Tenerife Sur): la de llegada, `GCTS · RWY 07 · WIND
+309/6KT · VIS 300M · OVC 200FT · T14 · QNH 1018 · XWIND 5KT · VAPP 151KT
+(VREF 146+5)`, en tres renglones, cada grupo entero, en la tablet (campos de
+319 px), en el portátil y en los dos teléfonos tumbados (327 px). **De pie no
+cabía**: los dos campos lado a lado se quedaban en 149 px, y `VAPP 151KT (VREF
+146+5)` no entra en un renglón de ese ancho. Ahí, por debajo de 560 px de
+ancho, la tarjeta pone un campo debajo del otro (`.parte__campos` en
+columna), y cada campo tiene el ancho de la tarjeta: medido otra vez, 324 px,
+y la VAPP entera en su renglón. El banco queda en 60 de 64: los cuatro
+fallos son los de abajo, dos por cada teléfono tumbado.
+
+**Y lo que se vio y no es de la línea.** En el peldaño de los números y en los
+dos teléfonos tumbados, con la niebla, la decisión queda debajo del borde de
+la tarjeta: los tres botones hay que buscarlos desplazando dentro de ella
+(`todo lo que se toca … se alcanza`, fallo en 800 × 360 y en 864 × 330; unos
+cincuenta y unos ochenta píxeles de más, a ojo en la captura). Lo llenan el
+porqué con sus cifras y la frase de la propuesta; la VAPP le suma un renglón
+de 14 px al campo de llegada, pero falta más que ese renglón, así que sin ella
+tampoco cabría. No se ha tocado: es el reparto de la tarjeta en pantallas
+bajas, no la línea de cifras, y no se ha medido antes de la VAPP.
+
+### La bajada del trayecto del banco (`OGA_RUTA`)
+
+H25d escribió que los vuelos de ruta del banco bajan el JAZ 90 limpio a 1,2
+veces la de circuito en verdadera con el gas del banco, por debajo de la
+mínima nueva por encima de unos 4.800 m. **En el JAZ 90 no es así**, leído en
+el código: en la ruta el banco engancha el automático del juego
+(`ponerPilotoAutomatico`), y en un reactor eso pone también los gases
+(`llevaGasesAutomaticos`: los de turbofán). Bajando por la senda del plan el
+modo vertical es `VNAV PTH` y los gases van en `SPD`, a la marca de la
+escalera (`laVelocidadQueToca`), y su gas pisa el del banco en lo que va al
+modelo (`mandosConAutomatico.throttle`). Lo que vuela el JAZ 90 bajando es lo
+que pide el juego: 280 nudos por encima de los diez mil pies, el Mach 0,75 más
+arriba y 250 por debajo. Igual el JAZ 110 y el JAZ 120.
+
+**Donde sí mandaba el número del banco es en los que no llevan gases
+automáticos**, y ahí estaba mal. En aire estándar, lejos del destino y
+limpios, nudos indicados (el banco a 1,2 veces la de circuito en verdadera /
+lo que pide la escalera / la mínima del automático limpio):
+
+| | 3.000 m | 4.800 m | 6.000 m | Mínima |
+|---|---|---|---|---|
+| JAZ 20 | 83 / 100 | 75 / 90 | **70** / 85 | 71 |
+| JAZ 40 | 103 / 150 | 94 / 145 | **88** / 140 | 94 |
+| JAZ 50 | 93 / 155 | 85 / 145 | **79** / 135 | 84 |
+| JAZ 60 | 134 / 235 | 122 / 215 | **114** / 200 | 118 |
+
+No es un descenso de nadie: el 1900D bajando a 114 nudos con la escalera
+pidiendo 200, por debajo de su punto verde (128) y de la mínima del
+automático, que ahí le bajaría el morro. **Era del banco.** Ahora el banco
+baja a la marca de la escalera, pasada a verdadera, que le da la sonda nueva
+`marcaDeVelocidad`, y que va frenando sola al acercarse —el área terminal, la
+aproximación—. En los reactores con los gases puestos no cambia nada.
+
+`minima-del-automatico.test.ts` lo deja escrito por el lado del juego: en
+todos los aviones, bajando por el plan a 1.500, 3.000, 4.800, 6.000 y 9.000 m,
+limpios, la marca queda por encima de la mínima del automático.
+
+**No se ha volado un trayecto en el navegador** (`OGA_RUTA=1`): es la hora de
+tiempo real que pide el banco, y no cabía en la tanda.
+
+### Puesto para aterrizar, en indicada
+
+`puestoParaAterrizar` —lo que calla el aviso de terreno con el avión
+aterrizando— miraba en el helicóptero y en el avión sin flaps si la
+**verdadera** estaba por debajo de 1,2 veces la de aproximación de la ficha,
+que es **indicada**. Es la mezcla que H25d quitó de la banda: en Los Rodeos,
+con 21 °C, la misma indicada es un cuatro y medio por ciento más de
+verdadera en la pista, así que a 1,18 veces la de aproximación indicada la
+verdadera ya pasaba de 1,23 y el avión dejaba de estar «puesto».
+
+- La cuenta sale de `game.ts` a `vienePuestoParaAterrizar` en
+  `flight/aviso-de-terreno.ts`, con la **indicada del aire**: no la del reloj,
+  que con la funda del pitot puesta marca cero, y eso no es venir despacio.
+- `aviso-de-terreno.test.ts`: el listón en indicada en los dos, el caso de Los
+  Rodeos, caer a plomo, y que con flaps mandan los flaps.
+
+### El margen de la final del banco, el que pide el juego
+
+El banco del vuelo entero llevaba su propio margen (`ADITIVO_DE_FINAL` y su
+cuenta): la regla del reactor —media cara y la racha entera, de cinco a
+veinte— en todos los aviones, con lo que medía su propio anemómetro en los
+últimos diez segundos, que es sobre todo su propio vaivén de gas y de senda.
+El juego lo cuenta desde H25d con la regla de cada clase de avión y con el
+viento del parte (`margenDeLaFinal`), y es lo que pide su marca, su banda y su
+puerta.
+
+- La sonda `margenDeLaFinal` da el del juego, en nudos, con el viento del
+  campo que se tiene debajo; el banco vuela la final con él y con él se coloca
+  en la final al cruzar entre islas. Sin la sonda, los cinco de la calma.
+- Lo que queda del margen en el umbral se cuenta como antes —el menor entre
+  el margen y la mitad de lo que sopla de cara más la racha del parte—, y lo
+  que va y viene el anemómetro sigue en la traza de la final, sin sumar.
+
+Con el viento del banco en Los Rodeos, 040/12 en la 12 —casi de costado, y
+sin racha en el parte—, el juego pide la Vref y cinco: en el JAZ 90, 123
+nudos (la tabla de H25d). El banco medía en esa final de 1 a 9 nudos de cara
+y de 2 a 6 de racha en su anemómetro (ver `SE_QUITA_EL_MARGEN_DESDE` en el
+banco), y pedía de cinco a diez nudos encima. En
+Guyrami, el JAZ 20 pasa de esa misma cuenta a la de la FAA: cinco nudos y la
+mitad de la racha del parte, cinco sin racha.
+
+### Volado en el navegador
+
+`verificar-vuelo-entero.mjs`, el 17-11-2026, puerto 5688, con la traza de la
+final (`OGA_TRAZA_FINAL`) y el viento de casa, 040/12:
+
+- **JAZ 20, Guyrami, reloj ×3** (`… tenerife-norte guyrami 3 jaz-20`): **62 de
+  62**, dos sin medir (la foto de las historias, porque no se contó ninguna, y
+  la espera en la roja, porque no había nadie en la pista). En la final el
+  banco pidió 69 nudos, la Vref y los cinco de la calma que da el juego
+  (`margen 5.0` en las 99 muestras de la traza); su anemómetro iba y venía
+  hasta 3,6 nudos y medía hasta 1,4 de cara, que ya no suman; con la cuenta
+  de antes tampoco habrían pasado de los cinco (0,7 + 3,6), así que esta final
+  es la misma que antes y no pone a prueba el cambio.
+  La puerta, a 70 nudos con la Vref en 64; la toma, a 294 m del umbral, en el
+  eje y a 1,53 m/s.
+- **JAZ 90, Taguató, reloj ×1** (`… tenerife-norte taguato 1 jaz-90`), con la
+  traza del ala: **61 de 62**, tres sin medir (la ventanilla en la final,
+  porque el plan del juego acaba más allá; la foto de las historias; la
+  espera en la roja). Lo que falló es de la radio, como en la segunda tirada de
+  H25d: un tráfico del circuito a 398 ft sin una palabra. En la final el
+  juego dio los cinco de la calma en las 98 muestras (`margen 5.0`, «senda
+  (123 kt)»), y el banco pidió de 123 a 119 al acercarse al umbral; con su
+  cuenta de antes —hasta 11,6 nudos de cara y 6,6 de racha en su anemómetro—
+  habría pedido hasta 9,3 encima, la Vref y nueve. La puerta, a 122 nudos con
+  la Vref en 118, 3,2 m sobre la senda y bajando 3,6 m/s; la recogida empezó a
+  15 m de ruedas a 117 nudos, y la toma, a 210 m del umbral —en la zona— y a
+  1,57 m/s. **El avisador no sonó** ni se encendió en todo el vuelo; lo menos
+  que le quedó al ala: 2,7° rotando a 5 m (1,24 g, 149 nudos), 3,55° en el
+  circuito con la segunda muesca (1,21 g, 132 nudos) y 3,6° en la recogida.
+
+### Lo que no
+
+- **Un trayecto volado en el navegador** (`OGA_RUTA=1`), ni con un reactor ni
+  con uno de hélice: la bajada a la marca está leída en el código y probada
+  en la mesa, no volada.
+- **La decisión de la tarjeta en el teléfono tumbado**, en el peldaño de los
+  números: arriba.
+- **El margen de los turbohélices con su manual**: siguen con la regla de la
+  FAA de la avioneta, en el juego y ahora también en el banco.
+- **Lo que queda del margen en el umbral** sigue siendo cuenta del banco, su
+  forma de recoger: el juego no pide nada en el umbral.
+- **El crucero del trayecto** en el avión sin gases automáticos, a
+  `VELOCIDAD_DE_CRUCERO` en verdadera: no se ha mirado.
+- **`npm run carteles`**, sin correr: el candado del navegador lo tenían otros
+  bancos y se acabó el tiempo de la tanda. Lo que toca la hoja de estilos es
+  solo la tarjeta del tiempo (`.parte__grupo` y los campos en columna por
+  debajo de 560 px de ancho), que ese banco no mide; la tarjeta sí se midió,
+  arriba.

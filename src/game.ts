@@ -1491,7 +1491,7 @@ import {
   type Peldano,
 } from "./flight/escalera";
 import { fueraDeLaBase, queToca, RADIO_DEL_PROCEDIMIENTO } from "./flight/inhibir-terreno";
-import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
+import { avisoDeTerreno, fueraDeLaSenda, vienePuestoParaAterrizar } from "./flight/aviso-de-terreno";
 import {
   gravedadDelSuelo,
   juntarAvisos,
@@ -1686,7 +1686,7 @@ import {
   escalonesDeSubida,
 } from "./flight/autorizacion-de-altitud";
 import { nivelMasTranquilo, ESPERA_CON_BACHES } from "./flight/nivel-tranquilo";
-import { ALTURA_DE_DECISION, MARGENES, PUERTA_ESTABILIZADA } from "./flight/minimos";
+import { ALTURA_DE_DECISION, PUERTA_ESTABILIZADA } from "./flight/minimos";
 import {
   bandaDeAhora,
   bandaDeVelocidad,
@@ -19683,7 +19683,7 @@ export class Game {
        * una aproximación se ha ido de las manos —`MARGENES.cayendo`— y no con
        * uno nuevo: caer más que eso no es aterrizar, sea cual sea la
        * configuración, y ahí el aviso tiene que seguir. Ver
-       * `puestoParaAterrizar` en `flight/aviso-de-terreno.ts`.
+       * `vienePuestoParaAterrizar` en `flight/aviso-de-terreno.ts`.
        */
       /*
        * **El helicóptero, despacio, está maniobrando para posarse**, y se posa
@@ -19693,21 +19693,20 @@ export class Game {
        * con él dentro el juego cantaba «vas muy bajo» al volver al helipuerto
        * a treinta metros. Deprisa y bajo, en cambio, sí se avisa: eso ya no es
        * llegar ni salir. Ver `vieneSinTren`.
+       *
+       * La velocidad, la indicada del aire y no la del reloj: con la funda
+       * puesta el reloj marca cero, y eso no es venir despacio.
        */
-      puestoParaAterrizar: this.aircraft.helicoptero
-        ? this.flight.state.airspeed < this.aircraft.approachSpeed * 1.2 &&
-          this.flight.state.verticalSpeed > MARGENES.cayendo
-        : this.input.controls.tren > 0.9 &&
-        /*
-         * Los flaps fuera son el «vas lento» de los tres. En el avión que no
-         * los lleva lo dice la velocidad, que es lo que ellos decían: la de
-         * aproximación y poco más. Sin esto, en el fumigador no había forma
-         * de estar puesto para aterrizar.
-         */
-        (this.aircraft.llevaFlaps
-          ? this.input.controls.flaps > 0.3
-          : this.flight.state.airspeed < this.aircraft.approachSpeed * 1.2) &&
-        this.flight.state.verticalSpeed > MARGENES.cayendo,
+      puestoParaAterrizar: vienePuestoParaAterrizar(this.aircraft, {
+        tren: this.input.controls.tren,
+        flaps: this.input.controls.flaps,
+        indicada: indicatedAirspeed(
+          this.flight.state.airspeed,
+          this.flight.state.position.y,
+          this.flight.aireDelDia(),
+        ),
+        vertical: this.flight.state.verticalSpeed,
+      }),
     };
     /*
      * **Y lo que viene por delante**, en el avión que lo mira. El aviso de
@@ -27957,6 +27956,24 @@ export class Game {
   get indicadaParaBanco(): number {
     const s = this.flight.state;
     return indicatedAirspeed(s.airspeed, s.position.y, this.flight.aireDelDia()) / NUDO;
+  }
+
+  /**
+   * **Lo que el juego le suma a la Vref en la final**, nudos, con el viento del
+   * parte del campo que se tiene debajo: para que el banco vuele la final que
+   * pide el juego y no una copia de la regla. Ver `margenDeLaFinal`.
+   */
+  get margenDeLaFinalParaBanco(): number {
+    return margenDeLaFinal(this.aircraft, this.vientoDeLaFinal());
+  }
+
+  /**
+   * **La marca de velocidad de ahora**, nudos indicados: la que pide la
+   * escalera y llevan los gases automáticos, para que el banco la vuele en el
+   * avión que no los lleva. Ver `laVelocidadQueToca`.
+   */
+  get marcaDeVelocidadParaBanco(): number {
+    return this.laVelocidadQueToca().kt;
   }
 
   /** El plan de vuelo y su progreso, para los bancos. */

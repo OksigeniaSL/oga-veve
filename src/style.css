@@ -17519,6 +17519,28 @@ body.con-vuelta #tactil {
   border: 1px solid var(--linea);
 }
 
+/*
+ * **En una pantalla estrecha, un campo debajo del otro.** Lado a lado, en un
+ * teléfono de pie cada campo se quedaba en 149 px, y el grupo más largo del
+ * parte, `VAPP 151KT (VREF 146+5)`, no cabía en un renglón: medido con
+ * `verificar-tarjeta-del-tiempo.mjs`. Uno debajo del otro, cada campo tiene el
+ * ancho de la tarjeta. Con el dedo y de pie lo tapa el cartel de girar la
+ * pantalla (`.gira`): esto es para la ventana estrecha.
+ */
+@media (max-width: 560px) {
+  .parte__campos {
+    flex-direction: column;
+  }
+
+  .parte__campo {
+    flex-basis: auto;
+  }
+
+  .parte__de-a {
+    width: 28px;
+  }
+}
+
 .parte__cabecera {
   display: flex;
   align-items: center;
@@ -17596,6 +17618,15 @@ body.con-vuelta #tactil {
   font: 13px/1.35 ui-monospace, monospace;
   color: #8fd3ff;
   overflow-wrap: anywhere;
+}
+
+/*
+ * Cada grupo del parte, de una pieza: la línea se parte entre grupos, como un
+ * METAR impreso. En línea y en bloque, para que solo se rompa por dentro si
+ * no cabe entero en el renglón. Ver `grupos` en `ui/tarjeta-del-tiempo.ts`.
+ */
+.parte__grupo {
+  display: inline-block;
 }
 
 .parte__metares {

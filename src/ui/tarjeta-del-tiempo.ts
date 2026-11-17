@@ -88,6 +88,20 @@ export function cifraDeAproximacion(
   return `VAPP ${vapp}KT (VREF ${vref}+${vapp - vref})`;
 }
 
+/**
+ * **Los grupos del parte, cada uno de una pieza**: `WIND 310/06KT`, `VAPP
+ * 135KT (VREF 118+17)`. La línea se parte entre grupo y grupo, como un METAR
+ * impreso, y no dentro de uno: con la VAPP la línea creció, y partida por
+ * cualquier espacio, en una caja estrecha «VAPP» podía quedarse al final de
+ * un renglón y su cifra en el siguiente, o «(VREF» lejos de su suma. Cada
+ * grupo va en su caja en
+ * línea, que no se rompe por dentro salvo que no quepa entero en el renglón
+ * —y entonces se parte antes que salirse—. Ver `.parte__grupo` en la hoja.
+ */
+function grupos(lista: readonly string[]): string {
+  return lista.map((g) => `<span class="parte__grupo">${g}</span>`).join(" · ");
+}
+
 /** Los tres botones de la decisión que dicen qué hacen al señalarlos. */
 export type BotonQueSeSenala = "quedarse" | "esperar" | "salir-igual";
 
@@ -522,15 +536,20 @@ export class TarjetaDelTiempo {
     const m = p.campo.meteo;
     const boca = p.relativo === null ? null : ((p.relativo % 360) + 360) % 360;
     const texto = cifras
-      ? `<p class="parte__cifras">${atisEnTexto(
-          p.campo.oaci,
-          p.campo.pista,
-          m,
-          v.declinacion?.(p.campo.oaci) ?? 0,
-          // Son las cifras del parte, no un ATIS: un campo sin torre no lo tiene.
-        ).replace(`${p.campo.oaci} ATIS`, p.campo.oaci)}${m.rachaKt ? ` · G${Math.round(m.rachaKt)}KT` : ""}${
-          p.cruzadoKt >= 1 ? ` · XWIND ${Math.round(p.cruzadoKt)}KT` : ""
-        }${this.deAproximacion(p, v)}</p>`
+      ? `<p class="parte__cifras">${grupos([
+          ...atisEnTexto(
+            p.campo.oaci,
+            p.campo.pista,
+            m,
+            v.declinacion?.(p.campo.oaci) ?? 0,
+            // Son las cifras del parte, no un ATIS: un campo sin torre no lo tiene.
+          )
+            .replace(`${p.campo.oaci} ATIS`, p.campo.oaci)
+            .split(" · "),
+          ...(m.rachaKt ? [`G${Math.round(m.rachaKt)}KT`] : []),
+          ...(p.cruzadoKt >= 1 ? [`XWIND ${Math.round(p.cruzadoKt)}KT`] : []),
+          ...this.deAproximacion(p, v),
+        ])}</p>`
       : "";
     return `
       <section class="parte__campo" data-papel="${p.papel}"
@@ -558,10 +577,10 @@ export class TarjetaDelTiempo {
    * margen. Es la cuenta de un briefing de aproximación, con sus siglas de
    * cabina, que no se traducen (regla tercera). Ver `margenDeLaFinal`.
    */
-  private deAproximacion(p: ParteDeUnCampo, v: ParteParaVer): string {
+  private deAproximacion(p: ParteDeUnCampo, v: ParteParaVer): readonly string[] {
     const a = v.aproximacion;
-    if (!a || p !== v.partes[v.partes.length - 1]) return "";
-    return ` · ${cifraDeAproximacion(p, a)}`;
+    if (!a || p !== v.partes[v.partes.length - 1]) return [];
+    return [cifraDeAproximacion(p, a)];
   }
 
   /** El mínimo de techo que se pinta: lo deja el juego en la tarjeta al abrir. */
