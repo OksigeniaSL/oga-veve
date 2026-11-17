@@ -904,6 +904,7 @@ import {
 import { SENDA_DE_SIEMPRE, ayudasVisuales, sendaDeLaCabecera, tieneIls } from "./world/sendas-publicadas";
 import { crearTeselas, type Teselas } from "./world/teselas";
 import {
+  llevaTeselas,
   TeselasDeOrtofoto,
   type ManifiestoDeTeselas,
 } from "./world/teselas-de-ortofoto";
@@ -16928,12 +16929,14 @@ export class Game {
       );
       // Y el borde de la foto de cada vecino, fundido con esta. Ver
       // `MundoVecino.fundirConElHorizonte`.
-      for (const v of this.vecinos)
+      for (const v of this.vecinos) {
         v.mundo.fundirConElHorizonte({
           textura: this.anilloHorizonte.textura,
           uv: this.anilloHorizonte.uv,
           exposicion: exposicionDe(this.anilloHorizonte.ficha),
         });
+        this.prepararElSuelo(v.mundo);
+      }
     }
     if (this.anilloPartido && this.anilloMedio)
       this.terrain.ponerOrtofotoLejana(
@@ -16988,6 +16991,7 @@ export class Game {
         teselas.apuntar({
           material: materialDe(v.mundo.terreno.group, "terreno"),
           origen: suyo,
+          alVestir: () => this.prepararElSuelo(v.mundo),
         });
     }
     this.teselasDeOrtofoto = teselas;
@@ -17000,6 +17004,40 @@ export class Game {
     if (!v) return;
     v.mundo.ponerFoto(foto);
     this.subirLaFotoYa(foto);
+    this.prepararElSuelo(v.mundo);
+  }
+
+  /**
+   * **El programa del suelo de una isla vecina, compilado antes de que entre
+   * en el cuadro** (ADR 0028, enmienda H23c).
+   *
+   * Cada cosa que le llega al suelo del vecino —su foto, el fundido con la
+   * del horizonte, las teselas— le cambia el sombreado, y three no compila el
+   * programa nuevo hasta que la malla entra en el cuadro: al virar hacia la
+   * isla de enfrente, al despegar en su dirección o al saltar de sitio. Y ahí
+   * espera a que la tarjeta lo enlace, en mitad de un fotograma. Medido tras
+   * un salto en El Hierro con la CPU ×4 y la Intel (H9c, 13-11-2026), de 64 a
+   * 256 ms en una sola llamada.
+   *
+   * Aquí se le pide a three que lo prepare ya, con las luces y la niebla de
+   * la escena, que es con lo que se va a dibujar —la misma llave de la caché
+   * de programas que el dibujo de verdad—, y la tarjeta lo enlaza por su
+   * cuenta mientras el juego sigue: nadie le pregunta si ha terminado hasta
+   * que la isla entra en el cuadro. Es `compile` y no `compileAsync`, que
+   * hace lo mismo y además pregunta cada diez milésimas si ya está; aquí no
+   * hay nada que esperar, y esa pregunta revienta si mientras tanto se tira
+   * el material, que pasa al cambiar de mundo.
+   *
+   * Si van a vestirlo de teselas —tiene foto, hay teselas y aún no las
+   * lleva—, se espera a eso, que llega en el siguiente cuarto de segundo:
+   * compilar el de sin teselas sería compilar uno que no se va a usar.
+   */
+  private prepararElSuelo(mundo: MundoVecino): void {
+    const malla = mundo.terreno.group.getObjectByName("terreno") as Mesh | undefined;
+    const mat = malla?.material as (Material & { map?: unknown }) | undefined;
+    if (!malla || !mat || Array.isArray(mat)) return;
+    if (this.teselasDeOrtofoto && mat.map && !llevaTeselas(mat)) return;
+    this.renderer.compile(malla, this.camera, this.scene);
   }
 
   /**
