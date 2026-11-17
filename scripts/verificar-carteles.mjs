@@ -315,6 +315,57 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
         : tel.malos.join(" · ") || (tel.cerrado ? "todo dentro" : "no se cierra"),
       "lo que no es volar vive ahí dentro; si no se alcanza, no existe",
     );
+    /*
+     * **Y un subtítulo largo, con el ancho que de verdad tiene.** Con
+     * `left: 50%` y el `translate` de centrar, el navegador le daba media
+     * pantalla para maquetar: en 844 se partía a 422 y una frase de las
+     * largas subía en tres líneas. Se pone una de las más largas que dice la
+     * instructora y se mide en el mismo instante —el HUD lo borra en el
+     * fotograma siguiente—: que pase de medio ancho, que siga centrado y que
+     * no se ponga encima de ningún botón redondo, ni de la barra ni de la
+     * columna de la cámara y la pausa.
+     */
+    const sub = await page.evaluate(() => {
+      const pisa = (a, b) =>
+        Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+        Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+      const hint = document.querySelector('[data-hud="hint"]');
+      hint.textContent =
+        "Nos queda justo, así que avisamos a la torre: combustible mínimo. No es una emergencia: es avisarle que no podemos esperar.";
+      const r = hint.getBoundingClientRect();
+      const redondos = [
+        ...document.querySelectorAll(
+          ".hud__arriba button, .hud__vistas button, .antes button, [data-hud='menu']",
+        ),
+      ]
+        .filter(
+          (b) =>
+            !b.closest("[hidden]") &&
+            getComputedStyle(b).visibility !== "hidden" &&
+            b.getBoundingClientRect().width > 2 &&
+            pisa(r, b.getBoundingClientRect()),
+        )
+        .map((b) => b.dataset.hud ?? String(b.className).slice(0, 20));
+      hint.textContent = "";
+      return {
+        // El peldaño de los pequeños no lleva subtítulos: ver `.hud--sin-letras`.
+        sinLetras: !!document.querySelector(".hud--sin-letras"),
+        ancho: Math.round(r.width),
+        centro: Math.round(r.left + r.width / 2),
+        pantalla: innerWidth,
+        redondos,
+      };
+    });
+    if (!sub.sinLetras)
+      comprobar(
+        `${donde0}: un subtítulo largo pasa de medio ancho, centrado y sin tapar botones redondos`,
+        sub.ancho > sub.pantalla / 2 &&
+          Math.abs(sub.centro - sub.pantalla / 2) <= 2 &&
+          sub.redondos.length === 0,
+        `${sub.ancho} px de ${sub.pantalla}, centro en ${sub.centro}` +
+          (sub.redondos.length ? ` · encima de ${sub.redondos.join(", ")}` : ""),
+        "con left: 50% se partía a media pantalla y subía en tres líneas hasta la barra",
+      );
   }
   /*
    * **Y todo lo que se toca, de yema.** Con la escala del HUD, los botones
