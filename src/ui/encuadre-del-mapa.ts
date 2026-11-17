@@ -96,6 +96,32 @@ function caja(puntos: readonly Punto[]): Encuadre {
 }
 
 /**
+ * **Lo que tiene que caber con una estela pintada**: la casa y las dos
+ * esquinas de la estela, y no los demás campos del mundo.
+ *
+ * La pide «Seguí la aguja» (`Mapa.ponerEstela`): el plano ancho enseñaba el
+ * archipiélago entero —Lanzarote, Gran Canaria— y la estela de veinte
+ * kilómetros quedaba en una raya de quince píxeles junto a Fuerteventura, con
+ * la instructora diciendo «mirá la curva». Mientras se lleva la estela, el
+ * vuelo entero es ella. `estela` en coordenadas del fichero: la y es la z
+ * negativa del mundo.
+ */
+export function camposConEstela(casa: Punto, estela: readonly (readonly [number, number])[]): Punto[] {
+  if (estela.length < 2) return [casa];
+  let x0 = Infinity;
+  let x1 = -Infinity;
+  let z0 = Infinity;
+  let z1 = -Infinity;
+  for (const [x, y] of estela) {
+    x0 = Math.min(x0, x);
+    x1 = Math.max(x1, x);
+    z0 = Math.min(z0, -y);
+    z1 = Math.max(z1, -y);
+  }
+  return [casa, { x: x0, z: z0 }, { x: x1, z: z1 }];
+}
+
+/**
  * El encuadre del vuelo entero: los campos y el avión, con aire alrededor.
  *
  * `minimo` es el escenario: aunque no haya a dónde ir, el plano ancho enseña

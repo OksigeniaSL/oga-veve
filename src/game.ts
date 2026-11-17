@@ -782,6 +782,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   despresurizacion: EJERCICIO_DE_DESPRESURIZACION.dibujo,
   // La nube con su rayo: la misma del aviso de tormenta del radar.
   tormenta: "tormenta",
+  // La aguja del ADF hacia arriba: la radio delante. Ver `seguir-la-aguja.ts`.
+  aguja: "aguja-adf",
   autorrotacion: "helicoptero-sin-motor",
   // Las lecciones del ala rotatoria, con lo que se pide en cada una: ver `lecciones-del-rotor.ts`.
   estacionario: "helicoptero-quieto",
@@ -967,6 +969,16 @@ import type { ComoSeDice } from "./ui/carta/tocar-la-carta";
 import { ponerRadioDeLaCarta } from "./ui/carta/tocar-la-carta";
 import { RadioDeCabina, radiosDe, vuelta, type Avion as AvionDeLaRadio, type Emisora } from "./flight/radio-de-navegacion";
 import { pintarLaRadio, type RadioEnElCuadro } from "./ui/radio-en-la-rosa";
+import { TurnoDelMorse } from "./audio/morse";
+import {
+  colocacionDeLaAguja,
+  MINUTOS_HASTA_LA_ESTACION,
+  ndbDelCampo,
+  SeguirLaAguja,
+  TOPE_POR_DEBAJO_DE_DIEZ_MIL,
+  type ColocacionDeLaAguja,
+  type SucesoDeLaAguja,
+} from "./flight/seguir-la-aguja";
 import { PantallaDespierta } from "./ui/pantalla-despierta";
 import { ahoraEsTelefonoApaisado } from "./ui/telefono";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
@@ -1319,6 +1331,7 @@ import {
   llamadaDeCombustible,
   loQueCabe,
   masaConCombustible,
+  quemaEsperando,
   quemaPorSegundo,
   reservaEnKilos,
   seCargaAlCambiarDeDestino,
@@ -3808,6 +3821,14 @@ export class Game {
    * `flight/lecciones-del-rotor.ts` y `practicarElRotor`.
    */
   private leccionDelRotor: LeccionDelRotor | null = null;
+  /**
+   * **«Seguí la aguja»**, si se eligió: el NDB del campo en el ADF, su morse
+   * y volar hacia él. No falla nada; lo lleva su propia práctica. Ver
+   * `flight/seguir-la-aguja.ts` y `practicarLaAguja`.
+   */
+  private aguja: SeguirLaAguja | null = null;
+  /** Dónde empieza, contado una vez por montaje: ver `dondeEmpiezaLaAguja`. */
+  private colocacionDeLaAguja: ColocacionDeLaAguja | null = null;
   /** La nube de la tormenta del ejercicio. Ver `world/cumulonimbo.ts`. */
   private cumulonimbo: CumulonimboEnElMundo | null = null;
   /**
@@ -3828,7 +3849,13 @@ export class Game {
    * torre que contesta, el «otra vez»—.
    */
   private get ejercicioDeHoy(): Ejercicio | null {
-    return this.practica?.ejercicio ?? this.tormenta?.ejercicio ?? this.leccionDelRotor?.ejercicio ?? null;
+    return (
+      this.practica?.ejercicio ??
+      this.tormenta?.ejercicio ??
+      this.leccionDelRotor?.ejercicio ??
+      this.aguja?.ejercicio ??
+      null
+    );
   }
   /**
    * **Si el ejercicio ya declaró la emergencia**: MAYDAY o PAN PAN con un
@@ -6371,7 +6398,7 @@ export class Game {
      * cinturón: `?ejercicio=` en la dirección llega por otro lado.
      */
     const ejercicio = options.ejercicio ?? null;
-    if (ejercicio && seOfrece(ejercicio, this.tier.id, this.aircraft)) {
+    if (ejercicio && seOfrece(ejercicio, this.tier.id, this.aircraft, oaciDe(this.scenario))) {
       /*
        * **La tormenta no es una avería**: la lleva su propia práctica, con la
        * tormenta puesta en medio del camino a casa. Ver `ponerLaTormenta`.
@@ -6387,6 +6414,14 @@ export class Game {
       } else if (ejercicio.escena === "rotor") {
         // Las del helicóptero tampoco: ver `practicarElRotor`.
         this.leccionDelRotor = new LeccionDelRotor(ejercicio, this.aircraft.helicoptero?.rotor.sentido ?? 1);
+      } else if (ejercicio.escena === "radio") {
+        // Ni la aguja: el NDB del campo, puesto donde está. Ver `practicarLaAguja`.
+        const ndb = ndbDelCampo(oaciDe(this.scenario));
+        const origen = this.scenario.aerodrome?.origin;
+        if (ndb && origen) {
+          const { x, z } = dondeCae(origen, ndb.estacion);
+          this.aguja = new SeguirLaAguja(ejercicio, { emisora: ndb, x, z });
+        }
       } else
         this.practica = new Practica(ejercicio, this.aircraft, {
           v1: this.aircraft.decisionSpeed,
@@ -7566,7 +7601,15 @@ export class Game {
      */
     ponerRadioDeLaCarta({
       lleva: (f) => f.radio !== "com" && radiosDe(this.aircraft)[f.radio],
-      poner: (f) => f.radio !== "com" && this.radioAlDia().poner(f.radio, f.mhz),
+      /*
+       * Y al ponerla, su morse: tocar otra vez la que ya está puesta la vuelve
+       * a identificar, que es lo que se hace cuando se duda. Ver `identificar`.
+       */
+      poner: (f) => {
+        if (f.radio === "com" || !this.radioAlDia().poner(f.radio, f.mhz)) return false;
+        this.identificar(f.radio);
+        return true;
+      },
     });
     this.hud.onDestino(() => this.alTocarLaCasa());
     /*
@@ -13233,7 +13276,19 @@ export class Game {
        * que la final de siempre. Ver `dondeEmpiezaElEjercicio`.
        */
       const colocacion = this.ejercicioDeHoy?.colocacion;
-      if (colocacion) {
+      /*
+       * **La aguja no empieza en la prolongación de la pista**: empieza a seis
+       * minutos de la radio, con el viento de costado. Ver `dondeEmpiezaLaAguja`.
+       */
+      const enLaAguja = colocacion === "aguja" ? this.dondeEmpiezaLaAguja() : null;
+      if (enLaAguja) {
+        const y = Math.max(
+          this.terrain.runwayElevation + enLaAguja.alto,
+          this.terrain.sampleHeight(enLaAguja.x, enLaAguja.z) + SUELO_MINIMO,
+        );
+        return new Vector3(enLaAguja.x, y, enLaAguja.z);
+      }
+      if (colocacion && colocacion !== "aguja") {
         const { lejos, alto } = this.dondeEmpiezaElEjercicio(colocacion);
         const [x, z] = puntoDePista(runway, hastaElUmbralDeToma(runway) + lejos);
         const y = Math.max(
@@ -13486,6 +13541,7 @@ export class Game {
     this.practica?.reiniciar();
     this.otraVezLaTormenta();
     this.leccionDelRotor?.reiniciar();
+    this.aguja?.reiniciar();
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
@@ -16139,11 +16195,61 @@ export class Game {
     if (this.radioAlDia().girarCurso(pasos)) this.avisar("attention");
   }
 
-  /** **La estación siguiente** de la NAV o del ADF, por cercanía. */
+  /** **La estación siguiente** de la NAV o del ADF, por cercanía, con su morse. */
   siguienteEstacion(caja: "nav" | "adf"): void {
     const a = this.avionParaLaRadio();
     if (!a || !this.conRadio()) return;
-    if (this.radioAlDia().siguiente(caja, a)) this.avisar("attention");
+    if (!this.radioAlDia().siguiente(caja, a)) return;
+    this.avisar("attention");
+    this.identificar(caja);
+  }
+
+  /**
+   * **El morse de la radio** (ADR 0030, enmienda H26b): un pedido como mucho
+   * y lo que suena, con su turno. Ver `audio/morse.ts`.
+   */
+  private readonly morseDeLaRadio = new TurnoDelMorse();
+  /** Lo último que se identificó entero: caja y estación, como `adf FV`. Lo mira el ejercicio de la aguja. */
+  private identificadaYa: string | null = null;
+
+  /**
+   * **Identificar la estación recién puesta**: su identificador en morse,
+   * como hace un piloto antes de creerse la aguja. **Sin señal, sin morse**:
+   * la estación está lejos o tras la Tierra, la bandera NAV está fuera o el
+   * ADF no tiene a qué apuntar, y eso es lo que tiene que enseñar el silencio.
+   * La bandera de encima de la estación o de través no lo calla: la portadora
+   * llega, y un receptor de verdad sigue oyendo el identificador.
+   */
+  private identificar(caja: "nav" | "adf"): void {
+    const a = this.avionParaLaRadio();
+    if (!a) return;
+    const l = this.radioAlDia().leer(a, this.elevacionDeLaEstacion);
+    const emisora = caja === "nav" ? l.nav?.lectura.emisora : l.adf?.lectura.emisora;
+    if (this.identificadaYa?.startsWith(`${caja} `)) this.identificadaYa = null;
+    if (!emisora) {
+      this.apuntarCanto(`morse ${caja}: sin señal, callado`);
+      return;
+    }
+    this.morseDeLaRadio.pedir(`${caja} ${emisora.estacion.id}`, emisora.estacion.morse, this.relojDePared);
+  }
+
+  /**
+   * **Un paso del morse**: suena cuando no habla nadie ni canta un aviso
+   * —un suceso, una voz— y se corta si empieza a hablar alguien.
+   */
+  private atenderAlMorse(): void {
+    const callado = BOCA.ocupada || this.torre.hablando || this.suenaUnAvisoParaLaCarta;
+    const a = this.morseDeLaRadio.paso(this.relojDePared, callado);
+    if (!a) return;
+    this.apuntarCanto(`morse ${a.id}: ${a.que}`);
+    if (a.que === "empieza") this.audio.morse(a.golpes);
+    else if (a.que === "corta") this.audio.callarElMorse();
+    else if (a.que === "acaba") this.identificadaYa = a.id;
+  }
+
+  /** El morse, para el banco: lo que suena o espera y lo último identificado. */
+  get morseParaBanco(): { readonly suena: boolean; readonly de: string | null; readonly identificada: string | null } {
+    return { suena: this.morseDeLaRadio.suena, de: this.morseDeLaRadio.de, identificada: this.identificadaYa };
   }
 
   /**
@@ -17476,19 +17582,22 @@ export class Game {
           ? this.aircraft.velocidadDeCircuito
           : colocacion === "crucero" || colocacion === "tormenta"
             ? this.aircraft.cruiseSpeed
-            : configurado
+            : colocacion === "aguja"
+              ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
+              : configurado
               ? this.aircraft.approachSpeed * 1.1
               : this.flight.velocidadDeEntradaEnFinal(this.aircraft.approachSpeed);
+    const enLaAguja = colocacion === "aguja" ? this.dondeEmpiezaLaAguja() : null;
     this.flight.reset({
       position: this.startPosition(),
-      heading: MathUtils.degToRad(runway.heading),
+      heading: enLaAguja ? enLaAguja.rumbo : MathUtils.degToRad(runway.heading),
       airspeed: entrada,
       /*
        * Arriba, en crucero, con el ala sosteniendo lo que pesa: sin esto nace
        * con el morro en el horizonte y lo primero que hace es caerse, que no
        * es lo que se viene a practicar. Ver `InitialConditions.equilibrado`.
        */
-      ...(colocacion === "crucero" || colocacion === "tormenta" ? { equilibrado: true } : {}),
+      ...(colocacion === "crucero" || colocacion === "tormenta" || colocacion === "aguja" ? { equilibrado: true } : {}),
     });
     if (this.campoMontado !== this.scenario.id) this.montarElCampo(this.laCasa);
     /*
@@ -19030,6 +19139,10 @@ export class Game {
     this.practicarLaTormenta(dt);
     // Y las lecciones del helicóptero. Ver `practicarElRotor`.
     this.practicarElRotor(dt);
+    // Y la aguja del ADF. Ver `practicarLaAguja`.
+    this.practicarLaAguja(dt);
+    // El morse de la radio, con su turno. Ver `atenderAlMorse`.
+    this.atenderAlMorse();
     this.mirarSiCambiaDeCampo();
     this.avisarDeLosBultos(dt);
 
@@ -23955,6 +24068,152 @@ export class Game {
             this.tier.instruments === "none"
               ? ""
               : this.rotulo(`ejercicio.${l.id}.bien` as TranslationKey, "palabra.bien"),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+    }
+  }
+
+  // ── «Seguí la aguja» ─────────────────────────────────────────────────
+  //
+  // Ver `flight/seguir-la-aguja.ts`. Aquí, como en los demás, solo se decide
+  // quién dice y enseña cada cosa. Va solo en el peldaño de la radio, y lo que
+  // cuenta es el ejercicio mismo: la instructora lo dice entero, con el dibujo
+  // de la aguja en la tarjeta y la frase escrita.
+
+  /**
+   * **Dónde empieza la aguja**: a seis minutos de la radio, con el viento del
+   * día de costado. Se cuenta con el suelo de verdad —el lado del mar, si lo
+   * hay— y se guarda: el morro y el sitio tienen que salir de la misma cuenta.
+   */
+  private dondeEmpiezaLaAguja(): ColocacionDeLaAguja | null {
+    const a = this.aguja;
+    if (!a) return null;
+    if (this.colocacionDeLaAguja) return this.colocacionDeLaAguja;
+    const agua = this.scenario.waterLevel ?? 0;
+    this.colocacionDeLaAguja = colocacionDeLaAguja({
+      estacion: a.estacion,
+      viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+      velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
+      suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+      cotaDeLaPista: this.terrain.runwayElevation,
+    });
+    return this.colocacionDeLaAguja;
+  }
+
+  /** «Seguí la aguja», para el banco. */
+  get seguirLaAgujaParaBanco(): {
+    readonly fase: string;
+    readonly cierre: string | null;
+    readonly desvio: number;
+    readonly lejosAlEmpezar: number | null;
+    readonly estacion: { readonly id: string; readonly x: number; readonly z: number };
+    readonly colocacion: ColocacionDeLaAguja | null;
+  } | null {
+    const a = this.aguja;
+    if (!a) return null;
+    return {
+      fase: a.fase,
+      cierre: a.cierre,
+      desvio: a.desvio,
+      lejosAlEmpezar: a.lejosAlEmpezar,
+      estacion: { id: a.estacion.emisora.estacion.id, x: a.estacion.x, z: a.estacion.z },
+      colocacion: this.colocacionDeLaAguja,
+    };
+  }
+
+  /**
+   * **Un paso de la aguja**: lo que marca el ADF, si tiene puesta la radio y
+   * si ya sonó su morse. Y la estela en el plano mientras dure: la raya que
+   * va dejando el avión es donde se ve la curva.
+   */
+  private practicarLaAguja(dt: number): void {
+    const g = this.aguja;
+    if (!g) return;
+    this.hud.mapa.ponerEstela(g.fase === "cerrada" ? null : () => this.libreta.traza);
+    // Como los demás: no se cuenta nada encima del parte.
+    if (this.tarjetaDelTiempo?.abierta) return;
+    const s = this.flight.state;
+    const a = this.avionParaLaRadio();
+    const radio = this.radioAlDia();
+    const adf = a ? radio.leer(a, this.elevacionDeLaEstacion).adf : null;
+    const id = g.estacion.emisora.estacion.id;
+    const sintonizada = g.esLaEstacion(radio.adfMhz) && adf?.lectura.emisora?.estacion.id === id;
+    const sucesos = g.paso(
+      {
+        x: s.position.x,
+        z: s.position.z,
+        enElSuelo: s.onGround,
+        parado: s.onGround && s.groundSpeed < 0.6,
+        percance: this.percance !== null,
+        sintonizada,
+        identificada: sintonizada && this.identificadaYa === `adf ${id}`,
+        relativa: sintonizada ? (adf?.lectura.relativa ?? null) : null,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderALaAguja(suceso);
+  }
+
+  private atenderALaAguja(suceso: SucesoDeLaAguja): void {
+    /** La tarjeta con su dibujo y su frase, y la voz de la instructora si está grabada. */
+    const contar = (dibujo: DibujoDeSenal, clave: TranslationKey, palabra: TranslationKey): void => {
+      this.hud.senal.mostrar(dibujo, this.rotulo(clave, palabra), null, {
+        segundos: 12,
+        prioridad: IMPORTANTE,
+      });
+      this.decirDelEjercicio(clave, "mando");
+    };
+    switch (suceso.que) {
+      case "presentar":
+        /*
+         * El ADF, vacío: se pone a mano y se identifica, que es la mitad de
+         * la lección. Al salir se había puesto solo con la radio del campo.
+         */
+        this.radioAlDia().quitar("adf");
+        if (this.identificadaYa?.startsWith("adf ")) this.identificadaYa = null;
+        /*
+         * **Y el depósito, con lo del ejercicio**: se carga para el vuelo de
+         * casa a casa, y la radio queda a seis minutos de ida y otros tantos
+         * de vuelta. Sin esto, a mitad de la curva se declaraba «minimum
+         * fuel», que es justo lo que una salida bien preparada no hace. Tres
+         * veces el tramo, a lo que se quema esperando: ida, vuelta y margen.
+         */
+        this.combustible = Math.min(
+          loQueCabe(this.aircraft),
+          this.combustible + quemaEsperando(this.aircraft) * 3 * MINUTOS_HASTA_LA_ESTACION,
+        );
+        return contar("aguja-adf", "ejercicio.aguja.antes", "palabra.practica");
+      case "sintonizar":
+        return contar("aguja-adf", "ejercicio.aguja.sintonizar", "palabra.practica");
+      case "identificada":
+        return contar("aguja-adf", "ejercicio.aguja.identificada", "palabra.practica");
+      case "curva":
+        return contar("aguja-adf", "ejercicio.aguja.curva", "palabra.practica");
+      case "corregir":
+        // Con el morro hacia el viento, la radio queda del otro lado: la aguja, quieta a ese lado.
+        return suceso.lado === "derecha"
+          ? contar("aguja-a-la-izquierda", "ejercicio.aguja.alVientoDerecha", "palabra.practica")
+          : contar("aguja-a-la-derecha", "ejercicio.aguja.alVientoIzquierda", "palabra.practica");
+      case "asiVa":
+        this.avisar("achieved");
+        return contar("aguja-adf", "ejercicio.aguja.asiVa", "palabra.bien");
+      case "pasada":
+        this.avisar("achieved");
+        return contar("aguja-adf", "ejercicio.aguja.bien", "palabra.bien");
+      case "cerrar":
+        // Lo malo ya lo cuenta el percance; posado sin pasar, el suelo lo dice.
+        if (suceso.como === "otraVez") return;
+        /*
+         * El panel del final, con la estela en el plano, cuando la instructora
+         * ha tenido tiempo de decir que la aguja dio la vuelta.
+         */
+        this.agenda.luego(TARDA_EL_FINAL + 8, () => {
+          if (this.aguja?.cierre !== "hecho") return;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre("vuelta"),
+            this.rotulo("ejercicio.aguja.bien", "palabra.bien"),
             plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
           );
         });

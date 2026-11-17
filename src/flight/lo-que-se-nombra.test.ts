@@ -71,6 +71,12 @@ const FUERA_DE_LA_TABLA: Readonly<Record<string, string>> = {
   "explica.td.presenta": "se presenta con el círculo a la vista",
   "explica.tc.presenta": "se presenta con el círculo a la vista",
   "explica.gs-rodaje.presenta": "se presenta con la barra a la vista",
+  /*
+   * «La carta» de «Seguí la aguja» es la de papel, con la caja de la estación
+   * y su morse impreso, la que se compara con lo que suena; no la pantalla de
+   * navegación del cuadro.
+   */
+  "ejercicio.aguja.identificada": "la carta de papel con el morse impreso en la caja, no la de la pantalla",
   // El rótulo de la tarjeta del PAPI: nombra las luces dibujadas en ella.
   "vuelo.papiAlto": "rótulo de la tarjeta que dibuja las cuatro luces",
   "vuelo.papiBajo": "rótulo de la tarjeta que dibuja las cuatro luces",

@@ -3007,6 +3007,40 @@ for (const tipo of DE_LA_CARTA_QUE_SE_TOCA) {
   total += texto.length;
 }
 
+/*
+ * **Y «Seguí la aguja»** (17-11-2026, #51): el primer ejercicio de la radio
+ * de navegación, el del NDB. La presentación, sintonizar, el morse que
+ * identifica, la curva del perro, apuntar al viento a cada lado, el «así» y
+ * la aguja que da la vuelta encima de la radio. Genéricas, sin el nombre de
+ * la estación, porque valen en todo campo con NDB. Detrás de todo, y en calma
+ * como todo ejercicio. Ver `src/flight/seguir-la-aguja.ts` y el ADR 0030,
+ * enmienda H26b.
+ */
+const DE_LA_AGUJA = [
+  ["ejercicio.aguja.antes", "seguí la aguja, antes de empezar: qué es la radio y qué hace la aguja del ADF"],
+  ["ejercicio.aguja.sintonizar", "seguí la aguja: a los doce segundos, si el ADF sigue sin la radio del campo"],
+  ["ejercicio.aguja.identificada", "seguí la aguja: detrás del morse de la radio, cuando acaba de sonar entero"],
+  ["ejercicio.aguja.curva", "seguí la aguja: la estela del plano se aparta de la recta con el viento de costado"],
+  ["ejercicio.aguja.alVientoDerecha", "seguí la aguja: catorce segundos después de la curva, con el viento por la derecha"],
+  ["ejercicio.aguja.alVientoIzquierda", "seguí la aguja: catorce segundos después de la curva, con el viento por la izquierda"],
+  ["ejercicio.aguja.asiVa", "seguí la aguja: la aguja quieta a un lado diez segundos, y se celebra"],
+  ["ejercicio.aguja.bien", "seguí la aguja: la aguja da la vuelta encima de la radio, y se acaba"],
+];
+for (const [id, para] of DE_LA_AGUJA) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
   ...filas.map((f) =>

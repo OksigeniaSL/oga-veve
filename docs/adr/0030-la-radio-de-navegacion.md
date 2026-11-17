@@ -159,3 +159,151 @@ No es una cabina nueva:
 Y, por delante de los ejercicios, el **morse**: al poner una estación, su
 identificador en tonos de mil veinte hercios, por la vía de la radio y nunca a
 la vez que la instructora (un suceso, una voz). Sin grabar nada: se sintetiza.
+
+## Enmienda H26b (17-11-2026): el morse al sintonizar y «Seguí la aguja»
+
+La segunda mitad de #51 para estos dos peldaños: lo que la propuesta de arriba
+ponía «por delante de los ejercicios», el morse, y el primero de ellos.
+
+### El morse, para identificar
+
+Un piloto no se cree una aguja hasta que ha oído el identificador de la
+estación y lo ha comparado con el de la carta: puede haber otra con la misma
+frecuencia, una en mantenimiento o ninguna. Por eso el morse no es un adorno:
+es la mitad de usar el instrumento. `audio/morse.ts`:
+
+- **Cuándo**: al sintonizar a mano —tocando la radioayuda o su frecuencia en
+  la carta, con el 7 y el 8 o tocando la estación en la pantalla de
+  navegación— y al volver a tocar en la carta la que ya está puesta, que es
+  como se vuelve a oír. **No al salir**, cuando la radio se pone sola: el
+  despegue es el momento con más voces, y un pitido más ahí es ruido.
+- **Qué**: el identificador de `morseDe`, el mismo que dibuja la caja de la
+  carta, **a 1.020 Hz y a unas siete palabras por minuto**, que es lo que pide
+  el Anexo 10, vol. I, para el localizador (3.1.3.9), el VOR (3.3.6) y el NDB
+  (3.4.5). La unidad de la palabra PARIS, 1,2 / ppm: 171 ms; la raya tres
+  unidades, entre letras tres y entre palabras siete. **Dos veces**, con el
+  hueco de una palabra: FV dura ocho segundos y medio.
+- **Cómo suena**: un solo oscilador senoidal con su ganancia abriéndose en
+  cada golpe —un nodo por identificador, no uno por punto—, con rampas de
+  cinco milésimas para que no chasque, por el bus de la radio y bajo (0,07).
+  Sin fichero: sintetizado.
+- **Su turno** (`TurnoDelMorse`): espera a que no hable nadie, ni la torre ni
+  la instructora, ni cante una caja ni suene un aviso; deja seis décimas de
+  respiro, que tocar la carta hace que la instructora diga qué es y su
+  grabación tarda en empezar; si empieza a hablar alguien mientras suena, se
+  corta y se vuelve a pedir una vez. Lo que espera más de treinta segundos se
+  cae: es lo que tarda una radioayuda en repetir su identificador, y una
+  espera sin salida es un candado.
+- **Sin señal, sin morse**: la estación lejos o tras la Tierra, la bandera NAV
+  fuera, el ADF sin nada a lo que apuntar. Ese silencio es lo que enseña a no
+  fiarse. La bandera de encima de la estación o de través no lo calla: la
+  portadora llega, y un receptor de verdad sigue oyendo el identificador.
+
+### «Seguí la aguja»
+
+`flight/seguir-la-aguja.ts`, una entrada más de `EJERCICIOS` —`aguja`, con
+`escena: "radio"`, como la tormenta y las del rotor, que no son averías—, con
+su ficha en el hangar (la antena con sus ondas, la estela curvándose con el
+viento y la avioneta que llega de cara a él) y la misma puerta: el hangar,
+`?ejercicio=aguja`, la presentación antes y el panel del final con la traza.
+
+- **Dónde se ofrece**: en el peldaño de cabina, que es el que tiene el ADF en
+  el cuadro y su frecuencia en la carta; en los de abajo no hay aguja que
+  seguir. En todo avión con ADF —no el biplano— y en todo campo con NDB, que
+  es un filtro nuevo de la lista (`dondeVale`, por el OACI de casa): FV en
+  Fuerteventura, que es para el que se pensó, y también BX, HIE, CVT, PJC y
+  CON. Se vende al mundo: Fuerteventura es el ejemplo, no el límite.
+- **El viento, el del sitio**: como la tormenta, el ejercicio trae su día —el
+  `vientoDominante` del campo, a mano—, porque con el parte de hoy podría
+  tocar la calma, y la lección es lo que hace el viento. En Fuerteventura, el
+  alisio: del treinta a veinte nudos.
+- **Dónde empieza** (`colocacionDeLaAguja`): a seis minutos de la estación a
+  la velocidad del ejercicio —la de crucero, con el tope de 250 kt de por
+  debajo de diez mil pies—, entre ocho y veinticinco millas; **con el viento
+  de costado**, a noventa grados del camino, que es el que dibuja la curva; de
+  los dos costados, el del camino más bajo —en Fuerteventura, el mar al
+  sudeste de FV—; a tres mil pies sobre la pista o mil por encima de lo más
+  alto del camino; equilibrado, limpio y con el morro treinta grados apartado
+  de la radio, del lado al que va el viento, para que al sintonizar la aguja
+  salga a un lado y lo primero sea ponerla arriba.
+- **El ADF empieza vacío** (`RadioDeCabina.quitar`): sintonizar e identificar
+  son la mitad del ejercicio. Cuenta como puesto a mano.
+- **Lo que pasa**, en sucesos como los demás ejercicios, con la tarjeta (la
+  aguja del ADF dibujada: arriba, o quieta a un lado) y la instructora:
+  presentar; si a los doce segundos el ADF sigue sin la radio, «poné la radio
+  del campo en el ADF», una vez y otra solo si se quita; al acabar el morse,
+  «¿oíste los pitidos?» y la aguja arriba; **la curva**, cuando la estela se
+  aparta de la recta —desde donde la aguja quedó arriba hasta la estación— un
+  dos por ciento de lo que había, y como poco cuatrocientos metros, tras
+  veinte segundos siguiéndola y con un tercio largo del camino hecho, que
+  antes de eso la curva todavía parece una recta en el plano (medido: con el alisio, la curva se aparta unos
+  mil trescientos metros a cualquier velocidad, que son seis minutos de viento
+  empujando, un 7,5 % del camino a cien nudos y un 3 % a doscientos cincuenta;
+  en calma, de veinte a cincuenta metros); catorce segundos después, **apuntar al viento**
+  hacia el lado del que viene; **«así»**, con la aguja quieta (dos grados y
+  medio en diez segundos) entre tres y cuarenta grados del lado al que empuja
+  el viento; y **la pasada**: la aguja cruza los noventa grados a menos de
+  tres millas de la estación. Ahí se acaba, con el sonido del logro, y el
+  panel del final llega con la traza en el plano. Nadie suspende: quien no
+  corrige llega igual, por la curva.
+- **La estela, en el plano en vuelo** (`Mapa.ponerEstela`): la traza de la
+  libreta pintada encima del papel, continua y en la tinta de los nombres,
+  como el lápiz con el que se lleva la traza en una carta, por encima de la
+  ruta y por debajo de la flecha. Desde la cabina se mira hacia delante, y la
+  curva se ve desde arriba: es ahí donde la instructora dice que se mire.
+  **Una estela dibujada en el suelo del mundo en 3D queda apuntada**: el plano
+  ya la enseña, y una cinta de cientos de metros sobre el relieve hay que
+  medirla antes en la tablet.
+- **Las frases**, ocho, genéricas: sin el nombre de la estación, que lo dice
+  su morse y lo escribe la carta. Sin grabar: están al final de
+  `scripts/frases-para-grabar.mjs` (`DE_LA_AGUJA`); hasta entonces, la tarjeta
+  y su texto, como todo ejercicio (`decirDelEjercicio`).
+
+### Lo que se prueba
+
+- `audio/morse.test.ts`: la unidad de siete palabras por minuto, los golpes de
+  FV (··–· ···–) con sus huecos, las dos veces con el hueco de palabra, y el
+  turno: espera a la boca, se corta y vuelve una vez, caduca y se pisa.
+- `flight/seguir-la-aguja.test.ts`: **un piloto de prueba que vuela el
+  ejercicio con la radio de verdad** (`leerAdf`) y un avión de cinemática —la
+  velocidad de la avioneta, giros de régimen estándar como mucho y el viento
+  sumado—, de Fuerteventura a FV. Con el alisio de costado, la curva del perro
+  sale, hacia el sudoeste, y se acaba al pasar; sin viento, la estela sale
+  recta y también se acaba; quien apunta al viento cuando se le pide oye el
+  «así» y llega antes; con el reactor a 250 kt la curva es menor, y sale. Y
+  dónde se ofrece y dónde empieza.
+- `scripts/ver-seguir-la-aguja.mjs`: el mismo vuelo en el juego, con la tecla
+  8, el morse y el automático siguiendo la aguja, con y sin viento, y sus
+  capturas. Con el modelo de vuelo de verdad y la avioneta, a 11,6 millas de
+  FV y a 948 m: con el alisio la estela se aparta 1.454 m de la recta (un 7 %)
+  y en calma 91 (un 0,4 %), y en los dos se cierra al pasar, con la aguja a
+  111° y a 180°. Y dos cosas que salieron ahí y se arreglaron: el plano ancho
+  enseñaba el archipiélago entero y la estela era una raya de quince píxeles
+  —con la estela puesta encuadra la casa y la estela (`camposConEstela`)—, y
+  el depósito, cargado para el vuelo de casa a casa, declaraba «minimum fuel»
+  a mitad de la curva: suma tres veces el tramo a lo que se quema esperando.
+
+### Propuesta para la tanda siguiente: «¿En qué radial estoy?»
+
+El peldaño del VOR, en el mismo marco: `escena: "radio"`, el peldaño de
+cabina, los campos con VOR (`radioDeSalida(oaci).nav`).
+
+- **Dónde empieza**: a unas quince millas del VOR del campo, en un radial
+  redondo que no sea el de la pista —el 060 de FTV, por ejemplo—, con el
+  morro de través al radial: así girar el avión no mueve la aguja, que es
+  justo la lección.
+- **Primero, identificar**, como en la aguja: la NAV vacía, sintonizar y oír
+  el morse. Después, **girar el OBS hasta centrar la aguja con FROM**
+  (9 y 0, o la ventanilla CRS): con `leerNav`, el suceso «centrada» es la
+  desviación por debajo de un punto (dos grados) con FROM, y la instructora
+  dice que ese número es el radial en que estás, lo mires como lo mires. Para
+  verlo, que gire el avión noventa grados: la aguja no se mueve.
+- **Luego, a la estación por ese radial**: girar el OBS ciento ochenta, TO,
+  volar con la aguja centrada (con el alisio, otra vez la corrección de
+  viento, ahora con una aguja que sí la dice), y **pasar**: la bandera en el
+  cono de confusión y el FROM al otro lado son el final.
+- **Frases**: identificar, girar el OBS, «ese es tu radial», girar el avión y
+  ver que no se mueve, TO y el paso. Las cifras se escriben, no se dicen.
+- **Prueba de mesa** con el mismo piloto de cinemática y `leerNav`: que el
+  OBS que centra la aguja es el radial de la cuenta (±1°), que girar el avión
+  no la mueve, y que al pasar sale la bandera y luego el FROM.

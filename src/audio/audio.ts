@@ -65,6 +65,7 @@ import { elegirFormato } from "./banco-de-voz";
 import { bucleDe, ficheroDe, type Musica } from "./hilo-musical";
 import { ficheroDeLaCancion, type Cancion, type PedidoDeCancion } from "./cancion";
 import { suenaLaCarta, tocarRuidoDeLaCarta, type RuidoDeLaCarta } from "./ruidos-de-la-carta";
+import { tocarMorse, type Golpe } from "./morse";
 import {
   Agachado,
   BUSES,
@@ -1879,6 +1880,28 @@ export class Audio {
     const ctx = this.context;
     if (!ctx || ctx.state !== "running" || !suenaLaCarta(this.suenaUnAviso)) return;
     tocarRuidoDeLaCarta(ctx, this.bus("interfaz"), que);
+  }
+
+  /** Con qué cortar el morse que suena, si suena uno. Ver `audio/morse.ts`. */
+  private cortarElMorse: (() => void) | null = null;
+
+  /**
+   * **El identificador de una radioayuda en morse**, por el bus de la radio:
+   * es la radio de navegación en los cascos, y se agacha como la otra cuando
+   * habla alguien. Cuándo puede sonar lo decide el juego con `TurnoDelMorse`;
+   * aquí solo suena, y uno nuevo corta el anterior.
+   */
+  morse(golpes: readonly Golpe[]): void {
+    const ctx = this.context;
+    if (!ctx || ctx.state !== "running") return;
+    this.callarElMorse();
+    this.cortarElMorse = tocarMorse(ctx, this.bus("radio"), golpes);
+  }
+
+  /** Corta el morse que suene, ya. */
+  callarElMorse(): void {
+    this.cortarElMorse?.();
+    this.cortarElMorse = null;
   }
 
   chasquido(cual: "abre" | "cierra"): void {

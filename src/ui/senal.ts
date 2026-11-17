@@ -895,6 +895,21 @@ const cruzando = (luz: "roja" | "verde", derecha: boolean): string =>
     <path d="M3 19.4 L7 16.8 V18.5 H20.5 V20.3 H7 V22 Z" />
   </g>`);
 
+/**
+ * **La aguja del ADF**, la de «Seguí la aguja» (#51): la esfera con sus
+ * cuatro marcas y la aguja hacia la radio. En un ADF de esfera fija arriba es
+ * el morro, así que la aguja arriba es «la radio está delante», y torcida a un
+ * lado, «la radio está a ese lado»: la aguja quieta a un lado es como se vuela
+ * con viento de costado. Ver `flight/seguir-la-aguja.ts`.
+ */
+const agujaDelAdf = (grados: number): string =>
+  icono(`
+  <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.6" />
+  <path d="M12 2 v2.4 M22 12 h-2.4 M12 22 v-2.4 M2 12 h2.4" fill="none"
+        stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+  <path transform="rotate(${grados} 12 12)" d="M12 4.4 L15 9.2 H12.9 V19 H11.1 V9.2 H9 Z" />
+`);
+
 /** La flecha del lado, pegada al borde: es lo primero que se mira. */
 const HACIA: Record<string, string> = {
   izquierda: `<path d="M5.4 4.2 L1.4 7.2 L5.4 10.2 Z" />
@@ -1764,6 +1779,9 @@ export const DIBUJOS = {
   tren: TREN,
   "tren-en-el-suelo": TREN_EN_EL_SUELO,
   tormenta: TORMENTA,
+  "aguja-adf": agujaDelAdf(0),
+  "aguja-a-la-izquierda": agujaDelAdf(-25),
+  "aguja-a-la-derecha": agujaDelAdf(25),
   sobrevelocidad: SOBREVELOCIDAD,
   calor: CALOR,
   frio: FRIO,

@@ -580,6 +580,19 @@ export class RadioDeCabina {
     return true;
   }
 
+  /**
+   * **Quita la estación de una caja**, como quien deja el selector en nada.
+   * Lo hace el ejercicio de la aguja, que empieza con el ADF vacío para que
+   * se sintonice y se identifique a mano. Cuenta como puesto a mano: al
+   * salir no se vuelve a llenar solo.
+   */
+  quitar(caja: Caja): void {
+    if (!this.lleva[caja]) return;
+    this.aMano[caja] = true;
+    if (caja === "adf") this.adfMhz = null;
+    else this.navMhz = null;
+  }
+
   /** **El mando de la cabina**: la estación siguiente de esta caja, por cercanía. */
   siguiente(caja: Caja, a: Punto): boolean {
     if (!this.lleva[caja]) return false;
