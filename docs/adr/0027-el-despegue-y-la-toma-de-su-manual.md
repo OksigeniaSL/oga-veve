@@ -3281,3 +3281,148 @@ botones quietos al pie y de yema; en la tablet y en el portátil cabe todo y
 no rueda nada. De pie, 380 × 760, los tres botones uno debajo del otro al
 pie, el cartel «puesto, debajo», y cerrada la tarjeta, «encima del vuelo».
 Las capturas, en el scratchpad de la tanda (`h28a/tarjeta/`).
+
+## Enmienda H29a (17-11-2026): la recogida del JAZ 90 en el banco, y de quién es la puerta
+
+Lo que el #192 dejaba abierto tras H25a: la final corta y la recogida del JAZ
+90 en Los Rodeos cambiaban de una tirada a otra. En las doce últimas del banco
+del vuelo entero —nueve con el reloj ×1, dos con ×12 y una en Gran Canaria—,
+la toma iba de 1,16 a 4,57 m/s y pasó de 2 m/s en seis; una tocó a 108 m del
+umbral, antes de la zona, y una llegó a la puerta de los 500 ft bajando a 6,3
+m/s de media.
+
+### El banco de mesa
+
+Para no gastar un vuelo entero por cada prueba, un banco de mesa
+(`h29a/mesa.ts` en el scratchpad de la tanda, fuera del repositorio) vuela la
+final y la recogida con lo del juego: el modelo completo del JAZ 90
+(`CoefficientFlightModel`, peldaño Taguató), el automático del juego en la
+senda (`mandosPara`, como lo usa el banco), las ráfagas del juego
+(`Rafagas`, σ_w de 1 m/s y constancia 0,6, que es lo del alisio sobre Los
+Rodeos a ras de suelo) y la recogida del banco copiada tal cual. Cuarenta
+finales con la misma semilla a cada lado. La final de esa mesa es peor que la
+del banco —llega más baja—, así que mide la recogida y no la senda.
+
+| Recogida (mesa, 40 finales, σ_w 1 m/s) | toma > 2 m/s | mediana | p90 | peor |
+|---|---|---|---|---|
+| La de antes | 26 | 2,25 | 3,53 | 4,87 |
+| Gas hasta los 30 ft, a 2 ft/s y mirando la carga | 7 | 1,48 | 2,32 | 3,14 |
+
+En aire quieto, de 1,74 m/s a 239 m a 1,27 m/s a 296 m.
+
+### Lo que se cambió en el banco
+
+En `recoger` y la final de `verificar-vuelo-entero.mjs`, solo en los
+reactores del modelo completo (`RECOGIDA_DE_REACTOR`):
+
+- **El gas, al ralentí a los treinta pies**, y no al empezar a recoger. Es
+  lo del E190: «30ft Idle · 20ft Flare» (C. Regli, *Embraer EMB190 –
+  Summary*, p. 2-26, la técnica de aterrizaje del OM-A 8.3.2.42.1) y el
+  *retard* de sus gases, «Idle during flare (30ft until T/D)» (p. 1-15). El
+  banco lo cortaba donde empezaba a recoger, de 35 a 49 ft en el JAZ 90, y
+  con el ala de este avión el ralentí se nota enseguida: recogiendo pierde
+  seis nudos en tres segundos.
+- **La cuenta acaba en dos pies por segundo** (0,6 m/s) y no en 1,2: es lo
+  que busca un piloto de reactor al tocar, y deja sitio a la racha de los
+  últimos metros sin pasar de 2 m/s.
+- **Y el lazo mira lo que el avión ya acelera**, la carga (`n − 1` g), y no
+  solo el variómetro, que llega un segundo tarde: cuatro centésimas de radián
+  de ángulo por cada m/s² que falte (`POR_LO_QUE_ACELERA`). Es lo que nota en
+  el asiento un piloto al que una racha le quita el ala. Medido con la traza
+  del ala de la toma a 4,57 m/s (H25a): una racha de cola de cinco metros por
+  segundo justo al empezar a recoger lo dejó a 0,87 g segundo y medio
+  mientras el lazo, con el error de ritmo, apenas movía la palanca.
+
+Los otros dos reactores, el JAZ 110 y el 120, entran también, y no se han
+volado en el navegador. En la mesa su final no se parece a la del banco —ya
+con la recogida de antes tocan a 3,6 y 6,2 m/s de mediana, que en el
+navegador no pasa—, así que de allí solo se saca que la nueva no toca peor:
+de 3,58 a 2,32 m/s de mediana en el 110 y de 6,18 a 5,03 en el 120, con
+veinticuatro finales cada uno; y dos tomas del 110 pasan de los 600 m, que
+antes no.
+
+### La recogida no empieza a los veinte pies, y es del avión
+
+El E190 recoge a veinte pies subiendo el morro dos o tres grados. El JAZ 90
+del juego no puede: en la mesa, en aire quieto, recogiendo a veinte pies toca
+a 3,7 m/s aun subiendo el morro siete grados a cuatro grados por segundo, y a
+treinta pies, a 2,5. A este avión le hacen falta unos cinco grados de morro y
+tres segundos para quitarse la senda: con los flaps de aterrizaje vuela la
+final con el morro de uno a dos grados por debajo del horizonte y de uno a
+tres de ángulo (la traza del ala de H25a), y al ralentí y tirando pierde
+velocidad deprisa, de 118 a 109 nudos en 2,7 s (1,7 m/s², con el ángulo
+yendo de 5° a 8°, en la mesa). Y el modelo de ala fija no tiene efecto suelo
+—la inducida de `fdm.ts` no mira la altura—, que en un avión de verdad es el
+colchón de los últimos metros: a una décima de la envergadura la inducida
+baja casi a la mitad (FAA-H-8083-25C, cap. 5, «Ground Effect»). Es del modelo de
+vuelo, no del piloto del banco, y no se tocó: el banco sigue empezando a
+recoger a los segundos de senda (`SEGUNDOS_DE_RECOGIDA`, de 35 a 49 ft en el
+JAZ 90).
+
+### La puerta: del automático del juego
+
+La puerta de los 500 ft bajando a 6,3 m/s (H25a, primera tirada) no la pide
+el banco. Con la traza del ala: saliendo del viraje, una ascendente sostiene
+el avión unos cinco segundos (de bajar a 2,9 m/s a subir a 0,8, 1,3 g); el
+banco pide al automático el tope de la final recta, 4,57 m/s, y el
+automático baja el morro de −1° a −7,5°; al acabarse la ascendente baja a
+6,9 m/s con lo pedido todavía en 4,57.
+
+Reproducido en la mesa con el automático del juego solo (`h29a/bolsa.ts`):
+bajando por la senda a ritmo fijo, una ascendente de 3 m/s durante cuatro
+segundos deja el morro que persigue (`Memoria.morro`) dos grados más abajo,
+porque el lazo del medio acumula el error de trayectoria mientras dura
+(`POR_TRAYECTORIA`), y al salir el avión pasa de lo pedido 1,8 m/s durante
+unos seis segundos: la peor media de cinco segundos, 6,1 m/s con el tope del
+banco y 5,1 aunque el banco no pida nada más que la senda. Con 2 m/s, 5,6 y
+4,6. El banco no lo puede quitar desde fuera sin dejar de usar el automático
+del juego tal cual, que es lo que se quiere medir; el arreglo está en
+`flight/piloto-automatico.ts` y no es pequeño: va al #192 como del juego.
+
+### Volado en el navegador
+
+`verificar-vuelo-entero.mjs … taguato … jaz-90`, el 17-11-2026, puerto 5688,
+con la traza del ala y el viento de casa, 040/12. Antes, las doce tiradas de
+H25a a H28a con el mismo banco:
+
+| JAZ 90 | Toma (m/s) | Toma (m del umbral) | Puerta (m/s, media de 5 s) |
+|---|---|---|---|
+| Antes, Los Rodeos ×1 (9) | 1,16–4,57; cuatro > 2 | 108–480; una antes de 150 | 2,5–6,3; una > 5,08 |
+| Antes, Los Rodeos ×12 (2) | 2,78 y 1,97 | 368 y 169 | 3,6 y 2,0 |
+| Antes, Gran Canaria (1) | 2,07 | 226 | 4,3 |
+| Ahora, Los Rodeos ×12 | 1,45 | 343 | 4,0 |
+| Ahora, Los Rodeos ×1 | 1,61 | 244 | 3,6 |
+| Ahora, Gran Canaria | 2,18 | 230 | 4,7 |
+
+En la tirada de ahora con el reloj ×12, el gas siguió en 0,23 hasta los 8,8
+m de ruedas, el morro subió de −2,6° a 3,8° y la carga, a 1,13 g; empezó a
+recoger a 12,2 m bajando 4,3 m/s. 60 de 62: lo que falló es de la torre, no
+de la final —su «cleared to land» se cayó en la cola por «ya no es verdad» a
+los 493 s, y con él la fraseología—.
+
+Con el reloj ×1, 63 de 63: empezó a recoger a 11,9 m bajando 3,7 m/s, el gas
+siguió hasta los 8,9 m, el morro subió de −2,0° a 4,5° y tocó a 1,61 m/s.
+
+En Gran Canaria, 61 de 62, y lo que falla es la toma, a 2,18 m/s: con veinte
+nudos de cara, la racha de cara cayó de 0 a −4,3 m/s en los últimos diez
+metros y la velocidad, de 125 a 112 nudos; el morro subió 7,4°, de −2,8° a
+4,6°, y el avión pasó de bajar 3,3 m/s a 2,2. Es lo que la regla del margen
+del reactor (media cara y la racha) está para cubrir, y el banco llegó a la
+recogida con nueve nudos encima de la Vref; con una tirada no se puede decir
+más que antes (2,07).
+
+### Lo que no
+
+- **La puerta**, arriba: es del automático del juego.
+- **La recogida a los veinte pies del E190**: es del modelo de vuelo, arriba.
+- **La final que llega baja a la recogida.** La toma a 108 m del umbral
+  (H25d) empezó a recoger trece metros bajo la senda. En su traza, de 960 a
+  450 m del umbral el automático pedía bajar a 2,7–3,5 m/s y el avión bajaba a
+  4,1–4,9, con el morro subiendo despacio (de −3,8° a −1,4° en ocho segundos)
+  y el gas del banco entre 0,05 y 0,16: iba de dos a cuatro nudos por encima
+  de lo que pedía mientras se quitaba el margen (`SE_QUITA_EL_MARGEN_DESDE`),
+  y el gas, que solo lleva la velocidad, se iba al ralentí mientras el morro
+  intentaba recoger la senda. Se probó en la mesa no quitar gas yendo bajo y
+  bajando de más: llega menos baja (2,5 m de mediana bajo la senda en vez de
+  4,3, y tres tomas cortas de cuarenta en vez de seis), pero toca más fuerte
+  (quince de cuarenta por encima de 2 m/s en vez de siete), así que no entra.

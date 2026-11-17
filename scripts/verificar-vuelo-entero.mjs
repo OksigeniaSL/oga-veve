@@ -1219,7 +1219,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * metro por segundo bajo el JAZ 90, y con el final del perfil a 1,2
      * contra la pista se tocaba a 1,9 de variómetro.
      */
-    const alSuelo = Math.max(0.3, RITMO_AL_TOCAR + pistaBaja);
+    const alSuelo = Math.max(0.3, ritmoAlTocar + pistaBaja);
     const pide = -(alSuelo + (recogida.caida - alSuelo) * queda);
     /*
      * Y en el último metro y medio no se empuja: si baja menos de lo pedido,
@@ -1333,12 +1333,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       envergadura > 30
         ? Math.min(1, (enVerdadera(s, suyas.aproximacion ?? s.airspeed) / Math.max(1, s.airspeed)) ** 2)
         : 1;
+    // Ver `POR_LO_QUE_ACELERA`.
+    const porLoQueAcelera =
+      RECOGIDA_DE_REACTOR && recogida.porAngulo
+        ? recogida.porAngulo *
+          POR_LO_QUE_ACELERA *
+          (acelera - ((s.loadFactor ?? 1) - 1) * 9.81)
+        : 0;
     const calculado = Math.max(
       -0.6,
       Math.min(
         0.8,
         recogida.palanca +
-          porLaPresion * (porLoQueFrena + porDelante + kp * falta + ki * recogida.acumulado) -
+          porLaPresion *
+            (porLoQueFrena + porDelante + kp * falta + ki * recogida.acumulado + porLoQueAcelera) -
           kq * (s.pitchRate ?? 0),
       ),
     );
@@ -1430,11 +1438,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * arriba—: quitándolo con la altura, una racha a seis metros lo llevó de
      * bajar a 1,5 m/s a bajar a 2,6 con la carga en 0,91 g, y tocó a 2,02.
      */
+    /*
+     * **Y un reactor, al ralentí a los treinta pies**, no al empezar a recoger:
+     * ver `RECOGIDA_DE_REACTOR`.
+     */
     if (!SENCILLO)
       mandos.throttle =
         suyas.propulsion === "helice" && (suyas.motores ?? 1) >= 2
           ? Math.min(1, (recogida.gas ?? 0) * queda + 0.5 * Math.max(0, falta))
-          : 0;
+          : RECOGIDA_DE_REACTOR && ruedas > RETARD_DEL_REACTOR
+            ? (recogida.gas ?? 0)
+            : 0;
   };
   /**
    * La palanca media de los últimos segundos de la final, que es la que
@@ -2207,6 +2221,48 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * llevando la velocidad como toda la final.
    */
   const SENCILLO = peldano === "guyrami";
+  /**
+   * **Y en un reactor del modelo completo, la recogida de su manual** (#192):
+   * el gas al ralentí a los treinta pies y no al empezar a recoger, y se
+   * busca tocar a dos pies por segundo.
+   *
+   * Lo del E190: «30ft Idle · 20ft Flare» (C. Regli, *Embraer EMB190 –
+   * Summary*, p. 2-26, de la técnica de aterrizaje del OM-A 8.3.2.42.1), y el
+   * *retard* de sus gases, «Idle during flare (30ft until T/D)» (p. 1-15).
+   * Este banco cortaba el gas donde empezaba a recoger, a los tres segundos y
+   * pico de senda —en el JAZ 90, de once a quince metros, 35–49 ft—, y con el
+   * ala de este avión el ralentí se nota enseguida: en el banco de mesa (el
+   * modelo, el automático y las ráfagas del juego, cuarenta finales) pierde
+   * seis nudos en tres segundos recogiendo. Con el gas hasta los treinta pies
+   * y la cuenta acabando en dos pies por segundo, las tomas de más de 2 m/s
+   * bajan de 26 de 40 a 7 (σ_w de 1 m/s), y en aire quieto toca a 1,27 m/s y
+   * no a 1,74.
+   *
+   * **La recogida no empieza a los veinte pies, y se midió**: en ese banco de
+   * mesa, en aire quieto, el JAZ 90 recogiendo a veinte pies toca a 3,7 m/s
+   * aun subiendo el morro siete grados a cuatro por segundo, y a treinta a 2,5:
+   * a este avión le hacen falta cinco grados de morro y tres segundos para
+   * quitarse la senda, y al E190 de verdad dos o tres grados. Es del modelo, no
+   * de este piloto —ver el informe del #192—, así que aquí se empieza donde
+   * empezaba, a los segundos de senda de `SEGUNDOS_DE_RECOGIDA`.
+   */
+  const RECOGIDA_DE_REACTOR = !SENCILLO && suyas.propulsion === "chorro";
+  /** El ritmo al que se busca tocar, m/s: el del perfil de `recoger`. */
+  const ritmoAlTocar = RECOGIDA_DE_REACTOR ? 2 * 0.3048 : RITMO_AL_TOCAR;
+  /** Las ruedas a las que un reactor pone el gas al ralentí, m. */
+  const RETARD_DEL_REACTOR = 30 * 0.3048;
+  /**
+   * **Y lo que el avión ya está acelerando, en la recogida de un reactor**:
+   * cuatro centésimas de radián de ángulo por cada m/s² que falte para la
+   * aceleración hacia arriba que pide el perfil, medida con la carga —`n − 1`
+   * g—, pasadas a palanca con el cabeceo del avión como lo demás. Es lo que
+   * nota en el asiento un piloto al que una racha le quita el ala: que se hunde
+   * antes de que lo diga el variómetro. Sin esto el lazo solo veía el error de
+   * ritmo, que llega un segundo tarde; medido con la traza del ala del JAZ 90
+   * en Los Rodeos, una racha de cola de cinco metros por segundo al empezar a
+   * recoger lo dejó a 0,87 g durante segundo y medio, y tocó a 4,57 m/s.
+   */
+  const POR_LO_QUE_ACELERA = 0.04;
   /**
    * **Y la senda, con el morro del automático en todo el modelo completo**,
    * no solo en los reactores.
@@ -6997,9 +7053,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
          * baja, y si la ley de la final lo sigue moviendo sobre la pista —la
          * senda ya no pide nada y lo va quitando— la palanca pierde mano a la
          * vez que el avión se hunde. La palanca la lleva `recoger`, que en
-         * Guyrami le suma un pelo de gas si una racha lo hunde de más.
+         * Guyrami le suma un pelo de gas si una racha lo hunde de más. Y en un
+         * reactor, el gas que llevaba hasta los treinta pies: ver
+         * `RECOGIDA_DE_REACTOR`.
          */
-        c.throttle = SENCILLO ? recogida.gas : 0;
+        c.throttle =
+          SENCILLO || (RECOGIDA_DE_REACTOR && ruedas > RETARD_DEL_REACTOR)
+            ? recogida.gas
+            : 0;
       } else {
         /*
          * Con la misma ley de altura que arriba: bajada limitada y
