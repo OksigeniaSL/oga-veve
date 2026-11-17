@@ -189,8 +189,11 @@ solo que en esta no hubo.
   —su puesto está en tu camino—, y a los treinta segundos parada por ti se le
   retira (`PACIENCIA_CON_QUIEN_JUEGA`), con su «hold short» ya dicho. Medido en
   las siete: en todas, tu raya pasa a menos de seis metros del centro del
-  turbohélice aparcado en su puesto, en la entrada de la plataforma por la que
-  se llega a todos los puestos de ese lado.
+  turbohélice que espera, en la entrada de la plataforma por la que se llega a
+  todos los puestos de ese lado. **Y no está en un puesto**: el más cercano, el
+  15, queda a 63 m. Su camino se recortó al asfalto (`recortarAlAsfalto` en
+  `world/suelo-del-trafico.ts`: el remate al puesto cruza fuera del pavimento
+  dibujado) y espera en el último nudo, que es una calle.
 
   Se probaron dos cosas y no se quedaron. Retenerle en su puesto hasta que
   hayas pasado por toda su calle, como ya se hace con los del tráfico que
@@ -199,7 +202,12 @@ solo que en esta no hubo.
   toma al puesto pasa de 203 a 233 s de media en las cuarenta y ocho llegadas
   (+96 s en doce por la 12). Y darte otro puesto al que se llegue sin pasar
   junto a un avión parado: en esas llegadas no lo hay entre los seis más
-  cercanos. Lo que queda por decidir es lo de debajo: **un puesto en el que el
-  avión aparcado tapa la entrada de la plataforma** —el turbohélice con su
-  centro a dos metros de tu raya— no debería ser un puesto para ese avión, o
-  la raya debería ir por otro sitio.
+  cercanos. Lo que va a la raíz es que el tráfico no espere en una calle:
+  **que entre los puestos cercanos prefiera uno al que su camino llega entero
+  antes que uno recortado**. Probado en una copia, sin juntar, con el mismo
+  banco de mesa de cuarenta y ocho llegadas: las salidas que no despegan pasan
+  de siete a una, el rodaje de la toma al puesto de 203 a 192 s de media, y
+  las pruebas de `src/world/` y de la torre pasan; pero sale una nueva de
+  «parado a tu lado» —un reactor a 42,8 m, con el límite en 43,25— y una
+  llegada tarda 98 s más. Falta mirar esas dos y el navegador antes de
+  juntarlo.
