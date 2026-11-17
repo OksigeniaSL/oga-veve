@@ -792,6 +792,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   aguja: "aguja-adf",
   // El CDI del VOR con la barra centrada y FROM: el radial en que se está. Ver `en-que-radial-estoy.ts`.
   radial: "cdi-from",
+  // El CDI con la barra viniendo hacia el centro: el radial que se acerca. Ver `interceptar-un-radial.ts`.
+  interceptar: "cdi-viniendo",
   autorrotacion: "helicoptero-sin-motor",
   // Las lecciones del ala rotatoria, con lo que se pide en cada una: ver `lecciones-del-rotor.ts`.
   estacionario: "helicoptero-quieto",
@@ -993,6 +995,13 @@ import {
   type ColocacionDelRadial,
   type SucesoDelRadial,
 } from "./flight/en-que-radial-estoy";
+import {
+  colocacionDelCorte,
+  CORRIGE,
+  InterceptarUnRadial,
+  type ColocacionDelCorte,
+  type SucesoDelCorte,
+} from "./flight/interceptar-un-radial";
 import { PantallaDespierta } from "./ui/pantalla-despierta";
 import { ahoraEsTelefonoApaisado } from "./ui/telefono";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
@@ -3855,6 +3864,15 @@ export class Game {
   private radial: EnQueRadialEstoy | null = null;
   /** Dónde empieza, contado una vez por montaje: ver `dondeEmpiezaElRadial`. */
   private colocacionDelRadial: ColocacionDelRadial | null = null;
+  /**
+   * **«Interceptar un radial»**, si se eligió: el curso pedido en el OBS,
+   * cortarlo a cuarenta y cinco grados, virar antes de que la barra llegue al
+   * centro y quedarse corrigiendo el viento. Ver
+   * `flight/interceptar-un-radial.ts` y `practicarElCorte`.
+   */
+  private corte: InterceptarUnRadial | null = null;
+  /** Dónde empieza, contado una vez por montaje: ver `dondeEmpiezaElCorte`. */
+  private colocacionDelCorte: ColocacionDelCorte | null = null;
   /** La nube de la tormenta del ejercicio. Ver `world/cumulonimbo.ts`. */
   private cumulonimbo: CumulonimboEnElMundo | null = null;
   /**
@@ -3881,6 +3899,7 @@ export class Game {
       this.leccionDelRotor?.ejercicio ??
       this.aguja?.ejercicio ??
       this.radial?.ejercicio ??
+      this.corte?.ejercicio ??
       null
     );
   }
@@ -6441,6 +6460,18 @@ export class Game {
       } else if (ejercicio.escena === "rotor") {
         // Las del helicóptero tampoco: ver `practicarElRotor`.
         this.leccionDelRotor = new LeccionDelRotor(ejercicio, this.aircraft.helicoptero?.rotor.sentido ?? 1);
+      } else if (ejercicio.escena === "radio" && ejercicio.colocacion === "interceptar") {
+        /*
+         * Ni el corte: el VOR del campo, puesto donde está. El radial pedido
+         * llega con la colocación, que necesita el terreno: ver
+         * `dondeEmpiezaElCorte` y `practicarElCorte`.
+         */
+        const vor = vorDelCampo(oaciDe(this.scenario));
+        const origen = this.scenario.aerodrome?.origin;
+        if (vor && origen) {
+          const { x, z } = dondeCae(origen, vor.estacion);
+          this.corte = new InterceptarUnRadial(ejercicio, { emisora: vor, x, z });
+        }
       } else if (ejercicio.escena === "radio" && ejercicio.colocacion === "radial") {
         // Ni el radial: el VOR del campo, puesto donde está. Ver `practicarElRadial`.
         const vor = vorDelCampo(oaciDe(this.scenario));
@@ -13315,10 +13346,10 @@ export class Game {
        * **La aguja no empieza en la prolongación de la pista**: empieza a seis
        * minutos de la radio, con el viento de costado. Ver `dondeEmpiezaLaAguja`.
        * **Ni el radial**, que empieza a ocho del VOR, en un radial de costado al
-       * viento. Ver `dondeEmpiezaElRadial`.
+       * viento. Ver `dondeEmpiezaElRadial`. **Ni el corte**, a cinco millas,
+       * cortando el radial pedido. Ver `dondeEmpiezaElCorte`.
        */
-      const enLaAguja =
-        colocacion === "aguja" ? this.dondeEmpiezaLaAguja() : colocacion === "radial" ? this.dondeEmpiezaElRadial() : null;
+      const enLaAguja = this.dondeEmpiezaConRadio(colocacion);
       if (enLaAguja) {
         const y = Math.max(
           this.terrain.runwayElevation + enLaAguja.alto,
@@ -13326,7 +13357,7 @@ export class Game {
         );
         return new Vector3(enLaAguja.x, y, enLaAguja.z);
       }
-      if (colocacion && colocacion !== "aguja" && colocacion !== "radial") {
+      if (colocacion && colocacion !== "aguja" && colocacion !== "radial" && colocacion !== "interceptar") {
         const { lejos, alto } = this.dondeEmpiezaElEjercicio(colocacion);
         const [x, z] = puntoDePista(runway, hastaElUmbralDeToma(runway) + lejos);
         const y = Math.max(
@@ -13581,6 +13612,7 @@ export class Game {
     this.leccionDelRotor?.reiniciar();
     this.aguja?.reiniciar();
     this.radial?.reiniciar();
+    this.corte?.reiniciar();
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
@@ -17646,13 +17678,12 @@ export class Game {
           ? this.aircraft.velocidadDeCircuito
           : colocacion === "crucero" || colocacion === "tormenta"
             ? this.aircraft.cruiseSpeed
-            : colocacion === "aguja" || colocacion === "radial"
+            : colocacion === "aguja" || colocacion === "radial" || colocacion === "interceptar"
               ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
               : configurado
               ? this.aircraft.approachSpeed * 1.1
               : this.flight.velocidadDeEntradaEnFinal(this.aircraft.approachSpeed);
-    const enLaAguja =
-      colocacion === "aguja" ? this.dondeEmpiezaLaAguja() : colocacion === "radial" ? this.dondeEmpiezaElRadial() : null;
+    const enLaAguja = this.dondeEmpiezaConRadio(colocacion);
     this.flight.reset({
       position: this.startPosition(),
       heading: enLaAguja ? enLaAguja.rumbo : MathUtils.degToRad(runway.heading),
@@ -17662,7 +17693,11 @@ export class Game {
        * con el morro en el horizonte y lo primero que hace es caerse, que no
        * es lo que se viene a practicar. Ver `InitialConditions.equilibrado`.
        */
-      ...(colocacion === "crucero" || colocacion === "tormenta" || colocacion === "aguja" || colocacion === "radial"
+      ...(colocacion === "crucero" ||
+      colocacion === "tormenta" ||
+      colocacion === "aguja" ||
+      colocacion === "radial" ||
+      colocacion === "interceptar"
         ? { equilibrado: true }
         : {}),
     });
@@ -19210,6 +19245,8 @@ export class Game {
     this.practicarLaAguja(dt);
     // Y el radial del VOR. Ver `practicarElRadial`.
     this.practicarElRadial(dt);
+    // Y el corte del radial. Ver `practicarElCorte`.
+    this.practicarElCorte(dt);
     // El morse de la radio, con su turno. Ver `atenderAlMorse`.
     this.atenderAlMorse();
     this.mirarSiCambiaDeCampo();
@@ -24411,6 +24448,180 @@ export class Game {
           this.hud.mostrarCierreDeEjercicio(
             dibujoDeCierre("vuelta"),
             this.rotulo("ejercicio.radial.pasada", "palabra.bien"),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+    }
+  }
+
+  // ── «Interceptar un radial» ──────────────────────────────────────────
+  //
+  // Ver `flight/interceptar-un-radial.ts`. Como el radial: aquí solo se
+  // decide quién dice y enseña cada cosa, con el CDI dibujado en la tarjeta,
+  // el radial pedido escrito en ella y la instructora contándolo por pasos.
+
+  /**
+   * **Dónde empieza un ejercicio de radio**, si lo es: cada uno con su
+   * cuenta, y los tres con lo mismo —el sitio, la altura sobre la pista y el
+   * morro—, que es lo que miran `startPosition` y `resetFlight`.
+   */
+  private dondeEmpiezaConRadio(
+    colocacion: Ejercicio["colocacion"],
+  ): { readonly x: number; readonly z: number; readonly alto: number; readonly rumbo: number } | null {
+    if (colocacion === "aguja") return this.dondeEmpiezaLaAguja();
+    if (colocacion === "radial") return this.dondeEmpiezaElRadial();
+    if (colocacion === "interceptar") return this.dondeEmpiezaElCorte();
+    return null;
+  }
+
+  /**
+   * **Dónde empieza el corte**: a cinco millas del VOR —o dos minutos y
+   * medio—, alejándose, treinta grados apartado del radial pedido del lado del
+   * viento, y cortándolo a cuarenta y cinco. Se guarda, como la del radial: el
+   * morro, el sitio, el OBS y el radial pedido salen de la misma cuenta, y el
+   * radial pedido se le da al ejercicio aquí.
+   */
+  private dondeEmpiezaElCorte(): ColocacionDelCorte | null {
+    const r = this.corte;
+    if (!r) return null;
+    if (this.colocacionDelCorte) return this.colocacionDelCorte;
+    const agua = this.scenario.waterLevel ?? 0;
+    this.colocacionDelCorte = colocacionDelCorte({
+      estacion: r.estacion,
+      declinacion: r.estacion.emisora.declinacion,
+      viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+      velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
+      suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+      cotaDeLaPista: this.terrain.runwayElevation,
+    });
+    r.pedir(this.colocacionDelCorte.radial);
+    return this.colocacionDelCorte;
+  }
+
+  /** «Interceptar un radial», para el banco. */
+  get interceptarUnRadialParaBanco(): {
+    readonly fase: string;
+    readonly cierre: string | null;
+    readonly pedido: number | null;
+    readonly loQueSePaso: number;
+    readonly estacion: { readonly id: string; readonly x: number; readonly z: number; readonly declinacion: number };
+    readonly colocacion: ColocacionDelCorte | null;
+  } | null {
+    const r = this.corte;
+    if (!r) return null;
+    return {
+      fase: r.fase,
+      cierre: r.cierre,
+      pedido: r.pedido,
+      loQueSePaso: r.loQueSePaso,
+      estacion: {
+        id: r.estacion.emisora.estacion.id,
+        x: r.estacion.x,
+        z: r.estacion.z,
+        declinacion: r.estacion.emisora.declinacion,
+      },
+      colocacion: this.colocacionDelCorte,
+    };
+  }
+
+  /**
+   * **Un paso del corte**: lo que marca la NAV con el curso que lleva el OBS.
+   * Y la estela en el plano, como en los otros dos: la cortada, el arco del
+   * viraje y el radial se ven desde arriba, y quien se pasó ve dónde.
+   */
+  private practicarElCorte(dt: number): void {
+    const g = this.corte;
+    if (!g) return;
+    this.hud.mapa.ponerEstela(g.fase === "cerrada" ? null : () => this.libreta.traza);
+    if (this.tarjetaDelTiempo?.abierta) return;
+    const s = this.flight.state;
+    const a = this.avionParaLaRadio();
+    const radio = this.radioAlDia();
+    const nav = a ? radio.leer(a, this.elevacionDeLaEstacion).nav : null;
+    const id = g.estacion.emisora.estacion.id;
+    const sintonizada = g.esLaEstacion(radio.navMhz) && nav?.lectura.emisora?.estacion.id === id;
+    const l = sintonizada ? nav?.lectura : null;
+    const sucesos = g.paso(
+      {
+        x: s.position.x,
+        z: s.position.z,
+        enElSuelo: s.onGround,
+        parado: s.onGround && s.groundSpeed < 0.6,
+        percance: this.percance !== null,
+        sintonizada,
+        rumbo: vuelta((s.heading * 180) / Math.PI),
+        curso: radio.curso,
+        desviacion: l?.desviacion ?? null,
+        toFrom: l?.toFrom ?? null,
+        bandera: l?.bandera ?? true,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderAlCorte(suceso);
+  }
+
+  private atenderAlCorte(suceso: SucesoDelCorte): void {
+    /** La tarjeta con su dibujo y su frase, y la voz de la instructora si está grabada. */
+    const contar = (dibujo: DibujoDeSenal, clave: TranslationKey, palabra: TranslationKey): void => {
+      this.hud.senal.mostrar(dibujo, this.rotulo(clave, palabra), null, { segundos: 12, prioridad: IMPORTANTE });
+      this.decirDelEjercicio(clave, "mando");
+    };
+    switch (suceso.que) {
+      case "presentar": {
+        /*
+         * La NAV con el VOR, como la deja la salida, y el OBS en el radial de
+         * debajo, con la barra en el centro: lo primero es girarlo al pedido.
+         */
+        const radio = this.radioAlDia();
+        const c = this.dondeEmpiezaElCorte();
+        const vor = this.corte?.estacion.emisora;
+        if (vor) radio.poner("nav", vor.mhz);
+        if (c) radio.curso = c.curso;
+        // El depósito ya va con el vuelo del ejercicio: ver `cargarParaElEjercicio` (H26d).
+        /*
+         * **El número, escrito y no dicho**: «R-120 FTV» en la tarjeta, como
+         * en una carta de salida, delante de la frase; la voz es genérica y
+         * vale en todo campo. La tarjeta se queda hasta que el OBS lo tenga,
+         * que es cuando la tapa la siguiente.
+         */
+        const pedido = this.corte?.pedido;
+        const frase = this.rotulo("ejercicio.interceptar.antes", "palabra.practica");
+        const numero =
+          pedido != null && vor
+            ? t("ejercicio.interceptar.pedido", { radial: String(pedido).padStart(3, "0"), id: vor.estacion.id })
+            : "";
+        const rotulo = numero && frase ? `${numero}. ${frase}` : numero || frase;
+        this.hud.senal.mostrar("cdi-a-un-lado", rotulo, null, { segundos: 40, prioridad: IMPORTANTE });
+        this.decirDelEjercicio("ejercicio.interceptar.antes", "mando");
+        return;
+      }
+      case "sintonizar":
+        // La frase del radial vale tal cual: «poné el VOR del campo en la NAV».
+        return contar("cdi-a-un-lado", "ejercicio.radial.sintonizar", "palabra.practica");
+      case "aTope":
+        return contar("cdi-a-un-lado", "ejercicio.interceptar.aTope", "palabra.practica");
+      case "seMueve":
+        return contar("cdi-viniendo", "ejercicio.interceptar.seMueve", "palabra.practica");
+      case "pasado":
+        return contar("cdi-pasada", "ejercicio.interceptar.pasado", "palabra.practica");
+      case "establecido":
+        this.avisar("achieved");
+        /*
+         * Con el morro apartado del camino lo que pide el viento, la
+         * instructora lo señala; en calma, o casi, no hay nada que señalar.
+         */
+        return Math.abs(suceso.correccion) >= CORRIGE
+          ? contar("cdi-from", "ejercicio.interceptar.establecidoAlViento", "palabra.bien")
+          : contar("cdi-from", "ejercicio.interceptar.establecido", "palabra.bien");
+      case "cerrar":
+        // Lo malo ya lo cuenta el percance; posado antes, el suelo lo dice.
+        if (suceso.como === "otraVez") return;
+        this.agenda.luego(TARDA_EL_FINAL + 8, () => {
+          if (this.corte?.cierre !== "hecho") return;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre("vuelta"),
+            this.rotulo("ejercicio.interceptar.establecido", "palabra.bien"),
             plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
           );
         });

@@ -1423,6 +1423,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.autorrotacion": "Coming down without engines in a helicopter",
   "hangar.ejercicio.aguja": "Follow the needle",
   "hangar.ejercicio.radial": "Which radial am I on?",
+  "hangar.ejercicio.interceptar": "Fly out on a radial",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1578,6 +1579,21 @@ export const EN: Dictionary = {
     "Now let's go to the radio along your radial. Turn the OBS half a turn, holding it down, until it says TO, and fly with the bar in the middle: if it slides to one side, turn a little that way",
   "ejercicio.radial.pasada":
     "We passed over the radio! See? Right on top the flag comes up, because there it can't tell, and on the other side TO and FROM swap. You got here with the bar alone",
+
+  // ── Fly out on a radial: the radial on the OBS, cut it at 45°, turn before the bar centres, hold it in the wind ──
+  "ejercicio.interceptar.pedido": "Fly out on R-{radial} {id}",
+  "ejercicio.interceptar.antes":
+    "Today we'll fly out along a radial, like on a real departure. The number is on the card: set it on the OBS with nine and zero; hold it down and it keeps turning",
+  "ejercicio.interceptar.aTope":
+    "The bar has gone to the stop: the radial is on that side. Keep cutting across it at an angle, not straight at it, and watch the bar",
+  "ejercicio.interceptar.seMueve":
+    "It's moving! The radial is close. Start turning now, gently, before the bar reaches the middle: the plane turns in a curve, and if you wait, you'll overshoot",
+  "ejercicio.interceptar.pasado":
+    "You went a little past it: the bar crossed to the other side. That's fine, turn back towards it gently. Next time, start the turn a bit earlier",
+  "ejercicio.interceptar.establecido":
+    "You're on the radial! The bar steady in the middle: that's how you fly out on a radial, like real pilots do",
+  "ejercicio.interceptar.establecidoAlViento":
+    "You're on the radial, with the bar steady in the middle! Look at the nose: it doesn't point exactly at the OBS number, it points a little into the wind. That's what it takes for the wind not to push you off the radial",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
   "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
   "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",

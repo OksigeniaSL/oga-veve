@@ -3074,6 +3074,43 @@ for (const [id, para] of DEL_RADIAL) {
   total += texto.length;
 }
 
+/*
+ * **Y «Interceptar un radial»** (17-11-2026, #51): el tercer ejercicio de la
+ * radio de navegación, el segundo del VOR. La presentación con el OBS, la
+ * barra a tope, la barra que se despega, pasarse y volver, y establecido en
+ * el radial, en calma o corrigiendo el viento. Genéricas, sin el nombre del
+ * VOR ni el número del radial, que va escrito en la tarjeta
+ * (`ejercicio.interceptar.pedido`, que no se dice). Si se quita el VOR de la
+ * NAV vale la de «¿En qué radial estoy?» tal cual. En calma, como todo
+ * ejercicio. Ver `src/flight/interceptar-un-radial.ts` y el ADR 0030,
+ * enmienda H26e.
+ */
+const DEL_CORTE = [
+  ["ejercicio.interceptar.antes", "interceptar un radial, antes de empezar: el número de la tarjeta en el OBS"],
+  ["ejercicio.interceptar.aTope", "interceptar un radial: el OBS en el radial pedido y la barra a tope"],
+  ["ejercicio.interceptar.seMueve", "interceptar un radial: la barra se despega del tope, y se pide virar antes del centro"],
+  ["ejercicio.interceptar.pasado", "interceptar un radial: la barra cruzó al otro lado, y se vuelve"],
+  ["ejercicio.interceptar.establecido", "interceptar un radial: en el radial veinte segundos, en calma, y se acaba"],
+  [
+    "ejercicio.interceptar.establecidoAlViento",
+    "interceptar un radial: en el radial veinte segundos con el morro contra el viento, y se acaba",
+  ],
+];
+for (const [id, para] of DEL_CORTE) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
   ...filas.map((f) =>

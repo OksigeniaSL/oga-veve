@@ -115,6 +115,49 @@ export interface ColocacionDelRadial {
 export const comoEnElObs = (g: number): number => Math.round(vuelta(g)) % 360 || 360;
 
 /**
+ * **El radial redondo de costado al viento**, de los dos el del camino más
+ * bajo hasta `lejos`: el número que se lee en el OBS, hacia dónde va en el
+ * mundo y lo más alto que hay debajo. Es la elección de este ejercicio y la
+ * de «Interceptar un radial» (`interceptar-un-radial.ts`): de costado, para
+ * que el viento pida corregirse, y sobre lo bajo, que en una isla es el mar.
+ * En calma, el que mira al este.
+ */
+export function radialDeCostadoAlViento(o: {
+  readonly estacion: PuntoDelMundo;
+  readonly declinacion: number;
+  readonly viento: PuntoDelMundo;
+  readonly lejos: number;
+  readonly suelo: (x: number, z: number) => number;
+}): { readonly radial: number; readonly d: PuntoDelMundo; readonly alto: number } {
+  const fuerza = Math.hypot(o.viento.x, o.viento.z);
+  const va = fuerza > 0.1 ? { x: o.viento.x / fuerza, z: o.viento.z / fuerza } : { x: 0, z: -1 };
+  /*
+   * Los dos radiales de costado al viento, redondeados: el radial es
+   * magnético y el mundo es verdadero, así que se pasa al magnético, se
+   * redondea allí —el número que se lee en el OBS— y se vuelve.
+   */
+  const deCostado = [
+    { x: -va.z, z: va.x },
+    { x: va.z, z: -va.x },
+  ].map((c) => {
+    const verdadero = Math.atan2(c.x, -c.z) / GRADO;
+    const radial = comoEnElObs(Math.round((verdadero + o.declinacion) / REDONDO) * REDONDO);
+    const r = (radial - o.declinacion) * GRADO;
+    return { radial, d: { x: Math.sin(r), z: -Math.cos(r) } };
+  });
+  const masAlto = (d: PuntoDelMundo): number => {
+    let alto = 0;
+    for (let i = 0; i <= 12; i++) {
+      const f = i / 12;
+      alto = Math.max(alto, o.suelo(o.estacion.x + d.x * o.lejos * f, o.estacion.z + d.z * o.lejos * f));
+    }
+    return alto;
+  };
+  const conSuelo = deCostado.map((c) => ({ ...c, alto: masAlto(c.d) }));
+  return conSuelo[1]!.alto < conSuelo[0]!.alto - 1 ? conSuelo[1]! : conSuelo[0]!;
+}
+
+/**
  * **Dónde empieza**: en un radial redondo **de costado al viento**, a ocho
  * minutos de la radio, y del lado más bajo de los dos —en Fuerteventura, el
  * mar al sudeste de FTV—. A tres mil pies sobre la pista o mil por encima de
@@ -140,30 +183,7 @@ export function colocacionDelRadial(o: {
   const lejos = Math.min(LEJOS.max, Math.max(LEJOS.min, o.velocidad * MINUTOS_HASTA_LA_RADIO));
   const fuerza = Math.hypot(o.viento.x, o.viento.z);
   const va = fuerza > 0.1 ? { x: o.viento.x / fuerza, z: o.viento.z / fuerza } : { x: 0, z: -1 };
-  /*
-   * Los dos radiales de costado al viento, redondeados: el radial es
-   * magnético y el mundo es verdadero, así que se pasa al magnético, se
-   * redondea allí —el número que se lee en el OBS— y se vuelve.
-   */
-  const deCostado = [
-    { x: -va.z, z: va.x },
-    { x: va.z, z: -va.x },
-  ].map((c) => {
-    const verdadero = Math.atan2(c.x, -c.z) / GRADO;
-    const radial = comoEnElObs(Math.round((verdadero + o.declinacion) / REDONDO) * REDONDO);
-    const r = (radial - o.declinacion) * GRADO;
-    return { radial, d: { x: Math.sin(r), z: -Math.cos(r) } };
-  });
-  const masAlto = (d: PuntoDelMundo): number => {
-    let alto = 0;
-    for (let i = 0; i <= 12; i++) {
-      const f = i / 12;
-      alto = Math.max(alto, o.suelo(o.estacion.x + d.x * lejos * f, o.estacion.z + d.z * lejos * f));
-    }
-    return alto;
-  };
-  const conSuelo = deCostado.map((c) => ({ ...c, alto: masAlto(c.d) }));
-  const elegido = conSuelo[1]!.alto < conSuelo[0]!.alto - 1 ? conSuelo[1]! : conSuelo[0]!;
+  const elegido = radialDeCostadoAlViento({ ...o, lejos });
   const x = o.estacion.x + elegido.d.x * lejos;
   const z = o.estacion.z + elegido.d.z * lejos;
   /*

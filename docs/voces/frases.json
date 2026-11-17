@@ -3306,6 +3306,96 @@
     }
   },
   {
+    "id": "ejercicio.interceptar.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy vamos a salir por un radial, como en una salida de verdad. El número está en la tarjeta: ponelo en el OBS con el nueve y el cero; si lo dejás apretado, gira solo",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy vamos a salir por un radial, como en una salida de verdad. El número está en la tarjeta: ponelo en el OBS con el nueve y el cero; si lo dejás apretado, gira solo.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.interceptar.aTope",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La barra se fue a tope: el radial queda de ese lado. Seguí cortándolo de costado, sin apuntarle derecho, y mirá la barra",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "La barra se fue a tope: el radial queda de ese lado. Seguí cortándolo de costado, sin apuntarle derecho, y mirá la barra.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.interceptar.seMueve",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Ya se mueve! El radial está cerca. Empezá a virar ahora, de a poquito, antes de que la barra llegue al centro: el avión gira en curva, y si esperás, te pasás",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Ya se mueve! El radial está cerca. Empezá a virar ahora, de a poquito, antes de que la barra llegue al centro: el avión gira en curva, y si esperás, te pasás.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.interceptar.pasado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Te pasaste un poquito: la barra cruzó al otro lado. No pasa nada, volvé hacia ella de a poco. La próxima, empezá a virar un poco antes",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Te pasaste un poquito: la barra cruzó al otro lado. No pasa nada, volvé hacia ella de a poco. La próxima, empezá a virar un poco antes.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.interceptar.establecido",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Estás en el radial! La barra quieta en el centro: así se sale por un radial, como los pilotos de verdad",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Estás en el radial! La barra quieta en el centro: así se sale por un radial, como los pilotos de verdad.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.interceptar.establecidoAlViento",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Estás en el radial, con la barra quieta en el centro! Fijate en el morro: no apunta justo al número del OBS, apunta un poco contra el viento. Es lo que hace falta para que no te saque del radial",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Estás en el radial, con la barra quieta en el centro! Fijate en el morro: no apunta justo al número del OBS, apunta un poco contra el viento. Es lo que hace falta para que no te saque del radial.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "mission.rio.name",
     "voz": "instructor",
     "idioma": "es-PY",

@@ -71,7 +71,9 @@
  * `escena: "radio"`: no falla nada, y lo que se practica es seguir una aguja
  * con viento de costado. Pide un campo con NDB (`dondeVale`) y lo hace pasar
  * `seguir-la-aguja.ts`. Y «¿En qué radial estoy?», la segunda, la del VOR:
- * pide un campo con VOR y la lleva `en-que-radial-estoy.ts`.
+ * pide un campo con VOR y la lleva `en-que-radial-estoy.ts`. La tercera,
+ * «Interceptar un radial», también con VOR: salir por un radial que no es el
+ * de debajo, anticipando el viraje; la lleva `interceptar-un-radial.ts`.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -93,7 +95,8 @@ export type EjercicioId =
   | "efecto-suelo"
   | "autorrotacion"
   | "aguja"
-  | "radial";
+  | "radial"
+  | "interceptar";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -144,7 +147,15 @@ export interface Ejercicio {
    * allí arriba se practica donde pasa, y abajo queda pista de sobra para
    * bajar después a aterrizar.
    */
-  readonly colocacion?: "planeo" | "un-motor" | "crucero" | "tormenta" | "autorrotacion" | "aguja" | "radial";
+  readonly colocacion?:
+    | "planeo"
+    | "un-motor"
+    | "crucero"
+    | "tormenta"
+    | "autorrotacion"
+    | "aguja"
+    | "radial"
+    | "interceptar";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
    * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
@@ -400,6 +411,26 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     dondeVale: (oaci) => radioDeSalida(oaci).nav !== null,
     ensena:
       "el VOR no dice hacia dónde ir sino en qué radial estás: el curso que centra la barra con FROM es tu radial, y girar el avión no lo cambia",
+  },
+  /*
+   * **Interceptar un radial** (#51, peldaño 5): salir por un radial que no es
+   * el de debajo, como pide una salida publicada. El curso en el OBS, la
+   * barra a tope, cortarlo a cuarenta y cinco grados, virar antes de que la
+   * barra llegue al centro y quedarse en él corrigiendo el viento. Lo lleva
+   * `interceptar-un-radial.ts`. Ver el ADR 0030, enmienda H26e.
+   */
+  {
+    id: "interceptar",
+    // El mismo peldaño y los mismos campos que «¿En qué radial estoy?»: el VOR.
+    peldanos: ["taguato-ruvicha"],
+    valePara: (a) => radiosDe(a).nav,
+    leccion: "aterrizaje",
+    colocacion: "interceptar",
+    averias: [],
+    escena: "radio",
+    dondeVale: (oaci) => radioDeSalida(oaci).nav !== null,
+    ensena:
+      "a un radial se llega cortándolo a cuarenta y cinco grados y virando antes de que la barra llegue al centro, porque el avión gira en arco; y con viento, el morro se queda apuntando contra él",
   },
 ];
 

@@ -1804,6 +1804,9 @@ export const DIBUJOS = {
   "cdi-a-un-lado": cdiDelVor(-7, "FROM"),
   "cdi-from": cdiDelVor(0, "FROM"),
   "cdi-to": cdiDelVor(0, "TO"),
+  // «Interceptar un radial»: la barra viniendo hacia el centro, y la que lo cruzó. Ver `interceptar-un-radial.ts`.
+  "cdi-viniendo": cdiDelVor(-3.5, "FROM"),
+  "cdi-pasada": cdiDelVor(3.5, "FROM"),
   sobrevelocidad: SOBREVELOCIDAD,
   calor: CALOR,
   frio: FRIO,

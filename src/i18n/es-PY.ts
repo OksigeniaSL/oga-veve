@@ -3286,6 +3286,7 @@ export const ES_PY = {
   "hangar.ejercicio.autorrotacion": "Bajar sin motor en helicóptero",
   "hangar.ejercicio.aguja": "Seguí la aguja",
   "hangar.ejercicio.radial": "¿En qué radial estoy?",
+  "hangar.ejercicio.interceptar": "Salí por un radial",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3501,6 +3502,26 @@ export const ES_PY = {
     "Ahora vamos a la radio por tu radial. Girá el OBS media vuelta, dejándolo apretado, hasta que diga TO, y volá con la barra en el centro: si se va a un lado, girá un poco hacia ese lado",
   "ejercicio.radial.pasada":
     "¡Pasamos por encima de la radio! ¿Viste? Justo encima sale la bandera, porque ahí no sabe qué decir, y del otro lado TO y FROM se dan vuelta. Llegaste con la barra sola",
+  /*
+   * **«Interceptar un radial»** (#51, ADR 0030, enmienda H26e): el radial
+   * pedido en el OBS, la barra a tope, cortarlo de costado, virar antes de
+   * que la barra llegue al centro y quedarse en él corrigiendo el viento.
+   * Genéricas: el número del radial se escribe en la tarjeta
+   * (`ejercicio.interceptar.pedido`), no se dice. Grabadas en calma.
+   */
+  "ejercicio.interceptar.pedido": "Salí por el R-{radial} {id}",
+  "ejercicio.interceptar.antes":
+    "Hoy vamos a salir por un radial, como en una salida de verdad. El número está en la tarjeta: ponelo en el OBS con el nueve y el cero; si lo dejás apretado, gira solo",
+  "ejercicio.interceptar.aTope":
+    "La barra se fue a tope: el radial queda de ese lado. Seguí cortándolo de costado, sin apuntarle derecho, y mirá la barra",
+  "ejercicio.interceptar.seMueve":
+    "¡Ya se mueve! El radial está cerca. Empezá a virar ahora, de a poquito, antes de que la barra llegue al centro: el avión gira en curva, y si esperás, te pasás",
+  "ejercicio.interceptar.pasado":
+    "Te pasaste un poquito: la barra cruzó al otro lado. No pasa nada, volvé hacia ella de a poco. La próxima, empezá a virar un poco antes",
+  "ejercicio.interceptar.establecido":
+    "¡Estás en el radial! La barra quieta en el centro: así se sale por un radial, como los pilotos de verdad",
+  "ejercicio.interceptar.establecidoAlViento":
+    "¡Estás en el radial, con la barra quieta en el centro! Fijate en el morro: no apunta justo al número del OBS, apunta un poco contra el viento. Es lo que hace falta para que no te saque del radial",
   // Y la frase corta, con sus números, de Taguató para arriba.
   "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
   "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",
