@@ -3353,9 +3353,12 @@ export class Game {
     const esta = n ?? this.informacionDeTrafico.pedida(a.id, como.turno);
     // El dibujo no pide turno: sale en cuanto el otro está cerca.
     if (n === undefined) this.tarjetaDelTrafico(a);
+    // Al acabar de oírse, el respiro y la siguiente: antes, ni su voz ni su
+    // tarjeta, que taparía la de ésta mientras se dice. Ver `ENTRE_DOS`.
     const alSonar: AlSonar = (que, porque) => {
       if (que === "empieza" || que === "no-suena")
-        this.alOirLaInformacion(esta, a.id, a, como.porRadio ? como.texto : null);
+        this.alOirLaInformacion(esta, a.id, a, como.porRadio ? como.texto : null, que === "empieza");
+      else if (que === "acaba" || que === "cortada") this.informacionDeTrafico.acabo(esta);
       else if (que === "se-cae") {
         /*
          * Si la boca no la dice porque se acaba de decir lo mismo, está
@@ -3381,9 +3384,10 @@ export class Game {
     id: string,
     aviso: AvisoDeTrafico | null,
     enLaRadio: string | null = null,
+    conVoz = false,
   ): void {
     if (this.informacionDeTrafico.esperando?.n !== n) return;
-    this.informacionDeTrafico.seOyo(n);
+    this.informacionDeTrafico.seOyo(n, conVoz);
     this.nombrar("informacionDeTrafico", id);
     if (aviso) this.tarjetaDelTrafico(aviso);
     if (enLaRadio && this.tier.instruments !== "none")

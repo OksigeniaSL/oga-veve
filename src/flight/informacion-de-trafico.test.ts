@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import {
   ENTRE_DOS,
   InformacionDeTrafico,
+  SUENA_COMO_MUCHO,
   alturaDelOtro,
   cifrasDelTrafico,
   informacionEnPiezas,
@@ -271,7 +272,7 @@ describe("y con la boca ocupada, pide turno", () => {
   const comoSeDice = (a: Parameters<typeof cifrasDelTrafico>[0]) =>
     JSON.stringify(cifrasDelTrafico(a));
 
-  it("y mientras espera no se da otra; al sonar, sigue la regla de siempre", () => {
+  it("y mientras espera no se da otra, ni mientras se oye; al acabar, el respiro y la siguiente", () => {
     const info = new InformacionDeTrafico();
     const dos = [al("A", 2, 300), al("B", 4, 300)];
     const n = info.pedida("A", comoSeDice(info.paso(0.1, YO, dos)!));
@@ -280,6 +281,63 @@ describe("y con la boca ocupada, pide turno", () => {
     expect(info.porQueCalla).toBe("esperando turno");
     info.seOyo(n);
     expect(info.esperando).toBeNull();
+    expect(info.paso(ENTRE_DOS, YO, dos)).toBeNull();
+    expect(info.porQueCalla).toBe("sonando");
+    info.acabo(n);
+    expect(info.paso(0.1, YO, dos)).toBeNull();
+    expect(info.porQueCalla).toBe("entre dos");
+    expect(info.paso(ENTRE_DOS, YO, dos)?.id).toBe("B");
+  });
+
+  /*
+   * **Dos del circuito cerca a la vez, al pasar los quinientos pies.** Es lo
+   * que pasaba subiendo de Los Rodeos con el JAZ 90: la torre nombraba al
+   * primero y el segundo esperaba quince segundos contados desde que se pidió
+   * el primero, con la frecuencia callada —«la información: entre dos»—. El
+   * banco del vuelo entero da doce segundos de rombo lleno sin una palabra.
+   * Ahora el segundo va detrás del primero, en cuanto se acaba de oír.
+   */
+  it("dos cerca a la vez: el segundo se nombra en cuanto se acaba de oír el primero", () => {
+    const info = new InformacionDeTrafico();
+    const dos = [al("circuito:EC-KLH", 1.5, -300), al("circuito:EC-JSN", 2.5, 400)];
+    const DT = 0.1;
+    let t = 0;
+    let segundo: number | null = null;
+    let n: number | null = null;
+    // La boca, libre: la primera empieza en el acto y dura seis segundos.
+    for (; t < 20 && segundo === null; t += DT) {
+      const dada = info.paso(DT, YO, dos);
+      if (dada?.id === "circuito:EC-KLH") {
+        n = info.pedida(dada.id, comoSeDice(dada));
+        info.seOyo(n);
+      } else if (dada) segundo = t;
+      if (n !== null && t >= 6 - 1e-9 && t < 6 + DT - 1e-9) info.acabo(n);
+    }
+    expect(segundo).not.toBeNull();
+    expect(segundo!).toBeLessThan(6 + ENTRE_DOS + 0.5);
+    expect(segundo!).toBeGreaterThanOrEqual(6 + ENTRE_DOS - DT);
+  });
+
+  it("y si el aviso de que acabó no llega, pasado lo que dura una larga se da por oída", () => {
+    const info = new InformacionDeTrafico();
+    const dos = [al("A", 2, 300), al("B", 4, 300)];
+    info.seOyo(info.pedida("A", comoSeDice(info.paso(0.1, YO, dos)!)));
+    let t = 0;
+    while (t < SUENA_COMO_MUCHO - 1) {
+      expect(info.paso(0.5, YO, dos)).toBeNull();
+      t += 0.5;
+    }
+    let dada = null;
+    for (let i = 0; i < 20 && !dada; i++) dada = info.paso(0.5, YO, dos);
+    expect(dada?.id).toBe("B");
+  });
+
+  it("sin voz —la tarjeta ya se vio— ya se acabó: el respiro cuenta desde ahí", () => {
+    const info = new InformacionDeTrafico();
+    const dos = [al("A", 2, 300), al("B", 4, 300)];
+    info.seOyo(info.pedida("A", comoSeDice(info.paso(0.1, YO, dos)!)), false);
+    expect(info.paso(0.1, YO, dos)).toBeNull();
+    expect(info.porQueCalla).toBe("entre dos");
     expect(info.paso(ENTRE_DOS, YO, dos)?.id).toBe("B");
   });
 

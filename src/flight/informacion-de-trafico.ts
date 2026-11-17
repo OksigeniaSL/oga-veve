@@ -29,8 +29,9 @@
  * pase un rato. Un «traffic» repetido cada medio minuto por el mismo avión
  * que sigue ahí no informa de nada.
  *
- * Y de uno en uno: si dos se acercan a la vez, el segundo espera un rato para
- * no pisar al primero. No es un reloj que rearme a nadie: es cola.
+ * Y de uno en uno: si dos se acercan a la vez, el segundo espera a que el
+ * primero se acabe de oír, y un respiro. No es un reloj que rearme a nadie:
+ * es cola. Ver `ENTRE_DOS`.
  *
  * ## Cuándo no
  *
@@ -74,8 +75,33 @@ export const SE_OLVIDA_PIES = 2000;
  */
 export const DESDE_ALTURA = 152;
 
-/** Entre dos informaciones de dos tráficos distintos, s. Ver la cabecera. */
-export const ENTRE_DOS = 15;
+/**
+ * **El respiro entre dos informaciones de dos tráficos distintos**, s,
+ * contado desde que la primera **se acaba de oír**.
+ *
+ * Eran quince segundos contados desde que se pedía la primera, de cuando no
+ * había cola y lo que separaba dos voces era el reloj. Con la boca por turnos
+ * la segunda ya no puede pisar a la primera, y aquellos quince segundos solo
+ * dejaban al segundo tráfico sin nombrar: subiendo de Los Rodeos con el JAZ 90,
+ * al pasar los quinientos pies con dos del circuito cerca a la vez, la torre
+ * nombraba al primero y callaba al segundo de diez a quince segundos con la
+ * frecuencia en silencio —«la información: entre dos», EC-JSN y EC-XCD en el
+ * banco del vuelo entero—. Un controlador con dos tráficos que darte los dice
+ * seguidos, casi siempre en la misma transmisión; aquí son dos, una detrás de
+ * otra con este respiro, y la tarjeta del segundo no sale mientras todavía se
+ * oye el primero.
+ */
+export const ENTRE_DOS = 2;
+
+/**
+ * **Lo más que se espera a que acabe de oírse una**, s: si el aviso de que
+ * acabó no llega —la boca se vació de golpe, al cambiar de avión—, pasado
+ * esto se da por oída. Es la red de una espera entre dos sistemas: sin ella,
+ * una información que no avisa de su final no deja pasar a ninguna otra. Es
+ * lo que duraba el rato entre dos de antes, y una transmisión de tráfico dura
+ * un tercio.
+ */
+export const SUENA_COMO_MUCHO = 15;
 
 /** Por debajo de esto, m, el otro va «a tu misma altura»: trescientos pies. */
 export const A_LA_MISMA_ALTURA = 91;
@@ -128,7 +154,7 @@ export class InformacionDeTrafico {
   private desdeLaUltima = Infinity;
   /**
    * **Por qué no se informó en el último paso**, para el banco: un cercano
-   * del que nadie dice nada se puede deber a cinco cosas distintas, y sin
+   * del que nadie dice nada se puede deber a varias cosas distintas, y sin
    * esto solo se podía adivinar cuál. `null` es que se informó o que no había
    * nadie cerca.
    */
@@ -138,6 +164,11 @@ export class InformacionDeTrafico {
    * llega a sonar, no cuenta como la última. Ver `noSono`.
    */
   private pendiente: (EnLaCola & { anterior: number }) | null = null;
+  /**
+   * La que se está oyendo, y desde cuándo: hasta que acaba no se pide otra.
+   * Ver `acabo` y `SUENA_COMO_MUCHO`.
+   */
+  private sonando: { readonly n: number; hace: number } | null = null;
   /** Cuántas se han pedido, para numerarlas. */
   private pedidas = 0;
   /** Cuánto hacía de la anterior cuando `paso` dio la última. */
@@ -167,6 +198,7 @@ export class InformacionDeTrafico {
     this.contados.clear();
     this.desdeLaUltima = Infinity;
     this.pendiente = null;
+    this.sonando = null;
     this.anterior = Infinity;
   }
 
@@ -197,10 +229,24 @@ export class InformacionDeTrafico {
 
   /**
    * **Sonó**: empezó a decirse, o no tenía con qué y su tarjeta ya se vio.
-   * Desde aquí cuenta como dicha.
+   * Desde aquí cuenta como dicha. Con voz, se está oyendo hasta `acabo`; sin
+   * ella, ya se acabó.
    */
-  seOyo(n: number): void {
-    if (this.pendiente?.n === n) this.pendiente = null;
+  seOyo(n: number, conVoz = true): void {
+    if (this.pendiente?.n !== n) return;
+    this.pendiente = null;
+    if (conVoz) this.sonando = { n, hace: 0 };
+    else this.desdeLaUltima = 0;
+  }
+
+  /**
+   * **Se acabó de oír**, entera o cortada: desde aquí cuenta el respiro hasta
+   * la siguiente. Ver `ENTRE_DOS`.
+   */
+  acabo(n: number): void {
+    if (this.sonando?.n !== n) return;
+    this.sonando = null;
+    this.desdeLaUltima = 0;
   }
 
   /**
@@ -268,6 +314,7 @@ export class InformacionDeTrafico {
     intrusos: readonly Intruso[],
   ): AvisoDeTrafico | null {
     this.desdeLaUltima += dt;
+    if (this.sonando && (this.sonando.hace += dt) >= SUENA_COMO_MUCHO) this.acabo(this.sonando.n);
     /*
      * Primero se olvida a los que se fueron de verdad, y se mira siempre,
      * también en tierra: si no, uno contado antes de aterrizar seguiría
@@ -293,9 +340,11 @@ export class InformacionDeTrafico {
           : // Y de una en una: la que espera turno, primero.
             this.pendiente
             ? "esperando turno"
-            : this.desdeLaUltima < ENTRE_DOS
-              ? "entre dos"
-              : null;
+            : this.sonando
+              ? "sonando"
+              : this.desdeLaUltima < ENTRE_DOS
+                ? "entre dos"
+                : null;
     if (this.porQueCalla) return null;
 
     let mejor: { i: Intruso; r: number } | null = null;
