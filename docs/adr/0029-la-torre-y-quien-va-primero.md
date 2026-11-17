@@ -435,3 +435,102 @@ medio para sonar.
 Se arreglaría en el banco como el permiso —a uno mientras el aviso de aves
 espera turno, con una sonda como `permisoPorOir`—; no se ha hecho en esta
 tanda.
+
+## Enmienda (17-11-2026, H29f): lo que el reloj apretado no deja sonar, la intersección en la roja y «ya podés tocar»
+
+Tres cosas que dejó vistas H29d en el banco del vuelo entero del JAZ 90 en Los
+Rodeos (`tenerife-norte taguato 12 jaz-90`), con sus volcados de voces.
+
+### Las aves, y todo lo que solo retira el juego
+
+Lo de «Las aves de los 414 s», arriba: «torre.canario.aves» pedido a los
+504,5 s del reloj de la ruta y retirado a los 605,8 s. En el juego no hay nada
+que lo haga caducar antes, y está bien que no lo haya: no caduca con el reloj
+de la boca (`esElAvisoDeAves`) y lo retira `vigilarLasAves` cuando las aves
+dejan de estar delante —espantadas, detrás o a más de ocho kilómetros— o se
+toca tierra. Eso es lo que hay que decir: un aviso de aves que ya se pasaron
+no enseña nada. Lo que no casaba era el banco, que aceleraba el reloj del
+juego con el aviso esperando turno, y el reloj de la boca es el de pared.
+
+No son solo las aves. Todo lo que `cuantoAguanta` deja sin reloj —la
+información de tráfico, la fase, lo que la torre te da, el descenso— lo
+retira el juego al dejar de ser verdad, y eso va con su reloj: a ×12 llega
+doce veces antes de pared. Así que **el banco vuela a ×1 mientras espere
+turno en la boca algo que no caduca con su reloj** (sonda `algoPorOir`, en
+`src/dev/sondas.ts`, y `relojPara` en `verificar-vuelo-entero.mjs`), como ya
+lo hacía con tu permiso (`permisoPorOir`). Lo que sí caduca con el reloj de
+la boca no hace falta mirarlo: ese reloj ya es el de pared.
+
+### La oferta de la intersección
+
+`torre.canario.ofreceInterseccion` caducaba esperando en las tres tiradas, y
+no era el ×12: la carrera ya va a tiempo real en el banco. Se pedía en el
+juego en un momento en que no podía sonar. `contarPorDondeSeSale` iba con la
+fase «autorizado», o sea a la vez que la verde en castellano y el «cleared
+for take-off» con su viento: dieciocho segundos de boca (de 362,1 a 380,3 s en
+la tirada de después de H29d) contra los doce de `CADUCA_LA_ORDEN`. Caía la
+pregunta y sonaba la respuesta, «TORA runway one two, from intersection Echo
+two», sin que nadie la hubiera hecho. Y «vuelo.desdeLaInterseccion», lo de la
+instructora en los peldaños de abajo, con los cuatro segundos de un aviso, se
+caía siempre detrás de la verde.
+
+Y era el orden al revés. La oferta y la pista que queda van con el rodaje
+(Doc 4444, 12.3.4.7, la fraseología que ya citaba el código): la torre
+pregunta antes de autorizar, no después de haberlo hecho. En esa tirada el
+JAZ 90 estuvo dos minutos parado en la roja, de los 243,8 a los 362,1 s, y
+entre el «cleared for take-off» del otro, a los 286 s, y tu verde no habló
+nadie.
+
+Ahora:
+
+- **Se cuenta en la roja, en cuanto calla la frecuencia** (`porDondeSeSalePorDecir`):
+  con la boca libre y la torre sin hablar, como pregunta una torre de verdad,
+  y no delante de la roja y su porqué. Si llega antes la verde, se cuenta con
+  ella, como antes.
+- **Y espera su turno sin reloj** (`cuentaPorDondeSeSale` en `audio/boca.ts`):
+  la oferta, la pista que queda o remontar, y lo de la instructora. Lo retira
+  el juego al empezar la carrera, que es cuando deja de ser verdad. Solo lo
+  tuyo: el «backtrack» a otro avión de la frecuencia va en `baja` y caduca
+  como la charla.
+- **Remontar sigue con la verde**: «backtrack runway one two» es entrar en la
+  pista, y con la roja encendida la torre se contradiría.
+
+### «Antes de tocar, el juego dice que ya se puede tocar»
+
+El rojo de la tirada de antes de H29d: «no salió · el juego lo decidió 1 veces
+(683 s/final/12 m, y en pantalla «nariz-arriba»)». No es la regla de medir:
+el juego decidió la tarjeta y otra la tapó. «Ya podés tocar» pedía estar sobre
+la zona de toma, del umbral en adelante y sin margen —el de trescientos metros
+se quitó porque en la 01 de Fuerteventura salía sobre las flechas—, así que
+cruzando el umbral por debajo de los dieciocho metros salía en el umbral. Ese
+avión lo cruzó a doce sobre la cota, que son los treinta pies de ruedas a los
+que el JAZ 90 pide la recogida (`flight/recogida.ts`), y la tarjeta de la
+nariz, de la misma prioridad, la tapó en el paso siguiente. A ×12 hay doce
+pasos por fotograma y el banco no llegó a verla; jugando habría durado lo que
+se tarda en bajar de una altura a la otra, décimas. Quien juega no se
+enteraba.
+
+Ahora **«ya podés tocar» se adelanta hasta segundo y medio al umbral si desde
+ahí ya no se puede tocar antes**: si bajando el doble de lo que se baja las
+ruedas llegan al suelo pasado el umbral (`llegandoALaZonaDeToma` en
+`world/pistas-del-vuelo.ts`, con su prueba). Dicho ahí sigue siendo verdad, y
+la tarjeta tiene ese segundo y medio para verse antes de la recogida.
+Cruzando el umbral a los quince metros de la senda no cambia nada: sale en el
+umbral, como siempre. Y sobre las flechas, bajo, no sale: desde ahí se
+tocaría antes.
+
+### Lo medido
+
+En la mesa: `boca.test.ts` (por dónde se sale espera sin reloj, y solo lo
+tuyo) y `pistas-del-vuelo.test.ts` (el segundo y medio, y que sobre las
+flechas bajo no se adelanta). vitest entero, 506 ficheros y 10.367 pruebas
+en verde.
+
+En el navegador, `tenerife-norte taguato 12 jaz-90`, puerto 5689, con el
+volcado de voces: **no se voló en esta tanda**. La cola del navegador iba con
+varios bancos delante y el turno no llegó antes del tope. Lo de arriba sale
+de los volcados de H29d y de la mesa; queda por ver en el banco que la oferta
+suena en la roja, que las aves suenan con el reloj a uno y que la tarjeta de
+tocar sale. Y una cosa que el banco tampoco podría probar en Los Rodeos: sin
+roja, la oferta sigue sonando detrás de la verde, en el orden de antes, solo
+que ahora sin caerse.
