@@ -175,22 +175,43 @@ export const MARGEN_DE_CIRCUITO =
   1;
 
 /**
+ * Lo que hace falta para juzgar el circuito: su velocidad y la más lenta que
+ * está bien con lo que se lleva sacado, las dos en las mismas unidades que
+ * `Aproximando.velocidad`.
+ */
+export interface Circuito {
+  /** La de circuito de este avión. Ver `velocidadDeCircuito` en `aircraft.ts`. */
+  readonly velocidad: number;
+  /**
+   * **La más lenta que se pinta de verde**: la de maniobra de los flaps que
+   * lleva, y la Vref solo con los de aterrizar. Ver `minimaConFlaps` en
+   * `velocidades-de-despegue.ts`.
+   */
+  readonly minima: number;
+}
+
+/**
  * En qué banda va la velocidad **volando el circuito**, o `null` si no hay
  * nada que juzgar.
  *
  * Solo el lado rápido. Por abajo manda lo de siempre: la banda de
  * aproximación en cuanto se baja hacia la pista, y el avisador de pérdida en
- * cualquier sitio. Ir a Vref en el viento en cola no es ir mal; ir por debajo
- * sí, y por eso ahí esta banda se calla y no pinta nada de verde.
+ * cualquier sitio. Ir por debajo de la mínima no se elogia, y por eso ahí esta
+ * banda se calla y no pinta nada de verde.
+ *
+ * **Y la mínima cuenta la muesca.** Era la Vref con cualquier muesca, y la Vref
+ * es de los flaps de aterrizar: con la segunda del JAZ 90 son 1,13 veces su
+ * pérdida, y la banda pintaba de verde una velocidad a la que, virando a
+ * veinticinco grados, suena el avisador. Lo que se aprende de un verde es que
+ * ahí se puede ir; con unos flaps, eso es su velocidad de maniobra.
  */
 export function bandaDeCircuito(
   s: Aproximando,
-  vref: number,
-  circuito: number,
+  circuito: Circuito,
 ): BandaDeVelocidad {
   if (s.enElSuelo) return null;
-  if (s.velocidad > circuito * (1 + MARGEN_DE_CIRCUITO)) return "rapido";
-  return s.velocidad >= vref ? "bien" : null;
+  if (s.velocidad > circuito.velocidad * (1 + MARGEN_DE_CIRCUITO)) return "rapido";
+  return s.velocidad >= circuito.minima ? "bien" : null;
 }
 
 /*
@@ -315,11 +336,11 @@ export function bandaDeAhora(
   vref: number,
   corriendo: boolean,
   /**
-   * La de circuito de este avión si se está volando el circuito, o `null`.
-   * Va la última: bajando hacia la pista manda la de aproximación, que es
-   * más estrecha y es la que decide la toma. Ver `bandaDeCircuito`.
+   * La de circuito de este avión y su mínima si se está volando el circuito,
+   * o `null`. Va la última: bajando hacia la pista manda la de aproximación,
+   * que es más estrecha y es la que decide la toma. Ver `bandaDeCircuito`.
    */
-  circuito: number | null = null,
+  circuito: Circuito | null = null,
   /** La banda del fotograma anterior. Ver `bandaDeVelocidad`. */
   antes: BandaDeVelocidad = null,
   /** Lo más que rueda este avión, m/s. Ver `bandaDeRodaje`. */
@@ -329,7 +350,7 @@ export function bandaDeAhora(
   return (
     bandaDeRodaje(s.velocidad, s.enElSuelo, corriendo, rodaje) ??
     bandaDeVelocidad(s, vref, antes) ??
-    (circuito === null ? null : bandaDeCircuito(s, vref, circuito))
+    (circuito === null ? null : bandaDeCircuito(s, circuito))
   );
 }
 

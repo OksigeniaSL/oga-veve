@@ -2603,3 +2603,212 @@ se ha tocado.
   pérdida. No se ha movido.
 - **Los nudos que apunta `cantar()`** son verdaderos, y su comentario dice
   indicada: en Los Rodeos, seis nudos de diferencia en un canto de pérdida.
+
+## Enmienda H25c (17-11-2026): lo que el juego elogiaba en el circuito, y la rotación del JAZ 90
+
+Lo que H25a vio en el juego y no era del banco: la banda del circuito, el
+avisador callado a cinco metros, el comentario de `cantar()` y la segura de la
+ayuda. Y la rotación del banco, que sí era del banco.
+
+### La banda del circuito, desde la de maniobra de sus flaps
+
+`bandaDeCircuito` pintaba «bien» desde la Vref con cualquier muesca. La Vref
+es de los flaps de aterrizar: con la segunda muesca del JAZ 90, a la masa de
+la ficha, es 1,12 veces su pérdida, y virando a veinticinco grados ahí suena
+el avisador. El verde le enseñaba a quien vuela que esa velocidad estaba bien.
+
+Lo real es la regla del punto verde, la misma de la enmienda H25a: con unos
+flaps se va a su de maniobra, 1,3 veces su pérdida —«Full bank protected
+[…] ≥ 1.3vSS»—, y para ir más despacio se sacan los siguientes: «Lower flaps
+before going below green dot SPD» (C. Regli, *Embraer EMB190 – Summary*, 2025,
+pp. 1-38 y 2-19). Solo con los de aterrizar se baja a la Vref.
+
+- `minimaConFlaps` en `velocidades-de-despegue.ts`: la de maniobra de lo que
+  lleva sacado (`maniobraCon`), la Vref con la muesca de aterrizar o sin flaps,
+  y nunca menos que la Vref.
+- `bandaDeCircuito` recibe la velocidad del circuito y esa mínima
+  (`Circuito`). El juego la calcula con la posición de los flaps —no con la de
+  la palanca: la sustentación es la de los que ya han salido— y con la masa de
+  ahora, y la pasa a verdadera con el aire del día, porque la banda compara con
+  la verdadera: en Los Rodeos son un seis por ciento.
+- Por debajo de la mínima la banda sigue callada, como estaba por debajo de la
+  Vref: no dice «lento», que eso lo dicen la de aproximación y el avisador.
+
+Al nivel del mar y con la masa de la ficha, nudos indicados, desde dónde se
+pinta de verde con cada muesca (limpio / primera / segunda / aterrizar):
+
+| | Vref | Antes | Ahora |
+|---|---|---|---|
+| JAZ 20 | 64 | 64 con todas | 64 / 64 / 64 / 64 |
+| JAZ 40 | 86 | 86 con todas | 86 / 86 / 86 / 86 |
+| JAZ 50 | 70 | 70 con todas | 91 / 82 / 75 / 70 |
+| JAZ 60 | 108 | 108 con todas | 128 / 117 / 108 (tres muescas) |
+| JAZ 90 | 118 | 118 con todas | 176 / 152 / 136 / 118 |
+| JAZ 110 | 144 | 144 con todas | 175 / 163 / 152 / 144 |
+| JAZ 120 | 146 | 146 con todas | 191 / 172 / 157 / 146 |
+
+En el JAZ 20 y el JAZ 40 no cambia nada: su Vref ya queda por encima de 1,3
+veces su pérdida con cualquier muesca.
+
+**La escalera de la llegada ya contaba la muesca.** Cada peldaño pide unos
+flaps y una velocidad, y en toda la flota la velocidad queda por encima de la
+de maniobra de esos flaps; el más justo, el JAZ 90 con la segunda, 138 nudos
+frente a 136. `velocidad-de-circuito.test.ts` lo deja escrito, con la banda
+en cada muesca de cada avión con flaps: a la mínima es verde y un nudo por
+debajo no, y a la mínima se vira a treinta grados sin que suene el avisador.
+
+### Por qué no cantó el avisador a cinco metros
+
+La traza del ala de H25a vio al JAZ 90 rotando 0,36 s por encima del avisador
+a cinco metros, y el registro de cantos sin el «stall, stall». No era el
+avisador del modelo, que sí se encendió (`stallWarning`: la traza lo apunta),
+ni otro ángulo: era `cantarLaPerdida` en `game.ts`, que **por debajo de
+treinta metros sobre el suelo no cantaba nada**, con un comentario que decía
+que un avión de verdad hace lo mismo. Se puso por la recogida, donde un
+«¡Pérdida! Bajá el morro» de la instructora es el consejo contrario. El
+sacudidor y la bocina sí sonaban —los lleva `audio.ts` con el ángulo de
+ataque, a cualquier altura—, y la luz del panel también.
+
+Lo real es que el avisador se inhibe con el peso en las ruedas y no con la
+altura: es lo que ya dice `avisaLaPerdida`. En el E-Jet el sacudidor lo pone el
+automático «when approaching stall speed», sin cota ninguna; la única
+inhibición por altura que da el resumen es la de los mensajes del EICAS, de 80
+nudos a 400 pies (Regli, p. 1-57).
+
+Así que se reparte: **la caja canta en el aire a cualquier altura**, en el
+avión cuya pérdida tiene voz —hoy solo el JAZ 90, y su «stall, stall» es
+supuesto (enmienda H10a)—, y **lo del juego se sigue callando abajo**: el tono
+de atención y la explicación de la instructora. Si la caja ya cantó abajo y el
+avisador sigue puesto al pasar los treinta metros, es el mismo suceso y no se
+canta otra vez. En la avioneta y en los de sacudidor sin voz no cambia nada:
+abajo no se llama a `cantar`, para que el registro de cantos no apunte lo que
+no dice nadie.
+
+### La rotación del banco: la actitud, menos que la de verdad; el ritmo, más
+
+El E-Jet rota «3°/sec to 18° ANU, then FD» con los dos motores, y «1.5..2°/sec
+to 10° ANU» con uno (Regli, p. 2-38); su protección de la cola vale «only if
+normal rotation (3°/sec)» (p. 1-33), y el director de vuelo del despegue
+manda entre 8° y 18° de morro, sin bajar de la velocidad del sacudidor y diez
+nudos, y en el aire la V2 y diez (p. 1-14).
+
+El piloto del banco rotaba a una actitud —la de subir, doce grados, y en el
+suelo dos grados por debajo del avisador—: **menos morro del que se rota de
+verdad**. Lo que no era de verdad era **el ritmo**: pedía la actitud con una
+ganancia y sin ritmo ninguno, y como el morro no se levanta hasta que hay
+velocidad para levantarlo, cuando se soltaba lo hacía de golpe. En las tres
+trazas de H25a el JAZ 90 se iba del suelo girando a 5,3, 5,8 y 6,9 grados por
+segundo, con 10,4 a 10,9 de morro, y seguía hasta 12–12,7 con la trayectoria
+todavía en un grado: el ala a 10,9–12,5°, con el avisador a 12,0°, y 1,3–1,4 g.
+En la que lo pasó, una racha le sumó además grado y medio. Y comparaba la
+verdadera con la Vr, que es indicada: en Los Rodeos empezaba a tirar a 117
+nudos indicados con la Vr en 129.
+
+En el banco (`verificar-vuelo-entero.mjs`), en los reactores del modelo
+completo: lo que el morro gire por encima de tres grados por segundo se quita
+de lo que se tira —medio mando por cada tres grados de más, sin pasar de
+soltar—, en el suelo y en la subida del despegue (`RITMO_DE_ROTACION`,
+`aSuRitmo`), y se tira a la Vr en indicada. Los de hélice ligeros rotan como
+rotaban. El juego no rota por nadie: lo que gira el morro de quien juega es su
+mano, y eso no se ha tocado.
+
+### El comentario de `cantar()`
+
+Decía «la indicada» y apuntaba `airspeed`, la verdadera. Ahora el registro de
+cantos apunta las dos: `[119 kt IAS · 126 kt TAS · vref …]`.
+
+### La segura de la ayuda y el viraje
+
+La norma de certificación pide que a la V2, con los flaps de despegue, un
+viraje coordinado de treinta grados no haga sonar el aviso de pérdida; a la V2
+y su incremento de subida con todos los motores, cuarenta; y a la Vref con los
+de aterrizar, cuarenta (14 CFR 25.143 h, leído en la copia de Cornell LII). La
+segura de la ayuda (nota H22b del ADR 0002) es 1,13 veces la pérdida con los
+flaps que se lleven, la V2 más baja que deja la norma, y con el avisador al
+1,07 (`MARGEN_DEL_AVISADOR`) a esa velocidad suena virando a veintiséis
+grados. Contado con la curva del modelo sin protección de pérdida, que es la
+de Taguató —la ayuda a 0,45—, al nivel del mar y con la masa de la ficha (en
+Tukã la protección alarga el ángulo de pérdida un 45 %, y el avisador va con
+ella):
+
+| | Limpio | Primera muesca | Segunda |
+|---|---|---|---|
+| JAZ 50 | 1,13 · aviso a 26° | 1,16 · 32° | 1,27 · 44° |
+| JAZ 60 | 1,15 · 30° | 1,26 · 44° | — |
+| JAZ 90 | 1,13 · 26° | 1,13 · 26° | 1,18 · 35° |
+| JAZ 110 | 1,13 · 26° | 1,21 · 38° | 1,29 · 47° |
+| JAZ 120 | 1,13 · 26° | 1,16 · 31° | 1,26 · 44° |
+
+(La segura sobre la pérdida con esos flaps, y a qué inclinación suena el
+avisador a esa velocidad. En el JAZ 20 y el JAZ 40 la segura va de 1,36 a 1,51
+veces su pérdida y el avisador no suena por debajo de 52°.)
+
+**El juego deja virar lo que se quiera a cualquier velocidad**, con la ayuda o
+sin ella: en Taguató no hay nivelador, y en Tukã solo actúa con la palanca
+suelta y a veinte o treinta grados apenas toca. Lo que no hace la ayuda es
+meter el ala en el avisador: su tope de ángulo está tres grados antes
+(`climbHold` en `fdm.ts`), y en Taguató, a 1,13 veces la pérdida, ese tope ya
+queda por debajo del ángulo de un g, así que ahí la ayuda no sostiene ni el
+vuelo nivelado y el avión baja; el avisador solo suena si quien vuela tira. No
+se ha tocado. Lo que haría falta, para proponerlo con sus números:
+
+- **Un tope de alabeo de la ayuda que crezca con el margen**, como el de la
+  cinta del E-Jet («Full bank protected» desde el punto verde) y como el límite
+  de su vuelo normal, 33° (Regli, p. 1-35): en los peldaños con la ayuda, que
+  no deje pasar de la inclinación a la que suena el avisador a esa velocidad,
+  menos un margen, también con la palanca cogida. Es una capa nueva en
+  `fdm.ts` y toca lo que vuelan los bancos.
+- **Y el avisador mismo.** Con la V2 en su mínimo, 1,13, la tabla de la norma
+  le deja al aviso 1,05 veces la pérdida como mucho (1,13 · √cos 30°); el del
+  juego, al 1,07, no la cumple ahí. Los aviones de verdad suelen llevar la V2
+  por encima de su mínimo, por la Vmu o la Vmc, así que no es una cifra para
+  mover el avisador de toda la flota: es la que habría que mirar con la V2 de
+  cada uno.
+
+### Las páginas del resumen de Regli
+
+La etiqueta de cada página del resumen va al pie, y en el texto extraído
+parece la cabecera de la siguiente. El punto verde y la franja ámbar están en
+la p. 1-38, no en la 1-37, y «Lower flaps before going below green dot SPD», en
+la 2-19, no en la 2-18, como citaba la enmienda H25a. Se han corregido en
+`velocidades-de-despegue.ts` y en el banco; el texto de la enmienda H25a se
+deja como estaba.
+
+### Volado en el navegador
+
+`verificar-vuelo-entero.mjs tenerife-norte taguato 1 …`, el 17-11-2026,
+puerto 5688, con la traza del ala y el viento del día, 040/12, reloj ×1:
+
+| | Resultado | Se va del suelo | Lo más que gira el morro (< 60 m) | Lo menos que le quedó al ala en el despegue | Lo que falló |
+|---|---|---|---|---|---|
+| JAZ 90, H25a (tres tiradas) | — | 143–145 kt, 10,4–10,9° de morro, 5,3–6,9°/s | 5,3–6,9°/s | 1,1°, −0,5° y 0,9° | — |
+| JAZ 90, 1.ª | 61 de 62 | 143 kt, 8,2°, 3,3°/s | 3,6°/s | 2,1°, a 7 m, 1,37 g | la toma, a 2,77 m/s |
+| JAZ 90, 2.ª | 63 de 63 | 147 kt, 7,9°, 3,4°/s | 4,1°/s | 2,8°, a 5 m, 1,28 g | — |
+| JAZ 50 | 57 de 57 | 78 kt, 8,0°, 2,6°/s | 3,3°/s | 1,6°, a 3 m, 1,25 g | — |
+
+(Sin medir: tres, dos y cuatro comprobaciones; entre ellas, en las tres, la
+ventanilla en la final, porque el plan del juego acaba más allá, y la foto de
+las historias, porque no se contó ninguna. El JAZ 50 vuela con la técnica de
+los rápidos, así que también rota a su ritmo.) En ninguna sonó «stall, stall» ni se encendió el avisador. La toma de la
+primera, a 2,77 m/s con la recogida empezada a 11,6 m de ruedas, es la de la
+enmienda H25a, que ya caía a 2,12 y 4,57: no viene de aquí. En la segunda, lo
+menos que le quedó al ala en todo el vuelo no fue en el despegue sino en el
+circuito, a 356 m: 1,5°, con 1,26 g de una racha a 128 nudos indicados con la
+segunda muesca, por debajo de su de maniobra, 136. El banco iba ahí, en la
+etapa de subir, a 127–134 nudos con la segunda: es del vuelo del circuito del
+banco (enmienda H25a), no de la rotación, y no se ha tocado.
+
+### Lo que no
+
+- **La banda de la aproximación** (`bandaDeVelocidad`) compara la verdadera
+  con la Vref, que es indicada: en Los Rodeos dice «lento» un seis por ciento
+  más abajo de donde toca. No es del circuito y no se ha tocado.
+- **La velocidad mínima del automático** (`velocidadMinimaDelAutomatico` en
+  `game.ts`), la Vref por `1,1 − 0,15 · flaps`: con la Vref de la FAA, en el
+  JAZ 90 limpio son 129 nudos con la pérdida limpia en 135, y con la segunda
+  muesca, la Vref, 1,12 veces su pérdida. Es la red del automático, no una
+  velocidad que se pida ni se elogie, y moverla toca lo que vuelan los bancos;
+  atarla a `minimaConFlaps`, o a 1,13 veces la pérdida con los flaps que
+  lleve, sería la misma regla.
+- **La rotación del JAZ 90 con quien juega**: no hay ayuda que rote, y no se ha
+  medido cuánto gira el morro con la tecla.
