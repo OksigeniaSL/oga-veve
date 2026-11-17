@@ -812,3 +812,155 @@ ha tocado.
 Lo medido: con el efecto suelo, MED sigue en sus 3 m/s² y para en 846 m; lo que
 se alarga es el pie a fondo, de 700 a 712 m, porque rodando con los flaps fuera
 el ala sostiene un 13 % más y las ruedas cargan menos.
+
+## Nota H29e (17-11-2026): el ángulo de pérdida por muesca, y el autofreno
+
+Las dos pruebas del 747 que la nota H29c (2) dejaba en rojo.
+
+### Lo que faltaba
+
+La sustentación de los flaps iba en recta con la palanca —`flapsLift` por la
+fracción de recorrido— y el ángulo de pérdida era uno para todas las muescas,
+el de `aero.alphaStall`. Con eso el 747 no podía irse del suelo a los 10,1° de
+Boeing (D. Carbaugh, «Tail Strikes: Prevention», *AERO* QTR_01 2007, figura 1)
+y llevar a la vez su V2 por encima de 1,13 veces la pérdida (CS 25.107 b 1):
+las dos cosas salían del mismo número.
+
+### Lo real
+
+Un flap de salida sube la curva de sustentación: más sustentación con el mismo
+ángulo, y la pérdida, si acaso, antes. Un slat o un Krueger del borde de ataque
+la alarga: la corriente sigue pegada unos grados más y la pérdida llega más
+tarde. «The lift curve of plain and slotted flaps is elevated to higher lift
+coefficients compared to the lift curve without flaps, but without increasing
+the stall angle. On the contrary, the stall angle tends to be smaller. In order
+to increase the lift through higher angles of attack (without airflow
+separation), high lift systems are inserted on the leading edge» (D. Scholz,
+*Aircraft Design*, apuntes de la HAW Hamburg, cap. 8, «High Lift Systems and
+Maximum Lift Coefficients», p. 8-4). Los 10,1° y el
+CL máximo de despegue de 2,03 del 747-100 (J. Jenkinson, P. Simpkin y D.
+Rhodes, *Civil Jet Aircraft Design*, 1999, fichero de datos A, tabla 3) piden
+justo eso: poca sustentación de más en la muesca de despegue y la pérdida más
+arriba.
+
+### Lo que se hizo (`flaps.ts`)
+
+- **`sustentacionDeLosFlaps`**: lo que suman los flaps con el mismo ángulo. La
+  recta de siempre, salvo en la ficha que da `sustentacionPorMuesca`, una cifra
+  por muesca sacada; entre dos muescas, en recta.
+- **`anguloDePerdida`**: el ángulo de pérdida con los flaps así. El de la
+  ficha con cualquier muesca, salvo en la que lleva `bordeDeAtaque` —slats o
+  Krueger—, que da uno por muesca. **Solo el que los lleva gana ángulo**, y lo
+  comprueba `flaps.test.ts`: en las fichas sin tabla, las dos funciones dan
+  exactamente lo de antes en cualquier posición.
+
+Los leen todos los que antes leían `flapsLift · flaps` o `alphaStall`: la
+sustentación, la pérdida y su histéresis, el avisador (`anguloDeAviso`), el par
+de cabeceo pasada la pérdida, el tope de ángulo de la ayuda, `timonQueSostiene`
+y con él la marca del compensador de despegue, `perdidaCon` y todo lo que sale
+de ella (la V2 de la norma, la de maniobra, la mínima del automático, las de la
+ayuda), la rodadura y la frenada (`sustentacionRodando`, `frenaElAire`), el
+suelo de vuelo del modelo sencillo, el anemómetro del cuadro, el marco rojo de
+pérdida del HUD y la bocina.
+
+### El 747 (JAZ 120)
+
+- `sustentacionPorMuesca: [0,14, 2/3, 1]`: la muesca de despegue sube la recta
+  0,14 y no 0,333, que es lo que lo deja irse del suelo a la actitud de
+  Carbaugh con el efecto suelo. Las otras dos, como estaban.
+- `bordeDeAtaque: { dispositivo: "krueger", perdidaPorMuesca: [0,352, 0,25,
+  0,25] }`: con la de despegue, el ángulo que da el CL máximo de Jenkinson con
+  esa sustentación, (2,03 − 0,2 − 0,14) / 4,8 = 0,352 rad, 20,2°. Con las otras
+  dos, el de la ficha: con los de aterrizar la pérdida la fija la Vref (1,3
+  veces), que no se ha movido, y la de veinte no tiene cifra propia.
+
+En la mesa de `despegue-y-toma-del-manual.test.ts`, a la masa de la ficha:
+
+| | Antes | Ahora |
+|---|---|---|
+| Se va del suelo a | 8,44° y 160,0 kt | 10,06° y 162,3 kt |
+| Se va del suelo a los | 1.299 m | 1.337 m |
+| A los 35 ft | 1.507 m | 1.554 m |
+| Volado / cuenta del hangar (1.489 m) | 1,012 | 1,044 (banda 0,95–1,05) |
+| Pérdida con los flaps de despegue | 132,2 kt | 122,1 kt |
+| CL máximo de despegue | 1,73 | 2,03 |
+| Ángulo de pérdida, flaps de despegue | 14,3° | 20,2° |
+| Avisador, flaps de despegue | 11,7° | 17,1° |
+| Vr / pérdida (Vr 145, NTSB) | 1,10 | 1,19 |
+| V2 / pérdida (V2 152,6, NTSB) | 1,15 | 1,25 |
+| De maniobra con los de despegue | 171,8 kt | 158,8 kt |
+| Pérdida con los de aterrizar | 112,3 kt | 112,3 kt |
+| Marca del compensador de despegue | 0,088 | 0,225 |
+
+La Vr y la V2 son las de la NTSB y no se han tocado; ahora quedan donde suelen
+quedar en un reactor grande, una quinta y una cuarta parte por encima de la
+pérdida. La pista que pide el hangar tampoco se mueve: la cuenta corre hasta
+la Vr y no mira la actitud. Lo que sí se alarga es el despegue volado, 47 m
+hasta los 35 ft: se va del suelo con dos grados más, medio segundo más tarde.
+Con el 1,15 de la norma son 1.787 m, un 4,5 % por encima de los 1.710 de Boeing
+a este peso (D6-58326, 3.3.1); antes, un 1,3 %.
+
+### Los demás
+
+El 787 y el E-Jet llevan slats de verdad, y el 1900D, el Seneca, la 172, el
+biplano y el anfibio, nada en el borde de ataque. **Ninguno lleva tabla**: los
+de pistón y el turbohélice porque no tienen con qué ganar ángulo, y los dos con
+slats porque lo que tienen con fuente ya cuadra con un solo ángulo —el 787 se
+va del suelo a 6,8°, en los 6–7,5° del AAIB (*Bulletin* 11/2020), y la Vref y
+la pérdida del E170 son las de la FAA—, y sin una cifra de su CL máximo de
+despegue no hay con qué fijarles el suyo. Sus pérdidas, avisadores y
+velocidades no cambian ni en un bit: las pruebas de pérdida, la escalera de
+velocidades, los motores, la ficha técnica y el apoyo siguen igual.
+
+### La subida recién despegado
+
+Una prueba que no era de las dos se salió:
+`subida-recien-despegado.test.ts`, el 747 soltado a 1,07 veces su pérdida de
+despegue en Tukã, bajaba a −2,4 m/s a los diez segundos. No era la ayuda: el
+avión nacía `equilibrado` con el ángulo del ala **limpia**, y con los flaps de
+despegue eso no es un g. Con la muesca de antes, que subía mucho la recta,
+nacía a 1,06 g; con la de ahora, a 0,79. Así que `InitialConditions` lleva
+`flapsDelEquilibrio`, y `alfaDeEquilibrio` y `timonDeEquilibrio` cuentan con
+ellos; la prueba pone el avión a un g con sus flaps, que es como sale de la
+rotación. Nadie más los pasa, así que el resto de quien nace equilibrado —el
+cambio de peldaño, la colocación del ejercicio, el banco de la mano— nace como
+antes.
+
+### El autofreno
+
+**Los frenos de tierra quitan lo que quitan en un avión de verdad.** Boeing:
+«For all Boeing jet transport aircraft at landing flap settings, lowering the
+nose and raising the speedbrakes places 65% - 100% of the airplane weight onto
+the tires», y a alta velocidad «more than half» («Landing on Slippery
+Runways», *Boeing Airliner*). En el modelo, con ellos fuera y el efecto suelo,
+las ruedas del 747 cargan el 75,5 % del peso en el primer segundo y el 83,2 %
+de media hasta que baja a seis décimas de la velocidad de toma (sin efecto
+suelo, 78,4 % y 85,2 %); el JAZ 90, el 76,9 %, y el JAZ 110, el 78,6 %. Dentro
+de la banda de Boeing, así que el fallo no está ahí.
+
+**Y el listón de 1,2 sigue sin fuente.** No se ha encontrado una tabla que se
+pueda citar con MED o el autofreno 3 frente al freno manual a fondo en seco:
+las de Boeing (*Normal Configuration Landing Distance*) y Airbus (*Landing
+distance without autoland*) existen, pero las copias que se pueden leer en
+abierto están cerradas a la descarga o son recuerdos de foro. Sin fuente, ni
+el listón ni el modelo se han movido, y **la prueba sigue en rojo**.
+
+Lo que dice la física, para quien la mire: con deceleraciones casi constantes,
+la relación entre las dos frenadas es la de sus deceleraciones. El pie a fondo
+del 747 para en 712 m desde 138,5 kt, una media de 3,56 m/s², y MED pide 3; su
+ficha dice que su autofreno más fuerte da 11 ft/s², 3,35 m/s². Con un avión que
+no frena más de eso, MED no puede parar un 20 % más largo que el freno a fondo:
+el 1,2 es de un avión que frena más que un 747. Medido: LO 1.493 m, MED 846, el
+pie a fondo 712 (MED / pie, 1,19; antes del efecto suelo, 1,21). El JAZ 90, 1,59,
+y el JAZ 110, 1,23.
+
+### Lo que no
+
+- **Las otras muescas del 747 y los otros dos con slats**, sin cifras de su CL
+  máximo con cada muesca. Con las de Boeing para las velocidades de maniobra de
+  cada muesca se podría, y no se han leído aquí de una fuente.
+- **El esquema del ala** (`flight/ala.ts`) sigue dibujando la curva del ala
+  limpia, la de la ficha.
+- **La primera muesca del 747 es de cinco grados** en el dibujo y en la placa,
+  y las cifras con las que se ha afinado —la Vr y la V2 de la NTSB, la actitud
+  de Carbaugh— son de un 747 con los flaps a diez.
