@@ -749,3 +749,66 @@ llegó a tiempo. Guyrami vuela el modelo sencillo, que en el aire no cambia.
 - **La recogida del banco** sigue empezando a los segundos de senda: con el
   colchón, ya podría empezar más abajo, como el E190. Es del banco y no se ha
   tocado.
+
+## Nota H29c (2) (17-11-2026): las dos pruebas del 747
+
+Las dos que la nota H29c dejaba en rojo. Ninguna se ha cerrado: las dos se
+quedan como estaban, con lo medido.
+
+### El 747 se va del suelo a 8,4°, y Boeing da 10,1°
+
+Los 10,1° son de un 747-400 con los flaps a diez (D. Carbaugh, «Tail Strikes:
+Prevention», *AERO* QTR_01 2007, figura 1), y ese avión tiene efecto suelo: lo
+que sobra es sustentación del 747 del modelo en aire libre con su muesca de
+despegue. La palanca del modelo da a cada muesca su parte de `flapsLift`, en
+recta (la primera del 747, un tercio: ΔCL = 0,333), así que se midió en la mesa
+de `despegue-y-toma-del-manual.test.ts` qué ΔCL de esa muesca hace falta, sin
+tocar las otras:
+
+| ΔCL de la muesca | Se va a | Pérdida, flaps de despegue | Vr / pérdida | V2 / pérdida | CL máx. de despegue |
+|---|---|---|---|---|---|
+| 0,333 (hoy) | 8,4° | 132,2 kt | 1,10 | 1,16 | 1,73 |
+| 0,30 | 8,7° | 133,5 | 1,09 | 1,15 | 1,70 |
+| 0,25 | 9,2° | 135,5 | 1,07 | 1,13 | 1,65 |
+| 0,20 | 9,6° | 137,6 | 1,05 | 1,12 | 1,60 |
+| 0,15 | 10,0° | 139,8 | 1,04 | 1,10 | 1,55 |
+
+(La V2 es la del modelo, 153,4 kt: la de la NTSB, 152,6, con el 0,5 % que pide
+su Vmc; `motores.test.ts`.)
+
+**No cabe.** Los 10,1° piden un ΔCL de unos 0,15, y con él la V2 queda a 1,10
+veces la pérdida con esos flaps, donde la norma pide 1,13 (CS 25.107 b 1, un
+reactor sin reducción de la pérdida con motor; `V2_SOBRE_LA_PERDIDA`). Lo único
+que entra en las dos bandas a la vez es un ΔCL de 0,245 a 0,255, que se va a
+9,15° —el borde de abajo de los 10,1 ± 1— con la V2 a tres décimas de nudo del
+suelo de la norma, y que aleja el CL máximo de despegue de 1,73 a 1,65 cuando
+Jenkinson, Simpkin y Rhodes (*Civil Jet Aircraft Design*, 1999, fichero A) le
+dan 2,03. Y la regla de la Vr, 1,1 veces esa pérdida, dejaría de decir lo mismo
+que la Vr de la NTSB (149 contra 146 nudos), que es una de las dos fuentes que
+la sostienen (enmienda H10b del ADR 0027).
+
+Las dos cifras con fuente —10,1° al irse del suelo y 2,03 de CL máximo— piden lo
+mismo: **menos sustentación con poco ángulo y más ángulo de pérdida con los
+flaps de despegue**, que es lo que hacen los Krueger del borde de ataque del
+747. El modelo tiene un solo ángulo de pérdida para todas las muescas; darle uno
+por muesca es cambiar el modelo, con el avisador y las pérdidas de todos
+detrás, y no se ha hecho.
+
+El 787, con la misma cuenta, ha entrado en lo de su fabricante: se va del
+suelo a 6,8°, y el AAIB cita «between 6° and 7.5°» (*Bulletin* 11/2020); sin
+efecto suelo se iba a 7,7°. Los comentarios de las dos pruebas ya no dicen que
+el modelo no tiene efecto suelo, ni la decisión del ADR 0027 sobre la VMU.
+
+### MED para 1,19 veces lo que el pie a fondo, y la prueba pide 1,2
+
+El autofreno del juego es el de Airbus (LO 1,7 m/s², MED 3; `frenada.ts`), así
+que la fuente sería su tabla de distancias de aterrizaje en seco por modo de
+frenada, o la de Boeing con su autofreno 3. **No se ha encontrado una que se
+pueda citar**: el QRH de Boeing en seco y en la configuración normal solo
+tabula uno de los autofrenos, y las copias del de Airbus a mano no son
+legibles ni oficiales. Sin fuente, el listón no se ha movido y el modelo no se
+ha tocado.
+
+Lo medido: con el efecto suelo, MED sigue en sus 3 m/s² y para en 846 m; lo que
+se alarga es el pie a fondo, de 700 a 712 m, porque rodando con los flaps fuera
+el ala sostiene un 13 % más y las ruedas cargan menos.
