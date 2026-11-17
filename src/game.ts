@@ -20402,9 +20402,10 @@ export class Game {
       viento.x,
       viento.z,
     );
+    this.subeElAireAhora = racha.y + estela.vertical;
     this.flight.ponerRacha?.(
       racha.x,
-      racha.y + estela.vertical,
+      this.subeElAireAhora,
       racha.z,
       racha.alabeo + estela.alabeo,
     );
@@ -28391,6 +28392,11 @@ export class Game {
     return margenDeLaFinal(this.aircraft, this.vientoDeLaFinal());
   }
 
+  /** Lo que sube el aire, m/s: lo mismo que le da a su automático. */
+  get subeElAireParaBanco(): number {
+    return this.subeElAireAhora;
+  }
+
   /**
    * **La marca de velocidad de ahora**, nudos indicados: la que pide la
    * escalera y llevan los gases automáticos, para que el banco la vuele en el
@@ -28777,6 +28783,13 @@ export class Game {
 
   /** Cuánto se mueve el aire ahora, σ en m/s: el meneo. Ver `cuantoSeMueve`. */
   private movimientoDelAire = 0;
+  /**
+   * Lo que sube el aire donde está el avión, m/s: la racha vertical y la
+   * estela del de delante, lo que se le da al modelo de vuelo. Lo lee el
+   * automático para seguir la senda sin esperar al variómetro: ver
+   * `porElAire` en `flight/piloto-automatico.ts`.
+   */
+  private subeElAireAhora = 0;
   /** El gesto del señalero en la llegada al puesto, o `null`. */
   private gestoDelSenalero: Gesto = null;
   /**
@@ -31159,6 +31172,9 @@ export class Game {
           airDensity(s.position.y, aire),
           s.airspeed,
         ),
+        // Y el aire que sube o baja, que pide morro sin esperar a que el
+        // avión se aparte de la senda: ver `porElAire`.
+        subeElAire: this.subeElAireAhora,
         /*
          * **Y en el modelo sencillo, con sus propias cuentas**: ahí la palanca
          * es cuánto se sube y el gas es la velocidad, y las dos cosas se le
