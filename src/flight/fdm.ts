@@ -167,6 +167,35 @@ const WING_LEVELLER = 2.0;
  */
 const VELOCIDAD_DE_LA_AYUDA = 60;
 
+/**
+ * **Hasta qué altura el compensador automático acelera subiendo**, m sobre el
+ * terreno: quinientos pies. Es hasta donde el manual de la FAA pide sostener
+ * el gas de despegar después de irse del suelo, «until reaching an altitude
+ * of at least 500 feet above the surrounding terrain or obstacles»
+ * (FAA-H-8083-3C, p. 6-5). Ver `leyDelSuelo` en `step`.
+ */
+const SUBE_SIN_BAJAR_HASTA = 500 * 0.3048;
+
+/**
+ * **Y desde qué altura ya no**, m: mil pies. Entre las dos se va apagando,
+ * para que la ley no salte al cruzar una raya.
+ */
+const SE_SUELTA_DEL_SUELO = 1000 * 0.3048;
+
+/**
+ * **Cuánto de lo que sobra se va en subir**, cerca del suelo: la mitad. La
+ * otra mitad acelera hacia la de subida.
+ */
+const PARTE_PARA_SUBIR = 0.5;
+
+/**
+ * **Desde cuánto de sobra entra entero el suelo de subida**, en seno del
+ * ángulo de la trayectoria: dos centésimas, algo más de un grado. Por debajo
+ * entra en proporción, para que pasar de que sobre a que falte —quitar gas—
+ * no sea un salto en la ley.
+ */
+const SOBRA_ENTERA = 0.02;
+
 /** Cuánto tarda el compensador automático en fijar la actitud, en segundos. */
 const TRIM_SETTLE = 1.1;
 
@@ -1050,10 +1079,17 @@ export class CoefficientFlightModel implements FlightModel {
       clDelAla > 0
         ? clDelAla * (1 - parteQueSeLlevan(ac, controls.frenosDeTierra ?? 0))
         : clDelAla;
+    /*
+     * La inducida y la del ala en pérdida, aparte: el compensador automático
+     * quita las dos para saber cuánto frena el avión a un g. Ver
+     * `sobraParaSubir`.
+     */
+    const inducida = (cl * cl) / (Math.PI * aspectRatio * a.oswald);
+    const enPerdida = postStallDrag(s.alpha, stallAngle);
     const cd =
       a.cd0 +
-      (cl * cl) / (Math.PI * aspectRatio * a.oswald) +
-      postStallDrag(s.alpha, stallAngle) +
+      inducida +
+      enPerdida +
       // Los flaps, por el ángulo al que están y no por la palanca. Ver
       // `resistenciaDeLosFlaps`.
       resistenciaDeLosFlaps(ac, assisted.flaps) +
@@ -1483,8 +1519,89 @@ export class CoefficientFlightModel implements FlightModel {
          */
         const hacia = s.alpha + s.pitchRate * 0.25;
         const cerca = hacia - (umbral - 0.05);
+        /*
+         * **Y cerca del suelo, con empuje que sobra, se acelera subiendo.**
+         *
+         * Lo de arriba, por debajo de la velocidad segura, baja el morro en
+         * proporción a lo que falta, y no mira dónde está el suelo. Recién
+         * despegado el avión va por debajo de ella —el JAZ 20 sale a unos
+         * cincuenta nudos y su segura son sesenta y siete—, así que soltando
+         * la palanca la ayuda lo llevaba hacia la pista: medido en Taguato,
+         * −2,6 m/s a cuatro metros; el JAZ 40, en Tukã, volvía a tocar. Con el
+         * gas a tope no hace falta bajar para coger velocidad: lo que sobra de
+         * empuje da para las dos cosas.
+         *
+         * Es lo que dice el manual de la FAA del despegue: «Upon liftoff, the
+         * airplane should be flying at approximately the pitch attitude that
+         * allows it to accelerate to VY», y si se deja caer el morro de más
+         * «the airplane may also settle back to the runway»; y con el gas de
+         * despegar «the airspeed should be controlled by making slight pitch
+         * adjustments», hasta por lo menos quinientos pies sobre el terreno
+         * (FAA-H-8083-3C, 2021, pp. 6-4 y 6-5).
+         *
+         * Así que por debajo de quinientos pies, lo que pide la ayuda para
+         * coger velocidad ya no es bajar el morro en proporción, sino **una
+         * subida con la mitad de lo que sobra**: la otra mitad acelera. Lo que
+         * sobra es el empuje de ahora menos lo que frena el avión a un g a
+         * esta velocidad, partido por el peso (`sobraParaSubir`): con el gas
+         * quitado no sobra nada y la ley es la de siempre, así que la toma y
+         * la bajada con poco gas siguen igual. Entre quinientos y mil pies se
+         * va apagando, sin interruptor —un interruptor en una ley de
+         * cabeceo es un ciclo límite—, y por encima vuelve a bajar el morro
+         * lo que haga falta, que con altura de sobra es lo que protege de la
+         * pérdida. Y el tope de ángulo de ataque de abajo manda sobre esto:
+         * acelerar subiendo no es tirar hasta el avisador.
+         *
+         * Es una ley sobre la velocidad vertical, como la de la subida, y no
+         * un suelo puesto encima de la otra: se probó como suelo y, con el
+         * morro abajo de la ley vieja al otro lado, el 747 cabeceaba entre
+         * cinco y diecisiete grados cada ocho segundos.
+         */
+        const pesoAhora = masaDe(ac) * GRAVITY;
+        const clAUnG = pesoAhora / Math.max(1, qSSimetria);
+        const sobraParaSubir =
+          (thrust -
+            motoresQueFrenan -
+            qSSimetria *
+              (cd -
+                inducida -
+                enPerdida +
+                (clAUnG * clAUnG) / (Math.PI * aspectRatio * a.oswald))) /
+          pesoAhora;
+        const cercaDelSuelo =
+          clamp(
+            (SE_SUELTA_DEL_SUELO - s.heightAboveGround) /
+              (SE_SUELTA_DEL_SUELO - SUBE_SIN_BAJAR_HASTA),
+            0,
+            1,
+          ) * clamp(sobraParaSubir / SOBRA_ENTERA, 0, 1);
+        /*
+         * **Con el tirón que le falta al compensador.** El avión sale
+         * compensado para la subida inicial (`compensadorDeDespegue`), más
+         * deprisa de lo que va recién despegado, y soltado busca esa velocidad
+         * bajando el morro: «some back-elevator pressure may be required to
+         * hold this attitude until the proper climb speed is established»
+         * (FAA-H-8083-3C, p. 6-5). Ese tirón es el timón que sostiene el avión
+         * a esta velocidad menos el que lleva (`timonQueSostiene`), y lo pone
+         * esta mano en la parte que le toque al peldaño. Sin él, la ley de
+         * arriba lo pedía a base de error: con la ayuda a medias de Taguato el
+         * JAZ 20 se quedaba bajando medio metro por segundo antes de subir.
+         */
+        const tironQueFalta =
+          timonQueSostiene(
+            ac,
+            speed * Math.sqrt(density / SEA_LEVEL_DENSITY),
+            assisted.flaps,
+          ) - timon;
+        const leyDelSuelo =
+          (PARTE_PARA_SUBIR * sobraParaSubir * speed - s.verticalSpeed) *
+            0.12 *
+            Math.min(1, VELOCIDAD_DE_LA_AYUDA / Math.max(1, speed)) +
+          tironQueFalta;
+        const deLaVelocidad =
+          speedLaw * (1 - cercaDelSuelo) + leyDelSuelo * cercaDelSuelo;
         const law = Math.min(
-          clamp(climbLaw * (1 - blend) + speedLaw * blend, -1, 1),
+          clamp(climbLaw * (1 - blend) + deLaVelocidad * blend, -1, 1),
           cerca > 0 ? -cerca * 2 : Infinity,
         );
 
