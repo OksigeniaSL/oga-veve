@@ -346,23 +346,33 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
             pisa(r, b.getBoundingClientRect()),
         )
         .map((b) => b.dataset.hud ?? String(b.className).slice(0, 20));
+      /*
+       * Su hueco, en píxeles de pantalla: lo que dejan sus dos bordes. Desde
+       * H28e acaba donde empieza la columna de mandos, que tapaba, así que se
+       * centra en él y no en la pantalla.
+       */
+      const escala = Number.parseFloat(getComputedStyle(document.querySelector(".hud")).zoom) || 1;
+      const bordes = getComputedStyle(hint);
+      const izq = (Number.parseFloat(bordes.left) || 0) * escala;
+      const der = innerWidth - (Number.parseFloat(bordes.right) || 0) * escala;
       hint.textContent = "";
       return {
         // El peldaño de los pequeños no lleva subtítulos: ver `.hud--sin-letras`.
         sinLetras: !!document.querySelector(".hud--sin-letras"),
         ancho: Math.round(r.width),
         centro: Math.round(r.left + r.width / 2),
-        pantalla: innerWidth,
+        hueco: Math.round(der - izq),
+        centroHueco: Math.round((izq + der) / 2),
         redondos,
       };
     });
     if (!sub.sinLetras)
       comprobar(
-        `${donde0}: un subtítulo largo pasa de medio ancho, centrado y sin tapar botones redondos`,
-        sub.ancho > sub.pantalla / 2 &&
-          Math.abs(sub.centro - sub.pantalla / 2) <= 2 &&
+        `${donde0}: un subtítulo largo pasa de medio hueco, centrado en él y sin tapar botones redondos`,
+        sub.ancho > sub.hueco / 2 &&
+          Math.abs(sub.centro - sub.centroHueco) <= 2 &&
           sub.redondos.length === 0,
-        `${sub.ancho} px de ${sub.pantalla}, centro en ${sub.centro}` +
+        `${sub.ancho} px de un hueco de ${sub.hueco}, centro en ${sub.centro} de ${sub.centroHueco}` +
           (sub.redondos.length ? ` · encima de ${sub.redondos.join(", ")}` : ""),
         "con left: 50% se partía a media pantalla y subía en tres líneas hasta la barra",
       );
@@ -1627,21 +1637,38 @@ async function medirAvisoYLampara() {
   poner();
   await raf();
   poner();
-  hud.classList.add("hud--avisando");
-  aviso.classList.add("aviso-hud--visible");
-  flecha.textContent = "↺";
-  avisoTexto.textContent = sinLetras ? "" : AVISO;
-  torre.hidden = false;
-  torre.classList.add("torre--roja");
   const fila = torre.querySelector('[data-hud="torre-fila"]');
   const avion = torre.querySelector(".torre__quien svg");
   const filaAntes = fila ? [fila.hidden, fila.innerHTML] : null;
-  if (fila && avion) {
-    fila.hidden = false;
-    fila.innerHTML = avion.outerHTML + avion.outerHTML;
-  }
   const ordenAntes = orden.textContent;
-  orden.textContent = sinLetras ? "" : ORDEN;
+  /*
+   * Los tres encendidos, y vueltos a encender durante dos fotogramas, que el
+   * juego apaga el aviso y la lámpara en cada uno: en el teléfono el aviso se
+   * aparta de la lámpara con lo que el HUD mide de ella (`--torre-alto`), y
+   * medido en el acto se medía con la lámpara de antes (H28e).
+   */
+  const encenderLosTres = () => {
+    hud.classList.add("hud--avisando");
+    aviso.classList.add("aviso-hud--visible");
+    if (flecha.textContent !== "↺") flecha.textContent = "↺";
+    const dice = sinLetras ? "" : AVISO;
+    if (avisoTexto.textContent !== dice) avisoTexto.textContent = dice;
+    torre.hidden = false;
+    torre.classList.add("torre--roja");
+    if (fila && avion && fila.innerHTML !== avion.outerHTML + avion.outerHTML) {
+      fila.hidden = false;
+      fila.innerHTML = avion.outerHTML + avion.outerHTML;
+    }
+    const orden2 = sinLetras ? "" : ORDEN;
+    if (orden.textContent !== orden2) orden.textContent = orden2;
+  };
+  for (let i = 0; i < 3; i++) {
+    poner();
+    encenderLosTres();
+    await raf();
+  }
+  poner();
+  encenderLosTres();
   const cabina = hud.classList.contains("hud--cabina");
   const redondos = [
     ...document.querySelectorAll(
