@@ -3778,6 +3778,11 @@ pico a menos de un nudo y la carga en lo mismo. No cambia lo que se ve: cambia
 que la tripulación del banco vuela el mismo automático que el juego. Lo fija
 `despresurizacion.test.ts`, con la ascendente.
 
+### Las pruebas
+
+El vitest entero, después del último cambio de código: 10.410 en verde, 28
+saltadas y ninguna en rojo.
+
 ### Volado en el navegador
 
 (Se completa con lo volado.)
