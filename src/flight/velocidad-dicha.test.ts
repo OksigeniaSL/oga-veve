@@ -89,9 +89,9 @@ describe("la velocidad dicha con su número", () => {
     // FAA (enmienda H20e del ADR 0027), que ya no la pide nadie.
     expect(velocidadDicha(123, "metric")).toBe(230);
     expect(piezaDeVelocidad(123, "metric")).toBe("vuelo.paso.velocidad.230");
-    // Y la de su área terminal, 198 nudos, 370 km/h, espera su toma: sin pieza.
+    // Y la de su área terminal, 198 nudos, 370 km/h, grabada el 16-11-2026.
     expect(velocidadDicha(198, "metric")).toBe(370);
-    expect(piezaDeVelocidad(198, "metric")).toBe(null);
+    expect(piezaDeVelocidad(198, "metric")).toBe("vuelo.paso.velocidad.370");
     // Y 320 no la pide ningún avión: sin pieza, la frase va sin el número.
     expect(piezaDeVelocidad(173, "metric")).toBe(null);
     // La de 250 nudos, el tope de los diez mil pies: 463 km/h, 460.
