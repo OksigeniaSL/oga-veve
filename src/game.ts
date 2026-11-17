@@ -298,6 +298,7 @@ import { createVegetation, zonaDeAeropuerto } from "./world/vegetation";
 import { FinalDeLaTorre } from "./flight/final-de-la-torre";
 import { crearGranja, type Granja } from "./world/granja";
 import { SitiosConModelo } from "./world/sitios-con-modelo";
+import { compilarYEsperar } from "./world/compilar-y-esperar";
 import {
   arrancarAbreOtroTramo,
   LECCION_POR_DEFECTO,
@@ -6697,7 +6698,7 @@ export class Game {
         }),
         suelo: (x, z) => this.terrain.sampleHeight(x, z),
         bultos: this.bultos,
-        preparar: (modelo) => this.renderer.compileAsync(modelo, this.camera, this.scene),
+        preparar: (modelo) => compilarYEsperar(this.renderer, modelo, this.camera, this.scene),
       });
       this.scene.add(this.sitios.grupo);
     }
@@ -18101,7 +18102,7 @@ export class Game {
         vecinos: [],
         suelo: (x, z) => this.terrain.sampleHeight(x, z),
         bultos: this.bultos,
-        preparar: (modelo) => this.renderer.compileAsync(modelo, this.camera, this.scene),
+        preparar: (modelo) => compilarYEsperar(this.renderer, modelo, this.camera, this.scene),
       });
       this.scene.add(this.sitios.grupo);
       // Los faros se encienden con el crepúsculo, como la ciudad.

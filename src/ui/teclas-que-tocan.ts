@@ -239,6 +239,33 @@ export class PistaDeTeclas {
   private pintado = "";
   private senalado: string | null = null;
   private buscando = 0;
+  /**
+   * **Lo que mide, después de maquetar y no en mitad del cuadro.** Colocar la
+   * tarjeta lee su caja y la de todo lo que podría tapar, y el dedo la del
+   * mando; leído justo después de cambiar el dibujo, eso obliga al navegador a
+   * recolocar la página entera en ese momento, con todo lo que el cuadro lleva
+   * escrito hasta ahí, y luego otra vez al final. Medido en el primer cuadro
+   * tras saltar a crucero con la CPU ×4 (H23c, enmienda del ADR 0028): de 37 a
+   * 43 ms, de ellos 29 a 36 en esa primera lectura.
+   *
+   * Así que se escribe lo de antes de medir —la tarjeta en su sitio de
+   * siempre, arriba y sin encoger— y se mide cuando el navegador ya ha
+   * maquetado el cuadro: en la llamada de un `ResizeObserver`, que llega
+   * después de maquetar y antes de pintar. Lo que se escribe ahí se pinta en
+   * ese mismo cuadro, así que la tarjeta no pasa ni un cuadro fuera de su
+   * sitio, y la regla de dónde va es la misma, con la página ya entera.
+   * Se observa solo cuando hay algo que medir: empezar a observarla hace que
+   * el observador la cuente en la siguiente maquetación aunque no cambie de
+   * tamaño, y se deja de observar en cuanto se ha colocado. Lo que cambie de
+   * tamaño sin pedirlo lo recoge la vuelta de cada treinta cuadros, como
+   * antes.
+   *
+   * Sin `ResizeObserver` —las pruebas, un navegador viejo— se mide en el
+   * momento, como siempre.
+   */
+  private readonly observador: ResizeObserver | null;
+  /** Si lo que se mide al maquetar tiene que colocar también el dedo. */
+  private dedoPendiente = false;
 
   constructor(
     private readonly raiz: HTMLElement,
@@ -262,10 +289,9 @@ export class PistaDeTeclas {
       const que = this.raiz.dataset.tecla as TeclaQueToca | undefined;
       if (que) aprender(que);
     });
-    window.addEventListener("resize", () => {
-      this.colocarElDedo();
-      this.colocarLaTarjeta();
-    });
+    this.observador =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => this.medirYColocar());
+    window.addEventListener("resize", () => this.pedirQueSeColoque(true));
   }
 
   /** La tarjeta entera, para medirla. */
@@ -293,16 +319,47 @@ export class PistaDeTeclas {
             ? "abajo"
             : "toca";
       this.dedo.className = `inicio__dedo ttq__dedo inicio__dedo--${dir}`;
-      this.colocarElDedo();
-      this.colocarLaTarjeta();
+      this.pedirQueSeColoque(true);
     } else if (v && ++this.buscando % 30 === 0) {
       /*
        * Y de vez en cuando se vuelve a mirar: el botón puede tardar un
        * fotograma en salir, y el cuadro se sube y se baja con su tirador.
        */
-      if (this.senalado && this.dedo.hidden) this.colocarElDedo();
-      this.colocarLaTarjeta();
+      this.pedirQueSeColoque(!!this.senalado && this.dedo.hidden);
     }
+  }
+
+  /**
+   * Pide colocar la tarjeta —y el dedo, si `dedo`— con la página maquetada.
+   * Ver `observador`.
+   */
+  private pedirQueSeColoque(dedo: boolean): void {
+    const tarjeta = this.tarjeta;
+    // Sin tecla no hay nada que medir —ni tarjeta ni mando señalado—: el dedo se esconde ya.
+    if (!this.observador || tarjeta.hidden) {
+      if (dedo) this.colocarElDedo();
+      this.colocarLaTarjeta();
+      return;
+    }
+    this.dedoPendiente ||= dedo;
+    this.sinColocar(tarjeta);
+    this.observador.unobserve(tarjeta);
+    this.observador.observe(tarjeta);
+  }
+
+  /** Lo que el observador llama, ya maquetado: lo que se pidió, de una vez. */
+  private medirYColocar(): void {
+    this.observador?.unobserve(this.tarjeta);
+    if (this.dedoPendiente) this.colocarElDedo();
+    this.dedoPendiente = false;
+    this.colocarLaTarjeta(false);
+  }
+
+  /** La tarjeta en su sitio de siempre y sin encoger, que es como se mide. */
+  private sinColocar(tarjeta: HTMLElement): void {
+    tarjeta.style.left = "";
+    tarjeta.style.top = "0px";
+    tarjeta.style.transform = "none";
   }
 
   /**
@@ -312,12 +369,11 @@ export class PistaDeTeclas {
    * hacer es tapar un instrumento o un mando. Es la regla del cuadro, que se
    * encoge antes que empujar nada (ver `ui/familia.ts`).
    */
-  private colocarLaTarjeta(): void {
+  private colocarLaTarjeta(ponerAntes = true): void {
     const tarjeta = this.tarjeta;
     if (tarjeta.hidden) return;
-    tarjeta.style.left = "";
-    tarjeta.style.top = "0px";
-    tarjeta.style.transform = "none";
+    // Desde el observador ya viene así puesta: escribirlo otra vez obligaría a maquetar al leer.
+    if (ponerAntes) this.sinColocar(tarjeta);
     const caja = tarjeta.getBoundingClientRect();
     const visibles = (sel: string, desde: number): DOMRect[] =>
       [...document.querySelectorAll<HTMLElement>(sel)]

@@ -63,6 +63,7 @@ import { ANCHO_RODADURA } from "./ancho-de-rodadura";
 import { umbralPublicado } from "./umbrales-publicados";
 import { lucesDePistaPublicadas, separacionDelBorde } from "./sendas-publicadas";
 import { puntoDeVisada } from "../flight/toma-larga";
+import { TramosCercanos } from "./calle-mas-cercana";
 
 /**
  * Lo más corto que puede medir algo para que cuente como pista, m.
@@ -1787,8 +1788,11 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
 
   // Puntos de espera: dos barras gruesas cruzando la calle. Se orientan según
   // la rodadura más cercana, porque OSM da el punto pero no su dirección.
+  // Los tramos de las calles, repartidos una vez para todos. Ver `world/calle-mas-cercana.ts`.
+  let cercanas: TramosCercanos | null = null;
   for (const { xy: punto } of aero.holdingPositions) {
-    const dir = direccionCercana(aero, punto);
+    cercanas ??= new TramosCercanos(aero.taxiways);
+    const dir = cercanas.direccion(punto);
     if (!dir) continue;
     const [ux, uy] = dir;
     for (const desfase of [-1.5, 1.5]) {
@@ -2179,27 +2183,6 @@ function sobreElEje(
     recorrido += l;
   }
   return null;
-}
-
-/** Hacia dónde va la calle de rodaje más cercana a un punto. */
-function direccionCercana(
-  aero: Aerodrome,
-  punto: Punto,
-): readonly [number, number] | null {
-  let mejor = Infinity;
-  let dir: readonly [number, number] | null = null;
-  for (const calle of aero.taxiways) {
-    for (let i = 0; i < calle.path.length - 1; i++) {
-      const [ax, ay] = calle.path[i]!;
-      const [bx, by] = calle.path[i + 1]!;
-      const d = Math.hypot((ax + bx) / 2 - punto[0], (ay + by) / 2 - punto[1]);
-      if (d >= mejor) continue;
-      const largo = Math.hypot(bx - ax, by - ay) || 1;
-      mejor = d;
-      dir = [(bx - ax) / largo, (by - ay) / largo];
-    }
-  }
-  return dir;
 }
 
 /**

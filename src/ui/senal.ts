@@ -2066,10 +2066,37 @@ export class Senal {
      */
     if (this.caja) alPulsar(this.caja, () => this.accion?.());
     this.medirse();
+    if (this.caja && typeof ResizeObserver !== "undefined") {
+      this.observador = new ResizeObserver(() => this.medirse());
+      this.observador.observe(this.caja);
+    }
   }
 
   /**
-   * Publica lo alto que es esta tarjeta, para que el tutor se le suba encima.
+   * **Se mide después de maquetar, no al cambiar.** Leer el alto de la
+   * tarjeta justo después de escribir en ella obliga al navegador a recolocar
+   * la página entera en ese momento, con todo lo que el cuadro lleva escrito
+   * hasta ahí: 12 a 14 ms en el primer cuadro tras saltar a crucero con la CPU
+   * ×4 (H23c, enmienda del ADR 0028). Un `ResizeObserver` llama después de
+   * maquetar y antes de pintar, con las medidas ya hechas, y lo que se escribe
+   * ahí se pinta en el mismo cuadro. Y llama justo cuando hace falta: al salir
+   * la tarjeta, al irse —se queda en cero— y al cambiar de tamaño; si cambia
+   * lo que dice y no lo que ocupa, no hay nada que volver a medir. Sin él
+   * —las pruebas, un navegador viejo—, se mide en el momento, como siempre.
+   *
+   * Cuando la tarjeta sale, el rincón crece y el observador del HUD
+   * (`medirLaBarra`), que se creó antes y llama antes, ya ha escrito
+   * `--rincon-alto`: esta lectura paga entonces el estilo nuevo del HUD, que
+   * el navegador rehace igual antes de pintar. No es una maquetación de más.
+   */
+  private observador: ResizeObserver | null = null;
+  private alCambiar(): void {
+    if (!this.observador) this.medirse();
+  }
+
+  /**
+   * Publica lo que ocupa el rincón con esta tarjeta, para que el tutor y la
+   * columna de mandos se coloquen debajo y la luz de la torre a su lado.
    *
    * **Los dos viven abajo y en medio.** La señal está ahí porque es donde ya
    * mira quien pilota —«veo unos símbolos en la esquina inferior izquierda,
@@ -2085,33 +2112,28 @@ export class Senal {
    */
   private medirse(): void {
     if (!this.raiz) return;
-    const puesta = !!this.caja && !this.caja.hidden;
-    const alto = puesta ? this.caja!.offsetHeight + 12 : 0;
-    this.raiz.style.setProperty("--senal-alto", `${alto}px`);
     /*
-     * **Y lo ancha que es, para que la luz de la torre se aparte.**
-     *
-     * Las dos viven arriba y en medio, y las dos hablan de lo mismo cuando la
-     * torre manda irse al aire: la lámpara dice el estado y la tarjeta dice
+     * **Y la luz de la torre, a su lado.** Las dos hablan de lo mismo cuando
+     * la torre manda irse al aire: la lámpara dice el estado y la tarjeta dice
      * qué hacer. Apiladas, con el mismo centro, se leen como una sola cosa a
-     * medio tapar — y en una frustrada caían además encima del avión.
+     * medio tapar — y en una frustrada caían además encima del avión. La
+     * lámpara se centra en el hueco que deja el rincón: `--rincon-izquierda`.
      *
-     * Se resuelve como todo lo demás que convive en este HUD: midiendo. Cada
-     * una se corre media anchura de la otra, así que juntas quedan centradas y
-     * separadas, y cuando solo hay una, esa se queda en el medio. Ver `.torre`
-     * y `.senal` en `style.css`.
-     */
-    const ancho = puesta ? this.caja!.offsetWidth + 14 : 0;
-    this.raiz.style.setProperty("--senal-ancho", `${ancho}px`);
-    /*
-     * **Y lo que ocupa el rincón entero**, que es lo que de verdad hace falta
+     * Aquí se escribían también `--senal-alto` y `--senal-ancho`, el alto y
+     * el ancho de la tarjeta sola, de cuando el tutor y la lámpara se
+     * colocaban con ellos. Ya no los leía nadie —ni la hoja ni el código—, y
+     * una variable que cambia en la raíz del HUD hace mirar otra vez el estilo
+     * de todo lo que cuelga de ella.
+     *
+     * **Lo que ocupa el rincón entero** es lo que de verdad hace falta
      * fuera: la columna de mandos de la derecha se coloca debajo de él.
      *
      * Se mide aquí y no solo al montar el HUD porque el rincón **cambia de
      * alto cuando esta tarjeta sale y cuando se va**, y una medida tomada una
      * sola vez se queda vieja justo en ese momento: los mandos se quedaban
-     * donde estaban y la tarjeta les caía encima. Esto ya se llama en las dos
-     * transiciones, así que es el sitio. Ver `--rincon-alto` en `hud.ts`.
+     * donde estaban y la tarjeta les caía encima. Esto se llama en las dos
+     * transiciones —ver `observador`—, así que es el sitio. Ver
+     * `--rincon-alto` en `hud.ts`.
      */
     escribirRincon(this.raiz);
   }
@@ -2218,7 +2240,7 @@ export class Senal {
     const llama = opciones.llama ?? true;
     boton.classList.toggle("senal--pulsable", !!this.accion && llama);
     boton.classList.toggle("senal--explica", !!this.accion && !llama);
-    this.medirse();
+    this.alCambiar();
   }
 
   /** El aviso se apaga solo. Un cartel permanente deja de mirarse. */
@@ -2248,7 +2270,7 @@ export class Senal {
     this.enEspera = null;
     if (this.caja) this.caja.hidden = true;
     this.actual = "";
-    this.medirse();
+    this.alCambiar();
   }
 
   /** Qué hay puesto y cuánto le queda. Para el banco de pruebas. */
@@ -2271,7 +2293,7 @@ export class Senal {
       this.caja.hidden = true;
       this.actual = "";
       this.prioridad = 0;
-      this.medirse();
+      this.alCambiar();
       // Y si algo se quedó esperando turno, ahora es su turno.
       const vuelve = this.enEspera;
       this.enEspera = null;

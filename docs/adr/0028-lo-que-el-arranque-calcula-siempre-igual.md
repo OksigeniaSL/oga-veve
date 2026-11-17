@@ -658,3 +658,190 @@ arreglar en el aro.
   partir lo largo.
 - De la lista de #190, sin tocar: decodificar las fotos de una pieza fuera
   del hilo principal y los reescalados de las teselas en un `Worker`.
+
+## Enmienda H23e (17-11-2026): las dos maquetaciones forzadas del HUD, la calle más cercana y la espera de los sitios (#190)
+
+Tres de las cosas que quedaban: las dos lecturas de tamaño del primer cuadro
+tras saltar a crucero, que H23c dejó medidas; la calle más cercana a cada
+punto de espera, del montaje de Barajas; y la excepción de los sitios con
+modelo al cambiar de mundo, que H23c vio de pasada.
+
+### Las dos lecturas del HUD, después de maquetar
+
+H23c midió en el primer cuadro tras saltar a crucero, con la CPU ×4, dos
+lecturas de tamaño justo después de escribir en el HUD: la de la tarjeta de
+las teclas (`colocarLaTarjeta`, 37–43 ms, de ellos 29–36 en su primer
+`getBoundingClientRect`) y la de la señal (`medirse`, 12–14 ms, en el
+`getBoundingClientRect` del rincón). Cada una obliga al navegador a recolocar
+la página en ese momento, con todo lo que el cuadro lleva escrito hasta ahí,
+y luego otra vez al final del cuadro.
+
+Lo hecho, en las dos: **se mide en la llamada de un `ResizeObserver`**, que
+llega después de que el navegador haya maquetado el cuadro y antes de que lo
+pinte. Ahí las medidas ya están hechas y leerlas no cuesta, y lo que se
+escribe se pinta en ese mismo cuadro: nada pasa un cuadro fuera de su sitio.
+Sin `ResizeObserver` —un navegador viejo— se mide en el momento, como antes.
+
+- **La tarjeta de las teclas** (`PistaDeTeclas`, en `ui/teclas-que-tocan.ts`).
+  Al cambiar la tecla, al cambiar la pantalla y en la vuelta de cada treinta
+  cuadros, se escribe ya lo de antes de medir —la tarjeta en su sitio de
+  siempre, arriba y sin encoger, lo mismo que hacía antes de leer— y se
+  empieza a observarla. Observar algo nuevo hace que el observador lo cuente
+  en la siguiente maquetación aunque no haya cambiado de tamaño; en esa
+  llamada se coloca el dedo, si toca, y la tarjeta, **con la misma regla y en
+  el mismo orden**, y se deja de observar. La única diferencia es qué página
+  ve la regla: antes, la de mitad del cuadro, sin lo que se escribía después
+  —la señal que salía en ese mismo paso, por ejemplo—; ahora, la del cuadro
+  entero. Lo que cambie de tamaño sin pedirlo lo sigue recogiendo la vuelta de
+  cada treinta cuadros.
+- **La señal** (`Senal`, en `ui/senal.ts`). Se observa su caja siempre: el
+  observador llama al salir la tarjeta, al irse y al cambiar de tamaño, que
+  son justo las veces que el rincón cambia; si cambia lo que dice y no lo que
+  ocupa, no hay nada que medir. De paso, `medirse` ya no escribe
+  `--senal-alto` ni `--senal-ancho`: no los leía nadie —ni la hoja ni el
+  código; el tutor y la luz de la torre se colocan con `--rincon-alto` y
+  `--rincon-izquierda`—, y cada variable que cambia en la raíz del HUD hace
+  mirar otra vez el estilo de todo lo que cuelga de ella.
+
+Sin DOM en vitest —no hay `jsdom` ni otro, y no se mete una dependencia para
+esto— no hay prueba de mesa que valga: una página sin maquetar no fuerza nada.
+Se comprueba en el navegador, abajo, y con `npm run carteles`, que mira que
+la tarjeta de las teclas y la señal caigan donde deben en la tablet y en el
+teléfono tumbado.
+
+### La calle más cercana a cada punto de espera, por una rejilla
+
+Las dos barras de cada punto de espera se orientan con la calle más cercana,
+porque OpenStreetMap da el punto y no su dirección: el tramo de punto medio
+más cercano, y en un empate, el primero de la lista. `direccionCercana`
+recorría todos los tramos de todas las calles por cada punto —en Barajas, los
+3.386 tramos de sus 756 calles por cada uno de sus 293 puntos—.
+
+Ahora (`TramosCercanos`, en `world/calle-mas-cercana.ts`) los puntos medios se
+reparten una vez en celdas de 64 m y se mira por anillos desde la del punto,
+hasta que lo que queda sin mirar está más lejos que lo mejor encontrado, con
+un milímetro de holgura para el redondeo de repartir. **Exacto por
+construcción**: la misma cuenta con `Math.hypot` sobre los mismos `double`,
+el empate deshecho por el índice, y con coordenadas que no son números finitos
+o enormes, la vuelta de antes tal cual. Y comprobado: `calle-mas-cercana.test.ts`
+lo compara con la cuenta de `5ebf7a7d` en los 384 puntos de espera de todos los
+campos y en más de ocho mil puntos sueltos alrededor —dentro, fuera de la
+rejilla, muy lejos, en el punto medio de un tramo y a medio camino entre dos,
+que es donde caen los empates—, con `Object.is` en cada número, y en un empate
+hecho a mano.
+
+En la mesa, sin estrangular, los 293 puntos de Barajas: **de 36–40 ms a
+0,6–2,8 ms**, montar la rejilla incluido —0,6 a 0,9 en cuatro de las cinco
+vueltas—, seis vueltas en el mismo proceso; la primera, en frío, 58 y 3,9. `createAerodrome` de Barajas, con el mismo
+instrumento de H23a y H23c, queda en 331–396 ms; H23c lo dejó en 359–391, en
+otra tanda y con la máquina de otra manera, así que la diferencia es del orden
+del ruido y no se da como medida.
+
+### Los sitios con modelo, sin excepción al cambiar de mundo
+
+`SitiosConModelo` esperaba a la tarjeta con `renderer.compileAsync` de three:
+compila los programas de cada material y pregunta cada diez milésimas, desde
+un temporizador, si ya están enlazados. Si el material se tira mientras tanto,
+three ya ha borrado su fila y la pregunta es `undefined.isReady()`: **una
+excepción en un temporizador, que no recoge nadie, y una promesa que no se
+cumple nunca**. Pasa al cambiar de mundo, porque `soltarTodo` tira el material
+con el que `calentar` compila en vacío el sombreado de los sitios, y esa espera
+puede seguir en marcha.
+
+Lo hecho: `compilarYEsperar` (`world/compilar-y-esperar.ts`), lo mismo que
+`compileAsync` y en el mismo orden —`compile` con las luces y la niebla de la
+escena, la primera pregunta ya si la tarjeta compila en paralelo y a las diez
+milésimas si no—, pero **un material tirado deja de esperarse** —se le escucha
+el `dispose`, y lo que no tenga programa en las tablas cuenta como listo— y
+**la espera tiene plazo**, cinco segundos: con la tarjeta perdida, `isReady` no
+dice nunca que sí, y `bajar` no volvería a bajar ningún otro sitio. No es
+`compile` a secas, como en el suelo de la isla vecina: aquí sí hay algo que
+esperar, porque un sitio se cuelga de la escena cuando su programa ya está, y
+si no, el primer dibujo espera a la tarjeta (ver `bajar`).
+
+`compilar-y-esperar.test.ts` lo prueba con un pintor de mentira que lleva las
+tablas como three: que espera hasta que el programa está, que tirar el
+material a media espera ni revienta ni deja la promesa colgada, que una fila
+borrada sin aviso cuenta como lista, el plazo y la primera pregunta sin
+compilación en paralelo.
+
+### Lo medido en el navegador
+
+El instrumento de H23c, adaptado (`medir-h23e.mjs`, en el directorio de
+trabajo de H23e): el paquete de `5ebf7a7d` y el de esta rama, compilados con
+`NODE_ENV=development vite build` y servidos como ficheros quietos, la tarjeta
+Intel, un navegador nuevo por carga y alternando antes y después. El 17-11-2026,
+con la máquina a una carga de 5 a 7 y sin vitest al lado.
+
+**El salto a crucero**, el de H23c: El Hierro, catorce segundos quieto, la CPU
+×4 y el avión a tres mil metros sobre la pista, a 120 m/s y con el
+automático. Se apunta el cuadro más largo del primer segundo, con el perfil de
+V8 de cada carga —qué se va en lecturas de maquetación dentro de él y de
+quién— y lo que el propio navegador da como maquetación forzada por guion en
+sus cuadros largos (`long-animation-frame`, `forcedStyleAndLayoutDuration`).
+Tres vueltas sin peldaño y tres con `tramo=guyrami`:
+
+| Primer segundo tras saltar a crucero, ×4 | Antes | Después |
+|---|---:|---:|
+| Sin peldaño: cuadro más largo | 186 · 175 · 165 ms | **133 · 152 · 147 ms** |
+| · maquetación forzada | 46 · 52 · 36 ms | **11 · 13 · 11 ms** |
+| · lecturas de `colocarLaTarjeta` y `medirse` en el perfil | 33 · 23 · 22 ms | **0 · 0 · 0 ms** |
+| Con `tramo=guyrami`: cuadro más largo | 170 · 158 · 143 ms | **154 · 146 · 203 ms** |
+| · maquetación forzada | 35 · 36 · 32 ms | **12 · 12 · 15 ms** |
+
+Las dos lecturas del cuadro han desaparecido del perfil en las seis cargas, y
+el cuadro largo baja, en mediana, de 175 a 147 ms sin peldaño y de 158 a 154
+con él, con una carga de después de 203 ms que no se parece a las otras dos.
+
+Lo que queda como forzada después, de 11 a 15 ms, **no es una lectura de
+más**: es la llamada del observador de la señal, que en el cuadro del salto
+llega justo después de la del HUD (`medirLaBarra`, que observa el rincón y se
+creó antes). Esa escribe `--rincon-alto`, porque el rincón ha crecido con la
+señal, y la primera lectura que viene detrás paga el estilo nuevo del HUD,
+que el navegador tendría que rehacer igual antes de pintar. En el perfil, lo
+único que corre entre la maquetación del cuadro y esa lectura es la llamada
+del HUD, cuando llega a verse: escribir una variable son microsegundos.
+
+**Tirar un material mientras se espera a la tarjeta**, la excepción de los
+sitios: El Hierro montado, cuatro veces un material nuevo —con su propia llave
+de programa, para que la tarjeta tenga que enlazarlo— pasado al `preparar` de
+los sitios y tirado en el acto. Con el paquete de antes, **las cuatro dan
+«Cannot read properties of undefined (reading 'isReady')»** desde el
+temporizador y ninguna promesa se cumple; con el de después, las cuatro se
+cumplen y no hay ningún error.
+
+**`npm run carteles`**, con el árbol de esta rama: 773 de 773. Entre ellas,
+dieciséis de la tecla que toca —sale, cabe y no pisa el cuadro, los mandos ni
+los avisos— y dieciséis de la señal y el tutor, que no se pisan, en Taguato y
+en Guyrami, en la tablet y en el teléfono tumbado, con el dedo y sin él. De
+pie no hay vuelo que mirar: sale el cartel de girar la pantalla, y también
+está bien. Y la tanda entera de vitest: 488
+ficheros, 9.951 pruebas bien y 28 saltadas.
+
+### Lo que queda de #190
+
+- **Decodificar las fotos de una pieza fuera del hilo principal y los
+  reescalados de las teselas en un `Worker`**, de la lista de #190: sin tocar.
+- **El resto del cuadro largo al saltar encima de una isla vecina**, unos
+  230 ms a ×4 (H23c), sin repartir; y **el otro programa de la isla vecina**,
+  un `MeshBasicMaterial` que se compila al verla.
+- **El primer cuadro tras saltar a crucero** queda en 133–154 ms a ×4 —y una
+  carga de 203—, y lo que es guion dentro de él, por el paso del juego —el
+  plan, la radio, el señalero, las luces de aviso, el dibujo—, sin nada mayor
+  de 8 ms.
+- **El montaje de Barajas**, del perfil de H23c: las plataformas y calles en
+  polígono, 69 ms de mesa; partir lo largo, 41; y la basura, 43. Sin tocar.
+- De H23a: medir el salto del vuelo largo en el navegador con la rejilla
+  horneada, Barajas otra vez en el navegador sin vitest al lado, lo que queda
+  de elegir el puesto y la comprobación de lo horneado en vitest, que es una
+  decisión.
+
+**Si #190 se puede cerrar**: de lo que pedía, está hecho o descartado con
+medida todo menos las dos cosas del `Worker` —decodificar las fotos y los
+reescalados—. Barajas arranca bastante antes, pero elegir el puesto y montar el
+aeródromo siguen costando; las rejillas de los vecinos y de los saltos se
+bajan horneadas; el programa del suelo de la isla vecina se compila antes;
+`ponerElAroDelPapi` no era el aro (H23c); y la imagen al ponerse en crucero ya
+no lleva las dos maquetaciones forzadas. Se puede cerrar abriendo una para lo
+que queda: el `Worker`, el cuadro largo sobre la isla vecina y su otro
+programa.
