@@ -1147,7 +1147,14 @@ export class Mapa {
       g.lineWidth = 2 * u;
       g.stroke();
     }
-    // Los números, encima de todas las rayas: a un tercio, del lado de su radio.
+    /*
+     * **Los números, a lo largo de su raya y a un lado**, como se rotula un
+     * radial en la carta: girados con ella, sin quedar nunca cabeza abajo, a
+     * medio camino entre la radio y la cruz —que es el 74 % de la raya: llega
+     * a 1,35 veces la cruz— y apartados de la raya lo que mide la letra.
+     * Puestos horizontales encima de la raya, en el plano ancho el de la raya
+     * corta quedaba debajo del avión y encima de los rótulos de su radio.
+     */
     g.font = `600 ${15 * u}px ${LETRAS.cifras}`;
     g.textAlign = "center";
     g.textBaseline = "middle";
@@ -1155,14 +1162,21 @@ export class Mapa {
     for (const raya of r.rayas) {
       const [ax, ay] = enElPapel(raya.desde);
       const [bx, by] = enElPapel(raya.hasta);
-      const tx = ax + (bx - ax) * 0.3;
-      const ty = ay + (by - ay) * 0.3;
-      const texto = raya.rotulo;
+      let angulo = Math.atan2(by - ay, bx - ax);
+      if (angulo > Math.PI / 2) angulo -= Math.PI;
+      else if (angulo < -Math.PI / 2) angulo += Math.PI;
+      const aparte = 11 * u;
+      const tx = ax + (bx - ax) * 0.37 + Math.sin(angulo) * aparte;
+      const ty = ay + (by - ay) * 0.37 - Math.cos(angulo) * aparte;
+      g.save();
+      g.translate(tx, ty);
+      g.rotate(angulo);
       g.strokeStyle = PAPEL.fondo;
       g.lineWidth = 4 * u;
-      g.strokeText(texto, tx, ty);
+      g.strokeText(raya.rotulo, 0, 0);
       g.fillStyle = TINTAS.aero;
-      g.fillText(texto, tx, ty);
+      g.fillText(raya.rotulo, 0, 0);
+      g.restore();
     }
     if (r.cruz) {
       const [cx, cy] = enElPapel(r.cruz);
