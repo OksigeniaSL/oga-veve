@@ -1797,6 +1797,84 @@ comprobación miraba esas mismas piezas, con una lista a mano.
   mano, y el reparto del fotograma siguiente veía un estado a medias; antes de
   medir, el banco le pide que reparta ya.
 
+- **Lo que se ve de lo que se toca, no su caja.** La caja de un grupo de SVG
+  es la de todo su dibujo, también lo recortado: la cinta de velocidad lleva
+  escritas todas las velocidades, y su caja subía por encima del cuadro hasta
+  la barra. En la primera vuelta el subtítulo y la lámpara esperaban de fuera
+  en la tablet de 900 × 600 sin nada encima, y el aviso se iba a la derecha
+  huyendo de una cinta que no se veía. Las cajas se recortan por los `<svg>`
+  que las contienen (`cajaQueSeVe`), y no cuenta lo transparente o lo que
+  esconde quien lo contiene (`checkVisibility`). Igual en carteles.
+- **Cada pieza busca fila hacia donde crece**: más abajo la que cuelga de la
+  barra, más arriba la que se apoya en el cuadro. Al otro lado está aquello en
+  lo que se apoya, y el aviso, buscando hacia abajo, caía sobre el asa. La
+  excepción es el sitio de una que va detrás, que es un sitio pensado para leer.
+- **La columna de mandos no baja por la frase de la tarjeta.** Donde hay alto
+  va debajo del rincón, y con la frase más larga de la tarjeta (234 letras)
+  bajaba hasta detrás del cuadro: lo que se lee movía lo que se toca. Se coloca
+  con la tarjeta en su dibujo (`--rincon-alto-mandos`, que mide
+  `escribirRincon`); si la frase no cabe, el reparto la recoge.
+
 La regla va a DESIGN.md, §5 («Dónde va lo que se lee lo decide un solo
 sitio»), y §4 y §8 la nombran.
+
+### Lo que se prueba
+
+- `npm run carteles`, `mirarLoQueSeLee`: en cada pantalla, juego y vista, dos
+  comprobaciones —nada de lo que se lee pisa lo que se toca ni se pisan entre
+  sí, en las cuatro maneras; y el aviso no espera, y fuera y en cabina se ven
+  el subtítulo solo y la lámpara con el subtítulo—. De pie y con el dedo, en
+  su lugar, que el cartel de girar la pantalla tape el vuelo: debajo no se
+  juega. Las comprobaciones de H28c a H28e se quedan, y miden ahora el reparto
+  del estado que ponen (`Hud.repartirAhora`).
+- `src/ui/reparto.test.ts`: los tramos libres de una fila y `colocar` —en su
+  sitio si no pisa, al sitio de la que va detrás si pisa el asa (el caso de
+  864 × 330), esperar si no cabe en ninguna fila, no estrecharse por debajo de
+  medio hueco, y subir desde el cuadro—.
+
+### Lo medido
+
+Con lo más largo que lleva cada cosa, todo lo que se lee contra todo lo que se
+toca, en las vistas, pantallas y maneras de arriba, con el reactor de Tenerife
+Norte en Taguato (la medida aparte de la tanda, `medir.mjs`, que cuenta pares
+que se pisan):
+
+- **Antes** (main en 4ec990ae): en 44 de 88 casos algo pisaba algo, 214 pares
+  en total. Los que más: el subtítulo con la pantalla en grande por delante del
+  piloto automático, el cinturón, la baliza, el sonido, el tren y los
+  aerofrenos (doce casos cada uno); la tarjeta de la orden con su frase larga
+  sobre el asa, la rueda del MCP, el volumen o las palancas; la radio sobre la
+  vuelta al avión y el parte; la lámpara sobre el destino, el tren y el asa; y
+  en cabina de pie, el aviso sobre el gas y la tarjeta sobre el gas y los
+  aerofrenos.
+- **La primera vuelta** del reparto dejó 15 de 1074 sin pasar en carteles: el
+  subtítulo y la lámpara esperando de fuera en las tablets por la caja entera
+  de la cinta de velocidad, y el aviso cayendo sobre el asa o quedándose sin
+  sitio en la pantalla grande por lo mismo. De ahí el recorte por los `<svg>`
+  y las filas hacia donde crece cada pieza.
+
+### Lo que cuesta, y lo que queda
+
+- **Lo que espera no se ve.** Es la regla de un avión cuando no hay sitio, y
+  ahora se cumple sin excepciones de pantalla, pero tiene su precio:
+  - **con la pantalla en grande del teléfono**, el subtítulo más largo y la
+    lámpara esperan: encima de la pantalla queda la fila del subtítulo, la
+    de la barra la lleva la tarjeta de la orden y a los lados hay mandos. Antes
+    se leían, pasando por delante del piloto automático, el cinturón, la
+    baliza, el sonido, el tren y los aerofrenos. Lo siguiente sería encoger la
+    pantalla mientras está la lámpara, como ya se encoge una fila con el aviso;
+  - **la radio** espera cuando la barra se parte en filas y la suya cae sobre
+    la vuelta al avión y el parte, que solo están antes de arrancar: en las
+    tablets, de fuera y en cabina. De fondo, la barra no sabe de la columna de
+    la pausa;
+  - **la tarjeta de la orden con su frase más larga** se queda en su dibujo
+    donde la frase no cabe: la frase la dice la instructora.
+- **Las variables de la hoja se quedan**, aunque ya no aparten nada de un
+  mando: dicen dónde prefiere ir cada pieza. Las que solo apartaban
+  (`--lee-derecha` con `--columna-izquierda`, el aparte del teléfono hasta la
+  palanca) se pueden quitar cuando el reparto se haya visto en el juego, no
+  en esta tanda.
+- **El rendimiento no se ha medido en una tablet.** El reparto no corre en cada
+  fotograma, solo cuando cambia lo que se lee o lo que se toca; queda medir en
+  la tablet de gama media cuánto cuesta cuando corre.
 
