@@ -303,8 +303,8 @@ const LENTA_SOBRE_SEGURA = 0.8 / 1.05;
  * norma, 1,13 veces esa pérdida (`V2_SOBRE_LA_PERDIDA`), que es lo mínimo con
  * lo que se vuela con esos flaps; la lenta, a la proporción de siempre. Con los
  * flaps de aterrizar las de la pérdida quedan por debajo de las de la ficha en
- * todos —en el JAZ 90, el más justo, 112 nudos verdaderos frente a 124 a la
- * altura de Barajas—, así que **la toma no cambia**: es lo que se afinó con ellas
+ * todos —en el JAZ 90, el más justo, 112 nudos verdaderos frente a 124 a los
+ * setecientos metros de Cuatro Vientos—, así que **la toma no cambia**: es lo que se afinó con ellas
  * (el JAZ 90 bajaba a 42 m/s cuando iban atadas al crucero).
  */
 export function velocidadesDeLaAyuda(

@@ -329,9 +329,9 @@ export class Senalero {
    * se quedaba con lo de la salida. En Los Rodeos, con el JAZ 50, se sale hacia el
    * oeste y la raya de vuelta entra por el sur: el señalero seguía puesto para un
    * avión que entrara hacia el este, así que lo que le quedaba al avión lo medía
-   * de través y lo desviado, a lo largo. Daba el alto con el avión todavía en la
-   * calle, a la altura del puesto pero treinta metros al sur, y parado en su sitio
-   * con el morro hacia el oeste le pedía «adelante». Desde que mide desde la
+   * de través y lo desviado, a lo largo. A uno que entrara por el sur derecho al
+   * punto le daría el alto a veinticinco metros, todavía en la calle; y al del
+   * banco, parado en su sitio y girado hacia el oeste, le pedía «adelante». Desde que mide desde la
    * rueda de morro (H20c) eso era lo que salía al apagar en el banco del vuelo
    * entero.
    */
