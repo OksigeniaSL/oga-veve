@@ -13306,6 +13306,8 @@ export class Game {
       /*
        * **La aguja no empieza en la prolongación de la pista**: empieza a seis
        * minutos de la radio, con el viento de costado. Ver `dondeEmpiezaLaAguja`.
+       * **Ni el radial**, que empieza a ocho del VOR, en un radial de costado al
+       * viento. Ver `dondeEmpiezaElRadial`.
        */
       const enLaAguja =
         colocacion === "aguja" ? this.dondeEmpiezaLaAguja() : colocacion === "radial" ? this.dondeEmpiezaElRadial() : null;
