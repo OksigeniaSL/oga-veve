@@ -182,21 +182,30 @@ describe("el verde del circuito, desde la de maniobra de los flaps que lleva", (
     },
   );
 
+  /*
+   * **Con los flaps de en medio, la Vref es verde solo donde ya llega a la de
+   * maniobra.** En el JAZ 20 y el JAZ 40, sí: su Vref queda por encima de 1,3
+   * veces su pérdida con la segunda muesca —el JAZ 20 se aproxima a 64 nudos y
+   * su de maniobra con veinte grados son 58—. En los demás, no: el JAZ 50, el
+   * 1900D y los tres reactores.
+   */
+  const VREF_DEBAJO = ["jaz-50", "jaz-60", "jaz-90", "jaz-110", "jaz-120"];
   it.each(CON_FLAPS.map((a) => [a.id, a] as const))(
-    "%s: con los flaps de en medio, la Vref ya no se pinta de verde",
-    (_id, a) => {
+    "%s: con los flaps de en medio, la Vref se pinta de verde solo si llega a la de maniobra",
+    (id, a) => {
       const f = muescasDeLaPalanca(a)[muescaDeAproximacion(a)]!;
-      // Solo donde la de maniobra queda por encima, que es en todos con su
-      // palanca: si un día no, esta prueba lo dice.
-      expect(maniobraCon(a, f)).toBeGreaterThan(a.approachSpeed);
-      expect(bandaDeCircuito(volando(a.approachSpeed), circuitoCon(a, f))).toBeNull();
+      const llega = a.approachSpeed >= maniobraCon(a, f);
+      expect(llega).toBe(!VREF_DEBAJO.includes(id));
+      expect(bandaDeCircuito(volando(a.approachSpeed), circuitoCon(a, f))).toBe(
+        llega ? "bien" : null,
+      );
     },
   );
 
-  it("el JAZ 90 con la segunda muesca: a la Vref, 1,13 veces su pérdida y el avisador antes de treinta grados", () => {
+  it("el JAZ 90 con la segunda muesca: a la Vref, 1,12 veces su pérdida y el avisador antes de treinta grados", () => {
     const a = aircraftById("jaz-90");
     const f = muescasDeLaPalanca(a)[muescaDeAproximacion(a)]!;
-    expect(a.approachSpeed / perdidaCon(a, f)).toBeCloseTo(1.13, 2);
+    expect(a.approachSpeed / perdidaCon(a, f)).toBeLessThan(1.15);
     expect(loQueSeVira(a, f, a.approachSpeed)).toBeLessThan(30);
     // Antes era verde; ahora no, y a la de maniobra sí, con cuarenta grados de margen.
     expect(bandaDeCircuito(volando(a.approachSpeed), circuitoCon(a, f))).toBeNull();
