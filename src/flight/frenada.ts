@@ -43,7 +43,12 @@
 import { masaDe, tieneReversa, type AircraftConfig } from "./aircraft";
 import { actitudEnTierra } from "./apoyo";
 import { GRAVITY, SEA_LEVEL_DENSITY } from "./atmosphere";
-import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
+import { efectoSueloRodando } from "./efecto-suelo";
+import {
+  fraccionDeLosFlaps,
+  resistenciaDeLosFlaps,
+  sustentacionDeLosFlaps,
+} from "./flaps";
 import { resistenciaDelTren } from "./tren";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 
@@ -232,10 +237,16 @@ export function sustentacionRodando(
   frenosDeTierra: number,
   velocidad = 0,
 ): number {
+  /*
+   * Y con el ala en efecto suelo, que rodando lo está del todo: sustenta más
+   * con el mismo ángulo, como en el modelo que se vuela. Ver
+   * `flight/efecto-suelo.ts`.
+   */
   const cl =
-    ac.aero.cl0 +
-    ac.aero.clAlpha * actitudEnTierra(ac, velocidad) +
-    ac.flapsLift * Math.max(0, Math.min(1, flaps));
+    (ac.aero.cl0 +
+      ac.aero.clAlpha * actitudEnTierra(ac, velocidad) +
+      sustentacionDeLosFlaps(ac, flaps)) *
+    efectoSueloRodando(ac).sustentacion;
   return cl * (1 - parteQueSeLlevan(ac, frenosDeTierra));
 }
 
@@ -284,7 +295,8 @@ export function deceleracionRodando(
   const alargamiento = (ac.wingSpan * ac.wingSpan) / ac.wingArea;
   const cd =
     ac.aero.cd0 +
-    (cl * cl) / (Math.PI * alargamiento * ac.aero.oswald) +
+    ((cl * cl) / (Math.PI * alargamiento * ac.aero.oswald)) *
+      efectoSueloRodando(ac).inducida +
     resistenciaDeLosFlaps(ac, m.flaps) +
     resistenciaDelTren(ac, m.tren ?? 1, fraccionDeLosFlaps(ac, m.flaps)) +
     resistenciaDeLosPaneles(ac, 0, m.frenosDeTierra);

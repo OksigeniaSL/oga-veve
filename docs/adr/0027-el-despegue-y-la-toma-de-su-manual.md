@@ -51,8 +51,10 @@ De dónde nacía cada diferencia:
 **Vr = 1,1 veces la pérdida con los flaps de despegue** (`VR_SOBRE_LA_PERDIDA`
 en `velocidades-de-despegue.ts`). Es la regla de certificación de la que sale la
 Vr: con todos los motores el avión tiene que irse del suelo a no menos de 1,1
-veces la VMU (CS 25.107 e 1 iv), que en un modelo sin efecto suelo es la pérdida
-con los flaps de despegue.
+veces la VMU (CS 25.107 e 1 iv). Aquí se cuenta sobre la pérdida con los flaps
+de despegue en aire libre. La VMU de verdad es con efecto suelo, que el modelo
+lleva desde la nota H29c del ADR 0002, y queda algo por debajo: contarla sobre
+la de aire libre deja la Vr del lado seguro.
 
 En el 747 dicen lo mismo dos fuentes que no se conocen: Jenkinson, Simpkin y
 Rhodes, *Civil Jet Aircraft Design* (1999), fichero de datos A, dan al 747-100

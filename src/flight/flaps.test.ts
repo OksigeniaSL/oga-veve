@@ -29,8 +29,11 @@ import {
   muescaMasCercana,
   muescasDeLaPalanca,
   mueveLosFlaps,
+  anguloDePerdida,
+  sustentacionDeLosFlaps,
 } from "./flaps";
 import { AIRCRAFT } from "./aircraft";
+import { perdidaCon } from "./velocidades-de-despegue";
 import { hastaDondeBajan } from "./carga-de-flaps";
 import { flapsQuePide } from "./escalera-de-velocidades";
 
@@ -383,5 +386,57 @@ describe("cada muesca por su papel, en la palanca de cada avión", () => {
     const tocados = { aliviados: false, abuso: 0, tocados: true };
     expect(hastaDondeBajan(tocados, de("jaz-60"))).toBe(0.5);
     expect(hastaDondeBajan(tocados, de("jaz-40"))).toBe(1 / 3);
+  });
+});
+
+/*
+ * **Lo que suben los flaps y dónde llega la pérdida, muesca a muesca** (nota
+ * H29e del ADR 0002). La recta con la palanca vale donde la ficha no dice
+ * otra cosa; y solo el que lleva algo en el borde de ataque gana ángulo.
+ */
+describe("la sustentación y la pérdida de cada muesca", () => {
+  it("sin tabla, la recta de siempre con la palanca y el ángulo de la ficha", () => {
+    for (const a of AIRCRAFT) {
+      if (a.sustentacionPorMuesca || a.bordeDeAtaque) continue;
+      for (const f of [0, 0.2, 1 / 3, 0.5, 2 / 3, 1]) {
+        expect(sustentacionDeLosFlaps(a, f), `${a.id} a ${f}`).toBeCloseTo(a.flapsLift * f, 12);
+        expect(anguloDePerdida(a, f), `${a.id} a ${f}`).toBe(a.aero.alphaStall);
+      }
+    }
+  });
+
+  it("la tabla, una cifra por muesca sacada, subiendo, y la última la de la ficha", () => {
+    for (const a of AIRCRAFT) {
+      const t = a.sustentacionPorMuesca;
+      if (!t) continue;
+      expect(t, a.id).toHaveLength(a.muescasDeFlaps.length - 1);
+      for (let i = 1; i < t.length; i++) expect(t[i]!, a.id).toBeGreaterThan(t[i - 1]!);
+      expect(t[t.length - 1]!, a.id).toBeCloseTo(a.flapsLift, 12);
+      muescasDeLaPalanca(a).forEach((d, i) => {
+        expect(sustentacionDeLosFlaps(a, d), `${a.id}, muesca ${i}`).toBeCloseTo(i === 0 ? 0 : t[i - 1]!, 12);
+      });
+    }
+  });
+
+  it("solo el que lleva slats o Krueger gana ángulo, y nunca lo pierde", () => {
+    for (const a of AIRCRAFT) {
+      const b = a.bordeDeAtaque;
+      if (!b) continue;
+      expect(a.llevaFlaps, a.id).toBe(true);
+      expect(b.perdidaPorMuesca, a.id).toHaveLength(a.muescasDeFlaps.length - 1);
+      for (const p of b.perdidaPorMuesca) expect(p, a.id).toBeGreaterThanOrEqual(a.aero.alphaStall);
+      expect(anguloDePerdida(a, 0), a.id).toBe(a.aero.alphaStall);
+    }
+  });
+
+  it("el 747, con sus Krueger, al CL máximo de despegue de Jenkinson", () => {
+    // 2,03 en el 747-100 (Jenkinson, Simpkin y Rhodes, *Civil Jet Aircraft
+    // Design*, 1999, fichero de datos A, tabla 3). Con un solo ángulo de
+    // pérdida el modelo le daba 1,73.
+    const a = AIRCRAFT.find((x) => x.id === "jaz-120")!;
+    expect(a.bordeDeAtaque?.dispositivo).toBe("krueger");
+    const v = perdidaCon(a, flapsDeDespegue(a));
+    const clMax = (2 * a.mass * 9.80665) / (1.225 * a.wingArea * v * v);
+    expect(clMax).toBeCloseTo(2.03, 2);
   });
 });

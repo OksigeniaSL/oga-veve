@@ -1357,6 +1357,23 @@ export interface AircraftConfig {
   /** Distancia del centro de gravedad al tren, m. */
   gearHeight: number;
   /**
+   * **A qué altura va el ala sobre el centro de gravedad**, m, en los ejes del
+   * avión: positiva por encima, la del ala alta; negativa, la del ala baja.
+   *
+   * Es lo que mira el efecto suelo, que depende de la altura del ala sobre el
+   * suelo y no de la del centro: con las ruedas en la pista el ala del JAZ 20
+   * va a 2,6 m y la del JAZ 40, a 1,5, con el mismo tren. Ver
+   * `flight/efecto-suelo.ts`.
+   *
+   * **Es la del dibujo** (`modelos/*.py`), como el tren: la altura media de
+   * la superficie del ala pesada por lo que mide vista desde arriba, que es
+   * donde sustenta, y no la de la raíz ni la de la punta. Así el diedro cuenta
+   * lo que cuenta y un winglet, de canto, no pesa. En el biplano, la de los
+   * dos planos juntos, cada uno por su planta. Lo comprueba
+   * `efecto-suelo.test.ts` contra el `.glb`.
+   */
+  alturaDelAla: number;
+  /**
    * **Por dónde apoya el avión al levantar el morro en el suelo**: cuánto va
    * por detrás del centro de gravedad el eje de la rueda principal de más
    * atrás, m.
@@ -1502,6 +1519,26 @@ export interface AircraftConfig {
    */
   flapsLift: number;
   flapsDrag: number;
+  /**
+   * **Lo que suman los flaps a la sustentación en cada muesca**, con el mismo
+   * ángulo de ataque, si no es la recta de `flapsLift` con la palanca. Una
+   * cifra por muesca sacada, en el orden de `muescasDeFlaps` sin su cero; la
+   * última, la de aterrizar, es `flapsLift`. Ver `sustentacionDeLosFlaps` en
+   * `flaps.ts`.
+   */
+  sustentacionPorMuesca?: readonly number[];
+  /**
+   * **Lo que lleva en el borde de ataque**, si lleva algo: slats o Krueger, y
+   * el ángulo de pérdida que le dan en cada muesca, rad, una cifra por muesca
+   * sacada como `vfePorMuesca`. Salen con la palanca de flaps, que es como
+   * salen en los reactores de la flota. Sin él, la pérdida es la de `aero` con
+   * cualquier muesca: un ala sin nada en el borde de ataque no gana ángulo.
+   * Ver `anguloDePerdida` en `flaps.ts`.
+   */
+  bordeDeAtaque?: {
+    readonly dispositivo: "slats" | "krueger";
+    readonly perdidaPorMuesca: readonly number[];
+  };
   /**
    * **Los grados de los flaps en cada muesca de la palanca**, empezando por el
    * cero de recogidos. Una cifra por muesca, o ninguna en el que no los lleva.
@@ -1658,6 +1695,8 @@ export const PYKASU: AircraftConfig = {
   rotationSpeed: 28,
   batalla: 1.65,
   gearHeight: 1.4,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: 1.22,
   // Apoyo al rotar: el eje de las principales, 0,36 m por detrás del centro de
   // gravedad: `MAINS_Z` y `centro_de_gravedad` en `modelos/jaz-20-pykasu.py`.
   mainWheelsAft: 0.36,
@@ -1818,6 +1857,8 @@ export const MAINUMBY: AircraftConfig = {
   deRodarADespegar: 1170 / 615,
   batalla: 5.4,
   gearHeight: 1.8,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: 0.53,
   /*
    * **Las principales, 0,20 m por delante del centro de gravedad**, que es lo
    * que lo sienta en su rueda de cola: el peso queda detrás de ellas. Estaban
@@ -2072,6 +2113,8 @@ export const PANAMBI: AircraftConfig = {
   deRodarADespegar: 1240 / 870,
   batalla: 2.8,
   gearHeight: 1.6,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: -0.14,
   // Apoyo al rotar: el eje de las principales, 0,35 m por detrás del centro de
   // gravedad: `PRINCIPAL_Z` en `modelos/jaz-40-panambi.py`.
   mainWheelsAft: 0.35,
@@ -2479,6 +2522,8 @@ export const JAZ_50: AircraftConfig = {
    * `modelos/jaz-50-tujuju.py`.
    */
   gearHeight: 1.98,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: 1.38,
   /*
    * **Las principales, 0,71 m por detrás del centro, las de su dibujo**: van a
    * 6,31 m del morro en la vista de NASA (figura 1), y el centro, al 28 % de la
@@ -2923,6 +2968,8 @@ export const ARASUNU: AircraftConfig = {
   // Del eje del fuselaje al suelo, como en su modelo: la punta de la pala a
   // 35 cm del suelo (13,82 in en la vista en tres planos).
   gearHeight: 2.1,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: -0.12,
   /*
    * Apoyo al rotar: el eje de las principales, 0,66 m por detrás del centro
    * de gravedad: `PRINCIPAL_Z` y `centro_de_gravedad` en
@@ -3361,6 +3408,8 @@ export const ARAI: AircraftConfig = {
   // escaso y el tren apenas asomaba bajo el motor: «ruedas enterradas». Tiene
   // que decir lo mismo que `TREN` en `modelos/jaz-90-arai.py`.
   gearHeight: 3.35,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: -0.61,
   // Apoyo al rotar: el eje de las principales, 1,38 m por detrás del centro de
   // gravedad: `PRINCIPAL_Z` en `modelos/jaz-90-arai.py`.
   mainWheelsAft: 1.38,
@@ -3720,8 +3769,11 @@ export const YVAGA: AircraftConfig = {
    */
   velocidadDeCircuito: 180 * 0.514444,
   /*
-   * **Ciento cuarenta y cinco nudos, la Vr de su peso**: 1,1 veces su pérdida
-   * con los flaps de despegue, 132. Ver `VR_SOBRE_LA_PERDIDA`.
+   * **Ciento cuarenta y cinco nudos, la Vr de su peso**: la de la NTSB, abajo.
+   * Era también 1,1 veces su pérdida con los flaps de despegue, 132, mientras
+   * el modelo le daba un CL máximo de despegue de 1,73; con los Krueger, 2,03,
+   * esa pérdida es de 122 y la Vr queda a 1,19 veces ella (nota H29e del ADR
+   * 0002). Ver `VR_SOBRE_LA_PERDIDA`.
    *
    * Eran 167, la Vr de un 747-100 **a su peso máximo al despegar** puesta en una
    * ficha que pesa su máximo al aterrizar: por encima de la V2 que tiene a este
@@ -3759,6 +3811,8 @@ export const YVAGA: AircraftConfig = {
   // quedaban tapadas por los motores y se leía «ruedas enterradas». Tiene que
   // decir lo mismo que `TREN` en `modelos/jaz-120-yvaga.py`.
   gearHeight: 5.9,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: -0.65,
   // Apoyo al rotar: el eje de atrás del bogie de la panza, que es el que se
   // queda en la pista cuando el de las alas ya se levanta: 0,72 m por detrás de
   // su pata, que va 3,42 por detrás del centro de gravedad (`PATAS_PANZA` en
@@ -3802,6 +3856,34 @@ export const YVAGA: AircraftConfig = {
   llevaFlaps: true,
   flapsLift: 1.0,
   flapsDrag: 0.065,
+  /*
+   * **La muesca de despegue sube poco la recta: 0,14**, y no un tercio de lo
+   * de aterrizar. Es lo que hace que se vaya del suelo a 10,1°, la actitud que
+   * da Boeing para el 747 con los flaps de despegue (D. Carbaugh, «Tail
+   * Strikes: Prevention», *AERO* QTR_01 2007, figura 1), con el efecto suelo;
+   * con 0,333 se iba a 8,4° (notas H29c (2) y H29e del ADR 0002). Las otras
+   * dos, como estaban: la de aterrizar la fija la Vref, 1,3 veces su pérdida.
+   */
+  sustentacionPorMuesca: [0.14, 2 / 3, 1.0],
+  /*
+   * **Y los Krueger del borde de ataque**: los de dentro, y los de curvatura
+   * variable de fuera, que salen con los flaps. Con ellos fuera la pérdida
+   * llega más tarde, y por eso un 747 lleva con los de despegue un CL máximo
+   * de 2,03 (J. Jenkinson, P. Simpkin y D. Rhodes, *Civil Jet Aircraft
+   * Design*, 1999, fichero de datos A, tabla 3, el 747-100), cuando con un
+   * solo ángulo de pérdida el modelo le daba 1,73. Con 0,14 de sustentación,
+   * 2,03 es el ala a (2,03 − 0,2 − 0,14) / 4,8 = 0,352 rad, 20,2°. La V2 queda
+   * a 1,25 veces esa pérdida, sobre el 1,13 de la norma, y la Vr a 1,19.
+   *
+   * Las otras dos muescas, con el ángulo de la ficha, el de antes. Con los de
+   * aterrizar la pérdida la fija la Vref, 1,3 veces ella, y el flap de salida
+   * muy bajado adelanta la pérdida, así que los Krueger no se suman enteros; la
+   * de veinte no tiene aquí cifra propia, y no se ha movido.
+   */
+  bordeDeAtaque: {
+    dispositivo: "krueger",
+    perdidaPorMuesca: [(2.03 - 0.2 - 0.14) / 4.8, 0.25, 0.25],
+  },
   // Cinco, veinte y treinta: los de un cuatrirreactor de fuselaje ancho, con
   // el recorrido más largo de la flota. Ocho segundos por muesca.
   muescasDeFlaps: [0, 5, 20, 30],
@@ -4097,6 +4179,8 @@ export const TIJERETA: AircraftConfig = {
   // Con ella la panza queda a 1,86 m del suelo y el lomo a 7,80, los de 2.3.2. Tiene
   // que decir lo mismo que `TREN` en `modelos/jaz-110-tijereta.py`.
   gearHeight: 4.8,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: -0.55,
   // Apoyo al rotar: el eje de atrás del bogie, 0,76 m por detrás de la pata,
   // que va 1,80 por detrás del centro de gravedad (`PATA_Z` en
   // `modelos/jaz-110-tijereta.py`).

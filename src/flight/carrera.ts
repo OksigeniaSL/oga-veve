@@ -35,6 +35,7 @@ import {
   type AircraftConfig,
 } from "./aircraft";
 import { actitudEnTierra } from "./apoyo";
+import { efectoSueloRodando } from "./efecto-suelo";
 import { resistenciaDelTren } from "./tren";
 import { acelerarYParar, vmc } from "./velocidades-de-despegue";
 import { esDeLinea } from "./velocidades-en-tierra";
@@ -96,6 +97,7 @@ export function carreraHastaVr(
   // Ver `resistenciaDelTren`.
   const delTren = a.aero.cd0 + resistenciaDelTren(a, 1);
   const inducida = Math.PI * alargamiento * a.aero.oswald;
+  const suelo = efectoSueloRodando(a);
   const mu = ROZAMIENTO[superficie];
   const sigma = Math.max(0.05, densidad / RHO);
   const motor = loQueDaElMotor(a, sigma);
@@ -116,8 +118,11 @@ export function carreraHastaVr(
      * de rueda de cola, en tres puntos hasta que la cola se levanta, que
      * sustenta más y frena más con su inducida. Ver `actitudEnTierra`.
      */
-    const cl = a.aero.cl0 + a.aero.clAlpha * actitudEnTierra(a, Math.max(0, aire));
-    const cd = delTren + (cl * cl) / inducida;
+    // Y en efecto suelo, como el modelo que se vuela. Ver `efecto-suelo.ts`.
+    const cl =
+      (a.aero.cl0 + a.aero.clAlpha * actitudEnTierra(a, Math.max(0, aire))) *
+      suelo.sustentacion;
+    const cd = delTren + ((cl * cl) / inducida) * suelo.inducida;
     const sustenta = Math.max(0, q) * cl;
     const empuje =
       a.maxThrust * motor * Math.max(0.2, 1 - Math.max(0, aire) / velocidadSinEmpuje(a));

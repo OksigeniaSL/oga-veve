@@ -221,6 +221,64 @@ export function resistenciaDeLosFlaps(
 }
 
 /**
+ * **Lo que suman los flaps de salida a la sustentación en esta posición**, con
+ * el mismo ángulo de ataque: lo que suben la recta del ala.
+ *
+ * Con la palanca, en recta hasta `flapsLift`, en el que no da otra cosa; y
+ * muesca a muesca donde la ficha lo da (`sustentacionPorMuesca`), entre dos
+ * muescas también en recta. La recta valía para casi todos, y en el 747 no: con
+ * un tercio de lo de aterrizar en su muesca de despegue se iba del suelo a 8,4°
+ * donde Boeing da 10,1° (nota H29e del ADR 0002).
+ *
+ * Es la sustentación **con poco ángulo**. Lo que se aguanta antes de la pérdida
+ * es otra cosa, y la cambian sobre todo los dispositivos del borde de ataque:
+ * ver `anguloDePerdida`.
+ */
+export function sustentacionDeLosFlaps(
+  a: {
+    readonly flapsLift: number;
+    readonly sustentacionPorMuesca?: readonly number[];
+  },
+  flaps: number,
+): number {
+  const f = Math.max(0, Math.min(1, Number.isFinite(flaps) ? flaps : 0));
+  const tabla = a.sustentacionPorMuesca;
+  if (!tabla || tabla.length === 0) return a.flapsLift * f;
+  return enLaMuesca([0, ...tabla], f);
+}
+
+/**
+ * **El ángulo de ataque de la pérdida con los flaps así**, rad.
+ *
+ * Uno solo para todas las muescas, el de la ficha, en el ala que no lleva
+ * nada en el borde de ataque: el flap de salida sube la recta y, si acaso,
+ * adelanta un poco la pérdida, y eso no se cuenta. **Los slats y los Krueger
+ * sí lo mueven**: abren el borde de ataque, la corriente sigue pegada unos
+ * grados más, y la curva de sustentación se alarga hacia ángulos más altos.
+ * «The lift curve of plain and slotted flaps is elevated […] but without
+ * increasing the stall angle. On the contrary, the stall angle tends to be
+ * smaller. In order to increase the lift through higher angles of attack […],
+ * high lift systems are inserted on the leading edge» (D. Scholz, *Aircraft
+ * Design*, apuntes de la HAW Hamburg, cap. 8, «High Lift Systems and Maximum
+ * Lift Coefficients», p. 8-4). Por eso va en `bordeDeAtaque` y solo el que
+ * los lleva puede darse un ángulo de más.
+ *
+ * Entre dos muescas, en recta, como los flaps al moverse.
+ */
+export function anguloDePerdida(
+  a: {
+    readonly aero: { readonly alphaStall: number };
+    readonly bordeDeAtaque?: { readonly perdidaPorMuesca: readonly number[] };
+  },
+  flaps: number,
+): number {
+  const tabla = a.bordeDeAtaque?.perdidaPorMuesca;
+  if (!tabla || tabla.length === 0) return a.aero.alphaStall;
+  const f = Math.max(0, Math.min(1, Number.isFinite(flaps) ? flaps : 0));
+  return enLaMuesca([a.aero.alphaStall, ...tabla], f);
+}
+
+/**
  * Adónde llegan los flaps en este paso de tiempo.
  *
  * A paso fijo, que es como los mueve un husillo: `tardan` es lo que se tarda

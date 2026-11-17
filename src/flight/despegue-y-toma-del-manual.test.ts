@@ -565,7 +565,9 @@ describe("la Vr de los reactores es la de su peso", () => {
 
   it("el 787 se va del suelo a la actitud del suyo, por debajo de su cola", () => {
     // «A normal lift off pitch angle is between 6° and 7.5°» (el mismo
-    // boletín); un grado arriba, que este modelo no tiene efecto suelo.
+    // boletín), con un grado de lectura a cada lado. Con el efecto suelo se va
+    // a 6,8°, dentro de la del suyo; sin él se iba a 7,7° (nota H29c del ADR
+    // 0002).
     const a = avion("jaz-110");
     const { actitudAlIrse } = despegar(a);
     expect(actitudAlIrse / GRADO).toBeGreaterThan(5);
@@ -600,8 +602,11 @@ describe("la cola de cada reactor toca donde dice su fabricante", () => {
   }
 
   it("el 747 se va del suelo a la actitud de Boeing, sin tocar la cola", () => {
-    // 10,1° con los flaps de despegue, un grado arriba o abajo: este modelo no
-    // tiene efecto suelo, que adelanta un poco la separación.
+    // 10,1° con los flaps de despegue, un grado arriba o abajo. Esos 10,1° son
+    // de un avión con efecto suelo, como el modelo desde la nota H29c del ADR
+    // 0002: con él y la muesca de despegue en recta con la palanca se iba a
+    // 8,4°. Con la de su ficha, que sube poco la recta, y los Krueger que
+    // alargan la pérdida, a 10,06° (nota H29e).
     const a = avion("jaz-120");
     const { actitudAlIrse } = despegar(a);
     expect(actitudAlIrse / GRADO).toBeGreaterThan(9.1);
