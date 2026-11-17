@@ -604,8 +604,9 @@ describe("la cola de cada reactor toca donde dice su fabricante", () => {
   it("el 747 se va del suelo a la actitud de Boeing, sin tocar la cola", () => {
     // 10,1° con los flaps de despegue, un grado arriba o abajo. Esos 10,1° son
     // de un avión con efecto suelo, como el modelo desde la nota H29c del ADR
-    // 0002: con él se va a 8,4°, y lo que sobra es sustentación del 747 en aire
-    // libre con sus flaps de despegue (nota H29c (2)).
+    // 0002: con él y la muesca de despegue en recta con la palanca se iba a
+    // 8,4°. Con la de su ficha, que sube poco la recta, y los Krueger que
+    // alargan la pérdida, a 10,06° (nota H29e).
     const a = avion("jaz-120");
     const { actitudAlIrse } = despegar(a);
     expect(actitudAlIrse / GRADO).toBeGreaterThan(9.1);
