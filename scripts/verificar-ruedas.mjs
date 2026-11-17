@@ -118,10 +118,12 @@ async function medirAqui(page) {
      * que va dos centímetros sobre el asfalto (`PINTURA_ALTURA`) y lo que se
      * mide aquí es el asfalto. Y el agua de casa, que
      * sobre el campo de llegada no se dibuja —su orilla lo tapa— y el rayo
-     * sí la encuentra.
+     * sí la encuentra. Y el tractor del remolque, que en un puesto de
+     * contacto tiene la cuna justo debajo de la rueda de morro: ver
+     * `verificar-vuelo-entero.mjs`.
      */
     const NO_ES_SUELO =
-      /plan-de-vuelo|ruta|sombra|luces|balizas|aros|senda|cielo|nubes|lluvia|sigueme|senalero|trafico|amarillo|pintura|designador|letreros|marcas|puntos-de-mira|cabeceras|helipuertos|agua/;
+      /plan-de-vuelo|ruta|sombra|luces|balizas|aros|senda|cielo|nubes|lluvia|sigueme|senalero|trafico|remolque|amarillo|pintura|designador|letreros|marcas|puntos-de-mira|cabeceras|helipuertos|agua/;
     const golpes = rayo.intersectObjects(o.escena().children, true);
     let suelo = null;
     for (const g of golpes) {
