@@ -1090,6 +1090,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     permisoPorOir: () => juego.permisoPorOirParaBanco,
     /**
+     * **Si espera turno algo que solo retira el juego**, al dejar de ser
+     * verdad: las aves, el tráfico, la fase. El banco vuela a tiempo real
+     * mientras tanto, que con el reloj del juego acelerado se retira antes de
+     * poder sonar. Ver `algoPorOirParaBanco` en `game.ts`.
+     */
+    algoPorOir: () => juego.algoPorOirParaBanco,
+    /**
      * El desvío de la senda en puntos —el del rombo— y el estado de tu permiso
      * para aterrizar. Ver `sendaYPermisoParaBanco` en `game.ts`.
      */

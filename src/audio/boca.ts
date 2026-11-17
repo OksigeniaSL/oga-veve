@@ -161,7 +161,8 @@ export function cuantoAguanta(
     anunciaElPuntoDeDescenso(clave) ||
     esElAvisoDeAves(clave) ||
     esLaInformacionDeTrafico(clave) ||
-    esDelDescenso(clave)
+    esDelDescenso(clave) ||
+    cuentaPorDondeSeSale(clave, urgencia)
   )
     return Infinity;
   return clave?.startsWith("torre.") ||
@@ -301,6 +302,38 @@ const DE_LA_FASE: ReadonlySet<string> = (() => {
   }
   return claves;
 })();
+
+/**
+ * **Por dónde se sale, contado en el punto de espera**: la oferta de la torre
+ * de salir desde la intersección y lo que le sigue —la pista que queda, o
+ * remontar— y lo que cuenta la instructora en los peldaños de abajo. Ver
+ * `contarPorDondeSeSale` en `game.ts`.
+ *
+ * Espera lo que haga falta y lo retira el juego al empezar la carrera, que es
+ * cuando deja de ser verdad. Con los doce segundos de una orden no sonaba
+ * nunca: se pedía con la autorización de despegar, detrás de la verde en
+ * castellano y del «cleared for take-off» con su viento, dieciocho segundos
+ * de boca. En Los Rodeos con el JAZ 90 en Taguató, «torre.canario.ofreceInterseccion:
+ * caducó esperando» en las tres tiradas de H29d, y detrás sonaba «TORA runway
+ * one two, from intersection Echo two», la respuesta a una pregunta que nadie
+ * había oído. Y «vuelo.desdeLaInterseccion», con los cuatro de un aviso,
+ * también se caía siempre detrás de la verde.
+ *
+ * **Solo lo tuyo**: «backtrack» es también lo que oye otro avión de la
+ * frecuencia que remonta, y eso va en `baja` y caduca como la charla. Ver
+ * `AL_QUE_REMONTA` en `audio/torre.ts`.
+ */
+export function cuentaPorDondeSeSale(
+  clave: string | undefined,
+  urgencia: Urgencia = "normal",
+): boolean {
+  return (
+    !!clave &&
+    urgencia !== "baja" &&
+    (/^vuelo\.(?:desdeLaInterseccion|remontar(?:UnTrecho)?)(?:\.[a-z]+)?(?:~\d+)?$/.test(clave) ||
+      /^torre\.(?:[a-z]+\.)?(?:ofreceInterseccion|tora|backtrack)(?:\.[LCR])?(?:@|$)/.test(clave))
+  );
+}
 
 /**
  * **La instructora contando por qué no se entra por esa punta**, que también

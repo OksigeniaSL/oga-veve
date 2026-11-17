@@ -1294,6 +1294,8 @@ import {
   MEGAFONIA,
   anunciaElPuntoDeDescenso,
   anunciaLaFase,
+  cuantoAguanta,
+  cuentaPorDondeSeSale,
   esDelDescenso,
 } from "./audio/boca";
 import {
@@ -1603,10 +1605,10 @@ import {
   dondeSeToca,
   enLaZonaDeLasFlechas,
   laMasCerca,
+  llegandoALaZonaDeToma,
   pistaPorDelante,
   sobreAlguna,
   sobreLaPistaConMargen,
-  sobreLaZonaDeToma,
   type Pista,
 } from "./world/pistas-del-vuelo";
 import {
@@ -12380,13 +12382,6 @@ export class Game {
   }
 
   /**
-   * **Si tu permiso para aterrizar todavía tiene algo por sonar**: pedido y
-   * sin dar, dado y esperando su voz o sonando, o con su fraseología en la
-   * cola. Para el banco, que vuela a tiempo real mientras tanto: la voz va con
-   * el reloj de pared, y con el del juego acelerado la altura a la que suena
-   * sale comprimida.
-   */
-  /**
    * **El desvío de la senda que pinta el rombo y el estado de tu permiso**,
    * para el banco: lo que apunta en cada orden de irse al aire.
    */
@@ -12407,6 +12402,13 @@ export class Game {
     };
   }
 
+  /**
+   * **Si tu permiso para aterrizar todavía tiene algo por sonar**: pedido y
+   * sin dar, dado y esperando su voz o sonando, o con su fraseología en la
+   * cola. Para el banco, que vuela a tiempo real mientras tanto: la voz va con
+   * el reloj de pared, y con el del juego acelerado la altura a la que suena
+   * sale comprimida.
+   */
   get permisoPorOirParaBanco(): boolean {
     return (
       this.turno.pidiendoAterrizaje ||
@@ -12414,6 +12416,24 @@ export class Game {
       this.permisoDeAterrizar === "sonando" ||
       BOCA.esperaAlguna(esTuPermisoDeAterrizar)
     );
+  }
+
+  /**
+   * **Si espera turno en la boca algo que solo retira el juego**: lo que no
+   * caduca con el reloj de la boca —las aves, el tráfico, la fase, lo que la
+   * torre te da— y se cae solo cuando deja de ser verdad. Para el banco, que
+   * vuela a tiempo real mientras tanto.
+   *
+   * La boca cuenta con el reloj de pared y el juego con el suyo, y a ×12 lo
+   * que deja de ser verdad llega doce veces antes de pared. Medido en Los
+   * Rodeos con el JAZ 90 (H29d): «torre.canario.aves» pedido a los 504,5 s
+   * de la ruta y retirado a los 605,8 s, al quedar las aves detrás; ciento un
+   * segundos de juego, ocho de pared, con la boca hablando. Jugando, ese
+   * aviso tenía minuto y medio para sonar. Lo que caduca por el reloj de la
+   * boca no hace falta mirarlo: ese reloj ya es el de pared.
+   */
+  get algoPorOirParaBanco(): boolean {
+    return BOCA.esperaAlguna((c, u) => cuantoAguanta(c, u) === Infinity);
   }
 
   /**
@@ -17062,9 +17082,9 @@ export class Game {
    * intersección. Si le da, sale desde ahí; si no, pide remontar: el de línea
    * hasta el final, la avioneta un trozo. Ver `remontaHastaLaCabecera` y
    * `pistaNecesariaHoy` en `flight/carrera.ts`. La raya lo dibuja —el lazo
-   * rojo donde se da la vuelta— y además se dice, una vez, con el verde y
-   * antes de entrar. Enrique preguntó «¿qué diría la torre y qué decidiría el
-   * piloto según su manual?», y son las dos partes:
+   * rojo donde se da la vuelta— y además se dice, una vez, en el punto de
+   * espera y antes de entrar. Enrique preguntó «¿qué diría la torre y qué
+   * decidiría el piloto según su manual?», y son las dos partes:
    *
    * - **En los tres peldaños de abajo, la instructora**, que es quien vuela a
    *   tu lado: «salimos desde acá, sin ir hasta el final», «vamos un trecho
@@ -17091,10 +17111,28 @@ export class Game {
    * Y si no le da **ni con la pista entera**, eso ya no se decide aquí: es una
    * negativa argumentada de la tarjeta del tiempo, antes de arrancar. Ver
    * `flight/parte-de-salida.ts`.
+   *
+   * **Y se cuenta al pararse en la roja, no con la verde.** Se pedía con la
+   * autorización de despegar, y ahí no cabía: la verde en castellano y el
+   * «cleared for take-off» con su viento son dieciocho segundos de boca, y la
+   * oferta caducaba a los doce sin sonar —en Los Rodeos con el JAZ 90, en las
+   * tres tiradas de H29d— mientras su respuesta, la pista que queda, sí
+   * sonaba. Y era el orden al revés: la fraseología de la intersección va con
+   * la del rodaje (Doc 4444, 12.3.4.7, la de arriba), y la torre la pregunta
+   * antes de autorizar, no después. Con roja hay tiempo de sobra —dos
+   * minutos callados en esa tirada—, y se pregunta en cuanto calla la
+   * frecuencia; sin ella, la verde llega primero y lo de aquí espera su turno
+   * detrás, sin reloj, hasta que empieza la carrera. Ver `cuentaPorDondeSeSale`
+   * en `audio/boca.ts`.
+   *
+   * **Remontar, en cambio, sigue esperando a la verde**: «backtrack runway one
+   * two» es entrar en la pista, y dicho con la roja encendida la torre se
+   * contradiría a sí misma.
    */
-  private contarPorDondeSeSale(): void {
+  private contarPorDondeSeSale(enLaRoja = false): void {
     const sale = this.plan?.comoSeSale ?? null;
     if (this.remonteContado || !sale || sale.desde === "cabecera") return;
+    if (enLaRoja && sale.desde !== "interseccion") return;
     this.remonteContado = true;
     const campo = this.elCampo();
     const aero = campo.escenario.aerodrome;
@@ -17205,6 +17243,16 @@ export class Game {
 
   /** Si ya se contó por dónde se sale en este despegue. Ver `contarPorDondeSeSale`. */
   private remonteContado = false;
+
+  /**
+   * **Y si toca contarlo en la roja, en cuanto calle la frecuencia.** Al
+   * pararse en el punto de espera la torre acaba de decir la roja y su porqué,
+   * y la instructora la fase: la torre pregunta por la intersección cuando
+   * nadie habla, como en una frecuencia de verdad, y no delante de lo que se
+   * está contando. Si llega antes la verde, se cuenta con ella. Ver
+   * `contarPorDondeSeSale`.
+   */
+  private porDondeSeSalePorDecir = false;
 
   /**
    * **«Hace calor: vamos a necesitar más pista»**, antes de despegar, cuando
@@ -20023,8 +20071,12 @@ export class Game {
        * es justo lo contrario de tocar.
        */
       !EN_DESPEGUE.has(this.faseDeAhora as Fase) &&
-      // Donde se puede tocar, que no es toda la pista. Ver `sobreLaZonaDeToma`.
-      this.sobreLaZonaDeToma() &&
+      /*
+       * Donde se puede tocar, que no es toda la pista, o a punto de llegar
+       * sin poder tocar antes: cruzando el umbral bajo, la tarjeta de la
+       * recogida la tapaba en el mismo instante. Ver `llegandoALaZonaDeToma`.
+       */
+      this.llegandoALaZonaDeToma() &&
       /*
        * **La altura sobre la pista, no sobre el terreno.** Antes del umbral el
        * suelo puede estar mucho más abajo —en Tenerife Norte cae setenta
@@ -26586,13 +26638,22 @@ export class Game {
 
   /**
    * Lo mismo, pero **donde se puede tocar**: del umbral de aterrizaje en
-   * adelante, sin margen por delante. El aviso de terreno sigue mirando la
-   * pista entera con su margen, que sobre asfalto no hay terreno que avisar.
-   * Ver `sobreLaZonaDeToma` en `world/pistas-del-vuelo.ts`.
+   * adelante, sin margen por delante, **o a punto de llegar sin poder tocar
+   * antes**, con las ruedas sobre la cota de la pista y no sobre el terreno.
+   * Lo mira «ya podés tocar». El aviso de terreno sigue mirando la pista
+   * entera con su margen, que sobre asfalto no hay terreno que avisar. Ver
+   * `llegandoALaZonaDeToma` en `world/pistas-del-vuelo.ts`.
    */
-  private sobreLaZonaDeToma(): boolean {
+  private llegandoALaZonaDeToma(): boolean {
     const s = this.flight.state;
-    return sobreLaZonaDeToma(this.laPistaDeAhora(), s.position.x, s.position.z, s.heading);
+    return llegandoALaZonaDeToma(this.laPistaDeAhora(), s.position.x, s.position.z, s.heading, {
+      suelo: s.groundSpeed,
+      ruedas:
+        s.position.y -
+        this.cotaDeLaPistaAqui() -
+        alturaSobreLasRuedas(this.aircraft, pitchAngleOf(s.orientation)),
+      bajando: -s.verticalSpeed,
+    });
   }
 
   /**
@@ -27734,11 +27795,20 @@ export class Game {
       this.pasoDadoPor.clear();
       this.salidasDichas.dicha = false;
       this.remonteContado = false;
+      this.porDondeSeSalePorDecir = false;
       this.calorDicho = false;
       this.calorPorDecir = false;
     } else if (this.calorPorDecir && !this.hud.senal.puesto.dibujo) {
       this.calorPorDecir = false;
       this.decirElCalor();
+    } else if (
+      this.porDondeSeSalePorDecir &&
+      this.faseDeAhora === "esperando" &&
+      BOCA.libre &&
+      !this.torre.hablando
+    ) {
+      this.porDondeSeSalePorDecir = false;
+      this.contarPorDondeSeSale(true);
     }
     this.presentarLaMatricula();
     /*
@@ -27955,6 +28025,18 @@ export class Game {
        */
       if (!repuesta && ANTES_DE_CORRER.has(vista.fase) && !this.calorDicho)
         this.calorPorDecir = true;
+      /*
+       * **Y corriendo, por dónde se sale ya no se cuenta**: la oferta de la
+       * intersección, la pista que queda y lo de la instructora esperan su
+       * turno sin reloj, y lo que siga esperando al empezar la carrera ya no
+       * es verdad. Ver `cuentaPorDondeSeSale` en `audio/boca.ts`.
+       */
+      if (
+        vista.fase === "despegando" ||
+        vista.fase === "comprometido" ||
+        vista.fase === "en-vuelo"
+      )
+        BOCA.retirar((c, u) => cuentaPorDondeSeSale(c, u));
       if (
         vista.fase === "alineando" &&
         this.flight.state.airspeed < ALINEANDO_DE_VERDAD
@@ -28140,7 +28222,12 @@ export class Game {
         }
         if (vista.fase === "autorizado" || vista.fase === "apagado")
           this.avisar("success");
-        // Y por dónde se sale, si no es la cabecera. Ver `contarPorDondeSeSale`.
+        /*
+         * Y por dónde se sale, si no es la cabecera: en la roja del punto de
+         * espera, en cuanto calle la frecuencia, o con la verde si llega
+         * antes. Ver `contarPorDondeSeSale` y `porDondeSeSalePorDecir`.
+         */
+        if (vista.fase === "esperando") this.porDondeSeSalePorDecir = true;
         if (vista.fase === "autorizado") this.contarPorDondeSeSale();
       }
       // Y apagar el motor en el suelo **termina el vuelo**: es el momento de
