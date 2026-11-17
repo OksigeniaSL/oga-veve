@@ -3391,12 +3391,25 @@ H25a a H28a con el mismo banco:
 | Antes, Los Rodeos ×12 (2) | 2,78 y 1,97 | 368 y 169 | 3,6 y 2,0 |
 | Antes, Gran Canaria (1) | 2,07 | 226 | 4,3 |
 | Ahora, Los Rodeos ×12 | 1,45 | 343 | 4,0 |
+| Ahora, Los Rodeos ×1 | 1,61 | 244 | 3,6 |
+| Ahora, Gran Canaria | 2,18 | 230 | 4,7 |
 
 En la tirada de ahora con el reloj ×12, el gas siguió en 0,23 hasta los 8,8
 m de ruedas, el morro subió de −2,6° a 3,8° y la carga, a 1,13 g; empezó a
 recoger a 12,2 m bajando 4,3 m/s. 60 de 62: lo que falló es de la torre, no
 de la final —su «cleared to land» se cayó en la cola por «ya no es verdad» a
 los 493 s, y con él la fraseología—.
+
+Con el reloj ×1, 63 de 63: empezó a recoger a 11,9 m bajando 3,7 m/s, el gas
+siguió hasta los 8,9 m, el morro subió de −2,0° a 4,5° y tocó a 1,61 m/s.
+
+En Gran Canaria, 61 de 62, y lo que falla es la toma, a 2,18 m/s: con veinte
+nudos de cara, la racha de cara cayó de 0 a −4,3 m/s en los últimos diez
+metros y la velocidad, de 125 a 112 nudos; el morro subió 7,4°, de −2,8° a
+4,6°, y el avión pasó de bajar 3,3 m/s a 2,2. Es lo que la regla del margen
+del reactor (media cara y la racha) está para cubrir, y el banco llegó a la
+recogida con nueve nudos encima de la Vref; con una tirada no se puede decir
+más que antes (2,07).
 
 ### Lo que no
 
