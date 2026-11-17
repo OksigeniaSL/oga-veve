@@ -1629,12 +1629,15 @@ import {
   type ModoDeGases,
 } from "./flight/gases-automaticos";
 import {
+  FINAL_SOBRE_VREF,
   NUDO,
   flapsQuePide,
+  margenDeLaFinal,
   trenQuePide,
   velocidadQueToca,
   vrefKt,
   type VelocidadQueToca,
+  type VientoDeLaFinal,
 } from "./flight/escalera-de-velocidades";
 import {
   CadenaDelVuelo,
@@ -1670,6 +1673,7 @@ import { ALTURA_DE_DECISION, MARGENES, PUERTA_ESTABILIZADA } from "./flight/mini
 import {
   bandaDeAhora,
   bandaDeVelocidad,
+  referenciaEnVerdadera,
   yaLoEstaCorrigiendo,
   queSeDice,
   type BandaDeVelocidad,
@@ -6771,6 +6775,9 @@ export class Game {
       hechos: this.hechos,
       vaca: this.vaca,
       campoDeAhora: () => this.campoParaLaAproximacion(),
+      // Y el margen del viento de hoy, que la puerta cuenta. Ver `margenDeLaFinal`.
+      porElVientoKt: () =>
+        Math.max(0, margenDeLaFinal(this.aircraft, this.vientoDeLaFinal()) - FINAL_SOBRE_VREF),
     });
 
     /*
@@ -19039,6 +19046,7 @@ export class Game {
      */
     const enElAsfalto =
       this.flight.state.onGround && this.flight.state.onRunway;
+    const referenciaDeLaFinal = this.referenciaDeLaFinal();
     let banda = bandaDeAhora(
       {
         // Las ruedas sobre el suelo, que es lo que separa la recogida del
@@ -19061,7 +19069,12 @@ export class Game {
           ? this.flight.state.groundSpeed
           : this.flight.state.airspeed,
       },
-      this.aircraft.approachSpeed,
+      /*
+       * **La Vref en verdadera**, como la velocidad del aire que se compara
+       * con ella: era la indicada de la ficha contra la verdadera, y en Los
+       * Rodeos eso son hasta seis puntos. Ver `referenciaDeLaFinal`.
+       */
+      referenciaDeLaFinal.vref,
       // Correr es despegar o aterrizar. Lo demás, en el suelo, es rodar.
       CORRIENDO.has(this.faseDeAhora),
       /*
@@ -19091,6 +19104,8 @@ export class Game {
       this.bandaDeAhora,
       // Y rodando, lo más que rueda este avión. Ver `velocidadesEnTierra`.
       velocidadesEnTierra(this.aircraft).rectaLarga,
+      // Y lo que suma el viento de hoy a la final. Ver `margenDeLaFinal`.
+      referenciaDeLaFinal.porElViento,
     );
     /*
      * **Y hacia dónde va la aguja**, filtrada en un segundo: el aviso de
@@ -30498,6 +30513,8 @@ export class Game {
         flaps: this.input.controls.flaps,
       }),
       aire,
+      // Y en la final, con el margen del viento de hoy. Ver `margenDeLaFinal`.
+      vientoDeLaFinal: this.vientoDeLaFinal(),
     });
     if (s.onGround && RECIEN_LLEGADO.has(this.faseDeAhora)) {
       /*
@@ -30543,6 +30560,43 @@ export class Game {
 
   /** Cuándo se contó `velocidadDeAhora`, en el reloj del juego. */
   private velocidadDeAhoraEn = -1;
+
+  /**
+   * **El viento del parte en la pista a la que se va a aterrizar**: la del
+   * destino si se va a otro campo, y si no la de aquí. Es el que da la torre,
+   * no el de este instante: con él se cuenta el margen de la final antes de
+   * llegar a ella, como en el briefing. `null` sin parte. Ver
+   * `margenDeLaFinal`.
+   */
+  private vientoDeLaFinal(): VientoDeLaFinal | null {
+    const destino = this.elDestino();
+    const campo = destino ? this.elCampo(destino.id) : this.elCampo();
+    const meteo = campo.escenario.meteo;
+    if (!meteo) return null;
+    return {
+      deCaraKt: deFrente(campo.pista.heading, meteo),
+      vientoKt: meteo.vientoKt,
+      rachaKt: meteo.rachaKt ?? 0,
+    };
+  }
+
+  /**
+   * **La Vref y lo que el viento de hoy le suma a la final, en verdadera**,
+   * m/s: lo que miran las bandas de velocidad, que comparan con la verdadera.
+   * La Vref de la ficha es indicada, y en Los Rodeos la misma indicada son
+   * hasta un seis por ciento más de verdadera: sin pasarla, la banda decía
+   * «lento» hasta seis puntos por debajo de donde tocaba. Ver
+   * `referenciaEnVerdadera`.
+   */
+  private referenciaDeLaFinal(): { readonly vref: number; readonly porElViento: number } {
+    const sobra = margenDeLaFinal(this.aircraft, this.vientoDeLaFinal()) - FINAL_SOBRE_VREF;
+    return referenciaEnVerdadera(
+      this.aircraft.approachSpeed,
+      sobra * NUDO,
+      this.flight.state.position.y,
+      this.flight.aireDelDia(),
+    );
+  }
 
   /**
    * **La velocidad mínima del automático**, indicada, m/s, o ninguna: por
@@ -31751,6 +31805,8 @@ export class Game {
   private bandaDeLaAproximacion(): Velocidad | null {
     const s = this.flight.state;
     if (s.onGround) return null;
+    // La Vref en verdadera, como la velocidad. Ver `referenciaDeLaFinal`.
+    const ref = this.referenciaDeLaFinal();
     return bandaDeVelocidad(
       {
         sobreElSuelo: Math.max(0, this.ruedasSobreElSuelo(s)),
@@ -31758,8 +31814,9 @@ export class Game {
         vertical: s.verticalSpeed,
         velocidad: s.airspeed,
       },
-      this.aircraft.approachSpeed,
+      ref.vref,
       this.bandaDeAhora,
+      ref.porElViento,
     );
   }
 
@@ -36282,6 +36339,15 @@ export class Game {
       peldano: this.tier.avisos,
       declinacion: (oaci) => this.declinaciones.get(oaci) ?? 0,
       limites,
+      // Y la de aproximación con el viento de hoy; el helicóptero no viene a una pista.
+      ...(this.aircraft.helicoptero
+        ? {}
+        : {
+            aproximacion: {
+              vrefKt: vrefKt(this.aircraft),
+              margenKt: (viento: VientoDeLaFinal) => margenDeLaFinal(this.aircraft, viento),
+            },
+          }),
       ...(releido ? { releido } : {}),
       ofrecerNoExplicar: vez?.ofrecerQuitarla ?? false,
     });

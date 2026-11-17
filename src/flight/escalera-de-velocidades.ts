@@ -33,7 +33,8 @@
  *   de los segundos (más cuarenta) del mismo manual. Son los 180–200 que se
  *   piden a una docena de millas.
  * - **En final, la Vref más cinco**, que es el margen que se le suma con el
- *   viento en calma.
+ *   viento en calma, y más con viento de cara o con rachas: ver
+ *   `margenDeLaFinal`.
  *
  * Y en los de hélice, sus números: no tienen Mach que sostener ni cifra de
  * reglamento por encima de su techo; suben a su velocidad de subida, cruzan a
@@ -120,8 +121,69 @@ const LIMPIO_SOBRE_VREF = 80;
 const PRIMEROS_FLAPS_SOBRE_VREF = 50;
 /** Con el tren y los segundos flaps. Ver `CONFIGURADO_DESDE`. */
 const SEGUNDOS_FLAPS_SOBRE_VREF = 20;
-/** Y en final, en todos: el margen sin viento. */
-const FINAL_SOBRE_VREF = 5;
+/** Y en final, en todos: el margen sin viento. Ver `margenDeLaFinal`. */
+export const FINAL_SOBRE_VREF = 5;
+
+/**
+ * **Lo más que se suma a la Vref en la final de un reactor**, kt. Ver
+ * `margenDeLaFinal`.
+ */
+export const FINAL_SOBRE_VREF_MAXIMO = 20;
+
+/**
+ * **El viento del parte en la pista a la que se llega**, nudos: lo que sirve
+ * para el margen de la final. Es el que da la torre o el ATIS, no el de cada
+ * instante: el margen se calcula antes de la final, en el briefing, y se
+ * vuela con él.
+ */
+export interface VientoDeLaFinal {
+  /** La componente de cara del viento medio; negativa, de cola. */
+  readonly deCaraKt: number;
+  /** El viento medio, el que se mide la racha contra él. */
+  readonly vientoKt: number;
+  /** La racha del parte, o cero si no hay. */
+  readonly rachaKt: number;
+}
+
+/**
+ * **Cuánto se suma a la Vref en la final con el viento de hoy**, kt.
+ *
+ * Con rachas se aproxima más deprisa, para que la racha que se va de golpe no
+ * deje el ala por debajo de la Vref: «if the pilot applies a gust factor,
+ * indicated airspeed should not decay below the recommended landing speed»
+ * (FAA, *Airplane Flying Handbook*, FAA-H-8083-3C, 2021, p. 9-6). Y cada
+ * clase de avión lo cuenta a su manera:
+ *
+ * - **El reactor de línea**: la mitad del viento de cara medio y la racha
+ *   entera sobre el viento medio, de cinco a veinte nudos. En el E-Jet, «vAP =
+ *   vREF + ½HWND + gusts (gust − WND)», con «Increment 5..20kts» (C. Regli,
+ *   *Embraer EMB190 – Summary*, 2025, p. 2-39; y «vAP,min = vREF + 5kts …
+ *   vAP,max = vREF + 20kts», pp. 2-21 y 2-22:
+ *   <http://www.flite.ch/Emb/Summary_E190.pdf>). Los manuales de Boeing lo
+ *   dicen igual: «½ steady headwind + full gust increment, max 20 kt». En
+ *   calma son los cinco de siempre; el viento de cola no suma ni resta.
+ * - **La avioneta y el turbohélice**: la de aproximación más la mitad de lo
+ *   que racha el viento sobre su media: «Pilots often use the normal approach
+ *   speed plus one-half of the wind gust factors in turbulent conditions. If
+ *   the normal speed is 70 knots, and the wind gusts are 15 knots, an increase
+ *   of airspeed to 77 knots is appropriate» (FAA-H-8083-3C, p. 9-20; y «no
+ *   more than one-half the gust factor is added», p. 9-21). Sin tope: el que
+ *   pone es «no more than». La de aproximación es la de la final en calma, la
+ *   Vref y cinco. El manual de los dos turbohélices de la flota, el 1900D y el
+ *   Twin Otter, no se ha leído en esto, y van con la regla de la FAA.
+ */
+export function margenDeLaFinal(
+  a: AircraftConfig,
+  viento: VientoDeLaFinal | null | undefined,
+): number {
+  if (!viento) return FINAL_SOBRE_VREF;
+  const racha = Math.max(0, viento.rachaKt - viento.vientoKt);
+  if (esDeChorro(a)) {
+    const sumado = Math.max(0, viento.deCaraKt) / 2 + racha;
+    return Math.min(FINAL_SOBRE_VREF_MAXIMO, Math.max(FINAL_SOBRE_VREF, sumado));
+  }
+  return FINAL_SOBRE_VREF + racha / 2;
+}
 
 /** Los tramos de la escalera, en el orden en que se viven. */
 export type Tramo =
@@ -228,6 +290,11 @@ export interface DondeVa {
   readonly topeKt?: number;
   /** El aire del día, para pasar el Mach a indicada. */
   readonly aire?: Aire;
+  /**
+   * El viento del parte en la pista a la que se llega, para el margen de la
+   * final; sin él, el de la calma. Ver `margenDeLaFinal`.
+   */
+  readonly vientoDeLaFinal?: VientoDeLaFinal | null;
 }
 
 /**
@@ -346,7 +413,12 @@ export function velocidadQueToca(a: AircraftConfig, d: DondeVa): VelocidadQueToc
   const llegando = conPlan && (d.bajando || falta < TERMINAL_DESDE);
   let r: VelocidadQueToca;
   if (d.enFinal || (llegando && falta < FINAL_DESDE)) {
-    r = { kt: vref + FINAL_SOBRE_VREF, mach: null, tramo: "final", peldano: "final" };
+    r = {
+      kt: vref + margenDeLaFinal(a, d.vientoDeLaFinal),
+      mach: null,
+      tramo: "final",
+      peldano: "final",
+    };
   } else if (llegando && falta < APROXIMACION_DESDE) {
     const configurado = chorro && falta < CONFIGURADO_DESDE;
     const kt = !chorro

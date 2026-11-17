@@ -155,6 +155,11 @@ export interface MundoDeLaAproximacion {
   readonly vaca: Vaca;
   /** El campo que se tiene debajo. Ver `CampoDeLaAproximacion`. */
   readonly campoDeAhora: () => CampoDeLaAproximacion;
+  /**
+   * Lo que el viento de hoy suma a la final por encima del margen de la
+   * calma, nudos. Ver `AproximacionEnLaPuerta.porElVientoKt` en `minimos.ts`.
+   */
+  readonly porElVientoKt?: () => number;
 }
 
 /** Y lo que cambia en cada fotograma. */
@@ -726,6 +731,7 @@ export class LaAproximacion {
     const motivo = porQueNoEstaEstabilizada({
       kt: puerta.kt,
       referenciaKt: this.mundo.avion().approachSpeed * 1.943844,
+      porElVientoKt: this.mundo.porElVientoKt?.() ?? 0,
       vertical: puerta.vertical,
       delEje: across,
       torcido,
