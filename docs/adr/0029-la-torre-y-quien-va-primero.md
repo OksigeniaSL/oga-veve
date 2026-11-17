@@ -211,3 +211,43 @@ solo que en esta no hubo.
   «parado a tu lado» —un reactor a 42,8 m, con el límite en 43,25— y una
   llegada tarda 98 s más. Falta mirar esas dos y el navegador antes de
   juntarlo.
+
+  **Arreglado (17-11-2026, H22a).** El parche entra, con dos cosas más
+  (`rutaEntre` y `mejorEntre` en `world/suelo-del-trafico.ts`, y
+  `asomaElMorro` en `world/trafico.ts`):
+
+  - **La llegada que tardaba 98 s más** era la misma raíz por el otro lado:
+    el que salía ya no esperaba en el ramal de la entrada de la plataforma,
+    pero el turbohélice que aterrizaba, contigo detrás, sí aparcaba allí —al
+    final del ramal, en (-312, 255), a 137 m del 13—, porque de los ocho
+    puestos más cercanos a su boca no llegaba entero a ninguno, y el
+    recortado más corto era ése. Tu raya pasaba a cuatro metros de su
+    centro y te quedabas detrás de él hasta que lo retiraban. Ahora, si los
+    ocho más cercanos solo dan recortados, se miran los ocho siguientes y
+    los otros ocho (`POR_TANDA`, `TANDAS`), y gana uno al que se llegue
+    entero; si ninguno de los veinticuatro, el recortado de antes. Lo mide
+    `trafico-en-tu-calle.test.ts` en Los Rodeos: ningún camino de la pista
+    a un puesto pasa ya junto a donde aparca el que llega, y si uno se
+    queda en ese ramal, la raya lo rodea.
+  - **El reactor «parado a tu lado»** es el que sale del 13 por la 30
+    mientras vuelves al 15: espera bien, fuera de tu tramo, pero con la
+    separación de ala, y de cara a tu calle lo primero que entra es el
+    morro, que en el reactor va 20,6 m por delante del centro con una
+    semiala de 17. Esperaba con el centro a 40,0 m de tu raya y el morro a
+    unos seis metros de tu punta de ala. Ahora el que espera cuenta lo que
+    el morro va más allá del ala (`asomaElMorro`, 3,6 m en el reactor y
+    nada en los demás) y espera con el centro a 43,7 m. El banco lo sigue
+    contando, a 43,2 m de ti con el límite en 43,25 —el piloto del banco
+    recorta la esquina y pasa medio metro por dentro de la raya—: con el
+    morro a más de nueve metros de tu punta de ala y las alas a trece, no
+    es un tapón sino el turno de cada uno, y se deja así.
+
+  Con el banco de mesa de cuarenta y ocho llegadas por Los Rodeos con el
+  JAZ 90:
+
+  | | Antes | Solo el parche | Ahora |
+  |---|---|---|---|
+  | Salidas que no despegan | 7 | 1 | 0 |
+  | Rodaje medio de la toma al puesto | 202,7 s | 191,9 s | 189,1 s |
+  | «Parado a tu lado» | 0 | 1 (42,8 m) | 1 (43,2 m) |
+  | Frustradas, dos en la pista, sin llegar | 9, 0, 0 | 9, 0, 0 | 9, 0, 0 |
