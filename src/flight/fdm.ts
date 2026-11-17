@@ -30,6 +30,7 @@
 import { Quaternion, Vector3 } from "three";
 import { actitudEnTierra, alturaSobreLasRuedas, brazoDelTren } from "./apoyo";
 import { resistenciaDelTren } from "./tren";
+import { efectoSuelo, efectoSueloRodando } from "./efecto-suelo";
 import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
 import { anguloDeAviso, SE_CALLA_EL_AVISADOR } from "./avisos-de-actitud";
 import {
@@ -1011,12 +1012,18 @@ export class CoefficientFlightModel implements FlightModel {
     // sostiene algo, como en `resolveGround`. Y con la actitud con la que
     // rueda: el de rueda de cola, en tres puntos, sustenta y frena más. Ver
     // `actitudEnTierra`.
+    // Y con el ala a su altura sobre la pista, que es efecto suelo del todo:
+    // lo mismo que le cuenta `integrate`. Ver `flight/efecto-suelo.ts`.
+    const suelo = efectoSueloRodando(ac);
     const frenaA = (v: number): number => {
       const q = 0.5 * densidad * v * v * ac.wingArea;
-      const cl = ac.aero.cl0 + ac.aero.clAlpha * actitudEnTierra(ac, v);
+      const cl =
+        (ac.aero.cl0 + ac.aero.clAlpha * actitudEnTierra(ac, v)) *
+        suelo.sustentacion;
       const cd =
         ac.aero.cd0 +
-        (cl * cl) / (Math.PI * alargamiento * ac.aero.oswald) +
+        ((cl * cl) / (Math.PI * alargamiento * ac.aero.oswald)) *
+          suelo.inducida +
         resistenciaDelTren(ac, 1, 0);
       return (
         ROZAMIENTO[this.superficie] *
@@ -1114,8 +1121,23 @@ export class CoefficientFlightModel implements FlightModel {
     // Alarga la pérdida en modo arcade en vez de eliminarla: el avión sigue
     // cayendo si insistís, pero perdona el tirón nervioso de un crío.
     const stallAngle = a.alphaStall * (1 + 0.45 * this.layers.stallProtection);
+    /*
+     * **Y el suelo debajo del ala**, que a menos de una envergadura le quita
+     * inducida y le da sustentación: el colchón de la recogida y lo que deja
+     * un avión en el aire antes de poder subir. Por la altura del ala y no la
+     * del centro —el ala alta va casi un metro y medio más arriba—, y sobre lo
+     * que haya debajo, pista, campo o agua: el juego da la superficie, con su
+     * agua donde la hay. Ver `flight/efecto-suelo.ts`.
+     */
+    const suelo = efectoSuelo(
+      ac,
+      s.position.y -
+        ac.alturaDelAla * this.down.y -
+        this.ground(s.position.x, s.position.z),
+    );
     const clDelAla =
-      liftCoefficient(s.alpha, a, stallAngle) + ac.flapsLift * assisted.flaps;
+      (liftCoefficient(s.alpha, a, stallAngle) + ac.flapsLift * assisted.flaps) *
+      suelo.sustentacion;
     /*
      * **Y lo que se llevan los frenos de tierra.** Con todos los paneles
      * arriba la corriente se rompe encima de los flaps, que es donde está casi
@@ -1132,7 +1154,8 @@ export class CoefficientFlightModel implements FlightModel {
      * quita las dos para saber cuánto frena el avión a un g. Ver
      * `sobraParaSubir`.
      */
-    const inducida = (cl * cl) / (Math.PI * aspectRatio * a.oswald);
+    const inducida =
+      ((cl * cl) / (Math.PI * aspectRatio * a.oswald)) * suelo.inducida;
     const enPerdida = postStallDrag(s.alpha, stallAngle);
     const cd =
       a.cd0 +
@@ -1617,7 +1640,9 @@ export class CoefficientFlightModel implements FlightModel {
               (cd -
                 inducida -
                 enPerdida +
-                (clAUnG * clAUnG) / (Math.PI * aspectRatio * a.oswald))) /
+                // A un g, con el mismo suelo debajo que la de ahora.
+                ((clAUnG * clAUnG) / (Math.PI * aspectRatio * a.oswald)) *
+                  suelo.inducida)) /
           pesoAhora;
         const cercaDelSuelo =
           clamp(

@@ -2496,6 +2496,84 @@ describe("lo que se oye cambiar se cuenta: el gas de los motores y los oídos", 
     expect(entreMedias.map((d) => d.clave).filter((c) => !/^(ventanilla|inicio\.ara\.pasaje\.(teide|garajonay|orotava|loVeo)$)/.test(c))).toEqual([]);
   });
 
+  /*
+   * **Y con cualquier crucero, a tiempo** (17-11-2026). En el navegador el
+   * crucero de un salto entre islas dura de treinta a cuarenta y cinco
+   * segundos, y el ralentí llega con la tripulante en el asiento de Ara
+   * contando las nubes, más de cuarenta segundos de frases: el banco de Ara lo
+   * vio dicho a los 38 s del cambio en un vuelo y sin decir en el siguiente, y
+   * aquí, antes del arreglo, con 31 s de crucero o menos no se decía nunca. Lo
+   * de la tripulante se para para el anuncio de la bajada, y sigue detrás.
+   * También con el baño mal medido —la bajada doce segundos antes de lo que
+   * le daba el juego, que es como Ara volvió siete segundos antes del ralentí
+   * en el banco—.
+   *
+   * **Y el porqué, en el primer rato tranquilo** (17-11-2026, H27b). Con 35 s
+   * de crucero o menos, y con 40 a 42, la explicación del ralentí salía detrás
+   * del kit, más de un minuto tarde: el rato tranquilo de después de los oídos
+   * caía ya dentro de los metros en que lo que viene a cuento espera al kit.
+   * Ahora el kit la deja pasar delante. Y también con la bajada empezando
+   * nueve kilómetros más cerca de la pista —con viento de cara el punto de
+   * descenso se acerca—, que es cuando ese rato cae ya pasado el sitio del
+   * kit: allí, sin esperar el kit a la explicación, la pisaba.
+   */
+  it("y con cualquier crucero, Ara lo nota a tiempo: lo de la tripulante se para para el anuncio, sin partir nada ni perder nada", () => {
+    const DE_LA_TRIPULANTE = ["hola", "deVerdad", "nubes1", "nubes2", "nubes3", "nubesSostiene", "plop1", "plop2"].map((c) =>
+      c === "deVerdad" || c === "nubesSostiene" ? `inicio.ara.pasaje.${c}` : `inicio.tripulacion.pasaje.cerca.${c}`,
+    );
+    const LA_BAJADA = ["inicio.ara.pasaje.ralenti", "comandante.descenso", "tripulacion.cinturones"];
+    // Lo que va pegado: el saludo y su «¡sí!», la pregunta y su respuesta, lo explicado y lo que saca Ara, y el plop.
+    const PEGADAS = [[0, 1], [1, 2], [4, 5], [6, 7]] as const;
+    const vuelos: { crucero: number; antes: number; cerca: number }[] = [
+      ...Array.from({ length: 36 }, (_, i) => ({ crucero: 20 + 2 * i, antes: 0, cerca: 0 })),
+      ...[28, 32, 36, 40, 44].map((crucero) => ({ crucero, antes: 12, cerca: 0 })),
+      ...[20, 30, 36, 42, 58, 90].map((crucero) => ({ crucero, antes: 0, cerca: 9000 })),
+    ];
+    for (const { crucero, antes, cerca } of vuelos) {
+      const m = volarApuntandoLaPotencia(
+        new (class extends VueloMedidoConRatos {
+          override get lectura(): LecturaDelPasaje {
+            const l = super.lectura;
+            const conElBano = l.hastaLaBajada === undefined ? l : { ...l, hastaLaBajada: l.hastaLaBajada + antes };
+            if (!cerca || l.tramo !== "bajada") return conElBano;
+            // La bajada entera `cerca` metros más cerca de la pista, y la misma desde los 60 km: sin saltos en lo que falta.
+            const f = l.faltaParaTocar;
+            return { ...conElBano, faltaParaTocar: f - cerca * Math.min(1, Math.max(0, (f - 60000) / 20000)) };
+          }
+        })(crucero),
+      );
+      const claves = m.escena.registro.map((d) => d.clave);
+      const cuando = (clave: string): number => m.escena.registro.find((d) => d.clave === clave)?.desde ?? NaN;
+      const que = `crucero de ${crucero} s${antes ? `, la bajada ${antes} s antes` : ""}${cerca ? `, la bajada ${cerca / 1000} km más cerca` : ""}`;
+      const alRalenti = m.cambios.find((c) => c.potencia === "ralenti")?.t ?? NaN;
+      const nota = cuando("inicio.ara.pasaje.ralenti");
+      expect(nota - alRalenti, que).toBeGreaterThan(0);
+      expect(nota - alRalenti, que).toBeLessThan(A_TIEMPO);
+      expect(nota, que).toBeLessThan(cuando("comandante.descenso"));
+      // Lo de la tripulante, entero, una vez y en su orden.
+      const donde = DE_LA_TRIPULANTE.map((c) => claves.indexOf(c));
+      for (const c of DE_LA_TRIPULANTE) expect(claves.filter((x) => x === c), `${que}: ${c}`).toHaveLength(1);
+      for (let k = 1; k < donde.length; k++) expect(donde[k], `${que}: ${DE_LA_TRIPULANTE[k]}`).toBeGreaterThan(donde[k - 1]!);
+      // Sin partir lo que va pegado, y lo que se mete en medio es solo el anuncio de la bajada.
+      for (const [a, b] of PEGADAS) expect(donde[b]! - donde[a]!, `${que}: ${DE_LA_TRIPULANTE[a]}`).toBe(1);
+      const enMedio = claves.slice(donde[0]! + 1, donde[7]!).filter((c) => !DE_LA_TRIPULANTE.includes(c));
+      expect([[], LA_BAJADA], que).toContainEqual(enMedio);
+      // Y si la tripulante llega al asiento con el ralentí ya sonando, saluda después del anuncio.
+      if (cuando(DE_LA_TRIPULANTE[0]!) > alRalenti) expect(claves.indexOf("tripulacion.cinturones"), que).toBeLessThan(donde[0]!);
+      // Y como Ara lo notó, la comandante cuenta el porqué arriba todavía.
+      expect(m.altitudA(cuando("inicio.mama.pasaje.bajando")), que).toBeGreaterThanOrEqual(DIEZ_MIL_PIES);
+      // En el primer rato tranquilo: lo primero que se cuenta después de los oídos, salvo lo señalado por la ventanilla.
+      const entreMedias = claves.slice(claves.indexOf("inicio.ara.pasaje.bostezo") + 1, claves.indexOf("inicio.ara.pasaje.preguntaBajar"));
+      expect(entreMedias.filter((c) => !/^(ventanilla|ventanilla\.historia|inicio\.ara\.pasaje\.(teide|garajonay|orotava|loVeo))$/.test(c)), que).toEqual(
+        [],
+      );
+      // Y el kit, detrás y entero: no se pierde por esperar.
+      expect(cuando("inicio.tripulacion.pasaje.cerca.kitAqui"), que).toBeGreaterThan(cuando("inicio.mama.pasaje.bajando"));
+      expect(claves, que).toContain("inicio.tripulacion.pasaje.cerca.kitGuardar");
+      expect(m.escena.estado.saltados, que).toEqual([]);
+    }
+  });
+
   it("y los motores que suben con el tren: Ara lo nota después del tren, y lo explica la comandante al llegar, con la reversa", () => {
     const nota = cuando("inicio.ara.pasaje.masGas");
     expect(nota).toBeGreaterThan(cambio("aproximacion"));

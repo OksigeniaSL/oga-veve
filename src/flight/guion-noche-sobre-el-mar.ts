@@ -269,6 +269,8 @@ export const GUION_NOCHE_SOBRE_EL_MAR: GuionDelPasaje<MomentoDeLaNoche, never> =
   sellosAlDecirlo: () => [],
   seQuedanHastaLaSiguiente: new Set(),
   elPlop: [],
+  // Nada que parar para el ralentí: su bajada no dice nada, y del salto se cae en el capítulo que sigue antes de llegar a ella.
+  paraEnLaBajada: new Set(),
   elOficio: [],
   bano: null,
   kit: null,

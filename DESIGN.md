@@ -320,6 +320,16 @@ nada de alrededor, con su cruz de 44 px para cerrarla. Lleva el sello, la pista,
 ir y el botón de ir, grande y donde cae el pulgar. En Guyrami no hay datos que leer: el sello y la pista en grande.
 Todo se mide contra la propia ficha (es contenedor), y así vale igual en la tablet que en el teléfono tumbado.
 
+**La carta se toca** (`src/ui/carta/tocar-la-carta.ts`, ADR 0021, enmienda H24c). En la ficha, en la carta de
+aproximación y en el plano en vuelo, tocar la pista, una radioayuda, una frecuencia, la MSA, un punto del perfil, los
+mínimos o la frustrada lo ilumina en `--ocre` —brillo en el SVG, contorno del foco con halo en las cajas, un aro de 44
+px en el lienzo del plano— y la instructora lo dice en una frase. Desde Tukã sale además una franja de papel del ancho
+de su hoja, encima o debajo de lo tocado y sin recibir toques, con el rótulo de la carta tal cual en la letra de las
+cifras (17 px, `--carta-tinta-aero`) y la glosa en la de los nombres (15 px); desde Taguato, debajo, la frase entera
+(14 px). Se va a los 7 s o con el siguiente toque. Solo existe lo que dibuja el calco del peldaño, la diana mide 44 px
+aunque el símbolo mida 14, y se atiende al `click`: arrastrar sigue rodando. Abrir la carta suena a papel y tocar, a un
+clic, bajos y cortos; con un aviso sonando, la carta se calla.
+
 **Los estados que no son una pieza**:
 
 - *Cargando y error*: si el juego no llega a arrancar, la página recarga sola una vez; si vuelve a fallar, o a los 90
@@ -476,6 +486,9 @@ nada.
   («El pasaje, de pie» en `src/style.css`). Arriba la columna de la pausa a la izquierda y los cuatro puntos con el
   volumen a la derecha; debajo, la tarjeta de quien habla de lado a lado; la lámina, en el tercio de abajo, de todo
   el ancho que quepa; y la mochila abajo a la derecha. Lo comprueba `OGA_SOLO=de-pie` de `verificar-consola.mjs`.
+  **Y la tarjeta del tiempo sale encima del cartel**, que se decide antes de volar: el cartel va dentro del HUD y la
+  tarjeta fuera, así que de pie se lee y se decide como tumbada, y al cerrarla vuelve el cartel. Lo mide
+  `verificar-tarjeta-del-tiempo.mjs` a 400 × 780 con el dedo.
 - **La pizarra del aula se elige, no se adivina** (`src/ui/pizarra.ts`): una pizarra cuelga con el borde de abajo a
   unos 90 cm del suelo y un niño de Infantil llega con la mano al tercio de abajo, pero a la hoja de estilos le parece
   una tablet apaisada. Con `?pizarra=1` o con su botón en los ajustes del hangar (la pizarra con el niño de pie y su

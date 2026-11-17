@@ -206,7 +206,13 @@ const HORNEADOS = import.meta.glob("../../data/aerodromes/*.pavimento.bin", {
   eager: true,
 }) as Record<string, string>;
 
-/** Lo bajado, por aeródromo. Se pide antes de montar el mundo: ver `main.ts`. */
+/**
+ * Lo bajado, por aeródromo. La del campo de salida se pide antes de montar el
+ * mundo, la de cada vecino después de arrancar —ver `main.ts`— y la del mundo
+ * al que se salta, con lo demás de ese mundo —ver `cargarElMundo`—. Se guarda
+ * por aeródromo y no por terreno: la huella de un campo es la misma montado de
+ * salida, de vecino o tras un salto (`pavimento-de-los-vecinos.test.ts`).
+ */
 const BAJADOS = new Map<string, Uint8Array>();
 
 /** El nombre del fichero de un aeródromo: el de su `.aero.json`, en minúsculas. */

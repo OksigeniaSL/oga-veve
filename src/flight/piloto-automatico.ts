@@ -468,7 +468,8 @@ export interface Objetivos {
   readonly gases?: ModoDeGases | null;
   /**
    * **La velocidad mínima**, indicada, m/s: por debajo, el morro baja antes
-   * que perder más. Ver la cabecera.
+   * que perder más, y los gases no piden menos aunque la marca lo pida. Ver
+   * la cabecera y `minimaDelAutomatico` en `velocidades-de-despegue.ts`.
    */
   readonly minima?: number;
 }
@@ -577,6 +578,18 @@ export function mandosPara(
     m.alabeo = e.alabeo;
   }
   const v = Math.max(e.verdadera, 1);
+  /*
+   * **Y la velocidad que se pide, nunca por debajo de la mínima.** Los gases
+   * del E-Jet ajustan el empuje «to remain above MIN SPD» aunque la marca
+   * esté más abajo (`MINIMA_DEL_AUTOMATICO_SOBRE_LA_PERDIDA`). Sin esto, con
+   * la marca de unos flaps que todavía están saliendo por debajo de la mínima
+   * de los que ya han salido, los gases frenaban hacia la marca y el morro
+   * bajaba para no perder más: el avión se iba hacia abajo hasta que salían.
+   */
+  const velocidadPedida =
+    o.velocidad !== null && o.minima !== undefined
+      ? Math.max(o.velocidad, o.minima)
+      : o.velocidad;
   let aileron = 0;
   let elevator = 0;
   let throttle: number | null = null;
@@ -609,7 +622,7 @@ export function mandosPara(
     const error = o.altitud - e.altitud;
     const seMueve = o.ritmo ?? 0;
     let quiere = seMueve + acotar(error / PARA_LA_ALTURA, RITMO_MAXIMO);
-    if (o.modo === "FLCH SPD" && o.velocidad !== null) {
+    if (o.modo === "FLCH SPD" && velocidadPedida !== null) {
       /*
        * **Cambiando de nivel, la velocidad la lleva el morro.** La energía
        * que entra por segundo la ponen los gases —ver el modo `THR`—, y el
@@ -619,7 +632,7 @@ export function mandosPara(
        * cuánto frena el avión: se mide.
        */
       const pide = acotar(
-        (o.velocidad - e.velocidad) / PARA_LA_VELOCIDAD_CON_EL_MORRO,
+        (velocidadPedida - e.velocidad) / PARA_LA_VELOCIDAD_CON_EL_MORRO,
         ACELERACION_MAXIMA,
       );
       const sube = e.vertical + (v * (m.gases.aceleracion - pide)) / GRAVITY;
@@ -708,7 +721,7 @@ export function mandosPara(
         subidaPedida: o.altitud !== null ? subidaPara(o.altitud - e.altitud) : 0,
       },
       gases,
-      o.velocidad ?? e.velocidad,
+      velocidadPedida ?? e.velocidad,
       dt,
       m.gases,
       true,

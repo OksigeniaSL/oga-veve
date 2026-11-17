@@ -45,6 +45,7 @@ import {
   ALTO_DEL_CUADRO,
   ANCHO_DEL_CUADRO,
   BANDA,
+  MARGEN,
   VISERA,
   VISERA_FINA,
   cajaDe,
@@ -107,6 +108,7 @@ import {
   type Estado as EstadoDeAvisos,
 } from "../flight/avisos-de-cabina";
 import { dibujoEn, type DibujoDeSenal } from "./senal";
+import { ANCHO_DEL_CRS, crsEnLaViseraSvg, pintarLaRadio, type RadioEnElCuadro } from "./radio-en-la-rosa";
 import type { Alerta } from "../flight/altitud-seleccionada";
 import {
   QUIETA_LA_ALTITUD,
@@ -258,6 +260,12 @@ export interface DatosDelTablero {
    * `flight/lo-que-cambia.ts` y `Tablero.resaltar`.
    */
   readonly resaltes?: Resaltes | null;
+  /**
+   * **La radio de navegación**: lo que recibe la NAV y el ADF, con su
+   * frecuencia y el curso del OBS. `null` o sin cajas si el avión no lleva
+   * ninguna. Ver `flight/radio-de-navegacion.ts` y `ui/radio-en-la-rosa.ts`.
+   */
+  readonly radio?: RadioEnElCuadro | null;
   /**
    * **Los mínimos puestos**: la altitud de decisión, en pies con el QNH —la
    * cota del umbral de la pista a la que se va más doscientos—, y si ya se ha
@@ -621,6 +629,14 @@ export class Tablero {
       -->
       <g data-caja="visera">
       ${familia === "linea" ? this.mcp(["SPD", "HDG", "ALT"]) : familia === "cristal" ? this.mcp(["ALT"]) : ""}
+      ${
+        /*
+         * Y en la punta derecha, la ventanilla CRS del VOR con su rueda,
+         * desde el peldaño de la radio: donde va la COURSE en el MCP de un
+         * Boeing. Las de pistón no llevan MCP: su curso va en el direccional.
+         */
+        familia !== "esferas" ? crsEnLaViseraSvg(ANCHO_DEL_CUADRO - MARGEN - ANCHO_DEL_CRS, BANDA.y) : ""
+      }
       ${
         /*
          * **El helicóptero, solo la de altitud**, y solo si la lleva. Las
@@ -1909,6 +1925,7 @@ export class Tablero {
      * mando. Ver `flight/tren.ts`.
      */
     this.laCarta(d, cifras);
+    this.laRadio(d, cifras);
     const tren = this.pieza('[data-cristal="tren"]');
     if (tren) {
       const luz = luzDeTren(d.tren);
@@ -2017,6 +2034,61 @@ export class Tablero {
    * de la cabina. El dibujo puede ser distinto —aquí SVG, allí lienzo— pero
    * **dónde va cada cosa, no**: de eso se trataba.
    */
+  /**
+   * **La radio sobre la rosa**: la aguja del ADF y el CDI, girando con la
+   * rosa —con la misma carta de rumbo, que tiene masa—, y las esquinas con la
+   * estación, la frecuencia, el curso y el DME. Si el avión no lleva ninguna
+   * caja, no sale nada: ni un hueco, ni una bandera. Ver
+   * `ui/radio-en-la-rosa.ts`.
+   */
+  private laRadio(d: DatosDelTablero, cifras: boolean): void {
+    const caja = this.pieza('[data-radio-caja]');
+    if (!caja) return;
+    const r = d.radio ?? null;
+    const lleva = !!r && (r.nav !== null || r.adf !== null);
+    poner(caja, "visibility", lleva ? "visible" : "hidden");
+    poner(this.pieza("[data-radio-mcp]"), "visibility", r?.nav ? "visible" : "hidden");
+    if (!lleva) return;
+    const p = pintarLaRadio(r, d.declinacion ?? 0);
+    /*
+     * Con la rosa de su instrumento: la de la pantalla de navegación lleva
+     * la masa de la carta de rumbo (`cintas`); la del direccional, el rumbo
+     * tal cual, como la gira `SixPack`.
+     */
+    const rosa = this.pieza("[data-radio-rosa]");
+    const giro =
+      this.familia === "esferas"
+        ? -(d.estado.heading * GRADOS + (d.declinacion ?? 0))
+        : -(((this.carta.desviacion % 360) + 360) % 360);
+    poner(rosa, "transform", `rotate(${n1(giro)})`);
+    const adf = this.pieza('[data-radio="adf"]');
+    poner(adf, "visibility", p.adf === null ? "hidden" : "visible");
+    if (p.adf !== null) poner(adf, "transform", `rotate(${n1(p.adf)})`);
+    const curso = this.pieza('[data-radio="curso"]');
+    poner(curso, "visibility", p.curso === null ? "hidden" : "visible");
+    if (p.curso !== null) poner(curso, "transform", `rotate(${n1(p.curso)})`);
+    // Lo que mide un punto del CDI lo dice quien lo dibujó: la pantalla o la esfera.
+    const punto = Number(rosa?.getAttribute("data-punto")) || 20;
+    const barra = this.pieza('[data-radio="barra"]');
+    poner(barra, "visibility", p.bandera ? "hidden" : "visible");
+    poner(barra, "transform", `translate(${n1(p.barra * punto * 2)} 0)`);
+    const tf = this.pieza('[data-radio="tofrom"]');
+    poner(tf, "visibility", p.toFrom ? "visible" : "hidden");
+    poner(tf, "transform", p.toFrom === "FROM" ? "rotate(180)" : "");
+    poner(this.pieza('[data-radio="bandera"]'), "visibility", p.bandera ? "visible" : "hidden");
+    if (!cifras) return;
+    escribir(this.pieza('[data-radio="nav-id"]'), p.textos.navId);
+    escribir(this.pieza('[data-radio="nav-mhz"]'), p.textos.navMhz);
+    escribir(this.pieza('[data-radio="nav-crs"]'), p.textos.crs);
+    escribir(this.pieza('[data-radio="nav-dme"]'), p.textos.dme);
+    escribir(this.pieza('[data-radio="adf-id"]'), p.textos.adfId);
+    escribir(this.pieza('[data-radio="adf-khz"]'), p.textos.adfKhz);
+    escribir(this.pieza('[data-radio="nav-crs-cifra"]'), p.textos.crsCifra);
+    escribir(this.pieza('[data-radio="mcp-crs"]'), p.textos.crsCifra);
+    escribir(this.pieza('[data-radio="nav-ident"]'), p.textos.navIdent);
+    escribir(this.pieza('[data-radio="adf-ident"]'), p.textos.adfIdent);
+  }
+
   private laCarta(d: DatosDelTablero, cifras: boolean): void {
     const grupo = this.pieza('[data-carta="grupo"]');
     if (!grupo) return;

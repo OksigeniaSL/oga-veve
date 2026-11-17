@@ -28,6 +28,7 @@ import { Boca } from "./boca";
 import { MUDO } from "./instructor";
 import { InstructorGrabado, nuevoBancoDeVoces, type Altavoz } from "./instructor-grabado";
 import { gananciaDe, leerVolumen } from "./volumen";
+import { tocarRuidoDeLaCarta, type RuidoDeLaCarta } from "./ruidos-de-la-carta";
 
 /**
  * El altavoz más sencillo que sirve: las piezas una detrás de otra, al
@@ -152,6 +153,21 @@ export class VozDelHangar {
 
   callar(): void {
     this.instructora?.callar();
+  }
+
+  /**
+   * **El papel y el clic de la carta**, en el hangar: por su contexto, al
+   * volumen guardado. Aquí no hay avisos que tapar. Con el contexto todavía
+   * dormido —antes del primer gesto— no suena, como la voz.
+   */
+  ruido(que: RuidoDeLaCarta): void {
+    const ctx = this.ctx;
+    if (!ctx || ctx.state !== "running") return;
+    const volumen = ctx.createGain();
+    volumen.gain.value = gananciaDe(leerVolumen());
+    volumen.connect(ctx.destination);
+    tocarRuidoDeLaCarta(ctx, volumen, que);
+    setTimeout(() => volumen.disconnect(), 600);
   }
 
   /** Lo que se le ha pedido, para el banco del hangar. */

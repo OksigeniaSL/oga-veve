@@ -28,7 +28,7 @@
  * partir por vértices compartidos y soldar por cercanía.
  */
 
-import { ANCHO_RODADURA, enElPavimento, type Aerodrome, type Punto } from "./aerodrome";
+import { ANCHO_RODADURA, enElPavimentoDe, type Aerodrome, type Punto } from "./aerodrome";
 
 /** A cuánto se consideran el mismo sitio dos puntas de calle, m. */
 const SOLDADURA = 12;
@@ -512,7 +512,9 @@ export function puestosEnElPavimento<P extends { readonly xy: Punto }>(
   grafo: Pick<Grafo, "rodable">,
 ): readonly P[] {
   const rodable = grafo.rodable;
-  const buenos = puestos.filter((p) => enElPavimento(aero, p.xy) && (!rodable || rodable(p.xy)));
+  // `enElPavimento` con cajas: lo mismo, puesto a puesto, sin mirar las calles lejanas.
+  const enElAsfalto = enElPavimentoDe(aero);
+  const buenos = puestos.filter((p) => enElAsfalto(p.xy) && (!rodable || rodable(p.xy)));
   return buenos.length ? buenos : puestos;
 }
 
@@ -843,6 +845,56 @@ function enganches(
 
 const ENGANCHES_GUARDADOS = new WeakMap<Grafo, Map<string, Enganche[]>>();
 
+/**
+ * **La caja de cada tramo**, para no medir contra los que caen lejos.
+ *
+ * Enganchar un punto lo proyecta sobre cada trozo de cada tramo del grafo, y
+ * en Barajas son cientos de tramos con decenas de trozos para un punto que
+ * solo puede engancharse a los de doscientos metros a la redonda. Lo que
+ * queda más lejos que su caja no puede estar más cerca que ella, así que se
+ * salta sin cambiar nada de lo que sale: ni qué tramos entran, ni en qué
+ * orden. Ver la enmienda H23a del ADR 0028.
+ *
+ * Guardada contra la lista de tramos, que es de lo que sale y no cambia una
+ * vez hecho el grafo. Cuatro números por tramo: x e y mínimas y máximas.
+ */
+export function cajasDeLosTramos(tramos: readonly Tramo[]): Float64Array {
+  const ya = CAJAS.get(tramos);
+  if (ya) return ya;
+  const cajas = new Float64Array(tramos.length * 4);
+  tramos.forEach((t, k) => {
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    for (const [x, y] of t.puntos) {
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
+    }
+    cajas.set([x0, y0, x1, y1], k * 4);
+  });
+  CAJAS.set(tramos, cajas);
+  return cajas;
+}
+
+const CAJAS = new WeakMap<readonly Tramo[], Float64Array>();
+
+/** Lo que dista un punto de la caja del tramo `k`, m; cero dentro. */
+export function aLaCaja(cajas: Float64Array, k: number, p: Punto): number {
+  const dx = Math.max(cajas[k * 4]! - p[0], 0, p[0] - cajas[k * 4 + 2]!);
+  const dy = Math.max(cajas[k * 4 + 1]! - p[1], 0, p[1] - cajas[k * 4 + 3]!);
+  return Math.hypot(dx, dy);
+}
+
+/**
+ * Un milímetro de más antes de saltarse un tramo por su caja: el punto
+ * proyectado sobre un trozo puede salirse de la caja en el último bit, y lo
+ * que se salta tiene que estar lejos de verdad.
+ */
+export const HOLGURA_DE_LA_CAJA = 1e-3;
+
 function buscarEnganches(
   grafo: Grafo,
   p: Punto,
@@ -850,10 +902,14 @@ function buscarEnganches(
   desdeFuera: boolean,
 ): Enganche[] {
   const todos: Enganche[] = [];
+  const cajas = cajasDeLosTramos(grafo.tramos);
   grafo.tramos.forEach((t, k) => {
     // Un tramo que sus nudos ya no nombran no es parte de la red: quien quita
     // una calle del grafo la quita de `desde`, y ahí no se engancha nadie.
     if (!grafo.desde[t.a]?.includes(k)) return;
+    // Y uno cuya caja queda más lejos que el salto no tiene ningún punto más
+    // cerca: no entraría. Ver `cajasDeLosTramos`.
+    if (aLaCaja(cajas, k, p) > maxSalto + HOLGURA_DE_LA_CAJA) return;
     const pts = t.puntos;
     let mejor: Enganche | null = null;
     let recorrido = 0;
@@ -894,9 +950,10 @@ function buscarEnganches(
    * había recta a ninguna parte, y al recalcular la vuelta no salía raya.
    */
   const desdeLaPista = !!(grafo.alBordeDeLaPista ?? grafo.enPista)?.(p);
+  const recta = rectasDesde(grafo, p, desdeFuera, desdeLaPista);
   for (const e of todos) {
     if (buenos.length >= ENGANCHES) break;
-    if (porPavimento(grafo, p, e.punto, desdeFuera, desdeLaPista)) buenos.push(e);
+    if (recta(e.punto)) buenos.push(e);
   }
   /*
    * **Y si la perpendicular cruza hierba, se busca por dónde no.**
@@ -913,7 +970,7 @@ function buscarEnganches(
   for (const e of todos.slice(0, TRAMOS_QUE_SE_MIRAN)) {
     if (buenos.length >= ENGANCHES) break;
     if (buenos.some((b) => b.tramo === e.tramo)) continue;
-    const otra = porOtroSitio(grafo, p, e, maxSalto, desdeFuera, desdeLaPista);
+    const otra = porOtroSitio(grafo, p, e, maxSalto, recta);
     if (otra) buenos.push(otra);
   }
   return buenos;
@@ -935,8 +992,8 @@ function porOtroSitio(
   p: Punto,
   e: Enganche,
   maxSalto: number,
-  desdeFuera: boolean,
-  porLaPista: boolean,
+  /** Si la recta de `p` a ese punto vale. Ver `rectasDesde`. */
+  recta: (q: Punto) => boolean,
 ): Enganche | null {
   const t = grafo.tramos[e.tramo]!;
   const candidatos: Enganche[] = [];
@@ -946,10 +1003,53 @@ function porOtroSitio(
     if (salto <= maxSalto) candidatos.push({ tramo: e.tramo, punto: q, desdeA: s, salto });
   }
   candidatos.sort((x, y) => x.salto - y.salto);
-  for (const c of candidatos.slice(0, 40))
-    if (porPavimento(grafo, p, c.punto, desdeFuera, porLaPista)) return c;
+  for (const c of candidatos.slice(0, 40)) if (recta(c.punto)) return c;
   return null;
 }
+
+/**
+ * **`porPavimento` desde un punto, con lo ya mirado guardado.**
+ *
+ * Elegir la salida engancha cada puesto dos veces: como destino de la vuelta,
+ * con seiscientos metros de salto, y como origen de la ida, con doscientos
+ * veinte. Las dos miran casi las mismas rectas —las de doscientos veinte son
+ * las primeras de las de seiscientos, en el mismo orden—, y mirar una recta es
+ * preguntar por el pavimento cada dos metros. Enganchar era dos quintos de lo
+ * que costaba elegir en Barajas, medido en la mesa, y así la segunda vez solo
+ * se mira lo que la primera no miró (ADR 0028, enmienda H23a).
+ *
+ * Exacto por construcción: lo guardado es lo que contestó `porPavimento` para
+ * ese mismo punto, esa misma recta y lo mismo de pista, con las coordenadas
+ * enteras en la clave —sin redondear—, y el grafo no cambia una vez hecho.
+ * Se vacía si crece, como `ENGANCHES_GUARDADOS`: el avión rodando pregunta
+ * cada vez desde un sitio distinto.
+ */
+function rectasDesde(
+  grafo: Grafo,
+  p: Punto,
+  desdeFuera: boolean,
+  porLaPista: boolean,
+): (q: Punto) => boolean {
+  let delGrafo = RECTAS_MIRADAS.get(grafo);
+  if (!delGrafo) RECTAS_MIRADAS.set(grafo, (delGrafo = new Map()));
+  const clave = `${p[0]},${p[1]},${desdeFuera},${porLaPista}`;
+  let miradas = delGrafo.get(clave);
+  if (!miradas) {
+    if (delGrafo.size > 4000) delGrafo.clear();
+    delGrafo.set(clave, (miradas = new Map()));
+  }
+  const suyas = miradas;
+  return (q) => {
+    const k = `${q[0]},${q[1]}`;
+    const ya = suyas.get(k);
+    if (ya !== undefined) return ya;
+    const vale = porPavimento(grafo, p, q, desdeFuera, porLaPista);
+    suyas.set(k, vale);
+    return vale;
+  };
+}
+
+const RECTAS_MIRADAS = new WeakMap<Grafo, Map<string, Map<string, boolean>>>();
 
 /** El punto de un tramo a tantos metros de su principio. */
 function puntoDelTramo(t: Tramo, s: number): Punto {

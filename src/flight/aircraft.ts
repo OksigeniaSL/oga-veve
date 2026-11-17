@@ -516,6 +516,28 @@ export function vrefDeSuCategoria(a: {
   return a.approachSpeed * Math.sqrt(Math.max(a.mass, maxima) / a.mass);
 }
 
+/** Las categorías de aproximación de la OACI; la H es la de los helicópteros. */
+export type CategoriaDeAproximacion = "A" | "B" | "C" | "D" | "E" | "H";
+
+/**
+ * **La categoría de aproximación de un tipo**: la columna de la tabla de
+ * mínimos de una carta que es la suya. Por su velocidad en el umbral a la masa
+ * máxima al aterrizar (`vrefDeSuCategoria`): menos de 91 nudos, la A; hasta
+ * 120, la B; hasta 140, la C; hasta 165, la D; y hasta 210, la E (PANS-OPS,
+ * Doc 8168, vol. I, parte I, sección 4, cap. 1, tabla I-4-1-2). Un helicóptero
+ * es la H, que no va por velocidad.
+ */
+export function categoriaDeAproximacion(a: {
+  readonly approachSpeed: number;
+  readonly mass: number;
+  readonly masaMaximaAlAterrizar?: number;
+  readonly helicoptero?: unknown;
+}): CategoriaDeAproximacion {
+  if (a.helicoptero) return "H";
+  const nudos = vrefDeSuCategoria(a) / 0.514444;
+  return nudos < 91 ? "A" : nudos < 121 ? "B" : nudos < 141 ? "C" : nudos < 166 ? "D" : "E";
+}
+
 export function velocidadDePerdida(a: {
   readonly approachSpeed: number;
 }): number {
@@ -1335,6 +1357,23 @@ export interface AircraftConfig {
   /** Distancia del centro de gravedad al tren, m. */
   gearHeight: number;
   /**
+   * **A qué altura va el ala sobre el centro de gravedad**, m, en los ejes del
+   * avión: positiva por encima, la del ala alta; negativa, la del ala baja.
+   *
+   * Es lo que mira el efecto suelo, que depende de la altura del ala sobre el
+   * suelo y no de la del centro: con las ruedas en la pista el ala del JAZ 20
+   * va a 2,6 m y la del JAZ 40, a 1,5, con el mismo tren. Ver
+   * `flight/efecto-suelo.ts`.
+   *
+   * **Es la del dibujo** (`modelos/*.py`), como el tren: la altura media de
+   * la superficie del ala pesada por lo que mide vista desde arriba, que es
+   * donde sustenta, y no la de la raíz ni la de la punta. Así el diedro cuenta
+   * lo que cuenta y un winglet, de canto, no pesa. En el biplano, la de los
+   * dos planos juntos, cada uno por su planta. Lo comprueba
+   * `efecto-suelo.test.ts` contra el `.glb`.
+   */
+  alturaDelAla: number;
+  /**
    * **Por dónde apoya el avión al levantar el morro en el suelo**: cuánto va
    * por detrás del centro de gravedad el eje de la rueda principal de más
    * atrás, m.
@@ -1636,6 +1675,8 @@ export const PYKASU: AircraftConfig = {
   rotationSpeed: 28,
   batalla: 1.65,
   gearHeight: 1.4,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: 1.22,
   // Apoyo al rotar: el eje de las principales, 0,36 m por detrás del centro de
   // gravedad: `MAINS_Z` y `centro_de_gravedad` en `modelos/jaz-20-pykasu.py`.
   mainWheelsAft: 0.36,
@@ -1796,6 +1837,8 @@ export const MAINUMBY: AircraftConfig = {
   deRodarADespegar: 1170 / 615,
   batalla: 5.4,
   gearHeight: 1.8,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: 0.53,
   /*
    * **Las principales, 0,20 m por delante del centro de gravedad**, que es lo
    * que lo sienta en su rueda de cola: el peso queda detrás de ellas. Estaban
@@ -2050,6 +2093,8 @@ export const PANAMBI: AircraftConfig = {
   deRodarADespegar: 1240 / 870,
   batalla: 2.8,
   gearHeight: 1.6,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: -0.14,
   // Apoyo al rotar: el eje de las principales, 0,35 m por detrás del centro de
   // gravedad: `PRINCIPAL_Z` en `modelos/jaz-40-panambi.py`.
   mainWheelsAft: 0.35,
@@ -2457,6 +2502,8 @@ export const JAZ_50: AircraftConfig = {
    * `modelos/jaz-50-tujuju.py`.
    */
   gearHeight: 1.98,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: 1.38,
   /*
    * **Las principales, 0,71 m por detrás del centro, las de su dibujo**: van a
    * 6,31 m del morro en la vista de NASA (figura 1), y el centro, al 28 % de la
@@ -2901,6 +2948,8 @@ export const ARASUNU: AircraftConfig = {
   // Del eje del fuselaje al suelo, como en su modelo: la punta de la pala a
   // 35 cm del suelo (13,82 in en la vista en tres planos).
   gearHeight: 2.1,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: -0.12,
   /*
    * Apoyo al rotar: el eje de las principales, 0,66 m por detrás del centro
    * de gravedad: `PRINCIPAL_Z` y `centro_de_gravedad` en
@@ -3339,6 +3388,8 @@ export const ARAI: AircraftConfig = {
   // escaso y el tren apenas asomaba bajo el motor: «ruedas enterradas». Tiene
   // que decir lo mismo que `TREN` en `modelos/jaz-90-arai.py`.
   gearHeight: 3.35,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: -0.61,
   // Apoyo al rotar: el eje de las principales, 1,38 m por detrás del centro de
   // gravedad: `PRINCIPAL_Z` en `modelos/jaz-90-arai.py`.
   mainWheelsAft: 1.38,
@@ -3737,6 +3788,8 @@ export const YVAGA: AircraftConfig = {
   // quedaban tapadas por los motores y se leía «ruedas enterradas». Tiene que
   // decir lo mismo que `TREN` en `modelos/jaz-120-yvaga.py`.
   gearHeight: 5.9,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: -0.65,
   // Apoyo al rotar: el eje de atrás del bogie de la panza, que es el que se
   // queda en la pista cuando el de las alas ya se levanta: 0,72 m por detrás de
   // su pata, que va 3,42 por detrás del centro de gravedad (`PATAS_PANZA` en
@@ -4075,6 +4128,8 @@ export const TIJERETA: AircraftConfig = {
   // Con ella la panza queda a 1,86 m del suelo y el lomo a 7,80, los de 2.3.2. Tiene
   // que decir lo mismo que `TREN` en `modelos/jaz-110-tijereta.py`.
   gearHeight: 4.8,
+  // La del dibujo: ver `alturaDelAla`.
+  alturaDelAla: -0.55,
   // Apoyo al rotar: el eje de atrás del bogie, 0,76 m por detrás de la pata,
   // que va 1,80 por detrás del centro de gravedad (`PATA_Z` en
   // `modelos/jaz-110-tijereta.py`).

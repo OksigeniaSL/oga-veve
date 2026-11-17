@@ -932,6 +932,42 @@ export class Hud {
      * ratón encima de la ventanilla, que es lo que se espera de una rueda.
      * Ver `flight/altitud-seleccionada.ts`.
      */
+    /*
+     * **El mando de la radio** en las esquinas de la pantalla de navegación,
+     * por delegación y con `pointerdown`, por lo mismo que la rueda ALT: el
+     * cuadro se repinta y un dedo que resbala no da `click`. Un toque, un paso:
+     * un grado del OBS o la estación siguiente.
+     */
+    this.root.addEventListener("pointerdown", (e) => {
+      const mando = (e.target as Element | null)?.closest?.("[data-radio-mando]");
+      if (!(mando instanceof SVGElement || mando instanceof HTMLElement)) return;
+      const que = mando.dataset.radioMando;
+      if (que !== "nav" && que !== "adf" && que !== "obs") return;
+      e.preventDefault();
+      e.stopPropagation();
+      const paso = Number(mando.dataset.paso) || 0;
+      this.radioHandler?.(que, paso);
+      /*
+       * **Y el OBS, con el dedo puesto, sigue girando**, como la tecla
+       * apretada: medio segundo quieto, que un toque siga siendo un grado, y
+       * luego veinte grados por segundo hasta que se suelta. Volver a la radio
+       * por el radial en que se está pide media vuelta, y ciento ochenta
+       * toques no son una rueda. Ver `flight/en-que-radial-estoy.ts`.
+       */
+      if (que !== "obs" || !paso) return;
+      let cada: number | undefined;
+      const empieza = window.setTimeout(() => {
+        cada = window.setInterval(() => this.radioHandler?.("obs", paso), 50);
+      }, 500);
+      const suelta = (): void => {
+        window.clearTimeout(empieza);
+        if (cada !== undefined) window.clearInterval(cada);
+        window.removeEventListener("pointerup", suelta);
+        window.removeEventListener("pointercancel", suelta);
+      };
+      window.addEventListener("pointerup", suelta);
+      window.addEventListener("pointercancel", suelta);
+    });
     this.root.addEventListener("pointerdown", (e) => {
       const zona = (e.target as Element | null)?.closest?.("[data-mcp-rueda], [data-mcp-alt]");
       if (!(zona instanceof SVGElement || zona instanceof HTMLElement)) return;
@@ -1001,7 +1037,7 @@ export class Hud {
      * `ui/tocar-para-explicar.ts`.
      */
     const laRueda =
-      "[data-mcp-rueda], [data-mcp-alt], [data-explica]:not([data-explica-fondo])";
+      "[data-mcp-rueda], [data-mcp-alt], [data-radio-mando], [data-explica]:not([data-explica-fondo])";
     alPulsarDentro(
       this.root,
       "[data-tel-grande]",
@@ -3152,6 +3188,8 @@ export class Hud {
       readonly rodaje?: DatosDelTablero["rodaje"];
       /** Lo que acaba de cambiar, resaltado. Ver `DatosDelTablero.resaltes`. */
       readonly resaltes?: DatosDelTablero["resaltes"];
+      /** La radio de navegación. Ver `DatosDelTablero.radio`. */
+      readonly radio?: DatosDelTablero["radio"];
       /**
        * **Si el pitot lleva la funda puesta.** Entonces el anemómetro marca
        * cero corra lo que corra, en todos los relojes que lo enseñan, y sin
@@ -3706,6 +3744,7 @@ export class Hud {
         rotor: mandos?.rotor ?? null,
         rodaje: mandos?.rodaje ?? null,
         resaltes: mandos?.resaltes ?? null,
+        radio: mandos?.radio ?? null,
       };
       /*
        * En el teléfono el cuadro plano solo se ve puesto en grande: lo de
@@ -4235,6 +4274,14 @@ export class Hud {
      * que se observa con lo demás.
      */
     const vistas = this.root.querySelector<HTMLElement>(".hud__vistas");
+    /*
+     * **Y dónde acaban por la derecha los botones redondos de la izquierda**
+     * —la cámara, la pausa y, antes de arrancar, la vuelta al avión y el
+     * parte—, en píxeles del HUD, para que el subtítulo se aparte lo mismo de
+     * los dos bordes y no se les ponga encima: con todo el ancho de la
+     * pantalla se comía la pausa. Ver `--vistas-derecha` en la hoja.
+     */
+    const antes = this.root.querySelector<HTMLElement>(".antes");
     const escribirVistas = (): void => {
       const caja = vistas?.getBoundingClientRect();
       if (caja && caja.height > 0)
@@ -4242,6 +4289,14 @@ export class Hud {
           "--vistas-abajo",
           `${Math.round(caja.bottom)}px`,
         );
+      const derecha = [vistas, antes]
+        .map((e) => e?.getBoundingClientRect())
+        .filter((c): c is DOMRect => !!c && c.width > 0 && c.height > 0)
+        .reduce((max, c) => Math.max(max, c.right), 0);
+      this.root.style.setProperty(
+        "--vistas-derecha",
+        `${Math.round(aPxDelHud(this.root, derecha))}px`,
+      );
     };
     escribir();
     escribirColumna();
@@ -4266,6 +4321,8 @@ export class Hud {
     if (columna) this.barraObservada.observe(columna);
     if (rincon) this.barraObservada.observe(rincon);
     if (vistas) this.barraObservada.observe(vistas);
+    // Se va al arrancar, y con ella el sitio que le dejaba el subtítulo.
+    if (antes) this.barraObservada.observe(antes);
   }
 
   /**
@@ -5149,6 +5206,16 @@ export class Hud {
 
   onVentanillaAlt(fn: (pasos: number) => void): void {
     this.ventanillaHandler = fn;
+  }
+
+  /**
+   * Quién atiende **el mando de la radio** en la pantalla de navegación:
+   * `obs` con su paso, o la caja cuya estación se cambia. Ver
+   * `ui/radio-en-la-rosa.ts`.
+   */
+  private radioHandler: ((mando: "nav" | "adf" | "obs", paso: number) => void) | null = null;
+  onMandoDeRadio(fn: (mando: "nav" | "adf" | "obs", paso: number) => void): void {
+    this.radioHandler = fn;
   }
 
   /** Quién abre la tarjeta del avión. Ver `ui/tarjeta-del-avion.ts`. */

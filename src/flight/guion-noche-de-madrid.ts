@@ -545,6 +545,8 @@ export const GUION_NOCHE_DE_MADRID: GuionDelPasaje<MomentoDeMadrid, CharlaDeMadr
   sellosAlDecirlo: () => [],
   seQuedanHastaLaSiguiente: new Set(),
   elPlop: [],
+  // Nada que parar para el ralentí: el capítulo acaba subiendo, y no tiene bajada.
+  paraEnLaBajada: new Set(),
   elOficio: [],
   bano: null,
   kit: null,

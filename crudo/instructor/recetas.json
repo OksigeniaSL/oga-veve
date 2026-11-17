@@ -2306,5 +2306,137 @@
   ],
   "vuelo.avisoDeConfiguracionCompensador": [
     "vuelo.avisoDeConfiguracionCompensador"
+  ],
+  "carta.toca.aerodromo": [
+    "carta.toca.aerodromo"
+  ],
+  "carta.toca.afis": [
+    "carta.toca.afis"
+  ],
+  "carta.toca.app": [
+    "carta.toca.app"
+  ],
+  "carta.toca.atis": [
+    "carta.toca.atis"
+  ],
+  "carta.toca.avion": [
+    "carta.toca.avion"
+  ],
+  "carta.toca.calle": [
+    "carta.toca.calle"
+  ],
+  "carta.toca.dme": [
+    "carta.toca.dme"
+  ],
+  "carta.toca.faf": [
+    "carta.toca.faf"
+  ],
+  "carta.toca.frecuencia": [
+    "carta.toca.frecuencia"
+  ],
+  "carta.toca.frustrada": [
+    "carta.toca.frustrada"
+  ],
+  "carta.toca.gnd": [
+    "carta.toca.gnd"
+  ],
+  "carta.toca.if": [
+    "carta.toca.if"
+  ],
+  "carta.toca.ils": [
+    "carta.toca.ils"
+  ],
+  "carta.toca.mapt": [
+    "carta.toca.mapt"
+  ],
+  "carta.toca.minimos": [
+    "carta.toca.minimos"
+  ],
+  "carta.toca.msa": [
+    "carta.toca.msa"
+  ],
+  "carta.toca.ndb": [
+    "carta.toca.ndb"
+  ],
+  "carta.toca.norte": [
+    "carta.toca.norte"
+  ],
+  "carta.toca.pista": [
+    "carta.toca.pista"
+  ],
+  "carta.toca.plataforma": [
+    "carta.toca.plataforma"
+  ],
+  "carta.toca.taa": [
+    "carta.toca.taa"
+  ],
+  "carta.toca.twr": [
+    "carta.toca.twr"
+  ],
+  "carta.toca.vor": [
+    "carta.toca.vor"
+  ],
+  "ejercicio.aguja.alVientoDerecha": [
+    "ejercicio.aguja.alVientoDerecha"
+  ],
+  "ejercicio.aguja.alVientoIzquierda": [
+    "ejercicio.aguja.alVientoIzquierda"
+  ],
+  "ejercicio.aguja.antes": [
+    "ejercicio.aguja.antes"
+  ],
+  "ejercicio.aguja.asiVa": [
+    "ejercicio.aguja.asiVa"
+  ],
+  "ejercicio.aguja.bien": [
+    "ejercicio.aguja.bien"
+  ],
+  "ejercicio.aguja.curva": [
+    "ejercicio.aguja.curva"
+  ],
+  "ejercicio.aguja.identificada": [
+    "ejercicio.aguja.identificada"
+  ],
+  "ejercicio.aguja.sintonizar": [
+    "ejercicio.aguja.sintonizar"
+  ],
+  "ejercicio.radial.antes": [
+    "ejercicio.radial.antes"
+  ],
+  "ejercicio.radial.centrada": [
+    "ejercicio.radial.centrada"
+  ],
+  "ejercicio.radial.giro": [
+    "ejercicio.radial.giro"
+  ],
+  "ejercicio.radial.haciaLaRadio": [
+    "ejercicio.radial.haciaLaRadio"
+  ],
+  "ejercicio.radial.identificada": [
+    "ejercicio.radial.identificada"
+  ],
+  "ejercicio.radial.pasada": [
+    "ejercicio.radial.pasada"
+  ],
+  "ejercicio.radial.sintonizar": [
+    "ejercicio.radial.sintonizar"
+  ],
+  "ejercicio.interceptar.aTope": [
+    "ejercicio.interceptar.aTope"
+  ],
+  "ejercicio.interceptar.antes": [
+    "ejercicio.interceptar.antes"
+  ],
+  "ejercicio.interceptar.establecido": [
+    "ejercicio.interceptar.establecido"
+  ],
+  "ejercicio.interceptar.establecidoAlViento": [
+    "ejercicio.interceptar.establecidoAlViento"
+  ],
+  "ejercicio.interceptar.pasado": [
+    "ejercicio.interceptar.pasado"
+  ],
+  "ejercicio.interceptar.seMueve": [
+    "ejercicio.interceptar.seMueve"
   ]
 }

@@ -255,3 +255,56 @@ solo que en esta no hubo.
   Lo que no se ha hecho todavía es pasarlo por el navegador: el candado
   estuvo ocupado hasta pasado el tope de la tanda. Ver «Sin pasar por el
   navegador» en el ADR 0025.
+
+## Enmienda H28a (17-11-2026): dos tráficos cerca a la vez
+
+En los vuelos enteros del JAZ 90 en Los Rodeos de H25d y H25e
+(`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-90`) fallaba la
+misma comprobación de la radio: «del tráfico cercano se informa». Un tráfico
+del circuito —EC-JSN en la de H25d, EC-XCD en la de H25e— llevaba doce
+segundos de rombo lleno sin una palabra, a los 310 y 309 s, recién
+despegado. Lo que decía el banco en ese instante era siempre lo mismo: la
+información callaba por **«entre dos»**, y el otro del circuito —EC-KLH,
+EC-YMW— ya estaba nombrado.
+
+No llegaba tarde a la cola ni lo pisaba nada: no se pedía. Al pasar los
+quinientos pies (a los 298 s), que es desde donde se da la información, los
+dos del circuito ya estaban dentro de las seis millas y los mil doscientos
+pies, a la vez. La torre nombraba al más cercano y el segundo esperaba
+`ENTRE_DOS`, quince segundos **contados desde que se pidió el primero**,
+acabara el primero cuando acabara. Era un reloj de cuando la
+información esperaba a que la boca estuviera libre del todo y lo único que
+separaba dos voces era el tiempo; desde que pide turno en la boca, la segunda
+no puede pisar a la primera, y los quince segundos solo dejaban al segundo
+tráfico sin nombrar. Con dos a la vez, el segundo se quedaba sin nombrar
+siempre más de doce.
+
+Un controlador con dos tráficos que darte los dice seguidos, casi siempre en
+la misma transmisión. Ahora:
+
+- **Lo que separa dos informaciones se cuenta desde que la primera se acaba
+  de oír** —entera o cortada—, y es un respiro: `ENTRE_DOS`, dos segundos.
+  Mientras se oye, la información calla por «sonando»: ni la voz del
+  segundo, ni su tarjeta, que taparía la del primero mientras se dice.
+- **La red** (`SUENA_COMO_MUCHO`, quince segundos, lo que duraba el rato de
+  antes): si el aviso de que acabó no llega —la boca se vacía de golpe al
+  cambiar de avión—, pasado eso se da por oída. Sin ella, una información
+  que no avisa de su final no dejaría pasar a ninguna otra.
+- Sin voz —la frase se cae por repetida, o no tiene con qué sonar y su
+  tarjeta ya se vio— ya se acabó: el respiro cuenta desde ahí.
+
+`informacion-de-trafico.test.ts` lo deja escrito: dos cerca a la vez, la
+primera dura seis segundos y el segundo se pide a los ocho, no a los quince;
+mientras se oye la primera no se da otra; y sin aviso de final, pasados
+`SUENA_COMO_MUCHO` se sigue.
+
+Volado el 17-11-2026, puerto 5688 (`… tenerife-norte taguato 1 jaz-90`):
+la comprobación pasa —«ningún rombo lleno doce segundos de reloj sin que
+nadie lo cuente»—, con dos informaciones de tráfico dadas y los 22 nombrados
+en el mundo. **Lo que el vuelo no prueba por sí solo**: el tráfico del banco
+sale cada vez distinto, esta vez se despegó a los 480 s con uno delante en la
+fila, y el banco no dice si al pasar los quinientos pies volvió a haber dos
+cerca a la vez. El caso queda probado en la mesa, no en esta tirada. Lo que
+falló en ella es de la toma, no de la radio: el piloto del banco tocó a
+3,1 m/s, recogiendo a 10,7 m de ruedas, y sin toma buena no hay gafas de sol
+(62 de 64, dos sin medir).

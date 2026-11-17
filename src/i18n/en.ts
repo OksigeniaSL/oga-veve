@@ -292,6 +292,10 @@ export const EN: Dictionary = {
   "tecla.qnhDown": "Altimeter setting down",
   "tecla.altUp": "ALT window up",
   "tecla.altDown": "ALT window down",
+  "tecla.obsUp": "VOR course (OBS) right",
+  "tecla.obsDown": "VOR course (OBS) left",
+  "tecla.navSiguiente": "Next NAV station",
+  "tecla.adfSiguiente": "Next ADF station",
   "tecla.sound": "Sound",
   "tecla.language": "Language",
   "tecla.credits": "Credits",
@@ -1309,6 +1313,78 @@ export const EN: Dictionary = {
   "carta.ir": "Fly",
   "carta.sinFrecuencia": "No published frequency",
   "carta.sinAip": "Not in any AIP",
+  "carta.sinRadioayudas": "No published radio aids",
+  "carta.descargo": "Not for real navigation",
+  "carta.iac": "Approach chart",
+  "carta.iac.categoria": "Your aircraft: CAT {cat}",
+  "carta.toca.pista.corta": "Runway",
+  "carta.toca.pista":
+    "This is the runway: the long, straight strip where the plane runs to take off, and where it touches down again when it lands.",
+  "carta.toca.calle.corta": "Taxiway",
+  "carta.toca.calle":
+    "This is a taxiway: here the plane drives slowly, like a car, to get to the runway and back.",
+  "carta.toca.plataforma.corta": "Apron",
+  "carta.toca.plataforma":
+    "This is the apron: where planes wait while people get on board and the fuel goes in.",
+  "carta.toca.aerodromo.corta": "Aerodrome",
+  "carta.toca.aerodromo": "This is an aerodrome: a place with a runway, where planes can take off and land.",
+  "carta.toca.avion.corta": "Your plane",
+  "carta.toca.avion": "This is your plane, and you are the one flying it.",
+  "carta.toca.norte.corta": "North",
+  "carta.toca.norte":
+    "This marks north. On a chart north is always at the top: east is to the right and west to the left.",
+  "carta.toca.vor.corta": "Radio beacon",
+  "carta.toca.vor":
+    "This is a VOR: an antenna on the ground that sends its radio signal in every direction. With it the plane knows which side of the VOR it is on. If it has a square around it, it also has a DME.",
+  "carta.toca.dme.corta": "Distance",
+  "carta.toca.dme":
+    "This is a DME: a radio station on the ground that answers the plane and tells it how many miles away it is.",
+  "carta.toca.ndb.corta": "Radio beacon",
+  "carta.toca.ndb":
+    "This is an NDB: a radio station on the ground that sounds the same in every direction. In the plane, a needle points at it, so you know where it is.",
+  "carta.toca.ils.corta": "Instrument landing",
+  "carta.toca.ils":
+    "This is an ILS: two radio signals coming from the runway. One tells you if you are left or right, the other if you are high or low. With them you can come down to the runway even through cloud.",
+  "carta.toca.twr.corta": "Tower",
+  "carta.toca.twr":
+    "This is the tower frequency: the number you set on the radio to talk to the people who clear you to take off and to land.",
+  "carta.toca.atis.corta": "Airport information",
+  "carta.toca.atis":
+    "This is the ATIS frequency: a recording that repeats the wind, the runway in use and today's pressure. You listen to it before you call the tower.",
+  "carta.toca.app.corta": "Approach",
+  "carta.toca.app":
+    "This is the approach frequency: the controllers who keep order among the planes arriving and leaving, while they are still far from the runway.",
+  "carta.toca.gnd.corta": "Ground",
+  "carta.toca.gnd":
+    "This is the ground frequency: you use it to move around on the ground, from the apron to the runway and back.",
+  "carta.toca.afis.corta": "Flight information",
+  "carta.toca.afis":
+    "This is the AFIS frequency: someone at the aerodrome who does not give clearances, but tells you the wind, the runway and who else is flying.",
+  "carta.toca.frecuencia.corta": "Frequency",
+  "carta.toca.frecuencia":
+    "This is a radio frequency: the number you set on the radio to talk to a service on the ground.",
+  "carta.toca.msa.corta": "Minimum sector altitude",
+  "carta.toca.msa":
+    "This circle is the MSA: the lowest altitude you can fly near the aerodrome and still pass over every hill, with plenty to spare.",
+  "carta.toca.taa.corta": "Arrival altitude",
+  "carta.toca.taa":
+    "This circle is the TAA: the lowest altitude to arrive at the point where the approach begins and still pass over everything, with plenty to spare.",
+  "carta.toca.if.corta": "Intermediate fix",
+  "carta.toca.if":
+    "This is the intermediate fix: here the plane lines up with the runway and gets ready to come down.",
+  "carta.toca.faf.corta": "Final approach",
+  "carta.toca.faf":
+    "The final approach starts at this point: the plane flies straight to the runway, coming down gently.",
+  "carta.toca.mapt.corta": "Missed approach point",
+  "carta.toca.mapt":
+    "This is the missed approach point: if you cannot see the runway when you get here, you go no lower. You climb away and try again, and that is good flying.",
+  "carta.toca.minimos.corta": "Minimums",
+  "carta.toca.minimos":
+    "These are the minimums: the lowest you may go without seeing the runway. Each column is a kind of plane, by how fast it comes in, and yours is marked.",
+  "carta.toca.frustrada.corta": "Missed approach",
+  "carta.toca.frustrada":
+    "This is the missed approach: the way to climb back up if the landing is not working out. It is always ready, and using it is what good pilots do.",
+  "carta.toca.puesta": "Set on the radio",
   "tiempo.title": "Weather",
   "tiempo.hora": "Time of day",
   "tiempo.viento": "Where the wind comes from and how hard",
@@ -1345,6 +1421,9 @@ export const EN: Dictionary = {
   "hangar.ejercicio.par": "Torque and the pedal",
   "hangar.ejercicio.efecto-suelo": "Near the ground it takes less",
   "hangar.ejercicio.autorrotacion": "Coming down without engines in a helicopter",
+  "hangar.ejercicio.aguja": "Follow the needle",
+  "hangar.ejercicio.radial": "Which radial am I on?",
+  "hangar.ejercicio.interceptar": "Fly out on a radial",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1467,6 +1546,54 @@ export const EN: Dictionary = {
   "palabra.masLejos": "Further",
   "palabra.rayo": "Lightning",
   "palabra.derecho": "Straight on",
+
+  // ── Follow the needle: the airfield's NDB on the ADF, its Morse, and home in on it ──
+  "ejercicio.aguja.antes":
+    "Today we follow the needle. Up ahead there's a radio beacon, an antenna that transmits on its own, and the ADF has a needle that always points at it. We'll get to the antenna without looking outside, just with the needle",
+  "ejercicio.aguja.sintonizar":
+    "First, put the airfield's beacon in the ADF: tap it on the map, or press eight",
+  "ejercicio.aguja.identificada":
+    "Did you hear the beeps? That's its name in Morse code, the same one printed on the chart: that's how you know it's the beacon you want. Now turn until the needle points up, to the nose, and follow it",
+  "ejercicio.aguja.curva":
+    "Look at the line you're leaving on the map: it isn't straight, it curves. The wind pushes you sideways, and the needle makes you turn a little more each time. It's the dog curve, like a dog that always runs straight at its owner",
+  "ejercicio.aguja.alVientoDerecha":
+    "To fly straight, point a little into the wind: turn a few degrees to the right, where it comes from, and keep the needle still a little to the left",
+  "ejercicio.aguja.alVientoIzquierda":
+    "To fly straight, point a little into the wind: turn a few degrees to the left, where it comes from, and keep the needle still a little to the right",
+  "ejercicio.aguja.asiVa":
+    "That's it! The needle steady to one side and the line straight: you're correcting for the wind, like real pilots do",
+  "ejercicio.aguja.bien":
+    "We've passed over the beacon! See? The needle swung round and now points behind us. You got here with the needle alone",
+
+  // ── Which radial am I on?: the airfield's VOR on the NAV, centre the bar with FROM, turn, and fly to it ──
+  "ejercicio.radial.antes":
+    "Today we'll find out where we are with the radio. Out there is a VOR, a radio that sends out a radial in every direction, like the spokes of a wheel. The NAV tells you which spoke you're on, wherever the nose is pointing",
+  "ejercicio.radial.sintonizar": "First, put the airfield's VOR in the NAV: tap it on the map, or press seven",
+  "ejercicio.radial.identificada":
+    "Did you hear the beeps? That's its name in Morse code, the same one printed on the map: it's the VOR you want. Now turn the OBS with nine and zero until the bar sits in the middle, with FROM",
+  "ejercicio.radial.centrada":
+    "There it is! With the bar in the middle and FROM, the OBS number is your radial: you're on that spoke of the wheel. Now turn the plane a quarter turn, either way, and watch the bar",
+  "ejercicio.radial.giro":
+    "See? The nose turned a quarter turn and the bar barely moved: the little it moves is how far you flew, not how much you turned. The radial says where you are, not where you're looking",
+  "ejercicio.radial.haciaLaRadio":
+    "Now let's go to the radio along your radial. Turn the OBS half a turn, holding it down, until it says TO, and fly with the bar in the middle: if it slides to one side, turn a little that way",
+  "ejercicio.radial.pasada":
+    "We passed over the radio! See? Right on top the flag comes up, because there it can't tell, and on the other side TO and FROM swap. You got here with the bar alone",
+
+  // ── Fly out on a radial: the radial on the OBS, cut it at 45°, turn before the bar centres, hold it in the wind ──
+  "ejercicio.interceptar.pedido": "Fly out on R-{radial} {id}",
+  "ejercicio.interceptar.antes":
+    "Today we'll fly out along a radial, like on a real departure. The number is on the card: set it on the OBS with nine and zero; hold it down and it keeps turning",
+  "ejercicio.interceptar.aTope":
+    "The bar has gone to the stop: the radial is on that side. Keep cutting across it at an angle, not straight at it, and watch the bar",
+  "ejercicio.interceptar.seMueve":
+    "It's moving! The radial is close. Start turning now, gently, before the bar reaches the middle: the plane turns in a curve, and if you wait, you'll overshoot",
+  "ejercicio.interceptar.pasado":
+    "You went a little past it: the bar crossed to the other side. That's fine, turn back towards it gently. Next time, start the turn a bit earlier",
+  "ejercicio.interceptar.establecido":
+    "You're on the radial! The bar steady in the middle: that's how you fly out on a radial, like real pilots do",
+  "ejercicio.interceptar.establecidoAlViento":
+    "You're on the radial, with the bar steady in the middle! Look at the nose: it doesn't point exactly at the OBS number, it points a little into the wind. That's what it takes for the wind not to push you off the radial",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
   "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
   "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",

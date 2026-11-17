@@ -161,6 +161,13 @@ export interface InputActions {
    * `flight/altitud-seleccionada.ts`. Opcional: sin ella la tecla no hace nada.
    */
   girarVentanillaAlt?: (pasos: number) => void;
+  /**
+   * La radio de navegación: girar el OBS de grado en grado y pasar a la
+   * estación siguiente de la NAV o del ADF. Ver `flight/radio-de-navegacion.ts`.
+   * Opcionales: sin ellas las teclas no hacen nada.
+   */
+  girarObs?: (pasos: number) => void;
+  siguienteEstacion?: (caja: "nav" | "adf") => void;
   cycleLanguage: () => void;
   toggleSound: () => void;
   /** Se llama en el primer gesto: los navegadores no dejan sonar antes. */
@@ -1342,7 +1349,19 @@ export class InputManager {
     // Las flechas hacen scroll de la página si no se les para los pies.
     if (event.code.startsWith("Arrow") || event.code === "Space")
       event.preventDefault();
-    if (event.repeat) return;
+    if (event.repeat) {
+      /*
+       * **El OBS sí gira con la tecla apretada**, como gira una rueda de
+       * verdad cuando se la hace girar seguido: de grado en grado, ir del
+       * radial al opuesto eran ciento ochenta toques, y es lo que pide volver
+       * a la radio por el radial en que se está (`flight/en-que-radial-estoy.ts`).
+       * Lo demás sigue siendo un toque, una acción.
+       */
+      const repite = this.keymap.actionFor(event.code) ?? this.keymap.actionFor(event.key);
+      if (repite === "obsUp") this.actions.girarObs?.(1);
+      else if (repite === "obsDown") this.actions.girarObs?.(-1);
+      return;
+    }
     this.keys.add(event.code);
     // El carácter también: ver la nota de KEYS sobre los teclados que no son
     // el americano.
@@ -1396,6 +1415,18 @@ export class InputManager {
         break;
       case "altDown":
         this.actions.girarVentanillaAlt?.(-1);
+        break;
+      case "obsUp":
+        this.actions.girarObs?.(1);
+        break;
+      case "obsDown":
+        this.actions.girarObs?.(-1);
+        break;
+      case "navSiguiente":
+        this.actions.siguienteEstacion?.("nav");
+        break;
+      case "adfSiguiente":
+        this.actions.siguienteEstacion?.("adf");
         break;
       case "credits":
         event.preventDefault();

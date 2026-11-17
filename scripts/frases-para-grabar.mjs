@@ -2960,6 +2960,157 @@ for (const f of filas) {
   if (f.voz === "comandante" && !f.ajustes) f.ajustes = AJUSTES_CON_CHISPA;
 }
 
+/*
+ * **Y la carta que se toca** (17-11-2026, #72): lo que dice la instructora al
+ * tocar un elemento de la carta —la ficha del campo, el plano en vuelo y la
+ * carta de aproximación—, una frase por tipo de elemento y no una por cada
+ * radioayuda. Se cuentan como las explicaciones de la ventana, con ganas. Van
+ * detrás de todo, por lo de siempre: lo ya grabado no se renumera. Ver
+ * `TOCABLES` en `src/ui/carta/tocar-la-carta.ts`.
+ *
+ * Las siglas, como se dicen en cabina y no deletreadas en castellano. Van
+ * aquí y no en `SIGLAS` de más arriba, que cambiaría lo que se le da a leer a
+ * frases que ya están grabadas.
+ */
+const DE_LA_CARTA_QUE_SE_TOCA = [
+  "pista", "calle", "plataforma", "aerodromo", "avion", "norte",
+  "vor", "dme", "ndb", "ils",
+  "twr", "atis", "app", "gnd", "afis", "frecuencia",
+  "msa", "taa", "if", "faf", "mapt", "minimos", "frustrada",
+];
+const SIGLAS_DE_LA_CARTA = [
+  ["VOR", "vor"],
+  ["DME", "di-em-i"],
+  ["NDB", "en-di-bi"],
+  ["ILS", "ai-el-es"],
+  ["MSA", "em-es-ei"],
+  ["TAA", "ti-ei-ei"],
+  ["ATIS", "atis"],
+  ["AFIS", "afis"],
+];
+for (const tipo of DE_LA_CARTA_QUE_SE_TOCA) {
+  const id = `carta.toca.${tipo}`;
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  let dicho = texto;
+  for (const [sigla, asi] of SIGLAS_DE_LA_CARTA)
+    dicho = dicho.replace(new RegExp(`(?<![\\w/])${sigla}(?![\\w/])`, "g"), asi);
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para: "lo que dice la instructora al tocar ese elemento en la carta: la ficha del campo, el plano en vuelo o la carta de aproximación",
+    ...(dicho !== texto ? { dicho } : {}),
+    ajustes: AJUSTES_CON_CHISPA,
+  });
+  total += texto.length;
+}
+
+/*
+ * **Y «Seguí la aguja»** (17-11-2026, #51): el primer ejercicio de la radio
+ * de navegación, el del NDB. La presentación, sintonizar, el morse que
+ * identifica, la curva del perro, apuntar al viento a cada lado, el «así» y
+ * la aguja que da la vuelta encima de la radio. Genéricas, sin el nombre de
+ * la estación, porque valen en todo campo con NDB. Detrás de todo, y en calma
+ * como todo ejercicio. Ver `src/flight/seguir-la-aguja.ts` y el ADR 0030,
+ * enmienda H26b.
+ */
+const DE_LA_AGUJA = [
+  ["ejercicio.aguja.antes", "seguí la aguja, antes de empezar: qué es la radio y qué hace la aguja del ADF"],
+  ["ejercicio.aguja.sintonizar", "seguí la aguja: a los doce segundos, si el ADF sigue sin la radio del campo"],
+  ["ejercicio.aguja.identificada", "seguí la aguja: detrás del morse de la radio, cuando acaba de sonar entero"],
+  ["ejercicio.aguja.curva", "seguí la aguja: la estela del plano se aparta de la recta con el viento de costado"],
+  ["ejercicio.aguja.alVientoDerecha", "seguí la aguja: catorce segundos después de la curva, con el viento por la derecha"],
+  ["ejercicio.aguja.alVientoIzquierda", "seguí la aguja: catorce segundos después de la curva, con el viento por la izquierda"],
+  ["ejercicio.aguja.asiVa", "seguí la aguja: la aguja quieta a un lado diez segundos, y se celebra"],
+  ["ejercicio.aguja.bien", "seguí la aguja: la aguja da la vuelta encima de la radio, y se acaba"],
+];
+for (const [id, para] of DE_LA_AGUJA) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
+/*
+ * **Y «¿En qué radial estoy?»** (17-11-2026, #51): el segundo ejercicio de la
+ * radio de navegación, el del VOR. La presentación, sintonizar, el morse y
+ * girar el OBS, la barra centrada con FROM, el giro del avión sin que la barra
+ * se mueva, la vuelta a la radio con TO y el paso por encima con la bandera.
+ * Genéricas, sin el nombre del VOR ni el número del radial, porque valen en
+ * todo campo con VOR. En calma, como todo ejercicio. Ver
+ * `src/flight/en-que-radial-estoy.ts` y el ADR 0030, enmienda H26c.
+ */
+const DEL_RADIAL = [
+  ["ejercicio.radial.antes", "¿en qué radial estoy?, antes de empezar: qué es un VOR y qué dice la NAV"],
+  ["ejercicio.radial.sintonizar", "¿en qué radial estoy?: a los catorce segundos, si la NAV sigue sin el VOR del campo"],
+  ["ejercicio.radial.identificada", "¿en qué radial estoy?: detrás del morse del VOR, y se pide girar el OBS"],
+  ["ejercicio.radial.centrada", "¿en qué radial estoy?: la barra centrada con FROM, y se pide girar el avión"],
+  ["ejercicio.radial.giro", "¿en qué radial estoy?: el avión giró un cuarto de vuelta y la barra casi no se movió"],
+  ["ejercicio.radial.haciaLaRadio", "¿en qué radial estoy?: nueve segundos después del giro, volver a la radio con TO"],
+  ["ejercicio.radial.pasada", "¿en qué radial estoy?: encima del VOR, la bandera y TO y FROM al revés, y se acaba"],
+];
+for (const [id, para] of DEL_RADIAL) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
+/*
+ * **Y «Interceptar un radial»** (17-11-2026, #51): el tercer ejercicio de la
+ * radio de navegación, el segundo del VOR. La presentación con el OBS, la
+ * barra a tope, la barra que se despega, pasarse y volver, y establecido en
+ * el radial, en calma o corrigiendo el viento. Genéricas, sin el nombre del
+ * VOR ni el número del radial, que va escrito en la tarjeta
+ * (`ejercicio.interceptar.pedido`, que no se dice). Si se quita el VOR de la
+ * NAV vale la de «¿En qué radial estoy?» tal cual. En calma, como todo
+ * ejercicio. Ver `src/flight/interceptar-un-radial.ts` y el ADR 0030,
+ * enmienda H26e.
+ */
+const DEL_CORTE = [
+  ["ejercicio.interceptar.antes", "interceptar un radial, antes de empezar: el número de la tarjeta en el OBS"],
+  ["ejercicio.interceptar.aTope", "interceptar un radial: el OBS en el radial pedido y la barra a tope"],
+  ["ejercicio.interceptar.seMueve", "interceptar un radial: la barra se despega del tope, y se pide virar antes del centro"],
+  ["ejercicio.interceptar.pasado", "interceptar un radial: la barra cruzó al otro lado, y se vuelve"],
+  ["ejercicio.interceptar.establecido", "interceptar un radial: en el radial veinte segundos, en calma, y se acaba"],
+  [
+    "ejercicio.interceptar.establecidoAlViento",
+    "interceptar un radial: en el radial veinte segundos con el morro contra el viento, y se acaba",
+  ],
+];
+for (const [id, para] of DEL_CORTE) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
   ...filas.map((f) =>

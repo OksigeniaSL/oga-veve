@@ -7,7 +7,16 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { avisoDeTerreno, fueraDeLaSenda, type Cerca } from "./aviso-de-terreno";
+import { aircraftById } from "./aircraft";
+import { aireDelParte, indicatedAirspeed, trueFromIndicated } from "./atmosphere";
+import {
+  avisoDeTerreno,
+  DESPACIO_SOBRE_LA_DE_APROXIMACION,
+  fueraDeLaSenda,
+  vienePuestoParaAterrizar,
+  type Cerca,
+} from "./aviso-de-terreno";
+import { SUPER_PUMA_EN_EL_JUEGO } from "./helicoptero-en-el-juego";
 
 const volando = (c: Partial<Cerca> = {}): Cerca => ({
   sobreElSuelo: 400,
@@ -173,5 +182,58 @@ describe("y puesto para aterrizar no se avisa, lo diga la fase o no", () => {
         }),
       ),
     ).toBe("sube");
+  });
+});
+
+/*
+ * **Puesto para aterrizar, con la indicada contra la de aproximación**, que
+ * es indicada. Se comparaba la verdadera: en un campo alto o con calor, la
+ * misma indicada es más verdadera y se dejaba de estar «puesto» antes de
+ * tiempo. Lo de la enmienda H25e del ADR 0027.
+ */
+describe("puesto para aterrizar", () => {
+  const fumigador = aircraftById("jaz-25");
+  const helicoptero = SUPER_PUMA_EN_EL_JUEGO;
+  /** Los Rodeos, en la pista y con 21 °C: el campo del banco del vuelo entero. */
+  const COTA = 632;
+  const aire = aireDelParte(21, COTA);
+  const bajando = { tren: 1, flaps: 0, vertical: -3 };
+
+  it("el avión sin flaps y el helicóptero: hasta un veinte por ciento sobre la de aproximación, en indicada", () => {
+    for (const a of [fumigador, helicoptero]) {
+      const v = a.approachSpeed * DESPACIO_SOBRE_LA_DE_APROXIMACION;
+      expect(vienePuestoParaAterrizar(a, { ...bajando, indicada: v * 0.99 })).toBe(true);
+      expect(vienePuestoParaAterrizar(a, { ...bajando, indicada: v * 1.01 })).toBe(false);
+    }
+  });
+
+  it("en Los Rodeos, a 1,18 veces la de aproximación indicada está puesto aunque la verdadera pase del 1,2", () => {
+    for (const a of [fumigador, helicoptero]) {
+      const indicada = a.approachSpeed * 1.18;
+      const verdadera = trueFromIndicated(indicada, COTA, aire);
+      // Lo que comparaba antes: la verdadera ya pasaba del listón.
+      expect(verdadera).toBeGreaterThan(a.approachSpeed * DESPACIO_SOBRE_LA_DE_APROXIMACION);
+      expect(indicatedAirspeed(verdadera, COTA, aire)).toBeCloseTo(indicada, 6);
+      expect(vienePuestoParaAterrizar(a, { ...bajando, indicada })).toBe(true);
+    }
+  });
+
+  it("cayendo a plomo no está puesto, ni con tren, ni despacio", () => {
+    for (const a of [fumigador, helicoptero, aircraftById("jaz-90")]) {
+      expect(
+        vienePuestoParaAterrizar(a, { tren: 1, flaps: 1, vertical: -9, indicada: a.approachSpeed }),
+      ).toBe(false);
+    }
+  });
+
+  it("con flaps, lo dicen los flaps y no la velocidad; el helicóptero no mira el tren", () => {
+    const jaz90 = aircraftById("jaz-90");
+    const rapido = jaz90.approachSpeed * 1.5;
+    expect(vienePuestoParaAterrizar(jaz90, { tren: 1, flaps: 1, vertical: -3, indicada: rapido })).toBe(true);
+    expect(vienePuestoParaAterrizar(jaz90, { tren: 1, flaps: 0, vertical: -3, indicada: jaz90.approachSpeed })).toBe(false);
+    expect(vienePuestoParaAterrizar(jaz90, { tren: 0, flaps: 1, vertical: -3, indicada: jaz90.approachSpeed })).toBe(false);
+    expect(
+      vienePuestoParaAterrizar(helicoptero, { tren: 0, flaps: 0, vertical: -1, indicada: helicoptero.approachSpeed }),
+    ).toBe(true);
   });
 });

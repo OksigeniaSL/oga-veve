@@ -349,6 +349,15 @@ export function rayaQueQuedaPorDelante(batalla: number): number {
  * mismo, y si al empezar mira hacia otro lado, da la vuelta en el giro más cerrado que le
  * deja la rueda.
  *
+ * **Y el de rueda de cola, con su barra** (`barra`, la de `barraAlTrenDe`), gira con
+ * ella y no con la batalla. Remolcado hacia delante por las principales y con la rueda
+ * de cola desbloqueada —«the tail wheel must be unlocked», FAA-H-8083-30, «Towing of
+ * Aircraft»—, lo que no derrapa son las principales, la de cola va loca y lo que tira
+ * de lado es el tractor en la punta de la barra: es la cuenta de la rueda de morro
+ * con la barra en el sitio de la batalla. Con la batalla, de las principales a la de
+ * cola, era como si las principales se dirigieran y la de cola fuera el eje fijo, que es
+ * al revés; en el biplano, 2,0 m en vez de los 1,7 de su barra de 4,6.
+ *
  * Devuelve un `Empuje` —lo que mueve el remolque— con el destino como cruce, o `null` si
  * no llega a la raya: entonces el tractor no se ofrece.
  */
@@ -357,6 +366,7 @@ export function remolqueALaRaya(
   raya: readonly PuntoXZ[],
   destino: DestinoEnLaRaya,
   batalla: number,
+  barra?: number,
 ): Empuje | null {
   const { enLaRaya, total } = recorrer(raya);
   const sigue = loQueSeSigue(batalla);
@@ -364,8 +374,10 @@ export function remolqueALaRaya(
   for (let s = destino.s + 2; s <= Math.min(total, destino.s + sigue); s += 2) camino.push(enLaRaya(s));
   const final = camino[camino.length - 1]!;
   const { enLaRaya: enElCamino, total: largoDelCamino } = recorrer(camino);
-  const radio = Math.max(0.5, batalla / Math.tan(DIRECCION_MAXIMA));
-  const mira = Math.max(5, 0.8 * batalla);
+  // De lo que no derrapa a lo que tira de lado: la batalla con cuna, la barra con barra.
+  const delGiro = barra ?? batalla;
+  const radio = Math.max(0.5, delGiro / Math.tan(DIRECCION_MAXIMA));
+  const mira = Math.max(5, 0.8 * delGiro);
   let x = desde.x;
   let z = desde.z;
   let rumbo = desde.rumbo;

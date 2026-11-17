@@ -53,6 +53,10 @@ export type Accion =
   | "qnhDown"
   | "altUp"
   | "altDown"
+  | "obsUp"
+  | "obsDown"
+  | "navSiguiente"
+  | "adfSiguiente"
   | "sound"
   | "language"
   | "credits"
@@ -215,6 +219,18 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
    */
   altUp: { label: "tecla.altUp", defecto: ["KeyY"], held: false },
   altDown: { label: "tecla.altDown", defecto: ["KeyT"], held: false },
+  /*
+   * **La radio de navegación**, en la fila de los números, que era lo único
+   * libre: no quedaba una letra. El OBS en el 9 y el 0, juntos, que es una
+   * rueda de dos lados como la O y la U; y la estación siguiente de la NAV y
+   * del ADF en el 7 y el 8. Los corchetes estaban más a mano y no valen: en
+   * el teclado español el de la derecha da el «+», y subiría el motor a la
+   * vez. Ver `flight/radio-de-navegacion.ts`.
+   */
+  obsUp: { label: "tecla.obsUp", defecto: ["Digit0"], held: false },
+  obsDown: { label: "tecla.obsDown", defecto: ["Digit9"], held: false },
+  navSiguiente: { label: "tecla.navSiguiente", defecto: ["Digit7"], held: false },
+  adfSiguiente: { label: "tecla.adfSiguiente", defecto: ["Digit8"], held: false },
   sound: { label: "tecla.sound", defecto: ["KeyV"], held: false },
   language: { label: "tecla.language", defecto: ["KeyL"], held: false },
   credits: { label: "tecla.credits", defecto: ["F1"], held: false },

@@ -4067,6 +4067,22 @@ button.motor__tecla::after {
     var(--apoyo) + var(--tirador-asoma, 34px) + 6px +
       env(safe-area-inset-bottom)
   );
+  /*
+   * **Centrado sin perder ancho.** Con `left: 50%` y el `translate` de
+   * centrar, el navegador le daba para maquetar el ancho que queda a la
+   * derecha de `left` —media pantalla— y el `max-width` de casi toda nunca
+   * llegaba a usarse: en un teléfono de 844 los subtítulos se partían a 422
+   * y una frase larga subía en tres líneas hasta los botones de arriba. Con
+   * los dos bordes puestos y el ancho de lo que lleva escrito, los márgenes
+   * automáticos lo centran entre ellos y la línea llega hasta donde llegan
+   * los bordes. Cada sitio pone los suyos, más abajo.
+   */
+  left: 16px;
+  right: 16px;
+  transform: none;
+  width: fit-content;
+  max-width: none;
+  margin-inline: auto;
 }
 
 /* Con un aviso en pantalla el tutor se esconde —ver `.hud--avisando`—, así
@@ -6462,6 +6478,127 @@ button.motor__tecla::after {
   stroke: var(--cabina-objetivo);
   stroke-width: 3;
   stroke-linecap: round;
+}
+
+/*
+ * **La radio en la rosa** (ui/radio-en-la-rosa.ts): el curso del OBS y su
+ * barra en magenta, que es lo que se quiere; la aguja del ADF en cian, el
+ * dato auxiliar, como en una pantalla de navegación de Boeing; los puntos y
+ * el TO/FROM en blanco; y la bandera NAV roja con la palabra en tinta
+ * oscura, como las luces de aviso.
+ */
+.cr__radio-curso {
+  fill: none;
+  stroke: var(--cabina-objetivo);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cr__radio-barra {
+  stroke: var(--cabina-objetivo);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.cr__radio-punto {
+  fill: none;
+  stroke: var(--cabina-valor);
+  stroke-width: 1.5;
+}
+
+.cr__radio-tofrom {
+  fill: var(--cabina-valor);
+}
+
+.cr__radio-adf {
+  fill: none;
+  stroke: var(--cabina-auxiliar);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cr__radio-bandera {
+  fill: var(--cabina-limite);
+}
+
+.cr__radio-bandera-letra {
+  fill: #14161a;
+  font-family: var(--cabina-fuente);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.cr__radio-estacion {
+  fill: var(--cabina-valor);
+  font-family: var(--cabina-fuente);
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr__radio-adf-letra {
+  fill: var(--cabina-auxiliar);
+  font-family: var(--cabina-fuente);
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr__radio-crs {
+  fill: var(--cabina-objetivo);
+  font-family: var(--cabina-fuente);
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr__radio-rueda {
+  fill: var(--cabina-objetivo);
+}
+
+/*
+ * **En el direccional de las de pistón**, el mismo dibujo en las unidades de
+ * su esfera, que se escala al doble: trazos y letras a la mitad para que en
+ * pantalla salgan como en la pantalla de navegación.
+ */
+.cr__radio--esfera .cr__radio-curso {
+  stroke-width: 1.6;
+}
+
+.cr__radio--esfera .cr__radio-barra {
+  stroke-width: 2.2;
+}
+
+.cr__radio--esfera .cr__radio-punto {
+  stroke-width: 0.8;
+}
+
+.cr__radio--esfera .cr__radio-adf {
+  stroke-width: 1.4;
+}
+
+.cr__radio--esfera .cr__radio-bandera-letra {
+  font-size: 6px;
+}
+
+.cr__radio--esfera .cr__radio-estacion,
+.cr__radio--esfera .cr__radio-adf-letra,
+.cr__radio--esfera .cr__radio-crs {
+  font-size: 8.5px;
+}
+
+/*
+ * `visible` y no `all`: la caja entera se esconde con `visibility` en el avión
+ * que no lleva radio, y con `all` sus dianas seguirían robando el dedo.
+ */
+.cr__radio-dedo {
+  fill: transparent;
+  pointer-events: visible;
+  cursor: pointer;
+  touch-action: none;
 }
 
 .cr__aguja-vsi {
@@ -10362,6 +10499,26 @@ button.motor__tecla::after {
   fill: none;
 }
 
+/*
+ * Y la antena de la radio de «Seguí la aguja»: el mástil en la tinta, como
+ * todo lo que es del suelo, y sus ondas más suaves.
+ */
+.ejercicio__mastil {
+  stroke: var(--tinta);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.ejercicio__ondas {
+  stroke: var(--tinta-suave);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  fill: none;
+  opacity: 0.8;
+}
+
 .ejercicio__rayo {
   stroke: var(--ocre-tinta);
   stroke-width: 2;
@@ -12361,6 +12518,18 @@ button.motor__tecla::after {
   font-size: 11px;
 }
 
+/*
+ * El descargo, al pie: lo pone el colocador, por `left` y `top` como la
+ * leyenda —un `right` aquí lo estiraría—, abajo a la derecha si cabe.
+ */
+.pais__descargo {
+  left: 6px;
+  bottom: 6px;
+  z-index: 1;
+  font-size: 11px;
+  font-style: italic;
+}
+
 /* La rosa, a la medida de la carta: en el teléfono tumbado se salía por abajo. */
 .pais__rosa {
   position: absolute;
@@ -12821,6 +12990,16 @@ button.motor__tecla::after {
  * Los datos, en columnas de periódico cuando no caben de alto: en el teléfono
  * tumbado la radio de Gran Canaria se quedaba debajo, fuera de la vista, en
  * una ficha con media hoja libre a la derecha.
+ *
+ * Las columnas van en una caja de dentro, de alto libre, y la de fuera es la
+ * que rueda: con el alto fijo en la de las columnas, lo que no cabía se iba a
+ * otra columna por la derecha, fuera de la ficha (las radioayudas de Gran
+ * Canaria en la tablet). Y el borde de abajo de la de fuera se desvanece:
+ * la línea que se corta a medio borrar dice que sigue, y un papel cortado a
+ * cuchillo parece acabado. Las columnas llevan debajo ese mismo hueco, para
+ * que al final del todo lo que se desvanece sea papel y no letra. (Con
+ * sombras de fondo, la tapa lisa sobre el grano del papel se veía como una
+ * caja más clara.)
  */
 .ficha-carta__datos {
   grid-area: datos;
@@ -12828,14 +13007,20 @@ button.motor__tecla::after {
   min-width: 0;
   min-height: 0;
   margin-right: 40px;
-  column-width: 210px;
-  column-gap: 18px;
-  column-fill: auto;
   overflow: auto;
+  overscroll-behavior: contain;
   scrollbar-width: thin;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent);
 }
 
-.ficha-carta__datos > * {
+.ficha-carta__columnas {
+  column-width: 210px;
+  column-gap: 18px;
+  padding-bottom: 30px;
+}
+
+.ficha-carta__columnas > * {
   display: block;
   margin-bottom: 3px;
   break-inside: avoid;
@@ -12891,10 +13076,688 @@ button.motor__tecla::after {
   color: var(--carta-tinta);
 }
 
+/*
+ * Las radioayudas del campo, en el calco de la radio: el símbolo del Anexo 4
+ * y su caja al lado —identificador y frecuencia, canal y morse—, en la tinta
+ * de lo aeronáutico.
+ */
+.ficha-carta__ayudas {
+  font-size: 13px;
+  color: var(--carta-tinta-aero);
+}
+
+.ficha-carta__ayudas li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.ficha-carta__simbolo {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+}
+
+.ficha-carta__simbolo svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* La pluma del ILS es larga y estrecha: en la lista va tumbada, con la punta a la derecha. */
+.ficha-carta__simbolo--ils svg {
+  width: 4px;
+  height: 20px;
+  transform: rotate(90deg);
+}
+
+.ficha-carta__caja span {
+  font-weight: 500;
+}
+
+.ficha-carta__morse {
+  display: block;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.ficha-carta__descargo {
+  font-style: italic;
+}
+
+/* En el dibujo de la ficha, la pluma y los símbolos sin su halo propio: van sobre el papel. */
+.pistas__pluma,
+.pistas__radioayuda {
+  pointer-events: none;
+}
+
 .ficha-carta__var {
   font-family: var(--carta-letra-cifras);
   font-weight: 600;
   color: var(--carta-tinta-aero);
+}
+
+/*
+ * ── La carta de aproximación (IAC) ───────────────────────────────────
+ *
+ * Solo en el calco de la radio. El botón va en los datos, debajo del nombre,
+ * y abre una hoja que tapa la ficha entera menos su cruz: la planta y el
+ * perfil a la izquierda, los mínimos, la MSA y la frustrada a la derecha, y
+ * al pie la carta, su fuente y el descargo. Se abre y se cambia de cabecera
+ * con unos botones de radio escondidos al principio de la ficha y sus
+ * etiquetas: sin código y sin repintar el hangar. Ver
+ * `carta/carta-de-aproximacion.ts`.
+ */
+.ficha-carta__iac {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-height: 44px;
+  margin: 4px 0 6px;
+  padding: 4px 14px 4px 8px;
+  border: 1.5px solid var(--carta-tinta-aero);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.4);
+  color: var(--carta-tinta-aero);
+  cursor: pointer;
+}
+
+.ficha-carta__iac svg {
+  flex: none;
+  width: 34px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ficha-carta__iac b {
+  display: block;
+  font: 600 15px var(--carta-letra-cifras);
+  letter-spacing: 0.04em;
+}
+
+.ficha-carta__iac small {
+  display: block;
+  font-size: 12px;
+  color: var(--carta-tinta);
+}
+
+/* La cruz de la ficha, por encima de la hoja de la carta: cierra las dos. */
+.ficha-carta > .ficha-carta__cerrar {
+  z-index: 3;
+}
+
+/*
+ * La cabeza se queda quieta y rueda el cuerpo: si rodaba la hoja entera, lo
+ * de la columna de la derecha pasaba por debajo de la cruz y no se leía.
+ */
+.iac {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 8px 8px 4px;
+  overflow: hidden;
+  background-color: var(--carta-papel);
+  background-image: var(--papel-grano, none);
+  background-size: 256px 256px;
+  color: var(--carta-tinta);
+}
+
+.iac__llave--0:checked ~ .iac--0,
+.iac__llave--1:checked ~ .iac--1 {
+  display: flex;
+}
+
+.iac__cabeza {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-height: 44px;
+  padding-right: 44px;
+}
+
+.iac__volver {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--carta-tinta);
+  cursor: pointer;
+}
+
+.iac__volver svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.iac__titulo {
+  min-width: 0;
+  font: 600 16px var(--carta-letra-cifras);
+  letter-spacing: 0.03em;
+  color: var(--carta-tinta-aero);
+}
+
+.iac__pestanas {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.iac__pestana {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--carta-tinta-aero);
+  border-radius: 999px;
+  font: 600 14px var(--carta-letra-cifras);
+  letter-spacing: 0.04em;
+  color: var(--carta-tinta-aero);
+  cursor: pointer;
+}
+
+.iac__pestana--esta {
+  background: var(--carta-tinta-aero);
+  color: var(--carta-papel);
+}
+
+.iac__cuerpo {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 8px 14px;
+  min-height: 0;
+  padding-left: 4px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.iac__dibujos,
+.iac__cajas {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.iac__planta,
+.iac__perfil {
+  border: 1px solid var(--carta-tinta-aero);
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.3);
+}
+
+.iac-planta,
+.iac-perfil {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* La letra de los dibujos: la de las cifras de la carta, con su halo de papel. */
+:where(.iac-planta text, .iac-perfil text, .iac-msa text) {
+  font-family: var(--carta-letra-cifras);
+  font-weight: 600;
+  fill: var(--carta-tinta);
+  paint-order: stroke;
+  stroke: var(--carta-papel);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.iac-perfil__rotulo {
+  font-size: 12.5px;
+  fill: var(--carta-tinta-aero);
+  text-anchor: middle;
+}
+
+.iac-perfil__nombre {
+  font-size: 12px;
+  text-anchor: middle;
+}
+
+.iac-perfil__alt {
+  font-size: 12.5px;
+}
+
+.iac-perfil__alt--frustrada {
+  text-anchor: middle;
+}
+
+.iac-perfil__hgt {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.iac-perfil__millas {
+  font-size: 12px;
+  fill: var(--carta-tinta-aero);
+  text-anchor: middle;
+}
+
+.iac-perfil__angulo {
+  font-size: 12px;
+  fill: var(--carta-tinta-aero);
+  text-anchor: middle;
+}
+
+.iac-perfil__rdh {
+  font-size: 11.5px;
+  text-anchor: middle;
+}
+
+.iac-perfil__nm {
+  font-size: 11.5px;
+}
+
+.iac-perfil__cota {
+  font-size: 12px;
+  text-anchor: end;
+}
+
+.iac-perfil__suelo {
+  stroke: var(--carta-tinta);
+  stroke-width: 1.5;
+}
+
+.iac-perfil__pista {
+  fill: var(--carta-tinta);
+}
+
+.iac-perfil__senda {
+  fill: none;
+  stroke: var(--carta-tinta);
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+}
+
+.iac-perfil__raya {
+  stroke: var(--carta-tinta-aero);
+  stroke-width: 0.9;
+  stroke-dasharray: 3 2;
+}
+
+.iac-perfil__frustrada {
+  fill: none;
+  stroke: var(--carta-tinta);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+}
+
+.iac-perfil__punta {
+  fill: none;
+  stroke: var(--carta-tinta);
+  stroke-width: 1.5;
+}
+
+.iac-planta__pista {
+  stroke: var(--carta-tinta);
+  stroke-width: 5;
+}
+
+.iac-planta__derrota {
+  fill: none;
+  stroke: var(--carta-tinta);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.iac-planta__fijo {
+  fill: var(--carta-papel);
+  stroke: var(--carta-tinta);
+  stroke-width: 1.3;
+  stroke-linejoin: round;
+}
+
+.iac-planta__marca {
+  fill: var(--carta-tinta);
+}
+
+.iac-planta__nombre {
+  font-size: 12.5px;
+}
+
+.iac-planta__rotulo {
+  font-size: 11.5px;
+  fill: var(--carta-tinta-aero);
+}
+
+.iac-planta__norte {
+  fill: var(--carta-tinta-aero);
+}
+
+.iac-planta__escala {
+  stroke: var(--carta-tinta);
+  stroke-width: 2;
+}
+
+.iac-planta__nm {
+  font-size: 11.5px;
+}
+
+/* La tabla de la senda, debajo del perfil, como en la carta. */
+.iac__senda {
+  width: 100%;
+  border-collapse: collapse;
+  border-top: 1px solid var(--carta-tinta-aero);
+  font: 600 12px var(--carta-letra-cifras);
+  font-variant-numeric: tabular-nums;
+}
+
+.iac__senda th,
+.iac__senda td {
+  padding: 1px 3px;
+  border-left: 1px solid var(--carta-tinta-aero);
+  text-align: center;
+}
+
+.iac__senda th {
+  border-left: 0;
+  color: var(--carta-tinta-aero);
+  text-align: left;
+}
+
+/* Los mínimos: la OCA encima y la OCH debajo, entre paréntesis, como en la carta. */
+.iac__minimos {
+  width: 100%;
+  border-collapse: collapse;
+  font: 600 13.5px var(--carta-letra-cifras);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.iac__minimos th,
+.iac__minimos td {
+  padding: 2px 3px;
+  border: 1px solid var(--carta-tinta-aero);
+  text-align: center;
+}
+
+.iac__minimos tr > th:first-child {
+  font-size: 12.5px;
+  text-align: left;
+  color: var(--carta-tinta-aero);
+}
+
+.iac__minimos small {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* La línea LPV que un suplemento deja fuera de servicio: se lee, pero se ve que no vale. */
+.iac__fuera td {
+  color: var(--carta-tinta-cota);
+  text-decoration: line-through;
+}
+
+.iac__fuera th small {
+  font-style: italic;
+}
+
+/* La columna del avión que va, marcada como con un rotulador. */
+.iac__minimos .iac__suya {
+  background: rgb(255 214 64 / 0.55);
+}
+
+.iac__tuya {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+}
+
+.iac__msa {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iac-msa {
+  flex: none;
+  width: 92px;
+  height: 92px;
+}
+
+.iac-msa__circulo {
+  fill: none;
+  stroke: var(--carta-tinta-aero);
+  stroke-width: 1.5;
+}
+
+.iac-msa__raya {
+  stroke: var(--carta-tinta-aero);
+}
+
+.iac-msa__pies {
+  font-size: 14px;
+  text-anchor: middle;
+}
+
+.iac-msa__pies--una {
+  font-size: 17px;
+}
+
+.iac-msa__tipo,
+.iac-msa__radio {
+  font-size: 12.5px;
+  fill: var(--carta-tinta-aero);
+  text-anchor: middle;
+}
+
+.iac__msa p {
+  min-width: 0;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.25;
+}
+
+.iac__frustrada {
+  padding: 4px 6px;
+  border: 1px solid var(--carta-tinta-aero);
+  border-radius: 4px;
+}
+
+.iac__frustrada b {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: 600 15px var(--carta-letra-cifras);
+  color: var(--carta-tinta-aero);
+}
+
+.iac__frustrada b svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-dasharray: 3 2;
+}
+
+.iac__frustrada p {
+  margin: 2px 0 0;
+  font: 500 12.5px var(--carta-letra-cifras);
+  letter-spacing: 0.02em;
+  line-height: 1.25;
+}
+
+.iac__pie {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 12px;
+  padding: 0 4px;
+  font-size: 12px;
+}
+
+.iac__descargo {
+  font-style: italic;
+}
+
+/*
+ * En una ficha baja —el teléfono tumbado— no cabe todo a la vista: arriba,
+ * lo que no está en ninguna otra parte del juego, el perfil y los mínimos;
+ * rodando, la planta, la MSA, la frustrada y el pie.
+ */
+@container ficha (max-height: 300px) {
+  .iac__titulo {
+    font-size: 14px;
+  }
+
+  .iac__cuerpo {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  }
+
+  .iac__perfil {
+    order: -1;
+  }
+}
+
+/* En una ficha estrecha —un teléfono de pie—, una columna: el perfil, los mínimos y lo demás debajo. */
+@container ficha (max-width: 440px) {
+  .iac__cuerpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .iac__dibujos,
+  .iac__cajas {
+    display: contents;
+  }
+
+  .iac__perfil {
+    order: -2;
+  }
+
+  .iac__mins {
+    order: -1;
+  }
+}
+
+/*
+ * ── La carta se toca (#72) ────────────────────────────────────────────
+ *
+ * Lo tocado se ilumina en ocre, como el foco, y su rótulo sale en una franja
+ * de papel del ancho de la hoja —el texto ocupa su caja—, encima o debajo de
+ * lo tocado, sin recibir toques: el siguiente pasa a la carta. En Guyrami no
+ * hay franja, solo el brillo y la voz. Ver `ui/carta/tocar-la-carta.ts`.
+ */
+.ficha-carta [data-toca] {
+  cursor: pointer;
+}
+
+/*
+ * El símbolo de una radioayuda y la pluma del ILS no recibían el dedo: no
+ * había nada que hacer con él. Ahora se tocan, y tienen que recibirlo para
+ * que el navegador sepa que están debajo. Ver `tocadoEn`.
+ */
+.ficha-carta [data-toca] > :is(.pistas__radioayuda, .pistas__pluma) {
+  pointer-events: visiblePainted;
+}
+
+/* En el SVG, un brillo alrededor del trazo, que es lo que se tocó. */
+:where(svg) .toque-tocado {
+  filter: drop-shadow(0 0 1.5px var(--ocre)) drop-shadow(0 0 4px var(--ocre));
+}
+
+/*
+ * En las cajas de HTML, el contorno del foco y un halo por fuera: un brillo
+ * sobre cada letra de una tabla la dejaba borrosa, y lo tocado se tiene que
+ * poder leer.
+ */
+:is(div, li, i, span).toque-tocado {
+  outline: 2.5px solid var(--ocre);
+  outline-offset: 2px;
+  border-radius: 4px;
+  box-shadow: 0 0 0 4px rgb(221 146 63 / 0.22);
+}
+
+.toque-rotulo {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 12px 8px;
+  border: 1.5px solid var(--carta-tinta-aero, #2e537a);
+  border-radius: 10px;
+  background-color: var(--carta-papel, #f3efe3);
+  background-image: var(--papel-grano, none);
+  background-size: 256px 256px;
+  box-shadow: 0 4px 14px -4px rgb(0 0 0 / 0.45);
+  color: var(--carta-tinta, #22302a);
+  text-align: left;
+  pointer-events: none;
+}
+
+.toque-rotulo[hidden] {
+  display: none;
+}
+
+.toque-rotulo__cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+}
+
+/* El rótulo aeronáutico en la letra de las cifras de la carta, como va impreso; la glosa, en la de los nombres. */
+.toque-rotulo__cabeza b {
+  font: 700 17px var(--carta-letra-cifras, sans-serif);
+  letter-spacing: 0.02em;
+  color: var(--carta-tinta-aero, #2e537a);
+}
+
+.toque-rotulo__cabeza span {
+  font: 600 15px var(--carta-letra-nombres, sans-serif);
+}
+
+.toque-rotulo__cabeza i {
+  font: 600 14px var(--carta-letra-nombres, sans-serif);
+  font-style: normal;
+  color: #2d6a3a;
+}
+
+.toque-rotulo__texto {
+  font: 500 14px/1.3 var(--carta-letra-nombres, sans-serif);
+}
+
+/* El aro del plano en vuelo, que es un lienzo: la diana entera, de 44 px. */
+.toque-aro {
+  position: absolute;
+  z-index: 5;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border: 3px solid var(--ocre);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.7), 0 0 10px var(--ocre);
+  pointer-events: none;
 }
 
 /* El botón de ir: grande, abajo a la derecha, con el avión mirando hacia donde se va. */
@@ -13488,9 +14351,10 @@ oksigenia-access-panel::part(trigger):focus-visible {
   top: calc(var(--arriba-alto, 80px) + 8px);
   bottom: auto;
   /* En el hueco que deja el rincón a su izquierda, como la lámpara de la
-     torre: centrados en la pantalla, se metían debajo de su tarjeta. */
-  left: calc(var(--rincon-izquierda, 100%) / 2);
-  max-width: calc(var(--rincon-izquierda, 100%) - 32px);
+     torre: centrados en la pantalla, se metían debajo de su tarjeta. Sin
+     rincón, de borde a borde. */
+  left: 16px;
+  right: calc(100% - var(--rincon-izquierda, 100%) + 16px);
 }
 
 /* Y si hay subtítulo, la lámpara baja una línea en vez de montarse. */
@@ -13552,11 +14416,13 @@ oksigenia-access-panel::part(trigger):focus-visible {
   font-size: 40px;
 }
 
+/* Centrado en la pantalla y apartado de los dos bordes lo que ocupan los
+   botones redondos de la izquierda: ver `--vistas-derecha` en `ui/hud.ts`. */
 .hud.hud--cabina .hud__abajo > [data-hud="hint"] {
   top: 32%;
   bottom: auto;
-  left: 50%;
-  max-width: calc(100% - 32px);
+  left: max(16px, var(--vistas-derecha, 0px) + 8px);
+  right: max(16px, var(--vistas-derecha, 0px) + 8px);
 }
 
 /* La altura en grande, en cabina, arriba y no al 32 %: sale en la final, y en
@@ -14148,10 +15014,22 @@ oksigenia-access-panel::part(trigger):focus-visible {
    * lámpara de la torre y los subtítulos— vuelve al centro: en el teléfono el
    * rincón está a la izquierda, y ese hueco es la esquina de la cámara.
    */
-  .hud .torre,
-  .hud .hud__abajo > [data-hud="hint"] {
+  .hud .torre {
     left: 50%;
     max-width: calc(100% - 32px);
+  }
+
+  /*
+   * El subtítulo, de borde a borde y no de media pantalla —ver la regla de
+   * `[data-hud="hint"]` arriba del todo—, pero apartado de los dos lados lo
+   * que ocupan los botones redondos de la izquierda, la cámara y la pausa:
+   * así sigue centrado sobre el avión y la pantalla grande, y no se les pone
+   * encima. A la derecha pasa por delante de las losas de mando, que dejan
+   * pasar el toque como antes.
+   */
+  .hud .hud__abajo > [data-hud="hint"] {
+    left: max(var(--borde-izq), var(--vistas-derecha, 0px) + 8px);
+    right: max(var(--borde-der), var(--vistas-derecha, 0px) + 8px);
   }
 
   /*
@@ -14664,31 +15542,47 @@ oksigenia-access-panel::part(trigger):focus-visible {
   }
 
   /*
-   * Y el subtítulo, que va debajo de la barra de arriba, baja con ella abierta
-   * al sitio de las losas: arriba tapaba el rumbo de la pantalla grande.
+   * **Y el subtítulo, encima de la pantalla grande y no encima de lo que se
+   * lee en ella.**
    *
-   * **Pero no hasta abajo del todo**: ahí, en la última franja de la pantalla
-   * de navegación, va el modo del TCAS —«TCAS STBY» en tierra— con la
-   * distancia al destino y la escala, como en la de un avión de verdad. El
-   * subtítulo se apoyaba encima y lo tapaba los segundos que duraba, que en
-   * tierra es justo cuando se pregunta por qué la pantalla no enseña a nadie.
-   * Medido en un teléfono de 844 × 390: el rótulo empieza un 12 % del alto de
-   * la pantalla por encima de su borde de abajo, así que el subtítulo sube un
-   * 14 % de ese alto —el de `.cuadro--grande > .tablero`, aquí abajo— y queda
-   * encima de la franja, en cualquier teléfono. Ver `scripts/ver-hoja.mjs`.
+   * Arriba, debajo de la barra, tapaba el rumbo de la pantalla grande; luego
+   * bajó al sitio de las losas, apoyado encima de la franja del TCAS, y ahí
+   * seguía tapando la pantalla que se había puesto en grande para leerla: la
+   * rosa y la radio en la de navegación, las cintas en la de vuelo. «Follow
+   * the arrow…» encima del instrumento. No hay sitio del instrumento que se
+   * pueda tapar, así que la pantalla grande deja una fila para él: mide una
+   * línea de subtítulo menos (`--fila-del-subtitulo`, la letra con su
+   * interlínea, el relleno y el filo de `.insignia` y un respiro), y el
+   * subtítulo se apoya en su borde de arriba. Si un día no cabe en una línea,
+   * crece hacia arriba, sobre la fila de los botones —deja pasar el toque,
+   * ver más arriba—, y no hacia la pantalla. Lo mide `verificar-carteles.mjs`.
+   *
+   * La altura en grande de cabina (`.insignia--cifra`) va arriba por su
+   * regla; con la pantalla grande, aquí, como el subtítulo.
    */
-  .hud.hay-cuadro-grande .hud__abajo > [data-hud="hint"] {
+  .hud {
+    --fila-del-subtitulo: calc(
+      var(--voz-glosa) / var(--escala, 1) * 1.3 + 14px + 8px
+    );
+    --alto-del-grande: calc(
+      (var(--alto-visible) - 64px - 92px) / var(--escala, 1) -
+        var(--fila-del-subtitulo)
+    );
+  }
+
+  .hud.hay-cuadro-grande .hud__abajo > [data-hud="hint"],
+  .hud.hay-cuadro-grande.hud--cabina .hud__abajo > [data-hud="hint"].insignia--cifra {
     top: auto;
     bottom: calc(
-      (20px + 56px + 12px) / var(--escala, 1) +
-        (var(--alto-visible) - 64px - 92px) / var(--escala, 1) * 0.14
+      (20px + 56px + 12px) / var(--escala, 1) + var(--alto-del-grande) + 8px
     );
+    line-height: 1.3;
   }
 
   .hud .cuadro.cuadro--grande > .tablero {
     display: block;
     width: auto;
-    height: calc((var(--alto-visible) - 64px - 92px) / var(--escala, 1));
+    height: var(--alto-del-grande);
     pointer-events: auto;
     cursor: zoom-out;
   }
@@ -16638,11 +17532,31 @@ body.con-vuelta #tactil {
   display: none;
 }
 
+/*
+ * **La decisión, siempre a la vista.** La concha es la de todos los paneles:
+ * cabecera, el cuerpo que rueda si no cabe y la fila de los botones al pie,
+ * que no se mueve (`.parte__pie`, ver `pie` en `ui/tarjeta-del-tiempo.ts`).
+ * Antes rodaba la tarjeta entera, y en un teléfono tumbado los tres botones
+ * quedaban debajo del borde. El cuerpo de un instrumento no recorta
+ * (`.concha--instrumento .concha__cuerpo`); éste sí, que es el que rueda.
+ */
 .tarjeta-tiempo .concha {
   width: min(760px, 100%);
   max-height: 100%;
   min-height: 0;
-  overflow: auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.tarjeta-tiempo .concha .concha__cuerpo {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* El pie, separado del cuerpo con la misma raya que la fila de acciones. */
+.parte__pie {
+  padding-top: 10px;
+  border-top: 1px solid var(--linea);
 }
 
 .parte {
@@ -16670,6 +17584,29 @@ body.con-vuelta #tactil {
   border-radius: 14px;
   background: rgb(255 255 255 / 0.05);
   border: 1px solid var(--linea);
+}
+
+/*
+ * **En una pantalla estrecha, un campo debajo del otro.** Lado a lado, en un
+ * teléfono de pie cada campo se quedaba en 149 px, y el grupo más largo del
+ * parte, `VAPP 151KT (VREF 146+5)`, no cabía en un renglón: medido con
+ * `verificar-tarjeta-del-tiempo.mjs`. Uno debajo del otro, cada campo tiene el
+ * ancho de la tarjeta. Vale para la ventana estrecha y para el teléfono de
+ * pie: la tarjeta va fuera del HUD y por encima del cartel de girar la
+ * pantalla (`.gira`), porque se decide antes de volar.
+ */
+@media (max-width: 560px) {
+  .parte__campos {
+    flex-direction: column;
+  }
+
+  .parte__campo {
+    flex-basis: auto;
+  }
+
+  .parte__de-a {
+    width: 28px;
+  }
 }
 
 .parte__cabecera {
@@ -16749,6 +17686,15 @@ body.con-vuelta #tactil {
   font: 13px/1.35 ui-monospace, monospace;
   color: #8fd3ff;
   overflow-wrap: anywhere;
+}
+
+/*
+ * Cada grupo del parte, de una pieza: la línea se parte entre grupos, como un
+ * METAR impreso. En línea y en bloque, para que solo se rompa por dentro si
+ * no cabe entero en el renglón. Ver `grupos` en `ui/tarjeta-del-tiempo.ts`.
+ */
+.parte__grupo {
+  display: inline-block;
 }
 
 .parte__metares {
@@ -16997,10 +17943,10 @@ body.con-vuelta #tactil {
 }
 
 /*
- * **En el teléfono apaisado, la decisión tiene que caber sin desplazar**:
- * medido en un Pixel de 360 de alto, la tarjeta entera dejaba los botones
- * debajo del borde. Los dibujos van más pequeños y la fila de porqués se
- * quita, que ya están en ámbar arriba.
+ * **En el teléfono apaisado, todo más justo**: medido en un Pixel de 360 de
+ * alto, la tarjeta entera dejaba los botones debajo del borde. Los dibujos
+ * van más pequeños, y lo que aun así no cabe rueda en el cuerpo, con los
+ * botones quietos al pie (`.parte__pie`).
  */
 @media (max-height: 500px) {
   .tarjeta-tiempo {

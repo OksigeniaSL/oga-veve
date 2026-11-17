@@ -716,6 +716,12 @@ export interface SueloConTeselas {
   readonly material: () => Material | null;
   /** El origen del marco de esa malla. */
   readonly origen: { readonly lat: number; readonly lon: number };
+  /**
+   * Lo que hay que hacer en cuanto se le ponen: vestirlo cambia su programa
+   * de la tarjeta, y el de una isla vecina se compila antes de que entre en
+   * el cuadro. Ver `prepararElSuelo` en `game.ts`.
+   */
+  readonly alVestir?: () => void;
 }
 
 export class TeselasDeOrtofoto {
@@ -876,6 +882,7 @@ export class TeselasDeOrtofoto {
       // Para que el banco de rendimiento cuente esta textura en la memoria.
       mat.userData.teselasCapas = this.capas;
       mat.userData.teselasIndice = this.indice;
+      suelo.alVestir?.();
     }
   }
 

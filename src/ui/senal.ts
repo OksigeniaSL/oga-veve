@@ -895,6 +895,40 @@ const cruzando = (luz: "roja" | "verde", derecha: boolean): string =>
     <path d="M3 19.4 L7 16.8 V18.5 H20.5 V20.3 H7 V22 Z" />
   </g>`);
 
+/**
+ * **La aguja del ADF**, la de «Seguí la aguja» (#51): la esfera con sus
+ * cuatro marcas y la aguja hacia la radio. En un ADF de esfera fija arriba es
+ * el morro, así que la aguja arriba es «la radio está delante», y torcida a un
+ * lado, «la radio está a ese lado»: la aguja quieta a un lado es como se vuela
+ * con viento de costado. Ver `flight/seguir-la-aguja.ts`.
+ */
+const agujaDelAdf = (grados: number): string =>
+  icono(`
+  <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.6" />
+  <path d="M12 2 v2.4 M22 12 h-2.4 M12 22 v-2.4 M2 12 h2.4" fill="none"
+        stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+  <path transform="rotate(${grados} 12 12)" d="M12 4.4 L15 9.2 H12.9 V19 H11.1 V9.2 H9 Z" />
+`);
+
+/**
+ * **El CDI del VOR**, el de «¿En qué radial estoy?» (#51): la rosa, la flecha
+ * del curso con su cola, la barra entre los dos puntos de cada lado y el
+ * triángulo del TO/FROM, hacia la punta si el curso lleva a la radio y hacia
+ * la cola si se aleja. Es lo que pinta el HSI de la cabina (`ui/radio-en-la-rosa.ts`):
+ * quien lo ve en la tarjeta lo reconoce en el cuadro. `barra`, lo que se
+ * aparta del centro, en unidades del dibujo: siete es a tope.
+ * Ver `flight/en-que-radial-estoy.ts`.
+ */
+const cdiDelVor = (barra: number, toFrom: "TO" | "FROM"): string =>
+  icono(`
+  <circle cx="12" cy="12" r="10.4" fill="none" stroke="currentColor" stroke-width="1.4" />
+  <path d="M12 2.6 L14.6 6.6 H13 V8 H11 V6.6 H9.4 Z M11 16 H13 V21.2 H11 Z" />
+  <path d="M${11 + barra} 8.8 H${13 + barra} V15.2 H${11 + barra} Z" />
+  <circle cx="5" cy="12" r="1" /><circle cx="8.5" cy="12" r="1" />
+  <circle cx="15.5" cy="12" r="1" /><circle cx="19" cy="12" r="1" />
+  <path d="${toFrom === "TO" ? "M17.2 7.6 L19.6 10.4 H14.8 Z" : "M17.2 16.4 L19.6 13.6 H14.8 Z"}" />
+`);
+
 /** La flecha del lado, pegada al borde: es lo primero que se mira. */
 const HACIA: Record<string, string> = {
   izquierda: `<path d="M5.4 4.2 L1.4 7.2 L5.4 10.2 Z" />
@@ -1764,6 +1798,15 @@ export const DIBUJOS = {
   tren: TREN,
   "tren-en-el-suelo": TREN_EN_EL_SUELO,
   tormenta: TORMENTA,
+  "aguja-adf": agujaDelAdf(0),
+  "aguja-a-la-izquierda": agujaDelAdf(-25),
+  "aguja-a-la-derecha": agujaDelAdf(25),
+  "cdi-a-un-lado": cdiDelVor(-7, "FROM"),
+  "cdi-from": cdiDelVor(0, "FROM"),
+  "cdi-to": cdiDelVor(0, "TO"),
+  // «Interceptar un radial»: la barra viniendo hacia el centro, y la que lo cruzó. Ver `interceptar-un-radial.ts`.
+  "cdi-viniendo": cdiDelVor(-3.5, "FROM"),
+  "cdi-pasada": cdiDelVor(3.5, "FROM"),
   sobrevelocidad: SOBREVELOCIDAD,
   calor: CALOR,
   frio: FRIO,
@@ -2066,10 +2109,37 @@ export class Senal {
      */
     if (this.caja) alPulsar(this.caja, () => this.accion?.());
     this.medirse();
+    if (this.caja && typeof ResizeObserver !== "undefined") {
+      this.observador = new ResizeObserver(() => this.medirse());
+      this.observador.observe(this.caja);
+    }
   }
 
   /**
-   * Publica lo alto que es esta tarjeta, para que el tutor se le suba encima.
+   * **Se mide después de maquetar, no al cambiar.** Leer el alto de la
+   * tarjeta justo después de escribir en ella obliga al navegador a recolocar
+   * la página entera en ese momento, con todo lo que el cuadro lleva escrito
+   * hasta ahí: 12 a 14 ms en el primer cuadro tras saltar a crucero con la CPU
+   * ×4 (H23c, enmienda del ADR 0028). Un `ResizeObserver` llama después de
+   * maquetar y antes de pintar, con las medidas ya hechas, y lo que se escribe
+   * ahí se pinta en el mismo cuadro. Y llama justo cuando hace falta: al salir
+   * la tarjeta, al irse —se queda en cero— y al cambiar de tamaño; si cambia
+   * lo que dice y no lo que ocupa, no hay nada que volver a medir. Sin él
+   * —las pruebas, un navegador viejo—, se mide en el momento, como siempre.
+   *
+   * Cuando la tarjeta sale, el rincón crece y el observador del HUD
+   * (`medirLaBarra`), que se creó antes y llama antes, ya ha escrito
+   * `--rincon-alto`: esta lectura paga entonces el estilo nuevo del HUD, que
+   * el navegador rehace igual antes de pintar. No es una maquetación de más.
+   */
+  private observador: ResizeObserver | null = null;
+  private alCambiar(): void {
+    if (!this.observador) this.medirse();
+  }
+
+  /**
+   * Publica lo que ocupa el rincón con esta tarjeta, para que el tutor y la
+   * columna de mandos se coloquen debajo y la luz de la torre a su lado.
    *
    * **Los dos viven abajo y en medio.** La señal está ahí porque es donde ya
    * mira quien pilota —«veo unos símbolos en la esquina inferior izquierda,
@@ -2085,33 +2155,28 @@ export class Senal {
    */
   private medirse(): void {
     if (!this.raiz) return;
-    const puesta = !!this.caja && !this.caja.hidden;
-    const alto = puesta ? this.caja!.offsetHeight + 12 : 0;
-    this.raiz.style.setProperty("--senal-alto", `${alto}px`);
     /*
-     * **Y lo ancha que es, para que la luz de la torre se aparte.**
-     *
-     * Las dos viven arriba y en medio, y las dos hablan de lo mismo cuando la
-     * torre manda irse al aire: la lámpara dice el estado y la tarjeta dice
+     * **Y la luz de la torre, a su lado.** Las dos hablan de lo mismo cuando
+     * la torre manda irse al aire: la lámpara dice el estado y la tarjeta dice
      * qué hacer. Apiladas, con el mismo centro, se leen como una sola cosa a
-     * medio tapar — y en una frustrada caían además encima del avión.
+     * medio tapar — y en una frustrada caían además encima del avión. La
+     * lámpara se centra en el hueco que deja el rincón: `--rincon-izquierda`.
      *
-     * Se resuelve como todo lo demás que convive en este HUD: midiendo. Cada
-     * una se corre media anchura de la otra, así que juntas quedan centradas y
-     * separadas, y cuando solo hay una, esa se queda en el medio. Ver `.torre`
-     * y `.senal` en `style.css`.
-     */
-    const ancho = puesta ? this.caja!.offsetWidth + 14 : 0;
-    this.raiz.style.setProperty("--senal-ancho", `${ancho}px`);
-    /*
-     * **Y lo que ocupa el rincón entero**, que es lo que de verdad hace falta
+     * Aquí se escribían también `--senal-alto` y `--senal-ancho`, el alto y
+     * el ancho de la tarjeta sola, de cuando el tutor y la lámpara se
+     * colocaban con ellos. Ya no los leía nadie —ni la hoja ni el código—, y
+     * una variable que cambia en la raíz del HUD hace mirar otra vez el estilo
+     * de todo lo que cuelga de ella.
+     *
+     * **Lo que ocupa el rincón entero** es lo que de verdad hace falta
      * fuera: la columna de mandos de la derecha se coloca debajo de él.
      *
      * Se mide aquí y no solo al montar el HUD porque el rincón **cambia de
      * alto cuando esta tarjeta sale y cuando se va**, y una medida tomada una
      * sola vez se queda vieja justo en ese momento: los mandos se quedaban
-     * donde estaban y la tarjeta les caía encima. Esto ya se llama en las dos
-     * transiciones, así que es el sitio. Ver `--rincon-alto` en `hud.ts`.
+     * donde estaban y la tarjeta les caía encima. Esto se llama en las dos
+     * transiciones —ver `observador`—, así que es el sitio. Ver
+     * `--rincon-alto` en `hud.ts`.
      */
     escribirRincon(this.raiz);
   }
@@ -2218,7 +2283,7 @@ export class Senal {
     const llama = opciones.llama ?? true;
     boton.classList.toggle("senal--pulsable", !!this.accion && llama);
     boton.classList.toggle("senal--explica", !!this.accion && !llama);
-    this.medirse();
+    this.alCambiar();
   }
 
   /** El aviso se apaga solo. Un cartel permanente deja de mirarse. */
@@ -2248,7 +2313,7 @@ export class Senal {
     this.enEspera = null;
     if (this.caja) this.caja.hidden = true;
     this.actual = "";
-    this.medirse();
+    this.alCambiar();
   }
 
   /** Qué hay puesto y cuánto le queda. Para el banco de pruebas. */
@@ -2271,7 +2336,7 @@ export class Senal {
       this.caja.hidden = true;
       this.actual = "";
       this.prioridad = 0;
-      this.medirse();
+      this.alCambiar();
       // Y si algo se quedó esperando turno, ahora es su turno.
       const vuelve = this.enEspera;
       this.enEspera = null;

@@ -31,6 +31,7 @@
 import { TIERS, type Tier } from "../flight/tiers";
 import { canalesDe, type Peldano } from "../flight/escalera";
 import { abrirExplicacion, ponerVozDeLasExplicaciones } from "./explicaciones";
+import { quitarRotulo, tocarEnLaHoja } from "./carta/tocar-la-carta";
 import { VozDelHangar } from "../audio/voz-del-hangar";
 import { ponerLasDeSerie } from "./explicaciones-de-serie";
 // La ventana de las explicaciones, que se apunta sola al cargarse: el hangar
@@ -1748,7 +1749,56 @@ const EJ_EFECTO_SUELO = escena(`
         d="M34 40 v24 q0 6 -8 6 h-12 m4 -4 l-4 4 l4 4 M86 40 v24 q0 6 8 6 h12 m-4 -4 l4 4 l-4 4" />
 `);
 
+/**
+ * **Seguí la aguja**: la antena de la radio en el suelo con sus ondas, la
+ * estela de la avioneta curvándose hacia donde la empuja el viento —las dos
+ * flechas de arriba— y la avioneta que llega a la antena de cara al viento.
+ * Es la curva del perro, dibujada. Ver `flight/seguir-la-aguja.ts`.
+ */
+const EJ_AGUJA = escena(`
+  <path class="ejercicio__ondas" d="M93 39 a9 9 0 0 1 14 0 M89 34 a15 15 0 0 1 22 0" />
+  <path class="ejercicio__mastil" d="M96 68 L100 43 L104 68 M97.4 60 h5.2 M98.6 52 h2.8" />
+  <path class="leccion__estela" d="M6 48 q34 30 58 22" stroke-dasharray="4 4" />
+  <path class="ejercicio__flecha" d="M30 6 v13 m-4 -4 l4 4 l4 -4 M48 6 v13 m-4 -4 l4 4 l4 -4" />
+  ${AVION("translate(76 67) rotate(80) scale(0.8)")}
+`);
+
+/**
+ * **¿En qué radial estoy?**: el VOR en el suelo, visto desde arriba, con sus
+ * radiales como los rayos de una rueda; uno, el del avión, marcado; y el
+ * avión de través sobre él, con la flecha del cuarto de vuelta hacia la
+ * radio. Girar no lo saca del rayo: es la lección. Ver
+ * `flight/en-que-radial-estoy.ts`.
+ */
+const EJ_RADIAL = escena(`
+  <path class="ejercicio__ondas"
+        d="M96 63 h22 M93.7 68.7 l14 14 M88 71 v12 M82.3 68.7 l-12 12 M82.3 57.3 l-14 -14 M88 55 v-20 M93.7 57.3 l15 -15" />
+  <path class="leccion__estela" d="M80.5 60.3 L40 46" stroke-dasharray="4 4" />
+  <path class="ejercicio__mastil" d="M88 56 l6 3.5 v7 l-6 3.5 l-6 -3.5 v-7 Z" />
+  <circle cx="88" cy="63" r="1.3" class="ejercicio__mastil" />
+  ${AVION("translate(56 51.4) rotate(20) scale(0.8)")}
+  <path class="ejercicio__flecha" d="M60.8 38.2 A14 14 0 0 1 69.2 56.2 M69.2 56.2 l3.3 -2.3 M69.2 56.2 l-1 -3.9" />
+`);
+
+/**
+ * **Interceptar un radial**: el VOR a la izquierda con un solo radial, el
+ * pedido, saliendo hacia la derecha; la estela del avión que baja cortándolo
+ * a cuarenta y cinco grados y **se curva antes de llegar**, para entrar en él
+ * sin pasarse; y el avión ya encima, siguiéndolo. La curva es la
+ * anticipación, dibujada. Ver `flight/interceptar-un-radial.ts`.
+ */
+const EJ_INTERCEPTAR = escena(`
+  <path class="ejercicio__ondas" d="M23 64 H118" />
+  <path class="leccion__estela" d="M30 30 L50 50 Q60 60 74 63 L86 64" stroke-dasharray="4 4" />
+  <path class="ejercicio__mastil" d="M16 57 l6 3.5 v7 l-6 3.5 l-6 -3.5 v-7 Z" />
+  <circle cx="16" cy="64" r="1.3" class="ejercicio__mastil" />
+  ${AVION("translate(98 64) rotate(90) scale(0.8)")}
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
+  aguja: EJ_AGUJA,
+  radial: EJ_RADIAL,
+  interceptar: EJ_INTERCEPTAR,
   autorrotacion: EJ_AUTORROTACION,
   estacionario: EJ_ESTACIONARIO,
   par: EJ_PAR,
@@ -2070,7 +2120,7 @@ export function abrirHangar(
    */
   let ejercicio: Ejercicio | null = null;
   const sigueValiendo = (): void => {
-    if (ejercicio && !seOfrece(ejercicio, tramo.id, avion)) ejercicio = null;
+    if (ejercicio && !seOfrece(ejercicio, tramo.id, avion, oaciDe(sitio))) ejercicio = null;
   };
   /*
    * **El destino, recordado por sitio.** Cada aeropuerto tiene los suyos, así
@@ -2290,7 +2340,7 @@ export function abrirHangar(
             ${misionesDe(sitio, avion)
               .map((m, i) => fichaDeMision(sitio, m, i + 1, mision?.id === m.id))
               .join("")}
-            ${ejerciciosPara(tramo.id, avion)
+            ${ejerciciosPara(tramo.id, avion, oaciDe(sitio))
               .map((e) => fichaDeEjercicio(e, ejercicio?.id === e.id))
               .join("")}
           </div>
@@ -2321,7 +2371,7 @@ export function abrirHangar(
             ${grupo(
               MARCA_EMERGENCIAS,
               t("hangar.emergencias"),
-              ejerciciosPara(tramo.id, avion)
+              ejerciciosPara(tramo.id, avion, oaciDe(sitio))
                 .map((e) => fichaDeEjercicio(e, ejercicio?.id === e.id))
                 .join(""),
             )}
@@ -2648,6 +2698,18 @@ export function abrirHangar(
     root.addEventListener("pointerdown", aplazarReposo);
     root.addEventListener("keydown", aplazarReposo);
 
+    /*
+     * **El papel, también al abrir la carta de aproximación**: se abre con
+     * una etiqueta que marca un botón de radio escondido, sin código, así que
+     * se oye en el cambio. Volver a la ficha no suena, como cerrar una hoja.
+     */
+    root.addEventListener("change", (event) => {
+      const llave = event.target as HTMLInputElement | null;
+      if (!llave?.matches(".iac__llave")) return;
+      const ficha = llave.closest<HTMLElement>(".ficha-carta");
+      if (ficha) quitarRotulo(ficha);
+      if (llave.checked && !llave.matches(".iac__llave--no")) voz.ruido("papel");
+    });
     root.addEventListener("click", (event) => {
       /*
        * **Lo que se explica, antes que nada**: el camión de los bomberos de un
@@ -2659,7 +2721,23 @@ export function abrirHangar(
         return;
       }
       const boton = (event.target as HTMLElement | null)?.closest("button");
-      if (!boton) return;
+      /*
+       * **Y la carta se toca** (#72): en la ficha de un campo y en su carta de
+       * aproximación, lo que no es un botón ni una etiqueta dice qué es, por
+       * rótulo y por voz. Ver `ui/carta/tocar-la-carta.ts`.
+       */
+      if (!boton) {
+        const objetivo = event.target as HTMLElement | null;
+        const ficha = objetivo?.closest<HTMLElement>(".ficha-carta");
+        if (ficha && !objetivo?.closest("label, input, a")) {
+          const tocado = tocarEnLaHoja(ficha, event.clientX, event.clientY, tramo.avisos);
+          if (tocado) {
+            voz.ruido("clic");
+            voz.decir(tocado.como.voz.clave, tocado.como.voz.texto);
+          }
+        }
+        return;
+      }
 
       const aDonde = boton.getAttribute("data-pantalla");
       if (aDonde) {
@@ -2707,7 +2785,10 @@ export function abrirHangar(
       const ficha = boton.getAttribute("data-ficha");
       if (ficha !== null) {
         // El más cercano al dedo, que en una carta pequeña los círculos de tocar se solapan.
-        abrirFichaDeLaCarta(root, ficha && campoTocado(boton, event));
+        const cual = ficha && campoTocado(boton, event);
+        abrirFichaDeLaCarta(root, cual);
+        // Y suena el papel al abrirla; al cerrarla, no: lo que se oye es lo que se abre.
+        if (cual) voz.ruido("papel");
         return;
       }
 
@@ -2820,7 +2901,7 @@ export function abrirHangar(
       const idEjercicio = boton.getAttribute("data-ejercicio");
       if (idEjercicio) {
         ejercicio =
-          ejerciciosPara(tramo.id, avion).find((e) => e.id === idEjercicio) ??
+          ejerciciosPara(tramo.id, avion, oaciDe(sitio)).find((e) => e.id === idEjercicio) ??
           null;
         if (ejercicio) {
           leccion = LECCIONES.find((l) => l.id === ejercicio!.leccion) ?? leccion;

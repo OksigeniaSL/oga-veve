@@ -27,6 +27,8 @@
  * subiendo, porque quien sube ya está resolviendo el problema.
  */
 
+import { MARGENES } from "./minimos";
+
 /** Por debajo de esta altura sobre el suelo hay que mirar dónde se está, m. */
 const ATENCION = 120;
 
@@ -158,4 +160,48 @@ export function avisoDeTerreno(s: Cerca): AvisoDeTerreno {
   if (s.vertical >= 0) return null;
   if (s.sobreElSuelo < URGENTE && s.vertical < BAJANDO) return "sube";
   return s.vertical < BAJANDO ? "sube" : "bajo";
+}
+
+/** «La de aproximación y poco más»: hasta un veinte por ciento por encima. */
+export const DESPACIO_SOBRE_LA_DE_APROXIMACION = 1.2;
+
+/**
+ * **Si viene puesto para aterrizar**: ver `Cerca.puestoParaAterrizar`. Tren,
+ * flaps y ritmo de bajada, los tres a la vez, porque cada uno solo miente.
+ *
+ * - **En el avión que no lleva flaps**, lo que ellos decían —«vas lento»— lo
+ *   dice la velocidad: la de aproximación y poco más. Sin esto, en el
+ *   fumigador no había forma de estar puesto para aterrizar.
+ * - **El helicóptero, despacio, está maniobrando para posarse**, y se posa en
+ *   cualquier sitio: bajo y por debajo de su velocidad de aproximación con un
+ *   poco de margen, sin caer a plomo. El tren no cuenta —tiene su propio
+ *   aviso—. Deprisa y bajo, en cambio, sí se avisa.
+ *
+ * **La velocidad es la indicada**, porque la de aproximación de la ficha lo
+ * es: es la del anemómetro. Se comparaba la verdadera, y en un campo alto o
+ * con calor la misma indicada es más verdadera —en Los Rodeos, un cuatro y
+ * medio por ciento en la pista con 21 °C—, así que se dejaba de estar
+ * «puesto» unos puntos antes de donde tocaba. Es la misma mezcla que la
+ * enmienda H25d del ADR 0027 quitó de la banda de la aproximación.
+ *
+ * El ritmo, con el mismo número con el que los mínimos dicen que una
+ * aproximación se ha ido de las manos (`MARGENES.cayendo`): caer más que eso
+ * no es aterrizar, con la configuración que sea.
+ */
+export function vienePuestoParaAterrizar(
+  a: { readonly helicoptero?: unknown; readonly llevaFlaps: boolean; readonly approachSpeed: number },
+  ahora: {
+    /** El tren, de 0 a 1, y los flaps, de 0 a 1: lo pedido en la palanca. */
+    readonly tren: number;
+    readonly flaps: number;
+    /** La indicada, m/s. */
+    readonly indicada: number;
+    /** El ritmo vertical, m/s, positivo subiendo. */
+    readonly vertical: number;
+  },
+): boolean {
+  const despacio = ahora.indicada < a.approachSpeed * DESPACIO_SOBRE_LA_DE_APROXIMACION;
+  const sinCaer = ahora.vertical > MARGENES.cayendo;
+  if (a.helicoptero) return despacio && sinCaer;
+  return ahora.tren > 0.9 && (a.llevaFlaps ? ahora.flaps > 0.3 : despacio) && sinCaer;
 }
