@@ -274,7 +274,14 @@ viento y la avioneta que llega de cara a él) y la misma puerta: el hangar,
   dónde se ofrece y dónde empieza.
 - `scripts/ver-seguir-la-aguja.mjs`: el mismo vuelo en el juego, con la tecla
   8, el morse y el automático siguiendo la aguja, con y sin viento, y sus
-  capturas.
+  capturas. Con el modelo de vuelo de verdad y la avioneta, a 11,6 millas de
+  FV y a 948 m: con el alisio la estela se aparta 1.454 m de la recta (un 7 %)
+  y en calma 91 (un 0,4 %), y en los dos se cierra al pasar, con la aguja a
+  111° y a 180°. Y dos cosas que salieron ahí y se arreglaron: el plano ancho
+  enseñaba el archipiélago entero y la estela era una raya de quince píxeles
+  —con la estela puesta encuadra la casa y la estela (`camposConEstela`)—, y
+  el depósito, cargado para el vuelo de casa a casa, declaraba «minimum fuel»
+  a mitad de la curva: suma tres veces el tramo a lo que se quema esperando.
 
 ### Propuesta para la tanda siguiente: «¿En qué radial estoy?»
 
