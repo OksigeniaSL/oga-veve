@@ -182,6 +182,14 @@ export interface Ejercicio {
    * necesita un NDB en casa. Sin esto, vale en todos.
    */
   readonly dondeVale?: (oaci: string | null) => boolean;
+  /**
+   * **Si se cierra en el aire, lejos de la pista**: los de radio, que acaban
+   * con la aguja que da la vuelta o la barra quieta en el centro. Mientras
+   * duran, la pista y su gente no son de la lección —ni «andá a la pista», ni
+   * la torre, ni su frecuencia—, y se callan. Los demás en el aire acaban
+   * aterrizando, y eso sí es suyo. Ver `lo-que-calla-el-ejercicio.ts`.
+   */
+  readonly acabaEnElAire?: boolean;
 }
 
 /** Todos menos Guyrami: los peldaños que ya practican algo. */
@@ -388,6 +396,7 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     colocacion: "aguja",
     averias: [],
     escena: "radio",
+    acabaEnElAire: true,
     dondeVale: (oaci) => radioDeSalida(oaci).adf !== null,
     ensena:
       "la aguja del ADF apunta a la radio y no sabe de viento: seguida con viento de costado, la estela se curva; apuntando un poco al viento, sale recta",
@@ -408,6 +417,7 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     colocacion: "radial",
     averias: [],
     escena: "radio",
+    acabaEnElAire: true,
     dondeVale: (oaci) => radioDeSalida(oaci).nav !== null,
     ensena:
       "el VOR no dice hacia dónde ir sino en qué radial estás: el curso que centra la barra con FROM es tu radial, y girar el avión no lo cambia",
@@ -428,6 +438,7 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     colocacion: "interceptar",
     averias: [],
     escena: "radio",
+    acabaEnElAire: true,
     dondeVale: (oaci) => radioDeSalida(oaci).nav !== null,
     ensena:
       "a un radial se llega cortándolo a cuarenta y cinco grados y virando antes de que la barra llegue al centro, porque el avión gira en arco; y con viento, el morro se queda apuntando contra él",
