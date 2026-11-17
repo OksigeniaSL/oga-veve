@@ -251,3 +251,7 @@ solo que en esta no hubo.
   | Rodaje medio de la toma al puesto | 202,7 s | 191,9 s | 189,1 s |
   | «Parado a tu lado» | 0 | 1 (42,8 m) | 1 (43,2 m) |
   | Frustradas, dos en la pista, sin llegar | 9, 0, 0 | 9, 0, 0 | 9, 0, 0 |
+
+  Lo que no se ha hecho todavía es pasarlo por el navegador: el candado
+  estuvo ocupado hasta pasado el tope de la tanda. Ver «Sin pasar por el
+  navegador» en el ADR 0025.

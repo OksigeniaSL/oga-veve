@@ -499,9 +499,9 @@ principales.
 - **El avión dibujado cabecea sobre las principales**: el de quien juega (`Game.conLaRuedaEnVilo`) y el del tráfico
   mientras tiene el tractor dibujado (`colocar` en `trafico.ts`), con `morroEnVilo`: el cabeceo que sube la rueda de
   morro lo que levanta la pala, y lo que sube la referencia para que las principales no bajen al girar. Es la
-  presentación, como la inclinación con el suelo de `pendiente-bajo-el-tren.ts`: el modelo de vuelo no se toca. Medido
-  contra el suelo, el tren no flota ni se hunde: `verificar-ruedas` y el vuelo entero miden el punto más bajo del
-  avión, que siguen siendo las principales. En el JAZ 90 son 0,75° de morro arriba.
+  presentación, como la inclinación con el suelo de `pendiente-bajo-el-tren.ts`: el modelo de vuelo no se toca. Las
+  principales no se mueven (`remolque.test.ts` lo mide en la cuenta), y `verificar-ruedas` y el vuelo entero miden el
+  punto más bajo del avión, que siguen siendo ellas. En el JAZ 90 son 0,75° de morro arriba.
 - **La pala sube y baja con la rueda**, con su cara de arriba a lo que la levanta, y sin rueda que llevar no se dibuja.
   Va aparte de lo que se junta por material: el dibujo del remolque pasa de dieciocho llamadas de dibujo a diecinueve.
 - **La rueda, en medio de la cuna** (`CUNA_DEL_TRACTOR`): el tractor se ponía con la rueda a un metro de su trasera,
@@ -550,6 +550,12 @@ se rueda en El Hierro, no un dato que falte, y se deja para tomarla con calma. L
 fichero, son de un puesto al otro por el de en medio: del 3A (107,9, −25,8) al 3 (118,2, −44,9) por (112,9, −35); del
 2A (136,7, −80,6) al 2 (147,6, −101,5) por (142,2, −91,1); y del 1A (169,6, −144,2) al 1 (180,4, −165,3) por
 (175, −154,8).
+
+**Sin pasar por el navegador** (17-11-2026, H22a): la rueda en vilo, el tráfico de Los Rodeos y la salida de El
+Hierro se midieron con vitest y con el banco de mesa, pero no con la tarjeta de verdad. El candado del navegador
+estuvo ocupado por otros bancos hasta pasado el tope de esa tanda, y quedan por correr `verificar-ruedas`, el vuelo
+entero de Los Rodeos con el JAZ 90, las llegadas de El Hierro, `npm run rodaje` y una foto del tractor enganchado, de
+lado y de cerca.
 
 ## Lo que queda
 
