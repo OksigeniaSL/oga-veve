@@ -17578,6 +17578,15 @@ body.con-vuelta #tactil {
   overflow-wrap: anywhere;
 }
 
+/*
+ * Cada grupo del parte, de una pieza: la línea se parte entre grupos, como un
+ * METAR impreso. En línea y en bloque, para que solo se rompa por dentro si
+ * no cabe entero en el renglón. Ver `grupos` en `ui/tarjeta-del-tiempo.ts`.
+ */
+.parte__grupo {
+  display: inline-block;
+}
+
 .parte__metares {
   display: flex;
   flex-direction: column;

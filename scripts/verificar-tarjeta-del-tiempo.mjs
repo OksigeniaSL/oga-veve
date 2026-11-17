@@ -18,6 +18,11 @@
  * - y que **«no volver a explicar»** no sale la primera vez, sale la segunda,
  *   se guarda en el perfil y la tercera ya no se explica.
  *
+ * Y desde el peldaño de los números (`OGA_TRAMO=taguato`), que **la línea de
+ * cifras quepa**, VAPP incluida, con cada grupo entero en su renglón: en la
+ * tablet, en el teléfono tumbado —también con la barra del navegador— y de
+ * pie. Ver `medirLaLinea`.
+ *
  * Las capturas van a `OGA_CAPTURAS` si se da; el peldaño, en `OGA_TRAMO`.
  *
  * Uso: `OGA_PUERTO=5601 node scripts/verificar-tarjeta-del-tiempo.mjs`
@@ -56,8 +61,64 @@ const METAR = "GCXO 270630Z 31006KT 0300 FG VV002 14/14 Q1018";
 const PANTALLAS = [
   { ancho: 1024, alto: 600, dedo: true, nombre: "tablet apaisada" },
   { ancho: 800, alto: 360, dedo: true, nombre: "teléfono apaisado" },
+  /*
+   * **El teléfono pequeño con la barra del navegador puesta**, el peor caso
+   * que mide `verificar-carteles.mjs`: es donde la línea de cifras con la
+   * VAPP tiene menos sitio a lo ancho y a lo alto.
+   */
+  { ancho: 864, alto: 330, dedo: true, nombre: "teléfono apaisado con barra" },
   { ancho: 1280, alto: 800, dedo: false, nombre: "portátil" },
+  /*
+   * **Y de pie.** Con el dedo y de pie el juego tapa todo con el cartel de
+   * girar la pantalla (`.gira`), así que aquí solo se mide que la línea de
+   * cifras quepa en su caja, por si el cartel se quita o alguien lo mira en
+   * una ventana estrecha.
+   */
+  { ancho: 400, alto: 780, dedo: true, nombre: "teléfono de pie", soloLaLinea: true },
 ];
+
+/**
+ * **La línea de cifras del parte**, grupo a grupo: cada grupo —`WIND
+ * 310/06KT`, `VAPP 135KT (VREF 118+17)`— tiene que leerse entero en una
+ * línea, como en un METAR impreso, y nada puede salirse de su caja. Corre en
+ * la página.
+ */
+function medirLaLinea() {
+  const malos = [];
+  const lineas = [];
+  for (const p of document.querySelectorAll("#tarjeta-del-tiempo .parte__cifras")) {
+    const texto = p.textContent ?? "";
+    const caja = p.getBoundingClientRect();
+    const campo = p.closest(".parte__campo")?.getBoundingClientRect() ?? caja;
+    if (p.scrollWidth > p.clientWidth + 0.5 || caja.right > campo.right + 0.5)
+      malos.push(`se sale de su caja (${p.scrollWidth} de ${p.clientWidth})`);
+    // Los nodos de texto en orden, para pasar de un índice del texto a su sitio.
+    const nodos = [];
+    const paseo = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+    for (let n = paseo.nextNode(), desde = 0; n; n = paseo.nextNode()) {
+      nodos.push({ n, desde, hasta: desde + n.data.length });
+      desde += n.data.length;
+    }
+    const sitio = (i) => {
+      const x = nodos.find((k) => i >= k.desde && i <= k.hasta) ?? nodos[nodos.length - 1];
+      return [x.n, i - x.desde];
+    };
+    const tops = new Set();
+    let i = 0;
+    for (const grupo of texto.split(" · ")) {
+      const r = document.createRange();
+      r.setStart(...sitio(i));
+      r.setEnd(...sitio(i + grupo.length));
+      const filas = new Set([...r.getClientRects()].filter((c) => c.width > 0).map((c) => Math.round(c.top)));
+      for (const f of filas) tops.add(f);
+      if (filas.size > 1) malos.push(`«${grupo}» partido en ${filas.size} líneas`);
+      if (r.getBoundingClientRect().right > caja.right + 0.5) malos.push(`«${grupo}» se sale`);
+      i += grupo.length + 3;
+    }
+    lineas.push(`${Math.round(caja.width)} px, ${tops.size} líneas: ${texto}`);
+  }
+  return { malos, lineas, vapp: lineas.some((l) => l.includes("VAPP")) };
+}
 
 /** Lo que se toca dentro de la tarjeta y mide menos de una yema, o se sale, o lo tapa otra cosa. */
 function medirLaTarjeta() {
@@ -139,6 +200,27 @@ try {
       continue;
     }
     if (CAPTURAS) await page.screenshot({ path: `${CAPTURAS}/despues-${TRAMO}-${p.ancho}x${p.alto}-primera.png` });
+    // La línea de cifras sale desde el peldaño de los números; en los de abajo no hay.
+    const conCifras = TRAMO === "taguato" || TRAMO === "taguato-ruvicha";
+    if (conCifras) {
+      const l = await page.evaluate(medirLaLinea);
+      comprobar(
+        `${donde}: la línea de cifras cabe, con cada grupo entero y la VAPP`,
+        l.malos.length === 0 && l.vapp,
+        `${l.malos.join(" · ") || "cada grupo en su línea"}${l.vapp ? "" : " · sin VAPP"}\n    ${l.lineas.join("\n    ")}`,
+        "un grupo partido —«VAPP» al final de una línea y la cifra en la otra— no se lee como se lee en cabina",
+      );
+    }
+    if (p.soloLaLinea) {
+      const gira = await page.evaluate(() => {
+        const el = document.querySelector('[data-hud="gira"]');
+        return !!el && getComputedStyle(el).display !== "none";
+      });
+      console.log(`  (${donde}: ${gira ? "el cartel de girar la pantalla tapa la tarjeta" : "sin el cartel de girar"})`);
+      comprobar(`${donde}: sin errores en la página`, errores.length === 0, errores.slice(0, 3).join(" | ") || "ninguno", "");
+      await contexto.close();
+      continue;
+    }
     const m1 = await page.evaluate(medirLaTarjeta);
     comprobar(`${donde}: cabe entera`, m1.cabe, m1.caja, "en el teléfono apaisado la decisión tiene que verse sin desplazar");
     comprobar(
