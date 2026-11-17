@@ -12837,9 +12837,12 @@ button.motor__tecla::after {
  * Las columnas van en una caja de dentro, de alto libre, y la de fuera es la
  * que rueda: con el alto fijo en la de las columnas, lo que no cabía se iba a
  * otra columna por la derecha, fuera de la ficha (las radioayudas de Gran
- * Canaria en la tablet). Y la de fuera lleva la sombra de lo que queda por
- * debajo y por encima, que es lo que dice que hay más: un papel sin sombra
- * parece acabado.
+ * Canaria en la tablet). Y el borde de abajo de la de fuera se desvanece:
+ * la línea que se corta a medio borrar dice que sigue, y un papel cortado a
+ * cuchillo parece acabado. Las columnas llevan debajo ese mismo hueco, para
+ * que al final del todo lo que se desvanece sea papel y no letra. (Con
+ * sombras de fondo, la tapa lisa sobre el grano del papel se veía como una
+ * caja más clara.)
  */
 .ficha-carta__datos {
   grid-area: datos;
@@ -12850,19 +12853,14 @@ button.motor__tecla::after {
   overflow: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  background:
-    linear-gradient(var(--carta-papel) 30%, rgb(255 255 255 / 0)) center top,
-    linear-gradient(rgb(255 255 255 / 0), var(--carta-papel) 70%) center bottom,
-    radial-gradient(farthest-side at 50% 0, rgb(40 30 20 / 0.28), rgb(40 30 20 / 0)) center top,
-    radial-gradient(farthest-side at 50% 100%, rgb(40 30 20 / 0.28), rgb(40 30 20 / 0)) center bottom;
-  background-repeat: no-repeat;
-  background-size: 100% 36px, 100% 36px, 100% 14px, 100% 14px;
-  background-attachment: local, local, scroll, scroll;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent);
 }
 
 .ficha-carta__columnas {
   column-width: 210px;
   column-gap: 18px;
+  padding-bottom: 30px;
 }
 
 .ficha-carta__columnas > * {
@@ -13040,6 +13038,10 @@ button.motor__tecla::after {
   z-index: 3;
 }
 
+/*
+ * La cabeza se queda quieta y rueda el cuerpo: si rodaba la hoja entera, lo
+ * de la columna de la derecha pasaba por debajo de la cruz y no se leía.
+ */
 .iac {
   position: absolute;
   inset: 0;
@@ -13048,9 +13050,7 @@ button.motor__tecla::after {
   flex-direction: column;
   gap: 6px;
   padding: 4px 8px 8px 4px;
-  overflow: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
+  overflow: hidden;
   background-color: var(--carta-papel);
   background-image: var(--papel-grano, none);
   background-size: 256px 256px;
@@ -13128,10 +13128,15 @@ button.motor__tecla::after {
 
 .iac__cuerpo {
   display: grid;
+  flex: 1 1 auto;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   align-items: start;
   gap: 8px 14px;
+  min-height: 0;
   padding-left: 4px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .iac__dibujos,
@@ -13157,7 +13162,7 @@ button.motor__tecla::after {
 }
 
 /* La letra de los dibujos: la de las cifras de la carta, con su halo de papel. */
-:where(.iac-planta, .iac-perfil, .iac-msa) text {
+:where(.iac-planta text, .iac-perfil text, .iac-msa text) {
   font-family: var(--carta-letra-cifras);
   font-weight: 600;
   fill: var(--carta-tinta);
@@ -13203,13 +13208,13 @@ button.motor__tecla::after {
   text-anchor: middle;
 }
 
-.iac-perfil__rdh,
-.iac-perfil__nm {
+.iac-perfil__rdh {
   font-size: 11.5px;
+  text-anchor: middle;
 }
 
-.iac-perfil__rdh {
-  text-anchor: middle;
+.iac-perfil__nm {
+  font-size: 11.5px;
 }
 
 .iac-perfil__cota {
@@ -13239,15 +13244,17 @@ button.motor__tecla::after {
   stroke-dasharray: 3 2;
 }
 
-.iac-perfil__frustrada,
+.iac-perfil__frustrada {
+  fill: none;
+  stroke: var(--carta-tinta);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+}
+
 .iac-perfil__punta {
   fill: none;
   stroke: var(--carta-tinta);
   stroke-width: 1.5;
-}
-
-.iac-perfil__frustrada {
-  stroke-dasharray: 5 3;
 }
 
 .iac-planta__pista {
@@ -13442,11 +13449,11 @@ button.motor__tecla::after {
 
 .iac__pie {
   display: flex;
+  grid-column: 1 / -1;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 2px 12px;
-  margin-top: auto;
-  padding: 4px 4px 0;
+  padding: 0 4px;
   font-size: 12px;
 }
 

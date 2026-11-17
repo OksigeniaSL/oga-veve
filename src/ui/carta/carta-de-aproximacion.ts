@@ -393,10 +393,10 @@ function pagina(e: Scenario, cabecera: string, c: CartaDeAproximacion, i: number
           ${msa}
           ${frustrada}
         </div>
-      </div>
-      <div class="iac__pie">
-        <small>${c.altitudDeTransicion !== null ? `TA ${c.altitudDeTransicion} · ` : ""}${c.carta} · ${c.fuente}</small>
-        <small class="iac__descargo">${t("carta.descargo")}</small>
+        <div class="iac__pie">
+          <small>${c.altitudDeTransicion !== null ? `TA ${c.altitudDeTransicion} · ` : ""}${c.carta} · ${c.fuente}</small>
+          <small class="iac__descargo">${t("carta.descargo")}</small>
+        </div>
       </div>
     </div>`;
 }

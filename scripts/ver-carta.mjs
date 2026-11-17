@@ -107,9 +107,9 @@ try {
               await carta.screenshot({ path: `${nombre}-ficha-abajo.png` });
               await page.click(`${ficha} .ficha-carta__iac`);
               await carta.screenshot({ path: `${nombre}-iac.png` });
-              await page.$eval(`${ficha} .iac--0`, (d) => (d.scrollTop = d.scrollHeight));
+              await page.$eval(`${ficha} .iac--0 .iac__cuerpo`, (d) => (d.scrollTop = d.scrollHeight));
               await carta.screenshot({ path: `${nombre}-iac-abajo.png` });
-              await page.$eval(`${ficha} .iac--0`, (d) => (d.scrollTop = 0));
+              await page.$eval(`${ficha} .iac--0 .iac__cuerpo`, (d) => (d.scrollTop = 0));
               const otra = await page.$(`${ficha} .iac--0 .iac__pestana:not(.iac__pestana--esta)`);
               if (otra) {
                 await otra.click();
@@ -118,8 +118,9 @@ try {
               // Cuánto mide la hoja abierta y cuánto queda por rodar: lo que no se ve al abrirla.
               const medida = await page.$eval(ficha, (f) => {
                 const abierta = [...f.querySelectorAll(".iac")].find((el) => getComputedStyle(el).display !== "none");
-                return abierta
-                  ? `iac ${abierta.clientWidth}×${abierta.clientHeight}, rueda ${abierta.scrollHeight - abierta.clientHeight} px`
+                const cuerpo = abierta?.querySelector(".iac__cuerpo");
+                return abierta && cuerpo
+                  ? `iac ${abierta.clientWidth}×${abierta.clientHeight}, rueda ${cuerpo.scrollHeight - cuerpo.clientHeight} px`
                   : "iac cerrada";
               });
               console.log(`    ${medida}`);

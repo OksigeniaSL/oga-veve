@@ -896,7 +896,7 @@ function fichaDelCampo(e: Scenario, p: readonly [number, number], d: DeLaCarta):
    * fijo, lo que no cabía se iba a una columna de más por la derecha, fuera
    * de la ficha, y en Gran Canaria las radioayudas no se veían. Así las
    * columnas se reparten lo que haya y lo que sobra se baja rodando, con la
-   * sombra de abajo diciendo que hay más.
+   * línea de abajo desvaneciéndose para decir que hay más.
    */
   const datos = calcos.nombres
     ? `<div class="ficha-carta__datos"><div class="ficha-carta__columnas">

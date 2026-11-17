@@ -449,8 +449,13 @@ mínimos y lo demás.
   periódico con el alto fijo, y lo que no cabía se iba a otra columna por la
   derecha, fuera de la ficha; en la tablet, las radioayudas no se veían. Ahora
   las columnas van en una caja de dentro de alto libre, la de fuera rueda de
-  arriba abajo, y lleva la sombra de lo que queda por debajo, que es lo que
-  dice que hay más.
+  arriba abajo, y su borde de abajo se desvanece: la línea cortada a medio
+  borrar es lo que dice que hay más. Con sombras de fondo la tapa lisa se veía
+  sobre el grano del papel como una caja más clara, y se quitaron. En la
+  tablet, las radioayudas de Gran Canaria salen rodando la columna; en el
+  teléfono tumbado la columna es corta —la ficha mide 222 px de alto— y casi
+  todo va rodando, con el botón de la carta de aproximación arriba, debajo
+  del nombre.
 - **TUVIL es el intermedio de la 19 de Fuerteventura**: la carta lo rotula
   «(IF)» en la planta y en el perfil (AD 2-GCFV IAC 16.1, mirada en la página
   bajada por H24a); su «TF» de la tabla codificada es el tipo de tramo, no el
