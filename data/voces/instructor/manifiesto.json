@@ -19,6 +19,98 @@
       "ms": 8107,
       "h": "9f860f52b5"
     },
+    "carta.toca.aerodromo": {
+      "ms": 5707,
+      "h": "d7fdd1e83e"
+    },
+    "carta.toca.afis": {
+      "ms": 7407,
+      "h": "2056d3a115"
+    },
+    "carta.toca.app": {
+      "ms": 7407,
+      "h": "2d305c7991"
+    },
+    "carta.toca.atis": {
+      "ms": 7707,
+      "h": "2c58bd6972"
+    },
+    "carta.toca.avion": {
+      "ms": 1848,
+      "h": "da81693807"
+    },
+    "carta.toca.calle": {
+      "ms": 6507,
+      "h": "f0fe67f5ae"
+    },
+    "carta.toca.dme": {
+      "ms": 6707,
+      "h": "dbf2343bb0"
+    },
+    "carta.toca.faf": {
+      "ms": 5507,
+      "h": "a3d21fa19f"
+    },
+    "carta.toca.frecuencia": {
+      "ms": 5407,
+      "h": "a2fdc8085a"
+    },
+    "carta.toca.frustrada": {
+      "ms": 7807,
+      "h": "643e2a086a"
+    },
+    "carta.toca.gnd": {
+      "ms": 6907,
+      "h": "19c1bd5ad7"
+    },
+    "carta.toca.if": {
+      "ms": 5707,
+      "h": "3bd456a586"
+    },
+    "carta.toca.ils": {
+      "ms": 10507,
+      "h": "6218b66c59"
+    },
+    "carta.toca.mapt": {
+      "ms": 7107,
+      "h": "2bcfb8bf96"
+    },
+    "carta.toca.minimos": {
+      "ms": 8407,
+      "h": "5338bd0c42"
+    },
+    "carta.toca.msa": {
+      "ms": 8707,
+      "h": "fcf91f7aea"
+    },
+    "carta.toca.ndb": {
+      "ms": 8807,
+      "h": "cba1d96dab"
+    },
+    "carta.toca.norte": {
+      "ms": 6307,
+      "h": "fa3fc35129"
+    },
+    "carta.toca.pista": {
+      "ms": 6607,
+      "h": "974feb6552"
+    },
+    "carta.toca.plataforma": {
+      "ms": 5807,
+      "h": "6bb423ec2b"
+    },
+    "carta.toca.taa": {
+      "ms": 9607,
+      "h": "812382edf2"
+    },
+    "carta.toca.twr": {
+      "ms": 7207,
+      "h": "cdd678a649"
+    },
+    "carta.toca.vor": {
+      "ms": 10607,
+      "h": "9c9e5ee6f0"
+    },
     "circuito.base": {
       "ms": 2873,
       "h": "013c255422"
@@ -5256,6 +5348,75 @@
     ],
     "vuelo.avisoDeConfiguracionCompensador": [
       "vuelo.avisoDeConfiguracionCompensador"
+    ],
+    "carta.toca.aerodromo": [
+      "carta.toca.aerodromo"
+    ],
+    "carta.toca.afis": [
+      "carta.toca.afis"
+    ],
+    "carta.toca.app": [
+      "carta.toca.app"
+    ],
+    "carta.toca.atis": [
+      "carta.toca.atis"
+    ],
+    "carta.toca.avion": [
+      "carta.toca.avion"
+    ],
+    "carta.toca.calle": [
+      "carta.toca.calle"
+    ],
+    "carta.toca.dme": [
+      "carta.toca.dme"
+    ],
+    "carta.toca.faf": [
+      "carta.toca.faf"
+    ],
+    "carta.toca.frecuencia": [
+      "carta.toca.frecuencia"
+    ],
+    "carta.toca.frustrada": [
+      "carta.toca.frustrada"
+    ],
+    "carta.toca.gnd": [
+      "carta.toca.gnd"
+    ],
+    "carta.toca.if": [
+      "carta.toca.if"
+    ],
+    "carta.toca.ils": [
+      "carta.toca.ils"
+    ],
+    "carta.toca.mapt": [
+      "carta.toca.mapt"
+    ],
+    "carta.toca.minimos": [
+      "carta.toca.minimos"
+    ],
+    "carta.toca.msa": [
+      "carta.toca.msa"
+    ],
+    "carta.toca.ndb": [
+      "carta.toca.ndb"
+    ],
+    "carta.toca.norte": [
+      "carta.toca.norte"
+    ],
+    "carta.toca.pista": [
+      "carta.toca.pista"
+    ],
+    "carta.toca.plataforma": [
+      "carta.toca.plataforma"
+    ],
+    "carta.toca.taa": [
+      "carta.toca.taa"
+    ],
+    "carta.toca.twr": [
+      "carta.toca.twr"
+    ],
+    "carta.toca.vor": [
+      "carta.toca.vor"
     ]
   }
 }
