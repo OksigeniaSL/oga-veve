@@ -556,8 +556,10 @@ presentación antes y el panel del final con la traza.
   corrección de arriba. En calma, el morro iba 4,2° apartado del curso al
   cerrar, con la barra aún a medio grado: era el piloto acercándose, y el
   ejercicio, que mide contra el camino, ya había elegido la frase sin
-  viento. El banco ahora mira lo mismo que el ejercicio. Lo que no ha volado
-  el banco: un reactor, que solo está en la prueba de mesa.
+  viento. El banco ahora mira lo mismo que el ejercicio, pero esa versión
+  no ha volado todavía: la cola del navegador estaba llena, y queda para la
+  ronda de cierre. Lo que no ha volado el banco: un reactor, que solo está en
+  la prueba de mesa.
 
 ### Propuesta para la tanda siguiente: «Dos radiales que se cortan»
 
