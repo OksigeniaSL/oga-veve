@@ -43,25 +43,39 @@ describe("la marca de despegue", () => {
     }
   });
 
-  it("es el timón que sostiene el avión a 1,3 veces su pérdida con los flaps de despegue", () => {
+  it("es el timón que sostiene el avión a 1,2 veces su pérdida con los flaps de despegue", () => {
     const flaps = flapsDeDespegue(PANAMBI);
     const v = Math.max(PANAMBI.rotationSpeed, perdidaCon(PANAMBI, flaps) * SUBE_SOBRE_LA_PERDIDA);
     expect(compensadorDeDespegue(PANAMBI).marca).toBeCloseTo(timonQueSostiene(PANAMBI, v, flaps), 6);
     // Y la franja, entre las de 1,15 y 1,3.
-    const lenta = timonQueSostiene(PANAMBI, perdidaCon(PANAMBI, flaps) * FRANJA_SOBRE_LA_PERDIDA.lenta, flaps);
+    const lenta = timonQueSostiene(
+      PANAMBI,
+      Math.max(PANAMBI.rotationSpeed, perdidaCon(PANAMBI, flaps) * FRANJA_SOBRE_LA_PERDIDA.lenta),
+      flaps,
+    );
     expect(compensadorDeDespegue(PANAMBI).hasta).toBeCloseTo(lenta, 6);
   });
 
   /*
    * **Con la velocidad atada a la pérdida, el peso se va de la cuenta**: el
    * ala vuela al mismo ángulo pese lo que pese. Lo que mueve la marca en un
-   * avión de verdad es el centro de gravedad, que este modelo no tiene.
+   * avión de verdad es el centro de gravedad, que este modelo no tiene. Salvo
+   * donde manda la Vr: más ligero, 1,2 veces la pérdida cae por debajo de
+   * ella, y a la misma velocidad un avión más ligero pide menos morro arriba.
    */
-  it("sale igual con el avión lleno y vacío", () => {
+  it("sale igual con el peso de la ficha y más cargado", () => {
     for (const a of DE_ALA) {
+      const ficha = compensadorDeDespegue(a).marca;
       const lleno = compensadorDeDespegue(conMasa(a, a.mass * 1.1)).marca;
-      const ligero = compensadorDeDespegue(conMasa(a, a.mass * 0.9)).marca;
-      expect(lleno, a.id).toBeCloseTo(ligero, 2);
+      expect(lleno, a.id).toBeCloseTo(ficha, 2);
+    }
+  });
+
+  it("y más ligero, donde manda la Vr, con menos morro arriba", () => {
+    for (const a of DE_ALA) {
+      const ficha = compensadorDeDespegue(a).marca;
+      const ligero = compensadorDeDespegue(conMasa(a, a.mass * 0.85)).marca;
+      expect(ligero, a.id).toBeLessThanOrEqual(ficha + 0.005);
     }
   });
 
