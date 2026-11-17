@@ -26,6 +26,7 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { mkdirSync } from "node:fs";
 import { baseDe } from "./servidor.mjs";
+import { vigilarLoAjeno } from "./lo-ajeno-al-ejercicio.mjs";
 
 const SALIDA = process.argv[2] ?? "capturas-aguja";
 const PUERTO = Number(process.env.OGA_PUERTO ?? 5687);
@@ -59,7 +60,7 @@ const comprobar = (nombre, ok, detalle = "") => {
 };
 
 /** Lo que dice el ejercicio, el ADF y el morse, y dónde está el avión. */
-const leer = (page) =>
+const leerSolo = (page) =>
   page.evaluate(() => {
     const o = globalThis.__oga;
     const j = o.juegoParaTrazas();
@@ -85,6 +86,14 @@ const leer = (page) =>
     };
   });
 
+/** Lo que no es del ejercicio, mirado en cada lectura mientras dura (H26f); uno por vuelo. */
+let ajeno = vigilarLoAjeno();
+const leer = async (page) => {
+  const r = await leerSolo(page);
+  await ajeno.mirar(page, r.aguja && r.aguja.fase !== "cerrada");
+  return r;
+};
+
 /** El rumbo del automático, rad, como lo lleva el juego. */
 const rumboAlAutomatico = (page, rumbo) =>
   page.evaluate((r) => {
@@ -96,6 +105,7 @@ let codigo = 0;
 try {
   for (const vuelo of VUELOS) {
     console.log(`\n${vuelo.nombre}`);
+    ajeno = vigilarLoAjeno();
     const contexto = await navegador.newContext({
       viewport: { width: 1280, height: 800 },
       deviceScaleFactor: 1,
@@ -187,6 +197,8 @@ try {
       comprobar("con el alisio, la estela se curva (la curva del perro)", parte > 0.04, `${Math.round(a.desvio)} m de ${Math.round(a.lejosAlEmpezar ?? 0)}: ${(parte * 100).toFixed(1)} %`);
     else
       comprobar("en calma, la estela sale recta", parte < 0.02, `${Math.round(a.desvio)} m de ${Math.round(a.lejosAlEmpezar ?? 0)}: ${(parte * 100).toFixed(1)} %`);
+    // Nada que no sea del ejercicio (H26f): ni la fase del plan, ni la torre, ni la frecuencia, ni la ventanilla.
+    await ajeno.comprobar(page, comprobar, /^aguja-/);
     // El panel del final, con la traza en el plano: ocho segundos y medio de juego después.
     await pausa(4000);
     await foto("05-final");

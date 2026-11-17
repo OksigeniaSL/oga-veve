@@ -256,6 +256,7 @@ export class InterceptarUnRadial {
   private morroSumado = 0;
   private desde: PuntoDelMundo | null = null;
   private comoCerro: CierreDelCorte | null = null;
+  private correccionMedida: number | null = null;
 
   constructor(
     readonly ejercicio: Ejercicio,
@@ -287,6 +288,11 @@ export class InterceptarUnRadial {
     return this.comoCerro;
   }
 
+  /** La corrección de viento que midió al quedar establecido, grados: lo mira el banco. */
+  get correccion(): number | null {
+    return this.correccionMedida;
+  }
+
   /** Lo más que la barra se fue al otro lado, grados: lo mira el banco. */
   get loQueSePaso(): number {
     return this.pasadoMaximo;
@@ -314,6 +320,7 @@ export class InterceptarUnRadial {
     this.morroSumado = 0;
     this.desde = null;
     this.comoCerro = null;
+    this.correccionMedida = null;
   }
 
   paso(l: LecturaDelCorte, dt: number): SucesoDelCorte[] {
@@ -398,6 +405,7 @@ export class InterceptarUnRadial {
     if (this.enElCentro >= ESTABLECIDO && this.desde) {
       const camino = Math.atan2(l.x - this.desde.x, -(l.z - this.desde.z)) / GRADO;
       const correccion = centrado(this.morroSumado / this.enElCentro - centrado(camino - cursoVerdadero));
+      this.correccionMedida = correccion;
       sucesos.push({ que: "establecido", correccion });
       this.cerrar("hecho", sucesos);
     }
