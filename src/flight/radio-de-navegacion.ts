@@ -76,6 +76,7 @@
 import { declinacion as declinacionWmm } from "../ui/carta/declinacion";
 import type { Estacion } from "../world/radioayudas-publicadas";
 import { RADIOAYUDAS, TODAS_LAS_ESTACIONES } from "../world/radioayudas-publicadas";
+import { SENDAS } from "../world/sendas-publicadas";
 
 const GRADO = Math.PI / 180;
 /** Radio terrestre medio, m: el de `world/entre-aerodromos.ts`. */
@@ -255,6 +256,31 @@ export interface LecturaNav {
   /** **La bandera**: sin señal, encima de la estación o de través. Con ella, la aguja no vale. */
   readonly bandera: boolean;
   readonly distanciaNm: number | null;
+  /**
+   * **La senda de planeo**, con un localizador que la tiene: su aguja
+   * horizontal, o el rombo. `null` con un VOR, o con un ILS cuya senda no
+   * se sabe. Ver `leerSenda`.
+   */
+  readonly senda?: LecturaSenda | null;
+}
+
+/** Lo que dice la aguja de la senda de planeo. */
+export interface LecturaSenda {
+  /** El ángulo de la senda, grados: el que publica el AIP de esa cabecera. */
+  readonly angulo: number;
+  /**
+   * Cuánto va el avión **por encima** de la senda, grados de elevación vistos
+   * desde su antena; negativo, por debajo. `null` con bandera.
+   */
+  readonly desviacion: number | null;
+  /**
+   * Lo mismo en **puntos** de su escala, sin tope: dos puntos son la aguja a
+   * fondo (`ESCALA_DE_LA_SENDA`). Positivo, por encima: la aguja se va abajo,
+   * hacia donde está la senda.
+   */
+  readonly puntos: number | null;
+  /** La bandera GS: sin señal, fuera de su sector o encima de él. */
+  readonly bandera: boolean;
 }
 
 /** Cuántos grados son la aguja a tope: diez en un VOR, dos y medio en un localizador. */
@@ -388,7 +414,12 @@ export function leerNav(
      * grados—, el eje le queda a su derecha mirando a la pista.
      */
     const lado = centrado(g.desdeLaEstacion - (rv + 180));
-    return { ...muda, emisora, localizador: true, desviacion: lado, bandera: false, distanciaNm };
+    /*
+     * La antena de la senda, a la cota de la pista: la misma que la del
+     * localizador, que la da quien llama con su terreno.
+     */
+    const senda = leerSenda(emisora, a, elevacion ? elevacion(emisora) : 0);
+    return { ...muda, emisora, localizador: true, desviacion: lado, bandera: false, distanciaNm, senda };
   }
   const radial = vuelta(g.desdeLaEstacion + emisora.declinacion);
   const elevacionDesdeLaEstacion = Math.atan2(g.alturaSobreLaEstacionFt * PIE, g.horizontalNm * MILLA) / GRADO;
@@ -413,6 +444,110 @@ export function leerNav(
     bandera,
     distanciaNm,
   };
+}
+
+// ── La senda de planeo ───────────────────────────────────────────────────
+
+/**
+ * **La senda emparejada con cada localizador**, MHz: la tabla del Anexo 10,
+ * vol. I, 3.1.6.1.1. Las cuarenta frecuencias de localizador de 108 a 112
+ * con decimal impar van cada una con una de UHF de 329,15 a 335 MHz, y el
+ * receptor de a bordo sintoniza la senda sola al poner el localizador: en la
+ * cabina no hay mando de la senda. Lo que publica el AD 2.19 de cada campo
+ * casa con esta tabla en todos (lo mira la prueba).
+ */
+export const SENDA_EMPAREJADA: Readonly<Record<string, number>> = {
+  "108.10": 334.7, "108.15": 334.55, "108.30": 334.1, "108.35": 333.95,
+  "108.50": 329.9, "108.55": 329.75, "108.70": 330.5, "108.75": 330.35,
+  "108.90": 329.3, "108.95": 329.15, "109.10": 331.4, "109.15": 331.25,
+  "109.30": 332.0, "109.35": 331.85, "109.50": 332.6, "109.55": 332.45,
+  "109.70": 333.2, "109.75": 333.05, "109.90": 333.8, "109.95": 333.65,
+  "110.10": 334.4, "110.15": 334.25, "110.30": 335.0, "110.35": 334.85,
+  "110.50": 329.6, "110.55": 329.45, "110.70": 330.2, "110.75": 330.05,
+  "110.90": 330.8, "110.95": 330.65, "111.10": 331.7, "111.15": 331.55,
+  "111.30": 332.3, "111.35": 332.15, "111.50": 332.9, "111.55": 332.75,
+  "111.70": 333.5, "111.75": 333.35, "111.90": 331.1, "111.95": 330.95,
+};
+
+/** La senda que va con esta frecuencia de localizador, MHz; `null` si no es de localizador. */
+export function sendaEmparejada(mhzLoc: number): number | null {
+  return SENDA_EMPAREJADA[mhzLoc.toFixed(2)] ?? null;
+}
+
+/**
+ * **La escala de la senda**: la aguja a fondo a 0,24 veces el ángulo de la
+ * senda por encima o por debajo, que es el borde del sector de la senda —la
+ * diferencia de modulación de 0,175— del Anexo 10, vol. I, 3.1.5.6.4 y su
+ * adjunto C: con tres grados, 0,72°, el «±0,7°» de los manuales, y 1,44° de
+ * ancho total. Dos puntos a cada lado, como el CDI: un punto, 0,12 veces el
+ * ángulo, tres décimas y media con tres grados (`GRADOS_POR_PUNTO` de
+ * `perfil-vertical.ts`, que es el mismo número).
+ */
+export const ESCALA_DE_LA_SENDA = 0.24;
+/** Los puntos de la escala a cada lado, en la senda y en el CDI: dos. */
+export const PUNTOS_DE_LA_ESCALA = 2;
+/** Hasta dónde llega la senda, NM: diez (Anexo 10, vol. I, 3.1.5.3.1). */
+export const ALCANCE_GS_NM = 10;
+/** Y a cuántos grados a cada lado del eje: ocho (el mismo apartado). */
+export const SECTOR_GS = 8;
+/**
+ * Hasta qué elevación, en veces el ángulo de la senda: 1,75 (el mismo
+ * apartado). Por encima la señal no se garantiza —y a tres veces el ángulo
+ * hay una senda falsa—: bandera. Por debajo sí llega, hasta el suelo, para
+ * que la aguja diga «subí» a quien viene bajo: la captura se hace desde
+ * abajo.
+ */
+export const GS_HASTA = 1.75;
+
+/**
+ * **El ángulo de la senda de un ILS**, grados: el de su senda de planeo en
+ * la tabla de las sendas de su AIP (`SENDAS`), o, si no se leyó, el de su
+ * PAPI, que en una pista con ILS se regla con la senda (Anexo 14, 5.3.5);
+ * `null` si no hay ninguno de los dos. Así lo marca la aguja y así lo pinta
+ * el rombo de la pantalla de vuelo (`sendaDeLaCabecera`).
+ */
+export function anguloDeLaSenda(e: Estacion): number | null {
+  if (e.clase !== "ILS" || !e.pista) return null;
+  const s = SENDAS[e.oaci]?.[e.pista];
+  return s?.senda ?? s?.papi ?? null;
+}
+
+/**
+ * **Lo que marca la aguja de la senda** con este localizador sintonizado.
+ * La senda sale de su antena, al lado de la pista y a unos trescientos metros
+ * del umbral (`Estacion.senda`): es un cono alrededor de ella, y la aguja
+ * dice la elevación del avión vista desde su pie contra el ángulo publicado.
+ * Así, sobre el umbral, la senda pasa a unos quince metros, que es la altura
+ * de referencia del ILS.
+ *
+ * Bandera: sin la senda emparejada, a más de diez millas, a más de ocho
+ * grados del eje o por encima de 1,75 veces el ángulo.
+ */
+export function leerSenda(e: Emisora, a: Avion, elevacionDeLaAntena: number): LecturaSenda | null {
+  const s = e.estacion;
+  const angulo = anguloDeLaSenda(s);
+  if (!s.senda || angulo === null || s.rumboVerdadero === null) return null;
+  const muda: LecturaSenda = { angulo, desviacion: null, puntos: null, bandera: true };
+  const emparejada = sendaEmparejada(e.mhz);
+  if (emparejada === null || s.mhzSenda === null || !mismaFrecuencia(emparejada, s.mhzSenda)) return muda;
+  const horizontal = distanciaOrtodromica(a, s.senda);
+  if (horizontal / MILLA > ALCANCE_GS_NM) return muda;
+  const fuera = Math.abs(centrado(rumboOrtodromico(s.senda, a) - (s.rumboVerdadero + 180)));
+  if (fuera > SECTOR_GS) return muda;
+  const elevacion = Math.atan2(a.altitud - elevacionDeLaAntena, horizontal) / GRADO;
+  if (elevacion > GS_HASTA * angulo) return muda;
+  const desviacion = elevacion - angulo;
+  return { angulo, desviacion, puntos: puntosDeLaSenda(desviacion, angulo), bandera: false };
+}
+
+/** **Grados de senda en puntos**: dos a `ESCALA_DE_LA_SENDA` veces el ángulo. */
+export function puntosDeLaSenda(desviacion: number, angulo: number): number {
+  return (desviacion / (ESCALA_DE_LA_SENDA * angulo)) * PUNTOS_DE_LA_ESCALA;
+}
+
+/** **Grados de localizador en puntos**: dos a `ESCALA_LOC`. */
+export function puntosDelLocalizador(desviacion: number): number {
+  return (desviacion / ESCALA_LOC) * PUNTOS_DE_LA_ESCALA;
 }
 
 // ── Qué lleva cada avión ─────────────────────────────────────────────────

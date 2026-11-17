@@ -3143,6 +3143,40 @@ for (const [id, para] of DEL_CRUCE) {
   total += texto.length;
 }
 
+/*
+ * **«Aterrizar con las agujas»** (#51, el peldaño del ILS): el localizador
+ * cortado de costado, la senda capturada desde abajo y las dos agujas en cruz
+ * hasta los mínimos; ahí, la pista o la frustrada, que se felicita igual.
+ * Genéricas, sin el nombre del ILS, su frecuencia ni su curso, que van
+ * escritos en la tarjeta como en una carta de aproximación. En calma, como
+ * todo ejercicio. Ver `src/flight/ils-con-agujas.ts` y el ADR 0030, enmienda
+ * H26i.
+ */
+const DEL_ILS = [
+  ["ejercicio.ils.antes", "aterrizar con las agujas, antes de empezar: el ILS en la NAV y qué dice cada aguja"],
+  ["ejercicio.ils.sintonizar", "aterrizar con las agujas: se quitó el ILS de la NAV, volver a ponerlo"],
+  ["ejercicio.ils.aTope", "aterrizar con las agujas: la aguja del localizador a tope, cortándolo de costado"],
+  ["ejercicio.ils.seMueve", "aterrizar con las agujas: la aguja del localizador se despega, virar ya"],
+  ["ejercicio.ils.enElLocalizador", "aterrizar con las agujas: establecido en el localizador, la senda todavía arriba"],
+  ["ejercicio.ils.capturada", "aterrizar con las agujas: la senda capturada desde abajo, las dos agujas en cruz"],
+  ["ejercicio.ils.pista", "aterrizar con las agujas: los mínimos con las dos agujas dentro, y la pista a la vista"],
+  ["ejercicio.ils.frustrada", "aterrizar con las agujas: los mínimos con una aguja fuera, la frustrada felicitada"],
+];
+for (const [id, para] of DEL_ILS) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
   ...filas.map((f) =>

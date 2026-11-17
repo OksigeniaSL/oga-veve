@@ -1883,3 +1883,229 @@ que se pisan):
   fotograma, solo cuando cambia lo que se lee o lo que se toca; queda medir en
   la tablet de gama media cuánto cuesta cuando corre.
 
+
+## Enmienda H26i (17-11-2026): «Aterrizar con las agujas»
+
+La propuesta de H26g, hecha en parte, y lo que cambió al hacerla. Es el quinto
+ejercicio de radio y el peldaño 6 de #51: **bajar hasta una pista que no se
+ve, con dos agujas**.
+
+### La senda de planeo, en la radio
+
+La NAV ya recibía el localizador; la senda solo estaba en el rombo de la
+pantalla de vuelo, sacada de la geometría de la pista (`perfil-vertical.ts`),
+y en un avión sin ella —la avioneta— no había ninguna. Ahora la NAV con un
+localizador marca también su senda (`leerSenda`, en `LecturaNav.senda`), como
+un receptor de verdad:
+
+- **De su antena**: la posición de la senda del AD 2.19 (`Estacion.senda`), al
+  lado de la pista y a unos trescientos metros del umbral. La aguja dice la
+  elevación del avión vista desde su pie contra el ángulo: sobre el umbral, la
+  senda pasa a unos quince metros, la altura de referencia del ILS.
+- **Con el ángulo publicado**: el de la senda de esa cabecera en la tabla de
+  sendas de su AIP (`SENDAS`, el mismo que pinta el rombo); si no se leyó, el
+  de su PAPI, que en una pista con ILS se regla con la senda (Anexo 14,
+  5.3.5); y si no hay ninguno de los dos —Mariscal Estigarribia—, sin senda.
+  La 19 de Fuerteventura, 3,45°.
+- **Con su escala**: a fondo a 0,24 veces el ángulo, el borde del sector de la
+  senda (DDM 0,175; Anexo 10, vol. I, 3.1.5.6.4 y adjunto C): con tres grados,
+  0,72° —el «±0,7°» y el haz de 1,4° de los manuales—, dos puntos, uno a 0,12
+  veces el ángulo. Es el mismo número que ya usaba el rombo
+  (`GRADOS_POR_PUNTO`, 0,35). El localizador sigue a tope a 2,5°: un punto,
+  1,25°.
+- **Con su alcance**: diez millas y ocho grados a cada lado del eje, y hasta
+  1,75 veces el ángulo por arriba (Anexo 10, vol. I, 3.1.5.3.1); fuera,
+  **bandera GS**. Por debajo no hay bandera: llega hasta el suelo, a fondo
+  hacia arriba, que es la que dice «subí» a quien viene bajo y la que deja
+  capturarla desde abajo.
+- **Emparejada**: la frecuencia de la senda sale de su fila del AD 2.19
+  (`Estacion.mhzSenda`), y el receptor la pone sola al sintonizar el
+  localizador, con la tabla de emparejamiento del Anexo 10, vol. I, 3.1.6.1.1
+  (`SENDA_EMPAREJADA`). Lo publicado casa con la tabla en todos los ILS del
+  juego, y lo mira la prueba.
+
+**En el HSI**, la escala de la senda a la derecha de la rosa, sin girar con
+ella: cuatro puntos, la raya del centro y el rombo magenta, que baja cuando se
+va alto; con la bandera, el rombo se esconde y sale «GS» en rojo. En la
+pantalla de navegación de los de cristal y de línea, como el puntero de la
+senda de un Boeing en modo de aproximación; en el direccional hecho HSI de los
+de pistón, como el de una avioneta. Con un VOR no sale.
+
+### «Aterrizar con las agujas»
+
+`flight/ils-con-agujas.ts`, otra entrada de `EJERCICIOS` —`ils`, con
+`escena: "radio"` y su `colocacion` propia—, con su ficha en el hangar (de
+perfil, la capa de nubes arriba con las dos agujas en cruz dentro, la senda a
+rayas bajando a la pista y el avión saliendo por la base de la nube) y la
+misma puerta que los otros cuatro: el hangar, `?ejercicio=ils`, la
+presentación y el panel del final con la traza.
+
+- **Dónde se ofrece**: en el peldaño de cabina, en todo avión con NAV y en todo
+  campo con un ILS cuya senda se sepa (`ilsDelCampo`): las dos cabeceras de
+  Fuerteventura (la 19 a 3,45°), Los Rodeos y Tenerife Sur; la 03L y la 21R de
+  Gran Canaria; la 03 de Lanzarote; las cuatro de llegadas de Barajas; la 23
+  de Guaraní, y la 20 de Asunción y la de Encarnación, con el ángulo de su
+  PAPI. Mariscal Estigarribia, que tiene ILS sin ángulo leído, no. Se vuela el
+  de la cabecera en uso y, si ésa no tiene, el del campo. Se vende al mundo:
+  Fuerteventura es donde lo vuela el banco.
+- **No acaba en el aire**: es el primero de radio que baja hasta la pista, y
+  no calla nada. La torre, su frecuencia, la fase de la final y la puerta de
+  los quinientos pies son parte de la aproximación, como en el planeo. La
+  prueba de lo que calla un ejercicio lo dice ya así.
+- **Dónde empieza** (`colocacionDelIls`): a doce millas de la antena de la
+  senda, fuera de sus diez —la bandera se ve al empezar y se va sola—, cinco
+  grados apartado del eje visto desde el localizador **del lado del que viene
+  el viento**, con el morro cortándolo a treinta grados (PANS-OPS: no más de
+  treinta para el localizador), a la altura de la senda a siete millas y nunca
+  a menos de quinientos pies del suelo del camino. A la velocidad del
+  circuito, limpio, como los otros ejercicios en el aire. El ILS ya puesto en
+  la NAV: identificar ya lo enseñaron los de antes.
+- **Lo que pasa**, en sucesos, con la tarjeta (el indicador del ILS dibujado:
+  la esfera con las dos escalas y las dos agujas, `cdiDelIls`) y la
+  instructora: presentar, con «ILS 01 · IFV 109.50 · 005» escrito delante de
+  la frase, como la cabecera de una carta de aproximación; **a tope**, «la
+  pista queda de ese lado»; **se despega**, «virá ahora, que el localizador es
+  cuatro veces más fino que un VOR»; **en el localizador**, la aguja a menos
+  de medio punto diez segundos: «ahora la senda, que está arriba: seguí
+  nivelado»; **capturada**, la aguja de la senda en el centro, con el sonido
+  del logro: «las dos agujas en cruz»; y **los mínimos**, a doscientos pies
+  sobre el umbral (`ALTURA_DE_DECISION`): con las dos dentro de un punto, «ahí
+  está la pista»; si no, **frustrada**, «irse a tiempo también es ganar».
+- **Cierra en el suelo o en el aire, y las dos cosas son acierto**: aterrizado
+  —parado, o a los ocho segundos de tocar—, «pista»; subiendo cuarenta metros
+  sobre lo más bajo de la final, que es el listón de `Frustrada`, «frustrada».
+  La frustrada la celebra el juego como cualquier otra, con su voz y su
+  sonido: el ejercicio no pone una segunda voz (un suceso, una voz), solo el
+  panel del final. Si se pidió la frustrada y se aterrizó igual, se cierra con
+  la pista, sin reñir: se ve la consecuencia.
+- **Lo que ya mira la final de siempre no se repite**: la puerta de los
+  quinientos pies, la velocidad y el ritmo (`flight/minimos.ts`). Los aros no
+  salen en ningún ejercicio, y en éste eso es la lección: solo agujas.
+- **Las frases**, ocho, genéricas, sin el nombre del ILS ni sus números, al
+  final de `scripts/frases-para-grabar.mjs` (`DEL_ILS`). Sin grabar: hasta
+  entonces, la tarjeta y su texto.
+
+### Lo que se prueba
+
+- `flight/ils-con-agujas.test.ts`: la senda de la 01 de Fuerteventura, IFV, a
+  tres grados y con 332,6 emparejada con 109,5; **cada ILS del juego publica la
+  senda emparejada con su localizador**; en la senda y en el eje, las dos
+  agujas en el centro a dos, cinco y nueve millas; **un punto de senda son
+  0,12 veces el ángulo y dos la aguja a fondo** (0,36° y 0,72°), y un punto de
+  localizador 1,25°, con la aguja a la derecha a la izquierda del eje; la
+  bandera de la senda a diez millas y media, a nueve grados del eje y por
+  encima de 1,75 veces el ángulo, y sin bandera muy por debajo, a fondo
+  arriba; con un VOR, sin senda. Dónde se ofrece y dónde empieza. Y el vuelo,
+  con **un piloto de prueba con la radio de verdad** (`leerNav` y su senda) y
+  un avión de cinemática: con el alisio de costado, en calma y con el reactor,
+  los sucesos en su orden, la senda capturada desde abajo, **a los mínimos
+  dentro de un punto** —y desde mil pies, las dos agujas siempre dentro— y
+  cerrado con la pista; quien va un punto y seis apartado del localizador oye
+  la frustrada en los mínimos, se va, y el ejercicio cierra con la frustrada.
+- `flight/lo-que-calla-el-ejercicio.test.ts`: el ILS es de radio y no calla
+  nada; los otros cuatro siguen callando.
+- `scripts/ver-ils-con-agujas.mjs`: el mismo vuelo en el juego, con un piloto
+  de banco que mira solo las dos agujas, como en una nube, y sus capturas.
+
+### Volado
+
+En el juego, con la avioneta en Fuerteventura, el alisio y la Intel por
+ANGLE, de una tirada:
+
+- **Con el alisio**, trece de catorce: empieza a 12,0 millas de la senda y a
+  675 m sobre la pista (2.213 ft), cortando a treinta grados, con IFV en la
+  NAV y el OBS en el 005; el localizador a tope (−3,9 puntos) y la bandera GS
+  en el HSI, sin rombo. La aguja se despega con −2,0 puntos y la tarjeta la
+  dibuja viniendo de su lado; establecido en el localizador a 9,8 millas, con
+  la senda arriba (−2,5 puntos) y el rombo del HSI arriba; **la senda,
+  capturada desde abajo a 7,3 millas**; en la final, las dos en cruz (0,00 y
+  −0,01 puntos) y el rombo en el centro; desde mil pies lo peor, 0,03 de
+  localizador y 0,12 de senda; **en los mínimos, 0,00 y −0,03**, «ahí está la
+  pista», y aterrizado se cierra con la pista. La instructora dijo los seis
+  pasos en su orden.
+- **Apartado del localizador** (`OGA_FUERA=1`, un punto y siete desde
+  ochocientos pies), trece de catorce: en los mínimos, −1,81 de localizador y
+  −0,10 de senda, **la frustrada**, se va al aire y el ejercicio cierra con la
+  frustrada. La puerta de los quinientos pies no mandó irse con ese
+  apartamiento: lo decidió la regla de los mínimos del ejercicio.
+- **La que falló en las dos, y se arregló**: «a tope» se decía en el mismo
+  paso que la presentación —se empieza a tope—, y su tarjeta tapaba en el
+  mismo fotograma la de la presentación, con el ILS escrito. Ahora «a tope»
+  espera a que acabe la presentación (`PRESENTACION`, catorce segundos), y si
+  la aguja se despega antes no se dice; la prueba de mesa lo mira.
+- **Y una de «un suceso, una voz»**, vista en lo que se dijo con el alisio:
+  en los mínimos, la instructora decía el «mirá la pista: ¿la ves?» de
+  cualquier final (`vuelo.minimos`) y justo detrás el «mínimos, y ahí está la
+  pista» del ejercicio. Mientras dura el ejercicio, los mínimos los cuenta él:
+  la caja del avión que la lleva canta *minimums* igual, sin explicación
+  detrás, y en el que no la lleva lo dice la frase del ejercicio. El banco lo
+  mira ya.
+
+**Los dos arreglos no han volado**: la tirada siguiente no cabía en la tanda.
+Están en la prueba de mesa (el primero) y en el banco (los dos), sin volar.
+
+Y dos cosas vistas que no son de este ejercicio, apuntadas y sin tocar: con
+el alisio, entre lo que se dijo está `torre.canario.goAround` —el banco no
+apunta a quién ni cuándo, y el avión aterrizó—, y al irse al aire la fase de
+la final se volvió a anunciar dos veces (`vuelo.enVueloAterrizando` y
+`vuelo.final`).
+
+`npm run carteles`, 925 de 925, con la escala de la senda ya en el cuadro.
+El vitest entero, antes de estos dos arreglos: 506 ficheros, 10.382 pruebas
+bien; después, las del ILS, la radio y lo que calla un ejercicio.
+
+### Lo que queda
+
+- **La nube**. La propuesta pedía tres pasadas —aros y agujas, agujas solas y
+  agujas en nube con la base a doscientos cincuenta pies— para **romper la
+  nube justo antes de los mínimos y ver aparecer la pista**. Está hecha la
+  segunda, que es la que enseña a volar las agujas, y sin nube: en los
+  mínimos la pista se ve porque hoy no hay techo. La capa existe
+  (`world/capa-de-nubes.ts`, con el techo del parte), y ponerle al ejercicio
+  su día con un techo de doscientos cincuenta pies es una línea en `main.ts`;
+  lo que no se ha mirado es qué más dice el juego con ese techo —la tarjeta
+  del tiempo, la regla de los mínimos con `seVeLaPista`, la ventanilla— y
+  cómo se ve dentro de la capa en la tablet. Es la tanda siguiente.
+- **La primera pasada**, la de los aros con las agujas, no está: en un
+  ejercicio no salen aros (`seVenLosAros`), y aquí se vuela ya la segunda.
+- **La pantalla de navegación de la cabina en 3D** no lleva la escala de la
+  senda: `pintarLaRadio` la da, y `world/pantallas-cabina.ts` no la pinta
+  todavía. El rombo de la pantalla de vuelo de los de cristal sigue saliendo
+  de la geometría de la pista (`desvioAhora`), no de la radio. Con un ILS
+  puesto deberían decir casi lo mismo —la antena de la senda está donde la
+  senda toca la pista—, pero no se ha medido cuánto se separan.
+- **El panel del final repite la frase de los mínimos**: con la pista,
+  «ahí está la pista: ahora mirá afuera y aterrizá», que se lee ya
+  aterrizado. Le falta una frase de cierre propia, y una frase nueva es una
+  grabación más; queda para la tanda de la nube.
+- **La cobertura lateral de la senda se mide desde su antena**: a un punto y
+  medio largo del localizador, cerca de la pista, ya se sale de sus ocho
+  grados y sale la bandera. Es lo que garantiza el Anexo; una antena de verdad
+  suele cubrir más.
+
+### Propuesta para la tanda siguiente
+
+Dos, y en este orden.
+
+1. **La nube a los mínimos**, el cierre de este peldaño: el ejercicio trae su
+   día como la tormenta y la aguja, con el viento del sitio y **un techo
+   cubierto a doscientos cincuenta pies** (`Meteo.techoM` y su tapadura), para
+   que la pista aparezca justo antes de los mínimos. Antes de ponerlo, mirar
+   qué dice el juego con ese techo —la tarjeta del tiempo, `seVeLaPista`, la
+   ventanilla, el consejo de la bajada— y que no diga «no se puede volar» a
+   quien viene a practicar justo eso; y medir dentro de la capa en la tablet.
+   Prueba de mesa: con la base a doscientos cincuenta pies, la pista se ve
+   antes de la altura de decisión en la senda; banco: la foto a trescientos
+   pies, dentro, y a doscientos, fuera, con la pista delante.
+2. **La estima**, el peldaño 3 de #51, que es lo que más falta de la escalera
+   y no pide ningún instrumento nuevo: «rumbo tanto durante tantos minutos y
+   estás encima», sobre el Chaco sin referencias. De Mariscal Estigarribia a
+   un sitio de verdad que se reconozca desde el aire —Filadelfia o Loma
+   Plata—, con el viento del sitio; el juego da el rumbo corregido por el
+   triángulo de vientos y el tiempo, y en la tarjeta **un cronómetro grande**
+   que cuenta hacia atrás. Al llegar a cero, «mirá abajo»: el sitio debajo, o
+   a un lado, y la distancia es lo que se voló mal. Sin radio ni GPS a la
+   vista, que es la lección: así cruzaron océanos. Prueba de mesa con el piloto
+   de cinemática: con el rumbo corregido llega a menos de una milla; sin
+   corregir, se aparta el viento por el tiempo, y se dice hacia dónde. El
+   cronómetro es una pieza nueva del HUD y pasa por `npm run carteles`.

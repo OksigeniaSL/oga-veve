@@ -2076,6 +2076,19 @@ export class Tablero {
     poner(tf, "visibility", p.toFrom ? "visible" : "hidden");
     poner(tf, "transform", p.toFrom === "FROM" ? "rotate(180)" : "");
     poner(this.pieza('[data-radio="bandera"]'), "visibility", p.bandera ? "visible" : "hidden");
+    /*
+     * **La senda**, con un ILS puesto: el rombo baja cuando se va alto, que es
+     * donde queda la senda, y con la bandera GS se esconde.
+     */
+    const senda = this.pieza('[data-radio="senda"]');
+    poner(senda, "visibility", p.conSenda ? "visible" : "hidden");
+    if (p.conSenda) {
+      const paso = Number(senda?.getAttribute("data-punto-senda")) || 20;
+      const rombo = this.pieza('[data-radio="senda-rombo"]');
+      poner(rombo, "visibility", p.senda === null ? "hidden" : "visible");
+      if (p.senda !== null) poner(rombo, "transform", `translate(0 ${n1(p.senda * paso * 2)})`);
+      poner(this.pieza('[data-radio="senda-bandera"]'), "visibility", p.banderaSenda ? "visible" : "hidden");
+    }
     if (!cifras) return;
     escribir(this.pieza('[data-radio="nav-id"]'), p.textos.navId);
     escribir(this.pieza('[data-radio="nav-mhz"]'), p.textos.navMhz);

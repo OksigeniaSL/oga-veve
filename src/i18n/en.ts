@@ -1425,6 +1425,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.radial": "Which radial am I on?",
   "hangar.ejercicio.interceptar": "Fly out on a radial",
   "hangar.ejercicio.cruce": "Where two radials cross",
+  "hangar.ejercicio.ils": "Landing on the needles",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1607,6 +1608,24 @@ export const EN: Dictionary = {
     "There you are! Look at the map: the two lines cross right where the plane is. That's how you know where you are without seeing anything, with just two stations",
   "ejercicio.cruce.tarde":
     "Look at the map: the fix ended up away from the plane. While you tuned and read the second one, the plane kept flying, and the first line no longer went through it. Next time, read them quickly, or fly towards one of the two stations, so its line doesn't change",
+
+  // ── Landing on the needles: the runway's ILS, the localizer, the glideslope from below and the two needles down to minimums ──
+  "ejercicio.ils.antes":
+    "Today we fly down to the runway with just the needles, as if inside a cloud. The ILS is already in the NAV: one needle shows which side the runway is on, and the other whether we're high or low",
+  "ejercicio.ils.sintonizar":
+    "Put the runway's ILS in the NAV: tap it on the map, or press seven until you hear its name",
+  "ejercicio.ils.aTope":
+    "The localizer needle is at full scale: the runway is over that side. Keep cutting across like this, and watch the needle",
+  "ejercicio.ils.seMueve":
+    "It's moving! Turn towards it now, don't wait: the localizer is four times finer than a VOR, and you cross it in no time",
+  "ejercicio.ils.enElLocalizador":
+    "We're on the localizer. Now the glideslope: its needle is up, because we're below it. Stay level, and when it comes down to the middle, we start down",
+  "ejercicio.ils.capturada":
+    "The glideslope! Both needles crossed in the middle. Now we go down like this: if the glideslope needle goes up, descend less; if it goes down, descend more. And keep the other one centred",
+  "ejercicio.ils.pista":
+    "Minimums, and there's the runway! Now look outside and land, as always",
+  "ejercicio.ils.frustrada":
+    "Minimums, and a needle has slipped off centre: go around. Power, nose up and climb. Leaving in time is winning too",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
   "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
   "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",

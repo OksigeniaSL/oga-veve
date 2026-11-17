@@ -797,6 +797,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   interceptar: "cdi-viniendo-de-la-izquierda",
   // Las dos rayas desde sus radios, cortándose encima del avión. Ver `dos-radiales.ts`.
   cruce: "cruce-de-radiales",
+  // Las dos agujas del ILS en cruz. Ver `ils-con-agujas.ts`.
+  ils: "ils-en-cruz",
   autorrotacion: "helicoptero-sin-motor",
   // Las lecciones del ala rotatoria, con lo que se pide en cada una: ver `lecciones-del-rotor.ts`.
   estacionario: "helicoptero-quieto",
@@ -982,7 +984,9 @@ import type { ComoSeDice } from "./ui/carta/tocar-la-carta";
 import { ponerRadioDeLaCarta } from "./ui/carta/tocar-la-carta";
 import {
   RadioDeCabina,
+  anguloDeLaSenda,
   leerNav,
+  puntosDelLocalizador,
   radiosDe,
   vuelta,
   type Avion as AvionDeLaRadio,
@@ -1019,6 +1023,14 @@ import {
   type ColocacionDelCruce,
   type SucesoDelCruce,
 } from "./flight/dos-radiales";
+import {
+  colocacionDelIls,
+  IlsConAgujas,
+  ilsDelVuelo,
+  rotuloDelIls,
+  type ColocacionDelIls,
+  type SucesoDelIls,
+} from "./flight/ils-con-agujas";
 import { PantallaDespierta } from "./ui/pantalla-despierta";
 import { ahoraEsTelefonoApaisado } from "./ui/telefono";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
@@ -1151,7 +1163,7 @@ import {
   separacionEnTierra,
   type Vista,
 } from "./world/plan-de-vuelo";
-import { comoDibujo, dibujoDelCdi, type ComoVaLaBarra, type DibujoDeSenal } from "./ui/senal";
+import { comoDibujo, dibujoDelCdi, dibujoDelIls, type ComoVaLaBarra, type DibujoDeSenal } from "./ui/senal";
 import { dibujoDeCierre } from "./ui/cierre-de-ejercicio";
 import { LeccionDelRotor, type SucesoDelRotor } from "./flight/lecciones-del-rotor";
 import { Senalero } from "./world/senalero";
@@ -3903,6 +3915,15 @@ export class Game {
   private cruce: DosRadiales | null = null;
   /** Dónde empieza, contado una vez por montaje: ver `dondeEmpiezaElCruce`. */
   private colocacionDelCruce: ColocacionDelCruce | null = null;
+  /**
+   * **«Aterrizar con las agujas»**, si se eligió: el ILS de la pista, el
+   * localizador cortado a treinta grados, la senda desde abajo y las dos
+   * agujas hasta los mínimos. Ver `flight/ils-con-agujas.ts` y
+   * `practicarElIls`.
+   */
+  private ils: IlsConAgujas | null = null;
+  /** Dónde empieza, contado una vez por montaje: ver `dondeEmpiezaElIls`. */
+  private colocacionDelIls: ColocacionDelIls | null = null;
   /** La nube de la tormenta del ejercicio. Ver `world/cumulonimbo.ts`. */
   private cumulonimbo: CumulonimboEnElMundo | null = null;
   /**
@@ -3931,6 +3952,7 @@ export class Game {
       this.radial?.ejercicio ??
       this.corte?.ejercicio ??
       this.cruce?.ejercicio ??
+      this.ils?.ejercicio ??
       null
     );
   }
@@ -3940,7 +3962,7 @@ export class Game {
    * ventanilla. Ver `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
-    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce;
+    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils;
     return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada");
   }
   /**
@@ -6522,6 +6544,14 @@ export class Game {
             { emisora: pareja.segunda, ...dondeCae(origen, pareja.segunda.estacion) },
             origen,
           );
+      } else if (ejercicio.escena === "radio" && ejercicio.colocacion === "ils") {
+        /*
+         * Ni el ILS: el de la cabecera en uso, o el del campo si ésa no lo
+         * tiene. Dónde empieza lo cuenta `dondeEmpiezaElIls`, que necesita el
+         * terreno; lo que pasa, `practicarElIls`.
+         */
+        const e = ilsDelVuelo(oaciDe(this.scenario), cabeceraEnUso(this.scenario));
+        if (e) this.ils = new IlsConAgujas(ejercicio, e);
       } else if (ejercicio.escena === "radio" && ejercicio.colocacion === "interceptar") {
         /*
          * Ni el corte: el VOR del campo, puesto donde está. El radial pedido
@@ -11676,6 +11706,19 @@ export class Game {
      * no es la maniobra, es que hay un momento en el que se decide.
      */
     this.hechos.on("minimos", () => {
+      /*
+       * **En «Aterrizar con las agujas» los mínimos los cuenta el ejercicio**,
+       * con lo que se decide en ellos: la pista o la frustrada. Con los dos,
+       * la instructora decía «mirá la pista: ¿la ves?» y justo detrás «mínimos,
+       * y ahí está la pista» (lo vio el banco): un suceso, una voz. La caja del
+       * avión que la lleva canta *minimums* igual, sin explicación detrás; en
+       * el que no la lleva, la frase del ejercicio es la que lo dice. Ver
+       * `atenderAlIls`.
+       */
+      if (this.ils && this.ils.fase !== "cerrada") {
+        this.cantar("minimums");
+        return;
+      }
       this.hud.senal.mostrar(
         "senda",
         this.rotulo("vuelo.minimos", "palabra.laPista"),
@@ -13444,7 +13487,8 @@ export class Game {
         colocacion !== "aguja" &&
         colocacion !== "radial" &&
         colocacion !== "interceptar" &&
-        colocacion !== "cruce"
+        colocacion !== "cruce" &&
+        colocacion !== "ils"
       ) {
         const { lejos, alto } = this.dondeEmpiezaElEjercicio(colocacion);
         const [x, z] = puntoDePista(runway, hastaElUmbralDeToma(runway) + lejos);
@@ -13702,6 +13746,7 @@ export class Game {
     this.radial?.reiniciar();
     this.corte?.reiniciar();
     this.cruce?.reiniciar();
+    this.ils?.reiniciar();
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
@@ -17809,6 +17854,9 @@ export class Game {
             ? this.aircraft.cruiseSpeed
             : colocacion === "aguja" || colocacion === "radial" || colocacion === "interceptar" || colocacion === "cruce"
               ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
+              : colocacion === "ils"
+              ? // A la del circuito, como quien ya ha bajado para la aproximación.
+                this.aircraft.velocidadDeCircuito
               : configurado
               ? this.aircraft.approachSpeed * 1.1
               : this.flight.velocidadDeEntradaEnFinal(this.aircraft.approachSpeed);
@@ -17827,7 +17875,8 @@ export class Game {
       colocacion === "aguja" ||
       colocacion === "radial" ||
       colocacion === "interceptar" ||
-      colocacion === "cruce"
+      colocacion === "cruce" ||
+      colocacion === "ils"
         ? { equilibrado: true }
         : {}),
     });
@@ -19379,6 +19428,8 @@ export class Game {
     this.practicarElCorte(dt);
     // Y los dos radiales que se cortan. Ver `practicarElCruce`.
     this.practicarElCruce(dt);
+    // Y el ILS con las agujas. Ver `practicarElIls`.
+    this.practicarElIls(dt);
     // El morse de la radio, con su turno. Ver `atenderAlMorse`.
     this.atenderAlMorse();
     this.mirarSiCambiaDeCampo();
@@ -24634,6 +24685,7 @@ export class Game {
     if (colocacion === "radial") return this.dondeEmpiezaElRadial();
     if (colocacion === "interceptar") return this.dondeEmpiezaElCorte();
     if (colocacion === "cruce") return this.dondeEmpiezaElCruce();
+    if (colocacion === "ils") return this.dondeEmpiezaElIls();
     return null;
   }
 
@@ -24799,6 +24851,197 @@ export class Game {
         return;
     }
   }
+
+  // ── «Aterrizar con las agujas» ───────────────────────────────────────
+  //
+  // Ver `flight/ils-con-agujas.ts`. Como los otros de radio: aquí solo se
+  // decide quién dice y enseña cada cosa —el indicador del ILS dibujado en la
+  // tarjeta, el ILS escrito en ella como en una carta de aproximación— y la
+  // instructora lo cuenta por pasos. La frustrada la celebra el juego como
+  // cualquier otra (`flight/frustrada.ts`), y la puerta de los quinientos
+  // pies la mira la final de siempre.
+
+  /**
+   * **Dónde empieza el ILS**: a doce millas de la antena de la senda, cinco
+   * grados apartado del eje del lado del viento y cortando el localizador a
+   * treinta, nivelado por debajo de la senda. Se guarda, como las otras.
+   */
+  private dondeEmpiezaElIls(): ColocacionDelIls | null {
+    const g = this.ils;
+    const origen = this.scenario.aerodrome?.origin;
+    const e = g?.ils.estacion;
+    if (!g || !origen || !e?.senda || e.rumboVerdadero === null) return null;
+    if (this.colocacionDelIls) return this.colocacionDelIls;
+    const agua = this.scenario.waterLevel ?? 0;
+    this.colocacionDelIls = colocacionDelIls({
+      localizador: dondeCae(origen, e),
+      senda: dondeCae(origen, e.senda),
+      rumboFinal: e.rumboVerdadero,
+      angulo: anguloDeLaSenda(e) ?? 3,
+      viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+      suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+      cotaDeLaPista: this.terrain.runwayElevation,
+    });
+    return this.colocacionDelIls;
+  }
+
+  /** «Aterrizar con las agujas», para el banco: la fase, cómo cerró y lo que marcan las agujas. */
+  get ilsConAgujasParaBanco(): {
+    readonly fase: string;
+    readonly cierre: string | null;
+    readonly ils: { readonly id: string; readonly pista: string | null; readonly mhz: number; readonly rotulo: string };
+    readonly enLosMinimos: { readonly loc: number; readonly senda: number } | null;
+    readonly peorDesdeMilPies: { readonly loc: number; readonly senda: number };
+    readonly colocacion: ColocacionDelIls | null;
+    readonly agujas: { readonly loc: number | null; readonly senda: number | null; readonly bandera: boolean } | null;
+    readonly altura: number;
+    /** Dónde están en el mundo la antena de la senda y la del localizador, el ángulo y el rumbo de la final. */
+    readonly antenas: {
+      readonly senda: { readonly x: number; readonly z: number };
+      readonly localizador: { readonly x: number; readonly z: number };
+      readonly angulo: number;
+      readonly rumboFinal: number;
+    } | null;
+  } | null {
+    const g = this.ils;
+    if (!g) return null;
+    const origen = this.scenario.aerodrome?.origin;
+    const e = g.ils.estacion;
+    const a = this.avionParaLaRadio();
+    const l = a ? leerNav(g.ils.mhz, this.radioAlDia().curso, a, this.elevacionDeLaEstacion, [g.ils]) : null;
+    return {
+      fase: g.fase,
+      cierre: g.cierre,
+      ils: { id: g.ils.estacion.id, pista: g.ils.estacion.pista, mhz: g.ils.mhz, rotulo: rotuloDelIls(g.ils) },
+      enLosMinimos: g.enLosMinimos,
+      peorDesdeMilPies: g.peorDesdeMilPies,
+      colocacion: this.colocacionDelIls,
+      agujas: l
+        ? {
+            loc: l.desviacion === null ? null : puntosDelLocalizador(l.desviacion),
+            senda: l.senda?.puntos ?? null,
+            bandera: l.senda?.bandera ?? true,
+          }
+        : null,
+      altura: this.flight.state.position.y - this.terrain.runwayElevation,
+      antenas:
+        origen && e.senda && e.rumboVerdadero !== null
+          ? {
+              senda: dondeCae(origen, e.senda),
+              localizador: dondeCae(origen, e),
+              angulo: anguloDeLaSenda(e) ?? 3,
+              rumboFinal: e.rumboVerdadero,
+            }
+          : null,
+    };
+  }
+
+  /**
+   * **Un paso del ILS**: lo que marcan las dos agujas con el ILS puesto. La
+   * estela en el plano, como en los otros: la cortada y el viraje se ven desde
+   * arriba.
+   */
+  private practicarElIls(dt: number): void {
+    const g = this.ils;
+    if (!g) return;
+    this.hud.mapa.ponerEstela(g.fase === "cerrada" ? null : () => this.libreta.traza);
+    if (this.tarjetaDelTiempo?.abierta) return;
+    const s = this.flight.state;
+    const a = this.avionParaLaRadio();
+    const radio = this.radioAlDia();
+    const nav = a ? radio.leer(a, this.elevacionDeLaEstacion).nav : null;
+    const id = g.ils.estacion.id;
+    const sintonizada = g.esElLocalizador(radio.navMhz) && nav?.lectura.emisora?.estacion.id === id;
+    const l = sintonizada ? nav?.lectura : null;
+    const sucesos = g.paso(
+      {
+        enElSuelo: s.onGround,
+        parado: s.onGround && s.groundSpeed < 0.6,
+        percance: this.percance !== null,
+        sintonizada,
+        localizador: l?.desviacion ?? null,
+        senda: l?.senda ?? null,
+        altura: s.position.y - this.terrain.runwayElevation,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderAlIls(suceso);
+  }
+
+  private atenderAlIls(suceso: SucesoDelIls): void {
+    /** La tarjeta con su dibujo y su frase, y la voz de la instructora si está grabada. */
+    const contar = (dibujo: DibujoDeSenal, clave: TranslationKey, palabra: TranslationKey, segundos = 12): void => {
+      this.hud.senal.mostrar(dibujo, this.rotulo(clave, palabra), null, { segundos, prioridad: IMPORTANTE });
+      this.decirDelEjercicio(clave, "mando");
+    };
+    /** El localizador del lado en que marca ahora. */
+    const delLado = (como: "a-tope" | "viniendo"): DibujoDeSenal => {
+      const g = this.ils;
+      const a = this.avionParaLaRadio();
+      const d = g && a ? leerNav(g.ils.mhz, 0, a, this.elevacionDeLaEstacion, [g.ils]).desviacion : null;
+      return dibujoDelIls(como, d ?? -1);
+    };
+    switch (suceso.que) {
+      case "presentar": {
+        /*
+         * **El ILS, puesto**: quien prepara una aproximación lo sintoniza y lo
+         * identifica antes de empezarla, y poner el localizador pone el curso
+         * de la final en el OBS. El número, escrito y no dicho: «ILS 01 · IFV
+         * 109.50 · 005», como en la cabecera de una carta de aproximación.
+         */
+        const g = this.ils;
+        if (!g) return;
+        this.radioAlDia().poner("nav", g.ils.mhz);
+        const frase = this.rotulo("ejercicio.ils.antes", "palabra.practica");
+        const escrito = rotuloDelIls(g.ils);
+        this.hud.senal.mostrar(delLado("a-tope"), frase ? `${escrito}. ${frase}` : escrito, null, {
+          segundos: 30,
+          prioridad: IMPORTANTE,
+        });
+        this.decirDelEjercicio("ejercicio.ils.antes", "mando");
+        return;
+      }
+      case "sintonizar":
+        return contar(delLado("a-tope"), "ejercicio.ils.sintonizar", "palabra.practica");
+      case "aTope":
+        return contar(delLado("a-tope"), "ejercicio.ils.aTope", "palabra.practica");
+      case "seMueve":
+        return contar(delLado("viniendo"), "ejercicio.ils.seMueve", "palabra.practica");
+      case "enElLocalizador":
+        return contar("ils-senda-arriba", "ejercicio.ils.enElLocalizador", "palabra.practica", 20);
+      case "capturada":
+        this.avisar("achieved");
+        return contar("ils-en-cruz", "ejercicio.ils.capturada", "palabra.bien");
+      case "minimos":
+        /*
+         * **Los mínimos**: la máquina canta *minimums* en el avión que lo
+         * lleva, y la instructora, justo detrás, dice qué se hace. Con las dos
+         * agujas dentro, la pista; si no, la frustrada, que es la decisión
+         * buena.
+         */
+        return suceso.dentro
+          ? contar("ils-en-cruz", "ejercicio.ils.pista", "palabra.bien", 8)
+          : contar("frustrada", "ejercicio.ils.frustrada", "palabra.bien", 8);
+      case "cerrar": {
+        // Lo malo ya lo cuenta el percance; posado en otra parte, el suelo lo dice.
+        if (suceso.como === "otraVez") return;
+        // La frustrada ya la celebró `Frustrada`, con su sonido: aquí solo el panel.
+        if (suceso.como === "pista") this.avisar("achieved");
+        const clave: TranslationKey = suceso.como === "pista" ? "ejercicio.ils.pista" : "ejercicio.ils.frustrada";
+        const como = suceso.como;
+        this.agenda.luego(TARDA_EL_FINAL + 4, () => {
+          if (this.ils?.cierre !== como) return;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre("vuelta"),
+            this.rotulo(clave, "palabra.bien"),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+      }
+    }
+  }
+
 
   // ── «Dos radiales que se cortan» ─────────────────────────────────────
   //

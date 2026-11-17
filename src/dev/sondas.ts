@@ -2589,6 +2589,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * leídos, la cruz y lo lejos que cayó del avión. Ver `flight/dos-radiales.ts`.
      */
     dosRadiales: () => juego.dosRadialesParaBanco,
+    /**
+     * «Aterrizar con las agujas»: la fase, el ILS, lo que marcan las dos
+     * agujas en puntos y lo que marcaban en los mínimos. Ver
+     * `flight/ils-con-agujas.ts`.
+     */
+    ilsConAgujas: () => juego.ilsConAgujasParaBanco,
     /** El morse de la radio: si suena, de quién, y lo último identificado. Ver `audio/morse.ts`. */
     morse: () => juego.morseParaBanco,
     /** Enseña o esconde la nube de la tormenta, para medir lo que cuesta. */
