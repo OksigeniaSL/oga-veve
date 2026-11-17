@@ -1413,6 +1413,23 @@ const MIRA_LOS_TRAMOS = 0.25;
 const ANTES_DEL_TRAMO = PASO_DEL_TRAMO + 2;
 
 /**
+ * **Lo que el morro va más allá del ala**, m: de la punta del morro al centro,
+ * menos la semiala. La separación con la que se espera fuera de tu tramo es
+ * de ala —tu semiala, la del tráfico más grande y el margen: `separacionEnTierra`
+ * en `plan-de-vuelo.ts`—, y vale de costado; pero quien espera mira hacia tu
+ * calle, y lo primero que entra en ella es su morro. En el reactor, el JAZ 90
+ * a una vez y tres décimas, la punta va 20,6 m por delante del centro con una
+ * semiala de 17: en Los Rodeos, el que salía del 13 esperaba a que pasaras con
+ * el centro a 40 m de tu raya y el morro hacia ella, a unos seis metros de tu
+ * punta de ala, menos que el margen. En los demás tipos el morro no pasa del
+ * ala, y no cambia nada.
+ */
+function asomaElMorro(tipo: TipoDeTrafico): number {
+  const m = MORRO_DEL_TRAFICO[tipo.id];
+  return Math.max(0, m.rueda + m.punta - tipo.envergadura / 2);
+}
+
+/**
  * Lo que se dejan entre puntas de ala dos del tráfico que se cruzan, m: el
  * de la clave C de la OACI, como `MARGEN_ENTRE_ALAS` en `plan-de-vuelo.ts`.
  */
@@ -2783,7 +2800,7 @@ export function crearTrafico(
       if (q.frenteATi === "espera")
         q.hastaElTramo = Math.min(
           q.hastaElTramo,
-          q.recorrido + suyo.entra - ANTES_DEL_TRAMO,
+          q.recorrido + suyo.entra - ANTES_DEL_TRAMO - asomaElMorro(q.tipo),
         );
       else if (q.frenteATi === "pasa")
         tienen.push({
