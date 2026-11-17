@@ -371,6 +371,13 @@ clic, bajos y cortos; con un aviso sonando, la carta se calla.
   acota la caja y la frase ocupa lo que ella deje: el tutor en pantalla baja no pasa de un tercio de la pantalla
   (`34vw`); la radio parte de 18 em en la fila de la barra, crece hasta llenar el hueco y se para donde acaba la frase
   (`max-width: max-content`); y los porqués del parte van al ancho de la tarjeta, como los partes de arriba.
+- **Lo que lleva texto no se centra con `left: 50%` y `translate`**: así el navegador le da para maquetar el ancho
+  que queda a la derecha de `left`, media pantalla, y la frase se parte a medio ancho aunque sobre sitio. Se ponen los
+  dos bordes, `width: fit-content` y `margin-inline: auto`, que lo centran entre ellos sin quitarle ancho; y los
+  bordes se apartan de lo que no se puede pisar, de los dos lados lo mismo si tiene que quedar en el medio. Así van el
+  subtítulo, el aviso y la lámpara de la torre, apartados de los botones redondos de la izquierda
+  (`--vistas-derecha`). Lo que tiene un ancho puesto (la tarjeta de inicio, el kit) o no se parte (`nowrap`, un dibujo)
+  no tiene ese problema.
 - Las medidas que el HUD toma de sí mismo y escribe como variables pasan por `aPxDelHud` (`src/ui/escala.ts`): en
   pantallas bajas el HUD va con `zoom`, y sin esa conversión cada hueco medido se reduce dos veces.
 
