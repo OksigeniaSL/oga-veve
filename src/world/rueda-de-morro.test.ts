@@ -9,7 +9,7 @@ import { Box3, Vector3, type Object3D } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { AIRCRAFT } from "../flight/aircraft";
 import { MODELO_DEL_TIPO } from "./cuerpos-del-trafico";
-import { conLaRuedaEn, MORRO_DEL_TRAFICO, morroDe, ruedaDeMorroEn } from "./rueda-de-morro";
+import { conLaRuedaEn, CUERPO_DEL_TRAFICO, MORRO_DEL_TRAFICO, morroDe, ruedaDeMorroEn } from "./rueda-de-morro";
 import { TIPOS } from "./trafico";
 
 /* El `fs` de Node pedido en marcha, como en `apoyo.test.ts`. */
@@ -24,7 +24,11 @@ interface Medido {
   readonly centroDeLaCaja: number;
   readonly envergadura: number;
   readonly rueda: number;
+  /** El centro de las principales: el de su caja, o el de las dos patas. */
+  readonly principales: number;
   readonly punta: number;
+  /** La punta de la cola, lo más atrasado de la malla. */
+  readonly cola: number;
   /** La puerta de más adelante, si tiene. */
   readonly puerta: number | null;
 }
@@ -40,15 +44,19 @@ async function medir(id: string): Promise<Medido> {
   const rueda =
     raiz.getObjectByName("rueda-morro") ?? raiz.getObjectByName("rueda-de-morro") ?? raiz.getObjectByName("rueda-principal");
   let puerta: number | null = null;
+  const patas: number[] = [];
   raiz.traverse((o) => {
     if (/^puerta-\d/.test(o.name)) puerta = Math.min(puerta ?? Infinity, centro(o).z);
+    if (/^rueda-principal(-derecha|-izquierda)?$/.test(o.name)) patas.push(centro(o).z);
   });
   return {
     cdg: raiz.getObjectByName("centro-de-gravedad")?.getWorldPosition(new Vector3()).z ?? null,
     centroDeLaCaja: (caja.min.z + caja.max.z) / 2,
     envergadura: caja.max.x - caja.min.x,
     rueda: centro(rueda!).z,
+    principales: patas.length ? patas.reduce((a, b) => a + b, 0) / patas.length : NaN,
     punta: caja.min.z,
+    cola: caja.max.z,
     puerta,
   };
 }
@@ -74,6 +82,10 @@ describe("la rueda de morro, donde la tiene su dibujo", () => {
       expect(Math.abs((m.rueda - m.punta) * k - morro.punta), t.id).toBeLessThan(0.2);
       if (m.puerta !== null && morro.puerta !== 0)
         expect(Math.abs((m.rueda - m.puerta) * k - morro.puerta), t.id).toBeLessThan(0.2);
+      // Y el cuerpo que se empuja: la batalla y la cola, a la medida con que se dibuja.
+      const cuerpo = CUERPO_DEL_TRAFICO[t.id];
+      expect(Math.abs((m.principales - m.rueda) * k - cuerpo.batalla), t.id).toBeLessThan(0.2);
+      expect(Math.abs((m.cola - m.centroDeLaCaja) * k - cuerpo.cola), t.id).toBeLessThan(0.2);
     });
   }
 
