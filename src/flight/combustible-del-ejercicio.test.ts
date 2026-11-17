@@ -79,11 +79,19 @@ describe("el depósito de los ejercicios que empiezan lejos", () => {
     }
   }
 
-  it("con lo del tramo desde casa, la avioneta pedía «minimum fuel» en la aguja: era el fallo", () => {
+  /*
+   * Con lo del tramo desde casa —la carga de un vuelo local—, la avioneta
+   * pedía «minimum fuel» en la aguja: era el fallo. Desde H28b la carga local
+   * ya no está a cinco minutos del aviso —ver `combustible-del-vuelo-local.test.ts`—
+   * y la aguja no llegaría a pedirlo con ella; pero el ejercicio sigue cargando
+   * su vuelo entero, que es lo que se despacha de verdad.
+   */
+  it("y el ejercicio lejano carga su vuelo, más que la vuelta al campo", () => {
     const a = AIRCRAFT.find((x) => x.id === "jaz-20")!;
-    const { lejos, velocidad } = LEJANOS.aguja(a);
-    const local = cargaParaElPlan(a, { alDestino: 0, alAlterno: 0 });
-    expect(loQueSeLlama(a, local, lejos, velocidad)).not.toBe("nada");
+    const { lejos } = LEJANOS.aguja(a);
+    expect(cargaDelEjercicio(a, { x: lejos, z: 0 }, CASA, [CASA])).toBeGreaterThan(
+      cargaParaElPlan(a, { alDestino: 0, alAlterno: 0 }),
+    );
   });
 
   it("y con alternativo, lleva también el tramo de casa a él", () => {

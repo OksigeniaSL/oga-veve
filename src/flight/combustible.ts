@@ -54,6 +54,7 @@
 import type { AircraftConfig } from "./aircraft";
 import { tramosDelPlan, type CampoDelVuelo } from "./alterno";
 import { PARADO } from "./cambio-de-avion";
+import { DE_SU_CLASE } from "./ficha-tecnica";
 import {
   airDensity,
   GRAVITY,
@@ -195,7 +196,9 @@ function cuantoDura(avion: AircraftConfig, metros: number): number {
  * de pistón, y en los de turbina lo que suman la reserva final de treinta
  * minutos de espera, la contingencia y el combustible extra que se lleva por
  * si hay que esperar o desviarse—: es lo que evita que un desvío o una espera
- * se conviertan en una emergencia.
+ * se conviertan en una emergencia. Y nunca menos que la reserva final, lo que
+ * cuesta un cambio y la contingencia, que en los de pistón es más que esos
+ * cuarenta y cinco minutos: ver `cargaParaLaRuta`.
  *
  * Se calcula con el motor a un tercio, que es el empuje de crucero de
  * cualquiera de estos aviones: a fondo solo se está en el despegue y son dos
@@ -266,6 +269,35 @@ export function reservaEnKilos(avion: AircraftConfig): number {
   return quemaEsperando(avion) * duracionDeLaReservaFinal(avion);
 }
 
+/**
+ * **Lo que cuesta un cambio**, s de espera: una vuelta más al circuito, una
+ * espera, una frustrada y otra aproximación. Es lo que «minimum fuel» mira
+ * que siga en el depósito encima de la reserva final —ver
+ * `llamadaDeCombustible`— y por eso es también lo que se carga encima de ella.
+ *
+ * Un cuarto de hora para todos, que es la media reserva final de un avión de
+ * turbina, lo que el aviso usaba. En los de pistón la media reserva eran
+ * veintidós minutos y medio, porque la ley les pide cuarenta y cinco de reserva
+ * final; pero un cambio no cuesta más minutos en una avioneta que en un
+ * reactor: cuesta los mismos o menos.
+ */
+const LO_QUE_CUESTA_UN_CAMBIO = 15 * 60;
+
+/** Lo que cuesta un cambio, en kilos: al consumo de esperar. */
+function margenDelMinimo(avion: AircraftConfig): number {
+  return quemaEsperando(avion) * LO_QUE_CUESTA_UN_CAMBIO;
+}
+
+/**
+ * **La contingencia**, kg: lo que se carga para lo que no se ha previsto —un
+ * viento de cara que no estaba en el parte, una vuelta de más—. La de la OACI
+ * (Anexo 6, parte I, 4.3.6.3 c): el cinco por ciento del viaje, y nunca menos
+ * de cinco minutos esperando a 1500 ft.
+ */
+function contingencia(avion: AircraftConfig, viaje: number): number {
+  return Math.max(0.05 * viaje, quemaEsperando(avion) * 5 * 60);
+}
+
 export function cargaParaLaRuta(
   avion: AircraftConfig,
   /** Lo que se va a volar, en metros. Un circuito son unos pocos miles. */
@@ -274,7 +306,42 @@ export function cargaParaLaRuta(
   // `maxThrust` ya es el de todos los motores juntos. Ver la cabecera.
   const crucero = quemaPorSegundo(avion, avion.maxThrust / 3);
   const viaje = crucero * cuantoDura(avion, metros);
-  return Math.min(loQueCabe(avion), viaje + crucero * RESERVA_SEGUNDOS);
+  /*
+   * **Y la reserva que se carga nunca es menos que la reserva final, lo que
+   * cuesta un cambio y la contingencia**, contados como los cuenta el aviso.
+   *
+   * Los cuarenta y cinco minutos a crucero ya lo cubren de sobra en los de
+   * turbina —su crucero gasta dos o tres veces lo de esperar—, y en los de
+   * pistón eran la reserva final de la ley y nada más; en la avioneta, ni eso,
+   * porque su crucero gasta un poco menos que esperar. Así que un vuelo local,
+   * que sin tramos es la media hora de maniobra, despegaba con «minimum fuel»
+   * a la vuelta de la esquina: la avioneta lo pedía a los cinco minutos, el
+   * JAZ 25 a los cuatro y el JAZ 40 a los quince. Un vuelo bien preparado no
+   * llega a pedirlo si va como se planeó; lo pide el que se ha alargado y se
+   * ha comido lo que llevaba para un cambio. Ver
+   * `combustible-del-vuelo-local.test.ts`.
+   */
+  const reserva = Math.max(
+    crucero * RESERVA_SEGUNDOS,
+    reservaEnKilos(avion) + margenDelMinimo(avion) + contingencia(avion, viaje),
+  );
+  return Math.min(loQueCabe(avion), loQueDejaElPeso(avion), viaje + reserva);
+}
+
+/**
+ * **Lo que deja cargar el peso máximo al despegue**, kg: el de su clase menos
+ * la masa sin combustible. Un despacho de verdad carga lo que pide el plan
+ * hasta donde llegue el primero de los dos topes, el depósito o el peso; con
+ * la gente ya a bordo no hay más. Pasa en una sola ruta: la avioneta de
+ * Mariscal Estigarribia a Asunción, con su alternativo de vuelta a casa
+ * —475 kilómetros cada tramo—, pide más de los 154 kilos de su depósito y en
+ * el peso le caben 148: sale con el viaje, la maniobra y la reserva final, sin
+ * lo de un cambio. De verdad se dejaría en tierra una mochila; aquí la gente
+ * ya va puesta. Ver `peso.test.ts`.
+ */
+export function loQueDejaElPeso(avion: AircraftConfig): number {
+  const mtow = DE_SU_CLASE[avion.id]?.mtow;
+  return mtow ? Math.max(0, mtow - avion.masaSinCombustible) : Infinity;
 }
 
 /**
@@ -464,13 +531,13 @@ export function comoVaElDeposito(
  *   no se le manda al aire salvo que la pista esté ocupada de verdad.
  *
  * Lo que falta hasta tocar se cuenta al consumo de esperar, que es el de
- * bajar y aproximar; en crucero se quema algo más, y por eso el margen del
- * aviso es de media reserva.
+ * bajar y aproximar. Y el margen del aviso es **lo que cuesta un cambio**, un
+ * cuarto de hora de espera: «minimum fuel» es aterrizar con la reserva final y
+ * poco más, sin sitio para una vuelta de más (AIM 5-5-15, Doc 4444). Era media
+ * reserva final, que en un avión de turbina es ese mismo cuarto de hora y en
+ * uno de pistón, veintidós minutos y medio. Ver `LO_QUE_CUESTA_UN_CAMBIO`.
  */
 export type LlamadaDeCombustible = "nada" | "minimo" | "mayday";
-
-/** El margen sobre la reserva final que deja de ser margen: media reserva. */
-const MARGEN_DEL_MINIMO = 0.5;
 
 /** Lo que quedará al tocar, kg, si se tarda `segundos` en llegar. */
 export function kilosAlTocar(
@@ -491,6 +558,6 @@ export function llamadaDeCombustible(
   const final = reservaEnKilos(avion);
   const alTocar = kilosAlTocar(avion, kilos, segundos);
   if (alTocar < final) return "mayday";
-  if (alTocar < final * (1 + MARGEN_DEL_MINIMO)) return "minimo";
+  if (alTocar < final + margenDelMinimo(avion)) return "minimo";
   return "nada";
 }

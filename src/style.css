@@ -4067,6 +4067,22 @@ button.motor__tecla::after {
     var(--apoyo) + var(--tirador-asoma, 34px) + 6px +
       env(safe-area-inset-bottom)
   );
+  /*
+   * **Centrado sin perder ancho.** Con `left: 50%` y el `translate` de
+   * centrar, el navegador le daba para maquetar el ancho que queda a la
+   * derecha de `left` —media pantalla— y el `max-width` de casi toda nunca
+   * llegaba a usarse: en un teléfono de 844 los subtítulos se partían a 422
+   * y una frase larga subía en tres líneas hasta los botones de arriba. Con
+   * los dos bordes puestos y el ancho de lo que lleva escrito, los márgenes
+   * automáticos lo centran entre ellos y la línea llega hasta donde llegan
+   * los bordes. Cada sitio pone los suyos, más abajo.
+   */
+  left: 16px;
+  right: 16px;
+  transform: none;
+  width: fit-content;
+  max-width: none;
+  margin-inline: auto;
 }
 
 /* Con un aviso en pantalla el tutor se esconde —ver `.hud--avisando`—, así
@@ -14335,9 +14351,10 @@ oksigenia-access-panel::part(trigger):focus-visible {
   top: calc(var(--arriba-alto, 80px) + 8px);
   bottom: auto;
   /* En el hueco que deja el rincón a su izquierda, como la lámpara de la
-     torre: centrados en la pantalla, se metían debajo de su tarjeta. */
-  left: calc(var(--rincon-izquierda, 100%) / 2);
-  max-width: calc(var(--rincon-izquierda, 100%) - 32px);
+     torre: centrados en la pantalla, se metían debajo de su tarjeta. Sin
+     rincón, de borde a borde. */
+  left: 16px;
+  right: calc(100% - var(--rincon-izquierda, 100%) + 16px);
 }
 
 /* Y si hay subtítulo, la lámpara baja una línea en vez de montarse. */
@@ -14399,11 +14416,13 @@ oksigenia-access-panel::part(trigger):focus-visible {
   font-size: 40px;
 }
 
+/* Centrado en la pantalla y apartado de los dos bordes lo que ocupan los
+   botones redondos de la izquierda: ver `--vistas-derecha` en `ui/hud.ts`. */
 .hud.hud--cabina .hud__abajo > [data-hud="hint"] {
   top: 32%;
   bottom: auto;
-  left: 50%;
-  max-width: calc(100% - 32px);
+  left: max(16px, var(--vistas-derecha, 0px) + 8px);
+  right: max(16px, var(--vistas-derecha, 0px) + 8px);
 }
 
 /* La altura en grande, en cabina, arriba y no al 32 %: sale en la final, y en
@@ -14995,10 +15014,22 @@ oksigenia-access-panel::part(trigger):focus-visible {
    * lámpara de la torre y los subtítulos— vuelve al centro: en el teléfono el
    * rincón está a la izquierda, y ese hueco es la esquina de la cámara.
    */
-  .hud .torre,
-  .hud .hud__abajo > [data-hud="hint"] {
+  .hud .torre {
     left: 50%;
     max-width: calc(100% - 32px);
+  }
+
+  /*
+   * El subtítulo, de borde a borde y no de media pantalla —ver la regla de
+   * `[data-hud="hint"]` arriba del todo—, pero apartado de los dos lados lo
+   * que ocupan los botones redondos de la izquierda, la cámara y la pausa:
+   * así sigue centrado sobre el avión y la pantalla grande, y no se les pone
+   * encima. A la derecha pasa por delante de las losas de mando, que dejan
+   * pasar el toque como antes.
+   */
+  .hud .hud__abajo > [data-hud="hint"] {
+    left: max(var(--borde-izq), var(--vistas-derecha, 0px) + 8px);
+    right: max(var(--borde-der), var(--vistas-derecha, 0px) + 8px);
   }
 
   /*

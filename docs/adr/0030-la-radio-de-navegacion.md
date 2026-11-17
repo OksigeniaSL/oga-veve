@@ -501,3 +501,103 @@ y quemando lo más de la cuenta, sin que se llame nunca a la torre. Y los dos
 bancos, `ver-seguir-la-aguja.mjs` y `verificar-tormenta.mjs`, miran ya que no
 se haya dicho «minimum fuel»: rodeando la tormenta en Pettirossi con el JAZ 50,
 el turbohélice más lento al que se le ofrece, acaba con 769 kg y sin llamada.
+
+## Enmienda H28b (17-11-2026): los dos flecos que H26d dejó vistos
+
+### El subtítulo, con el ancho que de verdad tiene
+
+El subtítulo se centraba con `left: 50%` y el `translate` de centrar, y así el
+navegador le daba para maquetar el ancho que queda a la derecha de `left`:
+media pantalla. El `max-width` de casi toda nunca llegaba a usarse. En el
+teléfono de 844 × 390 una frase larga de la instructora («Nos queda justo, así
+que avisamos a la torre: combustible mínimo…») se partía a 422 px en tres
+líneas, y con la pantalla puesta en grande esas tres líneas subían hasta media
+altura de los botones redondos de la barra.
+
+Ahora lleva **los dos bordes puestos, el ancho de lo que lleva escrito
+(`fit-content`) y márgenes automáticos**, que lo centran entre ellos sin
+quitarle ancho. Cada sitio pone sus bordes:
+
+- **En el teléfono apaisado y en cabina**, apartado de los dos lados lo que
+  ocupan los botones redondos de la izquierda —la cámara, la pausa y, antes de
+  arrancar, la vuelta al avión y el parte—, que el HUD mide y escribe en
+  `--vistas-derecha`. Así sigue centrado sobre el avión y sobre la pantalla
+  grande, y no se pone encima de ningún botón redondo. A la derecha pasa por
+  delante de las losas de mando —el tren, los aerofrenos, la tarjeta del
+  destino—, que dejan pasar el toque, como ya pasaba con el tren.
+- **En la tablet y el portátil**, en el hueco que deja el rincón a su
+  izquierda, como estaba: allí el rincón ya le dejaba más de media pantalla.
+
+Medido con la frase de arriba, antes de arrancar, que es cuando la columna de
+la izquierda es más ancha: en 844 × 390 pasa de 422 px y tres líneas a 527 y
+dos; en vuelo, sin los dos botones de antes de arrancar, a 728; en 864 × 330,
+de 432 a 547; en cabina de la tablet, de 512 a 648. `npm run carteles` lo mira
+en cada teléfono: más de medio ancho, centrado y sin tapar ningún botón
+redondo. El peldaño de los pequeños no lleva subtítulos (`.hud--sin-letras`) y
+ahí no se mira.
+
+**Lo que cuesta**: en vuelo, con dos líneas, pasa por delante de las tres
+losas de mando de la derecha —el tren, los aerofrenos y los flaps— y de la
+tarjeta del destino, que se siguen tocando a través de él; antes tapaba solo
+el tren, pero con tres líneas. Si se prefiere no tapar ninguna, el subtítulo
+tendría que ir en el hueco entre las dos columnas, que no está centrado sobre
+el avión y antes de arrancar no es más ancho que la media pantalla de antes.
+
+**Lo que queda**: con la pantalla en grande, una frase que no cabe en una línea
+sigue creciendo hacia arriba y, en dos, roza unos nueve píxeles el borde de
+abajo de los botones redondos de la barra; antes, en tres, los tapaba hasta la
+mitad. Darle dos líneas de fila le quitaría otra línea a la pantalla grande,
+que en 864 × 330 ya mide 140 px, y eso es una decisión de diseño, no un
+arreglo. **De pie y con el dedo** no se ve: lo tapa el cartel de girar la
+pantalla (`.gira`).
+
+### El vuelo local de los de pistón y el «minimum fuel»
+
+H26d calculó que la carga de un vuelo local de la avioneta quedaba a unos
+minutos del umbral de «minimum fuel». Volado en la mesa, avión por avión,
+con la maniobra a lo más de la cuenta y a cinco minutos de tocar: la avioneta
+lo pedía **a los siete minutos de despegar**, el JAZ 25 a los seis y el JAZ 40
+a los diecisiete. Los de turbina, pasada la media hora larga.
+
+La causa estaba en la carga, y en la vara con la que se medía la reserva. Un
+vuelo local carga la media hora de maniobra y los cuarenta y cinco minutos de
+reserva, **los dos al consumo de crucero**. En un reactor esos cuarenta y
+cinco minutos son dos o tres veces la reserva final —su crucero gasta mucho
+más que esperar— y ya llevan dentro la contingencia y lo de un cambio. En los
+de pistón eran la reserva final de la ley y nada más; en la avioneta, ni eso,
+porque su crucero gasta un poco menos que esperar. Y «minimum fuel» salta con
+la reserva final más un margen: un vuelo local de pistón despegaba con el aviso
+a la vuelta de la esquina.
+
+Lo de verdad: un despacho carga el viaje, la contingencia —el 5 % del viaje,
+nunca menos de cinco minutos esperando (Anexo 6, parte I, 4.3.6.3 c)—, el
+alternativo y la reserva final; y «minimum fuel» se declara cuando cualquier
+cambio dejaría aterrizar con menos de la reserva final (Anexo 6, 4.3.7.2.2;
+Doc 4444; AIM 5-5-15). Así que:
+
+- **El margen del aviso es lo que cuesta un cambio**, un cuarto de hora de
+  espera para todos (`LO_QUE_CUESTA_UN_CAMBIO`). Era media reserva final, que
+  en un avión de turbina es ese mismo cuarto de hora —no cambia nada— y en
+  uno de pistón, veintidós minutos y medio: un cambio no cuesta más minutos en
+  una avioneta que en un reactor.
+- **La reserva que se carga nunca es menos que la reserva final, lo que cuesta
+  un cambio y la contingencia**, contados como los cuenta el aviso. En los de
+  turbina, en cada ruta del juego, ganan los cuarenta y cinco minutos a crucero
+  y la carga es la de siempre; en los de pistón sube: la avioneta, de 32,5 a
+  42,2 kg en local; el JAZ 25, de 108 a 142; el JAZ 40, de 62,5 a 73.
+- **Y con el tope del peso máximo al despegue**, además del depósito
+  (`loQueDejaElPeso`): con la reserva nueva, la avioneta de Mariscal
+  Estigarribia a Asunción, con su alternativo de vuelta a casa —475 km cada
+  tramo—, pedía más de lo que cabe en el peso. Sale con 148 kg: el viaje, la
+  maniobra y la reserva final, sin lo de un cambio. Con la carga de antes, en
+  esa ruta, el aviso saltaba ya en la cabecera.
+
+Ahora, volando en local a lo más de la cuenta y a cinco minutos de tocar, la
+avioneta lo pide a los 29 minutos, el JAZ 25 a los 29 y el JAZ 40 a los 30:
+cuando se ha alargado lo planeado y se ha comido la contingencia, que es lo que
+quiere decir la llamada. Un vuelo bien preparado que va como se planeó no lo
+pide nunca. Lo prueba `flight/combustible-del-vuelo-local.test.ts`, que vuela
+en papel la media hora de cada avión sin llamada, el vuelo que se alarga con
+«minimum fuel» un cuarto de hora antes del MAYDAY, la carga de antes con su
+llamada a los pocos minutos, y los de turbina con la carga de siempre en cada
+ruta del juego.

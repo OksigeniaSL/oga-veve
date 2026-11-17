@@ -4274,6 +4274,14 @@ export class Hud {
      * que se observa con lo demás.
      */
     const vistas = this.root.querySelector<HTMLElement>(".hud__vistas");
+    /*
+     * **Y dónde acaban por la derecha los botones redondos de la izquierda**
+     * —la cámara, la pausa y, antes de arrancar, la vuelta al avión y el
+     * parte—, en píxeles del HUD, para que el subtítulo se aparte lo mismo de
+     * los dos bordes y no se les ponga encima: con todo el ancho de la
+     * pantalla se comía la pausa. Ver `--vistas-derecha` en la hoja.
+     */
+    const antes = this.root.querySelector<HTMLElement>(".antes");
     const escribirVistas = (): void => {
       const caja = vistas?.getBoundingClientRect();
       if (caja && caja.height > 0)
@@ -4281,6 +4289,14 @@ export class Hud {
           "--vistas-abajo",
           `${Math.round(caja.bottom)}px`,
         );
+      const derecha = [vistas, antes]
+        .map((e) => e?.getBoundingClientRect())
+        .filter((c): c is DOMRect => !!c && c.width > 0 && c.height > 0)
+        .reduce((max, c) => Math.max(max, c.right), 0);
+      this.root.style.setProperty(
+        "--vistas-derecha",
+        `${Math.round(aPxDelHud(this.root, derecha))}px`,
+      );
     };
     escribir();
     escribirColumna();
@@ -4305,6 +4321,8 @@ export class Hud {
     if (columna) this.barraObservada.observe(columna);
     if (rincon) this.barraObservada.observe(rincon);
     if (vistas) this.barraObservada.observe(vistas);
+    // Se va al arrancar, y con ella el sitio que le dejaba el subtítulo.
+    if (antes) this.barraObservada.observe(antes);
   }
 
   /**
