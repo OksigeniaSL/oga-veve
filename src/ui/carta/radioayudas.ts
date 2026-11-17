@@ -200,5 +200,12 @@ export function cajaDeRadioayuda(e: Estacion): { readonly titulo: string; readon
   return { titulo, canal, morse: morseEscrito(e.morse) };
 }
 
-/** El morse escrito: las letras separadas por un hueco ancho, como se oye la pausa entre ellas. */
-export const morseEscrito = (letras: readonly string[]): string => letras.join(" ");
+/**
+ * **El morse escrito**, como en la caja de una carta: el punto gordo (•) y la
+ * raya (–), con un hueco fino entre los elementos de una letra —dos rayas
+ * pegadas se leían como una sola larga— y uno ancho entre letra y letra, como
+ * se oye la pausa entre ellas. El punto medio de la tabla (·) era, en la
+ * letra estrecha de la carta, un puntito que no se veía.
+ */
+export const morseEscrito = (letras: readonly string[]): string =>
+  letras.map((l) => [...l].map((c) => (c === "·" ? "•" : "–")).join("\u2009")).join("\u2003");

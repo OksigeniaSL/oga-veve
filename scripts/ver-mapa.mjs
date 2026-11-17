@@ -34,11 +34,11 @@ try {
       const i = g?.getExtension('WEBGL_debug_renderer_info');
       return i ? g.getParameter(i.UNMASKED_RENDERER_WEBGL) : 'sin WebGL';
     });
-    await page.click('[data-hud="mapa-boton"]');
+    await page.evaluate(() => document.querySelector('[data-hud="mapa-boton"]')?.click());
     await page.waitForTimeout(600);
     // Los cuatro alcances, que es lo que hay que mirar.
     for (let z = 0; z < 4; z++) {
-      if (z) await page.click('[data-hud="mapa-cerca"]');
+      if (z) await page.evaluate(() => document.querySelector('[data-hud="mapa"] [data-accion="cerca"]')?.click());
       await page.waitForTimeout(500);
       await page.screenshot({ path: `${D}/mapa-${esc}${TRAMO ? `-${TRAMO}` : ''}-z${z}.png` });
     }

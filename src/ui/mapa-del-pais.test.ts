@@ -167,7 +167,8 @@ describe("los calcos de la carta", () => {
     expect(cabina).toContain("ficha-carta__ayudas");
     expect(cabina).toContain("<b>TFN 117.700</b> <span>CH 124X</span>");
     expect(cabina).toContain("<b>ILS 12 INOR 108.700</b>");
-    expect(cabina).toContain("–\u2002··–·\u2002–·");
+    // El morse de TFN: raya; punto, punto, raya, punto; raya, punto.
+    expect(cabina).toContain("–\u2003•\u2009•\u2009–\u2009•\u2003–\u2009•");
     expect(cabina).toContain("pistas__pluma");
     // En Pilar el AIP las publica en NIL, y la ficha lo dice.
     const asuncion = scenarioById("pettirossi");
