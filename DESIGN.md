@@ -288,7 +288,9 @@ Aparece en 160 ms; los tres primeros parpadean a 620 ms en dos pasos, y la viñe
 **encima del cuadro, nunca detrás**: un panel bonito no puede esconder un *terrain, pull up*. Con un aviso en pantalla
 el tutor se calla: dos carteles a la vez son ruido. El texto sigue la escalera (`data-escalera`: sin texto, corto o
 largo) y solo se reescribe cuando cambia, para no interrumpir sesenta veces por segundo a quien usa lector de
-pantalla.
+pantalla. Centrado sobre el avión con el ancho de lo que dice, y **por delante de todo lo que se enciende solo**,
+también de la lámpara de la torre. En cabina, apoyado encima del subtítulo; y en cabina y con la pantalla grande del
+teléfono, con la flecha al lado del texto, que ahí falta alto y sobra ancho (ADR 0030, enmienda H28c).
 
 **El tutor** (`.tutor`). La explicación de la tecla que toca, abajo a la izquierda y desde el segundo peldaño, para
 encontrarla en el teclado sin leer: el glifo a 54 px en ocre, la tecla dibujada de 62 × 62 (148 la ancha, Shift) en
