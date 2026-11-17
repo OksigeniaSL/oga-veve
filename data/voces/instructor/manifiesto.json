@@ -303,6 +303,38 @@
       "ms": 4607,
       "h": "0c067aeffc"
     },
+    "ejercicio.ils.aTope": {
+      "ms": 6907,
+      "h": "7ce9b30138"
+    },
+    "ejercicio.ils.antes": {
+      "ms": 10707,
+      "h": "c87424645d"
+    },
+    "ejercicio.ils.capturada": {
+      "ms": 9207,
+      "h": "d55dc3a26b"
+    },
+    "ejercicio.ils.enElLocalizador": {
+      "ms": 8207,
+      "h": "6749fbb03b"
+    },
+    "ejercicio.ils.frustrada": {
+      "ms": 7107,
+      "h": "1f21cc0aa8"
+    },
+    "ejercicio.ils.pista": {
+      "ms": 4407,
+      "h": "8a5b533daa"
+    },
+    "ejercicio.ils.seMueve": {
+      "ms": 6607,
+      "h": "94a7a0f60b"
+    },
+    "ejercicio.ils.sintonizar": {
+      "ms": 5507,
+      "h": "f9a57bf9e9"
+    },
     "ejercicio.interceptar.aTope": {
       "ms": 6607,
       "h": "73e0108d76"
@@ -5599,6 +5631,30 @@
     ],
     "ejercicio.cruce.tarde": [
       "ejercicio.cruce.tarde"
+    ],
+    "ejercicio.ils.antes": [
+      "ejercicio.ils.antes"
+    ],
+    "ejercicio.ils.sintonizar": [
+      "ejercicio.ils.sintonizar"
+    ],
+    "ejercicio.ils.aTope": [
+      "ejercicio.ils.aTope"
+    ],
+    "ejercicio.ils.seMueve": [
+      "ejercicio.ils.seMueve"
+    ],
+    "ejercicio.ils.enElLocalizador": [
+      "ejercicio.ils.enElLocalizador"
+    ],
+    "ejercicio.ils.capturada": [
+      "ejercicio.ils.capturada"
+    ],
+    "ejercicio.ils.pista": [
+      "ejercicio.ils.pista"
+    ],
+    "ejercicio.ils.frustrada": [
+      "ejercicio.ils.frustrada"
     ]
   }
 }
