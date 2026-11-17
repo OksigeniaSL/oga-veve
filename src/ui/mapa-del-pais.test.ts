@@ -157,6 +157,36 @@ describe("los calcos de la carta", () => {
     expect(html).toContain("TWR 118.1");
     expect(html).toContain("118.1 MHZ");
   });
+
+  /*
+   * Las radioayudas del AD 2.19 (#75): en la ficha, con su símbolo y su caja,
+   * solo en el calco de la radio; y ni como dibujo mudo en los de abajo.
+   */
+  it("las radioayudas, con su caja y su morse, solo en el calco de la radio", () => {
+    const cabina = carta("cabina");
+    expect(cabina).toContain("ficha-carta__ayudas");
+    expect(cabina).toContain("<b>TFN 117.700</b> <span>CH 124X</span>");
+    expect(cabina).toContain("<b>ILS 12 INOR 108.700</b>");
+    // El morse de TFN: raya; punto, punto, raya, punto; raya, punto.
+    expect(cabina).toContain("–\u2003•\u2009•\u2009–\u2009•\u2003–\u2009•");
+    expect(cabina).toContain("pistas__pluma");
+    // En Pilar el AIP las publica en NIL, y la ficha lo dice.
+    const asuncion = scenarioById("pettirossi");
+    expect(mapaDelPais(asuncion, SCENARIOS, rutasDelMapa(asuncion, AIRCRAFT[0]!), asuncion.id, "cabina")).toContain("AD 2.8-19: NIL");
+    for (const peldano of ["dibujo", "palabra", "cifra"] as const) {
+      const html = carta(peldano);
+      expect(html, peldano).not.toContain("ficha-carta__ayudas");
+      expect(html, peldano).not.toContain("pistas__pluma");
+      expect(html, peldano).not.toContain("pistas__radioayuda");
+    }
+  });
+
+  it("el descargo va al pie desde que la carta lleva letra, y en Guyrami no", () => {
+    const descargo = 'pais__descargo';
+    expect(carta("dibujo")).not.toContain(descargo);
+    for (const peldano of ["palabra", "cifra", "cabina"] as const) expect(carta(peldano), peldano).toContain(descargo);
+    expect(carta("cabina")).toContain("ficha-carta__descargo");
+  });
 });
 
 /**

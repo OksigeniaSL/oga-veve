@@ -61,6 +61,9 @@ import { imagenDe, PAPEL_URL, proyeccionDe, regionDe } from "./carta/region";
 import { rosa, simboloDeAerodromo, PUNTO_DE_COTA } from "./carta/simbolos";
 import { anoDecimal, declinacion, varEscrita } from "./carta/declinacion";
 import { frecuenciasDeLaCarta, RADIO } from "../world/frecuencias-publicadas";
+import { estacionesDe, RADIOAYUDAS, type Estacion } from "../world/radioayudas-publicadas";
+import { dondeCae } from "../world/entre-aerodromos";
+import { cajaDeRadioayuda, plumaEnSvg, simboloDeRadioayuda, simboloEnSvg } from "./carta/radioayudas";
 import { DESTACADOS } from "../world/lo-destacado";
 import {
   colocar,
@@ -238,8 +241,8 @@ export const anchoDeNumeroDePista = (nombre: string): number => nombre.length * 
  * umbrales— se rotula una vez: dos números iguales en el mismo sitio son uno
  * ilegible.
  */
-export function numerosDePista(e: Scenario): { nombre: string; x: number; y: number }[] {
-  const en = encuadreDePistas(e);
+export function numerosDePista(e: Scenario, holgura = 1.8): { nombre: string; x: number; y: number }[] {
+  const en = encuadreDePistas(e, holgura);
   const salen: { nombre: string; x: number; y: number }[] = [];
   for (const p of e.aerodrome?.runways ?? []) {
     const c = p.centerline;
@@ -279,14 +282,21 @@ export function numerosDePista(e: Scenario): { nombre: string; x: number; y: num
 /**
  * Las pistas de un aeródromo dibujadas para su ficha, con el norte arriba y
  * su rumbo de verdad; y sus números en las cabeceras desde el calco de las
- * cifras.
+ * cifras. Y en el de la radio, las radioayudas que caen dentro del dibujo y
+ * la pluma de cada ILS (`radioayudasDelDibujo`).
  */
-function dibujoDePistas(e: Scenario, conNumeros: boolean): string {
+function dibujoDePistas(e: Scenario, conNumeros: boolean, conRadio = false): string {
   const pistas = e.aerodrome?.runways ?? [];
   const puntos = pistas.flatMap((p) => p.centerline);
   if (puntos.length < 2) return "";
-  // Sin números, la pista más grande: es lo que se mira.
-  const en = encuadreDePistas(e, conNumeros ? 1.8 : 1.35);
+  const conAyudas = conRadio && conNumeros && estacionesDe(e.aerodrome?.id).length > 0;
+  /*
+   * Sin números, la pista más grande: es lo que se mira. Con la radio, el
+   * mismo encuadre que con las cifras: el dibujo que ya se conocía no cambia,
+   * se le suma la radio encima.
+   */
+  const holgura = conNumeros ? 1.8 : 1.35;
+  const en = encuadreDePistas(e, holgura);
   const { lado } = en;
   /*
    * **Y el campo alrededor**: las plataformas y las calles de rodaje, en el
@@ -342,14 +352,89 @@ function dibujoDePistas(e: Scenario, conNumeros: boolean): string {
     })
     .join("");
   const numeros = conNumeros
-    ? numerosDePista(e)
+    ? numerosDePista(e, holgura)
         .map((n) => `<text x="${r3(n.x)}" y="${r3(n.y)}" class="pistas__numero">${n.nombre}</text>`)
         .join("")
     : "";
+  const ayudas = conAyudas ? radioayudasDelDibujo(e, en) : "";
   return `<svg class="pistas" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
       <path d="${FLECHA_DEL_NORTE}" class="pistas__norte" />
-      ${plataformas}${calles}${barras}${numeros}
+      ${plataformas}${calles}${ayudas}${barras}${numeros}
     </svg>`;
+}
+
+/**
+ * Dónde empieza la pluma del ILS, pasado el umbral, en unidades del dibujo:
+ * pegada a la cabecera, y el número de la pista encima con su halo de papel,
+ * como en una carta de aproximación.
+ */
+const PLUMA_DESDE = 1.5;
+/** El lado de un símbolo de radioayuda en el dibujo de la ficha, en unidades del dibujo. */
+const LADO_DE_RADIOAYUDA = 7;
+
+/**
+ * **Las radioayudas en el dibujo de la ficha**: el símbolo de las que caen
+ * dentro, en su sitio de verdad —el VOR LRO en la punta oeste de
+ * Los Rodeos, el NDB de Hierro junto a su pista—, y la pluma de cada ILS por
+ * fuera de su cabecera, a lo largo del eje y debajo del número. Las que caen
+ * fuera del dibujo van en la lista de al lado, con su caja.
+ */
+function radioayudasDelDibujo(e: Scenario, en: ReturnType<typeof encuadreDePistas>): string {
+  const o = e.aerodrome?.origin;
+  if (!o) return "";
+  const aXy = (p: { lat: number; lon: number }): [number, number] => {
+    const { x, z } = dondeCae(o, p);
+    return [x, -z];
+  };
+  const salen: string[] = [];
+  for (const s of estacionesDe(e.aerodrome?.id)) {
+    if (s.clase === "ILS") {
+      // La pluma va con la pista dibujada: del otro extremo hacia el umbral, y más allá.
+      const pista = e.aerodrome?.runways.find((p) => s.pista && p.thresholds[s.pista]?.xy);
+      const umbral = pista && s.pista ? pista.thresholds[s.pista]?.xy : undefined;
+      const otro = pista ? Object.entries(pista.thresholds).find(([n]) => n !== s.pista)?.[1]?.xy : undefined;
+      if (!umbral || !otro) continue;
+      const [ux, uy] = en(umbral);
+      const [ox, oy] = en(otro);
+      const d = Math.hypot(ux - ox, uy - oy) || 1;
+      const [dx, dy] = [(ux - ox) / d, (uy - oy) / d];
+      const rumbo = (Math.atan2(dx, -dy) * 180) / Math.PI;
+      // Hasta el borde del dibujo, o veinte unidades como mucho.
+      const hastaElBorde = Math.min(
+        dx > 0 ? (100 - ux) / dx : dx < 0 ? -ux / dx : Infinity,
+        dy > 0 ? (100 - uy) / dy : dy < 0 ? -uy / dy : Infinity,
+      );
+      const largo = Math.min(20, hastaElBorde - PLUMA_DESDE - 1);
+      if (largo < 6) continue;
+      salen.push(plumaEnSvg(ux + dx * PLUMA_DESDE, uy + dy * PLUMA_DESDE, rumbo, largo));
+      continue;
+    }
+    const [x, y] = en(aXy(s));
+    const m = LADO_DE_RADIOAYUDA / 2 + 1;
+    if (x < m || y < m || x > 100 - m || y > 100 - m) continue;
+    salen.push(simboloEnSvg(s.clase, x, y, LADO_DE_RADIOAYUDA));
+  }
+  return salen.join("");
+}
+
+/**
+ * **La lista de las radioayudas de un campo**, en la ficha: cada una con su
+ * símbolo y su caja —identificador y frecuencia, canal DME y morse—, como
+ * las publica su AD 2.19. Donde el AIP no publica ninguna, lo dice.
+ */
+function listaDeRadioayudas(oaci: string): string {
+  const publicadas = RADIOAYUDAS[oaci];
+  if (!publicadas) return "";
+  const estaciones = estacionesDe(oaci);
+  if (!estaciones.length)
+    return `<p class="ficha-carta__pie ficha-carta__sin-radio">${t("carta.sinRadioayudas")}</p><small class="ficha-carta__pie ficha-carta__fuente">${publicadas.fuente}${publicadas.sinNinguna ? ` · ${publicadas.sinNinguna}` : ""}</small>`;
+  const una = (s: Estacion): string => {
+    const c = cajaDeRadioayuda(s);
+    return `<li><span class="ficha-carta__simbolo${s.clase === "ILS" ? " ficha-carta__simbolo--ils" : ""}">${simboloDeRadioayuda(s.clase)}</span><span class="ficha-carta__caja"><b>${c.titulo}</b>${
+      c.canal ? ` <span>${c.canal}</span>` : ""
+    }<i class="ficha-carta__morse">${c.morse}</i></span></li>`;
+  };
+  return `<ul class="ficha-carta__lista ficha-carta__ayudas">${estaciones.map(una).join("")}</ul><small class="ficha-carta__pie ficha-carta__fuente">${publicadas.fuente}</small>`;
 }
 
 /** Lo que mide un texto, a ojo: Barlow estrecha anda por el 0,47 del cuerpo. */
@@ -370,7 +455,7 @@ function grados(v: number, positivo: string, negativo: string): string {
  * Ver `colocarLaCarta` y `carta/rotulos.ts`.
  */
 export interface Etiqueta {
-  readonly tipo: "campo" | "ruta" | "isla" | "agua" | "pais" | "cota" | "grado" | "leyenda";
+  readonly tipo: "campo" | "ruta" | "isla" | "agua" | "pais" | "cota" | "grado" | "leyenda" | "descargo";
   /** Dónde se agarra, en fracción del lienzo: de 0 a 1. */
   readonly x: number;
   readonly y: number;
@@ -579,6 +664,15 @@ export function mapaDelPais(
   const leyenda = calcos.cifras
     ? `<span class="pais__letra pais__leyenda" ${conEtiqueta({ tipo: "leyenda", x: 0, y: 1, orden: 20 })}>${t("carta.enPies")}</span>`
     : "";
+  /*
+   * **El descargo, al pie de la hoja**, donde lo lleva toda carta que no es la
+   * oficial: «no apto para navegación real». Desde el calco de los nombres,
+   * que es el primero con letra; en Guyrami no hay una sola que leer, y quien
+   * pudiera llevarse esta carta a un avión de verdad ya lee.
+   */
+  const descargo = calcos.nombres
+    ? `<span class="pais__letra pais__descargo" ${conEtiqueta({ tipo: "descargo", x: 1, y: 1, orden: 21 })}>${t("carta.descargo")}</span>`
+    : "";
 
   // ── Los aeródromos, sus rótulos y la ficha de cada uno ─────────────────
   const tamano = pequenos ? SIMBOLOS.aerodromoPequenos : SIMBOLOS.aerodromo;
@@ -695,7 +789,7 @@ export function mapaDelPais(
           <path class="pais__reticula" d="${reticula.join("")}" />
           ${costa}${rios}${rayas}
         </svg>
-        ${cifrasDeLaReticula.join("")}${nombres}${cotas}${cifrasDeRuta.join("")}${laRosa}${puntos.join("")}${rotulos.join("")}${leyenda}
+        ${cifrasDeLaReticula.join("")}${nombres}${cotas}${cifrasDeRuta.join("")}${laRosa}${puntos.join("")}${rotulos.join("")}${leyenda}${descargo}
       </div>
       ${fichas.join("")}
     </div>`;
@@ -794,7 +888,9 @@ function fichaDelCampo(e: Scenario, p: readonly [number, number], d: DeLaCarta):
               : ""
           }
           ${laRadio}
+          ${calcos.radio ? listaDeRadioayudas(oaci) : ""}
           ${calcos.radio ? `<small class="ficha-carta__pie ficha-carta__var">${varEscrita(declinacion(p[1], p[0], d.hoy))}</small>` : ""}
+          ${calcos.radio ? `<small class="ficha-carta__pie ficha-carta__descargo">${t("carta.descargo")}</small>` : ""}
         </div>`
     : "";
   return `
@@ -804,7 +900,7 @@ function fichaDelCampo(e: Scenario, p: readonly [number, number], d: DeLaCarta):
         </button>
         <div class="ficha-carta__hoja">
           ${sello ? `<span class="ficha-carta__sello">${sello}</span>` : ""}
-          <div class="ficha-carta__dibujo">${dibujoDePistas(e, calcos.cifras)}</div>
+          <div class="ficha-carta__dibujo">${dibujoDePistas(e, calcos.cifras, calcos.radio)}</div>
           ${datos}
           ${retrato}
           ${boton}
@@ -872,6 +968,21 @@ export function sitiosDe(
     case "agua":
     case "pais":
       return { formas: [sitiosEntre([[x, y], ...(e.otros ?? []).map(([a, b]) => [a * ancho, b * alto] as const)], m)] };
+    // El descargo, abajo a la derecha si cabe, como el pie de una carta.
+    case "descargo":
+      return {
+        formas: [
+          sitiosEntre(
+            [
+              [ancho - 6 - m[0] / 2, alto - 6 - m[1] / 2],
+              [6 + m[0] / 2, alto - 6 - m[1] / 2],
+              [ancho - 6 - m[0] / 2, 6 + m[1] / 2],
+              [6 + m[0] / 2, 6 + m[1] / 2],
+            ],
+            m,
+          ),
+        ],
+      };
     case "leyenda":
       return {
         formas: [

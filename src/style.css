@@ -12361,6 +12361,18 @@ button.motor__tecla::after {
   font-size: 11px;
 }
 
+/*
+ * El descargo, al pie: lo pone el colocador, por `left` y `top` como la
+ * leyenda —un `right` aquí lo estiraría—, abajo a la derecha si cabe.
+ */
+.pais__descargo {
+  left: 6px;
+  bottom: 6px;
+  z-index: 1;
+  font-size: 11px;
+  font-style: italic;
+}
+
 /* La rosa, a la medida de la carta: en el teléfono tumbado se salía por abajo. */
 .pais__rosa {
   position: absolute;
@@ -12889,6 +12901,65 @@ button.motor__tecla::after {
   margin: 0;
   font-size: 12px;
   color: var(--carta-tinta);
+}
+
+/*
+ * Las radioayudas del campo, en el calco de la radio: el símbolo del Anexo 4
+ * y su caja al lado —identificador y frecuencia, canal y morse—, en la tinta
+ * de lo aeronáutico.
+ */
+.ficha-carta__ayudas {
+  font-size: 13px;
+  color: var(--carta-tinta-aero);
+}
+
+.ficha-carta__ayudas li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.ficha-carta__simbolo {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+}
+
+.ficha-carta__simbolo svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* La pluma del ILS es larga y estrecha: en la lista va tumbada, con la punta a la derecha. */
+.ficha-carta__simbolo--ils svg {
+  width: 4px;
+  height: 20px;
+  transform: rotate(90deg);
+}
+
+.ficha-carta__caja span {
+  font-weight: 500;
+}
+
+.ficha-carta__morse {
+  display: block;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.ficha-carta__descargo {
+  font-style: italic;
+}
+
+/* En el dibujo de la ficha, la pluma y los símbolos sin su halo propio: van sobre el papel. */
+.pistas__pluma,
+.pistas__radioayuda {
+  pointer-events: none;
 }
 
 .ficha-carta__var {

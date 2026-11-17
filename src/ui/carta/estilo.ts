@@ -191,6 +191,8 @@ export const SIMBOLOS = {
   aerodromoPequenos: 24,
   avion: 28,
   punto: 12,
+  /** El lado mayor del símbolo de una radioayuda —VOR, DME, NDB— en el plano; la pluma del ILS va por su largo. */
+  radioayuda: 15,
 } as const;
 
 /**
