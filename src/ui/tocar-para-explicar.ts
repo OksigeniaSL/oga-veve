@@ -189,6 +189,15 @@ export function escucharLosToquesQueExplican(raiz: HTMLElement): () => void {
     if (!donde) return null;
     // Lo que tiene debajo el dedo, si recoge toques y lleva explicación.
     const directa = donde.closest("[data-explica]");
+    /*
+     * **Salvo una rueda dentro de la pieza**: la de la ventanilla de presión
+     * va dentro de la esfera del altímetro, que se explica entera, y girarla
+     * no es pedir la explicación. Sin esto, cada toque a la rueda abría la
+     * figura de Kollsman y paraba el vuelo: salió en el banco de «El
+     * altímetro miente» (H26p).
+     */
+    const rueda = donde.closest("[data-mcp-rueda], [data-mcp-alt], [data-radio-mando]");
+    if (rueda && directa?.contains(rueda)) return null;
     if (directa && raiz.contains(directa) && seVe(directa)) {
       if (directa.hasAttribute("data-explica-fondo") && directa.closest(".cuadro--grande"))
         return null;
