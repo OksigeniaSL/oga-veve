@@ -71,7 +71,8 @@ const leerSolo = (page) =>
   page.evaluate(() => {
     const o = globalThis.__oga;
     const s = o.estado();
-    const qnh = document.querySelector("[data-qnh]");
+    // La ventanilla que se ve: puede haber más de un cuadro montado.
+    const qnh = [...document.querySelectorAll("[data-qnh]")].find((e) => e.getBoundingClientRect().width > 0) ?? null;
     return {
       x: s.position.x,
       z: s.position.z,
@@ -150,7 +151,13 @@ const tocarLaEsfera = (page, lado) =>
 let codigo = 0;
 try {
   console.log(`\n${NOMBRE}`);
-  const contexto = await navegador.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, hasTouch: false });
+  // En castellano paraguayo, que es el texto de producto y lo que miran las comprobaciones; `OGA_IDIOMA` lo cambia.
+  const contexto = await navegador.newContext({
+    viewport: { width: 1280, height: 800 },
+    deviceScaleFactor: 1,
+    hasTouch: false,
+    locale: process.env.OGA_IDIOMA ?? "es-PY",
+  });
   const page = await contexto.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
@@ -224,11 +231,14 @@ try {
       girando = true;
       // Con el dedo en el cuadro plano: un toque por hectopascal, en la mitad que baja.
       await page.evaluate(() => globalThis.__oga.acelerar(1));
-      const diana = page.locator('[data-radio-mando="qnh"][data-paso="-1"]').first();
+      // Con el ratón por donde va el dedo, en el punto de la diana: si algo la tapa, se lo queda eso.
+      const caja = await page.locator('[data-radio-mando="qnh"][data-paso="-1"]').first().boundingBox();
       for (let i = 0; i < 9; i++) {
-        await diana.click({ force: true });
-        await pausa(120);
+        await page.mouse.click(caja.x + caja.width * 0.35, caja.y + caja.height * 0.5);
+        await pausa(150);
       }
+      const explica = await page.evaluate(() => !!document.querySelector('[data-hud="explica"]:not([hidden]), .explica:not([hidden])'));
+      if (explica) console.log("    ojo: se abrió la explicación");
       // Y la última muesca, con la tecla.
       await page.keyboard.press("KeyU");
       await pausa(300);
@@ -300,8 +310,21 @@ try {
     );
   }
   comprobar("sin susto: nunca a menos de cien metros del suelo", masBajo > 100, `${masBajo.toFixed(0)} m como mucho cerca`);
+  /*
+   * **Lo que pidió decir la instructora**, sonara o no: una frase sin grabar
+   * se calla —Brave en Linux no tiene voces, y el juego no lee con el robot—
+   * y se apunta como «sin grabar, se calla». Lo que se mira es que cada paso
+   * la pida en su orden; que suene es de cuando estén grabadas.
+   */
   const dicho = await page.evaluate(() => globalThis.__oga.dichoTodo());
-  const delAltimetro = (dicho.instructor ?? []).filter((k) => /^ejercicio\.altimetro\./.test(k));
+  const cantados = await page.evaluate(() => globalThis.__oga.cantados());
+  const pedidas = [
+    ...(dicho.instructor ?? []).filter((k) => /^ejercicio\.altimetro\./.test(k)),
+    ...cantados
+      .map((c) => /^(ejercicio\.altimetro\.\w+): sin grabar/.exec(typeof c === "string" ? c : (c?.que ?? ""))?.[1])
+      .filter(Boolean),
+  ];
+  const delAltimetro = pedidas.filter((k, i) => pedidas.indexOf(k) === i);
   console.log(`    la instructora: ${delAltimetro.join(", ") || "nada"}`);
   const esperado = PONER
     ? ["ejercicio.altimetro.antes", "ejercicio.altimetro.qnh", "ejercicio.altimetro.puesto", "ejercicio.altimetro.pasaste"]

@@ -137,7 +137,8 @@ export class SixPack {
           agujaSvg(MEDIDAS.agujaCorta) +
           '</g><g data-needle="alt-hundreds">' +
           agujaSvg(MEDIDAS.aguja) +
-          "</g>",
+          "</g>" +
+          ruedaDeLaVentanilla(),
         yDelRotulo(c.altimetro),
       ],
       ["tc", "T/C", tcFace(), "", yDelRotulo(null)],
@@ -312,29 +313,27 @@ function altFace(c: Cuadro): string {
     escalaSvg(c.altimetro) +
     unidadSvg(c.altimetro) +
     `<rect x="${50 + v.x * CARA}" y="${50 + v.y * CARA}" width="${v.ancho * CARA}" height="${v.alto * CARA}" rx="1.5" class="esfera__ventana" />` +
-    `<text data-qnh x="${50 + (v.x + v.ancho / 2) * CARA}" y="${50 + (v.y + v.alto / 2) * CARA + 2.8}" class="esfera__qnh" text-anchor="middle"></text>` +
-    ruedaDeLaVentanilla()
+    `<text data-qnh x="${50 + (v.x + v.ancho / 2) * CARA}" y="${50 + (v.y + v.alto / 2) * CARA + 2.8}" class="esfera__qnh" text-anchor="middle"></text>`
   );
 }
 
 /**
- * **La rueda de la ventanilla, con el dedo**: la mitad de la izquierda baja
- * un hectopascal y la de la derecha lo sube; con el dedo puesto, sigue
- * girando. Era solo de teclado —la O y la U—, y en una tablet la presión no
- * se podía poner. La diana es más grande que la ventanilla, que en una esfera
- * de tablet son veinte píxeles: va del eje de las agujas al borde y del doble
- * de alto, y deja libre la mitad izquierda de la esfera para tocarla y que se
- * explique. Por el mismo atributo que el OBS: ver `onMandoDeRadio` en
- * `hud.ts` y `flight/el-altimetro-miente.ts`.
+ * **La rueda de la ventanilla, con el dedo**: la mitad de abajo de la
+ * esfera, partida en dos como la del OBS (`radio-en-la-rosa.ts`): la
+ * izquierda baja un hectopascal y la derecha lo sube; con el dedo puesto,
+ * sigue girando. Era solo de teclado —la O y la U— y en una tablet la presión
+ * no se podía poner. La ventanilla sola, en una esfera de tablet, son veinte
+ * píxeles y no llega a los 44 del dedo (DESIGN.md, «Móvil y táctil»); la
+ * mitad de abajo es donde va la rueda en un altímetro de verdad, abajo a la
+ * izquierda de la caja, y deja la de arriba para tocarla y que se explique.
+ * Va **encima de las agujas**, que si no se quedan el toque y lo que se abre
+ * es la explicación: salió en el banco. Por el mismo atributo que el OBS: ver
+ * `onMandoDeRadio` en `hud.ts` y `flight/el-altimetro-miente.ts`.
  */
 function ruedaDeLaVentanilla(): string {
-  const v = VENTANA_DE_PRESION;
-  const arriba = 50 + (v.y - v.alto / 2) * CARA;
-  const alto = v.alto * 2 * CARA;
-  const medio = 50 + (v.x + v.ancho / 2) * CARA;
   return (
-    `<rect data-radio-mando="qnh" data-paso="-1" class="cr__radio-dedo" x="50" y="${arriba}" width="${medio - 50}" height="${alto}" />` +
-    `<rect data-radio-mando="qnh" data-paso="1" class="cr__radio-dedo" x="${medio}" y="${arriba}" width="${96 - medio}" height="${alto}" />`
+    '<rect data-radio-mando="qnh" data-paso="-1" class="cr__radio-dedo" x="0" y="52" width="50" height="48" />' +
+    '<rect data-radio-mando="qnh" data-paso="1" class="cr__radio-dedo" x="50" y="52" width="50" height="48" />'
   );
 }
 

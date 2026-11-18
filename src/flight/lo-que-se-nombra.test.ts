@@ -81,6 +81,16 @@ const FUERA_DE_LA_TABLA: Readonly<Record<string, string>> = {
   "vuelo.papiAlto": "rótulo de la tarjeta que dibuja las cuatro luces",
   "vuelo.papiBajo": "rótulo de la tarjeta que dibuja las cuatro luces",
   "vuelo.papiBien": "rótulo de la tarjeta que dibuja las cuatro luces",
+  /*
+   * «El altímetro miente» (H26p) nombra **la esfera del altímetro** del cuadro
+   * de esferas, la de la ventanilla de Kollsman, que es de lo que va el
+   * ejercicio y solo se ofrece en esos aviones; la pieza `altimetro` es la
+   * cinta de la altura de los de cristal. Los dos cierres se leen en el panel
+   * del final, no se dicen.
+   */
+  "ejercicio.altimetro.qnh": "la esfera del altímetro de los de esferas, de lo que va el ejercicio; no la cinta",
+  "ejercicio.altimetro.cierre": "se lee en el panel del final, no se dice",
+  "ejercicio.altimetro.cierreSinPoner": "se lee en el panel del final, no se dice",
 };
 
 describe("no se nombra lo que no se ve", () => {

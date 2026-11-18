@@ -1898,7 +1898,7 @@ const EJ_ESTIMA = escena(`
  * **El altímetro miente**: de perfil, el mar a la derecha y la ladera que
  * sube a la izquierda hasta su cima; arriba, la silueta clara del avión
  * donde dice la aguja, y debajo el de verdad, más cerca del cerro, con la
- * flecha que baja entre los dos. En la esquina, la esfera del altímetro con
+ * cota entre los dos —una cota, no una flecha, que no se pide bajar—. En la esquina, la esfera del altímetro con
  * su ventanilla. Ver `flight/el-altimetro-miente.ts`.
  */
 const AVION_DE_PERFIL = (t: string, estilo = ""): string =>
@@ -1909,7 +1909,7 @@ const EJ_ALTIMETRO = escena(`
   <path class="leccion__loma" d="M0 84 V36 L10 30 L18 33 L30 22 L40 31 L50 46 L62 60 L70 84 Z" />
   ${AVION_DE_PERFIL("translate(86 14) scale(1.2)", "opacity: 0.35")}
   ${AVION_DE_PERFIL("translate(86 30) scale(1.2)")}
-  <path class="ejercicio__flecha" d="M64 10 V30 M59 25 L64 31 L69 25" />
+  <path class="ejercicio__flecha" d="M60 12 H68 M64 12 V31 M60 31 H68" />
   <g transform="translate(100 64)">
     <circle cx="0" cy="0" r="12" style="fill: #1b1f26; stroke: #6c7480; stroke-width: 1.6" />
     <rect x="2.6" y="-2.6" width="7.4" height="5.2" rx="1" style="fill: #ffb02e" />

@@ -1074,8 +1074,9 @@ const RUMBO_LLEGASTE = icono(`${NOCHE}
  * **«El altímetro miente»**, de perfil: el cerro a la izquierda y el avión
  * yendo hacia él. Con la ventanilla de donde se viene, el avión de la aguja
  * —la silueta clara, arriba— no es el de verdad, que va más abajo y en ámbar,
- * con la flecha que baja entre los dos: **el suelo está más cerca de lo que
- * dice la aguja**. Con la presión de acá, uno solo, arriba, con su margen
+ * con la cota entre los dos: **el suelo está más cerca de lo que dice la
+ * aguja**. Una cota y no una flecha, que una flecha hacia abajo al lado de un
+ * avión se lee «bajá», y es justo lo que no se pide. Con la presión de acá, uno solo, arriba, con su margen
  * hasta la cima. Y la rueda: la esfera con su ventanilla en ámbar y la
  * rueda abajo a la izquierda, girando. Se entiende sin leer un número. Ver
  * `flight/el-altimetro-miente.ts`.
@@ -1086,7 +1087,7 @@ const avionDelAltimetro = (y: number, clase = ""): string =>
 const ALTIMETRO_MIENTE = icono(`${CERRO}
   ${avionDelAltimetro(-1.4, "senal__silueta")}
   ${avionDelAltimetro(5.6, "senal__se-va")}
-  <path class="senal__se-va" d="M6.2 3.4 V9.6 M4.4 7.8 L6.2 10 L8 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />`);
+  <path class="senal__se-va" d="M6.4 3.4 H9.6 M8 3.4 V10.6 M6.4 10.6 H9.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />`);
 const ALTIMETRO_VERDAD = icono(`${CERRO}
   ${avionDelAltimetro(-1.4)}
   <path class="senal__marca" d="M7.6 6.6 V12.8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="1.4 1.2" />`);
