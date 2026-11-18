@@ -2545,3 +2545,10 @@ ha tocado.
   se salió de la final de lado antes de empezar a subir; sin mirar.
 - **Las agujas desde el asiento del JAZ 40**, arriba.
 - **La escala de la senda en la cabina en 3D**, con un avión que la tenga.
+- **`npm run carteles`**, sin pasar: la cola del navegador, compartida con
+  otro ayudante, estuvo ocupada casi una hora de las dos de la tanda, y no
+  hubo hueco. El panel del final con la frase larga sigue sin mirar en
+  tablet y teléfono.
+- **La nube contra el mismo sitio sin nube**: la tirada con `CAVOK`, que
+  daría «aire» fuera de la capa en el mismo sitio, tampoco tuvo hueco; la
+  comparación de arriba es contra el puesto y el crucero.
