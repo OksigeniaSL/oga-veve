@@ -2630,6 +2630,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `flight/ils-con-agujas.ts`.
      */
     ilsConAgujas: () => juego.ilsConAgujasParaBanco,
+    /**
+     * «La brújula baila»: la fase, la inclinación del campo, lo que marcan la
+     * brújula del parabrisas y el direccional, el alabeo, cuánto mintió y
+     * cuánto bailó. Ver `flight/brujula-que-baila.ts`.
+     */
+    brujula: () => juego.brujulaParaBanco,
     /** El morse de la radio: si suena, de quién, y lo último identificado. Ver `audio/morse.ts`. */
     morse: () => juego.morseParaBanco,
     /** Enseña o esconde la nube de la tormenta, para medir lo que cuesta. */

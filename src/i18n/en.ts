@@ -1435,6 +1435,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.deriva": "Aim into the wind",
   "hangar.ejercicio.rumbo": "Heading at night",
   "hangar.ejercicio.estima": "Heading and clock",
+  "hangar.ejercicio.brujula": "The dancing compass",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1688,6 +1689,16 @@ export const EN: Dictionary = {
     "Speed times time is distance: with the heading corrected for the wind and a clock, you get to a place you can't see",
   "cronometro.glosa": "heading",
   "cronometro.etiqueta": "Heading {rumbo}, {reloj} to go",
+  "ejercicio.brujula.antes": "Look at the compass up top and the heading indicator below: right now they agree",
+  "ejercicio.brujula.virar": "Turn gently to the right, up to the mark, watching both",
+  "ejercicio.brujula.seAtrasa": "See? The compass is lagging behind. In a turn, the compass lies",
+  "ejercicio.brujula.seAdelanta": "See? The compass is racing ahead. In a turn, the compass lies",
+  "ejercicio.brujula.baila": "We're straight now and the compass is still dancing. The heading indicator, steady",
+  "ejercicio.brujula.quieta": "There it is: with the plane straight and steady, the compass tells the truth",
+  "palabra.vira": "Turn!",
+  "ejercicio.brujula.cuanto": "{n}° apart",
+  "ejercicio.brujula.cierre":
+    "In a turn the compass lies, and coming out it dances. The heading indicator is a gyroscope: it doesn't feel the turn, and that's why we fly by it",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
   "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
   "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",

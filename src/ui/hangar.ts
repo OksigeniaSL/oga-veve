@@ -1894,6 +1894,25 @@ const EJ_ESTIMA = escena(`
   ${AVION("translate(60 66) scale(0.85)")}
 `);
 
+/**
+ * **La brújula baila**: desde el asiento, el travesaño del parabrisas con la
+ * brújula colgada y, abajo, el panel con el direccional. La aguja del
+ * direccional, quieta y blanca; la de la brújula, en ámbar y temblando, con
+ * su aguja de antes y de después. Ver `flight/brujula-que-baila.ts`.
+ */
+const EJ_BRUJULA = escena(`
+  <path d="M0 10 H120" style="stroke: #2b2f36; stroke-width: 6" />
+  <path d="M38 13 V22" style="stroke: #2b2f36; stroke-width: 3" />
+  <rect x="0" y="58" width="120" height="26" rx="3" style="fill: #2b2f36" />
+  <circle cx="38" cy="35" r="13" style="fill: #0b1322; stroke: #ffb02e; stroke-width: 2" />
+  <path d="M38 35 V25" style="stroke: #ffb02e; stroke-width: 1.6; stroke-linecap: round; opacity: 0.45" transform="rotate(-26 38 35)" />
+  <path d="M38 35 V25" style="stroke: #ffb02e; stroke-width: 1.6; stroke-linecap: round; opacity: 0.45" transform="rotate(26 38 35)" />
+  <path d="M38 35 V24" style="stroke: #ffb02e; stroke-width: 2.6; stroke-linecap: round" />
+  <path d="M21 29 Q19 35 21 41 M55 29 Q57 35 55 41" style="fill: none; stroke: #ffb02e; stroke-width: 1.6; stroke-linecap: round" />
+  <circle cx="82" cy="60" r="15" style="fill: #0b1322; stroke: #f2f5f7; stroke-width: 2" />
+  <path d="M82 60 V48" style="stroke: #f2f5f7; stroke-width: 2.6; stroke-linecap: round" />
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   rumbo: EJ_RUMBO,
   deriva: EJ_DERIVA,
@@ -1914,6 +1933,8 @@ const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   simulador: EJ_SIMULADOR,
   despresurizacion: EJ_DESPRESURIZACION,
   tormenta: EJ_TORMENTA,
+  // La brújula del parabrisas que tiembla y el direccional quieto. Ver `brujula-que-baila.ts`.
+  brujula: EJ_BRUJULA,
 };
 
 function fichaDeEjercicio(e: Ejercicio, elegido: boolean): string {

@@ -1118,6 +1118,53 @@ function estima(donde: "rumbo" | "debajo" | "derecha" | "izquierda" | "delante" 
 `);
 }
 
+/**
+ * **«La brújula baila»**: las dos agujas, la de la brújula y la del
+ * direccional, una al lado de la otra y con su sitio de verdad —la brújula
+ * colgada del parabrisas, a la izquierda; el direccional metido en el panel, a
+ * la derecha—. Las caras, oscuras como las de la cabina, para que el blanco de
+ * «lo que tengo» y el ámbar de la que miente se lean igual en la tarjeta. La
+ * que miente va en ámbar y, cuando baila, con su aguja de antes y de después
+ * a los lados, que es como se dibuja algo que tiembla. Ver
+ * `flight/brujula-que-baila.ts`.
+ */
+function dosAgujas(o: {
+  /** Lo girada la aguja de la brújula, grados desde arriba. */
+  readonly brujula: number;
+  /** Y la del direccional. */
+  readonly direccional: number;
+  /** Si la de la brújula miente: en ámbar. */
+  readonly miente?: boolean;
+  /** Si baila: con sus agujas de antes y de después. */
+  readonly baila?: boolean;
+  /** La marca de rumbo en el direccional, grados desde arriba; sin ella, ninguna. */
+  readonly marca?: number;
+}): string {
+  const cara = (cx: number, clase: string, giro: number, fantasmas: boolean): string => `
+    <circle cx="${cx}" cy="13.4" r="5.3" fill="#0b1322" />
+    <g class="${clase}">
+      <circle cx="${cx}" cy="13.4" r="5.3" fill="none" stroke="currentColor" stroke-width="0.9" />
+      ${fantasmas ? [-28, 28].map((g) => `<path d="M${cx} 13.4 V9" transform="rotate(${giro + g} ${cx} 13.4)" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.45" />`).join("") : ""}
+      <path d="M${cx} 13.4 V8.6" transform="rotate(${giro} ${cx} 13.4)" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+      <circle cx="${cx}" cy="13.4" r="0.9" />
+    </g>`;
+  // Las rayas del temblor, a los dos lados de la cara que baila.
+  const tiembla = o.baila
+    ? `<g class="senal__se-va"><path d="M0.4 11 Q-0.4 13.4 0.4 15.8 M12.4 11 Q13.2 13.4 12.4 15.8" fill="none" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" /></g>`
+    : "";
+  const marca =
+    o.marca === undefined
+      ? ""
+      : `<path class="senal__marca" d="M16.3 7.4 h2.4 v1.6 l-1.2 1.1 l-1.2 -1.1 Z" transform="rotate(${o.marca} 17.5 13.4)" />`;
+  return icono(`
+    <path d="M1 2.4 H11.8 M6.4 2.4 V8.1" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+    <rect x="11.6" y="19.6" width="11.8" height="3.2" rx="0.8" opacity="0.35" />
+    ${cara(6.4, o.miente || o.baila ? "senal__se-va" : "senal__en-la-noche", o.brujula, o.baila ?? false)}
+    ${cara(17.5, "senal__en-la-noche", o.direccional, false)}
+    ${marca}
+    ${tiembla}`);
+}
+
 /** La flecha del lado, pegada al borde: es lo primero que se mira. */
 const HACIA: Record<string, string> = {
   izquierda: `<path d="M5.4 4.2 L1.4 7.2 L5.4 10.2 Z" />
@@ -2026,6 +2073,17 @@ export const DIBUJOS = {
   "estima-a-la-izquierda": estima("izquierda"),
   "estima-delante": estima("delante"),
   "estima-detras": estima("detras"),
+  /*
+   * «La brújula baila»: las dos agujas iguales; la marca a la derecha para
+   * virar; virando, la de la brújula atrás o delante de la del direccional; y
+   * derecho, la del direccional quieta y la de la brújula temblando. Ver
+   * `brujula-que-baila.ts`.
+   */
+  "brujula-las-dos": dosAgujas({ brujula: 0, direccional: 0 }),
+  "brujula-virar": dosAgujas({ brujula: 0, direccional: 0, marca: 90 }),
+  "brujula-se-atrasa": dosAgujas({ brujula: 12, direccional: 50, miente: true, marca: 90 }),
+  "brujula-se-adelanta": dosAgujas({ brujula: 88, direccional: 50, miente: true, marca: 90 }),
+  "brujula-baila": dosAgujas({ brujula: 0, direccional: 0, baila: true, marca: 0 }),
   /*
    * «Aterrizar con las agujas»: el localizador a tope de cada lado con la
    * senda todavía arriba, viniendo hacia el centro, la senda arriba con el

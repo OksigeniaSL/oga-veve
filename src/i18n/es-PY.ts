@@ -3303,6 +3303,7 @@ export const ES_PY = {
   "hangar.ejercicio.deriva": "Apuntá al viento",
   "hangar.ejercicio.rumbo": "Rumbo de noche",
   "hangar.ejercicio.estima": "Rumbo y reloj",
+  "hangar.ejercicio.brujula": "La brújula baila",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3669,6 +3670,28 @@ export const ES_PY = {
   // El cronómetro: la glosa del rótulo HDG, en pequeño, y lo que oye un lector de pantalla.
   "cronometro.glosa": "rumbo",
   "cronometro.etiqueta": "Rumbo {rumbo}, faltan {reloj}",
+  /*
+   * **«La brújula baila»** (#51, ADR 0031, enmienda H26q): un viraje al norte
+   * mirando la brújula del parabrisas y el direccional del panel. La
+   * instructora habla de «la brújula de arriba» y «el direccional de abajo»,
+   * que es donde están desde el asiento, y de «la aguja». Se atrasa o se
+   * adelanta lo dice la propia brújula: en Canarias se atrasa y en Paraguay
+   * se adelanta, y las dos frases son verdad donde suenan. Cortas, para
+   * decirlas en calma.
+   */
+  "ejercicio.brujula.antes": "Mirá la brújula de arriba y el direccional de abajo: ahora dicen lo mismo",
+  "ejercicio.brujula.virar": "Virá despacito a la derecha, hasta la marca, mirando las dos",
+  "ejercicio.brujula.seAtrasa": "¿Viste? La brújula se queda atrás. Virando, la brújula miente",
+  "ejercicio.brujula.seAdelanta": "¿Viste? La brújula se adelanta. Virando, la brújula miente",
+  "ejercicio.brujula.baila": "Ya vamos derecho y la brújula todavía baila. El direccional, quieto",
+  "ejercicio.brujula.quieta": "Ahora sí: con el avión derecho y quieto, la brújula dice la verdad",
+  // La palabra de Tukã para el viraje.
+  "palabra.vira": "¡Virá!",
+  // Lo que se apartó la brújula del direccional, de Taguató para arriba, delante de la frase.
+  "ejercicio.brujula.cuanto": "{n}° de diferencia",
+  // El panel del final: se lee, no se dice.
+  "ejercicio.brujula.cierre":
+    "Virando, la brújula miente y al salir baila. El direccional es un giróscopo: no siente el viraje, y por eso se vuela con él",
   // Y la frase corta, con sus números, de Taguató para arriba.
   "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
   "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",
