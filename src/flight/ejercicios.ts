@@ -96,6 +96,11 @@
  * radio y sin nada que mirar, rumbo tanto durante tantos minutos y se está
  * encima. Pide un campo con destino (`destinoDeLaEstima`) y la lleva
  * `estima.ts`. Ver el ADR 0031, enmienda H26n.
+ *
+ * Y «El altímetro miente» (#51, el altímetro barométrico), con la misma
+ * escena: de alta a baja presión con la ventanilla sin tocar, hacia una
+ * ladera de verdad. Pide un campo con ladera medida (`laderaDelAltimetro`) y
+ * la lleva `el-altimetro-miente.ts`. Ver el ADR 0031, enmienda H26p.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -108,6 +113,7 @@ import { ilsDelCampo } from "./ils-con-agujas";
 import { sitioDeLaDeriva } from "./deriva";
 import { rioDeNoche } from "./rumbo-de-noche";
 import { destinoDeLaEstima } from "./estima";
+import { laderaDelAltimetro } from "./el-altimetro-miente";
 
 export type EjercicioId =
   | "planeo"
@@ -128,7 +134,8 @@ export type EjercicioId =
   | "ils"
   | "deriva"
   | "rumbo"
-  | "estima";
+  | "estima"
+  | "altimetro";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -192,7 +199,8 @@ export interface Ejercicio {
     | "ils"
     | "deriva"
     | "rumbo"
-    | "estima";
+    | "estima"
+    | "altimetro";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
    * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
@@ -617,6 +625,45 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     dondeVale: (oaci) => destinoDeLaEstima(oaci) !== null,
     ensena:
       "velocidad por tiempo es distancia: con el rumbo corregido por el viento y el reloj, se llega a un sitio que no se ve; y lo que se aparta es lo que se voló mal",
+  },
+  /*
+   * **El altímetro miente** (#51, el altímetro barométrico): se viene de
+   * Lanzarote con su presión en la ventanilla hacia la Cumbre Nueva de La
+   * Palma, donde hoy hay diez hectopascales menos; la aguja marca doscientos
+   * setenta pies de más. Llega el QNH de acá, se gira la rueda, la aguja baja
+   * y dice la verdad. Lo lleva `el-altimetro-miente.ts`. Ver el ADR 0031,
+   * enmienda H26p.
+   */
+  {
+    id: "altimetro",
+    /*
+     * **Desde Taguató**: la ventanilla de presión es de Taguató para arriba
+     * —abajo la gira la instructora al llegar a cada campo (`seguirElViento`
+     * en `game.ts`)— y lo que se pide es un número, el QNH, que entra en la
+     * escalera con las cifras (`escalera.ts`). Lo esencial se ve sin leerlo:
+     * la aguja que baja al girar la rueda y el dibujo del avión que va más
+     * bajo de lo que dice.
+     */
+    peldanos: DESDE_TAGUATO,
+    /*
+     * **Los de esferas**: la avioneta, el de motor radial y el bimotor de
+     * pistón. Su altímetro tiene la rueda que se toca con el dedo en el cuadro
+     * plano y en el 3D (`relojes-cabina.ts`); el de los de cristal es un
+     * recuadro de la pantalla, y en el avión de verdad su rueda está en el
+     * panel del EFIS, que la cabina 3D no tiene. Allí solo se gira con la
+     * tecla, y un ejercicio cuyo gesto es girar esa rueda no se ofrece donde
+     * el dedo no llega. Y ninguno de los tres lleva radioaltímetro ni
+     * avisador de terreno: lo que dice el suelo lo dice la instructora.
+     */
+    valePara: (a) => !conRadarMeteorologico(a),
+    leccion: "aterrizaje",
+    colocacion: "altimetro",
+    averias: [],
+    escena: "navegacion",
+    acabaEnElAire: true,
+    dondeVale: (oaci) => laderaDelAltimetro(oaci) !== null,
+    ensena:
+      "un altímetro mide presión, no altura: de alta a baja presión con la ventanilla sin tocar marca de más, veintisiete pies por hectopascal; con el QNH del sitio dice la verdad",
   },
 ];
 

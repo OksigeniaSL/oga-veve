@@ -780,3 +780,235 @@ ANGLE (`OGA_GPU=1`), las teselas de la ortofoto puestas y el reloj por ocho:
 - **En Taguató Ruvichá** el cuadro lleva la radio de navegación, y no se ha
   mirado qué enseña si alguien sintoniza a mano el ILS de Estigarribia
   durante el ejercicio.
+
+## Enmienda H26p (18-11-2026): «El altímetro miente»
+
+De la lista de instrumentos de #51: «**altímetro barométrico** con QNH
+ajustable —y la misión "el altímetro miente" al volar de alta a baja
+presión, con el cerro creciendo delante—». El altímetro barométrico ya
+estaba (`flight/altimetro.ts`: la ventanilla de Kollsman, `alturaIndicada`,
+`girarRueda`, 27 ft por hPa) y la ventanilla salía en ámbar cuando no era la
+del sitio; faltaban la misión y **poder girar la rueda con el dedo**, que
+solo se giraba con la O y la U. Va en este ADR y no en uno nuevo porque es
+la misma escena de navegación sin radio (`escena: "navegacion"`, se cierra
+en el aire y calla lo mismo, H26f) y el mismo molde de los dos de antes:
+colocación en el aire, tarjeta con su dibujo, voz genérica con las cifras
+escritas y mesa de cinemática. Lo nuevo es un instrumento y una ladera, no
+una decisión de navegación. Lo lleva `flight/el-altimetro-miente.ts`.
+
+### Lo que pasa de verdad
+
+Un altímetro mide presión y la traduce a altura con el día que se le pone.
+Con la ventanilla en la presión de un sitio más alto que el de aquí, la
+aguja marca de más: `alturaIndicada = real + (puesta − del sitio) × 8,23 m`,
+la cuenta que mueve la aguja en todos los vuelos, no una del ejercicio. Diez
+hectopascales son **82 m, 270 ft**, dentro de los 27–30 ft por hPa de
+cualquier carta.
+
+### El sitio: La Palma y la Cumbre Nueva
+
+Se buscó en los relieves medidos del juego una ladera de verdad que crezca
+delante, dentro del mundo fino de un escenario:
+
+| Escenario | Lo más alto del mundo fino | Lo que hay |
+| --- | --- | --- |
+| La Palma | 1.987 m | la Cumbre Nueva al oeste, del mar a 1.300 m en 7 km |
+| Tenerife Norte | 1.666 m | la dorsal de La Esperanza, pero el campo está a 632 m |
+| La Gomera | 1.401 m | laderas al norte, a la orilla del mundo |
+| Pedro Juan Caballero | 638 m | lomas de 300 m sobre un campo a 562 |
+| Asunción | 182 m | la Cordillera de los Altos queda fuera del mundo |
+
+**La Palma**: se entra sobre el Atlántico, cinco kilómetros al este y uno al
+norte del aeropuerto, al oeste derecho; la ladera sube del agua (21 m en la
+costa) a 598 m a cuatro kilómetros y a 1.282 a siete, medida en
+`data/terrain/la-palma.bin` (PNOA-LiDAR del IGN). La cima no se escribe a
+mano: `colocacionDelAltimetro` la busca sobre el camino, cada cincuenta
+metros, con el relieve tal como lo monta el mundo: en el juego sale a
+1.376 m, 6,85 km al oeste del aeropuerto (con el fichero crudo, que es lo
+que lee la mesa, a 1.284). Se vende al mundo: otro campo con una ladera alta dentro de su mundo entra con una
+línea en `LADERAS_DEL_ALTIMETRO`.
+
+### La diferencia de presión: diez hectopascales, de Lanzarote
+
+Se viene de **Lanzarote**, con su presión puesta al salir, a La Palma, con
+diez menos: 1023 y 1013 con el tiempo de casa. Son 430 km entre los dos
+campos, un gradiente de **2,3 hPa por cada cien kilómetros**, el de un día
+corriente de invierno con una borrasca atlántica al noroeste —de los que
+vacían el alisio—; un temporal pasa de cinco por cada cien. La presión de La
+Palma es la del parte del día (el METAR, o el tiempo de casa sin él) y la de
+Lanzarote, esa más diez: lo que se fija es la diferencia, que es lo que
+enseña, y no un número que el METAR de hoy podría contradecir.
+
+### La altura pedida: la cima más mil pies
+
+La instructora pide **la aguja** en la cima más mil pies, redondeada a cien
+hacia arriba: 5.600 ft en el juego. Mil pies es el margen de una ruta sobre un obstáculo
+y es lo que se enseña a dejar. Se pensó en quinientos, que haría crecer más
+el cerro —la mitad del margen sería mentira—, y se descartó: quinientos sobre
+el suelo es el mínimo del VFR fuera de poblado (SERA.5005(f)) y no es lo que
+se enseña a dejar sobre una cresta. Con mil, **sin tocar la rueda se pasa la
+cima con 814 ft en vez de los 1.084 que dice la aguja** (volado): lo bastante para ver que faltaba algo, y
+nunca un susto. No hay choque posible sosteniendo la aguja.
+
+### Lo que se ve y se oye
+
+1. **Presentar**: tarjeta «Lanzarote · QNH 1023 · ALT 5600 ft» con el dibujo
+   del avión de verdad, en ámbar, más bajo que la silueta clara del de la
+   aguja, frente al cerro. La ventanilla del cuadro, en 1023 y en ámbar.
+2. **El QNH de acá**, a los veinte segundos: «QNH 1013» y el dibujo de la
+   esfera con su rueda. La cima queda a nueve kilómetros.
+3. **Puesta**: la aguja baja 270 ft —se ve bajar, que es la lección—, la
+   ventanilla deja el ámbar, y la instructora pide volver a la altura de la
+   tarjeta.
+4. **Cerca, sin poner**, a 2,5 km de la cima: «La aguja: 1090 ft sobre el
+   cerro. De verdad: 820 ft», y que el cerro está más cerca de lo que dice la
+   aguja. Una vez; sin alarma, sin rojo, sin música.
+5. **La cima**: el margen de verdad y el que decía la aguja. Con la rueda
+   puesta, hecho; sin ponerla, el cierre es para volver a intentar. Nadie
+   suspende.
+6. **El cierre** se lee: *de alta a baja, ojo con la caja*, la regla de toda
+   escuela.
+
+**Lo que canta la máquina**: nada. Ninguno de los tres aviones del ejercicio
+lleva radioaltímetro ni avisador de terreno, y en el que no los lleva no
+suenan (AGENTS.md); lo que dice el suelo lo dice la instructora. El
+ejercicio no depende de un *terrain*.
+
+### La rueda, en el instrumento de cada avión
+
+- **Cuadro plano de esferas** (`ui/six-pack.ts`): dos dianas sobre la
+  ventanilla, del eje de las agujas al borde y del doble de alto —la
+  ventanilla de una esfera de tablet son veinte píxeles—: la mitad izquierda
+  baja un hectopascal, la derecha lo sube y con el dedo puesto sigue, a diez
+  por segundo. Por `data-radio-mando="qnh"`, el atributo del OBS, que ya
+  saben no explicar ni poner grande `tocar-para-explicar.ts` y `reparto.ts`.
+- **Panel 3D de esferas** (`world/relojes-cabina.ts`, `ruedaDelAltimetro`):
+  un toque en la esfera del altímetro, mitad izquierda o derecha. La rueda
+  de verdad va abajo a la izquierda de la caja, que en el modelo no es una
+  pieza: la esfera entera es la diana que se alcanza desde el asiento.
+- **Teclado**: la O sube y la U baja, como antes.
+- **Los de cristal no**: su QNH es un recuadro de la pantalla y la rueda de
+  verdad está en el panel del EFIS, que la cabina 3D no tiene; allí solo se
+  gira con la tecla, y un ejercicio cuyo gesto es girar esa rueda no se
+  ofrece donde el dedo no llega. Por eso, y porque es el altímetro de
+  esferas el que se aprende primero, el ejercicio va en el JAZ 20, el 25 y
+  el 40, como la estima.
+- **Suena el clic de la carta**, uno por muesca como mucho cada 80 ms, y no
+  `attention`: poner el QNH son diez muescas y eran diez avisos tapando a la
+  instructora. Y **abajo de Taguató la rueda no se toca**: allí la gira la
+  instructora al llegar a cada campo (`seguirElViento`), y el toque de un
+  niño se deshacía medio segundo después con un clic que no explicaba nada.
+
+### El peldaño: desde Taguató
+
+Lo que se pide es un número, el QNH, y los números entran en la escalera en
+Taguató (`escalera.ts`, el canal de la cifra); la ventanilla de presión es
+también de Taguató para arriba. Lo esencial se entiende sin leer: la aguja
+que baja al girar la rueda, la ventanilla que pasa del ámbar al blanco y el
+dibujo del avión que va más bajo de lo que dice.
+
+### Las frases
+
+Seis dichas y dos cierres que solo se leen, en `es-PY.ts` y `en.ts`,
+genéricas como las de la estima: de dónde se viene, el QNH y los pies van
+escritos en la tarjeta. **Sin grabar**; `frases-para-grabar.mjs` las recoge
+en `DEL_ALTIMETRO`.
+
+### Lo que se prueba
+
+`flight/el-altimetro-miente.test.ts`, con el relieve de
+`data/terrain/la-palma.bin` leído tal cual y un piloto de cinemática que
+**sostiene la aguja**, no la altitud de verdad, que nadie sabe en la cabina:
+
+- se ofrece desde Taguató, en el JAZ 20, el 25 y el 40, en La Palma; no en
+  Tukã, ni en el JAZ 60, ni donde no hay ladera medida;
+- la cima es la de la Cumbre Nueva, a más de seis kilómetros, entre 1.200 y
+  1.500 m; la aguja empieza en ella más mil pies, con 1023 en la ventanilla y
+  1013 aquí: miente 270 ft, entre 265 y 300; se empieza sobre el mar;
+- con otra presión del día la cuenta es la misma, y la rueda no pasa de sus
+  topes (con 1045 aquí, la ventanilla se queda en 1050 y miente cinco);
+- **sin tocar la rueda**: presentar, QNH, cerca, cima y cierre, en ese orden;
+  la aguja dice el margen entero y de verdad faltan 270 ft, y nunca se baja
+  de doscientos metros sobre el suelo: cierre `sinPoner`;
+- **poniéndola**, un hectopascal cada cuarto de segundo desde que se da:
+  presentar, QNH, puesta (la aguja baja nueve o diez hectopascales), cima y
+  cierre; se pasa con los mil pies: `hecho`;
+- la presión llega con la cima a más de tres veces la distancia de «cerca»;
+- con percance o en el suelo, se cierra para volver a intentar sin pasar
+  por la cima, y `reiniciar` lo deja como al principio.
+
+Y en `lo-que-calla-el-ejercicio.test.ts`, entre los que se cierran en el
+aire; en `lo-que-se-nombra.test.ts`, la frase de la rueda nombra la esfera
+del altímetro, de lo que va el ejercicio, y no la cinta de los de cristal.
+
+### Volado
+
+`scripts/ver-el-altimetro-miente.mjs`, en La Palma con el JAZ 20 en Taguató,
+con la Intel de verdad (`OGA_GPU=1`) y el reloj por cuatro. El piloto de
+banco lleva el automático con el rumbo del camino y le pide la altitud de
+verdad en la que **la aguja** marca la pedida con la ventanilla que lleve,
+que es sostener la aguja.
+
+**Sin poner la rueda**, 12 de 15 en la primera tirada; las tres que no, por
+el banco y no por el juego: el navegador sin `locale` sacó el juego en
+inglés y dos comprobaciones buscaban el texto en castellano, y la de la
+instructora miraba solo lo que suena, y sin grabar no suena nada (ahora
+cuenta también lo apuntado «sin grabar, se calla»). Lo que salió:
+
+- la cima, 1.376 m a 6,85 km; la aguja en 5.625 ft con 1023, de verdad
+  5.355: los 270 ft;
+- la ventanilla del cuadro, «1023» en ámbar; la tarjeta, «Lanzarote · QNH
+  1023 · ALT 5600 ft» y la frase;
+- **desde el asiento**, un toque en la mitad derecha de la esfera del panel
+  3D sube la ventanilla a 1024 y uno en la izquierda la baja a 1023, por el
+  mismo `pulsarElMando` que el dedo;
+- cerca: «La aguja: 1090 ft sobre el cerro. De verdad: 820 ft»;
+- la cima pasada con **814 ft de verdad y 1.084 en la aguja**, cierre
+  `sinPoner`, nunca a menos de 272 m del suelo, ningún canto de la máquina,
+  nada ajeno al ejercicio ni a la vista ni en la voz salvo los baches, y el
+  panel del final con la regla, la flecha de volver a empezar y «Otro vuelo».
+
+Vuelta a volar en castellano y con los arreglos del dedo de abajo, **15 de
+15**: lo mismo, con la cima a 813 ft de verdad y 1.083 en la aguja, la
+instructora pidiendo presentación, QNH, cerca y cima en su orden, y la cota
+de la tarjeta en vez de la flecha.
+
+**Poniendo la rueda**, la primera tirada sacó dos fallos del juego, y los
+dos se arreglaron: el toque a la ventanilla se lo quedaba la aguja de los
+cientos, que va encima, y abría la explicación del altímetro —que además
+para el vuelo—; y aun con la diana encima de las agujas,
+`tocar-para-explicar.ts` buscaba primero la pieza que se explica (la esfera
+entera) y después el mando, así que la rueda abría la figura de Kollsman.
+Ahora la diana va encima de las agujas, en las dos mitades de abajo de la
+esfera como las del OBS —la ventanilla sola son veinte píxeles en una
+tablet, y el dedo pide 44—, y un mando de rueda dentro de una pieza que se
+explica es del mando.
+
+Con los dos arreglos, **16 de 16**: nueve toques en la mitad izquierda de
+la esfera del cuadro plano y una U llevan la ventanilla de 1023 a 1013 y la
+sacan del ámbar; la aguja pasa de 5.627 a 5.370 ft, que es la de verdad; el
+automático vuelve a la pedida y **la cima se pasa con 1.086 ft de verdad y
+1.086 en la aguja**, cierre `hecho`; la instructora pide, en su orden, la
+presentación, el QNH, la puesta y la cima; ninguna caja canta, nada ajeno, y
+el panel lleva la regla.
+
+`vitest` entero, en verde: 522 ficheros y 10.578 pruebas (29 saltadas).
+
+### Lo que queda
+
+- **Las frases, sin grabar**: seis dichas (ver «Las frases»). Hasta entonces
+  la instructora calla, y el ejercicio se sigue por la tarjeta, que lleva
+  dibujo, cifras y frase.
+- **El mar de nubes**: con el tiempo de casa de La Palma —el alisio, techo a
+  1.100 m— la capa queda por debajo y por los lados del camino, y la cumbre
+  asoma de ella, que es como se ve de verdad. Un día de borrasca atlántica,
+  el que da la diferencia de presión, el alisio suele irse y la capa con él;
+  el ejercicio no pone su propio tiempo, que sería otro parte encima del
+  METAR.
+- **Los de cristal**: no se ofrece hasta que su cabina 3D tenga el mando del
+  EFIS para el QNH.
+- **El teléfono apaisado** (`cuadro-telefono.ts`, las cuatro losas) no se ha
+  mirado con el dedo en la rueda, ni `npm run carteles` con las dianas
+  nuevas: el navegador estaba tomado por la ronda de cierre y otro ayudante.
+- **Lanzarote es un nombre en la tarjeta**: su presión es la de La Palma más
+  diez, no la de su METAR.

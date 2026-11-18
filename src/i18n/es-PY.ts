@@ -3303,6 +3303,7 @@ export const ES_PY = {
   "hangar.ejercicio.deriva": "Apuntá al viento",
   "hangar.ejercicio.rumbo": "Rumbo de noche",
   "hangar.ejercicio.estima": "Rumbo y reloj",
+  "hangar.ejercicio.altimetro": "El altímetro miente",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3666,6 +3667,33 @@ export const ES_PY = {
   // El panel del final: se lee, no se dice.
   "ejercicio.estima.cierre":
     "Velocidad por tiempo es distancia: con el rumbo corregido por el viento y el reloj, se llega adonde no se ve",
+  /*
+   * **«El altímetro miente»** (#51, ADR 0031, enmienda H26p): de alta a baja
+   * presión con la ventanilla sin tocar, hacia el cerro. Genéricas, como las
+   * de la estima: de dónde se viene, el QNH y los pies se escriben en la
+   * tarjeta, no se dicen. Cortas, para decirlas en calma.
+   */
+  "ejercicio.altimetro.plan": "{de} · QNH {qnh} · ALT {alt} ft",
+  "ejercicio.altimetro.antes":
+    "Venimos de lejos, con la presión de allá en la ventanilla. Mantené la aguja en la altura de la tarjeta, hacia el cerro",
+  "ejercicio.altimetro.qnhDeAca": "QNH {qnh}",
+  "ejercicio.altimetro.qnh":
+    "La torre nos da la presión de acá, que es más baja. Girá la rueda del altímetro hasta ese número",
+  "ejercicio.altimetro.bajo": "La aguja bajó {n} ft",
+  "ejercicio.altimetro.puesto":
+    "¿Viste? La aguja bajó y ahora dice la verdad: íbamos más bajo. Subí despacito a la altura de la tarjeta",
+  "ejercicio.altimetro.deVerdad": "La aguja: {dice} ft sobre el cerro. De verdad: {real} ft",
+  "ejercicio.altimetro.cerca":
+    "Mirá el cerro: está más cerca de lo que dice la aguja. La ventanilla todavía tiene la presión de allá",
+  "ejercicio.altimetro.margen": "Sobre el cerro: {real} ft. La aguja decía {dice} ft",
+  "ejercicio.altimetro.pasaste": "¡Pasamos el cerro con el margen de verdad! Con la presión de acá, la aguja no miente",
+  "ejercicio.altimetro.pasasteSinPoner":
+    "Pasamos el cerro más bajo de lo que decía la aguja. Probemos otra vez, con la presión de acá",
+  // El panel del final: se lee, no se dice. La regla es la de toda escuela.
+  "ejercicio.altimetro.cierre":
+    "De alta a baja, ojo con la caja: yendo a menos presión, el altímetro marca de más. Con el QNH del sitio, dice la verdad",
+  "ejercicio.altimetro.cierreSinPoner":
+    "De alta a baja, ojo con la caja: con la presión de allá en la ventanilla, el altímetro marcaba de más. Otra vez, y girá la rueda",
   // El cronómetro: la glosa del rótulo HDG, en pequeño, y lo que oye un lector de pantalla.
   "cronometro.glosa": "rumbo",
   "cronometro.etiqueta": "Rumbo {rumbo}, faltan {reloj}",
