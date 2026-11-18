@@ -16072,7 +16072,7 @@ oksigenia-access-panel::part(trigger):focus-visible {
     );
     --alto-del-grande: calc(
       (var(--alto-visible) - 64px - 92px) / var(--escala, 1) -
-        var(--fila-del-subtitulo)
+        var(--fila-del-subtitulo) - var(--cede-el-grande, 0px)
     );
   }
 
@@ -16094,11 +16094,17 @@ oksigenia-access-panel::part(trigger):focus-visible {
    * mientras dura el aviso, el aviso va en esa fila con la flecha al lado y
    * no encima —una fila de flecha, 44 píxeles y su relleno—, y el subtítulo
    * sube con ella.
+   *
+   * **Y con la lámpara, lo que ella mide** (`--cede-el-grande`, con o sin
+   * aviso): es seguridad y no puede esperar detrás de la pantalla. Cuánto
+   * cede no lo dice la hoja: lo mide y lo escribe el reparto (`LO_QUE_CEDE`
+   * en `ui/reparto.ts`, ADR 0030, enmienda H28g), y lo de encima de la
+   * pantalla baja con ella.
    */
   .hud.hay-cuadro-grande.hud--avisando {
     --alto-del-grande: calc(
       (var(--alto-visible) - 64px - 92px) / var(--escala, 1) -
-        var(--fila-del-subtitulo) - var(--fila-del-aviso)
+        var(--fila-del-subtitulo) - var(--fila-del-aviso) - var(--cede-el-grande, 0px)
     );
   }
 
@@ -16112,6 +16118,33 @@ oksigenia-access-panel::part(trigger):focus-visible {
     bottom: calc(
       (20px + 56px + 12px) / var(--escala, 1) + var(--alto-del-grande) + 8px +
         var(--fila-del-aviso)
+    );
+  }
+
+  /*
+   * **Y la lámpara, encima del subtítulo**, en la fila que la pantalla le
+   * cede (H28g). Debajo de la barra, que es donde va sin la pantalla grande,
+   * caía en mitad de la pantalla encogida, y el reparto la subía al sitio del
+   * subtítulo, que se quedaba esperando con sitio de sobra encima. Con el
+   * subtítulo, con el mismo `:is()` de las reglas que la ponen debajo de él,
+   * para ganarles por orden y no por peso.
+   */
+  .hud.hay-cuadro-grande .torre,
+  .hud.hay-cuadro-grande:is(:has(.hud__abajo > [data-hud="hint"]:not(:empty)), .hay-subtitulo)
+    .torre {
+    top: auto;
+    bottom: calc(
+      (20px + 56px + 12px) / var(--escala, 1) + var(--alto-del-grande) + 8px +
+        var(--fila-del-subtitulo)
+    );
+  }
+
+  .hud.hay-cuadro-grande.hud--avisando .torre,
+  .hud.hay-cuadro-grande.hud--avisando:is(:has(.hud__abajo > [data-hud="hint"]:not(:empty)), .hay-subtitulo)
+    .torre {
+    bottom: calc(
+      (20px + 56px + 12px) / var(--escala, 1) + var(--alto-del-grande) + 8px +
+        var(--fila-del-subtitulo) + var(--fila-del-aviso)
     );
   }
 
@@ -21758,5 +21791,15 @@ path.kit-hueco__forma {
  * decide el mismo reparto (`lee-recogida`).
  */
 .senal.lee-recogida .senal__texto {
+  display: none !important;
+}
+
+/*
+ * Y la lámpara, igual (H28g): la luz, tu avión y la fila de los que salen
+ * antes, que es lo que se entiende sin leer; la orden la dice la torre por la
+ * radio. Así cabe al lado del aviso en las tablets con el dedo, donde entera
+ * esperaba, y la lámpara no puede esperar.
+ */
+.torre.lee-recogida .torre__texto {
   display: none !important;
 }

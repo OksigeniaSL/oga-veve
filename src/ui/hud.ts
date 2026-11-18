@@ -106,6 +106,8 @@ const TRECHO_DE_LA_RUEDA = 18;
  * siguiente, ms. Ver `Hud.radio`.
  */
 const RADIO_A_LA_VISTA_MS = 2500;
+/** Cada cuánto mira la radio si sigue esperando. Ver `ponerLaRadio`. */
+const RADIO_PASO_MS = 250;
 
 /**
  * **Tu avión, dibujado**: la silueta que marca en la tira de la radio y en la
@@ -4483,8 +4485,13 @@ export class Hud {
    * no el de un fotograma a medias. El juego no lo necesita: lo suyo no cambia
    * entre fotograma y fotograma.
    */
-  repartirAhora(): void {
-    this.repartidor?.ahora();
+  repartirAhora(): Record<string, string> | null {
+    return this.repartidor?.ahora() ?? null;
+  }
+
+  /** Lo que se ha llevado el reparto desde que se pintó el HUD. Para los bancos. */
+  gastoDelReparto(): Repartidor["gasto"] | null {
+    return this.repartidor?.gasto ?? null;
   }
 
   /**
@@ -5578,6 +5585,13 @@ export class Hud {
   private siguienteDeLaRadio(): void {
     this.radioTurno = 0;
     const caja = this.radioCaja;
+    // Si la de ahora estuvo esperando, aún no lleva su rato a la vista: ver
+    // `ponerLaRadio`.
+    const falta = RADIO_A_LA_VISTA_MS - (performance.now() - this.radioDesde);
+    if (caja && !caja.hidden && falta > 0) {
+      this.radioTurno = window.setTimeout(() => this.siguienteDeLaRadio(), falta);
+      return;
+    }
     const siguiente = this.radioEnCola.shift();
     if (!caja || !siguiente) return;
     this.ponerLaRadio(caja, siguiente.texto, siguiente.segundos, siguiente.paraTi);
@@ -5611,9 +5625,24 @@ export class Hud {
       caja.append(placa, dice);
     } else caja.textContent = texto;
     window.clearTimeout(this.radioReloj);
-    this.radioReloj = window.setTimeout(() => {
-      caja.hidden = true;
-    }, segundos * 1000);
+    /*
+     * **Y su rato a la vista, no de reloj** (ADR 0030, enmienda H28g). Si el
+     * reparto la deja esperando porque no hay sitio donde no pise un mando
+     * (`ui/reparto.ts`), su reloj no corre mientras espera, como el del
+     * subtítulo, y la que va detrás tampoco le quita el turno. Si no, se iba
+     * sin que nadie la hubiera visto: para quien no oye, no se dijo.
+     */
+    let queda = segundos * 1000;
+    const mirar = (): void => {
+      if (caja.classList.contains(ESPERA)) this.radioDesde += RADIO_PASO_MS;
+      else queda -= RADIO_PASO_MS;
+      if (queda <= 0) {
+        caja.hidden = true;
+        return;
+      }
+      this.radioReloj = window.setTimeout(mirar, RADIO_PASO_MS);
+    };
+    this.radioReloj = window.setTimeout(mirar, RADIO_PASO_MS);
   }
 
   /**
