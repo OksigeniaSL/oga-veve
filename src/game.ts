@@ -17657,9 +17657,16 @@ export class Game {
    * **Remontar, en cambio, sigue esperando a la verde**: «backtrack runway one
    * two» es entrar en la pista, y dicho con la roja encendida la torre se
    * contradiría a sí misma.
+   *
+   * **Y en la roja se pregunta lo que dará la verde**, no `comoSeSale`, que
+   * no existe hasta que la verde dibuja la entrada en la pista. Con eso, desde
+   * H29f la rama de la roja saltaba, no encontraba nada y se apagaba: la torre
+   * no preguntó en la roja en ningún vuelo, con hasta cuatro minutos de
+   * silencio, y la oferta seguía saliendo con la verde (H29j). Ver
+   * `comoSeSaldraDesdeAqui` en `world/plan-de-vuelo.ts`.
    */
   private contarPorDondeSeSale(enLaRoja = false): void {
-    const sale = this.plan?.comoSeSale ?? null;
+    const sale = (enLaRoja ? this.plan?.comoSeSaldraDesdeAqui() : this.plan?.comoSeSale) ?? null;
     if (this.remonteContado || !sale || sale.desde === "cabecera") return;
     if (enLaRoja && sale.desde !== "interseccion") return;
     this.remonteContado = true;
