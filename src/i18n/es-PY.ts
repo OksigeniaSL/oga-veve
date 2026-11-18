@@ -3623,11 +3623,11 @@ export const ES_PY = {
    * para decirlas en calma.
    */
   "ejercicio.rumbo.antes": "Seguí el río, que ya se puso el sol. Mirá cómo brilla el agua",
-  "ejercicio.rumbo.anochece": "Ya es de noche y el río casi no se ve. Dejá la flecha quieta en la marca",
+  "ejercicio.rumbo.anochece": "Ya es de noche y el río se va oscureciendo. Dejá la flecha quieta en la marca",
   "ejercicio.rumbo.seVa": "Se fue de la marca. Volvé despacito, sin apurarte",
   "ejercicio.rumbo.enLaMarca": "¡Eso! La flecha quieta en la marca",
-  "ejercicio.rumbo.llegaste": "¡Llegamos! Lo oscuro al lado de las luces es el río",
-  "ejercicio.rumbo.llegasteAlLado": "Pasamos al costado. El río es lo oscuro, al lado de las luces",
+  "ejercicio.rumbo.llegaste": "¡Llegamos! Ahí abajo sigue el río, al lado de las luces",
+  "ejercicio.rumbo.llegasteAlLado": "Pasamos al costado, pero ahí está el río, al lado de las luces",
   // El rumbo pedido, de Taguató para arriba, delante de la frase.
   "ejercicio.rumbo.cifra": "Rumbo {n}",
   // Lo que se apartó el morro de media, de Taguató para arriba, al llegar.

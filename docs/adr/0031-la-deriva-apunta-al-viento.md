@@ -398,7 +398,14 @@ las misiones con la avioneta, apuntando a su sitio. La brújula del
 parabrisas, que lleva la misma cara, no: es un imán.
 
 La medida es lo que el morro se aparta de la marca, cada paso: de media y lo
-más.
+más, **desde que llega a ella**. El rumbo se pide con el morro donde lo tenía
+el río, y el viraje hasta la marca no es apartarse: se empieza a medir al
+llegar a cinco grados de ella o, si no se llega, a los veinte segundos
+(`PARA_LLEGAR_A_LA_MARCA`), lo que dura un viraje de treinta grados a la
+mitad del régimen normal. Salió del primer vuelo del banco: pidió el 225 con
+el morro en el 243 y virando, y la instructora dijo «se fue de la marca»
+antes de que llegara a ella; la media salía de siete grados con el
+automático clavado en la marca.
 
 - **Se va**: más de diez grados tres segundos. Se dice una vez, con el dibujo
   del lado al que se fue; vuelve a poder decirse cuando el morro ha vuelto a

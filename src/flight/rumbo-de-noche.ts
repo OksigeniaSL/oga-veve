@@ -6,11 +6,11 @@
  * entero de la escalera: **cada instrumento aparece cuando el ojo ya no
  * basta**, degradando la vista, que es exactamente por qué se inventó cada
  * uno. Se sigue el río con la última luz de la tarde; cuando el sol baja de
- * los seis grados bajo el horizonte —el ocaso civil, el mismo umbral con el
- * que el juego enciende las luces (`esDeNoche`)— el río deja de ser un camino
- * que se ve, y lo que queda es el rumbo. La instructora pide uno, la marca de
- * la rosa se va a él, y se mide cuánto se aparta el morro hasta llegar a
- * donde el río sigue.
+ * los seis grados bajo el horizonte —el ocaso civil, el de `esDeNoche`— es de
+ * noche, y el río se va oscureciendo: el agua todavía refleja el crepúsculo,
+ * como de verdad, pero cada minuto menos. Lo que no se oscurece es el rumbo.
+ * La instructora pide uno, la marca de la rosa se va a él, y se mide cuánto
+ * se aparta el morro hasta llegar a donde el río sigue.
  *
  * Los pasos:
  *
@@ -20,7 +20,8 @@
  * 2. **Anochece**: el sol cruza los seis grados bajo el horizonte. El rumbo
  *    pedido es el que lleva de donde se está al punto donde el río sigue,
  *    redondeado a cinco grados, en **magnético**, que es lo que marca la rosa.
- * 3. **El rumbo**: se mide lo que el morro se aparta de él, cada paso. Si se
+ * 3. **El rumbo**: se mide lo que el morro se aparta de él, cada paso, desde
+ *    que llega a la marca (`PARA_LLEGAR_A_LA_MARCA`). Si se
  *    va más de `SE_VA` grados unos segundos, la instructora lo dice una vez;
  *    vuelve a poder decirlo cuando el morro ha vuelto a la marca, no cuando
  *    pasa un rato.
@@ -274,6 +275,16 @@ export const EN_LA_MARCA = 5;
 /** Lo que tiene que durar en la marca para celebrarlo, s. */
 export const QUIETO_UN_RATO = 20;
 /**
+ * **Lo que se da para llegar a la marca**, s, si no se llega antes: veinte.
+ * El rumbo se pide con el morro donde lo tenía el río, y el viraje hasta la
+ * marca no es apartarse de ella. Lo que se mide empieza al llegar a la marca
+ * por primera vez —a `EN_LA_MARCA`— o, si no se llega, a los veinte segundos:
+ * un viraje de treinta grados a la mitad del régimen normal dura veinte.
+ * Salió del primer vuelo del banco, que pidió el 225 con el morro en el 243
+ * y la instructora dijo «se fue de la marca» antes de que llegara a ella.
+ */
+export const PARA_LLEGAR_A_LA_MARCA = 20;
+/**
  * **Encima del río, donde sigue**: a menos de seiscientos metros en planta.
  * El cauce es de ochocientos de ancho, y con el rumbo redondeado a cinco
  * grados en siete kilómetros y medio el error de la cuenta es de trescientos.
@@ -291,6 +302,8 @@ export class RumboDeNoche {
   private pedido: number | null = null;
   private desde: PuntoDelMundo | null = null;
   private fuera = 0;
+  private desdeQueSePidio = 0;
+  private enLaMarcaYa = false;
   private puedeDecirSeVa = true;
   private quieto = 0;
   private dijoEnLaMarca = false;
@@ -343,7 +356,7 @@ export class RumboDeNoche {
     return this.rio.cauce[this.rio.cauce.length - 1]!;
   }
 
-  /** Lo que el morro se apartó de media desde que anocheció, grados. */
+  /** Lo que el morro se apartó de media desde que llegó a la marca, grados. */
   get desvioMedio(): number | null {
     return this.enRumbo > 0 ? this.desvioSumado / this.enRumbo : null;
   }
@@ -373,6 +386,8 @@ export class RumboDeNoche {
     this.pedido = null;
     this.desde = null;
     this.fuera = 0;
+    this.desdeQueSePidio = 0;
+    this.enLaMarcaYa = false;
     this.puedeDecirSeVa = true;
     this.quieto = 0;
     this.dijoEnLaMarca = false;
@@ -423,23 +438,28 @@ export class RumboDeNoche {
     const g = this.destino;
     const desvio = centrado(l.rumbo + this.variacion - pedido);
     const cuanto = Math.abs(desvio);
-    this.enRumbo += dt;
-    this.desvioSumado += cuanto * dt;
-    this.desvioMaximo = Math.max(this.desvioMaximo, cuanto);
+    // El viraje hasta la marca no cuenta: se empieza a medir al llegar a ella. Ver `PARA_LLEGAR_A_LA_MARCA`.
+    this.desdeQueSePidio += dt;
+    if (cuanto <= EN_LA_MARCA || this.desdeQueSePidio >= PARA_LLEGAR_A_LA_MARCA) this.enLaMarcaYa = true;
+    if (this.enLaMarcaYa) {
+      this.enRumbo += dt;
+      this.desvioSumado += cuanto * dt;
+      this.desvioMaximo = Math.max(this.desvioMaximo, cuanto);
 
-    // **Se va**: una vez, y otra solo cuando el morro haya vuelto a la marca.
-    if (cuanto > SE_VA) this.fuera += dt;
-    else this.fuera = 0;
-    if (cuanto <= EN_LA_MARCA) this.puedeDecirSeVa = true;
-    if (this.puedeDecirSeVa && this.fuera >= FUERA_UN_RATO) {
-      this.puedeDecirSeVa = false;
-      sucesos.push({ que: "seVa", lado: desvio > 0 ? 1 : -1 });
-    }
-    // **En la marca**: quieto un buen rato, una vez.
-    this.quieto = cuanto <= EN_LA_MARCA ? this.quieto + dt : 0;
-    if (!this.dijoEnLaMarca && this.quieto >= QUIETO_UN_RATO) {
-      this.dijoEnLaMarca = true;
-      sucesos.push({ que: "enLaMarca" });
+      // **Se va**: una vez, y otra solo cuando el morro haya vuelto a la marca.
+      if (cuanto > SE_VA) this.fuera += dt;
+      else this.fuera = 0;
+      if (cuanto <= EN_LA_MARCA) this.puedeDecirSeVa = true;
+      if (this.puedeDecirSeVa && this.fuera >= FUERA_UN_RATO) {
+        this.puedeDecirSeVa = false;
+        sucesos.push({ que: "seVa", lado: desvio > 0 ? 1 : -1 });
+      }
+      // **En la marca**: quieto un buen rato, una vez.
+      this.quieto = cuanto <= EN_LA_MARCA ? this.quieto + dt : 0;
+      if (!this.dijoEnLaMarca && this.quieto >= QUIETO_UN_RATO) {
+        this.dijoEnLaMarca = true;
+        sucesos.push({ que: "enLaMarca" });
+      }
     }
 
     /*

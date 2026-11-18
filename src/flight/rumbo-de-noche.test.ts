@@ -206,6 +206,18 @@ describe("Rumbo de noche: volado", () => {
     expect(ej.llegada).toBe("encima");
   });
 
+  it("el viraje hasta la marca no es irse de ella: con el morro treinta grados fuera al pedirlo, ni aviso ni desvío", () => {
+    // Lo del primer vuelo del banco: el 225 pedido con el morro todavía en el río, en el 243 y virando.
+    const { sucesos, ej } = volar((p) => {
+      if (p.pedido === null || p.deNoche === null) return null;
+      return (p.pedido - VARIACION + (p.t - p.deNoche < 2 ? 30 : 0)) * GRADO;
+    });
+    expect(sucesos.some((s) => s.que === "seVa")).toBe(false);
+    expect(ej.desvioMedio!).toBeLessThan(1.5);
+    expect(ej.desvioMasGrande).toBeLessThan(EN_LA_MARCA + 0.5);
+    expect(ej.llegada).toBe("encima");
+  });
+
   it("si el morro se va de la marca, se dice una vez, hacia qué lado, y se llega igual al volver", () => {
     const { sucesos, ej } = volar((p) => {
       if (p.pedido === null || p.deNoche === null) return null;

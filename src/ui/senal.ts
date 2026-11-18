@@ -1021,6 +1021,15 @@ function deriva(lado: 1 | -1 | 0, corregida: boolean): string {
  */
 const avionDeRumbo = (giro: number, escala = 0.62): string =>
   `<g transform="translate(12 13) rotate(${giro}) scale(${escala}) translate(-12 -12)">${FIGURA["avion"] ?? ""}</g>`;
+/**
+ * **El avioncito del direccional**, el de palos —fuselaje, alas y cola— que
+ * lleva la rosa de la cabina en el centro (`dg__avion` en `SixPack`): la
+ * figura del avión desde arriba, en la rosa, se leía como la estrella de una
+ * brújula. Girado `giro` grados.
+ */
+const avioncitoDeLaRosa = (giro: number): string =>
+  `<path transform="rotate(${giro} 12 13)" d="M12 7.6 V18 M8 12.2 H16 M10.2 17 H13.8" fill="none" stroke="currentColor"
+         stroke-width="1.7" stroke-linecap="round" />`;
 
 /** El río desde arriba, hacia el horizonte, y el sol medio hundido en él. */
 const RUMBO_RIO = icono(`
@@ -1045,7 +1054,7 @@ function rosaDeNoche(giro: number): string {
   <g class="senal__en-la-noche${giro === 0 ? "" : " senal__se-va"}">
     <circle cx="12" cy="13" r="8.2" fill="none" stroke="currentColor" stroke-width="1.1" />
     <path d="M12 5.4 v1.8 M19.6 13 h-1.8 M12 20.6 v-1.8 M4.4 13 h1.8" fill="none" stroke="currentColor" stroke-width="1" />
-    ${avionDeRumbo(giro)}
+    ${avioncitoDeLaRosa(giro)}
     ${vuelve}
   </g>
   <path class="senal__marca" d="M10.4 2.4 h3.2 v2.4 l-1.6 1.4 l-1.6 -1.4 Z" />`);
