@@ -17804,6 +17804,15 @@ svg .ex-raya {
   border-radius: 12px;
 }
 
+/*
+ * Y cuando el camino hasta el sitio nuevo cruza lo que no se tapa, ni se
+ * desliza ni se funde al irse: se apaga de golpe y sale con su fundido allí.
+ * Ver `mover` en `ventana-de-historia.ts` (H31a).
+ */
+.historia.historia--salta {
+  transition: none;
+}
+
 .historia__marco {
   position: relative;
   /* La de la imagen en la lámina del pasaje —3:2 o 4:3—; si no, 3:2. */

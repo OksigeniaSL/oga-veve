@@ -25,6 +25,7 @@ import {
   alSonarLaHistoria,
   altoDeLaVentana,
   anchoDeLaLamina,
+  caminoLibre,
   dondeCabeLaLamina,
   dondeCabeLaVentana,
   encuadre,
@@ -408,5 +409,29 @@ describe("cada historia con ilustración la enlaza", () => {
       else expect(ilustracionDeLaHistoria(historia.sitio!)?.url).toBeTruthy();
     }
     expect(h in RECETAS_DE_LAS_HISTORIAS || h in SIN_ILUSTRACION).toBe(true);
+  });
+});
+
+/*
+ * **El camino de la lámina, no solo sus dos sitios** (H31a). De pie, en el
+ * pasaje de 565 × 641, se iba de debajo de la tarjeta de quien habla a encima
+ * de ella deslizándose, y a medio camino la cruzaba: medido en el banco, de
+ * (12, 437) a (96, 12) con la tarjeta de 185 a 345, y a los veinte segundos
+ * la lámina en (77, 111)–(284, 253).
+ */
+describe("caminoLibre", () => {
+  const pantalla = { ancho: 565, alto: 641 };
+  const tarjeta = { left: 16, top: 185, right: 549, bottom: 345 };
+  const abajo = caja(12, 437, 282, 192);
+  const arriba = caja(96, 12, 196, 135);
+
+  it("de debajo de la tarjeta a encima, el camino la cruza", () => {
+    expect(laminaLibre(pantalla, { cajas: [tarjeta] }, abajo)).toBe(true);
+    expect(laminaLibre(pantalla, { cajas: [tarjeta] }, arriba)).toBe(true);
+    expect(caminoLibre(pantalla, { cajas: [tarjeta] }, abajo, arriba)).toBe(false);
+  });
+
+  it("de lado, por debajo de ella, no", () => {
+    expect(caminoLibre(pantalla, { cajas: [tarjeta] }, abajo, caja(40, 420, 282, 192))).toBe(true);
   });
 });

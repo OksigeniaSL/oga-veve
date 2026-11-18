@@ -418,6 +418,32 @@ export function laminaLibre(
   return new Rejilla(pantalla.ancho, pantalla.alto, no).libre(caja);
 }
 
+/**
+ * **Si deslizándose de `desde` a `hasta` la lámina no pasa por encima de lo
+ * que no se tapa**: diez puntos del camino. La hoja desliza el borde de
+ * arriba, el de la izquierda y el ancho con la misma curva y el mismo tiempo,
+ * así que el camino es la recta entre las dos cajas (H31a). Ver `mover`.
+ */
+export function caminoLibre(
+  pantalla: { readonly ancho: number; readonly alto: number },
+  no: LoQueNoSeTapa,
+  desde: Caja,
+  hasta: Caja,
+): boolean {
+  const entre = (a: number, b: number, t: number): number => a + (b - a) * t;
+  for (let i = 1; i < 10; i++) {
+    const t = i / 10;
+    const c: Caja = {
+      left: entre(desde.left, hasta.left, t),
+      top: entre(desde.top, hasta.top, t),
+      right: entre(desde.right, hasta.right, t),
+      bottom: entre(desde.bottom, hasta.bottom, t),
+    };
+    if (!laminaLibre(pantalla, no, c)) return false;
+  }
+  return true;
+}
+
 /** Lo que la historia necesita de la ventana: ponerla y quitarla. */
 export interface PonerYQuitar {
   mostrar(sitio: string): void;
@@ -841,11 +867,11 @@ export class VentanaDeHistoria implements PonerYQuitar {
       if (ancho >= anchoDeLaLamina(pantalla, this.proporcion) * 0.95 || ahora - this.crecio < CRECE_CADA) return;
       this.crecio = ahora;
       const mejor = dondeCabeLaLamina(pantalla, no, this.proporcion);
-      if (mejor && mejor.right - mejor.left > ancho * 1.25) this.mover(mejor);
+      if (mejor && mejor.right - mejor.left > ancho * 1.25) this.mover(mejor, no);
       return;
     }
     const mejor = dondeCabeLaLamina(pantalla, no, this.proporcion);
-    if (mejor) this.mover(mejor);
+    if (mejor) this.mover(mejor, no);
     else if (!libre) {
       // No cabe en ningún sitio sin tapar lo que se enseña: fuera, hasta que quepa.
       const foto = this.fotoPuesta;
@@ -884,9 +910,33 @@ export class VentanaDeHistoria implements PonerYQuitar {
     this.dondeQuedo = { donde: como, caja: donde };
   }
 
-  /** A otro sitio, ya puesta: se desliza, que la hoja lleva su transición. */
-  private mover(donde: Caja): void {
-    this.escribir(donde);
+  /**
+   * A otro sitio, ya puesta: se desliza, que la hoja lleva su transición.
+   *
+   * **Salvo si por el camino pasa por encima de lo que no se tapa** (H31a).
+   * De pie, en el pasaje, la lámina que se iba de debajo de la tarjeta de
+   * quien habla a encima de ella la cruzaba entera durante el medio segundo
+   * del deslizamiento, y el banco la pillaba a ratos («quien habla y la
+   * lámina», `pasaje 565×641 de pie con el dedo`): cada sitio estaba libre, y
+   * el camino entre los dos no. Entonces no se desliza: se apaga de golpe y
+   * sale con su fundido en el sitio nuevo, como una lámina recién puesta.
+   */
+  private mover(donde: Caja, no?: LoQueNoSeTapa): void {
+    const caja = this.caja;
+    const desde = this.dondeQuedo?.caja;
+    const pantalla = { ancho: innerWidth, alto: innerHeight };
+    if (caja && desde && no && !caminoLibre(pantalla, no, desde, donde)) {
+      caja.classList.add("historia--salta");
+      caja.classList.remove("historia--puesta");
+      this.escribir(donde);
+      // Que el salto se maquete sin transición antes de devolvérsela.
+      void caja.offsetWidth;
+      caja.classList.remove("historia--salta");
+      const sitio = this.sitio;
+      requestAnimationFrame(() => {
+        if (this.sitio === sitio) caja.classList.add("historia--puesta");
+      });
+    } else this.escribir(donde);
     if (this.dondeQuedo) this.dondeQuedo = { donde: this.dondeQuedo.donde, caja: donde };
   }
 
