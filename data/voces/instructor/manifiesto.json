@@ -167,6 +167,22 @@
       "ms": 4507,
       "h": "a531e3b98c"
     },
+    "ejercicio.ala-baja.antes": {
+      "ms": 6107,
+      "h": "cc7685723d"
+    },
+    "ejercicio.ala-baja.cierre": {
+      "ms": 6707,
+      "h": "0c06604de3"
+    },
+    "ejercicio.ala-baja.conElAlaBaja": {
+      "ms": 4107,
+      "h": "b757de7c96"
+    },
+    "ejercicio.ala-baja.rueda": {
+      "ms": 3807,
+      "h": "6a4c173832"
+    },
     "ejercicio.altimetro.antes": {
       "ms": 5907,
       "h": "56bf1eb755"
@@ -291,6 +307,26 @@
       "ms": 3607,
       "h": "e638e0913a"
     },
+    "ejercicio.cangrejo.antes": {
+      "ms": 5607,
+      "h": "b8439fc98d"
+    },
+    "ejercicio.cangrejo.cierre": {
+      "ms": 5907,
+      "h": "5050ac360d"
+    },
+    "ejercicio.cangrejo.enCangrejo": {
+      "ms": 4407,
+      "h": "deff050989"
+    },
+    "ejercicio.cangrejo.pieDerecho": {
+      "ms": 2086,
+      "h": "e5113f72d3"
+    },
+    "ejercicio.cangrejo.pieIzquierdo": {
+      "ms": 2317,
+      "h": "c470a1a536"
+    },
     "ejercicio.cortar": {
       "ms": 4207,
       "h": "3d31b756e9"
@@ -314,6 +350,18 @@
     "ejercicio.cruce.tarde": {
       "ms": 13307,
       "h": "0a6fdfdf9d"
+    },
+    "ejercicio.cruzado.cierreAlAire": {
+      "ms": 5107,
+      "h": "365467b4bc"
+    },
+    "ejercicio.cruzado.derecho": {
+      "ms": 1994,
+      "h": "4c40600ab2"
+    },
+    "ejercicio.cruzado.torcido": {
+      "ms": 5407,
+      "h": "c79aad3358"
     },
     "ejercicio.declarar": {
       "ms": 8507,
@@ -6082,6 +6130,42 @@
     ],
     "ejercicio.pitot.cierre": [
       "ejercicio.pitot.cierre"
+    ],
+    "ejercicio.cangrejo.antes": [
+      "ejercicio.cangrejo.antes"
+    ],
+    "ejercicio.cangrejo.enCangrejo": [
+      "ejercicio.cangrejo.enCangrejo"
+    ],
+    "ejercicio.cangrejo.pieDerecho": [
+      "ejercicio.cangrejo.pieDerecho"
+    ],
+    "ejercicio.cangrejo.pieIzquierdo": [
+      "ejercicio.cangrejo.pieIzquierdo"
+    ],
+    "ejercicio.ala-baja.antes": [
+      "ejercicio.ala-baja.antes"
+    ],
+    "ejercicio.ala-baja.conElAlaBaja": [
+      "ejercicio.ala-baja.conElAlaBaja"
+    ],
+    "ejercicio.ala-baja.rueda": [
+      "ejercicio.ala-baja.rueda"
+    ],
+    "ejercicio.cruzado.derecho": [
+      "ejercicio.cruzado.derecho"
+    ],
+    "ejercicio.cruzado.torcido": [
+      "ejercicio.cruzado.torcido"
+    ],
+    "ejercicio.cangrejo.cierre": [
+      "ejercicio.cangrejo.cierre"
+    ],
+    "ejercicio.ala-baja.cierre": [
+      "ejercicio.ala-baja.cierre"
+    ],
+    "ejercicio.cruzado.cierreAlAire": [
+      "ejercicio.cruzado.cierreAlAire"
     ]
   }
 }

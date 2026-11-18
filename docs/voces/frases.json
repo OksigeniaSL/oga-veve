@@ -3763,6 +3763,186 @@
     }
   },
   {
+    "id": "ejercicio.cangrejo.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy el viento viene de costado. Llevá el avión por la raya del centro, y dejá que el morro mire al viento",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy el viento viene de costado. Llevá el avión por la raya del centro, y dejá que el morro mire al viento.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.cangrejo.enCangrejo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Eso es el cangrejo! El morro mira al viento y el avión va derecho por la raya",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Eso es el cangrejo! El morro mira al viento y el avión va derecho por la raya.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.cangrejo.pieDerecho",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ahora, pie derecho: el morro a la pista",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Ahora, pie derecho: el morro a la pista.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.cangrejo.pieIzquierdo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ahora, pie izquierdo: el morro a la pista",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Ahora, pie izquierdo: el morro a la pista.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ala-baja.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy el viento viene de costado. Bajá un poquito el ala del viento, y con el pie contrario llevá el morro a la pista",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy el viento viene de costado. Bajá un poquito el ala del viento, y con el pie contrario llevá el morro a la pista.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ala-baja.conElAlaBaja",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Eso! El ala del viento abajo y el morro en la pista: así se resbala",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Eso! El ala del viento abajo y el morro en la pista: así se resbala.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ala-baja.rueda",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Bien! Primero la rueda del viento, y el morro en la pista",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Bien! Primero la rueda del viento, y el morro en la pista.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.cruzado.derecho",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Bien! Tocaste con el morro en la pista",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Bien! Tocaste con el morro en la pista.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.cruzado.torcido",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Tocaste un poco torcido, y las ruedas tiran de lado. La próxima, el morro a la pista antes de tocar",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Tocaste un poco torcido, y las ruedas tiran de lado. La próxima, el morro a la pista antes de tocar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.cangrejo.cierre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Con viento de costado se baja en cangrejo, el morro al viento; justo antes de tocar, pie y el morro a la pista",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Con viento de costado se baja en cangrejo, el morro al viento; justo antes de tocar, pie y el morro a la pista.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ala-baja.cierre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Con viento de costado se baja con el ala del viento abajo y el pie contrario, y se toca primero con la rueda del viento",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Con viento de costado se baja con el ala del viento abajo y el pie contrario, y se toca primero con la rueda del viento.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.cruzado.cierreAlAire",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Bien decidido! Con viento de costado, irse al aire y volver a probar también es aterrizar bien",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Bien decidido! Con viento de costado, irse al aire y volver a probar también es aterrizar bien.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "ejercicio.rumbo.antes",
     "voz": "instructor",
     "idioma": "es-PY",

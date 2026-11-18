@@ -2660,5 +2660,41 @@
   ],
   "ejercicio.pitot.cierre": [
     "ejercicio.pitot.cierre"
+  ],
+  "ejercicio.cangrejo.antes": [
+    "ejercicio.cangrejo.antes"
+  ],
+  "ejercicio.cangrejo.enCangrejo": [
+    "ejercicio.cangrejo.enCangrejo"
+  ],
+  "ejercicio.cangrejo.pieDerecho": [
+    "ejercicio.cangrejo.pieDerecho"
+  ],
+  "ejercicio.cangrejo.pieIzquierdo": [
+    "ejercicio.cangrejo.pieIzquierdo"
+  ],
+  "ejercicio.ala-baja.antes": [
+    "ejercicio.ala-baja.antes"
+  ],
+  "ejercicio.ala-baja.conElAlaBaja": [
+    "ejercicio.ala-baja.conElAlaBaja"
+  ],
+  "ejercicio.ala-baja.rueda": [
+    "ejercicio.ala-baja.rueda"
+  ],
+  "ejercicio.cruzado.derecho": [
+    "ejercicio.cruzado.derecho"
+  ],
+  "ejercicio.cruzado.torcido": [
+    "ejercicio.cruzado.torcido"
+  ],
+  "ejercicio.cangrejo.cierre": [
+    "ejercicio.cangrejo.cierre"
+  ],
+  "ejercicio.ala-baja.cierre": [
+    "ejercicio.ala-baja.cierre"
+  ],
+  "ejercicio.cruzado.cierreAlAire": [
+    "ejercicio.cruzado.cierreAlAire"
   ]
 }
