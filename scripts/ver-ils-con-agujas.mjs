@@ -417,8 +417,13 @@ try {
       .cantados()
       .map((c) => /^(ejercicio\.[\w.]+): sin grabar/.exec(c)?.[1])
       .filter(Boolean);
-    return { dicho: o.dichoTodo(), sinGrabar };
+    // Y lo que la boca apuntó de las del ejercicio: si alguna no llegó a sonar, por qué.
+    const apuntes = [...o.cantados(), ...o.descartadas().map((d) => (typeof d === "string" ? d : JSON.stringify(d)))].filter((c) =>
+      /ejercicio\.ils\./.test(c),
+    );
+    return { dicho: o.dichoTodo(), sinGrabar, apuntes };
   });
+  if (pedido.apuntes.length) console.log(`    apuntado de las del ejercicio: ${pedido.apuntes.join(" | ")}`);
   const delIls = [...new Set([...(pedido.dicho.instructor ?? []), ...pedido.sinGrabar].filter((c) => /^ejercicio\.ils\./.test(c)))];
   const esperado = [
     "ejercicio.ils.antes",
