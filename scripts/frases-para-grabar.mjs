@@ -3187,7 +3187,7 @@ for (const [id, para] of DEL_ILS) {
  * lee. Ver `src/flight/deriva.ts` y el ADR 0031.
  */
 const DE_LA_DERIVA = [
-  ["ejercicio.deriva.antes", "apuntá al viento, antes de empezar: el morro al final de la raya magenta"],
+  ["ejercicio.deriva.antes", "apuntá al viento, antes de empezar: el morro al final de la raya magenta y la blanca, adonde va el avión"],
   ["ejercicio.deriva.deLado", "apuntá al viento: la raya blanca se fue de costado, apuntar un poco al viento"],
   ["ejercicio.deriva.alViento", "apuntá al viento: corregido, la raya blanca sale derecha"],
   ["ejercicio.deriva.enCalma", "apuntá al viento, en calma: el avión va adonde apunta"],

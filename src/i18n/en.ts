@@ -1634,7 +1634,7 @@ export const EN: Dictionary = {
     "Good call! With a needle off centre, or without the runway in sight, you climb and try again. That's what real pilots do, and that's winning too",
   "ejercicio.deriva.sitio": "{sitio}",
   "ejercicio.deriva.antes":
-    "There's a crosswind today. Point the nose right at the end of the magenta line, and hold it there",
+    "Point the nose right at the end of the magenta line, and hold it there. Watch the white line: it goes where the plane goes",
   "ejercicio.deriva.deLado":
     "See? The white line is sliding sideways: the wind is pushing us, even with the nose on target. Aim a little into the wind",
   "ejercicio.deriva.alViento": "That's it! With the nose a little into the wind, the white line runs straight",

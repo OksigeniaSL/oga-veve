@@ -3585,8 +3585,9 @@ export const ES_PY = {
    * escribe en la tarjeta, no se dice. Cortas, para decirlas en calma.
    */
   "ejercicio.deriva.sitio": "{sitio}",
+  // Sin decir si hay viento: en calma (`?viento=000/0`) también se presenta, y lo dice la raya blanca.
   "ejercicio.deriva.antes":
-    "Hoy hay viento de costado. Apuntá el morro justo al final de la raya magenta, y dejalo quieto ahí",
+    "Apuntá el morro justo al final de la raya magenta, y dejalo quieto ahí. Mirá la raya blanca: va adonde va el avión",
   "ejercicio.deriva.deLado":
     "¿Viste? La raya blanca se va de costado: el viento nos empuja, aunque el morro apunte bien. Apuntá un poquito al viento",
   "ejercicio.deriva.alViento": "¡Eso! Con el morro un poquito al viento, la raya blanca sale derecha",
