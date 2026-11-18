@@ -3785,7 +3785,32 @@ saltadas y ninguna en rojo.
 
 ### Volado en el navegador
 
-(Se completa con lo volado.)
+`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-90`, el 17-11-2026,
+puerto 5688, con la traza del ala. El candado del navegador tardó 56 minutos en
+llegar.
+
+| JAZ 90, Los Rodeos ×1 | Arco: pedido / pico | Puerta (media de 5 s) | Toma | Comprobaciones |
+|---|---|---|---|---|
+| H29b, 1.ª | 6,25 / 7,3 m/s a 28° | **5,3 m/s** | 1,35 m/s a 308 m | 61 de 62 |
+| H29b, 2.ª | | 4,2 | 2,08 a 336 | 62 de 63 |
+| Ahora, 1.ª | 4,89 / 5,13 a 27° | 3,2 | 1,4 a 578 | **62 de 62** |
+
+En la de ahora, el arco pidió la senda y un metro —4,89 m/s, con el viento en
+cola del arco por el suelo— y el avión bajó como mucho a 5,13 inclinado 27°;
+al enderezar no subió: de 4,9 a 3,2 m/s en seis segundos, sin pasarse. Llegó a
+la puerta 4,8 m alto y bajando a 3,2, y la recogida empezó a 10,9 m de ruedas
+bajando solo 1,8, así que tocó larga, a 578 m de los 600 que cierran la zona.
+Es una tirada y con poca turbulencia (lo del aire, `ma`, no pasó de 0,25°); si
+lo largo se repite, es que con el arco más suave el avión entra en la final
+recta algo alto.
+
+La segunda tirada de Los Rodeos, la de Gran Canaria, el despegue de Guyrami
+(`OGA_GPU=1 verificar-despegue.mjs tenerife-norte guyrami "" jaz-90`) y el vuelo
+entero del JAZ 20 (`tenerife-norte guyrami 3 jaz-20`) no se volaron: a las
+00:18 la segunda seguía esperando el candado, y se acababa el tiempo de la
+tanda. El despegue de Guyrami y el JAZ 20 son los que miden el cambio del
+modelo sencillo; en la mesa, el primero pasa de 1,27 a 1,07 veces la Vr, y las
+49 pruebas de vitest que vuelan Guyrami o el modelo sencillo siguen en verde.
 
 ### Lo que no
 
@@ -3795,6 +3820,7 @@ saltadas y ninguna en rojo.
   leyes (`BAJA_POR_EL_ARCO`), también piden menos en el arco —de 6,25, 6,46 y
   6,54 m/s a 4,57, unos 5,0 y unos 5,1 en calma— y no se han volado.
 - **La recogida a los veinte pies**, arriba: es del modelo.
+- **Lo que no se voló en el navegador**, arriba.
 - **El banco del despegue** sigue llamando «rota a» a la velocidad con quince
   metros debajo; ahora es la de la Vr y medio segundo.
 - En `verificar-vuelo-entero.mjs` esta tanda solo tocó `volarLaSenda`
