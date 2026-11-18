@@ -1041,6 +1041,7 @@ import { BLANCO, CintaEnElSuelo, MAGENTA, PASO } from "./world/raya-del-camino";
  * son setenta kilómetros y la raya solo se mira al final, desde arriba.
  */
 const CADA_RAYA_DE_LA_ESTIMA = 100;
+import { minutosYSegundos, rumboDeTresCifras } from "./ui/cronometro";
 import {
   colocacionDeLaEstima,
   destinoDeLaEstima,
@@ -25196,14 +25197,22 @@ export class Game {
     switch (suceso.que) {
       case "presentar": {
         /*
-         * **El sitio, escrito y no dicho**: «Filadelfia» en la tarjeta, delante
-         * de la frase; el rumbo y el tiempo, en el cronómetro. La voz es
-         * genérica.
+         * **El sitio y el plan, escritos y no dichos**: «Filadelfia · HDG 128
+         * · 18:54» en la tarjeta, delante de la frase. Mientras la tarjeta
+         * habla, el cronómetro de debajo puede tener que esperar —en la
+         * tablet, la columna de mandos queda justo debajo—, y la frase pide
+         * el rumbo de la tarjeta: tiene que estar escrito en ella. La voz es
+         * genérica. Veinte segundos, lo que tarda en decirse y leerse.
          */
         const frase = this.rotulo("ejercicio.estima.antes", "palabra.mira");
+        const c = this.estima?.colocacion;
         const sitio = this.estima ? t("ejercicio.estima.destino", { sitio: this.estima.destino.nombre }) : "";
-        this.hud.senal.mostrar("estima-rumbo", sitio && frase ? `${sitio}. ${frase}` : sitio || frase, null, {
-          segundos: 30,
+        const plan = c
+          ? t("ejercicio.estima.plan", { rumbo: rumboDeTresCifras(c.rumboMagnetico), tiempo: minutosYSegundos(c.tiempo) })
+          : "";
+        const cabeza = [sitio, plan].filter(Boolean).join(" · ");
+        this.hud.senal.mostrar("estima-rumbo", cabeza && frase ? `${cabeza}. ${frase}` : cabeza || frase, null, {
+          segundos: 20,
           prioridad: IMPORTANTE,
         });
         this.decirDelEjercicio("ejercicio.estima.antes", "mando");
@@ -25215,8 +25224,18 @@ export class Game {
           suceso.enCalma ? "ejercicio.estima.porQueEnCalma" : "ejercicio.estima.porQue",
           "palabra.asi",
         );
-      case "fueraDeRumbo":
-        return contar("estima-rumbo", "ejercicio.estima.fueraDeRumbo", "palabra.volve");
+      case "fueraDeRumbo": {
+        // «Volvé al número de la tarjeta»: el número va escrito en ella, que el cronómetro puede estar esperando.
+        const c = this.estima?.colocacion;
+        const frase = this.rotulo("ejercicio.estima.fueraDeRumbo", "palabra.volve");
+        const hdg = c ? `HDG ${rumboDeTresCifras(c.rumboMagnetico)}` : "";
+        this.hud.senal.mostrar("estima-rumbo", hdg && frase ? `${hdg}. ${frase}` : hdg || frase, null, {
+          segundos: 12,
+          prioridad: IMPORTANTE,
+        });
+        this.decirDelEjercicio("ejercicio.estima.fueraDeRumbo", "mando");
+        return;
+      }
       case "unMinuto":
         return contar("estima-rumbo", "ejercicio.estima.unMinuto", "palabra.mira", 10);
       case "mirarAbajo": {

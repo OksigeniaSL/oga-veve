@@ -1654,6 +1654,7 @@ export const EN: Dictionary = {
   "ejercicio.deriva.cierre": "In a crosswind, the nose points a little into the wind and the path runs straight",
   "ejercicio.deriva.grados": "{n}° into the wind",
   "ejercicio.estima.destino": "{sitio}",
+  "ejercicio.estima.plan": "HDG {rumbo} · {tiempo}",
   "ejercicio.estima.antes":
     "Heading and clock, no map and no radio. Hold the heading on the card until the clock reaches zero, then look down",
   "ejercicio.estima.porQue":

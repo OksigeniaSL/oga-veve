@@ -3621,6 +3621,8 @@ export const ES_PY = {
    * dicen. Cortas, para decirlas en calma.
    */
   "ejercicio.estima.destino": "{sitio}",
+  // El plan, escrito en la tarjeta delante de la frase: el rótulo de cabina no se traduce.
+  "ejercicio.estima.plan": "HDG {rumbo} · {tiempo}",
   "ejercicio.estima.antes":
     "Rumbo y reloj, sin mapa ni radio. Mantené el rumbo de la tarjeta hasta que el reloj llegue a cero, y ahí mirá abajo",
   "ejercicio.estima.porQue":

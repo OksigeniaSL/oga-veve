@@ -80,6 +80,7 @@ const leerSolo = (page) =>
       rumbo: s.heading,
       ejercicio: o.estima(),
       tarjeta: o.tarjeta?.()?.dibujo ?? null,
+      rotulo: document.querySelector('[data-hud="hint"]')?.textContent?.trim() || null,
       casaSinGps: !!document.querySelector('[data-hud="home"]')?.classList.contains("casa--sin-gps"),
       textoDeLaTarjeta: document.querySelector(".senal")?.textContent?.replace(/\s+/g, " ").trim() ?? "",
       reloj: j.clock?.elapsedTime ?? 0,
@@ -175,6 +176,10 @@ try {
   console.log(`    reloj por ${puestas}`);
   const t0 = r.reloj;
   const cronometro0 = segundosDelCronometro(r.ejercicio.cronometro);
+  const transcurrido0 = r.ejercicio.transcurrido;
+  /** Lo que sale en la línea de avisos mientras dura, y cuándo: para saber de dónde viene lo ajeno. */
+  const rotulos = r.rotulo ? [`${r.ejercicio.transcurrido.toFixed(0)} s: ${r.rotulo}`] : [];
+  let ultimoRotulo = r.rotulo;
 
   // El rumbo quieto hasta que el reloj llega a cero.
   const costados = [];
@@ -187,6 +192,10 @@ try {
     r = await leer(page);
     await rumboAlAutomatico(page, rumboQueSeVuela);
     costados.push(deCostado(r.viento, c.curso));
+    if (r.rotulo !== ultimoRotulo) {
+      ultimoRotulo = r.rotulo;
+      if (r.rotulo) rotulos.push(`${r.ejercicio.transcurrido.toFixed(0)} s: ${r.rotulo}`);
+    }
     if (!fotoMitad && r.ejercicio.transcurrido > c.tiempo / 2) {
       fotoMitad = true;
       const corrido = (r.reloj - t0) * puestas;
@@ -194,8 +203,8 @@ try {
       cuentaAtras = { corrido, enElCronometro, transcurrido: r.ejercicio.transcurrido };
       comprobar(
         "a mitad, el cronómetro ha bajado lo que corrió el reloj del juego",
-        enElCronometro !== null && Math.abs(cronometro0 - enElCronometro - r.ejercicio.transcurrido) < 3,
-        `«${r.ejercicio.cronometro}»: ${cronometro0 - enElCronometro} s menos, ${r.ejercicio.transcurrido.toFixed(0)} s en el ejercicio, ${corrido.toFixed(0)} s de juego`,
+        enElCronometro !== null && Math.abs(cronometro0 - enElCronometro - (r.ejercicio.transcurrido - transcurrido0)) < 3,
+        `«${r.ejercicio.cronometro}»: ${cronometro0 - enElCronometro} s menos, ${(r.ejercicio.transcurrido - transcurrido0).toFixed(0)} s más en el ejercicio`,
       );
       comprobar("y el plano y la tarjeta de casa siguen sin GPS", r.ejercicio.planoSinGps && r.casaSinGps, `${r.ejercicio.planoSinGps}, ${r.casaSinGps}`);
       await foto("02-mitad");
@@ -208,6 +217,7 @@ try {
       await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
     }
   }
+  console.log(`    en la línea de avisos: ${rotulos.join(" | ") || "nada"}`);
   comprobar("el reloj llega a cero y se cierra", r.ejercicio.cierre === "hecho", `${r.ejercicio.cierre}, ${(r.ejercicio.transcurrido / 60).toFixed(1)} min`);
   const res = r.ejercicio.resultado;
   const costadoMedio = costados.reduce((a, b) => a + b, 0) / Math.max(1, costados.length);
