@@ -1858,8 +1858,26 @@ const EJ_DERIVA = escena(`
   ${AVION("translate(88 38) scale(0.85)")}
 `);
 
+/**
+ * **Rumbo y reloj**: desde arriba, todo suelo, el pueblo arriba —una
+ * cuadrícula de manzanas, como Filadelfia vista desde el aire—, la recta fina
+ * hasta él, el avión abajo apuntando por ella y, al lado, un reloj grande con
+ * su aguja y lo que ya corrió marcado: rumbo tanto durante tantos minutos. Ver
+ * `flight/estima.ts`.
+ */
+const EJ_ESTIMA = escena(`
+  <rect class="panel__tierra" x="0" y="0" width="120" height="84" rx="3" />
+  <rect class="leccion__asfalto" x="49" y="5" width="6" height="5" rx="0.8" /><rect class="leccion__asfalto" x="49" y="12" width="6" height="5" rx="0.8" /><rect class="leccion__asfalto" x="49" y="19" width="6" height="5" rx="0.8" /><rect class="leccion__asfalto" x="57" y="5" width="6" height="5" rx="0.8" /><rect class="leccion__asfalto" x="57" y="12" width="6" height="5" rx="0.8" /><rect class="leccion__asfalto" x="57" y="19" width="6" height="5" rx="0.8" /><rect class="leccion__asfalto" x="65" y="5" width="6" height="5" rx="0.8" /><rect class="leccion__asfalto" x="65" y="12" width="6" height="5" rx="0.8" /><rect class="leccion__asfalto" x="65" y="19" width="6" height="5" rx="0.8" />
+  <path class="ejercicio__ondas" d="M60 82 V28" stroke-dasharray="3 3" />
+  <circle class="ejercicio__ondas" cx="26" cy="52" r="15" />
+  <path class="ejercicio__flecha" d="M26 52 V41 M26 52 L34 57" />
+  <path class="ejercicio__flecha" d="M26 34 v3 M44 52 h-3 M26 70 v-3 M8 52 h3" />
+  ${AVION("translate(60 66) scale(0.85)")}
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   deriva: EJ_DERIVA,
+  estima: EJ_ESTIMA,
   ils: EJ_ILS,
   aguja: EJ_AGUJA,
   radial: EJ_RADIAL,

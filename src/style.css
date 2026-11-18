@@ -10086,6 +10086,105 @@ button.motor__tecla::after {
 }
 
 /*
+ * ── El cronómetro de la estima ── (ADR 0031, enmienda H26n)
+ *
+ * El rumbo del plan y el reloj que cuenta hacia atrás, en el rincón y debajo
+ * de la tarjeta de la orden: la misma pieza de barro, para que se vea de la
+ * familia. El disco que se vacía es el tiempo y se lee sin leer; las cifras
+ * van grandes y tabulares, para que el ancho no baile segundo a segundo
+ * (el reparto no vuelve a medir por un segundo menos: ver `cuentaSola` en
+ * `ui/reparto.ts`). El rótulo, `HDG`, en letra de cabina y sin traducir, con
+ * su glosa debajo.
+ */
+.cronometro {
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 22px 12px 14px;
+  border-radius: var(--r-l);
+  background: var(--barro);
+  background-image: var(--barniz);
+  box-shadow: var(--filo), var(--poso);
+  color: var(--tinta);
+  pointer-events: none;
+}
+
+.cronometro[hidden] {
+  display: none;
+}
+
+.cronometro__disco {
+  flex: none;
+  width: 76px;
+  height: 76px;
+}
+
+.cronometro__esfera {
+  fill: rgb(0 0 0 / 0.28);
+}
+
+.cronometro__queda {
+  fill: none;
+  stroke: var(--ocre);
+  transition: stroke-dashoffset 0.4s linear;
+}
+
+.cronometro__aro,
+.cronometro__marcas {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.cronometro__cifras {
+  display: grid;
+  justify-items: start;
+  line-height: 1;
+}
+
+.cronometro__rumbo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.cronometro__rotulo {
+  font-family: var(--cabina-fuente);
+  font-size: var(--voz-rotulo);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--ocre-tinta);
+}
+
+.cronometro__grados {
+  font-size: calc(var(--voz-cifra) * 0.75);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cronometro__glosa,
+.cronometro__destino {
+  font-size: var(--voz-glosa);
+  line-height: 1.2;
+  opacity: 0.85;
+}
+
+.cronometro__reloj {
+  margin-top: 4px;
+  font-size: calc(var(--voz-cifra) * 1.5);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A cero, el disco vacío y el aro en ocre: mirá abajo. */
+.cronometro--cero .cronometro__aro {
+  stroke: var(--ocre);
+  stroke-width: 3;
+}
+
+/*
  * Cuando la tarjeta **hace** lo que dice, se nota que se puede tocar.
  *
  * Es la única forma de arrancar el motor con el dedo: los mandos táctiles son

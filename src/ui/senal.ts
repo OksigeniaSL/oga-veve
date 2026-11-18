@@ -1012,6 +1012,47 @@ function deriva(lado: 1 | -1 | 0, corregida: boolean): string {
 `);
 }
 
+/**
+ * **«Rumbo y reloj»**, desde arriba: el pueblo arriba —una cuadrícula de
+ * manzanas, que es como se ve Filadelfia desde el aire—, la recta a rayas
+ * hasta él y el avión donde quedó al llegar el reloj a cero: encima, a un
+ * lado, todavía antes o ya pasado. `donde` es dónde quedó **el pueblo** visto
+ * desde el avión. El de la presentación, `"rumbo"`, lleva el avión abajo, al
+ * principio de la recta, y un reloj al lado. Ver `flight/estima.ts`.
+ */
+function estima(donde: "rumbo" | "debajo" | "derecha" | "izquierda" | "delante" | "detras"): string {
+  const avion = (x: number, y: number): string =>
+    `<g transform="translate(${x} ${y}) scale(0.5) translate(-12 -12)">${FIGURA["avion"] ?? ""}</g>`;
+  // Las manzanas: tres por tres, con sus calles en medio.
+  const manzanas = [8.2, 11, 13.8]
+    .flatMap((x) => [3, 5.8, 8.6].map((y) => `<rect x="${x}" y="${y}" width="2" height="2" rx="0.3" />`))
+    .join("");
+  const reloj =
+    donde === "rumbo"
+      ? `<circle cx="4.4" cy="17.6" r="3.4" fill="none" stroke="currentColor" stroke-width="1.2" />
+         <path d="M4.4 15.6 V17.6 L5.8 18.6" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />`
+      : "";
+  // Dónde quedó el avión: el pueblo, visto desde él, queda del lado contrario.
+  const sitio: Record<typeof donde, [number, number]> = {
+    rumbo: [12, 20],
+    debajo: [12, 6.8],
+    derecha: [5.6, 7.6],
+    izquierda: [18.4, 7.6],
+    delante: [12, 15],
+    detras: [12, 1.4],
+  };
+  const [x, y] = sitio[donde];
+  const camino =
+    donde === "rumbo" ? "" : `<path d="M12 22.6 L${x} ${y + 2.6}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />`;
+  return icono(`
+  ${manzanas}
+  <path d="M12 22.6 V10.8" fill="none" stroke="currentColor" stroke-width="0.9" stroke-dasharray="1.6 1.4" />
+  ${reloj}
+  ${camino}
+  ${avion(x, y)}
+`);
+}
+
 /** La flecha del lado, pegada al borde: es lo primero que se mira. */
 const HACIA: Record<string, string> = {
   izquierda: `<path d="M5.4 4.2 L1.4 7.2 L5.4 10.2 Z" />
@@ -1907,6 +1948,13 @@ export const DIBUJOS = {
   "deriva-corregida-a-la-izquierda": deriva(-1, true),
   "deriva-corregida-a-la-derecha": deriva(1, true),
   "deriva-en-calma": deriva(0, false),
+  // «Rumbo y reloj»: el plan con su reloj, y dónde quedó el pueblo al llegar a cero. Ver `estima.ts`.
+  "estima-rumbo": estima("rumbo"),
+  "estima-debajo": estima("debajo"),
+  "estima-a-la-derecha": estima("derecha"),
+  "estima-a-la-izquierda": estima("izquierda"),
+  "estima-delante": estima("delante"),
+  "estima-detras": estima("detras"),
   /*
    * «Aterrizar con las agujas»: el localizador a tope de cada lado con la
    * senda todavía arriba, viniendo hacia el centro, la senda arriba con el

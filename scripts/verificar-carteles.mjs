@@ -1622,9 +1622,10 @@ const CALCOS = ["guyrami", "tuka", "taguato", "taguato-ruvicha"];
  *   `ui/reparto.ts`, escrita aquí aparte para no medir con la vara de quien se
  *   mide), visible y dentro de la pantalla;
  * - **lo que se lee** es el aviso, la lámpara de la torre, la tarjeta de la
- *   orden, el subtítulo (y la altura en grande, que va en su caja), el tutor
- *   y la radio, **con lo más largo que lleva cada uno**: la orden, la más
- *   larga del código; la radio, una frase de tráfico larga;
+ *   orden, el subtítulo (y la altura en grande, que va en su caja), el tutor,
+ *   la radio y el cronómetro de la estima, **con lo más largo que lleva cada
+ *   uno**: la orden, la más larga del código; la radio, una frase de tráfico
+ *   larga; el cronómetro, el tramo más largo;
  * - en **las tres vistas** —fuera, cabina y, en el teléfono, la pantalla en
  *   grande— y en **las cuatro maneras** en que coinciden.
  *
@@ -1743,6 +1744,13 @@ async function medirLoQueSeLee([estado, ORDEN_LARGA, vista]) {
   const senal = document.querySelector('[data-hud="senal"]');
   const senalTexto = document.querySelector('[data-hud="senal-texto"]');
   const radio = document.querySelector('[data-hud="radio"]');
+  /*
+   * **Y el cronómetro de la estima** (ADR 0031, H26n), encendido siempre: va
+   * en el rincón debajo de la tarjeta de la orden, y con la orden más larga
+   * encima es cuando más baja. Con lo más largo que enseña: el tramo de la
+   * avioneta de motor radial, veinte minutos y pico.
+   */
+  const crono = document.querySelector('[data-hud="cronometro"]');
   if (!hud || !aviso || !torre || !hint)
     return { malos: ["no se encontraron las piezas"], perdidos: [] };
   const sinLetras = hud.classList.contains("hud--sin-letras");
@@ -1754,6 +1762,7 @@ async function medirLoQueSeLee([estado, ORDEN_LARGA, vista]) {
     orden: senalTexto?.textContent ?? "",
     senal: senal?.hidden,
     radio: radio ? [radio.hidden, radio.innerHTML] : null,
+    crono: crono ? crono.hidden : null,
   };
   const poner = () => {
     hud.classList.toggle("hud--avisando", conAviso);
@@ -1789,6 +1798,16 @@ async function medirLoQueSeLee([estado, ORDEN_LARGA, vista]) {
     if (radio && !sinLetras) {
       radio.hidden = false;
       if (radio.textContent !== RADIO) radio.textContent = RADIO;
+    }
+    // Solo desde Taguató, que es donde se ofrece la estima: en los peldaños de los pequeños no sale nunca.
+    if (crono && !hud.classList.contains("hud--pequenos")) {
+      crono.hidden = false;
+      const r = crono.querySelector('[data-hud="cronometro-rumbo"]');
+      const t = crono.querySelector('[data-hud="cronometro-reloj"]');
+      const d = crono.querySelector('[data-hud="cronometro-destino"]');
+      if (r && r.textContent !== "128°") r.textContent = "128°";
+      if (t && t.textContent !== "20:58") t.textContent = "20:58";
+      if (d && d.textContent !== "Filadelfia") d.textContent = "Filadelfia";
     }
   };
   for (let i = 0; i < 5; i++) {
@@ -1826,6 +1845,7 @@ async function medirLoQueSeLee([estado, ORDEN_LARGA, vista]) {
     ["el subtítulo", hint, true],
     ["el tutor", document.querySelector('[data-hud="tutor"]'), true],
     ["la radio", radio, true],
+    ["el cronómetro", crono, !hud.classList.contains("hud--pequenos")],
   ];
   const leidos = SE_LEE.filter(([, el, encendido]) => encendido && seVe(el));
   // Lo que no se ve —transparente o escondido por quien lo contiene— no es un
@@ -1895,6 +1915,7 @@ async function medirLoQueSeLee([estado, ORDEN_LARGA, vista]) {
   if (senalTexto) senalTexto.textContent = antes.orden;
   if (senal) senal.hidden = antes.senal;
   if (radio && antes.radio) [radio.hidden, radio.innerHTML] = antes.radio;
+  if (crono && antes.crono !== null) crono.hidden = antes.crono;
   return { malos, perdidos };
 }
 

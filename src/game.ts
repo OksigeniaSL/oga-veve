@@ -808,6 +808,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   ils: "ils-en-cruz",
   // El camino que se va de costado con el morro en el puente. Ver `deriva.ts`.
   deriva: "deriva-a-la-derecha",
+  // El reloj y la recta hasta el pueblo. Ver `estima.ts`.
+  estima: "estima-rumbo",
   autorrotacion: "helicoptero-sin-motor",
   // Las lecciones del ala rotatoria, con lo que se pide en cada una: ver `lecciones-del-rotor.ts`.
   estacionario: "helicoptero-quieto",
@@ -1034,6 +1036,19 @@ import {
   type SucesoDeLaDeriva,
 } from "./flight/deriva";
 import { BLANCO, CintaEnElSuelo, MAGENTA, PASO } from "./world/raya-del-camino";
+/**
+ * **Cada cuánto entra una muestra de la raya de la estima**, m: cien. El tramo
+ * son setenta kilómetros y la raya solo se mira al final, desde arriba.
+ */
+const CADA_RAYA_DE_LA_ESTIMA = 100;
+import {
+  colocacionDeLaEstima,
+  destinoDeLaEstima,
+  Estima,
+  type ColocacionDeLaEstima,
+  type ResultadoDeLaEstima,
+  type SucesoDeLaEstima,
+} from "./flight/estima";
 import {
   colocacionDelCruce,
   DosRadiales,
@@ -3962,6 +3977,16 @@ export class Game {
   } | null = null;
   /** Lo que falta para volver a tender la raya de delante, s. Ver `practicarLaDeriva`. */
   private hastaLaRayaDeDelante = 0;
+  /**
+   * **«Rumbo y reloj»**, si se eligió: la estima, rumbo tanto durante tantos
+   * minutos sobre el Chaco. Ver `flight/estima.ts` y `practicarLaEstima`.
+   */
+  private estima: Estima | null = null;
+  /**
+   * **Las dos rayas del suelo** de la estima, que no se ven hasta que el reloj
+   * llega a cero: entonces son la cuenta del vuelo. Ver `practicarLaEstima`.
+   */
+  private rayasDeLaEstima: { readonly camino: CintaEnElSuelo; readonly recta: CintaEnElSuelo } | null = null;
   /** La nube de la tormenta del ejercicio. Ver `world/cumulonimbo.ts`. */
   private cumulonimbo: CumulonimboEnElMundo | null = null;
   /**
@@ -3992,6 +4017,7 @@ export class Game {
       this.cruce?.ejercicio ??
       this.ils?.ejercicio ??
       this.deriva?.ejercicio ??
+      this.estima?.ejercicio ??
       null
     );
   }
@@ -4002,7 +4028,7 @@ export class Game {
    * `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
-    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva;
+    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva ?? this.estima;
     return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada", this.ils?.fase === "frustrando");
   }
   /**
@@ -6571,6 +6597,14 @@ export class Game {
       } else if (ejercicio.escena === "rotor") {
         // Las del helicóptero tampoco: ver `practicarElRotor`.
         this.leccionDelRotor = new LeccionDelRotor(ejercicio, this.aircraft.helicoptero?.rotor.sentido ?? 1);
+      } else if (ejercicio.escena === "navegacion" && ejercicio.colocacion === "estima") {
+        /*
+         * **Ni la estima**: el destino del campo, puesto donde está. El plan
+         * necesita el terreno: ver `dondeEmpiezaLaEstima` y `practicarLaEstima`.
+         */
+        const destino = destinoDeLaEstima(oaciDe(this.scenario));
+        const origen = this.scenario.aerodrome?.origin;
+        if (destino && origen) this.estima = new Estima(ejercicio, { ...destino, ...dondeCae(origen, destino) });
       } else if (ejercicio.escena === "navegacion") {
         /*
          * **Ni la deriva**: el sitio del campo, puesto donde está. Dónde se
@@ -13543,7 +13577,8 @@ export class Game {
         colocacion !== "interceptar" &&
         colocacion !== "cruce" &&
         colocacion !== "ils" &&
-        colocacion !== "deriva"
+        colocacion !== "deriva" &&
+        colocacion !== "estima"
       ) {
         const { lejos, alto } = this.dondeEmpiezaElEjercicio(colocacion);
         const [x, z] = puntoDePista(runway, hastaElUmbralDeToma(runway) + lejos);
@@ -13805,6 +13840,12 @@ export class Game {
     this.deriva?.reiniciar();
     this.rayasDeLaDeriva?.camino.vaciar();
     this.rayasDeLaDeriva?.delante.vaciar();
+    this.estima?.reiniciar();
+    // Las rayas de la estima vuelven a esconderse: son la cuenta del vuelo, al final.
+    this.rayasDeLaEstima?.camino.vaciar();
+    this.rayasDeLaEstima?.camino.quitar();
+    this.rayasDeLaEstima?.recta.quitar();
+    this.cronometroRecogido = false;
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
@@ -17899,7 +17940,7 @@ export class Game {
      * tormenta empieza a ochenta millas. Antes de la velocidad de entrada y
      * del gas, que salen de lo que pesa. Ver `cargaDelEjercicio`.
      */
-    if (colocacion) this.cargarParaElEjercicio(this.startPosition());
+    if (colocacion) this.cargarParaElEjercicio(colocacion === "estima" ? this.idaYVueltaDeLaEstima() : this.startPosition());
     const configurado = !colocacion && this.aircraft.trenRetractil;
     const entrada =
       colocacion === "autorrotacion"
@@ -17914,7 +17955,8 @@ export class Game {
                 colocacion === "radial" ||
                 colocacion === "interceptar" ||
                 colocacion === "cruce" ||
-                colocacion === "deriva"
+                colocacion === "deriva" ||
+                colocacion === "estima"
               ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
               : colocacion === "ils"
               ? // A la del circuito, como quien ya ha bajado para la aproximación.
@@ -17939,7 +17981,8 @@ export class Game {
       colocacion === "interceptar" ||
       colocacion === "cruce" ||
       colocacion === "ils" ||
-      colocacion === "deriva"
+      colocacion === "deriva" ||
+      colocacion === "estima"
         ? { equilibrado: true }
         : {}),
     });
@@ -19495,6 +19538,8 @@ export class Game {
     this.practicarElIls(dt);
     // Y la deriva. Ver `practicarLaDeriva`.
     this.practicarLaDeriva(dt);
+    // Y la estima. Ver `practicarLaEstima`.
+    this.practicarLaEstima(dt);
     // El morse de la radio, con su turno. Ver `atenderAlMorse`.
     this.atenderAlMorse();
     this.mirarSiCambiaDeCampo();
@@ -24788,6 +24833,7 @@ export class Game {
     if (colocacion === "cruce") return this.dondeEmpiezaElCruce();
     if (colocacion === "ils") return this.dondeEmpiezaElIls();
     if (colocacion === "deriva") return this.dondeEmpiezaLaDeriva();
+    if (colocacion === "estima") return this.dondeEmpiezaLaEstima();
     return null;
   }
 
@@ -24986,6 +25032,230 @@ export class Game {
           this.hud.mostrarCierreDeEjercicio(
             dibujoDeCierre("vuelta"),
             this.rotulo("ejercicio.deriva.cierre", "palabra.bien"),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+    }
+  }
+
+  // ── «Rumbo y reloj» ──────────────────────────────────────────────────
+  //
+  // Ver `flight/estima.ts`. Aquí solo se decide quién dice y enseña cada
+  // cosa: el cronómetro, la tarjeta con su dibujo, la instructora, el plano
+  // sin el avión y, al final, las dos rayas del suelo.
+
+  /**
+   * **El plan de la estima**: encima del campo, el rumbo corregido por el
+   * viento que sopla y el tiempo hasta el destino. Se guarda en el ejercicio:
+   * el cronómetro, la recta del final y lo que se mide salen de la misma
+   * cuenta.
+   */
+  private dondeEmpiezaLaEstima(): ColocacionDeLaEstima | null {
+    const e = this.estima;
+    if (!e) return null;
+    if (e.colocacion) return e.colocacion;
+    const agua = this.scenario.waterLevel ?? 0;
+    e.colocar(
+      colocacionDeLaEstima({
+        destino: e.destino,
+        campo: { x: 0, z: 0 },
+        viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+        velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
+        declinacion: this.scenario.magneticVariation,
+        suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+        cotaDeLaPista: this.terrain.runwayElevation,
+      }),
+    );
+    return e.colocacion;
+  }
+
+  /**
+   * **El depósito de la estima, para ir y volver**: empieza encima de casa, y
+   * cargar desde donde empieza sería cargar para un vuelo local. Se carga como
+   * para un tramo del doble de largo, en la misma recta: los setenta
+   * kilómetros hasta Filadelfia y los setenta de vuelta, con el alternativo y
+   * la reserva de siempre.
+   */
+  private idaYVueltaDeLaEstima(): { x: number; z: number } {
+    const d = this.estima?.destino;
+    return d ? { x: 2 * d.x, z: 2 * d.z } : this.startPosition();
+  }
+
+  /** «Rumbo y reloj», para el banco. */
+  get estimaParaBanco(): {
+    readonly fase: string;
+    readonly cierre: string | null;
+    readonly destino: { readonly id: string; readonly nombre: string; readonly x: number; readonly z: number };
+    readonly colocacion: ColocacionDeLaEstima | null;
+    readonly transcurrido: number;
+    readonly queda: number;
+    readonly rumboMedio: number | null;
+    readonly resultado: ResultadoDeLaEstima | null;
+    readonly cronometro: string | null;
+    readonly planoSinGps: boolean;
+    readonly rayas: { readonly camino: number; readonly recta: number; readonly enLaEscena: boolean } | null;
+  } | null {
+    const e = this.estima;
+    if (!e) return null;
+    const r = this.rayasDeLaEstima;
+    const crono = document.querySelector<HTMLElement>('[data-hud="cronometro"]');
+    return {
+      fase: e.fase,
+      cierre: e.cierre,
+      destino: { id: e.destino.id, nombre: e.destino.nombre, x: e.destino.x, z: e.destino.z },
+      colocacion: e.colocacion,
+      transcurrido: e.transcurrido,
+      queda: e.queda,
+      rumboMedio: e.rumboMedio,
+      resultado: e.resultado,
+      cronometro: crono && !crono.hidden ? (crono.textContent ?? "").split(/\s+/).filter(Boolean).join(" ") : null,
+      planoSinGps: e.fase !== "cerrada",
+      rayas: r ? { camino: r.camino.muestras, recta: r.recta.muestras, enLaEscena: !!r.camino.malla.parent } : null,
+    };
+  }
+
+  /** Si el cronómetro ya se recogió al salir el panel del final. Ver `practicarLaEstima`. */
+  private cronometroRecogido = false;
+
+  /**
+   * **Un paso de la estima**: el cronómetro, el plano sin el avión y, por
+   * debajo, la raya del camino que se va guardando sin enseñarla. Al llegar
+   * el reloj a cero salen las dos rayas —la recta que se quería y el camino
+   * que se hizo—, que son la cuenta del vuelo, y el plano vuelve a saber
+   * dónde está el avión.
+   */
+  private practicarLaEstima(dt: number): void {
+    const e = this.estima;
+    const c = e?.colocacion;
+    if (!e || !c) return;
+    if (!this.rayasDeLaEstima) {
+      const agua = this.scenario.waterLevel ?? 0;
+      const suelo = (x: number, z: number): number => Math.max(agua, this.terrain.sampleHeight(x, z));
+      this.rayasDeLaEstima = {
+        // Una muestra cada cien metros, y sitio para el doble del tramo: quien se pierde también deja raya.
+        camino: new CintaEnElSuelo(suelo, BLANCO, 24, Math.ceil((2 * c.lejos) / CADA_RAYA_DE_LA_ESTIMA) + 2),
+        recta: new CintaEnElSuelo(suelo, MAGENTA, 16, Math.ceil(c.lejos / PASO) + 2),
+      };
+    }
+    const rayas = this.rayasDeLaEstima;
+    const s = this.flight.state;
+    const volando = e.fase !== "cerrada";
+    if (volando && !s.onGround) rayas.camino.anadir(s.position.x, s.position.z, CADA_RAYA_DE_LA_ESTIMA);
+    /*
+     * **Sin GPS a la vista**, que es la lección: el plano se queda donde se
+     * puso el reloj en marcha y no pinta el avión ni su estela. Cerrado, lo
+     * vuelve a saber, con la traza entera.
+     */
+    this.hud.mapa.ponerSinGps(volando ? { x: c.x, z: c.z } : null);
+    this.hud.mapa.ponerEstela(volando ? null : () => this.libreta.traza);
+    if (!volando && e.cierre === "hecho") {
+      if (rayas.recta.muestras === 0) rayas.recta.recta(c, c.destino);
+      rayas.recta.ponerEn(this.scene);
+      rayas.camino.ponerEn(this.scene);
+    }
+    this.hud.cronometro.poner(
+      this.cronometroRecogido || e.cierre === "otraVez"
+        ? null
+        : { rumbo: c.rumboMagnetico, queda: e.queda, total: c.tiempo, destino: e.destino.nombre },
+    );
+    if (this.tarjetaDelTiempo?.abierta) return;
+    const sucesos = e.paso(
+      {
+        x: s.position.x,
+        z: s.position.z,
+        rumbo: vuelta((s.heading * 180) / Math.PI),
+        enElSuelo: s.onGround,
+        parado: s.onGround && s.groundSpeed < 0.6,
+        percance: this.percance !== null,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderALaEstima(suceso);
+  }
+
+  /** Lo que quedó el sitio, en las unidades del peldaño y con un decimal: «4,4 km», «2,4 NM». */
+  private distanciaDeLaEstima(metros: number): { n: string; u: string } {
+    const millas = this.tier.units === "aeronautical";
+    const valor = Math.max(0, metros) / (millas ? MILLA : 1000);
+    const n = new Intl.NumberFormat(getLocale() === "en" ? "en" : "es", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }).format(valor);
+    return { n, u: millas ? "NM" : "km" };
+  }
+
+  private atenderALaEstima(suceso: SucesoDeLaEstima): void {
+    /** La tarjeta con su dibujo y su frase, y la voz de la instructora si está grabada. */
+    const contar = (dibujo: DibujoDeSenal, clave: TranslationKey, palabra: TranslationKey, segundos = 12): void => {
+      this.hud.senal.mostrar(dibujo, this.rotulo(clave, palabra), null, { segundos, prioridad: IMPORTANTE });
+      this.decirDelEjercicio(clave, "mando");
+    };
+    switch (suceso.que) {
+      case "presentar": {
+        /*
+         * **El sitio, escrito y no dicho**: «Filadelfia» en la tarjeta, delante
+         * de la frase; el rumbo y el tiempo, en el cronómetro. La voz es
+         * genérica.
+         */
+        const frase = this.rotulo("ejercicio.estima.antes", "palabra.mira");
+        const sitio = this.estima ? t("ejercicio.estima.destino", { sitio: this.estima.destino.nombre }) : "";
+        this.hud.senal.mostrar("estima-rumbo", sitio && frase ? `${sitio}. ${frase}` : sitio || frase, null, {
+          segundos: 30,
+          prioridad: IMPORTANTE,
+        });
+        this.decirDelEjercicio("ejercicio.estima.antes", "mando");
+        return;
+      }
+      case "porQue":
+        return contar(
+          "estima-rumbo",
+          suceso.enCalma ? "ejercicio.estima.porQueEnCalma" : "ejercicio.estima.porQue",
+          "palabra.asi",
+        );
+      case "fueraDeRumbo":
+        return contar("estima-rumbo", "ejercicio.estima.fueraDeRumbo", "palabra.volve");
+      case "unMinuto":
+        return contar("estima-rumbo", "ejercicio.estima.unMinuto", "palabra.mira", 10);
+      case "mirarAbajo": {
+        // Nadie suspende: llegue donde llegue, el reloj a cero es el final del ejercicio.
+        this.avisar("achieved");
+        const dibujo: DibujoDeSenal =
+          suceso.donde === "debajo"
+            ? "estima-debajo"
+            : suceso.donde === "derecha"
+              ? "estima-a-la-derecha"
+              : suceso.donde === "izquierda"
+                ? "estima-a-la-izquierda"
+                : suceso.donde === "delante"
+                  ? "estima-delante"
+                  : "estima-detras";
+        const clave: TranslationKey = `ejercicio.estima.${suceso.donde}`;
+        const frase = this.rotulo(clave, "palabra.mira");
+        /*
+         * **Lo que quedó, escrito desde Taguató**: «A 4,4 km», delante de la
+         * frase. Debajo no hace falta: a menos de una milla, está ahí.
+         */
+        const lejos =
+          suceso.donde !== "debajo" && canalesDe(this.tier.avisos).cifra
+            ? t("ejercicio.estima.lejos", this.distanciaDeLaEstima(suceso.distancia))
+            : "";
+        this.hud.senal.mostrar(dibujo, lejos && frase ? `${lejos}. ${frase}` : lejos || frase, null, {
+          segundos: 16,
+          prioridad: IMPORTANTE,
+        });
+        this.decirDelEjercicio(clave, "mando");
+        return;
+      }
+      case "cerrar":
+        // Lo malo ya lo cuenta el percance; posado antes, el suelo lo dice.
+        if (suceso.como === "otraVez") return;
+        this.agenda.luego(TARDA_EL_FINAL + 8, () => {
+          if (this.estima?.cierre !== "hecho") return;
+          this.cronometroRecogido = true;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre("vuelta"),
+            this.rotulo("ejercicio.estima.cierre", "palabra.bien"),
             plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
           );
         });

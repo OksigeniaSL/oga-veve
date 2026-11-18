@@ -86,6 +86,11 @@
  * hay radio, solo un sitio que se ve, el viento de costado y la raya del
  * camino en el suelo. Pide un campo con un sitio bajo cerca y viento típico
  * (`sitioDeLaDeriva`) y la lleva `deriva.ts`. Ver el ADR 0031.
+ *
+ * Y «Rumbo y reloj» (#51, el peldaño 3), la estima, con la misma escena: sin
+ * radio y sin nada que mirar, rumbo tanto durante tantos minutos y se está
+ * encima. Pide un campo con destino (`destinoDeLaEstima`) y la lleva
+ * `estima.ts`. Ver el ADR 0031, enmienda H26n.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -96,6 +101,7 @@ import { radioDeSalida, radiosDe } from "./radio-de-navegacion";
 import { parejaDelCampo } from "./dos-radiales";
 import { ilsDelCampo } from "./ils-con-agujas";
 import { sitioDeLaDeriva } from "./deriva";
+import { destinoDeLaEstima } from "./estima";
 
 export type EjercicioId =
   | "planeo"
@@ -114,7 +120,8 @@ export type EjercicioId =
   | "interceptar"
   | "cruce"
   | "ils"
-  | "deriva";
+  | "deriva"
+  | "estima";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -176,7 +183,8 @@ export interface Ejercicio {
     | "interceptar"
     | "cruce"
     | "ils"
-    | "deriva";
+    | "deriva"
+    | "estima";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
    * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
@@ -539,6 +547,40 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     dondeVale: (oaci) => sitioDeLaDeriva(oaci) !== null,
     ensena:
       "con viento de costado, el avión no va adonde apunta el morro: se escurre de lado; apuntando un poco al viento, el camino sale derecho y se llega",
+  },
+  /*
+   * **Rumbo y reloj** (#51, peldaño 3): la estima. Encima de Mariscal
+   * Estigarribia, el rumbo corregido por el viento y el tiempo hasta
+   * Filadelfia; un cronómetro grande que cuenta hacia atrás, y al llegar a
+   * cero, mirar abajo. Sin radio ni el avión en el plano. Lo lleva
+   * `estima.ts`. Ver el ADR 0031, enmienda H26n.
+   */
+  {
+    id: "estima",
+    /*
+     * **Desde Taguató**: la lección son dos números, un rumbo y unos minutos,
+     * y la cuenta que los junta —velocidad por tiempo es distancia—. Los
+     * números entran en la escalera en Taguató (`escalera.ts`, el canal de la
+     * cifra). En Tukã, lo que se ve de la deriva (el puente, las dos rayas)
+     * se entiende sin leer; aquí no hay nada que ver hasta el final, que es
+     * justo la lección, y el rumbo que hay que sostener es un número.
+     */
+    peldanos: DESDE_TAGUATO,
+    /*
+     * **Los de esferas**: la avioneta, el de motor radial y el bimotor de
+     * pistón. La estima se aprende con la brújula y el reloj; los de cristal y
+     * los de línea llevan una pantalla de navegación que dice dónde se está,
+     * y en ellos el ejercicio sería mirar esa pantalla.
+     */
+    valePara: (a) => !conRadarMeteorologico(a),
+    leccion: "aterrizaje",
+    colocacion: "estima",
+    averias: [],
+    escena: "navegacion",
+    acabaEnElAire: true,
+    dondeVale: (oaci) => destinoDeLaEstima(oaci) !== null,
+    ensena:
+      "velocidad por tiempo es distancia: con el rumbo corregido por el viento y el reloj, se llega a un sitio que no se ve; y lo que se aparta es lo que se voló mal",
   },
 ];
 

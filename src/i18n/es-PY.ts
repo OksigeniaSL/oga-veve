@@ -3300,6 +3300,7 @@ export const ES_PY = {
   "hangar.ejercicio.cruce": "Dos radiales que se cortan",
   "hangar.ejercicio.ils": "Aterrizar con las agujas",
   "hangar.ejercicio.deriva": "Apuntá al viento",
+  "hangar.ejercicio.estima": "Rumbo y reloj",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3613,6 +3614,37 @@ export const ES_PY = {
   "ejercicio.deriva.cierre": "Con viento de costado, el morro va un poco al viento y el camino sale derecho",
   // La corrección en grados, de Taguató para arriba, delante de la frase.
   "ejercicio.deriva.grados": "{n}° al viento",
+  /*
+   * **«Rumbo y reloj»** (#51, ADR 0031, enmienda H26n): la estima sobre el
+   * Chaco, rumbo tanto durante tantos minutos. Genéricas: el nombre del sitio,
+   * el rumbo y el tiempo se escriben en la tarjeta y en el cronómetro, no se
+   * dicen. Cortas, para decirlas en calma.
+   */
+  "ejercicio.estima.destino": "{sitio}",
+  "ejercicio.estima.antes":
+    "Rumbo y reloj, sin mapa ni radio. Mantené el rumbo de la tarjeta hasta que el reloj llegue a cero, y ahí mirá abajo",
+  "ejercicio.estima.porQue":
+    "¿Viste que el rumbo no apunta derecho al pueblo? Apunta un poquito al viento, que nos empuja de costado",
+  "ejercicio.estima.porQueEnCalma":
+    "Hoy no hay viento, así que el rumbo apunta derecho al pueblo. Velocidad por tiempo es distancia",
+  "ejercicio.estima.fueraDeRumbo": "Se nos fue el rumbo. Volvé al número de la tarjeta, y dejalo quieto ahí",
+  "ejercicio.estima.unMinuto": "Falta un minuto. El rumbo quieto, y preparate para mirar abajo",
+  "ejercicio.estima.debajo":
+    "¡Mirá abajo! Ahí está el pueblo, justo debajo. Sin ver nada, con rumbo y reloj: así se cruzaban océanos",
+  "ejercicio.estima.izquierda":
+    "Mirá abajo, a tu izquierda: ahí está el pueblo. Esa distancia es lo que nos apartamos, y la próxima sale más justa",
+  "ejercicio.estima.derecha":
+    "Mirá abajo, a tu derecha: ahí está el pueblo. Esa distancia es lo que nos apartamos, y la próxima sale más justa",
+  "ejercicio.estima.delante": "Mirá adelante: el pueblo está un poquito más allá. Volamos menos de lo que pedía la cuenta",
+  "ejercicio.estima.detras": "Mirá atrás: ya pasamos el pueblo. Volamos más de lo que pedía la cuenta",
+  // Lo que quedó el sitio, de Taguató para arriba, delante de la frase.
+  "ejercicio.estima.lejos": "A {n} {u}",
+  // El panel del final: se lee, no se dice.
+  "ejercicio.estima.cierre":
+    "Velocidad por tiempo es distancia: con el rumbo corregido por el viento y el reloj, se llega adonde no se ve",
+  // El cronómetro: la glosa del rótulo HDG, en pequeño, y lo que oye un lector de pantalla.
+  "cronometro.glosa": "rumbo",
+  "cronometro.etiqueta": "Rumbo {rumbo}, faltan {reloj}",
   // Y la frase corta, con sus números, de Taguató para arriba.
   "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
   "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",

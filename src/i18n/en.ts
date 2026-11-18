@@ -1432,6 +1432,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.cruce": "Where two radials cross",
   "hangar.ejercicio.ils": "Landing on the needles",
   "hangar.ejercicio.deriva": "Aim into the wind",
+  "hangar.ejercicio.estima": "Heading and clock",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1652,6 +1653,28 @@ export const EN: Dictionary = {
   "ejercicio.deriva.llegasteEnCalma": "We made it! With no wind, the path goes right where the nose points",
   "ejercicio.deriva.cierre": "In a crosswind, the nose points a little into the wind and the path runs straight",
   "ejercicio.deriva.grados": "{n}° into the wind",
+  "ejercicio.estima.destino": "{sitio}",
+  "ejercicio.estima.antes":
+    "Heading and clock, no map and no radio. Hold the heading on the card until the clock reaches zero, then look down",
+  "ejercicio.estima.porQue":
+    "See how the heading doesn't point straight at the town? It points a little into the wind, which pushes us sideways",
+  "ejercicio.estima.porQueEnCalma":
+    "No wind today, so the heading points straight at the town. Speed times time is distance",
+  "ejercicio.estima.fueraDeRumbo": "The heading has wandered. Go back to the number on the card, and hold it there",
+  "ejercicio.estima.unMinuto": "One minute to go. Hold the heading, and get ready to look down",
+  "ejercicio.estima.debajo":
+    "Look down! There's the town, right below us. Without seeing a thing, with heading and clock: that's how oceans were crossed",
+  "ejercicio.estima.izquierda":
+    "Look down, to your left: there's the town. That gap is how far we drifted, and next time it'll be closer",
+  "ejercicio.estima.derecha":
+    "Look down, to your right: there's the town. That gap is how far we drifted, and next time it'll be closer",
+  "ejercicio.estima.delante": "Look ahead: the town is a little further on. We flew less than the sum asked for",
+  "ejercicio.estima.detras": "Look back: we've passed the town. We flew more than the sum asked for",
+  "ejercicio.estima.lejos": "{n} {u} away",
+  "ejercicio.estima.cierre":
+    "Speed times time is distance: with the heading corrected for the wind and a clock, you get to a place you can't see",
+  "cronometro.glosa": "heading",
+  "cronometro.etiqueta": "Heading {rumbo}, {reloj} to go",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
   "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
   "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",

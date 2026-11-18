@@ -2608,6 +2608,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     deriva: () => juego.derivaParaBanco,
     /**
+     * «Rumbo y reloj»: la fase, el destino, el plan, lo que lleva y le queda
+     * al reloj, el rumbo medio volado, dónde quedó el sitio, lo que enseña el
+     * cronómetro y las dos rayas. Ver `flight/estima.ts`.
+     */
+    estima: () => juego.estimaParaBanco,
+    /**
      * «Dos radiales que se cortan»: la fase, las dos radios, los radiales
      * leídos, la cruz y lo lejos que cayó del avión. Ver `flight/dos-radiales.ts`.
      */

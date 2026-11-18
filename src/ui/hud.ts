@@ -50,6 +50,7 @@ import { alturaSobreLasRuedas } from "../flight/apoyo";
 import { FRENO_DEL_HELICOPTERO, HELICOPTERO_DE_LA_TARJETA } from "./dibujos-del-helicoptero";
 import { Pictogramas, motorMas, motorMenos } from "./pictogramas";
 import { DIBUJOS, Senal } from "./senal";
+import { Cronometro } from "./cronometro";
 import { VentanaDeHistoria } from "./ventana-de-historia";
 import { OJO } from "./teclas";
 import { luzDeTren } from "../flight/tren";
@@ -470,6 +471,7 @@ const LO_QUE_TAPA = [
   '[data-hud="torre"]',
   '[data-hud="warning"]',
   '[data-hud="senal"]',
+  '[data-hud="cronometro"]',
   '[data-hud="tutor"]',
   '[data-hud="pictos"]',
   '[data-hud="cuadro"]',
@@ -645,6 +647,8 @@ export class Hud {
    */
   private readonly pictos = new Pictogramas();
   readonly senal = new Senal();
+  /** El rumbo y el reloj de la estima, en el rincón. Ver `ui/cronometro.ts`. */
+  readonly cronometro = new Cronometro();
   /** La ilustración de la historia de la ventanilla, mientras se cuenta. */
   readonly historia = new VentanaDeHistoria();
 
@@ -2216,6 +2220,12 @@ export class Hud {
         juego que solo se puede seguir con sonido excluye por diseño.
       -->
       ${Senal.markup()}
+      <!--
+        Y debajo, el cronómetro de la estima: el rumbo y el reloj que cuenta
+        hacia atrás, en la misma caja para que se apile con la tarjeta. Solo
+        sale en «Rumbo y reloj». Ver ui/cronometro.ts.
+      -->
+      ${Cronometro.markup()}
       </div>
       ${Mapa.markup()}
       ${PanelDelTiempo.markup()}
@@ -2630,6 +2640,7 @@ export class Hud {
     this.medirElSubtitulo();
     this.medirLaLampara();
     this.senal.bind(this.root);
+    this.cronometro.bind(this.root);
     this.repartidor?.soltar();
     this.repartidor = new Repartidor(this.root);
     this.repartidor.vigilar();
