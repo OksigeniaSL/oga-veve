@@ -85,6 +85,9 @@ const MANDAN_LOS_FLAPS = 0.25;
  * queda como estaba: la carrera de este modelo está medida contra la de
  * `carrera.ts` con esta cuenta (ver `prestaciones-guyrami.test.ts`).
  *
+ * **Y lo que bajan es la punta, no cada posición del gas**: rodando despacio
+ * los flaps no frenan nada que se note. Ver `step` (H27c).
+ *
  * **Volando ya no**: ahí lo sacado cuesta lo que cuesta en el modelo completo.
  * Ver `puntaConLoSacado` y `gasQueNiSubeNiBaja`.
  */
@@ -822,6 +825,16 @@ export class ArcadeFlightModel implements FlightModel {
    * carrera salía 331 m contra los 266 que dice la física, un veinticinco por
    * ciento larga. Ver `blando` en `step`.
    */
+  /**
+   * **Lo más que se coge rodando con estos flaps**, m/s, sobre la punta del
+   * suelo que se le pase: la regla de tres de `FRENAN_LOS_FLAPS`, que es la de
+   * la carrera de despegue con el gas a fondo. Ver `step`.
+   */
+  private puntaRodandoCon(flaps: number, punta: number): number {
+    const frenan = resistenciaDeLosFlaps(this.aircraft, flaps) * FRENAN_LOS_FLAPS;
+    return punta * Math.max(0, 1 - frenan);
+  }
+
   private puntaEnElSuelo(): number {
     const cuesta = ROZAMIENTO[this.superficie] / ROZAMIENTO.asfalto;
     return (
@@ -931,6 +944,11 @@ export class ArcadeFlightModel implements FlightModel {
    * ritmo `k`, así que acelerar `a` es pedir `a/k` por encima de lo que se
    * lleva. A la avioneta no le cambia nada, que ya llegaba antes.
    */
+  /*
+   * **Y con los flaps fuera, la misma recta hasta la punta que dejan**: ver
+   * `puntaRodandoCon`. Más allá no hay gas que llegue, y el que se pide de más
+   * no hace nada.
+   */
   gasParaRodar(velocidad: number, desde = velocidad): number {
     // En el suelo no hay altura que valga: la punta es la de abajo.
     const cruise = this.aircraft.cruiseSpeed * CRUISE_FRACTION;
@@ -1015,14 +1033,28 @@ export class ArcadeFlightModel implements FlightModel {
     let wanted: number;
     if (this.state.onGround) {
       /*
-       * **Rodando, como estaba**: del cero a la punta del suelo, y los flaps
-       * de despegue frenan con su regla de tres. El tren no: lo que cuesta ya
-       * está dentro de la carrera —`carreraHastaVr` lo cuenta, y de ahí sale
-       * el ritmo de este modelo en el suelo—, y contarlo aquí otra vez
-       * alargaría la carrera dos veces por lo mismo.
+       * **Rodando, del cero a la punta del suelo, y los flaps bajan la punta**,
+       * no cada posición del gas. El tren no: lo que cuesta ya está dentro de
+       * la carrera —`carreraHastaVr` lo cuenta, y de ahí sale el ritmo de este
+       * modelo en el suelo—, y contarlo aquí otra vez alargaría la carrera dos
+       * veces por lo mismo.
+       *
+       * Esto era `gas · punta · (1 − 4 · resistencia)`: la regla de tres de
+       * los flaps de despegue, puesta en toda la palanca. Con los de aterrizar
+       * del JAZ 50 —37°, la resistencia más alta de la flota, 0,2— eso deja un
+       * quinto: el gas que rueda a once metros por segundo rodaba a dos, la
+       * marca de rodaje de la palanca y el tope de Guyrami, que preguntan a
+       * `gasParaRodar`, se quedaban en ese quinto, y el banco del vuelo entero,
+       * con su gas de rodar, tardó 349 s en llevarlo por la pista de Los Rodeos
+       * hasta su salida (H27c, ADR 0002). Lo de verdad: la resistencia de los
+       * flaps va con el cuadrado de la velocidad, y a diez metros por segundo
+       * es un 5 % de la que hacen en la rotación de ese avión, a 43; se sale de
+       * la pista rodando con los de aterrizar y se recogen fuera, que es lo
+       * que pide la lista. Lo que bajan es lo más que se coge con el gas a
+       * fondo, y con el gas a fondo la cuenta es la de antes, así que la
+       * carrera de despegue no cambia.
        */
-      wanted =
-        gas * cruise * (1 - resistenciaDeLosFlaps(this.aircraft, flaps) * FRENAN_LOS_FLAPS);
+      wanted = Math.min(gas * cruise, this.puntaRodandoCon(flaps, cruise));
     } else {
       /*
        * **Volando, de la mínima de esos flaps a la punta con lo sacado**, en
