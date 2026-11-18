@@ -2406,21 +2406,22 @@ tienen el pack sabido desde hace rato. Los cantos de un ejercicio
 preguntando `vozDe`: se piden en la carrera de despegue, muchos segundos
 después del arranque.
 
-Volado, con la avioneta y el alisio: la presentación pedida a los 3.390 ms
+Volado, con el bimotor y el alisio a reloj normal: la presentación pedida a los 3.390 ms
 con el pack en `manifiestos` —apuntada «espera a saber si está grabada»—,
 los manifiestos a los 4.253 y **la presentación sonando a los 4.606 ms**. En
-las cinco tiradas de esta tanda sonó.
+las tres tiradas con el arreglo sonó, la última esperando casi tres segundos.
 
 ### Las frases de en medio: no era el reloj
 
 H26j sospechaba del reloj por cuatro del banco: los pasos del ejercicio
 llegan cuatro veces más juntos que la voz que los dice. Se voló el bimotor a
 **reloj normal** (`OGA_VECES=1`) para saberlo, y no: «ejercicio.ils.enElLocalizador:
-caducó esperando» a los 106 s, igual. Detrás de qué, lo dice lo que sonó
-alrededor: la torre pasando a su frecuencia (`torre.canario.contactTower`) y
-dando el tráfico, y la instructora con la ventanilla y los baches. Ninguna
-dura mucho; juntas pasan de los **cuatro segundos de `CADUCA`**, que es lo que
-aguantaba cualquier frase de un ejercicio de radio esperando turno. Y la que
+caducó esperando» a los 106 s, igual. Delante, por lo que sonó en esa
+tirada —el banco no apunta el instante de cada frase—, la torre pasando a su
+frecuencia (`torre.canario.contactTower`) y dando el tráfico, y la
+instructora con la ventanilla y los baches. Ninguna dura mucho; dos seguidas
+pasan de los **cuatro segundos de `CADUCA`**, que es lo que aguantaba
+cualquier frase de un ejercicio de radio esperando turno. Y la que
 caducó es justo la que dice qué hacer ahora: «ahora la senda, que está
 arriba: seguí nivelado».
 
