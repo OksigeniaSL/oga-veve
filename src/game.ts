@@ -3961,11 +3961,12 @@ export class Game {
   /**
    * **Lo que el ejercicio de hoy calla mientras dura**: en los de radio, que se
    * cierran en el aire, la fase del plan, la torre, su frecuencia y la
-   * ventanilla. Ver `flight/lo-que-calla-el-ejercicio.ts`.
+   * ventanilla; y en el ILS, desde que pide la frustrada, la fase. Ver
+   * `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
     const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils;
-    return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada");
+    return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada", this.ils?.fase === "frustrando");
   }
   /**
    * **Si el ejercicio ya declaró la emergencia**: MAYDAY o PAN PAN con un

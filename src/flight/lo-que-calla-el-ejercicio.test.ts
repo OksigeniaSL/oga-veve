@@ -48,6 +48,23 @@ describe("lo que calla un ejercicio que no acaba en la pista", () => {
 
   it("sin ejercicio, nada", () => {
     expect(loQueCallaElEjercicio(null, false)).toEqual(NO_CALLA_NADA);
+    expect(loQueCallaElEjercicio(null, false, true)).toEqual(NO_CALLA_NADA);
+  });
+
+  /*
+   * H26m: el bimotor en calma, apartado, se fue al aire en los mínimos y la
+   * fase dijo «andá a la pista» detrás de la frustrada del ejercicio.
+   */
+  it("el ILS, desde que pide la frustrada: la fase, y la torre sigue; cerrado, nada", () => {
+    const e = ejercicioPorId("ils");
+    expect(loQueCallaElEjercicio(e, false, true)).toEqual({ ...NO_CALLA_NADA, laFase: true });
+    expect(loQueCallaElEjercicio(e, true, true)).toEqual(NO_CALLA_NADA);
+    // Y uno de los que acaban en el aire no calla menos por irse al aire.
+    expect(loQueCallaElEjercicio(ejercicioPorId("radial"), false, true)).toEqual(TODO);
+  });
+
+  it("el juego le dice cuándo el ILS está pidiendo la frustrada", () => {
+    expect(juego).toMatch(/loQueCallaElEjercicio\(this\.ejercicioDeHoy, [^;]*this\.ils\?\.fase === "frustrando"\)/);
   });
 });
 
