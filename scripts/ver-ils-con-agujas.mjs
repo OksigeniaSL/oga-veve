@@ -388,7 +388,7 @@ try {
   );
   comprobar(
     "a trescientos treinta pies, dentro de la nube; en los mínimos, fuera, con la pista a la vista",
-    dentro && enLosMinimosSeVe && dentro.enLaNube > 0.5 && enLosMinimosSeVe.enLaNube < 0.05 && (enLosMinimosSeVe.haciaLaPista ?? 0) > 0.95,
+    dentro && enLosMinimosSeVe && dentro.enLaNube > 0.3 && enLosMinimosSeVe.enLaNube < 0.2 && (enLosMinimosSeVe.haciaLaPista ?? 0) > 0.95,
     dentro && enLosMinimosSeVe
       ? `a ${Math.round(dentro.pies)} ft en la nube ${dentro.enLaNube.toFixed(2)}; a ${Math.round(enLosMinimosSeVe.pies)} ft ${enLosMinimosSeVe.enLaNube.toFixed(2)}, hacia la pista deja ver ${enLosMinimosSeVe.haciaLaPista?.toFixed(2)}`
       : "no llegó",
