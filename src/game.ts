@@ -29676,6 +29676,28 @@ export class Game {
        */
       const loDiceElV1 =
         vista.fase === "comprometido" && canalesDe(this.tier.avisos).cabina;
+      /*
+       * **Y la verde, de Taguató para arriba, la cuenta la torre.** En ese
+       * instante la lámpara dice «pista uno dos, autorizado a despegar» en
+       * castellano y detrás su «cleared for take-off» con el viento: dos voces
+       * para un suceso, y «¡Luz verde! Entrá a la pista» era la tercera. Abajo
+       * la torre dice solo la lámpara y la instructora la traduce a lo que hay
+       * que hacer, que a los cuatro años «autorizado» no dice nada; arriba ya
+       * hay cifras en pantalla y la fraseología es la lección. Un suceso, una
+       * voz.
+       *
+       * Y no se callaba: se caía. Esperaba con peso de instructora detrás de
+       * la torre —diecisiete segundos de lámpara y fraseología, la llamada de
+       * la tripulación y la oferta de la intersección— y al entrar en la pista
+       * «vuelo.autorizado: ya no es verdad», en todos los vuelos medidos en
+       * Los Rodeos con el JAZ 90 (H29i, H29j). La tarjeta la sigue diciendo
+       * escrita. Ver `luzDeTorre`.
+       */
+      const laVerdeLaDiceLaTorre =
+        clave === "vuelo.autorizado" &&
+        (this.tier.instruments === "numeric" || this.tier.instruments === "full") &&
+        this.hayTorreQueHable() &&
+        !this.esAfisAqui();
       if (!repuesta && !callada) {
         /*
          * **Y la de la fase de antes, si todavía espera turno, ya no vale.**
@@ -29712,7 +29734,13 @@ export class Game {
          */
         if (vista.fase === "estacionado" && this.esperaAlCrosscheck())
           this.faseTrasElCrosscheck = { frase, clave, desde: this.relojDelJuego };
-        else if (!loDiceElV1 && !yaDicho && !yaDichoEnLaPista && !soloLaTarjetaTrasIrse)
+        else if (
+          !loDiceElV1 &&
+          !laVerdeLaDiceLaTorre &&
+          !yaDicho &&
+          !yaDichoEnLaPista &&
+          !soloLaTarjetaTrasIrse
+        )
           this.instructor.decir(frase, clave);
         // Y el rótulo grande tampoco: la tarjeta, que se queda, ya lo dice.
         if (conLetras && !yaDichoEnLaPista && !soloLaTarjetaTrasIrse) {
