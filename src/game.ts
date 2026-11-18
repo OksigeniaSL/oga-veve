@@ -1309,6 +1309,7 @@ import {
   anunciaLaFase,
   cuantoAguanta,
   cuentaPorDondeSeSale,
+  cuentaUnPasoDeRadio,
   esDelDescenso,
 } from "./audio/boca";
 import {
@@ -23684,6 +23685,16 @@ export class Game {
    * decide `decirGrabada`, que es quien sabe cómo va el pack.
    */
   private decirDelEjercicio(clave: TranslationKey, peso: Urgencia): void {
+    /*
+     * **Y un paso nuevo retira lo que quedara por decir de los de antes.** Lo
+     * que cuenta un paso de un ejercicio de radio espera lo que haga falta
+     * —ver `cuentaUnPasoDeRadio`—, porque es verdad hasta el paso siguiente;
+     * llegado éste, ya no lo es, y quien lo sabe es el ejercicio. **Salvo la
+     * presentación** (`….antes`), que no es un paso sino lo que los abre: en
+     * «interceptar» sale en el mismo fotograma que «a tope», y las dos se
+     * dicen, en su orden. Lo que la retira es el cierre.
+     */
+    BOCA.retirar((c) => c !== clave && cuentaUnPasoDeRadio(c) && !c?.endsWith(".antes"));
     if (!this.instructor.sabeLoGrabado) this.apuntarCanto(`${clave}: espera a saber si está grabada`);
     const pedida = this.instructor.decirGrabada(t(clave), clave, peso, undefined, (que, porque) => {
       if (que === "se-cae" && porque === "sin-grabar") this.apuntarCanto(`${clave}: sin grabar, se calla`);
@@ -25037,6 +25048,8 @@ export class Game {
           ? contar("ils-en-cruz", "ejercicio.ils.pista", "palabra.bien", 8)
           : contar("frustrada", "ejercicio.ils.frustrada", "palabra.bien", 8);
       case "cerrar": {
+        // Cerrado, lo que quedara por decir de sus pasos ya no es verdad. Ver `cuentaUnPasoDeRadio`.
+        BOCA.retirar((c) => cuentaUnPasoDeRadio(c));
         // Lo malo ya lo cuenta el percance; posado en otra parte, el suelo lo dice.
         if (suceso.como === "otraVez") return;
         /*
