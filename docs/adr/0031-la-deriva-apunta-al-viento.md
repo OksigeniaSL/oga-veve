@@ -262,7 +262,19 @@ En el juego, con la avioneta en Asunción, Taguató y la Intel por ANGLE
   salió «esa no es la pista en uso»** con su media vuelta: el rumbo 310 va
   alineado con la 30 de Los Rodeos, y la otra cabecera no miraba lo que el
   ejercicio calla. Ahora se calla con la fase (`mirarLaCabecera`), como la
-  torre.
+  torre. Volado otra vez, diecinueve de diecinueve; la torre da la pista en
+  uso en el mismo instante de cerrar, y eso ya es un vuelo (H26g): el banco
+  juzga lo dicho hasta la última lectura con el ejercicio abierto y apunta lo
+  de después aparte.
+- **En calma** (`OGA_VIENTO=000/0`), quince de quince: la recta sale del campo
+  hacia el puente, con rumbo 335; a mitad de camino lo dice sin haberse
+  apartado ni un metro, y llega con la frase de la calma. **Y enseñó que la
+  presentación decía «hoy hay viento de costado»** sin viento: ahora no dice
+  si lo hay (ver «Lo que pasa»). Volado otra vez con la frase nueva, quince de
+  quince.
+- **Lo que se oye**, en las cinco que acabaron bien: el ejercicio, los baches
+  y, como seguridad, los avisos de otro avión cerca; con el ejercicio abierto,
+  nada más. Los pájaros en uve, ya callados mientras dura, salen al cerrar.
 
 ## Lo que queda
 
