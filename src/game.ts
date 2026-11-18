@@ -18172,6 +18172,14 @@ export class Game {
      * llena de gotas aunque no llueva. Ver `world/gotas-en-el-parabrisas.ts`.
      */
     const s = this.flight.state;
+    /*
+     * **Bajo cero, la nube no moja: hiela.** Sus gotas siguen siendo agua y se
+     * congelan al tocar —es lo mismo que tapa el pitot, ver
+     * `flight/pitot-helado.ts`—, así que no corren por el cristal como en una
+     * nube templada. El hielo del parabrisas no se dibuja: se deja el cristal
+     * limpio antes que enseñar agua que no habría.
+     */
+    const nubeQueMoja = temperaturaExterior(s.position.y, this.flight.aireDelDia()) > 0 ? 1 : 0;
     const cuanta =
       llueve.clase === "nada"
         ? 0
@@ -18183,7 +18191,7 @@ export class Game {
       mojado: Math.min(
         1,
         cuanta * aqui(s.position.x, s.position.y, s.position.z) +
-          0.6 * this.sky.enLaNube,
+          0.6 * this.sky.enLaNube * nubeQueMoja,
       ),
       velocidad: s.airspeed,
       desdeDentro: this.cameraMode === "cockpit",
@@ -31314,12 +31322,14 @@ export class Game {
     const unidades = UNIT_SYSTEMS[this.tier.units];
     const u = unidades.speedLabel();
     const nudos = (v: number): string => String(Math.round(unidades.speed(v)));
+    // Con el signo menos de verdad, no el guion: «−5 °C».
+    const grados = (c: number): string => String(Math.round(c)).replace("-", "−");
     switch (suceso.que) {
       case "presentar":
         return contar(
           "pitot-helado",
           "ejercicio.pitot.antes",
-          cifra ? t("ejercicio.pitot.frio", { n: String(Math.round(suceso.oat)) }) : "",
+          cifra ? t("ejercicio.pitot.frio", { n: grados(suceso.oat) }) : "",
           12,
         );
       case "gas":
@@ -31343,7 +31353,7 @@ export class Game {
         this.avisar("achieved");
         return contar("pitot-calefaccion", "ejercicio.pitot.prevenido");
       case "calido":
-        return contar("pitot-helado", "ejercicio.pitot.calido", cifra ? t("ejercicio.pitot.frio", { n: String(Math.round(suceso.oat)) }) : "");
+        return contar("pitot-helado", "ejercicio.pitot.calido", cifra ? t("ejercicio.pitot.frio", { n: grados(suceso.oat) }) : "");
       case "cerrar":
         // Lo malo ya lo cuenta el percance; posado antes, el suelo lo dice; sin hielo, ya se dijo.
         if (suceso.como !== "hecho") return;

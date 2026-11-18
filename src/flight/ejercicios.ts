@@ -775,6 +775,8 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     averias: [],
     escena: "navegacion",
     acabaEnElAire: true,
+    // **Encima de un campo**: la nube y la altura salen de su aire y de su relieve. Ver `dondeEmpiezaElPitot`.
+    dondeVale: (oaci) => oaci !== null,
     ensena:
       "en nube fría el hielo tapa el pitot y la aguja se queda quieta aunque el avión acelere: se vuela con la actitud y el gas, y la calefacción del pitot lo destapa",
   },
