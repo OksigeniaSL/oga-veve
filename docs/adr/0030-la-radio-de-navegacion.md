@@ -2503,11 +2503,13 @@ ha tocado.
   se sabe si es el piloto de banco —que se pensó para la avioneta— o el
   avión; con la avioneta apartada, en H26j, sí cerraba.
 - **«Poné el ILS en la NAV» con el ILS puesto**, detrás de los mínimos en
-  esa misma tirada. Lo más probable, sin comprobar: el ejercicio da la radio
-  por quitada si deja de oír su localizador (`sintonizada` en
-  `practicarElIls` pide la frecuencia **y** la emisora oída), y apartado y
-  bajo, cerca de la pista, la recepción se pierde. Perder la señal no es
-  quitar la radio; habría que mirar solo la frecuencia.
+  esa misma tirada, antes del *go around* de la cabina. Sin comprobar. Lo
+  que se sabe: el ejercicio da la radio por quitada si deja de oír su
+  localizador (`sintonizada` en `practicarElIls` pide la frecuencia **y** la
+  emisora oída), y perder la señal no es quitar la radio. Pero en los
+  mínimos se leían 1,75 puntos —unos 2,2°, dentro de la cobertura—, así que
+  falta saber qué la hizo perder, o si algo cambió la radio al irse al aire.
+  Hay que apuntar en el banco la frecuencia y la emisora en ese instante.
 - **«Andá a la pista» antes del *go around***: en esa tirada sonó
   `vuelo.enVueloAterrizando` justo después de los mínimos, antes de que la
   cabina cantara la frustrada. Por la regla de H26j —salir de la final sin
