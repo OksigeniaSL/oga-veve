@@ -96,6 +96,7 @@ import {
 } from "./world/superficies-de-mando";
 import { seOfrece, type Ejercicio } from "./flight/ejercicios";
 import { loQueCallaElEjercicio, type LoQueCalla } from "./flight/lo-que-calla-el-ejercicio";
+import { LaFinalTrasIrse } from "./flight/la-final-tras-irse";
 import {
   colocacionDeLaTormenta,
   escenaDeLaTormenta,
@@ -5521,6 +5522,8 @@ export class Game {
   readonly galones = new Galones();
   /** Reconoce cuándo se renuncia a una aproximación. Ver `flight/frustrada.ts`. */
   private readonly frustrada = new Frustrada();
+  /** Lo que cuenta la fase después de irse al aire. Ver `flight/la-final-tras-irse.ts`. */
+  private readonly laFinalTrasIrse = new LaFinalTrasIrse();
   /** La toma larga: si no se toca en la zona de toma, al aire. Ver `flight/toma-larga.ts`. */
   private readonly tomaLarga = new TomaLarga();
   /** Cuándo se miró por última vez si queda pista para parar, s de `relojDeLaToma`. */
@@ -28069,6 +28072,8 @@ export class Game {
     const torreAntes = this.faseDeLaTorre;
     const estabaEnLaFinal = this.enLaFinalDeLaTorre;
     this.enLaFinalDeLaTorre = this.mirarLaFinalDeLaTorre(vista.fase);
+    // Y lo que cuenta la fase tras irse al aire: ver `flight/la-final-tras-irse.ts`.
+    this.laFinalTrasIrse.mirar(this.enLaFinalDeLaTorre, !this.flight.state.onGround);
     /*
      * **Y el permiso es de una aproximación.** Se acaba yéndose al aire,
      * dándose la vuelta o tocando: lo que venga después es otra final con su
@@ -28239,8 +28244,24 @@ export class Game {
        * fase se apunta igual, y al cerrarse no se vuelve a anunciar hasta que
        * cambie. Ver `flight/lo-que-calla-el-ejercicio.ts`.
        */
+      /*
+       * **Y tras irse al aire, la fase no repite la frustrada.** Salir de la
+       * final subiendo es la frustrada, que ya tiene su voz: la tarjeta de
+       * «en vuelo» sale, callada; y la final no se vuelve a contar hasta que
+       * haya otra final. Ver `flight/la-final-tras-irse.ts`.
+       */
+      const trasIrse = this.laFinalTrasIrse.alCambiar(
+        antes,
+        vista.fase,
+        !this.flight.state.onGround,
+        this.flight.state.verticalSpeed,
+      );
       const callada =
-        this.elSenaleroLlevaLaLlegada(vista) || this.elRemolqueLlevaLaSalida(vista) || this.loQueCalla.laFase;
+        this.elSenaleroLlevaLaLlegada(vista) ||
+        this.elRemolqueLlevaLaSalida(vista) ||
+        this.loQueCalla.laFase ||
+        trasIrse === "nada";
+      const soloLaTarjetaTrasIrse = trasIrse === "solo la tarjeta";
       /*
        * **Y alineado en la pista, su número.**
        *
@@ -28465,10 +28486,10 @@ export class Game {
          */
         if (vista.fase === "estacionado" && this.esperaAlCrosscheck())
           this.faseTrasElCrosscheck = { frase, clave, desde: this.relojDelJuego };
-        else if (!loDiceElV1 && !yaDicho && !yaDichoEnLaPista)
+        else if (!loDiceElV1 && !yaDicho && !yaDichoEnLaPista && !soloLaTarjetaTrasIrse)
           this.instructor.decir(frase, clave);
         // Y el rótulo grande tampoco: la tarjeta, que se queda, ya lo dice.
-        if (conLetras && !yaDichoEnLaPista) {
+        if (conLetras && !yaDichoEnLaPista && !soloLaTarjetaTrasIrse) {
           this.hud.flash(`${frase}${tecla}${letra ? ` · ${letra}` : ""}`, 5);
         }
         if (vista.fase === "autorizado" || vista.fase === "apagado")
