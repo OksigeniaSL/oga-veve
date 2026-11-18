@@ -491,6 +491,21 @@ const lasNubesDeCerca = (ultima: Linea): Linea[] => [
   ultima,
 ];
 /**
+ * **Dónde se para lo de la tripulante para el anuncio de la bajada**: en un
+ * salto entre islas el ralentí llega con ella en el asiento de Ara, y Ara lo
+ * tiene que poder notar mientras se oye. Se para antes del saludo, si todavía
+ * no ha empezado; antes de cada parte de las nubes que ya no contesta a nada
+ * —la del hielo y la de cruzarlas—; y antes del plop. Nunca entre el «¿es tu
+ * primer vuelo?» y el «¡sí!», ni entre la pregunta de Ara y su respuesta, ni
+ * entre lo que se explica y lo que Ara saca de ello. Así lo más que espera el
+ * anuncio son las tres primeras, menos de veinte segundos —17,6 en el banco de
+ * Ara, y 17 en la mesa con cualquier crucero—, lejos de los cuarenta en que
+ * se deja de oír el cambio. Ver `apartarParaLaBajada` en `motor-del-pasaje.ts`.
+ */
+const PARA_EN_LA_BAJADA: ReadonlySet<string> = new Set(
+  [tripulante("hola"), tripulante("nubes2"), tripulante("nubes3"), EL_PLOP_EXPLICADO[0]!].map((x) => x.clave),
+);
+/**
  * **Un anuncio de la megafonía de siempre**: lo monta el juego con el campo,
  * el plan y el tiempo de hoy. Ver `ANUNCIOS` en `audio/megafonia.ts`.
  */
@@ -845,7 +860,9 @@ export const GUION_DEL_PASAJE: readonly DefMomento<MomentoDelPasaje, MomentoDelP
      * **Y los motores al ralentí, que se oyen** (punto 297): en el punto de
      * descenso la tripulación quita el gas del todo, y el ruido baja de golpe.
      * Ara lo nota primero, si acaba de pasar —ver `SE_OYE_EL_CAMBIO`—, y la
-     * comandante dice lo que es: que empezamos a bajar. El porqué del ralentí
+     * comandante dice lo que es: que empezamos a bajar. Lo que esté contando
+     * la tripulante se para para esto, y sigue detrás: ver
+     * `PARA_EN_LA_BAJADA`. El porqué del ralentí
      * —que para bajar no se apagan los motores— lo cuenta ella misma en el
      * primer rato tranquilo de después, por encima de los diez mil pies: ver
      * la charla `bajando`.
@@ -1906,6 +1923,7 @@ export const GUION_TENERIFE_LA_PALMA: GuionDelPasaje<MomentoDelPasaje, CharlaDel
   ],
   seQuedanHastaLaSiguiente: HASTA_LA_SIGUIENTE,
   elPlop: EL_PLOP_EXPLICADO,
+  paraEnLaBajada: PARA_EN_LA_BAJADA,
   elOficio: EL_OFICIO,
   bano: { pedido: "revision", vuelta: AL_BANO[0]! },
   kit: { momento: "kit", llegaA: BAJANDO.kit, dado: tripulante(KIT_DADO).clave, guardado: tripulante(KIT_GUARDADO).clave },

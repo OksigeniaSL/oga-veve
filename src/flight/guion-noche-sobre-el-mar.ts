@@ -269,6 +269,7 @@ export const GUION_NOCHE_SOBRE_EL_MAR: GuionDelPasaje<MomentoDeLaNoche, never> =
   sellosAlDecirlo: () => [],
   seQuedanHastaLaSiguiente: new Set(),
   elPlop: [],
+  paraEnLaBajada: new Set(),
   elOficio: [],
   bano: null,
   kit: null,

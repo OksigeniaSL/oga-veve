@@ -92,6 +92,7 @@ const DE_JUGUETE: GuionDelPasaje<"saludo" | "arriba" | "adios" | "fin", "nube"> 
   sellosAlDecirlo: () => [],
   seQuedanHastaLaSiguiente: new Set(),
   elPlop: [],
+  paraEnLaBajada: new Set(),
   elOficio: [],
   bano: null,
   kit: null,
