@@ -518,6 +518,145 @@ En el juego, con la avioneta en Asunción, Taguató y la Intel por ANGLE
 - **Un solo campo**: Asunción. Encarnación, con el Paraná y su puente, es el
   siguiente candidato de `RIOS_DE_NOCHE`.
 
+### Nota H26u (18-11-2026): el bimotor, el reactor y el morro que se va
+
+La ronda de cierre voló lo que el autor no había volado, sobre main 7407ba1d
+y con las frases grabadas: la avioneta, 16 de 16, y Tukã, 15 de 15; **el
+JAZ 40, 13 de 16; el JAZ 90, 9 de 16; y `OGA_SE_VA=1`, 16 de 17**. Cuatro
+raíces, y cada una donde estaba.
+
+**La noche caía fuera del puente** (944 m con el JAZ 40, 1622 con el JAZ 90),
+y desde ahí el rumbo pedido ya no era el del río (230, 235). La hora de salida
+salía de una velocidad —el crucero con el tope de los diez mil pies, el
+viento dentro— y con el reloj del cielo apurado `PRISA` veces la noche caía
+donde el avión estuviera a ese tiempo. Pero un avión vuela la que sostiene,
+no la de la cuenta: el reactor, con los gases puestos, la de su escalera en
+indicada; el bimotor, la que dé su gas; quien vuela a mano, la que lleve, y
+por donde lleve el río. Ninguna cuenta de antes de salir acierta eso. Así que
+**con luz el reloj del cielo va con el río** (`avanzarElCielo`): la hora es la
+de salida más la parte del camino con luz andada por el cauce
+(`avanceSobreElCauce`, lo del cauce hasta su punto más cerca), y en el puente
+es la de la noche, `noche` en la colocación. El sol sigue haciendo su camino
+de verdad y la prisa sigue siendo la que era a la velocidad de la cuenta; lo
+único que cambia es que el ritmo lo pone lo que se avanza. Lo andado no
+vuelve atrás —río arriba el sol no sube— y el reloj no baja nunca de
+`PRISA_SIN_AVANZAR`, la mitad: quien se aparta del río no deja la tarde
+quieta, le cae la noche igual, más tarde. De noche, el reloj apurado sin más.
+La frase del panel, «acá la apuramos», sigue siendo verdad.
+
+**Y el reactor no podía seguir el río a 250 nudos.** Con el reloj ya puesto
+al río, el JAZ 90 vio la noche a 1606 m del puente: por fuera de la curva.
+Con los gases puestos sostiene la velocidad de su escalera, que sin plan y
+bajo los diez mil pies es la del tope, 250 nudos de indicada —unos 265 de
+verdadera a mil quinientos pies con el calor de Asunción—, y con el ala a los
+veinticinco grados del automático vira con cuatro kilómetros de radio. Del
+primer punto del cauce al puente el río gira casi ochenta grados en 3,8 km:
+no cabe. Medido con un piloto de cinemática que vira como el automático
+—el error de rumbo entre diez segundos, el ala a cinco grados por segundo,
+veinticinco como mucho—, a 136 m/s se sale de la curva 780 m mire lo que
+mire por delante; a 108-113 m/s, 210-310 m. Así que **el río se sigue, como
+mucho, a la de maniobra limpia** (`maniobraLimpiaKt`: la Vref y ochenta, sin
+pasar de 250, la del tramo terminal de los reactores en la escalera), que es
+la de ir virando cerca del campo: se sale a ella (`velocidadDelRumbo`), con
+ella se cuenta la hora de salida, y mientras dura el ejercicio es lo más que
+piden los gases (`laVelocidadQueToca`). Al principio se puso solo en los
+reactores, y el JAZ 60, un turbohélice que cruza a 274 nudos, voló lo mismo
+que el JAZ 90: la noche a 1198 m del puente, el 235 y el sol a −7,86° al
+llegar. Así que vale para todos: el JAZ 60 baja a 188 nudos y el JAZ 40 de
+189 a 166; la avioneta y el biplano cruzan más despacio que su Vref y
+ochenta, y no cambian.
+
+**El piloto del banco no sabía seguir el río con un avión rápido.** Perseguía
+cada punto del cauce hasta trescientos metros; uno rápido vira más ancho, se
+pasa el punto y vuelve a buscarlo. Ahora mira por delante: el punto del cauce
+a veinte segundos de vuelo de lo andado, como quien sigue el río por la
+ventanilla —veinte, porque el automático vira con retraso—. El de la mesa,
+que vira a tres grados por segundo sin retraso, a ocho. Y el «empieza encima
+del cauce» se medía desde el primer punto, con la
+lectura tres segundos largos después de salir: el JAZ 90 salía «a 401 m del
+cauce» yendo encima de él. Se mide lo apartado del cauce y lo andado por él.
+**Lo bajo no era**: los 457 m sobre la pista son los mil quinientos pies de
+la deriva y la estima, que tampoco suben a un reactor.
+
+**Lo que se oía en el reactor no era del ejercicio**: la comandante
+anunciando el crucero —«ya llegamos a nuestra altura»— a mil quinientos pies
+encima del río, con su tira tapando la radio, y la instructora contando los
+gases automáticos al poner el automático. La regla H26f callaba lo de la
+pista y su gente, y esto no lo es: sale solo en los aviones con pasaje o con
+gases, y los bancos de radio volaban la avioneta. `LoQueCalla` lleva ahora
+`laMegafonia` y `lasExplicaciones` (ADR 0030, nota H26u), en todos los
+ejercicios que se cierran en el aire: la segunda, los gases y, visto después
+con el JAZ 60, qué es el rombo del TCAS («vuelo.traficoAbajo»).
+
+**Con el morro fuera de la marca, al lado es lo de verdad.** El banco con
+`OGA_SE_VA=1` tuerce el morro quince grados dieciséis segundos y vuelve a la
+marca, y pedía llegar encima. Volver al rumbo no es volver a la recta: con la
+avioneta son doscientos cincuenta metros a la derecha, más lo de los dos
+virajes, y se sigue paralelo a la recta, apartado eso. `LLEGADA`, seiscientos
+metros, se puso para el redondeo del rumbo a cinco grados (trescientos en
+siete kilómetros y medio) y no para una ida de la marca. El ejercicio ya lo
+contaba como es —«pasamos al lado, pero ahí está el río»— sin castigar, y
+pedir otra cosa sería enseñar que volver al rumbo corrige lo que se apartó,
+que es justo lo que no hace. Lo que pedía de más era el banco: con
+`OGA_SE_VA` vale encima o al lado, cerrado hecho.
+
+**Lo que se prueba, de más**: la mesa vuela el bimotor y el reactor a la
+velocidad de su cuenta (la de `dondeEmpiezaElRumbo`) y volando más despacio y
+más deprisa que ella —del 80 al 120 % el bimotor, del 90 al 110 el reactor,
+del 75 al 125 la avioneta—, y en todos la noche cae a menos de quinientos
+metros del puente, pide el 225 y se llega encima; con el reloj de antes los
+tres fallan (medido con la cuenta del reactor de entonces, la del tope: 592,
+623 y 803 m del puente). Lo andado por el río, encima y de costado; y
+apartado del río, la noche cae al tiempo de `PRISA_SIN_AVANZAR`. En
+`lo-que-calla-el-ejercicio.test.ts`, la megafonía y los gases callados donde
+nacen. El banco pide el rumbo de donde anocheció —de cinco en cinco, en
+magnético, y a cinco grados o menos del 225 del puente— y lo escrito en la
+tarjeta, el pedido. `vitest` entero, en verde con el reloj al río y el
+reactor a la de maniobra: 530 ficheros, 10.728 pruebas y 29 saltadas; el tope
+para todos y el rombo callado, después, con los ficheros que tocan.
+
+**Volado**, en Asunción, Taguató, la Intel por ANGLE (`OGA_GPU=1`) y el reloj
+por cuatro, el 18 de noviembre:
+
+- **JAZ 90**, primero con el reloj al río y a 250 nudos: 12 de 16, sin nada
+  ajeno que se oiga ni se vea, y con la noche a 1606 m del puente, el 235, al
+  lado a 811 m y el sol a −7,97° al llegar. Con la de maniobra limpia
+  —198 nudos en la cinta—: **16 de 16**, la noche a 568 m del puente con el
+  sol a −6,04°, el 230 desde donde anocheció —por fuera de la curva, y a
+  cinco del 225—, encima, ±0,7° de media, el sol a −8,2° al llegar; la
+  instructora, solo el ejercicio.
+- **JAZ 40**, a 189 nudos, antes de poner el tope a todos: **16 de 16**, la
+  noche a 322 m del puente, el 225, encima, ±1,1°, el sol a −8,7°.
+  Con el tope para todos (166 nudos) no se ha vuelto a volar: el navegador
+  lo tenía otro banco, un vuelo entero, hasta pasada la hora.
+- **JAZ 60**, a 250 nudos: 13 de 16 —la noche a 1198 m del puente, el 235,
+  el sol a −7,86° al llegar—.
+- **JAZ 60**, a la de maniobra limpia: **15 de 16**, la noche a 366 m del
+  puente, el 225, encima, el sol a −8,44°; lo único, la instructora contando
+  el rombo del TCAS («vuelo.traficoAbajo»), que ahora se calla con
+  `lasExplicaciones` y no se ha vuelto a volar.
+- **`OGA_SE_VA=1`** con la avioneta: **17 de 17**, la noche a 218 m del
+  puente, el 225, «se va» a la derecha dicho, y esta vez encima: el morro se
+  apartó 12,2° como mucho, menos que los 16 de la ronda.
+- **La avioneta**, que no se tenía que romper: **16 de 16**, la noche a 213 m
+  del puente, el 225, encima, ±0,5°, el sol a −9,8°.
+- **Tukã**, con la avioneta: **15 de 15**, la noche a 230 m del puente, el
+  225, encima.
+
+**Lo que queda**:
+
+- **Volver a volar el JAZ 40 y el JAZ 60** con lo último: el JAZ 40 a 166
+  nudos (voló en verde a 189) y el JAZ 60 con el rombo callado.
+- El JAZ 90 ve la noche a 568 m del puente, con el banco pidiendo menos de
+  700, y por fuera de la curva pide el 230: es lo que da el avión a la de
+  maniobra con el ala a veinticinco grados, y el rumbo de donde se está lo
+  cuenta bien, pero el margen es corto.
+- Sin volar en el juego: el JAZ 25, el 50, el 110 y el 120, junio y la vuelta
+  a empezar tras un percance. La mesa cubre las velocidades, no cada avión.
+- Los demás ejercicios que se cierran en el aire callan ahora la megafonía y
+  las explicaciones de la cabina, y no se han vuelto a volar con un reactor
+  ni con el JAZ 60.
+
 ## Enmienda H26n (18-11-2026): la estima, «Rumbo y reloj»
 
 El peldaño 3 de #51, el que el ADR 0030 dejó escrito como propuesta («La
