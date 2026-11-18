@@ -89,6 +89,10 @@ export interface PiezaQueSeLee {
       cede alto (`LO_QUE_CEDE`) se encoge para hacerle sitio, y si hacia donde
       crece no cabe, busca fila al otro lado (`Colocable.alOtroLado`). */
   readonly pideSitio?: boolean;
+  /** Si, cuando hacia donde crece no cabe, busca fila al otro lado antes de
+      esperar, sin pedir sitio a nadie: el subtítulo, que solo no espera si
+      hay hueco (H31a). Ver `colocar`. */
+  readonly alOtroLado?: boolean;
   /** Lo que cambia de texto solo y sin cambiar de tamaño —el cronómetro, cada
       segundo, con cifras tabulares—: la firma no mira su texto, que si no
       habría un reparto por segundo para nada. Ver `Repartidor.firmaDeAhora`. */
@@ -153,7 +157,15 @@ export const LO_QUE_SE_LEE: readonly PiezaQueSeLee[] = [
    * salir enseña lo que queda de verdad. Ver `ui/cronometro.ts`.
    */
   { que: "cronometro", sel: '[data-hud="cronometro"]', mueve: false, espera: true, cuentaSola: true },
-  { que: "subtitulo", sel: '[data-hud="hint"]', mueve: true, espera: true },
+  /*
+   * **El subtítulo, al otro lado antes de esperar** (H31a). De pie y con
+   * ratón va debajo del rincón, y el rincón crece con lo que lleva: con la
+   * orden más larga y el cronómetro de la estima debajo —que esperando sigue
+   * ocupando su sitio—, en 600 × 900 bajaba hasta la rueda del altímetro, el
+   * volumen y la concha, y debajo de eso no hay fila. A la izquierda del
+   * rincón sí la había, y esperar es para cuando no cabe todo.
+   */
+  { que: "subtitulo", sel: '[data-hud="hint"]', mueve: true, espera: true, alOtroLado: true },
   { que: "tutor", sel: '[data-hud="tutor"]', mueve: false, espera: true },
   { que: "radio", sel: '[data-hud="radio"]', mueve: false, espera: true, traslada: true },
 ];
@@ -559,7 +571,7 @@ export function repartirLoQueSeLee(
     const sitio = d.traslada
       ? null
       : colocar(
-          { natural, hueco, ancla, sitios, mueve: d.mueve, alOtroLado: d.pideSitio },
+          { natural, hueco, ancla, sitios, mueve: d.mueve, alOtroLado: d.pideSitio || d.alOtroLado },
           ocupado,
           limites,
           probar,
@@ -610,7 +622,7 @@ export function repartirLoQueSeLee(
       el.classList.add(d.recoge);
       const recogida = cajaDe(el.getBoundingClientRect());
       const sitioRecogida = colocar(
-        { natural: recogida, hueco, ancla, sitios, mueve: d.mueve, alOtroLado: d.pideSitio },
+        { natural: recogida, hueco, ancla, sitios, mueve: d.mueve, alOtroLado: d.pideSitio || d.alOtroLado },
         ocupado,
         limites,
         probar,
