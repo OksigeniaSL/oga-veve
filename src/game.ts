@@ -817,6 +817,9 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   ils: "ils-en-cruz",
   // El camino que se va de costado con el morro en el puente. Ver `deriva.ts`.
   deriva: "deriva-a-la-derecha",
+  // El avión torcido sobre la raya, y el inclinado con el morro en ella. Ver `final-con-viento-cruzado.ts`.
+  cangrejo: "cangrejo-viento-izquierda",
+  "ala-baja": "ala-baja-viento-izquierda",
   // La rosa de noche con el avión en su marca. Ver `rumbo-de-noche.ts`.
   rumbo: "rumbo-en-la-marca",
   // El reloj y la recta hasta el pueblo. Ver `estima.ts`.
@@ -1055,6 +1058,13 @@ import {
   type ColocacionDeLaDeriva,
   type SucesoDeLaDeriva,
 } from "./flight/deriva";
+import {
+  anguloDeCangrejo,
+  cruzadoDelCampo,
+  FinalConViento,
+  tecnicaDe,
+  type SucesoDelCruzado,
+} from "./flight/final-con-viento-cruzado";
 import {
   colocacionDelRumbo,
   rioDeNoche,
@@ -4029,6 +4039,14 @@ export class Game {
    */
   private deriva: Deriva | null = null;
   /**
+   * **La final con viento cruzado**, si se eligió: el cangrejo o el ala baja.
+   * Se monta en el primer paso, con la pista y el viento de verdad. Ver
+   * `flight/final-con-viento-cruzado.ts` y `practicarElCruzado`.
+   */
+  private finalConViento: FinalConViento | null = null;
+  /** El ejercicio de la final con viento cruzado, hasta que se monta. */
+  private cruzadoPedido: Ejercicio | null = null;
+  /**
    * **Las dos rayas del suelo** de la deriva: la blanca, por donde va el
    * avión, y la magenta, la recta al sitio. Ver `world/raya-del-camino.ts`.
    */
@@ -4107,6 +4125,8 @@ export class Game {
       this.cruce?.ejercicio ??
       this.ils?.ejercicio ??
       this.deriva?.ejercicio ??
+      this.finalConViento?.ejercicio ??
+      this.cruzadoPedido ??
       this.rumboDeNoche?.ejercicio ??
       this.estima?.ejercicio ??
       this.altimetroMiente?.ejercicio ??
@@ -6751,6 +6771,12 @@ export class Game {
          * está en el cuadro plano y en el panel del asiento.
          */
         this.pitotHelado = new ElPitotHelado(ejercicio);
+      } else if (ejercicio.escena === "cruzado") {
+        /*
+         * **Ni la final con viento cruzado**: se monta en su primer paso, con
+         * la pista y el viento que haya de verdad. Ver `practicarElCruzado`.
+         */
+        this.cruzadoPedido = ejercicio;
       } else if (ejercicio.escena === "navegacion") {
         /*
          * **Ni la deriva**: el sitio del campo, puesto donde está. Dónde se
@@ -11882,6 +11908,8 @@ export class Game {
       });
     });
     this.hechos.on("frustrada", () => this.avisar("achieved"));
+    // Y la final con viento cruzado se cierra felicitando. Ver `practicarElCruzado`.
+    this.hechos.on("frustrada", () => this.finalConViento?.seFueAlAire());
     // Una frustrada es otra salida: el tren se vuelve a recordar.
     this.hechos.on("frustrada", () => {
       this.trenPorMeter = true;
@@ -14006,6 +14034,7 @@ export class Game {
     this.cruce?.reiniciar();
     this.ils?.reiniciar();
     this.deriva?.reiniciar();
+    this.finalConViento?.reiniciar();
     this.rayasDeLaDeriva?.camino.vaciar();
     this.rayasDeLaDeriva?.delante.vaciar();
     // Y el cielo del rumbo de noche, otra vez con el sol recién puesto.
@@ -19950,6 +19979,8 @@ export class Game {
     this.practicarElIls(dt);
     // Y la deriva. Ver `practicarLaDeriva`.
     this.practicarLaDeriva(dt);
+    // Y la final con viento cruzado. Ver `practicarElCruzado`.
+    this.practicarElCruzado(dt);
     // Y el rumbo de noche. Ver `practicarElRumbo`.
     this.practicarElRumbo(dt);
     // Y la estima. Ver `practicarLaEstima`.
@@ -25488,6 +25519,158 @@ export class Game {
         });
         return;
     }
+  }
+
+  // ── La final con viento cruzado ──────────────────────────────────────
+  //
+  // Ver `flight/final-con-viento-cruzado.ts`. Aquí solo se decide quién dice
+  // y enseña cada cosa: la tarjeta con su dibujo, los grados desde Taguato y
+  // la instructora.
+
+  /**
+   * **Un paso de la final con viento cruzado.** Se monta la primera vez, con
+   * la pista de la final y el viento de ahora: de qué lado entra y cuánto
+   * cangrejo pide a la velocidad de aproximación de este avión.
+   */
+  private practicarElCruzado(dt: number): void {
+    if (!this.finalConViento && this.cruzadoPedido) {
+      const tecnica = tecnicaDe(this.cruzadoPedido.id);
+      if (!tecnica) return;
+      const pista = this.scenario.runway.heading;
+      const meteo = this.scenario.meteo ?? TIEMPO_DE_CASA;
+      const aire = vientoComoVector(meteo);
+      const rad = MathUtils.degToRad(pista);
+      // Positivo, el viento entra por la derecha: el aire va hacia la izquierda de quien aterriza.
+      const costado = -(aire.x * Math.cos(rad) + aire.z * Math.sin(rad));
+      const deSiempre = cruzadoDelCampo(oaciDe(this.scenario));
+      const lado: 1 | -1 = Math.abs(costado) > 0.5 ? (costado > 0 ? 1 : -1) : (deSiempre?.lado ?? -1);
+      this.finalConViento = new FinalConViento(
+        this.cruzadoPedido,
+        tecnica,
+        pista,
+        lado,
+        anguloDeCangrejo(Math.abs(costado), this.aircraft.approachSpeed),
+      );
+      this.cruzadoPedido = null;
+    }
+    const f = this.finalConViento;
+    if (!f || this.tarjetaDelTiempo?.abierta) return;
+    const s = this.flight.state;
+    const sucesos = f.paso(
+      {
+        vx: s.velocity.x,
+        vz: s.velocity.z,
+        rumbo: vuelta((s.heading * 180) / Math.PI),
+        alabeo: MathUtils.radToDeg(bankAngleOf(s.orientation)),
+        altura: s.position.y - this.terrain.runwayElevation - this.aircraft.gearHeight,
+        enElSuelo: s.onGround,
+        percance: this.percance !== null,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderAlCruzado(suceso);
+  }
+
+  private atenderAlCruzado(suceso: SucesoDelCruzado): void {
+    const f = this.finalConViento;
+    if (!f) return;
+    const contar = (dibujo: DibujoDeSenal, clave: TranslationKey, palabra: TranslationKey, delante = "", segundos = 10): void => {
+      const frase = this.rotulo(clave, palabra);
+      this.hud.senal.mostrar(dibujo, delante && frase ? `${delante}. ${frase}` : delante || frase, null, {
+        segundos,
+        prioridad: IMPORTANTE,
+      });
+      this.decirDelEjercicio(clave, "mando");
+    };
+    const lado = f.lado < 0 ? "izquierda" : "derecha";
+    const torcido: DibujoDeSenal = `cangrejo-viento-${lado}`;
+    const enderezado: DibujoDeSenal = `cangrejo-enderezado-${lado}`;
+    const ala: DibujoDeSenal = `ala-baja-viento-${lado}`;
+    const conCifra = canalesDe(this.tier.avisos).cifra;
+    const cangrejo = f.tecnica === "cangrejo";
+    switch (suceso.que) {
+      case "presentar":
+        return cangrejo
+          ? contar(torcido, "ejercicio.cangrejo.antes", "palabra.alViento", "", 20)
+          : contar(ala, "ejercicio.ala-baja.antes", "palabra.alViento", "", 20);
+      case "enCangrejo": {
+        this.avisar("achieved");
+        // **Los grados, desde Taguato**: lo que el morro va al viento, delante de la frase.
+        const grados = conCifra ? t("ejercicio.cangrejo.grados", { n: String(Math.round(suceso.morro)) }) : "";
+        return contar(torcido, "ejercicio.cangrejo.enCangrejo", "palabra.asi", grados);
+      }
+      case "conElAlaBaja": {
+        this.avisar("achieved");
+        const grados = conCifra ? t("ejercicio.ala-baja.grados", { n: String(Math.round(suceso.ala)) }) : "";
+        return contar(ala, "ejercicio.ala-baja.conElAlaBaja", "palabra.asi", grados);
+      }
+      case "elPie":
+        /*
+         * **El pie, y de qué lado**: con el viento de la izquierda el morro va
+         * a la izquierda, y se endereza con el derecho. El dibujo es el del
+         * pedal, el mismo de los avisos del motor parado.
+         */
+        return f.lado < 0
+          ? contar("pie-derecho", "ejercicio.cangrejo.pieDerecho", "palabra.pieDerecho", "", 6)
+          : contar("pie-izquierdo", "ejercicio.cangrejo.pieIzquierdo", "palabra.pieIzquierdo", "", 6);
+      case "tocaste":
+        /*
+         * **Se cuenta, no se castiga**: derecho se felicita; torcido se dice
+         * qué pasa y qué se hace la próxima. Lo de la toma —suave, larga— ya lo
+         * dice el aterrizaje: aquí solo el morro y el ala.
+         */
+        if (suceso.como === "torcido") return contar(torcido, "ejercicio.cruzado.torcido", "palabra.derecho");
+        this.avisar("achieved");
+        if (!cangrejo && suceso.rueda) return contar(ala, "ejercicio.ala-baja.rueda", "palabra.bien");
+        return contar(enderezado, "ejercicio.cruzado.derecho", "palabra.bien");
+      case "alAire":
+        // La frustrada ya la celebró `Frustrada`, con su voz y su sonido: un suceso, una voz.
+        return;
+      case "cerrar": {
+        if (suceso.como === "otraVez") return;
+        const clave: TranslationKey =
+          suceso.como === "alAire"
+            ? "ejercicio.cruzado.cierreAlAire"
+            : cangrejo
+              ? "ejercicio.cangrejo.cierre"
+              : "ejercicio.ala-baja.cierre";
+        const como = suceso.como;
+        this.agenda.luego(TARDA_EL_FINAL + 10, () => {
+          if (this.finalConViento?.cierre !== como) return;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre("vuelta"),
+            this.rotulo(clave, "palabra.bien"),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+      }
+    }
+  }
+
+  /** La final con viento cruzado, para el banco. */
+  get cruzadoParaBanco(): {
+    readonly tecnica: string;
+    readonly fase: string;
+    readonly cierre: string | null;
+    readonly lado: number;
+    readonly pide: number;
+    readonly cangrejo: number | null;
+    readonly ala: number | null;
+    readonly alTocar: { readonly morro: number; readonly ala: number } | null;
+  } | null {
+    const f = this.finalConViento;
+    if (!f) return null;
+    return {
+      tecnica: f.tecnica,
+      fase: f.fase,
+      cierre: f.cierre,
+      lado: f.lado,
+      pide: f.pide,
+      cangrejo: f.cangrejo,
+      ala: f.ala,
+      alTocar: f.alTocar,
+    };
   }
 
   // ── «Rumbo de noche» ─────────────────────────────────────────────────

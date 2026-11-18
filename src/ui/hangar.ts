@@ -1859,6 +1859,44 @@ const EJ_DERIVA = escena(`
 `);
 
 /**
+ * **Aterrizar en cangrejo**: desde arriba, todo suelo como la deriva —es un
+ * plano—, la pista de abajo arriba con su raya del centro, el viento entrando
+ * por la izquierda con dos flechas, el camino a rayas **por la raya** y, al
+ * final, el avión encima de ella **torcido**, con el morro hacia el viento. El
+ * camino va derecho y el morro no: es el cangrejo. Ver
+ * `flight/final-con-viento-cruzado.ts`.
+ */
+const EJ_CANGREJO = escena(`
+  <rect class="panel__tierra" x="0" y="0" width="120" height="84" rx="3" />
+  <path class="leccion__asfalto" d="M48 0 h24 v84 h-24 Z" />
+  <path class="leccion__estela" style="stroke: #f2f5f7" d="M60 84 V50" />
+  <path class="ejercicio__ondas" style="stroke: #f2f5f7" d="M60 4 v8 M60 20 v8" />
+  <path class="ejercicio__flecha" d="M8 26 h16 M24 26 l-4 -3 M24 26 l-4 3 M8 42 h16 M24 42 l-4 -3 M24 42 l-4 3" />
+  ${AVION("translate(60 40) rotate(-18) scale(1.15)")}
+`);
+
+/**
+ * **Aterrizar con el ala baja**: desde detrás, como se ve llegar un avión por
+ * la final, la pista que se va hacia el horizonte con su raya, el viento por
+ * la izquierda y el avión **derecho sobre la raya e inclinado**: el ala del
+ * viento abajo, con su rueda más cerca de la pista, que es la que toca
+ * primero. Ver `flight/final-con-viento-cruzado.ts`.
+ */
+const EJ_ALA_BAJA = escena(`
+  <path class="leccion__asfalto" d="M14 84 L54 44 h12 L106 84 Z" />
+  <path class="ejercicio__ondas" style="stroke: #f2f5f7" d="M60 82 v-8 M60 68 v-6 M60 57 v-4 M60 49 v-2" />
+  <path class="ejercicio__flecha" d="M6 18 h16 M22 18 l-4 -3 M22 18 l-4 3 M6 32 h16 M22 32 l-4 -3 M22 32 l-4 3" />
+  <g transform="rotate(-12 60 30)">
+    <path class="leccion__avion" d="M26 29 H94 v2.6 H26 Z" />
+    <path class="leccion__avion" d="M58.6 22 V12 h2.8 V22 Z M52 21 h16 v2.2 H52 Z" />
+    <circle class="leccion__avion" cx="60" cy="30" r="6.4" />
+    <path class="leccion__avion" d="M53.6 35 h1.8 v6 h-1.8 Z M64.6 35 h1.8 v6 h-1.8 Z" />
+    <circle class="leccion__avion" cx="54.5" cy="42.6" r="2.4" />
+    <circle class="leccion__avion" cx="65.5" cy="42.6" r="2.4" />
+  </g>
+`);
+
+/**
  * **Rumbo de noche**: desde arriba, como la deriva, el río que sube de abajo
  * a arriba; la mitad de abajo todavía con luz y la de arriba ya de noche, con
  * las luces de la orilla. El avión en la raya entre las dos, y por delante la
@@ -1972,6 +2010,8 @@ const EJ_PITOT = escena(`
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   rumbo: EJ_RUMBO,
   deriva: EJ_DERIVA,
+  cangrejo: EJ_CANGREJO,
+  "ala-baja": EJ_ALA_BAJA,
   estima: EJ_ESTIMA,
   altimetro: EJ_ALTIMETRO,
   ils: EJ_ILS,

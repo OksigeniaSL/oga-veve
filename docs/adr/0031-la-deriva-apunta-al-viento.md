@@ -1971,3 +1971,149 @@ vueltas a volar:
 - **`npm run carteles`**, sin pasar: no hay pieza nueva en el HUD; la
   calefacción se toca en la tarjeta de siempre, con su `accion`, como la de la
   funda.
+
+## Enmienda H32a (18-11-2026): la final con viento cruzado, el cangrejo y el ala baja
+
+Lo que le faltaba a #92 según su último comentario: el límite ya iba en la
+ficha (`flight/viento-cruzado.ts`), la tarjeta del tiempo ya comparaba el
+cruzado de hoy con él, y la manga y el granizo ya estaban. Faltaban **las dos
+técnicas de aterrizar con viento de costado**. Va en este ADR porque es la
+continuación de «Apuntá al viento»: allí se aprende en crucero que con viento
+de costado el morro va un poco al viento para que el camino salga derecho;
+en la final es lo mismo con la pista delante, y es donde más se ve. Lo lleva
+`flight/final-con-viento-cruzado.ts`, con dos ejercicios, uno por técnica:
+«Aterrizar en cangrejo» (`cangrejo`) y «Aterrizar con el ala baja»
+(`ala-baja`), con `escena: "cruzado"`.
+
+### Lo que el modelo de vuelo ya hacía, medido antes de enseñar nada
+
+La regla 4 pide que lo que se enseña vuele. Así que primero la mesa
+(`final-con-viento-cruzado.test.ts`, con `OGA_MEDIR=1` la tabla entera): el
+modelo de coeficientes, un piloto de cinemática y la 12 de Los Rodeos con el
+alisio de casa —12 kt del 040, 11,8 de costado por la izquierda—.
+
+- **El cangrejo sale solo.** Con la bola centrada —el timón automático en
+  Tukã y Taguato, los pies del piloto en Taguato Ruvicha— y el camino por el
+  eje, el JAZ 20 va con el morro 10,4-10,5° a la izquierda, y el triángulo de
+  vientos pide 10,6. El JAZ 40, 7-8°; el JAZ 50, casi 10. No hubo que tocar
+  nada: el modelo tiene derrape, fuerza lateral y veleta desde el principio.
+- **Hay timón de dirección independiente**: Q y E, la barra de los pedales con
+  el dedo y el eje del mando de juego. Con él, enderezar en la recogida (desde
+  cinco metros de altura de ruedas) deja el JAZ 20 al tocar con el morro a
+  1,5° en Tukã, 1,2 en Taguato y 0,4 en Taguato Ruvicha.
+- **Resbalar pide un timón que sujete el derrape**, y en los peldaños con
+  ayuda no lo hay de sobra. El timón automático centra la bola, que es justo
+  deshacer un resbale, y el pie de quien juega pelea contra él: con el JAZ 20
+  y los doce nudos, en Tukã el pedal a fondo no llega (el morro se queda a
+  2,4° del eje), en Taguato hace falta el 97 % del pedal, y en Taguato
+  Ruvicha, sin ayuda, sobra con el 47 %: el ala izquierda baja 3,4°, el
+  derrape es de 10,7° y el morro va en el eje. El JAZ 40, con 4° de ala y el
+  27 % del pedal.
+- **Tocar torcido no se arregla solo donde no hay ayuda.** Sin enderezar, el
+  JAZ 20 toca con 9° de cangrejo; las ruedas no dejan ir de lado y el avión va
+  adonde apunta el morro: en Taguato Ruvicha se aparta 27 m del eje en cinco
+  segundos de carrera sin tocar nada. En Tukã y Taguato, el timón de tierra lo
+  endereza (`timonEnTierra`) y se queda en 6-7 m. No hay carga lateral en el
+  tren que contar: el modelo tiene un apoyo y no dos ruedas, y lo que se ve es
+  la salida del eje, que es la consecuencia de verdad.
+
+Con eso, **lo que no se añadió al modelo de vuelo**: nada. Se pensó en que el
+timón automático de Tukã y Taguato se apartara cuando quien juega pisa —como
+ya hace en el suelo—, pero cambia la guiñada de todos los vuelos de esos dos
+peldaños con un pie puesto, también la del ejercicio del motor parado, y no
+hace falta: el ala baja se lleva a Taguato Ruvicha.
+
+### Los peldaños, con `escalera.ts`
+
+- **El cangrejo, desde Tukã.** Lo esencial se ve —desde fuera, el avión
+  torcido sobre la raya; en la tarjeta, su dibujo— y se oye, sin leer. En
+  Tukã, una palabra («¡Al viento!», «Así»); los grados al viento, desde
+  Taguato (el canal de la cifra, `canalesDe(...).cifra`). En Guyrami no, por
+  lo mismo que la deriva: su modelo no lleva viento y no hay cangrejo.
+- **El ala baja, solo en Taguato Ruvicha**, que es el peldaño en que el timón
+  es de quien vuela («coordinar un viraje con los pies es un aprendizaje
+  aparte, y llega después», `tiers.ts`). Resbalar es cruzar los mandos, y es
+  ese aprendizaje. Los grados de ala, escritos.
+
+### Con qué aviones, y dónde
+
+**Dónde**: donde el viento de siempre del campo (`vientoDominante`) da ocho
+nudos o más de costado en su pista de siempre (`cruzadoDelCampo`). Con menos,
+el cangrejo de un reactor es de dos grados y no se distingue de ir derecho.
+Hoy es **Los Rodeos con el alisio sobre la 12**, que es el campo de Canarias
+con fama de viento cruzado; en Gando, Lanzarote o Fuerteventura el alisio va
+por la pista. El viento del ejercicio es el de siempre, puesto a mano como
+en los de navegación (`main.ts`): con el parte de hoy podría tocar un día de
+viento por la pista.
+
+**Con qué aviones**: el límite de la ficha manda (`cabeElCruzado`): si el
+viento de costado de siempre pasa del demostrado del avión, no se ofrece, que
+es la lección de la tarjeta del tiempo. Con los 11,8 kt de Los Rodeos caben
+todos los de la flota con cifra leída (15 el JAZ 20, el más bajo) y el JAZ
+110, que lleva la de certificación (22). **El JAZ 25 no**: del biplano no se
+ha leído la cifra, la de certificación le da nueve nudos, y no se sale a
+practicar con más viento del que se sabe que aguanta. El **cangrejo**, en
+todos los demás: es lo que hacen la avioneta y el reactor de línea. El
+**ala baja**, en los de hélice —JAZ 20, 40, 50 y 60—: en un reactor de
+ala en flecha y motores colgados, inclinar cerca del suelo tiene el tope de
+la góndola y de la punta del ala, y lo que se enseña es el cangrejo y
+enderezar. Y la mesa solo ha volado el ala baja con los de hélice.
+
+### El ejercicio
+
+Empieza en la final de siempre de la lección de aterrizar, configurado, a
+tres kilómetros. `FinalConViento`:
+
+1. **Presentar**: la técnica, dicha y dibujada.
+2. **Contarla**, una vez, cuando se sostiene cinco segundos por encima de
+   25 m: en el cangrejo, el camino por el eje (±3°) con el morro al viento al
+   menos la mitad de lo que pide el triángulo; en el ala baja, el camino por
+   el eje, el morro en él (±3°) y el ala del viento abajo un grado o más. Con
+   el sonido del logro.
+3. **El pie**, en el cangrejo, a quince metros de la pista: «Ahora, pie
+   derecho: el morro a la pista» (con el viento de la izquierda; el otro, con
+   el de la derecha), con el dibujo del pedal. A tres metros por segundo de
+   bajada son cinco segundos hasta tocar: cabe la frase y el pie.
+4. **Al tocar se cuenta, no se castiga**: el morro en la pista (±3°) se
+   felicita —y en el ala baja, la rueda del viento primero, si tocó
+   inclinado—; torcido se dice qué pasa y qué se hace la próxima.
+5. **Irse al aire se felicita**: lo reconoce `Frustrada`, que ya lo celebra
+   con su voz y su sonido; el ejercicio solo se cierra, con su panel.
+
+### Las frases
+
+Cortas, para decirlas en calma en una final que va deprisa; la del pie, la
+más corta. Sin grabar: ver «Lo que queda».
+
+- `ejercicio.cangrejo.antes`, `ejercicio.cangrejo.enCangrejo`,
+  `ejercicio.cangrejo.pieDerecho`, `ejercicio.cangrejo.pieIzquierdo`;
+- `ejercicio.ala-baja.antes`, `ejercicio.ala-baja.conElAlaBaja`,
+  `ejercicio.ala-baja.rueda`;
+- `ejercicio.cruzado.derecho`, `ejercicio.cruzado.torcido`;
+- y las que se leen: los tres paneles del final y los grados.
+
+### Lo que se prueba
+
+`final-con-viento-cruzado.test.ts`, en tres partes:
+
+- **La mesa**, con el modelo de coeficientes: que el cangrejo del JAZ 20 sea
+  el del triángulo (±1,5°) con las alas a nivel en los tres peldaños; que
+  enderezando en la recogida toque con el morro a menos de 3°; que sin
+  enderezar en Taguato Ruvicha se salga más de 15 m del eje y con la ayuda de
+  tierra de Tukã menos de 10; que el ala baja del JAZ 20 y del JAZ 40 en
+  Taguato Ruvicha lleve el morro en el eje (±1°), el ala del viento abajo y
+  menos del 70 % del pedal, y toque con el morro derecho y esa ala abajo; y
+  que en Tukã no se pueda (pedal a fondo y el morro fuera del eje) y en
+  Taguato haga falta más del 90 %, que es por lo que el ala baja es de
+  Taguato Ruvicha.
+- **Dónde y con qué avión**: Los Rodeos con 11,8 kt por la izquierda; el
+  cangrejo desde Tukã con toda la flota menos el JAZ 25; el ala baja solo en
+  Taguato Ruvicha y no en los reactores; el límite de la ficha, con la regla
+  de certificación para el que no tiene cifra.
+- **El ejercicio, con un piloto de cinemática**: el orden de los sucesos, el
+  cangrejo que no cuenta si el morro va en la pista y el camino se va de
+  lado, tocar torcido que se cuenta, el ala contraria que no es ala baja, la
+  frustrada y volver a empezar.
+
+Y `scripts/ver-el-cruzado.mjs`, el banco de navegador, con el piloto de la
+mesa metido en la página (`__oga.pilotar`) y capturas desde fuera.

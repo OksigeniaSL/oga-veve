@@ -101,6 +101,15 @@
  * escena: de alta a baja presión con la ventanilla sin tocar, hacia una
  * ladera de verdad. Pide un campo con ladera medida (`laderaDelAltimetro`) y
  * la lleva `el-altimetro-miente.ts`. Ver el ADR 0031, enmienda H26p.
+ *
+ * ## Y la final con viento cruzado, que tampoco
+ *
+ * «Aterrizar en cangrejo» y «Aterrizar con el ala baja» (#92) van con
+ * `escena: "cruzado"`: no falla nada, y lo que se practica es una de las dos
+ * técnicas de aterrizar con el viento de costado. Piden un campo con viento
+ * de costado de siempre (`cruzadoDelCampo`) que no pase del demostrado del
+ * avión (`conEsteAvion`), y las lleva `final-con-viento-cruzado.ts`. Ver el
+ * ADR 0031, enmienda H32a.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -116,6 +125,7 @@ import { destinoDeLaEstima } from "./estima";
 import { dondeSeVaElGiroscopo } from "./giroscopo-en-hora";
 import { laderaDelAltimetro } from "./el-altimetro-miente";
 import { inclinacionDelCampo } from "./brujula-que-baila";
+import { cabeElCruzado, cruzadoDelCampo } from "./final-con-viento-cruzado";
 
 export type EjercicioId =
   | "planeo"
@@ -140,7 +150,9 @@ export type EjercicioId =
   | "altimetro"
   | "brujula"
   | "giroscopo"
-  | "pitot";
+  | "pitot"
+  | "cangrejo"
+  | "ala-baja";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -221,7 +233,7 @@ export interface Ejercicio {
    * lecciones del ala rotatoria, `rotor`, que enseñan lo que hace un
    * helicóptero y no un avión (ver `lecciones-del-rotor.ts`).
    */
-  readonly escena?: "tormenta" | "rotor" | "radio" | "navegacion";
+  readonly escena?: "tormenta" | "rotor" | "radio" | "navegacion" | "cruzado";
   /** Lo que enseña, en una línea: para quien lea esto, no para el juego. */
   readonly ensena: string;
   /**
@@ -235,6 +247,12 @@ export interface Ejercicio {
    * necesita un NDB en casa. Sin esto, vale en todos.
    */
   readonly dondeVale?: (oaci: string | null) => boolean;
+  /**
+   * **Si cabe con este avión en este campo**: el de la final con viento
+   * cruzado pide que el viento de costado de siempre no pase del demostrado
+   * del avión. Sin esto, vale con todos los que valgan en el campo.
+   */
+  readonly conEsteAvion?: (a: AvionDelEjercicio & { readonly approachSpeed?: number }, oaci: string | null) => boolean;
   /**
    * **Si se cierra en el aire, lejos de la pista**: los de radio, que acaban
    * con la aguja que da la vuelta o la barra quieta en el centro. Mientras
@@ -780,6 +798,63 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     ensena:
       "en nube fría el hielo tapa el pitot y la aguja se queda quieta aunque el avión acelere: se vuela con la actitud y el gas, y la calefacción del pitot lo destapa",
   },
+  /*
+   * **La final con viento cruzado** (#92, H32a): las dos técnicas de aterrizar
+   * con el viento de costado, una por ejercicio. Empiezan en la final de
+   * siempre, configurados, con el viento de siempre del campo, y se cierran
+   * en la pista o al irse al aire. Las lleva `final-con-viento-cruzado.ts`.
+   * Ver el ADR 0031, enmienda H32a.
+   *
+   * Piden un campo con viento de costado de verdad —ocho nudos o más en su
+   * pista de siempre: Los Rodeos con el alisio— y que ese viento no pase del
+   * demostrado del avión, que es el límite de su ficha.
+   */
+  {
+    id: "cangrejo",
+    /*
+     * **Desde Tukã**: el cangrejo se ve desde fuera —el avión torcido sobre la
+     * raya— y se oye, sin leer. En Guyrami no, por lo mismo que la deriva: su
+     * modelo no lleva viento, y sin viento no hay cangrejo.
+     */
+    peldanos: DESDE_TUKA,
+    // En todo avión: es lo que hace con viento de costado la avioneta y el reactor de línea.
+    valePara: () => true,
+    leccion: "aterrizaje",
+    averias: [],
+    escena: "cruzado",
+    dondeVale: (oaci) => cruzadoDelCampo(oaci) !== null,
+    conEsteAvion: (a, oaci) => cabeElCruzado(a, oaci),
+    ensena:
+      "con viento de costado se baja en cangrejo, el morro al viento y el avión torcido sobre la raya; justo antes de tocar, pie y el morro a la pista",
+  },
+  {
+    id: "ala-baja",
+    /*
+     * **Solo en Taguato Ruvicha**, que es donde el timón es de quien vuela.
+     * Resbalar es cruzar los mandos —el ala a un lado, el pie al otro—, y en
+     * los peldaños de abajo el timón automático centra la bola, que es justo
+     * deshacer el resbale: medido en la mesa con el JAZ 20 y los doce nudos de
+     * Los Rodeos, en Tukã el pedal a fondo no llega y en Taguato hace falta
+     * casi entero; sin ayuda, con medio pedal sobra. Ver
+     * `final-con-viento-cruzado.test.ts`.
+     */
+    peldanos: ["taguato-ruvicha"],
+    /*
+     * **En los de hélice**: la avioneta, el bimotor y los turbohélices, que es
+     * donde el manual la enseña. En un reactor de línea, con el ala en flecha
+     * y los motores colgados, inclinar cerca del suelo tiene el tope de la
+     * góndola y de la punta del ala, y lo que se enseña es el cangrejo y
+     * enderezar. Y la mesa solo la ha volado con los de hélice.
+     */
+    valePara: (a) => a.sound.engine !== "turbofan",
+    leccion: "aterrizaje",
+    averias: [],
+    escena: "cruzado",
+    dondeVale: (oaci) => cruzadoDelCampo(oaci) !== null,
+    conEsteAvion: (a, oaci) => cabeElCruzado(a, oaci),
+    ensena:
+      "con viento de costado se baja con el ala del viento abajo y el pie contrario: el morro en la pista, el avión inclinado, y se toca primero con la rueda del viento",
+  },
 ];
 
 export function ejercicioPorId(id: string | null | undefined): Ejercicio | null {
@@ -790,19 +865,26 @@ export function ejercicioPorId(id: string | null | undefined): Ejercicio | null 
 export function seOfrece(
   e: Ejercicio,
   peldano: TierId,
-  avion: AvionDelEjercicio,
+  avion: AvionDelEjercicio & { readonly approachSpeed?: number },
   /** El campo de casa, si se sabe. Un ejercicio que pide campo no se ofrece sin él. */
   oaci?: string | null,
 ): boolean {
   const helicoptero = avion.helicoptero !== undefined;
   const enEsteCampo = !e.dondeVale || (oaci !== undefined && e.dondeVale(oaci));
-  return e.peldanos.includes(peldano) && (e.deHelicoptero ?? false) === helicoptero && e.valePara(avion) && enEsteCampo;
+  const conEste = !e.conEsteAvion || (oaci !== undefined && e.conEsteAvion(avion, oaci));
+  return (
+    e.peldanos.includes(peldano) &&
+    (e.deHelicoptero ?? false) === helicoptero &&
+    e.valePara(avion) &&
+    enEsteCampo &&
+    conEste
+  );
 }
 
 /** Los que se ofrecen con este peldaño y este avión, en su orden. */
 export function ejerciciosPara(
   peldano: TierId,
-  avion: AvionDelEjercicio,
+  avion: AvionDelEjercicio & { readonly approachSpeed?: number },
   oaci?: string | null,
 ): readonly Ejercicio[] {
   return EJERCICIOS.filter((e) => seOfrece(e, peldano, avion, oaci));
