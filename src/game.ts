@@ -29074,6 +29074,16 @@ export class Game {
   }
 
   /**
+   * **El ángulo de sustentación nula del ala, con los flaps de ahora**, para
+   * el automático, si el modelo lo sabe: el sencillo no. Ver `porElViraje` en
+   * `piloto-automatico.ts`.
+   */
+  anguloSinSustentacion(): { anguloSinSustentacion?: number } {
+    const a = this.flight.anguloSinSustentacion?.();
+    return a === undefined ? {} : { anguloSinSustentacion: a };
+  }
+
+  /**
    * **La marca de velocidad de ahora**, nudos indicados: la que pide la
    * escalera y llevan los gases automáticos, para que el banco la vuele en el
    * avión que no los lleva. Ver `laVelocidadQueToca`.
@@ -31851,6 +31861,9 @@ export class Game {
         // Y el aire que sube o baja, que pide morro sin esperar a que el
         // avión se aparte de la senda: ver `porElAire`.
         subeElAire: this.subeElAireAhora,
+        // Y dónde deja de sostener su ala con estos flaps, que dice cuánto
+        // morro pide inclinada: ver `porElViraje`.
+        ...this.anguloSinSustentacion(),
         /*
          * **Y en el modelo sencillo, con sus propias cuentas**: ahí la palanca
          * es cuánto se sube y el gas es la velocidad, y las dos cosas se le
@@ -32270,6 +32283,8 @@ export class Game {
           airDensity(s.position.y, aire),
           s.airspeed,
         ),
+        // Y lo que pide el ala inclinada por quien vuela: ver `porElViraje`.
+        ...this.anguloSinSustentacion(),
         ...(modelo.mandoParaSubir
           ? { subirCon: (ritmo: number) => modelo.mandoParaSubir?.(ritmo) ?? 0 }
           : {}),

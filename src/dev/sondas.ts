@@ -2408,6 +2408,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
              * ese mismo automático. Ver `porElAire`.
              */
             subeElAire: juego.subeElAireParaBanco,
+            // Y lo que pide el ala inclinada, igual: ver `porElViraje`.
+            ...juego.anguloSinSustentacion(),
           },
           rumbo,
           dt,
@@ -2438,6 +2440,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * automático, para que el banco se lo dé igual. Ver `porElAire`.
      */
     subeElAire: () => juego.subeElAireParaBanco,
+    /**
+     * El ángulo de sustentación nula del ala con sus flaps de ahora, rad: lo
+     * que el juego le da a su automático para el viraje, para que el banco se
+     * lo dé igual. Ver `porElViraje`.
+     */
+    anguloSinSustentacion: () => juego.anguloSinSustentacion().anguloSinSustentacion,
     /** La velocidad que recibe la pantalla de la cabina, en nudos. */
     velocidadDeCabina: () =>
       Math.round(

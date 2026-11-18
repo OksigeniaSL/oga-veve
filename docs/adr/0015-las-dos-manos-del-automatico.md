@@ -175,3 +175,16 @@ y mueve el morro por él aparte del que persigue el lazo del medio, que solo
 lo veía por el variómetro y tarde: tras una ascendente, la puerta de los 500
 ft del JAZ 90 llegaba bajando a más de mil pies por minuto. En calma vuela
 igual, bit a bit. El porqué y las cifras, en la enmienda H29b del ADR 0027.
+
+## Nota H29h (18-11-2026): la compensación del viraje
+
+Al inclinar el ala, el automático sube el morro lo que pide el ala inclinada
+para sostener la misma trayectoria (`porElViraje`): el ángulo de sustentación
+nula de los flaps que lleva por el verseno del alabeo, `−α₀·(1 − cos φ)`, hasta
+treinta grados. Es la compensación del viraje del canal de cabeceo de los
+automáticos de verdad. El ángulo se lo da el modelo de vuelo
+(`Estado.anguloSinSustentacion`), y va por debajo de todos los modos que llevan
+el morro. En el arco a final del JAZ 90, con 4,57 m/s pedidos, el pico virando
+baja de 6,05 a 4,98; un viraje de treinta grados en `ALT` se aparta de 8 a 28
+ft, dentro de los ±60 de MIL-C-18244A. Con las alas a nivel vuela igual, bit a
+bit. El porqué y las cifras, en la enmienda H29h del ADR 0027.

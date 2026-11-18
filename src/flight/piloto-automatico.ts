@@ -249,6 +249,62 @@ function porElAire(e: Estado, v: number): number {
 }
 
 /**
+ * **Hasta cuánto alabeo se compensa el viraje**, rad: treinta grados.
+ *
+ * Es la banda de viraje con la que se miden los automáticos —MIL-C-18244A,
+ * 3.1.1.5.2.6.1: ±60 ft hasta treinta grados, ±90 de treinta a sesenta—, y
+ * el automático de este juego no inclina más de veinticinco (`ALABEO_MAXIMO`):
+ * más allá solo llega la nivelada de los peldaños de abajo con el alabeo de
+ * quien vuela. Ahí la compensación se queda en la de treinta grados y lo que
+ * falte lo pone el lazo del medio, como lo pondría sin ella; pedirle de golpe
+ * el morro de un viraje de sesenta grados, que son dos g, a un avión lento y
+ * con todo fuera es acercarlo a la pérdida.
+ */
+const VIRAJE_COMPENSADO = (30 * Math.PI) / 180;
+
+/**
+ * **El morro que pide el ala inclinada**, rad: el que sostiene la misma
+ * trayectoria virando que con las alas a nivel. Es la compensación del viraje
+ * del canal de cabeceo de un automático de verdad.
+ *
+ * Al inclinar el ala, lo que sostiene en vertical es el coseno de lo que
+ * sostiene: para no bajar hay que pedirle `1/cos φ` veces el peso, la carga de
+ * un viraje nivelado (FAA-H-8083-25C, cap. 5, «Forces in Turns»), y eso es
+ * más ángulo de ataque. Con la recta de sustentación de la ficha, el ángulo
+ * medido desde el de sustentación nula `α₀` va con la carga: el ala pasa de `α`
+ * a `α₀ + (α − α₀)/cos φ`. Y el ángulo de ataque, inclinado, no es todo morro:
+ * con la trayectoria quieta, el morro sube `α·cos φ`, porque el resto del giro
+ * va hacia el lado del viraje. Juntas, lo que hay que subir el morro es
+ * **`−α₀·(1 − cos φ)`**: el ángulo de sustentación nula de los flaps que
+ * lleva, por el verseno del alabeo. No depende de la velocidad: más lento,
+ * más ángulo pide el viraje, y más ángulo llevaba ya el ala a nivel. El JAZ
+ * 90 con todo fuera tiene `α₀` en −19,4° —su ficha: `cl0` 0,18 y 1,38 de los
+ * flaps sobre `clα` 4,6—, y a veinticinco grados de alabeo pide 1,8° de morro;
+ * limpio, con −2,2°, dos décimas.
+ *
+ * Los de verdad lo llevan en el canal de cabeceo con la misma cuenta: el
+ * automático de Boeing suma al morro que pide la sustentación del ala
+ * inclinada, `L/(cos φ·q̄·S)`, sobre la recta de sustentación de cada
+ * configuración —pendiente y ordenada en el origen—, y cuenta que los que hay
+ * en servicio lo hacen con «a versine function», `1 − cos φ`, y una función
+ * de la presión dinámica (F. Blechen, *Automatic pilot pitch angle
+ * compensation*, patente US 9.058.040 B2, The Boeing Company, 2015).
+ *
+ * Sin él, el lazo del medio lo acaba poniendo, pero por el variómetro, que
+ * llega tarde: mientras entra el alabeo la carga baja a 0,92 y el avión se va
+ * hacia abajo. Medido en el arco del viraje a final del JAZ 90 en Los Rodeos
+ * (#192, H29g), con 4,57 m/s pedidos bajaba a 6,05. Ver
+ * `compensacion-del-viraje.test.ts`.
+ *
+ * Con las alas a nivel suma cero, y sin `Estado.anguloSinSustentacion`
+ * también: el automático vuela como volaba.
+ */
+function porElViraje(e: Estado): number {
+  const phi = acotar(e.alabeo, VIRAJE_COMPENSADO);
+  return -(e.anguloSinSustentacion ?? 0) * (1 - Math.cos(phi));
+}
+
+/**
  * El timón que mueve cada radián por segundo de giro que falta, **por
  * segundo**: el servo.
  *
@@ -454,6 +510,14 @@ export interface Estado {
    * cero: el aire quieto. Ver `porElAire`.
    */
   readonly subeElAire?: number;
+  /**
+   * **El ángulo de ataque al que el ala no sostiene nada**, con los flaps que
+   * lleva ahora, rad: negativo, y más cuanto más flap. Lo sabe el modelo de
+   * vuelo —ver `anguloSinSustentacion` en `model.ts`—, y con él el automático
+   * sabe cuánto morro pide el ala inclinada. Sin él, cero, y el automático vira
+   * como viraba. Ver `porElViraje`.
+   */
+  readonly anguloSinSustentacion?: number;
 }
 
 /** A dónde se le manda ir. `null` en uno de los dos es no mandarle nada. */
@@ -549,6 +613,11 @@ export interface Memoria {
    * `porElAire`.
    */
   aire: number;
+  /**
+   * Y el que se pone por el ala inclinada, rad. Ver `porElViraje`. El morro
+   * que persigue el avión es la suma de los tres.
+   */
+  viraje: number;
   /** El timón que lleva el servo, en unidades de mando. Ver `SERVO`. */
   timon: number;
   /** El alabeo que va pidiendo, rad. Ver `ALABEO_POR_SEGUNDO`. */
@@ -567,6 +636,7 @@ export function memoriaNueva(): Memoria {
     ritmo: 0,
     morro: 0,
     aire: 0,
+    viraje: 0,
     timon: 0,
     alabeo: 0,
     gases: memoriaDeGasesNueva(),
@@ -620,9 +690,11 @@ export function mandosPara(
   if (!m.cogido) {
     m.cogido = true;
     m.ritmo = e.vertical;
-    // El morro de ahora, con lo que ya lleva quitado o puesto por el aire.
+    // El morro de ahora, con lo que ya lleva quitado o puesto por el aire y
+    // por el viraje.
     m.aire = porElAire(e, v);
-    m.morro = e.cabeceo - m.aire;
+    m.viraje = porElViraje(e);
+    m.morro = e.cabeceo - m.aire - m.viraje;
     m.timon = acotar(e.timon ?? 0, 1);
     m.alabeo = e.alabeo;
   }
@@ -707,6 +779,7 @@ export function mandosPara(
        */
       m.morro = e.cabeceo;
       m.aire = 0;
+      m.viraje = 0;
       elevator = acotar(e.subirCon(m.ritmo), 1);
     } else {
       /*
@@ -724,12 +797,22 @@ export function mandosPara(
        * mismo tope de carga, que se reparte: primero el de la trayectoria,
        * y lo del aire con lo que quede.
        */
-      const juntos = acotar(giro + acotar((porElAire(e, v) - m.aire) / dt, tope), tope);
-      m.aire += (juntos - giro) * dt;
+      const conElAire = acotar(giro + acotar((porElAire(e, v) - m.aire) / dt, tope), tope);
+      m.aire += (conElAire - giro) * dt;
+      /*
+       * **Y lo que pide el ala inclinada**, también sin esperar al variómetro:
+       * ver `porElViraje`. Lo mismo, con lo que quede del tope.
+       */
+      const juntos = acotar(
+        conElAire + acotar((porElViraje(e) - m.viraje) / dt, tope),
+        tope,
+      );
+      m.viraje += (juntos - conElAire) * dt;
+      const aparte = m.aire + m.viraje;
       m.morro = Math.max(
-        e.cabeceo - m.aire - HOLGURA_DEL_MORRO,
+        e.cabeceo - aparte - HOLGURA_DEL_MORRO,
         Math.min(
-          e.cabeceo - m.aire + HOLGURA_DEL_MORRO,
+          e.cabeceo - aparte + HOLGURA_DEL_MORRO,
           acotar(m.morro + giro * dt, CABECEO_MAXIMO),
         ),
       );
@@ -747,7 +830,7 @@ export function mandosPara(
       const delViraje =
         (GRAVITY / v) * Math.tan(phi) * Math.sin(phi) * Math.cos(e.cabeceo);
       const pedido =
-        juntos / Math.cos(phi) + delViraje + POR_MORRO * (m.morro + m.aire - e.cabeceo);
+        juntos / Math.cos(phi) + delViraje + POR_MORRO * (m.morro + aparte - e.cabeceo);
       const falta = pedido - e.ritmoDeCabeceo;
       const refuerzo = e.autoridadDelTimon
         ? Math.min(REFUERZO_MAXIMO, Math.max(1, AUTORIDAD_SUFICIENTE / e.autoridadDelTimon))
@@ -758,7 +841,8 @@ export function mandosPara(
   } else {
     m.ritmo = e.vertical;
     m.aire = porElAire(e, v);
-    m.morro = e.cabeceo - m.aire;
+    m.viraje = porElViraje(e);
+    m.morro = e.cabeceo - m.aire - m.viraje;
   }
 
   /*

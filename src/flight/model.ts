@@ -392,6 +392,14 @@ export interface FlightModel {
    */
   timonDeEquilibrio?(): number;
   /**
+   * **El ángulo de ataque al que el ala no sostiene nada**, con los flaps del
+   * último paso, rad: negativo, y más cuanto más flap. Lo pide el piloto
+   * automático para saber cuánto morro pide el ala inclinada —ver
+   * `porElViraje` en `piloto-automatico.ts`—. Solo lo sabe el modelo de
+   * coeficientes; el sencillo sube con la palanca y no tiene ala que inclinar.
+   */
+  anguloSinSustentacion?(): number;
+  /**
    * **Qué palanca da este ritmo de subida**, en el modelo en el que la palanca
    * es cuánto se sube: el sencillo. Ver `mandoParaSubir` en `arcade.ts`.
    */
