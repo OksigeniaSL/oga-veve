@@ -277,13 +277,17 @@ export const QUIETO_UN_RATO = 20;
 /**
  * **Lo que se da para llegar a la marca**, s, si no se llega antes: veinte.
  * El rumbo se pide con el morro donde lo tenía el río, y el viraje hasta la
- * marca no es apartarse de ella. Lo que se mide empieza al llegar a la marca
- * por primera vez —a `EN_LA_MARCA`— o, si no se llega, a los veinte segundos:
- * un viraje de treinta grados a la mitad del régimen normal dura veinte.
- * Salió del primer vuelo del banco, que pidió el 225 con el morro en el 243
- * y la instructora dijo «se fue de la marca» antes de que llegara a ella.
+ * marca no es apartarse de ella. Lo que se mide empieza al quedarse en la
+ * marca —a `EN_LA_MARCA`, `ASENTADO` segundos— o, si no se llega, a los
+ * veinte segundos: un viraje de treinta grados a la mitad del régimen normal
+ * dura veinte. Salió del banco: el primer vuelo pidió el 225 con el morro en
+ * el 243 y la instructora dijo «se fue de la marca» antes de que llegara a
+ * ella; el segundo, contando desde la primera vez que el morro pasó a cinco
+ * grados, lo dijo en el pasado de largo del propio viraje.
  */
 export const PARA_LLEGAR_A_LA_MARCA = 20;
+/** Lo que tiene que quedarse en la marca para darla por alcanzada, s: pasar por ella virando no es llegar. */
+export const ASENTADO = 3;
 /**
  * **Encima del río, donde sigue**: a menos de seiscientos metros en planta.
  * El cauce es de ochocientos de ancho, y con el rumbo redondeado a cinco
@@ -303,6 +307,7 @@ export class RumboDeNoche {
   private desde: PuntoDelMundo | null = null;
   private fuera = 0;
   private desdeQueSePidio = 0;
+  private asentado = 0;
   private enLaMarcaYa = false;
   private puedeDecirSeVa = true;
   private quieto = 0;
@@ -387,6 +392,7 @@ export class RumboDeNoche {
     this.desde = null;
     this.fuera = 0;
     this.desdeQueSePidio = 0;
+    this.asentado = 0;
     this.enLaMarcaYa = false;
     this.puedeDecirSeVa = true;
     this.quieto = 0;
@@ -440,7 +446,8 @@ export class RumboDeNoche {
     const cuanto = Math.abs(desvio);
     // El viraje hasta la marca no cuenta: se empieza a medir al llegar a ella. Ver `PARA_LLEGAR_A_LA_MARCA`.
     this.desdeQueSePidio += dt;
-    if (cuanto <= EN_LA_MARCA || this.desdeQueSePidio >= PARA_LLEGAR_A_LA_MARCA) this.enLaMarcaYa = true;
+    this.asentado = cuanto <= EN_LA_MARCA ? this.asentado + dt : 0;
+    if (this.asentado >= ASENTADO || this.desdeQueSePidio >= PARA_LLEGAR_A_LA_MARCA) this.enLaMarcaYa = true;
     if (this.enLaMarcaYa) {
       this.enRumbo += dt;
       this.desvioSumado += cuanto * dt;

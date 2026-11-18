@@ -28335,6 +28335,14 @@ export class Game {
     if (this.mirarLasLucesEn > 0) return;
     this.mirarLasLucesEn = 1;
     if (!laInstructoraLoExplica(this.tier.avisos)) return;
+    /*
+     * **Es una lección de lo que se ve fuera**, como las uves de los pájaros:
+     * un ejercicio que se cierra en el aire la calla mientras dura, y sale al
+     * acabar. El aviso del otro avión, que es seguridad, no pasa por aquí.
+     * Salió de «Rumbo de noche» (H26o), el primero de esos que se vuela de
+     * noche: la regla de las luces se metía entre el rumbo pedido y la marca.
+     */
+    if (this.loQueCalla.laVentanilla) return;
     // Noche hecha: el sol a más de cuatro grados por debajo del horizonte.
     if (this.sky.sunDirection.y > -0.07) return;
     const s = this.flight.state;
