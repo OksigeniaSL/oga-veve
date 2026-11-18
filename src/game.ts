@@ -6588,6 +6588,7 @@ export class Game {
     saltaLaCabeza: false,
     arribaTapado: 0,
     abajoTapado: null as LoQueTapaAbajo | null,
+    dibujo: null as Contexto["dibujo"],
   };
   /**
    * **Las cámaras de la escena de pasaje**: la de fuera y el fundido de cada
@@ -30522,6 +30523,8 @@ export class Game {
     ctx.aircraft.largo = this.largoDelAvion;
     ctx.aircraft.miraAlMorro = !!this.aircraft.helicoptero;
     ctx.ojo = this.aircraftMesh.ojo ?? null;
+    // Y el avión como se dibuja, que en tierra no es como lo lleva el modelo de vuelo. Ver `Contexto.dibujo`.
+    ctx.dibujo = this.aircraftMesh.group;
     ctx.aLaVista = this.adelantoDelSigueme;
     // El de rueda de cola rueda con el morro arriba: la cámara de fuera lo
     // descuenta. Ver `actitudEnTierra` en `cameras/tipos.ts`.
@@ -30704,7 +30707,8 @@ export class Game {
     const ahora = performance.now();
     if (ahora - this.brujulaEnPantalla.medida < 500) return;
     this.brujulaEnPantalla.medida = ahora;
-    const s = this.flight.state;
+    // Con el avión como se dibuja, que es donde está la brújula. Ver `Contexto.dibujo`.
+    const s = this.aircraftMesh.group;
     const v = this.esquinaDeLaBrujula;
     const ancho = window.innerWidth;
     const alto = window.innerHeight;
@@ -30718,7 +30722,7 @@ export class Game {
       for (const caida of [b.arriba, b.abajo]) {
         // La misma cuenta que la mide en el modelo (`conSuEncuadre`), a un metro de los ojos.
         v.set(ojo.x + x, ojo.y - Math.tan(caida), ojo.z - 1)
-          .applyQuaternion(s.orientation)
+          .applyQuaternion(s.quaternion)
           .add(s.position)
           .project(this.camera);
         if (v.z > 1) delante = false;
@@ -32237,7 +32241,9 @@ export class Game {
     const asiento = this.asientoDe(modo);
     // En el pasaje no se gira la cabeza a secas: se asoma uno al cristal. Asomada al pasillo, el cristal queda detrás.
     if (asiento && !this.enElPasillo) asomarse(this.camera, state.orientation, asiento, giro);
-    else if (como === "cabeza" || asiento) girarLaCabeza(this.camera, state.orientation, giro);
+    // Desde el asiento, la cabeza gira sobre el avión dibujado, como los ojos. Ver `Contexto.dibujo`.
+    else if (como === "cabeza" || asiento)
+      girarLaCabeza(this.camera, modo === "cockpit" ? this.aircraftMesh.group.quaternion : state.orientation, giro);
     else
       darLaVuelta(this.camera, state.position, giro, (x, z) =>
         this.terrain.sampleSurface(x, z),

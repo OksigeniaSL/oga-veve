@@ -332,9 +332,11 @@ export class CamaraDeDentro implements CameraRig {
     else
       this.offset.set(0, ctx.aircraft.chord * 0.55, -ctx.aircraft.chord * 0.4);
     this.offset.y += cabeza;
-    this.offset.applyQuaternion(state.orientation);
-    camera.position.copy(state.position).add(this.offset);
-    camera.quaternion.copy(state.orientation);
+    // Los ojos, en la cabina dibujada: ver `Contexto.dibujo`.
+    const giro = ctx.dibujo?.quaternion ?? state.orientation;
+    this.offset.applyQuaternion(giro);
+    camera.position.copy(ctx.dibujo?.position ?? state.position).add(this.offset);
+    camera.quaternion.copy(giro);
     /*
      * **Y en cabina se mira un poco hacia abajo, por encima de la visera.**
      *

@@ -80,6 +80,27 @@ describe("la vista de cabina", () => {
     expect(camara.position.z).toBeCloseTo(-0.8, 5);
   });
 
+  /*
+   * **Y los ojos, en la cabina dibujada** (H31b): en tierra el dibujo se
+   * inclina con el suelo o levanta el morro enganchado al tractor, y el
+   * modelo de vuelo no. Con los ojos puestos con el del modelo, el panel del
+   * JAZ 90 salía cincuenta píxeles más arriba de lo que contaba el encuadre.
+   */
+  it("va con el avión dibujado cuando no es el del modelo de vuelo", () => {
+    const c = construirCamaras().cockpit;
+    const camara = new PerspectiveCamera();
+    const ojo = { x: 0, y: 0.4, z: -12 };
+    const dibujo = {
+      position: new Vector3(0, 100.02, 0),
+      quaternion: new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), (0.5 * Math.PI) / 180),
+    };
+    c.update(camara, avion(), 1 / 60, contexto({ ojo, dibujo }));
+    // Doce metros por delante, medio grado de morro arriba son diez centímetros.
+    const donde = new Vector3(0, 0.4, -12).applyQuaternion(dibujo.quaternion).add(dibujo.position);
+    expect(camara.position.distanceTo(donde)).toBeLessThan(1e-5);
+    expect(camara.position.y - 100.4).toBeGreaterThan(0.1);
+  });
+
   it("sin modelo con asientos, se sitúa sobre la cuerda del ala", () => {
     const c = construirCamaras().cockpit;
     const camara = new PerspectiveCamera();

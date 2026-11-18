@@ -14,7 +14,7 @@
  * escenario. Una vista nueva es un fichero nuevo y una línea en `index.ts`.
  */
 
-import type { PerspectiveCamera } from "three";
+import type { PerspectiveCamera, Quaternion, Vector3 } from "three";
 import type { FlightState } from "../flight/model";
 
 /** Lo que una vista necesita del mundo, y no puede sacar del estado del avión. */
@@ -88,6 +88,16 @@ export interface Contexto {
    * Ver `encuadreDeCabina` y `Game.loQueTapaLaFilaDeArriba`.
    */
   readonly arribaTapado?: number;
+  /**
+   * **Dónde está el avión dibujado**, si no es donde lo tiene el modelo de
+   * vuelo (H31b). En tierra el dibujo se inclina con el suelo y, enganchado
+   * al tractor, levanta el morro sobre las principales; los ojos de la cabina
+   * van con el dibujo, que es donde están el panel y sus mandos. En el JAZ 90,
+   * con el morro en vilo, el medio grado sobre las principales subía el panel
+   * once centímetros delante de unos ojos que se quedaban donde estaban. Ver
+   * `CamaraDeDentro`. Sin poner, el del modelo de vuelo.
+   */
+  readonly dibujo?: { readonly position: Vector3; readonly quaternion: Quaternion } | null;
   /**
    * **Lo que tapa la barra del timón por abajo**, desde el asiento y con el
    * dedo: su borde de arriba y sus lados, en fracciones de la pantalla (H31b).
