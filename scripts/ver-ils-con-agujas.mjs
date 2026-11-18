@@ -495,11 +495,23 @@ try {
    */
   const sonaron = (pedido.dicho.instructor ?? []).filter((c) => /^ejercicio\.ils\./.test(c));
   const mudas = pedido.sinGrabar.filter((c) => /^ejercicio\.ils\./.test(c));
+  /*
+   * Y el paso que retiró el siguiente antes de que le tocara —«ya no es
+   * verdad»— está contado: es lo que se quiere (H26k). Con el reloj por
+   * cuatro le pasa a «a tope», que la aguja se despega mientras aún suena la
+   * presentación.
+   */
+  const retiradas = pedido.apuntes
+    .map((c) => /(ejercicio\.ils\.\w+): ya no es verdad/.exec(c)?.[1])
+    .filter((c) => c && !sonaron.includes(c));
+  const contadas = new Set([...delIls, ...retiradas]);
   comprobar(
     "la instructora lo cuenta por pasos, en su orden",
-    [...delIls].sort().join(",") === [...esperado].sort().join(",") &&
+    esperado.every((c) => contadas.has(c)) &&
       sonaron.join(",") === esperado.filter((c) => sonaron.includes(c)).join(","),
-    `${sonaron.join(", ")}${mudas.length ? `; sin voz: ${[...new Set(mudas)].join(", ")}` : ""}`,
+    `${sonaron.join(", ")}${mudas.length ? `; sin voz: ${[...new Set(mudas)].join(", ")}` : ""}${
+      retiradas.length ? `; retiradas por el paso siguiente: ${retiradas.join(", ")}` : ""
+    }`,
   );
   // Un suceso, una voz: los mínimos del ejercicio, y no además los de siempre.
   comprobar(

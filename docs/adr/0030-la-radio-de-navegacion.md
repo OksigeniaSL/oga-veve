@@ -2347,3 +2347,170 @@ vuelvan «andá a la pista» ni la final; y el panel con su frase. Con
   banco escribe ya lo que la boca apuntó o tiró; falta volarlo a reloj normal.
 - **El rombo de la pantalla de vuelo** de los de cristal, de la geometría y no
   de la radio, sin medir cuánto se separan (de H26i).
+
+## Enmienda H26k (18-11-2026): lo que H26j dejó del ILS, y que toca a todos los ejercicios
+
+Lo que H26j dejó apuntado de «Aterrizar con las agujas», en el orden en que
+se pidió. Dos de las cinco cosas no eran del ILS: eran de cualquier ejercicio.
+
+### La primera frase, muda: se preguntaba antes de saber
+
+En las cuatro tiradas de H26j la presentación del ILS quedó en «sin grabar,
+se calla» con la frase grabada. Primero se midió: el banco
+(`scripts/ver-ils-con-agujas.mjs`) mira ahora, dentro de la página y cada
+cincuenta milisegundos, cuándo cambia el estado del pack y cuándo se pide la
+presentación. Con la avioneta, antes del arreglo:
+
+- **pedida a los 4.316 ms** de cargar la página, en el primer paso del
+  ejercicio, con el pack en `manifiestos`;
+- **los manifiestos, puestos a los 5.251 ms**: un segundo tarde.
+
+No era que la voz no hubiera cargado, sino algo más fino: la decisión la
+tomaba `decirDelEjercicio` preguntando `vozDe`, y `vozDe` mira los
+manifiestos ya bajados. Antes de que lleguen contesta «nadie», que no quiere
+decir «no está grabada» sino «todavía no lo sé». La boca ya sabía esperar a
+su grabación —`estaLista`, con el tope de `ESPERA_A_SU_VOZ`, desde el
+crosscheck de Jazlyn—, pero la frase no llegaba a pedirse: se callaba en la
+puerta. Le pasaba a todo ejercicio que hable en su primer paso, que son los
+cinco de radio y cualquiera que presente algo al empezar.
+
+**El arreglo, en el sitio que sabe cómo va el pack**:
+`InstructorGrabado.decirGrabada`, «solo con su grabación, y esperando a saber
+si la tiene» (`sabeLoGrabado`):
+
+- **ya se sabe** qué hay grabado —los manifiestos puestos, o sin pack que
+  esperar—: sin receta no se pide y devuelve `false`, como antes;
+- **todavía no**: se pide igual y espera en la cola de la boca a que lleguen
+  los manifiestos y sus piezas, con el tope de siempre; si al saberlo no
+  estaba grabada, o se acabó el tope, **se cae callada, nunca a la voz del
+  navegador**, y quien la pidió se entera por `alSonar` («se-cae»,
+  «sin-grabar»).
+
+Lo usan `decirDelEjercicio`, que es por donde hablan todos los ejercicios, y
+`decirLoGrabado`, que es el mismo patrón para las explicaciones de una vez.
+No es un retraso a mano en cada ejercicio: es la pregunta bien hecha en un
+sitio.
+
+**Y el primer vuelo, fuera de los ejercicios, no lo tiene.** Para saberlo,
+`vozDe` apunta en desarrollo quién le pregunta antes de saber
+(`preguntadasSinSaber`, en la sonda `voz()`), y se miraron con una sonda de
+un uso los primeros veinte segundos de dos arranques: un vuelo normal en
+Fuerteventura con la avioneta y el modo inicio (Jazlyn y Ara). Ninguno
+preguntó nada antes de que llegaran los manifiestos —a los 5,4 y a los 1,9
+s—: el vuelo normal empieza en el puesto y lo primero que dice
+(`vuelo.nuestroAvion`) llega después, y la escena del modo inicio pide sus
+frases con `decir`, que ya esperaba al pack. Quedan setenta y siete
+`vozDe` en `game.ts` con el mismo patrón; los que caen en mitad de un vuelo
+tienen el pack sabido desde hace rato. Los cantos de un ejercicio
+(`cantarDelEjercicio`, el «stop» y el «engine failure» de los de la V1) siguen
+preguntando `vozDe`: se piden en la carrera de despegue, muchos segundos
+después del arranque.
+
+Volado, con la avioneta y el alisio: la presentación pedida a los 3.390 ms
+con el pack en `manifiestos` —apuntada «espera a saber si está grabada»—,
+los manifiestos a los 4.253 y **la presentación sonando a los 4.606 ms**. En
+las cinco tiradas de esta tanda sonó.
+
+### Las frases de en medio: no era el reloj
+
+H26j sospechaba del reloj por cuatro del banco: los pasos del ejercicio
+llegan cuatro veces más juntos que la voz que los dice. Se voló el bimotor a
+**reloj normal** (`OGA_VECES=1`) para saberlo, y no: «ejercicio.ils.enElLocalizador:
+caducó esperando» a los 106 s, igual. Detrás de qué, lo dice lo que sonó
+alrededor: la torre pasando a su frecuencia (`torre.canario.contactTower`) y
+dando el tráfico, y la instructora con la ventanilla y los baches. Ninguna
+dura mucho; juntas pasan de los **cuatro segundos de `CADUCA`**, que es lo que
+aguantaba cualquier frase de un ejercicio de radio esperando turno. Y la que
+caducó es justo la que dice qué hacer ahora: «ahora la senda, que está
+arriba: seguí nivelado».
+
+Un aviso vuelve cuando cambia algo que pasa, no por el reloj, y lo mismo vale
+para lo que se calla: **lo que cuenta un paso de un ejercicio de radio sigue
+siendo verdad hasta el paso siguiente**. Así que:
+
+- **Espera lo que haga falta** (`cuentaUnPasoDeRadio` en `audio/boca.ts`, en la
+  lista de lo que aguanta sin reloj, con la fase y el punto de descenso): los
+  cinco ejercicios de radio, `ejercicio.{aguja,radial,interceptar,cruce,ils}.*`.
+  Los otros ejercicios no, que algunas de sus frases son correcciones de un
+  instante —«ejercicio.velocidad»— y una corrección vieja enseña mal.
+- **Y lo retira quien sabe que ya no vale**: el ejercicio, al pedir el paso
+  siguiente (`decirDelEjercicio` retira lo que quedara por decir de los
+  pasos de antes) o al cerrarse. **Salvo la presentación**, que no es un paso
+  sino lo que los abre: en «interceptar» sale en el mismo fotograma que «a
+  tope», y las dos se dicen, en su orden.
+
+Volado, con la avioneta apartada del localizador (`OGA_FUERA=1`) y a reloj
+normal, ya con el arreglo: la presentación, «a tope», «se despega», «en el
+localizador» y **«capturada»** —la que en H26j no sonó en las dos tiradas
+apartadas—, las cinco en su orden y ninguna caducada. Esa tirada no llegó a
+los mínimos: el banco tenía nueve minutos de reloj de pared, que con el reloj
+por cuatro sobran y a reloj normal no, que la avioneta tarda once. Ahora tiene
+veinte cuando vuela a reloj normal.
+
+**Lo que se descarta**: que fuera el reloj del banco. Con el reloj por cuatro
+los pasos llegan más juntos y caducan más, pero a reloj normal caducaba
+igual; el reloj lo hacía más frecuente, no lo causaba.
+
+### Sin el alisio, apartado y con la nube
+
+La tirada que H26j no pudo volar, juntada con las otras dos cosas que pedían
+navegador, porque la cola del navegador estuvo ocupada cuarenta minutos: el
+bimotor (`OGA_AVION=jaz-40`), en calma (`OGA_VIENTO=0/0`), apartado del
+localizador (`OGA_FUERA=1`), con el reloj por cuatro y la foto desde el
+asiento (`OGA_CABINA=1`). **16 de 20**:
+
+- **Bien**: la presentación pedida a los 3.298 ms, esperando, y sonando a
+  los 6.085; el día del ejercicio, cubierto a trescientos pies; la aguja que
+  se despega, en el localizador a 9,4 millas con la senda arriba, la senda
+  capturada desde abajo a 7,3, en la final las dos en cruz (−0,02 y 0,01);
+  **a 339 ft dentro de la nube (1,00) y a 196 fuera (0,03)**, con la pista a la
+  vista; en los mínimos, 1,75 de localizador y la frustrada; la torre manda al
+  aire a **EC-RYP** con su indicativo en el alfabeto.
+- **«A tope», retirada por el paso siguiente**: con el reloj por cuatro la
+  aguja se despega mientras aún suena la presentación, y «la pista queda de
+  ese lado» ya no era verdad. Es lo que se quiere, y el banco lo cuenta ya
+  así («retiradas por el paso siguiente»).
+- **Lo que falló, y no se ha arreglado en esta tanda** (ver «Lo que queda»):
+  el ejercicio no llegó a cerrarse con la frustrada antes del tope del banco
+  —se quedó en `frustrando`—; detrás de los mínimos sonó
+  `ejercicio.ils.sintonizar`, «poné el ILS en la NAV», con el ILS puesto; y
+  sonó `vuelo.enVueloAterrizando` antes del *go around* de la cabina.
+
+### La pantalla de navegación de la cabina en 3D, mirada
+
+La foto desde el asiento salió en la final, con el ILS puesto y la Intel por
+ANGLE, pero **con el bimotor no dice nada de la escala de la senda**: el JAZ
+40 es de la familia de esferas (`familiaDe`, por el motor de pistón), su
+cabina en 3D lleva los seis relojes de siempre y no tiene pantalla de
+navegación; la escala de H26j está en la de los de cristal (turbohélice) y
+la de línea (reactores). Hace falta otra tirada con el JAZ 60 o un reactor,
+que no cupo.
+
+Y la foto enseña otra cosa, que es más grave para este ejercicio: **desde el
+asiento del JAZ 40 no se ven las agujas**. El cuadro plano, con su HSI y la
+escala de la senda, no se pinta en la vista de cabina, y el panel en 3D no
+lleva ni CDI ni HSI: el direccional es un giróscopo sin agujas. Un bimotor
+como ése, en la realidad, lleva el indicador del VOR y el ILS en el panel.
+Quien vuele el ILS desde el asiento con el bimotor no tiene con qué. No se
+ha tocado.
+
+### Lo que queda
+
+- **El cierre de la frustrada con el bimotor en calma**: en los mínimos, a
+  1,75 puntos, el ejercicio pidió la frustrada y se quedó en `frustrando`
+  hasta el tope del banco, sin subir los cuarenta metros que la cierran. No
+  se sabe si es el piloto de banco —que se pensó para la avioneta— o el
+  avión; con la avioneta apartada, en H26j, sí cerraba.
+- **«Poné el ILS en la NAV» con el ILS puesto**, detrás de los mínimos en
+  esa misma tirada. Lo más probable, sin comprobar: el ejercicio da la radio
+  por quitada si deja de oír su localizador (`sintonizada` en
+  `practicarElIls` pide la frecuencia **y** la emisora oída), y apartado y
+  bajo, cerca de la pista, la recepción se pierde. Perder la señal no es
+  quitar la radio; habría que mirar solo la frecuencia.
+- **«Andá a la pista» antes del *go around***: en esa tirada sonó
+  `vuelo.enVueloAterrizando` justo después de los mínimos, antes de que la
+  cabina cantara la frustrada. Por la regla de H26j —salir de la final sin
+  haber subido quince metros se dice entero— puede ser correcto si el avión
+  se salió de la final de lado antes de empezar a subir; sin mirar.
+- **Las agujas desde el asiento del JAZ 40**, arriba.
+- **La escala de la senda en la cabina en 3D**, con un avión que la tenga.
