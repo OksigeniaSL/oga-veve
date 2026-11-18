@@ -1168,8 +1168,10 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     const to = m.torre;
     comprobar(
       `${aqui}: la orden de la torre usa más de medio hueco`,
-      m.sinLetras || to.lineas === 1 || to.ancho > to.hueco / 2,
-      `${to.lineas} línea${to.lineas === 1 ? "" : "s"}, ${to.ancho} px de un hueco de ${to.hueco}`,
+      m.sinLetras || to.recogida || to.lineas === 1 || to.ancho > to.hueco / 2,
+      to.recogida
+        ? `recogida a su dibujo para caber con el aviso (${to.ancho} px): la orden la dice la torre`
+        : `${to.lineas} línea${to.lineas === 1 ? "" : "s"}, ${to.ancho} px de un hueco de ${to.hueco}`,
       "con left y translate maquetaba en medio hueco y la orden se partía en tres líneas",
     );
     const toPisa = [...to.redondos, ...to.rincon, ...(to.subtitulo ? ["el subtítulo"] : [])];
@@ -2050,6 +2052,9 @@ async function medirAvisoYLampara() {
       ancho: Math.round(t.width),
       hueco: Math.round(hueco),
       lineas: sinLetras ? 1 : lineas(orden),
+      // Recogida a su dibujo no lleva la orden escrita: ver «la lámpara no
+      // espera» en `ui/reparto.ts` (H28g).
+      recogida: torre.classList.contains("lee-recogida"),
       redondos: pisados(t, redondos),
       rincon: pisados(t, rincon),
       subtitulo: conSub && pisa(t, h),
