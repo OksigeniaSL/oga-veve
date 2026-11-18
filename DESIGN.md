@@ -394,12 +394,18 @@ clic, bajos y cortos; con un aviso sonando, la carta se calla.
   prioridad —el aviso, la lámpara, la tarjeta de la orden, el subtítulo, el tutor y la radio—**: primero la estrecha en
   el tramo libre de su fila, sin bajar de la mitad de su hueco; luego la prueba en el sitio de una que va detrás o
   debajo de lo ya puesto; y si no cabe en ninguno, **espera** (`.lee-espera`, escondida sin dejar su sitio), como en un
-  avión: uno a la vez y por orden, y lo que espera no se pierde. El aviso no espera nunca. Corre solo cuando cambia algo
-  de lo que se lee o de lo que se toca, no en cada fotograma. **Un solape nuevo se arregla ahí, no con otra variable**:
+  avión: uno a la vez y por orden, y lo que espera no se pierde. El aviso no espera nunca, **ni la lámpara**, que es
+  seguridad (H28g): si hacia donde crece no cabe, busca fila al otro lado; si aun así no, se recoge a su dibujo —la luz
+  y la fila de aviones—, como la tarjeta de la orden; y con la pantalla en grande del teléfono, la pantalla le cede lo
+  que ella mide (`LO_QUE_CEDE`), como le cede una fila al aviso. **La radio, que vive en la barra, no se estrecha ni
+  deja su hueco**: si pisa, se lleva entera a donde quepa (`translate`), y si espera, su reloj no corre. Corre solo
+  cuando cambia algo de lo que se lee o de lo que se toca, no en cada fotograma, y lo que mira en cada uno no obliga a
+  maquetar (ni `innerWidth`). **Un solape nuevo se arregla ahí, no con otra variable**:
   una variable de la hoja dice dónde prefiere ir una pieza, nunca de qué se aparta. Y lo que se añada que se toque y no
   sea un botón lleva `data-tocable`, y entra solo en la cuenta. Lo mira `npm run carteles` con lo más largo que lleva
   cada cosa —la orden, la más larga del código—, en las cuatro maneras en que coinciden y en las tres vistas: fuera,
-  cabina y la pantalla en grande del teléfono.
+  cabina y la pantalla en grande del teléfono; y de pie con el dedo, el vuelo del pasaje. Lo que cuesta, con la CPU de
+  una tablet de gama media, lo mide `scripts/medir-reparto.mjs`.
 - Separaciones de uso: 2, 4, 6, 8, 10, 12, 14 y 16 px. Radios: `--r-s` 10, `--r-m` 16 y `--r-l` 22; 999 px para las
   pastillas y 50 % para lo redondo.
 - **El texto ocupa su caja**: nunca `max-width` en `ch` ni en px para un párrafo. Si una frase no puede crecer, se

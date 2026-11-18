@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Caja, colocar, pisa, RESPIRO, tramosLibres } from "./reparto";
+import { type Caja, colocar, pisa, RESPIRO, tramosLibres, trasladar } from "./reparto";
 
 const caja = (izq: number, arr: number, der: number, aba: number): Caja => ({ izq, arr, der, aba });
 const PANTALLA = caja(0, 0, 864, 330);
@@ -103,5 +103,67 @@ describe("colocar", () => {
     );
     expect(sitio).not.toBeNull();
     expect(sitio && pisa(sitio, tren)).toBe(false);
+  });
+});
+
+describe("colocar lo que no puede esperar", () => {
+  // 1280 × 800 con el dedo, de fuera (H28f): el aviso sube con el cuadro y le
+  // quita a la lámpara el sitio del subtítulo; debajo, el cuadro.
+  const P = caja(0, 0, 1280, 800);
+  const barra = caja(260, 70, 550, 147);
+  const aviso = caja(395, 278, 885, 342);
+  const cuadro = caja(300, 348, 980, 800);
+  // La frase de mentira no pasa de 420 de ancho: la lámpara, de ese ancho.
+  const lampara = {
+    natural: caja(95, 221, 515, 305),
+    hueco: [95, 1029] as const,
+    ancla: "arriba" as const,
+    sitios: [],
+    mueve: true,
+  };
+
+  it("sin buscar al otro lado, espera", () => {
+    expect(colocar(lampara, [barra, cuadro, aviso], P, frase(420 * 84))).toBeNull();
+  });
+
+  it("buscando al otro lado, sube a la franja libre de debajo de la barra", () => {
+    const sitio = colocar({ ...lampara, alOtroLado: true }, [barra, cuadro, aviso], P, frase(420 * 84));
+    expect(sitio).not.toBeNull();
+    expect(sitio && [barra, cuadro, aviso].some((o) => pisa(sitio, o))).toBe(false);
+    expect(sitio?.arr).toBe(147 + RESPIRO);
+  });
+});
+
+describe("trasladar", () => {
+  const PANTALLA_TABLET = caja(0, 0, 900, 600);
+
+  it("si en su sitio no pisa nada, se queda en su sitio", () => {
+    const natural = caja(300, 70, 560, 96);
+    expect(trasladar(natural, "arriba", [], [caja(0, 0, 60, 60)], PANTALLA_TABLET)).toEqual(natural);
+  });
+
+  it("si pisa la vuelta al avión, se lleva entera al lado, en su fila, sin estrecharse", () => {
+    // La radio cae en la segunda fila de la barra, sobre la columna de la pausa.
+    const vuelta = caja(16, 64, 60, 108);
+    const natural = caja(20, 70, 280, 96);
+    const sitio = trasladar(natural, "arriba", [], [vuelta], PANTALLA_TABLET);
+    expect(sitio).not.toBeNull();
+    expect(sitio && pisa(sitio, vuelta)).toBe(false);
+    expect(sitio?.arr).toBe(70);
+    expect(sitio && sitio.der - sitio.izq).toBe(260);
+    expect(sitio?.izq).toBe(60 + RESPIRO);
+  });
+
+  it("si en su fila no cabe entera, baja debajo de lo que la estorba", () => {
+    const fila = caja(0, 64, 900, 108);
+    const natural = caja(20, 70, 280, 96);
+    const sitio = trasladar(natural, "arriba", [], [fila], PANTALLA_TABLET);
+    expect(sitio?.arr).toBe(108 + RESPIRO);
+    expect(sitio?.izq).toBe(20);
+  });
+
+  it("si no cabe en ninguna fila, espera", () => {
+    const natural = caja(20, 70, 280, 96);
+    expect(trasladar(natural, "arriba", [], [caja(0, 60, 900, 600)], PANTALLA_TABLET)).toBeNull();
   });
 });

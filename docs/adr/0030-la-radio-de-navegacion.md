@@ -2347,3 +2347,169 @@ vuelvan «andá a la pista» ni la final; y el panel con su frase. Con
   banco escribe ya lo que la boca apuntó o tiró; falta volarlo a reloj normal.
 - **El rombo de la pantalla de vuelo** de los de cristal, de la geometría y no
   de la radio, sin medir cuánto se separan (de H26i).
+
+## Enmienda H28g (18-11-2026): lo que no puede esperar, y lo que cuesta
+
+H28f llevó el reparto de lo que se lee a un solo sitio (`src/ui/reparto.ts`) y
+dejó escrito lo que aún costaba: con la pantalla en grande del teléfono la
+lámpara esperaba, y el subtítulo con ella; con el aviso y la lámpara a la vez,
+en las tablets de 1280 × 800 y de 1024 × 600 con el dedo, la lámpara también;
+la radio esperaba encima de la vuelta al avión y del parte, y esperando se iba
+sin que nadie la viera; de pie con el dedo no se medía ninguna pantalla de
+vuelo, y el coste del reparto no se había medido en una tablet. Todo se
+arregla en el reparto, que es el sitio, y no en la pieza.
+
+### Lo que se cambió
+
+- **La lámpara no espera**, igual que el aviso: es seguridad. El orden sigue
+  siendo el aviso, la lámpara, la tarjeta de la orden y el subtítulo, y para
+  que la lámpara quepa siempre se le dan tres salidas antes de esperar:
+  - **Buscar fila al otro lado** (`Colocable.alOtroLado`). Con el aviso, la
+    lámpara va en el sitio del subtítulo, y en las tablets con el dedo el
+    aviso sube con el cuadro y le quita esa fila: hacia abajo está el cuadro y
+    la lámpara esperaba con la franja de debajo de la barra libre. Ahora,
+    cuando hacia donde crece no cabe, prueba también hacia el otro lado, la
+    fila más cerca de la suya primero y justo debajo de lo que hay encima, que
+    así no se mete en aquello en lo que se apoya (lo que H28f vio con el aviso
+    y el asa). Solo la lámpara: el aviso sigue sin esperar quedándose en su
+    sitio.
+  - **Recogerse a su dibujo** (`.lee-recogida`, como la tarjeta de la orden):
+    la luz, tu avión y la fila de los que salen antes, que es lo que se
+    entiende sin leer (regla 2); la orden la dice la torre por la radio. Y
+    recogida **vuelve a buscar sitio**, que antes la recogida solo se probaba
+    donde estaba. En la tablet de 1024 × 600 con el dedo, entera no cabía en
+    los 54 píxeles entre la tercera fila de la barra y el aviso, y recogida
+    cabe a su lado.
+  - **Que la pantalla en grande le ceda alto** (`LO_QUE_CEDE`). La pantalla en
+    grande del teléfono llena todo lo que hay entre la barra y los pulgares, y
+    con ella puesta a la lámpara no le quedaba fila. Mientras la lámpara está
+    encendida, la pantalla se queda lo que la lámpara mide más baja, como ya
+    se quedaba una fila más baja con el aviso. Cuánto, no lo dice la hoja: lo
+    mide el reparto —el alto de la lámpara con su respiro— antes de medir lo
+    demás y lo escribe en `--cede-el-grande`, que la hoja le quita a
+    `--alto-del-grande`. La hoja sí dice dónde quiere la lámpara con la
+    pantalla en grande: **encima del subtítulo**, en esa fila. Debajo de la
+    barra, que es donde va sin ella, caía en mitad de la pantalla encogida y
+    el reparto la subía al sitio del subtítulo, que se quedaba esperando con
+    sitio de sobra encima. Es un mando que se encoge para dejar sitio a lo que
+    no puede esperar, y por eso es una lista del reparto: el día que otra cosa
+    tenga que ceder, se añade ahí.
+- **La radio se lleva entera** (`trasladar`). Vive en la barra, en el hilo de
+  sus botones, y no se puede estrechar ni sacar de ahí sin que lo de su lado se
+  mueva, que es un mando. Cuando su sitio cae sobre algo que se toca —la
+  vuelta al avión y el parte, en la segunda fila de la barra de la tablet de
+  900 × 600 antes de arrancar—, se traslada entera con `translate`, que no
+  cambia la maqueta y deja su hueco donde estaba, al primer sitio libre: su
+  fila o la de debajo de lo ya puesto, lo más cerca de donde la pone la hoja.
+  Crece hacia abajo, como la barra: la primera vuelta la medía como anclada
+  abajo, porque su `top` es `auto`, y la subía pegada al borde de la pantalla.
+  Si no cabe en ninguna, espera; y **esperando, su reloj no corre** y la
+  siguiente no le quita el turno (`Hud.ponerLaRadio`), como el del subtítulo:
+  antes se iba a los seis segundos sin que nadie la hubiera visto, y para quien
+  no oye, lo que no se escribe no se dijo.
+- **De pie con el dedo, el vuelo del pasaje.** De pie y con el dedo no se
+  pilota: el cartel de girar tapa el vuelo, y eso ya se mira. Pero de pasaje
+  el cartel no sale y se vuela de pie, con quien habla, sus láminas, el
+  subtítulo y los botones de la pausa, el cinturón y el menú. `npm run
+  carteles` mira ahí, en 400 × 780 y en 565 × 641, cada segundo de los 25
+  primeros del vuelo, que nada de lo que se lee pise lo que se toca ni se pisen
+  entre sí, con la misma regla de lo que se toca.
+- **Lo que cuesta, medido en la tablet** (`scripts/medir-reparto.mjs`):
+  1024 × 600 con el dedo, la CPU a ×4 (`Emulation.setCPUThrottlingRate`), en
+  el aire y virando con el JAZ 90. El reparto lleva la cuenta de lo que gasta
+  (`Repartidor.gasto`), y con `separar` el banco hace antes la maqueta que el
+  juego dejó pendiente y la cuenta aparte: el reparto es el primero que la pide
+  en el fotograma y sin separarla se le apuntaba entera, cuando el navegador la
+  hace igual al pintar.
+  - **La firma obligaba a maquetar en cada fotograma.** Se mira en cada uno
+    para saber si hay que repartir, y llevaba el tamaño de la ventana:
+    `innerWidth` con la página por maquetar obliga a maquetar en el acto, 5,6
+    ms a ×4. Sin él (un cambio de tamaño ya pide reparto por su cuenta), con
+    muchos cambios el reparto pasa de **5,9 ms por fotograma a 1,1**.
+  - **Lo que se toca, de lo barato a lo caro**: primero lo escondido con
+    `hidden` y lo que está dentro de lo que se lee, luego `checkVisibility`,
+    que ya mira `display`, `visibility` y la opacidad de quien lo contiene, y
+    solo entonces su caja, una vez, con la de cada dibujo medida una vez por
+    reparto. El ancla de cada pieza, una vez por reparto.
+
+La regla va a DESIGN.md, §5.
+
+### Lo que se prueba
+
+- `npm run carteles`, `mirarLoQueSeLee`: el aviso y la lámpara se ven en las
+  cuatro maneras y en las tres vistas —ahora también la lámpara con el aviso y
+  con la pantalla en grande—, el subtítulo solo se ve fuera de la pantalla en
+  grande, y la radio se ve con el subtítulo solo. Y el vuelo del pasaje de pie
+  con el dedo, arriba. La comprobación de H28c de que la orden de la torre usa
+  más de medio hueco da por buena la lámpara recogida, que no la lleva: la
+  primera vuelta la dio por mala en 780 × 360 y 864 × 330 con el dedo.
+- `src/ui/reparto.test.ts`: la lámpara que espera sin buscar al otro lado y
+  sube a la franja libre de debajo de la barra buscándolo (el caso de
+  1280 × 800 con el dedo), y `trasladar` —en su sitio si no pisa, al lado en su
+  fila sin estrecharse, debajo de lo que la estorba y esperar si no cabe—.
+
+### Lo medido
+
+Con lo más largo que lleva cada cosa, el reactor de Tenerife Norte en Taguato
+(el diagnóstico aparte de la tanda, que dice qué decide el reparto y qué pisa
+cada pieza donde la pone la hoja):
+
+- **Antes** (main en bcb172d4): con los tres a la vez, la lámpara esperaba de
+  fuera en 1280 × 800 y en 1024 × 600 con el dedo (el aviso, apoyado en el
+  cuadro, le quitaba la fila); con la pantalla en grande del teléfono de
+  915 × 412 esperaba con el aviso y con el subtítulo (sobre el tren, los
+  aerofrenos y la vuelta al avión); y la radio esperaba en la tablet de
+  900 × 600, de fuera y en cabina, en las tres maneras, sobre la vuelta al
+  avión y el parte.
+- **Después**: la lámpara se ve en todas. En 1280 × 800 con el dedo sube a la
+  franja de debajo de la barra; en 1024 × 600 con el dedo y en el teléfono de
+  864 × 330, de fuera con el aviso, se recoge a su dibujo al lado de él; con la
+  pantalla en grande se ve, en la fila que la pantalla le cede, en 915 × 412,
+  864 × 330 y 800 × 360. La radio, en 900 × 600, baja
+  debajo de la vuelta al avión de fuera y se queda en su fila, más a la
+  derecha, en cabina.
+- **`npm run carteles`**, con la cuenta nueva: **antes** (main en bcb172d4),
+  1067 de 1076. La lámpara esperaba con los tres a la vez en 900 × 600 de
+  fuera, en 1024 × 600 con el dedo de fuera y en 600 × 900 de pie, y con la
+  pantalla en grande de los cuatro teléfonos, con el aviso y con el subtítulo;
+  la radio esperaba con el subtítulo solo en 900 × 600, de fuera y en cabina,
+  y en 600 × 900 de pie en cabina. **Después**, **1076 de 1076**: las 1074 de
+  H28f y dos nuevas, el pasaje de pie en 400 × 780 y en 565 × 641, sin un
+  solape en 25 s. `npm run acceso` y `npm run toque` dan 90 de 90 y 91 de 91,
+  como antes. Y vitest, 10456 de 10456 (29 saltadas, como siempre).
+- **Lo que cuesta**, con `scripts/medir-reparto.mjs` (1024 × 600 con el dedo,
+  CPU ×4, el JAZ 90 en el aire):
+  - **quieto**, 0,09 ms por fotograma: seis repartos en cinco segundos;
+  - **como un vuelo** (una frase cada tres segundos, el aviso y la lámpara los
+    del juego), **0,06 ms por fotograma**: 13 repartos de 2,6 ms en doce
+    segundos (0,15 con un vitest entero corriendo a la vez);
+  - **con muchos cambios** (una frase cada 400 ms, el aviso y la lámpara cada
+    segundo y medio y la cámara dentro y fuera cada cuatro), **1,1 ms por
+    fotograma**: 150 repartos de 3,0 ms en doce segundos. Con la firma de
+    antes, que leía `innerWidth`, 5,9;
+  - cada reparto se lleva unos 3 ms, un quinto de un fotograma de sesenta, y
+    la maqueta que el juego dejó pendiente, que el navegador hace igual al
+    pintar, otros 4 a 7. De los 2,3 ms de guion de un reparto sin cambios, 1,1
+    son el `querySelectorAll` de lo que se toca sobre la página entera (111
+    elementos entre miles, casi todos del dibujo del cuadro), 0,3 el filtro y
+    0,2 las cajas.
+
+### Lo que cuesta, y lo que queda
+
+- **Con la pantalla en grande, el subtítulo más largo sigue esperando** si
+  hay lámpara o va solo: la fila que tiene encima de la pantalla es de una
+  línea (`--fila-del-subtitulo`) y el más largo va en dos. Sale al quitar la
+  pantalla grande, y uno de una línea cabe.
+- **La lámpara recogida no lleva la orden escrita**: donde entera no cabe al
+  lado del aviso, se queda en la luz y la fila de aviones, y la orden la dice
+  la torre por la radio. Quien juega sin sonido la lee cuando se apaga el
+  aviso.
+- **La radio trasladada puede quedar lejos de la barra**, debajo de la vuelta
+  al avión: no tapa nada y se lee, pero ya no va con sus botones. Solo pasa
+  antes de arrancar, que es cuando están la vuelta y el parte.
+- **Un reparto sigue costando unos 3 ms a ×4.** En un vuelo son 0,06 ms por
+  fotograma, muy por debajo del milisegundo; con cambios a cada rato, 1,1. Lo
+  siguiente sería no buscar lo que se toca en la página entera en cada reparto
+  —1,1 ms de los 2,3 de guion— sino guardar la lista entre uno y otro; pero
+  entonces un mando nuevo no contaría hasta que algo la rehiciera, y lo que se
+  toca sale de la página precisamente para que entre solo. No en esta tanda.

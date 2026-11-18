@@ -1168,8 +1168,10 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     const to = m.torre;
     comprobar(
       `${aqui}: la orden de la torre usa más de medio hueco`,
-      m.sinLetras || to.lineas === 1 || to.ancho > to.hueco / 2,
-      `${to.lineas} línea${to.lineas === 1 ? "" : "s"}, ${to.ancho} px de un hueco de ${to.hueco}`,
+      m.sinLetras || to.recogida || to.lineas === 1 || to.ancho > to.hueco / 2,
+      to.recogida
+        ? `recogida a su dibujo para caber con el aviso (${to.ancho} px): la orden la dice la torre`
+        : `${to.lineas} línea${to.lineas === 1 ? "" : "s"}, ${to.ancho} px de un hueco de ${to.hueco}`,
       "con left y translate maquetaba en medio hueco y la orden se partía en tres líneas",
     );
     const toPisa = [...to.redondos, ...to.rincon, ...(to.subtitulo ? ["el subtítulo"] : [])];
@@ -1628,8 +1630,9 @@ const CALCOS = ["guyrami", "tuka", "taguato", "taguato-ruvicha"];
  *
  * Lo que espera (`lee-espera`, escondido sin dejar su sitio) no cuenta como
  * pisado: esperar es la respuesta cuando no hay sitio. Pero **el aviso no
- * espera nunca**, y el subtítulo solo y la lámpara con el subtítulo se tienen
- * que ver: si no, esconderlo todo pasaría la cuenta.
+ * espera nunca, ni la lámpara**, que es seguridad —con el subtítulo, con el
+ * aviso y con la pantalla en grande (H28g)—, y el subtítulo solo se tiene que
+ * ver: si no, esconderlo todo pasaría la cuenta.
  */
 async function mirarLoQueSeLee(page, donde) {
   /*
@@ -1695,7 +1698,7 @@ async function mirarLoQueSeLee(page, donde) {
       "un mando tapado, aunque sea a medias y deje pasar el toque, es un mando que no se encuentra",
     );
     comprobar(
-      `${aqui}: el aviso no espera nunca, y el subtítulo solo y la lámpara se ven`,
+      `${aqui}: el aviso y la lámpara no esperan nunca, y el subtítulo solo y la radio se ven`,
       perdidos.length === 0,
       perdidos.join(" · ") || "se ven",
       "esperar es para cuando no cabe todo, no para no tener que colocar nada",
@@ -1868,10 +1871,20 @@ async function medirLoQueSeLee([estado, ORDEN_LARGA, vista]) {
    */
   if (!sinLetras && estado === "el subtítulo solo" && vista !== "grande" && !seVe(hint))
     perdidos.push("el subtítulo espera");
-  // Con la pantalla en grande tampoco la lámpara, por lo mismo: ver arriba y
-  // la enmienda H28f del ADR 0030, «Lo que queda».
-  if (estado === "la lámpara y el subtítulo" && vista !== "grande" && !seVe(torre))
-    perdidos.push("la lámpara espera");
+  /*
+   * **Y la lámpara no espera**: es seguridad. Ni con el subtítulo ni con el
+   * aviso —va detrás de él y delante de todo lo demás—, ni con la pantalla en
+   * grande, que le cede lo que ella mide (ADR 0030, enmienda H28g).
+   */
+  if (conTorre && !seVe(torre)) perdidos.push("la lámpara espera");
+  /*
+   * **Y la radio, con el subtítulo solo, se ve**: vive en la barra, y antes
+   * de arrancar su sitio caía sobre la vuelta al avión y el parte y esperaba
+   * —y esperando se iba sin que nadie la viera—. Ahora se lleva entera a
+   * donde quepa (H28g).
+   */
+  if (!sinLetras && estado === "el subtítulo solo" && radio && !seVe(radio))
+    perdidos.push("la radio espera");
   // Y todo como estaba, para la vista siguiente.
   hud.classList.remove("hud--avisando");
   aviso.classList.remove("aviso-hud--visible");
@@ -2039,6 +2052,9 @@ async function medirAvisoYLampara() {
       ancho: Math.round(t.width),
       hueco: Math.round(hueco),
       lineas: sinLetras ? 1 : lineas(orden),
+      // Recogida a su dibujo no lleva la orden escrita: ver «la lámpara no
+      // espera» en `ui/reparto.ts` (H28g).
+      recogida: torre.classList.contains("lee-recogida"),
       redondos: pisados(t, redondos),
       rincon: pisados(t, rincon),
       subtitulo: conSub && pisa(t, h),
@@ -2231,6 +2247,104 @@ async function medirAvisoYLampara() {
     await mirarLoQueSeLee(page, "taguato 600×900 de pie");
   }
   await page.close();
+}
+
+/*
+ * **Y de pie con el dedo, la pantalla de vuelo que hay: la del pasaje**
+ * (ADR 0030, enmienda H28g). De pie y con el dedo no se pilota —el cartel de
+ * girar la pantalla tapa el vuelo, y arriba se mira que esté—, pero de pasaje
+ * no se pilota y el cartel no sale: ahí se vuela de pie, con quien habla, sus
+ * láminas, el subtítulo y los botones de la pausa, el cinturón y el menú. Se
+ * mira lo mismo que en el vuelo, con la misma regla de lo que se toca: que
+ * nada de lo que se lee lo pise ni se pisen entre sí, cada segundo del primer
+ * rato del vuelo, que es cuando más se habla.
+ */
+for (const [ancho, alto] of [
+  [400, 780],
+  [565, 641],
+]) {
+  const donde = `pasaje ${ancho}×${alto} de pie con el dedo`;
+  const page = await navegador.newPage({
+    viewport: { width: ancho, height: alto },
+    hasTouch: true,
+    isMobile: true,
+  });
+  try {
+    await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
+    await page.goto(`${BASE}/?inicio=3&fecha=2026-12-15`);
+    const arranco = await page
+      .waitForFunction(() => !!globalThis.__oga?.inicio?.()?.estado, null, { timeout: 240000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!arranco) {
+      comprobar(`${donde}: el pasaje arrancó`, false, "no arrancó en 240 s", "");
+      continue;
+    }
+    await page.evaluate(() => globalThis.__ogaEmpezar?.());
+    await page.waitForTimeout(1500);
+    const malos = new Set();
+    let leidos = 0;
+    for (let s = 0; s < 25; s++) {
+      const m = await page.evaluate(medirElPasajeDePie);
+      leidos = Math.max(leidos, m.leidos);
+      for (const x of m.malos) malos.add(x);
+      await page.waitForTimeout(1000);
+    }
+    comprobar(
+      `${donde}: sin el cartel de girar, nada de lo que se lee pisa lo que se toca ni se pisan entre sí`,
+      malos.size === 0 && leidos > 0,
+      [...malos].join(" · ") ||
+        (leidos ? `ni un solape en 25 s, con hasta ${leidos} cosas que se leen a la vez` : "no se leyó nada: no se midió"),
+      "de pasaje el teléfono de pie es tan bueno como tumbado, y un mando tapado es un mando que no se encuentra",
+    );
+  } finally {
+    await page.close();
+  }
+}
+
+/** Corre en la página: lo que se lee del pasaje de pie contra lo que se toca. */
+function medirElPasajeDePie() {
+  const SE_TOCA =
+    'button:not(:disabled), [role="button"], a[href], input, select, textarea, ' +
+    "[data-tocable], [data-touch], [data-tel-grande], [data-mcp-rueda], [data-mcp-alt], " +
+    "[data-radio-mando], [data-explica]:not([data-explica-fondo])";
+  const seVe = (el) => {
+    if (!el || el.closest("[hidden]")) return false;
+    if (!el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return false;
+    const r = el.getBoundingClientRect();
+    if (r.right <= 0 || r.bottom <= 0 || r.left >= innerWidth || r.top >= innerHeight) return false;
+    return r.width > 2 && r.height > 2;
+  };
+  const pisa = (a, b) =>
+    Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+    Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+  const nombre = (el) =>
+    el.dataset?.hud ?? (String(el.className?.baseVal ?? el.className).split(" ")[0] || el.tagName.toLowerCase());
+  const SE_LEE = [
+    ["quien habla", ".inicio__tarjeta"],
+    ["la lámina", '[data-hud="historia"]'],
+    ["el subtítulo", '[data-hud="hint"]'],
+    ["el tutor", '[data-hud="tutor"]'],
+    ["la tarjeta de la orden", '[data-hud="senal"]'],
+    ["la radio", '[data-hud="radio"]'],
+  ];
+  const leidos = SE_LEE.map(([que, q]) => [que, document.querySelector(q)]).filter(
+    ([, el]) => seVe(el) && (el.textContent?.trim() || el.querySelector("img, svg")),
+  );
+  const tocables = [...document.querySelectorAll(SE_TOCA)].filter(
+    (t) => seVe(t) && !leidos.some(([, l]) => l.contains(t) || t.contains(l)),
+  );
+  const malos = [];
+  for (const [que, el] of leidos) {
+    const r = el.getBoundingClientRect();
+    const sobre = [...new Set(tocables.filter((t) => pisa(r, t.getBoundingClientRect())).map(nombre))];
+    if (sobre.length) malos.push(`${que} sobre ${sobre.join(", ")}`);
+  }
+  for (let i = 0; i < leidos.length; i++)
+    for (let j = i + 1; j < leidos.length; j++)
+      if (pisa(leidos[i][1].getBoundingClientRect(), leidos[j][1].getBoundingClientRect()))
+        malos.push(`${leidos[i][0]} y ${leidos[j][0]}`);
+  return { malos, leidos: leidos.length };
 }
 
 function medirLaCarta() {

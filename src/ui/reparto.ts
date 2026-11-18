@@ -70,7 +70,38 @@ export interface PiezaQueSeLee {
       se queda con su dibujo y deja la frase, que el dibujo es lo esencial
       (regla 2) y la frase la dice también la instructora. */
   readonly recoge?: string;
+  /** Si vive en el hilo de una caja de la hoja —la radio, en la barra— y,
+      cuando pisa, se lleva entera a donde quepa con `translate`, sin dejar su
+      hueco: lo que va a su lado en la barra se toca y no se mueve por ella. */
+  readonly traslada?: boolean;
+  /** Lo que es seguridad y no puede quedarse esperando: la lámpara. Lo que
+      cede alto (`LO_QUE_CEDE`) se encoge para hacerle sitio, y si hacia donde
+      crece no cabe, busca fila al otro lado (`Colocable.alOtroLado`). */
+  readonly pideSitio?: boolean;
 }
+
+/**
+ * **Lo que se toca y cede alto** a lo que no puede esperar: la pantalla en
+ * grande del teléfono, que llena todo lo que hay entre la barra y los
+ * pulgares. Con ella puesta no queda fila para la lámpara, y la lámpara es
+ * seguridad: mientras está encendida, la pantalla se queda lo que ella mide
+ * más baja, como ya se queda una fila más baja con el aviso
+ * (`--fila-del-aviso` en la hoja). Lo mide el reparto y lo escribe en
+ * `variable`, en píxeles del HUD; la hoja se lo quita a su alto.
+ */
+export interface LoQueCede {
+  readonly que: string;
+  readonly sel: string;
+  readonly variable: string;
+}
+
+export const LO_QUE_CEDE: readonly LoQueCede[] = [
+  {
+    que: "pantalla en grande",
+    sel: '.cuadro.cuadro--grande > [data-hud="tablero"]',
+    variable: "--cede-el-grande",
+  },
+];
 
 /** La clase de lo que se ha recogido para caber. */
 export const RECOGIDA = "lee-recogida";
@@ -84,11 +115,18 @@ export const LO_QUE_SE_LEE: readonly PiezaQueSeLee[] = [
     espera: false,
     encendida: (el) => el.classList.contains("aviso-hud--visible"),
   },
-  { que: "torre", sel: '[data-hud="torre"]', mueve: true, espera: true },
+  {
+    que: "torre",
+    sel: '[data-hud="torre"]',
+    mueve: true,
+    espera: true,
+    pideSitio: true,
+    recoge: RECOGIDA,
+  },
   { que: "senal", sel: '[data-hud="senal"]', mueve: false, espera: true, recoge: RECOGIDA },
   { que: "subtitulo", sel: '[data-hud="hint"]', mueve: true, espera: true },
   { que: "tutor", sel: '[data-hud="tutor"]', mueve: false, espera: true },
-  { que: "radio", sel: '[data-hud="radio"]', mueve: false, espera: true },
+  { que: "radio", sel: '[data-hud="radio"]', mueve: false, espera: true, traslada: true },
 ];
 
 /** Lo que se deja entre dos cosas: la separación de uso de las filas. */
@@ -143,6 +181,9 @@ export interface Colocable {
       en el suyo, la que manda más se pone en el de la que manda menos. */
   readonly sitios: readonly number[];
   readonly mueve: boolean;
+  /** Si, cuando hacia donde crece no cabe, se busca también al otro lado:
+      lo que no puede esperar (la lámpara). Ver `colocar`. */
+  readonly alOtroLado?: boolean;
 }
 
 /** Una prueba: los dos bordes y la fila (el borde de arriba o el de abajo). */
@@ -193,8 +234,24 @@ export function colocar(
   const haciaDondeCrece = ocupado
     .map((o) => (arriba ? o.aba + RESPIRO : o.arr - RESPIRO))
     .filter((f) => (arriba ? f > filaNatural : f < filaNatural));
+  /*
+   * **Y al otro lado, lo que no puede esperar** (H28g). La lámpara, con el
+   * aviso encendido, va en el sitio del subtítulo, y en las tablets con el
+   * dedo el aviso sube con el cuadro y le quita esa fila: hacia abajo está el
+   * cuadro y la lámpara esperaba, con la franja de debajo de la barra libre.
+   * Se busca ahí, la fila más cerca de la suya primero, justo debajo de lo
+   * que hay encima: así no se mete en aquello en lo que se apoya.
+   */
+  const alOtroLado = p.alOtroLado
+    ? ocupado
+        .map((o) => (arriba ? o.aba + RESPIRO : o.arr - RESPIRO))
+        .filter((f) =>
+          arriba ? f < filaNatural && f >= limites.arr : f > filaNatural && f <= limites.aba,
+        )
+        .sort((a, b) => (arriba ? b - a : a - b))
+    : [];
   const filas: number[] = [];
-  for (const f of [filaNatural, ...orden(p.sitios), ...orden(haciaDondeCrece)])
+  for (const f of [filaNatural, ...orden(p.sitios), ...orden(haciaDondeCrece), ...alOtroLado])
     if (!filas.some((g) => Math.abs(g - f) <= 1)) filas.push(f);
   for (const fila of filas) {
     let alto = p.natural.aba - p.natural.arr;
@@ -219,10 +276,58 @@ export function colocar(
   return null;
 }
 
+/**
+ * **Dónde se lleva entera una pieza que no se estrecha** —la radio, que vive
+ * en la barra—: la misma caja, con el mismo ancho y el mismo alto, en el
+ * primer sitio libre de su fila, de la de una que va detrás o de una de
+ * debajo de lo ya puesto, lo más cerca de donde la pone la hoja. Sin
+ * `probar`: trasladar no cambia su maqueta, así que la caja se sabe.
+ *
+ * Devuelve la caja donde queda, o `null` si no cabe en ninguna: espera.
+ */
+export function trasladar(
+  natural: Caja,
+  ancla: "arriba" | "abajo",
+  sitios: readonly number[],
+  ocupado: readonly Caja[],
+  limites: Caja,
+): Caja | null {
+  const ancho = natural.der - natural.izq;
+  const alto = natural.aba - natural.arr;
+  const arriba = ancla === "arriba";
+  const filaNatural = arriba ? natural.arr : natural.aba;
+  const dentro = (f: number): boolean =>
+    arriba ? f >= limites.arr && f + alto <= limites.aba : f <= limites.aba && f - alto >= limites.arr;
+  const haciaDondeCrece = ocupado
+    .map((o) => (arriba ? o.aba + RESPIRO : o.arr - RESPIRO))
+    .filter((f) => (arriba ? f > filaNatural : f < filaNatural))
+    .sort((a, b) => (arriba ? a - b : b - a));
+  const filas: number[] = [];
+  for (const f of [filaNatural, ...sitios, ...haciaDondeCrece])
+    if (dentro(f) && !filas.some((g) => Math.abs(g - f) <= 1)) filas.push(f);
+  for (const fila of filas) {
+    const [arr, aba] = arriba ? [fila, fila + alto] : [fila - alto, fila];
+    const tramos = tramosLibres(limites.izq, limites.der, arr, aba, ocupado).filter(
+      ([i, d]) => d - i >= ancho,
+    );
+    // El tramo más cerca de donde la quiere la hoja, y dentro de él, lo más
+    // cerca de ahí.
+    let mejor: Caja | null = null;
+    for (const [i, d] of tramos) {
+      const izq = Math.min(Math.max(natural.izq, i), d - ancho);
+      const c: Caja = { izq, der: izq + ancho, arr, aba };
+      if (ocupado.some((o) => pisa(c, o))) continue;
+      if (!mejor || Math.abs(izq - natural.izq) < Math.abs(mejor.izq - natural.izq)) mejor = c;
+    }
+    if (mejor) return mejor;
+  }
+  return null;
+}
+
 /** La clase de lo que espera: escondido sin dejar su sitio. */
 export const ESPERA = "lee-espera";
 
-const PROPIEDADES = ["left", "right", "top", "bottom"] as const;
+const PROPIEDADES = ["left", "right", "top", "bottom", "translate"] as const;
 
 function cajaDe(r: DOMRect): Caja {
   return { izq: r.left, arr: r.top, der: r.right, aba: r.bottom };
@@ -235,7 +340,7 @@ function cajaDe(r: DOMRect): Caja {
  * velocidades, y su caja subía por encima del cuadro hasta la fila del aviso,
  * que se quedaba sin sitio donde no había nada. `null` si no se ve nada.
  */
-export function cajaQueSeVe(el: Element): Caja | null {
+export function cajaQueSeVe(el: Element, svgs?: Map<Element, DOMRect>): Caja | null {
   const r = el.getBoundingClientRect();
   let c: Caja = {
     izq: Math.max(0, r.left),
@@ -244,7 +349,13 @@ export function cajaQueSeVe(el: Element): Caja | null {
     aba: Math.min(innerHeight, r.bottom),
   };
   for (let svg = el.parentElement?.closest("svg"); svg; svg = svg.parentElement?.closest("svg")) {
-    const s = svg.getBoundingClientRect();
+    // Las piezas que se explican del cuadro son decenas dentro del mismo
+    // dibujo: su caja se mide una vez por reparto.
+    let s = svgs?.get(svg);
+    if (!s) {
+      s = svg.getBoundingClientRect();
+      svgs?.set(svg, s);
+    }
     c = {
       izq: Math.max(c.izq, s.left),
       arr: Math.max(c.arr, s.top),
@@ -274,6 +385,32 @@ function anclaDe(el: HTMLElement): "arriba" | "abajo" {
 }
 
 /**
+ * **Lo que cede alto, antes de medir lo demás**: lo que miden de alto las
+ * piezas encendidas que piden sitio (la lámpara), con su respiro, a cada cosa
+ * de `LO_QUE_CEDE` que esté a la vista; nada si no hay ninguna. Se escribe
+ * solo si cambia, que escribirlo obliga a maquetar otra vez.
+ */
+function cederAlto(
+  raiz: HTMLElement,
+  vivas: ReadonlyArray<{ d: PiezaQueSeLee; el: HTMLElement }>,
+  escala: number,
+): void {
+  for (const c of LO_QUE_CEDE) {
+    const el = raiz.querySelector(c.sel);
+    const yaCede = raiz.style.getPropertyValue(c.variable);
+    if (!el && !yaCede) continue;
+    let alto = 0;
+    if (el && seVe(el))
+      for (const { d, el: pieza } of vivas)
+        if (d.pideSitio) alto += pieza.getBoundingClientRect().height + RESPIRO;
+    const valor = alto > 0 ? `${Math.round(alto / escala)}px` : "";
+    if (valor === yaCede) continue;
+    if (valor) raiz.style.setProperty(c.variable, valor);
+    else raiz.style.removeProperty(c.variable);
+  }
+}
+
+/**
  * **Coloca lo que se lee**: lo mide donde lo pone la hoja, mide lo que se
  * toca, y en orden de prioridad deja cada cosa en su sitio, la cambia de sitio
  * o la deja esperando. Escribe en línea solo lo que mueve, y lo borra en la
@@ -296,19 +433,32 @@ export function repartirLoQueSeLee(raiz: HTMLElement): Record<string, string> {
     }
   }
   const vivas = piezas.filter(({ d, el }) => seVe(el) && (d.encendida?.(el) ?? true));
+  cederAlto(raiz, vivas, escala);
   const leidas = vivas.map(({ el }) => el);
-  const tocables = [...document.querySelectorAll<HTMLElement>(LO_QUE_SE_TOCA)]
-    .filter(
-      (el) =>
-        !leidas.some((l) => l.contains(el) || el.contains(l)) &&
-        seVe(el) &&
-        // Lo que no se ve —transparente o escondido por quien lo contiene—
-        // no es un mando que se tape.
-        (el.checkVisibility?.({ opacityProperty: true, visibilityProperty: true }) ?? true),
-    )
-    .map(cajaQueSeVe)
-    .filter((c): c is Caja => !!c);
+  /*
+   * Lo que se toca, de lo más barato a lo más caro (regla 6: esto corre en la
+   * tablet de gama media): primero lo que no pide estilo —escondido con
+   * `hidden`, o dentro de lo que se lee—; luego si se ve, con
+   * `checkVisibility`, que ya mira `display`, `visibility` y la opacidad de
+   * quien lo contiene; y solo entonces su caja, una vez. Lo que no se ve
+   * —transparente o escondido por quien lo contiene— no es un mando que se
+   * tape.
+   */
+  const svgs = new Map<Element, DOMRect>();
+  const tocables: Caja[] = [];
+  for (const el of document.querySelectorAll<HTMLElement>(LO_QUE_SE_TOCA)) {
+    if (el.closest("[hidden]")) continue;
+    if (leidas.some((l) => l.contains(el) || el.contains(l))) continue;
+    // Firefox 98 no lo tiene: ahí, la cuenta a mano.
+    const visible = el.checkVisibility?.({ opacityProperty: true, visibilityProperty: true });
+    if (visible === false || (visible === undefined && !seVe(el))) continue;
+    const c = cajaQueSeVe(el, svgs);
+    if (c) tocables.push(c);
+  }
   const naturales = new Map(vivas.map(({ el }) => [el, cajaDe(el.getBoundingClientRect())]));
+  // Lo que se traslada vive en el hilo de su caja, sin bordes propios: crece
+  // hacia abajo, como la barra en la que va.
+  const anclas = new Map(vivas.map(({ d, el }) => [el, d.traslada ? "arriba" : anclaDe(el)]));
   const limites: Caja = { izq: 0, arr: 0, der: innerWidth, aba: innerHeight };
   const ocupado: Caja[] = [...tocables];
   const hecho: Record<string, string> = {};
@@ -317,7 +467,7 @@ export function repartirLoQueSeLee(raiz: HTMLElement): Record<string, string> {
     if (!natural) return;
     const cs = getComputedStyle(el);
     const px = (v: string): number => Number.parseFloat(v) || 0;
-    const ancla = anclaDe(el);
+    const ancla = anclas.get(el) ?? "arriba";
     // El bloque que la contiene, en píxeles de pantalla: lo que hay de su
     // caja a cada borde, menos lo que la hoja le pone de distancia y margen.
     const cbIzq = natural.izq - (px(cs.left) + px(cs.marginLeft)) * escala;
@@ -328,7 +478,7 @@ export function repartirLoQueSeLee(raiz: HTMLElement): Record<string, string> {
     // Los sitios de las que van detrás y se mueven, en la misma columna.
     const sitios = vivas
       .slice(i + 1)
-      .filter((o) => o.d.mueve && anclaDe(o.el) === ancla)
+      .filter((o) => o.d.mueve && anclas.get(o.el) === ancla)
       .map((o) => naturales.get(o.el))
       .filter((c): c is Caja => !!c && Math.min(c.der, hueco[1]) - Math.max(c.izq, hueco[0]) > 1)
       .map((c) => (ancla === "arriba" ? c.arr : c.aba));
@@ -345,12 +495,27 @@ export function repartirLoQueSeLee(raiz: HTMLElement): Record<string, string> {
       }
       return cajaDe(el.getBoundingClientRect());
     };
-    const sitio = colocar(
-      { natural, hueco, ancla, sitios, mueve: d.mueve },
-      ocupado,
-      limites,
-      probar,
-    );
+    if (d.traslada) {
+      const libre = !ocupado.some((o) => pisa(natural, o));
+      const llevada = libre ? natural : trasladar(natural, ancla, sitios, ocupado, limites);
+      if (llevada) {
+        if (llevada !== natural) {
+          el.dataset.reparto = "1";
+          el.style.translate = `${(llevada.izq - natural.izq) / escala}px ${(llevada.arr - natural.arr) / escala}px`;
+        }
+        ocupado.push(llevada);
+        hecho[d.que] = llevada === natural ? "en su sitio" : "trasladada";
+        return;
+      }
+    }
+    const sitio = d.traslada
+      ? null
+      : colocar(
+          { natural, hueco, ancla, sitios, mueve: d.mueve, alOtroLado: d.pideSitio },
+          ocupado,
+          limites,
+          probar,
+        );
     if (sitio) {
       if (sitio === natural && el.dataset.reparto) {
         for (const p of PROPIEDADES) el.style.removeProperty(p);
@@ -365,12 +530,31 @@ export function repartirLoQueSeLee(raiz: HTMLElement): Record<string, string> {
       delete el.dataset.reparto;
     }
     if (d.recoge) {
+      /*
+       * Recogida, se vuelve a buscar sitio con lo que mide así: la lámpara sin
+       * la frase de la orden es la luz y la fila de aviones, una línea, y cabe
+       * en la franja que deja el aviso cuando entera no cabía (H28g).
+       */
       el.classList.add(d.recoge);
       const recogida = cajaDe(el.getBoundingClientRect());
-      if (!ocupado.some((o) => pisa(recogida, o))) {
-        ocupado.push(recogida);
+      const sitioRecogida = colocar(
+        { natural: recogida, hueco, ancla, sitios, mueve: d.mueve, alOtroLado: d.pideSitio },
+        ocupado,
+        limites,
+        probar,
+      );
+      if (sitioRecogida) {
+        if (sitioRecogida === recogida && el.dataset.reparto) {
+          for (const p of PROPIEDADES) el.style.removeProperty(p);
+          delete el.dataset.reparto;
+        }
+        ocupado.push(sitioRecogida);
         hecho[d.que] = "recogida";
         return;
+      }
+      if (el.dataset.reparto) {
+        for (const p of PROPIEDADES) el.style.removeProperty(p);
+        delete el.dataset.reparto;
       }
       el.classList.remove(d.recoge);
     }
@@ -400,6 +584,24 @@ export class Repartidor {
   private forzar = false;
   private firma = "";
   private readonly alCambiarDeTamano = (): void => this.pedir(true);
+  /**
+   * **Lo que se lleva**, para que un banco lo mida con la CPU frenada (regla
+   * 6): los fotogramas en que se miró la firma, las veces que se repartió y
+   * los milisegundos de las dos cosas. Dos lecturas del reloj por fotograma.
+   *
+   * Con `separar`, que solo pone el banco, antes de repartir se hace la
+   * maqueta que el juego dejó pendiente y se cuenta aparte (`msMaqueta`): esa
+   * la paga el navegador igual al pintar, y lo que es del reparto es lo demás.
+   */
+  readonly gasto = {
+    miradas: 0,
+    repartos: 0,
+    ms: 0,
+    msReparto: 0,
+    msMaqueta: 0,
+    maximo: 0,
+    separar: false,
+  };
 
   constructor(private readonly raiz: HTMLElement) {}
 
@@ -432,11 +634,11 @@ export class Repartidor {
     this.pedido = 0;
   }
 
-  /** Que se reparta ya, con lo que haya. */
-  ahora(): void {
+  /** Que se reparta ya, con lo que haya. Devuelve lo que se ha decidido. */
+  ahora(): Record<string, string> {
     this.firma = this.firmaDeAhora();
     this.forzar = false;
-    repartirLoQueSeLee(this.raiz);
+    return repartirLoQueSeLee(this.raiz);
   }
 
   /** Que se reparta en el fotograma que viene; `forzar` aunque no cambie la firma. */
@@ -445,17 +647,39 @@ export class Repartidor {
     if (this.pedido || typeof requestAnimationFrame === "undefined") return;
     this.pedido = requestAnimationFrame(() => {
       this.pedido = 0;
+      const t0 = performance.now();
       const firma = this.firmaDeAhora();
-      if (!this.forzar && firma === this.firma) return;
-      this.forzar = false;
-      this.firma = firma;
-      repartirLoQueSeLee(this.raiz);
+      const g = this.gasto;
+      g.miradas++;
+      if (this.forzar || firma !== this.firma) {
+        this.forzar = false;
+        this.firma = firma;
+        if (g.separar) {
+          const tm = performance.now();
+          this.raiz.getBoundingClientRect();
+          g.msMaqueta += performance.now() - tm;
+        }
+        const t1 = performance.now();
+        repartirLoQueSeLee(this.raiz);
+        const ms = performance.now() - t1;
+        g.repartos++;
+        g.msReparto += ms;
+        g.maximo = Math.max(g.maximo, ms);
+      }
+      g.ms += performance.now() - t0;
     });
   }
 
   /** Lo que se mira para saber si ha cambiado algo, sin maquetar. */
   private firmaDeAhora(): string {
-    const partes = [this.raiz.className, `${innerWidth}x${innerHeight}`];
+    /*
+     * Sin el tamaño de la ventana: leer `innerWidth` con la página por
+     * maquetar obliga a maquetar en el acto, y esto se mira en cada
+     * fotograma. Medido en la tablet (CPU ×4), era casi todo lo que costaba
+     * (ADR 0030, H28g). Un cambio de tamaño ya pide reparto por su cuenta
+     * (`resize`, y el `ResizeObserver` de la barra).
+     */
+    const partes = [this.raiz.className];
     for (const d of LO_QUE_SE_LEE) {
       const el = this.raiz.querySelector<HTMLElement>(d.sel);
       if (!el) continue;
