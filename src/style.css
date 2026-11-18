@@ -10253,22 +10253,23 @@ button.motor__tecla::after {
 
 /*
  * **Lo dibujado encima de la noche**, en «Rumbo de noche»: la rosa y el avión
- * en claro sobre el cielo oscuro; ámbar cuando el morro se fue de la marca, y
- * la marca en magenta, «lo que quiero», como en las pantallas. Ver
+ * en el blanco de «lo que tengo» sobre el cielo oscuro; en el ámbar de
+ * precaución cuando el morro se fue de la marca, y la marca en el magenta de
+ * «lo que quiero», como en las pantallas. Ver
  * `rosaDeNoche` en `ui/senal.ts`.
  */
 .senal__en-la-noche {
-  color: #e6ebf2;
-  fill: #e6ebf2;
+  color: var(--cabina-valor, #f2f5f7);
+  fill: var(--cabina-valor, #f2f5f7);
 }
 
 .senal__se-va {
-  color: #ffb020;
-  fill: #ffb020;
+  color: var(--cabina-precaucion, #ffb02e);
+  fill: var(--cabina-precaucion, #ffb02e);
 }
 
 .senal__marca {
-  fill: #e14fd8;
+  fill: var(--cabina-objetivo);
 }
 
 .senal__silueta {

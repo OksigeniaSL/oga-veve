@@ -381,10 +381,24 @@ sin texturas y sin dibujos de más por imagen.
 Al anochecer, la instructora pide el rumbo **desde donde se esté** a donde
 el río sigue —quien se apartó del río con luz tiene que llegar igual—, en
 magnético y de cinco en cinco, como lo diría quien va sentado al lado. Ese
-rumbo es el objetivo del vuelo (`aDondeVoy`): la marca de rumbo de la rosa
-del cuadro plano se va a él, y la pantalla de navegación de los de cristal
-lo enseña con su distancia. La medida es lo que el morro se aparta de la
-marca, cada paso: de media y lo más.
+rumbo es el objetivo del vuelo (`aDondeVoy`), y lo enseña el instrumento que
+lleve cada avión:
+
+| avión | dónde | qué |
+| --- | --- | --- |
+| los de cristal (JAZ 50 en adelante) | la rosa del cuadro plano y la pantalla de navegación en 3D | la marca magenta, que ya iba al objetivo del vuelo, con su distancia |
+| los de esferas (JAZ 20, JAZ 40) | el direccional del six-pack y el del panel en 3D | **la marca de rumbo, nueva**: la del direccional de una Cessna 172 o una Seneca, la que se pone con su botón |
+
+Desde el asiento de la avioneta el rumbo pedido no se veía en ningún sitio:
+el cuadro plano no se pinta en la vista de cabina (H26m) y el direccional del
+panel no llevaba marca. Ahora la llevan los dos, en magenta, en el borde de
+la rosa y girando con ella, **con la misma regla que la de los de cristal**
+—al objetivo del vuelo y, ya en el sitio, ninguna—, así que también sale en
+las misiones con la avioneta, apuntando a su sitio. La brújula del
+parabrisas, que lleva la misma cara, no: es un imán.
+
+La medida es lo que el morro se aparta de la marca, cada paso: de media y lo
+más.
 
 - **Se va**: más de diez grados tres segundos. Se dice una vez, con el dibujo
   del lado al que se fue; vuelve a poder decirse cuando el morro ha vuelto a
@@ -412,9 +426,10 @@ no cuesta nada. Si un día los lleva, baja con la deriva.
 ### Las frases
 
 Seis para la instructora, en `es-PY.ts` y en `en.ts`, cortas: presentar, el
-anochecer, se va, en la marca y las dos de llegar. Sin grabar: al final de
-`scripts/frases-para-grabar.mjs` (`DEL_RUMBO`); hasta entonces, la tarjeta y
-su texto, y la frase muda. El número del rumbo, el desvío y el cierre se
+anochecer, se va, en la marca y las dos de llegar. Sin grabar: entran solas
+en `scripts/frases-para-grabar.mjs` con las demás `ejercicio.*` —y el
+cierre con ellas, como el de la deriva—; hasta entonces, la tarjeta y su
+texto, y la frase muda. El número del rumbo, el desvío y el cierre se
 escriben y no se dicen. El guaraní, como está.
 
 ### Lo que se prueba

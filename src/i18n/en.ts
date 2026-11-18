@@ -1655,7 +1655,7 @@ export const EN: Dictionary = {
   "ejercicio.deriva.cierre": "In a crosswind, the nose points a little into the wind and the path runs straight",
   "ejercicio.deriva.grados": "{n}° into the wind",
   "ejercicio.rumbo.antes": "Follow the river: the sun has just set. Look how the water shines",
-  "ejercicio.rumbo.anochece": "It's night now and the river is gone. Keep the arrow still on the mark",
+  "ejercicio.rumbo.anochece": "It's night now and the river is fading. Keep the arrow still on the mark",
   "ejercicio.rumbo.seVa": "Off the mark. Come back gently, no rush",
   "ejercicio.rumbo.enLaMarca": "That's it! The arrow still on the mark",
   "ejercicio.rumbo.llegaste": "We made it! The dark strip beside the lights is the river",

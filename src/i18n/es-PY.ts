@@ -3623,7 +3623,7 @@ export const ES_PY = {
    * para decirlas en calma.
    */
   "ejercicio.rumbo.antes": "Seguí el río, que ya se puso el sol. Mirá cómo brilla el agua",
-  "ejercicio.rumbo.anochece": "Ya es de noche y el río no se ve. Dejá la flecha quieta en la marca",
+  "ejercicio.rumbo.anochece": "Ya es de noche y el río casi no se ve. Dejá la flecha quieta en la marca",
   "ejercicio.rumbo.seVa": "Se fue de la marca. Volvé despacito, sin apurarte",
   "ejercicio.rumbo.enLaMarca": "¡Eso! La flecha quieta en la marca",
   "ejercicio.rumbo.llegaste": "¡Llegamos! Lo oscuro al lado de las luces es el río",
