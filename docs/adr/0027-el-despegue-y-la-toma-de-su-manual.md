@@ -4050,7 +4050,53 @@ saltadas y ninguna en rojo.
 
 ### Volado en el navegador
 
-Las tiradas de esta tanda, en curso al escribir esto: se apuntan al acabar.
+`verificar-vuelo-entero.mjs tenerife-norte taguato 1 jaz-90`, dos tiradas el
+18-11-2026, puerto 5688, con la traza del ala, que ahora lleva también lo que
+pone el automático por el viraje (`mv`). Antes, las de H29g con el mismo banco.
+
+| JAZ 90, Los Rodeos ×1 | Arco: pedido / pico | Puerta (media de 5 s) | Toma | Comprobaciones |
+|---|---|---|---|---|
+| H29g, 1.ª | 4,89 / 5,13 a 27° | 3,2 | 1,4 a 578 | 62 de 62 |
+| H29g, 2.ª | 4,90 / 5,40 a 27° | 3,1 | 0,99 a 376 | 62 de 62 |
+| Ahora, 1.ª | 4,89 / 5,28 a 24° | 2,6 | 0,81 a 380 | 61 de 62 |
+| Ahora, 2.ª | 4,93 / **6,69** a 24°, tras una ascendente | 2,8 | 0,68 a **724** | 60 de 63 |
+
+**En el arco, la compensación hizo lo suyo y lo que queda no es del ala
+inclinada.** En la primera, el automático puso por el viraje hasta 2,2° de
+morro (con todo fuera y de 24° a 28° de alabeo, lo que dice la cuenta) desde
+antes de empezar a bajar; el banco pidió de subir 0,4 a bajar 4,89 m/s en
+cinco segundos y medio, y el avión se quedó unos diez segundos bajando de 5,0
+a 5,3 con lo pedido en 4,89: es el lazo del medio, lento, después de un cambio grande de lo
+pedido (H29b), con la carga ya en la del viraje, 1,09–1,12. En la segunda, una
+ascendente de unos 3,5 m/s (`ma` hasta −3,1°) hizo bajar el morro a −7°, y al acabarse el avión cayó a 6,69 m/s con la
+carga en 0,81 durante dos segundos, mientras el morro volvía al ritmo del tope
+de carga; lo del viraje se quedó quieto porque lo del aire se comía el tope. Es
+la ascendente de H29b, no el viraje. Las dos puertas, bajando 2,6 y 2,8 m/s.
+
+**La toma larga de la segunda no es de esto.** Llegó a la puerta 3,1 m alto y
+a 125 kt, siete por encima de la Vref; empezó a recoger a 12,6 m de ruedas
+bajando 4 m/s a 63 m del umbral y tocó a 0,68 m/s a 724 m, pasada la zona. En
+los últimos treinta segundos de la final el automático no puso más de seis
+centésimas de grado por el viraje. Es la flotada de la recogida del banco,
+como la de 578 m de H29g. Lo que falla en las dos, «suenan los anuncios de
+Jazlyn» (no sonó `comandante.despegue`), es de la megafonía.
+
+`gran-canaria taguato 1 jaz-90`, con veinte nudos de cara (025/20): **63 de
+63**, la puerta bajando 3,3 m/s a 133 kt y la toma a 1,53 m/s a 417 m (H29a:
+2,18 a 230). En el arco, con lo pedido en 4,57, el avión fue y vino entre
+bajar 2,6 y 6,2 m/s con el ala de 18° a 22°: el morro de aire quieto bajó a −6°
+persiguiéndolo, con la indicada yendo de 128 a 132 kt y lo del aire que sube
+casi quieto (`ma` de −1° a 0,4°). Lo del viraje estuvo quieto en lo suyo, de
+0,9° a 1,5°: es la racha de cara de Gando con el lazo del medio, que esto no
+toca.
+
+`OGA_GPU=1 verificar-despegue.mjs tenerife-norte guyrami "" jaz-90` y
+`verificar-vuelo-entero.mjs tenerife-norte guyrami 3 jaz-20` no se volaron: el
+candado del navegador lo tuvieron otras tandas de 00:40 a 00:47 y de 01:17 a
+01:47, la de Gran Canaria acabó a las 02:07 y se acababa el tiempo de la tanda.
+Los dos vuelan el modelo sencillo, donde esto no entra (`subirCon`), y el JAZ 20
+del modelo completo, en la mesa, se aparta 14 ft en un viraje de treinta grados
+sin compensar y 12 compensando.
 
 ### Lo que no
 
@@ -4068,3 +4114,8 @@ Las tiradas de esta tanda, en curso al escribir esto: se apuntan al acabar.
 - **La nivelada** de los peldaños de abajo no le pasa al automático el aire
   que sube (`subeElAire`), como sí la llamada del automático; el ángulo, ahora
   sí.
+- **Lo que no se voló en el navegador**, arriba: el despegue de Guyrami y el
+  JAZ 20.
+- **El lazo del medio** después de un cambio grande de lo pedido, y con la
+  racha horizontal (Los Rodeos, 1.ª; Gran Canaria): de H29b, sigue.
+- **La megafonía**: en las dos de Los Rodeos no sonó `comandante.despegue`.
