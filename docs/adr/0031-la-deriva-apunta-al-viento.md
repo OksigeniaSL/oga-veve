@@ -1355,3 +1355,271 @@ tarjeta de las dos agujas; y la vista no vuelve sola.
 - **El desvío propio del avión** y su tablilla de compensación, sin hacer.
 - **Las frases, sin grabar**: siete con voz (ver «Las frases»). Hasta
   entonces, mudas en Brave y en Linux.
+
+## Enmienda H26r (18-11-2026): el giróscopo que se va, y «Poné en hora el giróscopo»
+
+La otra mitad de la línea de #51 que H26q dejó escrita en «Lo que queda»:
+«la brújula que baila en los virajes, lo que justifica el **giróscopo** y su
+**ritual de resincronizar** cada diez minutos». La brújula ya baila; aquí el
+direccional del panel de esferas **se aparta solo** y se pone con ella. Va en
+este ADR por lo mismo que H26q: la misma familia de ejercicios (`escena:
+"navegacion"`, se cierra en el aire, lo que calla, el panel del final) y una
+decisión de instrumento que **solo mueve una rosa**. Lo llevan
+`flight/direccional.ts` (el giróscopo) y `flight/giroscopo-en-hora.ts` (el
+ejercicio).
+
+### Lo que se va, y por qué
+
+Un direccional de vacío no está esclavizado a nada: se pone con la brújula
+antes de salir y desde ahí se aparta por dos motivos que suman.
+
+- **La Tierra gira debajo de él.** El giróscopo se queda quieto en el
+  espacio y el suelo gira 15,041° por hora (el día sidéreo); en el plano del
+  horizonte se nota esa vuelta por el seno de la latitud. En el hemisferio
+  norte **el número baja** —el eje se va hacia el este respecto al norte de
+  aquí y el morro se lee contra él— y en el sur **sube**: es la misma cuenta,
+  `−15,041 · sen(latitud)` grados por hora, sin una regla por hemisferio.
+  Tenerife Norte, −7,2° por hora; Asunción, +6,4; Madrid, −9,8.
+- **El rozamiento de sus cojinetes** lo tuerce, y depende del instrumento:
+  cuánto y hacia dónde. Cada modelo de avión lleva el suyo, fijo, entre medio
+  grado y dos por hora hacia un lado o el otro (`friccionDe`, salido del
+  nombre del modelo: una avioneta nueva tiene el suyo sin escribir una
+  tabla). Con dos como mucho, la Tierra manda y cada hemisferio se va hacia su
+  lado con cualquier avión.
+
+**De dónde salen.** El *Pilot's Handbook of Aeronautical Knowledge* de la FAA
+(FAA-H-8083-25C, capítulo 8, *Heading Indicator*): el rozamiento hace que el
+direccional se arrastre del rumbo en que se puso, cuánto depende del estado
+del instrumento, y como el giróscopo está orientado en el espacio y la
+Tierra gira 15° por hora, aparte del rozamiento puede llegar a 15° de error
+por hora (lo del polo); hay que comprobarlo a menudo y ponerlo con la
+brújula. El *Instrument Flying Handbook* (FAA-H-8083-15B, capítulo 5)
+concreta el ritual: **cada quince minutos**, en vuelo recto y sin acelerar.
+La cifra de «no más de 3° cada quince minutos» que repite toda escuela **es
+costumbre del oficio, no norma escrita**: aquí es el tope, y con la Tierra y
+el rozamiento no se pasa en ningún campo del juego (Madrid, el más al norte:
+9,8 + 2 = 11,8° por hora, 2,9° cada quince minutos; `direccional.test.ts`).
+
+**Lo que no lleva.** El error de transporte —lo que gira el norte de aquí al
+volar hacia el este o el oeste sobre una Tierra redonda—, porque el mundo del
+juego es un plano tangente cuyo norte no gira, y a la velocidad de una
+avioneta es un grado por hora, menos que el rozamiento. Ni la tuerca de
+latitud de algunos direccionales, que una avioneta no suele llevar.
+
+### En qué avión
+
+**En los de esferas**: la avioneta, el de motor radial y el bimotor de
+pistón (`familiaDe(a) === "esferas"`, comprobado en la mesa: son los tres y
+solo los tres). Llevan un direccional de vacío sin esclavizar, el de su
+clase. **Los de cristal no se van**: los dos turbohélices llevan un AHRS con
+su magnetómetro, y los reactores la válvula de flujo de su sistema de
+referencia; los dos corrigen solos el giro de la Tierra, y su rosa no se
+aparta. Lo mismo el helicóptero. Mirado modelo a modelo en `modelos/*.py`:
+los tres de pistón llevan las seis esferas en su panel 3D (`seispack`), y
+los demás, pantallas.
+
+### Lo que no se toca
+
+**Solo se aparta la rosa del direccional**, y lo que va en ella: la marca de
+rumbo y el curso del OBS del direccional hecho HSI, que en uno de verdad van
+pintados en la rosa y se van con ella. La aguja del ADF no: apunta a la
+estación, y lo que dice contra la línea de fe es la marcación relativa, que
+no sabe nada del giróscopo (`tablero.ts`, `radioEnElDireccional`). Lo que se
+guarda es un número, cuánto marca de más la rosa (`Direccional.error`), que
+se suma al rumbo solo al pintarla: `DatosDelTablero.direccional` en el cuadro
+plano —y en la losa del rumbo del teléfono apaisado, que en un avión de
+esferas es su direccional— y `DatosDeRelojes.direccional` en el panel 3D. **Los pilotos de banco,
+los ejercicios —«Rumbo de noche», «Rumbo y reloj», «La brújula baila»—, la
+brújula del parabrisas, la carta, las pantallas y la línea del lector de
+pantalla siguen leyendo el rumbo de verdad**, como antes.
+
+Se pone con la brújula —a cero— al colocar el avión, al reiniciar y al
+cambiar de avión, que es lo que se hace en la revisión antes de salir.
+
+### El peldaño: desde Taguató, en cualquier vuelo
+
+Con `escalera.ts` en la mano. **Abajo de Taguató no se va**: lo pone la
+instructora, como la rueda del altímetro (`seguirElViento`, H26p), y la
+perilla no hace nada. Un niño de Guyrami o de Tukã que sigue la marca de la
+rosa tiene que poder fiarse de ella: **un instrumento que miente sin que
+nadie lo explique enseña a no creer en los instrumentos**, que es lo
+contrario de lo que se viene a aprender. El ritual es un trabajo de cabina
+con un número —el rumbo de la brújula contra el del direccional— y los
+números entran en Taguató (el canal de la cifra), que es también donde la
+rueda del altímetro pasa a ser de quien vuela (`PELDANOS_QUE_LO_PONEN`).
+
+**Desde Taguató se va en cualquier vuelo**, el de cabina incluido, y la
+instructora lo cuenta cuando hace falta y no con un reloj: cuando la rosa se
+ha ido tres grados —los de la costumbre de cada quince minutos, que con las
+derivas de aquí llegan entre los veinte minutos y la hora de vuelo— dice una
+vez «El direccional se fue un poquito. Derecho y sin acelerar, ponelo con la
+brújula», con la tarjeta de la perilla y los grados escritos. Vuelve a poder
+decirlo después de girar la perilla, que es cuando cambia algo
+(`recordarElDireccional`). Con un ejercicio en marcha, no: el ejercicio
+cuenta lo suyo.
+
+### La perilla, en el instrumento de cada vista
+
+- **Cuadro plano** (`ui/six-pack.ts`, `perillaDelDireccional`): las dos
+  mitades de abajo de la esfera, como la rueda del altímetro —la izquierda
+  gira la rosa hacia los números que bajan, la derecha hacia los que suben—,
+  un grado por toque y, con el dedo puesto, diez por segundo. Por
+  `data-radio-mando="dg"`, el atributo del OBS y de la rueda, que ya saben no
+  explicar ni poner grande `tocar-para-explicar.ts` y `reparto.ts`. **Solo
+  desde Taguató** (`data-desde="3"`): abajo no hay nada que girar, y la esfera
+  entera sigue explicándose al tocarla, que la rueda del altímetro no hacía.
+  **Va antes que la radio en el dibujo**: en el peldaño de cabina, con la radio encima,
+  la mitad de abajo del direccional hecho HSI es del OBS, que queda por
+  encima; ahí la perilla se gira con la tecla o desde el asiento. Ver «Lo que
+  queda».
+- **Panel 3D** (`world/relojes-cabina.ts`, `perillaDelDireccional`): un toque
+  en la esfera del direccional, mitad izquierda o derecha, como la del
+  altímetro. La brújula del parabrisas lleva la misma cara y no cuenta: es un
+  imán y no se gira.
+- **Teclado**: el 6 sube y el 5 baja, juntos como el 9 y el 0 del OBS, y
+  libres; con la tecla apretada, sigue.
+- **Suena el clic de la carta**, uno por muesca como mucho cada 80 ms, como la
+  rueda.
+
+### El ejercicio
+
+1. **Derecho al norte magnético, encima del campo**: las dos dicen lo mismo.
+   **Al norte** porque al norte y al sur acelerar no tuerce la brújula —el
+   error de aceleración es del este y del oeste (H26q)—, y el avión recién
+   puesto frena un poco: al oeste la brújula salía tres grados apartada.
+2. **El reloj del giróscopo, apurado**: a los ocho segundos, lo que se va en
+   una hora larga se va en cuarenta segundos de juego, y se dice al empezar,
+   con los minutos escritos («Reloj apurado: … min en 40 s»), y en el panel
+   del final. Solo el del giróscopo: el del vuelo, el del sol y el de la
+   brújula siguen a su paso. Es lo que hizo H26o con el cielo.
+3. **Se fue**: ocho grados (`SE_FUE`), que se ven en la rosa sin leer —una
+   raya larga y tres cortas— y en los campos del juego son una hora o algo
+   más. El reloj vuelve a su paso. La rosa se ha ido hacia el lado de su
+   hemisferio; la brújula, derecha y quieta, sigue en el norte.
+4. **La perilla**, seis segundos después —un suceso, una voz—: girarla hasta
+   que digan lo mismo.
+5. **Puesto**: el direccional a dos grados de la brújula, con el avión
+   derecho, dos segundos. Si se gira la perilla virando, la brújula mentía
+   (H26q): se dice una vez («Virando no: la brújula miente»), y al enderezar no
+   cuadran, así que el ejercicio no se cierra hasta ponerlo derecho. Sin
+   castigo: si no se gira, no pasa nada.
+
+- **Con qué avión**: los de esferas con brújula en el parabrisas, los de «La
+  brújula baila».
+- **Dónde**: donde la brújula dice la verdad lo bastante —el campo de la
+  Tierra inclinado quince grados o más, `inclinacionDelCampo`— y la Tierra
+  hace irse al giróscopo, tres grados por hora o más (lejos del ecuador). Hoy,
+  todos los campos.
+- **El peldaño, desde Taguató**: el mismo en que empieza a irse en cualquier
+  vuelo. Se aprende el ritual el día que hace falta; abajo lo hace la
+  instructora, y enseñar a hacer algo que nadie necesita hacer todavía no
+  enseña nada. Lo esencial se ve sin leer —la rosa que se va, en ámbar en la
+  tarjeta, y la perilla que la devuelve— y el número va escrito.
+- **Desde el asiento**, como «La brújula baila»: la brújula solo está en la
+  cabina.
+
+La tarjeta lleva tres dibujos nuevos con las dos agujas de H26q
+(`dosAgujas`): el direccional ido, en ámbar, con la brújula derecha; el mismo
+con su perilla abajo a la izquierda y la flecha de girarla; y las dos
+iguales, con la perilla. La ficha del hangar, la brújula blanca colgada del
+travesaño y el direccional ido en ámbar con su perilla.
+
+### Las frases
+
+En `es-PY` y en `en`, **sin grabar**; `frases-para-grabar.mjs` las recoge
+solas (comprobado: las ocho con voz entre las de la instructora y
+`ejercicio.giroscopo.apurado` entre las que se montan).
+
+| Clave | Texto |
+| --- | --- |
+| `ejercicio.giroscopo.antes` | Vamos derecho al norte. La brújula de arriba y el direccional de abajo dicen lo mismo |
+| `ejercicio.giroscopo.apurar` | Ahora apuramos el reloj. Mirá el direccional: se va solito, despacito |
+| `ejercicio.giroscopo.seFue` | El direccional se fue y la brújula no. Derecho y sin acelerar, la brújula dice la verdad |
+| `ejercicio.giroscopo.ponelo` | Girá la perilla del direccional hasta que diga lo mismo que la brújula |
+| `ejercicio.giroscopo.virando` | Virando no: la brújula miente. Primero derecho, y después la perilla |
+| `ejercicio.giroscopo.puesto` | ¡Eso! El direccional dice la verdad otra vez |
+| `ejercicio.giroscopo.cierre` | (el panel del final, se lee) El giróscopo no siente el viraje, pero se va solo. Cada quince minutos, derecho y sin acelerar, se pone con la brújula. De verdad tarda una hora o más en irse así: acá apuramos el reloj |
+| `vuelo.giroscopo.seFue` | (en un vuelo cualquiera, desde Taguató) El direccional se fue un poquito. Derecho y sin acelerar, ponelo con la brújula |
+
+Y sin voz: `ejercicio.giroscopo.apurado` («Reloj apurado: {min} min en {s}
+s»), `hangar.ejercicio.giroscopo` («Poné en hora el giróscopo») y las teclas
+`tecla.dgUp` y `tecla.dgDown`. Los grados de diferencia, con el
+`ejercicio.brujula.cuanto` de H26q.
+
+### Lo que se prueba
+
+- `flight/direccional.test.ts`: la vuelta de la Tierra en el polo, el ecuador,
+  Tenerife Norte y Asunción; el rozamiento de cada modelo, fijo y dentro de su
+  tope, hacia los dos lados; **el total, en ningún campo del juego por encima
+  de tres grados cada quince minutos**; la deriva en los dos hemisferios con
+  el mismo instrumento; el reloj apurado; la perilla, hacia los dos lados y
+  por el 360; y en qué avión y peldaño se va.
+- `flight/giroscopo-en-hora.test.ts`: el ejercicio entero con un piloto de
+  cinemática, la brújula y el direccional de verdad, en Tenerife Norte (se va
+  hacia los números que bajan) y en Asunción (hacia los que suben), en
+  cuarenta segundos y con una hora o más de reloj de verdad; la perilla
+  pedida seis segundos después de decir que se fue; girándola virando, que se
+  dice una vez y se cierra al ponerla derecho; sin girarla, que no pasa nada;
+  con percance, para otra vez; y dónde y con qué avión se ofrece.
+- `world/marca-de-rumbo.test.ts`: la rosa del panel 3D gira con lo que marca
+  el direccional y la marca va en ella; la brújula no hereda lo que se fue; y
+  en el cuadro plano, las dos dianas de la perilla, por debajo de la radio.
+- `flight/lo-que-calla-el-ejercicio.test.ts`: entre los que se cierran en el
+  aire.
+- El banco, `scripts/ver-el-giroscopo.mjs`: ver «Volado».
+
+`vitest` entero, en verde: 526 ficheros y 10.636 pruebas (29 saltadas).
+
+### Volado
+
+`scripts/ver-el-giroscopo.mjs`, con la avioneta en Taguató, la tarjeta de
+verdad (Intel Iris Xe por ANGLE), el reloj del juego a dos veces y el
+automático de rumbo sosteniendo el norte, como quien sostiene el avión
+derecho. **36 de 36** a la primera, en los dos campos:
+
+| | Tenerife Norte | Asunción |
+| --- | --- | --- |
+| Deriva del direccional | −7,72° por hora (la Tierra, −7,17; el rozamiento de la avioneta, −0,55) | +5,87° por hora (+6,42 y −0,55) |
+| Al empezar | 924 m sobre la pista, direccional 0,0 y brújula 360,0 | 923 m, 0,0 y 0,0 |
+| Reloj apurado | 62 min en 40 s, por 93 | 82 min en 40 s, por 123 |
+| Se fue | direccional 352,0, brújula 359,9, de verdad 0,0 | direccional 8,0, brújula 360,0, de verdad 360,0 |
+| La perilla | dos toques en el cuadro plano, uno a cada lado: −8,0 → −8,0 → −7,0; uno en la esfera del panel 3D: −7,0 → −6,0; y seis veces el 6 | 8,0 → 8,0 → 7,0; 7,1 → 6,1; seis veces el 5 |
+| Puesto | queda −0,1°: direccional 359,8, brújula 359,8 | queda +0,1° |
+
+Las tarjetas en su orden —las dos agujas, el direccional ido, la perilla y
+puesto—, la explicación del direccional no se abre al tocar la perilla, nada
+ajeno ni a la vista ni en la voz (en Tenerife, un «baches» del vuelo, que es
+de seguridad) y ningún error en la página. Mirado en las capturas desde el
+asiento: con el direccional ido, la N de su rosa y la marca magenta salen a
+la derecha de la línea de fe en Tenerife y a la izquierda en Asunción, con la
+brújula del parabrisas en el norte; puesto, las dos en el norte.
+
+Y en la lámina de los dibujos, **la perilla de la tarjeta caía entre las dos
+caras**, abajo a la izquierda del direccional y pegada a la brújula: parecía
+de la brújula, que es justo lo que no se gira. Se bajó al panel, debajo y a la
+izquierda del direccional, que es donde va en uno de verdad, y se miró el
+dibujo otra vez fuera del navegador (las tres tarjetas pintadas a PNG desde
+`DIBUJOS`).
+
+### Lo que queda
+
+- **Las frases, sin grabar**: ocho con voz (ver «Las frases»). Hasta
+  entonces, mudas en Brave y en Linux; el ejercicio se sigue por la tarjeta,
+  que lleva el dibujo, los grados y la frase.
+- **En el peldaño de cabina, en el cuadro plano, la perilla no se toca con el
+  dedo**: con la radio encima, la mitad de abajo del direccional hecho HSI es
+  del OBS. Se gira con el 5 y el 6 o desde el asiento, que es donde está la
+  brújula y donde se hace el ritual. Un HSI de verdad lleva las dos perillas,
+  la del rumbo abajo a la izquierda y la del curso abajo a la derecha; partir
+  la mitad de abajo en cuatro dianas no llega a los 44 píxeles del dedo en una
+  tablet.
+- **Los aviones de cristal**: su rosa no se va, y es verdad; pero tampoco
+  llevan brújula en sus cabinas de aquí (H26q), así que el ejercicio no se les
+  ofrece.
+- **El recordatorio de un vuelo cualquiera** («El direccional se fue un
+  poquito») está probado en la mesa por sus piezas —la deriva y el umbral—,
+  no volado: hace falta media hora de vuelo en Taguató para llegar a tres
+  grados, y el banco no la ha volado.
+- **El teléfono apaisado** con la perilla: la losa del rumbo ya marca lo que
+  marca el direccional, pero no lleva perilla —es una cifra con su rosa, no un
+  instrumento—, y en el teléfono el ritual se hace desde el asiento.
