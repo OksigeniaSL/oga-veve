@@ -2395,6 +2395,134 @@ async function medirLoDelAsiento(ORDEN_LARGA) {
 }
 
 /*
+ * **Y los instrumentos del panel, libres de la barra del timón desde el
+ * asiento** (H31b). Con el dedo la barra va abajo en el centro, que es donde
+ * el panel lleva los mandos que se pulsan —la baliza, el motor, los flaps, el
+ * freno, el tren— y el pie de los relojes del medio: en el teléfono los
+ * tapaba enteros en los ocho aviones, y el toque se lo llevaba la barra; en
+ * la tablet, el pie del direccional y del variómetro. Se mira la caja de cada
+ * instrumento en la pantalla contra la de la barra, y en el teléfono **se
+ * pulsa cada mando con un toque de verdad**, que es lo que tiene que pasar:
+ * en la avioneta, en uno de cristal y en el reactor, y en la tablet, el de
+ * motor radial, que es donde la fila de arriba baja más el panel (H26q).
+ */
+for (const [avion, ancho, alto, conToque] of [
+  ["jaz-20", 915, 412, true],
+  ["jaz-60", 915, 412, true],
+  ["jaz-90", 915, 412, true],
+  ["jaz-25", 1280, 800, false],
+]) {
+  const donde = `cabina del ${avion} ${ancho}×${alto} con el dedo`;
+  const page = await navegador.newPage({
+    viewport: { width: ancho, height: alto },
+    hasTouch: true,
+    isMobile: true,
+  });
+  try {
+    await page.goto(`${BASE}/?escenario=tenerife-norte&hora=12&tramo=taguato&avion=${avion}&meteo=&viento=000/00`);
+    // Los instrumentos son los del modelo de Blender, que llega después del juego.
+    const arranco = await page
+      .waitForFunction(() => globalThis.__oga?.estado?.() && globalThis.__oga?.aeronave?.().deVerdad, null, {
+        timeout: 90000,
+      })
+      .then(() => true)
+      .catch(() => false);
+    if (!arranco) {
+      comprobar(`${donde}: el juego arrancó con su modelo`, false, "no arrancó en 90 s", "");
+      continue;
+    }
+    await page.evaluate(() => globalThis.__oga.ponerVista("cockpit"));
+    // El encuadre se repasa cada medio segundo y el ángulo llega suave.
+    await page.waitForTimeout(3500);
+    const m = await page.evaluate(medirElPanelContraLaBarra);
+    comprobar(
+      `${donde}: desde el asiento, la barra del timón no tapa ningún instrumento`,
+      !!m.barra && m.piezas > 0 && m.tapados.length === 0,
+      !m.barra
+        ? "no salió la barra"
+        : m.tapados.join(" · ") || `${m.piezas} instrumentos libres por encima de ${m.barra}`,
+      "lo que se pulsa en la cabina y lo que se lee en ella tienen que verse y tocarse; la barra se llevaba el toque",
+    );
+    if (conToque) {
+      const toques = [];
+      for (const [cual, x, y] of m.mandos) {
+        const n = await page.evaluate(() => globalThis.__pulsados.length);
+        await page.touchscreen.tap(x, y);
+        await page.waitForTimeout(300);
+        const hizo = await page.evaluate((n) => globalThis.__pulsados.slice(n), n);
+        toques.push({ cual, ok: hizo.length === 1 && hizo[0] === cual, hizo: hizo.join(",") || "nada" });
+      }
+      comprobar(
+        `${donde}: los mandos del panel se pulsan con un toque desde el asiento`,
+        toques.length > 0 && toques.every((t) => t.ok),
+        toques.map((t) => (t.ok ? t.cual : `${t.cual} → ${t.hizo}`)).join(" · ") || "no hay mandos",
+        "un mando que se ve y no responde enseña que los mandos son decoración",
+      );
+    }
+  } catch (e) {
+    comprobar(`${donde}: la cabina sale`, false, String(e).slice(0, 160), "");
+  } finally {
+    await page.close();
+  }
+}
+
+/**
+ * Corre en la página: la caja de cada instrumento del panel contra la de la
+ * barra del timón, y dónde se pulsa cada mando. Deja apuntado en
+ * `__pulsados` lo que hace cada toque.
+ */
+function medirElPanelContraLaBarra() {
+  const o = globalThis.__oga;
+  const juego = o.juegoParaTrazas();
+  if (!globalThis.__pulsados) {
+    globalThis.__pulsados = [];
+    const pulsar = juego.pulsarMandoDeCabina.bind(juego);
+    juego.pulsarMandoDeCabina = (cual) => {
+      globalThis.__pulsados.push(cual);
+      pulsar(cual);
+    };
+  }
+  const el = document.querySelector('[data-touch="rudder"]');
+  const r = el?.checkVisibility() ? el.getBoundingClientRect() : null;
+  // Juntadas por nombre: un reloj son varias mallas.
+  const cajas = new Map();
+  for (const p of o.enPantalla("^(boton-|reloj-|pantalla-)").piezas) {
+    if (p.detras) continue;
+    const nombre = p.nombre.replace(/_\d+$/, "");
+    const c = cajas.get(nombre);
+    if (!c) cajas.set(nombre, { ...p, nombre });
+    else {
+      c.x0 = Math.min(c.x0, p.x0);
+      c.x1 = Math.max(c.x1, p.x1);
+      c.y0 = Math.min(c.y0, p.y0);
+      c.y1 = Math.max(c.y1, p.y1);
+    }
+  }
+  const tapados = [];
+  const mandos = [];
+  const hay = o.botones() ?? [];
+  for (const c of cajas.values()) {
+    if (r) {
+      const ancho = Math.min(c.x1, r.right) - Math.max(c.x0, r.left);
+      const alto = Math.min(c.y1, r.bottom) - Math.max(c.y0, r.top);
+      if (ancho > 0 && alto > 0)
+        tapados.push(
+          `${c.nombre}, ${Math.round((100 * ancho * alto) / Math.max(1, (c.x1 - c.x0) * (c.y1 - c.y0)))} % debajo`,
+        );
+    }
+    const cual = c.nombre.replace(/^boton-/, "");
+    if (c.nombre.startsWith("boton-") && hay.includes(cual))
+      mandos.push([cual, (c.x0 + c.x1) / 2, (c.y0 + c.y1) / 2]);
+  }
+  return {
+    barra: r ? `${Math.round(r.top)} px` : null,
+    piezas: cajas.size,
+    tapados,
+    mandos,
+  };
+}
+
+/*
  * **Y de pie con el dedo, la pantalla de vuelo que hay: la del pasaje**
  * (ADR 0030, enmienda H28g). De pie y con el dedo no se pilota —el cartel de
  * girar la pantalla tapa el vuelo, y arriba se mira que esté—, pero de pasaje
