@@ -2309,3 +2309,41 @@ vuelvan «andá a la pista» ni la final; y el panel con su frase. Con
   de la torre encendida por el parpadeo—; después, **18 de 19**, y desde los
   mínimos solo sonó *going around, good decision*. En los mínimos, −1,80 de
   localizador, la frustrada, y el panel con «¡Bien decidido!».
+- **El bimotor, por instrumentos y con la nube** (`OGA_AVION=jaz-40`), 19 de
+  20: cubierto a trescientos pies sobre la pista; **a 339 ft, dentro de la
+  nube del todo** (1,00 en la cámara), y **a 197 ft, en los mínimos, fuera**
+  (0,00), con la capa dejando ver la pista entera desde el avión; las fotos,
+  gris y nada a trescientos cuarenta, y las luces de aproximación y la pista
+  delante en los mínimos. A los mínimos con 0,00 y −0,01, lo peor desde mil
+  pies 0,06 y 0,10, y cerrado con la pista y su panel. La torre mandó al aire
+  a **EC-SQX**, con su indicativo.
+- **La que falló en todas es la del orden de la instructora**, y no por el
+  orden: la presentación, muda en las cuatro (ver abajo); y en tres, además,
+  una de en medio que no sonó —`enElLocalizador`, que caducó esperando turno
+  a los 31 s en el bimotor; `capturada` en las dos apartadas—. El banco vuela con el reloj
+  por cuatro, y los pasos le llegan a la boca cuatro veces más juntos que la
+  voz que los dice: todo apunta a eso, y no a este ejercicio, pero no se ha
+  volado a reloj normal para saberlo.
+
+### Lo que queda
+
+- **Sin el alisio no ha volado**: el banco ya lo vuela con `OGA_VIENTO=0/0`,
+  y la tirada no cupo en la tanda; la cola del navegador estuvo ocupada media
+  hora. Tampoco se ha medido el coste dentro de la capa con
+  `verificar-rendimiento.mjs` y `OGA_METAR`: no es un efecto nuevo —la misma
+  capa de cinco láminas, a otra altura, y dentro la niebla cerrada que ese
+  banco ya mide como el peor caso del tiempo—, pero con un avión de
+  instrumentos ahora se vuelan dentro unos cuatro minutos de cada final, y
+  eso en la tablet no se ha medido.
+- **Ni `npm run carteles`**, por lo mismo: el panel del final lleva una frase
+  más larga, en dos líneas a 1280 × 800 en la captura de la frustrada.
+- **La presentación muda.** Con las ocho frases ya grabadas, en las cuatro
+  tiradas `ejercicio.ils.antes` quedó en «sin grabar, se calla»: se pide en el
+  primer paso del ejercicio y todo apunta a que la voz todavía no había
+  cargado (`InstructorGrabado.vozDe` mira los manifiestos ya bajados). No es
+  de este ejercicio: cualquiera que hable en su primer paso lo tendrá igual.
+  No se ha tocado.
+- **Las frases que caducan esperando** con el reloj por cuatro (arriba): el
+  banco escribe ya lo que la boca apuntó o tiró; falta volarlo a reloj normal.
+- **El rombo de la pantalla de vuelo** de los de cristal, de la geometría y no
+  de la radio, sin medir cuánto se separan (de H26i).
