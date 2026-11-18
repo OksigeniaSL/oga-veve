@@ -482,9 +482,16 @@ export interface EncuadreDeCabina {
    * por encima) y dónde cae a lo ancho, como tangente desde el frente —`x`, el
    * centro; `medio`, la mitad del ancho—. Cuelga del travesaño, en lo más
    * alto del parabrisas, y desde el asiento quedaba debajo de la fila de
-   * botones de arriba (H26q). Ver `encuadreDeCabina`.
+   * botones de arriba (H26q). Ver `encuadreDeCabina`. Y cuánto cae el de
+   * abajo, `abajo`: con los dos, el juego sabe dónde cae la caja entera en la
+   * pantalla y el HUD no le pone nada encima (H31a). Ver `Game.dondeCaeLaBrujula`.
    */
-  readonly brujula?: { readonly arriba: number; readonly x: number; readonly medio: number };
+  readonly brujula?: {
+    readonly arriba: number;
+    readonly abajo: number;
+    readonly x: number;
+    readonly medio: number;
+  };
 }
 
 /** La caja y la cara de la brújula del parabrisas: ver `brujula` en `modelos/comun.py`. */
@@ -504,6 +511,7 @@ function conSuEncuadre(
   let lados = 0;
   let abajo = -Infinity;
   let brujulaArriba = Infinity;
+  let brujulaAbajo = -Infinity;
   let brujulaIzquierda = Infinity;
   let brujulaDerecha = -Infinity;
   raiz.traverse((o) => {
@@ -526,6 +534,7 @@ function conSuEncuadre(
       const caida = Math.atan2(ojo.y - v.y, delante);
       if (esBrujula) {
         brujulaArriba = Math.min(brujulaArriba, caida);
+        brujulaAbajo = Math.max(brujulaAbajo, caida);
         const x = (v.x - ojo.x) / delante;
         brujulaIzquierda = Math.min(brujulaIzquierda, x);
         brujulaDerecha = Math.max(brujulaDerecha, x);
@@ -543,7 +552,12 @@ function conSuEncuadre(
   });
   if (visera === undefined || !Number.isFinite(abajo)) return ojo;
   const brujula = Number.isFinite(brujulaArriba)
-    ? { arriba: brujulaArriba, x: (brujulaIzquierda + brujulaDerecha) / 2, medio: (brujulaDerecha - brujulaIzquierda) / 2 }
+    ? {
+        arriba: brujulaArriba,
+        abajo: brujulaAbajo,
+        x: (brujulaIzquierda + brujulaDerecha) / 2,
+        medio: (brujulaDerecha - brujulaIzquierda) / 2,
+      }
     : undefined;
   return { ...ojo, encuadre: { visera, lados, abajo, ...(brujula ? { brujula } : {}) } };
 }

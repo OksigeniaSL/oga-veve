@@ -84,7 +84,7 @@ import { alPulsar, alPulsarDentro } from "./pulsar";
 import { botonDeNoExplicar } from "./no-volver-a-explicar";
 import { ponerLasDeSerie } from "./explicaciones-de-serie";
 import { escucharLosToquesQueExplican } from "./tocar-para-explicar";
-import { ESPERA, Repartidor } from "./reparto";
+import { type Caja, ESPERA, Repartidor } from "./reparto";
 // La ventana de las explicaciones se ofrece al registro al cargarse.
 import "./ventana-de-explicacion";
 import {
@@ -583,6 +583,8 @@ export class Hud {
    * deja esperando lo que no cabe. Ver `ui/reparto.ts`.
    */
   private repartidor: Repartidor | null = null;
+  /** Dónde cae la brújula del parabrisas en la pantalla, desde el asiento. Ver `ponerLaBrujula`. */
+  private brujula: Caja | null = null;
   /** Lo que mide el cuadro en la pantalla, para sus rótulos. Ver `medirLaUnidad`. */
   private cuadroObservado: ResizeObserver | null = null;
   /**
@@ -2660,6 +2662,7 @@ export class Hud {
     this.cronometro.bind(this.root);
     this.repartidor?.soltar();
     this.repartidor = new Repartidor(this.root);
+    this.repartidor.ponerLoDelAvion(this.brujula ? [this.brujula] : []);
     this.repartidor.vigilar();
     this.tutor.bind(this.root);
     this.reserveForPanel();
@@ -4531,6 +4534,28 @@ export class Hud {
    */
   repartirAhora(): Record<string, string> | null {
     return this.repartidor?.ahora() ?? null;
+  }
+
+  /**
+   * **Dónde cae la brújula del parabrisas en la pantalla**, desde el asiento,
+   * en píxeles de pantalla; `null` sin ella o fuera de la cabina (H31a).
+   *
+   * Es lo único del panel que cuelga arriba, donde va lo que se lee del HUD, y
+   * en el teléfono apaisado la tarjeta de la orden, en la fila de arriba, le
+   * llegaba encima. No se arregla en el encuadre, como la fila de botones de
+   * la tablet (ADR 0031, H26q): la tarjeta va y viene, y la cámara saltaría
+   * con cada una. Se arregla en el reparto, que la esquiva como a un botón:
+   * la tarjeta se estrecha en su sitio, el subtítulo y la radio buscan otra
+   * fila. Lo pone el juego dos veces por segundo (`Game.dondeCaeLaBrujula`).
+   */
+  ponerLaBrujula(caja: Caja | null): void {
+    this.brujula = caja;
+    this.repartidor?.ponerLoDelAvion(caja ? [caja] : []);
+  }
+
+  /** Lo de `ponerLaBrujula`, para los bancos. */
+  get cajaDeLaBrujula(): Caja | null {
+    return this.brujula;
   }
 
   /** Lo que se ha llevado el reparto desde que se pintó el HUD. Para los bancos. */

@@ -402,7 +402,13 @@ clic, bajos y cortos; con un aviso sonando, la carta se calla.
   cuando cambia algo de lo que se lee o de lo que se toca, no en cada fotograma, y lo que mira en cada uno no obliga a
   maquetar (ni `innerWidth`). **Un solape nuevo se arregla ahí, no con otra variable**:
   una variable de la hoja dice dónde prefiere ir una pieza, nunca de qué se aparta. Y lo que se añada que se toque y no
-  sea un botón lleva `data-tocable`, y entra solo en la cuenta. Lo mira `npm run carteles` con lo más largo que lleva
+  sea un botón lleva `data-tocable`, y entra solo en la cuenta. **Desde el asiento, lo que el avión enseña cuenta como
+  lo que se toca** (H31a): la brújula del parabrisas cuelga en lo más alto, que es donde va lo que se lee del HUD, y el
+  juego dice dos veces por segundo dónde cae su caja en la pantalla, vista con la cámara de ahora y con la cabeza
+  girada si lo está (`Game.dondeCaeLaBrujula`, `Hud.ponerLaBrujula`). Y **la tarjeta de la orden, antes de recogerse a
+  su dibujo, se estrecha en su sitio** —el mismo borde, la misma fila y la frase en una línea más—, si lo que pisa le
+  queda a la derecha y le deja al menos la mitad (`estrechaEnSuSitio`): es lo que no se mueve de su rincón, y recogida
+  perdía la frase entera por unos píxeles. Lo mira `npm run carteles` con lo más largo que lleva
   cada cosa —la orden, la más larga del código—, en las cuatro maneras en que coinciden y en las tres vistas: fuera,
   cabina y la pantalla en grande del teléfono; y de pie con el dedo, el vuelo del pasaje. Lo que cuesta, con la CPU de
   una tablet de gama media, lo mide `scripts/medir-reparto.mjs`.
@@ -530,11 +536,28 @@ nada.
 - **El teléfono apaisado** es `(pointer: coarse) and (orientation: landscape) and (max-height: 500px)`
   (`src/ui/telefono.ts`): el cuadro pasa a cuatro losas y los botones de la barra de arriba se recogen en un menú que
   se abre con un botón y sale en rejilla encima del vuelo, con botones más grandes.
+- **Desde el asiento, el teléfono no tapa el panel** (H31a). La vista de cabina está para leer el panel del avión, así
+  que el HUD se aparta de él en todas las pantallas, también en la más pequeña:
+  - **el cuadro plano no sale**, ni sus losas ni su asa: desde el asiento el cuadro es el del avión. En el teléfono
+    salía, porque su regla de cuatro losas le ganaba a la de la cabina por orden de la hoja, y el asa recogida caía
+    justo encima del direccional del panel;
+  - **la brújula del parabrisas no se tapa.** En el teléfono la fila de arriba lleva la tarjeta de la orden, que con
+    su frase llegaba hasta el centro, encima de la caja. No se arregla en el encuadre, como la fila de botones en la
+    tablet (ADR 0031, H26q): la fila está siempre y la tarjeta va y viene, y la cámara saltaría con cada una. Se
+    arregla donde se decide lo que se lee (apartado 5): la brújula entra en el reparto como un botón más, la tarjeta
+    se estrecha en su sitio y el subtítulo y la radio buscan otra fila. El dibujo de la orden, que es lo que mira
+    quien no lee, no se toca nunca.
+
+  Lo mira `npm run carteles` desde el asiento de la avioneta en Taguató, a 915 × 412 con el dedo.
 - **De pie, con el dedo, no se vuela**: los mandos se esconden y el juego pide girar el teléfono con un dibujo.
   **Salvo de pasaje**, que no se pilota: ahí de pie sale todo lo de tumbado, colocado para una pantalla alta
   («El pasaje, de pie» en `src/style.css`). Arriba la columna de la pausa a la izquierda y los cuatro puntos con el
   volumen a la derecha; debajo, la tarjeta de quien habla de lado a lado; la lámina, en el tercio de abajo, de todo
   el ancho que quepa; y la mochila abajo a la derecha. Lo comprueba `OGA_SOLO=de-pie` de `verificar-consola.mjs`.
+  **La lámina se desliza a su sitio nuevo solo si el camino está libre** (H31a): de debajo de la tarjeta de quien
+  habla a encima de ella la cruzaba entera durante el medio segundo del deslizamiento, con los dos sitios libres. Si
+  el camino pisa lo que no se tapa, se apaga de golpe y sale con su fundido en el sitio nuevo (`caminoLibre` en
+  `ui/ventana-de-historia.ts`).
   **Y la tarjeta del tiempo sale encima del cartel**, que se decide antes de volar: el cartel va dentro del HUD y la
   tarjeta fuera, así que de pie se lee y se decide como tumbada, y al cerrarla vuelve el cartel. Lo mide
   `verificar-tarjeta-del-tiempo.mjs` a 400 × 780 con el dedo.

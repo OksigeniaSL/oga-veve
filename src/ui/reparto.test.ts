@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Caja, colocar, pisa, RESPIRO, tramosLibres, trasladar } from "./reparto";
+import { type Caja, colocar, hastaDondeEnSuSitio, pisa, RESPIRO, tramosLibres, trasladar } from "./reparto";
 
 const caja = (izq: number, arr: number, der: number, aba: number): Caja => ({ izq, arr, der, aba });
 const PANTALLA = caja(0, 0, 864, 330);
@@ -165,5 +165,36 @@ describe("trasladar", () => {
   it("si no cabe en ninguna fila, espera", () => {
     const natural = caja(20, 70, 280, 96);
     expect(trasladar(natural, "arriba", [], [caja(0, 60, 900, 600)], PANTALLA_TABLET)).toBeNull();
+  });
+});
+
+/*
+ * **La tarjeta de la orden, estrechada en su sitio** (H31a): en el teléfono
+ * apaisado, desde el asiento de la avioneta, va en la fila de arriba y con la
+ * frase más larga llegaba hasta el centro, encima de la brújula del
+ * parabrisas (medida en el banco: de 439 a 476, y la tarjeta de 74 a 494).
+ */
+describe("hastaDondeEnSuSitio", () => {
+  const tarjeta = caja(74, 11, 494, 59);
+  const brujula = caja(439, 0, 476, 64);
+
+  it("si pisa algo a su derecha, acaba antes de ello, con su respiro", () => {
+    expect(hastaDondeEnSuSitio(tarjeta, [brujula])).toBe(439 - RESPIRO);
+  });
+
+  it("acaba antes de lo primero que pisa, si pisa dos", () => {
+    expect(hastaDondeEnSuSitio(tarjeta, [brujula, caja(300, 40, 340, 90)])).toBe(300 - RESPIRO);
+  });
+
+  it("lo que no pisa no la estrecha", () => {
+    expect(hastaDondeEnSuSitio(tarjeta, [caja(439, 70, 476, 120)])).toBeNull();
+  });
+
+  it("lo que empieza a su izquierda no se arregla estrechando", () => {
+    expect(hastaDondeEnSuSitio(tarjeta, [caja(60, 0, 100, 30)])).toBeNull();
+  });
+
+  it("nunca más estrecha que la mitad de lo que mide entera", () => {
+    expect(hastaDondeEnSuSitio(tarjeta, [caja(200, 0, 240, 64)])).toBeNull();
   });
 });

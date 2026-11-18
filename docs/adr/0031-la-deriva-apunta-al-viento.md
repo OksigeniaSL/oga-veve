@@ -1313,7 +1313,7 @@ pantalla, el ángulo se queda en el de siempre (58°) y **la caja entera y sus
 cifras de arriba quedan libres por debajo de los botones** en la avioneta, el
 de motor radial y el bimotor. En el teléfono apaisado (915 × 412) la fila se
 recoge y no tiene nada en esa columna, así que el encuadre queda como estaba;
-lo que tapa ahí es otra cosa: ver «Lo que queda».
+lo que tapaba ahí era otra cosa, y se arregló en H31a: ver «Lo que queda».
 
 ### Volado otra vez: Tukã y el bimotor
 
@@ -1349,7 +1349,12 @@ tarjeta de las dos agujas; y la vista no vuelve sola.
   pero aquí son las dos cosas que hay que leer. Contarlas en el encuadre como
   la fila no vale: la tarjeta va y viene, y la cámara saltaría con cada una.
   Es de la maquetación del teléfono (DESIGN.md, apartado 8), y pide
-  `npm run carteles` en el teléfono.
+  `npm run carteles` en el teléfono. **Hecho en H31a**, en la maquetación y
+  no en el encuadre: el cuadro plano ya no sale desde el asiento en el
+  teléfono —la regla de la cabina perdía contra la del teléfono por orden de
+  la hoja—, y la brújula entra en el reparto de lo que se lee como lo que se
+  toca, con la tarjeta de la orden estrechada en su sitio antes de llegar a
+  ella. Ver DESIGN.md, apartados 5 y 8.
 - **Los aviones de cristal**, sin brújula en sus cabinas de aquí (ver arriba):
   es una pieza de Blender por modelo, y entonces baila sola.
 - **El desvío propio del avión** y su tablilla de compensación, sin hacer.

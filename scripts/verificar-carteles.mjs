@@ -2271,6 +2271,130 @@ async function medirAvisoYLampara() {
 }
 
 /*
+ * **Y desde el asiento de la avioneta, en el teléfono apaisado** (H31a): lo
+ * que el HUD dibuja encima no va donde están los instrumentos. Con la orden
+ * más larga, el subtítulo y la radio encendidos, ni la tarjeta de la orden
+ * ni nada de lo que se lee pisa la brújula del parabrisas —la tarjeta iba en
+ * la fila de arriba hasta el centro, encima de ella—, y el cuadro plano no
+ * sale, ni su asa, que caía encima del direccional del panel. En Taguató,
+ * que es donde la tarjeta lleva frase; la avioneta de Guyrami de arriba solo
+ * lleva el dibujo.
+ */
+{
+  const donde = "cabina de la avioneta 915×412 con el dedo";
+  const page = await navegador.newPage({
+    viewport: { width: 915, height: 412 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  try {
+    await page.goto(
+      `${BASE}/?escenario=tenerife-norte&hora=16&leccion=despegue&tramo=taguato&avion=jaz-20&meteo=`,
+    );
+    const arranco = await page
+      .waitForFunction(() => globalThis.__oga?.estado?.(), null, { timeout: 60000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!arranco) comprobar(`${donde}: el juego arrancó`, false, "no arrancó en 60 s", "");
+    else {
+      await page.evaluate(() => globalThis.__oga?.ponerVista?.("cockpit"));
+      // La brújula sale con el modelo de Blender, que llega después del juego.
+      const conBrujula = await page
+        .waitForFunction(
+          () => !!globalThis.__oga?.juegoParaTrazas?.()?.hud?.cajaDeLaBrujula,
+          null,
+          { timeout: 30000 },
+        )
+        .then(() => true)
+        .catch(() => false);
+      await page.waitForTimeout(600);
+      const m = await page.evaluate(medirLoDelAsiento, LA_ORDEN_MAS_LARGA);
+      comprobar(
+        `${donde}: el cuadro plano no sale, ni su asa`,
+        !m.cuadro,
+        m.cuadro ?? "no sale",
+        "desde el asiento el cuadro es el del avión, y el asa recogida caía encima del direccional",
+      );
+      comprobar(
+        `${donde}: con lo más largo que llevan, nada de lo que se lee pisa la brújula del parabrisas`,
+        conBrujula && m.leidos > 0 && m.encima.length === 0,
+        !conBrujula
+          ? "no se midió la brújula"
+          : m.encima.join(" · ") ||
+              `libre, con ${m.leidos} cosas que se leen a la vez (la orden: ${m.orden})`,
+        "la brújula se lee desde el asiento, y lo que se dibuja encima no va donde están los instrumentos",
+      );
+    }
+  } finally {
+    await page.close();
+  }
+}
+
+/** Corre en la página: lo que se lee desde el asiento contra la brújula, y el cuadro. */
+async function medirLoDelAsiento(ORDEN_LARGA) {
+  const SUB =
+    "Nos queda justo, así que avisamos a la torre: combustible mínimo. No es una emergencia: es avisarle que no podemos esperar.";
+  const RADIO = "Tripulación, sentados para el despegue";
+  const juego = globalThis.__oga?.juegoParaTrazas?.();
+  const hint = document.querySelector('[data-hud="hint"]');
+  const senal = document.querySelector('[data-hud="senal"]');
+  const senalTexto = document.querySelector('[data-hud="senal-texto"]');
+  const radio = document.querySelector('[data-hud="radio"]');
+  const poner = () => {
+    if (hint && hint.textContent !== SUB) hint.textContent = SUB;
+    if (senal) senal.hidden = false;
+    if (senalTexto && senalTexto.textContent !== ORDEN_LARGA) {
+      senalTexto.textContent = ORDEN_LARGA;
+      senalTexto.hidden = false;
+    }
+    if (radio) {
+      radio.hidden = false;
+      if (radio.textContent !== RADIO) radio.textContent = RADIO;
+    }
+  };
+  for (let i = 0; i < 5; i++) {
+    poner();
+    await new Promise((r) => requestAnimationFrame(() => r()));
+  }
+  poner();
+  const hecho = juego?.hud?.repartirAhora?.() ?? {};
+  const seVe = (el) => {
+    if (!el || el.closest("[hidden]")) return false;
+    if (!el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 2 && r.height > 2 && r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight;
+  };
+  const b = juego?.hud?.cajaDeLaBrujula ?? null;
+  const encima = [];
+  let leidos = 0;
+  for (const [que, el] of [
+    ["la tarjeta de la orden", senal],
+    ["el subtítulo", hint],
+    ["la radio", radio],
+    ["el tutor", document.querySelector('[data-hud="tutor"]')],
+    ["la lámpara", document.querySelector('[data-hud="torre"]')],
+    ["el cronómetro", document.querySelector('[data-hud="cronometro"]')],
+  ]) {
+    if (!seVe(el)) continue;
+    leidos++;
+    const r = el.getBoundingClientRect();
+    if (
+      b &&
+      Math.min(r.right, b.der) - Math.max(r.left, b.izq) > 1 &&
+      Math.min(r.bottom, b.aba) - Math.max(r.top, b.arr) > 1
+    )
+      encima.push(`${que} sobre la brújula (${Math.round(r.left)}–${Math.round(r.right)} con ella en ${Math.round(b.izq)}–${Math.round(b.der)})`);
+  }
+  const tirador = document.querySelector('[data-hud="cuadro-tirador"]');
+  const losas = document.querySelector(".tel");
+  const cuadro = seVe(tirador) ? "sale el asa" : seVe(losas) ? "salen las losas" : null;
+  // Y todo como estaba.
+  if (hint) hint.textContent = "";
+  if (radio) radio.hidden = true;
+  return { encima, leidos, cuadro, orden: hecho.senal ?? "?" };
+}
+
+/*
  * **Y de pie con el dedo, la pantalla de vuelo que hay: la del pasaje**
  * (ADR 0030, enmienda H28g). De pie y con el dedo no se pilota —el cartel de
  * girar la pantalla tapa el vuelo, y arriba se mira que esté—, pero de pasaje

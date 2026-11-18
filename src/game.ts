@@ -30464,8 +30464,17 @@ export class Game {
    * el piloto y cómo traquetea lo que hay debajo de las ruedas. El resto
    * —suavizado, retroceso por aceleración, traqueteo, mirar lejos— vive en
    * `src/cameras/`, una vista por fichero.
+   *
+   * Y después, dónde cae la brújula del parabrisas con la cámara ya puesta: ver
+   * `dondeCaeLaBrujula`. Aquí y no dentro, que la vuelta al avión y la escena de
+   * pasaje se van antes y también tienen que quitarla.
    */
   private updateCamera(dt: number): void {
+    this.moverLaCamara(dt);
+    this.dondeCaeLaBrujula();
+  }
+
+  private moverLaCamara(dt: number): void {
     /*
      * **En la vuelta al avión, la cámara es suya**: a pie, delante de lo que
      * se mira. Desde fuera y con el avión a la vista, sea cual sea la vista
@@ -30665,6 +30674,67 @@ export class Game {
 
   /** Lo que tapa la fila de arriba encima de la brújula, y cuándo se midió, ms. */
   private readonly filaDeArriba = { tapa: 0, medida: Number.NEGATIVE_INFINITY };
+
+  /** La caja de la brújula que se le dio al HUD —en una cadena, para compararla— y cuándo se midió, ms. */
+  private readonly brujulaEnPantalla = { clave: "", medida: Number.NEGATIVE_INFINITY };
+  private readonly esquinaDeLaBrujula = new Vector3();
+
+  /**
+   * **Dónde cae en la pantalla la brújula del parabrisas**, desde el asiento,
+   * para que el HUD no le ponga nada encima (H31a): sus cuatro esquinas, vistas
+   * desde los ojos con la cámara de ahora —con la cabeza girada también— y en
+   * píxeles de pantalla. Fuera de la cabina, en un avión sin brújula o con la
+   * caja fuera de la pantalla, nada. Dos veces por segundo, como lo que tapa la
+   * fila (`loQueTapaLaFilaDeArriba`): son cuatro puntos, y al HUD solo se le
+   * dice si cambia. Ver `Hud.ponerLaBrujula`.
+   */
+  private dondeCaeLaBrujula(): void {
+    const ojo = this.aircraftMesh.ojo;
+    const b = ojo?.encuadre?.brujula;
+    const enElAsiento = !!b && !this.enLaVuelta && this.cameraMode === "cockpit";
+    if (!enElAsiento) {
+      if (this.brujulaEnPantalla.clave) this.hud.ponerLaBrujula(null);
+      this.brujulaEnPantalla.clave = "";
+      this.brujulaEnPantalla.medida = Number.NEGATIVE_INFINITY;
+      return;
+    }
+    const ahora = performance.now();
+    if (ahora - this.brujulaEnPantalla.medida < 500) return;
+    this.brujulaEnPantalla.medida = ahora;
+    const s = this.flight.state;
+    const v = this.esquinaDeLaBrujula;
+    const ancho = window.innerWidth;
+    const alto = window.innerHeight;
+    this.camera.updateMatrixWorld();
+    let izq = Infinity;
+    let der = -Infinity;
+    let arr = Infinity;
+    let aba = -Infinity;
+    let delante = true;
+    for (const x of [b.x - b.medio, b.x + b.medio])
+      for (const caida of [b.arriba, b.abajo]) {
+        // La misma cuenta que la mide en el modelo (`conSuEncuadre`), a un metro de los ojos.
+        v.set(ojo.x + x, ojo.y - Math.tan(caida), ojo.z - 1)
+          .applyQuaternion(s.orientation)
+          .add(s.position)
+          .project(this.camera);
+        if (v.z > 1) delante = false;
+        const px = ((v.x + 1) / 2) * ancho;
+        const py = ((1 - v.y) / 2) * alto;
+        izq = Math.min(izq, px);
+        der = Math.max(der, px);
+        arr = Math.min(arr, py);
+        aba = Math.max(aba, py);
+      }
+    const seVe = delante && der > 0 && izq < ancho && aba > 0 && arr < alto;
+    const caja = seVe
+      ? { izq: Math.max(0, izq), arr: Math.max(0, arr), der: Math.min(ancho, der), aba: Math.min(alto, aba) }
+      : null;
+    const clave = caja ? `${Math.round(caja.izq)},${Math.round(caja.arr)},${Math.round(caja.der)},${Math.round(caja.aba)}` : "";
+    if (clave === this.brujulaEnPantalla.clave) return;
+    this.brujulaEnPantalla.clave = clave;
+    this.hud.ponerLaBrujula(caja);
+  }
 
   /**
    * **Lo que la fila de botones de arriba tapa encima de la brújula del
