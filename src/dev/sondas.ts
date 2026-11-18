@@ -2651,6 +2651,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     giroscopo: () => juego.giroscopoParaBanco,
     /** La perilla del direccional, como la tecla o el dedo: `pasos` muescas. */
     girarElDireccional: (pasos: number) => juego.girarElDireccional(pasos),
+    /**
+     * «El pitot se hiela»: lo que marca la aguja y lo de verdad, el hielo, la
+     * calefacción, el frío de fuera, la nube y la fase. Ver
+     * `flight/pitot-helado.ts`.
+     */
+    pitot: () => juego.pitotParaBanco,
+    /** El interruptor de la calefacción del pitot, como la tecla. */
+    calefaccionDelPitot: () => juego.alternarLaCalefaccionDelPitot(),
     /** El morse de la radio: si suena, de quién, y lo último identificado. Ver `audio/morse.ts`. */
     morse: () => juego.morseParaBanco,
     /** Enseña o esconde la nube de la tormenta, para medir lo que cuesta. */

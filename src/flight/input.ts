@@ -170,6 +170,8 @@ export interface InputActions {
   siguienteEstacion?: (caja: "nav" | "adf") => void;
   /** La perilla del direccional, de grado en grado. Ver `flight/direccional.ts`. Opcional. */
   girarDireccional?: (pasos: number) => void;
+  /** El interruptor de la calefacción del pitot. Ver `flight/pitot-helado.ts`. Opcional. */
+  calefaccionDelPitot?: () => void;
   cycleLanguage: () => void;
   toggleSound: () => void;
   /** Se llama en el primer gesto: los navegadores no dejan sonar antes. */
@@ -1438,6 +1440,9 @@ export class InputManager {
         break;
       case "dgDown":
         this.actions.girarDireccional?.(-1);
+        break;
+      case "pitotHeat":
+        this.actions.calefaccionDelPitot?.();
         break;
       case "credits":
         event.preventDefault();

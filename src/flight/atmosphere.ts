@@ -309,3 +309,12 @@ export function aireDelParte(
     qnh,
   };
 }
+
+/**
+ * **La presión estática a esa altura con ese aire**, Pa: la que entra por la
+ * toma del costado. Hace falta para el pitot que se hiela, que encierra una
+ * presión y la compara con esta. Ver `flight/pitot-helado.ts`.
+ */
+export function presionEstatica(altitudeMetres: number, aire: Aire = AIRE_ESTANDAR): number {
+  return presionPa(altitudeMetres, aire);
+}

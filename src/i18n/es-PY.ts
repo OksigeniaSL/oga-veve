@@ -357,6 +357,8 @@ export const ES_PY = {
   "tecla.credits": "Créditos",
   "tecla.keys": "Ver y cambiar las teclas",
   "tecla.pausa": "Parar el juego",
+  // El interruptor de la calefacción del pitot. Ver `flight/pitot-helado.ts`.
+  "tecla.pitotHeat": "Calefacción del pitot",
   "tecla.engine": "Arrancar o apagar el motor",
   "hud.engineOff": "Motor apagado",
   "hud.engineBusy": "Parate del todo y bajá el motor primero",
@@ -3309,6 +3311,7 @@ export const ES_PY = {
   "hangar.ejercicio.altimetro": "El altímetro miente",
   "hangar.ejercicio.brujula": "La brújula baila",
   "hangar.ejercicio.giroscopo": "Poné en hora el giróscopo",
+  "hangar.ejercicio.pitot": "El pitot se hiela",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3746,6 +3749,25 @@ export const ES_PY = {
     "El giróscopo no siente el viraje, pero se va solo. Cada quince minutos, derecho y sin acelerar, se pone con la brújula. De verdad tarda una hora o más en irse así: acá apuramos el reloj",
   // En un vuelo cualquiera, de Taguató para arriba, cuando el direccional se fue tres grados. Ver `recordarElDireccional`.
   "vuelo.giroscopo.seFue": "El direccional se fue un poquito. Derecho y sin acelerar, ponelo con la brújula",
+  /*
+   * **«El pitot se hiela»** (#51, ADR 0031, enmienda H26s): adentro de una
+   * nube fría, con la calefacción del pitot apagada, el hielo tapa el tubo;
+   * con todo el gas el avión acelera y la aguja no se mueve, y se prende la
+   * calefacción. Sin drama: que la aguja mienta es la lección.
+   */
+  "ejercicio.pitot.antes": "Estamos adentro de una nube, y afuera hace frío. Mirá la aguja de la velocidad",
+  "ejercicio.pitot.gas": "Ahora dale todo el gas, y mantené la altura",
+  "ejercicio.pitot.acelera": "El avión acelera y la aguja no se mueve: se heló el pitot. Mirá la actitud y el gas",
+  "ejercicio.pitot.calefaccion": "Prendé la calefacción del pitot, y esperá un ratito",
+  "ejercicio.pitot.volvio": "¡Eso! Se derritió el hielo, y la aguja dice la verdad otra vez",
+  "ejercicio.pitot.prevenido": "¡Muy bien! Con la calefacción prendida antes, el pitot no se hiela",
+  "ejercicio.pitot.calido": "Hoy acá arriba no hace tanto frío: el pitot no se hiela. Otro día probamos",
+  // Los números de la tarjeta, de Taguató para arriba, que es donde está el ejercicio.
+  "ejercicio.pitot.frio": "Afuera: {n} °C",
+  "ejercicio.pitot.cuanto": "De verdad {real} {u} · aguja {aguja} {u}",
+  // El panel del final: se lee, no se dice.
+  "ejercicio.pitot.cierre":
+    "Con nube y frío, el hielo tapa el pitot y la aguja se queda quieta aunque el avión acelere. Entonces se vuela con la actitud y el gas. La calefacción del pitot se prende antes de entrar en la nube",
   // Y la frase corta, con sus números, de Taguató para arriba.
   "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
   "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",

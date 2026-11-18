@@ -762,6 +762,15 @@ const POR_ENCIMA_DEL_TEJADO = 3;
  */
 const TARDA_EL_FINAL = 0.5;
 /**
+ * **A qué velocidad empieza «El pitot se hiela»**, veces la de circuito: un
+ * cuarto por encima, en nivel y con el gas a medias. Con todo el gas, el
+ * bimotor acelera hacia su crucero, y eso es lo que tiene que verse contra la
+ * aguja quieta. Ver `flight/pitot-helado.ts`.
+ */
+const VELOCIDAD_DEL_PITOT = 1.25;
+/** El rumbo de «El pitot se hiela», magnético: el norte, como el giróscopo. Da igual cuál: es nivel y recto. */
+const RUMBO_DEL_PITOT = 360;
+/**
  * **Cuándo se va en crucero**, para la cabina estéril: dentro de una banda de
  * altura de tanto arriba y abajo, m, durante `RATO_EN_CRUCERO` segundos.
  * Llegar arriba no es pasar por arriba.
@@ -823,6 +832,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   brujula: "brujula-las-dos",
   // El direccional que se fue y la brújula. Ver `giroscopo-en-hora.ts`.
   giroscopo: "giroscopo-se-fue",
+  // La esfera con la aguja quieta y el hielo en el tubo. Ver `pitot-helado.ts`.
+  pitot: "pitot-helado",
 };
 
 /**
@@ -1084,6 +1095,13 @@ import {
   dondeSeVaElGiroscopo,
   type SucesoDelGiroscopo,
 } from "./flight/giroscopo-en-hora";
+import {
+  DENTRO_DE_LA_NUBE,
+  ElPitotHelado,
+  PitotHelado,
+  alturaDelFrio,
+  type SucesoDelPitotHelado,
+} from "./flight/pitot-helado";
 import { sitioDelCielo } from "./world/cielo-de-noche";
 import {
   colocacionDelAltimetro,
@@ -1226,6 +1244,7 @@ import {
   temperaturaExterior,
   trueFromIndicated,
   velocidadDelSonido,
+  presionEstatica,
 } from "./flight/atmosphere";
 import {
   delante,
@@ -4093,6 +4112,7 @@ export class Game {
       this.altimetroMiente?.ejercicio ??
       this.brujulaQueBaila?.ejercicio ??
       this.giroscopoEnHora?.ejercicio ??
+      this.pitotHelado?.ejercicio ??
       null
     );
   }
@@ -4103,7 +4123,7 @@ export class Game {
    * `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
-    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva ?? this.rumboDeNoche ?? this.estima ?? this.altimetroMiente ?? this.brujulaQueBaila ?? this.giroscopoEnHora;
+    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva ?? this.rumboDeNoche ?? this.estima ?? this.altimetroMiente ?? this.brujulaQueBaila ?? this.giroscopoEnHora ?? this.pitotHelado;
     return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada", this.ils?.fase === "frustrando");
   }
   /**
@@ -6721,6 +6741,14 @@ export class Game {
           this.giroscopoEnHora = new GiroscopoEnHora(ejercicio, derivaDelDireccional(lat, this.aircraft.id));
           this.cameraMode = "cockpit";
         }
+      } else if (ejercicio.escena === "navegacion" && ejercicio.colocacion === "pitot") {
+        /*
+         * **Ni el pitot**: vale en cualquier campo. La nube y la altura se
+         * ponen al colocar, con la temperatura del día: ver
+         * `dondeEmpiezaElPitot`. La vista, la que se elija: la aguja quieta
+         * está en el cuadro plano y en el panel del asiento.
+         */
+        this.pitotHelado = new ElPitotHelado(ejercicio);
       } else if (ejercicio.escena === "navegacion") {
         /*
          * **Ni la deriva**: el sitio del campo, puesto donde está. Dónde se
@@ -7543,6 +7571,7 @@ export class Game {
       girarVentanillaAlt: (pasos: number) => this.girarLaVentanillaAlt(pasos),
       girarObs: (pasos: number) => this.girarElObs(pasos),
       girarDireccional: (pasos: number) => this.girarElDireccional(pasos),
+      calefaccionDelPitot: () => this.alternarLaCalefaccionDelPitot(),
       siguienteEstacion: (caja: "nav" | "adf") => this.siguienteEstacion(caja),
       trenTrabado: () => this.trenTrabado(),
       /*
@@ -13714,7 +13743,8 @@ export class Game {
         colocacion !== "estima" &&
         colocacion !== "altimetro" &&
         colocacion !== "brujula" &&
-        colocacion !== "giroscopo"
+        colocacion !== "giroscopo" &&
+        colocacion !== "pitot"
       ) {
         const { lejos, alto } = this.dondeEmpiezaElEjercicio(colocacion);
         const [x, z] = puntoDePista(runway, hastaElUmbralDeToma(runway) + lejos);
@@ -13995,6 +14025,10 @@ export class Game {
     this.giroscopoEnHora?.reiniciar();
     this.direccionalDelPanel.poner();
     this.dijoQueSeFue = false;
+    // Y el pitot, limpio y con la calefacción apagada, como se olvidó.
+    this.pitotHelado?.reiniciar();
+    this.pitotDelPanel.reiniciar();
+    this.calefaccionDelPitot = false;
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
@@ -18300,6 +18334,9 @@ export class Game {
           ? this.aircraft.velocidadDeCircuito
           : colocacion === "crucero" || colocacion === "tormenta"
             ? this.aircraft.cruiseSpeed
+            : colocacion === "pitot"
+            ? // Por encima de la de circuito y lejos de la de crucero: con todo el gas, se ve acelerar.
+              VELOCIDAD_DEL_PITOT * this.aircraft.velocidadDeCircuito
             : colocacion === "aguja" ||
                 colocacion === "radial" ||
                 colocacion === "interceptar" ||
@@ -18339,7 +18376,8 @@ export class Game {
       colocacion === "estima" ||
       colocacion === "altimetro" ||
       colocacion === "brujula" ||
-      colocacion === "giroscopo"
+      colocacion === "giroscopo" ||
+      colocacion === "pitot"
         ? { equilibrado: true }
         : {}),
     });
@@ -19906,6 +19944,8 @@ export class Game {
     // Y el direccional que se va, y el ejercicio de ponerlo. Ver `pasoDelDireccional`.
     this.pasoDelDireccional(dt);
     this.practicarElGiroscopo(dt);
+    // Y el pitot que se hiela. Ver `practicarElPitot`.
+    this.practicarElPitot(dt);
     // El morse de la radio, con su turno. Ver `atenderAlMorse`.
     this.atenderAlMorse();
     this.mirarSiCambiaDeCampo();
@@ -21828,6 +21868,8 @@ export class Game {
         radio,
         // Y la funda del pitot, si se quedó puesta. Ver `vigilarLaFunda`.
         pitotTapado: this.pitotTapado,
+        // Y el pitot helado, si lo está: lo que marca el aire encerrado. Ver `practicarElPitot`.
+        pitotHelado: this.pitotHeladoMarca(),
         /*
          * **Y la senda a la vista**: el desvío, la marca del ritmo y el arco
          * verde, en el avión que los lleva. Ver `perfilParaElCuadro`.
@@ -25225,6 +25267,7 @@ export class Game {
     if (colocacion === "altimetro") return this.dondeEmpiezaElAltimetro();
     if (colocacion === "brujula") return this.dondeEmpiezaLaBrujula();
     if (colocacion === "giroscopo") return this.dondeEmpiezaElGiroscopo();
+    if (colocacion === "pitot") return this.dondeEmpiezaElPitot();
     return null;
   }
 
@@ -31099,6 +31142,216 @@ export class Game {
           this.hud.mostrarCierreDeEjercicio(
             dibujoDeCierre("vuelta"),
             this.rotulo("ejercicio.giroscopo.cierre", "palabra.bien"),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+    }
+  }
+
+  // ── «El pitot se hiela» ──────────────────────────────────────────────
+  //
+  // Ver `flight/pitot-helado.ts`. Aquí solo se decide quién dice y enseña
+  // cada cosa: la nube fría, la aguja quieta, el interruptor de la
+  // calefacción, la tarjeta y la instructora. **Solo miente la aguja**: los
+  // pilotos de banco, los avisos y el modelo de vuelo siguen leyendo la
+  // velocidad de verdad.
+
+  /** **El pitot del panel**, con su hielo. Solo se mueve con el ejercicio puesto. */
+  private readonly pitotDelPanel = new PitotHelado();
+  /** **«El pitot se hiela»**, si se eligió. Ver `practicarElPitot`. */
+  private pitotHelado: ElPitotHelado | null = null;
+  /** Si la calefacción del pitot está prendida. Empieza apagada: es lo que se olvidó. */
+  private calefaccionDelPitot = false;
+  /** **La base de la nube del ejercicio**, m sobre el mar, desde que se colocó. */
+  private nubeDelPitot: number | null = null;
+
+  /**
+   * **Lo que marca la aguja con el pitot helado**, m/s, o `null` si no está
+   * helado. Con `deVerdad`, la de verdad para cuando no lo está.
+   */
+  private pitotHeladoMarca(deVerdad?: number): number | null {
+    if (!this.pitotHelado || !this.pitotDelPanel.tapado) return null;
+    const s = this.flight.state;
+    const aire = this.flight.aireDelDia();
+    const v = deVerdad ?? indicatedAirspeed(s.airspeed, s.position.y, aire);
+    return this.pitotDelPanel.marca(v, presionEstatica(s.position.y, aire));
+  }
+
+  /**
+   * **Dónde empieza el pitot**: encima del campo, a la altitud en que el aire
+   * del día está a cinco bajo cero —sin pasar del crucero del avión, que es
+   * su techo de aquí—, y con trescientos metros sobre lo más alto en seis
+   * kilómetros. Y la nube, puesta con la base un poco por debajo: se empieza
+   * dentro. Ver `alturaDelFrio`.
+   */
+  private dondeEmpiezaElPitot(): { readonly x: number; readonly z: number; readonly alto: number; readonly rumbo: number } | null {
+    if (!this.pitotHelado) return null;
+    const pista = this.terrain.runwayElevation;
+    const aire = this.flight.aireDelDia();
+    let alto = alturaDelFrio((h) => temperaturaExterior(h, aire), this.aircraft.alturaDeCrucero) - pista;
+    for (let x = -6000; x <= 6000; x += 500)
+      for (let z = -6000; z <= 6000; z += 500)
+        if (Math.hypot(x, z) <= 6000) alto = Math.max(alto, this.terrain.sampleHeight(x, z) + 300 - pista);
+    this.nubeDelPitot = pista + alto - DENTRO_DE_LA_NUBE;
+    return { x: 0, z: 0, alto, rumbo: MathUtils.degToRad(RUMBO_DEL_PITOT - (this.scenario.magneticVariation ?? 0)) };
+  }
+
+  /**
+   * **La nube del ejercicio, puesta**: cubierta, con la base debajo del avión.
+   * Se vuelve a poner si un parte que llega después la cambia: el ejercicio
+   * es dentro de esta nube.
+   */
+  private ponerLaNubeDelPitot(): void {
+    const base = this.nubeDelPitot;
+    if (base === null || !this.pitotHelado || this.pitotHelado.fase === "cerrada") return;
+    const capa = this.capaDeNubes;
+    if (capa && Math.abs(capa.base - base) < 1 && capa.tapadura >= 1) return;
+    this.ponerTecho(base - this.terrain.runwayElevation, 1);
+  }
+
+  /** **Cuánta nube hay donde está el avión**, de 0 a 1: la misma cuenta que la escena de pasaje. */
+  private nubeDondeEsta(): number {
+    const s = this.flight.state;
+    const capa = this.capaDeNubes;
+    return capa && s.position.y > capa.base - 50 && s.position.y < capa.techo + 50
+      ? cuantoDentro(this.sky.densidadEn(s.position.x, s.position.y, s.position.z))
+      : 0;
+  }
+
+  /**
+   * **El interruptor de la calefacción del pitot**: la tecla y la tarjeta que
+   * la pide. Fuera del ejercicio no hace nada —no hay pitot que se hiele—, y
+   * se dice en la enmienda H26s por qué.
+   */
+  alternarLaCalefaccionDelPitot(): void {
+    if (!this.pitotHelado) return;
+    this.calefaccionDelPitot = !this.calefaccionDelPitot;
+    if (!this.dePasaje) this.audio.ruidoDeLaCarta("clic");
+  }
+
+  /** El pitot, para el banco: lo que marca la aguja, lo de verdad, el hielo y el ejercicio. */
+  get pitotParaBanco(): {
+    readonly marca: number;
+    readonly deVerdad: number;
+    readonly tapado: boolean;
+    readonly hielo: number;
+    readonly calefaccion: boolean;
+    readonly oat: number;
+    readonly enNube: number;
+    readonly nube: { readonly base: number; readonly techo: number } | null;
+    readonly fase: string | null;
+    readonly cierre: string | null;
+    readonly camara: string;
+  } {
+    const s = this.flight.state;
+    const aire = this.flight.aireDelDia();
+    const capa = this.capaDeNubes;
+    return {
+      marca: this.indicadaDelReloj(),
+      deVerdad: indicatedAirspeed(s.airspeed, s.position.y, aire),
+      tapado: this.pitotDelPanel.tapado,
+      hielo: this.pitotDelPanel.cuanto,
+      calefaccion: this.calefaccionDelPitot,
+      oat: temperaturaExterior(s.position.y, aire),
+      enNube: this.nubeDondeEsta(),
+      nube: capa ? { base: capa.base, techo: capa.techo } : null,
+      fase: this.pitotHelado?.fase ?? null,
+      cierre: this.pitotHelado?.cierre ?? null,
+      camara: this.cameraMode,
+    };
+  }
+
+  /** **Un paso de «El pitot se hiela»**: el hielo del tubo con el aire de aquí, y el ejercicio. */
+  private practicarElPitot(dt: number): void {
+    const e = this.pitotHelado;
+    if (!e) return;
+    this.ponerLaNubeDelPitot();
+    const s = this.flight.state;
+    const aire = this.flight.aireDelDia();
+    const indicada = indicatedAirspeed(s.airspeed, s.position.y, aire);
+    const estatica = presionEstatica(s.position.y, aire);
+    const oat = temperaturaExterior(s.position.y, aire);
+    const enNube = this.nubeDondeEsta();
+    this.pitotDelPanel.paso({ enNube, oat, calefaccion: this.calefaccionDelPitot, indicada, estatica }, dt);
+    const sucesos = e.paso(
+      {
+        indicada,
+        marca: this.pitotDelPanel.marca(indicada, estatica),
+        tapado: this.pitotDelPanel.tapado,
+        calefaccion: this.calefaccionDelPitot,
+        oat,
+        enNube,
+        enElSuelo: s.onGround,
+        parado: s.onGround && s.groundSpeed < 0.6,
+        percance: this.percance !== null,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderAlPitot(suceso);
+  }
+
+  private atenderAlPitot(suceso: SucesoDelPitotHelado): void {
+    /** La tarjeta con su dibujo y su frase, y la voz de la instructora si está grabada. */
+    const contar = (
+      dibujo: DibujoDeSenal,
+      clave: TranslationKey,
+      delante = "",
+      segundos = 12,
+      accion: (() => void) | null = null,
+    ): void => {
+      const frase = this.rotulo(clave, "palabra.mira");
+      this.hud.senal.mostrar(dibujo, delante && frase ? `${delante}. ${frase}` : delante || frase, null, {
+        segundos,
+        prioridad: IMPORTANTE,
+        accion,
+      });
+      this.decirDelEjercicio(clave, "mando");
+    };
+    /** **Los números, desde Taguató**, delante de la frase. El ejercicio es de Taguató para arriba: siempre. */
+    const cifra = canalesDe(this.tier.avisos).cifra;
+    // En las unidades del peldaño: kilómetros por hora en Taguató, nudos en Taguató Ruvichá.
+    const unidades = UNIT_SYSTEMS[this.tier.units];
+    const u = unidades.speedLabel();
+    const nudos = (v: number): string => String(Math.round(unidades.speed(v)));
+    switch (suceso.que) {
+      case "presentar":
+        return contar(
+          "pitot-helado",
+          "ejercicio.pitot.antes",
+          cifra ? t("ejercicio.pitot.frio", { n: String(Math.round(suceso.oat)) }) : "",
+          12,
+        );
+      case "gas":
+        return contar("gas-mas", "ejercicio.pitot.gas", "", 12);
+      case "acelera":
+        return contar(
+          "pitot-helado",
+          "ejercicio.pitot.acelera",
+          cifra ? t("ejercicio.pitot.cuanto", { real: nudos(suceso.deVerdad), aguja: nudos(suceso.marca), u }) : "",
+          12,
+        );
+      case "calefaccion":
+        this.avisar("attention");
+        return contar("pitot-calefaccion", "ejercicio.pitot.calefaccion", "", 40, () => {
+          if (!this.calefaccionDelPitot) this.alternarLaCalefaccionDelPitot();
+        });
+      case "volvio":
+        this.avisar("achieved");
+        return contar("pitot-calefaccion", "ejercicio.pitot.volvio", cifra ? `${nudos(suceso.marca)} ${u}` : "");
+      case "prevenido":
+        this.avisar("achieved");
+        return contar("pitot-calefaccion", "ejercicio.pitot.prevenido");
+      case "calido":
+        return contar("pitot-helado", "ejercicio.pitot.calido", cifra ? t("ejercicio.pitot.frio", { n: String(Math.round(suceso.oat)) }) : "");
+      case "cerrar":
+        // Lo malo ya lo cuenta el percance; posado antes, el suelo lo dice; sin hielo, ya se dijo.
+        if (suceso.como !== "hecho") return;
+        this.agenda.luego(TARDA_EL_FINAL + 6, () => {
+          if (this.pitotHelado?.cierre !== "hecho") return;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre("vuelta"),
+            this.rotulo("ejercicio.pitot.cierre", "palabra.bien"),
             plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
           );
         });
@@ -39026,14 +39279,18 @@ export class Game {
     return this.anemometro !== null && (this.vueltaAlAvion?.fundaPuesta ?? false);
   }
 
-  /** La velocidad indicada que enseñan los relojes: cero con la funda puesta. */
+  /**
+   * La velocidad indicada que enseñan los relojes: cero con la funda puesta,
+   * y la del aire encerrado con el pitot helado. Ver `pitotHeladoMarca`.
+   */
   private indicadaDelReloj(): number {
     if (this.pitotTapado) return 0;
-    return indicatedAirspeed(
+    const deVerdad = indicatedAirspeed(
       this.flight.state.airspeed,
       this.flight.state.position.y,
       this.flight.aireDelDia(),
     );
+    return this.pitotHeladoMarca(deVerdad) ?? deVerdad;
   }
 
   /**

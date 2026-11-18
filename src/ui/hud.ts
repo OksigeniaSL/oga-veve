@@ -3258,6 +3258,12 @@ export class Hud {
        */
       readonly pitotTapado?: boolean;
       /**
+       * **Lo que marca la aguja con el pitot helado**, m/s, o `null` si no lo
+       * está: la presión encerrada contra la estática de ahora, quieta en
+       * nivel aunque el avión acelere. Ver `flight/pitot-helado.ts`.
+       */
+      readonly pitotHelado?: number | null;
+      /**
        * Y lo que marca cada motor, de 0 a 1, si no marcan todos lo mismo: con
        * uno parado, su aguja cae. Sin esto, todas marcan el gas. Ver
        * `agujasDeLosMotores` en `game.ts`.
@@ -3276,7 +3282,7 @@ export class Hud {
     // la que marcaría el instrumento de un avión real.
     const ias = mandos?.pitotTapado
       ? 0
-      : indicatedAirspeed(state.airspeed, state.position.y, mandos?.aire);
+      : mandos?.pitotHelado ?? indicatedAirspeed(state.airspeed, state.position.y, mandos?.aire);
 
     if (this.pictos.present) {
       // Fracciones, no unidades: aquí no hay nudos ni pies que valgan.

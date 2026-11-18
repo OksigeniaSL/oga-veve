@@ -1753,6 +1753,34 @@ const PITOT_TAPADO = icono(`
 `);
 
 /**
+ * **La esfera del velocímetro con el pitot**: la aguja quieta a media
+ * esfera y, abajo a la derecha, el tubo con la boca hacia delante. Es la base
+ * de los dos dibujos de «El pitot se hiela» —ver `flight/pitot-helado.ts`—,
+ * que le ponen encima el hielo o el calor.
+ */
+const ESFERA_CON_PITOT = `
+  <circle cx="9" cy="9.6" r="7.4" fill="none" stroke="currentColor" stroke-width="2" />
+  <path d="M9 9.6 L13.2 5.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+  <circle cx="9" cy="9.6" r="1.5" />
+  <path d="M10.5 19.6 H19.4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />`;
+
+/**
+ * **El pitot helado**: la esfera con la aguja quieta y, en la boca del tubo,
+ * el hielo en ámbar. Se lee sin una letra: la aguja que no se mueve y el
+ * copo donde entra el aire.
+ */
+const PITOT_HELADO = icono(`${ESFERA_CON_PITOT}
+  <path class="senal__se-va" d="M20.2 15 V24 M16.3 17.25 L24 21.75 M16.3 21.75 L24 17.25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />`);
+
+/**
+ * **La calefacción del pitot**: la misma esfera y, encima del tubo, tres
+ * ondas de calor que suben. Es la tarjeta que pide prenderla y la que
+ * celebra la aguja de vuelta.
+ */
+const PITOT_CALEFACCION = icono(`${ESFERA_CON_PITOT}
+  <path d="M13.4 17.4 q-1.1 -1.3 0 -2.6 q1.1 -1.3 0 -2.6 M16.6 17.4 q-1.1 -1.3 0 -2.6 q1.1 -1.3 0 -2.6 M19.8 17.4 q-1.1 -1.3 0 -2.6 q1.1 -1.3 0 -2.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />`);
+
+/**
  * **El servicio a bordo**: una botella de agua y un vaso, en su bandeja.
  *
  * Es el dibujo de cuando la tripulación anuncia que pasa por el pasillo, y en
@@ -2286,6 +2314,9 @@ export const DIBUJOS = {
     <circle class="senal__luz-blanca" cx="12" cy="13.2" r="1.8" />`),
   "luces-cruza-izquierda": cruzando("roja", false),
   "luces-cruza-derecha": cruzando("verde", true),
+  // «El pitot se hiela»: la aguja quieta con el hielo en la boca, y la calefacción. Ver `pitot-helado.ts`.
+  "pitot-helado": PITOT_HELADO,
+  "pitot-calefaccion": PITOT_CALEFACCION,
   ...TRAFICO,
   ...CERCANO,
   ...RA,
