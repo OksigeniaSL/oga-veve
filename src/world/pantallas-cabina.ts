@@ -1000,6 +1000,37 @@ function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   g.restore();
 }
 
+/** Medio rombo de la senda, px: el del cuadro plano. Ver `escalaDeLaSenda` en `ui/radio-en-la-rosa.ts`. */
+const ROMBO_DE_LA_SENDA = 8;
+
+/**
+ * **Dónde va la escala de la senda** en la pantalla de navegación de la
+ * cabina y qué marca, sin lienzo: lo mismo que la del cuadro plano
+ * (`escalaDeLaSenda`), a la derecha de la rosa —a su radio y dieciséis más, o
+ * pegada al borde si no cabe—, con el punto a 0,17 veces el radio y el rombo
+ * bajando cuando se va alto (`LaRadioPintada.senda`, positiva hacia abajo).
+ * `null` sin escala: con un VOR o sin NAV. `rombo`, lo que baja el rombo
+ * desde la raya del centro, o `null` con la bandera GS.
+ */
+export function escalaDeLaSendaEnLaRosa(
+  p: LaRadioPintada,
+  cx: number,
+  cy: number,
+  r: number,
+  izquierda: number,
+  ancho: number,
+): { readonly x: number; readonly y: number; readonly punto: number; readonly rombo: number | null; readonly bandera: boolean } | null {
+  if (!p.conSenda) return null;
+  const punto = r * 0.17;
+  return {
+    x: cx + Math.min(izquierda + ancho - cx - 14, r + 16),
+    y: cy,
+    punto,
+    rombo: p.senda === null ? null : p.senda * punto * 2,
+    bandera: p.banderaSenda,
+  };
+}
+
 /**
  * **La radio sobre la rosa**, en la pantalla de navegación de la cabina: lo
  * mismo que el cuadro plano —`radioEnLaRosaSvg` en `ui/radio-en-la-rosa.ts`—,
@@ -1091,6 +1122,48 @@ function pintarLaRadioEnLaRosa(
     escribir(g, "NAV", x + 15, y + 8, "700 12px " + FUENTE, "#14161a");
   }
   g.restore();
+  /*
+   * **Y la escala de la senda**, a la derecha de la rosa y sin girar con ella,
+   * como en el cuadro plano: cuatro puntos, la raya del centro y el rombo
+   * magenta, que baja cuando se va alto; con la bandera GS, el rombo se
+   * esconde. Faltaba aquí: el HSI la llevaba y la cabina en 3D no (ADR 0030,
+   * H26i). Ver `escalaDeLaSendaEnLaRosa`.
+   */
+  const senda = escalaDeLaSendaEnLaRosa(p, cx, cy, r, izquierda, ancho);
+  if (senda) {
+    g.save();
+    g.translate(senda.x, senda.y);
+    g.strokeStyle = TINTA;
+    g.lineWidth = 1.5;
+    for (const i of [-2, -1, 1, 2]) {
+      g.beginPath();
+      g.arc(0, i * senda.punto, 3.2, 0, Math.PI * 2);
+      g.stroke();
+    }
+    g.beginPath();
+    g.moveTo(-ROMBO_DE_LA_SENDA * 1.4, 0);
+    g.lineTo(ROMBO_DE_LA_SENDA * 1.4, 0);
+    g.stroke();
+    if (senda.rombo !== null) {
+      const m = ROMBO_DE_LA_SENDA;
+      g.strokeStyle = PALETA.objetivo;
+      g.lineWidth = 3;
+      g.lineJoin = "round";
+      g.beginPath();
+      g.moveTo(0, senda.rombo - m);
+      g.lineTo(m * 0.7, senda.rombo);
+      g.lineTo(0, senda.rombo + m);
+      g.lineTo(-m * 0.7, senda.rombo);
+      g.closePath();
+      g.stroke();
+    }
+    if (senda.bandera) {
+      g.fillStyle = PALETA.limite;
+      g.fillRect(-13, -8, 26, 16);
+      escribir(g, "GS", 0, 0, "700 12px " + FUENTE, "#14161a");
+    }
+    g.restore();
+  }
   const y0 = cy + r * 0.56;
   const linea = (texto: string, x: number, y: number, color: string, alineado: CanvasTextAlign) => {
     if (texto) escribir(g, texto, x, y, "500 15px " + FUENTE, color, alineado);
