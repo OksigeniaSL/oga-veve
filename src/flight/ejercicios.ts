@@ -79,6 +79,13 @@
  * `dos-radiales.ts`. Y la quinta, «Aterrizar con las agujas», con el ILS: el
  * localizador y la senda hasta los mínimos; pide un campo con un ILS cuya
  * senda se sepa (`ilsDelCampo`) y la lleva `ils-con-agujas.ts`.
+ *
+ * ## Y la deriva, que es navegación sin radio
+ *
+ * «Apuntá al viento» (#51, el peldaño 2) va con `escena: "navegacion"`: no
+ * hay radio, solo un sitio que se ve, el viento de costado y la raya del
+ * camino en el suelo. Pide un campo con un sitio bajo cerca y viento típico
+ * (`sitioDeLaDeriva`) y la lleva `deriva.ts`. Ver el ADR 0031.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -88,6 +95,7 @@ import { EJERCICIO_DE_DESPRESURIZACION } from "./despresurizacion";
 import { radioDeSalida, radiosDe } from "./radio-de-navegacion";
 import { parejaDelCampo } from "./dos-radiales";
 import { ilsDelCampo } from "./ils-con-agujas";
+import { sitioDeLaDeriva } from "./deriva";
 
 export type EjercicioId =
   | "planeo"
@@ -105,7 +113,8 @@ export type EjercicioId =
   | "radial"
   | "interceptar"
   | "cruce"
-  | "ils";
+  | "ils"
+  | "deriva";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -166,7 +175,8 @@ export interface Ejercicio {
     | "radial"
     | "interceptar"
     | "cruce"
-    | "ils";
+    | "ils"
+    | "deriva";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
    * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
@@ -179,7 +189,7 @@ export interface Ejercicio {
    * lecciones del ala rotatoria, `rotor`, que enseñan lo que hace un
    * helicóptero y no un avión (ver `lecciones-del-rotor.ts`).
    */
-  readonly escena?: "tormenta" | "rotor" | "radio";
+  readonly escena?: "tormenta" | "rotor" | "radio" | "navegacion";
   /** Lo que enseña, en una línea: para quien lea esto, no para el juego. */
   readonly ensena: string;
   /**
@@ -503,6 +513,32 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     dondeVale: (oaci) => ilsDelCampo(oaci).length > 0,
     ensena:
       "un ILS son dos agujas: la del localizador dice a qué lado queda la pista y la de la senda si se va alto o bajo; con las dos en el centro se llega a los mínimos, y ahí se ve la pista o se va uno al aire, que también es ganar",
+  },
+  /*
+   * **Apuntá al viento** (#51, peldaño 2): el morro en un puente con el
+   * viento de costado, la raya del camino en el suelo que se aparta de la
+   * recta, y apuntar un poco al viento para llegar. Lo lleva `deriva.ts`. Ver
+   * el ADR 0031.
+   */
+  {
+    id: "deriva",
+    /*
+     * **Desde Tukã**: lo esencial se ve —el puente, la raya blanca que se
+     * aparta de la magenta— y se oye, sin leer nada. En Guyrami no, y no por
+     * la edad: su modelo de vuelo no lleva viento (`FlightModel.ponerViento`),
+     * y sin viento no hay deriva que ver.
+     */
+    peldanos: DESDE_TUKA,
+    // En todo avión: la deriva no es de un aparato, es del aire. El helicóptero va aparte.
+    valePara: () => true,
+    leccion: "aterrizaje",
+    colocacion: "deriva",
+    averias: [],
+    escena: "navegacion",
+    acabaEnElAire: true,
+    dondeVale: (oaci) => sitioDeLaDeriva(oaci) !== null,
+    ensena:
+      "con viento de costado, el avión no va adonde apunta el morro: se escurre de lado; apuntando un poco al viento, el camino sale derecho y se llega",
   },
 ];
 

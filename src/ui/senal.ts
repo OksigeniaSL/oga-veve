@@ -975,6 +975,43 @@ const CRUCE_DE_RADIALES = icono(`
   <circle cx="12" cy="9.3" r="1.3" />
 `);
 
+/**
+ * **«Apuntá al viento»**, desde arriba: el sitio arriba —un puente, la
+ * calzada con sus dos pilas—, la recta a rayas hasta él, el viento con dos
+ * flechas que entran por un lado y el camino de verdad, la raya llena, con el
+ * avión al final. Sin corregir, el camino se va de costado hacia donde empuja
+ * el viento aunque el morro apunte arriba; corrigiendo, el camino va por la
+ * recta y el morro, un poco al viento. `lado`: hacia dónde empuja, 1 a la
+ * derecha. Ver `flight/deriva.ts`.
+ */
+function deriva(lado: 1 | -1 | 0, corregida: boolean): string {
+  const k = lado === 0 ? 1 : lado;
+  const avion = (x: number, y: number, giro: number): string =>
+    `<g transform="translate(${x} ${y}) rotate(${giro}) scale(0.5) translate(-12 -12)">${FIGURA["avion"] ?? ""}</g>`;
+  // El viento entra por el lado contrario al que empuja: dos flechas cortas.
+  const x0 = 12 - k * 10.4;
+  const viento =
+    lado === 0
+      ? ""
+      : `<path d="M${x0} 10.4 h${k * 3.8} M${x0 + k * 3.8} 10.4 l${-k * 1.4} -1.3 M${x0 + k * 3.8} 10.4 l${-k * 1.4} 1.3
+                 M${x0} 15.6 h${k * 3.8} M${x0 + k * 3.8} 15.6 l${-k * 1.4} -1.3 M${x0 + k * 3.8} 15.6 l${-k * 1.4} 1.3"
+               fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />`;
+  const recto = lado === 0 || corregida;
+  const camino = recto
+    ? `<path d="M12 22.6 V14.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />`
+    : `<path d="M12 22.6 Q12.8 17.4 ${12 + k * 4.6} 12.6" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" />`;
+  const delante = recto ? avion(12, 11.4, corregida ? -k * 16 : 0) : avion(12 + k * 4.6, 10, 0);
+  return icono(`
+  <path d="M8 3.6 h8 M9.4 3.6 v2.2 M14.6 3.6 v2.2" fill="none" stroke="currentColor" stroke-width="1.6"
+        stroke-linecap="round" />
+  <path d="M12 22.6 V7" fill="none" stroke="currentColor" stroke-width="0.9" stroke-dasharray="1.6 1.4" />
+  ${viento}
+  ${camino}
+  ${delante}
+`);
+}
+
 /** La flecha del lado, pegada al borde: es lo primero que se mira. */
 const HACIA: Record<string, string> = {
   izquierda: `<path d="M5.4 4.2 L1.4 7.2 L5.4 10.2 Z" />
@@ -1864,6 +1901,12 @@ export const DIBUJOS = {
   "cdi-pasada-a-la-derecha": cdiDelVor(3.5, "FROM", 1),
   // «Dos radiales que se cortan»: las dos rayas y el fijo. Ver `dos-radiales.ts`.
   "cruce-de-radiales": CRUCE_DE_RADIALES,
+  // «Apuntá al viento»: el camino que se va de lado, el que sale derecho y el de la calma. Ver `deriva.ts`.
+  "deriva-a-la-izquierda": deriva(-1, false),
+  "deriva-a-la-derecha": deriva(1, false),
+  "deriva-corregida-a-la-izquierda": deriva(-1, true),
+  "deriva-corregida-a-la-derecha": deriva(1, true),
+  "deriva-en-calma": deriva(0, false),
   /*
    * «Aterrizar con las agujas»: el localizador a tope de cada lado con la
    * senda todavía arriba, viniendo hacia el centro, la senda arriba con el

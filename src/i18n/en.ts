@@ -958,6 +958,7 @@ export const EN: Dictionary = {
     "The runway we're going to is higher than the sea: what we still have to come down is what the altimeter shows minus the runway's number, the one under the altitude.",
   "palabra.pista": "Runway",
   "palabra.asi": "Steady",
+  "palabra.alViento": "Into the wind!",
   "palabra.aerofrenosAdentro": "Speed brakes in",
   "hud.gasDelAvion": "The plane holds the power",
   "hud.gasDeLaAyuda": "The instructor holds the power",
@@ -1426,6 +1427,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.interceptar": "Fly out on a radial",
   "hangar.ejercicio.cruce": "Where two radials cross",
   "hangar.ejercicio.ils": "Landing on the needles",
+  "hangar.ejercicio.deriva": "Aim into the wind",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1630,6 +1632,22 @@ export const EN: Dictionary = {
     "You landed on the needles! You came down the localizer and the glideslope to minimums, and there was the runway. That's how you get down to a runway you can't see",
   "ejercicio.ils.cierreFrustrada":
     "Good call! With a needle off centre, or without the runway in sight, you climb and try again. That's what real pilots do, and that's winning too",
+  "ejercicio.deriva.sitio": "{sitio}",
+  "ejercicio.deriva.antes":
+    "Point the nose right at the end of the magenta line, and hold it there. Watch the white line: it goes where the plane goes",
+  "ejercicio.deriva.deLado":
+    "See? The white line is sliding sideways: the wind is pushing us, even with the nose on target. Aim a little into the wind",
+  "ejercicio.deriva.alViento": "That's it! With the nose a little into the wind, the white line runs straight",
+  "ejercicio.deriva.enCalma":
+    "No wind today: the plane goes right where the nose points, and the white line runs straight",
+  "ejercicio.deriva.deLargo": "We went past to one side. No problem: turn back, with the nose a little into the wind",
+  "ejercicio.deriva.llegaste":
+    "We made it! Look: the nose wasn't pointing straight at it, it was a little into the wind. That's how you get there in a crosswind",
+  "ejercicio.deriva.llegasteEnCurva":
+    "We made it, but on a curve! Look at the white line: it bent. Next time, aim a little into the wind from the start",
+  "ejercicio.deriva.llegasteEnCalma": "We made it! With no wind, the path goes right where the nose points",
+  "ejercicio.deriva.cierre": "In a crosswind, the nose points a little into the wind and the path runs straight",
+  "ejercicio.deriva.grados": "{n}° into the wind",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
   "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
   "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",

@@ -15,7 +15,8 @@ import { EJERCICIOS, ejercicioPorId, type EjercicioId } from "./ejercicios";
 import { NO_CALLA_NADA, loQueCallaElEjercicio } from "./lo-que-calla-el-ejercicio";
 
 const TODO = { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true };
-const DE_RADIO: readonly EjercicioId[] = ["aguja", "radial", "interceptar", "cruce"];
+/** Los que se cierran en el aire: los de radio menos el ILS, y la deriva, que acaba encima de su puente. */
+const DE_RADIO: readonly EjercicioId[] = ["aguja", "radial", "interceptar", "cruce", "deriva"];
 /**
  * Los otros que empiezan en el aire: acaban aterrizando, y la pista es suya.
  * También el ILS, que es de radio y acaba en la pista o en la frustrada encima

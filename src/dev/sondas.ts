@@ -2602,6 +2602,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     interceptarUnRadial: () => juego.interceptarUnRadialParaBanco,
     /**
+     * «Apuntá al viento»: la fase, el sitio, dónde empezó, lo que se apartó
+     * la raya, la corrección medida y las dos rayas del suelo. Ver
+     * `flight/deriva.ts`.
+     */
+    deriva: () => juego.derivaParaBanco,
+    /**
      * «Dos radiales que se cortan»: la fase, las dos radios, los radiales
      * leídos, la cruz y lo lejos que cayó del avión. Ver `flight/dos-radiales.ts`.
      */
