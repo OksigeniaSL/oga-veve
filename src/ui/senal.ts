@@ -1049,7 +1049,7 @@ function estima(donde: "rumbo" | "debajo" | "derecha" | "izquierda" | "delante" 
       ? ""
       : `<path d="M12 23 L${x} ${y + 3}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />`;
   // Encima del pueblo, un hueco del color de la caja debajo del avión: si no, se pierde entre las manzanas.
-  const hueco = donde === "debajo" ? `<circle class="senal__hueco" cx="${x}" cy="${y}" r="4.6" />` : "";
+  const hueco = donde === "debajo" ? `<circle class="senal__hueco" cx="${x}" cy="${y}" r="3.2" />` : "";
   return icono(`
   ${manzanas}
   <path d="M12 23 V15.6" fill="none" stroke="currentColor" stroke-width="0.9" stroke-dasharray="1.6 1.4" />
