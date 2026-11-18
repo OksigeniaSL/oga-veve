@@ -177,7 +177,7 @@ export interface LecturaDelCorte {
   readonly parado: boolean;
   /** Si el vuelo acaba de terminar en un percance. */
   readonly percance: boolean;
-  /** Si la NAV tiene puesta la estación del ejercicio y se oye. */
+  /** Si la NAV tiene puesta la frecuencia de la estación del ejercicio, se oiga o no (H26m). */
   readonly sintonizada: boolean;
   /** El rumbo **verdadero** del avión, grados. */
   readonly rumbo: number;

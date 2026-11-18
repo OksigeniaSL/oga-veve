@@ -245,7 +245,11 @@ export interface LecturaDelIls {
   readonly parado: boolean;
   /** Si el vuelo acaba de terminar en un percance. */
   readonly percance: boolean;
-  /** Si la NAV tiene puesto el localizador del ejercicio y se oye. */
+  /**
+   * Si la NAV tiene puesta la frecuencia del localizador del ejercicio, se
+   * oiga o no: sin señal, `localizador` va a `null`, y eso no es quitar la
+   * radio (H26m).
+   */
   readonly sintonizada: boolean;
   /** Lo que marca el localizador, grados con su signo (`leerNav`); `null` sin señal. */
   readonly localizador: number | null;
