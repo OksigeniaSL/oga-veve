@@ -281,6 +281,7 @@ Hoy volás sin mí. ¿Lo querés así?
 Dale. Si hay peligro, te aviso.
 Bueno: hoy te acompaño.
 Entraste sin la luz verde. La próxima, esperala
+El direccional se fue un poquito. Derecho y sin acelerar, ponelo con la brújula
 Subí derecho por el eje
 Girá a la izquierda: volvemos a la pista
 Volá al lado de la pista, con ella a tu izquierda
@@ -442,6 +443,13 @@ Ya vamos derecho y la brújula todavía baila. El direccional, quieto
 Ahora sí: con el avión derecho y quieto, la brújula dice la verdad
 La brújula está en la cabina. Volvé adentro para verla
 Virando, la brújula miente y al salir baila. El direccional es un giróscopo: no siente el viraje, y por eso se vuela con él
+Vamos derecho al norte. La brújula de arriba y el direccional de abajo dicen lo mismo
+Ahora apuramos el reloj. Mirá el direccional: se va solito, despacito
+El direccional se fue y la brújula no. Derecho y sin acelerar, la brújula dice la verdad
+Girá la perilla del direccional hasta que diga lo mismo que la brújula
+Virando no: la brújula miente. Primero derecho, y después la perilla
+¡Eso! El direccional dice la verdad otra vez
+El giróscopo no siente el viraje, pero se va solo. Cada quince minutos, derecho y sin acelerar, se pone con la brújula. De verdad tarda una hora o más en irse así: acá apuramos el reloj
 Ver el río
 Seguir el río
 Salir al mar

@@ -2307,6 +2307,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.giroscopo.seFue",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El direccional se fue un poquito. Derecho y sin acelerar, ponelo con la brújula",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "circuito.subida",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -4257,6 +4264,111 @@
     "texto": "Virando, la brújula miente y al salir baila. El direccional es un giróscopo: no siente el viraje, y por eso se vuela con él",
     "para": "los ejercicios de emergencia: antes, durante y después",
     "dicho": "Virando, la brújula miente y al salir baila. El direccional es un giróscopo: no siente el viraje, y por eso se vuela con él.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.giroscopo.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vamos derecho al norte. La brújula de arriba y el direccional de abajo dicen lo mismo",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Vamos derecho al norte. La brújula de arriba y el direccional de abajo dicen lo mismo.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.giroscopo.apurar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ahora apuramos el reloj. Mirá el direccional: se va solito, despacito",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Ahora apuramos el reloj. Mirá el direccional: se va solito, despacito.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.giroscopo.seFue",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El direccional se fue y la brújula no. Derecho y sin acelerar, la brújula dice la verdad",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "El direccional se fue y la brújula no. Derecho y sin acelerar, la brújula dice la verdad.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.giroscopo.ponelo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Girá la perilla del direccional hasta que diga lo mismo que la brújula",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Girá la perilla del direccional hasta que diga lo mismo que la brújula.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.giroscopo.virando",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Virando no: la brújula miente. Primero derecho, y después la perilla",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Virando no: la brújula miente. Primero derecho, y después la perilla.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.giroscopo.puesto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Eso! El direccional dice la verdad otra vez",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Eso! El direccional dice la verdad otra vez.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.giroscopo.cierre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El giróscopo no siente el viraje, pero se va solo. Cada quince minutos, derecho y sin acelerar, se pone con la brújula. De verdad tarda una hora o más en irse así: acá apuramos el reloj",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "El giróscopo no siente el viraje, pero se va solo. Cada quince minutos, derecho y sin acelerar, se pone con la brújula. De verdad tarda una hora o más en irse así: acá apuramos el reloj.",
     "ajustes": {
       "stability": 0.85,
       "similarity_boost": 0.75,

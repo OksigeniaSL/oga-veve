@@ -447,6 +447,34 @@
       "ms": 3407,
       "h": "3dfe0c9a79"
     },
+    "ejercicio.giroscopo.antes": {
+      "ms": 4507,
+      "h": "344e8f55e4"
+    },
+    "ejercicio.giroscopo.apurar": {
+      "ms": 4307,
+      "h": "b5739d5541"
+    },
+    "ejercicio.giroscopo.cierre": {
+      "ms": 10607,
+      "h": "806d96045b"
+    },
+    "ejercicio.giroscopo.ponelo": {
+      "ms": 3507,
+      "h": "2e228c5da1"
+    },
+    "ejercicio.giroscopo.puesto": {
+      "ms": 2380,
+      "h": "cbed3f50eb"
+    },
+    "ejercicio.giroscopo.seFue": {
+      "ms": 4907,
+      "h": "c147a1cacb"
+    },
+    "ejercicio.giroscopo.virando": {
+      "ms": 4107,
+      "h": "85601ec6e8"
+    },
     "ejercicio.ils.aTope": {
       "ms": 6907,
       "h": "7ce9b30138"
@@ -2438,6 +2466,10 @@
     "vuelo.gasesSueltos": {
       "ms": 5007,
       "h": "d55cc7e3dc"
+    },
+    "vuelo.giroscopo.seFue": {
+      "ms": 4207,
+      "h": "1149c518d2"
     },
     "vuelo.laOtraPunta": {
       "ms": 4107,
@@ -5970,6 +6002,30 @@
     ],
     "ejercicio.brujula.cierre": [
       "ejercicio.brujula.cierre"
+    ],
+    "vuelo.giroscopo.seFue": [
+      "vuelo.giroscopo.seFue"
+    ],
+    "ejercicio.giroscopo.antes": [
+      "ejercicio.giroscopo.antes"
+    ],
+    "ejercicio.giroscopo.apurar": [
+      "ejercicio.giroscopo.apurar"
+    ],
+    "ejercicio.giroscopo.seFue": [
+      "ejercicio.giroscopo.seFue"
+    ],
+    "ejercicio.giroscopo.ponelo": [
+      "ejercicio.giroscopo.ponelo"
+    ],
+    "ejercicio.giroscopo.virando": [
+      "ejercicio.giroscopo.virando"
+    ],
+    "ejercicio.giroscopo.puesto": [
+      "ejercicio.giroscopo.puesto"
+    ],
+    "ejercicio.giroscopo.cierre": [
+      "ejercicio.giroscopo.cierre"
     ]
   }
 }

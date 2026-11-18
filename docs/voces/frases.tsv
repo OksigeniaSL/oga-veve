@@ -282,6 +282,7 @@ instructor	instructor/vuelo.sinInstructora.pregunta.ogg	es-PY	Hoy volás sin mí
 instructor	instructor/vuelo.sinInstructora.si.ogg	es-PY	Dale. Si hay peligro, te aviso.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sinInstructora.no.ogg	es-PY	Bueno: hoy te acompaño.	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sinPermiso.ogg	es-PY	Entraste sin la luz verde. La próxima, esperala	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.giroscopo.seFue.ogg	es-PY	El direccional se fue un poquito. Derecho y sin acelerar, ponelo con la brújula	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/circuito.subida.ogg	es-PY	Subí derecho por el eje	los cuatro tramos del circuito de tráfico
 instructor	instructor/circuito.cruzado.ogg	es-PY	Girá a la izquierda: volvemos a la pista	los cuatro tramos del circuito de tráfico
 instructor	instructor/circuito.encola.ogg	es-PY	Volá al lado de la pista, con ella a tu izquierda	los cuatro tramos del circuito de tráfico
@@ -443,6 +444,13 @@ instructor	instructor/ejercicio.brujula.baila.ogg	es-PY	Ya vamos derecho y la br
 instructor	instructor/ejercicio.brujula.quieta.ogg	es-PY	Ahora sí: con el avión derecho y quieto, la brújula dice la verdad	los ejercicios de emergencia: antes, durante y después
 instructor	instructor/ejercicio.brujula.cabina.ogg	es-PY	La brújula está en la cabina. Volvé adentro para verla	los ejercicios de emergencia: antes, durante y después
 instructor	instructor/ejercicio.brujula.cierre.ogg	es-PY	Virando, la brújula miente y al salir baila. El direccional es un giróscopo: no siente el viraje, y por eso se vuela con él	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.giroscopo.antes.ogg	es-PY	Vamos derecho al norte. La brújula de arriba y el direccional de abajo dicen lo mismo	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.giroscopo.apurar.ogg	es-PY	Ahora apuramos el reloj. Mirá el direccional: se va solito, despacito	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.giroscopo.seFue.ogg	es-PY	El direccional se fue y la brújula no. Derecho y sin acelerar, la brújula dice la verdad	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.giroscopo.ponelo.ogg	es-PY	Girá la perilla del direccional hasta que diga lo mismo que la brújula	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.giroscopo.virando.ogg	es-PY	Virando no: la brújula miente. Primero derecho, y después la perilla	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.giroscopo.puesto.ogg	es-PY	¡Eso! El direccional dice la verdad otra vez	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.giroscopo.cierre.ogg	es-PY	El giróscopo no siente el viraje, pero se va solo. Cada quince minutos, derecho y sin acelerar, se pone con la brújula. De verdad tarda una hora o más en irse así: acá apuramos el reloj	los ejercicios de emergencia: antes, durante y después
 instructor	instructor/mission.rio.name.ogg	es-PY	Ver el río	las misiones
 instructor	instructor/mission.rioabajo.name.ogg	es-PY	Seguir el río	las misiones
 instructor	instructor/mission.mar.name.ogg	es-PY	Salir al mar	las misiones
