@@ -3829,3 +3829,242 @@ modelo sencillo; en la mesa, el primero pasa de 1,27 a 1,07 veces la Vr, y las
 - En `verificar-vuelo-entero.mjs` esta tanda solo tocó `volarLaSenda`
   (`caidaQueSePide`); H29f trabaja a la vez en la torre y el reloj del mismo
   fichero.
+
+## Enmienda H29h (18-11-2026): la compensación del viraje del automático, y lo que le falta al JAZ 90 para recoger
+
+Lo que H29g dejó abierto en el #192: virando, el automático se pasaba de lo
+pedido, y la recogida del JAZ 90 no llegaba a la de los veinte pies del E190.
+Las mesas de esta tanda están en `h29h/` del scratchpad, fuera del
+repositorio: `arco.ts`, el arco a final de H29g en los ocho de ala fija;
+`alt30.ts`, un viraje de treinta grados sosteniendo la altura; `bit.ts`, el de
+antes contra el de ahora, como `h29b/bit.ts`; y `recogida.ts`, la recogida.
+
+### 1. La compensación del viraje
+
+**Lo que pasaba.** Al inclinar el ala, lo que sostiene en vertical es el
+coseno de lo que sostenía, y el lazo del medio solo lo veía cuando el
+variómetro ya lo contaba. En el arco a final de Los Rodeos, con 4,57 m/s
+pedidos, el JAZ 90 llegaba a bajar 6,05 con la carga en 0,92 mientras entraba
+el alabeo (H29g).
+
+**Lo real.** Para no bajar virando, el ala tiene que sostener `1/cos φ` veces
+el peso, y eso es más ángulo de ataque (FAA-H-8083-25C, cap. 5, «Forces in
+Turns»). Los automáticos lo llevan en el canal de cabeceo: el de Boeing suma
+al morro que pide sostener la altura una «pitch roll compensation» sacada de
+la sustentación que necesita el ala inclinada, `L/(cos φ·q̄·S)`, y de la recta
+de sustentación de cada configuración —su pendiente y su ordenada en el
+origen—; y cuenta que los que hay en servicio lo hacen con «a versine
+function», `1 − cos φ`, y una función de la presión dinámica (F. Blechen,
+*Automatic pilot pitch angle compensation*, patente US 9.058.040 B2, The
+Boeing Company, 2015). Y lo que se le pide a uno al sostener la altura virando
+está escrito: ±30 ft con las alas a nivel, ±60 ft hasta treinta grados de
+alabeo y ±90 de treinta a sesenta (MIL-C-18244A(WEP), 3.1.1.5.2.6.1; la misma
+tabla, con sus bandas de alabeo, en la tabla I de MIL-DTL-9490E).
+
+**La cuenta.** Con la recta de sustentación de la ficha, el ángulo de ataque
+medido desde el de sustentación nula `α₀` va con la carga: inclinado, el ala
+pasa de `α` a `α₀ + (α − α₀)/cos φ`. Y con la trayectoria quieta el morro no
+sube todo ese ángulo: sube `α·cos φ`, porque el resto del giro va hacia el lado
+del viraje. Juntas, el morro que hay que poner es **`−α₀·(1 − cos φ)`**: el
+ángulo de sustentación nula de los flaps que lleva por el verseno del alabeo,
+que no depende de la velocidad —más lento, más ángulo pide el viraje, y más
+llevaba ya el ala a nivel—. El JAZ 90 con todo fuera tiene `α₀` en −19,4°
+(`cl0` 0,18 y 1,38 de los flaps sobre `clα` 4,6), y a veinticinco grados pide
+1,8° de morro; limpio, con −2,2°, dos décimas.
+
+La que probó H29g, `α₁·(1 − cos φ)` con `α₁ = m·g/(q·S·C_Lα)`, es la misma
+cuenta olvidando que el ala ya llevaba ángulo: se pasa en `α·(1 − cos φ)`. En
+la final, donde `α` es poco al lado de `α₁`, casi no se nota; en crucero pone
+el doble de lo que hace falta. Medido en el modelo, en un viraje sostenido de
+treinta grados del JAZ 20 a la de circuito el ángulo de ataque pasa de 4,01° a
+5,01°, y la recta dice 4,94°.
+
+**Lo que se cambió.**
+
+- `porElViraje` en `flight/piloto-automatico.ts`: ese morro, aparte del de
+  aire quieto que integra el lazo del medio (`Memoria.viraje`, como
+  `Memoria.aire`), al mismo ritmo que el resto del morro y dentro del mismo
+  tope de carga: primero la trayectoria, luego lo del aire y luego esto, con lo
+  que quede. Hasta treinta grados de alabeo (`VIRAJE_COMPENSADO`), la banda de
+  viraje de MIL-C-18244A; el automático no inclina más de veinticinco, y más
+  allá solo llega la nivelada de los peldaños de abajo con el alabeo de quien
+  vuela, donde lo que falte lo pone el lazo como lo ponía.
+- El ángulo lo da el modelo de vuelo, que es quien sabe con qué flaps voló el
+  último paso: `anguloSinSustentacion` en `fdm.ts` y en la interfaz de
+  `model.ts`. El efecto suelo escala la recta entera y no lo mueve. El modelo
+  sencillo no lo tiene: allí el automático pide el ritmo tal cual y no hay
+  morro que girar.
+- El automático lo recibe en `Estado.anguloSinSustentacion`, sin mirar la
+  ficha por su cuenta. Se lo pasa el juego en sus dos llamadas —el automático
+  y la nivelada de los peldaños de abajo, que en Guyrami vuela el modelo
+  sencillo y no lo recibe—, la tripulación del descenso de emergencia
+  (`volarElDescenso` en `dev/sondas.ts`) y el banco del vuelo entero, por la
+  sonda `anguloSinSustentacion`; el banco lo traza en el ala como `mv`.
+- Va en el lazo del medio, por debajo de todos los modos que llevan el morro:
+  `ALT`, `V/S`, `VNAV PTH`, `G/S` y también `FLCH SPD`, donde el morro lleva la
+  velocidad por la trayectoria y, sin compensar, el avión virando bajaría y
+  aceleraría hasta que el lazo lo viera.
+
+### La mesa
+
+El arco de H29g (el modelo completo, Taguató, todo fuera a la Vref más cinco
+sobre la cota de Los Rodeos, la senda de tres grados empezando 45 m por
+debajo, 4,57 m/s pedidos estando alto, el ala a 27° en cinco segundos y
+enderezando a 1,5°/s desde los veinte), aire quieto. Pico virando, m/s, y entre
+paréntesis la peor media de cinco segundos tras enderezar:
+
+| | Sin compensar | Compensando (el juego) | `α₁·(1 − cos φ)` (H29g) |
+|---|---|---|---|
+| JAZ 20 | 4,62 (3,95) | 4,48 (4,11) | 4,50 (4,11) |
+| JAZ 25 | 4,59 (3,93) | 4,59 (4,00) | 4,58 (4,10) |
+| JAZ 40 | 5,02 (4,32) | 4,59 (4,36) | 4,54 (4,37) |
+| JAZ 50 | 5,08 (4,05) | 4,61 (4,22) | 4,58 (4,23) |
+| JAZ 60 | 5,21 (4,58) | 4,54 (4,67) | 4,52 (4,73) |
+| JAZ 90 | **6,05** (4,71) | **4,98** (4,66) | 4,92 (4,66) |
+| JAZ 110 | 6,02 (4,64) | 5,18 (4,63) | 4,96 (4,67) |
+| JAZ 120 | 6,05 (4,64) | 5,25 (4,64) | 5,14 (4,64) |
+
+Lo que queda por encima de lo pedido es lo que tarda el morro: el JAZ 90
+empieza a bajar a la vez que inclina, y el pico llega a los once segundos,
+con el alabeo ya puesto. La media tras enderezar sube unas décimas en los
+pequeños porque el avión pierde menos virando, llega al final del arco más
+alto sobre la senda y la sigue bajando al tope; ninguna pasa de mil pies por
+minuto. El JAZ 110 y el JAZ 120 siguen pasando de 5,08 un instante: su morro va
+más despacio.
+
+Un viraje de treinta grados en `ALT` (`alt30.ts`): nivelado, el ala entra a
+5°/s, se sostiene un minuto y sale a 5°/s, con el automático en la altura y sus
+gases en la velocidad. Lo más que se aparta de la altura, ft, a la de circuito
+a 1.500 m y en crucero (nueve décimas de su altura de crucero, a su velocidad
+de crucero):
+
+| | Circuito, sin / con | Crucero, sin / con |
+|---|---|---|
+| JAZ 20 | 14 / 12 | 12 / 8 |
+| JAZ 25 | 16 / 13 | 12 / 8 |
+| JAZ 40 | 13 / 10 | 16 / 10 |
+| JAZ 50 | 20 / 17 | 15 / 10 |
+| JAZ 60 | 22 / 17 | 28 / 19 |
+| JAZ 90 | 25 / 20 | 27 / 15 |
+| JAZ 110 | 34 / 28 | **47** / 27 |
+| JAZ 120 | 30 / 25 | 41 / 28 |
+
+Todos dentro de los ±60 ft de MIL-C-18244A, ya sin compensar; compensando,
+ninguno se aparta más y el peor baja de 47 a 28. Con un cambio de rumbo de
+noventa grados del propio automático, a veinticinco de alabeo, el peor baja de
+34 a 20 ft. Lo que queda en el viraje sostenido no es de la sustentación: con
+la ayuda de pie de Taguató el viraje lleva derrape —2,1° el JAZ 20 y 0,7° el
+JAZ 90, sostenidos a treinta grados—, y con el ala inclinada eso también pide
+morro (`β·sen φ`, un grado en el JAZ 20), que el automático no sabe.
+
+**Con las alas a nivel no cambia nada, bit a bit** (`bit.ts`): los ocho
+aviones cuatro minutos cada uno, sosteniendo, bajando por una senda con
+flaps, cambiando de nivel en `FLCH SPD` y en `V/S` con la mínima, sin rumbo
+—alabeo máximo, 6·10⁻¹⁷ grados—, el automático de ahora recibiendo el ángulo
+contra el de antes: 115.200 pasos, ningún mando distinto. Con los virajes de
+H29b y sin pasarle el ángulo, tampoco. Con los virajes y el ángulo, 86.392
+pasos distintos: es lo que tiene que cambiar.
+
+Lo fija `compensacion-del-viraje.test.ts`: el arco del JAZ 90 pasa de mil pies
+por minuto sin compensar y no compensando; en ninguno de los ocho el pico
+compensando es mayor; el viraje de treinta grados en `ALT` no se aparta 60 ft
+en ninguno, a la de circuito y en crucero, ni más que sin compensar; y con las
+alas a nivel, los mismos mandos con el ángulo que sin él.
+
+### 2. Lo que le falta al JAZ 90 para recoger: la trayectoria va despacio detrás del morro
+
+H29a y H29g midieron que al JAZ 90 le hacían falta unos cinco grados de morro
+y tres segundos para quitarse la senda, y que con la recogida del banco a
+veinte pies tocaba a 1,5 m/s en aire quieto, y duro una de cada dos con las
+ráfagas de Los Rodeos. Se miró si era la autoridad del timón, la inercia de
+cabeceo o lo deprisa que gira el morro (`recogida.ts`).
+
+Las cuentas del JAZ 90 en la final, a la Vref más cinco (122,7 kt, 65,1 m/s de
+verdadera en Los Rodeos), con todo fuera:
+
+| | |
+|---|---|
+| Sustentación que pide un g | C_L 1,67 |
+| Ángulo de ataque por cada g, `α₁` | 20,9° |
+| Lo que tarda la trayectoria en seguir al morro, `V/Zα` | 2,4 s |
+| Lo que acelera el morro un timón a fondo | 0,79 rad/s² |
+| Radio de giro de cabeceo, `√(Iyy/m)` | 3,2 m |
+| Fineza | 7,9 |
+| Lo que frena al ralentí, nivelado | 1,24 m/s² |
+
+Y una recogida de manual, igual para todos: por la senda de tres grados con el
+automático del juego, ya asentado en ella, en calma y a la Vref más cinco
+—llega a la recogida bajando 3,2–3,4 m/s—; a la altura de recoger, el gas al
+ralentí y el morro arriba al ritmo que se diga hasta lo que se diga, con un
+lazo de actitud. Toma, m/s:
+
+| Recoger a, ritmo | +2° | +3° | +4° | +5° |
+|---|---|---|---|---|
+| 20 ft, 1 °/s | 2,42 | 2,42 | 2,42 | 2,42 |
+| 20 ft, 2 °/s | 2,00 | 1,75 | 1,70 | 1,70 |
+| 20 ft, 3 °/s | 1,84 | 1,32 | **0,84** (158 m) | 0,56 (163 m) |
+| 20 ft, 4 °/s | 1,77 | 1,12 | 0,07 (206 m) | 1,24 (513 m) |
+| 30 ft, 2 °/s | 1,73 | 0,97 (255 m) | 0,53 (342 m) | 0,81 (485 m) |
+
+El E190 recoge a los veinte pies subiendo el morro dos o tres grados («20ft
+Flare»: C. Regli, *Embraer EMB190 – Summary*, p. 2-26). El JAZ 90 del modelo,
+desde los veinte pies, toca a 1,7 m/s con tres grados a dos por segundo, y
+necesita cuatro grados en poco más de un segundo para bajar de uno; desde los
+treinta, con tres o cuatro grados a dos por segundo, sí.
+
+- **La autoridad del timón no es**: 0,79 rad/s² da los cuatro grados por
+  segundo con el timón a fondo en una décima de segundo.
+- **La inercia de cabeceo tampoco, y va al revés**: un radio de giro de 3,2 m
+  es la mitad o menos del de un birreactor de línea de su tamaño, así que este
+  morro gira más deprisa que el de uno de verdad, no más despacio. Con cuatro
+  veces la inercia, tres grados a tres por segundo desde los veinte pies tocan
+  a 1,93 m/s en vez de 1,32.
+- **Ni el ritmo de cabeceo del modelo**: el lazo de actitud lleva el morro a
+  donde se le pide y al ritmo que se le pide.
+- **Lo que va despacio es la trayectoria detrás del morro**: `V/Zα`, 2,4 s, con
+  `Zα = q̄·S·C_Lα/m`. Es la pendiente de sustentación la que la manda, y la de
+  la ficha, 4,6 por radián, es la del ala limpia también con todo fuera; unos
+  flaps que salen hacia atrás alargan la cuerda y la suben. Con un 15 % más
+  —para probar, no medido de ningún avión—, tres grados a tres por segundo
+  desde los veinte pies tocan a 0,77 m/s en vez de 1,32, y a cuatro por
+  segundo, a 0,51. Es la palanca que hay en el modelo, y cambia todas las tomas
+  de todos los aviones con flaps: no se ha tocado, y para tocarla hace falta su
+  fuente, la pendiente con flaps de cada tipo.
+- **El ralentí**, que en el modelo no empuja nada (con el gas a cero, empuje
+  cero), apenas mueve esto: con el 6 % del empuje lleno, de 1,75 a 1,58 m/s con
+  tres grados a dos por segundo desde los veinte pies.
+
+**Y el banco.** Su recogida persigue el variómetro con un lazo proporcional e
+integral (`recoger`, H29a), así que no sube el morro de una vez, y en el
+navegador llega a recoger bajando de 3,7 a 4,5 m/s (H29a y H29b), más que la
+senda. Por eso empieza a los segundos de senda (de 35 a 49 ft), y con este
+modelo hace bien: desde los treinta pies, tres o cuatro grados a dos por
+segundo bastan. Recoger a los veinte pies del manual pide subir el morro a
+tres o cuatro grados por segundo, o un ala que siga antes al morro. Con
+ráfagas no se ha medido la recogida de actitud: queda para el #192.
+
+### Las pruebas
+
+El vitest entero, después del último cambio de código: 10.451 en verde, 28
+saltadas y ninguna en rojo.
+
+### Volado en el navegador
+
+Las tiradas de esta tanda, en curso al escribir esto: se apuntan al acabar.
+
+### Lo que no
+
+- **La recogida a los veinte pies**, arriba: con este modelo pide el morro a
+  tres o cuatro grados por segundo. La palanca del modelo es la pendiente de
+  sustentación con flaps, que cambia todas las tomas y pide su fuente: no se ha
+  tocado, ni la recogida del banco.
+- **El derrape en los virajes** con la ayuda de pie de Taguató (`autoRudder`
+  0,6, solo proporcional al derrape): 2,1° el JAZ 20 y 0,7° el JAZ 90 en un
+  viraje sostenido de treinta grados. No es de esta tanda.
+- **El ralentí del modelo** no empuja nada (con el gas a cero, empuje cero), y
+  el de un reactor de verdad en vuelo sí; y **la inercia de cabeceo del JAZ 90**
+  es pequeña para su tamaño. Las dos cambian cómo vuela todo, y no se han
+  tocado.
+- **La nivelada** de los peldaños de abajo no le pasa al automático el aire
+  que sube (`subeElAire`), como sí la llamada del automático; el ángulo, ahora
+  sí.
