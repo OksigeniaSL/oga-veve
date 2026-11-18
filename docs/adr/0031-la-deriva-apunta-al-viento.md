@@ -780,3 +780,289 @@ ANGLE (`OGA_GPU=1`), las teselas de la ortofoto puestas y el reloj por ocho:
 - **En Taguató Ruvichá** el cuadro lleva la radio de navegación, y no se ha
   mirado qué enseña si alguien sintoniza a mano el ILS de Estigarribia
   durante el ejercicio.
+
+## Enmienda H26q (18-11-2026): «La brújula baila»
+
+La línea de #51: «**brújula** que baila en los virajes, lo que justifica el
+**giróscopo** y su ritual de resincronizar cada diez minutos». En esta tanda
+va la brújula; la deriva del giróscopo y el ritual de ponerlo con ella, en
+otra (ver «Lo que queda»).
+
+Va como enmienda de este ADR y no en uno propio por lo mismo que H26o y H26n:
+es la misma familia de ejercicios —navegación sin radio, `escena:
+"navegacion"`, la misma puerta del hangar, lo que se calla y el panel del
+final—. Lo que sí es nuevo es la física de un instrumento, y se pensó si
+merecía ADR propio: no lo merece porque **solo mueve una aguja**. Nada que lea
+el rumbo para el juego cambia —ver «Lo que no se toca»—, y la decisión que
+habría que revertir algún día es una función pura de un fichero. Lo llevan
+`flight/brujula.ts` (la brújula) y `flight/brujula-que-baila.ts` (el
+ejercicio).
+
+### La brújula, con lo que la hace bailar
+
+Hasta hoy la brújula del parabrisas de la avioneta, el de motor radial y el
+bimotor de pistón —`brujula=True` en `modelos/jaz-20`, `jaz-25` y `jaz-40`—
+llevaba la cara del direccional y marcaba lo mismo que él: el magnético
+exacto, quieto en cualquier viraje. Es justo lo que una brújula no hace, y la
+razón de que exista el giróscopo. Ahora lleva su física, con tres piezas:
+
+1. **El imán va en un flotador pendular**, que cuelga y se pone a lo largo de
+   la gravedad **aparente**: la de verdad más lo que acelera el avión. En un
+   viraje coordinado va por el eje vertical del avión, así que el flotador se
+   inclina con el ala; acelerando, se va hacia atrás. Se saca de la velocidad
+   del modelo, sin preguntarle al modelo nada más, con un retraso de péndulo
+   de 0,35 s.
+2. **El campo de la Tierra se mete bajo el horizonte** lo que diga la
+   inclinación del sitio. Con el flotador derecho, esa parte vertical no
+   tuerce nada; inclinado, una parte cae en el plano por el que gira el imán y
+   lo arrastra. Lo que marca la tarjeta es el morro leído contra el campo
+   proyectado en ese plano (`marcaQuieta`). **El error de viraje y el de
+   aceleración salen de la misma cuenta**: no hay una regla escrita por
+   hemisferio, sale del signo de la inclinación.
+3. **El imán tiene inercia y va en líquido**: un segundo orden, con el
+   líquido que va con la caja y lo frena respecto a ella. Es lo que se ve al
+   salir de un viraje: la tarjeta pasa de largo, vuelve y se asienta.
+
+Y lo que sale, comparado en la mesa con la regla de cada hemisferio
+(`brujula.test.ts`):
+
+| | Tenerife Norte, +36,5° | Asunción, −33,4° |
+| --- | --- | --- |
+| Virando desde el norte, 20° de alabeo | **se atrasa**: marca el viraje al revés, más de 10° | **se adelanta**, más de 10° |
+| Virando desde el sur | se adelanta | se atrasa |
+| Virando al este o al oeste | nada (menos de 0,5°) | nada |
+| A 15° de alabeo en el norte | entre 9° y 13° | algo menos: el campo está menos inclinado |
+| Acelerando una décima de g al este | marca hacia el norte (ANDS) | marca hacia el sur |
+| Frenando al este | hacia el sur | hacia el norte |
+| Acelerando al norte o al sur | nada | nada |
+| Saliendo de un viraje al norte | pasa de largo unos 4°, vuelve 2° y se queda a un grado en unos 6 s | igual, con el signo al revés |
+
+Es lo que pedía el encargo con más cuidado: **lo que aprende alguien de
+Canarias y lo que aprende alguien de Paraguay son distintos, y los dos son
+verdad**. Las reglas de los manuales —«del norte, se retrasa», *undershoot
+north, overshoot south*, ANDS— son del hemisferio norte, y aquí no se
+escriben en ninguna parte: en Asunción la brújula hace lo contrario porque su
+campo sale del suelo.
+
+### De dónde salen los números
+
+- **La inclinación, del WMM2025** en el punto de referencia del campo. El
+  modelo ya estaba en el juego para la declinación de la carta
+  (`ui/carta/declinacion.ts`), y solo calculaba el norte y el este; ahora da
+  también la componente hacia abajo, que es la del mismo programa de
+  referencia del modelo. Se comprobó contra **la otra hoja de prueba del WMM**
+  (`WMM2025testvalues.pdf`, NCEI, enero de 2025), que trae la Z y la
+  inclinación: la Z al nanotesla y la inclinación a la décima en los seis
+  puntos copiados. En Tenerife Norte sale +36,5° (H 31.100 nT, Z 23.000 nT),
+  en Gran Canaria +35,5°, en Lanzarote +37,3°; en Asunción −33,4° (H 18.400
+  nT: la anomalía del Atlántico Sur) y en Mariscal Estigarribia −27,0°. Se
+  calcula una vez por campo.
+- **Los 18° que puede inclinarse el flotador** respecto a la caja, del
+  *Pilot's Handbook of Aeronautical Knowledge* de la FAA (FAA-H-8083-25C,
+  capítulo 8, la brújula magnética). Con más, el flotador toca y deja de
+  seguir a la gravedad aparente. En un viraje coordinado no llega nunca: ahí
+  la gravedad aparente va con la caja.
+- **El periodo y el amortiguamiento del imán, 4 s y 0,25, no son de una
+  norma**: el mismo manual dice que la tarjeta oscila y que hay que esperar a
+  que se asiente, sin dar cifra. Están puestos para que al salir de un viraje
+  pase de largo un cuarto o un tercio de lo que vuelve y se quede a un grado
+  en unos seis segundos. **Es lo único apurado de la brújula**, y se dice
+  aquí y en la cabecera del fichero. Con 2,5 s y 0,3, que fue lo primero, el
+  baile de Asunción no llegaba a un grado: con una salida de dos segundos el
+  imán seguía casi sin retraso.
+- **Lo que no lleva: el desvío propio del avión**, el que corrige la tablilla
+  de compensación (*compass correction card*) que va al lado de toda brújula
+  de verdad. Aquí el avión no tiene hierro ni cables.
+
+### Lo que no se toca
+
+**Solo la aguja de la brújula baila.** El direccional del panel en 3D y del
+cuadro plano, la rosa de las pantallas, los pilotos de banco, los ejercicios
+—«Rumbo de noche», «Rumbo y reloj»— y las misiones siguen leyendo el rumbo
+verdadero del modelo o el magnético exacto, como antes. La brújula da un paso
+por fotograma en `Game.pasoDeLaBrujula` y lo que marca llega al panel en 3D
+como `DatosDeRelojes.brujula`; la esfera que se llama `brujula` lo pinta, con
+la misma cara del direccional, sin la radio ni la marca de rumbo
+(`loQueMarcaLaBrujula`, probada en `marca-de-rumbo.test.ts`). Las demás
+esferas, como estaban.
+
+Un salto de sitio —colocar, reiniciar, cambiar de avión— no la hace bailar:
+un acelerón de más de 40 m/s² no es vuelo, y la brújula vuelve a reposo.
+
+### Los aviones de cristal
+
+**De verdad la llevan todos**: una brújula sin estabilizar es equipo
+obligatorio también en un avión de transporte (14 CFR 25.1303(a)(3)), y en
+un Twin Otter o un reactor de línea va en el mismo sitio, colgada del centro
+del parabrisas. **En sus cabinas de aquí no está**: solo los tres modelos de
+esferas la tienen. Así que en los de cristal no baila nada, porque no hay
+nada que baile, y el ejercicio no se les ofrece. Cuando sus modelos la
+lleven —una pieza `reloj("brujula", "dg", …)` como la de `comun.py`, que no
+se ha tocado en esta tanda porque es Blender—, bailará sola: el panel en 3D
+busca la malla por su nombre.
+
+### El ejercicio
+
+1. **Derecho al oeste magnético, encima del campo**: las dos dicen lo mismo.
+2. **Se pide el norte**, a la derecha, con la marca del direccional en él.
+   **Se empieza al oeste** porque el error de viraje es del norte y del sur:
+   al oeste no hay, crece llegando al norte y **se sale en el norte**, que es
+   donde la salida mueve más el sitio del imán y la tarjeta baila más. Al
+   revés —saliendo al este u oeste— casi no se vería bailar.
+3. **Miente**: virando, la brújula a seis grados o más del direccional.
+   **Cómo miente lo dice ella**, comparando su signo con el del alabeo: en
+   Canarias se atrasa y en Asunción se adelanta, sin una tabla de
+   hemisferios. Con seis grados se ve en la rosa sin leer —una raya larga y
+   media— y no sale de un bache; con quince grados de alabeo se llega a once
+   en el norte en Canarias y a diez en Asunción.
+4. **Baila**: derecho en la marca, si la brújula todavía va y viene.
+5. **Quieta**: dos segundos a dos grados del direccional, y al menos seis
+   desde que se salió si bailó, que es lo que dura la frase y lo que tarda en
+   asentarse. Se cierra.
+
+- **Dónde**: encima del campo, a tres mil pies o a trescientos metros sobre
+  lo más alto en seis kilómetros a la redonda, lo que sea más. El viraje
+  cabe de sobra, y en Tenerife Norte el monte está cerca. **En cualquier
+  campo donde el campo de la Tierra se incline quince grados o más**
+  (`inclinacionDelCampo`): con menos, la brújula casi no miente y no habría
+  lección. Hoy son todos los del juego, al norte y al sur, y uno de cada
+  hemisferio es Tenerife Norte y Asunción.
+- **Con qué avión**: los que llevan brújula en el parabrisas, la avioneta, el
+  de motor radial y el bimotor de pistón.
+- **Desde el asiento.** Al empezar se pone la vista de cabina, sin guardarla
+  como preferida: la brújula cuelga del parabrisas y el direccional está en
+  el panel, y **son las dos a la vez lo que hay que ver**. El cuadro plano de
+  fuera lleva el direccional y no la brújula, como un panel de verdad, que la
+  lleva encima y no entre los seis. Si se cambia de vista, se pierde la
+  brújula: ver «Lo que queda».
+
+### El peldaño: desde Tukã
+
+Con `escalera.ts` en la mano: **lo esencial es del canal del dibujo**, que
+está en los cuatro peldaños —dos agujas, una que se va y vuelve y otra
+quieta, y el ámbar de la que miente— y de la voz, que no es de la escalera y
+sube desde abajo. El número del rumbo pedido y la diferencia en grados
+(«12° de diferencia») son del canal de la cifra y salen desde Taguató.
+
+En Guyrami no, y no por el dibujo: el ejercicio viene detrás de «Rumbo de
+noche», que es donde se aprende a seguir la rosa con la marca, y ése empieza
+en Tukã. Saber que la brújula miente presupone saber leer una rosa. La
+brújula baila igual en Guyrami, en cualquier vuelo: la física no tiene
+peldaño.
+
+La tarjeta lleva cinco dibujos (`dosAgujas` en `ui/senal.ts`): las dos
+agujas iguales; la marca a la derecha para virar; virando, la de la brújula
+detrás o delante de la del direccional, en ámbar; y derecho, la del
+direccional quieta y la de la brújula temblando, con su aguja de antes y de
+después a los lados. Las caras van oscuras, como las de la cabina, para que
+el blanco y el ámbar se lean sobre el papel de la tarjeta. La brújula, a la
+izquierda y colgada de un travesaño; el direccional, a la derecha y metido en
+el panel, que es donde están.
+
+### Las frases
+
+En `es-PY` y en `en`, sin grabar, y entran solas en `frases-para-grabar`
+(comprobado). La instructora habla de «la brújula de arriba» y «el
+direccional de abajo», que es donde están desde el asiento.
+
+| Clave | Texto |
+| --- | --- |
+| `ejercicio.brujula.antes` | Mirá la brújula de arriba y el direccional de abajo: ahora dicen lo mismo |
+| `ejercicio.brujula.virar` | Virá despacito a la derecha, hasta la marca, mirando las dos |
+| `ejercicio.brujula.seAtrasa` | ¿Viste? La brújula se queda atrás. Virando, la brújula miente |
+| `ejercicio.brujula.seAdelanta` | ¿Viste? La brújula se adelanta. Virando, la brújula miente |
+| `ejercicio.brujula.baila` | Ya vamos derecho y la brújula todavía baila. El direccional, quieto |
+| `ejercicio.brujula.quieta` | Ahora sí: con el avión derecho y quieto, la brújula dice la verdad |
+| `ejercicio.brujula.cierre` | (el panel del final, se lee) Virando, la brújula miente y al salir baila. El direccional es un giróscopo: no siente el viraje, y por eso se vuela con él |
+
+Y sin voz: `palabra.vira` («¡Virá!», la palabra de Tukã), `ejercicio.brujula.cuanto`
+(«{n}° de diferencia») y `hangar.ejercicio.brujula` («La brújula baila»).
+
+### Lo que se prueba
+
+- `ui/carta/declinacion.test.ts`: la Z y la inclinación contra la hoja de
+  prueba del WMM2025, y el signo de cada hemisferio en Tenerife y Asunción.
+- `flight/brujula.test.ts`: la brújula en la mesa, contra la regla de cada
+  hemisferio —la tabla de arriba—, el tope del flotador, un viraje volado
+  del oeste al norte que miente más de ocho grados y baila, quieta en el
+  suelo y un salto de sitio sin baile.
+- `flight/brujula-que-baila.test.ts`: el ejercicio entero con un piloto de
+  cinemática y la brújula de verdad, en Tenerife Norte (se atrasa) y en
+  Asunción (se adelanta); el baile que se deja mirar antes de cerrar; con
+  siete grados de alabeo, que se cierra igual; sin virar, que no pasa nada; y
+  dónde y con qué avión se ofrece.
+- `world/marca-de-rumbo.test.ts`: la brújula del panel en 3D gira con lo
+  suyo y sin la marca.
+- El banco, `scripts/ver-la-brujula-baila.mjs`: los dos campos con la
+  avioneta en Taguató, capturas de cabina derecho, en mitad del viraje, al
+  salir y quieta, y la lámina de los dibujos.
+
+`vitest` entero, en verde: 523 ficheros y 10.599 pruebas (29 saltadas).
+
+### Volado
+
+Con la avioneta en Taguató, la tarjeta de verdad (Intel Iris Xe por ANGLE),
+el reloj a dos veces y el automático de rumbo como quien sostiene el avión:
+derecho al oeste y, al pedirlo, el norte. **32 de 32** en
+`scripts/ver-la-brujula-baila.mjs`.
+
+| | Tenerife Norte | Asunción |
+| --- | --- | --- |
+| Inclinación | +36,5° | −33,4° |
+| Salida | 923 m sobre la pista, direccional 270,0 | igual |
+| Derecho, recién puesto | brújula 267,2: el avión frena y en el norte marca hacia el sur | brújula 272,7: hacia el norte |
+| En mitad del viraje, 17° de alabeo | brújula 311,2 con el direccional en 319,3: **se atrasa** | brújula 319,9 con el direccional en 311,8: **se adelanta** |
+| Lo más que mintió | −10,4° | +10,3° |
+| Al salir, lo que bailó | 4,0°, quieta a los 6,7 s | 3,0°, quieta a los 4,1 s |
+| Al cerrar | brújula 355,3, direccional 357,0 | 357,3 y 355,7 |
+
+Lo primero que se vio en el primer vuelo: **derecho y recién puesto, la
+brújula marcaba tres grados menos que el direccional en Tenerife y tres más
+en Asunción**, y el banco lo daba por malo. No lo era: el equilibrio de la
+salida deja al avión frenando medio metro por segundo cada segundo y subiendo
+tres y medio, y al oeste eso es el error de aceleración, del lado que toca en
+cada hemisferio. Se cambió la comprobación del banco, no la brújula: ahora
+mira que sea pequeño y de ese lado.
+
+Y desde el asiento, a 1280 × 800, **la caja de la brújula queda justo debajo
+de la fila de botones de arriba**: el del mapa tapa el borde de arriba de la
+caja y roza las cifras de arriba de la tarjeta, que es donde se lee el rumbo.
+La tarjeta se ve girar y las cifras de los lados se leen; la de arriba, a
+medias. Ver «Lo que queda».
+
+Nada que no sea del ejercicio: solo sus tarjetas, ningún rótulo, sin radio;
+la instructora, en Tenerife, un «baches» del vuelo, que es de seguridad.
+
+### Lo que queda
+
+- **El giróscopo que se va, y ponerlo con la brújula** —la otra mitad de la
+  línea de #51—, para otro encargo. Lo que pide, escrito para quien lo haga:
+  el direccional de verdad **precesa**, por el rozamiento de sus cojinetes y
+  porque la Tierra gira debajo de él (quince grados por hora por el seno de
+  la latitud: unos siete en Canarias y seis en Asunción, al revés en cada
+  hemisferio), y por eso tiene un botón para ponerlo y el ritual de
+  comprobarlo con la brújula cada diez o quince minutos, **derecho y sin
+  acelerar**, que es justo cuando la brújula dice la verdad. Haría falta un
+  direccional con su propio rumbo que se aparta del verdadero —solo el del
+  panel de esferas; la rosa de los de cristal sale de un sistema que no
+  precesa así—, el botón en el panel en 3D y en el cuadro plano, y lo que lee
+  el rumbo para el juego **seguir leyendo el verdadero**, como aquí. Y un
+  ejercicio que lo enseñe: un vuelo largo con la marca de la rosa que ya no
+  lleva adonde decía, y ponerlo con la brújula en un tramo recto.
+- **La brújula, solo desde el asiento.** El cuadro plano de fuera no la lleva,
+  como un panel de verdad no la lleva entre los seis; si se cambia de vista a
+  mitad del ejercicio, la instructora sigue hablando de una brújula que no se
+  ve. Una brújula pequeña encima del cuadro plano, como la del travesaño,
+  sería una pieza nueva del HUD y pasaría por `npm run carteles`.
+- **La caja de la brújula, debajo de los botones de arriba** desde el
+  asiento de la avioneta: el del mapa tapa el borde de arriba de la caja y
+  roza las cifras que dan el rumbo (ver «Volado»). Se arregla en el encuadre
+  de la cabina (`encuadreDeCabina`, que ya deja entero lo que se lee del
+  panel y no cuenta la brújula) o bajando la brújula en el modelo; las dos
+  tocan todos los vuelos de los tres aviones y piden `npm run carteles`, y no
+  caben en esta tanda.
+- **Los aviones de cristal**, sin brújula en sus cabinas de aquí (ver arriba):
+  es una pieza de Blender por modelo, y entonces baila sola.
+- **El desvío propio del avión** y su tablilla de compensación, sin hacer.
+- **Las frases, sin grabar**: seis con voz (ver «Las frases»). Hasta
+  entonces, mudas en Brave y en Linux.
