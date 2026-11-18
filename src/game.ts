@@ -1814,6 +1814,7 @@ import {
   FINAL_SOBRE_VREF,
   NUDO,
   flapsQuePide,
+  maniobraLimpiaKt,
   margenDeLaFinal,
   trenQuePide,
   velocidadQueToca,
@@ -18398,12 +18399,13 @@ export class Game {
                 colocacion === "interceptar" ||
                 colocacion === "cruce" ||
                 colocacion === "deriva" ||
-                colocacion === "rumbo" ||
                 colocacion === "estima" ||
                 colocacion === "altimetro" ||
                 colocacion === "brujula" ||
                 colocacion === "giroscopo"
               ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
+              : colocacion === "rumbo"
+              ? this.velocidadDelRumbo()
               : colocacion === "ils"
               ? // A la del circuito, como quien ya ha bajado para la aproximación.
                 this.aircraft.velocidadDeCircuito
@@ -25701,12 +25703,27 @@ export class Game {
     r.colocar(
       colocacionDelRumbo({
         rio: r.rio,
-        velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
+        velocidad: this.velocidadDelRumbo(),
         fecha: this.fechaPedida() ?? new Date(),
         viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
       }),
     );
     return r.colocacion;
+  }
+
+  /**
+   * **A qué velocidad se sigue el río**, m/s: la del crucero con el tope de
+   * los diez mil pies, como en los demás ejercicios de navegación; y un
+   * reactor, a la de maniobra limpia (`maniobraLimpiaKt`), que con los gases
+   * puestos es también la que sostienen (`laVelocidadQueToca`). Es la de ir
+   * virando cerca del campo, y la única con la que el JAZ 90 sigue la curva
+   * del río antes del puente: a 250 nudos, con el ala a veinticinco grados del
+   * automático, vira con cuatro kilómetros de radio y se sale de ella (H26u).
+   */
+  private velocidadDelRumbo(): number {
+    return esDeChorro(this.aircraft)
+      ? maniobraLimpiaKt(this.aircraft) * NUDO
+      : Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL);
   }
 
   /** «Rumbo de noche», para el banco. */
@@ -25719,6 +25736,7 @@ export class Game {
     readonly sol: number;
     readonly rumboPedido: number | null;
     readonly solCuandoAnochecio: number | null;
+    readonly dondeAnochecio: { readonly x: number; readonly z: number } | null;
     readonly desvioMedio: number | null;
     readonly desvioMasGrande: number;
     readonly llegada: string | null;
@@ -25738,6 +25756,7 @@ export class Game {
       sol: this.alturaDelSol(),
       rumboPedido: r.rumboPedido,
       solCuandoAnochecio: r.solCuandoAnochecio,
+      dondeAnochecio: r.dondeAnochecio,
       desvioMedio: r.desvioMedio,
       desvioMasGrande: r.desvioMasGrande,
       llegada: r.llegada,
@@ -34303,6 +34322,14 @@ export class Game {
         tramo: "subida",
         peldano: "subida",
       };
+    } else if (this.rumboDeNoche && this.rumboDeNoche.fase !== "cerrada" && esDeChorro(this.aircraft)) {
+      /*
+       * **Y siguiendo el río de «Rumbo de noche», la de maniobra limpia**
+       * (H26u): es ir virando a mil quinientos pies cerca del campo, y sin plan
+       * la escalera daba los 250 del crucero bajo los diez mil pies, con los
+       * que la curva del río no se sigue. Ver `velocidadDelRumbo`.
+       */
+      v = { kt: Math.round(maniobraLimpiaKt(this.aircraft)), mach: null, tramo: "terminal", peldano: "terminal" };
     }
     if (this.tier.model === "simple") {
       /*

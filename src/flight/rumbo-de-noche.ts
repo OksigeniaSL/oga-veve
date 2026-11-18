@@ -42,6 +42,10 @@
  *   el mundo del escenario son veintidós kilómetros: a la velocidad de un
  *   avión, la noche no caería nunca dentro de él. Se dice en el panel del
  *   final, que se lee: de verdad tarda media hora.
+ * - **Y con luz, el reloj del cielo va con el río** (H26u): lo que lleva
+ *   andado por el cauce dice la hora, y en el puente es la de la noche. Así
+ *   cae allí con cualquier avión, a la velocidad que vuele y por donde lo
+ *   lleve. Ver `RumboDeNoche.paso`.
  *
  * Sin three.js, sin audio y sin DOM: lo prueba un piloto de cinemática
  * (`rumbo-de-noche.test.ts`).
@@ -127,6 +131,12 @@ export const NOCHE = -6;
  * cabe entre el sol recién puesto y la noche.
  */
 export const PRISA = 10;
+/**
+ * **Lo menos que corre el reloj del cielo con luz**, aunque no se avance por
+ * el río: la mitad de `PRISA`. Quien se aparta del cauce o vuela río arriba no
+ * deja la tarde quieta; le cae la noche igual, más tarde. Ver `RumboDeNoche.paso`.
+ */
+export const PRISA_SIN_AVANZAR = PRISA / 2;
 
 /** La altura del sol, grados, a una hora solar de ese día en ese sitio. */
 export function alturaDelSol(fecha: Date, hora: number, lat: number, lon: number): number {
@@ -174,6 +184,8 @@ export interface ColocacionDelRumbo {
   readonly solDeSalida: number;
   /** El camino con luz, de la salida a donde cae la noche, m. */
   readonly conLuz: number;
+  /** **La hora solar de la noche**, la del sol a `NOCHE` grados hoy aquí: la del cielo al llegar al puente. */
+  readonly noche: number;
 }
 
 /** El largo del cauce entre dos de sus puntos, m. */
@@ -184,12 +196,45 @@ export function largoDelCauce(cauce: readonly PuntoDelMundo[], desde: number, ha
 }
 
 /**
+ * **Lo andado por el río**, m: el largo del cauce desde su principio hasta el
+ * punto de él más cerca de (x, z). Es lo que diría quien lo va siguiendo por
+ * la ventanilla: por dónde del río va, esté encima o a un lado.
+ */
+export function avanceSobreElCauce(cauce: readonly PuntoDelMundo[], x: number, z: number): number {
+  let mejor = Infinity;
+  let avance = 0;
+  let antes = 0;
+  for (let i = 1; i < cauce.length; i++) {
+    const a = cauce[i - 1]!;
+    const b = cauce[i]!;
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const l = Math.hypot(dx, dz) || 1;
+    const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (l * l)));
+    const d = Math.hypot(a.x + dx * t - x, a.z + dz * t - z);
+    if (d < mejor) {
+      mejor = d;
+      avance = antes + t * l;
+    }
+    antes += l;
+  }
+  return avance;
+}
+
+/**
  * **Dónde empieza y a qué hora**: encima del primer punto del cauce, con el
  * morro por el río, a mil quinientos pies; y a la hora solar en que, con el
  * reloj del cielo apurado `PRISA` veces, el sol llega a la noche cuando el
  * avión llega a `rio.anochece` siguiendo el cauce a `velocidad`. Es decir:
  * **la noche cae en el puente**, vuele lo que vuele. Lo que cambia con el
  * avión es lo alto que está el sol al salir, que es la hora de verdad de hoy.
+ *
+ * La velocidad es la que se espera, y el avión vuela la suya: sale a la del
+ * tope de los diez mil pies, pero con los gases puestos el reactor sostiene
+ * la de su escalera, en indicada; el bimotor, la que dé su gas; y quien vuela
+ * a mano, la que lleve, por donde lleve el río. Lo que pone la noche en el
+ * puente no es esta cuenta, sino que con luz el reloj del cielo vaya con el
+ * río (`RumboDeNoche.paso`): esta solo dice dónde está el sol al salir.
  */
 export function colocacionDelRumbo(o: {
   readonly rio: RioDeNoche;
@@ -222,6 +267,7 @@ export function colocacionDelRumbo(o: {
     hora,
     solDeSalida: alturaDelSol(o.fecha, hora, rio.lat, rio.lon),
     conLuz,
+    noche: ocaso,
   };
 }
 
@@ -302,7 +348,10 @@ export class RumboDeNoche {
   private presentada = false;
   private comoCerro: CierreDelRumbo | null = null;
   private colocacionPuesta: ColocacionDelRumbo | null = null;
-  private reloj = 0;
+  /** La hora solar del cielo, la que se pinta. Ver `paso`. */
+  private horaDelCielo: number | null = null;
+  /** Lo más lejos que se llegó por el río con luz, m. Ver `avanceSobreElCauce`. */
+  private avanzado = 0;
   private pedido: number | null = null;
   private desde: PuntoDelMundo | null = null;
   private fuera = 0;
@@ -328,6 +377,8 @@ export class RumboDeNoche {
 
   colocar(c: ColocacionDelRumbo): void {
     this.colocacionPuesta = c;
+    this.horaDelCielo = c.hora;
+    this.avanzado = 0;
   }
 
   get colocacion(): ColocacionDelRumbo | null {
@@ -343,12 +394,12 @@ export class RumboDeNoche {
   }
 
   /**
-   * **La hora del cielo ahora**: la de salida más lo volado, apurado `PRISA`
-   * veces. Sin colocar, nada.
+   * **La hora del cielo ahora**: con luz, la de lo andado por el río; de
+   * noche, la de entonces más lo volado, apurado `PRISA` veces. Ver `paso`.
+   * Sin colocar, nada.
    */
   get hora(): number | null {
-    const c = this.colocacionPuesta;
-    return c ? c.hora + (this.reloj * PRISA) / 3600 : null;
+    return this.horaDelCielo;
   }
 
   /** El rumbo pedido, magnético, grados; antes de anochecer, nada. */
@@ -378,6 +429,11 @@ export class RumboDeNoche {
     return this.apartadoAlLlegar;
   }
 
+  /** Dónde se pidió el rumbo, m del mundo: de ahí sale, y lo mira el banco. */
+  get dondeAnochecio(): PuntoDelMundo | null {
+    return this.desde;
+  }
+
   /** La altura del sol cuando se pidió el rumbo, grados: lo mira el banco. */
   get solCuandoAnochecio(): number | null {
     return this.solAlAnochecer;
@@ -387,7 +443,8 @@ export class RumboDeNoche {
     this.faseActual = "rio";
     this.presentada = false;
     this.comoCerro = null;
-    this.reloj = 0;
+    this.horaDelCielo = this.colocacionPuesta?.hora ?? null;
+    this.avanzado = 0;
     this.pedido = null;
     this.desde = null;
     this.fuera = 0;
@@ -416,7 +473,7 @@ export class RumboDeNoche {
       this.cerrar("otraVez", sucesos);
       return sucesos;
     }
-    this.reloj += dt;
+    this.avanzarElCielo(l, dt);
 
     if (this.faseActual === "rio") {
       if (l.sol > NOCHE) return sucesos;
@@ -490,6 +547,40 @@ export class RumboDeNoche {
       this.cerrar("hecho", sucesos);
     }
     return sucesos;
+  }
+
+  /**
+   * **El reloj del cielo**, en cada paso.
+   *
+   * Con luz **va con el río**: la hora es la de salida más la parte del
+   * camino con luz que se lleva andada por el cauce, de la tarde a la noche;
+   * en el puente, la de la noche. Era el reloj de verdad apurado `PRISA`
+   * veces, y la hora de salida, la que hacía caer la noche en el puente a la
+   * velocidad esperada, el tope de los diez mil pies con el viento. La ronda
+   * de cierre (H26u) voló lo que su autor no: el JAZ 40 vio la noche a 944 m
+   * del puente y el JAZ 90 a 1622, y desde ahí el rumbo pedido ya no era el
+   * del río. Un avión vuela a la velocidad que sostiene, no a la de la
+   * cuenta; y quien vuela a mano, menos todavía. El reloj sigue apurado
+   * —con la velocidad esperada, `PRISA` veces justas— y lo único que cambia
+   * es que el ritmo lo pone lo que se avanza.
+   *
+   * Por debajo de `PRISA_SIN_AVANZAR` no va nunca: quien se aparta del río
+   * no deja la tarde quieta. Lo andado no vuelve atrás: río arriba, el sol no
+   * sube.
+   *
+   * De noche, el reloj apurado sin más: ya no hay ningún sitio en el que
+   * tenga que caer nada.
+   */
+  private avanzarElCielo(l: LecturaDelRumbo, dt: number): void {
+    const c = this.colocacionPuesta!;
+    const antes = this.horaDelCielo ?? c.hora;
+    if (this.faseActual !== "rio") {
+      this.horaDelCielo = antes + (dt * PRISA) / 3600;
+      return;
+    }
+    this.avanzado = Math.max(this.avanzado, avanceSobreElCauce(this.rio.cauce, l.x, l.z));
+    const porElRio = c.hora + ((c.noche - c.hora) * this.avanzado) / Math.max(1, c.conLuz);
+    this.horaDelCielo = Math.max(porElRio, antes + (dt * PRISA_SIN_AVANZAR) / 3600);
   }
 
   private cerrar(como: CierreDelRumbo, sucesos: SucesoDelRumbo[]): void {

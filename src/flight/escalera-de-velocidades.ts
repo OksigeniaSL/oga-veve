@@ -118,6 +118,18 @@ export const FINAL_DESDE = 5 * MILLA;
 
 /** Lo que se suma a la Vref en un reactor para cada tramo de la llegada, kt. */
 const LIMPIO_SOBRE_VREF = 80;
+
+/**
+ * **La de maniobra limpia de un reactor**, kt indicados: la Vref y ochenta,
+ * sin pasar de 250. Es la del tramo terminal, la de ir cerca del campo
+ * virando sin flaps, y la de seguir un río a mil quinientos pies en «Rumbo de
+ * noche» (H26u): a 250 nudos el JAZ 90 vira con cuatro kilómetros de radio
+ * con el ala a veinticinco grados, y la curva del Paraguay antes del puente
+ * no se puede seguir.
+ */
+export function maniobraLimpiaKt(a: AircraftConfig): number {
+  return Math.min(TOPE_BAJO_EL_100, vrefKt(a) + LIMPIO_SOBRE_VREF);
+}
 const PRIMEROS_FLAPS_SOBRE_VREF = 50;
 /** Con el tren y los segundos flaps. Ver `CONFIGURADO_DESDE`. */
 const SEGUNDOS_FLAPS_SOBRE_VREF = 20;
@@ -434,7 +446,7 @@ export function velocidadQueToca(a: AircraftConfig, d: DondeVa): VelocidadQueToc
     };
   } else if (llegando && falta < TERMINAL_DESDE) {
     const kt = chorro
-      ? Math.min(TOPE_BAJO_EL_100, vref + LIMPIO_SOBRE_VREF)
+      ? maniobraLimpiaKt(a)
       : Math.min(
           cruceroDeHelice(a, d.altitud, aire),
           Math.round(((a.velocidadDeCircuito / NUDO) * 1.2) / 5) * 5,

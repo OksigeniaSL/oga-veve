@@ -7,11 +7,19 @@
  * El piloto de banco hace lo que pide la instructora, con el automático de
  * rumbo como quien sostiene el avión:
  *
- * - con luz, sigue el río: el rumbo al siguiente punto del cauce, como quien
- *   lo mira por la ventana;
+ * - con luz, sigue el río mirando por delante: el rumbo al punto del cauce a
+ *   veinte segundos de vuelo, como quien lo mira por la ventana. Perseguía
+ *   cada punto del cauce hasta trescientos metros, y eso es la avioneta: uno
+ *   rápido vira más ancho, se pasa el punto y vuelve a buscarlo (H26u). Veinte
+ *   y no menos porque el automático vira al error de rumbo entre diez
+ *   segundos y entra en el viraje a cinco grados de ala por segundo: lo que
+ *   se le pide lo hace con retraso;
  * - de noche, el rumbo pedido, el de la marca de la rosa;
  * - con `OGA_SE_VA=1`, a los veinte segundos de noche se le va el morro
- *   quince grados a la derecha un rato, y vuelve.
+ *   quince grados a la derecha un rato, y vuelve. Volver al rumbo no es
+ *   volver a la recta: se sigue paralelo a ella, apartado lo que llevó la
+ *   ida, y se puede pasar al lado. Es lo de verdad, y el ejercicio lo cuenta
+ *   sin castigar (H26u).
  *
  * Mira que el cielo sea el de la hora del ejercicio, que la noche caiga en el
  * puente con el sol a seis grados bajo el horizonte, que se encienda la
@@ -19,7 +27,8 @@
  * encima de donde el río sigue; y lo de H26f: nada que no sea del ejercicio.
  * Capturas desde fuera y desde la cabina, antes y después de anochecer. El
  * puerto, `OGA_PUERTO`; el peldaño, `OGA_TRAMO` (Taguató, con su número); el
- * reloj, por `OGA_VECES` (cuatro); con `OGA_GPU=1`, con la tarjeta de verdad.
+ * reloj, por `OGA_VECES` (cuatro); con `OGA_GPU=1`, con la tarjeta de verdad;
+ * el avión, `OGA_AVION` (el JAZ 20).
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -62,6 +71,41 @@ const comprobar = (nombre, ok, detalle = "") => {
 const centrado = (g) => ((((g + 180) % 360) + 360) % 360) - 180;
 const GRADO = Math.PI / 180;
 
+/** Lo andado por el río y lo apartado de él, m: lo mismo que `avanceSobreElCauce`. */
+const sobreElCauce = (cauce, x, z) => {
+  let lejos = Infinity;
+  let avance = 0;
+  let antes = 0;
+  for (let i = 1; i < cauce.length; i++) {
+    const a = cauce[i - 1];
+    const b = cauce[i];
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const l = Math.hypot(dx, dz) || 1;
+    const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (l * l)));
+    const d = Math.hypot(a.x + dx * t - x, a.z + dz * t - z);
+    if (d < lejos) {
+      lejos = d;
+      avance = antes + t * l;
+    }
+    antes += l;
+  }
+  return { avance, lejos };
+};
+
+/** El punto del cauce a `s` metros de su principio; pasado el final, el final. */
+const puntoDelCauce = (cauce, s) => {
+  let resta = s;
+  for (let i = 1; i < cauce.length; i++) {
+    const a = cauce[i - 1];
+    const b = cauce[i];
+    const l = Math.hypot(b.x - a.x, b.z - a.z);
+    if (resta <= l) return { x: a.x + ((b.x - a.x) * resta) / l, z: a.z + ((b.z - a.z) * resta) / l };
+    resta -= l;
+  }
+  return cauce[cauce.length - 1];
+};
+
 const leerSolo = (page) =>
   page.evaluate(() => {
     const o = globalThis.__oga;
@@ -72,6 +116,7 @@ const leerSolo = (page) =>
       z: s.position.z,
       y: s.position.y,
       rumbo: s.heading,
+      suelo: Math.hypot(s.velocity.x, s.velocity.z),
       ejercicio: o.rumboDeNoche(),
       tarjeta: o.tarjeta?.()?.dibujo ?? null,
       textoDeLaTarjeta: document.querySelector(".senal")?.textContent?.replace(/\s+/g, " ").trim() ?? "",
@@ -131,10 +176,17 @@ try {
 
   let r = await leer(page);
   const c = r.ejercicio.colocacion;
+  /*
+   * Encima del cauce, al principio de él. Se medía del primer punto, y la
+   * lectura llega tres segundos largos después de salir: a doscientos
+   * cincuenta nudos son cuatrocientos metros río abajo, y el JAZ 90 salía
+   * «a 401 m del cauce» yendo encima de él (H26u).
+   */
+  const alSalir = sobreElCauce(cauce, r.x, r.z);
   comprobar(
     "empieza en el aire, encima del cauce y por él",
-    Math.hypot(r.x - cauce[0].x, r.z - cauce[0].z) < 400 && r.y - r.pista > 400 && Math.abs(centrado(r.rumbo / GRADO - 157)) < 5,
-    `${Math.round(Math.hypot(r.x - cauce[0].x, r.z - cauce[0].z))} m del cauce, ${Math.round(r.y - r.pista)} m sobre la pista, rumbo ${((r.rumbo / GRADO + 360) % 360).toFixed(0)}`,
+    alSalir.lejos < 400 && alSalir.avance < 1000 && r.y - r.pista > 400 && Math.abs(centrado(r.rumbo / GRADO - 157)) < 5,
+    `${Math.round(alSalir.lejos)} m del cauce, ${Math.round(alSalir.avance)} m río abajo, ${Math.round(r.y - r.pista)} m sobre la pista, rumbo ${((r.rumbo / GRADO + 360) % 360).toFixed(0)}`,
   );
   comprobar(
     "el cielo, a la hora del ejercicio, con el sol recién puesto",
@@ -153,13 +205,11 @@ try {
   const puestas = await page.evaluate((v) => globalThis.__oga.acelerar(v), VECES);
   console.log(`    reloj por ${puestas}`);
 
-  // Con luz: el río, punto a punto.
-  let siguiente = 1;
+  // Con luz: el río, mirando por delante.
   const fin1 = Date.now() + 4 * 60000;
   let fotoAMitad = false;
   while (Date.now() < fin1 && r.ejercicio.fase === "rio") {
-    const p = cauce[Math.min(siguiente, cauce.length - 1)];
-    if (Math.hypot(p.x - r.x, p.z - r.z) < 300) siguiente++;
+    const p = puntoDelCauce(cauce, sobreElCauce(cauce, r.x, r.z).avance + Math.max(400, 20 * r.suelo));
     await rumboAlAutomatico(page, Math.atan2(p.x - r.x, -(p.z - r.z)));
     if (!fotoAMitad && r.ejercicio.sol < -5) {
       fotoAMitad = true;
@@ -174,15 +224,26 @@ try {
     r.ejercicio.fase === "rumbo" && lejosDelPuente < 700 && r.ejercicio.solCuandoAnochecio <= -6 && r.ejercicio.solCuandoAnochecio > -6.3,
     `${Math.round(lejosDelPuente)} m del puente, sol ${r.ejercicio.solCuandoAnochecio?.toFixed(2)}°`,
   );
+  /*
+   * El rumbo se pide desde donde se está, de cinco en cinco y en magnético; y
+   * con la noche en el puente es el del río que sigue, el 225 de la rosa.
+   */
+  const desde = r.ejercicio.dondeAnochecio;
+  const alDestino = desde ? Math.atan2(r.ejercicio.destino.x - desde.x, -(r.ejercicio.destino.z - desde.z)) / GRADO : NaN;
+  const debia = ((Math.round((((alDestino + variacion) % 360) + 360) % 360 / 5) * 5) % 360) || 360;
   comprobar(
     "pide el rumbo del río que sigue, en magnético",
-    r.ejercicio.rumboPedido === 225,
-    `rumbo ${r.ejercicio.rumboPedido}`,
+    r.ejercicio.rumboPedido === debia && Math.abs(centrado(r.ejercicio.rumboPedido - 225)) <= 5,
+    `rumbo ${r.ejercicio.rumboPedido} (de donde anocheció, ${debia}; del puente, 225)`,
   );
   comprobar("y se encienden las luces de la ciudad", r.ejercicio.lucesDeCiudad, String(r.ejercicio.lucesDeCiudad));
   comprobar("la tarjeta dibuja la rosa con la marca", r.tarjeta === "rumbo-en-la-marca", `${r.tarjeta}, «${r.textoDeLaTarjeta.slice(0, 90)}»`);
   if (TRAMO !== "tuka" && TRAMO !== "guyrami")
-    comprobar("desde Taguató, el rumbo escrito", /(Rumbo|Heading) 225/.test(r.textoDeLaTarjeta), `«${r.textoDeLaTarjeta.slice(0, 60)}»`);
+    comprobar(
+      "desde Taguató, el rumbo escrito",
+      new RegExp(`(Rumbo|Heading) ${String(r.ejercicio.rumboPedido).padStart(3, "0")}`).test(r.textoDeLaTarjeta),
+      `«${r.textoDeLaTarjeta.slice(0, 60)}»`,
+    );
   const pedidoVerdadero = (r.ejercicio.rumboPedido - variacion) * GRADO;
   comprobar(
     "la marca de la rosa, en el rumbo pedido",
@@ -213,7 +274,18 @@ try {
     r = await leer(page);
   }
   if (SE_VA) comprobar("se fue de la marca y lo dijo, con el avión a la derecha", vioSeVa, String(vioSeVa));
-  comprobar("llega encima de donde el río sigue", r.ejercicio.cierre === "hecho" && r.ejercicio.llegada === "encima", `${r.ejercicio.cierre}, ${r.ejercicio.llegada}, a ${Math.round(r.ejercicio.apartado ?? NaN)} m`);
+  /*
+   * **Con `OGA_SE_VA`, encima o al lado** (H26u): quince grados dieciséis
+   * segundos son doscientos cincuenta metros a la derecha con la avioneta, y
+   * más con el viraje de ida y el de vuelta; con el rumbo de vuelta en la
+   * marca se va paralelo a la recta, apartado eso. Lo que no se puede es no
+   * llegar: el ejercicio se cierra hecho, y lo cuenta.
+   */
+  comprobar(
+    SE_VA ? "llega encima de donde el río sigue, o al lado si se fue" : "llega encima de donde el río sigue",
+    r.ejercicio.cierre === "hecho" && (r.ejercicio.llegada === "encima" || (SE_VA && r.ejercicio.llegada === "alLado")),
+    `${r.ejercicio.cierre}, ${r.ejercicio.llegada}, a ${Math.round(r.ejercicio.apartado ?? NaN)} m`,
+  );
   comprobar(
     "lo que se apartó el morro, medido",
     r.ejercicio.desvioMedio !== null && (SE_VA ? r.ejercicio.desvioMasGrande > 10 : r.ejercicio.desvioMedio < 3),
