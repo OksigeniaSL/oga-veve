@@ -277,9 +277,10 @@ const VIRAJE_COMPENSADO = (30 * Math.PI) / 180;
  * va hacia el lado del viraje. Juntas, lo que hay que subir el morro es
  * **`−α₀·(1 − cos φ)`**: el ángulo de sustentación nula de los flaps que
  * lleva, por el verseno del alabeo. No depende de la velocidad: más lento,
- * más ángulo pide el viraje, y más ángulo llevaba ya el ala a nivel. Con el
- * JAZ 90 en la final, unos once grados de `α₀` y veinticinco de alabeo, un
- * grado de morro; limpio en crucero, un quinto.
+ * más ángulo pide el viraje, y más ángulo llevaba ya el ala a nivel. El JAZ
+ * 90 con todo fuera tiene `α₀` en −19,4° —su ficha: `cl0` 0,18 y 1,38 de los
+ * flaps sobre `clα` 4,6—, y a veinticinco grados de alabeo pide 1,8° de morro;
+ * limpio, con −2,2°, dos décimas.
  *
  * Los de verdad lo llevan en el canal de cabeceo con la misma cuenta: el
  * automático de Boeing suma al morro que pide la sustentación del ala
