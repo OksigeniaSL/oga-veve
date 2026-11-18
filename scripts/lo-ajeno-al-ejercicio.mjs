@@ -40,14 +40,20 @@ export function vigilarLoAjeno() {
       if (v.radio) visto.radio.add(v.radio);
       visto.perdido ||= v.perdido;
     },
-    async comprobar(page, comprobar, propias, tambien = null) {
-      const dicho = await page.evaluate(async () => {
+    /*
+     * `tambien`, frases de la instructora que además valen; `hasta`, lo dicho
+     * tal como estaba en la última lectura con el ejercicio abierto
+     * (`__oga.dichoTodo()`), para no juzgar lo que se dice ya en vuelo, en el
+     * mismo instante de cerrar.
+     */
+    async comprobar(page, comprobar, propias, tambien = null, hasta = null) {
+      const dicho = await page.evaluate(async (hasta) => {
         const { SEGURIDAD, claveBase } = await import("/src/flight/sin-instructora.ts");
-        return Object.entries(globalThis.__oga.dichoTodo()).map(([quien, claves]) => ({
+        return Object.entries(hasta ?? globalThis.__oga.dichoTodo()).map(([quien, claves]) => ({
           quien,
           claves: claves.map((c) => ({ c, seguridad: SEGURIDAD.has(claveBase(c)) })),
         }));
-      });
+      }, hasta);
       const ajeno = dicho.flatMap(({ quien, claves }) =>
         claves
           .filter(

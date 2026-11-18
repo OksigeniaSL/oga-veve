@@ -94,9 +94,13 @@ const leerSolo = (page) =>
   });
 
 const ajeno = vigilarLoAjeno();
+/** Lo dicho en la última lectura con el ejercicio abierto: lo de después ya es un vuelo (H26g). */
+let dichoMientras = null;
 const leer = async (page) => {
   const r = await leerSolo(page);
-  await ajeno.mirar(page, r.ejercicio && r.ejercicio.fase !== "cerrada");
+  const abierto = r.ejercicio && r.ejercicio.fase !== "cerrada";
+  await ajeno.mirar(page, abierto);
+  if (abierto) dichoMientras = await page.evaluate(() => globalThis.__oga.dichoTodo());
   return r;
 };
 
@@ -251,7 +255,12 @@ try {
    * siente cuando el aire de la tarde sacude el avión sobre la ciudad, y eso
    * pasa de verdad mientras dura el ejercicio. Ver ADR 0031.
    */
-  await ajeno.comprobar(page, comprobar, /^deriva-/, /^vuelo\.baches/);
+  await ajeno.comprobar(page, comprobar, /^deriva-/, /^vuelo\.baches/, dichoMientras);
+  const alCerrar = await page.evaluate(() => globalThis.__oga.dichoTodo());
+  const despues = Object.entries(alCerrar).flatMap(([quien, claves]) =>
+    claves.slice(dichoMientras?.[quien]?.length ?? 0).map((c) => `${quien}: ${c}`),
+  );
+  console.log(`    dicho al cerrar, ya en vuelo: ${despues.join(", ") || "nada"}`);
   await pausa(500);
   await foto("04-encima");
   await pausa(4000);
