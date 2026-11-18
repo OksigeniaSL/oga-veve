@@ -2267,9 +2267,12 @@ la ficha: no hay tabla de potencia que leer así.
 | JAZ 40 | 189 kt (no llega: 179 a fondo) | 158 kt |
 
 Así que **la avioneta y el radial también cambian**, unos nudos, y es lo de
-verdad: la tabla de la página de arriba (la de H26n) queda con las cifras
-de la ficha y el JAZ 40 pasa de 11,7 a 13,7 minutos. Lo que no cambia es que
-el plan y el vuelo usan la misma velocidad.
+verdad: la avioneta ya no vuela la estima con el 85 % de la palanca. La
+tabla de tiempos de H26n se hizo con la de la ficha; con la de la tabla, la
+avioneta pasa de 18,9 a 19,3 minutos (HDG 128, −3,8°, 117 nudos sobre el
+suelo con 112 de verdadera) y el JAZ 40 de 11,7 a 13,7 (HDG 129, −2,7°, 163
+sobre el suelo). El radial no se ha volado aquí. Lo que no cambia es la
+regla: el plan y el vuelo, con la misma velocidad.
 
 El altímetro tenía la misma raíz con el bimotor: empezaba a 189 nudos a
 5.400 ft, que ahí tampoco sostiene, y mientras frenaba subía, así que al
@@ -2280,7 +2283,8 @@ cambiar sus planes, que no se han volado aquí.
 
 Volado con el JAZ 40: **15 de 15**, el pueblo **debajo a 363 m** (de lado
 311, de largo 187), con 162 nudos de verdadera y 163 sobre el suelo en el
-plan, HDG 129 y 13,7 minutos. En el altímetro, la aguja empieza a 5.645 ft
+plan, HDG 129 y 13,7 minutos. Con la avioneta, 15 de 15 y **debajo a 473
+m** (de lado 429, de largo −200), con 112 nudos de verdadera. En el altímetro, la aguja empieza a 5.645 ft
 con la pedida en 5.600, y 16 de 16: lo que queda es lo que sube cualquier
 avión al soltarlo equilibrado (H26q), no lo que frenaba.
 
@@ -2306,3 +2310,22 @@ grados, salía al entrar en el viraje, con el morro todavía al oeste, donde el
 biplano, que frena al alabear, también se aparta siete grados y medio por el
 tirón de la tarjeta y el error de aceleración. Volado con el JAZ 25 en
 Pettirossi: **16 de 16**.
+
+### Lo que queda
+
+- **Los demás ejercicios de navegación** —la aguja, el radial, la deriva, el
+  rumbo de noche, la brújula y el giróscopo— siguen empezando con la de la
+  ficha y el tope. Con el JAZ 40 abajo, frenan al empezar como frenaba la
+  estima; ninguno cuenta con la velocidad, pero si se cambia hay que cambiar
+  sus planes con ella, y volarlos.
+- **Con el biplano, la brújula da su tirón más grande al entrar en el
+  viraje**, con el morro todavía al oeste: 7,6° con 5° de alabeo, lo mismo
+  que hacia el norte. Es el error de aceleración de un avión que frena al
+  alabear más el tirón de la tarjeta, y el «se adelanta» del ejercicio puede
+  salir ahí y no cerca del norte. Lo que dice es verdad en ese instante; si
+  se quiere que hable del error de viraje, el ejercicio tendría que mirar el
+  rumbo, no solo el alabeo.
+- **Los otros ejercicios de navegación** piden sus frases como las pedía el
+  altímetro, en cuanto pasa su paso. La estima y la brújula pasaron sus
+  bancos con las tomas grabadas, pero no se ha mirado en su volcado de voces
+  si alguna cayó por esperar; si cae, el arreglo es el mismo.
