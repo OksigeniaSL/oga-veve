@@ -821,6 +821,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   "efecto-suelo": "efecto-suelo",
   // Las dos agujas, la de la brújula y la del direccional. Ver `brujula-que-baila.ts`.
   brujula: "brujula-las-dos",
+  // El direccional que se fue y la brújula. Ver `giroscopo-en-hora.ts`.
+  giroscopo: "giroscopo-se-fue",
 };
 
 /**
@@ -1073,6 +1075,15 @@ import {
   type SucesoDeLaBrujula,
 } from "./flight/brujula-que-baila";
 import { inclinacion } from "./ui/carta/declinacion";
+import { Direccional, RECORDAR as RECORDAR_EL_DIRECCIONAL, derivaDelDireccional, seVa } from "./flight/direccional";
+import {
+  ALTURA_DEL_GIROSCOPO,
+  GiroscopoEnHora,
+  RUMBO_DEL_GIROSCOPO,
+  TARDA_EN_IRSE as TARDA_EN_IRSE_EL_GIROSCOPO,
+  dondeSeVaElGiroscopo,
+  type SucesoDelGiroscopo,
+} from "./flight/giroscopo-en-hora";
 import { sitioDelCielo } from "./world/cielo-de-noche";
 import {
   colocacionDelAltimetro,
@@ -4081,6 +4092,7 @@ export class Game {
       this.estima?.ejercicio ??
       this.altimetroMiente?.ejercicio ??
       this.brujulaQueBaila?.ejercicio ??
+      this.giroscopoEnHora?.ejercicio ??
       null
     );
   }
@@ -4091,7 +4103,7 @@ export class Game {
    * `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
-    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva ?? this.rumboDeNoche ?? this.estima ?? this.altimetroMiente ?? this.brujulaQueBaila;
+    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva ?? this.rumboDeNoche ?? this.estima ?? this.altimetroMiente ?? this.brujulaQueBaila ?? this.giroscopoEnHora;
     return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada", this.ils?.fase === "frustrando");
   }
   /**
@@ -6697,6 +6709,18 @@ export class Game {
           this.brujulaQueBaila = new BrujulaQueBaila(ejercicio, i);
           this.cameraMode = "cockpit";
         }
+      } else if (ejercicio.escena === "navegacion" && ejercicio.colocacion === "giroscopo") {
+        /*
+         * **Ni el giróscopo**: la deriva de este direccional en este campo, la
+         * Tierra por la latitud más su rozamiento. Y desde el asiento, como
+         * «La brújula baila»: lo que se pone con la perilla del panel es lo
+         * que dice la brújula del parabrisas, y fuera no hay brújula.
+         */
+        if (dondeSeVaElGiroscopo(oaciDe(this.scenario))) {
+          const { lat } = sitioDelCielo(this.scenario);
+          this.giroscopoEnHora = new GiroscopoEnHora(ejercicio, derivaDelDireccional(lat, this.aircraft.id));
+          this.cameraMode = "cockpit";
+        }
       } else if (ejercicio.escena === "navegacion") {
         /*
          * **Ni la deriva**: el sitio del campo, puesto donde está. Dónde se
@@ -7518,6 +7542,7 @@ export class Game {
       girarAltimetro: (pasos: number) => this.girarAltimetro(pasos),
       girarVentanillaAlt: (pasos: number) => this.girarLaVentanillaAlt(pasos),
       girarObs: (pasos: number) => this.girarElObs(pasos),
+      girarDireccional: (pasos: number) => this.girarElDireccional(pasos),
       siguienteEstacion: (caja: "nav" | "adf") => this.siguienteEstacion(caja),
       trenTrabado: () => this.trenTrabado(),
       /*
@@ -7928,7 +7953,13 @@ export class Game {
     this.hud.onVentanillaAlt((pasos) => this.girarLaVentanillaAlt(pasos));
     // El mando de la radio en las esquinas de la pantalla de navegación.
     this.hud.onMandoDeRadio((mando, paso) =>
-      mando === "qnh" ? this.girarAltimetro(paso) : mando === "obs" ? this.girarElObs(paso) : this.siguienteEstacion(mando),
+      mando === "qnh"
+        ? this.girarAltimetro(paso)
+        : mando === "obs"
+        ? this.girarElObs(paso)
+        : mando === "dg"
+        ? this.girarElDireccional(paso)
+        : this.siguienteEstacion(mando),
     );
     /*
      * **Y la carta enchufada a la radio** (el gancho de H24c): tocar una
@@ -13682,7 +13713,8 @@ export class Game {
         colocacion !== "rumbo" &&
         colocacion !== "estima" &&
         colocacion !== "altimetro" &&
-        colocacion !== "brujula"
+        colocacion !== "brujula" &&
+        colocacion !== "giroscopo"
       ) {
         const { lejos, alto } = this.dondeEmpiezaElEjercicio(colocacion);
         const [x, z] = puntoDePista(runway, hastaElUmbralDeToma(runway) + lejos);
@@ -13959,6 +13991,10 @@ export class Game {
     this.brujulaQueBaila?.reiniciar();
     this.brujulaFuera = { segundos: 0, dicho: false };
     this.brujulaDelParabrisas.reiniciar();
+    // Y el direccional, puesto con la brújula como en la revisión antes de salir.
+    this.giroscopoEnHora?.reiniciar();
+    this.direccionalDelPanel.poner();
+    this.dijoQueSeFue = false;
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
@@ -18272,7 +18308,8 @@ export class Game {
                 colocacion === "rumbo" ||
                 colocacion === "estima" ||
                 colocacion === "altimetro" ||
-                colocacion === "brujula"
+                colocacion === "brujula" ||
+                colocacion === "giroscopo"
               ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
               : colocacion === "ils"
               ? // A la del circuito, como quien ya ha bajado para la aproximación.
@@ -18301,7 +18338,8 @@ export class Game {
       colocacion === "rumbo" ||
       colocacion === "estima" ||
       colocacion === "altimetro" ||
-      colocacion === "brujula"
+      colocacion === "brujula" ||
+      colocacion === "giroscopo"
         ? { equilibrado: true }
         : {}),
     });
@@ -19865,6 +19903,9 @@ export class Game {
     this.practicarElAltimetro(dt);
     // Y la brújula que baila. Ver `practicarLaBrujula`.
     this.practicarLaBrujula(dt);
+    // Y el direccional que se va, y el ejercicio de ponerlo. Ver `pasoDelDireccional`.
+    this.pasoDelDireccional(dt);
+    this.practicarElGiroscopo(dt);
     // El morse de la radio, con su turno. Ver `atenderAlMorse`.
     this.atenderAlMorse();
     this.mirarSiCambiaDeCampo();
@@ -21665,6 +21706,14 @@ export class Game {
          * acelerar (ADR 0031, H26q). Solo ella; el direccional sigue con `rumbo`.
          */
         brujula: this.pasoDeLaBrujula(dt),
+        /*
+         * **Y el direccional, con lo que se ha ido su giróscopo** (ADR 0031,
+         * H26r). Solo su rosa; el resto lee `rumbo`.
+         */
+        direccional:
+          (this.flight.state.heading * 180) / Math.PI +
+          (this.elCampoMontado().escenario.magneticVariation ?? 0) +
+          this.direccionalDelPanel.error,
       },
       dt,
       // Lo mismo que las pantallas: desde fuera, menos veces por segundo.
@@ -21751,6 +21800,8 @@ export class Game {
          * verdad no sabe. Ver `flight/altimetro.ts`.
          */
         presion: { puesta: this.qnhPuesta, delSitio: this.qnhDelSitio },
+        // Y lo que se ha ido el direccional, para la rosa del cuadro plano. Ver `flight/direccional.ts`.
+        direccional: this.direccionalDelPanel.error,
         ventanilla: this.ventanillaParaElCuadro(),
         // Y quién sostiene la altura, si no es quien vuela. Ver `sostenerElNivel`.
         sostieneLaAltura: this.quienSostieneLaAltura(),
@@ -25173,6 +25224,7 @@ export class Game {
     if (colocacion === "estima") return this.dondeEmpiezaLaEstima();
     if (colocacion === "altimetro") return this.dondeEmpiezaElAltimetro();
     if (colocacion === "brujula") return this.dondeEmpiezaLaBrujula();
+    if (colocacion === "giroscopo") return this.dondeEmpiezaElGiroscopo();
     return null;
   }
 
@@ -30825,6 +30877,235 @@ export class Game {
     }
   }
 
+  // ── El direccional que se va, y «Poné en hora el giróscopo» ─────────
+  //
+  // Ver `flight/direccional.ts` y `flight/giroscopo-en-hora.ts`. Aquí solo se
+  // decide quién dice y enseña cada cosa: lo que se ha ido la rosa, la
+  // perilla, la tarjeta y la instructora. El rumbo de todo lo demás sigue
+  // siendo el de verdad.
+
+  /** **El direccional del panel de esferas**: lo que marca de más su rosa. */
+  private readonly direccionalDelPanel = new Direccional();
+  /** **«Poné en hora el giróscopo»**, si se eligió. Ver `practicarElGiroscopo`. */
+  private giroscopoEnHora: GiroscopoEnHora | null = null;
+  /**
+   * Si ya se dijo, en un vuelo cualquiera, que el direccional se fue. Vuelve
+   * a poder decirse al girar la perilla, que es cuando cambia algo: no con un
+   * reloj de fondo.
+   */
+  private dijoQueSeFue = false;
+  /** Si en este fotograma se giró la perilla: el ejercicio lo pregunta. */
+  private giroLaPerilla = false;
+  private ultimoClicDelDireccional = -Infinity;
+
+  /**
+   * **Si este direccional se va**: el de un avión de esferas, desde Taguató.
+   * Ver `seVa` y `PELDANOS_QUE_LO_PONEN`.
+   */
+  private get elDireccionalSeVa(): boolean {
+    return seVa({ esferas: familiaDe(this.aircraft) === "esferas", peldano: this.tier.avisos });
+  }
+
+  /**
+   * **Un paso del direccional**: la Tierra por la latitud del campo montado y
+   * el rozamiento de este instrumento, con el reloj del ejercicio si lo
+   * apura. Donde no se va, puesto siempre: lo pone la instructora, o lo
+   * corrige su magnetómetro.
+   */
+  private pasoDelDireccional(dt: number): void {
+    if (!this.elDireccionalSeVa) {
+      this.direccionalDelPanel.poner();
+      return;
+    }
+    const { lat } = sitioDelCielo(this.elCampoMontado().escenario);
+    this.direccionalDelPanel.paso(derivaDelDireccional(lat, this.aircraft.id), dt, this.giroscopoEnHora?.apuro ?? 1);
+    this.recordarElDireccional();
+  }
+
+  /**
+   * **Gira la perilla del direccional** una muesca, con el clic de la carta
+   * como la rueda del altímetro. Donde el direccional no se va no hace nada:
+   * abajo de Taguató lo pone la instructora, y un giro del niño se deshacía en
+   * el fotograma siguiente.
+   */
+  girarElDireccional(pasos: number): void {
+    if (!this.elDireccionalSeVa || !pasos) return;
+    this.direccionalDelPanel.girar(pasos);
+    this.giroLaPerilla = true;
+    this.dijoQueSeFue = false;
+    const ahora = this.clock.elapsedTime;
+    if (ahora - this.ultimoClicDelDireccional < CLIC_DE_LA_RUEDA) return;
+    this.ultimoClicDelDireccional = ahora;
+    if (!this.dePasaje) this.audio.ruidoDeLaCarta("clic");
+  }
+
+  /**
+   * **En un vuelo cualquiera, cuando el direccional se ha ido tres grados**,
+   * la instructora lo dice una vez y pide ponerlo con la brújula, derecho y
+   * sin acelerar: el ritual de cada quince minutos, contado cuando hace falta
+   * y no con un reloj. Con un ejercicio en marcha, no: el ejercicio cuenta lo
+   * suyo.
+   */
+  private recordarElDireccional(): void {
+    const s = this.flight.state;
+    if (
+      this.dijoQueSeFue ||
+      this.ejercicioDeHoy ||
+      this.dePasaje ||
+      s.onGround ||
+      this.faseDeAhora !== "en-vuelo" ||
+      Math.abs(this.direccionalDelPanel.error) < RECORDAR_EL_DIRECCIONAL
+    )
+      return;
+    this.dijoQueSeFue = true;
+    const cuanto = t("ejercicio.brujula.cuanto", { n: String(Math.round(Math.abs(this.direccionalDelPanel.error))) });
+    const frase = this.rotulo("vuelo.giroscopo.seFue", "palabra.mira");
+    this.hud.senal.mostrar("giroscopo-perilla", frase ? `${cuanto}. ${frase}` : cuanto, null, { segundos: 10 });
+    this.decirDelEjercicio("vuelo.giroscopo.seFue", "mando");
+  }
+
+  /**
+   * **Dónde empieza el giróscopo**: encima del campo, derecho al norte
+   * magnético, a tres mil pies o a trescientos metros sobre lo más alto en
+   * seis kilómetros, como «La brújula baila». Al norte porque ahí acelerar no
+   * tuerce la brújula: ver `giroscopo-en-hora.ts`.
+   */
+  private dondeEmpiezaElGiroscopo(): { readonly x: number; readonly z: number; readonly alto: number; readonly rumbo: number } | null {
+    if (!this.giroscopoEnHora) return null;
+    const pista = this.terrain.runwayElevation;
+    let alto = ALTURA_DEL_GIROSCOPO;
+    for (let x = -6000; x <= 6000; x += 500)
+      for (let z = -6000; z <= 6000; z += 500)
+        if (Math.hypot(x, z) <= 6000) alto = Math.max(alto, this.terrain.sampleHeight(x, z) + 300 - pista);
+    return {
+      x: 0,
+      z: 0,
+      alto,
+      rumbo: MathUtils.degToRad(RUMBO_DEL_GIROSCOPO - (this.scenario.magneticVariation ?? 0)),
+    };
+  }
+
+  /** El rumbo magnético de verdad, grados. */
+  private magneticoDeVerdad(): number {
+    return vuelta((this.flight.state.heading * 180) / Math.PI + (this.elCampoMontado().escenario.magneticVariation ?? 0));
+  }
+
+  /** El direccional, para el banco: lo que marca, lo que se ha ido y el ejercicio. */
+  get giroscopoParaBanco(): {
+    readonly seVa: boolean;
+    readonly error: number;
+    readonly direccional: number;
+    readonly magnetico: number;
+    readonly brujula: number;
+    readonly alabeo: number;
+    readonly deriva: number | null;
+    readonly apuro: number;
+    readonly fase: string | null;
+    readonly cierre: string | null;
+    readonly queda: number | null;
+    readonly minutosApurados: number | null;
+    readonly camara: string;
+  } {
+    const g = this.giroscopoEnHora;
+    const magnetico = this.magneticoDeVerdad();
+    return {
+      seVa: this.elDireccionalSeVa,
+      error: this.direccionalDelPanel.error,
+      direccional: this.direccionalDelPanel.marca(magnetico),
+      magnetico,
+      brujula: this.brujulaDelParabrisas.lectura,
+      alabeo: (bankAngleOf(this.flight.state.orientation) * 180) / Math.PI,
+      deriva: g?.deriva ?? null,
+      apuro: g?.apuro ?? 1,
+      fase: g?.fase ?? null,
+      cierre: g?.cierre ?? null,
+      queda: g?.queda ?? null,
+      minutosApurados: g ? g.minutosApurados : null,
+      camara: this.cameraMode,
+    };
+  }
+
+  /** **Un paso de «Poné en hora el giróscopo»**: lo que marcan los dos, el alabeo y la perilla. */
+  private practicarElGiroscopo(dt: number): void {
+    const girando = this.giroLaPerilla;
+    this.giroLaPerilla = false;
+    const g = this.giroscopoEnHora;
+    if (!g) return;
+    this.hud.mapa.ponerEstela(g.fase === "cerrada" ? null : () => this.libreta.traza);
+    const s = this.flight.state;
+    const magnetico = this.magneticoDeVerdad();
+    const sucesos = g.paso(
+      {
+        brujula: this.brujulaDelParabrisas.lectura,
+        direccional: this.direccionalDelPanel.marca(magnetico),
+        magnetico,
+        alabeo: (bankAngleOf(s.orientation) * 180) / Math.PI,
+        girando,
+        enElSuelo: s.onGround,
+        parado: s.onGround && s.groundSpeed < 0.6,
+        percance: this.percance !== null,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderAlGiroscopo(suceso);
+  }
+
+  private atenderAlGiroscopo(suceso: SucesoDelGiroscopo): void {
+    /** La tarjeta con su dibujo y su frase, y la voz de la instructora si está grabada. */
+    const contar = (dibujo: DibujoDeSenal, clave: TranslationKey, delante = "", segundos = 12): void => {
+      const frase = this.rotulo(clave, "palabra.mira");
+      this.hud.senal.mostrar(dibujo, delante && frase ? `${delante}. ${frase}` : delante || frase, null, {
+        segundos,
+        prioridad: IMPORTANTE,
+      });
+      this.decirDelEjercicio(clave, "mando");
+    };
+    /** **El número, desde Taguató**, delante de la frase. El ejercicio es de Taguató para arriba: siempre. */
+    const cifra = canalesDe(this.tier.avisos).cifra;
+    switch (suceso.que) {
+      case "presentar":
+        return contar("brujula-las-dos", "ejercicio.giroscopo.antes", cifra ? t("ejercicio.rumbo.cifra", { n: "360" }) : "", 10);
+      case "apurar":
+        return contar(
+          "giroscopo-se-fue",
+          "ejercicio.giroscopo.apurar",
+          cifra
+            ? t("ejercicio.giroscopo.apurado", {
+                min: String(Math.round(suceso.minutos)),
+                s: String(TARDA_EN_IRSE_EL_GIROSCOPO),
+              })
+            : "",
+          14,
+        );
+      case "seFue":
+        return contar(
+          "giroscopo-se-fue",
+          "ejercicio.giroscopo.seFue",
+          cifra ? t("ejercicio.brujula.cuanto", { n: String(Math.round(Math.abs(suceso.cuanto))) }) : "",
+        );
+      case "ponelo":
+        this.avisar("attention");
+        return contar("giroscopo-perilla", "ejercicio.giroscopo.ponelo", "", 30);
+      case "virando":
+        return contar("brujula-se-atrasa", "ejercicio.giroscopo.virando");
+      case "puesto":
+        this.avisar("achieved");
+        return contar("giroscopo-puesto", "ejercicio.giroscopo.puesto");
+      case "cerrar":
+        // Lo malo ya lo cuenta el percance; posado antes, el suelo lo dice.
+        if (suceso.como === "otraVez") return;
+        this.agenda.luego(TARDA_EL_FINAL + 6, () => {
+          if (this.giroscopoEnHora?.cierre !== "hecho") return;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre("vuelta"),
+            this.rotulo("ejercicio.giroscopo.cierre", "palabra.bien"),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+    }
+  }
+
   // ── Lo que se ve desde el asiento de Ara ─────────────────────────────
 
   /** Cuánto se mueve el aire ahora, σ en m/s: el meneo. Ver `cuantoSeMueve`. */
@@ -32036,6 +32317,9 @@ export class Game {
      */
     const rueda = this.aircraftMesh.relojes?.ruedaDelAltimetro(x, y, this.camera) ?? 0;
     if (rueda) return this.girarAltimetro(rueda);
+    // Y la perilla del direccional, igual: mitad izquierda, mitad derecha. Ver `perillaDelDireccional`.
+    const perilla = this.aircraftMesh.relojes?.perillaDelDireccional(x, y, this.camera) ?? 0;
+    if (perilla) return this.girarElDireccional(perilla);
     const botones = this.aircraftMesh.botones;
     if (!botones) return;
     const cual = botones.cualEsta(x, y, this.camera);
@@ -36558,7 +36842,13 @@ export class Game {
      * él al pedir el viraje. La de la brújula no, que es un imán. Lejos, que
      * no hay sitio al que llegar: es un rumbo.
      */
-    const alNorte = this.brujulaQueBaila?.fase !== "cerrada" ? this.brujulaQueBaila?.rumboPedido ?? null : null;
+    /*
+     * Y en «Poné en hora el giróscopo», el norte desde el principio: la marca
+     * va en la rosa y, al irse el giróscopo, se va con ella.
+     */
+    const alNorte =
+      (this.brujulaQueBaila?.fase !== "cerrada" ? this.brujulaQueBaila?.rumboPedido ?? null : null) ??
+      (this.giroscopoEnHora && this.giroscopoEnHora.fase !== "cerrada" ? RUMBO_DEL_GIROSCOPO : null);
     if (alNorte !== null) {
       return {
         rumbo: MathUtils.degToRad(alNorte - (this.elCampoMontado().escenario.magneticVariation ?? 0)),

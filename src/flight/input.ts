@@ -168,6 +168,8 @@ export interface InputActions {
    */
   girarObs?: (pasos: number) => void;
   siguienteEstacion?: (caja: "nav" | "adf") => void;
+  /** La perilla del direccional, de grado en grado. Ver `flight/direccional.ts`. Opcional. */
+  girarDireccional?: (pasos: number) => void;
   cycleLanguage: () => void;
   toggleSound: () => void;
   /** Se llama en el primer gesto: los navegadores no dejan sonar antes. */
@@ -1360,6 +1362,9 @@ export class InputManager {
       const repite = this.keymap.actionFor(event.code) ?? this.keymap.actionFor(event.key);
       if (repite === "obsUp") this.actions.girarObs?.(1);
       else if (repite === "obsDown") this.actions.girarObs?.(-1);
+      // Y la perilla del direccional, igual: se gira seguido hasta que cuadra con la brújula.
+      else if (repite === "dgUp") this.actions.girarDireccional?.(1);
+      else if (repite === "dgDown") this.actions.girarDireccional?.(-1);
       return;
     }
     this.keys.add(event.code);
@@ -1427,6 +1432,12 @@ export class InputManager {
         break;
       case "adfSiguiente":
         this.actions.siguienteEstacion?.("adf");
+        break;
+      case "dgUp":
+        this.actions.girarDireccional?.(1);
+        break;
+      case "dgDown":
+        this.actions.girarDireccional?.(-1);
         break;
       case "credits":
         event.preventDefault();

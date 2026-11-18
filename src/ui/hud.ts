@@ -964,7 +964,7 @@ export class Hud {
       const mando = (e.target as Element | null)?.closest?.("[data-radio-mando]");
       if (!(mando instanceof SVGElement || mando instanceof HTMLElement)) return;
       const que = mando.dataset.radioMando;
-      if (que !== "nav" && que !== "adf" && que !== "obs" && que !== "qnh") return;
+      if (que !== "nav" && que !== "adf" && que !== "obs" && que !== "qnh" && que !== "dg") return;
       e.preventDefault();
       e.stopPropagation();
       const paso = Number(mando.dataset.paso) || 0;
@@ -982,10 +982,15 @@ export class Hud {
        * un número concreto de la ventanilla: a veinte por segundo se pasa de
        * largo. Ver `flight/el-altimetro-miente.ts`.
        */
-      if ((que !== "obs" && que !== "qnh") || !paso) return;
+      /*
+       * **Y la perilla del direccional, como la rueda**: diez grados por
+       * segundo con el dedo puesto. Lo que se busca es que cuadre con la
+       * brújula, a un grado, y se ha ido unos pocos (ADR 0031, enmienda H26r).
+       */
+      if ((que !== "obs" && que !== "qnh" && que !== "dg") || !paso) return;
       let cada: number | undefined;
       const empieza = window.setTimeout(() => {
-        cada = window.setInterval(() => this.radioHandler?.(que, paso), que === "qnh" ? 100 : 50);
+        cada = window.setInterval(() => this.radioHandler?.(que, paso), que === "obs" ? 50 : 100);
       }, 500);
       const suelta = (): void => {
         window.clearTimeout(empieza);
@@ -3200,6 +3205,8 @@ export class Hud {
         readonly puesta: number;
         readonly delSitio: number;
       } | null;
+      /** Lo que marca de más la rosa del direccional, grados. Ver `flight/direccional.ts`. */
+      readonly direccional?: number;
       /**
        * El aire del día, el mismo que vuela el modelo: la indicada, el Mach y
        * la temperatura de fuera tienen que salir de él, o el avión y los
@@ -3771,6 +3778,7 @@ export class Hud {
         vref: this.vref * 1.94384,
         objetivo: mandos?.objetivo ?? null,
         declinacion: this.magneticVariation,
+        direccional: mandos?.direccional ?? 0,
         viento: mandos?.viento ?? null,
         // La pérdida: marco rojo alrededor del horizonte, que es donde mira
         // quien ya está en apuros. Ver `cinta.ts` para el parpadeo. Y el
@@ -5419,14 +5427,14 @@ export class Hud {
    * `obs` con su paso, o la caja cuya estación se cambia. Ver
    * `ui/radio-en-la-rosa.ts`.
    */
-  private radioHandler: ((mando: "nav" | "adf" | "obs" | "qnh", paso: number) => void) | null = null;
+  private radioHandler: ((mando: "nav" | "adf" | "obs" | "qnh" | "dg", paso: number) => void) | null = null;
   /**
    * Y `qnh`, la rueda de la ventanilla del altímetro de esferas: no es de la
    * radio, pero se toca igual —un toque, un paso; con el dedo puesto, sigue—
    * y por el mismo atributo, que es el que ya saben no explicar ni poner
    * grande (`tocar-para-explicar.ts`, `reparto.ts`). Ver `ui/six-pack.ts`.
    */
-  onMandoDeRadio(fn: (mando: "nav" | "adf" | "obs" | "qnh", paso: number) => void): void {
+  onMandoDeRadio(fn: (mando: "nav" | "adf" | "obs" | "qnh" | "dg", paso: number) => void): void {
     this.radioHandler = fn;
   }
 

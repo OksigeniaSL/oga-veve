@@ -1169,6 +1169,10 @@ function dosAgujas(o: {
   readonly baila?: boolean;
   /** La marca de rumbo en el direccional, grados desde arriba; sin ella, ninguna. */
   readonly marca?: number;
+  /** Si el que se fue es el direccional, el giróscopo: en ámbar él. Ver `flight/giroscopo-en-hora.ts`. */
+  readonly seFue?: boolean;
+  /** Y su perilla, abajo a la izquierda de la caja, con la flecha de girarla. */
+  readonly perilla?: boolean;
 }): string {
   const cara = (cx: number, clase: string, giro: number, fantasmas: boolean): string => `
     <circle cx="${cx}" cy="13.4" r="5.3" fill="#0b1322" />
@@ -1190,9 +1194,14 @@ function dosAgujas(o: {
     <path d="M1 2.4 H11.8 M6.4 2.4 V8.1" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
     <rect x="11.6" y="19.6" width="11.8" height="3.2" rx="0.8" opacity="0.35" />
     ${cara(6.4, o.miente || o.baila ? "senal__se-va" : "senal__en-la-noche", o.brujula, o.baila ?? false)}
-    ${cara(17.5, "senal__en-la-noche", o.direccional, false)}
+    ${cara(17.5, o.seFue ? "senal__se-va" : "senal__en-la-noche", o.direccional, false)}
     ${marca}
-    ${tiembla}`);
+    ${tiembla}
+    ${
+      o.perilla
+        ? `<g class="${o.seFue ? "senal__se-va" : "senal__en-la-noche"}"><circle cx="12.4" cy="18.9" r="1.3" /><path d="M9.9 17.2 A2.8 2.8 0 0 0 11 21.4 M9.6 20.2 L11 21.4 L11.4 19.8" fill="none" stroke="currentColor" stroke-width="0.6" stroke-linecap="round" stroke-linejoin="round" /></g>`
+        : ""
+    }`);
 }
 
 /** La flecha del lado, pegada al borde: es lo primero que se mira. */
@@ -2118,6 +2127,14 @@ export const DIBUJOS = {
   "brujula-se-atrasa": dosAgujas({ brujula: 12, direccional: 50, miente: true, marca: 90 }),
   "brujula-se-adelanta": dosAgujas({ brujula: 88, direccional: 50, miente: true, marca: 90 }),
   "brujula-baila": dosAgujas({ brujula: 0, direccional: 0, baila: true, marca: 0 }),
+  /*
+   * «Poné en hora el giróscopo»: las dos iguales; el direccional que se fue,
+   * en ámbar, con la brújula derecha; su perilla para girarlo; y las dos
+   * iguales otra vez, con la perilla. Ver `giroscopo-en-hora.ts`.
+   */
+  "giroscopo-se-fue": dosAgujas({ brujula: 0, direccional: -26, seFue: true }),
+  "giroscopo-perilla": dosAgujas({ brujula: 0, direccional: -26, seFue: true, perilla: true }),
+  "giroscopo-puesto": dosAgujas({ brujula: 0, direccional: 0, perilla: true }),
   /*
    * «Aterrizar con las agujas»: el localizador a tope de cada lado con la
    * senda todavía arriba, viniendo hacia el centro, la senda arriba con el

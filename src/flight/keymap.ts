@@ -57,6 +57,8 @@ export type Accion =
   | "obsDown"
   | "navSiguiente"
   | "adfSiguiente"
+  | "dgUp"
+  | "dgDown"
   | "sound"
   | "language"
   | "credits"
@@ -231,6 +233,13 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
   obsDown: { label: "tecla.obsDown", defecto: ["Digit9"], held: false },
   navSiguiente: { label: "tecla.navSiguiente", defecto: ["Digit7"], held: false },
   adfSiguiente: { label: "tecla.adfSiguiente", defecto: ["Digit8"], held: false },
+  /*
+   * **La perilla del direccional**, en el 5 y el 6: juntos, una rueda de dos
+   * lados como el 9 y el 0, y libres. Arriba la de la derecha, como en la O y
+   * la U. Ver `flight/direccional.ts`.
+   */
+  dgUp: { label: "tecla.dgUp", defecto: ["Digit6"], held: false },
+  dgDown: { label: "tecla.dgDown", defecto: ["Digit5"], held: false },
   sound: { label: "tecla.sound", defecto: ["KeyV"], held: false },
   language: { label: "tecla.language", defecto: ["KeyL"], held: false },
   credits: { label: "tecla.credits", defecto: ["F1"], held: false },

@@ -327,8 +327,10 @@ export class CuadroDelTelefono {
     );
     sel?.classList.toggle("tel__cambia", luceLaVentanilla(d.resaltes?.alt, quieto));
 
+    // En los de esferas, lo que marca su direccional, que se va (`flight/direccional.ts`): la misma rosa que el cuadro plano.
+    const seFue = this.familia === "esferas" ? d.direccional ?? 0 : 0;
     const rumbo =
-      (((d.estado.heading * GRADOS + (d.declinacion ?? 0)) % 360) + 360) % 360;
+      (((d.estado.heading * GRADOS + (d.declinacion ?? 0) + seFue) % 360) + 360) % 360;
     const redondo = Math.round(rumbo) % 360;
     escribir(this.pieza("hdg"), String(redondo === 0 ? 360 : redondo).padStart(3, "0"));
     poner(this.pieza("rosa"), "transform", `rotate(${decima(-rumbo)} 12 12)`);

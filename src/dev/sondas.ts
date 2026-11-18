@@ -2643,6 +2643,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * cuánto bailó. Ver `flight/brujula-que-baila.ts`.
      */
     brujula: () => juego.brujulaParaBanco,
+    /**
+     * El direccional que se va y «Poné en hora el giróscopo»: lo que marca,
+     * lo que se ha ido, la brújula, la deriva, el reloj apurado y la fase.
+     * Ver `flight/direccional.ts` y `flight/giroscopo-en-hora.ts`.
+     */
+    giroscopo: () => juego.giroscopoParaBanco,
+    /** La perilla del direccional, como la tecla o el dedo: `pasos` muescas. */
+    girarElDireccional: (pasos: number) => juego.girarElDireccional(pasos),
     /** El morse de la radio: si suena, de quién, y lo último identificado. Ver `audio/morse.ts`. */
     morse: () => juego.morseParaBanco,
     /** Enseña o esconde la nube de la tormenta, para medir lo que cuesta. */
