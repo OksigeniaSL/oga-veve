@@ -1601,6 +1601,14 @@ izquierda del direccional, que es donde va en uno de verdad, y se miró el
 dibujo otra vez fuera del navegador (las tres tarjetas pintadas a PNG desde
 `DIBUJOS`).
 
+`npm run carteles`, con la perilla nueva: **1.075 de 1.076**. La que no, «el
+subtítulo solo espera» en la ventana de pie de 600 × 900 con el reactor de
+Tenerife Norte, que no lleva direccional de esferas ni perilla; no es de esta
+tanda, y no se ha vuelto a pasar en main para saber si ya fallaba. Las dianas
+de la perilla no salen en ninguno de sus dos juegos —el reactor no tiene seis
+esferas, y la avioneta va en Guyrami, donde no se ponen—; miden lo mismo que
+las de la rueda del altímetro, que sí mide.
+
 ### Lo que queda
 
 - **Las frases, sin grabar**: ocho con voz (ver «Las frases»). Hasta
