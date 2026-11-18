@@ -183,6 +183,12 @@ try {
     let fotoBaila = false;
     let enElViraje = null;
     let mayor = 0;
+    /** Lo más que alabeó virando y a qué velocidad: lo que aparta la brújula. */
+    let alabeoMayor = 0;
+    let velocidadVirando = 0;
+    /** Y lo más que se aparta en la segunda mitad del viraje, hacia el norte: el error de viraje, sin la entrada. */
+    let mayorHaciaElNorte = 0;
+    let dondeHaciaElNorte = null;
     while (Date.now() < fin && r.b.fase !== "cerrada") {
       if (!pedido && r.b.fase !== "derecho") {
         pedido = true;
@@ -195,7 +201,23 @@ try {
       }
       const aparte = centrado(r.b.brujula - r.b.direccional);
       if (r.b.fase === "virando" && Math.abs(aparte) > Math.abs(mayor)) mayor = aparte;
-      if (!fotoViraje && r.b.fase === "virando" && Math.abs(aparte) >= 8 && Math.abs(r.b.alabeo) > 5) {
+      if (r.b.fase === "virando" && centrado(r.b.direccional - 270) > 45 && Math.abs(aparte) > Math.abs(mayorHaciaElNorte)) {
+        mayorHaciaElNorte = aparte;
+        dondeHaciaElNorte = { direccional: r.b.direccional, alabeo: r.b.alabeo };
+      }
+      if (r.b.fase === "virando" && Math.abs(r.b.alabeo) > alabeoMayor) {
+        alabeoMayor = Math.abs(r.b.alabeo);
+        velocidadVirando = await page.evaluate(() => globalThis.__oga.estado().airspeed);
+      }
+      /*
+       * **Lo que miente, con el umbral del ejercicio** (`MIENTE`), no con uno
+       * del banco: cuánto se aparta lo dice el alabeo del viraje estándar, y
+       * el biplano, más lento, vira con menos ala y la brújula miente menos
+       * (H26t). Lo que se mira es que se vea la mentira que el ejercicio
+       * cuenta.
+       */
+      // La foto, en la segunda mitad del viraje: al entrar, la tarjeta da un tirón que no es lo que se enseña.
+      if (!fotoViraje && r.b.fase === "virando" && Math.abs(aparte) >= r.b.miente && Math.abs(r.b.alabeo) > 5 && centrado(r.b.direccional - 270) > 45) {
         fotoViraje = true;
         enElViraje = { ...r.b };
         await foto("02-en-mitad-del-viraje");
@@ -211,7 +233,14 @@ try {
       await pausa(120);
       r = await leer();
     }
-    comprobar("virando, la brújula se aparta del direccional ocho grados o más", Math.abs(mayor) >= 8, `${mayor.toFixed(1)}° como mucho`);
+    comprobar(
+      `virando, la brújula se aparta del direccional lo que el ejercicio llama mentir, ${r.b.miente}° o más`,
+      Math.abs(mayor) >= r.b.miente,
+      `${mayor.toFixed(1)}° como mucho, con ${alabeoMayor.toFixed(1)}° de alabeo a ${(velocidadVirando / 0.514444).toFixed(0)} kt`,
+    );
+    console.log(
+      `    hacia el norte, pasada la mitad del viraje: ${mayorHaciaElNorte.toFixed(1)}° como mucho${dondeHaciaElNorte ? `, con el direccional en ${dondeHaciaElNorte.direccional.toFixed(1)} y ${dondeHaciaElNorte.alabeo.toFixed(1)}° de alabeo` : ""}`,
+    );
     comprobar(
       `y como manda su hemisferio: ${ESPERADO[campo] ?? "?"}`,
       r.b.como === ESPERADO[campo],

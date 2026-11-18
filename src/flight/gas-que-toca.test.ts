@@ -19,7 +19,7 @@ import { indicatedAirspeed, trueFromIndicated } from "./atmosphere";
 import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
 import { mandosPara, memoriaNueva } from "./piloto-automatico";
 import { NUDO, velocidadQueToca } from "./escalera-de-velocidades";
-import { gasQueSostiene, marcaDelGas, NIVELADO } from "./gas-que-toca";
+import { gasQueSostiene, marcaDelGas, NIVELADO, velocidadDeCrucero } from "./gas-que-toca";
 import { MOTOR_QUE_SOSTIENE } from "./arcade";
 import { TAGUATO } from "./tiers";
 
@@ -161,5 +161,46 @@ describe("la marca del motor", () => {
     expect(marcaDelGas({ ...base, vertical: NIVELADO * 4 })).toBeNull();
     expect(marcaDelGas({ ...base, vertical: -NIVELADO * 4, enLaFinal: true })).toBe(0.62);
     expect(marcaDelGas({ ...base, enTierra: true })).toBeNull();
+  });
+});
+
+/*
+ * **La velocidad de la tabla de crucero**, la que se usa para planear una
+ * estima (ADR 0031, enmienda H26t): con la de la ficha, el JAZ 40 empezaba a
+ * 189 nudos a dos mil pies, que ahí no sostiene, frenaba a 166 y la cuenta del
+ * plan contaba con 189: el sitio quedaba ocho kilómetros por delante.
+ */
+describe("la velocidad de la tabla de crucero", () => {
+  const sostiene = (a: AircraftConfig, altura: number, v: number) =>
+    gasQueSostiene(a, { altura, verdadera: v, flaps: 0, tren: a.trenRetractil ? 0 : 1, pendiente: 0 });
+
+  it("el JAZ 40 abajo va más despacio que su ficha, y a su altura de crucero va a la de la ficha", () => {
+    const a = de("jaz-40");
+    const abajo = velocidadDeCrucero(a, { altura: 2000 * PIE, tren: 0 });
+    expect(abajo / NUDO).toBeGreaterThan(150);
+    expect(abajo / NUDO).toBeLessThan(165);
+    // La ficha, ni a fondo: por eso no se puede planear con ella aquí.
+    expect(sostiene(a, 2000 * PIE, a.cruiseSpeed)).toBeNull();
+    // Arriba, la de la ficha: es la de su altura de crucero, con el 75 %.
+    expect(velocidadDeCrucero(a, { altura: a.alturaDeCrucero, tren: 0 }) / NUDO).toBeGreaterThan(189 * 0.97);
+  });
+
+  it("en ningún avión pasa de la de la ficha, y siempre se sostiene con gas de sobra", () => {
+    for (const a of AIRCRAFT.filter((x) => !x.helicoptero)) {
+      for (const pies of [0, 2000, 5000, 9000]) {
+        const v = velocidadDeCrucero(a, { altura: pies * PIE, tren: a.trenRetractil ? 0 : 1 });
+        expect(v, `${a.id} a ${pies} ft`).toBeLessThanOrEqual(a.cruiseSpeed);
+        expect(sostiene(a, pies * PIE, v), `${a.id} a ${pies} ft`).not.toBeNull();
+      }
+    }
+  });
+
+  it("y volada con el gas que la sostiene, se queda en ella: es la que lleva el plan", () => {
+    const a = de("jaz-40");
+    const altura = 2000 * PIE;
+    const v = velocidadDeCrucero(a, { altura, tren: 0 });
+    const kt = indicatedAirspeed(v, altura) / NUDO;
+    const r = nivelado(a, 2000, kt, 120);
+    expect(Math.abs(r.kt - kt)).toBeLessThan(2);
   });
 });

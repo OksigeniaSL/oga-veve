@@ -108,6 +108,11 @@ export interface ColocacionDeLaEstima {
   readonly correccion: number;
   /** Del campo al destino, m. */
   readonly lejos: number;
+  /**
+   * **La verdadera del plan**, m/s: la de la tabla de crucero a la altura de
+   * la estima, y la que lleva el avión al empezar. Ver `velocidadDeCrucero`.
+   */
+  readonly velocidad: number;
   /** La velocidad sobre el suelo del plan, m/s. */
   readonly suelo: number;
   /** **El tiempo del plan**, s: lo que cuenta el cronómetro. */
@@ -178,6 +183,7 @@ export function colocacionDeLaEstima(o: {
     curso,
     correccion,
     lejos,
+    velocidad: o.velocidad,
     suelo,
     tiempo: lejos / suelo,
     destino: { x: o.destino.x, z: o.destino.z },

@@ -858,6 +858,21 @@ const HUECO_DE_LA_TORMENTA = 3;
  * boca no avisa nunca. La frase más larga del ejercicio dura unos quince.
  */
 const TOPE_DE_UNA_FRASE_DE_LA_TORMENTA = 40;
+/**
+ * **Lo que se espera a que acabe una frase del altímetro**, s de pared, antes
+ * de pedir la siguiente sin noticias de ella: la más larga dura ocho. Ver
+ * `porDecirDelAltimetro`.
+ */
+const TOPE_DE_UNA_FRASE_DEL_ALTIMETRO = 30;
+/**
+ * Por qué se vuelve a pedir una frase del altímetro que se cayó sin sonar:
+ * por esperar detrás de lo que no es del ejercicio. Lo demás —sin grabar, la
+ * boca de otra escena, lo que barre un urgente— no se arregla pidiéndola otra
+ * vez. Ver `apuntarDescarte` en `audio/boca.ts`.
+ */
+const SE_PIDE_OTRA_VEZ = new Set(["caducó esperando", "no cabía en la cola"]);
+/** Y cuántas veces, como mucho. */
+const OTRA_VEZ_SI_SE_CAE = 2;
 
 /** El respiro entre el «vamos otra vez» oído y volver a empezar, s. */
 const RESPIRO_TRAS_LA_TORMENTA = 2;
@@ -1090,6 +1105,7 @@ import { Brujula } from "./flight/brujula";
 import {
   ALTURA_DE_LA_BRUJULA,
   BrujulaQueBaila,
+  MIENTE,
   RUMBO_DE_SALIDA,
   inclinacionDelCampo,
   type SucesoDeLaBrujula,
@@ -1831,7 +1847,7 @@ import {
   type MandoDelPaso,
   type Paso as PasoDeLaCadena,
 } from "./flight/siguiente-paso";
-import { gasQueSostiene, marcaDelGas } from "./flight/gas-que-toca";
+import { gasQueSostiene, marcaDelGas, velocidadDeCrucero } from "./flight/gas-que-toca";
 import { piezaDeVelocidad, velocidadDicha } from "./flight/velocidad-dicha";
 import {
   AvisadorDeAltitud,
@@ -14052,6 +14068,7 @@ export class Game {
     this.cronometroRecogido = false;
     // Y el altímetro que miente: la ventanilla vuelve a la presión de donde se viene al presentarlo.
     this.altimetroMiente?.reiniciar();
+    this.olvidarLoDelAltimetro();
     // Y la brújula, otra vez derecha al oeste y en reposo.
     this.brujulaQueBaila?.reiniciar();
     this.brujulaFuera = { segundos: 0, dicho: false };
@@ -16736,6 +16753,8 @@ export class Game {
     readonly altitud: number;
     readonly indicada: number;
     readonly sobreElSuelo: number;
+    /** Cuántas frases del ejercicio quedan por acabar: la que suena y las que esperan detrás. */
+    readonly porDecir: number;
   } | null {
     const a = this.altimetroMiente;
     if (!a) return null;
@@ -16754,6 +16773,7 @@ export class Game {
       altitud: p.y,
       indicada: this.altitudIndicada(),
       sobreElSuelo: p.y - Math.max(this.scenario.waterLevel ?? 0, this.terrain.sampleHeight(p.x, p.z)),
+      porDecir: this.porDecirDelAltimetro.length + (this.elAltimetroHabla ? 1 : 0),
     };
   }
 
@@ -16761,6 +16781,7 @@ export class Game {
   private practicarElAltimetro(dt: number): void {
     const a = this.altimetroMiente;
     if (!a?.colocacion) return;
+    this.soltarLoDelAltimetro();
     this.hud.mapa.ponerEstela(a.fase === "cerrada" ? null : () => this.libreta.traza);
     if (this.tarjetaDelTiempo?.abierta) return;
     const s = this.flight.state;
@@ -16790,13 +16811,20 @@ export class Game {
      * ejercicio de Taguató para arriba, donde las cifras entran
      * (`escalera.ts`).
      */
-    const contar = (dibujo: DibujoDeSenal, clave: TranslationKey, delante: string, segundos = 14): void => {
+    const contar = (
+      dibujo: DibujoDeSenal,
+      clave: TranslationKey,
+      delante: string,
+      segundos = 14,
+      vale: () => boolean = () => true,
+    ): void => {
       const frase = this.rotulo(clave, "palabra.mira");
       this.hud.senal.mostrar(dibujo, delante && frase ? `${delante}. ${frase}` : delante || frase, null, {
         segundos,
         prioridad: IMPORTANTE,
       });
-      this.decirDelEjercicio(clave, "mando");
+      this.porDecirDelAltimetro.push({ clave, vale, intentos: 0 });
+      this.soltarLoDelAltimetro();
     };
     /** En pies y de diez en diez: la aguja larga no se lee más fina. */
     const pies = (m: number): string => String(Math.round(m / PIE_EN_METROS / 10) * 10);
@@ -16818,13 +16846,22 @@ export class Game {
         this.avisar("attention");
         return contar("altimetro-rueda", "ejercicio.altimetro.qnh", t("ejercicio.altimetro.qnhDeAca", { qnh: String(suceso.qnh) }), 16);
       case "puesto":
-        return contar("altimetro-verdad", "ejercicio.altimetro.puesto", t("ejercicio.altimetro.bajo", { n: pies(suceso.bajo) }), 16);
+        return contar(
+          "altimetro-verdad",
+          "ejercicio.altimetro.puesto",
+          t("ejercicio.altimetro.bajo", { n: pies(suceso.bajo) }),
+          16,
+          // «Subí despacito a la altura de la tarjeta»: pasada la cima, lo que queda es «pasamos el cerro».
+          () => this.altimetroMiente?.fase !== "cerrada",
+        );
       case "cerca":
         return contar(
           "altimetro-miente",
           "ejercicio.altimetro.cerca",
           t("ejercicio.altimetro.deVerdad", { dice: pies(suceso.dice), real: pies(suceso.deVerdad) }),
           16,
+          // «La ventanilla todavía tiene la presión de allá»: deja de ser verdad al ponerla, o pasada la cima.
+          () => this.altimetroMiente?.fase === "conQnh" && this.altimetroMiente.puestaEn === null,
         );
       case "pasaste": {
         const cifras = t("ejercicio.altimetro.margen", { real: pies(suceso.margen), dice: pies(suceso.creido) });
@@ -16836,8 +16873,11 @@ export class Game {
         return contar("altimetro-miente", "ejercicio.altimetro.pasasteSinPoner", cifras, 16);
       }
       case "cerrar":
-        // Lo malo ya lo cuenta el percance; posado antes, el suelo lo dice.
-        if (suceso.como === "otraVez") return;
+        // Lo malo ya lo cuenta el percance; posado antes, el suelo lo dice. Y lo que quedaba por decir, no.
+        if (suceso.como === "otraVez") {
+          this.olvidarLoDelAltimetro();
+          return;
+        }
         this.agenda.luego(TARDA_EL_FINAL + 8, () => {
           const como = this.altimetroMiente?.cierre;
           if (como !== "hecho" && como !== "sinPoner") return;
@@ -16849,6 +16889,67 @@ export class Game {
         });
         return;
     }
+  }
+
+  /**
+   * **Lo que la instructora tiene por decir del altímetro, de una en una**:
+   * cada frase se pide cuando la anterior del ejercicio ha acabado, y no
+   * antes.
+   *
+   * Se pedían en cuanto pasaba su paso, y con las frases grabadas la de la
+   * rueda puesta no salía nunca: la presentación dura 7,2 s y el QNH 5,8, y
+   * quien gira la rueda mientras la instructora pide girarla —el piloto de
+   * banco, en cuanto llega el QNH; quien juega, en cuanto ve el número—
+   * pedía «puesto» detrás del QNH, con los cuatro segundos de aguante de un
+   * aviso (`CADUCA`): «ejercicio.altimetro.puesto: caducó esperando», en el
+   * banco y en la mesa. Y es la frase que enseña el ejercicio: la aguja que
+   * baja y dice la verdad. Sin grabar no ocupaban la boca y no se veía.
+   *
+   * No se cambia lo que aguanta en la cola: un paso de estos no es «virá
+   * ahora», que vale hasta el siguiente —ver `cuentaUnPasoDeRadio`—, sino una
+   * explicación que se cuenta entera y en su orden. Lo que se cambia es
+   * cuándo la pide el ejercicio: detrás de la suya, con la boca a punto de
+   * quedar libre, y cuatro segundos son de sobra para lo que no es del
+   * ejercicio —los baches—. Si aun así se cae por esperar, se pide otra vez;
+   * y la que dejó de ser verdad mientras esperaba —«cerca», con la rueda ya
+   * puesta— no se pide (ADR 0031, enmienda H26t).
+   */
+  private porDecirDelAltimetro: { readonly clave: TranslationKey; readonly vale: () => boolean; readonly intentos: number }[] = [];
+  /** La que está pedida y todavía no ha acabado, con el reloj de pared de cuando se pidió. */
+  private elAltimetroHabla: { readonly clave: TranslationKey; readonly desde: number } | null = null;
+
+  private soltarLoDelAltimetro(): void {
+    if (this.elAltimetroHabla) {
+      // La red: una frase sin noticias no deja al ejercicio mudo para siempre.
+      if (this.relojDePared - this.elAltimetroHabla.desde < TOPE_DE_UNA_FRASE_DEL_ALTIMETRO) return;
+      this.apuntarCanto(`${this.elAltimetroHabla.clave}: sin noticias, se sigue`);
+      this.elAltimetroHabla = null;
+    }
+    while (this.porDecirDelAltimetro.length) {
+      const f = this.porDecirDelAltimetro.shift()!;
+      if (!f.vale()) {
+        this.apuntarCanto(`${f.clave}: ya no es verdad, no se pide`);
+        continue;
+      }
+      const esta = { clave: f.clave, desde: this.relojDePared };
+      this.elAltimetroHabla = esta;
+      const pedida = this.decirDelEjercicio(f.clave, "mando", (que, porque) => {
+        if (que === "empieza" || this.elAltimetroHabla !== esta) return;
+        this.elAltimetroHabla = null;
+        if (que === "se-cae" && SE_PIDE_OTRA_VEZ.has(porque ?? "") && f.intentos < OTRA_VEZ_SI_SE_CAE)
+          this.porDecirDelAltimetro.unshift({ ...f, intentos: f.intentos + 1 });
+      });
+      if (pedida) return;
+      if (this.elAltimetroHabla === esta) this.elAltimetroHabla = null;
+    }
+  }
+
+  /** Lo que quedaba por decir del altímetro, fuera: al cerrarse con percance o al volver a empezar. */
+  private olvidarLoDelAltimetro(): void {
+    this.porDecirDelAltimetro = [];
+    const habla = this.elAltimetroHabla?.clave;
+    if (habla) BOCA.retirar((c) => c === habla);
+    this.elAltimetroHabla = null;
   }
 
   // ── La radio de navegación ───────────────────────────────────────────
@@ -18393,11 +18494,20 @@ export class Game {
                 colocacion === "cruce" ||
                 colocacion === "deriva" ||
                 colocacion === "rumbo" ||
-                colocacion === "estima" ||
-                colocacion === "altimetro" ||
                 colocacion === "brujula" ||
                 colocacion === "giroscopo"
               ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
+              : /*
+                 * **La estima y el altímetro, a la de la tabla a su altura**:
+                 * la primera, porque su plan es esa velocidad por el tiempo;
+                 * el segundo, porque con la de la ficha el JAZ 40 no se
+                 * sostenía y empezaba subiendo mientras frenaba, con la aguja
+                 * ya lejos de la pedida (H26t). Ver `laDeLaTabla`.
+                 */
+                colocacion === "estima"
+                ? (this.dondeEmpiezaLaEstima()?.velocidad ?? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL))
+                : colocacion === "altimetro"
+                ? this.laDeLaTabla(this.terrain.runwayElevation + (this.dondeEmpiezaElAltimetro()?.alto ?? 0))
               : colocacion === "ils"
               ? // A la del circuito, como quien ya ha bajado para la aproximación.
                 this.aircraft.velocidadDeCircuito
@@ -24277,7 +24387,7 @@ export class Game {
    * los manifiestos, y preguntar `vozDe` entonces la callaba grabada. Lo
    * decide `decirGrabada`, que es quien sabe cómo va el pack.
    */
-  private decirDelEjercicio(clave: TranslationKey, peso: Urgencia): void {
+  private decirDelEjercicio(clave: TranslationKey, peso: Urgencia, alSonar?: AlSonar): boolean {
     /*
      * **Y un paso nuevo retira lo que quedara por decir de los de antes.** Lo
      * que cuenta un paso de un ejercicio de radio espera lo que haga falta
@@ -24291,8 +24401,10 @@ export class Game {
     if (!this.instructor.sabeLoGrabado) this.apuntarCanto(`${clave}: espera a saber si está grabada`);
     const pedida = this.instructor.decirGrabada(t(clave), clave, peso, undefined, (que, porque) => {
       if (que === "se-cae" && porque === "sin-grabar") this.apuntarCanto(`${clave}: sin grabar, se calla`);
+      alSonar?.(que, porque);
     });
     if (!pedida) this.apuntarCanto(`${clave}: sin grabar, se calla`);
+    return pedida;
   }
 
   /**
@@ -25849,18 +25961,37 @@ export class Game {
     if (!e) return null;
     if (e.colocacion) return e.colocacion;
     const agua = this.scenario.waterLevel ?? 0;
-    e.colocar(
-      colocacionDeLaEstima({
-        destino: e.destino,
-        campo: { x: 0, z: 0 },
-        viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
-        velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
-        declinacion: this.scenario.magneticVariation,
-        suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
-        cotaDeLaPista: this.terrain.runwayElevation,
-      }),
-    );
+    const plan = {
+      destino: e.destino,
+      campo: { x: 0, z: 0 },
+      viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+      declinacion: this.scenario.magneticVariation,
+      suelo: (x: number, z: number) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+      cotaDeLaPista: this.terrain.runwayElevation,
+    };
+    /*
+     * **Con la velocidad de la tabla, a la altura de la estima**, que es la
+     * que lleva el avión: la altura sale del suelo del camino y no de la
+     * velocidad, así que una primera cuenta da dónde se vuela y la segunda,
+     * a qué se vuela ahí. Ver `laDeLaTabla`.
+     */
+    const alto = colocacionDeLaEstima({ ...plan, velocidad: this.aircraft.cruiseSpeed }).alto;
+    e.colocar(colocacionDeLaEstima({ ...plan, velocidad: this.laDeLaTabla(this.terrain.runwayElevation + alto) }));
     return e.colocacion;
+  }
+
+  /**
+   * **La verdadera de un ejercicio que se cuenta con la velocidad**, m/s, a
+   * esa altura: la de la tabla de crucero, sin pasar del tope de debajo de
+   * diez mil pies. Con la de la ficha, el JAZ 40 empezaba la estima a 189
+   * nudos que abajo no sostiene, frenaba hasta 166 y el plan contaba con 189
+   * (ADR 0031, enmienda H26t). Ver `velocidadDeCrucero`.
+   */
+  private laDeLaTabla(altura: number): number {
+    return Math.min(
+      TOPE_POR_DEBAJO_DE_DIEZ_MIL,
+      velocidadDeCrucero(this.avionConPeso(), { altura, aire: this.flight.aireDelDia(), tren: 0 }),
+    );
   }
 
   /**
@@ -31143,6 +31274,11 @@ export class Game {
     readonly rumboPedido: number | null;
     readonly como: string | null;
     readonly mentiraMasGrande: number;
+    /**
+     * **Desde cuántos grados dice el ejercicio que miente**: el banco mide con
+     * esto y no con un número suyo. Ver `MIENTE`.
+     */
+    readonly miente: number;
     readonly bailoHasta: number;
     readonly tardo: number | null;
     readonly camara: string;
@@ -31163,6 +31299,7 @@ export class Game {
       rumboPedido: b.rumboPedido,
       como: b.como,
       mentiraMasGrande: b.mentiraMasGrande,
+      miente: MIENTE,
       bailoHasta: b.bailoHasta,
       tardo: b.tardo,
       camara: this.cameraMode,

@@ -2174,3 +2174,158 @@ torcido.
   enderezar solo se ha medido con los de hélice.
 - **Un solo campo**: hoy solo Los Rodeos da ocho nudos de costado con su
   viento de siempre.
+
+## Enmienda H26t (18-11-2026): lo que la ronda de cierre vio con las frases grabadas
+
+La ronda de cierre de #51 voló los ejercicios nuevos con **las frases ya
+grabadas** y en aviones que sus autores no volaron. Sin grabar, una frase se
+apunta como «sin grabar, se calla» y no ocupa la boca; grabada, dura lo que
+dura, y eso cambia quién espera a quién. Salieron tres fallos, y ninguno era
+de la física.
+
+### «El altímetro miente»: la instructora se callaba a mitad
+
+En los tres vuelos de la ronda la instructora pedía la presentación y el QNH
+y se callaba: poniendo la rueda faltaban «puesto» y «pasaste», aunque sus
+tarjetas salían; sin ponerla, «pasasteSinPoner». **«Puesto» es la frase que
+enseña el ejercicio**: la aguja que baja y dice la verdad.
+
+La raíz, en la mesa con la boca de verdad y las duraciones de las tomas (la
+presentación 7,2 s, el QNH 5,8): las frases del altímetro aguantan en la cola
+lo que un aviso, cuatro segundos (`CADUCA`), y el ejercicio las pedía en
+cuanto pasaba su paso. Quien gira la rueda mientras la instructora pide
+girarla —el piloto de banco en cuanto llega el QNH; quien juega, en cuanto ve
+el número— pide «puesto» detrás del QNH, y cae:
+
+    banco, reloj por 4:   antes 0,0 s · qnh 8,0 s · puesto: caducó esperando a los 14,6
+    jugando, reloj de 1:  antes 0,0 s · qnh 20,0 s · puesto: caducó esperando a los 26,6
+
+Y la de la cima caía detrás de los baches de La Palma, que es lo único que no
+es del ejercicio y suena con él.
+
+**El arreglo va en el ejercicio, no en la cola** (`porDecirDelAltimetro` en
+`game.ts`). No se le da a estas frases la espera sin reloj de un paso de
+radio (`cuentaUnPasoDeRadio`, H26k): aquello es «virá ahora», que vale hasta
+el paso siguiente y lo retira el siguiente; esto es una explicación que se
+cuenta entera y en su orden, y el QNH no deja de valer porque se haya puesto
+la rueda —es el porqué de lo que se acaba de hacer—. Lo que cambia es
+**cuándo la pide el ejercicio**:
+
+- **de una en una**: cada frase se pide cuando la anterior del ejercicio ha
+  acabado, con la boca a punto de quedar libre; los cuatro segundos quedan
+  para lo que no es del ejercicio;
+- **si aun así se cae por esperar** —«caducó esperando» o «no cabía en la
+  cola»—, se pide otra vez, dos veces como mucho; sin grabar, sin
+  instructora o barrida por un urgente, no;
+- **lo que dejó de ser verdad mientras esperaba no se pide**: «cerca» dice
+  que la ventanilla todavía tiene la presión de allá, y con la rueda ya
+  puesta o la cima pasada no se dice; «puesto» pide subir a la altura de la
+  tarjeta, y pasada la cima lo cuenta «pasaste»;
+- con percance o al volver a empezar, lo que quedaba se olvida; y una frase
+  sin noticias en treinta segundos de pared no deja al ejercicio mudo.
+
+La cola de voz (`audio/boca.ts`, `turnos.ts`) no se ha tocado. El banco, que
+cerraba el vuelo y miraba lo dicho en el mismo instante, ahora espera a que
+el ejercicio no tenga nada por acabar (`porDecir` en `altimetroParaBanco`),
+con tope, y con `OGA_VOCES=fichero` vuelca la línea de tiempo de la boca.
+
+Volado poniendo la rueda con la avioneta, **16 de 16**: antes 0,0 s · qnh 6,7
+· puesto 12,7 · baches 50,1 · pasaste 57,5. La de la cima se pidió con los
+baches sonando, cayó a los 57,4 por esperar y se pidió otra vez: es
+exactamente lo que se perdía. Con el JAZ 40, igual: 16 de 16, y la de la
+cima, otra vez detrás de los baches y pedida de nuevo. **Sin poner la
+rueda**, 15 de 15: antes 0,0 · qnh 6,7 · cerca 38,8 · baches 46,8 ·
+pasasteSinPoner 54,1, sin nada caído.
+
+### «Rumbo y reloj» con el JAZ 40: el plan con una velocidad a la que no iba
+
+Con el bimotor, al llegar el reloj a cero el pueblo quedaba **7,7 km por
+delante**; con la avioneta, debajo. El plan salía de
+`Math.min(cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)`, y el JAZ 40 empezaba a
+esa misma velocidad: sus 189 nudos de ficha. Pero esa cifra es la de su
+altura de crucero, doce mil pies, con el turbo dando lo de nivel del mar en
+aire que frena menos (ver el JAZ 40 en `aircraft.ts` y `turbo.test.ts`). A
+la altura de la estima, 470 m sobre Estigarribia, ni a fondo pasa de 180
+nudos: `gasQueSostiene` no daba gas para la de la ficha, el avión salía con
+el de una recta a ojo y frenaba hasta 166. El plan contaba con 191 sobre el
+suelo; se volaba a 166.
+
+La lección es *velocidad por tiempo es distancia*, y un piloto no planea con
+la cifra del folleto: busca en la tabla de crucero su altura y su potencia y
+lee la verdadera. Eso hace ahora `velocidadDeCrucero` (`gas-que-toca.ts`):
+**la verdadera que se sostiene nivelado y limpio con el 75 % de la potencia a
+esa altura, sin pasar de la de la ficha**, de las mismas fuerzas que
+`gasQueSostiene`. Con ella se hace el plan de la estima, a la altura de la
+estima, y con ella empieza el avión, con el gas que la sostiene; el plan
+guarda la suya (`ColocacionDeLaEstima.velocidad`). En un reactor vale la de
+la ficha: no hay tabla de potencia que leer así.
+
+| Avión, a 2.000 ft | La de la ficha | La de la tabla |
+| --- | --- | --- |
+| JAZ 20 | 117 kt (con el 85 % de la palanca) | 112 kt |
+| JAZ 25 | 107 kt (92 %) | 99 kt |
+| JAZ 40 | 189 kt (no llega: 179 a fondo) | 158 kt |
+
+Así que **la avioneta y el radial también cambian**, unos nudos, y es lo de
+verdad: la avioneta ya no vuela la estima con el 85 % de la palanca. La
+tabla de tiempos de H26n se hizo con la de la ficha; con la de la tabla, la
+avioneta pasa de 18,9 a 19,3 minutos (HDG 128, −3,8°, 117 nudos sobre el
+suelo con 112 de verdadera) y el JAZ 40 de 11,7 a 13,7 (HDG 129, −2,7°, 163
+sobre el suelo). El radial no se ha volado aquí. Lo que no cambia es la
+regla: el plan y el vuelo, con la misma velocidad.
+
+El altímetro tenía la misma raíz con el bimotor: empezaba a 189 nudos a
+5.400 ft, que ahí tampoco sostiene, y mientras frenaba subía, así que al
+mirar la aguja estaba ya 60 ft por encima de la pedida. Empieza también con
+la de la tabla a su altura. Los demás ejercicios de navegación siguen con la
+de la ficha y el tope: su cuenta no depende de la velocidad, y cambiarla es
+cambiar sus planes, que no se han volado aquí.
+
+Volado con el JAZ 40: **15 de 15**, el pueblo **debajo a 363 m** (de lado
+311, de largo 187), con 162 nudos de verdadera y 163 sobre el suelo en el
+plan, HDG 129 y 13,7 minutos. Con la avioneta, 15 de 15 y **debajo a 473
+m** (de lado 429, de largo −200), con 112 nudos de verdadera. En el altímetro, la aguja empieza a 5.645 ft
+con la pedida en 5.600, y 16 de 16: lo que queda es lo que sube cualquier
+avión al soltarlo equilibrado (H26q), no lo que frenaba.
+
+### «La brújula baila» con el JAZ 25: el umbral era del banco
+
+Con el biplano en Asunción el banco daba «la brújula se aparta del
+direccional ocho grados o más — 7,8° como mucho», y el ejercicio, que dice
+«miente» desde seis (`MIENTE`), había dicho ya su «se adelanta». Los ocho
+eran un número del banco, puesto mirando la avioneta.
+
+**El biplano vira menos**, y es lo de verdad. El automático vira al ritmo
+estándar, tres grados por segundo, y el alabeo que pide eso sale de la
+velocidad: a 96 nudos, los que lleva el JAZ 25 en el viraje, son 14,7°; la
+avioneta, más rápida, lleva 17. El error de viraje crece con el alabeo, así
+que con el biplano la brújula se adelanta 7,5° pasada la mitad del viraje
+(con el direccional en 326,5 y 14,5° de alabeo), y con la avioneta, 10,8.
+La física de la brújula no se ha tocado.
+
+El banco mide ahora con el umbral del ejercicio, que el juego le da
+(`miente` en `brujulaParaBanco`), y cuenta el alabeo y la velocidad del
+viraje. La foto «en mitad del viraje» se hace en la segunda mitad: con seis
+grados, salía al entrar en el viraje, con el morro todavía al oeste, donde el
+biplano, que frena al alabear, también se aparta siete grados y medio por el
+tirón de la tarjeta y el error de aceleración. Volado con el JAZ 25 en
+Pettirossi: **16 de 16**.
+
+### Lo que queda
+
+- **Los demás ejercicios de navegación** —la aguja, el radial, la deriva, el
+  rumbo de noche, la brújula y el giróscopo— siguen empezando con la de la
+  ficha y el tope. Con el JAZ 40 abajo, frenan al empezar como frenaba la
+  estima; ninguno cuenta con la velocidad, pero si se cambia hay que cambiar
+  sus planes con ella, y volarlos.
+- **Con el biplano, la brújula da su tirón más grande al entrar en el
+  viraje**, con el morro todavía al oeste: 7,6° con 5° de alabeo, lo mismo
+  que hacia el norte. Es el error de aceleración de un avión que frena al
+  alabear más el tirón de la tarjeta, y el «se adelanta» del ejercicio puede
+  salir ahí y no cerca del norte. Lo que dice es verdad en ese instante; si
+  se quiere que hable del error de viraje, el ejercicio tendría que mirar el
+  rumbo, no solo el alabeo.
+- **Los otros ejercicios de navegación** piden sus frases como las pedía el
+  altímetro, en cuanto pasa su paso. La estima y la brújula pasaron sus
+  bancos con las tomas grabadas, pero no se ha mirado en su volcado de voces
+  si alguna cayó por esperar; si cae, el arreglo es el mismo.
