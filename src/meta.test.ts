@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 import html from "../index.html?raw";
 import llms from "../public/llms.txt?raw";
 import robots from "../public/robots.txt?raw";
+import { CORREO, OKSIGENIA, REDES, SELLO } from "./ui/pie-de-oksigenia";
 
 /**
  * **Dónde vive: granjaoga.com/oga-veve/**, desde el 19 de septiembre de 2026.
@@ -158,6 +159,52 @@ describe("lo que necesita un buscador", () => {
     expect(sinJs).toContain("JavaScript");
     // Y en inglés también, que es el otro idioma de producto.
     expect(sinJs).toContain('lang="en"');
+  });
+});
+
+/**
+ * **El pie de Oksigenia, donde lo leen sin ejecutar nada.**
+ *
+ * El `<noscript>` lo lleva escrito a mano, porque ahí no hay módulo que
+ * importar, y los créditos lo pintan desde `ui/pie-de-oksigenia.ts`. Dos
+ * copias de lo mismo se separan el día que cambia una; esto mira que la de a
+ * mano diga lo que dice la de verdad.
+ */
+describe("el pie de Oksigenia sin JavaScript", () => {
+  const sinJs = /<noscript>([\s\S]*?)<\/noscript>/.exec(html)?.[1] ?? "";
+
+  it("firma, da el correo y lleva al sello de su dominio", () => {
+    expect(sinJs).toContain("Óga Veve · un producto de Oksigenia");
+    expect(sinJs).toContain(`href="${OKSIGENIA}"`);
+    expect(sinJs).toContain(`href="mailto:${CORREO}"`);
+    // El sello es el del dominio donde vive el juego, no uno puesto a mano.
+    expect(SELLO).toBe(
+      `https://checker.oksigenia.com/sello/${new URL(LA_DE_VERDAD).hostname}/`,
+    );
+    expect(sinJs).toContain(`href="${SELLO}"`);
+    // Texto de producto: con voseo, como el resto del bloque.
+    expect(sinJs).toContain("Comprobá la seguridad de esta web");
+  });
+
+  it("y conserva la marca con la que sale y el código abierto", () => {
+    expect(sinJs).toContain('href="https://granjaoga.com/"');
+    expect(sinJs).toContain('href="https://github.com/OksigeniaSL/oga-veve"');
+  });
+
+  it("y las redes, las mismas que los créditos, en el mismo orden y con su nombre", () => {
+    const lista = /<ul\s+class="redes"[\s\S]*?<\/ul>/.exec(sinJs)?.[0] ?? "";
+    expect(lista).toContain('aria-label="Oksigenia en las redes"');
+    const enlaces = [...lista.matchAll(/<a\s([^>]*)>/g)].map((m) => m[1] ?? "");
+    expect(enlaces.map((a) => /href="([^"]+)"/.exec(a)?.[1])).toEqual(
+      REDES.map((red) => red.url),
+    );
+    REDES.forEach((red, i) => {
+      expect(enlaces[i]).toContain(`aria-label="Oksigenia en ${red.nombre}"`);
+      expect(enlaces[i]).toContain('rel="me"');
+      // Y el mismo dibujo, que va en línea: ni un icono pedido fuera.
+      expect(lista).toContain(`d="${red.d}"`);
+    });
+    expect(lista).not.toMatch(/<img|src=/);
   });
 });
 
