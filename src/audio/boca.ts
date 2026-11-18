@@ -78,7 +78,14 @@
  */
 
 import { esElAvisoDeAves, esLaInformacionDeTrafico, noSePierde } from "./torre";
-import { CADUCA_LA_MEGAFONIA, cierraElVuelo, esDeLaMegafonia, pesoDe } from "./turnos";
+import {
+  CADUCA_LA_MEGAFONIA,
+  cierraElVuelo,
+  esDeLaMegafonia,
+  esperaComoLaMegafonia,
+  pesoDe,
+} from "./turnos";
+import { esUnaLlamada } from "./tonos-de-cabina";
 import { GUION, guionAfis, guionSinTorre, type Fase } from "../flight/vuelo";
 
 /**
@@ -156,6 +163,11 @@ export function cuantoAguanta(
 ): number {
   if (
     noSePierde(clave, urgencia) ||
+    /*
+     * La llamada de cabina, lo que su anuncio: la retira el juego cuando se
+     * le pasa el momento o su reloj. Ver `atenderALasLlamadas` en `game.ts`.
+     */
+    esUnaLlamada(clave) ||
     cierraElVuelo(clave) ||
     anunciaLaFase(clave) ||
     anunciaElPuntoDeDescenso(clave) ||
@@ -721,6 +733,11 @@ export class Boca {
     lista?: () => boolean;
     /** Hasta cuándo se le espera la voz. */
     hasta?: number;
+    /**
+     * Cuándo se pidió, que no cambia: `desde` vuelve a empezar cuando la voz
+     * está lista, para su caducidad. Ver `esperaALoDeAntes`.
+     */
+    pedida?: number;
     alCaer?: (porque: string) => void;
   }[] = [];
   /** Cuándo se dijo cada cosa por última vez. Ver `NO_REPETIR` y `RIÑEN`. */
@@ -850,6 +867,7 @@ export class Boca {
         hacer,
         urgencia,
         desde: ahora,
+        pedida: desde,
         clave,
         lista: al.lista,
         hasta: ahora + (al.tope ?? Infinity),
@@ -940,7 +958,7 @@ export class Boca {
          * el servicio o la bajada siguen siendo verdad después de un aviso.
          * Lo tira su propio reloj si espera demasiado. Ver `turnos.ts`.
          */
-        if (esDeLaMegafonia(c.clave)) continue;
+        if (esperaComoLaMegafonia(c.clave)) continue;
         // Ni lo que cierra el vuelo: ver `cierraElVuelo` en `turnos.ts`.
         if (cierraElVuelo(c.clave)) continue;
         this.tirar(i, "la barrió un urgente");
@@ -1018,9 +1036,15 @@ export class Boca {
    * quien llega tarde espera, y si ya no viene a cuento, no lo dice.
    */
   private encolar(esta: (typeof this.cola)[number]): void {
+    esta.pedida ??= esta.desde;
     this.cola.push(esta);
     // Lo que espera a su voz no ocupa plaza: todavía no compite por hablar.
-    if (this.cola.filter((c) => !c.lista).length <= PLAZAS_DE_ESPERA) return;
+    /*
+     * Ni la llamada de cabina (H29j): es el principio de un anuncio que ya
+     * ocupa la suya al pedir la voz, y un tono de segundo y medio. Contándola,
+     * en la verde echaba de la cola lo de la instructora. Ver `pedirLaLlamada`.
+     */
+    if (this.cola.filter((c) => !c.lista && !esUnaLlamada(c.clave)).length <= PLAZAS_DE_ESPERA) return;
     /*
      * Y lo que suelta la pista no se echa: si no queda otra, la cola crece
      * una plaza. Ver `sueltaLaPista`. Ni lo que la torre te da o te manda:
@@ -1042,7 +1066,7 @@ export class Boca {
        * de uno en uno —ver `megafoniaHablando` en `game.ts`—, así que la cola
        * crece como mucho en uno.
        */
-      if (esDeLaMegafonia(a.clave)) continue;
+      if (esperaComoLaMegafonia(a.clave)) continue;
       /*
        * **Ni lo que cierra el vuelo**: el señalero, apagar el motor, «¡vuelo
        * terminado!», la lista de después del aterrizaje, el «bien hecho» de
@@ -1114,6 +1138,8 @@ export class Boca {
     for (let i = 0; i < this.cola.length; i++) {
       const a = this.cola[i]!;
       if (a.lista) continue;
+      // Ni la llamada de cabina con algo de antes por decir: ver `esperaALoDeAntes`.
+      if (this.esperaALoDeAntes(a)) continue;
       if (mejor < 0) {
         mejor = i;
         continue;
@@ -1126,6 +1152,45 @@ export class Boca {
     }
     if (mejor < 0) return undefined;
     return this.cola.splice(mejor, 1)[0];
+  }
+
+  /**
+   * **Si esta es una llamada de cabina que tiene que esperar a lo que se pidió
+   * antes que ella** (H29k): lo que pesa lo mismo o más, también lo que
+   * todavía espera su grabación.
+   *
+   * Lo que espera a su voz no ocupa la frecuencia —ver `libre`—, y para una
+   * frase cualquiera está bien: mientras baja, quien tiene algo que decir lo
+   * dice, y lo que esperaba suena después con su reloj de caducidad recién
+   * puesto. Una frase pasa delante de otra y le cuesta un turno.
+   *
+   * La llamada le cuesta dos: el tono con su respiro y la voz que va detrás,
+   * que no espera a nadie —ver `PESO_TRAS_SU_LLAMADA` en `turnos.ts`—. Cinco
+   * o seis segundos, más que los cuatro de un aviso. Medido en Los Rodeos con
+   * el JAZ 90 (H29j): «Nuestro avión es…» se pidió al empezar y esperaba su
+   * grabación, la llamada del crosscheck se pidió un segundo después con la
+   * suya bajada, cogió la boca y su voz detrás, y a los 6,1 s «vuelo.
+   * nuestroAvion: caducó esperando»: la torre llamaba a la matrícula sin que
+   * nadie hubiera dicho cuál era.
+   *
+   * Así que la llamada guarda la cola por orden de llegada: no coge la boca
+   * mientras haya algo pedido antes que ella con su peso o más, esté listo o
+   * esperando su voz, y por eso cuenta `pedida` y no `desde`, que vuelve a
+   * empezar cuando la voz está lista. La espera tiene salida: lo de antes
+   * suena, caduca, se retira o se le acaba su tope —`ESPERA_A_SU_VOZ`—. Lo
+   * que se pide después con más peso —tu autorización, lo urgente— sigue
+   * pasando delante, que eso no es adelantarse a nadie.
+   */
+  private esperaALoDeAntes(a: (typeof this.cola)[number]): boolean {
+    if (!esUnaLlamada(a.clave)) return false;
+    const suPeso = pesoDe(a.clave, a.urgencia);
+    const cuando = a.pedida ?? a.desde;
+    return this.cola.some(
+      (c) =>
+        c !== a &&
+        (c.pedida ?? c.desde) < cuando &&
+        pesoDe(c.clave, c.urgencia) >= suPeso,
+    );
   }
 
   /**
