@@ -78,14 +78,7 @@
  */
 
 import { esElAvisoDeAves, esLaInformacionDeTrafico, noSePierde } from "./torre";
-import {
-  CADUCA_LA_MEGAFONIA,
-  cierraElVuelo,
-  esDeLaMegafonia,
-  esperaComoLaMegafonia,
-  pesoDe,
-} from "./turnos";
-import { esUnaLlamada } from "./tonos-de-cabina";
+import { CADUCA_LA_MEGAFONIA, cierraElVuelo, esDeLaMegafonia, pesoDe } from "./turnos";
 import { GUION, guionAfis, guionSinTorre, type Fase } from "../flight/vuelo";
 
 /**
@@ -163,11 +156,6 @@ export function cuantoAguanta(
 ): number {
   if (
     noSePierde(clave, urgencia) ||
-    /*
-     * La llamada de cabina, lo que su anuncio: la retira el juego cuando se
-     * le pasa el momento o su reloj. Ver `atenderALasLlamadas` en `game.ts`.
-     */
-    esUnaLlamada(clave) ||
     cierraElVuelo(clave) ||
     anunciaLaFase(clave) ||
     anunciaElPuntoDeDescenso(clave) ||
@@ -952,7 +940,7 @@ export class Boca {
          * el servicio o la bajada siguen siendo verdad después de un aviso.
          * Lo tira su propio reloj si espera demasiado. Ver `turnos.ts`.
          */
-        if (esperaComoLaMegafonia(c.clave)) continue;
+        if (esDeLaMegafonia(c.clave)) continue;
         // Ni lo que cierra el vuelo: ver `cierraElVuelo` en `turnos.ts`.
         if (cierraElVuelo(c.clave)) continue;
         this.tirar(i, "la barrió un urgente");
@@ -1032,12 +1020,7 @@ export class Boca {
   private encolar(esta: (typeof this.cola)[number]): void {
     this.cola.push(esta);
     // Lo que espera a su voz no ocupa plaza: todavía no compite por hablar.
-    /*
-     * Ni la llamada de cabina (H29j): es el principio de un anuncio que ya
-     * ocupa la suya al pedir la voz, y un tono de segundo y medio. Contándola,
-     * en la verde echaba de la cola lo de la instructora. Ver `pedirLaLlamada`.
-     */
-    if (this.cola.filter((c) => !c.lista && !esUnaLlamada(c.clave)).length <= PLAZAS_DE_ESPERA) return;
+    if (this.cola.filter((c) => !c.lista).length <= PLAZAS_DE_ESPERA) return;
     /*
      * Y lo que suelta la pista no se echa: si no queda otra, la cola crece
      * una plaza. Ver `sueltaLaPista`. Ni lo que la torre te da o te manda:
@@ -1059,7 +1042,7 @@ export class Boca {
        * de uno en uno —ver `megafoniaHablando` en `game.ts`—, así que la cola
        * crece como mucho en uno.
        */
-      if (esperaComoLaMegafonia(a.clave)) continue;
+      if (esDeLaMegafonia(a.clave)) continue;
       /*
        * **Ni lo que cierra el vuelo**: el señalero, apagar el motor, «¡vuelo
        * terminado!», la lista de después del aterrizaje, el «bien hecho» de

@@ -1496,7 +1496,6 @@ import {
   conPasaje,
   conTripulacion,
   seLePasoElMomento,
-  tieneSuMomento,
   type Anuncio,
 } from "./audio/megafonia";
 import {
@@ -1522,10 +1521,7 @@ import { anuncioTrasLaToma } from "./audio/anuncio-tras-la-toma";
 import {
   LlamadasDelPasaje,
   esperaTrasLaLlamada,
-  laLlamadaDe,
   llamadaAntesDe,
-  pedirLaLlamada,
-  sinLaLlamada,
   type TonoDeCabina,
 } from "./audio/tonos-de-cabina";
 import { LoQueCambia } from "./flight/lo-que-cambia";
@@ -2061,8 +2057,7 @@ const TESELAS_QUE_ESPERAN = 6;
  * ventanilla. Medido en el banco: «la boca es de la escena».
  */
 function baseDeLaClave(clave: string): string {
-  // Y la llamada de cabina de un anuncio, la del anuncio: ver `pedirLaLlamada`.
-  return sinLaLlamada(clave).replace(/[@~].*$/, "");
+  return clave.replace(/[@~].*$/, "");
 }
 
 /**
@@ -35642,8 +35637,8 @@ export class Game {
     sono: number | null;
     /** Lo que se hace si se le pasa el momento: la escena de pasaje sigue. */
     alCaer?: (() => void) | undefined;
-    /** Si ya pidió turno en la boca. Ver `atenderALasLlamadas`. */
-    pedida?: boolean;
+    /** Quién le tapó el hueco, en fotogramas. Para el banco. */
+    tapada?: Record<string, number>;
   }[] = [];
   /** Los pasajeros que llaman durante el servicio. Ver `LlamadasDelPasaje`. */
   private readonly llamadasDelPasaje = new LlamadasDelPasaje();
@@ -35815,88 +35810,70 @@ export class Game {
   }
 
   /**
-   * **Las llamadas, una detrás de otra.** La primera de la fila pide turno en
-   * la boca y su voz va al acabar el tono; la siguiente espera. Lo que pierde
-   * su momento esperando —el crosscheck, si se arranca antes— se retira sin
+   * **Las llamadas, una detrás de otra.** La primera de la fila suena cuando
+   * puede y su voz va al acabar el tono; la siguiente espera. Lo que pierde su
+   * momento esperando —el crosscheck, si se arranca antes— se retira sin
    * sonar, y lo que espera demasiado, también: ver `CADUCA_LA_MEGAFONIA`.
-   *
-   * **Y el tono pide turno, no busca un silencio** (H29j). Sonaba en cuanto
-   * no hablaba nadie, y eso pasa entre dos frases cualesquiera: en el
-   * silencio de 0,8 s de la boca, que no sabía que sonaba y arrancaba la
-   * siguiente encima del tono, que dura casi el doble. Ver `pedirLaLlamada`
-   * en `audio/tonos-de-cabina.ts`. Lo que le tapó el hueco, si se cae, lo
-   * apunta la boca en sus descartes.
    */
   private atenderALasLlamadas(): void {
     const l = this.llamadas[0];
     if (!l) return;
     const ahora = this.relojDelJuego;
     if (l.sono === null) {
-      /*
-       * **Y lo que tiene su momento aguanta lo que su momento**, no el reloj
-       * de un anuncio: pidiendo turno, «sentados para el despegue» puede
-       * esperar detrás de la autorización entera y de la pista que queda, y
-       * con los treinta segundos se caía con la carrera todavía por delante.
-       * Ver `tieneSuMomento` en `audio/megafonia.ts`.
-       */
       const caduca =
         seLePasoElMomento(l.clave, this.faseDeAhora as Fase) ||
-        (!tieneSuMomento(l.clave) && ahora - l.desde > CADUCA_LA_MEGAFONIA / 1000);
+        ahora - l.desde > CADUCA_LA_MEGAFONIA / 1000;
       if (caduca) {
-        if (import.meta.env.DEV && !l.pedida)
+        this.llamadas.shift();
+        if (l.clave.startsWith("comandante.crosscheck")) this.crosscheckAcabado = true;
+        if (import.meta.env.DEV)
           BOCA.apuntarLoQueSeCayoFuera(
             l.clave,
-            `llamada sin turno en ${this.faseDeAhora}, ${(ahora - l.desde).toFixed(1)} s`,
+            `llamada sin hueco en ${this.faseDeAhora}, ${(ahora - l.desde).toFixed(1)} s · ` +
+              Object.entries(l.tapada ?? {})
+                .map(([q, n]) => `${q} ${n}`)
+                .join(" "),
           );
-        // Pedida, se cae en la boca y la boca la apunta. Ver `seCayoLaLlamada`.
-        if (l.pedida) BOCA.retirar((c) => c === laLlamadaDe(l.clave));
-        this.seCayoLaLlamada(l);
+        l.alCaer?.();
         return;
       }
       /*
-       * Los de la emergencia no esperan a que se calle nadie: su llamada
-       * suena en el acto y la voz va detrás, con su reloj.
+       * **Y sin la radio hablando**: la llamada es un suceso y no se toca
+       * encima de la torre. Al dejar la pista la torre da el rodaje en el
+       * mismo momento del anuncio de la tripulación, y sin esto el tono podía
+       * sonar encima de la autorización, con la voz esperando detrás.
        */
-      if (l.ya) {
-        this.avisar(l.tono);
-        l.sono = ahora;
+      const libre =
+        !this.comandante.hablando &&
+        !this.tripulacion.hablando &&
+        !this.instructor.hablando &&
+        !this.torre.hablando &&
+        !this.otroAvion.hablando;
+      if (!l.ya && !(libre && this.instructor.estaLista(l.clave, l.relleno))) {
+        if (import.meta.env.DEV) {
+          const t = (l.tapada ??= {});
+          const quien = !libre
+            ? [
+                this.comandante.hablando && "comandante",
+                this.tripulacion.hablando && "tripulacion",
+                this.instructor.hablando && "instructor",
+                this.torre.hablando && "torre",
+                this.otroAvion.hablando && "otro",
+              ]
+                .filter(Boolean)
+                .join("+")
+            : "sin-voz";
+          t[quien] = (t[quien] ?? 0) + 1;
+        }
         return;
       }
-      if (l.pedida) return;
-      l.pedida = true;
-      pedirLaLlamada(BOCA, {
-        tono: l.tono,
-        anuncio: l.clave,
-        tocar: () => {
-          this.avisar(l.tono);
-          l.sono = this.relojDelJuego;
-        },
-        laVoz: () => {
-          // Si el vuelo se rehizo mientras sonaba, la llamada ya no es de nadie.
-          const i = this.llamadas.indexOf(l);
-          if (i < 0) return;
-          this.llamadas.splice(i, 1);
-          l.decir();
-        },
-        esperar: (ms, hacer) => void setTimeout(hacer, ms),
-        // Y no suena antes de que su voz pueda sonar detrás.
-        lista: () => this.instructor.estaLista(l.clave, l.relleno),
-        alCaer: () => this.seCayoLaLlamada(l),
-      });
+      this.avisar(l.tono);
+      l.sono = ahora;
       return;
     }
-    if (!l.ya || ahora - l.sono < esperaTrasLaLlamada(l.tono)) return;
+    if (ahora - l.sono < esperaTrasLaLlamada(l.tono)) return;
     this.llamadas.shift();
     l.decir();
-  }
-
-  /** Una llamada que se cae sin sonar: fuera de la fila, y quien la pidió sigue. */
-  private seCayoLaLlamada(l: (typeof this.llamadas)[number]): void {
-    const i = this.llamadas.indexOf(l);
-    if (i < 0) return;
-    this.llamadas.splice(i, 1);
-    if (l.clave.startsWith("comandante.crosscheck")) this.crosscheckAcabado = true;
-    l.alCaer?.();
   }
 
   /**
