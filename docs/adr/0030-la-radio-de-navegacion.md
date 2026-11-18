@@ -2109,3 +2109,203 @@ Dos, y en este orden.
    de cinemática: con el rumbo corregido llega a menos de una milla; sin
    corregir, se aparta el viento por el tiempo, y se dice hacia dónde. El
    cronómetro es una pieza nueva del HUD y pasa por `npm run carteles`.
+
+## Enmienda H26j (18-11-2026): los flecos de «Aterrizar con las agujas»
+
+Lo que H26i dejó apuntado del quinto ejercicio de radio, hecho o dicho por
+qué no, en el orden en que se pidió.
+
+### La frase de cierre
+
+El panel del final repetía la frase de los mínimos —«ahora mirá afuera y
+aterrizá»— leída ya aterrizado. Ahora el ejercicio tiene la suya, una por
+cierre, y las dos aciertan:
+
+- **La pista** (`ejercicio.ils.cierrePista`): «¡Aterrizaste con las agujas!
+  Bajaste por el localizador y la senda hasta los mínimos, y ahí estaba la
+  pista. Así se baja hasta una pista que no se ve». La dice la instructora al
+  salir el panel, con el sonido del logro: es la celebración del aterrizaje.
+  No nombra la nube, que la avioneta no la tiene (ver abajo).
+- **La frustrada** (`ejercicio.ils.cierreFrustrada`): «¡Bien decidido! Con una
+  aguja fuera del centro, o sin ver la pista, se sube y se vuelve a probar.
+  Así lo hacen los pilotos de verdad, y eso también es ganar». Solo se lee:
+  la frustrada ya la celebra `Frustrada` en el aire, en el mismo instante en
+  que el ejercicio se cierra (los dos miran los mismos cuarenta metros), con
+  su voz y su sonido. Una tercera voz en veinte segundos sobre la misma
+  decisión sería ruido. Cuentan igual: la de los mínimos y una celebración en
+  voz cada una, el sonido del logro y el panel con su frase.
+
+Genérica, sin el nombre del ILS, porque se cierra igual en cualquiera. Y no
+dice «en los mínimos»: la frustrada que cierra el ejercicio puede ser una de
+antes, a ochocientos pies, de quien vio que no le salía.
+
+### Tras irse al aire, la fase no repite la frustrada
+
+Al irse al aire se volvían a oír «andá a la pista» (`vuelo.enVueloAterrizando`)
+y «bajá suavecito» (`vuelo.final`). Las dos son la fase del plan: sale de la
+final por arriba al subir veinte metros (`SUBIDA_QUE_SACA_DE_FINAL`) y
+vuelve a entrar en cuanto el avión baja un poco antes del centro de la
+pista, que en la subida de una frustrada pasa nivelando para coger
+velocidad. Ninguna decía nada nuevo, y no es cosa del ejercicio: pasaba en
+cualquier frustrada. Así que se arregla en la raíz, en `flight/la-final-tras-irse.ts`:
+
+- **Salir de la final subiendo es la frustrada**, que ya tiene su voz y su
+  tarjeta: la tarjeta de «en vuelo» sale, callada, sin voz ni rótulo. Un
+  suceso, una voz. Subiendo es **lo subido desde lo más bajo de esa final**,
+  quince metros (`SUBIDA_DE_IRSE`, los de irse con el gas de despegue), y no
+  el variómetro de ese instante: la primera versión miraba el variómetro y el
+  banco la tumbó, porque la avioneta se va a tirones, nivelando cada vez que
+  se le cae la velocidad, y salía de la final justo en uno de ellos. Si se
+  sale sin subir —quien flota y pasa la pista de largo—, no hay frustrada que
+  lo diga, y se dice entero como siempre. Con la orden de la torre pasa
+  igual: «andá a la pista» detrás de «go around» decía lo contrario de la
+  orden.
+- **La final no se vuelve a contar hasta que haya otra final**: la de la
+  torre (`flight/final-de-la-torre.ts`) cogida otra vez **por delante del
+  umbral**, dentro del cono de la aproximación, después de haber salido de
+  ese lado. La de la torre sola no basta, y también lo enseñó el banco: cuenta
+  siempre la fase «final» del plan, así que el parpadeo de esa fase subiendo
+  encima de la pista la encendía, que es justo lo que no es otra
+  aproximación. Un aviso vuelve cuando cambia algo que pasa, no por el reloj.
+- En tierra se olvida, que el vuelo siguiente empieza de cero.
+
+### La torre y su «go around»
+
+Visto en el banco de H26i con el alisio: entre lo que se dijo estaba
+`torre.canario.goAround`, y el banco no apuntaba a quién ni cuándo. No era
+una frase sin destinatario: la frecuencia del campo sigue hablando en este
+ejercicio —acaba en la pista y no calla nada—, y la torre manda al aire a un
+tráfico del circuito que viene detrás con la pista ocupada, que es el guion
+`frustrada` de `flight/radio.ts`. Esa frase se monta siempre con el
+indicativo delante, como todas las de la torre: la receta grabada de la voz
+canaria es `{c1}…{c5}` y «go around, runway occupied», y el texto, `deTorre`
+con el indicativo de quien la recibe. Sin el indicativo la receta no se
+monta y no suena. Lo que faltaba era que el banco lo mirara: ahora apunta a
+quién y cuándo (`nombrados`) y comprueba que lo que sonó lleva sus piezas del
+alfabeto (`dichoConPiezas`).
+
+### La nube en los mínimos
+
+La propuesta de H26i: el ejercicio trae su día, con el viento del sitio y un
+techo cubierto justo por encima de los mínimos, para que la pista aparezca
+ahí. Hecho con lo que ya había, sin ningún efecto nuevo: `elDiaDelIls` en
+`flight/ils-con-agujas.ts` pone el techo y su tapadura en el `Meteo` del
+ejercicio, en `main.ts`, como la tormenta y la aguja traen el suyo; la capa
+es la de todos los días (`world/capa-de-nubes.ts`), solo que más baja. Con
+el viento puesto a mano (`?viento=`) se queda el techo; con un METAR a mano,
+manda el METAR.
+
+**Y solo en un avión que vuela por instrumentos.** La propuesta no lo decía
+y es lo primero: la avioneta de escuela vuela con reglas visuales
+(`AircraftConfig.reglasDeVuelo`), «ni lleva con qué volar dentro de una
+nube», y meterse en una con un avión así es lo que más mata en la aviación
+ligera. Enseñarlo como ejercicio sería enseñar justo lo contrario de las tres
+eses. Así que con la avioneta el ILS se practica como en cualquier escuela,
+con buen tiempo y mirando solo las agujas —«como dentro de una nube», que es
+lo que ya decía la presentación—, y el día es el de siempre del sitio; con
+el bimotor, el turbohélice y los reactores, que vuelan por instrumentos, la
+nube de verdad.
+
+**Trescientos pies, y no los doscientos cincuenta de la propuesta**, por dos
+motivos que dicen lo mismo:
+
+- La capa **se deshilacha veinticinco metros por debajo de su base**
+  (`BORDE_DE_LA_CAPA`), como el borde de una nube de verdad. Con la base a
+  doscientos cincuenta, en los mínimos se seguiría entre jirones —en la mesa,
+  un 30 % de nube de media y con sitios a más de la mitad—, y la pista se
+  vería a ratos justo cuando hay que decidir. Con trescientos se va saliendo
+  de los jirones desde ahí y se está fuera del todo a los doscientos veinte
+  pies: unos segundos antes de la altura de decisión.
+- Es **lo que diría el parte**: las bases van de cien en cien pies, y
+  doscientos cincuenta salía en el ATIS del juego como trescientos. Ahora lo
+  escrito y lo que se ve son lo mismo, OVC003.
+
+Lo que dice el juego con ese techo, mirado antes de ponerlo, como pedía
+H26i:
+
+- **`seVeLaPista`**, la regla de los mínimos: con la base por encima de los
+  doscientos pies de la decisión, la pista se ve en los mínimos; lo que se
+  decide ahí es lo de las agujas, que es la lección.
+- **La tarjeta del tiempo** no sale: sale sola solo en el puesto de
+  estacionamiento, antes de salir, y el ejercicio empieza en el aire. Y los
+  límites de un avión de instrumentos para salir son doscientos pies de techo
+  (`MINIMOS.instrumentos`): con trescientos, se puede salir.
+- **La ventanilla** calla lo que tapa la capa, como siempre (`laCapaTapa`).
+- **El consejo de la bajada** (`porQueNoSeSigue`) mira el mismo techo con la
+  misma regla, y no dice «sin pista».
+
+En Fuerteventura el avión empieza a unos 675 m sobre la pista, por encima de la capa, que con su
+grosor de siempre llega a unos 540: ve la alfombra blanca debajo, captura la
+senda nivelado por encima de ella, entra en la nube bajando por la senda y
+sale por debajo a los doscientos veinte pies. Es como se vuela un ILS con
+techo bajo.
+
+**El coste**: la capa es la misma de cinco láminas que se pinta cualquier
+día, a otra altura; dentro se cierra la niebla, que es el peor caso del
+tiempo y ya lo mide `verificar-rendimiento.mjs` con `OGA_METAR` («dentro de
+la nube, a media capa sobre el campo»). No añade ninguna pieza que medir.
+
+Prueba de mesa: el día del ejercicio con el viento del sitio; con la
+avioneta, el de siempre, sin nube baja; con uno de instrumentos, cubierto a
+trescientos pies, sin agua y a mano, y su ATIS dice «OVC 300FT»; con la
+capa pintada como en el cielo, dentro en la base y fuera del todo a los
+doscientos veinte pies y en los mínimos; y con doscientos cincuenta, todavía
+en los jirones en los mínimos.
+
+### La primera pasada con aros, no
+
+H26g proponía tres pasadas, «como pide el issue»: aros y agujas, agujas
+solas y agujas en nube. H26i hizo la segunda y escribió por qué la primera
+no: los aros no salen en ningún ejercicio, y en éste **la lección es
+precisamente quitarlos**, volar solo con las agujas. Su propuesta para la
+tanda siguiente ya no la traía: la nube y la estima. No se pone, por eso y
+por dos cosas más:
+
+- **No hay peldaños de abajo donde ponerla.** El ejercicio solo se ofrece en
+  el peldaño de cabina, que es el único con la NAV en el cuadro
+  (`RADIO_DESDE`): en los de abajo no hay agujas con las que juntar los
+  aros.
+- **Y la pasada con aros ya existe**: es la lección de aterrizar en ese mismo
+  peldaño, con los aros de la senda y, si se pone el ILS en la NAV, las dos
+  agujas en el HSI marcando lo mismo.
+
+### La senda en la pantalla de navegación de la cabina en 3D
+
+H26i la dejó apuntada: el HSI del cuadro plano llevaba la escala de la senda
+y la pantalla de navegación de la cabina en 3D no. Ahora la lleva, en
+`world/pantallas-cabina.ts`, como la del cuadro plano: a la derecha de la
+rosa y sin girar con ella, cuatro puntos, la raya del centro y el rombo
+magenta, que baja cuando se va alto; con la bandera GS, el rombo se esconde
+y sale «GS» en rojo. Dónde va y qué marca es una cuenta sin lienzo
+(`escalaDeLaSendaEnLaRosa`), con su prueba: el mismo sitio y el mismo punto
+que el cuadro plano.
+
+Lo que sigue sin tocar, de lo mismo: el rombo de la pantalla de vuelo de los
+de cristal sale todavía de la geometría de la pista (`desvioAhora`), no de
+la radio, y no se ha medido cuánto se separan.
+
+### Volado
+
+En el juego, en Fuerteventura con el alisio, por la 01 (IFV) y la Intel por
+ANGLE. El banco (`scripts/ver-ils-con-agujas.mjs`) mira ya los flecos de
+esta tanda: el día según el avión y, con nube, la foto dentro a unos
+trescientos treinta pies y fuera en los mínimos con la pista a la vista; a
+quién manda al aire la torre, con sus piezas; que desde los mínimos no
+vuelvan «andá a la pista» ni la final; y el panel con su frase. Con
+`OGA_VIENTO`, el viento a mano.
+
+- **La avioneta, a la pista**, 17 de 19 la primera tirada, y las dos que
+  fallaron eran del banco: el panel se miraba en castellano y el navegador
+  del banco va en inglés, y el orden de lo que dice la instructora mezclaba
+  dos listas (ver abajo). Por lo demás como en H26i: a los mínimos con 0,02
+  de localizador y −0,17 de senda, lo peor desde mil pies 0,06 y 0,16, y
+  cerrado con la pista. Sin nube baja, que es una avioneta de reglas
+  visuales. La torre mandó al aire a **EC-CHB** a los 255 s y a **EC-ZHF** a
+  los 432 s, tráfico del circuito con la pista ocupada, y las dos veces con
+  su indicativo en el alfabeto delante de «go around, runway occupied».
+- **La avioneta, apartada del localizador**: antes del arreglo de la fase,
+  desde los mínimos se volvieron a oír `vuelo.enVueloAterrizando` y
+  `vuelo.final` —el variómetro casi a cero al salir de la final, y la final
+  de la torre encendida por el parpadeo—; después, **18 de 19**, y desde los
+  mínimos solo sonó *going around, good decision*. En los mínimos, −1,80 de
+  localizador, la frustrada, y el panel con «¡Bien decidido!».
