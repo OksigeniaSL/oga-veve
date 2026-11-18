@@ -40,7 +40,7 @@ export function vigilarLoAjeno() {
       if (v.radio) visto.radio.add(v.radio);
       visto.perdido ||= v.perdido;
     },
-    async comprobar(page, comprobar, propias) {
+    async comprobar(page, comprobar, propias, tambien = null) {
       const dicho = await page.evaluate(async () => {
         const { SEGURIDAD, claveBase } = await import("/src/flight/sin-instructora.ts");
         return Object.entries(globalThis.__oga.dichoTodo()).map(([quien, claves]) => ({
@@ -50,7 +50,9 @@ export function vigilarLoAjeno() {
       });
       const ajeno = dicho.flatMap(({ quien, claves }) =>
         claves
-          .filter(({ c, seguridad }) => !(quien === "instructor" && (/^ejercicio\./.test(c) || seguridad)))
+          .filter(
+            ({ c, seguridad }) => !(quien === "instructor" && (/^ejercicio\./.test(c) || seguridad || tambien?.test(c))),
+          )
           .map(({ c }) => `${quien}: ${c}`),
       );
       const delInstructor = dicho.find((d) => d.quien === "instructor")?.claves ?? [];

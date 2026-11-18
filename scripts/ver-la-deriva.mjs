@@ -21,11 +21,14 @@
  * del triángulo de vientos con el viento que sopla en el modelo**, y lo de
  * H26f: nada que no sea del ejercicio. Capturas desde fuera, que es desde
  * donde se ven las rayas. El puerto, `OGA_PUERTO`; el peldaño, `OGA_TRAMO`
- * (Taguató, con sus grados); el reloj, por `OGA_VECES` (cuatro).
+ * (Taguató, con sus grados); el reloj, por `OGA_VECES` (cuatro); el sitio,
+ * `OGA_ESCENARIO` (`pettirossi`, o `tenerife-norte` para el Auditorio con el
+ * alisio y el relieve que baja hacia Santa Cruz); con `OGA_GPU=1`, con la
+ * tarjeta de verdad.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { baseDe } from "./servidor.mjs";
 import { vigilarLoAjeno } from "./lo-ajeno-al-ejercicio.mjs";
 
@@ -36,7 +39,11 @@ const TRAMO = process.env.OGA_TRAMO ?? "taguato";
 const VECES = Number(process.env.OGA_VECES ?? 4);
 const VIENTO = process.env.OGA_VIENTO ?? null;
 const SIN_CORREGIR = process.env.OGA_SIN_CORREGIR === "1";
-const NOMBRE = `${VIENTO ? "calma" : "nordeste"}${SIN_CORREGIR ? "-sin-corregir" : ""}-${TRAMO}`;
+const ESCENARIO = process.env.OGA_ESCENARIO ?? "pettirossi";
+const CON_GPU = process.env.OGA_GPU === "1";
+/** El sitio que le toca a cada campo: ver `sitioDeLaDeriva`. */
+const SITIO = { pettirossi: ["puente-remanso", "Remanso"], "tenerife-norte": ["auditorio", "Auditorio"] }[ESCENARIO] ?? [null, ""];
+const NOMBRE = `${ESCENARIO}-${VIENTO ? "calma" : "viento"}${SIN_CORREGIR ? "-sin-corregir" : ""}-${TRAMO}`;
 
 mkdirSync(SALIDA, { recursive: true });
 const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -50,7 +57,9 @@ await server.listen();
 const BASE = baseDe(server, PUERTO);
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
-  args: ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
+  args: CON_GPU
+    ? ["--headless=new", "--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=gl"]
+    : ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
 });
 
 const resultados = [];
@@ -110,7 +119,7 @@ try {
   page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
   await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
   const viento = VIENTO ? `&viento=${VIENTO}` : "";
-  await page.goto(`${BASE}/?escenario=pettirossi&hora=12&tramo=${TRAMO}&avion=${AVION}&ejercicio=deriva${viento}`);
+  await page.goto(`${BASE}/?escenario=${ESCENARIO}&hora=12&tramo=${TRAMO}&avion=${AVION}&ejercicio=deriva${viento}`);
   await page.waitForFunction(() => globalThis.__oga?.deriva?.()?.colocacion != null, null, { timeout: 120000 });
   await pausa(3000);
   await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
@@ -130,9 +139,9 @@ try {
   const c = r.ejercicio.colocacion;
   const lejos0 = Math.hypot(r.ejercicio.sitio.x - r.x, r.ejercicio.sitio.z - r.z);
   comprobar(
-    "empieza en el aire, a dos minutos y medio del puente Remanso",
-    r.ejercicio.sitio.id === "puente-remanso" && r.y - r.pista > 400 && Math.abs(lejos0 - c.lejos) < 400,
-    `${(lejos0 / 1000).toFixed(1)} km de ${c.lejos.toFixed(0)} m, ${Math.round(r.y - r.pista)} m sobre la pista`,
+    "empieza en el aire, a dos minutos y medio de su sitio",
+    r.ejercicio.sitio.id === SITIO[0] && r.y - r.pista > 400 && Math.abs(lejos0 - c.lejos) < 400,
+    `${r.ejercicio.sitio.id}, ${(lejos0 / 1000).toFixed(1)} km de ${c.lejos.toFixed(0)} m, ${Math.round(r.y - r.pista)} m sobre la pista, rumbo ${((c.rumbo / GRADO + 360) % 360).toFixed(0)}`,
   );
   comprobar(
     "con el morro en el puente",
@@ -151,7 +160,10 @@ try {
     r.ejercicio.rayas?.enLaEscena && r.ejercicio.rayas.recta > c.lejos / 60,
     JSON.stringify(r.ejercicio.rayas),
   );
-  comprobar("la tarjeta escribe el sitio", r.textoDeLaTarjeta.includes("Remanso"), `«${r.textoDeLaTarjeta.slice(0, 90)}»`);
+  comprobar("la tarjeta escribe el sitio", r.textoDeLaTarjeta.includes(SITIO[1]), `«${r.textoDeLaTarjeta.slice(0, 90)}» (${r.tarjeta})`);
+  /** El modelo del sitio, puesto en el mundo: ver `world/sitios-con-modelo.ts`. */
+  const sitioPuesto = () =>
+    page.evaluate((id) => (globalThis.__oga.sitios?.() ?? []).find((s) => s.id === id)?.estado ?? null, SITIO[0]);
   await foto("01-salida");
 
   await page.evaluate(() => globalThis.__oga.pilotoAutomatico(true));
@@ -168,7 +180,8 @@ try {
   }
   const ladoEsperado = Math.sign(costado0) > 0 ? "derecha" : "izquierda";
   if (!VIENTO) {
-    const t = r.reloj - t0;
+    // El reloj de la página es el de pared: el del juego va por las veces que se aceleró.
+    const t = (r.reloj - t0) * puestas;
     comprobar(
       "la raya se va de costado, hacia donde empuja el viento, en lo que tarda el viento en apartarla",
       r.ejercicio.fase === "corregir" && r.ejercicio.loQueSeAparto >= 150 && Math.abs(t - 150 / Math.abs(costado0)) < 12,
@@ -177,7 +190,9 @@ try {
     comprobar("y la tarjeta dibuja el camino yéndose de ese lado", r.tarjeta === `deriva-a-la-${ladoEsperado}`, r.tarjeta);
   } else
     comprobar("en calma, a mitad de camino lo dice, sin apartarse", r.ejercicio.fase === "llegar" && r.ejercicio.loQueSeAparto < 30, `${r.ejercicio.loQueSeAparto.toFixed(0)} m, tarjeta ${r.tarjeta}`);
+  comprobar("la línea de trayectoria, tendida por delante", (r.ejercicio.rayas?.delante ?? 0) > 10, JSON.stringify(r.ejercicio.rayas));
   await foto("02-de-costado");
+  comprobar("el sitio, cargado en el mundo", (await sitioPuesto()) === "puesto", String(await sitioPuesto()));
 
   // Al viento: el rumbo al puente menos lo que se ve que el viento deriva.
   let ventana = [];
@@ -227,15 +242,55 @@ try {
       `ejercicio ${r.ejercicio.correccion?.toFixed(1)}°, banco ${media("medida").toFixed(1)}°, triángulo ${media("triangulo").toFixed(1)}° (la cuenta: ${c.correccion.toFixed(1)}°)`,
     );
     if (TRAMO !== "tuka" && TRAMO !== "guyrami")
-      comprobar("desde Taguató, los grados escritos", /\d+° al viento/.test(textoAlViento), `«${textoAlViento.slice(0, 60)}»`);
+      comprobar("desde Taguató, los grados escritos", /\d+° (al viento|into the wind)/.test(textoAlViento), `«${textoAlViento.slice(0, 60)}»`);
   }
   comprobar("la raya blanca del camino, entera en el suelo", (r.ejercicio.rayas?.camino ?? 0) > 20, JSON.stringify(r.ejercicio.rayas));
-  await ajeno.comprobar(page, comprobar, /^deriva-/);
+  comprobar("y la de delante, quitada al cerrar", r.ejercicio.rayas?.delante === 0, JSON.stringify(r.ejercicio.rayas));
+  /*
+   * **Los baches** sí: es la instructora contando con calma qué es lo que se
+   * siente cuando el aire de la tarde sacude el avión sobre la ciudad, y eso
+   * pasa de verdad mientras dura el ejercicio. Ver ADR 0031.
+   */
+  await ajeno.comprobar(page, comprobar, /^deriva-/, /^vuelo\.baches/);
   await pausa(500);
   await foto("04-encima");
   await pausa(4000);
   await foto("05-final");
   comprobar("sin errores en la página", errores.length === 0, errores.join(" | "));
+
+  /*
+   * **La lámina**: los cinco dibujos de la tarjeta y la ficha del hangar,
+   * puestos encima de la página con las clases de verdad, para mirarlos de
+   * cerca. La ficha se saca del fuente tal cual, con el avión de su macro.
+   */
+  const hangar = readFileSync("src/ui/hangar.ts", "utf8");
+  const avion = /const AVION = \(t: string\): string =>\s*`([\s\S]*?)`;/.exec(hangar)?.[1] ?? "";
+  const ficha = (/const EJ_DERIVA = escena\(`([\s\S]*?)`\);/.exec(hangar)?.[1] ?? "").replace(
+    /\$\{AVION\("([^"]*)"\)\}/g,
+    (_, t) => avion.replace("${t}", t),
+  );
+  await page.evaluate(async (ficha) => {
+    const { DIBUJOS } = await import("/src/ui/senal.ts");
+    const caja = document.createElement("div");
+    caja.style.cssText =
+      "position:fixed;inset:0;z-index:99999;background:#1a2420;display:flex;flex-wrap:wrap;gap:24px;padding:24px;align-items:center;color:#f2f1ec";
+    for (const n of ["deriva-a-la-izquierda", "deriva-a-la-derecha", "deriva-corregida-a-la-izquierda", "deriva-corregida-a-la-derecha", "deriva-en-calma"]) {
+      const d = document.createElement("div");
+      d.style.cssText = "width:160px;height:160px;fill:currentColor";
+      d.innerHTML = DIBUJOS[n].replace("<svg ", '<svg width="160" height="160" ');
+      caja.append(d);
+    }
+    const f = document.createElement("div");
+    f.className = "ficha ficha--leccion ficha--ejercicio";
+    f.style.cssText = "width:360px";
+    f.innerHTML = `<span class="ficha__lienzo ficha__lienzo--panel"><svg class="ficha__panel" viewBox="0 0 120 84" width="360" height="252">
+      <rect class="panel__cielo" x="0" y="0" width="120" height="46" rx="3" />
+      <rect class="panel__tierra" x="0" y="42" width="120" height="42" rx="3" />${ficha}</svg></span>`;
+    caja.append(f);
+    document.body.append(caja);
+  }, ficha);
+  await pausa(300);
+  await foto("06-lamina");
   await contexto.close();
 } catch (e) {
   console.error(e);

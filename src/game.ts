@@ -774,6 +774,12 @@ const TARDA_EL_FINAL = 0.5;
  * `enFaseDeTrabajo` en `flight/lo-que-se-ve.ts`.
  */
 const BANDA_EN_CRUCERO = 30;
+/**
+ * **Lo largo de la línea de trayectoria** de «Apuntá al viento», m: cuatro
+ * kilómetros por delante del avión, o hasta un poco pasado el sitio si está
+ * más cerca. Ver `practicarLaDeriva`.
+ */
+const LINEA_DE_TRAYECTORIA = 4000;
 const RATO_EN_CRUCERO = 20;
 
 /**
@@ -1027,7 +1033,7 @@ import {
   type ColocacionDeLaDeriva,
   type SucesoDeLaDeriva,
 } from "./flight/deriva";
-import { BLANCO, CintaEnElSuelo, MAGENTA } from "./world/raya-del-camino";
+import { BLANCO, CintaEnElSuelo, MAGENTA, PASO } from "./world/raya-del-camino";
 import {
   colocacionDelCruce,
   DosRadiales,
@@ -3188,6 +3194,8 @@ export class Game {
    */
   private mirarLasUves(): void {
     if (this.uveExplicada) return;
+    // Es paisaje, como lo que señala la ventanilla: un ejercicio que se cierra en el aire lo calla (H26f).
+    if (this.loQueCalla.laVentanilla) return;
     const s = this.flight.state;
     if (s.onGround || s.heightAboveGround < 60) return;
     if (Math.abs(s.verticalSpeed) > 4) return;
@@ -3946,7 +3954,13 @@ export class Game {
    * **Las dos rayas del suelo** de la deriva: la blanca, por donde va el
    * avión, y la magenta, la recta al sitio. Ver `world/raya-del-camino.ts`.
    */
-  private rayasDeLaDeriva: { readonly camino: CintaEnElSuelo; readonly recta: CintaEnElSuelo } | null = null;
+  private rayasDeLaDeriva: {
+    readonly camino: CintaEnElSuelo;
+    readonly recta: CintaEnElSuelo;
+    readonly delante: CintaEnElSuelo;
+  } | null = null;
+  /** Lo que falta para volver a tender la raya de delante, s. Ver `practicarLaDeriva`. */
+  private hastaLaRayaDeDelante = 0;
   /** La nube de la tormenta del ejercicio. Ver `world/cumulonimbo.ts`. */
   private cumulonimbo: CumulonimboEnElMundo | null = null;
   /**
@@ -13785,6 +13799,7 @@ export class Game {
     this.ils?.reiniciar();
     this.deriva?.reiniciar();
     this.rayasDeLaDeriva?.camino.vaciar();
+    this.rayasDeLaDeriva?.delante.vaciar();
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
@@ -24772,7 +24787,7 @@ export class Game {
     readonly correccion: number | null;
     readonly loQueSeAparto: number;
     readonly llegada: string | null;
-    readonly rayas: { readonly camino: number; readonly recta: number; readonly enLaEscena: boolean } | null;
+    readonly rayas: { readonly camino: number; readonly recta: number; readonly delante: number; readonly enLaEscena: boolean } | null;
   } | null {
     const d = this.deriva;
     if (!d) return null;
@@ -24785,7 +24800,9 @@ export class Game {
       correccion: d.correccion,
       loQueSeAparto: d.loQueSeAparto,
       llegada: d.llegada,
-      rayas: r ? { camino: r.camino.muestras, recta: r.recta.muestras, enLaEscena: !!r.camino.malla.parent } : null,
+      rayas: r
+        ? { camino: r.camino.muestras, recta: r.recta.muestras, delante: r.delante.muestras, enLaEscena: !!r.camino.malla.parent }
+        : null,
     };
   }
 
@@ -24802,14 +24819,42 @@ export class Game {
     if (!this.rayasDeLaDeriva) {
       const agua = this.scenario.waterLevel ?? 0;
       const suelo = (x: number, z: number): number => Math.max(agua, this.terrain.sampleHeight(x, z));
-      this.rayasDeLaDeriva = { camino: new CintaEnElSuelo(suelo, BLANCO, 16), recta: new CintaEnElSuelo(suelo, MAGENTA, 10) };
+      this.rayasDeLaDeriva = {
+        camino: new CintaEnElSuelo(suelo, BLANCO, 16),
+        recta: new CintaEnElSuelo(suelo, MAGENTA, 10),
+        delante: new CintaEnElSuelo(suelo, BLANCO, 10, LINEA_DE_TRAYECTORIA / PASO + 2),
+      };
     }
     const rayas = this.rayasDeLaDeriva;
     if (rayas.recta.muestras === 0) rayas.recta.recta(c, c.sitio);
     rayas.recta.ponerEn(this.scene);
     rayas.camino.ponerEn(this.scene);
+    rayas.delante.ponerEn(this.scene);
     const s = this.flight.state;
     if (!s.onGround && d.fase !== "cerrada") rayas.camino.anadir(s.position.x, s.position.z);
+    /*
+     * **Y hacia dónde se va de verdad**, delante: la raya del camino que va
+     * dejando el avión queda detrás, y desde la cabina o desde fuera se mira
+     * hacia delante. Así que la blanca sigue también por delante del avión,
+     * por donde lo lleva el camino de ahora —la velocidad sobre el suelo, con
+     * el viento dentro—, como la línea de trayectoria de una pantalla de
+     * navegación o de un GPS. Con viento de costado se ve ir al lado del
+     * puente aunque el morro apunte a él; corrigiendo, acaba en él. Se tiende
+     * cuatro veces por segundo; cerrado el ejercicio, se quita.
+     */
+    this.hastaLaRayaDeDelante -= dt;
+    if (d.fase === "cerrada" || s.onGround) rayas.delante.vaciar();
+    else if (this.hastaLaRayaDeDelante <= 0) {
+      this.hastaLaRayaDeDelante = 0.25;
+      const v = Math.hypot(s.velocity.x, s.velocity.z);
+      if (v > 1) {
+        const lejos = Math.min(LINEA_DE_TRAYECTORIA, Math.hypot(c.sitio.x - s.position.x, c.sitio.z - s.position.z) + 600);
+        rayas.delante.recta(
+          { x: s.position.x, z: s.position.z },
+          { x: s.position.x + (s.velocity.x / v) * lejos, z: s.position.z + (s.velocity.z / v) * lejos },
+        );
+      }
+    }
     this.hud.mapa.ponerEstela(d.fase === "cerrada" ? null : () => this.libreta.traza);
     if (this.tarjetaDelTiempo?.abierta) return;
     const sucesos = d.paso(
