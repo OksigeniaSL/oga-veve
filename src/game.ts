@@ -1185,7 +1185,7 @@ import {
 import { CabinaDePasaje, cabinaPreparada, enLaPuerta } from "./world/cabina-de-pasaje";
 import type { AsientoDePasaje } from "./world/asiento-de-pasaje";
 import { CERCANO_EN_LA_CABINA } from "./world/cabina-333";
-import { CERCANO_EN_EL_HELICOPTERO } from "./cameras/dentro";
+import { CERCANO_EN_EL_HELICOPTERO, type LoQueTapaAbajo } from "./cameras/dentro";
 import { montarElPasillo, type PasilloDePasaje } from "./world/pasillo-de-pasaje";
 import type { ModoDeLaPantalla, PantallaDelRespaldo } from "./world/pantalla-del-respaldo";
 import { diaEnLaCabina } from "./world/luz-de-cabina";
@@ -6587,6 +6587,7 @@ export class Game {
     asientoDeLaEscena: null as AsientoDePasaje | null,
     saltaLaCabeza: false,
     arribaTapado: 0,
+    abajoTapado: null as LoQueTapaAbajo | null,
   };
   /**
    * **Las cámaras de la escena de pasaje**: la de fuera y el fundido de cada
@@ -30529,6 +30530,8 @@ export class Game {
     ctx.traqueteo = TRAQUETEO[this.superficie];
     // Lo que la fila de botones tapa encima de la brújula del parabrisas. Ver `loQueTapaLaFilaDeArriba`.
     ctx.arribaTapado = this.loQueTapaLaFilaDeArriba();
+    // Y lo que la barra del timón tapa por abajo. Ver `loQueTapaLaBarraDelTimon`.
+    ctx.abajoTapado = this.loQueTapaLaBarraDelTimon();
     ctx.pasaje = this.aircraftMesh.pasaje ?? null;
     // Los frenos de tierra, en el avión cuyo modelo los lleva: la de cola se
     // acerca en tierra por ellos. Ver `sitioDeLaCola`.
@@ -30772,6 +30775,36 @@ export class Game {
       tapa = Math.max(tapa, r.bottom);
     }
     return (this.filaDeArriba.tapa = Math.min(0.5, tapa / alto));
+  }
+
+  /** Lo que tapa la barra del timón, y cuándo se midió, ms. */
+  private readonly barraDelTimon: { tapa: LoQueTapaAbajo | null; medida: number } = {
+    tapa: null,
+    medida: Number.NEGATIVE_INFINITY,
+  };
+
+  /**
+   * **Lo que la barra del timón tapa desde el asiento**, en fracciones de la
+   * pantalla: su borde de arriba y sus dos lados (H31b). Con el dedo va abajo
+   * en el centro, encima de los mandos que se pulsan en el panel, y el toque
+   * se lo lleva ella. Sin dedo, sin barra o fuera de la cabina, nada. Dos
+   * veces por segundo, como la fila de arriba: la barra solo cambia al girar
+   * la pantalla. Ver `encuadreDeCabina` en `cameras/dentro.ts`.
+   */
+  private loQueTapaLaBarraDelTimon(): LoQueTapaAbajo | null {
+    if (this.cameraMode !== "cockpit") return null;
+    const ahora = performance.now();
+    if (ahora - this.barraDelTimon.medida < 500) return this.barraDelTimon.tapa;
+    this.barraDelTimon.medida = ahora;
+    const barra = document.querySelector<HTMLElement>('[data-touch="rudder"]');
+    const ancho = window.innerWidth;
+    const alto = window.innerHeight;
+    const r = barra?.getBoundingClientRect();
+    const tapa =
+      r && r.width && r.height && ancho && alto && barra?.checkVisibility({ visibilityProperty: true })
+        ? { arriba: r.top / alto, izq: r.left / ancho, der: r.right / ancho }
+        : null;
+    return (this.barraDelTimon.tapa = tapa);
   }
 
   // ── «La brújula baila» ───────────────────────────────────────────────

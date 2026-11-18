@@ -58,6 +58,8 @@ export interface Contexto {
       readonly abajo: number;
       /** La brújula del parabrisas: su borde de arriba y dónde cae a lo ancho. */
       readonly brujula?: { readonly arriba: number; readonly x: number; readonly medio: number };
+      /** Cada instrumento, con su columna y lo más bajo de él. Ver `EncuadreDeCabina.piezas`. */
+      readonly piezas?: readonly { readonly izq: number; readonly der: number; readonly abajo: number }[];
     };
   } | null;
   /**
@@ -86,6 +88,17 @@ export interface Contexto {
    * Ver `encuadreDeCabina` y `Game.loQueTapaLaFilaDeArriba`.
    */
   readonly arribaTapado?: number;
+  /**
+   * **Lo que tapa la barra del timón por abajo**, desde el asiento y con el
+   * dedo: su borde de arriba y sus lados, en fracciones de la pantalla (H31b).
+   * Sin poner o `null`, nada. Ver `encuadreDeCabina` y
+   * `Game.loQueTapaLaBarraDelTimon`.
+   */
+  readonly abajoTapado?: {
+    readonly arriba: number;
+    readonly izq: number;
+    readonly der: number;
+  } | null;
   /** Si el sistema pide movimiento reducido. Apaga traqueteo y zoom. */
   readonly movimientoReducido: boolean;
   /** Cuánto traquetea el suelo de debajo: asfalto 1, hierba 1,8, campo 3. */

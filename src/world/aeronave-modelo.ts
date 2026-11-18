@@ -492,6 +492,21 @@ export interface EncuadreDeCabina {
     readonly x: number;
     readonly medio: number;
   };
+  /**
+   * **Cada instrumento por separado**: dónde cae a lo ancho —`izq` y `der`,
+   * como tangente desde el frente— y cuánto cae lo más bajo de él, rad (H31b).
+   * `abajo` dice lo más bajo de todos; esto dice además **en qué columna**,
+   * que es lo que hace falta para saber qué tapa la barra del timón, que
+   * solo ocupa el centro de abajo. Ver `encuadreDeCabina`.
+   */
+  readonly piezas?: readonly PiezaDelPanel[];
+}
+
+/** Un instrumento del panel visto desde los ojos. Ver `EncuadreDeCabina.piezas`. */
+export interface PiezaDelPanel {
+  readonly izq: number;
+  readonly der: number;
+  readonly abajo: number;
 }
 
 /** La caja y la cara de la brújula del parabrisas: ver `brujula` en `modelos/comun.py`. */
@@ -514,6 +529,8 @@ function conSuEncuadre(
   let brujulaAbajo = -Infinity;
   let brujulaIzquierda = Infinity;
   let brujulaDerecha = -Infinity;
+  // Juntadas por nombre: un reloj son varias mallas —la cara, la aguja, el bisel—, y es uno.
+  const piezas = new Map<string, { izq: number; der: number; abajo: number }>();
   raiz.traverse((o) => {
     const esVisera = o.name === "visera";
     const esBrujula = BRUJULA.test(o.name);
@@ -521,7 +538,9 @@ function conSuEncuadre(
       INSTRUMENTO.test(o.name) ||
       (o as { material?: { name?: string } }).material?.name === "g1000_display";
     if (!esVisera && !esInstrumento && !esBrujula) return;
-    const pos = (o as { geometry?: { attributes?: { position?: {
+    // Las mallas de una pieza con varios materiales salen del lector como `nombre_1`, `nombre_2`…
+    const nombre = o.name.replace(/_\d+$/, "") || o.uuid;
+    const pos =(o as { geometry?: { attributes?: { position?: {
       count: number; getX(i: number): number; getY(i: number): number; getZ(i: number): number;
     } } } }).geometry?.attributes?.position;
     if (!pos) return;
@@ -545,8 +564,16 @@ function conSuEncuadre(
         // La visera tapa por su punto más alto en pantalla.
         if (visera === undefined || caida < visera) visera = caida;
       } else {
-        lados = Math.max(lados, Math.abs(v.x - ojo.x) / delante);
+        const x = (v.x - ojo.x) / delante;
+        lados = Math.max(lados, Math.abs(x));
         abajo = Math.max(abajo, caida);
+        const p = piezas.get(nombre);
+        if (!p) piezas.set(nombre, { izq: x, der: x, abajo: caida });
+        else {
+          p.izq = Math.min(p.izq, x);
+          p.der = Math.max(p.der, x);
+          p.abajo = Math.max(p.abajo, caida);
+        }
       }
     }
   });
@@ -559,7 +586,10 @@ function conSuEncuadre(
         medio: (brujulaDerecha - brujulaIzquierda) / 2,
       }
     : undefined;
-  return { ...ojo, encuadre: { visera, lados, abajo, ...(brujula ? { brujula } : {}) } };
+  return {
+    ...ojo,
+    encuadre: { visera, lados, abajo, ...(brujula ? { brujula } : {}), piezas: [...piezas.values()] },
+  };
 }
 
 /**

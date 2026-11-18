@@ -528,6 +528,35 @@ describe("el encuadre de la cabina", () => {
     expect(encuadreDeCabina(conBrujula, 1.6, 0)).toEqual(sin);
     expect(encuadreDeCabina(avioneta, 1.6, tapa)).toEqual(encuadreDeCabina(avioneta, 1.6));
   });
+  /*
+   * **Y lo que se pulsa, por encima de la barra del timón** (H31b): con el
+   * dedo, la barra va abajo en el centro, justo encima de los mandos del pie
+   * del panel, y en el teléfono se llevaba el toque.
+   */
+  it("los mandos del pie del panel, por encima de la barra del timón, y lo de los lados no cuenta", () => {
+    const aspecto = 915 / 412;
+    // Los mandos en el centro, muy abajo; un reloj a un lado, más abajo todavía.
+    const mandos = { izq: -0.12, der: 0.12, abajo: 0.5 };
+    const delLado = { izq: 0.8, der: 0.95, abajo: 0.55 };
+    const panel = { ...avioneta, lados: 0.95, abajo: 0.55, piezas: [mandos, delLado] };
+    const barra = { arriba: (412 - 76) / 412, izq: (915 / 2 - 110) / 915, der: (915 / 2 + 110) / 915 };
+    const bajo = (e: { inclinacion: number; fov: number }, caida: number) =>
+      0.5 + Math.tan(caida - e.inclinacion) / (2 * Math.tan(((e.fov / 2) * Math.PI) / 180));
+    const sin = encuadreDeCabina(panel, aspecto);
+    const con = encuadreDeCabina(panel, aspecto, 0, barra);
+    // Antes, los mandos debajo del borde de la barra; ahora, por encima con su aire.
+    expect(bajo(sin, mandos.abajo)).toBeGreaterThan(barra.arriba);
+    expect(bajo(con, mandos.abajo)).toBeLessThanOrEqual(barra.arriba - 0.015);
+    // Encogiendo, que es abrir el ángulo: la visera sigue en su sitio.
+    expect(con.fov).toBeGreaterThan(sin.fov);
+    expect(bajo(con, avioneta.visera)).toBeCloseTo(bajo(sin, avioneta.visera), 1);
+    // El reloj de un lado, fuera de la columna de la barra, no mueve nada por sí solo.
+    const soloElLado = { ...panel, piezas: [delLado] };
+    expect(encuadreDeCabina(soloElLado, aspecto, 0, barra)).toEqual(encuadreDeCabina(soloElLado, aspecto));
+    // Sin barra —con ratón—, o sin piezas medidas, como antes.
+    expect(encuadreDeCabina(panel, aspecto, 0, null)).toEqual(sin);
+    expect(encuadreDeCabina(avioneta, aspecto, 0, barra)).toEqual(encuadreDeCabina(avioneta, aspecto));
+  });
   it("sin cabina que medir, lo de siempre", () => {
     const r = encuadreDeCabina(undefined, 1.6);
     expect(grados(r.inclinacion)).toBeCloseTo(12);
