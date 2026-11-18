@@ -114,6 +114,7 @@ import { sitioDeLaDeriva } from "./deriva";
 import { rioDeNoche } from "./rumbo-de-noche";
 import { destinoDeLaEstima } from "./estima";
 import { laderaDelAltimetro } from "./el-altimetro-miente";
+import { inclinacionDelCampo } from "./brujula-que-baila";
 
 export type EjercicioId =
   | "planeo"
@@ -135,7 +136,8 @@ export type EjercicioId =
   | "deriva"
   | "rumbo"
   | "estima"
-  | "altimetro";
+  | "altimetro"
+  | "brujula";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -200,7 +202,8 @@ export interface Ejercicio {
     | "deriva"
     | "rumbo"
     | "estima"
-    | "altimetro";
+    | "altimetro"
+    | "brujula";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
    * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
@@ -664,6 +667,40 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     dondeVale: (oaci) => laderaDelAltimetro(oaci) !== null,
     ensena:
       "un altímetro mide presión, no altura: de alta a baja presión con la ventanilla sin tocar marca de más, veintisiete pies por hectopascal; con el QNH del sitio dice la verdad",
+  },
+  /*
+   * **La brújula baila** (#51, «la brújula que baila en los virajes, lo que
+   * justifica el giróscopo»): derecho al oeste, un viraje al norte mirando la
+   * brújula del parabrisas y el direccional, y ver que virando la brújula
+   * miente y el direccional no. Lo lleva `brujula-que-baila.ts`; la física de
+   * la brújula, `brujula.ts`. Ver el ADR 0031, enmienda H26q.
+   */
+  {
+    id: "brujula",
+    /*
+     * **Desde Tukã**: lo que se aprende se ve sin leer —dos rosas, una que se
+     * va y vuelve y otra quieta, el ámbar de la que miente— y se oye; el
+     * número del rumbo llega en Taguató, como todas las cifras. En Guyrami
+     * no: viene detrás de «Rumbo de noche», que es donde se aprende a seguir
+     * la rosa, y ése empieza en Tukã.
+     */
+    peldanos: DESDE_TUKA,
+    /*
+     * **Los que llevan brújula en el parabrisas**: la avioneta, el de motor
+     * radial y el bimotor de pistón (`brujula=True` en sus `modelos/jaz-*.py`),
+     * los mismos que no llevan radar. Los de pantallas también la llevan de
+     * verdad, pero sus cabinas de aquí no: ver la enmienda H26q.
+     */
+    valePara: (a) => !conRadarMeteorologico(a),
+    leccion: "aterrizaje",
+    colocacion: "brujula",
+    averias: [],
+    escena: "navegacion",
+    acabaEnElAire: true,
+    // Donde el campo de la Tierra se inclina lo bastante para que se vea: en todos los campos de hoy. Ver `inclinacionDelCampo`.
+    dondeVale: (oaci) => inclinacionDelCampo(oaci) !== null,
+    ensena:
+      "derecha y quieta, la brújula dice la verdad; virando miente y, al salir, baila un rato. El direccional es un giróscopo: no siente el viraje, y por eso se vuela con él",
   },
 ];
 

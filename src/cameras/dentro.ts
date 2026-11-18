@@ -79,6 +79,13 @@ export const CERCANO_EN_EL_HELICOPTERO = 0.25;
 const FOV_MAXIMO = 78;
 
 /**
+ * Lo que se deja entre la fila de botones de arriba y la caja de la brújula,
+ * como fracción del alto de la pantalla: un poco de aire, para que el borde
+ * de la caja no se lea pegado al botón.
+ */
+const AIRE_SOBRE_LA_BRUJULA = 0.015;
+
+/**
  * Qué parte de la pantalla puede ocupar el grupo de instrumentos: lo que
  * queda al quitar un margen del tres por ciento a cada lado y abajo, para que
  * nada se lea cortado contra el borde.
@@ -104,16 +111,38 @@ const HASTA_EL_BORDE = 0.97;
  * Sin encuadre —las cajas de respaldo, que no tienen cabina— lo de siempre.
  */
 export function encuadreDeCabina(
-  e: { visera: number; lados: number; abajo: number } | undefined,
+  e: {
+    visera: number;
+    lados: number;
+    abajo: number;
+    brujula?: { readonly arriba: number; readonly x: number; readonly medio: number };
+  } | undefined,
   aspecto: number,
+  /** Lo que tapa la fila de botones de arriba encima de la brújula, fracción del alto. Ver `Contexto.arribaTapado`. */
+  arribaTapado = 0,
 ): { inclinacion: number; fov: number } {
   if (!e) return { inclinacion: MIRANDO_AL_PANEL, fov: FOV_DE_CABINA };
   let salida = { inclinacion: MIRANDO_AL_PANEL, fov: FOV_DE_CABINA };
   for (let fov = FOV_DE_CABINA; fov <= FOV_MAXIMO; fov += 0.5) {
     const t = Math.tan(((fov / 2) * Math.PI) / 180);
+    /*
+     * **Y la brújula del parabrisas, entera por debajo de la fila de botones**
+     * (H26q). Cuelga del travesaño, en lo más alto del parabrisas, y con la
+     * visera en su sitio de siempre el botón del mapa le tapaba el borde de
+     * arriba y las cifras que dan el rumbo, que es lo único que se lee de
+     * ella. Es la misma regla que la de los relojes —lo que se lee se ve
+     * entero—, y como las otras dos manda la que deje mirar más alto: aquí se
+     * baja la mirada menos, el panel baja en la pantalla y, si ya no cabe por
+     * abajo, se abre el ángulo, que es encoger. Solo si hay algo encima.
+     */
+    const bajoLaFila =
+      e.brujula && arribaTapado > 0
+        ? e.brujula.arriba + Math.atan((1 - 2 * Math.min(0.5, arribaTapado + AIRE_SOBRE_LA_BRUJULA)) * t)
+        : Infinity;
     const inclinacion = Math.min(
       e.visera + Math.atan((1 - 2 * VISERA_EN_PANTALLA) * t),
       Math.atan((1 - 2 * HORIZONTE_EN_PANTALLA) * t),
+      bajoLaFila,
     );
     salida = { inclinacion, fov };
     const abajo = 0.5 + Math.tan(e.abajo - inclinacion) / (2 * t);
@@ -261,7 +290,7 @@ export class CamaraDeDentro implements CameraRig {
      * Cuánto, lo dice la visera de cada avión: ver `encuadreDeCabina`.
      */
     if (this.comoCabina) {
-      this.encuadre = encuadreDeCabina(ojo?.encuadre, camera.aspect);
+      this.encuadre = encuadreDeCabina(ojo?.encuadre, camera.aspect, ctx.arribaTapado ?? 0);
       camera.rotateX(-this.encuadre.inclinacion);
     }
   }

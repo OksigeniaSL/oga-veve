@@ -56,6 +56,8 @@ export interface Contexto {
       readonly visera: number;
       readonly lados: number;
       readonly abajo: number;
+      /** La brújula del parabrisas: su borde de arriba y dónde cae a lo ancho. */
+      readonly brujula?: { readonly arriba: number; readonly x: number; readonly medio: number };
     };
   } | null;
   /**
@@ -77,6 +79,13 @@ export interface Contexto {
   readonly actitudEnTierra?: number;
   /** La cota del terreno, para que la cámara no se meta debajo. */
   readonly suelo: (x: number, z: number) => number;
+  /**
+   * **Lo que tapa el HUD por arriba encima de la brújula del parabrisas**,
+   * como fracción del alto de la pantalla desde arriba: el borde de abajo de
+   * lo que la fila de botones tiene en su columna. Cero o sin poner, nada.
+   * Ver `encuadreDeCabina` y `Game.loQueTapaLaFilaDeArriba`.
+   */
+  readonly arribaTapado?: number;
   /** Si el sistema pide movimiento reducido. Apaga traqueteo y zoom. */
   readonly movimientoReducido: boolean;
   /** Cuánto traquetea el suelo de debajo: asfalto 1, hierba 1,8, campo 3. */

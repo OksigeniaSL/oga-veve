@@ -208,6 +208,13 @@ export interface DatosDeRelojes {
    * vuelo. `null` o sin poner, sin marca. Ver `direccional`.
    */
   readonly rumboPedido?: number | null;
+  /**
+   * **Lo que marca la brújula del parabrisas**, magnético, grados: la que
+   * baila al virar y al acelerar (`flight/brujula.ts`, ADR 0031, enmienda
+   * H26q). Solo la mueve a ella; el direccional sigue con `rumbo`. Sin poner,
+   * la brújula marca `rumbo`, como antes.
+   */
+  readonly brujula?: number | null;
 }
 
 interface Esfera {
@@ -393,8 +400,7 @@ export function encenderRelojes(raiz: Object3D): Relojes | null {
           e.g,
           e.que,
           e.motor,
-          // La brújula es un imán: ni radio ni marca de rumbo.
-          e.brujula && (datos.radio || datos.rumboPedido != null) ? { ...datos, radio: null, rumboPedido: null } : datos,
+          e.brujula ? loQueMarcaLaBrujula(datos) : datos,
         );
         e.textura.needsUpdate = true;
       }
@@ -406,6 +412,16 @@ export function encenderRelojes(raiz: Object3D): Relojes | null {
       }
     },
   };
+}
+
+/**
+ * **Lo que pinta la brújula del parabrisas**, que lleva la cara del
+ * direccional y es un imán: ni radio ni marca de rumbo, y su rumbo es el
+ * suyo, el que baila (`DatosDeRelojes.brujula`). Aparte para probarlo sin
+ * modelo. Ver `flight/brujula.ts`.
+ */
+export function loQueMarcaLaBrujula(d: DatosDeRelojes): DatosDeRelojes {
+  return { ...d, rumbo: d.brujula ?? d.rumbo, radio: null, rumboPedido: null };
 }
 
 // ── El pincel ──────────────────────────────────────────────────────────

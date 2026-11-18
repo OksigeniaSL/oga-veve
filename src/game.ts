@@ -819,6 +819,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   estacionario: "helicoptero-quieto",
   par: "helicoptero-par",
   "efecto-suelo": "efecto-suelo",
+  // Las dos agujas, la de la brújula y la del direccional. Ver `brujula-que-baila.ts`.
+  brujula: "brujula-las-dos",
 };
 
 /**
@@ -1004,6 +1006,7 @@ import {
   puntosDelLocalizador,
   radiosDe,
   vuelta,
+  ANO_DE_HOY,
   type Avion as AvionDeLaRadio,
   type Emisora,
 } from "./flight/radio-de-navegacion";
@@ -1061,6 +1064,16 @@ import {
   type ResultadoDeLaEstima,
   type SucesoDeLaEstima,
 } from "./flight/estima";
+import { Brujula } from "./flight/brujula";
+import {
+  ALTURA_DE_LA_BRUJULA,
+  BrujulaQueBaila,
+  RUMBO_DE_SALIDA,
+  inclinacionDelCampo,
+  type SucesoDeLaBrujula,
+} from "./flight/brujula-que-baila";
+import { inclinacion } from "./ui/carta/declinacion";
+import { sitioDelCielo } from "./world/cielo-de-noche";
 import {
   colocacionDelAltimetro,
   ElAltimetroMiente,
@@ -4010,6 +4023,26 @@ export class Game {
    */
   private estima: Estima | null = null;
   /**
+   * **«La brújula baila»**, si se eligió: un viraje al norte mirando la
+   * brújula del parabrisas y el direccional. Ver `flight/brujula-que-baila.ts`
+   * y `practicarLaBrujula`.
+   */
+  private brujulaQueBaila: BrujulaQueBaila | null = null;
+  /**
+   * **La brújula del parabrisas**, la que baila al virar y al acelerar, con la
+   * inclinación del campo montado. Solo mueve su aguja: el resto del juego lee
+   * el rumbo como antes. Ver `flight/brujula.ts` y `pasoDeLaBrujula`.
+   */
+  private readonly brujulaDelParabrisas = new Brujula(0);
+  /** El escenario cuya inclinación lleva puesta, para no recalcular el WMM cada fotograma. */
+  private brujulaDe: object | null = null;
+  /**
+   * **Lo que lleva fuera de la cabina** durante «La brújula baila», s, y si ya
+   * se dijo dónde está la brújula. Se rearma al volver al asiento. Ver
+   * `practicarLaBrujula`.
+   */
+  private brujulaFuera = { segundos: 0, dicho: false };
+  /**
    * **Las dos rayas del suelo** de la estima, que no se ven hasta que el reloj
    * llega a cero: entonces son la cuenta del vuelo. Ver `practicarLaEstima`.
    */
@@ -4047,6 +4080,7 @@ export class Game {
       this.rumboDeNoche?.ejercicio ??
       this.estima?.ejercicio ??
       this.altimetroMiente?.ejercicio ??
+      this.brujulaQueBaila?.ejercicio ??
       null
     );
   }
@@ -4057,7 +4091,7 @@ export class Game {
    * `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
-    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva ?? this.rumboDeNoche ?? this.estima ?? this.altimetroMiente;
+    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva ?? this.rumboDeNoche ?? this.estima ?? this.altimetroMiente ?? this.brujulaQueBaila;
     return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada", this.ils?.fase === "frustrando");
   }
   /**
@@ -6540,6 +6574,7 @@ export class Game {
     caidaTope: Number.POSITIVE_INFINITY,
     asientoDeLaEscena: null as AsientoDePasaje | null,
     saltaLaCabeza: false,
+    arribaTapado: 0,
   };
   /**
    * **Las cámaras de la escena de pasaje**: la de fuera y el fundido de cada
@@ -6649,6 +6684,19 @@ export class Game {
          */
         const ladera = laderaDelAltimetro(oaciDe(this.scenario));
         if (ladera) this.altimetroMiente = new ElAltimetroMiente(ejercicio, ladera);
+      } else if (ejercicio.escena === "navegacion" && ejercicio.colocacion === "brujula") {
+        /*
+         * **Ni la brújula**: la inclinación del campo, del WMM. Y **desde el
+         * asiento**, que es donde están las dos: la brújula cuelga del
+         * parabrisas y el direccional va en el panel, y el cuadro plano de
+         * fuera solo lleva el direccional, como el de verdad. Sin guardarlo:
+         * la vista que se elija después es de quien juega.
+         */
+        const i = inclinacionDelCampo(oaciDe(this.scenario));
+        if (i !== null) {
+          this.brujulaQueBaila = new BrujulaQueBaila(ejercicio, i);
+          this.cameraMode = "cockpit";
+        }
       } else if (ejercicio.escena === "navegacion") {
         /*
          * **Ni la deriva**: el sitio del campo, puesto donde está. Dónde se
@@ -13633,7 +13681,8 @@ export class Game {
         colocacion !== "deriva" &&
         colocacion !== "rumbo" &&
         colocacion !== "estima" &&
-        colocacion !== "altimetro"
+        colocacion !== "altimetro" &&
+        colocacion !== "brujula"
       ) {
         const { lejos, alto } = this.dondeEmpiezaElEjercicio(colocacion);
         const [x, z] = puntoDePista(runway, hastaElUmbralDeToma(runway) + lejos);
@@ -13906,6 +13955,10 @@ export class Game {
     this.cronometroRecogido = false;
     // Y el altímetro que miente: la ventanilla vuelve a la presión de donde se viene al presentarlo.
     this.altimetroMiente?.reiniciar();
+    // Y la brújula, otra vez derecha al oeste y en reposo.
+    this.brujulaQueBaila?.reiniciar();
+    this.brujulaFuera = { segundos: 0, dicho: false };
+    this.brujulaDelParabrisas.reiniciar();
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
@@ -18218,7 +18271,8 @@ export class Game {
                 colocacion === "deriva" ||
                 colocacion === "rumbo" ||
                 colocacion === "estima" ||
-                colocacion === "altimetro"
+                colocacion === "altimetro" ||
+                colocacion === "brujula"
               ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
               : colocacion === "ils"
               ? // A la del circuito, como quien ya ha bajado para la aproximación.
@@ -18246,7 +18300,8 @@ export class Game {
       colocacion === "deriva" ||
       colocacion === "rumbo" ||
       colocacion === "estima" ||
-      colocacion === "altimetro"
+      colocacion === "altimetro" ||
+      colocacion === "brujula"
         ? { equilibrado: true }
         : {}),
     });
@@ -19808,6 +19863,8 @@ export class Game {
     this.practicarLaEstima(dt);
     // Y el altímetro que miente. Ver `practicarElAltimetro`.
     this.practicarElAltimetro(dt);
+    // Y la brújula que baila. Ver `practicarLaBrujula`.
+    this.practicarLaBrujula(dt);
     // El morse de la radio, con su turno. Ver `atenderAlMorse`.
     this.atenderAlMorse();
     this.mirarSiCambiaDeCampo();
@@ -21603,6 +21660,11 @@ export class Game {
          * ningún sitio (ADR 0031, H26o).
          */
         rumboPedido: this.marcaDeRumbo(),
+        /*
+         * **Y la brújula del parabrisas, la suya**: la que baila al virar y al
+         * acelerar (ADR 0031, H26q). Solo ella; el direccional sigue con `rumbo`.
+         */
+        brujula: this.pasoDeLaBrujula(dt),
       },
       dt,
       // Lo mismo que las pantallas: desde fuera, menos veces por segundo.
@@ -25110,6 +25172,7 @@ export class Game {
     if (colocacion === "rumbo") return this.dondeEmpiezaElRumbo();
     if (colocacion === "estima") return this.dondeEmpiezaLaEstima();
     if (colocacion === "altimetro") return this.dondeEmpiezaElAltimetro();
+    if (colocacion === "brujula") return this.dondeEmpiezaLaBrujula();
     return null;
   }
 
@@ -30403,6 +30466,8 @@ export class Game {
     ctx.actitudEnTierra = state.onGround ? actitudEnTierra(this.aircraft, state.airspeed) : 0;
     ctx.movimientoReducido = this.reducedMotion;
     ctx.traqueteo = TRAQUETEO[this.superficie];
+    // Lo que la fila de botones tapa encima de la brújula del parabrisas. Ver `loQueTapaLaFilaDeArriba`.
+    ctx.arribaTapado = this.loQueTapaLaFilaDeArriba();
     ctx.pasaje = this.aircraftMesh.pasaje ?? null;
     // Los frenos de tierra, en el avión cuyo modelo los lleva: la de cola se
     // acerca en tierra por ellos. Ver `sitioDeLaCola`.
@@ -30545,6 +30610,220 @@ export class Game {
 
   /** El sitio del paisaje que enseña la toma de ahora, para apuntarle. */
   private paisajeDeLaToma: SitioDelPaisaje | null = null;
+
+  /** Lo que tapa la fila de arriba encima de la brújula, y cuándo se midió, ms. */
+  private readonly filaDeArriba = { tapa: 0, medida: Number.NEGATIVE_INFINITY };
+
+  /**
+   * **Lo que la fila de botones de arriba tapa encima de la brújula del
+   * parabrisas**, como fracción del alto de la pantalla: el borde de abajo de
+   * lo que la fila tiene en la columna donde cae la brújula, con el ángulo de
+   * ahora. Cero sin brújula o fuera de la cabina. Se mide dos veces por
+   * segundo, que la fila solo cambia al girar la pantalla o al cambiar de
+   * vista. Ver `encuadreDeCabina` en `cameras/dentro.ts` (H26q).
+   */
+  private loQueTapaLaFilaDeArriba(): number {
+    const b = this.aircraftMesh.ojo?.encuadre?.brujula;
+    if (!b || this.cameraMode !== "cockpit") return 0;
+    const ahora = performance.now();
+    if (ahora - this.filaDeArriba.medida < 500) return this.filaDeArriba.tapa;
+    this.filaDeArriba.medida = ahora;
+    const fila = document.querySelector(".hud__arriba");
+    const ancho = window.innerWidth;
+    const alto = window.innerHeight;
+    if (!fila || !alto) return (this.filaDeArriba.tapa = 0);
+    // Dónde cae la brújula a lo ancho: su tangente llevada a la pantalla con el ángulo de ahora.
+    const t = Math.tan(((this.camera.fov / 2) * Math.PI) / 180) * this.camera.aspect;
+    const desde = ancho * (0.5 + (b.x - b.medio) / (2 * t));
+    const hasta = ancho * (0.5 + (b.x + b.medio) / (2 * t));
+    let tapa = 0;
+    /*
+     * **Los botones de la fila, no todo lo que cuelga de ella**: medido con
+     * todo, un desplegable escondido o una caja estirada salían hasta media
+     * pantalla, y la cámara se iba al tope del ángulo. Solo los que empiezan
+     * en la cuarta parte de arriba, que es donde está la fila.
+     */
+    for (const el of fila.querySelectorAll("button")) {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height || r.top > alto / 4 || r.right < desde || r.left > hasta) continue;
+      if (getComputedStyle(el).visibility === "hidden") continue;
+      tapa = Math.max(tapa, r.bottom);
+    }
+    return (this.filaDeArriba.tapa = Math.min(0.5, tapa / alto));
+  }
+
+  // ── «La brújula baila» ───────────────────────────────────────────────
+  //
+  // Ver `flight/brujula.ts` y `flight/brujula-que-baila.ts`. Aquí solo se
+  // decide quién dice y enseña cada cosa: la brújula del parabrisas con la
+  // inclinación del campo, la marca del direccional, la tarjeta y la
+  // instructora.
+
+  /**
+   * **Un paso de la brújula del parabrisas**, con la inclinación del campo
+   * montado —el WMM2025 en su punto de referencia, una vez por campo— y la
+   * variación con la que se lee la rosa. Devuelve lo que marca.
+   */
+  private pasoDeLaBrujula(dt: number): number {
+    const esc = this.elCampoMontado().escenario;
+    if (esc !== this.brujulaDe) {
+      this.brujulaDe = esc;
+      const { lat, lon } = sitioDelCielo(esc);
+      this.brujulaDelParabrisas.ponerInclinacion(inclinacion(lat, lon, ANO_DE_HOY));
+    }
+    const s = this.flight.state;
+    return this.brujulaDelParabrisas.paso(
+      { orientacion: s.orientation, velocidad: s.velocity, variacion: esc.magneticVariation ?? 0 },
+      dt,
+    );
+  }
+
+  /**
+   * **Dónde empieza la brújula**: encima del campo, derecho al oeste
+   * magnético, a tres mil pies sobre la pista o a trescientos metros por
+   * encima de lo más alto en seis kilómetros a la redonda, lo que sea más: el
+   * viraje al norte cabe de sobra, y en Tenerife Norte el monte está cerca.
+   */
+  private dondeEmpiezaLaBrujula(): { readonly x: number; readonly z: number; readonly alto: number; readonly rumbo: number } | null {
+    if (!this.brujulaQueBaila) return null;
+    const pista = this.terrain.runwayElevation;
+    let alto = ALTURA_DE_LA_BRUJULA;
+    for (let x = -6000; x <= 6000; x += 500)
+      for (let z = -6000; z <= 6000; z += 500)
+        if (Math.hypot(x, z) <= 6000) alto = Math.max(alto, this.terrain.sampleHeight(x, z) + 300 - pista);
+    return {
+      x: 0,
+      z: 0,
+      alto,
+      rumbo: MathUtils.degToRad(RUMBO_DE_SALIDA - (this.scenario.magneticVariation ?? 0)),
+    };
+  }
+
+  /** «La brújula baila», para el banco. */
+  get brujulaParaBanco(): {
+    readonly fase: string;
+    readonly cierre: string | null;
+    readonly inclinacion: number;
+    readonly brujula: number;
+    readonly enReposo: number;
+    readonly direccional: number;
+    readonly alabeo: number;
+    readonly rumboPedido: number | null;
+    readonly como: string | null;
+    readonly mentiraMasGrande: number;
+    readonly bailoHasta: number;
+    readonly tardo: number | null;
+    readonly camara: string;
+    /** Si ya dijo, estando fuera, que la brújula está en la cabina. */
+    readonly dijoLaCabina: boolean;
+  } | null {
+    const b = this.brujulaQueBaila;
+    if (!b) return null;
+    const s = this.flight.state;
+    return {
+      fase: b.fase,
+      cierre: b.cierre,
+      inclinacion: this.brujulaDelParabrisas.inclinacion,
+      brujula: this.brujulaDelParabrisas.lectura,
+      enReposo: this.brujulaDelParabrisas.enReposo,
+      direccional: vuelta((s.heading * 180) / Math.PI + (this.elCampoMontado().escenario.magneticVariation ?? 0)),
+      alabeo: (bankAngleOf(s.orientation) * 180) / Math.PI,
+      rumboPedido: b.rumboPedido,
+      como: b.como,
+      mentiraMasGrande: b.mentiraMasGrande,
+      bailoHasta: b.bailoHasta,
+      tardo: b.tardo,
+      camara: this.cameraMode,
+      dijoLaCabina: this.brujulaFuera.dicho,
+    };
+  }
+
+  /** **Un paso de la brújula que baila**: lo que marcan las dos, y el alabeo. */
+  private practicarLaBrujula(dt: number): void {
+    const b = this.brujulaQueBaila;
+    if (!b) return;
+    this.hud.mapa.ponerEstela(b.fase === "cerrada" ? null : () => this.libreta.traza);
+    /*
+     * **Fuera de la cabina, la brújula no se ve**: el cuadro plano lleva el
+     * direccional y no la brújula, como un panel de verdad. No se vuelve a la
+     * cabina sola —la vista es de quien juega, y el ejercicio ya la puso al
+     * empezar—: se dice dónde está, una vez, a los tres segundos de salir, y
+     * vuelve a poder decirse al volver al asiento, que es cuando cambia algo.
+     */
+    const fuera = this.cameraMode !== "cockpit" && b.fase !== "cerrada";
+    if (!fuera) this.brujulaFuera = { segundos: 0, dicho: false };
+    else if (!this.brujulaFuera.dicho && (this.brujulaFuera.segundos += dt) >= 3) {
+      this.brujulaFuera.dicho = true;
+      this.hud.senal.mostrar("brujula-las-dos", this.rotulo("ejercicio.brujula.cabina", "palabra.mira"), null, {
+        segundos: 10,
+        prioridad: IMPORTANTE,
+      });
+      this.decirDelEjercicio("ejercicio.brujula.cabina", "mando");
+    }
+    const s = this.flight.state;
+    const sucesos = b.paso(
+      {
+        brujula: this.brujulaDelParabrisas.lectura,
+        direccional: vuelta((s.heading * 180) / Math.PI + (this.elCampoMontado().escenario.magneticVariation ?? 0)),
+        alabeo: (bankAngleOf(s.orientation) * 180) / Math.PI,
+        enElSuelo: s.onGround,
+        parado: s.onGround && s.groundSpeed < 0.6,
+        percance: this.percance !== null,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderALaBrujula(suceso);
+  }
+
+  private atenderALaBrujula(suceso: SucesoDeLaBrujula): void {
+    /** La tarjeta con su dibujo y su frase, y la voz de la instructora si está grabada. */
+    const contar = (dibujo: DibujoDeSenal, clave: TranslationKey, palabra: TranslationKey, delante = "", segundos = 12): void => {
+      const frase = this.rotulo(clave, palabra);
+      this.hud.senal.mostrar(dibujo, delante && frase ? `${delante}. ${frase}` : delante || frase, null, {
+        segundos,
+        prioridad: IMPORTANTE,
+      });
+      this.decirDelEjercicio(clave, "mando");
+    };
+    /** **El número, desde Taguató**, delante de la frase: abajo, las agujas y la voz. */
+    const cifra = canalesDe(this.tier.avisos).cifra;
+    switch (suceso.que) {
+      case "presentar":
+        return contar("brujula-las-dos", "ejercicio.brujula.antes", "palabra.mira", "", 12);
+      case "virar":
+        return contar(
+          "brujula-virar",
+          "ejercicio.brujula.virar",
+          "palabra.vira",
+          cifra ? t("ejercicio.rumbo.cifra", { n: String(suceso.rumbo).padStart(3, "0") }) : "",
+          30,
+        );
+      case "miente":
+        return contar(
+          suceso.como === "seAtrasa" ? "brujula-se-atrasa" : "brujula-se-adelanta",
+          suceso.como === "seAtrasa" ? "ejercicio.brujula.seAtrasa" : "ejercicio.brujula.seAdelanta",
+          "palabra.mira",
+          cifra ? t("ejercicio.brujula.cuanto", { n: String(Math.round(suceso.cuanto)) }) : "",
+        );
+      case "baila":
+        return contar("brujula-baila", "ejercicio.brujula.baila", "palabra.mira");
+      case "quieta":
+        this.avisar("achieved");
+        return contar("brujula-las-dos", "ejercicio.brujula.quieta", "palabra.bien");
+      case "cerrar":
+        // Lo malo ya lo cuenta el percance; posado antes, el suelo lo dice.
+        if (suceso.como === "otraVez") return;
+        this.agenda.luego(TARDA_EL_FINAL + 8, () => {
+          if (this.brujulaQueBaila?.cierre !== "hecho") return;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre("vuelta"),
+            this.rotulo("ejercicio.brujula.cierre", "palabra.bien"),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+    }
+  }
 
   // ── Lo que se ve desde el asiento de Ara ─────────────────────────────
 
@@ -36272,6 +36551,18 @@ export class Game {
       return {
         rumbo: MathUtils.degToRad(pedido - this.rumboDeNoche.variacion),
         distancia: Math.hypot(g.x - p.x, g.z - p.z),
+      };
+    }
+    /*
+     * **Y en «La brújula baila», el norte**: la marca del direccional se va a
+     * él al pedir el viraje. La de la brújula no, que es un imán. Lejos, que
+     * no hay sitio al que llegar: es un rumbo.
+     */
+    const alNorte = this.brujulaQueBaila?.fase !== "cerrada" ? this.brujulaQueBaila?.rumboPedido ?? null : null;
+    if (alNorte !== null) {
+      return {
+        rumbo: MathUtils.degToRad(alNorte - (this.elCampoMontado().escenario.magneticVariation ?? 0)),
+        distancia: 20000,
       };
     }
     const donde = this.sitioDeLaMision;

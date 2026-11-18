@@ -11,7 +11,7 @@ import { AIRCRAFT } from "../flight/aircraft";
 import { cuadroDe } from "../ui/cuadro";
 import { PALETA } from "../ui/paleta";
 import { SixPack } from "../ui/six-pack";
-import { pintarReloj, type DatosDeRelojes } from "./relojes-cabina";
+import { loQueMarcaLaBrujula, pintarReloj, type DatosDeRelojes } from "./relojes-cabina";
 
 /** Un lienzo que no pinta: apunta cada relleno con su color y el giro puesto antes. */
 function lienzoQueApunta() {
@@ -72,6 +72,27 @@ describe("la marca de rumbo del direccional", () => {
     const { g, rellenos } = lienzoQueApunta();
     pintarReloj(g, "dg", -1, datos(null));
     expect(rellenos.filter((r) => r.color === PALETA.objetivo)).toEqual([]);
+  });
+
+  it("la brújula del parabrisas, con la misma cara, ni lleva la marca ni marca el rumbo del direccional: el suyo, el que baila (H26q)", () => {
+    const { g, rellenos } = lienzoQueApunta();
+    const giros: number[] = [];
+    const g2 = new Proxy(g as unknown as Record<string, unknown>, {
+      get(obj, clave: string) {
+        if (clave === "rotate") return (a: number) => (giros.push(a), (obj.rotate as (a: number) => void)(a));
+        return obj[clave];
+      },
+      set(obj, clave: string, valor) {
+        obj[clave] = valor;
+        return true;
+      },
+    }) as unknown as CanvasRenderingContext2D;
+    pintarReloj(g2, "dg", -1, loQueMarcaLaBrujula({ ...datos(225), brujula: 187 }));
+    expect(rellenos.filter((r) => r.color === PALETA.objetivo)).toEqual([]);
+    // La rosa gira con lo que marca la brújula, 187, y no con el 200 del direccional.
+    expect((giros[0]! * 180) / Math.PI).toBeCloseTo(-187, 6);
+    // Y sin lo suyo, el rumbo de siempre.
+    expect(loQueMarcaLaBrujula(datos(null)).rumbo).toBe(200);
   });
 
   it("y en el cuadro plano, la misma marca dentro de la rosa que gira", () => {
