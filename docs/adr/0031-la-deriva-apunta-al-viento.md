@@ -1784,7 +1784,8 @@ vuelve a crecer y se espera a que se prenda otra vez. Con percance o en el
 suelo, otra vez.
 
 - **Con qué avión**: el JAZ 40. Ver «El remedio, avión por avión».
-- **Dónde**: en cualquier campo; la altitud sale del día.
+- **Dónde**: encima de cualquier campo (`dondeVale` pide uno, como los demás
+  de navegación: la nube y la altura salen de su aire y de su relieve).
 - **El peldaño**: desde Taguató.
 - **La vista**: la que se elija. La aguja quieta está en el cuadro plano y en
   el panel del asiento.
@@ -1794,6 +1795,15 @@ La tarjeta lleva dos dibujos nuevos sobre la misma esfera con el tubo debajo
 en la boca, y `pitot-calefaccion`, con tres ondas de calor. La ficha del
 hangar, `EJ_PITOT`: la esfera con la aguja quieta dentro de la nube y, debajo
 del ala, el tubo con el hielo en la boca.
+
+**Y el parabrisas, bajo cero, no se moja.** La nube mojaba el cristal con
+gotas que corren aunque no lloviera (`gotas-en-el-parabrisas.ts`, 0,6 por lo
+que hay de nube), y dentro de la del ejercicio, a cinco bajo cero, se veía
+agua corriendo por el parabrisas. Bajo cero las gotas de nube se congelan al
+tocar —es lo mismo que tapa el pitot—, así que la nube solo moja con el aire
+de más de cero, en cualquier vuelo. El hielo del cristal no se dibuja: mejor
+el cristal limpio que agua que no habría. La lluvia de debajo de la nube
+sigue como estaba.
 
 ### Las frases
 
@@ -1834,3 +1844,73 @@ Y sin voz: `ejercicio.pitot.frio` («Afuera: {n} °C»),
 - `flight/lo-que-calla-el-ejercicio.test.ts`: entre los que se cierran en el
   aire.
 - El banco, `scripts/ver-el-pitot.mjs`: ver «Volado».
+
+`vitest` entero, en verde: 527 ficheros y 10.658 pruebas (29 saltadas). En la
+primera vuelta falló una, la de los ejercicios de Taguató sin campo de
+`practica.test.ts`: el del pitot se ofrecía sin campo, y se coloca encima de
+uno. Ahora lo pide (`dondeVale`).
+
+### Volado
+
+`scripts/ver-el-pitot.mjs`, con el JAZ 40 en Taguató, la tarjeta de verdad
+(Intel Iris Xe por ANGLE), el reloj del juego a dos veces, el automático
+sosteniendo la altura y el rumbo como quien sostiene el avión en nivel, el gas
+con la tecla y la calefacción tocando la tarjeta. **28 de 28**, en los dos
+campos, dos veces: antes y después de arreglar los dibujos y el parabrisas.
+Los números, de la segunda:
+
+| | Tenerife Norte | Asunción |
+| --- | --- | --- |
+| Al empezar | 4101 m, dentro de la nube de 3952 a 4402 m (1,00), −5,0 °C | 4344 m, nube de 4196 a 4646 m, −5,0 °C |
+| Antes del hielo | aguja y de verdad, 101,5 kt; calefacción apagada | 100,4 kt |
+| Todo el gas, con el tubo cerrado | de verdad de 101,9 a 111,7 kt; la aguja entre 101,6 y 102,3; de 4100 a 4099 m | de 101,5 a 115,6 kt; la aguja entre 102,0 y 102,4; de 4345 a 4349 m |
+| La tarjeta | «De verdad 207 km/h · aguja 188 km/h» | «De verdad 208 km/h · aguja 189 km/h» |
+| La aguja vuelve | 139,2 kt, la de verdad | 143,6 kt |
+
+Lo poco que se mueve la aguja con el tubo cerrado es lo que sube o baja el
+avión: cuatro metros más arriba, unas décimas de nudo de más, como un
+altímetro. Las tarjetas en su orden —el pitot helado, el gas, el pitot
+helado con los dos números, la calefacción—, nada ajeno ni a la vista ni en la
+voz (un «baches» del vuelo, que es de seguridad) y ningún error en la página.
+
+Mirado en las capturas desde el asiento y en el cuadro plano: la aguja del
+velocímetro del panel 3D y la del cuadro plano, quietas en los cien nudos con
+la tarjeta diciendo que de verdad van 207 km/h; y al final, las dos en los
+140. En la primera tirada salieron dos cosas, arregladas en la misma tanda y
+vueltas a volar:
+
+- **El copo se salía del cuadro** del dibujo y las ondas de calor cruzaban la
+  esfera; y el copo, sin ramas, era un asterisco. La esfera va más pequeña
+  arriba a la izquierda, el tubo abajo de punta a punta, y el copo lleva sus
+  ramas. Mirados también fuera del navegador, a 280 y a 64 píxeles, y la ficha
+  del hangar con el mismo copo.
+- **Gotas corriendo por el parabrisas** dentro de la nube a cinco bajo cero:
+  ver «Y el parabrisas, bajo cero, no se moja». En la segunda tirada, el
+  cristal limpio.
+
+### Lo que queda
+
+- **Las frases, sin grabar**: ocho con voz (ver «Las frases»). Hasta
+  entonces, mudas en Brave y en Linux; el ejercicio se sigue por la tarjeta,
+  que lleva el dibujo, los números y la frase.
+- **El interruptor en la cabina**: es la tecla 4 y la tarjeta que lo pide. En
+  el panel 3D del JAZ 40 (`modelos/jaz-40-panambi.py`) no hay un interruptor
+  modelado que se toque, y en el cuadro plano tampoco. El de verdad va en el
+  panel de interruptores; ponerlo pide pasar por Blender.
+- **La calefacción en un vuelo cualquiera**: fuera del ejercicio el pitot no
+  se hiela y la tecla no hace nada (ver «Lo que no se toca»). El día que haya
+  nubes frías en el tiempo de casa, o un JAZ 40 subiendo a ellas en un vuelo
+  largo, hace falta el interruptor de la cabina y la calefacción prendida en
+  la revisión antes de salir.
+- **«Como un altímetro» no se cuenta**: el tubo cerrado sube y baja con la
+  altura —en la mesa y en el banco—, pero la instructora no lo dice. Sería
+  otra frase, para quien suba o baje con el tubo tapado.
+- **La figura del velocímetro** enseña con su botón del hielo el primer caso
+  del manual —drenaje abierto, aguja a cero—, que sigue siendo verdad; el
+  segundo, el de la nube, no está en la figura.
+- **El hielo del parabrisas y del ala** no se dibuja.
+- **El teléfono apaisado**: su losa de la velocidad lee la misma indicada del
+  cuadro, así que marca la aguja helada; no se ha mirado con el banco.
+- **`npm run carteles`**, sin pasar: no hay pieza nueva en el HUD; la
+  calefacción se toca en la tarjeta de siempre, con su `accion`, como la de la
+  funda.
