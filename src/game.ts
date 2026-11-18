@@ -25025,12 +25025,20 @@ export class Game {
       case "cerrar": {
         // Lo malo ya lo cuenta el percance; posado en otra parte, el suelo lo dice.
         if (suceso.como === "otraVez") return;
-        // La frustrada ya la celebró `Frustrada`, con su sonido: aquí solo el panel.
+        /*
+         * **El cierre tiene su frase**, que la de los mínimos decía «aterrizá»
+         * leída ya en el suelo. La de la pista la dice además la instructora
+         * al salir el panel, que es su celebración; la frustrada ya la celebró
+         * `Frustrada` en el aire, con su voz y su sonido, y aquí solo se lee:
+         * un suceso, una voz. Las dos aciertan por igual.
+         */
         if (suceso.como === "pista") this.avisar("achieved");
-        const clave: TranslationKey = suceso.como === "pista" ? "ejercicio.ils.pista" : "ejercicio.ils.frustrada";
+        const clave: TranslationKey =
+          suceso.como === "pista" ? "ejercicio.ils.cierrePista" : "ejercicio.ils.cierreFrustrada";
         const como = suceso.como;
         this.agenda.luego(TARDA_EL_FINAL + 4, () => {
           if (this.ils?.cierre !== como) return;
+          if (como === "pista") this.decirDelEjercicio(clave, "normal");
           this.hud.mostrarCierreDeEjercicio(
             dibujoDeCierre("vuelta"),
             this.rotulo(clave, "palabra.bien"),

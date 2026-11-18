@@ -3161,6 +3161,8 @@ const DEL_ILS = [
   ["ejercicio.ils.capturada", "aterrizar con las agujas: la senda capturada desde abajo, las dos agujas en cruz"],
   ["ejercicio.ils.pista", "aterrizar con las agujas: los mínimos con las dos agujas dentro, y la pista a la vista"],
   ["ejercicio.ils.frustrada", "aterrizar con las agujas: los mínimos con una aguja fuera, la frustrada felicitada"],
+  // El cierre de la pista, en el panel del final; el de la frustrada solo se lee (H26j).
+  ["ejercicio.ils.cierrePista", "aterrizar con las agujas: el panel del final, aterrizado"],
 ];
 for (const [id, para] of DEL_ILS) {
   const texto = es.get(id);

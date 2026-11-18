@@ -1626,6 +1626,10 @@ export const EN: Dictionary = {
     "Minimums, and there's the runway! Now look outside and land, as always",
   "ejercicio.ils.frustrada":
     "Minimums, and a needle has slipped off centre: go around. Power, nose up and climb. Leaving in time is winning too",
+  "ejercicio.ils.cierrePista":
+    "You landed on the needles! You came down inside the cloud on the localizer and the glideslope, and at minimums there was the runway. That's how you get down to a runway you can't see",
+  "ejercicio.ils.cierreFrustrada":
+    "Good call! With a needle off centre, or without the runway in sight, you climb and try again. That's what real pilots do, and that's winning too",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
   "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
   "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",

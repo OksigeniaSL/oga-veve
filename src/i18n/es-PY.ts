@@ -3565,6 +3565,17 @@ export const ES_PY = {
     "¡Mínimos, y ahí está la pista! Ahora mirá afuera y aterrizá, como siempre",
   "ejercicio.ils.frustrada":
     "Mínimos, y una aguja se salió del centro: frustrada. Gas, morro arriba y a subir. Irse a tiempo también es ganar",
+  /*
+   * Y el cierre, en el panel del final, ya en el suelo o ya subiendo: la
+   * frase de los mínimos decía «aterrizá» a quien ya había aterrizado. Las
+   * dos aciertan, y la frustrada se felicita igual que la pista. La de la
+   * pista la dice además la instructora; la de la frustrada solo se lee,
+   * que la frustrada ya tiene su voz (`vuelo.frustrada`): un suceso, una voz.
+   */
+  "ejercicio.ils.cierrePista":
+    "¡Aterrizaste con las agujas! Bajaste dentro de la nube por el localizador y la senda, y en los mínimos ahí estaba la pista. Así se baja hasta una pista que no se ve",
+  "ejercicio.ils.cierreFrustrada":
+    "¡Bien decidido! Con una aguja fuera del centro, o sin ver la pista, se sube y se vuelve a probar. Así lo hacen los pilotos de verdad, y eso también es ganar",
   // Y la frase corta, con sus números, de Taguató para arriba.
   "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
   "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",
