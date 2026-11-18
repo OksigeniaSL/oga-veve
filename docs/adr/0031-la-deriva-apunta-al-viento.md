@@ -934,7 +934,7 @@ busca la malla por su nombre.
   el panel, y **son las dos a la vez lo que hay que ver**. El cuadro plano de
   fuera lleva el direccional y no la brújula, como un panel de verdad, que la
   lleva encima y no entre los seis. Si se cambia de vista, se pierde la
-  brújula: ver «Lo que queda».
+  brújula: ver «Fuera de la cabina, a mitad del ejercicio».
 
 ### El peldaño: desde Tukã
 
@@ -973,6 +973,7 @@ direccional de abajo», que es donde están desde el asiento.
 | `ejercicio.brujula.seAdelanta` | ¿Viste? La brújula se adelanta. Virando, la brújula miente |
 | `ejercicio.brujula.baila` | Ya vamos derecho y la brújula todavía baila. El direccional, quieto |
 | `ejercicio.brujula.quieta` | Ahora sí: con el avión derecho y quieto, la brújula dice la verdad |
+| `ejercicio.brujula.cabina` | La brújula está en la cabina. Volvé adentro para verla |
 | `ejercicio.brujula.cierre` | (el panel del final, se lee) Virando, la brújula miente y al salir baila. El direccional es un giróscopo: no siente el viraje, y por eso se vuela con él |
 
 Y sin voz: `palabra.vira` («¡Virá!», la palabra de Tukã), `ejercicio.brujula.cuanto`
@@ -1028,10 +1029,69 @@ Y desde el asiento, a 1280 × 800, **la caja de la brújula queda justo debajo
 de la fila de botones de arriba**: el del mapa tapa el borde de arriba de la
 caja y roza las cifras de arriba de la tarjeta, que es donde se lee el rumbo.
 La tarjeta se ve girar y las cifras de los lados se leen; la de arriba, a
-medias. Ver «Lo que queda».
+medias. Se arregló en la misma tanda: ver «La brújula, por debajo de la fila
+de botones».
 
 Nada que no sea del ejercicio: solo sus tarjetas, ningún rótulo, sin radio;
 la instructora, en Tenerife, un «baches» del vuelo, que es de seguridad.
+
+### La brújula, por debajo de la fila de botones
+
+Lo que salió en el primer vuelo del banco y quedaba en «Lo que queda»: desde
+el asiento de la avioneta, a 1280 × 800, el botón del mapa de la fila de
+arriba tapaba el borde de arriba de la caja de la brújula y rozaba las cifras
+que dan el rumbo. El ejercicio entero es leerla, así que se arregló en la
+misma tanda, y **en el encuadre y no en el modelo ni en la fila**:
+
+- **No en la fila**, porque la fila es la misma en todas las vistas y en
+  todos los aviones; moverla por una pieza de una cabina era mover el HUD
+  entero.
+- **No en el modelo**, porque bajar la brújula en Blender la sacaba de donde
+  la lleva una avioneta —colgada del centro del travesaño—, y en otro tamaño
+  de pantalla la fila vuelve a caer en otro sitio.
+- **En el encuadre**, porque es la regla que ya tenía: lo que se lee se ve
+  entero, y si no cabe se encoge (`encuadreDeCabina`). La brújula no estaba
+  en ella. Ahora el modelo mide el borde de arriba de la caja y dónde cae a lo
+  ancho (`EncuadreDeCabina.brujula`, de las piezas `brujula` y
+  `brujula-caja-negra`), y el juego mide, dos veces por segundo, **lo que la
+  fila tapa en esa columna** de la pantalla (`Game.loQueTapaLaFilaDeArriba`,
+  lo de abajo de los botones que caen encima de ella). La cámara mira un poco
+  más arriba, lo justo para que la caja quede por debajo con un 1,5 % de
+  aire; el panel baja en la pantalla y, si ya no cabe por abajo, se abre el
+  ángulo. **Solo los botones**: medido con todo lo que cuelga de la fila, un
+  desplegable escondido salía hasta media pantalla y la cámara se iba al tope
+  del ángulo, que es lo primero que dio la sonda.
+  Con nada encima —un teléfono donde la fila se recoge, o un avión sin
+  brújula— todo queda como estaba.
+
+### Fuera de la cabina, a mitad del ejercicio
+
+Si se pasa a la vista de detrás, la brújula desaparece: el cuadro plano lleva
+el direccional y no la brújula, como un panel de verdad. **No se vuelve a la
+cabina sola.** La vista es de quien juega —el ejercicio ya la puso al
+empezar— y cambiársela sería imponer la norma en vez de enseñarla. **Se dice
+dónde está**: a los tres segundos fuera, una vez, la tarjeta de las dos agujas
+y «La brújula está en la cabina. Volvé adentro para verla»
+(`ejercicio.brujula.cabina`, sin grabar); vuelve a poder decirse al volver al
+asiento, que es cuando cambia algo.
+
+Mirado con la tarjeta de verdad desde el asiento de los tres, a 1280 × 800:
+lo que tapa la fila en la columna de la brújula sale en el 8 % de la
+pantalla, el ángulo se queda en el de siempre (58°) y **la caja entera y sus
+cifras de arriba quedan libres por debajo de los botones** en la avioneta, el
+de motor radial y el bimotor. En el teléfono apaisado (915 × 412) la fila se
+recoge y no tiene nada en esa columna, así que el encuadre queda como estaba;
+lo que tapa ahí es otra cosa: ver «Lo que queda».
+
+### Volado otra vez: Tukã y el bimotor
+
+El bimotor de pistón en Tenerife Norte, en Tukã, saliendo cuatro segundos a
+la vista de detrás al empezar: **17 de 17**. Sale frenando, y la brújula
+marca 4,5° hacia el sur; virando con 24° de alabeo se atrasa hasta 12,6°
+(308,3 con el direccional en 316,8); al salir baila 4,3° y se queda quieta a
+los 7,9 s. En Tukã la tarjeta lleva una palabra —«¡Mirá!», «¡Virá!»— y no el
+número, como manda la escalera. Fuera de la cabina, a los tres segundos, la
+tarjeta de las dos agujas; y la vista no vuelve sola.
 
 ### Lo que queda
 
@@ -1049,20 +1109,17 @@ la instructora, en Tenerife, un «baches» del vuelo, que es de seguridad.
   el rumbo para el juego **seguir leyendo el verdadero**, como aquí. Y un
   ejercicio que lo enseñe: un vuelo largo con la marca de la rosa que ya no
   lleva adonde decía, y ponerlo con la brújula en un tramo recto.
-- **La brújula, solo desde el asiento.** El cuadro plano de fuera no la lleva,
-  como un panel de verdad no la lleva entre los seis; si se cambia de vista a
-  mitad del ejercicio, la instructora sigue hablando de una brújula que no se
-  ve. Una brújula pequeña encima del cuadro plano, como la del travesaño,
-  sería una pieza nueva del HUD y pasaría por `npm run carteles`.
-- **La caja de la brújula, debajo de los botones de arriba** desde el
-  asiento de la avioneta: el del mapa tapa el borde de arriba de la caja y
-  roza las cifras que dan el rumbo (ver «Volado»). Se arregla en el encuadre
-  de la cabina (`encuadreDeCabina`, que ya deja entero lo que se lee del
-  panel y no cuenta la brújula) o bajando la brújula en el modelo; las dos
-  tocan todos los vuelos de los tres aviones y piden `npm run carteles`, y no
-  caben en esta tanda.
+- **En el teléfono apaisado, desde el asiento, la tarjeta de señal tapa la
+  brújula y el botón del cuadro tapa el direccional.** La tarjeta va en la
+  fila de arriba y a lo ancho llega hasta el centro, justo encima de la caja;
+  el botón que abre el cuadro plano cae encima del direccional del panel. No
+  es de este ejercicio —pasa en cualquier vuelo de cabina con esos aviones—
+  pero aquí son las dos cosas que hay que leer. Contarlas en el encuadre como
+  la fila no vale: la tarjeta va y viene, y la cámara saltaría con cada una.
+  Es de la maquetación del teléfono (DESIGN.md, apartado 8), y pide
+  `npm run carteles` en el teléfono.
 - **Los aviones de cristal**, sin brújula en sus cabinas de aquí (ver arriba):
   es una pieza de Blender por modelo, y entonces baila sola.
 - **El desvío propio del avión** y su tablilla de compensación, sin hacer.
-- **Las frases, sin grabar**: seis con voz (ver «Las frases»). Hasta
+- **Las frases, sin grabar**: siete con voz (ver «Las frases»). Hasta
   entonces, mudas en Brave y en Linux.
