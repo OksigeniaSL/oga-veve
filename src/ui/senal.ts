@@ -1021,34 +1021,41 @@ function deriva(lado: 1 | -1 | 0, corregida: boolean): string {
  * principio de la recta, y un reloj al lado. Ver `flight/estima.ts`.
  */
 function estima(donde: "rumbo" | "debajo" | "derecha" | "izquierda" | "delante" | "detras"): string {
+  // Más pequeño que el de la deriva: cabe pasado el pueblo sin salirse del dibujo.
   const avion = (x: number, y: number): string =>
-    `<g transform="translate(${x} ${y}) scale(0.5) translate(-12 -12)">${FIGURA["avion"] ?? ""}</g>`;
+    `<g transform="translate(${x} ${y}) scale(0.42) translate(-12 -12)">${FIGURA["avion"] ?? ""}</g>`;
   // Las manzanas: tres por tres, con sus calles en medio.
   const manzanas = [8.2, 11, 13.8]
-    .flatMap((x) => [3, 5.8, 8.6].map((y) => `<rect x="${x}" y="${y}" width="2" height="2" rx="0.3" />`))
+    .flatMap((x) => [7.4, 10.2, 13].map((y) => `<rect x="${x}" y="${y}" width="2" height="2" rx="0.3" />`))
     .join("");
   const reloj =
     donde === "rumbo"
-      ? `<circle cx="4.4" cy="17.6" r="3.4" fill="none" stroke="currentColor" stroke-width="1.2" />
-         <path d="M4.4 15.6 V17.6 L5.8 18.6" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />`
+      ? `<circle cx="4.6" cy="18.4" r="3.4" fill="none" stroke="currentColor" stroke-width="1.2" />
+         <path d="M4.6 16.4 V18.4 L6 19.4" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />`
       : "";
   // Dónde quedó el avión: el pueblo, visto desde él, queda del lado contrario.
   const sitio: Record<typeof donde, [number, number]> = {
-    rumbo: [12, 20],
-    debajo: [12, 6.8],
-    derecha: [5.6, 7.6],
-    izquierda: [18.4, 7.6],
-    delante: [12, 15],
-    detras: [12, 1.4],
+    rumbo: [12, 19.2],
+    debajo: [12, 11],
+    derecha: [4.6, 11.4],
+    izquierda: [19.4, 11.4],
+    delante: [12, 18.4],
+    detras: [12, 4.4],
   };
   const [x, y] = sitio[donde];
+  // El camino que se hizo, lleno, desde abajo hasta la cola del avión.
   const camino =
-    donde === "rumbo" ? "" : `<path d="M12 22.6 L${x} ${y + 2.6}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />`;
+    donde === "rumbo"
+      ? ""
+      : `<path d="M12 23 L${x} ${y + 3}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />`;
+  // Encima del pueblo, un hueco del color de la caja debajo del avión: si no, se pierde entre las manzanas.
+  const hueco = donde === "debajo" ? `<circle class="senal__hueco" cx="${x}" cy="${y}" r="4.6" />` : "";
   return icono(`
   ${manzanas}
-  <path d="M12 22.6 V10.8" fill="none" stroke="currentColor" stroke-width="0.9" stroke-dasharray="1.6 1.4" />
+  <path d="M12 23 V15.6" fill="none" stroke="currentColor" stroke-width="0.9" stroke-dasharray="1.6 1.4" />
   ${reloj}
   ${camino}
+  ${hueco}
   ${avion(x, y)}
 `);
 }
