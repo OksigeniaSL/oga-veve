@@ -2588,5 +2588,29 @@
   ],
   "ejercicio.altimetro.cierreSinPoner": [
     "ejercicio.altimetro.cierreSinPoner"
+  ],
+  "ejercicio.brujula.antes": [
+    "ejercicio.brujula.antes"
+  ],
+  "ejercicio.brujula.virar": [
+    "ejercicio.brujula.virar"
+  ],
+  "ejercicio.brujula.seAtrasa": [
+    "ejercicio.brujula.seAtrasa"
+  ],
+  "ejercicio.brujula.seAdelanta": [
+    "ejercicio.brujula.seAdelanta"
+  ],
+  "ejercicio.brujula.baila": [
+    "ejercicio.brujula.baila"
+  ],
+  "ejercicio.brujula.quieta": [
+    "ejercicio.brujula.quieta"
+  ],
+  "ejercicio.brujula.cabina": [
+    "ejercicio.brujula.cabina"
+  ],
+  "ejercicio.brujula.cierre": [
+    "ejercicio.brujula.cierre"
   ]
 }

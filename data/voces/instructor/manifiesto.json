@@ -259,6 +259,38 @@
       "ms": 6807,
       "h": "481c51a184"
     },
+    "ejercicio.brujula.antes": {
+      "ms": 3907,
+      "h": "3e83f48ec7"
+    },
+    "ejercicio.brujula.baila": {
+      "ms": 4207,
+      "h": "3fd1c5e277"
+    },
+    "ejercicio.brujula.cabina": {
+      "ms": 2855,
+      "h": "4052f542a7"
+    },
+    "ejercicio.brujula.cierre": {
+      "ms": 6607,
+      "h": "82b3756cfd"
+    },
+    "ejercicio.brujula.quieta": {
+      "ms": 4107,
+      "h": "7d9db83434"
+    },
+    "ejercicio.brujula.seAdelanta": {
+      "ms": 3607,
+      "h": "ae81c6fa25"
+    },
+    "ejercicio.brujula.seAtrasa": {
+      "ms": 3707,
+      "h": "15d38dc96d"
+    },
+    "ejercicio.brujula.virar": {
+      "ms": 3607,
+      "h": "e638e0913a"
+    },
     "ejercicio.cortar": {
       "ms": 4207,
       "h": "3d31b756e9"
@@ -5914,6 +5946,30 @@
     ],
     "ejercicio.altimetro.cierreSinPoner": [
       "ejercicio.altimetro.cierreSinPoner"
+    ],
+    "ejercicio.brujula.antes": [
+      "ejercicio.brujula.antes"
+    ],
+    "ejercicio.brujula.virar": [
+      "ejercicio.brujula.virar"
+    ],
+    "ejercicio.brujula.seAtrasa": [
+      "ejercicio.brujula.seAtrasa"
+    ],
+    "ejercicio.brujula.seAdelanta": [
+      "ejercicio.brujula.seAdelanta"
+    ],
+    "ejercicio.brujula.baila": [
+      "ejercicio.brujula.baila"
+    ],
+    "ejercicio.brujula.quieta": [
+      "ejercicio.brujula.quieta"
+    ],
+    "ejercicio.brujula.cabina": [
+      "ejercicio.brujula.cabina"
+    ],
+    "ejercicio.brujula.cierre": [
+      "ejercicio.brujula.cierre"
     ]
   }
 }
