@@ -122,7 +122,8 @@ const leer = (page) =>
  *   a cinco metros se recoge;
  * - **el gas**, a la velocidad del circuito y luego a la de aproximación;
  * - con `fuera`, apartado un punto y siete del localizador desde ochocientos
- *   pies; y si en los mínimos se pide la frustrada, gas a fondo y a subir.
+ *   pies; y si en los mínimos se pide la frustrada, como se vuela: gas a
+ *   fondo, una muesca menos de flaps, a subir y, subiendo, el tren dentro.
  */
 const ponerElPiloto = (page, datos) =>
   page.evaluate((d) => {
@@ -161,8 +162,28 @@ const ponerElPiloto = (page, datos) =>
       let vs = 0;
       let quiereKt = d.circuito;
       if (b.alAire) {
-        vs = s.airspeed < d.vref * 1.2 ? 0 : 5;
+        /*
+         * **La frustrada como se vuela**: gas a fondo, una muesca menos de
+         * flaps, el morro a la velocidad de subida —la velocidad se coge
+         * subiendo menos, no esperando nivelado a una de circuito— y, con el
+         * variómetro arriba y unos metros ganados, el tren dentro. Antes
+         * nivelaba hasta coger 1,2 veces la de referencia con los flaps de
+         * aterrizar: con el bimotor en calma no llegaba, pasaba la pista a
+         * doscientos pies sin subir y el ejercicio se quedaba en
+         * `frustrando` (H26m).
+         */
         c.throttle = 1;
+        if (!b.recogidos) {
+          b.recogidos = true;
+          o.pedirFlaps(Math.max(0, o.palancaDeFlaps() - 0.34));
+        }
+        b.bajo = Math.min(b.bajo ?? h, h);
+        if (!b.trenDentro && s.verticalSpeed > 1 && h - b.bajo > 10) {
+          b.trenDentro = true;
+          o.pedirTren(false);
+        }
+        // Por debajo de la de subida, menos subida —hasta nivelar, nunca a costa de la velocidad—; por encima, más.
+        vs = Math.max(0, Math.min(5, 1 + (s.airspeed - d.vref * 1.05) * 0.4));
       } else if (ej && (ej.fase === "bajando" || ej.fase === "pista" || ej.fase === "frustrando" || ej.fase === "cerrada")) {
         if (!b.flaps) {
           b.flaps = true;
@@ -354,6 +375,8 @@ try {
   let veces = VECES;
   let peorSenda = 0;
   let peorLoc = 0;
+  /** Lo que lleva escrito el rastro de después de los mínimos. */
+  const rastro = { ultimo: 0, dicho: {} };
   // Nueve minutos con el reloj por cuatro; a reloj normal la avioneta tarda once en llegar a los mínimos.
   const fin = Date.now() + (VECES >= 4 ? 9 : 20) * 60000;
   while (Date.now() < fin && r.ej.fase !== "cerrada") {
@@ -433,6 +456,46 @@ try {
       enLosMinimosSeVe = await comoSeVe();
       dichoHastaLosMinimos = enLosMinimosSeVe.dicho;
       await foto("05-minimos");
+    }
+    /*
+     * **Desde los mínimos, el rastro**: cada segundo de pared, la altura, la
+     * velocidad, lo que sube, el gas, los flaps, el tren, la fase del
+     * ejercicio y la del plan; y cada frase nueva de cualquier boca —la
+     * instructora, la torre, los otros—, con dónde se dijo. Con el bimotor en calma el
+     * ejercicio se quedaba en `frustrando` y sonaban «andá a la pista» y
+     * «poné el ILS» sin que nada dijera por qué (H26k).
+     */
+    if (fotoMinimos) {
+      const ahora = Date.now();
+      const t = await page.evaluate(() => {
+        const o = globalThis.__oga;
+        const j = o.juegoParaTrazas();
+        const s = o.estado();
+        const dicho = o.dichoTodo();
+        return {
+          seg: j.clock.elapsedTime,
+          pies: (s.position.y - j.terrain.runwayElevation) / 0.3048,
+          kt: s.airspeed * 1.943844,
+          vs: s.verticalSpeed,
+          gas: j.input.controls.throttle,
+          flaps: j.input.controls.flaps,
+          tren: j.input.controls.tren,
+          plan: o.fase(),
+          dicho,
+        };
+      });
+      for (const [quien, lista] of Object.entries(t.dicho)) {
+        const antes = rastro.dicho[quien] ?? lista.length;
+        for (const c of lista.slice(antes))
+          console.log(`      ${t.seg.toFixed(1)} s · ${quien}: ${c} — a ${Math.round(t.pies)} ft, ${Math.round(t.kt)} kt, fase ${r.ej.fase}, plan ${t.plan}`);
+        rastro.dicho[quien] = lista.length;
+      }
+      if (ahora - rastro.ultimo >= 1000) {
+        rastro.ultimo = ahora;
+        console.log(
+          `      ${t.seg.toFixed(1)} s · ${Math.round(t.pies)} ft, ${Math.round(t.kt)} kt, ${t.vs.toFixed(1)} m/s, gas ${t.gas.toFixed(2)}, flaps ${t.flaps.toFixed(2)}, tren ${t.tren.toFixed(2)}, ${r.ej.fase}, plan ${t.plan}, loc ${loc?.toFixed(2) ?? "—"}, NAV ${oye}`,
+        );
+      }
     }
     await pausa(120);
   }
