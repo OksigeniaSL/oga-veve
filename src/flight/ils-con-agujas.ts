@@ -59,6 +59,7 @@ import {
   type LecturaSenda,
 } from "./radio-de-navegacion";
 import type { PuntoDelMundo } from "./seguir-la-aguja";
+import type { Meteo } from "../world/meteo";
 
 const GRADO = Math.PI / 180;
 const PIE = 0.3048;
@@ -188,6 +189,43 @@ export function colocacionDelIls(o: {
     alto = Math.max(alto, o.suelo(px, pz) + POR_ENCIMA_DEL_CAMINO - o.cotaDeLaPista);
   }
   return { x, z, alto, rumbo, lado };
+}
+
+// ── El día del ejercicio ─────────────────────────────────────────────────
+
+/**
+ * **La base de la nube del ejercicio**, m sobre la pista: trescientos pies,
+ * cubierto. Es el techo bajo de un ILS de verdad: se baja dentro de la nube
+ * con las dos agujas y se sale por debajo **justo antes de los mínimos**, a
+ * tiempo de ver la pista ahí y decidir.
+ *
+ * Trescientos y no los doscientos cincuenta de la propuesta (ADR 0030, H26i)
+ * por dos motivos que dicen lo mismo:
+ *
+ * - **La capa se deshilacha veinticinco metros por debajo de su base**
+ *   (`BORDE_DE_LA_CAPA` en `world/capa-de-nubes.ts`), que es el borde de una
+ *   nube de verdad: con la base a doscientos cincuenta, a los doscientos de
+ *   la decisión todavía se está entre jirones, y la pista se vería a ratos
+ *   justo cuando hay que decidir. Con trescientos se va saliendo de los jirones desde
+ *   ahí y se está fuera a los doscientos veinte, un poco antes de decidir.
+ * - **Y es lo que diría el parte**: las bases se dan de cien en cien pies, y
+ *   doscientos cincuenta saldría en el ATIS del juego como trescientos. Así
+ *   lo escrito y lo que se ve son lo mismo: OVC003.
+ *
+ * Por encima de los doscientos de la decisión, así que en los mínimos la
+ * pista se ve (`seVeLaPista`) y lo que se decide ahí es lo de las agujas.
+ */
+export const TECHO_DEL_ILS = 300 * PIE;
+
+/**
+ * **El día del ejercicio**: el de siempre del sitio —su viento, que es el que
+ * hay que corregir en el localizador— con un techo cubierto a trescientos
+ * pies, sin agua. A mano, como la tormenta y la aguja: con el parte de hoy
+ * podría tocar un día despejado, y la lección es salir de la nube y ver
+ * aparecer la pista.
+ */
+export function elDiaDelIls(deCasa: Meteo): Meteo {
+  return { ...deCasa, techoM: TECHO_DEL_ILS, tapadura: 1, lluvia: "nada", fuerzaDeLluvia: 0, fuente: "mano" };
 }
 
 // ── El ejercicio ─────────────────────────────────────────────────────────
