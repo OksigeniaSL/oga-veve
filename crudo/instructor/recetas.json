@@ -2483,5 +2483,32 @@
   ],
   "ejercicio.ils.cierreFrustrada": [
     "ejercicio.ils.cierreFrustrada"
+  ],
+  "ejercicio.deriva.antes": [
+    "ejercicio.deriva.antes"
+  ],
+  "ejercicio.deriva.deLado": [
+    "ejercicio.deriva.deLado"
+  ],
+  "ejercicio.deriva.alViento": [
+    "ejercicio.deriva.alViento"
+  ],
+  "ejercicio.deriva.enCalma": [
+    "ejercicio.deriva.enCalma"
+  ],
+  "ejercicio.deriva.deLargo": [
+    "ejercicio.deriva.deLargo"
+  ],
+  "ejercicio.deriva.llegaste": [
+    "ejercicio.deriva.llegaste"
+  ],
+  "ejercicio.deriva.llegasteEnCurva": [
+    "ejercicio.deriva.llegasteEnCurva"
+  ],
+  "ejercicio.deriva.llegasteEnCalma": [
+    "ejercicio.deriva.llegasteEnCalma"
+  ],
+  "ejercicio.deriva.cierre": [
+    "ejercicio.deriva.cierre"
   ]
 }

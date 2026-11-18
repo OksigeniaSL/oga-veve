@@ -255,6 +255,42 @@
       "ms": 8507,
       "h": "6d1a2f8639"
     },
+    "ejercicio.deriva.alViento": {
+      "ms": 3807,
+      "h": "df7a3b9f0e"
+    },
+    "ejercicio.deriva.antes": {
+      "ms": 6407,
+      "h": "c6406978be"
+    },
+    "ejercicio.deriva.cierre": {
+      "ms": 4407,
+      "h": "2fba1fcc4c"
+    },
+    "ejercicio.deriva.deLado": {
+      "ms": 6707,
+      "h": "4b9d2f0b53"
+    },
+    "ejercicio.deriva.deLargo": {
+      "ms": 4407,
+      "h": "e724d86c34"
+    },
+    "ejercicio.deriva.enCalma": {
+      "ms": 5307,
+      "h": "a9a88457f4"
+    },
+    "ejercicio.deriva.llegaste": {
+      "ms": 6207,
+      "h": "140396cb84"
+    },
+    "ejercicio.deriva.llegasteEnCalma": {
+      "ms": 3607,
+      "h": "1cba2a88f3"
+    },
+    "ejercicio.deriva.llegasteEnCurva": {
+      "ms": 6407,
+      "h": "a1ee6ac71f"
+    },
     "ejercicio.despresurizacion.antes": {
       "ms": 12907,
       "h": "3d93350931"
@@ -5669,6 +5705,33 @@
     ],
     "ejercicio.ils.cierreFrustrada": [
       "ejercicio.ils.cierreFrustrada"
+    ],
+    "ejercicio.deriva.antes": [
+      "ejercicio.deriva.antes"
+    ],
+    "ejercicio.deriva.deLado": [
+      "ejercicio.deriva.deLado"
+    ],
+    "ejercicio.deriva.alViento": [
+      "ejercicio.deriva.alViento"
+    ],
+    "ejercicio.deriva.enCalma": [
+      "ejercicio.deriva.enCalma"
+    ],
+    "ejercicio.deriva.deLargo": [
+      "ejercicio.deriva.deLargo"
+    ],
+    "ejercicio.deriva.llegaste": [
+      "ejercicio.deriva.llegaste"
+    ],
+    "ejercicio.deriva.llegasteEnCurva": [
+      "ejercicio.deriva.llegasteEnCurva"
+    ],
+    "ejercicio.deriva.llegasteEnCalma": [
+      "ejercicio.deriva.llegasteEnCalma"
+    ],
+    "ejercicio.deriva.cierre": [
+      "ejercicio.deriva.cierre"
     ]
   }
 }

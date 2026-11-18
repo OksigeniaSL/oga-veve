@@ -3621,6 +3621,141 @@
     }
   },
   {
+    "id": "ejercicio.deriva.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Apuntá el morro justo al final de la raya magenta, y dejalo quieto ahí. Mirá la raya blanca: va adonde va el avión",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Apuntá el morro justo al final de la raya magenta, y dejalo quieto ahí. Mirá la raya blanca: va adonde va el avión.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.deriva.deLado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Viste? La raya blanca se va de costado: el viento nos empuja, aunque el morro apunte bien. Apuntá un poquito al viento",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¿Viste? La raya blanca se va de costado: el viento nos empuja, aunque el morro apunte bien. Apuntá un poquito al viento.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.deriva.alViento",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Eso! Con el morro un poquito al viento, la raya blanca sale derecha",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Eso! Con el morro un poquito al viento, la raya blanca sale derecha.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.deriva.enCalma",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy no hay viento: el avión va justo adonde apunta el morro, y la raya blanca sale derecha",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy no hay viento: el avión va justo adonde apunta el morro, y la raya blanca sale derecha.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.deriva.deLargo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Pasamos de costado. No pasa nada: girá y volvé, con el morro un poquito al viento",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Pasamos de costado. No pasa nada: girá y volvé, con el morro un poquito al viento.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.deriva.llegaste",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Llegamos! Fijate: el morro no apuntaba justo, apuntaba un poquito al viento. Así se llega con viento de costado",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Llegamos! Fijate: el morro no apuntaba justo, apuntaba un poquito al viento. Así se llega con viento de costado.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.deriva.llegasteEnCurva",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Llegamos, pero en curva! Mirá la raya blanca: se dobló. La próxima, apuntá un poquito al viento desde el principio",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Llegamos, pero en curva! Mirá la raya blanca: se dobló. La próxima, apuntá un poquito al viento desde el principio.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.deriva.llegasteEnCalma",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Llegamos! Sin viento, el camino va justo adonde apunta el morro",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Llegamos! Sin viento, el camino va justo adonde apunta el morro.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.deriva.cierre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Con viento de costado, el morro va un poco al viento y el camino sale derecho",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Con viento de costado, el morro va un poco al viento y el camino sale derecho.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "mission.rio.name",
     "voz": "instructor",
     "idioma": "es-PY",
