@@ -32,6 +32,19 @@
  *   sigue mirando la barra aunque no hable, y su tarjeta es lo que hay que
  *   tener delante.
  *
+ * - **La megafonía de la cabina** (H26u): la comandante y la tripulación
+ *   contándole al pasaje un vuelo de línea —«ya llegamos a nuestra altura, se
+ *   apagó la señal del cinturón»— y lo que cuenta la comandante en crucero.
+ *   Volando «Rumbo de noche» con el JAZ 90, la comandante anunció el crucero a
+ *   mil quinientos pies encima del río, y su tira tapó la radio del ejercicio.
+ *   No es de la pista, y por eso H26f no la había visto: salía solo en los
+ *   aviones con pasaje, y los bancos de radio volaban la avioneta.
+ * - **Lo que explica la instructora de los gases automáticos** (H26u): la
+ *   palanca que se mueve sola al poner el automático, o que se queda al
+ *   soltarse. Se explica una vez por vuelo, y en estos ejercicios el
+ *   automático se pone en mitad de lo que se practica: la explicación no se
+ *   gasta aquí, y queda para el vuelo siguiente.
+ *
  * **Lo que no se calla nunca** es la seguridad: la máquina del avión
  * (*traffic*, *terrain*, la pérdida), los avisos del cuadro y la información
  * de tráfico, que sin torre la da la instructora (`comoSeDiceElTrafico`). Y al
@@ -50,6 +63,10 @@ export interface LoQueCalla {
   readonly laTorre: boolean;
   /** Lo que se señala por la ventanilla. */
   readonly laVentanilla: boolean;
+  /** La megafonía de la cabina: los anuncios al pasaje y lo que cuenta la comandante en crucero. */
+  readonly laMegafonia: boolean;
+  /** La instructora explicando los gases automáticos: que se mueven solos, que se soltaron. */
+  readonly losGases: boolean;
 }
 
 /** Sin ejercicio, o con uno que acaba en la pista: no se calla nada. */
@@ -58,6 +75,8 @@ export const NO_CALLA_NADA: LoQueCalla = {
   laFrecuencia: false,
   laTorre: false,
   laVentanilla: false,
+  laMegafonia: false,
+  losGases: false,
 };
 
 /**
@@ -84,6 +103,7 @@ export function loQueCallaElEjercicio(
   seVaAlAire = false,
 ): LoQueCalla {
   if (!ejercicio || cerrado) return NO_CALLA_NADA;
-  if (ejercicio.acabaEnElAire) return { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true };
+  if (ejercicio.acabaEnElAire)
+    return { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true, laMegafonia: true, losGases: true };
   return seVaAlAire ? SOLO_LA_FASE : NO_CALLA_NADA;
 }

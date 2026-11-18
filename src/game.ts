@@ -4142,8 +4142,9 @@ export class Game {
   }
   /**
    * **Lo que el ejercicio de hoy calla mientras dura**: en los de radio, que se
-   * cierran en el aire, la fase del plan, la torre, su frecuencia y la
-   * ventanilla; y en el ILS, desde que pide la frustrada, la fase. Ver
+   * cierran en el aire, la fase del plan, la torre, su frecuencia, la
+   * ventanilla, la megafonía y la explicación de los gases (H26u); y en el
+   * ILS, desde que pide la frustrada, la fase. Ver
    * `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
@@ -15240,8 +15241,13 @@ export class Game {
      * **De pasaje, los anuncios los dice la escena**, cada uno en su momento y
      * sin pisar a Ara: la megafonía de siempre no decide nada en ese vuelo.
      * Ver `decirElAnuncioDeLaEscena`.
+     *
+     * **Ni mientras dura un ejercicio que se cierra en el aire** (H26u): «ya
+     * llegamos a nuestra altura» a mil quinientos pies encima del río no es del
+     * ejercicio. La megafonía espera, y al cerrarse sigue. Ver
+     * `flight/lo-que-calla-el-ejercicio.ts`.
      */
-    const anuncio = this.dePasaje ? null : this.megafonia.paso(dt, {
+    const anuncio = this.dePasaje || this.loQueCalla.laMegafonia ? null : this.megafonia.paso(dt, {
       fase: this.faseDeAhora as Fase,
       conPasaje: conPasaje(this.aircraft.mass),
       conTripulacion: conTripulacion(this.aircraft.mass),
@@ -33754,7 +33760,8 @@ export class Game {
       (puesto && llevaGasesAutomaticos(this.aircraft)) ||
       (!puesto && this.gasDeLaFinal === "gases");
     this.pintarQuienLlevaElGas();
-    if (puesto && llevaGasesAutomaticos(this.aircraft))
+    // Con un ejercicio en el aire, no: no es suyo, y se cuenta en el vuelo siguiente (H26u).
+    if (puesto && llevaGasesAutomaticos(this.aircraft) && !this.loQueCalla.losGases)
       this.explicarUnaVez("vuelo.gasesAutomaticos");
     /*
      * **Y con ventanilla ALT, a la altura de la ventanilla.**
@@ -34224,7 +34231,7 @@ export class Game {
     this.objetivos = { ...this.objetivos, velocidad: null };
     this.pintarQuienLlevaElGas();
     this.avisar("attention");
-    if (this.pilotoPuesto && this.gasDeLaFinalSueltoEn !== this.relojDelJuego)
+    if (this.pilotoPuesto && this.gasDeLaFinalSueltoEn !== this.relojDelJuego && !this.loQueCalla.losGases)
       this.explicarUnaVez("vuelo.gasesSueltos");
   }
 
@@ -36123,7 +36130,8 @@ export class Game {
      * que se salga de crucero lo retira ya `seLePasoElMomento`.
      */
     if (this.megafonia.bajandoAlDestino) BOCA.retirar((c) => esUnMomentoDeCrucero(c));
-    if (this.dePasaje || !conPasaje(this.aircraft.mass)) return;
+    // Ni con un ejercicio en el aire, que lo que se oye es él (H26u). Ver `loQueCalla`.
+    if (this.dePasaje || !conPasaje(this.aircraft.mass) || this.loQueCalla.laMegafonia) return;
     const destino = this.elDestino();
     const grabada = (id: string): boolean =>
       this.instructor.vozDe(id) !== null || (this.momentosSinGrabarParaBanco && hayTexto(id));
