@@ -29479,6 +29479,7 @@ export class Game {
             escenario: vuelta.escenario,
           }
         : null);
+    this.hud.callarElDestino(this.loQueCalla.laFase);
     this.hud.setHome(
       relative,
       Math.hypot(dx, dz),

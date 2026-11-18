@@ -217,6 +217,12 @@ try {
       await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
     }
   }
+  /*
+   * **El reloj, otra vez a uno**, nada más llegar a cero: con el reloj por
+   * ocho el panel del final sale en un segundo y medio de pared, y lo que hay
+   * que fotografiar es el suelo, con el pueblo y las dos rayas.
+   */
+  await page.evaluate(() => globalThis.__oga.acelerar(1));
   console.log(`    en la línea de avisos: ${rotulos.join(" | ") || "nada"}`);
   comprobar("el reloj llega a cero y se cierra", r.ejercicio.cierre === "hecho", `${r.ejercicio.cierre}, ${(r.ejercicio.transcurrido / 60).toFixed(1)} min`);
   const res = r.ejercicio.resultado;
@@ -243,7 +249,7 @@ try {
   const dicho = await page.evaluate(() => globalThis.__oga.dichoTodo());
   const deLaEstima = (dicho.instructor ?? []).filter((k) => /^ejercicio\.estima\./.test(k));
   console.log(`    la instructora: ${deLaEstima.join(", ") || "nada"}`);
-  await pausa(1500);
+  await pausa(400);
   r = await leer(page);
   comprobar(
     "al final, las dos rayas en el suelo y el plano vuelve a saber dónde está el avión",

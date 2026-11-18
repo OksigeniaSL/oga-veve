@@ -758,6 +758,12 @@ export class Hud {
    * `setHome`.
    */
   private destinoPuesto: string | null = null;
+  /**
+   * **Si el nombre del destino se calla** en la línea de avisos: mientras dura
+   * un ejercicio que se cierra en el aire, que lo que se lee es suyo. Ver
+   * `callarElDestino`.
+   */
+  private destinoCallado = false;
   private home!: HTMLElement;
   private warning!: HTMLElement;
   private warningText!: HTMLElement;
@@ -3012,11 +3018,24 @@ export class Hud {
     this.home.classList.add("casa--destello");
     // Y el nombre, donde se escriben los avisos cortos. Sin letras no se
     // escribe nada: ahí habla el dibujo de la tarjeta.
-    if (this.instruments !== "none")
+    if (this.instruments !== "none" && !this.destinoCallado)
       this.flash(
         destino.oaci ? `${destino.nombre} · ${destino.oaci}` : destino.nombre,
         4,
       );
+  }
+
+  /**
+   * **El nombre del destino, callado mientras dura un ejercicio que se cierra
+   * en el aire** (`LoQueCalla.laFase`, H26f). Volando «Rumbo y reloj» salía
+   * «Mariscal Estigarribia · SGME» en la línea de avisos a los tres segundos,
+   * justo cuando la tarjeta decía «Filadelfia · HDG 128»: dos sitios escritos
+   * a la vez, y el que no es adonde se va, arriba (ADR 0031, H26n). La placa
+   * de la tarjeta de casa sí cambia; lo que se calla es el rótulo, y cerrado
+   * el ejercicio no se escribe tarde, que ya no es noticia.
+   */
+  callarElDestino(callado: boolean): void {
+    this.destinoCallado = callado;
   }
 
   /**
