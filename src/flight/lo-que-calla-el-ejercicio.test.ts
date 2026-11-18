@@ -14,7 +14,7 @@ import juego from "../game.ts?raw";
 import { EJERCICIOS, ejercicioPorId, type EjercicioId } from "./ejercicios";
 import { NO_CALLA_NADA, loQueCallaElEjercicio } from "./lo-que-calla-el-ejercicio";
 
-const TODO = { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true };
+const TODO = { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true, laMegafonia: true, lasExplicaciones: true };
 /**
  * Los que se cierran en el aire: los de radio menos el ILS, la deriva, que acaba encima de su puente, el rumbo de noche, encima del río, y la estima, que acaba con el reloj a cero.
  * Y el altímetro que miente, pasada la cima (H26p), y la brújula, con la tarjeta quieta (H26q); y el giróscopo, puesto con ella (H26r).
@@ -110,5 +110,33 @@ describe("y el juego lo calla donde nace cada cosa", () => {
     const cuerpo = cuerpoDe(/\n {2}private momentoDeMirar\(\): MomentoDeMirar \{/);
     expect(cuerpo, "no se encontró momentoDeMirar en game.ts").not.toBe("");
     expect(cuerpo).toMatch(/this\.loQueCalla\.laVentanilla/);
+  });
+
+  /*
+   * H26u: «Rumbo de noche» con el JAZ 90 oyó a la comandante anunciar el
+   * crucero a mil quinientos pies, y a la instructora contar los gases al
+   * poner el automático. Ninguna de las dos es de la pista: salían solo en los
+   * aviones con pasaje o con gases.
+   */
+  it("la megafonía de la cabina no anuncia, ni la comandante cuenta su crucero", () => {
+    const radio = cuerpoDe(/\n {2}private oirLaRadio\(dt: number\): void \{/);
+    expect(radio, "no se encontró oirLaRadio en game.ts").not.toBe("");
+    expect(radio).toMatch(/const anuncio =[^;]*this\.loQueCalla\.laMegafonia/);
+    const cabina = cuerpoDe(/\n {2}private contarLaVidaDeCabina\(dt: number, enEmergencia: boolean\): void \{/);
+    expect(cabina, "no se encontró contarLaVidaDeCabina en game.ts").not.toBe("");
+    expect(cabina).toMatch(/this\.loQueCalla\.laMegafonia/);
+  });
+
+  it("y la instructora no explica los gases automáticos, ni al ponerlos ni al soltarse, ni el rombo del TCAS", () => {
+    const poner = cuerpoDe(/\n {2}ponerPilotoAutomatico\(/);
+    expect(poner, "no se encontró ponerPilotoAutomatico en game.ts").not.toBe("");
+    expect(poner).toMatch(/!this\.loQueCalla\.lasExplicaciones[^;]*\s*this\.explicarUnaVez\("vuelo\.gasesAutomaticos"\)/);
+    const soltar = cuerpoDe(/\n {2}private soltarLosGases\(\): void \{/);
+    expect(soltar, "no se encontró soltarLosGases en game.ts").not.toBe("");
+    expect(soltar).toMatch(/!this\.loQueCalla\.lasExplicaciones[^;]*\s*this\.explicarUnaVez\("vuelo\.gasesSueltos"\)/);
+    // H26u, el JAZ 60: «ese rombo es otro avión» no es del ejercicio; el aviso de tráfico sí sigue.
+    const rombo = cuerpoDe(/\n {2}private explicarElTrafico\(\): void \{/);
+    expect(rombo, "no se encontró explicarElTrafico en game.ts").not.toBe("");
+    expect(rombo).toMatch(/this\.loQueCalla\.lasExplicaciones/);
   });
 });

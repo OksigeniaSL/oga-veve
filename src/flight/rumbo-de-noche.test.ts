@@ -9,11 +9,12 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { ARAI, PYKASU } from "./aircraft";
+import { ARAI, PANAMBI, PYKASU } from "./aircraft";
 import { ejercicioPorId, ejerciciosPara } from "./ejercicios";
 import { centrado } from "./radio-de-navegacion";
 import {
   alturaDelSol,
+  avanceSobreElCauce,
   bajadaDelSol,
   colocacionDelRumbo,
   EN_LA_MARCA,
@@ -21,6 +22,7 @@ import {
   LLEGADA,
   NOCHE,
   PRISA,
+  PRISA_SIN_AVANZAR,
   rioDeNoche,
   RumboDeNoche,
   type SucesoDelRumbo,
@@ -28,6 +30,8 @@ import {
 import { SCENARIOS, oaciDe } from "../world/scenarios";
 import { vientoComoVector } from "../world/meteo";
 import { solALaHora } from "../world/cielo-de-noche";
+import { TOPE_POR_DEBAJO_DE_DIEZ_MIL } from "./seguir-la-aguja";
+import { NUDO, maniobraLimpiaKt } from "./escalera-de-velocidades";
 
 const GRADO = Math.PI / 180;
 const RUMBO = ejercicioPorId("rumbo")!;
@@ -42,33 +46,47 @@ const HOY = new Date(Date.UTC(2026, 10, 18, 12));
 const AVIONETA = 51;
 /** Un reactor a doscientos cincuenta nudos, el tope por debajo de diez mil pies. */
 const REACTOR = 129;
+/**
+ * **Lo que cuenta el juego** para el JAZ 40 y el JAZ 90: su crucero con el
+ * tope de los diez mil pies, y como mucho la de maniobra limpia. Ver `velocidadDelRumbo`.
+ */
+const cuentaDe = (a: typeof PANAMBI): number =>
+  Math.min(a.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL, maniobraLimpiaKt(a) * NUDO);
+const CUENTA_DEL_BIMOTOR = cuentaDe(PANAMBI);
+const CUENTA_DEL_REACTOR = cuentaDe(ARAI);
 
 /**
  * **El piloto de cinemática**: cada décima de segundo, el morro hacia donde
  * diga `morro` (rad verdaderos, girando como mucho tres grados por segundo),
  * el avión a la verdadera por el morro más el viento, y el sol el del cielo a
- * la hora que lleva el ejercicio. Con luz, persigue el siguiente punto del
- * cauce, como quien sigue el río mirándolo.
+ * la hora que lleva el ejercicio. Con luz, persigue el cauce por delante,
+ * como quien sigue el río mirándolo.
  */
 function volar(
   morro: (p: { x: number; z: number; t: number; deNoche: number | null; pedido: number | null }) => number | null,
-  o: { velocidad?: number; fecha?: Date; viento?: { x: number; z: number } } = {},
+  o: {
+    velocidad?: number;
+    /** **La que vuela de verdad**, m/s, si no es la de la cuenta: la que sostiene el avión, o quien lo lleva. */
+    vuela?: number;
+    fecha?: Date;
+    viento?: { x: number; z: number };
+  } = {},
 ): {
   sucesos: SucesoDelRumbo[];
   ej: RumboDeNoche;
   dondeAnochecio: { x: number; z: number } | null;
   masCerca: number;
 } {
-  const velocidad = o.velocidad ?? AVIONETA;
+  const cuenta = o.velocidad ?? AVIONETA;
+  const velocidad = o.vuela ?? cuenta;
   const viento = o.viento ?? VIENTO;
   const fecha = o.fecha ?? HOY;
   const ej = new RumboDeNoche(RUMBO, RIO, VARIACION);
-  const c = colocacionDelRumbo({ rio: RIO, velocidad, fecha, viento });
+  const c = colocacionDelRumbo({ rio: RIO, velocidad: cuenta, fecha, viento });
   ej.colocar(c);
   let x = c.x;
   let z = c.z;
   let rumbo = c.rumbo;
-  let siguiente = 1;
   const sucesos: SucesoDelRumbo[] = [];
   let dondeAnochecio: { x: number; z: number } | null = null;
   let deNoche: number | null = null;
@@ -76,9 +94,13 @@ function volar(
   const g = ej.destino;
   const dt = 0.1;
   for (let t = 0; t < 900 && ej.fase !== "cerrada"; t += dt) {
-    // Con luz, el río: el siguiente punto del cauce, y el de después al pasarlo a menos de doscientos metros.
-    const p = RIO.cauce[Math.min(siguiente, RIO.cauce.length - 1)]!;
-    if (Math.hypot(p.x - x, p.z - z) < 200) siguiente++;
+    /*
+     * Con luz, el río **mirando por delante**: el punto del cauce a ocho
+     * segundos de vuelo de donde se va. Perseguir cada punto a doscientos
+     * metros era la avioneta; uno rápido, que vira más ancho, se pasaba la
+     * curva del puente y volvía a buscarlo.
+     */
+    const p = puntoDelCauce(avanceSobreElCauce(RIO.cauce, x, z) + Math.max(400, 8 * velocidad));
     const alRio = Math.atan2(p.x - x, -(p.z - z));
     const quiero = morro({ x, z, t, deNoche, pedido: ej.rumboPedido }) ?? alRio;
     const giro = Math.max(-3 * GRADO * dt, Math.min(3 * GRADO * dt, Math.atan2(Math.sin(quiero - rumbo), Math.cos(quiero - rumbo))));
@@ -96,6 +118,19 @@ function volar(
     if (ej.fase === "rumbo") masCerca = Math.min(masCerca, Math.hypot(g.x - x, g.z - z));
   }
   return { sucesos, ej, dondeAnochecio, masCerca };
+}
+
+/** El punto del cauce a `s` metros de su principio, por él; pasado el final, el final. */
+function puntoDelCauce(s: number): { x: number; z: number } {
+  let resta = s;
+  for (let i = 1; i < RIO.cauce.length; i++) {
+    const a = RIO.cauce[i - 1]!;
+    const b = RIO.cauce[i]!;
+    const l = Math.hypot(b.x - a.x, b.z - a.z);
+    if (resta <= l) return { x: a.x + ((b.x - a.x) * resta) / l, z: a.z + ((b.z - a.z) * resta) / l };
+    resta -= l;
+  }
+  return RIO.cauce[RIO.cauce.length - 1]!;
 }
 
 /** El morro en el rumbo pedido, de noche; con luz, el río. */
@@ -199,6 +234,59 @@ describe("Rumbo de noche: volado", () => {
     expect(ej.llegada).toBe("encima");
   });
 
+  /*
+   * H26u: la ronda de cierre voló el JAZ 40 y el JAZ 90, y la noche cayó a
+   * 944 y a 1622 m del puente. La hora de salida se contaba con la velocidad
+   * de la cuenta, y cada avión vuela la que sostiene: ahora, con luz, el reloj
+   * del cielo va con lo andado por el río.
+   */
+  for (const [nombre, cuenta, vuelas] of [
+    ["el bimotor", CUENTA_DEL_BIMOTOR, [0.8, 1.2]],
+    ["el reactor", CUENTA_DEL_REACTOR, [0.9, 1.1]],
+    ["la avioneta", AVIONETA, [0.75, 1.25]],
+  ] as const)
+    it(`con ${nombre}, más despacio o más deprisa de lo que dice la cuenta, la noche cae en el puente y pide el rumbo del río`, () => {
+      for (const f of vuelas) {
+        const { dondeAnochecio, ej, sucesos } = volar(enLaMarca, { velocidad: cuenta, vuela: cuenta * f });
+        const como = `${nombre} a ${(f * 100).toFixed(0)} % de la cuenta`;
+        const lejos = Math.hypot(dondeAnochecio!.x - PUENTE.x, dondeAnochecio!.z - PUENTE.z);
+        expect(lejos, como).toBeLessThan(500);
+        expect(sucesos.find((s) => s.que === "anochece"), como).toEqual({ que: "anochece", rumbo: 225 });
+        expect(ej.solCuandoAnochecio!, como).toBeLessThanOrEqual(NOCHE);
+        expect(ej.solCuandoAnochecio!, como).toBeGreaterThan(NOCHE - 0.1);
+        expect(ej.llegada, como).toBe("encima");
+      }
+    });
+
+  it("lo andado por el río es lo del cauce hasta el punto más cerca, encima o a un lado", () => {
+    expect(avanceSobreElCauce(RIO.cauce, RIO.cauce[0]!.x, RIO.cauce[0]!.z)).toBe(0);
+    const conLuz = colocacionDelRumbo({ rio: RIO, velocidad: AVIONETA, fecha: HOY }).conLuz;
+    expect(avanceSobreElCauce(RIO.cauce, PUENTE.x, PUENTE.z)).toBeCloseTo(conLuz, 6);
+    // A trescientos metros del puente, de costado al río: lo andado es el puente.
+    const a = RIO.cauce[RIO.anochece - 1]!;
+    const l = Math.hypot(PUENTE.x - a.x, PUENTE.z - a.z);
+    const lado = { x: PUENTE.x + ((PUENTE.z - a.z) / l) * 300, z: PUENTE.z - ((PUENTE.x - a.x) / l) * 300 };
+    expect(Math.abs(avanceSobreElCauce(RIO.cauce, lado.x, lado.z) - conLuz)).toBeLessThan(150);
+  });
+
+  it("apartado del río la tarde no se queda quieta: la noche cae igual, con el reloj a la mitad de su prisa", () => {
+    // Hacia el este todo el rato, lejos del cauce.
+    const ej = new RumboDeNoche(RUMBO, RIO, VARIACION);
+    const c = colocacionDelRumbo({ rio: RIO, velocidad: AVIONETA, fecha: HOY, viento: VIENTO });
+    ej.colocar(c);
+    let x = c.x;
+    let t = 0;
+    while (ej.fase === "rio" && t < 900) {
+      x += AVIONETA * 0.1;
+      ej.paso({ x, z: c.z, rumbo: 90, sol: alturaDelSol(HOY, ej.hora!, RIO.lat, RIO.lon), enElSuelo: false, parado: false, percance: false }, 0.1);
+      t += 0.1;
+    }
+    expect(ej.fase).toBe("rumbo");
+    const debia = ((c.noche - c.hora) * 3600) / PRISA_SIN_AVANZAR;
+    expect(t).toBeGreaterThan(debia - 2);
+    expect(t).toBeLessThan(debia + 2);
+  });
+
   it("en junio también: el sol se pone más al norte y más tarde de reloj, y la noche cae en el puente", () => {
     const junio = new Date(Date.UTC(2027, 5, 20, 12));
     const { dondeAnochecio, ej } = volar(enLaMarca, { fecha: junio });
@@ -252,8 +340,12 @@ describe("Rumbo de noche: volado", () => {
     expect(llego).toMatchObject({ que: "llegaste", como: "alLado" });
     const g = ej.destino;
     const l = Math.hypot(g.x - dondeAnochecio!.x, g.z - dondeAnochecio!.z);
-    // Lo que se aparta una recta doce grados torcida en ese largo, con el viento y el giro dentro.
-    expect(ej.apartado!).toBeGreaterThan(l * Math.sin(10 * GRADO));
+    /*
+     * Lo que se aparta una recta doce grados torcida en ese largo, con el
+     * viento y el giro dentro: los ocho nudos del 020, con el morro en el 227,
+     * la empujan de vuelta hacia la recta un par de grados.
+     */
+    expect(ej.apartado!).toBeGreaterThan(l * Math.sin(9 * GRADO));
     expect(ej.apartado!).toBeLessThan(l * Math.sin(15 * GRADO));
     expect(ej.apartado!).toBeGreaterThan(LLEGADA);
     expect(ej.cierre).toBe("hecho");

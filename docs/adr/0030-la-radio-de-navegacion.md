@@ -920,6 +920,25 @@ cuadro y la información de tráfico, que sin torre la da la instructora
 (`comoSeDiceElTrafico`). Y al cerrarse el ejercicio vuelve todo: lo que se
 vuele después ya es un vuelo.
 
+**Nota H26u (18-11-2026): y la cabina.** Volando «Rumbo de noche» con el
+JAZ 90 (ADR 0031, nota H26u) se oyeron dos cosas que no son de la pista y
+que por eso esta lista no tenía: **la megafonía** —la comandante anunciando
+el crucero a mil quinientos pies encima del río, «ya llegamos a nuestra
+altura, se apagó la señal del cinturón», con su tira tapando la radio del
+ejercicio— y **la explicación de los gases automáticos** de la instructora al
+poner el automático, la palanca que se mueve sola. Las dos salen solo en los
+aviones con pasaje o con gases, y los bancos de radio volaban la avioneta.
+Ahora `LoQueCalla` lleva `laMegafonia` —los anuncios de `megafonia.paso` y lo
+que cuenta la comandante en crucero (`contarLaVidaDeCabina`)— y
+`lasExplicaciones` —«vuelo.gasesAutomaticos» al ponerlos, «vuelo.gasesSueltos»
+al soltarse y, visto después con el JAZ 60, qué es el rombo del TCAS
+(`explicarElTrafico`, «vuelo.traficoAbajo» y sus hermanas)—, las dos mientras
+dura un ejercicio que se cierra en el aire. La megafonía espera y sigue al
+cerrarse; las explicaciones, que son de una vez, no se gastan y quedan para
+el vuelo siguiente. El aviso de tráfico de verdad sigue: es seguridad. Lo que la tripulación
+dice por la turbulencia (`anunciarLaTurbulencia`) no pasa por aquí: es de
+seguridad, y sigue.
+
 Y una cosa más que salió al mirarlo: **la flecha de casa latía** saliendo por
 el R-120 de FTV, que es alejarse mar adentro con la casa detrás, lo que
 `flight/perdido.ts` llama perderse. `mirarSiSePerdio` dejaba fuera los

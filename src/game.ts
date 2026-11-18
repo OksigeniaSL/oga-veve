@@ -1830,6 +1830,7 @@ import {
   FINAL_SOBRE_VREF,
   NUDO,
   flapsQuePide,
+  maniobraLimpiaKt,
   margenDeLaFinal,
   trenQuePide,
   velocidadQueToca,
@@ -3672,7 +3673,8 @@ export class Game {
    * En el peldaño de cabina no: ahí la pantalla se lee.
    */
   private explicarElTrafico(): void {
-    if (this.traficoExplicado || canalesDe(this.tier.avisos).cabina) return;
+    // Ni en un ejercicio en el aire: no es suyo, y queda para el vuelo siguiente (H26u). Ver `loQueCalla`.
+    if (this.traficoExplicado || canalesDe(this.tier.avisos).cabina || this.loQueCalla.lasExplicaciones) return;
     const s = this.flight.state;
     /*
      * **Con calma quiere decir en vuelo tranquilo**: alto y sin subir ni
@@ -4158,8 +4160,9 @@ export class Game {
   }
   /**
    * **Lo que el ejercicio de hoy calla mientras dura**: en los de radio, que se
-   * cierran en el aire, la fase del plan, la torre, su frecuencia y la
-   * ventanilla; y en el ILS, desde que pide la frustrada, la fase. Ver
+   * cierran en el aire, la fase del plan, la torre, su frecuencia, la
+   * ventanilla, la megafonía y lo que se explica de la cabina (H26u); y en el
+   * ILS, desde que pide la frustrada, la fase. Ver
    * `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
@@ -15257,8 +15260,13 @@ export class Game {
      * **De pasaje, los anuncios los dice la escena**, cada uno en su momento y
      * sin pisar a Ara: la megafonía de siempre no decide nada en ese vuelo.
      * Ver `decirElAnuncioDeLaEscena`.
+     *
+     * **Ni mientras dura un ejercicio que se cierra en el aire** (H26u): «ya
+     * llegamos a nuestra altura» a mil quinientos pies encima del río no es del
+     * ejercicio. La megafonía espera, y al cerrarse sigue. Ver
+     * `flight/lo-que-calla-el-ejercicio.ts`.
      */
-    const anuncio = this.dePasaje ? null : this.megafonia.paso(dt, {
+    const anuncio = this.dePasaje || this.loQueCalla.laMegafonia ? null : this.megafonia.paso(dt, {
       fase: this.faseDeAhora as Fase,
       conPasaje: conPasaje(this.aircraft.mass),
       conTripulacion: conTripulacion(this.aircraft.mass),
@@ -18493,7 +18501,6 @@ export class Game {
                 colocacion === "interceptar" ||
                 colocacion === "cruce" ||
                 colocacion === "deriva" ||
-                colocacion === "rumbo" ||
                 colocacion === "brujula" ||
                 colocacion === "giroscopo"
               ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
@@ -18508,6 +18515,8 @@ export class Game {
                 ? (this.dondeEmpiezaLaEstima()?.velocidad ?? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL))
                 : colocacion === "altimetro"
                 ? this.laDeLaTabla(this.terrain.runwayElevation + (this.dondeEmpiezaElAltimetro()?.alto ?? 0))
+                : colocacion === "rumbo"
+                ? this.velocidadDelRumbo()
               : colocacion === "ils"
               ? // A la del circuito, como quien ya ha bajado para la aproximación.
                 this.aircraft.velocidadDeCircuito
@@ -25807,12 +25816,27 @@ export class Game {
     r.colocar(
       colocacionDelRumbo({
         rio: r.rio,
-        velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
+        velocidad: this.velocidadDelRumbo(),
         fecha: this.fechaPedida() ?? new Date(),
         viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
       }),
     );
     return r.colocacion;
+  }
+
+  /**
+   * **A qué velocidad se sigue el río**, m/s: la del crucero con el tope de
+   * los diez mil pies, como en los demás ejercicios de navegación, y **como
+   * mucho la de maniobra limpia** (`maniobraLimpiaKt`, la Vref y ochenta), que
+   * con los gases puestos es también la que sostienen (`laVelocidadQueToca`).
+   * Es la de ir virando cerca del campo, y con la que se sigue la curva del río
+   * antes del puente: a 250 nudos, con el ala a veinticinco grados del
+   * automático, se vira con cuatro kilómetros de radio y se sale de ella. Lo
+   * vieron el JAZ 90 y el JAZ 60 (H26u); la avioneta y el biplano, que
+   * cruzan más despacio que eso, no cambian.
+   */
+  private velocidadDelRumbo(): number {
+    return Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL, maniobraLimpiaKt(this.aircraft) * NUDO);
   }
 
   /** «Rumbo de noche», para el banco. */
@@ -25825,6 +25849,7 @@ export class Game {
     readonly sol: number;
     readonly rumboPedido: number | null;
     readonly solCuandoAnochecio: number | null;
+    readonly dondeAnochecio: { readonly x: number; readonly z: number } | null;
     readonly desvioMedio: number | null;
     readonly desvioMasGrande: number;
     readonly llegada: string | null;
@@ -25844,6 +25869,7 @@ export class Game {
       sol: this.alturaDelSol(),
       rumboPedido: r.rumboPedido,
       solCuandoAnochecio: r.solCuandoAnochecio,
+      dondeAnochecio: r.dondeAnochecio,
       desvioMedio: r.desvioMedio,
       desvioMasGrande: r.desvioMasGrande,
       llegada: r.llegada,
@@ -33891,7 +33917,8 @@ export class Game {
       (puesto && llevaGasesAutomaticos(this.aircraft)) ||
       (!puesto && this.gasDeLaFinal === "gases");
     this.pintarQuienLlevaElGas();
-    if (puesto && llevaGasesAutomaticos(this.aircraft))
+    // Con un ejercicio en el aire, no: no es suyo, y se cuenta en el vuelo siguiente (H26u).
+    if (puesto && llevaGasesAutomaticos(this.aircraft) && !this.loQueCalla.lasExplicaciones)
       this.explicarUnaVez("vuelo.gasesAutomaticos");
     /*
      * **Y con ventanilla ALT, a la altura de la ventanilla.**
@@ -34361,7 +34388,7 @@ export class Game {
     this.objetivos = { ...this.objetivos, velocidad: null };
     this.pintarQuienLlevaElGas();
     this.avisar("attention");
-    if (this.pilotoPuesto && this.gasDeLaFinalSueltoEn !== this.relojDelJuego)
+    if (this.pilotoPuesto && this.gasDeLaFinalSueltoEn !== this.relojDelJuego && !this.loQueCalla.lasExplicaciones)
       this.explicarUnaVez("vuelo.gasesSueltos");
   }
 
@@ -34433,6 +34460,14 @@ export class Game {
         tramo: "subida",
         peldano: "subida",
       };
+    } else if (this.rumboDeNoche && this.rumboDeNoche.fase !== "cerrada" && v.kt > maniobraLimpiaKt(this.aircraft)) {
+      /*
+       * **Y siguiendo el río de «Rumbo de noche», como mucho la de maniobra
+       * limpia** (H26u): es ir virando a mil quinientos pies cerca del campo, y
+       * sin plan la escalera daba los 250 del crucero bajo los diez mil pies,
+       * con los que la curva del río no se sigue. Ver `velocidadDelRumbo`.
+       */
+      v = { kt: Math.round(maniobraLimpiaKt(this.aircraft)), mach: null, tramo: "terminal", peldano: "terminal" };
     }
     if (this.tier.model === "simple") {
       /*
@@ -36260,7 +36295,8 @@ export class Game {
      * que se salga de crucero lo retira ya `seLePasoElMomento`.
      */
     if (this.megafonia.bajandoAlDestino) BOCA.retirar((c) => esUnMomentoDeCrucero(c));
-    if (this.dePasaje || !conPasaje(this.aircraft.mass)) return;
+    // Ni con un ejercicio en el aire, que lo que se oye es él (H26u). Ver `loQueCalla`.
+    if (this.dePasaje || !conPasaje(this.aircraft.mass) || this.loQueCalla.laMegafonia) return;
     const destino = this.elDestino();
     const grabada = (id: string): boolean =>
       this.instructor.vozDe(id) !== null || (this.momentosSinGrabarParaBanco && hayTexto(id));
