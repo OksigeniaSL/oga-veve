@@ -233,7 +233,7 @@ import {
   sueloDelTrafico,
   type SueloDelTrafico,
 } from "./world/suelo-del-trafico";
-import { MILLA, rangoConMemoria, type Mapa, type RangoElegido } from "./ui/carta";
+import { MILLA, rangoConMemoria, siQuedaCamino, type Mapa, type RangoElegido } from "./ui/carta";
 import { pixelesPorRadian, ponerTamanoMinimo } from "./world/se-ve-de-lejos";
 import {
   Tcas,
@@ -21335,6 +21335,12 @@ export class Game {
          * desde cuyo asiento no se podía volar (ADR 0030, H26m).
          */
         radio: radioPintada,
+        /*
+         * **Y la marca de rumbo**, la del cuadro plano: en «Rumbo de noche»,
+         * el rumbo pedido, que desde el asiento de la avioneta no se veía en
+         * ningún sitio (ADR 0031, H26o).
+         */
+        rumboPedido: this.marcaDeRumbo(),
       },
       dt,
       // Lo mismo que las pantallas: desde fuera, menos veces por segundo.
@@ -35749,6 +35755,16 @@ export class Game {
       rumbo: rumboHacia(p.x, p.z, donde.x, donde.z),
       distancia: Math.hypot(donde.x - p.x, donde.z - p.z),
     };
+  }
+
+  /**
+   * **La marca de rumbo del direccional**, magnética, grados: al objetivo del
+   * vuelo, con la misma regla que el cuadro plano —ya en el sitio, ninguna—.
+   * Ver `SixPack.update` y `DatosDeRelojes.rumboPedido`.
+   */
+  private marcaDeRumbo(): number | null {
+    const o = siQuedaCamino(this.aDondeVoy);
+    return o ? vuelta((o.rumbo * 180) / Math.PI + (this.elCampoMontado().escenario.magneticVariation ?? 0)) : null;
   }
 
   /**

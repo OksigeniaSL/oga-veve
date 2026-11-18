@@ -147,6 +147,13 @@ export class SixPack {
         '<g data-needle="dg-card">' +
           `<circle cx="50" cy="50" r="${CARA}" class="dg__rosa" />` +
           escalaSvg(c.rosa, { radial: true }) +
+          /*
+           * **La marca de rumbo**, en el borde de la rosa y girando con ella:
+           * la del direccional de una avioneta, la que se pone con su botón.
+           * Aquí la pone el objetivo del vuelo, como en la rosa de los de
+           * cristal; sin objetivo, no sale. Ver `rumboPedido` en `update`.
+           */
+          `<g data-needle="dg-bug" visibility="hidden"><path class="dg__marca" d="M46.4 ${50 - CARA} h7.2 v3.4 l-3.6 3.2 l-3.6 -3.2 Z" /></g>` +
           "</g>" +
           // Y desde el peldaño de cabina, el curso y la aguja encima: un HSI. Ver `ui/radio-en-la-rosa.ts`.
           radioEnElDireccionalSvg(),
@@ -212,6 +219,8 @@ export class SixPack {
     /** Lo puesto en la rueda y lo que hay de verdad. Ver `altimetro.ts`. */
     presion: { readonly puesta: number; readonly delSitio: number } | null,
     declinacion = 0,
+    /** **El rumbo de la marca**, magnético, grados; `null`, sin marca. */
+    rumboPedido: number | null = null,
   ): void {
     if (!this.root) return;
     const c = this.cuadro;
@@ -233,6 +242,9 @@ export class SixPack {
     // Direccional: la rosa gira al revés que el avión, porque lo que se
     // mueve es el mundo.
     this.rotate("dg-card", -((state.heading * 180) / Math.PI + declinacion));
+    // La marca va en la rosa: girada a su rumbo, sale arriba cuando el morro va en él.
+    poner(this.needles.get("dg-bug"), "visibility", rumboPedido === null ? "hidden" : "visible");
+    if (rumboPedido !== null) this.rotate("dg-bug", rumboPedido);
 
     // Horizonte artificial: el disco gira contra el alabeo y sube o baja con
     // el cabeceo, así que representa el mundo y no la máquina.

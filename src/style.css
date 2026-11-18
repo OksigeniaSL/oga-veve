@@ -5973,6 +5973,13 @@ button.motor__tecla::after {
   fill: var(--cabina-esfera);
 }
 
+/* La marca de rumbo del direccional: lo que quiero, en magenta. Ver `SixPack`. */
+.dg__marca {
+  fill: var(--cabina-objetivo);
+  stroke: var(--cabina-filo);
+  stroke-width: 0.5;
+}
+
 .dg__avion {
   fill: none;
   stroke: var(--cabina-simbolo);

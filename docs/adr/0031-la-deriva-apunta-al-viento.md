@@ -297,3 +297,144 @@ En el juego, con la avioneta en Asunción, Taguató y la Intel por ANGLE
   primera vez que se pinta algo en el suelo que no es del aeródromo.
 - Dos mallas más en la escena mientras dura, dos dibujos por imagen y unas
   decenas de sumas por paso. Fuera del ejercicio no existen.
+
+## Enmienda H26o (18-11-2026): «Rumbo de noche», el peldaño 1
+
+El primero de la escalera de #51: «cae la noche a mitad del "sigue el río" y
+solo queda el HDG». Va como enmienda de este ADR y no en uno propio porque es
+la misma familia —navegación sin radio, `escena: "navegacion"`, un sitio de
+verdad, la misma puerta del hangar, lo que se calla y el panel del final— y
+porque la única decisión nueva, la de la noche, no cambia nada del motor del
+cielo: lo usa como está. Lo lleva `flight/rumbo-de-noche.ts`.
+
+### Un ejercicio aparte, y no una continuación de «Seguir el río»
+
+«Seguir el río» (`RIO_ABAJO` en `content/missions.ts`) es una misión: se
+despega, se pasa por dos puntos del cauce y se aterriza, y la lleva el
+corredor genérico de objetivos (`missions/runner.ts`), que no sabe de la
+hora, ni del instrumento de cada avión, ni de lo que se calla. Hacerla
+anochecer a mitad sería meterle al contenido tres cosas del motor, y obligar
+a despegar y volar diez minutos para llegar a la lección. El ejercicio
+**empieza literalmente a mitad del río**, que es lo que pide el issue: en el
+aire, encima del cauce, con el sol recién puesto. El río es el mismo —el
+Paraguay, medido igual: las celdas de `data/terrain/pettirossi.bin` por
+debajo de la lámina de los 56 metros— y el punto donde cae la noche es el
+puente Remanso, el de «Ver el río» y el de «Apuntá al viento».
+
+| | |
+| --- | --- |
+| Salida | encima del cauce a 9,6 km al norte del campo (−2292, −9625), rumbo 157 verdaderos, río abajo, a mil quinientos pies |
+| Con luz | 3,8 km siguiendo el río hasta el puente |
+| Anochece | en el puente (−2910, −6353), donde el río tuerce al suroeste |
+| De noche | 7,7 km casi rectos —ningún punto medido se aparta de la recta más de 110 m, con un cauce de 800 de ancho— hasta (−7333, 0) |
+| Rumbo | 215 verdaderos, **225 en la rosa** de Asunción (`magneticVariation` 10), de cinco en cinco |
+
+Se vende al mundo: el campo es el ejemplo. `RIOS_DE_NOCHE` es una tabla por
+indicativo, y un campo con un río ancho y un tramo derecho dentro de su mundo
+entra con una línea.
+
+### La noche, la de verdad y apurada
+
+Lo que el juego ya sabe hacer, y se usa tal cual: **el sol de verdad**
+(`solALaHora`, Meeus, en el sitio y el día), la hora solar del sitio, poner
+la hora en cualquier momento del vuelo (`ponerHora`, que el vuelo largo
+llama una vez por minuto: «el amanecer amanece»), las luces que se encienden
+con la altura del sol (`encendidoSegunElSol`: farolas, balizamiento y faros)
+y los colores que se van con el crepúsculo (`de-noche-sin-color.ts`).
+
+Lo que no puede hacer es **meter un anochecer de verdad en el mundo del
+escenario**. Medido en la prueba: en Asunción, el 18 de noviembre, del ocaso
+a los seis grados bajo el horizonte pasan veinticinco minutos largos, con el
+sol bajando un quinto de grado por minuto y poniéndose al oesuroeste. A la
+velocidad de la avioneta eso son ochenta kilómetros, y el mundo de Asunción
+tiene veintidós. Se miraron tres salidas:
+
+1. **El reloj de verdad**: no anochece nunca dentro del ejercicio. Es lo que
+   pasaría volando el río a esta hora, y no enseña el peldaño.
+2. **Un salto**, como los del vuelo largo (ADR 0023): corta el vuelo justo en
+   el momento que es la lección, que es ver irse la luz.
+3. **Apurar el reloj del cielo, y decirlo**. Es la elegida: `PRISA`, diez
+   veces. El sol hace su camino de verdad, se pone donde se pone y las luces
+   se encienden a la altura de verdad; lo único que no es de verdad es lo que
+   tarda, y eso se lee en el panel del final: «De verdad, la noche tarda
+   media hora en caer: acá la apuramos».
+
+**La hora de salida sí es la de hoy**: la hora solar en que el sol está a la
+altura que hace que, con el reloj diez veces apurado y el avión siguiendo el
+cauce a su velocidad —con el viento del sitio dentro—, **la noche caiga en el
+puente** (`colocacionDelRumbo`). Con la avioneta se sale con el sol a unos
+tres grados y medio bajo el horizonte; con un reactor a doscientos cincuenta
+nudos, más bajo. La noche es el ocaso civil, `NOCHE`, seis grados: el mismo
+de `esDeNoche` y de las luces. Y **quien decide que anocheció es el cielo
+pintado**, no una cuenta aparte: el ejercicio lee la altura del sol de
+`sky.sunDirection`.
+
+**Lo que cuesta**: cada medio segundo, `ponerLaLuzDeLaHora` —lo de
+`ponerHora` menos repoblar las aves, que se rehacen enteras y no se pagan dos
+veces por segundo—: la cuenta del sol y del cielo de noche, los uniformes de
+la cúpula y media docena de `ponerSol` de las luces. Es lo que el vuelo largo
+hace una vez por minuto, y fuera del ejercicio no existe. Sin mallas nuevas,
+sin texturas y sin dibujos de más por imagen.
+
+### El rumbo, en el instrumento de cada avión
+
+Al anochecer, la instructora pide el rumbo **desde donde se esté** a donde
+el río sigue —quien se apartó del río con luz tiene que llegar igual—, en
+magnético y de cinco en cinco, como lo diría quien va sentado al lado. Ese
+rumbo es el objetivo del vuelo (`aDondeVoy`): la marca de rumbo de la rosa
+del cuadro plano se va a él, y la pantalla de navegación de los de cristal
+lo enseña con su distancia. La medida es lo que el morro se aparta de la
+marca, cada paso: de media y lo más.
+
+- **Se va**: más de diez grados tres segundos. Se dice una vez, con el dibujo
+  del lado al que se fue; vuelve a poder decirse cuando el morro ha vuelto a
+  cinco grados de la marca, no cuando pasa un rato.
+- **En la marca**: veinte segundos seguidos a cinco grados o menos. Una vez.
+- **Llegar**: a menos de seiscientos metros de donde el río sigue. Si el
+  rumbo se fue, al pasar a su altura o al alejarse de más: nadie suspende, y
+  se le cuenta por dónde pasó.
+
+### El peldaño: desde Tukã
+
+`DESDE_TUKA`, como la deriva. Lo esencial se entiende sin leer: la rosa de la
+tarjeta con la marca en magenta —«lo que quiero», como en las pantallas— y el
+avión en el centro, en claro sobre la noche, que se pone ámbar y gira cuando
+el morro se va; y la voz. La palabra en Tukã («El rumbo», «¡Volvé!»), y **el
+número**, desde Taguató, delante de la frase: «Rumbo 225». Al llegar, desde
+Taguató, lo que se apartó de media («±2° en promedio»). Sin voz de cabina:
+aquí no canta ninguna caja.
+
+**En Guyrami no, y no por la edad**: su modelo, el sencillo, no lleva viento
+(`FlightModel.ponerViento`) y sus baches solo suben y bajan
+(`ArcadeFlightModel.ponerRacha`): el morro no se va solo, y mantener el rumbo
+no cuesta nada. Si un día los lleva, baja con la deriva.
+
+### Las frases
+
+Seis para la instructora, en `es-PY.ts` y en `en.ts`, cortas: presentar, el
+anochecer, se va, en la marca y las dos de llegar. Sin grabar: al final de
+`scripts/frases-para-grabar.mjs` (`DEL_RUMBO`); hasta entonces, la tarjeta y
+su texto, y la frase muda. El número del rumbo, el desvío y el cierre se
+escriben y no se dicen. El guaraní, como está.
+
+### Lo que se prueba
+
+`flight/rumbo-de-noche.test.ts`, con un piloto de cinemática —el morro donde
+se diga, tres grados por segundo como mucho, la verdadera por el morro más el
+viento del sitio— y **el sol del cielo** a la hora que lleva el ejercicio:
+dónde se ofrece; que el tramo de noche es una recta encima del agua; el ocaso
+de verdad de ese día (de veinticuatro a treinta minutos hasta la noche, al
+oesuroeste, un quinto de grado por minuto); que se sale a la hora solar en
+que el sol está recién puesto; y volado: **la noche cae a menos de
+cuatrocientos metros del puente** con la avioneta, en noviembre y en junio, y
+a menos de un kilómetro con un reactor, que a doscientos cincuenta nudos
+corta las curvas del río; pide el 225; **con la flecha en la marca llega
+encima**, a menos de grado y medio de media; el morro que se va quince grados
+se dice una vez y hacia su lado; dos idas separadas por una vuelta a la
+marca, dos avisos; **con el morro torcido doce grados se pasa al lado** lo
+que dice el seno; un percance lo cierra.
+
+`scripts/ver-el-rumbo-de-noche.mjs`: el mismo vuelo en el juego, con el
+automático de rumbo como quien sostiene el avión —el río punto a punto con
+luz, el rumbo pedido de noche; con `OGA_SE_VA=1`, una ida de la marca—, con
+capturas desde fuera y desde el asiento, antes y después de anochecer.
