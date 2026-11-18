@@ -3998,11 +3998,12 @@ export class Game {
   /**
    * **Lo que el ejercicio de hoy calla mientras dura**: en los de radio, que se
    * cierran en el aire, la fase del plan, la torre, su frecuencia y la
-   * ventanilla. Ver `flight/lo-que-calla-el-ejercicio.ts`.
+   * ventanilla; y en el ILS, desde que pide la frustrada, la fase. Ver
+   * `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
     const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva;
-    return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada");
+    return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada", this.ils?.fase === "frustrando");
   }
   /**
    * **Si el ejercicio ya declaró la emergencia**: MAYDAY o PAN PAN con un
@@ -20964,6 +20965,8 @@ export class Game {
      */
     const radio = this.laRadioParaElCuadro();
     const declinacionDelCampo = this.elCampoMontado().escenario.magneticVariation ?? 0;
+    // Pintada una vez, para la pantalla de la cabina y para los relojes del panel.
+    const radioPintada = radio ? pintarLaRadio(radio, declinacionDelCampo) : null;
     this.aircraftMesh.pantallas?.actualizar(
       {
         /*
@@ -20995,7 +20998,7 @@ export class Game {
         // La del campo en el que se está: sus pistas van numeradas con la
         // suya, y el rumbo tiene que casar con el número pintado.
         declinacion: declinacionDelCampo,
-        radio: radio ? pintarLaRadio(radio, declinacionDelCampo) : null,
+        radio: radioPintada,
         cabeceo: pitchAngleOf(this.flight.state.orientation),
         alabeo: bankAngleOf(this.flight.state.orientation),
         /*
@@ -21274,6 +21277,13 @@ export class Game {
         combustible: this.elDeposito(),
         tren: this.input.controls.tren,
         cuadro: cuadroDe(this.aircraft),
+        /*
+         * **Y la radio, la misma de la pantalla**: desde el asiento de un
+         * avión de esferas el cuadro plano no se pinta, y el direccional del
+         * panel era un giróscopo sin agujas — el ILS se ofrecía en un avión
+         * desde cuyo asiento no se podía volar (ADR 0030, H26m).
+         */
+        radio: radioPintada,
       },
       dt,
       // Lo mismo que las pantallas: desde fuera, menos veces por segundo.
@@ -24521,7 +24531,14 @@ export class Game {
     const radio = this.radioAlDia();
     const adf = a ? radio.leer(a, this.elevacionDeLaEstacion).adf : null;
     const id = g.estacion.emisora.estacion.id;
-    const sintonizada = g.esLaEstacion(radio.adfMhz) && adf?.lectura.emisora?.estacion.id === id;
+    /*
+     * **Puesta no es oída**: `sintonizada` es la frecuencia en la caja, lo que
+     * se pone y se quita con la mano; lo que marca, solo si lo que se oye es
+     * esa estación. Iban juntas, y perder la señal pedía «poné la radio» con
+     * la radio puesta: lo que sin señal se ve es la bandera (ADR 0030, H26m).
+     */
+    const sintonizada = g.esLaEstacion(radio.adfMhz);
+    const oida = sintonizada && adf?.lectura.emisora?.estacion.id === id;
     const sucesos = g.paso(
       {
         x: s.position.x,
@@ -24530,8 +24547,8 @@ export class Game {
         parado: s.onGround && s.groundSpeed < 0.6,
         percance: this.percance !== null,
         sintonizada,
-        identificada: sintonizada && this.identificadaYa === `adf ${id}`,
-        relativa: sintonizada ? (adf?.lectura.relativa ?? null) : null,
+        identificada: oida && this.identificadaYa === `adf ${id}`,
+        relativa: oida ? (adf?.lectura.relativa ?? null) : null,
       },
       dt,
     );
@@ -24656,8 +24673,10 @@ export class Game {
     const radio = this.radioAlDia();
     const nav = a ? radio.leer(a, this.elevacionDeLaEstacion).nav : null;
     const id = g.estacion.emisora.estacion.id;
-    const sintonizada = g.esLaEstacion(radio.navMhz) && nav?.lectura.emisora?.estacion.id === id;
-    const l = sintonizada ? nav?.lectura : null;
+    // Puesta no es oída: ver `practicarLaAguja`.
+    const sintonizada = g.esLaEstacion(radio.navMhz);
+    const oida = sintonizada && nav?.lectura.emisora?.estacion.id === id;
+    const l = oida ? nav?.lectura : null;
     const sucesos = g.paso(
       {
         x: s.position.x,
@@ -24666,7 +24685,7 @@ export class Game {
         parado: s.onGround && s.groundSpeed < 0.6,
         percance: this.percance !== null,
         sintonizada,
-        identificada: sintonizada && this.identificadaYa === `nav ${id}`,
+        identificada: oida && this.identificadaYa === `nav ${id}`,
         rumbo: (s.heading * 180) / Math.PI,
         curso: radio.curso,
         desviacion: l?.desviacion ?? null,
@@ -25041,8 +25060,9 @@ export class Game {
     const radio = this.radioAlDia();
     const nav = a ? radio.leer(a, this.elevacionDeLaEstacion).nav : null;
     const id = g.estacion.emisora.estacion.id;
-    const sintonizada = g.esLaEstacion(radio.navMhz) && nav?.lectura.emisora?.estacion.id === id;
-    const l = sintonizada ? nav?.lectura : null;
+    // Puesta no es oída: ver `practicarLaAguja`.
+    const sintonizada = g.esLaEstacion(radio.navMhz);
+    const l = sintonizada && nav?.lectura.emisora?.estacion.id === id ? nav?.lectura : null;
     const sucesos = g.paso(
       {
         x: s.position.x,
@@ -25236,8 +25256,13 @@ export class Game {
     const radio = this.radioAlDia();
     const nav = a ? radio.leer(a, this.elevacionDeLaEstacion).nav : null;
     const id = g.ils.estacion.id;
-    const sintonizada = g.esElLocalizador(radio.navMhz) && nav?.lectura.emisora?.estacion.id === id;
-    const l = sintonizada ? nav?.lectura : null;
+    /*
+     * Puesta no es oída: ver `practicarLaAguja`. Aquí es donde se veía: en la
+     * frustrada se pasa por encima de la antena del localizador, al otro
+     * extremo de la pista, y detrás de ella no llega.
+     */
+    const sintonizada = g.esElLocalizador(radio.navMhz);
+    const l = sintonizada && nav?.lectura.emisora?.estacion.id === id ? nav?.lectura : null;
     const sucesos = g.paso(
       {
         enElSuelo: s.onGround,

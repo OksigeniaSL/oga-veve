@@ -61,13 +61,29 @@ export const NO_CALLA_NADA: LoQueCalla = {
 };
 
 /**
+ * **Y el que acaba en la pista, desde que pide irse al aire**: la fase del plan
+ * y nada más. El ILS acaba en la pista o en la frustrada encima de ella, y
+ * desde los mínimos con las agujas fuera lo que manda es su «frustrada: gas a
+ * fondo y arriba». Quien se va nivelado o subiendo poco sale de la final sin
+ * los quince metros de `SUBIDA_DE_IRSE`, y la fase decía «andá a la pista»
+ * justo detrás: dos órdenes contrarias en el mismo momento (ADR 0030, H26m).
+ * La torre y su frecuencia siguen, que mandar al aire y despejar la pista es
+ * suyo y es parte de la aproximación.
+ */
+export const SOLO_LA_FASE: LoQueCalla = { ...NO_CALLA_NADA, laFase: true };
+
+/**
  * **Lo que calla el ejercicio de hoy**: todo eso mientras dura uno que acaba
- * en el aire (`Ejercicio.acabaEnElAire`), y nada en cuanto se cierra.
+ * en el aire (`Ejercicio.acabaEnElAire`); la fase, mientras uno que acaba en
+ * la pista está pidiendo irse al aire (`seVaAlAire`); y nada en cuanto se
+ * cierra.
  */
 export function loQueCallaElEjercicio(
   ejercicio: Pick<Ejercicio, "acabaEnElAire"> | null,
   cerrado: boolean,
+  seVaAlAire = false,
 ): LoQueCalla {
-  if (!ejercicio?.acabaEnElAire || cerrado) return NO_CALLA_NADA;
-  return { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true };
+  if (!ejercicio || cerrado) return NO_CALLA_NADA;
+  if (ejercicio.acabaEnElAire) return { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true };
+  return seVaAlAire ? SOLO_LA_FASE : NO_CALLA_NADA;
 }

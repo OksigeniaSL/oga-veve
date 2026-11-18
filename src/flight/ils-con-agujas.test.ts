@@ -16,6 +16,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import juego from "../game.ts?raw";
 import { PYKASU, ARAI } from "./aircraft";
 import { ejercicioPorId, ejerciciosPara } from "./ejercicios";
 import {
@@ -413,6 +414,29 @@ describe("el día del ejercicio: la nube, rota justo antes de los mínimos", () 
     const d = dentroA(capa(250 * 0.3048), ALTURA_DE_DECISION);
     expect(d.media).toBeGreaterThan(0.2);
     expect(d.peor).toBeGreaterThan(0.5);
+  });
+});
+
+/*
+ * **Perder la señal no es quitar la radio** (H26m). En la frustrada se pasa por
+ * encima de la antena del localizador, al otro extremo de la pista, y detrás
+ * de ella no llega: el juego daba la radio por quitada y pedía «poné el ILS en
+ * la NAV» con el ILS puesto. Lo que se le da al ejercicio es la frecuencia, y
+ * sin señal el localizador va a `null`.
+ */
+describe("el ILS puesto, se oiga o no", () => {
+  it("pasada la antena, sin señal y con el ILS puesto, no se pide sintonizar", () => {
+    const ej = new IlsConAgujas(ILS, IFV);
+    const paso = (localizador: number | null) =>
+      ej.paso({ enElSuelo: false, parado: false, percance: false, sintonizada: true, localizador, senda: null, altura: 600 }, 0.5);
+    paso(3);
+    paso(3);
+    expect(paso(null).map((s) => s.que)).not.toContain("sintonizar");
+  });
+
+  it("el juego le pasa la frecuencia como puesta, y lo que marca solo si se oye esa emisora", () => {
+    expect(juego).toMatch(/const sintonizada = g\.esElLocalizador\(radio\.navMhz\);/);
+    expect(juego).toMatch(/const l = sintonizada && nav\?\.lectura\.emisora\?\.estacion\.id === id \? nav\?\.lectura : null;/);
   });
 });
 

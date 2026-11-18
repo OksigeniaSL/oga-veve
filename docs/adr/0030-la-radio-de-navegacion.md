@@ -2718,3 +2718,193 @@ ha tocado.
 - **La nube contra el mismo sitio sin nube**: la tirada con `CAVOK`, que
   daría «aire» fuera de la capa en el mismo sitio, tampoco tuvo hueco; la
   comparación de arriba es contra el puesto y el crucero.
+
+## Enmienda H26m (18-11-2026): las agujas desde el asiento, y los tres fallos del ILS en calma
+
+Lo que H26k dejó de los ejercicios de radio, en el orden en que se pidió.
+
+### Desde el asiento del bimotor no había agujas
+
+La foto de H26k desde el asiento del JAZ 40, volando el ILS, enseñaba los
+seis relojes, los de motor y las luces del tren, y nada con que volar el
+ejercicio: el cuadro plano —con su direccional hecho HSI desde el peldaño de
+la radio (`radioEnElDireccionalSvg`)— no se pinta en la vista de cabina, y
+el direccional del panel en 3D era un giróscopo sin agujas. Se le ofrecían
+los cinco ejercicios de radio a un avión desde cuyo asiento no se podía volar
+ninguno.
+
+**La tabla**, avión por avión: los que tienen NAV o ADF
+(`RADIOS_A_BORDO`), con los ejercicios que se les ofrecen, lo que lleva su
+panel en 3D y lo que lleva el avión de su ficha (`ficha-tecnica.ts`). El
+fumigador no lleva ni NAV ni ADF y no se le ofrece ninguno; el helicóptero no
+tiene ejercicios de radio.
+
+| avión | referencia | se le ofrece | panel en 3D, antes | panel en 3D, ahora | el de verdad |
+|---|---|---|---|---|---|
+| JAZ 20 | Cessna 172R | aguja, radial, interceptar, cruce, ILS | six-pack con direccional sin agujas: **nada** | el direccional, HSI: curso y barra, TO/FROM, bandera NAV, escala de la senda y aguja del ADF | indicador de VOR/ILS con senda y de ADF junto al six-pack, o un HSI en el sitio del direccional |
+| JAZ 40 | PA-34-200T Seneca II | las cinco | **nada**, igual | lo mismo que el JAZ 20 | lo mismo; en muchos, el HSI en el sitio del direccional |
+| JAZ 50 | DHC-6 Twin Otter 400 | las cinco | pantalla de navegación con la rosa, el CDI, la escala de la senda y la aguja del ADF; la senda también en el horizonte | sin cambio | PFD con HSI, senda y agujas de marcación |
+| JAZ 60 | Beech 1900D | las cinco | lo mismo que el JAZ 50 | sin cambio | EFIS con EHSI, senda y agujas de marcación |
+| JAZ 90 | Embraer 170 | las cinco | pantalla de navegación y horizonte, como los de cristal | sin cambio | PFD con HSI, LOC y GS, agujas de marcación |
+| JAZ 110 | Boeing 787-9 | las cinco | lo mismo | sin cambio | PFD con LOC y GS, ND con las agujas del VOR y el ADF |
+| JAZ 120 | Boeing 747-100 | las cinco | lo mismo, en cristal | sin cambio | HSI electromecánico con la senda, ADI con la senda y RDMI con las agujas del ADF |
+
+Ninguno de los que se le ofrecen deja de llevar con qué en el avión de
+verdad, así que no se quita ningún ejercicio a ningún avión. El 747-100 se
+vuela con la cabina de línea en cristal desde antes de esta tanda; lo que
+dice su panel —el curso, la senda y la aguja del ADF— es lo que dicen sus
+relojes, en el sitio en que van.
+
+**El arreglo, en los dos de esferas**: el direccional del panel en 3D se hace
+HSI, como el del cuadro plano. Es el sitio en el que lo lleva una avioneta
+que tiene uno —el del giróscopo, en el centro de la fila de abajo— y es **el
+mismo instrumento que el cuadro plano**, que es la regla de los relojes desde
+que «los paneles de los aviones no coinciden en diferentes vistas»: un CDI y
+un ADF sueltos al lado del six-pack serían otro panel distinto del de la
+otra vista. `radioEnElDireccional` en `world/relojes-cabina.ts` pinta lo que
+pinta `radioEnElDireccionalSvg`, en las unidades de su esfera —un cuadrado de
+cien con la cara de 43— llevadas al lienzo, y con los mismos anchos.
+
+- **Sin una segunda cuenta**: `LaRadioPintada` sale de `pintarLaRadio` una vez
+  por imagen en `game.ts` y la miran la pantalla de navegación de los de
+  cristal y los relojes del panel; el cuadro plano la saca de la misma
+  lectura de la radio.
+- **Sin las letras de las esquinas**: en el cuadro plano van en el cuadrado,
+  fuera de la cara redonda —el curso, la NAV y el ADF—, y en el modelo ese
+  sitio queda detrás del bisel, que cierra la esfera al 99 % de su radio
+  (`reloj` en `modelos/comun.py`). El curso se lee como en un HSI de aguja:
+  la punta de la flecha contra la rosa. La escala de la senda, a 1,08 radios,
+  cabe dentro del bisel.
+- **Y la brújula del parabrisas, no**: lleva la cara del direccional
+  (`reloj_dg`) porque gira igual, pero es un imán.
+
+La prueba (`relojes-cabina-radio.test.ts`) mira el dibujo —la barra donde la
+pone el cuadro plano, el rombo de la senda, la aguja del ADF, las banderas— y
+que **cada avión al que se le ofrece un ejercicio de radio lleve en su modelo
+dónde leerlo**: el `reloj-dg` en los de esferas y la `pantalla-rumbo` en los
+demás. Un avión nuevo con radio y sin eso no pasa.
+
+### La senda en la pantalla de navegación, mirada
+
+La escala de la senda de H26j en la pantalla de navegación de la cabina en
+3D (`escalaDeLaSendaEnLaRosa`) solo tenía la prueba de mesa. Volado con el
+JAZ 60 en Fuerteventura, con el alisio, la Intel por ANGLE y la foto desde el
+asiento en la final (`OGA_AVION=jaz-60 OGA_CABINA=1`): **está**, a la
+derecha de la rosa, con sus cuatro puntos y el rombo magenta en el centro
+—en ese instante, 0,06 puntos—; y la del horizonte, a la derecha de la
+actitud, igual. El CDI, la aguja del ADF y las letras de la NAV y del ADF, en
+su sitio.
+
+Esa tirada, 18 de 20: lo que falló fue el final, que el piloto de banco no
+posó el turbohélice —el ejercicio cerró con `otraVez` tras los mínimos con
+las dos agujas dentro (0,04 y −0,32)— y el panel del final dijo lo que dice
+entonces. Es el piloto de banco de la avioneta aterrizando un 1900D; no se ha
+mirado más en esta tanda.
+
+### Sin el alisio, apartado: los tres fallos, con el rastro
+
+La tirada de H26k que se quedó en 16 de 20, el bimotor en calma y apartado
+del localizador, volada otra vez con el banco apuntando cada segundo desde
+los mínimos la altura, la velocidad, lo que sube, el gas, los flaps y el tren,
+la fase del ejercicio y la del plan, lo que oye la NAV y cada frase nueva de
+cada boca. Lo que se vio:
+
+- **En los mínimos**, a 193 ft y 98 nudos, el ejercicio pide la frustrada.
+  El piloto de banco pone gas a fondo y **nivela**: subía solo pasados 1,2
+  veces la de referencia —103 nudos—, y con los flaps de aterrizar y el tren
+  fuera el bimotor a fondo se sostiene en 96–103. Medio minuto después
+  seguía a 203 ft.
+- **A los 177 s**, sin haber subido diez pies, la fase del plan sale de la
+  final a «en vuelo» y, por la regla de H26j —salir de la final sin haber
+  subido los quince metros de `SUBIDA_DE_IRSE` se dice entero—, suena
+  **«andá a la pista»** detrás de «frustrada».
+- **A los 212 s**, nivelado a 205 ft sobre el otro extremo de la pista, la
+  NAV sigue en **109.50 y deja de oír IFV**, a 1,3 millas de la antena de la
+  senda: es donde está la del localizador, 2,3 km más al norte según las
+  coordenadas del AIP (`radioayudas-publicadas.ts`), y por encima y detrás
+  de ella no llega. El juego daba
+  eso por radio quitada: **«poné el ILS en la NAV»** con el ILS puesto.
+- Y el ejercicio, en `frustrando` hasta el tope del banco: sin subir los
+  cuarenta metros no se cierra.
+
+Las tres causas, y dónde se arreglan:
+
+1. **El cierre: el piloto de banco.** El ejercicio y el avión hacen lo que
+   deben: no subir no es irse al aire. Lo que no hacía lo que haría quien
+   vuela era el banco, pensado para la avioneta. Ahora vuela la frustrada
+   como se vuela: gas a fondo, una muesca menos de flaps —veinticinco grados
+   en el Seneca, veinte en el 172—, el morro a la velocidad de subida
+   **subiendo siempre** —la velocidad se coge subiendo menos, no nivelando—,
+   y con el variómetro arriba y diez metros ganados, el tren dentro.
+2. **«Poné el ILS» con el ILS puesto: puesta no es oída.** `sintonizada`
+   juntaba dos cosas: la frecuencia en la caja, que es lo que se pone y se
+   quita con la mano, y que lo que se oye en ella sea la estación del
+   ejercicio. Ahora es solo la frecuencia, y lo que marca la aguja se le da
+   al ejercicio solo si se oye esa estación: sin señal, el localizador va a
+   `null` y lo que se ve es la bandera, como en el avión. Era el mismo patrón
+   en los cuatro ejercicios que miran una radio —la aguja, el radial, el
+   corte y el ILS—, y en los cuatro se ha cambiado; en los tres del VOR y el
+   NDB no se llegaba a ver porque empiezan cerca de su estación.
+3. **«Andá a la pista» detrás de la frustrada: el ejercicio no callaba la
+   fase.** Los de radio que se cierran en el aire ya la callaban
+   (`loQueCallaElEjercicio`, H26f); el ILS no, porque acaba en la pista. Pero
+   desde que pide la frustrada lo que manda es su orden, y quien se va
+   subiendo poco sale de la final sin los quince metros y oía la contraria.
+   Ahora, mientras el ILS está en `frustrando`, se calla **la fase y nada
+   más**: la torre y su frecuencia siguen, que mandar al aire y despejar la
+   pista es suyo. Al cerrarse vuelve todo.
+
+### Volado
+
+Todo en Fuerteventura, el ILS de la 01, con la Intel por ANGLE y el banco en
+una copia quieta del árbol —editar las fuentes con un banco volando falsea
+lo que mide—.
+
+- **El bimotor en calma y apartado, con los tres arreglos: 20 de 20.** En
+  los mínimos, a 194 ft y 1,83 puntos del localizador, la frustrada; los
+  flaps de 40 a 25 en tres segundos, el tren dentro a partir de los 228 ft, y
+  la frustrada cerrada a 323 ft, quince segundos después. La fase del plan
+  sale de la final a los 260 ft, ya con veinte metros subidos: la tarjeta de
+  «en vuelo», callada. Ni «andá a la pista» ni «poné el ILS»; el panel del
+  final con la frase de cierre de la frustrada.
+- **La misma tirada antes, con el rastro**: la de arriba, en «Sin el alisio,
+  apartado». Con «puesta no es oída» ya dentro —esa copia lo llevaba—, la
+  NAV pierde IFV a los 212 s con 109.50 puesto y no se pide nada: 17 de 20,
+  los tres que fallan son el cierre, «andá a la pista» y el panel del final.
+- **Y con los arreglos del juego y el piloto de antes**, el que se va
+  nivelado —para ver lo que oye quien se va subiendo poco—, con el banco
+  cortado ochenta segundos después de los mínimos: la fase del plan sale de
+  la final a los 180 s **sin decir nada**, la NAV pierde IFV a 1,3 millas de
+  la antena de la senda con 109.50 puesto **sin que se pida nada**, y desde
+  los mínimos la instructora no dice más que la frustrada. 18 de 20: los dos
+  que fallan son el cierre y su panel, que sin subir no hay frustrada que
+  cerrar, y así tiene que ser.
+- **El JAZ 20 con el alisio, desde el asiento: 19 de 19**, y la foto en la
+  final: la flecha del curso en el 005, la aguja del ADF, los puntos del CDI
+  y, a la derecha de la cara, la escala de la senda con el rombo en el
+  centro, dentro del bisel. La brújula del parabrisas, sin nada.
+- **El JAZ 40, desde el asiento, en la misma final**: lo mismo.
+- **El JAZ 60**, arriba: la senda en la pantalla de navegación y en el
+  horizonte.
+- **vitest entero**: 515 ficheros, 10.494 pruebas bien y 29 saltadas.
+
+Lo que se ve en las fotos del direccional, y no se ha cambiado: con la
+barra en el centro, el avioncito y la aguja del ADF van encima de ella, como
+en el cuadro plano; y la esfera entera mide en pantalla poco más de cien
+píxeles. Se leen la flecha, el rombo y la aguja; las letras de las esquinas,
+que no van, no se leerían.
+
+### Lo que queda
+
+- **Las letras del direccional en 3D**: el curso en cifras y los
+  identificadores de la NAV y del ADF van en el cuadro plano fuera de la cara
+  redonda, y en el modelo ese sitio es el bisel. Para «¿En qué radial
+  estoy?» el número se lee con la flecha contra la rosa, de cinco en cinco
+  grados; si hiciera falta la cifra desde el asiento, el sitio es una
+  ventanilla en el modelo (`modelos/comun.py`), no el lienzo de la esfera.
+- **El JAZ 60 no posó**: en su tirada el ejercicio cerró con `otraVez`
+  después de unos mínimos con las dos agujas dentro. Es el piloto de banco
+  de la avioneta aterrizando un 1900D; no se ha mirado.
+- **El 747-100 en cristal**: lleva en el panel lo que llevan sus relojes de
+  aguja —el curso, la senda y la aguja del ADF—, pero en pantallas. Viene de
+  antes y no es de esta tanda.
