@@ -65,7 +65,8 @@ export type Accion =
   | "keys"
   | "cuadro"
   | "engine"
-  | "pausa";
+  | "pausa"
+  | "pitotHeat";
 
 interface Definicion {
   /** Clave de traducción del nombre de la acción. */
@@ -271,6 +272,12 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
    * `ui/panel.ts`.
    */
   pausa: { label: "tecla.pausa", defecto: ["Escape"], held: false },
+  /*
+   * **La calefacción del pitot**, en el 4: libre, y al lado de la perilla del
+   * direccional, que es otro trabajo de cabina con los números. Se pulsa y se
+   * queda, como el interruptor de verdad. Ver `flight/pitot-helado.ts`.
+   */
+  pitotHeat: { label: "tecla.pitotHeat", defecto: ["Digit4"], held: false },
 };
 
 export const ORDEN: readonly Accion[] = Object.keys(ACCIONES) as Accion[];

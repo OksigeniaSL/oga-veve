@@ -303,6 +303,7 @@ export const EN: Dictionary = {
   "tecla.credits": "Credits",
   "tecla.keys": "View and change keys",
   "tecla.pausa": "Pause the game",
+  "tecla.pitotHeat": "Pitot heat",
   "tecla.engine": "Start or shut down the engine",
   "hud.engineOff": "Engine off",
   "hud.engineBusy": "Come to a stop and close the throttle first",
@@ -1440,6 +1441,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.altimetro": "The altimeter lies",
   "hangar.ejercicio.brujula": "The dancing compass",
   "hangar.ejercicio.giroscopo": "Set the gyro",
+  "hangar.ejercicio.pitot": "The pitot freezes",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1732,6 +1734,17 @@ export const EN: Dictionary = {
   "ejercicio.giroscopo.cierre":
     "The gyro doesn't feel the turn, but it drifts on its own. Every fifteen minutes, straight and steady, set it to the compass. For real it takes an hour or more to drift this much: here we sped up the clock",
   "vuelo.giroscopo.seFue": "The heading indicator has drifted a little. Straight and steady, set it to the compass",
+  "ejercicio.pitot.antes": "We're inside a cloud, and it's cold outside. Watch the airspeed needle",
+  "ejercicio.pitot.gas": "Now give it full power, and hold your altitude",
+  "ejercicio.pitot.acelera": "The plane speeds up and the needle doesn't move: the pitot froze. Watch the attitude and the power",
+  "ejercicio.pitot.calefaccion": "Turn on the pitot heat, and wait a little",
+  "ejercicio.pitot.volvio": "That's it! The ice melted, and the needle tells the truth again",
+  "ejercicio.pitot.prevenido": "Well done! With the heat on beforehand, the pitot doesn't freeze",
+  "ejercicio.pitot.calido": "Up here it isn't cold enough today: the pitot won't freeze. We'll try another day",
+  "ejercicio.pitot.frio": "Outside: {n} °C",
+  "ejercicio.pitot.cuanto": "Actual {real} {u} · needle {aguja} {u}",
+  "ejercicio.pitot.cierre":
+    "In cloud and cold, ice blocks the pitot and the needle stays still even as the plane speeds up. Then you fly by attitude and power. Pitot heat goes on before you enter the cloud",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
   "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
   "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",

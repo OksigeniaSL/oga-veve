@@ -19,7 +19,7 @@ const TODO = { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: tr
  * Los que se cierran en el aire: los de radio menos el ILS, la deriva, que acaba encima de su puente, el rumbo de noche, encima del río, y la estima, que acaba con el reloj a cero.
  * Y el altímetro que miente, pasada la cima (H26p), y la brújula, con la tarjeta quieta (H26q); y el giróscopo, puesto con ella (H26r).
  */
-const DE_RADIO: readonly EjercicioId[] = ["aguja", "radial", "interceptar", "cruce", "deriva", "rumbo", "estima", "altimetro", "brujula", "giroscopo"];
+const DE_RADIO: readonly EjercicioId[] = ["aguja", "radial", "interceptar", "cruce", "deriva", "rumbo", "estima", "altimetro", "brujula", "giroscopo", "pitot"];
 /**
  * Los otros que empiezan en el aire: acaban aterrizando, y la pista es suya.
  * También el ILS, que es de radio y acaba en la pista o en la frustrada encima

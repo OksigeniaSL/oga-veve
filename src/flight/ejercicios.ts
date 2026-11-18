@@ -139,7 +139,8 @@ export type EjercicioId =
   | "estima"
   | "altimetro"
   | "brujula"
-  | "giroscopo";
+  | "giroscopo"
+  | "pitot";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -206,7 +207,8 @@ export interface Ejercicio {
     | "estima"
     | "altimetro"
     | "brujula"
-    | "giroscopo";
+    | "giroscopo"
+    | "pitot";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
    * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
@@ -738,6 +740,45 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     dondeVale: (oaci) => dondeSeVaElGiroscopo(oaci),
     ensena:
       "el giróscopo no siente el viraje, pero se va solo: cada quince minutos, derecho y sin acelerar, se pone con la brújula, que es lo único que sabe dónde está el norte",
+  },
+  /*
+   * **El pitot se hiela** (#51, «tubo pitot que se hiela en nube fría, con la
+   * velocidad congelada mientras el avión claramente acelera»): dentro de una
+   * nube a cinco bajo cero, con la calefacción del pitot apagada, el hielo
+   * cierra el tubo; con todo el gas el avión acelera y la aguja no se mueve,
+   * y se prende la calefacción hasta que vuelve. Lo lleva `pitot-helado.ts`.
+   * Ver el ADR 0031, enmienda H26s.
+   */
+  {
+    id: "pitot",
+    /*
+     * **Desde Taguató**: lo que se ve es una aguja que no se mueve contra lo
+     * que de verdad corre el avión, y eso se cuenta con los dos números, que
+     * entran en Taguató (el canal de la cifra). Y el interruptor de la
+     * calefacción es un trabajo de cabina de los que se aprenden el día que
+     * los instrumentos empiezan a ser de quien vuela, como la rueda del
+     * altímetro y la perilla del direccional.
+     */
+    peldanos: DESDE_TAGUATO,
+    /*
+     * **El bimotor de pistón**, el único de esferas que vuela por
+     * instrumentos —y por tanto dentro de nubes— y lleva pitot calentado con
+     * su interruptor, como el de su clase. La avioneta y el fumigador vuelan
+     * con reglas visuales y no entran en una nube: su lección del hielo es no
+     * salir. Los de turbina llevan la calefacción de las sondas prendida
+     * desde que arrancan, y su cabina de aquí no tiene el interruptor. Ver
+     * la enmienda H26s.
+     */
+    valePara: (a) => !conRadarMeteorologico(a) && multimotor(a),
+    leccion: "aterrizaje",
+    colocacion: "pitot",
+    averias: [],
+    escena: "navegacion",
+    acabaEnElAire: true,
+    // **Encima de un campo**: la nube y la altura salen de su aire y de su relieve. Ver `dondeEmpiezaElPitot`.
+    dondeVale: (oaci) => oaci !== null,
+    ensena:
+      "en nube fría el hielo tapa el pitot y la aguja se queda quieta aunque el avión acelere: se vuela con la actitud y el gas, y la calefacción del pitot lo destapa",
   },
 ];
 

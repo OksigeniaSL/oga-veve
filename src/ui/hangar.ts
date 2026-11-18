@@ -1954,6 +1954,21 @@ const EJ_GIROSCOPO = escena(`
   <path d="M58 70 A9 9 0 0 0 61 83 M57.5 79 L61 83 L62.5 78.5" style="fill: none; stroke: #ffb02e; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round" />
 `);
 
+/**
+ * **El pitot se hiela**: dentro de la nube, el velocímetro con la aguja
+ * quieta y, debajo del ala, el tubo del pitot con un copo de hielo en la
+ * boca, en ámbar. Ver `flight/pitot-helado.ts`.
+ */
+const EJ_PITOT = escena(`
+  <path d="M8 40 Q8 24 26 26 Q32 10 52 16 Q66 6 80 18 Q100 14 104 32 Q118 36 112 52 H12 Q2 50 8 40 Z" style="fill: #c9d3dc; opacity: 0.35" />
+  <circle cx="40" cy="44" r="18" style="fill: #0b1322; stroke: #f2f5f7; stroke-width: 2" />
+  <path d="M40 44 L51 31" style="stroke: #f2f5f7; stroke-width: 2.6; stroke-linecap: round" />
+  <circle cx="40" cy="44" r="2.4" style="fill: #f2f5f7" />
+  <path d="M66 54 H120" style="stroke: #2b2f36; stroke-width: 6" />
+  <path d="M84 57 V64 M80 66 H106" style="stroke: #f2f5f7; stroke-width: 3; stroke-linecap: round" />
+  <path d="M110.0 58.0 L110.0 74.0 M116.9 62.0 L103.1 70.0 M116.9 70.0 L103.1 62.0 M111.7 72.7 L110.0 71.0 L108.3 72.7 M105.1 70.8 L105.7 68.5 L103.4 67.9 M103.4 64.1 L105.7 63.5 L105.1 61.2 M108.3 59.3 L110.0 61.0 L111.7 59.3 M114.9 61.2 L114.3 63.5 L116.6 64.1 M116.6 67.9 L114.3 68.5 L114.9 70.8" style="fill: none; stroke: #ffb02e; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round" />
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   rumbo: EJ_RUMBO,
   deriva: EJ_DERIVA,
@@ -1979,6 +1994,8 @@ const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   brujula: EJ_BRUJULA,
   // El direccional que se fue, en ámbar, con su perilla, y la brújula derecha. Ver `giroscopo-en-hora.ts`.
   giroscopo: EJ_GIROSCOPO,
+  // La aguja quieta dentro de la nube y el hielo en la boca del pitot. Ver `pitot-helado.ts`.
+  pitot: EJ_PITOT,
 };
 
 function fichaDeEjercicio(e: Ejercicio, elegido: boolean): string {
