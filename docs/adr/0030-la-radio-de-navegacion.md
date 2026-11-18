@@ -2477,6 +2477,34 @@ asiento (`OGA_CABINA=1`). **16 de 20**:
   `ejercicio.ils.sintonizar`, «poné el ILS en la NAV», con el ILS puesto; y
   sonó `vuelo.enVueloAterrizando` antes del *go around* de la cabina.
 
+### Lo que cuesta volar dentro de la nube
+
+Con un avión de instrumentos el ejercicio vuela unos cuatro minutos dentro
+de la capa, y H26j no lo midió. Ahora sí, con `verificar-rendimiento.mjs` en
+Fuerteventura, el bimotor, el parte `OVC003` y la Intel con su reloj de GPU
+(`OGA_GPU=1`), a uno y con la CPU frenada cuatro veces (CDP
+`Emulation.setCPUThrottlingRate`, la tablet de gama media). Con esa capa,
+«aire» —a 250 m sobre el campo— y «nube» —a media capa— caen dentro; «puesto»,
+debajo, y «crucero», encima. Mediana de cuadro (p95) y GPU:
+
+| sitio | ×1 | ×4 | GPU ×1 |
+|---|---|---|---|
+| puesto, bajo la capa | 2,3 ms (2,7) | 9,7 ms (12,7) | 1,23 ms |
+| aire, dentro | 2,2 ms (3,4) | 10,1 ms (12,1) | 1,36 ms |
+| nube, a media capa | 2,8 ms (5,8) | **11,2 ms (16,2)** | 1,57 ms |
+| crucero, encima | 1,9 ms (3,1) | 10,2 ms (13,0) | 1,09 ms |
+
+**Dentro de la nube, a ×4, 11,2 ms de mediana y 16,2 de p95**: dentro de los
+16,7 de sesenta cuadros, por poco en los tirones, y lejos de los 33,3 que
+exige el banco. Lo que pone la nube es un milisegundo de mediana y unos
+tres de p95 sobre los otros sitios, y hasta medio milisegundo de GPU: la
+niebla cerrada, las láminas y los jirones. No se ha tocado:
+está dentro del presupuesto. Si una tablet de verdad se quedara corta, lo
+primero que se puede quitar es lo que la niebla ya tapa —acortar el plano
+lejano de la cámara con la nube cerrada, que deja de mandar el relieve
+entero a la tarjeta— y, en GPU, los jirones, que son veinte cuadrados
+transparentes y de cerca cada uno es la pantalla entera.
+
 ### La pantalla de navegación de la cabina en 3D, mirada
 
 La foto desde el asiento salió en la final, con el ILS puesto y la Intel por
