@@ -943,6 +943,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       mo: memoriaDeSenda ? +((memoriaDeSenda.morro * 180) / Math.PI).toFixed(2) : null,
       // Y lo que le quita o le pone el aire que sube o baja, °. Ver `porElAire`.
       ma: memoriaDeSenda ? +(((memoriaDeSenda.aire ?? 0) * 180) / Math.PI).toFixed(2) : null,
+      // Y lo que le pone el ala inclinada, °. Ver `porElViraje`.
+      mv: memoriaDeSenda ? +(((memoriaDeSenda.viraje ?? 0) * 180) / Math.PI).toFixed(2) : null,
       cb: +(((o.actitud?.().cabeceo ?? 0) * 180) / Math.PI).toFixed(2),
       q: +(((s.pitchRate ?? 0) * 180) / Math.PI).toFixed(2),
       mt: memoriaDeSenda ? +memoriaDeSenda.timon.toFixed(3) : null,
@@ -1167,6 +1169,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         autoridadDelTimon: o.autoridadDelTimon?.(),
         // Y el aire que sube o baja, también como en el juego: ver `porElAire`.
         subeElAire: o.subeElAire?.() ?? 0,
+        // Y lo que pide el ala inclinada, también como en el juego: ver
+        // `porElViraje`.
+        anguloSinSustentacion: o.anguloSinSustentacion?.(),
       },
       conLaVelocidad
         ? {

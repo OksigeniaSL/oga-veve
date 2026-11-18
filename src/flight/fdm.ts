@@ -660,6 +660,20 @@ export class CoefficientFlightModel implements FlightModel {
     return this.timonQueSostiene;
   }
 
+  /** Los flaps con los que voló el último paso, de 0 a 1. */
+  private flapsDelPaso = 0;
+
+  /**
+   * **El ángulo de ataque de sustentación nula**, con los flaps del último
+   * paso, rad: donde la recta de `step` —`cl0 + clα·α` y lo que suman los
+   * flaps— cruza el cero. El efecto suelo escala la recta entera y no lo mueve.
+   * Ver `FlightModel.anguloSinSustentacion`.
+   */
+  anguloSinSustentacion(): number {
+    const ac = this.aircraft;
+    return -(ac.aero.cl0 + sustentacionDeLosFlaps(ac, this.flapsDelPaso)) / ac.aero.clAlpha;
+  }
+
   /**
    * **Cómo está cada motor**, en el orden de `motoresA`: de izquierda a
    * derecha. Todos en marcha al empezar cada vuelo. Ver `flight/motores.ts`.
@@ -893,6 +907,8 @@ export class CoefficientFlightModel implements FlightModel {
     // Y el timón que lo sostiene, para quien lo coja volando. Ver `timonAhora`.
     if (initial.equilibrado)
       this.timonQueSostiene = this.timonDeEquilibrio(initial.flapsDelEquilibrio ?? 0);
+    // Y sus flaps, hasta el primer paso. Ver `anguloSinSustentacion`.
+    this.flapsDelPaso = initial.flapsDelEquilibrio ?? 0;
     /*
      * **Y en el suelo solo si las ruedas tocan.**
      *
@@ -1117,6 +1133,7 @@ export class CoefficientFlightModel implements FlightModel {
     const qS = qDyn * ac.wingArea;
 
     const assisted = this.applyAssist(controls, s.alpha, s.beta, dt, qS);
+    this.flapsDelPaso = assisted.flaps;
     /*
      * **Y lo que sustenta, frena y cabecea es el aire que pasa por el plano de
      * simetría**, no todo el que llega.
