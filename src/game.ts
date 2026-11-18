@@ -30804,8 +30804,9 @@ export class Game {
     const ancho = window.innerWidth;
     const alto = window.innerHeight;
     const r = barra?.getBoundingClientRect();
+    // Sin dedo, la barra no ocupa sitio; en la vuelta y en el pasaje, ocupa y no se ve (se hereda).
     const tapa =
-      r && r.width && r.height && ancho && alto && barra?.checkVisibility({ visibilityProperty: true })
+      barra && r && r.width && r.height && ancho && alto && getComputedStyle(barra).visibility !== "hidden"
         ? { arriba: r.top / alto, izq: r.left / ancho, der: r.right / ancho }
         : null;
     return (this.barraDelTimon.tapa = tapa);
