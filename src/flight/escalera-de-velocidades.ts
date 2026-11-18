@@ -122,10 +122,10 @@ const LIMPIO_SOBRE_VREF = 80;
 /**
  * **La de maniobra limpia de un reactor**, kt indicados: la Vref y ochenta,
  * sin pasar de 250. Es la del tramo terminal, la de ir cerca del campo
- * virando sin flaps, y la de seguir un río a mil quinientos pies en «Rumbo de
- * noche» (H26u): a 250 nudos el JAZ 90 vira con cuatro kilómetros de radio
- * con el ala a veinticinco grados, y la curva del Paraguay antes del puente
- * no se puede seguir.
+ * virando sin flaps; y en «Rumbo de noche» (H26u), lo más que se sigue un río
+ * a mil quinientos pies, con cualquier avión: a 250 nudos se vira con cuatro
+ * kilómetros de radio con el ala a veinticinco grados, y la curva del
+ * Paraguay antes del puente no se puede seguir.
  */
 export function maniobraLimpiaKt(a: AircraftConfig): number {
   return Math.min(TOPE_BAJO_EL_100, vrefKt(a) + LIMPIO_SOBRE_VREF);

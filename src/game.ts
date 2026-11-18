@@ -25713,17 +25713,17 @@ export class Game {
 
   /**
    * **A qué velocidad se sigue el río**, m/s: la del crucero con el tope de
-   * los diez mil pies, como en los demás ejercicios de navegación; y un
-   * reactor, a la de maniobra limpia (`maniobraLimpiaKt`), que con los gases
-   * puestos es también la que sostienen (`laVelocidadQueToca`). Es la de ir
-   * virando cerca del campo, y la única con la que el JAZ 90 sigue la curva
-   * del río antes del puente: a 250 nudos, con el ala a veinticinco grados del
-   * automático, vira con cuatro kilómetros de radio y se sale de ella (H26u).
+   * los diez mil pies, como en los demás ejercicios de navegación, y **como
+   * mucho la de maniobra limpia** (`maniobraLimpiaKt`, la Vref y ochenta), que
+   * con los gases puestos es también la que sostienen (`laVelocidadQueToca`).
+   * Es la de ir virando cerca del campo, y con la que se sigue la curva del río
+   * antes del puente: a 250 nudos, con el ala a veinticinco grados del
+   * automático, se vira con cuatro kilómetros de radio y se sale de ella. Lo
+   * vieron el JAZ 90 y el JAZ 60 (H26u); la avioneta y el biplano, que
+   * cruzan más despacio que eso, no cambian.
    */
   private velocidadDelRumbo(): number {
-    return esDeChorro(this.aircraft)
-      ? maniobraLimpiaKt(this.aircraft) * NUDO
-      : Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL);
+    return Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL, maniobraLimpiaKt(this.aircraft) * NUDO);
   }
 
   /** «Rumbo de noche», para el banco. */
@@ -34322,12 +34322,12 @@ export class Game {
         tramo: "subida",
         peldano: "subida",
       };
-    } else if (this.rumboDeNoche && this.rumboDeNoche.fase !== "cerrada" && esDeChorro(this.aircraft)) {
+    } else if (this.rumboDeNoche && this.rumboDeNoche.fase !== "cerrada" && v.kt > maniobraLimpiaKt(this.aircraft)) {
       /*
-       * **Y siguiendo el río de «Rumbo de noche», la de maniobra limpia**
-       * (H26u): es ir virando a mil quinientos pies cerca del campo, y sin plan
-       * la escalera daba los 250 del crucero bajo los diez mil pies, con los
-       * que la curva del río no se sigue. Ver `velocidadDelRumbo`.
+       * **Y siguiendo el río de «Rumbo de noche», como mucho la de maniobra
+       * limpia** (H26u): es ir virando a mil quinientos pies cerca del campo, y
+       * sin plan la escalera daba los 250 del crucero bajo los diez mil pies,
+       * con los que la curva del río no se sigue. Ver `velocidadDelRumbo`.
        */
       v = { kt: Math.round(maniobraLimpiaKt(this.aircraft)), mach: null, tramo: "terminal", peldano: "terminal" };
     }

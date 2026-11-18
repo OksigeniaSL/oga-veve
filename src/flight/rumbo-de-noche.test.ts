@@ -47,11 +47,13 @@ const AVIONETA = 51;
 /** Un reactor a doscientos cincuenta nudos, el tope por debajo de diez mil pies. */
 const REACTOR = 129;
 /**
- * **Lo que cuenta el juego** para el JAZ 40, su crucero con el tope de los
- * diez mil pies; y para el JAZ 90, la de maniobra limpia. Ver `velocidadDelRumbo`.
+ * **Lo que cuenta el juego** para el JAZ 40 y el JAZ 90: su crucero con el
+ * tope de los diez mil pies, y como mucho la de maniobra limpia. Ver `velocidadDelRumbo`.
  */
-const CUENTA_DEL_BIMOTOR = Math.min(PANAMBI.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL);
-const CUENTA_DEL_REACTOR = maniobraLimpiaKt(ARAI) * NUDO;
+const cuentaDe = (a: typeof PANAMBI): number =>
+  Math.min(a.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL, maniobraLimpiaKt(a) * NUDO);
+const CUENTA_DEL_BIMOTOR = cuentaDe(PANAMBI);
+const CUENTA_DEL_REACTOR = cuentaDe(ARAI);
 
 /**
  * **El piloto de cinemática**: cada décima de segundo, el morro hacia donde
