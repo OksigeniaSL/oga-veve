@@ -5280,6 +5280,17 @@ export class Hud {
   }
 
   /**
+   * **Sin GPS**, mientras corre el reloj de «Rumbo y reloj» (ADR 0031,
+   * H26n): la tarjeta de casa se queda —un mando que va y viene no se
+   * aprende—, pero sin la aguja ni la distancia, que señalando el campo con
+   * sus kilómetros son un GPS. La placa del campo y la manga siguen. Se llama
+   * cada paso; con el mismo valor, `toggle` no toca el DOM.
+   */
+  ponerSinGps(sin: boolean): void {
+    this.home?.classList.toggle("casa--sin-gps", sin);
+  }
+
+  /**
    * **La flecha de casa late cuando alguien se ha perdido lejos**, o mar
    * adentro, y entonces tocarla hace virar el avión hacia el campo.
    *

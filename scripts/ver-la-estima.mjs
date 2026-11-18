@@ -80,6 +80,7 @@ const leerSolo = (page) =>
       rumbo: s.heading,
       ejercicio: o.estima(),
       tarjeta: o.tarjeta?.()?.dibujo ?? null,
+      casaSinGps: !!document.querySelector('[data-hud="home"]')?.classList.contains("casa--sin-gps"),
       textoDeLaTarjeta: document.querySelector(".senal")?.textContent?.replace(/\s+/g, " ").trim() ?? "",
       reloj: j.clock?.elapsedTime ?? 0,
       viento: j.vientoAqui?.aire ?? { x: 0, z: 0 },
@@ -160,7 +161,11 @@ try {
     `«${r.ejercicio.cronometro}», el plan ${(c.tiempo / 60).toFixed(1)} min`,
   );
   comprobar("la tarjeta escribe el sitio", r.textoDeLaTarjeta.includes("Filadelfia"), `«${r.textoDeLaTarjeta.slice(0, 90)}» (${r.tarjeta})`);
-  comprobar("el plano no sabe dónde está el avión, y las rayas no se ven", r.ejercicio.planoSinGps && !r.ejercicio.rayas?.enLaEscena, JSON.stringify(r.ejercicio.rayas));
+  comprobar(
+    "el plano no sabe dónde está el avión, la tarjeta de casa va sin aguja ni distancia, y las rayas no se ven",
+    r.ejercicio.planoSinGps && r.casaSinGps && !r.ejercicio.rayas?.enLaEscena,
+    `plano ${r.ejercicio.planoSinGps}, casa ${r.casaSinGps}, ${JSON.stringify(r.ejercicio.rayas)}`,
+  );
   await foto("01-salida");
 
   await page.evaluate(() => globalThis.__oga.pilotoAutomatico(true));
@@ -192,7 +197,7 @@ try {
         enElCronometro !== null && Math.abs(cronometro0 - enElCronometro - r.ejercicio.transcurrido) < 3,
         `«${r.ejercicio.cronometro}»: ${cronometro0 - enElCronometro} s menos, ${r.ejercicio.transcurrido.toFixed(0)} s en el ejercicio, ${corrido.toFixed(0)} s de juego`,
       );
-      comprobar("y el plano sigue sin el avión", r.ejercicio.planoSinGps, String(r.ejercicio.planoSinGps));
+      comprobar("y el plano y la tarjeta de casa siguen sin GPS", r.ejercicio.planoSinGps && r.casaSinGps, `${r.ejercicio.planoSinGps}, ${r.casaSinGps}`);
       await foto("02-mitad");
     }
     if (!fotoUnMinuto && r.ejercicio.queda < 50) {
@@ -232,7 +237,11 @@ try {
   r = await leer(page);
   comprobar(
     "al final, las dos rayas en el suelo y el plano vuelve a saber dónde está el avión",
-    r.ejercicio.rayas?.enLaEscena && r.ejercicio.rayas.recta > c.lejos / 60 && r.ejercicio.rayas.camino > c.lejos / 120 && !r.ejercicio.planoSinGps,
+    r.ejercicio.rayas?.enLaEscena &&
+      r.ejercicio.rayas.recta > c.lejos / 60 &&
+      r.ejercicio.rayas.camino > c.lejos / 120 &&
+      !r.ejercicio.planoSinGps &&
+      !r.casaSinGps,
     JSON.stringify(r.ejercicio.rayas),
   );
   await foto("04-cero");

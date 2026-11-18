@@ -25144,10 +25144,12 @@ export class Game {
     if (volando && !s.onGround) rayas.camino.anadir(s.position.x, s.position.z, CADA_RAYA_DE_LA_ESTIMA);
     /*
      * **Sin GPS a la vista**, que es la lección: el plano se queda donde se
-     * puso el reloj en marcha y no pinta el avión ni su estela. Cerrado, lo
-     * vuelve a saber, con la traza entera.
+     * puso el reloj en marcha y no pinta el avión ni su estela, y la tarjeta
+     * de casa no lleva aguja ni distancia. Cerrado, lo vuelve a saber, con la
+     * traza entera.
      */
     this.hud.mapa.ponerSinGps(volando ? { x: c.x, z: c.z } : null);
+    this.hud.ponerSinGps(volando);
     this.hud.mapa.ponerEstela(volando ? null : () => this.libreta.traza);
     if (!volando && e.cierre === "hecho") {
       if (rayas.recta.muestras === 0) rayas.recta.recta(c, c.destino);
