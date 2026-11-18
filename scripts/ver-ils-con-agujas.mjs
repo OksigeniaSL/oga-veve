@@ -251,12 +251,25 @@ try {
     Math.abs(Math.abs(centrado(r.rumbo / GRADO - RF)) - 30) < 3,
     `${centrado(r.rumbo / GRADO - RF).toFixed(1)}°`,
   );
-  // El día del ejercicio: cubierto a trescientos pies sobre la pista. Ver `elDiaDelIls`.
+  /*
+   * El día del ejercicio: en un avión de instrumentos, cubierto a trescientos
+   * pies sobre la pista; en uno de reglas visuales, el de siempre del sitio,
+   * sin nube baja, que no lleva con qué volar dentro. Ver `elDiaDelIls`.
+   */
   const nube = await page.evaluate(() => globalThis.__oga.capaDeNubes());
+  const reglas = await page.evaluate(() => globalThis.__oga.juegoParaTrazas().aircraft.reglasDeVuelo);
+  const conNube = reglas === "instrumentos";
+  const comoEsLaNube = nube
+    ? `base ${Math.round(nube.techoM / PIE_EN_LA_PAGINA)} ft, tapadura ${nube.tapadura}, techo de la capa ${Math.round(nube.techo - nube.base)} m más arriba`
+    : "sin capa";
   comprobar(
-    "el día del ejercicio: cubierto a trescientos pies sobre la pista",
-    nube && Math.abs(nube.techoM / PIE_EN_LA_PAGINA - 300) < 1 && nube.tapadura >= 1,
-    nube ? `base ${Math.round(nube.techoM / PIE_EN_LA_PAGINA)} ft, tapadura ${nube.tapadura}, techo de la capa ${Math.round(nube.techo - nube.base)} m más arriba` : "sin capa",
+    conNube
+      ? "el día del ejercicio, con un avión de instrumentos: cubierto a trescientos pies sobre la pista"
+      : "el día del ejercicio, con uno de reglas visuales: sin nube baja",
+    conNube
+      ? nube && Math.abs(nube.techoM / PIE_EN_LA_PAGINA - 300) < 1 && nube.tapadura >= 1
+      : !nube || nube.techoM / PIE_EN_LA_PAGINA >= 1500,
+    `${reglas}: ${comoEsLaNube}`,
   );
   await foto("01-salida");
 
@@ -386,7 +399,7 @@ try {
     m && (FUERA ? Math.abs(m.loc) > 1 : Math.abs(m.loc) <= 1 && Math.abs(m.senda) <= 1),
     m ? `loc ${m.loc.toFixed(2)}, senda ${Number.isFinite(m.senda) ? m.senda.toFixed(2) : "sin señal"} puntos; desde mil pies lo peor, loc ${peorLoc.toFixed(2)} y senda ${peorSenda.toFixed(2)}` : "no llegó",
   );
-  comprobar(
+  if (conNube) comprobar(
     "a trescientos treinta pies, dentro de la nube; en los mínimos, fuera, con la pista a la vista",
     dentro && enLosMinimosSeVe && dentro.enLaNube > 0.3 && enLosMinimosSeVe.enLaNube < 0.2 && (enLosMinimosSeVe.haciaLaPista ?? 0) > 0.95,
     dentro && enLosMinimosSeVe
@@ -415,7 +428,20 @@ try {
     "ejercicio.ils.capturada",
     FUERA ? "ejercicio.ils.frustrada" : "ejercicio.ils.pista",
   ];
-  comprobar("la instructora lo cuenta por pasos, en su orden", delIls.join(",") === esperado.join(","), delIls.join(", "));
+  /*
+   * En su orden lo que sonó, y entero contando lo que se calló sin voz: con
+   * las frases ya grabadas, la presentación —en el primer paso— puede caer
+   * antes de que la voz haya cargado y quedarse en «sin grabar, se calla»,
+   * que va en otra lista y no sabe de orden. Se dice aparte.
+   */
+  const sonaron = (pedido.dicho.instructor ?? []).filter((c) => /^ejercicio\.ils\./.test(c));
+  const mudas = pedido.sinGrabar.filter((c) => /^ejercicio\.ils\./.test(c));
+  comprobar(
+    "la instructora lo cuenta por pasos, en su orden",
+    [...delIls].sort().join(",") === [...esperado].sort().join(",") &&
+      sonaron.join(",") === esperado.filter((c) => sonaron.includes(c)).join(","),
+    `${sonaron.join(", ")}${mudas.length ? `; sin voz: ${[...new Set(mudas)].join(", ")}` : ""}`,
+  );
   // Un suceso, una voz: los mínimos del ejercicio, y no además los de siempre.
   comprobar(
     "en los mínimos habla el ejercicio y no además el «mirá la pista» de siempre",
@@ -464,7 +490,8 @@ try {
   );
   comprobar(
     "el panel del final, con la frase de cierre del ejercicio",
-    despues.finVisible && (FUERA ? /Bien decidido/.test(despues.fin) : /Aterrizaste con las agujas/.test(despues.fin)),
+    despues.finVisible &&
+      (FUERA ? /Bien decidido|Good call/.test(despues.fin) : /Aterrizaste con las agujas|You landed on the needles/.test(despues.fin)),
     `«${despues.fin.slice(0, 90)}»`,
   );
   comprobar("sin errores en la página", errores.length === 0, errores.join(" | "));
