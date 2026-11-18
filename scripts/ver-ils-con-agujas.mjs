@@ -321,6 +321,7 @@ try {
   console.log(`    reloj por ${puestas}`);
 
   let fotoDespegada = false;
+  let oidoAntes = "";
   let fotoSendaArriba = false;
   let fotoEnCruz = false;
   let fotoMinimos = false;
@@ -361,6 +362,17 @@ try {
     const loc = ag?.loc ?? null;
     const senda = ag && !ag.bandera ? ag.senda : null;
     const h = r.ej.altura;
+    /*
+     * **Lo que oye la NAV, cuando cambia**: la frecuencia y la emisora, con la
+     * altura y la distancia. En la tirada del bimotor apartado y en calma
+     * (H26k) sonó «poné el ILS en la NAV» detrás de los mínimos con el ILS
+     * puesto, y no se sabía si se perdió la señal o se cambió la radio.
+     */
+    const oye = `${r.navMhz?.toFixed(2)} ${r.navId ?? "sin emisora"}`;
+    if (oye !== oidoAntes) {
+      console.log(`    la NAV: ${oye}, a ${Math.round(h / PIE)} ft y ${(lejosDeLaSenda() / 1852).toFixed(1)} NM, fase ${r.ej.fase}`);
+      oidoAntes = oye;
+    }
     if (!fotoDespegada && r.tarjeta?.startsWith("ils-viniendo")) {
       fotoDespegada = true;
       comprobar(
