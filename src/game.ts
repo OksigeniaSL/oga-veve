@@ -1309,6 +1309,7 @@ import {
   anunciaLaFase,
   cuantoAguanta,
   cuentaPorDondeSeSale,
+  cuentaUnPasoDeRadio,
   esDelDescenso,
 } from "./audio/boca";
 import {
@@ -10330,7 +10331,11 @@ export class Game {
       this.apuntarCanto(`${clave}: no se ve lo que nombra`);
       return false;
     }
-    if (!this.instructor.vozDe(clave)) {
+    /*
+     * Y con el pack todavía sin decir qué trae, se pide igual y espera a
+     * saberlo: ver `decirGrabada`.
+     */
+    if (!this.instructor.decirGrabada(t(clave), clave, urgencia)) {
       /*
        * Apuntado una vez por vuelo: hay sucesos que se repiten en cada
        * fotograma —una curva del rodaje entera—, y el registro de cantos que
@@ -10343,7 +10348,6 @@ export class Game {
       }
       return false;
     }
-    this.instructor.decir(t(clave), clave, urgencia);
     return true;
   }
 
@@ -23674,10 +23678,28 @@ export class Game {
    * y un robot en el resto, justo en lo que más importa de un ejercicio, que
    * es la calma. En cuanto la frase tenga receta en el pack, suena sin tocar
    * nada. Ver `src/flight/ejercicios.ts`.
+   *
+   * **Y si el pack aún no ha dicho qué trae, espera a saberlo**: la primera
+   * frase de cada ejercicio se pide en su primer paso, antes de que lleguen
+   * los manifiestos, y preguntar `vozDe` entonces la callaba grabada. Lo
+   * decide `decirGrabada`, que es quien sabe cómo va el pack.
    */
   private decirDelEjercicio(clave: TranslationKey, peso: Urgencia): void {
-    if (this.instructor.vozDe(clave)) this.instructor.decir(t(clave), clave, peso);
-    else this.apuntarCanto(`${clave}: sin grabar, se calla`);
+    /*
+     * **Y un paso nuevo retira lo que quedara por decir de los de antes.** Lo
+     * que cuenta un paso de un ejercicio de radio espera lo que haga falta
+     * —ver `cuentaUnPasoDeRadio`—, porque es verdad hasta el paso siguiente;
+     * llegado éste, ya no lo es, y quien lo sabe es el ejercicio. **Salvo la
+     * presentación** (`….antes`), que no es un paso sino lo que los abre: en
+     * «interceptar» sale en el mismo fotograma que «a tope», y las dos se
+     * dicen, en su orden. Lo que la retira es el cierre.
+     */
+    BOCA.retirar((c) => c !== clave && cuentaUnPasoDeRadio(c) && !c?.endsWith(".antes"));
+    if (!this.instructor.sabeLoGrabado) this.apuntarCanto(`${clave}: espera a saber si está grabada`);
+    const pedida = this.instructor.decirGrabada(t(clave), clave, peso, undefined, (que, porque) => {
+      if (que === "se-cae" && porque === "sin-grabar") this.apuntarCanto(`${clave}: sin grabar, se calla`);
+    });
+    if (!pedida) this.apuntarCanto(`${clave}: sin grabar, se calla`);
   }
 
   /**
@@ -25026,6 +25048,8 @@ export class Game {
           ? contar("ils-en-cruz", "ejercicio.ils.pista", "palabra.bien", 8)
           : contar("frustrada", "ejercicio.ils.frustrada", "palabra.bien", 8);
       case "cerrar": {
+        // Cerrado, lo que quedara por decir de sus pasos ya no es verdad. Ver `cuentaUnPasoDeRadio`.
+        BOCA.retirar((c) => cuentaUnPasoDeRadio(c));
         // Lo malo ya lo cuenta el percance; posado en otra parte, el suelo lo dice.
         if (suceso.como === "otraVez") return;
         /*

@@ -162,7 +162,8 @@ export function cuantoAguanta(
     esElAvisoDeAves(clave) ||
     esLaInformacionDeTrafico(clave) ||
     esDelDescenso(clave) ||
-    cuentaPorDondeSeSale(clave, urgencia)
+    cuentaPorDondeSeSale(clave, urgencia) ||
+    cuentaUnPasoDeRadio(clave)
   )
     return Infinity;
   return clave?.startsWith("torre.") ||
@@ -207,6 +208,28 @@ export function esDelDescenso(clave: string | undefined): boolean {
 
 const DEL_DESCENSO =
   /^(?:vuelo\.(?:cabinaSinPresion(?:ConTren)?|primeroLaTuya\.\w+|yaSeRespira)|comandante\.(?:descensoDeEmergencia|mascaras|alturaSegura|yaSeRespira)|tripulacion\.(?:canario\.)?mascaras)$/;
+
+/**
+ * **Un paso de un ejercicio de radio**: «la pista queda de ese lado», «virá
+ * ahora», «ahora la senda, que está arriba», «las dos agujas en cruz». Aguanta
+ * lo que dura el paso, no un reloj.
+ *
+ * Tenía los cuatro segundos de un aviso, y cada paso llega cuando la radio
+ * del campo tiene más que decir: medido en el banco del ILS con el bimotor y
+ * **a reloj normal** —no era el reloj por cuatro del banco, como sospechaba
+ * H26j—, «ejercicio.ils.enElLocalizador: caducó esperando» a los 106 s,
+ * detrás de la torre pasando a la frecuencia y del tráfico. Y es justo la
+ * frase que dice qué hacer ahora: «ahora la senda: seguí nivelado». Lo que
+ * cuenta un paso sigue siendo verdad hasta el paso siguiente, así que espera
+ * lo que haga falta, y lo retira el ejercicio al pedir el siguiente o al
+ * cerrarse, que es quien sabe que ya no vale. Ver `decirDelEjercicio` en
+ * `game.ts` y el ADR 0030, enmienda H26k.
+ */
+export function cuentaUnPasoDeRadio(clave: string | undefined): boolean {
+  return !!clave && DE_UN_EJERCICIO_DE_RADIO.test(clave);
+}
+
+const DE_UN_EJERCICIO_DE_RADIO = /^ejercicio\.(?:aguja|radial|interceptar|cruce|ils)\./;
 
 /**
  * **El ejercicio de la tormenta**, que tampoco es un comentario: qué es, por

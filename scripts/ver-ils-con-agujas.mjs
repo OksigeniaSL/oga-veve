@@ -35,6 +35,8 @@ const AVION = process.env.OGA_AVION ?? "jaz-20";
 const ESCENARIO = process.env.OGA_ESCENARIO ?? "fuerteventura";
 const VECES = Number(process.env.OGA_VECES ?? 4);
 const FUERA = process.env.OGA_FUERA === "1";
+// Con `OGA_CABINA=1`, una foto desde el asiento en la final: la pantalla de navegación con la senda.
+const CABINA = process.env.OGA_CABINA === "1";
 // El viento a mano, «grados/nudos» como `?viento=`: `0/0` es la calma. Sin él, el del sitio.
 const VIENTO = process.env.OGA_VIENTO ?? "";
 const NOMBRE = `${ESCENARIO}-${AVION}${FUERA ? "-fuera" : ""}${VIENTO ? `-viento-${VIENTO.replace("/", "-")}` : ""}`;
@@ -200,6 +202,33 @@ try {
   const errores = [];
   page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
   await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
+  /*
+   * **Cuándo está la voz y cuándo se pide la primera frase**, en el reloj de
+   * la página y desde que carga: la presentación se pide en el primer paso
+   * del ejercicio, y el pack baja después del primer gesto. Se mira dentro
+   * de la página cada cincuenta milisegundos, sin ida y vuelta del banco, el
+   * primer minuto. Ver la enmienda H26k del ADR 0030.
+   */
+  await page.addInitScript(() => {
+    const linea = { pack: [], pedida: null, sono: null };
+    globalThis.__arranqueDeLaVoz = linea;
+    let ultimo = null;
+    const mirar = () => {
+      const o = globalThis.__oga;
+      const ms = Math.round(performance.now());
+      if (o?.voz) {
+        const p = o.voz().pack;
+        if (p !== ultimo) linea.pack.push({ estado: (ultimo = p), ms });
+        if (!linea.pedida) {
+          const c = o.cantados().find((x) => /^ejercicio\.ils\.antes: /.test(x));
+          if (c) linea.pedida = { ms, como: c.replace(/ \[.*$/, "") };
+        }
+        if (!linea.sono && (o.dichoTodo().instructor ?? []).includes("ejercicio.ils.antes")) linea.sono = { ms };
+      }
+      if (ms < 180000) setTimeout(mirar, 50);
+    };
+    setTimeout(mirar, 50);
+  });
   await page.goto(
     `${BASE}/?escenario=${ESCENARIO}&hora=12&tramo=taguato-ruvicha&avion=${AVION}&ejercicio=ils${VIENTO ? `&viento=${VIENTO}` : ""}`,
   );
@@ -219,6 +248,12 @@ try {
     return i ? g.getParameter(i.UNMASKED_RENDERER_WEBGL) : "sin WebGL";
   });
   console.log(`    tarjeta: ${tarjetaGrafica}`);
+  const alEmpezar = await page.evaluate(() => globalThis.__arranqueDeLaVoz);
+  console.log(
+    `    la voz al empezar el ejercicio: ${alEmpezar.pack.map((p) => `${p.estado} a ${p.ms} ms`).join(", ")}; la presentación, ${
+      alEmpezar.pedida ? `«${alEmpezar.pedida.como}» a ${alEmpezar.pedida.ms} ms` : "sin apunte"
+    }${alEmpezar.sono ? `, sonó a ${alEmpezar.sono.ms} ms` : ""}`,
+  );
 
   let r = await leer(page);
   const ant = r.ej.antenas;
@@ -286,6 +321,7 @@ try {
   console.log(`    reloj por ${puestas}`);
 
   let fotoDespegada = false;
+  let oidoAntes = "";
   let fotoSendaArriba = false;
   let fotoEnCruz = false;
   let fotoMinimos = false;
@@ -318,13 +354,25 @@ try {
   let veces = VECES;
   let peorSenda = 0;
   let peorLoc = 0;
-  const fin = Date.now() + 9 * 60000;
+  // Nueve minutos con el reloj por cuatro; a reloj normal la avioneta tarda once en llegar a los mínimos.
+  const fin = Date.now() + (VECES >= 4 ? 9 : 20) * 60000;
   while (Date.now() < fin && r.ej.fase !== "cerrada") {
     r = await leer(page);
     const ag = r.ej.agujas;
     const loc = ag?.loc ?? null;
     const senda = ag && !ag.bandera ? ag.senda : null;
     const h = r.ej.altura;
+    /*
+     * **Lo que oye la NAV, cuando cambia**: la frecuencia y la emisora, con la
+     * altura y la distancia. En la tirada del bimotor apartado y en calma
+     * (H26k) sonó «poné el ILS en la NAV» detrás de los mínimos con el ILS
+     * puesto, y no se sabía si se perdió la señal o se cambió la radio.
+     */
+    const oye = `${r.navMhz?.toFixed(2)} ${r.navId ?? "sin emisora"}`;
+    if (oye !== oidoAntes) {
+      console.log(`    la NAV: ${oye}, a ${Math.round(h / PIE)} ft y ${(lejosDeLaSenda() / 1852).toFixed(1)} NM, fase ${r.ej.fase}`);
+      oidoAntes = oye;
+    }
     if (!fotoDespegada && r.tarjeta?.startsWith("ils-viniendo")) {
       fotoDespegada = true;
       comprobar(
@@ -356,6 +404,18 @@ try {
       fotoEnCruz = true;
       enCruz = { loc, senda, hsi: r.hsi, tarjeta: r.tarjeta };
       await foto("04-en-cruz");
+      /*
+       * Y con `OGA_CABINA=1`, desde el asiento: la pantalla de navegación de
+       * la cabina en 3D con la escala de la senda (H26j), en el mismo sitio.
+       * Segundo y medio a la altura de la final: el piloto sigue volando.
+       */
+      if (CABINA) {
+        const vista = await page.evaluate(() => globalThis.__oga.ponerVista("cockpit"));
+        await pausa(1500);
+        console.log(`    vista: ${vista}`);
+        await foto("04c-cabina");
+        await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
+      }
     }
     // El reloj, despacio cerca del suelo.
     const quiereVeces = h < 400 * PIE ? 1 : h < 1200 * PIE ? 2 : VECES;
@@ -424,6 +484,12 @@ try {
     return { dicho: o.dichoTodo(), sinGrabar, apuntes };
   });
   if (pedido.apuntes.length) console.log(`    apuntado de las del ejercicio: ${pedido.apuntes.join(" | ")}`);
+  const arranque = await page.evaluate(() => globalThis.__arranqueDeLaVoz);
+  console.log(
+    `    la voz al arrancar: ${arranque.pack.map((p) => `${p.estado} a ${p.ms} ms`).join(", ")}; la presentación, ${
+      arranque.pedida ? `«${arranque.pedida.como}» a ${arranque.pedida.ms} ms` : "sin apunte"
+    }${arranque.sono ? `, sonó a ${arranque.sono.ms} ms` : ", no sonó"}`,
+  );
   const delIls = [...new Set([...(pedido.dicho.instructor ?? []), ...pedido.sinGrabar].filter((c) => /^ejercicio\.ils\./.test(c)))];
   const esperado = [
     "ejercicio.ils.antes",
@@ -441,11 +507,23 @@ try {
    */
   const sonaron = (pedido.dicho.instructor ?? []).filter((c) => /^ejercicio\.ils\./.test(c));
   const mudas = pedido.sinGrabar.filter((c) => /^ejercicio\.ils\./.test(c));
+  /*
+   * Y el paso que retiró el siguiente antes de que le tocara —«ya no es
+   * verdad»— está contado: es lo que se quiere (H26k). Con el reloj por
+   * cuatro le pasa a «a tope», que la aguja se despega mientras aún suena la
+   * presentación.
+   */
+  const retiradas = pedido.apuntes
+    .map((c) => /(ejercicio\.ils\.\w+): ya no es verdad/.exec(c)?.[1])
+    .filter((c) => c && !sonaron.includes(c));
+  const contadas = new Set([...delIls, ...retiradas]);
   comprobar(
     "la instructora lo cuenta por pasos, en su orden",
-    [...delIls].sort().join(",") === [...esperado].sort().join(",") &&
+    esperado.every((c) => contadas.has(c)) &&
       sonaron.join(",") === esperado.filter((c) => sonaron.includes(c)).join(","),
-    `${sonaron.join(", ")}${mudas.length ? `; sin voz: ${[...new Set(mudas)].join(", ")}` : ""}`,
+    `${sonaron.join(", ")}${mudas.length ? `; sin voz: ${[...new Set(mudas)].join(", ")}` : ""}${
+      retiradas.length ? `; retiradas por el paso siguiente: ${retiradas.join(", ")}` : ""
+    }`,
   );
   // Un suceso, una voz: los mínimos del ejercicio, y no además los de siempre.
   comprobar(

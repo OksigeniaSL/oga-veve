@@ -15,6 +15,7 @@ import {
   CADUCA,
   CADUCA_LA_ORDEN,
   cuantoAguanta,
+  cuentaUnPasoDeRadio,
   cuentaElPirep,
   cuentaPorDondeSeSale,
   explicaLaOtraPunta,
@@ -660,6 +661,28 @@ describe("y la megafonía va por el mismo turno", () => {
     // Y lo que se le parece y no es, no.
     expect(cuentaPorDondeSeSale("torre.toraDeOtro")).toBe(false);
     expect(cuentaPorDondeSeSale("vuelo.remontando")).toBe(false);
+  });
+
+  /*
+   * **Un paso de un ejercicio de radio** espera lo que dure el paso: en el
+   * banco del ILS, a reloj normal, «enElLocalizador» caducaba a los cuatro
+   * segundos detrás de la torre (ADR 0030, H26k). Lo retira el ejercicio.
+   */
+  it("un paso de un ejercicio de radio espera sin reloj; los otros ejercicios, no", () => {
+    for (const c of [
+      "ejercicio.ils.enElLocalizador",
+      "ejercicio.ils.antes",
+      "ejercicio.aguja.curva",
+      "ejercicio.radial.centrada",
+      "ejercicio.interceptar.aTope",
+      "ejercicio.cruce.aqui",
+    ]) {
+      expect(cuentaUnPasoDeRadio(c)).toBe(true);
+      expect(cuantoAguanta(c, "mando")).toBe(Infinity);
+    }
+    expect(cuentaUnPasoDeRadio("ejercicio.velocidad")).toBe(false);
+    expect(cuantoAguanta("ejercicio.velocidad", "mando")).toBe(CADUCA);
+    expect(cuentaUnPasoDeRadio("ejercicio.ilsDeOtro")).toBe(false);
   });
 });
 

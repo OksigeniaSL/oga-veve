@@ -795,6 +795,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       // Y cómo va la bajada: desde que los manifiestos llegan primero, saber
       // quién dice qué ya no quiere decir que sus piezas estén bajadas.
       pack: juego.instructor.estadoDelPack,
+      // Y quién preguntó qué hay grabado antes de saberlo. Ver `sabeLoGrabado`.
+      preguntadasSinSaber: [...juego.instructor.preguntadasSinSaber],
       ultima: juego.instructor.loUltimo,
       hablando: juego.instructor.hablando,
     }),
