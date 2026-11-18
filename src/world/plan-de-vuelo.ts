@@ -6353,6 +6353,40 @@ export class PlanDeVuelo {
     return this.laSalidaDeHoy;
   }
 
+  /**
+   * **Y por dónde se saldrá, preguntado antes de la verde**: lo mismo que
+   * pondrá `entradaEnPista` al dibujar la raya que entra en la pista, contado
+   * desde donde está el avión y sin tocar la raya de ahora ni el back-taxi.
+   *
+   * Hace falta porque `comoSeSale` solo existe desde la verde, y la torre
+   * pregunta por la intersección antes, en la roja, en cuanto calla la
+   * frecuencia —ver `contarPorDondeSeSale` en `game.ts`—. Preguntando a
+   * `comoSeSale` en la roja la respuesta era siempre «nada», el aviso se
+   * apagaba al preguntar y la oferta acababa saliendo con la verde:
+   * dieciocho segundos de radio justo delante de la carrera, en los tres
+   * vuelos de Los Rodeos con el JAZ 90 en Taguató medidos en H29i, con hasta
+   * cuatro minutos callados en la roja. Lo dijo la sonda del banco (H29j): la
+   * rama de la roja saltaba a los 256 s, con la salida sin saber.
+   *
+   * En la roja el avión está parado en el punto de espera y la calle que lo
+   * trajo es la que leerá la verde, así que la cuenta da lo que dará la
+   * verde. Ver `por-donde-se-sale-en-la-roja.test.ts`.
+   */
+  comoSeSaldraDesdeAqui(): ComoSeSale | null {
+    if (this.laSalidaDeHoy) return this.laSalidaDeHoy;
+    const alEje = this.alEjeDesde(this.ultimaPos);
+    if (!alEje) return null;
+    // `backTaxiDesde` deja puesto su giro: se pregunta y se deja como estaba.
+    const giro = this.giroDelBackTaxi;
+    const hastaElFinal = this.remonteHastaElFinal;
+    const calle = this.ruta?.letras.at(-1) ?? null;
+    const vuelta = this.backTaxiDesde(alEje.along, alEje.llegaDeFrente);
+    const sale = this.comoSeSaleDesde(alEje.along, vuelta !== null, calle);
+    this.giroDelBackTaxi = giro;
+    this.remonteHastaElFinal = hastaElFinal;
+    return sale;
+  }
+
   /** Ver `comoSeSale`. */
   private laSalidaDeHoy: ComoSeSale | null = null;
 

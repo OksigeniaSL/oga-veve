@@ -665,7 +665,8 @@ nadie y una vez que habla no la pisa nadie —y su llamada de cabina ya es habla
 que suena—; la frecuencia de los demás; y lo que espera su hueco de calma (lo que se ve por la ventanilla).
 
 **Un suceso, una voz.** Una frase detrás de otra, nunca dos a la vez contando lo mismo. Al despegar no se solapa nada:
-es el momento con más voces y el que más agobia.
+es el momento con más voces y el que más agobia. Por eso la torre pregunta por la intersección en la roja, que es
+cuando hay silencio, y de Taguató para arriba la verde la cuenta la torre y la instructora no la repite.
 
 **Lo que dice el avión no sube por la escalera.** La cuenta del radioaltímetro y los avisos de sus cajas (*terrain*,
 *sink rate*, *pull up*, *bank angle*, *stall*, *minimums*, *traffic, traffic*) suenan con su voz de máquina **en los
