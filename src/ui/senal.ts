@@ -1013,6 +1013,73 @@ function deriva(lado: 1 | -1 | 0, corregida: boolean): string {
 }
 
 /**
+ * **La final con viento cruzado** (#92, H32a), las dos técnicas como se ven
+ * desde fuera, que es como se distinguen. `lado`: de dónde viene el viento,
+ * −1 de la izquierda. Ver `flight/final-con-viento-cruzado.ts`.
+ *
+ * El **cangrejo**, desde arriba: la pista de abajo arriba con su raya, el
+ * viento entrando por su lado con dos flechas y el avión **encima de la raya
+ * y torcido**, con el morro hacia el viento. Enderezado, el mismo avión con el
+ * morro en la pista.
+ */
+function cangrejo(lado: 1 | -1, enderezado: boolean): string {
+  const viento = vientoDeCostado(lado, 4.4, 8.8);
+  const giro = enderezado ? 0 : lado * 18;
+  /*
+   * El avión desde arriba, de palos como el de la rosa pero lleno: fuselaje,
+   * alas rectas y cola, simétrico, que es lo que deja ver que va torcido.
+   */
+  return icono(`
+  <path d="M8.4 23 L10.2 1 h3.6 L15.6 23 Z" opacity="0.3" />
+  <path d="M12 21.6 V18.8 M12 16 V13.2 M12 10.4 V7.6 M12 4.8 V2.4" fill="none" stroke="currentColor"
+        stroke-width="0.9" stroke-linecap="round" opacity="0.75" />
+  ${viento}
+  <g transform="rotate(${giro} 12 12.4) translate(12 12.4) scale(0.74) translate(-12 -12.4)" fill="none"
+     stroke="currentColor" stroke-linecap="round">
+    <path d="M12 6.2 V18.6" stroke-width="2.8" />
+    <path d="M5.4 11.2 H18.6" stroke-width="2.5" />
+    <path d="M9.4 17.4 H14.6" stroke-width="2" />
+  </g>
+`);
+}
+
+/**
+ * El **ala baja**, desde detrás, como se ve llegar un avión por la final: la
+ * pista que se va hacia el horizonte, el viento por su lado, y el avión
+ * **derecho sobre la raya e inclinado**, con el ala del viento abajo y su
+ * rueda más cerca del suelo, que es la que toca primero.
+ */
+function alaBaja(lado: 1 | -1): string {
+  const viento = vientoDeCostado(lado, 2.6, 6.4);
+  // Baja el ala del viento: con el viento de la izquierda, el ala izquierda, que es girar a la izquierda.
+  const giro = lado * 13;
+  return icono(`
+  <path d="M3 23 L10.4 13.6 h3.2 L21 23 Z" opacity="0.3" />
+  <path d="M12 22.6 V20.4 M12 18.4 V16.8 M12 15.4 V14.4" fill="none" stroke="currentColor" stroke-width="0.9"
+        stroke-linecap="round" opacity="0.75" />
+  ${viento}
+  <g transform="rotate(${giro} 12 9.4)">
+    <path d="M3.6 9.4 H20.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+    <path d="M12 7.2 V3 M9.4 6.6 H14.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+    <circle cx="12" cy="9.4" r="2.3" />
+    <path d="M9.6 11.2 V13 M14.4 11.2 V13" fill="none" stroke="currentColor" stroke-width="1.1" />
+    <circle cx="9.6" cy="13.6" r="0.9" />
+    <circle cx="14.4" cy="13.6" r="0.9" />
+  </g>
+`);
+}
+
+/** El viento de costado, dos flechas cortas que entran por `lado`, a las alturas `y1` e `y2`. */
+function vientoDeCostado(lado: 1 | -1, y1: number, y2: number): string {
+  // El viento entra por su lado y va hacia el otro.
+  const k = -lado;
+  const x0 = 12 - k * 10.6;
+  const flecha = (y: number): string =>
+    `M${x0} ${y} h${k * 3.6} M${x0 + k * 3.6} ${y} l${-k * 1.4} -1.3 M${x0 + k * 3.6} ${y} l${-k * 1.4} 1.3`;
+  return `<path d="${flecha(y1)} ${flecha(y2)}" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />`;
+}
+
+/**
  * **«Rumbo de noche»**: el río con el sol que se pone, la rosa con su marca
  * de noche y el río que sigue entre las luces. La rosa es la de la cabina
  * —la del direccional, el HSI y el cuadro—, con la marca de rumbo en
@@ -2132,6 +2199,13 @@ export const DIBUJOS = {
   "deriva-corregida-a-la-izquierda": deriva(-1, true),
   "deriva-corregida-a-la-derecha": deriva(1, true),
   "deriva-en-calma": deriva(0, false),
+  // La final con viento cruzado: torcido sobre la raya, enderezado y con el ala baja. Ver `final-con-viento-cruzado.ts`.
+  "cangrejo-viento-izquierda": cangrejo(-1, false),
+  "cangrejo-viento-derecha": cangrejo(1, false),
+  "cangrejo-enderezado-izquierda": cangrejo(-1, true),
+  "cangrejo-enderezado-derecha": cangrejo(1, true),
+  "ala-baja-viento-izquierda": alaBaja(-1),
+  "ala-baja-viento-derecha": alaBaja(1),
   // «Rumbo de noche»: el río con el sol que se pone, la rosa con su marca y el río entre las luces. Ver `rumbo-de-noche.ts`.
   "rumbo-rio": RUMBO_RIO,
   "rumbo-en-la-marca": rosaDeNoche(0),

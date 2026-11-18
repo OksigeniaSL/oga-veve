@@ -1442,6 +1442,8 @@ export const EN: Dictionary = {
   "hangar.ejercicio.brujula": "The dancing compass",
   "hangar.ejercicio.giroscopo": "Set the gyro",
   "hangar.ejercicio.pitot": "The pitot freezes",
+  "hangar.ejercicio.cangrejo": "Landing in a crab",
+  "hangar.ejercicio.ala-baja": "Landing wing-low",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1662,6 +1664,26 @@ export const EN: Dictionary = {
   "ejercicio.deriva.llegasteEnCalma": "We made it! With no wind, the path goes right where the nose points",
   "ejercicio.deriva.cierre": "In a crosswind, the nose points a little into the wind and the path runs straight",
   "ejercicio.deriva.grados": "{n}° into the wind",
+  "ejercicio.cangrejo.antes":
+    "The wind is from the side today. Keep the plane on the centreline, and let the nose point into the wind",
+  "ejercicio.cangrejo.enCangrejo": "That's the crab! The nose points into the wind and the plane flies straight down the line",
+  "ejercicio.cangrejo.pieDerecho": "Now, right rudder: nose to the runway",
+  "ejercicio.cangrejo.pieIzquierdo": "Now, left rudder: nose to the runway",
+  "ejercicio.ala-baja.antes":
+    "The wind is from the side today. Lower the upwind wing a little, and with opposite rudder keep the nose on the runway",
+  "ejercicio.ala-baja.conElAlaBaja": "That's it! Upwind wing down and the nose on the runway: that's a sideslip",
+  "ejercicio.ala-baja.rueda": "Well done! The upwind wheel first, and the nose on the runway",
+  "ejercicio.cruzado.derecho": "Well done! You touched down with the nose on the runway",
+  "ejercicio.cruzado.torcido":
+    "You touched down a little crooked, and the wheels pull sideways. Next time, nose to the runway before touchdown",
+  "ejercicio.cangrejo.cierre":
+    "In a crosswind you come down in a crab, nose into the wind; just before touchdown, rudder and the nose to the runway",
+  "ejercicio.ala-baja.cierre":
+    "In a crosswind you come down with the upwind wing low and opposite rudder, and touch down on the upwind wheel first",
+  "ejercicio.cruzado.cierreAlAire":
+    "Good call! In a crosswind, going around and trying again is landing well too",
+  "ejercicio.cangrejo.grados": "{n}° into the wind",
+  "ejercicio.ala-baja.grados": "{n}° of bank",
   "ejercicio.rumbo.antes": "Follow the river: the sun has just set. Look how the water shines",
   "ejercicio.rumbo.anochece": "It's night now and the river is getting dark. Keep the arrow still on the mark",
   "ejercicio.rumbo.seVa": "Off the mark. Come back gently, no rush",

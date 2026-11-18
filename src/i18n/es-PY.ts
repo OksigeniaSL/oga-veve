@@ -3312,6 +3312,8 @@ export const ES_PY = {
   "hangar.ejercicio.brujula": "La brújula baila",
   "hangar.ejercicio.giroscopo": "Poné en hora el giróscopo",
   "hangar.ejercicio.pitot": "El pitot se hiela",
+  "hangar.ejercicio.cangrejo": "Aterrizar en cangrejo",
+  "hangar.ejercicio.ala-baja": "Aterrizar con el ala baja",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3625,6 +3627,35 @@ export const ES_PY = {
   "ejercicio.deriva.cierre": "Con viento de costado, el morro va un poco al viento y el camino sale derecho",
   // La corrección en grados, de Taguató para arriba, delante de la frase.
   "ejercicio.deriva.grados": "{n}° al viento",
+  /*
+   * **La final con viento cruzado** (#92, H32a): el cangrejo y el ala baja.
+   * Cortas, para decirlas en calma en la final, que va deprisa; la del pie,
+   * la más corta de todas, porque se dice a cincuenta pies del suelo. El lado
+   * del pie se dice: con el viento de la izquierda el morro va a la izquierda
+   * y se endereza con el derecho.
+   */
+  "ejercicio.cangrejo.antes":
+    "Hoy el viento viene de costado. Llevá el avión por la raya del centro, y dejá que el morro mire al viento",
+  "ejercicio.cangrejo.enCangrejo": "¡Eso es el cangrejo! El morro mira al viento y el avión va derecho por la raya",
+  "ejercicio.cangrejo.pieDerecho": "Ahora, pie derecho: el morro a la pista",
+  "ejercicio.cangrejo.pieIzquierdo": "Ahora, pie izquierdo: el morro a la pista",
+  "ejercicio.ala-baja.antes":
+    "Hoy el viento viene de costado. Bajá un poquito el ala del viento, y con el pie contrario llevá el morro a la pista",
+  "ejercicio.ala-baja.conElAlaBaja": "¡Eso! El ala del viento abajo y el morro en la pista: así se resbala",
+  "ejercicio.ala-baja.rueda": "¡Bien! Primero la rueda del viento, y el morro en la pista",
+  "ejercicio.cruzado.derecho": "¡Bien! Tocaste con el morro en la pista",
+  "ejercicio.cruzado.torcido":
+    "Tocaste un poco torcido, y las ruedas tiran de lado. La próxima, el morro a la pista antes de tocar",
+  // Los paneles del final: se leen, no se dicen.
+  "ejercicio.cangrejo.cierre":
+    "Con viento de costado se baja en cangrejo, el morro al viento; justo antes de tocar, pie y el morro a la pista",
+  "ejercicio.ala-baja.cierre":
+    "Con viento de costado se baja con el ala del viento abajo y el pie contrario, y se toca primero con la rueda del viento",
+  "ejercicio.cruzado.cierreAlAire":
+    "¡Bien decidido! Con viento de costado, irse al aire y volver a probar también es aterrizar bien",
+  // Los grados, de Taguato para arriba, delante de la frase.
+  "ejercicio.cangrejo.grados": "{n}° al viento",
+  "ejercicio.ala-baja.grados": "{n}° de ala",
   /*
    * **«Rumbo de noche»** (#51, peldaño 1): se sigue el río con la última luz,
    * anochece y queda el rumbo. La instructora habla de «la flecha» y «la

@@ -100,6 +100,13 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
    * que se escurre de costado. Ver `flight/deriva.ts`.
    */
   if (ejercicio?.escena === "navegacion") return { ...deCasa, fuente: "mano" };
+  /*
+   * **Y el de la final con viento cruzado**: el viento de siempre, que es el
+   * de costado —en Los Rodeos, el alisio sobre la 12—. Con el parte de hoy
+   * podría tocar un día de viento por la pista, o uno que pasara del límite
+   * del avión. Ver `flight/final-con-viento-cruzado.ts`.
+   */
+  if (ejercicio?.escena === "cruzado") return { ...deCasa, fuente: "mano" };
 
   // El identificador OACI es el `id` del aeródromo: así se llama el fichero y
   // así lo llama el METAR.
