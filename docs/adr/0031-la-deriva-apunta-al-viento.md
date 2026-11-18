@@ -968,6 +968,11 @@ cuenta también lo apuntado «sin grabar, se calla»). Lo que salió:
   nada ajeno al ejercicio ni a la vista ni en la voz salvo los baches, y el
   panel del final con la regla, la flecha de volver a empezar y «Otro vuelo».
 
+Vuelta a volar en castellano y con los arreglos del dedo de abajo, **15 de
+15**: lo mismo, con la cima a 813 ft de verdad y 1.083 en la aguja, la
+instructora pidiendo presentación, QNH, cerca y cima en su orden, y la cota
+de la tarjeta en vez de la flecha.
+
 **Poniendo la rueda**, la primera tirada sacó dos fallos del juego, y los
 dos se arreglaron: el toque a la ventanilla se lo quedaba la aguja de los
 cientos, que va encima, y abría la explicación del altímetro —que además
