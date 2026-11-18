@@ -808,6 +808,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   ils: "ils-en-cruz",
   // El camino que se va de costado con el morro en el puente. Ver `deriva.ts`.
   deriva: "deriva-a-la-derecha",
+  // La rosa de noche con el avión en su marca. Ver `rumbo-de-noche.ts`.
+  rumbo: "rumbo-en-la-marca",
   autorrotacion: "helicoptero-sin-motor",
   // Las lecciones del ala rotatoria, con lo que se pide en cada una: ver `lecciones-del-rotor.ts`.
   estacionario: "helicoptero-quieto",
@@ -1033,6 +1035,13 @@ import {
   type ColocacionDeLaDeriva,
   type SucesoDeLaDeriva,
 } from "./flight/deriva";
+import {
+  colocacionDelRumbo,
+  rioDeNoche,
+  RumboDeNoche,
+  type ColocacionDelRumbo,
+  type SucesoDelRumbo,
+} from "./flight/rumbo-de-noche";
 import { BLANCO, CintaEnElSuelo, MAGENTA, PASO } from "./world/raya-del-camino";
 import {
   colocacionDelCruce,
@@ -3962,6 +3971,14 @@ export class Game {
   } | null = null;
   /** Lo que falta para volver a tender la raya de delante, s. Ver `practicarLaDeriva`. */
   private hastaLaRayaDeDelante = 0;
+  /**
+   * **«Rumbo de noche»**, si se eligió: el río con la última luz, la noche
+   * que cae en el puente y el rumbo que queda. Ver `flight/rumbo-de-noche.ts`
+   * y `practicarElRumbo`.
+   */
+  private rumboDeNoche: RumboDeNoche | null = null;
+  /** Lo que falta para volver a poner la hora del cielo, s. Ver `practicarElRumbo`. */
+  private hastaLaHoraDelRumbo = 0;
   /** La nube de la tormenta del ejercicio. Ver `world/cumulonimbo.ts`. */
   private cumulonimbo: CumulonimboEnElMundo | null = null;
   /**
@@ -3992,6 +4009,7 @@ export class Game {
       this.cruce?.ejercicio ??
       this.ils?.ejercicio ??
       this.deriva?.ejercicio ??
+      this.rumboDeNoche?.ejercicio ??
       null
     );
   }
@@ -4002,7 +4020,7 @@ export class Game {
    * `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
-    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva;
+    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva ?? this.rumboDeNoche;
     return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada", this.ils?.fase === "frustrando");
   }
   /**
@@ -6571,6 +6589,14 @@ export class Game {
       } else if (ejercicio.escena === "rotor") {
         // Las del helicóptero tampoco: ver `practicarElRotor`.
         this.leccionDelRotor = new LeccionDelRotor(ejercicio, this.aircraft.helicoptero?.rotor.sentido ?? 1);
+      } else if (ejercicio.escena === "navegacion" && ejercicio.colocacion === "rumbo") {
+        /*
+         * **Ni el rumbo de noche**: el río del campo, medido, y la variación
+         * con la que se lee la rosa. Dónde y a qué hora se empieza, en
+         * `dondeEmpiezaElRumbo`.
+         */
+        const rio = rioDeNoche(oaciDe(this.scenario));
+        if (rio) this.rumboDeNoche = new RumboDeNoche(ejercicio, rio, this.scenario.magneticVariation ?? 0);
       } else if (ejercicio.escena === "navegacion") {
         /*
          * **Ni la deriva**: el sitio del campo, puesto donde está. Dónde se
@@ -13543,7 +13569,8 @@ export class Game {
         colocacion !== "interceptar" &&
         colocacion !== "cruce" &&
         colocacion !== "ils" &&
-        colocacion !== "deriva"
+        colocacion !== "deriva" &&
+        colocacion !== "rumbo"
       ) {
         const { lejos, alto } = this.dondeEmpiezaElEjercicio(colocacion);
         const [x, z] = puntoDePista(runway, hastaElUmbralDeToma(runway) + lejos);
@@ -13805,6 +13832,9 @@ export class Game {
     this.deriva?.reiniciar();
     this.rayasDeLaDeriva?.camino.vaciar();
     this.rayasDeLaDeriva?.delante.vaciar();
+    // Y el cielo del rumbo de noche, otra vez con el sol recién puesto.
+    this.rumboDeNoche?.reiniciar();
+    if (this.rumboDeNoche?.colocacion) this.ponerHora(this.rumboDeNoche.colocacion.hora);
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
@@ -14233,6 +14263,13 @@ export class Game {
     const q = new URLSearchParams(location.search).get("hora");
     const h = q === null ? NaN : Number(q);
     if (Number.isFinite(h)) return h;
+    /*
+     * **Y el rumbo de noche, a la hora de verdad de hoy** en que el sol está
+     * donde tiene que estar para que la noche caiga en el puente. Ver
+     * `colocacionDelRumbo`.
+     */
+    const delRumbo = this.dondeEmpiezaElRumbo();
+    if (delRumbo) return delRumbo.hora;
     /*
      * **De pasaje, de día**: el primer vuelo de alguien es para mirar por la
      * ventanilla, y de noche no se ve el Teide. Es el horario de ese vuelo,
@@ -16336,6 +16373,18 @@ export class Game {
 
   /** Pone una hora del día. Lo llama el panel del tiempo. */
   ponerHora(hora: number): void {
+    this.ponerLaLuzDeLaHora(hora);
+    // Y las aves, que salen con el sol y suben con la térmica de la tarde.
+    this.poblarDeAves();
+  }
+
+  /**
+   * **La luz de una hora**, sin repoblar las aves: el cielo, el cuadro, el
+   * balizamiento, las farolas y los faros. Es lo que se pone cada medio
+   * segundo mientras anochece en «Rumbo de noche»; las bandadas se rehacen
+   * enteras, y eso no se paga dos veces por segundo. Ver `practicarElRumbo`.
+   */
+  private ponerLaLuzDeLaHora(hora: number): void {
     this.horaDelVuelo = hora;
     this.sky.ponerHora(hora);
     // Y la luz del cuadro, que se enciende con el sol que hay. Ver `cuantaLuz`.
@@ -16351,8 +16400,6 @@ export class Game {
       v.rodadura?.ponerSol(this.sky.sunDirection.y);
       v.aproximacion?.ponerSol(this.sky.sunDirection.y);
     }
-    // Y las aves, que salen con el sol y suben con la térmica de la tarde.
-    this.poblarDeAves();
   }
 
   /**
@@ -17914,7 +17961,8 @@ export class Game {
                 colocacion === "radial" ||
                 colocacion === "interceptar" ||
                 colocacion === "cruce" ||
-                colocacion === "deriva"
+                colocacion === "deriva" ||
+                colocacion === "rumbo"
               ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
               : colocacion === "ils"
               ? // A la del circuito, como quien ya ha bajado para la aproximación.
@@ -17939,7 +17987,8 @@ export class Game {
       colocacion === "interceptar" ||
       colocacion === "cruce" ||
       colocacion === "ils" ||
-      colocacion === "deriva"
+      colocacion === "deriva" ||
+      colocacion === "rumbo"
         ? { equilibrado: true }
         : {}),
     });
@@ -19495,6 +19544,8 @@ export class Game {
     this.practicarElIls(dt);
     // Y la deriva. Ver `practicarLaDeriva`.
     this.practicarLaDeriva(dt);
+    // Y el rumbo de noche. Ver `practicarElRumbo`.
+    this.practicarElRumbo(dt);
     // El morse de la radio, con su turno. Ver `atenderAlMorse`.
     this.atenderAlMorse();
     this.mirarSiCambiaDeCampo();
@@ -24788,6 +24839,7 @@ export class Game {
     if (colocacion === "cruce") return this.dondeEmpiezaElCruce();
     if (colocacion === "ils") return this.dondeEmpiezaElIls();
     if (colocacion === "deriva") return this.dondeEmpiezaLaDeriva();
+    if (colocacion === "rumbo") return this.dondeEmpiezaElRumbo();
     return null;
   }
 
@@ -24986,6 +25038,162 @@ export class Game {
           this.hud.mostrarCierreDeEjercicio(
             dibujoDeCierre("vuelta"),
             this.rotulo("ejercicio.deriva.cierre", "palabra.bien"),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+    }
+  }
+
+  // ── «Rumbo de noche» ─────────────────────────────────────────────────
+  //
+  // Ver `flight/rumbo-de-noche.ts`. Aquí solo se decide quién dice y enseña
+  // cada cosa: la hora del cielo, la marca de la rosa, la tarjeta y la
+  // instructora.
+
+  /**
+   * **Dónde y a qué hora empieza el rumbo de noche**: encima del río, por él,
+   * y a la hora solar de hoy en que la noche cae en el puente a la velocidad
+   * del ejercicio. Se cuenta una vez: la hora del cielo sale de aquí, y la
+   * pide `horaPedida` antes de que el mundo exista.
+   */
+  private dondeEmpiezaElRumbo(): ColocacionDelRumbo | null {
+    const r = this.rumboDeNoche;
+    if (!r) return null;
+    if (r.colocacion) return r.colocacion;
+    r.colocar(
+      colocacionDelRumbo({
+        rio: r.rio,
+        velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
+        fecha: this.fechaPedida() ?? new Date(),
+        viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+      }),
+    );
+    return r.colocacion;
+  }
+
+  /** «Rumbo de noche», para el banco. */
+  get rumboDeNocheParaBanco(): {
+    readonly fase: string;
+    readonly cierre: string | null;
+    readonly colocacion: ColocacionDelRumbo | null;
+    readonly hora: number | null;
+    readonly horaDelCielo: number;
+    readonly sol: number;
+    readonly rumboPedido: number | null;
+    readonly solCuandoAnochecio: number | null;
+    readonly desvioMedio: number | null;
+    readonly desvioMasGrande: number;
+    readonly llegada: string | null;
+    readonly apartado: number | null;
+    readonly destino: { readonly x: number; readonly z: number };
+    readonly lucesDeCiudad: boolean;
+    readonly objetivo: { readonly rumbo: number; readonly distancia: number } | null;
+  } | null {
+    const r = this.rumboDeNoche;
+    if (!r) return null;
+    return {
+      fase: r.fase,
+      cierre: r.cierre,
+      colocacion: r.colocacion,
+      hora: r.hora,
+      horaDelCielo: this.sky.hora,
+      sol: this.alturaDelSol(),
+      rumboPedido: r.rumboPedido,
+      solCuandoAnochecio: r.solCuandoAnochecio,
+      desvioMedio: r.desvioMedio,
+      desvioMasGrande: r.desvioMasGrande,
+      llegada: r.llegada,
+      apartado: r.apartado,
+      destino: r.destino,
+      lucesDeCiudad: this.lucesDeCiudad?.grupo.visible ?? false,
+      objetivo: this.aDondeVoy,
+    };
+  }
+
+  /**
+   * **Un paso del rumbo de noche**: el cielo a la hora del ejercicio —el sol de
+   * verdad, con el reloj apurado—, cada medio segundo, que a diez veces es un
+   * minuto y medio de grado; y el ejercicio, que lee la altura del sol que ese
+   * cielo pinta. La estela, en el plano, como en la deriva.
+   */
+  private practicarElRumbo(dt: number): void {
+    const r = this.rumboDeNoche;
+    if (!r?.colocacion) return;
+    this.hud.mapa.ponerEstela(r.fase === "cerrada" ? null : () => this.libreta.traza);
+    if (this.tarjetaDelTiempo?.abierta) return;
+    this.hastaLaHoraDelRumbo -= dt;
+    const hora = r.hora;
+    if (r.fase !== "cerrada" && hora !== null && this.hastaLaHoraDelRumbo <= 0) {
+      this.hastaLaHoraDelRumbo = 0.5;
+      this.ponerLaLuzDeLaHora(hora);
+    }
+    const s = this.flight.state;
+    const sucesos = r.paso(
+      {
+        x: s.position.x,
+        z: s.position.z,
+        rumbo: vuelta((s.heading * 180) / Math.PI),
+        sol: this.alturaDelSol(),
+        enElSuelo: s.onGround,
+        parado: s.onGround && s.groundSpeed < 0.6,
+        percance: this.percance !== null,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderAlRumbo(suceso);
+  }
+
+  private atenderAlRumbo(suceso: SucesoDelRumbo): void {
+    /** La tarjeta con su dibujo y su frase, y la voz de la instructora si está grabada. */
+    const contar = (dibujo: DibujoDeSenal, clave: TranslationKey, palabra: TranslationKey, delante = "", segundos = 12): void => {
+      const frase = this.rotulo(clave, palabra);
+      this.hud.senal.mostrar(dibujo, delante && frase ? `${delante}. ${frase}` : delante || frase, null, {
+        segundos,
+        prioridad: IMPORTANTE,
+      });
+      this.decirDelEjercicio(clave, "mando");
+    };
+    /** **El número, desde Taguató**, delante de la frase: abajo, la marca y la voz. */
+    const cifra = canalesDe(this.tier.avisos).cifra;
+    switch (suceso.que) {
+      case "presentar":
+        // El depósito ya va con el vuelo del ejercicio: ver `cargarParaElEjercicio` (H26d).
+        return contar("rumbo-rio", "ejercicio.rumbo.antes", "palabra.mira", "", 30);
+      case "anochece":
+        this.avisar("attention");
+        return contar(
+          "rumbo-en-la-marca",
+          "ejercicio.rumbo.anochece",
+          "palabra.elRumbo",
+          cifra ? t("ejercicio.rumbo.cifra", { n: String(suceso.rumbo).padStart(3, "0") }) : "",
+          20,
+        );
+      case "seVa":
+        return contar(
+          suceso.lado > 0 ? "rumbo-se-va-a-la-derecha" : "rumbo-se-va-a-la-izquierda",
+          "ejercicio.rumbo.seVa",
+          "palabra.volve",
+          cifra && this.rumboDeNoche?.rumboPedido != null
+            ? t("ejercicio.rumbo.cifra", { n: String(this.rumboDeNoche.rumboPedido).padStart(3, "0") })
+            : "",
+        );
+      case "enLaMarca":
+        return contar("rumbo-en-la-marca", "ejercicio.rumbo.enLaMarca", "palabra.asi");
+      case "llegaste": {
+        this.avisar("achieved");
+        const grados = cifra ? t("ejercicio.rumbo.desvio", { n: String(Math.max(1, Math.round(suceso.desvio))) }) : "";
+        if (suceso.como === "encima") return contar("rumbo-llegaste", "ejercicio.rumbo.llegaste", "palabra.bien", grados);
+        return contar("rumbo-llegaste", "ejercicio.rumbo.llegasteAlLado", "palabra.bien", grados);
+      }
+      case "cerrar":
+        // Lo malo ya lo cuenta el percance; posado antes, el suelo lo dice.
+        if (suceso.como === "otraVez") return;
+        this.agenda.luego(TARDA_EL_FINAL + 8, () => {
+          if (this.rumboDeNoche?.cierre !== "hecho") return;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre("vuelta"),
+            this.rotulo("ejercicio.rumbo.cierre", "palabra.bien"),
             plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
           );
         });
@@ -35518,6 +35726,20 @@ export class Game {
       return {
         rumbo: rumboHacia(p.x, p.z, punto.x, punto.z),
         distancia: Math.hypot(punto.x - p.x, punto.z - p.z),
+      };
+    }
+    /*
+     * **Y de noche, en «Rumbo de noche», el rumbo pedido**: la marca de la
+     * rosa se va a él —en el cuadro, en el direccional hecho HSI y en las
+     * pantallas— y la distancia es la que falta a donde el río sigue.
+     */
+    const pedido = this.rumboDeNoche?.fase === "rumbo" ? this.rumboDeNoche.rumboPedido : null;
+    if (pedido !== null && this.rumboDeNoche) {
+      const p = this.flight.state.position;
+      const g = this.rumboDeNoche.destino;
+      return {
+        rumbo: MathUtils.degToRad(pedido - this.rumboDeNoche.variacion),
+        distancia: Math.hypot(g.x - p.x, g.z - p.z),
       };
     }
     const donde = this.sitioDeLaMision;

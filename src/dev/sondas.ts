@@ -2608,6 +2608,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     deriva: () => juego.derivaParaBanco,
     /**
+     * «Rumbo de noche»: la fase, la hora del ejercicio y la del cielo, el sol,
+     * el rumbo pedido, lo que se apartó el morro, cómo llegó y si las luces
+     * de la ciudad están encendidas. Ver `flight/rumbo-de-noche.ts`.
+     */
+    rumboDeNoche: () => juego.rumboDeNocheParaBanco,
+    /**
      * «Dos radiales que se cortan»: la fase, las dos radios, los radiales
      * leídos, la cruz y lo lejos que cayó del avión. Ver `flight/dos-radiales.ts`.
      */

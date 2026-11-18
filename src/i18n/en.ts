@@ -963,6 +963,7 @@ export const EN: Dictionary = {
   "palabra.pista": "Runway",
   "palabra.asi": "Steady",
   "palabra.alViento": "Into the wind!",
+  "palabra.elRumbo": "Heading",
   "palabra.aerofrenosAdentro": "Speed brakes in",
   "hud.gasDelAvion": "The plane holds the power",
   "hud.gasDeLaAyuda": "The instructor holds the power",
@@ -1432,6 +1433,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.cruce": "Where two radials cross",
   "hangar.ejercicio.ils": "Landing on the needles",
   "hangar.ejercicio.deriva": "Aim into the wind",
+  "hangar.ejercicio.rumbo": "Heading at night",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1652,6 +1654,16 @@ export const EN: Dictionary = {
   "ejercicio.deriva.llegasteEnCalma": "We made it! With no wind, the path goes right where the nose points",
   "ejercicio.deriva.cierre": "In a crosswind, the nose points a little into the wind and the path runs straight",
   "ejercicio.deriva.grados": "{n}° into the wind",
+  "ejercicio.rumbo.antes": "Follow the river: the sun has just set. Look how the water shines",
+  "ejercicio.rumbo.anochece": "It's night now and the river is gone. Keep the arrow still on the mark",
+  "ejercicio.rumbo.seVa": "Off the mark. Come back gently, no rush",
+  "ejercicio.rumbo.enLaMarca": "That's it! The arrow still on the mark",
+  "ejercicio.rumbo.llegaste": "We made it! The dark strip beside the lights is the river",
+  "ejercicio.rumbo.llegasteAlLado": "We passed to one side. The river is the dark strip beside the lights",
+  "ejercicio.rumbo.cifra": "Heading {n}",
+  "ejercicio.rumbo.desvio": "±{n}° on average",
+  "ejercicio.rumbo.cierre":
+    "At night, the heading is the road. Really, night takes half an hour to fall: here we sped it up",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
   "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
   "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",

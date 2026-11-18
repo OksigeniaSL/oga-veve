@@ -1012,6 +1012,55 @@ function deriva(lado: 1 | -1 | 0, corregida: boolean): string {
 `);
 }
 
+/**
+ * **«Rumbo de noche»**: el río con el sol que se pone, la rosa con su marca
+ * de noche y el río que sigue entre las luces. La rosa es la de la cabina
+ * —la del direccional, el HSI y el cuadro—, con la marca de rumbo en
+ * magenta, que es «lo que quiero» en todas las pantallas del juego, y el
+ * avión en el centro, que es «lo que tengo». Ver `flight/rumbo-de-noche.ts`.
+ */
+const avionDeRumbo = (giro: number, escala = 0.62): string =>
+  `<g transform="translate(12 13) rotate(${giro}) scale(${escala}) translate(-12 -12)">${FIGURA["avion"] ?? ""}</g>`;
+
+/** El río desde arriba, hacia el horizonte, y el sol medio hundido en él. */
+const RUMBO_RIO = icono(`
+  <path d="M1 7.4 H23" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />
+  <path d="M15.2 7.4 a3.2 3.2 0 0 1 6.4 0 Z" />
+  <path d="M8.4 23 Q6.4 18.6 10.6 15.4 T12.6 7.6 h1.4 Q15 11.6 13 14.2 T11.8 23 Z" opacity="0.55" />
+  <g transform="translate(10.6 15.6) scale(0.42) translate(-12 -12)">${FIGURA["avion"] ?? ""}</g>
+`);
+
+/**
+ * La rosa de noche, con la marca arriba y el avión girado `giro` grados de
+ * ella: cero, en la marca; con giro, ámbar y la flecha que lo trae de vuelta.
+ */
+function rosaDeNoche(giro: number): string {
+  const vuelve =
+    giro === 0
+      ? ""
+      : `<path d="M${12 + Math.sign(giro) * 6.2} 6.2 Q${12 + Math.sign(giro) * 2.6} 3.2 12.8 4.4" fill="none"
+               stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+         <path d="M${12 + Math.sign(giro) * 1.2} 3.2 l${-Math.sign(giro) * 1.9} 1.4 l${Math.sign(giro) * 1.9} 1.4 Z" />`;
+  return icono(`${NOCHE}
+  <g class="senal__en-la-noche${giro === 0 ? "" : " senal__se-va"}">
+    <circle cx="12" cy="13" r="8.2" fill="none" stroke="currentColor" stroke-width="1.1" />
+    <path d="M12 5.4 v1.8 M19.6 13 h-1.8 M12 20.6 v-1.8 M4.4 13 h1.8" fill="none" stroke="currentColor" stroke-width="1" />
+    ${avionDeRumbo(giro)}
+    ${vuelve}
+  </g>
+  <path class="senal__marca" d="M10.4 2.4 h3.2 v2.4 l-1.6 1.4 l-1.6 -1.4 Z" />`);
+}
+
+/** Llegar: el río oscuro entre la orilla con luces y la que no las tiene. */
+const RUMBO_LLEGASTE = icono(`${NOCHE}
+  <path d="M3 23 L14 1 h5 L8 23 Z" fill="#1d2a40" />
+  <g class="senal__luz-blanca">
+    <circle cx="11.6" cy="20" r="0.8" /><circle cx="14" cy="17.4" r="0.7" /><circle cx="13.2" cy="21.6" r="0.6" />
+    <circle cx="16.2" cy="13.8" r="0.8" /><circle cx="18.4" cy="11.4" r="0.6" /><circle cx="17.2" cy="16.2" r="0.6" />
+    <circle cx="19.6" cy="7.4" r="0.8" /><circle cx="21.2" cy="10" r="0.6" /><circle cx="20.4" cy="4.4" r="0.6" />
+  </g>
+  <g class="senal__en-la-noche">${avionDeRumbo(26, 0.5)}</g>`);
+
 /** La flecha del lado, pegada al borde: es lo primero que se mira. */
 const HACIA: Record<string, string> = {
   izquierda: `<path d="M5.4 4.2 L1.4 7.2 L5.4 10.2 Z" />
@@ -1907,6 +1956,12 @@ export const DIBUJOS = {
   "deriva-corregida-a-la-izquierda": deriva(-1, true),
   "deriva-corregida-a-la-derecha": deriva(1, true),
   "deriva-en-calma": deriva(0, false),
+  // «Rumbo de noche»: el río con el sol que se pone, la rosa con su marca y el río entre las luces. Ver `rumbo-de-noche.ts`.
+  "rumbo-rio": RUMBO_RIO,
+  "rumbo-en-la-marca": rosaDeNoche(0),
+  "rumbo-se-va-a-la-derecha": rosaDeNoche(24),
+  "rumbo-se-va-a-la-izquierda": rosaDeNoche(-24),
+  "rumbo-llegaste": RUMBO_LLEGASTE,
   /*
    * «Aterrizar con las agujas»: el localizador a tope de cada lado con la
    * senda todavía arriba, viniendo hacia el centro, la senda arriba con el

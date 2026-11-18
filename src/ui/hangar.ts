@@ -1858,7 +1858,27 @@ const EJ_DERIVA = escena(`
   ${AVION("translate(88 38) scale(0.85)")}
 `);
 
+/**
+ * **Rumbo de noche**: desde arriba, como la deriva, el río que sube de abajo
+ * a arriba; la mitad de abajo todavía con luz y la de arriba ya de noche, con
+ * las luces de la orilla. El avión en la raya entre las dos, y por delante la
+ * recta a rayas del rumbo, que va encima del río aunque el río ya no se vea.
+ * Ver `flight/rumbo-de-noche.ts`.
+ */
+const EJ_RUMBO = escena(`
+  <rect class="panel__tierra" x="0" y="0" width="120" height="84" rx="3" />
+  <path class="leccion__mar" d="M44 84 Q40 66 54 54 L86 0 H100 L68 56 Q58 68 62 84 Z" />
+  <path d="M0 3 a3 3 0 0 1 3 -3 H117 a3 3 0 0 1 3 3 V44 H0 Z" style="fill: #0b1322; opacity: 0.88" />
+  <g style="fill: #ffe9a8">
+    <circle cx="96" cy="30" r="1.4" /><circle cx="104" cy="22" r="1.2" /><circle cx="90" cy="38" r="1.2" />
+    <circle cx="110" cy="12" r="1.4" /><circle cx="100" cy="36" r="1" /><circle cx="114" cy="30" r="1.2" />
+  </g>
+  <path class="ejercicio__ondas" d="M60 50 L88 4" stroke-dasharray="4 4" />
+  ${AVION("translate(60 50) rotate(31) scale(0.8)")}
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
+  rumbo: EJ_RUMBO,
   deriva: EJ_DERIVA,
   ils: EJ_ILS,
   aguja: EJ_AGUJA,

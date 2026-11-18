@@ -3211,6 +3211,33 @@ for (const [id, para] of DE_LA_DERIVA) {
   total += texto.length;
 }
 
+/*
+ * **«Rumbo de noche»** (H26o): las seis de la instructora. El número del
+ * rumbo, el desvío y el cierre se escriben y no se dicen.
+ */
+const DEL_RUMBO = [
+  ["ejercicio.rumbo.antes", "rumbo de noche, antes de empezar: seguir el río con el sol recién puesto"],
+  ["ejercicio.rumbo.anochece", "rumbo de noche: anocheció, el río ya no se ve, la flecha quieta en la marca"],
+  ["ejercicio.rumbo.seVa", "rumbo de noche: el morro se fue de la marca, volver despacio"],
+  ["ejercicio.rumbo.enLaMarca", "rumbo de noche: la flecha lleva un rato quieta en la marca"],
+  ["ejercicio.rumbo.llegaste", "rumbo de noche: encima de donde el río sigue, entre las luces"],
+  ["ejercicio.rumbo.llegasteAlLado", "rumbo de noche: se pasó al costado de donde el río sigue"],
+];
+for (const [id, para] of DEL_RUMBO) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
   ...filas.map((f) =>
