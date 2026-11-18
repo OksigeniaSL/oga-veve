@@ -1079,8 +1079,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
     /*
      * **Y en la final recta, alto se corrige con un punto, no con un picado.**
      *
-     * El tope de arriba es para el arco del viraje, donde la senda se mueve
-     * bajo el avión y hay que alcanzarla. Ya alineado, un piloto corrige la
+     * El tope de arriba queda para los tramos de antes de la final; en ella,
+     * con el arco del viraje dentro, va este. Ya alineado, un piloto corrige la
      * senda con unos doscientos pies por minuto de más y nunca pasa de los
      * mil, que es justo lo que mide la puerta. Con el tope del arco, el JAZ 90
      * de Los Rodeos llegó a la puerta bajando a 6,3 m/s (#192), medido con la
@@ -1096,7 +1096,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       etapa === "final" &&
       !aLaVista?.length &&
       elArcoHastaElEje(s).theta < (20 * Math.PI) / 180;
-    const caidaQueSePide = enLaFinalRecta
+    /*
+     * **Y en el arco del viraje a final, lo mismo que en la recta** (#192,
+     * H29g). Aquí el tope era el de arriba, `CAIDA_MAXIMA` y un cuarto: 6,25
+     * m/s en el JAZ 90, 1.230 pies por minuto pedidos con el ala a veinticinco
+     * grados y por debajo de los mil pies. Ningún piloto de reactor vira a
+     * final así: el viraje se hace con treinta grados como mucho y la
+     * aproximación visual se tiene que estabilizar —en la senda y sin pasar
+     * de mil pies por minuto— a los quinientos pies; alto y bajando de más es
+     * la primera de las aproximaciones visuales sin estabilizar de la Flight
+     * Safety Foundation (FSF ALAR, *Briefing Notes* 7.1 y 7.4). Medido con la
+     * traza del ala en Los Rodeos (H29b): con 6,25 pedidos el avión llegó a
+     * bajar 7,3 m/s a 28° de alabeo, al enderezar subió a 0,5 y en la puerta
+     * bajaba a 5,3 de media. Y en la mesa (`h29g/arco.ts` en el scratchpad de
+     * la tanda, aire quieto, 45 m alto al empezar a virar): con 6,25, el pico
+     * del arco en 7,08 m/s y la peor media de cinco segundos tras enderezar en
+     * 6,39; con lo de la recta, 6,05 y 4,70. Lo que el avión baja de más
+     * virando, aun con 4,57 pedidos, es del automático: no compensa el ala que
+     * deja de sostener al inclinarse (ADR 0027, enmienda H29g).
+     */
+    const enLaFinal = etapa === "final";
+    const caidaQueSePide = enLaFinal
       ? Math.min(
           CAIDA_MAXIMA * 1.25,
           Math.max(porElSuelo(s) * SENDA + CORRECCION_EN_FINAL, 0.9 * MIL_PIES_POR_MINUTO),

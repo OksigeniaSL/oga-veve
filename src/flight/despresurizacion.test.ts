@@ -119,6 +119,11 @@ describe("lo que pasa, en su orden", () => {
 function descenso(
   a: AircraftConfig,
   aerofrenos: boolean,
+  /**
+   * Lo que sube el aire a los `t` segundos, m/s. Se le pone al modelo y se le
+   * da al automático, como el juego: ver `Estado.subeElAire`.
+   */
+  subeElAire: (t: number) => number = () => 0,
 ): {
   segundos: number;
   iasMax: number;
@@ -158,6 +163,8 @@ function descenso(
   const conTren = a.aerofrenos === null && a.trenRetractil;
   let trenFuera = false;
   for (let t = 0; t < 20 * 60; t += dt) {
+    const sube = subeElAire(t);
+    modelo.ponerRacha(0, sube, 0, 0);
     const r = piloto.mandos(
       {
         heading: s.heading,
@@ -170,6 +177,7 @@ function descenso(
         verdadera: s.airspeed,
         ritmoDeCabeceo: s.pitchRate,
         timon: t === 0 ? timon : modelo.timonAhora(),
+        subeElAire: sube,
       },
       rumbo,
       dt,
@@ -214,6 +222,22 @@ describe("el descenso de emergencia, con el JAZ 90 desde su crucero", () => {
     expect(conAerofrenos.machMax).toBeLessThan(ARAI.mmo);
     // Un descenso de emergencia no es un picado: la carga no baja de medio g.
     expect(conAerofrenos.cargaMin).toBeGreaterThan(0.5);
+  });
+
+  it("y con una ascendente por el camino, el automático que la sabe no se pasa de nada", () => {
+    /*
+     * La tripulación del ejercicio vuela con el automático del juego, y el
+     * juego le da lo que sube el aire en cualquier modo (H29g; ver `porElAire`
+     * en `piloto-automatico.ts` y `volarElDescenso` en `dev/sondas.ts`). Con
+     * tres metros por segundo durante seis segundos a mitad de bajada, medido:
+     * los mismos 203 s, 295 kt de pico y Mach 0,711, y la carga entre 0,83 y
+     * 1,10; sin la ascendente, entre 0,89 y 1,04.
+     */
+    const d = descenso(ARAI, true, (t) => (t > 60 && t < 66 ? 3 : 0));
+    expect(Math.abs(d.segundos - conAerofrenos.segundos)).toBeLessThan(5);
+    expect(d.iasMax / 0.514444).toBeLessThan(ARAI.vmoKt);
+    expect(d.machMax).toBeLessThan(ARAI.mmo);
+    expect(d.cargaMin).toBeGreaterThan(0.5);
   });
 
   it("y sin aerofrenos tarda bastante más, que es para lo que están", () => {
