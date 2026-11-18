@@ -3179,6 +3179,38 @@ for (const [id, para] of DEL_ILS) {
   total += texto.length;
 }
 
+/*
+ * **«Apuntá al viento»** (#51, el peldaño de la deriva): el morro en un sitio
+ * que se ve con el viento de costado, la raya blanca que se aparta de la
+ * magenta y apuntar un poco al viento. Genéricas, sin el nombre del sitio, que
+ * va escrito en la tarjeta. En calma, como todo ejercicio. El cierre solo se
+ * lee. Ver `src/flight/deriva.ts` y el ADR 0031.
+ */
+const DE_LA_DERIVA = [
+  ["ejercicio.deriva.antes", "apuntá al viento, antes de empezar: el morro al final de la raya magenta"],
+  ["ejercicio.deriva.deLado", "apuntá al viento: la raya blanca se fue de costado, apuntar un poco al viento"],
+  ["ejercicio.deriva.alViento", "apuntá al viento: corregido, la raya blanca sale derecha"],
+  ["ejercicio.deriva.enCalma", "apuntá al viento, en calma: el avión va adonde apunta"],
+  ["ejercicio.deriva.deLargo", "apuntá al viento: se pasó de costado, volver"],
+  ["ejercicio.deriva.llegaste", "apuntá al viento: encima del sitio, con el morro al viento"],
+  ["ejercicio.deriva.llegasteEnCurva", "apuntá al viento: encima del sitio por la curva, sin corregir"],
+  ["ejercicio.deriva.llegasteEnCalma", "apuntá al viento: encima del sitio, sin viento"],
+];
+for (const [id, para] of DE_LA_DERIVA) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
   ...filas.map((f) =>

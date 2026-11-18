@@ -1839,7 +1839,24 @@ const EJ_ILS = escena(`
   ${AVION("translate(56 52) rotate(31) scale(0.85)")}
 `);
 
+/**
+ * **Apuntá al viento**: desde arriba, el río con su puente arriba, la recta a
+ * rayas hasta él, el viento entrando por la izquierda con dos flechas, y la
+ * estela que sale de abajo y se va de costado hacia la derecha, con el avión
+ * al final apuntando arriba, al puente: el morro va bien y el camino no. Ver
+ * `flight/deriva.ts`.
+ */
+const EJ_DERIVA = escena(`
+  <path class="leccion__mar" d="M0 9 Q30 15 60 10 T120 11 V21 Q90 25 60 20 T0 19 Z" />
+  <path class="leccion__asfalto" d="M56 5 h8 v21 h-8 Z" />
+  <path class="ejercicio__ondas" d="M60 82 V29" stroke-dasharray="2 3" />
+  <path class="ejercicio__flecha" d="M6 46 h14 M20 46 l-4 -3 M20 46 l-4 3 M6 60 h14 M20 60 l-4 -3 M20 60 l-4 3" />
+  <path class="leccion__estela" d="M60 82 Q62 62 86 44" />
+  ${AVION("translate(88 38) scale(0.85)")}
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
+  deriva: EJ_DERIVA,
   ils: EJ_ILS,
   aguja: EJ_AGUJA,
   radial: EJ_RADIAL,

@@ -95,6 +95,11 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
    * `flight/seguir-la-aguja.ts`.
    */
   if (ejercicio?.escena === "radio") return { ...deCasa, fuente: "mano" };
+  /*
+   * **Y el de la deriva, igual**: el viento de siempre del sitio, que es el
+   * que se escurre de costado. Ver `flight/deriva.ts`.
+   */
+  if (ejercicio?.escena === "navegacion") return { ...deCasa, fuente: "mano" };
 
   // El identificador OACI es el `id` del aeródromo: así se llama el fichero y
   // así lo llama el METAR.

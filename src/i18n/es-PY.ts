@@ -2578,6 +2578,7 @@ export const ES_PY = {
     "La pista a la que vamos está más alta que el mar: lo que nos queda por bajar es lo que marca el altímetro menos la cifra de la pista, la de abajo de la altura.",
   "palabra.pista": "Pista",
   "palabra.asi": "Así",
+  "palabra.alViento": "¡Al viento!",
   "palabra.aerofrenosAdentro": "Aerofrenos adentro",
   // Lo que dice el dibujo de quién lleva el gas, para quien no lo ve.
   "hud.gasDelAvion": "El avión lleva el motor",
@@ -3289,6 +3290,7 @@ export const ES_PY = {
   "hangar.ejercicio.interceptar": "Salí por un radial",
   "hangar.ejercicio.cruce": "Dos radiales que se cortan",
   "hangar.ejercicio.ils": "Aterrizar con las agujas",
+  "hangar.ejercicio.deriva": "Apuntá al viento",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3576,6 +3578,31 @@ export const ES_PY = {
     "¡Aterrizaste con las agujas! Bajaste por el localizador y la senda hasta los mínimos, y ahí estaba la pista. Así se baja hasta una pista que no se ve",
   "ejercicio.ils.cierreFrustrada":
     "¡Bien decidido! Con una aguja fuera del centro, o sin ver la pista, se sube y se vuelve a probar. Así lo hacen los pilotos de verdad, y eso también es ganar",
+  /*
+   * **«Apuntá al viento»** (#51, ADR 0031): el morro en un sitio que se ve
+   * con el viento de costado, la raya blanca del camino que se aparta de la
+   * magenta, y apuntar un poco al viento. Genéricas: el nombre del sitio se
+   * escribe en la tarjeta, no se dice. Cortas, para decirlas en calma.
+   */
+  "ejercicio.deriva.sitio": "{sitio}",
+  "ejercicio.deriva.antes":
+    "Hoy hay viento de costado. Apuntá el morro justo al final de la raya magenta, y dejalo quieto ahí",
+  "ejercicio.deriva.deLado":
+    "¿Viste? La raya blanca se va de costado: el viento nos empuja, aunque el morro apunte bien. Apuntá un poquito al viento",
+  "ejercicio.deriva.alViento": "¡Eso! Con el morro un poquito al viento, la raya blanca sale derecha",
+  "ejercicio.deriva.enCalma":
+    "Hoy no hay viento: el avión va justo adonde apunta el morro, y la raya blanca sale derecha",
+  "ejercicio.deriva.deLargo":
+    "Pasamos de costado. No pasa nada: girá y volvé, con el morro un poquito al viento",
+  "ejercicio.deriva.llegaste":
+    "¡Llegamos! Fijate: el morro no apuntaba justo, apuntaba un poquito al viento. Así se llega con viento de costado",
+  "ejercicio.deriva.llegasteEnCurva":
+    "¡Llegamos, pero en curva! Mirá la raya blanca: se dobló. La próxima, apuntá un poquito al viento desde el principio",
+  "ejercicio.deriva.llegasteEnCalma": "¡Llegamos! Sin viento, el camino va justo adonde apunta el morro",
+  // El panel del final: se lee, no se dice.
+  "ejercicio.deriva.cierre": "Con viento de costado, el morro va un poco al viento y el camino sale derecho",
+  // La corrección en grados, de Taguató para arriba, delante de la frase.
+  "ejercicio.deriva.grados": "{n}° al viento",
   // Y la frase corta, con sus números, de Taguató para arriba.
   "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
   "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",

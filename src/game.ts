@@ -800,6 +800,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   cruce: "cruce-de-radiales",
   // Las dos agujas del ILS en cruz. Ver `ils-con-agujas.ts`.
   ils: "ils-en-cruz",
+  // El camino que se va de costado con el morro en el puente. Ver `deriva.ts`.
+  deriva: "deriva-a-la-derecha",
   autorrotacion: "helicoptero-sin-motor",
   // Las lecciones del ala rotatoria, con lo que se pide en cada una: ver `lecciones-del-rotor.ts`.
   estacionario: "helicoptero-quieto",
@@ -1017,6 +1019,15 @@ import {
   type ColocacionDelCorte,
   type SucesoDelCorte,
 } from "./flight/interceptar-un-radial";
+import {
+  colocacionDeLaDeriva,
+  CORRIGE as CORRIGE_LA_DERIVA,
+  Deriva,
+  sitioDeLaDeriva,
+  type ColocacionDeLaDeriva,
+  type SucesoDeLaDeriva,
+} from "./flight/deriva";
+import { BLANCO, CintaEnElSuelo, MAGENTA } from "./world/raya-del-camino";
 import {
   colocacionDelCruce,
   DosRadiales,
@@ -3925,6 +3936,17 @@ export class Game {
   private ils: IlsConAgujas | null = null;
   /** Dónde empieza, contado una vez por montaje: ver `dondeEmpiezaElIls`. */
   private colocacionDelIls: ColocacionDelIls | null = null;
+  /**
+   * **«Apuntá al viento»**, si se eligió: el morro en un puente con el viento
+   * de costado, la raya del camino en el suelo y apuntar un poco al viento.
+   * Ver `flight/deriva.ts` y `practicarLaDeriva`.
+   */
+  private deriva: Deriva | null = null;
+  /**
+   * **Las dos rayas del suelo** de la deriva: la blanca, por donde va el
+   * avión, y la magenta, la recta al sitio. Ver `world/raya-del-camino.ts`.
+   */
+  private rayasDeLaDeriva: { readonly camino: CintaEnElSuelo; readonly recta: CintaEnElSuelo } | null = null;
   /** La nube de la tormenta del ejercicio. Ver `world/cumulonimbo.ts`. */
   private cumulonimbo: CumulonimboEnElMundo | null = null;
   /**
@@ -3954,6 +3976,7 @@ export class Game {
       this.corte?.ejercicio ??
       this.cruce?.ejercicio ??
       this.ils?.ejercicio ??
+      this.deriva?.ejercicio ??
       null
     );
   }
@@ -3963,7 +3986,7 @@ export class Game {
    * ventanilla. Ver `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
-    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils;
+    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva;
     return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada");
   }
   /**
@@ -6532,6 +6555,15 @@ export class Game {
       } else if (ejercicio.escena === "rotor") {
         // Las del helicóptero tampoco: ver `practicarElRotor`.
         this.leccionDelRotor = new LeccionDelRotor(ejercicio, this.aircraft.helicoptero?.rotor.sentido ?? 1);
+      } else if (ejercicio.escena === "navegacion") {
+        /*
+         * **Ni la deriva**: el sitio del campo, puesto donde está. Dónde se
+         * empieza necesita el terreno: ver `dondeEmpiezaLaDeriva` y
+         * `practicarLaDeriva`.
+         */
+        const sitio = sitioDeLaDeriva(oaciDe(this.scenario));
+        const origen = this.scenario.aerodrome?.origin;
+        if (sitio && origen) this.deriva = new Deriva(ejercicio, { ...sitio, ...dondeCae(origen, sitio) });
       } else if (ejercicio.escena === "radio" && ejercicio.colocacion === "cruce") {
         /*
          * Ni el cruce: el VOR del campo y su pareja, cada uno donde está, y el
@@ -13491,7 +13523,8 @@ export class Game {
         colocacion !== "radial" &&
         colocacion !== "interceptar" &&
         colocacion !== "cruce" &&
-        colocacion !== "ils"
+        colocacion !== "ils" &&
+        colocacion !== "deriva"
       ) {
         const { lejos, alto } = this.dondeEmpiezaElEjercicio(colocacion);
         const [x, z] = puntoDePista(runway, hastaElUmbralDeToma(runway) + lejos);
@@ -13750,6 +13783,8 @@ export class Game {
     this.corte?.reiniciar();
     this.cruce?.reiniciar();
     this.ils?.reiniciar();
+    this.deriva?.reiniciar();
+    this.rayasDeLaDeriva?.camino.vaciar();
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
@@ -17855,7 +17890,11 @@ export class Game {
           ? this.aircraft.velocidadDeCircuito
           : colocacion === "crucero" || colocacion === "tormenta"
             ? this.aircraft.cruiseSpeed
-            : colocacion === "aguja" || colocacion === "radial" || colocacion === "interceptar" || colocacion === "cruce"
+            : colocacion === "aguja" ||
+                colocacion === "radial" ||
+                colocacion === "interceptar" ||
+                colocacion === "cruce" ||
+                colocacion === "deriva"
               ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
               : colocacion === "ils"
               ? // A la del circuito, como quien ya ha bajado para la aproximación.
@@ -17879,7 +17918,8 @@ export class Game {
       colocacion === "radial" ||
       colocacion === "interceptar" ||
       colocacion === "cruce" ||
-      colocacion === "ils"
+      colocacion === "ils" ||
+      colocacion === "deriva"
         ? { equilibrado: true }
         : {}),
     });
@@ -19433,6 +19473,8 @@ export class Game {
     this.practicarElCruce(dt);
     // Y el ILS con las agujas. Ver `practicarElIls`.
     this.practicarElIls(dt);
+    // Y la deriva. Ver `practicarLaDeriva`.
+    this.practicarLaDeriva(dt);
     // El morse de la radio, con su turno. Ver `atenderAlMorse`.
     this.atenderAlMorse();
     this.mirarSiCambiaDeCampo();
@@ -24689,7 +24731,180 @@ export class Game {
     if (colocacion === "interceptar") return this.dondeEmpiezaElCorte();
     if (colocacion === "cruce") return this.dondeEmpiezaElCruce();
     if (colocacion === "ils") return this.dondeEmpiezaElIls();
+    if (colocacion === "deriva") return this.dondeEmpiezaLaDeriva();
     return null;
+  }
+
+  // ── «Apuntá al viento» ───────────────────────────────────────────────
+  //
+  // Ver `flight/deriva.ts`. Aquí solo se decide quién dice y enseña cada
+  // cosa: las dos rayas del suelo, la tarjeta con su dibujo y la instructora.
+
+  /**
+   * **Dónde empieza la deriva**: a dos minutos y medio del sitio, con el
+   * morro en él y el viento entero de costado. Se guarda en el ejercicio: la
+   * recta magenta y lo que se mide salen de la misma cuenta.
+   */
+  private dondeEmpiezaLaDeriva(): ColocacionDeLaDeriva | null {
+    const d = this.deriva;
+    if (!d) return null;
+    if (d.colocacion) return d.colocacion;
+    const agua = this.scenario.waterLevel ?? 0;
+    d.colocar(
+      colocacionDeLaDeriva({
+        sitio: d.sitio,
+        campo: { x: 0, z: 0 },
+        viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+        velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
+        suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+        cotaDeLaPista: this.terrain.runwayElevation,
+      }),
+    );
+    return d.colocacion;
+  }
+
+  /** «Apuntá al viento», para el banco. */
+  get derivaParaBanco(): {
+    readonly fase: string;
+    readonly cierre: string | null;
+    readonly sitio: { readonly id: string; readonly x: number; readonly z: number };
+    readonly colocacion: ColocacionDeLaDeriva | null;
+    readonly correccion: number | null;
+    readonly loQueSeAparto: number;
+    readonly llegada: string | null;
+    readonly rayas: { readonly camino: number; readonly recta: number; readonly enLaEscena: boolean } | null;
+  } | null {
+    const d = this.deriva;
+    if (!d) return null;
+    const r = this.rayasDeLaDeriva;
+    return {
+      fase: d.fase,
+      cierre: d.cierre,
+      sitio: { id: d.sitio.id, x: d.sitio.x, z: d.sitio.z },
+      colocacion: d.colocacion,
+      correccion: d.correccion,
+      loQueSeAparto: d.loQueSeAparto,
+      llegada: d.llegada,
+      rayas: r ? { camino: r.camino.muestras, recta: r.recta.muestras, enLaEscena: !!r.camino.malla.parent } : null,
+    };
+  }
+
+  /**
+   * **Un paso de la deriva**: las dos rayas en el suelo —la recta, una vez;
+   * el camino, una muestra cada cincuenta metros— y la estela en el plano,
+   * como en los de radio. Las rayas se quedan al cerrar: lo que hay que mirar
+   * es justo la blanca que salió derecha, o la que se curvó.
+   */
+  private practicarLaDeriva(dt: number): void {
+    const d = this.deriva;
+    const c = d?.colocacion;
+    if (!d || !c) return;
+    if (!this.rayasDeLaDeriva) {
+      const agua = this.scenario.waterLevel ?? 0;
+      const suelo = (x: number, z: number): number => Math.max(agua, this.terrain.sampleHeight(x, z));
+      this.rayasDeLaDeriva = { camino: new CintaEnElSuelo(suelo, BLANCO, 16), recta: new CintaEnElSuelo(suelo, MAGENTA, 10) };
+    }
+    const rayas = this.rayasDeLaDeriva;
+    if (rayas.recta.muestras === 0) rayas.recta.recta(c, c.sitio);
+    rayas.recta.ponerEn(this.scene);
+    rayas.camino.ponerEn(this.scene);
+    const s = this.flight.state;
+    if (!s.onGround && d.fase !== "cerrada") rayas.camino.anadir(s.position.x, s.position.z);
+    this.hud.mapa.ponerEstela(d.fase === "cerrada" ? null : () => this.libreta.traza);
+    if (this.tarjetaDelTiempo?.abierta) return;
+    const sucesos = d.paso(
+      {
+        x: s.position.x,
+        z: s.position.z,
+        vx: s.velocity.x,
+        vz: s.velocity.z,
+        rumbo: vuelta((s.heading * 180) / Math.PI),
+        enElSuelo: s.onGround,
+        parado: s.onGround && s.groundSpeed < 0.6,
+        percance: this.percance !== null,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderALaDeriva(suceso);
+  }
+
+  private atenderALaDeriva(suceso: SucesoDeLaDeriva): void {
+    /** La tarjeta con su dibujo y su frase, y la voz de la instructora si está grabada. */
+    const contar = (dibujo: DibujoDeSenal, clave: TranslationKey, palabra: TranslationKey, segundos = 12): void => {
+      this.hud.senal.mostrar(dibujo, this.rotulo(clave, palabra), null, { segundos, prioridad: IMPORTANTE });
+      this.decirDelEjercicio(clave, "mando");
+    };
+    const lado = this.deriva?.colocacion?.lado ?? 0;
+    /** De qué lado empuja el viento, en el nombre del dibujo: el avión se escurre hacia ahí. */
+    const haciaDonde = lado < 0 ? "izquierda" : "derecha";
+    const deLado: DibujoDeSenal = lado === 0 ? "deriva-en-calma" : `deriva-a-la-${haciaDonde}`;
+    const alViento: DibujoDeSenal = lado === 0 ? "deriva-en-calma" : `deriva-corregida-a-la-${haciaDonde}`;
+    switch (suceso.que) {
+      case "presentar": {
+        /*
+         * **El sitio, escrito y no dicho**: «Puente Remanso» en la tarjeta,
+         * delante de la frase; la voz es genérica y vale en todo campo. Quien
+         * no lee tiene la raya magenta, que acaba en él.
+         */
+        // El depósito ya va con el vuelo del ejercicio: ver `cargarParaElEjercicio` (H26d).
+        const frase = this.rotulo("ejercicio.deriva.antes", "palabra.mira");
+        const sitio = this.deriva ? t("ejercicio.deriva.sitio", { sitio: this.deriva.sitio.nombre }) : "";
+        this.hud.senal.mostrar(deLado, sitio && frase ? `${sitio}. ${frase}` : sitio || frase, null, {
+          segundos: 30,
+          prioridad: IMPORTANTE,
+        });
+        this.decirDelEjercicio("ejercicio.deriva.antes", "mando");
+        return;
+      }
+      case "deLado":
+        return contar(deLado, "ejercicio.deriva.deLado", "palabra.alViento");
+      case "alViento": {
+        this.avisar("achieved");
+        /*
+         * **Los grados, desde Taguató**: lo que el morro va apartado del
+         * camino, escrito delante de la frase. Abajo, el dibujo y la palabra.
+         */
+        const frase = this.rotulo("ejercicio.deriva.alViento", "palabra.asi");
+        const grados = canalesDe(this.tier.avisos).cifra
+          ? t("ejercicio.deriva.grados", { n: String(Math.round(Math.abs(suceso.correccion))) })
+          : "";
+        this.hud.senal.mostrar(alViento, grados && frase ? `${grados}. ${frase}` : grados || frase, null, {
+          segundos: 12,
+          prioridad: IMPORTANTE,
+        });
+        this.decirDelEjercicio("ejercicio.deriva.alViento", "mando");
+        return;
+      }
+      case "enCalma":
+        return contar("deriva-en-calma", "ejercicio.deriva.enCalma", "palabra.asi");
+      case "deLargo":
+        return contar(deLado, "ejercicio.deriva.deLargo", "palabra.volve");
+      case "llegaste": {
+        this.avisar("achieved");
+        /*
+         * Con el camino derecho y el morro apartado lo que pide el viento, la
+         * frase lo señala; por la curva, se cuenta la curva; en calma, o casi,
+         * no hay viento que señalar.
+         */
+        const corrigio =
+          Math.abs(this.deriva?.correccion ?? this.deriva?.colocacion?.correccion ?? 0) >= CORRIGE_LA_DERIVA;
+        if (suceso.como === "enCurva") return contar(deLado, "ejercicio.deriva.llegasteEnCurva", "palabra.bien");
+        if (suceso.como === "derecho" && corrigio) return contar(alViento, "ejercicio.deriva.llegaste", "palabra.bien");
+        return contar("deriva-en-calma", "ejercicio.deriva.llegasteEnCalma", "palabra.bien");
+      }
+      case "cerrar":
+        // Lo malo ya lo cuenta el percance; posado antes, el suelo lo dice.
+        if (suceso.como === "otraVez") return;
+        this.agenda.luego(TARDA_EL_FINAL + 8, () => {
+          if (this.deriva?.cierre !== "hecho") return;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre("vuelta"),
+            this.rotulo("ejercicio.deriva.cierre", "palabra.bien"),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+    }
   }
 
   /**
