@@ -332,7 +332,7 @@ export class Mapa {
     if (rosa) salen.push({ tipo: "norte", cx: rosa.x, cy: rosa.y, w: 2 * rosa.radio, h: 2 * rosa.radio, rotulo: null, mhz: null });
     // Y tu avión, donde está ahora: se mueve cada fotograma.
     const hecho = this.encuadrePintado;
-    if (hecho) {
+    if (hecho && !this.sinGps) {
       const k = 1 / this.u;
       const escala = LADO / hecho.lado;
       const lado = SIMBOLOS.avion * this.trazo * k;
@@ -875,6 +875,19 @@ export class Mapa {
   private destino: { x: number; z: number } | null = null;
 
   /**
+   * **Sin GPS**: dónde se puso el reloj en marcha, o nada. Mientras dura
+   * «Rumbo y reloj» (`flight/estima.ts`) el plano no sabe dónde está el
+   * avión, que es la lección —así se cruzaron océanos—: es la carta en las
+   * rodillas, no una pantalla que lo dice. El encuadre se queda donde empezó
+   * y la flecha del avión no se pinta. Al cerrar, vuelve a saberlo.
+   */
+  private sinGps: { readonly x: number; readonly z: number } | null = null;
+
+  ponerSinGps(punto: { readonly x: number; readonly z: number } | null): void {
+    this.sinGps = punto;
+  }
+
+  /**
    * Mueve la flecha. Se llama cada fotograma, así que no pinta el mundo.
    *
    * `destino` es el objetivo de la misión, si hay misión. Es la respuesta a
@@ -897,6 +910,10 @@ export class Mapa {
     /** Los otros aviones que pinta el TCAS. Ver `pintarElTrafico`. */
     trafico: readonly TraficoEnElMapa[] = [],
   ): void {
+    if (this.sinGps) {
+      x = this.sinGps.x;
+      z = this.sinGps.z;
+    }
     this.destino = destino;
     this.alterno = alterno;
     this.avionX = x;
@@ -1133,7 +1150,7 @@ export class Mapa {
      * **El avión en planta de la hoja**, con su halo de papel: el morro a su
      * rumbo, que con el norte arriba es el mismo cero que el del plano.
      */
-    dibujarAvion(g, cx, cy, rumboRad, SIMBOLOS.avion * u);
+    if (!this.sinGps) dibujarAvion(g, cx, cy, rumboRad, SIMBOLOS.avion * u);
   }
 
   /**

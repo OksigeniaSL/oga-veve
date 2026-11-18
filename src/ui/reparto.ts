@@ -78,6 +78,10 @@ export interface PiezaQueSeLee {
       cede alto (`LO_QUE_CEDE`) se encoge para hacerle sitio, y si hacia donde
       crece no cabe, busca fila al otro lado (`Colocable.alOtroLado`). */
   readonly pideSitio?: boolean;
+  /** Lo que cambia de texto solo y sin cambiar de tamaño —el cronómetro, cada
+      segundo, con cifras tabulares—: la firma no mira su texto, que si no
+      habría un reparto por segundo para nada. Ver `Repartidor.firmaDeAhora`. */
+  readonly cuentaSola?: boolean;
 }
 
 /**
@@ -124,6 +128,13 @@ export const LO_QUE_SE_LEE: readonly PiezaQueSeLee[] = [
     recoge: RECOGIDA,
   },
   { que: "senal", sel: '[data-hud="senal"]', mueve: false, espera: true, recoge: RECOGIDA },
+  /*
+   * **El cronómetro de la estima**, detrás de la tarjeta de la orden y en su
+   * misma caja del rincón: no se mueve, y si pisa algo que se toca, espera.
+   * El reloj del ejercicio sigue corriendo en el juego mientras espera, y al
+   * salir enseña lo que queda de verdad. Ver `ui/cronometro.ts`.
+   */
+  { que: "cronometro", sel: '[data-hud="cronometro"]', mueve: false, espera: true, cuentaSola: true },
   { que: "subtitulo", sel: '[data-hud="hint"]', mueve: true, espera: true },
   { que: "tutor", sel: '[data-hud="tutor"]', mueve: false, espera: true },
   { que: "radio", sel: '[data-hud="radio"]', mueve: false, espera: true, traslada: true },
@@ -684,7 +695,7 @@ export class Repartidor {
       const el = this.raiz.querySelector<HTMLElement>(d.sel);
       if (!el) continue;
       const cls = el.className.replace(ESPERA, "").replace(RECOGIDA, "");
-      partes.push(`${el.hidden ? 0 : 1}${cls}${el.textContent ?? ""}`);
+      partes.push(`${el.hidden ? 0 : 1}${cls}${d.cuentaSola ? "" : (el.textContent ?? "")}`);
     }
     return partes.join("|");
   }

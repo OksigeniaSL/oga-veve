@@ -3211,6 +3211,41 @@ for (const [id, para] of DE_LA_DERIVA) {
   total += texto.length;
 }
 
+/*
+ * **«Rumbo y reloj»** (#51, ADR 0031, enmienda H26n): la estima sobre el
+ * Chaco. La instructora presenta el plan, cuenta el porqué del número —con
+ * viento o en calma—, pide volver al rumbo, avisa del último minuto y, con el
+ * reloj a cero, dice dónde quedó el pueblo. El sitio, el rumbo, el tiempo y la
+ * distancia van escritos en la tarjeta y en el cronómetro. En calma, como todo
+ * ejercicio. El cierre solo se lee. Ver `src/flight/estima.ts`.
+ */
+const DE_LA_ESTIMA = [
+  ["ejercicio.estima.antes", "rumbo y reloj, antes de empezar: el rumbo de la tarjeta hasta que el reloj llegue a cero"],
+  ["ejercicio.estima.porQue", "rumbo y reloj: el rumbo de la tarjeta apunta un poco al viento"],
+  ["ejercicio.estima.porQueEnCalma", "rumbo y reloj, en calma: el rumbo apunta derecho al pueblo"],
+  ["ejercicio.estima.fueraDeRumbo", "rumbo y reloj: el rumbo se fue más de diez grados, volver al de la tarjeta"],
+  ["ejercicio.estima.unMinuto", "rumbo y reloj: falta un minuto"],
+  ["ejercicio.estima.debajo", "rumbo y reloj, a cero: el pueblo justo debajo"],
+  ["ejercicio.estima.izquierda", "rumbo y reloj, a cero: el pueblo a la izquierda"],
+  ["ejercicio.estima.derecha", "rumbo y reloj, a cero: el pueblo a la derecha"],
+  ["ejercicio.estima.delante", "rumbo y reloj, a cero: el pueblo todavía delante"],
+  ["ejercicio.estima.detras", "rumbo y reloj, a cero: el pueblo ya detrás"],
+];
+for (const [id, para] of DE_LA_ESTIMA) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
   ...filas.map((f) =>

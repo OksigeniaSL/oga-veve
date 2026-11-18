@@ -50,6 +50,7 @@ import { alturaSobreLasRuedas } from "../flight/apoyo";
 import { FRENO_DEL_HELICOPTERO, HELICOPTERO_DE_LA_TARJETA } from "./dibujos-del-helicoptero";
 import { Pictogramas, motorMas, motorMenos } from "./pictogramas";
 import { DIBUJOS, Senal } from "./senal";
+import { Cronometro } from "./cronometro";
 import { VentanaDeHistoria } from "./ventana-de-historia";
 import { OJO } from "./teclas";
 import { luzDeTren } from "../flight/tren";
@@ -470,6 +471,7 @@ const LO_QUE_TAPA = [
   '[data-hud="torre"]',
   '[data-hud="warning"]',
   '[data-hud="senal"]',
+  '[data-hud="cronometro"]',
   '[data-hud="tutor"]',
   '[data-hud="pictos"]',
   '[data-hud="cuadro"]',
@@ -645,6 +647,8 @@ export class Hud {
    */
   private readonly pictos = new Pictogramas();
   readonly senal = new Senal();
+  /** El rumbo y el reloj de la estima, en el rincón. Ver `ui/cronometro.ts`. */
+  readonly cronometro = new Cronometro();
   /** La ilustración de la historia de la ventanilla, mientras se cuenta. */
   readonly historia = new VentanaDeHistoria();
 
@@ -754,6 +758,12 @@ export class Hud {
    * `setHome`.
    */
   private destinoPuesto: string | null = null;
+  /**
+   * **Si el nombre del destino se calla** en la línea de avisos: mientras dura
+   * un ejercicio que se cierra en el aire, que lo que se lee es suyo. Ver
+   * `callarElDestino`.
+   */
+  private destinoCallado = false;
   private home!: HTMLElement;
   private warning!: HTMLElement;
   private warningText!: HTMLElement;
@@ -2216,6 +2226,12 @@ export class Hud {
         juego que solo se puede seguir con sonido excluye por diseño.
       -->
       ${Senal.markup()}
+      <!--
+        Y debajo, el cronómetro de la estima: el rumbo y el reloj que cuenta
+        hacia atrás, en la misma caja para que se apile con la tarjeta. Solo
+        sale en «Rumbo y reloj». Ver ui/cronometro.ts.
+      -->
+      ${Cronometro.markup()}
       </div>
       ${Mapa.markup()}
       ${PanelDelTiempo.markup()}
@@ -2630,6 +2646,7 @@ export class Hud {
     this.medirElSubtitulo();
     this.medirLaLampara();
     this.senal.bind(this.root);
+    this.cronometro.bind(this.root);
     this.repartidor?.soltar();
     this.repartidor = new Repartidor(this.root);
     this.repartidor.vigilar();
@@ -3001,11 +3018,24 @@ export class Hud {
     this.home.classList.add("casa--destello");
     // Y el nombre, donde se escriben los avisos cortos. Sin letras no se
     // escribe nada: ahí habla el dibujo de la tarjeta.
-    if (this.instruments !== "none")
+    if (this.instruments !== "none" && !this.destinoCallado)
       this.flash(
         destino.oaci ? `${destino.nombre} · ${destino.oaci}` : destino.nombre,
         4,
       );
+  }
+
+  /**
+   * **El nombre del destino, callado mientras dura un ejercicio que se cierra
+   * en el aire** (`LoQueCalla.laFase`, H26f). Volando «Rumbo y reloj» salía
+   * «Mariscal Estigarribia · SGME» en la línea de avisos a los tres segundos,
+   * justo cuando la tarjeta decía «Filadelfia · HDG 128»: dos sitios escritos
+   * a la vez, y el que no es adonde se va, arriba (ADR 0031, H26n). La placa
+   * de la tarjeta de casa sí cambia; lo que se calla es el rótulo, y cerrado
+   * el ejercicio no se escribe tarde, que ya no es noticia.
+   */
+  callarElDestino(callado: boolean): void {
+    this.destinoCallado = callado;
   }
 
   /**
@@ -5266,6 +5296,17 @@ export class Hud {
       this.soloAqui = null;
     }, 3200);
     if (this.instruments !== "none") this.flash(texto, 6);
+  }
+
+  /**
+   * **Sin GPS**, mientras corre el reloj de «Rumbo y reloj» (ADR 0031,
+   * H26n): la tarjeta de casa se queda —un mando que va y viene no se
+   * aprende—, pero sin la aguja ni la distancia, que señalando el campo con
+   * sus kilómetros son un GPS. La placa del campo y la manga siguen. Se llama
+   * cada paso; con el mismo valor, `toggle` no toca el DOM.
+   */
+  ponerSinGps(sin: boolean): void {
+    this.home?.classList.toggle("casa--sin-gps", sin);
   }
 
   /**

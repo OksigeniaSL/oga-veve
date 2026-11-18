@@ -1070,6 +1070,54 @@ const RUMBO_LLEGASTE = icono(`${NOCHE}
   </g>
   <g class="senal__en-la-noche">${avionDeRumbo(26, 0.5)}</g>`);
 
+/**
+ * **«Rumbo y reloj»**, desde arriba: el pueblo arriba —una cuadrícula de
+ * manzanas, que es como se ve Filadelfia desde el aire—, la recta a rayas
+ * hasta él y el avión donde quedó al llegar el reloj a cero: encima, a un
+ * lado, todavía antes o ya pasado. `donde` es dónde quedó **el pueblo** visto
+ * desde el avión. El de la presentación, `"rumbo"`, lleva el avión abajo, al
+ * principio de la recta, y un reloj al lado. Ver `flight/estima.ts`.
+ */
+function estima(donde: "rumbo" | "debajo" | "derecha" | "izquierda" | "delante" | "detras"): string {
+  // Más pequeño que el de la deriva: cabe pasado el pueblo sin salirse del dibujo.
+  const avion = (x: number, y: number): string =>
+    `<g transform="translate(${x} ${y}) scale(0.42) translate(-12 -12)">${FIGURA["avion"] ?? ""}</g>`;
+  // Las manzanas: tres por tres, con sus calles en medio.
+  const manzanas = [8.2, 11, 13.8]
+    .flatMap((x) => [7.4, 10.2, 13].map((y) => `<rect x="${x}" y="${y}" width="2" height="2" rx="0.3" />`))
+    .join("");
+  const reloj =
+    donde === "rumbo"
+      ? `<circle cx="4.6" cy="18.4" r="3.4" fill="none" stroke="currentColor" stroke-width="1.2" />
+         <path d="M4.6 16.4 V18.4 L6 19.4" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />`
+      : "";
+  // Dónde quedó el avión: el pueblo, visto desde él, queda del lado contrario.
+  const sitio: Record<typeof donde, [number, number]> = {
+    rumbo: [12, 19.2],
+    debajo: [12, 11],
+    derecha: [4.6, 11.4],
+    izquierda: [19.4, 11.4],
+    delante: [12, 18.4],
+    detras: [12, 4.4],
+  };
+  const [x, y] = sitio[donde];
+  // El camino que se hizo, lleno, desde abajo hasta la cola del avión.
+  const camino =
+    donde === "rumbo"
+      ? ""
+      : `<path d="M12 23 L${x} ${y + 3}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />`;
+  // Encima del pueblo, un hueco del color de la caja debajo del avión: si no, se pierde entre las manzanas.
+  const hueco = donde === "debajo" ? `<circle class="senal__hueco" cx="${x}" cy="${y}" r="3.2" />` : "";
+  return icono(`
+  ${manzanas}
+  <path d="M12 23 V15.6" fill="none" stroke="currentColor" stroke-width="0.9" stroke-dasharray="1.6 1.4" />
+  ${reloj}
+  ${camino}
+  ${hueco}
+  ${avion(x, y)}
+`);
+}
+
 /** La flecha del lado, pegada al borde: es lo primero que se mira. */
 const HACIA: Record<string, string> = {
   izquierda: `<path d="M5.4 4.2 L1.4 7.2 L5.4 10.2 Z" />
@@ -1971,6 +2019,13 @@ export const DIBUJOS = {
   "rumbo-se-va-a-la-derecha": rosaDeNoche(24),
   "rumbo-se-va-a-la-izquierda": rosaDeNoche(-24),
   "rumbo-llegaste": RUMBO_LLEGASTE,
+  // «Rumbo y reloj»: el plan con su reloj, y dónde quedó el pueblo al llegar a cero. Ver `estima.ts`.
+  "estima-rumbo": estima("rumbo"),
+  "estima-debajo": estima("debajo"),
+  "estima-a-la-derecha": estima("derecha"),
+  "estima-a-la-izquierda": estima("izquierda"),
+  "estima-delante": estima("delante"),
+  "estima-detras": estima("detras"),
   /*
    * «Aterrizar con las agujas»: el localizador a tope de cada lado con la
    * senda todavía arriba, viniendo hacia el centro, la senda arriba con el
