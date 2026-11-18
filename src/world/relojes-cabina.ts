@@ -81,6 +81,7 @@ import { enLaMuesca } from "../flight/flaps";
 import { bienPuesta } from "../flight/altimetro";
 import { luzDeTren } from "../flight/tren";
 import { POR_SEGUNDO_DESDE_FUERA } from "./pantallas-cabina";
+import type { LaRadioPintada } from "../ui/radio-en-la-rosa";
 
 /** Lado del lienzo de cada reloj, en píxeles. */
 const LADO = 256;
@@ -190,6 +191,14 @@ export interface DatosDeRelojes {
   readonly tren: number;
   /** Las escalas de **este** avión: sin ellas la esfera miente. */
   readonly cuadro: Cuadro;
+  /**
+   * **La radio de navegación, ya decidida**: la misma `LaRadioPintada` con la
+   * que el cuadro plano hace HSI su direccional (`radioEnElDireccionalSvg`),
+   * salida de la misma lectura de la NAV y del ADF. `null` o sin poner, el
+   * avión no lleva caja o el peldaño no tiene radio: el direccional se queda
+   * en giróscopo. Ver `radioEnElDireccional`.
+   */
+  readonly radio?: LaRadioPintada | null;
 }
 
 interface Esfera {
@@ -199,6 +208,12 @@ interface Esfera {
   readonly que: QueMide;
   /** Qué motor le toca, si mide un motor. */
   readonly motor: number;
+  /**
+   * **Si es la brújula** del parabrisas, que lleva la cara del direccional
+   * (`reloj_dg`) pero es un imán: la radio no va en ella. Ver
+   * `radioEnElDireccional`.
+   */
+  readonly brujula: boolean;
 }
 
 export interface Relojes {
@@ -213,7 +228,7 @@ export interface Relojes {
   dispose(): void;
 }
 
-function nuevaEsfera(que: QueMide, motor: number): Esfera | null {
+function nuevaEsfera(que: QueMide, motor: number, brujula = false): Esfera | null {
   const lienzo = document.createElement("canvas");
   lienzo.width = LADO;
   lienzo.height = LADO;
@@ -245,7 +260,7 @@ function nuevaEsfera(que: QueMide, motor: number): Esfera | null {
     toneMapped: false,
     side: DoubleSide,
   });
-  return { g, textura, material, que, motor };
+  return { g, textura, material, que, motor, brujula };
 }
 
 /** Estira las coordenadas de textura al lienzo entero. Ver `pantallas-cabina`. */
@@ -288,7 +303,7 @@ function estirarUV(malla: Mesh): void {
  */
 export function encenderRelojes(raiz: Object3D): Relojes | null {
   const deMotor: { malla: Mesh; que: QueMide; x: number }[] = [];
-  const otros: { malla: Mesh; que: QueMide }[] = [];
+  const otros: { malla: Mesh; que: QueMide; brujula: boolean }[] = [];
   raiz.updateWorldMatrix(true, true);
   raiz.traverse((o) => {
     const m = o as Mesh;
@@ -300,7 +315,8 @@ export function encenderRelojes(raiz: Object3D): Relojes | null {
     // la izquierda como en cualquier cabina. El resto mide lo suyo y ya.
     if (DE_MOTOR.has(que))
       deMotor.push({ malla: m, que, x: m.getWorldPosition(new Vector3()).x });
-    else otros.push({ malla: m, que });
+    // La brújula cuelga del parabrisas con el nombre que le pone el modelo (`parabrisas_por_dentro`).
+    else otros.push({ malla: m, que, brujula: m.name === "brujula" });
   });
   if (!deMotor.length && !otros.length) return null;
   deMotor.sort((a, b) => a.x - b.x);
@@ -315,8 +331,8 @@ export function encenderRelojes(raiz: Object3D): Relojes | null {
     esferas.push(e);
     hay.push({ uuid: malla.uuid, que });
   });
-  for (const { malla, que } of otros) {
-    const e = nuevaEsfera(que, -1);
+  for (const { malla, que, brujula } of otros) {
+    const e = nuevaEsfera(que, -1, brujula);
     if (!e) continue;
     estirarUV(malla);
     malla.material = e.material;
@@ -343,7 +359,7 @@ export function encenderRelojes(raiz: Object3D): Relojes | null {
          * «3596» escritos de derecha a izquierda.
          */
         e.g.setTransform(1, 0, 0, 1, 0, 0);
-        pintarReloj(e.g, e.que, e.motor, datos);
+        pintarReloj(e.g, e.que, e.motor, e.brujula && datos.radio ? { ...datos, radio: null } : datos);
         e.textura.needsUpdate = true;
       }
     },
@@ -621,6 +637,8 @@ function direccional(d: DatosDeRelojes, g: CanvasRenderingContext2D): void {
   g.translate(-C, -C);
   escala(d, g, e, true);
   g.restore();
+  // Y desde el peldaño de la radio, el curso y la aguja encima: un HSI, como en el cuadro plano.
+  if (d.radio) radioEnElDireccional(g, d.radio, d.rumbo);
   // El avioncito, fijo y mirando arriba: lo que se lee es lo que tiene encima.
   g.strokeStyle = PALETA.simbolo;
   g.lineWidth = R * 0.042;
@@ -634,6 +652,146 @@ function direccional(d: DatosDeRelojes, g: CanvasRenderingContext2D): void {
   g.lineTo(C + 0.12 * R, C + 0.23 * R);
   g.stroke();
   rotulo(d, g, e.rotulo, e);
+}
+
+/**
+ * Lo que mide en el lienzo una unidad de la esfera del cuadro plano, que
+ * dibuja su direccional en un cuadrado de cien con la cara de 43
+ * (`radioEnElDireccionalSvg`): así cada raya, cada punto y cada rombo van en
+ * la misma proporción de la cara en las dos vistas.
+ */
+const UNIDAD_DE_ESFERA = R / 43;
+
+/**
+ * **El direccional hecho HSI**, el del cuadro plano dicho en lienzo: el curso
+ * del OBS con su barra, los cuatro puntos y el TO/FROM, girando con la rosa;
+ * la aguja del ADF en cian; la bandera NAV; y a la derecha de la cara, sin
+ * girar, la escala de la senda con su rombo, que baja cuando se va alto.
+ *
+ * **Es la misma lectura, no otra cuenta**: `LaRadioPintada` sale de
+ * `pintarLaRadio` con la radio del avión una vez por imagen, y la mira igual
+ * el cuadro plano. Desde el asiento el cuadro plano no se pinta, y sin esto el
+ * bimotor volaba el ILS con un giróscopo sin agujas (ADR 0030, H26m).
+ *
+ * **Y sin las letras de las esquinas**: en el cuadro plano van en el cuadrado,
+ * fuera de la cara redonda; aquí ese sitio queda detrás del bisel, que cierra
+ * la esfera al 99 % de su radio. El curso se lee donde se lee en un HSI de
+ * aguja: la punta de la flecha contra la rosa.
+ */
+function radioEnElDireccional(g: CanvasRenderingContext2D, p: LaRadioPintada, rumbo: number): void {
+  const r = 43;
+  const punto = r * 0.17;
+  const largo = r * 0.42;
+  g.save();
+  g.translate(C, C);
+  g.scale(UNIDAD_DE_ESFERA, UNIDAD_DE_ESFERA);
+  g.lineCap = "round";
+  g.lineJoin = "round";
+  if (p.curso !== null) {
+    g.save();
+    g.rotate(((p.curso - rumbo) * Math.PI) / 180);
+    g.strokeStyle = PALETA.objetivo;
+    g.lineWidth = 1.6;
+    g.beginPath();
+    g.moveTo(0, -r + 4);
+    g.lineTo(0, -largo - 3);
+    g.moveTo(-3.5, -r + 11);
+    g.lineTo(0, -r + 4);
+    g.lineTo(3.5, -r + 11);
+    g.moveTo(0, largo + 3);
+    g.lineTo(0, r - 4);
+    g.stroke();
+    g.strokeStyle = PALETA.valor;
+    g.lineWidth = 0.8;
+    for (const i of [-2, -1, 1, 2]) {
+      g.beginPath();
+      g.arc(i * punto, 0, 1.5, 0, Math.PI * 2);
+      g.stroke();
+    }
+    if (!p.bandera) {
+      g.strokeStyle = PALETA.objetivo;
+      g.lineWidth = 2.2;
+      g.beginPath();
+      g.moveTo(p.barra * punto * 2, -largo);
+      g.lineTo(p.barra * punto * 2, largo);
+      g.stroke();
+    }
+    if (p.toFrom) {
+      // Hacia la punta con TO y hacia la cola con FROM, como el triángulo girado del plano.
+      const s = p.toFrom === "TO" ? 1 : -1;
+      g.fillStyle = PALETA.valor;
+      g.beginPath();
+      g.moveTo(0, -largo * 0.7 * s);
+      g.lineTo(-3, (-largo * 0.7 + 8.5) * s);
+      g.lineTo(3, (-largo * 0.7 + 8.5) * s);
+      g.closePath();
+      g.fill();
+    }
+    g.restore();
+  }
+  if (p.adf !== null) {
+    g.save();
+    g.rotate(((p.adf - rumbo) * Math.PI) / 180);
+    g.strokeStyle = PALETA.auxiliar;
+    g.lineWidth = 1.4;
+    g.beginPath();
+    g.moveTo(0, -r + 2);
+    g.lineTo(0, r - 2);
+    g.moveTo(-4, -r + 10);
+    g.lineTo(0, -r + 2);
+    g.lineTo(4, -r + 10);
+    g.moveTo(-3, r - 2);
+    g.lineTo(0, r - 7);
+    g.lineTo(3, r - 2);
+    g.stroke();
+    g.restore();
+  }
+  if (p.bandera) bandera(g, "NAV", -punto * 2 - 17, -largo * 0.3, 15, 8, 6);
+  if (p.conSenda) {
+    g.save();
+    g.translate(r + 3.4, 0);
+    g.strokeStyle = PALETA.valor;
+    g.lineWidth = 0.8;
+    for (const i of [-2, -1, 1, 2]) {
+      g.beginPath();
+      g.arc(0, i * punto, 1.5, 0, Math.PI * 2);
+      g.stroke();
+    }
+    const rombo = 3.6;
+    g.beginPath();
+    g.moveTo(-rombo * 1.4, 0);
+    g.lineTo(rombo * 1.4, 0);
+    g.stroke();
+    if (p.senda !== null) {
+      const y = p.senda * punto * 2;
+      g.strokeStyle = PALETA.objetivo;
+      g.lineWidth = 1.6;
+      g.beginPath();
+      g.moveTo(0, y - rombo);
+      g.lineTo(rombo * 0.7, y);
+      g.lineTo(0, y + rombo);
+      g.lineTo(-rombo * 0.7, y);
+      g.closePath();
+      g.stroke();
+    }
+    if (p.banderaSenda) bandera(g, "GS", -3.5, -3, 7, 6, 5);
+    g.restore();
+  }
+  g.restore();
+}
+
+/**
+ * Una bandera de aviso de un instrumento: el rectángulo rojo con la palabra
+ * en tinta oscura, como las del cuadro plano. En unidades de la esfera.
+ */
+function bandera(g: CanvasRenderingContext2D, texto: string, x: number, y: number, ancho: number, alto: number, letra: number): void {
+  g.fillStyle = PALETA.limite;
+  g.fillRect(x, y, ancho, alto);
+  g.fillStyle = "#14161a";
+  g.font = `700 ${letra}px ${FUENTE}`;
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.fillText(texto, x + ancho / 2, y + alto / 2);
 }
 
 /**

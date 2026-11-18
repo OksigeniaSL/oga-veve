@@ -20907,6 +20907,8 @@ export class Game {
      */
     const radio = this.laRadioParaElCuadro();
     const declinacionDelCampo = this.elCampoMontado().escenario.magneticVariation ?? 0;
+    // Pintada una vez, para la pantalla de la cabina y para los relojes del panel.
+    const radioPintada = radio ? pintarLaRadio(radio, declinacionDelCampo) : null;
     this.aircraftMesh.pantallas?.actualizar(
       {
         /*
@@ -20938,7 +20940,7 @@ export class Game {
         // La del campo en el que se está: sus pistas van numeradas con la
         // suya, y el rumbo tiene que casar con el número pintado.
         declinacion: declinacionDelCampo,
-        radio: radio ? pintarLaRadio(radio, declinacionDelCampo) : null,
+        radio: radioPintada,
         cabeceo: pitchAngleOf(this.flight.state.orientation),
         alabeo: bankAngleOf(this.flight.state.orientation),
         /*
@@ -21217,6 +21219,13 @@ export class Game {
         combustible: this.elDeposito(),
         tren: this.input.controls.tren,
         cuadro: cuadroDe(this.aircraft),
+        /*
+         * **Y la radio, la misma de la pantalla**: desde el asiento de un
+         * avión de esferas el cuadro plano no se pinta, y el direccional del
+         * panel era un giróscopo sin agujas — el ILS se ofrecía en un avión
+         * desde cuyo asiento no se podía volar (ADR 0030, H26m).
+         */
+        radio: radioPintada,
       },
       dt,
       // Lo mismo que las pantallas: desde fuera, menos veces por segundo.
