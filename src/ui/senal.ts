@@ -1171,7 +1171,11 @@ function dosAgujas(o: {
   readonly marca?: number;
   /** Si el que se fue es el direccional, el giróscopo: en ámbar él. Ver `flight/giroscopo-en-hora.ts`. */
   readonly seFue?: boolean;
-  /** Y su perilla, abajo a la izquierda de la caja, con la flecha de girarla. */
+  /**
+   * Y su perilla, abajo a la izquierda de la caja y sobre el panel, con la
+   * flecha de girarla. Entre las dos caras parecía de la brújula: salió en la
+   * lámina del banco.
+   */
   readonly perilla?: boolean;
 }): string {
   const cara = (cx: number, clase: string, giro: number, fantasmas: boolean): string => `
@@ -1199,7 +1203,7 @@ function dosAgujas(o: {
     ${tiembla}
     ${
       o.perilla
-        ? `<g class="${o.seFue ? "senal__se-va" : "senal__en-la-noche"}"><circle cx="12.4" cy="18.9" r="1.3" /><path d="M9.9 17.2 A2.8 2.8 0 0 0 11 21.4 M9.6 20.2 L11 21.4 L11.4 19.8" fill="none" stroke="currentColor" stroke-width="0.6" stroke-linecap="round" stroke-linejoin="round" /></g>`
+        ? `<g class="${o.seFue ? "senal__se-va" : "senal__en-la-noche"}"><circle cx="14.6" cy="21.2" r="1.4" /><path d="M12.7 19.5 A2.5 2.5 0 0 0 13.4 23.4 M12.5 23.2 L13.4 23.4 L13.5 22.4" fill="none" stroke="currentColor" stroke-width="0.6" stroke-linecap="round" stroke-linejoin="round" /></g>`
         : ""
     }`);
 }
