@@ -1158,6 +1158,11 @@ export class Tablero {
         d.cabeceo,
         d.presion,
         d.declinacion ?? 0,
+        // La marca de rumbo, al objetivo como la de los de cristal; ya en el sitio, ninguna. Ver `bugs`.
+        ((): number | null => {
+          const o = lejos(d.objetivo);
+          return o ? (((o.rumbo * GRADOS + (d.declinacion ?? 0)) % 360) + 360) % 360 : null;
+        })(),
       );
     } else {
       this.cintas(d, dt, cifras);

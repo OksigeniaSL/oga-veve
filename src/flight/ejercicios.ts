@@ -86,6 +86,11 @@
  * hay radio, solo un sitio que se ve, el viento de costado y la raya del
  * camino en el suelo. Pide un campo con un sitio bajo cerca y viento típico
  * (`sitioDeLaDeriva`) y la lleva `deriva.ts`. Ver el ADR 0031.
+ *
+ * Y «Rumbo de noche» (#51, el peldaño 1), también con `escena: "navegacion"`:
+ * se sigue el río con la última luz, anochece y queda el rumbo. Pide un campo
+ * con un río medido (`rioDeNoche`) y la lleva `rumbo-de-noche.ts`. Ver el ADR
+ * 0031, enmienda H26o.
  */
 
 import type { AircraftConfig } from "./aircraft";
@@ -96,6 +101,7 @@ import { radioDeSalida, radiosDe } from "./radio-de-navegacion";
 import { parejaDelCampo } from "./dos-radiales";
 import { ilsDelCampo } from "./ils-con-agujas";
 import { sitioDeLaDeriva } from "./deriva";
+import { rioDeNoche } from "./rumbo-de-noche";
 
 export type EjercicioId =
   | "planeo"
@@ -114,7 +120,8 @@ export type EjercicioId =
   | "interceptar"
   | "cruce"
   | "ils"
-  | "deriva";
+  | "deriva"
+  | "rumbo";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -176,7 +183,8 @@ export interface Ejercicio {
     | "interceptar"
     | "cruce"
     | "ils"
-    | "deriva";
+    | "deriva"
+    | "rumbo";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
    * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
@@ -539,6 +547,34 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     dondeVale: (oaci) => sitioDeLaDeriva(oaci) !== null,
     ensena:
       "con viento de costado, el avión no va adonde apunta el morro: se escurre de lado; apuntando un poco al viento, el camino sale derecho y se llega",
+  },
+  /*
+   * **Rumbo de noche** (#51, peldaño 1): se sigue el río con la última luz,
+   * cae la noche y el río ya no se ve; queda el rumbo, y se mide cuánto se
+   * aparta el morro hasta llegar a donde el río sigue. Lo lleva
+   * `rumbo-de-noche.ts`. Ver el ADR 0031, enmienda H26o.
+   */
+  {
+    id: "rumbo",
+    /*
+     * **Desde Tukã**: la marca de la rosa, su color y la voz se entienden sin
+     * leer, y el número escrito llega en Taguató, como todas las cifras. En
+     * Guyrami no, y no por la edad: su modelo de vuelo, el sencillo, no lleva
+     * viento (`FlightModel.ponerViento`) y sus baches solo suben y bajan
+     * (`ArcadeFlightModel.ponerRacha`), así que el morro no se va solo y no
+     * hay rumbo que mantener. Si un día los lleva, éste baja con la deriva.
+     */
+    peldanos: DESDE_TUKA,
+    // En todo avión: un rumbo se mantiene igual en una avioneta que en un reactor. El helicóptero va aparte.
+    valePara: () => true,
+    leccion: "aterrizaje",
+    colocacion: "rumbo",
+    averias: [],
+    escena: "navegacion",
+    acabaEnElAire: true,
+    dondeVale: (oaci) => rioDeNoche(oaci) !== null,
+    ensena:
+      "cuando cae la noche el río deja de verse, y lo que queda es el rumbo: con la flecha quieta en la marca se llega adonde el río sigue, aunque no se vea",
   },
 ];
 

@@ -2588,6 +2588,7 @@ export const ES_PY = {
   "palabra.pista": "Pista",
   "palabra.asi": "Así",
   "palabra.alViento": "¡Al viento!",
+  "palabra.elRumbo": "El rumbo",
   "palabra.aerofrenosAdentro": "Aerofrenos adentro",
   // Lo que dice el dibujo de quién lleva el gas, para quien no lo ve.
   "hud.gasDelAvion": "El avión lleva el motor",
@@ -3300,6 +3301,7 @@ export const ES_PY = {
   "hangar.ejercicio.cruce": "Dos radiales que se cortan",
   "hangar.ejercicio.ils": "Aterrizar con las agujas",
   "hangar.ejercicio.deriva": "Apuntá al viento",
+  "hangar.ejercicio.rumbo": "Rumbo de noche",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3613,6 +3615,26 @@ export const ES_PY = {
   "ejercicio.deriva.cierre": "Con viento de costado, el morro va un poco al viento y el camino sale derecho",
   // La corrección en grados, de Taguató para arriba, delante de la frase.
   "ejercicio.deriva.grados": "{n}° al viento",
+  /*
+   * **«Rumbo de noche»** (#51, peldaño 1): se sigue el río con la última luz,
+   * anochece y queda el rumbo. La instructora habla de «la flecha» y «la
+   * marca», que son lo que se ve en la rosa de cualquier cabina; el número
+   * del rumbo se escribe en la tarjeta desde Taguató y no se dice. Cortas,
+   * para decirlas en calma.
+   */
+  "ejercicio.rumbo.antes": "Seguí el río, que ya se puso el sol. Mirá cómo brilla el agua",
+  "ejercicio.rumbo.anochece": "Ya es de noche y el río se va oscureciendo. Dejá la flecha quieta en la marca",
+  "ejercicio.rumbo.seVa": "Se fue de la marca. Volvé despacito, sin apurarte",
+  "ejercicio.rumbo.enLaMarca": "¡Eso! La flecha quieta en la marca",
+  "ejercicio.rumbo.llegaste": "¡Llegamos! Ahí abajo sigue el río, al lado de las luces",
+  "ejercicio.rumbo.llegasteAlLado": "Pasamos al costado, pero ahí está el río, al lado de las luces",
+  // El rumbo pedido, de Taguató para arriba, delante de la frase.
+  "ejercicio.rumbo.cifra": "Rumbo {n}",
+  // Lo que se apartó el morro de media, de Taguató para arriba, al llegar.
+  "ejercicio.rumbo.desvio": "±{n}° en promedio",
+  // El panel del final: se lee, no se dice. Y dice lo que se apuró, que es lo único que no es de verdad.
+  "ejercicio.rumbo.cierre":
+    "De noche, el rumbo es el camino. De verdad, la noche tarda media hora en caer: acá la apuramos",
   // Y la frase corta, con sus números, de Taguató para arriba.
   "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
   "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",

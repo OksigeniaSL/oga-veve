@@ -5973,6 +5973,13 @@ button.motor__tecla::after {
   fill: var(--cabina-esfera);
 }
 
+/* La marca de rumbo del direccional: lo que quiero, en magenta. Ver `SixPack`. */
+.dg__marca {
+  fill: var(--cabina-objetivo);
+  stroke: var(--cabina-filo);
+  stroke-width: 0.5;
+}
+
 .dg__avion {
   fill: none;
   stroke: var(--cabina-simbolo);
@@ -10242,6 +10249,27 @@ button.motor__tecla::after {
  */
 .senal__noche {
   fill: #0b1322;
+}
+
+/*
+ * **Lo dibujado encima de la noche**, en «Rumbo de noche»: la rosa y el avión
+ * en el blanco de «lo que tengo» sobre el cielo oscuro; en el ámbar de
+ * precaución cuando el morro se fue de la marca, y la marca en el magenta de
+ * «lo que quiero», como en las pantallas. Ver
+ * `rosaDeNoche` en `ui/senal.ts`.
+ */
+.senal__en-la-noche {
+  color: var(--cabina-valor, #f2f5f7);
+  fill: var(--cabina-valor, #f2f5f7);
+}
+
+.senal__se-va {
+  color: var(--cabina-precaucion, #ffb02e);
+  fill: var(--cabina-precaucion, #ffb02e);
+}
+
+.senal__marca {
+  fill: var(--cabina-objetivo);
 }
 
 .senal__silueta {

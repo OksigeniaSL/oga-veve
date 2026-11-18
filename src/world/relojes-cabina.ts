@@ -199,6 +199,12 @@ export interface DatosDeRelojes {
    * en giróscopo. Ver `radioEnElDireccional`.
    */
   readonly radio?: LaRadioPintada | null;
+  /**
+   * **El rumbo de la marca** del direccional, magnético, grados: el mismo que
+   * pone el cuadro plano en el suyo (`SixPack.update`), del objetivo del
+   * vuelo. `null` o sin poner, sin marca. Ver `direccional`.
+   */
+  readonly rumboPedido?: number | null;
 }
 
 interface Esfera {
@@ -359,7 +365,13 @@ export function encenderRelojes(raiz: Object3D): Relojes | null {
          * «3596» escritos de derecha a izquierda.
          */
         e.g.setTransform(1, 0, 0, 1, 0, 0);
-        pintarReloj(e.g, e.que, e.motor, e.brujula && datos.radio ? { ...datos, radio: null } : datos);
+        pintarReloj(
+          e.g,
+          e.que,
+          e.motor,
+          // La brújula es un imán: ni radio ni marca de rumbo.
+          e.brujula && (datos.radio || datos.rumboPedido != null) ? { ...datos, radio: null, rumboPedido: null } : datos,
+        );
         e.textura.needsUpdate = true;
       }
     },
@@ -637,6 +649,8 @@ function direccional(d: DatosDeRelojes, g: CanvasRenderingContext2D): void {
   g.translate(-C, -C);
   escala(d, g, e, true);
   g.restore();
+  // La marca de rumbo, en el borde de la rosa, en magenta: la misma del cuadro plano.
+  if (d.rumboPedido != null) marcaDeRumbo(g, d.rumboPedido - d.rumbo);
   // Y desde el peldaño de la radio, el curso y la aguja encima: un HSI, como en el cuadro plano.
   if (d.radio) radioEnElDireccional(g, d.radio, d.rumbo);
   // El avioncito, fijo y mirando arriba: lo que se lee es lo que tiene encima.
@@ -652,6 +666,27 @@ function direccional(d: DatosDeRelojes, g: CanvasRenderingContext2D): void {
   g.lineTo(C + 0.12 * R, C + 0.23 * R);
   g.stroke();
   rotulo(d, g, e.rotulo, e);
+}
+
+/**
+ * **La marca de rumbo**, girada `giro` grados desde arriba: la del cuadro plano
+ * (`dg__marca` en `SixPack`), en las unidades de su esfera llevadas al lienzo.
+ */
+function marcaDeRumbo(g: CanvasRenderingContext2D, giro: number): void {
+  const u = R / 43;
+  g.save();
+  g.translate(C, C);
+  g.rotate((giro * Math.PI) / 180);
+  g.fillStyle = PALETA.objetivo;
+  g.beginPath();
+  g.moveTo(-3.6 * u, -43 * u);
+  g.lineTo(3.6 * u, -43 * u);
+  g.lineTo(3.6 * u, -39.6 * u);
+  g.lineTo(0, -36.4 * u);
+  g.lineTo(-3.6 * u, -39.6 * u);
+  g.closePath();
+  g.fill();
+  g.restore();
 }
 
 /**
