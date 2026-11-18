@@ -69,7 +69,7 @@ const leer = (page) =>
     const q = s.orientation;
     return {
       ejercicio: o.cruzado(),
-      altura: s.position.y - j.terrain.runwayElevation - j.aircraft.gearHeight,
+      altura: s.position.y - j.terrain.sampleHeight(s.position.x, s.position.z) - j.aircraft.gearHeight,
       eje: (s.position.x - r.x) * Math.cos(h) + (s.position.z - r.z) * Math.sin(h),
       morro: ((((s.heading - h) * 180) / Math.PI + 540) % 360) - 180,
       ala: (Math.asin(-2 * (q.x * q.y + q.w * q.z)) * 180) / Math.PI,
@@ -113,11 +113,14 @@ try {
   const costado = -(r.viento.x * Math.cos((r.pista * Math.PI) / 180) + r.viento.z * Math.sin((r.pista * Math.PI) / 180));
   comprobar(
     "en la final de la 12, con el viento de costado por la izquierda",
-    e0.tecnica === TECNICA && e0.lado === -1 && Math.abs(r.pista - 120) < 3 && costado < -5,
-    `pista ${r.pista.toFixed(0)}, ${(Math.abs(costado) / 0.514444).toFixed(1)} kt de costado, pide ${e0.pide.toFixed(1)}° de cangrejo, ${Math.round(r.altura)} m`,
+    // La 12 por su rumbo verdadero, 111°: ver `data/aerodromes/gcxo.aero.json`.
+    e0.tecnica === TECNICA && e0.lado === -1 && Math.abs(r.pista - 111) < 3 && costado < -5,
+    `pista ${r.pista.toFixed(0)}, ${(Math.abs(costado) / 0.514444).toFixed(1)} kt de costado, ${Math.round(r.altura)} m`,
   );
   await foto("01-final");
 
+  // Los flaps de aterrizar, como en la mesa: la final a la velocidad de aproximación.
+  await page.evaluate(() => globalThis.__oga.pedirFlaps(1));
   // **El piloto de la mesa**, en la página. Ver `final-con-viento-cruzado.test.ts`.
   await page.evaluate(
     ({ tecnica, veces }) => {
@@ -152,7 +155,8 @@ try {
           return;
         }
         if (gas === null) gas = c.throttle;
-        const hAlto = s.position.y - j.terrain.runwayElevation - a.gearHeight;
+        // Sobre el suelo de debajo: la pista de Los Rodeos no está toda a la cota del campo.
+        const hAlto = s.position.y - j.terrain.sampleHeight(s.position.x, s.position.z) - a.gearHeight;
         const x = (s.position.x - r.x) * fx + (s.position.z - r.z) * fz + umbral;
         const y = (s.position.x - r.x) * Math.cos(h) + (s.position.z - r.z) * Math.sin(h);
         const vy = s.velocity.x * Math.cos(h) + s.velocity.z * Math.sin(h);
@@ -217,9 +221,9 @@ try {
   }
   if (TECNICA === "cangrejo") {
     comprobar(
-      "el cangrejo medido es el del triángulo con el viento que sopla, a menos de dos grados",
-      r.ejercicio.cangrejo !== null && Math.abs(r.ejercicio.cangrejo - r.ejercicio.pide) < 2,
-      `medido ${r.ejercicio.cangrejo?.toFixed(1)}°, pide ${r.ejercicio.pide.toFixed(1)}°`,
+      "el cangrejo medido es el del triángulo con la verdadera y el viento de ese momento, a menos de dos grados",
+      r.ejercicio.cangrejo !== null && Math.abs(r.ejercicio.cangrejo - r.ejercicio.pidioAlContar) < 2,
+      `medido ${r.ejercicio.cangrejo?.toFixed(1)}°, pedía ${r.ejercicio.pidioAlContar?.toFixed(1)}°`,
     );
     comprobar("la tarjeta dibuja el avión torcido sobre la raya", tarjetaMedida === "cangrejo-viento-izquierda", String(tarjetaMedida));
     comprobar("y en la corta, el pie derecho", tarjetaDelPie === "pie-derecho", String(tarjetaDelPie));

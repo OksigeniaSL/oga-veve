@@ -1059,7 +1059,6 @@ import {
   type SucesoDeLaDeriva,
 } from "./flight/deriva";
 import {
-  anguloDeCangrejo,
   cruzadoDelCampo,
   FinalConViento,
   tecnicaDe,
@@ -25544,25 +25543,22 @@ export class Game {
       const costado = -(aire.x * Math.cos(rad) + aire.z * Math.sin(rad));
       const deSiempre = cruzadoDelCampo(oaciDe(this.scenario));
       const lado: 1 | -1 = Math.abs(costado) > 0.5 ? (costado > 0 ? 1 : -1) : (deSiempre?.lado ?? -1);
-      this.finalConViento = new FinalConViento(
-        this.cruzadoPedido,
-        tecnica,
-        pista,
-        lado,
-        anguloDeCangrejo(Math.abs(costado), this.aircraft.approachSpeed),
-      );
+      this.finalConViento = new FinalConViento(this.cruzadoPedido, tecnica, pista, lado, Math.abs(costado));
       this.cruzadoPedido = null;
     }
     const f = this.finalConViento;
     if (!f || this.tarjetaDelTiempo?.abierta) return;
     const s = this.flight.state;
+    // Sobre el suelo de debajo: la pista de Los Rodeos no está toda a la cota del campo.
+    const suelo = Math.max(this.scenario.waterLevel ?? 0, this.terrain.sampleHeight(s.position.x, s.position.z));
     const sucesos = f.paso(
       {
+        verdadera: s.airspeed,
         vx: s.velocity.x,
         vz: s.velocity.z,
         rumbo: vuelta((s.heading * 180) / Math.PI),
         alabeo: MathUtils.radToDeg(bankAngleOf(s.orientation)),
-        altura: s.position.y - this.terrain.runwayElevation - this.aircraft.gearHeight,
+        altura: s.position.y - suelo - this.aircraft.gearHeight,
         enElSuelo: s.onGround,
         percance: this.percance !== null,
       },
@@ -25655,6 +25651,7 @@ export class Game {
     readonly cierre: string | null;
     readonly lado: number;
     readonly pide: number;
+    readonly pidioAlContar: number | null;
     readonly cangrejo: number | null;
     readonly ala: number | null;
     readonly alTocar: { readonly morro: number; readonly ala: number } | null;
@@ -25667,6 +25664,7 @@ export class Game {
       cierre: f.cierre,
       lado: f.lado,
       pide: f.pide,
+      pidioAlContar: f.pidioAlContar,
       cangrejo: f.cangrejo,
       ala: f.ala,
       alTocar: f.alTocar,

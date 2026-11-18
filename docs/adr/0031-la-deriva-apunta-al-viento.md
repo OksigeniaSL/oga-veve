@@ -1989,31 +1989,33 @@ en la final es lo mismo con la pista delante, y es donde más se ve. Lo lleva
 
 La regla 4 pide que lo que se enseña vuele. Así que primero la mesa
 (`final-con-viento-cruzado.test.ts`, con `OGA_MEDIR=1` la tabla entera): el
-modelo de coeficientes, un piloto de cinemática y la 12 de Los Rodeos con el
-alisio de casa —12 kt del 040, 11,8 de costado por la izquierda—.
+modelo de coeficientes, un piloto de cinemática y la 12 de Los Rodeos —111°
+verdaderos— con el alisio de casa: 12 kt del 040, 11,3 de costado por la
+izquierda.
 
 - **El cangrejo sale solo.** Con la bola centrada —el timón automático en
   Tukã y Taguato, los pies del piloto en Taguato Ruvicha— y el camino por el
-  eje, el JAZ 20 va con el morro 10,4-10,5° a la izquierda, y el triángulo de
-  vientos pide 10,6. El JAZ 40, 7-8°; el JAZ 50, casi 10. No hubo que tocar
+  eje, el JAZ 20 va con el morro 10,0-10,1° a la izquierda, y el triángulo de
+  vientos pide 10,2. El JAZ 40, 7-8°. No hubo que tocar
   nada: el modelo tiene derrape, fuerza lateral y veleta desde el principio.
 - **Hay timón de dirección independiente**: Q y E, la barra de los pedales con
   el dedo y el eje del mando de juego. Con él, enderezar en la recogida (desde
   cinco metros de altura de ruedas) deja el JAZ 20 al tocar con el morro a
-  1,5° en Tukã, 1,2 en Taguato y 0,4 en Taguato Ruvicha.
+  1,4° en Tukã, 1,1 en Taguato y 0,4 en Taguato Ruvicha.
 - **Resbalar pide un timón que sujete el derrape**, y en los peldaños con
   ayuda no lo hay de sobra. El timón automático centra la bola, que es justo
   deshacer un resbale, y el pie de quien juega pelea contra él: con el JAZ 20
-  y los doce nudos, en Tukã el pedal a fondo no llega (el morro se queda a
-  2,4° del eje), en Taguato hace falta el 97 % del pedal, y en Taguato
-  Ruvicha, sin ayuda, sobra con el 47 %: el ala izquierda baja 3,4°, el
-  derrape es de 10,7° y el morro va en el eje. El JAZ 40, con 4° de ala y el
-  27 % del pedal.
+  y los once nudos, en Tukã el pedal a fondo no llega (el morro se queda a
+  2,1° del eje), en Taguato hace falta el 93 % del pedal, y en Taguato
+  Ruvicha, sin ayuda, sobra con el 45 %: el ala izquierda baja 3,2°, el
+  derrape es de 10,3° y el morro va en el eje. El JAZ 40, con 4° de ala y el
+  26 % del pedal.
 - **Tocar torcido no se arregla solo donde no hay ayuda.** Sin enderezar, el
   JAZ 20 toca con 9° de cangrejo; las ruedas no dejan ir de lado y el avión va
-  adonde apunta el morro: en Taguato Ruvicha se aparta 27 m del eje en cinco
-  segundos de carrera sin tocar nada. En Tukã y Taguato, el timón de tierra lo
-  endereza (`timonEnTierra`) y se queda en 6-7 m. No hay carga lateral en el
+  adonde apunta el morro: en Taguato Ruvicha se aparta 25 m del eje en cinco
+  segundos de carrera sin tocar nada. En Taguato el timón de tierra lo
+  endereza (`timonEnTierra`) y se queda en 6 m; en Tukã, con el pie entero de
+  la ayuda, en 18, con un bandazo (ver «Lo que queda»). No hay carga lateral en el
   tren que contar: el modelo tiene un apoyo y no dos ruedas, y lo que se ve es
   la salida del eje, que es la consecuencia de verdad.
 
@@ -2048,7 +2050,7 @@ viento por la pista.
 
 **Con qué aviones**: el límite de la ficha manda (`cabeElCruzado`): si el
 viento de costado de siempre pasa del demostrado del avión, no se ofrece, que
-es la lección de la tarjeta del tiempo. Con los 11,8 kt de Los Rodeos caben
+es la lección de la tarjeta del tiempo. Con los 11,3 kt de Los Rodeos caben
 todos los de la flota con cifra leída (15 el JAZ 20, el más bajo) y el JAZ
 110, que lleva la de certificación (22). **El JAZ 25 no**: del biplano no se
 ha leído la cifra, la de certificación le da nueve nudos, y no se sale a
@@ -2099,14 +2101,14 @@ más corta. Sin grabar: ver «Lo que queda».
 - **La mesa**, con el modelo de coeficientes: que el cangrejo del JAZ 20 sea
   el del triángulo (±1,5°) con las alas a nivel en los tres peldaños; que
   enderezando en la recogida toque con el morro a menos de 3°; que sin
-  enderezar en Taguato Ruvicha se salga más de 15 m del eje y con la ayuda de
-  tierra de Tukã menos de 10; que el ala baja del JAZ 20 y del JAZ 40 en
+  enderezar en Taguato Ruvicha se salga más de 20 m del eje, en Taguato menos
+  de 10 y en Tukã menos que sin ayuda; que el ala baja del JAZ 20 y del JAZ 40 en
   Taguato Ruvicha lleve el morro en el eje (±1°), el ala del viento abajo y
   menos del 70 % del pedal, y toque con el morro derecho y esa ala abajo; y
   que en Tukã no se pueda (pedal a fondo y el morro fuera del eje) y en
   Taguato haga falta más del 90 %, que es por lo que el ala baja es de
   Taguato Ruvicha.
-- **Dónde y con qué avión**: Los Rodeos con 11,8 kt por la izquierda; el
+- **Dónde y con qué avión**: Los Rodeos con 11,3 kt por la izquierda; el
   cangrejo desde Tukã con toda la flota menos el JAZ 25; el ala baja solo en
   Taguato Ruvicha y no en los reactores; el límite de la ficha, con la regla
   de certificación para el que no tiene cifra.

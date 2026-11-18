@@ -165,6 +165,8 @@ const SIN_CONTAR_DEBAJO = 25;
 
 /** Lo que el ejercicio mira del vuelo en cada paso. */
 export interface LecturaDelCruzado {
+  /** La verdadera, m/s: con ella y el viento de costado sale el cangrejo que pide el triángulo. */
+  readonly verdadera: number;
   /** La velocidad sobre el suelo, m/s, con el viento dentro. */
   readonly vx: number;
   readonly vz: number;
@@ -172,7 +174,10 @@ export interface LecturaDelCruzado {
   readonly rumbo: number;
   /** La inclinación, grados: positiva, el ala derecha abajo. */
   readonly alabeo: number;
-  /** Altura de las ruedas sobre la pista, m. */
+  /**
+   * Altura de las ruedas sobre el suelo de debajo, m: en la corta, sobre la
+   * pista de verdad, que en Los Rodeos no está toda a la misma cota.
+   */
   readonly altura: number;
   readonly enElSuelo: boolean;
   readonly percance: boolean;
@@ -214,6 +219,8 @@ export class FinalConViento {
   private morroMedido: number | null = null;
   private alaMedida: number | null = null;
   private toque: { readonly morro: number; readonly ala: number } | null = null;
+  private pideAhora = 0;
+  private pideMedido: number | null = null;
 
   constructor(
     readonly ejercicio: Ejercicio,
@@ -222,9 +229,23 @@ export class FinalConViento {
     readonly pista: number,
     /** De qué lado viene el viento, mirando a la pista: −1, izquierda; 1, derecha. */
     readonly lado: 1 | -1,
-    /** El cangrejo que pide el viento a la velocidad de la final, grados. */
-    readonly pide: number,
+    /** El viento de costado, m/s, sin signo. */
+    readonly cruzado: number,
   ) {}
+
+  /**
+   * **El cangrejo que pide el triángulo ahora**, grados, con la verdadera de
+   * ahora: se cuenta con la de verdad y no con la de aproximación de la ficha,
+   * que la final empieza más deprisa y con los flaps arriba.
+   */
+  get pide(): number {
+    return this.pideAhora;
+  }
+
+  /** Y el que pedía cuando se contó el cangrejo, grados. */
+  get pidioAlContar(): number | null {
+    return this.pideMedido;
+  }
 
   get fase(): FaseDelCruzado {
     return this.faseActual;
@@ -265,6 +286,7 @@ export class FinalConViento {
     this.morroMedido = null;
     this.alaMedida = null;
     this.toque = null;
+    this.pideMedido = null;
   }
 
   paso(l: LecturaDelCruzado, dt: number): SucesoDelCruzado[] {
@@ -304,17 +326,19 @@ export class FinalConViento {
     const suelo = Math.hypot(l.vx, l.vz);
     const camino = (Math.atan2(l.vx, -l.vz) / GRADO + 360) % 360;
     const porElEje = suelo > 1 && Math.abs(centrado(camino - this.pista)) <= POR_EL_EJE;
+    this.pideAhora = anguloDeCangrejo(this.cruzado, l.verdadera);
 
     if (!this.contado && l.altura > SIN_CONTAR_DEBAJO) {
       const hecho =
         this.tecnica === "cangrejo"
-          ? porElEje && morro >= this.pide * MEDIO_CANGREJO
+          ? porElEje && morro >= this.pideAhora * MEDIO_CANGREJO
           : porElEje && Math.abs(morro) <= MORRO_DERECHO && ala >= ALA_BAJA;
       this.sostenido = hecho ? this.sostenido + dt : 0;
       if (this.sostenido >= SOSTENIDO) {
         this.contado = true;
         if (this.tecnica === "cangrejo") {
           this.morroMedido = morro;
+          this.pideMedido = this.pideAhora;
           sucesos.push({ que: "enCangrejo", morro });
         } else {
           this.alaMedida = ala;
