@@ -661,11 +661,13 @@ qué está en `docs/voces/LEEME.md`.
 **Un solo turno para todas las personas** (`src/audio/turnos.ts`), de más a menos: la máquina, que no pide turno; lo
 urgente (el terreno, la pista ocupada, la frustrada), que es lo único que corta a quien esté hablando; lo que es para
 ti (la luz de la torre, tus autorizaciones, el tráfico cerca); la instructora; la megafonía, que espera a que no hable
-nadie y una vez que habla no la pisa nadie —y su llamada de cabina ya es hablar: la voz que va detrás es lo siguiente
-que suena—; la frecuencia de los demás; y lo que espera su hueco de calma (lo que se ve por la ventanilla).
+nadie y una vez que habla no la pisa nadie —y su llamada de cabina ya es hablar: pide turno detrás de lo tuyo y delante
+de la instructora, nadie arranca mientras suena, y la voz que va detrás es lo siguiente que suena—; la frecuencia de
+los demás; y lo que espera su hueco de calma (lo que se ve por la ventanilla).
 
 **Un suceso, una voz.** Una frase detrás de otra, nunca dos a la vez contando lo mismo. Al despegar no se solapa nada:
-es el momento con más voces y el que más agobia.
+es el momento con más voces y el que más agobia. Por eso la torre pregunta por la intersección en la roja, que es
+cuando hay silencio, y de Taguató para arriba la verde la cuenta la torre y la instructora no la repite.
 
 **Lo que dice el avión no sube por la escalera.** La cuenta del radioaltímetro y los avisos de sus cajas (*terrain*,
 *sink rate*, *pull up*, *bank angle*, *stall*, *minimums*, *traffic, traffic*) suenan con su voz de máquina **en los

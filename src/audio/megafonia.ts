@@ -258,6 +258,17 @@ export function seLePasoElMomento(clave: string | undefined, fase: Fase): boolea
 }
 
 /**
+ * **Si este anuncio tiene su momento**, el de `VALE_MIENTRAS`: lo que lo
+ * retira es que se le pase, no un reloj. Lo mira la llamada que va delante,
+ * que pide turno y puede esperar detrás de una autorización entera. Ver
+ * `atenderALasLlamadas` en `game.ts`.
+ */
+export function tieneSuMomento(clave: string): boolean {
+  const base = clave.replace(/[@~].*$/, "");
+  return Object.keys(VALE_MIENTRAS).some((a) => base === a || base.startsWith(a));
+}
+
+/**
  * **Hasta cuándo vale cada anuncio de tierra que ya se pidió**, que en algunos
  * es un poco más que su momento de pedirse: la bienvenida, hasta despegar. El
  * crosscheck, no: vale mientras el motor siga parado en el puesto, que es
