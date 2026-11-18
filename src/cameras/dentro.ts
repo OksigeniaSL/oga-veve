@@ -116,10 +116,13 @@ export function encuadreDeCabina(
     lados: number;
     abajo: number;
     brujula?: { readonly arriba: number; readonly x: number; readonly medio: number };
+    piezas?: readonly { readonly izq: number; readonly der: number; readonly abajo: number }[];
   } | undefined,
   aspecto: number,
   /** Lo que tapa la fila de botones de arriba encima de la brújula, fracción del alto. Ver `Contexto.arribaTapado`. */
   arribaTapado = 0,
+  /** Lo que tapa la barra del timón por abajo, en fracciones de la pantalla. Ver `Contexto.abajoTapado`. */
+  abajoTapado: LoQueTapaAbajo | null = null,
 ): { inclinacion: number; fov: number } {
   if (!e) return { inclinacion: MIRANDO_AL_PANEL, fov: FOV_DE_CABINA };
   let salida = { inclinacion: MIRANDO_AL_PANEL, fov: FOV_DE_CABINA };
@@ -148,9 +151,62 @@ export function encuadreDeCabina(
     const abajo = 0.5 + Math.tan(e.abajo - inclinacion) / (2 * t);
     const cabeAbajo = abajo <= HASTA_EL_BORDE;
     const cabeALosLados = e.lados <= HASTA_EL_BORDE * aspecto * t;
-    if (cabeAbajo && cabeALosLados) break;
+    /*
+     * **Y lo que se pulsa, por encima de la barra del timón** (H31b). Con el
+     * dedo, la barra va abajo en el centro, que es justo donde un panel lleva
+     * los mandos que se tocan —la baliza, el motor, los flaps, el freno, el
+     * tren— y el pie de los relojes del medio. En el teléfono los tapaba
+     * enteros: se veían y no se podían pulsar, porque el toque se lo llevaba
+     * la barra. Es la regla de la fila de arriba (H26q), abajo: solo lo que
+     * cae en su columna, y si no cabe, se abre el ángulo.
+     */
+    const libreAbajo = !abajoTapado || !e.piezas || !algoDebajo(e.piezas, abajoTapado, inclinacion, t, aspecto);
+    if (cabeAbajo && cabeALosLados && libreAbajo) break;
   }
   return salida;
+}
+
+/**
+ * **Lo que tapa el HUD por abajo desde el asiento**: la barra del timón, en
+ * fracciones de la pantalla —`arriba`, su borde de arriba desde arriba; `izq`
+ * y `der`, sus bordes desde la izquierda—. Tapa desde ahí hasta abajo. Ver
+ * `Game.loQueTapaLaBarraDelTimon`.
+ */
+export interface LoQueTapaAbajo {
+  readonly arriba: number;
+  readonly izq: number;
+  readonly der: number;
+}
+
+/**
+ * Lo que se deja entre lo más bajo de un instrumento y la barra del timón,
+ * como fracción del alto: el mismo aire que encima de la brújula.
+ */
+const AIRE_SOBRE_LA_BARRA = 0.015;
+
+/**
+ * Si alguna pieza del panel, mirando así, cae por debajo del borde de arriba
+ * de lo que tapa por abajo y en su columna.
+ *
+ * El alto, con la misma cuenta que la visera. El ancho, con la de una cámara
+ * que mira hacia abajo: lo que cae lejos del centro de la pantalla se ve más
+ * estrecho que su tangente, `cos c / cos(θ − c)`, y en el teléfono con el
+ * ángulo abierto son píxeles que deciden si un mando queda dentro o fuera.
+ */
+function algoDebajo(
+  piezas: readonly { readonly izq: number; readonly der: number; readonly abajo: number }[],
+  barra: LoQueTapaAbajo,
+  inclinacion: number,
+  t: number,
+  aspecto: number,
+): boolean {
+  const tope = barra.arriba - AIRE_SOBRE_LA_BARRA;
+  for (const p of piezas) {
+    if (0.5 + Math.tan(p.abajo - inclinacion) / (2 * t) <= tope) continue;
+    const k = Math.cos(p.abajo) / Math.cos(inclinacion - p.abajo) / (2 * t * aspecto);
+    if (0.5 + p.der * k > barra.izq && 0.5 + p.izq * k < barra.der) return true;
+  }
+  return false;
 }
 
 /**
@@ -251,6 +307,8 @@ export class CamaraDeDentro implements CameraRig {
   private readonly comoCabina: boolean;
   /** El último encuadre, para que el ángulo pedido sea el mismo que se usó. */
   private encuadre = { inclinacion: MIRANDO_AL_PANEL, fov: FOV_DE_CABINA };
+  /** Con qué se sacó el último encuadre, para no repetir la cuenta si no cambia. */
+  private readonly encuadreDe = { encuadre: null as unknown, aspecto: 0, arriba: 0, abajo: 0, izq: 0, der: 0 };
 
   constructor(muestraElAvion: boolean, comoCabina: boolean) {
     this.muestraElAvion = muestraElAvion;
@@ -274,9 +332,11 @@ export class CamaraDeDentro implements CameraRig {
     else
       this.offset.set(0, ctx.aircraft.chord * 0.55, -ctx.aircraft.chord * 0.4);
     this.offset.y += cabeza;
-    this.offset.applyQuaternion(state.orientation);
-    camera.position.copy(state.position).add(this.offset);
-    camera.quaternion.copy(state.orientation);
+    // Los ojos, en la cabina dibujada: ver `Contexto.dibujo`.
+    const giro = ctx.dibujo?.quaternion ?? state.orientation;
+    this.offset.applyQuaternion(giro);
+    camera.position.copy(ctx.dibujo?.position ?? state.position).add(this.offset);
+    camera.quaternion.copy(giro);
     /*
      * **Y en cabina se mira un poco hacia abajo, por encima de la visera.**
      *
@@ -290,7 +350,31 @@ export class CamaraDeDentro implements CameraRig {
      * Cuánto, lo dice la visera de cada avión: ver `encuadreDeCabina`.
      */
     if (this.comoCabina) {
-      this.encuadre = encuadreDeCabina(ojo?.encuadre, camera.aspect, ctx.arribaTapado ?? 0);
+      /*
+       * Solo si cambia algo de lo que lo decide: con cada instrumento contra
+       * la barra del timón son unos cientos de cuentas por paso del ángulo, y
+       * lo que lo decide cambia al girar la pantalla o al cambiar de avión,
+       * no en cada imagen.
+       */
+      const de = this.encuadreDe;
+      const arriba = ctx.arribaTapado ?? 0;
+      const abajo = ctx.abajoTapado ?? null;
+      if (
+        ojo?.encuadre !== de.encuadre ||
+        camera.aspect !== de.aspecto ||
+        arriba !== de.arriba ||
+        (abajo?.arriba ?? -1) !== de.abajo ||
+        (abajo?.izq ?? -1) !== de.izq ||
+        (abajo?.der ?? -1) !== de.der
+      ) {
+        de.encuadre = ojo?.encuadre;
+        de.aspecto = camera.aspect;
+        de.arriba = arriba;
+        de.abajo = abajo?.arriba ?? -1;
+        de.izq = abajo?.izq ?? -1;
+        de.der = abajo?.der ?? -1;
+        this.encuadre = encuadreDeCabina(ojo?.encuadre, camera.aspect, arriba, abajo);
+      }
       camera.rotateX(-this.encuadre.inclinacion);
     }
   }

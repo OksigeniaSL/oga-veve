@@ -1203,7 +1203,7 @@ import {
 import { CabinaDePasaje, cabinaPreparada, enLaPuerta } from "./world/cabina-de-pasaje";
 import type { AsientoDePasaje } from "./world/asiento-de-pasaje";
 import { CERCANO_EN_LA_CABINA } from "./world/cabina-333";
-import { CERCANO_EN_EL_HELICOPTERO } from "./cameras/dentro";
+import { CERCANO_EN_EL_HELICOPTERO, type LoQueTapaAbajo } from "./cameras/dentro";
 import { montarElPasillo, type PasilloDePasaje } from "./world/pasillo-de-pasaje";
 import type { ModoDeLaPantalla, PantallaDelRespaldo } from "./world/pantalla-del-respaldo";
 import { diaEnLaCabina } from "./world/luz-de-cabina";
@@ -6607,6 +6607,8 @@ export class Game {
     asientoDeLaEscena: null as AsientoDePasaje | null,
     saltaLaCabeza: false,
     arribaTapado: 0,
+    abajoTapado: null as LoQueTapaAbajo | null,
+    dibujo: null as Contexto["dibujo"],
   };
   /**
    * **Las cámaras de la escena de pasaje**: la de fuera y el fundido de cada
@@ -30572,6 +30574,8 @@ export class Game {
     ctx.aircraft.largo = this.largoDelAvion;
     ctx.aircraft.miraAlMorro = !!this.aircraft.helicoptero;
     ctx.ojo = this.aircraftMesh.ojo ?? null;
+    // Y el avión como se dibuja, que en tierra no es como lo lleva el modelo de vuelo. Ver `Contexto.dibujo`.
+    ctx.dibujo = this.aircraftMesh.group;
     ctx.aLaVista = this.adelantoDelSigueme;
     // El de rueda de cola rueda con el morro arriba: la cámara de fuera lo
     // descuenta. Ver `actitudEnTierra` en `cameras/tipos.ts`.
@@ -30580,6 +30584,8 @@ export class Game {
     ctx.traqueteo = TRAQUETEO[this.superficie];
     // Lo que la fila de botones tapa encima de la brújula del parabrisas. Ver `loQueTapaLaFilaDeArriba`.
     ctx.arribaTapado = this.loQueTapaLaFilaDeArriba();
+    // Y lo que la barra del timón tapa por abajo. Ver `loQueTapaLaBarraDelTimon`.
+    ctx.abajoTapado = this.loQueTapaLaBarraDelTimon();
     ctx.pasaje = this.aircraftMesh.pasaje ?? null;
     // Los frenos de tierra, en el avión cuyo modelo los lleva: la de cola se
     // acerca en tierra por ellos. Ver `sitioDeLaCola`.
@@ -30752,7 +30758,8 @@ export class Game {
     const ahora = performance.now();
     if (ahora - this.brujulaEnPantalla.medida < 500) return;
     this.brujulaEnPantalla.medida = ahora;
-    const s = this.flight.state;
+    // Con el avión como se dibuja, que es donde está la brújula. Ver `Contexto.dibujo`.
+    const s = this.aircraftMesh.group;
     const v = this.esquinaDeLaBrujula;
     const ancho = window.innerWidth;
     const alto = window.innerHeight;
@@ -30766,7 +30773,7 @@ export class Game {
       for (const caida of [b.arriba, b.abajo]) {
         // La misma cuenta que la mide en el modelo (`conSuEncuadre`), a un metro de los ojos.
         v.set(ojo.x + x, ojo.y - Math.tan(caida), ojo.z - 1)
-          .applyQuaternion(s.orientation)
+          .applyQuaternion(s.quaternion)
           .add(s.position)
           .project(this.camera);
         if (v.z > 1) delante = false;
@@ -30823,6 +30830,37 @@ export class Game {
       tapa = Math.max(tapa, r.bottom);
     }
     return (this.filaDeArriba.tapa = Math.min(0.5, tapa / alto));
+  }
+
+  /** Lo que tapa la barra del timón, y cuándo se midió, ms. */
+  private readonly barraDelTimon: { tapa: LoQueTapaAbajo | null; medida: number } = {
+    tapa: null,
+    medida: Number.NEGATIVE_INFINITY,
+  };
+
+  /**
+   * **Lo que la barra del timón tapa desde el asiento**, en fracciones de la
+   * pantalla: su borde de arriba y sus dos lados (H31b). Con el dedo va abajo
+   * en el centro, encima de los mandos que se pulsan en el panel, y el toque
+   * se lo lleva ella. Sin dedo, sin barra o fuera de la cabina, nada. Dos
+   * veces por segundo, como la fila de arriba: la barra solo cambia al girar
+   * la pantalla. Ver `encuadreDeCabina` en `cameras/dentro.ts`.
+   */
+  private loQueTapaLaBarraDelTimon(): LoQueTapaAbajo | null {
+    if (this.cameraMode !== "cockpit") return null;
+    const ahora = performance.now();
+    if (ahora - this.barraDelTimon.medida < 500) return this.barraDelTimon.tapa;
+    this.barraDelTimon.medida = ahora;
+    const barra = document.querySelector<HTMLElement>('[data-touch="rudder"]');
+    const ancho = window.innerWidth;
+    const alto = window.innerHeight;
+    const r = barra?.getBoundingClientRect();
+    // Sin dedo, la barra no ocupa sitio; en la vuelta y en el pasaje, ocupa y no se ve (se hereda).
+    const tapa =
+      barra && r && r.width && r.height && ancho && alto && getComputedStyle(barra).visibility !== "hidden"
+        ? { arriba: r.top / alto, izq: r.left / ancho, der: r.right / ancho }
+        : null;
+    return (this.barraDelTimon.tapa = tapa);
   }
 
   // ── «La brújula baila» ───────────────────────────────────────────────
@@ -32467,7 +32505,9 @@ export class Game {
     const asiento = this.asientoDe(modo);
     // En el pasaje no se gira la cabeza a secas: se asoma uno al cristal. Asomada al pasillo, el cristal queda detrás.
     if (asiento && !this.enElPasillo) asomarse(this.camera, state.orientation, asiento, giro);
-    else if (como === "cabeza" || asiento) girarLaCabeza(this.camera, state.orientation, giro);
+    // Desde el asiento, la cabeza gira sobre el avión dibujado, como los ojos. Ver `Contexto.dibujo`.
+    else if (como === "cabeza" || asiento)
+      girarLaCabeza(this.camera, modo === "cockpit" ? this.aircraftMesh.group.quaternion : state.orientation, giro);
     else
       darLaVuelta(this.camera, state.position, giro, (x, z) =>
         this.terrain.sampleSurface(x, z),

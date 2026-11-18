@@ -1296,6 +1296,58 @@ misma tanda, y **en el encuadre y no en el modelo ni en la fila**:
   Con nada encima —un teléfono donde la fila se recoge, o un avión sin
   brújula— todo queda como estaba.
 
+### Y abajo, la barra del timón (H31b)
+
+La misma regla, por abajo. Con el dedo la barra del timón va abajo en el
+centro, encima de los mandos del pie del panel: en el teléfono apaisado
+(915 × 412) tapaba enteros la baliza, el motor, los flaps, el freno y el
+tren en siete de los ocho aviones, y del 63 al 84 % en la JAZ 25; tocados
+en el banco, no respondía ninguno. En la tablet, el pie del direccional y del
+variómetro de la JAZ 25. Aquí sí va en el encuadre: la barra está siempre
+que hay dedo, y la cámara no salta.
+
+- El modelo mide **cada instrumento con su columna** (`EncuadreDeCabina.piezas`),
+  porque la barra solo tapa el centro: un reloj de un lado puede bajar más.
+- El juego mide la barra dos veces por segundo
+  (`Game.loQueTapaLaBarraDelTimon`), y `encuadreDeCabina` abre el ángulo
+  hasta que lo que cae en su columna queda por encima con el mismo 1,5 % de
+  aire que la brújula. La visera no se mueve; el panel encoge.
+- **Y los ojos, en el avión dibujado** (`Contexto.dibujo`). La primera
+  medida daba el JAZ 90 encogido un 18 % sin que la barra le tapara nada:
+  su panel se dibujaba entre cincuenta y setenta y cinco píxeles más arriba
+  de lo que contaba el encuadre. En tierra el dibujo se inclina con el suelo
+  y, enganchado al tractor, levanta el morro sobre las principales; la
+  cámara se ponía con la actitud del modelo de vuelo, y medio grado con los
+  ojos doce metros por delante sube el panel diez centímetros delante de
+  ellos. Con los ojos en su sitio, lo dibujado y lo contado coinciden al
+  píxel —el borde de abajo del panel queda en los 330 px, seis por encima de
+  la barra, en los ocho—. Lo que encoge no cambia con eso —lo decide el
+  ángulo, que sale de la cuenta—, pero el JAZ 90 pasa a estar tapado como
+  los demás reactores y deja de parecer gratis.
+
+Lo que encoge el panel, medido con la tarjeta de verdad (el ancho de los
+instrumentos en la pantalla, después contra antes):
+
+| Pantalla | Avioneta y radial | Bimotor de pistón | De cristal y reactores |
+|---|---|---|---|
+| 915 × 412 | 8 % (JAZ 25), 14 % (JAZ 20) | 10 % | 18–20 % |
+| 780 × 360 | 13 % (JAZ 25), 18 % (JAZ 20) | — | 24–25 % |
+| 1024 × 600 | 15 % (JAZ 25), 13 % (JAZ 20) | — | 10–11 % |
+| 1280 × 800 | 10 % (JAZ 25), 9 % (JAZ 20) | — | 5–6 % |
+
+En 1024 × 600 la avioneta llega al tope del ángulo (78°) con la fila de
+arriba bajando el panel por la brújula y la barra subiéndolo: los mandos
+quedan un píxel dentro de la barra, el 6 % de su caja, y se pulsan por el
+centro. Las dos reglas juntas no caben ahí sin abrir más el tope.
+
+Es el doble del diez por ciento que se daba por bueno en el teléfono para
+los de cristal y los reactores, y queda dicho para decidirlo: la otra
+salida es mezclar —encoger un diez y mirar más abajo lo que falte, que sube
+la visera y deja en el teléfono un 83–85 % del parabrisas de ahora en los
+reactores—. Mientras no se decida, manda la regla: lo que se pulsa, se
+pulsa. Tocados en el banco a 915 × 412, responden los mandos de los ocho,
+y en ninguna de las cuatro pantallas queda un reloj debajo de la barra.
+
 ### Fuera de la cabina, a mitad del ejercicio
 
 Si se pasa a la vista de detrás, la brújula desaparece: el cuadro plano lleva

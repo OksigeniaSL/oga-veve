@@ -546,9 +546,21 @@ nada.
     tablet (ADR 0031, H26q): la fila está siempre y la tarjeta va y viene, y la cámara saltaría con cada una. Se
     arregla donde se decide lo que se lee (apartado 5): la brújula entra en el reparto como un botón más, la tarjeta
     se estrecha en su sitio y el subtítulo y la radio buscan otra fila. El dibujo de la orden, que es lo que mira
-    quien no lee, no se toca nunca.
+    quien no lee, no se toca nunca;
+  - **la barra del timón no tapa lo que se pulsa** (H31b). Con el dedo va abajo en el centro, que es donde el panel
+    lleva los mandos que se tocan —la baliza, el motor, los flaps, el freno, el tren— y el pie de los relojes del
+    medio. En el teléfono los tapaba enteros en casi toda la flota, y el toque se lo llevaba la barra: se veían y no
+    respondían. Esto sí se arregla en el encuadre, como la fila de arriba en la tablet: la barra está siempre que hay
+    dedo, así que la cámara no salta. `encuadreDeCabina` mide cada instrumento con su columna
+    (`EncuadreDeCabina.piezas`) contra la barra que mide el juego (`Game.loQueTapaLaBarraDelTimon`), y si algo de su
+    columna cae debajo, abre el ángulo: la visera no se mueve y el panel encoge. Y la cuenta tiene que ser la de lo
+    que se ve: los ojos van con el avión **dibujado**, que en tierra se inclina con el suelo y levanta el morro con el
+    tractor (`Contexto.dibujo`); con los del modelo de vuelo, el panel del reactor salía cincuenta píxeles más arriba
+    de lo que se contaba y encogía por nada.
 
-  Lo mira `npm run carteles` desde el asiento de la avioneta en Taguató, a 915 × 412 con el dedo.
+  Lo mira `npm run carteles` desde el asiento de la avioneta en Taguató, a 915 × 412 con el dedo; y los instrumentos
+  contra la barra, con un toque de verdad en cada mando, en la avioneta, el turbohélice y el reactor a 915 × 412, y en
+  el de motor radial a 1280 × 800.
 - **De pie, con el dedo, no se vuela**: los mandos se esconden y el juego pide girar el teléfono con un dibujo.
   **Salvo de pasaje**, que no se pilota: ahí de pie sale todo lo de tumbado, colocado para una pantalla alta
   («El pasaje, de pie» en `src/style.css`). Arriba la columna de la pausa a la izquierda y los cuatro puntos con el
