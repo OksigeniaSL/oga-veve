@@ -427,6 +427,14 @@ instructor	instructor/ejercicio.estima.derecha.ogg	es-PY	Mirá abajo, a tu derec
 instructor	instructor/ejercicio.estima.delante.ogg	es-PY	Mirá adelante: el pueblo está un poquito más allá. Volamos menos de lo que pedía la cuenta	los ejercicios de emergencia: antes, durante y después
 instructor	instructor/ejercicio.estima.detras.ogg	es-PY	Mirá atrás: ya pasamos el pueblo. Volamos más de lo que pedía la cuenta	los ejercicios de emergencia: antes, durante y después
 instructor	instructor/ejercicio.estima.cierre.ogg	es-PY	Velocidad por tiempo es distancia: con el rumbo corregido por el viento y el reloj, se llega adonde no se ve	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.altimetro.antes.ogg	es-PY	Venimos de lejos, con la presión de allá en la ventanilla. Mantené la aguja en la altura de la tarjeta, hacia el cerro	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.altimetro.qnh.ogg	es-PY	La torre nos da la presión de acá, que es más baja. Girá la rueda del altímetro hasta ese número	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.altimetro.puesto.ogg	es-PY	¿Viste? La aguja bajó y ahora dice la verdad: íbamos más bajo. Subí despacito a la altura de la tarjeta	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.altimetro.cerca.ogg	es-PY	Mirá el cerro: está más cerca de lo que dice la aguja. La ventanilla todavía tiene la presión de allá	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.altimetro.pasaste.ogg	es-PY	¡Pasamos el cerro con el margen de verdad! Con la presión de acá, la aguja no miente	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.altimetro.pasasteSinPoner.ogg	es-PY	Pasamos el cerro más bajo de lo que decía la aguja. Probemos otra vez, con la presión de acá	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.altimetro.cierre.ogg	es-PY	De alta a baja, ojo con la caja: yendo a menos presión, el altímetro marca de más. Con el QNH del sitio, dice la verdad	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.altimetro.cierreSinPoner.ogg	es-PY	De alta a baja, ojo con la caja: con la presión de allá en la ventanilla, el altímetro marcaba de más. Otra vez, y girá la rueda	los ejercicios de emergencia: antes, durante y después
 instructor	instructor/mission.rio.name.ogg	es-PY	Ver el río	las misiones
 instructor	instructor/mission.rioabajo.name.ogg	es-PY	Seguir el río	las misiones
 instructor	instructor/mission.mar.name.ogg	es-PY	Salir al mar	las misiones

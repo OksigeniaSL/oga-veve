@@ -167,6 +167,38 @@
       "ms": 4507,
       "h": "a531e3b98c"
     },
+    "ejercicio.altimetro.antes": {
+      "ms": 5907,
+      "h": "56bf1eb755"
+    },
+    "ejercicio.altimetro.cerca": {
+      "ms": 6007,
+      "h": "1a983b1735"
+    },
+    "ejercicio.altimetro.cierre": {
+      "ms": 7207,
+      "h": "f923de7321"
+    },
+    "ejercicio.altimetro.cierreSinPoner": {
+      "ms": 7007,
+      "h": "a9182c55f3"
+    },
+    "ejercicio.altimetro.pasaste": {
+      "ms": 4607,
+      "h": "6e1a3912f9"
+    },
+    "ejercicio.altimetro.pasasteSinPoner": {
+      "ms": 5107,
+      "h": "e841b4028e"
+    },
+    "ejercicio.altimetro.puesto": {
+      "ms": 7207,
+      "h": "c695441e29"
+    },
+    "ejercicio.altimetro.qnh": {
+      "ms": 5207,
+      "h": "cd6e0de4ef"
+    },
     "ejercicio.antes-de-v1.antes": {
       "ms": 8907,
       "h": "861ce1c808"
@@ -5858,6 +5890,30 @@
     ],
     "ejercicio.estima.cierre": [
       "ejercicio.estima.cierre"
+    ],
+    "ejercicio.altimetro.antes": [
+      "ejercicio.altimetro.antes"
+    ],
+    "ejercicio.altimetro.qnh": [
+      "ejercicio.altimetro.qnh"
+    ],
+    "ejercicio.altimetro.puesto": [
+      "ejercicio.altimetro.puesto"
+    ],
+    "ejercicio.altimetro.cerca": [
+      "ejercicio.altimetro.cerca"
+    ],
+    "ejercicio.altimetro.pasaste": [
+      "ejercicio.altimetro.pasaste"
+    ],
+    "ejercicio.altimetro.pasasteSinPoner": [
+      "ejercicio.altimetro.pasasteSinPoner"
+    ],
+    "ejercicio.altimetro.cierre": [
+      "ejercicio.altimetro.cierre"
+    ],
+    "ejercicio.altimetro.cierreSinPoner": [
+      "ejercicio.altimetro.cierreSinPoner"
     ]
   }
 }

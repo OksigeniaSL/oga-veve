@@ -426,6 +426,14 @@ Mirá abajo, a tu derecha: ahí está el pueblo. Esa distancia es lo que nos apa
 Mirá adelante: el pueblo está un poquito más allá. Volamos menos de lo que pedía la cuenta
 Mirá atrás: ya pasamos el pueblo. Volamos más de lo que pedía la cuenta
 Velocidad por tiempo es distancia: con el rumbo corregido por el viento y el reloj, se llega adonde no se ve
+Venimos de lejos, con la presión de allá en la ventanilla. Mantené la aguja en la altura de la tarjeta, hacia el cerro
+La torre nos da la presión de acá, que es más baja. Girá la rueda del altímetro hasta ese número
+¿Viste? La aguja bajó y ahora dice la verdad: íbamos más bajo. Subí despacito a la altura de la tarjeta
+Mirá el cerro: está más cerca de lo que dice la aguja. La ventanilla todavía tiene la presión de allá
+¡Pasamos el cerro con el margen de verdad! Con la presión de acá, la aguja no miente
+Pasamos el cerro más bajo de lo que decía la aguja. Probemos otra vez, con la presión de acá
+De alta a baja, ojo con la caja: yendo a menos presión, el altímetro marca de más. Con el QNH del sitio, dice la verdad
+De alta a baja, ojo con la caja: con la presión de allá en la ventanilla, el altímetro marcaba de más. Otra vez, y girá la rueda
 Ver el río
 Seguir el río
 Salir al mar

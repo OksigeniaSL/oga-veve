@@ -4026,6 +4026,126 @@
     }
   },
   {
+    "id": "ejercicio.altimetro.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Venimos de lejos, con la presión de allá en la ventanilla. Mantené la aguja en la altura de la tarjeta, hacia el cerro",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Venimos de lejos, con la presión de allá en la ventanilla. Mantené la aguja en la altura de la tarjeta, hacia el cerro.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.altimetro.qnh",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La torre nos da la presión de acá, que es más baja. Girá la rueda del altímetro hasta ese número",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "La torre nos da la presión de acá, que es más baja. Girá la rueda del altímetro hasta ese número.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.altimetro.puesto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¿Viste? La aguja bajó y ahora dice la verdad: íbamos más bajo. Subí despacito a la altura de la tarjeta",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¿Viste? La aguja bajó y ahora dice la verdad: íbamos más bajo. Subí despacito a la altura de la tarjeta.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.altimetro.cerca",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá el cerro: está más cerca de lo que dice la aguja. La ventanilla todavía tiene la presión de allá",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Mirá el cerro: está más cerca de lo que dice la aguja. La ventanilla todavía tiene la presión de allá.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.altimetro.pasaste",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Pasamos el cerro con el margen de verdad! Con la presión de acá, la aguja no miente",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Pasamos el cerro con el margen de verdad! Con la presión de acá, la aguja no miente.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.altimetro.pasasteSinPoner",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Pasamos el cerro más bajo de lo que decía la aguja. Probemos otra vez, con la presión de acá",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Pasamos el cerro más bajo de lo que decía la aguja. Probemos otra vez, con la presión de acá.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.altimetro.cierre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "De alta a baja, ojo con la caja: yendo a menos presión, el altímetro marca de más. Con el QNH del sitio, dice la verdad",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "De alta a baja, ojo con la caja: yendo a menos presión, el altímetro marca de más. Con el QNH del sitio, dice la verdad.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.altimetro.cierreSinPoner",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "De alta a baja, ojo con la caja: con la presión de allá en la ventanilla, el altímetro marcaba de más. Otra vez, y girá la rueda",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "De alta a baja, ojo con la caja: con la presión de allá en la ventanilla, el altímetro marcaba de más. Otra vez, y girá la rueda.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "mission.rio.name",
     "voz": "instructor",
     "idioma": "es-PY",

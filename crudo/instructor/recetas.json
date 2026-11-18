@@ -2564,5 +2564,29 @@
   ],
   "ejercicio.estima.cierre": [
     "ejercicio.estima.cierre"
+  ],
+  "ejercicio.altimetro.antes": [
+    "ejercicio.altimetro.antes"
+  ],
+  "ejercicio.altimetro.qnh": [
+    "ejercicio.altimetro.qnh"
+  ],
+  "ejercicio.altimetro.puesto": [
+    "ejercicio.altimetro.puesto"
+  ],
+  "ejercicio.altimetro.cerca": [
+    "ejercicio.altimetro.cerca"
+  ],
+  "ejercicio.altimetro.pasaste": [
+    "ejercicio.altimetro.pasaste"
+  ],
+  "ejercicio.altimetro.pasasteSinPoner": [
+    "ejercicio.altimetro.pasasteSinPoner"
+  ],
+  "ejercicio.altimetro.cierre": [
+    "ejercicio.altimetro.cierre"
+  ],
+  "ejercicio.altimetro.cierreSinPoner": [
+    "ejercicio.altimetro.cierreSinPoner"
   ]
 }
