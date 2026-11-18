@@ -45,10 +45,22 @@ import {
   PRESENTACION,
   ilsDelCampo,
   rotuloDelIls,
+  TECHO_DEL_ILS,
+  elDiaDelIls,
   type SucesoDelIls,
 } from "./ils-con-agujas";
 import type { PuntoDelMundo } from "./seguir-la-aguja";
 import { dondeCae } from "../world/entre-aerodromos";
+import { seVeLaPista } from "./minimos";
+import { atisEnTexto, vientoDeCasa } from "../world/meteo";
+import {
+  cuantoDentro,
+  densidadEnLaCapa,
+  grosorDeLaCapa,
+  ruidoDeNube,
+  umbralDeLaNube,
+  type DibujoDeLaCapa,
+} from "../world/capa-de-nubes";
 
 const GRADO = Math.PI / 180;
 const NUDO = 0.514444;
@@ -347,3 +359,60 @@ describe("el ILS volado con las dos agujas", () => {
     expect(ALTURA_DE_DECISION / 0.3048).toBeCloseTo(200, -1);
   });
 });
+
+describe("el día del ejercicio: la nube, rota justo antes de los mínimos", () => {
+  const FUERTEVENTURA = { vientoDe: 25, vientoKt: 20, techoM: 1100, temp: 23 };
+  /** La capa como la pinta el cielo: cinco láminas con su ruido, cubierta. Ver `nubes` en `world/sky.ts`. */
+  const capa = (base: number): DibujoDeLaCapa => ({
+    base,
+    separacion: grosorDeLaCapa("nada") / 4,
+    ruidos: [0, 1, 2, 3, 4].map((i) => ruidoDeNube(0xc10d + i * 977)),
+    desfases: [0, 1, 2, 3, 4].map((i) => [i * 0.17, i * 0.31] as const),
+    paso: 2000,
+    umbral: umbralDeLaNube(1),
+  });
+  /** Lo que se está dentro de la nube a una altura, de media y como mucho, en una final de seis kilómetros. */
+  const dentroA = (c: DibujoDeLaCapa, altura: number): { media: number; peor: number } => {
+    let suma = 0;
+    let peor = 0;
+    for (let i = 0; i < 60; i++) {
+      const d = cuantoDentro(densidadEnLaCapa(c, i * 97, altura, -i * 61));
+      suma += d;
+      peor = Math.max(peor, d);
+    }
+    return { media: suma / 60, peor };
+  };
+
+  it("en un avión de reglas visuales, el día de siempre del sitio, sin nube baja: no lleva con qué volar dentro", () => {
+    const m = elDiaDelIls(vientoDeCasa(FUERTEVENTURA), "visual");
+    expect(m).toMatchObject({ vientoDe: 25, vientoKt: 20, techoM: 1100, fuente: "mano" });
+    expect(PYKASU.reglasDeVuelo).toBe("visual");
+  });
+
+  it("en uno de instrumentos, el viento del sitio y un cubierto a trescientos pies, sin agua, a mano", () => {
+    const m = elDiaDelIls(vientoDeCasa(FUERTEVENTURA), "instrumentos");
+    expect(m).toMatchObject({ vientoDe: 25, vientoKt: 20, tapadura: 1, lluvia: "nada", fuente: "mano" });
+    expect(m.techoM! / 0.3048).toBeCloseTo(300, 6);
+    // Y lo que dice el parte es lo que hay: OVC003, no un redondeo.
+    expect(atisEnTexto("GCFV", "01", m)).toContain("OVC 300FT");
+  });
+
+  it("por encima de la altura de decisión: en los mínimos la pista se ve", () => {
+    expect(seVeLaPista(TECHO_DEL_ILS)).toBe(true);
+  });
+
+  it("dentro de la nube en su base, y fuera del todo en los mínimos, con la pista delante", () => {
+    const c = capa(TECHO_DEL_ILS);
+    expect(dentroA(c, TECHO_DEL_ILS + 30).media).toBeGreaterThan(0.7);
+    expect(dentroA(c, ALTURA_DE_DECISION).peor).toBe(0);
+    // Y ya fuera a los doscientos veinte pies, unos segundos antes de decidir.
+    expect(dentroA(c, 220 * 0.3048).peor).toBe(0);
+  });
+
+  it("con la base a doscientos cincuenta, en los mínimos se seguiría en los jirones: por eso trescientos", () => {
+    const d = dentroA(capa(250 * 0.3048), ALTURA_DE_DECISION);
+    expect(d.media).toBeGreaterThan(0.2);
+    expect(d.peor).toBeGreaterThan(0.5);
+  });
+});
+

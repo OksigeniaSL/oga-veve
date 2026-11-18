@@ -35,12 +35,15 @@ const AVION = process.env.OGA_AVION ?? "jaz-20";
 const ESCENARIO = process.env.OGA_ESCENARIO ?? "fuerteventura";
 const VECES = Number(process.env.OGA_VECES ?? 4);
 const FUERA = process.env.OGA_FUERA === "1";
-const NOMBRE = `${ESCENARIO}-${AVION}${FUERA ? "-fuera" : ""}`;
+// El viento a mano, «grados/nudos» como `?viento=`: `0/0` es la calma. Sin él, el del sitio.
+const VIENTO = process.env.OGA_VIENTO ?? "";
+const NOMBRE = `${ESCENARIO}-${AVION}${FUERA ? "-fuera" : ""}${VIENTO ? `-viento-${VIENTO.replace("/", "-")}` : ""}`;
 
 mkdirSync(SALIDA, { recursive: true });
 const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
 const GRADO = Math.PI / 180;
 const PIE = 0.3048;
+const PIE_EN_LA_PAGINA = PIE;
 const centrado = (g) => ((((g + 180) % 360) + 360) % 360) - 180;
 
 const server = await createServer({
@@ -197,7 +200,9 @@ try {
   const errores = [];
   page.on("pageerror", (e) => errores.push(e.message.slice(0, 200)));
   await page.addInitScript(() => localStorage.setItem("oga-veve:teclas-vistas", "1"));
-  await page.goto(`${BASE}/?escenario=${ESCENARIO}&hora=12&tramo=taguato-ruvicha&avion=${AVION}&ejercicio=ils`);
+  await page.goto(
+    `${BASE}/?escenario=${ESCENARIO}&hora=12&tramo=taguato-ruvicha&avion=${AVION}&ejercicio=ils${VIENTO ? `&viento=${VIENTO}` : ""}`,
+  );
   await page.waitForFunction(() => globalThis.__oga?.ilsConAgujas?.()?.colocacion != null, null, { timeout: 120000 });
   // A la salida, antes de que la presentación acabe: con el reloj normal, son sus catorce segundos.
   await pausa(2000);
@@ -246,6 +251,26 @@ try {
     Math.abs(Math.abs(centrado(r.rumbo / GRADO - RF)) - 30) < 3,
     `${centrado(r.rumbo / GRADO - RF).toFixed(1)}°`,
   );
+  /*
+   * El día del ejercicio: en un avión de instrumentos, cubierto a trescientos
+   * pies sobre la pista; en uno de reglas visuales, el de siempre del sitio,
+   * sin nube baja, que no lleva con qué volar dentro. Ver `elDiaDelIls`.
+   */
+  const nube = await page.evaluate(() => globalThis.__oga.capaDeNubes());
+  const reglas = await page.evaluate(() => globalThis.__oga.juegoParaTrazas().aircraft.reglasDeVuelo);
+  const conNube = reglas === "instrumentos";
+  const comoEsLaNube = nube
+    ? `base ${Math.round(nube.techoM / PIE_EN_LA_PAGINA)} ft, tapadura ${nube.tapadura}, techo de la capa ${Math.round(nube.techo - nube.base)} m más arriba`
+    : "sin capa";
+  comprobar(
+    conNube
+      ? "el día del ejercicio, con un avión de instrumentos: cubierto a trescientos pies sobre la pista"
+      : "el día del ejercicio, con uno de reglas visuales: sin nube baja",
+    conNube
+      ? nube && Math.abs(nube.techoM / PIE_EN_LA_PAGINA - 300) < 1 && nube.tapadura >= 1
+      : !nube || nube.techoM / PIE_EN_LA_PAGINA >= 1500,
+    `${reglas}: ${comoEsLaNube}`,
+  );
   await foto("01-salida");
 
   await ponerElPiloto(page, {
@@ -264,6 +289,29 @@ try {
   let fotoSendaArriba = false;
   let fotoEnCruz = false;
   let fotoMinimos = false;
+  let fotoDentro = false;
+  /** Dentro de la nube, a unos trescientos treinta pies; y fuera, en los mínimos, con la pista delante. */
+  let dentro = null;
+  let enLosMinimosSeVe = null;
+  /** Cuánto llevaba dicho la instructora al llegar a los mínimos: lo de después es lo de la frustrada o la toma. */
+  let dichoHastaLosMinimos = null;
+  const comoSeVe = () =>
+    page.evaluate(() => {
+      const o = globalThis.__oga;
+      const j = o.juegoParaTrazas();
+      const s = o.estado();
+      const ej = o.ilsConAgujas();
+      const c = o.capaDeNubes();
+      const umbral = ej?.antenas?.senda;
+      const cota = j.terrain.runwayElevation;
+      return {
+        enLaNube: c?.enLaNube ?? 0,
+        // Lo que deja ver la capa del avión a la antena de la senda, al lado del umbral.
+        haciaLaPista: umbral ? j.sky.transparenciaEntre({ x: s.position.x, y: s.position.y, z: s.position.z }, { x: umbral.x, y: cota + 2, z: umbral.z }) : null,
+        pies: (s.position.y - cota) / 0.3048,
+        dicho: (o.dichoTodo().instructor ?? []).length,
+      };
+    });
   let enElLoc = null;
   let capturada = null;
   let enCruz = null;
@@ -315,8 +363,15 @@ try {
       veces = quiereVeces;
       await page.evaluate((v) => globalThis.__oga.acelerar(v), veces);
     }
+    if (!fotoDentro && r.ej.fase === "bajando" && h < 340 * PIE) {
+      fotoDentro = true;
+      dentro = await comoSeVe();
+      await foto("04b-dentro-de-la-nube");
+    }
     if (!fotoMinimos && (r.ej.fase === "pista" || r.ej.fase === "frustrando")) {
       fotoMinimos = true;
+      enLosMinimosSeVe = await comoSeVe();
+      dichoHastaLosMinimos = enLosMinimosSeVe.dicho;
       await foto("05-minimos");
     }
     await pausa(120);
@@ -344,6 +399,13 @@ try {
     m && (FUERA ? Math.abs(m.loc) > 1 : Math.abs(m.loc) <= 1 && Math.abs(m.senda) <= 1),
     m ? `loc ${m.loc.toFixed(2)}, senda ${Number.isFinite(m.senda) ? m.senda.toFixed(2) : "sin señal"} puntos; desde mil pies lo peor, loc ${peorLoc.toFixed(2)} y senda ${peorSenda.toFixed(2)}` : "no llegó",
   );
+  if (conNube) comprobar(
+    "a trescientos treinta pies, dentro de la nube; en los mínimos, fuera, con la pista a la vista",
+    dentro && enLosMinimosSeVe && dentro.enLaNube > 0.3 && enLosMinimosSeVe.enLaNube < 0.2 && (enLosMinimosSeVe.haciaLaPista ?? 0) > 0.95,
+    dentro && enLosMinimosSeVe
+      ? `a ${Math.round(dentro.pies)} ft en la nube ${dentro.enLaNube.toFixed(2)}; a ${Math.round(enLosMinimosSeVe.pies)} ft ${enLosMinimosSeVe.enLaNube.toFixed(2)}, hacia la pista deja ver ${enLosMinimosSeVe.haciaLaPista?.toFixed(2)}`
+      : "no llegó",
+  );
   comprobar(
     FUERA ? "se fue al aire y el ejercicio cierra con la frustrada" : "aterrizó y el ejercicio cierra con la pista",
     r.ej.cierre === (FUERA ? "frustrada" : "pista"),
@@ -355,8 +417,13 @@ try {
       .cantados()
       .map((c) => /^(ejercicio\.[\w.]+): sin grabar/.exec(c)?.[1])
       .filter(Boolean);
-    return { dicho: o.dichoTodo(), sinGrabar };
+    // Y lo que la boca apuntó de las del ejercicio: si alguna no llegó a sonar, por qué.
+    const apuntes = [...o.cantados(), ...o.descartadas().map((d) => (typeof d === "string" ? d : JSON.stringify(d)))].filter((c) =>
+      /ejercicio\.ils\./.test(c),
+    );
+    return { dicho: o.dichoTodo(), sinGrabar, apuntes };
   });
+  if (pedido.apuntes.length) console.log(`    apuntado de las del ejercicio: ${pedido.apuntes.join(" | ")}`);
   const delIls = [...new Set([...(pedido.dicho.instructor ?? []), ...pedido.sinGrabar].filter((c) => /^ejercicio\.ils\./.test(c)))];
   const esperado = [
     "ejercicio.ils.antes",
@@ -366,7 +433,20 @@ try {
     "ejercicio.ils.capturada",
     FUERA ? "ejercicio.ils.frustrada" : "ejercicio.ils.pista",
   ];
-  comprobar("la instructora lo cuenta por pasos, en su orden", delIls.join(",") === esperado.join(","), delIls.join(", "));
+  /*
+   * En su orden lo que sonó, y entero contando lo que se calló sin voz: con
+   * las frases ya grabadas, la presentación —en el primer paso— puede caer
+   * antes de que la voz haya cargado y quedarse en «sin grabar, se calla»,
+   * que va en otra lista y no sabe de orden. Se dice aparte.
+   */
+  const sonaron = (pedido.dicho.instructor ?? []).filter((c) => /^ejercicio\.ils\./.test(c));
+  const mudas = pedido.sinGrabar.filter((c) => /^ejercicio\.ils\./.test(c));
+  comprobar(
+    "la instructora lo cuenta por pasos, en su orden",
+    [...delIls].sort().join(",") === [...esperado].sort().join(",") &&
+      sonaron.join(",") === esperado.filter((c) => sonaron.includes(c)).join(","),
+    `${sonaron.join(", ")}${mudas.length ? `; sin voz: ${[...new Set(mudas)].join(", ")}` : ""}`,
+  );
   // Un suceso, una voz: los mínimos del ejercicio, y no además los de siempre.
   comprobar(
     "en los mínimos habla el ejercicio y no además el «mirá la pista» de siempre",
@@ -379,6 +459,46 @@ try {
   console.log(`    lo demás que se dijo: ${otros.join(", ") || "nada"}`);
   await pausa(6000);
   await foto("06-final");
+  const despues = await page.evaluate(() => {
+    const o = globalThis.__oga;
+    const j = o.juegoParaTrazas();
+    const yo = j.miIndicativo?.matricula ?? null;
+    const alAire = o
+      .nombrados()
+      .lista.filter((n) => /goAround/.test(n.clave))
+      .map((n) => ({ t: Math.round(n.t), clave: n.clave, quien: n.quien, aMi: n.quien === yo }));
+    const conPiezas = (o.dichoConPiezas().torre ?? []).filter((d) => /goAround/.test(d.clave));
+    return {
+      yo,
+      alAire,
+      conPiezas,
+      instructor: o.dichoTodo().instructor ?? [],
+      fin: document.querySelector('[data-hud="fin-frase"]')?.textContent ?? "",
+      finVisible: !document.querySelector(".fin")?.hidden,
+    };
+  });
+  // La torre manda al aire con el indicativo delante, como en todas sus frases: a quién y cuándo.
+  console.log(
+    `    la torre, al aire: ${despues.alAire.map((n) => `${n.clave} a ${n.quien}${n.aMi ? " (a mí)" : ""} a los ${n.t} s`).join(", ") || "nadie"}`,
+  );
+  comprobar(
+    "la torre manda al aire a alguien con nombre: el indicativo en el rótulo y en la voz",
+    despues.alAire.every((n) => n.quien) && despues.conPiezas.every((d) => d.piezas === null || d.piezas.some((p) => /^fonetico\./.test(p))),
+    despues.conPiezas.map((d) => `${d.clave}: ${d.piezas ? d.piezas.join(" ") : "sin grabar"}`).join(" | ") || "no hubo",
+  );
+  // Un suceso, una voz: desde los mínimos, la fase no repite «andá a la pista» ni «bajá suavecito».
+  const trasLosMinimos = dichoHastaLosMinimos === null ? [] : despues.instructor.slice(dichoHastaLosMinimos);
+  comprobar(
+    "desde los mínimos, la fase no vuelve a decir «andá a la pista» ni la final",
+    dichoHastaLosMinimos !== null && !trasLosMinimos.some((c) => c === "vuelo.enVueloAterrizando" || c === "vuelo.final"),
+    trasLosMinimos.join(", ") || "nada",
+  );
+  comprobar(
+    "el panel del final, con la frase de cierre del ejercicio",
+    despues.finVisible &&
+      (FUERA ? /Bien decidido|Good call/.test(despues.fin) : /Aterrizaste con las agujas|You landed on the needles/.test(despues.fin)),
+    `«${despues.fin.slice(0, 90)}»`,
+  );
   comprobar("sin errores en la página", errores.length === 0, errores.join(" | "));
   await contexto.close();
 } catch (e) {

@@ -21,6 +21,7 @@ import {
   type Leccion,
 } from "./flight/lecciones";
 import { ejercicioPorId, type Ejercicio } from "./flight/ejercicios";
+import { elDiaDelIls } from "./flight/ils-con-agujas";
 import { conRelieve } from "./world/relieve";
 import { cargarOrtofoto } from "./world/ortofoto";
 import { cargarManifiesto, juegoDeTeselas } from "./world/teselas-de-ortofoto";
@@ -50,7 +51,16 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
 
   // El tiempo de este sitio cuando no hay METAR: su viento dominante. Ver
   // `vientoDeCasa`, que es de donde sale la cabecera en uso.
-  const deCasa = vientoDeCasa(esc.vientoDominante);
+  /*
+   * **Y «Aterrizar con las agujas» trae su techo** en el avión que vuela por
+   * instrumentos, cubierto a trescientos pies, también con el viento puesto
+   * a mano: se baja dentro de la nube y se sale justo antes de los mínimos.
+   * Con un METAR a mano, el del METAR. Ver `elDiaDelIls`.
+   */
+  const deCasa =
+    ejercicio?.id === "ils"
+      ? elDiaDelIls(vientoDeCasa(esc.vientoDominante), avion.reglasDeVuelo)
+      : vientoDeCasa(esc.vientoDominante);
 
   const crudo = q.get("metar");
   if (crudo) return { ...(leerMetar(crudo) ?? deCasa), fuente: "mano" };
