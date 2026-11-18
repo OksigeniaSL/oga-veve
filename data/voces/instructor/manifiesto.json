@@ -315,6 +315,14 @@
       "ms": 9207,
       "h": "d55dc3a26b"
     },
+    "ejercicio.ils.cierreFrustrada": {
+      "ms": 8207,
+      "h": "db274ccc08"
+    },
+    "ejercicio.ils.cierrePista": {
+      "ms": 7707,
+      "h": "5af086452d"
+    },
     "ejercicio.ils.enElLocalizador": {
       "ms": 8207,
       "h": "6749fbb03b"
@@ -5655,6 +5663,12 @@
     ],
     "ejercicio.ils.frustrada": [
       "ejercicio.ils.frustrada"
+    ],
+    "ejercicio.ils.cierrePista": [
+      "ejercicio.ils.cierrePista"
+    ],
+    "ejercicio.ils.cierreFrustrada": [
+      "ejercicio.ils.cierreFrustrada"
     ]
   }
 }

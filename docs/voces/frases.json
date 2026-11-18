@@ -3591,6 +3591,36 @@
     }
   },
   {
+    "id": "ejercicio.ils.cierrePista",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Aterrizaste con las agujas! Bajaste por el localizador y la senda hasta los mínimos, y ahí estaba la pista. Así se baja hasta una pista que no se ve",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Aterrizaste con las agujas! Bajaste por el localizador y la senda hasta los mínimos, y ahí estaba la pista. Así se baja hasta una pista que no se ve.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.ils.cierreFrustrada",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Bien decidido! Con una aguja fuera del centro, o sin ver la pista, se sube y se vuelve a probar. Así lo hacen los pilotos de verdad, y eso también es ganar",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Bien decidido! Con una aguja fuera del centro, o sin ver la pista, se sube y se vuelve a probar. Así lo hacen los pilotos de verdad, y eso también es ganar.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "mission.rio.name",
     "voz": "instructor",
     "idioma": "es-PY",
