@@ -7954,7 +7954,14 @@ export class Game {
     this.resetFlight();
     this.abrirVentanaDePruebas();
     if (this.conInicio) this.empezarElInicio();
-    else this.hud.flash(`${t("help.start")} · ${t("help.assist")}`, 8);
+    /*
+     * **Y la ayuda de arrancar, solo si se arranca en la pista**: «gas a fondo
+     * y, cuando corra, aflojá» no es nada en un ejercicio que empieza ya
+     * volando, y en «Rumbo y reloj» salía a los tres segundos en la línea de
+     * avisos, debajo de la presentación (ADR 0031, H26n). Ahí habla el
+     * ejercicio.
+     */
+    else if (!this.ejercicioDeHoy?.colocacion) this.hud.flash(`${t("help.start")} · ${t("help.assist")}`, 8);
 
     /*
      * **Y si no hay voz, se dice.**
