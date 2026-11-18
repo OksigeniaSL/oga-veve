@@ -9,6 +9,7 @@
 import { t } from "../i18n";
 import { Panel } from "./panel";
 import { armarPanel, CERRAR } from "./concha";
+import { pieDeOksigenia } from "./pie-de-oksigenia";
 
 /** «Luz verde», de Granja Óga, publicada el 18-10-2026. */
 export const CANCION = "https://youtu.be/nxC1d03iqyw";
@@ -75,6 +76,15 @@ export class CreditsScreen {
           por obligación legal.
         -->
         <p class="creditos__dedicatoria">${t("credits.dedication")}</p>
+        <!--
+          **Y debajo, el pie de Oksigenia**: la firma, el correo, el sello y
+          las redes, como en el pie de todas sus webs. Debajo de la dedicatoria
+          y no antes porque no es un crédito más, es el pie del panel; y aquí,
+          en los créditos, porque es la pantalla de los mayores: por la portada
+          y por el vuelo pasa un chico de cuatro años tocando, y a ese no se le
+          pone delante un enlace que se lo lleva fuera del juego.
+        -->
+        ${pieDeOksigenia()}
       `,
     });
     this.panel = new Panel(root, () => this.hide());

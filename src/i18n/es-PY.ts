@@ -359,7 +359,16 @@ export const ES_PY = {
   "hud.engineBusy": "Parate del todo y bajá el motor primero",
   "hud.engineOn": "¡Motor en marcha!",
   "credits.title": "Créditos",
-  "credits.madeBy": "Un producto de Oksigenia SL, bajo la marca Granja Óga.",
+  /*
+   * Quién lo hace lo dice el pie de Oksigenia, al final de los créditos
+   * (`ui/pie-de-oksigenia.ts`); aquí arriba queda la marca con la que sale.
+   */
+  "credits.madeBy": "Se publica bajo la marca Granja Óga.",
+  // La firma común de los productos de Oksigenia, con su forma de la norma.
+  "credits.firma": "Óga Veve · un producto de Oksigenia",
+  "credits.sello": "Comprobá la seguridad de esta web",
+  "credits.redes": "Oksigenia en las redes",
+  "credits.red": "Oksigenia en {red}",
   "credits.educational":
     "Gratis y para siempre para todo uso sin ánimo de lucro, en cualquier país: sin registro y sin pagar nada.",
   // **Literal y sin resumir**: la licencia de Copernicus exige esta frase

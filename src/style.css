@@ -4985,6 +4985,74 @@ button.motor__tecla::after {
   color: var(--ocre);
 }
 
+/*
+ * **El pie de Oksigenia**, al final de los créditos. Ver
+ * `ui/pie-de-oksigenia.ts`.
+ *
+ * La firma, el correo y el sello van uno debajo de otro y no en una línea con
+ * puntos, como en el pie de una web ancha: en los quinientos y pico píxeles de
+ * este panel no caben nunca en una, y al partirse el punto se quedaba colgando
+ * al final del renglón. Es lo mismo que hace el pie de jepyso.com en un
+ * teléfono.
+ */
+.creditos__pie {
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1px solid var(--linea);
+}
+
+.creditos__panel .creditos__firma {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0;
+}
+
+/* Cada línea, del alto de lo que se toca: son enlaces sueltos, no texto. */
+.creditos__firma a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tacto);
+}
+
+/*
+ * Los seis iconos, del tamaño del dedo y con el margen negativo para que el
+ * dibujo del primero quede alineado con la letra de arriba, y no su caja.
+ */
+.creditos__redes {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin: 0 calc((22px - var(--tacto)) / 2);
+  padding: 0;
+}
+
+.creditos__redes a {
+  display: inline-grid;
+  place-items: center;
+  width: var(--tacto);
+  height: var(--tacto);
+  border-radius: 50%;
+}
+
+.creditos__redes svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+/* Lo que se aprieta responde, y el `:hover`, solo donde hay ratón. */
+.creditos__redes a:active {
+  background: rgba(228, 226, 218, 0.16);
+}
+
+@media (hover: hover) {
+  .creditos__redes a:hover {
+    background: rgba(228, 226, 218, 0.1);
+  }
+}
+
 /* Foco visible en todo lo que se puede enfocar: criterio 2.4.7. */
 /*
  * El aro del foco. **Sin `border-radius`**, y no es un detalle de gusto.

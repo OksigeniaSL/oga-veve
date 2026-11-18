@@ -306,7 +306,11 @@ export const EN: Dictionary = {
   "hud.engineBusy": "Come to a stop and close the throttle first",
   "hud.engineOn": "Engine running",
   "credits.title": "Credits",
-  "credits.madeBy": "An Oksigenia SL product, under the Granja Óga brand.",
+  "credits.madeBy": "Published under the Granja Óga brand.",
+  "credits.firma": "Óga Veve · an Oksigenia product",
+  "credits.sello": "Check this site's security",
+  "credits.redes": "Oksigenia on social media",
+  "credits.red": "Oksigenia on {red}",
   "credits.educational":
     "Free forever for any non-profit use, in any country: no sign-up, no payment.",
   "credits.cancion": "The simulator's song: «Luz verde» (Green Light), by Granja Óga.",
