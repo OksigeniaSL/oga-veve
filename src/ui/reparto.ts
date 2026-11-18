@@ -23,6 +23,11 @@
  *   el subtítulo no corre su reloj mientras espera (`Hud.subtituloEsperando`).
  * - **El aviso no espera nunca**: si no tiene sitio libre se queda en el suyo,
  *   que es lo más importante de la pantalla.
+ * - **Y desde el asiento, lo que el avión enseña cuenta como lo que se toca**
+ *   (H31a): la brújula del parabrisas cuelga en lo más alto, que es donde va
+ *   lo que se lee, y en el teléfono la tarjeta de la orden le llegaba encima.
+ *   El juego dice dónde cae en la pantalla (`Hud.ponerLaBrujula`) y aquí se
+ *   esquiva como un botón más.
  *
  * Por qué midiendo y no con más CSS: lo que hay que esquivar depende de lo que
  * esté encendido en cada momento —el freno sale al tocar suelo, la barra se
@@ -74,6 +79,12 @@ export interface PiezaQueSeLee {
       cuando pisa, se lleva entera a donde quepa con `translate`, sin dejar su
       hueco: lo que va a su lado en la barra se toca y no se mueve por ella. */
   readonly traslada?: boolean;
+  /** Si, cuando pisa algo a su derecha, **se estrecha en su sitio** antes de
+      recogerse —el mismo borde de la izquierda y la misma fila, con la frase
+      en una línea más—: la tarjeta de la orden, que vive en su rincón y no se
+      mueve, y recogida perdía la frase entera por unos píxeles (H31a). Ver
+      `hastaDondeEnSuSitio`. */
+  readonly estrechaEnSuSitio?: boolean;
   /** Lo que es seguridad y no puede quedarse esperando: la lámpara. Lo que
       cede alto (`LO_QUE_CEDE`) se encoge para hacerle sitio, y si hacia donde
       crece no cabe, busca fila al otro lado (`Colocable.alOtroLado`). */
@@ -127,7 +138,14 @@ export const LO_QUE_SE_LEE: readonly PiezaQueSeLee[] = [
     pideSitio: true,
     recoge: RECOGIDA,
   },
-  { que: "senal", sel: '[data-hud="senal"]', mueve: false, espera: true, recoge: RECOGIDA },
+  {
+    que: "senal",
+    sel: '[data-hud="senal"]',
+    mueve: false,
+    espera: true,
+    estrechaEnSuSitio: true,
+    recoge: RECOGIDA,
+  },
   /*
    * **El cronómetro de la estima**, detrás de la tarjeta de la orden y en su
    * misma caja del rincón: no se mueve, y si pisa algo que se toca, espera.
@@ -288,6 +306,20 @@ export function colocar(
 }
 
 /**
+ * **Hasta dónde puede llegar una pieza estrechada en su sitio**, en píxeles de
+ * pantalla: hasta lo primero que pisa a su derecha, con su respiro. `null` si
+ * estrecharla no basta —algo la pisa por la izquierda, o se quedaría en menos
+ * de la mitad de lo que mide entera, que una frase en un palillo no se lee—
+ * o si no pisa nada. Ver `PiezaQueSeLee.estrechaEnSuSitio`.
+ */
+export function hastaDondeEnSuSitio(natural: Caja, ocupado: readonly Caja[]): number | null {
+  const pisan = ocupado.filter((o) => pisa(natural, o));
+  if (!pisan.length || pisan.some((o) => o.izq - RESPIRO <= natural.izq)) return null;
+  const hasta = Math.min(...pisan.map((o) => o.izq - RESPIRO));
+  return hasta - natural.izq >= (natural.der - natural.izq) / 2 ? hasta : null;
+}
+
+/**
  * **Dónde se lleva entera una pieza que no se estrecha** —la radio, que vive
  * en la barra—: la misma caja, con el mismo ancho y el mismo alto, en el
  * primer sitio libre de su fila, de la de una que va detrás o de una de
@@ -338,7 +370,7 @@ export function trasladar(
 /** La clase de lo que espera: escondido sin dejar su sitio. */
 export const ESPERA = "lee-espera";
 
-const PROPIEDADES = ["left", "right", "top", "bottom", "translate"] as const;
+const PROPIEDADES = ["left", "right", "top", "bottom", "translate", "max-width"] as const;
 
 function cajaDe(r: DOMRect): Caja {
   return { izq: r.left, arr: r.top, der: r.right, aba: r.bottom };
@@ -427,9 +459,14 @@ function cederAlto(
  * o la deja esperando. Escribe en línea solo lo que mueve, y lo borra en la
  * vuelta siguiente para volver a medir lo que quiere la hoja.
  *
- * Devuelve lo que ha decidido, para quien quiera mirarlo.
+ * Devuelve lo que ha decidido, para quien quiera mirarlo. `delAvion` es lo que
+ * el avión enseña y no se tapa, en píxeles de pantalla: la brújula del
+ * parabrisas desde el asiento (H31a). Se esquiva como lo que se toca.
  */
-export function repartirLoQueSeLee(raiz: HTMLElement): Record<string, string> {
+export function repartirLoQueSeLee(
+  raiz: HTMLElement,
+  delAvion: readonly Caja[] = [],
+): Record<string, string> {
   const escala = Number.parseFloat(getComputedStyle(raiz).zoom) || 1;
   const piezas = LO_QUE_SE_LEE.map((d) => ({
     d,
@@ -471,7 +508,7 @@ export function repartirLoQueSeLee(raiz: HTMLElement): Record<string, string> {
   // hacia abajo, como la barra en la que va.
   const anclas = new Map(vivas.map(({ d, el }) => [el, d.traslada ? "arriba" : anclaDe(el)]));
   const limites: Caja = { izq: 0, arr: 0, der: innerWidth, aba: innerHeight };
-  const ocupado: Caja[] = [...tocables];
+  const ocupado: Caja[] = [...tocables, ...delAvion];
   const hecho: Record<string, string> = {};
   vivas.forEach(({ d, el }, i) => {
     const natural = naturales.get(el);
@@ -540,6 +577,30 @@ export function repartirLoQueSeLee(raiz: HTMLElement): Record<string, string> {
       for (const p of PROPIEDADES) el.style.removeProperty(p);
       delete el.dataset.reparto;
     }
+    if (d.estrechaEnSuSitio) {
+      /*
+       * Estrechada, la frase va en una línea más y la tarjeta crece hacia
+       * abajo: si así pisa otra cosa, se vuelve a mirar hasta dónde con lo que
+       * mide ahora. Dos vueltas bastan, que estrechar solo hace crecer.
+       */
+      let caja = natural;
+      for (let vuelta = 0; vuelta < 2; vuelta++) {
+        const hasta = hastaDondeEnSuSitio(caja, ocupado);
+        if (hasta === null) break;
+        el.dataset.reparto = "1";
+        el.style.maxWidth = `${(hasta - natural.izq) / escala}px`;
+        caja = cajaDe(el.getBoundingClientRect());
+        if (!ocupado.some((o) => pisa(caja, o)) && caja.aba <= limites.aba + 1) {
+          ocupado.push(caja);
+          hecho[d.que] = "estrechada";
+          return;
+        }
+      }
+      if (el.dataset.reparto) {
+        for (const p of PROPIEDADES) el.style.removeProperty(p);
+        delete el.dataset.reparto;
+      }
+    }
     if (d.recoge) {
       /*
        * Recogida, se vuelve a buscar sitio con lo que mide así: la lámpara sin
@@ -594,6 +655,8 @@ export class Repartidor {
   private pedido = 0;
   private forzar = false;
   private firma = "";
+  /** Lo que el avión enseña y no se tapa: ver `ponerLoDelAvion`. */
+  private delAvion: readonly Caja[] = [];
   private readonly alCambiarDeTamano = (): void => this.pedir(true);
   /**
    * **Lo que se lleva**, para que un banco lo mida con la CPU frenada (regla
@@ -649,7 +712,20 @@ export class Repartidor {
   ahora(): Record<string, string> {
     this.firma = this.firmaDeAhora();
     this.forzar = false;
-    return repartirLoQueSeLee(this.raiz);
+    return repartirLoQueSeLee(this.raiz, this.delAvion);
+  }
+
+  /**
+   * **Lo que el avión enseña desde el asiento y no se tapa**, en píxeles de
+   * pantalla —la brújula del parabrisas—, o nada. Se reparte otra vez solo si
+   * cambia: lo pone el juego dos veces por segundo (H31a).
+   */
+  ponerLoDelAvion(cajas: readonly Caja[]): void {
+    const clave = (cs: readonly Caja[]): string =>
+      cs.map((c) => `${Math.round(c.izq)},${Math.round(c.arr)},${Math.round(c.der)},${Math.round(c.aba)}`).join("|");
+    if (clave(cajas) === clave(this.delAvion)) return;
+    this.delAvion = cajas;
+    this.pedir(true);
   }
 
   /** Que se reparta en el fotograma que viene; `forzar` aunque no cambie la firma. */
@@ -671,7 +747,7 @@ export class Repartidor {
           g.msMaqueta += performance.now() - tm;
         }
         const t1 = performance.now();
-        repartirLoQueSeLee(this.raiz);
+        repartirLoQueSeLee(this.raiz, this.delAvion);
         const ms = performance.now() - t1;
         g.repartos++;
         g.msReparto += ms;
