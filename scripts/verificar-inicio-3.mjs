@@ -531,8 +531,11 @@ const CALLADO_COMO_MUCHO = 85;
 /** Lo que calla la escena en cada corte de cámara, s de escena. Ver `CORTE_DE_PLANO`. */
 const CORTE = 1.1;
 
-/** Las claves que dice la escena y que no empiezan por `inicio.`: los anuncios y la ventanilla. */
-const DE_LA_ESCENA = /^(inicio\.|comandante\.|tripulacion\.|ventanilla)/;
+/**
+ * Las claves que dice la escena y que no empiezan por `inicio.`: los anuncios y la ventanilla. Con la
+ * llamada de la tripulación delante desde que pide turno en la boca (H29k), que es el anuncio hablando.
+ */
+const DE_LA_ESCENA = /^(llamada:)?(inicio\.|comandante\.|tripulacion\.|ventanilla)/;
 
 async function elVuelo() {
   const ctx = await navegador.newContext({ viewport: { width: 1280, height: 800 }, locale: "es-PY" });
