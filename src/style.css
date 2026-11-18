@@ -15969,6 +15969,18 @@ oksigenia-access-panel::part(trigger):focus-visible {
     display: none;
   }
 
+  /*
+   * **Y desde el asiento, ni las losas ni su asa** (H31a). El `display: flex`
+   * de aquí arriba le ganaba por orden de la hoja a `.hud--cabina .cuadro`,
+   * que lo apaga desde el asiento porque ahí el cuadro es el del avión: en el
+   * teléfono quedaba el asa recogida, una pestaña de ciento cincuenta por
+   * cuarenta y cuatro, justo encima del direccional del panel, y abierta, las
+   * cuatro losas encima del six-pack. La regla de la cabina vale también aquí.
+   */
+  .hud.hud--cabina .cuadro {
+    display: none;
+  }
+
   .hud .cuadro > .tel {
     display: flex;
     align-items: stretch;
