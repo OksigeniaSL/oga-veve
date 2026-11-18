@@ -35562,6 +35562,8 @@ export class Game {
     sono: number | null;
     /** Lo que se hace si se le pasa el momento: la escena de pasaje sigue. */
     alCaer?: (() => void) | undefined;
+    /** Quién le tapó el hueco, en fotogramas. Para el banco. */
+    tapada?: Record<string, number>;
   }[] = [];
   /** Los pasajeros que llaman durante el servicio. Ver `LlamadasDelPasaje`. */
   private readonly llamadasDelPasaje = new LlamadasDelPasaje();
@@ -35749,6 +35751,14 @@ export class Game {
       if (caduca) {
         this.llamadas.shift();
         if (l.clave.startsWith("comandante.crosscheck")) this.crosscheckAcabado = true;
+        if (import.meta.env.DEV)
+          BOCA.apuntarLoQueSeCayoFuera(
+            l.clave,
+            `llamada sin hueco en ${this.faseDeAhora}, ${(ahora - l.desde).toFixed(1)} s · ` +
+              Object.entries(l.tapada ?? {})
+                .map(([q, n]) => `${q} ${n}`)
+                .join(" "),
+          );
         l.alCaer?.();
         return;
       }
@@ -35764,7 +35774,24 @@ export class Game {
         !this.instructor.hablando &&
         !this.torre.hablando &&
         !this.otroAvion.hablando;
-      if (!l.ya && !(libre && this.instructor.estaLista(l.clave, l.relleno))) return;
+      if (!l.ya && !(libre && this.instructor.estaLista(l.clave, l.relleno))) {
+        if (import.meta.env.DEV) {
+          const t = (l.tapada ??= {});
+          const quien = !libre
+            ? [
+                this.comandante.hablando && "comandante",
+                this.tripulacion.hablando && "tripulacion",
+                this.instructor.hablando && "instructor",
+                this.torre.hablando && "torre",
+                this.otroAvion.hablando && "otro",
+              ]
+                .filter(Boolean)
+                .join("+")
+            : "sin-voz";
+          t[quien] = (t[quien] ?? 0) + 1;
+        }
+        return;
+      }
       this.avisar(l.tono);
       l.sono = ahora;
       return;
