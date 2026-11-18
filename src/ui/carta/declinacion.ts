@@ -180,6 +180,35 @@ export function anoDecimal(fecha: Date): number {
  * su programa de referencia.
  */
 export function declinacion(lat: number, lon: number, ano: number, alturaKm = 0): number {
+  const { norte, este } = campoMagnetico(lat, lon, ano, alturaKm);
+  return (Math.atan2(este, norte) * 180) / Math.PI;
+}
+
+/**
+ * **La inclinación**, en grados: lo que la línea del campo se mete bajo el
+ * horizonte. Positiva hacia abajo, en el hemisferio magnético norte, y
+ * negativa en el sur, donde el campo sale del suelo. Es lo que hace bailar
+ * una brújula al virar y al acelerar —ver `flight/brujula.ts`—: en Canarias
+ * pasa de los treinta y ocho grados y en Asunción se queda en una veintena
+ * hacia arriba, y por eso la brújula de cada sitio miente al revés.
+ */
+export function inclinacion(lat: number, lon: number, ano: number, alturaKm = 0): number {
+  const { norte, este, abajo } = campoMagnetico(lat, lon, ano, alturaKm);
+  return (Math.atan2(abajo, Math.hypot(norte, este)) * 180) / Math.PI;
+}
+
+/**
+ * El campo entero en el sitio, nT, en sus tres componentes geodésicas: hacia
+ * el norte verdadero, hacia el este y **hacia abajo** —la X, la Y y la Z del
+ * modelo—. Es la cuenta del informe técnico del WMM, la misma que la de su
+ * programa de referencia.
+ */
+export function campoMagnetico(
+  lat: number,
+  lon: number,
+  ano: number,
+  alturaKm = 0,
+): { readonly norte: number; readonly este: number; readonly abajo: number } {
   const a = 6378.137;
   const b = 6356.7523142;
   const re = 6371.2;
@@ -265,7 +294,8 @@ export function declinacion(lat: number, lon: number, ano: number, alturaKm = 0)
   // De vuelta a geodésicas: el norte y el este del sitio.
   const bx = -bt * ca - br * sa;
   const by = bp;
-  return (Math.atan2(by, bx) * 180) / Math.PI;
+  const bz = bt * sa - br * ca;
+  return { norte: bx, este: by, abajo: bz };
 }
 
 /**
