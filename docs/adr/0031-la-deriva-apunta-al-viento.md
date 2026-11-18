@@ -1631,3 +1631,206 @@ las de la rueda del altímetro, que sí mide.
 - **El teléfono apaisado** con la perilla: la losa del rumbo ya marca lo que
   marca el direccional, pero no lleva perilla —es una cifra con su rosa, no un
   instrumento—, y en el teléfono el ritual se hace desde el asiento.
+
+## Enmienda H26s (18-11-2026): el pitot que se hiela, y «El pitot se hiela»
+
+El último instrumento de la lista de #51: «**tubo pitot** que se hiela en
+nube fría, con la velocidad congelada mientras el avión claramente
+acelera». Va en este ADR por lo mismo que H26q y H26r: la misma familia de
+ejercicios (`escena: "navegacion"`, se cierra en el aire, lo que calla, el
+panel del final) y una decisión de instrumento que **solo mueve una aguja**.
+Lo lleva `flight/pitot-helado.ts`, el instrumento y el ejercicio juntos.
+
+### Qué fallo es, y de dónde sale
+
+El *Pilot's Handbook of Aeronautical Knowledge* de la FAA (FAA-H-8083-25C,
+capítulo 8, *Blocked Pitot System*) da dos:
+
+- **La boca tapada y el drenaje abierto**: el aire del tubo se escapa por el
+  agujerito de atrás, la presión baja a la estática y **la aguja cae a
+  cero**. Es el de la funda olvidada (`anemometro-tapado.ts`), que tapa la
+  boca y deja libre el drenaje, y el del botón del hielo de la figura del
+  velocímetro.
+- **La boca y el drenaje tapados**: la presión queda encerrada y **la aguja
+  no se mueve aunque la velocidad suba o baje**; con la estática libre marca
+  de más al subir y de menos al bajar, **como un altímetro**.
+
+**En la nube fría es el segundo.** El hielo de una nube de gotas subfundidas
+crece sobre todo el tubo y cierra también el drenaje, que es más pequeño que
+la boca. Es lo que pasó en el vuelo 6231 de Northwest (NTSB AAR-75-13, 1974):
+subiendo en nube con la calefacción de las sondas apagada, el hielo tapó
+bocas y drenajes, y los velocímetros subían con la altura. Y es la frase del
+issue: en nivel y con más gas, el avión acelera de verdad y la aguja se queda
+donde estaba. El otro caso ya lo enseña la funda; con este, el juego tiene los
+dos del manual, cada uno donde pasa.
+
+La cuenta es la del instrumento, con el aire del juego (`atmosphere.ts`): al
+cerrarse, el tubo guarda la estática de ese momento más la presión de impacto
+de la indicada (½·ρ₀·IAS², la misma indicada equivalente que enseñan todos
+los relojes); después la aguja marca la raíz de esa presión menos la estática
+de ahora. En nivel no se mueve; a la altura del ejercicio, cien metros más
+arriba una aguja de 120 nudos pasa a más de 130, cien más abajo a menos de
+110, y bajando seiscientos, a cero (`pitot-helado.test.ts`). `presionEstatica`
+se exporta de `atmosphere.ts` para eso.
+
+### Cuándo se hiela
+
+Con **humedad visible** —dentro de la nube, `cuantoDentro` de la capa del
+cielo de 0,3 para arriba— y **el aire de fuera entre cero y veinte bajo
+cero**, donde las gotas de nube siguen siendo agua y se congelan al tocar
+(FAA, AC 91-74B, *Pilot Guide: Flight in Icing Conditions*). La temperatura
+no se inventa: es `temperaturaExterior` con el aire del día, la del parte del
+campo bajando con la altura.
+
+Lo que tarda no sale de ningún manual —depende del hielo, del tubo y de la
+resistencia— y va escrito como lo que es: **veinte segundos** de nube fría
+sin calefacción para cerrarlo (`SE_TAPA`), **veinticinco** de calefacción
+para destaparlo (`SE_DESTAPA`), y **sesenta** para derretirse solo fuera de
+la nube con el aire de más de cero (`SE_DERRITE`). Fuera de la nube y bajo
+cero, el hielo que hay se queda: no hay con qué derretirlo.
+
+### El remedio, avión por avión
+
+**La calefacción del pitot**: una resistencia en el tubo. La norma la pide en
+todo avión que vuele por instrumentos (14 CFR 23.1323(e), en la redacción de
+antes de la reforma de 2017: un pitot calentado o algo equivalente contra el
+hielo), y se prende antes de entrar en nube. Si ya se heló, lo derrite en un
+rato y la aguja vuelve. Sin ella, se sale de la nube hacia aire de más de
+cero y se vuela con la actitud y el gas hasta que se derrite —el modelo lo
+hace: `SE_DERRITE`—.
+
+- **JAZ 40, el bimotor de pistón** (clase Seneca II): vuela por instrumentos,
+  lleva las esferas y su clase lleva el pitot calentado con su interruptor.
+  **Es el del ejercicio.** El interruptor, que aquí faltaba, se añade como un
+  mando de cabina: **la tecla 4** (`pitotHeat` en `keymap.ts`, libre y al lado
+  del 5 y el 6 de la perilla del direccional) y **la tarjeta que la pide**,
+  que se toca. Se pulsa y se queda, como el de verdad, con el clic de la
+  carta.
+- **JAZ 20, la avioneta, y JAZ 25, el fumigador**: vuelan con reglas
+  visuales (`reglasDeVuelo: "visual"`) y no entran en una nube. Su lección
+  del hielo es no salir, la de la tarjeta del tiempo; enseñarles a volar
+  dentro de una nube fría sería enseñar lo que no hacen. **No se les ofrece.**
+- **Los de turbina** (JAZ 50, JAZ 60, JAZ 90, JAZ 120): llevan la
+  calefacción de las sondas prendida todo el vuelo —sola con los motores en
+  marcha en unos, en la lista de antes de despegar en otros—, y sus cabinas de
+  aquí no tienen el interruptor. Su pitot no se hiela en este juego. **No se
+  les ofrece.**
+- **El helicóptero**: sus ejercicios son los del ala rotatoria.
+
+### Lo que no se toca
+
+**Solo miente la aguja.** Lo que marca el pitot helado entra por un solo
+sitio, `indicadaDelReloj`, que ya era el de la funda: el cuadro plano (por
+`mandos.pitotHelado` en `hud.ts`, junto a `pitotTapado`) y los relojes del
+panel 3D. **El modelo de vuelo, los avisos, el piloto automático, los
+pilotos de banco y los demás ejercicios siguen leyendo la velocidad de
+verdad.**
+
+**Fuera del ejercicio el pitot no se hiela**: el hielo solo se cuenta con el
+ejercicio puesto (`pitotDelPanel` se mueve en `practicarElPitot`, que sin
+ejercicio no hace nada), y la tecla no hace nada. No es un atajo, es lo que
+pasaría igual: las nubes del tiempo de casa van por encima de cero —el mar de
+nubes de Tenerife Norte con 20 °C, a once grados en su techo; los cúmulos de
+Asunción con 30 °C, a quince—; el único de la flota que entra en una nube
+fría es el JAZ 40, que vuela con la calefacción prendida como se hace antes de
+entrar en nube; y los de turbina la llevan siempre. Hacerlo de todos los
+vuelos pide el interruptor en el panel 3D de cada cabina: ver «Lo que queda».
+
+### El peldaño: desde Taguató
+
+Con `escalera.ts` en la mano. Lo que se ve es **una aguja quieta contra lo
+que corre el avión de verdad**, y eso se cuenta con dos números en la
+tarjeta —«De verdad … · aguja …», en las unidades del peldaño—, que entran en
+Taguató (el canal de la cifra). El interruptor es un trabajo de cabina de los
+que pasan a ser de quien vuela en ese mismo peldaño, como la rueda del
+altímetro (H26p) y la perilla del direccional (H26r). Lo esencial se ve sin
+leer: la aguja que no se mueve, el motor que suena más fuerte, el copo en
+ámbar en la boca del tubo y las ondas de calor que lo quitan.
+
+**Sin drama**: ni pérdida, ni rojo, ni alarma. El aviso de pérdida de un
+avión de esta clase no sale del pitot —es una veleta o una lengüeta en el
+borde del ala—, así que no se entera, y el JAZ 40 no lleva voz que cante la
+velocidad. No suena nada que no sonara antes, y el ejercicio no depende de
+que suene nada.
+
+### El ejercicio
+
+1. **Dentro de la nube fría**: encima del campo, en nivel, a la altitud en
+   que el aire del día está a **cinco bajo cero** (`alturaDelFrio`, sin pasar
+   del crucero del avión y con trescientos metros sobre lo más alto en seis
+   kilómetros), y una capa cubierta con la base **ciento cincuenta metros por
+   debajo**: se empieza dentro. Cinco bajo cero, lejos de los dos bordes del
+   hielo, para que lo que suba o baje el avión al dar gas no lo saque. La
+   velocidad, un cuarto por encima de la de circuito, con el gas a medias. La
+   calefacción, apagada: es lo que se olvidó. Si un parte que llega después
+   cambia el techo, la nube del ejercicio se vuelve a poner.
+2. **Se cierra el tubo** a los veinte segundos, sin decir nada: la aguja se
+   queda. Cuatro segundos después, **«Ahora dale todo el gas, y mantené la
+   altura»**, con la tarjeta del gas.
+3. **Acelera y la aguja no**: cuando lo de verdad pasa diez nudos de lo que
+   marca —una raya larga de la esfera—, la instructora lo hace ver con los
+   dos números y pide mirar **la actitud y el gas**. Si en treinta segundos no
+   se dio gas, se sigue igual: la aguja quieta ya es la lección.
+4. **La calefacción**, siete segundos después —un suceso, una voz—, con la
+   tarjeta que la prende al tocarla, o la tecla 4.
+5. **La aguja vuelve** a los veinticinco segundos de calefacción, a la de
+   verdad, que es la del avión que aceleró: hecho, y el panel del final.
+
+Y dos salidas sin castigo: **prenderla antes de que se hiele** es lo que se
+hace de verdad, y se felicita y se cierra hecho («prevenido»); y **un día en
+que no hace ese frío ni en el techo del avión**, se dice y se cierra sin hielo
+(«calido»). Si se apaga la calefacción antes de que se derrita, el hielo
+vuelve a crecer y se espera a que se prenda otra vez. Con percance o en el
+suelo, otra vez.
+
+- **Con qué avión**: el JAZ 40. Ver «El remedio, avión por avión».
+- **Dónde**: en cualquier campo; la altitud sale del día.
+- **El peldaño**: desde Taguató.
+- **La vista**: la que se elija. La aguja quieta está en el cuadro plano y en
+  el panel del asiento.
+
+La tarjeta lleva dos dibujos nuevos sobre la misma esfera con el tubo debajo
+(`ESFERA_CON_PITOT` en `ui/senal.ts`): `pitot-helado`, con el copo en ámbar
+en la boca, y `pitot-calefaccion`, con tres ondas de calor. La ficha del
+hangar, `EJ_PITOT`: la esfera con la aguja quieta dentro de la nube y, debajo
+del ala, el tubo con el hielo en la boca.
+
+### Las frases
+
+En `es-PY` y en `en`, **sin grabar**; `frases-para-grabar.mjs` las recoge
+solas (comprobado: las ocho, entre las de la instructora, del 453 al 460 de
+`guion-instructor.tsv`). La duración, a dieciséis caracteres por segundo.
+
+| Clave | Texto | Caracteres |
+| --- | --- | --- |
+| `ejercicio.pitot.antes` | Estamos adentro de una nube, y afuera hace frío. Mirá la aguja de la velocidad | 78, unos 5 s |
+| `ejercicio.pitot.gas` | Ahora dale todo el gas, y mantené la altura | 43, unos 3 s |
+| `ejercicio.pitot.acelera` | El avión acelera y la aguja no se mueve: se heló el pitot. Mirá la actitud y el gas | 83, unos 5 s |
+| `ejercicio.pitot.calefaccion` | Prendé la calefacción del pitot, y esperá un ratito | 51, unos 3 s |
+| `ejercicio.pitot.volvio` | ¡Eso! Se derritió el hielo, y la aguja dice la verdad otra vez | 62, unos 4 s |
+| `ejercicio.pitot.prevenido` | ¡Muy bien! Con la calefacción prendida antes, el pitot no se hiela | 66, unos 4 s |
+| `ejercicio.pitot.calido` | Hoy acá arriba no hace tanto frío: el pitot no se hiela. Otro día probamos | 74, unos 5 s |
+| `ejercicio.pitot.cierre` | (el panel del final, se lee) Con nube y frío, el hielo tapa el pitot y la aguja se queda quieta aunque el avión acelere. Entonces se vuela con la actitud y el gas. La calefacción del pitot se prende antes de entrar en la nube | — |
+
+Y sin voz: `ejercicio.pitot.frio` («Afuera: {n} °C»),
+`ejercicio.pitot.cuanto` («De verdad {real} {u} · aguja {aguja} {u}»),
+`hangar.ejercicio.pitot` («El pitot se hiela») y la tecla `tecla.pitotHeat`
+(«Calefacción del pitot»).
+
+### Lo que se prueba
+
+- `flight/pitot-helado.test.ts`: cuándo hiela y cuándo no, y que las nubes
+  del tiempo de casa no hielan; el tubo, que se cierra en `SE_TAPA`, quieto en
+  nivel aunque acelere, como un altímetro al subir y al bajar, y a cero
+  bajando de más; la calefacción, que lo destapa en `SE_DESTAPA` y con la que
+  no se hiela; el hielo que se queda fuera de la nube bajo cero y se derrite
+  con aire de más de cero; dónde empieza, a cinco bajo cero y por debajo del
+  techo; con qué avión (solo el JAZ 40) y en qué peldaño; y el ejercicio
+  entero con un piloto de cinemática y el aire de verdad, en Tenerife Norte a
+  20 °C y en Asunción a 30 °C: la aguja quieta del gas al «acelera», la
+  calefacción pedida siete segundos después, la aguja de vuelta a los
+  veinticinco y todo en menos de noventa segundos; y subiendo al dar gas, sin
+  calefacción, sin gas, prevenido, un día cálido y con percance.
+- `flight/lo-que-calla-el-ejercicio.test.ts`: entre los que se cierran en el
+  aire.
+- El banco, `scripts/ver-el-pitot.mjs`: ver «Volado».
