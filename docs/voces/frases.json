@@ -3756,6 +3756,111 @@
     }
   },
   {
+    "id": "ejercicio.rumbo.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Seguí el río, que ya se puso el sol. Mirá cómo brilla el agua",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Seguí el río, que ya se puso el sol. Mirá cómo brilla el agua.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.rumbo.anochece",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya es de noche y el río se va oscureciendo. Dejá la flecha quieta en la marca",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Ya es de noche y el río se va oscureciendo. Dejá la flecha quieta en la marca.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.rumbo.seVa",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se fue de la marca. Volvé despacito, sin apurarte",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Se fue de la marca. Volvé despacito, sin apurarte.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.rumbo.enLaMarca",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Eso! La flecha quieta en la marca",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Eso! La flecha quieta en la marca.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.rumbo.llegaste",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Llegamos! Ahí abajo sigue el río, al lado de las luces",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Llegamos! Ahí abajo sigue el río, al lado de las luces.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.rumbo.llegasteAlLado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Pasamos al costado, pero ahí está el río, al lado de las luces",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Pasamos al costado, pero ahí está el río, al lado de las luces.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.rumbo.cierre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "De noche, el rumbo es el camino. De verdad, la noche tarda media hora en caer: acá la apuramos",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "De noche, el rumbo es el camino. De verdad, la noche tarda media hora en caer: acá la apuramos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "mission.rio.name",
     "voz": "instructor",
     "idioma": "es-PY",

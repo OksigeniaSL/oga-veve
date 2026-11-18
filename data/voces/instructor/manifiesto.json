@@ -471,6 +471,34 @@
       "ms": 4007,
       "h": "1772ef1701"
     },
+    "ejercicio.rumbo.anochece": {
+      "ms": 4207,
+      "h": "e76c85251b"
+    },
+    "ejercicio.rumbo.antes": {
+      "ms": 3607,
+      "h": "d58c1ad771"
+    },
+    "ejercicio.rumbo.cierre": {
+      "ms": 5307,
+      "h": "435b475311"
+    },
+    "ejercicio.rumbo.enLaMarca": {
+      "ms": 2052,
+      "h": "2850e8548a"
+    },
+    "ejercicio.rumbo.llegaste": {
+      "ms": 3107,
+      "h": "ba66fb38ff"
+    },
+    "ejercicio.rumbo.llegasteAlLado": {
+      "ms": 3507,
+      "h": "9a8bd37746"
+    },
+    "ejercicio.rumbo.seVa": {
+      "ms": 3207,
+      "h": "4c4f83245d"
+    },
     "ejercicio.seguidoAntesDeV1": {
       "ms": 5307,
       "h": "da317964cf"
@@ -5732,6 +5760,27 @@
     ],
     "ejercicio.deriva.cierre": [
       "ejercicio.deriva.cierre"
+    ],
+    "ejercicio.rumbo.antes": [
+      "ejercicio.rumbo.antes"
+    ],
+    "ejercicio.rumbo.anochece": [
+      "ejercicio.rumbo.anochece"
+    ],
+    "ejercicio.rumbo.seVa": [
+      "ejercicio.rumbo.seVa"
+    ],
+    "ejercicio.rumbo.enLaMarca": [
+      "ejercicio.rumbo.enLaMarca"
+    ],
+    "ejercicio.rumbo.llegaste": [
+      "ejercicio.rumbo.llegaste"
+    ],
+    "ejercicio.rumbo.llegasteAlLado": [
+      "ejercicio.rumbo.llegasteAlLado"
+    ],
+    "ejercicio.rumbo.cierre": [
+      "ejercicio.rumbo.cierre"
     ]
   }
 }
