@@ -383,8 +383,14 @@ describe("el día del ejercicio: la nube, rota justo antes de los mínimos", () 
     return { media: suma / 60, peor };
   };
 
-  it("el viento del sitio y un cubierto a trescientos pies, sin agua, a mano", () => {
-    const m = elDiaDelIls(vientoDeCasa(FUERTEVENTURA));
+  it("en un avión de reglas visuales, el día de siempre del sitio, sin nube baja: no lleva con qué volar dentro", () => {
+    const m = elDiaDelIls(vientoDeCasa(FUERTEVENTURA), "visual");
+    expect(m).toMatchObject({ vientoDe: 25, vientoKt: 20, techoM: 1100, fuente: "mano" });
+    expect(PYKASU.reglasDeVuelo).toBe("visual");
+  });
+
+  it("en uno de instrumentos, el viento del sitio y un cubierto a trescientos pies, sin agua, a mano", () => {
+    const m = elDiaDelIls(vientoDeCasa(FUERTEVENTURA), "instrumentos");
     expect(m).toMatchObject({ vientoDe: 25, vientoKt: 20, tapadura: 1, lluvia: "nada", fuente: "mano" });
     expect(m.techoM! / 0.3048).toBeCloseTo(300, 6);
     // Y lo que dice el parte es lo que hay: OVC003, no un redondeo.

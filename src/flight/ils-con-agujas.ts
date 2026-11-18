@@ -60,6 +60,7 @@ import {
 } from "./radio-de-navegacion";
 import type { PuntoDelMundo } from "./seguir-la-aguja";
 import type { Meteo } from "../world/meteo";
+import type { AircraftConfig } from "./aircraft";
 
 const GRADO = Math.PI / 180;
 const PIE = 0.3048;
@@ -219,12 +220,19 @@ export const TECHO_DEL_ILS = 300 * PIE;
 
 /**
  * **El día del ejercicio**: el de siempre del sitio —su viento, que es el que
- * hay que corregir en el localizador— con un techo cubierto a trescientos
- * pies, sin agua. A mano, como la tormenta y la aguja: con el parte de hoy
- * podría tocar un día despejado, y la lección es salir de la nube y ver
- * aparecer la pista.
+ * hay que corregir en el localizador— y, en un avión que vuela por
+ * instrumentos, un techo cubierto a trescientos pies, sin agua. A mano, como
+ * la tormenta y la aguja: con el parte de hoy podría tocar un día despejado, y
+ * la lección es salir de la nube y ver aparecer la pista.
+ *
+ * **Y en uno de reglas visuales, sin nube**: la avioneta de escuela no lleva
+ * con qué volar dentro de una (`AircraftConfig.reglasDeVuelo`), y meterse en
+ * una con un avión así es lo que más mata en la aviación ligera. Ahí el ILS se
+ * practica como en cualquier escuela, con buen tiempo y mirando solo las
+ * agujas, «como dentro de una nube»: el día de siempre del sitio.
  */
-export function elDiaDelIls(deCasa: Meteo): Meteo {
+export function elDiaDelIls(deCasa: Meteo, reglas: AircraftConfig["reglasDeVuelo"]): Meteo {
+  if (reglas !== "instrumentos") return { ...deCasa, fuente: "mano" };
   return { ...deCasa, techoM: TECHO_DEL_ILS, tapadura: 1, lluvia: "nada", fuerzaDeLluvia: 0, fuente: "mano" };
 }
 

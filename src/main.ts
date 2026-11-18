@@ -52,13 +52,15 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
   // El tiempo de este sitio cuando no hay METAR: su viento dominante. Ver
   // `vientoDeCasa`, que es de donde sale la cabecera en uso.
   /*
-   * **Y «Aterrizar con las agujas» trae su techo**, cubierto a trescientos
-   * pies, también con el viento puesto a mano: se baja dentro de la nube y
-   * se sale justo antes de los mínimos. Con un METAR a mano, el del METAR.
-   * Ver `elDiaDelIls`.
+   * **Y «Aterrizar con las agujas» trae su techo** en el avión que vuela por
+   * instrumentos, cubierto a trescientos pies, también con el viento puesto
+   * a mano: se baja dentro de la nube y se sale justo antes de los mínimos.
+   * Con un METAR a mano, el del METAR. Ver `elDiaDelIls`.
    */
   const deCasa =
-    ejercicio?.id === "ils" ? elDiaDelIls(vientoDeCasa(esc.vientoDominante)) : vientoDeCasa(esc.vientoDominante);
+    ejercicio?.id === "ils"
+      ? elDiaDelIls(vientoDeCasa(esc.vientoDominante), avion.reglasDeVuelo)
+      : vientoDeCasa(esc.vientoDominante);
 
   const crudo = q.get("metar");
   if (crudo) return { ...(leerMetar(crudo) ?? deCasa), fuente: "mano" };

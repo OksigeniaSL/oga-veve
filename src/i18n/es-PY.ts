@@ -3573,7 +3573,7 @@ export const ES_PY = {
    * que la frustrada ya tiene su voz (`vuelo.frustrada`): un suceso, una voz.
    */
   "ejercicio.ils.cierrePista":
-    "¡Aterrizaste con las agujas! Bajaste dentro de la nube por el localizador y la senda, y en los mínimos ahí estaba la pista. Así se baja hasta una pista que no se ve",
+    "¡Aterrizaste con las agujas! Bajaste por el localizador y la senda hasta los mínimos, y ahí estaba la pista. Así se baja hasta una pista que no se ve",
   "ejercicio.ils.cierreFrustrada":
     "¡Bien decidido! Con una aguja fuera del centro, o sin ver la pista, se sube y se vuelve a probar. Así lo hacen los pilotos de verdad, y eso también es ganar",
   // Y la frase corta, con sus números, de Taguató para arriba.
