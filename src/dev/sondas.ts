@@ -2620,6 +2620,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     estima: () => juego.estimaParaBanco,
     /**
+     * «El altímetro miente»: la fase, la colocación con la cima medida, el
+     * QNH dado, cuándo se puso la rueda, el margen de verdad y el que decía
+     * la aguja al pasar la cima, la ventanilla, la altitud de verdad y la
+     * indicada. Ver `flight/el-altimetro-miente.ts`.
+     */
+    altimetro: () => juego.altimetroParaBanco,
+    /**
      * «Dos radiales que se cortan»: la fase, las dos radios, los radiales
      * leídos, la cruz y lo lejos que cayó del avión. Ver `flight/dos-radiales.ts`.
      */

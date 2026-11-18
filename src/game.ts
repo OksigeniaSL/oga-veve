@@ -812,6 +812,8 @@ const DIBUJO_DEL_EJERCICIO: Readonly<Record<Ejercicio["id"], DibujoDeSenal>> = {
   rumbo: "rumbo-en-la-marca",
   // El reloj y la recta hasta el pueblo. Ver `estima.ts`.
   estima: "estima-rumbo",
+  // El avión de verdad, más bajo que el que dice la aguja, frente al cerro. Ver `el-altimetro-miente.ts`.
+  altimetro: "altimetro-miente",
   autorrotacion: "helicoptero-sin-motor",
   // Las lecciones del ala rotatoria, con lo que se pide en cada una: ver `lecciones-del-rotor.ts`.
   estacionario: "helicoptero-quieto",
@@ -1059,6 +1061,13 @@ import {
   type ResultadoDeLaEstima,
   type SucesoDeLaEstima,
 } from "./flight/estima";
+import {
+  colocacionDelAltimetro,
+  ElAltimetroMiente,
+  laderaDelAltimetro,
+  type ColocacionDelAltimetro,
+  type SucesoDelAltimetro,
+} from "./flight/el-altimetro-miente";
 import {
   colocacionDelCruce,
   DosRadiales,
@@ -4037,6 +4046,7 @@ export class Game {
       this.deriva?.ejercicio ??
       this.rumboDeNoche?.ejercicio ??
       this.estima?.ejercicio ??
+      this.altimetroMiente?.ejercicio ??
       null
     );
   }
@@ -4047,7 +4057,7 @@ export class Game {
    * `flight/lo-que-calla-el-ejercicio.ts`.
    */
   private get loQueCalla(): LoQueCalla {
-    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva ?? this.rumboDeNoche ?? this.estima;
+    const deRadio = this.aguja ?? this.radial ?? this.corte ?? this.cruce ?? this.ils ?? this.deriva ?? this.rumboDeNoche ?? this.estima ?? this.altimetroMiente;
     return loQueCallaElEjercicio(this.ejercicioDeHoy, deRadio?.fase === "cerrada", this.ils?.fase === "frustrando");
   }
   /**
@@ -6632,6 +6642,13 @@ export class Game {
         const destino = destinoDeLaEstima(oaciDe(this.scenario));
         const origen = this.scenario.aerodrome?.origin;
         if (destino && origen) this.estima = new Estima(ejercicio, { ...destino, ...dondeCae(origen, destino) });
+      } else if (ejercicio.escena === "navegacion" && ejercicio.colocacion === "altimetro") {
+        /*
+         * **Ni el altímetro que miente**: la ladera del campo. La cima se mide
+         * sobre el relieve al colocar: ver `dondeEmpiezaElAltimetro`.
+         */
+        const ladera = laderaDelAltimetro(oaciDe(this.scenario));
+        if (ladera) this.altimetroMiente = new ElAltimetroMiente(ejercicio, ladera);
       } else if (ejercicio.escena === "navegacion") {
         /*
          * **Ni la deriva**: el sitio del campo, puesto donde está. Dónde se
@@ -7862,7 +7879,9 @@ export class Game {
     this.hud.onPilotoAutomatico(() => this.ponerPilotoAutomatico());
     this.hud.onVentanillaAlt((pasos) => this.girarLaVentanillaAlt(pasos));
     // El mando de la radio en las esquinas de la pantalla de navegación.
-    this.hud.onMandoDeRadio((mando, paso) => (mando === "obs" ? this.girarElObs(paso) : this.siguienteEstacion(mando)));
+    this.hud.onMandoDeRadio((mando, paso) =>
+      mando === "qnh" ? this.girarAltimetro(paso) : mando === "obs" ? this.girarElObs(paso) : this.siguienteEstacion(mando),
+    );
     /*
      * **Y la carta enchufada a la radio** (el gancho de H24c): tocar una
      * radioayuda o su frecuencia la pone en la caja que toca, si el avión la
@@ -13613,7 +13632,8 @@ export class Game {
         colocacion !== "ils" &&
         colocacion !== "deriva" &&
         colocacion !== "rumbo" &&
-        colocacion !== "estima"
+        colocacion !== "estima" &&
+        colocacion !== "altimetro"
       ) {
         const { lejos, alto } = this.dondeEmpiezaElEjercicio(colocacion);
         const [x, z] = puntoDePista(runway, hastaElUmbralDeToma(runway) + lejos);
@@ -13884,6 +13904,8 @@ export class Game {
     this.rayasDeLaEstima?.camino.quitar();
     this.rayasDeLaEstima?.recta.quitar();
     this.cronometroRecogido = false;
+    // Y el altímetro que miente: la ventanilla vuelve a la presión de donde se viene al presentarlo.
+    this.altimetroMiente?.reiniciar();
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
       vr: this.aircraft.rotationSpeed,
@@ -16487,10 +16509,188 @@ export class Game {
     );
   }
 
-  /** Gira la rueda del altímetro un hectopascal. */
+  /**
+   * Gira la rueda del altímetro un hectopascal.
+   *
+   * **Con el clic de la carta, como el OBS**, y no con `attention`: ése es un
+   * motivo de los que mandan y, mientras suena, cuenta como aviso. Poner el
+   * QNH de «El altímetro miente» son diez muescas seguidas, y eran diez avisos
+   * tapando a la instructora que explica por qué baja la aguja. Ver
+   * `girarElObs`.
+   */
   girarAltimetro(pasos: number): void {
+    // Abajo de Taguató la rueda es de la instructora: ver `seguirElViento`.
+    if (this.tier.instruments === "none" || this.tier.instruments === "pictorial") return;
+    const antes = this.qnhPuesta;
     this.qnhPuesta = girarRueda(this.qnhPuesta, pasos);
-    this.avisar("attention");
+    if (this.qnhPuesta === antes) return;
+    const ahora = this.clock.elapsedTime;
+    if (ahora - this.ultimoClicDelAltimetro < CLIC_DE_LA_RUEDA) return;
+    this.ultimoClicDelAltimetro = ahora;
+    if (!this.dePasaje) this.audio.ruidoDeLaCarta("clic");
+  }
+  private ultimoClicDelAltimetro = -Infinity;
+
+  // ── «El altímetro miente» ────────────────────────────────────────────
+  //
+  // Ver `flight/el-altimetro-miente.ts`. Aquí solo se decide quién dice y
+  // enseña cada cosa: la ventanilla con la presión de donde se viene, la
+  // tarjeta con su dibujo y la instructora.
+
+  /** **«El altímetro miente»**, si se eligió. Ver `practicarElAltimetro`. */
+  private altimetroMiente: ElAltimetroMiente | null = null;
+
+  /**
+   * **Dónde empieza el altímetro que miente**: sobre el mar, hacia la ladera,
+   * con la aguja en la altura pedida y la ventanilla de donde se viene. La
+   * cima se mide aquí, sobre el relieve del mundo; el agua cuenta como suelo,
+   * que en La Palma la salida es sobre el Atlántico. Se cuenta una vez.
+   */
+  private dondeEmpiezaElAltimetro(): { readonly x: number; readonly z: number; readonly alto: number; readonly rumbo: number } | null {
+    const a = this.altimetroMiente;
+    if (!a) return null;
+    if (!a.colocacion) {
+      const agua = this.scenario.waterLevel ?? 0;
+      a.colocar(
+        colocacionDelAltimetro({
+          ladera: a.ladera,
+          qnh: this.scenario.meteo?.qnh ?? this.qnhDelSitio,
+          cota: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+        }),
+      );
+    }
+    const c = a.colocacion!;
+    return { x: c.x, z: c.z, alto: c.altitud - this.terrain.runwayElevation, rumbo: c.rumbo };
+  }
+
+  /** «El altímetro miente», para el banco. */
+  get altimetroParaBanco(): {
+    readonly fase: string;
+    readonly cierre: string | null;
+    readonly colocacion: ColocacionDelAltimetro | null;
+    readonly qnh: number | null;
+    readonly puestaEn: number | null;
+    readonly margen: number | null;
+    readonly creido: number | null;
+    readonly conLaRuedaPuesta: boolean | null;
+    readonly puesta: number;
+    readonly delSitio: number;
+    readonly altitud: number;
+    readonly indicada: number;
+    readonly sobreElSuelo: number;
+  } | null {
+    const a = this.altimetroMiente;
+    if (!a) return null;
+    const p = this.flight.state.position;
+    return {
+      fase: a.fase,
+      cierre: a.cierre,
+      colocacion: a.colocacion,
+      qnh: a.qnh,
+      puestaEn: a.puestaEn,
+      margen: a.margen,
+      creido: a.creido,
+      conLaRuedaPuesta: a.conLaRuedaPuesta,
+      puesta: this.qnhPuesta,
+      delSitio: this.qnhDelSitio,
+      altitud: p.y,
+      indicada: this.altitudIndicada(),
+      sobreElSuelo: p.y - Math.max(this.scenario.waterLevel ?? 0, this.terrain.sampleHeight(p.x, p.z)),
+    };
+  }
+
+  /** Un paso del altímetro que miente: lo que lee la aguja y lo que hay de verdad. */
+  private practicarElAltimetro(dt: number): void {
+    const a = this.altimetroMiente;
+    if (!a?.colocacion) return;
+    this.hud.mapa.ponerEstela(a.fase === "cerrada" ? null : () => this.libreta.traza);
+    if (this.tarjetaDelTiempo?.abierta) return;
+    const s = this.flight.state;
+    const sucesos = a.paso(
+      {
+        x: s.position.x,
+        z: s.position.z,
+        altitud: s.position.y,
+        indicada: this.altitudIndicada(),
+        puesta: this.qnhPuesta,
+        delSitio: this.qnhDelSitio,
+        enElSuelo: s.onGround,
+        parado: s.onGround && s.groundSpeed < 0.6,
+        percance: this.percance !== null,
+      },
+      dt,
+    );
+    for (const suceso of sucesos) this.atenderAlAltimetro(suceso);
+  }
+
+  private atenderAlAltimetro(suceso: SucesoDelAltimetro): void {
+    /**
+     * La tarjeta con su dibujo y su frase, la cifra delante, y la voz de la
+     * instructora si está grabada. **Las cifras, en pies**: son las del
+     * altímetro, que va en pies en todos los peldaños (`ALTIMETRO` en
+     * `ui/cuadro.ts`), y los hectopascales, los de su ventanilla. Es un
+     * ejercicio de Taguató para arriba, donde las cifras entran
+     * (`escalera.ts`).
+     */
+    const contar = (dibujo: DibujoDeSenal, clave: TranslationKey, delante: string, segundos = 14): void => {
+      const frase = this.rotulo(clave, "palabra.mira");
+      this.hud.senal.mostrar(dibujo, delante && frase ? `${delante}. ${frase}` : delante || frase, null, {
+        segundos,
+        prioridad: IMPORTANTE,
+      });
+      this.decirDelEjercicio(clave, "mando");
+    };
+    /** En pies y de diez en diez: la aguja larga no se lee más fina. */
+    const pies = (m: number): string => String(Math.round(m / PIE_EN_METROS / 10) * 10);
+    const c = this.altimetroMiente?.colocacion;
+    switch (suceso.que) {
+      case "presentar": {
+        /*
+         * **La ventanilla de donde se viene**: la presión de allá, puesta al
+         * salir de allá, que es lo que haría cualquiera. La aguja ya está en
+         * la altura pedida con ella, así que de verdad se va más bajo.
+         */
+        if (c) this.qnhPuesta = c.puesta;
+        const plan = c
+          ? t("ejercicio.altimetro.plan", { de: this.altimetroMiente!.ladera.deDonde, qnh: String(c.puesta), alt: String(c.pedida) })
+          : "";
+        return contar("altimetro-miente", "ejercicio.altimetro.antes", plan, 20);
+      }
+      case "qnh":
+        this.avisar("attention");
+        return contar("altimetro-rueda", "ejercicio.altimetro.qnh", t("ejercicio.altimetro.qnhDeAca", { qnh: String(suceso.qnh) }), 16);
+      case "puesto":
+        return contar("altimetro-verdad", "ejercicio.altimetro.puesto", t("ejercicio.altimetro.bajo", { n: pies(suceso.bajo) }), 16);
+      case "cerca":
+        return contar(
+          "altimetro-miente",
+          "ejercicio.altimetro.cerca",
+          t("ejercicio.altimetro.deVerdad", { dice: pies(suceso.dice), real: pies(suceso.deVerdad) }),
+          16,
+        );
+      case "pasaste": {
+        const cifras = t("ejercicio.altimetro.margen", { real: pies(suceso.margen), dice: pies(suceso.creido) });
+        if (suceso.puesta) {
+          this.avisar("achieved");
+          return contar("altimetro-verdad", "ejercicio.altimetro.pasaste", cifras, 16);
+        }
+        // Sin poner no se celebra ni se castiga: se cuenta lo que pasó, y se vuelve a intentar.
+        return contar("altimetro-miente", "ejercicio.altimetro.pasasteSinPoner", cifras, 16);
+      }
+      case "cerrar":
+        // Lo malo ya lo cuenta el percance; posado antes, el suelo lo dice.
+        if (suceso.como === "otraVez") return;
+        this.agenda.luego(TARDA_EL_FINAL + 8, () => {
+          const como = this.altimetroMiente?.cierre;
+          if (como !== "hecho" && como !== "sinPoner") return;
+          this.hud.mostrarCierreDeEjercicio(
+            dibujoDeCierre(como === "hecho" ? "vuelta" : "otraVez"),
+            this.rotulo(como === "hecho" ? "ejercicio.altimetro.cierre" : "ejercicio.altimetro.cierreSinPoner", "palabra.bien"),
+            plano(this.scenario, 0, this.libreta.traza, this.aerodromosDelTramo()),
+          );
+        });
+        return;
+    }
   }
 
   // ── La radio de navegación ───────────────────────────────────────────
@@ -16685,7 +16885,12 @@ export class Game {
      * quejarse — que es lo que hace uno de verdad.
      */
     this.qnhDelSitio = meteo.qnh;
-    this.qnhPuesta = meteo.qnh;
+    /*
+     * Salvo en «El altímetro miente», que la trae puesta de otro sitio a
+     * propósito: un parte que llega a mitad no le gira la rueda a nadie. Ver
+     * `practicarElAltimetro`.
+     */
+    if (!this.altimetroMiente || this.altimetroMiente.fase === "cerrada") this.qnhPuesta = meteo.qnh;
     /*
      * **Y el avión se entera, que era lo que faltaba.**
      *
@@ -18012,7 +18217,8 @@ export class Game {
                 colocacion === "cruce" ||
                 colocacion === "deriva" ||
                 colocacion === "rumbo" ||
-                colocacion === "estima"
+                colocacion === "estima" ||
+                colocacion === "altimetro"
               ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
               : colocacion === "ils"
               ? // A la del circuito, como quien ya ha bajado para la aproximación.
@@ -18039,7 +18245,8 @@ export class Game {
       colocacion === "ils" ||
       colocacion === "deriva" ||
       colocacion === "rumbo" ||
-      colocacion === "estima"
+      colocacion === "estima" ||
+      colocacion === "altimetro"
         ? { equilibrado: true }
         : {}),
     });
@@ -19599,6 +19806,8 @@ export class Game {
     this.practicarElRumbo(dt);
     // Y la estima. Ver `practicarLaEstima`.
     this.practicarLaEstima(dt);
+    // Y el altímetro que miente. Ver `practicarElAltimetro`.
+    this.practicarElAltimetro(dt);
     // El morse de la radio, con su turno. Ver `atenderAlMorse`.
     this.atenderAlMorse();
     this.mirarSiCambiaDeCampo();
@@ -24900,6 +25109,7 @@ export class Game {
     if (colocacion === "deriva") return this.dondeEmpiezaLaDeriva();
     if (colocacion === "rumbo") return this.dondeEmpiezaElRumbo();
     if (colocacion === "estima") return this.dondeEmpiezaLaEstima();
+    if (colocacion === "altimetro") return this.dondeEmpiezaElAltimetro();
     return null;
   }
 
@@ -31538,8 +31748,17 @@ export class Game {
   }
 
   private pulsarElMando(x: number, y: number): void {
+    if (this.cameraMode !== "cockpit") return;
+    /*
+     * **Y la rueda del altímetro, en la esfera del panel**: tocar su mitad
+     * izquierda baja la ventanilla un hectopascal y la derecha la sube, como
+     * en el cuadro plano. Sin ella, desde el asiento la presión solo se ponía
+     * con la tecla. Ver `ruedaDelAltimetro` en `world/relojes-cabina.ts`.
+     */
+    const rueda = this.aircraftMesh.relojes?.ruedaDelAltimetro(x, y, this.camera) ?? 0;
+    if (rueda) return this.girarAltimetro(rueda);
     const botones = this.aircraftMesh.botones;
-    if (!botones || this.cameraMode !== "cockpit") return;
+    if (!botones) return;
     const cual = botones.cualEsta(x, y, this.camera);
     if (cual) this.pulsarMandoDeCabina(cual);
   }

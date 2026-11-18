@@ -964,7 +964,7 @@ export class Hud {
       const mando = (e.target as Element | null)?.closest?.("[data-radio-mando]");
       if (!(mando instanceof SVGElement || mando instanceof HTMLElement)) return;
       const que = mando.dataset.radioMando;
-      if (que !== "nav" && que !== "adf" && que !== "obs") return;
+      if (que !== "nav" && que !== "adf" && que !== "obs" && que !== "qnh") return;
       e.preventDefault();
       e.stopPropagation();
       const paso = Number(mando.dataset.paso) || 0;
@@ -976,10 +976,16 @@ export class Hud {
        * por el radial en que se está pide media vuelta, y ciento ochenta
        * toques no son una rueda. Ver `flight/en-que-radial-estoy.ts`.
        */
-      if (que !== "obs" || !paso) return;
+      /*
+       * **Y la rueda del altímetro, igual pero más despacio**: diez muescas
+       * por segundo. Un hectopascal son veintisiete pies, y lo que se busca es
+       * un número concreto de la ventanilla: a veinte por segundo se pasa de
+       * largo. Ver `flight/el-altimetro-miente.ts`.
+       */
+      if ((que !== "obs" && que !== "qnh") || !paso) return;
       let cada: number | undefined;
       const empieza = window.setTimeout(() => {
-        cada = window.setInterval(() => this.radioHandler?.("obs", paso), 50);
+        cada = window.setInterval(() => this.radioHandler?.(que, paso), que === "qnh" ? 100 : 50);
       }, 500);
       const suelta = (): void => {
         window.clearTimeout(empieza);
@@ -5413,8 +5419,14 @@ export class Hud {
    * `obs` con su paso, o la caja cuya estación se cambia. Ver
    * `ui/radio-en-la-rosa.ts`.
    */
-  private radioHandler: ((mando: "nav" | "adf" | "obs", paso: number) => void) | null = null;
-  onMandoDeRadio(fn: (mando: "nav" | "adf" | "obs", paso: number) => void): void {
+  private radioHandler: ((mando: "nav" | "adf" | "obs" | "qnh", paso: number) => void) | null = null;
+  /**
+   * Y `qnh`, la rueda de la ventanilla del altímetro de esferas: no es de la
+   * radio, pero se toca igual —un toque, un paso; con el dedo puesto, sigue—
+   * y por el mismo atributo, que es el que ya saben no explicar ni poner
+   * grande (`tocar-para-explicar.ts`, `reparto.ts`). Ver `ui/six-pack.ts`.
+   */
+  onMandoDeRadio(fn: (mando: "nav" | "adf" | "obs" | "qnh", paso: number) => void): void {
     this.radioHandler = fn;
   }
 

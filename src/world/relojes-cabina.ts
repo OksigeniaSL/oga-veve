@@ -51,10 +51,13 @@
 import {
   CanvasTexture,
   DoubleSide,
+  Vector2,
   Vector3,
   LinearFilter,
   MeshBasicMaterial,
+  Raycaster,
   SRGBColorSpace,
+  type Camera,
   type Mesh,
   type Object3D,
 } from "three";
@@ -231,6 +234,16 @@ export interface Relojes {
    * `pantallas-cabina.ts`.
    */
   actualizar(datos: DatosDeRelojes, dt: number, desdeFuera?: boolean): void;
+  /**
+   * **La rueda del altímetro, con el dedo**: si el punto de la pantalla
+   * —coordenadas de −1 a 1, como `cualEsta` de los botones— cae en la esfera
+   * del altímetro, −1 en su mitad izquierda y 1 en la derecha; si no, 0. Un
+   * altímetro de verdad lleva la rueda abajo a la izquierda de la caja, que
+   * en el modelo no es una pieza aparte: la esfera entera es la diana, que es
+   * lo que se alcanza con un dedo desde el asiento. Ver `pulsarElMando` en
+   * `game.ts`.
+   */
+  ruedaDelAltimetro(x: number, y: number, camara: Camera): -1 | 0 | 1;
   dispose(): void;
 }
 
@@ -348,8 +361,19 @@ export function encenderRelojes(raiz: Object3D): Relojes | null {
   if (!esferas.length) return null;
 
   let desde = 0;
+  const altimetros = [...deMotor, ...otros].filter((m) => m.que === "alt").map((m) => m.malla);
+  const rayo = new Raycaster();
+  const punto = new Vector2();
   return {
     hay,
+    ruedaDelAltimetro(x, y, camara) {
+      if (!altimetros.length) return 0;
+      punto.set(x, y);
+      rayo.setFromCamera(punto, camara);
+      const uv = rayo.intersectObjects(altimetros, false)[0]?.uv;
+      if (!uv) return 0;
+      return uv.x < 0.5 ? -1 : 1;
+    },
     actualizar(datos, dt, desdeFuera = false) {
       desde += dt;
       if (desde < 1 / (desdeFuera ? POR_SEGUNDO_DESDE_FUERA : POR_SEGUNDO)) return;

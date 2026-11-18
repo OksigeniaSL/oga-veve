@@ -1435,6 +1435,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.deriva": "Aim into the wind",
   "hangar.ejercicio.rumbo": "Heading at night",
   "hangar.ejercicio.estima": "Heading and clock",
+  "hangar.ejercicio.altimetro": "The altimeter lies",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1686,6 +1687,24 @@ export const EN: Dictionary = {
   "ejercicio.estima.lejos": "{n} {u} away",
   "ejercicio.estima.cierre":
     "Speed times time is distance: with the heading corrected for the wind and a clock, you get to a place you can't see",
+  "ejercicio.altimetro.plan": "{de} · QNH {qnh} · ALT {alt} ft",
+  "ejercicio.altimetro.antes":
+    "We come from far away, with their pressure still in the window. Hold the needle at the altitude on the card, towards the hill",
+  "ejercicio.altimetro.qnhDeAca": "QNH {qnh}",
+  "ejercicio.altimetro.qnh": "The tower gives us the pressure here, and it's lower. Turn the altimeter knob to that number",
+  "ejercicio.altimetro.bajo": "The needle dropped {n} ft",
+  "ejercicio.altimetro.puesto":
+    "See? The needle dropped, and now it tells the truth: we were lower. Climb gently back to the altitude on the card",
+  "ejercicio.altimetro.deVerdad": "The needle: {dice} ft above the hill. Really: {real} ft",
+  "ejercicio.altimetro.cerca":
+    "Look at the hill: it's closer than the needle says. The window still has the pressure from back there",
+  "ejercicio.altimetro.margen": "Above the hill: {real} ft. The needle said {dice} ft",
+  "ejercicio.altimetro.pasaste": "We crossed the hill with the real margin! With the local pressure, the needle doesn't lie",
+  "ejercicio.altimetro.pasasteSinPoner": "We crossed the hill lower than the needle said. Let's try again, with the local pressure",
+  "ejercicio.altimetro.cierre":
+    "High to low, look out below: flying towards lower pressure, the altimeter reads high. With the local QNH, it tells the truth",
+  "ejercicio.altimetro.cierreSinPoner":
+    "High to low, look out below: with the old pressure in the window, the altimeter read high. Try again, and turn the knob",
   "cronometro.glosa": "heading",
   "cronometro.etiqueta": "Heading {rumbo}, {reloj} to go",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",

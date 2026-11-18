@@ -312,7 +312,29 @@ function altFace(c: Cuadro): string {
     escalaSvg(c.altimetro) +
     unidadSvg(c.altimetro) +
     `<rect x="${50 + v.x * CARA}" y="${50 + v.y * CARA}" width="${v.ancho * CARA}" height="${v.alto * CARA}" rx="1.5" class="esfera__ventana" />` +
-    `<text data-qnh x="${50 + (v.x + v.ancho / 2) * CARA}" y="${50 + (v.y + v.alto / 2) * CARA + 2.8}" class="esfera__qnh" text-anchor="middle"></text>`
+    `<text data-qnh x="${50 + (v.x + v.ancho / 2) * CARA}" y="${50 + (v.y + v.alto / 2) * CARA + 2.8}" class="esfera__qnh" text-anchor="middle"></text>` +
+    ruedaDeLaVentanilla()
+  );
+}
+
+/**
+ * **La rueda de la ventanilla, con el dedo**: la mitad de la izquierda baja
+ * un hectopascal y la de la derecha lo sube; con el dedo puesto, sigue
+ * girando. Era solo de teclado —la O y la U—, y en una tablet la presión no
+ * se podía poner. La diana es más grande que la ventanilla, que en una esfera
+ * de tablet son veinte píxeles: va del eje de las agujas al borde y del doble
+ * de alto, y deja libre la mitad izquierda de la esfera para tocarla y que se
+ * explique. Por el mismo atributo que el OBS: ver `onMandoDeRadio` en
+ * `hud.ts` y `flight/el-altimetro-miente.ts`.
+ */
+function ruedaDeLaVentanilla(): string {
+  const v = VENTANA_DE_PRESION;
+  const arriba = 50 + (v.y - v.alto / 2) * CARA;
+  const alto = v.alto * 2 * CARA;
+  const medio = 50 + (v.x + v.ancho / 2) * CARA;
+  return (
+    `<rect data-radio-mando="qnh" data-paso="-1" class="cr__radio-dedo" x="50" y="${arriba}" width="${medio - 50}" height="${alto}" />` +
+    `<rect data-radio-mando="qnh" data-paso="1" class="cr__radio-dedo" x="${medio}" y="${arriba}" width="${96 - medio}" height="${alto}" />`
   );
 }
 

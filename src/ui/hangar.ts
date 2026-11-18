@@ -1894,10 +1894,34 @@ const EJ_ESTIMA = escena(`
   ${AVION("translate(60 66) scale(0.85)")}
 `);
 
+/**
+ * **El altímetro miente**: de perfil, el mar a la derecha y la ladera que
+ * sube a la izquierda hasta su cima; arriba, la silueta clara del avión
+ * donde dice la aguja, y debajo el de verdad, más cerca del cerro, con la
+ * flecha que baja entre los dos. En la esquina, la esfera del altímetro con
+ * su ventanilla. Ver `flight/el-altimetro-miente.ts`.
+ */
+const AVION_DE_PERFIL = (t: string, estilo = ""): string =>
+  `<path class="leccion__avion" transform="${t}"${estilo ? ` style="${estilo}"` : ""}
+     d="M-10 1.6 Q-9.6 -0.6 -6.8 -0.8 H4.2 L7.8 -5.6 H10 L9.2 -0.8 Q10.4 -0.3 10.4 1.1 Q9.9 2.8 7.3 2.9 H-6.8 Q-9.4 2.8 -10 1.6 Z" />`;
+const EJ_ALTIMETRO = escena(`
+  <path class="leccion__mar" d="M56 84 V60 H120 V84 Z" />
+  <path class="leccion__loma" d="M0 84 V36 L10 30 L18 33 L30 22 L40 31 L50 46 L62 60 L70 84 Z" />
+  ${AVION_DE_PERFIL("translate(86 14) scale(1.2)", "opacity: 0.35")}
+  ${AVION_DE_PERFIL("translate(86 30) scale(1.2)")}
+  <path class="ejercicio__flecha" d="M64 10 V30 M59 25 L64 31 L69 25" />
+  <g transform="translate(100 64)">
+    <circle cx="0" cy="0" r="12" style="fill: #1b1f26; stroke: #6c7480; stroke-width: 1.6" />
+    <rect x="2.6" y="-2.6" width="7.4" height="5.2" rx="1" style="fill: #ffb02e" />
+    <path d="M0 0 L-5 -9" style="stroke: #f2f1ec; stroke-width: 1.8; stroke-linecap: round" />
+  </g>
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   rumbo: EJ_RUMBO,
   deriva: EJ_DERIVA,
   estima: EJ_ESTIMA,
+  altimetro: EJ_ALTIMETRO,
   ils: EJ_ILS,
   aguja: EJ_AGUJA,
   radial: EJ_RADIAL,

@@ -1071,6 +1071,35 @@ const RUMBO_LLEGASTE = icono(`${NOCHE}
   <g class="senal__en-la-noche">${avionDeRumbo(26, 0.5)}</g>`);
 
 /**
+ * **«El altímetro miente»**, de perfil: el cerro a la izquierda y el avión
+ * yendo hacia él. Con la ventanilla de donde se viene, el avión de la aguja
+ * —la silueta clara, arriba— no es el de verdad, que va más abajo y en ámbar,
+ * con la flecha que baja entre los dos: **el suelo está más cerca de lo que
+ * dice la aguja**. Con la presión de acá, uno solo, arriba, con su margen
+ * hasta la cima. Y la rueda: la esfera con su ventanilla en ámbar y la
+ * rueda abajo a la izquierda, girando. Se entiende sin leer un número. Ver
+ * `flight/el-altimetro-miente.ts`.
+ */
+const CERRO = `<path d="M0.6 23.4 V19.4 L2.8 17.6 L4.6 18.4 L7.6 14.2 L10.2 16.8 L12.6 20 L15.4 23.4 Z" />`;
+const avionDelAltimetro = (y: number, clase = ""): string =>
+  `<path${clase ? ` class="${clase}"` : ""} transform="translate(11.6 ${y}) scale(0.5)" d="${PERFIL_NIVELADO}" />`;
+const ALTIMETRO_MIENTE = icono(`${CERRO}
+  ${avionDelAltimetro(-1.4, "senal__silueta")}
+  ${avionDelAltimetro(5.6, "senal__se-va")}
+  <path class="senal__se-va" d="M6.2 3.4 V9.6 M4.4 7.8 L6.2 10 L8 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />`);
+const ALTIMETRO_VERDAD = icono(`${CERRO}
+  ${avionDelAltimetro(-1.4)}
+  <path class="senal__marca" d="M7.6 6.6 V12.8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="1.4 1.2" />`);
+const ALTIMETRO_RUEDA = icono(`
+  <circle cx="13" cy="10.6" r="9" fill="none" stroke="currentColor" stroke-width="1.6" />
+  <rect class="senal__se-va" x="15.4" y="8.8" width="5.4" height="3.6" rx="0.8" />
+  <path d="M13 10.6 L9.4 4.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+  <circle cx="13" cy="10.6" r="1.3" />
+  <circle cx="4.2" cy="19.6" r="2.6" />
+  <path class="senal__se-va" d="M1 16.4 A4.6 4.6 0 0 1 7.8 15.8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+  <path class="senal__se-va" d="M8.6 14.2 L8.4 17 L6 16 Z" />`);
+
+/**
  * **«Rumbo y reloj»**, desde arriba: el pueblo arriba —una cuadrícula de
  * manzanas, que es como se ve Filadelfia desde el aire—, la recta a rayas
  * hasta él y el avión donde quedó al llegar el reloj a cero: encima, a un
@@ -2026,6 +2055,10 @@ export const DIBUJOS = {
   "estima-a-la-izquierda": estima("izquierda"),
   "estima-delante": estima("delante"),
   "estima-detras": estima("detras"),
+  // «El altímetro miente»: la aguja que miente frente al cerro, la verdad y la rueda. Ver `el-altimetro-miente.ts`.
+  "altimetro-miente": ALTIMETRO_MIENTE,
+  "altimetro-verdad": ALTIMETRO_VERDAD,
+  "altimetro-rueda": ALTIMETRO_RUEDA,
   /*
    * «Aterrizar con las agujas»: el localizador a tope de cada lado con la
    * senda todavía arriba, viniendo hacia el centro, la senda arriba con el

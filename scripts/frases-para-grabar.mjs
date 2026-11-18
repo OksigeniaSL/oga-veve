@@ -3246,6 +3246,38 @@ for (const [id, para] of DE_LA_ESTIMA) {
   total += texto.length;
 }
 
+/*
+ * **«El altímetro miente»** (#51, ADR 0031, enmienda H26p): de alta a baja
+ * presión con la ventanilla sin tocar, hacia el cerro. La instructora
+ * presenta, da la presión de acá, cuenta que la aguja bajó y dice la verdad,
+ * hace ver el cerro más cerca si la rueda sigue sin poner y, pasada la cima,
+ * cuenta con qué margen. De dónde se viene, el QNH y los pies van escritos en
+ * la tarjeta. En calma, como todo ejercicio. Los dos cierres solo se leen.
+ * Ver `src/flight/el-altimetro-miente.ts`.
+ */
+const DEL_ALTIMETRO = [
+  ["ejercicio.altimetro.antes", "el altímetro miente, antes de empezar: la presión de allá en la ventanilla, la aguja en la altura de la tarjeta"],
+  ["ejercicio.altimetro.qnh", "el altímetro miente: la torre da la presión de acá, girar la rueda hasta ella"],
+  ["ejercicio.altimetro.puesto", "el altímetro miente: con la rueda puesta, la aguja bajó y dice la verdad"],
+  ["ejercicio.altimetro.cerca", "el altímetro miente, cerca de la cima y sin poner la rueda: el cerro está más cerca de lo que dice la aguja"],
+  ["ejercicio.altimetro.pasaste", "el altímetro miente, pasada la cima con la rueda puesta"],
+  ["ejercicio.altimetro.pasasteSinPoner", "el altímetro miente, pasada la cima sin poner la rueda: otra vez"],
+];
+for (const [id, para] of DEL_ALTIMETRO) {
+  const texto = es.get(id);
+  if (!texto || filas.some((f) => f.id === id)) continue;
+  filas.push({
+    id,
+    voz: "instructor",
+    idioma: "es-PY",
+    texto,
+    para,
+    dicho: /[.!?]$/.test(texto) ? texto : `${texto}.`,
+    ajustes: AJUSTES_EN_CALMA,
+  });
+  total += texto.length;
+}
+
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
   ...filas.map((f) =>
