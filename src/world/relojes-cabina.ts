@@ -215,6 +215,13 @@ export interface DatosDeRelojes {
    * la brújula marca `rumbo`, como antes.
    */
   readonly brujula?: number | null;
+  /**
+   * **Lo que marca el direccional**, grados: el rumbo magnético más lo que se
+   * ha ido su giróscopo, que no está esclavizado a nada (`flight/direccional.ts`,
+   * ADR 0031, enmienda H26r). Solo gira su rosa y lo que va en ella; la aguja
+   * del ADF sigue apuntando a la estación con `rumbo`. Sin poner, `rumbo`.
+   */
+  readonly direccional?: number | null;
 }
 
 interface Esfera {
@@ -251,6 +258,15 @@ export interface Relojes {
    * `game.ts`.
    */
   ruedaDelAltimetro(x: number, y: number, camara: Camera): -1 | 0 | 1;
+  /**
+   * **La perilla del direccional, con el dedo**, como la rueda del altímetro:
+   * −1 en la mitad izquierda de su esfera y 1 en la derecha; 0 fuera. La
+   * perilla de verdad va abajo a la izquierda de la caja, y aquí tampoco es
+   * una pieza: la esfera entera es la diana. La brújula del parabrisas lleva
+   * la misma cara y no cuenta, que es un imán y no se gira. Ver
+   * `girarElDireccional` en `game.ts` y `flight/direccional.ts`.
+   */
+  perillaDelDireccional(x: number, y: number, camara: Camera): -1 | 0 | 1;
   dispose(): void;
 }
 
@@ -369,17 +385,24 @@ export function encenderRelojes(raiz: Object3D): Relojes | null {
 
   let desde = 0;
   const altimetros = [...deMotor, ...otros].filter((m) => m.que === "alt").map((m) => m.malla);
+  const direccionales = otros.filter((m) => m.que === "dg" && !m.brujula).map((m) => m.malla);
   const rayo = new Raycaster();
   const punto = new Vector2();
+  const mitad = (mallas: Mesh[], x: number, y: number, camara: Camera): -1 | 0 | 1 => {
+    if (!mallas.length) return 0;
+    punto.set(x, y);
+    rayo.setFromCamera(punto, camara);
+    const uv = rayo.intersectObjects(mallas, false)[0]?.uv;
+    if (!uv) return 0;
+    return uv.x < 0.5 ? -1 : 1;
+  };
   return {
     hay,
     ruedaDelAltimetro(x, y, camara) {
-      if (!altimetros.length) return 0;
-      punto.set(x, y);
-      rayo.setFromCamera(punto, camara);
-      const uv = rayo.intersectObjects(altimetros, false)[0]?.uv;
-      if (!uv) return 0;
-      return uv.x < 0.5 ? -1 : 1;
+      return mitad(altimetros, x, y, camara);
+    },
+    perillaDelDireccional(x, y, camara) {
+      return mitad(direccionales, x, y, camara);
     },
     actualizar(datos, dt, desdeFuera = false) {
       desde += dt;
@@ -421,7 +444,7 @@ export function encenderRelojes(raiz: Object3D): Relojes | null {
  * modelo. Ver `flight/brujula.ts`.
  */
 export function loQueMarcaLaBrujula(d: DatosDeRelojes): DatosDeRelojes {
-  return { ...d, rumbo: d.brujula ?? d.rumbo, radio: null, rumboPedido: null };
+  return { ...d, rumbo: d.brujula ?? d.rumbo, radio: null, rumboPedido: null, direccional: null };
 }
 
 // ── El pincel ──────────────────────────────────────────────────────────
@@ -683,16 +706,18 @@ function altimetro(d: DatosDeRelojes, g: CanvasRenderingContext2D): void {
  */
 function direccional(d: DatosDeRelojes, g: CanvasRenderingContext2D): void {
   const e = d.cuadro.rosa;
+  // La rosa, con lo que se haya ido el giróscopo: ver `DatosDeRelojes.direccional`.
+  const tarjeta = d.direccional ?? d.rumbo;
   g.save();
   g.translate(C, C);
-  g.rotate((-d.rumbo * Math.PI) / 180);
+  g.rotate((-tarjeta * Math.PI) / 180);
   g.translate(-C, -C);
   escala(d, g, e, true);
   g.restore();
-  // La marca de rumbo, en el borde de la rosa, en magenta: la misma del cuadro plano.
-  if (d.rumboPedido != null) marcaDeRumbo(g, d.rumboPedido - d.rumbo);
+  // La marca de rumbo, en el borde de la rosa, en magenta: la misma del cuadro plano. Va en la rosa, y se va con ella.
+  if (d.rumboPedido != null) marcaDeRumbo(g, d.rumboPedido - tarjeta);
   // Y desde el peldaño de la radio, el curso y la aguja encima: un HSI, como en el cuadro plano.
-  if (d.radio) radioEnElDireccional(g, d.radio, d.rumbo);
+  if (d.radio) radioEnElDireccional(g, d.radio, tarjeta, d.rumbo);
   // El avioncito, fijo y mirando arriba: lo que se lee es lo que tiene encima.
   g.strokeStyle = PALETA.simbolo;
   g.lineWidth = R * 0.042;
@@ -753,7 +778,14 @@ const UNIDAD_DE_ESFERA = R / 43;
  * la esfera al 99 % de su radio. El curso se lee donde se lee en un HSI de
  * aguja: la punta de la flecha contra la rosa.
  */
-function radioEnElDireccional(g: CanvasRenderingContext2D, p: LaRadioPintada, rumbo: number): void {
+function radioEnElDireccional(
+  g: CanvasRenderingContext2D,
+  p: LaRadioPintada,
+  /** Lo que marca la rosa, grados: el curso va en ella. */
+  rumbo: number,
+  /** El magnético de verdad: la aguja del ADF apunta a la estación, no a la rosa. */
+  deVerdad = rumbo,
+): void {
   const r = 43;
   const punto = r * 0.17;
   const largo = r * 0.42;
@@ -806,7 +838,7 @@ function radioEnElDireccional(g: CanvasRenderingContext2D, p: LaRadioPintada, ru
   }
   if (p.adf !== null) {
     g.save();
-    g.rotate(((p.adf - rumbo) * Math.PI) / 180);
+    g.rotate(((p.adf - deVerdad) * Math.PI) / 180);
     g.strokeStyle = PALETA.auxiliar;
     g.lineWidth = 1.4;
     g.beginPath();

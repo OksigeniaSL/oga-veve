@@ -176,6 +176,13 @@ export interface DatosDelTablero {
    * pintado en el suelo. El HUD plano ya lo sumaba; este tablero no.
    */
   readonly declinacion?: number;
+  /**
+   * **Lo que marca de más la rosa del direccional** de un avión de esferas,
+   * grados: el giróscopo sin esclavizar que se va solo (`flight/direccional.ts`,
+   * ADR 0031, enmienda H26r). Solo la rosa del direccional y lo que va en
+   * ella; el rumbo de todo lo demás sigue siendo el de verdad.
+   */
+  readonly direccional?: number;
   /** De dónde sopla y cuánto. */
   readonly viento: { readonly desde: number; readonly nudos: number } | null;
   /**
@@ -1163,6 +1170,8 @@ export class Tablero {
           const o = lejos(d.objetivo);
           return o ? (((o.rumbo * GRADOS + (d.declinacion ?? 0)) % 360) + 360) % 360 : null;
         })(),
+        // Y lo que se ha ido el giróscopo: solo la rosa. Ver `flight/direccional.ts`.
+        d.direccional ?? 0,
       );
     } else {
       this.cintas(d, dt, cifras);
@@ -2063,12 +2072,19 @@ export class Tablero {
     const rosa = this.pieza("[data-radio-rosa]");
     const giro =
       this.familia === "esferas"
-        ? -(d.estado.heading * GRADOS + (d.declinacion ?? 0))
+        ? -(d.estado.heading * GRADOS + (d.declinacion ?? 0) + (d.direccional ?? 0))
         : -(((this.carta.desviacion % 360) + 360) % 360);
     poner(rosa, "transform", `rotate(${n1(giro)})`);
     const adf = this.pieza('[data-radio="adf"]');
     poner(adf, "visibility", p.adf === null ? "hidden" : "visible");
-    if (p.adf !== null) poner(adf, "transform", `rotate(${n1(p.adf)})`);
+    /*
+     * **La aguja del ADF apunta a la estación**, aunque la rosa del
+     * direccional se haya ido: es una aguja aparte, y lo que dice contra la
+     * línea de fe es la marcación relativa, que no sabe nada del giróscopo.
+     * El curso sí va en la rosa, como en un HSI. Ver `flight/direccional.ts`.
+     */
+    const seFue = this.familia === "esferas" ? d.direccional ?? 0 : 0;
+    if (p.adf !== null) poner(adf, "transform", `rotate(${n1(p.adf + seFue)})`);
     const curso = this.pieza('[data-radio="curso"]');
     poner(curso, "visibility", p.curso === null ? "hidden" : "visible");
     if (p.curso !== null) poner(curso, "transform", `rotate(${n1(p.curso)})`);

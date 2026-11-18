@@ -1936,6 +1936,24 @@ const EJ_BRUJULA = escena(`
   <path d="M82 60 V48" style="stroke: #f2f5f7; stroke-width: 2.6; stroke-linecap: round" />
 `);
 
+/**
+ * **Poné en hora el giróscopo**: desde el asiento, la brújula colgada del
+ * travesaño, quieta y blanca, y abajo el direccional que se fue, en ámbar,
+ * con su perilla abajo a la izquierda y la flecha de girarla. Ver
+ * `flight/giroscopo-en-hora.ts`.
+ */
+const EJ_GIROSCOPO = escena(`
+  <path d="M0 10 H120" style="stroke: #2b2f36; stroke-width: 6" />
+  <path d="M38 13 V22" style="stroke: #2b2f36; stroke-width: 3" />
+  <rect x="0" y="58" width="120" height="26" rx="3" style="fill: #2b2f36" />
+  <circle cx="38" cy="35" r="13" style="fill: #0b1322; stroke: #f2f5f7; stroke-width: 2" />
+  <path d="M38 35 V24" style="stroke: #f2f5f7; stroke-width: 2.6; stroke-linecap: round" />
+  <circle cx="82" cy="60" r="15" style="fill: #0b1322; stroke: #ffb02e; stroke-width: 2" />
+  <path d="M82 60 V48" style="stroke: #ffb02e; stroke-width: 2.6; stroke-linecap: round" transform="rotate(-28 82 60)" />
+  <circle cx="66" cy="76" r="4" style="fill: #ffb02e" />
+  <path d="M58 70 A9 9 0 0 0 61 83 M57.5 79 L61 83 L62.5 78.5" style="fill: none; stroke: #ffb02e; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round" />
+`);
+
 const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   rumbo: EJ_RUMBO,
   deriva: EJ_DERIVA,
@@ -1959,6 +1977,8 @@ const DIBUJOS_EJERCICIO: Record<Ejercicio["id"], string> = {
   tormenta: EJ_TORMENTA,
   // La brújula del parabrisas que tiembla y el direccional quieto. Ver `brujula-que-baila.ts`.
   brujula: EJ_BRUJULA,
+  // El direccional que se fue, en ámbar, con su perilla, y la brújula derecha. Ver `giroscopo-en-hora.ts`.
+  giroscopo: EJ_GIROSCOPO,
 };
 
 function fichaDeEjercicio(e: Ejercicio, elegido: boolean): string {

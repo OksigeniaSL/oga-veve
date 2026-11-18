@@ -113,6 +113,7 @@ import { ilsDelCampo } from "./ils-con-agujas";
 import { sitioDeLaDeriva } from "./deriva";
 import { rioDeNoche } from "./rumbo-de-noche";
 import { destinoDeLaEstima } from "./estima";
+import { dondeSeVaElGiroscopo } from "./giroscopo-en-hora";
 import { laderaDelAltimetro } from "./el-altimetro-miente";
 import { inclinacionDelCampo } from "./brujula-que-baila";
 
@@ -137,7 +138,8 @@ export type EjercicioId =
   | "rumbo"
   | "estima"
   | "altimetro"
-  | "brujula";
+  | "brujula"
+  | "giroscopo";
 
 /**
  * **Cuándo falla**, contado por lo que pasa y no por un reloj de fondo: un
@@ -203,7 +205,8 @@ export interface Ejercicio {
     | "rumbo"
     | "estima"
     | "altimetro"
-    | "brujula";
+    | "brujula"
+    | "giroscopo";
   /**
    * Lo que puede fallar. Con una sola, es esa; con varias, se sortea al
    * empezar y **no se dice cuál**: la sesión de simulador. Ninguna en la
@@ -701,6 +704,40 @@ export const EJERCICIOS: readonly Ejercicio[] = [
     dondeVale: (oaci) => inclinacionDelCampo(oaci) !== null,
     ensena:
       "derecha y quieta, la brújula dice la verdad; virando miente y, al salir, baila un rato. El direccional es un giróscopo: no siente el viraje, y por eso se vuela con él",
+  },
+  /*
+   * **Poné en hora el giróscopo** (#51, «lo que justifica el giróscopo y su
+   * ritual de resincronizar cada diez minutos»): derecho al norte, el reloj
+   * del giróscopo apurado hasta que el direccional se va ocho grados, y
+   * girar su perilla hasta que diga lo mismo que la brújula, derecho y sin
+   * acelerar. Lo lleva `giroscopo-en-hora.ts`; la deriva, `direccional.ts`.
+   * Ver el ADR 0031, enmienda H26r.
+   */
+  {
+    id: "giroscopo",
+    /*
+     * **Desde Taguató**, que es donde el direccional empieza a irse en
+     * cualquier vuelo (`PELDANOS_QUE_LO_PONEN`): se aprende el ritual el
+     * mismo día que hace falta. Abajo lo pone la instructora y no se va, y
+     * enseñar a hacer algo que nadie necesita hacer todavía no enseña nada.
+     */
+    peldanos: DESDE_TAGUATO,
+    /*
+     * **Los de esferas con brújula en el parabrisas**: la avioneta, el de
+     * motor radial y el bimotor de pistón, los de «La brújula baila». Su
+     * direccional es un giróscopo de vacío sin esclavizar; el de los de
+     * cristal lo corrige solo su magnetómetro, y no se va.
+     */
+    valePara: (a) => !conRadarMeteorologico(a),
+    leccion: "aterrizaje",
+    colocacion: "giroscopo",
+    averias: [],
+    escena: "navegacion",
+    acabaEnElAire: true,
+    // Donde la brújula dice la verdad y la Tierra hace irse al giróscopo: hoy, todos. Ver `dondeSeVaElGiroscopo`.
+    dondeVale: (oaci) => dondeSeVaElGiroscopo(oaci),
+    ensena:
+      "el giróscopo no siente el viraje, pero se va solo: cada quince minutos, derecho y sin acelerar, se pone con la brújula, que es lo único que sabe dónde está el norte",
   },
 ];
 

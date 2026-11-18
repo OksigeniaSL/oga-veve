@@ -63,6 +63,8 @@ import {
 import { BANDA, cajaDe } from "./familia";
 import { PYKASU } from "../flight/aircraft";
 import { bienPuesta } from "../flight/altimetro";
+import { PELDANOS_QUE_LO_PONEN } from "../flight/direccional";
+import { PELDANOS } from "../flight/escalera";
 import { decima as n1, escribir, poner } from "./si-cambia";
 
 /** Lo que se dejan entre sí dos esferas vecinas, en píxeles del cuadro. */
@@ -156,6 +158,8 @@ export class SixPack {
            */
           `<g data-needle="dg-bug" visibility="hidden"><path class="dg__marca" d="M46.4 ${50 - CARA} h7.2 v3.4 l-3.6 3.2 l-3.6 -3.2 Z" /></g>` +
           "</g>" +
+          // La perilla del direccional, debajo de la radio: con la radio puesta, la mitad de abajo es del OBS.
+          perillaDelDireccional() +
           // Y desde el peldaño de cabina, el curso y la aguja encima: un HSI. Ver `ui/radio-en-la-rosa.ts`.
           radioEnElDireccionalSvg(),
         dgAircraft(),
@@ -222,6 +226,12 @@ export class SixPack {
     declinacion = 0,
     /** **El rumbo de la marca**, magnético, grados; `null`, sin marca. */
     rumboPedido: number | null = null,
+    /**
+     * **Lo que marca de más la tarjeta del direccional**, grados: el giróscopo
+     * que se va (`flight/direccional.ts`, ADR 0031, enmienda H26r). Solo gira
+     * la rosa; la marca va en ella y se va con ella, como la de verdad.
+     */
+    apartado = 0,
   ): void {
     if (!this.root) return;
     const c = this.cuadro;
@@ -242,7 +252,7 @@ export class SixPack {
 
     // Direccional: la rosa gira al revés que el avión, porque lo que se
     // mueve es el mundo.
-    this.rotate("dg-card", -((state.heading * 180) / Math.PI + declinacion));
+    this.rotate("dg-card", -((state.heading * 180) / Math.PI + declinacion + apartado));
     // La marca va en la rosa: girada a su rumbo, sale arriba cuando el morro va en él.
     poner(this.needles.get("dg-bug"), "visibility", rumboPedido === null ? "hidden" : "visible");
     if (rumboPedido !== null) this.rotate("dg-bug", rumboPedido);
@@ -336,6 +346,30 @@ function ruedaDeLaVentanilla(): string {
     '<rect data-radio-mando="qnh" data-paso="1" class="cr__radio-dedo" x="50" y="52" width="50" height="48" />'
   );
 }
+
+/**
+ * **La perilla del direccional, con el dedo** (ADR 0031, enmienda H26r): la
+ * mitad de abajo de la esfera, partida en dos como la rueda del altímetro —la
+ * izquierda gira la rosa hacia los números que bajan y la derecha hacia los
+ * que suben; con el dedo puesto, sigue—. En un direccional de verdad la
+ * perilla va abajo a la izquierda de la caja, y es como se pone con la
+ * brújula cuando el giróscopo se ha ido (`flight/direccional.ts`). Va antes
+ * que la radio: desde el peldaño de cabina, con la radio encima, la mitad de
+ * abajo es del OBS, y la perilla se gira con la tecla o desde el asiento. Por
+ * el mismo atributo que el OBS y la rueda: ver `onMandoDeRadio` en `hud.ts`.
+ */
+function perillaDelDireccional(): string {
+  return (
+    // Desde el peldaño en que se va: abajo no hay nada que girar, y la esfera entera sigue explicándose.
+    `<g data-desde="${PERILLA_DESDE}">` +
+    '<rect data-radio-mando="dg" data-paso="-1" class="cr__radio-dedo" x="0" y="52" width="50" height="48" />' +
+    '<rect data-radio-mando="dg" data-paso="1" class="cr__radio-dedo" x="50" y="52" width="50" height="48" />' +
+    "</g>"
+  );
+}
+
+/** El primer peldaño, de uno a cuatro, en que el direccional se va. Ver `PELDANOS_QUE_LO_PONEN`. */
+const PERILLA_DESDE = PELDANOS.findIndex((p) => PELDANOS_QUE_LO_PONEN.includes(p)) + 1;
 
 function aiFace(): string {
   /*

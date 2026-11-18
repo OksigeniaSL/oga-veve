@@ -106,3 +106,49 @@ describe("la marca de rumbo del direccional", () => {
     expect(svg).toContain('class="dg__marca"');
   });
 });
+
+describe("el direccional que se va (H26r)", () => {
+  /** Lo que gira el lienzo en cada `rotate`, en grados. */
+  function giros(d: DatosDeRelojes): number[] {
+    const { g } = lienzoQueApunta();
+    const vistos: number[] = [];
+    const g2 = new Proxy(g as unknown as Record<string, unknown>, {
+      get(obj, clave: string) {
+        if (clave === "rotate") return (a: number) => (vistos.push((a * 180) / Math.PI), (obj.rotate as (a: number) => void)(a));
+        return obj[clave];
+      },
+      set(obj, clave: string, valor) {
+        obj[clave] = valor;
+        return true;
+      },
+    }) as unknown as CanvasRenderingContext2D;
+    pintarReloj(g2, "dg", -1, d);
+    return vistos;
+  }
+
+  it("en el panel en 3D, la rosa gira con lo que marca el direccional, y la marca va en ella", () => {
+    const v = giros({ ...datos(225), direccional: 192 });
+    // La rosa, con el 192 del direccional que se fue ocho grados, no con el 200 de verdad.
+    expect(v[0]).toBeCloseTo(-192, 6);
+    // La marca, a 225 de la rosa: treinta y tres a la derecha de la línea de fe.
+    const { g, rellenos } = lienzoQueApunta();
+    pintarReloj(g, "dg", -1, { ...datos(225), direccional: 192 });
+    const marca = rellenos.filter((r) => r.color === PALETA.objetivo);
+    expect(marca).toHaveLength(1);
+    expect((marca[0]!.giro * 180) / Math.PI).toBeCloseTo(33, 6);
+  });
+
+  it("sin poner, la rosa marca el rumbo, como antes; y la brújula no hereda lo que se fue", () => {
+    expect(giros(datos(null))[0]).toBeCloseTo(-200, 6);
+    expect(loQueMarcaLaBrujula({ ...datos(null), direccional: 192, brujula: 201 }).direccional).toBeNull();
+    expect(giros(loQueMarcaLaBrujula({ ...datos(null), direccional: 192, brujula: 201 }))[0]).toBeCloseTo(-201, 6);
+  });
+
+  it("en el cuadro plano, la perilla en las dos mitades de abajo, por debajo de la radio", () => {
+    const svg = SixPack.grupo(cuadroDe(AVIONETA));
+    expect(svg.match(/data-radio-mando="dg"/g)).toHaveLength(2);
+    // Antes que la radio en el dibujo: con la radio puesta, la mitad de abajo es del OBS, que va encima.
+    expect(svg.indexOf('data-radio-mando="dg"')).toBeLessThan(svg.indexOf('data-radio-mando="obs"'));
+    expect(svg.indexOf('data-radio-mando="dg"')).toBeGreaterThan(svg.indexOf('data-needle="dg-card"'));
+  });
+});

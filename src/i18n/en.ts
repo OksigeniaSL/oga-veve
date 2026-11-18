@@ -295,6 +295,8 @@ export const EN: Dictionary = {
   "tecla.obsUp": "VOR course (OBS) right",
   "tecla.obsDown": "VOR course (OBS) left",
   "tecla.navSiguiente": "Next NAV station",
+  "tecla.dgUp": "Heading indicator knob right",
+  "tecla.dgDown": "Heading indicator knob left",
   "tecla.adfSiguiente": "Next ADF station",
   "tecla.sound": "Sound",
   "tecla.language": "Language",
@@ -1437,6 +1439,7 @@ export const EN: Dictionary = {
   "hangar.ejercicio.estima": "Heading and clock",
   "hangar.ejercicio.altimetro": "The altimeter lies",
   "hangar.ejercicio.brujula": "The dancing compass",
+  "hangar.ejercicio.giroscopo": "Set the gyro",
   "ejercicio.planeo.antes":
     "Today we practise gliding. In a little while the engine will stop, on purpose: we lower the nose, hold the speed and glide to the runway",
   "ejercicio.antes-de-v1.antes":
@@ -1719,6 +1722,16 @@ export const EN: Dictionary = {
   "ejercicio.brujula.cuanto": "{n}° apart",
   "ejercicio.brujula.cierre":
     "In a turn the compass lies, and coming out it dances. The heading indicator is a gyroscope: it doesn't feel the turn, and that's why we fly by it",
+  "ejercicio.giroscopo.antes": "We're flying straight north. The compass up top and the heading indicator below agree",
+  "ejercicio.giroscopo.apurar": "Now we speed up the clock. Watch the heading indicator: it creeps away on its own",
+  "ejercicio.giroscopo.seFue": "The heading indicator drifted and the compass didn't. Straight and steady, the compass tells the truth",
+  "ejercicio.giroscopo.ponelo": "Turn the heading indicator knob until it matches the compass",
+  "ejercicio.giroscopo.virando": "Not while turning: the compass lies. Straight first, then the knob",
+  "ejercicio.giroscopo.puesto": "That's it! The heading indicator tells the truth again",
+  "ejercicio.giroscopo.apurado": "Clock sped up: {min} min in {s} s",
+  "ejercicio.giroscopo.cierre":
+    "The gyro doesn't feel the turn, but it drifts on its own. Every fifteen minutes, straight and steady, set it to the compass. For real it takes an hour or more to drift this much: here we sped up the clock",
+  "vuelo.giroscopo.seFue": "The heading indicator has drifted a little. Straight and steady, set it to the compass",
   "tormenta.rotulo.rodearDerecha": "Go around on the right: {n} {u} from the red",
   "tormenta.rotulo.rodearIzquierda": "Go around on the left: {n} {u} from the red",
   "tormenta.rotulo.masLejos": "This way you pass {n} {u} from the red: turn more",

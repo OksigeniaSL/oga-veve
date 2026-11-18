@@ -349,6 +349,9 @@ export const ES_PY = {
   "tecla.obsDown": "Girar el curso del VOR (OBS) a la izquierda",
   "tecla.navSiguiente": "Otra estación en la NAV",
   "tecla.adfSiguiente": "Otra estación en el ADF",
+  // La perilla del direccional, para ponerlo con la brújula. Ver `flight/direccional.ts`.
+  "tecla.dgUp": "Girar el direccional a la derecha",
+  "tecla.dgDown": "Girar el direccional a la izquierda",
   "tecla.sound": "Sonido",
   "tecla.language": "Idioma",
   "tecla.credits": "Créditos",
@@ -3305,6 +3308,7 @@ export const ES_PY = {
   "hangar.ejercicio.estima": "Rumbo y reloj",
   "hangar.ejercicio.altimetro": "El altímetro miente",
   "hangar.ejercicio.brujula": "La brújula baila",
+  "hangar.ejercicio.giroscopo": "Poné en hora el giróscopo",
   "ejercicio.planeo.antes":
     "Hoy practicamos el planeo. En un ratito el motor se va a parar, a propósito: bajamos la nariz, sostenemos la velocidad y llegamos planeando a la pista",
   "ejercicio.antes-de-v1.antes":
@@ -3722,6 +3726,26 @@ export const ES_PY = {
   // El panel del final: se lee, no se dice.
   "ejercicio.brujula.cierre":
     "Virando, la brújula miente y al salir baila. El direccional es un giróscopo: no siente el viraje, y por eso se vuela con él",
+  /*
+   * **«Poné en hora el giróscopo»** (#51, ADR 0031, enmienda H26r): derecho al
+   * norte, el reloj del giróscopo apurado, el direccional que se va y la
+   * perilla para ponerlo con la brújula. «La brújula de arriba» y «el
+   * direccional de abajo», como en «La brújula baila». Cortas, para decirlas
+   * en calma.
+   */
+  "ejercicio.giroscopo.antes": "Vamos derecho al norte. La brújula de arriba y el direccional de abajo dicen lo mismo",
+  "ejercicio.giroscopo.apurar": "Ahora apuramos el reloj. Mirá el direccional: se va solito, despacito",
+  "ejercicio.giroscopo.seFue": "El direccional se fue y la brújula no. Derecho y sin acelerar, la brújula dice la verdad",
+  "ejercicio.giroscopo.ponelo": "Girá la perilla del direccional hasta que diga lo mismo que la brújula",
+  "ejercicio.giroscopo.virando": "Virando no: la brújula miente. Primero derecho, y después la perilla",
+  "ejercicio.giroscopo.puesto": "¡Eso! El direccional dice la verdad otra vez",
+  // Cuánto se apura el reloj, en la tarjeta: de Taguató para arriba, que es donde está el ejercicio.
+  "ejercicio.giroscopo.apurado": "Reloj apurado: {min} min en {s} s",
+  // El panel del final: se lee, no se dice.
+  "ejercicio.giroscopo.cierre":
+    "El giróscopo no siente el viraje, pero se va solo. Cada quince minutos, derecho y sin acelerar, se pone con la brújula. De verdad tarda una hora o más en irse así: acá apuramos el reloj",
+  // En un vuelo cualquiera, de Taguató para arriba, cuando el direccional se fue tres grados. Ver `recordarElDireccional`.
+  "vuelo.giroscopo.seFue": "El direccional se fue un poquito. Derecho y sin acelerar, ponelo con la brújula",
   // Y la frase corta, con sus números, de Taguató para arriba.
   "tormenta.rotulo.rodearDerecha": "Rodeala por la derecha: a {n} {u} del rojo",
   "tormenta.rotulo.rodearIzquierda": "Rodeala por la izquierda: a {n} {u} del rojo",
