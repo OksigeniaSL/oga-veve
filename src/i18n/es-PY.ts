@@ -3685,6 +3685,8 @@ export const ES_PY = {
   "ejercicio.brujula.seAdelanta": "¿Viste? La brújula se adelanta. Virando, la brújula miente",
   "ejercicio.brujula.baila": "Ya vamos derecho y la brújula todavía baila. El direccional, quieto",
   "ejercicio.brujula.quieta": "Ahora sí: con el avión derecho y quieto, la brújula dice la verdad",
+  // Si se sale de la cabina a mitad: la brújula solo se ve desde el asiento.
+  "ejercicio.brujula.cabina": "La brújula está en la cabina. Volvé adentro para verla",
   // La palabra de Tukã para el viraje.
   "palabra.vira": "¡Virá!",
   // Lo que se apartó la brújula del direccional, de Taguató para arriba, delante de la frase.

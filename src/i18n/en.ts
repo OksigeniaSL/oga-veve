@@ -1695,6 +1695,7 @@ export const EN: Dictionary = {
   "ejercicio.brujula.seAdelanta": "See? The compass is racing ahead. In a turn, the compass lies",
   "ejercicio.brujula.baila": "We're straight now and the compass is still dancing. The heading indicator, steady",
   "ejercicio.brujula.quieta": "There it is: with the plane straight and steady, the compass tells the truth",
+  "ejercicio.brujula.cabina": "The compass is in the cockpit. Go back inside to see it",
   "palabra.vira": "Turn!",
   "ejercicio.brujula.cuanto": "{n}° apart",
   "ejercicio.brujula.cierre":

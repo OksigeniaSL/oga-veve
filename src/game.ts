@@ -4028,6 +4028,12 @@ export class Game {
   /** El escenario cuya inclinación lleva puesta, para no recalcular el WMM cada fotograma. */
   private brujulaDe: object | null = null;
   /**
+   * **Lo que lleva fuera de la cabina** durante «La brújula baila», s, y si ya
+   * se dijo dónde está la brújula. Se rearma al volver al asiento. Ver
+   * `practicarLaBrujula`.
+   */
+  private brujulaFuera = { segundos: 0, dicho: false };
+  /**
    * **Las dos rayas del suelo** de la estima, que no se ven hasta que el reloj
    * llega a cero: entonces son la cuenta del vuelo. Ver `practicarLaEstima`.
    */
@@ -6558,6 +6564,7 @@ export class Game {
     caidaTope: Number.POSITIVE_INFINITY,
     asientoDeLaEscena: null as AsientoDePasaje | null,
     saltaLaCabeza: false,
+    arribaTapado: 0,
   };
   /**
    * **Las cámaras de la escena de pasaje**: la de fuera y el fundido de cada
@@ -13928,6 +13935,7 @@ export class Game {
     this.cronometroRecogido = false;
     // Y la brújula, otra vez derecha al oeste y en reposo.
     this.brujulaQueBaila?.reiniciar();
+    this.brujulaFuera = { segundos: 0, dicho: false };
     this.brujulaDelParabrisas.reiniciar();
     this.practica?.ponerVelocidades({
       v1: this.aircraft.decisionSpeed,
@@ -30248,6 +30256,8 @@ export class Game {
     ctx.actitudEnTierra = state.onGround ? actitudEnTierra(this.aircraft, state.airspeed) : 0;
     ctx.movimientoReducido = this.reducedMotion;
     ctx.traqueteo = TRAQUETEO[this.superficie];
+    // Lo que la fila de botones tapa encima de la brújula del parabrisas. Ver `loQueTapaLaFilaDeArriba`.
+    ctx.arribaTapado = this.loQueTapaLaFilaDeArriba();
     ctx.pasaje = this.aircraftMesh.pasaje ?? null;
     // Los frenos de tierra, en el avión cuyo modelo los lleva: la de cola se
     // acerca en tierra por ellos. Ver `sitioDeLaCola`.
@@ -30391,6 +30401,47 @@ export class Game {
   /** El sitio del paisaje que enseña la toma de ahora, para apuntarle. */
   private paisajeDeLaToma: SitioDelPaisaje | null = null;
 
+  /** Lo que tapa la fila de arriba encima de la brújula, y cuándo se midió, ms. */
+  private readonly filaDeArriba = { tapa: 0, medida: Number.NEGATIVE_INFINITY };
+
+  /**
+   * **Lo que la fila de botones de arriba tapa encima de la brújula del
+   * parabrisas**, como fracción del alto de la pantalla: el borde de abajo de
+   * lo que la fila tiene en la columna donde cae la brújula, con el ángulo de
+   * ahora. Cero sin brújula o fuera de la cabina. Se mide dos veces por
+   * segundo, que la fila solo cambia al girar la pantalla o al cambiar de
+   * vista. Ver `encuadreDeCabina` en `cameras/dentro.ts` (H26q).
+   */
+  private loQueTapaLaFilaDeArriba(): number {
+    const b = this.aircraftMesh.ojo?.encuadre?.brujula;
+    if (!b || this.cameraMode !== "cockpit") return 0;
+    const ahora = performance.now();
+    if (ahora - this.filaDeArriba.medida < 500) return this.filaDeArriba.tapa;
+    this.filaDeArriba.medida = ahora;
+    const fila = document.querySelector(".hud__arriba");
+    const ancho = window.innerWidth;
+    const alto = window.innerHeight;
+    if (!fila || !alto) return (this.filaDeArriba.tapa = 0);
+    // Dónde cae la brújula a lo ancho: su tangente llevada a la pantalla con el ángulo de ahora.
+    const t = Math.tan(((this.camera.fov / 2) * Math.PI) / 180) * this.camera.aspect;
+    const desde = ancho * (0.5 + (b.x - b.medio) / (2 * t));
+    const hasta = ancho * (0.5 + (b.x + b.medio) / (2 * t));
+    let tapa = 0;
+    /*
+     * **Los botones de la fila, no todo lo que cuelga de ella**: medido con
+     * todo, un desplegable escondido o una caja estirada salían hasta media
+     * pantalla, y la cámara se iba al tope del ángulo. Solo los que empiezan
+     * en la cuarta parte de arriba, que es donde está la fila.
+     */
+    for (const el of fila.querySelectorAll("button")) {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height || r.top > alto / 4 || r.right < desde || r.left > hasta) continue;
+      if (getComputedStyle(el).visibility === "hidden") continue;
+      tapa = Math.max(tapa, r.bottom);
+    }
+    return (this.filaDeArriba.tapa = Math.min(0.5, tapa / alto));
+  }
+
   // ── «La brújula baila» ───────────────────────────────────────────────
   //
   // Ver `flight/brujula.ts` y `flight/brujula-que-baila.ts`. Aquí solo se
@@ -30453,6 +30504,8 @@ export class Game {
     readonly bailoHasta: number;
     readonly tardo: number | null;
     readonly camara: string;
+    /** Si ya dijo, estando fuera, que la brújula está en la cabina. */
+    readonly dijoLaCabina: boolean;
   } | null {
     const b = this.brujulaQueBaila;
     if (!b) return null;
@@ -30471,6 +30524,7 @@ export class Game {
       bailoHasta: b.bailoHasta,
       tardo: b.tardo,
       camara: this.cameraMode,
+      dijoLaCabina: this.brujulaFuera.dicho,
     };
   }
 
@@ -30479,6 +30533,23 @@ export class Game {
     const b = this.brujulaQueBaila;
     if (!b) return;
     this.hud.mapa.ponerEstela(b.fase === "cerrada" ? null : () => this.libreta.traza);
+    /*
+     * **Fuera de la cabina, la brújula no se ve**: el cuadro plano lleva el
+     * direccional y no la brújula, como un panel de verdad. No se vuelve a la
+     * cabina sola —la vista es de quien juega, y el ejercicio ya la puso al
+     * empezar—: se dice dónde está, una vez, a los tres segundos de salir, y
+     * vuelve a poder decirse al volver al asiento, que es cuando cambia algo.
+     */
+    const fuera = this.cameraMode !== "cockpit" && b.fase !== "cerrada";
+    if (!fuera) this.brujulaFuera = { segundos: 0, dicho: false };
+    else if (!this.brujulaFuera.dicho && (this.brujulaFuera.segundos += dt) >= 3) {
+      this.brujulaFuera.dicho = true;
+      this.hud.senal.mostrar("brujula-las-dos", this.rotulo("ejercicio.brujula.cabina", "palabra.mira"), null, {
+        segundos: 10,
+        prioridad: IMPORTANTE,
+      });
+      this.decirDelEjercicio("ejercicio.brujula.cabina", "mando");
+    }
     const s = this.flight.state;
     const sucesos = b.paso(
       {

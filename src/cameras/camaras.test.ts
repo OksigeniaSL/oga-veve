@@ -505,6 +505,29 @@ describe("el encuadre de la cabina", () => {
     // En el teléfono, más apaisado, ya caben con el de siempre.
     expect(telefono.fov).toBe(FOV_DE_CABINA);
   });
+  /*
+   * **Y la brújula del parabrisas, entera por debajo de la fila de botones**
+   * (H26q): colgada del travesaño, el botón del mapa le tapaba el borde de
+   * arriba y las cifras que dan el rumbo.
+   */
+  it("la brújula del parabrisas, entera por debajo de lo que tapa la fila de arriba", () => {
+    // La caja, muy por encima de los ojos: con esta visera cae en el 9 % de la pantalla, debajo del botón.
+    const conBrujula = { ...avioneta, brujula: { arriba: (-18 * Math.PI) / 180, x: 0, medio: 0.05 } };
+    const enPantalla = (e: { inclinacion: number; fov: number }, caida: number) =>
+      0.5 - Math.tan(e.inclinacion - caida) / (2 * Math.tan(((e.fov / 2) * Math.PI) / 180));
+    const sin = encuadreDeCabina(conBrujula, 1.6);
+    const tapa = 0.1;
+    const con = encuadreDeCabina(conBrujula, 1.6, tapa);
+    // Antes, debajo del botón; ahora, por debajo de él con su poco de aire.
+    expect(enPantalla(sin, conBrujula.brujula.arriba)).toBeLessThan(tapa);
+    expect(enPantalla(con, conBrujula.brujula.arriba)).toBeGreaterThanOrEqual(tapa);
+    // Y los relojes, enteros por abajo, aunque haya que abrir el ángulo.
+    const t = Math.tan(((con.fov / 2) * Math.PI) / 180);
+    expect(0.5 + Math.tan(conBrujula.abajo - con.inclinacion) / (2 * t)).toBeLessThanOrEqual(0.97);
+    // Sin nada encima, o sin brújula, como antes.
+    expect(encuadreDeCabina(conBrujula, 1.6, 0)).toEqual(sin);
+    expect(encuadreDeCabina(avioneta, 1.6, tapa)).toEqual(encuadreDeCabina(avioneta, 1.6));
+  });
   it("sin cabina que medir, lo de siempre", () => {
     const r = encuadreDeCabina(undefined, 1.6);
     expect(grados(r.inclinacion)).toBeCloseTo(12);

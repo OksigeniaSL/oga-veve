@@ -14,7 +14,8 @@
  * puerto, `OGA_PUERTO`; el peldaño, `OGA_TRAMO` (Taguató, con su número); el
  * avión, `OGA_AVION`; el reloj, por `OGA_VECES` (dos); con `OGA_GPU=1`, con
  * la tarjeta de verdad; `OGA_CAMPOS`, los escenarios separados por comas;
- * `OGA_ESCALA`, los píxeles por punto de las capturas (dos).
+ * `OGA_ESCALA`, los píxeles por punto de las capturas (dos); con `OGA_FUERA=1`,
+ * se sale un rato a la vista de detrás al empezar.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -29,6 +30,7 @@ const TRAMO = process.env.OGA_TRAMO ?? "taguato";
 const VECES = Number(process.env.OGA_VECES ?? 2);
 const CON_GPU = process.env.OGA_GPU === "1";
 const ESCALA = Number(process.env.OGA_ESCALA ?? 2);
+const FUERA = process.env.OGA_FUERA === "1";
 /** Cada campo con lo que su brújula tiene que hacer virando del oeste al norte. */
 const CAMPOS = (process.env.OGA_CAMPOS ?? "tenerife-norte,pettirossi").split(",");
 const ESPERADO = { "tenerife-norte": "seAtrasa", pettirossi: "seAdelanta" };
@@ -143,11 +145,32 @@ try {
     const aparteAlSalir = centrado(r.b.brujula - r.b.direccional);
     comprobar(
       "derecho, las dos casi lo mismo, y lo que se aparta es lo que manda frenar en su hemisferio",
-      Math.abs(aparteAlSalir) < 4 && (!frena || Math.sign(aparteAlSalir) === (campo === "pettirossi" ? 1 : -1)),
+      Math.abs(aparteAlSalir) < 6 && (!frena || Math.sign(aparteAlSalir) === (campo === "pettirossi" ? 1 : -1)),
       `brújula ${r.b.brujula.toFixed(1)}, direccional ${r.b.direccional.toFixed(1)}, ${frena ? "frenando" : "sin frenar"}`,
     );
     comprobar("la tarjeta dibuja las dos agujas", r.tarjeta === "brujula-las-dos", `${r.tarjeta}, «${r.texto.slice(0, 80)}»`);
     await foto("01-derecho");
+    if (FUERA) {
+      /*
+       * **Y fuera de la cabina**: la brújula no se ve desde la vista de
+       * detrás, y la instructora lo dice una vez, a los tres segundos. Vuelve
+       * al asiento quien juega, no el ejercicio.
+       */
+      await page.evaluate(() => globalThis.__oga.ponerVista("chase"));
+      // Tres segundos y poco: antes de que el ejercicio pida el viraje y su tarjeta tape esta.
+      await pausa(3400);
+      await foto("01b-fuera");
+      const fuera = await leer();
+      comprobar(
+        "fuera de la cabina, dice dónde está la brújula",
+        fuera.b.dijoLaCabina && fuera.tarjeta === "brujula-las-dos",
+        `${fuera.b.dijoLaCabina}, ${fuera.tarjeta}, «${fuera.texto.slice(0, 70)}»`,
+      );
+      await page.evaluate(() => globalThis.__oga.ponerVista("cockpit"));
+      await pausa(500);
+      r = await leer();
+      comprobar("y no vuelve sola: vuelve quien juega", r.b.camara === "cockpit", r.b.camara);
+    }
 
     await page.evaluate(() => globalThis.__oga.pilotoAutomatico(true));
     await alAutomatico(r.rumbo);

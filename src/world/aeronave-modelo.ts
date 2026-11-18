@@ -476,7 +476,19 @@ export interface EncuadreDeCabina {
   readonly visera: number;
   readonly lados: number;
   readonly abajo: number;
+  /**
+   * **La brújula del parabrisas**, en el avión que la lleva: cuánto cae el
+   * borde de arriba de su caja por debajo de los ojos (rad, negativo si queda
+   * por encima) y dónde cae a lo ancho, como tangente desde el frente —`x`, el
+   * centro; `medio`, la mitad del ancho—. Cuelga del travesaño, en lo más
+   * alto del parabrisas, y desde el asiento quedaba debajo de la fila de
+   * botones de arriba (H26q). Ver `encuadreDeCabina`.
+   */
+  readonly brujula?: { readonly arriba: number; readonly x: number; readonly medio: number };
 }
+
+/** La caja y la cara de la brújula del parabrisas: ver `brujula` en `modelos/comun.py`. */
+const BRUJULA = /^brujula(-caja-negra)?$/;
 
 const INSTRUMENTO = /^(reloj-|pantalla-|boton-)/;
 
@@ -491,12 +503,16 @@ function conSuEncuadre(
   let visera: number | undefined;
   let lados = 0;
   let abajo = -Infinity;
+  let brujulaArriba = Infinity;
+  let brujulaIzquierda = Infinity;
+  let brujulaDerecha = -Infinity;
   raiz.traverse((o) => {
     const esVisera = o.name === "visera";
+    const esBrujula = BRUJULA.test(o.name);
     const esInstrumento =
       INSTRUMENTO.test(o.name) ||
       (o as { material?: { name?: string } }).material?.name === "g1000_display";
-    if (!esVisera && !esInstrumento) return;
+    if (!esVisera && !esInstrumento && !esBrujula) return;
     const pos = (o as { geometry?: { attributes?: { position?: {
       count: number; getX(i: number): number; getY(i: number): number; getZ(i: number): number;
     } } } }).geometry?.attributes?.position;
@@ -508,6 +524,14 @@ function conSuEncuadre(
       const delante = ojo.z - v.z;
       if (delante <= 0.05) continue;
       const caida = Math.atan2(ojo.y - v.y, delante);
+      if (esBrujula) {
+        brujulaArriba = Math.min(brujulaArriba, caida);
+        const x = (v.x - ojo.x) / delante;
+        brujulaIzquierda = Math.min(brujulaIzquierda, x);
+        brujulaDerecha = Math.max(brujulaDerecha, x);
+        // Solo para esto: la brújula no cuenta para los lados ni para abajo.
+        if (!esInstrumento) continue;
+      }
       if (esVisera) {
         // La visera tapa por su punto más alto en pantalla.
         if (visera === undefined || caida < visera) visera = caida;
@@ -518,7 +542,10 @@ function conSuEncuadre(
     }
   });
   if (visera === undefined || !Number.isFinite(abajo)) return ojo;
-  return { ...ojo, encuadre: { visera, lados, abajo } };
+  const brujula = Number.isFinite(brujulaArriba)
+    ? { arriba: brujulaArriba, x: (brujulaIzquierda + brujulaDerecha) / 2, medio: (brujulaDerecha - brujulaIzquierda) / 2 }
+    : undefined;
+  return { ...ojo, encuadre: { visera, lados, abajo, ...(brujula ? { brujula } : {}) } };
 }
 
 /**
