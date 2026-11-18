@@ -2232,7 +2232,10 @@ con tope, y con `OGA_VOCES=fichero` vuelca la línea de tiempo de la boca.
 Volado poniendo la rueda con la avioneta, **16 de 16**: antes 0,0 s · qnh 6,7
 · puesto 12,7 · baches 50,1 · pasaste 57,5. La de la cima se pidió con los
 baches sonando, cayó a los 57,4 por esperar y se pidió otra vez: es
-exactamente lo que se perdía.
+exactamente lo que se perdía. Con el JAZ 40, igual: 16 de 16, y la de la
+cima, otra vez detrás de los baches y pedida de nuevo. **Sin poner la
+rueda**, 15 de 15: antes 0,0 · qnh 6,7 · cerca 38,8 · baches 46,8 ·
+pasasteSinPoner 54,1, sin nada caído.
 
 ### «Rumbo y reloj» con el JAZ 40: el plan con una velocidad a la que no iba
 
@@ -2280,3 +2283,26 @@ Volado con el JAZ 40: **15 de 15**, el pueblo **debajo a 363 m** (de lado
 plan, HDG 129 y 13,7 minutos. En el altímetro, la aguja empieza a 5.645 ft
 con la pedida en 5.600, y 16 de 16: lo que queda es lo que sube cualquier
 avión al soltarlo equilibrado (H26q), no lo que frenaba.
+
+### «La brújula baila» con el JAZ 25: el umbral era del banco
+
+Con el biplano en Asunción el banco daba «la brújula se aparta del
+direccional ocho grados o más — 7,8° como mucho», y el ejercicio, que dice
+«miente» desde seis (`MIENTE`), había dicho ya su «se adelanta». Los ocho
+eran un número del banco, puesto mirando la avioneta.
+
+**El biplano vira menos**, y es lo de verdad. El automático vira al ritmo
+estándar, tres grados por segundo, y el alabeo que pide eso sale de la
+velocidad: a 96 nudos, los que lleva el JAZ 25 en el viraje, son 14,7°; la
+avioneta, más rápida, lleva 17. El error de viraje crece con el alabeo, así
+que con el biplano la brújula se adelanta 7,5° pasada la mitad del viraje
+(con el direccional en 326,5 y 14,5° de alabeo), y con la avioneta, 10,8.
+La física de la brújula no se ha tocado.
+
+El banco mide ahora con el umbral del ejercicio, que el juego le da
+(`miente` en `brujulaParaBanco`), y cuenta el alabeo y la velocidad del
+viraje. La foto «en mitad del viraje» se hace en la segunda mitad: con seis
+grados, salía al entrar en el viraje, con el morro todavía al oeste, donde el
+biplano, que frena al alabear, también se aparta siete grados y medio por el
+tirón de la tarjeta y el error de aceleración. Volado con el JAZ 25 en
+Pettirossi: **16 de 16**.

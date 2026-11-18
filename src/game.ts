@@ -1105,6 +1105,7 @@ import { Brujula } from "./flight/brujula";
 import {
   ALTURA_DE_LA_BRUJULA,
   BrujulaQueBaila,
+  MIENTE,
   RUMBO_DE_SALIDA,
   inclinacionDelCampo,
   type SucesoDeLaBrujula,
@@ -31273,6 +31274,11 @@ export class Game {
     readonly rumboPedido: number | null;
     readonly como: string | null;
     readonly mentiraMasGrande: number;
+    /**
+     * **Desde cuántos grados dice el ejercicio que miente**: el banco mide con
+     * esto y no con un número suyo. Ver `MIENTE`.
+     */
+    readonly miente: number;
     readonly bailoHasta: number;
     readonly tardo: number | null;
     readonly camara: string;
@@ -31293,6 +31299,7 @@ export class Game {
       rumboPedido: b.rumboPedido,
       como: b.como,
       mentiraMasGrande: b.mentiraMasGrande,
+      miente: MIENTE,
       bailoHasta: b.bailoHasta,
       tardo: b.tardo,
       camara: this.cameraMode,
