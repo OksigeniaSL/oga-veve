@@ -14,12 +14,18 @@
  * - **Salir de la final subiendo es la frustrada**, y la frustrada ya tiene su
  *   voz y su tarjeta (`vuelo.frustrada`, con el sonido del logro): un suceso,
  *   una voz. La tarjeta de la fase sale igual, que no habla; la voz no.
+ *   Subiendo quiere decir lo subido desde lo más bajo de esa final, no el
+ *   variómetro de ese instante: quien se va con una avioneta sube a tirones,
+ *   nivelando cada vez que la velocidad se le cae, y en el banco salía de la
+ *   final justo en uno de esos tirones.
  * - **Y la final no se vuelve a contar hasta que haya otra final**: la que ve
- *   la torre (`flight/final-de-la-torre.ts`), que se pierde al irse y se
- *   vuelve a coger viniendo otra vez hacia la pista por su lado de
- *   aproximación. Un parpadeo de la fase del plan subiendo sobre la pista no
- *   es otra aproximación, y un aviso no vuelve por el reloj, sino cuando
- *   cambia algo que pasa.
+ *   la torre (`flight/final-de-la-torre.ts`), cogida otra vez **por delante
+ *   del umbral**, viniendo hacia la pista por su lado de aproximación, después
+ *   de haber estado fuera de ese lado. La de la torre sola no basta: cuenta
+ *   siempre la fase «final» del plan, y el parpadeo de esa fase subiendo
+ *   encima de la pista la encendía, que es justo lo que no es otra
+ *   aproximación. Un aviso vuelve cuando cambia algo que pasa, no por el
+ *   reloj.
  *
  * En tierra se olvida todo: el vuelo siguiente empieza de cero.
  *
@@ -35,16 +41,41 @@ export type AnuncioTrasIrse =
   /** Nada: se apunta la fase y no se anuncia. */
   | "nada";
 
-/** Subiendo de verdad, m/s: un bache no es irse. El de `flight/final-de-la-torre.ts`. */
-export const SUBIENDO = 1;
+/**
+ * **Lo que hay que haber subido desde lo más bajo de la final para que salir
+ * de ella sea irse al aire**, m: quince, los de irse con el gas de despegue
+ * en `flight/final-de-la-torre.ts` (`SUBIDA_CON_GAS`). La fase del plan sale
+ * por arriba a los veinte; quien pasa la pista de largo sin subir, con nada.
+ */
+export const SUBIDA_DE_IRSE = 15;
+
+/** Lo que el juego le dice en cada paso. */
+export interface LoQueSeVeTrasIrse {
+  readonly enElAire: boolean;
+  /** Si la torre te ve en final. */
+  readonly enLaFinalDeLaTorre: boolean;
+  /**
+   * Si se está **por delante del umbral**, dentro del cono de la aproximación
+   * de esa pista (`alUmbralEnLaAproximacion` no es `null`).
+   */
+  readonly delanteDelUmbral: boolean;
+  /** Si la fase anunciada ahora es la final del plan. */
+  readonly enLaFinal: boolean;
+  /** Altura sobre la pista, m. */
+  readonly altura: number;
+}
 
 export class LaFinalTrasIrse {
   /** Desde que se salió de la final subiendo, hasta que se coge otra. */
   private porCoger = false;
-  /** Y si desde entonces se ha estado fuera de la final de la torre. */
-  private fueraDeLaDeLaTorre = false;
+  /** Y si desde entonces se ha estado fuera del lado de la aproximación. */
+  private haSalido = false;
   /** Si en esta vuelta ya salió la tarjeta de «en vuelo». */
   private tarjetaPuesta = false;
+  /** Lo más bajo de la final anunciada, m sobre la pista. */
+  private masBajo = Infinity;
+  /** La altura del último paso, m. */
+  private altura = 0;
 
   /** Si ahora se está entre irse y la final siguiente. Lo mira el banco. */
   get yendose(): boolean {
@@ -52,34 +83,37 @@ export class LaFinalTrasIrse {
   }
 
   /**
-   * **Cada paso**, con lo que dice la torre: la final siguiente empieza al
-   * volver a entrar en la suya después de haber salido. En tierra, de cero.
+   * **Cada paso**, antes de anunciar nada: lo más bajo de la final, y la
+   * final siguiente, que empieza al volver a la de la torre por delante del
+   * umbral después de haber salido de ese lado. En tierra, de cero.
    */
-  mirar(enLaFinalDeLaTorre: boolean, enElAire: boolean): void {
-    if (!enElAire) {
+  mirar(v: LoQueSeVeTrasIrse): void {
+    this.altura = v.altura;
+    if (!v.enElAire) {
       this.porCoger = false;
-      this.fueraDeLaDeLaTorre = false;
+      this.haSalido = false;
       this.tarjetaPuesta = false;
+      this.masBajo = Infinity;
       return;
     }
+    if (v.enLaFinal) this.masBajo = Math.min(this.masBajo, v.altura);
     if (!this.porCoger) return;
-    if (!enLaFinalDeLaTorre) this.fueraDeLaDeLaTorre = true;
-    else if (this.fueraDeLaDeLaTorre) {
+    if (!v.delanteDelUmbral) this.haSalido = true;
+    else if (this.haSalido && v.enLaFinalDeLaTorre) {
       this.porCoger = false;
-      this.fueraDeLaDeLaTorre = false;
+      this.haSalido = false;
       this.tarjetaPuesta = false;
     }
   }
 
-  /**
-   * **Al cambiar la fase anunciada**, qué se anuncia de la nueva. `vertical`,
-   * m/s, positiva subiendo.
-   */
-  alCambiar(antes: string, ahora: string, enElAire: boolean, vertical: number): AnuncioTrasIrse {
+  /** **Al cambiar la fase anunciada**, qué se anuncia de la nueva. */
+  alCambiar(antes: string, ahora: string, enElAire: boolean): AnuncioTrasIrse {
     if (!enElAire) return "entero";
-    if (antes === "final" && ahora === "en-vuelo" && vertical > SUBIENDO && !this.porCoger) {
+    const subido = this.altura - this.masBajo;
+    if (antes === "final") this.masBajo = Infinity;
+    if (antes === "final" && ahora === "en-vuelo" && subido >= SUBIDA_DE_IRSE && !this.porCoger) {
       this.porCoger = true;
-      this.fueraDeLaDeLaTorre = false;
+      this.haSalido = false;
       this.tarjetaPuesta = true;
       return "solo la tarjeta";
     }

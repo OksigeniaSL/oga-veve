@@ -28073,7 +28073,17 @@ export class Game {
     const estabaEnLaFinal = this.enLaFinalDeLaTorre;
     this.enLaFinalDeLaTorre = this.mirarLaFinalDeLaTorre(vista.fase);
     // Y lo que cuenta la fase tras irse al aire: ver `flight/la-final-tras-irse.ts`.
-    this.laFinalTrasIrse.mirar(this.enLaFinalDeLaTorre, !this.flight.state.onGround);
+    {
+      const s = this.flight.state;
+      const campo = this.elCampo();
+      this.laFinalTrasIrse.mirar({
+        enElAire: !s.onGround,
+        enLaFinalDeLaTorre: this.enLaFinalDeLaTorre,
+        delanteDelUmbral: alUmbralEnLaAproximacion(campo.pista, s.position.x, s.position.z) !== null,
+        enLaFinal: this.faseAnunciada === "final",
+        altura: s.position.y - this.cotaDelCampo(campo),
+      });
+    }
     /*
      * **Y el permiso es de una aproximación.** Se acaba yéndose al aire,
      * dándose la vuelta o tocando: lo que venga después es otra final con su
@@ -28250,12 +28260,7 @@ export class Game {
        * «en vuelo» sale, callada; y la final no se vuelve a contar hasta que
        * haya otra final. Ver `flight/la-final-tras-irse.ts`.
        */
-      const trasIrse = this.laFinalTrasIrse.alCambiar(
-        antes,
-        vista.fase,
-        !this.flight.state.onGround,
-        this.flight.state.verticalSpeed,
-      );
+      const trasIrse = this.laFinalTrasIrse.alCambiar(antes, vista.fase, !this.flight.state.onGround);
       const callada =
         this.elSenaleroLlevaLaLlegada(vista) ||
         this.elRemolqueLlevaLaSalida(vista) ||
