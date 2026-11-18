@@ -2119,3 +2119,58 @@ más corta. Sin grabar: ver «Lo que queda».
 
 Y `scripts/ver-el-cruzado.mjs`, el banco de navegador, con el piloto de la
 mesa metido en la página (`__oga.pilotar`) y capturas desde fuera.
+
+### Volado
+
+`scripts/ver-el-cruzado.mjs`, con la tarjeta de verdad (`OGA_GPU=1`: ANGLE
+sobre la Intel Iris Xe), el JAZ 20 en Los Rodeos y el piloto de la mesa en la
+página:
+
+- **El cangrejo en Taguato**, 7 de 7: en la final de la 12 con 11,3 kt de
+  costado; el cangrejo contado a 172 m, 9,1° al viento cuando el triángulo
+  pedía 8,6 con la verdadera de ese momento, con la tarjeta del avión torcido
+  y «9° al viento» escrito; el pie derecho pedido en la corta; y al tocar, el
+  morro a 0,8° de la pista, felicitado. Desde fuera, el morro apartado de la
+  raya a media final y derecho al tocar.
+- **El ala baja en Taguato Ruvicha**, 5 de 5: el ala izquierda abajo 3,2° con
+  el morro a 1,5° del eje, la tarjeta del avión inclinado, y al tocar el
+  morro a 1,1° y el ala del viento 1,1° abajo: «primero la rueda del viento».
+- **La lámina**: los seis dibujos de la tarjeta y las dos fichas del hangar.
+
+La primera tirada del cangrejo salió 4 de 7, y enseñó dos cosas que se
+arreglaron en la misma tanda: el triángulo se contaba con la velocidad de
+aproximación de la ficha y la final empieza más deprisa y con los flaps
+arriba (pedía 10° y el avión llevaba 6), y la altura se medía desde la cota
+del campo, que en Los Rodeos no es la de toda la pista: el pie se pedía tarde
+y el piloto tocaba antes de enderezar, con 8,5° de cangrejo, contado como
+torcido.
+
+### Lo que queda
+
+- **Las frases, sin grabar**: las nueve con voz de «Las frases». Hasta
+  entonces, mudas en Brave y en Linux; el ejercicio se sigue por la tarjeta,
+  que lleva el dibujo y la frase.
+- **El ala baja en Taguato** pediría que el timón automático se apartara en
+  el aire mientras quien juega pisa, como ya hace en el suelo («lo que mueva
+  quien juega es suyo»). Es de verdad —un amortiguador de guiñada no le
+  discute el pie al piloto—, pero cambia todos los vuelos de Tukã y Taguato
+  con un pie puesto, y se deja para decidirlo aparte.
+- **«Toca primero con una rueda»** se mide por la inclinación al tocar: el
+  modelo tiene un apoyo, no dos ruedas, y la rueda del viento no toca antes
+  que la otra en la física. Tampoco hay carga lateral en el tren al tocar
+  torcido; lo que se ve es la salida del eje.
+- **En Tukã, tocar torcido da un bandazo**: el timón de tierra, con el pie
+  entero de la ayuda, endereza el JAZ 20 pero se va 18 m del eje en cinco
+  segundos, más que en Taguato (6). Es el timón de tierra de todos los
+  aterrizajes (`timonEnTierra`), no del cruzado, y no se ha tocado.
+- **La vista de fuera** no la pone el ejercicio: se elige con la tecla de
+  siempre. La de cola mira por donde va el avión, así que el cangrejo se ve
+  como el morro apartado de la raya, y el ala baja como el avión derecho e
+  inclinado; con nueve grados de cangrejo y tres de ala, las dos se
+  distinguen, pero el ala baja de tres grados es discreta, que es lo de
+  verdad. Lo que se ve seguro, en cualquier vista, es el dibujo de la tarjeta.
+- **Los reactores**: el cangrejo sale solo con ellos igual que con todos (es
+  el triángulo), pero el piloto de la mesa no está afinado para ellos y el
+  enderezar solo se ha medido con los de hélice.
+- **Un solo campo**: hoy solo Los Rodeos da ocho nudos de costado con su
+  viento de siempre.
