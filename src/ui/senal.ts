@@ -1144,7 +1144,7 @@ function dosAgujas(o: {
     <circle cx="${cx}" cy="13.4" r="5.3" fill="#0b1322" />
     <g class="${clase}">
       <circle cx="${cx}" cy="13.4" r="5.3" fill="none" stroke="currentColor" stroke-width="0.9" />
-      ${fantasmas ? [-28, 28].map((g) => `<path d="M${cx} 13.4 V9" transform="rotate(${giro + g} ${cx} 13.4)" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.45" />`).join("") : ""}
+      ${fantasmas ? [-28, 28].map((g) => `<path d="M${cx} 13.4 V9" transform="rotate(${giro + g} ${cx} 13.4)" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.6" />`).join("") : ""}
       <path d="M${cx} 13.4 V8.6" transform="rotate(${giro} ${cx} 13.4)" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
       <circle cx="${cx}" cy="13.4" r="0.9" />
     </g>`;
