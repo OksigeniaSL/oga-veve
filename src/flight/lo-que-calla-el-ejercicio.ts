@@ -39,11 +39,14 @@
  *   mil quinientos pies encima del río, y su tira tapó la radio del ejercicio.
  *   No es de la pista, y por eso H26f no la había visto: salía solo en los
  *   aviones con pasaje, y los bancos de radio volaban la avioneta.
- * - **Lo que explica la instructora de los gases automáticos** (H26u): la
- *   palanca que se mueve sola al poner el automático, o que se queda al
- *   soltarse. Se explica una vez por vuelo, y en estos ejercicios el
- *   automático se pone en mitad de lo que se practica: la explicación no se
- *   gasta aquí, y queda para el vuelo siguiente.
+ * - **Lo que la instructora explica una vez de la cabina** (H26u): la
+ *   palanca de los gases automáticos que se mueve sola al poner el
+ *   automático, o que se queda al soltarse; y qué es el rombo del TCAS en el
+ *   mapa, con calma y en vuelo tranquilo (`explicarElTrafico`). Las dos se
+ *   explican una vez, y en estos ejercicios caen en mitad de lo que se
+ *   practica: no se gastan aquí, y quedan para el vuelo siguiente. El aviso
+ *   de tráfico de verdad, «mirá: hay otro avión cerca», no pasa por aquí: es
+ *   seguridad, y sigue.
  *
  * **Lo que no se calla nunca** es la seguridad: la máquina del avión
  * (*traffic*, *terrain*, la pérdida), los avisos del cuadro y la información
@@ -65,8 +68,8 @@ export interface LoQueCalla {
   readonly laVentanilla: boolean;
   /** La megafonía de la cabina: los anuncios al pasaje y lo que cuenta la comandante en crucero. */
   readonly laMegafonia: boolean;
-  /** La instructora explicando los gases automáticos: que se mueven solos, que se soltaron. */
-  readonly losGases: boolean;
+  /** La instructora explicando la cabina una vez: los gases automáticos y el rombo del TCAS. */
+  readonly lasExplicaciones: boolean;
 }
 
 /** Sin ejercicio, o con uno que acaba en la pista: no se calla nada. */
@@ -76,7 +79,7 @@ export const NO_CALLA_NADA: LoQueCalla = {
   laTorre: false,
   laVentanilla: false,
   laMegafonia: false,
-  losGases: false,
+  lasExplicaciones: false,
 };
 
 /**
@@ -104,6 +107,6 @@ export function loQueCallaElEjercicio(
 ): LoQueCalla {
   if (!ejercicio || cerrado) return NO_CALLA_NADA;
   if (ejercicio.acabaEnElAire)
-    return { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true, laMegafonia: true, losGases: true };
+    return { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true, laMegafonia: true, lasExplicaciones: true };
   return seVaAlAire ? SOLO_LA_FASE : NO_CALLA_NADA;
 }

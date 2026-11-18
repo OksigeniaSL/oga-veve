@@ -14,7 +14,7 @@ import juego from "../game.ts?raw";
 import { EJERCICIOS, ejercicioPorId, type EjercicioId } from "./ejercicios";
 import { NO_CALLA_NADA, loQueCallaElEjercicio } from "./lo-que-calla-el-ejercicio";
 
-const TODO = { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true, laMegafonia: true, losGases: true };
+const TODO = { laFase: true, laFrecuencia: true, laTorre: true, laVentanilla: true, laMegafonia: true, lasExplicaciones: true };
 /**
  * Los que se cierran en el aire: los de radio menos el ILS, la deriva, que acaba encima de su puente, el rumbo de noche, encima del río, y la estima, que acaba con el reloj a cero.
  * Y el altímetro que miente, pasada la cima (H26p), y la brújula, con la tarjeta quieta (H26q); y el giróscopo, puesto con ella (H26r).
@@ -127,12 +127,16 @@ describe("y el juego lo calla donde nace cada cosa", () => {
     expect(cabina).toMatch(/this\.loQueCalla\.laMegafonia/);
   });
 
-  it("y la instructora no explica los gases automáticos, ni al ponerlos ni al soltarse", () => {
+  it("y la instructora no explica los gases automáticos, ni al ponerlos ni al soltarse, ni el rombo del TCAS", () => {
     const poner = cuerpoDe(/\n {2}ponerPilotoAutomatico\(/);
     expect(poner, "no se encontró ponerPilotoAutomatico en game.ts").not.toBe("");
-    expect(poner).toMatch(/!this\.loQueCalla\.losGases[^;]*\s*this\.explicarUnaVez\("vuelo\.gasesAutomaticos"\)/);
+    expect(poner).toMatch(/!this\.loQueCalla\.lasExplicaciones[^;]*\s*this\.explicarUnaVez\("vuelo\.gasesAutomaticos"\)/);
     const soltar = cuerpoDe(/\n {2}private soltarLosGases\(\): void \{/);
     expect(soltar, "no se encontró soltarLosGases en game.ts").not.toBe("");
-    expect(soltar).toMatch(/!this\.loQueCalla\.losGases[^;]*\s*this\.explicarUnaVez\("vuelo\.gasesSueltos"\)/);
+    expect(soltar).toMatch(/!this\.loQueCalla\.lasExplicaciones[^;]*\s*this\.explicarUnaVez\("vuelo\.gasesSueltos"\)/);
+    // H26u, el JAZ 60: «ese rombo es otro avión» no es del ejercicio; el aviso de tráfico sí sigue.
+    const rombo = cuerpoDe(/\n {2}private explicarElTrafico\(\): void \{/);
+    expect(rombo, "no se encontró explicarElTrafico en game.ts").not.toBe("");
+    expect(rombo).toMatch(/this\.loQueCalla\.lasExplicaciones/);
   });
 });

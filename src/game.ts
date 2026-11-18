@@ -3657,7 +3657,8 @@ export class Game {
    * En el peldaño de cabina no: ahí la pantalla se lee.
    */
   private explicarElTrafico(): void {
-    if (this.traficoExplicado || canalesDe(this.tier.avisos).cabina) return;
+    // Ni en un ejercicio en el aire: no es suyo, y queda para el vuelo siguiente (H26u). Ver `loQueCalla`.
+    if (this.traficoExplicado || canalesDe(this.tier.avisos).cabina || this.loQueCalla.lasExplicaciones) return;
     const s = this.flight.state;
     /*
      * **Con calma quiere decir en vuelo tranquilo**: alto y sin subir ni
@@ -4144,7 +4145,7 @@ export class Game {
   /**
    * **Lo que el ejercicio de hoy calla mientras dura**: en los de radio, que se
    * cierran en el aire, la fase del plan, la torre, su frecuencia, la
-   * ventanilla, la megafonía y la explicación de los gases (H26u); y en el
+   * ventanilla, la megafonía y lo que se explica de la cabina (H26u); y en el
    * ILS, desde que pide la frustrada, la fase. Ver
    * `flight/lo-que-calla-el-ejercicio.ts`.
    */
@@ -33780,7 +33781,7 @@ export class Game {
       (!puesto && this.gasDeLaFinal === "gases");
     this.pintarQuienLlevaElGas();
     // Con un ejercicio en el aire, no: no es suyo, y se cuenta en el vuelo siguiente (H26u).
-    if (puesto && llevaGasesAutomaticos(this.aircraft) && !this.loQueCalla.losGases)
+    if (puesto && llevaGasesAutomaticos(this.aircraft) && !this.loQueCalla.lasExplicaciones)
       this.explicarUnaVez("vuelo.gasesAutomaticos");
     /*
      * **Y con ventanilla ALT, a la altura de la ventanilla.**
@@ -34250,7 +34251,7 @@ export class Game {
     this.objetivos = { ...this.objetivos, velocidad: null };
     this.pintarQuienLlevaElGas();
     this.avisar("attention");
-    if (this.pilotoPuesto && this.gasDeLaFinalSueltoEn !== this.relojDelJuego && !this.loQueCalla.losGases)
+    if (this.pilotoPuesto && this.gasDeLaFinalSueltoEn !== this.relojDelJuego && !this.loQueCalla.lasExplicaciones)
       this.explicarUnaVez("vuelo.gasesSueltos");
   }
 

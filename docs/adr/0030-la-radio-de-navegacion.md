@@ -929,11 +929,13 @@ ejercicio— y **la explicación de los gases automáticos** de la instructora a
 poner el automático, la palanca que se mueve sola. Las dos salen solo en los
 aviones con pasaje o con gases, y los bancos de radio volaban la avioneta.
 Ahora `LoQueCalla` lleva `laMegafonia` —los anuncios de `megafonia.paso` y lo
-que cuenta la comandante en crucero (`contarLaVidaDeCabina`)— y `losGases`
-—«vuelo.gasesAutomaticos» al ponerlos y «vuelo.gasesSueltos» al soltarse—,
-las dos mientras dura un ejercicio que se cierra en el aire. La megafonía
-espera y sigue al cerrarse; la explicación de los gases, que es de una vez
-por vuelo, no se gasta y queda para el vuelo siguiente. Lo que la tripulación
+que cuenta la comandante en crucero (`contarLaVidaDeCabina`)— y
+`lasExplicaciones` —«vuelo.gasesAutomaticos» al ponerlos, «vuelo.gasesSueltos»
+al soltarse y, visto después con el JAZ 60, qué es el rombo del TCAS
+(`explicarElTrafico`, «vuelo.traficoAbajo» y sus hermanas)—, las dos mientras
+dura un ejercicio que se cierra en el aire. La megafonía espera y sigue al
+cerrarse; las explicaciones, que son de una vez, no se gastan y quedan para
+el vuelo siguiente. El aviso de tráfico de verdad sigue: es seguridad. Lo que la tripulación
 dice por la turbulencia (`anunciarLaTurbulencia`) no pasa por aquí: es de
 seguridad, y sigue.
 
