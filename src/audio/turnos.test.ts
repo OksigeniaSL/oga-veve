@@ -27,6 +27,22 @@ describe("quién habla primero", () => {
     expect(new Set(orden).size).toBe(orden.length);
   });
 
+  it("y la voz que va detrás de su llamada, la siguiente: delante de lo tuyo y detrás de lo urgente (H29i)", () => {
+    const urgente = pesoDe("vuelo.terrenoSube", "urgente");
+    const tuyo = pesoDe("torre.canario.ofreceInterseccion@z-p", "mando");
+    for (const clave of [
+      "comandante.despegue",
+      "comandante.despegue~2",
+      "comandante.crosscheck",
+      "tripulacion.canario.llegada@tripulacion.canario.bienvenidos.tenerife-norte",
+    ]) {
+      expect(pesoDe(clave, "baja"), clave).toBeGreaterThan(tuyo);
+      expect(pesoDe(clave, "baja"), clave).toBeLessThan(urgente);
+    }
+    // Lo demás de la megafonía, que no lleva llamada, sigue con su peso.
+    expect(pesoDe("comandante.descenso", "baja")).toBeLessThan(pesoDe("vuelo.final", "normal"));
+  });
+
   it("la megafonía se reconoce por su clave, y la ventanilla de la avioneta no es suya", () => {
     expect(esDeLaMegafonia("comandante.crosscheck")).toBe(true);
     expect(esDeLaMegafonia("tripulacion.canario.servicio@mani")).toBe(true);

@@ -1160,6 +1160,16 @@ export class Boca {
    */
   cuantasHabladas = 0;
 
+  /**
+   * **Y lo que se cae antes de llegar a la boca**, en la misma lista: una
+   * llamada de cabina que pierde su momento esperando un hueco no pasa nunca
+   * por la cola, y sin esto se caía sin dejar rastro. Ver `atenderALasLlamadas`
+   * en `game.ts`.
+   */
+  apuntarLoQueSeCayoFuera(clave: string, porque: string): void {
+    this.apuntarDescarte(clave, porque);
+  }
+
   private apuntarDescarte(clave: string | undefined, porque: string): void {
     /*
      * **Con la hora**, que es lo que faltaba para poder leerlo.

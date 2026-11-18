@@ -42,6 +42,9 @@
  *    la radio del tráfico y la instructora esperan a que acabe. Y si tiene que
  *    esperar, espera más que un aviso —ver `CADUCA_LA_MEGAFONIA`—, porque un
  *    anuncio no describe un instante.
+ *    - **Y la voz que va detrás de su llamada no espera a nadie**: el tono ya
+ *      es la megafonía hablando, y lo que se pidió mientras sonaba va detrás.
+ *      Ver `PESO_TRAS_SU_LLAMADA`.
  * 6. **La frecuencia de los demás** (`baja`): lo que se dicen los otros aviones
  *    y la torre a ellos, y los elogios. Espera a que la frecuencia esté libre.
  * 7. **Lo que espera su hueco**: las lecciones del aire —`lecciones-del-aire.ts`—
@@ -57,6 +60,7 @@
  */
 
 import type { Urgencia } from "./boca";
+import { llamadaAntesDe } from "./tonos-de-cabina";
 
 /**
  * **Si esta frase es de la megafonía**: la comandante, la tripulación y lo que
@@ -82,6 +86,7 @@ const DE_LA_MEGAFONIA = /^(?:(?:comandante|tripulacion)\.|ventanilla(?:\.histori
  * peso —el descenso de emergencia va en `mando`— se queda con ese peso.
  */
 export function pesoDe(clave: string | undefined, urgencia: Urgencia): number {
+  if (urgencia !== "urgente" && vaDetrasDeSuLlamada(clave)) return PESO_TRAS_SU_LLAMADA;
   if (urgencia === "baja") return esDeLaMegafonia(clave) ? PESO_DE_LA_MEGAFONIA : PESO.baja;
   if (urgencia === "normal" && explicaUnMando(clave)) return PESO_DE_EXPLICAR_UN_MANDO;
   return PESO[urgencia];
@@ -99,6 +104,40 @@ const PESO_DE_LA_MEGAFONIA = 1;
 
 /** Y lo que explica un mando: por debajo de lo que pasa ahora. Ver `explicaUnMando`. */
 const PESO_DE_EXPLICAR_UN_MANDO = 2;
+
+/**
+ * **Y la voz que va detrás de su llamada, la siguiente**: por encima de lo
+ * tuyo y por debajo de lo urgente.
+ *
+ * La aguda y grave de la tripulación —o las tres de la emergencia— es el
+ * principio del anuncio, no un aviso aparte: suena en el primer silencio y la
+ * voz pide turno al acabar. Y una vez que la megafonía habla no la pisa nadie.
+ * Con el peso de la megafonía, la voz esperaba detrás de todo lo que se había
+ * pedido mientras sonaba el tono, y en el despegue esa es la cola más llena
+ * del vuelo: la verde y su fraseología, la oferta de la intersección y la
+ * pista que queda, y las fases de la instructora, que esperan sin reloj desde
+ * H29f. Medido en Los Rodeos con el JAZ 90 en Taguató (H29i): la llamada sonó
+ * a los 352 s, «Tripulación, sentados para el despegue» se puso detrás de
+ * cuatro frases de la torre y a los 384 «caducó esperando», con la
+ * tripulación avisada y sin la orden. Pasó en los dos vuelos de la tanda 13.
+ *
+ * Así que la voz no espera a nadie más que a quien ya suena: no corta, y lo
+ * urgente sigue pasando delante, que para eso barre la cola. Lo que se retrasa
+ * es lo que se pidió durante el tono, unos segundos, como en una cabina de
+ * verdad: quien está con el micrófono del pasaje acaba la frase y contesta.
+ */
+const PESO_TRAS_SU_LLAMADA = 4.5;
+
+/**
+ * Si esta frase es la voz de un anuncio que lleva su llamada delante: lo que
+ * se le dice a la tripulación, la bienvenida al llegar y el descenso de
+ * emergencia. Las reconoce `llamadaAntesDe`, que es quien pone la llamada; y
+ * todas pasan por ella antes de pedir turno —ver `conSuLlamada` en
+ * `game.ts`—, así que cuando la voz llega a la cola su tono ya sonó.
+ */
+export function vaDetrasDeSuLlamada(clave: string | undefined): boolean {
+  return !!clave && llamadaAntesDe(clave) !== null;
+}
 
 /**
  * **La instructora explicando un mando la primera vez que se usa en el

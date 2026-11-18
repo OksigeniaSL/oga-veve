@@ -1332,7 +1332,12 @@ describe("la información de tráfico espera su turno", () => {
     const { dicho, acabar, frase } = coro();
     b.pedir("mando", frase("permiso"), "torre.canario.clearedLand@yo");
     b.pedir("normal", frase("aros"), "vuelo.final");
-    b.pedir("baja", frase("bienvenidos"), "comandante.aproximacion");
+    /*
+     * Un anuncio sin llamada delante: el que la lleva ya está hablando cuando
+     * su voz pide turno, y esa va la siguiente. Ver `PESO_TRAS_SU_LLAMADA` en
+     * `turnos.ts`.
+     */
+    b.pedir("baja", frase("bienvenidos"), "comandante.descenso");
     b.pedir("mando", frase("tráfico"), INFO);
     // Diez segundos y medio de «cleared to land» con el viento, y más.
     reloj += 2 * CADUCA_LA_ORDEN;
