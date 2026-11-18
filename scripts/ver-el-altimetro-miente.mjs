@@ -311,6 +311,16 @@ try {
   }
   comprobar("sin susto: nunca a menos de cien metros del suelo", masBajo > 100, `${masBajo.toFixed(0)} m como mucho cerca`);
   /*
+   * **Y lo que la instructora tiene por decir, dicho**: la de la cima se pide
+   * al pasarla, y con las frases grabadas suena detrás de la anterior, que
+   * puede estar sonando todavía —el reloj del banco va por cuatro y la voz
+   * no—. Se espera a que el ejercicio no tenga nada por acabar, con tope.
+   */
+  {
+    const hasta = Date.now() + 30000;
+    while (Date.now() < hasta && ((await page.evaluate(() => globalThis.__oga.altimetro()?.porDecir ?? 0)) > 0)) await pausa(250);
+  }
+  /*
    * **Lo que pidió decir la instructora**, sonara o no: una frase sin grabar
    * se calla —Brave en Linux no tiene voces, y el juego no lee con el robot—
    * y se apunta como «sin grabar, se calla». Lo que se mira es que cada paso
@@ -326,6 +336,19 @@ try {
   ];
   const delAltimetro = pedidas.filter((k, i) => pedidas.indexOf(k) === i);
   console.log(`    la instructora: ${delAltimetro.join(", ") || "nada"}`);
+  /*
+   * **Y la línea de tiempo de la boca, si se pide** (`OGA_VOCES=fichero`):
+   * qué sonó, qué se cayó y por qué, y qué esperaba al cerrar. Con las frases
+   * grabadas, una que no sale hay que verla caer.
+   */
+  if (process.env.OGA_VOCES) {
+    const { writeFile } = await import("node:fs/promises");
+    const voces = await page.evaluate(() => {
+      const o = globalThis.__oga;
+      return { habladas: o.habladas(), descartadas: o.descartadas(), boca: o.bocaAhora(), cantados: o.cantados() };
+    });
+    await writeFile(process.env.OGA_VOCES, JSON.stringify(voces, null, 1));
+  }
   const esperado = PONER
     ? ["ejercicio.altimetro.antes", "ejercicio.altimetro.qnh", "ejercicio.altimetro.puesto", "ejercicio.altimetro.pasaste"]
     : ["ejercicio.altimetro.antes", "ejercicio.altimetro.qnh", "ejercicio.altimetro.cerca", "ejercicio.altimetro.pasasteSinPoner"];

@@ -2174,3 +2174,62 @@ torcido.
   enderezar solo se ha medido con los de hélice.
 - **Un solo campo**: hoy solo Los Rodeos da ocho nudos de costado con su
   viento de siempre.
+
+## Enmienda H26t (18-11-2026): lo que la ronda de cierre vio con las frases grabadas
+
+La ronda de cierre de #51 voló los ejercicios nuevos con **las frases ya
+grabadas** y en aviones que sus autores no volaron. Sin grabar, una frase se
+apunta como «sin grabar, se calla» y no ocupa la boca; grabada, dura lo que
+dura, y eso cambia quién espera a quién. Salieron tres fallos, y ninguno era
+de la física.
+
+### «El altímetro miente»: la instructora se callaba a mitad
+
+En los tres vuelos de la ronda la instructora pedía la presentación y el QNH
+y se callaba: poniendo la rueda faltaban «puesto» y «pasaste», aunque sus
+tarjetas salían; sin ponerla, «pasasteSinPoner». **«Puesto» es la frase que
+enseña el ejercicio**: la aguja que baja y dice la verdad.
+
+La raíz, en la mesa con la boca de verdad y las duraciones de las tomas (la
+presentación 7,2 s, el QNH 5,8): las frases del altímetro aguantan en la cola
+lo que un aviso, cuatro segundos (`CADUCA`), y el ejercicio las pedía en
+cuanto pasaba su paso. Quien gira la rueda mientras la instructora pide
+girarla —el piloto de banco en cuanto llega el QNH; quien juega, en cuanto ve
+el número— pide «puesto» detrás del QNH, y cae:
+
+    banco, reloj por 4:   antes 0,0 s · qnh 8,0 s · puesto: caducó esperando a los 14,6
+    jugando, reloj de 1:  antes 0,0 s · qnh 20,0 s · puesto: caducó esperando a los 26,6
+
+Y la de la cima caía detrás de los baches de La Palma, que es lo único que no
+es del ejercicio y suena con él.
+
+**El arreglo va en el ejercicio, no en la cola** (`porDecirDelAltimetro` en
+`game.ts`). No se le da a estas frases la espera sin reloj de un paso de
+radio (`cuentaUnPasoDeRadio`, H26k): aquello es «virá ahora», que vale hasta
+el paso siguiente y lo retira el siguiente; esto es una explicación que se
+cuenta entera y en su orden, y el QNH no deja de valer porque se haya puesto
+la rueda —es el porqué de lo que se acaba de hacer—. Lo que cambia es
+**cuándo la pide el ejercicio**:
+
+- **de una en una**: cada frase se pide cuando la anterior del ejercicio ha
+  acabado, con la boca a punto de quedar libre; los cuatro segundos quedan
+  para lo que no es del ejercicio;
+- **si aun así se cae por esperar** —«caducó esperando» o «no cabía en la
+  cola»—, se pide otra vez, dos veces como mucho; sin grabar, sin
+  instructora o barrida por un urgente, no;
+- **lo que dejó de ser verdad mientras esperaba no se pide**: «cerca» dice
+  que la ventanilla todavía tiene la presión de allá, y con la rueda ya
+  puesta o la cima pasada no se dice; «puesto» pide subir a la altura de la
+  tarjeta, y pasada la cima lo cuenta «pasaste»;
+- con percance o al volver a empezar, lo que quedaba se olvida; y una frase
+  sin noticias en treinta segundos de pared no deja al ejercicio mudo.
+
+La cola de voz (`audio/boca.ts`, `turnos.ts`) no se ha tocado. El banco, que
+cerraba el vuelo y miraba lo dicho en el mismo instante, ahora espera a que
+el ejercicio no tenga nada por acabar (`porDecir` en `altimetroParaBanco`),
+con tope, y con `OGA_VOCES=fichero` vuelca la línea de tiempo de la boca.
+
+Volado poniendo la rueda con la avioneta, **16 de 16**: antes 0,0 s · qnh 6,7
+· puesto 12,7 · baches 50,1 · pasaste 57,5. La de la cima se pidió con los
+baches sonando, cayó a los 57,4 por esperar y se pidió otra vez: es
+exactamente lo que se perdía.
