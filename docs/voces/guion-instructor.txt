@@ -450,6 +450,14 @@ Girá la perilla del direccional hasta que diga lo mismo que la brújula
 Virando no: la brújula miente. Primero derecho, y después la perilla
 ¡Eso! El direccional dice la verdad otra vez
 El giróscopo no siente el viraje, pero se va solo. Cada quince minutos, derecho y sin acelerar, se pone con la brújula. De verdad tarda una hora o más en irse así: acá apuramos el reloj
+Estamos adentro de una nube, y afuera hace frío. Mirá la aguja de la velocidad
+Ahora dale todo el gas, y mantené la altura
+El avión acelera y la aguja no se mueve: se heló el pitot. Mirá la actitud y el gas
+Prendé la calefacción del pitot, y esperá un ratito
+¡Eso! Se derritió el hielo, y la aguja dice la verdad otra vez
+¡Muy bien! Con la calefacción prendida antes, el pitot no se hiela
+Hoy acá arriba no hace tanto frío: el pitot no se hiela. Otro día probamos
+Con nube y frío, el hielo tapa el pitot y la aguja se queda quieta aunque el avión acelere. Entonces se vuela con la actitud y el gas. La calefacción del pitot se prende antes de entrar en la nube
 Ver el río
 Seguir el río
 Salir al mar

@@ -575,6 +575,38 @@
       "ms": 3707,
       "h": "262c9960f2"
     },
+    "ejercicio.pitot.acelera": {
+      "ms": 4707,
+      "h": "920b562d13"
+    },
+    "ejercicio.pitot.antes": {
+      "ms": 4407,
+      "h": "f29c9c69fb"
+    },
+    "ejercicio.pitot.calefaccion": {
+      "ms": 2739,
+      "h": "92d99d949b"
+    },
+    "ejercicio.pitot.calido": {
+      "ms": 4507,
+      "h": "b89bad8dec"
+    },
+    "ejercicio.pitot.cierre": {
+      "ms": 10707,
+      "h": "20fb6d4984"
+    },
+    "ejercicio.pitot.gas": {
+      "ms": 2303,
+      "h": "d30cf9fc36"
+    },
+    "ejercicio.pitot.prevenido": {
+      "ms": 3707,
+      "h": "0e75c335ed"
+    },
+    "ejercicio.pitot.volvio": {
+      "ms": 3807,
+      "h": "777c0555ce"
+    },
     "ejercicio.planeo.antes": {
       "ms": 8107,
       "h": "be30a83078"
@@ -6026,6 +6058,30 @@
     ],
     "ejercicio.giroscopo.cierre": [
       "ejercicio.giroscopo.cierre"
+    ],
+    "ejercicio.pitot.antes": [
+      "ejercicio.pitot.antes"
+    ],
+    "ejercicio.pitot.gas": [
+      "ejercicio.pitot.gas"
+    ],
+    "ejercicio.pitot.acelera": [
+      "ejercicio.pitot.acelera"
+    ],
+    "ejercicio.pitot.calefaccion": [
+      "ejercicio.pitot.calefaccion"
+    ],
+    "ejercicio.pitot.volvio": [
+      "ejercicio.pitot.volvio"
+    ],
+    "ejercicio.pitot.prevenido": [
+      "ejercicio.pitot.prevenido"
+    ],
+    "ejercicio.pitot.calido": [
+      "ejercicio.pitot.calido"
+    ],
+    "ejercicio.pitot.cierre": [
+      "ejercicio.pitot.cierre"
     ]
   }
 }

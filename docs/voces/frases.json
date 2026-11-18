@@ -4378,6 +4378,126 @@
     }
   },
   {
+    "id": "ejercicio.pitot.antes",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estamos adentro de una nube, y afuera hace frío. Mirá la aguja de la velocidad",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Estamos adentro de una nube, y afuera hace frío. Mirá la aguja de la velocidad.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pitot.gas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ahora dale todo el gas, y mantené la altura",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Ahora dale todo el gas, y mantené la altura.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pitot.acelera",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El avión acelera y la aguja no se mueve: se heló el pitot. Mirá la actitud y el gas",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "El avión acelera y la aguja no se mueve: se heló el pitot. Mirá la actitud y el gas.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pitot.calefaccion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Prendé la calefacción del pitot, y esperá un ratito",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Prendé la calefacción del pitot, y esperá un ratito.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pitot.volvio",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Eso! Se derritió el hielo, y la aguja dice la verdad otra vez",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Eso! Se derritió el hielo, y la aguja dice la verdad otra vez.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pitot.prevenido",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Muy bien! Con la calefacción prendida antes, el pitot no se hiela",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "¡Muy bien! Con la calefacción prendida antes, el pitot no se hiela.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pitot.calido",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hoy acá arriba no hace tanto frío: el pitot no se hiela. Otro día probamos",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Hoy acá arriba no hace tanto frío: el pitot no se hiela. Otro día probamos.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
+    "id": "ejercicio.pitot.cierre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Con nube y frío, el hielo tapa el pitot y la aguja se queda quieta aunque el avión acelere. Entonces se vuela con la actitud y el gas. La calefacción del pitot se prende antes de entrar en la nube",
+    "para": "los ejercicios de emergencia: antes, durante y después",
+    "dicho": "Con nube y frío, el hielo tapa el pitot y la aguja se queda quieta aunque el avión acelere. Entonces se vuela con la actitud y el gas. La calefacción del pitot se prende antes de entrar en la nube.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
+  },
+  {
     "id": "mission.rio.name",
     "voz": "instructor",
     "idioma": "es-PY",

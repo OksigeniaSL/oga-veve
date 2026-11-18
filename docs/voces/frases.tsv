@@ -451,6 +451,14 @@ instructor	instructor/ejercicio.giroscopo.ponelo.ogg	es-PY	Girá la perilla del 
 instructor	instructor/ejercicio.giroscopo.virando.ogg	es-PY	Virando no: la brújula miente. Primero derecho, y después la perilla	los ejercicios de emergencia: antes, durante y después
 instructor	instructor/ejercicio.giroscopo.puesto.ogg	es-PY	¡Eso! El direccional dice la verdad otra vez	los ejercicios de emergencia: antes, durante y después
 instructor	instructor/ejercicio.giroscopo.cierre.ogg	es-PY	El giróscopo no siente el viraje, pero se va solo. Cada quince minutos, derecho y sin acelerar, se pone con la brújula. De verdad tarda una hora o más en irse así: acá apuramos el reloj	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.pitot.antes.ogg	es-PY	Estamos adentro de una nube, y afuera hace frío. Mirá la aguja de la velocidad	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.pitot.gas.ogg	es-PY	Ahora dale todo el gas, y mantené la altura	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.pitot.acelera.ogg	es-PY	El avión acelera y la aguja no se mueve: se heló el pitot. Mirá la actitud y el gas	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.pitot.calefaccion.ogg	es-PY	Prendé la calefacción del pitot, y esperá un ratito	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.pitot.volvio.ogg	es-PY	¡Eso! Se derritió el hielo, y la aguja dice la verdad otra vez	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.pitot.prevenido.ogg	es-PY	¡Muy bien! Con la calefacción prendida antes, el pitot no se hiela	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.pitot.calido.ogg	es-PY	Hoy acá arriba no hace tanto frío: el pitot no se hiela. Otro día probamos	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.pitot.cierre.ogg	es-PY	Con nube y frío, el hielo tapa el pitot y la aguja se queda quieta aunque el avión acelere. Entonces se vuela con la actitud y el gas. La calefacción del pitot se prende antes de entrar en la nube	los ejercicios de emergencia: antes, durante y después
 instructor	instructor/mission.rio.name.ogg	es-PY	Ver el río	las misiones
 instructor	instructor/mission.rioabajo.name.ogg	es-PY	Seguir el río	las misiones
 instructor	instructor/mission.mar.name.ogg	es-PY	Salir al mar	las misiones

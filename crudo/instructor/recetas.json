@@ -2636,5 +2636,29 @@
   ],
   "ejercicio.giroscopo.cierre": [
     "ejercicio.giroscopo.cierre"
+  ],
+  "ejercicio.pitot.antes": [
+    "ejercicio.pitot.antes"
+  ],
+  "ejercicio.pitot.gas": [
+    "ejercicio.pitot.gas"
+  ],
+  "ejercicio.pitot.acelera": [
+    "ejercicio.pitot.acelera"
+  ],
+  "ejercicio.pitot.calefaccion": [
+    "ejercicio.pitot.calefaccion"
+  ],
+  "ejercicio.pitot.volvio": [
+    "ejercicio.pitot.volvio"
+  ],
+  "ejercicio.pitot.prevenido": [
+    "ejercicio.pitot.prevenido"
+  ],
+  "ejercicio.pitot.calido": [
+    "ejercicio.pitot.calido"
+  ],
+  "ejercicio.pitot.cierre": [
+    "ejercicio.pitot.cierre"
   ]
 }
