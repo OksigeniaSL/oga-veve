@@ -26246,6 +26246,13 @@ export class Game {
       s.heading,
     );
     this.enFinalPor = { enUso: por.enUso, otra: por.otra };
+    /*
+     * **Un ejercicio que se cierra en el aire no va a la pista**, y su
+     * cabecera no es de la lección: en Los Rodeos, «Apuntá al viento» va hacia
+     * el Auditorio con rumbo 310, alineado con la 30, y salía «esa no es la
+     * pista en uso» con su media vuelta. Callado con la fase (H26f, ADR 0031).
+     */
+    if (this.loQueCalla.laFase) return;
     // Sin pista con dos cabeceras de verdad no hay otra punta que decir.
     if (!campo.escenario.aerodrome || !cabeceraContraria(campo.escenario)) return;
     const meteo = campo.escenario.meteo;
