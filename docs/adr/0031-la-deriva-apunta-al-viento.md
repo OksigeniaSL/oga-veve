@@ -2233,3 +2233,50 @@ Volado poniendo la rueda con la avioneta, **16 de 16**: antes 0,0 s · qnh 6,7
 · puesto 12,7 · baches 50,1 · pasaste 57,5. La de la cima se pidió con los
 baches sonando, cayó a los 57,4 por esperar y se pidió otra vez: es
 exactamente lo que se perdía.
+
+### «Rumbo y reloj» con el JAZ 40: el plan con una velocidad a la que no iba
+
+Con el bimotor, al llegar el reloj a cero el pueblo quedaba **7,7 km por
+delante**; con la avioneta, debajo. El plan salía de
+`Math.min(cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)`, y el JAZ 40 empezaba a
+esa misma velocidad: sus 189 nudos de ficha. Pero esa cifra es la de su
+altura de crucero, doce mil pies, con el turbo dando lo de nivel del mar en
+aire que frena menos (ver el JAZ 40 en `aircraft.ts` y `turbo.test.ts`). A
+la altura de la estima, 470 m sobre Estigarribia, ni a fondo pasa de 180
+nudos: `gasQueSostiene` no daba gas para la de la ficha, el avión salía con
+el de una recta a ojo y frenaba hasta 166. El plan contaba con 191 sobre el
+suelo; se volaba a 166.
+
+La lección es *velocidad por tiempo es distancia*, y un piloto no planea con
+la cifra del folleto: busca en la tabla de crucero su altura y su potencia y
+lee la verdadera. Eso hace ahora `velocidadDeCrucero` (`gas-que-toca.ts`):
+**la verdadera que se sostiene nivelado y limpio con el 75 % de la potencia a
+esa altura, sin pasar de la de la ficha**, de las mismas fuerzas que
+`gasQueSostiene`. Con ella se hace el plan de la estima, a la altura de la
+estima, y con ella empieza el avión, con el gas que la sostiene; el plan
+guarda la suya (`ColocacionDeLaEstima.velocidad`). En un reactor vale la de
+la ficha: no hay tabla de potencia que leer así.
+
+| Avión, a 2.000 ft | La de la ficha | La de la tabla |
+| --- | --- | --- |
+| JAZ 20 | 117 kt (con el 85 % de la palanca) | 112 kt |
+| JAZ 25 | 107 kt (92 %) | 99 kt |
+| JAZ 40 | 189 kt (no llega: 179 a fondo) | 158 kt |
+
+Así que **la avioneta y el radial también cambian**, unos nudos, y es lo de
+verdad: la tabla de la página de arriba (la de H26n) queda con las cifras
+de la ficha y el JAZ 40 pasa de 11,7 a 13,7 minutos. Lo que no cambia es que
+el plan y el vuelo usan la misma velocidad.
+
+El altímetro tenía la misma raíz con el bimotor: empezaba a 189 nudos a
+5.400 ft, que ahí tampoco sostiene, y mientras frenaba subía, así que al
+mirar la aguja estaba ya 60 ft por encima de la pedida. Empieza también con
+la de la tabla a su altura. Los demás ejercicios de navegación siguen con la
+de la ficha y el tope: su cuenta no depende de la velocidad, y cambiarla es
+cambiar sus planes, que no se han volado aquí.
+
+Volado con el JAZ 40: **15 de 15**, el pueblo **debajo a 363 m** (de lado
+311, de largo 187), con 162 nudos de verdadera y 163 sobre el suelo en el
+plan, HDG 129 y 13,7 minutos. En el altímetro, la aguja empieza a 5.645 ft
+con la pedida en 5.600, y 16 de 16: lo que queda es lo que sube cualquier
+avión al soltarlo equilibrado (H26q), no lo que frenaba.

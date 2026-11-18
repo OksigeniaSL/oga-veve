@@ -1846,7 +1846,7 @@ import {
   type MandoDelPaso,
   type Paso as PasoDeLaCadena,
 } from "./flight/siguiente-paso";
-import { gasQueSostiene, marcaDelGas } from "./flight/gas-que-toca";
+import { gasQueSostiene, marcaDelGas, velocidadDeCrucero } from "./flight/gas-que-toca";
 import { piezaDeVelocidad, velocidadDicha } from "./flight/velocidad-dicha";
 import {
   AvisadorDeAltitud,
@@ -18493,11 +18493,20 @@ export class Game {
                 colocacion === "cruce" ||
                 colocacion === "deriva" ||
                 colocacion === "rumbo" ||
-                colocacion === "estima" ||
-                colocacion === "altimetro" ||
                 colocacion === "brujula" ||
                 colocacion === "giroscopo"
               ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
+              : /*
+                 * **La estima y el altímetro, a la de la tabla a su altura**:
+                 * la primera, porque su plan es esa velocidad por el tiempo;
+                 * el segundo, porque con la de la ficha el JAZ 40 no se
+                 * sostenía y empezaba subiendo mientras frenaba, con la aguja
+                 * ya lejos de la pedida (H26t). Ver `laDeLaTabla`.
+                 */
+                colocacion === "estima"
+                ? (this.dondeEmpiezaLaEstima()?.velocidad ?? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL))
+                : colocacion === "altimetro"
+                ? this.laDeLaTabla(this.terrain.runwayElevation + (this.dondeEmpiezaElAltimetro()?.alto ?? 0))
               : colocacion === "ils"
               ? // A la del circuito, como quien ya ha bajado para la aproximación.
                 this.aircraft.velocidadDeCircuito
@@ -25951,18 +25960,37 @@ export class Game {
     if (!e) return null;
     if (e.colocacion) return e.colocacion;
     const agua = this.scenario.waterLevel ?? 0;
-    e.colocar(
-      colocacionDeLaEstima({
-        destino: e.destino,
-        campo: { x: 0, z: 0 },
-        viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
-        velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
-        declinacion: this.scenario.magneticVariation,
-        suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
-        cotaDeLaPista: this.terrain.runwayElevation,
-      }),
-    );
+    const plan = {
+      destino: e.destino,
+      campo: { x: 0, z: 0 },
+      viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+      declinacion: this.scenario.magneticVariation,
+      suelo: (x: number, z: number) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+      cotaDeLaPista: this.terrain.runwayElevation,
+    };
+    /*
+     * **Con la velocidad de la tabla, a la altura de la estima**, que es la
+     * que lleva el avión: la altura sale del suelo del camino y no de la
+     * velocidad, así que una primera cuenta da dónde se vuela y la segunda,
+     * a qué se vuela ahí. Ver `laDeLaTabla`.
+     */
+    const alto = colocacionDeLaEstima({ ...plan, velocidad: this.aircraft.cruiseSpeed }).alto;
+    e.colocar(colocacionDeLaEstima({ ...plan, velocidad: this.laDeLaTabla(this.terrain.runwayElevation + alto) }));
     return e.colocacion;
+  }
+
+  /**
+   * **La verdadera de un ejercicio que se cuenta con la velocidad**, m/s, a
+   * esa altura: la de la tabla de crucero, sin pasar del tope de debajo de
+   * diez mil pies. Con la de la ficha, el JAZ 40 empezaba la estima a 189
+   * nudos que abajo no sostiene, frenaba hasta 166 y el plan contaba con 189
+   * (ADR 0031, enmienda H26t). Ver `velocidadDeCrucero`.
+   */
+  private laDeLaTabla(altura: number): number {
+    return Math.min(
+      TOPE_POR_DEBAJO_DE_DIEZ_MIL,
+      velocidadDeCrucero(this.avionConPeso(), { altura, aire: this.flight.aireDelDia(), tren: 0 }),
+    );
   }
 
   /**

@@ -26,8 +26,8 @@
  * Sin three.js ni DOM: se comprueba sin volar.
  */
 
-import type { AircraftConfig } from "./aircraft";
-import { AIRE_ESTANDAR, airDensity } from "./atmosphere";
+import { esDeChorro, loQueDaElMotor, type AircraftConfig } from "./aircraft";
+import { AIRE_ESTANDAR, airDensity, SEA_LEVEL_DENSITY, type Aire } from "./atmosphere";
 import { MOTOR_QUE_SOSTIENE } from "./arcade";
 import { empujeLleno, empujeQueSostiene, type ParaSostener } from "./fdm";
 
@@ -50,6 +50,60 @@ export function gasQueSostiene(a: AircraftConfig, p: ParaSostener): number | nul
   // Un pelo por encima del tope es redondeo; más, es que no se llega.
   if (gas > 1.02) return null;
   return Math.max(0, Math.min(1, gas));
+}
+
+/**
+ * **La potencia de crucero**, fracción de la de nivel del mar: el 75 %, la
+ * fila de la tabla de crucero con la que se planea un tramo en cualquier
+ * manual de avioneta, y la del crucero de la ficha del JAZ 40 (ver
+ * `turbo.test.ts`).
+ */
+export const POTENCIA_DE_CRUCERO = 0.75;
+
+/**
+ * **La verdadera de la tabla de crucero a esa altura**, m/s: la que se
+ * sostiene nivelado y limpio con la potencia de crucero, sin pasar de la de
+ * la ficha.
+ *
+ * El crucero de la ficha es el de su altura de crucero, y abajo no sale: el
+ * JAZ 40 da sus 189 nudos a doce mil pies, con el turbo dando lo de nivel del
+ * mar en aire que frena menos; a dos mil, ni a fondo pasa de 180, y con la
+ * potencia de crucero va a 158. Quien planea una estima a esa altura no
+ * escribe 189: busca en la tabla su altura y su potencia y lee la verdadera.
+ * Con la ficha, la cuenta «velocidad por tiempo» salía con una velocidad a
+ * la que el avión no iba, y el sitio quedaba ocho kilómetros por delante al
+ * llegar el reloj a cero (ADR 0031, enmienda H26t).
+ *
+ * Sale de las mismas fuerzas que `gasQueSostiene`: la palanca que da el 75 %
+ * de la potencia ahí —arriba de su altitud crítica, o sin turbo, más de tres
+ * cuartos de palanca— y la velocidad más alta que sostiene con ella. En un
+ * reactor no hay tabla de potencia que leer así, y vale la de la ficha.
+ */
+export function velocidadDeCrucero(
+  a: AircraftConfig,
+  p: { readonly altura: number; readonly aire?: Aire; readonly tren: number },
+): number {
+  if (esDeChorro(a)) return a.cruiseSpeed;
+  const aire = p.aire ?? AIRE_ESTANDAR;
+  const motor = loQueDaElMotor(a, airDensity(p.altura, aire) / SEA_LEVEL_DENSITY);
+  const palanca = motor > 0 ? Math.min(1, POTENCIA_DE_CRUCERO / motor) : 1;
+  const pide = (v: number): number =>
+    gasQueSostiene(a, { altura: p.altura, verdadera: v, aire, flaps: 0, tren: p.tren, pendiente: 0 }) ?? Infinity;
+  if (pide(a.cruiseSpeed) <= palanca) return a.cruiseSpeed;
+  /*
+   * Por encima de la de mínima resistencia, lo que pide la palanca crece con
+   * la velocidad: se busca dónde llega a la de crucero, entre la de
+   * aproximación —que siempre se sostiene con menos— y la de la ficha.
+   */
+  let lenta = a.approachSpeed;
+  let rapida = a.cruiseSpeed;
+  if (pide(lenta) > palanca) return lenta;
+  for (let i = 0; i < 40; i++) {
+    const v = (lenta + rapida) / 2;
+    if (pide(v) <= palanca) lenta = v;
+    else rapida = v;
+  }
+  return lenta;
 }
 
 /**
