@@ -389,7 +389,72 @@ export class InstructorGrabado implements Instructor {
     clave: string,
     relleno?: Readonly<Record<string, string>>,
   ): string | null {
-    return this.quienLaDice(clave, relleno)?.voz ?? null;
+    const voz = this.quienLaDice(clave, relleno)?.voz ?? null;
+    /*
+     * Un «nadie» de antes de saber no es un «nadie»: se apunta, para que el
+     * banco vea quién decide con él. Ver `sabeLoGrabado`.
+     */
+    if (import.meta.env.DEV && voz === null && !this.sabeLoGrabado) {
+      this.preguntadasSinSaber.push(clave);
+      if (this.preguntadasSinSaber.length > 500) this.preguntadasSinSaber.shift();
+    }
+    return voz;
+  }
+
+  /**
+   * **Si ya se sabe qué hay grabado**: con los manifiestos puestos, o sin
+   * pack que esperar. Antes —el pack por pedir, o sus manifiestos todavía en
+   * camino—, `vozDe` contesta «nadie» porque aún no lo sabe, no porque la
+   * frase no esté grabada.
+   *
+   * Es la diferencia que dejaba muda la presentación de los ejercicios: se
+   * pide en su primer paso, en el primer fotograma, y los manifiestos llegaban
+   * un segundo después (medido en el banco del ILS: pedida a los 4,3 s de
+   * cargar la página y manifiestos puestos a los 5,3). Ver `decirGrabada` y
+   * la enmienda H26k del ADR 0030.
+   */
+  get sabeLoGrabado(): boolean {
+    return this.banco.estado !== "por-pedir" && this.banco.estado !== "manifiestos";
+  }
+
+  /**
+   * Las claves que alguien preguntó con `vozDe` antes de saber qué hay
+   * grabado, en orden. Para los bancos: quien decide callar con eso calla
+   * una frase que quizá sí estaba grabada. Solo en desarrollo.
+   */
+  readonly preguntadasSinSaber: string[] = [];
+
+  /**
+   * **Solo con su grabación, y esperando a saber si la tiene.**
+   *
+   * Lo que no tiene que pasar a la voz del navegador —muda en Brave para
+   * Linux y un robot en el resto— se pedía preguntando antes `vozDe`, y con
+   * el pack todavía por llegar esa pregunta contesta «nadie»: la frase se
+   * callaba aunque estuviera grabada. Pasaba con la primera frase de cada
+   * ejercicio, que se pide en su primer paso.
+   *
+   * Así que la decisión se toma aquí, que es quien sabe cómo va el pack:
+   *
+   * - **Ya se sabe** qué hay grabado: sin receta, no se pide y devuelve
+   *   `false`; con ella, se dice como cualquier otra.
+   * - **Todavía no**: se pide igual y espera en la cola de la boca a que
+   *   lleguen los manifiestos y sus piezas, con el tope de siempre
+   *   (`ESPERA_A_SU_VOZ`). Si cuando le toca resulta que no estaba grabada,
+   *   o se acabó el tope sin ella, se cae callada —nunca al suplente— y quien
+   *   la pidió se entera por `alSonar` («se-cae», «sin-grabar»).
+   *
+   * Devuelve si se pidió.
+   */
+  decirGrabada(
+    texto: string,
+    clave: string,
+    urgencia?: Urgencia,
+    relleno?: Readonly<Record<string, string>>,
+    alSonar?: AlSonar,
+  ): boolean {
+    if (this.sabeLoGrabado && !this.quienLaDice(clave, relleno)) return false;
+    this.decir(texto, clave, urgencia, relleno, alSonar, true);
+    return true;
   }
 
   /**
@@ -484,6 +549,8 @@ export class InstructorGrabado implements Instructor {
     urgencia?: Urgencia,
     relleno?: Readonly<Record<string, string>>,
     alSonar?: AlSonar,
+    /** Solo con su grabación: sin ella, se calla. Ver `decirGrabada`. */
+    soloGrabada = false,
   ): void {
     if (this.callaSalvo && !this.callaSalvo(clave)) {
       if (import.meta.env.DEV) {
@@ -498,7 +565,7 @@ export class InstructorGrabado implements Instructor {
       alSonar?.("se-cae", "sin-instructora");
       return;
     }
-    this.decirLoPedido(texto, clave, urgencia, relleno, alSonar);
+    this.decirLoPedido(texto, clave, urgencia, relleno, alSonar, soloGrabada);
   }
 
   /**
@@ -515,6 +582,8 @@ export class InstructorGrabado implements Instructor {
     urgencia?: Urgencia,
     relleno?: Readonly<Record<string, string>>,
     alSonar?: AlSonar,
+    /** Solo con su grabación: sin ella, se calla. Ver `decirGrabada`. */
+    soloGrabada = false,
   ): void {
     /*
      * **Y para los turnos, la frase y a quién va.** La torre habla con los
@@ -527,7 +596,7 @@ export class InstructorGrabado implements Instructor {
     const turno = turnoDe(clave, relleno);
     const alCaer = alSonar ? (porque: string) => alSonar("se-cae", porque) : undefined;
     const hablar = (listo: (noSono?: boolean) => void) =>
-      this.hablarYa(texto, clave, urgencia, relleno, alSonar, listo);
+      this.hablarYa(texto, clave, urgencia, relleno, alSonar, listo, soloGrabada);
     /*
      * **Y si todavía no puede sonar como tiene que sonar, espera**: en la cola
      * de la boca, a la vista de quien pregunte qué espera, pero sin que le
@@ -548,6 +617,11 @@ export class InstructorGrabado implements Instructor {
      * **pidiendo la palabra**. Ver `porElSuplente`.
      */
     if (!suena || !this.cadenaDe(suena)) {
+      // Lo que solo va con su grabación no pasa al navegador. Ver `decirGrabada`.
+      if (soloGrabada) {
+        alSonar?.("se-cae", "sin-grabar");
+        return;
+      }
       this.porElSuplente(texto, clave, urgencia, turno, relleno, alSonar);
       return;
     }
@@ -580,6 +654,7 @@ export class InstructorGrabado implements Instructor {
     relleno: Readonly<Record<string, string>> | undefined,
     alSonar: AlSonar | undefined,
     listo: (noSono?: boolean) => void,
+    soloGrabada = false,
   ): (() => void) | void {
     // Lo que nombraba ya no se ve: se cae sin sonar. Ver `loNombrado`.
     if (this.noSeVe(clave)) {
@@ -589,6 +664,16 @@ export class InstructorGrabado implements Instructor {
     }
     const suena = this.quienLaDice(clave ?? null, relleno);
     const cadena = suena ? this.cadenaDe(suena) : null;
+    /*
+     * **Y lo que solo va con su grabación, sin ella se calla**: esperó a saber
+     * si la tenía y no la tiene, o se le acabó el tope esperándola. Suelta la
+     * plaza en el acto, como lo que no sonó. Ver `decirGrabada`.
+     */
+    if (soloGrabada && !(suena && cadena)) {
+      alSonar?.("se-cae", "sin-grabar");
+      listo(true);
+      return;
+    }
     this.ultima = clave ?? texto;
     this.apuntar(suena && cadena ? suena.piezas : null);
     if (suena && cadena) {

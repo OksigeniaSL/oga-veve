@@ -214,3 +214,68 @@ describe("lo que se pide antes de tener su voz", () => {
     expect(boca.cuantasEsperan).toBe(0);
   });
 });
+
+/*
+ * **Solo con su grabación, sin saber todavía si la tiene** (ADR 0030, H26k).
+ * La primera frase de cada ejercicio se pide en su primer paso, y en el banco
+ * del ILS los manifiestos llegaban un segundo después: preguntar `vozDe`
+ * entonces contestaba «nadie», y la presentación se callaba grabada.
+ */
+describe("lo que solo va con su grabación, pedido antes de saber qué hay", () => {
+  it("antes de los manifiestos, vozDe no lo sabe: decirGrabada la pide y espera", async () => {
+    const { altavoz, comandante, boca } = montar();
+    expect(comandante.sabeLoGrabado).toBe(false);
+    expect(comandante.vozDe("comandante.crosscheck")).toBeNull();
+    const sonidos: string[] = [];
+    expect(
+      comandante.decirGrabada("Tripulación…", "comandante.crosscheck", "mando", undefined, (q) => sonidos.push(q)),
+    ).toBe(true);
+    expect(boca.espera("comandante.crosscheck")).toBe(true);
+    const red = redLenta();
+    red.soltarTodo();
+    vi.stubGlobal("fetch", red.fetch);
+    void comandante.cargar(["comandante"], "data/voces", () => "probably");
+    await vi.advanceTimersByTimeAsync(600);
+    expect(comandante.sabeLoGrabado).toBe(true);
+    expect(altavoz.tocadas).toEqual(["comandante.crosscheck"]);
+    expect(sonidos).toEqual(["empieza"]);
+  });
+
+  it("y si al saberlo no estaba grabada, se cae callada: nunca a la voz del navegador", async () => {
+    const boca = new Boca({ ahora: () => Date.now(), cancelar: () => {}, esperar: (ms, hacer) => void setTimeout(hacer, ms) });
+    const altavoz = new Altavoz_();
+    const dijo: string[] = [];
+    const robot: Instructor = { decir: (texto) => void dijo.push(texto), callar: () => {}, disponible: true, hablando: false };
+    const comandante = new InstructorGrabado(altavoz, robot, boca, nuevoBancoDeVoces());
+    comandante.esperarAlPack(() => "probably");
+    const motivos: string[] = [];
+    expect(
+      comandante.decirGrabada("No grabada", "comandante.noEsta", "mando", undefined, (q, porque) =>
+        motivos.push(`${q}:${porque ?? ""}`),
+      ),
+    ).toBe(true);
+    const red = redLenta();
+    red.soltarTodo();
+    vi.stubGlobal("fetch", red.fetch);
+    void comandante.cargar(["comandante"], "data/voces", () => "probably");
+    await vi.advanceTimersByTimeAsync(600);
+    expect(dijo).toEqual([]);
+    expect(altavoz.tocadas).toEqual([]);
+    expect(motivos).toEqual(["se-cae:sin-grabar"]);
+    expect(boca.cuantasEsperan).toBe(0);
+    // Y ya sabido, ni se pide.
+    expect(comandante.decirGrabada("No grabada", "comandante.noEsta", "mando")).toBe(false);
+  });
+
+  it("y la espera tiene su tope: sin pack en ese rato, se calla y suelta la plaza", async () => {
+    const { altavoz, comandante, boca } = montar();
+    const motivos: string[] = [];
+    comandante.decirGrabada("Tripulación…", "comandante.crosscheck", "mando", undefined, (q, porque) =>
+      motivos.push(`${q}:${porque ?? ""}`),
+    );
+    await vi.advanceTimersByTimeAsync(ESPERA_A_SU_VOZ + 1500);
+    expect(altavoz.tocadas).toEqual([]);
+    expect(motivos).toEqual(["se-cae:sin-grabar"]);
+    expect(boca.cuantasEsperan).toBe(0);
+  });
+});
