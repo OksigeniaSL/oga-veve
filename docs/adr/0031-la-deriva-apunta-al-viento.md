@@ -992,6 +992,8 @@ automático vuelve a la pedida y **la cima se pasa con 1.086 ft de verdad y
 presentación, el QNH, la puesta y la cima; ninguna caja canta, nada ajeno, y
 el panel lleva la regla.
 
+`vitest` entero, en verde: 522 ficheros y 10.578 pruebas (29 saltadas).
+
 ### Lo que queda
 
 - **Las frases, sin grabar**: seis dichas (ver «Las frases»). Hasta entonces
