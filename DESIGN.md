@@ -661,8 +661,10 @@ qué está en `docs/voces/LEEME.md`.
 **Un solo turno para todas las personas** (`src/audio/turnos.ts`), de más a menos: la máquina, que no pide turno; lo
 urgente (el terreno, la pista ocupada, la frustrada), que es lo único que corta a quien esté hablando; lo que es para
 ti (la luz de la torre, tus autorizaciones, el tráfico cerca); la instructora; la megafonía, que espera a que no hable
-nadie y una vez que habla no la pisa nadie —y su llamada de cabina ya es hablar: la voz que va detrás es lo siguiente
-que suena—; la frecuencia de los demás; y lo que espera su hueco de calma (lo que se ve por la ventanilla).
+nadie y una vez que habla no la pisa nadie —y su llamada de cabina ya es hablar: pide turno detrás de lo tuyo y con la
+instructora en el orden en que se pidió cada cosa, sin adelantarse a lo que espera su grabación; nadie arranca mientras
+suena, y la voz que va detrás es lo siguiente que suena—; la frecuencia de los demás; y lo que espera su hueco de calma
+(lo que se ve por la ventanilla).
 
 **Un suceso, una voz.** Una frase detrás de otra, nunca dos a la vez contando lo mismo. Al despegar no se solapa nada:
 es el momento con más voces y el que más agobia. Por eso la torre pregunta por la intersección en la roja, que es

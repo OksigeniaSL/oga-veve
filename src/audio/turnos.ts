@@ -42,6 +42,9 @@
  *    la radio del tráfico y la instructora esperan a que acabe. Y si tiene que
  *    esperar, espera más que un aviso —ver `CADUCA_LA_MEGAFONIA`—, porque un
  *    anuncio no describe un instante.
+ *    - **Y su llamada pide turno como la instructora**, en el orden en que se
+ *      pidió cada cosa y sin adelantarse a lo que espera su grabación. Ver
+ *      `PESO_DE_SU_LLAMADA`.
  *    - **Y la voz que va detrás de su llamada no espera a nadie**: el tono ya
  *      es la megafonía hablando, y lo que se pidió mientras sonaba va detrás.
  *      Ver `PESO_TRAS_SU_LLAMADA`.
@@ -60,7 +63,7 @@
  */
 
 import type { Urgencia } from "./boca";
-import { llamadaAntesDe } from "./tonos-de-cabina";
+import { esUnaLlamada, llamadaAntesDe } from "./tonos-de-cabina";
 
 /**
  * **Si esta frase es de la megafonía**: la comandante, la tripulación y lo que
@@ -77,6 +80,21 @@ export function esDeLaMegafonia(clave: string | undefined): boolean {
 const DE_LA_MEGAFONIA = /^(?:(?:comandante|tripulacion)\.|ventanilla(?:\.historia)?(?:@|$))/;
 
 /**
+ * **Y lo que espera turno como la megafonía**: sus anuncios y la llamada de
+ * cabina que va delante de algunos, que es el principio del anuncio y pide
+ * turno en la boca (H29j, ver `pedirLaLlamada` en `tonos-de-cabina.ts`).
+ * Aguanta lo que un anuncio, no la barre un urgente ni la echa la cola; y la
+ * llamada espera con su peso, que es otro: ver `PESO_DE_SU_LLAMADA`.
+ *
+ * Aparte de `esDeLaMegafonia` y no dentro: con esa se cuenta también lo que
+ * se oyó por la megafonía —el banco la lee de lo que habló la boca—, y un
+ * tono no es un anuncio dicho.
+ */
+export function esperaComoLaMegafonia(clave: string | undefined): boolean {
+  return esDeLaMegafonia(clave) || esUnaLlamada(clave);
+}
+
+/**
  * El peso con que espera turno una frase: manda el más alto, y entre iguales
  * la que llegó antes. Ver el orden de la cabecera.
  *
@@ -87,6 +105,7 @@ const DE_LA_MEGAFONIA = /^(?:(?:comandante|tripulacion)\.|ventanilla(?:\.histori
  */
 export function pesoDe(clave: string | undefined, urgencia: Urgencia): number {
   if (urgencia !== "urgente" && vaDetrasDeSuLlamada(clave)) return PESO_TRAS_SU_LLAMADA;
+  if (urgencia !== "urgente" && esUnaLlamada(clave)) return PESO_DE_SU_LLAMADA;
   if (urgencia === "baja") return esDeLaMegafonia(clave) ? PESO_DE_LA_MEGAFONIA : PESO.baja;
   if (urgencia === "normal" && explicaUnMando(clave)) return PESO_DE_EXPLICAR_UN_MANDO;
   return PESO[urgencia];
@@ -127,6 +146,37 @@ const PESO_DE_EXPLICAR_UN_MANDO = 2;
  * verdad: quien está con el micrófono del pasaje acaba la frase y contesta.
  */
 const PESO_TRAS_SU_LLAMADA = 4.5;
+
+/**
+ * **Y la llamada misma, cuando pide turno** (H29j): por debajo de lo tuyo, y
+ * con la instructora en el orden en que se pidió cada cosa.
+ *
+ * Buscaba un silencio, y lo encontraba en los 0,8 s entre dos frases
+ * cualesquiera: era como no esperar a nadie, y la frase siguiente arrancaba
+ * debajo del tono. Pidiendo turno con el peso de la megafonía, que espera a
+ * que nadie más quiera hablar, no lo encontraba nunca en el despegue: la
+ * cola no se vacía de la verde al V1, y «sentados para el despegue» se caía
+ * entero —medido en la prueba de mesa de Taguató, con la oferta de la
+ * intersección delante—, que es lo que H29i acababa de arreglar. Con el peso
+ * de su voz se colaba entre la lámpara en castellano y su «cleared for
+ * take-off», que son una sola autorización y la lección de la pareja.
+ *
+ * Aquí espera a lo que es para ti —la autorización entera, la pista que
+ * queda, el tráfico—, que es lo que hace quien vuela: oye la torre, contesta
+ * y llama a la cabina.
+ *
+ * **Y no pasa delante de la instructora** (H29k), que es lo que hacía con
+ * tres y medio: una llamada que suena se lleva dos turnos, el suyo y el de su
+ * voz, que va detrás sin esperar a nadie. Lo que la instructora había pedido
+ * antes esperaba los dos —el tono, su respiro y el anuncio, cinco o seis
+ * segundos— y con los cuatro de un aviso caducaba. Medido en Los Rodeos con
+ * el JAZ 90: en el puesto, el tono del crosscheck delante de «Nuestro avión
+ * es…» y la presentación de la matrícula, caducada a los 6,1 s. Con el mismo
+ * peso que ella va en su orden: detrás de lo que se pidió antes, delante de
+ * lo que se pide después. Y lo que se pidió antes y todavía espera su
+ * grabación también es antes: ver `esperaALoDeAntes` en `boca.ts`.
+ */
+const PESO_DE_SU_LLAMADA = PESO.normal;
 
 /**
  * Si esta frase es la voz de un anuncio que lleva su llamada delante: lo que

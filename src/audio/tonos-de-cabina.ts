@@ -55,6 +55,7 @@
  */
 
 import type { Fase } from "../flight/vuelo";
+import type { Boca } from "./boca";
 import { fuerzaDelCinturon, type Oido } from "./ruidos";
 
 /** Los cuatro tonos de la cabina. */
@@ -182,6 +183,84 @@ export const DE_LA_EMERGENCIA_A_LA_VOZ = 3.2;
 /** Lo que espera la voz detrás de cada llamada, s. */
 export function esperaTrasLaLlamada(tono: TonoDeCabina): number {
   return tono === "llamadaEmergencia" ? DE_LA_EMERGENCIA_A_LA_VOZ : DE_LA_LLAMADA_A_LA_VOZ;
+}
+
+// ── La llamada, en el turno de todos ──────────────────────────────────
+
+/**
+ * **La llamada pide turno en la boca, como una frase más** (H29j).
+ *
+ * Sonaba en cuanto nadie hablaba, y entre dos frases siempre hay un rato en
+ * que nadie habla: el silencio de 0,8 s que la boca deja detrás de cada una
+ * —`SILENCIO` en `boca.ts`—. La aguda y grave dura casi el doble, y la boca,
+ * que no sabía que estaba sonando, arrancaba la frase siguiente encima. En
+ * Los Rodeos con el JAZ 90 en Taguató, el tono entre la verde y su «cleared
+ * for take-off», y la fraseología empezando debajo de él: un tono tapado por
+ * la radio no llama a nadie.
+ *
+ * Pidiendo turno, la boca la cuenta como lo que es: el principio del anuncio.
+ * Espera a lo que es para ti y pasa delante de la instructora —ver
+ * `PESO_DE_SU_LLAMADA` en `turnos.ts`—, nadie arranca mientras suena, y al
+ * acabar pide la voz, que es lo siguiente que suena —ver
+ * `PESO_TRAS_SU_LLAMADA`—. Con su clave propia y no la del anuncio: la boca
+ * da por dicha cada clave que suena, y con la misma la voz se caería por
+ * repetida.
+ *
+ * Los de la emergencia no pasan por aquí: su llamada suena en el acto. Ver
+ * `conSuLlamada` en `game.ts`.
+ */
+export function pedirLaLlamada(boca: Pick<Boca, "pedir">, l: LaLlamada): void {
+  boca.pedir(
+    "baja",
+    (listo) => {
+      l.tocar();
+      /*
+       * La boca la tiene lo que dura el tono y un respiro; la voz se pide
+       * antes de soltarla, para que sea la siguiente.
+       */
+      l.esperar(esperaTrasLaLlamada(l.tono) * 1000, () => {
+        l.laVoz();
+        listo();
+      });
+    },
+    laLlamadaDe(l.anuncio),
+    { ...(l.lista ? { lista: l.lista } : {}), ...(l.alCaer ? { alCaer: l.alCaer } : {}) },
+  );
+}
+
+/** Lo que necesita una llamada para pedir turno. Ver `pedirLaLlamada`. */
+export interface LaLlamada {
+  readonly tono: TonoDeCabina;
+  /** La clave del anuncio que va detrás. */
+  readonly anuncio: string;
+  /** Toca el tono. */
+  tocar(): void;
+  /** Pide la voz del anuncio. Se llama al acabar el tono. */
+  laVoz(): void;
+  /** Un temporizador de pared, como el de la boca: la voz va con ese reloj. */
+  esperar(ms: number, hacer: () => void): void;
+  /** Si la voz ya puede sonar: el tono no suena antes. Ver `AlPedir.lista`. */
+  readonly lista?: () => boolean;
+  /** Y si se cae sin sonar, por qué. Ver `AlPedir.alCaer`. */
+  readonly alCaer?: (porque: string) => void;
+}
+
+/** Lo que lleva delante la clave de una llamada en la boca. */
+const DE_UNA_LLAMADA = "llamada:";
+
+/** La clave con que la llamada de un anuncio pide turno. */
+export function laLlamadaDe(anuncio: string): string {
+  return `${DE_UNA_LLAMADA}${anuncio}`;
+}
+
+/** Si esta clave de la boca es la llamada de un anuncio. */
+export function esUnaLlamada(clave: string | undefined): boolean {
+  return !!clave && clave.startsWith(DE_UNA_LLAMADA);
+}
+
+/** El anuncio de una llamada; lo demás, como está. */
+export function sinLaLlamada(clave: string): string {
+  return esUnaLlamada(clave) ? clave.slice(DE_UNA_LLAMADA.length) : clave;
 }
 
 // ── Los pasajeros que llaman ──────────────────────────────────────────
