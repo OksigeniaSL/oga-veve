@@ -400,12 +400,15 @@ parabrisas, que lleva la misma cara, no: es un imán.
 La medida es lo que el morro se aparta de la marca, cada paso: de media y lo
 más, **desde que llega a ella**. El rumbo se pide con el morro donde lo tenía
 el río, y el viraje hasta la marca no es apartarse: se empieza a medir al
-llegar a cinco grados de ella o, si no se llega, a los veinte segundos
-(`PARA_LLEGAR_A_LA_MARCA`), lo que dura un viraje de treinta grados a la
-mitad del régimen normal. Salió del primer vuelo del banco: pidió el 225 con
-el morro en el 243 y virando, y la instructora dijo «se fue de la marca»
-antes de que llegara a ella; la media salía de siete grados con el
-automático clavado en la marca.
+**quedarse** a cinco grados de ella tres segundos (`ASENTADO`) o, si no se
+llega, a los veinte segundos (`PARA_LLEGAR_A_LA_MARCA`), lo que dura un
+viraje de treinta grados a la mitad del régimen normal. Salió del banco, en
+dos vueltas: el primer vuelo pidió el 225 con el morro en el 243 y virando,
+la instructora dijo «se fue de la marca» antes de que llegara a ella y la
+media salía de siete grados con el automático clavado en la marca; el
+segundo, midiendo desde la primera vez que el morro pasó a cinco grados, lo
+dijo en el pasado de largo del propio viraje (dieciséis grados). Pasar por
+la marca virando no es llegar a ella.
 
 - **Se va**: más de diez grados tres segundos. Se dice una vez, con el dibujo
   del lado al que se fue; vuelve a poder decirse cuando el morro ha vuelto a
@@ -460,3 +463,57 @@ que dice el seno; un percance lo cierra.
 automático de rumbo como quien sostiene el avión —el río punto a punto con
 luz, el rumbo pedido de noche; con `OGA_SE_VA=1`, una ida de la marca—, con
 capturas desde fuera y desde el asiento, antes y después de anochecer.
+
+`vitest` entero, en verde: 519 ficheros y 10.541 pruebas (antes de los dos
+arreglos del banco; los ficheros que tocan, pasados después).
+
+### Volado
+
+En el juego, con la avioneta en Asunción, Taguató y la Intel por ANGLE
+(`OGA_GPU=1`), el reloj por cuatro, el 18 de noviembre:
+
+- **El cielo es el de la hora del ejercicio**: hora solar 18,71, el sol a
+  cuatro grados bajo el horizonte al salir (la cuenta, 3,9). La noche cae a
+  234-265 m del puente con el sol a −6,0°, pide el **225** y la marca de la
+  rosa se va a 215 verdaderos. Se llega encima de donde el río sigue con el
+  sol a −10°, y las luces de la ciudad, encendidas.
+- **Lo que se vio del río**: a seis grados bajo el horizonte **se ve, y
+  bien**: refleja el crepúsculo del oesuroeste, que es lo que hace el agua de
+  verdad; a diez se ha oscurecido y sigue siendo la banda entre la ciudad
+  encendida y el Chaco a oscuras. No desaparece. Así que la instructora no
+  dice que no se ve —la primera versión decía «el río no se ve», y era
+  mentira—: dice que se va oscureciendo, y al llegar, «ahí abajo sigue el
+  río, al lado de las luces».
+- **La marca, desde el asiento**: la del direccional del panel en 3D, en
+  magenta, girando con la rosa; y la del six-pack del cuadro plano, la misma.
+- **Tres vuelos**: el primero, 15 de 16 —la media de siete grados del viraje
+  hasta la marca, ver arriba—; el segundo, 14 de 16 —el pasado de largo del
+  viraje y, de noche por primera vez en un ejercicio que se cierra en el
+  aire, **la regla de las luces de otro avión** (`vuelo.lucesDeNoche.*`), que
+  es una lección de lo que se ve fuera, como las uves, y ahora se calla con
+  la ventanilla mientras dura—; el tercero, **16 de 16**: ±1,0° de media y
+  8,4° como mucho, sin «se va», y lo único que se oye fuera del ejercicio es
+  el aviso del otro avión cerca, que es seguridad.
+- La tarjeta: el avioncito de la rosa era la figura del avión desde arriba, y
+  se leía como la estrella de una brújula; ahora es el de palos del
+  direccional, en blanco en la marca y en ámbar al irse.
+- `npm run carteles`, por la marca nueva del six-pack: 1076 de 1076.
+
+### Lo que queda
+
+- **El río no desaparece** en lo que dura: para que el ojo no baste del todo
+  haría falta la noche náutica entrada (−12°) o más, y sin luna. Con este
+  mundo y este reloj no cabe; un tramo de noche más largo, en un campo con
+  más río dentro de su mundo, sí.
+- **Volado solo así**: la avioneta, Taguató, Asunción, el automático clavado.
+  Sin volar en el juego: Tukã (la palabra, sin número), un reactor, junio,
+  `OGA_SE_VA=1` (una ida de la marca a propósito) y la vuelta a empezar tras
+  un percance. La mesa los cubre; el banco no.
+- **La marca del direccional sale también en las misiones** con la avioneta y
+  el bimotor, apuntando a su sitio: es la regla de la rosa de los de cristal,
+  y no se ha mirado en ninguna misión.
+- **La Luna**: el cielo la pone (`cieloDe`); no se ha mirado qué hace en el
+  agua.
+- **Las frases, sin grabar**: seis. Hasta entonces, mudas.
+- **Un solo campo**: Asunción. Encarnación, con el Paraná y su puente, es el
+  siguiente candidato de `RIOS_DE_NOCHE`.
