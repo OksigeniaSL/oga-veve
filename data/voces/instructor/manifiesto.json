@@ -339,6 +339,50 @@
       "ms": 4607,
       "h": "0c067aeffc"
     },
+    "ejercicio.estima.antes": {
+      "ms": 6407,
+      "h": "c5c432e957"
+    },
+    "ejercicio.estima.cierre": {
+      "ms": 6507,
+      "h": "635cdec73b"
+    },
+    "ejercicio.estima.debajo": {
+      "ms": 5807,
+      "h": "6602501c36"
+    },
+    "ejercicio.estima.delante": {
+      "ms": 4707,
+      "h": "740ac259cc"
+    },
+    "ejercicio.estima.derecha": {
+      "ms": 6607,
+      "h": "a8ecb6f00f"
+    },
+    "ejercicio.estima.detras": {
+      "ms": 3907,
+      "h": "5589805689"
+    },
+    "ejercicio.estima.fueraDeRumbo": {
+      "ms": 3907,
+      "h": "45f4e00f8c"
+    },
+    "ejercicio.estima.izquierda": {
+      "ms": 6007,
+      "h": "277ad0b1f9"
+    },
+    "ejercicio.estima.porQue": {
+      "ms": 5407,
+      "h": "1a714931ba"
+    },
+    "ejercicio.estima.porQueEnCalma": {
+      "ms": 5007,
+      "h": "990f2d861f"
+    },
+    "ejercicio.estima.unMinuto": {
+      "ms": 3407,
+      "h": "3dfe0c9a79"
+    },
     "ejercicio.ils.aTope": {
       "ms": 6907,
       "h": "7ce9b30138"
@@ -5781,6 +5825,39 @@
     ],
     "ejercicio.rumbo.cierre": [
       "ejercicio.rumbo.cierre"
+    ],
+    "ejercicio.estima.antes": [
+      "ejercicio.estima.antes"
+    ],
+    "ejercicio.estima.porQue": [
+      "ejercicio.estima.porQue"
+    ],
+    "ejercicio.estima.porQueEnCalma": [
+      "ejercicio.estima.porQueEnCalma"
+    ],
+    "ejercicio.estima.fueraDeRumbo": [
+      "ejercicio.estima.fueraDeRumbo"
+    ],
+    "ejercicio.estima.unMinuto": [
+      "ejercicio.estima.unMinuto"
+    ],
+    "ejercicio.estima.debajo": [
+      "ejercicio.estima.debajo"
+    ],
+    "ejercicio.estima.izquierda": [
+      "ejercicio.estima.izquierda"
+    ],
+    "ejercicio.estima.derecha": [
+      "ejercicio.estima.derecha"
+    ],
+    "ejercicio.estima.delante": [
+      "ejercicio.estima.delante"
+    ],
+    "ejercicio.estima.detras": [
+      "ejercicio.estima.detras"
+    ],
+    "ejercicio.estima.cierre": [
+      "ejercicio.estima.cierre"
     ]
   }
 }

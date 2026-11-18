@@ -416,6 +416,17 @@ instructor	instructor/ejercicio.rumbo.enLaMarca.ogg	es-PY	¡Eso! La flecha quiet
 instructor	instructor/ejercicio.rumbo.llegaste.ogg	es-PY	¡Llegamos! Ahí abajo sigue el río, al lado de las luces	los ejercicios de emergencia: antes, durante y después
 instructor	instructor/ejercicio.rumbo.llegasteAlLado.ogg	es-PY	Pasamos al costado, pero ahí está el río, al lado de las luces	los ejercicios de emergencia: antes, durante y después
 instructor	instructor/ejercicio.rumbo.cierre.ogg	es-PY	De noche, el rumbo es el camino. De verdad, la noche tarda media hora en caer: acá la apuramos	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.estima.antes.ogg	es-PY	Rumbo y reloj, sin mapa ni radio. Mantené el rumbo de la tarjeta hasta que el reloj llegue a cero, y ahí mirá abajo	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.estima.porQue.ogg	es-PY	¿Viste que el rumbo no apunta derecho al pueblo? Apunta un poquito al viento, que nos empuja de costado	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.estima.porQueEnCalma.ogg	es-PY	Hoy no hay viento, así que el rumbo apunta derecho al pueblo. Velocidad por tiempo es distancia	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.estima.fueraDeRumbo.ogg	es-PY	Se nos fue el rumbo. Volvé al número de la tarjeta, y dejalo quieto ahí	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.estima.unMinuto.ogg	es-PY	Falta un minuto. El rumbo quieto, y preparate para mirar abajo	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.estima.debajo.ogg	es-PY	¡Mirá abajo! Ahí está el pueblo, justo debajo. Sin ver nada, con rumbo y reloj: así se cruzaban océanos	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.estima.izquierda.ogg	es-PY	Mirá abajo, a tu izquierda: ahí está el pueblo. Esa distancia es lo que nos apartamos, y la próxima sale más justa	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.estima.derecha.ogg	es-PY	Mirá abajo, a tu derecha: ahí está el pueblo. Esa distancia es lo que nos apartamos, y la próxima sale más justa	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.estima.delante.ogg	es-PY	Mirá adelante: el pueblo está un poquito más allá. Volamos menos de lo que pedía la cuenta	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.estima.detras.ogg	es-PY	Mirá atrás: ya pasamos el pueblo. Volamos más de lo que pedía la cuenta	los ejercicios de emergencia: antes, durante y después
+instructor	instructor/ejercicio.estima.cierre.ogg	es-PY	Velocidad por tiempo es distancia: con el rumbo corregido por el viento y el reloj, se llega adonde no se ve	los ejercicios de emergencia: antes, durante y después
 instructor	instructor/mission.rio.name.ogg	es-PY	Ver el río	las misiones
 instructor	instructor/mission.rioabajo.name.ogg	es-PY	Seguir el río	las misiones
 instructor	instructor/mission.mar.name.ogg	es-PY	Salir al mar	las misiones
