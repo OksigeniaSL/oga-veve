@@ -4777,6 +4777,140 @@ mesa no lleva; no se ha buscado qué.
   (`flight/mano.ts`), no la ayuda. Si con eso se llega a los 56 y se
   sostienen, está por ver jugando.
 
+## Enmienda H35c (19-11-2026): el banco de los árboles, por el centro de la copa; y el monte que se queda
+
+H35b dejó escrito que `verificar-arboles.mjs` no se había vuelto a volar en
+Yvytu Rape después de sus últimos arreglos. La ronda de comprobación lo voló y
+dio 8 de 12: en Los Rodeos, el percance del árbol; en Yvytu Rape, en Taguató
+Ruvichá el avión tocaba el campo («fuera») antes de llegar al árbol, y en
+Guyrami pasaba sin tocarlo. En los dos, el árbol elegido estaba a 280 m de la
+pista.
+
+### Fallaba el banco, no el juego
+
+Medido en la mesa con el relieve, la granja y la vegetación de Yvytu Rape como
+los monta el juego —los mismos 7.214 árboles— y el JAZ 20 en los dos modelos:
+
+- El árbol de los 280 m tiene la copa de 4,4 m de radio y 3,25 de semialto, con
+  el centro a 5,4 m del suelo. El banco apuntaba al primer punto de su barrido
+  que caía dentro de la copa a seis metros del suelo, y ese punto estaba **a
+  tres metros del centro, de lado**.
+- **Guyrami** perdona dos metros de copa, que en ese árbol se quedan en 1,76
+  por los dos quintos: la copa que se toca tiene 2,6 m de radio, y el avión
+  pasaba a tres del centro. Pasaba por la piel que ese peldaño perdona, que es
+  justo lo que tiene que pasar. Por ahí, a tres metros del centro, no hay
+  copa que tocar en Guyrami a ninguna altura, así que **no hacía falta ninguna
+  ayuda para pasar, y ninguna lo subía**: en la mesa, sin las del juego, con
+  el gas a 0,7 —por encima del 0,55 que deja recto el modelo sencillo— y la
+  palanca a 0,05, subió cuarenta centímetros en los cuarenta metros, y el
+  banco del juego vio lo mismo, las ruedas nunca por debajo de los seis metros
+  de salida. La nivelada (`sostenerElNivel`) solo captura la altura de la
+  ventanilla o el crucero del plan, viniendo hacia ellos; ninguna ayuda
+  sostiene una altura sobre el suelo, y la mano (`flight/mano.ts`) sostiene la
+  trayectoria, no la altura, y en el banco ni está puesta. Así que en Guyrami
+  un árbol se choca, como dice H35b —«lo que se gradúa es cuánta piel de copa
+  se perdona, no si el árbol existe»—, y lo que se roza por el borde se
+  perdona, que es lo que H35b decidió para ese peldaño.
+- **Taguató Ruvichá**: colocado a treinta metros por segundo y sin subir, el
+  JAZ 20 se hunde antes de que el ala lo sostenga —en la mesa, 3,7 m en esos
+  cuarenta metros; en el juego, los seis hasta el campo, a los 1,28 s— y por
+  donde se le apuntaba la copa empieza a tres metros del suelo: pasaba por
+  debajo. En Los Rodeos salía porque la copa del elegido es mayor, seis metros
+  de radio y de semialto, con el fondo casi en el suelo.
+
+### El cambio
+
+Solo en el banco, y en lo que el banco pregunta. El juego no cambia: `toca`
+responde lo mismo que antes.
+
+- `Arboleda.arbolEn` dice qué árbol tiene dentro un punto: su pie y su copa
+  entera. Sale del mismo recorrido que `toca`, que sigue sin reservar memoria;
+  lo que devuelve es un objeto nuevo y no es para cada fotograma.
+- El banco apunta **al centro de la copa** y sale **a doce metros de ella**,
+  con las ruedas medio metro por encima del centro, que es lo que el JAZ 20
+  baja hasta llegar. El centro está dentro de la copa que se toca en los
+  cuatro peldaños, porque la piel nunca pasa de dos quintos. Pide una copa de
+  dos metros de radio y de semialto como poco —con los dos metros de Guyrami
+  le queda 1,2 por cada lado—, el suelo dos metros y medio por debajo del
+  camino, y ni agua, ni otro árbol, ni un edificio hasta la copa.
+
+En la mesa, con la puntería nueva, cuatro árboles de Yvytu Rape y cuatro de
+Los Rodeos en los cuatro peldaños: siempre el árbol, entre 0,38 y 0,52 s, con
+las ruedas a menos de 0,6 m del centro de la copa. Probado en
+`arboleda.test.ts`: `arbolEn` da el árbol del punto y nada fuera de él, y su
+centro se toca con la holgura de los cuatro peldaños mientras el borde no.
+
+### Volado
+
+`verificar-arboles.mjs` entero, 12 de 12; registro y fotos en `h35c/` del
+scratchpad. En Yvytu Rape sale ahora el árbol de 265 m, que el banco de antes
+descartaba y la mesa, que no mira los edificios, ya elegía: con el camino
+corto, lo que lo apartaba ya no queda por medio.
+
+| Caso | Copa del elegido | Percance | Ruedas al final, sobre el centro |
+|---|---|---|---|
+| Yvytu Rape, Taguató Ruvichá | a 265 m; 3,6 de radio, 2,2 de semialto, centro a 6,6 del suelo | árbol, a los 0,43 s y 13 m | 0 m |
+| Yvytu Rape, Guyrami | el mismo | árbol, a los 0,48 s y 14 m | 0,6 m |
+| Los Rodeos, Taguató Ruvichá | a 565 m; 7,0 de radio, 6,6 de semialto, centro a 5,6 del suelo | árbol, a los 0,43 s y 14 m | 0 m |
+
+Con su dibujo y su botón en los tres, con la frase donde se lee y sin ella en
+Guyrami, y sin errores en la página.
+
+### El monte de la pista corta, en la final de la 33
+
+El monte del ejercicio (`MONTE_DE_CADA_CAMPO`: SGOG, a 120 m pasado el final
+de la 15 y de 15 m) se planta al empezar el ejercicio y no se quita: se queda
+para el resto del vuelo, y desde ese momento está en la aproximación de la 33,
+a 120 m antes de su umbral. Medido en la mesa con el monte tal y como lo pone
+`ponerElMonte` y la senda del juego —tres grados desde trescientos metros
+pasado el umbral, porque SGOG no tiene PAPI—:
+
+- La copa más alta, la del eje, llega a 14,65 m sobre la cota de la pista (el
+  suelo allí está 35 cm por debajo).
+- La senda pasa a 22,0 m, y las ruedas del JAZ 20 a 20,6: **6,0 m sobre las
+  copas**. Una senda de 2,2° las roza con las ruedas; y donde un PAPI de 3°
+  pasa a cuatro rojas, a 2,5°, quedarían 2,3 m.
+- `arboles-de-la-senda.test.ts` da por buena una senda diez metros por debajo
+  de la de tres grados sin un árbol en medio. Con el monte puesto, esa senda
+  entra en las copas: la prueba no lo ve porque no planta el monte.
+
+Lo que haría un aeródromo de verdad con un obstáculo así, sin cambiar nada
+todavía:
+
+- **La superficie de aproximación** del Anexo 14 de OACI (Volumen I, capítulo
+  4, tabla 4-1) para una pista visual empieza antes del umbral y sube con una
+  pendiente fija. Para el número de clave 1 —el de un avión con una longitud
+  de campo de referencia de menos de 800 m, como el 172— empieza a 30 m del
+  umbral, con un borde de 60 m que se abre un 10 % a cada lado y una pendiente
+  del 5 %. A 120 m del umbral está a 4,5 m: **la copa más alta la pasa por
+  10,1 m**. Con el número de clave 2 (a 60 m del umbral y al 4 %), por 12,2.
+  En Estados Unidos es la misma pendiente, 20:1, en la superficie de
+  emplazamiento del umbral de la FAA para avionetas que aproximan a cincuenta
+  nudos o más (AC 150/5300-13B, *Threshold Siting Surfaces*).
+- El Anexo 14 recomienda quitar lo que asoma por encima de esa superficie
+  siempre que se pueda. Cuando no se puede, lo que se hace es **desplazar el umbral**
+  para que la superficie, que arranca de él, pase por encima (Anexo 14,
+  Volumen I, adjunto A, «Location of threshold»), con sus flechas pintadas y
+  la distancia de aterrizaje disponible publicada más corta. Para librar el
+  monte con el número de clave 1, **el umbral de la 33 tendría que moverse
+  202 m** pista adentro: quedarían 698 m para aterrizar, y la senda —que nace
+  del umbral de toma— se correría con él. Con el número de clave 2, 305 m.
+
+Propuesta, sin hacer: lo más simple, y lo primero que recomienda el Anexo, es
+quitar el monte al acabar el ejercicio, porque es del ejercicio y no del
+campo. Si se quiere que se quede, que la 33 lo sepa: umbral desplazado de
+202 m mientras esté, que el juego ya sabe dibujar y volar (`displacedM` en el
+aeródromo y `world/umbral-desplazado.ts`), y el monte dentro de
+`arboles-de-la-senda`.
+
+### Lo que queda
+
+- **El monte de la 33**, la propuesta de arriba, sin hacer.
+- El banco apunta a un árbol por peldaño y en dos campos. Que cada árbol se
+  toca con la forma que se dibuja lo mira `arboleda.test.ts` con la
+  vegetación entera; lo que el banco añade es que el juego, con todo puesto,
+  lo convierte en el percance con su pantalla.
+
 ## Enmienda H34d (19-11-2026): los flecos del piloto del vuelo entero
 
 Lo que las rondas de cierre dejaban al filo de sus comprobaciones y H34a,
