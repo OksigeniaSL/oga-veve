@@ -166,6 +166,16 @@ const REMOLINO = `<svg class="remolino" viewBox="0 0 24 24" aria-hidden="true">
  * uno del otro— salgan uno después del otro y no encima.
  */
 const DURA_EL_DESTELLO = 1.6;
+/**
+ * **Lo que va de «V1» a «rotate» cuando las dos son la misma velocidad**, s.
+ *
+ * Con mucho peso la V1 llega a la Vr —no puede pasarla: se para o se rota—, y
+ * entonces quien no pilota canta las dos seguidas, «V1, rotate», sin esperar.
+ * Esperar a que se apague el destello de V1 era llegar tarde: en La Gomera con
+ * el JAZ 90 lleno y a 40 °C, cuando Vr salía el avión ya estaba en el aire.
+ * Lo justo para que se vea el V1 y se oiga antes de la otra.
+ */
+const DE_V1_A_ROTATE = 0.7;
 
 /** Una milla náutica, m: la del plan de vuelo. Ver `ponerTrayecto`. */
 const MILLA_HUD = 1852;
@@ -566,6 +576,8 @@ export class Hud {
   }
   /** Y si ya se marcó Vr, que va justo detrás. */
   private dijoVr = false;
+  /** Si la V1 de esta carrera llegó ya en la Vr: «V1, rotate». Ver `DE_V1_A_ROTATE`. */
+  private v1EnLaVr = false;
   /** Velocidad de rotación de la aeronave de hoy, m/s. Ver `setAeronave`. */
   private vr = Infinity;
   /** Lo que le queda al destello de pantalla, s. Ver `destellar`. */
@@ -3558,6 +3570,7 @@ export class Hud {
     this.destelloRestante = Math.max(0, this.destelloRestante - dt);
     if (despegando && !this.dijoV1) {
       this.dijoV1 = true;
+      this.v1EnLaVr = ias >= this.vr;
       this.destellar("V1");
       this.velocidadesHandler?.("V1");
     } else if (
@@ -3582,10 +3595,15 @@ export class Hud {
        * perdía siempre. Haber cantado V1 **ya dice** que esto era un despegue;
        * lo único que falta es que la aguja pase.
        */
+      /*
+       * **Y si V1 y Vr son la misma, van seguidas**: «V1, rotate», como se
+       * cantan de verdad, sin esperar a que se apague el V1. Ver
+       * `DE_V1_A_ROTATE`.
+       */
       this.dijoV1 &&
       !this.dijoVr &&
       ias >= this.vr &&
-      this.destelloRestante <= 0
+      this.destelloRestante <= (this.v1EnLaVr ? DURA_EL_DESTELLO - DE_V1_A_ROTATE : 0)
     ) {
       this.dijoVr = true;
       this.destellar("Vr");
