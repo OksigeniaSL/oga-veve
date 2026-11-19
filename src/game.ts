@@ -8117,6 +8117,8 @@ export class Game {
     this.hud.onVelocidades((cual) => {
       if (cual === "V1") {
         this.avisar("v1");
+        // Ver `elV1MentiriaEnElEjercicio`: el destello sale, el «seguí» no.
+        if (this.elV1MentiriaEnElEjercicio()) return;
         this.cantar(
           "V one",
           t("vuelo.comprometido"),
@@ -24935,6 +24937,27 @@ export class Game {
    * los cuatro peldaños —la voz es el canal de quien no lee—, el dibujo del
    * ejercicio sale en la tarjeta y la frase, donde se lee.
    */
+  /**
+   * **Si el «ya despegamos: seguí» de V1 sería mentira en este ejercicio**: el
+   * bimotor de pistón practicando un fallo del despegue. Su V1 del juego es su
+   * Vmc, 66 nudos, y su manual para con el tren fuera por debajo de 85: en «Motor
+   * en la carrera» el motor falla tres nudos después, y la instructora diría
+   * «seguí» y «paramos» con un segundo de diferencia. El destello de V1 sale
+   * igual en pantalla, en todos los aviones, que así se pidió (ver `hud.ts`); lo
+   * que se calla es la voz y la tarjeta de «seguí», mientras dura el ejercicio.
+   * Ver `conV1` en `flight/ejercicios.ts`.
+   */
+  private elV1MentiriaEnElEjercicio(): boolean {
+    const p = this.practica;
+    return (
+      !!p &&
+      p.fase !== "cerrada" &&
+      p.averia.que === "motor" &&
+      p.averia.cuando.en !== "aire" &&
+      !conV1(this.aircraft)
+    );
+  }
+
   /** La frase del cuatrimotor, si la tiene: ver `CON_MAS_DE_DOS`. */
   private segunLosMotores(clave: TranslationKey): TranslationKey {
     return this.aircraft.motores > 2 ? (CON_MAS_DE_DOS[clave] ?? clave) : clave;
@@ -30555,7 +30578,8 @@ export class Game {
         this.elSenaleroLlevaLaLlegada(vista) ||
         this.elRemolqueLlevaLaSalida(vista) ||
         this.loQueCalla.laFase ||
-        trasIrse === "nada";
+        trasIrse === "nada" ||
+        (vista.fase === "comprometido" && this.elV1MentiriaEnElEjercicio());
       const soloLaTarjetaTrasIrse = trasIrse === "solo la tarjeta";
       /*
        * **Y alineado en la pista, su número.**
