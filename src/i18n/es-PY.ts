@@ -3129,6 +3129,7 @@ export const ES_PY = {
   "hoja.corta": "Corta",
   "hoja.cabe.largo": "Cabe todo: no pasa del peso máximo y sobra pista.",
   "hoja.pesado.largo": "Sobran {kg}: bajá {n} pasajeros, o elegí un destino más cerca.",
+  "hoja.pesado.uno": "Sobran {kg}: bajá un pasajero, o elegí un destino más cerca.",
   "hoja.pesado.combustible": "Sobran {kg}, y no es la gente: es el combustible. Elegí un destino más cerca.",
   "hoja.corta.largo": "Hoy hacen falta {pide} de pista y hay {hay}: sacá carga o combustible.",
   "hoja.pesado.llenos": "Con los tanques llenos sobran {kg}: cargá solo lo del vuelo.",

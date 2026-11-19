@@ -229,7 +229,9 @@ export function vistaDeLaHoja(v: VueloDeLaHoja): string {
         que.como === "plan"
           ? t("hoja.pesado.llenos", { kg: kg(r.pesada.deMas) })
           : que.como === "gente"
-            ? t("hoja.pesado.largo", { kg: kg(r.pesada.deMas), n: que.cuantos })
+            ? que.cuantos === 1
+              ? t("hoja.pesado.uno", { kg: kg(r.pesada.deMas) })
+              : t("hoja.pesado.largo", { kg: kg(r.pesada.deMas), n: que.cuantos })
             : t("hoja.pesado.combustible", { kg: kg(r.pesada.deMas) });
     else texto = t("hoja.corta.largo", { pide: m(r.pide), hay: m(r.hay) });
   }

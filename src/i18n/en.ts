@@ -1305,6 +1305,7 @@ export const EN: Dictionary = {
   "hoja.corta": "Short",
   "hoja.cabe.largo": "Everything fits: under the maximum weight, with runway to spare.",
   "hoja.pesado.largo": "{kg} too heavy: leave {n} passengers on the ground, or pick a closer destination.",
+  "hoja.pesado.uno": "{kg} too heavy: leave one passenger on the ground, or pick a closer destination.",
   "hoja.pesado.combustible": "{kg} too heavy, and it isn't the passengers: it's the fuel. Pick a closer destination.",
   "hoja.corta.largo": "Today it needs {pide} of runway and there are {hay}: take out load or fuel.",
   "hoja.pesado.llenos": "With full tanks it is {kg} too heavy: load only the trip fuel.",
