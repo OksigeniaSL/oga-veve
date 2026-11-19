@@ -466,12 +466,14 @@ export function tieneReversa(a: AircraftConfig): boolean {
  * solo se sabe la densidad, no qué parte de ella es temperatura.
  */
 export function loQueDaElMotor(
-  ac: Pick<AircraftConfig, "alturaCritica">,
+  ac: Pick<AircraftConfig, "alturaCritica" | "caidaSobreLaCritica">,
   sigma: number,
 ): number {
   if (ac.alturaCritica !== null) {
     const enLaCritica = airDensity(ac.alturaCritica) / SEA_LEVEL_DENSITY;
-    return sigma >= enLaCritica ? 1 : Math.max(0, sigma) / enLaCritica;
+    if (sigma >= enLaCritica) return 1;
+    // Por encima, con la caída de su clase: ver `caidaSobreLaCritica`.
+    return Math.pow(Math.max(0, sigma) / enLaCritica, ac.caidaSobreLaCritica ?? 1);
   }
   return Math.pow(Math.max(0, sigma), 0.7);
 }
@@ -905,6 +907,18 @@ export interface AircraftConfig {
    * *critical altitude*), que no distingue motores. ADR 0027, enmienda H37c.
    */
   alturaCritica: number | null;
+  /**
+   * **Lo deprisa que pierde por encima de su altura crítica**: el exponente
+   * de la densidad que le queda respecto a la de esa altura. Sin él, uno, que
+   * es el del motor de pistón con turbo y lo que dicen las curvas del
+   * TSIO-360-E del JAZ 40. Ver `loQueDaElMotor`.
+   *
+   * El turbohélice pierde más deprisa, y no es solo la turbina: lo que se
+   * cuenta aquí es empuje, y arriba la hélice va con menos aire en cada pala.
+   * Sin él el JAZ 50 subía a 32.000 ft a su peso máximo, y el suyo se queda en
+   * 25.000 a 14.000 lb (ADR 0027, enmienda H37d).
+   */
+  caidaSobreLaCritica?: number;
   /**
    * **Si las hélices giran una contra otra.** Lo normal es que todas giren
    * igual, a la derecha vistas desde el asiento —«conventional, clockwise
@@ -2471,7 +2485,8 @@ export const JAZ_50: AircraftConfig = {
    * —170 nudos a 10.000 ft donde el suyo va a 182—, porque la ley de empuje de
    * la casa le quita potencia con la altura y el PT6A-27 la sostiene hasta su
    * temperatura de régimen plano (ADR 0027, enmienda H11a). Con el régimen
-   * plano ya contado (`alturaCritica`, H37c), va a 176 y a 178.
+   * plano ya contado (`alturaCritica`, H37c), va a 176 y a 178; y desde
+   * nueve mil pies (H37d), a 179.
    *
    * **Sigue con la recta aunque su hélice sea de velocidad constante**, y es a
    * propósito: con la ley de la hélice de paso variable (`potenciaUtil`), la
@@ -2504,15 +2519,25 @@ export const JAZ_50: AircraftConfig = {
    */
   motoresA: [-2.75, 2.75],
   /*
-   * **Su régimen plano, hasta ocho mil pies.** El PT6A-34 da sus 620 shp de
+   * **Su régimen plano, hasta nueve mil pies.** El PT6A-34 da sus 620 shp de
    * despegue y de máxima continua «available to 42 °C (108 °F) ambient
    * temperature (S.L.)» (EASA.IM.A.575, issue 6, p. 7), y la misma placa, 50
    * psi de par, vale para el crucero máximo. La hoja no dice hasta qué altura
-   * en día estándar: los ocho mil pies son los que ponen su crucero donde
-   * Viking lo pone, 170, 181 y 182 nudos al nivel del mar, a 5.000 y a 10.000
-   * ft —el modelo, 170, 176 y 178—. Sin él iba a 170 a cualquier altura.
+   * en día estándar: los nueve mil pies (ocho hasta H37d) son los que ponen
+   * su crucero donde Viking lo pone, 170, 181 y 182 nudos al nivel del mar, a
+   * 5.000 y a 10.000 ft —el modelo, 170, 176 y 179—. Sin él iba a 170 a
+   * cualquier altura.
+   *
+   * **Y por encima pierde con la densidad a la 1,5, no a la 1** (H37d): con la
+   * caída del motor de turbo subía hasta 32.000 ft a su peso máximo y 28.900
+   * a 14.000 lb, donde Viking pone su techo de servicio —100 ft/min con los
+   * dos a potencia de subida— en 7.620 m (Guardian 400, 2018). Con 1,5 desde
+   * nueve mil pies, 24.500 ft a 14.000 lb y 26.800 a 12.500, sin tocar su
+   * subida de abajo ni sus cruceros; con 1,5 desde ocho mil, 23.800 y un nudo
+   * menos a diez mil pies. ADR 0027, enmienda H37d.
    */
-  alturaCritica: 8000 * 0.3048,
+  alturaCritica: 9000 * 0.3048,
+  caidaSobreLaCritica: 1.5,
   // Las dos giran igual: «Propellers rotate Clockwise in view of flight
   // direction» (EASA.IM.A.575, A.III.6.1).
   helicesContrarrotativas: false,
