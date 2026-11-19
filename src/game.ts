@@ -98,6 +98,7 @@ import { seOfrece, type Ejercicio } from "./flight/ejercicios";
 import { loQueCallaElEjercicio, type LoQueCalla } from "./flight/lo-que-calla-el-ejercicio";
 import { LaFinalTrasIrse } from "./flight/la-final-tras-irse";
 import {
+  alturaDelEjercicio,
   colocacionDeLaTormenta,
   escenaDeLaTormenta,
   margenEnUnidades,
@@ -1643,6 +1644,7 @@ import {
   pasoDeTurbulencia,
 } from "./audio/anuncio-de-turbulencia";
 import {
+  DIEZ_MIL_PIES,
   enFaseDeTrabajo,
   LoQueSeVe,
   type MomentoDeMirar,
@@ -18795,12 +18797,12 @@ export class Game {
         ? planeoDe(this.avionConPeso()).velocidad
         : colocacion === "un-motor"
           ? this.aircraft.velocidadDeCircuito
-          : colocacion === "crucero" || colocacion === "tormenta"
-            ? this.aircraft.cruiseSpeed
-            : colocacion === "pitot"
+          : colocacion === "pitot"
             ? // Por encima de la de circuito y lejos de la de crucero: con todo el gas, se ve acelerar.
               VELOCIDAD_DEL_PITOT * this.aircraft.velocidadDeCircuito
-            : colocacion === "aguja" ||
+            : colocacion === "crucero" ||
+                colocacion === "tormenta" ||
+                colocacion === "aguja" ||
                 colocacion === "radial" ||
                 colocacion === "gps" ||
                 colocacion === "interceptar" ||
@@ -18808,7 +18810,13 @@ export class Game {
                 colocacion === "deriva" ||
                 colocacion === "brujula" ||
                 colocacion === "giroscopo"
-              ? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL)
+              ? /*
+                 * **Los que empiezan en crucero, a la de la tabla a la altura
+                 * a la que empiezan**, que nunca pasa del tope y siempre se
+                 * sostiene: con la de la ficha, el JAZ 50 nacía en el del GPS
+                 * con el aviso de sobrevelocidad (H39a). Ver `laDeLaTabla`.
+                 */
+                this.laDeLaTabla(this.startPosition().y)
               : /*
                  * **La estima y el altímetro, a la de la tabla a su altura**:
                  * la primera, porque su plan es esa velocidad por el tiempo;
@@ -18817,7 +18825,7 @@ export class Game {
                  * ya lejos de la pedida (H26t). Ver `laDeLaTabla`.
                  */
                 colocacion === "estima"
-                ? (this.dondeEmpiezaLaEstima()?.velocidad ?? Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL))
+                ? (this.dondeEmpiezaLaEstima()?.velocidad ?? this.laDeLaTabla(this.startPosition().y))
                 : colocacion === "altimetro"
                 ? this.laDeLaTabla(this.terrain.runwayElevation + (this.dondeEmpiezaElAltimetro()?.alto ?? 0))
                 : colocacion === "rumbo"
@@ -24636,7 +24644,12 @@ export class Game {
      * del camino a casa. Ver `colocacionDeLaTormenta`.
      */
     if (colocacion === "tormenta") {
-      const { lejos, alto } = colocacionDeLaTormenta(this.aircraft);
+      // Lo que se vuela mientras se cuenta, a la de la tabla de ahí arriba, que es a la que empieza.
+      const arriba = this.terrain.runwayElevation + alturaDelEjercicio(this.aircraft.alturaDeCrucero);
+      const { lejos, alto } = colocacionDeLaTormenta({
+        cruiseSpeed: this.laDeLaTabla(arriba),
+        alturaDeCrucero: this.aircraft.alturaDeCrucero,
+      });
       return { lejos, alto };
     }
     if (colocacion === "un-motor") {
@@ -24647,7 +24660,7 @@ export class Game {
       const cota = this.terrain.runwayElevation;
       const arriba = Math.max(this.aircraft.alturaDeCrucero, DONDE_SE_RESPIRA);
       const cuando = this.practica?.averia.cuando;
-      const antes = this.aircraft.cruiseSpeed * (cuando?.en === "aire" ? cuando.segundos : 0);
+      const antes = this.laDeLaTabla(arriba) * (cuando?.en === "aire" ? cuando.segundos : 0);
       const bajando = (arriba - DONDE_SE_RESPIRA) / Math.tan((10 * Math.PI) / 180);
       const aterrizando = Math.max(0, DONDE_SE_RESPIRA - cota) / Math.tan((3 * Math.PI) / 180);
       return { lejos: antes + bajando + aterrizando, alto: arriba - cota };
@@ -25463,13 +25476,15 @@ export class Game {
     if (!a) return null;
     if (this.colocacionDeLaAguja) return this.colocacionDeLaAguja;
     const agua = this.scenario.waterLevel ?? 0;
-    this.colocacionDeLaAguja = colocacionDeLaAguja({
-      estacion: a.estacion,
-      viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
-      velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
-      suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
-      cotaDeLaPista: this.terrain.runwayElevation,
-    });
+    this.colocacionDeLaAguja = this.aLaDeLaTabla((velocidad) =>
+      colocacionDeLaAguja({
+        estacion: a.estacion,
+        viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+        velocidad,
+        suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+        cotaDeLaPista: this.terrain.runwayElevation,
+      }),
+    );
     return this.colocacionDeLaAguja;
   }
 
@@ -25605,14 +25620,16 @@ export class Game {
     if (!r) return null;
     if (this.colocacionDelRadial) return this.colocacionDelRadial;
     const agua = this.scenario.waterLevel ?? 0;
-    this.colocacionDelRadial = colocacionDelRadial({
-      estacion: r.estacion,
-      declinacion: r.estacion.emisora.declinacion,
-      viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
-      velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
-      suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
-      cotaDeLaPista: this.terrain.runwayElevation,
-    });
+    this.colocacionDelRadial = this.aLaDeLaTabla((velocidad) =>
+      colocacionDelRadial({
+        estacion: r.estacion,
+        declinacion: r.estacion.emisora.declinacion,
+        viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+        velocidad,
+        suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+        cotaDeLaPista: this.terrain.runwayElevation,
+      }),
+    );
     return this.colocacionDelRadial;
   }
 
@@ -25793,14 +25810,16 @@ export class Game {
     if (d.colocacion) return d.colocacion;
     const agua = this.scenario.waterLevel ?? 0;
     d.colocar(
-      colocacionDeLaDeriva({
-        sitio: d.sitio,
-        campo: { x: 0, z: 0 },
-        viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
-        velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
-        suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
-        cotaDeLaPista: this.terrain.runwayElevation,
-      }),
+      this.aLaDeLaTabla((velocidad) =>
+        colocacionDeLaDeriva({
+          sitio: d.sitio,
+          campo: { x: 0, z: 0 },
+          viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+          velocidad,
+          suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+          cotaDeLaPista: this.terrain.runwayElevation,
+        }),
+      ),
     );
     return d.colocacion;
   }
@@ -26603,12 +26622,34 @@ export class Game {
    * diez mil pies. Con la de la ficha, el JAZ 40 empezaba la estima a 189
    * nudos que abajo no sostiene, frenaba hasta 166 y el plan contaba con 189
    * (ADR 0031, enmienda H26t). Ver `velocidadDeCrucero`.
+   *
+   * **Y es la de todo ejercicio que empieza en crucero**, `altura` sobre el
+   * mar: los de radio, la brújula, el giróscopo, la despresurización y la
+   * tormenta. Arrancaban a la de la ficha, que es la verdadera de su altura
+   * de crucero: el JAZ 50 empezaba el del GPS a tres mil pies con 182 nudos,
+   * por encima de los 174 verdaderos que ahí son su Vmo, y nacía con el aviso
+   * de sobrevelocidad; el JAZ 40, a 189 que abajo no sostiene ni a fondo. La
+   * tabla no pasa nunca del tope (`topeConMargen`), y el de los doscientos
+   * cincuenta nudos vale solo por debajo de diez mil pies, que es donde lo
+   * pone la norma (ADR 0031, enmienda H39a).
    */
   private laDeLaTabla(altura: number): number {
-    return Math.min(
-      TOPE_POR_DEBAJO_DE_DIEZ_MIL,
-      velocidadDeCrucero(this.avionConPeso(), { altura, aire: this.flight.aireDelDia(), tren: 0 }),
-    );
+    const tabla = velocidadDeCrucero(this.avionConPeso(), { altura, aire: this.flight.aireDelDia(), tren: 0 });
+    return altura < DIEZ_MIL_PIES ? Math.min(TOPE_POR_DEBAJO_DE_DIEZ_MIL, tabla) : tabla;
+  }
+
+  /**
+   * **Un ejercicio de radio, colocado a la de la tabla**: la distancia sale
+   * de minutos a esa velocidad, y la velocidad, de la altura a la que se
+   * vuela, que sale del suelo del camino. Una primera cuenta con la de la
+   * ficha da dónde y a qué altura; la segunda, con la de la tabla ahí. Como
+   * la estima. El sitio y la velocidad de entrada salen así de la misma
+   * tabla: ver `reiniciarEnFinal`.
+   */
+  private aLaDeLaTabla<T extends { readonly alto: number } | null>(colocar: (velocidad: number) => T): T {
+    const primera = colocar(Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL));
+    if (primera === null) return primera;
+    return colocar(this.laDeLaTabla(this.terrain.runwayElevation + primera.alto));
   }
 
   /**
@@ -26836,14 +26877,16 @@ export class Game {
     if (!r) return null;
     if (this.colocacionDelCorte) return this.colocacionDelCorte;
     const agua = this.scenario.waterLevel ?? 0;
-    this.colocacionDelCorte = colocacionDelCorte({
-      estacion: r.estacion,
-      declinacion: r.estacion.emisora.declinacion,
-      viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
-      velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
-      suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
-      cotaDeLaPista: this.terrain.runwayElevation,
-    });
+    this.colocacionDelCorte = this.aLaDeLaTabla((velocidad) =>
+      colocacionDelCorte({
+        estacion: r.estacion,
+        declinacion: r.estacion.emisora.declinacion,
+        viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+        velocidad,
+        suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+        cotaDeLaPista: this.terrain.runwayElevation,
+      }),
+    );
     r.pedir(this.colocacionDelCorte.radial);
     return this.colocacionDelCorte;
   }
@@ -27212,16 +27255,17 @@ export class Game {
     if (!r) return null;
     if (this.colocacionDelCruce) return this.colocacionDelCruce;
     const agua = this.scenario.waterLevel ?? 0;
-    const velocidad = Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL);
-    this.colocacionDelCruce = colocacionDelCruce({
-      primera: r.primera,
-      segunda: r.segunda,
-      declinacion: r.primera.emisora.declinacion,
-      viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
-      velocidad,
-      suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
-      cotaDeLaPista: this.terrain.runwayElevation,
-    });
+    this.colocacionDelCruce = this.aLaDeLaTabla((velocidad) =>
+      colocacionDelCruce({
+        primera: r.primera,
+        segunda: r.segunda,
+        declinacion: r.primera.emisora.declinacion,
+        viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+        velocidad,
+        suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+        cotaDeLaPista: this.terrain.runwayElevation,
+      }),
+    );
     return this.colocacionDelCruce;
   }
 
@@ -32506,14 +32550,16 @@ export class Game {
     if (g.colocacion) return g.colocacion;
     const agua = this.scenario.waterLevel ?? 0;
     g.colocar(
-      colocacionDelGps({
-        estacion: g.estacion,
-        declinacion: vor.declinacion,
-        viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
-        velocidad: Math.min(this.aircraft.cruiseSpeed, TOPE_POR_DEBAJO_DE_DIEZ_MIL),
-        suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
-        cotaDeLaPista: this.terrain.runwayElevation,
-      }),
+      this.aLaDeLaTabla((velocidad) =>
+        colocacionDelGps({
+          estacion: g.estacion,
+          declinacion: vor.declinacion,
+          viento: vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA),
+          velocidad,
+          suelo: (x, z) => Math.max(agua, this.terrain.sampleHeight(x, z)),
+          cotaDeLaPista: this.terrain.runwayElevation,
+        }),
+      ),
     );
     return g.colocacion;
   }

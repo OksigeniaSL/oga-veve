@@ -30,6 +30,7 @@ import { esDeChorro, loQueDaElMotor, type AircraftConfig } from "./aircraft";
 import { AIRE_ESTANDAR, airDensity, SEA_LEVEL_DENSITY, type Aire } from "./atmosphere";
 import { MOTOR_QUE_SOSTIENE } from "./arcade";
 import { empujeLleno, empujeQueSostiene, type ParaSostener } from "./fdm";
+import { topeConMargen } from "./limites";
 
 export type { ParaSostener } from "./fdm";
 
@@ -78,25 +79,35 @@ export const POTENCIA_DE_CRUCERO = 0.75;
  * de la potencia ahí —arriba de su altitud crítica, o sin turbo, más de tres
  * cuartos de palanca— y la velocidad más alta que sostiene con ella. En un
  * reactor no hay tabla de potencia que leer así, y vale la de la ficha.
+ *
+ * **Y nunca por encima de su tope**, con el margen de `topeConMargen`: diez
+ * nudos por debajo de la Vmo y dos centésimas del Mmo. La Vmo es indicada y
+ * esto es verdadera, así que el tope baja con el aire denso: el JAZ 50, con
+ * sus 182 nudos de ficha, empezaba los ejercicios de radio a tres mil pies
+ * por encima de los 174 verdaderos que ahí son su Vmo, y nacía con el aviso
+ * de sobrevelocidad; un reactor, a cualquier altura baja, daba la de la ficha
+ * —los 428 del JAZ 90 a mil metros— (ADR 0031, enmienda H39a).
  */
 export function velocidadDeCrucero(
   a: AircraftConfig,
   p: { readonly altura: number; readonly aire?: Aire; readonly tren: number },
 ): number {
-  if (esDeChorro(a)) return a.cruiseSpeed;
   const aire = p.aire ?? AIRE_ESTANDAR;
+  const tope = Math.min(a.cruiseSpeed, topeConMargen(a, p.altura, aire));
+  if (esDeChorro(a)) return tope;
   const motor = loQueDaElMotor(a, airDensity(p.altura, aire) / SEA_LEVEL_DENSITY);
   const palanca = motor > 0 ? Math.min(1, POTENCIA_DE_CRUCERO / motor) : 1;
   const pide = (v: number): number =>
     gasQueSostiene(a, { altura: p.altura, verdadera: v, aire, flaps: 0, tren: p.tren, pendiente: 0 }) ?? Infinity;
-  if (pide(a.cruiseSpeed) <= palanca) return a.cruiseSpeed;
+  if (pide(tope) <= palanca) return tope;
   /*
    * Por encima de la de mínima resistencia, lo que pide la palanca crece con
    * la velocidad: se busca dónde llega a la de crucero, entre la de
-   * aproximación —que siempre se sostiene con menos— y la de la ficha.
+   * aproximación —que siempre se sostiene con menos— y la de la ficha o el
+   * tope.
    */
   let lenta = a.approachSpeed;
-  let rapida = a.cruiseSpeed;
+  let rapida = tope;
   if (pide(lenta) > palanca) return lenta;
   for (let i = 0; i < 40; i++) {
     const v = (lenta + rapida) / 2;
