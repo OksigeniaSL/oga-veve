@@ -85,7 +85,13 @@ await page.goto(
   `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=despegue&tramo=${TRAMO}` +
     `&avion=${AVION}` +
     (VIENTO ? `&viento=${VIENTO}` : "") +
-    METEO,
+    METEO +
+    /*
+     * **Y lo que se quiera añadir a la dirección**: la hoja de carga
+     * —`&pasajeros=19&llenos=1`— o un parte a mano —`&metar=…`—, para
+     * despegar con la carga elegida. Ver `flight/hoja-de-carga.ts`.
+     */
+    (process.env.OGA_URL_EXTRA ?? ""),
 );
 await page.waitForTimeout(16000);
 
@@ -1251,6 +1257,8 @@ const despegue = await page.evaluate(async () => {
     // es contra eso contra lo que hay que medir, no contra una fracción de la
     // pista. Ver `cabeEn`.
     carreraDeFicha: ficha.carreraHastaVr,
+    // Lo que pesaba al soltar frenos: con la hoja de carga, lo de la hoja.
+    masa: ficha.masa,
     vr: ficha.rotacion,
     fase: o.fase(),
     partida,
@@ -1265,6 +1273,7 @@ const despegue = await page.evaluate(async () => {
   };
 });
 
+console.log(`  masa al soltar frenos: ${Math.round(despegue.masa)} kg`);
 comprobar(
   "a todo gas el avión despega",
   despegue.enElAire !== null,

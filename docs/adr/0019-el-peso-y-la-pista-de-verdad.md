@@ -213,3 +213,106 @@ tres de la pista:
   encima.
 - La tarjeta del tiempo puede proponer no salir un día pesado y caliente desde
   un campo justo, que es lo que pasa.
+
+## Enmienda H38a (19-11-2026): la hoja de carga, la gente o los depósitos
+
+El avión ya pesaba lo que lleva, pero la gente iba puesta: la masa sin
+combustible era la de la ficha en todos los vuelos, y por eso no había nada que
+decidir. De verdad sí lo hay, y es lo primero que se aprende al despachar un
+avión pequeño: **la carga y los depósitos llenos no caben juntos**. El #91 lo
+pedía como «la hoja de carga».
+
+### Qué se decide
+
+En el hangar, detrás del destino, un paso nuevo, «¿Qué llevás?»
+(`ui/hoja-de-carga.ts`, las cuentas en `flight/hoja-de-carga.ts`):
+
+- **Cuánta gente sube**, de cero a las plazas de pasaje, cada uno a la masa
+  estándar de un adulto en Europa, 84 kg con su equipaje de mano (Reglamento
+  (UE) 965/2012, CAT.POL.MAB.100, tabla 1), y en los de línea con su maleta de
+  bodega, 11 kg.
+- **Cuánto combustible**: lo del plan de su destino —el tramo, el alternativo,
+  la maniobra y la reserva, como hasta ahora— o los tanques llenos.
+- **Lo que sale**: la báscula —el avión vacío, la gente y el combustible
+  contra la raya del peso máximo al despegue de su manual— y la pista: el
+  asfalto de la TORA del campo y la barra de lo que pide hoy con ese peso, con
+  el aire del parte y la cota del campo. Es `pistaNecesariaHoy`, la misma
+  cuenta del vuelo, y por eso la barra del hangar dice lo que hará el avión.
+- **Si no cabe, el arreglo a un toque**, el más pequeño que lo resuelve: cargar
+  lo del vuelo en vez de llenar, bajar a los pasajeros justos, o ir a elegir un
+  destino más cerca.
+
+El avión vacío con su tripulación sale de su manual, y solo de los que lo
+tienen leído: el 172R (1.639 lb), el Twin Otter -400 (3.377 kg), el 1900D
+(10.874 lb) y el Embraer 170 (20.700 kg en orden de operaciones). El Ag Cat, el
+Seneca II, el 787-9 y el 747-100 no tienen esa cifra en sus fuentes: vuelan con
+la carga de su ficha y su hoja solo deja elegir el combustible. Es preferible
+no dejar elegir a hacerlo con un peso en vacío inventado.
+
+La hoja se abre con la gente que cabe en la masa sin combustible de su ficha,
+redondeando hacia abajo: quien no la toca vuela lo de siempre o un poco menos,
+y lo que cabía sigue cabiendo.
+
+### Crece con el peldaño
+
+Como manda `escalera.ts`: en el de los dibujos, los asientos que se encienden,
+la báscula que pasa o no de su raya, la barra que se sale o no del final del
+asfalto y un sello verde o ámbar, sin una letra. En el segundo, una palabra:
+«¡Cabe!», «Pesado», «Corta». En el tercero, los kilos, los metros y la frase
+entera («Sobran 355 kg: bajá 4 pasajeros, o elegí un destino más cerca»). En el
+de cabina, además, los rótulos de un despacho de verdad, que no se traducen:
+TOW, MTOW y TORA. Ámbar y no rojo: es una decisión en tierra, con tiempo.
+
+### Llega al vuelo
+
+`Eleccion.hoja` lleva la hoja a `Game`, atada al avión para el que se eligió:
+`masaDeAhora` pesa el avión vacío, la gente y lo que queda en los depósitos, y
+el repostaje carga lo de la hoja —los tanques llenos, o lo del plan **sin
+recortarlo al peso de la ficha**: si con esa gente no cabe, el avión sale
+pesado, como se eligió—. De `masaDeAhora` salen ya la pista de hoy, la
+intersección, el parte de salida, las velocidades y los dos modelos de vuelo;
+el aviso del calor pasa también a contarse con ese peso. Sin hoja —una
+dirección, un banco— todo sigue como estaba. En la dirección,
+`?pasajeros=19&llenos=1`.
+
+`cargaParaElPlan` sigue igual para quien no tiene hoja; lo que pide la ruta sin
+el tope del peso es `combustibleDelPlan`.
+
+### Los casos de verdad
+
+- **El 1900D lleno no llega a Pedro Juan Caballero.** Vacío, 10.874 lb (hoja de
+  especificaciones de Raytheon); con dos de cabina y diecinueve de pasaje,
+  6.927 kg. Su máximo al despegue, 17.120 lb, 7.766 kg (FSF 2004, TAR 98/07). El
+  plan de Pettirossi a Pedro Juan con su alternativo y su reserva, 1.194 kg:
+  8.121, 355 de más. Se quedan cuatro en tierra.
+- **El 172R con quien pilota y tres más no carga ni la vuelta al campo.** 743
+  kg vacío y cuatro de 84: 1.079 kg, a 32 de sus 2.450 lb (1.111 kg). La vuelta
+  al campo pide 42; a Gran Canaria, 69. Sobra uno.
+- **Caliente y alto en Los Rodeos: con las cifras de cada manual, la barra no
+  se pasa a ningún peso que se pueda llevar.** A 633 m, con 3.171 m de TORA y
+  40 °C, a su peso máximo: el 787-9 pide 3.140 m, el 747-100 3.036, el Embraer
+  170 1.670 y el 1900D 1.429. Solo se pasa pasándose de peso —el 787-9 con los
+  tanques llenos, 276 t, pide 3.246 m a 30 °C—, y eso ya lo para la báscula. No
+  se ha trucado nada para que pase. **Donde sí pasa**, a su peso máximo y en
+  un día de ola de calor: el Embraer 170 en La Gomera (1.500 m de TORA) desde
+  unos 36 °C —1.538 m a 40—, y el 1900D en El Hierro (1.250) a 40 °C, 1.260 m.
+  Lo vigila `hoja-de-carga.test.ts`.
+
+### Lo que no
+
+- **El centrado** —dónde va el peso, con su zona buena— y la carga que se
+  mueve en vuelo: otra hoja, otro encargo.
+- **Los kilos de combustible entre medias**: o lo del plan, o lleno. Llevar de
+  más sin llenar (el combustible de ida y vuelta, el que se lleva porque en el
+  destino es caro) no se enseña aquí.
+- **El tanque de las fichas sin `combustibleUtilizable`** sigue siendo la
+  proporción de su clase —un tercio de la masa de la ficha en los reactores, el
+  14 % en los de hélice— y no el de su manual: el del Embraer 170 sale en 9.900
+  kg. Afecta a «tanques llenos» en el JAZ 20, el 25, el 40, el 90 y el 120, y
+  cambiarlo es tocar `aircraft.ts`, que no era de este encargo.
+- **El aire del hangar**: el parte se pide al abrir la hoja, como lo pide el
+  vuelo al salir; sin red, o en un banco, es el día de siempre del sitio. El
+  vuelo vuelve a hacer la cuenta con el parte que le llegue, y es esa la que
+  manda.
+- **El viento**, en el hangar, en calma: es como se despacha (CAT.POL.A.230 b
+  1); el del día lo cuenta el vuelo.

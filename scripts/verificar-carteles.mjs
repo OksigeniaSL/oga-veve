@@ -3704,6 +3704,121 @@ for (const pizarra of [false, true]) {
   }
 }
 
+/*
+ * **La hoja de carga, con el dedo** (H38a): el JAZ 60 en Pettirossi con sus
+ * diecinueve plazas llenas para ir a Pedro Juan Caballero, que no cabe, en los
+ * cuatro peldaños. Que se vea entera sin rodar de lado, que lo que se toca sea
+ * del tamaño de un dedo y que la barra de la pista y la báscula estén en
+ * pantalla. Con `OGA_FOTOS`, una foto por peldaño y pantalla.
+ */
+/** Corre en la página: lo que se sale de la hoja y lo que se toca pequeño. */
+function medirLaHoja() {
+  const hoja = document.querySelector(".hoja");
+  if (!hoja) return null;
+  const W = innerWidth;
+  const fuera = [];
+  for (const el of hoja.querySelectorAll(".hoja__fila, .hoja__cabina, .hoja__bascula, .hoja__pista, .hoja__veredicto")) {
+    const r = el.getBoundingClientRect();
+    if (r.left < -0.5 || r.right > W + 0.5) fuera.push(`${String(el.className).split(" ")[0]} ${Math.round(r.left)}–${Math.round(r.right)}`);
+  }
+  const chicos = [];
+  for (const el of hoja.querySelectorAll("button, input")) {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && Math.min(r.width, r.height) < 44)
+      chicos.push(`${String(el.className).split(" ")[0]} ${Math.round(r.width)}×${Math.round(r.height)}`);
+  }
+  const pista = hoja.querySelector(".hoja__pista")?.getBoundingClientRect();
+  return {
+    fuera,
+    chicos,
+    pistaAncho: pista ? Math.round(pista.width) : 0,
+    corta: !!hoja.querySelector(".hoja__bascula--pasa, .hoja__pista--corta"),
+    texto: hoja.querySelector(".hoja__texto")?.textContent?.trim() ?? "",
+    rueda: document.querySelector(".hangar").scrollHeight - document.querySelector(".hangar").clientHeight,
+  };
+}
+
+for (const [ancho, alto] of [[915, 412], [800, 360], [960, 540], [565, 641], [400, 780]]) {
+  const page = await navegador.newPage({ viewport: { width: ancho, height: alto }, hasTouch: true, isMobile: true });
+  const tam = `hoja de carga ${ancho}×${alto} con el dedo`;
+  try {
+    await page.addInitScript(() => {
+      localStorage.setItem("oga-veve:teclas-vistas", "1");
+      if (localStorage.getItem("oga-veve:guardado") === null)
+        localStorage.setItem("oga-veve:cuaderno", JSON.stringify({ despegues: 1, segundos: 600 }));
+    });
+    await page.goto(`${BASE}/`);
+    await page.waitForSelector(".piloto__boton", { timeout: 90000 });
+    await page.click(".piloto__boton");
+    await page.waitForSelector(".ficha--sitio", { timeout: 90000 });
+    const alInicio = async () => {
+      if (await page.$('.paso--volver[data-pantalla="inicio"]')) await page.click('.paso--volver[data-pantalla="inicio"]');
+    };
+    await page.click('[data-pantalla="donde"]');
+    await page.click('[data-sitio="pettirossi"]');
+    await alInicio();
+    await page.click('[data-pantalla="conque"]');
+    await page.click('[data-avion="jaz-60"]');
+    await alInicio();
+    await page.click('[data-pantalla="adonde"]');
+    await page.click('button.ficha--destino[data-destino="pedro-juan"]');
+    await alInicio();
+    for (const peldano of ["guyrami", "tuka", "taguato", "taguato-ruvicha"]) {
+      await page.click('[data-pantalla="quien"]');
+      await page.click(`[data-tramo="${peldano}"]`);
+      await alInicio();
+      await page.click('[data-pantalla="carga"]');
+      await page.waitForSelector(".hoja__vista", { timeout: 10000 });
+      // Las diecinueve plazas, con el deslizador como lo movería un dedo.
+      await page.evaluate(() => {
+        const d = document.querySelector("[data-hoja-gente]");
+        d.value = d.max;
+        d.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      await page.waitForTimeout(700);
+      const h = await page.evaluate(medirLaHoja);
+      comprobar(
+        `${tam}, ${peldano}: la hoja se ve entera, del tamaño del dedo, y dice que no cabe`,
+        h && !h.fuera.length && !h.chicos.length && h.corta && h.pistaAncho > ancho * 0.5,
+        h
+          ? [
+              h.fuera.length ? `fuera: ${h.fuera.join(", ")}` : "",
+              h.chicos.length ? `pequeños: ${h.chicos.join(", ")}` : "",
+              h.corta ? "" : "no avisa",
+              `pista ${h.pistaAncho} px`,
+              h.rueda > 1 ? `se rueda ${h.rueda} px` : "sin rodar",
+              h.texto,
+            ]
+              .filter(Boolean)
+              .join(" · ")
+          : "no hay hoja",
+        "la hoja se usa con el dedo y sin leer: si la barra no se ve, no hay decisión",
+      );
+      if (process.env.OGA_FOTOS)
+        await page.screenshot({ path: `${process.env.OGA_FOTOS}/hoja-${ancho}x${alto}-${peldano}.png` });
+      // Y el arreglo, a un toque: quitar a los que sobran deja la hoja en verde.
+      if (peldano === "taguato") {
+        await page.click("[data-hoja-quitar]");
+        await page.waitForTimeout(300);
+        const h2 = await page.evaluate(medirLaHoja);
+        comprobar(
+          `${tam}: un toque en el arreglo y cabe`,
+          h2 && !h2.corta,
+          h2 ? h2.texto : "no hay hoja",
+          "el arreglo es la propuesta: tocarlo tiene que resolverlo",
+        );
+        if (process.env.OGA_FOTOS)
+          await page.screenshot({ path: `${process.env.OGA_FOTOS}/hoja-${ancho}x${alto}-${peldano}-arreglada.png` });
+      }
+      await alInicio();
+    }
+  } catch (e) {
+    comprobar(`${tam}: la hoja sale`, false, String(e).slice(0, 200), "");
+  } finally {
+    await page.close();
+  }
+}
+
 for (const r of resultados) {
   console.log(`  ${r.ok ? "✓" : "✗"} ${r.nombre}  —  ${r.detalle}`);
   if (!r.ok && r.porque) console.log(`      ${r.porque}`);
